@@ -32,7 +32,7 @@
 
 * 云编译或者fork同步仓库等需要 [在此](https://github.com/settings/tokens) 创建个token,然后在此仓库Settings->Secrets中添加个名字为ACCESS_TOKEN的Secret,填入token值
 
-* 对应.github\workflows目录下的yml工作流文件里的ACCESS_TOKEN名称（依据自己yml文件修改）
+* 对应.github/workflows目录下的yml工作流文件里的ACCESS_TOKEN名称（依据自己yml文件修改）
 
 * 在仓库Settings->Secrets中添加 SCKEY 可通过[Server酱](http://sc.ftqq.com) 推送编译结果到微信
 
