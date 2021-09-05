@@ -1,11 +1,11 @@
 ![kenzo github stats](https://github-readme-stats.vercel.app/api?username=kenzok8&show_icons=true&theme=merko)
 <div align="center">
 <h1 align="center">small_action</h1>
-<img src="https://img.shields.io/github/issues/kenzokk78/small-package?color=green">
-<img src="https://img.shields.io/github/stars/kenzokk78/small-package?color=yellow">
-<img src="https://img.shields.io/github/forks/kenzokk78/small-package?color=orange">
-<img src="https://img.shields.io/github/license/kenzokk78/small-package?color=ff69b4">
-<img src="https://img.shields.io/github/languages/code-size/kenzokk78/small-package?color=blueviolet">
+<img src="https://img.shields.io/github/issues/kenzok8/small-package?color=green">
+<img src="https://img.shields.io/github/stars/kenzok8/small-package?color=yellow">
+<img src="https://img.shields.io/github/forks/kenzok8/small-package?color=orange">
+<img src="https://img.shields.io/github/license/kenzok8/small-package?color=ff69b4">
+<img src="https://img.shields.io/github/languages/code-size/kenzok8/small-package?color=blueviolet">
 </div>
 
 
@@ -28,6 +28,8 @@
 *  官方源码用19.07分支
 
 
+
+
 ##### 关于Secrets、TOKEN的小知识
 
 * 云编译或者fork同步仓库等需要 [在此](https://github.com/settings/tokens) 创建个token,然后在此仓库Settings->Secrets中添加个名字为ACCESS_TOKEN的Secret,填入token值
@@ -37,6 +39,7 @@
 * 在仓库Settings->Secrets中添加 SCKEY 可通过[Server酱](http://sc.ftqq.com) 推送编译结果到微信
 
 * 在仓库Settings->Secrets中添加 TELEGRAM_CHAT_ID, TELEGRAM_TOKEN 可推送编译结果到Telegram Bot
+
 
 
 
