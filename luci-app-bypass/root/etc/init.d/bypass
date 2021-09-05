@@ -786,7 +786,12 @@ gen_dns(){
 			fi
 		else
 			uci set AdGuardHome.AdGuardHome.enabled='0'
-			uci del AdGuardHome.AdGuardHome.redirect
+			redirect="$(uci get AdGuardHome.AdGuardHome.old_redirect 2>/dev/null)"
+			if [ "redirect" ]; then
+				uci set AdGuardHome.AdGuardHome.redirect="$redirect" 2>/dev/null
+			else
+				uci del AdGuardHome.AdGuardHome.redirect
+			fi
 			uci commit AdGuardHome
 			/etc/init.d/AdGuardHome stop
 		fi
@@ -1026,15 +1031,20 @@ stop(){
 	kill -9 $(ps -w | grep by-preload | grep -v grep | awk '{print$1}') 2>/dev/null
 	kill -9 $(ps -w | grep $VAR | grep -v grep | awk '{print$1}') 2>/dev/null
 	killall -q -9 smartdns-le chinadns-ng kcptun-client microsocks
-	if [[ -f /etc/init.d/AdGuardHome && $adguardhome == 1 && ! "$GLOBAL_SERVER" ]]; then
-		uci set AdGuardHome.AdGuardHome.enabled='0'
-		uci del AdGuardHome.AdGuardHome.redirect
-		uci commit AdGuardHome
-		/etc/init.d/AdGuardHome stop
-		if [ "$(netstat -tunlp | grep 53 | grep -i AdGuardHome)" ]; then
+	if [[ $adguardhome == 1 && ! "$GLOBAL_SERVER" ]]; then
+		if [ -f /etc/init.d/AdGuardHome ]; then
+			uci set AdGuardHome.AdGuardHome.enabled='0'
+			if [ "redirect" ]; then
+				uci set AdGuardHome.AdGuardHome.redirect="$redirect" 2>/dev/null
+			else
+				uci del AdGuardHome.AdGuardHome.redirect
+			fi
+			uci commit AdGuardHome
+			/etc/init.d/AdGuardHome stop
+		fi
+		if [ "$(netstat -tunlp | grep 53 | grep -i AdGuardHome)" || "$(uci get dhcp.@dnsmasq[0].port)" != "53" ]; then
 			uci set dhcp.@dnsmasq[0].port='53'
 			uci commit dhcp
-			/etc/init.d/dnsmasq restart
 		fi
 	fi
 	rm -rf $DNS_DIR $VAR $DNS_FILE $CON_T /var/lock/bypass-update.lock
