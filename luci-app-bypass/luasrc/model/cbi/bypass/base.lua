@@ -59,14 +59,14 @@ o:value("gfw",translate("GFW List Mode"))
 o:value("all",translate("Global Mode"))
 o:value("oversea",translate("Oversea Mode"))
 
-if luci.sys.call("test -f /lib/modules/*/gcm.ko") ~= 0 then
+if luci.sys.call("test `grep MemTotal /proc/meminfo | awk '{print $2}'` -le 500000") == 0 then
 o=s:option(Flag,"gfw_mode",translate("Load GFW List"),
 translate("If the domestic DNS does not hijack foreign domain name to domestic IP, No need to be enabled"))
 o:depends("run_mode","router")
 o.default=1
 end
 
-if luci.sys.call("test -f /lib/modules/*/gcm.ko") == 0 then
+if luci.sys.call("test `grep MemTotal /proc/meminfo | awk '{print $2}'` -gt 500000") == 0 then
 o=s:option(Flag,"adguardhome",translate("Used with AdGuardHome"),
 translate("Luci-app-adguardhome require"))
 if luci.sys.call("test `which AdGuardHome` && test -r /etc/init.d/AdGuardHome") == 0 then
