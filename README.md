@@ -20,7 +20,7 @@
 *  关于指定19.07分支下载示例:
 
 ```bash
- git clone -b 19.07 https://github.com/kenzok78/small-package
+ git clone -b 19.07 https://github.com/kenzok8/small-package
 ```
 
 *  lean源码用18.06分支
@@ -59,17 +59,17 @@
 1. 先cd进package目录，然后执行
 
 ```bash
- git clone https://github.com/kenzok78/small-package
+ git clone https://github.com/kenzok8/small-package
 ```
 2. 或者添加下面代码到feeds.conf.default文件
 
 ```bash
- src-git small8 https://github.com/kenzok78/small-package
+ src-git small8 https://github.com/kenzok8/small-package
 ```
 3. lede/下运行 或者openwrt/下运行
 
 ```bash
-git clone https://github.com/kenzok78/small-package package/small-package
+git clone https://github.com/kenzok8/small-package package/small-package
 ```
 
 
