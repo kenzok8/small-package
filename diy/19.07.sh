@@ -52,8 +52,8 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/microsocks
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/redsocks2
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/tcpping
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
-svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-adguardhome
-svn co https://github.com/immortalwrt/packages/trunk/net/adguardhome
+svn co https://github.com/kenzok8/jell/trunk/luci-app-adguardhome
+svn co https://github.com/kenzok8/jell/trunk/adguardhome
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-smartdns
 svn co https://github.com/immortalwrt/packages/trunk/net/smartdns
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-gost
