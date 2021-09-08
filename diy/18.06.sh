@@ -28,6 +28,7 @@ svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/luci-app-passwall
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/naiveproxy
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/dns2socks
+svn co https://github.com/xiaorouji/openwrt-passwall/trunk/hysteria
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/ipt2socks
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/kcptun
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/pdnsd-alt
