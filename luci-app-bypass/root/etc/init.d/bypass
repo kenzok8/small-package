@@ -193,8 +193,8 @@ start_dns(){
 		service_start $(which chinadns-ng) -l 5337 -c '127.0.0.1#5336' -t '127.0.0.1#5335' -4 china_v4 -6 china_v6 -f -n $([ $gfw_mode = 1 ] && echo -g $K/gfw.list)
 		log "ChinaDNS : Start ChinaDNS-NG successful!"
 	fi
-	if [[ "$(uci get dhcp.@dnsmasq[0].cachesize 2>/dev/null)" == "0" ]]; then
-		uci set dhcp.@dnsmasq[0].cachesize='1500'
+	if [[ "$(uci -q get dhcp.@dnsmasq[0].cachesize)" == "0" ]]; then
+		uci -q set dhcp.@dnsmasq[0].cachesize='1500'
 		uci commit dhcp
 	fi
 }
@@ -772,25 +772,26 @@ gen_dns(){
 	if [[ -x /etc/init.d/AdGuardHome && "$(which AdGuardHome)" ]]; then
 		if [ $adguardhome == 1 ]; then
 			if [[ ! "$(netstat -tunlp | grep 53 | grep -i AdGuardHome)" ]]; then
-				uci del dhcp.@dnsmasq[0].dns_redirect 2>/dev/null
-				uci add_list dhcp.lan.dhcp_option="6,$(uci get network.lan.ipaddr)"
+				uci -q del dhcp.@dnsmasq[0].dns_redirect
+				uci -q del dhcp.lan.dhcp_option
+				uci -q add_list dhcp.lan.dhcp_option="6,$(uci -q get network.lan.ipaddr)"
 				uci commit dhcp
-				masqport="$(uci get AdGuardHome.AdGuardHome.old_port 2>/dev/null)"
-				adgconf="$(uci get AdGuardHome.AdGuardHome.configpath)"	
+				masqport="$(uci -q get AdGuardHome.AdGuardHome.old_port)"
+				adgconf="$(uci -q get AdGuardHome.AdGuardHome.configpath)"	
 				[ "$masqport" ] || masqport="$(grep "  port:.*" $adgconf | cut -f 4 -d " ")"
-				cat $adgconf | tr '\n' '\r' | sed -e "s/upstream_dns:.*upstream_dns_file/upstream_dns:\n  - 127.0.0.1:$masqport\n  upstream_dns_file/" | tr '\r' '\n' >$(uci get AdGuardHome.AdGuardHome.configpath)
-				uci set AdGuardHome.AdGuardHome.enabled='1'
-				uci set AdGuardHome.AdGuardHome.redirect='exchange'
+				cat $adgconf | tr '\n' '\r' | sed -e "s/upstream_dns:.*upstream_dns_file/upstream_dns:\n  - 127.0.0.1:$masqport\n  upstream_dns_file/" | tr '\r' '\n' >$(uci -q get AdGuardHome.AdGuardHome.configpath)
+				uci -q set AdGuardHome.AdGuardHome.enabled='1'
+				uci -q set AdGuardHome.AdGuardHome.redirect='exchange'
 				uci commit AdGuardHome
 				/etc/init.d/AdGuardHome restart
 			fi
-		elif [ "$(uci get AdGuardHome.AdGuardHome.redirect 2>/dev/null)" == "exchange" ]; then
-			uci set AdGuardHome.AdGuardHome.enabled='0'
-			redirect="$(uci get AdGuardHome.AdGuardHome.old_redirect 2>/dev/null)"
+		elif [ "$(uci -q get AdGuardHome.AdGuardHome.redirect)" == "exchange" ]; then
+			uci -q set AdGuardHome.AdGuardHome.enabled='0'
+			redirect="$(uci -q get AdGuardHome.AdGuardHome.old_redirect)"
 			if [ "redirect" ]; then
-				uci set AdGuardHome.AdGuardHome.redirect="$redirect" 2>/dev/null
+				uci -q set AdGuardHome.AdGuardHome.redirect="$redirect"
 			else
-				uci del AdGuardHome.AdGuardHome.redirect
+				uci -q del AdGuardHome.AdGuardHome.redirect
 			fi
 			uci commit AdGuardHome
 			/etc/init.d/AdGuardHome stop
@@ -989,8 +990,8 @@ start_monitor(){
 }
 
 start(){
-	if [[ "$(uci get smartdns.@smartdns[0].enabled 2>/dev/null)" == "1" ]]; then
-		uci del smartdns.@smartdns[0].enabled 2>/dev/null
+	if [[ "$(uci -q get smartdns.@smartdns[0].enabled)" == "1" ]]; then
+		uci -q del smartdns.@smartdns[0].enabled
 		uci commit smartdns
 		/etc/init.d/smartdns stop 2>/dev/null
 	fi
@@ -1033,17 +1034,17 @@ stop(){
 	killall -q -9 smartdns-le chinadns-ng kcptun-client microsocks
 	if [[ $adguardhome == 1 && ! "$GLOBAL_SERVER" ]]; then
 		if [ -f /etc/init.d/AdGuardHome ]; then
-			uci set AdGuardHome.AdGuardHome.enabled='0'
+			uci -q set AdGuardHome.AdGuardHome.enabled='0'
 			if [ "redirect" ]; then
-				uci set AdGuardHome.AdGuardHome.redirect="$redirect" 2>/dev/null
+				uci -q set AdGuardHome.AdGuardHome.redirect="$redirect"
 			else
-				uci del AdGuardHome.AdGuardHome.redirect
+				uci -q del AdGuardHome.AdGuardHome.redirect
 			fi
 			uci commit AdGuardHome
 			/etc/init.d/AdGuardHome stop
 		fi
-		if [ "$(netstat -tunlp | grep 53 | grep -i AdGuardHome)" || "$(uci get dhcp.@dnsmasq[0].port)" != "53" ]; then
-			uci set dhcp.@dnsmasq[0].port='53'
+		if [ "$(netstat -tunlp | grep 53 | grep -i AdGuardHome)" || "$(uci -q get dhcp.@dnsmasq[0].port)" != "53" ]; then
+			uci -q set dhcp.@dnsmasq[0].port='53'
 			uci commit dhcp
 		fi
 	fi
