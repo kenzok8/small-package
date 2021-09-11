@@ -19,7 +19,7 @@
     "font_end": "</font>",
     "font_end2": "",
     "percentsym": "",
-    "boldstar": "**",
+    "boldstar": "",
     "type":
       {
 	      	"token": "\"${pp_token}\"",
