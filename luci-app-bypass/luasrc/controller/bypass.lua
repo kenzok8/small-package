@@ -21,7 +21,6 @@ function index()
 	entry({"admin","services","bypass","status"},form("bypass/status"),_("Status"),7).leaf=true
 	entry({"admin","services","bypass","log"},form("bypass/log"),_("Log"),8).leaf=true
 	entry({"admin","services","bypass","check"},call("check_status"))
-	entry({"admin","services","bypass","refresh"},call("refresh_data"))
 	entry({"admin","services","bypass","subscribe"},call("subscribe"))
 	entry({"admin","services","bypass","checkport"},call("check_port"))
 	entry({"admin","services","bypass","run"},call("act_status"))
@@ -95,64 +94,6 @@ function check_status()
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({ret=retstring})
-end
-
-function refresh_data()
-	local set=luci.http.formvalue("set")
-	local icount=0
-	if set=="gfw_data" then
-		sret=luci.sys.call("curl -Lfso /tmp/gfw.b64 https://cdn.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt")
-		if sret==0 then
-			luci.sys.call("/usr/share/bypass/by-gfw")
-			icount=luci.sys.exec("cat /tmp/gfwnew.txt | wc -l")
-			if tonumber(icount)>1000 then
-				oldcount=luci.sys.exec("cat /tmp/bypass/gfw.list | wc -l")
-				if tonumber(icount)~=tonumber(oldcount) then
-					luci.sys.exec("cp -f /tmp/gfwnew.txt /tmp/bypass/gfw.list && /etc/init.d/bypass restart >/dev/null 2>&1")
-					retstring=tostring(tonumber(icount))
-				else
-					retstring="0"
-				end
-			else
-				retstring="-1"
-			end
-			luci.sys.exec("rm -f /tmp/gfwnew.txt ")
-		else
-			retstring="-1"
-		end
-	elseif set=="ip_data" then
-		sret=luci.sys.call("A=`curl -Lfsm 9 https://cdn.jsdelivr.net/gh/f6UiINtMDSmglMK4/A9xehMB2/ht2ix0v4Aj/zp2XmWPY9R4 || curl -Lfsm 9 https://raw.githubusercontent.com/f6UiINtMDSmglMK4/A9xehMB2/master/ht2ix0v4Aj/zp2XmWPY9R4` && echo \"$A\" | base64 -d > /tmp/china.txt")
-		icount=luci.sys.exec("cat /tmp/china.txt | wc -l")
-		if sret==0 and tonumber(icount)>1000 then
-			oldcount=luci.sys.exec("cat /tmp/bypass/china.txt | wc -l")
-			if tonumber(icount)~=tonumber(oldcount) then
-				luci.sys.exec("cp -f /tmp/china.txt /tmp/bypass/china.txt && ipset list china_v4 >/dev/null 2>&1 && /usr/share/bypass/chinaipset")
-				retstring=tostring(tonumber(icount))
-			else
-				retstring="0"
-			end
-		else
-			retstring="-1"
-		end
-		luci.sys.exec("rm -f /tmp/china.txt ")
-	elseif set=="ip6_data" then
-		sret=luci.sys.call("curl -Lfso /tmp/china_v6.txt https://cdn.jsdelivr.net/gh/icy37785/Auto_IP_Range/China_ipv6.txt || curl -Lfso /tmp/china_v6.txt https://raw.githubusercontent.com/icy37785/Auto_IP_Range/master/China_ipv6.txt")
-		icount=luci.sys.exec("cat /tmp/china_v6.txt | wc -l")
-		if sret==0 and tonumber(icount)>1000 then
-			oldcount=luci.sys.exec("cat /tmp/bypass/china_v6.txt | wc -l")
-			if tonumber(icount)~=tonumber(oldcount) then
-				luci.sys.exec("cp -f /tmp/china_v6.txt /tmp/bypass/china_v6.txt && ipset list china_v6 >/dev/null 2>&1 && /usr/share/bypass/chinaipset v6")
-				retstring=tostring(tonumber(icount))
-			else
-				retstring="0"
-			end
-		else
-			retstring="-1"
-		end
-		luci.sys.exec("rm -f /tmp/china_v6.txt ")
-	end
-	luci.http.prepare_content("application/json")
-	luci.http.write_json({ret=retstring,retcount=icount})
 end
 
 function check_port()
