@@ -255,7 +255,7 @@ rules(){
 	check_net
 	cat $LOG 2>/dev/null | sed -n '$p' | grep -q 'Download IP/GFW files...' || (log "Check network status successful!";log "Check IP/GFW files...")
 	mkdir -p /var/run $VAR
-	if [ ! -s $K/china.txt ] || [ $run_mode = router -a ! -s $K/china_v6.txt ] || ([ $run_mode = gfw -o $gfw_mode = 1 ] && [ ! -s $K/gfw.list ]);then
+	if ([ $run_mode = router ] && [ ! -s $K/china.txt -o ! -s $K/china_v6.txt ]) || ([ $run_mode = gfw -o $gfw_mode = 1 ] && [ ! -s $K/gfw.list ]);then
 		log "Download IP/GFW files..."
 		firstdown 2;exit 1
 	fi
