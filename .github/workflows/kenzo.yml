@@ -52,6 +52,30 @@ jobs:
         rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
         $GITHUB_WORKSPACE/${{matrix.target}}.sh
         $GITHUB_WORKSPACE/diy/convert_translation.sh
+        $GITHUB_WORKSPACE/diy/convert_translation.sh
+
+    - name: Modify
+      run: |
+        shopt -s extglob
+        (
+          sed -i \
+          -e 's?include \.\./\.\./\(lang\|devel\)?include $(TOPDIR)/feeds/packages/\1?' \
+          -e "s/\(PKG_HASH\|PKG_MD5SUM\|PKG_MIRROR_HASH\):=.*/\1:=skip/" \
+          -e 's?\.\./\.\./luci.mk?$(TOPDIR)/feeds/luci/luci.mk?' \
+          -e 's/ca-certificates/ca-bundle/' \
+          */Makefile
+        ) &
+        for pkg in $(ls -d */); do
+          if [ "$(grep "PKG_RELEASE" $pkg/Makefile)" ]; then
+            sed -i "s/PKG_RELEASE:=.*/PKG_RELEASE:=$(git rev-list --count master $pkg)/" $pkg/Makefile || true
+          fi
+        done
+        
+        while [ ! -f /tmp/ok ]; do
+            echo "wait"
+          sleep 1
+        done
+       
         
     - name: Upload
       env: 
