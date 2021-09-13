@@ -71,12 +71,6 @@ jobs:
           fi
         done
         
-        while [ ! -f /tmp/ok ]; do
-            echo "wait"
-          sleep 1
-        done
-       
-        
     - name: Upload
       env: 
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
