@@ -16,6 +16,8 @@ git clone https://github.com/sirpdboy/luci-app-advanced
 git clone https://github.com/ntlf9t/luci-app-easymesh
 git clone https://github.com/walkingsky/luci-wifidog luci-app-wifidog
 git clone https://github.com/linkease/ddnsto-openwrt
+svn co https://github.com/messense/aliyundrive-webdav/trunk/openwrt/aliyundrive-webdav
+svn co https://github.com/messense/aliyundrive-webdav/trunk/openwrt/luci-app-aliyundrive-webdav
 svn co https://github.com/garypang13/openwrt-bypass/trunk/luci-app-bypass
 svn co https://github.com/garypang13/openwrt-bypass/trunk/lua-maxminddb
 svn co https://github.com/garypang13/openwrt-bypass/trunk/smartdns-le
