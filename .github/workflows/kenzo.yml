@@ -52,7 +52,6 @@ jobs:
         rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
         $GITHUB_WORKSPACE/${{matrix.target}}.sh
         $GITHUB_WORKSPACE/diy/convert_translation.sh
-        $GITHUB_WORKSPACE/diy/convert_translation.sh
 
     - name: Modify
       run: |
@@ -65,6 +64,7 @@ jobs:
           -e 's/ca-certificates/ca-bundle/' \
           */Makefile
         ) &
+        
         for pkg in $(ls -d */); do
           if [ "$(grep "PKG_RELEASE" $pkg/Makefile)" ]; then
             sed -i "s/PKG_RELEASE:=.*/PKG_RELEASE:=$(git rev-list --count master $pkg)/" $pkg/Makefile || true
