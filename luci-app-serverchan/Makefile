@@ -4,7 +4,7 @@ PKG_NAME:=luci-app-serverchan
 PKG_VERSION:=2.01.3
 PKG_RELEASE:=9
 
-PKG_MAINTAINER:=tty228
+PKG_MAINTAINER:=tty228 <tty228@yeah.net>
 
 LUCI_TITLE:=LuCI support for serverchan
 LUCI_PKGARCH:=all
