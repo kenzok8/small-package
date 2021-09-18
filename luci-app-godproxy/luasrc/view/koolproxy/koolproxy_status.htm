@@ -1,16 +1,21 @@
-<%#
- Copyright 2016 Chen RuiWei <crwbak@gmail.com>
- Licensed to the public under the Apache License 2.0.
--%>
-
-<% include("cbi/map") %>
 <script type="text/javascript">//<![CDATA[
-	XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "services", "koolproxy", "status")%>', null,
-		function(x, result)
-		{
-			var status = document.getElementsByClassName('koolproxy_status');
-			status[0].innerHTML = result.running?'<font color=green><%=translate("GodProxy滤广告  运行中")%></font>':'<font color=red><%=translate("<font color=\"red\">GodProxy滤广告  未运行</font></strong>")%></font>';
+XHR.poll(3, '<%=url([[admin]], [[services]], [[koolproxy]], [[status]])%>', null,
+	function(x, data) {
+		var tb = document.getElementById('koolproxy_status');
+		if (data && tb) {
+			if (data.running) {
+				tb.innerHTML = '<em><b><font color=green><%:KoolproxyR Plus+%> <%:RUNNING%></font></b></em>';
+			} else {
+				tb.innerHTML = '<em><b><font color=red><%:KoolproxyR Plus+%> <%:NOT RUNNING%></font></b></em>';
+			}
 		}
-	);
+	}
+);
 //]]>
 </script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="koolproxy_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>

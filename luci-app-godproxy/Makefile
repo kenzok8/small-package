@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-godproxy
 PKG_VERSION:=3.8.5
-PKG_RELEASE:=3-20210421
+PKG_RELEASE:=3-20210917
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,33 +31,24 @@ define Package/luci-app-godproxy/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	po2lmo ./po/zh-cn/koolproxy.po $(1)/usr/lib/lua/luci/i18n/koolproxy.zh-cn.lmo
 
-ifeq ($(ARCH),mipsel)
-	$(INSTALL_BIN) ./bin/mipsel $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),mips)
-	$(INSTALL_BIN) ./bin/mips $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),x86)
-	$(INSTALL_BIN) ./bin/x86 $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),x86_64)
-	$(INSTALL_BIN) ./bin/x86_64 $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),arm)
-	$(INSTALL_BIN) ./bin/arm $(1)/usr/share/koolproxy/koolproxy
-endif
 ifeq ($(ARCH),aarch64)
 	$(INSTALL_BIN) ./bin/aarch64 $(1)/usr/share/koolproxy/koolproxy
-endif
-endef
 
-define Package/luci-app-godproxy/postinst
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	( . /etc/uci-defaults/luci-koolproxy ) && rm -f /etc/uci-defaults/luci-koolproxy
-	rm -f /tmp/luci-indexcache
-fi
-exit 0
+else ifeq ($(ARCH),arm)
+	$(INSTALL_BIN) ./bin/arm $(1)/usr/share/koolproxy/koolproxy
+	
+else ifeq ($(ARCH),i386)
+	$(INSTALL_BIN) ./bin/i386 $(1)/usr/share/koolproxy/koolproxy
+	
+else ifeq ($(ARCH),mips)
+	$(INSTALL_BIN) ./bin/mips $(1)/usr/share/koolproxy/koolproxy
+	
+else ifeq ($(ARCH),mipsel)
+	$(INSTALL_BIN) ./bin/mipsel $(1)/usr/share/koolproxy/koolproxy
+
+else ($(ARCH),x86_64)
+	$(INSTALL_BIN) ./bin/x86_64 $(1)/usr/share/koolproxy/koolproxy
+endif
 endef
 
 $(eval $(call BuildPackage,luci-app-godproxy))
