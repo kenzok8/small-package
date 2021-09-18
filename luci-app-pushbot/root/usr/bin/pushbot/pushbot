@@ -1120,7 +1120,7 @@ function send(){
 		local cpuload=`getcpu`
 		local ramload=`free -m|sed -n '2p'|awk '{printf "%.2f%%\n",($3/$2)*100}'`
 		local Qwai=`curl -o /dev/null --connect-timeout 5 -s -w %{http_code} www.google.com`
-		if [[ "$Qwai" -eq "200" ]] || [[ "$Qwai" -eq "301" ]] || [[ "$Qwai" -eq "301" ]]; then
+		if [[ "$Qwai" -eq "200" ]] || [[ "$Qwai" -eq "301" ]] || [[ "$Qwai" -eq "302" ]]; then
 			local Qwai_status="已连通！"
 		else
 			local Qwai_status="已断开！"
