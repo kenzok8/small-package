@@ -1033,17 +1033,17 @@ stop(){
 	kill -9 $(ps -w | grep $VAR | grep -v grep | awk '{print$1}') 2>/dev/null
 	killall -q -9 smartdns-le chinadns-ng kcptun-client microsocks
 	if [[ $adguardhome == 1 && ! "$GLOBAL_SERVER" ]]; then
-		if [ -f /etc/init.d/AdGuardHome ]; then
-			uci -q set AdGuardHome.AdGuardHome.enabled='0'
-			if [ "redirect" ]; then
-				uci -q set AdGuardHome.AdGuardHome.redirect="$redirect"
-			else
+		if [[ -f /etc/init.d/AdGuardHome && "$(uci -q get AdGuardHome.AdGuardHome.redirect)" == "exchange" ]]; then
+			redirect="$(uci -q get AdGuardHome.AdGuardHome.old_redirect)"
+			if [[ ! "redirect" || "redirect" == "exchange" ]]; then
 				uci -q del AdGuardHome.AdGuardHome.redirect
+			else
+				uci -q set AdGuardHome.AdGuardHome.redirect="$redirect"
 			fi
 			uci commit AdGuardHome
 			/etc/init.d/AdGuardHome stop
 		fi
-		if [ "$(netstat -tunlp | grep 53 | grep -i AdGuardHome)" || "$(uci -q get dhcp.@dnsmasq[0].port)" != "53" ]; then
+		if [[ "$(netstat -tunlp | grep 53 | grep -i AdGuardHome)" || "$(uci -q get dhcp.@dnsmasq[0].port)" != "53" ]]; then
 			uci -q set dhcp.@dnsmasq[0].port='53'
 			uci commit dhcp
 		fi

@@ -1,5 +1,14 @@
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
 msgid "Filter Mode"
 msgstr "过滤模式"
+
+msgid "Collecting data..."
+msgstr "收集数据..."
 
 msgid "Basic Settings"
 msgstr "基础设置"
@@ -29,7 +38,7 @@ msgid "Set Backlist Of Websites"
 msgstr "网站黑名单设置"
 
 msgid "KoolproxyR Plus+"
-msgstr "GodProxy滤广告"
+msgstr "GodProxy 滤广告"
 
 msgid "Koolproxy Logs"
 msgstr "查看最近的更新日志"
@@ -42,5 +51,3 @@ msgstr "上传恢复已备份的证书，文件名必须为koolproxyCA.tar.gz"
 
 msgid "ACLs is a tools which used to designate specific IP filter mode,The MAC addresses added to the list will be filtered using https"
 msgstr "访问控制列表是用于指定特殊IP过滤模式的工具，如为已安装证书的客户端开启https广告过滤等，MAC或者IP必须填写其中一项。"
-
-

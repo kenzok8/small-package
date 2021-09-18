@@ -9,7 +9,6 @@ local fs = require "nixio.fs"
 local sys = require "luci.sys"
 local http = require "luci.http"
 
-
 local o,t,e
 local v=luci.sys.exec("/usr/share/koolproxy/koolproxy -v")
 local a=luci.sys.exec("head -3 /usr/share/koolproxy/data/rules/koolproxy.txt | grep rules | awk -F' ' '{print $3,$4}'")
@@ -25,28 +24,17 @@ local q=luci.sys.exec("grep -v !x /usr/share/koolproxy/data/rules/daily.txt | wc
 local f=luci.sys.exec("grep -v !x /usr/share/koolproxy/data/rules/anti-ad.txt | wc -l")
 local i=luci.sys.exec("cat /usr/share/koolproxy/dnsmasq.adblock | wc -l")
 
+o = Map("koolproxy", translate("GodProxy 滤广告 "), translate("GodProxy是基于KoolProxyR Plus重新整理的能识别adblock规则的免费开源软件,追求体验更快、更清洁的网络，屏蔽烦人的广告！"))
+o:section(SimpleSection).template = "koolproxy/koolproxy_status"
 
-if luci.sys.call("pidof koolproxy >/dev/null") == 0 then
-	status = translate("<strong class=\"koolproxy_status\"><font color=\"green\">GodProxy滤广告  运行中</font></strong>")
-else
-	status = translate("<strong class=\"koolproxy_status\"><font color=\"red\">GodProxy滤广告  未运行</font></strong>")
-end
-
-o = Map("koolproxy", translate("GodProxy滤广告 "), translate("GodProxy是基于KoolProxyR Plus重新整理的能识别adblock规则的免费开源软件,追求体验更快、更清洁的网络，屏蔽烦人的广告！"))
-
-o.template="koolproxy/koolproxy_status"
 t = o:section(TypedSection, "global")
 t.anonymous = true
-t.description = translate(string.format("%s<br /><br />", status))
 
 t:tab("base",translate("Basic Settings"))
 
 e = t:taboption("base", Flag, "enabled", translate("Enable"))
 e.default = 0
 e.rmempty = false
-
-e = t:taboption("base", DummyValue, "koolproxy_status", translate("程序版本"))
-e.value = string.format("[ %s ]", v)
 
 e = t:taboption("base", Value, "startup_delay", translate("启动延迟"))
 e:value(0, translate("不启用"))
@@ -80,7 +68,6 @@ e:value("fanboy.txt", translate("Fanboy规则"))
 e:value("yhosts.txt", translate("Yhosts规则"))
 e:value("anti-ad.txt", translate("Anti-AD规则"))
 e:value("mv.txt", translate("乘风视频"))
-
 
 e = t:taboption("base", ListValue, "koolproxy_port", translate("端口控制"))
 e.default = 0
@@ -120,7 +107,7 @@ for t = 0,23 do
 	e:value(t,translate("每天"..t.."点"))
 end
 e:value(nil, translate("关闭"))
-e.default = 0
+e.default = nil
 e.rmempty = false
 e.description = translate(string.format("<font color=\"red\"><strong>定时更新规则。请把时间修改掉，默认时间使用人数多会更新失败</strong></font>"))
 
