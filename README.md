@@ -29,7 +29,7 @@
 
 
 ##### 插件下载:
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/compile-packages?style=for-the-badge&label=插件每日更新)](https://github.com/kenzok78/compile-packages/releases/latest)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/compile-small?style=for-the-badge&label=插件每日更新)](https://github.com/kenzok78/compile-small/releases/latest)
 
 ##### 关于Secrets、TOKEN的小知识
 
