@@ -1,0 +1,34 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2020 X-WRT.COM
+
+START=19
+
+boot() {
+	. /lib/wifi/wifi-init.sh
+
+	local base wifi_init
+	local SSID SSID_PASSWD
+
+	base=`uci get base_config.@status[0].base 2>/dev/null`
+	base=$((base+0))
+	wifi_init=`uci get base_config.@status[0].wifi_init 2>/dev/null`
+	wifi_init=$((wifi_init+0))
+
+	test $base -lt 1 && {
+		wifi_init=1 #skip wifi_init=1 hook
+	}
+
+	test $wifi_init -lt 1 && {
+		wifi_first_init
+
+		wifi_init=1
+	}
+
+	uci set base_config.@status[0].wifi_init=$wifi_init
+	uci commit base_config
+
+	#XXX
+	test -f /rom/etc/uci-defaults/96-wizard-defaults && sh /rom/etc/uci-defaults/96-wizard-defaults
+
+	/etc/init.d/wifi-init disable
+}

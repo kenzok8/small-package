@@ -1,0 +1,124 @@
+<%+cbi/valueheader%>
+
+<label class="cbi-value-title"><%= translate("用户名") %></label>
+<div class="cbi-value-field">
+	<input type="tel" name="phone" class="cbi-input-text" id="phone" placeholder="手机号">
+</div>
+
+<%+cbi/valuefooter%>
+<%+cbi/valueheader%>
+
+<label class="cbi-value-title"><%= translate("验证码") %></label>
+<div class="cbi-value-field">
+	<input type="tel" name="code" class="cbi-input-text" id="code" maxlength="6"> <input
+		class="cbi-button cbi-button-reload" id="getcode" type="button" size="0" value="获取验证码">
+</div>
+
+<%+cbi/valuefooter%>
+
+<%+cbi/valueheader%>
+
+<label class="cbi-value-title"></label>
+<div class="cbi-value-field">
+	<input class="cbi-button cbi-button-reload" id="login" type="button" size="0" value="登录甜糖">
+</div>
+
+<%+cbi/valuefooter%>
+<script src="/ttnode/jquery.min.js?v=1"></script>
+
+<script type="text/javascript">
+    var jq=$.noConflict();
+	const CODE_URL = '<%=luci.dispatcher.build_url("admin", "services", "ttnode","get_code")%>';
+	const LOGIN_URL = '<%=luci.dispatcher.build_url("admin", "services", "ttnode","login")%>';
+	const THIS_URL = '<%=luci.dispatcher.build_url("admin", "services", "ttnode")%>';
+	var countdown = 60;
+	let lefttime = jq.cookie('ltime') == undefined ? 0 : jq.cookie('ltime');
+	console.log(lefttime)
+	if (lefttime > 0) {
+		jq("#getcode").attr("disabled", true);
+		countdown = lefttime
+		settime()
+	} else {
+		jq("#getcode").attr("disabled", false);
+	}
+
+	jq("#getcode").click(function () {
+		$phone = jq("#phone").val()
+		if ($phone == "") {
+			alert("请填写手机号");
+			return false
+		}
+		var data = {
+			phone: jq("#phone").val()
+		}
+		jq.ajax({
+			type: "post",
+			url: CODE_URL,
+			dataType: "json",
+			data: data,
+			success: function (d) {
+				if (d.error == 0) {
+					settime()
+				} else {
+					alert("请填写手机号");
+				}
+			}
+		});
+
+		return false
+	})
+
+	var t
+
+	function settime() {
+		if (countdown == 0) {
+			jq("#getcode").attr("disabled", false);
+			jq("#getcode").val("获取验证码")
+			jq.cookie('ltime', 0)
+			countdown = 60;
+			clearTimeout(t)
+		} else {
+			jq("#getcode").attr("disabled", true);
+			jq("#getcode").val(countdown + " 秒后重新发送")
+			countdown--;
+			jq.cookie('ltime', countdown)
+		}
+		t = setTimeout(function () {
+			settime()
+		}, 1000)
+	}
+
+	jq("#login").click(function () {
+		jq.cookie('ltime', 0)
+		$phone = jq("#phone").val()
+		$code = jq("#code").val()
+		if ($phone == "") {
+			alert("请填写手机号");
+			return false
+		}
+
+		if ($code == "") {
+			alert("请填写验证码");
+			return false
+		}
+		var data = {
+			phone: $phone,
+			code: $code
+		}
+		jq.ajax({
+			type: "post",
+			url: LOGIN_URL,
+			dataType: "json",
+			data: data,
+			success: function (d) {
+				if (d.error == 0) {
+					window.location.reload();
+				} else {
+					alert("手机号或者验证码错误");
+				}
+			}
+		});
+
+		return false
+	})
+</script>

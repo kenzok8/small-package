@@ -94,8 +94,6 @@ function to_download(url,md5)
 
     local result = api.exec(api.curl, {api._unpack(api.curl_args), "-o", tmp_file, url}, nil, api.command_timeout) == 0
 
-	local md5local = sys.exec("echo -n $(md5sum " .. tmp_file .. " | awk '{print $1}')")
-
     if not result then
         api.exec("/bin/rm", {"-f", tmp_file})
         return {
@@ -103,7 +101,9 @@ function to_download(url,md5)
             error = i18n.translatef("File download failed or timed out: %s", url)
         }
     end
-	
+
+	local md5local = sys.exec("echo -n $(md5sum " .. tmp_file .. " | awk '{print $1}')")
+
 	if md5 ~= "" and md5local ~= md5 then
 		api.exec("/bin/rm", {"-f", tmp_file})
 		return {
@@ -122,7 +122,7 @@ function to_flash(file,retain)
 if not retain or retain == "" then
 	local result = api.exec("/sbin/sysupgrade", {file}, nil, api.command_timeout) == 0
 else
-	if retain:match(".*-k.*") then
+	if retain:match(".*-q .*") then
 		luci.sys.exec("echo -e /etc/backup/user_installed.opkg>/lib/upgrade/keep.d/luci-app-gpsysupgrade")
 	end
 	sys.exec("/sbin/sysupgrade " ..retain.. " " ..file.. "")

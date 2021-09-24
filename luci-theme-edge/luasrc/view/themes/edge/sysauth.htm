@@ -5,16 +5,17 @@
 -%>
 
 <%+header_login%>
+
 <div id="CrossFade"><img src="<%=media%>/background/1.jpg" alt="img"/><img src="<%=media%>/background/2.jpg" alt="img"/><img src="<%=media%>/background/3.jpg" alt="img"/>
 </div>
 
 <div class="speaker"></div>
-<audio loop autoplay id="player" type="audio/mpeg"></audio>
+<audio loop id="player" autoplay type="audio/mpeg"></audio>
 <script>
 setTimeout(function(){
 var sound = document.getElementById("player");
 sound.setAttribute('src','https://cdn.jsdelivr.net/gh/kkkidding/custom2@master/audio.ogg');
-}, 0);
+},0);
      setTimeout(function(){
    if (!$('#player')[0].paused) {
          $('.speaker').addClass('speakerplay');
@@ -26,8 +27,17 @@ if (/(iPhone|iPad|iPod|iOS|Android)/i.test(navigator.userAgent)) {
 };
 </script>
 
+<!-- partial -->
 <div class="main">
-
+		<div style="" class="loading">
+			<div class="sk-folding-cube">
+				<div class="sk-cube1 sk-cube"></div>
+				<div class="sk-cube2 sk-cube"></div>
+				<div class="sk-cube4 sk-cube"></div>
+				<div class="sk-cube3 sk-cube"></div>
+			</div>
+		</div>
+	
 <div class="main-right">
 	<div class="darkMask"></div>
 			<div id="maincontent">
@@ -50,33 +60,36 @@ if (/(iPhone|iPad|iPod|iOS|Android)/i.test(navigator.userAgent)) {
 						</div>
 					</noscript>
 			<div class="container">
-	
+		
 
-<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+
+<form method="post" action="<%=pcdata(FULL_REQUEST_URI)%>">
+
+
 	<div class="cbi-map">
 		<h2 name="content"><img src="<%=media%>/logo.png" width="200"></h2>
 		<div class="cbi-map-descr">
 			<%:Have a nice day. ✨%>
 		</div>
-		<fieldset class="cbi-section"><fieldset class="cbi-section-node">
+		<div class="cbi-section"><div class="cbi-section-node">
 			<div class="cbi-value">
 				<label class="cbi-value-title"><%:Username%></label>
 				<div class="cbi-value-field">
-					<input class="cbi-input-user" type="text" name="luci_username" placeholder="User name" value="<%=duser%>" />
+					<input class="cbi-input-text" type="text" name="luci_username" placeholder="User name" value="<%=duser%>" />
 				</div>
 			</div>
 			<div class="cbi-value cbi-value-last">
 				<label class="cbi-value-title"><%:Password%></label>
 				<div class="cbi-value-field">
-					<input class="cbi-input-password" type="password" placeholder="Password" name="luci_password" />
+					<input class="cbi-input-text" type="password" placeholder="Password" name="luci_password" />
 				</div>
 			</div>
-		</fieldset></fieldset>
+		</div></div>
 	</div>
 
 	<div class="cbi-page-actions">
-		<input type="submit" value="<%:Login%>" class="cbi-button cbi-button-apply" />
-		<input type="reset" value="<%:Reset%>" class="cbi-button cbi-button-reset" />
+		<input type="submit" value="<%:Login%>" class="btn cbi-button cbi-button-apply" />
+		<input type="reset" value="<%:Reset%>" class="btn cbi-button cbi-button-reset" />
 	</div>
 </form>
 
@@ -96,7 +109,7 @@ if (/(iPhone|iPad|iPod|iOS|Android)/i.test(navigator.userAgent)) {
 
 <%+footer%>
 <%
-io.popen("(curl -k -L \"$(curl -s https://instant.unsplash.com | grep -oE '\"raw\":\".*?\",\"full\"'| grep -o 'https://.*,' | sed 's/\",//g')\&q=80\&w=1680\" -o /www/luci-static/edge/background/1.jpg >/dev/null 2>&1) &")
-io.popen("(curl -k -L \"$(curl -s https://instant.unsplash.com | grep -oE '\"raw\":\".*?\",\"full\"'| grep -o 'https://.*,' | sed 's/\",//g')\&q=80\&w=1680\" -o /www/luci-static/edge/background/2.jpg >/dev/null 2>&1) &")
-io.popen("(curl -k -L \"$(curl -s https://instant.unsplash.com | grep -oE '\"raw\":\".*?\",\"full\"'| grep -o 'https://.*,' | sed 's/\",//g')\&q=80\&w=1680\" -o /www/luci-static/edge/background/3.jpg >/dev/null 2>&1) &")
+io.popen("(curl -k -L \"$(curl -s https://instant.unsplash.com | grep -oE '\"raw\":\".*?\",\"full\"'| grep -o 'https://.*,' | sed 's/\",//g')q=80\&w=1680\" -o /www/luci-static/edge/background/1.jpg >/dev/null 2>&1) &")
+io.popen("(curl -k -L \"$(curl -s https://instant.unsplash.com | grep -oE '\"raw\":\".*?\",\"full\"'| grep -o 'https://.*,' | sed 's/\",//g')q=80\&w=1680\" -o /www/luci-static/edge/background/2.jpg >/dev/null 2>&1) &")
+io.popen("(curl -k -L \"$(curl -s https://instant.unsplash.com | grep -oE '\"raw\":\".*?\",\"full\"'| grep -o 'https://.*,' | sed 's/\",//g')q=80\&w=1680\" -o /www/luci-static/edge/background/3.jpg >/dev/null 2>&1) &")
 %>
