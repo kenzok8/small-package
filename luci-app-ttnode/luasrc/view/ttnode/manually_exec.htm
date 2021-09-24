@@ -1,0 +1,121 @@
+<%+cbi/valueheader%>
+<style>
+	#res_info {
+		line-height: 1.5em;
+		border: 1px solid #dee2e6;
+		padding: 0.5em 1em;
+		border-radius: 0.3rem;
+		transition: all 0.3s;
+	}
+
+	#res_info.hide {
+		visibility: hidden;
+		opacity: 0;
+	}
+
+	#res_info p {
+		padding: 0.5em 0;
+	}
+
+	#res_info pre {
+		padding: 0.5em 0;
+		background-color: whitesmoke;
+		border-radius: 0.3rem;
+	}
+
+</style>
+<label class="cbi-value-title">保存设置</label>
+<div class="cbi-value-field">
+	<input class="cbi-button cbi-button-reload" id="save" type="button" size="0" value="<%= translate("保存设置") %>">
+	<div class="cbi-value-description">
+		<span class="cbi-value-helpicon"><img src="/luci-static/resources/cbi/help.gif" alt="帮助"></span>
+		手动执行前请先保存设置
+	</div>
+</div>
+<%+cbi/valuefooter%>
+<%+cbi/valueheader%>
+<label class="cbi-value-title">手动执行</label>
+<div class="cbi-value-field">
+	<input class="cbi-button cbi-button-reload" id="run" type="button" size="0" value="<%= translate("手动执行") %>">
+</div>
+
+<%+cbi/valuefooter%>
+<%+cbi/valueheader%>
+<label class="cbi-value-title"></label>
+<div class="cbi-value-field">
+	<div class="cbi-value-version hide" id="res_info">
+	</div>
+</div>
+<%+cbi/valuefooter%>
+<script src="/ttnode/jquery.min.js?v=1"></script>
+<script src="/ttnode/marked.min.js"></script>
+<script type="text/javascript">
+    var jq=$.noConflict();
+	const RUN_URL = '<%=luci.dispatcher.build_url("admin", "services", "ttnode","run")%>';
+	const SAVE_URL = '<%=luci.dispatcher.build_url("admin", "services", "ttnode","save")%>';
+	jq("#save").click(function () {
+		prefix_array = jq("#cbi-ttnode-global .cbi-section-node").attr("id").split("-");
+		prefix = prefix_array[prefix_array.length - 1];
+		console.log(prefix);
+
+		if (jq("[name='cbid.ttnode." + prefix + ".auto_run']").is(":checked")) {
+			var auto_run = "1";
+			var auto_run_time = jq("[name='cbid.ttnode." + prefix + ".auto_run_time']").val();
+		} else {
+			var auto_run = "0";
+			var auto_run_time = "0";
+		}
+
+		if (jq("[name='cbid.ttnode." + prefix + ".auto_cash']").is(":checked")) {
+			var auto_cash = "1";
+			var week = jq("[name='cbid.ttnode." + prefix + ".week']").val();
+		} else {
+			var auto_cash = "0";
+			var week = "";
+		}
+		var serverchan = jq("[name='cbid.ttnode." + prefix + ".serverchan']").val();
+		var tg_token = jq("[name='cbid.ttnode." + prefix + ".tg_token']").val();
+		var tg_userid = jq("[name='cbid.ttnode." + prefix + ".tg_userid']").val();
+		var data = {
+			auto_run: auto_run,
+			auto_run_time: auto_run_time,
+			auto_cash: auto_cash,
+			week: week,
+			serverchan: serverchan,
+			tg_token: tg_token,
+			tg_userid: tg_userid
+		}
+		jq("#save").attr("disabled", true);
+		jq("#save").val("正在保存......")
+		jq.ajax({
+			type: "post",
+			url: SAVE_URL + "?rev=" + Math.random(),
+			data: data,
+			dataType: "json",
+			success: function (d) {
+				jq("#save").attr("disabled", false);
+				jq("#save").val("保存设置")
+			}
+		});
+		return false;
+	});
+	//手动执行
+	jq("#run").click(function () {
+		//console.log(data);
+		jq("#run").attr("disabled", true);
+		jq("#run").val("正在执行......")
+		jq.ajax({
+			type: "get",
+			url: RUN_URL + "?rev=" + Math.random(),
+			dataType: "json",
+			success: function (d) {
+				jq("#run").attr("disabled", false);
+				jq("#run").val("手动执行")
+				jq("#res_info").removeClass("hide")
+				jq("#res_info").html(marked(d.msg.replace(/🌟/g, "★")))
+
+			}
+		});
+		return false;
+	});
+</script>

@@ -1,0 +1,42 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2020 Jerryk
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
+
+USE_PROCD=1
+START=95
+
+NAME=ttnode
+CRON_FILE=/etc/crontabs/root
+
+
+uci_get_by_type() {
+    local ret=$(uci get $NAME.@$1[0].$2 2>/dev/null)
+    echo ${ret:=$3}
+}
+
+del_cron() {
+	sed -i '/ttnode/d' $CRON_FILE
+	/etc/init.d/cron restart
+}
+
+add_cron() {
+    sed -i '/ttnode/d' $CRON_FILE
+    [ $(uci_get_by_type global auto_run 0) -eq 1 ] && echo '1 '$(uci_get_by_type global auto_run_time)' * * * lua /usr/share/ttnode/main.lua' >>$CRON_FILE
+    crontab $CRON_FILE
+}
+
+start_service(){
+	add_cron
+}
+
+stop_service() {
+    del_cron
+}
+
+service_triggers() {
+	procd_add_reload_trigger "ttnode"
+}

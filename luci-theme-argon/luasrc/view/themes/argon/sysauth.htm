@@ -14,21 +14,20 @@
 
 	MUI:
 	https://github.com/muicss/mui
-	
-	Agron Theme
+
+	Argon Theme
 	https://demos.creative-tim.com/argon-dashboard/index.html
 
 	Licensed to the public under the Apache License 2.0
 -%>
 
-<%+header_login%>
+<%+themes/argon/out_header_login%>
 <%
 	local util = require "luci.util"
 	local boardinfo = util.ubus("system", "board")
-	local fs	= require "nixio.fs"
+	local fs = require "nixio.fs"
 	local nutil = require "nixio.util"
-	local uci = require 'luci.model.uci'.cursor()
-	local theme_dir = media .. "/background/"
+
 	function glob(...)
 		local iter, code, msg = fs.glob(...)
 		if iter then
@@ -42,42 +41,30 @@
 		return str:match(".+%.(%w+)$")
 	end
 
-	function fetchMedia(path)
-		local bgArr = {}
-		local numBg = 0
-		for i, f in ipairs(glob(path)) do
-			attr = fs.stat(f)
-			if attr then
-				local ext = getExtension(fs.basename(f))
-				if ext == "jpg" or ext == "png" or ext == "gif" or ext == "mp4" then
-					local bg = {}
-					bg.type = ext
-					bg.url = theme_dir .. fs.basename(f)
-					table.insert(bgArr,bg)
-					numBg = numBg + 1
-				end
-			end
-		end
-		return bgArr,numBg
-	end
-
 	local bgcount = 0
 	local currentBg = {}
-	local bgs = {}
+	local bgs,attr = {}
 	local theme_dir = media .. "/background/"
-	local bing_background = fs.access('/etc/config/argon') and uci:get_first('argon', 'global', 'bing_background') or "0"
-	bgs,bgcount=fetchMedia("/www" .. theme_dir .. "*")
+	for i, f in ipairs(glob("/www" .. theme_dir .. "*")) do
+		attr = fs.stat(f)
+		if attr then
+			local ext = getExtension(fs.basename(f))
+			if ext == "jpg" or ext == "png" or ext == "gif" or ext == "mp4" then
+				local bg = {}
+				bg.type = ext
+				bg.url = theme_dir .. fs.basename(f)
+				table.insert(bgs,bg)
+				bgcount = bgcount + 1
+			end
+		end
+	end
+
+	if bgcount > 0 then
+		currentBg = bgs[math.random(1,bgcount)]
+	end
 %>
 <div class="login-page">
-	
-	<%
-	local bg_url = media .. "/img/bg1.jpg"
-	if ( bing_background == "0" ) then
-		if bgcount > 0 then
-			currentBg =  bgs[math.random(1,bgcount)]
-		end
-		if ( bgcount > 0 and currentBg.type == "mp4" ) then
-	%>
+	<% if (bgcount > 0 and currentBg.type == "mp4") then %>
 	<div class="video">
 		<video autoplay loop muted id="video">
 			<source src="<%=currentBg.url%>" type="video/mp4">
@@ -95,11 +82,10 @@
 			}
 		})
 	</script>
-	<%  elseif ( bgcount > 0 and currentBg["type"] ~= "mp4") then
-			bg_url = currentBg.url
-		end
-	else
-		local bing = "123"
+	<% else 
+	local bg_url = media .. "/img/bg1.jpg"
+	local bing = "123"
+	if (bgcount == 0 ) then
 		local sys = require "luci.sys"
 		local json = require "luci.jsonc"
 		local remote_bg_url="http://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US"
@@ -108,9 +94,10 @@
 		if (bing and bing ~= '') then
 			bg_url = "https://www.bing.com" .. json.parse(bing).images[1].url
 		end
+	elseif (bgcount > 0 and currentBg["type"] ~= "mp4") then
+		bg_url = currentBg.url
 	end
 	%>
-	<% if(currentBg["type"] ~= "mp4") then %>
 	<div class="main-bg" id="main-bg" style="background-image:url(<%=bg_url%>)"></div>
 	<% end %>
 	<div class="login-container">
@@ -167,4 +154,4 @@
 				}
 			//]]></script>
 			<% end %>
-<%+footer%>
+<%+themes/argon/out_footer_login%>
