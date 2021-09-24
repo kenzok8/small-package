@@ -52,6 +52,7 @@ jobs:
         rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
         $GITHUB_WORKSPACE/${{matrix.target}}.sh
         $GITHUB_WORKSPACE/diy/convert_translation.sh
+        $GITHUB_WORKSPACE/diy/Modify.sh
 
     - name: Modify
       run: |
