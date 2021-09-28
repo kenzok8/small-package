@@ -1,0 +1,22 @@
+--- a/luci-app-wizard/root/usr/share/luci/menu.d/luci-app-wizard.json
++++ b/luci-app-wizard/root/usr/share/luci/menu.d/luci-app-wizard.json
+@@ -1,7 +1,7 @@
+ {
+-	"admin/initsetup": {
++	"admin/network/initsetup": {
+ 		"title": "Wizard",
+-		"order": 990,
++		"order": 30,
+ 		"action": {
+ 			"type": "view",
+ 			"path": "wizard/wizard"
+
+--- a/luci-app-wizard/root/etc/config/wizard
++++ b/luci-app-wizard/root/etc/config/wizard
+@@ -1,5 +1,5 @@
+ config wizard 'default'
+-	option lan_ipaddr '192.168.15.1'
++	option lan_ipaddr ''
+ 	option lan_netmask '255.255.255.0'
+ 	option wan_proto 'dhcp'
+ 	option wan_ipaddr ''
