@@ -8,9 +8,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-netspeedtest
 PKG_VERSION:=1.6
-PKG_RELEASE:=20210511
+PKG_RELEASE:=20210415
 PKG_LICENSE:=GPLv2
 PKG_MAINTAINER:=sirpdboy
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,12 +30,23 @@ define Package/$(PKG_NAME)/description
 	Luci Support for netspeedtest.
 endef
 
-define Build/Compile
+
+define Build/Prepare
 endef
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/netspeedtest
 endef
+
+define Build/Configure
+endef
+
+define Build/Compile
+endef
+
+define Package/$(PKG_NAME)/postinst
+endef
+
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
