@@ -1,3 +1,4 @@
+
 #!/bin/bash
 function mvdir() {
 mv -n `find $1/* -maxdepth 0 -type d` ./
@@ -73,7 +74,6 @@ svn co https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-
 svn co https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcutmenu
 svn co https://github.com/sundaqiang/openwrt-packages/trunk/luci-app-services-wolplus
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
-svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
 svn co https://github.com/messense/aliyundrive-webdav/trunk/openwrt aliyundrive && mvdir aliyundrive
 svn co https://github.com/immortalwrt/packages/trunk/net/amule
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-amule
