@@ -1,0 +1,61 @@
+--- a/luci-app-https-dns-proxy/luasrc/model/cbi/https-dns-proxy.lua
++++ b/luci-app-https-dns-proxy/luasrc/model/cbi/https-dns-proxy.lua
+@@ -109,12 +109,10 @@ h.template = "cbi/nullsection"
+ ss = h:option(DummyValue, "_dummy", translate("Service Status"))
+ ss.template = packageName .. "/status"
+ ss.value = packageStatus
+-if packageStatusCode ~= -1 then
+-	buttons = h:option(DummyValue, "_dummy", translate("Service Control"))
+-	buttons.template = packageName .. "/buttons"
+-end
+ 
+ c = m:section(NamedSection, "config", "https-dns-proxy", translate("Configuration"))
++o = c:option(Flag, "enabled", translate("Enable"))
++o.default = 1
+ d1 = c:option(ListValue, "update_dnsmasq_config", translate("Update DNSMASQ Config on Start/Stop"), translatef("If update option is selected, the 'DNS forwardings' section of %sDHCP and DNS%s will be automatically updated to use selected DoH providers (%smore information%s).", "<a href=\"" .. dispatcher.build_url("admin/network/dhcp") .. "\">", "</a>", "<a href=\"" .. readmeURL .. "#default-settings" .. "\" target=\"_blank\">", "</a>"))
+ d1:value('*', translate("Update all configs"))
+ local dnsmasq_num = 0
+
+--- a/https-dns-proxy/files/https-dns-proxy.init
++++ b/https-dns-proxy/files/https-dns-proxy.init
+@@ -96,6 +96,8 @@ is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
+ start_service() {
+ 	local p=5053 c
+ 	config_load 'https-dns-proxy'
++	config_get enabled 'config' 'enabled' '1'
++	[ "$enabled" = 0 ] && return
+ 	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
+ 	config_get_bool forceDNS	'config' 'force_dns' '1'
+ 	config_get forceDNSPorts	'config' 'force_dns_port' '53 853'
+@@ -152,7 +154,7 @@ stop_service() {
+ }
+ 
+ service_triggers() {
+-	procd_add_config_trigger "config.change" "https-dns-proxy" /etc/init.d/https-dns-proxy reload
++	procd_add_config_trigger "config.change" "https-dns-proxy" /etc/init.d/https-dns-proxy restart
+ }
+ 
+ service_started() { procd_set_config_changed firewall; }
+@@ -203,8 +205,8 @@ dnsmasq_restore_server_backup() {
+ 		fi
+ 		uci -q del "dhcp.${cfg}.doh_backup_noresolv"
+ 	fi
++	uci -q del "dhcp.${cfg}.server"
+ 	if uci -q get "dhcp.${cfg}.doh_backup_server" >/dev/null; then
+-		uci -q del "dhcp.${cfg}.server"
+ 		for i in $(uci -q get "dhcp.${cfg}.doh_backup_server"); do
+ 			uci -q add_list "dhcp.${cfg}.server=$i"
+ 		done
+
+--- a/luci-app-https-dns-proxy/root/etc/uci-defaults/40_luci-https-dns-proxy
++++ b/luci-app-https-dns-proxy/root/etc/uci-defaults/40_luci-https-dns-proxy
+@@ -1,3 +1,9 @@
+ #!/bin/sh
++uci -q batch <<-EOF >/dev/null
++	delete ucitrack.@https-dns-proxy[-1]
++	add ucitrack https-dns-proxy
++	set ucitrack.@https-dns-proxy[-1].init=https-dns-proxy
++	commit ucitrack
++EOF
+ rm -rf /var/luci-modulecache/; rm -f /var/luci-indexcache;
+ exit 0

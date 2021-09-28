@@ -1,0 +1,65 @@
+--- a/luci-app-adguardhome/root/etc/init.d/AdGuardHome
++++ b/luci-app-adguardhome/root/etc/init.d/AdGuardHome
+@@ -29,7 +29,7 @@ set_forward_dnsmasq()
+ 		if [ "$server" = "$addr" ]; then
+ 			continue
+ 		fi
+-		uci add_list dhcp.@dnsmasq[0].server=$server
++		# uci add_list dhcp.@dnsmasq[0].server=$server
+ 	done
+ 	uci delete dhcp.@dnsmasq[0].resolvfile 2>/dev/null
+ 	uci set dhcp.@dnsmasq[0].noresolv=1
+@@ -499,6 +499,14 @@ start_service() {
+ 	echo "AdGuardHome service enabled"
+ 	echo "luci enable switch=$enabled"
+ 	(sleep 10 && [ -z "$(pgrep $binpath)" ] && logger "AdGuardHome" "no process in 10s cancel redirect" && _do_redirect 0 )&
++	if [[ "`uci get bypass.@global[0].global_server 2>/dev/null`" && "`uci get bypass.@global[0].adguardhome 2>/dev/null`" == 1 && "$(uci get dhcp.@dnsmasq[0].port)" == "53" ]]; then
++		c1=0
++		while ! netstat -tunlp | grep 53 | grep -i AdGuardHome 2>&1; do
++			/etc/init.d/bypass restart 2>/dev/null
++			sleep 1
++			[ $c1 == 5 ] && break || let c1++
++		done
++	fi
+ }
+ 
+ reload_service()
+@@ -539,11 +548,13 @@ stop_service()
+ 	fi
+ 	echo "AdGuardHome service disabled"
+ 	touch /var/run/AdGserverdis
++	killall -9 AdGuardHome 2>/dev/null
++	/etc/init.d/dnsmasq restart
+ }
+ 
+ boot() {
+ 	rc_procd boot_service "$@"
+-	if eval "type service_started" 2>/dev/null >/dev/null; then
++	if eval "type service_started" 2>/dev/null; then
+ 		service_started
+ 	fi
+ }
+
+--- a/adguardhome/Makefile
++++ b/adguardhome/Makefile
+@@ -32,7 +32,7 @@ GO_PKG_BUILD_PKG:=github.com/AdguardTeam/AdGuardHome
+ AGH_BUILD_TIME:=$(shell date -d @$(SOURCE_DATE_EPOCH) +%FT%TZ%z)
+ AGH_VERSION_PKG:=github.com/AdguardTeam/AdGuardHome/internal/version
+ GO_PKG_LDFLAGS_X:=$(AGH_VERSION_PKG).channel=release \
+-	$(AGH_VERSION_PKG).version=$(PKG_SOURCE_VERSION) \
++	$(AGH_VERSION_PKG).version=v$(PKG_VERSION) \
+ 	$(AGH_VERSION_PKG).buildtime=$(AGH_BUILD_TIME) \
+ 	$(AGH_VERSION_PKG).goarm=$(GO_ARM) \
+ 	$(AGH_VERSION_PKG).gomips=$(GO_MIPS)
+@@ -52,6 +52,11 @@ define Package/adguardhome/conffiles
+ /etc/adguardhome.yaml
+ endef
+ 
++define Package/adguardhome/postinst
++#!/bin/sh
++	/etc/init.d/AdGuardHome restart
++endef
++
+ define Package/adguardhome/description
+ Free and open source, powerful network-wide ads and trackers blocking DNS server.
+ endef

@@ -1,0 +1,44 @@
+--- a/luci-app-dockerman/Makefile
++++ b/luci-app-dockerman/Makefile
+@@ -7,6 +7,7 @@ LUCI_DEPENDS:=@(aarch64||arm||x86_64) \
+ 	+luci-lib-ip \
+ 	+docker \
+ 	+dockerd \
++	+cgroupfs-mount \
+ 	+ttyd
+ LUCI_PKGARCH:=all
+ 
+
+--- a/luci-app-dockerman/luasrc/view/dockerman/newcontainer_resolve.htm
++++ b/luci-app-dockerman/luasrc/view/dockerman/newcontainer_resolve.htm
+@@ -88,12 +88,29 @@
+ 	}
+ 
+ 	function show_reslov_dialog() {
+-		document.getElementById('dialog_reslov') || document.body.insertAdjacentHTML("beforeend", '<div id="dialog_reslov"><div class="dialog_box"><div class="dialog_line"></div><div class="dialog_line"><span><%:Plese input <docker create/run> command line:%></span><br><span id="cmd-line-status"></span></div><div class="dialog_line"><textarea class="cbi-input-textarea" id="dialog_reslov_text" style="width: 100%; height:100%;" rows="15" onkeyup="clear_text()"></textarea></div><div class="dialog_line" style="text-align: right;"><input type="button" class="btn cbi-button cbi-button-apply" type="submit" value="<%:Submit%>" onclick="reslov_container()" /> <input type="button" class="btn cbi-button cbi-button-reset" type="reset" value="<%:Cancel%>" onclick="close_reslov_dialog()" /></div><div class="dialog_line"></div></div></div>')
++		document.getElementById('dialog_reslov') || document.body.insertAdjacentHTML("beforeend", '<div id="dialog_reslov"><div class="dialog_box"><div class="dialog_line"></div><div class="dialog_line"><span><%:Plese input <docker create/run> command line:%></span><br><span id="cmd-line-status"></span><span id="qinglong"><a href="javascript:writeInto()">青龙京豆</a></span></div><div class="dialog_line"><textarea class="cbi-input-textarea" id="dialog_reslov_text" style="width: 100%; height:100%;" rows="15" onkeyup="clear_text()"></textarea></div><div class="dialog_line" style="text-align: right;"><input type="button" class="btn cbi-button cbi-button-apply" type="submit" value="<%:Submit%>" onclick="reslov_container()" /> <input type="button" class="btn cbi-button cbi-button-reset" type="reset" value="<%:Cancel%>" onclick="close_reslov_dialog()" /></div><div class="dialog_line"></div></div></div>')
+ 		document.body.classList.add('dialog-reslov-active')
+ 		let s = document.getElementById('cmd-line-status')
+ 		s.innerHTML = ""
+ 		document.documentElement.style.overflowY = 'hidden'
+ 	}
++	function writeInto(){
++		var t = document.getElementById("dialog_reslov_text");
++		t.value = "docker run -dit \
++			-v /opt/ql/config:/ql/config \
++			-v /opt/ql/db:/ql/db \
++			-v /opt/ql/scripts:/ql/scripts \
++			-v /opt/ql/log:/ql/log \
++			-v /opt/ql/repo:/ql/repo \
++			-v /opt/ql/jbot:/ql/jbot \
++			-v /opt/ql/ninja:/ql/ninja \
++			-p 5700:5700 \
++			-p 5701:5701 \
++			--name qinglong \
++			--hostname qinglong \
++			--restart always \
++			whyour/qinglong:latest";
++}
+ </script>
+ <%+cbi/valueheader%>
+ 
