@@ -2,16 +2,15 @@
 name: Update packages
 
 on:
-  repository_dispatch:
-  workflow_dispatch:
-    types: published
   push:
-    branches:
-      - main
+    paths:
+      - '.github/workflows/kenzo.yml'
+      - 'diy/**'
   schedule:
-    - cron: 0 */24 * * *
+    - cron: 0 */12 * * *
   watch:
     types: started
+  repository_dispatch:
 
 env:
   TZ: Asia/Shanghai
@@ -50,7 +49,6 @@ jobs:
         git rm -r --cache * >/dev/null 2>&1 &
         rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
         $GITHUB_WORKSPACE/${{matrix.target}}.sh
-        $GITHUB_WORKSPACE/diy/convert_translation.sh
         $GITHUB_WORKSPACE/diy/Modify.sh
         
     - name: Upload
