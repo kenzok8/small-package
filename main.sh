@@ -71,6 +71,7 @@ svn co https://github.com/x-wrt/packages/trunk/net/nft-qos
 svn co https://github.com/x-wrt/luci/trunk/applications/luci-app-nft-qos
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
+svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
 svn co https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcutmenu
 svn co https://github.com/sundaqiang/openwrt-packages/trunk/luci-app-services-wolplus
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
