@@ -1,0 +1,11 @@
+{
+	"luci-app-godproxy": {
+		"description": "Grant UCI access for luci-app-godproxy",
+		"read": {
+			"uci": [ "koolproxy" ]
+		},
+		"write": {
+			"uci": [ "koolproxy" ]
+		}
+	}
+}
