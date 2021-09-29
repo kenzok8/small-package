@@ -1,0 +1,11 @@
+{
+	"luci-app-koolddns": {
+		"description": "Grant UCI access for luci-app-koolddns",
+		"read": {
+			"uci": [ "koolddns" ]
+		},
+		"write": {
+			"uci": [ "koolddns" ]
+		}
+	}
+}
