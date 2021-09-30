@@ -1,4 +1,3 @@
-
 #!/bin/bash
 function mvdir() {
 mv -n `find $1/* -maxdepth 0 -type d` ./
@@ -62,7 +61,7 @@ git clone --depth 1 https://github.com/linkease/ddnsto-openwrt && mvdir ddnsto-o
 git clone --depth 1 https://github.com/sensec/luci-app-udp2raw
 git clone --depth 1 https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-sysuh3c
 git clone --depth 1 https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd1/luci-app-cupsd cupsd1/cups/cups ./ ; rm -rf cupsd1
-
+git clone --depth 1 https://github.com/kenzok78/luci-app-netspeedtest
 svn co https://github.com/Lienol/openwrt/trunk/package/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
@@ -114,6 +113,3 @@ mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
 rm -rf ./*/.git & rm -f ./*/.gitattributes
 rm -rf ./*/.svn & rm -rf ./*/.github & rm -rf ./*/.gitignore
 exit 0
-
-
-
