@@ -489,4 +489,16 @@ _docker.remove_macvlan_interface = function(name)
 	os.execute("ip link del " .. if_name)
 end
 
+_docker.byte_format = function (byte)
+	if not byte then return 'NaN' end
+	local suff = {"B", "KB", "MB", "GB", "TB"}
+	for i=1, 5 do
+		if byte > 1024 and i < 5 then
+			byte = byte / 1024
+		else
+			return string.format("%.2f %s", byte, suff[i])
+		end
+	end
+end
+
 return _docker

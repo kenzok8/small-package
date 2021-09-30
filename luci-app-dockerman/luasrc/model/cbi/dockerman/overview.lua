@@ -13,17 +13,6 @@ if dk:_ping().code ~= 200 then
 	lost_state = true
 end
 
-function byte_format(byte)
-	local suff = {"B", "KB", "MB", "GB", "TB"}
-	for i=1, 5 do
-		if byte > 1024 and i < 5 then
-			byte = byte / 1024
-		else
-			return string.format("%.2f %s", byte, suff[i])
-		end
-	end
-end
-
 m = SimpleForm("dockerd",
 	translate("Docker - Overview"),
 	translate("An overview with the relevant data is displayed here with which the LuCI docker client is connected.")
@@ -114,9 +103,10 @@ s.volumes_total = '-'
 
 -- local socket = luci.model.uci.cursor():get("dockerd", "dockerman", "socket_path")
 if not lost_state then
-	local containers_list = dk.containers:list({query = {all=true}}).body
-	local images_list = dk.images:list().body
-	local vol = dk.volumes:list()
+	local res = dk:df()
+	local containers_list = res.body.Containers
+	local images_list = res.body.Images
+	local vol = res.body.Volumes
 	local volumes_list = vol and vol.body and vol.body.Volumes or {}
 	local networks_list = dk.networks:list().body or {}
 	local docker_info = dk:info()
@@ -127,11 +117,11 @@ if not lost_state then
 	docker_info_table['3ServerVersion']._value = docker_info.body.ServerVersion
 	docker_info_table['4ApiVersion']._value = docker_info.headers["Api-Version"]
 	docker_info_table['5NCPU']._value = tostring(docker_info.body.NCPU)
-	docker_info_table['6MemTotal']._value = byte_format(docker_info.body.MemTotal)
+	docker_info_table['6MemTotal']._value = docker.byte_format(docker_info.body.MemTotal)
 	if docker_info.body.DockerRootDir then
 		local statvfs = nixio.fs.statvfs(docker_info.body.DockerRootDir)
 		local size = statvfs and (statvfs.bavail * statvfs.bsize) or 0
-		docker_info_table['7DockerRootDir']._value = docker_info.body.DockerRootDir .. " (" .. tostring(byte_format(size)) .. " " .. translate("Available") .. ")"
+		docker_info_table['7DockerRootDir']._value = docker_info.body.DockerRootDir .. " (" .. tostring(docker.byte_format(size)) .. " " .. translate("Available") .. ")"
 	end
 
 	docker_info_table['8IndexServerAddress']._value = docker_info.body.IndexServerAddress

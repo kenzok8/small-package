@@ -41,26 +41,18 @@ function get_volumes()
 			end
 		end
 		data[index]["_created"] = v.CreatedAt
+		data[index]["_size"] =  docker.byte_format(v.UsageData and v.UsageData.Size or nil)
 	end
 
 	return data
 end
-
 if dk:_ping().code ~= 200 then
 	lost_state = true
 else
-	res = dk.volumes:list()
+	res = dk:df()
 	if res and res.code and res.code <300 then
 		volumes = res.body.Volumes
-	end
-
-	res = dk.containers:list({
-		query = {
-			all=true
-		}
-	})
-	if res and res.code and res.code <300 then
-		containers = res.body
+		containers = res.body.Containers
 	end
 end
 
@@ -81,14 +73,11 @@ o.write = function(self, section, value)
 end
 
 o = s:option(DummyValue, "_name", translate("Name"))
-
 o = s:option(DummyValue, "_driver", translate("Driver"))
-
 o = s:option(DummyValue, "_containers", translate("Containers"))
 o.rawhtml = true
-
 o = s:option(DummyValue, "_mountpoint", translate("Mount Point"))
-
+o = s:option(DummyValue, "_size", translate("Size"))
 o = s:option(DummyValue, "_created", translate("Created"))
 
 s = m:section(SimpleSection)
