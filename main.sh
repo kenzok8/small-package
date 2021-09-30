@@ -62,6 +62,8 @@ git clone --depth 1 https://github.com/sensec/luci-app-udp2raw
 git clone --depth 1 https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-sysuh3c
 git clone --depth 1 https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd1/luci-app-cupsd cupsd1/cups/cups ./ ; rm -rf cupsd1
 git clone --depth 1 https://github.com/kenzok78/luci-app-netspeedtest
+git clone --depth 1 https://github.com/kenzok78/udp2raw
+
 svn co https://github.com/Lienol/openwrt/trunk/package/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
@@ -70,7 +72,6 @@ svn co https://github.com/x-wrt/packages/trunk/net/nft-qos
 svn co https://github.com/x-wrt/luci/trunk/applications/luci-app-nft-qos
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
-svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
 svn co https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcutmenu
 svn co https://github.com/sundaqiang/openwrt-packages/trunk/luci-app-services-wolplus
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
