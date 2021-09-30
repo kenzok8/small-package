@@ -10,22 +10,16 @@ local m, s, o
 local dk = docker.new()
 
 local cmd_line = table.concat(arg, '/')
-local images, networks, containers
+local images, networks
 local create_body = {}
 
 if dk:_ping().code ~= 200 then
 	lost_state = true
 	images = {}
 	networks = {}
-	containers ={}
 else
 	images = dk.images:list().body
 	networks = dk.networks:list().body
-	containers = dk.containers:list({
-		query = {
-			all=true
-		}
-	}).body
 end
 
 local is_quot_complete = function(str)

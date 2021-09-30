@@ -26,7 +26,8 @@ else
 
 	res = dk.containers:list({
 		query = {
-			all=true
+			all = true,
+			size = true
 		}
 	})
 	if res and res.code and res.code < 300 then
@@ -89,7 +90,7 @@ function get_containers()
 				data[index]["_image"] = iv.RepoTags and iv.RepoTags[1] or (iv.RepoDigests[1]:gsub("(.-)@.+", "%1") .. ":&lt;none&gt;")
 			end
 		end
-		data[index]["_id_name"] = '<a href='..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'  class="dockerman_link" title="'..translate("Container detail")..'">'.. data[index]["_name"] .. "<br><font color='#9f9f9f'>ID: " ..	data[index]["_id"] .. "</font></a><br>Image: " .. (data[index]["_image"] or "&lt;none&gt;")
+		data[index]["_id_name"] = '<a href='..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'  class="dockerman_link" title="'..translate("Container detail")..'">'.. data[index]["_name"] .. "<br><font color='#9f9f9f'>ID: " ..	data[index]["_id"] .. "</font></a><br>Image: " .. (data[index]["_image"] or "&lt;none&gt;") .. "<br><font color='#9f9f9f' title='"..translate("RW Size: ").. docker.byte_format(v['SizeRw']).. ' / ' ..  translate("RootFS Size(Include image): ").. docker.byte_format(v['SizeRootFs']) .."'>Size: " .. docker.byte_format(v['SizeRw']).. '/'.. docker.byte_format(v['SizeRootFs']) .. "</font>"
 
 		if type(v.Mounts) == "table" and next(v.Mounts) then
 			for _, v2 in pairs(v.Mounts) do
