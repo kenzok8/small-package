@@ -27,7 +27,7 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/description
-	LuCI Support for udp2raw-tunnel.
+	LuCI Support for udp2raw.
 endef
 
 define Build/Prepare
