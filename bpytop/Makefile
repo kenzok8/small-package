@@ -32,6 +32,9 @@ define Package/bpytop/description
 endef
 
 define Py3Package/bpytop/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bpytop $(1)/usr/bin/
+
 	$(INSTALL_DIR) $(1)/usr/share
 	$(CP) $(PKG_BUILD_DIR)/themes $(1)/usr/share/bpytop
 endef
