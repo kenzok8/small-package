@@ -12,10 +12,14 @@ local m, s, o
 if dk:_ping().code ~= 200 then
 	lost_state = true
 else
-	res = dk:df()
+	res = dk.images:list()
 	if res and res.code and res.code < 300 then
-		images = res.body.Images
-		containers = res.body.Containers
+		images = res.body
+	end
+
+	res = dk.containers:list({ query = {	all = true } })
+	if res and res.code and res.code < 300 then
+		containers = res.body
 	end
 end
 

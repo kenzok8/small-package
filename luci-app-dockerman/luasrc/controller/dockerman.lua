@@ -45,15 +45,17 @@ function index()
 	entry({"admin", "docker", "newnetwork"}, form("dockerman/newnetwork")).leaf=true
 	entry({"admin", "docker", "container"}, form("dockerman/container")).leaf=true
 
+	entry({"admin", "docker", "call"}, call("action_call_docker")).leaf=true
+
 	entry({"admin", "docker", "container_stats"}, call("action_get_container_stats")).leaf=true
 	entry({"admin", "docker", "containers_stats"}, call("action_get_containers_stats")).leaf=true
-
+	entry({"admin", "docker", "get_system_df"}, call("action_get_system_df")).leaf=true
 	entry({"admin", "docker", "container_get_archive"}, call("download_archive")).leaf=true
 	entry({"admin", "docker", "container_put_archive"}, call("upload_archive")).leaf=true
-	entry({"admin","docker","container_list_file"},call("list_file")).leaf=true
-	entry({"admin","docker","container_remove_file"},call("remove_file")).leaf=true
-	entry({"admin","docker","container_rename_file"},call("rename_file")).leaf=true
-	entry({"admin","docker","container_export"},call("export_container")).leaf=true
+	entry({"admin", "docker", "container_list_file"}, call("list_file")).leaf=true
+	entry({"admin", "docker", "container_remove_file"}, call("remove_file")).leaf=true
+	entry({"admin", "docker", "container_rename_file"}, call("rename_file")).leaf=true
+	entry({"admin", "docker", "container_export"}, call("export_container")).leaf=true
 	entry({"admin", "docker", "images_save"}, call("save_images")).leaf=true
 	entry({"admin", "docker", "images_load"}, call("load_images")).leaf=true
 	entry({"admin", "docker", "images_import"}, call("import_images")).leaf=true
@@ -61,6 +63,17 @@ function index()
 	entry({"admin", "docker", "images_tag"}, call("tag_image")).leaf=true
 	entry({"admin", "docker", "images_untag"}, call("untag_image")).leaf=true
 	entry({"admin", "docker", "confirm"}, call("action_confirm")).leaf=true
+end
+
+function action_call_docker()
+	
+end
+
+function action_get_system_df()
+	local res = docker.new():df()
+	luci.http.status(res.code, res.message)
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(res.body)
 end
 
 function scandir(id, directory)
