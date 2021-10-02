@@ -9,10 +9,18 @@
 	}
 
 	fnWindowLoad = function () {
+		XHR.get('<%=luci.dispatcher.build_url("admin/docker/get_system_df")%>/', null, (x, info)=>{
+			if(!info || !info.Containers || !info.Containers.forEach) return
+			info.Containers.forEach(item=>{
+				const size_c =	document.getElementsByClassName("container_size_" + item.Id)
+				size_c[0].title = "RW Size: " + niceBytes(item.SizeRw) + " / RootFS Size(Include Image): " + niceBytes(item.SizeRootFs)
+				size_c[0].innerText = "Size: " + niceBytes(item.SizeRw) + "/" + niceBytes(item.SizeRootFs)
+			})
+		})
 		let lines = document.querySelectorAll('[id^=cbi-containers-]')
 		let last_bw_tx = {}
 		let last_bw_rx = {}
-		let interval = 5
+		let interval = 30
 		let containers = []
 		lines.forEach((item) => {
 			let containerId = item.id.match(/cbi-containers-.+_id_(.*)/)

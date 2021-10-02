@@ -103,10 +103,9 @@ s.volumes_total = '-'
 
 -- local socket = luci.model.uci.cursor():get("dockerd", "dockerman", "socket_path")
 if not lost_state then
-	local res = dk:df()
-	local containers_list = res.body.Containers
-	local images_list = res.body.Images
-	local vol = res.body.Volumes
+	local containers_list = dk.containers:list({query = {all=true}}).body
+	local images_list = dk.images:list().body
+	local vol = dk.volumes:list()
 	local volumes_list = vol and vol.body and vol.body.Volumes or {}
 	local networks_list = dk.networks:list().body or {}
 	local docker_info = dk:info()

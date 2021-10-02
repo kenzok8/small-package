@@ -41,7 +41,7 @@ function get_volumes()
 			end
 		end
 		data[index]["_created"] = v.CreatedAt
-		data[index]["_size"] =  docker.byte_format(v.UsageData and v.UsageData.Size or nil)
+		data[index]["_size"] =  "<font class='volume_size_" .. v.Name .. "'>-</font>"
 	end
 
 	return data
@@ -49,10 +49,18 @@ end
 if dk:_ping().code ~= 200 then
 	lost_state = true
 else
-	res = dk:df()
+	res = dk.volumes:list()
 	if res and res.code and res.code <300 then
 		volumes = res.body.Volumes
-		containers = res.body.Containers
+	end
+
+	res = dk.containers:list({
+		query = {
+			all=true
+		}
+	})
+	if res and res.code and res.code <300 then
+		containers = res.body
 	end
 end
 
@@ -61,6 +69,7 @@ local volume_list = not lost_state and get_volumes() or {}
 m = SimpleForm("docker", translate("Docker - Volumes"))
 m.submit=false
 m.reset=false
+m:append(Template("dockerman/volume_size"))
 
 s = m:section(Table, volume_list, translate("Volumes overview"))
 
@@ -78,6 +87,7 @@ o = s:option(DummyValue, "_containers", translate("Containers"))
 o.rawhtml = true
 o = s:option(DummyValue, "_mountpoint", translate("Mount Point"))
 o = s:option(DummyValue, "_size", translate("Size"))
+o.rawhtml = true
 o = s:option(DummyValue, "_created", translate("Created"))
 
 s = m:section(SimpleSection)
