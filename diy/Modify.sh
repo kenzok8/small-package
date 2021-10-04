@@ -8,6 +8,8 @@ sed -i \
 -e 's?\.\./\.\./luci.mk?$(TOPDIR)/feeds/luci/luci.mk?' \
 -e 's/ca-certificates/ca-bundle/' \
 */Makefile
+
+sed -i 's?zstd$?zstd ucl upx\n$(curdir)/upx/compile := $(curdir)/ucl/compile?g' tools/Makefile
 bash diy/create_acl_for_luci.sh -a >/dev/null 2>&1
 bash diy/convert_translation.sh -a >/dev/null 2>&1
 rm -rf create_acl_for_luci.err & rm -rf create_acl_for_luci.ok
