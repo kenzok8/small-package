@@ -32,9 +32,14 @@ sed -i "s/# //g" /etc/opkg/distfeeds.conf
 #uci commit dhcp
 
 #设置IP
-#uci set network.lan.ipaddr='192.168.119.10'
-#uci set network.lan.netmask='255.255.255.0'
-#uci commit network
+uci set network.lan.ipaddr='192.168.1.252'   # 默认IP地址
+uci set network.lan.proto='static'           # 静态IP
+uci set network.lan.type='bridge'            # 接口类型:桥接
+uci set network.lan.ifname='eth0'            # 网络端口：默认 eth0，第一个网口
+uci set network.lan.netmask='255.255.255.0'  # 子网掩码
+uci set network.lan.gateway='192.168.1.251'  # 默认网关地址（主路由IP）
+uci set network.lan.dns='192.168.1.251 223.5.5.5 119.29.29.29'  # 默认上游 DNS 地址
+uci commit network
 
 #DNS重定向
 sed -i '/REDIRECT --to-ports 53/d' /etc/firewall.user
