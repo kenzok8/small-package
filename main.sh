@@ -63,6 +63,7 @@ git clone --depth 1 https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-
 git clone --depth 1 https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd1/luci-app-cupsd cupsd1/cups/cups ./ ; rm -rf cupsd1
 git clone --depth 1 https://github.com/kenzok78/luci-app-netspeedtest
 git clone --depth 1 https://github.com/kenzok78/udp2raw
+git clone --depth 1 https://github.com/kenzok78/luci-theme-argonne.git
 
 svn co https://github.com/Lienol/openwrt/trunk/package/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
