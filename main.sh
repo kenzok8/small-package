@@ -106,6 +106,8 @@ svn co https://github.com/immortalwrt/packages/trunk/libs/toml11
 svn co https://github.com/garypang13/openwrt-packages/trunk/qtbase
 svn co https://github.com/garypang13/openwrt-packages/trunk/qttools
 svn co https://github.com/garypang13/openwrt-packages/trunk/rblibtorrent
+svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
+svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
