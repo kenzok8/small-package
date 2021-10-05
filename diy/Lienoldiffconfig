@@ -103,8 +103,10 @@ CONFIG_PACKAGE_luci-i18n-passwall-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-ssr-plus-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-turboacc-zh-cn=y
 CONFIG_PACKAGE_luci-lib-fs=y
-CONFIG_PACKAGE_luci-theme-argon_new=y
+CONFIG_PACKAGE_luci-theme-argonne=y
 CONFIG_PACKAGE_luci-theme-atmaterial_new=y
+# CONFIG_PACKAGE_libustream-wolfssl is not set
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_libustream-wolfssl is not set
 CONFIG_PACKAGE_microsocks=y
 CONFIG_PACKAGE_mwan3=y
 CONFIG_PACKAGE_nano=y
