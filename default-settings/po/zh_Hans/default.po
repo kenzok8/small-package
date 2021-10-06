@@ -61,6 +61,9 @@ msgstr "用于压缩内存数据的CPU并发线程数"
 msgid "Swap"
 msgstr "虚拟内存"
 
+msgid "Swap used"
+msgstr "已用交换区"
+
 msgid "Force 40MHz mode"
 msgstr "强制 40MHz 频宽"
 
