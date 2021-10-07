@@ -162,7 +162,10 @@ aria2_start() {
 
 	[ "$enabled" = "1" ] || { _info "Instance \"$section\" disabled."; return 1; }
 	[ -n "$dir" ] || { _err "Please set download dir."; return 1; }
-	[ -d "$dir" ] || { _err "Please create download dir first."; return 1; }
+	[ -d "$dir" ] || _make_dir "$dir" || {
+			_err "Can't create download dir: $dir"
+			return 1
+		}
 
 	config_file="$config_dir/$NAME.conf.$section"
 	config_file_tmp="$config_dir/$NAME.conf.tmp"
