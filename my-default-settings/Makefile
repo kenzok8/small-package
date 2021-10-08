@@ -7,29 +7,29 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=default-settings
+PKG_NAME:=my-default-settings
 PKG_VERSION:=1
 PKG_RELEASE:=10
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/default-settings
+define Package/$(PKG_NAME)
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=Default Settings
   MAINTAINER:=Kiddin'
   PKGARCH:=all
-  DEPENDS:=+luci-base
+  DEPENDS:=+luci-base +bash
 endef
 
-define Package/default-settings/conffiles
+define Package/$(PKG_NAME)/conffiles
 /etc/config/base_config
 endef
 
 define Build/Compile
 endef
 
-define Package/default-settings/install
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DATA) ./files/uci.defaults $(1)/etc/uci-defaults/95-default-settings
 	$(INSTALL_DIR) $(1)/etc/config
@@ -47,5 +47,5 @@ define Package/default-settings/install
 
 endef
 
-$(eval $(call BuildPackage,default-settings))
+$(eval $(call BuildPackage,$(PKG_NAME)))
 

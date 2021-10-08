@@ -7,13 +7,13 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=autocore
+PKG_NAME:=my-autocore
 PKG_VERSION:=1
 PKG_RELEASE:=29
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/autocore-arm
+define Package/my-autocore-arm
   TITLE:=ARM auto core script.
   MAINTAINER:=CN_SZTL
   DEPENDS:=@(arm||aarch64) \
@@ -23,14 +23,14 @@ define Package/autocore-arm
   VARIANT:=arm
 endef
 
-define Package/autocore-x86
+define Package/my-autocore-x86
   TITLE:=x86/x64 auto core loadbalance script.
   MAINTAINER:=Lean / CN_SZTL
   DEPENDS:=@TARGET_x86 +bc +lm-sensors +ethtool
   VARIANT:=x86
 endef
 
-define Package/autocore-arm/description
+define Package/my-autocore-arm/description
   Display more details info about the devices in LuCI.
 endef
 
@@ -48,7 +48,7 @@ endef
 define Build/Compile
 endef
 
-define Package/autocore-arm/install
+define Package/my-autocore-arm/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(DL_DIR)/cpuinfo $(1)/sbin/cpuinfo
 	$(INSTALL_BIN) ./files/common/ethinfo $(1)/sbin/ethinfo
@@ -56,7 +56,7 @@ define Package/autocore-arm/install
 	$(INSTALL_DATA) ./files/common/29_eth.js $(1)/www/luci-static/resources/view/status/include/
 endef
 
-define Package/autocore-x86/install
+define Package/my-autocore-x86/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) ./files/x86/cpuinfo $(1)/sbin/cpuinfo
 	$(INSTALL_BIN) ./files/common/ethinfo $(1)/sbin/ethinfo
@@ -67,5 +67,5 @@ define Package/autocore-x86/install
 endef
 
 $(eval $(call Download,armcpuinfo))
-$(eval $(call BuildPackage,autocore-arm))
-$(eval $(call BuildPackage,autocore-x86))
+$(eval $(call BuildPackage,my-autocore-arm))
+$(eval $(call BuildPackage,my-autocore-x86))
