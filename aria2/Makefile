@@ -40,6 +40,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_ARIA2_WEBSOCKET
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/aria2/config
   source "$(SOURCE)/Config.in"
