@@ -48,6 +48,10 @@ function to_check()
 		model = "nanopi-r4s"
 		check_update()
 			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..dateyr.. "-openwrt-rockchip-armv8-nanopi-r4s-squashfs-sysupgrade.img.gz"
+    elseif model:match(".*R2C.*") then
+		model = "nanopi-r2c"
+		check_update()
+			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..dateyr.. "-openwrt-rockchip-armv8-nanopi-r2c-squashfs-sysupgrade.img.gz"
     elseif model:match(".*Pi 4 Model B.*") then
 		model = "Rpi-4B"
 		check_update()
