@@ -9,7 +9,7 @@ if [ ! -f /etc/inited ]; then
 	[ "$(uci -q get dhcp.@dnsmasq[0].noresolv)" ] && {
 		uci -q del dhcp.@dnsmasq[0].noresolv
 		uci commit dhcp
-		service dnsmasq reload
+		/etc/init.d/dnsmasq reload
 	}
 # sh -c "cat '/usr/share/patch/adblock.patch'  | patch -d '/' -p1 --forward" >/dev/null 2>&1
 fi
