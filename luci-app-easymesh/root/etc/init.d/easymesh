@@ -43,16 +43,17 @@ ap_mode_stop(){
 }
 
 kvr_stop(){
-			for wifi-iface in $(uci -X show wireless | grep wifi-iface | awk -F'[=]' '{print $1}'); do
-				if [ "${wifi-device}" != "wireless.mesh0" ]; then
-					uci delete ${wifi-device}.ieee80211k
-					uci delete ${wifi-device}.ieee80211v
-					uci delete ${wifi-device}.ieee80211r
+			for wifiiface in $(uci -X show wireless | grep wifi-iface | awk -F'[=]' '{print $1}'); do
+				if [ "${wifiiface}" != "wireless.mesh0" ]; then
+					uci delete ${wifiiface}.ieee80211k
+					uci delete ${wifiiface}.ieee80211v
+					uci delete ${wifiiface}.ieee80211r
 					uci commit network
 				fi
 			done
 			/etc/init.d/dawn stop && /etc/init.d/dawn disable
-fi
+
+}
 
 start(){	
 	if [ "$enable" == 1 ]; then
@@ -116,17 +117,17 @@ start(){
 		fi
 		
 		if [ "$kvr" = 1 ]; then
-			for wifi-iface in $(uci -X show wireless | grep wifi-iface | awk -F'[=]' '{print $1}'); do
-				if [ "${wifi-device}" != "wireless.mesh0" ]; then
-					uci set ${wifi-device}.ieee80211k='1'
-					uci set ${wifi-device}.rrm_neighbor_report='1'
-					uci set ${wifi-device}.rrm_beacon_report='1'
-					uci set ${wifi-device}.ieee80211v='1'
-					uci set ${wifi-device}.bss_transition='1'
-					uci set ${wifi-device}.ieee80211r='1'
-					uci set ${wifi-device}.encryption='psk-mixed'
-					uci set ${wifi-device}.mobility_domain=$mobility_domain
-					uci set ${wifi-device}.ft_over_ds='1'
+			for wifiiface in $(uci -X show wireless | grep wifi-iface | awk -F'[=]' '{print $1}'); do
+				if [ "${wifiiface}" != "wireless.mesh0" ]; then
+					uci set ${wifiiface}.ieee80211k='1'
+					uci set ${wifiiface}.rrm_neighbor_report='1'
+					uci set ${wifiiface}.rrm_beacon_report='1'
+					uci set ${wifiiface}.ieee80211v='1'
+					uci set ${wifiiface}.bss_transition='1'
+					uci set ${wifiiface}.ieee80211r='1'
+					uci set ${wifiiface}.encryption='psk-mixed'
+					uci set ${wifiiface}.mobility_domain=$mobility_domain
+					uci set ${wifiiface}.ft_over_ds='1'
 					uci commit network
 
 					uci set dawn.@metric[0].rssi_val=$rssi_val
