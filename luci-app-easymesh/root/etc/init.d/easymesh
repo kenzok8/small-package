@@ -20,6 +20,10 @@ apRadio=$(uci get easymesh.config.apRadio 2>/dev/null)
 mesh0_apRadio=$(uci get wireless.mesh0.device 2>/dev/null)
 encryption=$(uci get easymesh.config.encryption 2>/dev/null)
 key=$(uci get easymesh.config.key 2>/dev/null)
+kvr=$(uci get easymesh.config.kvr 2>/dev/null)
+mobility_domain=$(uci get easymesh.config.mobility_domain 2>/dev/null)
+rssi_val=$(uci get easymesh.config.rssi_val 2>/dev/null)
+low_rssi_val=$(uci get easymesh.config.low_rssi_val 2>/dev/null)
 
 ap_mode_stop(){
 	if [ "$ap_gateway" = "$ap_gateway1" ]; then
@@ -37,6 +41,18 @@ ap_mode_stop(){
 		/etc/init.d/firewall enable && /etc/init.d/firewall start >/dev/null 2>&1
 	fi
 }
+
+kvr_stop(){
+			for wifi-iface in $(uci -X show wireless | grep wifi-iface | awk -F'[=]' '{print $1}'); do
+				if [ "${wifi-device}" != "wireless.mesh0" ]; then
+					uci delete ${wifi-device}.ieee80211k
+					uci delete ${wifi-device}.ieee80211v
+					uci delete ${wifi-device}.ieee80211r
+					uci commit network
+				fi
+			done
+			/etc/init.d/dawn stop && /etc/init.d/dawn disable
+fi
 
 start(){	
 	if [ "$enable" == 1 ]; then
@@ -98,6 +114,30 @@ start(){
 			uci set wireless.mesh0.key=$key
 			uci commit wireless
 		fi
+		
+		if [ "$kvr" = 1 ]; then
+			for wifi-iface in $(uci -X show wireless | grep wifi-iface | awk -F'[=]' '{print $1}'); do
+				if [ "${wifi-device}" != "wireless.mesh0" ]; then
+					uci set ${wifi-device}.ieee80211k='1'
+					uci set ${wifi-device}.rrm_neighbor_report='1'
+					uci set ${wifi-device}.rrm_beacon_report='1'
+					uci set ${wifi-device}.ieee80211v='1'
+					uci set ${wifi-device}.bss_transition='1'
+					uci set ${wifi-device}.ieee80211r='1'
+					uci set ${wifi-device}.encryption='psk-mixed'
+					uci set ${wifi-device}.mobility_domain=$mobility_domain
+					uci set ${wifi-device}.ft_over_ds='1'
+					uci commit network
+
+					uci set dawn.@metric[0].rssi_val=$rssi_val
+					uci set dawn.@metric[0].low_rssi_val=$low_rssi_val
+					uci commit dawn 
+				fi
+			done
+			/etc/init.d/dawn enable && /etc/init.d/dawn start
+		else
+			kvr_stop
+		fi
 
 		if [ "$ap_mode" == 1 ]; then
 			if [ "$ap_gateway" != "$gateway" ]; then
@@ -147,6 +187,8 @@ stop(){
 		if [ "$mesh_mesh0" = "wifi-iface" ]; then
 			uci delete wireless.mesh0
 			uci commit wireless
+
+			kvr_stop
 		fi
 
 		if [ "$ap_mode" == 1 ]; then
