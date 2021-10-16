@@ -1,9 +1,18 @@
 #!/bin/sh
+
+START=99
+
 LOCK=/var/lock/opkgupgrade.lock
 BKOPKG="/etc/backup"
 # 防止重复启动
 [ -f $LOCK ] && exit 1
 touch $LOCK
+
+if [ ! -f "$BKOPKG/user_installed.opkg" ]; then
+	touch /etc/inited
+fi
+
+function opkgupgrade() {
 mkdir -p $BKOPKG
 if [ ! -f /etc/inited ]; then
 	[ "$(uci -q get dhcp.@dnsmasq[0].noresolv)" ] && {
@@ -13,12 +22,6 @@ if [ ! -f /etc/inited ]; then
 	}
 # sh -c "cat '/usr/share/patch/adblock.patch'  | patch -d '/' -p1 --forward" >/dev/null 2>&1
 fi
-
-if [ ! -f "$BKOPKG/user_installed.opkg" ]; then
-	touch /etc/inited
-fi
-
-function opkgupgrade() {
 	c1=0
 	c2=0
 	c3=0
