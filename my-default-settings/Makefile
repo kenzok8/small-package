@@ -38,8 +38,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/wifi-init.sh $(1)/lib/wifi/wifi-init.sh
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/wifi-init.init $(1)/etc/init.d/wifi-init
-	$(INSTALL_DIR) $(1)/etc/rc.d
-	$(INSTALL_BIN) ./files/opkg.rc.d $(1)/etc/rc.d/S99opkg
+	$(INSTALL_BIN) ./files/packages.init $(1)/etc/init.d/packages
 	$(INSTALL_DIR) $(1)/etc/profile.d
 	$(INSTALL_BIN) ./files/sysinfo.sh $(1)/etc/profile.d/sysinfo.sh
 	$(INSTALL_DIR) $(1)/sbin
