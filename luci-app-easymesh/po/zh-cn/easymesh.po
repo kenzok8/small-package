@@ -46,6 +46,12 @@ msgstr "加密"
 msgid "Key"
 msgstr "密码"
 
+msgid "Threshold for an good RSSI"
+msgstr "快速漫游接入值"
+
+msgid "Threshold for an bad RSSI"
+msgstr "快速漫游踢出值"
+
 msgid "AP MODE Enable"
 msgstr "启用AP模式"
 
