@@ -248,7 +248,7 @@ function getcpu(){
 function soc_temp(){
 	[ -z "$soc_code" ] && local soctemp=`sensors 2>/dev/null|grep °C|sed -nr 's#^.*:.*\+(.*)°C .*#\1#gp'|sort -nr|head -n1`
 	[ -z "$soc_code" ] && [ -z "$soctemp" ] && local soctemp=`cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null|sort -nr|head -n1|cut -c-2`
-	[ "$soc_code" == "pve" ] && [ ! -z "$server_host" ] && local soctemp=`ssh -i ~/.ssh/id_rsa root@${server_host} -p ${server_port} sensors 2>/dev/null|grep °C|sed -nr 's#^.*:.*\+(.*)°C .*#\1#gp'|sort -nr|head -n1`
+	[ "$soc_code" == "pve" ] && [ ! -z "$server_host" ] && local soctemp=`ssh -i /root/.ssh/id_rsa root@${server_host} -p ${server_port} sensors 2>/dev/null|grep Core|sed -nr 's#^.*:.*\+(.*)°C .*#\1#gp'|sort -nr|head -n1`
 	[ ! -z "$soctemp" ] && echo "$soctemp" && return
 	[ ! -z "$soc_code" ] && eval `echo "$soc_code"` 2>/dev/null
 }
