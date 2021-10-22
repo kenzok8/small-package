@@ -87,6 +87,7 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/tcpping
 svn co https://github.com/liuran001/openwrt-theme/trunk/luci-theme-argon-lr
 svn co https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
+svn co https://github.com/immortalwrt/openwrt-filebrowser/trunk/filebrowser
 svn co https://github.com/Lienol/openwrt/trunk/package/diy/luci-app-adguardhome
 svn co https://github.com/kenzok8/jell/trunk/adguardhome
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-smartdns
