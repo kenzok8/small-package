@@ -51,6 +51,7 @@ uci:foreach("wireless", "wifi-device",
 							function(s)
 								apRadio:value(s['.name'])
 							end)
+apRadio:value("all", translate("ALL"))
 o.default = "radio0"
 o.rmempty = false
 
