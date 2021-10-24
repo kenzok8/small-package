@@ -16,8 +16,8 @@ dns1=$(cat /etc/easymesh | sed -n '2p' 2>/dev/null)
 dns=$(uci get easymesh.config.dns 2>/dev/null)
 apRadio=$(uci get easymesh.config.apRadio 2>/dev/null)
 encryption=$(uci get easymesh.config.encryption 2>/dev/null)
-key=$(uci get easymesh.config.key 2>/dev/null)
 kvr=$(uci get easymesh.config.kvr 2>/dev/null)
+brlan=$(uci get network.@device[0].name 2>/dev/null)
 
 ap_mode_stop(){
 	if [ "$ap_gateway" = "$ap_gateway1" ]; then
@@ -40,6 +40,8 @@ add_wifi_mesh(){
 	mesh_apRadio=$(uci get wireless.mesh_${apall}.device 2>/dev/null)
 	mesh_mesh=$(uci get wireless.mesh_${apall} 2>/dev/null)
 	mesh_id=$(uci get easymesh.config.mesh_id 2>/dev/null)
+	mobility_domain=$(uci get easymesh.config.mobility_domain 2>/dev/null)
+	key=$(uci get easymesh.config.key 2>/dev/null)
 	if [ "$mesh_apRadio" != "wifi-iface" ]; then
 		uci set wireless.mesh_$apall=wifi-iface
 		uci set wireless.mesh_$apall.device=$apall
@@ -70,11 +72,10 @@ add_wifi_mesh(){
 }
 
 add_kvr(){
-	mobility_domain=$(uci get easymesh.config.mobility_domain 2>/dev/null)
-
+	kvr=$(uci get easymesh.config.kvr 2>/dev/null)
 	for wifiiface in $(uci -X show wireless | grep wifi-iface | awk -F'[=]' '{print $1}'); do
-		if [ "${wifiiface}" != "wireless.mesh_${apall}" ]; then
-			if [ "$kvr" = 1 ]; then
+		if [ "$kvr" = 1 ]; then
+			if [ "${wifiiface}" != "wireless.mesh_${apall}" ]; then
 				uci set ${wifiiface}.ieee80211k='1'
 				uci set ${wifiiface}.rrm_neighbor_report='1'
 				uci set ${wifiiface}.rrm_beacon_report='1'
@@ -97,6 +98,7 @@ add_kvr(){
 }
 
 add_dawn(){
+	kvr=$(uci get easymesh.config.kvr 2>/dev/null)
 	rssi_val=$(uci get easymesh.config.rssi_val 2>/dev/null)
 	low_rssi_val=$(uci get easymesh.config.low_rssi_val 2>/dev/null)
 
@@ -132,7 +134,11 @@ start(){
 			uci set network.bat0.hop_penalty='30'
 			uci set network.bat0.isolation_mark='0x00000000/0x00000000'
 
-			uci set network.lan.ifname="${lan} bat0"
+			if [ "$brlan" = "br-lan" ]; then
+				uci add_list network.@device[0].ports='bat0'
+			else
+				uci set network.lan.ifname="${lan} bat0"
+			fi
 			uci commit network
 		fi
 
@@ -152,6 +158,8 @@ start(){
 			apall=$apRadio
 			add_wifi_mesh
 		fi
+		
+		add_dawn
 
 		if [ "$ap_mode" == 1 ]; then
 			if [ "$ap_gateway" != "$gateway" ]; then
@@ -189,8 +197,12 @@ stop(){
 	if [ "$enable" != 1 ]; then
 		if [ "$mesh_bat0" = "interface" ]; then
 			uci delete network.bat0
+			if [ "$brlan" = "br-lan" ]; then
+				uci del_list network.@device[0].ports='bat0'
+			else
+				sed -i 's/ bat0//' /etc/config/network
+			fi
 			uci commit network
-			sed -i 's/ bat0//' /etc/config/network
 		fi
 
 		if [ "$mesh_nwi_mesh0" = "interface" ]; then
