@@ -1,4 +1,3 @@
-
 #!/bin/bash
 # [CTCGFW]Project-OpenWrt
 # Use it under GPLv3, please.
@@ -113,5 +112,3 @@ else
 	echo -e "${info_font}Usage: $0 [-a|-m -p <path-to-acl> -l <luci-name> -n <conf-name>|-c]"
 	exit 2
 fi
-rm -rf ./*/.gitignore
-exit 0    
