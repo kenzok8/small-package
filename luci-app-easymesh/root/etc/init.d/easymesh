@@ -36,13 +36,13 @@ ap_mode_stop(){
 }
 
 add_wifi_mesh(){
+	mesh_nwi_mesh=$(uci get network.nwi_mesh_${apall} 2>/dev/null)
 	mesh_apRadio=$(uci get wireless.mesh_${apall}.device 2>/dev/null)
 	mesh_mesh=$(uci get wireless.mesh_${apall} 2>/dev/null)
 	mesh_id=$(uci get easymesh.config.mesh_id 2>/dev/null)
 	mobility_domain=$(uci get easymesh.config.mobility_domain 2>/dev/null)
 	key=$(uci get easymesh.config.key 2>/dev/null)
 	encryption=$(uci get easymesh.config.encryption 2>/dev/null)
-	mesh_nwi_mesh=$(uci get network.nwi_mesh_${apall} 2>/dev/null)
 
 	if [ "$mesh_nwi_mesh" != "interface" ]; then
 		uci set network.nwi_mesh_$apall=interface
@@ -52,7 +52,7 @@ add_wifi_mesh(){
 		uci commit network
 	fi
 
-	if [ "$mesh_apRadio" != "wifi-iface" ]; then
+	if [ "$mesh_mesh" != "wifi-iface" ]; then
 		uci set wireless.mesh_$apall=wifi-iface
 		uci set wireless.mesh_$apall.device=$apall
 		uci set wireless.mesh_$apall.ifname=mesh_${apall}
@@ -78,31 +78,29 @@ add_wifi_mesh(){
 		uci set wireless.mesh_$apall.key=$key
 		uci commit wireless
 	fi
-	add_kvr
 }
 
 add_kvr(){
 	kvr=$(uci get easymesh.config.kvr 2>/dev/null)
-	for wifiiface in $(uci -X show wireless | grep wifi-iface | awk -F'[=]' '{print $1}'); do
+	mobility_domain=$(uci get easymesh.config.mobility_domain 2>/dev/null)
+	for apall in $(uci -X show wireless | grep wifi-device | awk -F'[.=]' '{print $2}'); do
 		if [ "$kvr" = 1 ]; then
-			if [ "${wifiiface}" != "wireless.mesh_${apall}" ]; then
-				uci set ${wifiiface}.ieee80211k='1'
-				uci set ${wifiiface}.rrm_neighbor_report='1'
-				uci set ${wifiiface}.rrm_beacon_report='1'
-				uci set ${wifiiface}.ieee80211v='1'
-				uci set ${wifiiface}.bss_transition='1'
-				uci set ${wifiiface}.ieee80211r='1'
-				uci set ${wifiiface}.encryption='psk-mixed'
-				uci set ${wifiiface}.mobility_domain=$mobility_domain
-				uci set ${wifiiface}.ft_over_ds='1'
-				uci set ${wifiiface}.ft_psk_generate_local='1'
-				uci commit network
-			fi
+			uci set wireless.default_$apall.ieee80211k='1'
+			uci set wireless.default_$apall.rrm_neighbor_report='1'
+			uci set wireless.default_$apall.rrm_beacon_report='1'
+			uci set wireless.default_$apall.ieee80211v='1'
+			uci set wireless.default_$apall.bss_transition='1'
+			uci set wireless.default_$apall.ieee80211r='1'
+			uci set wireless.default_$apall.encryption='psk-mixed'
+			uci set wireless.default_$apall.mobility_domain=$mobility_domain
+			uci set wireless.default_$apall.ft_over_ds='1'
+			uci set wireless.default_$apall.ft_psk_generate_local='1'
+			uci commit wireless
 		else
-			uci delete ${wifiiface}.ieee80211k
-			uci delete ${wifiiface}.ieee80211v
-			uci delete ${wifiiface}.ieee80211r
-			uci commit network
+			uci delete wireless.default_$apall.ieee80211k
+			uci delete wireless.default_$apall.ieee80211v
+			uci delete wireless.default_$apall.ieee80211r
+			uci commit wireless
 		fi
 	done
 }
@@ -160,7 +158,8 @@ start(){
 			apall=$apRadio
 			add_wifi_mesh
 		fi
-		
+
+		add_kvr
 		add_dawn
 
 		if [ "$ap_mode" == 1 ]; then
