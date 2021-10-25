@@ -1,0 +1,32 @@
+--- a/bpytop.py
++++ b/bpytop.py
+@@ -19,7 +19,7 @@
+ 
+ import os, sys, io, threading, signal, re, subprocess, logging, logging.handlers, argparse
+ import urllib.request
+-from time import time, sleep, strftime, tzset
++from time import time, sleep, strftime
+ from datetime import timedelta
+ from _thread import interrupt_main
+ from collections import defaultdict
+@@ -38,6 +38,11 @@ except Exception as e: errors.append(f'{e}')
+ try: import psutil # type: ignore
+ except Exception as e: errors.append(f'{e}')
+ 
++try:
++    from time import tzset
++except ImportError:
++    tzset = None
++
+ SELF_START = time()
+ 
+ SYSTEM: str
+@@ -1706,7 +1711,7 @@ class Box:
+ 		if not "cpu" in cls.boxes or not cls.clock_on: return
+ 		cls.c_counter += 1
+ 		if cls.c_counter > 3600 / (Config.update_ms / 1000):
+-			tzset()
++			if tzset: tzset()
+ 			cls.c_counter = 0
+ 		out: str = ""
+ 		if force: pass
