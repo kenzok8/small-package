@@ -91,7 +91,7 @@ add_kvr(){
 			uci set wireless.default_$apall.ieee80211v='1'
 			uci set wireless.default_$apall.bss_transition='1'
 			uci set wireless.default_$apall.ieee80211r='1'
-			uci set wireless.default_$apall.encryption='psk-mixed'
+			uci set wireless.default_$apall.encryption='psk2+ccmp'
 			uci set wireless.default_$apall.mobility_domain=$mobility_domain
 			uci set wireless.default_$apall.ft_over_ds='1'
 			uci set wireless.default_$apall.ft_psk_generate_local='1'
