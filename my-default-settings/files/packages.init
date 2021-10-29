@@ -33,7 +33,7 @@ fi
 			while :; do
 			opkg update | sed -e "s/^/$(date +%Y-%m-%d" "%H:%M:%S) /" >>/tmp/opkgupdate.log 2>&1
 				if [ "$?" == "0" ]; then
-					def="$(opkg list-upgradable | cut -f 1 -d ' ' | grep -vE 'opkg|luci-lib-fs|firewall|base-files|luci-base|busybox|dnsmasq-full|coremark|miniupnpd|luci-mod-network|luci-mod-status|luci-mod-system')"
+					def="$(opkg list-upgradable | cut -f 1 -d ' ' | grep -vE 'opkg|luci-lib-fs|firewall|base-files|luci-base|busybox|nginx-|dnsmasq-full|coremark|miniupnpd|luci-mod-network|luci-mod-status|luci-mod-system')"
 					if [ ! -f /etc/inited ]; then
 						insed="$(cat $BKOPKG/user_installed.opkg)"
 					fi
