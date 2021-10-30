@@ -1,6 +1,7 @@
 <%
 	local util = require "luci.util"
 	local sys = require "luci.sys"
+	local uci = require "luci.model.uci".cursor()
 
 	local pon = tostring(uci:get("sms_tool", "general", "prefix"))
 	local pnumber = tostring(uci:get("sms_tool", "general", "pnumber"))
@@ -74,8 +75,8 @@ XHR.get('<%=luci.dispatcher.build_url("admin", "modem", "sms", "user_phonebook")
 							var number = fields[1];
 							opt.text = name;
 							opt.value = number.trim();
-    						opt.innerHTML = name;
-    						select.appendChild(opt);
+    							opt.innerHTML = name;
+    							select.appendChild(opt);
 						}
 
 			}
@@ -101,7 +102,7 @@ function count_replace(obj) {
 
         document.getElementById('counter').innerHTML = (160 - document.getElementById('smstxt').value.length);
 
-	    obj.value = obj.value.replace(/ą/g, 'a').replace(/Ą/g, 'A');
+	obj.value = obj.value.replace(/ą/g, 'a').replace(/Ą/g, 'A');
         obj.value = obj.value.replace(/ć/g, 'c').replace(/Ć/g, 'C')
         obj.value = obj.value.replace(/ę/g, 'e').replace(/Ę/g, 'E')
         obj.value = obj.value.replace(/ł/g, 'l').replace(/Ł/g, 'L')
@@ -110,7 +111,7 @@ function count_replace(obj) {
         obj.value = obj.value.replace(/ś/g, 's').replace(/Ś/g, 'S')
         obj.value = obj.value.replace(/ż/g, 'z').replace(/Ż/g, 'Z')
         obj.value = obj.value.replace(/ź/g, 'z').replace(/Ź/g, 'Z');
-	    document.getElementById("odp").innerHTML = "";
+	document.getElementById("odp").innerHTML = "";
 
 }
 
@@ -189,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function (ev) {var button = docume
 
 
 <h2><%:SMS Messages%></h2>
-	<label><%:Web UI for handling messages via sms_tool.%></label>
+	<label><%:Web UI for sending messages via sms_tool. More information about the sms-tool on the%> <a href="https://eko.one.pl/?p=openwrt-sms_tool" target="_blank"><%:eko.one.pl forum%></a>.</label>
 	<p></p>
 	
 	<h4><%:Send Messages%></h4>
@@ -227,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function (ev) {var button = docume
 	<div class="table" width="100%">
 
 		<div class="tr cbi-rowstyle-2">
-		<div class="td center"><div style="float: left;"><div class="ifacebadge"><a href="https://eko.one.pl/forum/viewtopic.php?id=20096">e1</a></div></div><input type="button" style="margin-left: 35%"; id="sendsms" class="btn cbi-button cbi-button-neutral" value="<%:Send Message%>" /></div>
+		<div class="td center"><input type="button" style="margin-left: 35%"; id="sendsms" class="btn cbi-button cbi-button-neutral" value="<%:Send Message%>" /></div>
 		</div>
 
 	</div>

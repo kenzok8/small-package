@@ -70,11 +70,17 @@ msgstr "Panel ustawień dla aplikacji sms_tool oraz dla interfejsu użytkownika.
 msgid "Device"
 msgstr "Urządzenie"
 
-msgid "Web UI for handling messages via sms_tool."
-msgstr "Interfejs użytkownika dla sms_tool do obsługi wiadomości SMS."
+msgid "Web UI for receiveling messages via sms_tool. More information about the sms-tool on the"
+msgstr "Interfejs użytkownika dla sms_tool do odbierania wiadomości SMS. Więcej informacji o sms-tool na"
 
-msgid "Web UI for handling USSD codes via sms_tool."
-msgstr "Interfejs użytkownika dla sms_tool do obsługi kodów USSD."
+msgid "Web UI for sending messages via sms_tool. More information about the sms-tool on the"
+msgstr "Interfejs użytkownika dla sms_tool do wysyłania wiadomości SMS. Więcej informacji o sms-tool na"
+
+msgid "Web UI for handling USSD codes via sms_tool. More information about the sms-tool on the"
+msgstr "Interfejs użytkownika dla sms_tool do obsługi kodów USSD. Więcej informacji o sms-tool na"
+
+msgid "eko.one.pl forum"
+msgstr "forum eko.one.pl"
 
 msgid "SIM card"
 msgstr "Karta SIM"
@@ -229,8 +235,8 @@ msgstr "Wiadomości przechowywane są w określonym miejscu (np. na karcie SIM l
 msgid "AT Commands"
 msgstr "Polecenia AT"
 
-msgid "Web UI for handling AT commands via sms_tool."
-msgstr "Interfejs użytkownika dla sms_tool do obsługi poleceń AT."
+msgid "Web UI for handling AT commands via sms_tool. More information about the sms-tool on the"
+msgstr "Interfejs użytkownika dla sms_tool do obsługi poleceń AT. Więcej informacji o sms-tool na"
 
 msgid "Sending commands to modem"
 msgstr "Wysyłanie poleceń do modemu"

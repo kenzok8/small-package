@@ -42,7 +42,7 @@ local smscount = string.match(smsnum, '%d+')
 m = Map("sms_tool", translate("Configuration sms-tool"),
 	translate("Configuration panel for sms_tool and gui application."))
 
-s = m:section(NamedSection, 'general' , "sms_tool" , "<p>&nbsp;</p>" .. translate(""))
+s = m:section(NamedSection, 'general' , "sms_tool" , "" .. translate(""))
 s.anonymous = true
 s:tab("sms", translate("SMS Settings"))
 s:tab("ussd", translate("USSD Codes Settings"))
