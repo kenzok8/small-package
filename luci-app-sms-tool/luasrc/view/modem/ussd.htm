@@ -17,7 +17,7 @@
 -->
 
 <h2><%:USSD Codes%></h2>
-	<label><%:Web UI for handling USSD codes via sms_tool.%></label>
+	<label><%:Web UI for handling USSD codes via sms_tool. More information about the sms-tool on the%> <a href="https://eko.one.pl/?p=openwrt-sms_tool" target="_blank"><%:eko.one.pl forum%></a>.</label>
 	<p></p>
 	<h4><%:Sending USSD codes%></h4>
 	<div class="table" width="100%">
@@ -46,7 +46,7 @@
 
 	<div class="table" width="100%">
 		<div class="tr cbi-rowstyle-2">
-		<div class="td center"><div style="float: left;"><div class="ifacebadge"><a href="https://eko.one.pl/forum/viewtopic.php?id=20096">e1</a></div></div><input type="button" style="margin-left: 35%"; id="sendussd" class="btn cbi-button cbi-button-neutral" value="<%:Send Code%>" /></div>
+		<div class="td center"><input type="button" style="margin-left: 35%"; id="sendussd" class="btn cbi-button cbi-button-neutral" value="<%:Send Code%>" /></div>
 		</div>
 
 	</div>
@@ -75,8 +75,8 @@ window.onload = function readUSER() {
 							var code = fields[1];
 							opt.text = name;
 							opt.value = code.trim();
-    					    opt.innerHTML = name;
-    						select.appendChild(opt);
+    					    		opt.innerHTML = name;
+    							select.appendChild(opt);
 						}
 
 			}

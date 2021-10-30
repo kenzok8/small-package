@@ -10,7 +10,7 @@
 
 	local smsmem = tostring(uci:get("sms_tool", "general", "storage"))
 
-	local sms = tostring(luci.sys.exec("sms_tool -s" .. smsmem .. " -d " .. devv .. " -f '%Y-%m-%d %H:%M' -j recv 2>/dev/null"))
+	local sms = tostring(luci.sys.exec("sms_tool -s" .. smsmem .. " -d " .. devv .. " -f '%Y-%m-%d %H:%M:%S' -j recv 2>/dev/null"))
 	local smsmer = tostring(uci:get("sms_tool", "general", "mergesms"))
 	local smscuta = string.sub (sms, 8)
 	local smscut = smscuta:sub(1, #smscuta - 2)
@@ -56,7 +56,7 @@ th, td {
 td input[type="checkbox"] {
     float: left;
     margin: 0 auto;
-    width: 50%;
+    width: 40%;
 }
 
 tr:nth-child(odd) {background-color: #f5f5f5;}
@@ -272,7 +272,7 @@ if (document.querySelectorAll('input[name="smsn"]:checked').length === document.
 
 
 <h2><%:SMS Messages%></h2>
-	<label><%:Web UI for handling messages via sms_tool.%></label>
+	<label><%:Web UI for receiveling messages via sms_tool. More information about the sms-tool on the%> <a href="https://eko.one.pl/?p=openwrt-sms_tool" target="_blank"><%:eko.one.pl forum%></a>.</label>
 	<p></p>
 	<h4><%:Received Messages%></h4>
 	<div class="table" width="100%">
@@ -285,8 +285,8 @@ if (document.querySelectorAll('input[name="smsn"]:checked').length === document.
 
     	<td class="td left" width="7%"><input type='checkbox' id='allcheck' onclick='toggle(this);'/></td>
     	<td class="td left" width="10%"><strong><%:From%></strong></td>
-    	<td class="td left" width="13%"><strong><%:Received%></strong></td>
-    	<td class="td center" width="60%" ><strong><%:Message%></strong></td>
+    	<td class="td left" width="16%"><strong><%:Received%></strong></td>
+    	<td class="td center" width="66%" ><strong><%:Message%></strong></td>
 
  	</tr>
 	</table>
@@ -296,7 +296,7 @@ if (document.querySelectorAll('input[name="smsn"]:checked').length === document.
 	
 	
 	<div class="td right" style="width:100%;">
-	<div style="float: left;"><div class="ifacebadge"><a href="https://eko.one.pl/forum/viewtopic.php?id=20096">e1</a></div></div>
+	<div style="float: left;"></div>
 	<input type="button" id="delbtn" class="btn cbi-button cbi-button-neutral" value="<%:Refresh SMS%>" onclick="refreshSMS()" />&nbsp;&nbsp;&nbsp;<input type="button" id="delabtn" class="btn cbi-button cbi-button-neutral" value="<%:Delete message(s)%>" onclick="delete_new()" />
 
 	</div>
