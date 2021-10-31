@@ -1,1 +1,2 @@
+chmod +x /etc/init.d/packages >/dev/null 2>&1
 rm -rf /tmp/luci-modulecache /tmp/luci-indexcache*
