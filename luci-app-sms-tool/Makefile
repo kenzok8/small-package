@@ -7,7 +7,7 @@ PKG_NAME:=luci-app-sms-tool
 LUCI_TITLE:=LuCI Support for sms_tool
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:=+sms-tool +kmod-usb-serial +kmod-usb-serial-option +luci-compat
-PKG_VERSION:=1.9.2-2021-10-30
+PKG_VERSION:=1.9.2-2021-11-02
 PKG_LICENSE:=GPLv3
 
 define Package/luci-app-sms-tool/postinst
