@@ -1,5 +1,5 @@
 ## 更新：2021年11月5日：
-1、感谢 [Beginner-Go](https://github.com/Beginner-Go) 大佬提供最近几次修复。
+1、感谢 [Beginner-Go](https://github.com/Beginner-Go) 大佬提供最近几次修复.
 2、已经修复开启视频规则导致软件无法运行问题。主要原因是猴子大佬的规则内容清空了。直接在后台重新更新规则即可。
 
 ## 更新：2021年3月23日：
