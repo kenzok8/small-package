@@ -124,7 +124,7 @@ update_rules() {
                  easylist_rules_local=`cat /usr/share/koolproxy/data/rules/easylistchina.txt  | sed -n '3p'|awk '{print $3,$4}'`
                  fanboy_rules_local=`cat /usr/share/koolproxy/data/rules/fanboy.txt  | sed -n '3p'|awk '{print $3,$4}'`
 		 yhosts_rules_local=`cat /usr/share/koolproxy/data/rules/yhosts.txt  | sed -n '1p' | awk '{print $2,$3}'`
-		 antiad_rules_local=`cat /usr/share/koolproxy/data/rules/anti-ad.txt  | sed -n '2p' | awk '{print $2,$3}'`
+		 antiad_rules_local=`cat /usr/share/koolproxy/data/rules/anti-ad.txt  | sed -n '2p' | cut -d "=" -f2``
 		 koolproxy_rules_local=`cat /usr/share/koolproxy/data/rules/koolproxy.txt  | sed -n '3p'|awk '{print $3,$4}'`
                  mv_rules_local=`cat /usr/share/koolproxy/data/rules/mv.txt  | sed -n '3p'|awk '{print $3,$4}'`
                  echo $(date "+%F %T"): -------------------ABP规则    Version $easylist_rules_local >>$LOGFILE
