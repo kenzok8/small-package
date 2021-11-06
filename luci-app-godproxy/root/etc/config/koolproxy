@@ -6,7 +6,7 @@ config global
 	option koolproxy_mode '1'
 	option koolproxy_host '1'
 	option koolproxy_rules 'koolproxy.txt daily.txt kp.dat user.txt'
-	option thirdparty_rules 'anti-ad.txt'
+	option thirdparty_rules 'mv.txt'
 	option koolproxy_ipv6 '0'
 	option time_update 'nil'
 	
