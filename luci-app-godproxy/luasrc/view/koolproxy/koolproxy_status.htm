@@ -4,9 +4,9 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[koolproxy]], [[status]])%>', null
 		var tb = document.getElementById('koolproxy_status');
 		if (data && tb) {
 			if (data.running) {
-				tb.innerHTML = '<em><b><font color=green><%:KoolproxyR Plus+%> <%:RUNNING%></font></b></em>';
+				tb.innerHTML = '<em><b><font color=green><%:GodProxy 滤广告%> <%:运行中%></font></b></em>';
 			} else {
-				tb.innerHTML = '<em><b><font color=red><%:KoolproxyR Plus+%> <%:NOT RUNNING%></font></b></em>';
+				tb.innerHTML = '<em><b><font color=red><%:GodProxy 滤广告%> <%:未运行%></font></b></em>';
 			}
 		}
 	}
@@ -16,6 +16,6 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[koolproxy]], [[status]])%>', null
 <style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
 <fieldset class="cbi-section">
 	<p id="koolproxy_status">
-		<em><%:Collecting data...%></em>
+		<em><%:收集数据...%></em>
 	</p>
 </fieldset>

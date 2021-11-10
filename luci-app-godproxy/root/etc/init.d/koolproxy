@@ -430,7 +430,6 @@ start_service() {
 	procd_set_param command /usr/share/koolproxy/koolproxy
 	procd_append_param command --mark
 	procd_append_param command --ttl 160
-	procd_append_param command --ipv6
 
 	procd_set_param respawn
 

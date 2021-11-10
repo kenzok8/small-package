@@ -51,7 +51,7 @@ function get_containers()
 
 		if v.Status:find("^Up") then
 			data[index]["_name"] = "<font color='green'>"..v.Names[1]:sub(2).."</font>"
-			data[index]["_status"] = "<a href='"..luci.dispatcher.build_url("admin/docker/container/"..v.Id).."/stats'><font color='green'>".. data[index]["_status"] .. "</font>" .. "<br><font color='#9f9f9f' class='container_cpu_status'></font><br><font color='#9f9f9f' class='container_mem_status'></font><br><font color='#9f9f9f' class='container_network_status'></font></a>"
+			data[index]["_status"] = "<a href='"..luci.dispatcher.build_url("admin/docker/container/"..v.Id).."/stats'><font color='green'>".. data[index]["_status"] .. "</font>" .. "<br /><font color='#9f9f9f' class='container_cpu_status'></font><br /><font color='#9f9f9f' class='container_mem_status'></font><br /><font color='#9f9f9f' class='container_network_status'></font></a>"
 		else
 			data[index]["_name"] = "<font color='red'>"..v.Names[1]:sub(2).."</font>"
 			data[index]["_status"] = '<font class="container_not_running" color="red">'.. data[index]["_status"] .. "</font>"
@@ -89,9 +89,9 @@ function get_containers()
 				data[index]["_image"] = iv.RepoTags and iv.RepoTags[1] or (iv.RepoDigests[1]:gsub("(.-)@.+", "%1") .. ":&lt;none&gt;")
 			end
 		end
-		data[index]["_id_name"] = '<a href='..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'  class="dockerman_link" title="'..translate("Container detail")..'">'.. data[index]["_name"] .. "<br><font color='#9f9f9f'>ID: " ..	data[index]["_id"]
-		.. "</font></a><br>Image: " .. (data[index]["_image"] or "&lt;none&gt;") 
-		.. "<br><font color='#9f9f9f' class='container_size_".. v.Id .."'></font>"
+		data[index]["_id_name"] = '<a href='..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'  class="dockerman_link" title="'..translate("Container detail")..'">'.. data[index]["_name"] .. "<br /><font color='#9f9f9f'>ID: " ..	data[index]["_id"]
+		.. "</font></a><br />Image: " .. (data[index]["_image"] or "&lt;none&gt;") 
+		.. "<br /><font color='#9f9f9f' class='container_size_".. v.Id .."'></font>"
 
 		if type(v.Mounts) == "table" and next(v.Mounts) then
 			for _, v2 in pairs(v.Mounts) do
@@ -113,7 +113,7 @@ function get_containers()
 							v_dest = v_dest .."/".. v_dest_d
 						end
 					end
-					data[index]["_mounts"] = (data[index]["_mounts"] and (data[index]["_mounts"] .. "<br>") or "") .. '<span title="'.. v2.Source.. "￫" .. v2.Destination .. '" ><a href="'..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'/file?path='..v2["Destination"]..'">' .. v_sorce .. "￫" .. v_dest..'</a></span>'
+					data[index]["_mounts"] = (data[index]["_mounts"] and (data[index]["_mounts"] .. "<br />") or "") .. '<span title="'.. v2.Source.. "￫" .. v2.Destination .. '" ><a href="'..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'/file?path='..v2["Destination"]..'">' .. v_sorce .. "￫" .. v_dest..'</a></span>'
 				end
 			end
 		end
@@ -136,7 +136,7 @@ m:append(Template("dockerman/containers_running_stats"))
 s = m:section(SimpleSection)
 s.template = "dockerman/apply_widget"
 s.err=docker:read_status()
-s.err=s.err and s.err:gsub("\n","<br>"):gsub(" ","&nbsp;")
+s.err=s.err and s.err:gsub("\n","<br />"):gsub(" ","&#160;")
 if s.err then
 	docker:clear_status()
 end
