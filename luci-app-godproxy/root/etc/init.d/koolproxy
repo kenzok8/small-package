@@ -178,7 +178,7 @@ __load_exrule() {
 		fi
 
 		if [ ! -f $KP_DIR/data/rules/$file ]; then
-			wget-ssl --quiet --timeout=5 --no-check-certificate $exrule -O $TMP_DIR/$file
+			wget $exrule -q -O $TMP_DIR/$file
 			if [ "$?" == "0" ]; then
 				uci set koolproxy.$1.time="`date +%Y-%m-%d" "%H:%M`"
 				uci commit koolproxy
