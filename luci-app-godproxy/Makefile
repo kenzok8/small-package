@@ -2,51 +2,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-godproxy
 PKG_VERSION:=3.8.5
-PKG_RELEASE:=3-20211109
+PKG_RELEASE:=3-20211112
 
-include $(INCLUDE_DIR)/package.mk
+PKG_MAINTAINER:=panda-mute <wxuzju@gmail.com>
 
-define Package/luci-app-godproxy
-	SECTION:=luci
-	CATEGORY:=LuCI
-	SUBMENU:=3. Applications
-	TITLE:=LuCI support for koolproxy
-	DEPENDS:=+openssl-util +ipset +dnsmasq-full +@BUSYBOX_CONFIG_DIFF +iptables-mod-nat-extra +wget
-	MAINTAINER:=panda-mute <wxuzju@gmail.com>
+LUCI_TITLE:=LuCI support for koolproxy
+LUCI_PKGARCH:=all
+LUCI_DEPENDS:=+koolproxy +openssl-util +ipset +dnsmasq-full +@BUSYBOX_CONFIG_DIFF +iptables-mod-nat-extra +wget
+
+define Package/$(PKG_NAME)/conffiles
+/etc/config/koolproxy
+/usr/share/koolproxy/data/rules/
 endef
 
-define Build/Compile
-endef
+include $(TOPDIR)/feeds/luci/luci.mk
 
-define Package/luci-app-godproxy/conffiles
-	/etc/config/koolproxy
-	/usr/share/koolproxy/data/rules/
-endef
-
-define Package/luci-app-godproxy/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
-	cp -pR ./luasrc/* $(1)/usr/lib/lua/luci
-	$(INSTALL_DIR) $(1)/
-	cp -pR ./root/* $(1)/
-
-ifeq ($(ARCH),aarch64)
-	$(INSTALL_BIN) ./bin/aarch64 $(1)/usr/share/koolproxy/koolproxy
-
-else ifeq ($(ARCH),arm)
-	$(INSTALL_BIN) ./bin/arm $(1)/usr/share/koolproxy/koolproxy
-	
-else ifeq ($(ARCH),i386)
-	$(INSTALL_BIN) ./bin/i386 $(1)/usr/share/koolproxy/koolproxy
-	
-else ifeq ($(ARCH),mips)
-	$(INSTALL_BIN) ./bin/mips $(1)/usr/share/koolproxy/koolproxy
-	
-else ifeq ($(ARCH),mipsel)
-	$(INSTALL_BIN) ./bin/mipsel $(1)/usr/share/koolproxy/koolproxy
-
-else ($(ARCH),x86_64)
-	$(INSTALL_BIN) ./bin/x86_64 $(1)/usr/share/koolproxy/koolproxy
-endif
-endef
-
-$(eval $(call BuildPackage,luci-app-godproxy))
+# call BuildPackage - OpenWrt buildroot signature
