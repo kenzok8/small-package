@@ -12,12 +12,22 @@ e = t:option(Value, "remarks", translate("客户端备注"))
 e.rmempty = true
 e.width = "30%"
 
-e = t:option(Value, "ipaddr", translate("内部IP地址"))
+e = t:option(Value, "ipaddr", translate("内部 IP 地址"))
 e.width = "20%"
 e.datatype = "ip4addr"
 luci.ip.neighbors({family = 4}, function(neighbor)
 	if neighbor.reachable then
 		e:value(neighbor.dest:string(), "%s (%s)" %{neighbor.dest:string(), neighbor.mac})
+	end
+end)
+
+e = t:option(Value,"mac",translate("MAC 地址"))
+e.width = "20%"
+e.rmempty = true
+e.datatype = "macaddr"
+luci.ip.neighbors({family = 4}, function(neighbor)
+	if neighbor.reachable then
+		e:value(neighbor.mac, "%s (%s)" %{neighbor.mac, neighbor.dest:string()})
 	end
 end)
 
