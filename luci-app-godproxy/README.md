@@ -1,10 +1,24 @@
-## 更新：2021年11月9日：
-1、整理 Luci 界面。
+## 更新：2021年11月13日：
+1、感谢 Beginner-Go大神修复以下1-3项： [Beginner-Go](https://github.com/Beginner-Go)  
 
-2、(可能)修复 CPU 占用过高问题。
+1）、整理 Luci 界面。
 
-## 更新：2021年11月8日：
-1、优化部分规则+规则地址变更。
+2）、(可能)修复 CPU 占用过高问题。
+
+3）、修复证书备份与下载。
+
+2、感谢 [godManYYDS](https://github.com/godManYYDS)  大神修复fix rule timeout
+
+3、优化部分规则+规则地址变更。
+
+   A、升级koolrpxy规则，视频规则kp.dat，每日规则daily为2021年10月7日最新版。
+   
+   B、升级ABP规则为：EasyList+ Easylist China + CJX's Annoyance List + CJX's chinese。并默认采用。
+   
+   C、升级kpr_our_rule并合并了某些规则为ikpr_our_rule。
+   
+   D、为缓解服务器压力，默认关闭自动更新，上游规则每周更新一次。
+   
 
 ## 更新：2021年11月5日：
 1、已经修复开启视频规则导致软件无法运行问题。主要原因是猴子大佬的规则内容清空了。直接在后台重新更新规则即可。
@@ -20,9 +34,6 @@
 ## 更新：2021年2月26日（元宵）：
 原来的码云以及coding规则已经无法获取（被封）了。现在托管在github上。
 
-## 更名声明：
-原ledeproxy，于2021年1月23日更名为 GodProxy。特此知晓，以前的规则更新链接会失效！
-
 ## 整理声明：
 GodProxy是基于koolproxyR Plus+重新整理而来。主要参考：
 
@@ -34,7 +45,7 @@ GodProxy是基于koolproxyR Plus+重新整理而来。主要参考：
 
 4、规则来源于 [GodProxy](https://github.com/godros/GodProxy) 。
 
-## 本来是完全没有必要再造一个的，因为浪费时间。但各位大神都好久没有更新了，有些规则更新需要翻墙，有些名字是KP，有些是KPR，KPR Plus，KPR Plus+。所以没有办法，只能暂且叫GodProxy。望理解！
+## 本来是完全没有必要再造一个的，因为浪费时间。但各位大神都好久没有更新了，有些规则更新需要翻墙，有些名字是KP，有些是KPR，KPR Plus，KPR Plus+。所以没有办法，既然用了各位大神的源码和规则就暂且叫GodProxy。望理解！
 
 
 ## 免责声明：
