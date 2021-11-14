@@ -22,20 +22,20 @@ define Package/koolproxy/install
 
 ifeq ($(ARCH),aarch64)
 	$(INSTALL_BIN) ./files/aarch64 $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),arm)
+
+else ifeq ($(ARCH),arm)
 	$(INSTALL_BIN) ./files/arm $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),i386)
+
+else ifeq ($(ARCH),i386)
 	$(INSTALL_BIN) ./files/i386 $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),mips)
+
+else ifeq ($(ARCH),mips)
 	$(INSTALL_BIN) ./files/mips $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),mipsel)
+
+else ifeq ($(ARCH),mipsel)
 	$(INSTALL_BIN) ./files/mipsel $(1)/usr/share/koolproxy/koolproxy
-endif
-ifeq ($(ARCH),x86_64)
+
+else ifeq ($(ARCH),x86_64)
 	$(INSTALL_BIN) ./files/x86_64 $(1)/usr/share/koolproxy/koolproxy
 endif
 endef
