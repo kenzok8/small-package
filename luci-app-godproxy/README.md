@@ -1,15 +1,8 @@
 ## 更新：2021年11月13日：
-1、感谢 Beginner-Go大神修复以下1-3项： [Beginner-Go](https://github.com/Beginner-Go)  
 
-1）、整理 Luci 界面。
+1、整理 Luci 界面。
 
-2）、(可能)修复 CPU 占用过高问题。
-
-3）、修复证书备份与下载。
-
-2、感谢 [godManYYDS](https://github.com/godManYYDS)  大神修复fix rule timeout
-
-3、优化部分规则+规则地址变更。
+2、优化部分规则+规则地址变更。
 
    A、升级koolrpxy规则，视频规则kp.dat，每日规则daily为2021年10月7日最新版。
    
@@ -39,11 +32,9 @@ GodProxy是基于koolproxyR Plus+重新整理而来。主要参考：
 
 1、以前Ameykyl大神的 [KoolProxyR Plus+](https://github.com/Ameykyl/luci-app-koolproxyR) (源码已经2020年4月删除）。源码来源于 [project-openwrt](https://github.com/project-openwrt/luci-app-koolproxyR) 收录的ameykyl的2020年3月最后一次更新。 
 
-2、新的目录来源 [Beginner-Go](https://github.com/Beginner-Go/luci-app-koolproxyR)  
+2、感谢koolproxy官方组、shaoxia、Ameykyl、immortalwrt组、Beginner-Go等的无私奉献！
 
-3、感谢koolproxy官方组、shaoxia、Ameykyl、immortalwrt组、Beginner-Go等的无私奉献！
-
-4、规则来源于 [GodProxy](https://github.com/godros/GodProxy) 。
+3、规则来源于 [GodProxy](https://github.com/godros/GodProxy) 。
 
 ## 本来是完全没有必要再造一个的，因为浪费时间。但各位大神都好久没有更新了，有些规则更新需要翻墙，有些名字是KP，有些是KPR，KPR Plus，KPR Plus+。所以没有办法，既然用了各位大神的源码和规则就暂且叫GodProxy。望理解！
 

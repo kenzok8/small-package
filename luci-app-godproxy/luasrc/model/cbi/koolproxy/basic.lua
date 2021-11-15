@@ -36,14 +36,14 @@ e = t:option(Flag, "enabled", translate("启用"))
 e.rmempty = false
 e.default = 0
 
-e = t:option(Value, "startup_delay", translate("启动延迟"))
-e:value(0, translate("不启用"))
-for _, v in ipairs({5, 10, 15, 25, 40, 60}) do
-	e:value(v, translate("%u 秒") %{v})
-end
-e.datatype = "uinteger"
-e.rmempty = false
-e.default = 0
+--e = t:option(Value, "startup_delay", translate("启动延迟"))
+--e:value(0, translate("不启用"))
+--for _, v in ipairs({5, 10, 15, 25, 40, 60}) do
+--	e:value(v, translate("%u 秒") %{v})
+--end
+--e.datatype = "uinteger"
+--e.rmempty = false
+--e.default = 0
 
 e = t:option(ListValue, "koolproxy_mode", translate("过滤模式"))
 e.rmempty = false
@@ -75,11 +75,11 @@ e:value(0, translate("关闭"))
 e:value(1, translate("开启"))
 e.default = 0
 
-e = t:option(ListValue, "koolproxy_ipv6", translate("IPv6支持"))
-e.rmempty = false
-e:value(0, translate("关闭"))
-e:value(1, translate("开启"))
-e.default = 0
+--e = t:option(ListValue, "koolproxy_ipv6", translate("IPv6支持"))
+--e.rmempty = false
+--e:value(0, translate("关闭"))
+--e:value(1, translate("开启"))
+--e.default = 0
 
 e = t:option(Value, "koolproxy_bp_port", translate("例外端口"))
 e.description = translate("单端口:80&nbsp;&nbsp;多端口:80,443")
@@ -96,7 +96,7 @@ e.rmempty = false
 e:value(0, translate("不过滤"))
 e:value(1, translate("过滤HTTP协议"))
 e:value(2, translate("过滤HTTP(S)协议"))
-e:value(3, translate("全部过滤"))
+e:value(3, translate("过滤全端口"))
 e.default = 1
 
 e = t:option(ListValue, "time_update", translate("定时更新"))

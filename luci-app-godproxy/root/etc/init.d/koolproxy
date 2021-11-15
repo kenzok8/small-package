@@ -247,10 +247,10 @@ get_mode_name() {
 			echo "不过滤"
 		;;
 		1)
-			echo "过滤 HTTP"
+			echo "过滤HTTP协议"
 		;;
 		2)
-			echo "过滤HTTP + HTTPS"
+			echo "过滤HTTP(S)协议"
 		;;
 		3)
 			echo "过滤全端口"
