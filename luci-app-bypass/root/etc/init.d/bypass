@@ -788,7 +788,7 @@ gen_dns(){
 		elif [ "$(uci -q get AdGuardHome.AdGuardHome.redirect)" == "exchange" ]; then
 			uci -q set AdGuardHome.AdGuardHome.enabled='0'
 			redirect="$(uci -q get AdGuardHome.AdGuardHome.old_redirect)"
-			if [ "redirect" ]; then
+			if [ "$redirect" ]; then
 				uci -q set AdGuardHome.AdGuardHome.redirect="$redirect"
 			else
 				uci -q del AdGuardHome.AdGuardHome.redirect
@@ -1035,11 +1035,12 @@ stop(){
 	if [[ $adguardhome == 1 && ! "$GLOBAL_SERVER" ]]; then
 		if [[ -f /etc/init.d/AdGuardHome && "$(uci -q get AdGuardHome.AdGuardHome.redirect)" == "exchange" ]]; then
 			redirect="$(uci -q get AdGuardHome.AdGuardHome.old_redirect)"
-			if [[ ! "redirect" || "redirect" == "exchange" ]]; then
+			if [[ ! "$redirect" || "$redirect" == "exchange" ]]; then
 				uci -q del AdGuardHome.AdGuardHome.redirect
 			else
 				uci -q set AdGuardHome.AdGuardHome.redirect="$redirect"
 			fi
+			uci -q set AdGuardHome.AdGuardHome.enabled='0'
 			uci commit AdGuardHome
 			/etc/init.d/AdGuardHome stop
 		fi
