@@ -10,7 +10,7 @@
 
 	local smsmem = tostring(uci:get("sms_tool", "general", "storage"))
 
-	local sms = tostring(luci.sys.exec("sms_tool -s" .. smsmem .. " -d " .. devv .. " -f '%Y-%m-%d %H:%M:%S' -j recv 2>/dev/null"))
+	local sms = tostring(luci.sys.exec("sms_tool -s" .. smsmem .. " -d " .. devv .. " -f '%Y-%m-%d %H:%M' -j recv 2>/dev/null"))
 	local smsmer = tostring(uci:get("sms_tool", "general", "mergesms"))
 	local smscuta = string.sub (sms, 8)
 	local smscut = smscuta:sub(1, #smscuta - 2)
@@ -100,7 +100,6 @@ tr:nth-child(odd) {background-color: #f5f5f5;}
   						var cell2 = row.insertCell(0);
   						var cell3 = row.insertCell(0);
   						var cell4 = row.insertCell(0);
-
 						cell4.innerHTML = "<input type='checkbox' name='smsn' id="+"btn"+json[d].index+" /><img src='<%=resource%>/icons/delsms.png'>"
  				 		cell3.innerHTML = json[d].sender;
   						cell2.innerHTML = json[d].timestamp;
@@ -120,17 +119,17 @@ tr:nth-child(odd) {background-color: #f5f5f5;}
     			result = [];
 
 			MergeMySMS.forEach(function (o) {
-    			if (!this[o.timestamp] && !this[o.sender]) {
-        		this[o.timestamp] = { index: o.index, sender: o.sender, timestamp: o.timestamp, content: o.content };
-        		result.push(this[o.timestamp]);
+    			if (!this[o.sender]) {
+        		this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content };
+        		result.push(this[o.sender]);
         		return;
     			}
-			if (this[o.timestamp].sender == o.sender) {
-    			this[o.timestamp].content += o.content;
-    			this[o.timestamp].index += '-' + o.index;}
+			if (this[o.sender].total == o.total && this[o.sender].part > 0) {
+    			this[o.sender].content += o.content;
+    			this[o.sender].index += '-' + o.index;}
 			else {
-			this[o.timestamp] = { index: o.index, sender: o.sender, timestamp: o.timestamp, content: o.content };
-        		result.push(this[o.timestamp]);
+			this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content };
+        		result.push(this[o.sender]);
         		return;
 			}
 			}, Object.create(null));
@@ -146,7 +145,6 @@ tr:nth-child(odd) {background-color: #f5f5f5;}
   						var cell2 = row.insertCell(0);
   						var cell3 = row.insertCell(0);
   						var cell4 = row.insertCell(0);
-
 						cell4.innerHTML = "<input type='checkbox' name='smsn' id="+"btn"+json[d].index+" /><img src='<%=resource%>/icons/delsms.png'>"
  				 		cell3.innerHTML = json[d].sender;
   						cell2.innerHTML = json[d].timestamp;
@@ -284,8 +282,8 @@ if (document.querySelectorAll('input[name="smsn"]:checked').length === document.
   	<tr class="tr cbi-rowstyle-2">
 
     	<td class="td left" width="7%"><input type='checkbox' id='allcheck' onclick='toggle(this);'/></td>
-    	<td class="td left" width="10%"><strong><%:From%></strong></td>
-    	<td class="td left" width="16%"><strong><%:Received%></strong></td>
+    	<td class="td left" width="12%"><strong><%:From%></strong></td>
+    	<td class="td left" width="14%"><strong><%:Received%></strong></td>
     	<td class="td center" width="66%" ><strong><%:Message%></strong></td>
 
  	</tr>

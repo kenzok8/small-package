@@ -35,8 +35,8 @@ e = t:option(ListValue, "proxy_mode", translate("访问控制"))
 e.rmempty = false
 e.width = "20%"
 e:value(0,translate("不过滤"))
-e:value(1,translate("过滤 HTTP"))
-e:value(2,translate("过滤HTTP + HTTPS"))
+e:value(1,translate("过滤HTTP协议"))
+e:value(2,translate("过滤HTTP(S)协议"))
 e:value(3,translate("过滤全端口"))
 e.default = 1
 
