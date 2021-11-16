@@ -25,9 +25,10 @@ fi
 	c1=0
 	c2=0
 	c3=0
+	c4=0
 	while ! curl --retry 3 -m 5 https://op.supes.top >/dev/null 2>&1;do
 		echo "无法连接仓库服务器,请检查网络. $c1" | sed -e "s/^/$(date +%Y-%m-%d" "%H:%M:%S) /" >>/tmp/opkgupdate.log
-		[ $c1 == 120 ] && return || let c1++
+		[ $c1 eq 120 ] && return || let c1++
 		sleep 5
 	done
 			while :; do
@@ -40,15 +41,12 @@ fi
 					upopkg="$insed $def"
 					if [ "$upopkg" != " " ]; then
 							for ipk in $upopkg; do
-								while :; do
+								while [ ! "$(opkg list-installed | grep -w $ipk)" ]; do
 									opkg install --force-overwrite --force-checksum --force-depends $ipk 2>&1 | sed -e "s/^/$(date +%Y-%m-%d" "%H:%M:%S) /" >>/tmp/opkgupdate.log 2>&1 || true
 									if [[ $ipk == luci-app-* ]]; then
 										opkg install --force-overwrite --force-checksum luci-i18n-"$(echo $ipk | cut -d - -f 3-4)"-zh-cn 2>&1 | sed -e "s/^/$(date +%Y-%m-%d" "%H:%M:%S) /" >>/tmp/opkgupdate.log 2>&1 || true
 									fi
-									[[ "$(opkg list-installed | grep $ipk)" ]] && {
-										break
-									}
-									[ $c2 == 3 ] && {
+									[ $c2 eq 3 ] && {
 										echo $ipk >> $BKOPKG/failed.txt
 										sed -i '/$ipk/d' $BKOPKG/user_installed.opkg
 										break
@@ -59,20 +57,24 @@ fi
 							done
 							rm -f /etc/config/*-opkg
 					fi
-					[[ -f $BKOPKG/failed.txt &&  -f /etc/inited ]] && {
+					while [[ -f $BKOPKG/failed.txt && -f /etc/inited && $c4 -le 5 ]]; do
 						for ipk in $(cat $BKOPKG/failed.txt); do
 							opkg install --force-overwrite --force-checksum --force-depends $ipk 2>&1 | sed -e "s/^/$(date +%Y-%m-%d" "%H:%M:%S) /" >>/tmp/opkgupdate.log 2>&1 || true
 							[[ "$(opkg list-installed | grep $ipk)" ]] && {
-								sed -i '/$ipk/d' $BKOPKG/failed.txt
+								sed -i "/$ipk/d" $BKOPKG/failed.txt
+								[ -n "$(cat $BKOPKG/failed.txt)" ] || rm -f $BKOPKG/failed.txt
 							}
 						done
-						mv $BKOPKG/failed.txt $BKOPKG/failed_.txt
-					}
+						let c4++
+						sleep 1
+						rm -f /var/lock/opkg.lock
+					done
+					mv $BKOPKG/failed.txt $BKOPKG/failed_.txt >/dev/null 2>&1
 					touch /etc/inited
 					rm -f /var/lock/opkg.lock
 					break
 				fi
-				[ $c3 == 10 ] && break || let c3++
+				[ $c3 eq 10 ] && break || let c3++
 			done
 			rm -f /var/lock/opkg.lock
 }
