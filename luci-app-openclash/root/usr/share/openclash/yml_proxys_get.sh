@@ -366,12 +366,12 @@ do
    server_type=$(ruby_read_hash "$proxy_hash" "['proxies'][$count]['type']")
 
    LOG_OUT "Start Getting【$CONFIG_NAME - $server_type - $server_name】Proxy Setting..."
-
+   
    if [ "$servers_update" -eq 1 ] && [ ! -z "$server_num" ]; then
 #更新已有节点
       uci_set="uci -q set openclash.@servers["$server_num"]."
-      uci_add="uci -q add_list $name.$uci_name_tmp."
-      uci_del="uci -q del_list $name.$uci_name_tmp."
+      uci_add="uci -q add_list openclash.@servers["$server_num"]."
+      uci_del="uci -q del_list openclash.@servers["$server_num"]."
 
       ${uci_set}manual="0"
       ${uci_set}name="$server_name"
@@ -380,9 +380,9 @@ do
 #添加新节点
       name=openclash
       uci_name_tmp=$(uci add $name servers)
-
       uci_set="uci -q set $name.$uci_name_tmp."
       uci_add="uci -q add_list $name.$uci_name_tmp."
+      uci_del="uci -q del_list $name.$uci_name_tmp."
 
       if [ "$config_group_exist" -eq 0 ] && [ "$servers_if_update" = "1" ] && [ "$servers_update" -eq 1 ]; then
          ${uci_set}enabled="0"
@@ -423,6 +423,22 @@ do
    if Value['proxies'][$count].key?('udp') then
       udp = '${uci_set}udp=' + Value['proxies'][$count]['udp'].to_s
       system(udp)
+   end
+   }.join;
+   
+   Thread.new{
+   #interface-name
+   if Value['proxies'][$count].key?('interface-name') then
+      interface_name = '${uci_set}interface_name=' + Value['proxies'][$count]['interface-name'].to_s
+      system(interface_name)
+   end
+   }.join;
+   
+   Thread.new{
+   #routing-mark
+   if Value['proxies'][$count].key?('routing-mark') then
+      routing_mark = '${uci_set}routing_mark=' + Value['proxies'][$count]['routing-mark'].to_s
+      system(routing_mark)
    end
    }.join;
    
