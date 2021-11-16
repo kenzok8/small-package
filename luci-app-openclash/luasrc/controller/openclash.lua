@@ -16,6 +16,7 @@ function index()
 	entry({"admin", "services", "openclash", "startlog"},call("action_start")).leaf=true
 	entry({"admin", "services", "openclash", "refresh_log"},call("action_refresh_log"))
 	entry({"admin", "services", "openclash", "del_log"},call("action_del_log"))
+	entry({"admin", "services", "openclash", "del_start_log"},call("action_del_start_log"))
 	entry({"admin", "services", "openclash", "close_all_connection"},call("action_close_all_connection"))
 	entry({"admin", "services", "openclash", "reload_firewall"},call("action_reload_firewall"))
 	entry({"admin", "services", "openclash", "update_subscribe"},call("action_update_subscribe"))
@@ -85,11 +86,9 @@ local core_path_mode = uci:get("openclash", "config", "small_flash_memory")
 if core_path_mode ~= "1" then
 	dev_core_path="/etc/openclash/core/clash"
 	tun_core_path="/etc/openclash/core/clash_tun"
-	game_core_path="/etc/openclash/core/clash_game"
 else
 	dev_core_path="/tmp/etc/openclash/core/clash"
 	tun_core_path="/tmp/etc/openclash/core/clash_tun"
-	game_core_path="/tmp/etc/openclash/core/clash_game"
 end
 
 local function is_running()
@@ -219,20 +218,11 @@ else
 end
 end
 
-local function coregamecv()
-if not nixio.fs.access(game_core_path) then
-  return "0"
-else
-	return luci.sys.exec(string.format("%s -v 2>/dev/null |awk -F ' ' '{print $2}'",game_core_path))
-end
-end
-
 local function corelv()
 	luci.sys.call("sh /usr/share/openclash/clash_version.sh")
 	local core_lv = luci.sys.exec("sed -n 1p /tmp/clash_last_version 2>/dev/null")
 	local core_tun_lv = luci.sys.exec("sed -n 2p /tmp/clash_last_version 2>/dev/null")
-	local core_game_lv = luci.sys.exec("sed -n 3p /tmp/clash_last_version 2>/dev/null")
-	return core_lv .. "," .. core_tun_lv .. "," .. core_game_lv
+	return core_lv .. "," .. core_tun_lv
 end
 
 local function opcv()
@@ -851,7 +841,6 @@ function action_update()
 			coremodel = coremodel(),
 			corecv = corecv(),
 			coretuncv = coretuncv(),
-			coregamecv = coregamecv(),
 			opcv = opcv(),
 			corever = corever(),
 			upchecktime = upchecktime(),
@@ -930,7 +919,7 @@ function action_refresh_log()
 	luci.http.prepare_content("application/json")
 	local logfile="/tmp/openclash.log"
 	local file = io.open(logfile, "r+")
-	local info, len, line, lens, cache
+	local info, len, line, lens, cache, ex_match
 	local data = ""
 	local limit = 1000
 	local log_tb = {}
@@ -952,28 +941,40 @@ function action_refresh_log()
 	string.gsub(info, '[^\n]+', function(w) table.insert(log_tb, w) end, lens)
 	for i=1, lens do
 		line = log_tb[i]:reverse()
-		if not string.find (line, "level=") then
-			if not string.find (line, "【") and not string.find (line, "】") then
-   			line = string.sub(line, 0, 20)..luci.i18n.translate(string.sub(line, 21, -1))
-   		else
-   			local a = string.find (line, "【")
-   			local b = string.find (line, "】")+2
-   			if a <= 21 then
-   				line = string.sub(line, 0, b)..luci.i18n.translate(string.sub(line, b+1, -1))
-   			elseif b < string.len(line) then
-   				line = string.sub(line, 0, 20)..luci.i18n.translate(string.sub(line, 21, a-1))..string.sub(line, a, b)..luci.i18n.translate(string.sub(line, b+1, -1))
-   			elseif b == string.len(line) then
-   				line = string.sub(line, 0, 20)..luci.i18n.translate(string.sub(line, 21, a-1))..string.sub(line, a, b)
+		ex_match = false
+		while true do
+			ex_keys = {"^Sec%-Fetch%-Mode", "^User%-Agent", "^Access%-Control", "^Accept", "^Origin", "^Referer", "^Connection"}
+    	for key=1, #ex_keys do
+    		if string.find (line, ex_keys[key]) then
+    			ex_match = true
+    			break
+    		end
+    	end
+    	if ex_match then break end
+    	if not string.find (line, "level=") then
+				if not string.find (line, "【") and not string.find (line, "】") then
+   				line = string.sub(line, 0, 20)..luci.i18n.translate(string.sub(line, 21, -1))
+   			else
+   				local a = string.find (line, "【")
+   				local b = string.find (line, "】")+2
+   				if a <= 21 then
+   					line = string.sub(line, 0, b)..luci.i18n.translate(string.sub(line, b+1, -1))
+   				elseif b < string.len(line) then
+   					line = string.sub(line, 0, 20)..luci.i18n.translate(string.sub(line, 21, a-1))..string.sub(line, a, b)..luci.i18n.translate(string.sub(line, b+1, -1))
+   				elseif b == string.len(line) then
+   					line = string.sub(line, 0, 20)..luci.i18n.translate(string.sub(line, 21, a-1))..string.sub(line, a, b)
+   				end
    			end
-   		end
-		end
-		if data == "" then
-    	data = line
-    elseif log_len == 0 and i == limit then
-    	data = data .."\n" .. line .. "\n..."
-    else
-    	data = data .."\n" .. line
-  	end
+			end
+			if data == "" then
+    		data = line
+    	elseif log_len == 0 and i == limit then
+    		data = data .."\n" .. line .. "\n..."
+    	else
+    		data = data .."\n" .. line
+  		end
+    	break
+    end
 	end
 	luci.http.write_json({
 		len = len,
@@ -983,6 +984,11 @@ end
 
 function action_del_log()
 	luci.sys.exec(": > /tmp/openclash.log")
+	return
+end
+
+function action_del_start_log()
+	luci.sys.exec(": > /tmp/openclash_start.log")
 	return
 end
 
