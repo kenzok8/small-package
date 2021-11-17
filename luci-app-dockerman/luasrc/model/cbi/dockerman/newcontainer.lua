@@ -148,7 +148,6 @@ local resolve_cli = function(cmd_line)
 		'ipc',
 		'isolation',
 		'kernel_memory',
-		'log_driver',
 		'mac_address',
 		'm',
 		'memory',
@@ -223,7 +222,6 @@ local resolve_cli = function(cmd_line)
 		'label_file',
 		'link',
 		'link_local_ip',
-		'log_driver',
 		'log_opt',
 		'network_alias',
 		'p',
@@ -400,12 +398,14 @@ elseif cmd_line and cmd_line:match("^duplicate/[^/]+$") then
 				table.insert( default_config.sysctl, k.."="..v )
 			end
 		end
-
-		if create_body.HostConfig.LogConfig and create_body.HostConfig.LogConfig.Config and type(create_body.HostConfig.LogConfig.Config) == "table" then
-			default_config.log_opt = {}
-			for k, v in pairs(create_body.HostConfig.LogConfig.Config) do
-				table.insert( default_config.log_opt, k.."="..v )
+		if create_body.HostConfig.LogConfig then
+			if create_body.HostConfig.LogConfig.Config and type(create_body.HostConfig.LogConfig.Config) == "table" then
+				default_config.log_opt = {}
+				for k, v in pairs(create_body.HostConfig.LogConfig.Config) do
+					table.insert( default_config.log_opt, k.."="..v )
+				end
 			end
+			default_config.log_driver = create_body.HostConfig.LogConfig.Type or nil
 		end
 
 		if create_body.HostConfig.PortBindings and type(create_body.HostConfig.PortBindings) == "table" then
@@ -651,6 +651,14 @@ o:depends("advance", 1)
 o.datatype="uinteger"
 o.default = default_config.blkio_weight or nil
 
+o = s:option(Value, "log_driver",
+	translate("Logging driver"),
+	translate("The logging driver for the container"))
+o.placeholder = "json-file"
+o.rmempty = true
+o:depends("advance", 1)
+o.default = default_config.log_driver or nil
+
 o = s:option(DynamicList, "log_opt",
 	translate("Log driver options"),
 	translate("The logging configuration for this container"))
@@ -701,6 +709,7 @@ m.handle = function(self, state, data)
 	local dns = data.dns
 	local cap_add = data.cap_add
 	local sysctl = {}
+	local log_driver = data.log_driver
 
 	tmp = data.sysctl
 	if type(tmp) == "table" then
@@ -859,7 +868,10 @@ m.handle = function(self, state, data)
 	create_body["HostConfig"]["Devices"] = device
 	create_body["HostConfig"]["Sysctls"] = sysctl
 	create_body["HostConfig"]["CapAdd"] = cap_add
-	create_body["HostConfig"]["LogConfig"] = next(log_opt) ~= nil and { Config = log_opt } or nil
+	create_body["HostConfig"]["LogConfig"] = {
+		Config = log_opt,
+		Type = log_driver
+	}
 
 	if network == "bridge" then
 		create_body["HostConfig"]["Links"] = link

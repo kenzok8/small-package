@@ -783,7 +783,7 @@ gen_dns(){
 				uci -q set AdGuardHome.AdGuardHome.enabled='1'
 				uci -q set AdGuardHome.AdGuardHome.redirect='exchange'
 				uci commit AdGuardHome
-				/etc/init.d/AdGuardHome restart
+				/etc/init.d/AdGuardHome restart >/dev/null 2>&1
 			fi
 		elif [ "$(uci -q get AdGuardHome.AdGuardHome.redirect)" == "exchange" ]; then
 			uci -q set AdGuardHome.AdGuardHome.enabled='0'

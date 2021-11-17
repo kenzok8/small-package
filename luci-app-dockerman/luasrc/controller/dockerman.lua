@@ -45,8 +45,6 @@ function index()
 	entry({"admin", "docker", "newnetwork"}, form("dockerman/newnetwork")).leaf=true
 	entry({"admin", "docker", "container"}, form("dockerman/container")).leaf=true
 
-	entry({"admin", "docker", "call"}, call("action_call_docker")).leaf=true
-
 	entry({"admin", "docker", "container_stats"}, call("action_get_container_stats")).leaf=true
 	entry({"admin", "docker", "containers_stats"}, call("action_get_containers_stats")).leaf=true
 	entry({"admin", "docker", "get_system_df"}, call("action_get_system_df")).leaf=true
@@ -63,10 +61,6 @@ function index()
 	entry({"admin", "docker", "images_tag"}, call("tag_image")).leaf=true
 	entry({"admin", "docker", "images_untag"}, call("untag_image")).leaf=true
 	entry({"admin", "docker", "confirm"}, call("action_confirm")).leaf=true
-end
-
-function action_call_docker()
-	
 end
 
 function action_get_system_df()
@@ -412,7 +406,7 @@ function upload_archive(container_id)
 		body = rec_send
 	})
 
-	local msg = res and res.body and res.body.message or nil
+	local msg = res and res.message or res.body and res.body.message or nil
 	luci.http.status(res and res.code or 500, msg or "unknow")
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({message = msg or "unknow"})
