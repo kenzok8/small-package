@@ -226,7 +226,8 @@
 			var tarHeader = TarFileEntryHeader.default();
 			var tarFileEntryHeader = new TarFileEntryHeader
 				(
-					ByteHelper.bytesToStringUTF8(fileName),
+					// ByteHelper.bytesToStringUTF8(fileName),
+					fileName,
 					tarHeader.fileMode,
 					tarHeader.userIDOfOwner,
 					tarHeader.userIDOfGroup,
