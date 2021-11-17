@@ -74,11 +74,11 @@ while :;do
 	fi
 #smartdns
 	if [ $smartdns = 1 ];then
-		t=`ps -w | grep smartdns-le | grep -v grep | wc -l`
+		t=`ps -w | grep smartdns | grep -v grep | wc -l`
 		if [ $t = 0 ];then
 			echolog "SmartDNS Error. Restart!"
-			killall -q -9 smartdns-le
-			$(which smartdns-le) -c /var/etc/smartdns/smartdns.conf
+			killall -q -9 smartdns
+			$(which smartdns) -c /var/etc/smartdns/smartdns.conf
 		fi
 	fi
 #chinadns-ng
