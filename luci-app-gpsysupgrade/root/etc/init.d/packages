@@ -26,7 +26,7 @@ fi
 	c2=0
 	c3=0
 	c4=0
-	while ! curl --retry 3 -m 5 https://op.supes.top >/dev/null 2>&1;do
+	while ! curl --retry 3 -m 5 https://op.dllkids.xyz >/dev/null 2>&1;do
 		echo "无法连接仓库服务器,请检查网络. $c1" | sed -e "s/^/$(date +%Y-%m-%d" "%H:%M:%S) /" >>/tmp/opkgupdate.log
 		[ $c1 eq 120 ] && return || let c1++
 		sleep 5
