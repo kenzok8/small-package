@@ -6,7 +6,7 @@ config global
 	option koolproxy_mode '1'
 	option koolproxy_host '1'
 	option koolproxy_rules 'koolproxy.txt daily.txt kp.dat user.txt'
-	option thirdparty_rules 'ABP.txt'
+	option thirdparty_rules 'yhosts.txt'
 	option koolproxy_ipv6 '0'
 	option time_update 'nil'
 	
@@ -18,15 +18,8 @@ config acl_rule
 config rss_rule
         option file 'ikprule.txt'
 	option name 'ikpr_our_rule'
-	option url 'https://cdn.jsdelivr.net/gh/project-lede/koolproxy@master/rules/ikprule.txt'
+	option url 'https://cdn.jsdelivr.net/gh/project-lede/koolproxy@main/rules/ikprule.txt'
 	option load '1'
-	
-config rss_rule
-	option load '1'
-	option name 'adwar规则'
-	option url 'https://cdn.jsdelivr.net/gh/project-lede/koolproxy@master/rules/adwars.txt'
-	option file 'adwars.txt'
-	
 config usetips
 	option load '0'
 	option name '1'
