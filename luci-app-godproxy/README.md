@@ -1,42 +1,13 @@
-## 更新：2021年11月13日：
-
-1、整理 Luci 界面。
-
-2、优化部分规则+规则地址变更。
-
-   A、升级koolrpxy规则，视频规则kp.dat，每日规则daily为2021年10月7日最新版。
-   
-   B、升级ABP规则为：EasyList+ Easylist China + CJX's Annoyance List + CJX's chinese。并默认采用。
-   
-   C、升级kpr_our_rule并合并了某些规则为ikpr_our_rule。
-   
-   D、为缓解服务器压力，默认关闭自动更新，上游规则每周更新一次。
-   
-
-## 更新：2021年11月5日：
-1、已经修复开启视频规则导致软件无法运行问题。主要原因是猴子大佬的规则内容清空了。直接在后台重新更新规则即可。
-
-2、修复anti-ad获取版本问题。
-
-## 更新：2021年3月23日：
-感谢 [maple's sky](https://github.com/maplesky) 大佬提供技术支持，修复状态栏不动态问题。
-
-## 更新：2021年3月4日：
-感谢 [xiaoqi2020](https://github.com/xiaoqi2020) 提供，选择规则托管国内。
-
-## 更新：2021年2月26日（元宵）：
-原来的码云以及coding规则已经无法获取（被封）了。现在托管在github上。
-
 ## 整理声明：
-GodProxy是基于koolproxyR Plus+重新整理而来。主要参考：
+iKoolProxy是[Beginner-Go](https://github.com/Beginner-Go) 大神基于koolproxyR Plus+重新整理而来。主要参考：
 
 1、以前Ameykyl大神的 [KoolProxyR Plus+](https://github.com/Ameykyl/luci-app-koolproxyR) (源码已经2020年4月删除）。源码来源于 [project-openwrt](https://github.com/project-openwrt/luci-app-koolproxyR) 收录的ameykyl的2020年3月最后一次更新。 
 
 2、感谢koolproxy官方组、shaoxia、Ameykyl、immortalwrt组、Beginner-Go等的无私奉献！
 
-3、规则来源于 [GodProxy](https://github.com/godros/GodProxy) 。
+3、规则来源于 [KoolProxy](https://github.com/godros/koolproxy) 。在此特别鸣谢 [CatsTeam](https://github.com/Cats-Team/AdRules) ，因为ABP和Fanboy规则来源他们。
 
-## 本来是完全没有必要再造一个的，因为浪费时间。但各位大神都好久没有更新了，有些规则更新需要翻墙，有些名字是KP，有些是KPR，KPR Plus，KPR Plus+。所以没有办法，既然用了各位大神的源码和规则就暂且叫GodProxy。望理解！
+## 本来是完全没有必要再造一个的，因为浪费时间。但各位大神都好久没有更新了，有些规则更新需要翻墙，有些名字是KP，有些是KPR，KPR Plus，KPR Plus+。既然在koolproxy上整理而来就暂且叫iKoolProxy。望理解！
 
 
 ## 免责声明：
@@ -46,7 +17,7 @@ KoolProxy 可以对 https 网络数据进行识别代理，使用 https 功能�
 
 ## 1、前言
 感謝 koolshare.cn 提供 KoolProxy, 使用风险由用户自行承担
-本程序运行需要联网下载最新的 KoolProxy 到内存中运行, 也正因此本程序大小可以忽略不计.为了区分，暂且更名为：GodProxy
+本程序运行需要联网下载最新的 KoolProxy 到内存中运行, 也正因此本程序大小可以忽略不计.
 
 ## 2、简介
 本软件包是 KoolProxy 的 LuCI 控制界面,
@@ -138,7 +109,6 @@ iptables -t nat -L PREROUTING
 ### 9、第三方规则（已做了转换，koolproxy能识别，不要用乘风大神的通用规则，会导致koolproxy停止运行）
 
 [ABP规则]
-（ABP规则是CJX's Annoyance List+China+EasyList的二合一规则） 注：CJX's Annoyance List (反自我推广,移除anti adblock,防跟踪规则列表)是"EasyList China+EasyList" & "EasyPrivacy"的补充）
 
 [Yhosts规则]
 
