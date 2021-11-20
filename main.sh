@@ -65,7 +65,7 @@ git clone --depth 1 https://github.com/kenzok78/luci-app-netspeedtest
 git clone --depth 1 https://github.com/kenzok78/udp2raw
 git clone --depth 1 https://github.com/kenzok78/luci-theme-argonne.git
 
-svn co https://github.com/Lienol/openwrt/trunk/package/lean/luci-app-autoreboot
+svn co https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
 svn co https://github.com/coolsnowwolf/lede/trunk/package/network/services/shellsync
