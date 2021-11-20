@@ -1,0 +1,142 @@
+#!/bin/sh /etc/rc.common
+
+START=19
+
+boot() {
+	XBOOT=1 start
+}
+
+add_wizard() {
+	[ "x$XBOOT" = "x1" ] && return 0
+	local cfg="$1"
+	local wan_proto wan_ipaddr wan_netmask wan_gateway wan_pppoe_user wan_pppoe_pass
+	local wifi_ssid wifi_key
+	local lan_ipaddr lan_netmask lan_dns lan_gateway dhcp
+	local device ipv6
+
+	config_get wan_proto "$cfg" wan_proto
+
+	device=$(uci get network.wan.device 2>/dev/null)
+	case "${wan_proto}" in
+		dhcp)
+			uci delete network.wan
+			uci set network.wan=interface
+			uci set network.wan.device="$device"
+			uci set network.wan.proto='dhcp'
+			uci set network.wan.metric='40'
+		;;
+		static)
+			config_get wan_ipaddr "$cfg" wan_ipaddr
+			config_get wan_netmask "$cfg" wan_netmask
+			config_get wan_gateway "$cfg" wan_gateway
+			test -n "${wan_ipaddr}" && test -n "${wan_netmask}" && {
+				uci delete network.wan
+				uci set network.wan=interface
+				uci set network.wan.proto='static'
+				uci set network.wan.force_link='0'
+				uci set network.wan.device="$device"
+				uci set network.wan.metric='40'
+				uci set network.wan.ipaddr="${wan_ipaddr}"
+				uci set network.wan.netmask="${wan_netmask}"
+				uci set network.wan.gateway="${wan_gateway}"
+			
+			config_get wan_dns "$cfg" wan_dns
+				test -n "${wan_dns}" && {
+					uci set network.wan.peerdns='0'
+					uci set network.wan.dns="${wan_dns}"
+				}
+			}
+		;;
+		pppoe)
+			config_get wan_pppoe_user "$cfg" wan_pppoe_user
+			config_get wan_pppoe_pass "$cfg" wan_pppoe_pass
+			uci delete network.wan
+			uci set network.wan=interface
+			uci set network.wan.proto='pppoe'
+			uci set network.wan.device="$device"
+			uci set network.wan.metric='40'
+			uci set network.wan.username="${wan_pppoe_user}"
+			uci set network.wan.password="${wan_pppoe_pass}"
+			uci set network.wan.keepalive='5 5'
+			uci set network.wan.mtu='1492'
+
+			uci get network.wan6 2>/dev/null && {
+				uci set network.wan6.device='@wan'
+				uci set network.wan6.reqaddress='try'
+				uci set network.wan6.reqprefix='auto'
+			}
+		;;
+	esac
+
+	config_get lan_ipaddr "$cfg" lan_ipaddr
+	config_get lan_netmask "$cfg" lan_netmask
+	test -n "${lan_ipaddr}" && test -n "${lan_netmask}" && {
+		uci set network.lan.ipaddr="${lan_ipaddr}"
+		uci set network.lan.netmask="${lan_netmask}"
+	}
+
+	config_get wifi_ssid "$cfg" wifi_ssid
+	config_get wifi_key "$cfg" wifi_key
+
+	test -n "${wifi_ssid}" && test -n "${wifi_key}" && {
+		for idx in `seq 0 64`; do
+			uci get wireless.@wifi-iface[$idx] 2>/dev/null || break
+			[ "$(uci get wireless.@wifi-iface[$idx].mode 2>/dev/null)" = "ap" ] && {
+				uci set wireless.@wifi-iface[$idx].ssid="${wifi_ssid}"
+				uci set wireless.@wifi-iface[$idx].key="${wifi_key}"
+				uci set wireless.@wifi-iface[$idx].encryption='psk2'
+			}
+		done
+	}
+
+	config_get siderouter "$cfg" siderouter
+	config_get lan_gateway "$cfg" lan_gateway
+	config_get dhcp "$cfg" dhcp
+	config_get lan_dns "$cfg" lan_dns
+
+	if [ -n "${siderouter}" ]; then
+		uci -q set network.lan.gateway="${lan_gateway}"
+		[ -n "$lan_dns" ] && uci -q set network.lan.dns="${lan_dns}" || uci -q set network.lan.dns='223.5.5.5'
+		[ -n "$dhcp" ] && uci -q set dhcp.lan.ignore="1" || uci -q del dhcp.lan.ignore
+	else
+		uci -q del network.lan.gateway
+		uci -q del dhcp.lan.ignore
+		uci -q set network.lan.dns="${lan_dns}"
+	fi
+	
+	config_get ipv6 "$cfg" ipv6
+
+	test -n "${ipv6}" && {
+		uci -q delete dhcp.lan.ra
+		uci -q delete dhcp.lan.dhcpv6
+		uci -q set network.lan.delegate='0'
+		uci -q set network.wan.ipv6='0'
+		uci -q delete network.globals.ula_prefix
+		uci commit dhcp
+		/etc/init.d/odhcpd disable
+		/etc/init.d/odhcpd stop
+	} || {
+		uci -q set dhcp.lan.ra='hybrid'
+		uci -q set dhcp.lan.dhcpv6='hybrid'
+		uci -q del network.lan.delegate
+		uci -q set network.wan.ipv6='auto'
+		uci commit dhcp
+		/etc/init.d/odhcpd enable
+		/etc/init.d/odhcpd start
+	}
+
+	uci commit network
+	uci commit wireless
+	(
+	 /etc/init.d/network reload
+	 /etc/init.d/dnsmasq reload)&
+}
+
+start() {
+	config_load wizard
+	config_foreach add_wizard wizard
+}
+
+restart() {
+	XRELOAD=1 start
+}
