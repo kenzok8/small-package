@@ -167,9 +167,3 @@ msgstr "软件包自动更新"
 
 msgid "Firmware Upgrade Notice"
 msgstr "固件更新提醒"
-
-msgid "Enable IPv6"
-msgstr "启用IPv6"
-
-msgid "Enable/Disable IPv6"
-msgstr "一键开启/关闭 IPv6"
