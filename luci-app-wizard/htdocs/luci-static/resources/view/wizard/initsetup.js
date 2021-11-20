@@ -70,6 +70,7 @@ return view.extend({
 
 		o = s.taboption('wansetup', form.Flag, 'ipv6', _('Enable IPv6'), _('Enable/Disable IPv6'));
 		o.default = o.enabled;
+		o.rmempty = false;
 
 		if (has_wifi) {
 			o = s.taboption('wifisetup', form.Value, 'wifi_ssid', _('<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>'));
@@ -94,6 +95,7 @@ return view.extend({
 		o.cast = 'string';
 
 		o = s.taboption('lansetup', form.Flag, 'siderouter', _('Siderouter'));
+		o.rmempty = false;
 		
 		o = s.taboption('lansetup', form.Value, 'lan_gateway', _('IPv4 gateway'));
 		o.depends('siderouter', '1');
