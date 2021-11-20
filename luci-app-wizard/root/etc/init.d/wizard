@@ -94,11 +94,11 @@ add_wizard() {
 	config_get dhcp "$cfg" dhcp
 	config_get lan_dns "$cfg" lan_dns
 
-	if [ -n "${siderouter}" ]; then
+	if [ "${siderouter}" == "1" ]; then
 		uci -q set network.lan.gateway="${lan_gateway}"
 		[ -n "$lan_dns" ] && uci -q set network.lan.dns="${lan_dns}" || uci -q set network.lan.dns='223.5.5.5'
 		[ -n "$dhcp" ] && uci -q set dhcp.lan.ignore="1" || uci -q del dhcp.lan.ignore
-	else
+	elif [ "${siderouter}" == "0" ]; then
 		uci -q del network.lan.gateway
 		uci -q del dhcp.lan.ignore
 		uci -q set network.lan.dns="${lan_dns}"
@@ -106,7 +106,7 @@ add_wizard() {
 	
 	config_get ipv6 "$cfg" ipv6
 
-	test -n "${ipv6}" && {
+	if [ "${ipv6}" == "0" ]; then
 		uci -q delete dhcp.lan.ra
 		uci -q delete dhcp.lan.dhcpv6
 		uci -q set network.lan.delegate='0'
@@ -115,7 +115,7 @@ add_wizard() {
 		uci commit dhcp
 		/etc/init.d/odhcpd disable
 		/etc/init.d/odhcpd stop
-	} || {
+	elif [ "${ipv6}" == "1" ]; then
 		uci -q set dhcp.lan.ra='hybrid'
 		uci -q set dhcp.lan.dhcpv6='hybrid'
 		uci -q del network.lan.delegate
@@ -123,7 +123,7 @@ add_wizard() {
 		uci commit dhcp
 		/etc/init.d/odhcpd enable
 		/etc/init.d/odhcpd start
-	}
+	fi
 
 	uci commit network
 	uci commit wireless
