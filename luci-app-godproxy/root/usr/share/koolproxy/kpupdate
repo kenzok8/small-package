@@ -114,26 +114,25 @@ update_rules() {
 	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/kp.dat' -q -O $KP_DIR/data/rules/kp.dat
 	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/daily.txt' -q -O $KP_DIR/data/rules/daily.txt
 	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/koolproxy.txt' -q -O $KP_DIR/data/rules/koolproxy.txt
-	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/user.txt' -q -O $KP_DIR/data/rules/user.txt
 	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/yhosts.txt' -q -O $KP_DIR/data/rules/yhosts.txt
-	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/fanboy.txt' -q -O $KP_DIR/data/rules/fanboy.txt
-	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/ABP.txt' -q -O $KP_DIR/data/rules/ABP.txt
+	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/steven.txt' -q -O $KP_DIR/data/rules/steven.txt
+	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/adg.txt' -q -O $KP_DIR/data/rules/adg.txt
 	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/antiad.txt' -q -O $KP_DIR/data/rules/anti-ad.txt
-	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/mv.txt' -q -O $KP_DIR/data/rules/mv.txt
+	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/adgk.txt' -q -O $KP_DIR/data/rules/adgk.txt
 	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/ipsetadblock/koolproxy_ipset.conf' -q -O $KP_DIR/koolproxy_ipset.conf
 	wget 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/ipsetadblock/dnsmasq.adblock' -q -O $KP_DIR/dnsmasq.adblock
-	ABP_rules_local=`cat /usr/share/koolproxy/data/rules/ABP.txt  | sed -n '3p'|awk '{print $3,$4}'`
-	fanboy_rules_local=`cat /usr/share/koolproxy/data/rules/fanboy.txt  | sed -n '3p'|awk '{print $3,$4}'`
+	adg_rules_local=`cat /usr/share/koolproxy/data/rules/adg.txt  | sed -n '4p'|awk '{print $4}'`
+	steven_rules_local=`cat /usr/share/koolproxy/data/rules/steven.txt  | sed -n '2p'|awk '{print $3,$4,$5,$6}'`
 	yhosts_rules_local=`cat /usr/share/koolproxy/data/rules/yhosts.txt  | sed -n '1p' | cut -d ":" -f2`
 	antiad_rules_local=`cat /usr/share/koolproxy/data/rules/anti-ad.txt  | sed -n '2p' | cut -d "=" -f2`
 	koolproxy_rules_local=`cat /usr/share/koolproxy/data/rules/koolproxy.txt  | sed -n '3p'|awk '{print $3,$4}'`
-	mv_rules_local=`cat /usr/share/koolproxy/data/rules/mv.txt  | sed -n '3p'|awk '{print $3,$4}'`
-	echo $(date "+%F %T"): -------------------ABP规则    Version $ABP_rules_local >>$LOGFILE
-	echo $(date "+%F %T"): -------------------Fanboy规则 Version $fanboy_rules_local >>$LOGFILE
+	adgk_rules_local=`cat /usr/share/koolproxy/data/rules/adgk.txt  | sed -n '1p'|awk '{print $3}'`
+	echo $(date "+%F %T"): -------------------AdGuard规则 Version $adg_rules_local >>$LOGFILE
+	echo $(date "+%F %T"): -------------------Steven规则 Version $steven_rules_local >>$LOGFILE
 	echo $(date "+%F %T"): -------------------Yhosts规则 Version $yhosts_rules_local >>$LOGFILE
 	echo $(date "+%F %T"): -------------------Anti-AD规则 Version $antiad_rules_local >>$LOGFILE
+	echo $(date "+%F %T"): -------------------坂本规则   Version $adgk_rules_local >>$LOGFILE
 	echo $(date "+%F %T"): -------------------静态规则   Version $koolproxy_rules_local >>$LOGFILE
-	echo $(date "+%F %T"): -------------------乘风视频   Version $mv_rules_local >>$LOGFILE
 	echo $(date "+%F %T"): ------------------- 内置规则更新成功！ ------------------- >>$LOGFILE
 	RESTART_KOOLPROXY=true
 

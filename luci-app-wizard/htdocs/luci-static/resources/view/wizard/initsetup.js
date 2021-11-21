@@ -5,12 +5,13 @@
 'require uci';
 'require rpc';
 'require form';
+'require fs';
 
 return view.extend({
 	load: function() {
 		return Promise.all([
+			fs.exec('/etc/init.d/wizard', ['reconfig']),
 			uci.changes(),
-			uci.load('wireless'),
 			uci.load('wizard')
 		]);
 	},
@@ -20,19 +21,11 @@ return view.extend({
 		var m, s, o;
 		var has_wifi = false;
 
-		if (uci.sections('wireless', 'wifi-device').length > 0) {
-			has_wifi = true;
-		}
-
 		m = new form.Map('wizard', [_('Inital Router Setup')],
 			_('If you are using this router for the first time, please configure it here.'));
 
 		s = m.section(form.NamedSection, 'default', 'wizard');
 		s.addremove = false;
-		s.tab('wansetup', _('Wan Settings'), _('Three different ways to access the Internet, please choose according to your own situation.'));
-		if (has_wifi) {
-			s.tab('wifisetup', _('Wireless Settings'), _('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'));
-		}
 		s.tab('lansetup', _('Lan Settings'));
 
 		o = s.taboption('wansetup', form.ListValue, 'wan_proto', _('Protocol'));
