@@ -12,7 +12,7 @@ add_wizard() {
 	local wan_proto wan_ipaddr wan_netmask wan_gateway wan_pppoe_user wan_pppoe_pass
 	local wifi_ssid wifi_key
 	local lan_ipaddr lan_netmask lan_dns lan_gateway dhcp
-	local device ipv6
+	local device ipv6 old_ipv6 siderouter old_siderouter
 
 	config_get wan_proto "$cfg" wan_proto
 
@@ -39,32 +39,23 @@ add_wizard() {
 				uci set network.wan.ipaddr="${wan_ipaddr}"
 				uci set network.wan.netmask="${wan_netmask}"
 				uci set network.wan.gateway="${wan_gateway}"
-			
-			config_get wan_dns "$cfg" wan_dns
-				test -n "${wan_dns}" && {
-					uci set network.wan.peerdns='0'
-					uci set network.wan.dns="${wan_dns}"
-				}
 			}
 		;;
 		pppoe)
 			config_get wan_pppoe_user "$cfg" wan_pppoe_user
 			config_get wan_pppoe_pass "$cfg" wan_pppoe_pass
-			uci delete network.wan
-			uci set network.wan=interface
-			uci set network.wan.proto='pppoe'
-			uci set network.wan.device="$device"
-			uci set network.wan.metric='40'
-			uci set network.wan.username="${wan_pppoe_user}"
-			uci set network.wan.password="${wan_pppoe_pass}"
-			uci set network.wan.keepalive='5 5'
-			uci set network.wan.mtu='1492'
-
-			uci get network.wan6 2>/dev/null && {
-				uci set network.wan6.device='@wan'
-				uci set network.wan6.reqaddress='try'
-				uci set network.wan6.reqprefix='auto'
+			test -n "${wan_pppoe_user}" && test -n "${wan_pppoe_pass}" && {
+				uci delete network.wan
+				uci set network.wan=interface
+				uci set network.wan.proto='pppoe'
+				uci set network.wan.device="$device"
+				uci set network.wan.metric='40'
+				uci set network.wan.username="${wan_pppoe_user}"
+				uci set network.wan.password="${wan_pppoe_pass}"
+				uci set network.wan.keepalive='5 5'
+				uci set network.wan.mtu='1492'
 			}
+		}
 		;;
 	esac
 
@@ -90,23 +81,33 @@ add_wizard() {
 	}
 
 	config_get siderouter "$cfg" siderouter
+	config_get old_siderouter "$cfg" old_siderouter
 	config_get lan_gateway "$cfg" lan_gateway
 	config_get dhcp "$cfg" dhcp
 	config_get lan_dns "$cfg" lan_dns
 
-	if [ "${siderouter}" == "1" ]; then
+	[ -n "$lan_dns" ] && {
+		uci set network.wan.peerdns='0'
+		uci -q set network.lan.dns="${lan_dns}"
+		} || uci del network.wan.peerdns
+
+	if [ "${siderouter}" != "old_siderouter" ]; then
+	if [ -n "${siderouter}" ]; then
 		uci -q set network.lan.gateway="${lan_gateway}"
-		[ -n "$lan_dns" ] && uci -q set network.lan.dns="${lan_dns}" || uci -q set network.lan.dns='223.5.5.5'
+		[ -n "$lan_dns" ] || uci -q set network.lan.dns='223.5.5.5'
 		[ -n "$dhcp" ] && uci -q set dhcp.lan.ignore="1" || uci -q del dhcp.lan.ignore
-	elif [ "${siderouter}" == "0" ]; then
+	else
 		uci -q del network.lan.gateway
 		uci -q del dhcp.lan.ignore
-		uci -q set network.lan.dns="${lan_dns}"
+	fi
+	uci -q set wizard.default.old_siderouter="${siderouter}"
 	fi
 	
 	config_get ipv6 "$cfg" ipv6
-
-	if [ "${ipv6}" == "0" ]; then
+	config_get old_ipv6 "$cfg" old_ipv6
+	
+	if [ "${ipv6}" != "old_ipv6" ]; then
+	if [ -n "${ipv6}" ]; then
 		uci -q delete dhcp.lan.ra
 		uci -q delete dhcp.lan.dhcpv6
 		uci -q set network.lan.delegate='0'
@@ -115,7 +116,7 @@ add_wizard() {
 		uci commit dhcp
 		/etc/init.d/odhcpd disable
 		/etc/init.d/odhcpd stop
-	elif [ "${ipv6}" == "1" ]; then
+	else
 		uci -q set dhcp.lan.ra='hybrid'
 		uci -q set dhcp.lan.dhcpv6='hybrid'
 		uci -q del network.lan.delegate
@@ -124,7 +125,10 @@ add_wizard() {
 		/etc/init.d/odhcpd enable
 		/etc/init.d/odhcpd start
 	fi
-
+	uci -q set wizard.default.old_ipv6="${ipv6}"
+	fi
+	
+	uci commit wizard
 	uci commit network
 	uci commit wireless
 	(
