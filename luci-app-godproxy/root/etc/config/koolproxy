@@ -17,8 +17,8 @@ config acl_rule
 	
 config rss_rule
         option file 'ikprule.txt'
-	option name 'ikpr_our_rule'
-	option url 'https://cdn.jsdelivr.net/gh/project-lede/koolproxy@main/rules/ikprule.txt'
+	option name 'IKPR规则'
+	option url 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/ikprule.txt'
 	option load '1'
 config usetips
 	option load '0'
