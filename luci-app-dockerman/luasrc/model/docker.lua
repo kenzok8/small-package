@@ -110,6 +110,9 @@ _docker.clear_empty_tables = function ( t )
 		for k, v in pairs(t) do
 			if type(v) == 'table' then
 				t[k] = _docker.clear_empty_tables(v)
+				if t[k] and next(t[k]) == nil then
+					t[k] = nil
+				end
 			end
 		end
 	end

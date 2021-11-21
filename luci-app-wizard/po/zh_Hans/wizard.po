@@ -33,3 +33,12 @@ msgstr "启用IPv6"
 
 msgid "Enable/Disable IPv6"
 msgstr "一键开启/关闭 IPv6"
+
+msgid "Firmware Settings"
+msgstr "固件设置"
+
+msgid "Packages Auto Upgrade"
+msgstr "软件包自动更新"
+
+msgid "Firmware Upgrade Notice"
+msgstr "固件更新提醒"

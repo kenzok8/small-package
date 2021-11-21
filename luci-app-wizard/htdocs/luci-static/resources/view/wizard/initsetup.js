@@ -68,10 +68,6 @@ return view.extend({
 		o.datatype = 'ip4addr';
 		o.cast = 'string';
 
-		o = s.taboption('wansetup', form.Flag, 'ipv6', _('Enable IPv6'), _('Enable/Disable IPv6'));
-		o.default = o.enabled;
-		o.rmempty = false;
-
 		if (has_wifi) {
 			o = s.taboption('wifisetup', form.Value, 'wifi_ssid', _('<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>'));
 			o.datatype = 'maxlength(32)';
@@ -95,7 +91,6 @@ return view.extend({
 		o.cast = 'string';
 
 		o = s.taboption('lansetup', form.Flag, 'siderouter', _('Siderouter'));
-		o.rmempty = false;
 		
 		o = s.taboption('lansetup', form.Value, 'lan_gateway', _('IPv4 gateway'));
 		o.depends('siderouter', '1');
@@ -105,6 +100,17 @@ return view.extend({
 		
 		o = s.taboption('lansetup', form.Flag, 'dhcp', _('DHCP Server'), _('开启此DHCP则需要关闭主路由的DHCP, 关闭此DHCP则需要手动将所有上网设备的网关和DNS改为此旁路由的IP'));
 		o.depends('siderouter', '1');
+		o.default = o.enabled;
+		
+		s.tab('firmware', _('Firmware Settings'));
+
+		o = s.taboption('firmware', form.Flag, 'autoupgrade_pkg', _('Packages Auto Upgrade'));
+		o.default = o.enabled;
+
+		o = s.taboption('firmware', form.Flag, 'autoupgrade_fm', _('Firmware Upgrade Notice'));
+		o.default = o.enabled;
+		
+		o = s.taboption('firmware', form.Flag, 'ipv6', _('Enable IPv6'), _('Enable/Disable IPv6'));
 		o.default = o.enabled;
 
 		return m.render();

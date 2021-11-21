@@ -1,25 +1,14 @@
-
-SSID=$(uci -q get wireless.@wifi-iface[0].ssid)
-KEY=$(uci -q get wireless.@wifi-iface[0].key)
-IPADDR=$(uci -q get network.lan.ipaddr)
 NETMASK=$(uci -q get network.lan.netmask)
 DNS=$(uci -q get network.lan.dns)
 GATEWAY=$(uci -q get network.lan.gateway)
 PROTO=$(uci -q get network.wan.proto)
-USERNAME=$(uci -q get network.wan.username)
-PASSWORD=$(uci -q get network.wan.password)
 
 uci -q set wizard.default=wizard
-uci -q set wizard.default.wifi_ssid="$SSID"
-uci -q set wizard.default.wifi_key="$KEY"
-uci -q set wizard.default.lan_ipaddr="$IPADDR"
 uci -q set wizard.default.lan_netmask="$NETMASK"
 uci -q set wizard.default.lan_dns="$DNS"
 uci -q set wizard.default.lan_gateway="$GATEWAY"
 [ "$(uci -q get dhcp.lan.ignore)" ] && uci -q set wizard.default.dhcp="0"
 uci -q set wizard.default.wan_proto="$PROTO"
-uci -q set wizard.default.wan_pppoe_user="$USERNAME"
-uci -q set wizard.default.wan_pppoe_pass="$PASSWORD"
 
 uci commit wizard
 
