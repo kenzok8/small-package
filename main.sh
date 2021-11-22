@@ -46,7 +46,7 @@ git clone --depth 1 https://github.com/sirpdboy/luci-app-autotimeset
 git clone --depth 1 https://github.com/wolandmaster/luci-app-rtorrent
 git clone --depth 1 https://github.com/jerrykuku/luci-app-jd-dailybonus
 git clone --depth 1 https://github.com/NateLol/luci-app-oled
-git clone --depth 1 https://github.com/frainzy1477/luci-app-clash
+git clone --depth 1 https://github.com/hubbylei/luci-app-clash
 git clone --depth 1 https://github.com/destan19/OpenAppFilter && mvdir OpenAppFilter
 git clone --depth 1 https://github.com/esirplayground/luci-app-poweroff
 git clone --depth 1 https://github.com/lvqier/luci-app-dnsmasq-ipset
