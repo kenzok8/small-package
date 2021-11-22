@@ -76,7 +76,7 @@ function resolve_cmd()
 local set = luci.http.formvalue("set")
 local retstring="<br /><br />"
 
-retstring = luci.sys.exec("/usr/sbin/dnscrypt-proxy -resolve www.google.com")
+retstring = luci.sys.exec("/usr/sbin/dnscrypt-proxy -resolve www.google.com,127.0.0.1:7915 -config /var/etc/dnscrypt-proxy-ns1.conf")
 luci.http.prepare_content("application/json")
 luci.http.write_json({ ret=retstring })
 end

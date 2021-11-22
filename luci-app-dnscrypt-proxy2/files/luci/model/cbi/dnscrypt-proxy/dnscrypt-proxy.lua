@@ -37,7 +37,7 @@ o.placeholder = o.default
 o.optional = false
 o.rmempty = false
 
-o = s:option(Value, "fallback_resolvers", translate("Fallback resolvers"), translate("DNS resolver on query fails or for forced forwarding domain list.") .. translate("Split MultiValues by a comma"))
+o = s:option(Value, "bootstrap_resolvers", translate("Fallback resolvers"), translate("DNS resolver on query fails or for forced forwarding domain list.") .. translate("Split MultiValues by a comma"))
 o.default = "114.114.114.114:53"
 o.placeholder = o.default
 o.optional = false
@@ -126,13 +126,13 @@ o.placeholder = "/etc/dnsmasq.oversea/oversea_list.conf"
 o.optional = true
 o.rmempty = true
 
-o = s:option(DynamicList, "blacklist", translate("Domain Black List"), translate("Domains to blacklist, [.conf|.adblock] file treat like dnsmasq configure: ") .. "https://download.dnscrypt.info/blacklists/domains/mybase.txt")
+o = s:option(DynamicList, "blocked_named", translate("Domain Black List"), translate("Domains to blacklist, [.conf|.adblock] file treat like dnsmasq configure: ") .. "https://download.dnscrypt.info/blacklists/domains/mybase.txt")
 o.default = "/etc/dnsmasq.ssr/ad.conf"
 o.placeholder = "/usr/share/adbyby/dnsmasq.adblock"
 o.optional = true
 o.rmempty = true
 
-o = s:option(DynamicList, "ip_blacklist", translate("IP Address List"), translate("IP Address to blacklist, [.conf] file treat like dnsmasq configure: ") .. "https://download.dnscrypt.info/blacklists/domains/mybase.txt")
+o = s:option(DynamicList, "blocked_ips", translate("IP Address List"), translate("IP Address to blacklist, [.conf] file treat like dnsmasq configure: ") .. "https://download.dnscrypt.info/blacklists/ips/mybase.txt")
 o.default = "https://download.dnscrypt.info/blacklists/domains/mybase.txt"
 o.placeholder = "/etc/dnsmasq.ssr/ad.conf"
 o.optional = true

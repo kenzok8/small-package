@@ -11,7 +11,7 @@ cfg = "dnscrypt-proxy"
 
 local dnslist_table = {}
 for _, s in pairs(dc:dns_list()) do
-	if s.name ~= nil then
+	if s.addrs ~= nil then
 		dnslist_table[#dnslist_table+1] = "%s.%s:%s@%s://%s:%s" %{s.resolver, s.country, s.name,  s.proto, s.addrs, s.ports}
 	end
 end
