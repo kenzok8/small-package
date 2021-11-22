@@ -66,7 +66,6 @@ git clone --depth 1 https://github.com/kenzok78/udp2raw
 git clone --depth 1 https://github.com/kenzok78/luci-theme-argonne
 git clone --depth 1 https://github.com/kiddin9/luci-app-wizard
 git clone --depth 1 https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic
-git clone --depth 1 https://github.com/UnblockNeteaseMusic/server && mvdir UnblockNeteaseMusic
 
 svn co https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
@@ -107,9 +106,10 @@ svn co https://github.com/immortalwrt/packages/trunk/libs/libcron
 svn co https://github.com/immortalwrt/packages/trunk/libs/rapidjson
 svn co https://github.com/immortalwrt/packages/trunk/libs/quickjspp
 svn co https://github.com/immortalwrt/packages/trunk/libs/toml11
-svn co https://github.com/garypang13/openwrt-packages/trunk/qtbase
-svn co https://github.com/garypang13/openwrt-packages/trunk/qttools
-svn co https://github.com/garypang13/openwrt-packages/trunk/rblibtorrent
+svn co https://github.com/kiddin9/openwrt-packages/trunk/UnblockNeteaseMusic
+svn co https://github.com/kiddin9/openwrt-packages/trunk/qtbase
+svn co https://github.com/kiddin9/openwrt-packages/trunk/qttools
+svn co https://github.com/kiddin9/openwrt-packages/trunk/rblibtorrent
 svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
 svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
 
