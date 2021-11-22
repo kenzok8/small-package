@@ -75,6 +75,7 @@ return view.extend({
 		o.cast = 'string';
 
 		o = s.taboption('lansetup', form.Flag, 'siderouter', _('Siderouter'));
+		o.rmempty = false;
 		
 		o = s.taboption('lansetup', form.Value, 'lan_gateway', _('IPv4 gateway'));
 		o.depends('siderouter', '1');
