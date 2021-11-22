@@ -32,8 +32,8 @@ revert_dns() {
 add_cron(){
 config_type=$(uci get clash.config.config_type 2>/dev/null)
 #===========================================================================================================================
-	[ -z "$(grep -w "/usr/share/clash/clash-watchdog.sh" $CRON_FILE)" ] && echo "*/3 * * * * /usr/share/clash/clash-watchdog.sh" >> $CRON_FILE
-	[ -z "$(grep -w "/usr/share/clash/kill_watchdog.sh" $CRON_FILE)" ] && echo "*/1 * * * * /usr/share/clash/kill_watchdog.sh" >> $CRON_FILE
+	[ -z "$(grep -w "/usr/share/clash/clash-watchdog.sh" $CRON_FILE)" ] && echo "*/2 * * * * /usr/share/clash/clash-watchdog.sh" >> $CRON_FILE
+	#[ -z "$(grep -w "/usr/share/clash/kill_watchdog.sh" $CRON_FILE)" ] && echo "*/1 * * * * /usr/share/clash/kill_watchdog.sh" >> $CRON_FILE
 	clear=$(uci get clash.config.auto_clear_log 2>/dev/null)
 	if [ "${clear}" -eq 1 ]; then
 	[ -z "$(grep -w "/usr/share/clash/clash.txt" $CRON_FILE)" ] && echo "0 */$(uci get clash.config.clear_time 2>/dev/null) * * * echo '' >/usr/share/clash/clash.txt" >> $CRON_FILE
@@ -68,8 +68,10 @@ config_type=$(uci get clash.config.config_type 2>/dev/null)
 del_cron(){
 #=========================================================================================================================== 
 	sed -i '/clash-watchdog.sh/d' $CRON_FILE
+	#sed -i '/kill_watchdog.sh/d' $CRON_FILE
 	sed -i '/update_all.sh/d' $CRON_FILE
 	sed -i '/clash.txt/d' $CRON_FILE
+	sed -i '/geoip.sh/d' $CRON_FILE
 	/etc/init.d/cron restart
 #=========================================================================================================================== 	
 }
@@ -93,7 +95,7 @@ elif [ ! -f "$CONFIG_YAML_PATH" ] && [ ! -f "$CONFIG_YAML" ];then
 		if [ "${lang}" == "en" ] || [ $lang == "auto" ];then
 			echo "No config found" >$REAL_LOG 
 		elif [ "${lang}" == "zh_cn" ];then
-			echo "找不到配置文章" >$REAL_LOG
+			echo "找不到配置文件" >$REAL_LOG
 		fi
 		sleep 5
 		echo "Clash for OpenWRT" >$REAL_LOG
@@ -169,7 +171,12 @@ yml_dns_change(){
 			uci commit dhcp
 		  fi  
 	    else
-		  echo "Setting dns forwarder" >$REAL_LOG
+			if [ "${lang}" == "en" ] || [ $lang == "auto" ];then
+				echo "Setting dns forwarder" >$REAL_LOG 
+			elif [ "${lang}" == "zh_cn" ];then
+				echo "设置dns转发器" >$REAL_LOG
+			fi
+
 			  uci del_list dhcp.@dnsmasq[0].server=127.0.0.1#$dns_port >/dev/null 2>&1 	
 	          uci add_list dhcp.@dnsmasq[0].server=127.0.0.1#$dns_port >/dev/null 2>&1 
 	          uci delete dhcp.@dnsmasq[0].resolvfile
@@ -962,6 +969,7 @@ if pidof clash >/dev/null; then
       remove_mark 2>/dev/null
 	  yml_dns_change 2>/dev/null
       rules 2>/dev/null	 
+	  echo "Clash for OpenWRT" >$REAL_LOG
 	  echo "Clash Reload Completed"	
 fi	  
 }
