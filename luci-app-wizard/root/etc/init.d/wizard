@@ -11,13 +11,14 @@ boot() {
 add_wizard() {
 	[ "x$XBOOT" = "x1" ] && return 0
 	local cfg="$1"
-	local wan_proto wan_ipaddr wan_netmask wan_gateway wan_pppoe_user wan_pppoe_pass
+	local wan_proto old_wan_proto wan_ipaddr wan_netmask wan_gateway wan_pppoe_user wan_pppoe_pass
 	local lan_ipaddr lan_netmask lan_dns lan_gateway dhcp
 	local device ipv6 old_ipv6 siderouter old_siderouter
 
 	config_get wan_proto "$cfg" wan_proto
 
 	device=$(uci get network.wan.device 2>/dev/null)
+	if [ "${wan_proto}" != "${old_wan_proto}" ]; then
 	case "${wan_proto}" in
 		dhcp)
 			uci delete network.wan
@@ -58,6 +59,8 @@ add_wizard() {
 			}
 		;;
 	esac
+	fi
+	
 
 	config_get lan_ipaddr "$cfg" lan_ipaddr
 	config_get lan_netmask "$cfg" lan_netmask
@@ -80,7 +83,7 @@ add_wizard() {
 		uci -q del network.lan.dns
 		}
 
-	if [ "${siderouter}" != "old_siderouter" ]; then
+	if [ "${siderouter}" != "${old_siderouter}" ]; then
 	if [ -n "${siderouter}" ]; then
 		uci -q set network.lan.gateway="${lan_gateway}"
 		[ -n "$lan_dns" ] || uci -q set network.lan.dns='223.5.5.5'
@@ -95,7 +98,7 @@ add_wizard() {
 	config_get ipv6 "$cfg" ipv6
 	config_get old_ipv6 "$cfg" old_ipv6
 	
-	if [ "${ipv6}" != "old_ipv6" ]; then
+	if [ "${ipv6}" != "${old_ipv6}" ]; then
 	if [ -n "${ipv6}" ]; then
 		uci -q delete dhcp.lan.ra
 		uci -q delete dhcp.lan.dhcpv6
@@ -136,6 +139,7 @@ uci -q set wizard.default.lan_netmask="$(uci -q get network.lan.netmask)"
 uci -q set wizard.default.lan_gateway="$(uci -q get network.lan.gateway)"
 uci -q set wizard.default.lan_dns="$(uci -q get network.lan.dns)"
 [ "$(uci -q get dhcp.lan.ignore)" ] && uci -q set wizard.default.dhcp="0"
+uci -q set wizard.default.old_wan_proto="$(uci -q set wizard.default.wan_proto)"
 uci commit wizard
 }
 
