@@ -104,7 +104,7 @@ include_for_firewall_reload() {
 }
 
 create_config_file() {
-    local server_names listen_address query_meta max_clients fallback_resolvers netprobe_address
+    local server_names listen_address query_meta max_clients bootstrap_resolvers netprobe_address
     local disabled_server_names log_file log_level timeout keepalive cert_refresh_delay netprobe_timeout
     local log_files_max_size log_files_max_age log_files_max_backups reject_ttl
     local reject_ttl cache_size cache_min_ttl cache_max_ttl cache_neg_min_ttl cache_neg_max_ttl
@@ -121,7 +121,7 @@ create_config_file() {
     config_get      listen_addresses        $1 'listen_addresses'    '127.0.0.1:5335'
     config_get      query_meta              $1 'query_meta'          ''
     config_get      max_clients             $1 'max_clients'         '250'
-    config_get      fallback_resolvers       $1 'fallback_resolvers'   '114.114.114.114:53'
+    config_get      bootstrap_resolvers     $1 'bootstrap_resolvers' '114.114.114.114:53'
     config_get      netprobe_address        $1 'netprobe_address'    '114.114.114.114:53'
     config_get      disabled_server_names   $1 'disabled_server_names' ''
 
@@ -155,7 +155,7 @@ create_config_file() {
     append_multivalue_param "listen_addresses"    "$listen_addresses"     $config_path
     append_multivalue_param "query_meta"          "$query_meta"           $config_path
     append_param            "max_clients"         "$max_clients"          $config_path
-    append_multivalue_param        "fallback_resolvers"   "$fallback_resolvers"    $config_path
+    append_multivalue_param "bootstrap_resolvers" "$bootstrap_resolvers"    $config_path
     append_str_param        "netprobe_address"    "$netprobe_address"     $config_path
     append_multivalue_param "disabled_server_names" "$disabled_server_names" $config_path
 
@@ -184,7 +184,6 @@ create_config_file() {
     append_param            "cloak_ttl"           "$cloak_ttl"            $config_path
 
     force_defaults='
-daemonize,true
 lb_estimator,true
 ignore_system_dns,true
 block_unqualified,true
@@ -271,7 +270,7 @@ cert_ignore_timestamp,false
 
     dstf="$CONFIG_DIR/dnscrypt_forwarding_rules.txt"
     two_line_header='#dnscrypt forwarding rule file.\n'
-    forward_resolvers="$fallback_resolvers"
+    forward_resolvers="$bootstrap_resolvers"
     append_list_file $1 "forwarding_rules" "forwarding_rules" "$dstf" "" $config_path "$two_line_header" $forward_resolvers
 
     dstf="$CONFIG_DIR/dnscrypt_cloaking_rules.txt"
@@ -286,20 +285,20 @@ cert_ignore_timestamp,false
     append_str_param        "file"    "${LOG_FILE}_nx.log"      $config_path
     append_str_param        "format"  "tsv"                     $config_path
 
-    echo "[blacklist]" >> $config_path
-    dstf="$CONFIG_DIR/dnscrypt_domain_black.txt"
+    echo "[blocked_names]" >> $config_path
+    dstf="$CONFIG_DIR/dnscrypt_blocked_names.txt"
     two_line_header='#dnscrypt domain black list file.\n*.test\n*.onion\n*.localhost\n*.local\n*.invalid\n*.bind\n*.lan\n*.internal\n*.intranet\n*.private\n*.workgroup\n*.10.in-addr.arpa\n*.16.172.in-addr.arpa\n*.168.192.in-addr.arpa\n*.254.169.in-addr.arpa\n*.d.f.ip6.arpa'
-    append_list_file $1 "blacklist" "blacklist_file" "$dstf" "bd.log" $config_path "$two_line_header"
+    append_list_file $1 "blocked_names" "blocked_names_file" "$dstf" "bd.log" $config_path "$two_line_header"
 
-    echo "[ip_blacklist]" >> $config_path
-    dstf="$CONFIG_DIR/dnscrypt_ip_blacklist.txt"
+    echo "[blocked_ips]" >> $config_path
+    dstf="$CONFIG_DIR/dnscrypt_blocked_ips.txt"
     two_line_header='#dnscrypt ip black list file.\n127.*\n192.168.*'
-    append_list_file $1 "ip_blacklist" "blacklist_file" "$dstf" "bi.log" $config_path "$two_line_header"
+    append_list_file $1 "blocked_ips" "blocked_ips_file" "$dstf" "bi.log" $config_path "$two_line_header"
 
-    echo "[whitelist]" >> $config_path
-    dstf="$CONFIG_DIR/dnscrypt_whitelist.txt"
+    echo "[allowed_names]" >> $config_path
+    dstf="$CONFIG_DIR/dnscrypt_allowed_names.txt"
     two_line_header='#dnscrypt white list file.\n'
-    append_list_file $1 "whitelist" "whitelist_file" "$dstf" "wd.log" $config_path "$two_line_header"
+    append_list_file $1 "allowed_names" "allowed_names_file" "$dstf" "wd.log" $config_path "$two_line_header"
 
     echo "[static]" >> $config_path
     append_static_resolver() {

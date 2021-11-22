@@ -62,7 +62,7 @@ end
 o = s:option(Button, "dnscrypt_ck", translate("DNS resolve test"))
 o.rawhtml  = true
 o.template = "dnscrypt-proxy/resolve"
-o.description = translate("Check DNSCrypt resolver: ") .. "/usr/sbin/dnscrypt-proxy -resolve www.google.com"
+o.description = translate("Check DNSCrypt resolver: ") .. "/usr/sbin/dnscrypt-proxy -resolve www.google.com,127.0.0.1:7915 -config /var/etc/dnscrypt-proxy-ns1.conf"
 
 -- [[ Caches ]]--
 s = m:section(TypedSection, cfg, translate("Cache Management"), translate("Running resolver details and offline caches manipulating."))

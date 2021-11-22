@@ -19,13 +19,13 @@ return view.extend({
 	render: function(data) {
 
 		var m, s, o;
-		var has_wifi = false;
 
 		m = new form.Map('wizard', [_('Inital Router Setup')],
 			_('If you are using this router for the first time, please configure it here.'));
 
 		s = m.section(form.NamedSection, 'default', 'wizard');
 		s.addremove = false;
+		s.tab('wansetup', _('Wan Settings'), _('Three different ways to access the Internet, please choose according to your own situation.'));
 		s.tab('lansetup', _('Lan Settings'));
 
 		o = s.taboption('wansetup', form.ListValue, 'wan_proto', _('Protocol'));
@@ -60,15 +60,6 @@ return view.extend({
 		o.depends('wan_proto', 'static');
 		o.datatype = 'ip4addr';
 		o.cast = 'string';
-
-		if (has_wifi) {
-			o = s.taboption('wifisetup', form.Value, 'wifi_ssid', _('<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>'));
-			o.datatype = 'maxlength(32)';
-
-			o = s.taboption("wifisetup", form.Value, "wifi_key", _("Key"));
-			o.datatype = 'wpakey';
-			o.password = true;
-		}
 
 		o = s.taboption('lansetup', form.Value, 'lan_ipaddr', _('IPv4 address'));
 		o.datatype = 'ip4addr';

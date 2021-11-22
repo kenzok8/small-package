@@ -43,7 +43,7 @@ cache_file() {
     local tmpf="/tmp/dnscrypt_${cdl##*/}.dl"
     local line
     [ ! -f "$fn" ] && {
-        wget -q --no-check-certificate -t 3 -T 30 -O "$tmpf" "$cdl"
+        wget -q --no-check-certificate -t 3 -O "$tmpf" "$cdl"
         [ $? -eq 0 ] || return
         line=$(cat "$tmpf" | wc -l)
         [ $line -gt 1 ] || return
@@ -95,8 +95,8 @@ update() {
     json_set_namespace "resolvers" "pre"
     json_init
     echo "INFO: JSON parsing [$file]..." > $LUCI_STATUS
-    echo "{'resolvers':$(cat $file)}" > "/tmp/${file##*\}.ld"
-    json_load_file "/tmp/${file##*\}.ld"
+    echo "{'resolvers':$(cat $file)}" > "/tmp/${file##*/}.ld"
+    json_load_file "/tmp/${file##*/}.ld"
 
     local type resolvers resolver keys key val
     local sname name addrs ports proto stamp country description dnssec ipv6 location nofilter nolog

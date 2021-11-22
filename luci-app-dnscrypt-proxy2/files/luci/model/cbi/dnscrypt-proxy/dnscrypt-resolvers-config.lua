@@ -89,7 +89,7 @@ o.rmempty = true
 
 o = s:option(Value, "format", translate("Version"), translate("Configure file version."))
 o.optional = true
-o.default = "v2"
+o.default = "v3"
 o.rmempty = true
 
 s = m:section(TypedSection, 'dnscrypt', translate("DNSCrypt Resolver Info"))
