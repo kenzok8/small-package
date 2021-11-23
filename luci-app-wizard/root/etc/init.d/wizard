@@ -11,7 +11,7 @@ boot() {
 add_wizard() {
 	[ "x$XBOOT" = "x1" ] && return 0
 	local cfg="$1"
-	local wan_proto wan_ipaddr wan_netmask wan_gateway wan_pppoe_user wan_pppoe_pass
+	local wan_proto wan_pppoe_user wan_pppoe_pass
 	local lan_ipaddr lan_netmask lan_dns lan_gateway dhcp
 	local device ipv6 old_ipv6
 
@@ -24,23 +24,6 @@ add_wizard() {
 			uci set network.wan=interface
 			uci set network.wan.device="$device"
 			uci set network.wan.proto='dhcp'
-		;;
-		static)
-			config_get wan_ipaddr "$cfg" wan_ipaddr
-			config_get wan_netmask "$cfg" wan_netmask
-			config_get wan_gateway "$cfg" wan_gateway
-			test -n "${wan_ipaddr}" && test -n "${wan_netmask}" && {
-				uci delete network.wan
-				uci set network.wan=interface
-				uci set network.wan.proto='static'
-				uci set network.wan.device="$device"
-				uci set network.wan.ipaddr="${wan_ipaddr}"
-				uci set network.wan.netmask="${wan_netmask}"
-				uci set network.wan.gateway="${wan_gateway}"
-				uci set dhcp.wan.start='100'
-				uci set dhcp.wan.limit='150'
-				uci set dhcp.wan.leasetime='12h'
-			}
 		;;
 		pppoe)
 			config_get wan_pppoe_user "$cfg" wan_pppoe_user
@@ -122,8 +105,6 @@ add_wizard() {
 
 reconfig() {
 uci -q set wizard.default.wan_proto="$(uci -q get network.wan.proto)"
-uci -q set wizard.default.wan_netmask="$(uci -q get network.wan.netmask)"
-uci -q set wizard.default.wan_gateway="$(uci -q get network.wan.gateway)"
 uci -q set wizard.default.wan_pppoe_user="$(uci -q get network.wan.username)"
 uci -q set wizard.default.wan_pppoe_pass="$(uci -q get network.wan.password)"
 uci -q set wizard.default.lan_ipaddr="$(uci -q get network.lan.ipaddr)"

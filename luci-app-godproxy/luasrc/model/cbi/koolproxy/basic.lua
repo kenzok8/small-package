@@ -61,7 +61,7 @@ e:value("kp.dat", translate("视频规则"))
 e:value("user.txt", translate("自定义规则"))
 
 e = t:option(MultiValue, "thirdparty_rules", translate("第三方规则"))
-e.optional = true
+e.optional = false
 e.rmempty = false
 e:value("adg.txt", translate("AdGuard规则"))
 e:value("steven.txt", translate("Steven规则"))
