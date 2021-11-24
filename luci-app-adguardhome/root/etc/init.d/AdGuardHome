@@ -274,7 +274,6 @@ _do_redirect()
 	elif [ "$redirect" == "exchange" -a "$(uci get dhcp.@dnsmasq[0].port 2>/dev/null)" == "53" ]; then
 		use_port53
 	fi
-	/etc/init.d/dnsmasq restart
 }
 
 get_filesystem()
@@ -500,23 +499,12 @@ start_service() {
 	echo "AdGuardHome service enabled"
 	echo "luci enable switch=$enabled"
 	(sleep 10 && [ -z "$(pgrep $binpath)" ] && logger "AdGuardHome" "no process in 10s cancel redirect" && _do_redirect 0 )&
-	if [[ "`uci get bypass.@global[0].global_server 2>/dev/null`" && "`uci get bypass.@global[0].adguardhome 2>/dev/null`" == 1 && "$(uci get dhcp.@dnsmasq[0].port)" == "53" ]]; then
-		c1=0
-		while ! netstat -tunlp | grep 53 | grep -i AdGuardHome 2>&1; do
-			uci -q set AdGuardHome.AdGuardHome.redirect='exchange'
-			uci commit AdGuardHome
-			/etc/init.d/AdGuardHome restart
-			sleep 1
-			[ $c1 == 5 ] && break || let c1++
-		done
-	fi
 }
 
 reload_service()
 {
 	rm /var/run/AdGlucitest >/dev/null 2>&1
 	echo "AdGuardHome reloading"
-	stop
 	start
 }
 
@@ -551,13 +539,11 @@ stop_service()
 	fi
 	echo "AdGuardHome service disabled"
 	touch /var/run/AdGserverdis
-	killall -9 AdGuardHome 2>/dev/null
-	/etc/init.d/dnsmasq restart
 }
 
 boot() {
 	rc_procd boot_service "$@"
-	if eval "type service_started" 2>/dev/null; then
+	if eval "type service_started" 2>/dev/null >/dev/null; then
 		service_started
 	fi
 }
