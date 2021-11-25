@@ -278,7 +278,7 @@ rules(){
 		   for pre_line in $pre_lines; do
 			  iptables -t nat -D PREROUTING "$pre_line" >/dev/null 2>&1
 		   done
-		   iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53 >/dev/null 2>&1
+		   # iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53 >/dev/null 2>&1
 		   sleep 2
 		fi
 		
@@ -315,10 +315,10 @@ rules(){
 			iptables -t nat -A clash -m set --match-set china dst -j RETURN			
 			iptables -t nat -A clash -p tcp -j REDIRECT --to-ports "${redir_port}"
 			iptables -t nat -I PREROUTING -p tcp -d 8.8.8.8 -j REDIRECT --to-ports "${redir_port}"
-			iptables -t nat -I PREROUTING -p tcp -d 8.8.4.4 -j REDIRECT --to-ports "${redir_port}"			
+			iptables -t nat -I PREROUTING -p tcp -d 8.8.4.4 -j REDIRECT --to-ports "${redir_port}"
            	iptables -t nat -A PREROUTING -p tcp -j clash
 
-				
+
 			ip rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE"
 			ip route add local 0.0.0.0/0 dev lo table "$PROXY_ROUTE_TABLE"			
 			iptables -t mangle -N clash
@@ -328,9 +328,8 @@ rules(){
 			iptables -t mangle -A clash -m set --match-set china dst -j RETURN
 			iptables -t mangle -A clash -p udp -j TPROXY --on-port "${redir_port}" --tproxy-mark "$PROXY_FWMARK"
 			iptables -t mangle -A PREROUTING -p udp -j clash
-			
-				
-			
+
+
 		   if [ "${fake_ip}" == "fake-ip" ];then
 			  iptables -t nat -N clash_output
 			  iptables -t nat -F clash_output
@@ -401,7 +400,7 @@ rules(){
 			iptables -t mangle -I PREROUTING -m set ! --match-set localnetwork dst -m set ! --match-set china dst -j MARK --set-mark "$PROXY_FWMARK"
 			iptables -t mangle -I PREROUTING -m set --match-set reject_lan src -j RETURN >/dev/null 2>&1
 			iptables -t mangle -I PREROUTING -m set ! --match-set proxy_lan src -j RETURN >/dev/null 2>&1			
-			iptables -t nat -I PREROUTING -p tcp --dport 53 -j ACCEPT
+			#iptables -t nat -I PREROUTING -p tcp --dport 53 -j ACCEPT
 
 			if [ "${fake_ip}" == "fake-ip" ];then
 			fake_ip_range=$(egrep '^ {0,}fake-ip-range' /etc/clash/config.yaml |grep fake-ip-range: |awk -F ': ' '{print $2}')
@@ -754,9 +753,9 @@ remove_mark(){
 		  iptables -t nat -D PREROUTING "$pre_line" >/dev/null 2>&1
 	   done
 
-	   
-		iptables -t nat -D PREROUTING -p tcp --dport 53 -j ACCEPT >/dev/null 2>&1
-		iptables -t nat -D PREROUTING -p udp --dport 53 -j DNAT --to "127.0.0.1:$dns_port"
+
+		# iptables -t nat -D PREROUTING -p tcp --dport 53 -j ACCEPT >/dev/null 2>&1
+		# iptables -t nat -D PREROUTING -p udp --dport 53 -j DNAT --to "127.0.0.1:$dns_port"
 
 		if [ "${ipv6}" == "true" ]; then
 		ip6tables -t mangle -D PREROUTING -j MARK --set-mark "$PROXY_FWMARK" 2>/dev/null
