@@ -77,6 +77,9 @@ return view.extend({
 		o = s.taboption('firmware', form.Flag, 'autoupgrade_fm', _('Firmware Upgrade Notice'));
 		o.default = o.enabled;
 		
+		o = s.taboption('firmware', form.Flag, 'coremark', _('CoreMark'),_('第一次开机后是否运行CPU跑分测试'));
+		o.rmempty = false;
+		
 		return m.render();
 	}
 });
