@@ -7,6 +7,8 @@
 # 警告:对着屏幕的哥们,我们允许你使用此脚本，但不允许你抹去作者的信息,请保留这段话。
 #
 
+[ "$(uci -q get ksmbd.@globals[0].autoshare)" == "1" ] && exit 0;
+
 . /lib/functions.sh
 . /lib/functions/service.sh
 
@@ -68,6 +70,7 @@ case "$ACTION" in
 		if [ "$str" == $path ];then
 			strr=${j#* }
 			target=${strr%% *}
+			if [ "$target" != "/boot" ];then
 			global=0
 			config_foreach smb_handle share $target
 			name=${target#*/mnt/}
@@ -86,8 +89,11 @@ case "$ACTION" in
 				/etc/init.d/ksmbd reload
 				return
 			fi
+			fi
 		fi
 	done
+	uci -q set ksmbd.@globals[0].autoshare='1'
+	uci commit ksmbd
 	;;
 
 	remove)
