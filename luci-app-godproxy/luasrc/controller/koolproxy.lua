@@ -24,6 +24,7 @@ end
 function act_status()
 	local e = {}
 	e.running = luci.sys.call("pidof koolproxy >/dev/null") == 0
+	e.bin_version = luci.sys.exec("/usr/share/koolproxy/koolproxy -v")
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
