@@ -54,7 +54,7 @@ e.default = 1
 
 e = t:option(MultiValue, "koolproxy_rules", translate("内置规则"))
 e.optional = false
-e.rmempty = false
+e.rmempty = true
 e:value("koolproxy.txt", translate("静态规则"))
 e:value("daily.txt", translate("每日规则"))
 e:value("kp.dat", translate("视频规则"))
@@ -62,7 +62,7 @@ e:value("user.txt", translate("自定义规则"))
 
 e = t:option(MultiValue, "thirdparty_rules", translate("第三方规则"))
 e.optional = false
-e.rmempty = false
+e.rmempty = true
 e:value("adg.txt", translate("AdGuard规则"))
 e:value("steven.txt", translate("Steven规则"))
 e:value("yhosts.txt", translate("Yhosts规则"))
