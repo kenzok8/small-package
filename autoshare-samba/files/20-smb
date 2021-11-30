@@ -68,13 +68,12 @@ case "$ACTION" in
 
 	wait_for_init
 
-	cat /proc/mounts | while read j
+	cat /proc/mounts | grep -v '/boot\|/opt' | while read j
 	do
 		str=${j%% *}
 		if [ "$str" == $path ];then
 			strr=${j#* }
 			target=${strr%% *}
-			if [ "$target" != "/boot" ];then
 			global=0
 			config_foreach smb_handle sambashare $target
 			name=${target#*/mnt/}
@@ -92,7 +91,6 @@ case "$ACTION" in
 				echo -e "\toption force_root '1'" >> $config_file
 				/etc/init.d/samba4 reload
 				return
-			fi
 			fi
 		fi
 	done
