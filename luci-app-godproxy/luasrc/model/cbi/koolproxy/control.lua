@@ -1,6 +1,6 @@
 o = Map("koolproxy")
 
-t = o:section(TypedSection, "acl_rule", translate("GodProxy 访问控制"))
+t = o:section(TypedSection, "acl_rule", translate("iKoolProxy 访问控制"))
 t.anonymous = true
 
 t.description = translate("访问控制列表是用于指定特殊IP过滤模式的工具，如为已安装证书的客户端开启https广告过滤等，MAC或者IP必须填写其中一项。")

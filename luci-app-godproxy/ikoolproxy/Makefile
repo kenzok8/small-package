@@ -1,23 +1,23 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=koolproxy
+PKG_NAME:=ikoolproxy
 PKG_VERSION:=3.8.5
 PKG_RELEASE:=$(AUTORELEASE)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/koolproxy
+define Package/ikoolproxy
   SECTION:=multimedia
   CATEGORY:=Multimedia
   DEPENDS:=@(aarch64||arm||i386||mips||mipsel||x86_64)
-  TITLE:=koolproxy bin from koolshare
+  TITLE:=ikoolproxy bin from koolshare
   URL:=https://github.com/houzi-/CDN
 endef
 
 define Build/Compile
 endef
 
-define Package/koolproxy/install
+define Package/ikoolproxy/install
 	$(INSTALL_DIR) $(1)/usr/share/koolproxy
 
 ifeq ($(ARCH),aarch64)
@@ -40,4 +40,4 @@ else ifeq ($(ARCH),x86_64)
 endif
 endef
 
-$(eval $(call BuildPackage,koolproxy))
+$(eval $(call BuildPackage,ikoolproxy))

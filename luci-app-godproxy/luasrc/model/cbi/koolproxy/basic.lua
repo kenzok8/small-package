@@ -20,12 +20,12 @@ local p = luci.sys.exec("grep -v !x /usr/share/koolproxy/data/rules/yhosts.txt |
 local h = luci.sys.exec("grep -v '^!' /usr/share/koolproxy/data/rules/user.txt | wc -l")
 local l = luci.sys.exec("grep -v !x /usr/share/koolproxy/data/rules/koolproxy.txt | wc -l")
 local q = luci.sys.exec("grep -v !x /usr/share/koolproxy/data/rules/daily.txt | wc -l")
-local f = luci.sys.exec("grep -v !x /usr/share/koolproxy/data/rules/anti-ad.txt | wc -l")
+local f = luci.sys.exec("grep -v !x /usr/share/koolproxy/data/rules/antiad.txt | wc -l")
 local i = luci.sys.exec("cat /usr/share/koolproxy/dnsmasq.adblock | wc -l")
 
 o = Map("koolproxy")
-o.title = translate("GodProxy 滤广告")
-o.description = translate("GodProxy是基于KoolProxyR Plus重新整理的能识别adblock规则的免费开源软件,追求体验更快、更清洁的网络，屏蔽烦人的广告！")
+o.title = translate("iKoolProxy滤广告")
+o.description = translate("iKoolProxy是基于KoolProxyR重新整理的能识别adblock规则的免费开源软件,追求体验更快、更清洁的网络，屏蔽烦人的广告！")
 
 o:section(SimpleSection).template = "koolproxy/koolproxy_status"
 
@@ -66,8 +66,8 @@ e.rmempty = true
 e:value("adg.txt", translate("AdGuard规则"))
 e:value("steven.txt", translate("Steven规则"))
 e:value("yhosts.txt", translate("Yhosts规则"))
-e:value("anti-ad.txt", translate("Anti-AD规则"))
-e:value("adgk.txt", translate("坂本规则"))
+e:value("antiad.txt", translate("AntiAD规则"))
+e:value("adgk.txt", translate("Banben规则"))
 
 e = t:option(ListValue, "koolproxy_port", translate("端口控制"))
 e.rmempty = false
@@ -100,7 +100,7 @@ e:value(3, translate("过滤全端口"))
 e.default = 1
 
 e = t:option(ListValue, "time_update", translate("定时更新"))
-e.description = translate("定时更新规则。请把时间修改掉，默认时间使用人数多会更新失败")
+e.description = translate("定时更新规则")
 e.rmempty = false
 for t = 0,23 do
 	e:value(t,translate("每天"..t.."点"))
@@ -115,6 +115,6 @@ e.write = function()
 	luci.sys.call("/usr/share/koolproxy/kpupdate 2>&1 >/dev/null")
 	luci.http.redirect(luci.dispatcher.build_url("admin","services","koolproxy"))
 end
-e.description = translate(string.format("<font color=\"red\"><strong>更新订阅规则与Adblock Plus Hosts</strong></font><br /><font color=\"green\">AdGuard规则: %s条<br />Steven规则: %s条<br />Yhosts规则: %s条<br />Anti-AD规则: %s条<br />静态规则: %s条<br />视频规则: %s<br />坂本规则: %s条<br />每日规则: %s条<br />自定义规则: %s条<br />Host: %s条</font><br />", s, u, p, f, l, b, m, q, h, i))
+e.description = translate(string.format("<font color=\"red\"><strong>更新订阅规则与Adblock Plus Hosts</strong></font><br /><font color=\"green\">AdGuard规则: %s条<br />Steven规则: %s条<br />Yhosts规则: %s条<br />AntiAD规则: %s条<br />静态规则: %s条<br />视频规则: %s<br />Banben规则: %s条<br />每日规则: %s条<br />自定义规则: %s条<br />Host: %s条</font><br />", s, u, p, f, l, b, m, q, h, i))
 
 return o

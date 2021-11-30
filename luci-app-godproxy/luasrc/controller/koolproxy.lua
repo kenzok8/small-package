@@ -5,7 +5,7 @@ function index()
 		return
 	end
 
-	entry({"admin", "services", "koolproxy"}, alias("admin", "services", "koolproxy", "basic"), _("GodProxy 滤广告"), 1).dependent = true
+	entry({"admin", "services", "koolproxy"}, alias("admin", "services", "koolproxy", "basic"), _("iKoolProxy 滤广告"), 1).dependent = true
 	entry({"admin", "services", "koolproxy", "basic"}, cbi("koolproxy/basic"), _("基本设置"), 1).leaf = true
 	entry({"admin", "services", "koolproxy", "control"}, cbi("koolproxy/control"), _("访问控制"), 2).leaf = true
 	entry({"admin", "services", "koolproxy", "add_rule"}, cbi("koolproxy/add_rule"), _("规则订阅"), 3).leaf = true
