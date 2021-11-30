@@ -1,6 +1,6 @@
 o = Map("koolproxy")
 
-t = o:section(TypedSection,"rss_rule", translate("GodProxy 规则订阅"))
+t = o:section(TypedSection,"rss_rule", translate("iKoolProxy 规则订阅"))
 t.description = translate("请确保订阅规则的兼容性")
 t.anonymous = true
 t.addremove = true

@@ -6,7 +6,6 @@ config global
 	option koolproxy_mode '1'
 	option koolproxy_host '1'
 	option koolproxy_rules 'koolproxy.txt daily.txt kp.dat user.txt'
-	option thirdparty_rules 'yhosts.txt'
 	option koolproxy_ipv6 '0'
 	option time_update 'nil'
 	
@@ -18,7 +17,7 @@ config acl_rule
 config rss_rule
         option file 'ikprule.txt'
 	option name 'IKPR规则'
-	option url 'https://igodros.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/ikprule.txt'
+	option url 'https://iwrt.coding.net/p/ikoolproxy/d/rules/git/raw/master/rules/ikprule.txt'
 	option load '1'
 config usetips
 	option load '0'
