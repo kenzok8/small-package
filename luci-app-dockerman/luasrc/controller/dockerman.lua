@@ -314,7 +314,7 @@ end
 function action_confirm()
 	local data = docker:read_status()
 	if data then
-		data = data:gsub("\n","<br />"):gsub(" ","&#160;")
+		data = data:gsub("\n","<br>"):gsub(" ","&nbsp;")
 		code = 202
 		msg = data
 	else
