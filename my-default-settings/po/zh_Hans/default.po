@@ -158,12 +158,3 @@ msgstr "客户端缓存的最小 DNS TTL"
 
 msgid "Modify DNS entries minimum TTL (max is 86400, 0 is no modify)"
 msgstr "修改发送到客户端的域名记录的 TTL 时间 (最大 86400, 0 表示不修改)"
-
-msgid "Firmware Settings"
-msgstr "固件设置"
-
-msgid "Packages Auto Upgrade"
-msgstr "软件包自动更新"
-
-msgid "Firmware Upgrade Notice"
-msgstr "固件更新提醒"

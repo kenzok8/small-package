@@ -57,6 +57,8 @@ define Package/my-autocore-arm/install
 endef
 
 define Package/my-autocore-x86/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/x86/autocore $(1)/etc/init.d/autocore
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) ./files/x86/cpuinfo $(1)/sbin/cpuinfo
 	$(INSTALL_BIN) ./files/common/ethinfo $(1)/sbin/ethinfo

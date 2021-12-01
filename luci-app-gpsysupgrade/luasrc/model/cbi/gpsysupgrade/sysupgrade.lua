@@ -96,7 +96,7 @@ function to_download(url,md5)
 
     local tmp_file = util.trim(util.exec("mktemp -u -t firmware_download.XXXXXX"))
 
-    local result = api.exec(api.curl, {api._unpack(api.curl_args), "-o", tmp_file, url}, nil, api.command_timeout) == 0
+    local result = api.exec(api.wget, {api._unpack(api.wget_args), "-O", tmp_file, url}, nil, api.command_timeout) == 0
 
     if not result then
         api.exec("/bin/rm", {"-f", tmp_file})
