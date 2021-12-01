@@ -10,7 +10,7 @@ define Package/ikoolproxy
   SECTION:=multimedia
   CATEGORY:=Multimedia
   DEPENDS:=@(aarch64||arm||i386||mips||mipsel||x86_64)
-  TITLE:=ikoolproxy bin from koolshare
+  TITLE:=ikoolproxy bin is from koolshare koolproxy bin
   URL:=https://github.com/houzi-/CDN
 endef
 

@@ -115,6 +115,6 @@ e.write = function()
 	luci.sys.call("/usr/share/koolproxy/kpupdate 2>&1 >/dev/null")
 	luci.http.redirect(luci.dispatcher.build_url("admin","services","koolproxy"))
 end
-e.description = translate(string.format("<font color=\"red\"><strong>更新订阅规则与Adblock Plus Hosts</strong></font><br /><font color=\"green\">AdGuard规则: %s条<br />Steven规则: %s条<br />Yhosts规则: %s条<br />AntiAD规则: %s条<br />静态规则: %s条<br />视频规则: %s<br />Banben规则: %s条<br />每日规则: %s条<br />自定义规则: %s条<br />Host: %s条</font><br />", s, u, p, f, l, b, m, q, h, i))
+e.description = translate(string.format("<font color=\"red\"><strong>更新订阅规则与Adblock Plus Hosts</strong></font><br /><font color=\"green\">AdGuard规则: %s条<br />Steven规则: %s条<br />Yhosts规则: %s条<br />AntiAD规则: %s条<br />Banben规则: %s条<br />静态规则: %s条<br />视频规则: %s<br />每日规则: %s条<br />自定义规则: %s条<br />Host: %s条</font><br />", s, u, p, f, m, l, b, q, h, i))
 
 return o
