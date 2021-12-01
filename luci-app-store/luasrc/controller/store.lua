@@ -14,6 +14,9 @@ function index()
 
     entry({"admin", "store"}, call("redirect_index"), _("iStore"), 31)
     entry({"admin", "store", "pages"}, call("store_index")).leaf = true
+    if nixio.fs.access("/usr/lib/lua/luci/view/store/main_dev.htm") then
+        entry({"admin", "store", "dev"}, call("store_dev")).leaf = true
+    end
     entry({"admin", "store", "token"}, call("store_token"))
     entry({"admin", "store", "log"}, call("store_log"))
     entry({"admin", "store", "uid"}, call("action_user_id"))
@@ -53,8 +56,8 @@ local function is_exec(cmd)
     local os   = require "os"
     local fs   = require "nixio.fs"
 
-    local oflags = nixio.open_flags("rdonly", "creat")
-	local lock, code, msg = nixio.open(target, oflags)
+    local oflags = nixio.open_flags("wronly", "creat")
+	local lock, code, msg = nixio.open("/var/lock/istore.lock", oflags)
 	if not lock then
 		return 255, "", "Open lock failed: " .. msg
 	end
@@ -86,6 +89,10 @@ function store_index()
     luci.template.render("store/main", {prefix=luci.dispatcher.build_url(unpack(page_index)),id=user_id()})
 end
 
+function store_dev()
+    luci.template.render("store/main_dev", {prefix=luci.dispatcher.build_url(unpack({"admin", "store", "dev"})),id=user_id()})
+end
+
 function store_log()
     local fs   = require "nixio.fs"
     local code = 0
@@ -113,7 +120,7 @@ function check_self_upgrade()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o
+        ret.msg = o:gsub("[\r\n]", "")
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
