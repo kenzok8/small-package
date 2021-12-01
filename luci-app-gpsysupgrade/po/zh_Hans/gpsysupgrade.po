@@ -50,7 +50,7 @@ msgid "New version found, but failed to get new version download url."
 msgstr "发现新版本，但未能获得新版本的下载地址。"
 
 msgid "File download failed or timed out: %s"
-msgstr "固件下载失败或超时：%s"
+msgstr "固件下载失败或超时, 请重试. 或下载：%s 到本地, 通过 系统->备份/升级 上传更新."
 
 msgid "Firmware file required."
 msgstr "固件文件未找到。"
