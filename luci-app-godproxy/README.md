@@ -1,5 +1,5 @@
 ## 整理声明：
-iKoolProxy是[Beginner-Go](https://github.com/Beginner-Go) 大神基于koolproxyR重新整理而来的。主要参考：
+iKoolProxy是 [Beginner-Go](https://github.com/Beginner-Go) 大神基于koolproxyR重新整理而来的。主要参考：
 
 1、以前Ameykyl大神的 [KoolProxyR](https://github.com/Ameykyl/luci-app-koolproxyR) (源码已经2020年4月删除）。源码来源于 [project-openwrt](https://github.com/project-openwrt/luci-app-koolproxyR) 收录的ameykyl的2020年3月最后一次更新。 
 
