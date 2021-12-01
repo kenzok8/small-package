@@ -9,12 +9,6 @@
  	done
  	uci delete dhcp.@dnsmasq[0].resolvfile 2>/dev/null
  	uci set dhcp.@dnsmasq[0].noresolv=1
-@@ -274,6 +274,7 @@ _do_redirect()
- 	elif [ "$redirect" == "exchange" -a "$(uci get dhcp.@dnsmasq[0].port 2>/dev/null)" == "53" ]; then
- 		use_port53
- 	fi
-+	/etc/init.d/dnsmasq restart
- }
  
  get_filesystem()
 @@ -499,12 +500,23 @@ start_service() {
@@ -41,11 +35,10 @@
  	start
  }
  
-@@ -539,11 +551,13 @@ stop_service()
+@@ -539,11 +551,12 @@ stop_service()
  	fi
  	echo "AdGuardHome service disabled"
  	touch /var/run/AdGserverdis
-+	killall -9 AdGuardHome 2>/dev/null
 +	/etc/init.d/dnsmasq restart
  }
  
