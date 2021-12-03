@@ -68,6 +68,7 @@ git clone --depth 1 https://github.com/kenzok78/minisign
 git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
 git clone --depth 1 https://github.com/linkease/nas-packages-luci && mvdir luci
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
+git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
 
 svn co https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
