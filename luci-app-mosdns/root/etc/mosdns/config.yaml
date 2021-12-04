@@ -1,0 +1,95 @@
+log:
+  level:                   error
+  file:                    ''
+
+plugin:
+  - tag:                   main_server
+    type:                  server
+    args:
+      entry:
+        - _no_ecs
+        - lazy_cache
+        - main_sequence
+      server:
+        - protocol:        udp
+          addr:            '127.0.0.1:5335'
+        - protocol:        tcp
+          addr:            '127.0.0.1:5335'
+
+  - tag:                   main_sequence
+    type:                  sequence
+    args:
+      exec:
+        - if:
+            - query_is_local_domain
+            - '!_query_is_common'
+          exec:
+            - forward_local
+            - _end
+        - if:
+            - query_is_non_local_domain
+          exec:
+            - if:
+                - _qtype_AAAA
+              exec:
+                - _block_with_empty_response
+                - _end
+            - forward_remote
+            - _end
+        - primary:
+            - forward_local
+            - if:
+                - '!response_has_local_ip'
+              exec:
+                - _drop_response
+          secondary:
+            - if:
+                - _qtype_AAAA
+              exec:
+                - _block_with_empty_response
+                - _end
+            - forward_remote
+          fast_fallback:   150
+          always_standby:  true
+
+  - tag:                   forward_local
+    type:                  fast_forward
+    args:
+      upstream:
+        - addr:            119.29.29.29
+        - addr:            101.226.4.6
+
+  - tag:                   forward_remote
+    type:                  fast_forward
+    args:
+      upstream:
+        - addr:            'tls://8.8.4.4'
+          idle_timeout:    60
+          max_conns:       10
+        - addr:            'tls://101.101.101.101'
+          idle_timeout:    20
+          max_conns:       10
+
+  - tag:                   lazy_cache
+    type:                  cache
+    args:
+      size:                512000
+      lazy_cache_ttl:      31536000
+
+  - tag:                   query_is_local_domain
+    type:                  query_matcher
+    args:
+      domain:
+        - 'ext:./geosite.dat:cn'
+
+  - tag:                   query_is_non_local_domain
+    type:                  query_matcher
+    args:
+      domain:
+        - 'ext:./geosite.dat:geolocation-!cn'
+
+  - tag:                   response_has_local_ip
+    type:                  response_matcher
+    args:
+      ip:
+        - 'ext:./geoip.dat:cn'

@@ -1,0 +1,162 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2020 IrineSistiana
+
+START=91
+USE_PROCD=1
+
+#####  ONLY CHANGE THIS BLOCK  ######
+PROG=/usr/bin/mosdns # where is mosdns
+RES_DIR=/etc/mosdns/ # resource dir / working dir / the dir where you store ip/domain lists
+CONF=./config.yaml   # where is the config file, it can be a relative path to $RES_DIR
+CRON_FILE=/etc/crontabs/root
+#####  ONLY CHANGE THIS BLOCK  ######
+
+inital_conf() {
+  config_load "mosdns"
+  config_get "enabled" "mosdns" "enabled" "0"
+}
+service_triggers() {
+  procd_add_reload_trigger "mosdns"
+}
+
+restore_setting() {
+  redirect=$(uci -q get mosdns.mosdns.redirect)
+  if [ $redirect -eq 1 ]; then
+    sed -i "/list server/d" /etc/config/dhcp
+    sed -i "/dhcp_option/d" /etc/config/dhcp
+    uci set dhcp.@dnsmasq[0].noresolv='0'
+    uci del dhcp.@dnsmasq[0].cachesize
+    uci set dhcp.@dnsmasq[0].filter_aaaa='1'
+    uci commit dhcp
+  fi
+  autoconf="$(uci -q get mosdns.mosdns.autoconf)"
+  if [ $autoconf -eq 1 ]; then
+    uci set shadowsocksr.@global[0].pdnsd_enable='1'
+    uci set shadowsocksr.@global[0].tunnel_forward='8.8.4.4:53'
+    uci commit shadowsocksr
+    uci set passwall.@global[0].dns_mode='pdnsd'
+    uci set passwall.@global[0].dns_forward='8.8.8.8'
+    uci set passwall.@global[0].dns_cache='1'
+    uci commit passwall
+    uci set vssr.@global[0].pdnsd_enable='1'
+    uci commit vssr
+  fi
+}
+
+prepare_setting() {
+  redirect=$(uci -q get mosdns.mosdns.redirect)
+  if [ $redirect -eq 1 ]; then
+    sed -i "/list server/d" /etc/config/dhcp
+    uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5335'
+    uci set dhcp.@dnsmasq[0].rebind_protection='0'
+    lanip="$(uci get network.lan.ipaddr)"
+    sed -i "/dhcp_option/d" /etc/config/dhcp
+    sed -i "/dhcpv6/a\\\tlist dhcp_option '6,$lanip'" /etc/config/dhcp
+    uci set dhcp.@dnsmasq[0].noresolv="1"
+    uci set dhcp.@dnsmasq[0].cachesize='0'
+    uci set dhcp.@dnsmasq[0].filter_aaaa='0'
+    uci commit dhcp
+  fi
+  autoconf="$(uci -q get mosdns.mosdns.autoconf)"
+  if [ $autoconf -eq 1 ]; then
+    uci set shadowsocksr.@global[0].pdnsd_enable='0'
+    uci del shadowsocksr.@global[0].tunnel_forward
+    uci commit shadowsocksr
+    uci set passwall.@global[0].dns_mode='nonuse'
+    uci del passwall.@global[0].dns_forward
+    uci del passwall.@global[0].dns_cache
+    uci commit passwall
+    uci set vssr.@global[0].pdnsd_enable='0'
+    uci commit vssr
+  fi
+}
+
+restart_others() {
+  /etc/init.d/network reload
+  /etc/init.d/dnsmasq reload
+
+  ssrp="$(uci get shadowsocksr.@global[0].global_server)"
+  count1="$(ps | grep ssrplus | grep -v 'grep' | wc -l)"
+  if [ $ssrp != "nil" ] && [ $count1 -ne 0 ]; then
+    /etc/init.d/shadowsocksr restart
+  fi
+
+  pw="$(uci get passwall.@global[0].enabled)"
+  count2="$(ps | grep passwall | grep -v 'grep' | wc -l)"
+  if [ $pw -eq 1 ] && [ $count2 -ne 0 ]; then
+    /etc/init.d/passwall restart
+  fi
+
+  vssr="$(uci get vssr.@global[0].global_server)"
+  count3="$(ps | grep vssr | grep -v 'grep' | wc -l)"
+  if [ $vssr != "nil" ] && [ $count3 -ne 0 ]; then
+    /etc/init.d/vssr restart
+  fi
+
+}
+
+reload_service() {
+  stop
+  sleep 2s
+  echo "MosDNS is restarted!"
+  start
+}
+
+setcron() {
+  chmod 755 /etc/mosdns/mosupdater.sh
+  [ "$(tail -n1 /etc/crontabs/root | wc -l)" -eq 0 ] && [ -n "$(cat /etc/crontabs/root 2>/dev/null)" ] && echo >>/etc/crontabs/root
+  [ -z "$(grep "mosupdater.sh" "$CRON_FILE" 2>/dev/null)" ] && {
+    [ "$(uci -q get mosdns.mosdns.geo_auto_update)" -eq 1 ] && echo "0 $(uci -q get mosdns.mosdns.geo_update_day_time) * * $(uci -q get mosdns.mosdns.geo_update_week_time) /etc/mosdns/mosupdater.sh" >>$CRON_FILE
+  }
+  crontab $CRON_FILE
+}
+
+delcron() {
+  sed -i '/mosupdater.sh/d' $CRON_FILE 2>/dev/null
+  /etc/init.d/cron restart
+}
+
+start_service() {
+
+  # Reading config
+  inital_conf
+  if [ "$enabled" -eq 0 ]; then
+    firstblood=$(uci -q get mosdns.mosdns.not_first_start)
+    [ "${firstblood}" = "0" ] && restore_setting
+    [ "${firstblood}" = "0" ] && restart_others
+    uci set mosdns.mosdns.not_first_start='1'
+    uci commit mosdns
+    echo "MosDNS has turned off"
+    return 1
+  fi
+  delcron
+  setcron
+  procd_open_instance mosdns
+  procd_set_param command $PROG -dir $RES_DIR -c $CONF
+  procd_set_param user root
+  procd_set_param stdout 1
+  procd_set_param stderr 1
+  procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
+  procd_close_instance mosdns
+
+  prepare_setting
+  restart_others
+
+  echo "MosDNS turn on"
+  echo "enabled="$enabled""
+
+}
+
+stop_service() {
+
+  killall -q mosdns
+  echo "MosDNS turn off"
+  echo "enabled="$enabled""
+
+  config_load "mosdns"
+  enabled=$(uci -q get mosdns.mosdns.enabled)
+  [ "${enabled}" = "0" ] && restore_setting
+  restart_others
+  delcron
+
+}
