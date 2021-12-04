@@ -66,7 +66,6 @@ git clone --depth 1 https://github.com/kiddin9/luci-app-wizard
 git clone --depth 1 https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic
 git clone --depth 1 https://github.com/kenzok78/minisign
 git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
-git clone --depth 1 https://github.com/linkease/nas-packages-luci && mvdir luci
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
 
@@ -118,6 +117,7 @@ svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
 svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
 svn co https://github.com/linkease/nas-packages/trunk/network/services && mvdir services
 svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
+svn co https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
