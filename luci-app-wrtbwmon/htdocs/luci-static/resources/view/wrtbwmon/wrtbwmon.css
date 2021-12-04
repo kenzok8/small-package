@@ -43,9 +43,6 @@ div > label + select {
 	flex: 1 1 35%;
 	text-align: right;
 }
-#updated, #updating {
-	display: inline;
-}
 #thClient {
 	width: 17%;
 }

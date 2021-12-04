@@ -1,9 +1,11 @@
 'use strict';
+'require dom';
 'require fs';
+'require poll';
 'require rpc';
-'require uci';
 'require ui';
 'require validation';
+'require view';
 
 var cachedData = [];
 var luciConfig = '/etc/luci-wrtbwmon.conf';
@@ -21,25 +23,41 @@ var callLuciDSLStatus = rpc.declare({
 	expect: { '': {} }
 });
 
+var callGetDatabaseRaw = rpc.declare({
+	object: 'luci.wrtbwmon',
+	method: 'get_db_raw',
+	params: [ 'protocol' ]
+});
+
+var callGetDatabasePath = rpc.declare({
+	object: 'luci.wrtbwmon',
+	method: 'get_db_path',
+	params: [ 'protocol' ]
+});
+
+var callRemoveDatabase = rpc.declare({
+	object: 'luci.wrtbwmon',
+	method: 'remove_db',
+	params: [ 'protocol' ]
+});
+
 function $(tid) {
 	return document.getElementById(tid);
 }
 
-function clickToResetDatabase(settings) {
+function clickToResetDatabase(settings, table, updated, updating, ev) {
 	if (confirm(_('This will delete the database file. Are you sure?'))) {
-		getPath().then(function(res) {
-			var db = settings.protocol == 'ipv4' ? res : renameFile(res, '6');
-			fs.exec('/bin/rm', [db]).then(function() {
-				updateData($('traffic'), $('updated'), $('updating'), settings, true);
-			});
-		})
+		return callRemoveDatabase(settings.protocol)
+		.then(function() {
+			updateData(settings, table, updated, updating, true);
+		});
 	}
 }
 
 function clickToSaveConfig(keylist, cstrs) {
 	var data = {};
 
-	for(var i = 0; i < keylist.length; i++) {
+	for (var i = 0; i < keylist.length; i++) {
 		data[keylist[i]] = cstrs[keylist[i]].getValue();
 	}
 
@@ -55,26 +73,25 @@ function clickToSaveConfig(keylist, cstrs) {
 	.then(function() { document.location.reload(); });
 }
 
-function clickToSelectInterval(settings, ev) {
+function clickToSelectInterval(settings, updating, ev) {
 	if (ev.target.value > 0) {
 		settings.interval = parseInt(ev.target.value);
-		if (!L.Request.poll.active()) L.Request.poll.start();
+		if (!poll.active()) poll.start();
 	}
 	else {
-		L.Request.poll.stop();
-		setUpdateMessage($('updating'), -1);
+		poll.stop();
+		setUpdateMessage(updating, -1);
 	}
 }
 
-function clickToSelectProtocol(settings, ev) {
+function clickToSelectProtocol(settings, table, updated, updating, ev) {
 	settings.protocol = ev.target.value;
-	updateData($('traffic'), $('updated'), $('updating'), settings, true);
+	updateData(settings, table, updated, updating, true);
 }
 
-function clickToShowMore(settings, ev) {
-	var table = $('traffic');
+function clickToShowMore(settings, table, ev) {
 	var t = table.querySelector('.tr.table-totals');
-	settings.showMore = ev.target.checked
+	    settings.showMore = ev.target.checked
 
 	if (t && t.firstElementChild)
 		t.firstElementChild.textContent = _('TOTAL') + (settings.showMore ? '' : ': ' + (table.childElementCount - 2));
@@ -99,7 +116,7 @@ function createOption(args, val) {
 	]);
 
 	if (desc && desc != '')
-		L.dom.append(frame.lastChild, E('div', { 'class': 'cbi-value-description' }, desc));
+		dom.append(frame.lastChild, E('div', { 'class': 'cbi-value-description' }, desc));
 
 	return [widget, frame];
 }
@@ -153,14 +170,6 @@ function getDSLBandwidth() {
 	});
 }
 
-function getPath() {
-	return uci.load('wrtbwmon').then(function() {
-		var res = uci.get_first('wrtbwmon', 'wrtbwmon', 'path') || '/tmp/usage.db';
-		uci.unload('wrtbwmon');
-		return res;
-	});
-}
-
 function handleConfig(ev) {
 	ui.showModal(_('Configuration'), [
 			E('p', { 'class': 'spinning' }, _('Loading configuration data...'))
@@ -181,7 +190,7 @@ function handleConfig(ev) {
 			[ui.Textfield, _('Upstream Bandwidth'), '100', {datatype: 'ufloat'}, 'Mbps'],
 			[ui.Textfield, _('Downstream Bandwidth'), '100', {datatype: 'ufloat'}, 'Mbps'],
 			[ui.DynamicList, _('Hide MAC Addresses'), [], '', {datatype: 'macaddr'}, '']
-		]; // [constructor, lable, default_value(, all_values), options, description]
+		]; // [constructor, label, default_value(, all_values), options, description]
 
 		for (var i = 0; i < keylist.length; i++) {
 			res = createOption(arglist[i], settings[keylist[i]]);
@@ -248,7 +257,7 @@ function parseDefaultSettings(file) {
 	var keylist = ['protocol', 'interval', 'showMore', 'showZero', 'useBits', 'useMultiple', 'useDSL', 'upstream', 'downstream', 'hideMACs'];
 	var valuelist = ['ipv4', '5', false, true, false, '1000', false, '100', '100', []];
 
-	return fs.read(file).then(function(json) {
+	return fs.read_direct(file).then(function(json) {
 		var settings;
 		try {
 			settings = JSON.parse(json);
@@ -258,7 +267,7 @@ function parseDefaultSettings(file) {
 		}
 
 		for (var i = 0; i < keylist.length; i++) {
-			if(!(keylist[i] in settings))
+			if (!(keylist[i] in settings))
 				settings[keylist[i]] = valuelist[i];
 		}
 
@@ -292,10 +301,13 @@ function progressbar(query, v, m, useBits, useMultiple) {
 	}
 }
 
-function registerTableEventHandlers(settings, table) {
-	var indicators = $('xhr_poll_status') || $('indicators').getElementsByTagName('span')[0];
-	indicators.addEventListener('click', function() {
-		$('selectInterval').value = L.Request.poll.active() ? settings.interval : -1;
+function setupThisDOM(settings, table) {
+	document.addEventListener('poll-stop', function() {
+		$('selectInterval').value = -1;
+	});
+
+	document.addEventListener('poll-start', function() {
+		$('selectInterval').value = settings.interval;
 	});
 
 	table.querySelectorAll('.th').forEach(function(e) {
@@ -304,6 +316,9 @@ function registerTableEventHandlers(settings, table) {
 				setSortedColumn(ev.target);
 				displayTable(table, settings);
 			});
+
+			if (e.classList.contains('showMore'))
+				settings.showMore ? e.classList.remove('hide') : e.classList.add('hide');
 		}
 	});
 }
@@ -317,8 +332,8 @@ function renameFile(str, tag) {
 
 function resolveCustomizedHostName() {
 	return fs.stat(hostNameFile).then(function() {
-		return fs.read(hostNameFile).then(function(rawStr) {
-			var hostNames = [], arr = rawStr.split(/\r?\n|\r/g), row;
+		return fs.read_direct(hostNameFile).then(function(raw) {
+			var hostNames = [], arr = raw.trim().split(/\r?\n/), row;
 			for (var i = 0; i < arr.length; i++) {
 				row = arr[i].split(',');
 				if (row.length == 2 && row[0])
@@ -326,7 +341,8 @@ function resolveCustomizedHostName() {
 			}
 			return hostNames;
 		})
-	}).catch(function() { return []; });
+	})
+	.catch(function() { return []; });
 }
 
 function resolveHostNameByMACAddr() {
@@ -367,7 +383,7 @@ function setSortedColumn(sorting) {
 }
 
 function setUpdateMessage(e, sec) {
-	e.innerHTML = sec < 0 ? '' : ' ' + _('Updating again in %s second(s).').format('<b>' + sec + '</b>');
+	e.innerHTML = sec < 0 ? '' : _('Updating again in %s second(s).').format('<b>' + sec + '</b>');
 }
 
 function sortTable(col, IPVer, flag, x, y) {
@@ -384,8 +400,8 @@ function sortTable(col, IPVer, flag, x, y) {
 		: (a = validation.parseIPv6(a) || [0, 0, 0, 0, 0, 0, 0, 0], b = validation.parseIPv6(b) || [0, 0, 0, 0, 0, 0, 0, 0]);
 	}
 
-	if(Array.isArray(a) && Array.isArray(b)) {
-		for(var i = 0; i < a.length; i++) {
+	if (Array.isArray(a) && Array.isArray(b)) {
+		for (var i = 0; i < a.length; i++) {
 			if (a[i] != b[i]) {
 				return (b[i] - a[i]) * flag;
 			}
@@ -396,34 +412,36 @@ function sortTable(col, IPVer, flag, x, y) {
 	return a == b ? 0 : (a < b ? 1 : -1) * flag;
 }
 
-function updateData(table, updated, updating, settings, once) {
-	if (!(L.Poll.tick % settings.interval) || once) {
-		getPath().then(function(res) {
+function updateData(settings, table, updated, updating, once) {
+	if (!(poll.tick % settings.interval) || once) {
+		callGetDatabasePath()
+		.then(function(res) {
 			var params = settings.protocol == 'ipv4' ? '-4' : '-6';
-			fs.exec('/usr/sbin/wrtbwmon', [params, '-f', res]);
-			return params == '-4' ? res : renameFile(res, '6');
-		}).then(function(data) {
-			Promise.all([
-				fs.exec('/bin/cat', [ data ]),
+			return fs.exec_direct('/usr/sbin/wrtbwmon', [params, '-f', res.file_4])
+		})
+		.then(function() {
+			return Promise.all([
+				callGetDatabaseRaw(settings.protocol),
 				resolveHostNameByMACAddr()
-			]).then(function(res) {
-				//console.time('start');
-				cachedData = parseDatabase(res[0].stdout || '', res[1], settings.showZero, settings.hideMACs);
-				displayTable(table, settings);
-				updated.innerHTML = _('Last updated at %s.').format(formatDate(new Date(document.lastModified)));
-				//console.timeEnd('start');
-			});
+			]);
+		})
+		.then(function(res) {
+			//console.time('start');
+			cachedData = parseDatabase(res[0].data || '', res[1], settings.showZero, settings.hideMACs);
+			displayTable(table, settings);
+			updated.textContent = _('Last updated at %s.').format(formatDate(new Date(document.lastModified)));
+			//console.timeEnd('start');
 		});
 	}
 	updatePerSec(updating, settings.interval);
 }
 
 function updatePerSec(e, interval) {
-	var tick = L.Poll.tick;
+	var tick = poll.tick;
 	var sec = tick % interval ? interval - tick % interval : 0;
 
 	setUpdateMessage(e, sec);
-	if(sec == 0) {
+	if (sec == 0) {
 		setTimeout(setUpdateMessage.bind(this, e, interval), 100);
 	}
 }
@@ -483,7 +501,7 @@ function updateTable(tb, values, placeholder, settings) {
 	}
 
 	//Append the totals or placeholder row.
-	if(formData.length == 0) {
+	if (formData.length == 0) {
 		newNode = document.createElement('div');
 		newNode.className = 'tr placeholder';
 		childTD = document.createElement('div');
@@ -525,7 +543,17 @@ function updateTable(tb, values, placeholder, settings) {
 	tb.appendChild(fragment);
 }
 
-return L.view.extend({
+function initOption(options, selected) {
+	var res = [], attr = {};
+	for (var idx in options) {
+		attr.value = idx;
+		attr.selected = idx == selected ? '' : null;
+		res.push(E('option', attr, options[idx]));
+	}
+	return res;
+}
+
+return view.extend({
 	load: function() {
 		return Promise.all([
 			parseDefaultSettings(luciConfig),
@@ -534,8 +562,29 @@ return L.view.extend({
 	},
 
 	render: function(data) {
-		var settings = data[0];
-		var node = E('div', { 'class': 'cbi-map' }, [
+		var settings = data[0],
+		    labelUpdated = E('label'),
+		    labelUpdating = E('label'),
+		    table = E('div', { 'class': 'table', 'id': 'traffic' }, [
+					E('div', { 'class': 'tr table-titles' }, [
+						E('div', { 'class': 'th', 'id': 'thClient' }, _('Clients')),
+						E('div', { 'class': 'th showMore hide', 'id': 'thMAC' }, _('MAC')),
+						E('div', { 'class': 'th', 'id': 'thDownload' }, _('Download')),
+						E('div', { 'class': 'th', 'id': 'thUpload' }, _('Upload')),
+						E('div', { 'class': 'th', 'id': 'thTotalDown' }, _('Total Down')),
+						E('div', { 'class': 'th', 'id': 'thTotalUp' }, _('Total Up')),
+						E('div', { 'class': 'th sorted', 'id': 'thTotal' }, _('Total')),
+						E('div', { 'class': 'th showMore hide', 'id': 'thFirstSeen' }, _('First Seen')),
+						E('div', { 'class': 'th showMore hide', 'id': 'thLastSeen' }, _('Last Seen'))
+					]),
+					E('div', {'class': 'tr placeholder'}, [
+						E('div', { 'class': 'td' }, E('em', {}, _('Collecting data...')))
+					])
+				]);
+
+		poll.add(updateData.bind(this, settings, table, labelUpdated, labelUpdating, false), 1);
+		setupThisDOM(settings, table);
+		return E('div', { 'class': 'cbi-map' }, [
 			E('h2', {}, _('Usage - Details')),
 			E('div', { 'class': 'cbi-section' }, [
 				E('div', { 'id': 'control_panel' }, [
@@ -543,25 +592,26 @@ return L.view.extend({
 						E('label', {}, _('Protocol:')),
 						E('select', {
 							'id': 'selectProtocol',
-							'change': clickToSelectProtocol.bind(this, settings)
-							}, [
-							E('option', { 'value': 'ipv4' }, 'ipv4'),
-							E('option', { 'value': 'ipv6' }, 'ipv6')
-						])
+							'change': clickToSelectProtocol.bind(this, settings, table, labelUpdated, labelUpdating)
+							}, initOption({
+								'ipv4': 'ipv4',
+								'ipv6': 'ipv6'
+								}, settings.protocol))
 					]),
 					E('div', {}, [
 						E('label', { 'for': 'showMore' }, _('Show More Columns:')),
 						E('input', {
 							'id': 'showMore',
 							'type': 'checkbox',
-							'click': clickToShowMore.bind(this, settings)
+							'click': clickToShowMore.bind(this, settings, table),
+							'checked': settings.showMore ? '' : null
 						}),
 					]),
 					E('div', {}, [
 						E('button', {
 							'class': 'btn cbi-button cbi-button-reset important',
 							'id': 'resetDatabase',
-							'click': clickToResetDatabase.bind(this, settings)
+							'click': clickToResetDatabase.bind(this, settings, table, labelUpdated, labelUpdating)
 						}, _('Reset Database')),
 						' ',
 						E('button', {
@@ -571,22 +621,19 @@ return L.view.extend({
 					])
 				]),
 				E('div', {}, [
-					E('div', {}, [
-						E('div', { 'id': 'updated' }),
-						E('div', { 'id': 'updating' })
-					]),
+					E('div', {}, [ labelUpdated, labelUpdating ]),
 					E('div', {}, [
 						E('label', { 'for': 'selectInterval' }, _('Auto update every:')),
 						E('select', {
 							'id': 'selectInterval',
-							'change': clickToSelectInterval.bind(this, settings)
-							}, [
-							E('option', { 'value': '-1' }, _('Disabled')),
-							E('option', { 'value': '2' }, _('2 seconds')),
-							E('option', { 'value': '5' }, _('5 seconds')),
-							E('option', { 'value': '10' }, _('10 seconds')),
-							E('option', { 'value': '30' }, _('30 seconds'))
-						])
+							'change': clickToSelectInterval.bind(this, settings, labelUpdating)
+							}, initOption({
+								'-1': _('Disabled'),
+								'2': _('2 seconds'),
+								'5': _('5 seconds'),
+								'10': _('10 seconds'),
+								'30': _('30 seconds')
+								}, settings.interval))
 					])
 				]),
 				E('div', { 'id': 'progressbar_panel', 'class': 'table' }, [
@@ -609,40 +656,9 @@ return L.view.extend({
 						))
 					]),
 				]),
-				E('div', { 'class': 'table', 'id': 'traffic' }, [
-					E('div', { 'class': 'tr table-titles' }, [
-						E('div', { 'class': 'th', 'id': 'thClient' }, _('Clients')),
-						E('div', { 'class': 'th showMore hide', 'id': 'thMAC' }, _('MAC')),
-						E('div', { 'class': 'th', 'id': 'thDownload' }, _('Download')),
-						E('div', { 'class': 'th', 'id': 'thUpload' }, _('Upload')),
-						E('div', { 'class': 'th', 'id': 'thTotalDown' }, _('Total Down')),
-						E('div', { 'class': 'th', 'id': 'thTotalUp' }, _('Total Up')),
-						E('div', { 'class': 'th sorted', 'id': 'thTotal' }, _('Total')),
-						E('div', { 'class': 'th showMore hide', 'id': 'thFirstSeen' }, _('First Seen')),
-						E('div', { 'class': 'th showMore hide', 'id': 'thLastSeen' }, _('Last Seen'))
-					]),
-					E('div', {'class': 'tr placeholder'}, [
-						E('div', { 'class': 'td' }, E('em', {}, _('Collecting data...')))
-					])
-				])
+				table
 			])
 		]);
-
-		return Promise.all([
-			node.querySelector('[id="traffic"]'),
-			node.querySelector('[id="updated"]'),
-			node.querySelector('[id="updating"]'),
-			node.querySelector('[id="selectInterval"]').value = settings.interval,
-			node.querySelector('[id="selectProtocol"]').value = settings.protocol,
-			node.querySelector('[id="showMore"]').checked = settings.showMore,
-			node.querySelectorAll('.showMore').forEach(function(e) { settings.showMore ? e.classList.remove('hide') : e.classList.add('hide'); })
-		])
-		.then(function(data) {
-			L.Poll.add(updateData.bind(this, data[0], data[1], data[2], settings, false), 1);
-			return data[0];
-		})
-		.then(registerTableEventHandlers.bind(this, settings))
-		.then(function() { return node; });
 	},
 
 	handleSaveApply: null,

@@ -1,0 +1,77 @@
+msgid "Basic Setting"
+msgstr "基本设置"
+
+msgid "Manual Configuration"
+msgstr "手动配置"
+
+msgid "MosDNS is a 'programmable' DNS forwarder."
+msgstr "MosDNS 是一个插件化的 DNS 转发/分流器。"
+
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "Collecting data..."
+msgstr "获取数据中..."
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Enable DNS Redirect"
+msgstr "启用 DNS 重定向"
+
+msgid "View the YAML Configuration file used by this MosDNS. You can edit it as you own need; Beware the listening port 5335 was hardcoded into the init script, do not change that."
+msgstr "查看 MosDNS 所使用的 YAML 配置文件。你可以根据自己的需要进行编辑；但请注意，监听端口5335是硬编码在启动脚本中的，不要更改！"
+
+msgid "Geodata Update"
+msgstr "数据库更新"
+
+msgid "Update Time (Every Day)"
+msgstr "更新时间（每天）"
+
+msgid "Update Cycle"
+msgstr "更新周期"
+
+msgid "Every Day"
+msgstr "每天"
+
+msgid "Every Monday"
+msgstr "每周一"
+
+msgid "Every Tuesday"
+msgstr "每周二"
+
+msgid "Every Wednesday"
+msgstr "每周三"
+
+msgid "Every Thursday"
+msgstr "每周四"
+
+msgid "Every Friday"
+msgstr "每周五"
+
+msgid "Every Saturday"
+msgstr "每周六"
+
+msgid "Every Sunday"
+msgstr "每周日"
+
+msgid "Database Update"
+msgstr "数据库更新"
+
+msgid "Check And Update"
+msgstr "检查并更新"
+
+msgid "Enable Auto Database Update"
+msgstr "启用数据库自动更新"
+
+msgid "Enable Config Update"
+msgstr "启用配置文件同步"
+
+msgid "Enable AutoConfiguration"
+msgstr "启用自动化配置"
+
+msgid "Turning it on will make the necessary adjustments to other plug-in settings."
+msgstr "开启这个选项会允许本插件对其他插件的设置进行必要的设置，目前仅支持 SSRP VSSR PASSWALL。"

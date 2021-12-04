@@ -1,8 +1,9 @@
 'use strict';
 'require fs';
 'require ui';
+'require view';
 
-return L.view.extend({
+return view.extend({
 	load: function() {
 		return fs.trimmed('/etc/wrtbwmon.user').catch(function(err) {
 			ui.addNotification(null, E('p', {}, _('Unable to load the customized hostname file: ' + err.message)));
@@ -36,7 +37,7 @@ return L.view.extend({
 		return E('div', { 'class': 'cbi-page-actions' }, [
 			E('button', {
 				'class': 'cbi-button cbi-button-save',
-				'click': L.ui.createHandlerFn(this, 'handleSave')
+				'click': ui.createHandlerFn(this, 'handleSave')
 			}, [ _('Save') ])
 		]);
 	}
