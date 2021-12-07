@@ -1,5 +1,5 @@
 config global
-	option enabled '1'
+	option enabled '0'
 	option koolproxy_port '0'
 	option startup_delay '0'
 	option koolproxy_acl_default '1'
