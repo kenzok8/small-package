@@ -46,6 +46,12 @@ o = s:option(Flag, "enabled", translate("Enable"), translate("Enable or disable 
 o.default = 0
 o.rmempty = false
 
+o = s:option(ListValue, "role", translate("role"))
+o:value("off", translate("off"))
+o:value("server", translate("host MESH"))
+o:value("client", translate("son MESH"))
+o.rmempty = false
+
 apRadio = s:option(ListValue, "apRadio", translate("MESH Radio device"), translate("The radio device which MESH use"))
 uci:foreach("wireless", "wifi-device",
 							function(s)

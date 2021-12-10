@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 START=99
-STOP=10
+STOP=70
 
 enable=$(uci get easymesh.config.enabled 2>/dev/null)
 mesh_bat0=$(uci get network.bat0 2>/dev/null)
@@ -14,6 +14,7 @@ ap_ipaddr1=$(cat /etc/easymesh | sed -n '1p' 2>/dev/null)
 apRadio=$(uci get easymesh.config.apRadio 2>/dev/null)
 kvr=$(uci get easymesh.config.kvr 2>/dev/null)
 brlan=$(uci get network.@device[0].name 2>/dev/null)
+role=$(uci get easymesh.config.role 2>/dev/null)
 
 ap_mode_stop(){
 	ap_ipaddr=$(uci get network.lan.ipaddr 2>/dev/null)
@@ -47,8 +48,8 @@ add_wifi_mesh(){
 	if [ "$mesh_nwi_mesh" != "interface" ]; then
 		uci set network.nwi_mesh_$apall=interface
 		uci set network.nwi_mesh_$apall.proto='batadv_hardif'
-		uci set network.nwi_mesh_$apall.mtu='2304'
 		uci set network.nwi_mesh_$apall.master='bat0'
+		uci set network.nwi_mesh_$apall.mtu='1536'
 		uci commit network
 	fi
 
@@ -58,8 +59,11 @@ add_wifi_mesh(){
 		uci set wireless.mesh_$apall.ifname=mesh_${apall}
 		uci set wireless.mesh_$apall.network=nwi_mesh_${apall}
 		uci set wireless.mesh_$apall.mode='mesh'
-		uci set wireless.mesh_$apall.mesh_fwding='0'
 		uci set wireless.mesh_$apall.mesh_id=$mesh_id
+		uci set wireless.mesh_$apall.mesh_fwding='0'
+		uci set wireless.mesh_$apall.mesh_ttl='1'
+		uci set wireless.mesh_$apall.mcast_rate='24000'
+		uci set wireless.mesh_$apall.disabled='0'
 		uci commit wireless
 	fi
 
@@ -127,21 +131,29 @@ start(){
 			uci set network.bat0.proto='batadv'
 			uci set network.bat0.routing_algo='BATMAN_IV'
 			uci set network.bat0.aggregated_ogms='1'
-			#uci set network.bat0.gw_bandwidth='10000/2000'
 			uci set network.bat0.ap_isolation='0'
 			uci set network.bat0.bonding='0'
-			uci set network.bat0.fragmentation='1'
-			uci set network.bat0.gw_mode='off'
-			#uci set network.bat0.gw_sel_class='20'
-			uci set network.bat0.log_level='0'
-			uci set network.bat0.orig_interval='1000'
 			uci set network.bat0.bridge_loop_avoidance='1'
 			uci set network.bat0.distributed_arp_table='1'
-			uci set network.bat0.multicast_mode='1'
-			uci set network.bat0.network_coding='0'
+			uci set network.bat0.fragmentation='1'
+			#uci set network.bat0.gw_bandwidth='10000/2000'
+			#uci set network.bat0.gw_sel_class='20'
 			uci set network.bat0.hop_penalty='30'
 			uci set network.bat0.isolation_mark='0x00000000/0x00000000'
+			uci set network.bat0.log_level='0'
+			uci set network.bat0.multicast_fanout='16'
+			uci set network.bat0.multicast_mode='1'
+			uci set network.bat0.network_coding='0'
+			uci set network.bat0.orig_interval='1000'
 
+			if [ "$role" = "server" ]; then
+				uci set network.bat0.gw_mode='server'
+			elif [ "$role" = "client" ]; then
+				uci set network.bat0.gw_mode='client'
+			else
+				uci set network.bat0.gw_mode='off'
+			fi
+		
 			if [ "$brlan" = "br-lan" ]; then
 				uci add_list network.@device[0].ports='bat0'
 			else
