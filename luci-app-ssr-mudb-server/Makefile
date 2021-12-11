@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=LuCI support for SSR Mudb Server
 LUCI_DEPENDS:=+libsodium +luci-lib-jsonc +python3
 LUCI_PKGARCH:=all
-PKG_VERSION:=10
-PKG_DATE:=20200619
+PKG_VERSION:=11
+PKG_DATE:=20211211
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
