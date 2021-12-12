@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-mosdns
 PKG_VERSION:=1.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 LUCI_TITLE:=LuCI Support for mosdns
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+mosdns
+LUCI_DEPENDS:=+mosdns +jsonfilter
 
 define Package/$(PKG_NAME)/conffiles
 /etc/mosdns/config.yaml

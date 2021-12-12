@@ -4,8 +4,11 @@ function index()
 	if not nixio.fs.access("/etc/config/mosdns") then
 		return
 	end
-
-	entry({"admin", "services", "mosdns"}, alias("admin", "services", "mosdns", "basic"), _("MosDNS"), 30).dependent = true
+	
+	local page = entry({"admin", "services", "mosdns"}, alias("admin", "services", "mosdns", "basic"), _("MosDNS"), 30)
+	page.dependent = true
+	page.acl_depends = { "luci-app-mosdns" }
+	
 	entry({"admin", "services", "mosdns", "basic"}, cbi("mosdns/basic"), _("Basic Setting"), 1).leaf = true
 	entry({"admin", "services", "mosdns", "update"}, cbi("mosdns/update"), _("Geodata Update"), 2).leaf = true
 	entry({"admin", "services", "mosdns", "config"}, cbi("mosdns/config"), _("Manual Configuration"), 3).leaf = true

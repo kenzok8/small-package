@@ -9,6 +9,8 @@ plugin:
       entry:
         - _no_ecs
         - lazy_cache
+        - _prefer_ipv4
+        - _single_flight
         - main_sequence
       server:
         - protocol:        udp
@@ -29,11 +31,6 @@ plugin:
         - if:
             - query_is_non_local_domain
           exec:
-            - if:
-                - _qtype_AAAA
-              exec:
-                - _block_with_empty_response
-                - _end
             - forward_remote
             - _end
         - primary:
@@ -43,11 +40,6 @@ plugin:
               exec:
                 - _drop_response
           secondary:
-            - if:
-                - _qtype_AAAA
-              exec:
-                - _block_with_empty_response
-                - _end
             - forward_remote
           fast_fallback:   150
           always_standby:  true
@@ -56,8 +48,9 @@ plugin:
     type:                  fast_forward
     args:
       upstream:
-        - addr:            119.29.29.29
-        - addr:            101.226.4.6
+        - addr:            ${{ ./dns0.sh }}
+        - addr:            ${{ ./dns1.sh }}
+
 
   - tag:                   forward_remote
     type:                  fast_forward
@@ -74,7 +67,7 @@ plugin:
     type:                  cache
     args:
       size:                512000
-      lazy_cache_ttl:      31536000
+      lazy_cache_ttl:      259200
 
   - tag:                   query_is_local_domain
     type:                  query_matcher
