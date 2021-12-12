@@ -4,8 +4,8 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 msgid "easymesh"
 msgstr "easymesh"
 
-msgid "<b>Active node：" .. Nodes .. "</b>"
-msgstr "<b>活动节点：" .. Nodes .. "</b>"
+msgid "Active node"
+msgstr "活动节点"
 
 msgid "IF"
 msgstr "IF"
