@@ -6,6 +6,10 @@
 				"luci.wrtbwmon": [
 					"get_db_raw",
 					"get_db_path"
+				],
+				"luci-rpc": [
+					"getDHCPLeases",
+					"getDSLStatus"
 				]
 			},
 			"file": {
