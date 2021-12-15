@@ -23,6 +23,11 @@ plugin:
     args:
       exec:
         - if:
+            - query_is_ad_domain
+          exec:
+            - _block_with_nxdomain
+            - _end
+        - if:
             - query_is_local_domain
             - '!_query_is_common'
           exec:
@@ -86,3 +91,9 @@ plugin:
     args:
       ip:
         - 'ext:./geoip.dat:cn'
+
+  - tag: query_is_ad_domain
+    type: query_matcher
+    args:
+      domain:
+        - 'ext:./serverlist.txt'
