@@ -34,10 +34,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/uci.defaults $(1)/etc/uci-defaults/95-default-settings
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/base_config.conf $(1)/etc/config/base_config
-	$(INSTALL_DIR) $(1)/lib/wifi
-	$(INSTALL_DATA) ./files/wifi-init.sh $(1)/lib/wifi/wifi-init.sh
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/wifi-init.init $(1)/etc/init.d/wifi-init
 	$(INSTALL_DIR) $(1)/etc/profile.d
 	$(INSTALL_BIN) ./files/sysinfo.sh $(1)/etc/profile.d/sysinfo.sh
 	$(INSTALL_DIR) $(1)/sbin
@@ -48,4 +44,3 @@ define Package/$(PKG_NAME)/install
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
-
