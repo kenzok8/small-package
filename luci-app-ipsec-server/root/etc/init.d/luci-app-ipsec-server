@@ -72,9 +72,7 @@ start() {
 	local vt_enabled=$(uci -q get $CONFIG.@service[0].enabled)
 	[ "$vt_enabled" = 0 ] && return 1
 	
-	local vt_clientip=$(uci -q get $CONFIG.@service[0].clientip)
-	local vt_clientdns=$(uci -q get $CONFIG.@service[0].clientdns)
-	[ -z "$vt_clientdns" ] && local vt_clientdns="8.8.4.4"
+	local vt_gateway="${vt_clientip%.*}.1"
 	local vt_secret=$(uci -q get $CONFIG.@service[0].secret)
 	
 	local vt_l2tp_enabled=$(uci -q get $CONFIG.@service[0].l2tp_enable)
@@ -178,7 +176,7 @@ start() {
 		  leftsubnet=0.0.0.0/0
 		  rightsubnet=${vt_clientip}
 		  rightsourceip=${vt_clientip}
-		  rightdns=${vt_clientdns}
+		  rightdns=${vt_gateway}
 		  ike=aes128-sha1-modp2048,aes128-sha1-modp1024,3des-sha1-modp1024,3des-sha1-modp1536
 		  esp=aes128-sha1,3des-sha1
 
@@ -214,9 +212,16 @@ start() {
 	
 	/usr/lib/ipsec/starter --daemon charon --nofork > /dev/null 2>&1 &
 	gen_include
+	
+	uci -q batch <<-EOF >/dev/null
+		set network.ipsec_server.ipaddr="${vt_clientip%.*}.1"
+		commit network
+	EOF
+	ifup ipsec_server > /dev/null 2>&1
 }
 
 stop() {
+	ifdown ipsec_server > /dev/null 2>&1
 	sed -i '/l2tp-server/d' $CHAP_SECRETS 2>/dev/null
 	top -bn1 | grep "$L2TP_PATH" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -rf $L2TP_PATH
@@ -224,3 +229,29 @@ stop() {
 	ipt_rule del
 	rm -rf /var/etc/ipsecvpn.include
 }
+
+gen_iface_and_firewall() {
+	uci -q batch <<-EOF >/dev/null
+		delete network.ipsec_server
+		set network.ipsec_server=interface
+		set network.ipsec_server.ifname="ipsec0"
+		set network.ipsec_server.device="ipsec0"
+		set network.ipsec_server.proto="static"
+		set network.ipsec_server.ipaddr="${vt_clientip%.*}.1"
+		set network.ipsec_server.netmask="255.255.255.0"
+		commit network
+		
+		delete firewall.ipsecserver
+		set firewall.ipsecserver=zone
+		set firewall.ipsecserver.name="ipsecserver"
+		set firewall.ipsecserver.input="ACCEPT"
+		set firewall.ipsecserver.forward="ACCEPT"
+		set firewall.ipsecserver.output="ACCEPT"
+		set firewall.ipsecserver.network="ipsec_server"
+		commit firewall
+	EOF
+}
+
+if [ -z "$(uci -q get network.ipsec_server)" ] || [ -z "$(uci -q get firewall.ipsecserver)" ]; then
+	gen_iface_and_firewall
+fi
