@@ -144,8 +144,12 @@ start() {
 			done
 		}
 		unset user
+		
+		echo "ip-up-script /usr/share/xl2tpd/ip-up" >> $L2TP_OPTIONS_FILE
+		echo "ip-down-script /usr/share/xl2tpd/ip-down" >> $L2TP_OPTIONS_FILE
 
 		xl2tpd -c $L2TP_CONFIG_FILE -C $L2TP_CONTROL_FILE -D >${L2TP_LOG_FILE} 2>&1 &
+		rm -f "/usr/lib/ipsec/libipsec.so.0"
 	}
 	
 	cat > $IPSEC_CONN_FILE <<-EOF
@@ -228,6 +232,7 @@ stop() {
 	ps -w | grep "/usr/lib/ipsec" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	ipt_rule del
 	rm -rf /var/etc/ipsecvpn.include
+	ln -s "libipsec.so.0.0.0" "/usr/lib/ipsec/libipsec.so.0" >/dev/null 2>&1
 }
 
 gen_iface_and_firewall() {
