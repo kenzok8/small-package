@@ -8,6 +8,7 @@ function index()
     entry({"admin", "vpn", "ipsec-server"}, alias("admin", "vpn", "ipsec-server", "settings"), _("IPSec VPN Server"), 49).dependent = false
     entry({"admin", "vpn", "ipsec-server", "settings"}, cbi("ipsec-server/settings"), _("General Settings"), 10).leaf = true
     entry({"admin", "vpn", "ipsec-server", "users"}, cbi("ipsec-server/users"), _("Users Manager"), 20).leaf = true
+    entry({"admin", "vpn", "ipsec-server", "l2tp_user"}, cbi("ipsec-server/l2tp_user")).leaf = true
     entry({"admin", "vpn", "ipsec-server", "online"}, cbi("ipsec-server/online"), _("L2TP Online Users"), 30).leaf = true
     entry({"admin", "vpn", "ipsec-server", "status"}, call("status")).leaf = true
 end

@@ -1,17 +1,11 @@
 local d = require "luci.dispatcher"
 
-m = Map("luci-app-pptp-server", translate("PPTP VPN Server"))
-m.description = translate("Simple, quick and convenient PPTP VPN, universal across the platform")
+m = Map("luci-app-pptp-server", translate("Users Manager"))
+m.redirect = d.build_url("admin", "vpn", "pptpd", "users")
 
-s = m:section(TypedSection, "users", translate("Users Manager"))
-s.addremove = true
+s = m:section(NamedSection, arg[1], "users", "")
+s.addremove = false
 s.anonymous = true
-s.template = "cbi/tblsection"
-s.extedit = d.build_url("admin", "vpn", "pptpd", "user", "%s")
-function s.create(e, t)
-    t = TypedSection.create(e, t)
-    luci.http.redirect(e.extedit:format(t))
-end
 
 o = s:option(Flag, "enabled", translate("Enabled"))
 o.default = 1
@@ -28,6 +22,11 @@ o.rmempty = false
 o = s:option(Value, "ipaddress", translate("IP address"))
 o.placeholder = translate("Automatically")
 o.datatype = "ip4addr"
+o.rmempty = true
+
+o = s:option(DynamicList, "routes", translate("Static Routes"))
+o.placeholder = "192.168.10.0/24"
+o.datatype = "ipmask4"
 o.rmempty = true
 
 return m
