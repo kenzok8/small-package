@@ -135,7 +135,9 @@ start() {
 		local l2tp_users=$(get_enabled_anonymous_secs "@l2tp_users")
 		[ -n "$l2tp_users" ] && {
 			for user in $l2tp_users; do
-				eval $(uci -q show "${CONFIG}.${user}" | cut -d'.' -sf 3-)
+				for i in $(uci -q show "${CONFIG}.${user}" | cut -d '.' -sf 3- | cut -d '=' -sf 1); do
+					eval $i=\"$(uci -q get "${CONFIG}.${user}".$i)\"
+				done
 				[ "$enabled" -eq 1 ] || return 0
 				[ -n "$username" ] || return 0
 				[ -n "$password" ] || return 0
@@ -203,7 +205,9 @@ start() {
 	local ipsec_users=$(get_enabled_anonymous_secs "@ipsec_users")
 	[ -n "$ipsec_users" ] && {
 		for user in $ipsec_users; do
-			eval $(uci -q show "${CONFIG}.${user}" | cut -d'.' -sf 3-)
+			for i in $(uci -q show "${CONFIG}.${user}" | cut -d '.' -sf 3- | cut -d '=' -sf 1); do
+				eval $i=\"$(uci -q get "${CONFIG}.${user}".$i)\"
+			done
 			[ "$enabled" -eq 1 ] || return 0
 			[ -n "$username" ] || return 0
 			[ -n "$password" ] || return 0

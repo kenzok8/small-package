@@ -1,6 +1,9 @@
 #!/bin/sh
 
 _LOGIN_TIME="$(date "+%Y-%m-%d %H:%M:%S")"
+CONFIG="luci-app-pptp-server"
+PPTP_PATH=/var/etc/pptpd
+PPTP_SESSION_PATH=${PPTP_PATH}/session
 
 _USERNAME=${PEERNAME}
 _IFACE=${1}
@@ -12,9 +15,9 @@ _REMOTEIP=${6}
 
 _PID="$(cat /var/run/${_IFACE}.pid 2>/dev/null)"
 
-mkdir -p /var/etc/pptpd/session
+mkdir -p ${PPTP_SESSION_PATH}
 
-cat <<-EOF > /var/etc/pptpd/session/${_USERNAME}.${_IFACE}
+cat <<-EOF > ${PPTP_SESSION_PATH}/${_USERNAME}.${_IFACE}
 	{
 	    "username": "${_USERNAME}",
 	    "interface": "${_IFACE}",
@@ -27,24 +30,27 @@ cat <<-EOF > /var/etc/pptpd/session/${_USERNAME}.${_IFACE}
 	}
 EOF
 
-#如果给用户绑定了IP地址，仅只能单用户。
-cfgid=$(uci show luci-app-pptp-server | grep "\.username='${_USERNAME}'" | cut -d '.' -sf 2)
+#只能单用户使用
+cfgid=$(uci show ${CONFIG} | grep "@users" | grep "\.username='${_USERNAME}'" | cut -d '.' -sf 2)
 [ -n "$cfgid" ] && {
-	ip=$(uci -q get luci-app-pptp-server.${cfgid}.ipaddress)
-	[ -n "$ip" ] && {
-		HAS_LOGIN=$(ls /var/etc/pptpd/session | grep "^${_USERNAME}\.ppp" | grep -v "${_IFACE}")
-		[ -n "$HAS_LOGIN" ] && {
-			#踢出之前的用户
-			KO_IFACE=$(echo $HAS_LOGIN | awk -F '.' '{print $2}')
-			KO_PID=$(cat /var/run/${KO_IFACE}.pid 2>/dev/null)
-			[ -n "$KO_PID" ] && kill -9 ${KO_PID} >/dev/null 2>&1
-			rm -f /var/etc/pptpd/session/${HAS_LOGIN}
-			rm -f /var/run/${KO_IFACE}.pid
-		}
+	HAS_LOGIN=$(ls ${PPTP_SESSION_PATH} | grep "^${_USERNAME}\.ppp" | grep -v "${_IFACE}")
+	[ -n "$HAS_LOGIN" ] && {
+		#踢出之前的用户
+		KO_IFACE=$(echo $HAS_LOGIN | awk -F '.' '{print $2}')
+		KO_PID=$(cat /var/run/${KO_IFACE}.pid 2>/dev/null)
+		[ -n "$KO_PID" ] && kill -9 ${KO_PID} >/dev/null 2>&1
+		rm -f ${PPTP_SESSION_PATH}/${HAS_LOGIN}
+		rm -f /var/run/${KO_IFACE}.pid
+	}
+	routes=$(uci -q get ${CONFIG}.${cfgid}.routes)
+	[ -n "$routes" ] && {
+		for router in ${routes}; do
+			route add -net ${router} dev ${_IFACE} >/dev/null 2>&1
+		done
 	}
 }
 
-#可根据登录的账号自定义脚本，如静态路由表，组网等。
+#可根据登录的账号自定义脚本，如组网、日志、限速、权限等特殊待遇。
 SCRIPT="/usr/share/pptpd/ip-up.d/${_USERNAME}"
 [ -s "$SCRIPT" ] && {
 	[ ! -x "$SCRIPT" ] && chmod 0755 "$SCRIPT"

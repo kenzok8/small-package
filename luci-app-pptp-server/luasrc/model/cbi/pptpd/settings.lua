@@ -13,7 +13,7 @@ o = s:option(DummyValue, "pptpd_status", translate("Current Condition"))
 o.template = "pptpd/status"
 o.value = translate("Collecting data...")
 
-o = s:option(Flag, "enabled", translate("Enable VPN Server"))
+o = s:option(Flag, "enabled", translate("Enabled"))
 o.rmempty = false
 
 o = s:option(Value, "localip", translate("Server IP"), translate("VPN Server IP address, it not required."))

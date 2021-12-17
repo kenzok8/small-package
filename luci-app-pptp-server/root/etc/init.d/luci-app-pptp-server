@@ -88,7 +88,9 @@ start() {
 	local pptp_users=$(get_enabled_anonymous_secs "@users")
 	[ -n "$pptp_users" ] && {
 		for user in $pptp_users; do
-			eval $(uci -q show "${CONFIG}.${user}" | cut -d'.' -sf 3-)
+			for i in $(uci -q show "${CONFIG}.${user}" | cut -d '.' -sf 3- | cut -d '=' -sf 1); do
+				eval $i=\"$(uci -q get "${CONFIG}.${user}".$i)\"
+			done
 			[ "$enabled" -eq 1 ] || return 0
 			[ -n "$username" ] || return 0
 			[ -n "$password" ] || return 0
