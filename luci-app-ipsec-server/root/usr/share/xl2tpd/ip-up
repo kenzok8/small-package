@@ -1,0 +1,53 @@
+#!/bin/sh
+
+_LOGIN_TIME="$(date "+%Y-%m-%d %H:%M:%S")"
+
+_USERNAME=${PEERNAME}
+_IFACE=${1}
+_TTY=${2}
+_SPEED=${3}
+_LOCALIP=${4}
+_PEERIP=${5}
+
+_PID=$(cat /var/run/${_IFACE}.pid 2>/dev/null)
+_REMOTEIP=$(cat /var/etc/xl2tpd/xl2tpd.log 2>/dev/null | grep "PID: ${_PID}" | grep -o -E '([0-9]{1,3}[\.]){3}[0-9]{1,3}')
+
+mkdir -p /var/etc/xl2tpd/session
+
+cat <<-EOF > /var/etc/xl2tpd/session/${_USERNAME}.${_IFACE}
+	{
+	    "username": "${_USERNAME}",
+	    "interface": "${_IFACE}",
+	    "tty": "${_TTY}",
+	    "speed": "${_SPEED}",
+	    "ip": "${_PEERIP}",
+	    "remote_ip": "${_REMOTEIP}",
+	    "pid": "${_PID}",
+	    "login_time": "${_LOGIN_TIME}"
+	}
+EOF
+
+#如果给用户绑定了IP地址，仅只能单用户。
+cfgid=$(uci show luci-app-ipsec-server | grep "@l2tp_users" | grep "\.username='${_USERNAME}'" | cut -d '.' -sf 2)
+[ -n "$cfgid" ] && {
+	
+	ip=$(uci -q get luci-app-ipsec-server.${cfgid}.ipaddress)
+	[ -n "$ip" ] && {
+		HAS_LOGIN=$(ls /var/etc/xl2tpd/session | grep "^${_USERNAME}\.ppp" | grep -v "${_IFACE}")
+		[ -n "$HAS_LOGIN" ] && {
+			#踢出之前的用户
+			KO_IFACE=$(echo $HAS_LOGIN | awk -F '.' '{print $2}')
+			KO_PID=$(cat /var/run/${KO_IFACE}.pid 2>/dev/null)
+			[ -n "$KO_PID" ] && kill -9 ${KO_PID} >/dev/null 2>&1
+			rm -f /var/etc/xl2tpd/session/${HAS_LOGIN}
+			rm -f /var/run/${KO_IFACE}.pid
+		}
+	}
+}
+
+#可根据登录的账号自定义脚本，如静态路由表，组网等。
+SCRIPT="/usr/share/xl2tpd/ip-up.d/${_USERNAME}"
+[ -s "$SCRIPT" ] && {
+	[ ! -x "$SCRIPT" ] && chmod 0755 "$SCRIPT"
+	"$SCRIPT" "$@"
+}

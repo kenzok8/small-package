@@ -69,9 +69,7 @@ start() {
 	local vt_mppe=$(uci -q get $CONFIG.@service[0].mppe)
 	[ -n "$vt_mppe" ] && [ "$vt_mppe" -eq 1 ] && echo "mppe required,no40,no56,stateless" >> $PPTP_OPTIONS_FILE
 	
-	local vt_dns=$(uci -q get $CONFIG.@service[0].dns)
-	[ -z "$vt_dns" ] && vt_dns="8.8.4.4"
-	echo "ms-dns ${vt_dns}">> $PPTP_OPTIONS_FILE
+	echo "ms-dns ${vt_localip}">> $PPTP_OPTIONS_FILE
 	
 	cp /etc/pptpd.conf $PPTP_CONFIG_FILE
 	sed -i '/localip/d' $PPTP_CONFIG_FILE 2>/dev/null
@@ -98,6 +96,9 @@ start() {
 			echo "$username pptp-server $password $ipaddress" >> $CHAP_SECRETS
 		done
 	}
+	
+	echo "ip-up-script /usr/share/pptpd/ip-up" >> $PPTP_OPTIONS_FILE
+	echo "ip-down-script /usr/share/pptpd/ip-down" >> $PPTP_OPTIONS_FILE
 	
 	for m in arc4 sha1_generic slhc crc-ccitt ppp_generic ppp_async ppp_mppe; do
 		insmod $m >/dev/null 2>&1

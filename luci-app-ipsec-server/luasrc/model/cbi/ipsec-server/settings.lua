@@ -22,14 +22,6 @@ clientip.description = translate("VPN Client reserved started IP addresses with 
 clientip.optional = false
 clientip.rmempty = false
 
---[[
-clientdns = s:option(Value, "clientdns", translate("VPN Client DNS"))
-clientdns.datatype = "ip4addr"
-clientdns.description = translate("DNS using in VPN tunnel.")
-clientdns.optional = false
-clientdns.rmempty = false
-]]--
-
 secret = s:option(Value, "secret", translate("Secret Pre-Shared Key"))
 secret.password = true
 
@@ -54,6 +46,15 @@ if sys.call("command -v xl2tpd > /dev/null") == 0 then
     o.rmempty = true
     o.default = "192.168.101.10-20"
     o.placeholder = o.default
+
+    if sys.call("ls -L /usr/lib/ipsec/libipsec* 2>/dev/null >/dev/null") == 0 then 
+        o = s:option(DummyValue, "_o", " ")
+        o.rawhtml = true
+        o.cfgvalue = function(t, n)
+            return string.format('<a style="color: red">%s</a>', translate("L2TP/IPSec is not compatible with kernel-libipsec, which will disable this module."))
+        end
+        o:depends("l2tp_enable", true)
+    end
 end
 
 return m

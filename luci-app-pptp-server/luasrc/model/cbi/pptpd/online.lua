@@ -1,78 +1,84 @@
-local e = {}
 local o = require "luci.dispatcher"
-local a = luci.util.execi("/bin/busybox top -bn1 | grep '/usr/sbin/pppd'")
-for t in a do
-    local a, n, h, s, o, i = t:match("^ *(%d+) +(%d+) +.+options%.pptpd +(%d+) +(%S.-%S)%:(%S.-%S) +.+ +(.+)")
-    local t = tonumber(a)
-    if t then
-        e["%02i.%s" % {t, "online"}] = {
-            ['PID'] = a,
-            ['PPID'] = n,
-            ['SPEED'] = h,
-            ['GATEWAY'] = s,
-            ['VIP'] = o,
-            ['CIP'] = i,
-            ['BLACKLIST'] = 0
-        }
+local fs = require "nixio.fs"
+local jsonc = require "luci.jsonc"
+
+local sessions = {}
+local session_path = "/var/etc/pptpd/session"
+if fs.access(session_path) then
+    for filename in fs.dir(session_path) do
+        local session_file = session_path .. "/" .. filename
+        local file = io.open(session_file, "r")
+        local t = jsonc.parse(file:read("*a"))
+        if t then
+            t.session_file = session_file
+            sessions[#sessions + 1] = t
+        end
+        file:close()
     end
 end
-local a = luci.util.execi("sed = /etc/firewall.user | sed 'N;s/\\n/:/'")
-for t in a do
-    local t, a = t:match("^ *(%d+)%:.+%#%# pptpd%-blacklist%-(.+)")
-    local t = tonumber(t)
-    if t then
-        e["%02i.%s" % {t, "blacklist"}] =
-            {
-                ['PID'] = "-1",
-                ['PPID'] = "-1",
-                ['SPEED'] = "-1",
-                ['GATEWAY'] = "-",
-                ['VIP'] = "-",
-                ['CIP'] = a,
-                ['BLACKLIST'] = 1
-            }
+
+local blacklist = {}
+local firewall_user_path = "/etc/firewall.user"
+if fs.access(firewall_user_path) then
+    for line in io.lines(firewall_user_path) do
+        local m = line:match('pptpd%-blacklist%-([^\n]+)')
+        if m then
+            local t = {}
+            t.ip = m
+            blacklist[#blacklist + 1] = t
+        end
     end
 end
+
 f = SimpleForm("processes", translate("PPTP VPN Server"))
 f.reset = false
 f.submit = false
 f.description = translate("Simple, quick and convenient PPTP VPN, universal across the platform")
-t = f:section(Table, e, translate("Online Users"))
-t:option(DummyValue, "GATEWAY", translate("Server IP"))
-t:option(DummyValue, "VIP", translate("Client IP"))
-t:option(DummyValue, "CIP", translate("IP address"))
-blacklist = t:option(Button, "_blacklist", translate("Blacklist"))
-function blacklist.render(e, t, a)
-    if e.map:get(t, "BLACKLIST") == 0 then
-        e.title = translate("Add to Blacklist")
-        e.inputstyle = "remove"
-    else
-        e.title = translate("Remove from Blacklist")
-        e.inputstyle = "apply"
-    end
+
+t = f:section(Table, sessions, translate("Online Users"))
+t:option(DummyValue, "username", translate("Username"))
+t:option(DummyValue, "interface", translate("Interface"))
+t:option(DummyValue, "ip", translate("Client IP"))
+t:option(DummyValue, "remote_ip", translate("IP address"))
+t:option(DummyValue, "login_time", translate("Login Time"))
+
+_blacklist = t:option(Button, "_blacklist", translate("Blacklist"))
+function _blacklist.render(e, t, a)
+    e.title = translate("Add to Blacklist")
+    e.inputstyle = "remove"
     Button.render(e, t, a)
 end
-function blacklist.write(t, a)
-    local e = t.map:get(a, "CIP")
-    if t.map:get(a, "BLACKLIST") == 0 then
-        luci.util.execi(
-            "echo 'iptables -A input_rule -s %s -p tcp --dport 1723 -j DROP ## pptpd-blacklist-%s' >> /etc/firewall.user" %
-                {e, e})
-        luci.util.execi(
-            "iptables -A input_rule -s %s -p tcp --dport 1723 -j DROP" % {e})
-        null, t.tag_error[a] = luci.sys.process.signal(t.map:get(a, "PID"), 9)
-    else
-        luci.util.execi(
-            "sed -i -e '/## pptpd-blacklist-%s/d' /etc/firewall.user" % {e})
-        luci.util.execi(
-            "iptables -D input_rule -s %s -p tcp --dport 1723 -j DROP" % {e})
-    end
+function _blacklist.write(t, s)
+    local e = t.map:get(s, "remote_ip")
+    luci.util.execi("echo 'iptables -I INPUT -s %s -p tcp --dport 1723 -j DROP ## pptpd-blacklist-%s' >> /etc/firewall.user" % {e, e})
+    luci.util.execi("iptables -I INPUT -s %s -p tcp --dport 1723 -j DROP" % {e})
+    luci.util.execi("rm -f " .. t.map:get(s, "session_file"))
+    null, t.tag_error[s] = luci.sys.process.signal(t.map:get(s, "pid"), 9)
     luci.http.redirect(o.build_url("admin/vpn/pptpd/online"))
 end
-kill = t:option(Button, "_kill", translate("Forced offline"))
-kill.inputstyle = "reset"
-function kill.write(e, t)
-    null, e.tag_error[t] = luci.sys.process.signal(e.map:get(t, "PID"), 9)
+
+_kill = t:option(Button, "_kill", translate("Forced offline"))
+_kill.inputstyle = "reset"
+function _kill.write(t, s)
+    luci.util.execi("rm -f " .. t.map:get(s, "session_file"))
+    null, t.tag_error[t] = luci.sys.process.signal(t.map:get(s, "pid"), 9)
     luci.http.redirect(o.build_url("admin/vpn/pptpd/online"))
 end
+
+t = f:section(Table, blacklist, translate("Blacklist"))
+t:option(DummyValue, "ip", translate("IP address"))
+
+_blacklist2 = t:option(Button, "_blacklist2", translate("Blacklist"))
+function _blacklist2.render(e, t, a)
+    e.title = translate("Remove from Blacklist")
+    e.inputstyle = "apply"
+    Button.render(e, t, a)
+end
+function _blacklist2.write(t, s)
+    local e = t.map:get(s, "ip")
+    luci.util.execi("sed -i -e '/## pptpd-blacklist-%s/d' /etc/firewall.user" % {e})
+    luci.util.execi("iptables -D INPUT -s %s -p tcp --dport 1723 -j DROP" % {e})
+    luci.http.redirect(o.build_url("admin/vpn/pptpd/online"))
+end
+
 return f
