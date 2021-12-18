@@ -3,12 +3,10 @@
 # Copyright (C) 2018 rosysong@rosinson.com
 #
 
-qosdef_monitor_get_ip_handle() { # <family> <chain> <ip>
-	echo $(nft -a list chain $1 nft-qos-monitor $2 2>/dev/null | grep " $3 " | awk '{print $11}')
-}
+. /lib/nft-qos/core.sh
 
-qosdef_monitor_delete_handle() { # <family> <chain> <handle>
-	nft delete rule $1 nft-qos-monitor $2 handle $3
+qosdef_monitor_get_ip_handle() { # <family> <chain> <ip>
+	echo $(nft -a list chain $1 nft-qos-monitor $2 2>/dev/null | grep $3 | awk '{print $11}')
 }
 
 qosdef_monitor_add() { # <mac> <ip> <hostname>
@@ -22,8 +20,8 @@ qosdef_monitor_del() { # <mac> <ip> <hostname>
 	local handle_dl handle_ul
 	handle_dl=$(qosdef_monitor_get_ip_handle $NFT_QOS_INET_FAMILY download $2)
 	handle_ul=$(qosdef_monitor_get_ip_handle $NFT_QOS_INET_FAMILY upload $2)
-	[ -n "$handle_dl" ] && qosdef_monitor_delete_handle $NFT_QOS_INET_FAMILY download $handle_dl
-	[ -n "$handle_ul" ] && qosdef_monitor_delete_handle $NFT_QOS_INET_FAMILY upload $handle_ul
+	[ -n "$handle_dl" ] && nft delete handle $handle_dl
+	[ -n "$handle_ul" ] && nft delete handle $handle_ul
 }
 
 # init qos monitor

@@ -5,10 +5,7 @@
 
 export initscript="nft-qos-monitor"
 
-. $IPKG_INSTROOT/lib/functions/procd.sh
-. $IPKG_INSTROOT/lib/functions.sh
-. $IPKG_INSTROOT/lib/nft-qos/core.sh
-. $IPKG_INSTROOT/lib/nft-qos/monitor.sh
+. /lib/nft-qos/monitor.sh
 
 logger -t nft-qos-monitor "ACTION=$ACTION, MACADDR=$MACADDR, IPADDR=$IPADDR, HOSTNAME=$HOSTNAME"
 
@@ -16,11 +13,11 @@ case "$ACTION" in
 	add | update)
 		qosdef_init_env
 		qosdef_init_monitor
-		qosdef_monitor_add "$MACADDR" "$IPADDR" "$HOSTNAME"
+		qosdef_monitor_add $MACADDR $IPADDR $HOSTNAME
 	;;
 	remove)
 		qosdef_init_env
 		qosdef_init_monitor
-		qosdef_monitor_del "$MACADDR" "$IPADDR" "$HOSTNAME"
+		qosdef_monitor_del $MACADDR $IPADDR $HOSTNAME
 	;;
 esac

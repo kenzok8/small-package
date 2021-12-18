@@ -3,6 +3,9 @@
 # Copyright (C) 2018 rosysong@rosinson.com
 #
 
+# for uci_validate_section()
+. /lib/functions/procd.sh
+
 NFT_QOS_HAS_BRIDGE=
 NFT_QOS_INET_FAMILY=ip
 NFT_QOS_SCRIPT_TEXT=
