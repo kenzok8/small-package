@@ -3,6 +3,8 @@
 # Copyright (C) 2020 Tong Zhang<ztong0001@gmail.com>
 #
 
+. /lib/nft-qos/core.sh
+
 qosdef_validate_mac() {
 	uci_load_validate nft-qos default "$1" "$2" \
 		'limit_mac_enable:bool:0'

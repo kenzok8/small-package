@@ -58,11 +58,11 @@ br.submit = false
 
 s = br:section(SimpleSection) 
 
---o = s:option(ListValue, 'bing_background', translate('Wallpaper Source'))
---o:value('0', translate('Built-in'))
---o:value('1', translate('Bing Wallpapers'))
---o.default = bing_background
---o.rmempty = false
+o = s:option(ListValue, 'bing_background', translate('Wallpaper Source'))
+o:value('0', translate('Built-in'))
+o:value('1', translate('Bing Wallpapers'))
+o.default = bing_background
+o.rmempty = false
 
 o = s:option(ListValue, 'mode', translate('Theme mode'))
 o.description = translate('You can choose Theme color mode here')

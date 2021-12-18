@@ -3,6 +3,8 @@
 # Copyright (C) 2018 rosysong@rosinson.com
 #
 
+. /lib/nft-qos/core.sh
+
 qosdef_validate_dynamic() {
 	uci_load_validate nft-qos default "$1" "$2" \
 		'limit_enable:bool:0' \
