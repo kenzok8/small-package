@@ -1773,7 +1773,6 @@ analytics.dnsfilter.com
 analytics.dspunion.com
 analytics.emarketer.com
 analytics.ext.go-tellm.com
-analytics.fkz.re
 analytics.ganji.com
 analytics.google.com
 analytics.htmedia.in
@@ -4742,6 +4741,7 @@ inapps.appsflyer.com
 incentaclick.com
 inclk.com
 incognitosearches.com
+incoming-telemetry.thunderbird.net
 incoming.telemetry.mozilla.org
 indexexchange.com
 indexstats.com
@@ -6256,6 +6256,7 @@ output.nend.net
 overconfidentfood.com
 overture.com
 ow.biqugego.com
+owebanalytics.com
 owebmoney.ru
 owin.biqugego.com
 owlsr.us
@@ -7709,6 +7710,7 @@ sponsorads.de
 sponsorpro.de
 sponsors.thoughtsmedia.com
 spookysleet.com
+sportsad.net
 spot.fitness.com
 spotlessstamp.com
 spotscenered.info
@@ -8921,7 +8923,6 @@ vpptv.admaster.com.cn
 vps.inte.sogou.com
 vqq.admaster.com.cn
 vrs.cz
-vrtzcontextualads.com
 vs.funshion.com
 vs.tucows.com
 vs19.gzcu.u3.ucweb.com
