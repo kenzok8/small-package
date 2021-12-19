@@ -125,7 +125,19 @@ add_dawn() {
 	fi
 }
 
+boot() {
+	return 0
+}
+
 start() {
+	return 0
+}
+
+stop() {
+	return 0
+}
+
+restart() {
 	if [ "$enable" = 1 ]; then
 		if [ "$mesh_bat0" != "interface" ]; then
 			uci set network.bat0=interface
@@ -200,15 +212,7 @@ start() {
 		else
 			ap_mode_stop
 		fi
-
-		/etc/init.d/network restart
 	else
-		stop
-	fi
-}
-
-stop() {
-	if [ "$enable" != 1 ]; then
 		if [ "$mesh_bat0" = "interface" ]; then
 			uci -q delete network.bat0
 			if [ "$brlan" = "br-lan" ]; then
@@ -240,11 +244,6 @@ stop() {
 		if [ "$ap_mode" = 1 ]; then
 			ap_mode_stop
 		fi
-
-		/etc/init.d/network restart
 	fi
-}
-
-restart() {
-	start
+	/etc/init.d/network restart
 }
