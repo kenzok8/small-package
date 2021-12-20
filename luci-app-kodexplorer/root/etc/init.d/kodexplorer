@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
+# Copyright (C) 2018-2022 Lienol <lawlienol@gmail.com>
 
 START=99
 
@@ -62,7 +62,7 @@ start() {
 	open_basedir=$(config_t_get global open_basedir "/")
 	open_basedir=$(echo $open_basedir | sed "s/ /:/g")
 	gen_php_config
-	/usr/bin/php-fpm -c $PHP_CONFIG -R -y $PHP_FPM_CONFIG
+	/usr/bin/php8-fpm -c $PHP_CONFIG -R -y $PHP_FPM_CONFIG
 	gen_nginx_config $NGINX_CONFIG
 	/usr/sbin/nginx -c $NGINX_CONFIG >/dev/null 2>&1 &
 }

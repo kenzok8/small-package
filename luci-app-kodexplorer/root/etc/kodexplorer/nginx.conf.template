@@ -20,7 +20,7 @@ http {
         server_name  localhost;
         root |project_directory|;
         index index.html index.htm index.php;
-        location ~ \.php(.*) {
+        location ~ \.php(.*)$ {
             fastcgi_pass unix:|SOCK|; # 通过 Unix 套接字执行 PHP
             fastcgi_index index.php;
             fastcgi_split_path_info ^(.+\.php)(.*)$;
