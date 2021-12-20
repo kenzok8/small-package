@@ -636,6 +636,7 @@ adcash.com
 adcast.deviantart.com
 adcdn.goo.ne.jp
 adcdn.hpplay.cn
+adcel.co
 adcell.de
 adcenter.net
 adcentriconline.com
@@ -1453,6 +1454,7 @@ adslvseed.qq.com
 adsmart.com
 adsmart.net
 adsmart.yicha.cn
+adsmetadata.startappservice.com
 adsmind.gdtimg.com
 adsmind.ugdtimg.com
 adsmogo.com
@@ -1751,7 +1753,6 @@ ambitiousagreement.com
 amdc.m.taobao.com
 americash.com
 amiok.org
-amplitude.com
 amps.yoyi.com.cn
 amung.us
 an.wikigifth.com
@@ -1882,6 +1883,7 @@ api.doumob.com
 api.dsp.madserving.com
 api.dsp.yhd.com
 api.e.mi.com
+api.eu.amplitude.com
 api.exc.mob.com
 api.flurry.com
 api.gi.igexin.com
@@ -1893,6 +1895,7 @@ api.intensifier.de
 api.itaoxiaoshuo.com
 api.jsfc8.cn
 api.kameleoon.com
+api.lab.amplitude.com
 api.leancloud.cn
 api.mini.wps.cn
 api.mlinks.co
@@ -1929,6 +1932,7 @@ api.youxiaoad.com
 api.zol.com
 api0.tuisong.baidu.com
 api1.tuisong.baidu.com
+api2.amplitude.com
 api2.analysys.cn
 api2.play.cn
 api2.tuisong.baidu.com
@@ -1952,6 +1956,7 @@ apnmedia.ask.com
 apns.ios.ijinshan.com
 apollo.caixin.com
 apolloprogram.io
+app-analytics-v2.snapchat.com
 app-analytics.snapchat.com
 app-facade.youmi.net
 app-g.39.net
@@ -2254,6 +2259,7 @@ barnesandnoble.bfast.com
 bartender.cc
 base.api.my7v.com
 basebanner.com
+basketballbelieve.com
 baskettexture.com
 bat.bing.com
 batbuilding.com
@@ -2931,6 +2937,7 @@ cloudcdn.dopa.com
 cloudcdn.dopa.com.cn
 cloudcdn.yousee.com
 cloudcoins.biz
+cloudflare-dacdn.visualwebsiteoptimizer.com
 cloudflareinsights.com
 cloudservice12.kingsoft-office-service.com
 cloudservice13.kingsoft-office-service.com
@@ -3598,6 +3605,7 @@ duomai.com
 duomeng.cn
 duomilm.com
 dup.baidustatic.com
+dustywave.com
 dvb.pandora.xiaomi.com
 dvsend.china.com
 dvser.china.com
@@ -3793,6 +3801,7 @@ engage.dnsfilter.com
 engage.webshrinker.com
 engage.windows.com
 engagebdr.com
+engageya.com
 engine.adzerk.net
 engine.espace.netavenir.com
 engine.lvehaisen.com
@@ -3864,6 +3873,7 @@ everestads.net
 everesttech.net
 evergage.com
 eversales.space
+evidon.com
 evyy.net
 ewg9465443.y4j32.cn
 ex.mobmore.com
@@ -4379,7 +4389,6 @@ hit.webcentre.lycos.co.uk
 hitbox.com
 hitcounters.miarroba.com
 hitfarm.com
-hitiz.com
 hitlist.ru
 hitlog2.chosun.com
 hitlounge.com
@@ -4759,6 +4768,7 @@ info.static.startappservice.com
 info.stockstar.com
 info.wps.cn
 info.yitsoftware.com
+infoevent.startappservice.com
 infolinks.com
 information.com
 ingameads.gameloft.com
@@ -5139,7 +5149,6 @@ leadboltads.net
 leadclick.com
 leadingedgecash.com
 leadplace.fr
-leady.com
 leadzupc.com
 leaplunchroom.com
 ledou.dl.uu.cc
@@ -5598,6 +5607,7 @@ marketing.etouch.cn
 marketing.hearstmagazines.nl
 marketing.net.brillen.de
 marketing.net.home24.de
+marketing.net.occhiali24.it
 marketing.nyi.net
 marketing.osijek031.com
 marketing.zhidian3g.cn
@@ -5682,6 +5692,7 @@ media6degrees.com
 mediaarea.eu
 mediabridge.cc
 mediacharger.com
+mediafuse.com
 mediageneral.com
 mediaiqdigital.com
 mediamath.com
@@ -5937,6 +5948,7 @@ myads.company
 myads.net
 myads.telkomsel.com
 myaffiliateprogram.com
+mybbc-analytics.files.bbci.co.uk
 mybestmv.com
 mybetterdl.com
 mybloglog.com
@@ -6015,6 +6027,8 @@ netclickstats.com
 netcommunities.com
 netdirect.nl
 netincap.com
+netmera-web.com
+netmera.com
 netmng.com
 netpool.netbookia.net
 netshelter.net
@@ -6825,6 +6839,7 @@ r3.visualwebsiteoptimizer.com
 ra.gtimg.com
 rabbit.meitustat.com
 rabbit.tg.meitu.com
+rabbitrifle.com
 rabc1.iteye.com
 rabc2.iteye.com
 rad.reporo.net
@@ -7691,6 +7706,7 @@ spcnv.i-mobile.co.jp
 spdeliver.i-mobile.co.jp
 spdmg-backend.i-mobile.co.jp
 spdmg.i-mobile.co.jp
+speakol.com
 specially4u.net
 specificmedia.co.uk
 specificpop.com
@@ -8098,6 +8114,7 @@ t.irtyd.com
 t.iz55.com
 t.ksrong.com
 t.l.qq.com
+t.leady.com
 t.news.browns-restaurants.co.uk
 t.pzclw.cn
 t.qiuqiuqipai.com
@@ -8385,6 +8402,7 @@ track.hexcan.com
 track.hot-mob.com
 track.hujiang.com
 track.madserving.com
+track.mailalert.io
 track.mailerlite.com
 track.mediav.com
 track.ra.icast.cn

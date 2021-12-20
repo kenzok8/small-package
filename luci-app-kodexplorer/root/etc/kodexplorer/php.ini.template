@@ -9,7 +9,7 @@ implicit_flush = Off
 unserialize_callback_func =
 serialize_precision = 100
 
-open_basedir = /tmp:|project_directory|:|open_basedir|
+open_basedir = /tmp:|project_directory|:|open_basedir|:/usr/bin/
 disable_functions =
 disable_classes =
 expose_php = On
@@ -21,7 +21,6 @@ error_reporting  =  E_ALL & ~E_NOTICE & ~E_STRICT
 display_errors = On
 display_startup_errors = Off
 log_errors = Off
-log_errors_max_len = 1024
 ignore_repeated_errors = Off
 ignore_repeated_source = Off
 report_memleaks = On
@@ -42,7 +41,7 @@ default_mimetype = "text/html"
 
 ;doc_root = "/www"
 user_dir =
-extension_dir = "/usr/lib/php"
+extension_dir = "/usr/lib/php8"
 enable_dl = On
 cgi.fix_pathinfo=1
 
