@@ -36,14 +36,14 @@ e = t:option(Flag, "enabled", translate("启用"))
 e.rmempty = false
 e.default = 0
 
---e = t:option(Value, "startup_delay", translate("启动延迟"))
---e:value(0, translate("不启用"))
---for _, v in ipairs({5, 10, 15, 25, 40, 60}) do
---	e:value(v, translate("%u 秒") %{v})
---end
---e.datatype = "uinteger"
---e.rmempty = false
---e.default = 0
+e = t:option(Value, "startup_delay", translate("启动延迟"))
+e:value(0, translate("不启用"))
+for _, v in ipairs({5, 10, 15, 25, 40, 60}) do
+	e:value(v, translate("%u 秒") %{v})
+end
+e.datatype = "uinteger"
+e.rmempty = false
+e.default = 0
 
 e = t:option(ListValue, "koolproxy_mode", translate("过滤模式"))
 e.rmempty = false
