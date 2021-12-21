@@ -1,3 +1,7 @@
+--[[
+luci-app-argon-config
+]]--
+
 module("luci.controller.argon-config", package.seeall)
 
 function index()
@@ -5,7 +9,5 @@ function index()
 		return
 	end
 
-	local page = entry({"admin", "system", "argon-config"}, form("argon-config"), _("Argon Config"), 90)
-	page.dependent = true
-	page.acl_depends = { "luci-app-argon-config" }
+	entry({"admin", "system", "argon-config"}, form("argon-config"), _("Argon Config"), 90)
 end

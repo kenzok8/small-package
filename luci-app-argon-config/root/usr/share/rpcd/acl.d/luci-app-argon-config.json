@@ -1,11 +1,11 @@
 {
-    "luci-app-argon-config": {
-        "description": "Luci Argon theme config",
+    "luci-argon-config": {
+        "description": "Luci Argon theme config ",
         "read": {
-            "uci": [ "argon-config" ]
+            "uci": [ "argon" ]
         },
         "write": {
-            "uci": [ "argon-config" ]
+            "uci": [ "argon" ]
         }
     }
 }

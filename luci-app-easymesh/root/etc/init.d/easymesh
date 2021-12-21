@@ -2,20 +2,22 @@
 START=99
 STOP=70
 
-enable=$(uci -q get easymesh.config.enabled)
-mesh_bat0=$(uci -q get network.bat0)
-ap_mode=$(uci -q get easymesh.config.ap_mode)
-lan=$(uci -q get network.lan.ifname)
-ipaddr=$(uci -q get easymesh.config.ipaddr)
-netmask=$(uci -q get easymesh.config.netmask)
-gateway=$(uci -q get easymesh.config.gateway)
-dns=$(uci -q get easymesh.config.dns)
-ap_ipaddr=$(uci -q get network.lan.ipaddr)
-ap_ipaddr1=$(sed -n '1p' /etc/easymesh 2>/dev/null)
-apRadio=$(uci -q get easymesh.config.apRadio)
-kvr=$(uci -q get easymesh.config.kvr)
-brlan=$(uci -q get network.@device[0].name)
-role=$(uci -q get easymesh.config.role)
+load_easymesh_config() {
+	enable=$(uci -q get easymesh.config.enabled)
+	mesh_bat0=$(uci -q get network.bat0)
+	ap_mode=$(uci -q get easymesh.config.ap_mode)
+	lan=$(uci -q get network.lan.ifname)
+	ipaddr=$(uci -q get easymesh.config.ipaddr)
+	netmask=$(uci -q get easymesh.config.netmask)
+	gateway=$(uci -q get easymesh.config.gateway)
+	dns=$(uci -q get easymesh.config.dns)
+	ap_ipaddr=$(uci -q get network.lan.ipaddr)
+	ap_ipaddr1=$(sed -n '1p' /etc/easymesh 2>/dev/null)
+	apRadio=$(uci -q get easymesh.config.apRadio)
+	kvr=$(uci -q get easymesh.config.kvr)
+	brlan=$(uci -q get network.@device[0].name)
+	role=$(uci -q get easymesh.config.role)
+}
 
 ap_mode_stop() {
 	ap_ipaddr=$(uci -q get network.lan.ipaddr)
@@ -125,19 +127,8 @@ add_dawn() {
 	fi
 }
 
-boot() {
-	return 0
-}
-
-start() {
-	return 0
-}
-
-stop() {
-	return 0
-}
-
-restart() {
+set_easymesh() {
+	load_easymesh_config
 	if [ "$enable" = 1 ]; then
 		if [ "$mesh_bat0" != "interface" ]; then
 			uci set network.bat0=interface
@@ -246,4 +237,16 @@ restart() {
 		fi
 	fi
 	/etc/init.d/network restart
+}
+
+start() {
+	return 0
+}
+
+stop() {
+	return 0
+}
+
+restart() {
+	set_easymesh
 }
