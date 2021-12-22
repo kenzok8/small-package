@@ -23,7 +23,6 @@ restore_setting() {
   redirect=$(uci -q get mosdns.mosdns.redirect)
   if [ $redirect -eq 1 ]; then
     sed -i "/list server/d" /etc/config/dhcp
-    sed -i "/dhcp_option/d" /etc/config/dhcp
     uci set dhcp.@dnsmasq[0].noresolv='0'
     uci del dhcp.@dnsmasq[0].cachesize
     uci set dhcp.@dnsmasq[0].filter_aaaa='1'
@@ -49,9 +48,6 @@ prepare_setting() {
     sed -i "/list server/d" /etc/config/dhcp
     uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5335'
     uci set dhcp.@dnsmasq[0].rebind_protection='0'
-    lanip="$(uci get network.lan.ipaddr)"
-    sed -i "/dhcp_option/d" /etc/config/dhcp
-    sed -i "/dhcpv6/a\\\tlist dhcp_option '6,$lanip'" /etc/config/dhcp
     uci set dhcp.@dnsmasq[0].noresolv="1"
     uci set dhcp.@dnsmasq[0].cachesize='0'
     uci set dhcp.@dnsmasq[0].filter_aaaa='0'
