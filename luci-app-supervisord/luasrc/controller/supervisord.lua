@@ -89,6 +89,11 @@ function update()
             e.error=nixio.fs.mover("/tmp/" .. filename:gsub(".tar.gz", "") .. "/supervisord", d)
             if e.error then
                 e.error=0
+				sysupgrade=nixio.fs.readfile("/etc/sysupgrade.conf")
+				if not sysupgrade:find(d) then
+					sysupgrade=sysupgrade .. '\n' .. d
+					nixio.fs.writefile ("/etc/sysupgrade.conf", sysupgrade)
+				end
                 luci.http.prepare_content("application/json")
     	        luci.http.write_json(e)
             end

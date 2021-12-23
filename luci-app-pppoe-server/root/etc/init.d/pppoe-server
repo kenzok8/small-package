@@ -1,101 +1,118 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
+# Copyright (C) 2018-2021 Lienol <lawlienol@gmail.com>
 
 START=99
 
 CONFIG="pppoe-server"
-CONFIG_FILE=/etc/ppp/$CONFIG-options
-CHAP_SECRETS=/var/etc/chap-secrets
-TEMP=/tmp/$CONFIG.tmp
+CONFIG_PATH=/var/etc/${CONFIG}
+OPTIONS_FILE=${CONFIG_PATH}/options
+CHAP_SECRETS=/etc/ppp/chap-secrets
+
+ipt_flag="PPPoE Server"
 
 config_t_get() {
 	local index=0
 	[ -n "$4" ] && index=$4
-	local ret=$(uci -q get $CONFIG.@$1[$index].$2 2>/dev/null)
+	local ret=$(uci -q get ${CONFIG}.@$1[$index].$2 2>/dev/null)
 	echo ${ret:=$3}
 }
 
-setup_users() {
-	config_get enabled $1 enabled
-	[ "$enabled" -eq 0 ] && return 0
-	config_get username $1 username
-	config_get password $1 password
-	config_get ipaddress $1 ipaddress
-	[ -n "$username" -a -n "$password" ] && echo "$username $CONFIG $password $ipaddress" >> $CHAP_SECRETS
+localip=$(config_t_get service localip 10.0.1.1)
+
+ipt_rule() {
+	if [ "$1" = "add" ]; then
+		iptables -t nat -I POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "${ipt_flag}" -j MASQUERADE 2>/dev/null
+		iptables -I forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
+	else
+		ipt_del() {
+			for i in $(seq 1 $($1 -nL $2 | grep -c "${ipt_flag}")); do
+				local index=$($1 --line-number -nL $2 | grep "${ipt_flag}" | head -1 | awk '{print $1}')
+				$1 -w -D $2 $index 2>/dev/null
+			done
+		}
+		ipt_del "iptables" "forwarding_rule"
+		ipt_del "iptables -t nat" "POSTROUTING"
+	fi
 }
 
-del_user()
-{
-	cat $CHAP_SECRETS | grep -v $CONFIG > $TEMP
-	cat $TEMP > $CHAP_SECRETS
-	rm $TEMP
+gen_include() {
+	echo '#!/bin/sh' > /var/etc/${CONFIG}.include
+	extract_rules() {
+		echo "*$1"
+		iptables-save -t $1 | grep "${ipt_flag}" | \
+		sed -e "s/^-A \(INPUT\)/-I \1 1/"
+		echo 'COMMIT'
+	}
+	cat <<-EOF >> /var/etc/${CONFIG}.include
+		iptables-save -c | grep -v "${ipt_flag}" | iptables-restore -c
+		iptables-restore -n <<-EOT
+		$(extract_rules filter)
+		$(extract_rules nat)
+		EOT
+	EOF
+	return 0
 }
 
 start() {
-	config_load pppoe-server
-	enabled=$(config_t_get service enabled)
-	[ "$enabled" -eq 0 ]  && exit 0
-	cat <<-EOF >$CONFIG_FILE
-# PPP options for the PPPoE server
-# LIC: GPL
-name $CONFIG
-login
-require-mschap-v2
-refuse-chap
-require-pap
-lcp-echo-interval 10
-lcp-echo-failure 2
-mru $(config_t_get service mru 1492)
-mtu $(config_t_get service mtu 1492)
-ms-dns $(config_t_get service dns1 223.5.5.5)
-ms-dns $(config_t_get service dns2 119.29.29.29)
-logfile $(config_t_get service log /var/log/pppoe-server.log)
-EOF
-	del_user
-	config_foreach setup_users user
-	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
-	local is_nat=$(config_t_get service is_nat)
-	local localip=$(config_t_get service localip)
-	if [ "$is_nat" -eq 1 ];then
-		local export_interface=$(config_t_get service export_interface)
-		if [ "$export_interface" != "default" ];then
-			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -o ${export_interface} -m comment --comment "PPPoE Server" -j MASQUERADE
-		else
-			iptables -t nat -A POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "PPPoE Server" -j MASQUERADE
-		fi
-		iptables -A forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "PPPoE Server" -j ACCEPT
-	fi
-	/usr/sbin/pppoe-server -k -I $(config_t_get service client_interface) -L $(config_t_get service localip) -R $(config_t_get service remoteip) -N $(config_t_get service count)
+	local enabled=$(config_t_get service enabled)
+	[ "$enabled" -eq 1 ]  || return 1
+	touch ${CHAP_SECRETS}
+	mkdir -p ${CONFIG_PATH}
+	local ms_dns1=""
+	local dns1=$(config_t_get service dns1)
+	[ -n "${dns1}" ] && ms_dns1="ms-dns ${dns1}"
+	local ms_dns2=""
+	local dns2=$(config_t_get service dns2)
+	[ -n "${dns2}" ] && ms_dns2="ms-dns ${dns2}"
+	
+	cat <<-EOF >> ${OPTIONS_FILE}
+		# PPP options for the PPPoE server
+		# LIC: GPL
+		name $CONFIG
+		login
+		require-mschap-v2
+		refuse-chap
+		require-pap
+		lcp-echo-interval 10
+		lcp-echo-failure 2
+		mru 1492
+		mtu 1492
+		${ms_dns1}
+		${ms_dns2}
+		logfile ${CONFIG_PATH}/log.log
+		ip-up-script /usr/share/pppoe-server/ip-up
+		ip-down-script /usr/share/pppoe-server/ip-down
+	EOF
+	
+	local _users=$(uci show ${CONFIG} | grep "=user" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
+	[ -n "${_users}" ] && {
+		for _user in ${_users}; do
+			local u_enabled=$(uci -q get ${CONFIG}.${_user}.enabled)
+			[ "${u_enabled}" -eq 1 ] || continue
+			
+			local u_username=$(uci -q get ${CONFIG}.${_user}.username)
+			[ -n "${u_username}" ] || continue
+			
+			local u_password=$(uci -q get ${CONFIG}.${_user}.password)
+			[ -n "${u_password}" ] || continue
+			
+			local u_ipaddress=$(uci -q get ${CONFIG}.${_user}.ipaddress)
+			[ -n "${u_ipaddress}" ] || u_ipaddress="*"
+			
+			echo "${u_username} ${CONFIG} ${u_password} ${u_ipaddress}" >> ${CHAP_SECRETS}
+		done
+	}
+	
+	/usr/sbin/pppoe-server -O ${OPTIONS_FILE} -k -I $(config_t_get service client_interface) -L ${localip} -R $(config_t_get service remoteip) -N $(config_t_get service count)
+	
+	ipt_rule add
+	gen_include
 }
 
 stop() {
-	del_user
-	nums=$(iptables -t nat -n -L POSTROUTING 2>/dev/null | grep -c "PPPoE Server")
-	if [ -n "$nums" ]; then
-		until [ "$nums" = 0 ]
-		do
-			rules=$(iptables -t nat -n -L POSTROUTING --line-num 2>/dev/null | grep "PPPoE Server" | awk '{print $1}')
-			for rule in $rules
-			do
-				iptables -t nat -D POSTROUTING $rule 2> /dev/null
-				break
-			done
-			nums=$(expr $nums - 1)
-		done
-	fi
-	nums2=$(iptables -L forwarding_rule 2>/dev/null | grep -c "PPPoE Server")
-	if [ -n "$nums2" ]; then
-		until [ "$nums2" = 0 ]
-		do
-			rules=$(iptables -L forwarding_rule --line-num 2>/dev/null | grep "PPPoE Server" | awk '{print $1}')
-			for rule in $rules
-			do
-				iptables -D forwarding_rule $rule 2> /dev/null
-				break
-			done
-			nums2=$(expr $nums2 - 1)
-		done
-	fi
-	ps | grep "pppd plugin rp-pppoe.so" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
-	killall -q -9 pppoe-server
+	sed -i "/${CONFIG}/d" ${CHAP_SECRETS}
+	top -bn1 | grep "${CONFIG_PATH}" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	ipt_rule del
+	rm -rf /var/etc/${CONFIG}.include
+	rm -rf ${CONFIG_PATH}
 }
