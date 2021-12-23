@@ -6,10 +6,10 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for IPSec VPN Server
-LUCI_DEPENDS:=+strongswan +strongswan-minimal +strongswan-mod-kernel-libipsec +strongswan-mod-openssl +strongswan-mod-xauth-generic +xl2tpd +luci-lib-jsonc +kmod-tun
+LUCI_DEPENDS:=+kmod-tun +luci-lib-jsonc +strongswan +strongswan-minimal +strongswan-mod-kernel-libipsec +strongswan-mod-openssl +strongswan-mod-xauth-generic +xl2tpd
 LUCI_PKGARCH:=all
-PKG_VERSION:=20211216
-PKG_RELEASE:=2
+PKG_VERSION:=20211223
+PKG_RELEASE:=1
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

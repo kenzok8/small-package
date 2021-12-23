@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=LuCI support for PPTP VPN Server
 LUCI_DEPENDS:=+pptpd +kmod-mppe +ppp +luci-lib-jsonc
 LUCI_PKGARCH:=all
-PKG_VERSION:=20211216
-PKG_RELEASE:=2
+PKG_VERSION:=20211223
+PKG_RELEASE:=1
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

@@ -2333,6 +2333,8 @@ beacon.sina.com.cn
 beacon.taboola.com
 beacon1.turn.com
 beacon2.turn.com
+beam-ws.giraffe360.com
+beam.giraffe360.com
 beamincrease.com
 beap-bc.yahoo.com
 beap.adss.yahoo.com
@@ -3874,6 +3876,7 @@ everesttech.net
 evergage.com
 eversales.space
 evidon.com
+evs.sgmt.loom.com
 evyy.net
 ewg9465443.y4j32.cn
 ex.mobmore.com
@@ -6498,6 +6501,7 @@ pimproll.com
 pin.hpplay.cn
 ping.acc.sogou.com
 ping.chartbeat.net
+ping.hashnode.com
 ping.pinyin.sogou.com
 ping.ublock.org
 pingma.qq.com
@@ -7464,6 +7468,7 @@ securepubads.g.doubleclick.net
 sedoparking.com
 sedotracker.com
 seg.sharethis.com
+segment-cdn.producthunt.com
 selectivesummer.com
 semasio.net
 sendmepixel.com
@@ -8127,6 +8132,7 @@ t.supermario.xyz
 t.targetuse.com
 t.trafmag.com
 t.ujian.cc
+t.visitorqueue.com
 t.youmi.net
 t.yunsoka.com
 t1.58cdn.com.cn
@@ -8406,6 +8412,7 @@ track.madserving.com
 track.mailalert.io
 track.mailerlite.com
 track.mediav.com
+track.miro.com
 track.ra.icast.cn
 track.recreativ.ru
 track.segmetrics.io
