@@ -2188,7 +2188,6 @@ banner.finzoom.ro
 banner.goldenpalace.com
 banner.icmedia.eu
 banner.img.co.za
-banner.interich.com
 banner.inyourpocket.com
 banner.linux.se
 banner.media-system.de
@@ -4751,7 +4750,6 @@ in1.feed.uu.cc
 in1.secure.uu.cc
 inapp.1sapp.com
 inapps.appsflyer.com
-incentaclick.com
 inclk.com
 incognitosearches.com
 incoming-telemetry.thunderbird.net
@@ -6624,6 +6622,7 @@ priefy.com
 primetime.net
 privatecash.com
 prmtracking.com
+pro-advertising.com
 pro-market.net
 pro.baidu.com
 pro.cn
@@ -8912,7 +8911,6 @@ visiblemeasures.com
 visistat.com
 visit.webhosting.yahoo.com
 visitbox.de
-visitpath.com
 vista.tgbus.com
 vista.tgbusdata.cn
 visual-pagerank.fr
