@@ -73,5 +73,17 @@ msgstr "启用配置文件同步"
 msgid "Enable AutoConfiguration"
 msgstr "启用自动化配置"
 
-msgid "Turning it on will make the necessary adjustments to other plug-in settings."
-msgstr "开启这个选项会允许本插件对其他插件的设置进行必要的设置，目前仅支持 SSRP VSSR PASSWALL。"
+msgid "This will make the necessary adjustments to other plug-in settings."
+msgstr "对其他插件的设置进行必要的设置，目前仅支持 SSRP VSSR PASSWALL。"
+
+msgid "This will revert the adjustments."
+msgstr "还原设置助手对其他插件进行的配置设定。"
+
+msgid "DNS Helper"
+msgstr "DNS 设置助手"
+
+msgid "Revert Settings"
+msgstr "DNS 设置还原"
+
+msgid "Apply"
+msgstr "应用"
