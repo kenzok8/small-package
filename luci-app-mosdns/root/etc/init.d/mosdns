@@ -28,18 +28,6 @@ restore_setting() {
     uci set dhcp.@dnsmasq[0].filter_aaaa='1'
     uci commit dhcp
   fi
-  autoconf="$(uci -q get mosdns.mosdns.autoconf)"
-  if [ $autoconf -eq 1 ]; then
-    uci set shadowsocksr.@global[0].pdnsd_enable='1'
-    uci set shadowsocksr.@global[0].tunnel_forward='8.8.4.4:53'
-    uci commit shadowsocksr
-    uci set passwall.@global[0].dns_mode='pdnsd'
-    uci set passwall.@global[0].dns_forward='8.8.8.8'
-    uci set passwall.@global[0].dns_cache='1'
-    uci commit passwall
-    uci set vssr.@global[0].pdnsd_enable='1'
-    uci commit vssr
-  fi
 }
 
 prepare_setting() {
@@ -53,42 +41,11 @@ prepare_setting() {
     uci set dhcp.@dnsmasq[0].filter_aaaa='0'
     uci commit dhcp
   fi
-  autoconf="$(uci -q get mosdns.mosdns.autoconf)"
-  if [ $autoconf -eq 1 ]; then
-    uci set shadowsocksr.@global[0].pdnsd_enable='0'
-    uci del shadowsocksr.@global[0].tunnel_forward
-    uci commit shadowsocksr
-    uci set passwall.@global[0].dns_mode='nonuse'
-    uci del passwall.@global[0].dns_forward
-    uci del passwall.@global[0].dns_cache
-    uci commit passwall
-    uci set vssr.@global[0].pdnsd_enable='0'
-    uci commit vssr
-  fi
 }
 
 restart_others() {
   /etc/init.d/network reload
   /etc/init.d/dnsmasq reload
-
-  ssrp="$(uci get shadowsocksr.@global[0].global_server)"
-  count1="$(ps | grep ssrplus | grep -v 'grep' | wc -l)"
-  if [ $ssrp != "nil" ] && [ $count1 -ne 0 ]; then
-    /etc/init.d/shadowsocksr restart
-  fi
-
-  pw="$(uci get passwall.@global[0].enabled)"
-  count2="$(ps | grep passwall | grep -v 'grep' | wc -l)"
-  if [ $pw -eq 1 ] && [ $count2 -ne 0 ]; then
-    /etc/init.d/passwall restart
-  fi
-
-  vssr="$(uci get vssr.@global[0].global_server)"
-  count3="$(ps | grep vssr | grep -v 'grep' | wc -l)"
-  if [ $vssr != "nil" ] && [ $count3 -ne 0 ]; then
-    /etc/init.d/vssr restart
-  fi
-
 }
 
 reload_service() {
