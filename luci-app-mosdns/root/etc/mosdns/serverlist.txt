@@ -244,7 +244,6 @@ a.ltdnc.com
 a.mktw.net
 a.muloqot.uz
 a.oadz.com
-a.pub.network
 a.sakh.com
 a.shangz99991.com
 a.slsbc.cn
@@ -340,7 +339,6 @@ ac.atpanel.com
 ac.mmstat.com
 ac.rnm.ca
 ac3.msn.com
-acceptable.a-ads.com
 acdcdn.com
 acdn.adnxs.com
 acid-adserver.click
@@ -400,7 +398,6 @@ ad.1ting.com
 ad.3dnews.ru
 ad.51wnl.com
 ad.71i.de
-ad.a-ads.com
 ad.a8.net
 ad.abcnews.com
 ad.abctv.com
@@ -492,7 +489,6 @@ ad.lupa.cz
 ad.madserving.com
 ad.mail.ru
 ad.mail.sohu.com
-ad.media-servers.net
 ad.mediastorm.hu
 ad.mg
 ad.mi.com
@@ -550,12 +546,10 @@ ad.xiaomi.com
 ad.ximalaya.com
 ad.xmovies8.si
 ad.xrea.com
-ad.yadro.ru
 ad.yeshitv.com
 ad.yieldlab.net
 ad.yixin.im
 ad.yun.wifi8.com
-ad.zanox.com
 ad.zdworks.com
 ad.zhidian3g.cn
 ad.ztylez.com
@@ -780,7 +774,6 @@ admarketplace.net
 admarvel.com
 admaster.com.cn
 admatchly.com
-admax.nexage.com
 admd.yam.com
 admedia.com
 admeld.adnxs.com
@@ -956,8 +949,6 @@ ads.com.com
 ads.comeon.com
 ads.contactmusic.com
 ads.contentabc.com
-ads.contextweb.com
-ads.crakmedia.com
 ads.creative-serving.com
 ads.csdn.net
 ads.cyberctm.com
@@ -1045,7 +1036,6 @@ ads.harpers.org
 ads.hbv.de
 ads.hearstmags.com
 ads.heartlight.org
-ads.heias.com
 ads.hollywood.com
 ads.horsehero.com
 ads.horyzon-media.com
@@ -1160,7 +1150,6 @@ ads.printscr.com
 ads.prisacom.com
 ads.privatemedia.co
 ads.program3.com
-ads.programattik.com
 ads.psd2html.com
 ads.pubmatic.com
 ads.pushplay.com
@@ -1182,7 +1171,6 @@ ads.seniorfriendfinder.com
 ads.servebom.com
 ads.service.kugou.com
 ads.sexgratuit.tv
-ads.sexinyourcity.com
 ads.shizmoo.com
 ads.shopstyle.com
 ads.sift.co.uk
@@ -1215,7 +1203,6 @@ ads.townhall.com
 ads.traffichunt.com
 ads.trafficjunky.net
 ads.travelaudience.com
-ads.tremorhub.com
 ads.tribalfusion.com
 ads.trinitymirror.co.uk
 ads.tripod.com
@@ -1231,7 +1218,6 @@ ads.twojatv.info
 ads.uknetguide.co.uk
 ads.ultimate-guitar.com
 ads.uncrate.com
-ads.undertone.com
 ads.union.jd.com
 ads.unison.bg
 ads.unister-gmbh.de
@@ -1407,8 +1393,6 @@ adserver.twitpic.com
 adserver.virginmedia.com
 adserver.yahoo.com
 adserver01.de
-adserver1-images.backbeatmedia.com
-adserver1.backbeatmedia.com
 adserver1.mindshare.de
 adserver2.mindshare.de
 adserverplus.com
@@ -1707,7 +1691,6 @@ ak.ad.turn.com
 ak0gsh40.com
 aka-cdn-ns.adtechus.com
 aka-cdn.adtechus.com
-aktrack.pubmatic.com
 al.autohome.com.cn
 albtest.applovin.com
 alchemist.go2cloud.org
@@ -2232,7 +2215,6 @@ banners.friendfinder.com
 banners.getiton.com
 banners.iq.pl
 banners.isoftmarketing.com
-banners.linkbuddies.com
 banners.passion.com
 banners.payserve.com
 banners.resultonline.com
@@ -2498,7 +2480,6 @@ bu02.zybang.com
 bu1.duba.com
 bu2.duba.com
 bucketbean.com
-bullseye.backbeatmedia.com
 business.inveno.com
 businessbells.com
 bustlinganimal.com
@@ -2815,7 +2796,6 @@ claria.com
 clc.wanmancn.com
 clevernt.com
 cliand.com
-click.a-ads.com
 click.ad-stir.com
 click.admaster.com.cn
 click.adperium.com
@@ -3832,7 +3812,6 @@ err.ifengcloud.ifeng.com
 ers.baidu.com
 erwqw.zh1155.com
 espn-ak.starwave.com
-espn.com.ssl.sc.omtrdc.net
 estat.com
 esty.com
 et.emarbox.com
@@ -3942,6 +3921,7 @@ fastpopunder.com
 faultycanvas.com
 faultyfowl.com
 fav.simba.taobao.com
+fave.co
 fb.37cs.com
 fbc.ffychb.com
 fc.webmasterpro.de
@@ -5320,7 +5300,6 @@ longinglettuce.com
 look.djfiln.com
 look.ichlnk.com
 look.opskln.com
-look.udncoeln.com
 look.ufinkln.com
 loopme.com
 lop.com
@@ -5552,7 +5531,6 @@ m1.asklib.com
 m1.daumcdn.net
 m1.jiasudu666.com
 m1.mgogo.com
-m1.webstats4u.com
 m2.ai
 m2.da.mgtv.com
 m2u.376710.com
@@ -6517,7 +6495,6 @@ pixel.condenastdigital.com
 pixel.digitru.st
 pixel.keywee.co
 pixel.mathtag.com
-pixel.mtrcs.samba.tv
 pixel.quantserve.com
 pixel.rubiconproject.com
 pixel.sojern.com
@@ -7861,7 +7838,6 @@ static-interactive-api.nend.net
 static-ssl.mediav.com
 static-tracking.klaviyo.com
 static.1j1j.com
-static.a-ads.com
 static.addtoany.com
 static.ads-twitter.com
 static.adsafeprotected.com
@@ -8159,7 +8135,6 @@ tag.cdnmaster.cn
 tag.digitaltarget.ru
 tag.links-analytics.com
 tag.sp.advertising.com
-tagan.adlightning.com
 tagcommander.com
 tagger.opecloud.com
 tags.bluekai.com
@@ -8349,7 +8324,6 @@ top.h.qhimg.com
 top.h.qhmsg.com
 top.list.ru
 top.mail.ru
-top.proext.com
 top100-images.rambler.ru
 top100.mafia.ru
 top123.ro
@@ -8404,7 +8378,6 @@ track.flexlinks.com
 track.flexlinkspro.com
 track.freemmo2017.com
 track.game18click.com
-track.hexcan.com
 track.hot-mob.com
 track.hujiang.com
 track.madserving.com
@@ -8421,7 +8394,6 @@ track.sohu.com
 track.tenjin.com
 track.themaccleanup.info
 track.tiara.daum.net
-track.tkbo.com
 track.uc.cn
 track.ultravpn.com
 track.unear.net
@@ -8474,7 +8446,6 @@ tracking.netalerts.io
 tracking.olx-st.com
 tracking.orixa-media.com
 tracking.propellerads.com
-tracking.publicidees.com
 tracking.taboola.com
 tracking.theoceanac.online
 tracking.thinkabt.com
