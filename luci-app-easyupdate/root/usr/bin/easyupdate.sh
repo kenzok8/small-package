@@ -68,7 +68,7 @@ function flashFirmware() {
 		echo 'Get whether to save the configuration(读取是否保存配置)'
 		keepconfig=$(uci get easyupdate.main.keepconfig)
 		if [ $keepconfig -eq 1 ]; then
-			keepconfig=''
+			keepconfig=' '
 			res='yes'
 		else
 			keepconfig='-n '
@@ -76,7 +76,7 @@ function flashFirmware() {
 		fi
 		echo "Whether to save the configuration(读取是否保存配置):$res"
 		echo 'Start flash firmware, log output in /tmp/easyupdate.log(开始刷写固件，日志输出在/tmp/easyupdate.log)'
-		sysupgrade $keepconfig"/tmp/$file" >/tmp/easyupdate.log 2>&1 &
+		sysupgrade $keepconfig$file >/tmp/easyupdate.log 2>&1 &
 	fi
 }
 

@@ -17,7 +17,7 @@ msgid "If you are using this router for the first time, please configure it here
 msgstr "如果你首次使用这个路由器，请在这里简单设置。"
 
 msgid "Three different ways to access the Internet, please choose according to your own situation."
-msgstr "三种不同的上网方式，请您根据自身情况进行选择。"
+msgstr "二种不同的上网方式，请您根据自身情况进行选择。"
 
 msgid "Set the router's wireless name and password. For more advanced settings, please go to the Network-Wireless page."
 msgstr "设置路由器的无线名字和密码，更多高级设置请进入 网络-无线 页面。"
@@ -39,3 +39,6 @@ msgstr "软件包自动更新"
 
 msgid "Firmware Upgrade Notice"
 msgstr "固件更新提醒"
+
+msgid "Persistent cookies"
+msgstr "持久化登录"

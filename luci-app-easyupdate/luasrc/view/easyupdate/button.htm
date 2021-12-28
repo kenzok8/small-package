@@ -119,12 +119,23 @@ function check_version() {
             if (r.code == 1) {
                 XHR.poll(1, '<%=url([[admin]], [[services]], [[easyupdate]], [[getlog]])%>', null,(x, r) => {
                     update_status_message('notice', r.data);
-                    if (r.data.indexOf("Commencing upgrade") > -1 ){
+					if (r.data.indexOf("Image check failed.") > -1){
                         XHR.halt()
-                        setTimeout(() => {
-                            location.replace(document.location.origin)
-                        },180000);
+                        update_status_message('warning', r.data);
+                        document.getElementById('update_apply_overlay').addEventListener("click", (e)=>{
+                            update_status_message()
+                        })
+                    }else{
+						if (r.data.indexOf("Commencing upgrade") > -1 ){
+							XHR.halt()
+							setTimeout(() => {
+								location.replace(document.location.origin)
+							},180000);
+						}else{
+                            update_status_message('notice', r.data);
+                        }
                     }
+
                 })
             } else {
                 tb.disabled = false;
