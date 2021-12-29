@@ -4,9 +4,14 @@
 
 function checkEnv() {
 	if !type sysupgrade >/dev/null 2>&1; then
-		echo 'Your firmware does not contain sysupgrade and does not support automatic updates(您的固件未包含sysupgrade,暂不支持自动更新)'
+		writeLog 'Your firmware does not contain sysupgrade and does not support automatic updates(您的固件未包含sysupgrade,暂不支持自动更新)'
 		exit
 	fi
+}
+
+function writeLog() {
+	now_time='['$(date +"%Y-%m-%d %H:%M:%S")']'
+	echo ${now_time} $1 | tee -a '/tmp/easyupdatemain.log'
 }
 
 function shellHelp() {
@@ -15,10 +20,10 @@ function shellHelp() {
 Openwrt-EasyUpdate Script by sundaqiang
 Your firmware already includes Sysupgrade and supports automatic updates(您的固件已包含sysupgrade,支持自动更新)
 参数:
-    -c			    Get the cloud firmware version(获取云端固件版本)
-    -d			    Download cloud Firmware(下载云端固件)
-    -f filename		Flash firmware(刷写固件)
-    -u			    One-click firmware update(一键更新固件)
+    -c                     Get the cloud firmware version(获取云端固件版本)
+    -d                     Download cloud Firmware(下载云端固件)
+    -f filename                Flash firmware(刷写固件)
+    -u                     One-click firmware update(一键更新固件)
 EOF
 }
 
@@ -26,26 +31,26 @@ function getCloudVer() {
 	checkEnv
 	github=$(uci get easyupdate.main.github)
 	github=(${github//// })
-	uclient-fetch -qO- "https://api.github.com/repos/${github[2]}/${github[3]}/releases/latest" | jsonfilter -e '@.tag_name'
+	uclient-fetch -qO- "https://api.github.com/repos/${github[2]}/${github[3]}/releases/latest" | jsonfilter -e '@.tag_name' | sed -e 's/OpenWrt_//'
 }
 
 function downCloudVer() {
 	checkEnv
-	echo 'Get github project address(读取github项目地址)'
+	writeLog 'Get github project address(读取github项目地址)'
 	github=$(uci get easyupdate.main.github)
-	echo "Github project address(github项目地址):$github"
+	writeLog "Github project address(github项目地址):$github"
 	github=(${github//// })
-	echo 'Check whether EFI firmware is available(判断是否EFI固件)'
+	writeLog 'Check whether EFI firmware is available(判断是否EFI固件)'
 	if [ -d "/sys/firmware/efi/" ]; then
 		suffix="combined-efi.img.gz"
 	else
 		suffix="combined.img.gz"
 	fi
-	echo "Whether EFI firmware is available(是否EFI固件):$suffix"
-	echo 'Get the cloud firmware link(获取云端固件链接)'
+	writeLog "Whether EFI firmware is available(是否EFI固件):$suffix"
+	writeLog 'Get the cloud firmware link(获取云端固件链接)'
 	url=$(uclient-fetch -qO- "https://api.github.com/repos/${github[2]}/${github[3]}/releases/latest" | jsonfilter -e '@.assets[*].browser_download_url' | sed -n "/$suffix/p")
-	echo "Cloud firmware link(云端固件链接):$url"
-	echo 'Get whether to use Chinese mirror(读取是否使用中国镜像)'
+	writeLog "Cloud firmware link(云端固件链接):$url"
+	writeLog 'Get whether to use Chinese mirror(读取是否使用中国镜像)'
 	proxy=$(uci get easyupdate.main.proxy)
 	if [ $proxy -eq 1 ]; then
 		proxy='https://ghproxy.com/'
@@ -54,8 +59,8 @@ function downCloudVer() {
 		proxy=''
 		res='no'
 	fi
-	echo "Whether to use Chinese mirror(是否使用中国镜像):$res"
-	echo 'Start downloading firmware, log output in /tmp/easyupdate.log(开始下载固件，日志输出在/tmp/easyupdate.log)'
+	writeLog "Whether to use Chinese mirror(是否使用中国镜像):$res"
+	writeLog 'Start downloading firmware, log output in /tmp/easyupdate.log(开始下载固件，日志输出在/tmp/easyupdate.log)'
 	fileName=(${url//// })
 	uclient-fetch -O "/tmp/${fileName[7]}" "$proxy$url" >/tmp/easyupdate.log 2>&1 &
 }
@@ -63,9 +68,9 @@ function downCloudVer() {
 function flashFirmware() {
 	checkEnv
 	if [[ -z "$file" ]]; then
-		echo 'Please specify the file name(请指定文件名)'
+		writeLog 'Please specify the file name(请指定文件名)'
 	else
-		echo 'Get whether to save the configuration(读取是否保存配置)'
+		writeLog 'Get whether to save the configuration(读取是否保存配置)'
 		keepconfig=$(uci get easyupdate.main.keepconfig)
 		if [ $keepconfig -eq 1 ]; then
 			keepconfig=' '
@@ -74,14 +79,65 @@ function flashFirmware() {
 			keepconfig='-n '
 			res='no'
 		fi
-		echo "Whether to save the configuration(读取是否保存配置):$res"
-		echo 'Start flash firmware, log output in /tmp/easyupdate.log(开始刷写固件，日志输出在/tmp/easyupdate.log)'
+		writeLog "Whether to save the configuration(读取是否保存配置):$res"
+		writeLog 'Start flash firmware, log output in /tmp/easyupdate.log(开始刷写固件，日志输出在/tmp/easyupdate.log)'
 		sysupgrade $keepconfig$file >/tmp/easyupdate.log 2>&1 &
 	fi
 }
 
 function updateCloud() {
 	checkEnv
+	writeLog 'Get the local firmware version(获取本地固件版本)'
+	lFirVer=$(cat /etc/openwrt_release | sed -n "s/DISTRIB_VERSIONS='\(.*\)'/\1/p")
+	writeLog "Local firmware version(本地固件版本):$lFirVer"
+	writeLog 'Get the cloud firmware version(获取云端固件版本)'
+	cFirVer=$(getCloudVer)
+	writeLog "Cloud firmware version(云端固件版本):$cFirVer"
+	lFirVer=$(date -d "${lFirVer:0:4}-${lFirVer:4:2}-${lFirVer:6:2} ${lFirVer:9:2}:${lFirVer:11:2}:${lFirVer:13:2}" +%s)
+	cFirVer=$(date -d "${cFirVer:0:4}-${cFirVer:4:2}-${cFirVer:6:2} ${cFirVer:9:2}:${cFirVer:11:2}:${cFirVer:13:2}" +%s)
+	if [ $cFirVer -gt $lFirVer ]; then
+		writeLog 'Need to be updated(需要更新)'
+		downCloudVer
+		i=0
+		while [ $i -le 100 ]; do
+			log=$(cat /tmp/easyupdate.log)
+			str=' error'
+			if [[ $log =~ $str ]]; then
+				writeLog 'Download error(下载出错)'
+				i=101
+				break
+			else
+				str='Connection reset'
+				if [[ $log =~ $str ]]; then
+					writeLog 'Download error(下载出错)'
+					i=101
+					break
+				else
+					str='Download completed'
+					if [[ $log =~ $str ]]; then
+						writeLog 'Download completes(下载完成)'
+						i=100
+						break
+					else
+						echo $log | sed -n '$p'
+						if [[ $i -eq 99 ]]; then
+							writeLog 'Download the timeout(下载超时)'
+							break
+						fi
+					fi
+				fi
+			fi
+			i++
+			sleep 3
+		done
+		if [[ $i -eq 100 ]]; then
+			writeLog 'Prepare flash firmware(准备刷写固件)'
+			file=$(cat /tmp/easyupdate.log | sed -n "s/Writing to '\(.*\)'/\1/p")
+			flashFirmware
+		fi
+	else
+		writeLog "Is the latest(已是最新)"
+	fi
 }
 
 if [[ -z "$1" ]]; then
