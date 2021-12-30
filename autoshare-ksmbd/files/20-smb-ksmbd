@@ -7,12 +7,6 @@
 # 警告:对着屏幕的哥们,我们允许你使用此脚本，但不允许你抹去作者的信息,请保留这段话。
 #
 
-/etc/init.d/ksmbd reload
-[ "$(uci -q get ksmbd.@globals[0].autoshare)" == "1" ] && {
-/etc/init.d/ksmbd restart
-exit 0;
-}
-
 . /lib/functions.sh
 . /lib/functions/service.sh
 
@@ -67,6 +61,11 @@ case "$ACTION" in
 	path="/dev/$device"
 
 	wait_for_init
+
+	[ "$(uci -q get ksmbd.@globals[0].autoshare)" == "1" ] && {
+		/etc/init.d/ksmbd restart
+		exit 0;
+	}
 
 	cat /proc/mounts | grep -v '/boot\|/opt' | while read j
 	do
