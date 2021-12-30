@@ -8405,6 +8405,7 @@ trackedlink.net
 trackedweb.net
 tracker-pm2.spilleren.com
 tracker.bannerflow.com
+tracker.bongngo.bar
 tracker.cdnbye.com
 tracker.comunidadmarriott.com
 tracker.icerocket.com
@@ -8449,6 +8450,7 @@ tracking.taboola.com
 tracking.theoceanac.online
 tracking.thinkabt.com
 tracking.v.tf.360.cn
+tracking.wetter.at
 tracking01.ad4game.com
 tracking01.walmart.com
 tracking02.ad4game.com
@@ -8517,6 +8519,7 @@ tribalfusion.com
 trickycelery.com
 triplelift.com
 triptease.io
+trk.bad-tool-tell-doubt.xyz
 trk.bc.shutterfly.com
 trk.bee-data.com
 trk.enemy-adult-scared-there.xyz
