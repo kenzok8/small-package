@@ -20,14 +20,11 @@ service_triggers() {
 }
 
 restore_setting() {
-  redirect=$(uci -q get mosdns.mosdns.redirect)
-  if [ $redirect -eq 1 ]; then
     sed -i "/list server/d" /etc/config/dhcp
     uci set dhcp.@dnsmasq[0].noresolv='0'
     uci del dhcp.@dnsmasq[0].cachesize
     uci set dhcp.@dnsmasq[0].filter_aaaa='1'
     uci commit dhcp
-  fi
 }
 
 prepare_setting() {
@@ -92,6 +89,7 @@ start_service() {
   procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
   procd_close_instance mosdns
 
+  restore_setting
   prepare_setting
   restart_others
 
