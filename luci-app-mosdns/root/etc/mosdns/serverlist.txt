@@ -5,7 +5,6 @@
 036e.cn
 09_19.supfree.net
 0x5.me
-1-1ads.com
 1.1010pic.com
 1.ad-locus.com
 1.aili.com
@@ -558,6 +557,7 @@ ad0.bigmir.net
 ad01.mediacorpsingapore.com
 ad1.bigmir.net
 ad1.emule-project.org
+ad1.eventmanager.co.kr
 ad1.img.static.youmi.net
 ad1.kde.cz
 ad1.nend.net
@@ -6871,7 +6871,6 @@ rd.e.sogou.com
 rd.wan.360.cn
 rdstat.tanx.com
 rdx.autohome.com.cn
-re-directme.com
 re.m.taobao.com
 re.taobao.com
 reachjunction.com
@@ -8522,7 +8521,6 @@ triptease.io
 trk.bad-tool-tell-doubt.xyz
 trk.bc.shutterfly.com
 trk.bee-data.com
-trk.enemy-adult-scared-there.xyz
 trk.hot-mob.com
 trk.pinterest.com
 trk.taboola.com
