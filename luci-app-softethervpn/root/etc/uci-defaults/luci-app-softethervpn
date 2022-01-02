@@ -15,9 +15,8 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-/etc/init.d/softethervpnbridge disable && /etc/init.d/softethervpnbridge stop
-/etc/init.d/softethervpnclient disable && /etc/init.d/softethervpnclient stop
-/etc/init.d/softethervpnserver disable && /etc/init.d/softethervpnserver stop
+/etc/init.d/softethervpnserver stop
+/etc/init.d/softethervpnserver disable
 
 rm -rf /tmp/luci-*cache
 exit 0
