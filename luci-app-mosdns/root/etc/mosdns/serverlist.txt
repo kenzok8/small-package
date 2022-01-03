@@ -2808,6 +2808,7 @@ click.cartsguru.io
 click.cheshi.com
 click.cision.com
 click.dangdang.com
+click.em.blizzard.com
 click.email.bbc.com
 click.email.sonos.com
 click.fool.com
@@ -3998,6 +3999,7 @@ foo.cosmocode.de
 foresee.com
 forex-affiliate.net
 forkcdn.com
+forwrdnow.com
 fota4.adups.cn
 fourarithmetic.com
 fozhu.rrsdl.com
@@ -6636,6 +6638,7 @@ protectsubrev.com
 proton-int.flurry.com
 proton-tm.com
 protraffic.com
+provenpixel.com
 provexia.com
 prsaln.com
 prsitecheck.com
