@@ -27,6 +27,7 @@ define Package/jpcre2
   CATEGORY:=Libraries
   TITLE:=C++ wrapper for PCRE2 Library
   URL:=https://github.com/jpcre2/jpcre2
+  BUILDONLY:=1
 endef
 
 define Package/jpcre2/description

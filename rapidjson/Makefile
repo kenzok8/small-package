@@ -32,6 +32,7 @@ define Package/rapidjson
   CATEGORY:=Libraries
   URL:=https://github.com/Tencent/rapidjson
   TITLE:=rapidjson JSON parser/generator for C++
+  BUILDONLY:=1
 endef
 
 define Package/rapidjson/description

@@ -29,6 +29,7 @@ define Package/libcron
   CATEGORY:=Libraries
   URL:=https://github.com/PerMalmberg/libcron
   TITLE:=A C++ scheduling library using cron formatting
+  BUILDONLY:=1
 endef
 
 define Package/libcron/description

@@ -27,6 +27,7 @@ define Package/quickjspp
   URL:=https://github.com/ftk/quickjspp
   TITLE:=QuickJS wrapper for C++
   DEPENDS:=+libatomic +libpthread
+  BUILDONLY:=1
 endef
 
 define Package/quickjspp/description
