@@ -14,6 +14,9 @@ enable.rmempty = false
 redirect = s:option(Flag, "redirect", translate("Enable DNS Redirect"))
 redirect.rmempty = false
 
+adblock = s:option(Flag, "adblock", translate("Enable DNS ADblock"))
+adblock.rmempty = false
+
 set_config = s:option(Button, "set_config", translate("DNS Helper"))
 set_config.inputtitle = translate("Apply")
 set_config.inputstyle = "reload"
