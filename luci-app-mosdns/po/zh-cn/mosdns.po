@@ -22,6 +22,9 @@ msgstr "启用"
 msgid "Enable DNS Redirect"
 msgstr "启用 DNS 重定向"
 
+msgid "Enable DNS ADblock"
+msgstr "启用 DNS 广告过滤"
+
 msgid "View the YAML Configuration file used by this MosDNS. You can edit it as you own need; Beware the listening port 5335 was hardcoded into the init script, do not change that."
 msgstr "查看 MosDNS 所使用的 YAML 配置文件。你可以根据自己的需要进行编辑；但请注意，监听端口5335是硬编码在启动脚本中的，不要更改！"
 

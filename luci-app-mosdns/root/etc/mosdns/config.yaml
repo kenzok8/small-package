@@ -62,9 +62,9 @@ plugin:
     args:
       upstream:
         - addr:            'tls://8.8.4.4'
-          idle_timeout:    60
-        - addr:            'tls://101.101.101.101'
-          idle_timeout:    30
+          idle_timeout:    10
+        - addr:            'tls://9.9.9.9'
+          idle_timeout:    10
 
   - tag:                   lazy_cache
     type:                  cache
