@@ -69,7 +69,6 @@ define Build/Prepare
 endef
 
 define Package/$(PKG_NAME)/conffiles
-/etc/config/qbittorrent
 /etc/qBittorrent
 endef
 
