@@ -51,20 +51,12 @@ add_wizard() {
 	config_get lan_gateway "$cfg" lan_gateway
 	config_get dhcp "$cfg" dhcp
 	config_get lan_dns "$cfg" lan_dns
-
-	[ -n "$lan_dns" ] && {
-		uci -q set network.wan.peerdns='0'
-		uci -q set network.lan.dns="${lan_dns}"
-		} || {
-		uci -q del network.wan.peerdns
-		uci -q del network.lan.dns
-		}
 	
 	[ "$dhcp" == "0" ] && dhcp="1"
 	if [[ -n "${lan_gateway} != $(uci -q get network.lan.gateway)" || -n "${dhcp} != $(uci -q get dhcp.lan.ignore)" ]]; then
 	if [ "${siderouter}" == "1" ]; then
 		uci -q set network.lan.gateway="${lan_gateway}"
-		[ -n "$lan_dns" ] || uci -q set network.lan.dns='223.5.5.5'
+		[ -n "$lan_dns" ] || lan_dns='223.5.5.5'
 		[ -n "$dhcp" ] && uci -q set dhcp.lan.ignore="1" || uci -q del dhcp.lan.ignore
 	elif [ "${siderouter}" == "0" ]; then
 		uci -q del network.lan.gateway
@@ -72,6 +64,17 @@ add_wizard() {
 	fi
 	fi
 	
+	[ -n "$lan_dns" ] && {
+		[ "$(uci -q get dhcp.@dnsmasq[0].noresolv)" == 1 ] && {
+		uci -q del dhcp.@dnsmasq[0].noresolv
+		}
+		uci -q set network.wan.peerdns='0'
+		uci -q set network.lan.dns="${lan_dns}"
+		} || {
+		uci -q del network.wan.peerdns
+		uci -q del network.lan.dns
+		}
+
 	config_get ipv6 "$cfg" ipv6
 	config_get old_ipv6 "$cfg" old_ipv6
 	

@@ -5,6 +5,7 @@
 036e.cn
 09_19.supfree.net
 0x5.me
+1-1ads.com
 1.1010pic.com
 1.ad-locus.com
 1.aili.com
@@ -1361,6 +1362,7 @@ adserver.digitoday.com
 adserver.echdk.pl
 adserver.friendfinder.com
 adserver.generationiron.com
+adserver.gilligan.tech
 adserver.html.it
 adserver.hwupgrade.it
 adserver.ilango.de
@@ -3924,7 +3926,6 @@ fav.simba.taobao.com
 fave.co
 fb.37cs.com
 fbc.ffychb.com
-fc.webmasterpro.de
 fc.yahoo.com
 fclick.baidu.com
 fd.anzhi.com
@@ -5579,6 +5580,7 @@ mapping.yoyi.com.cn
 marinsm.com
 markedcrayon.com
 markedpail.com
+market-buster.com
 market.21cn.com
 market.52pk.com
 market.wsskj520.cn
@@ -6478,7 +6480,6 @@ pimproll.com
 pin.hpplay.cn
 ping.acc.sogou.com
 ping.chartbeat.net
-ping.hashnode.com
 ping.pinyin.sogou.com
 ping.ublock.org
 pingma.qq.com
@@ -6526,7 +6527,6 @@ pleasantpump.com
 plista.com
 plotrabbit.com
 ployea.com
-ploz.mangadex.org
 plt.data.pplive.com
 pltraffic8.com
 pluckypocket.com
