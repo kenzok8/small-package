@@ -11,7 +11,6 @@ function index()
 	
 	entry({"admin", "services", "mosdns", "basic"}, cbi("mosdns/basic"), _("Basic Setting"), 1).leaf = true
 	entry({"admin", "services", "mosdns", "update"}, cbi("mosdns/update"), _("Geodata Update"), 2).leaf = true
-	entry({"admin", "services", "mosdns", "config"}, cbi("mosdns/config"), _("Manual Configuration"), 3).leaf = true
 	entry({"admin", "services", "mosdns", "status"}, call("act_status")).leaf = true
 end
 

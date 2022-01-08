@@ -25,8 +25,8 @@ msgstr "启用 DNS 重定向"
 msgid "Enable DNS ADblock"
 msgstr "启用 DNS 广告过滤"
 
-msgid "View the YAML Configuration file used by this MosDNS. You can edit it as you own need; Beware the listening port 5335 was hardcoded into the init script, do not change that."
-msgstr "查看 MosDNS 所使用的 YAML 配置文件。你可以根据自己的需要进行编辑；但请注意，监听端口5335是硬编码在启动脚本中的，不要更改！"
+msgid "<font color=\"ff0000\"><strong>View the Custom YAML Configuration file used by this MosDNS. You can edit it as you own need."
+msgstr "<font color=\"ff0000\"><strong>注意！此页的更改仅当 'MosDNS 配置文件选择' 为 '自定义配置' 时才会生效"
 
 msgid "Geodata Update"
 msgstr "数据库更新"
@@ -90,3 +90,15 @@ msgstr "DNS 设置还原"
 
 msgid "Apply"
 msgstr "应用"
+
+msgid "MosDNS Config File"
+msgstr "MosDNS 配置文件选择"
+
+msgid "Def Config"
+msgstr "内置预设"
+
+msgid "Cus Config"
+msgstr "自定义配置"
+
+msgid "MosDNS Log File"
+msgstr "MosDNS 日志文件"
