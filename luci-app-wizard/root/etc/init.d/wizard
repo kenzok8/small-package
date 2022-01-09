@@ -51,6 +51,9 @@ add_wizard() {
 	config_get lan_gateway "$cfg" lan_gateway
 	config_get dhcp "$cfg" dhcp
 	config_get lan_dns "$cfg" lan_dns
+	config_get ipv6 "$cfg" ipv6
+	config_get old_ipv6 "$cfg" old_ipv6
+	config_get autoupgrade_pkg "$cfg" autoupgrade_pkg
 	
 	[ "$dhcp" == "0" ] && dhcp="1"
 	if [[ -n "${lan_gateway} != $(uci -q get network.lan.gateway)" || -n "${dhcp} != $(uci -q get dhcp.lan.ignore)" ]]; then
@@ -74,9 +77,6 @@ add_wizard() {
 		uci -q del network.wan.peerdns
 		uci -q del network.lan.dns
 		}
-
-	config_get ipv6 "$cfg" ipv6
-	config_get old_ipv6 "$cfg" old_ipv6
 	
 	if [ "${ipv6}" != "${old_ipv6}" ]; then
 	if [ -n "${ipv6}" ]; then
@@ -104,6 +104,17 @@ add_wizard() {
 	(
 	 /etc/init.d/network restart
 	 /etc/init.d/dnsmasq reload)&
+	
+	if [ "${autoupgrade_pkg}" == "0" ]; then
+		sed -i '/init.d\/packages/d' /etc/crontabs/root
+	else
+		grep -qE "^\d.*init.d/packages" /etc/crontabs/root || {
+			sed -i '/init.d\/packages/d' /etc/crontabs/root
+			hour="$(grep -m1 -ao '[4-6]' /dev/urandom | head -n1)"
+			min="$(grep -m1 -ao '[0-5][0-9]' /dev/urandom | head -n1)"
+			echo "$min $hour * * * /etc/init.d/packages start >/dev/null 2>&1" >> /etc/crontabs/root
+		}
+	fi
 }
 
 reconfig() {

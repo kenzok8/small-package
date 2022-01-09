@@ -10,4 +10,13 @@ EOF
 
 chmod +x /etc/init.d/wizard 2>/dev/null
 rm -f /tmp/luci-indexcache
+
+/etc/init.d/packages enable
+grep -qE "^\d.*init.d/packages" /etc/crontabs/root || {
+	sed -i -e '/init.d\/packages/d' -e '/S99packages/d' /etc/crontabs/root
+	hour="$(grep -m1 -ao '[4-6]' /dev/urandom | head -n1)"
+	min="$(grep -m1 -ao '[0-5][0-9]' /dev/urandom | head -n1)"
+	echo "$min $hour * * * /etc/init.d/packages start >/dev/null 2>&1" >> /etc/crontabs/root
+}
+
 exit 0
