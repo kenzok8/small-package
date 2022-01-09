@@ -8,7 +8,10 @@ function index()
     if not nixio.fs.access("/etc/config/kodexplorer") then return end
 
     entry({"admin", "nas"}, firstchild(), "NAS", 44).dependent = false
-    entry({"admin", "nas", "kodexplorer"}, cbi("kodexplorer/settings"), _("KodExplorer"), 3).dependent = true
+
+    e = entry({"admin", "nas", "kodexplorer"}, cbi("kodexplorer/settings"), _("KodExplorer"), 3)
+    e.dependent = true
+    e.acl_depends = { "luci-app-kodexplorer" }
 
     entry({"admin", "nas", "kodexplorer", "check"}, call("action_check")).leaf = true
     entry({"admin", "nas", "kodexplorer", "download"}, call("action_download")).leaf = true
@@ -23,7 +26,7 @@ end
 function act_status()
     local e = {}
     e.nginx_status = luci.sys.call("ps -w | grep nginx | grep kodexplorer | grep -v grep > /dev/null") == 0
-    e.php_status = luci.sys.call("ps -w | grep php | grep kodexplorer | grep -v grep > /dev/null") ==  0
+    e.php_status = luci.sys.call("ps -w | grep php | grep kodexplorer | grep -v grep > /dev/null") == 0
     http_write_json(e)
 end
 
