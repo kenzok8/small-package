@@ -83,12 +83,13 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[AdGuardHome]], [[getlog]])%>', nu
 		if (x.responseText && lv) {
 			if (isutc2local)
 			{
-				var lines=line_tolocal(x.responseText);
+				var lines=line_toUTC(x.responseText);
 				if (islogreverse){
 					lv.innerHTML = lines.reverse().join('\n')+lv.innerHTML;
 				}else{
 					lv.innerHTML += lines.join('\n');
 				}
+			lv.innerHTML=line_tolocal(lv.innerHTML).join('\n');
 			}else{
 				if (islogreverse){
 					lv.innerHTML = x.responseText.split('\n').reverse().join('\n')+lv.innerHTML;
