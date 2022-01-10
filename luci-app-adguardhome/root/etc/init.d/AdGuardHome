@@ -231,6 +231,9 @@ _do_redirect()
 	fi
 	config_get configpath $CONFIGURATION configpath "/etc/AdGuardHome.yaml"
 	AdGuardHome_PORT=$(config_editor "dns.port" "" "$configpath" "1")
+	if [ ! -s "$configpath" ]; then
+		cp -f /usr/share/AdGuardHome/AdGuardHome_template.yaml $configpath
+	fi
 	if [ -z "$AdGuardHome_PORT" ]; then
 		AdGuardHome_PORT="0"
 	fi
@@ -504,7 +507,7 @@ start_service() {
 	if [[ "`uci get bypass.@global[0].global_server 2>/dev/null`" && "`uci get bypass.@global[0].adguardhome 2>/dev/null`" == 1 && "$(uci get dhcp.@dnsmasq[0].port)" == "53" ]]; then
 	 uci -q set AdGuardHome.AdGuardHome.redirect='exchange'
 	 uci commit AdGuardHome
-	 _do_redirect 1
+	 do_redirect 1
 	fi
 }
 
