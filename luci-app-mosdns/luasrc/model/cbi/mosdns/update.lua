@@ -15,7 +15,7 @@ enable = s:option(Flag, "syncconfig", translate("Enable Config Update"))
 enable.rmempty = false
 
 o = s:option(ListValue, "geo_update_week_time", translate("Update Cycle"))
-o:value("all", translate("Every Day"))
+o:value("*", translate("Every Day"))
 o:value("1", translate("Every Monday"))
 o:value("2", translate("Every Tuesday"))
 o:value("3", translate("Every Wednesday"))
