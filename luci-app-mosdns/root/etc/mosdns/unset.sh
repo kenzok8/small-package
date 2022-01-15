@@ -5,6 +5,7 @@ uci commit shadowsocksr
 uci set passwall.@global[0].dns_mode='pdnsd'
 uci set passwall.@global[0].dns_forward='8.8.8.8'
 uci set passwall.@global[0].dns_cache='1'
+uci set passwall.@global[0].chinadns_ng='1'
 uci commit passwall
 uci set vssr.@global[0].pdnsd_enable='1'
 uci commit vssr

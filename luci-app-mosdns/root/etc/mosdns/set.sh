@@ -2,9 +2,10 @@
 uci set shadowsocksr.@global[0].pdnsd_enable='0'
 uci del shadowsocksr.@global[0].tunnel_forward
 uci commit shadowsocksr
-uci set passwall.@global[0].dns_mode='nonuse'
-uci del passwall.@global[0].dns_forward
+uci set passwall.@global[0].dns_mode='udp'
+uci set passwall.@global[0].dns_forward='127.0.0.1'
 uci del passwall.@global[0].dns_cache
+uci set passwall.@global[0].chinadns_ng='0'
 uci commit passwall
 uci set vssr.@global[0].pdnsd_enable='0'
 uci commit vssr

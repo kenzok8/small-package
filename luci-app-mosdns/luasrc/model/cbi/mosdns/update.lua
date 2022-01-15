@@ -23,7 +23,7 @@ o:value("4", translate("Every Thursday"))
 o:value("5", translate("Every Friday"))
 o:value("6", translate("Every Saturday"))
 o:value("7", translate("Every Sunday"))
-o.default = "all"
+o.default = "*"
 
 update_time = s:option(ListValue, "geo_update_day_time", translate("Update Time (Every Day)"))
 for t = 0, 23 do
