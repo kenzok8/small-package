@@ -4,7 +4,7 @@ name: Update packages
 on:
   push:
     paths:
-      - '.github/workflows/kenzo.yml'
+      - '.github/workflows/cyzzc1288.yml'
       - 'diy/**'
   schedule:
     - cron: 0 */12 * * *
