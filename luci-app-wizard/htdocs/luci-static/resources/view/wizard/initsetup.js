@@ -83,6 +83,8 @@ return view.extend({
 		o = s.taboption('firmware', form.Flag, 'cookie_p', _('Persistent cookies'),_('保持后台登录状态,避免每次关闭浏览器后都需要重新登录'));
 		o.default = o.enabled;
 		
+		setTimeout("document.getElementsByClassName('cbi-button-apply')[0].children[3].children[0].value='1'",1000)
+		
 		return m.render();
 	}
 });
