@@ -68,7 +68,7 @@ CONFIG_PACKAGE_lua-openssl=y
 此文件为 UCI 配置文件, 配置方式可参考 Wiki -> Use-UCI-system 和 OpenWrt Wiki
 
 ## 6、编译
-git clone https://github.com/iwrt/luci-app-ikoolproxy.git package/luci-app-ikoolproxy
+git clone https://github.com/1wrt/luci-app-ikoolproxy.git package/luci-app-ikoolproxy
 
 make && sudo make install
 
