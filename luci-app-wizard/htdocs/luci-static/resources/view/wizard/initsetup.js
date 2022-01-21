@@ -49,7 +49,7 @@ return view.extend({
 		o.value('255.0.0.0');
 		o.default = '255.255.255.0';
 
-		o = s.taboption('netsetup', form.DynamicList, 'lan_dns', _('Use custom DNS servers'), _('留空则使用运营商DNS, 推荐: 223.5.5.5'));
+		o = s.taboption('netsetup', form.DynamicList, 'lan_dns', _('Use custom DNS servers'), _('留空则使用主路由DNS'));
 		o.datatype = 'ip4addr';
 		o.cast = 'string';
 
