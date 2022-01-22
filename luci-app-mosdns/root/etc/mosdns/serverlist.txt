@@ -3925,6 +3925,7 @@ fav.simba.taobao.com
 fave.co
 fb.37cs.com
 fbc.ffychb.com
+fc.webmasterpro.de
 fc.yahoo.com
 fclick.baidu.com
 fd.anzhi.com
@@ -3994,7 +3995,6 @@ fm.ipinyou.com
 fm.p0y.cn
 fms.ipinyou.com
 folawn.com
-fontsctaticx.com
 foo.cosmocode.de
 foresee.com
 forex-affiliate.net
@@ -4037,7 +4037,6 @@ freewheel.tv
 friendwool.com
 frightenedpotato.com
 frontstat.agrantsem.com
-frontstatics.com
 frtyj.com
 frtyk.com
 fs-uc-nearme-com-cn.oss-cn-hangzhou.aliyuncs.com
@@ -4134,8 +4133,6 @@ gas.data.pplive.com
 gateway.cacafly.com
 gaug.es
 gavvia.com
-gctatic.com
-gctatics.com
 gd-stats.jpush.cn
 gdc2091.cc-club.com.cn
 gdgy56.com
@@ -4257,7 +4254,6 @@ gscontxt.net
 gslb.hpplay.cn
 gstat.bitauto.com
 gstaticx.com
-gstaticxs.com
 gtop100.com
 guardedschool.com
 guce.advertising.com
@@ -7342,7 +7338,6 @@ sc-analytics.appspot.com
 sc.iasds01.com
 scambiobanner.aruba.it
 scanscout.com
-scaraabresearch.com
 scarcesign.com
 scarfsmash.com
 scatteredheat.com
@@ -7707,7 +7702,6 @@ sponsorads.de
 sponsorpro.de
 sponsors.thoughtsmedia.com
 spookysleet.com
-sportsad.net
 spot.fitness.com
 spotlessstamp.com
 spotscenered.info
