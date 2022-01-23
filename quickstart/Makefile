@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
 	SECTION:=net
-	CATEGORY:=Guide
+	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=Quickstart, the quick start.
 	DEPENDS:=
@@ -36,9 +36,7 @@ define Package/$(PKG_NAME)/description
   Quickstart is a dashboard & user guide
 endef
 
-define Package/$(PKG_NAME)/conffiles
 
-endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
