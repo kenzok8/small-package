@@ -12,7 +12,7 @@ config global
 config acl_rule
 	option proxy_mode '2'
 	option remarks '选要滤https的客户端'
-	option ipaddr '192.168.168.168'
+	option ipaddr '192.168.8.168'
 	
 config usetips
 	option load '0'
