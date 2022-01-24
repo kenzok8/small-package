@@ -52,7 +52,7 @@ endef
 
 ifeq ($(CONFIG_CDNSPEEDTEST_COMPRESS_GOPROXY),y)
 	export GO111MODULE=on
-	export GOPROXY=https://goproxy.baidu.com
+	export GOPROXY=https://goproxy.bj.bcebos.com
 endif
 
 define Build/Compile
