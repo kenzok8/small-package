@@ -5611,6 +5611,7 @@ matheranalytics.com
 mathtag.com
 mathtype.cn
 matomo.activate.cz
+matomo.crossiety.app
 matomo.gals24.ru
 matomo.hdweb.ru
 matomo.kmkb.ru
@@ -8100,6 +8101,8 @@ t.supermario.xyz
 t.targetuse.com
 t.trafmag.com
 t.ujian.cc
+t.vacations.disneydestinations.com
+t.visit.disneydestinations.com
 t.visitorqueue.com
 t.youmi.net
 t.yunsoka.com
