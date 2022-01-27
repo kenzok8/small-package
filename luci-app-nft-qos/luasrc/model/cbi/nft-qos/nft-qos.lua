@@ -30,39 +30,41 @@ s = m:section(TypedSection, "default", translate("NFT-QoS Settings"))
 s.addremove = false
 s.anonymous = true
 
-s:tab("limitopt", translate("Limit Rate Options"))
+s:tab("limit", "Limit Rate by IP Address")
+s:tab("limitmac", "Limit Rate by Mac Address")
+s:tab("priority", "Traffic Priority")
 
 --
 -- Static
 --
-o = s:taboption("limitopt", Flag, "limit_enable", translate("Limit Rate by IP Address"), translate("Enable Limit Rate Feature"))
-o.default = limit_enable or o.disabled
+o = s:taboption("limit", Flag, "limit_enable", translate("Limit Enable"), translate("Enable Limit Rate Feature"))
+o.default = limit_enable or o.enabled
 o.rmempty = false
 
-o = s:taboption("limitopt", ListValue, "limit_type", translate("Limit Type"), translate("Type of Limit Rate"))
+o = s:taboption("limit", ListValue, "limit_type", translate("Limit Type"), translate("Type of Limit Rate"))
 o.default = limit_static or "static"
 o:depends("limit_enable","1")
 o:value("static", "Static")
 o:value("dynamic", "Dynamic")
 
-o = s:taboption("limitopt", Value, "static_rate_dl", translate("Default Download Rate"), translate("Default value for download rate"))
+o = s:taboption("limit", Value, "static_rate_dl", translate("Default Download Rate"), translate("Default value for download rate"))
 o.datatype = "uinteger"
 o.default = def_rate_dl or '50'
 o:depends("limit_type","static")
 
-o = s:taboption("limitopt", ListValue, "static_unit_dl", translate("Default Download Unit"), translate("Default unit for download rate"))
+o = s:taboption("limit", ListValue, "static_unit_dl", translate("Default Download Unit"), translate("Default unit for download rate"))
 o.default = def_unit_dl or "kbytes"
 o:depends("limit_type","static")
 o:value("bytes", "Bytes/s")
 o:value("kbytes", "KBytes/s")
 o:value("mbytes", "MBytes/s")
 
-o = s:taboption("limitopt", Value, "static_rate_ul", translate("Default Upload Rate"), translate("Default value for upload rate"))
+o = s:taboption("limit", Value, "static_rate_ul", translate("Default Upload Rate"), translate("Default value for upload rate"))
 o.datatype = "uinteger"
 o.default = def_rate_ul or '50'
 o:depends("limit_type","static")
 
-o = s:taboption("limitopt", ListValue, "static_unit_ul", translate("Default Upload Unit"), translate("Default unit for upload rate"))
+o = s:taboption("limit", ListValue, "static_unit_ul", translate("Default Upload Unit"), translate("Default unit for upload rate"))
 o.default = def_unit_ul or "kbytes"
 o:depends("limit_type","static")
 o:value("bytes", "Bytes/s")
@@ -72,45 +74,54 @@ o:value("mbytes", "MBytes/s")
 --
 -- Dynamic
 --
-o = s:taboption("limitopt", Value, "dynamic_bw_down", translate("Download Bandwidth (Mbps)"), translate("Default value for download bandwidth"))
+o = s:taboption("limit", Value, "dynamic_bw_down", translate("Download Bandwidth (Mbps)"), translate("Default value for download bandwidth"))
 o.default = def_up or '100'
 o.datatype = "uinteger"
 o:depends("limit_type","dynamic")
 
-o = s:taboption("limitopt", Value, "dynamic_bw_up", translate("Upload Bandwidth (Mbps)"), translate("Default value for upload bandwidth"))
+o = s:taboption("limit", Value, "dynamic_bw_up", translate("Upload Bandwidth (Mbps)"), translate("Default value for upload bandwidth"))
 o.default = def_down or '100'
 o.datatype = "uinteger"
 o:depends("limit_type","dynamic")
 
-o = s:taboption("limitopt", Value, "dynamic_cidr", translate("Target Network (IPv4/MASK)"), translate("Network to be applied, e.g. 192.168.1.0/24, 10.2.0.0/16, etc."))
+o = s:taboption("limit", Value, "dynamic_cidr", translate("Target Network (IPv4/MASK)"), translate("Network to be applied, e.g. 192.168.1.0/24, 10.2.0.0/16, etc."))
 o.datatype = "cidr4"
 ipc.routes({ family = 4, type = 1 }, function(rt) o.default = rt.dest end)
 o:depends("limit_type","dynamic")
 
 if has_ipv6 then
-	o = s:taboption("limitopt", Value, "dynamic_cidr6", translate("Target Network6 (IPv6/MASK)"), translate("Network to be applied, e.g. AAAA::BBBB/64, CCCC::1/128, etc."))
+	o = s:taboption("limit", Value, "dynamic_cidr6", translate("Target Network6 (IPv6/MASK)"), translate("Network to be applied, e.g. AAAA::BBBB/64, CCCC::1/128, etc."))
 	o.datatype = "cidr6"
 	o:depends("limit_type","dynamic")
 end
 
-o = s:taboption("limitopt", DynamicList, "limit_whitelist", translate("White List for Limit Rate"))
+o = s:taboption("limit", DynamicList, "limit_whitelist", translate("White List for Limit Rate"))
 o.datatype = "ipaddr"
 o:depends("limit_enable","1")
 
 --
--- Priority
+-- limit speed by mac address
 --
-o = s:taboption("limitopt", Flag, "priority_enable", translate("Enable Traffic Priority"), translate("Enable this feature"))
-o.default = enable_priority or o.disabled
+o = s:taboption("limitmac", Flag, "limit_mac_enable", translate("Limit Enable"), translate("Enable Limit Rate Feature"))
+o.default = limit_mac_enable or o.enabled
 o.rmempty = false
 
-o = s:taboption("limitopt", ListValue, "priority_netdev", translate("Default Network Interface"), translate("Network Interface for Traffic Shaping, e.g. br-lan, eth0.1, eth0, etc."))
+--
+-- Priority
+--
+o = s:taboption("priority", Flag, "priority_enable", translate("Enable Traffic Priority"), translate("Enable this feature"))
+o.default = enable_priority or o.enabled
+o.rmempty = false
+
+o = s:taboption("priority", ListValue, "priority_netdev", translate("Default Network Interface"), translate("Network Interface for Traffic Shaping, e.g. br-lan, eth0.1, eth0, etc."))
 o:depends("priority_enable", "1")
 wa.cbi_add_networks(o)
 
 --
 -- Static Limit Rate - Download Rate
 --
+if limit_enable == "1" and limit_type == "static" then
+
 	x = m:section(TypedSection, "download", translate("Static QoS-Download Rate"))
 	x.anonymous = true
 	x.addremove = true
@@ -178,15 +189,19 @@ wa.cbi_add_networks(o)
 	o:value("kbytes", "KBytes/s")
 	o:value("mbytes", "MBytes/s")
 
+end
+
 --
 -- Traffic Priority Settings
 --
-	z = m:section(TypedSection, "priority", translate("Traffic Priority Settings"))
-	z.anonymous = true
-	z.addremove = true
-	z.template = "cbi/tblsection"
+if enable_priority == "1" then
 
-	o = z:option(ListValue, "protocol", translate("Protocol"))
+	s = m:section(TypedSection, "priority", translate("Traffic Priority Settings"))
+	s.anonymous = true
+	s.addremove = true
+	s.template = "cbi/tblsection"
+
+	o = s:option(ListValue, "protocol", translate("Protocol"))
 	o.default = "tcp"
 	o:value("tcp", "TCP")
 	o:value("udp", "UDP")
@@ -194,7 +209,7 @@ wa.cbi_add_networks(o)
 	o:value("sctp", "SCTP")
 	o:value("dccp", "DCCP")
 
-	o = z:option(ListValue, "priority", translate("Priority"))
+	o = s:option(ListValue, "priority", translate("Priority"))
 	o.default = "1"
 	o:value("-400", "1")
 	o:value("-300", "2")
@@ -208,22 +223,19 @@ wa.cbi_add_networks(o)
 	o:value("225", "10")
 	o:value("300", "11")
 
-	o = z:option(Value, "service", translate("Service"), translate("e.g. https, 23, (separator is comma)"))
+	o = s:option(Value, "service", translate("Service"), translate("e.g. https, 23, (separator is comma)"))
 	o.default = '?'
 
-	o = z:option(Value, "comment", translate("Comment"))
+	o = s:option(Value, "comment", translate("Comment"))
 	o.default = '?'
 
---
--- limit speed by mac address
---
-o = s:taboption("limitopt", Flag, "limit_mac_enable", translate("Limit Rate by Mac Address"), translate("Enable Limit Rate Feature"))
-o.default = limit_mac_enable or o.disabled
-o.rmempty = false
+end
 
 --
 -- Static By Mac Address
 --
+if limit_mac_enable == "1" then
+
 	x = m:section(TypedSection, "client", translate("Limit Traffic Rate By Mac Address"))
 	x.anonymous = true
 	x.addremove = true
@@ -258,5 +270,7 @@ o.rmempty = false
 	o:value("bytes", "Bytes/s")
 	o:value("kbytes", "KBytes/s")
 	o:value("mbytes", "MBytes/s")
+
+end
 
 return m

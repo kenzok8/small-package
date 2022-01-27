@@ -18,7 +18,7 @@ function index()
 	e.leaf = true
 	e.acl_depends = { "luci-app-nft-qos" }
 
-	e = entry({"admin", "network", "nft-qos"}, cbi("nft-qos/nft-qos"), _("QoS over Nftables"), 60)
+	e = entry({"admin", "services", "nft-qos"}, cbi("nft-qos/nft-qos"), _("QoS over Nftables"), 60)
 	e.leaf = true
 	e.acl_depends = { "luci-app-nft-qos" }
 end
