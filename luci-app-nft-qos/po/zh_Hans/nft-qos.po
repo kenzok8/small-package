@@ -128,7 +128,7 @@ msgstr "限速开启"
 
 #: applications/luci-app-nft-qos/luasrc/model/cbi/nft-qos/nft-qos.lua:239
 msgid "Limit Traffic Rate By Mac Address"
-msgstr "根据MAC流控"
+msgstr "按 Mac 地址限制通信量速率"
 
 #: applications/luci-app-nft-qos/luasrc/model/cbi/nft-qos/nft-qos.lua:44
 msgid "Limit Type"
@@ -182,7 +182,7 @@ msgstr "协议"
 #: applications/luci-app-nft-qos/luasrc/controller/nft-qos.lua:21
 #: applications/luci-app-nft-qos/luasrc/model/cbi/nft-qos/nft-qos.lua:24
 msgid "QoS over Nftables"
-msgstr "流量控制"
+msgstr "QoS Nftables 版"
 
 #: applications/luci-app-nft-qos/luasrc/controller/nft-qos.lua:13
 #: applications/luci-app-nft-qos/luasrc/model/cbi/nft-qos/nft-qos.lua:137
@@ -261,12 +261,3 @@ msgstr "例如https, 23（用逗号分隔）"
 #: applications/luci-app-nft-qos/luasrc/view/nft-qos/rate.htm:44
 msgid "kB"
 msgstr "kB"
-
-msgid "Limit Rate by IP Address"
-msgstr "开启IP流控"
-
-msgid "Limit Rate by Mac Address"
-msgstr "开启MAC流控"
-
-msgid "Limit Rate Options"
-msgstr "流控选项"
