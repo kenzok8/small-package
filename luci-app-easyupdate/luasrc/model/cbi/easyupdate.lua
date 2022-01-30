@@ -24,14 +24,14 @@ f.default=0
 f.optional=false
 
 w=s:option(ListValue,"week",translate("Update Time"),translate("Advised to set the automatic update time to idle time."))
-w:value(0,translate("Everyday"))
+w:value(7,translate("Everyday"))
 w:value(1,translate("Monday"))
 w:value(2,translate("Tuesday"))
 w:value(3,translate("Wednesday"))
 w:value(4,translate("Thursday"))
 w:value(5,translate("Friday"))
 w:value(6,translate("Saturday"))
-w:value(7,translate("Sunday"))
+w:value(0,translate("Sunday"))
 w.default=1
 w:depends("enable", "1")
 
@@ -75,7 +75,7 @@ if apply then
             n='\n' 
         end
         local week = luci.http.formvalue("cbid.easyupdate.main.week")
-        if week == '0' then
+        if week == '7' then
             week='*'
         end
         local hour = luci.http.formvalue("cbid.easyupdate.main.hour")
