@@ -64,6 +64,7 @@ add_wizard() {
 	elif [ "${siderouter}" == "0" ]; then
 		uci -q del network.lan.gateway
 		uci -q del dhcp.lan.ignore
+		uci -q del network.lan.dns
 		
 	fi
 	fi
