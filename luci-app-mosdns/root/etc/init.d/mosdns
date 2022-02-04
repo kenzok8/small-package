@@ -114,7 +114,7 @@ start_service() {
 
 stop_service() {
 
-  killall -q mosdns
+  ps -w | grep -v "grep" | grep "/usr/bin/mosdns" | awk '{print $1}' | xargs kill -9
   echo "MosDNS turn off"
   echo "enabled="$enabled""
 
