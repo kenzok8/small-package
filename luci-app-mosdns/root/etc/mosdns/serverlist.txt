@@ -427,7 +427,6 @@ ad.bloggerads.net
 ad.bnmla.com
 ad.bondage.com
 ad.cacafly.com
-ad.caradisiac.com
 ad.centrum.cz
 ad.cgi.cz
 ad.choiceradio.com
@@ -2161,7 +2160,6 @@ banner.ambercoastcasino.com
 banner.as.admaster.com.cn
 banner.buempliz-online.ch
 banner.casino.net
-banner.casinodelrio.com
 banner.cotedazurpalace.com
 banner.coza.com
 banner.cz
@@ -4827,7 +4825,6 @@ isub.snssdk.com
 itaoxiaoshuo.com
 item.mediav.com
 itemifs.tanx.com
-itfarm.com
 itop.cz
 its-that-easy.com
 its.fugetech.com
@@ -6868,6 +6865,7 @@ rd.e.sogou.com
 rd.wan.360.cn
 rdstat.tanx.com
 rdx.autohome.com.cn
+re-directme.com
 re.m.taobao.com
 re.taobao.com
 reachjunction.com
@@ -8385,7 +8383,6 @@ track.ra.icast.cn
 track.recreativ.ru
 track.segmetrics.io
 track.sitetag.us
-track.software-codes.com
 track.sohu.com
 track.tenjin.com
 track.themaccleanup.info
