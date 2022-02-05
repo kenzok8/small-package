@@ -715,6 +715,14 @@ elseif action == "console" then
 				return
 			end
 
+			local ttyd_ssl = uci.get("ttyd", "@ttyd[0]", "ssl")
+			local ttyd_ssl_key = uci.get("ttyd", "@ttyd[0]", "ssl_key")
+			local ttyd_ssl_cert = uci.get("ttyd", "@ttyd[0]", "ssl_cert")
+
+			if ttyd_ssl=="1" and ttyd_ssl_cert and ttyd_ssl_key then
+				cmd_ttyd=string.format('%s -S -C %s -K %s',cmd_ttyd,ttyd_ssl_cert,ttyd_ssl_key)
+			end
+
 			local pid = luci.util.trim(luci.util.exec("netstat -lnpt | grep :7682 | grep ttyd | tr -s ' ' | cut -d ' ' -f7 | cut -d'/' -f1"))
 			if pid and pid ~= "" then
 				luci.util.exec("kill -9 " .. pid)
