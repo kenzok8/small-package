@@ -11,11 +11,4 @@ EOF
 chmod +x /etc/init.d/wizard 2>/dev/null
 rm -f /tmp/luci-indexcache
 
-/etc/init.d/packages enable
-grep -q "opkg-upgrade" /etc/crontabs/root || {
-	hour="$(grep -m1 -ao '[4-6]' /dev/urandom | head -n1)"
-	min="$(grep -m1 -ao '[0-5][0-9]' /dev/urandom | head -n1)"
-	echo "$min $hour * * * . /etc/hotplug.d/online/51-opkg-upgrade" >> /etc/crontabs/root
-}
-
 exit 0
