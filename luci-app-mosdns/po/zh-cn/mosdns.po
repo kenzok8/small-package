@@ -28,6 +28,9 @@ msgstr "启用 DNS 广告过滤"
 msgid "<font color=\"ff0000\"><strong>View the Custom YAML Configuration file used by this MosDNS. You can edit it as you own need."
 msgstr "<font color=\"ff0000\"><strong>注意！此页的更改仅当 'MosDNS 配置文件选择' 为 '自定义配置' 时才会生效"
 
+msgid "<font color=\"ff0000\"><strong>ADblock whitelist."
+msgstr "<font color=\"ff0000\"><strong>广告过滤白名单"
+
 msgid "Geodata Update"
 msgstr "数据库更新"
 

@@ -28,6 +28,7 @@ plugin:
             - _block_with_nxdomain
             - _end
         - if:
+            - query_is_whitelist_domain
             - query_is_local_domain
             - '!_query_is_common'
           exec:
@@ -56,6 +57,11 @@ plugin:
         - addr:            ${{ ./dns0.sh }}
         - addr:            ${{ ./dns1.sh }}
 
+  - tag: query_is_whitelist_domain
+    type: query_matcher
+    args:
+      domain:
+        - 'ext:./whitelist.txt'
 
   - tag:                   forward_remote
     type:                  fast_forward
