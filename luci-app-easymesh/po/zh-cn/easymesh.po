@@ -58,6 +58,12 @@ msgstr "加密"
 msgid "Key"
 msgstr "密码"
 
+msgid "inter-access point protocol"
+msgstr "接入点内部协议"
+
+msgid "Wireless Access Points (APs) running on different vendors can communicate with each other"
+msgstr "运行在不同供应商的无线访问点(AP)可以相互交流"
+
 msgid "Threshold for an good RSSI"
 msgstr "快速漫游接入值"
 
