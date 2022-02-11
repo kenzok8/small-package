@@ -94,6 +94,11 @@ o.default = "-88"
 o.atatype = "range(-1,-120)"
 o:depends("kvr", 1)
 
+---- 802.11F
+enable = s:option(Flag, "iapp", translate("inter-access point protocol"), translate("Wireless Access Points (APs) running on different vendors can communicate with each other"))
+enable.default = 0
+enable.rmempty = false
+
 ---- ap_mode
 enable = s:option(Flag, "ap_mode", translate("AP MODE Enable"), translate("Enable or disable AP MODE"))
 enable.default = 0

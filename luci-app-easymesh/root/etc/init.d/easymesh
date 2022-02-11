@@ -15,6 +15,7 @@ load_easymesh_config() {
 	ap_ipaddr1=$(sed -n '1p' /etc/easymesh 2>/dev/null)
 	apRadio=$(uci -q get easymesh.config.apRadio)
 	kvr=$(uci -q get easymesh.config.kvr)
+	iapp=$(uci -q get easymesh.config.iapp)
 	brlan=$(uci -q get network.@device[0].name)
 	role=$(uci -q get easymesh.config.role)
 }
@@ -90,6 +91,7 @@ add_wifi_mesh() {
 add_kvr() {
 	kvr=$(uci -q get easymesh.config.kvr)
 	mobility_domain=$(uci -q get easymesh.config.mobility_domain)
+	iapp=$(uci -q get easymesh.config.iapp)
 	for apall in $(uci -X show wireless | grep wifi-device | awk -F'[.=]' '{print $2}'); do
 		if [ "$kvr" = 1 ]; then
 			uci set wireless.default_$apall.ieee80211k='1'
@@ -107,6 +109,13 @@ add_kvr() {
 			uci -q delete wireless.default_$apall.ieee80211k
 			uci -q delete wireless.default_$apall.ieee80211v
 			uci -q delete wireless.default_$apall.ieee80211r
+			uci commit wireless
+		fi
+		if [ "$iapp" = 1 ]; then
+			uci set wireless.default_$apall.iapp_interface='br-lan'
+			uci commit wireless
+		else
+			uci -q delete wireless.default_$apall.iapp_interface
 			uci commit wireless
 		fi
 	done
