@@ -69,7 +69,7 @@ git clone --depth 1 https://github.com/kenzok78/openwrt-minisign
 git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
-git clone --depth 1 https://github.com/pymumu/luci-app-smartdns
+git clone -b lede https://github.com/pymumu/luci-app-smartdns
 git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
 
 svn co https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
