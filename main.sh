@@ -70,6 +70,7 @@ git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
 git clone --depth 1 https://github.com/pymumu/luci-app-smartdns
+git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
 
 svn co https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
@@ -114,8 +115,6 @@ svn co https://github.com/kiddin9/openwrt-packages/trunk/qtbase
 svn co https://github.com/kiddin9/openwrt-packages/trunk/qttools
 svn co https://github.com/kiddin9/openwrt-packages/trunk/rblibtorrent
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-advancedsetting
-svn co https://github.com/kiddin9/openwrt-packages/trunk/mosdns
-svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns
 
 svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
 svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
