@@ -1,0 +1,28 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(1, '<%=url([[admin]], [[services]], [[v2raya]], [[status]])%>', null,
+	function(x, data) {
+		var tb = document.getElementById('v2raya_status');
+
+		if (data && tb) {
+			if (data.running) {
+				var links = '<em><b style=color:green> <%:v2rayA%>' + data.bin_version + ' <%:Service is running.%></b></em><input class="btn cbi-button mar-10" type="button" value="<%:Open v2rayA page%>" onclick="openwebui();" />';
+				tb.innerHTML = links;
+			} else {
+				tb.innerHTML = '<em><b style=color:red> <%:v2rayA%>' + data.bin_version + ' <%:Service is not running.%></b></em>';
+			}
+		}
+	}
+);
+
+function openwebui(){
+	var url = window.location.host+":<%=luci.sys.exec("uci -q get v2raya.config.address"):match(":[0-9]+"):gsub(":", "")%>";
+	window.open('http://'+url,'target','');
+}
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="v2raya_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
