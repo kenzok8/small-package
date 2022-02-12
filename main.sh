@@ -3,7 +3,7 @@ function mvdir() {
 mv -n `find $1/* -maxdepth 0 -type d` ./
 rm -rf $1
 }
-git clone --depth 1 https://github.com/kenzok78/my-packages && mvdir my-packages
+git clone --depth 1 https://github.com/kiddin9/my-packages && mvdir my-packages
 git clone --depth 1 https://github.com/kiddin9/openwrt-bypass && mvdir openwrt-bypass
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
 git clone --depth 1 https://github.com/kiddin9/aria2
@@ -21,6 +21,7 @@ git clone --depth 1 https://github.com/KyleRicardo/MentoHUST-OpenWrt-ipk
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-autoipsetadder
 git clone --depth 1 https://github.com/NateLol/luci-app-beardropper
 git clone --depth 1 https://github.com/riverscn/openwrt-iptvhelper && mvdir openwrt-iptvhelper
+git clone --depth 1 https://github.com/iwrt/luci-app-ikoolproxy  && mv -f luci-app-ikoolproxy/ikoolproxy ikoolproxy
 git clone --depth 1 https://github.com/project-lede/luci-app-godproxy
 git clone --depth 1 https://github.com/BoringCat/luci-app-minieap
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-onliner
@@ -68,7 +69,7 @@ git clone --depth 1 https://github.com/kenzok78/openwrt-minisign
 git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
-git clone -b lede https://github.com/pymumu/luci-app-smartdns
+git clone --depth 1 https://github.com/pymumu/luci-app-smartdns
 
 svn co https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
@@ -113,11 +114,16 @@ svn co https://github.com/kiddin9/openwrt-packages/trunk/qtbase
 svn co https://github.com/kiddin9/openwrt-packages/trunk/qttools
 svn co https://github.com/kiddin9/openwrt-packages/trunk/rblibtorrent
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-advancedsetting
+svn co https://github.com/kiddin9/openwrt-packages/trunk/mosdns
+svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-mosdns
+
 svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
 svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
 svn co https://github.com/linkease/nas-packages/trunk/network/services && mvdir services
 svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
 svn co https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
+svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
+svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
