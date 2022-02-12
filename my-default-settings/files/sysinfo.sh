@@ -12,12 +12,6 @@ DATA_STORAGE=/userdisk/data
 MEDIA_STORAGE=/userdisk/snail
 
 
-[[ -f /etc/default/motd ]] && . /etc/default/motd
-for f in $MOTD_DISABLE; do
-	[[ $f == $THIS_SCRIPT ]] && exit 0
-done
-
-
 # don't edit below here
 function display()
 {
@@ -66,24 +60,6 @@ function storage_info()
 	RootInfo=$(df -h /)
 	root_usage=$(awk '/\// {print $(NF-1)}' <<<${RootInfo} | sed 's/%//g')
 	root_total=$(awk '/\// {print $(NF-4)}' <<<${RootInfo})
-
-	# storage info
-	[ -d /boot ] && {
-	BootInfo=$(df -h /boot) 2>/dev/null
-	boot_usage=$(awk '/\// {print $(NF-1)}' <<<${BootInfo} | sed 's/%//g')
-	boot_total=$(awk '/\// {print $(NF-4)}' <<<${BootInfo})
-	}
-	StorageInfo=$(df -h $MEDIA_STORAGE 2>/dev/null | grep $MEDIA_STORAGE)
-	if [[ -n "${StorageInfo}" && ${RootInfo} != *$MEDIA_STORAGE* ]]; then
-		media_usage=$(awk '/\// {print $(NF-1)}' <<<${StorageInfo} | sed 's/%//g')
-		media_total=$(awk '/\// {print $(NF-4)}' <<<${StorageInfo})
-	fi
-
-	StorageInfo=$(df -h $DATA_STORAGE 2>/dev/null | grep $DATA_STORAGE)
-	if [[ -n "${StorageInfo}" && ${RootInfo} != *$DATA_STORAGE* ]]; then
-		data_usage=$(awk '/\// {print $(NF-1)}' <<<${StorageInfo} | sed 's/%//g')
-		data_total=$(awk '/\// {print $(NF-4)}' <<<${StorageInfo})
-	fi
 } # storage_info
 
 
@@ -141,9 +117,5 @@ echo "" # fixed newline
 
 display "系统存储" "$root_usage" "90" "1" "%" " of $root_total"
 printf "CPU 信息: \x1B[92m%s\x1B[0m\t" "$(echo `/sbin/cpuinfo | cut -d '(' -f -1`)"
-echo ""
-
-display "数据存储" "$data_usage" "90" "1" "%" " of $data_total"
-display "媒体存储" "$media_usage" "90" "1" "%" " of $media_total"
 echo ""
 echo ""

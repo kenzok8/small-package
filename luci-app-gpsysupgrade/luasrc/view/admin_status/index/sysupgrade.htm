@@ -2,6 +2,8 @@
 local fs = require "nixio.fs"
 local uci = require 'luci.model.uci'.cursor()
 
+luci.sys.exec("opkg update >/dev/null &")
+
 if fs.access('/etc/config/wizard') then
 	autoupgrade_fm = uci:get('wizard', 'default', 'autoupgrade_fm')
 end
