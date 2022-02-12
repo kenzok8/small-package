@@ -1,8 +1,8 @@
 #!/bin/sh
 
-grep -q "ng_index.html index.html" /etc/config/nginx || {
-	uci -q set nginx._lan.index="ng_index.html index.html index.htm"
-	uci -q set nginx._ssl.index="ng_index.html index.html index.htm"
+grep -q "luci index.html" /etc/config/nginx || {
+	uci -q set nginx._lan.index="luci index.html index.htm"
+	uci -q set nginx._ssl.index="luci index.html index.htm"
 	uci commit nginx
 	service nginx reload
 }

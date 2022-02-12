@@ -53,8 +53,8 @@ plugin:
     type:                  fast_forward
     args:
       upstream:
-        - addr:            ${{ ./dns0.sh }}
-        - addr:            ${{ ./dns1.sh }}
+        - addr:            ${{ ./dns.sh 0 }}
+        - addr:            ${{ ./dns.sh 1 }}
 
 
   - tag:                   forward_remote
