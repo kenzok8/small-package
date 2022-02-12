@@ -25,12 +25,6 @@ msgstr "设置"
 msgid "Advanced Settings"
 msgstr "高级设置"
 
-msgid "RUNNING"
-msgstr "运行中"
-
-msgid "NOT RUNNING"
-msgstr "未运行"
-
 msgid "Generate Coredump"
 msgstr "生成coredump"
 
@@ -89,7 +83,7 @@ msgid "Enable domain prefetch, accelerate domain response speed."
 msgstr "启用域名预加载，加速域名响应速度。"
 
 msgid "Serve expired"
-msgstr "缓存过期服务"
+msgstr "过期缓存服务"
 
 msgid "Attempts to serve old responses from cache with a TTL of 0 in the response without waiting for the actual resolution to finish."
 msgstr "查询性能优化，有请求时尝试回应TTL为0的过期记录，以避免查询等待。"
@@ -186,12 +180,6 @@ msgstr "跳过cache"
 
 msgid "Skip Cache."
 msgstr "跳过cache。"
-
-msgid "Force AAAA SOA"
-msgstr "停用IPV6地址解析"
-
-msgid "Force AAAA SOA."
-msgstr "停用IPV6地址解析。"
 
 msgid "Upstream Servers"
 msgstr "上游服务器"
