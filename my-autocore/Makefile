@@ -14,6 +14,8 @@ PKG_RELEASE:=29
 include $(INCLUDE_DIR)/package.mk
 
 define Package/my-autocore-arm
+  SECTION:=libs
+  CATEGORY:=Libraries
   TITLE:=ARM auto core script.
   MAINTAINER:=CN_SZTL
   DEPENDS:=@(arm||aarch64) \
@@ -24,6 +26,8 @@ define Package/my-autocore-arm
 endef
 
 define Package/my-autocore-x86
+  SECTION:=libs
+  CATEGORY:=Libraries
   TITLE:=x86/x64 auto core loadbalance script.
   MAINTAINER:=Lean / CN_SZTL
   DEPENDS:=@TARGET_x86 +bc +lm-sensors +ethtool
