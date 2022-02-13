@@ -10,7 +10,7 @@ PKG_NAME:=qttools
 PKG_BASE:=5.15
 PKG_BUGFIX:=2
 PKG_VERSION:=$(PKG_BASE).$(PKG_BUGFIX)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-everywhere-src-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:= \
@@ -27,7 +27,7 @@ PKG_BUILD_DEPENDS:=qtbase
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/qttools
   SECTION:=libs
   CATEGORY:=Libraries
   SUBMENU:=Qt5
@@ -48,4 +48,4 @@ define Build/InstallDev
 	$(MAKE) -C $(PKG_BUILD_DIR) install
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,qttools))
