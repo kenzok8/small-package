@@ -53,7 +53,6 @@ reload_service() {
 }
 
 setcron() {
-	chmod 755 /etc/mosdns/mosupdater.sh
 	[ "$(tail -n1 /etc/crontabs/root | wc -l)" -eq 0 ] && [ -n "$(cat /etc/crontabs/root 2>/dev/null)" ] && echo >>/etc/crontabs/root
 	grep -q "mosupdater.sh" "$CRON_FILE" && {
 		[ "$(uci -q get mosdns.mosdns.geo_auto_update)" -eq 1 ] && echo "0 $(uci -q get mosdns.mosdns.geo_update_day_time) * * $(uci -q get mosdns.mosdns.geo_update_week_time) /etc/mosdns/mosupdater.sh" >>$CRON_FILE
