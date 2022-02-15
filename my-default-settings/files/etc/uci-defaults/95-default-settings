@@ -226,8 +226,6 @@ uci commit base_config
 [[ -f "/bin/coremark" && ! -f "/etc/bench.log" && "$(uci -q get wizard.default.coremark)" == '1' ]] && {
 		sleep 30
 		/bin/coremark >/tmp/coremark.log
-		cat /tmp/coremark.log | grep "CoreMark 1.0" | cut -d "/" -f 1 | cut -d "." -f -2 >/etc/bench.log
-		sed -i 's/CoreMark 1.0/(CpuMark/g' /etc/bench.log
-		echo " Scores)" >>/etc/bench.log
+		cat /tmp/coremark.log | grep "CoreMark 1.0" | cut -d "/" -f 1 | cut -d "." -f -2 | sed -e 's/CoreMark 1.0\(.*\)/(CpuMark\1 Scores)/g' >/etc/bench.log
 }
 ) &
