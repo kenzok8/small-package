@@ -5,9 +5,14 @@ module("luci.controller.quickstart", package.seeall)
 local page_index = {"admin", "quickstart", "pages"}
 
 function index()
-    entry({"admin", "quickstart"}, call("redirect_index"), _("QuickStart"), 1)
-    entry({"admin", "network_guide"}, call("networkguide_index"), _("NetworkGuide"), 2)
-    entry({"admin", "quickstart", "pages"}, call("quickstart_index")).leaf = true
+    if luci.sys.call("pgrep quickstart >/dev/null") == 0 then
+        entry({"admin", "quickstart"}, call("redirect_index"), _("QuickStart"), 1)
+        entry({"admin", "network_guide"}, call("networkguide_index"), _("NetworkGuide"), 2)
+        entry({"admin", "quickstart", "pages"}, call("quickstart_index")).leaf = true
+    else
+        entry({"admin", "quickstart"})
+        entry({"admin", "quickstart", "pages"}, call("redirect_fallback")).leaf = true
+    end
 end
 
 function networkguide_index()
@@ -16,6 +21,10 @@ end
 
 function redirect_index()
     luci.http.redirect(luci.dispatcher.build_url(unpack(page_index)))
+end
+
+function redirect_fallback()
+    luci.http.redirect(luci.dispatcher.build_url("admin","status"))
 end
 
 function quickstart_index()

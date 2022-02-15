@@ -22,7 +22,7 @@ set opkg.defaults.proc='--force-overwrite --force-checksum --force-depends'
 set opkg.defaults.reinstall='--force-reinstall --force-overwrite --force-checksum --force-depends'
 set opkg.defaults.newconf='/etc'
 EOI
-echo "kmod busybox base-files luci-app-openclash opkg " \
+echo "kmod busybox base-files luci-app-openclash " \
 | sed -e "s/\s/ ipkg\n/g" | opkg uci ignore
 }
 
