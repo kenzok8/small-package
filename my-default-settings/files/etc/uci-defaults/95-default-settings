@@ -3,8 +3,8 @@
 grep -q "host/luci" /etc/config/nginx || {
 	uci -q set nginx._lan.index="luci index.html index.htm"
 	uci -q set nginx._ssl.index="luci index.html index.htm"
-	uci -q add_list nginx._lan.rewrite='"^/$" $scheme://$host/luci/ permanent'
-	uci -q add_list nginx._ssl.rewrite='"^/$" $scheme://$host/luci/ permanent'
+	uci -q add_list nginx._lan.rewrite='"^/$" $scheme://$http_host/luci/ permanent'
+	uci -q add_list nginx._ssl.rewrite='"^/$" $scheme://$http_host/luci/ permanent'
 	uci commit nginx
 	service nginx reload
 }
