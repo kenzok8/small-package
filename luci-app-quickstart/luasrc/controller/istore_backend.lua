@@ -1,3 +1,6 @@
+-- Copyright 2022 xiaobao <xiaobao@linkease.com>
+-- Licensed to the public under the MIT License
+
 local http = require "luci.http"
 local nixio = require "nixio"
 local ltn12 = require "luci.ltn12"
@@ -7,7 +10,7 @@ local util = require "luci.util"
 module("luci.controller.istore_backend", package.seeall)
 
 local BLOCKSIZE = 2048
-local ISTOREOS_PORT = 3000
+local ISTOREOS_PORT = 3038
 
 function index()
     entry({"istore"}, call("istore_backend")).leaf=true

@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=98
+START=92
 USE_PROCD=1
  
 
