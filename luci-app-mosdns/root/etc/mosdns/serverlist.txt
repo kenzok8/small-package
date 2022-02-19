@@ -2512,7 +2512,6 @@ adserver.digitoday.com
 adserver.echdk.pl
 adserver.friendfinder.com
 adserver.generationiron.com
-adserver.gilligan.tech
 adserver.html.it
 adserver.hwupgrade.it
 adserver.ilango.de
@@ -2858,7 +2857,6 @@ adzmaza.in
 adzmedia.com
 adzmob.com
 adzmoney.linkyqueen.ga
-adzone.temp.co.za
 adzones.com
 adzonk.com
 adzouk1tag.com
@@ -2912,7 +2910,6 @@ affiliate.gamestop.com
 affiliate.heureka.cz
 affiliate.juno.co.uk
 affiliate.mediatemple.net
-affiliate.mogs.com
 affiliate.offgamers.com
 affiliate.rusvpn.com
 affiliate.travelnow.com
@@ -5795,7 +5792,6 @@ cdn-server.cc
 cdn-server.top
 cdn.bannerflow.com
 cdn.branch.io
-cdn.freefarcy.com
 cdn.freshmarketer.com
 cdn.heapanalytics.com
 cdn.imvkan.com
@@ -9561,7 +9557,6 @@ fascinatingappraisalunderestimate.com
 fashionabacus.com
 fashional.pro
 fast-redirecting.com
-fastable.com
 fastapi.net
 fastcache.fun
 fastcdn.info
@@ -11207,6 +11202,7 @@ gxejgs.com
 gxfc2021.top
 gxfkkj.com
 gxgzyny.com
+gxhc.ink
 gxhxmy88.com
 gxjajt.com
 gxjohibbp.com
@@ -11359,6 +11355,7 @@ hao.360hyzj.com
 hao61.net
 haoanfang.cn
 haodazhizhuangzhuang.club
+haodiwh.top
 haoerer.cn
 haogame.me
 haoinn.top
@@ -13118,6 +13115,7 @@ jiazhenghangye.pw
 jibn12.jintang114.org
 jicmutse.com
 jiedaibao120.cn
+jiehe.me
 jiejiemimu.cn
 jiekc.com
 jiemeichike.cn
@@ -14729,7 +14727,6 @@ looprapid.com
 loopredsglen.com
 lootynews.com
 loout.top
-lop.com
 lophaszip.com
 loptyinterva.xyz
 lopzitpup.com
@@ -14782,6 +14779,7 @@ loxtk.com
 loyalinvadeballoon.com
 lp.ncdownloader.com
 lp3tdqle.com
+lpjgr.top
 lpjxzs.com
 lppwnue.cn
 lpsgc.cn
@@ -15257,6 +15255,7 @@ mcdnmv.com
 mcfarland.cn
 mcfpsn.xyz
 mcix.cn
+mclseww.top
 mcning.com
 mct.etherscan.com
 mcteu.cn
@@ -19256,7 +19255,6 @@ quehq.com
 quenchskirmishcohere.com
 quensillo.com
 querylead.com
-questaffiliates.net
 questionmarket.com
 questionsadjournasleep.com
 questionsunpleasantaborigines.com
@@ -22244,6 +22242,7 @@ tangerinenet.biz
 tangibleteam.com
 tangxue.me
 tanky.vip
+tanshan.site
 taobayun.cn
 taobc.com
 taobso.cn
@@ -25434,7 +25433,9 @@ xihashuale.com
 xihua.me
 xihuangdushu.com
 xiituvt.top
+xije.ren
 xiji-express.com
+xikaijz.top
 xilbalar.com
 xilele.com
 ximupea.ru
