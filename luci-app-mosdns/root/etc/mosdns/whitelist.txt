@@ -1,2 +1,3 @@
 example.example
+tracking.miui.com
 stat.xiaomi.com
