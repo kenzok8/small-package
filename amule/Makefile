@@ -1,15 +1,12 @@
-# Copyright (C) 2021 ImmortalWrt
-# <https://immortalwrt.org>
+# SDPX-License-Identifier: GPL-3.0-only
 #
-# This is free software, licensed under the GNU General Public License v3.
-# See /LICENSE for more information.
-#
+# Copyright (C) 2021-2022 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=amule
 PKG_VERSION:=2.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/amule-project/amule/tar.gz/$(PKG_VERSION)?
@@ -31,8 +28,9 @@ define Package/amule
   CATEGORY:=Network
   TITLE:=A multi-platform eMule-like ed2k client
   URL:=http://www.amule.org/
-  DEPENDS:=+libpng +libpthread +libncurses +libreadline +libwxbase +libupnp +libbfd \
-	$(ICONV_DEPENDS) $(INTL_DEPENDS) +!AMULE_CRYPTOPP_STATIC_LINKING:libcryptopp
+  DEPENDS:=+antileech +libpng +libpthread +libncurses +libreadline +libwxbase \
+	+libupnp +libbfd $(ICONV_DEPENDS) $(INTL_DEPENDS) \
+	+!AMULE_CRYPTOPP_STATIC_LINKING:libcryptopp
 endef
 
 define Package/amule/config
