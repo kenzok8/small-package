@@ -9,6 +9,12 @@ grep -q "host/luci" /etc/config/nginx || {
 	service nginx reload
 }
 
+grep -q "ifname 'br-lan'" /etc/config/network || {
+sed -i "s/\(option device '\(.*\)'\)/\1\n\toption ifname '\2'/" /etc/config/network
+}
+
+([ -x /bin/bash ] && ! grep -q "^root.*bash" /etc/passwd) && sed -i "s/^\(root.*\/\)ash/\1bash/g" /etc/passwd
+
 # [[ "$(df | grep overlay)" && ! "$(df | grep /rom/overlay)" ]] && firstboot
 
 version=`uci -q get base_config.@status[0].version`
