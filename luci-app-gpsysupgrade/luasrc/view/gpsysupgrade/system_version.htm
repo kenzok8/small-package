@@ -147,10 +147,10 @@ local system_version = require "luci.model.cbi.gpsysupgrade.sysupgrade".get_syst
 			}
 
 		if (kopkg.checked){
-			opts = "-q -u";
+			opts = "-k -u";
 			}
 		if (!kconfig.checked && kopkg.checked){
-			opts = "-n -q";
+			opts = "-n -k";
 			}
 			removePageNotice_sysup();
 			setTimeout(check, 8000);
