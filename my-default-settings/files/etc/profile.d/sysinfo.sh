@@ -98,11 +98,11 @@ swap_total=$(awk '{print $(2)}' <<<${swap_info})
 [ -f /etc/config/network ] && {
 c=0
 while [ ! -n "$(get_ip_addresses)" ];do
-[ $c -eq 7 ] && break || let c++
+[ $c -eq 10 ] && break || let c++
 sleep 1
 done
 ip_address="$(get_ip_addresses)"
-} || ip_address="10.0.0.1"
+}
 
 # display info
 display "系统负载" "${load%% *}" "${critical_load}" "0" "" "${load#* }"

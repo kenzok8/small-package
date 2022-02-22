@@ -68,7 +68,7 @@ function serverchan_init(){
 	[ ! -f "/usr/sbin/wrtbwmon" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】未安装 wrtbwmon ，流量统计不可用" >> ${logfile}
 	[ -z "$ip_version" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法获取依赖项 iputils-arping 版本号，请确认插件是否正常运行" >> ${logfile}
 	[ -z "$cu_version" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法获取依赖项 curl 版本号，请确认插件是否正常运行" >> ${logfile}
-	[ -z "${sckey}${tg_token}${pushplus_token}${corpid}${wxpusher_apptoken}${wxpusher_uids}${wxpusher_topicIds}" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】请填写正确的 key " >> ${logfile} && return 1
+	[ -z "${sckey}${tg_token}${pushplus_token}${corpid}${wxpusher_apptoken}${wxpusher_uids}${wxpusher_topicIds}" -a "${jsonpath}" != "/usr/bin/serverchan/api/diy.json" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】请填写正确的 key " >> ${logfile} && return 1
 	local interfacelist=`getinterfacelist` && [ -z "$interfacelist" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法正确获取接口信息，请确认插件是否正常运行" >> ${logfile}
 	return 0
 }
@@ -81,12 +81,12 @@ function diy_send(){
 	local data=`/usr/bin/jq -r '.data' ${3}` && local data=`eval echo ${data}`
 	local content_type=`/usr/bin/jq -r '.content_type' ${3}`
 	/usr/bin/jq ".type + $type" ${jsonpath} > ${tempjsonpath}
-	
+
 	/usr/bin/jq -r '.[]' ${tempjsonpath}|grep -w "null" && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】参数值错误，请检查设置项  `/usr/bin/jq -r '.' ${tempjsonpath}|grep "null"`" >> ${logfile} && return 1
 	[ -f ${tempjsonpath} ] && local logrow=$(grep -c "" ${tempjsonpath}) || local logrow="0"
 	[ $logrow -eq "0" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】json 文件生成失败，请检查文件格式" >> ${logfile} && return 1
 	/usr/bin/jq -r '.[]' ${tempjsonpath}|grep "null" && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】参数变量生成失败，请检查设置项 `/usr/bin/jq -r '.' ${tempjsonpath}|grep "null"`" >> ${logfile}
-	
+
 	curl -X POST -H "$content_type" -d "${data}" "${diyurl}"
 }
 
@@ -101,7 +101,7 @@ function down_oui(){
 			cat ${dir}oui.txt|grep "base 16"|grep -i "apple\|aruba\|asus\|autelan\|belkin\|bhu\|buffalo\|cctf\|cisco\|comba\|datang\|dell\|dlink\|dowell\|ericsson\|fast\|feixun\|\
 fiberhome\|fujitsu\|grentech\|h3c\|hisense\|hiwifi\|honghai\|honghao\|hp\|htc\|huawei\|intel\|jinli\|jse\|lenovo\|lg\|liteon\|malata\|meizu\|mercury\|meru\|moto\|netcore\|\
 netgear\|nokia\|omron\|oneplus\|oppo\|philips\|router_unkown\|samsung\|shanzhai\|sony\|start_net\|sunyuanda\|tcl\|tenda\|texas\|tianyu\|tp-link\|ubq\|undefine\|VMware\|\
-utstarcom\|volans\|xerox\|xiaomi\|zdc\|zhongxing\|smartisan" > ${oui_base} && echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】设备MAC厂商信息下载成功" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备MAC厂商信息下载失败" >> ${logfile} 
+utstarcom\|volans\|xerox\|xiaomi\|zdc\|zhongxing\|smartisan" > ${oui_base} && echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】设备MAC厂商信息下载成功" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备MAC厂商信息下载失败" >> ${logfile}
 		fi
 		if [ -f ${dir}oui.txt ] && [ "$oui_data" -eq "2" ]; then
 			cat ${dir}oui.txt|grep "base 16" > ${oui_base} && echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】设备MAC厂商信息下载成功" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备MAC厂商信息下载失败" >> ${logfile}
@@ -709,7 +709,7 @@ function ip_changes(){
 			echo IPv4 $IPv4 > ${dir}ip && echo -e IPv6 $IPv6 >> ${dir}ip
 			[ -z "$title" ] && title="IPv6 地址变化"
 			[ ! -z "$title" ] && title="IP 地址变化"
-			content="${content}${str_splitline}${str_title_start} IPv6 地址变化${str_title_end}${str_linefeed}${str_tab}当前 IPv6：${IPv6}"				
+			content="${content}${str_splitline}${str_title_start} IPv6 地址变化${str_title_end}${str_linefeed}${str_tab}当前 IPv6：${IPv6}"
 		elif [ ! -z "$serverchan_ipv6" ] && [ "$serverchan_ipv6" -ne "0" ] && [ -z "$IPv6" ]; then
 			echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】获取 IPv6 地址失败" >> ${logfile}
 		fi
@@ -718,7 +718,7 @@ function ip_changes(){
 		echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}路由器已经重启!" >> ${logfile}
 		[ ! -z "$serverchan_ipv4" ] && [ "$serverchan_ipv4" -ne "0" ] && echo "`date "+%Y-%m-%d %H:%M:%S"`  当前IP: ${IPv4}" >> ${logfile}
 		[ ! -z "$serverchan_ipv6" ] && [ "$serverchan_ipv6" -ne "0" ] && echo "`date "+%Y-%m-%d %H:%M:%S"`  当前IPv6: ${IPv6}" >> ${logfile}
-		echo IPv4 $IPv4 > ${dir}ip && echo -e IPv6 $IPv6 >> ${dir}ip	
+		echo IPv4 $IPv4 > ${dir}ip && echo -e IPv6 $IPv6 >> ${dir}ip
 		title="路由器重新启动"
 		content="${content}${str_splitline}${str_title_start} 路由器重新启动${str_title_end}"
 		[ ! -z "$serverchan_ipv4" ] && [ "$serverchan_ipv4" -ne "0" ] && content="${content}${str_linefeed}${str_tab}当前IP：${IPv4}"
@@ -967,7 +967,7 @@ function login_send(){
 	cat ${dir}login_monitor|grep -i "Bad password attempt\|Login attempt for nonexistent user from"|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" >> ${dir}ssh_failed
 	echo "" > ${dir}login_monitor
 	add_ip_black
-	
+
 	local login_ip_list=`cat ${dir}web_login|awk '{print $2}'|grep -v "^$"|sort -u|head -n1`
 	for login_ip in $login_ip_list; do
 		[ -z "$login_ip" ] && continue
@@ -1073,13 +1073,13 @@ function add_ip_black(){
 	[ ! -f "${ip_blacklist_path}" ] && local logrow="0"
 	[ ! -z "$web_login_black" ] && [ "$web_login_black" -eq "0" ] || [ -z "$web_login_black" ] && local logrow="0"
 	ipset flush ip_blacklist >/dev/null 2>&1
-	
+
 	if [ $logrow -le "0" ]; then
 		iptables -D INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
 		ipset destroy ip_blacklist >/dev/null 2>&1
 		return
 	fi
-	
+
 	ipset list ip_blacklist >/dev/null 2>&1 || ipset create ip_blacklist hash:ip timeout ${ip_black_timeout} >/dev/null 2>&1
 	iptables -C INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1 || iptables -I INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
 	echo "$1" >> ${ip_blacklist_path}
@@ -1200,7 +1200,7 @@ while [ "$serverchan_enable" -eq "1" ]; do
 	deltemp
 	usage update
 	serverchan_disturb;disturb=$?
-	
+
 	[ -f ${dir}ipAddress ] && ipAddress_logrow=$(grep -c "" ${dir}ipAddress) || ipAddress_logrow="0";
 	if [ $ipAddress_logrow -ne "0" ]; then
 		online_list=`cat ${dir}ipAddress|awk '{print $2}'|grep -v "^$"|sort -u`
@@ -1237,9 +1237,9 @@ while [ "$serverchan_enable" -eq "1" ]; do
 
 	# 异常流量检测
 	[ ! -f "${dir}send_enable.lock" ] && get_client_usage
-	
+
 	# 登陆提醒通知
-	[ ! -f "${dir}send_enable.lock" ] && login_send 
+	[ ! -f "${dir}send_enable.lock" ] && login_send
 
 	if [ ! -f "${dir}send_enable.lock" ] && [ ! -z "$title" ] && [ ! -z "$content" ]; then
 		[ ! -z "$device_name" ] && title="【$device_name】$title"
@@ -1247,7 +1247,7 @@ while [ "$serverchan_enable" -eq "1" ]; do
 		[ "$disturb" -eq "0" ] && diy_send "${title}" "${content}" "${jsonpath}" >/dev/null 2>&1
 		[ $? -eq 1 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】推送失败，请检查网络或设置信息 " >> ${logfile}
 	fi
-	
+
 	while [ -f "${dir}send_enable.lock" ]; do
 		sleep $sleeptime
 	done
