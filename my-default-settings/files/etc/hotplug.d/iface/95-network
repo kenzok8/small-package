@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+for eth in "$(ip address | grep ^[0-9] | awk -F: '{print $2}' | sed "s/ //g" | grep '^[e]' | grep -vE "(@|\.)")"; do
+	ethtool -s $eth autoneg on
+done
+
+[ "$(uci -q get network.lan.ifname)" ] || (uci -q set network.lan.ifname="`uci -q get network.lan.device`";uci commit network)
+[ "$(uci -q get network.wan.ifname)" ] || (uci -q set network.wan.ifname="`uci -q get network.wan.device`";uci commit network)
+[ "$(uci -q get network.wan6.ifname)" ] || (uci -q set network.wan6.ifname="`uci -q get network.wan6.device`";uci commit network)
