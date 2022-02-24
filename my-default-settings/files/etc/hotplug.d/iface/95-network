@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-for eth in "$(ip address | grep ^[0-9] | awk -F: '{print $2}' | sed "s/ //g" | grep '^[e]' | grep -vE "(@|\.)")"; do
+for eth in $(ip address | grep ^[0-9] | awk -F: '{print $2}' | sed "s/ //g" | grep '^[e]' | grep -vE "(@|\.)"); do
 	ethtool -s $eth autoneg on
 done
 
