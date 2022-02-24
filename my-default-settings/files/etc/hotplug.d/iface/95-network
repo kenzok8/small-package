@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 for eth in $(ip address | grep ^[0-9] | awk -F: '{print $2}' | sed "s/ //g" | grep '^[e]' | grep -vE "(@|\.)"); do
-	ethtool -s $eth autoneg on
+	[ "$(ethtool -i $eth | grep 'r8125')" ] && ethtool -s $eth autoneg on
 done
 
 [ "$(uci -q get network.lan.ifname)" ] || (uci -q set network.lan.ifname="`uci -q get network.lan.device`";uci commit network)
