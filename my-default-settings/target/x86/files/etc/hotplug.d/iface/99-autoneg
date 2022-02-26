@@ -1,6 +1,0 @@
-#!/bin/sh
-#
-
-for eth in $(ip address | grep ^[0-9] | awk -F: '{print $2}' | sed "s/ //g" | grep '^[e]' | grep -vE "(@|\.)"); do
-	[[ "$(ethtool -i $eth | grep 'r8125')" && ! "$(ubus call system board | grep VMware)" ]] && ethtool -s $eth autoneg on
-done
