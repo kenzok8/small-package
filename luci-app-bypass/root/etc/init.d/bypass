@@ -983,8 +983,6 @@ start(){
 		if [[ $adguardhome == 1 && -n "$GLOBAL_SERVER" ]]; then
 			if [[ ! "$(netstat -tunlp | grep 53 | grep -i AdGuardHome)" ]]; then
 				uci -q del dhcp.@dnsmasq[0].dns_redirect
-				uci -q del dhcp.lan.dhcp_option
-				uci -q add_list dhcp.lan.dhcp_option="6,$(uci -q get network.lan.ipaddr)"
 				uci commit dhcp
 				adgconf="$(uci -q get AdGuardHome.AdGuardHome.configpath)"
 				masqport="$(grep "  port:.*" $adgconf | cut -f 4 -d " ")"
