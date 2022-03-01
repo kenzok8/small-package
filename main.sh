@@ -70,6 +70,7 @@ git clone -b lede https://github.com/pymumu/luci-app-smartdns
 git clone --depth 1 https://github.com/esirplayground/LingTiGameAcc
 git clone --depth 1 https://github.com/esirplayground/luci-app-LingTiGameAcc
 git clone --depth 1 https://github.com/zxlhhyccc/luci-app-v2raya
+git clone --depth 1 https://github.com/thinktip/luci-theme-neobird.git
 
 svn co https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
