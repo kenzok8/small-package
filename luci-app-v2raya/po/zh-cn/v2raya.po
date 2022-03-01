@@ -1,14 +1,20 @@
-msgid "v2rayA"
-msgstr "v2rayA"
+msgid "v2rayA Client"
+msgstr "v2rayA 客户端"
 
 msgid "v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols."
 msgstr "v2rayA 是一个支持全局透明代理的 V2Ray Linux 客户端，同时兼容 SS、SSR、Trojan(trojan-go)、PingTunnel 协议"
 
-msgid "Service is not running."
-msgstr "服务未运行"
+msgid "NOT RUNNING"
+msgstr "未运行"
 
-msgid "Service is running."
-msgstr "服务正在运行"
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "v2rayA Version"
+msgstr "v2rayA 版本"
 
 msgid "Open v2rayA page"
 msgstr "打开 v2rayA 页面"

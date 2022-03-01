@@ -5,3 +5,11 @@ start() {
     /usr/bin/fa-fancontrol.sh &
 }
 
+stop() {
+kill -9 $(ps -w | grep fa-fancontrol | grep -v grep | awk '{print$1}') 2>/dev/null
+}
+
+restart() {
+stop
+start
+}
