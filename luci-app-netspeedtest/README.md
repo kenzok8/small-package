@@ -14,7 +14,7 @@ Welcome to sirpdboy's  git source of packages
 
 请 **认真阅读完毕** 本页面，本页面包含注意事项和如何使用。
 
-a new netspeedtest luci app bese luci-app-netspeedtest
+a new NetSpeedTest luci app bese luci-app-NetSpeedTest
 -
 
 ## 写在前面：[![](https://img.shields.io/badge/-写在前面-F5F5F5.svg)](#写在前面-)
@@ -40,8 +40,6 @@ a new netspeedtest luci app bese luci-app-netspeedtest
 
 10.新插件难免有bug 请不要大惊小怪。欢迎提交bug。
 
-11.安装需要依赖： python3 iperf3 。
-
 ## 编译说明 [![](https://img.shields.io/badge/-编译说明-F5F5F5.svg)](#编译说明-) 
 
 将NetSpeedTest 主题添加至 LEDE/OpenWRT 源码的方法。
@@ -51,43 +49,43 @@ a new netspeedtest luci app bese luci-app-netspeedtest
 
 ```Brach
     # feeds获取源码：
-    src-git netspeedtest  https://github.com/sirpdboy/netspeedtest
+    src-git NetSpeedTest  https://github.com/sirpdboy/NetSpeedTest
  ``` 
   ```Brach
    # 更新feeds，并安装主题：
-    scripts/feeds update netspeedtest
-	scripts/feeds install luci-app-netspeedtest
+    scripts/feeds update NetSpeedTest
+	scripts/feeds install luci-app-NetSpeedTest
  ``` 	
 
 ## 下载源码方法二：
  ```Brach
     # 下载源码
     
-    git clone https://github.com/sirpdboy/netspeedtest package/netspeedtest
+    git clone https://github.com/sirpdboy/NetSpeedTest package/NetSpeedTest
     
     make menuconfig
  ``` 
 ## 配置菜单
  ```Brach
     make menuconfig
-	# 找到 LuCI -> Applications, 选择 luci-app-netspeedtest, 保存后退出。
+	# 找到 LuCI -> Applications, 选择 luci-app-NetSpeedTest, 保存后退出。
  ``` 
 ## 编译
  ```Brach 
     # 编译固件
-    make package/netspeedtest/luci-app-netspeedtest/{clean,compile} V=s
+    make package/NetSpeedTest/luci-app-NetSpeedTest/{clean,compile} V=s
 ```   
 
 ## 说明 [![](https://img.shields.io/badge/-说明-F5F5F5.svg)](#说明-)
 
-源码来源：https://github.com/sirpdboy/netspeedtest/luci-app-netspeedtest
+源码来源：https://github.com/sirpdboy/NetSpeedTest/luci-app-NetSpeedTest
 
 
 你可以随意使用其中的源码，但请注明出处。
 ============================
 
 # My other project
-网络速度测试 ：https://github.com/sirpdboy/netspeedtest
+网络速度测试 ：https://github.com/sirpdboy/NetSpeedTest
 
 定时关机重启 : https://github.com/sirpdboy/luci-app-autopoweroff
 

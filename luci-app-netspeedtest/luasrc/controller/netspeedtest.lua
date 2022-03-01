@@ -3,8 +3,9 @@ module("luci.controller.netspeedtest", package.seeall)
 
 function index()
 
-	entry({"admin","network","netspeedtest"},cbi("netspeedtest/netspeedtest", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("netspeedtest"),90).dependent=true
+	entry({"admin","network","netspeedtest"},cbi("netspeedtest/netspeedtest", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Netspeedtest"),90).dependent=true
 
+        entry({"admin", "network", "netspeedtest", "status"}, call("act_status")).leaf = true
 	entry({"admin", "network","test_iperf0"}, post("test_iperf0"), nil).leaf = true
 
 	entry({"admin", "network","test_iperf1"}, post("test_iperf1"), nil).leaf = true
@@ -13,6 +14,14 @@ function index()
 
 	entry({"admin", "network", "netspeedtest", "realtime_log"}, call("get_log")) 
 
+end
+
+
+function act_status()
+	local e={}
+	e.status=luci.sys.call("pgrep iperf3 >/dev/null")==0
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(e)
 end
 
 
