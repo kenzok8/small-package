@@ -7,7 +7,6 @@ git clone --depth 1 https://github.com/kiddin9/my-packages && mvdir my-packages
 git clone --depth 1 https://github.com/kiddin9/openwrt-bypass && mvdir openwrt-bypass
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
 git clone --depth 1 https://github.com/kiddin9/aria2
-git clone --depth 1 https://github.com/kiddin9/luci-app-eqos
 git clone --depth 1 https://github.com/kiddin9/luci-app-baidupcs-web
 git clone --depth 1 https://github.com/kiddin9/luci-theme-edge
 git clone --depth 1 https://github.com/kiddin9/qBittorrent-Enhanced-Edition
@@ -51,8 +50,6 @@ git clone --depth 1 https://github.com/hubbylei/luci-app-clash
 git clone --depth 1 https://github.com/destan19/OpenAppFilter && mvdir OpenAppFilter
 git clone --depth 1 https://github.com/esirplayground/luci-app-poweroff
 git clone --depth 1 https://github.com/lvqier/luci-app-dnsmasq-ipset
-git clone --depth 1 https://github.com/small-5/ddns-scripts-dnspod
-git clone --depth 1 https://github.com/small-5/ddns-scripts-aliyun
 git clone --depth 1 https://github.com/walkingsky/luci-wifidog luci-app-wifidog
 git clone --depth 1 https://github.com/peter-tank/luci-app-autorepeater
 git clone --depth 1 https://github.com/CCnut/feed-netkeeper && mvdir feed-netkeeper
@@ -87,6 +84,7 @@ svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn co https://github.com/messense/aliyundrive-webdav/trunk/openwrt aliyundrive && mvdir aliyundrive
 svn co https://github.com/immortalwrt/packages/trunk/net/amule
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-amule
+svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-eqos
 svn co https://github.com/immortalwrt/packages/trunk/net/cdnspeedtest
 svn co https://github.com/sirpdboy/sirpdboy-package/trunk/luci-app-koolddns
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/microsocks
