@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hysteria
-PKG_VERSION:=0.9.6
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -60,7 +60,7 @@ endef
 
 ifeq ($(CONFIG_HYSTERIA_COMPRESS_GOPROXY),y)
 	export GO111MODULE=on
-	export GOPROXY=https://goproxy.baidu.com
+	export GOPROXY=https://goproxy.bj.bcebos.com
 endif
 
 define Build/Compile

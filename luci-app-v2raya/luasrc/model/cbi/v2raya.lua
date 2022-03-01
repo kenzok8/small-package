@@ -5,8 +5,11 @@ local uci = luci.model.uci.cursor()
 local m, o, s
 require("nixio.fs")
 
+local v2raya_bin = "/usr/bin/v2raya"
+	v2raya_version=luci.sys.exec(v2raya_bin.." --version  2>/dev/null")
+
 m = Map("v2raya")
-m.title = translate("v2rayA")
+m.title = translate("v2rayA Client")
 m.description = translate("v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.")
 
 m:section(SimpleSection).template = "v2raya/v2raya_status"
@@ -18,6 +21,10 @@ s.addremove = false
 o = s:option(Flag, "enabled", translate("Enabled"))
 o.default = 0
 o.rmempty = false
+
+o = s:option(DummyValue,"v2raya_version",translate("v2rayA Version"))
+o.rawhtml  = true
+o.value = v2raya_version
 
 o = s:option(Value, "address", translate("GUI access address"))
 o.description = translate("Use 0.0.0.0:2017 to monitor all access.")

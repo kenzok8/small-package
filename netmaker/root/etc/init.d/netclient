@@ -19,7 +19,7 @@ start() {
     echo "service is running"
     return
   fi
-  bash -c "while [ 1 ]; do /etc/netclient/netclient checkin -n all >> ${LOG_FILE} 2>&1;sleep 15;\
+  /bin/sh -c "while [ 1 ]; do netclient checkin -n all >> ${LOG_FILE} 2>&1;sleep 15;\
            if [ $(ls -l ${LOG_FILE}|awk '{print $5}') -gt 10240000 ];then tar zcf "${LOG_FILE}.tar" -C / "tmp/netclient.logs"  && > $LOG_FILE;fi;done &"
   echo "start"
 }

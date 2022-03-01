@@ -15,7 +15,6 @@ end
 function act_status()
 	local e = {}
 	e.running = luci.sys.call("pgrep -f v2raya >/dev/null") == 0
-	e.bin_version = luci.sys.exec("v2raya --version")
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
