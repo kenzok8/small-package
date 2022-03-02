@@ -1,5 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2020 IrineSistiana
+# shellcheck disable=SC2034
 
 START=91
 USE_PROCD=1
@@ -68,7 +69,7 @@ adblock() {
 	cp -f /etc/mosdns/serverlist.txt /etc/mosdns/serverlist.bak
 	modns_adblock=$(uci -q get mosdns.mosdns.adblock)
 	if [ "$modns_adblock" = 0 ]; then
-		>/etc/mosdns/serverlist.txt
+		: > /etc/mosdns/serverlist.txt
 	else
 		cat /etc/mosdns/serverlist.bak >/etc/mosdns/serverlist.txt
 	fi

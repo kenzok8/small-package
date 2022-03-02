@@ -1,4 +1,6 @@
 #!/bin/bash -e
+# shellcheck source=/etc/mosdns/library.sh
+
 source /etc/mosdns/library.sh
 
 if L_exist ssrp; then
