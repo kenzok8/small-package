@@ -1,4 +1,4 @@
-#!/bin/echo Warning:this is a library should be sourced!
+#!/bin/bash -e
 bakdns() {
 	if [ "$1" == "0" ]; then
 		echo "119.29.29.29"
@@ -8,7 +8,7 @@ bakdns() {
 }
 
 exist() {
-  command -v "$1" >/dev/null &>/dev/null
+  command -v "$1" >/dev/null 2>&1
 }
 
 getdat() {
