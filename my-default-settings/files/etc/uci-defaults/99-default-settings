@@ -75,6 +75,8 @@ test $version -lt 1 && {
 	uci -q set uhttpd.main.script_timeout='120'
 	uci commit uhttpd
 	
+	(echo "root"; sleep 1; echo "root") | /bin/busybox passwd root >/dev/null 2>&1 &
+	
 	wifi_setup_radio(){
 	local radio=$1
 	uci -q get wireless.${radio} >/dev/null 2>&1 && {
