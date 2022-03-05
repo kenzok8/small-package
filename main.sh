@@ -123,6 +123,9 @@ svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
 svn co https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
 svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
+svn co https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest/trunk/applications/luci-app-cloudflarespeedtest
+svn co https://github.com/messense/aliyundrive-fuse/trunk/openwrt && mvdir openwrt
+svn co https://github.com/kenzok8/litte/trunk/luci-app-passwall
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
