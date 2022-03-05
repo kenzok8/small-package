@@ -1,0 +1,135 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2022-02-10 20:44+0000\n"
+"Last-Translator: mingxiaoyu <fengying0347@163.com>\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.8-dev\n"
+
+msgid "<a href=\"https://github.com/mingxiaoyu/luci-app-jd-cloudflarespeedtest\" target=\"_blank\">GitHub</a>"
+msgstr "<a href=\"https://github.com/mingxiaoyu/luci-app-jd-cloudflarespeedtest\" target=\"_blank\">GitHub项目地址</a>"
+
+msgid "Cloudflare Speed Test"
+msgstr "Cloudflare速度测试"
+
+msgid "Base Setting"
+msgstr "基本设置"
+
+msgid "Logs"
+msgstr "日志"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Enabled scheduled task test Cloudflare IP"
+msgstr "启用计划任务测试 Cloudflare IP"
+
+msgid "Broadband speed"
+msgstr "宽带速度"
+
+msgid "Custome Url Enabled"
+msgstr "启用自定义地址"
+
+msgid "Custome Url"
+msgstr "自定义地址"
+
+msgid "Cron Enabled"
+msgstr "启用Cron"
+
+msgid "Hour"
+msgstr "小时"
+
+msgid "Minute"
+msgstr "分钟"
+
+msgid "100M broadband download speed is about 12M/s. It is not recommended to fill in an excessively large value, and it may run all the time."
+msgstr "100M的宽带下载大概为速度12M/s。不推荐填过大的值，可能出现一直运行。"
+
+msgid "Shadowsocksr Plus+ Enabled"
+msgstr "启用ShadowSocksR Plus+"
+
+msgid "Passwall Enabled"
+msgstr "启用Passwall"
+
+msgid "Shadowsocksr Servers"
+msgstr "ShadowSocksR Plus+服务"
+
+msgid "Passwall Servers"
+msgstr "Passwall服务"
+
+msgid "Please select a service"
+msgstr "请选择一项服务"
+
+msgid "Speed Test"
+msgstr "速度测试"
+
+msgid "Best IP"
+msgstr "最佳IP"
+
+msgid "TEST AND APPLY"
+msgstr "测试并应用"
+
+msgid "STOP"
+msgstr "停止"
+
+msgid "Advanced"
+msgstr "高级模式"
+
+msgid "Threads"
+msgid "线程数"
+
+msgid "Average Latency Cap"
+msgstr "平均延迟上限"
+
+msgid "Average Latency Lower Bound"
+msgstr "平均延迟下限"
+
+msgid "IPv6 Enabled"
+msgstr "启用IPv6"
+
+msgid "Not recommended"
+msgstr "不推荐"
+
+msgid "Provides only one method, if IPv6 is enabled, IPv4 will not be tested"
+msgstr "IPv4和IPv6只能选一个！！！！！！"
+
+msgid "<a href=\"https://github.com/XIU2/CloudflareSpeedTest/issues/168\" target=\"_blank\">How to create</a>"
+msgstr "<a href=\"https://github.com/XIU2/CloudflareSpeedTest/issues/168\" target=\"_blank\">如何创建</a>"
+
+msgid "RUNNING" 
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "Collecting data..."
+msgstr "收集数据中..."
+
+msgid "Third party applications settings"
+msgstr "第三方应用设置"
+
+msgid "Auto refresh"
+msgstr "自动刷新"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Proxy Mode"
+msgstr "代理模式"
+
+msgid "HOLD"
+msgstr "保持"
+
+msgid "GFW List"
+msgid "GFW列表"
+
+msgid "CLOSE"
+msgstr "关闭"
+
+msgid "during the speed testing, swith to which mode"
+msgstr "在速度测试期间，切换到哪种模式"
