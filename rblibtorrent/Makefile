@@ -2,12 +2,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rblibtorrent
 PKG_VERSION:=1.2.15
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/arvidn/libtorrent.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=9c5b26b8d9bdb168256566a2986c563187638e5a
+PKG_SOURCE_VERSION:=1b25eb5584db5f335167e6f8beda1ae280f28445
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MIRROR_HASH:=skip
 
@@ -56,7 +56,7 @@ endef
 
 define Package/rblibtorrent/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so.* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib
 endef
 
 $(eval $(call BuildPackage,rblibtorrent))

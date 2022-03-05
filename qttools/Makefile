@@ -8,11 +8,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qttools
 PKG_BASE:=5.15
-PKG_BUGFIX:=2
+PKG_BUGFIX:=3
 PKG_VERSION:=$(PKG_BASE).$(PKG_BUGFIX)
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
-PKG_SOURCE:=$(PKG_NAME)-everywhere-src-$(PKG_VERSION).tar.xz
+PKG_SOURCE:=$(PKG_NAME)-everywhere-opensource-src-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:= \
 		http://download.qt.io/official_releases/qt/$(PKG_BASE)/$(PKG_VERSION)/submodules \
 		http://master.qt.io/archive/qt/$(PKG_BASE)/$(PKG_VERSION)/submodules \
