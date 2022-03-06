@@ -17,7 +17,7 @@ add_cron(){
 		config_get minute $1 minute
 		config_get hour $1 hour
 		
-		echo "$minute $hour * * * /usr/bin/cloudflarespeedtest start" >> $CRON_FILE
+		echo "$minute $hour * * * /usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh start" >> $CRON_FILE
 		crontab $CRON_FILE	 
 	fi
 }

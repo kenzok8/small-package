@@ -26,7 +26,7 @@ echolog() {
 
 function read_config(){
 	get_global_config "enabled" "speed" "custome_url" "threads" "tl" "tll" "ipv6_enabled" "advanced" "proxy_mode"
-	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services"
+	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "DNS_enabled"
 }
 
 function  speed_test(){
@@ -83,6 +83,8 @@ function ip_replace(){
 	bestip=$(sed -n "2,1p" $IP_FILE | awk -F, '{print $1}')
 	[[ -z "${bestip}" ]] && echo "CloudflareST 测速结果 IP 数量为 0，跳过下面步骤..." && exit 0
 
+	alidns_ip
+
 	ssr_best_ip
 	
 	passwall_best_ip
@@ -90,8 +92,8 @@ function ip_replace(){
 }
 
 function passwall_best_ip(){
-
 	if [ $passwall_server_enabled -eq '1' ] ; then
+		echolog "设置passwall代理模式"
 		if [ $proxy_mode  == "close" ] ;then
 			uci set passwall.@global[0].enabled="${passwall_server_enabled}"		
 		elif [ $proxy_mode  == "gfw" ] ;then
@@ -101,6 +103,7 @@ function passwall_best_ip(){
 	fi
 
 	if [ $passwall_enabled -eq "1" ] ;then
+		echolog "设置passwall IP"
 		for ssrname in $passwall_services
 		do
 			echo $ssrname
@@ -109,6 +112,7 @@ function passwall_best_ip(){
 		uci commit passwall
  		if [ $passwall_server_enabled -eq "1" ] ;then
 			/etc/init.d/passwall restart 2>/dev/null
+			echolog "passwall重启完成"
 		fi
 	fi
 }
@@ -116,6 +120,7 @@ function passwall_best_ip(){
 function ssr_best_ip(){
 
 	if [ $ssr_enabled -eq "1" ] ;then
+		echolog "设置ssr IP"
 		for ssrname in $ssr_services
 		do
 			echo $ssrname
@@ -127,14 +132,27 @@ function ssr_best_ip(){
 	fi
 
 	if [ $ssr_original_server != 'nil' ] ; then
+		echolog "设置ssr代理模式"
 		if [ $proxy_mode  == "close" ] ;then
 			uci set shadowsocksr.@global[0].global_server="${ssr_original_server}"		
 		elif [ $proxy_mode  == "gfw" ] ;then
 			uci set  shadowsocksr.@global[0].run_mode="${ssr_original_run_mode}"
 		fi	
-		/etc/init.d/shadowsocksr restart 2>/dev/null
+		/etc/init.d/shadowsocksr restart 2 >/dev/null
+		echolog "ssr重启完成"
 	fi
 }
+
+function alidns_ip(){
+	if [ $DNS_enabled -eq "1" ] ;then
+		get_servers_config "DNS_type" "app_key" "app_secret" "main_domain" "sub_domain" "line"
+		if [ $DNS_type == "aliyu" ] ;then
+			/usr/bin/cloudflarespeedtest/aliddns.sh $app_key $app_secret $main_domain $sub_domain $line $ipv6_enabled $bestip
+			echolog "更新阿里云DNS完成"
+		fi		
+	fi
+}
+
 read_config
 
 # 启动参数

@@ -133,3 +133,45 @@ msgstr "关闭"
 
 msgid "during the speed testing, swith to which mode"
 msgstr "在速度测试期间，切换到哪种模式"
+
+msgid "DNS"
+msgstr "DNS"
+
+msgid "DNS Enabled"
+msgstr "启用DNS"
+
+msgid "DNS Type"
+msgstr "DNS类型"
+
+msgid "AliyuDNS"
+msgstr "阿里云DNS"
+
+msgid "Access Key ID"
+msgstr "Access Key ID"
+
+msgid "Access Key Secret"
+msgstr "Access Key Secret"
+
+msgid "Main Domain"
+msgstr "主域名"
+
+msgid "Sub Domain"
+msgstr "子域名"
+
+msgid "For example: test.github.com -> github.com"
+msgstr "例如: test.github.com 则填: github.com"
+
+msgid "For example: test.github.com -> test"
+msgstr "例如: test.github.com, 则填: test"
+
+msgid "Lines"
+msgstr "解析线路"
+
+msgid "telecom"
+msgstr "电信"
+
+msgid "unicom"
+msgstr "联通"
+
+msgid "mobile"
+msgstr "移动"
