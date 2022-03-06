@@ -36,7 +36,7 @@ end
 
 function act_start()
 	act_stop()
-	luci.sys.call("/usr/bin/cloudflarespeedtest start")
+	luci.sys.call("/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh start")
 	luci.http.write('')
 end
 

@@ -46,7 +46,7 @@ o:value("nil", translate("HOLD"))
 o.description = translate("during the speed testing, swith to which mode")
 o:value("gfw", translate("GFW List"))
 o:value("close", translate("CLOSE"))
-o.default = gfw
+o.default = "gfw"
 
 o=s:option(Flag,"advanced",translate("Advanced"))
 o.description = translate("Not recommended")
@@ -55,7 +55,7 @@ o.rmempty=false
 
 o = s:option(Value, "threads", translate("Threads"))
 o.datatype ="uinteger" 
-o.default = 100
+o.default = 200
 o.rmempty=true
 o:depends("advanced", 1)
 
@@ -144,6 +144,32 @@ if nixio.fs.access("/etc/config/passwall") then
 
 end
 
+s:tab("dnstab", translate("DNS"))
+
+o=s:taboption("dnstab", Flag, "DNS_enabled",translate("DNS Enabled"))
+
+o=s:taboption("dnstab", ListValue, "DNS_type", translate("DNS Type"))
+o:value("aliyu", translate("AliyuDNS"))
+o:depends("DNS_enabled", 1)
+
+o=s:taboption("dnstab", Value,"app_key",translate("Access Key ID"))
+o.rmempty=false
+o:depends("DNS_enabled", 1)
+o=s:taboption("dnstab", Value,"app_secret",translate("Access Key Secret"))
+o.rmempty=false
+o:depends("DNS_enabled", 1)
+
+o=s:taboption("dnstab", Value,"main_domain",translate("Main Domain"),translate("For example: test.github.com -> github.com"))
+o.rmempty=false
+o=s:taboption("dnstab", Value,"sub_domain",translate("Sub Domain"),translate("For example: test.github.com -> test"))
+o.rmempty=false
+
+o=s:taboption("dnstab", ListValue, "line", translate("Lines"))
+o:value("telecom", translate("telecom"))
+o:value("unicom", translate("unicom"))
+o:value("mobile", translate("mobile"))
+o:depends("DNS_enabled", 1)
+o.default ="telecom"
 
 e=m:section(TypedSection,"global",translate("Best IP"))
 e.anonymous=true
