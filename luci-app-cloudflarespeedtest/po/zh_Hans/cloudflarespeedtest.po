@@ -167,6 +167,9 @@ msgstr "例如: test.github.com, 则填: test"
 msgid "Lines"
 msgstr "解析线路"
 
+msgid "default"
+msgstr "默认"
+
 msgid "telecom"
 msgstr "电信"
 

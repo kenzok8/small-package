@@ -165,6 +165,7 @@ o=s:taboption("dnstab", Value,"sub_domain",translate("Sub Domain"),translate("Fo
 o.rmempty=false
 
 o=s:taboption("dnstab", ListValue, "line", translate("Lines"))
+o:value("default", translate("default"))
 o:value("telecom", translate("telecom"))
 o:value("unicom", translate("unicom"))
 o:value("mobile", translate("mobile"))
