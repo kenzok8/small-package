@@ -28,7 +28,7 @@ if [ "$C" = router ];then
 	else
 		log "China IPv4 List is up to date!"
 	fi
-	ipset list china_v4 >/dev/null 2>&1 && $DIR/chinaipset
+	#ipset list china_v4 >/dev/null 2>&1 && $DIR/chinaipset
 
 	if [ ! -f $T_FILE/china_v6.txt ];then
 		while ! D=$(curl -kLfsm 3 https://ispip.clang.cn/all_cn_ipv6.txt || curl -kLfsm 3 https://op.supes.top/all_cn_ipv6.txt);do
@@ -44,7 +44,7 @@ if [ "$C" = router ];then
 	else
 		log "China IPv6 List is up to date!"
 	fi
-	ipset list china_v6 >/dev/null 2>&1 && $DIR/chinaipset v6
+	#ipset list china_v6 >/dev/null 2>&1 && $DIR/chinaipset v6
 fi
 
 if [ "$C" = gfw -o "$(uci -q get bypass.@global[0].gfw_mode)" = 1 ];then
@@ -66,4 +66,4 @@ fi
 
 rm -f $LOCK /tmp/china*.txt /tmp/gfwnew.txt
 
-[ "$1" == "restart" ] && /etc/init.d/bypass restart || /etc/init.d/bypass updated
+[ "$1" == "restart" ] && /etc/init.d/bypass restart update || /etc/init.d/bypass start updated
