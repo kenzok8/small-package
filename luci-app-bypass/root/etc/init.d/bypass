@@ -253,7 +253,7 @@ rules(){
 	check_net
 	cat $LOG 2>/dev/null | sed -n '$p' | grep -q 'Download IP/GFW files...' || (log "Check IP/GFW files...")
 	mkdir -p /var/run $VAR
-	if [[ ! -f $PID && "$update" != "updated" ]] || [ "$update" == "update" ] ;then
+	if [[ ! -f $PID && "$update" != "updated" ]];then
 		log "Download IP/GFW files..."
 		firstdown 2;exit 0;
 	fi
@@ -846,7 +846,7 @@ add_cron(){
 	if [ $(uci_get_by_type server_subscribe auto_update 0) = 1 ];then
 		if ! grep -wq "$(uci_get_by_type server_subscribe auto_update_time 6) \* \* \* .*$BIN_DIR" $CRON_FILE;then
 			eval $CRON
-			echo "0 $(uci_get_by_type server_subscribe auto_update_time 6) * * * $BIN_DIR/update restart" >>$CRON_FILE
+			echo "0 $(uci_get_by_type server_subscribe auto_update_time 6) * * * $BIN_DIR/update" >>$CRON_FILE
 			echo "5 $(uci_get_by_type server_subscribe auto_update_time 6) * * * $BIN_DIR/subscribe" >>$CRON_FILE
 			A=1
 		fi
@@ -1027,7 +1027,7 @@ stop(){
 		if [[ -f /etc/init.d/AdGuardHome && "$(uci -q get AdGuardHome.AdGuardHome.redirect)" == "exchange"  ]]; then
 			/etc/init.d/AdGuardHome stop >/dev/null 2>&1 &
 		fi
-		rm -rf $SDNS $PID $LOC
+		rm -rf $SDNS $PID $LOC $LOG
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	elif [ -s $DNS_T ];then
 		cat > $DNS_T <<-EOF
