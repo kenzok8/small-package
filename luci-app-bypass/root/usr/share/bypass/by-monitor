@@ -86,7 +86,7 @@ while :;do
 		t=`ps -w | grep chinadns-ng | grep -v grep | wc -l`
 		if [ $t = 0 ];then
 			echolog "ChinaDNS-NG Error. Restart!"
-			$(which chinadns-ng) -l 5337 -c '127.0.0.1#5336' -t '127.0.0.1#5335' -4 china_v4 -6 china_v6 -f -n $([ $gfw_mode = 1 ] && echo -g /tmp/bypass/gfw.list) >/dev/null 2>&1 &
+			$(which chinadns-ng) -l 5337 -c '127.0.0.1#5336' -t '127.0.0.1#5335' -4 china_v4 -6 china_v6 -f -n $([ $gfw_mode = 1 ] && echo -g /etc/bypass/gfw.list) >/dev/null 2>&1 &
 		fi
 	fi
 #localsocks

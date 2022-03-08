@@ -6,7 +6,7 @@ local m, o, s
 require("nixio.fs")
 
 local v2raya_bin = "/usr/bin/v2raya"
-	v2raya_version=luci.sys.exec(v2raya_bin.." --version  2>/dev/null")
+	v2raya_version="<b><font style=\"color:red\">"..luci.sys.exec(v2raya_bin.." --version  2>/dev/null").."</font></b>"
 
 m = Map("v2raya")
 m.title = translate("v2rayA Client")
