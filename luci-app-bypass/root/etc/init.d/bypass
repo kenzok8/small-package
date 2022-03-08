@@ -27,16 +27,10 @@ smartdns_flag=0
 chinadns_flag=0
 local_enable=0
 switch_enable=0
-switch_server=$1
+[[ "$1" == update* ]] && update=$1 || switch_server=$1
 server_count=0
 STATUS=Y
 
-extra_command "updated" ""
-
-updated() {
-updated=Y
-start
-}
 uci_get_by_name(){
 	ret=$(uci -q get $NAME.$1.$2)
 	echo ${ret:=$3}
@@ -259,7 +253,7 @@ rules(){
 	check_net
 	cat $LOG 2>/dev/null | sed -n '$p' | grep -q 'Download IP/GFW files...' || (log "Check IP/GFW files...")
 	mkdir -p /var/run $VAR
-	if [[ ! -f $PID && "$updated" != Y ]];then
+	if [[ ! -f $PID && "$update" != "updated" ]] || [ "$update" == "update" ] ;then
 		log "Download IP/GFW files..."
 		firstdown 2;exit 0;
 	fi
