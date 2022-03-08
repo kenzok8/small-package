@@ -13,7 +13,6 @@ SDNS=/var/etc/smartdns
 DNS_T=$SDNS/smartdns.conf
 CON_T=$SDNS/rules.conf
 PID=/var/run/smartdns.pid
-K=/tmp/bypass
 LOG=/var/log/bypass.log
 BIN_DIR=/usr/share/bypass
 DNS_FILE=/tmp/dnsmasq.d/dnsmasq-by.conf
@@ -32,6 +31,12 @@ switch_server=$1
 server_count=0
 STATUS=Y
 
+extra_command "updated" ""
+
+updated() {
+updated=Y
+start
+}
 uci_get_by_name(){
 	ret=$(uci -q get $NAME.$1.$2)
 	echo ${ret:=$3}
@@ -190,7 +195,7 @@ start_dns(){
 		;;
 	esac
 	if [ $run_mode = router ];then
-		service_start $(which chinadns-ng) -l 5337 -c '127.0.0.1#5336' -t '127.0.0.1#5335' -4 china_v4 -6 china_v6 -f -n $([ $gfw_mode = 1 ] && echo -g $K/gfw.list)
+		service_start $(which chinadns-ng) -l 5337 -c '127.0.0.1#5336' -t '127.0.0.1#5335' -4 china_v4 -6 china_v6 -f -n $([ $gfw_mode = 1 ] && echo -g $T_FILE/gfw.list)
 		log "ChinaDNS : Start ChinaDNS-NG successful!"
 	fi
 	if [[ "$(uci -q get dhcp.@dnsmasq[0].cachesize)" == "0" && $adguardhome == 0 ]]; then
@@ -215,9 +220,8 @@ preload(){
 
 check_net(){
 	if ! curl -so /dev/null -m 3 www.baidu.com;then
-		log "Wait for network to connect..."
 		/etc/init.d/dnsmasq restart
-		firstdown 1;exit 1
+		firstdown 1;exit 0;
 	fi
 }
 
@@ -226,7 +230,6 @@ get_soip(){
 		if [ "$1" = 1 ];then
 			cat $LOG 2>/dev/null | sed -n '$p' | grep -q 'Check network status...' || gen_log
 			check_net
-			cat $LOG 2>/dev/null | sed -n '$p' | grep -q 'Check network status successful!' || log "Check network status successful!"
 		fi
 		socks5_ip=$(uci_get_by_name $SO_SERVER server)
 		if ! echo $socks5_ip | grep -E "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$">/dev/null;then
@@ -254,11 +257,11 @@ rules(){
 	fi
 	cat $LOG 2>/dev/null | sed -n '$p' | grep -q 'Check network status...\|Download IP/GFW files...' || gen_log
 	check_net
-	cat $LOG 2>/dev/null | sed -n '$p' | grep -q 'Download IP/GFW files...' || (log "Check network status successful!";log "Check IP/GFW files...")
+	cat $LOG 2>/dev/null | sed -n '$p' | grep -q 'Download IP/GFW files...' || (log "Check IP/GFW files...")
 	mkdir -p /var/run $VAR
-	if ([ $run_mode = router ] && [ ! -s $K/china.txt -o ! -s $K/china_v6.txt ]) || ([ $run_mode = gfw -o $gfw_mode = 1 ] && [ ! -s $K/gfw.list ]);then
+	if [[ ! -f $PID && "$updated" != Y ]];then
 		log "Download IP/GFW files..."
-		firstdown 2;exit 1
+		firstdown 2;exit 0;
 	fi
 	log "Check IP/GFW files successful!"
 	kcp_enable=$(uci_get_by_name $GLOBAL_SERVER kcp_enable 0)
@@ -784,7 +787,7 @@ gen_dns(){
 			awk '!/^$/&&!/^#/{printf("server=/%s/'"127.0.0.1#5335"'\n",$0)}' $O >$DNS_DIR/black.conf
 			if [ $run_mode = gfw ];then
 				[ "$dns_a" = 1 ] && echo "server=/$doh_o_dom/127.0.0.1#5335" >>$DNS_DIR/black.conf
-				cp -f $K/gfw.list $O
+				cp -f $T_FILE/gfw.list $O
 				awk '!/^$/&&!/^#/{printf("server=/%s/'"127.0.0.1#5335"'\n",$0)}' $O >>$DNS_DIR/black.conf
 			fi
 		fi
@@ -849,7 +852,7 @@ add_cron(){
 	if [ $(uci_get_by_type server_subscribe auto_update 0) = 1 ];then
 		if ! grep -wq "$(uci_get_by_type server_subscribe auto_update_time 6) \* \* \* .*$BIN_DIR" $CRON_FILE;then
 			eval $CRON
-			echo "0 $(uci_get_by_type server_subscribe auto_update_time 6) * * * $BIN_DIR/update" >>$CRON_FILE
+			echo "0 $(uci_get_by_type server_subscribe auto_update_time 6) * * * $BIN_DIR/update restart" >>$CRON_FILE
 			echo "5 $(uci_get_by_type server_subscribe auto_update_time 6) * * * $BIN_DIR/subscribe" >>$CRON_FILE
 			A=1
 		fi
@@ -1025,14 +1028,12 @@ stop(){
 	kill -9 $(ps -w | grep $VAR | grep -v grep | awk '{print$1}') 2>/dev/null
 	killall -q -9 smartdns chinadns-ng kcptun-client microsocks
 	rm -rf $DNS_DIR $VAR $DNS_FILE $CON_T /var/lock/bypass-update.lock
-	[ $run_mode = gfw -o $gfw_mode = 1 ] || rm -f $K/gfw.list
-	[ $run_mode = router ] || rm -f $K/china_v6.txt
 	[ -z "$GLOBAL_SERVER" ] && grep -q bypass $CRON_FILE && sed -i '/bypass/d' $CRON_FILE && /etc/init.d/cron restart
 	if [ $STATUS = Y -o -z "$GLOBAL_SERVER" ];then
 		if [[ -f /etc/init.d/AdGuardHome && "$(uci -q get AdGuardHome.AdGuardHome.redirect)" == "exchange"  ]]; then
 			/etc/init.d/AdGuardHome stop >/dev/null 2>&1 &
 		fi
-		rm -rf $K $SDNS $PID $LOC
+		rm -rf $SDNS $PID $LOC
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	elif [ -s $DNS_T ];then
 		cat > $DNS_T <<-EOF

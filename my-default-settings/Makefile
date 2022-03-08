@@ -24,7 +24,8 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/conffiles
-/etc/config/base_config
+/etc/config/
+/etc/nginx/
 endef
 
 define Build/Prepare
