@@ -257,7 +257,6 @@ rules(){
 		log "Download IP/GFW files..."
 		firstdown 2;exit 0;
 	fi
-	log "Check IP/GFW files successful!"
 	kcp_enable=$(uci_get_by_name $GLOBAL_SERVER kcp_enable 0)
 	UDP_RELAY_SERVER=$(uci_get_by_type global udp_relay_server)
 	[ "$UDP_RELAY_SERVER" = same ] && UDP_RELAY_SERVER=$GLOBAL_SERVER
