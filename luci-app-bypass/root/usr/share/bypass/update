@@ -17,57 +17,49 @@ C=$(uci -q get bypass.@global[0].run_mode)
 mkdir -p $T_FILE 2>/dev/null
 if [ "$C" = router ];then
 	if [ ! -f $T_FILE/china.txt ];then
-		while ! B=$(curl -kLfsm 3 https://cdn.jsdelivr.net/gh/kiddin9/china_ip_list@main/china_ip_list.txt || curl -kLfsm 3 https://op.supes.top/all_cn.txt);do
+		while ! (curl -kLfsm 3 -o /tmp/china.txt https://op.supes.top/all_cn.txt || curl -kLfsm 5 -o /tmp/china.txt https://cdn.jsdelivr.net/gh/kiddin9/china_ip_list@main/china_ip_list.txt);do
 			sleep 1
 		done
 	else
-		B=$(curl -kLfsm 3 https://cdn.jsdelivr.net/gh/kiddin9/china_ip_list@main/china_ip_list.txt || curl -kLfsm 3 https://op.supes.top/all_cn.txt)
+		curl -kLfsm 3 -o /tmp/china.txt https://op.supes.top/all_cn.txt || curl -kLfsm 5 -o /tmp/china.txt https://cdn.jsdelivr.net/gh/kiddin9/china_ip_list@main/china_ip_list.txt
 	fi
-	[ -n "$B" ] && {
-	echo "$B" > /tmp/china.txt
+	[[ -f /tmp/china.txt && $? == 0 ]] && {
 	if ! cmp -s /tmp/china.txt $T_FILE/china.txt;then
-		log "Update China IP List!"
+		log "China IPv4 List 已更新"
 		cp -f /tmp/china.txt $T_FILE/china.txt
 		[ $A = N ] && ipset list china_v4 >/dev/null 2>&1 && $DIR/chinaipset
-	else
-		log "China IPv4 List is up to date!"
 	fi
 	}
 
 	if [ ! -f $T_FILE/china_v6.txt ];then
-		while ! D=$(curl -kLfsm 2 https://ispip.clang.cn/all_cn_ipv6.txt || curl -kLfsm 2 https://op.supes.top/all_cn_ipv6.txt);do
+		while ! (curl -kLfsm 2 -o /tmp/china_v6.txt https://ispip.clang.cn/all_cn_ipv6.txt || curl -kLfsm 2 -o /tmp/china_v6.txt https://op.supes.top/all_cn_ipv6.txt);do
 			sleep 1
 		done
 	elif [ $A = N ];then
-		D=$(curl -kLfsm 2 https://ispip.clang.cn/all_cn_ipv6.txt || curl -kLfsm 2 https://op.supes.top/all_cn_ipv6.txt)
+		curl -kLfsm 2 -o /tmp/china_v6.txt https://ispip.clang.cn/all_cn_ipv6.txt || curl -kLfsm 2 -o /tmp/china_v6.txt https://op.supes.top/all_cn_ipv6.txt
 	fi
-	[ -n "$D" ] && {
-	echo "$D" > /tmp/china_v6.txt
+	[[ -f /tmp/china_v6.txt && $? == 0 ]] && {
 	if ! cmp -s /tmp/china_v6.txt $T_FILE/china_v6.txt;then
-		log "Update China IPv6 List!"
+		log "China IPv6 List 已更新"
 		cp -f /tmp/china_v6.txt $T_FILE/china_v6.txt
 		[ $A = N ] && ipset list china_v6 >/dev/null 2>&1 && $DIR/chinaipset v6
-	else
-		log "China IPv6 List is up to date!"
 	fi
 	}
 fi
 
 if [ "$C" = gfw -o "$(uci -q get bypass.@global[0].gfw_mode)" = 1 ];then
 	if [ ! -f $T_FILE/gfw.list ];then
-		while ! (curl -kLfsm 3 -o /tmp/gfw.b64 https://cdn.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt || curl -kLfsm 3 -o /tmp/gfw.b64 https://op.supes.top/gfwlist.txt);do
+		while ! (curl -kLfsm 3 -o /tmp/gfw.b64 https://op.supes.top/gfwlist.txt || curl -kLfsm 5 -o /tmp/gfw.b64 https://cdn.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt);do
 			sleep 1
 		done
 	elif [ "$C" = gfw ];then
-		curl -kLfsm 3 -o /tmp/gfw.b64 https://cdn.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt || curl -kLfsm 3 -o /tmp/gfw.b64 https://op.supes.top/gfwlist.txt
+		curl -kLfsm 3 -o /tmp/gfw.b64 https://op.supes.top/gfwlist.txt || curl -kLfsm 5 -o /tmp/gfw.b64 https://cdn.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt
 	fi
-	if [ -f /tmp/gfw.b64 ];then
+	if [[ -f /tmp/gfw.b64 && $? == 0 ]];then
 	$DIR/by-gfw
 	if ! cmp -s /tmp/gfwnew.txt $T_FILE/gfw.list;then
 		cp -f /tmp/gfwnew.txt $T_FILE/gfw.list
-		log "Update GFW List!"
-	else
-		log "GFW List is up to date!"
+		log "GFW List 已更新"
 	fi
 	fi
 fi
