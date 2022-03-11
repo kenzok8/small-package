@@ -126,7 +126,7 @@ svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
 svn co https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest/trunk/applications/luci-app-cloudflarespeedtest
 svn co https://github.com/messense/aliyundrive-fuse/trunk/openwrt && mvdir openwrt
-git clone -b luci https://github.com/xiaorouji/openwrt-passwall && && mv -n openwrt-passwall/luci-* ./; rm -rf openwrt-passwall
+git clone -b luci https://github.com/xiaorouji/openwrt-passwall && mv -n openwrt-passwall/luci-* ./; rm -rf openwrt-passwall
 svn co https://github.com/xiaorouji/openwrt-passwall2/trunk/luci-app-passwall2
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
