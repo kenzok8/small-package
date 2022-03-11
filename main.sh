@@ -88,9 +88,9 @@ svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-amule
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-eqos
 svn co https://github.com/immortalwrt/packages/trunk/net/cdnspeedtest
 svn co https://github.com/sirpdboy/sirpdboy-package/trunk/luci-app-koolddns
-svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/microsocks
-svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/redsocks2
-svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/tcpping
+svn co https://github.com/coolsnowwolf/packages/trunk/net/microsocks
+svn co https://github.com/coolsnowwolf/packages/trunk/net/redsocks2
+svn co https://github.com/coolsnowwolf/packages/trunk/net/tcpping
 svn co https://github.com/liuran001/openwrt-theme/trunk/luci-theme-argon-lr
 svn co https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
