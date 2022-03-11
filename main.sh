@@ -115,6 +115,7 @@ svn co https://github.com/kiddin9/openwrt-packages/trunk/qtbase
 svn co https://github.com/kiddin9/openwrt-packages/trunk/qttools
 svn co https://github.com/kiddin9/openwrt-packages/trunk/rblibtorrent
 svn co https://github.com/kiddin9/openwrt-packages/trunk/v2raya
+svn co https://github.com/kiddin9/openwrt-packages/trunk/antileech
 
 svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
 svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
