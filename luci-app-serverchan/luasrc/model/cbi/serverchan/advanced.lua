@@ -70,7 +70,7 @@ a.description = translate("请确认脚本可以正常运行，否则可能造�
 a=s:option(Flag,"err_sheep_enable",translate("仅在免打扰时段重拨"))
 a.default=0
 a.rmempty=true
-a.description = translate("避免白天重拨 ddns 域名等待解析，此功能不影响断网检测<br/>因夜间跑流量问题，该功能可能不稳定")
+a.description = translate("避免白天重拨 DDNS 域名等待解析，此功能不影响断网检测<br/>因夜间跑流量问题，该功能可能不稳定")
 a:depends({err_enable="1"})
 
 a= s:option(DynamicList, "err_device_aliases", translate("关注列表"))
@@ -109,11 +109,11 @@ a.datatype="uinteger"
 a:depends({system_time_event="2"})
 a.description = translate("单位为小时")
 
-a=s:option(Flag,"public_ip_event",translate("重拨尝试获取公网 ip"))
+a=s:option(Flag,"public_ip_event",translate("重拨尝试获取公网 IP"))
 a.default=0
 a.rmempty=true
 a:depends({err_enable="1"})
-a.description = translate("重拨时不会推送 ip 变动通知，并会导致你的域名无法及时更新 ip 地址<br/>请确认你可以通过重拨获取公网 ip，否则这不仅徒劳无功还会引起频繁断网<br/>移动等大内网你就别挣扎了！！")
+a.description = translate("重拨时不会推送 IP 变动通知，并会导致你的域名无法及时更新 IP 地址<br/>请确认你可以通过重拨获取公网 IP，否则这不仅徒劳无功还会引起频繁断网<br/>移动等大内网你就别挣扎了！！")
 
 a= s:option(Value, "public_ip_retry_count", "当天最大重试次数")
 a.rmempty = true 
