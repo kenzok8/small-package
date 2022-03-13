@@ -12,8 +12,8 @@ end
 
 function check_update()
 		needs_update, notice, md5 = false, false, false
-		remote_version = luci.sys.exec("curl -skfL https://op.supes.top/firmware/" ..model.. "/version.txt")
-		updatelogs = luci.sys.exec("curl -skfL https://op.supes.top/firmware/" ..model.. "/updatelogs.txt")
+		remote_version = luci.sys.exec("curl -skfL https://op.dllkids.xyz/firmware/" ..model.. "/version.txt")
+		updatelogs = luci.sys.exec("curl -skfL https://op.dllkids.xyz/firmware/" ..model.. "/updatelogs.txt")
 		remoteformat = luci.sys.exec("date -d $(echo \"" ..remote_version.. "\" | tr '\r\n' ',' | awk -F, '{printf $1}' | awk -F. '{printf $3\"-\"$1\"-\"$2}') +%s")
 		fnotice = luci.sys.exec("echo \"" ..remote_version.. "\" | tr '\r\n' ',' | awk -F, '{printf $(NF-1)}'")
 		md5 = luci.sys.exec("echo \"" ..remote_version.. "\" | tr '\r\n' ',' | awk -F, '{printf $2}'")
@@ -33,27 +33,27 @@ function to_check()
 	if model == "x86_64" then
 		check_update()
 		if fs.access("/sys/firmware/efi") then
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-x86-64-generic-squashfs-combined-efi.img.gz"
+			download_url = "https://op.dllkids.xyz/firmware/" ..model.. "/" ..remote_version.. "-openwrt-x86-64-generic-squashfs-combined-efi.img.gz"
 		else
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-x86-64-generic-squashfs-combined.img.gz"
+			download_url = "https://op.dllkids.xyz/firmware/" ..model.. "/" ..remote_version.. "-openwrt-x86-64-generic-squashfs-combined.img.gz"
 			md5 = ""
 		end
     elseif model:match(".*R2S.*") then
 		model = "nanopi-r2s"
 		check_update()
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r2s-squashfs-sysupgrade.img.gz"
+			download_url = "https://op.dllkids.xyz/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r2s-squashfs-sysupgrade.img.gz"
     elseif model:match(".*R4S.*") then
 		model = "nanopi-r4s"
 		check_update()
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r4s-squashfs-sysupgrade.img.gz"
+			download_url = "https://op.dllkids.xyz/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r4s-squashfs-sysupgrade.img.gz"
     elseif model:match(".*R2C.*") then
 		model = "nanopi-r2c"
 		check_update()
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r2c-squashfs-sysupgrade.img.gz"
+			download_url = "https://op.dllkids.xyz/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r2c-squashfs-sysupgrade.img.gz"
     elseif model:match(".*Pi 4 Model B.*") then
 		model = "Rpi-4B"
 		check_update()
-		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-bcm27xx-bcm2711-rpi-4-squashfs-sysupgrade.img.gz"
+		download_url = "https://op.dllkids.xyz/firmware/" ..model.. "/" ..remote_version.. "-openwrt-bcm27xx-bcm2711-rpi-4-squashfs-sysupgrade.img.gz"
     else
 		local needs_update = false
 		return {
