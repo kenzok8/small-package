@@ -116,7 +116,7 @@ svn co https://github.com/kiddin9/openwrt-packages/trunk/qttools
 svn co https://github.com/kiddin9/openwrt-packages/trunk/rblibtorrent
 svn co https://github.com/kiddin9/openwrt-packages/trunk/v2raya
 svn co https://github.com/kiddin9/openwrt-packages/trunk/antileech
-
+svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-snmpd
 svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
 svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
 svn co https://github.com/linkease/nas-packages/trunk/network/services && mvdir services
@@ -128,10 +128,13 @@ svn co https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest/trunk/applicat
 svn co https://github.com/messense/aliyundrive-fuse/trunk/openwrt && mvdir openwrt
 git clone -b luci https://github.com/xiaorouji/openwrt-passwall passwall1 && mv -n passwall1/luci-app-passwall  ./; rm -rf passwall1
 svn co https://github.com/xiaorouji/openwrt-passwall2/trunk/luci-app-passwall2
+
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
+
 rm -rf ./*/.git & rm -f ./*/.gitattributes
 rm -rf ./*/.svn & rm -rf ./*/.github & rm -rf ./*/.gitignore
+
 exit 0
 
 
