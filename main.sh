@@ -88,6 +88,7 @@ svn co https://github.com/immortalwrt/packages/trunk/net/gost
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-amule
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-eqos
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-gost
+svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-eqos
 svn co https://github.com/immortalwrt/packages/trunk/net/cdnspeedtest
 svn co https://github.com/sirpdboy/sirpdboy-package/trunk/luci-app-koolddns
 svn co https://github.com/coolsnowwolf/packages/trunk/net/microsocks
