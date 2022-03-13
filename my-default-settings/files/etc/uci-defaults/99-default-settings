@@ -16,7 +16,7 @@ if [ "$(uci -q get dhcp.@dnsmasq[0].port)" != "53" ]; then
 fi
 
 uci -q batch <<EOF
-set attendedsysupgrade.server.url='https://op.supes.top'
+set attendedsysupgrade.server.url='https://op.dllkids.xyz'
 commit attendedsysupgrade
 EOF
 
@@ -37,8 +37,8 @@ sed -i "s/git-.*-\(.*\)/git-\1/g" /usr/lib/lua/luci/version.lua
 
 [[ "$(echo "$(/sbin/cpuinfo 2>/dev/null)" | grep -i "MHz")" ]] || sed -i "s/_('CPU Info'),cpuinfo.cpufreq,//" /www/luci-static/resources/view/status/include/10_system.js
 
-grep -q op.supes.top /etc/bypass/white.list ||
-		echo "op.supes.top" >> /etc/bypass/white.list
+grep -q op.dllkids.xyz /etc/bypass/white.list ||
+		echo "op.dllkids.xyz" >> /etc/bypass/white.list
 
 processor=`cat /proc/cpuinfo | grep 'processor' | wc -l`
 test -n "$processor" || processor=3
