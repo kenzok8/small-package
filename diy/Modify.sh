@@ -17,7 +17,6 @@ sed -i "/minisign:minisign/d" luci-app-dnscrypt-proxy2/Makefile
 sed -i 's/+libstdcpp/+libstdcpp +zlib/' ngrokc/Makefile
 sed -i 's/+dockerd/+dockerd +cgroupfs-mount/' luci-app-docker*/Makefile
 sed -i '$i /etc/init.d/dockerd restart &' luci-app-docker*/root/etc/uci-defaults/*
-sed -i '/\/etc\/config\/AdGuardHome/a /etc/AdGuardHome.yaml' luci-app-adguardhome/Makefile
 sed -i 's/+rclone\( \|$\)/+rclone +fuse-utils\1/g' luci-app-rclone/Makefile
 sed -i 's/+libcap /+libcap +libcap-bin /' luci-app-openclash/Makefile
 sed -i 's/\(+luci-compat\)/\1 +luci-theme-argon/' luci-app-argon-config/Makefile
