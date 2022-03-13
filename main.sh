@@ -84,8 +84,10 @@ svn co https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcut
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn co https://github.com/messense/aliyundrive-webdav/trunk/openwrt aliyundrive && mvdir aliyundrive
 svn co https://github.com/immortalwrt/packages/trunk/net/amule
+svn co https://github.com/immortalwrt/packages/trunk/net/gost
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-amule
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-eqos
+svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-gost
 svn co https://github.com/immortalwrt/packages/trunk/net/cdnspeedtest
 svn co https://github.com/sirpdboy/sirpdboy-package/trunk/luci-app-koolddns
 svn co https://github.com/coolsnowwolf/packages/trunk/net/microsocks
