@@ -98,8 +98,6 @@ svn co https://github.com/immortalwrt/openwrt-filebrowser/trunk/filebrowser
 svn co https://github.com/kenzok8/jell/trunk/luci-app-adguardhome
 svn co https://github.com/kenzok8/jell/trunk/adguardhome
 svn co https://github.com/immortalwrt/packages/trunk/net/smartdns
-svn co https://github.com/kenzok8/litte/trunk/luci-theme-argon_new
-svn co https://github.com/kenzok8/litte/trunk/luci-theme-opentopd_new
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-mcat
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
