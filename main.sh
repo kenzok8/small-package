@@ -61,7 +61,6 @@ git clone --depth 1 https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd
 git clone --depth 1 https://github.com/kenzok78/udp2raw
 git clone --depth 1 https://github.com/kenzok78/luci-theme-argonne
 git clone --depth 1 https://github.com/kiddin9/luci-app-wizard
-git clone --depth 1 https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic
 git clone --depth 1 https://github.com/kenzok78/openwrt-minisign
 git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
@@ -91,9 +90,6 @@ svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-gost
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-eqos
 svn co https://github.com/immortalwrt/packages/trunk/net/cdnspeedtest
 svn co https://github.com/sirpdboy/sirpdboy-package/trunk/luci-app-koolddns
-svn co https://github.com/coolsnowwolf/packages/trunk/net/microsocks
-svn co https://github.com/coolsnowwolf/packages/trunk/net/redsocks2
-svn co https://github.com/coolsnowwolf/packages/trunk/net/tcpping
 svn co https://github.com/liuran001/openwrt-theme/trunk/luci-theme-argon-lr
 svn co https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
@@ -111,10 +107,8 @@ svn co https://github.com/immortalwrt/packages/trunk/libs/libcron
 svn co https://github.com/immortalwrt/packages/trunk/libs/rapidjson
 svn co https://github.com/immortalwrt/packages/trunk/libs/quickjspp
 svn co https://github.com/immortalwrt/packages/trunk/libs/toml11
-svn co https://github.com/kiddin9/openwrt-packages/trunk/UnblockNeteaseMusic
 svn co https://github.com/kiddin9/openwrt-packages/trunk/qtbase
 svn co https://github.com/kiddin9/openwrt-packages/trunk/qttools
-svn co https://github.com/kiddin9/openwrt-packages/trunk/rblibtorrent
 svn co https://github.com/kiddin9/openwrt-packages/trunk/v2raya
 svn co https://github.com/kiddin9/openwrt-packages/trunk/antileech
 
