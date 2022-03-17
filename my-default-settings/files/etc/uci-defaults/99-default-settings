@@ -16,7 +16,7 @@ if [ "$(uci -q get dhcp.@dnsmasq[0].port)" != "53" ]; then
 fi
 
 uci -q batch <<EOF
-set attendedsysupgrade.server.url='https://op.dllkids.xyz'
+set attendedsysupgrade.server.url='https://op.supes.top'
 commit attendedsysupgrade
 EOF
 
@@ -37,7 +37,7 @@ sed -i "s/git-.*-\(.*\)/git-\1/g" /usr/lib/lua/luci/version.lua
 
 [[ "$(echo "$(/sbin/cpuinfo 2>/dev/null)" | grep -i "MHz")" ]] || sed -i "s/_('CPU Info'),cpuinfo.cpufreq,//" /www/luci-static/resources/view/status/include/10_system.js
 
-grep -q op.dllkids.xyz /etc/bypass/white.list ||
+grep -q op.supes.top /etc/bypass/white.list ||
 		echo "op.dllkids.xyz" >> /etc/bypass/white.list
 
 processor=`cat /proc/cpuinfo | grep 'processor' | wc -l`
@@ -126,7 +126,7 @@ test $version -lt 1 && {
 	uci -q set fstab.@global[0].anon_mount=1
 	uci commit fstab
  
-	uci -q set network.lan.ipaddr="10.0.0.1"
+	uci -q set network.lan.ipaddr="192.168.1.252"
 	uci -q set network.@globals[0].packet_steering=1
 	uci commit network
   
