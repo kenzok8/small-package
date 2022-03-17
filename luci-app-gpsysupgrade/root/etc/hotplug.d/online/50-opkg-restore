@@ -3,7 +3,7 @@ OPKG_PI="$(opkg export pi)"
 if [ ! -e /etc/opkg-restore-auto ] \
 && lock -n /var/lock/opkg-restore && [ -s "${OPKG_PI}" ]; then
 c=0
-while ! curl https://op.dllkids.xyz >/dev/null || ! opkg update >/dev/null; do
+while ! curl https://op.supes.top >/dev/null || ! opkg update >/dev/null; do
 echo "Network error." | logger -t opkg
 [[ "$(uci -q get dhcp.@dnsmasq[0].noresolv)" == 1 && c == 0 ]] && {
 	uci -q del dhcp.@dnsmasq[0].noresolv
