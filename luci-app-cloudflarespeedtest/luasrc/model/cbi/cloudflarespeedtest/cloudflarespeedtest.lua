@@ -224,9 +224,4 @@ end
 tvIPs.write=function(e,e,e)
 end
 
-local e = luci.http.formvalue("cbi.apply")
-if e then
-  io.popen("/etc/init.d/cloudflarespeedtest restart")
-end
-
 return m
