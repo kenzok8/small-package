@@ -38,8 +38,11 @@ msgstr "启用自定义地址"
 msgid "Custome Url"
 msgstr "自定义地址"
 
-msgid "Cron Enabled"
-msgstr "启用Cron"
+msgid "Custome Cron Enabled"
+msgstr "启用自定义Cron"
+
+msgid "Custome Cron"
+msgstr "自定义Cron"
 
 msgid "Hour"
 msgstr "小时"
@@ -80,7 +83,7 @@ msgstr "停止"
 msgid "Advanced"
 msgstr "高级模式"
 
-msgid "Threads"
+msgid "Thread"
 msgid "线程数"
 
 msgid "Average Latency Cap"
@@ -91,6 +94,21 @@ msgstr "平均延迟下限"
 
 msgid "IPv6 Enabled"
 msgstr "启用IPv6"
+
+msgid "Delayed speed measurement time"
+msgstr "延迟测速次数"
+ 
+msgid "Download speed test time"
+msgstr "下载测速时间"
+
+msgid "Number of download speed tests"
+msgstr "下载测速数量"
+
+msgid "Disable download speed test"
+msgstr "禁用下载测速"
+
+msgid "Port"
+msgstr "端口"
 
 msgid "Not recommended"
 msgstr "不推荐"

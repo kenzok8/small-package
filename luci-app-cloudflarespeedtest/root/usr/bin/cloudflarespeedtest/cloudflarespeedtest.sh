@@ -25,7 +25,7 @@ echolog() {
 }
 
 function read_config(){
-	get_global_config "enabled" "speed" "custome_url" "threads" "tl" "tll" "ipv6_enabled" "advanced" "proxy_mode"
+	get_global_config "enabled" "speed" "custome_url" "threads" "custome_cors_enabled" "custome_cron" "t" "tp" "dt" "dn" "dd" "tl" "tll" "ipv6_enabled" "advanced" "proxy_mode"
 	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "DNS_enabled"
 }
 
@@ -42,9 +42,15 @@ function  speed_test(){
 	fi
 
 	if [ $advanced -eq "1" ] ; then
-		command="${command} -tl ${tl} -tll ${tll} -n ${threads}"
+		command="${command} -tl ${tl} -tll ${tll} -n ${threads} -t ${t} -dt ${dt} -dn ${dn}"
+		if [ $dn -eq "1" ] ; then
+			command="${command} -dd"
+		fi
+		if [ $tp -ne "443" ] ; then
+		 	command="${command} -tp ${tp}"
+		fi
 	else
-		command="${command} -tl 200 -tll 40 -n 200"
+		command="${command} -tl 200 -tll 40 -n 200 -t 4 -dt 10 -dn 2"
 	fi
 	
 	ssr_original_server=$(uci get shadowsocksr.@global[0].global_server 2>/dev/null)
