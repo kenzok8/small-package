@@ -52,7 +52,7 @@ if [ "$C" = gfw -o "$(uci -q get bypass.@global[0].gfw_mode)" = 1 ];then
 		while ! (curl -kLfsm 3 -o /tmp/gfw.b64 https://op.supes.top/gfwlist.txt || curl -kLfsm 5 -o /tmp/gfw.b64 https://cdn.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt);do
 			sleep 1
 		done
-	elif [ "$C" = gfw ];then
+	elif [ "$C" = gfw -o $A = N ];then
 		curl -kLfsm 3 -o /tmp/gfw.b64 https://op.supes.top/gfwlist.txt || curl -kLfsm 5 -o /tmp/gfw.b64 https://cdn.jsdelivr.net/gh/gfwlist/gfwlist/gfwlist.txt
 	fi
 	if [[ -f /tmp/gfw.b64 && $? == 0 ]];then
