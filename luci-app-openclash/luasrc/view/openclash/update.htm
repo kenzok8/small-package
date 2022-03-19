@@ -10,6 +10,7 @@
 	  	<td width="25%" align="left"><select id="CORE_VERSION">
 	  		<option value="linux-386"><%:linux-386%></option>
 				<option value="linux-amd64"><%:linux-amd64(x86-64)%></option>
+				<option value="linux-amd64-v3"><%:linux-amd64-v3(x86-64)%></option>
 				<option value="linux-armv5"><%:linux-armv5%></option>
 				<option value="linux-armv6"><%:linux-armv6%></option>
 				<option value="linux-armv7"><%:linux-armv7%></option>
@@ -29,8 +30,9 @@
 	  	</select></td>
 	  	</tr>
 		<tr>
+			<td width="25%"><%:CPU Architecture%></td><td width="25%" align="left" id="CPU_MODEL"><%:Collecting data...%></td>
 			<td width="25%"><%:Last Check Update%></td><td width="25%" align="left" id="CHECKTIME"><%:Collecting data...%></td>
-			<td width="25%"><%:CPU Architecture%></td><td width="25%" align="left" id="CPU_MODEL"><%:Collecting data...%></td></tr>
+		</tr>
 	  <tr><td width="100%" colspan="4">
 	    <p align="center">
 	  		<b><%:Core path:%>/etc/openclash/core/clash</b>
@@ -243,28 +245,16 @@
         if ( x && x.status == 200 ) {
         	if ( status.corever != "0" ) {
         		if (type == "Dev") {
-        			if (r == "dev") {
-        				url1='https://raw.githubusercontent.com/vernesong/OpenClash/'+r+'/core-lateset/dev/clash-'+status.corever+'.tar.gz';
-        				window.location.href=url1;
-        			}
-        			else {
-        				url1='https://github.com/vernesong/OpenClash/releases/download/Clash/clash-'+status.corever+'.tar.gz';
-        				window.location.href=url1;
-        			}
+        			url1='https://raw.githubusercontent.com/vernesong/OpenClash/'+r+'/core-lateset/dev/clash-'+status.corever+'.tar.gz';
+        			window.location.href=url1;
         		}
         		if (type == "TUN") {
         			var corelv = status.corelv;
           		var arr_core = corelv.split(",");
           		var coretunlvis = arr_core[1];
           		if ( coretunlvis != "" ) {
-          			if (r == "dev") {
-          				url3='https://raw.githubusercontent.com/vernesong/OpenClash/'+r+'/core-lateset/premium/clash-'+status.corever+'-'+coretunlvis+'.gz';
-              		window.location.href=url3;
-          			}
-          			else {
-              		url3='https://github.com/vernesong/OpenClash/releases/download/TUN-Premium/clash-'+status.corever+'-'+coretunlvis+'.gz';
-              		window.location.href=url3;
-              	}
+          			url3='https://raw.githubusercontent.com/vernesong/OpenClash/'+r+'/core-lateset/premium/clash-'+status.corever+'-'+coretunlvis+'.gz';
+              	window.location.href=url3;
           		}
           		else {
               	alert('<%:Failed to get the latest version. Please try again later!%>')
@@ -293,14 +283,8 @@
               var oplv = status.oplv;
               var oplvis = oplv.substring(oplv.indexOf("v") + 1,oplv.indexOf(","));
               if ( oplvis != "" ) {
-              	if (r == "dev") {
-                	url2='https://raw.githubusercontent.com/vernesong/OpenClash/'+r+'/luci-app-openclash_'+oplvis+'_all.ipk';
-                	window.location.href=url2;
-                }
-                else {
-                	url2='https://github.com/vernesong/OpenClash/releases/download/v'+oplvis+'/luci-app-openclash_'+oplvis+'_all.ipk';
-                	window.location.href=url2;
-                }
+                url2='https://raw.githubusercontent.com/vernesong/OpenClash/'+r+'/luci-app-openclash_'+oplvis+'_all.ipk';
+                window.location.href=url2;
               }
               else {
                  alert('<%:Failed to get the latest version. Please try again later!%>')

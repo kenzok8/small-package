@@ -64,7 +64,7 @@ if [ "$enable" -eq 1 ]; then
            chmod o+w /etc/openclash/rule_provider/* 2>/dev/null
            chmod o+w /tmp/openclash.log 2>/dev/null
            chown nobody:nogroup /etc/openclash/core/* 2>/dev/null
-           capabilties="cap_sys_resource,cap_dac_override,cap_net_raw,cap_net_bind_service,cap_net_admin"
+           capabilties="cap_sys_resource,cap_dac_override,cap_net_raw,cap_net_bind_service,cap_net_admin,cap_sys_ptrace"
            capsh --caps="${capabilties}+eip" -- -c "capsh --user=nobody --addamb='${capabilties}' -- -c 'nohup $CLASH -d $CLASH_CONFIG -f \"$CONFIG_FILE\" >> $LOG_FILE 2>&1 &'" >> $LOG_FILE 2>&1
         else
            nohup $CLASH -d $CLASH_CONFIG -f "$CONFIG_FILE" >> $LOG_FILE 2>&1 &
@@ -153,6 +153,10 @@ fi
                LOG_OUT "Tip: Start Auto Select Proxy For YouTube Premium Unlock..."
                /usr/share/openclash/openclash_streaming_unlock.lua "YouTube Premium" >> $LOG_FILE
             fi
+            if [ "$stream_auto_select_prime_video" -eq 1 ]; then
+               LOG_OUT "Tip: Start Auto Select Proxy For Amazon Prime Video Unlock..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "Amazon Prime Video" >> $LOG_FILE
+            fi
             if [ "$stream_auto_select_hbo_now" -eq 1 ]; then
                LOG_OUT "Tip: Start Auto Select Proxy For HBO Now Unlock..."
                /usr/share/openclash/openclash_streaming_unlock.lua "HBO Now" >> $LOG_FILE
@@ -168,10 +172,6 @@ fi
             if [ "$stream_auto_select_tvb_anywhere" -eq 1 ]; then
                LOG_OUT "Tip: Start Auto Select Proxy For TVB Anywhere+ Unlock..."
                /usr/share/openclash/openclash_streaming_unlock.lua "TVB Anywhere+" >> $LOG_FILE
-            fi
-            if [ "$stream_auto_select_prime_video" -eq 1 ]; then
-               LOG_OUT "Tip: Start Auto Select Proxy For Amazon Prime Video Unlock..."
-               /usr/share/openclash/openclash_streaming_unlock.lua "Amazon Prime Video" >> $LOG_FILE
             fi
          fi
       fi

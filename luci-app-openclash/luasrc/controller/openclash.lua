@@ -62,6 +62,9 @@ function index()
 	entry({"admin", "services", "openclash", "switch_run_mode"}, call("action_switch_run_mode"))
 	entry({"admin", "services", "openclash", "get_run_mode"}, call("action_get_run_mode"))
 	entry({"admin", "services", "openclash", "create_file"}, call("create_file"))
+	entry({"admin", "services", "openclash", "rename_file"}, call("rename_file"))
+	entry({"admin", "services", "openclash", "manual_stream_unlock_test"}, call("manual_stream_unlock_test"))
+	entry({"admin", "services", "openclash", "all_proxies_stream_test"}, call("all_proxies_stream_test"))
 	entry({"admin", "services", "openclash", "settings"},cbi("openclash/settings"),_("Global Settings"), 30).leaf = true
 	entry({"admin", "services", "openclash", "servers"},cbi("openclash/servers"),_("Servers and Groups"), 40).leaf = true
 	entry({"admin", "services", "openclash", "other-rules-edit"},cbi("openclash/other-rules-edit"), nil).leaf = true
@@ -109,12 +112,7 @@ local function restricted_mode()
 end
 
 local function is_watchdog()
-	local ps_version = luci.sys.exec("ps --version 2>&1 |grep -c procps-ng |tr -d '\n'")
-	if ps_version == "1" then
-		return luci.sys.call("ps -efw |grep openclash_watchdog.sh |grep -v grep >/dev/null") == 0
-	else
-		return luci.sys.call("ps -w |grep openclash_watchdog.sh |grep -v grep >/dev/null") == 0
-	end
+	return process_status("openclash_watchdog.sh")
 end
 
 local function cn_port()
@@ -184,38 +182,7 @@ local function startlog()
 			if not string.find (info, "【") and not string.find (info, "】") then
    			line_trans = luci.i18n.translate(string.sub(info, 0, -1))
    		else
-   			local no_trans = {}
-   			line_trans = ""
-   			local a = string.find (info, "【")
-   			local b = string.find (info, "】") + 2
-   			local c = 0
-   			local v
-   			local x
-   			while true do
-   				table.insert(no_trans, a)
-   				table.insert(no_trans, b)
-   				if string.find (info, "【", b+1) and string.find (info, "】", b+1) then
-   					a = string.find (info, "【", b+1)
-   					b = string.find (info, "】", b+1) + 2
-   				else
-   					break
-   				end
-   			end
-   			for k = 1, #no_trans, 2 do
-   				x = no_trans[k]
-   				v = no_trans[k+1]
-   				if x <= 1 then
-   					line_trans = line_trans .. string.sub(info, 0, v)
-   				elseif v <= string.len(info) then
-   					line_trans = line_trans .. luci.i18n.translate(string.sub(info, c, x - 1))..string.sub(info, x, v)
-   				end
-   				c = v + 1
-   			end
-   			if c > string.len(info) then
-   				line_trans = line_trans
-   			else
-   				line_trans = line_trans .. luci.i18n.translate(string.sub(info, c, -1))
-   			end
+   			line_trans = trans_line(line)
    		end
    	end
 	end
@@ -1062,46 +1029,7 @@ function action_refresh_log()
 				if not string.find (line, "【") and not string.find (line, "】") then
    				line_trans = string.sub(line, 0, 20)..luci.i18n.translate(string.sub(line, 21, -1))
    			else
-   				local no_trans = {}
-   				line_trans = ""
-   				local a = string.find (line, "【")
-   				local b = string.find (line, "】") + 2
-   				local c = 21
-   				local d = 0
-   				local v
-   				local x
-   				while true do
-   					table.insert(no_trans, a)
-   					table.insert(no_trans, b)
-   					if string.find (line, "【", b+1) and string.find (line, "】", b+1) then
-   						a = string.find (line, "【", b+1)
-   						b = string.find (line, "】", b+1) + 2
-   					else
-   						break
-   					end
-   				end
-   				for k = 1, #no_trans, 2 do
-   					x = no_trans[k]
-   					v = no_trans[k+1]
-   					if x <= 21 then
-   						line_trans = line_trans .. luci.i18n.translate(string.sub(line, d, x - 1)) .. string.sub(line, x, v)
-   						d = v + 1
-   					elseif v <= string.len(line) then
-   						line_trans = line_trans .. luci.i18n.translate(string.sub(line, c, x - 1)) .. string.sub(line, x, v)
-   					end
-   					c = v + 1
-   				end
-   				if c > string.len(line) then
-   					if d == 0 then
-   						line_trans = string.sub(line, 0, 20) .. line_trans
-   					end
-   				else
-   					if d == 0 then
-   						line_trans = string.sub(line, 0, 20) .. line_trans .. luci.i18n.translate(string.sub(line, c, -1))
-   					else
-   						line_trans = line_trans .. luci.i18n.translate(string.sub(line, c, -1))
-   					end
-   				end
+   				line_trans = trans_line(line)
    			end
 			end
 			if data == "" then
@@ -1277,9 +1205,206 @@ function create_file()
 	local file_name = luci.http.formvalue("filename")
 	local file_path = luci.http.formvalue("filepath")..file_name
 	fs.writefile(file_path, "")
-	if fs.isfile(file_path) then
-		return
-	else
+	if not fs.isfile(file_path) then
 		luci.http.status(500, "Create File Faild")
+	end
+	return
+end
+
+function rename_file()
+	local new_file_name = luci.http.formvalue("new_file_name")
+	local file_path = luci.http.formvalue("file_path")
+	local old_file_name = luci.http.formvalue("file_name")
+	local old_file_path = file_path .. old_file_name
+	local new_file_path = file_path .. new_file_name
+	local old_run_file_path = "/etc/openclash/" .. old_file_name
+	local new_run_file_path = "/etc/openclash/" .. new_file_name
+	local old_backup_file_path = "/etc/openclash/backup/" .. old_file_name
+	local new_backup_file_path = "/etc/openclash/backup/" .. new_file_name
+	if fs.rename(old_file_path, new_file_path) then
+		if file_path == "/etc/openclash/config/" then
+			if uci:get("openclash", "config", "config_path") == old_file_path then
+				uci:set("openclash", "config", "config_path", new_file_path)
+			end
+			
+			if fs.isfile(old_run_file_path) then
+				fs.rename(old_run_file_path, new_run_file_path)
+			end
+			
+			if fs.isfile(old_backup_file_path) then
+				fs.rename(old_backup_file_path, new_backup_file_path)
+			end
+			
+			uci:foreach("openclash", "config_subscribe",
+			function(s)
+				if s.name == fs.filename(old_file_name) and fs.filename(new_file_name) ~= new_file_name then
+					uci:set("openclash", s[".name"], "name", fs.filename(new_file_name))
+				end
+			end)
+			
+			uci:foreach("openclash", "other_rules",
+			function(s)
+				if s.config == old_file_name and fs.filename(new_file_name) ~= new_file_name then
+					uci:set("openclash", s[".name"], "config", new_file_name)
+				end
+			end)
+			
+			uci:foreach("openclash", "groups",
+			function(s)
+				if s.config == old_file_name and fs.filename(new_file_name) ~= new_file_name then
+					uci:set("openclash", s[".name"], "config", new_file_name)
+				end
+			end)
+			
+			uci:foreach("openclash", "proxy-provider",
+			function(s)
+				if s.config == old_file_name and fs.filename(new_file_name) ~= new_file_name then
+					uci:set("openclash", s[".name"], "config", new_file_name)
+				end
+			end)
+			
+			uci:foreach("openclash", "rule_provider_config",
+			function(s)
+				if s.config == old_file_name and fs.filename(new_file_name) ~= new_file_name then
+					uci:set("openclash", s[".name"], "config", new_file_name)
+				end
+			end)
+			
+			uci:foreach("openclash", "servers",
+			function(s)
+				if s.config == old_file_name and fs.filename(new_file_name) ~= new_file_name then
+					uci:set("openclash", s[".name"], "config", new_file_name)
+				end
+			end)
+			
+			uci:foreach("openclash", "game_config",
+			function(s)
+				if s.config == old_file_name and fs.filename(new_file_name) ~= new_file_name then
+					uci:set("openclash", s[".name"], "config", new_file_name)
+				end
+			end)
+			
+			uci:foreach("openclash", "rule_providers",
+			function(s)
+				if s.config == old_file_name and fs.filename(new_file_name) ~= new_file_name then
+					uci:set("openclash", s[".name"], "config", new_file_name)
+				end
+			end)
+			
+			uci:commit("openclash")
+		end
+		luci.http.status(200, "Rename File Successful")
+	else
+		luci.http.status(500, "Rename File Faild")
+	end
+	return
+end
+
+function manual_stream_unlock_test()
+	local type = luci.http.formvalue("type")
+	local cmd = string.format('/usr/share/openclash/openclash_streaming_unlock.lua "%s"', type)
+	local line_trans
+	luci.http.prepare_content("text/plain; charset=utf-8")
+	local util = io.popen(cmd)
+	if util and util ~= "" then
+		while true do
+			local ln = util:read("*l")
+			if ln then
+				if not string.find (ln, "【") and not string.find (ln, "】") then
+   				line_trans = luci.i18n.translate(string.sub(ln, 0, -1))
+   			else
+   				line_trans = trans_line(ln)
+   			end
+				luci.http.write(line_trans)
+				luci.http.write("\n")
+			end
+			if not process_status("openclash_streaming_unlock.lua") then
+				break
+			end
+		end
+		util:close()
+		return
+	end
+	luci.http.status(500, "Something Wrong While Testing...")
+end
+
+function all_proxies_stream_test()
+	local type = luci.http.formvalue("type")
+	local cmd = string.format('/usr/share/openclash/openclash_streaming_unlock.lua "%s" "%s"', type, "true")
+	local line_trans
+	luci.http.prepare_content("text/plain; charset=utf-8")
+	local util = io.popen(cmd)
+	if util and util ~= "" then
+		while true do
+			local ln = util:read("*l")
+			if ln then
+				if not string.find (ln, "【") and not string.find (ln, "】") then
+   				line_trans = luci.i18n.translate(string.sub(ln, 0, -1))
+   			else
+   				line_trans = trans_line(ln)
+   			end
+				luci.http.write(line_trans)
+				luci.http.write("\n")
+			end
+			if not process_status("openclash_streaming_unlock.lua") then
+				break
+			end
+		end
+		util:close()
+		return
+	end
+	luci.http.status(500, "Something Wrong While Testing...")
+end
+
+function trans_line(data)
+	local no_trans = {}
+	local line_trans = ""
+	local a = string.find (data, "【")
+	local b = string.find (data, "】") + 2
+	local c = 21
+	local d = 0
+	local v
+	local x
+	while true do
+		table.insert(no_trans, a)
+		table.insert(no_trans, b)
+		if string.find (data, "【", b+1) and string.find (data, "】", b+1) then
+			a = string.find (data, "【", b+1)
+			b = string.find (data, "】", b+1) + 2
+		else
+			break
+		end
+	end
+	for k = 1, #no_trans, 2 do
+		x = no_trans[k]
+		v = no_trans[k+1]
+		if x <= 21 then
+			line_trans = line_trans .. luci.i18n.translate(string.sub(data, d, x - 1)) .. string.sub(data, x, v)
+			d = v + 1
+		elseif v <= string.len(data) then
+			line_trans = line_trans .. luci.i18n.translate(string.sub(data, c, x - 1)) .. string.sub(data, x, v)
+		end
+		c = v + 1
+	end
+	if c > string.len(data) then
+		if d == 0 then
+			line_trans = string.sub(data, 0, 20) .. line_trans
+		end
+	else
+		if d == 0 then
+			line_trans = string.sub(data, 0, 20) .. line_trans .. luci.i18n.translate(string.sub(data, c, -1))
+		else
+			line_trans = line_trans .. luci.i18n.translate(string.sub(data, c, -1))
+		end
+	end
+	return line_trans
+end
+
+function process_status(name)
+	local ps_version = luci.sys.exec("ps --version 2>&1 |grep -c procps-ng |tr -d '\n'")
+	if ps_version == "1" then
+		return luci.sys.call(string.format("ps -efw |grep '%s' |grep -v grep >/dev/null", name)) == 0
+	else
+		return luci.sys.call(string.format("ps -w |grep '%s' |grep -v grep >/dev/null", name)) == 0
 	end
 end
