@@ -13,7 +13,9 @@ service_triggers() {
 add_cron(){
 	local enabled
 	config_get_bool enabled $1 enabled
- 
+	
+	del_cron
+	
 	if	[ $enabled = 1 ] ; then 
 		local minute
 		local hour
