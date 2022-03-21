@@ -43,7 +43,7 @@ function  speed_test(){
 
 	if [ $advanced -eq "1" ] ; then
 		command="${command} -tl ${tl} -tll ${tll} -n ${threads} -t ${t} -dt ${dt} -dn ${dn}"
-		if [ $dn -eq "1" ] ; then
+		if [ $dd -eq "1" ] ; then
 			command="${command} -dd"
 		fi
 		if [ $tp -ne "443" ] ; then
