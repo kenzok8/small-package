@@ -46,11 +46,19 @@ function testwan(cmd)
 end
 
 function test_iperf0(addr)
+        local netease
+        netease= luci.sys.call("ps |grep unblockneteasemusic |grep app.js |grep -v grep >/dev/null") == 0
+	if netease then
+	   luci.sys.call("/etc/init.d/unblockneteasemusic stop ")
+	   luci.sys.call("/etc/init.d/unblockmusic stop ")
+	end
 	testlan("iperf3 -s ", addr)
 end
 
 function test_iperf1(addr)
 	luci.sys.call("killall iperf3")
+	luci.sys.call("/etc/init.d/unblockneteasemusic restart ")
+	luci.sys.call("/etc/init.d/unblockmusic restart ")
 end
 
 function get_log()

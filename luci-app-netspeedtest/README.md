@@ -7,7 +7,7 @@
 =
 Welcome to sirpdboy's  git source of packages
 -
-[luci-app-NetSpeedTest — 网络速度测试1.5完整版](https://github.com/sirpdboy/NetSpeedTest)
+[luci-app-NetSpeedTest — 网络速度测试1.7完整版](https://github.com/sirpdboy/NetSpeedTest)
 ======================
 
 [![](https://img.shields.io/badge/-目录:-696969.svg)](#readme) [![](https://img.shields.io/badge/-写在前面-F5F5F5.svg)](#写在前面-) [![](https://img.shields.io/badge/-编译说明-F5F5F5.svg)](#编译说明-) [![](https://img.shields.io/badge/-说明-F5F5F5.svg)](#说明-) [![](https://img.shields.io/badge/-捐助-F5F5F5.svg)](#捐助-) 

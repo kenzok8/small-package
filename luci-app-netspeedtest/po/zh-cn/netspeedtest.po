@@ -22,9 +22,9 @@ msgstr "网络速度诊断测试（包括内网和外网）"
 msgid "iperf3 lanspeedtest"
 msgstr "iperf3 内网测速"
 
+msgid "Network speed diagnosis test (including intranet and extranet)<br/>For specific usage, see:"
+msgstr "网络速度诊断测试（包括内网和外网）<br/>具体使用参见:"
 
-msgid "Network speed diagnosis test (including intranet and extranet)<br/>For specific usage, see:<a href=\'https://github.com/sirpdboy/netspeedtest.git' target=\'_blank\'>GitHub @netspeedtest/luci-app-netspeedtest</a>'"
-msgstr "网络速度诊断测试（包括内网和外网）<br/>具体使用参见:<a href=\'https://github.com/sirpdboy/netspeedtest.git' target=\'_blank\'>GitHub @netspeedtest/luci-app-netspeedtest</a>'"
 
 msgid "iperfstart"
 msgstr "iperf服务启动"
