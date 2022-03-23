@@ -1,5 +1,5 @@
---- prereq-build.mk	2022-01-12 17:31:03.000000000 +0800
-+++ prereq-build_new.mk	2022-03-23 10:46:22.000000000 +0800
+--- a/include/prereq-build.mk
++++ b/include/prereq-build.mk
 @@ -196,5 +196,4 @@
  
  # Install ldconfig stub
