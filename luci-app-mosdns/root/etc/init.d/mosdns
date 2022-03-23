@@ -104,8 +104,7 @@ start_service() {
 	if [ "${configfile}" = "./def_config.yaml" ]; then
 		restore_setting
 		prepare_setting
-		redirect=$(uci -q get mosdns.mosdns.redirect)
-		if [ "$redirect" -eq 1 ]; then
+		if [ "$(uci -q get mosdns.mosdns.redirect)" -eq 1 ] && [ "$(uci -q get shadowsocksr.@global[0].run_mode)" != gfw ]; then
 			cat /dev/null > /etc/ssrplus/gfw_list.conf
 			sed -i '/update.lua/d' /usr/share/shadowsocksr/ssrplusupdate.sh
 			sed -i '/bin\/sh/a\/usr/bin/lua /usr/share/shadowsocksr/update.lua ad_data' /usr/share/shadowsocksr/ssrplusupdate.sh
