@@ -130,6 +130,7 @@ svn co https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest/trunk/applicat
 svn co https://github.com/messense/aliyundrive-fuse/trunk/openwrt && mvdir openwrt
 git clone -b luci https://github.com/xiaorouji/openwrt-passwall passwall1 && mv -n passwall1/luci-app-passwall  ./; rm -rf passwall1
 svn co https://github.com/xiaorouji/openwrt-passwall2/trunk/luci-app-passwall2
+svn co https://github.com/Carseason/openwrt-themedog/trunk/luci/luci-theme-dog
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
