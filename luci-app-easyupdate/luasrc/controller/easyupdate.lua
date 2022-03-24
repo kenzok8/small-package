@@ -27,6 +27,7 @@ function index()
 	entry({"admin", "services", "easyupdate", "getver"}, call("getver")).leaf = true
 	entry({"admin", "services", "easyupdate", "download"}, call("download")).leaf = true
 	entry({"admin", "services", "easyupdate", "getlog"}, call("getlog")).leaf = true
+	entry({"admin", "services", "easyupdate", "check"}, call("check")).leaf = true
 	entry({"admin", "services", "easyupdate", "flash"}, call("flash")).leaf = true
 end
 
@@ -66,15 +67,26 @@ end
 
 function download()
 	local e={}
-    luci.sys.exec("/usr/bin/easyupdate.sh -d")
-    e.code=1
+	ret=luci.sys.exec("/usr/bin/easyupdate.sh -d")
+	e.data=ret:match("openwrt.+%.img%.gz")
+	e.code=1
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
 
 function getlog()
 	local e = {}
+	e.code=1
 	e.data=nixio.fs.readfile ("/tmp/easyupdate.log")
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(e)
+end
+
+function check()
+	local e = {}
+	local f = luci.http.formvalue('file')
+	e.code=1
+	e.data=luci.sys.exec("/usr/bin/easyupdate.sh -k " .. f)
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
@@ -82,7 +94,7 @@ end
 function flash()
 	local e={}
 	local f = luci.http.formvalue('file')
-    luci.sys.exec("/usr/bin/easyupdate.sh -f " .. f)
+    luci.sys.exec("/usr/bin/easyupdate.sh -f /tmp/" .. f)
     e.code=1
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
