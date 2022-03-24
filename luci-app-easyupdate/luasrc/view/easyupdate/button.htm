@@ -109,6 +109,14 @@ function getver() {
             }
         }
     );
+	XHR.get('<%=url([[admin]], [[services]], [[easyupdate]], [[check]])%>', {file: ''}, (x, r) => {
+		if (r.code == 1 && r.data.indexOf("OK") > -1) {
+			const tb = document.getElementById('update');
+			tb.setAttribute('file', r.data.slice(0,r.data.indexOf(".img.gz")) + ".img.gz");
+			tb.value = '<%:Firmware Upgrade%>'
+			tb.setAttribute('flash', 1);
+		}
+	});
 }
 getver()
 function check_version() {
@@ -149,23 +157,31 @@ function check_version() {
         tb.disabled = true;
         XHR.get('<%=url([[admin]], [[services]], [[easyupdate]], [[download]])%>', null, (x, r) => {
             if (r.code == 1) {
+				tb.setAttribute('file', r.data);
                 XHR.poll(1, '<%=url([[admin]], [[services]], [[easyupdate]], [[getlog]])%>', null,(x, r) => {
-                    if (r.data.indexOf(" error") > -1 || r.data.indexOf("Connection reset") > -1){
+                    if (r.data.indexOf("transfer closed") > -1 || r.data.indexOf("Could not resolve host") > -1){
                         XHR.halt()
                         update_status_message('warning', r.data);
                         document.getElementById('update_apply_overlay').addEventListener("click", (e)=>{
                             update_status_message()
                         })
                     }else{
-                        if (r.data.indexOf("Download completed") > -1 ){
-                            XHR.halt()
-                            setTimeout(() => {
-                                update_status_message();
-                                tb.value = '<%:Firmware Upgrade%>'
-                                tb.setAttribute('flash', 1);
-                                const file = r.data.match(/Writing to '([^\s]+img.gz)'/);
-                                tb.setAttribute('file', file[1]);
-                            },3000);
+                        if (/100\s.+M\s+100.+--:--:--/.test(r.data)){
+							XHR.get('<%=url([[admin]], [[services]], [[easyupdate]], [[check]])%>', {file: tb.getAttribute("file")}, (x, r) => {
+								XHR.halt()
+								if (r.code == 1 && r.data.indexOf("OK") > -1) {
+									setTimeout(() => {
+										update_status_message();
+										tb.value = '<%:Firmware Upgrade%>'
+										tb.setAttribute('flash', 1);
+									},3000);
+								}else{
+									update_status_message('warning', r.data);
+									document.getElementById('update_apply_overlay').addEventListener("click", (e)=>{
+										update_status_message()
+									})
+								}
+							});
                         }else{
                             update_status_message('notice', r.data);
                         }
