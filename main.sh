@@ -118,6 +118,7 @@ svn co https://github.com/kiddin9/openwrt-packages/trunk/rblibtorrent
 svn co https://github.com/kiddin9/openwrt-packages/trunk/v2raya
 svn co https://github.com/kiddin9/openwrt-packages/trunk/antileech
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-diskman
+svn co https://github.com/kiddin9/openwrt-packages/trunk/vsftpd-alt
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-snmpd
 svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
 svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
