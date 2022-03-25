@@ -28,22 +28,25 @@ git clone --depth 1 https://github.com/kiddin9/luci-app-xlnetacc
 git clone --depth 1 https://github.com/kiddin9/openwrt-amule-dlp && mvdir openwrt-amule-dlp
 git clone --depth 1 https://github.com/kiddin9/luci-app-wizard
 
-
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall
 git clone --depth 1 https://github.com/Lienol/openwrt-package
 git clone --depth 1 https://github.com/ysc3839/openwrt-minieap
 git clone --depth 1 https://github.com/BoringCat/luci-app-mentohust
+git clone --depth 1 https://github.com/BoringCat/luci-app-minieap
 git clone --depth 1 https://github.com/KyleRicardo/MentoHUST-OpenWrt-ipk
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-autoipsetadder
-git clone --depth 1 https://github.com/NateLol/luci-app-beardropper
+git clone --depth 1 https://github.com/rufengsuixing/luci-app-onliner
+git clone --depth 1 https://github.com/rufengsuixing/luci-app-usb3disable
 git clone --depth 1 https://github.com/riverscn/openwrt-iptvhelper && mvdir openwrt-iptvhelper
+
+git clone --depth 1 https://github.com/NateLol/luci-app-beardropper
 git clone --depth 1 https://github.com/iwrt/luci-app-ikoolproxy  && mv -f luci-app-ikoolproxy/ikoolproxy ikoolproxy
 git clone --depth 1 https://github.com/project-lede/luci-app-godproxy
-git clone --depth 1 https://github.com/BoringCat/luci-app-minieap
-git clone --depth 1 https://github.com/rufengsuixing/luci-app-onliner
+
+
 git clone --depth 1 https://github.com/tty228/luci-app-serverchan
 git clone --depth 1 https://github.com/4IceG/luci-app-sms-tool smstool && mvdir smstool
-git clone --depth 1 https://github.com/rufengsuixing/luci-app-usb3disable
+
 git clone --depth 1 https://github.com/silime/luci-app-xunlei
 git clone --depth 1 https://github.com/ysc3839/luci-proto-minieap
 
@@ -80,7 +83,7 @@ git clone --depth 1 https://github.com/sensec/luci-app-udp2raw
 git clone --depth 1 https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-sysuh3c
 git clone --depth 1 https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd1/luci-app-cupsd cupsd1/cups/cups ./ ; rm -rf cupsd1
 git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
-git clone --depth 1 https://github.com/kiddin9/luci-app-wizard
+
 git clone --depth 1 https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 
