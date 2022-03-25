@@ -130,6 +130,11 @@ svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-filebrows
 svn co https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
 
+git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" net/miniupnpd net/mwan3 multimedia/UnblockNeteaseMusic-Go \
+multimedia/UnblockNeteaseMusic net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
+net/qBittorrent-static net/qBittorrent libs/qtbase libs/qttools libs/rblibtorrent \
+net/uugamebooster net/verysync net/dnsforwarder net/nps net/microsocks net/tcpping net/redsocks2
+
 git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/adguardhome \
 net/sub-web net/smartdns net/dnsproxy net/haproxy net/v2raya net/cdnspeedtest \
 net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gost net/gowebdav \
@@ -142,9 +147,8 @@ git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua
 
 git_sparse_clone openwrt-21.02 "https://github.com/openwrt/packages" "21packages" \
 net/openvpn utils/cgroupfs-mount utils/coremark net/xray-core net/nginx net/uwsgi net/ddns-scripts admin/netdata
-
 git_sparse_clone openwrt-21.02 "https://github.com/openwrt/openwrt" "21openwrt" package/libs/mbedtls \
-git_sparse_clone openwrt-21.02 "https://github.com/openwrt/luci" "opluci" applications/luci-app-attendedsysupgrade applications/luci-app-aria2 \
+git_sparse_clone openwrt-21.02 "https://github.com/openwrt/luci" "21luci" applications/luci-app-attendedsysupgrade applications/luci-app-aria2 \
 applications/luci-app-ddns applications/luci-app-opkg applications/luci-app-ksmbd \
 applications/luci-app-samba4 modules/luci-base modules/luci-mod-network \
 modules/luci-mod-status modules/luci-mod-system
