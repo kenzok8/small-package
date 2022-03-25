@@ -111,6 +111,7 @@ svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
 svn co https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest/trunk/applications/luci-app-cloudflarespeedtest
 svn co https://github.com/kenzok8/jell/trunk/luci-app-adguardhome
+svn co https://github.com/kenzok8/jell/trunk/adguardhome
 svn co https://github.com/Carseason/openwrt-themedog/trunk/luci/luci-theme-dog
 
 svn co https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcutmenu
@@ -134,8 +135,8 @@ multimedia/UnblockNeteaseMusic net/amule net/baidupcs-web multimedia/gmediarende
 net/qBittorrent-static net/qBittorrent libs/qtbase libs/qttools libs/rblibtorrent \
 net/uugamebooster net/verysync net/dnsforwarder net/nps net/microsocks net/tcpping net/redsocks2
 
-git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/adguardhome \
-net/sub-web net/smartdns net/dnsproxy net/haproxy net/v2raya net/cdnspeedtest \
+git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/sub-web \
+net/smartdns net/dnsproxy net/haproxy net/v2raya net/cdnspeedtest \
 net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gost net/gowebdav \
 admin/bpytop libs/jpcre2 libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 \
 utils/cpulimit utils/filebrowser
