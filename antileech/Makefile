@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=antileech
 PKG_VERSION:=2.3.2
-PKG_RELEASE:=17
+PKG_RELEASE:=15
 
 #PKG_SOURCE:=antileech-2.3.1.tar.gz
 #PKG_SOURCE_URL:=@SF/amule

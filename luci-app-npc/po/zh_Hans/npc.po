@@ -1,0 +1,42 @@
+# zh_CN translation for npc.
+# Copyright (C) 2015 Yoyodyne, Inc. (msgids)
+# This file is distributed under the same license as the gettext package.
+#
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2015-09-01 09:53中国标准时间\n"
+"Last-Translator: mujw <mujw@gmail.com>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Nps Client"
+msgstr "Nps 客户端"
+
+msgid "Server"
+msgstr "Server"
+
+msgid "Auto Reconnection"
+msgstr "自动重连"
+
+msgid "Nps is a fast reverse proxy to help you expose a local server behind a NAT or firewall to the internet."
+msgstr "Nps 是一款轻量级、高性能、功能强大的内网穿透代理服务器"
+
+msgid "Basic Setting"
+msgstr "基本设置"
+
+msgid "Enable Compression"
+msgstr "压缩传输"
+
+msgid "Enable Encryption"
+msgstr "加密传输"
+
+msgid "Protocol Type"
+msgstr "协议类型"
+
+msgid "The contents will be compressed to speed up the traffic forwarding speed, but this will consume some additional cpu resources."
+msgstr "压缩传输内容，加快流量转发速度，会额外消耗 cpu 资源"
+
+msgid "Encrypted the communication between Npc and Nps, will effectively prevent the traffic intercepted."
+msgstr "加密传输 npc 与 nps 之间的通信内容，会有效防止流量被拦截"

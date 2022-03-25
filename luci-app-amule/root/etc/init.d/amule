@@ -159,8 +159,7 @@ amule() {
 	fi
 
 	procd_add_jail amule log
-	procd_add_jail_mount /usr/bin/amulecmd /usr/bin/amuleweb /usr/share/amule/
-	procd_add_jail_mount_rw $config_dir
+	procd_add_jail_mount_rw $config_file
 	procd_add_jail_mount_rw $incoming_dir
 	procd_add_jail_mount_rw $temp_dir
 	procd_close_instance

@@ -7,6 +7,8 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
+chmod +x /etc/init.d/amule
+
 while [ ! $(grep -e "amule" ${IPKG_INSTROOT}/etc/passwd) ]
 do 
     gid=$(awk -v min=1000 -v max=1500 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
