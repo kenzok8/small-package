@@ -1,4 +1,3 @@
-
 #!/bin/bash
 function git_sparse_clone() {
 branch="$1" rurl="$2" localdir="$3" && shift 3
@@ -128,16 +127,27 @@ svn co https://github.com/messense/openwrt-wiretrustee/trunk/wiretrustee
 svn co https://github.com/xiaorouji/openwrt-passwall2/trunk/luci-app-passwall2
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-snmpd
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-filebrowser
+svn co https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
+svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
 
-git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpkg" net/miniupnpd net/mwan3 multimedia/UnblockNeteaseMusic-Go \
-multimedia/UnblockNeteaseMusic net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
-net/qBittorrent-static net/qBittorrent libs/qtbase libs/qttools libs/rblibtorrent \
-net/uugamebooster net/microsocks net/tcpping net/redsocks2
-
-git_sparse_clone master "https://github.com/immortalwrt/packages" "immpkgs" net/adguardhome net/smartdns \
-net/dnsproxy net/haproxy net/v2raya net/cdnspeedtest net/gost net/gowebdav \
+git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/adguardhome \
+net/sub-web net/smartdns net/dnsproxy net/haproxy net/v2raya net/cdnspeedtest \
+net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gost net/gowebdav \
 admin/bpytop libs/jpcre2 libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 \
 utils/cpulimit utils/filebrowser
+
+git_sparse_clone develop "https://github.com/Ysurac/openmptcprouter-feeds" "enmptcp" luci-app-snmpd \
+luci-app-packet-capture luci-app-mail msmtp
+git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua-ipops luci-app-macvlan
+
+git_sparse_clone openwrt-21.02 "https://github.com/openwrt/packages" "21packages" \
+net/openvpn utils/cgroupfs-mount utils/coremark net/xray-core net/nginx net/uwsgi net/ddns-scripts admin/netdata
+
+git_sparse_clone openwrt-21.02 "https://github.com/openwrt/openwrt" "21openwrt" package/libs/mbedtls \
+git_sparse_clone openwrt-21.02 "https://github.com/openwrt/luci" "opluci" applications/luci-app-attendedsysupgrade applications/luci-app-aria2 \
+applications/luci-app-ddns applications/luci-app-opkg applications/luci-app-ksmbd \
+applications/luci-app-samba4 modules/luci-base modules/luci-mod-network \
+modules/luci-mod-status modules/luci-mod-system
 
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
