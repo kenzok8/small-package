@@ -1,0 +1,12 @@
+diff --color -uNr a/src/corelib/text/qbytearraymatcher.h b/src/corelib/text/qbytearraymatcher.h
+--- a/src/corelib/text/qbytearraymatcher.h	2020-10-27 16:02:11.000000000 +0800
++++ b/src/corelib/text/qbytearraymatcher.h	2021-07-19 06:22:30.139372013 +0800
+@@ -41,7 +41,7 @@
+ #define QBYTEARRAYMATCHER_H
+ 
+ #include <QtCore/qbytearray.h>
+-
++#include <limits>
+ QT_BEGIN_NAMESPACE
+ 
+ 
