@@ -125,7 +125,6 @@ svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 svn co https://github.com/messense/aliyundrive-fuse/trunk/openwrt && mvdir openwrt
 svn co https://github.com/messense/openwrt-wiretrustee/trunk/wiretrustee
 svn co https://github.com/xiaorouji/openwrt-passwall2/trunk/luci-app-passwall2
-svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-snmpd
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-filebrowser
 svn co https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
