@@ -71,7 +71,7 @@ return view.extend({
 		
 		s.tab('firmware', _('Firmware Settings'));
 
-		o = s.taboption('firmware', form.Flag, 'autoupgrade_pkg', _('Packages Auto Upgrade'));
+		o = s.taboption('firmware', form.Flag, 'autoupgrade_pkg', _('Packages Auto Upgrade'),_('谨慎开启'));
 		o.rmempty = false;
 
 		o = s.taboption('firmware', form.Flag, 'autoupgrade_fm', _('Firmware Upgrade Notice'));

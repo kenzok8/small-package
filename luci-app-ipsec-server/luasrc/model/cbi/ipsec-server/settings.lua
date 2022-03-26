@@ -1,7 +1,7 @@
 local sys = require "luci.sys"
 
 m = Map("luci-app-ipsec-server", translate("IPSec VPN Server"))
-m.template = "ipsec-server/index"
+m.template = "ipsec-server/ipsec-server_status"
 
 s = m:section(TypedSection, "service")
 s.anonymous = true
