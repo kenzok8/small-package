@@ -13,7 +13,7 @@
 	local smscuta = string.sub (sms, 8)
 	local smscut = smscuta:sub(1, #smscuta - 2)
 	local statusb = luci.util.exec("sms_tool -s" .. smsmem .. " -d ".. devv .. " status")
-	local all = string.sub (statusb, -4)
+	local all = statusb:match('[^: ]+$')
 	local location = ""
 	local l = string.sub (statusb, 15, 16)
 	if l == "SM" then
@@ -27,7 +27,7 @@
 <%+header%>
 
 <!--
--- Copyright 2020-2021 Rafał Wabik (IceG) - From eko.one.pl forum
+-- Copyright 2020-2022 Rafał Wabik (IceG) - From eko.one.pl forum
 -- Licensed to the GNU General Public License v3.0.
 -->
 

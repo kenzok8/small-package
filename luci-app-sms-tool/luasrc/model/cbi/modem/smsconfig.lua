@@ -1,4 +1,4 @@
--- Copyright 2020-2021 Rafa³ Wabik (IceG) - From eko.one.pl forum
+-- Copyright 2020-2022 Rafa³ Wabik (IceG) - From eko.one.pl forum
 -- Licensed to the GNU General Public License v3.0.
 
 local util = require "luci.util"
