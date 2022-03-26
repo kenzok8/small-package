@@ -113,7 +113,7 @@ add_wizard() {
 	 /etc/init.d/network restart
 	 /etc/init.d/dnsmasq reload)&
 	
-	if [ "${autoupgrade_pkg}" == "0" ]; then
+	if [ "${autoupgrade_pkg}" != "1" ]; then
 		sed -i '/opkg-upgrade/d' /etc/crontabs/root
 	else
 		grep -q "opkg-upgrade" /etc/crontabs/root || {
