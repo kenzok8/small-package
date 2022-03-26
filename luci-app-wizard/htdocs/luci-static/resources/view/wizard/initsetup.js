@@ -72,7 +72,7 @@ return view.extend({
 		s.tab('firmware', _('Firmware Settings'));
 
 		o = s.taboption('firmware', form.Flag, 'autoupgrade_pkg', _('Packages Auto Upgrade'));
-		o.default = o.enabled;
+		o.rmempty = false;
 
 		o = s.taboption('firmware', form.Flag, 'autoupgrade_fm', _('Firmware Upgrade Notice'));
 		o.default = o.enabled;
