@@ -1,4 +1,4 @@
--- Copyright 2020-2021 Rafa³ Wabik (IceG) - From eko.one.pl forum
+-- Copyright 2020-2022 Rafa³ Wabik (IceG) - From eko.one.pl forum
 -- Licensed to the GNU General Public License v3.0.
 
 
@@ -130,7 +130,7 @@ function slots()
 
 	local statusb = luci.util.exec("sms_tool -s" .. smsmem .. " -d ".. devv .. " status")
 	local usex = string.sub (statusb, 23, 27)
-	local max = string.sub (statusb, -4)
+	local max = statusb:match('[^: ]+$')
 	sim["use"] = string.match(usex, '%d+')
 	local smscount = string.match(usex, '%d+')
 	if ln == "1" then
