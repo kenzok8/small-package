@@ -24,7 +24,7 @@ limit_log() {
 }
 
 init_env() {
-	[ ! -f "$LOG" ] && echo "netspeedtest by sirpdboy" > $LOG
+	[ ! -f "$LOG" ] && echo " " > $LOG
 	echo 1 > $NS_FILE
    
 }
