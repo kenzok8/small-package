@@ -4,9 +4,14 @@ function index()
 	if not nixio.fs.access("/etc/config/aliyundrive-fuse") then
 		return
 	end
-	entry({"admin", "services", "aliyundrive-fuse"}, alias("admin", "services", "aliyundrive-fuse", "client"),_("AliyunDrive FUSE"), 10).dependent = true  -- 首页
-	entry({"admin", "services", "aliyundrive-fuse", "client"}, cbi("aliyundrive-fuse/client"),_("Settings"), 10).leaf = true  -- 客户端配置
-	entry({"admin", "services", "aliyundrive-fuse", "log"}, form("aliyundrive-fuse/log"),_("Log"), 30).leaf = true -- 日志页面
+
+	local page
+	page = entry({"admin", "services", "aliyundrive-fuse"}, alias("admin", "services", "aliyundrive-fuse", "client"), _("AliyunDrive FUSE"), 10) -- 首页
+	page.dependent = true
+	page.acl_depends = { "luci-app-aliyundrive-fuse" }
+
+	entry({"admin", "services", "aliyundrive-fuse", "client"}, cbi("aliyundrive-fuse/client"), _("Settings"), 10).leaf = true -- 客户端配置
+	entry({"admin", "services", "aliyundrive-fuse", "log"}, form("aliyundrive-fuse/log"), _("Log"), 30).leaf = true -- 日志页面
 
 	entry({"admin", "services", "aliyundrive-fuse", "status"}, call("action_status")).leaf = true
 	entry({"admin", "services", "aliyundrive-fuse", "logtail"}, call("action_logtail")).leaf = true

@@ -1,6 +1,3 @@
-local uci = luci.model.uci.cursor()
-local m, e
-
 m = Map("aliyundrive-fuse")
 m.title = translate("AliyunDrive FUSE")
 m.description = translate("<a href=\"https://github.com/messense/aliyundrive-fuse\" target=\"_blank\">Project GitHub URL</a>")
