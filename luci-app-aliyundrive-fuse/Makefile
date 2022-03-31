@@ -10,7 +10,7 @@ PKG_MAINTAINER:=messense <messense@icloud.com>
 
 LUCI_TITLE:=LuCI Support for aliyundrive-fuse
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+aliyundrive-fuse +lua +libuci-lua
+LUCI_DEPENDS:=+aliyundrive-fuse
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

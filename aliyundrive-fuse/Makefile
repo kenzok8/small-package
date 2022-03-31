@@ -28,7 +28,7 @@ PKG_HASH:=skip
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
+define Package/aliyundrive-fuse
   SECTION:=multimedia
   CATEGORY:=Multimedia
   DEPENDS:=+fuse-utils
@@ -36,11 +36,11 @@ define Package/$(PKG_NAME)
   URL:=https://github.com/messense/aliyundrive-fuse
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/aliyundrive-fuse/description
   FUSE for AliyunDrive.
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/aliyundrive-fuse/conffiles
 /etc/config/aliyundrive-fuse
 endef
 
@@ -62,10 +62,10 @@ define Build/Prepare
 endef
 
 define Build/Compile
-	echo "$(PKG_NAME) using precompiled binary."
+	echo "aliyundrive-fuse using precompiled binary."
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/aliyundrive-fuse/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/aliyundrive-fuse $(1)/usr/bin/aliyundrive-fuse
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -74,4 +74,4 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) ./files/aliyundrive-fuse.config $(1)/etc/config/aliyundrive-fuse
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,aliyundrive-fuse))
