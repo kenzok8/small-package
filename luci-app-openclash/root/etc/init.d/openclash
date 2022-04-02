@@ -12,7 +12,7 @@ STOP=15
 RAW_CONFIG_FILE=$(uci -q get openclash.config.config_path)
 BACKUP_FILE="/etc/openclash/backup/$(uci -q get openclash.config.config_path |awk -F '/' '{print $5}' 2>/dev/null)"
 CONFIG_FILE="/etc/openclash/$(uci -q get openclash.config.config_path |awk -F '/' '{print $5}' 2>/dev/null)"
-TMP_CONFIG_FILE="/tmp/$(uci -q get openclash.config.config_path |awk -F '/' '{print $5}' 2>/dev/null)"
+TMP_CONFIG_FILE="/tmp/yaml_config_tmp_$(uci -q get openclash.config.config_path |awk -F '/' '{print $5}' 2>/dev/null)"
 }
 LOGTIME=$(echo $(date "+%Y-%m-%d %H:%M:%S"))
 CLASH="/etc/openclash/clash"
@@ -248,7 +248,7 @@ EOF
        };
        File.open('${1}','w') {|f| YAML.dump(Value, f)};
     rescue Exception => e
-    puts '${LOGTIME} Error: Set default-nameserver Error,【' + e.message + '】'
+    puts '${LOGTIME} Error: Set default-nameserver Failed,【' + e.message + '】'
     end
     " 2>/dev/null >> $LOG_FILE
    
@@ -287,8 +287,6 @@ yml_vmess_compatible()
                x['ws-opts'] = {'path'=>x['ws-path'].to_s}
             elsif x['ws-opts']['path'].nil? then
                x['ws-opts'].update({'path'=>x['ws-path'].to_s})
-            else
-               x['ws-opts']['path'].update(x['ws-path'].to_s)
             end
          end
          x.delete('ws-path')
@@ -303,8 +301,8 @@ yml_vmess_compatible()
                   x['ws-opts'] = {'headers'=>{v.to_s=>x['ws-headers'][v].to_s}}
                elsif x['ws-opts']['headers'].nil? then
                   x['ws-opts'].update({'headers'=>{v.to_s=>x['ws-headers'][v].to_s}})
-               else
-                  x['ws-opts']['headers'].update({v.to_s=>x['ws-headers'][v].to_s})
+               #elsif not x['ws-opts']['headers'].key?(v)
+               #   x['ws-opts']['headers'].update({v.to_s=>x['ws-headers'][v].to_s})
                end
             end
          };
@@ -316,7 +314,7 @@ yml_vmess_compatible()
       end;
    end;
    rescue Exception => e
-   puts '${LOGTIME} Error: Edit Vmess compatible Error,【' + e.message + '】'
+   puts '${LOGTIME} Error: Edit Vmess Compatible Failed,【' + e.message + '】'
    end
    " 2>/dev/null >> $LOG_FILE
 }
@@ -367,7 +365,7 @@ yml_provider_path()
       end
    end;
    rescue Exception => e
-   puts '${LOGTIME} Error: Edit Provider Path Error,【' + e.message + '】'
+   puts '${LOGTIME} Error: Edit Provider Path Failed,【' + e.message + '】'
    end
    " 2>/dev/null >> $LOG_FILE
 }
@@ -376,9 +374,9 @@ yml_provider_path()
 yml_provider_check()
 {
 provider_path_line=$(ruby_read "$1" ".key?('$2')")
-local provider_path_check provider_path_check_num=0
+local provider_path_check
 if "$provider_path_line"; then
-   while ( [ -n "$(pidof clash)" ] && [ "$provider_path_check_num" -le 5 ] )
+   while ( [ -n "$(pidof clash)" ] )
    do
       provider_path_check=$(ruby -ryaml -E UTF-8 -e "
       Value = YAML.load_file('$1');
@@ -402,7 +400,6 @@ if "$provider_path_line"; then
       }
       " 2>/dev/null)
       if [ "$provider_path_check" = "false" ]; then
-         let provider_path_check_num++
          sleep 2
       else
          break
@@ -418,9 +415,6 @@ if [ -z "$(pidof clash)" ] && [ -n "$provider_path_check" ]; then
    fi
    LOG_ALERT
    start_fail
-elif [ "$provider_path_check_num" -gt 5 ]; then
-   LOG_OUT "Warning: Providers File Check Timeout, If Failed To start, Please Check The Log Page For Detailed error information!"
-   sleep 3
 fi
 
 }
@@ -606,7 +600,7 @@ ruby -ryaml -E UTF-8 -e "
 		};
 		File.open('${1}','w') {|f| YAML.dump(Value, f)};
 	rescue Exception => e
-		puts '${LOGTIME} Error: Set Url-Test Group Tolerance Error,【' + e.message + '】'
+		puts '${LOGTIME} Error: Set Url-Test Group Tolerance Failed,【' + e.message + '】'
 	end
 " 2>/dev/null >> $LOG_FILE
 fi
@@ -646,7 +640,7 @@ get_rule_file()
       end;
       File.open('$GAME_RULE_FILE','w') {|f| YAML.dump(Value, f)};
    rescue Exception => e
-      puts '${LOGTIME} Error: Game Rule Merge Error,【' + e.message + '】'
+      puts '${LOGTIME} Error: Game Rule Merge Failed,【' + e.message + '】'
    end
    " 2>/dev/null >> $LOG_FILE
 }
@@ -724,7 +718,7 @@ else
 end;
 File.open('$1','w') {|f| YAML.dump(Value, f)}
 rescue Exception => e
-puts '${LOGTIME} Error: Game Rule Merge Error,【' + e.message + '】'
+puts '${LOGTIME} Error: Game Rule Merge Failed,【' + e.message + '】'
 end
 " 2>/dev/null >> $LOG_FILE
 }
@@ -767,7 +761,7 @@ if File::exist?('/tmp/yaml_provider.yaml') then
 end;
 File.open('$1','w') {|f| YAML.dump(Value, f)}
 rescue Exception => e
-puts '${LOGTIME} Error: Game Proxy Merge Error,【' + e.message + '】'
+puts '${LOGTIME} Error: Game Proxy Merge Failed,【' + e.message + '】'
 end" 2>/dev/null >> $LOG_FILE
 fi
 }
@@ -796,7 +790,7 @@ begin
    end
 File.open('$TMP_CONFIG_FILE','w') {|f| YAML.dump(Value, f)}
 rescue Exception => e
-   puts '${LOGTIME} Error: Rule Set Add Error,【' + e.message + '】'
+   puts '${LOGTIME} Error: Rule Set Add Failed,【' + e.message + '】'
 end
 " 2>/dev/null >> $LOG_FILE
 }
@@ -949,7 +943,7 @@ yml_custom_rule_provider()
       begin
          Value = YAML.load_file('$1');
       rescue Exception => e
-         puts '${LOGTIME} Error: Load File Error,【' + e.message + '】'
+         puts '${LOGTIME} Error: Load File Failed,【' + e.message + '】'
       end;
       
       begin
@@ -960,7 +954,7 @@ yml_custom_rule_provider()
             Value['rule-providers']=Value_1
          end;
       rescue Exception => e
-         puts '${LOGTIME} Error: Custom Rule Provider Merge Error,【' + e.message + '】'
+         puts '${LOGTIME} Error: Custom Rule Provider Merge Failed,【' + e.message + '】'
       end;
       
       begin
@@ -1004,7 +998,7 @@ yml_custom_rule_provider()
             end
          end;
       rescue Exception => e
-         puts '${LOGTIME} Error: Rule Set Add Error,【' + e.message + '】'
+         puts '${LOGTIME} Error: Rule Set Add Failed,【' + e.message + '】'
       ensure
          File.open('$1','w') {|f| YAML.dump(Value, f)}
       end;
@@ -1583,7 +1577,7 @@ try_restore_start()
          end;
          File.open('$CONFIG_FILE','w') {|f| YAML.dump(Value_1, f)}
          rescue Exception => e
-         puts '${LOGTIME} Error: Restore Backup Rules Error,【' + e.message + '】'
+         puts '${LOGTIME} Error: Restore Backup Rules Failed,【' + e.message + '】'
          end
          " 2>/dev/null >> $LOG_FILE
          start_run_core
@@ -2323,6 +2317,7 @@ get_config()
    bypass_gateway_compatible=$(uci -q get openclash.config.bypass_gateway_compatible || echo 0)
    core_version=$(uci -q get openclash.config.core_version || echo 0)
    github_address_mod=$(uci -q get openclash.config.github_address_mod || echo 0)
+   router_self_proxy=$(uci -q get openclash.config.router_self_proxy || echo 1)
    _koolshare=$(cat /usr/lib/os-release 2>/dev/null |grep OPENWRT_RELEASE 2>/dev/null |grep -i koolshare 2>/dev/null)
    [ -z "$dns_port" ] && dns_port=7874 && uci -q set openclash.config.dns_port=7874
    uci -q set openclash.config.restricted_mode=0 && uci -q commit openclash
@@ -2356,7 +2351,7 @@ start()
       yml_auth_custom "$TMP_CONFIG_FILE"
       yml_dns_custom "$enable_custom_dns" "$TMP_CONFIG_FILE" "$append_wan_dns" "$ipv6_dns"
       /usr/share/openclash/yml_change.sh 2>/dev/null "$en_mode" "$da_password" "$cn_port" "$proxy_port" "$TMP_CONFIG_FILE" "$ipv6_enable" "$http_port" "$socks_port" "$log_level" "$proxy_mode" "$en_mode_tun" "$stack_type" "$dns_port" "$mixed_port" "$tproxy_port" "$ipv6_dns" "$store_fakeip" "$stream_domains_prefetch" "$dns_remote"
-      /usr/share/openclash/yml_rules_change.sh 2>/dev/null "$rule_source" "$enable_custom_clash_rules" "$TMP_CONFIG_FILE" "$enable_rule_proxy" "$CONFIG_NAME"
+      /usr/share/openclash/yml_rules_change.sh 2>/dev/null "$rule_source" "$enable_custom_clash_rules" "$TMP_CONFIG_FILE" "$enable_rule_proxy" "$CONFIG_NAME" "$router_self_proxy" "$lan_ip"
       yml_custom_rule_provider "$TMP_CONFIG_FILE"
       yml_game_custom "$TMP_CONFIG_FILE"
       yml_provider_path "$TMP_CONFIG_FILE" "proxy-providers" "proxy_provider" "$github_address_mod"

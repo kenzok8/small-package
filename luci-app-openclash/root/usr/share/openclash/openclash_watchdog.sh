@@ -12,6 +12,7 @@ disable_masq_cache=$(uci -q get openclash.config.disable_masq_cache)
 cfg_update_interval=$(uci -q get openclash.config.config_update_interval || echo 60)
 log_size=$(uci -q get openclash.config.log_size || echo 1024)
 core_type=$(uci -q get openclash.config.core_type)
+router_self_proxy=$(uci -q get openclash.config.router_self_proxy || echo 1)
 stream_domains_prefetch_interval=$(uci -q get openclash.config.stream_domains_prefetch_interval || echo 1440)
 stream_auto_select_interval=$(uci -q get openclash.config.stream_auto_select_interval || echo 30)
 NETFLIX_DOMAINS_LIST="/usr/share/openclash/res/Netflix_Domains.list"
@@ -41,6 +42,10 @@ do
    stream_auto_select_tvb_anywhere=$(uci -q get openclash.config.stream_auto_select_tvb_anywhere || echo 0)
    stream_auto_select_prime_video=$(uci -q get openclash.config.stream_auto_select_prime_video || echo 0)
    stream_auto_select_ytb=$(uci -q get openclash.config.stream_auto_select_ytb || echo 0)
+   stream_auto_select_dazn=$(uci -q get openclash.config.stream_auto_select_dazn || echo 0)
+   stream_auto_select_paramount_plus=$(uci -q get openclash.config.stream_auto_select_paramount_plus || echo 0)
+   stream_auto_select_discovery_plus=$(uci -q get openclash.config.stream_auto_select_discovery_plus || echo 0)
+   
    enable=$(uci -q get openclash.config.enable)
 
 if [ "$enable" -eq 1 ]; then
@@ -137,7 +142,7 @@ fi
    /usr/share/openclash/openclash_dler_checkin.lua >/dev/null 2>&1
 
 ##STREAMING_UNLOCK_CHECK
-   if [ "$stream_auto_select" -eq 1 ]; then
+   if [ "$stream_auto_select" -eq 1 ] && [ "$router_self_proxy" -eq 1 ]; then
       [ "$stream_auto_select_interval" -ne "$stream_auto_select_interval_now" ] && STREAM_AUTO_SELECT=1 && stream_auto_select_interval="$stream_auto_select_interval_now"
       if [ "$STREAM_AUTO_SELECT" -ne 0 ]; then
          if [ "$(expr "$STREAM_AUTO_SELECT" % "$stream_auto_select_interval_now")" -eq 0 ] || [ "$STREAM_AUTO_SELECT" -eq 1 ]; then
@@ -173,13 +178,25 @@ fi
                LOG_OUT "Tip: Start Auto Select Proxy For TVB Anywhere+ Unlock..."
                /usr/share/openclash/openclash_streaming_unlock.lua "TVB Anywhere+" >> $LOG_FILE
             fi
+            if [ "$stream_auto_select_dazn" -eq 1 ]; then
+               LOG_OUT "Tip: Start Auto Select Proxy For DAZN Unlock..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "DAZN" >> $LOG_FILE
+            fi
+            if [ "$stream_auto_select_paramount_plus" -eq 1 ]; then
+               LOG_OUT "Tip: Start Auto Select Proxy For Paramount Plus Unlock..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "Paramount Plus" >> $LOG_FILE
+            fi
+            if [ "$stream_auto_select_discovery_plus" -eq 1 ]; then
+               LOG_OUT "Tip: Start Auto Select Proxy For Discovery Plus Unlock..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "Discovery Plus" >> $LOG_FILE
+            fi
          fi
       fi
       STREAM_AUTO_SELECT=$(expr "$STREAM_AUTO_SELECT" + 1)
    fi
 
 ##STREAM_DNS_PREFETCH
-   if [ "$stream_domains_prefetch" -eq 1 ]; then
+   if [ "$stream_domains_prefetch" -eq 1 ] && [ "$router_self_proxy" -eq 1 ]; then
       [ "$stream_domains_prefetch_interval" -ne "$stream_domains_prefetch_interval_now" ] && STREAM_DOMAINS_PREFETCH=1 && stream_domains_prefetch_interval="$stream_domains_prefetch_interval_now"
       if [ "$STREAM_DOMAINS_PREFETCH" -ne 0 ]; then
          if [ "$(expr "$STREAM_DOMAINS_PREFETCH" % "$stream_domains_prefetch_interval_now")" -eq 0 ] || [ "$STREAM_DOMAINS_PREFETCH" -eq 1 ]; then
