@@ -1079,8 +1079,8 @@ msgstr "配置文件编辑"
 msgid "Delete All File"
 msgstr "删除所有文件"
 
-msgid "SS/SSR/Vmess or Other Link And Subscription Address is Supported When Online Subscription Conversion is Enabled, Please Separate Multiple Links With |"
-msgstr "在线订阅转换启用时支持：SS/SSR/Vmess等节点链接和订阅链接，多个链接请用 | 分隔"
+msgid "SS/SSR/Vmess or Other Link And Subscription Address is Supported When Online Subscription Conversion is Enabled, Multiple Links Should be One Per Line or Separated By |"
+msgstr "在线订阅转换启用时支持：SS/SSR/Vmess等节点链接和订阅链接，多个链接请每行一个或用 | 分隔"
 
 msgid "Template Name"
 msgstr "订阅转换模板"
@@ -1850,9 +1850,6 @@ msgstr "错误: 代理集文件下载失败，请到日志页面查看详细错�
 msgid "Error: Failed To Download Rule-providers, Please Check The Log Page For Detailed error information!"
 msgstr "错误: 规则集文件下载失败，请到日志页面查看详细错误信息！"
 
-msgid "Warning: Providers File Check Timeout, If Failed To start, Please Check The Log Page For Detailed error information!"
-msgstr "警告: 代理集文件检查超时，如启动失败请到日志页面查看详细信息！"
-
 msgid "Error: Nameserver Option Must Be Setted, Stop Customing DNS Servers"
 msgstr "错误: 配置文件DNS选项下的Nameserver必须设置服务器，已停止设置自定义DNS服务器！"
 
@@ -2216,40 +2213,40 @@ msgstr "警告：【Rule】写法已不再支持，自动替换为rules"
 msgid "Warning: rule-provider is no longer used. Auto replaced by rule-providers"
 msgstr "警告：【rule-provider】写法已不再支持，自动替换为rule-providers"
 
-msgid "Error: Load File Error,"
+msgid "Error: Load File Failed,"
 msgstr "错误：文件解析失败，"
 
-msgid "Error: Set General Error,"
+msgid "Error: Set General Failed,"
 msgstr "错误：修改General配置失败，"
 
-msgid "Error: Set Hosts Rules Error,"
+msgid "Error: Set Hosts Rules Failed,"
 msgstr "错误：修改Hosts配置失败，"
 
-msgid "Error: Set Fake-IP-Filter Error,"
+msgid "Error: Set Fake-IP-Filter Failed,"
 msgstr "错误：修改Fake-IP-Filter配置失败，"
 
-msgid "Error: Set Nameserver-Policy Error,"
+msgid "Error: Set Nameserver-Policy Failed,"
 msgstr "错误：修改Nameserver-Policy配置失败，"
 
-msgid "Error: Set Custom Rules Error,"
+msgid "Error: Set Custom Rules Failed,"
 msgstr "错误：设置自定义规则失败，"
 
-msgid "Error: Set BT/P2P DIRECT Rules Error,"
+msgid "Error: Set BT/P2P DIRECT Rules Failed,"
 msgstr "错误：设置仅代理命中规则流量（BT/P2P直连）失败，"
 
-msgid "Error: Set 198.18.0.1/16 REJECT Rule Error,"
+msgid "Error: Set 198.18.0.1/16 REJECT Rule Failed,"
 msgstr "错误：设置198.18.0.1/16（REJECT）规则失败，"
 
-msgid "Error: Set lhie1 Rules Error,"
+msgid "Error: Set lhie1 Rules Failed,"
 msgstr "错误：设置第三方规则（lhie1）失败，"
 
-msgid "Error: Set ConnersHua Rules Error,"
+msgid "Error: Set ConnersHua Rules Failed,"
 msgstr "错误：设置第三方规则（ConnersHua）失败，"
 
-msgid "Error: Set ConnersHua Return Rules Error,"
+msgid "Error: Set ConnersHua Return Rules Failed,"
 msgstr "错误：设置第三方规则（ConnersHua 回国）失败，"
 
-msgid "Error: Filter Proxies Error,"
+msgid "Error: Filter Proxies Failed,"
 msgstr "错误：节点筛选失败，"
 
 msgid "Error: Unable To Parse Config File,"
@@ -2258,44 +2255,38 @@ msgstr "错误：配置文件解析失败，"
 msgid "Error: Unable To Parse Updated Rules File,"
 msgstr "错误：更新的规则文件解析失败，"
 
-msgid "Error: Edit Provider Path Error,"
+msgid "Error: Edit Provider Path Failed,"
 msgstr "错误：修改集路径失败，"
 
-msgid "Error: Set Url-Test Group Tolerance Error,"
+msgid "Error: Set Url-Test Group Tolerance Failed,"
 msgstr "错误：修改Url-Test策略组容忍值失败，"
 
-msgid "Error: Game Rule Merge Error,"
+msgid "Error: Game Rule Merge Failed,"
 msgstr "错误：游戏规则合并失败，"
 
-msgid "Error: Game Proxy Merge Error,"
+msgid "Error: Game Proxy Merge Failed,"
 msgstr "错误：游戏规则策略组合并失败，"
 
-msgid "Error: Rule Set Add Error,"
+msgid "Error: Rule Set Add Failed,"
 msgstr "错误：规则集Rule-Set规则添加失败，"
 
-msgid "Error: Custom Rule Provider Merge Error,"
+msgid "Error: Custom Rule Provider Merge Failed,"
 msgstr "错误：规则集Rule Provider合并失败，"
 
-msgid "Error: Restore Backup Rules Error,"
+msgid "Error: Restore Backup Rules Failed,"
 msgstr "错误：还原默认规则失败，"
 
-msgid "Error: Restore Backup Rules Error,"
-msgstr "错误：还原默认规则失败，"
-
-msgid "Error: Resolve Proxy-provider Error,"
+msgid "Error: Resolve Proxy-providers Failed,"
 msgstr "错误：解析代理集失败，"
 
-msgid "Error: Resolve Proxy Error,"
+msgid "Error: Resolve Proxies Failed,"
 msgstr "错误：节点解析失败，"
 
-msgid "Error: Resolve Proxy-group Error,"
+msgid "Error: Resolve Groups Failed,"
 msgstr "错误：策略组解析失败，"
 
-msgid "Error: Set default-nameserver Error,"
+msgid "Error: Set default-nameserver Failed,"
 msgstr "错误：修改default-nameserver配置失败，"
-
-msgid "Error: Netflix IP Rules Complete Error,"
-msgstr "错误：Netflix IP 规则补全失败，"
 
 msgid "switching succeeded!"
 msgstr "切换成功！"
@@ -2480,50 +2471,14 @@ msgstr "展开策略组"
 msgid "Automatically Expand The Group When Selected"
 msgstr "自动展开嵌套的策略组并进行解锁检测，启用后可能会造成网络不稳定"
 
-msgid "Netflix Group Filter"
-msgstr "Netflix 策略组筛选"
+msgid "Group Filter"
+msgstr "策略组筛选"
 
-msgid "Disney Plus Group Filter"
-msgstr "Disney Plus 策略组筛选"
+msgid "Unlock Region Filter"
+msgstr "解锁区域筛选"
 
-msgid "HBO Now Group Filter"
-msgstr "HBO Now 策略组筛选"
-
-msgid "HBO Max Group Filter"
-msgstr "HBO Max 策略组筛选"
-
-msgid "HBO GO Asia Group Filter"
-msgstr "HBO GO Asia 策略组筛选"
-
-msgid "YouTube Premium Group Filter"
-msgstr "YouTube Premium 策略组筛选"
-
-msgid "TVB Anywhere+ Group Filter"
-msgstr "TVB Anywhere+ 策略组筛选"
-
-msgid "Amazon Prime Video Group Filter"
-msgstr "Amazon Prime Video 策略组筛选"
-
-msgid "Netflix Unlock Region Filter"
-msgstr "Netflix 解锁区域筛选"
-
-msgid "Disney Plus Unlock Region Filter"
-msgstr "Disney Plus 解锁区域筛选"
-
-msgid "HBO Max Unlock Region Filter"
-msgstr "HBO Max 解锁区域筛选"
-
-msgid "HBO GO Asia Unlock Region Filter"
-msgstr "HBO GO Asia 解锁区域筛选"
-
-msgid "YouTube Premium Unlock Region Filter"
-msgstr "YouTube Premium 解锁区域筛选"
-
-msgid "TVB Anywhere+ Unlock Region Filter"
-msgstr "TVB Anywhere+ 解锁区域筛选"
-
-msgid "Amazon Prime Video Unlock Region Filter"
-msgstr "Amazon Prime Video 解锁区域筛选"
+msgid "Unlock Nodes Filter"
+msgstr "解锁节点筛选"
 
 msgid "Tip: Start Auto Select Proxy For Netflix Unlock..."
 msgstr "提示：开始自动选择（检测）Netflix 解锁节点..."
@@ -2549,6 +2504,15 @@ msgstr "提示：开始自动选择（检测）TVB Anywhere+ 解锁节点..."
 msgid "Tip: Start Auto Select Proxy For Amazon Prime Video Unlock..."
 msgstr "提示：开始自动选择（检测）Amazon Prime Video 解锁节点..."
 
+msgid "Tip: Start Auto Select Proxy For DAZN Unlock..."
+msgstr "提示：开始自动选择（检测）DAZN 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For Paramount Plus Unlock..."
+msgstr "提示：开始自动选择（检测）Paramount Plus 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For Discovery Plus Unlock..."
+msgstr "提示：开始自动选择（检测）Discovery Plus 解锁节点..."
+
 msgid "Netflix Group:"
 msgstr "Netflix 策略组："
 
@@ -2572,6 +2536,15 @@ msgstr "Amazon Prime Video 策略组："
 
 msgid "YouTube Premium Group:"
 msgstr "YouTube Premium 策略组："
+
+msgid "DAZN Group:"
+msgstr "DAZN 策略组："
+
+msgid "Paramount Plus Group:"
+msgstr "Paramount Plus 策略组："
+
+msgid "Discovery Plus Group:"
+msgstr "Discovery Plus 策略组："
 
 msgid "full support."
 msgstr "完整解锁。"
@@ -2608,6 +2581,9 @@ msgstr "策略组自动获取失败时将会根据正则表达式进行匹配"
 
 msgid "It Will Be Selected Region According To The Regex"
 msgstr "解锁区域将会根据正则表达式进行匹配"
+
+msgid "It Will Be Selected Nodes According To The Regex"
+msgstr "解锁节点将会根据正则表达式进行匹配"
 
 msgid "not support unlock!"
 msgstr "不支持解锁！"
@@ -2650,6 +2626,9 @@ msgstr "解锁检测完成，未找到区域匹配的节点，回退到其他区
 
 msgid "unlock node test finished, no node available, rolled back to the"
 msgstr "解锁检测完成，无完整解锁节点，回退到"
+
+msgid "no nodes name match the regex!"
+msgstr "未找到名称匹配的节点!"
 
 msgid "DNS Remote"
 msgstr "*远程域名解析"
@@ -2749,3 +2728,24 @@ msgstr "发生了一些错误，测试失败..."
 
 msgid "Network instability may occur during testing, Are you sure want to start test?"
 msgstr "测试过程中可能会造成网络不稳定,确定要开始测试吗？"
+
+msgid "Error: Edit Vmess Compatible Failed,"
+msgstr "错误：Vmess节点兼容性修改失败，"
+
+msgid "Subscription Info"
+msgstr "订阅信息"
+
+msgid "No Sub Info Found"
+msgstr "无订阅信息"
+
+msgid "Sub Info Get Error"
+msgstr "订阅信息获取失败"
+
+msgid "Router-Self Proxy"
+msgstr "路由本机代理"
+
+msgid "Only Supported for Rule Mode, ALL Functions In Stream Enhance Tag Will Not Work After Disable"
+msgstr "仅支持规则（Rule）模式，其他模式默认分流，禁用后将无法使用流媒体增强标签中的所有功能"
+
+msgid "Error: Set Router Self Proxy Rule Failed,"
+msgstr "错误：修改路由自身代理规则失败，"
