@@ -43,7 +43,7 @@ git clone --depth 1 https://github.com/rufengsuixing/luci-app-usb3disable
 git clone --depth 1 https://github.com/riverscn/openwrt-iptvhelper && mvdir openwrt-iptvhelper
 git clone --depth 1 https://github.com/KyleRicardo/MentoHUST-OpenWrt-ipk
 git clone --depth 1 https://github.com/NateLol/luci-app-beardropper
-git clone --depth 1 https://github.com/iwrt/luci-app-ikoolproxy  && mv -f luci-app-ikoolproxy/ikoolproxy ikoolproxy
+git clone --depth 1 https://github.com/yaof2/luci-app-ikoolproxy
 git clone --depth 1 https://github.com/project-lede/luci-app-godproxy
 
 git clone --depth 1 https://github.com/tty228/luci-app-serverchan
