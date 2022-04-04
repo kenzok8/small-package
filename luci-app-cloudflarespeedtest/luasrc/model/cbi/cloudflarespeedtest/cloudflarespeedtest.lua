@@ -4,7 +4,7 @@ local uci = luci.model.uci.cursor()
 
 m = Map('cloudflarespeedtest')
 m.title = translate('Cloudflare Speed Test')
-m.description = '<a href=\"https://github.com/mingxiaoyu/luci-app-jd-cloudflarespeedtest\" target=\"_blank\">GitHub</a>'
+m.description = '<a href=\"https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest\" target=\"_blank\">GitHub</a>'
 
 -- [[ 基本设置 ]]--
 
