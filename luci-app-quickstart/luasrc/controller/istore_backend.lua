@@ -71,7 +71,7 @@ function istore_backend()
       input[#input+1] = "X-Forwarded-Token: " .. sdat.token
     end
   end
-  input[#input+1] = "X-Forwarded-For: " .. http.getenv("REMOTE_HOST") ..":".. http.getenv("REMOTE_PORT")
+  -- input[#input+1] = "X-Forwarded-For: " .. http.getenv("REMOTE_HOST") ..":".. http.getenv("REMOTE_PORT")
   local num = tonumber(http.getenv("CONTENT_LENGTH")) or 0
   input[#input+1] = "Content-Length: " .. tostring(num)
   input[#input+1] = "\r\n"
