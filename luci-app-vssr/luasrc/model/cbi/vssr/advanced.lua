@@ -74,6 +74,10 @@ o.rmempty = false
 s = m:section(TypedSection, 'socks5_proxy', translate('Update Setting'))
 s.anonymous = true
 
+o = s:option(Value, 'ip_data_url', translate('China ip data URL'))
+o.rmempty = true
+o.description = translate('China ip data url. You are not recommended to change the value')
+
 o = s:option(Button, 'gfw_data', translate('GFW List Data'))
 o.rawhtml = true
 o.template = 'vssr/refresh'

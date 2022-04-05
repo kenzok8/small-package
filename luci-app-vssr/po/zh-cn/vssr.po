@@ -241,6 +241,9 @@ msgstr "全局模式"
 msgid "Oversea Mode"
 msgstr "海外用户回国模式"
 
+msgid "Direct Mode"
+msgstr "直连模式"
+
 msgid "Router Proxy"
 msgstr "路由器访问控制"
 
@@ -722,3 +725,9 @@ msgstr "↑ 在上面放置你需要分流的IP列表"
 
 msgid "↑ Put your domain list here"
 msgstr "↑ 在上面放置你需要分流的域名列表"
+
+msgid "China ip data URL"
+msgstr "【国内IP段】来源地址"
+
+msgid "China ip data url. You are not recommended to change the value"
+msgstr "中国大陆IP数据列表地址，除非明白原理否则不建议修改！"

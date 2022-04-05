@@ -69,6 +69,7 @@ BACKUP_LIST='./etc/AdGuardHome.yaml \
 ./etc/uhttpd.crt \
 ./etc/uhttpd.key \
 ./etc/urandom.seed \
+./etc/v2raya/ \
 ./etc/verysync/ \
 ./root/.ssh/'
 

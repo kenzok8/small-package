@@ -39,7 +39,8 @@ else
 end
 
 log('正在更新【国内IP段】数据库')
-refresh_cmd ="wget-ssl -O- 'https://ispip.clang.cn/all_cn.txt' > /tmp/china_ssr.txt 2>/dev/null"
+local ip_data_url = ucic:get("vssr","@socks5_proxy[0]","ip_data_url")  
+refresh_cmd ="wget-ssl -O- '".. ip_data_url .."' > /tmp/china_ssr.txt 2>/dev/null"
 sret = luci.sys.call(refresh_cmd)
 icount = luci.sys.exec('cat /tmp/china_ssr.txt | wc -l')
 if sret == 0 then

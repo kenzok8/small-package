@@ -214,6 +214,7 @@ start_rules() {
         router) gfwmode="-r" ;;
         oversea) gfwmode="-c" ;;
         all) gfwmode="-z" ;;
+        direct) gfwmode="-d" ;;
     esac
 
     local dports=$(uci_get_by_type global dports 1)
@@ -583,7 +584,13 @@ start() {
                 rm -rf /tmp/dnsmasq.oversea
             fi
             mkdir -p /tmp/dnsmasq.d
-            if ! [ "$run_mode" = "oversea" ]; then
+            if [ "$run_mode" = "direct" ]; then
+                mkdir -p /tmp/dnsmasq.ssr
+                cp -rf /etc/vssr/ad.conf /tmp/dnsmasq.ssr/
+                cat >/tmp/dnsmasq.d/dnsmasq-ssr.conf <<EOF
+conf-dir=/tmp/dnsmasq.ssr
+EOF
+            elif ! [ "$run_mode" = "oversea" ]; then
                 mkdir -p /tmp/dnsmasq.ssr
                 cp -rf /etc/vssr/gfw_list.conf /tmp/dnsmasq.ssr/
                 cp -rf /etc/vssr/gfw_base.conf /tmp/dnsmasq.ssr/
