@@ -69,6 +69,7 @@ flush_r() {
     ipset -X oversea 2>/dev/null
     ipset -X whitelist 2>/dev/null
     ipset -X blacklist 2>/dev/null
+    ipset -X gfwlist 2>/dev/null
     [ -n "$FWI" ] && echo '#!/bin/sh' >$FWI
     return 0
 }
@@ -90,7 +91,7 @@ ipset_r() {
 		$IPT -A SS_SPEC_WAN_AC -m set --match-set china dst -j RETURN
 		$IPT -A SS_SPEC_WAN_AC -j SS_SPEC_WAN_FW
         ;;
-    gfw)
+    gfw|direct)
         ipset -N gfwlist hash:net hashsize 4096 maxelem 1000000 2>/dev/null
         $IPT -A SS_SPEC_WAN_AC -m set --match-set gfwlist dst -j SS_SPEC_WAN_FW
         $IPT -A SS_SPEC_WAN_AC -m set --match-set gmlan src -m set ! --match-set china dst -j SS_SPEC_WAN_FW
@@ -296,7 +297,7 @@ gen_include() {
     return 0
 }
 
-while getopts ":s:l:S:L:i:e:a:b:w:p:G:D:oOuUfgrczh" arg; do
+while getopts ":s:l:S:L:i:e:a:b:w:p:G:D:oOuUfgrczhd" arg; do
     case "$arg" in
     s)
         server=$OPTARG
@@ -357,6 +358,9 @@ while getopts ":s:l:S:L:i:e:a:b:w:p:G:D:oOuUfgrczh" arg; do
         ;;
     z)
         RUNMODE=all
+        ;;
+    d)
+        RUNMODE=direct
         ;;
     f)
         flush_r
