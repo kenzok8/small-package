@@ -99,6 +99,7 @@ svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
 svn co https://github.com/kenzok8/jell/trunk/luci-app-adguardhome
 svn co https://github.com/kenzok8/jell/trunk/adguardhome
+svn co https://github.com/kenzok8/jell/trunk/smartdns
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-mcat
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
