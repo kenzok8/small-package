@@ -67,7 +67,7 @@ add_rule(){
 				iptables -t filter -I WEBURL $settime -m string --string "$keyword" --algo $(get_algo_mode $algos) -j DROP
 			else
 				iptables -t filter -I WEBURL $settime -m mac --mac-source $macaddr -m string --string "$keyword" --algo $(get_algo_mode $algos) -j DROP
-				unset "$macaddr"
+				unset macaddr
 			fi
 		fi
 	done
@@ -79,6 +79,7 @@ start(){
 	iptables -t filter -N WEBURL
 	iptables -t filter -I FORWARD -m comment --comment "Rule For Control" -j WEBURL
 	add_rule
+	iptables -t filter -I WEBURL -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 }
 stop(){
 	iptables -t filter -D FORWARD -m comment --comment "Rule For Control" -j WEBURL

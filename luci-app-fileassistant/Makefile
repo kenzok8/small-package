@@ -6,8 +6,8 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for Fileassistant
 LUCI_PKGARCH:=all
-PKG_VERSION:=1.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.0-4
+PKG_RELEASE:=
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

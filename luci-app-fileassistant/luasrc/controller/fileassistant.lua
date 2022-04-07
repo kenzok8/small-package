@@ -27,6 +27,14 @@ function index()
     page = entry({"admin", "nas", "fileassistant", "install"}, call("fileassistant_install"), nil)
     page.leaf = true
 
+    page = entry({"admin", "nas", "fileassistant", "mkdir"}, call("fileassistant_mkdir"), nil)
+    page.leaf = true
+
+    page = entry({"admin", "nas", "fileassistant", "chmod"}, call("fileassistant_chmod"), nil)
+    page.leaf = true
+
+    page = entry({"admin", "nas", "fileassistant", "chown"}, call("fileassistant_chown"), nil)
+    page.leaf = true
 end
 
 function list_response(path, success)
@@ -131,6 +139,27 @@ function fileassistant_upload()
     )
 
     list_response(uploaddir, true)
+end
+
+function fileassistant_mkdir()
+    local path = luci.http.formvalue("path")
+    local dirname = luci.http.formvalue("dirname")
+    local success = os.execute('sh -c \'cd "'..path..'" && mkdir -p "'..dirname..'"\'')
+    list_response(path, success)
+end
+
+function fileassistant_chmod()
+    local path = luci.http.formvalue("filepath")
+    local newmod = luci.http.formvalue("newmod")
+    local success = os.execute('chmod '..newmod..' "'..path..'"')
+    list_response(nixio.fs.dirname(path), success)
+end
+
+function fileassistant_chown()
+    local path = luci.http.formvalue("filepath")
+    local newown = luci.http.formvalue("newown")
+    local success = os.execute('chown '..newown..' "'..path..'"')
+    list_response(nixio.fs.dirname(path), success)
 end
 
 function scandir(directory)

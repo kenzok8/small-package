@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for Timewol From Koolshare
 LUCI_DEPENDS:=+etherwake
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=3-20190309
+PKG_RELEASE:=3-20220406
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
