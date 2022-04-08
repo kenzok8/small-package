@@ -103,6 +103,7 @@ svn co https://github.com/kenzok8/jell/trunk/smartdns
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-mcat
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
+svn co https://github.com/kenzok8/litte/trunk/luci-app-fileassistant
 svn co https://github.com/x-wrt/packages/trunk/net/nft-qos
 svn co https://github.com/x-wrt/luci/trunk/applications/luci-app-nft-qos
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-diskman
