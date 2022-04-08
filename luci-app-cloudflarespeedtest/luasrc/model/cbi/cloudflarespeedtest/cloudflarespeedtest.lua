@@ -187,17 +187,17 @@ o:value("aliyu", translate("AliyuDNS"))
 o:depends("DNS_enabled", 1)
 
 o=s:taboption("dnstab", Value,"app_key",translate("Access Key ID"))
-o.rmempty=false
+o.rmempty=true
 o:depends("DNS_enabled", 1)
 o=s:taboption("dnstab", Value,"app_secret",translate("Access Key Secret"))
-o.rmempty=false
+o.rmempty=true
 o:depends("DNS_enabled", 1)
 
 o=s:taboption("dnstab", Value,"main_domain",translate("Main Domain"),translate("For example: test.github.com -> github.com"))
-o.rmempty=false
+o.rmempty=true
 o:depends("DNS_enabled", 1)
 o=s:taboption("dnstab", Value,"sub_domain",translate("Sub Domain"),translate("For example: test.github.com -> test"))
-o.rmempty=false
+o.rmempty=true
 o:depends("DNS_enabled", 1)
 
 o=s:taboption("dnstab", ListValue, "line", translate("Lines"))
