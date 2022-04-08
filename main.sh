@@ -98,12 +98,12 @@ svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
 svn co https://github.com/kenzok8/jell/trunk/luci-app-adguardhome
+svn co https://github.com/kenzok8/jell/trunk/luci-app-fileassistant
 svn co https://github.com/kenzok8/jell/trunk/adguardhome
 svn co https://github.com/kenzok8/jell/trunk/smartdns
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-mcat
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
-svn co https://github.com/kenzok8/litte/trunk/luci-app-fileassistant
 svn co https://github.com/x-wrt/packages/trunk/net/nft-qos
 svn co https://github.com/x-wrt/luci/trunk/applications/luci-app-nft-qos
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-diskman
