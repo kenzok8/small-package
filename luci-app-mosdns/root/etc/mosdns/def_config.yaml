@@ -23,13 +23,17 @@ plugin:
     args:
       exec:
         - if:
+            - query_is_whitelist_domain
+          exec:
+            - forward_local
+            - _return
+        - if:
             - query_is_ad_domain
             - qtype65
           exec:
             - _block_with_nxdomain
             - _return
         - if:
-            - query_is_whitelist_domain
             - query_is_local_domain
             - "!_query_is_common"
           exec:
