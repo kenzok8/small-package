@@ -47,8 +47,8 @@ define Package/adguardhome
 endef
 
 define Package/adguardhome/conffiles
-/etc/AdGuardHome.yaml
-/etc/config/AdGuardHome
+/etc/adguardhome.yaml
+/etc/config/adguardhome
 endef
 
 define Package/adguardhome/description
@@ -78,10 +78,10 @@ endef
 define Package/adguardhome/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/adguardhome.init $(1)/etc/init.d/AdGuardHome
+	$(INSTALL_BIN) ./files/adguardhome.init $(1)/etc/init.d/adguardhome
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/adguardhome.config $(1)/etc/config/AdGuardHome
+	$(INSTALL_DATA) ./files/adguardhome.config $(1)/etc/config/adguardhome
 endef
 
 $(eval $(call GoBinPackage,adguardhome))
