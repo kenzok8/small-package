@@ -1,14 +1,12 @@
+# SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2021 ImmortalWrt
-# This is free software, licensed under the GNU General Public License v3.
-# See /LICENSE.txt for more information.
-#
+# Copyright (C) 2021 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=filebrowser
 PKG_VERSION:=2.21.1
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=b73d278
@@ -23,12 +21,7 @@ PKG_BUILD_DEPENDS:=golang/host node/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_FILEBROWSER_COMPRESS_GOPROXY \
-	CONFIG_FILEBROWSER_COMPRESS_UPX
-
 GO_PKG:=github.com/filebrowser/filebrowser
-GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:= \
 	$(GO_PKG)/v2/version.CommitSHA=$(PKG_SOURCE_VERSION) \
 	$(GO_PKG)/v2/version.Version=v$(PKG_VERSION)
@@ -51,41 +44,24 @@ define Package/filebrowser/description
   It can be used as a standalone app or as a middleware.
 endef
 
-define Package/filebrowser/config
-config FILEBROWSER_COMPRESS_GOPROXY
-	bool "Compiling with GOPROXY proxy"
-	default n
-
-config FILEBROWSER_COMPRESS_UPX
-	bool "Compress executable files with UPX"
-	depends on !mips64
-	default n
-endef
-
-ifeq ($(CONFIG_FILEBROWSER_COMPRESS_GOPROXY),y)
-export GO111MODULE=on
-export GOPROXY=https://goproxy.bj.bcebos.com
-endif
-
 define Build/Compile
-( \
-  cd $(PKG_BUILD_DIR)/frontend ; \
-  npm ci; \
-  npm run lint ; \
-  npm run build ; \
-)
-	$(call GoPackage/Build/Compile)
-ifeq ($(CONFIG_FILEBROWSER_COMPRESS_UPX),y)
-	$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DIR)/filebrowser
-endif
+	( \
+		pushd "$(PKG_BUILD_DIR)/frontend" ; \
+		npm ci; \
+		npm run lint ; \
+		npm run build ; \
+		popd ; \
+		$(call GoPackage/Build/Compile) ; \
+	)
 endef
 
 define Package/filebrowser/install
-	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
-	$(INSTALL_DIR) $(1)/etc/config/ $(1)/etc/init.d/ $(1)/usr/bin/
+	$(call GoPackage/Package/Install/Bin,$(1))
+
+	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/filebrowser.config $(1)/etc/config/filebrowser
+	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) $(CURDIR)/files/filebrowser.init $(1)/etc/init.d/filebrowser
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/filebrowser $(1)/usr/bin/filebrowser
 endef
 
 $(eval $(call GoBinPackage,filebrowser))

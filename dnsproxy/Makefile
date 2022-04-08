@@ -16,36 +16,15 @@ PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_DNSPROXY_COMPRESS_GOPROXY \
-	CONFIG_DNSPROXY_COMPRESS_UPX
-
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/AdguardTeam/dnsproxy
-GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:=main.VersionString=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
-
-define Package/dnsproxy/config
-config DNSPROXY_COMPRESS_GOPROXY
-	bool "Compiling with GOPROXY proxy"
-	default n
-
-config DNSPROXY_COMPRESS_UPX
-	bool "Compress executable files with UPX"
-	depends on !mips64
-	default n
-endef
-
-ifeq ($(CONFIG_DNSPROXY_COMPRESS_GOPROXY),y)
-	export GO111MODULE=on
-	export GOPROXY=https://goproxy.bj.bcebos.com
-endif
 
 define Package/dnsproxy
   SECTION:=net
@@ -61,13 +40,6 @@ define Package/dnsproxy/description
   A simple DNS proxy server that supports all existing DNS protocols including
   DNS-over-TLS, DNS-over-HTTPS, DNSCrypt, and DNS-over-QUIC.Moreover, it can
   work as a DNS-over-HTTPS, DNS-over-TLS or DNS-over-QUIC server.
-endef
-
-define Build/Compile
-	$(call GoPackage/Build/Compile)
-ifeq ($(CONFIG_DNSPROXY_COMPRESS_UPX),y)
-	$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DIR)/dnsproxy
-endif
 endef
 
 define Package/dnsproxy/install
