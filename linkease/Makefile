@@ -28,7 +28,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=LinkEase - the file cloud
-	DEPENDS:=
+	DEPENDS:=@(arm||x86_64||aarch64)
 	URL:=https://www.ddnsto.com/linkease/
 endef
 

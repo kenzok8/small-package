@@ -16,16 +16,11 @@ PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILE:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_GO_ALIYUNDRIVE_WEBDAV_COMPRESS_GOPROXY \
-	CONFIG_GO_ALIYUNDRIVE_WEBDAV_COMPRESS_UPX
-
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=go-aliyun-webdav
-GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:=main.Version=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -40,30 +35,9 @@ define Package/go-aliyundrive-webdav
   DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
-define Package/go-aliyundrive-webdav/config
-config GO_ALIYUNDRIVE_WEBDAV_COMPRESS_GOPROXY
-	bool "Compiling with GOPROXY proxy"
-	default n
-
-config GO_ALIYUNDRIVE_WEBDAV_COMPRESS_UPX
-	bool "Compress executable files with UPX"
-	default y
-endef
-
-ifeq ($(CONFIG_GO_ALIYUNDRIVE_WEBDAV_COMPRESS_GOPROXY),y)
-	export GO111MODULE=on
-	export GOPROXY=https://goproxy.baidu.com
-endif
 
 define Package/go-aliyundrive-webdav/conffiles
 /etc/config/go-aliyundrive-webdav
-endef
-
-define Build/Compile
-	$(call GoPackage/Build/Compile)
-ifeq ($(CONFIG_GO_ALIYUNDRIVE_WEBDAV_COMPRESS_UPX),y)
-	$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DIR)/go-aliyun-webdav
-endif
 endef
 
 define Package/go-aliyundrive-webdav/install
