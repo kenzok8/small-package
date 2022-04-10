@@ -6,7 +6,7 @@
 	local hostname = luci.sys.hostname()
 	local page = pcdata(table.concat(disp.context.requestpath, "-"))
 	local lang = luci.i18n.context.lang
-	local isindex = path == "admin-themedog"
+	local isindex = ( path == "admin-themedog" or path == "admin-themedog_dev" )
 	luci.http.prepare_content("text/html; charset=UTF-8")
 -%>
 	<!DOCTYPE html>
