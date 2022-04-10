@@ -28,7 +28,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=Quickstart, the quick start.
-	DEPENDS:=
+	DEPENDS:=@(x86_64||aarch64)
 	URL:=https://easepi.linkease.com/
 endef
 
