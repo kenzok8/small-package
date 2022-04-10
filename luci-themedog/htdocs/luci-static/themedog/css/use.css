@@ -25,13 +25,13 @@
 .alert-message.fade-in.warning.fade-out {
     display: none !important;
 }
-html,body{
+/* html,body{
     color-scheme: none !important;
 }
 body {
     background: none !important;
-    /* background: url(/luci-static/themedog/image/bg.gif) no-repeat center center fixed; */
-}
+    background: url(/luci-static/themedog/image/bg.gif) no-repeat center center fixed;
+} */
 .modal {
     background-color: #181c20c7;
     backdrop-filter: blur(20px);
