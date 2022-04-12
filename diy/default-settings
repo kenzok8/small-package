@@ -45,7 +45,7 @@ echo '[ -n "$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p tcp 
 sed -i '/option disabled/d' /etc/config/wireless
 sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
 
-date=`date +%m.%d`
+date=`date +%m.%d.%Y`
 date1=`date +%h`
 sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
 echo "DISTRIB_REVISION='v$date'" >> /etc/openwrt_release
