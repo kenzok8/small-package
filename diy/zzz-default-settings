@@ -3,7 +3,7 @@
 touch /etc/crontabs/root
 
 uci set luci.main.lang=zh_cn
-#ÉèÖÃÄ¬ÈÏÖ÷Ìâ
+#è®¾ç½®é»˜è®¤ä¸»é¢˜
 #uci set luci.main.mediaurlbase=/luci-static/bootstrap_mod
 uci commit luci
 
@@ -31,7 +31,7 @@ sed -i "s/# //g" /etc/opkg/distfeeds.conf
 #uci set dhcp.@dnsmasq[0].nonwildcard=0
 #uci commit dhcp
 
-#DNSÖØ¶¨Ïò
+#DNSé‡å®šå‘
 sed -i '/REDIRECT --to-ports 53/d' /etc/firewall.user
 echo "# iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53" >> /etc/firewall.user
 
@@ -39,7 +39,7 @@ sed -i '/option disabled/d' /etc/config/wireless
 sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
 wifi up
 
-date=`date +%m.%d`
+date=`date +%m.%d.%Y`
 date1=`date +%h`
 sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
 echo "DISTRIB_REVISION='v$date'" >> /etc/openwrt_release
@@ -56,11 +56,11 @@ sed -i 's/LuCI openwrt-21.02 branch/kenzo/g' /usr/lib/lua/luci/version.lua
 sed -i '/luciversion/d' /usr/lib/lua/luci/version.lua
 echo 'luciversion = "v$date1"' >> /usr/lib/lua/luci/version.lua
 
-# É¾³ý×´Ì¬Ò³²»ÐèÏÔÊ¾µÄ
+# åˆ é™¤çŠ¶æ€é¡µä¸éœ€æ˜¾ç¤ºçš„
 rm -rf /usr/lib/lua/luci/view/admin_status/index
 #mv -f /usr/lib/lua/luci/view/admin_status/index /usr/lib/lua/luci/view/admin_status/index_backup 2>/dev/null
 
-#½ûÓÃÄ³Ð©¿ÉÄÜ»á×ÔÆô¶¯ÇÒÓÃ²»ÉÏµÄÒÀÀµ°ü·þÎñ
+#ç¦ç”¨æŸäº›å¯èƒ½ä¼šè‡ªå¯åŠ¨ä¸”ç”¨ä¸ä¸Šçš„ä¾èµ–åŒ…æœåŠ¡
 /etc/init.d/php7-fastcgi disable 2>/dev/null
 /etc/init.d/php7-fpm disable 2>/dev/null
 /etc/init.d/softethervpnbridge disable 2>/dev/null
