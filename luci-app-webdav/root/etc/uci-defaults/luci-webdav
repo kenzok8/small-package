@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@webdav[-1]
+	add ucitrack webdav
+	set ucitrack.@webdav[-1].init=webdav
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0
