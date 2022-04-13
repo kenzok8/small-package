@@ -82,7 +82,7 @@ m = Map("wifidog", "wifidog执行参数配置","")
 	mac.datatype = "list(macaddr)"
 	
 	--sys.net.arptable(function(entry)
-	ip.neighbors(function(entry)
+	luci.ip.neighbors(function(entry)
 		mac:value(
 			entry["HW address"],
 			entry["HW address"] .. " (" .. entry["IP address"] .. ")"
