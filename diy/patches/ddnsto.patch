@@ -1,0 +1,36 @@
+--- a/luci-app-ddnsto/root/etc/uci-defaults/50_luci-ddnsto
++++ b/luci-app-ddnsto/root/etc/uci-defaults/50_luci-ddnsto
+@@ -1,4 +1,11 @@
+ #!/bin/sh
+ 
++uci -q batch <<-EOF >/dev/null
++	delete ucitrack.@ddnsto[-1]
++	add ucitrack ddnsto
++	set ucitrack.@ddnsto[-1].init=ddnsto
++	commit ucitrack
++EOF
++
+ rm -f /tmp/luci-indexcache
+ exit 0
+
+--- a/ddnsto/files/ddnsto.init
++++ b/ddnsto/files/ddnsto.init
+@@ -24,3 +24,7 @@ start_service() {
+ 	procd_set_param respawn
+ 	procd_close_instance
+ }
++
++service_triggers() {
++	procd_add_reload_trigger 'ddnsto'
++}
+
+--- a/linkease/files/linkease.init
++++ b/linkease/files/linkease.init
+@@ -21,3 +21,7 @@ start_service() {
+ 	procd_set_param respawn
+ 	procd_close_instance
+ }
++
++service_triggers() {
++	procd_add_reload_trigger 'linkease'
++}

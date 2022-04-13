@@ -12,9 +12,6 @@ on:
     types: started
   repository_dispatch:
 
-env:
-  TZ: Asia/Shanghai
-
 jobs:
   build:
     if: github.event.repository.owner.id == github.event.sender.id
@@ -28,17 +25,15 @@ jobs:
         
     steps:
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - name: Initialization environment
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo -E apt-get -qq update
-        sudo -E apt-get -qq install git subversion git-core wget
-        sudo timedatectl set-timezone "$TZ"
+      run : |
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
+        sudo timedatectl set-timezone "Asia/Shanghai"
         
     - name: Clone packages
       run: |
@@ -64,10 +59,11 @@ jobs:
         
         
     - name: Delete workflow runs
-      uses: GitRML/delete-workflow-runs@main
+      uses: Mattraks/delete-workflow-runs@v2.0.1
+      continue-on-error: true
       with:
         retain_days: 1
-        keep_minimum_runs: 0
+        keep_minimum_runs: 1
 
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0

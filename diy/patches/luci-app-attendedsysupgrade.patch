@@ -1,0 +1,147 @@
+--- a/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js
++++ b/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js
+@@ -100,7 +100,7 @@ return view.extend({
+ 		}
+ 
+ 		if (image.name != undefined) {
+-			var sysupgrade_url = `${this.data.url}/store/${res.bin_dir}/${image.name}`;
++			var sysupgrade_url = `${this.data.url}/store/${res.request_hash}/${image.name}`;
+ 
+ 			var keep = E('input', { type: 'checkbox' });
+ 			keep.checked = true;
+@@ -284,15 +284,12 @@ return view.extend({
+ 			});
+ 	},
+ 
+-	handleCheck: function () {
++	handleCheck: function (force) {
+ 		var { url, revision } = this.data
+ 		var { version, target } = this.firmware
+ 		var candidates = [];
+ 		var response;
+-		var request_url = `${url}/api/overview`;
+-		if (version.endsWith('SNAPSHOT')) {
+-			request_url = `${url}/api/v1/revision/${version}/${target}`;
+-		}
++		var request_url = `${url}/api/v1/revision/${version}/${target}`;
+ 
+ 		ui.showModal(_('Searching...'), [
+ 			E('p', { 'class': 'spinning' },
+@@ -311,35 +308,10 @@ return view.extend({
+ 					]);
+ 					return;
+ 				}
+-				if (version.endsWith('SNAPSHOT')) {
+ 					const remote_revision = response.json().revision;
+-					if (get_revision_count(revision) < get_revision_count(remote_revision)) {
++					if (revision < remote_revision || force == 1) {
+ 						candidates.push([version, remote_revision]);
+ 					}
+-				} else {
+-					const latest = response.json().latest;
+-
+-					for (let remote_version of latest) {
+-						var remote_branch = get_branch(remote_version);
+-
+-						// already latest version installed
+-						if (version == remote_version) {
+-							break;
+-						}
+-
+-						// skip branch upgrades outside the advanced mode
+-						if (this.data.branch != remote_branch && this.data.advanced_mode == 0) {
+-							continue;
+-						}
+-
+-						candidates.unshift([remote_version, null]);
+-
+-						// don't offer branches older than the current
+-						if (this.data.branch == remote_branch) {
+-							break;
+-						}
+-					}
+-				}
+ 
+ 				if (candidates.length) {
+ 					var m, s, o;
+@@ -348,7 +320,7 @@ return view.extend({
+ 						request: {
+ 							profile: this.firmware.profile,
+ 							version: candidates[0][0],
+-							packages: Object.keys(this.firmware.packages).sort(),
++							packages: Object.keys(this.firmware.packages).filter((value) => value.search("-zh-cn") == -1).sort(),
+ 						},
+ 					};
+ 
+@@ -391,6 +363,9 @@ return view.extend({
+ 						E('p', _('The device runs the latest firmware version %s - %s').format(version, revision)),
+ 						E('div', { class: 'right' }, [
+ 							E('div', { class: 'btn', click: ui.hideModal }, _('Close')),
++							E('div', { class: 'btn cbi-button cbi-button-positive', click: ui.createHandlerFn(this, function () {
++											this.handleCheck(1)
++										}) }, _('Force Sysupgrade')),
+ 						]),
+ 					]);
+ 				}
+@@ -414,9 +389,15 @@ return view.extend({
+ 		this.firmware.profile = res[1].board_name;
+ 		this.firmware.target = res[1].release.target;
+ 		this.firmware.version = res[1].release.version;
++		this.firmware.partsize = res[1].release.distribution;
+ 		this.data.branch = get_branch(res[1].release.version);
+ 		this.data.revision = res[1].release.revision;
+ 		this.data.efi = res[2];
++		if (this.data.efi) {
++			this.firmware.efi = "efi";
++		} else {
++			this.firmware.efi = "not";
++		}
+ 		if (res[1].rootfs_type) {
+ 			this.firmware.filesystem = res[1].rootfs_type;
+ 		} else {
+@@ -449,6 +430,17 @@ return view.extend({
+ 			E('p', _('The attended sysupgrade service allows to easily upgrade vanilla and custom firmware images.')),
+ 			E('p', _('This is done by building a new firmware on demand via an online service.')),
+ 			E('p', _('Currently running: %s - %s').format(this.firmware.version, this.data.revision)),
++			E('p', [_('更多个性化定制请使用网页版: '),
++					E('a', {
++				'class': '',
++				'href': 'https://supes.top',
++				'target': '_balank',
++			}, _('在线定制网页版'))]),
++			E('p', [_('非定制固件请在此更新: '),E('a', {
++				'class': '',
++				'href': '/cgi-bin/luci/admin/services/gpsysupgrade',
++				'target': '_balank',
++			}, _('系统在线更新')),E('br')]),
+ 			E('button', {
+ 				'class': 'btn cbi-button cbi-button-positive important',
+ 				'click': ui.createHandlerFn(this, this.handleCheck)
+
+--- a/luci-app-attendedsysupgrade/po/zh_Hans/attendedsysupgrade.po
++++ b/luci-app-attendedsysupgrade/po/zh_Hans/attendedsysupgrade.po
+@@ -263,3 +263,24 @@ msgstr "版本"
+ #: applications/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js:264
+ msgid "Wrong checksum"
+ msgstr "错误的校验和"
++
++msgid "Attended Sysupgrade"
++msgstr "定制系统升级"
++
++msgid "Force Sysupgrade"
++msgstr "强制重刷"
++
++msgid "Error building the sysupgrade"
++msgstr "构建固件时出错"
++
++msgid "Error during download of firmware. Please try again"
++msgstr "固件下载出错, 请重试"
++
++msgid "Installing the sysupgrade. Do not unpower device!"
++msgstr "正在刷入固件。不要切断电源！"
++
++msgid "Request in build queue position %s"
++msgstr "排队中...当前位置 %s "
++
++msgid "The attended sysupgrade service allows to easily upgrade vanilla and custom firmware images."
++msgstr "定制和更新适用于您设备的OpenWrt固件。"
