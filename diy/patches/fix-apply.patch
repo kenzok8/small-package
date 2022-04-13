@@ -1,0 +1,10 @@
+--- a/luci-app-uugamebooster/root/etc/init.d/uuplugin
++++ b/luci-app-uugamebooster/root/etc/init.d/uuplugin
+@@ -21,3 +21,7 @@ start_service() {
+     procd_close_instance
+ 	fi
+ }
++
++service_triggers() {
++        procd_add_reload_trigger "uuplugin"
++}

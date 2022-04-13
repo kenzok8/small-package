@@ -1,6 +1,14 @@
 --- a/qBittorrent/Makefile
 +++ b/qBittorrent/Makefile
-@@ -65,11 +65,14 @@ TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+@@ -38,6 +38,7 @@ define Package/qbittorrent
+ 		+qt5-core \
+ 		+qt5-network \
+ 		+qt5-xml \
++		+qt5-sql \
+ 		+zlib
+ 	TITLE:=bittorrent client programmed in C++ / Qt
+ 	URL:=https://www.qbittorrent.org/
+@@ -65,11 +66,14 @@ TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
  
  define Package/qbittorrent/conffiles
  /etc/config/qbittorrent
@@ -15,6 +23,17 @@
  endef
  
  $(eval $(call BuildPackage,qbittorrent))
+
+--- a/luci-app-qbittorrent/Makefile
++++ b/luci-app-qbittorrent/Makefile
+@@ -12,6 +12,7 @@ LUCI_PKGARCH:=all
+ PKG_NAME:=luci-app-qbittorrent
+ 
+ define Package/luci-app-qbittorrent/conffiles
++/etc/config/qbittorrent
+ /etc/qBittorrent/
+ endef
+ 
 
 --- /dev/null
 +++ b/qBittorrent/files/ipfilter.dat
