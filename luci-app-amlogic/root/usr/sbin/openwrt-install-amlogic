@@ -230,7 +230,11 @@ echo -e "This Kernel [ ${MODULES_NOW} ]"
 
 k510_ver=${VERSION_NOW%%.*}
 k510_maj=${VERSION_NOW##*.}
-if [ "${k510_ver}" -eq "5" ]; then
+
+# If the kernel version ends with +o, it means that u-boot.ext or u-boot.emmc do not need to be reloaded
+if echo ${MODULES_NOW} | grep "+o$";then
+    K510=0
+elif [ "${k510_ver}" -eq "5" ]; then
     if [ "${k510_maj}" -ge "10" ]; then
         K510="1"
     else
