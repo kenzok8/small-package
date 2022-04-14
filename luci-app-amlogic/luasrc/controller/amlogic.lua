@@ -406,7 +406,7 @@ end
 
 --Read external model database
 local function my_model_database()
-	local state = luci.sys.exec("cat /etc/model_database.txt | grep -E '^[0-9]{1,9}:' | awk -F ':' '{print $1,$2}' OFS='###' ORS='@@@' | tr ' ' '~' 2>&1")
+	local state = luci.sys.exec("cat /etc/model_database.txt | grep -E '^[0-9]{1,9}.*:' | awk -F ':' '{print $1,$2}' OFS='###' ORS='@@@' | tr ' ' '~' 2>&1")
 	return state
 end
 
