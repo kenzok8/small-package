@@ -85,7 +85,11 @@ if [ $(ls ${P4_PATH}/*.tar.gz -l 2>/dev/null | grep "^-" | wc -l) -ge 3 ]; then
         kernel_vermaj=$(echo ${kernel_version} | grep -oE '^[1-9].[0-9]{1,3}')
         k510_ver=${kernel_vermaj%%.*}
         k510_maj=${kernel_vermaj##*.}
-        if [ ${k510_ver} -eq "5" ]; then
+
+        # If the kernel version ends with +o, it means that u-boot.ext or u-boot.emmc do not need to be reloaded
+        if echo ${flippy_version} | grep "+o$";then
+            K510=0
+        elif [ ${k510_ver} -eq "5" ]; then
             if [ "${k510_maj}" -ge "10" ]; then
                 K510=1
             else
@@ -129,7 +133,10 @@ MODULES_OLD=$(ls /lib/modules/ 2>/dev/null)
 VERSION_OLD=$(echo ${MODULES_OLD} | grep -oE '^[1-9].[0-9]{1,3}' 2>/dev/null)
 VERSION_ver=${VERSION_OLD%%.*}
 VERSION_maj=${VERSION_OLD##*.}
-if [ ${VERSION_ver} -eq "5" ]; then
+# If the kernel version ends with +o, it means that u-boot.ext or u-boot.emmc do not need to be reloaded
+if echo ${MODULES_OLD} | grep "+o$";then
+    V510=0
+elif [ ${VERSION_ver} -eq "5" ]; then
     if [ "${VERSION_maj}" -ge "10" ]; then
         V510=1
     else
