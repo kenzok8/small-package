@@ -46,7 +46,7 @@ jobs:
         $GITHUB_WORKSPACE/${{matrix.target}}.sh
         bash diy/create_acl_for_luci.sh -a >/dev/null 2>&1 || true
         bash diy/convert_translation.sh -a >/dev/null 2>&1 || true
-	
+
     - name: Upload small-package
       env: 
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
