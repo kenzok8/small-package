@@ -10,7 +10,7 @@ PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=skip
+PKG_HASH:=c0fe91f715293cfc39a5afeef71e1ff43d379ae0faa139c560fdc3ede88a458a
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE

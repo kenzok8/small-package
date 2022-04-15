@@ -17,8 +17,8 @@
 # E.g: openwrt-install-amlogic
 
 # Receive one-key command related parameters
-AUTO_MAINLINE_UBOOT=${1}
-ZSTD_LEVEL=6
+AUTO_MAINLINE_UBOOT="${1}"
+ZSTD_LEVEL="6"
 
 # For [luci-app-amlogic] input parameter: SOC & DTB
 # When there is no input parameter, select manually
@@ -39,7 +39,7 @@ if [[ -n "$(echo ${2} | sed -n "/^[0-9]\+$/p")" ]]; then
 fi
 
 # shared partition can be ext4, xfs, btrfs, f2fs
-SHARED_FSTYPE=${4}
+SHARED_FSTYPE="${4}"
 
 echo "AUTO_MAINLINE_UBOOT: ${AUTO_MAINLINE_UBOOT}"
 echo "SPECIFY_SOC: ${SPECIFY_SOC}"
@@ -223,28 +223,34 @@ if [ ! -f "/boot/dtb/amlogic/${FDTFILE}" ]; then
     exit 1
 fi
 
+function get_k510_from_vmlinuz() {
+    local vmlinuz=$1
+    local K510=1
+    local temp_script=$(mktemp)
+    cat >$temp_script <<EOF
+use strict;
+my \$filename = \$ARGV[0];
+open my \$fh, '<', \$filename or die;
+binmode \$fh;
+seek \$fh, 0x8, 0;
+my \$buf = "";
+read \$fh, \$buf, 0x4;
+close(\$fh);
+my \$str = unpack 'H*', \$buf;
+print "\$str\n";
+EOF
+    local text_offset=$(perl "$temp_script" "$vmlinuz")
+    [ "$text_offset" == "00000801" ] && K510=0
+    rm -f $temp_script
+    echo "$K510"
+}
+
 #Check if writing to EMMC is supported
-MODULES_NOW=$(ls /lib/modules/ 2>/dev/null)
-VERSION_NOW=$(echo ${MODULES_NOW} | grep -oE '^[1-9].[0-9]{1,3}' 2>/dev/null)
-echo -e "This Kernel [ ${MODULES_NOW} ]"
-
-k510_ver=${VERSION_NOW%%.*}
-k510_maj=${VERSION_NOW##*.}
-
-# If the kernel version ends with +o, it means that u-boot.ext or u-boot.emmc do not need to be reloaded
-if echo ${MODULES_NOW} | grep "+o$";then
-    K510=0
-elif [ "${k510_ver}" -eq "5" ]; then
-    if [ "${k510_maj}" -ge "10" ]; then
-        K510="1"
-    else
-        K510="0"
-    fi
-elif [ "${k510_ver}" -gt "5" ]; then
-    K510="1"
-else
-    K510="0"
-fi
+CUR_KERNEL_VERSION=$(uname -r)
+echo -e "This Kernel [ ${CUR_KERNEL_VERSION} ]"
+K510=$(get_k510_from_vmlinuz "/boot/vmlinuz-${CUR_KERNEL_VERSION}")
+export K510
+echo -e "K510 [ ${K510} ]"
 
 # backup old bootloader
 if [ ! -f "/root/BackupOldBootloader.img" ]; then
@@ -684,7 +690,7 @@ Please select the type of shared file system:
 4. xfs:   Very good file system, alternative to ext4.
 ---------------------------------------------------------------------------------
 EOF
-    read TARGET_SHARED_FSTYPE
+    read -p "Please Input ID: " TARGET_SHARED_FSTYPE
 fi
 case $TARGET_SHARED_FSTYPE in
 2 | btrfs)

@@ -10,7 +10,7 @@ PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/LinkLeong/go-aliyundrive-webdav/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=skip
+PKG_HASH:=967472971586bc9c62d1579a780e52431eaf37e54f2fe1b180c9a52db2304874
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILE:=LICENSE
@@ -24,7 +24,7 @@ GO_PKG:=go-aliyun-webdav
 GO_PKG_LDFLAGS_X:=main.Version=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
+include ../../lang/golang/golang-package.mk
 
 define Package/go-aliyundrive-webdav
   SECTION:=net
