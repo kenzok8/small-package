@@ -57,8 +57,7 @@ jobs:
         git add .
         git commit -m "update $(TZ='Asia/Shanghai' date +%m-%d" "%H:%M)"
         git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
-        
-        
+               
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@v2.0.1
       continue-on-error: true
