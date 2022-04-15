@@ -14,7 +14,7 @@ PKG_VERSION:=0.3.3
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://fw.koolcenter.com/binary/quickstart/
-PKG_HASH:=skip
+PKG_HASH:=49dc49c1efb1646fcfe21832796667d3f32beb5f0d6d152ec8b67046d865b1a2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 

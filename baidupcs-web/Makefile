@@ -10,7 +10,7 @@ PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Erope/BaiduPCS-Go/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=skip
+PKG_HASH:=6efd1c5e4cf5cf876204bed246c70ea0212ad078d4eb7703d7f1179b39551d1d
 PKG_BUILD_DIR:=$(BUILD_DIR)/BaiduPCS-Go-$(PKG_VERSION)
 
 PKG_LICENSE:=Apache-2.0
@@ -24,7 +24,7 @@ GO_PKG:=github.com/Erope/BaiduPCS-Go
 GO_PKG_LDFLAGS_X:=main.Version=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
+include ../../lang/golang/golang-package.mk
 
 define Package/baidupcs-web
   SECTION:=net

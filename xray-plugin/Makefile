@@ -10,7 +10,7 @@ PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/teddysun/xray-plugin/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=skip
+PKG_HASH:=b6b66ea091f6348c7f213a8f7a3be51be25cea2cdf9ea7fb5bb93e2e04077a6f
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
