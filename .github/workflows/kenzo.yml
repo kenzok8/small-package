@@ -53,7 +53,7 @@ jobs:
         [ -e $GITHUB_WORKSPACE/README.md ] && cp $GITHUB_WORKSPACE/README.md $GITHUB_WORKSPACE/${{matrix.target}}
         cd $GITHUB_WORKSPACE/${{matrix.target}}
         git add .
-        git diff --exit-code || git commit -m "update $(TZ='Asia/Shanghai' date +%m-%d" "%H:%M)"
+        git diff --exit-code || git commit -am "update $(date +%m-%d" "%H:%M:%S)"
         git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
                
     - name: Delete workflow runs
