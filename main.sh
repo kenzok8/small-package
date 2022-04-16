@@ -39,7 +39,6 @@ git clone --depth 1 https://github.com/peter-tank/luci-app-autorepeater
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-autoipsetadder
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-onliner
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-usb3disable
-
 git clone --depth 1 https://github.com/riverscn/openwrt-iptvhelper && mvdir openwrt-iptvhelper
 git clone --depth 1 https://github.com/KyleRicardo/MentoHUST-OpenWrt-ipk
 git clone --depth 1 https://github.com/NateLol/luci-app-beardropper
@@ -53,8 +52,6 @@ git clone --depth 1 https://github.com/BCYDTZ/luci-app-UUGameAcc
 git clone --depth 1 https://github.com/ntlf9t/luci-app-easymesh
 git clone --depth 1 https://github.com/zzsj0928/luci-app-pushbot
 git clone --depth 1 https://github.com/shanglanxin/luci-app-homebridge
-
-
 git clone --depth 1 https://github.com/esirplayground/luci-app-poweroff
 git clone --depth 1 https://github.com/esirplayground/LingTiGameAcc
 git clone --depth 1 https://github.com/esirplayground/luci-app-LingTiGameAcc
