@@ -1,4 +1,0 @@
-#!/bin/sh
-rm -rf /tmp/luci-modulecache /tmp/luci-indexcache*
-[ -s /etc/openvpn/ta.key ] || openvpn --genkey --secret /etc/openvpn/ta.key
-exit 0
