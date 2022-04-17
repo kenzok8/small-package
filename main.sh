@@ -90,7 +90,6 @@ git clone --depth 1 -b lede https://github.com/pymumu/luci-app-smartdns
 git clone --depth 1  https://github.com/ophub/luci-app-amlogic amlogic && mv -n amlogic/luci-app-amlogic amlogic/depends/* ./;rm -rf amlogic
 git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall1 && mv -n passwall1/luci-app-passwall  ./; rm -rf passwall1
 
-svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-fileassistant
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-filebrowser
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
