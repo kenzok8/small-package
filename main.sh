@@ -190,6 +190,10 @@ sed -i '/limit-as/c\limit-as = 5000' uwsgi/files-luci-support/luci-webui.ini
 sed -i 's/procd_set_param stderr 1/procd_set_param stderr 0/' uwsgi/files/uwsgi.init
 sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/wifidog/wifidog_cfg.lua
 cp -rf base-files/files/sbin/sysupgrade my-default-settings/files/sbin/
+sed -i 's/"nas"/"services"/g' luci-app-fileassistant/luasrc/controller/fileassistant.lua
+sed -i 's/"NAS"/"Services"/g' luci-app-fileassistant/luasrc/controller/fileassistant.lua
+sed -i 's/nas/services/g' luci-app-fileassistant/htdocs/luci-static/resources/fileassistant/fb.js
+sed -i 's/NAS/Services/g' luci-app-fileassistant/htdocs/luci-static/resources/fileassistant/fb.js
 
 bash diy/create_acl_for_luci.sh -a >/dev/null 2>&1
 bash diy/convert_translation.sh -a >/dev/null 2>&1
