@@ -1,0 +1,17 @@
+--- a/luci-app-oaf/luasrc/model/cbi/appfilter/appfilter.lua
++++ b/luci-app-oaf/luasrc/model/cbi/appfilter/appfilter.lua
+@@ -19,6 +19,14 @@ m = Map("appfilter",
+ 	
+ s = m:section(TypedSection, "global", translate("Basic Settings"))
+ s:option(Flag, "enable", translate("Enable App Filter"),translate(""))
++um = s:option(DummyValue, "")
++um.template="cbi/oaf_dvalue"
++local fullcone=SYS.exec("uci get firewall.@defaults[0].fullcone");
++local bbr=SYS.exec("uci get flowoffload.@flow[0].bbr");
++local flow_offloading=SYS.exec("uci get flowoffload.@flow[0].flow_offloading");
++if string.match(flow_offloading, "1") then
++    um.value="运行环境检测失败，请先关闭ACC加速模块!"
++end
+ s.anonymous = true
+ 
+ local rule_count=0

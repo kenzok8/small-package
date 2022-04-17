@@ -1,0 +1,3 @@
+
+config softether
+	option enabled '0'
