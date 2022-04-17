@@ -1,0 +1,22 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(3, '<%=url([[admin]], [[services]], [[netkeeper-interception]], [[status]])%>', null,
+	function(x, data) {
+		var tb = document.getElementById('netkeeper-interception_status');
+		if (data && tb) {
+			if (data.running) {
+				var links = '<em><b><font color=green>Netkeeper Interception <%:RUNNING%></font></b></em>';
+				tb.innerHTML = links;
+			} else {
+				tb.innerHTML = '<em><b><font color=red>Netkeeper Interception <%:NOT RUNNING%></font></b></em>';
+			}
+		}
+	}
+);
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="netkeeper-interception_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>

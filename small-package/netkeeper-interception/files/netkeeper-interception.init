@@ -1,0 +1,63 @@
+#!/bin/sh /etc/rc.common
+
+START=60
+
+USE_PROCD=1
+
+PPPOE_SERVER_EXEC=/usr/sbin/pppoe-server
+SERVICE_PID_FILE=/var/run/netkeeper-interception.pid
+
+start_interception() {
+	config_get_bool enabled $1 enabled 0
+	config_get iface $1 iface
+	if [ $enabled -ne 0 ] ;then
+		#enabled
+		if [ -f /etc/netkeeper-interception/AuthReq ]; then
+			logger "Restore Netkeeper AuthReq"
+			cp -f /etc/netkeeper-interception/AuthReq /tmp/Last_AuthReq
+		fi
+		procd_open_instance
+		procd_set_param command $PPPOE_SERVER_EXEC -k -I $iface -O /etc/netkeeper-interception/pppoe-server-options -X $SERVICE_PID_FILE
+	#	procd_set_param respawn 
+		procd_set_param file /etc/netkeeper-interception/pppoe-server-options
+		procd_set_param pidfile $SERVICE_PID_FILE
+		procd_close_instance
+	else
+		#disabled
+		if [ -f /tmp/Last_AuthReq ]; then
+			logger "Save Netkeeper Last_AuthReq"
+			cp -f /tmp/Last_AuthReq /etc/netkeeper-interception/AuthReq
+		fi
+	fi
+	if [ ! -f /tmp/Last_AuthReq ]; then
+		logger "/tmp/Last_AuthReq Not Found,Try to restore Netkeeper AuthReq"
+		if [ -f /etc/netkeeper-interception/AuthReq ]; then
+			cp -f /etc/netkeeper-interception/AuthReq /tmp/Last_AuthReq
+		else
+			touch -f /tmp/Last_AuthReq
+		fi
+	fi
+}
+
+start_service() {
+	if [ -f $SERVICE_PID_FILE ]; then
+		if [ $(pgrep pppoe-server|grep $(cat /var/run/netkeeper-interception.pid) -q && echo 0) -eq 0 ]; then
+			kill $(cat /var/run/netkeeper-interception.pid)
+			rm -f $SERVICE_PID_FILE
+		else
+			rm -f $SERVICE_PID_FILE
+		fi
+	fi
+	config_load netkeeper-interception
+	config_foreach start_interception netkeeper-interception
+}
+
+stop_service() {
+	service_stop "$PPPOE_SERVER_EXEC"
+	rm -f $SERVICE_PID_FILE
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "netkeeper-interception"
+}

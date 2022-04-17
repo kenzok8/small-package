@@ -1,0 +1,11 @@
+{
+        "luci-app-netkeeper-interception": {
+                "description": "Grant access to Netkeeper-interception",
+                "read": {
+                        "uci":["netkeeper-interception"]
+                },
+                "write": {
+                        "uci":["netkeeper-interception"]
+                }
+        }
+}
