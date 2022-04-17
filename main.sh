@@ -67,7 +67,7 @@ git clone --depth 1 https://github.com/sirpdboy/luci-app-advanced
 git clone --depth 1 https://github.com/sirpdboy/luci-app-netdata
 git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice
 git clone --depth 1 https://github.com/sirpdboy/luci-app-autotimeset
-
+git clone --depth 1 https://github.com/KFERMercer/luci-app-tcpdump
 git clone --depth 1 https://github.com/jefferymvp/luci-app-koolproxyR
 git clone --depth 1 https://github.com/wolandmaster/luci-app-rtorrent
 git clone --depth 1 https://github.com/NateLol/luci-app-oled
