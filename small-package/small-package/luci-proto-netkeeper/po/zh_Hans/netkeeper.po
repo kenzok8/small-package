@@ -1,0 +1,55 @@
+msgid ""
+msgstr ""
+
+"Content-Type: text/plain; charset=UTF-8"
+
+msgid "Netkeeper"
+msgstr "闪讯拨号"
+
+msgid "Netkeeper plugin"
+msgstr "闪讯插件"
+
+msgid "Choice Netkeeper plugin"
+msgstr "选择闪讯拨号插件"
+
+msgid "If Leave empty, no default MAC-Address is configured"
+msgstr "留空则不配置Mac地址"
+
+msgid "Netkeeper Chongqing"
+msgstr "重庆闪讯"
+
+msgid "Netkeeper Chongqing 0094"
+msgstr "重庆闪讯0094"
+
+msgid "Netkeeper Xinjiang"
+msgstr "新疆闪讯"
+
+msgid "Netkeeper Shandong Mobile"
+msgstr "山东移动闪讯"
+
+msgid "Netkeeper Shandong Mobile 4.9"
+msgstr "山东移动闪讯4.9"
+
+msgid "Netkeeper Gansu"
+msgstr "甘肃闪讯"
+
+msgid "Netkeeper Hainan"
+msgstr "海南闪讯"
+
+msgid "Netkeeper Hebei"
+msgstr "河北闪讯"
+
+msgid "Yixun Shanxi"
+msgstr "陕西翼讯"
+
+msgid "Netkeeper Hubei"
+msgstr "湖北闪讯"
+
+msgid "Netkeeper Enterprise Zhejiang"
+msgstr "浙江企业闪讯"
+
+msgid "Netkeeper School Zhejiang"
+msgstr "浙江校园闪讯"
+
+msgid "Netkeeper Qinghai"
+msgstr "青海闪讯"
