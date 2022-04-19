@@ -117,7 +117,6 @@ svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
 svn co https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest/trunk/applications/luci-app-cloudflarespeedtest
-svn co https://github.com/Carseason/openwrt-themedog/trunk/luci/luci-themedog
 svn co https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcutmenu
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
