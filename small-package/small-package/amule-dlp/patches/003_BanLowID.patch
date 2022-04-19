@@ -1,0 +1,39 @@
+diff --git a/src/DLP.cpp b/src/DLP.cpp
+index 7016598..d06c2d0 100644
+--- a/src/DLP.cpp
++++ b/src/DLP.cpp
+@@ -62,6 +62,7 @@ bool DLP::DLPCheck(CUpDownClient* c){
+ 	CString clientver(c->GetClientVerString());
+ 	CString uname(c->GetUserName());
+ 	CString uhash(wxString(c->GetUserHash().EncodeSTL().c_str(), wxConvUTF8));
++	CString fullip(Uint32_16toStringIP_Port(c->GetConnectIP(),c->GetUserPort()));
+ 	
+ 	//CheckGhostMod
+ 	if(prefs & PF_GHOSTMOD) {
+@@ -89,7 +90,6 @@ bool DLP::DLPCheck(CUpDownClient* c){
+ 		}
+ 	}
+ 	
+-
+ 	// Check VeryCD eMule
+ 	if ((prefs & PF_VERYCDEMULE) && (tmp == NULL)) {
+ 		if(modver.Find(wxT("VeryCD")) != wxNOT_FOUND){
+@@ -97,11 +97,16 @@ bool DLP::DLPCheck(CUpDownClient* c){
+ 			tmp = ret.c_str();
+ 		}
+ 	}
+-	
++
++	if (c->HasLowID() && (tmp == NULL)) {
++		ret = _("Ban Low ID");
++		tmp = ret.c_str();
++	}
++
+ 	if (tmp != NULL) {
+ 		ret = tmp;
+ 		wxString wxInfo;
+-		wxInfo.Printf(wxT("[%s] %s"), ret.c_str(), c->GetClientFullInfo().c_str());
++		wxInfo.Printf(wxT("_%s_%s_%s_%s_%s"), uhash.c_str(), ret.c_str(), fullip.c_str(), clientver.c_str(), uname.c_str());
+ 		c->Ban();
+ 		theApp->AddDLPMessageLine(wxInfo);
+ 		return true;

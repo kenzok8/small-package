@@ -1,0 +1,57 @@
+--- a/dnsmasq/files/dnsmasq.init
++++ b/dnsmasq/files/dnsmasq.init
+@@ -921,8 +921,12 @@ dnsmasq_start()
+ 	append_bool "$cfg" rapidcommit "--dhcp-rapid-commit"
+ 	append_bool "$cfg" scriptarp "--script-arp"
+ 
++	append_bool "$cfg" filter_aaaa "--filter-aaaa"
++
+ 	append_parm "$cfg" logfacility "--log-facility"
+ 
++	append_parm "$cfg" mini_ttl "--min-ttl"
++
+ 	append_parm "$cfg" cachesize "--cache-size"
+ 	append_parm "$cfg" dnsforwardmax "--dns-forward-max"
+ 	append_parm "$cfg" port "--port"
+@@ -1145,6 +1149,13 @@ dnsmasq_start()
+ 	procd_add_jail_mount_rw /var/run/dnsmasq/ $leasefile
+ 
+ 	procd_close_instance
++
++	config_get_bool dns_redirect "$cfg" dns_redirect 0
++	config_get dns_port "$cfg" port 53
++	if [ "$dns_redirect" = 1 ]; then
++		iptables -t nat -A PREROUTING -m comment --comment "DNSMASQ" -p udp --dport 53 -j REDIRECT --to-ports $dns_port
++		[ -n "$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -m comment --comment "DNSMASQ" -p udp --dport 53 -j REDIRECT --to-ports $dns_port
++	fi
+ }
+ 
+ dnsmasq_stop()
+@@ -1162,6 +1173,13 @@ dnsmasq_stop()
+ 	rm -f ${BASEDHCPSTAMPFILE}.${cfg}.*.dhcp
+ }
+ 
++iptables_clear()
++{
++	config_get dns_port "$cfg" port 53
++	iptables -t nat -D PREROUTING -m comment --comment "DNSMASQ" -p udp --dport 53 -j REDIRECT --to-ports $dns_port 2>"/dev/null"
++	[ -n "$(command -v ip6tables)" ] && ip6tables -t nat -D PREROUTING -m comment --comment "DNSMASQ" -p udp --dport 53 -j REDIRECT --to-ports $dns_port 2>"/dev/null"
++}
++
+ add_interface_trigger()
+ {
+ 	local interface ignore
+@@ -1232,6 +1250,7 @@ start_service() {
+ }
+ 
+ reload_service() {
++	iptables_clear
+ 	rc_procd start_service "$@"
+ 	procd_send_signal dnsmasq "$@"
+ }
+@@ -1258,4 +1277,5 @@ stop_service() {
+ 	else
+ 		config_foreach dnsmasq_stop dnsmasq
+ 	fi
++	iptables_clear
+ }

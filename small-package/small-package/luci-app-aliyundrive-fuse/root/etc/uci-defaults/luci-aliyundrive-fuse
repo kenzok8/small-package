@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@aliyundrive-fuse[-1]
+	add ucitrack aliyundrive-fuse
+	set ucitrack.@aliyundrive-fuse[-1].init=aliyundrive-fuse
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0

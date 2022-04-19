@@ -1,0 +1,5 @@
+config global
+	option auto_run_time '2'
+	option auto_run '1'
+	option auto_cash '1'
+	option week 'Thursday'

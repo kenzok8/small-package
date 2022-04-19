@@ -1,0 +1,37 @@
+<div id="tabmenu">
+	<ul class="tabs">
+		<% for _, tab in ipairs(self.tab_names) do
+			local active = tab == self.selected_tab and " active" or ""
+			local sort = self.sort ~= self.default_sort and "/" .. self.sort or "" -%>
+		<li class="tabmenu-item-<%=tab .. active%>">
+			<a href="<%=self.root_path%>/<%=tab .. sort%>"><%=self.tabs[tab].title%></a>
+		</li>
+		<%- end %>
+	</ul>
+</div>
+<%+rtorrent/tblsection%>
+<div class="cbi-page-actions">
+	<div<%=attr("data-ui-widget", luci.util.serialize_json({ "ComboButton", nil, self.actions,
+		{ name="cbi.action", sort = self.action_order, classes = self.action_classes }
+	}))%>></div>
+	<input class="cbi-button cbi-button-reset" type="reset" value="<%=translate("Reset")%>" />
+</div>
+<script type="text/javascript">
+	document.addEventListener("luci-loaded", function() {
+		eachElement("div.cbi-page-actions > div.cbi-dropdown", action => {
+			action.addEventListener("click", async function(event) {
+				if (!event.target.matches("span.open") && !event.target.matches("li.focus")) {
+					let selected = 0;
+					await eachElement(".tr input[type=checkbox]",
+						checkbox => selected += checkbox.checked ? 1 : 0);
+					if (selected == 0) {
+						alert("No torrent selected!\n"
+							+ "Please use the checkbox at the end of the torrents.");
+					} else {
+						document.forms[0].submit();
+					}
+				}
+			});
+		});
+	});
+</script>
