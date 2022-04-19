@@ -1,0 +1,11 @@
+{
+    "luci-ttnode": {
+        "description": "Luci for TTnode Script ",
+        "read": {
+            "uci": [ "ttnode" ]
+        },
+        "write": {
+            "uci": [ "ttnode" ]
+        }
+    }
+}

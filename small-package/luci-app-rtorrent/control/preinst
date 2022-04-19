@@ -1,0 +1,4 @@
+#!/bin/sh
+[ "${IPKG_NO_SCRIPT}" = "1" ] && exit 0
+mv /etc/config/rtorrent /etc/config/rtorrent-prev &>/dev/null
+exit 0

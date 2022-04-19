@@ -1,0 +1,4 @@
+
+config netkeeper-interception 'config'
+	option enabled '0'
+	option iface 'br-lan'

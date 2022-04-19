@@ -1,0 +1,83 @@
+--- a/luci-app-acme/Makefile
++++ b/luci-app-acme/Makefile
+@@ -8,7 +8,7 @@
+ include $(TOPDIR)/rules.mk
+ 
+ LUCI_TITLE:=ACME package - LuCI interface
+-LUCI_DEPENDS:=+luci-mod-admin-full +acme
++LUCI_DEPENDS:=+luci-mod-admin-full +acme +acme-dnsapi
+ 
+ PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
+ PKG_LICENSE:=GPL-3.0-or-later
+
+--- a/luci-app-ddns/Makefile
++++ b/luci-app-ddns/Makefile
+@@ -12,7 +12,7 @@ PKG_LICENSE:=Apache-2.0
+ PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
+ 
+ LUCI_TITLE:=LuCI Support for Dynamic DNS Client (ddns-scripts)
+-LUCI_DEPENDS:=+luci-lib-ipkg +luci-mod-admin-full +ddns-scripts
++LUCI_DEPENDS:=+luci-lib-ipkg +luci-mod-admin-full +ddns-scripts +ddns-scripts-aliyun +ddns-scripts-dnspod +ddns-scripts-cloudflare
+ LUCI_PKGARCH:=all
+ 
+ include ../../luci.mk
+
+--- a/luci-app-aria2/Makefile
++++ b/luci-app-aria2/Makefile
+@@ -7,7 +7,7 @@
+ include $(TOPDIR)/rules.mk
+ 
+ LUCI_TITLE:=LuCI Support for Aria2
+-LUCI_DEPENDS:=+luci-compat +aria2 +luci-lib-ipkg
++LUCI_DEPENDS:=+luci-compat +aria2 +luci-lib-ipkg +ariang
+ LUCI_PKGARCH:=all
+ 
+ PKG_MAINTAINER:=Xingwang Liao <kuoruan@gmail.com>
+
+--- a/luci-app-transmission/Makefile
++++ b/luci-app-transmission/Makefile
+@@ -7,7 +7,7 @@
+ include $(TOPDIR)/rules.mk
+ 
+ LUCI_TITLE:=LuCI Support for Transmission
+-LUCI_DEPENDS:=+transmission-daemon
++LUCI_DEPENDS:=+transmission-daemon +transmission-web-control
+ 
+ include ../../luci.mk
+ 
+
+--- a/luci-app-samba4/Makefile
++++ b//luci-app-samba4/Makefile
+@@ -3,7 +3,7 @@
+ include $(TOPDIR)/rules.mk
+ 
+ LUCI_TITLE:=Network Shares - Samba 4 SMB/CIFS fileserver
+-LUCI_DEPENDS:=+samba4-server
++LUCI_DEPENDS:=+samba4-server +autoshare-samba
+ 
+ include ../../luci.mk
+ 
+
+--- a/luci-app-ksmbd/Makefile
++++ b/luci-app-ksmbd/Makefile
+@@ -3,7 +3,7 @@
+ include $(TOPDIR)/rules.mk
+ 
+ LUCI_TITLE:=Network Shares - Ksmbd the SMB kernel fileserver
+-LUCI_DEPENDS:=+ksmbd-server
++LUCI_DEPENDS:=+ksmbd-server +autoshare-ksmbd
+ 
+ include ../../luci.mk
+ 
+
+--- a/firewall/Makefile
++++ b/firewall/Makefile
+@@ -28,7 +28,7 @@ define Package/firewall
+   SECTION:=net
+   CATEGORY:=Base system
+   TITLE:=OpenWrt C Firewall
+-  DEPENDS:=+libubox +libubus +libuci +libip4tc +IPV6:libip6tc +libxtables +kmod-ipt-core +kmod-ipt-conntrack +IPV6:kmod-nf-conntrack6 +kmod-ipt-nat
++  DEPENDS:=+libubox +libubus +libuci +libip4tc +IPV6:libip6tc +libxtables +kmod-ipt-core +kmod-ipt-conntrack +IPV6:kmod-nf-conntrack6 +kmod-ipt-nat +iptables-mod-fullconenat
+ endef
+ 
+ define Package/firewall/description

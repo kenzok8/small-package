@@ -1,0 +1,9 @@
+--- a/include/prereq-build.mk
++++ b/include/prereq-build.mk
+@@ -196,5 +196,4 @@
+ 
+ # Install ldconfig stub
+ $(eval $(call TestHostCommand,ldconfig-stub,Failed to install stub, \
+-	touch $(STAGING_DIR_HOST)/bin/ldconfig && \
+-	chmod +x $(STAGING_DIR_HOST)/bin/ldconfig))
++	$(LN) /bin/true $(STAGING_DIR_HOST)/bin/ldconfig))
