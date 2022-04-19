@@ -1,6 +1,0 @@
-config login
-	option minute '1'
-	option hour '1'
-	option week '1'
-	option enable '0'
-	option stype '2'
