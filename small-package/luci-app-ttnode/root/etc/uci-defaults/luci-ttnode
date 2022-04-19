@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@ttnode[-1]
+	add ucitrack ttnode
+	set ucitrack.@ttnode[-1].init=ttnode
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0

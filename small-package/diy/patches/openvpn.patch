@@ -1,0 +1,87 @@
+--- a/openvpn/files/etc/hotplug.d/openvpn/01-user
++++ b/openvpn/files/etc/hotplug.d/openvpn/01-user
+@@ -1,9 +1,10 @@
+ #!/bin/sh
+ 
+ [ -e "/etc/openvpn.user" ] && {
++[ -e "/etc/openvpn/openvpn.user" ] && {
+ 	env -i ACTION="$ACTION" INSTANCE="$INSTANCE" \
+ 		/bin/sh \
+-		/etc/openvpn.user \
++		/etc/openvpn/openvpn.user \
+ 		$*
+ }
+ 
+
+--- a/openvpn/files/openvpn.init
++++ b/openvpn/files/openvpn.init
+@@ -140,9 +140,6 @@ openvpn_add_instance() {
+ 	local name="$1"
+ 	local dir="$2"
+ 	local conf="$3"
+-	local security="$4"
+-	local up="$5"
+-	local down="$6"
+ 
+ 	procd_open_instance "$name"
+ 	procd_set_param command "$PROG"	\
+@@ -150,13 +147,8 @@ openvpn_add_instance() {
+ 		--status "/var/run/openvpn.$name.status" \
+ 		--cd "$dir" \
+ 		--config "$conf" \
+-		--up "/usr/libexec/openvpn-hotplug up $name" \
+-		--down "/usr/libexec/openvpn-hotplug down $name" \
+-		${up:+--setenv user_up "$up"} \
+-		${down:+--setenv user_down "$down"} \
+-		--script-security "${security:-2}" \
+-		$(openvpn_get_dev "$name" "$conf") \
+-		$(openvpn_get_credentials "$name" "$conf")
++		--script-security 2 \
++		$(openvpn_get_dev "$name" "$conf")
+ 	procd_set_param file "$dir/$conf"
+ 	procd_set_param term_timeout 15
+ 	procd_set_param respawn
+@@ -177,28 +169,22 @@ start_instance() {
+ 		return 1
+ 	}
+ 
+-	local up down script_security
+-	config_get up "$s" up
+-	config_get down "$s" down
+-	config_get script_security "$s" script_security
+-
+ 	[ ! -d "/var/run" ] && mkdir -p "/var/run"
+ 
+ 	if [ ! -z "$config" ]; then
+ 		append UCI_STARTED "$config" "$LIST_SEP"
+-		[ -n "$up" ] || get_openvpn_option "$config" up up
+-		[ -n "$down" ] || get_openvpn_option "$config" down down
+-		openvpn_add_instance "$s" "${config%/*}" "$config" "$script_security" "$up" "$down"
++		openvpn_add_instance "$s" "${config%/*}" "$config"
+ 		return
+ 	fi
+ 
+-	create_temp_file "/var/etc/openvpn-$s.conf"
++	[ ! -d "/var/etc" ] && mkdir -p "/var/etc"
++	[ -f "/var/etc/openvpn-$s.conf" ] && rm "/var/etc/openvpn-$s.conf"
+ 
+ 	append_bools "$s" $OPENVPN_BOOLS
+ 	append_params "$s" $OPENVPN_PARAMS
+ 	append_list "$s" $OPENVPN_LIST
+ 
+-	openvpn_add_instance "$s" "/var/etc" "openvpn-$s.conf" "$script_security" "$up" "$down"
++	openvpn_add_instance "$s" "/var/etc" "openvpn-$s.conf"
+ }
+ 
+ start_service() {
+@@ -240,9 +226,7 @@ start_service() {
+ 					continue
+ 				fi
+ 
+-				get_openvpn_option "$path" up up || up=""
+-				get_openvpn_option "$path" down down || down=""
+-				openvpn_add_instance "$name" "${path%/*}" "$path" "" "$up" "$down"
++				openvpn_add_instance "$name" "${path%/*}" "$path" ""
+ 			fi
+ 		done
+ 	fi

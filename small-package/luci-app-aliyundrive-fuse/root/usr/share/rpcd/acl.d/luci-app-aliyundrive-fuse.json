@@ -1,0 +1,11 @@
+{
+	"luci-app-aliyundrive-fuse": {
+		"description": "Grant UCI access for luci-app-aliyundrive-fuse",
+		"read": {
+			"uci": [ "aliyundrive-fuse" ]
+		},
+		"write": {
+			"uci": [ "aliyundrive-fuse" ]
+		}
+	}
+}
