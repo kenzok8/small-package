@@ -23,7 +23,7 @@ define Package/ngrokc
   SUBMENU:=Web Servers/Proxies
   TITLE:=Secure tunnels to localhost (C++ port)
   URL:=https://github.com/dosgo/ngrok-c
-  DEPENDS:=+libc +libpthread +libopenssl +libstdcpp +zlib +zlib \
+  DEPENDS:=+libc +libpthread +libopenssl +libstdcpp +zlib \
     +USE_GLIBC:libatomic
 endef
 
