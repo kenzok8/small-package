@@ -42,7 +42,7 @@ o:value("off", translate("OFF"))
 o.default = auto
 
 o = s:option(Value, "log_file", translate("Log file"))
-o.default = "/tmp/v2raya.log"
+o.default = "/var/log/v2raya/v2raya.log"
 
 o = s:option(ListValue, "log_level", translate("Log Level"))
 o:value("trace",translate("Trace"))
