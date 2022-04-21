@@ -4,7 +4,7 @@ name: Sync packages
 on:
   push:
     paths:
-      - '.github/workflows/small-package.yml'
+      - '.github/workflows/small8.yml'
       - 'diy/**'
   schedule:
     - cron: 35 8,23 * * *
