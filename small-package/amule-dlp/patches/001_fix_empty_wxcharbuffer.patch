@@ -1,0 +1,22 @@
+From 0a9c99fe35b68725036ed7109954327dffc31323 Mon Sep 17 00:00:00 2001
+From: kiddin9 <48883331+kiddin9@users.noreply.github.com>
+Date: Sun, 12 Sep 2021 05:31:27 +0800
+Subject: [PATCH] Update Path.cpp
+
+---
+ src/libs/common/Path.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libs/common/Path.cpp b/src/libs/common/Path.cpp
+index b70e937f2..0e162bbc3 100644
+--- a/src/libs/common/Path.cpp
++++ b/src/libs/common/Path.cpp
+@@ -230,7 +230,7 @@ CPath::CPath(const wxString& filename)
+ 	}
+ 
+ 	wxCharBuffer fn = filename2char(filename);
+-	if (fn.data() && fn.length()) {
++	if (fn.data()) {
+ 		// Filename is valid in the current locale. This means that
+ 		// it either originated from a (wx)system-call, or from a
+ 		// user with a properly setup system.

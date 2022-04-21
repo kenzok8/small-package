@@ -1,0 +1,14 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(3, '<%=url([[admin]], [[services]], [[netkeeper-interception]], [[authreq]])%>', null,
+	function(x, data) {
+		var tb = document.getElementById('netkeeper-interception_authreq');
+		tb.innerHTML = data.authreq;
+	}
+);
+//]]>
+</script>
+<%+cbi/valueheader%>
+	<span id="netkeeper-interception_authreq" class="cbi-value" style="padding: .35rem 0rem .2rem" data-update="change">
+	<%-=pcdata(self:cfgvalue(section) or self.default)-%>
+	</span>
+<%+cbi/valuefooter%>
