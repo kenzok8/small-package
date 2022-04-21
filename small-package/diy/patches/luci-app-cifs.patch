@@ -1,0 +1,11 @@
+--- a/luci-app-cifs/root/etc/init.d/cifs
++++ b/luci-app-cifs/root/etc/init.d/cifs
+@@ -91,7 +91,7 @@ mount_natshare() {
+ 	natpath="//${server}/$name"
+ 
+ 	append _mount_path "$MOUNTAREA/$name"
+-	append _agm "-o ${USERS}${GUEST},dom=$WORKGROUPD,iocharset=$IOCHARSET,$SEC,$AGM,vers=1.0"
++	append _agm "-o ${USERS}${GUEST},dom=$WORKGROUPD,iocharset=$IOCHARSET,$SEC,$AGM"
+ 	
+ 	sleep 1
+ 	mkdir -p $_mount_path

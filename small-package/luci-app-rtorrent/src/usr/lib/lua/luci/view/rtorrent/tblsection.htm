@@ -1,0 +1,93 @@
+<style type="text/css">
+	.center { text-align: center }
+	.right  { text-align: right }
+	.wrap   { word-break: break-all }
+	.red    { color: #b20000 }
+	.orange { color: #cc7000 }
+	.green  { color: #00a100 }
+	.blue   { color: #0000bf }
+	.bold   { font-weight: bold }
+	.hidden { display: "none" }
+	.cbi-value-field input[type="checkbox"] { margin-top: 4px }
+	img { margin: 4px 0 0 4px }
+	select  { text-align: center; text-align-last: center }
+	.table .th, .table .td { padding: 10px 6px 9px }
+	.th a { text-decoration: none; }
+	.th a:not(.active) { color: #c0bab2 }
+	.pagination { margin: -12px 0 18px 0 }
+	.pagination a { padding: 4px 8px; text-decoration: none; border-radius: 4px }
+	.pagination a.active { background-color: #004daa; color: #e8e6e3 }
+	.pagination a:hover:not(.active) { background-color: #ddd }
+</style>
+<script type="text/javascript" src="<%=resource%>/rtorrent.js"></script>
+<div id="<%=self.name%>">
+	<%+cbi/tblsection%>
+</div>
+<% if self.pages and self.pages ~= "" then %>
+	<div class="pagination center"><%=self.pages%></div>
+<% end %>
+<script type="text/javascript">
+	document.addEventListener("luci-loaded", function() {
+		<% for i, node in ipairs(self.children) do
+			if node.classes ~= nil and next(node.classes) ~= nil then %>
+		eachElement("#<%=self.name%> .th:nth-child(<%=i%>), "
+				+ "#<%=self.name%> :not(.placeholder) > .td:nth-child(<%=i%>)",
+			cell => cell.classList.add("<%=table.concat(node.classes, '", "')%>"));
+			<% end
+		end %>
+		<% if #self:cfgsections() > 1
+		   and self.map:get(self:cfgsections()[#self:cfgsections()], ".total_row") then %>
+		eachElement(".tr:last-child > .td", cell => cell.classList.add("bold"));
+		eachElement(".tr:not(:last-child) input[type=checkbox]", checkbox => {
+			checkbox.addEventListener("change", async function() {
+				const invertSelection = (await selectElement(
+					".tr:last-child input[type=checkbox]"))[0];
+				updateInvertSelection(invertSelection);
+			});
+		});
+		eachElement(".tr:last-child input[type=checkbox]", async invertSelection => {
+			updateInvertSelection(invertSelection);
+			invertSelection.addEventListener("change", async function() {
+				let count = 0, selected = 0;
+				await eachElement(".tr:not(:last-child) input[type=checkbox]", checkbox => {
+					checkbox.checked = !checkbox.checked;
+					count++; selected += checkbox.checked ? 1 : 0;
+				});
+				invertSelection.indeterminate = (selected > 0 && selected < count);
+			});
+		});
+		document.forms[0].addEventListener("reset", function() {
+			setTimeout(async function() {
+				const invertSelection = (await selectElement(
+					".tr:last-child input[type=checkbox]"))[0];
+				updateInvertSelection(invertSelection);
+			}, 1);
+		});
+		eachElement(".tr:not(:last-child) select", select => {
+			select.addEventListener("change", async function() {
+				const batchSelect = (await selectElement(".tr:last-child select"))[0];
+				const selectedValues = new Set();
+				await eachElement(".tr:not(:last-child) select:not(.hidden)", select => {
+					selectedValues.add(select.value);
+				});
+				if (selectedValues.size > 1) { batchSelect.value = "mixed"; }
+				else { batchSelect.value = selectedValues.values().next().value; }
+			});
+		});
+		eachElement(".tr:last-child select", batchSelect => {
+			batchSelect.addEventListener("change", async function() {
+				await eachElement(".tr:not(:last-child) select:not(.hidden)", select => {
+					select.value = batchSelect.value;
+				});
+			});
+		});
+		<% end %>
+		eachElement("option", option => {
+			if (option.value === "") {
+				if (option.selected) { option.parentElement.classList.add("hidden"); }
+				option.classList.add("hidden");
+			}
+			if (option.value === "mixed") { option.classList.add("hidden"); }
+		});
+	});
+</script>
