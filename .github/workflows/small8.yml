@@ -59,7 +59,7 @@ jobs:
     - name: Cleanup Workflow Logs
       uses: Mattraks/delete-workflow-runs@main
       with:
-        token: ${{ github.token }}
+        token: ${{ secrets.ACCESS_TOKEN }}
         repository: ${{ github.repository }}
         retain_days: 1
         keep_minimum_runs: 1
