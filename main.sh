@@ -25,7 +25,7 @@ git clone --depth 1 https://github.com/kiddin9/openwrt-openvpn && mvdir openwrt-
 git clone --depth 1 https://github.com/kiddin9/luci-app-xlnetacc
 git clone --depth 1 https://github.com/kiddin9/openwrt-amule-dlp && mvdir openwrt-amule-dlp
 git clone --depth 1 https://github.com/kiddin9/luci-app-wizard
-
+git clone --depth 1 https://github.com/yichya/luci-app-xray
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall
 git clone --depth 1 https://github.com/Lienol/openwrt-package
 git clone --depth 1 https://github.com/ysc3839/openwrt-minieap
