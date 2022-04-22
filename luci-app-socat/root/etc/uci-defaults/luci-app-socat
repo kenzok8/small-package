@@ -11,7 +11,7 @@ EOF
 uci -q batch <<-EOF >/dev/null
 	delete ucitrack.@socat[-1]
 	add ucitrack socat
-	set ucitrack.@socat[-1].init=socat
+	set ucitrack.@socat[-1].init=luci_socat
 	commit ucitrack
 EOF
 
