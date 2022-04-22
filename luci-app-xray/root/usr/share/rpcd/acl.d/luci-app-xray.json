@@ -1,0 +1,15 @@
+{
+    "luci-app-xray": {
+        "description": "Grant access to xray configurations",
+        "read": {
+            "uci": [
+                "xray"
+            ]
+        },
+        "write": {
+            "uci": [
+                "xray"
+            ]
+        }
+    }
+}
