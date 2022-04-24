@@ -997,8 +997,9 @@ end
 local function observatory()
     if proxy.observatory == "1" then
         return {
-            subjectSelector = {"tcp_outbound", "udp_outbound"},
-            probeInterval = "1s"
+            subjectSelector = {"tcp_outbound", "udp_outbound", "direct"},
+            probeInterval = "1s",
+            probeUrl = "http://www.apple.com/library/test/success.html"
         }
     end
     return nil
