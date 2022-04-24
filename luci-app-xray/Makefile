@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=1.9.0
+PKG_VERSION:=1.10.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -49,10 +49,6 @@ choice
 	config PACKAGE_XRAY_RLIMIT_DATA_LARGE
 		bool "Large limit (about 200MB)"
 endchoice
-
-config PACKAGE_XRAY_OPTIONAL_FEATURE_1000
-	bool "Include Optional Feature pull/1000 (metrics support))"
-	default n
 
 endmenu
 endef
@@ -117,9 +113,6 @@ ifdef CONFIG_PACKAGE_XRAY_RLIMIT_DATA_SMALL
 endif
 ifdef CONFIG_PACKAGE_XRAY_RLIMIT_DATA_LARGE
 	$(INSTALL_DATA) ./root/usr/share/xray/rlimit_data_large $(1)/usr/share/xray/rlimit_data
-endif
-ifdef CONFIG_PACKAGE_XRAY_OPTIONAL_FEATURE_1000
-	$(INSTALL_DATA) ./root/usr/share/xray/optional_feature_1000 $(1)/usr/share/xray/optional_feature_1000
 endif
 	$(INSTALL_BIN) ./root/usr/share/xray/gen_ipset_rules.lua $(1)/usr/share/xray/gen_ipset_rules.lua
 	$(INSTALL_BIN) ./root/usr/share/xray/gen_ipset_rules_extra_normal.lua $(1)/usr/share/xray/gen_ipset_rules_extra.lua

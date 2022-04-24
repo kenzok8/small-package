@@ -14,7 +14,6 @@ local udp_server = ucursor:get_all("xray", udp_server_section)
 
 local geoip_existence = false
 local geosite_existence = false
-local optional_feature_1000 = false
 
 local xray_data_file_iterator = nixiofs.dir("/usr/share/xray")
 
@@ -25,9 +24,6 @@ repeat
     end
     if fn == "geosite.dat" then
         geosite_existence = true
-    end
-    if fn == "optional_feature_1000" then
-        optional_feature_1000 = true
     end
 until fn == nil
 
@@ -745,12 +741,10 @@ local function api_conf()
 end
 
 local function metrics_conf()
-    if optional_feature_1000 then
-        if proxy.metrics_server_enable == "1" then
-            return {
-                tag = "metrics",
-            }
-        end
+    if proxy.metrics_server_enable == "1" then
+        return {
+            tag = "metrics",
+        }
     end
     return nil
 end
@@ -768,18 +762,16 @@ local function inbounds()
     if proxy.web_server_enable == "1" then
         table.insert(i, https_inbound())
     end
-    if optional_feature_1000 then
-        if proxy.metrics_server_enable == '1' then
-            table.insert(i, {
-                listen = "0.0.0.0",
-                port = proxy.metrics_server_port or 18888,
-                protocol = "dokodemo-door",
-                settings = {
-                    address = "127.0.0.1"
-                },
-                tag = "metrics"
-            })
-        end
+    if proxy.metrics_server_enable == '1' then
+        table.insert(i, {
+            listen = "0.0.0.0",
+            port = proxy.metrics_server_port or 18888,
+            protocol = "dokodemo-door",
+            settings = {
+                address = "127.0.0.1"
+            },
+            tag = "metrics"
+        })
     end
     if proxy.xray_api == '1' then
         table.insert(i, {
@@ -892,14 +884,12 @@ local function rules()
             outboundTag = "api"
         }
     }
-    if optional_feature_1000 then
-        if proxy.metrics_server_enable == "1" then
-            table.insert(result, 1, {
-                type = "field",
-                inboundTag = {"metrics"},
-                outboundTag = "metrics"
-            })
-        end
+    if proxy.metrics_server_enable == "1" then
+        table.insert(result, 1, {
+            type = "field",
+            inboundTag = {"metrics"},
+            outboundTag = "metrics"
+        })
     end
     if geoip_existence then
         if proxy.geoip_direct_code ~= nil then
