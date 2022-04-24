@@ -26,10 +26,11 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-02-01 feat: refactor transparent-proxy-ipset to use lua
 * 2022-02-02 feat: return certain domain names as NXDOMAIN
 * 2022-02-03 fix: failed to start Xray when blocked domain list is empty
-* 2022-02-15 feat: add a large rlimit_data option
-* 2022-02-19 fix: rlimit_data and rlimit_nofile does not work together
+* 2022-02-15 feat: add a large `rlimit_data` option
+* 2022-02-19 fix: `rlimit_data` and `rlimit_nofile` does not work together
 * 2022-02-20 fix: return a discarded address instead of nxdomain to let dnsmasq cache these queries
 * 2022-03-25 feat: remove web and add metrics configurations (recommended to use with [metrics support](https://github.com/XTLS/Xray-core/pull/1000))
+* 2022-04-24 feat: metrics is now out of optional features; add basic ubus wrapper for xray apis
 
 ## Changelog 2021
 
