@@ -9,16 +9,8 @@
 
 START=99
 
-CONFIG=weburl
-
-uci_get_by_type() {
-	local index=0
-	if [ -n $4 ]; then
-		index=$4
-	fi
-	local ret=$(uci get $CONFIG.@$1[$index].$2 2>/dev/null)
-	echo ${ret:=$3}
-}
+WEBURL_ENABLE=0
+WEBURL_ALGOS=
 
 is_true() {
 	case $1 in
@@ -27,63 +19,90 @@ is_true() {
 	esac
 }
 
-load_config() {
-	ENABLED=$(uci_get_by_type basic enable)
-	return $(is_true $ENABLED)
+get_algo_mode(){
+	if [ "x$1" = "x1" ]; then
+		echo "kmp"
+	else
+		echo "bm"
+	fi
 }
 
-get_algo_mode(){
-	case "$1" in
-		0)
-			echo "bm"
-		;;
-		1)
-			echo "kmp"
-		;;
-	esac
+iptables_w(){
+	iptables -w 1 "$@"
 }
 
 add_rule(){
-	algos=$(uci_get_by_type basic algos)
-	for i in $(seq 0 100)
-	do
-		enable=$(uci_get_by_type macbind enable '' $i)
-		macaddr=$(uci_get_by_type macbind macaddr '' $i)
-		timeon=$(uci_get_by_type macbind timeon '' $i)
-		timeoff=$(uci_get_by_type macbind timeoff '' $i)
-		keyword=$(uci_get_by_type macbind keyword '' $i)
-		if [ -z $enable ] || [ -z $keyword ]; then
-			break
-		fi
-		
-		if [ -z $timeon ] || [ -z $timeoff ]; then
-			settime=""
-		else
-			settime="-m time --kerneltz --timestart $timeon --timestop $timeoff"
-		fi
-		
-		if [ "$enable" == "1" ]; then
-			if [ -z $macaddr ]; then
-				iptables -t filter -I WEBURL $settime -m string --string "$keyword" --algo $(get_algo_mode $algos) -j DROP
-			else
-				iptables -t filter -I WEBURL $settime -m mac --mac-source $macaddr -m string --string "$keyword" --algo $(get_algo_mode $algos) -j DROP
-				unset macaddr
-			fi
-		fi
-	done
+	local settime
+	local macaddr
+	local enable
+	local timeon
+	local timeoff
+	local keyword
+	config_get enable "$1" enable "0"
+	config_get macaddr "$1" macaddr
+	config_get timeon "$1" timeon
+	config_get timeoff "$1" timeoff
+	config_get keyword "$1" keyword
+
+	if [ -z "$enable" ] || [ $enable = 0 ] || [ -z "$keyword" ]; then
+		return
+	fi
+
+	if [ -z "$timeon" ] || [ -z "$timeoff" ]; then
+		settime=""
+	else
+		settime="-m time --kerneltz --timestart $timeon --timestop $timeoff"
+	fi
+
+	if [ -z $macaddr ]; then
+		iptables_w -t filter -I WEBURL_RULES $settime -m string --string "$keyword" --algo $WEBURL_ALGOS -j WEBURL_REJECT
+	else
+		iptables_w -t filter -I WEBURL_RULES $settime -m mac --mac-source $macaddr -m string --string "$keyword" --algo $WEBURL_ALGOS -j WEBURL_REJECT
+	fi
+
+}
+
+weburl_header() {
+	local algos
+	config_get WEBURL_ENABLE "$1" enable "0"
+	config_get algos "$1" algos "0"
+	WEBURL_ALGOS=$(get_algo_mode $algos)
 }
 
 start(){
-	! load_config && exit 0
-	iptables -L FORWARD | grep -c WEBURL 2>/dev/null && [ $? -eq 0 ] && exit 0;
-	iptables -t filter -N WEBURL
-	iptables -t filter -I FORWARD -m comment --comment "Rule For Control" -j WEBURL
-	add_rule
-	iptables -t filter -I WEBURL -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+	config_load weburl
+	config_foreach weburl_header basic
+	[ "x`is_true $WEBURL_ENABLE`" = "x0" ] || return 0
+	iptables_w -L FORWARD | grep -c WEBURL 2>/dev/null && [ $? -eq 0 ] && return 0;
+	# resolve interface
+	local interface=$(
+		. /lib/functions/network.sh
+
+		network_is_up "lan" && network_get_device device "lan"
+		echo "${device:-br-lan}"
+	)
+	iptables_w -t filter -N WEBURL_REJECT
+	iptables_w -t filter -F WEBURL_REJECT
+	iptables_w -t filter -I WEBURL_REJECT -j DROP
+	iptables_w -t filter -I WEBURL_REJECT -p tcp -j REJECT --reject-with tcp-reset
+	iptables_w -t filter -N WEBURL_RULES
+	iptables_w -t filter -F WEBURL_RULES
+	config_foreach add_rule macbind
+	iptables_w -t filter -N WEBURL
+	iptables_w -t filter -F WEBURL
+	iptables_w -t filter -I WEBURL -i $interface -m length --length 53:768 -j WEBURL_RULES
+	# iptables_w -t filter -I WEBURL -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+	iptables_w -t filter -I FORWARD -m comment --comment "Rule For Control" -j WEBURL
+	logger -t weburl "weburl filter on $interface"
 }
+
 stop(){
-	iptables -t filter -D FORWARD -m comment --comment "Rule For Control" -j WEBURL
-	iptables -t filter -F WEBURL
-	iptables -t filter -X WEBURL
+	iptables_w -t filter -D FORWARD -m comment --comment "Rule For Control" -j WEBURL
+	iptables_w -t filter -F WEBURL
+	iptables_w -t filter -X WEBURL
+	iptables_w -t filter -F WEBURL_RULES
+	iptables_w -t filter -X WEBURL_RULES
+	iptables_w -t filter -F WEBURL_REJECT
+	iptables_w -t filter -X WEBURL_REJECT
 }
 
