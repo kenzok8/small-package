@@ -1,5 +1,9 @@
+
 #!/bin/bash
-function git_sparse_clone() (
+function git_clone() {
+  git clone --depth 1 $1 $2 || true
+ }
+function git_sparse_clone() {
   branch="$1" rurl="$2" localdir="$3" && shift 3
   git clone -b $branch --depth 1 --filter=blob:none --sparse $rurl $localdir
   cd $localdir
@@ -8,7 +12,7 @@ function git_sparse_clone() (
   mv -n $@ ../
   cd ..
   rm -rf $localdir
-  )
+  }
 function mvdir() {
 mv -n `find $1/* -maxdepth 0 -type d` ./
 rm -rf $1
@@ -78,7 +82,7 @@ git clone --depth 1 https://github.com/CCnut/feed-netkeeper && mvdir feed-netkee
 git clone --depth 1 https://github.com/sensec/luci-app-udp2raw
 git clone --depth 1 https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-sysuh3c
 git clone --depth 1 https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd1/luci-app-cupsd cupsd1/cups/cups ./ ; rm -rf cupsd1
-git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mv -n openwrt-mos/*mosdns ./ ; rm -rf openwrt-mos
+git_clone https://github.com/QiuSimons/openwrt-mos && mv -n openwrt-mos/*mosdns ./ ; rm -rf openwrt-mos
 git clone --depth 1 https://github.com/peter-tank/luci-app-fullconenat
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/zxlhhyccc/luci-app-v2raya
