@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 bakdns() {
 	if [ "$1" == "0" ]; then
 		echo "119.29.29.29"
