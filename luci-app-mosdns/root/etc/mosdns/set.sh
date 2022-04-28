@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 # shellcheck source=/etc/mosdns/library.sh
 
 source /etc/mosdns/library.sh
@@ -49,7 +49,7 @@ if L_exist pw2; then
 		uci set passwall2.@global[0].dns_query_strategy='UseIP'
 	fi
 	uci commit passwall2
-	if [ "$(pid passwall)" ]; then
+	if [ "$(pid passwall2)" ]; then
 		/etc/init.d/passwall2 restart
 	fi
 fi
