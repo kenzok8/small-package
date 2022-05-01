@@ -90,7 +90,7 @@ o:depends("advanced", 1)
  
 o = s:option(Value, "dn", translate("Number of download speed tests"))
 o.datatype ="uinteger" 
-o.default = 2
+o.default = 1
 o.rmempty=true
 o:depends("advanced", 1)  
 
@@ -174,6 +174,150 @@ if nixio.fs.access("/etc/config/passwall") then
 		o:value(key, passwall_server_table[key])
 	end
 	o:depends("passwall_enabled", 1)
+	o.forcewrite = true
+
+end
+
+if nixio.fs.access("/etc/config/passwall2") then
+	s:tab("passwall2tab", translate("passwall2"))
+
+	o=s:taboption("passwall2tab", Flag, "passwall2_enabled",translate("PassWall2 Enabled"))
+	o.rmempty=true	
+
+	local passwall2_server_table = {}
+	uci:foreach("passwall2", "nodes", function(s)
+		if s.remarks then
+			passwall2_server_table[s[".name"]] = "[%s]:%s" % {string.upper(s.protocol or s.type), s.remarks}
+		end
+	end)
+
+	local passwall2_key_table = {}
+	for key, _ in pairs(passwall2_server_table) do
+		table.insert(passwall2_key_table, key)
+	end
+
+	table.sort(passwall2_key_table)
+
+	o = s:taboption("passwall2tab", DynamicList, "passwall2_services",
+			translate("Passwall2 Servers"),
+			translate("Please select a service"))
+			
+	for _, key in pairs(passwall2_key_table) do
+		o:value(key, passwall2_server_table[key])
+	end
+	o:depends("passwall2_enabled", 1)
+	o.forcewrite = true
+
+end
+
+s:tab("bypasstab", translate("Bypass"))
+if nixio.fs.access("/etc/config/bypass") then
+	
+	o=s:taboption("bypasstab", Flag, "bypass_enabled",translate("Bypass Enabled"))
+	o.rmempty=true	
+
+	local bypass_server_table = {}
+	uci:foreach("bypass", "servers", function(s)
+		if s.alias then
+			bypass_server_table[s[".name"]] = "[%s]:%s" % {string.upper(s.protocol or s.type), s.alias}
+		elseif s.server and s.server_port then
+			bypass_server_table[s[".name"]] = "[%s]:%s:%s" % {string.upper(s.protocol or s.type), s.server, s.server_port}
+		end
+	end)
+
+	local bypass_key_table = {}
+	for key, _ in pairs(bypass_server_table) do
+		table.insert(bypass_key_table, key)
+	end
+
+	table.sort(bypass_key_table)
+
+	o = s:taboption("bypasstab", DynamicList, "bypass_services",
+			translate("Bypass Servers"),
+			translate("Please select a service"))
+			
+	for _, key in pairs(bypass_key_table) do
+		o:value(key, bypass_server_table[key])
+	end
+	o:depends("bypass_enabled", 1)
+	o.forcewrite = true
+
+end
+
+s:tab("vssrtab", translate("Vssr"))
+if nixio.fs.access("/etc/config/vssr") then
+	
+	o=s:taboption("vssrtab", Flag, "vssr_enabled",translate("Vssr Enabled"))
+	o.rmempty=true	
+
+	local vssr_server_table = {}
+	uci:foreach("vssr", "servers", function(s)
+		if s.alias then
+			vssr_server_table[s[".name"]] = "[%s]:%s" % {string.upper(s.protocol or s.type), s.alias}
+		elseif s.server and s.server_port then
+			vssr_server_table[s[".name"]] = "[%s]:%s:%s" % {string.upper(s.protocol or s.type), s.server, s.server_port}
+		end
+	end)
+
+	local vssr_key_table = {}
+	for key, _ in pairs(vssr_server_table) do
+		table.insert(vssr_key_table, key)
+	end
+
+	table.sort(vssr_key_table)
+
+	o = s:taboption("vssrtab", DynamicList, "vssr_services",
+			translate("Vssr Servers"),
+			translate("Please select a service"))
+			
+	for _, key in pairs(vssr_key_table) do
+		o:value(key, vssr_server_table[key])
+	end
+	o:depends("vssr_enabled", 1)
+	o.forcewrite = true
+
+end
+
+
+
+
+
+
+
+
+
+
+
+s:tab("shadowsockstab", translate("Shadowsocks"))
+if nixio.fs.access("/etc/config/shadowsocks-libev") then
+	
+	o=s:taboption("shadowsockstab", Flag, "shadowsocks_enabled",translate("Shadowsocks-libev Enabled"))
+	o.rmempty=true	
+
+	local shadowsocks_server_table = {}
+	uci:foreach("shadowsocks-libev", "server", function(s)
+		if s.server then
+			shadowsocks_server_table[s[".name"]] = "[%s]:%s" % {string.upper(s.server), s.server}
+		elseif s.server and s.server_port then
+			shadowsocks_server_table[s[".name"]] = "[%s]:%s:%s" % {string.upper(s.server), s.server, s.server_port}
+		end
+	end)
+
+	local shadowsocks_key_table = {}
+	for key, _ in pairs(shadowsocks_server_table) do
+		table.insert(shadowsocks_key_table, key)
+	end
+
+	table.sort(shadowsocks_key_table)
+
+	o = s:taboption("shadowsockstab", DynamicList, "shadowsocks_services",
+			translate("Shadowsocks-libev Servers"),
+			translate("Please select a service"))
+			
+	for _, key in pairs(shadowsocks_key_table) do
+		o:value(key, shadowsocks_server_table[key])
+	end
+	o:depends("shadowsocks_enabled", 1)
 	o.forcewrite = true
 
 end

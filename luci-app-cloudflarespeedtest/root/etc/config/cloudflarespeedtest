@@ -14,4 +14,8 @@ config global 'global'
 config servers 'servers'
 	option ssr_enabled '0'
 	option passwall_enabled '0'
+	option passwall2_enabled '0'
+	option bypass_enabled '0'
+	option vssr_enabled '0'
+	option DNS_enabled '0'
 
