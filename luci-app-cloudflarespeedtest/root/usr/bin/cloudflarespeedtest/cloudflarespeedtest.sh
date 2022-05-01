@@ -26,7 +26,7 @@ echolog() {
 
 function read_config(){
 	get_global_config "enabled" "speed" "custome_url" "threads" "custome_cors_enabled" "custome_cron" "t" "tp" "dt" "dn" "dd" "tl" "tll" "ipv6_enabled" "advanced" "proxy_mode"
-	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "DNS_enabled"
+	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "passwall2_enabled" "passwall2_services" "bypass_enabled" "bypass_services" "vssr_enabled" "vssr_services" "DNS_enabled"
 }
 
 function  speed_test(){
@@ -77,6 +77,42 @@ function  speed_test(){
 		/etc/init.d/passwall  restart 2>/dev/null
 	fi
 
+	passwall2_server_enabled=$(uci get passwall2.@global[0].enabled 2>/dev/null)
+	passwall2_original_run_mode=$(uci get passwall2.@global[0].tcp_proxy_mode 2>/dev/null)
+	if [ $passwall2_server_enabled -eq "1" ] ;then
+		if [ $proxy_mode  == "close" ] ;then
+			uci set passwall2.@global[0].enabled="0"			
+		elif  [ $proxy_mode  == "gfw" ] ;then
+			uci set passwall2.@global[0].tcp_proxy_mode="gfwlist"
+			uci set passwall2.@global[0].udp_proxy_mode="gfwlist"
+		fi
+		uci commit passwall2
+		/etc/init.d/passwall2 restart 2>/dev/null
+	fi
+	
+	bypass_original_server=$(uci get bypass.@global[0].global_server 2>/dev/null)
+	bypass_original_run_mode=$(uci get bypass.@global[0].run_mode 2>/dev/null)
+	if [ $bypass_original_server != "$bypass_key_table" ] ;then
+		if [ $proxy_mode  == "close" ] ;then
+			uci set bypass.@global[0].global_server="$bypass_key_table"			
+		elif  [ $proxy_mode  == "gfw" ] ;then
+			uci set bypass.@global[0].run_mode="gfw"
+		fi
+		uci commit bypass
+		/etc/init.d/bypass restart
+	fi
+	
+	vssr_original_server=$(uci get vssr.@global[0].global_server 2>/dev/null)
+	vssr_original_run_mode=$(uci get vssr.@global[0].run_mode 2>/dev/null)
+	if [ $vssr_original_server != "nil" ] ;then
+		if [ $proxy_mode  == "close" ] ;then
+			uci set vssr.@global[0].global_server="nil"		
+		elif  [ $proxy_mode  == "gfw" ] ;then
+			uci set vssr.@global[0].run_mode="gfw"
+		fi
+		uci commit vssr
+		/etc/init.d/vssr restart
+	fi
 	echo $command  >> $LOG_FILE 2>&1 
 	echolog "-----------start----------" 
 	$command >> $LOG_FILE 2>&1
@@ -93,7 +129,11 @@ function ip_replace(){
 
 	ssr_best_ip
 	
+	vssr_best_ip
+
+	bypass_best_ip
 	passwall_best_ip
+	passwall2_best_ip
 	
 }
 
@@ -123,6 +163,32 @@ function passwall_best_ip(){
 	fi
 }
 
+function passwall2_best_ip(){
+	if [ $passwall2_server_enabled -eq '1' ] ; then
+		echolog "设置passwall2代理模式"
+		if [ $proxy_mode  == "close" ] ;then
+			uci set passwall2.@global[0].enabled="${passwall2_server_enabled}"		
+		 elif [ $proxy_mode  == "gfw" ] ;then
+		 	uci set passwall2.@global[0].tcp_proxy_mode="${passwall2_original_run_mode}"
+			uci set passwall2.@global[0].udp_proxy_mode="${passwall2_original_run_mode}"
+		fi	
+		uci commit passwall2
+	fi
+
+	if [ $passwall2_enabled -eq "1" ] ;then
+		echolog "设置passwall2 IP"
+		for ssrname in $passwall2_services
+		do
+			echo $ssrname
+			uci set passwall2.$ssrname.address="${bestip}"
+		done
+		uci commit passwall2
+ 		if [ $passwall2_server_enabled -eq "1" ] ;then
+			/etc/init.d/passwall2 restart 2>/dev/null
+			echolog "passwall2重启完成"
+		fi
+	fi
+}
 function ssr_best_ip(){
 
 	if [ $ssr_enabled -eq "1" ] ;then
@@ -149,6 +215,53 @@ function ssr_best_ip(){
 	fi
 }
 
+function vssr_best_ip(){
+	if [ $vssr_enabled -eq "1" ] ;then
+		echolog "设置Vssr IP"
+		for ssrname in $vssr_services
+		do
+			echo $ssrname
+			uci set vssr.$ssrname.server="${bestip}"
+		done
+		uci commit vssr
+		 	
+	fi
+
+	if [ $vssr_original_server != 'nil' ] ; then
+		echolog "设置Vssr代理模式"
+		if [ $proxy_mode  == "close" ] ;then
+			uci set vssr.@global[0].global_server="${vssr_original_server}"		
+		elif [ $proxy_mode  == "gfw" ] ;then
+			uci set vssr.@global[0].run_mode="${vssr_original_run_mode}"
+		fi	
+		/etc/init.d/vssr restart 2 >/dev/null
+		echolog "Vssr重启完成"
+	fi
+}
+
+function bypass_best_ip(){
+	if [ $bypass_enabled -eq "1" ] ;then
+		echolog "设置Bypass IP"
+		for ssrname in $bypass_services
+		do
+			echo $ssrname
+			uci set bypass.$ssrname.server="${bestip}"
+		done
+		uci commit bypass
+
+	fi
+
+	if [ $bypass_original_server != '$bypass_key_table' ] ; then
+		echolog "设置Bypass代理模式"
+		if [ $proxy_mode  == "close" ] ;then
+			uci set bypass.@global[0].global_server="${bypass_original_server}"		
+		elif [ $proxy_mode  == "gfw" ] ;then
+			uci set  bypass.@global[0].run_mode="${bypass_original_run_mode}"
+		fi	
+		/etc/init.d/bypass restart 2 >/dev/null
+		echolog "Bypass重启完成"
+	fi
+}
 function alidns_ip(){
 	if [ $DNS_enabled -eq "1" ] ;then
 		get_servers_config "DNS_type" "app_key" "app_secret" "main_domain" "sub_domain" "line"

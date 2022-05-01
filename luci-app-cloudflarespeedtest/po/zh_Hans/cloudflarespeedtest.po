@@ -59,11 +59,28 @@ msgstr "启用ShadowSocksR Plus+"
 msgid "Passwall Enabled"
 msgstr "启用Passwall"
 
+msgid "PassWall2 Enabled"
+msgstr "启用PassWall2"
+
+msgid "Bypass Enabled"
+msgstr "启用Bypass"
+
+msgid "Vssr Enabled"
+msgstr "启用Vssr"
 msgid "Shadowsocksr Servers"
 msgstr "ShadowSocksR Plus+服务"
 
 msgid "Passwall Servers"
 msgstr "Passwall服务"
+
+msgid "Passwall2 Servers"
+msgstr "Passwall2服务"
+
+msgid "Bypass Servers"
+msgstr "Bypass服务"
+
+msgid "Vssr Servers"
+msgstr "Vssr服务"
 
 msgid "Please select a service"
 msgstr "请选择一项服务"
