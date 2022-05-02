@@ -29,7 +29,7 @@ function read_config(){
 	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "passwall2_enabled" "passwall2_services" "bypass_enabled" "bypass_services" "vssr_enabled" "vssr_services" "DNS_enabled"
 }
 
-function  speed_test(){
+function speed_test(){
 
 	rm -rf $LOG_FILE
 
@@ -126,11 +126,8 @@ function ip_replace(){
 	[[ -z "${bestip}" ]] && echo "CloudflareST 测速结果 IP 数量为 0，跳过下面步骤..." && exit 0
 
 	alidns_ip
-
 	ssr_best_ip
-	
 	vssr_best_ip
-
 	bypass_best_ip
 	passwall_best_ip
 	passwall2_best_ip
@@ -210,6 +207,7 @@ function ssr_best_ip(){
 		elif [ $proxy_mode  == "gfw" ] ;then
 			uci set  shadowsocksr.@global[0].run_mode="${ssr_original_run_mode}"
 		fi	
+		uci commit shadowsocksr
 		/etc/init.d/shadowsocksr restart 2 >/dev/null
 		echolog "ssr重启完成"
 	fi
@@ -234,6 +232,7 @@ function vssr_best_ip(){
 		elif [ $proxy_mode  == "gfw" ] ;then
 			uci set vssr.@global[0].run_mode="${vssr_original_run_mode}"
 		fi	
+		uci commit vssr
 		/etc/init.d/vssr restart 2 >/dev/null
 		echolog "Vssr重启完成"
 	fi
@@ -258,6 +257,7 @@ function bypass_best_ip(){
 		elif [ $proxy_mode  == "gfw" ] ;then
 			uci set  bypass.@global[0].run_mode="${bypass_original_run_mode}"
 		fi	
+		uci commit bypass
 		/etc/init.d/bypass restart 2 >/dev/null
 		echolog "Bypass重启完成"
 	fi
