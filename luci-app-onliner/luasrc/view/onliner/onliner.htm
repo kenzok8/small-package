@@ -71,17 +71,17 @@ end
 
 					var td = tr.insertCell(-1);
 						td.colSpan = 4;
-						td.innerHTML = '<em><br /><%:What? There is no one online.%></em>';
+						td.innerHTML = '<em><br /><%:There is no one online now.%></em>';
 				}
 			}
 		}
 	);
 //]]></script>
 
-<h2 name="content"><%:Status%></h2>
+<h2 name="content" style="display:none"><%:Status%></h2>
 
 <fieldset class="cbi-section">
-	<legend><%:user online%></legend>
+	<legend style="display:none"><%:user online%></legend>
 
 	<table class="cbi-section-table" id="online_status_table">
 		<tr class="cbi-section-table-titles">
