@@ -1,0 +1,12 @@
+msgid "Online User"
+msgstr "在线用户"
+
+msgid "User List"
+msgstr "用户列表"
+
+msgid "user online"
+msgstr "客户端"
+
+msgid "speed"
+msgstr "网速监控"
+
