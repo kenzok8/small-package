@@ -278,50 +278,6 @@ if nixio.fs.access("/etc/config/vssr") then
 
 end
 
-
-
-
-
-
-
-
-
-
-
-s:tab("shadowsockstab", translate("Shadowsocks"))
-if nixio.fs.access("/etc/config/shadowsocks-libev") then
-	
-	o=s:taboption("shadowsockstab", Flag, "shadowsocks_enabled",translate("Shadowsocks-libev Enabled"))
-	o.rmempty=true	
-
-	local shadowsocks_server_table = {}
-	uci:foreach("shadowsocks-libev", "server", function(s)
-		if s.server then
-			shadowsocks_server_table[s[".name"]] = "[%s]:%s" % {string.upper(s.server), s.server}
-		elseif s.server and s.server_port then
-			shadowsocks_server_table[s[".name"]] = "[%s]:%s:%s" % {string.upper(s.server), s.server, s.server_port}
-		end
-	end)
-
-	local shadowsocks_key_table = {}
-	for key, _ in pairs(shadowsocks_server_table) do
-		table.insert(shadowsocks_key_table, key)
-	end
-
-	table.sort(shadowsocks_key_table)
-
-	o = s:taboption("shadowsockstab", DynamicList, "shadowsocks_services",
-			translate("Shadowsocks-libev Servers"),
-			translate("Please select a service"))
-			
-	for _, key in pairs(shadowsocks_key_table) do
-		o:value(key, shadowsocks_server_table[key])
-	end
-	o:depends("shadowsocks_enabled", 1)
-	o.forcewrite = true
-
-end
-
 s:tab("dnstab", translate("DNS"))
 
 o=s:taboption("dnstab", Flag, "DNS_enabled",translate("DNS Enabled"))
