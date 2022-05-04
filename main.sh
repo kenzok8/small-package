@@ -97,11 +97,11 @@ git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwa
 svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-fileassistant
 svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-filebrowser
 svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-aliddns
+svn export https://github.com/immortalwrt/packages/trunk/net/smartdns
 svn export https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
 svn export https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
 svn export https://github.com/kenzok8/jell/trunk/luci-app-adguardhome
 svn export https://github.com/kenzok8/jell/trunk/adguardhome
-svn export https://github.com/kenzok8/jell/trunk/smartdns
 svn export https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
 svn export https://github.com/kenzok8/litte/trunk/luci-theme-mcat
 svn export https://github.com/kenzok8/litte/trunk/luci-theme-tomato
