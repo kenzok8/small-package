@@ -308,6 +308,12 @@ o:value("mobile", translate("mobile"))
 o:depends("DNS_enabled", 1)
 o.default ="telecom"
 
+s:tab("dnshost", translate("HOST"))
+o=s:taboption("dnshost", Flag, "HOST_enabled",translate("HOST Enabled"))
+o=s:taboption("dnshost", Value,"host_domain",translate("Domain"))
+o.rmempty=true
+o:depends("HOST_enabled", 1)
+
 e=m:section(TypedSection,"global",translate("Best IP"))
 e.anonymous=true
 local a="/usr/share/cloudflarespeedtestresult.txt"

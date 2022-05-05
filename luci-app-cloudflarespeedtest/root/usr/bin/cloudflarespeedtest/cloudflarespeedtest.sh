@@ -26,7 +26,7 @@ echolog() {
 
 function read_config(){
 	get_global_config "enabled" "speed" "custome_url" "threads" "custome_cors_enabled" "custome_cron" "t" "tp" "dt" "dn" "dd" "tl" "tll" "ipv6_enabled" "advanced" "proxy_mode"
-	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "passwall2_enabled" "passwall2_services" "bypass_enabled" "bypass_services" "vssr_enabled" "vssr_services" "DNS_enabled"
+	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "passwall2_enabled" "passwall2_services" "bypass_enabled" "bypass_services" "vssr_enabled" "vssr_services" "DNS_enabled" "HOST_enabled"
 }
 
 function speed_test(){
@@ -131,7 +131,7 @@ function ip_replace(){
 	bypass_best_ip
 	passwall_best_ip
 	passwall2_best_ip
-	
+	host_ip
 }
 
 function passwall_best_ip(){
@@ -186,8 +186,8 @@ function passwall2_best_ip(){
 		fi
 	fi
 }
-function ssr_best_ip(){
 
+function ssr_best_ip(){
 	if [ $ssr_enabled -eq "1" ] ;then
 		echolog "设置ssr IP"
 		for ssrname in $ssr_services
@@ -196,20 +196,17 @@ function ssr_best_ip(){
 			uci set shadowsocksr.$ssrname.server="${bestip}"
 			uci set shadowsocksr.$ssrname.ip="${bestip}"
 		done
-		uci commit shadowsocksr
-		 	
-	fi
-
-	if [ $ssr_original_server != 'nil' ] ; then
-		echolog "设置ssr代理模式"
-		if [ $proxy_mode  == "close" ] ;then
-			uci set shadowsocksr.@global[0].global_server="${ssr_original_server}"		
-		elif [ $proxy_mode  == "gfw" ] ;then
-			uci set  shadowsocksr.@global[0].run_mode="${ssr_original_run_mode}"
-		fi	
-		uci commit shadowsocksr
-		/etc/init.d/shadowsocksr restart 2 >/dev/null
-		echolog "ssr重启完成"
+    if [ $ssr_original_server != 'nil' ] ; then
+      echolog "设置ssr代理模式"
+      if [ $proxy_mode  == "close" ] ;then
+        uci set shadowsocksr.@global[0].global_server="${ssr_original_server}"		
+      elif [ $proxy_mode  == "gfw" ] ;then
+        uci set  shadowsocksr.@global[0].run_mode="${ssr_original_run_mode}"
+      fi	
+    fi
+    uci commit shadowsocksr
+    /etc/init.d/shadowsocksr restart &>/dev/null
+    echolog "ssr重启完成"
 	fi
 }
 
@@ -221,20 +218,17 @@ function vssr_best_ip(){
 			echo $ssrname
 			uci set vssr.$ssrname.server="${bestip}"
 		done
-		uci commit vssr
-		 	
-	fi
-
-	if [ $vssr_original_server != 'nil' ] ; then
-		echolog "设置Vssr代理模式"
-		if [ $proxy_mode  == "close" ] ;then
-			uci set vssr.@global[0].global_server="${vssr_original_server}"		
-		elif [ $proxy_mode  == "gfw" ] ;then
-			uci set vssr.@global[0].run_mode="${vssr_original_run_mode}"
-		fi	
-		uci commit vssr
-		/etc/init.d/vssr restart 2 >/dev/null
-		echolog "Vssr重启完成"
+    if [ $vssr_original_server != 'nil' ] ; then
+      echolog "设置Vssr代理模式"
+      if [ $proxy_mode  == "close" ] ;then
+        uci set vssr.@global[0].global_server="${vssr_original_server}"		
+      elif [ $proxy_mode  == "gfw" ] ;then
+        uci set vssr.@global[0].run_mode="${vssr_original_run_mode}"
+      fi	
+    fi
+    uci commit vssr
+    /etc/init.d/vssr restart &>/dev/null
+    echolog "Vssr重启完成"
 	fi
 }
 
@@ -246,22 +240,20 @@ function bypass_best_ip(){
 			echo $ssrname
 			uci set bypass.$ssrname.server="${bestip}"
 		done
-		uci commit bypass
-
-	fi
-
-	if [ $bypass_original_server != '$bypass_key_table' ] ; then
-		echolog "设置Bypass代理模式"
-		if [ $proxy_mode  == "close" ] ;then
-			uci set bypass.@global[0].global_server="${bypass_original_server}"		
-		elif [ $proxy_mode  == "gfw" ] ;then
-			uci set  bypass.@global[0].run_mode="${bypass_original_run_mode}"
-		fi	
-		uci commit bypass
-		/etc/init.d/bypass restart 2 >/dev/null
-		echolog "Bypass重启完成"
+    if [ $bypass_original_server != '$bypass_key_table' ] ; then
+      echolog "设置Bypass代理模式"
+      if [ $proxy_mode  == "close" ] ;then
+        uci set bypass.@global[0].global_server="${bypass_original_server}"		
+      elif [ $proxy_mode  == "gfw" ] ;then
+        uci set  bypass.@global[0].run_mode="${bypass_original_run_mode}"
+      fi	
+    fi
+    uci commit bypass
+    /etc/init.d/bypass restart &>/dev/null
+    echolog "Bypass重启完成"
 	fi
 }
+
 function alidns_ip(){
 	if [ $DNS_enabled -eq "1" ] ;then
 		get_servers_config "DNS_type" "app_key" "app_secret" "main_domain" "sub_domain" "line"
@@ -270,6 +262,22 @@ function alidns_ip(){
 			echolog "更新阿里云DNS完成"
 		fi		
 	fi
+}
+
+function host_ip() {
+	if [ $HOST_enabled -eq "1" ] ;then
+    get_servers_config "host_domain"
+    HOSTS_LINE="$bestip $host_domain"
+    if [ -n "$(grep $host_domain /etc/hosts)" ]
+        then
+          sed -i".bak" "/$host_domain/d" /etc/hosts
+          echo $HOSTS_LINE >> /etc/hosts;
+        else                             
+          echo $HOSTS_LINE >> /etc/hosts;
+    fi                                
+    /etc/init.d/dnsmasq reload &>/dev/null
+    echolog "HOST 完成"
+  fi
 }
 
 read_config
