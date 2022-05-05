@@ -213,3 +213,9 @@ msgstr "联通"
 
 msgid "mobile"
 msgstr "移动"
+
+msgid "HOST Enabled"
+msgstr "启用HOST"
+
+msgid "Domain"
+msgstr "域名"
