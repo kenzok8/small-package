@@ -23,6 +23,10 @@ read_buffer_size.datatype = "uinteger"
 domain_id = e:option(Value, "domain_id", translate("Domain ID"))
 domain_id.description = translate("Input domain_id option will use <a href=\"https://www.aliyun.com/product/storage/pds\" target=\"_blank\">Aliyun PDS</a> instead of <a href=\"https://www.aliyundrive.com\" target=\"_blank\">AliyunDrive</a>")
 
+allow_other = e:option(Flag, "allow_other", translate("Allow Other users Access"))
+allow_other.description = translate("Allow other users to access the drive, enable this if you share with samba")
+allow_other.rmempty = false
+
 debug = e:option(Flag, "debug", translate("Debug Mode"))
 debug.rmempty = false
 

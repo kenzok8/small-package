@@ -48,3 +48,9 @@ msgstr "阿里云相册与云盘服务 domainId"
 
 msgid "Input domain_id option will use <a href=\"https://www.aliyun.com/product/storage/pds\" target=\"_blank\">Aliyun PDS</a> instead of <a href=\"https://www.aliyundrive.com\" target=\"_blank\">AliyunDrive</a>"
 msgstr "填写此选项将使用<a href=\"https://www.aliyun.com/product/storage/pds\" target=\"_blank\">阿里云相册与网盘服务</a>而不是<a href=\"https://www.aliyundrive.com\" target=\"_blank\">阿里云盘</a>"
+
+msgid "Allow Other users Access"
+msgstr "允许其他用户访问"
+
+msgid "Allow other users to access the drive, enable this if you share with samba"
+msgstr "允许其他用户访问此驱动，如果你想用Samba分享请开启此开关"
