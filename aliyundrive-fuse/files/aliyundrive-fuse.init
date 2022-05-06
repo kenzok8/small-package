@@ -20,11 +20,16 @@ start_service() {
       local domain_id=$(uci_get_by_type default domain_id)
       local mount_point=$(uci_get_by_type default mount_point)
       local read_buf_size=$(uci_get_by_type default read_buffer_size 10485760)
+      local allow_other=$(uci_get_by_type default allow_other 0)
 
       local extra_options=""
 
       if [[ ! -z "$domain_id" ]]; then
         extra_options="$extra_options --domain-id $domain_id"
+      fi
+
+      if [ "$allow_other" = "1" ]; then
+        extra_options="$extra_options --allow-other"
       fi
 
       mkdir -p "$mount_point"
