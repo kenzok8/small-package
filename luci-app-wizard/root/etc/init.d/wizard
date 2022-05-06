@@ -65,10 +65,12 @@ add_wizard() {
 		uci -q set network.lan.gateway="${lan_gateway}"
 		[ -n "$lan_dns" ] || lan_dns='223.5.5.5'
 		[ -n "$dhcp" ] && uci -q set dhcp.lan.ignore="1" || uci -q del dhcp.lan.ignore
+		uci -q set firewall.@zone[0].masq='1'
 	elif [ "${siderouter}" == "0" ]; then
 		uci -q del network.lan.gateway
 		uci -q del dhcp.lan.ignore
 		uci -q del network.lan.dns
+		uci -q del firewall.@zone[0].masq
 		
 	fi
 	fi
