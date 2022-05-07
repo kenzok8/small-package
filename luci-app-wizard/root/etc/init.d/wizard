@@ -110,6 +110,7 @@ add_wizard() {
 	
 	uci commit wizard
 	uci commit dhcp
+	uci commit firewall
 	uci commit network
 	(
 	 /etc/init.d/network restart
