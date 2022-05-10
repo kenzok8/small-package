@@ -19,6 +19,11 @@ return view.extend({
 	render: function(data) {
 
 		var m, s, o;
+		var has_wifi = false;
+
+		if (uci.sections('wireless', 'wifi-device').length > 0) {
+			has_wifi = true;
+		}
 
 		m = new form.Map('wizard', [_('Inital Router Setup')],
 			_('If you are using this router for the first time, please configure it here.'));
@@ -82,6 +87,16 @@ return view.extend({
 		
 		o = s.taboption('firmware', form.Flag, 'cookie_p', _('Persistent cookies'),_('保持后台登录状态,避免每次关闭浏览器后都需要重新登录'));
 		o.default = o.enabled;
+		
+		if (has_wifi) {
+			s.tab('wifisetup', _('Wireless Settings'), _('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'));
+			o = s.taboption('wifisetup', form.Value, 'wifi_ssid', _('<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>'));
+			o.datatype = 'maxlength(32)';
+
+			o = s.taboption("wifisetup", form.Value, "wifi_key", _("Key"));
+			o.datatype = 'wpakey';
+			o.password = true;
+		}
 		
 		setTimeout("document.getElementsByClassName('cbi-button-apply')[0].children[3].children[0].value='1'",1000)
 		
