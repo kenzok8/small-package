@@ -18,7 +18,7 @@ http {
 	default_type application/octet-stream;
 	sendfile on;
 
-	client_max_body_size 128M;
+	client_max_body_size 1024m;
 	client_header_buffer_size 512k;
 	large_client_header_buffers 4 512k;
 
