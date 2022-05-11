@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=my-autocore
 PKG_VERSION:=1
-PKG_RELEASE:=29
+PKG_RELEASE:=7
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,8 +38,8 @@ define Package/my-autocore-arm/description
   Display more details info about the devices in LuCI.
 endef
 
-define Download/armcpuinfo
-  URL:=https://raw.githubusercontent.com/immortalwrt/immortalwrt/master/package/emortal/autocore/files/arm
+define Download/cpuinfo
+  URL:=https://raw.githubusercontent.com/immortalwrt/immortalwrt/master/package/emortal/autocore/files/generic
   URL_FILE:=cpuinfo
   FILE:=cpuinfo
   HASH:=skip
@@ -66,7 +66,7 @@ define Package/my-autocore-x86/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/x86/autocore $(1)/etc/init.d/autocore
 	$(INSTALL_DIR) $(1)/sbin
-	$(INSTALL_BIN) ./files/x86/cpuinfo $(1)/sbin/cpuinfo
+	$(INSTALL_BIN) $(DL_DIR)/cpuinfo $(1)/sbin/cpuinfo
 	$(INSTALL_BIN) ./files/common/ethinfo $(1)/sbin/ethinfo
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/status/include
 	$(INSTALL_DATA) ./files/common/29_eth.js $(1)/www/luci-static/resources/view/status/include/
@@ -76,6 +76,6 @@ define Package/my-autocore-x86/install
 	$(INSTALL_DATA) ./files/common/disc_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
 endef
 
-$(eval $(call Download,armcpuinfo))
+$(eval $(call Download,cpuinfo))
 $(eval $(call BuildPackage,my-autocore-arm))
 $(eval $(call BuildPackage,my-autocore-x86))

@@ -12,7 +12,6 @@ opkg_init() {
 uci import opkg < /dev/null
 uci -q batch << EOI
 set opkg.defaults='opkg'
-set opkg.defaults.import='/etc/backup/installed_packages.txt'
 set opkg.defaults.save='auto'
 set opkg.defaults.restore='auto'
 set opkg.defaults.rollback='auto'
@@ -22,7 +21,7 @@ set opkg.defaults.proc='--force-overwrite --force-checksum --force-depends'
 set opkg.defaults.reinstall='--force-reinstall --force-overwrite --force-checksum --force-depends'
 set opkg.defaults.newconf='/etc'
 EOI
-echo "kmod busybox base-files luci-app-openclash " \
+echo "kmod busybox base-files " \
 | sed -e "s/\s/ ipkg\n/g" | opkg uci ignore
 }
 
@@ -77,6 +76,9 @@ local OPKG_CONF="${OPKG_OPT}"
 local OPKG_AI="$(opkg export ai)"
 local OPKG_PR="$(opkg export pr)"
 local OPKG_PI="$(opkg export pi)"
+if ! uci -q get opkg > /dev/null
+then opkg init
+fi
 grep -x -f "${OPKG_AI}" "${OPKG_PR}" \
 | opkg proc remove
 grep -v -x -f "${OPKG_AI}" "${OPKG_PI}" \
@@ -103,6 +105,9 @@ rm -f "${OPKG_UR}" "${OPKG_UI}" "${OPKG_PR}" "${OPKG_PI}"
 
 opkg_upgr() {
 local OPKG_OPT="${1:-${OPKG_UCI}}"
+if ! uci -q get opkg > /dev/null
+then opkg init
+fi
 case "${OPKG_OPT}" in
 (ai|oi) opkg_"${OPKG_CMD}"_type ;;
 esac | opkg proc upgrade
