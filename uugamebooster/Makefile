@@ -31,22 +31,22 @@ endef
 
 ifeq ($(ARCH),arm)
 	UU_ARCH:=arm
-	PKG_MD5SUM:=skip
+	PKG_MD5SUM:=3d022c05301bcec94dcf8ae8945ca223
 endif
 
 ifeq ($(ARCH),aarch64)
 	UU_ARCH:=aarch64
-	PKG_MD5SUM:=skip
+	PKG_MD5SUM:=f062220b51418083412e9691feb1be55
 endif
 
 ifeq ($(ARCH),mipsel)
 	UU_ARCH:=mipsel
-	PKG_MD5SUM:=skip
+	PKG_MD5SUM:=a99db0b7faf58b66c123427ef9b97f9c
 endif
 
 ifeq ($(ARCH),x86_64)
 	UU_ARCH:=x86_64
-	PKG_MD5SUM:=skip
+	PKG_MD5SUM:=51502e89ca80ae960a2330a01b8f2b3b
 endif
 
 PKG_SOURCE_URL:=https://uu.gdl.netease.com/uuplugin/openwrt-$(UU_ARCH)/$(PKG_VERSION)/uu.tar.gz?
