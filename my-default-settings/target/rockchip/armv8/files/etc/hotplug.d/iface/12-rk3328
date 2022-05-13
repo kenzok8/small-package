@@ -11,6 +11,6 @@ friendlyelec,nanopi-r2s)
 friendlyelec,nanopi-r2c)
 	[ "$(uci get network.$INTERFACE.device)" = "br-lan" ] && \
 	[ "$ACTION" = "ifup" ] && \
-	$ETHTOOL -K eth0 rx off tx off
+	$ETHTOOL -K eth1 rx off tx off
 	;;
 esac

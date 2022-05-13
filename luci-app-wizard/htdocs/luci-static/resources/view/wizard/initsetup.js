@@ -12,6 +12,7 @@ return view.extend({
 		return Promise.all([
 			fs.exec('/etc/init.d/wizard', ['reconfig']),
 			uci.changes(),
+			uci.load('wireless'),
 			uci.load('wizard')
 		]);
 	},
