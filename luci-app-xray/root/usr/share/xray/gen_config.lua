@@ -256,6 +256,33 @@ local function xtls_settings(server, protocol)
     return result
 end
 
+local function stream_settings(server, protocol, xtls)
+    local security = server[protocol .. "_tls"]
+    local tlsSettings = nil
+    local xtlsSettings = nil
+    if security == "tls" then
+        tlsSettings = tls_settings(server, protocol)
+    elseif security == "xtls" and xtls then
+        xtlsSettings = xtls_settings(server, protocol)
+    end
+    return {
+        network = server.transport,
+        sockopt = {
+            mark = tonumber(proxy.mark),
+            domainStrategy = server.domain_strategy or "UseIP"
+        },
+        security = security,
+        tlsSettings = tlsSettings,
+        xtlsSettings = xtlsSettings,
+        quicSettings = stream_quic(server),
+        tcpSettings = stream_tcp(server),
+        kcpSettings = stream_kcp(server),
+        wsSettings = stream_ws(server),
+        grpcSettings = stream_grpc(server),
+        httpSettings = stream_h2(server)
+    }
+end
+
 local function shadowsocks_outbound(server, tag)
     return {
         protocol = "shadowsocks",
@@ -270,21 +297,7 @@ local function shadowsocks_outbound(server, tag)
                 }
             }
         },
-        streamSettings = {
-            network = server.transport,
-            sockopt = {
-                mark = tonumber(proxy.mark),
-                domainStrategy = server.domain_strategy or "UseIP"
-            },
-            security = server.shadowsocks_tls,
-            tlsSettings = server.shadowsocks_tls == "tls" and tls_settings(server, "shadowsocks") or nil,
-            quicSettings = stream_quic(server),
-            tcpSettings = stream_tcp(server),
-            kcpSettings = stream_kcp(server),
-            wsSettings = stream_ws(server),
-            grpcSettings = stream_grpc(server),
-            httpSettings = stream_h2(server)
-        }
+        streamSettings = stream_settings(server, "shadowsocks", false)
     }
 end
 
@@ -307,21 +320,7 @@ local function vmess_outbound(server, tag)
                 }
             }
         },
-        streamSettings = {
-            network = server.transport,
-            sockopt = {
-                mark = tonumber(proxy.mark),
-                domainStrategy = server.domain_strategy or "UseIP"
-            },
-            security = server.vmess_tls,
-            tlsSettings = server.vmess_tls == "tls" and tls_settings(server, "vmess") or nil,
-            quicSettings = stream_quic(server),
-            tcpSettings = stream_tcp(server),
-            kcpSettings = stream_kcp(server),
-            wsSettings = stream_ws(server),
-            grpcSettings = stream_grpc(server),
-            httpSettings = stream_h2(server)
-        }
+        streamSettings = stream_settings(server, "vmess", false)
     }
 end
 
@@ -348,22 +347,7 @@ local function vless_outbound(server, tag)
                 }
             }
         },
-        streamSettings = {
-            network = server.transport,
-            sockopt = {
-                mark = tonumber(proxy.mark),
-                domainStrategy = server.domain_strategy or "UseIP"
-            },
-            security = server.vless_tls,
-            tlsSettings = server.vless_tls == "tls" and tls_settings(server, "vless") or nil,
-            xtlsSettings = server.vless_tls == "xtls" and xtls_settings(server, "vless") or nil,
-            quicSettings = stream_quic(server),
-            tcpSettings = stream_tcp(server),
-            kcpSettings = stream_kcp(server),
-            wsSettings = stream_ws(server),
-            grpcSettings = stream_grpc(server),
-            httpSettings = stream_h2(server)
-        }
+        streamSettings = stream_settings(server, "vless", true)
     }
 end
 
@@ -385,22 +369,7 @@ local function trojan_outbound(server, tag)
                 }
             }
         },
-        streamSettings = {
-            network = server.transport,
-            sockopt = {
-                mark = tonumber(proxy.mark),
-                domainStrategy = server.domain_strategy or "UseIP"
-            },
-            security = server.trojan_tls,
-            tlsSettings = server.trojan_tls == "tls" and tls_settings(server, "trojan") or nil,
-            xtlsSettings = server.trojan_tls == "xtls" and xtls_settings(server, "trojan") or nil,
-            quicSettings = stream_quic(server),
-            tcpSettings = stream_tcp(server),
-            kcpSettings = stream_kcp(server),
-            wsSettings = stream_ws(server),
-            grpcSettings = stream_grpc(server),
-            httpSettings = stream_h2(server)
-        }
+        streamSettings = stream_settings(server, "trojan", true)
     }
 end
 
