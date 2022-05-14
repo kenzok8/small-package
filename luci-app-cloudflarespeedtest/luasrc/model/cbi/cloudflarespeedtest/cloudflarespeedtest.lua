@@ -296,7 +296,7 @@ o:depends("DNS_enabled", 1)
 o=s:taboption("dnstab", Value,"main_domain",translate("Main Domain"),translate("For example: test.github.com -> github.com"))
 o.rmempty=true
 o:depends("DNS_enabled", 1)
-o=s:taboption("dnstab", Value,"sub_domain",translate("Sub Domain"),translate("For example: test.github.com -> test"))
+o=s:taboption("dnstab", DynamicList,"sub_domain",translate("Sub Domain"),translate("For example: test.github.com -> test"))
 o.rmempty=true
 o:depends("DNS_enabled", 1)
 

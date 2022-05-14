@@ -113,6 +113,7 @@ function speed_test(){
 		uci commit vssr
 		/etc/init.d/vssr restart
 	fi
+
 	echo $command  >> $LOG_FILE 2>&1 
 	echolog "-----------start----------" 
 	$command >> $LOG_FILE 2>&1
@@ -258,8 +259,12 @@ function alidns_ip(){
 	if [ $DNS_enabled -eq "1" ] ;then
 		get_servers_config "DNS_type" "app_key" "app_secret" "main_domain" "sub_domain" "line"
 		if [ $DNS_type == "aliyu" ] ;then
-			/usr/bin/cloudflarespeedtest/aliddns.sh $app_key $app_secret $main_domain $sub_domain $line $ipv6_enabled $bestip
-			echolog "更新阿里云DNS完成"
+		for sub in $sub_domain
+		do
+			echolog "更新域名$sub 阿里云DNS完成"
+
+			/usr/bin/cloudflarespeedtest/aliddns.sh $app_key $app_secret $main_domain $sub $line $ipv6_enabled $bestip 
+		done
 		fi		
 	fi
 }
