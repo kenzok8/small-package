@@ -125,9 +125,6 @@ test $version -lt 1 && {
 	grep -q log-facility /etc/dnsmasq.conf ||
 		echo "log-facility=/dev/null" >> /etc/dnsmasq.conf
 
-	grep -q /etc/dnsmasq.d /etc/dnsmasq.conf ||
-		echo "conf-dir=/etc/dnsmasq.d" >> /etc/dnsmasq.conf
-
 	uci -q set firewall.@defaults[0].fullcone='1'
 	uci commit firewall
 
