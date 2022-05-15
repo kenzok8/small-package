@@ -50,7 +50,7 @@ function speed_test(){
 		 	command="${command} -tp ${tp}"
 		fi
 	else
-		command="${command} -tl 200 -tll 40 -n 200 -t 4 -dt 10 -dn 2"
+		command="${command} -tl 200 -tll 40 -n 200 -t 4 -dt 10 -dn 1"
 	fi
 	
 	ssr_original_server=$(uci get shadowsocksr.@global[0].global_server 2>/dev/null)
