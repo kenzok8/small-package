@@ -11,7 +11,7 @@ test -n "${hostname}" || hostname="OpenWrt"
 	while uci rename wireless.@wifi-iface[$widx]=default_radio$widx >/dev/null 2>&1; do widx=$((widx+1)); done
 	uci -q get wireless.${radio} >/dev/null 2>&1 && {
 			uci -q del wireless.${radio}.disabled
-			uci -q set wireless.${radio}.country='AU'
+			uci -q set wireless.${radio}.country='US'
 			uci -q set wireless.${radio}.channel='auto'
 		
 		if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
