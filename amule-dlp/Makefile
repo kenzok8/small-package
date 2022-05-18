@@ -33,8 +33,9 @@ define Package/amule-dlp
   CATEGORY:=Network
   TITLE:=A multi-platform eMule-like ed2k client
   URL:=http://www.amule.org/
-  DEPENDS:=+libpng +libpthread +libncurses +libreadline +libwxbase +libupnp +libbfd +antileech \
-	$(ICONV_DEPENDS) $(INTL_DEPENDS) +!AMULE_CRYPTOPP_STATIC_LINKING:libcryptopp
+  DEPENDS:=+antileech +libpng +libpthread +libncurses +libreadline +libwxbase \
+	+libupnp +libbfd $(ICONV_DEPENDS) $(INTL_DEPENDS) \
+	+!AMULE_CRYPTOPP_STATIC_LINKING:libcryptopp
 endef
 
 define Package/amule-dlp/config
