@@ -26,12 +26,14 @@ sed -i '/profile.d/d' /lib/upgrade/keep.d/base-files
 
 echo $(uci -q get uhttpd.main.index_page) | grep -q "cgi-bin/luci" ||
 	uci -q add_list uhttpd.main.index_page='cgi-bin/luci' && uci commit uhttpd
-	
+
 grep -q "return 301" /etc/nginx/conf.d/luci.locations || {
 echo '
 location ~* ^/cgi-bin/(.*) {
 		return 307 $scheme://$http_host/$1$is_args$args;
 }
+
+[ -f /etc/dnsmasq.d ] || sed -i "/\/etc\/dnsmasq.d/d" /etc/dnsmasq.conf
 
 location = / {
 		return 301 $scheme://$http_host/luci/;
