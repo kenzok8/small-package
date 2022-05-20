@@ -33,13 +33,12 @@ location ~* ^/cgi-bin/(.*) {
 		return 307 $scheme://$http_host/$1$is_args$args;
 }
 
-[ -f /etc/dnsmasq.d ] || sed -i "/\/etc\/dnsmasq.d/d" /etc/dnsmasq.conf
-
 location = / {
 		return 301 $scheme://$http_host/luci/;
 }
 ' >>/etc/nginx/conf.d/luci.locations
 }
+[ -f /etc/dnsmasq.d ] || sed -i "/\/etc\/dnsmasq.d/d" /etc/dnsmasq.conf
 
 /etc/init.d/wizard disable
 
