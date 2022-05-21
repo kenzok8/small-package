@@ -1,0 +1,9 @@
+version=`uci -q get base_config.@status[0].version`
+
+test $version -lt 3 && {
+uci -q del turboacc.config.sw_flow
+uci commit turboacc
+}
+
+uci -q set base_config.@status[0].version=3
+uci commit base_config

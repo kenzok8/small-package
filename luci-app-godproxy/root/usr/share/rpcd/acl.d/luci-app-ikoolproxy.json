@@ -1,6 +1,6 @@
 {
-	"luci-app-godproxy": {
-		"description": "Grant UCI access for luci-app-godproxy",
+	"luci-app-ikoolproxy": {
+		"description": "Grant UCI access for luci-app-ikoolproxy",
 		"read": {
 			"uci": [ "koolproxy" ]
 		},

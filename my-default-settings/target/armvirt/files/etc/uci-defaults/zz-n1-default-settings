@@ -17,12 +17,16 @@ test -n "${hostname}" || hostname="OpenWrt"
 		if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
 			uci -q set wireless.default_${radio}.ssid="${SSID}_5G"
 			if test -z "${htmode##HE*}"; then
-				uci -q set wireless.${radio}.htmode="HE160"
+				if [[ $htmode == "HE20" || $htmode == "HE40" ]]; then
+					uci -q set wireless.${radio}.htmode="HE80"
+				fi
 			else
 				uci -q set wireless.${radio}.htmode="VHT80"
 			fi
 		else
 			uci -q set wireless.${radio}.htmode="HT40"
+			uci -q set wireless.${radio}.noscan='1'
+			uci -q set wireless.${radio}.vendor_vht='1'
 			uci -q set wireless.default_${radio}.ssid="${SSID}_2.4G"
 		fi
 			uci -q set wireless.default_${radio}.device="${radio}"
