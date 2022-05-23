@@ -17,11 +17,16 @@ start() {
 	enabled=$(uci get natflow.main.enabled 2>/dev/null || echo 1)
 	debug=$(uci get natflow.main.debug 2>/dev/null || echo 3)
 	delay_pkts=$(uci get natflow.main.delay_pkts 2>/dev/null || echo 0)
+	ifname_filter=$(uci get natflow.main.ifname_filter 2>/dev/null)
 
 	echo debug=$debug >/dev/natflow_ctl
 	echo disabled=$((!enabled)) >/dev/natflow_ctl
 	echo hwnat=$hwnat >/dev/natflow_ctl
 	echo delay_pkts=$delay_pkts >/dev/natflow_ctl
+	echo ifname_clear >/dev/natflow_ctl
+	for ifn in ${ifname_filter}; do
+		echo ifname_add=$ifn >/dev/natflow_ctl
+	done
 }
 
 stop() {
