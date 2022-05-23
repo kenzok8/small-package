@@ -57,7 +57,7 @@ jobs:
         git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
                
     - name: Delete workflow runs
-      uses: Mattraks/delete-workflow-runs@main
+      uses: Mattraks/delete-workflow-runs@v2.0.2
       with:
         retain_days: 1
         keep_minimum_runs: 3
