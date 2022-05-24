@@ -96,3 +96,7 @@ stop() {
 		ipset destroy $ipset
 	done
 }
+
+restart() {
+	start
+}

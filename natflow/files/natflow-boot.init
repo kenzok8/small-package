@@ -32,3 +32,7 @@ start() {
 stop() {
 	echo disabled=1 >/dev/natflow_ctl
 }
+
+restart() {
+	start
+}
