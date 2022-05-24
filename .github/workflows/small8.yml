@@ -7,7 +7,7 @@ on:
       - '.github/workflows/small8.yml'
       - 'diy/**'
   schedule:
-    - cron: 35 8,23 * * *
+    - cron: 0 */12 * * *
   watch:
     types: started
   repository_dispatch:
