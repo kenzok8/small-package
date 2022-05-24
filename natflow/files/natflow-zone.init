@@ -42,3 +42,8 @@ start() {
 stop() {
 	test -c $DEVCTL || return 0
 }
+
+restart()
+{
+	start
+}
