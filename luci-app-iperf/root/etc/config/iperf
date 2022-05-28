@@ -95,7 +95,7 @@ config server 'he'
 	option udp '1'
 	option location 'America'
 
-config server 'biznetnetworks.com'
+config server 'biznetnetworks'
 	option host 'iperf.biznetnetworks.com'
 	option ipv4 '1'
 	option ipv6 '1'
