@@ -218,6 +218,9 @@ return view.extend({
         o.value("aes-256-gcm", "aes-256-gcm")
         o.value("aes-128-gcm", "aes-128-gcm")
         o.value("chacha20-poly1305", "chacha20-poly1305")
+        o.value("2022-blake3-aes-128-gcm", "2022-blake3-aes-128-gcm")
+        o.value("2022-blake3-aes-256-gcm", "2022-blake3-aes-256-gcm")
+        o.value("2022-blake3-chacha20-poly1305", "2022-blake3-chacha20-poly1305")
         o.rmempty = false
         o.modalonly = true
 
