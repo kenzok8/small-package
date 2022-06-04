@@ -6,7 +6,8 @@ USE_PROCD=1
 NAME=xray
 
 GENERATE_CONF="/usr/share/xray/gen_config.lua"
-FIREWALL_INCLUDE="/usr/share/xray/firewall_include.lua"
+
+source /usr/share/xray/init.firewall
 
 uci_get_by_type() {
     local ret=$(uci get ${NAME}.@$1[0].$2 2> /dev/null)
@@ -63,7 +64,6 @@ start_xray() {
 }
 
 gen_config_file() {
-    mkdir -p /var/etc/xray
     rm -f /var/etc/xray/*
     if [ -s /usr/share/xray/infinite_retry ] ; then
         while [ ! -s /var/etc/xray/config.json ] ; do
@@ -76,32 +76,6 @@ gen_config_file() {
     fi
     local custom_config=$(uci_get_by_type general custom_config)
     [ ! "${#custom_config}" == "0" ] && echo ${custom_config} > /var/etc/xray/config_custom.json
-}
-
-setup_firewall() {
-    logger -st xray[$$] -p4 "Setting ipset rules..."
-    lua /usr/share/xray/gen_ipset_rules.lua | ipset -! restore
-    /etc/hotplug.d/iface/01-transparent-proxy-ipset
-
-    logger -st xray[$$] -p4 "Generating firewall rules..."
-    /usr/bin/lua ${FIREWALL_INCLUDE} enable > $(uci get firewall.xray.path)
-
-    logger -st xray[$$] -p4 "Triggering firewall restart..."
-    /etc/init.d/firewall restart > /dev/null 2>&1
-}
-
-flush_firewall() {
-    logger -st xray[$$] -p4 "Flushing firewall rules..."
-    /usr/bin/lua ${FIREWALL_INCLUDE} flush > $(uci get firewall.xray.path)
-
-    logger -st xray[$$] -p4 "Triggering firewall restart..."
-    /etc/init.d/firewall restart > /dev/null 2>&1
-
-    logger -st xray[$$] -p4 "Flushing ipset rules..."
-    for setname in $(ipset -n list | grep "tp_spec"); do
-        ipset -! destroy $setname
-    done
-    /etc/hotplug.d/iface/01-transparent-proxy-ipset
 }
 
 setup_dnsmasq() {
@@ -140,7 +114,7 @@ flush_when_disable() {
 
 start_service() {
     config_load $NAME
-    mkdir -p /var/run /var/etc
+    mkdir -p /var/run /var/etc/xray
     local xray_bin=$(uci_get_by_type general xray_bin)
     command -v ${xray_bin} > /dev/null 2>&1 || return 1
     gen_config_file

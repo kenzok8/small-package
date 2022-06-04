@@ -1,0 +1,12 @@
+#!/bin/sh
+DEFAULT_GATEWAY=$(ip route get 1.1.1.1 | grep -Eoe "src (\d+.\d+.\d+.\d+)" | awk '{print $NF}')
+if [ -n "$DEFAULT_GATEWAY" ] ; then
+    logger -st transparent-proxy-ipset[$$] -p6 "default gateway available at $DEFAULT_GATEWAY"
+    nft -f - <<-EOF
+		add set inet fw4 tp_spec_def_gw { type ipv4_addr; }
+		flush set inet fw4 tp_spec_def_gw
+		add element inet fw4 tp_spec_def_gw { $DEFAULT_GATEWAY }
+	EOF
+else
+    logger -st transparent-proxy-ipset[$$] -p6 "default gateway not available, please wait for interface ready"
+fi
