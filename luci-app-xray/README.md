@@ -6,6 +6,10 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Warnings
 
+* Support for nftables / firewall4 is **experimental** and
+    * only works with OpenWrt 22.03 versions or master branch with firewall4 as the only firewall implementation
+    * may **NOT** be as stable as the old implementation using iptables and fw3 due to the lack of hooking facilities in fw4. However it should be good enough for daily use so if you encounter problems please report.
+    * currently only tested with a proper buildroot environment. Building ipk with OpenWrt SDK is **NOT** tested and is **NOT** likely to work right now. If you are building ipks yourself, use the proper version of buildroot toolchain which matches the firewall implementation (fw3 or fw4) you are using.
 * There will be a series of **BREAKING CHANGES** in the following months due to some major refactor of DNS module. Please read changelog carefully to know about breaking changes and always backup your configuration files before updating.
 * If you see `WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly` and don't know what to do:
     * try `opkg update && opkg install xray-geodata` (at least OpenWrt 21.02 releases)
@@ -31,6 +35,8 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-02-20 fix: return a discarded address instead of nxdomain to let dnsmasq cache these queries
 * 2022-03-25 feat: remove web and add metrics configurations (recommended to use with [metrics support](https://github.com/XTLS/Xray-core/pull/1000))
 * 2022-04-24 feat: metrics is now out of optional features; add basic ubus wrapper for xray apis
+* 2022-05-13 feat: shadowsocks-2022 protocols support
+* 2022-06-04 feat: nftables support (experimental)
 
 ## Changelog 2021
 

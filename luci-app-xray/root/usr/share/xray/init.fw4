@@ -1,0 +1,27 @@
+FIREWALL_INCLUDE="/usr/share/xray/firewall_include.uc"
+
+setup_firewall() {
+    ip rule add fwmark 251 lookup 251
+    ip rule add fwmark 252 lookup 252
+    ip route add local default dev lo table 251
+    ip route add local default dev lo table 252
+
+    logger -st xray[$$] -p4 "Generating firewall4 rules..."
+    /usr/bin/utpl ${FIREWALL_INCLUDE} > /var/etc/xray/firewall_include.nft
+
+    logger -st xray[$$] -p4 "Triggering firewall4 restart..."
+    /etc/init.d/firewall restart > /dev/null 2>&1
+}
+
+flush_firewall() {
+    ip rule del fwmark 251 lookup 251
+    ip rule del fwmark 252 lookup 252
+    ip route del local default dev lo table 251
+    ip route del local default dev lo table 252
+
+    logger -st xray[$$] -p4 "Flushing firewall4 rules..."
+    rm  /var/etc/xray/firewall_include.nft
+
+    logger -st xray[$$] -p4 "Triggering firewall4 restart..."
+    /etc/init.d/firewall restart > /dev/null 2>&1
+}

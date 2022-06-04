@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=1.11.0
+PKG_VERSION:=1.12.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
 	SECTION:=Custom
 	CATEGORY:=Extra packages
 	TITLE:=LuCI Support for Xray
-	DEPENDS:=+luci-base +xray-core +dnsmasq +ipset +firewall +iptables +iptables-mod-tproxy +ca-bundle
+	DEPENDS:=+luci-base +xray-core +dnsmasq +ca-bundle +PACKAGE_firewall4:kmod-nft-tproxy +PACKAGE_firewall3:ipset +PACKAGE_firewall3:iptables +PACKAGE_firewall3:iptables-mod-tproxy
 	PKGARCH:=all
 endef
 
@@ -88,7 +88,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./root/etc/config/xray $(1)/tmp/xray.conf
 	$(INSTALL_DIR) $(1)/etc/luci-uploads/xray
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) ./root/etc/hotplug.d/iface/01-transparent-proxy-ipset $(1)/etc/hotplug.d/iface/01-transparent-proxy-ipset
 	$(INSTALL_DIR) $(1)/etc/ssl/certs
 ifdef CONFIG_PACKAGE_XRAY_INCLUDE_CLOUDFLARE_ORIGIN_ROOT_CA
 	$(INSTALL_DATA) ./root/etc/ssl/certs/origin_ca_ecc_root.pem $(1)/etc/ssl/certs/origin_ca_ecc_root.pem
@@ -114,10 +113,21 @@ endif
 ifdef CONFIG_PACKAGE_XRAY_RLIMIT_DATA_LARGE
 	$(INSTALL_DATA) ./root/usr/share/xray/rlimit_data_large $(1)/usr/share/xray/rlimit_data
 endif
+ifdef CONFIG_PACKAGE_firewall
+	$(INSTALL_BIN) ./root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw3 $(1)/etc/hotplug.d/iface/01-transparent-proxy-ipset
 	$(INSTALL_BIN) ./root/usr/share/xray/gen_ipset_rules.lua $(1)/usr/share/xray/gen_ipset_rules.lua
 	$(INSTALL_BIN) ./root/usr/share/xray/gen_ipset_rules_extra_normal.lua $(1)/usr/share/xray/gen_ipset_rules_extra.lua
-	$(INSTALL_BIN) ./root/usr/share/xray/gen_config.lua $(1)/usr/share/xray/gen_config.lua
 	$(INSTALL_BIN) ./root/usr/share/xray/firewall_include.lua $(1)/usr/share/xray/firewall_include.lua
+	$(INSTALL_DATA) ./root/usr/share/xray/init.fw3 $(1)/usr/share/xray/init.firewall
+endif
+ifdef CONFIG_PACKAGE_firewall4
+	$(INSTALL_BIN) ./root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw4 $(1)/etc/hotplug.d/iface/01-transparent-proxy-ipset
+	$(INSTALL_DIR) $(1)/etc/nftables.d
+	$(INSTALL_DATA) ./root/etc/nftables.d/99-xray.nft $(1)/etc/nftables.d/99-xray.nft
+	$(INSTALL_BIN) ./root/usr/share/xray/firewall_include.uc $(1)/usr/share/xray/firewall_include.uc
+	$(INSTALL_DATA) ./root/usr/share/xray/init.fw4 $(1)/usr/share/xray/init.firewall
+endif
+	$(INSTALL_BIN) ./root/usr/share/xray/gen_config.lua $(1)/usr/share/xray/gen_config.lua
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
 	$(INSTALL_BIN) ./root/usr/libexec/rpcd/xray $(1)/usr/libexec/rpcd/xray
 endef
