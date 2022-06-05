@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=1.12.0
+PKG_VERSION:=1.12.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -122,8 +122,9 @@ ifdef CONFIG_PACKAGE_firewall
 endif
 ifdef CONFIG_PACKAGE_firewall4
 	$(INSTALL_BIN) ./root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw4 $(1)/etc/hotplug.d/iface/01-transparent-proxy-ipset
+	$(INSTALL_DATA) ./root/usr/share/xray/include.nft $(1)/usr/share/xray/include.nft
 	$(INSTALL_DIR) $(1)/etc/nftables.d
-	$(INSTALL_DATA) ./root/etc/nftables.d/99-xray.nft $(1)/etc/nftables.d/99-xray.nft
+	$(LN) /usr/share/xray/include.nft $(1)/etc/nftables.d/99-xray.nft
 	$(INSTALL_BIN) ./root/usr/share/xray/firewall_include.uc $(1)/usr/share/xray/firewall_include.uc
 	$(INSTALL_DATA) ./root/usr/share/xray/init.fw4 $(1)/usr/share/xray/init.firewall
 endif
