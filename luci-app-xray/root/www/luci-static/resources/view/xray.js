@@ -224,6 +224,10 @@ return view.extend({
         o.rmempty = false
         o.modalonly = true
 
+        o = ss.taboption('protocol', form.Flag, 'shadowsocks_udp_over_tcp', _('[shadowsocks] UDP over TCP'), _('Only available for shadowsocks-2022 ciphers (2022-*)'))
+        o.rmempty = false
+        o.modalonly = true
+
         add_flow_and_stream_security_conf(ss, "protocol", "protocol", "shadowsocks", false, true)
 
         o = ss.taboption('protocol', form.ListValue, "vmess_security", _("[vmess] Encrypt Method"))
