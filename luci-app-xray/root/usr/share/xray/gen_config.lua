@@ -293,7 +293,8 @@ local function shadowsocks_outbound(server, tag)
                     address = server.server,
                     port = tonumber(server.server_port),
                     password = server.password,
-                    method = server.shadowsocks_security
+                    method = server.shadowsocks_security,
+                    uot = server.shadowsocks_udp_over_tcp == '1'
                 }
             }
         },
