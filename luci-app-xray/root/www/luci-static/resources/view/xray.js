@@ -225,6 +225,7 @@ return view.extend({
         o.modalonly = true
 
         o = ss.taboption('protocol', form.Flag, 'shadowsocks_udp_over_tcp', _('[shadowsocks] UDP over TCP'), _('Only available for shadowsocks-2022 ciphers (2022-*)'))
+        o.depends("shadowsocks_security", /2022/)
         o.rmempty = false
         o.modalonly = true
 
@@ -547,7 +548,7 @@ return view.extend({
 
         o = s.taboption('access_control', form.DynamicList, "wan_bp_ips", _("Bypassed IP"), _("Requests to these IPs won't be forwarded through Xray."))
         o.datatype = "ip4addr"
-        o.rmempty = false
+        o.rmempty = true
 
         o = s.taboption('access_control', form.DynamicList, "wan_fw_ips", _("Forwarded IP"))
         o.datatype = "ip4addr"
