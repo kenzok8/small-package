@@ -201,22 +201,22 @@ test $version -lt 1 && {
 	uci -q set system.@system[0].zram_comp_algo='zstd'
 	uci -q set system.@system[0].zram_size_mb="$(expr $memtotal / 1024 / 3)"
 	uci commit system
+	
+	# sysctl overwrite
+	SYSCTL_LOCAL=/etc/sysctl.d/50-local.conf
+	mkdir -p /etc/sysctl.d
+	echo -n >$SYSCTL_LOCAL
+	echo net.nf_conntrack_max=$nf_conntrack_max >>$SYSCTL_LOCAL
+	echo net.ipv4.ip_early_demux=0 >>$SYSCTL_LOCAL
+	echo net.bridge.bridge-nf-call-iptables=0 >>$SYSCTL_LOCAL
+	echo net.ipv4.fib_multipath_hash_policy=1 >>$SYSCTL_LOCAL
+	echo net.ipv4.tcp_congestion_control=cubic >>$SYSCTL_LOCAL
+	echo net.netfilter.nf_conntrack_helper=1 >>$SYSCTL_LOCAL
+	echo kernel.msgmax = 65536 >>$SYSCTL_LOCAL
+	echo kernel.msgmnb = 65536 >>$SYSCTL_LOCAL
+	echo vm.swappiness=0 >>$SYSCTL_LOCAL
 	version=1
 }
-
-# sysctl overwrite
-SYSCTL_LOCAL=/etc/sysctl.d/50-local.conf
-mkdir -p /etc/sysctl.d
-echo -n >$SYSCTL_LOCAL
-echo net.nf_conntrack_max=$nf_conntrack_max >>$SYSCTL_LOCAL
-echo net.ipv4.ip_early_demux=0 >>$SYSCTL_LOCAL
-echo net.bridge.bridge-nf-call-iptables=0 >>$SYSCTL_LOCAL
-echo net.ipv4.fib_multipath_hash_policy=1 >>$SYSCTL_LOCAL
-echo net.ipv4.tcp_congestion_control=cubic >>$SYSCTL_LOCAL
-echo net.netfilter.nf_conntrack_helper=1 >>$SYSCTL_LOCAL
-echo kernel.msgmax = 65536 >>$SYSCTL_LOCAL
-echo kernel.msgmnb = 65536 >>$SYSCTL_LOCAL
-echo vm.swappiness=0 >>$SYSCTL_LOCAL
 
 cp -pR /www/cgi-bin/* /www/
 rm -rf /tmp/luci-*
