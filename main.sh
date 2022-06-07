@@ -119,6 +119,7 @@ svn export https://github.com/linkease/nas-packages/trunk/network/services && mv
 svn export https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
 
 svn export https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
+svn export https://github.com/fw876/helloworld/trunk/sagernet-core
 svn export https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn export https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
