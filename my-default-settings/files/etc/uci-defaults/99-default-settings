@@ -126,8 +126,10 @@ test $version -lt 1 && {
 	grep -q log-facility /etc/dnsmasq.conf ||
 		echo "log-facility=/dev/null" >> /etc/dnsmasq.conf
 
+	[ -f /sys/module/xt_FULLCONENAT/refcnt ] && {
 	uci -q set firewall.@defaults[0].fullcone='1'
 	uci commit firewall
+	}
 
 	uci -q set fstab.@global[0].anon_mount=1
 	uci commit fstab
