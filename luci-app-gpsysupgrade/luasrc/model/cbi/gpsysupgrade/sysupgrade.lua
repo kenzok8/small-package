@@ -46,6 +46,10 @@ function to_check()
 		model = "rockchip_armv8/nanopi-r4s"
 		check_update()
 			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r4s-squashfs-sysupgrade.img.gz"
+    elseif model:match(".*R5S.*") then
+		model = "rockchip_armv8/nanopi-r5s"
+		check_update()
+			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r5s_sd.img.gz"
     elseif model:match(".*R2C.*") then
 		model = "rockchip_armv8/nanopi-r2c"
 		check_update()
@@ -122,6 +126,14 @@ function to_check()
 		model = "ramips_mt7621/mi-ac2100"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-xiaomi_mi-ac2100-squashfs-sysupgrade.bin"
+    elseif model:match(".*RT-AC42U.*") then
+		model = "ipq40xx_generic/asus-rt-acrh17"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-asus_rt-ac42u-squashfs-sysupgrade.bin"
+    elseif model:match(".*RT-AC58U.*") then
+		model = "ipq40xx_generic/asus-rt-ac58u"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-asus_rt-ac58u-squashfs-sysupgrade.bin"
     else
 		local needs_update = false
 		return {
