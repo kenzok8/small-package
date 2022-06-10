@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_quickstart:=$(ARCH)
 
 PKG_NAME:=quickstart
-PKG_VERSION:=0.4.7
+PKG_VERSION:=0.4.8
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://fw.koolcenter.com/binary/quickstart/
-PKG_HASH:=ecc9373738d64efbb3af6c0cf177ba866ede5f8acebd027dd535cd1217c69066
+PKG_HASH:=236dcba61010b88706b152a359cb85c563c27febaa6b0c341b61cf4549e48920
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
