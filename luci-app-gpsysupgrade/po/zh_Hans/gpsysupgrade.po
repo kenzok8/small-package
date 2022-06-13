@@ -63,3 +63,6 @@ msgstr "更新成功, 等待设备重启后响应..."
 
 msgid "Device unreachable! Still waiting for device..."
 msgstr "无法连接设备! 继续等待..."
+
+msgid "Retain the current packages"
+msgstr "保留已安装软件包 (系统更新完成联网后自动在线安装回原有软件包)"
