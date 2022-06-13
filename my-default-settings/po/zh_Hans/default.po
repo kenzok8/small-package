@@ -138,9 +138,6 @@ msgstr "域名（不带 HTTP(S)://）"
 msgid "Comments"
 msgstr "备注"
 
-msgid "Retain the current packages"
-msgstr "保留已安装软件包"
-
 msgid "Packet Steering"
 msgstr "数据包引导"
 
