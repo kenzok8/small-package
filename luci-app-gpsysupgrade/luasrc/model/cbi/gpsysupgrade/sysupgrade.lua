@@ -41,19 +41,19 @@ function to_check()
     elseif model:match(".*R2S.*") then
 		model = "rockchip_armv8/nanopi-r2s"
 		check_update()
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r2s-squashfs-sysupgrade.img.gz"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r2s-squashfs-sysupgrade.img.gz"
     elseif model:match(".*R4S.*") then
 		model = "rockchip_armv8/nanopi-r4s"
 		check_update()
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r4s-squashfs-sysupgrade.img.gz"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r4s-squashfs-sysupgrade.img.gz"
     elseif model:match(".*R5S.*") then
 		model = "rockchip_armv8/nanopi-r5s"
 		check_update()
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r5s_sd.img.gz"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r5s_sd.img.gz"
     elseif model:match(".*R2C.*") then
 		model = "rockchip_armv8/nanopi-r2c"
 		check_update()
-			download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r2c-squashfs-sysupgrade.img.gz"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-nanopi-r2c-squashfs-sysupgrade.img.gz"
     elseif model:match(".*DoorNet2.*") then
 		model = "rockchip_armv8/doornet2"
 		check_update()
@@ -85,15 +85,15 @@ function to_check()
     elseif model:match(".*AX6.*") then
 		model = "ipq807x/redmi-ax6"
 		check_update()
-		download_url = "https://op.supes.top/firmware/ipq807x/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-redmi_ax6-squashfs-nand-sysupgrade.bin"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-redmi_ax6-squashfs-nand-sysupgrade.bin"
     elseif model:match(".*AX9000.*") then
 		model = "ipq807x/xiaomi-ax9000"
 		check_update()
-		download_url = "https://op.supes.top/firmware/ipq807x/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-xiaomi_ax9000-squashfs-nand-sysupgrade.bin"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-xiaomi_ax9000-squashfs-nand-sysupgrade.bin"
     elseif model:match(".*AX3600.*") then
 		model = "ipq807x/xiaomi-ax3600"
 		check_update()
-		download_url = "https://op.supes.top/firmware/ipq807x/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-xiaomi_ax3600-squashfs-nand-sysupgrade.bin"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-xiaomi_ax3600-squashfs-nand-sysupgrade.bin"
     elseif model:match(".*XY-C5.*") then
 		model = "ramips_mt7621/xy-c5"
 		check_update()
@@ -201,7 +201,7 @@ function to_flash(file,retain)
     if not file or file == "" or not fs.access(file) then
         return {code = 1, error = i18n.translate("Firmware file is required.")}
     end
-    sys.call("/sbin/sysupgrade " ..retain.. " " ..file.. "")
+    sys.call(". /etc/profile.d/opkg.sh;opkg save;/sbin/sysupgrade " ..retain.. " " ..file.. "")
 
     return {code = 0}
 end
