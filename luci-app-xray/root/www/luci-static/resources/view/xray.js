@@ -135,6 +135,7 @@ return view.extend({
 
     render: function (load_result) {
         const config_data = load_result[0];
+        const geoip_direct_code = uci.get_first(config_data, "general", "geoip_direct_code");
         const { geoip_existence, geoip_size, geosite_existence, geosite_size, optional_features } = check_resource_files(load_result[1]);
         let asset_file_status = _('WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly. See <a href="https://github.com/yichya/luci-app-xray">here</a> for help.')
         if (geoip_existence) {
@@ -529,11 +530,21 @@ return view.extend({
 
         s.tab('access_control', _('Transparent Proxy Rules'));
 
-        if (geoip_existence) {
-            o = s.taboption('access_control', form.Value, 'geoip_direct_code', _('GeoIP Direct Code'), _("Hosts in this GeoIP set will not be forwarded through Xray. Set to unspecified to forward all non-private hosts."))
+        if (geoip_direct_code === "upgrade" || geoip_direct_code === void 0) {
+            if (geoip_existence) {
+                o = s.taboption('access_control', form.DynamicList, 'geoip_direct_code_list', _('GeoIP Direct Code List'), _("Hosts in these GeoIP sets will not be forwarded through Xray. Remove all items to forward all non-private hosts."))
+            } else {
+                o = s.taboption('access_control', form.DynamicList, 'geoip_direct_code_list', _('GeoIP Direct Code List'), _("Resource file /usr/share/xray/geoip.dat not exist. All network traffic will be forwarded. <br/> Compile your firmware again with data files to use this feature, or<br/><a href=\"https://github.com/v2fly/geoip\">download one</a> (maybe disable transparent proxy first) and upload it to your router."))
+                o.readonly = true
+            }
         } else {
-            o = s.taboption('access_control', form.Value, 'geoip_direct_code', _('GeoIP Direct Code'), _("Resource file /usr/share/xray/geoip.dat not exist. All network traffic will be forwarded. <br/> Compile your firmware again with data files to use this feature, or<br/><a href=\"https://github.com/v2fly/geoip\">download one</a> (maybe disable transparent proxy first) and upload it to your router."))
-            o.readonly = true
+            if (geoip_existence) {
+                o = s.taboption('access_control', form.Value, 'geoip_direct_code', _('GeoIP Direct Code'), _("Hosts in this GeoIP set will not be forwarded through Xray. Set to unspecified to forward all non-private hosts. <br/> Switching to new format (by selecting 'Upgrade configuration...') is recommended for multiple GeoIP options here."))
+            } else {
+                o = s.taboption('access_control', form.Value, 'geoip_direct_code', _('GeoIP Direct Code'), _("Resource file /usr/share/xray/geoip.dat not exist. All network traffic will be forwarded. <br/> Compile your firmware again with data files to use this feature, or<br/><a href=\"https://github.com/v2fly/geoip\">download one</a> (maybe disable transparent proxy first) and upload it to your router."))
+                o.readonly = true
+            }
+            o.value("upgrade", "Upgrade configuration...")
         }
         o.value("cn", "cn")
         o.value("telegram", "telegram")

@@ -28,7 +28,7 @@ echo "kmod busybox base-files " \
 opkg_uci() {
 local OPKG_OPT="${1:-${OPKG_UCI}}"
 local OPKG_OPT="${OPKG_OPT:-auto}"
-if ! uci -q get opkg > /dev/null
+if ! uci -q get opkg.defaults > /dev/null
 then opkg init
 fi
 uci -q batch << EOI
