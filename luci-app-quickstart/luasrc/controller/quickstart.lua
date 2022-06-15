@@ -8,9 +8,11 @@ function index()
     if luci.sys.call("pgrep quickstart >/dev/null") == 0 then
         entry({"admin", "quickstart"}, call("redirect_index"), _("QuickStart"), 1)
         entry({"admin", "network_guide"}, call("networkguide_index"), _("NetworkGuide"), 2)
-        entry({"admin", "quickstart", "pages"}, call("quickstart_index")).leaf = true
+        entry({"admin", "quickstart", "pages"}, call("quickstart_index", {index={"admin", "quickstart", "pages"}})).leaf = true
+        entry({"admin", "network_guide", "pages"}, call("quickstart_index", {index={"admin", "network_guide", "pages"}})).leaf = true
         if nixio.fs.access("/usr/lib/lua/luci/view/quickstart/main_dev.htm") then
-            entry({"admin", "quickstart", "dev"}, call("quickstart_dev")).leaf = true
+            entry({"admin", "quickstart", "dev"}, call("quickstart_dev", {index={"admin", "quickstart", "dev"}})).leaf = true
+            entry({"admin", "network_guide", "dev"}, call("quickstart_dev", {index={"admin", "network_guide", "dev"}})).leaf = true
         end
     else
         entry({"admin", "quickstart"})
@@ -19,7 +21,7 @@ function index()
 end
 
 function networkguide_index()
-    luci.http.redirect(luci.dispatcher.build_url("admin","quickstart","pages","network"))
+    luci.http.redirect(luci.dispatcher.build_url("admin","network_guide","pages","network"))
 end
 
 function redirect_index()
@@ -30,10 +32,18 @@ function redirect_fallback()
     luci.http.redirect(luci.dispatcher.build_url("admin","status"))
 end
 
-function quickstart_index()
-    luci.template.render("quickstart/main", {prefix=luci.dispatcher.build_url(unpack(page_index))})
+function quickstart_index(param)
+    local jsonc = require "luci.jsonc"
+    local features = { "_lua_force_array_" }
+    if luci.sys.call("which ota >/dev/null 2>&1") == 0 then
+        features[#features+1] = "ota"
+    end
+    if luci.sys.call("[ -d /ext_overlay ] >/dev/null 2>&1") == 0 then
+        features[#features+1] = "sandbox"
+    end
+    luci.template.render("quickstart/main", {prefix=luci.dispatcher.build_url(unpack(param.index)),features=jsonc.stringify(features)})
 end
 
-function quickstart_dev()
-    luci.template.render("quickstart/main_dev", {prefix=luci.dispatcher.build_url(unpack({"admin", "quickstart", "dev"}))})
+function quickstart_dev(param)
+    luci.template.render("quickstart/main_dev", {prefix=luci.dispatcher.build_url(unpack(param.index))})
 end
