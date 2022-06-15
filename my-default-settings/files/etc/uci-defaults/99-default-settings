@@ -94,7 +94,7 @@ test $version -lt 1 && {
 				uci -q set wireless.${radio}.htmode="VHT80"
 				uci -q set wireless.${radio}.channel="157"
 			fi
-			[ "$(cat /tmp/sysinfo/board_name)" == "xiaomi_mi-router-cr660x" ] && {
+			[ "$(cat /tmp/sysinfo/board_name)" == "xiaomi,mi-router-cr660x" ] && {
 				uci -q set wireless.${radio}.htmode="HE80"
 				uci -q set wireless.${radio}.channel='157'
 			}

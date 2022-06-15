@@ -1,5 +1,6 @@
 #!/bin/sh
 
+if [ "$(cat /tmp/sysinfo/board_name)" == "phicomm,n1" ]; then
 version=`uci -q get base_config.@status[0].version`
 hostname=`uci -q get system.@system[0].hostname`
 test -n "${hostname}" || hostname="OpenWrt"
@@ -60,3 +61,4 @@ uci commit firewall
 
 uci -q set base_config.@status[0].version=3
 uci commit base_config
+fi
