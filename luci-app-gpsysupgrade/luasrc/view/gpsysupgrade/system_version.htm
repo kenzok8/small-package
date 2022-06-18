@@ -147,7 +147,7 @@ local system_version = require "luci.model.cbi.gpsysupgrade.sysupgrade".get_syst
 			}
 
 		if (kopkg.checked){
-			opts = "-k -u";
+			opts = "-k";
 			}
 		if (!kconfig.checked && kopkg.checked){
 			opts = "-n -k";

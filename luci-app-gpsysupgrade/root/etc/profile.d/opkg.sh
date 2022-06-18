@@ -55,6 +55,7 @@ local OPKG_OPT="${1:-${OPKG_UCI}}"
 local OPKG_WR="$(opkg export wr)"
 local OPKG_WI="$(opkg export wi)"
 local OPKG_UR="$(opkg export ur)"
+local OPKG_CM="$(opkg export cm)"
 local OPKG_UI="$(opkg export ui)"
 if uci -q get fstab.rwm > /dev/null \
 && grep -q -e "\s/rwm\s" /etc/mtab
@@ -65,7 +66,9 @@ sed -e "s/$/\tipkg/" "${OPKG_WI}"
 fi
 {
 sed -e "s/$/\trpkg/" "${OPKG_UR}"
+sed -e "s/$/\trpkg/" "${OPKG_CM}" | grep "^-"
 sed -e "s/$/\tipkg/" "${OPKG_UI}"
+sed -e "s/$/\tipkg/" "${OPKG_CM}" | grep "^[^-]"
 } | opkg uci "${OPKG_OPT}"
 rm -f "${OPKG_WR}" "${OPKG_WI}" "${OPKG_UR}" "${OPKG_UI}"
 }
@@ -131,7 +134,7 @@ case "${OPKG_OPT}" in
 (ai|au) opkg_"${OPKG_CMD}"_cmd ;;
 (ri|wr|wi|or|oi) opkg_"${OPKG_CMD}"_type ;;
 (ur|ui) opkg_"${OPKG_CMD}"_run ;;
-(pr|pi|ig) opkg_"${OPKG_CMD}"_uci ;;
+(pr|pi|ig|cm) opkg_"${OPKG_CMD}"_uci ;;
 esac > "${OPKG_TEMP}"
 echo "${OPKG_TEMP}"
 }
@@ -178,6 +181,7 @@ case "${OPKG_OPT:1}" in
 (r) OPKG_TYPE="rpkg"; OPKG_CONF="auto" ;;
 (i) OPKG_TYPE="ipkg"; OPKG_CONF="auto" ;;
 (g) OPKG_TYPE="ipkg"; OPKG_CONF="ignore" ;;
+(m) OPKG_TYPE="ipkg"; OPKG_CONF="custom" ;;
 esac
 uci -q get opkg."${OPKG_CONF}"."${OPKG_TYPE}" \
 | sed -e "s/\s/\n/g"
