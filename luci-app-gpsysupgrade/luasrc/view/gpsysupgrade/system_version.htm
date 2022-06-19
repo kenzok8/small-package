@@ -141,7 +141,7 @@ local system_version = require "luci.model.cbi.gpsysupgrade.sysupgrade".get_syst
 						message.style.display = '';
 							label.innerHTML = '<%:Upgrade successful, Waiting for device...%>';
 							
-			var opts = "-u";
+			var opts = "";
 		if (!kconfig.checked){
 			opts = "-n";
 			}
