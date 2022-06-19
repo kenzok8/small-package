@@ -1,0 +1,11 @@
+
+#!/bin/sh
+
+version=`uci -q get base_config.@status[0].version`
+
+test $version -lt 3 && {
+uci set firewall.@defaults[0].flow_offloading='1'
+uci commit firewall
+}
+uci -q set base_config.@status[0].version=3
+uci commit base_config

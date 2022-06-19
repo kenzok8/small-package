@@ -5,7 +5,7 @@ local uci = require 'luci.model.uci'.cursor()
 if fs.access('/etc/config/wizard') then
 	autoupgrade_fm = uci:get('wizard', 'default', 'autoupgrade_fm')
 end
-if autoupgrade_fm ~= '0' then
+if autoupgrade_fm == '1' then
 -%>
 <script>
 var tokenStr = '<%=token%>';
