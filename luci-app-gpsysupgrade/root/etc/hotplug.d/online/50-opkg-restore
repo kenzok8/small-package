@@ -5,7 +5,7 @@ if [ ! -e /etc/opkg-restore-auto ] \
 c=0
 while ! curl https://op.supes.top >/dev/null || ! opkg update >/dev/null; do
 echo "Network error." | logger -t opkg
-[[ "$(uci -q get dhcp.@dnsmasq[0].noresolv)" == 1 && c == 0 ]] && {
+[[ "$(uci -q get dhcp.@dnsmasq[0].noresolv)" == 1 && $c == 3 ]] && {
 	uci -q del dhcp.@dnsmasq[0].noresolv
 	uci commit dhcp
 	uci -q get network.lan.dns || {
@@ -15,7 +15,7 @@ echo "Network error." | logger -t opkg
 		}
 	/etc/init.d/dnsmasq reload
 }
-[ $c -eq 200 ] && {
+[ $c -eq 300 ] && {
 	lock -u /var/lock/opkg-restore
 	exit 0
 } || let c++

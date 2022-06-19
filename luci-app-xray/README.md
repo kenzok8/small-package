@@ -37,6 +37,9 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-04-24 feat: metrics is now out of optional features; add basic ubus wrapper for xray apis
 * 2022-05-13 feat: shadowsocks-2022 protocols support
 * 2022-06-04 feat: nftables support (experimental)
+* 2022-06-05 feat: shadowsocks-2022 UDP over TCP support
+* 2022-06-14 feat: multiple geoip direct code
+* 2022-06-19 feat: skip proxy for specific uids / gids (nftables support only)
 
 ## Changelog 2021
 

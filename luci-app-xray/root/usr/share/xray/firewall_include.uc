@@ -7,6 +7,8 @@
     const general = config[filter(keys(config), k => config[k][".type"] == "general")[0]];
     const tp_spec_src_fw = map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].bypassed == "0"), k => config[k].macaddr) || [];
     const tp_spec_src_bp = map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].bypassed == "1"), k => config[k].macaddr) || [];
+    const uids_direct = general.uids_direct || [];
+    const gids_direct = general.gids_direct || [];
     let wan_bp_ips = general.wan_bp_ips || [];
     let wan_fw_ips = general.wan_fw_ips || [];
     push(wan_bp_ips, split(general.fast_dns, ":")[0]);
@@ -99,6 +101,12 @@
         ip daddr @tp_spec_dst_sp return
         ip daddr @tp_spec_dst_bp return
         ip daddr @tp_spec_def_gw return
+{% if (length(uids_direct) > 0): %}
+        meta skuid { {{ join(", ", uids_direct) }} } return
+{% endif %}
+{% if (length(gids_direct) > 0): %}
+        meta skgid { {{ join(", ", gids_direct) }} } return
+{% endif %}
         meta mark {{ sprintf("0x%08x", general.mark) }} return
         meta l4proto { tcp, udp } meta mark set 0x000000fc
     }

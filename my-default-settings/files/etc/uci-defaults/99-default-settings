@@ -74,19 +74,19 @@ test $version -lt 1 && {
 		
 		if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
 			uci -q set wireless.default_${radio}.ssid="${SSID}_5G"
-			if test -z "${htmode##HE*}"; then
+			if [[ "${htmode}" == HE* ]]; then   # AX
 				uci -q set wireless.${radio}.htmode="HE160"
 				uci -q set wireless.${radio}.channel='44'
 			else
-				uci -q set wireless.${radio}.htmode="VHT80"
+				uci -q set wireless.${radio}.htmode="VHT80"   #AC
 				uci -q set wireless.${radio}.channel="157"
 			fi
-			[ "$(cat /tmp/sysinfo/board_name)" == "xiaomi,mi-router-cr660x" ] && {
+			[[ "$(board_name)" == *cr660x ]] && {
 				uci -q set wireless.${radio}.htmode="HE80"
 				uci -q set wireless.${radio}.channel='157'
 			}
 		else
-			uci -q set wireless.${radio}.htmode="HT40"
+			uci -q set wireless.${radio}.htmode="HT40"   #N
 			uci -q set wireless.${radio}.noscan='1'
 			uci -q set wireless.${radio}.vendor_vht='1'
 			uci -q set wireless.default_${radio}.ssid="${SSID}_2.4G"

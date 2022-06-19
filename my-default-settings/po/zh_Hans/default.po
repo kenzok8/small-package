@@ -167,3 +167,6 @@ msgstr "已用空间"
 
 msgid "Upgrade all…"
 msgstr "更新所有软件包 (谨慎)"
+
+msgid "Temperature"
+msgstr "温度"
