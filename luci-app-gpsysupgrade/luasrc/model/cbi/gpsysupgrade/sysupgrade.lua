@@ -102,7 +102,7 @@ function to_check()
 		model = "ramips_mt7621/newifi-d2"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-d-team_newifi-d2-squashfs-sysupgrade.bin"
-    elseif model:match(".*CR660x.*") then
+    elseif model:match(".*CR660.*") then
 		model = "ramips_mt7621/cr660x"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-xiaomi_mi-router-cr660x-squashfs-sysupgrade.bin"
@@ -134,6 +134,10 @@ function to_check()
 		model = "ipq40xx_generic/asus-rt-ac58u"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-asus_rt-ac58u-squashfs-sysupgrade.bin"
+    elseif model:match(".*K2P.*") then
+		model = "ramips_mt7621/phicomm-k2p"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-phicomm_k2p-squashfs-sysupgrade.bin"
     else
 		local needs_update = false
 		return {
