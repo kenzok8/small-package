@@ -20,7 +20,7 @@ define Package/$(PKG_NAME)
   TITLE:=Default Settings
   MAINTAINER:=Kiddin'
   PKGARCH:=all
-  DEPENDS:=+luci-base +bash
+  DEPENDS:=+luci-base
 endef
 
 define Package/$(PKG_NAME)/conffiles
