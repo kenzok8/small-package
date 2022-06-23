@@ -58,7 +58,7 @@ define Package/v2raya/conffiles
 /etc/config/v2raya
 endef
 
-WEB_FILE:=v2raya-web-$(PKG_VERSION).tar.gz
+WEB_FILE:=$(PKG_NAME)-web-$(PKG_VERSION).tar.gz
 define Download/v2raya-web
 	URL:=https://codeload.github.com/v2rayA/v2raya-web/tar.gz/v$(PKG_VERSION)?
 	URL_FILE:=$(WEB_FILE)

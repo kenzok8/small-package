@@ -34,8 +34,6 @@ echo $(uci -q get uhttpd.main.index_page) | grep -q "cgi-bin/luci" ||
 
 sed -i "s/git-.*-\(.*\)/git-\1/g" /usr/lib/lua/luci/version.lua
 
-[[ "$(echo "$(/sbin/cpuinfo 2>/dev/null)" | grep -i "MHz")" ]] || sed -i "s/_('CPU Info'),cpuinfo.cpufreq,//" /www/luci-static/resources/view/status/include/10_system.js
-
 processor=`cat /proc/cpuinfo | grep 'processor' | wc -l`
 test -n "$processor" || processor=3
 sed -i "/^threads =/c\threads = $processor" /etc/uwsgi/vassals/luci-webui.ini

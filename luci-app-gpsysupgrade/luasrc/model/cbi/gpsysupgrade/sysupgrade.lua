@@ -78,6 +78,14 @@ function to_check()
 		model = "bcm27xx_bcm2711/Rpi-4B"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-bcm27xx-bcm2711-rpi-4-squashfs-sysupgrade.img.gz"
+    elseif model:match(".*Pi 3 Model B.*") then
+		model = "bcm27xx_bcm2710/Rpi-3B"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-bcm27xx-bcm2710-rpi-3-squashfs-sysupgrade.img.gz"
+    elseif model:match(".*Pi 2 Model B.*") then
+		model = "bcm27xx_bcm2709/Rpi-2B"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-bcm27xx-bcm2709-rpi-2-squashfs-sysupgrade.img.gz"
     elseif model:match(".*AX6S.*") then
 		model = "mediatek_mt7622/redmi-ax6s"
 		check_update()
@@ -138,6 +146,10 @@ function to_check()
 		model = "ramips_mt7621/phicomm-k2p"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-phicomm_k2p-squashfs-sysupgrade.bin"
+    elseif model:match(".*PHICOMM K3.*") then
+		model = "bcm53xx/phicomm-k3"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-bcm53xx-generic-phicomm_k3-squashfs.trx"
     else
 		local needs_update = false
 		return {
