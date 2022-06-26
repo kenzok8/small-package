@@ -6,6 +6,17 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Warnings
 
+* There's a possible bug in nftables 1.0.3 / 1.0.4 which breaks tproxy.
+    * Do not use this application unless
+        * You're using OpenWrt 22.03 branch or earlier
+        * You're not using fw4
+        * You know how to compile your own firmware
+    * If you compile your own firmware using master branch, revert these commits manually in the following order
+        * [`a74a853d0d9c716bcaf1878eecbdc3860d28c88e`](https://github.com/openwrt/openwrt/commit/a74a853d0d9c716bcaf1878eecbdc3860d28c88e)
+        * [`bde367255cc9307e2a15b2b3bb3a2c24938c61f6`](https://github.com/openwrt/openwrt/commit/bde367255cc9307e2a15b2b3bb3a2c24938c61f6)
+        * [`879dd95f4360978a2b5da1f3b9e04ee0311c9432`](https://github.com/openwrt/openwrt/commit/879dd95f4360978a2b5da1f3b9e04ee0311c9432)
+        * [`8704e75d259f6aba23a83ed680b3e15aa0dfb953`](https://github.com/openwrt/openwrt/commit/8704e75d259f6aba23a83ed680b3e15aa0dfb953)
+    * If you use SNAPSHOT versions, wait for a fix or switch to fw3 for now
 * Support for nftables / firewall4 is **experimental** and
     * only works with OpenWrt 22.03 versions or master branch with firewall4 as the only firewall implementation
     * may **NOT** be as stable as the old implementation using iptables and fw3 due to the lack of hooking facilities in fw4. However it should be good enough for daily use so if you encounter problems please report.
