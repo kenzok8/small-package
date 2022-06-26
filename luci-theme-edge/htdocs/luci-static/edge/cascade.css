@@ -3182,9 +3182,10 @@ input[type="checkbox"] {
 	padding: 0;
 	cursor: pointer;
 	transition: all 0.2s;
+}
+input[type="checkbox"]:nth-of-type(-n+2){
 	display:none;
 }
-
 .cbi-dropdown[open]>ul.dropdown>li label {
     margin-left: .5rem;
 }
