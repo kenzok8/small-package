@@ -110,6 +110,7 @@ test $version -lt 1 && {
 	[ -f /etc/config/wireless ] && {
 		SSID=${hostname}
 		SSID_PASSWD=""
+		[ "$(uci -q get wireless.radio1.band)" == "5g" ] && uci -q set wireless.radio0.band="2g"
 		for radio in radio0 radio1 radio2 radio3; do
 			wifi_setup_radio ${radio}
 		done
