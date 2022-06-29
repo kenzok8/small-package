@@ -3,8 +3,6 @@
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export LANG=zh_CN.UTF-8
 
-[ "$(which bash)" ] || exit 0
-
 THIS_SCRIPT="sysinfo"
 MOTD_DISABLE=""
 
