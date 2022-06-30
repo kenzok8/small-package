@@ -1,22 +1,17 @@
+# Copyright (C) 2018-2020 Lienol <lawlienol@gmail.com>
 #
-# Copyright (C) 2021 ImmortalWrt
-# <https://immortalwrt.org>
-#
-# This is free software, licensed under the GNU General Public License v3.
+# This is free software, licensed under the Apache License, Version 2.0 .
 #
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=LuCI Support for FileBrowser
-LUCI_DEPENDS:=+filebrowser
+LUCI_TITLE:=LuCI support for FileBrowser
 LUCI_PKGARCH:=all
-
-PKG_NAME:=luci-app-filebrowser
-PKG_VERSION:=snapshot
-PKG_RELEASE:=118071b
-
-PKG_LICENSE:=GPLv3
+PKG_VERSION:=1.1
+PKG_RELEASE:=1
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
+
+
