@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aliyundrive-fuse
-PKG_VERSION:=0.1.12
+PKG_VERSION:=0.1.14
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_LICENSE:=MIT
