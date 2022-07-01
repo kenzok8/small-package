@@ -14,6 +14,7 @@ function index()
             entry({"admin", "quickstart", "dev"}, call("quickstart_dev", {index={"admin", "quickstart", "dev"}})).leaf = true
             entry({"admin", "network_guide", "dev"}, call("quickstart_dev", {index={"admin", "network_guide", "dev"}})).leaf = true
         end
+        entry({"admin", "nas", "raid"}, call("quickstart_index", {index={"admin", "nas"}}), _("RAID"), 10).leaf = true
     else
         entry({"admin", "quickstart"})
         entry({"admin", "quickstart", "pages"}, call("redirect_fallback")).leaf = true
