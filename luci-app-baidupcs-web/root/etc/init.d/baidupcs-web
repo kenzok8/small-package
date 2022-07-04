@@ -33,5 +33,5 @@ start() {
 }
 
 stop() {
-	killall baidupcs-web >/dev/null 2>&1
+	killall `which baidupcs-web` >/dev/null 2>&1
 }
