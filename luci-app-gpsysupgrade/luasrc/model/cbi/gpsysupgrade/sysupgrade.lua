@@ -91,15 +91,15 @@ function to_check()
 		model = "mediatek_mt7622/xiaomi_redmi-router_ax6s"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mediatek-mt7622-xiaomi_redmi-router-ax6s-squashfs-sysupgrade.bin"
-    elseif board_name:match("redmi_ax6") then
+    elseif board_name:match("redmi,ax6") then
 		model = "ipq807x_generic/redmi_ax6"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-redmi_ax6-squashfs-nand-sysupgrade.bin"
-    elseif board_name:match("xiaomi_ax9000") then
+    elseif board_name:match("xiaomi,ax9000") then
 		model = "ipq807x_generic/xiaomi_ax9000"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-xiaomi_ax9000-squashfs-nand-sysupgrade.bin"
-    elseif board_name:match("xiaomi_ax3600") then
+    elseif board_name:match("xiaomi,ax3600") then
 		model = "ipq807x_generic/xiaomi_ax3600"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-generic-xiaomi_ax3600-squashfs-nand-sysupgrade.bin"
