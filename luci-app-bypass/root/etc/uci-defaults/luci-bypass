@@ -13,14 +13,14 @@ uci batch <<EOF
 	rm -rf /tmp/luci-modulecache/
 EOF
 
-if [[ "$(grep "option type 'vless'" /etc/config/bypass)" || "$(grep "option type 'vmess'" /etc/config/bypass)" ]]; then
+if [[ "$(grep "option uuid" /etc/config/bypass)" ]]; then
 sed -i "s/option uuid/option vmess_id/" /etc/config/bypass
 for i in {0..100}
 do
 	if [ "$(uci -q get bypass.@servers[$i].type)" == 'vless' ];then
 		uci -q set bypass.@servers[$i].type='v2ray'
 		uci -q set bypass.@servers[$i].v2ray_protocol='vless'
-	elif [ "$(uci -q get bypass.@servers[$i].type)" == 'vless' ];then
+	elif [ "$(uci -q get bypass.@servers[$i].type)" == 'vmess' ];then
 		uci -q set bypass.@servers[$i].type='v2ray'
 		uci -q set bypass.@servers[$i].v2ray_protocol='vmess'
 	fi
