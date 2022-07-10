@@ -115,6 +115,10 @@ function to_check()
 		model = "ramips_mt7621/lenovo_newifi-d1"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-lenovo_newifi-d1-squashfs-sysupgrade.bin"
+    elseif board_name:match("re%-sp%-01b") then
+		model = "ramips_mt7621/jdcloud_re-sp-01b"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-jdcloud_re-sp-01b-squashfs-sysupgrade.bin"
     elseif board_name:match("mi%-router%-cr660x") then
 		model = "ramips_mt7621/xiaomi_mi-router-cr660x"
 		check_update()
@@ -227,11 +231,11 @@ function to_check()
 		model = "ramips_mt7621/xiaomi_mi-router-3g-v2"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-xiaomi_mi-router-3g-v2-squashfs-sysupgrade.bin"
-    elseif board_name:match(jcg,y2") then
+    elseif board_name:match("jcg,y2") then
 		model = "ramips_mt7621/jcg_y2"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-jcg_y2-squashfs-sysupgrade.bin"
-    elseif board_name:match(jcg,q20") then
+    elseif board_name:match("jcg,q20") then
 		model = "ramips_mt7621/jcg_q20"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-jcg_q20-squashfs-sysupgrade.bin"
