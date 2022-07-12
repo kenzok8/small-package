@@ -70,11 +70,15 @@ test $version -lt 1 && {
 	(echo "root"; sleep 1; echo "root") | /bin/busybox passwd root >/dev/null 2>&1 &
 	
 	. /etc/openwrt_release
-	[[ "$DISTRIB_TARGET" != "x86/64" && "$DISTRIB_TARGET" != "ipq807x/generic" ]] && {
+	
+	if [ "$DISTRIB_TARGET" == "ipq807x/generic" ]; then
+		uci -q set turboacc.config.sfe_flow='1'
+		uci commit turboacc
+	elif [[ "$DISTRIB_TARGET" != "x86/64" ]]; then
 		uci set firewall.@defaults[0].flow_offloading='1'
 		uci set firewall.@defaults[0].flow_offloading_hw='1'
 		uci commit firewall
-	}
+	fi
 
 	wifi_setup_radio(){
 	local radio=$1
