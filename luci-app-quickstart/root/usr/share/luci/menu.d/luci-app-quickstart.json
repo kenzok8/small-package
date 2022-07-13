@@ -4,7 +4,7 @@
 		"order": 1,
 		"action": {
 			"type": "template",
-			"path": "quickstart/landing"
+			"path": "quickstart/home"
 		}
 	}
 }
