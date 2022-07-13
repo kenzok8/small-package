@@ -1,9 +1,26 @@
 <%+header%>
+<%
+  local jsonc = require "luci.jsonc"
+  local features = { "_lua_force_array_" }
+  if luci.sys.call("which ota >/dev/null 2>&1") == 0 then
+      features[#features+1] = "ota"
+  end
+  if luci.sys.call("[ -d /ext_overlay ] >/dev/null 2>&1") == 0 then
+      features[#features+1] = "sandbox"
+  end
+-%>
 <script>
     (function(){
       var vue_prefix="<%=prefix%>";
       window.vue_base = vue_prefix + '/';
-      window.quickstart_features = <%=features%>;
+      window.quickstart_features = <%=jsonc.stringify(features)%>;
+      if (location.pathname != vue_prefix && !location.pathname.startsWith(window.vue_base)) {
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, null, vue_prefix);
+        } else {
+          location.href = vue_prefix;
+        }
+      }
     })();
 </script>
 <div id="app">
