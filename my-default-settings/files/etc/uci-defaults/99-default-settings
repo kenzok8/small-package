@@ -38,10 +38,8 @@ processor=`cat /proc/cpuinfo | grep 'processor' | wc -l`
 test -n "$processor" || processor=3
 sed -i "/^threads =/c\threads = $processor" /etc/uwsgi/vassals/luci-webui.ini
 
-uci -q get upnpd.config.use_stun || {
-uci -q set upnpd.config.use_stun='1'
-uci -q set upnpd.config.stun_host='stun.miwifi.com'
-uci -q set upnpd.config.stun_port='3478'
+[ "$(uci -q get upnpd.config.force_forwarding)" == '1' ] || {
+uci -q set upnpd.config.force_forwarding='1'
 uci commit upnpd
 }
 
