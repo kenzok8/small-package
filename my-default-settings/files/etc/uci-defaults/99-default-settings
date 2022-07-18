@@ -38,11 +38,6 @@ processor=`cat /proc/cpuinfo | grep 'processor' | wc -l`
 test -n "$processor" || processor=3
 sed -i "/^threads =/c\threads = $processor" /etc/uwsgi/vassals/luci-webui.ini
 
-[ "$(uci -q get upnpd.config.force_forwarding)" == '1' ] || {
-uci -q set upnpd.config.force_forwarding='1'
-uci commit upnpd
-}
-
 test $version -lt 1 && {
 	uci -q set luci.main.lang='auto'
 	uci -q set luci.main.mediaurlbase=/luci-static/edge
