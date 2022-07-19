@@ -200,7 +200,7 @@ local boardinfo = luci.util.ubus("system", "board") or { }
 overlay = boardinfo.release.distribution
 %>
 <%- if overlay ~="OpenWrt" and overlay ~= "1004" then -%>
-	<b style="color:orangered">注意: 修改过根目录大小的定制固件请使用<a target="_blank" href="https://supes.top"> 网站 </a>或安装luci-app-attendsysupgrade重新生成定制固件, 直接用此在线更新会重置分区,丢失配置.</b>
+	<b style="color:orangered">注意: 修改过根目录大小的定制固件请使用<a target="_blank" href="https://supes.top"> 网站 </a>或安装luci-app-attendedsysupgrade重新生成定制固件, 直接用此在线更新会重置分区,丢失配置.</b>
 <%- end -%>
 
 	<pre id="updatelogs" style="font-family:Microsoft Yahei;line-height:1.5rem;white-space:pre-line;"></div>
