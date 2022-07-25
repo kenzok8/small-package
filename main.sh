@@ -39,7 +39,7 @@ git clone --depth 1 https://github.com/BoringCat/luci-app-minieap
 git clone --depth 1 https://github.com/peter-tank/luci-app-dnscrypt-proxy2
 git clone --depth 1 https://github.com/peter-tank/luci-app-autorepeater
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-autoipsetadder
-git clone --depth 1 https://github.com/cyh92/luci-app-onliner
+git clone --depth 1 https://github.com/ElvenP/luci-app-onliner
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-usb3disable
 git clone --depth 1 https://github.com/riverscn/openwrt-iptvhelper && mvdir openwrt-iptvhelper
 git clone --depth 1 https://github.com/KyleRicardo/MentoHUST-OpenWrt-ipk
