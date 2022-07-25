@@ -1,0 +1,21 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Connection info"
+msgstr "联机用户"
+
+msgid "Online User"
+msgstr "在线用户"
+
+msgid "Speed monitor"
+msgstr "宽带监视"
+
+msgid "There is no one online now."
+msgstr "当前无任何设备在线。"
