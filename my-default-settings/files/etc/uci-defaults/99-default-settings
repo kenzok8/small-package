@@ -7,7 +7,7 @@
 version=`uci -q get base_config.@status[0].version`
 
 hostname=`uci -q get system.@system[0].hostname`
-test -n "${hostname}" || hostname="OpenWrt"
+[ -n "${hostname}" ] || hostname="OpenWrt"
 
 if [ "$(uci -q get dhcp.@dnsmasq[0].port)" != "53" ]; then
 	uci -q set dhcp.@dnsmasq[0].port='53'
@@ -19,7 +19,7 @@ set attendedsysupgrade.server.url='https://op.supes.top'
 commit attendedsysupgrade
 EOF
 
-uci set dockerd.firewall.extra_iptables_args='--match conntrack ! --ctstate RELATED,ESTABLISHED'
+uci -q set dockerd.firewall.extra_iptables_args='--match conntrack ! --ctstate RELATED,ESTABLISHED'
 uci commit dockerd
 
 sed -i '/profile.d/d' /lib/upgrade/keep.d/base-files
@@ -29,16 +29,15 @@ echo $(uci -q get uhttpd.main.index_page) | grep -q "cgi-bin/luci" ||
 
 /etc/init.d/wizard disable
 
-[ -f /usr/bin/wget ] && 	
-	ln -s /usr/bin/wget /usr/bin/wget-ssl
-
 sed -i "s/git-.*-\(.*\)/git-\1/g" /usr/lib/lua/luci/version.lua
 
+if [ -f /etc/uwsgi/vassals/luci-webui.ini ]; then
 processor=`cat /proc/cpuinfo | grep 'processor' | wc -l`
-test -n "$processor" || processor=3
+[ -n "$processor" ] || processor=3
 sed -i "/^threads =/c\threads = $processor" /etc/uwsgi/vassals/luci-webui.ini
+fi
 
-test $version -lt 1 && {
+if [[ ! "$version" || "$version" -lt 1 ]]; then
 	uci -q set luci.main.lang='auto'
 	uci -q set luci.main.mediaurlbase=/luci-static/edge
 	uci commit luci
@@ -46,14 +45,14 @@ test $version -lt 1 && {
 	uci -q set dropbear.@dropbear[0].Interface='lan'
 	uci commit dropbear
 	
-	uci -q get system.@system[0] >/dev/null 2>&1 && {
+	if uci -q get system.@system[0] >/dev/null; then
 		uci -q set system.@system[0].zonename='Asia/Shanghai'
 		uci -q set system.@system[0].timezone='CST-8'
 		uci -q del system.ntp.server
 		uci -q add_list system.ntp.server='ntp.aliyun.com'
 		uci -q add_list system.ntp.server='0.openwrt.pool.ntp.org'
 		uci commit system
-	}
+	fi
 
 	uci -q set uhttpd.main.rfc1918_filter=0
 	uci -q set uhttpd.main.redirect_https=0
@@ -68,17 +67,17 @@ test $version -lt 1 && {
 		uci -q set turboacc.config.sfe_flow='1'
 		uci commit turboacc
 	elif [[ "$DISTRIB_TARGET" != "x86/64" ]]; then
-		uci set firewall.@defaults[0].flow_offloading='1'
-		uci set firewall.@defaults[0].flow_offloading_hw='1'
+		uci -q set firewall.@defaults[0].flow_offloading='1'
+		uci -q set firewall.@defaults[0].flow_offloading_hw='1'
 		uci commit firewall
 	fi
 
 	wifi_setup_radio(){
 	local radio=$1
-	htmode="$(uci get wireless.${radio}.htmode)"
+	htmode="$(uci -q get wireless.${radio}.htmode)"
 	local widx=0
 	while uci rename wireless.@wifi-iface[$widx]=default_radio$widx >/dev/null 2>&1; do widx=$((widx+1)); done
-	uci -q get wireless.${radio} >/dev/null 2>&1 && {
+	if uci -q get wireless.${radio} >/dev/null; then
 			uci -q del wireless.${radio}.disabled
 			uci -q set wireless.${radio}.country='US'
 		
@@ -91,10 +90,10 @@ test $version -lt 1 && {
 				uci -q set wireless.${radio}.htmode="VHT80"   #AC
 				uci -q set wireless.${radio}.channel="157"
 			fi
-			[[ "$(board_name)" =~ (.*cr660x|.*ax9000|.*ax3600) || "$DISTRIB_TARGET" == 'ipq60xx/generic' ]] && {
+			if [[ "$(board_name)" == *cr660x || "$(board_name)" == *ax9000 || "$(board_name)" == *ax3600 || "$DISTRIB_TARGET" == 'ipq60xx/generic' ]]; then
 				uci -q set wireless.${radio}.htmode="HE80"
 				uci -q set wireless.${radio}.channel='157'
-			}
+			fi
 		else
 			uci -q set wireless.${radio}.htmode="HT40"   #N
 			uci -q set wireless.${radio}.noscan='1'
@@ -109,10 +108,10 @@ test $version -lt 1 && {
 			else
 				uci -q set wireless.default_${radio}.encryption='none'
 			fi
-		}
+		fi
 	}
 
-	[ -f /etc/config/wireless ] && {
+	if [ -f /etc/config/wireless ]; then
 		SSID=${hostname}
 		SSID_PASSWD=""
 		[ "$(uci -q get wireless.radio1.band)" == "5g" ] && uci -q set wireless.radio0.band="2g"
@@ -120,7 +119,7 @@ test $version -lt 1 && {
 			wifi_setup_radio ${radio}
 		done
 		uci commit wireless
-	}
+	fi
 
 	uci -q set upnpd.config.enabled='1'
 	uci commit upnpd
@@ -128,10 +127,10 @@ test $version -lt 1 && {
 	grep -q log-facility /etc/dnsmasq.conf ||
 		echo "log-facility=/dev/null" >> /etc/dnsmasq.conf
 
-	[[ -f /sys/module/xt_FULLCONENAT/refcnt || -f /sys/module/nft_fullcone/refcnt ]] && {
+	if [[ -f /sys/module/xt_FULLCONENAT/refcnt || -f /sys/module/nft_fullcone/refcnt ]]; then
 	uci -q set firewall.@defaults[0].fullcone='1'
 	uci commit firewall
-	}
+	fi
 
 	uci -q set fstab.@global[0].anon_mount=1
 	uci commit fstab
@@ -157,31 +156,31 @@ test $version -lt 1 && {
 	uci -q set system.@system[0].conloglevel='4'
 	uci -q set system.@system[0].cronloglevel='8'
 	uci commit system
-}
+fi
 
 # kB
 memtotal=`grep MemTotal /proc/meminfo | awk '{print $2}'`
-if test $memtotal -ge 1048576; then
+if [ "$memtotal" -ge 1048576 ]; then
 	# > 1024M
 	cachesize=10000
 	dnsforwardmax=10000
 	nf_conntrack_max=262144
-elif test $memtotal -ge 524288; then
+elif [ "$memtotal" -ge 524288 ]; then
 	# <= 1024M
 	cachesize=10000
 	dnsforwardmax=10000
 	nf_conntrack_max=131072
-elif test $memtotal -ge 262144; then
+elif [ "$memtotal" -ge 262144 ]; then
 	# <= 512M
 	cachesize=8192
 	dnsforwardmax=8192
 	nf_conntrack_max=65536
-elif test $memtotal -ge 131072; then
+elif [ "$memtotal" -ge 131072 ]; then
 	# <= 256M
 	cachesize=4096
 	dnsforwardmax=4096
 	nf_conntrack_max=65536
-elif test $memtotal -ge 65536; then
+elif [ "$memtotal" -ge 65536 ]; then
 	# <= 128M
 	cachesize=2048
 	dnsforwardmax=2048
@@ -193,7 +192,7 @@ else
 	nf_conntrack_max=16384
 fi
 
-test $version -lt 1 && {
+if [[ ! "$version" || "$version" -lt 1 ]]; then
 	uci -q get dhcp.@dnsmasq[0] || uci -q add dhcp dnsmasq
 	uci -q set dhcp.@dnsmasq[0].cachesize="$cachesize"
 	uci -q set dhcp.@dnsmasq[0].dnsforwardmax="$dnsforwardmax"
@@ -220,7 +219,7 @@ test $version -lt 1 && {
 	echo kernel.msgmnb = 65536 >>$SYSCTL_LOCAL
 	echo vm.swappiness=0 >>$SYSCTL_LOCAL
 	version=1
-}
+fi
 
 cp -pR /www/cgi-bin/* /www/
 rm -rf /tmp/luci-*
