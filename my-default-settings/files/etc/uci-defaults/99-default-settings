@@ -91,7 +91,7 @@ test $version -lt 1 && {
 				uci -q set wireless.${radio}.htmode="VHT80"   #AC
 				uci -q set wireless.${radio}.channel="157"
 			fi
-			[[ "$(board_name)" == *cr660x || "$(board_name)" == *ax9000 || "$(board_name)" == *ax3600 ]] && {
+			[[ "$(board_name)" =~ (.*cr660x|.*ax9000|.*ax3600) || "$DISTRIB_TARGET" == 'ipq60xx/generic' ]] && {
 				uci -q set wireless.${radio}.htmode="HE80"
 				uci -q set wireless.${radio}.channel='157'
 			}
