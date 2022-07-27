@@ -1,16 +1,21 @@
+<%
+  local ver = require "luci.version"
+-%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0" /> -->
-    <meta name="viewport" content="width=1400, initial-scale=1.0" />
+    <!-- <meta name="viewport" content="width=1400, initial-scale=1.0" /> -->
+    <meta name="viewport" content="width=1100" />
     <title><%=luci.sys.hostname()%></title>
 </head>
 <body>
-    <script src="<%=resource%>/cbi.js?v=git-22.135.19704-132fbcf"></script>
-    <script type="text/javascript" src="<%=resource%>/promis.min.js?v=git-22.160.13453-cb18896"></script>
-    <script type="text/javascript" src="<%=resource%>/luci.js?v=git-22.160.13453-cb18896"></script>
+    <script src="<%=url('admin/translations', luci.i18n.context.lang)%><%# ?v=PKG_VERSION %>"></script>
+    <script src="<%=resource%>/cbi.js?v=<%=ver.luciversion%>"></script>
+    <script type="text/javascript" src="<%=resource%>/promis.min.js?v=<%=ver.luciversion%>"></script>
+    <script type="text/javascript" src="<%=resource%>/luci.js?v=<%=ver.luciversion%>"></script>
     <script>
         (function(){
             var pathe_prefix    =   "<%=prefix%>"
@@ -40,7 +45,7 @@
       }) %>);
     </script>
     <div id="app"></div>
-    <link rel="stylesheet" href="/luci-static/istorex/style.css?v=<%=math.random(1,100000)%>">
-    <script type="module" crossorigin src="/luci-static/istorex/index.js?v=<%=math.random(1,100000)%>"></script>
+    <link rel="stylesheet" href="/luci-static/istorex/style.css<%# ?v=PKG_VERSION %>">
+    <script type="module" crossorigin src="/luci-static/istorex/index.js<%# ?v=PKG_VERSION %>"></script>
 </body>
 </html>
