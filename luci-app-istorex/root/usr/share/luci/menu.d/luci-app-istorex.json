@@ -3,7 +3,7 @@
         "order": 0,
         "action": {
             "type": "template",
-            "path": "istorex/redirect"
+            "path": "istorex/index"
         }
     }
 }
