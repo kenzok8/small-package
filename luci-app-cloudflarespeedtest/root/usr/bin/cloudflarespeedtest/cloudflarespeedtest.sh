@@ -21,12 +21,21 @@ function get_servers_config(){
 
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
+	echo -e "$d: $*" 
 	echo -e "$d: $*" >>$LOG_FILE
 }
 
 function read_config(){
 	get_global_config "enabled" "speed" "custome_url" "threads" "custome_cors_enabled" "custome_cron" "t" "tp" "dt" "dn" "dd" "tl" "tll" "ipv6_enabled" "advanced" "proxy_mode"
 	get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "passwall2_enabled" "passwall2_services" "bypass_enabled" "bypass_services" "vssr_enabled" "vssr_services" "DNS_enabled" "HOST_enabled"
+}
+
+function appinit(){
+	ssr_started='';
+	passwall_started='';
+	passwall2_started='';
+	bypass_started='';
+	vssr_started='';
 }
 
 function speed_test(){
@@ -52,66 +61,73 @@ function speed_test(){
 	else
 		command="${command} -tl 200 -tll 40 -n 200 -t 4 -dt 10 -dn 1"
 	fi
-	
+
+	appinit
+
 	ssr_original_server=$(uci get shadowsocksr.@global[0].global_server 2>/dev/null)
 	ssr_original_run_mode=$(uci get shadowsocksr.@global[0].run_mode 2>/dev/null)
-	if [ $ssr_original_server != "nil" ] ;then
+	if [ "x${ssr_original_server}" != "xnil" ] && [ "x${ssr_original_server}"  !=  "x" ] ;then
 		if [ $proxy_mode  == "close" ] ;then
 			uci set shadowsocksr.@global[0].global_server="nil"			
 		elif  [ $proxy_mode  == "gfw" ] ;then
 			uci set shadowsocksr.@global[0].run_mode="gfw"
 		fi
+		ssr_started='1';
 		uci commit shadowsocksr
 		/etc/init.d/shadowsocksr restart
 	fi
 
 	passwall_server_enabled=$(uci get passwall.@global[0].enabled 2>/dev/null)
 	passwall_original_run_mode=$(uci get passwall.@global[0].tcp_proxy_mode 2>/dev/null)
-	if [ $passwall_server_enabled -eq "1" ] ;then
+	if [ "x${passwall_server_enabled}" == "x1" ] ;then
 		if [ $proxy_mode  == "close" ] ;then
 			uci set passwall.@global[0].enabled="0"			
 		elif  [ $proxy_mode  == "gfw" ] ;then
 			uci set passwall.@global[0].tcp_proxy_mode="gfwlist"
-		fi
+		fi	 
+		passwall_started='1'; 
 		uci commit passwall
 		/etc/init.d/passwall  restart 2>/dev/null
 	fi
 
 	passwall2_server_enabled=$(uci get passwall2.@global[0].enabled 2>/dev/null)
 	passwall2_original_run_mode=$(uci get passwall2.@global[0].tcp_proxy_mode 2>/dev/null)
-	if [ $passwall2_server_enabled -eq "1" ] ;then
+	if [ "x${passwall2_server_enabled}" == "x1" ] ;then
 		if [ $proxy_mode  == "close" ] ;then
 			uci set passwall2.@global[0].enabled="0"			
 		elif  [ $proxy_mode  == "gfw" ] ;then
 			uci set passwall2.@global[0].tcp_proxy_mode="gfwlist"
-			uci set passwall2.@global[0].udp_proxy_mode="gfwlist"
-		fi
+		fi 
+		passwall2_started='1'; 
 		uci commit passwall2
 		/etc/init.d/passwall2 restart 2>/dev/null
 	fi
 	
-	bypass_original_server=$(uci get bypass.@global[0].global_server 2>/dev/null)
-	bypass_original_run_mode=$(uci get bypass.@global[0].run_mode 2>/dev/null)
-	if [ $bypass_original_server != "$bypass_key_table" ] ;then
-		if [ $proxy_mode  == "close" ] ;then
-			uci set bypass.@global[0].global_server="$bypass_key_table"			
-		elif  [ $proxy_mode  == "gfw" ] ;then
-			uci set bypass.@global[0].run_mode="gfw"
-		fi
-		uci commit bypass
-		/etc/init.d/bypass restart
-	fi
-	
 	vssr_original_server=$(uci get vssr.@global[0].global_server 2>/dev/null)
 	vssr_original_run_mode=$(uci get vssr.@global[0].run_mode 2>/dev/null)
-	if [ $vssr_original_server != "nil" ] ;then
+	if [ "x${vssr_original_server}" != "xnil" ] && [ "x${vssr_original_server}"  !=  "x" ] ;then
+
 		if [ $proxy_mode  == "close" ] ;then
 			uci set vssr.@global[0].global_server="nil"		
 		elif  [ $proxy_mode  == "gfw" ] ;then
 			uci set vssr.@global[0].run_mode="gfw"
 		fi
+		vssr_started='1';
 		uci commit vssr
 		/etc/init.d/vssr restart
+	fi
+
+	bypass_original_server=$(uci get bypass.@global[0].global_server 2>/dev/null)
+	bypass_original_run_mode=$(uci get bypass.@global[0].run_mode 2>/dev/null)
+	if [ "x${bypass_original_server}" != "x" ] ;then
+		if [ $proxy_mode  == "close" ] ;then
+			uci set bypass.@global[0].global_server=""			
+		elif  [ $proxy_mode  == "gfw" ] ;then
+			uci set bypass.@global[0].run_mode="gfw"
+		fi
+		bypass_started='1';
+		uci commit bypass
+		/etc/init.d/bypass restart
 	fi
 
 	echo $command  >> $LOG_FILE 2>&1 
@@ -132,21 +148,12 @@ function ip_replace(){
 	bypass_best_ip
 	passwall_best_ip
 	passwall2_best_ip
-	host_ip
+	restart_app
+	host_ip	
 }
 
 function passwall_best_ip(){
-	if [ $passwall_server_enabled -eq '1' ] ; then
-		echolog "设置passwall代理模式"
-		if [ $proxy_mode  == "close" ] ;then
-			uci set passwall.@global[0].enabled="${passwall_server_enabled}"		
-		elif [ $proxy_mode  == "gfw" ] ;then
-			uci set passwall.@global[0].tcp_proxy_mode="${passwall_original_run_mode}"
-		fi	
-		uci commit passwall
-	fi
-
-	if [ $passwall_enabled -eq "1" ] ;then
+	if [ "x${passwall_enabled}" == "x1" ] ;then
 		echolog "设置passwall IP"
 		for ssrname in $passwall_services
 		do
@@ -154,26 +161,11 @@ function passwall_best_ip(){
 			uci set passwall.$ssrname.address="${bestip}"
 		done
 		uci commit passwall
- 		if [ $passwall_server_enabled -eq "1" ] ;then
-			/etc/init.d/passwall restart 2>/dev/null
-			echolog "passwall重启完成"
-		fi
 	fi
 }
 
 function passwall2_best_ip(){
-	if [ $passwall2_server_enabled -eq '1' ] ; then
-		echolog "设置passwall2代理模式"
-		if [ $proxy_mode  == "close" ] ;then
-			uci set passwall2.@global[0].enabled="${passwall2_server_enabled}"		
-		 elif [ $proxy_mode  == "gfw" ] ;then
-		 	uci set passwall2.@global[0].tcp_proxy_mode="${passwall2_original_run_mode}"
-			uci set passwall2.@global[0].udp_proxy_mode="${passwall2_original_run_mode}"
-		fi	
-		uci commit passwall2
-	fi
-
-	if [ $passwall2_enabled -eq "1" ] ;then
+	if [ "x${passwall2_enabled}" == "x1" ] ;then
 		echolog "设置passwall2 IP"
 		for ssrname in $passwall2_services
 		do
@@ -181,96 +173,120 @@ function passwall2_best_ip(){
 			uci set passwall2.$ssrname.address="${bestip}"
 		done
 		uci commit passwall2
- 		if [ $passwall2_server_enabled -eq "1" ] ;then
-			/etc/init.d/passwall2 restart 2>/dev/null
-			echolog "passwall2重启完成"
-		fi
 	fi
 }
 
 function ssr_best_ip(){
-	if [ $ssr_enabled -eq "1" ] ;then
+	if [ "x${ssr_enabled}" == "x1" ] ;then
 		echolog "设置ssr IP"
 		for ssrname in $ssr_services
 		do
 			echo $ssrname
 			uci set shadowsocksr.$ssrname.server="${bestip}"
 			uci set shadowsocksr.$ssrname.ip="${bestip}"
-		done
-    if [ $ssr_original_server != 'nil' ] ; then
-      echolog "设置ssr代理模式"
-      if [ $proxy_mode  == "close" ] ;then
-        uci set shadowsocksr.@global[0].global_server="${ssr_original_server}"		
-      elif [ $proxy_mode  == "gfw" ] ;then
-        uci set  shadowsocksr.@global[0].run_mode="${ssr_original_run_mode}"
-      fi	
-    fi
-    uci commit shadowsocksr
-    /etc/init.d/shadowsocksr restart &>/dev/null
-    echolog "ssr重启完成"
+		done	
+    	uci commit shadowsocksr
 	fi
 }
 
 function vssr_best_ip(){
-	if [ $vssr_enabled -eq "1" ] ;then
+	if [ "x${vssr_enabled}" == "x1" ] ;then
 		echolog "设置Vssr IP"
 		for ssrname in $vssr_services
 		do
 			echo $ssrname
 			uci set vssr.$ssrname.server="${bestip}"
-		done
-    if [ $vssr_original_server != 'nil' ] ; then
-      echolog "设置Vssr代理模式"
-      if [ $proxy_mode  == "close" ] ;then
-        uci set vssr.@global[0].global_server="${vssr_original_server}"		
-      elif [ $proxy_mode  == "gfw" ] ;then
-        uci set vssr.@global[0].run_mode="${vssr_original_run_mode}"
-      fi	
-    fi
-    uci commit vssr
-    /etc/init.d/vssr restart &>/dev/null
-    echolog "Vssr重启完成"
+		done    
+    	uci commit vssr
 	fi
 }
 
 function bypass_best_ip(){
-	if [ $bypass_enabled -eq "1" ] ;then
+	if [ "x${bypass_enabled}" == "x1" ] ;then
 		echolog "设置Bypass IP"
 		for ssrname in $bypass_services
 		do
 			echo $ssrname
 			uci set bypass.$ssrname.server="${bestip}"
-		done
-    if [ $bypass_original_server != '$bypass_key_table' ] ; then
-      echolog "设置Bypass代理模式"
-      if [ $proxy_mode  == "close" ] ;then
-        uci set bypass.@global[0].global_server="${bypass_original_server}"		
-      elif [ $proxy_mode  == "gfw" ] ;then
-        uci set  bypass.@global[0].run_mode="${bypass_original_run_mode}"
-      fi	
+		done    
+    	uci commit bypass   
+	fi
+}
+
+function restart_app(){
+	if [ "x${ssr_started}" == "x1" ] ;then
+		if [ $proxy_mode  == "close" ] ;then
+			uci set shadowsocksr.@global[0].global_server="${ssr_original_server}"		
+		elif [ $proxy_mode  == "gfw" ] ;then
+			uci set  shadowsocksr.@global[0].run_mode="${ssr_original_run_mode}"
+		fi
+		uci commit shadowsocksr
+		/etc/init.d/shadowsocksr restart &>/dev/null
+    	echolog "ssr重启完成"
     fi
-    uci commit bypass
-    /etc/init.d/bypass restart &>/dev/null
-    echolog "Bypass重启完成"
+
+	if [ "x${passwall_started}" == "x1" ] ;then
+		if [ $proxy_mode  == "close" ] ;then
+				uci set passwall.@global[0].enabled="${passwall_server_enabled}"		
+		elif [ $proxy_mode  == "gfw" ] ;then
+				uci set passwall.@global[0].tcp_proxy_mode="${passwall_original_run_mode}"
+		fi	
+		uci commit passwall
+		/etc/init.d/passwall restart 2>/dev/null
+		echolog "passwall重启完成"
+	fi	 
+
+	if [ "x${passwall2_started}" == "x1" ] ;then
+		if [ $proxy_mode  == "close" ] ;then
+				uci set passwall2.@global[0].enabled="${passwall2_server_enabled}"		
+		elif [ $proxy_mode  == "gfw" ] ;then
+		 		uci set passwall2.@global[0].tcp_proxy_mode="${passwall2_original_run_mode}"
+		fi
+		uci commit passwall2
+		/etc/init.d/passwall2 restart 2>/dev/null
+		echolog "passwall2重启完成"		 
+	fi
+
+	if [ "x${bypass_started}" == "x1" ] ;then
+      	if [ $proxy_mode  == "close" ] ;then
+        	uci set vssr.@global[0].global_server="${vssr_original_server}"		
+      	elif [ $proxy_mode  == "gfw" ] ;then
+        	uci set vssr.@global[0].run_mode="${vssr_original_run_mode}"
+      	fi	
+		uci commit vssr
+		/etc/init.d/vssr restart &>/dev/null
+    	echolog "Vssr重启完成"
+	fi
+
+	if [ "x${vssr_started}" == "x1" ] ;then
+		if [ $proxy_mode  == "close" ] ;then
+        	uci set bypass.@global[0].global_server="${bypass_original_server}"		
+      	elif [ $proxy_mode  == "gfw" ] ;then
+        	uci set  bypass.@global[0].run_mode="${bypass_original_run_mode}"
+      	fi	
+     	uci commit bypass 
+	 	/etc/init.d/bypass restart &>/dev/null
+    	echolog "Bypass重启完成"
 	fi
 }
 
 function alidns_ip(){
-	if [ $DNS_enabled -eq "1" ] ;then
+	if [ "x${DNS_enabled}" == "x1" ] ;then
 		get_servers_config "DNS_type" "app_key" "app_secret" "main_domain" "sub_domain" "line"
 		if [ $DNS_type == "aliyu" ] ;then
 		for sub in $sub_domain
 		do
-			echolog "更新域名$sub 阿里云DNS完成"
-
 			/usr/bin/cloudflarespeedtest/aliddns.sh $app_key $app_secret $main_domain $sub $line $ipv6_enabled $bestip 
+			echolog "更新域名${sub}阿里云DNS完成"
+			sleep 1s
 		done
-		fi		
+		fi
+		echo "aliyun done"
 	fi
 }
 
 function host_ip() {
-	if [ $HOST_enabled -eq "1" ] ;then
+	if [ "x${HOST_enabled}" == "x1" ] ;then
     get_servers_config "host_domain"
     HOSTS_LINE="$bestip $host_domain"
     if [ -n "$(grep $host_domain /etc/hosts)" ]
