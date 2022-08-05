@@ -1,6 +1,6 @@
 --- a/core/v2ray/process.go
 +++ b/core/v2ray/process.go
-@@ -195,6 +195,7 @@ func StartCoreProcess(ctx context.Contex
+@@ -226,6 +226,7 @@ func StartCoreProcess(ctx context.Contex
  	dir := path.Dir(v2rayBinPath)
  	var arguments = []string{
  		v2rayBinPath,
