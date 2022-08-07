@@ -51,6 +51,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-06-05 feat: shadowsocks-2022 UDP over TCP support
 * 2022-06-14 feat: multiple geoip direct code
 * 2022-06-19 feat: skip proxy for specific uids / gids (nftables support only)
+* 2022-08-07 fix: avoid duplicated items in generated nftables ruleset
 
 ## Changelog 2021
 

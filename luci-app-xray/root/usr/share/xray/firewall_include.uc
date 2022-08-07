@@ -5,14 +5,16 @@
     cursor.load("xray");
     const config = cursor.get_all("xray");
     const general = config[filter(keys(config), k => config[k][".type"] == "general")[0]];
-    const tp_spec_src_fw = map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].bypassed == "0"), k => config[k].macaddr) || [];
-    const tp_spec_src_bp = map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].bypassed == "1"), k => config[k].macaddr) || [];
-    const uids_direct = general.uids_direct || [];
-    const gids_direct = general.gids_direct || [];
-    let wan_bp_ips = general.wan_bp_ips || [];
-    let wan_fw_ips = general.wan_fw_ips || [];
-    push(wan_bp_ips, split(general.fast_dns, ":")[0]);
-    push(wan_fw_ips, split(general.secure_dns, ":")[0]);
+    const tp_spec_src_fw = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].bypassed == "0"), k => config[k].macaddr) || []);
+    const tp_spec_src_bp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].bypassed == "1"), k => config[k].macaddr) || []);
+    const uids_direct = uniq(general.uids_direct || []);
+    const gids_direct = uniq(general.gids_direct || []);
+    let wan_bp_ips_no_dns = general.wan_bp_ips || [];
+    let wan_fw_ips_no_dns = general.wan_fw_ips || [];
+    push(wan_bp_ips_no_dns, split(general.fast_dns, ":")[0]);
+    push(wan_fw_ips_no_dns, split(general.secure_dns, ":")[0]);
+    const wan_bp_ips = uniq(wan_bp_ips_no_dns);
+    const wan_fw_ips = uniq(wan_fw_ips_no_dns);
 %}
     set tp_spec_src_ac {
         type ether_addr
