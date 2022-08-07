@@ -127,7 +127,8 @@ if [[ ! "$version" || "$version" -lt 1 ]]; then
 	grep -q log-facility /etc/dnsmasq.conf ||
 		echo "log-facility=/dev/null" >> /etc/dnsmasq.conf
 
-	if [[ -f /sys/module/xt_FULLCONENAT/refcnt || -f /sys/module/nft_fullcone/refcnt ]]; then
+	kernel_version="$(echo -n $(uname -r))"
+	if [[ -f /lib/modules/$kernel_version/xt_FULLCONENAT.ko || -f /lib/modules/$kernel_version/nft_fullcone.ko ]]; then
 	uci -q set firewall.@defaults[0].fullcone='1'
 	uci commit firewall
 	fi
