@@ -51,6 +51,10 @@ function to_check()
 		model = "rockchip_armv8/friendlyarm_nanopi-r5s"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-friendlyarm_nanopi-r5s_sd.img.gz"
+    elseif board_name:match("nanopi%-r4se") then
+		model = "rockchip_armv8/friendlyarm_nanopi-r4se"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-friendlyarm_nanopi-r4se_sd.img.gz"
     elseif board_name:match("nanopi%-r2c") then
 		model = "rockchip_armv8/friendlyarm_nanopi-r2c"
 		check_update()
@@ -239,6 +243,22 @@ function to_check()
 		model = "ramips_mt7621/jcg_q20"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-jcg_q20-squashfs-sysupgrade.bin"
+    elseif board_name:match("edgerouter%-x$") then
+		model = "ramips_mt7621/ubnt_edgerouter-x"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-ubnt_edgerouter-x-squashfs-sysupgrade.bin"
+    elseif board_name:match("edgerouter%-x%-sfp") then
+		model = "ramips_mt7621/ubnt_edgerouter-x-sfp"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-ubnt_edgerouter-x-sfp-squashfs-sysupgrade.bin"
+    elseif board_name:match("msg1500%-x%-00") then
+		model = "ramips_mt7621/raisecom_msg1500-x-00"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-raisecom_msg1500-x-00-squashfs-sysupgrade.bin"
+    elseif board_name:match("zte,e8820s") then
+		model = "ramips_mt7621/zte_e8820s"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-zte_e8820s-squashfs-sysupgrade.bin"
     elseif board_name:match("rt%-ac1200$") then
 		model = "ramips_mt76x8/asus_rt-ac1200"
 		check_update()
@@ -287,18 +307,78 @@ function to_check()
 		model = "bcm53xx_generic/asus_rt-ac88u"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-bcm53xx-generic-asus_rt-ac88u-squashfs.trx"
-    elseif board_name:match("edgerouter%-x$") then
-		model = "bcm53xx_generic/asus_rt-ac88u"
-		check_update()
-		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-ubnt_edgerouter-x-squashfs-sysupgrade.bin"
-    elseif board_name:match("edgerouter%-x%-sfp") then
-		model = "bcm53xx_generic/asus_rt-ac88u"
-		check_update()
-		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-ubnt_edgerouter-x-sfp-squashfs-sysupgrade.bin"
     elseif board_name:match("wrt1200ac") then
-		model = "mvebu/cortexa9"
+		model = "mvebu_cortexa9/linksys_wrt1200ac"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mvebu-cortexa9-linksys_wrt1200ac-squashfs-sysupgrade.bin"
+    elseif board_name:match("qihoo,v6") then
+		model = "ipq60xx_generic/qihoo_v6"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-qihoo_v6-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("gl%-ax1800") then
+		model = "ipq60xx_generic/linet_gl-ax1800"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-glinet_gl-ax1800-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("gl%-axt1800") then
+		model = "ipq60xx_generic/glinet_gl-axt1800"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-glinet_gl-axt1800-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("linksys,mr7350") then
+		model = "ipq60xx_generic/linksys_mr7350"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-linksys_mr7350-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("cmiot,ax18") then
+		model = "ipq60xx_generic/cmiot_ax18"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-cmiot_ax18-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("zn,m2") then
+		model = "ipq60xx_generic/zn_m2"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-zn_m2-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("gl%-mt300a") then
+		model = "ramips_mt7620/glinet_gl-mt300a"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-glinet_gl-mt300a-squashfs-sysupgrade.bin"
+    elseif board_name:match("gl%-mt750") then
+		model = "ramips_mt7620/glinet_gl-mt750"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-glinet_gl-mt750-squashfs-sysupgrade.bin"
+    elseif board_name:match("hiwifi,hc5661") then
+		model = "ramips_mt7620/hiwifi_hc5661"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-hiwifi_hc5661-squashfs-sysupgrade.bin"
+    elseif board_name:match("hiwifi,hc5761") then
+		model = "ramips_mt7620/hiwifi_hc5761"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-hiwifi_hc5761-squashfs-sysupgrade.bin"
+    elseif board_name:match("hiwifi,hc5861") then
+		model = "ramips_mt7620/hiwifi_hc5861"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-hiwifi_hc5861-squashfs-sysupgrade.bin"
+    elseif board_name:match("newifi%-y1") then
+		model = "ramips_mt7620/lenovo_newifi-y1"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-lenovo_newifi-y1-squashfs-sysupgrade.bin"
+    elseif board_name:match("newifi%-y1s") then
+		model = "ramips_mt7620/lenovo_newifi-y1s"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-lenovo_newifi-y1s-squashfs-sysupgrade.bin"
+    elseif board_name:match("miwifi%-mini") then
+		model = "ramips_mt7620/xiaomi_miwifi-mini"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-xiaomi_miwifi-mini-squashfs-sysupgrade.bin"
+    elseif board_name:match("yk%-l1$") then
+		model = "ramips_mt7620/youku_yk-l1"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-youku_yk-l1-squashfs-sysupgrade.bin"
+    elseif board_name:match("yk%-l1c") then
+		model = "ramips_mt7620/youku_yk-l1c"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-youku_yk-l1c-squashfs-sysupgrade.bin"
+    elseif board_name:match("miwifi%-r3") then
+		model = "ramips_mt7620/xiaomi_miwifi-r3"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-xiaomi_miwifi-r3-squashfs-sysupgrade.bin"
     else
 		local needs_update = false
 		return {
