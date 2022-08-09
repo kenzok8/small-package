@@ -11,7 +11,7 @@ end
 
 function act_status()
     local e = {}
-    e.status = luci.sys.call("ps -w | grep pingos | grep nginx | grep -v grep > /dev/null") == 0
+    e.status = luci.sys.call("busybox ps -w | grep pingos | grep nginx | grep -v grep > /dev/null") == 0
     luci.http.prepare_content("application/json")
     luci.http.write_json(e)
 end

@@ -25,8 +25,8 @@ end
 
 function act_status()
     local e = {}
-    e.nginx_status = luci.sys.call("ps -w | grep nginx | grep kodexplorer | grep -v grep > /dev/null") == 0
-    e.php_status = luci.sys.call("ps -w | grep php | grep kodexplorer | grep -v grep > /dev/null") == 0
+    e.nginx_status = luci.sys.call("busybox ps -w | grep nginx | grep kodexplorer | grep -v grep > /dev/null") == 0
+    e.php_status = luci.sys.call("busybox ps -w | grep php | grep kodexplorer | grep -v grep > /dev/null") == 0
     http_write_json(e)
 end
 
