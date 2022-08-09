@@ -241,7 +241,7 @@ stop() {
 	sed -i '/l2tp-server/d' ${CHAP_SECRETS} 2>/dev/null
 	top -bn1 | grep "${L2TP_PATH}" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -rf ${L2TP_PATH}
-	ps -w | grep "/usr/lib/ipsec" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	busybox ps -w | grep "/usr/lib/ipsec" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	ipt_rule del
 	rm -rf /var/etc/ipsecvpn.include
 	ln -s "libipsec.so.0.0.0" "/usr/lib/ipsec/libipsec.so.0" >/dev/null 2>&1

@@ -91,7 +91,7 @@ run_service() {
 }
 
 stop_service() {
-	ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
+	busybox ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	del_rule
 	rm -rf $CONFIG_PATH /var/etc/$CONFIG.include
 }
