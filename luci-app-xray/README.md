@@ -52,6 +52,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-06-14 feat: multiple geoip direct code
 * 2022-06-19 feat: skip proxy for specific uids / gids (nftables support only)
 * 2022-08-07 fix: avoid duplicated items in generated nftables ruleset
+* 2022-08-08 fix: make sure forwarded IPs are always forwarded to Xray even for reserved addresses. Xray may not forward those requests so that manner may be changed later.
 
 ## Changelog 2021
 
