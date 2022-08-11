@@ -1,0 +1,10 @@
+uci -q batch <<EOF
+	set bypass.@global[0].dports='1'
+	commit bypass
+	set shadowsocksr.@global[0].dports='1'
+	commit shadowsocksr
+	set passwall.@global_forwarding[0].udp_redir_ports='1:65535'
+	commit passwall
+	set passwall2.@global_forwarding[0].udp_redir_ports='1:65535'
+	commit passwall2
+EOF
