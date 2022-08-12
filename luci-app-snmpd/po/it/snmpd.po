@@ -1,14 +1,14 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2020-09-21 12:51+0000\n"
-"Last-Translator: Weblate Admin <contact@openmptcprouter.com>\n"
+"PO-Revision-Date: 2022-02-21 21:14+0000\n"
+"Last-Translator: Deleted User <noreply+28@weblate.org>\n"
 "Language-Team: Italian <http://weblate.openmptcprouter.com/projects/omr/"
 "luciapplicationssnmpd/it/>\n"
 "Language: it\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.0.4\n"
+"X-Generator: Weblate 4.10.1\n"
 
 #: luci-app-snmpd/luasrc/model/cbi/snmpd.lua:82
 msgid "Access"
@@ -51,13 +51,13 @@ msgstr "Abilitato"
 
 #: luci-app-snmpd/luasrc/model/cbi/snmpd.lua:132
 msgid "Exec"
-msgstr ""
+msgstr "Esegui"
 
 #: luci-app-snmpd/luasrc/model/cbi/snmpd.lua:6
 #: luci-app-snmpd/luasrc/view/snmpd.htm:21
 #: luci-app-snmpd/luasrc/view/snmpd.htm:48
 msgid "General"
-msgstr ""
+msgstr "Generale"
 
 #: luci-app-snmpd/root/usr/share/rpcd/acl.d/luci-app-snmpd.json:3
 msgid "Grant UCI access for luci-app-snmpd"
