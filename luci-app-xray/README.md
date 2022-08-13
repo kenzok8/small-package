@@ -53,6 +53,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-06-19 feat: skip proxy for specific uids / gids (nftables support only)
 * 2022-08-07 fix: avoid duplicated items in generated nftables ruleset
 * 2022-08-08 fix: make sure forwarded IPs are always forwarded to Xray even for reserved addresses. Xray may not forward those requests so that manner may be changed later.
+* 2022-08-13 fix: apply 2022-08-08 fix to iptables as well
 
 ## Changelog 2021
 
@@ -102,3 +103,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * [x] transparent proxy access control for LAN
 * [x] try to be compatible with [OpenWrt Packages: xray-core](https://github.com/openwrt/packages/tree/master/net/xray-core)
 * [ ] Better DNS module implementation like DoH (may involve breaking changes)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=yichya/luci-app-xray&type=Date)](https://star-history.com/#yichya/luci-app-xray&Date)
