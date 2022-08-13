@@ -18,8 +18,10 @@ COMMIT
 *mangle
 :TP_SPEC_LAN_AC - [0:0]
 :TP_SPEC_LAN_DG - [0:0]
+:TP_SPEC_LAN_RE - [0:0]
 :TP_SPEC_WAN_AC - [0:0]
 :TP_SPEC_WAN_DG - [0:0]
+:TP_SPEC_WAN_RE - [0:0]
 :TP_SPEC_WAN_FW - [0:0]
 -I PREROUTING 1 -m mark --mark 0xfc -j TP_SPEC_WAN_AC]]
 local lan = "-I PREROUTING 1 -i %s -j TP_SPEC_LAN_DG"
@@ -28,18 +30,24 @@ local rules = [[-A OUTPUT -j TP_SPEC_WAN_DG
 -A TP_SPEC_LAN_AC -m set --match-set tp_spec_src_fw src -j TP_SPEC_WAN_FW
 -A TP_SPEC_LAN_AC -m set --match-set tp_spec_src_ac src -j TP_SPEC_WAN_AC
 -A TP_SPEC_LAN_AC -j TP_SPEC_WAN_AC
+-A TP_SPEC_LAN_DG -m set --match-set tp_spec_dst_fw dst -j TP_SPEC_LAN_RE
 -A TP_SPEC_LAN_DG -m set --match-set tp_spec_dst_sp dst -j RETURN
--A TP_SPEC_LAN_DG -p tcp -j TP_SPEC_LAN_AC
--A TP_SPEC_LAN_DG -p udp -j TP_SPEC_LAN_AC
+-A TP_SPEC_LAN_DG -m set --match-set tp_spec_dst_bp dst -j RETURN
+-A TP_SPEC_LAN_DG -m set --match-set tp_spec_def_gw dst -j RETURN
+-A TP_SPEC_LAN_DG -j TP_SPEC_LAN_RE
+-A TP_SPEC_LAN_RE -p tcp -j TP_SPEC_LAN_AC
+-A TP_SPEC_LAN_RE -p udp -j TP_SPEC_LAN_AC
 -A TP_SPEC_WAN_AC -m set --match-set tp_spec_dst_fw dst -j TP_SPEC_WAN_FW
 -A TP_SPEC_WAN_AC -m set --match-set tp_spec_dst_bp dst -j RETURN
 -A TP_SPEC_WAN_AC -j TP_SPEC_WAN_FW
+-A TP_SPEC_WAN_DG -m mark --mark 0x%x -j RETURN
+-A TP_SPEC_WAN_DG -m set --match-set tp_spec_dst_fw dst -j TP_SPEC_WAN_RE
 -A TP_SPEC_WAN_DG -m set --match-set tp_spec_dst_sp dst -j RETURN
 -A TP_SPEC_WAN_DG -m set --match-set tp_spec_dst_bp dst -j RETURN
 -A TP_SPEC_WAN_DG -m set --match-set tp_spec_def_gw dst -j RETURN
--A TP_SPEC_WAN_DG -m mark --mark 0x%x -j RETURN
--A TP_SPEC_WAN_DG -p tcp -j MARK --set-xmark 0xfc/0xffffffff
--A TP_SPEC_WAN_DG -p udp -j MARK --set-xmark 0xfc/0xffffffff
+-A TP_SPEC_WAN_DG -j TP_SPEC_WAN_RE
+-A TP_SPEC_WAN_RE -p tcp -j MARK --set-xmark 0xfc/0xffffffff
+-A TP_SPEC_WAN_RE -p udp -j MARK --set-xmark 0xfc/0xffffffff
 -A TP_SPEC_WAN_FW -p tcp -j TPROXY --on-port %d --on-ip 0.0.0.0 --tproxy-mark 0xfb/0xffffffff
 -A TP_SPEC_WAN_FW -p udp -j TPROXY --on-port %d --on-ip 0.0.0.0 --tproxy-mark 0xfb/0xffffffff
 COMMIT
