@@ -450,7 +450,7 @@ function to_flash(file,retain)
     if not file or file == "" or not fs.access(file) then
         return {code = 1, error = i18n.translate("Firmware file is required.")}
     end
-    sys.call(". /etc/profile.d/opkg.sh;opkg save;/sbin/sysupgrade " ..retain.. " " ..file.. "")
+    sys.call("/sbin/sysupgrade " ..retain.. " " ..file.. "")
 
     return {code = 0}
 end
