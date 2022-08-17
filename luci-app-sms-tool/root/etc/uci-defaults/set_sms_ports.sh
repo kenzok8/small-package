@@ -2,6 +2,13 @@
 # Copyright 2020-2021 Rafał Wabik (IceG) - From eko.one.pl forum
 # Licensed to the GNU General Public License v3.0.
 
+chmod +x /sbin/cronsync.sh
+chmod +x /sbin/set_sms_ports.sh
+chmod +x /sbin/smsled-init.sh
+chmod +x /sbin/smsled.sh
+rm -rf /tmp/luci-indexcache
+rm -rf /tmp/luci-modulecache/
+
 work=false
 for port in /dev/ttyUSB*
 do
