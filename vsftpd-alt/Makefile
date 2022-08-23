@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vsftpd-alt
 PKG_VERSION:=3.0.5
-PKG_RELEASE:=13
+PKG_RELEASE:=14
 
 PKG_SOURCE:=vsftpd-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://security.appspot.com/downloads/
@@ -47,6 +47,8 @@ config VSFTPD_USE_UCI_SCRIPTS
 endef
 
 ifneq ($(CONFIG_USE_MUSL),)
+  NLSSTRING:=-lcrypt
+else ifneq ($(CONFIG_USE_GLIBC),)
   NLSSTRING:=-lcrypt
 else
   NLSSTRING:=-lcrypt -lnsl
