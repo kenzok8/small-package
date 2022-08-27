@@ -40,6 +40,9 @@ local function direct_outbound()
     return {
         protocol = "freedom",
         tag = "direct",
+        settings = {
+            domainStrategy = "UseIPv4"
+        },
         streamSettings = {
             sockopt = {
                 mark = tonumber(proxy.mark)
@@ -691,7 +694,8 @@ local function dns_conf()
     return {
         hosts = hosts,
         servers = servers,
-        tag = "dns_conf_inbound"
+        tag = "dns_conf_inbound",
+        queryStrategy = "UseIPv4"
     }
 end
 
