@@ -90,7 +90,7 @@ if [[ ! "$version" || "$version" -lt 1 ]]; then
 				uci -q set wireless.${radio}.htmode="VHT80"   #AC
 				uci -q set wireless.${radio}.channel="157"
 			fi
-			if [[ "$(board_name)" == *cr660x || "$(board_name)" == *ax9000 || "$(board_name)" == *ax3600 || "$DISTRIB_TARGET" == 'ipq60xx/generic' ]]; then
+			if [[ "$(board_name)" == *cr660x || "$(board_name)" == *ax9000 || "$DISTRIB_TARGET" == 'ipq60xx/generic' ]]; then
 				uci -q set wireless.${radio}.htmode="HE80"
 				uci -q set wireless.${radio}.channel='157'
 			fi
