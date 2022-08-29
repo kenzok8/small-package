@@ -6,16 +6,8 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Warnings
 
-* There's a possible bug in nftables 1.0.3 / 1.0.4 which breaks tproxy.
-    * Do not use this application unless
-        * You're using OpenWrt 22.03 branch or earlier
-        * You're not using fw4
-        * You know how to compile your own firmware
-    * If you use SNAPSHOT (aka branch master) versions
-        * If you compile your own firmware, apply [this patch](https://github.com/openwrt/openwrt/pull/10446) to manually update to nftables 1.0.5
-        * otherwise wait for a fix or switch to fw3 for now
 * Support for nftables / firewall4 is **experimental** and
-    * only works with OpenWrt 22.03 versions or master branch with firewall4 as the only firewall implementation
+    * only works with OpenWrt 22.03 versions or master branch with firewall4 as the only firewall implementation. Note that there is a possible bug in nftables 1.0.3 / 1.0.4 which breaks tproxy, so if you use master branch, make sure your source code is newer than [36bec544d73dbed46f06875fdfa570e89a40e553](https://github.com/openwrt/openwrt/commit/36bec544d73dbed46f06875fdfa570e89a40e553)
     * may **NOT** be as stable as the old implementation using iptables and fw3 due to the lack of hooking facilities in fw4. However it should be good enough for daily use so if you encounter problems please report.
     * currently only tested with a proper buildroot environment. Building ipk with OpenWrt SDK is **NOT** tested and is **NOT** likely to work right now. If you are building ipks yourself, use the proper version of buildroot toolchain which matches the firewall implementation (fw3 or fw4) you are using.
 * There will be a series of **BREAKING CHANGES** in the following months due to some major refactor of DNS module. Please read changelog carefully to know about breaking changes and always backup your configuration files before updating.
