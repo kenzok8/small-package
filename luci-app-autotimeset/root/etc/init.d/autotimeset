@@ -12,8 +12,8 @@ run_autotimeset()
 		config_get week $1 week
 		config_get minute $1 minute
 		config_get hour $1 hour
-		[ "$minute" -eq 0 ] && minute="00"
-		[ "$week" -eq 7 ] && week="*"
+		[ $minute -eq 0 ] && minute="00"
+		[ $week = 7 || $week = '7' ] && week='*'
 
 		if [ $stype = 1 ] ; then
 			local cmd="$minute $hour * * $week sleep 5 && touch /etc/banner && reboot" 
