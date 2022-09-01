@@ -58,37 +58,6 @@ local function blackhole_outbound()
     }
 end
 
-local function manual_tproxy_outbounds()
-    local result = {}
-    local i = 0
-    ucursor:foreach("xray", "manual_tproxy", function(v)
-        i = i + 1
-        table.insert(result, {
-            protocol = "freedom",
-            tag = string.format("manual_tproxy_outbound_tcp_%d", i),
-            settings = {
-                redirect = string.format("%s:%d", v.dest_addr, v.dest_port),
-                domainStrategy = v.domain_strategy or "UseIP"
-            },
-            proxySettings = v.force_forward == "1" and {
-                tag = "tcp_outbound"
-            } or nil
-        })
-        table.insert(result, {
-            protocol = "freedom",
-            tag = string.format("manual_tproxy_outbound_udp_%d", i),
-            settings = {
-                redirect = string.format("%s:%d", v.dest_addr, v.dest_port),
-                domainStrategy = v.domain_strategy or "UseIP"
-            },
-            proxySettings = v.force_forward == "1" and {
-                tag = "udp_outbound"
-            } or nil
-        })
-    end)
-    return result
-end
-
 local function stream_tcp_fake_http_request(server)
     if server.tcp_guise == "http" then
         return {
@@ -759,6 +728,64 @@ local function inbounds()
         })
     end
     return i
+end
+
+local function manual_tproxy_outbounds()
+    local result = {}
+    local i = 0
+    ucursor:foreach("xray", "manual_tproxy", function(v)
+        i = i + 1
+        local tcp_tag = "direct"
+        local udp_tag = "direct"
+        if v.force_forward == "1" then
+            if v.force_forward_server_tcp ~= nil then 
+                if v.force_forward_server_tcp == proxy.main_server then
+                    tcp_tag = "tcp_outbound"
+                else
+                    tcp_tag = string.format("manual_tproxy_force_forward_tcp_outbound_%d", i)
+                    local force_forward_server_tcp = ucursor:get_all("xray", v.force_forward_server_tcp)
+                    table.insert(result, server_outbound(force_forward_server_tcp, tcp_tag))
+                end
+            else
+                tcp_tag = "tcp_outbound"
+            end
+            if v.force_forward_server_udp ~= nil then
+                if v.force_forward_server_udp == proxy.tproxy_udp_server then
+                    udp_tag = "udp_outbound"
+                else
+                    udp_tag = string.format("manual_tproxy_force_forward_udp_outbound_%d", i)
+                    local force_forward_server_udp = ucursor:get_all("xray", v.force_forward_server_udp)
+                    table.insert(result, server_outbound(force_forward_server_udp, udp_tag))
+                end
+            else
+                udp_tag = "udp_outbound"
+            end
+        end
+
+        table.insert(result, {
+            protocol = "freedom",
+            tag = string.format("manual_tproxy_outbound_tcp_%d", i),
+            settings = {
+                redirect = string.format("%s:%d", v.dest_addr, v.dest_port),
+                domainStrategy = v.domain_strategy or "UseIP"
+            },
+            proxySettings = {
+                tag = tcp_tag
+            }
+        })
+        table.insert(result, {
+            protocol = "freedom",
+            tag = string.format("manual_tproxy_outbound_udp_%d", i),
+            settings = {
+                redirect = string.format("%s:%d", v.dest_addr, v.dest_port),
+                domainStrategy = v.domain_strategy or "UseIP"
+            },
+            proxySettings = {
+                tag = udp_tag
+            }
+        })
+    end)
+    return result
 end
 
 local function manual_tproxy_rules()

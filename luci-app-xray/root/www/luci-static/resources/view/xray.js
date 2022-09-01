@@ -606,7 +606,23 @@ return view.extend({
         o.default = "UseIP"
         o.modalonly = true
 
-        o = ss.option(form.Flag, 'force_forward', _('Force Forward'), _('This destination must be forwarded through Xray. (This option might be removed later.)'))
+        o = ss.option(form.Flag, 'force_forward', _('Force Forward'), _('This destination must be forwarded through an outbound server.'))
+        o.modalonly = true
+
+        o = ss.option(form.ListValue, 'force_forward_server_tcp', _('Force Forward server (TCP)'))
+        o.depends("force_forward", "1")
+        o.datatype = "uciname"
+        for (var v of uci.sections(config_data, "servers")) {
+            o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
+        }
+        o.modalonly = true
+
+        o = ss.option(form.ListValue, 'force_forward_server_udp', _('Force Forward server (UDP)'))
+        o.depends("force_forward", "1")
+        o.datatype = "uciname"
+        for (var v of uci.sections(config_data, "servers")) {
+            o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
+        }
         o.modalonly = true
 
         s.tab('xray_server', _('HTTPS Server'));
