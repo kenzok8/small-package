@@ -1,0 +1,2 @@
+config wxedge
+	option 'cache_path' ''

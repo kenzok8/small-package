@@ -1,0 +1,62 @@
+msgid "Alist"
+msgstr "Alist 文件列表"
+
+msgid "Running state"
+msgstr "运行状态"
+
+msgid "Click to open Alist"
+msgstr "点击打开 Alist"
+
+msgid "A file list program that supports multiple storage."
+msgstr "一款支持多种存储的目录文件列表程序。"
+
+msgid "manage password:"
+msgstr "管理密码："
+
+msgid "Global settings"
+msgstr "全局设置"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Enable SSL"
+msgstr "启用 SSL"
+
+msgid "SSL cert"
+msgstr "SSL 证书"
+
+msgid "SSL certificate file path"
+msgstr "SSL 证书文件路径"
+
+msgid "SSL key"
+msgstr "SSL 密钥"
+
+msgid "SSL key file path"
+msgstr "SSL 密钥文件路径"
+
+msgid "Cache settings"
+msgstr "缓存设置"
+
+msgid "Cache invalidation time (unit: minutes)"
+msgstr "缓存失效时间（分钟）"
+
+msgid "Clear the invalidation cache interval (unit: minutes)"
+msgstr "清理失效缓存间隔（分钟）"
+
+msgid "Cache directory"
+msgstr "缓存目录"
+
+msgid "The Alist service is running."
+msgstr "Alist 服务已启动"
+
+msgid "The Alist service is not running."
+msgstr "Alist 服务未启动"
+
+msgid "Collecting data..."
+msgstr "收集数据..."
+
+msgid "NAS"
+msgstr "网络存储"
+
+msgid "User Manual"
+msgstr "用户手册"

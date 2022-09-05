@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+get_config() {
+	config_get_bool enabled $1 enabled 1
+	config_get_bool logger $1 logger
+}
+
+start() {
+	config_load xunyou
+	config_foreach get_config xunyou
+	
+	[ $enabled == 1 ] && sh /xunyou/scripts/xunyou_config.sh start
+	[ $enabled != 1 ] && sh /xunyou/scripts/xunyou_config.sh stop
+}
+
+stop() {
+	sh /xunyou/scripts/xunyou_config.sh stop
+}
