@@ -1,0 +1,3 @@
+config kodexplorer
+	option 'cache_path' '/mnt/sda1/kodexplorer'
+	option 'port' '8081'

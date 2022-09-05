@@ -1,0 +1,53 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Official website:"
+msgstr "官方网站："
+
+msgid "Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way."
+msgstr "Jellyfin 是志愿者构建的媒体解决方案，可让您控制自己的电影等媒体，并没带任何条件的让您从各种设备去观看您的媒体。"
+
+msgid "Media path"
+msgstr "媒体路径"
+
+msgid "Config path"
+msgstr "配置文件路径"
+
+msgid "Transcode cache path"
+msgstr "转码缓存路径"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Host network"
+msgstr "宿主网络"
+
+msgid "Jellyfin running in host network, for DLNA application, port is always 8096 if enabled"
+msgstr "在宿主网络运行 Jellyfin，以支持 DLNA 等应用，例如投屏，如果启用则端口固定为8096"
+
+msgid "Default use 'transcodes' in 'config path' if not set, please make sure there has enough space"
+msgstr "留空则使用配置文件路径下的 transcodes，请确保有足够空间"
+
+msgid "Service Status"
+msgstr "服务状态"
+
+msgid "Jellyfin status:"
+msgstr "Jellyfin 的状态信息如下："
+
+msgid "Setup"
+msgstr "安装配置"
+
+msgid "The following parameters will only take effect during installation or upgrade:"
+msgstr "以下参数只在安装或者升级时才会生效："
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Jellyfin is running"
+msgstr "Jellyfin 运行中"
+
+msgid "Jellyfin is not running"
+msgstr "Jellyfin 未运行"
+
+msgid "Open Jellyfin"
+msgstr "打开 Jellyfin"

@@ -1,0 +1,73 @@
+<script type="text/javascript">//<![CDATA[
+    XHR.poll(5, '<%=url("admin/services/xunyou/status")%>', null,
+        function (x, st) {
+            var tb = document.getElementById('linkease_status');
+            if (st && tb) {
+                if(st.xunyou_running){
+                    const htmlString = '<br/><em><%:The xunyou service is running.%></em>'
+                                + "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:open xunyou%> \" onclick=\"open_container('" + st.container_port + "')\" />";
+                                tb.innerHTML = htmlString;
+                }
+                else{
+                    tb.innerHTML = '<br/><em><%:The xunyou service is not running.%></em>';
+                }
+            }
+        }
+    );
+
+    function open_container(x) {
+        Url = "https://pay.xunyou.com/login/router.html?partner=&salesid=316186107&eid=10699&regfrom=router_web"
+        // alert(Url)
+        window.open(Url)
+        return false
+    }
+
+    const STOP_URL = '<%=luci.dispatcher.build_url("admin", "services", "xunyou","stop")%>';
+
+    function stop_container(x) {
+
+        XHR.get(STOP_URL, { container_id: x }, (x, d) => {
+
+        });
+        return false
+    }
+
+    const START_URL = '<%=luci.dispatcher.build_url("admin", "services", "xunyou","start")%>';
+
+    function start_container(x) {
+        XHR.get(START_URL, { container_id: x }, (x, d) => {
+        });
+        return false
+    }
+
+    const UNINSTALL_URL = '<%=luci.dispatcher.build_url("admin", "services", "xunyou","uninstall")%>';
+
+    function uninstall_container(x) {
+
+        XHR.get(UNINSTALL_URL, { container_id: x }, (x, d) => {
+            // alert(" 删除容器'" + d.container_id + "' ");
+        });
+        return false
+    }
+
+    const INSTALL_URL = '<%=luci.dispatcher.build_url("admin", "services", "xunyou","install")%>';
+
+    function install_container(x) {
+
+        XHR.get(INSTALL_URL, { container_id: x }, (x, d) => {
+            // alert(" 安装容器'" + d.container_id + "' ");
+        });
+        return false
+    }
+//]]></script>
+
+<fieldset class="cbi-section">
+    <!-- <legend>
+        <%:xunyou Status%>
+    </legend> -->
+    <p id="linkease_status">
+        <em>
+            <%:Collecting data...%>
+        </em>
+    </p>
+</fieldset>

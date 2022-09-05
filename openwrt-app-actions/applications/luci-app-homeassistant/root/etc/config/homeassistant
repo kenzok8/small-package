@@ -1,0 +1,2 @@
+config homeassistant
+	option 'config_path' '/root/homeassistant/config'
