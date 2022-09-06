@@ -6,6 +6,5 @@ uci -q batch <<-EOF >/dev/null
 	set ucitrack.@autotimeset[-1].init=autotimeset
 	commit ucitrack
 EOF
-chmod 755 /etc/init.d/autotimeset  >/dev/null 2>&1
 rm -rf /tmp/luci-modulecache /tmp/luci-indexcache*
 exit 0

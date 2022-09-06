@@ -39,5 +39,3 @@ msgstr "设置某一个小时"
 
 msgid "Set a minute"
 msgstr "设置某一分钟"
-
-Set the type of timing

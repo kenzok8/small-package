@@ -7,111 +7,53 @@ STOP=10
 run_autotimeset()
 {
 	config_get_bool enable $1 enable
-    if [ $enable = 1 ] ; then
+	if [ "x$enable" = "x1" ] ; then
 		config_get stype $1 stype
 		config_get week $1 week
 		config_get minute $1 minute
 		config_get hour $1 hour
-		[ $minute -eq 0 ] && minute="00"
-		[ $week = 7 || $week = '7' ] && week='*'
 
 		if [ $stype = 1 ] ; then
-			local cmd="$minute $hour * * $week sleep 5 && touch /etc/banner && reboot" 
-			if [ ! -f "/etc/crontabs/root" ] || [ $(cat /etc/crontabs/root | grep "$cmd" | wc -l) -eq 0 ]; then
-				sed -i '/reboot/d' /etc/crontabs/root >/dev/null 2>&1
-				echo "$cmd" >> /etc/crontabs/root
-				
-			fi
+			local cmd="$minute $hour * * $week /usr/libexec/timeset/handler reboot" 
+			echo "$cmd" >> /etc/crontabs/root
 			echo "Auto REBOOT has started.."
-
 		fi
 		if [ $stype = 2 ] ; then
-			local cmd="$minute $hour * * $week sleep 5 && touch /etc/banner && poweroff" 
-			if [ ! -f "/etc/crontabs/root" ] || [ $(cat /etc/crontabs/root | grep "$cmd" | wc -l) -eq 0 ]; then
-				sed -i '/poweroff/d' /etc/crontabs/root >/dev/null 2>&1
-				echo "$cmd" >> /etc/crontabs/root
-				
-			fi
+			local cmd="$minute $hour * * $week /usr/libexec/timeset/handler poweroff" 
+			echo "$cmd" >> /etc/crontabs/root
 			echo "Auto poweroff has started.."	
 		fi
 		if [ $stype = 3 ] ; then
-			local cmd="$minute $hour * * $week sleep 5 && touch /etc/banner && /etc/init.d/network restart" 
-			if [ ! -f "/etc/crontabs/root" ] || [ $(cat /etc/crontabs/root | grep "$cmd" | wc -l) -eq 0 ]; then
-				sed -i '/network restart/d' /etc/crontabs/root >/dev/null 2>&1
-				echo "$cmd" >> /etc/crontabs/root
-				
-			fi
+			local cmd="$minute $hour * * $week /usr/libexec/timeset/handler network" 
+			echo "$cmd" >> /etc/crontabs/root
 			echo "Auto network restart has started."
 		fi
-     else
-			del_cru
     fi
 }
 
-
-add_cru()
-{
-	local enable=$(uci get autotimeset.@login[0].enable)
-    if [ $enable = 1 ] ; then
-	local stype=$(uci get autotimeset.@login[0].stype)
-	local week=$(uci get autotimeset.@login[0].week)
-	local minute=$(uci get autotimeset.@login[0].minute)
-	local hour=$(uci get autotimeset.@login[0].hour)
-		if [ $stype = 1 ] ; then
-			local cmd="$minute $hour * * $week sleep 5 && touch /etc/banner && reboot" 
-			if [ ! -f "/etc/crontabs/root" ] || [ $(cat /etc/crontabs/root | grep "$cmd" | wc -l) -eq 0 ]; then
-				sed -i '/reboot/d' /etc/crontabs/root >/dev/null 2>&1
-				echo "$cmd" >> /etc/crontabs/root
-				
-			fi
-			echo "Auto REBOOT has started."
-		fi
-		if [ $stype = 2 ] ; then
-			local cmd="$minute $hour * * $week sleep 5 && touch /etc/banner && poweroff" 
-			if [ ! -f "/etc/crontabs/root" ] || [ $(cat /etc/crontabs/root | grep "$cmd" | wc -l) -eq 0 ]; then
-				sed -i '/poweroff/d' /etc/crontabs/root >/dev/null 2>&1
-				echo "$cmd" >> /etc/crontabs/root
-				
-			fi
-			echo "Auto poweroff has started."
-		fi
-		if [ $stype = 3 ] ; then
-			local cmd="$minute $hour * * $week sleep 5 && touch /etc/banner && /etc/init.d/network restart" 
-			if [ ! -f "/etc/crontabs/root" ] || [ $(cat /etc/crontabs/root | grep "$cmd" | wc -l) -eq 0 ]; then
-				sed -i '/network/d' /etc/crontabs/root >/dev/null 2>&1
-				echo "$cmd" >> /etc/crontabs/root
-				
-			fi
-			echo "Auto network restart has started."
-		fi
-    else
-       	del_cru
-	fi
-}
-
 start()
-{       
+{
+	del_cru
+	[ -n "`tail -c1 /etc/crontabs/root`" ] && echo >> /etc/crontabs/root
 	config_load autotimeset
 	config_foreach run_autotimeset login
-	add_cru
+	/etc/init.d/cron reload
 }
 
 stop()
 {
     del_cru
+	/etc/init.d/cron reload
 	echo "Auto set has stop."
+}
+
+restart()
+{
+	start
 }
 
 del_cru()
 {
-	if [ -f "/etc/crontabs/root" ] && [ $(cat /etc/crontabs/root | grep reboot | wc -l) -ne 0 ]; then
-		sed -i '/reboot/d' /etc/crontabs/root >/dev/null 2>&1
-	fi
-	if [ -f "/etc/crontabs/root" ] && [ $(cat /etc/crontabs/root | grep poweroff | wc -l) -ne 0 ]; then
-		sed -i '/poweroff/d' /etc/crontabs/root >/dev/null 2>&1
-	fi
-	if [ -f "/etc/crontabs/root" ] && [ $(cat /etc/crontabs/root | grep network | wc -l) -ne 0 ]; then
-		sed -i '/network/d' /etc/crontabs/root >/dev/null 2>&1
-	fi
+	sed -i '/ \/usr\/libexec\/timeset\/handler /d' /etc/crontabs/root >/dev/null 2>&1
 }
 
