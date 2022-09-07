@@ -1,5 +1,7 @@
 #!/bin/sh
 
+DETECT=0
+
 if [ -z "$ACTION" ]; then
 log() {
     echo "$*" >&2
@@ -39,30 +41,35 @@ handle_part() {
     [ -n "$1" ] || return 1
 
     # ignore mounted device, unknown fs type, swap or raid member
-    [ -n "$MOUNT" -o -z "$UUID" -o -z "$TYPE" \
+    [ -z "$UUID" -o -z "$TYPE" \
         -o "$TYPE" = "swap" \
         -o "$TYPE" = "linux_raid_member" \
     ] && return 0
 
-    local DEVICENAME="${1#/dev/}"
-    local candidate="`/usr/sbin/blockphy.sh "$DEVICENAME"`"
-    [ -z "$candidate" ] && return 0
-    candidate="/mnt/$candidate"
-
-    # check if candidate mount point is busy
-    mountpoint -q "$candidate" && return 0
-
-    # check if configured
-    check_configured "$UUID" "$LABEL" "$1" "$candidate" || return 0
-
-    log "add mount $UUID => $candidate"
-
-    uci -q batch <<-EOF >/dev/null
-        add fstab mount
-        set fstab.@mount[-1].uuid=$UUID
-        set fstab.@mount[-1].target=$candidate
-        set fstab.@mount[-1].enabled=1
+    if [ "$DETECT" = "1" ]; then
+        [ -z "$MOUNT" ] && return 0
+        log "add mount $UUID => $MOUNT"
+        uci -q batch <<-EOF >/dev/null
+            add fstab mount
+            set fstab.@mount[-1].uuid=$UUID
+            set fstab.@mount[-1].target=$MOUNT
+            set fstab.@mount[-1].enabled=0
 EOF
+    elif [ -z "$MOUNT" ]; then
+        local DEVICENAME="${1#/dev/}"
+        local candidate="`/usr/sbin/blockphy.sh "$DEVICENAME"`"
+        [ -z "$candidate" ] && return 0
+        candidate="/mnt/$candidate"
+
+        # check if candidate mount point is busy
+        mountpoint -q "$candidate" && return 0
+
+        # check if configured
+        check_configured "$UUID" "$LABEL" "$1" "$candidate" || return 0
+
+        # log "add mount $UUID => $candidate"
+        mkdir -p "$candidate" && mount "$1" "$candidate"
+    fi
 
 }
 
@@ -74,10 +81,24 @@ scan_all() {
     done
 }
 
+if [ "$1" = "detect" ]; then
+    DETECT=1
+    cat <<-EOF >/etc/config/fstab
+config global
+	option anon_swap '0'
+	option anon_mount '1'
+	option auto_swap '1'
+	option auto_mount '1'
+	option delay_root '5'
+	option check_fs '0'
+
+EOF
+fi
+
 . /lib/functions.sh
 
 config_load fstab
 
 scan_all
 
-uci commit fstab
+[ "$DETECT" = "1" ] && uci commit fstab

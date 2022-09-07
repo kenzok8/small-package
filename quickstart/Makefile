@@ -11,7 +11,7 @@ PKG_ARCH_quickstart:=$(ARCH)
 
 PKG_NAME:=quickstart
 PKG_VERSION:=0.5.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://fw.koolcenter.com/binary/quickstart/
 PKG_HASH:=78e69598982302e3cc1d59d1192b758b8b8d463c4bc88c6e5d0ed07242d1e9de
@@ -56,6 +56,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/quickstart.$(PKG_ARCH_quickstart) $(1)/usr/sbin/quickstart
 	$(INSTALL_BIN) ./files/blockphy.sh $(1)/usr/sbin/blockphy.sh
 	$(INSTALL_BIN) ./files/blockmount.sh $(1)/usr/libexec/blockmount.sh
+	$(INSTALL_BIN) ./files/blockmount.init $(1)/etc/init.d/blockmount
 	$(INSTALL_BIN) ./files/quickstart.init $(1)/etc/init.d/quickstart
 	$(INSTALL_BIN) ./files/quickstart.uci-default $(1)/etc/uci-defaults/09-quickstart
 	$(INSTALL_BIN) ./files/quickstart.hotplug $(1)/etc/hotplug.d/block/09-quickstart
