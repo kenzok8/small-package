@@ -260,56 +260,13 @@ document.addEventListener('luci-loaded', function(ev) {
      /*Set the status back to off*/
    });
 	setTimeout(function(){
-var config = {
-    // How long Waves effect duration 
-    // when it's clicked (in milliseconds)
-    duration: 600
-};
-    Waves.attach("button,input[type='button'],input[type='reset'],input[type='submit']", ['waves-light']);
-	// Ripple on hover
-$("button,input[type='button'],input[type='reset'],input[type='submit']").mouseenter(function() {
-    Waves.ripple(this, {wait: null});
-}).mouseleave(function() {
-    Waves.calm(this);
-});
-  Waves.init(config);
-$(".waves-input-wrapper").filter(function () {
-  if($(this).children().css("display")=="none"){
-        return true;
-    }else{
-        return false;
-    }
-}).hide();
-
-$("div>select:first-child,div>input[type='text']:first-child").filter(function () {
-return (!$(this).parents(".cbi-dynlist").length&&!$("body.Diagnostics").length&&!$(this).hasClass("cbi-input-password"))
-}).after("<span class='focus-input'></span>");
-
 $("input[type='checkbox']").filter(function () {
   return (!$(this).next("label").length)
 }).show();
-
-$("select,input").filter(function () {
-  return ($(this).next(".focus-input").length)
-}).focus(function(){
-  $(this).css("border-bottom","1px solid #fff");
-}).blur(function(){
-  $(this).css("border-bottom","1px solid #9e9e9e");
-});
 	}, 0);
 
 var options = { attributes: true};
 function callback() {
-$("div>select:first-child,div>input[type='text']:first-child").filter(function () {
-return (!$(this).parents(".cbi-dynlist").length&&!$(this).hasClass("cbi-input-password"))
-}).after("<span class='focus-input'></span>");
-$("select,input").filter(function () {
-  return ($(this).next(".focus-input").length)
-}).focus(function(){
-  $(this).css("border-bottom","1px solid #fff");
-}).blur(function(){
-  $(this).css("border-bottom","1px solid #9e9e9e");
-});
 $("input[type='checkbox']").filter(function () {
   return (!$(this).next("label").length)
 }).show();
