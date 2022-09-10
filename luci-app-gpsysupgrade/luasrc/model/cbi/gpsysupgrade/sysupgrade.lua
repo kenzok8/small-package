@@ -155,14 +155,6 @@ function to_check()
 		model = "ramips_mt7621/xiaomi_mi-router-ac2100"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-xiaomi_mi-router-ac2100-squashfs-sysupgrade.bin"
-    elseif board_name:match("rt%-ac42u") then
-		model = "ipq40xx_generic/asus_rt-ac42u"
-		check_update()
-		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-asus_rt-ac42u-squashfs-sysupgrade.bin"
-    elseif board_name:match("rt%-ac58u") then
-		model = "ipq40xx_generic/asus_rt-ac58u"
-		check_update()
-		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-asus_rt-ac58u-squashfs-sysupgrade.bin"
     elseif board_name:match("phicomm,k2p") then
 		model = "ramips_mt7621/phicomm_k2p"
 		check_update()
@@ -267,6 +259,14 @@ function to_check()
 		model = "ramips_mt7621/zte_e8820s"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-zte_e8820s-squashfs-sysupgrade.bin"
+    elseif board_name:match("ghl%-r%-001") then
+		model = "ramips_mt7621/gehua_ghl-r-001"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-gehua_ghl-r-001-squashfs-sysupgrade.bin"
+    elseif board_name:match("ea7500%-v2") then
+		model = "ramips_mt7621/linksys_ea7500-v2"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-linksys_ea7500-v2-squashfs-sysupgrade.bin"
     elseif board_name:match("rt%-ac1200$") then
 		model = "ramips_mt76x8/asus_rt-ac1200"
 		check_update()
@@ -311,6 +311,18 @@ function to_check()
 		model = "ipq40xx_generic/p2w_r619ac-128m"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-p2w_r619ac-128m-squashfs-sysupgrade.bin"
+    elseif board_name:match("rt%-ac42u") then
+		model = "ipq40xx_generic/asus_rt-ac42u"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-asus_rt-ac42u-squashfs-sysupgrade.bin"
+    elseif board_name:match("rt%-ac58u") then
+		model = "ipq40xx_generic/asus_rt-ac58u"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-asus_rt-ac58u-squashfs-sysupgrade.bin"
+    elseif board_name:match("cm520%-79f") then
+		model = "ipq40xx_generic/mobipromo_cm520-79f"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-mobipromo_cm520-79f-squashfs-nand-sysupgrade.bin
     elseif board_name:match("rt%-ac88u") then
 		model = "bcm53xx_generic/asus_rt-ac88u"
 		check_update()
