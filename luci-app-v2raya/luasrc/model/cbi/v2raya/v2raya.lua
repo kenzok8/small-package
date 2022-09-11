@@ -15,8 +15,8 @@ m.description = translate("v2rayA is a V2Ray Linux client supporting global tran
 m:section(SimpleSection).template = "v2raya/v2raya_status"
 
 s = m:section(TypedSection, "v2raya")
-s.anonymous = true
 s.addremove = false
+s.anonymous = true
 
 o = s:option(Flag, "enabled", translate("Enabled"))
 o.default = 0
