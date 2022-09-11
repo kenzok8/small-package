@@ -322,7 +322,7 @@ function to_check()
     elseif board_name:match("cm520%-79f") then
 		model = "ipq40xx_generic/mobipromo_cm520-79f"
 		check_update()
-		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-mobipromo_cm520-79f-squashfs-nand-sysupgrade.bin
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-mobipromo_cm520-79f-squashfs-nand-sysupgrade.bin"
     elseif board_name:match("rt%-ac88u") then
 		model = "bcm53xx_generic/asus_rt-ac88u"
 		check_update()
