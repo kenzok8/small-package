@@ -1,3 +1,6 @@
+msgid "Basic Setting"
+msgstr "基本设置"
+
 msgid "v2rayA Client"
 msgstr "v2rayA 客户端"
 
@@ -94,3 +97,5 @@ msgstr "上传的证书路径"
 msgid "This is the path where the certificate resides after the certificate is uploaded."
 msgstr "这里是上传证书后证书所在的路径。"
 
+msgid "Logs"
+msgstr "日志"
