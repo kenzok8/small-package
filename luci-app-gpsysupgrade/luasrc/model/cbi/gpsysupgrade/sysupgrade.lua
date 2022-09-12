@@ -43,7 +43,7 @@ function to_check()
 		model = "rockchip_armv8/friendlyarm_nanopi-r2s"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-friendlyarm_nanopi-r2s-squashfs-sysupgrade.img.gz"
-    elseif board_name:match("nanopi%-r4s") then
+    elseif board_name:match("nanopi%-r4s$") then
 		model = "rockchip_armv8/friendlyarm_nanopi-r4s"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-friendlyarm_nanopi-r4s-squashfs-sysupgrade.img.gz"
@@ -59,6 +59,14 @@ function to_check()
 		model = "rockchip_armv8/fastrhino_r68s"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-fastrhino_r68s-squashfs-sysupgrade.img.gz"
+    elseif board_name:match("fastrhino,r66s") then
+		model = "rockchip_armv8/fastrhino_r66s"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-fastrhino_r66s-squashfs-sysupgrade.img.gz"
+    elseif board_name:match("opc%-h68k") then
+		model = "rockchip_armv8/hinlink_opc-h68k"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-rockchip-armv8-hinlink_opc-h68k-squashfs-sysupgrade.img.gz"
     elseif board_name:match("nanopi%-r2c") then
 		model = "rockchip_armv8/friendlyarm_nanopi-r2c"
 		check_update()
@@ -355,6 +363,14 @@ function to_check()
 		model = "ipq60xx_generic/zn_m2"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-zn_m2-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("xiaomi,rm1800") then
+		model = "ipq60xx_generic/xiaomi_rm1800"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-xiaomi_rm1800-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("wf%-hr6001") then
+		model = "ipq60xx_generic/huasifei_wf-hr6001"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-huasifei_wf-hr6001-squashfs-nand-sysupgrade.bin"
     elseif board_name:match("gl%-mt300a") then
 		model = "ramips_mt7620/glinet_gl-mt300a"
 		check_update()
