@@ -48,6 +48,7 @@ handle_part() {
 
     if [ "$DETECT" = "1" ]; then
         [ -z "$MOUNT" ] && return 0
+        # in this case, only add mounted device: boot,root,overlayfs, and disable them
         log "add mount $UUID => $MOUNT"
         uci -q batch <<-EOF >/dev/null
             add fstab mount
@@ -86,7 +87,7 @@ if [ "$1" = "detect" ]; then
     cat <<-EOF >/etc/config/fstab
 config global
 	option anon_swap '0'
-	option anon_mount '1'
+	option anon_mount '0'
 	option auto_swap '1'
 	option auto_mount '1'
 	option delay_root '5'
@@ -101,4 +102,11 @@ config_load fstab
 
 scan_all
 
-[ "$DETECT" = "1" ] && uci commit fstab
+if [ "$DETECT" = "1" ]; then
+    uci commit fstab
+    sleep 2
+    uci -q batch <<-EOF >/dev/null
+        set fstab.@global[0].anon_mount=1
+        commit fstab
+EOF
+fi
