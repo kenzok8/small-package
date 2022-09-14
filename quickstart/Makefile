@@ -11,7 +11,7 @@ PKG_ARCH_quickstart:=$(ARCH)
 
 PKG_NAME:=quickstart
 PKG_VERSION:=0.5.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://fw.koolcenter.com/binary/quickstart/
 PKG_HASH:=e754732d68c04d73b3ed2d11884056e371c2984f63a90c4b3b1ed44aba4a6e5b

@@ -23,9 +23,9 @@ check_mount() {
     config_get device $1 device
     config_get target $1 target
 
-    if [ "$DEVICE_CONFIGURED" = "0" -a \( "$uuid" = "$2" -o \( -n "$3" -a "$3" = "$label" \) -o \( -n "$4" -a "$4" = "$device" \) \) ]; then
+    if [ "$DEVICE_CONFIGURED" = "0" -a \( "$uuid" = "$2" -o "$device" = "$4" -o "$target" = "$5" -o \( -n "$3" -a "$3" = "$label" \) \) ]; then
         export -n DEVICE_CONFIGURED=1
-        [ -z "$ACTION" ] && log "found $1 ($uuid, $label, $device) match $2 $3 $4"
+        [ -z "$ACTION" ] && log "found $1 ($uuid, $label, $device, $target) matches ($2, $3, $4, $5)"
     fi
 }
 
