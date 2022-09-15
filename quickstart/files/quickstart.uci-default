@@ -1,12 +1,6 @@
 #!/bin/sh
 
-if [ "$PKG_UPGRADE" != 1 ]; then
-    if [ ! -f /etc/config/fstab ]; then
-        /usr/libexec/blockmount.sh detect 2>/dev/null
-    fi
-else
-    /etc/init.d/blockmount enable
-    /etc/init.d/blockmount start
+if [ "$PKG_UPGRADE" = 1 ]; then
     /etc/init.d/quickstart enable
     /etc/init.d/quickstart start
 fi

@@ -1,4 +1,3 @@
 if [ "$ACTION" = "add" -o "$ACTION" = "remove" ]; then
-    [ "$ACTION" = "add" ] && [ "`uci -q get fstab.@global[0].anon_mount`" = "1" ] && /usr/libexec/blockmount.sh
     quickstart blockChange
 fi
