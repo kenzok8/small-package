@@ -1,5 +1,5 @@
 {
-	"admin/quickstart": {
+	"admin/quickstart/*": {
 		"title": "QuickStart",
 		"order": 1,
 		"action": {
