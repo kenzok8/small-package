@@ -1,7 +1,5 @@
 config alist
 	option 'enabled' '0'
 	option 'port' '5244'
-	option 'expiration' '60'
-	option 'cleanup_interval' '120'
-	option 'temp_dir' '/tmp'
+	option 'temp_dir' '/tmp/alist'
 	option 'ssl' '0'
