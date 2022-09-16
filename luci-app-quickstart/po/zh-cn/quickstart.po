@@ -6,3 +6,6 @@ msgstr "首页"
 
 msgid "RAID"
 msgstr "磁盘阵列"
+
+msgid "NetworkPort"
+msgstr "网口配置"
