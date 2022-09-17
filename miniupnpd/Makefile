@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2022 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
 PKG_VERSION:=2.0.20170421
-PKG_RELEASE:=5
+PKG_RELEASE:=3
 
 # Content-Encoding conflict, can refer to this [issue](https://github.com/miniupnp/miniupnp/issues/605)
 # so switch mirror repo to http://miniupnp.tuxfamily.org
