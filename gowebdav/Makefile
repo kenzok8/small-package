@@ -32,6 +32,10 @@ define Package/gowebdav
   DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
+define Package/gowebdav/conffiles
+/etc/config/gowebdav
+endef
+
 define Package/gowebdav/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 
