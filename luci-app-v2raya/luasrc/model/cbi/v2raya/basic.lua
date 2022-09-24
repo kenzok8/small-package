@@ -11,10 +11,6 @@ local v2raya_bin = "/usr/bin/v2raya"
 m = Map("v2raya")
 m.title = translate("v2rayA Client")
 m.description = translate("v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.")
-m.apply_on_parse = true
-m.on_after_apply = function(self)
-	luci.sys.call("/etc/init.d/v2raya restart")
-end
 
 m:section(SimpleSection).template = "v2raya/v2raya_status"
 
@@ -130,6 +126,11 @@ o.default = "/etc/v2raya/cert.crt,/etc/v2raya/cert.key"
 o = s:taboption("log", Value, "log", translate("Logs"))
 o.template = "v2raya/v2raya_log"
 --[[o.rows = 50]]--
+
+m.apply_on_parse = true
+m.on_after_apply = function(self,map)
+	luci.sys.call("/etc/init.d/v2raya restart")
+end
 
 --[[
 o.inputstyle = "reload"
