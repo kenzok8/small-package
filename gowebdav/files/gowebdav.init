@@ -52,5 +52,5 @@ stop() {
 	init_conf
 
 	set_type="stop" && set_firewall 2>"/dev/null"
-	killall "gowebdav" 2>"/dev/null"
+	killall -3 "gowebdav" 2>"/dev/null"
 }
