@@ -275,6 +275,30 @@ function to_check()
 		model = "ramips_mt7621/linksys_ea7500-v2"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-linksys_ea7500-v2-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,ea8100%-v1$") then
+		model = "ramips_mt7621/linksys_ea8100-v1"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-linksys_ea8100-v1-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,ea8100%-v2$") then
+		model = "ramips_mt7621/linksys_ea8100-v2"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-linksys_ea8100-v2-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,ea7300%-v1$") then
+		model = "ramips_mt7621/linksys_ea7300-v1"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-linksys_ea7300-v1-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,ea7300%-v2$") then
+		model = "ramips_mt7621/linksys_ea7300-v2"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-linksys_ea7300-v2-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,ea6350%-v4$") then
+		model = "ramips_mt7621/linksys_ea6350-v4"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-linksys_ea6350-v4-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,e5600$") then
+		model = "ramips_mt7621/linksys_e5600"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7621-linksys_e5600-squashfs-sysupgrade.bin"
     elseif board_name:match("rt%-ac1200$") then
 		model = "ramips_mt76x8/asus_rt-ac1200"
 		check_update()
@@ -415,6 +439,18 @@ function to_check()
 		model = "ramips_mt7620/xiaomi_miwifi-r3"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt7620-xiaomi_miwifi-r3-squashfs-sysupgrade.bin"
+    elseif board_name:match("redmi%-router%-ax6000$") then
+		model = "mediatek_filogic/xiaomi_redmi-router-ax6000"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,ea4500$") then
+		model = "kirkwood_generic/linksys_ea4500"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-kirkwood-linksys_ea4500-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,e4200%-v2$") then
+		model = "kirkwood_generic/linksys_e4200-v2"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-kirkwood-linksys_e4200-v2-squashfs-sysupgrade.bin"
     else
 		local needs_update = false
 		return {

@@ -44,6 +44,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-08-08 fix: make sure forwarded IPs are always forwarded to Xray even for reserved addresses. Xray may not forward those requests so that manner may be changed later.
 * 2022-08-13 fix: apply 2022-08-08 fix to iptables as well
 * 2022-09-01 feat: specify outbound for manual transparent proxy
+* 2022-09-26 feat: show process running status
 
 ## Changelog 2021
 

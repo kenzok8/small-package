@@ -102,8 +102,12 @@ function check_resource_files(load_result) {
     let geosite_existence = false;
     let geosite_size = 0;
     let firewall4 = false;
+    let xray_running = false;
     let optional_features = {};
     for (const f of load_result) {
+        if (f.name == "xray.pid") {
+            xray_running = true;
+        }
         if (f.name == "geoip.dat") {
             geoip_existence = true;
             geoip_size = '%.2mB'.format(f.size);
@@ -126,6 +130,7 @@ function check_resource_files(load_result) {
         geosite_size: geosite_size,
         optional_features: optional_features,
         firewall4: firewall4,
+        xray_running: xray_running,
     }
 }
 
@@ -141,7 +146,9 @@ return view.extend({
     render: function (load_result) {
         const config_data = load_result[0];
         const geoip_direct_code = uci.get_first(config_data, "general", "geoip_direct_code");
-        const { geoip_existence, geoip_size, geosite_existence, geosite_size, optional_features, firewall4 } = check_resource_files(load_result[1]);
+        const { geoip_existence, geoip_size, geosite_existence, geosite_size, optional_features, firewall4, xray_running } = check_resource_files(load_result[1]);
+        const status_text = xray_running ? _("[Xray is running]") : _("[Xray is stopped]");
+        
         let asset_file_status = _('WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly. See <a href="https://github.com/yichya/luci-app-xray">here</a> for help.')
         if (geoip_existence) {
             if (geosite_existence) {
@@ -150,7 +157,7 @@ return view.extend({
         }
 
         var m, s, o, ss;
-        m = new form.Map('xray', _('Xray'), asset_file_status);
+        m = new form.Map('xray', _('Xray'), status_text + " " + asset_file_status);
 
         s = m.section(form.TypedSection, 'general');
         s.addremove = false;
@@ -160,13 +167,13 @@ return view.extend({
 
         o = s.taboption('general', form.Value, 'xray_bin', _('Xray Executable Path'))
 
-        o = s.taboption('general', form.ListValue, 'main_server', _('Main Server'))
+        o = s.taboption('general', form.ListValue, 'main_server', _('TCP Server'))
         o.datatype = "uciname"
         for (var v of uci.sections(config_data, "servers")) {
             o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
         }
 
-        o = s.taboption('general', form.ListValue, 'tproxy_udp_server', _('TProxy UDP Server'))
+        o = s.taboption('general', form.ListValue, 'tproxy_udp_server', _('UDP Server'))
         for (var v of uci.sections(config_data, "servers")) {
             o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
         }
