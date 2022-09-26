@@ -6,10 +6,11 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Warnings
 
-* Support for nftables / firewall4 is **experimental** and
-    * only works with OpenWrt 22.03 versions or master branch with firewall4 as the only firewall implementation. Note that there is a possible bug in nftables 1.0.3 / 1.0.4 which breaks tproxy, so if you use master branch, make sure your source code is newer than [36bec544d73dbed46f06875fdfa570e89a40e553](https://github.com/openwrt/openwrt/commit/36bec544d73dbed46f06875fdfa570e89a40e553)
-    * may **NOT** be as stable as the old implementation using iptables and fw3 due to the lack of hooking facilities in fw4. However it should be good enough for daily use so if you encounter problems please report.
-    * currently only tested with a proper buildroot environment. Building ipk with OpenWrt SDK is **NOT** tested and is **NOT** likely to work right now. If you are building ipks yourself, use the proper version of buildroot toolchain which matches the firewall implementation (fw3 or fw4) you are using.
+* Since OpenWrt 22.03 release, the recommended firewall implementation for this project is now **firewall4** with some caveats
+    * this project only works with OpenWrt 22.03 versions or master branch with firewall4 as the only firewall implementation. 
+    * there is a possible bug in nftables 1.0.3 / 1.0.4 which breaks tproxy, so if you use master branch, make sure your source code is newer than [36bec544d73dbed46f06875fdfa570e89a40e553](https://github.com/openwrt/openwrt/commit/36bec544d73dbed46f06875fdfa570e89a40e553)
+    * currently building ipk with OpenWrt SDK is **NOT** tested and is **NOT** likely to work right now. If you are building ipks yourself, use the proper version of buildroot toolchain which matches the firewall implementation (fw3 or fw4) you are using.
+    * support for **firewall3** will soon be **deprecated** and most new features involving firewall changes (for example, IPv6 support) may **only have firewall4 implementation**.
 * There will be a series of **BREAKING CHANGES** in the following months due to some major refactor of DNS module. Please read changelog carefully to know about breaking changes and always backup your configuration files before updating.
 * If you see `WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly` and don't know what to do:
     * try `opkg update && opkg install xray-geodata` (at least OpenWrt 21.02 releases)
