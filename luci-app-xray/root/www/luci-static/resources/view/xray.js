@@ -7,9 +7,7 @@
 'require tools.widgets as widgets';
 
 function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, protocol_name, have_xtls, client_side) {
-    var o;
-
-    o = s.taboption(tab_name, form.ListValue, `${protocol_name}_tls`, _(`[${protocol_name}] Stream Security`))
+    let o = s.taboption(tab_name, form.ListValue, `${protocol_name}_tls`, _(`[${protocol_name}] Stream Security`))
     let odep = {}
     odep[depends_field_name] = protocol_name
     if (client_side) {
@@ -156,8 +154,9 @@ return view.extend({
             }
         }
 
-        var m, s, o, ss;
-        m = new form.Map('xray', _('Xray'), status_text + " " + asset_file_status);
+        const m = new form.Map('xray', _('Xray'), status_text + " " + asset_file_status);
+
+        var s, o, ss;
 
         s = m.section(form.TypedSection, 'general');
         s.addremove = false;
@@ -169,12 +168,12 @@ return view.extend({
 
         o = s.taboption('general', form.ListValue, 'main_server', _('TCP Server'))
         o.datatype = "uciname"
-        for (var v of uci.sections(config_data, "servers")) {
+        for (const v of uci.sections(config_data, "servers")) {
             o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
         }
 
         o = s.taboption('general', form.ListValue, 'tproxy_udp_server', _('UDP Server'))
-        for (var v of uci.sections(config_data, "servers")) {
+        for (const v of uci.sections(config_data, "servers")) {
             o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
         }
 
@@ -619,7 +618,7 @@ return view.extend({
         o = ss.option(form.ListValue, 'force_forward_server_tcp', _('Force Forward server (TCP)'))
         o.depends("force_forward", "1")
         o.datatype = "uciname"
-        for (var v of uci.sections(config_data, "servers")) {
+        for (const v of uci.sections(config_data, "servers")) {
             o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
         }
         o.modalonly = true
@@ -627,7 +626,7 @@ return view.extend({
         o = ss.option(form.ListValue, 'force_forward_server_udp', _('Force Forward server (UDP)'))
         o.depends("force_forward", "1")
         o.datatype = "uciname"
-        for (var v of uci.sections(config_data, "servers")) {
+        for (const v of uci.sections(config_data, "servers")) {
             o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
         }
         o.modalonly = true
@@ -746,7 +745,7 @@ return view.extend({
 
         o = ss.option(form.ListValue, "upstream", _("Upstream"))
         o.datatype = "uciname"
-        for (var v of uci.sections(config_data, "servers")) {
+        for (const v of uci.sections(config_data, "servers")) {
             o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
         }
 

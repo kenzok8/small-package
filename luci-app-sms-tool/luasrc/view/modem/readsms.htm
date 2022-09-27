@@ -68,7 +68,6 @@ tr:nth-child(odd) {background-color: var(--background-color-medium)}
 			var mn = parseInt(sim.all) || 100;
 			var pc = Math.floor((100 / mn) * vn);
 			document.getElementById('usse').innerHTML=sim.use  + " / " + sim.all + " " + '('+ pc + '%)';
-
 			}
 			);
 
@@ -92,9 +91,7 @@ tr:nth-child(odd) {background-color: var(--background-color-medium)}
 						cell4.innerHTML = "<input type='checkbox' name='smsn' id="+"btn"+json[d].index+" /><img src='<%=resource%>/icons/delsms.png'>"
  				 		cell3.innerHTML = json[d].sender;
   						cell2.innerHTML = json[d].timestamp;
-    						cell1.innerHTML = json[d].content;
-
-					
+    						cell1.innerHTML = json[d].content;	
 				}
 			}
 
@@ -109,19 +106,30 @@ tr:nth-child(odd) {background-color: var(--background-color-medium)}
 
 			MergeMySMS.forEach(function (o) {
     			if (!this[o.sender]) {
-        		this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content };
+    			if(o.part > 0){
+        		this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content, contentparts: [] };
+        		this[o.sender].contentparts[o.part] = o.content;
+        		}else{
+        		this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content};
+        		}
         		result.push(this[o.sender]);
         		return;
     			}
 			if (this[o.sender].total == o.total && this[o.sender].timestamp == o.timestamp && this[o.sender].sender == o.sender && this[o.sender].part > 0) {
-    			this[o.sender].index += '-' + o.index;    			
-			this[o.sender].content += o.content;}
+    			this[o.sender].index += '-' + o.index;
+            		this[o.sender].contentparts[o.part] = o.content;}
 			else {
 			this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content };
         		result.push(this[o.sender]);
         		return;
 			}
 			}, Object.create(null));
+			result.forEach(function(o) {
+                		if(o.contentparts){
+                    		o.contentparts.shift();
+                    		o.content = o.contentparts.join('');
+                		}
+			});
 
 			var data = JSON.stringify(result);
 			var json = JSON.parse(data);
@@ -139,11 +147,7 @@ tr:nth-child(odd) {background-color: var(--background-color-medium)}
   						cell2.innerHTML = json[d].timestamp;
     						cell1.innerHTML = json[d].content;
 				}
-
-
 			}
-
-	
 	}
 
 
@@ -182,10 +186,8 @@ if (document.querySelectorAll('input[name="smsn"]:checked').length === document.
 
 			function()
 			{
-			
 			}
 		);
-
 		return false;
 		}
 
@@ -240,12 +242,10 @@ if (document.querySelectorAll('input[name="smsn"]:checked').length === document.
 
 			function()
 			{
-			
 			}
 		);
 		return false;
 		}
-
         }
 	}
 }
@@ -283,4 +283,3 @@ if (document.querySelectorAll('input[name="smsn"]:checked').length === document.
 	</div>
 
 <%+footer%>
-

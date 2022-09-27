@@ -31,16 +31,23 @@ function sink_socket(sock, io_err)
 end
 
 local function session_retrieve(sid, allowed_users)
-        local sdat = util.ubus("session", "get", { ubus_rpc_session = sid })
-        if type(sdat) == "table" and   
-           type(sdat.values) == "table" and
-           type(sdat.values.token) == "string" and
-           (not allowed_users or
-            util.contains(allowed_users, sdat.values.username))
-        then                     
-                return sid, sdat.values
-        end
-        return nil, nil
+  local sdat = util.ubus("session", "get", { ubus_rpc_session = sid })
+  if type(sdat) == "table" and
+      type(sdat.values) == "table" and
+      type(sdat.values.token) == "string" and
+      (not allowed_users or
+      util.contains(allowed_users, sdat.values.username))
+  then
+      return sid, sdat.values
+  end
+  return nil, nil
+end
+
+local function get_session(sid)
+  if sid then
+    return session_retrieve(sid, nil)
+  end
+  return nil, nil
 end
 
 function istore_backend() 
@@ -63,13 +70,13 @@ function istore_backend()
       input[#input+1] = string.sub(k, start_len+1, string.len(k)) .. ": " .. v
     end
   end
-  local sid = http.getcookie("sysauth")
-  if sid then
-    local sid, sdat = session_retrieve(sid, nil)
-    if sdat ~= nil then
-      input[#input+1] = "X-Forwarded-Sid: " .. sid
-      input[#input+1] = "X-Forwarded-Token: " .. sdat.token
-    end
+  local sid, sdat = get_session(http.getcookie("sysauth"))
+  if sdat == nil then
+    sid, sdat = get_session(http.getcookie('sysauth_%s' % { http.getenv("HTTPS") == "on" and "https" or "http" }))
+  end
+  if sdat ~= nil then
+    input[#input+1] = "X-Forwarded-Sid: " .. sid
+    input[#input+1] = "X-Forwarded-Token: " .. sdat.token
   end
   -- input[#input+1] = "X-Forwarded-For: " .. http.getenv("REMOTE_HOST") ..":".. http.getenv("REMOTE_PORT")
   local num = tonumber(http.getenv("CONTENT_LENGTH")) or 0
