@@ -451,6 +451,10 @@ function to_check()
 		model = "kirkwood_generic/linksys_e4200-v2"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-kirkwood-linksys_e4200-v2-squashfs-sysupgrade.bin"
+    elseif board_name:match("thunder%-onecloud$") then
+		model = "meson_meson8/thunder-onecloud"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-meson-meson8b-thunder-onecloud-ext4-sdcard.img.gz"
     else
 		local needs_update = false
 		return {
