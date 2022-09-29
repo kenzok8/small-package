@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=LuCI support for linkease
 LUCI_DEPENDS:=+linkease
 LUCI_PKGARCH:=all
-PKG_VERSION:=2.1.1
+PKG_VERSION:=2.1.2
 PKG_RELEASE:=2
 
 include $(TOPDIR)/feeds/luci/luci.mk

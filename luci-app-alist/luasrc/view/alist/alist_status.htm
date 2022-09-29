@@ -17,7 +17,7 @@
 			{
 				if (st.running)
 				{
-					tb.innerHTML = '<em style=\"color:green\"><b>Alist <%:RUNNING%></b></em>' + "<input class=\"cbi-button-reload mar-10\" type=\"button\" value=\" <%:Open Web Interface%> \" onclick=\"window.open('<%=protocol%>" + window.location.hostname + ":" + st.port + "/')\"/>";
+					tb.innerHTML = '<em style=\"color:green\"><b>Alist <%:RUNNING%></b></em>' + "<input class=\"cbi-button cbi-button-reload mar-10\" type=\"button\" value=\" <%:Open Web Interface%> \" onclick=\"window.open('<%=protocol%>" + window.location.hostname + ":" + st.port + "/')\"/>";
 				}
 				else
 				{
