@@ -26,6 +26,24 @@ case "$1" in
 
     ;;
 
+  local_save)
+    if [ ! -z "$2" ]; then
+      uci set linkease.@linkease[0].local_home=$2
+      uci commit
+    fi
+    ;;
+
+  local_load)
+    data=`uci get linkease.@linkease[0].local_home`
+
+    if [ -z "${data}" ]; then
+      echo "nil"
+    else
+      echo "${data}"
+    fi
+
+    ;;
+
   status)
     echo "TODO"
     ;;

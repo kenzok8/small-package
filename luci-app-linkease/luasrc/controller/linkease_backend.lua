@@ -7,13 +7,13 @@ local ltn12 = require "luci.ltn12"
 local table = require "table"
 local util = require "luci.util"
 
-module("luci.controller.istore_backend", package.seeall)
+module("luci.controller.linkease_backend", package.seeall)
 
 local BLOCKSIZE = 2048
-local ISTOREOS_PORT = 3038
+local LINKEASE_UNIX = "/var/run/linkease.sock"
 
 function index()
-    entry({"istore"}, call("istore_backend")).leaf=true
+    entry({"linkease"}, call("linkease_backend")).leaf=true
 end
 
 local function sink_socket(sock, io_err) 
@@ -93,9 +93,9 @@ local function chunksource(sock, buffer)
 	end
 end
 
-function istore_backend() 
-  local sock = nixio.connect("127.0.0.1", ISTOREOS_PORT) 
-  if not sock then
+function linkease_backend() 
+  local sock = nixio.socket("unix", "stream")
+  if sock:connect(LINKEASE_UNIX) ~= true then
     http.status(500, "connect failed")
     return
   end
