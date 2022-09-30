@@ -1,0 +1,10 @@
+# Copyright (C) 2022 X-WRT.COM
+
+do_pre_kmodload()
+{
+	test -e /etc/modules.d/mt7915e && {
+		cat /etc/modules.d/mt7915e | grep -q wed_enable=Y || echo mt7915e wed_enable=Y >/etc/modules.d/mt7915e
+	}
+}
+
+boot_hook_add preinit_main do_pre_kmodload

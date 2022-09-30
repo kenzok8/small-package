@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=natflow
-PKG_VERSION:=20221003
+PKG_VERSION:=20221004
 
 PKG_SOURCE_URL:=https://codeload.github.com/ptpt52/natflow/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=5c6f02301efa7a7a01ee3f72b8b62b6474d034ac608ca441568a8c695ea16726
+PKG_HASH:=117d2eafd2b94ee35f0a3e15aaa69fdc545dd1f107755965def217e40ab3b18c
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_MAINTAINER:=Chen Minqiang <ptpt52@gmail.com>
@@ -39,7 +39,7 @@ endef
 include $(INCLUDE_DIR)/kernel-defaults.mk
 
 EXTRA_CFLAGS += -DCONFIG_NATFLOW_PATH -DCONFIG_NATFLOW_URLLOGGER
-ifneq ($(CONFIG_TARGET_mediatek),)
+ifneq ($(CONFIG_TARGET_mediatek_mt7622),)
 EXTRA_CFLAGS += -DCONFIG_HWNAT_EXTDEV_USE_VLAN_HASH
 endif
 
@@ -69,6 +69,8 @@ define Package/natflow-boot/install
 	$(INSTALL_BIN) ./files/natflow-boot.init $(1)/etc/init.d/natflow-boot
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DATA) ./files/21-natflow-boot.hotplug $(1)/etc/hotplug.d/iface/21-natflow-boot
+	$(INSTALL_DIR) $(1)/lib/preinit
+	$(INSTALL_DATA) ./files/natflow-boot.preinit $(1)/lib/preinit/95_natflow-boot
 endef
 
 define Package/natflow-auth
