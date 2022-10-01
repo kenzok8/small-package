@@ -4,7 +4,7 @@
 START=95
 
 disable_gro() {
-	which ethtool || return 0
+	which ethtool &>/dev/null || return 0
 	for eth in $(ifconfig | grep "^eth\|^dsa" | awk '{print $1}' | sort | uniq); do
 		ethtool -K "$eth" gro off
 		logger -t natfflow "disable gro for <$eth>"
@@ -21,7 +21,9 @@ start() {
 
 	echo debug=$debug >/dev/natflow_ctl
 	echo disabled=$((!enabled)) >/dev/natflow_ctl
-	echo hwnat=$hwnat >/dev/natflow_ctl
+	cat /dev/natflow_ctl | grep -q hwnat= && {
+		echo hwnat=$hwnat >/dev/natflow_ctl
+	}
 	echo delay_pkts=$delay_pkts >/dev/natflow_ctl
 	echo ifname_clear >/dev/natflow_ctl
 	for ifn in ${ifname_filter}; do
