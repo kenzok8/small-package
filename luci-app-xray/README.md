@@ -46,6 +46,8 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-08-13 fix: apply 2022-08-08 fix to iptables as well
 * 2022-09-01 feat: specify outbound for manual transparent proxy
 * 2022-09-26 feat: show process running status
+* 2022-10-02 feat: detect xray binary path; allow changing default HTTPS server port
+* 2022-10-03 feat: switch to disable TCP / UDP transparent proxy
 
 ## Changelog 2021
 

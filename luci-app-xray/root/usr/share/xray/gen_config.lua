@@ -7,10 +7,16 @@ local proxy_section = ucursor:get_first("xray", "general")
 local proxy = ucursor:get_all("xray", proxy_section)
 
 local tcp_server_section = arg[1] == nil and proxy.main_server or arg[1]
-local tcp_server = ucursor:get_all("xray", tcp_server_section)
+local tcp_server = nil
+if tcp_server_section ~= nil and tcp_server_section ~= "disabled" then
+    tcp_server = ucursor:get_all("xray", tcp_server_section)
+end
 
 local udp_server_section = arg[2] == nil and proxy.tproxy_udp_server or arg[2]
-local udp_server = ucursor:get_all("xray", udp_server_section)
+local udp_server = nil
+if udp_server_section ~= nil and udp_server_section ~= "disabled" then
+    udp_server = ucursor:get_all("xray", udp_server_section)
+end
 
 local geoip_existence = false
 local geosite_existence = false
@@ -36,10 +42,10 @@ local function split_ipv4_host_port(val, port_default)
     end
 end
 
-local function direct_outbound()
+local function direct_outbound(tag)
     return {
         protocol = "freedom",
-        tag = "direct",
+        tag = tag,
         settings = {
             domainStrategy = "UseIPv4"
         },
@@ -347,6 +353,9 @@ local function trojan_outbound(server, tag)
 end
 
 local function server_outbound(server, tag)
+    if server == nil then
+        return direct_outbound(tag)
+    end
     if server.protocol == "vmess" then
         return vmess_outbound(server, tag)
     end
@@ -445,9 +454,23 @@ local function fallbacks()
     return f
 end
 
+local function tls_inbound_settings()
+    return {
+        alpn = {
+            "http/1.1"
+        },
+        certificates = {
+            {
+                certificateFile = proxy.web_server_cert_file,
+                keyFile = proxy.web_server_key_file
+            }
+        }
+    }
+end
+
 local function https_trojan_inbound()
     return {
-        port = 443,
+        port = proxy.web_server_port or 443,
         protocol = "trojan",
         tag = "https_inbound",
         settings = {
@@ -462,35 +485,15 @@ local function https_trojan_inbound()
         streamSettings = {
             network = "tcp",
             security = proxy.trojan_tls,
-            tlsSettings = proxy.trojan_tls == "tls" and {
-                alpn = {
-                    "http/1.1"
-                },
-                certificates = {
-                    {
-                        certificateFile = proxy.web_server_cert_file,
-                        keyFile = proxy.web_server_key_file
-                    }
-                }
-            } or nil,
-            xtlsSettings = proxy.trojan_tls == "xtls" and {
-                alpn = {
-                    "http/1.1"
-                },
-                certificates = {
-                    {
-                        certificateFile = proxy.web_server_cert_file,
-                        keyFile = proxy.web_server_key_file
-                    }
-                }
-            } or nil
+            tlsSettings = proxy.trojan_tls == "tls" and tls_inbound_settings() or nil,
+            xtlsSettings = proxy.trojan_tls == "xtls" and tls_inbound_settings() or nil
         }
     }
 end
 
 local function https_vless_inbound()
     return {
-        port = 443,
+        port = proxy.web_server_port or 443,
         protocol = "vless",
         tag = "https_inbound",
         settings = {
@@ -506,28 +509,8 @@ local function https_vless_inbound()
         streamSettings = {
             network = "tcp",
             security = proxy.vless_tls,
-            tlsSettings = proxy.vless_tls == "tls" and {
-                alpn = {
-                    "http/1.1"
-                },
-                certificates = {
-                    {
-                        certificateFile = proxy.web_server_cert_file,
-                        keyFile = proxy.web_server_key_file
-                    }
-                }
-            } or nil,
-            xtlsSettings = proxy.vless_tls == "xtls" and {
-                alpn = {
-                    "http/1.1"
-                },
-                certificates = {
-                    {
-                        certificateFile = proxy.web_server_cert_file,
-                        keyFile = proxy.web_server_key_file
-                    }
-                }
-            } or nil
+            tlsSettings = proxy.vless_tls == "tls" and tls_inbound_settings() or nil,
+            xtlsSettings = proxy.vless_tls == "xtls" and tls_inbound_settings() or nil
         }
     }
 end
@@ -581,11 +564,20 @@ local function dns_server_outbound()
 end
 
 local function upstream_domain_names()
-    local result = {
-        tcp_server.server,
-    }
-    if tcp_server.server ~= udp_server.server then
-        table.insert(result, udp_server.server)
+    local domain_names = {}
+    local hash = {}
+    local result = {}
+    if tcp_server ~= nil then
+        table.insert(domain_names, tcp_server.server)
+    end
+    if udp_server ~= nil then
+        table.insert(domain_names, udp_server.server)
+    end
+    for _, v in ipairs(domain_names) do
+        if (not hash[v]) then
+            result[#result+1] = v
+            hash[v] = true
+        end
     end
     return result
 end
@@ -964,7 +956,7 @@ local function outbounds()
     local result = {
         server_outbound(tcp_server, "tcp_outbound"),
         server_outbound(udp_server, "udp_outbound"),
-        direct_outbound(),
+        direct_outbound("direct"),
         dns_server_outbound(),
         blackhole_outbound()
     }
