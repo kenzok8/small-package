@@ -6,8 +6,10 @@ START=95
 disable_gro() {
 	which ethtool &>/dev/null || return 0
 	for eth in $(ifconfig | grep "^eth\|^dsa" | awk '{print $1}' | sort | uniq); do
-		ethtool -K "$eth" gro off
-		logger -t natfflow "disable gro for <$eth>"
+		ethtool -k eth0 | grep -q "generic-segmentation-offload: on" || {
+			ethtool -K "$eth" gro off
+			logger -t natfflow "disable gro for <$eth>"
+		}
 	done
 }
 
