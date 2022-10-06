@@ -72,38 +72,38 @@
 
     chain xray_prerouting {
         type filter hook prerouting priority filter; policy accept;
-        meta mark 0x000000fc jump tp_spec_wan_ac
-        iifname "{{ general.lan_ifaces }}" jump tp_spec_lan_dg
+        meta mark 0x000000fc goto tp_spec_wan_ac
+        iifname "{{ general.lan_ifaces }}" goto tp_spec_lan_dg
     }
 
     chain xray_output {
         type route hook output priority filter; policy accept;
-        jump tp_spec_wan_dg
+        goto tp_spec_wan_dg
     }
 
     chain tp_spec_lan_ac {
         ether saddr @tp_spec_src_bp return
-        ether saddr @tp_spec_src_fw jump tp_spec_wan_fw
-        ether saddr @tp_spec_src_ac jump tp_spec_wan_ac
-        jump tp_spec_wan_ac
+        ether saddr @tp_spec_src_fw goto tp_spec_wan_fw
+        ether saddr @tp_spec_src_ac goto tp_spec_wan_ac
+        goto tp_spec_wan_ac
     }
 
     chain tp_spec_lan_dg {
-        ip daddr @tp_spec_dst_fw jump tp_spec_lan_re
+        ip daddr @tp_spec_dst_fw goto tp_spec_lan_re
         ip daddr @tp_spec_dst_sp return
         ip daddr @tp_spec_dst_bp return
         ip daddr @tp_spec_def_gw return
-        jump tp_spec_lan_re
+        goto tp_spec_lan_re
     }
 
     chain tp_spec_lan_re {
-        meta l4proto { tcp, udp } jump tp_spec_lan_ac
+        meta l4proto { tcp, udp } goto tp_spec_lan_ac
     }
 
     chain tp_spec_wan_ac {
-        ip daddr @tp_spec_dst_fw jump tp_spec_wan_fw
+        ip daddr @tp_spec_dst_fw goto tp_spec_wan_fw
         ip daddr @tp_spec_dst_bp return
-        jump tp_spec_wan_fw
+        goto tp_spec_wan_fw
     }
 
     chain tp_spec_wan_dg {
@@ -114,11 +114,11 @@
         meta skgid { {{ join(", ", gids_direct) }} } return
 {% endif %}
         meta mark {{ sprintf("0x%08x", general.mark) }} return
-        ip daddr @tp_spec_dst_fw jump tp_spec_wan_re
+        ip daddr @tp_spec_dst_fw goto tp_spec_wan_re
         ip daddr @tp_spec_dst_sp return
         ip daddr @tp_spec_dst_bp return
         ip daddr @tp_spec_def_gw return
-        jump tp_spec_wan_re
+        goto tp_spec_wan_re
     }
 
     chain tp_spec_wan_re {

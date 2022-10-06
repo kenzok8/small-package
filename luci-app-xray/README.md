@@ -48,6 +48,8 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-09-26 feat: show process running status
 * 2022-10-02 feat: detect xray binary path; allow changing default HTTPS server port
 * 2022-10-03 feat: switch to disable TCP / UDP transparent proxy
+* 2022-10-05 feat: dialer proxy
+* 2022-10-06 feat: use goto instead of jump in nftables rules
 
 ## Changelog 2021
 

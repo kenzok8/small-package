@@ -461,6 +461,14 @@ return view.extend({
         o.rmempty = true
         o.modalonly = true
 
+        o = ss.taboption('transport', form.ListValue, 'dialer_proxy', _('Dialer Proxy'), _('Similar to <a href="https://xtls.github.io/config/outbound.html#proxysettingsobject">ProxySettings.Tag</a>'))
+        o.datatype = "uciname"
+        o.value("disabled", _("Disabled"))
+        for (const v of uci.sections(config_data, "servers")) {
+            o.value(v[".name"], v.alias || v.server + ":" + v.server_port)
+        }
+        o.modalonly = true
+
         s.tab('proxy', _('Proxy Settings'));
 
         o = s.taboption('proxy', form.Value, 'tproxy_port_tcp', _('Transparent Proxy Port (TCP)'))
@@ -469,7 +477,7 @@ return view.extend({
 
         o = s.taboption('proxy', form.Value, 'tproxy_port_udp', _('Transparent Proxy Port (UDP)'))
         o.datatype = 'port'
-        o.default = 1080
+        o.default = 1081
 
         o = s.taboption('proxy', form.Value, 'socks_port', _('Socks5 Proxy Port'))
         o.datatype = 'port'
