@@ -46,6 +46,9 @@ do_install_detail() {
     fi
   fi
 
+  cmd="$cmd -v /mnt:/mnt"
+  mountpoint -q /mnt && cmd="$cmd:rslave"
+
   cmd="$cmd --name nastools \"$IMAGE_NAME\""
 
   echo "$cmd"
