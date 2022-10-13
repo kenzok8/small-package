@@ -3182,7 +3182,7 @@ input[type="checkbox"] {
 	cursor: pointer;
 	transition: all 0.2s;
 }
-input[type="checkbox"]:nth-of-type(-n+2){
+input[type="checkbox"]:nth-of-type(2){
 	display:none;
 }
 .cbi-dropdown[open]>ul.dropdown>li label {
@@ -3958,7 +3958,7 @@ input,select {
 	background: none;
 }
 
-input:not([type=button]):not([type=submit]),select {
+input:not([type=button]):not([type=submit]):not([type=checkbox]),select {
 	border:0 !important;
 	background-image:linear-gradient(dodgerblue,dodgerblue),linear-gradient(#a9a9a9,#a9a9a9);
     background-size:0 2px,100% 1px;
