@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=1.21.0
+PKG_VERSION:=1.21.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -47,7 +47,7 @@ choice
 	config PACKAGE_XRAY_RLIMIT_DATA_SMALL
 		bool "Small limit (about 50MB)"
 	config PACKAGE_XRAY_RLIMIT_DATA_LARGE
-		bool "Large limit (about 210MB)"
+		bool "Large limit (about 321MB)"
 endchoice
 
 endmenu
