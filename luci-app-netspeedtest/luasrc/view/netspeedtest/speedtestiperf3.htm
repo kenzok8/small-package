@@ -1,21 +1,22 @@
-
-<%
-local fs = require "nixio.fs"
-
-%>
+<%#
+ Copyright 2020-2022 sirpdboy Wich <sirpdboy@qq.com>
+ https://github.com/sirpdboy/netspeedtest
+ Licensed to the public under the Apache License 2.0.
+-%>
 
 <script type="text/javascript" src="<%=resource%>/cbi.js?v=1.1"></script>
+<%+cbi/valueheader%>
 <script type="text/javascript">//<![CDATA[
-	var stxhr = new XHR();
 
+	var stxhr = new XHR();
 	function update_status(field, proto)
 	{
 		var tool = field.name;
 		var addr = field.value;
 		var protocol = proto ;
         
-		var legend = document.getElementById('test-rc-legend');
-		var output = document.getElementById('test-rc-output');
+		var legend = document.getElementById('test-iperf-legend');
+		var output = document.getElementById('test-iperf-output');
 		if (legend && output)
 		{
 			output.innerHTML =
@@ -33,13 +34,11 @@ local fs = require "nixio.fs"
 					{
 						legend.style.display = 'none';
 						output.innerHTML = String.format('<pre>%h</pre>', x.responseText);
-                                                
-	 
 					}
 					else
 					{
 						legend.style.display = 'none';
-						output.innerHTML ='</p><%:Operation execution complete%></p>';
+						output.innerHTML ='</p>  <%:Operation execution complete%></p>';
 
 					}
 
@@ -50,9 +49,7 @@ local fs = require "nixio.fs"
 //]]></script>
 
 <form method="post" action="<%=url('admin/network/netspeedtest')%>">
-    <div style="width:100%; float:left">
       <table>
-
         <tr><td  class="cbi-value-title"  ><input style="margin: 5px 0"  type="hidden" value="" name="iperf" />
             <select name="iperf_to" style="width:auto">
               <option value="0" selected="selected"><%:iperfstart%></option>
@@ -70,15 +67,13 @@ local fs = require "nixio.fs"
             <input type="button" class="cbi-button cbi-input-reload" value="<%:Domestic download password:%>cpd6" onclick="javascript:window.open('https://sipdboy.lanzoui.com/b01c3esih','target');" />
             <input type="button" class="cbi-button cbi-input-reload" value="<%:Download from foreign official websites%>" onclick="javascript:window.open('https://iperf.fr/iperf-download.php','target');" /></td>
         </tr>
-
       </table>
-
-
   <fieldset class="cbi-section" style="display:none">
-    <legend id="test-rc-legend">
+    <legend id="test-iperf-legend">
     <%:Collecting data...%>
     </legend>
-    <span id="test-rc-output"></span>
+    <span id="test-iperf-output"></span>
   </fieldset>
-</div>
 </form>
+
+<%+cbi/valuefooter%>

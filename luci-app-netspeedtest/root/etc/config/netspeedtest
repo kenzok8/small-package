@@ -1,8 +1,10 @@
+config speedtestweb 'speedtestweb'
+        option enabled '1'
+	option port '8989'
+	option logger '1'
 
-config netspeedtest
-	option enabled '0'
+config speedtestiperf3 'speedtestiperf3'
+        option enabled '0'
 
-
-config wanspeedtest
-	option enabled '0'
-
+config wanspeedtest 'wanspeedtest'
+	option surl ' ' 
