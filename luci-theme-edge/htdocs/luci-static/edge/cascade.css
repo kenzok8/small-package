@@ -3182,7 +3182,7 @@ input[type="checkbox"] {
 	cursor: pointer;
 	transition: all 0.2s;
 }
-input[type="checkbox"]:nth-of-type(2){
+div[id^="cbid."]>input[type="checkbox"]{
 	display:none;
 }
 .cbi-dropdown[open]>ul.dropdown>li label {
