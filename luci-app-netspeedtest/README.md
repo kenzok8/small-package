@@ -136,7 +136,7 @@ luci-app-netspeedtest 网络速度诊断测试（包括：内网网页版测速�
 
 ## 感谢
 
-感谢superspeed、user1121114685、ZeaKyX、佐须之男、lean等。因为有你们珠玉在前！
+感谢sivel、user1121114685、ZeaKyX、佐须之男、lean等。因为有你们珠玉在前！
 
 ## 捐助
 
