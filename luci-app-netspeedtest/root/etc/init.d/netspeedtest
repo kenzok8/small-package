@@ -2,9 +2,7 @@
 
 #
 # Copyright (C) 2020-2022  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/netspeedtest
-#
-# This file is part of ddns-go .
-# 
+
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
 
@@ -84,6 +82,6 @@ start_service() {
 }
 
 service_triggers() {
-      procd_add_reload_trigger "speedtest-web"
+      procd_add_reload_trigger "netspeedtest"
 }
 
