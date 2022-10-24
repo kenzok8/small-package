@@ -42,6 +42,16 @@ do_install_detail() {
   echo "$cmd"
   eval "$cmd"
 
+  if [ "$?" = "0" ]; then
+    if [ "`uci -q get firewall.wxedge.enabled`" = 0 ]; then
+      uci -q batch <<-EOF >/dev/null
+        set firewall.wxedge.enabled="1"
+        commit firewall
+EOF
+      /etc/init.d/firewall reload
+    fi
+  fi
+
 }
 
 usage() {
@@ -63,6 +73,13 @@ case ${ACTION} in
   ;;
   "rm")
     docker rm -f wxedge
+    if [ "`uci -q get firewall.wxedge.enabled`" = 1 ]; then
+      uci -q batch <<-EOF >/dev/null
+        set firewall.wxedge.enabled="0"
+        commit firewall
+EOF
+      /etc/init.d/firewall reload
+    fi
   ;;
   "start" | "stop" | "restart")
     docker ${ACTION} wxedge
