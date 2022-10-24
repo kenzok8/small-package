@@ -15,8 +15,9 @@ disable_gro() {
 
 start() {
 	disable_gro
-	hwnat=$(uci get natflow.main.hwnat 2>/dev/null || echo 1)
-	enabled=$(uci get natflow.main.enabled 2>/dev/null || echo 1)
+	hwnat_wed=$(uci get natflow.main.hwnat_wed 2>/dev/null || echo 0)
+	hwnat=$(uci get natflow.main.hwnat 2>/dev/null || echo 0)
+	enabled=$(uci get natflow.main.enabled 2>/dev/null || echo 0)
 	debug=$(uci get natflow.main.debug 2>/dev/null || echo 3)
 	delay_pkts=$(uci get natflow.main.delay_pkts 2>/dev/null || echo 0)
 	ifname_filter=$(uci get natflow.main.ifname_filter 2>/dev/null)
@@ -25,6 +26,7 @@ start() {
 	echo disabled=$((!enabled)) >/dev/natflow_ctl
 	cat /dev/natflow_ctl | grep -q hwnat= && {
 		echo hwnat=$hwnat >/dev/natflow_ctl
+		echo hwnat_wed_disabled=$((!hwnat_wed)) >/dev/natflow_ctl
 	}
 	echo delay_pkts=$delay_pkts >/dev/natflow_ctl
 	echo ifname_clear >/dev/natflow_ctl
