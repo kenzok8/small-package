@@ -1,0 +1,20 @@
+<%
+  local ver = require "luci.version"
+-%>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>易有云文件管理</title>
+  <script type="module" crossorigin src="/luci-static/linkeasefile/index.js?v=<%=ver.luciversion%>"></script>
+  <link rel="stylesheet" href="/luci-static/linkeasefile/style.css?v=<%=ver.luciversion%>">
+</head>
+
+<body>
+  <div id="app"></div>
+  
+</body>
+
+</html>

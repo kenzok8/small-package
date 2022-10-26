@@ -8,7 +8,8 @@
 				if (st.running)
 				{
 					tb.innerHTML = '<br/><em style=\"color:green\"><%:The LinkEase service is running.%></em>'
-						+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open LinkEase%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
+						+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open LinkEase%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>"
+            + "<br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open Files%> \" onclick=\"window.open('/cgi-bin/luci/admin/services/linkease/file/')\"/>";
 				}
 				else
 				{
