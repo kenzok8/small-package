@@ -8,6 +8,9 @@ function index()
 	entry({"admin", "services", "linkease"}, cbi("linkease"), _("LinkEase"), 20).dependent = true
 
 	entry({"admin", "services", "linkease_status"}, call("linkease_status"))
+
+	entry({"admin", "services", "linkease", "file"}, call("linkease_file_template")).leaf = true
+
 end
 
 function linkease_status()
@@ -22,4 +25,8 @@ function linkease_status()
 
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(status)
+end
+
+function linkease_file_template()
+    luci.template.render("linkease/file")
 end
