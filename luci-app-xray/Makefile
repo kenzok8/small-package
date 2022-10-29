@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=1.21.1
+PKG_VERSION:=1.22.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -121,16 +121,17 @@ ifdef CONFIG_PACKAGE_firewall
 	$(INSTALL_BIN) ./root/usr/share/xray/gen_ipset_rules_extra_normal.lua $(1)/usr/share/xray/gen_ipset_rules_extra.lua
 	$(INSTALL_BIN) ./root/usr/share/xray/firewall_include.lua $(1)/usr/share/xray/firewall_include.lua
 	$(INSTALL_DATA) ./root/usr/share/xray/init.fw3 $(1)/usr/share/xray/init.firewall
+	$(INSTALL_BIN) ./root/usr/share/xray/gen_config.lua $(1)/usr/share/xray/gen_config.lua
 endif
 ifdef CONFIG_PACKAGE_firewall4
 	$(INSTALL_BIN) ./root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw4 $(1)/etc/hotplug.d/iface/01-transparent-proxy-ipset
 	$(INSTALL_DATA) ./root/usr/share/xray/include.nft $(1)/usr/share/xray/include.nft
 	$(INSTALL_DIR) $(1)/etc/nftables.d
 	$(LN) /usr/share/xray/include.nft $(1)/etc/nftables.d/99-xray.nft
-	$(INSTALL_BIN) ./root/usr/share/xray/firewall_include.uc $(1)/usr/share/xray/firewall_include.uc
+	$(INSTALL_BIN) ./root/usr/share/xray/firewall_include.ut $(1)/usr/share/xray/firewall_include.ut
 	$(INSTALL_DATA) ./root/usr/share/xray/init.fw4 $(1)/usr/share/xray/init.firewall
+	$(INSTALL_BIN) ./root/usr/share/xray/gen_config.uc $(1)/usr/share/xray/gen_config.uc
 endif
-	$(INSTALL_BIN) ./root/usr/share/xray/gen_config.lua $(1)/usr/share/xray/gen_config.lua
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
 	$(INSTALL_BIN) ./root/usr/libexec/rpcd/xray $(1)/usr/libexec/rpcd/xray
 endef

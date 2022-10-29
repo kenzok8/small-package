@@ -554,8 +554,8 @@ end
 
 local function dns_server_inbounds()
     local result = {}
+    local default_dns_ip, default_dns_port = split_ipv4_host_port(proxy.default_dns, 53)
     for i = proxy.dns_port, proxy.dns_port + (proxy.dns_count or 0), 1 do
-        local default_dns_ip, default_dns_port = split_ipv4_host_port(proxy.default_dns, 53)
         table.insert(result, {
             port = i,
             protocol = "dokodemo-door",

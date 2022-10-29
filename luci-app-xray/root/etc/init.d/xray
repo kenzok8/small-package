@@ -5,8 +5,6 @@ STOP=15
 USE_PROCD=1
 NAME=xray
 
-GENERATE_CONF="/usr/share/xray/gen_config.lua"
-
 source /usr/share/xray/init.firewall
 
 uci_get_by_type() {
@@ -68,11 +66,11 @@ gen_config_file() {
     if [ -s /usr/share/xray/infinite_retry ] ; then
         while [ ! -s /var/etc/xray/config.json ] ; do
             logger -st xray[$$] -p4 "(Re)generating Xray configuration files..."
-            /usr/bin/lua ${GENERATE_CONF} > /var/etc/xray/config.json
+            impl_gen_config_file
         done
     else
         logger -st xray[$$] -p4 "Generating Xray configuration files..."
-        /usr/bin/lua ${GENERATE_CONF} > /var/etc/xray/config.json
+        impl_gen_config_file
     fi
     local custom_config=$(uci_get_by_type general custom_config)
     [ ! "${#custom_config}" == "0" ] && echo ${custom_config} > /var/etc/xray/config_custom.json
