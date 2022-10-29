@@ -7,10 +7,10 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 ## Warnings
 
 * Since OpenWrt 22.03 release, the recommended firewall implementation for this project is now **firewall4** with some caveats
-    * this project only works with OpenWrt 22.03 versions or master branch with firewall4 as the only firewall implementation. 
+    * currently this project still works on OpenWrt 19.07 / 21.02 versions. There's a warning about missing `kmod-nft-tproxy` when using these versions, just ignore it. This problem will be fixed later.
+    * support for versions mentioned above will soon be **deprecated**, which means that most new features won't be implemented for these old versions. Check changelog for details about future changes and availability of various new features.
     * there is a possible bug in nftables 1.0.3 / 1.0.4 which breaks tproxy, so if you use master branch, make sure your source code is newer than [36bec544d73dbed46f06875fdfa570e89a40e553](https://github.com/openwrt/openwrt/commit/36bec544d73dbed46f06875fdfa570e89a40e553)
     * currently building ipk with OpenWrt SDK is **NOT** tested and is **NOT** likely to work right now. If you are building ipks yourself, use the proper version of buildroot toolchain which matches the firewall implementation (fw3 or fw4) you are using.
-    * support for **firewall3** will soon be **deprecated** and most new features involving firewall changes (for example, IPv6 support) may **only have firewall4 implementation**.
 * There will be a series of **BREAKING CHANGES** in the following months due to some major refactor of DNS module. Please read changelog carefully to know about breaking changes and always backup your configuration files before updating.
 * If you see `WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly` and don't know what to do:
     * try `opkg update && opkg install xray-geodata` (at least OpenWrt 21.02 releases)
@@ -50,6 +50,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-10-03 feat: switch to disable TCP / UDP transparent proxy
 * 2022-10-05 feat: dialer proxy
 * 2022-10-06 feat: use goto instead of jump in nftables rules
+* 2022-10-29 feat: rewrite gen_config in ucode
 
 ## Changelog 2021
 

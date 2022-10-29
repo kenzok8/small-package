@@ -1,4 +1,4 @@
-FIREWALL_INCLUDE="/usr/share/xray/firewall_include.uc"
+FIREWALL_INCLUDE="/usr/share/xray/firewall_include.ut"
 
 setup_firewall() {
     ip rule add fwmark 251 lookup 251
@@ -26,4 +26,8 @@ flush_firewall() {
     logger -st xray[$$] -p4 "Triggering firewall4 restart..."
     /etc/init.d/firewall restart > /dev/null 2>&1
     /etc/hotplug.d/iface/01-transparent-proxy-ipset
+}
+
+impl_gen_config_file() {
+    /usr/bin/ucode /usr/share/xray/gen_config.uc > /var/etc/xray/config.json
 }

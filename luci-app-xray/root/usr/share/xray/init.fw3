@@ -25,3 +25,7 @@ flush_firewall() {
     done
     /etc/hotplug.d/iface/01-transparent-proxy-ipset
 }
+
+impl_gen_config_file() {
+    /usr/bin/lua /usr/share/xray/gen_config.lua > /var/etc/xray/config.json
+}
