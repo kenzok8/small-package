@@ -300,7 +300,10 @@ function vmess_outbound(server, tag) {
 
 function vless_outbound(server, tag) {
     let flow = server["vless_flow"];
-    if (server["vless_flow"] == "none") {
+    if (server["vless_tls"] == "tls") {
+        flow = server["vless_flow_tls"]
+    }
+    if (flow == "none") {
         flow = null;
     }
     const stream_settings_object = stream_settings(server, "vless", true, tag);
@@ -333,7 +336,7 @@ function vless_outbound(server, tag) {
 
 function trojan_outbound(server, tag) {
     let flow = server["trojan_flow"];
-    if (server["trojan_flow"] == "none") {
+    if (flow == "none") {
         flow = null;
     }
     const stream_settings_object = stream_settings(server, "trojan", true, tag);
@@ -491,6 +494,13 @@ function tls_inbound_settings() {
 }
 
 function https_trojan_inbound() {
+    let flow = null;
+    if (proxy["trojan_tls"] == "xtls") {
+        flow = proxy["trojan_flow"]
+    }
+    if (flow == "none") {
+        flow = null;
+    }
     return {
         port: proxy["web_server_port"] || 443,
         protocol: "trojan",
@@ -499,7 +509,7 @@ function https_trojan_inbound() {
             clients: [
                 {
                     password: proxy["web_server_password"],
-                    flow: proxy["trojan_tls"] == "xtls" ? proxy["trojan_flow"] : null
+                    flow: flow
                 }
             ],
             fallbacks: fallbacks()
@@ -514,6 +524,15 @@ function https_trojan_inbound() {
 }
 
 function https_vless_inbound() {
+    let flow = null;
+    if (proxy["vless_tls"] == "xtls") {
+        flow = proxy["vless_flow"]
+    } else if (proxy["vless_tls"] == "tls") {
+        flow = proxy["vless_flow_tls"]
+    }
+    if (flow == "none") {
+        flow = null;
+    }
     return {
         port: proxy["web_server_port"] || 443,
         protocol: "vless",
@@ -522,7 +541,7 @@ function https_vless_inbound() {
             clients: [
                 {
                     id: proxy["web_server_password"],
-                    flow: proxy["vless_tls"] == "xtls" ? proxy["vless_flow"] : null
+                    flow: flow
                 }
             ],
             decryption: "none",
