@@ -118,7 +118,7 @@ function check_resource_files(load_result) {
             geosite_existence = true;
             geosite_size = '%.2mB'.format(f.size);
         }
-        if (f.name == "firewall_include.uc") {
+        if (f.name == "firewall_include.ut") {
             firewall4 = true;
         }
         if (f.name.startsWith("optional_feature_")) {
