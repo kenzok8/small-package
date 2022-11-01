@@ -1,1 +1,4 @@
-<% luci.template.render("istorex/main", {prefix=luci.dispatcher.build_url("admin", "istorex")}) %>
+<% 
+   local istorex = require "luci.controller.istorex"
+   istorex.istorex_template()
+%>
