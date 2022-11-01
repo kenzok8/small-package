@@ -16,11 +16,19 @@
     <script src="<%=resource%>/cbi.js?v=<%=ver.luciversion%>"></script>
     <script type="text/javascript" src="<%=resource%>/promis.min.js?v=<%=ver.luciversion%>"></script>
     <script type="text/javascript" src="<%=resource%>/luci.js?v=<%=ver.luciversion%>"></script>
+    <%+tasks/embed%>
     <script>
         (function(){
             var pathe_prefix    =   "<%=prefix%>"
             window.HostName     =   "<%=luci.sys.hostname()%>"
             window.path_base    =   pathe_prefix
+            window.token        =   "<%=token%>"
+            window.model        =   "<%=model%>"
+            window.device_id    =   {
+                                      arch:"<%=id.arch%>",
+                                      uid:"<%=id.uid%>",
+                                      version:"<%=id.version%>"
+                                     }
         })();
     </script>
     <script type="text/javascript">
