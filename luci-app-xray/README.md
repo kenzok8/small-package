@@ -37,20 +37,20 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-03-25 feat: remove web and add metrics configurations (recommended to use with [metrics support](https://github.com/XTLS/Xray-core/pull/1000))
 * 2022-04-24 feat: metrics is now out of optional features; add basic ubus wrapper for xray apis
 * 2022-05-13 feat: shadowsocks-2022 protocols support
-* 2022-06-04 feat: nftables support (experimental)
+* 2022-06-04 `[OpenWrt 22.03 or above only]` feat: nftables support (experimental)
 * 2022-06-05 feat: shadowsocks-2022 UDP over TCP support
 * 2022-06-14 feat: multiple geoip direct code
-* 2022-06-19 feat: skip proxy for specific uids / gids (nftables support only)
+* 2022-06-19 `[OpenWrt 22.03 or above only]` feat: skip proxy for specific uids / gids
 * 2022-08-07 fix: avoid duplicated items in generated nftables ruleset
-* 2022-08-08 fix: make sure forwarded IPs are always forwarded to Xray even for reserved addresses. Xray may not forward those requests so that manner may be changed later.
-* 2022-08-13 fix: apply 2022-08-08 fix to iptables as well
+* 2022-08-13 fix: make sure forwarded IPs are always forwarded to Xray even for reserved addresses. Xray may not forward those requests so that manner may be changed later.
 * 2022-09-01 feat: specify outbound for manual transparent proxy
 * 2022-09-26 feat: show process running status
 * 2022-10-02 feat: detect xray binary path; allow changing default HTTPS server port
 * 2022-10-03 feat: switch to disable TCP / UDP transparent proxy
 * 2022-10-05 feat: dialer proxy
-* 2022-10-06 feat: use goto instead of jump in nftables rules
-* 2022-10-29 feat: rewrite gen_config in ucode
+* 2022-10-06 `[OpenWrt 22.03 or above only]` feat: use goto instead of jump in nftables rules
+* 2022-10-29 `[OpenWrt 22.03 or above only]` feat: rewrite gen_config in ucode
+* 2022-11-01 feat: support xtls-rprx-vision
 
 ## Changelog 2021
 
