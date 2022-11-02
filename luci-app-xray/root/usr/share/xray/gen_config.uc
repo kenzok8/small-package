@@ -299,8 +299,10 @@ function vmess_outbound(server, tag) {
 }
 
 function vless_outbound(server, tag) {
-    let flow = server["vless_flow"];
-    if (server["vless_tls"] == "tls") {
+    let flow = null;
+    if (server["vless_tls"] == "xtls") {
+        flow = server["vless_flow"]
+    } else if (server["vless_tls"] == "tls") {
         flow = server["vless_flow_tls"]
     }
     if (flow == "none") {
@@ -335,7 +337,10 @@ function vless_outbound(server, tag) {
 }
 
 function trojan_outbound(server, tag) {
-    let flow = server["trojan_flow"];
+    let flow = null;
+    if (server["trojan_tls"] == "xtls") {
+        flow = server["trojan_flow"]
+    }
     if (flow == "none") {
         flow = null;
     }
