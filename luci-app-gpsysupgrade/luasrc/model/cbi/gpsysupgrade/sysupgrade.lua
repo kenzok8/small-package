@@ -368,6 +368,10 @@ function to_check()
 		model = "ipq40xx_generic/mobipromo_cm520-79f"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-mobipromo_cm520-79f-squashfs-nand-sysupgrade.bin"
+    elseif board_name:match("gl%-a1300$") then
+		model = "ipq40xx_generic/glinet_gl-a1300"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq40xx-generic-glinet_gl-a1300-squashfs-nand-sysupgrade.bin"
     elseif board_name:match("rt%-ac88u$") then
 		model = "bcm53xx_generic/asus_rt-ac88u"
 		check_update()
