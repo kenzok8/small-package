@@ -11,7 +11,7 @@ PKG_ARCH_quickstart:=$(ARCH)
 
 PKG_NAME:=quickstart
 PKG_VERSION:=0.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://fw.koolcenter.com/binary/quickstart/
 PKG_HASH:=0893c8d58cb639946f33b2dd5841729b613eb89651c11bd40294d9235323784c
@@ -36,7 +36,9 @@ define Package/$(PKG_NAME)/description
   Quickstart is a dashboard & user guide
 endef
 
-
+define Package/$(PKG_NAME)/conffiles
+/etc/config/quickstart
+endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
