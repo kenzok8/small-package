@@ -8,6 +8,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>易有云文件管理</title>
+  <script>
+    (function () {
+      var pathe_prefix = "<%=prefix%>"
+      window.path_base = pathe_prefix
+      window.ver       = "<%=ver.luciversion%>"
+    })();
+  </script>
   <script type="module" crossorigin src="/luci-static/linkeasefile/index.js?v=<%=ver.luciversion%>"></script>
   <link rel="stylesheet" href="/luci-static/linkeasefile/style.css?v=<%=ver.luciversion%>">
 </head>
