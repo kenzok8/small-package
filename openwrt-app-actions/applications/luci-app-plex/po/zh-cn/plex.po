@@ -1,0 +1,41 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Official website:"
+msgstr "官方网站："
+
+msgid "Plex is an streaming media service and a client–server media player platform, made by Plex, Inc."
+msgstr "Plex 是一个多媒体串流平台。"
+
+msgid "Config path"
+msgstr "配置文件路径"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "HTTP Port"
+msgstr "HTTP 端口"
+
+msgid "Service Status"
+msgstr "服务状态"
+
+msgid "Plex status:"
+msgstr "Plex 的状态信息如下："
+
+msgid "Setup"
+msgstr "安装配置"
+
+msgid "The following parameters will only take effect during installation or upgrade:"
+msgstr "以下参数只在安装或者升级时才会生效："
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Plex is running"
+msgstr "Plex 运行中"
+
+msgid "Plex is not running"
+msgstr "Plex 未运行"
+
+msgid "Open Plex"
+msgstr "打开 Plex"

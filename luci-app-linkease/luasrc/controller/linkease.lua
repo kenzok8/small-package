@@ -27,6 +27,13 @@ function linkease_status()
 	luci.http.write_json(status)
 end
 
+function get_params(name)
+    local data = {
+        prefix=luci.dispatcher.build_url(unpack({"admin", "services", "linkease", name})),
+    }
+    return data
+end
+
 function linkease_file_template()
-    luci.template.render("linkease/file")
+    luci.template.render("linkease/file", get_params("file"))
 end
