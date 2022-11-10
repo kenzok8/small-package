@@ -1,0 +1,6 @@
+config main
+	option 'http_port' '3000'
+	option 'image_name' 'difegue/lanraragi'
+	option 'config_path' ''
+	option 'content_path' ''
+

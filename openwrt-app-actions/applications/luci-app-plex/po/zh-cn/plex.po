@@ -39,3 +39,6 @@ msgstr "Plex 未运行"
 
 msgid "Open Plex"
 msgstr "打开 Plex"
+
+msgid "Not required, all disk is mounted in"
+msgstr "可不填，所有硬盘都在"
