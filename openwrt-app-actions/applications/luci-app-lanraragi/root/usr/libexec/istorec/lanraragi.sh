@@ -10,7 +10,7 @@ do_install() {
   local config=`uci get lanraragi.@main[0].config_path 2>/dev/null`
   local content=`uci get lanraragi.@main[0].content_path 2>/dev/null`
 
-  [ -z "$image_name" ] && image_name="difegue/lanraragi"
+  [ -z "$image_name" ] && image_name="dezhao/lanraragi_cn"
   echo "docker pull ${image_name}"
   docker pull ${image_name}
   docker rm -f lanraragi

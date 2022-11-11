@@ -9,6 +9,7 @@ do_install() {
   local image_name=`uci get photoprism.@main[0].image_name 2>/dev/null`
   local config=`uci get photoprism.@main[0].config_path 2>/dev/null`
   local picture=`uci get photoprism.@main[0].picture_path 2>/dev/null`
+  local password=`uci get photoprism.@main[0].password 2>/dev/null`
 
   [ -z "$image_name" ] && image_name="photoprism/photoprism:latest"
   echo "docker pull ${image_name}"
@@ -24,7 +25,7 @@ do_install() {
 
   local cmd="docker run --restart=unless-stopped -d -v \"$config:/photoprism/storage\" --dns=172.17.0.1 -p $http_port:2342 \
     -e PHOTOPRISM_UPLOAD_NSFW=\"true\" \
-    -e PHOTOPRISM_ADMIN_PASSWORD=\"insecure\" "
+    -e PHOTOPRISM_ADMIN_PASSWORD=\"$password\" "
 
   local tz="`cat /tmp/TZ`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"

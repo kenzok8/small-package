@@ -42,3 +42,9 @@ msgstr "可不填，所有硬盘都在"
 
 msgid "Picture path"
 msgstr "图片路径"
+
+msgid "Default Password"
+msgstr "初始密码"
+
+msgid "Default User:"
+msgstr "默认用户："

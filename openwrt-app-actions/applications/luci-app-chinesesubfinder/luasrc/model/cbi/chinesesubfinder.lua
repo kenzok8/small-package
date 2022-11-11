@@ -8,8 +8,8 @@ local m, s, o
 
 m = taskd.docker_map("chinesesubfinder", "chinesesubfinder", "/usr/libexec/istorec/chinesesubfinder.sh",
 	translate("ChineseSubFinder"),
-	translate("ChineseSubFinder brings together your personal videos, music, photos, and live television.")
-		.. translate("Official website:") .. ' <a href=\"https://chinesesubfinder.media/\" target=\"_blank\">https://chinesesubfinder.media/</a>')
+	translate("ChineseSubFinder is a tool which can download chinese subtitle automaticly.")
+		.. translate("Official website:") .. ' <a href=\"https://github.com/allanpk716/ChineseSubFinder\" target=\"_blank\">https://github.com/allanpk716/ChineseSubFinder</a>')
 
 s = m:section(SimpleSection, translate("Service Status"), translate("ChineseSubFinder status:"))
 s:append(Template("chinesesubfinder/status"))

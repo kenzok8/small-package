@@ -8,7 +8,7 @@ local m, s, o
 
 m = taskd.docker_map("navidrome", "navidrome", "/usr/libexec/istorec/navidrome.sh",
 	translate("Navidrome"),
-	translate("Navidrome is Open source server for archival of comics/manga.")
+	translate("Navidrome is an open source web-based music collection server and streamer.")
 		.. translate("Official website:") .. ' <a href=\"https://github.com/Difegue/Navidrome\" target=\"_blank\">https://github.com/Difegue/Navidrome</a>')
 
 s = m:section(SimpleSection, translate("Service Status"), translate("Navidrome status:"))

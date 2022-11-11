@@ -39,3 +39,6 @@ msgstr "LANraragi 未运行"
 
 msgid "Open LANraragi"
 msgstr "打开 LANraragi"
+
+msgid "Default Password:"
+msgstr "默认密码："
