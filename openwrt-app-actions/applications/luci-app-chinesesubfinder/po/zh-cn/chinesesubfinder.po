@@ -4,8 +4,8 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "Official website:"
 msgstr "官方网站："
 
-msgid "ChineseSubFinder brings together your personal videos, music, photos, and live television."
-msgstr "ChineseSubFinder 是一个多媒体串流平台。"
+msgid "ChineseSubFinder is a tool which can download chinese subtitle automaticly."
+msgstr "ChineseSubFinder是一个自动化中文字幕下载工具。"
 
 msgid "Config path"
 msgstr "配置文件路径"

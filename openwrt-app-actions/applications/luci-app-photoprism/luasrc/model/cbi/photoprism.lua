@@ -8,7 +8,8 @@ local m, s, o
 
 m = taskd.docker_map("photoprism", "photoprism", "/usr/libexec/istorec/photoprism.sh",
 	translate("PhotoPrism"),
-	translate("PhotoPrism® is an AI-Powered Photos App for the Decentralized Web.")
+	translate("PhotoPrism® is an AI-Powered Photos App for the Decentralized Web. ") 
+    .. translate("Default User:") .. ' admin '
 		.. translate("Official website:") .. ' <a href=\"https://photoprism.app/\" target=\"_blank\">https://photoprism.app/</a>')
 
 s = m:section(SimpleSection, translate("Service Status"), translate("PhotoPrism status:"))
@@ -30,6 +31,11 @@ o.datatype = "string"
 o:value("photoprism/photoprism:latest", "photoprism/photoprism:latest")
 o:value("photoprism/photoprism:221105-armv7", "photoprism/photoprism:221105-armv7")
 o.default = "photoprism/photoprism:latest"
+
+o = s:option(Value, "password", translate("Default Password").."<b>*</b>")
+o.password = true
+o.rmempty = false
+o.datatype = "string"
 
 local blocks = photoprism_model.blocks()
 local home = photoprism_model.home()

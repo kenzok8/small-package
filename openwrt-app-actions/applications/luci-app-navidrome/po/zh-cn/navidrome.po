@@ -4,7 +4,7 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "Official website:"
 msgstr "官方网站："
 
-msgid "Navidrome is an open source web-based music collection server and streamer. "
+msgid "Navidrome is an open source web-based music collection server and streamer."
 msgstr "Navidrome 是一个开源的在线音乐播放软件。"
 
 msgid "Config path"
