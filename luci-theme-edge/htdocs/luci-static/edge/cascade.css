@@ -4125,8 +4125,13 @@ table.interfaces .th{
 .cbi-value>.cbi-value-field>div:first-child+br{
 display:none;
 }
+
 .cbi-page-actions.control-group.fixed {
     position: fixed;
     bottom: 1.3rem;
     right: 2rem;
+}
+
+#cbi-vssr+.cbi-page-actions.control-group.fixed {
+    bottom: 4.8rem;
 }
