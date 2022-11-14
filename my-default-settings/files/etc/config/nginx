@@ -20,7 +20,7 @@ config server '_ssl'
 	option ssl_session_timeout '64m'
 	option access_log 'off; # logd openwrt'
 
-config server '_redirect2ssl'
+#config server '_redirect2ssl'
 	#list listen '80'
 	#list listen '[::]:80'
 	#option server_name '_redirect2ssl'
