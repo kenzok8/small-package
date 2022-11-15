@@ -1,0 +1,13 @@
+#!/bin/sh
+
+cd /root
+export HOME=/root
+SERVER=${1}
+
+echo "run speedtest"
+if [ "$SERVER" == "auto" ]; then
+  echo "yes"|/usr/bin/speedtest
+else
+  echo "yes"|/usr/bin/speedtest -s $SERVER
+fi
+

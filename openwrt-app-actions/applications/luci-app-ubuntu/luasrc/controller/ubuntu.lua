@@ -11,11 +11,9 @@ function index()
   entry({"admin", "services", "ubuntu", "pages"}, call("ubuntu_index")).leaf = true
   entry({"admin", "services", "ubuntu", "form"}, call("ubuntu_form"))
   entry({"admin", "services", "ubuntu", "submit"}, call("ubuntu_submit"))
-  entry({"admin", "services", "ubuntu", "log"}, call("ubuntu_log"))
 
 end
 
-local const_log_end = "XU6J03M6"
 local appname = "ubuntu"
 local page_index = {"admin", "services", "ubuntu", "pages"}
 
@@ -198,10 +196,6 @@ function ubuntu_submit()
     http.write_json(resp)
 end
 
-function ubuntu_log()
-  iform.response_log("/var/log/"..appname..".log")
-end
-
 function install_upgrade_ubuntu(req)
   local password = req["password"]
   local port = req["port"]
@@ -217,15 +211,13 @@ function install_upgrade_ubuntu(req)
   uci:save(appname)
   uci:commit(appname)
 
-  -- local exec_cmd = string.format("start-stop-daemon -q -S -b -x /usr/share/ubuntu/install.sh -- %s", req["$apply"])
-  -- os.execute(exec_cmd)
-  local exec_cmd = string.format("/usr/share/ubuntu/install.sh %s", req["$apply"])
-  iform.fork_exec(exec_cmd)
+  local exec_cmd = string.format("/usr/libexec/istorec/ubuntu.sh %s", req["$apply"])
+  exec_cmd = "/etc/init.d/tasks task_add ubuntu " .. luci.util.shellquote(exec_cmd)
+  os.execute(exec_cmd .. " >/dev/null 2>&1")
 
   local result = {
     async = true,
-    exec = exec_cmd,
-    async_state = req["$apply"]
+    async_state = appname
   }
   return result
 end
