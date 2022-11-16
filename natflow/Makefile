@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=natflow
-PKG_VERSION:=20221115
+PKG_VERSION:=20221116
 
 PKG_SOURCE_URL:=https://codeload.github.com/ptpt52/natflow/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=89a6fe162d37313a1d4b555cbc47ac397373cc65061876c8cf4b28dc6f408c0c
+PKG_HASH:=919a482dead921070e4de314a2136060ce135bb735a9b11cd133e014adeb9fa5
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_MAINTAINER:=Chen Minqiang <ptpt52@gmail.com>
@@ -51,6 +51,7 @@ define Build/Compile/natflow
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(KERNEL_CROSS)" \
 		M="$(PKG_BUILD_DIR)" \
+		$(if $(CONFIG_KERNEL_DEBUG_INFO),,NO_DEBUG=1) \
 		modules
 endef
 
