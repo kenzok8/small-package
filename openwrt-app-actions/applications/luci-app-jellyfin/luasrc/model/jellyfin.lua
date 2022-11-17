@@ -26,7 +26,8 @@ jellyfin.home = function()
   local home_dirs = {}
   home_dirs["main_dir"] = uci:get_first("quickstart", "main", "main_dir", "/root")
   home_dirs["Configs"] = uci:get_first("quickstart", "main", "conf_dir", home_dirs["main_dir"].."/Configs")
-  home_dirs["Downloads"] = uci:get_first("quickstart", "main", "dl_dir", home_dirs["main_dir"].."/Downloads")
+  home_dirs["Public"] = uci:get_first("quickstart", "main", "pub_dir", home_dirs["main_dir"].."/Public")
+  home_dirs["Downloads"] = uci:get_first("quickstart", "main", "dl_dir", home_dirs["Public"].."/Downloads")
   home_dirs["Caches"] = uci:get_first("quickstart", "main", "tmp_dir", home_dirs["main_dir"].."/Caches")
   return home_dirs
 end

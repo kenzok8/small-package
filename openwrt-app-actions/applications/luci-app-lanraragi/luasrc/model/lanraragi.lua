@@ -26,7 +26,7 @@ lanraragi.home = function()
   local home_dirs = {}
   home_dirs["main_dir"] = uci:get_first("quickstart", "main", "main_dir", "/root")
   home_dirs["Configs"] = uci:get_first("quickstart", "main", "conf_dir", home_dirs["main_dir"].."/Configs")
-  home_dirs["Public"] = uci:get_first("quickstart", "main", "dl_dir", home_dirs["main_dir"].."/Public")
+  home_dirs["Public"] = uci:get_first("quickstart", "main", "pub_dir", home_dirs["main_dir"].."/Public")
   home_dirs["Caches"] = uci:get_first("quickstart", "main", "tmp_dir", home_dirs["main_dir"].."/Caches")
   return home_dirs
 end
@@ -40,7 +40,7 @@ lanraragi.find_paths = function(blocks, home_dirs, path_name)
     return
   else
     if path_name == "Public" then
-      appname = "/Book"
+      appname = "/Comics"
     end
     for _, val in pairs(blocks) do 
       table.insert(configs, val .. "/" .. path_name .. appname)

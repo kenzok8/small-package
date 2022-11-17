@@ -26,7 +26,6 @@ o = s:option(Value, "claim_token", translate("Plex Claim"))
 o.datatype = "string"
 
 o = s:option(Value, "port", translate("Port").."<b>*</b>")
-o.rmempty = false
 o.default = "32400"
 o.datatype = "port"
 o:depends("hostnet", 0)
