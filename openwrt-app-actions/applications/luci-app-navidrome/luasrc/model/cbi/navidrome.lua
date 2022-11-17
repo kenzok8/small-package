@@ -45,7 +45,7 @@ o.default = default_path
 o = s:option(Value, "music_path", translate("Music path").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
-local paths, default_path = navidrome_model.find_paths(blocks, home, "Downloads")
+local paths, default_path = navidrome_model.find_paths(blocks, home, "Public")
 for _, val in pairs(paths) do
   o:value(val, val)
 end

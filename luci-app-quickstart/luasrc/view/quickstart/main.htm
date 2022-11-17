@@ -14,6 +14,7 @@
 -%>
 <script>
     (function(){
+      window.token = "<%=token%>";
       var vue_prefix="<%=prefix%>";
       window.vue_base = vue_prefix + '/';
       window.quickstart_features = <%=jsonc.stringify(features)%>;
