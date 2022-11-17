@@ -37,11 +37,8 @@ msgstr "Photoprism 未运行"
 msgid "Open Photoprism"
 msgstr "打开 Photoprism"
 
-msgid "Not required, all disk is mounted in"
-msgstr "可不填，所有硬盘都在"
-
-msgid "Picture path"
-msgstr "图片路径"
+msgid "Photo path"
+msgstr "相册路径"
 
 msgid "Default Password"
 msgstr "初始密码"
