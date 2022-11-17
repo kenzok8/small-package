@@ -29,7 +29,6 @@ o.rmempty = false
 o.datatype = "string"
 o:value("dezhao/lanraragi_cn", "dezhao/lanraragi_cn")
 o:value("dezhao/lanraragi_cn:0.8.6", "dezhao/lanraragi_cn:0.8.6")
-o:value("difegue/lanraragi", "difegue/lanraragi")
 o.default = "dezhao/lanraragi_cn"
 
 local blocks = lanraragi_model.blocks()
@@ -48,7 +47,7 @@ o.default = default_path
 o = s:option(Value, "content_path", translate("Content path").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
-local paths, default_path = lanraragi_model.find_paths(blocks, home, "Downloads")
+local paths, default_path = lanraragi_model.find_paths(blocks, home, "Public")
 for _, val in pairs(paths) do
   o:value(val, val)
 end

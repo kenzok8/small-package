@@ -23,8 +23,8 @@ do_install() {
   [ -z "$http_port" ] && http_port=3000
 
   local cmd="docker run --restart=unless-stopped -d \
-    -v \"$config:/home/koyomi/lanraragi/database\" \
-    -v \"$content:/home/koyomi/lanraragi/content\" \
+    -v \"$config:/root/lanraragi/database\" \
+    -v \"$content:/root/lanraragi/content\" \
     --dns=172.17.0.1 \
     -p $http_port:3000 "
 
