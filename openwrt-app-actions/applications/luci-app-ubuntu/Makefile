@@ -3,7 +3,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=20221115
+PKG_RELEASE:=20221117
 
 LUCI_TITLE:=LuCI support for ubuntu
 LUCI_PKGARCH:=all

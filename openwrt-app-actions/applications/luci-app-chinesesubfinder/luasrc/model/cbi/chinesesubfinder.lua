@@ -48,7 +48,7 @@ for _, val in pairs(paths) do
 end
 o.default = default_path
 
-o = s:option(Value, "media_path", translate("Media path"), translate("Not required, all disk is mounted in") .. " <a href='/cgi-bin/luci/admin/services/linkease/file#/?path=/root/mnt' target='_blank'>/mnt</a>")
+o = s:option(Value, "media_path", translate("Media path"), translate("Not required, all disk is mounted in") .. " <a href='/cgi-bin/luci/admin/services/linkease/file/?path=/root/mnt' target='_blank'>/mnt</a>")
 o.datatype = "string"
 
 return m

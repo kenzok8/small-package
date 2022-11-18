@@ -22,7 +22,8 @@ do_install() {
       exit 1
   fi
 
-  [ -z "$http_port" ] && http_port=8096
+  # not conflict with jellyfin
+  [ -z "$http_port" ] && http_port=8097
 
   local cmd="docker run --restart=unless-stopped -d -v \"$config:/config\" "
 
