@@ -127,6 +127,8 @@ svn export https://github.com/Lienol/openwrt-package/branches/other/lean/luci-ap
 svn export https://github.com/fw876/helloworld/trunk/sagernet-core
 svn export https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn export https://github.com/fw876/helloworld/trunk/lua-neturl
+svn export https://github.com/fw876/helloworld/trunk/redsocks2
+svn export https://github.com/fw876/helloworld/trunk/microsocks
 svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn export https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
 svn export https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest/trunk/applications/luci-app-cloudflarespeedtest
