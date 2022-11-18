@@ -1,6 +1,3 @@
-<%
-  local ver = require "luci.version"
--%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,13 +10,14 @@
 </head>
 <body>
     <script src="<%=url('admin/translations', luci.i18n.context.lang)%><%# ?v=PKG_VERSION %>"></script>
-    <script src="<%=resource%>/cbi.js?v=<%=ver.luciversion%>"></script>
-    <script type="text/javascript" src="<%=resource%>/promis.min.js?v=<%=ver.luciversion%>"></script>
-    <script type="text/javascript" src="<%=resource%>/luci.js?v=<%=ver.luciversion%>"></script>
+    <script src="<%=resource%>/cbi.js<%# ?v=PKG_VERSION %>"></script>
+    <script type="text/javascript" src="<%=resource%>/promis.min.js<%# ?v=PKG_VERSION %>"></script>
+    <script type="text/javascript" src="<%=resource%>/luci.js<%# ?v=PKG_VERSION %>"></script>
     <%+tasks/embed%>
     <script>
         (function(){
             var pathe_prefix    =   "<%=prefix%>"
+            window.istoreXVer   =   "<%# PKG_VERSION %>"
             window.HostName     =   "<%=luci.sys.hostname()%>"
             window.path_base    =   pathe_prefix
             window.token        =   "<%=token%>"

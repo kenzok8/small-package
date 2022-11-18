@@ -18,7 +18,7 @@ local container_running = container_status == "running"
 if container_running then
     local port=util.trim(util.exec("/usr/libexec/istorec/emby.sh port"))
     if port == "" then
-        port="8096"
+        port="8097"
     end
 -%>
 <div class="cbi-value cbi-value-last">
