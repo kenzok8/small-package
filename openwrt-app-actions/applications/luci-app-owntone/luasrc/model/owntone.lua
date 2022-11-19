@@ -1,9 +1,9 @@
 local util  = require "luci.util"
 local jsonc = require "luci.jsonc"
 
-local lanraragi = {}
+local owntone = {}
 
-lanraragi.blocks = function()
+owntone.blocks = function()
   local f = io.popen("lsblk -s -f -b -o NAME,FSSIZE,MOUNTPOINT --json", "r")
   local vals = {}
   if f then
@@ -21,7 +21,7 @@ lanraragi.blocks = function()
   return vals
 end
 
-lanraragi.home = function()
+owntone.home = function()
   local uci = require "luci.model.uci".cursor()
   local home_dirs = {}
   home_dirs["main_dir"] = uci:get_first("quickstart", "main", "main_dir", "/root")
@@ -31,8 +31,8 @@ lanraragi.home = function()
   return home_dirs
 end
 
-lanraragi.find_paths = function(blocks, home_dirs, path_name)
-  local appname = '/LANraragi'
+owntone.find_paths = function(blocks, home_dirs, path_name)
+  local appname = '/Owntone'
   local default_path = ''
   local configs = {}
 
@@ -40,7 +40,7 @@ lanraragi.find_paths = function(blocks, home_dirs, path_name)
     return configs, default_path
   else
     if path_name == "Public" then
-      appname = "/Comics"
+      appname = "/Music"
     end
     for _, val in pairs(blocks) do 
       table.insert(configs, val .. "/" .. path_name .. appname)
@@ -51,4 +51,4 @@ lanraragi.find_paths = function(blocks, home_dirs, path_name)
   return configs, default_path
 end
 
-return lanraragi
+return owntone

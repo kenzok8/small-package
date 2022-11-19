@@ -12,7 +12,7 @@
 <script>
   window.IstoreosData = {};
   window.IstoreosFormConfig = {
-    getApi:"/cgi-bin/luci/admin/system/systools/form/",
+    getApi:"/cgi-bin/luci/admin/system/systools/form/" + window.location.search,
     submitApi:"/cgi-bin/luci/admin/system/systools/submit",
     logApi:"/cgi-bin/luci/admin/system/systools/log",
     getHook:function(resp){

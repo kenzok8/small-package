@@ -136,6 +136,14 @@ end
 function get_data() 
   local tool = luci.http.formvalue("tool")
   local extra = {}
+
+  if not tool then
+    local has = luci.http.formvalue("speedtest")
+    if has and has ~= "" then
+      tool = "speedtest"
+    end
+  end
+
   if tool then
     if tool == "speedtest" then
       extra["speedTestServers"] = get_speedtest_servers()
