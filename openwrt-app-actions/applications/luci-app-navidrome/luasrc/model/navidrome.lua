@@ -37,7 +37,7 @@ navidrome.find_paths = function(blocks, home_dirs, path_name)
   local configs = {}
 
   if #blocks == 0 then
-    return
+    return configs, default_path
   else
     if path_name == "Public" then
       appname = "/Music"
