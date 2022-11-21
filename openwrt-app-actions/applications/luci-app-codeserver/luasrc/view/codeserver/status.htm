@@ -18,7 +18,7 @@ local container_running = container_status == "running"
 if container_running then
     local port=util.trim(util.exec("/usr/libexec/istorec/codeserver.sh port"))
     if port == "" then
-        port="8443"
+        port="8085"
     end
 -%>
 <div class="cbi-value cbi-value-last">

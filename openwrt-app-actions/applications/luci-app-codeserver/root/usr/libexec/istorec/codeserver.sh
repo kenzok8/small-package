@@ -24,7 +24,7 @@ do_install() {
       exit 1
   fi
 
-  [ -z "$http_port" ] && http_port=8082
+  [ -z "$http_port" ] && http_port=8085
 
   local cmd="docker run --restart=unless-stopped -d -v \"$config:/config\" \
     --dns=172.17.0.1 \
