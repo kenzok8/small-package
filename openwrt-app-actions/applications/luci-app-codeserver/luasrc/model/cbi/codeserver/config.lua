@@ -19,7 +19,7 @@ s.addremove=false
 s.anonymous=true
 
 o = s:option(Value, "http_port", translate("HTTP Port").."<b>*</b>")
-o.default = "8082"
+o.default = "8085"
 o.datatype = "string"
 
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")

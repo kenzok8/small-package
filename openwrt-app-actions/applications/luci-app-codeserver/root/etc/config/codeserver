@@ -1,5 +1,5 @@
 config main
-	option 'http_port' '8082'
+	option 'http_port' '8085'
 	option 'image_name' 'lscr.io/linuxserver/code-server:latest'
 	option 'config_path' ''
 	option 'env_password' ''
