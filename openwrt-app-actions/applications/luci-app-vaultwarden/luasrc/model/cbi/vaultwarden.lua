@@ -8,8 +8,8 @@ local m, s, o
 
 m = taskd.docker_map("vaultwarden", "vaultwarden", "/usr/libexec/istorec/vaultwarden.sh",
 	translate("Vaultwarden"),
-	translate("Vaultwarden brings together your personal videos, music, photos, and live television.")
-		.. translate("Official website:") .. ' <a href=\"https://vaultwarden.media/\" target=\"_blank\">https://vaultwarden.media/</a>')
+	translate("Vaultwarden is an alternative implementation of the Bitwarden server API written in Rust and compatible with upstream Bitwarden clients.")
+		.. translate("Official website:") .. ' <a href=\"https://github.com/dani-garcia/vaultwarden\" target=\"_blank\">https://github.com/dani-garcia/vaultwarden</a>')
 
 s = m:section(SimpleSection, translate("Service Status"), translate("Vaultwarden status:"))
 s:append(Template("vaultwarden/status"))

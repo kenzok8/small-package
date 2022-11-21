@@ -31,10 +31,10 @@ case ${ACTION} in
     /usr/share/systools/speedtest.run ${1}
   ;;
   "openssl-aes256gcm")
-    /usr/share/systools/speedtest.run ${1}
+    bash "/usr/share/systools/${ACTION}.run"
   ;;
   "openssl-chacha20-poly1305")
-    /usr/share/systools/speedtest.run ${1}
+    bash "/usr/share/systools/${ACTION}.run"
   ;;
   *)
     usage
