@@ -344,6 +344,10 @@ function to_check()
 		model = "ramips_mt76x8/hiwifi_hc5861b"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt76x8-hiwifi_hc5861b-squashfs-sysupgrade.bin"
+    elseif board_name:match("hiwifi,hc5611$") then
+		model = "ramips_mt76x8/hiwifi_hc5611"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ramips-mt76x8-hiwifi_hc5611-squashfs-sysupgrade.bin"
     elseif board_name:match("netgear,r6120$") then
 		model = "ramips_mt76x8/netgear_r6120"
 		check_update()
@@ -384,6 +388,26 @@ function to_check()
 		model = "mvebu_cortexa9/linksys_wrt1200ac"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mvebu-cortexa9-linksys_wrt1200ac-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,wrt1900ac%-v2$") then
+		model = "mvebu_cortexa9/linksys_wrt1900ac-v2"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mvebu-cortexa9-linksys_wrt1900ac-v2-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,wrt1900ac%-v1$") then
+		model = "mvebu_cortexa9/linksys_wrt1900ac-v1"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mvebu-cortexa9-linksys_wrt1900ac-v1-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,wrt3200acm$") then
+		model = "mvebu_cortexa9/linksys_wrt3200acm"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mvebu-cortexa9-linksys_wrt3200acm-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,wrt1900acs$") then
+		model = "mvebu_cortexa9/linksys_wrt1900acs"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mvebu-cortexa9-linksys_wrt1900acs-squashfs-sysupgrade.bin"
+    elseif board_name:match("linksys,wrt32x$") then
+		model = "mvebu_cortexa9/linksys_wrt32x"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mvebu-cortexa9-linksys_wrt32x-squashfs-sysupgrade.bin"
     elseif board_name:match("qihoo,v6$") then
 		model = "ipq60xx_generic/qihoo_v6"
 		check_update()
