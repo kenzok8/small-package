@@ -52,7 +52,7 @@ function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, prot
         odep[`${protocol_name}_tls`] = "tls"
         o.value("none", "none")
         o.value("xtls-rprx-vision", "xtls-rprx-vision")
-        o.value("xtls-rprx-vision-udp443", "xtls-rprx-origin-udp443")
+        o.value("xtls-rprx-vision-udp443", "xtls-rprx-vision-udp443")
         if (client_side) {
             // wait for some other things
         } else {
