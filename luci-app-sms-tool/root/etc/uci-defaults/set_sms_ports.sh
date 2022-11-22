@@ -29,3 +29,45 @@ uci set sms_tool.@sms_tool[0].ussdport=$work
 uci set sms_tool.@sms_tool[0].atport=$work
 uci commit sms_tool
 fi
+
+DEVICE=$(cat /tmp/sysinfo/board_name)
+
+if [[ "$DEVICE" == *"mf289f"* ]]; then
+	
+		uci set sms_tool.@sms_tool[0].readport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].sendport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].ussdport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].atport="/dev/ttyUSB1"
+		uci commit sms_tool
+
+fi
+	
+if [[ "$DEVICE" == *"mf286r"* ]]; then
+	
+		uci set sms_tool.@sms_tool[0].readport="/dev/ttyACM0"
+		uci set sms_tool.@sms_tool[0].sendport="/dev/ttyACM0"
+		uci set sms_tool.@sms_tool[0].ussdport="/dev/ttyACM0"
+		uci set sms_tool.@sms_tool[0].atport="/dev/ttyACM0"
+		uci commit sms_tool
+
+fi
+
+if [[ "$DEVICE" == *"mf286d"* ]]; then
+	
+		uci set sms_tool.@sms_tool[0].readport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].sendport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].ussdport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].atport="/dev/ttyUSB1"
+		uci commit sms_tool
+
+fi
+
+if [[ "$DEVICE" == *"mf286"* ]]; then
+	
+		uci set sms_tool.@sms_tool[0].readport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].sendport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].ussdport="/dev/ttyUSB1"
+		uci set sms_tool.@sms_tool[0].atport="/dev/ttyUSB1"
+		uci commit sms_tool
+
+fi
