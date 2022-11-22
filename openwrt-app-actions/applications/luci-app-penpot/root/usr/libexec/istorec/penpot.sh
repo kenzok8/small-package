@@ -52,11 +52,11 @@ case ${ACTION} in
     do_install
   ;;
   "rm")
-    local config=`uci get penpot.@main[0].config_path 2>/dev/null`
+    config=`uci get penpot.@main[0].config_path 2>/dev/null`
     cd $config && docker-compose down
   ;;
   "start" | "stop" | "restart")
-    local config=`uci get penpot.@main[0].config_path 2>/dev/null`
+    config=`uci get penpot.@main[0].config_path 2>/dev/null`
     cd $config && docker-compose ${ACTION}
   ;;
   "status")
