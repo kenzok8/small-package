@@ -33,3 +33,19 @@ msgstr "Home Assistant 未运行"
 
 msgid "Open the Home Assistant"
 msgstr "打开 Home Assistant"
+
+msgid "Tool"
+msgstr "操作"
+
+msgid "Console"
+msgstr "控制台"
+
+msgid "Only works in LAN"
+msgstr "只在内网环境下工作。"
+
+msgid "Execute"
+msgstr "执行"
+
+msgid "Timezone"
+msgstr "时区"
+

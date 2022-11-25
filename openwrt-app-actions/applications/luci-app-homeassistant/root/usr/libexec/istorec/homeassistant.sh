@@ -3,26 +3,19 @@
 ACTION=${1}
 shift 1
 
-get_image() {
-  IMAGE_NAME="homeassistant/home-assistant:latest"
-}
-
 do_install() {
-  get_image
-  echo "docker pull ${IMAGE_NAME}"
-  docker pull ${IMAGE_NAME}
-  docker rm -f homeassistant
-
-  do_install_detail
-}
-
-do_install_detail() {
   local config=`uci get homeassistant.@homeassistant[0].config_path 2>/dev/null`
+  local IMAGE_NAME=`uci get homeassistant.@homeassistant[0].image_name 2>/dev/null`
+  local tz=`uci get homeassistant.@homeassistant[0].time_zone 2>/dev/null`
 
   if [ -z "$config" ]; then
       echo "config path is empty!"
       exit 1
   fi
+
+  echo "docker pull ${IMAGE_NAME}"
+  docker pull ${IMAGE_NAME}
+  docker rm -f homeassistant
 
   local cmd="docker run --restart=unless-stopped -d \
     -v \"$config:/config\" \
@@ -30,7 +23,9 @@ do_install_detail() {
     --network=host \
     --dns=127.0.0.1 "
 
-  local tz="`cat /tmp/TZ`"
+  if [ -z "$tz" ]; then
+    tz="`cat /tmp/TZ`"
+  fi
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   cmd="$cmd --name homeassistant \"$IMAGE_NAME\""
@@ -38,6 +33,17 @@ do_install_detail() {
   echo "$cmd"
   eval "$cmd"
 
+  RET=$?
+  if [ "$RET" = "0" ]; then
+    do_hacs_install
+  fi
+}
+
+do_hacs_install() {
+  echo "wget -O - https://get.hacs.xyz | bash -" | docker exec -i homeassistant bash -
+  sleep 3
+  echo "restart homeassistant"
+  docker restart homeassistant
 }
 
 usage() {
@@ -68,6 +74,9 @@ case ${ACTION} in
   ;;
   "port")
     docker ps --all -f 'name=homeassistant' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+  ;;
+  "hacs-install")
+    do_hacs_install
   ;;
   *)
     usage

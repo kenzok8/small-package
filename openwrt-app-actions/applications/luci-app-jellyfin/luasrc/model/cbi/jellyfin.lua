@@ -9,12 +9,21 @@ local m, s, o
 m = taskd.docker_map("jellyfin", "jellyfin", "/usr/libexec/istorec/jellyfin.sh",
 	translate("Jellyfin"),
 	translate("Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way.")
-		.. translate("Official website:") .. ' <a href=\"https://jellyfin.org/\" target=\"_blank\">https://jellyfin.org/</a>')
+		.. translate("Official website:") .. ' <a href=\"https://jellyfin.org/\" target=\"_blank\">https://jellyfin.org/</a>'
+		.. "<dl><dt>" .. translate("The following models support hardware transcoding without configuration in Jellyfin:") .. "</dt>"
+		.. "<dd>- Easepi ARS2</dd>"
+		.. "<dd>- " .. translate("RK3568 series (e.g. R5S, R68s, R66s, etc.) with iStoreOS firmware (version 20221123 and above). Other firmwares require MPP and RGA to be turned on, and are not guaranteed to be available.") .. "</dd>"
+		.. "<dt>" .. translate("The following models may support hardware transcoding by referring to the official Jellyfin documentation:") .. "</dt>"
+		.. "<dd>- " .. translate("x86 series") .. "</dd>"
+		.. "<dd>- " .. translate("Raspberry Pi series") .. "</dd>"
+		.. "</dl>")
 
 s = m:section(SimpleSection, translate("Service Status"), translate("Jellyfin status:"))
 s:append(Template("jellyfin/status"))
 
-s = m:section(TypedSection, "jellyfin", translate("Setup"), translate("The following parameters will only take effect during installation or upgrade:"))
+s = m:section(TypedSection, "jellyfin", translate("Setup"),
+		translate("The initial installation of Jellyfin requires at least 2GB of space, please make sure that the Docker data directory has enough space. It is recommended to migrate Docker to a hard drive before installing Jellyfin.") 
+		.. "<br>" .. translate("The following parameters will only take effect during installation or upgrade:"))
 s.addremove=false
 s.anonymous=true
 

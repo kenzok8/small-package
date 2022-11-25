@@ -1,4 +1,5 @@
 #!/bin/sh
+# Author jjm2473@gmail.com
 # Author Xiaobao(xiaobao@linkease.com)
 
 ACTION=${1}
@@ -10,6 +11,8 @@ IMAGE_NAME='default'
 get_image() {
   if grep -Eq ',rtd-?129.$' /proc/device-tree/compatible 2>/dev/null; then
     ARCH="rtd129x"
+  elif grep -q 'rockchip,' /proc/device-tree/compatible 2>/dev/null; then
+    ARCH="rockchip"
   fi
   IMAGE_NAME=`uci get jellyfin.@jellyfin[0].image 2>/dev/null`
   if [ -z "$IMAGE_NAME" -o "$IMAGE_NAME" == "default" ]; then
@@ -18,6 +21,8 @@ get_image() {
       if uname -r | grep -q '^4\.9\.'; then
         IMAGE_NAME="jjm2473/jellyfin-rtk:4.9-latest"
       fi
+    elif [ "${ARCH}" = "rockchip" ]; then
+      IMAGE_NAME="jjm2473/jellyfin-mpp:latest"
     else
       IMAGE_NAME="jellyfin/jellyfin"
     fi
@@ -39,6 +44,7 @@ do_install_detail() {
   local config=`uci get jellyfin.@jellyfin[0].config_path 2>/dev/null`
   local cache=`uci get jellyfin.@jellyfin[0].cache_path 2>/dev/null`
   local port=`uci get jellyfin.@jellyfin[0].port 2>/dev/null`
+  local dev
 
   if [ -z "$config" ]; then
       echo "config path is empty!"
@@ -71,6 +77,14 @@ do_install_detail() {
     -v /sys/class/uio:/sys/class/uio \
     -v /var/tmp/vowb:/var/tmp/vowb \
     --pid=host "
+  elif [ "${ARCH}" = "rockchip" -a -e "/dev/rga" ]; then
+    cmd="$cmd\
+    -t \
+    --privileged "
+    for dev in iep rga dri dma_heap mpp_service mpp-service vpu_service vpu-service \
+        hevc_service hevc-service rkvdec rkvenc avsd vepu h265e ; do
+      [ -e "/dev/$dev" ] && cmd="$cmd --device /dev/$dev"
+    done
   elif [ -d /dev/dri ]; then
     cmd="$cmd\
     --device /dev/dri:/dev/dri \
