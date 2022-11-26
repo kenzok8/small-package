@@ -40,7 +40,7 @@ function to_check()
     		md5 = ""
     	end
     elseif board_name == "x86_generic" then
-    	model = "x86_generic"
+    	model = "x86_32"
     	check_update()
     	if fs.access("/sys/firmware/efi") then
     		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-x86-generic-squashfs-combined-efi.img.gz"
