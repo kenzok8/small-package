@@ -5,7 +5,7 @@ source /lib/functions.sh
 case "$1" in
   save)
     if [ ! -z "$2" ]; then
-      uci set linkease.@linkease[0].preconfig=$ROOT_DIR
+      uci set linkease.@linkease[0].preconfig=$2
       uci commit
     fi
     ;;
