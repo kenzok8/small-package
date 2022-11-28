@@ -43,9 +43,18 @@ local function session_retrieve(sid, allowed_users)
   return nil, nil
 end
 
-local function get_session(sid)
-  if sid then
-    return session_retrieve(sid, nil)
+local function get_session()
+  local sid
+  local key
+  local sdat
+  for _, key in ipairs({"sysauth_https", "sysauth_http", "sysauth"}) do
+    sid = http.getcookie(key)
+    if sid then
+      sid, sdat = session_retrieve(sid, nil)
+      if sid and sdat then
+        return sid, sdat
+      end
+    end
   end
   return nil, nil
 end
@@ -113,10 +122,7 @@ function istore_backend()
       input[#input+1] = string.sub(k, start_len+1, string.len(k)) .. ": " .. v
     end
   end
-  local sid, sdat = get_session(http.getcookie("sysauth"))
-  if sdat == nil then
-    sid, sdat = get_session(http.getcookie('sysauth_%s' % { http.getenv("HTTPS") == "on" and "https" or "http" }))
-  end
+  local sid, sdat = get_session()
   if sdat ~= nil then
     input[#input+1] = "X-Forwarded-Sid: " .. sid
     input[#input+1] = "X-Forwarded-Token: " .. sdat.token
