@@ -75,8 +75,7 @@ CONFIGURE_ARGS+= \
 	--without-x \
 	--disable-debug 
 
-TARGET_LDFLAGS += -liconv 
-
+TARGET_LDFLAGS += $(if $(ICONV_FULL),-liconv)
 
 define Build/Configure
 	cd $(PKG_BUILD_DIR) && sh ./autogen.sh
