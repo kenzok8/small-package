@@ -488,6 +488,10 @@ function to_check()
 		model = "mediatek_filogic/xiaomi_redmi-router-ax6000"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mediatek-filogic-xiaomi_redmi-router-ax6000-squashfs-sysupgrade.bin"
+    elseif board_name:match("mt7981%-360%-t7%-108M$") then
+		model = "mediatek_mt7981/mt7981-360-t7-108M"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mediatek-mt7981-mt7981-360-t7-108M-squashfs-sysupgrade.bin"
     elseif board_name:match("linksys,ea4500$") then
 		model = "kirkwood_generic/linksys_ea4500"
 		check_update()
