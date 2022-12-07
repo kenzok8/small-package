@@ -2,7 +2,6 @@
 
 do_pre_kmodload()
 {
-	return
 	test -e /etc/modules.d/mt7915e && {
 		cat /etc/modules.d/mt7915e | grep -q wed_enable=Y || echo mt7915e wed_enable=Y >/etc/modules.d/mt7915e
 	}
