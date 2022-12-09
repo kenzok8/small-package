@@ -45,7 +45,7 @@ function speed_test(){
 	command="/usr/bin/cdnspeedtest -sl $((speed*125/1000)) -url ${custome_url} -o ${IP_FILE}"
 
 	if [ $ipv6_enabled -eq "1" ] ;then
-		command="${command} -f ${IPV6_TXT} -ipv6"
+		command="${command} -f ${IPV6_TXT}"
 	else
 		command="${command} -f ${IPV4_TXT}"
 	fi
@@ -140,16 +140,18 @@ function ip_replace(){
 
 	# 获取最快 IP（从 result.csv 结果文件中获取第一个 IP）
 	bestip=$(sed -n "2,1p" $IP_FILE | awk -F, '{print $1}')
-	[[ -z "${bestip}" ]] && echo "CloudflareST 测速结果 IP 数量为 0，跳过下面步骤..." && exit 0
-
-	alidns_ip
-	ssr_best_ip
-	vssr_best_ip
-	bypass_best_ip
-	passwall_best_ip
-	passwall2_best_ip
-	restart_app
-	host_ip	
+	if [[ -z "${bestip}" ]]; then
+		echolog "CloudflareST 测速结果 IP 数量为 0,跳过下面步骤..."
+	else
+		alidns_ip
+		ssr_best_ip
+		vssr_best_ip
+		bypass_best_ip
+		passwall_best_ip
+		passwall2_best_ip
+		restart_app
+		host_ip	
+	if
 }
 
 function passwall_best_ip(){
