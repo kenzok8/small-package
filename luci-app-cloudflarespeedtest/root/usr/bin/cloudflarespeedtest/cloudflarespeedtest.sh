@@ -151,7 +151,7 @@ function ip_replace(){
 		passwall2_best_ip
 		restart_app
 		host_ip	
-	if
+	fi
 }
 
 function passwall_best_ip(){
