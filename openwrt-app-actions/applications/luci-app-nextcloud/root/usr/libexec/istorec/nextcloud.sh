@@ -9,16 +9,14 @@ get_image() {
 
 do_install() {
   get_image
-  echo "docker pull ${IMAGE_NAME}"
-  docker pull ${IMAGE_NAME}
-  docker rm -f nextcloud
 
   do_install_detail
 }
 
-do_install_detail() {
+do_install() {
   local config=`uci get nextcloud.@nextcloud[0].config_path 2>/dev/null`
   local port=`uci get nextcloud.@nextcloud[0].port 2>/dev/null`
+  local IMAGE_NAME=`uci get nextcloud.@nextcloud[0].image_name 2>/dev/null`
 
   if [ -z "$config" ]; then
       echo "config path is empty!"
@@ -26,6 +24,11 @@ do_install_detail() {
   fi
 
   [ -z "$port" ] && port=8082
+  [ -z "$IMAGE_NAME" ] && IMAGE_NAME=nextcloud
+
+  echo "docker pull ${IMAGE_NAME}"
+  docker pull ${IMAGE_NAME}
+  docker rm -f nextcloud
 
   local cmd="docker run --restart=unless-stopped -d \
     -v \"$config:/var/www/html\" \

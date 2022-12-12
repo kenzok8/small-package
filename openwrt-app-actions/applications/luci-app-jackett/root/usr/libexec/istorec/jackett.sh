@@ -3,24 +3,12 @@
 ACTION=${1}
 shift 1
 
-get_image() {
-  IMAGE_NAME="linuxserver/jackett:latest"
-}
-
 do_install() {
-  get_image
-  echo "docker pull ${IMAGE_NAME}"
-  docker pull ${IMAGE_NAME}
-  docker rm -f jackett
-
-  do_install_detail
-}
-
-do_install_detail() {
   local save_path=`uci get jackett.@jackett[0].save_path 2>/dev/null`
   local config=`uci get jackett.@jackett[0].config_path 2>/dev/null`
   local port=`uci get jackett.@jackett[0].port 2>/dev/null`
   local auto_update=`uci get jackett.@jackett[0].auto_update 2>/dev/null`
+  local IMAGE_NAME=`uci get jackett.@jackett[0].image_name 2>/dev/null`
 
   if [ -z "$config" ]; then
       echo "config path is empty!"
@@ -32,6 +20,11 @@ do_install_detail() {
   fi
 
   [ -z "$port" ] && port=9117
+  [ -z "$IMAGE_NAME" ] && IMAGE_NAME="linuxserver/jackett:latest"
+
+  echo "docker pull ${IMAGE_NAME}"
+  docker pull ${IMAGE_NAME}
+  docker rm -f jackett
 
   local cmd="docker run --restart=unless-stopped -d \
     -v \"$config:/config\" \
@@ -55,6 +48,8 @@ do_install_detail() {
   echo "$cmd"
   eval "$cmd"
 
+  echo "Waiting 15s to setup"
+  sleep 15
 }
 
 usage() {

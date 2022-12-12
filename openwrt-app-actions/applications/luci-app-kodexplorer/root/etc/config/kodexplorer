@@ -1,3 +1,4 @@
 config kodexplorer
-	option 'cache_path' '/mnt/sda1/kodexplorer'
-	option 'port' '8081'
+  option 'cache_path' ''
+  option 'port' '8081'
+  option 'image_name' 'kodcloud/kodbox:latest'

@@ -3,6 +3,7 @@ LuCI - Lua Configuration Interface
 ]]--
 
 local taskd = require "luci.model.tasks"
+local nextcloud_model = require "luci.model.nextcloud"
 local m, s, o
 
 m = taskd.docker_map("nextcloud", "nextcloud", "/usr/libexec/istorec/nextcloud.sh",
@@ -22,9 +23,23 @@ o.rmempty = false
 o.default = "8082"
 o.datatype = "port"
 
+o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o.rmempty = false
+o.datatype = "string"
+o:value("nextcloud", "nextcloud")
+o.default = "nextcloud"
+
+local blocks = nextcloud_model.blocks()
+local home = nextcloud_model.home()
+
 o = s:option(Value, "config_path", translate("Config path").."<b>*</b>")
 o.rmempty = false
-o.default = "/root/nextcloud/config"
 o.datatype = "string"
+
+local paths, default_path = nextcloud_model.find_paths(blocks, home, "Configs")
+for _, val in pairs(paths) do
+  o:value(val, val)
+end
+o.default = default_path
 
 return m
