@@ -1,0 +1,11 @@
+#!/bin/sh
+
+image_name=`uci get xteve.@main[0].image_name 2>/dev/null`
+
+if [ "$image_name" == "alturismo/xteve_guide2go" -a "`uname -m`" != "x86_64" ]; then
+    uci -q batch <<-EOF >/dev/null
+        set xteve.@main[0].image_name=""
+        commit xteve
+EOF
+fi
+exit 0

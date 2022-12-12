@@ -3,6 +3,7 @@ LuCI - Lua Configuration Interface
 ]]--
 
 local taskd = require "luci.model.tasks"
+local docker = require "luci.docker"
 local xteve_model = require "luci.model.xteve"
 local m, s, o
 
@@ -10,6 +11,10 @@ m = taskd.docker_map("xteve", "xteve", "/usr/libexec/istorec/xteve.sh",
 	translate("Xteve"),
 	translate("Xteve is M3U Proxy for Plex DVR and Emby Live TV.")
 		.. translate("Official website:") .. ' <a href=\"https://github.com/xteve-project/xTeVe\" target=\"_blank\">https://github.com/xteve-project/xTeVe</a>')
+
+local dk = docker.new({socket_path="/var/run/docker.sock"})
+local dockerd_running = dk:_ping().code == 200
+local docker_info = dockerd_running and dk:info().body or {}
 
 s = m:section(SimpleSection, translate("Service Status"), translate("Xteve status:"))
 s:append(Template("xteve/status"))
@@ -26,8 +31,16 @@ o:depends("hostnet", 0)
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
-o:value("alturismo/xteve_guide2go", "alturismo/xteve_guide2go")
-o.default = "alturismo/xteve_guide2go"
+if "x86_64" == docker_info.Architecture then
+	o:value("alturismo/xteve_guide2go", "alturismo/xteve_guide2go")
+	o.default = "alturismo/xteve_guide2go"
+elseif "aarch64" == docker_info.Architecture then
+	o:value("coolyzp/xteve_guide2go:linux-arm64", "coolyzp/xteve_guide2go:linux-arm64")
+	o.default = "coolyzp/xteve_guide2go:linux-arm64"
+else
+	o:value("", translate("Unsupported Architecture"))
+	o.default = ""
+end
 
 local blocks = xteve_model.blocks()
 local home = xteve_model.home()

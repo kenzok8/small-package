@@ -4,11 +4,14 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "Official website:"
 msgstr "官方网站："
 
-msgid "Xteve is M3U Proxy for Plex DVR and Emby Live TV."
-msgstr "Xteve 是一个在线电视源的代理工具。"
+msgid "Xunlei is an download tool, made by Xunlei, Inc."
+msgstr "Xunlei 是一个下载工具。"
 
 msgid "Config path"
 msgstr "配置文件路径"
+
+msgid "Download path"
+msgstr "下载路径"
 
 msgid "Port"
 msgstr "端口"
@@ -19,8 +22,8 @@ msgstr "HTTP 端口"
 msgid "Service Status"
 msgstr "服务状态"
 
-msgid "Xteve status:"
-msgstr "Xteve 的状态信息如下："
+msgid "Xunlei status:"
+msgstr "Xunlei 的状态信息如下："
 
 msgid "Setup"
 msgstr "安装配置"
@@ -31,14 +34,14 @@ msgstr "以下参数只在安装或者升级时才会生效："
 msgid "Status"
 msgstr "状态"
 
-msgid "Xteve is running"
-msgstr "Xteve 运行中"
+msgid "Xunlei is running"
+msgstr "Xunlei 运行中"
 
-msgid "Xteve is not running"
-msgstr "Xteve 未运行"
+msgid "Xunlei is not running"
+msgstr "Xunlei 未运行"
 
-msgid "Open Xteve"
-msgstr "打开 Xteve"
+msgid "Open Xunlei"
+msgstr "打开 Xunlei"
 
-msgid "Unsupported Architecture"
-msgstr "不支持此架构"
+msgid "Not required, all disk is mounted in"
+msgstr "可不填，所有硬盘都在"

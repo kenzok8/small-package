@@ -13,9 +13,6 @@ msgstr "配置文件路径"
 msgid "Port"
 msgstr "端口"
 
-msgid "HTTP Port"
-msgstr "HTTP 端口"
-
 msgid "Service Status"
 msgstr "服务状态"
 
@@ -40,5 +37,20 @@ msgstr "Plex 未运行"
 msgid "Open Plex"
 msgstr "打开 Plex"
 
-msgid "Not required, all disk is mounted in"
-msgstr "可不填，所有硬盘都在"
+msgid "Not required, all disk will be mounted under %s"
+msgstr "可不填，所有硬盘都会挂载到 %s 下"
+
+msgid "Plex running in host network, for DLNA application. Port is always 32400 if enabled"
+msgstr "在宿主网络运行 Plex，以支持 DLNA 等应用，例如投屏，如果启用则端口固定为32400"
+
+msgid "The free space of Docker is less than 2GB, which may cause the installation to fail."
+msgstr "Docker 可用空间已不足2GB，可能导致安装失败。"
+
+msgid "Plex Claim Token"
+msgstr "Plex Claim 令牌"
+
+msgid "Obtain token from %s"
+msgstr "从 %s 获取令牌"
+
+msgid "Please make sure there has enough space"
+msgstr "请确保有足够空间"
