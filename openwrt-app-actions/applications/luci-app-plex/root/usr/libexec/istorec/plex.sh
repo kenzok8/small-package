@@ -13,15 +13,19 @@ do_install() {
   local media=`uci get plex.@main[0].media_path 2>/dev/null`
   local cache=`uci get plex.@main[0].cache_path 2>/dev/null`
 
-  [ -z "$image_name" ] && image_name="plexinc/pms-docker:latest"
+  if [ -z "$config" ]; then
+    echo "config path is empty!"
+    exit 1
+  fi
+  if [ -z "$cache" ]; then
+    echo "cache path is empty!"
+    exit 1
+  fi
+
+  [ -z "$image_name" ] && image_name="linuxserver/plex:latest"
   echo "docker pull ${image_name}"
   docker pull ${image_name}
   docker rm -f plex
-
-  if [ -z "$config" ]; then
-      echo "config path is empty!"
-      exit 1
-  fi
 
   [ -z "$port" ] && port=32400
 
@@ -55,7 +59,8 @@ do_install() {
 
   [ -z "$claim_token" ] || cmd="$cmd -e \"PLEX_CLAIM=$claim_token\""
 
-  [ -z "$cache" ] || cmd="$cmd -v \"$cache:/transcode\""
+  cmd="$cmd -v \"$cache:/transcode\""
+  cmd="$cmd -v \"$cache:/config/Library/Application Support/Plex Media Server/Cache\""
   [ -z "$media" ] || cmd="$cmd -v \"$media:/data\""
 
   cmd="$cmd -v /mnt:/mnt"
@@ -93,7 +98,8 @@ case ${ACTION} in
     docker ps --all -f 'name=plex' --format '{{.State}}'
   ;;
   "port")
-    local port=`uci get plex.@main[0].port 2>/dev/null`
+    local port=`docker ps --all -f 'name=plex' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->32400/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'`
+    [ -z "$port" ] && port=32400
     echo $port
   ;;
   *)

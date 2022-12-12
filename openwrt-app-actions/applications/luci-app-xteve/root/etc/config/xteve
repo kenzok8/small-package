@@ -1,5 +1,4 @@
 config main
 	option 'port' '34400'
-	option 'image_name' 'alturismo/xteve_guide2go'
 	option 'config_path' ''
 

@@ -10,25 +10,31 @@ do_install() {
   local config=`uci get xteve.@main[0].config_path 2>/dev/null`
   local tz=`uci get xteve.@main[0].time_zone 2>/dev/null`
 
-  [ -z "$image_name" ] && image_name="alturismo/xteve_guide2go"
+  if [ -z "$config" ]; then
+    echo "config path is empty!"
+    exit 1
+  fi
+  if [ -z "$image_name" ]; then
+    local arch=`uname -m`
+    [ "$arch" = "x86_64" ] && image_name="alturismo/xteve_guide2go"
+    [ "$arch" = "aarch64" ] && image_name="coolyzp/xteve_guide2go:linux-arm64"
+    if [ -z "$image_name" ]; then
+      echo "$arch is unsupported!" >&2
+      exit 1
+    fi
+  fi
+
   echo "docker pull ${image_name}"
   docker pull ${image_name}
   docker rm -f xteve
 
-  if [ -z "$config" ]; then
-      echo "config path is empty!"
-      exit 1
-  fi
-
   [ -z "$port" ] && port=34400
 
   local cmd="docker run --restart=unless-stopped -d \
-    --log-opt max-size=10m \
-    --log-opt max-file=3 \
-    -v $config/Xteve/:/root/.xteve:rw \
-    -v $config/Xteve/_config/:/config:rw \
-    -v $config/Xteve/_guide2go/:/guide2go:rw \
-    -v /tmp/xteve/:/tmp/xteve:rw \
+    -v $config:/root/.xteve:rw \
+    -v $config/_config:/config:rw \
+    -v $config/_guide2go:/guide2go:rw \
+    -v /tmp/xteve:/tmp/xteve:rw \
     -p $port:34400 "
 
   if [ -z "$tz" ]; then
