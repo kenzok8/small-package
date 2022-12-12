@@ -9,16 +9,14 @@ get_image() {
 
 do_install() {
   get_image
-  echo "docker pull ${IMAGE_NAME}"
-  docker pull ${IMAGE_NAME}
-  docker rm -f kodexplorer
 
   do_install_detail
 }
 
-do_install_detail() {
+do_install() {
   local config=`uci get kodexplorer.@kodexplorer[0].cache_path 2>/dev/null`
   local port=`uci get kodexplorer.@kodexplorer[0].port 2>/dev/null`
+  local IMAGE_NAME=`uci get kodexplorer.@kodexplorer[0].image_name 2>/dev/null`
 
   if [ -z "$config" ]; then
       echo "config path is empty!"
@@ -26,6 +24,12 @@ do_install_detail() {
   fi
 
   [ -z "$port" ] && port=8081
+
+  [ -z "$IMAGE_NAME" ] && IMAGE_NAME="kodcloud/kodbox:latest"
+
+  echo "docker pull ${IMAGE_NAME}"
+  docker pull ${IMAGE_NAME}
+  docker rm -f kodexplorer
 
   local cmd="docker run --restart=unless-stopped -d \
     -v \"$config:/var/www/html\" \
