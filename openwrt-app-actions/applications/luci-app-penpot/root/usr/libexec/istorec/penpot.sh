@@ -27,7 +27,7 @@ do_install() {
   fi
 
   cd $config
-  docker-compose down
+  docker-compose down || true
   docker-compose up -d
   echo "Wait 120 to intialize"
   sleep 120
