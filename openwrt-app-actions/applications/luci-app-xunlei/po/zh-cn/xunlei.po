@@ -4,6 +4,9 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "Official website:"
 msgstr "官方网站："
 
+msgid "Xunlei"
+msgstr "Xunlei下载"
+
 msgid "Xunlei is an download tool, made by Xunlei, Inc."
 msgstr "Xunlei 是一个下载工具。"
 
