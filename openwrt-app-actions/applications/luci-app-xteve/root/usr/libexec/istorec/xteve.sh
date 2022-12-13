@@ -16,8 +16,7 @@ do_install() {
   fi
   if [ -z "$image_name" ]; then
     local arch=`uname -m`
-    [ "$arch" = "x86_64" ] && image_name="alturismo/xteve_guide2go"
-    [ "$arch" = "aarch64" ] && image_name="coolyzp/xteve_guide2go:linux-arm64"
+    [ "$arch" = "x86_64" -o "$arch" = "aarch64" ] && image_name="jjm2473/xteve_guide2go"
     if [ -z "$image_name" ]; then
       echo "$arch is unsupported!" >&2
       exit 1

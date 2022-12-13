@@ -31,12 +31,9 @@ o:depends("hostnet", 0)
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
-if "x86_64" == docker_info.Architecture then
-	o:value("alturismo/xteve_guide2go", "alturismo/xteve_guide2go")
-	o.default = "alturismo/xteve_guide2go"
-elseif "aarch64" == docker_info.Architecture then
-	o:value("coolyzp/xteve_guide2go:linux-arm64", "coolyzp/xteve_guide2go:linux-arm64")
-	o.default = "coolyzp/xteve_guide2go:linux-arm64"
+if "x86_64" == docker_info.Architecture or "aarch64" == docker_info.Architecture then
+	o:value("jjm2473/xteve_guide2go", "jjm2473/xteve_guide2go")
+	o.default = "jjm2473/xteve_guide2go"
 else
 	o:value("", translate("Unsupported Architecture"))
 	o.default = ""

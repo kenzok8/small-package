@@ -51,6 +51,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * 2022-10-06 `[OpenWrt 22.03 or above only]` feat: use goto instead of jump in nftables rules
 * 2022-10-29 `[OpenWrt 22.03 or above only]` feat: rewrite gen_config in ucode
 * 2022-11-01 feat: support xtls-rprx-vision
+* 2022-12-13 fix: force restart dnsmasq on interface change
 
 ## Changelog 2021
 

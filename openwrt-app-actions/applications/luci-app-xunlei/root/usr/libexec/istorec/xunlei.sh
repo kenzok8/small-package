@@ -21,14 +21,6 @@ do_install() {
       exit 1
   fi
 
-  local unameinfo=`uname -m`
-  if echo "$unameinfo" | grep -Eqi 'x86_64'; then
-    echo "x86_64 supported"
-  else
-    echo "$unameinfo not supported, only x86_64 supported"
-    exit 1
-  fi
-
   [ -z "$port" ] && port=2345
 
   local cmd="docker run --restart=unless-stopped -d -h $hostname \

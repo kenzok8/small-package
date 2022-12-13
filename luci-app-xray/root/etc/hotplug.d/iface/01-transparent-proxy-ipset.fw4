@@ -7,6 +7,7 @@ if [ -n "$DEFAULT_GATEWAY" ] ; then
 		flush set inet fw4 tp_spec_def_gw
 		add element inet fw4 tp_spec_def_gw { $DEFAULT_GATEWAY }
 	EOF
+    service dnsmasq restart
 else
     logger -st transparent-proxy-ipset[$$] -p6 "default gateway not available, please wait for interface ready"
 fi
