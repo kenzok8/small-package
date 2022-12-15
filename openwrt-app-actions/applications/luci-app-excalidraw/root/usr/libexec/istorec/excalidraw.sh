@@ -30,6 +30,7 @@ do_install() {
   fi
 
   cd $config
+  export COMPOSE_PROJECT_NAME=linkease-excalidraw
   docker-compose down || true
   docker-compose up -d
 }
@@ -59,10 +60,10 @@ case ${ACTION} in
     cd $config && docker-compose ${ACTION}
   ;;
   "status")
-    docker ps --all -f 'name=excalidraw_frontend_1' --format '{{.State}}'
+    docker ps --all -f 'name=linkease-excalidraw_frontend_1' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=excalidraw_frontend_1' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=linkease-excalidraw_frontend_1' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
   ;;
   *)
     usage
