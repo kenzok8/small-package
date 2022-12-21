@@ -4,6 +4,8 @@
 START=95
 
 DEVCTL=/dev/natflow_user_ctl
+IPOPS="lua /usr/lib/lua/ipops.lua"
+test -e /usr/share/natflow/ipops.lua && IPOPS="lua /usr/share/natflow/ipops.lua"
 
 auth_idx=0
 
@@ -37,7 +39,7 @@ natflow_user_setup()
 
 	#echo auth id=0,szone=0,type=auto,sipgrp=auth_sipgrp,ipwhite=,macwhite=
 
-	sipgrp=$(lua /usr/lib/lua/ipops.lua netStrings2ipcidrStrings "$sipgrp")
+	sipgrp=$($IPOPS netStrings2ipcidrStrings "$sipgrp")
 	ipset create auth_sipgrp_$idx nethash 2>/dev/null
 	ipset flush auth_sipgrp_$idx
 	for net in $(echo "$sipgrp" | sed 's/,/ /g'); do
@@ -46,7 +48,7 @@ natflow_user_setup()
 
 	cmd="auth id=$idx,szone=$szone,type=$type,sipgrp=auth_sipgrp_$idx"
 	if test -n "$ipwhite"; then
-		ipwhite=$(lua /usr/lib/lua/ipops.lua netStrings2ipcidrStrings "$ipwhite")
+		ipwhite=$($IPOPS netStrings2ipcidrStrings "$ipwhite")
 		ipset create auth_ipwhite_$idx nethash 2>/dev/null
 		ipset flush auth_ipwhite_$idx
 		for net in $(echo "$ipwhite" | sed 's/,/ /g'); do
@@ -98,5 +100,6 @@ stop() {
 }
 
 restart() {
+	stop
 	start
 }
