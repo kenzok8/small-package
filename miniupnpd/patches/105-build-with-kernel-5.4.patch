@@ -1,7 +1,5 @@
-Index: miniupnpd-2.0.20170421/netfilter/iptcrdr.c
-===================================================================
---- miniupnpd-2.0.20170421.orig/netfilter/iptcrdr.c
-+++ miniupnpd-2.0.20170421/netfilter/iptcrdr.c
+--- a/netfilter/iptcrdr.c
++++ b/netfilter/iptcrdr.c
 @@ -1116,9 +1116,13 @@ addnatrule(int proto, unsigned short epo
  	} else {
  		match = get_udp_match(eport, 0);
