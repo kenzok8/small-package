@@ -11,9 +11,6 @@ PKG_NAME:=miniupnpd
 PKG_VERSION:=2.0.20170421
 PKG_RELEASE:=3
 
-# Content-Encoding conflict, can refer to this [issue](https://github.com/miniupnp/miniupnp/issues/605)
-# so switch mirror repo to http://miniupnp.tuxfamily.org
-# PKG_SOURCE_URL:=http://miniupnp.free.fr/files
 PKG_SOURCE_URL:=http://miniupnp.tuxfamily.org/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=9677aeccadf73b4bf8bb9d832c32b5da8266b4d58eed888f3fd43d7656405643
