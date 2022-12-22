@@ -246,6 +246,28 @@ local function rangeSet_sub_rangeSet(rangeSetA, rangeSetB)
 	return rangeSetA
 end
 
+local function range_in_rangeSet(range, rangeSet)
+	for _, r in ipairs(rangeSet) do
+		if range[1] >= r[1] and range[2] <= r[2] then
+			return true
+		end
+	end
+	return false
+end
+
+local function rangeSet_in_rangeSet(rangeSetA, rangeSetB)
+	rangeSetA = rangeSetA or {}
+	if #rangeSetA == 0 then
+		return true
+	end
+	for _, range in ipairs(rangeSetA) do
+		if  not range_in_rangeSet(range, rangeSetB) then
+			return false
+		end
+	end
+	return true
+end
+
 -- netStringSet: [netString, ...]
 local function netStringSet2rangeSet(netStringSet)
 	local rangeSet = {}
@@ -364,6 +386,7 @@ local __func__ =  {
 	rangeSet_add_range			= rangeSet_add_range,
 	rangeSet_del_range			= rangeSet_del_range,
 	rangeSet_sub_rangeSet			= rangeSet_sub_rangeSet,
+	rangeSet_in_rangeSet			= rangeSet_in_rangeSet,
 }
 
 -- api for test_func
@@ -413,6 +436,29 @@ local function netStrings_sub_netStrings(argv)
 	return 0
 end
 
+-- eg: lua ipops.lua netStrings_test_netStrings "192.168.15.0/24" "192.168.15.0/29"
+local function netStrings_test_netStrings(argv)
+	local netString
+	local rangeSetA = {}
+	local rangeSetB = {}
+	local netStringsA, netStringsB = argv[1], argv[2]
+	if not netStringsA or not netStringsB then
+		return -1
+	end
+	for netString in netStringsA:gmatch("[^,]+") do
+		rangeSetA = rangeSet_add_range(rangeSetA, netString2range(netString))
+	end
+	for netString in netStringsB:gmatch("[^,]+") do
+		rangeSetB = rangeSet_add_range(rangeSetB, netString2range(netString))
+	end
+
+	if (rangeSet_in_rangeSet(rangeSetB, rangeSetA)) then
+		return 0
+	end
+
+	return 1
+end
+
 local test_func = {
 	netStrings2ipcidrStrings = {
 		argc = 1,
@@ -421,6 +467,10 @@ local test_func = {
 	netStrings_sub_netStrings = {
 		argc = 2,
 		func = netStrings_sub_netStrings
+	},
+	netStrings_test_netStrings = {
+		argc = 2;
+		func = netStrings_test_netStrings
 	}
 }
 

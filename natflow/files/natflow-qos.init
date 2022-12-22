@@ -21,23 +21,53 @@ ipv4set_add()
 	done
 }
 
+get_rate_data()
+{
+	local cnt num unit
+	echo -n $1 | grep -qi "bps$" || {
+		num=$1
+		echo -n $((num)) # assume num B/s
+		return
+	}
+	cnt=`echo -n $1 | wc -c || echo 0`
+	test $cnt -le 4 && echo -n 0 && return # assume 0 B/s
+
+	num=`echo -n $1 | cut -c0-$((cnt-4))`
+	unit=`echo -n $1 | cut -c$((cnt-3))-$cnt | tr A-Z a-z`
+	case $unit in
+		"kbps")
+			num=$((num*128))
+		;;
+		"mbps")
+			num=$((num*128*1024))
+		;;
+		"gbps")
+			num=$((num*128*1024*1024))
+		;;
+		*)
+			num=$((num/8))
+		;;
+	esac
+	echo -n $num # assume num bps
+}
+
 natflow_qos_setup()
 {
 	local idx=$qos_idx
 	qos_idx=$((qos_idx+1))
 	local cfg="$1"
-	local enabled user user_port remote remote_port proto rxbytes txbytes
+	local disabled user user_port remote remote_port proto rx_rate tx_rate
 
-	config_get enabled "$cfg" enabled
+	config_get disabled "$cfg" disabled 0
 	config_get user "$cfg" user
 	config_get user_port "$cfg" user_port
 	config_get remote "$cfg" remote
 	config_get remote_port "$cfg" remote_port
 	config_get proto "$cfg" proto
-	config_get rxbytes "$cfg" rxbytes 0
-	config_get txbytes "$cfg" txbytes 0
+	config_get rx_rate "$cfg" rx_rate 0
+	config_get tx_rate "$cfg" tx_rate 0
 
-	[ "$enabled" = "1" ] || return 0
+	[ "$disabled" = "1" ] && return 0
 
 	#echo add user=<ipset/ip/ipcidr>,user_port=<portset/port>,remote=<ipset/ip/ipcidr>,remote_port=<portset/port>,proto=<tcp/udp>,rxbytes=Bytes,txbytes=Bytes
 
@@ -79,7 +109,10 @@ natflow_qos_setup()
 		remote_port=qos_rp$idx
 	fi
 
-	cmd="add user=$user,user_port=$user_port,remote=$remote,remote_port=$remote_port,proto=$proto,rxbytes=$rxbytes,txbytes=$txbytes"
+	rx_rate=$(get_rate_data "$rx_rate")
+	tx_rate=$(get_rate_data "$tx_rate")
+
+	cmd="add user=$user,user_port=$user_port,remote=$remote,remote_port=$remote_port,proto=$proto,rxbytes=$rx_rate,txbytes=$tx_rate"
 
 	echo "$cmd" >$DEVCTL
 }
