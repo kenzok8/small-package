@@ -14,6 +14,7 @@ disable_gro() {
 }
 
 start() {
+	test -c /dev/natflow_ctl || return 0
 	disable_gro
 	hwnat_wed=$(uci get natflow.main.hwnat_wed 2>/dev/null || echo 0)
 	hwnat=$(uci get natflow.main.hwnat 2>/dev/null || echo 0)
@@ -38,6 +39,7 @@ start() {
 }
 
 stop() {
+	test -c /dev/natflow_ctl || return 0
 	echo disabled=1 >/dev/natflow_ctl
 }
 
