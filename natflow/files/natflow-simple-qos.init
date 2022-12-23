@@ -85,6 +85,7 @@ start() {
 }
 
 stop() {
+	kill -TERM $(pgrep -f "cat /dev/userinfo_event_ctl") &>/dev/null
 	cat /dev/userinfo_ctl | while read line; do
 		ip=${line//,*}
 		echo set-token-ctrl $ip 0 0 >/dev/userinfo_ctl
