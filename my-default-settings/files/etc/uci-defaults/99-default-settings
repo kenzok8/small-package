@@ -84,15 +84,16 @@ if [[ ! "$version" || "$version" -lt 1 ]]; then
 		if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
 			uci -q set wireless.default_${radio}.ssid="${SSID}_5G"
 			if [[ "${htmode}" == HE* ]]; then   # AX
-				uci -q set wireless.${radio}.htmode="HE160"
-				uci -q set wireless.${radio}.channel='44'
+				if [[ "$(board_name)" == *cr660x || "$(board_name)" == *ax9000 || "$DISTRIB_TARGET" == 'ipq60xx/generic' || "$DISTRIB_TARGET" == 'ipq807x/ipq60xx' ]]; then
+					uci -q set wireless.${radio}.htmode="HE80"
+					uci -q set wireless.${radio}.channel='157'
+				else
+					uci -q set wireless.${radio}.htmode="HE160"
+					uci -q set wireless.${radio}.channel='44'
+				fi
 			else
 				uci -q set wireless.${radio}.htmode="VHT80"   #AC
 				uci -q set wireless.${radio}.channel="157"
-			fi
-			if [[ "$(board_name)" == *cr660x || "$(board_name)" == *ax9000 || "$DISTRIB_TARGET" == 'ipq60xx/generic' ]]; then
-				uci -q set wireless.${radio}.htmode="HE80"
-				uci -q set wireless.${radio}.channel='157'
 			fi
 			if [[ "$(board_name)" == *ax6000 ]]; then
 				uci -q set wireless.${radio}.htmode="VHT160"
