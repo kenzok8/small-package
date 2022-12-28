@@ -1,11 +1,21 @@
---- a/src/base/bittorrent/session.cpp
-+++ b/src/base/bittorrent/session.cpp
-@@ -116,7 +116,7 @@ const QString CATEGORIES_FILE_NAME {QStr
+--- a/src/base/version.h.in
++++ b/src/base/version.h.in
+@@ -31,7 +31,7 @@
+ #define QBT_VERSION_MAJOR 4
+ #define QBT_VERSION_MINOR 4
+ #define QBT_VERSION_BUGFIX 5
+-#define QBT_VERSION_BUILD 10
++#define QBT_VERSION_BUILD 0
+ #define QBT_VERSION_STATUS ""  // Should be empty for stable releases!
+
+--- a/src/base/bittorrent/sessionimpl.cpp
++++ b/src/base/bittorrent/sessionimpl.cpp
+@@ -122,7 +122,7 @@ const int STATISTICS_SAVE_INTERVAL = std::chrono::milliseconds(15min).count();
  namespace
  {
      const char PEER_ID[] = "qB";
--    const char USER_AGENT[] = "qBittorrent Enhanced/" QBT_VERSION_2;
-+    const char USER_AGENT[] = "qBittorrent/" QBT_VERSION_2;
+-    const auto USER_AGENT = QStringLiteral("qBittorrent Enhanced/" QBT_VERSION_2);
++    const auto USER_AGENT = QStringLiteral("qBittorrent/" QBT_VERSION_2);
  
      void torrentQueuePositionUp(const lt::torrent_handle &handle)
      {
