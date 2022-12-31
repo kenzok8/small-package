@@ -4135,3 +4135,7 @@ display:none;
 #cbi-vssr+.cbi-page-actions.control-group.fixed {
     bottom: 4.8rem;
 }
+
+#cbi-passwall+.cbi-page-actions.control-group.fixed {
+    bottom: 3.3rem;
+}
