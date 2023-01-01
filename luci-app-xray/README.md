@@ -24,6 +24,10 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * For OpenWrt 19.07 releases, you need to prepare your own xray-core package (just download from [Releases · yichya/openwrt-xray](https://github.com/yichya/openwrt-xray/releases) and install that) because building Xray from source requires Go 1.17 which is currently only available in at least OpenWrt 21.02 releases.
 * This project may change its code structure, configuration files format, user interface or dependencies quite frequently since it is still in its very early stage. 
 
+## Changelog 2023
+
+* 2023-01-01 feat: optional restart of dnsmasq on interface change
+
 ## Changelog 2022
 
 * 2022-01-08 feat: bridge; add DomainStrategy for outbound; minor UI changes

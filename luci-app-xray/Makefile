@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=1.23.3
+PKG_VERSION:=1.24.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -38,6 +38,10 @@ config PACKAGE_XRAY_INFINITE_RETRY_ON_STARTUP
 config PACKAGE_XRAY_RLIMIT_NOFILE_LARGE
 	bool "Increase Max Open Files Limit (recommended)"
 	default y
+
+config PACKAGE_XRAY_RESTART_DNSMASQ_ON_IFACE_CHANGE
+	bool "Restart dnsmasq on interface change (select this if using dnsmasq v2.87)"
+	default n
 
 choice
 	prompt "Limit memory use by setting rlimit_data (experimental)"
@@ -103,6 +107,9 @@ endif
 	$(INSTALL_DIR) $(1)/usr/share/xray
 	$(LN) /var/run/xray.pid $(1)/usr/share/xray/xray.pid
 	$(LN) /usr/bin/xray $(1)/usr/share/xray/xray
+ifdef CONFIG_PACKAGE_XRAY_RESTART_DNSMASQ_ON_IFACE_CHANGE
+	$(INSTALL_DATA) ./root/usr/share/xray/restart_dnsmasq_on_iface_change $(1)/usr/share/xray/restart_dnsmasq_on_iface_change
+endif
 ifdef CONFIG_PACKAGE_XRAY_INFINITE_RETRY_ON_STARTUP
 	$(INSTALL_DATA) ./root/usr/share/xray/infinite_retry $(1)/usr/share/xray/infinite_retry
 endif
