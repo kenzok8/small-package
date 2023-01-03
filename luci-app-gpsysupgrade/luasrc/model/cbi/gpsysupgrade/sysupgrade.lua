@@ -412,14 +412,14 @@ function to_check()
 		model = "ipq60xx_generic/qihoo_v6"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-qihoo_v6-squashfs-nand-sysupgrade.bin"
-    elseif board_name:match("gl%-ax1800$") then
-		model = "ipq60xx_generic/linet_gl-ax1800"
+    elseif board_name:match("glinet,axt1800$") then
+		model = "ipq807x_ipq60xx/glinet_axt1800"
 		check_update()
-		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-glinet_gl-ax1800-squashfs-nand-sysupgrade.bin"
-    elseif board_name:match("gl%-axt1800$") then
-		model = "ipq60xx_generic/glinet_gl-axt1800"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-glinet_axt1800-squashfs-sysupgrade.tar"
+    elseif board_name:match("glinet,ax1800$") then
+		model = "ipq807x_ipq60xx/glinet_ax1800"
 		check_update()
-		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq60xx-generic-glinet_gl-axt1800-squashfs-nand-sysupgrade.bin"
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ipq807x-glinet_ax1800-squashfs-sysupgrade.tar"
     elseif board_name:match("linksys,mr7350$") then
 		model = "ipq60xx_generic/linksys_mr7350"
 		check_update()
