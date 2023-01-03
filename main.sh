@@ -22,7 +22,7 @@ git clone --depth 1 https://github.com/kiddin9/openwrt-bypass && mvdir openwrt-b
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
 git clone --depth 1 https://github.com/kiddin9/aria2
 git clone --depth 1 https://github.com/kiddin9/luci-app-baidupcs-web
-git clone --depth 1 https://github.com/kiddin9/luci-theme-edge
+git clone --depth 1 -b 18.06 https://github.com/kiddin9/luci-theme-edge
 git clone --depth 1 https://github.com/kiddin9/qBittorrent-Enhanced-Edition
 git clone --depth 1 https://github.com/kiddin9/autoshare && mvdir autoshare
 git clone --depth 1 https://github.com/kiddin9/openwrt-openvpn && mvdir openwrt-openvpn
