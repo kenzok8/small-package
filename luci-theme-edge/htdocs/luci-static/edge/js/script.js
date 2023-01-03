@@ -1,92 +1,99 @@
 /**
- *  Edge is a clean HTML5 theme for LuCI. It is based on luci-theme-Argon
+ *  Argon is a clean HTML5 theme for LuCI. It is based on luci-theme-material and Argon Template
  *
- *  luci-theme-edge
- *      Copyright 2020 Kiddin'
+ *  luci-theme-argon
+ *      Copyright 2019 Jerrykuku <jerrykuku@qq.com>
  *
  *  Have a bug? Please create an issue here on GitHub!
- *      https://github.com/kiddin9/luci-theme-edge/issues
+ *      https://github.com/jerrykuku/luci-theme-argon/issues
  *
- *  luci-theme-material: 
- *      Copyright 2015 Lutty Yang <lutty@wcan.in>
- *		https://github.com/LuttyYang/luci-theme-material/
+ *  luci-theme-bootstrap:
+ *      Copyright 2008 Steven Barth <steven@midlink.org>
+ *      Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+ *      Copyright 2012 David Menting <david@nut-bolt.nl>
+ *
+ *  MUI:
+ *      https://github.com/muicss/mui
+ *
+ *  luci-theme-material:
+ *      https://github.com/LuttyYang/luci-theme-material/
  *
  *  Agron Theme
  *	    https://demos.creative-tim.com/argon-dashboard/index.html
  *
  *  Login background
  *      https://unsplash.com/
- *  Font generate by Icomoon<icomoon.io>
  *
  *  Licensed to the public under the Apache License 2.0
  */
 
-document.addEventListener('luci-loaded', function(ev) {
+/*
+ *  Font generate by Icomoon<icomoon.io>
+ */
 (function ($) {
-	$(".main > .loading").fadeOut();
+    $(".main > .loading").fadeOut();
 
-	/**
-	 * trim text, Remove spaces, wrap
-	 * @param text
-	 * @returns {string}
-	 */
-	function trimText(text) {
-		return text.replace(/[ \t\n\r]+/g, " ");
-	}
+    /**
+     * trim text, Remove spaces, wrap
+     * @param text
+     * @returns {string}
+     */
+    function trimText(text) {
+        return text.replace(/[ \t\n\r]+/g, " ");
+    }
 
-	var lastNode = undefined;
-	var mainNodeName = undefined;
 
-	var nodeUrl = "";
-	(function(node){
-		var luciLocation;
-		if (node[0] == "admin"){
-			luciLocation = [node[1], node[2]];
-		}else{
-			luciLocation = node;
-		}
+    var lastNode = undefined;
+    var mainNodeName = undefined;
 
-		for(var i in luciLocation){
-			nodeUrl += luciLocation[i];
-			if (i != luciLocation.length - 1){
-				nodeUrl += "/";
-			}
-		}
-	})(luciLocation);
+    var nodeUrl = "";
+    (function (node) {
+        if (node[0] == "admin") {
+            luciLocation = [node[1], node[2]];
+        } else {
+            luciLocation = node;
+        }
 
-	/**
-	 * get the current node by Burl (primary)
-	 * @returns {boolean} success?
-	 */
-	function getCurrentNodeByUrl() {
-		var ret = false;
-		if (!$('body').hasClass('logged-in')) {
-			luciLocation = ["Main", "Login"];
-			return true;
-		}
+        for (var i in luciLocation) {
+            nodeUrl += luciLocation[i];
+            if (i != luciLocation.length - 1) {
+                nodeUrl += "/";
+            }
+        }
+    })(luciLocation);
 
-		$(".main > .main-left > .nav > .slide > .menu").each(function () {
-			var ulNode = $(this);
-			ulNode.next().find("a").each(function () {
-				var that = $(this);
-				var href = that.attr("href");
+    /**
+     * get the current node by Burl (primary)
+     * @returns {boolean} success?
+     */
+    function getCurrentNodeByUrl() {
+        var ret = false;
+        if (!$('body').hasClass('logged-in')) {
+            luciLocation = ["Main", "Login"];
+            return true;
+        }
+        $(".main > .main-left > .nav > .slide > .active").next(".slide-menu").stop(true).slideUp("fast");
+        $(".main > .main-left > .nav > .slide > .menu").removeClass("active");
+        $(".main > .main-left > .nav > .slide > .menu").each(function () {
+            var ulNode = $(this);
 
-				if (href.indexOf(nodeUrl) != -1) {
-					ulNode.click();
-					ulNode.next(".slide-menu").stop(true, true);
-					lastNode = that.parent();
-					lastNode.addClass("active");
-					ret = true;
-					return true;
-				}
-			});
-		});
-		return ret;
-	}
+            ulNode.next().find("a").each(function () {
+                var that = $(this);
+                var href = that.attr("href");
 
-	/**
-	 * menu click
-	 */
+                if (href.indexOf(nodeUrl) != -1) {
+                    ulNode.click();
+                    ulNode.next(".slide-menu").stop(true, true);
+                    lastNode = that.parent();
+                    lastNode.addClass("active");
+                    ret = true;
+                    return true;
+                }
+            });
+        });
+        return ret;
+    }
+
 	/**
 	 * menu click
 	 */
@@ -111,127 +118,173 @@ document.addEventListener('luci-loaded', function(ev) {
 		return false;
 	});
 
-	/**
-	 * hook menu click and add the hash
-	 */
-	$(".main > .main-left > .nav > .slide > .slide-menu > li > a").click(function () {
-		if (lastNode != undefined) lastNode.removeClass("active");
-		$(this).parent().addClass("active");
-		$(".main > .loading").fadeIn("fast");
-		return true;
-	});
+// define what element should be observed by the observer
+// and what types of mutations trigger the callback
+    if ($("#cbi-dhcp-lan-ignore").length > 0) {
+        observer.observe(document.getElementById("cbi-dhcp-lan-ignore"), {
+            subtree: true,
+            attributes: true
+        });
+    }
 
-	/**
-	 * fix menu click
-	 */
-	$(".main > .main-left > .nav > .slide > .slide-menu > li").click(function () {
-		if (lastNode != undefined) lastNode.removeClass("active");
-		$(this).addClass("active");
-		$(".main > .loading").fadeIn("fast");
-		window.location = $($(this).find("a")[0]).attr("href");
-		return false;
-	});
+    /**
+     * hook menu click and add the hash
+     */
+    $(".main > .main-left > .nav > .slide > .slide-menu > li > a").click(function () {
+        if (lastNode != undefined)
+            lastNode.removeClass("active");
+        $(this).parent().addClass("active");
+        $(".main > .loading").fadeIn("fast");
+        return true;
+    });
 
-	/**
-	 * get current node and open it
-	 */
-	if (getCurrentNodeByUrl()) {
-		mainNodeName = "node-" + luciLocation[0] + "-" + luciLocation[1];
-		mainNodeName = mainNodeName.replace(/[ \t\n\r\/]+/g, "_").toLowerCase();
-		$("body").addClass(mainNodeName);
-	}
+    /**
+     * fix menu click
+     */
+    $(".main > .main-left > .nav > .slide > .slide-menu > li").click(function () {
+        if (lastNode != undefined)
+            lastNode.removeClass("active");
+        $(this).addClass("active");
+        $(".main > .loading").fadeIn("fast");
+        window.location = $($(this).find("a")[0]).attr("href");
+        return false;
+    });
+    
+    /**
+     * fix submenu click
+     */
+    $("#maincontent > .container > .tabs > li").click(function () {
+        $(".main > .loading").fadeIn("fast");
+        window.location = $($(this).find("a")[0]).attr("href");
+        return false;
+    });
 
-	/**
-	 * Sidebar expand
-	 */
-	var showSide = false;
-	$(".showSide").click(function () {
-		if (showSide) {
-			$(".darkMask").stop(true).fadeOut("fast");
-			$(".main-left").stop(true).animate({
-				width: "0"
-			}, "200");
-			$(".main-right").css("overflow-y", "visible");
-			showSide = false;
-		} else {
-			$(".darkMask").stop(true).fadeIn("fast");
-			$(".main-left").stop(true).animate({
-				width: "13rem"
-			}, "200");
-			$(".main-right").css("overflow-y", "hidden");
-			showSide = true;
-		}
-	});
+    /**
+     * get current node and open it
+     */
+    if (getCurrentNodeByUrl()) {
+        mainNodeName = "node-" + luciLocation[0] + "-" + luciLocation[1];
+        mainNodeName = mainNodeName.replace(/[ \t\n\r\/]+/g, "_").toLowerCase();
+        $("body").addClass(mainNodeName);
+    }
+    $(".cbi-button-up").val("");
+    $(".cbi-button-down").val("");
 
-	$(".darkMask").click(function () {
-		if (showSide) {
-			showSide = false;
-			$(".darkMask").stop(true).fadeOut("fast");
-			$(".main-left").stop(true).animate({
-				width: "0"
-			}, "fast");
-			$(".main-right").css("overflow-y", "visible");
-		}
-	});
 
-	$(window).resize(function () {
-		if ($(window).width() > 921) {
-			$(".main-left").css("width", "");
-			$(".darkMask").stop(true);
-			$(".darkMask").css("display", "none");
-			showSide = false;
-		}
-	});
+    /**
+     * hook other "A Label" and add hash to it.
+     */
+    $("#maincontent > .container").find("a").each(function () {
+        var that = $(this);
+        var onclick = that.attr("onclick");
+        if (onclick == undefined || onclick == "") {
+            that.click(function () {
+                var href = that.attr("href");
+                if (href.indexOf("#") == -1) {
+                    $(".main > .loading").fadeIn("fast");
+                    return true;
+                }
+            });
+        }
+    });
 
-	/**
-	 * fix legend position
-	 */
-	$("legend").each(function () {
-		var that = $(this);
-		that.after("<span class='panel-title'>" + that.text() + "</span>");
-	});
+    /**
+     * Sidebar expand
+     */
+    var showSide = false;
+    $(".showSide").click(function () {
+        if (showSide) {
+            $(".darkMask").stop(true).fadeOut("fast");
+            $(".main-left").stop(true).animate({
+                width: "0"
+            }, "fast");
+            $(".main-right").css("overflow-y", "auto");
+            showSide = false;
+        } else {
+            $(".darkMask").stop(true).fadeIn("fast");
+            $(".main-left").stop(true).animate({
+                width: "15rem"
+            }, "fast");
+            $(".main-right").css("overflow-y", "hidden");
+            showSide = true;
+        }
+    });
 
-	$(".cbi-section-table-titles, .cbi-section-table-descr, .cbi-section-descr").each(function () {
-		var that = $(this);
-		if (that.text().trim() == ""){
-			that.css("display", "none");
-		}
-	});
 
-	$(".main-right").focus();
-	$(".main-right").blur();
-	$("input").attr("size", "0");
-	$(".cbi-button-up").val("__");
-	$(".cbi-button-down").val("__");
-	$(".slide > a").removeAttr("href");
+    $(".darkMask").click(function () {
+        if (showSide) {
+            showSide = false;
+            $(".darkMask").stop(true).fadeOut("fast");
+            $(".main-left").stop(true).animate({
+                width: "0"
+            }, "fast");
+            $(".main-right").css("overflow-y", "auto");
+        }
+    });
 
-	if (mainNodeName != undefined) {
-		console.log(mainNodeName);
-		switch (mainNodeName) {
-			case "node-status-system_log":
-			case "node-status-kernel_log":
-				$("#syslog").focus(function () {
-					$("#syslog").blur();
-					$(".main-right").focus();
-					$(".main-right").blur();
-				});
-				break;
-			case "node-status-firewall":
-				var button = $(".node-status-firewall > .main fieldset li > a");
-				button.addClass("cbi-button cbi-button-reset a-to-btn");
-				break;
-			case "node-system-reboot":
-				var button = $(".node-system-reboot > .main > .main-right p > a");
-				button.addClass("cbi-button cbi-input-reset a-to-btn");
-				break;
-		}
-	}
-	
+    $(window).resize(function () {
+        if ($(window).width() > 921) {
+            $(".main-left").css("width", "");
+            $(".darkMask").stop(true);
+            $(".darkMask").css("display", "none");
+            showSide = false;
+        }
+    });
+
+    /**
+     * fix legend position
+     */
+    $("legend").each(function () {
+        var that = $(this);
+        that.after("<span class='panel-title'>" + that.text() + "</span>");
+    });
+
+    $(".cbi-section-table-titles, .cbi-section-table-descr, .cbi-section-descr").each(function () {
+        var that = $(this);
+        if (that.text().trim() == "") {
+            that.css("display", "none");
+        }
+    });
+
+    $(".node-main-login > .main .cbi-value.cbi-value-last .cbi-input-text").focus(function () {
+        //$(".node-main-login > .main > .main-right > .login-bg").addClass("blur");
+    });
+    $(".node-main-login > .main .cbi-value.cbi-value-last .cbi-input-text").blur(function () {
+        //$(".node-main-login > .main > .main-right > .login-bg").removeClass("blur");
+    });
+
+
+    $(".main-right").focus();
+    $(".main-right").blur();
+    $("input").attr("size", "0");
+
+    if (mainNodeName != undefined) {
+        console.log(mainNodeName);
+        switch (mainNodeName) {
+            case "node-status-system_log":
+            case "node-status-kernel_log":
+                $("#syslog").focus(function () {
+                    $("#syslog").blur();
+                    $(".main-right").focus();
+                    $(".main-right").blur();
+                });
+                break;
+            case "node-status-firewall":
+                var button = $(".node-status-firewall > .main fieldset li > a");
+                button.addClass("cbi-button cbi-button-reset a-to-btn");
+                break;
+            case "node-system-reboot":
+                var button = $(".node-system-reboot > .main > .main-right p > a");
+                button.addClass("cbi-button cbi-input-reset a-to-btn");
+                break;
+        }
+    }
+
    var getaudio = $('#player')[0];
    /* Get the audio from the player (using the player's ID), the [0] is necessary */
+   /* Global variable for a timer. When the mouse is hovered over the speaker it will start playing after hovering for 1 second, if less than 1 second it won't play (incase you accidentally hover over the speaker) */
    var audiostatus = 'off';
    /* Global variable for the audio's status (off or on). It's a bit crude but it works for determining the status. */
-
 
    $(document).on('click touchend', '.speaker', function() {
      /* Touchend is necessary for mobile devices, click alone won't work */
@@ -260,22 +313,15 @@ document.addEventListener('luci-loaded', function(ev) {
      /*Set the status back to off*/
    });
 	setTimeout(function(){
-$("input[type='checkbox']").filter(function () {
-  return (!$(this).next("label").length)
-}).show();
-	}, 0);
 
-var options = { attributes: true};
-function callback() {
+	
 $("input[type='checkbox']").filter(function () {
   return (!$(this).next("label").length)
 }).show();
-}
-var mutationObserver = new MutationObserver(callback);
- mutationObserver.observe($("body")[0], options);
- $(".cbi-value").has("textarea").css("background","none");
+
+	}, 0);
+	$(".cbi-value").has("textarea").css("background","none");
 if(document.body.scrollHeight > window.innerHeight){
 	$(".cbi-page-actions.control-group").addClass("fixed")
 }
 })(jQuery);
-});
