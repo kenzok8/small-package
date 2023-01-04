@@ -19,16 +19,13 @@ o.template = "cbi/network_netlist"
 o.nocreate = true
 o.default = "lan"
 o.datatype = "string"
-o:depends("enabled", 1)
 
 o = s:option(Flag, "aircast", translate("Supports Chromecast"), translate("Select this if you have Chromecast devices"))
 o.default = 1
 o.rmempty = false
-o:depends("enabled", 1)
 
 o = s:option(Flag, "airupnp", translate("Supports UPnP/Sonos"), translate("Select this if you have UPnP/Sonos devices"))
 o.default = 1
 o.rmempty = false
-o:depends("enabled", 1)
 
 return m

@@ -9,11 +9,14 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=xunyou
-PKG_VERSION:=1.0.9.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.1.5
+PKG_RELEASE:=1
 
+PKG_SOURCE:=$(PKG_NAME)_v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://partnerdownload.xunyou.com/routerplugin/koolshare/
+PKG_HASH:=811d61a2c47e60c26af257061e2ee9f218006108f9f6d1fad9bde6d51a252f08
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_v$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
@@ -44,10 +47,11 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1) $(1)/etc/config $(1)/etc/init.d $(1)/etc/uci-defaults
-	cp -pR ./files/xunyou $(1)/
+	$(CP) $(PKG_BUILD_DIR)/common/. $(1)/
+	$(CP) $(PKG_BUILD_DIR)/$(ARCH)/. $(1)/
 	$(INSTALL_CONF) ./files/xunyou.config $(1)/etc/config/xunyou
 	$(INSTALL_BIN) ./files/xunyou.init $(1)/etc/init.d/xunyou
 	$(INSTALL_BIN) ./files/xunyou.uci-default $(1)/etc/uci-defaults/xunyou
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,xunyou))
