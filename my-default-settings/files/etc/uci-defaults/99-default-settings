@@ -42,7 +42,7 @@ fi
 
 if [[ ! "$version" || "$version" -lt 1 ]]; then
 	uci -q set luci.main.lang='auto'
-	uci -q set luci.main.mediaurlbase=/luci-static/edge
+	uci -q set luci.main.mediaurlbase=/luci-static/argon
 	uci commit luci
 	
 	uci -q set dropbear.@dropbear[0].Interface='lan'
