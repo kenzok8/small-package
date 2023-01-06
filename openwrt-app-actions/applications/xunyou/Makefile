@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=xunyou
-PKG_VERSION:=2.0.1.5
+PKG_VERSION:=2.0.1.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://partnerdownload.xunyou.com/routerplugin/koolshare/
-PKG_HASH:=811d61a2c47e60c26af257061e2ee9f218006108f9f6d1fad9bde6d51a252f08
+PKG_HASH:=46e300b5fa81404731d8461da51e7cd2954d424c84974908f088e12ba53d03ee
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_v$(PKG_VERSION)
 
@@ -28,7 +28,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=xunyou
-	DEPENDS:=
+	DEPENDS:=+coreutils-nohup
 endef
 
 define Package/$(PKG_NAME)/description

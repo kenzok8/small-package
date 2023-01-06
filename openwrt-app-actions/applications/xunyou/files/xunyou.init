@@ -20,7 +20,7 @@ start() {
 			printf "%s" "${device}"
 		)
 		[ -z "$interface" ] && interface=br-lan
-		sh /xunyou/xunyou_daemon.sh start -i "$interface" >/dev/null 2>&1
+		nohup sh /xunyou/xunyou_daemon.sh start -i "$interface" >/dev/null 2>&1
 	else
 		sh /xunyou/xunyou_daemon.sh stop >/dev/null 2>&1
 	fi
