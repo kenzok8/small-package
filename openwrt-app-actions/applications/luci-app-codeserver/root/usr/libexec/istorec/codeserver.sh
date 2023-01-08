@@ -31,7 +31,7 @@ do_install() {
     -e DEFAULT_WORKSPACE=/config/workspace \
     -p $http_port:8443 "
 
-  local tz="`cat /tmp/TZ`"
+  local tz="`uci get system.@system[0].zonename`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   [ -z "$env_password" ] || cmd="$cmd -e \"PASSWORD=$env_password\""

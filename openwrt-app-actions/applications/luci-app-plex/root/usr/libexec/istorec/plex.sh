@@ -54,7 +54,7 @@ do_install() {
     -p $port:32400 "
   fi
 
-  local tz="`cat /tmp/TZ`"
+  local tz="`uci get system.@system[0].zonename`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   [ -z "$claim_token" ] || cmd="$cmd -e \"PLEX_CLAIM=$claim_token\""

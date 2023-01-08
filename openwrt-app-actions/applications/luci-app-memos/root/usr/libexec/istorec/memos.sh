@@ -27,7 +27,7 @@ do_install() {
     --dns=172.17.0.1 \
     -p $http_port:5230 "
 
-  local tz="`cat /tmp/TZ`"
+  local tz="`uci get system.@system[0].zonename`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   cmd="$cmd -v /mnt:/mnt"

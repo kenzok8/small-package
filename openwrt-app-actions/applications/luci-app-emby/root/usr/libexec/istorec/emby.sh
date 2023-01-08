@@ -43,7 +43,7 @@ do_install() {
     -p $http_port:8096 "
   fi
 
-  local tz="`cat /tmp/TZ`"
+  local tz="`uci get system.@system[0].zonename`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   [ -z "$cache" ] || cmd="$cmd -v \"$cache:/config/cache\""
