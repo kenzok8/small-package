@@ -25,7 +25,7 @@ do_install() {
     --dns=127.0.0.1 \
     --network=host "
 
-  local tz="`cat /tmp/TZ`"
+  local tz="`uci get system.@system[0].zonename`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   cmd="$cmd -v /mnt:/mnt"

@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.2.0-20221212
+PKG_VERSION:=1.2.1-20230108
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for kodexplorer

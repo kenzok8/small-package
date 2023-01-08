@@ -24,7 +24,7 @@ do_install() {
     --dns=127.0.0.1 "
 
   if [ -z "$tz" ]; then
-    tz="`cat /tmp/TZ`"
+    tz="`uci get system.@system[0].zonename`"
   fi
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
