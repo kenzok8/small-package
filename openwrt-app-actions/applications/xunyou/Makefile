@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=xunyou
-PKG_VERSION:=2.0.1.6
+PKG_VERSION:=2.0.1.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://partnerdownload.xunyou.com/routerplugin/koolshare/
-PKG_HASH:=46e300b5fa81404731d8461da51e7cd2954d424c84974908f088e12ba53d03ee
+PKG_HASH:=d8e084349fa0fccbeaf95b40243f47b019ac7647a2cccf16efd82368141cf37c
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_v$(PKG_VERSION)
 
