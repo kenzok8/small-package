@@ -5,7 +5,7 @@
 -%>
 <%+cbi/valueheader%>
  
-    <input class="cbi-button cbi-button-apply" id="update_service" type="button"  onclick="run()" value="<%= translate('Perform WanSpeedtest') %>" />
+    <input class="cbi-button cbi-button-apply" id="update_service" type="button"  onclick="run()" value="<%= translate('Perform Wan Speedtest') %>" />
  
   <fieldset class="cbi-section" style="display:none">
     <legend id="wanspeedtest-legend">
@@ -15,7 +15,7 @@
   </fieldset>
 
 <script type="text/javascript">
-    const RUN_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","wanrun")%>';
+    const RUN_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","speedtestrun")%>';
     function run(s) {
 	var legend = document.getElementById('wanspeedtest-legend');
 	var output = document.getElementById('wanspeedtest-output');

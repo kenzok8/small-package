@@ -1,0 +1,54 @@
+<%#
+ Copyright 2020-2022 sirpdboy Wich <sirpdboy@qq.com>
+ https://github.com/sirpdboy/netspeedtest
+ Licensed to the public under the Apache License 2.0.
+-%>
+<%
+local fs   = require "nixio.fs"
+local has_ping6 = fs.access("/bin/ping6") or fs.access("/usr/bin/ping6")
+%>
+<%+cbi/valueheader%>
+ 
+				
+    <input class="cbi-button cbi-button-apply" id="netperf_service" type="button"  onclick="netperf()" value="<%= translate('Perform Netperf Speedtest') %>" />
+ 
+  <fieldset class="cbi-section" style="display:none">
+    <legend id="netperftest-legend">
+    <%:Collecting data...%>
+    </legend>
+    <span id="netperftest-output"></span>
+  </fieldset>
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript">//<![CDATA[
+
+    const RUN_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","netperfrun")%>';
+    const S_URL = '<%=luci.dispatcher.build_url("admin","network","netspeedtest","netperftestwan")%>';
+    function netperf(s) {
+	var legend = document.getElementById('netperftest-legend');
+	var output = document.getElementById('netperftest-output');
+			output.innerHTML =
+				'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+				'<%:Network speed test, please wait...%>'
+			;
+			legend.parentNode.style.display = 'block';
+			legend.style.display = 'inline';
+        XHR.get(RUN_URL, null, 
+				function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre>%h</pre>', x.responseText);	 
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML ='</p><%:Operation execution complete%></p>';
+					}
+				setTimeout(() => { window.location = S_URL }, 5000);
+				}
+		);
+        return false;
+    }
+</script>
+<%+cbi/valuefooter%>

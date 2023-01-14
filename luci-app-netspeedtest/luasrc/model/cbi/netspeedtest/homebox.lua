@@ -4,9 +4,9 @@ local m, s ,o
 
 
 m = Map("netspeedtest", "<font color='green'>" .. translate("Net Speedtest") .."</font>",translate( "Network speed diagnosis test (including intranet and extranet)<br/>For specific usage, see:") ..translate("<a href=\'https://github.com/sirpdboy/netspeedtest.git' target=\'_blank\'>GitHub @sirpdboy/netspeedtest</a>") )
--- m:section(SimpleSection).template  = "netspeedtest/speedtestweb_status"
+-- m:section(SimpleSection).template  = "netspeedtest/homebox_status"
 
-s = m:section(TypedSection, "speedtestweb", translate('Lan Speedtest Web'))
+s = m:section(TypedSection, "homebox", translate('Lan homebox Web'))
 s.addremove=false
 s.anonymous=true
 
@@ -15,10 +15,11 @@ o.default=0
 
 o = s:option(DummyValue, '', '')
 o.rawhtml = true
-o.template ='netspeedtest/speedtestweb'
+o.template ='netspeedtest/homebox'
 
-local o=luci.http.formvalue("cbi.apply")
-if o then
+m.apply_on_parse = true
+m.on_after_apply = function(self,map)
   io.popen("/etc/init.d/netspeedtest start")
 end
+
 return m

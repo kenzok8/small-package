@@ -1,0 +1,18 @@
+<%#
+ Copyright 2020-2022 sirpdboy Wich <sirpdboy@qq.com>
+ https://github.com/sirpdboy/netspeedtest
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+cbi/valueheader%>
+<div class="cbi-map">
+        <iframe id="homebox" style="width: 100%; min-height: 400px; border: none; border-radius: 3px;"></iframe>
+</div>
+<script type="text/javascript">
+        document.getElementById("homebox").src = window.location.protocol + "//" + window.location.hostname + ":3300";
+        document.getElementById("homebox").height = document.documentElement.clientHeight;
+        window.onresize = function(){
+            document.getElementById("homebox").height = document.documentElement.clientHeight;
+        }
+</script>
+<%+cbi/valuefooter%>
