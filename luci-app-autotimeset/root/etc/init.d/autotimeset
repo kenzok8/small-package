@@ -6,45 +6,69 @@ STOP=10
 
 run_autotimeset()
 {
-	config_get_bool enable $1 enable
-	if [ "x$enable" = "x1" ] ; then
-		config_get stype $1 stype
-		config_get week $1 week
-		config_get minute $1 minute
-		config_get hour $1 hour
-
-		if [ $stype = 1 ] ; then
-			local cmd="$minute $hour * * $week /usr/libexec/timeset/handler reboot" 
-			echo "$cmd" >> /etc/crontabs/root
-			echo "Auto REBOOT has started.."
-		fi
-		if [ $stype = 2 ] ; then
-			local cmd="$minute $hour * * $week /usr/libexec/timeset/handler poweroff" 
-			echo "$cmd" >> /etc/crontabs/root
-			echo "Auto poweroff has started.."	
-		fi
-		if [ $stype = 3 ] ; then
-			local cmd="$minute $hour * * $week /usr/libexec/timeset/handler network" 
-			echo "$cmd" >> /etc/crontabs/root
-			echo "Auto network restart has started."
-		fi
+ssum=$(grep -c stime /etc/config/autotimeset)
+for i in $(seq 0 $((ssum-1)))
+do
+	enable=$(uci -q get autotimeset.@stime[$i].enable )
+	if [ "$enable" == 1 ]; then
+		stype=$(uci -q get autotimeset.@stime[$i].stype )
+		week=$(uci -q get autotimeset.@stime[$i].week )
+		minute=$(uci -q get autotimeset.@stime[$i].minute )
+		hour=$(uci -q get autotimeset.@stime[$i].hour )
+		[ "x$minute" == "x0" ] && minute="00"
+		case "$stype" in
+			1)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler reboot" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			2)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler poweroff" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			3)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler network" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			4)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler restartsamba" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			5)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler restartwan" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			6)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler closewan" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			7)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler clearmem" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			8)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler sysfree" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+		esac
+	
     fi
+
+ done
 }
 
 start()
 {
 	del_cru
 	[ -n "`tail -c1 /etc/crontabs/root`" ] && echo >> /etc/crontabs/root
-	config_load autotimeset
-	config_foreach run_autotimeset login
+
+	run_autotimeset
 	/etc/init.d/cron reload
 }
 
 stop()
 {
     del_cru
-	/etc/init.d/cron reload
-	echo "Auto set has stop."
+    /etc/init.d/cron reload
 }
 
 restart()
@@ -54,6 +78,7 @@ restart()
 
 del_cru()
 {
-	sed -i '/ \/usr\/libexec\/timeset\/handler /d' /etc/crontabs/root >/dev/null 2>&1
+
+    sed -i '/timesethandler/d' /etc/crontabs/root >/dev/null 2>&1
 }
 

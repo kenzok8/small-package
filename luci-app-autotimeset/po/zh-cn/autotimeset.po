@@ -2,7 +2,7 @@ msgid "Scheduled Setting"
 msgstr "定时设置"
 
 msgid "Timing settings include: timing restart, timing shutdown, timing restart network, all functions can be used together."
-msgstr "定时设置包括：定时重启、定时关机、定时重启网络."
+msgstr "定时设置包括：定时重启、定时关机、定时重启网络、释放内存、系统清理、重启网络共享、定时关闭网络等功能."
 
 msgid "Scheduled Type"
 msgstr "定时类型"
@@ -15,6 +15,21 @@ msgstr "定时关闭机器"
 
 msgid "Scheduled ReNetwork"
 msgstr "定时重启网络"
+
+msgid "Scheduled RestartSamba"
+msgstr "定时重启网络共享"
+
+msgid "Scheduled Restartwan"
+msgstr "定时重启WAN"
+
+msgid "Scheduled Closewan"
+msgstr "定时关闭网络"
+
+msgid "Scheduled Clearmem"
+msgstr "定时释放内存"
+
+msgid "Scheduled Sysfree"
+msgstr "定时系统清理"
 
 msgid "Week Day"
 msgstr "设定星期"
