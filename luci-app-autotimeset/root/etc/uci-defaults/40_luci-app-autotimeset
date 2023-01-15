@@ -1,5 +1,5 @@
 #!/bin/sh
-
+chmod +x  /etc/init.d/autotimeset  /usr/bin/timesethandler
 uci -q batch <<-EOF >/dev/null
 	delete ucitrack.@autotimeset[-1]
 	add ucitrack autotimeset

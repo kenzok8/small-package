@@ -4,6 +4,6 @@ function index()
 		return
 	end
 	local page
-	page = entry({"admin","system","autotimeset"},cbi("autotimeset"),_("Scheduled Setting"),88)
+	page = entry({"admin","control","autotimeset"},cbi("autotimeset"),_("Scheduled Setting"),88)
 	page.dependent = true
 end
