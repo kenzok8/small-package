@@ -1,0 +1,10 @@
+config homebox 'homebox'
+        option enabled '0'
+	option port '3300'
+	option logger '1'
+
+config speedtestiperf3 'speedtestiperf3'
+        option enabled '0'
+
+config wanspeedtest 'wanspeedtest'
+	option surl ' ' 
