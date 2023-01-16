@@ -1,13 +1,13 @@
 config stime
         option hour '1'
-        option enable '1'
+        option enable '0'
         option stype '7'
         option week '*'
         option minute '0'
 
 config stime
         option minute '0'
-        option enable '1'
+        option enable '0'
         option stype '8'
         option week '1'
         option hour '5'
@@ -17,7 +17,7 @@ config stime
         option stype '1'
         option hour '2'
         option minute '30'
-        option enable '1'
+        option enable '0'
 
 config stime
         option enable '0'
