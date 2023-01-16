@@ -62,10 +62,6 @@ homebox_prepare() {
 	pgrep -f homebox | xargs kill -9 >/dev/null 2>&1 
 }
 
-stop_service() {
-	homebox_prepare
-}
-
 start_service() {
 	homebox_prepare
 	config_load netspeedtest
