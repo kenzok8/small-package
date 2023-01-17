@@ -11,8 +11,8 @@ PKG_NAME:=luci-app-netspeedtest
 LUCI_TITLE:=LuCI Support for netspeedtest
 LUCI_DEPENDS:=+python3 +iperf3 +homebox +netperf
 LUCI_PKGARCH:=all
-PKG_VERSION:=2.0.6
-PKG_RELEASE:=20230113
+PKG_VERSION:=2.1.1
+PKG_RELEASE:=20230116
 PKG_MAINTAINER:=<https://github.com/sirpdboy/netspeedtest>
 
 include $(TOPDIR)/feeds/luci/luci.mk

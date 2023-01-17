@@ -19,7 +19,7 @@ o.template ='netspeedtest/homebox'
 
 m.apply_on_parse = true
 m.on_after_apply = function(self,map)
-  io.popen("/etc/init.d/netspeedtest start")
+  io.popen("/etc/init.d/netspeedtest restart")
 end
 
 return m
