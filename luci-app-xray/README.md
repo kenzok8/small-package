@@ -27,6 +27,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 ## Changelog 2023
 
 * 2023-01-01 feat: optional restart of dnsmasq on interface change
+* 2023-01-18 `[OpenWrt 22.03 or above only]` feat: option to ignore TP_SPEC_DEF_GW
 
 ## Changelog 2022
 
