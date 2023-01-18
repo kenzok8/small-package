@@ -1,6 +1,7 @@
 #!/usr/bin/utpl
 {%
     const uci = require("uci");
+    const fs = require("fs");
     const cursor = uci.cursor();
     cursor.load("xray");
     const config = cursor.get_all("xray");
@@ -15,6 +16,7 @@
     push(wan_fw_ips_no_dns, split(general.secure_dns, ":")[0]);
     const wan_bp_ips = uniq(wan_bp_ips_no_dns);
     const wan_fw_ips = uniq(wan_fw_ips_no_dns);
+    const ignore_tp_spec_def_gw = fs.stat("/usr/share/xray/ignore_tp_spec_def_gw");
 %}
     set tp_spec_src_ac {
         type ether_addr
@@ -64,11 +66,13 @@
         elements = { {{ join(", ", wan_fw_ips)}} }
     }
 
+{% if (ignore_tp_spec_def_gw != null): %}
     set tp_spec_def_gw {
         type ipv4_addr
         size 65536
         flags interval
     }
+{% endif %}
 
     chain xray_prerouting {
         type filter hook prerouting priority filter; policy accept;
@@ -92,7 +96,9 @@
         ip daddr @tp_spec_dst_fw goto tp_spec_lan_re
         ip daddr @tp_spec_dst_sp return
         ip daddr @tp_spec_dst_bp return
+{% if (ignore_tp_spec_def_gw != null): %}
         ip daddr @tp_spec_def_gw return
+{% endif %}
         goto tp_spec_lan_re
     }
 
@@ -117,7 +123,9 @@
         ip daddr @tp_spec_dst_fw goto tp_spec_wan_re
         ip daddr @tp_spec_dst_sp return
         ip daddr @tp_spec_dst_bp return
+{% if (ignore_tp_spec_def_gw != null): %}
         ip daddr @tp_spec_def_gw return
+{% endif %}
         goto tp_spec_wan_re
     }
 

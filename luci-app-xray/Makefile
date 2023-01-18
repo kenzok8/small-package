@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=1.24.0
+PKG_VERSION:=1.25.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -41,6 +41,10 @@ config PACKAGE_XRAY_RLIMIT_NOFILE_LARGE
 
 config PACKAGE_XRAY_RESTART_DNSMASQ_ON_IFACE_CHANGE
 	bool "Restart dnsmasq on interface change (select this if using dnsmasq v2.87)"
+	default n
+
+config PACKAGE_XRAY_IGNORE_TP_SPEC_DEF_GW
+	bool "Ignore TP_SPEC_DEF_GW (select this if using private IPv4 address)"
 	default n
 
 choice
@@ -107,6 +111,9 @@ endif
 	$(INSTALL_DIR) $(1)/usr/share/xray
 	$(LN) /var/run/xray.pid $(1)/usr/share/xray/xray.pid
 	$(LN) /usr/bin/xray $(1)/usr/share/xray/xray
+ifdef CONFIG_PACKAGE_XRAY_IGNORE_TP_SPEC_DEF_GW
+	$(INSTALL_DATA) ./root/usr/share/xray/ignore_tp_spec_def_gw $(1)/usr/share/xray/ignore_tp_spec_def_gw
+endif
 ifdef CONFIG_PACKAGE_XRAY_RESTART_DNSMASQ_ON_IFACE_CHANGE
 	$(INSTALL_DATA) ./root/usr/share/xray/restart_dnsmasq_on_iface_change $(1)/usr/share/xray/restart_dnsmasq_on_iface_change
 endif

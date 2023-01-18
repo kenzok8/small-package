@@ -1,21 +1,13 @@
-#
-# Copyright (C) 2021 ImmortalWrt
-# (https://immortalwrt.org)
-#
-# This is free software, licensed under the GNU General Public License v3.
-# See /LICENSE for more information.
-#
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sub-web
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=6
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/CareyWang/sub-web.git
-PKG_SOURCE_DATE:=2021-09-08
-PKG_SOURCE_VERSION:=f3a997d6054fae3bcf0aa4989f1d80d83d30af17
-PKG_MIRROR_HASH:=85e482f049d849c44792028fa8a1091f7319906081fc0862897dd75c56265372
+PKG_SOURCE_DATE:=2022-11-10
+PKG_SOURCE_VERSION:=71e53414a89b5fd5ec0ef453e32202194993d0cf
+PKG_MIRROR_HASH:=2910c8a782c6a3b2886f91b1621a973a8d5923b9f6d979c9b3defaf0acca4e06
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -41,15 +33,16 @@ endef
 
 define Build/Compile
 	( \
-		cd $(PKG_BUILD_DIR); \
+		pushd "$(PKG_BUILD_DIR)"; \
 		yarn install; \
-		yarn build; \
+		NODE_OPTIONS=--openssl-legacy-provider yarn build; \
+		popd ; \
 	)
 endef
 
 define Package/sub-web/install
-	$(INSTALL_DIR) $(1)/www
-	$(CP) $(PKG_BUILD_DIR)/dist $(1)/www/sub-web
+	$(INSTALL_DIR) $(1)/www/sub-web
+	$(CP) $(PKG_BUILD_DIR)/dist/* $(1)/www/sub-web/
 endef
 
 $(eval $(call BuildPackage,sub-web))
