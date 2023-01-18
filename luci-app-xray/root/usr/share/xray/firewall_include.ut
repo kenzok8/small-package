@@ -66,7 +66,7 @@
         elements = { {{ join(", ", wan_fw_ips)}} }
     }
 
-{% if (ignore_tp_spec_def_gw != null): %}
+{% if (ignore_tp_spec_def_gw == null): %}
     set tp_spec_def_gw {
         type ipv4_addr
         size 65536
@@ -96,7 +96,7 @@
         ip daddr @tp_spec_dst_fw goto tp_spec_lan_re
         ip daddr @tp_spec_dst_sp return
         ip daddr @tp_spec_dst_bp return
-{% if (ignore_tp_spec_def_gw != null): %}
+{% if (ignore_tp_spec_def_gw == null): %}
         ip daddr @tp_spec_def_gw return
 {% endif %}
         goto tp_spec_lan_re
@@ -123,7 +123,7 @@
         ip daddr @tp_spec_dst_fw goto tp_spec_wan_re
         ip daddr @tp_spec_dst_sp return
         ip daddr @tp_spec_dst_bp return
-{% if (ignore_tp_spec_def_gw != null): %}
+{% if (ignore_tp_spec_def_gw == null): %}
         ip daddr @tp_spec_def_gw return
 {% endif %}
         goto tp_spec_wan_re
