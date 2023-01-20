@@ -20,6 +20,7 @@ e:value(5,translate("Scheduled Restartwan"))
 e:value(6,translate("Scheduled Closewan"))
 e:value(7,translate("Scheduled Clearmem"))
 e:value(8,translate("Scheduled Sysfree"))
+e:value(9,translate("Scheduled DisReconn"))
 e.default=2
 
 week=s:option(ListValue,"week",translate("Week Day"))
