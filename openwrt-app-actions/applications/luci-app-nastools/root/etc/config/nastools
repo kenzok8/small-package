@@ -1,0 +1,4 @@
+config nastools
+	option 'config_path' ''
+	option 'http_port' '3003'
+	option 'auto_upgrade' '0'
