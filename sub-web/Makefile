@@ -35,7 +35,7 @@ define Build/Compile
 	( \
 		pushd "$(PKG_BUILD_DIR)"; \
 		yarn install; \
-		NODE_OPTIONS=--openssl-legacy-provider yarn build; \
+		yarn build; \
 		popd ; \
 	)
 endef

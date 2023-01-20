@@ -1,6 +1,30 @@
 #!/bin/sh
 # author 2021 jjm2473
-# author 2020-2023 sirpdboy  
+# author 2020-2023 sirpdboy
+
+disreconnwan() {
+i=0
+PingA=114.114.114.114
+PingB=223.5.5.5
+while [[ $i -lt 5 ]]
+do
+	if /bin/ping -c 1 $PingA >/dev/null
+	then
+		PingErr=0
+		break
+	else
+		if /bin/ping -c 1 $PingB >/dev/null
+		then
+			PingErr=0
+			break
+		else
+			i=$(($i + 1))
+			PingErr=1
+			sleep 10
+		fi
+	fi
+done
+}
 
 trigger() {
 	case "$1" in
@@ -39,15 +63,22 @@ trigger() {
 		/etc/init.d/samba4 restart
 		;;
 	restartwan)
-		ifdown wan 
+		# ifdown wan 
 		ifup wan
 		;;
 		
 	closewan)
 		ifdown wan
 		;;
+	disreconn)
+		disreconnwan
+		if [ $PingErr = 1 ]; then
+		  ifup wan
+		fi
+		;;
 	esac
 }
 
+PingErr=0
 logger -p warn -t "autotimeset" "Automatic timing operation execution operation:$@, execution time: `date `" && trigger $@
 

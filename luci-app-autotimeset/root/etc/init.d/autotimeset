@@ -49,6 +49,10 @@ do
 				local cmd="$minute $hour * * $week /usr/bin/timesethandler sysfree" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
+			9)
+				local cmd="$minute $hour * * $week /usr/bin/timesethandler disreconn" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
 		esac
 	
     fi
