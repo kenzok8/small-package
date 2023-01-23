@@ -28,6 +28,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 * 2023-01-01 feat: optional restart of dnsmasq on interface change
 * 2023-01-18 `[OpenWrt 22.03 or above only]` feat: option to ignore TP_SPEC_DEF_GW
+* 2023-01-23 `[OpenWrt 22.03 or above only]` feat: custom configurations in outbounds. Say if you want to try [XTLS/Xray-core#1540](https://github.com/XTLS/Xray-core/pull/1540) before its release, you can specify `{"streamSettings": {"tlsSettings": {"fingerprint": "xray_random"}}}` in "Custom Options" tab of the corresponding outbound. See the help text in LuCI ui for the rules of configuration override.
 
 ## Changelog 2022
 

@@ -6,6 +6,24 @@
 'require network';
 'require tools.widgets as widgets';
 
+function validate_object(id, a) {
+    if (a == "") {
+        return true
+    }
+    try {
+        const t = JSON.parse(a)
+        if (Array.isArray(t)) {
+            return "TypeError: Requires an object here, got an array"
+        }
+        if (t instanceof Object) {
+            return true
+        }
+        return "TypeError: Requires an object here, got a " + typeof t
+    } catch (e) {
+        return e
+    }
+}
+
 function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, protocol_name, have_xtls, have_tls_flow, client_side) {
     let o = s.taboption(tab_name, form.ListValue, `${protocol_name}_tls`, _(`[${protocol_name}] Stream Security`))
     let odep = {}
@@ -487,6 +505,16 @@ return view.extend({
         }
         o.modalonly = true
 
+        if (firewall4) {
+            ss.tab('custom', _('Custom Options'));
+
+            o = ss.taboption('custom', form.TextValue, 'custom_config', _('Custom Configurations'), _('Configurations here override settings in the previous tabs with the following rules: <ol><li>Object values will be replaced recursively so settings in previous tabs matters.</li><li>Arrays will be replaced entirely instead of being merged.</li><li>Tag <code>tag</code> is ignored. </li></ol>Override rules here may be changed later. Use this only for experimental or pre-release features.'))
+            o.modalonly = true
+            o.monospace = true
+            o.rows = 10
+            o.validate = validate_object;
+        }
+
         s.tab('proxy', _('Proxy Settings'));
 
         o = s.taboption('proxy', form.Value, 'tproxy_port_tcp', _('Transparent Proxy Port (TCP)'))
@@ -808,6 +836,7 @@ return view.extend({
         o = s.taboption('custom_options', form.TextValue, 'custom_config', _('Custom Configurations'), _('Check <code>/var/etc/xray/config.json</code> for tags of generated inbounds and outbounds. See <a href="https://xtls.github.io/config/features/multiple.html">here</a> for help'))
         o.monospace = true
         o.rows = 10
+        o.validate = validate_object
 
         return m.render();
     }
