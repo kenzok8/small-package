@@ -367,6 +367,16 @@ function trojan_outbound(server, tag) {
     }
 }
 
+function override_custom_config_recursive(x, y) {
+    if (type(x) != "object" || type(y) != "object") {
+        return y;
+    }
+    for (k in y) {
+        x[k] = override_custom_config_recursive(x[k], y[k])
+    }
+    return x;
+}
+
 function server_outbound_recursive(t, server, tag) {
     let outbound_result = null;
     if (server["protocol"] == "vmess") {
@@ -381,8 +391,19 @@ function server_outbound_recursive(t, server, tag) {
     if (outbound_result == null) {
         die("unknown outbound server protocol");
     }
+    let outbound = outbound_result["outbound"];
+    const custom_config_outbound_string = server["custom_config"];
 
-    const outbound = outbound_result["outbound"];
+    if (custom_config_outbound_string != null && custom_config_outbound_string != "") {
+        let custom_config_outbound = json(custom_config_outbound_string);
+        for (k in custom_config_outbound) {
+            if (k == "tag") {
+                continue;
+            }
+            outbound[k] = override_custom_config_recursive(outbound[k], custom_config_outbound[k])
+        }
+    }
+
     const dialer_proxy = outbound_result["dialer_proxy"];
     const result = [...t, outbound];
 

@@ -1,0 +1,62 @@
+#!/bin/sh
+
+version="1.0"
+APP_URL='https://istore.linkease.com/repo/all/store'
+luci_store=luci-app-store_0.1.12-9_all.ipk
+luci_taskd=luci-lib-taskd_1.0.17_all.ipk
+xterm=luci-lib-xterm_4.18.0_all.ipk
+task=taskd_1.0.3-1_all.ipk
+
+setup_color() {
+    # Only use colors if connected to a terminal
+    if [ -t 1 ]; then
+        RED=$(printf '\033[31m')
+        GREEN=$(printf '\033[32m')
+        YELLOW=$(printf '\033[33m')
+        BLUE=$(printf '\033[34m')
+        BOLD=$(printf '\033[1m')
+        RESET=$(printf '\033[m')
+    else
+        RED=""
+        GREEN=""
+        YELLOW=""
+        BLUE=""
+        BOLD=""
+        RESET=""
+    fi
+}
+setup_color
+command_exists() {
+    command -v "$@" >/dev/null 2>&1
+}
+error() {
+    echo ${RED}"Error: $@"${RESET} >&2
+}
+
+Download_Files(){
+  local URL=$1
+  local FileName=$2
+  if command_exists curl; then
+    curl -sSLk ${URL} -o ${FileName}
+  elif command_exists wget; then
+    wget -c --no-check-certificate ${URL} -O ${FileName}
+  fi
+}
+
+clean_app(){
+    rm -f /tmp/${luci_store} /tmp/${luci_taskd} /tmp/${xterm} /tmp/${task}
+}
+
+command_exists opkg || {
+    error "The program only supports Openwrt."
+    clean_app
+    exit 1
+}
+
+( set -x; Download_Files ${APP_URL}/${luci_store} /tmp/${luci_store};
+  Download_Files ${APP_URL}/${luci_taskd} /tmp/${luci_taskd};
+  Download_Files ${APP_URL}/${task} /tmp/${task};
+  Download_Files ${APP_URL}/${xterm} /tmp/${xterm}; )
+  
+opkg install --force-reinstall /tmp/${task} /tmp/${xterm} /tmp/${luci_taskd} /tmp/${luci_store}
+
