@@ -106,7 +106,8 @@ git clone --depth 1 https://github.com/Huangjoe123/luci-app-eqos
 git clone --depth 1 https://github.com/sirpdboy/luci-app-lucky
 git clone --depth 1 https://github.com/sirpdboy/netspeedtest speedtest && mv -f speedtest/*/ ./ && rm -rf speedtest
 
-svn export https://github.com/immortalwrt/packages/trunk/multimedia/UnblockNeteaseMusic
+svn export https://github.com/coolsnowwolf/packages/trunk/multimedia/UnblockNeteaseMusic
+svn export https://github.com/coolsnowwolf/packages/trunk/multimedia/UnblockNeteaseMusic-Go
 svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-msd_lite
 svn export https://github.com/coolsnowwolf/packages/trunk/net/msd_lite
 svn export https://github.com/fw876/helloworld/trunk/v2raya
