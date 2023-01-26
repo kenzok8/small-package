@@ -107,7 +107,7 @@ git clone --depth 1 https://github.com/sirpdboy/luci-app-lucky
 git clone --depth 1 https://github.com/sirpdboy/netspeedtest speedtest && mv -f speedtest/*/ ./ && rm -rf speedtest
 
 svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-msd_lite
-svn export https://github.com/immortalwrt/packages/trunk/net/v2raya
+svn export --force https://github.com/fw876/helloworld/trunk/v2raya
 svn export https://github.com/immortalwrt/packages/trunk/net/cdnspeedtest
 svn export https://github.com/immortalwrt/packages/trunk/utils/filebrowser
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
