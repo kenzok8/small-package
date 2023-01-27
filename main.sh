@@ -17,7 +17,6 @@ function mvdir() {
 mv -n `find $1/* -maxdepth 0 -type d` ./
 rm -rf $1
 }
-git clone --depth 1 https://github.com/kiddin9/openwrt-bypass && mvdir openwrt-bypass
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
 git clone --depth 1 https://github.com/kiddin9/aria2
 git clone --depth 1 https://github.com/kiddin9/luci-app-baidupcs-web
@@ -63,11 +62,16 @@ git clone --depth 1 https://github.com/jerrykuku/luci-app-vssr
 git clone --depth 1 https://github.com/jerrykuku/luci-app-ttnode
 git clone --depth 1 https://github.com/jerrykuku/luci-app-jd-dailybonus
 git clone --depth 1 https://github.com/jerrykuku/luci-app-go-aliyundrive-webdav
+git clone --depth 1 https://github.com/jerrykuku/lua-maxminddb
 git clone --depth 1 https://github.com/sirpdboy/luci-app-advanced
 git clone --depth 1 https://github.com/sirpdboy/luci-theme-opentopd
-git clone --depth 1 https://github.com/Jason6111/luci-app-netdata
 git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice
 git clone --depth 1 https://github.com/sirpdboy/luci-app-autotimeset
+git clone --depth 1 https://github.com/sirpdboy/luci-app-lucky
+git clone --depth 1 https://github.com/sirpdboy/luci-app-partexp
+git clone --depth 1 https://github.com/sirpdboy/luci-app-ddns-go ddns-go && mvdir ddns-go
+git clone --depth 1 https://github.com/sirpdboy/netspeedtest speedtest && mv -f speedtest/*/ ./ && rm -rf speedtest
+git clone --depth 1 https://github.com/Jason6111/luci-app-netdata
 git clone --depth 1 https://github.com/KFERMercer/luci-app-tcpdump
 git clone --depth 1 https://github.com/jefferymvp/luci-app-koolproxyR
 git clone --depth 1 https://github.com/wolandmaster/luci-app-rtorrent
@@ -79,10 +83,9 @@ git clone --depth 1 https://github.com/lvqier/luci-app-dnsmasq-ipset
 git clone --depth 1 https://github.com/walkingsky/luci-wifidog luci-app-wifidog
 git clone --depth 1 https://github.com/CCnut/feed-netkeeper && mvdir feed-netkeeper
 git clone --depth 1 https://github.com/sensec/luci-app-udp2raw
-git clone --depth 1 https://github.com/jerrykuku/lua-maxminddb
 git clone --depth 1 https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-sysuh3c
 git clone --depth 1 https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd1/luci-app-cupsd cupsd1/cups/cups ./ ; rm -rf cupsd1
-git clone --depth 1 https://github.com/sbwml/luci-app-mosdns openwrt-mos && mv -n openwrt-mos/*mosdns ./ ; rm -rf openwrt-mos
+git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mv -n openwrt-mos/{*mosdns,v2ray-geodata} ./ ; rm -rf openwrt-mos
 git clone --depth 1 https://github.com/peter-tank/luci-app-fullconenat
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/zxlhhyccc/luci-app-v2raya
@@ -93,16 +96,14 @@ git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
 git clone --depth 1 https://github.com/thinktip/luci-theme-neobird
 git clone --depth 1 -b lede https://github.com/pymumu/luci-app-smartdns
 git clone --depth 1 https://github.com/ophub/luci-app-amlogic amlogic && mv -n amlogic/luci-app-amlogic ./;rm -rf amlogic
-git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall1 && mv -n passwall1/luci-app-passwall  ./; rm -rf passwall1
 git clone --depth 1 https://github.com/linkease/nas-packages && mv -n nas-packages/{network/services/*,multimedia/*} ./; rm -rf nas-packages
 git clone --depth 1 https://github.com/linkease/nas-packages-luci && mv -n nas-packages-luci/luci/* ./; rm -rf nas-packages-luci
 git clone --depth 1 https://github.com/linkease/istore && mv -n istore/luci/* ./; rm -rf istore
+git clone --depth 1 https://github.com/AlexZhuo/luci-app-bandwidthd
 git clone --depth 1 https://github.com/linkease/openwrt-app-actions
 git clone --depth 1 https://github.com/ZeaKyX/luci-app-speedtest-web
 git clone --depth 1 https://github.com/ZeaKyX/speedtest-web
 git clone --depth 1 https://github.com/Huangjoe123/luci-app-eqos
-git clone --depth 1 https://github.com/sirpdboy/luci-app-lucky
-git clone --depth 1 https://github.com/sirpdboy/netspeedtest speedtest && mv -f speedtest/*/ ./ && rm -rf speedtest
 git clone --depth 1 https://github.com/honwen/luci-app-aliddns
 
 git clone --depth 1 https://github.com/Hyy2001X/AutoBuild-Packages && mv -n AutoBuild-Packages/luci-app-adguardhome ./; rm -rf AutoBuild-Packages
@@ -116,7 +117,7 @@ git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall2 passwall2 && 
 git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall && mv -n passwall/luci-app-passwall ./;rm -rf passwall
 git clone --depth 1 https://github.com/SSSSSimon/tencentcloud-openwrt-plugin-ddns && mv -n tencentcloud-openwrt-plugin-ddns/tencentcloud_ddns ./luci-app-tencentddns; rm -rf tencentcloud-openwrt-plugin-ddns
 git clone --depth 1 https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos && mv -n tencentcloud-openwrt-plugin-cos/tencentcloud_cos ./luci-app-tencentcloud-cos; rm -rf tencentcloud-openwrt-plugin-cos
-git clone --depth 1 https://github.com/lisaac/luci-app-dockerman dockerman && mv -n dockerman/applications/* ./; rm -rf dockerman
+git clone --depth 1 https://github.com/lisaac/dockerman && mv -n dockerman/applications/* ./; rm -rf dockerman
 git clone --depth 1 https://github.com/messense/openwrt-wiretrustee && mv -n openwrt-wiretrustee/wiretrustee ./;rm -rf openwrt-wiretrustee
 git clone --depth 1 https://github.com/kiddin9/openwrt-packages && mv -n openwrt-packages/luci-app-bypass openwrt-packages/sbwml openwrt-packages/luci-app-fileassistant ./ ; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/immortalwrt/packages && mv -n packages/net/gost packages/net/smartdns packages/net/adguardhome packages/net/cdnspeedtest packages/utils/filebrowser ./ ; rm -rf packages
