@@ -118,7 +118,7 @@ git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall2 passwall2 && 
 git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall && mv -n passwall/luci-app-passwall ./;rm -rf passwall
 git clone --depth 1 https://github.com/SSSSSimon/tencentcloud-openwrt-plugin-ddns && mv -n tencentcloud-openwrt-plugin-ddns/tencentcloud_ddns ./luci-app-tencentddns; rm -rf tencentcloud-openwrt-plugin-ddns
 git clone --depth 1 https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos && mv -n tencentcloud-openwrt-plugin-cos/tencentcloud_cos ./luci-app-tencentcloud-cos; rm -rf tencentcloud-openwrt-plugin-cos
-git clone --depth 1 https://github.com/kiddin9/openwrt-packages && mv -n openwrt-packages/luci-app-bypass openwrt-packages/sbwml openwrt-packages/luci-app-fileassistant ./ ; rm -rf openwrt-packages
+git clone --depth 1 https://github.com/kiddin9/openwrt-packages && mv -n openwrt-packages/luci-app-bypass openwrt-packages/luci-app-fileassistant ./ ; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/immortalwrt/packages && mv -n packages/net/gost packages/net/smartdns packages/net/adguardhome packages/net/cdnspeedtest packages/utils/filebrowser ./ ; rm -rf packages
 git clone --depth 1 https://github.com/immortalwrt/luci && mv -n luci/applications/luci-app-unblockneteasemusic luci/applications/luci-app-msd_lite luci/applications/luci-app-filebrowser ./ ; rm -rf luci
 git clone --depth 1 https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest cloudflarespeedtest && mv -n cloudflarespeedtest/applications/* ./;rm -rf cloudflarespeedtest
