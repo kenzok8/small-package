@@ -21,15 +21,14 @@ git clone --depth 1 https://github.com/kiddin9/openwrt-bypass && mvdir openwrt-b
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
 git clone --depth 1 https://github.com/kiddin9/aria2
 git clone --depth 1 https://github.com/kiddin9/luci-app-baidupcs-web
-git clone --depth 1 -b 18.06 https://github.com/kiddin9/luci-theme-edge
 git clone --depth 1 https://github.com/kiddin9/qBittorrent-Enhanced-Edition
 git clone --depth 1 https://github.com/kiddin9/autoshare && mvdir autoshare
 git clone --depth 1 https://github.com/kiddin9/openwrt-openvpn && mvdir openwrt-openvpn
 git clone --depth 1 https://github.com/kiddin9/luci-app-xlnetacc
 git clone --depth 1 https://github.com/kiddin9/openwrt-amule-dlp && mvdir openwrt-amule-dlp
 git clone --depth 1 https://github.com/kiddin9/luci-app-wizard
+git clone --depth 1 -b 18.06 https://github.com/kiddin9/luci-theme-edge
 git clone --depth 1 https://github.com/yichya/luci-app-xray
-git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall
 git clone --depth 1 https://github.com/Lienol/openwrt-package
 git clone --depth 1 https://github.com/ysc3839/openwrt-minieap
 git clone --depth 1 https://github.com/ysc3839/luci-proto-minieap
