@@ -105,47 +105,33 @@ git clone --depth 1 https://github.com/sirpdboy/luci-app-lucky
 git clone --depth 1 https://github.com/sirpdboy/netspeedtest speedtest && mv -f speedtest/*/ ./ && rm -rf speedtest
 git clone --depth 1 https://github.com/honwen/luci-app-aliddns
 
-svn export https://github.com/coolsnowwolf/packages/trunk/multimedia/UnblockNeteaseMusic
-svn export https://github.com/coolsnowwolf/packages/trunk/multimedia/UnblockNeteaseMusic-Go
-svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-msd_lite
-svn export https://github.com/coolsnowwolf/packages/trunk/net/msd_lite
-svn export https://github.com/fw876/helloworld/trunk/v2raya
-svn export https://github.com/immortalwrt/packages/trunk/net/cdnspeedtest
-svn export https://github.com/immortalwrt/packages/trunk/utils/filebrowser
+git clone --depth 1 https://github.com/Hyy2001X/AutoBuild-Packages && mv -n AutoBuild-Packages/luci-app-adguardhome ./; rm -rf AutoBuild-Packages
+git clone --depth 1 https://github.com/vernesong/OpenClash && mv -n OpenClash/luci-app-openclash ./; rm -rf OpenClash
+git clone --depth 1 https://github.com/messense/aliyundrive-webdav aliyundrive && mv -n aliyundrive/openwrt/* ./ ; rm -rf aliyundrive
+git clone --depth 1 https://github.com/messense/aliyundrive-fuse aliyundrive && mv -n aliyundrive/openwrt/* ./;rm -rf aliyundrive
+git clone --depth 1 https://github.com/kenzok8/litte && mv -n litte/luci-theme-atmaterial_new litte/luci-theme-mcat litte/luci-theme-tomato ./ ; rm -rf litte
+git clone --depth 1 https://github.com/fw876/helloworld && mv -n helloworld/luci-app-ssr-plus helloworld/lua-neturl  helloworld/v2raya helloworld/naiveproxy helloworld/sagernet-core helloworld/tcping helloworld/redsocks2  helloworld/microsocks ./ ; rm -rf helloworld
+git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall && mvdir openwrt-passwall
+git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall2 passwall2 && mv -n passwall2/luci-app-passwall2 ./;rm -rf passwall2
+git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall && mv -n passwall/luci-app-passwall ./;rm -rf passwall
+git clone --depth 1 https://github.com/SSSSSimon/tencentcloud-openwrt-plugin-ddns && mv -n tencentcloud-openwrt-plugin-ddns/tencentcloud_ddns ./luci-app-tencentddns; rm -rf tencentcloud-openwrt-plugin-ddns
+git clone --depth 1 https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos && mv -n tencentcloud-openwrt-plugin-cos/tencentcloud_cos ./luci-app-tencentcloud-cos; rm -rf tencentcloud-openwrt-plugin-cos
+git clone --depth 1 https://github.com/lisaac/luci-app-dockerman dockerman && mv -n dockerman/applications/* ./; rm -rf dockerman
+git clone --depth 1 https://github.com/messense/openwrt-wiretrustee && mv -n openwrt-wiretrustee/wiretrustee ./;rm -rf openwrt-wiretrustee
+git clone --depth 1 https://github.com/kiddin9/openwrt-packages && mv -n openwrt-packages/luci-app-bypass openwrt-packages/sbwml openwrt-packages/luci-app-fileassistant ./ ; rm -rf openwrt-packages
+git clone --depth 1 https://github.com/immortalwrt/packages && mv -n packages/net/gost packages/net/smartdns packages/net/adguardhome packages/net/cdnspeedtest packages/utils/filebrowser ./ ; rm -rf packages
+git clone --depth 1 https://github.com/immortalwrt/luci && mv -n luci/applications/luci-app-unblockneteasemusic luci/applications/luci-app-msd_lite luci/applications/luci-app-filebrowser ./ ; rm -rf luci
+git clone --depth 1 https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest cloudflarespeedtest && mv -n cloudflarespeedtest/applications/* ./;rm -rf cloudflarespeedtest
+git clone --depth 1 https://github.com/doushang/luci-app-shortcutmenu luci-shortcutmenu && mv -n luci-shortcutmenu/luci-app-shortcutmenu ./ ; rm -rf luci-shortcutmenu
+git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
+git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic packages/multimedia/UnblockNeteaseMusic-Go packages/net/msd_lite ./ ; rm -rf packages
+
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
-svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-fileassistant
-svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-filebrowser
-svn export https://github.com/immortalwrt/packages/trunk/net/smartdns
-svn export https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
-svn export https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
-svn export https://github.com/Hyy2001X/AutoBuild-Packages/trunk/luci-app-adguardhome
-svn export https://github.com/kiddin9/openwrt-packages/trunk/adguardhome
-svn export https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
-svn export https://github.com/kenzok8/litte/trunk/luci-theme-mcat
-svn export https://github.com/kenzok8/litte/trunk/luci-theme-tomato
 svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
 svn export https://github.com/x-wrt/luci/trunk/applications/luci-app-nft-qos
-svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-diskman
-svn export https://github.com/kiddin9/openwrt-packages/trunk/vsftpd-alt
-svn export https://github.com/messense/aliyundrive-fuse/trunk/openwrt && mvdir openwrt
-svn export https://github.com/messense/openwrt-wiretrustee/trunk/wiretrustee
-svn export https://github.com/messense/aliyundrive-webdav/trunk/openwrt aliyundrive && mvdir aliyundrive
-svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-bypass
 svn export https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
-svn export https://github.com/fw876/helloworld/trunk/sagernet-core
-svn export https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
-svn export https://github.com/fw876/helloworld/trunk/lua-neturl
-svn export https://github.com/fw876/helloworld/trunk/redsocks2
-svn export https://github.com/fw876/helloworld/trunk/microsocks
-svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
-svn export https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
-svn export https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest/trunk/applications/luci-app-cloudflarespeedtest
-svn export https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcutmenu
 svn export https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
-svn export https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
-svn export https://github.com/xiaorouji/openwrt-passwall2/trunk/luci-app-passwall2
 svn export https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
-svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-unblockneteasemusic
 
 git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" net/miniupnpd net/mwan3 multimedia/UnblockNeteaseMusic-Go \
 multimedia/UnblockNeteaseMusic net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
