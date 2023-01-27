@@ -13,6 +13,12 @@ msgstr "清除所有同名记录"
 msgid "Clean Before Update mean"
 msgstr "如果有相同的域名的A解析记录，DDNS会将其覆盖"
 
+msgid "ipv6"
+msgstr "更新IPv6地址"
+
+msgid "ipv6 mean"
+msgstr "如果勾选，仅更新IPv6地址"
+
 msgid "Base"
 msgstr "基本设置"
 
@@ -28,7 +34,7 @@ msgstr "密钥Token"
 msgid "Key Token Mean"
 msgstr "DNSPod后台密钥管理中的Token"
 
-
+ 
 msgid "WAN-IP Source"
 msgstr "WAN-IP来源"
 
