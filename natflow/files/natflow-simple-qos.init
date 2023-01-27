@@ -1,0 +1,98 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=95
+
+IPOPS="lua /usr/lib/lua/ipops.lua"
+test -e /usr/share/natflow/ipops.lua && IPOPS="lua /usr/share/natflow/ipops.lua"
+
+get_rate_data()
+{
+	local cnt num unit
+	echo -n $1 | grep -qi "bps$" || {
+		num=$1
+		echo -n $((num)) # assume num B/s
+		return
+	}
+	cnt=`echo -n $1 | wc -c || echo 0`
+	test $cnt -le 4 && echo -n 0 && return # assume 0 B/s
+
+	num=`echo -n $1 | cut -c0-$((cnt-4))`
+	unit=`echo -n $1 | cut -c$((cnt-3))-$cnt | tr A-Z a-z`
+	case $unit in
+		"kbps")
+			num=$((num*128))
+		;;
+		"mbps")
+			num=$((num*128*1024))
+		;;
+		"gbps")
+			num=$((num*128*1024*1024))
+		;;
+		*)
+			num=$((num/8))
+		;;
+	esac
+	echo -n $num # assume num bps
+}
+
+qos_simple_watch()
+{
+	cat /dev/userinfo_event_ctl 2>/dev/null | while read line; do
+		ip=${line//,*}
+		idx=0
+		while uci get natflow.@qos_simple[$idx] &>/dev/null; do
+			disabled=$(uci get natflow.@qos_simple[$idx].disabled 2>/dev/null || echo 0)
+			if [ "$disabled" = "0" ]; then
+				user=$(uci get natflow.@qos_simple[$idx].user 2>/dev/null)
+				if test -z "$user" || $IPOPS netStrings_test_netStrings "$user" "$ip"; then
+					rx_rate=$(uci get natflow.@qos_simple[$idx].rx_rate 2>/dev/null)
+					tx_rate=$(uci get natflow.@qos_simple[$idx].tx_rate 2>/dev/null)
+					rx_rate=$(get_rate_data "$rx_rate")
+					tx_rate=$(get_rate_data "$tx_rate")
+					echo set-token-ctrl $ip $rx_rate $tx_rate >/dev/userinfo_ctl
+					break
+				fi
+			fi
+			idx=$((idx+1))
+		done
+	done
+}
+
+start() {
+	cat /dev/userinfo_ctl | while read line; do
+		ip=${line//,*}
+		idx=0
+		while uci get natflow.@qos_simple[$idx] &>/dev/null; do
+			disabled=$(uci get natflow.@qos_simple[$idx].disabled 2>/dev/null || echo 0)
+			if [ "$disabled" = "0" ]; then
+				user=$(uci get natflow.@qos_simple[$idx].user 2>/dev/null)
+				if test -z "$user" || $IPOPS netStrings_test_netStrings "$user" "$ip"; then
+					rx_rate=$(uci get natflow.@qos_simple[$idx].rx_rate 2>/dev/null)
+					tx_rate=$(uci get natflow.@qos_simple[$idx].tx_rate 2>/dev/null)
+					rx_rate=$(get_rate_data "$rx_rate")
+					tx_rate=$(get_rate_data "$tx_rate")
+					echo set-token-ctrl $ip $rx_rate $tx_rate
+					echo set-token-ctrl $ip $rx_rate $tx_rate >/dev/userinfo_ctl
+					break
+				fi
+			fi
+			idx=$((idx+1))
+		done
+	done
+
+	qos_simple_watch &
+}
+
+stop() {
+	kill -TERM $(pgrep -f "cat /dev/userinfo_event_ctl") &>/dev/null
+	cat /dev/userinfo_ctl | while read line; do
+		ip=${line//,*}
+		echo set-token-ctrl $ip 0 0 >/dev/userinfo_ctl
+	done
+}
+
+restart() {
+	stop
+	start
+}

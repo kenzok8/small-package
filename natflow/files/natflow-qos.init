@@ -1,0 +1,141 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=95
+
+DEVCTL=/dev/qos_ctl
+IPOPS="lua /usr/lib/lua/ipops.lua"
+test -e /usr/share/natflow/ipops.lua && IPOPS="lua /usr/share/natflow/ipops.lua"
+
+qos_idx=0
+
+# ipset_add ipsetname net
+ipv4set_add()
+{
+	local ipsetname=$1
+	local net=$2
+	#hack for 0.0.0.0/0
+	[ "$net" = "0.0.0.0/0" ] && net="0.0.0.0/1 128.0.0.0/1"
+	for n in $net; do
+		ipset add $ipsetname $n
+	done
+}
+
+get_rate_data()
+{
+	local cnt num unit
+	echo -n $1 | grep -qi "bps$" || {
+		num=$1
+		echo -n $((num)) # assume num B/s
+		return
+	}
+	cnt=`echo -n $1 | wc -c || echo 0`
+	test $cnt -le 4 && echo -n 0 && return # assume 0 B/s
+
+	num=`echo -n $1 | cut -c0-$((cnt-4))`
+	unit=`echo -n $1 | cut -c$((cnt-3))-$cnt | tr A-Z a-z`
+	case $unit in
+		"kbps")
+			num=$((num*128))
+		;;
+		"mbps")
+			num=$((num*128*1024))
+		;;
+		"gbps")
+			num=$((num*128*1024*1024))
+		;;
+		*)
+			num=$((num/8))
+		;;
+	esac
+	echo -n $num # assume num bps
+}
+
+natflow_qos_setup()
+{
+	local idx=$qos_idx
+	qos_idx=$((qos_idx+1))
+	local cfg="$1"
+	local disabled user user_port remote remote_port proto rx_rate tx_rate
+
+	config_get disabled "$cfg" disabled 0
+	config_get user "$cfg" user
+	config_get user_port "$cfg" user_port
+	config_get remote "$cfg" remote
+	config_get remote_port "$cfg" remote_port
+	config_get proto "$cfg" proto
+	config_get rx_rate "$cfg" rx_rate 0
+	config_get tx_rate "$cfg" tx_rate 0
+
+	[ "$disabled" = "1" ] && return 0
+
+	#echo add user=<ipset/ip/ipcidr>,user_port=<portset/port>,remote=<ipset/ip/ipcidr>,remote_port=<portset/port>,proto=<tcp/udp>,rxbytes=Bytes,txbytes=Bytes
+
+	user=$($IPOPS netStrings2ipcidrStrings "$user")
+	if [ "$(echo $user | sed 's/,/ /g' | wc -w)" -gt 1 ]; then
+		ipset create qos_u$idx nethash 2>/dev/null
+		ipset flush qos_u$idx
+		for net in $(echo $user | sed 's/,/ /g'); do
+			ipv4set_add qos_u$idx $net
+		done
+		user=qos_u$idx
+	fi
+
+	if [ "$(echo $user_port | sed 's/,/ /g' | wc -w)" -gt 1 ]; then
+		ipset create qos_up$idx bitmap:port range 0-65535 2>/dev/null
+		ipset flush qos_up$idx
+		for port in $(echo $user_port | sed 's/,/ /g'); do
+			ipset add qos_up$idx $port
+		done
+		user_port=qos_up$idx
+	fi
+
+	remote=$($IPOPS netStrings2ipcidrStrings "$remote")
+	if [ "$(echo $remote | sed 's/,/ /g' | wc -w)" -gt 1 ]; then
+		ipset create qos_r$idx nethash 2>/dev/null
+		ipset flush qos_r$idx
+		for net in $(echo $remote | sed 's/,/ /g'); do
+			ipv4set_add qos_r$idx $net
+		done
+		remote=qos_r$idx
+	fi
+
+	if [ "$(echo $remote_port | sed 's/,/ /g' | wc -w)" -gt 1 ]; then
+		ipset create qos_rp$idx bitmap:port range 0-65535 2>/dev/null
+		ipset flush qos_rp$idx
+		for port in $(echo $remote_port | sed 's/,/ /g'); do
+			ipset add qos_rp$idx $port
+		done
+		remote_port=qos_rp$idx
+	fi
+
+	rx_rate=$(get_rate_data "$rx_rate")
+	tx_rate=$(get_rate_data "$tx_rate")
+
+	cmd="add user=$user,user_port=$user_port,remote=$remote,remote_port=$remote_port,proto=$proto,rxbytes=$rx_rate,txbytes=$tx_rate"
+
+	echo "$cmd" >$DEVCTL
+}
+
+start() {
+	test -c $DEVCTL || return 0
+
+	echo clear >$DEVCTL
+
+	config_load natflow
+	config_foreach natflow_qos_setup qos
+}
+
+stop() {
+	test -c $DEVCTL || return 0
+
+	echo clear >$DEVCTL
+	ipset list -n | grep ^qos_ | while read ipset; do
+		ipset destroy $ipset
+	done
+}
+
+restart() {
+	stop
+	start
+}

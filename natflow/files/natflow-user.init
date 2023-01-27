@@ -1,0 +1,105 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=95
+
+DEVCTL=/dev/natflow_user_ctl
+IPOPS="lua /usr/lib/lua/ipops.lua"
+test -e /usr/share/natflow/ipops.lua && IPOPS="lua /usr/share/natflow/ipops.lua"
+
+auth_idx=0
+
+# ipset_add ipsetname net
+ipv4set_add()
+{
+	local ipsetname=$1
+	local net=$2
+	#hack for 0.0.0.0/0
+	[ "$net" = "0.0.0.0/0" ] && net="0.0.0.0/1 128.0.0.0/1"
+	for n in $net; do
+		ipset add $ipsetname $n
+	done
+}
+
+natflow_user_setup()
+{
+	local idx=$auth_idx
+	auth_idx=$((auth_idx+1))
+	local cfg="$1"
+	local enabled szone type sipgrp ipwhite macwhite
+
+	config_get enabled "$cfg" enabled
+	config_get szone "$cfg" szone
+	config_get type "$cfg" type
+	config_get sipgrp "$cfg" sipgrp
+	config_get ipwhite "$cfg" ipwhite
+	config_get macwhite "$cfg" macwhite
+
+	[ "$enabled" = "1" ] || return 0
+
+	#echo auth id=0,szone=0,type=auto,sipgrp=auth_sipgrp,ipwhite=,macwhite=
+
+	sipgrp=$($IPOPS netStrings2ipcidrStrings "$sipgrp")
+	ipset create auth_sipgrp_$idx nethash 2>/dev/null
+	ipset flush auth_sipgrp_$idx
+	for net in $(echo "$sipgrp" | sed 's/,/ /g'); do
+		ipv4set_add auth_sipgrp_$idx $net
+	done
+
+	cmd="auth id=$idx,szone=$szone,type=$type,sipgrp=auth_sipgrp_$idx"
+	if test -n "$ipwhite"; then
+		ipwhite=$($IPOPS netStrings2ipcidrStrings "$ipwhite")
+		ipset create auth_ipwhite_$idx nethash 2>/dev/null
+		ipset flush auth_ipwhite_$idx
+		for net in $(echo "$ipwhite" | sed 's/,/ /g'); do
+			ipv4set_add auth_ipwhite_$idx $net
+		done
+		cmd="$cmd,ipwhite=auth_ipwhite_$idx"
+	else
+		cmd="$cmd,ipwhite="
+	fi
+
+	if test -n "$macwhite"; then
+		ipset create auth_macwhite_$idx machash 2>/dev/null
+		ipset flush auth_macwhite_$idx
+		for mac in $(echo "$macwhite" | sed 's/,/ /g'); do
+			ipset add auth_macwhite_$idx $mac
+		done
+		cmd="$cmd,macwhite=auth_macwhite_$idx"
+	else
+		cmd="$cmd,macwhite="
+	fi
+
+	echo "$cmd" >$DEVCTL
+}
+
+start() {
+	test -c $DEVCTL || return 0
+
+	echo clean >$DEVCTL
+	echo disabled=0 >$DEVCTL
+
+	config_load natflow
+	config_foreach natflow_user_setup auth
+
+	no_flow_timeout=$(uci get natflow.globals.no_flow_timeout 2>/dev/null || echo 1800)
+	echo no_flow_timeout=${no_flow_timeout} >$DEVCTL
+	redirect_ip=$(uci get natflow.globals.redirect_ip 2>/dev/null || echo 10.10.10.10)
+	echo redirect_ip=${redirect_ip} >$DEVCTL
+
+	echo update_magic >$DEVCTL
+}
+
+stop() {
+	test -c $DEVCTL || return 0
+
+	echo disabled=1 >$DEVCTL
+	ipset list -n | grep ^auth_ | while read ipset; do
+		ipset destroy $ipset
+	done
+}
+
+restart() {
+	stop
+	start
+}
