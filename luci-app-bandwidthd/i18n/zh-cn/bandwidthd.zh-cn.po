@@ -1,0 +1,41 @@
+msgid "Enable"
+msgstr "启用"
+
+msgid "Bandwidthd"
+msgstr "流量统计"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Not running"
+msgstr "未运行"
+
+msgid "dev"
+msgstr "被监控网卡"
+
+msgid "subnets"
+msgstr "被监控网段"
+
+msgid "skip_intervals"
+msgstr "刷新间隔"
+
+msgid "graph_cutoff"
+msgstr "图形的流量阈值(KB)"
+
+msgid "promiscuous"
+msgstr "混杂模式"
+
+msgid "output_cdf"
+msgstr "生成cdf格式数据记录"
+
+msgid "recover_cdf"
+msgstr "重新读取cdf的数据"
+
+msgid "filter"
+msgstr "过滤对象"
+
+msgid "graph"
+msgstr "是否绘图"
+
+
+
