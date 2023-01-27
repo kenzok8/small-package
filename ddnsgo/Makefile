@@ -1,3 +1,5 @@
+
+
 # SPDX-License-Identifier: GPL-3.0-only
 #
 # Copyright (C) 2021-2022  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/luci-app-ddnsgo 
@@ -8,14 +10,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddnsgo
-PKG_VERSION:=4.4.1
+PKG_VERSION:=4.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/jeessy2/ddns-go.git
-PKG_SOURCE_VERSION:=a59beb9104abbd77b9bf70da1b35b1c8182fa361
-PKG_MIRROR_HASH:=e26a66b60f8595efa4261b74e30d84b5cc077ef4002e49d287038c7a532e729a
+PKG_SOURCE_VERSION:=3adfc85ea96204dc762b99fff93770323fc2120c
+PKG_MIRROR_HASH:=c017a4e96593bbffedacac9aef21e59bba1a84a983e4c46fffe4fa2f09a1b241
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
