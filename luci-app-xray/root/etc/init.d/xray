@@ -93,7 +93,7 @@ setup_dnsmasq() {
 }
 
 flush_dnsmasq() {
-    rm /tmp/dnsmasq.d/xray.conf
+    rm -f /tmp/dnsmasq.d/xray.conf
     /etc/init.d/dnsmasq restart > /dev/null 2>&1
 }
 

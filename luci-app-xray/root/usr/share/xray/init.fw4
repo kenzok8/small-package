@@ -21,7 +21,7 @@ flush_firewall() {
     ip route del local default dev lo table 252
 
     logger -st xray[$$] -p4 "Flushing firewall4 rules..."
-    rm /var/etc/xray/firewall_include.nft
+    rm -f /var/etc/xray/firewall_include.nft
 
     logger -st xray[$$] -p4 "Triggering firewall4 restart..."
     /etc/init.d/firewall restart > /dev/null 2>&1
