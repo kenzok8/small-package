@@ -46,5 +46,14 @@ msgstr "目标地址"
 msgid "Destination port"
 msgstr "目标端口"
 
+msgid "Proxy"
+msgstr "代理"
+
+msgid "Proxy Server"
+msgstr "代理服务器"
+
+msgid "Proxy Port"
+msgstr "代理端口"
+
 msgid "Open firewall port"
 msgstr "打开防火墙端口"
