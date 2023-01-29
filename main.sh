@@ -150,7 +150,6 @@ git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua
 git_sparse_clone openwrt-21.02 "https://github.com/openwrt/openwrt" "21openwrt" package/libs/mbedtls \
 git_sparse_clone openwrt-21.02 "https://github.com/openwrt/packages" "21packages" \
 net/openvpn utils/cgroupfs-mount utils/coremark net/xray-core net/nginx net/uwsgi net/ddns-scripts admin/netdata
-git_sparse_clone openwrt-21.02 "https://github.com/openwrt/openwrt" "21openwrt" package/libs/mbedtls \
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
