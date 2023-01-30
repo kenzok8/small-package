@@ -1,4 +1,3 @@
-
 #!/bin/bash
 function git_clone() {
   git clone --depth 1 $1 $2 || true
@@ -104,14 +103,14 @@ git clone --depth 1 https://github.com/ZeaKyX/luci-app-speedtest-web
 git clone --depth 1 https://github.com/ZeaKyX/speedtest-web
 git clone --depth 1 https://github.com/Huangjoe123/luci-app-eqos
 git clone --depth 1 https://github.com/honwen/luci-app-aliddns
-
+git clone --depth 1 https://github.com/sbwml/luci-app-alist openwrt-alist && mv -n openwrt-alist/*alist ./ ; rm -rf openwrt-alist
 git clone --depth 1 https://github.com/Hyy2001X/AutoBuild-Packages && mv -n AutoBuild-Packages/luci-app-adguardhome ./; rm -rf AutoBuild-Packages
 git clone --depth 1 https://github.com/vernesong/OpenClash && mv -n OpenClash/luci-app-openclash ./; rm -rf OpenClash
 git clone --depth 1 https://github.com/messense/aliyundrive-webdav aliyundrive && mv -n aliyundrive/openwrt/* ./ ; rm -rf aliyundrive
 git clone --depth 1 https://github.com/messense/aliyundrive-fuse aliyundrive && mv -n aliyundrive/openwrt/* ./;rm -rf aliyundrive
 git clone --depth 1 https://github.com/kenzok8/litte && mv -n litte/luci-theme-atmaterial_new litte/luci-theme-mcat litte/luci-theme-tomato ./ ; rm -rf litte
 git clone --depth 1 https://github.com/fw876/helloworld && mv -n helloworld/luci-app-ssr-plus ./ ; rm -rf helloworld
-git clone --depth 1 https://github.com/kenzok78/wall && mv -n wall/ wall/adguardhome wall/filebrowser  wall/gost wall/mosdns wall/lua-neturl wall/lucky wall/smartdns wall/naiveproxy wall/sagernet-core wall/tcping wall/redsocks2  wall/microsocks  wall/v2ray-geodata ./ ; rm -rf wall
+git clone --depth 1 https://github.com/kenzok78/wall && mv -n wall/ wall/adguardhome wall/filebrowser wall/gost wall/mosdns wall/lua-neturl wall/lucky wall/smartdns wall/naiveproxy wall/sagernet-core wall/tcping wall/redsocks2 wall/microsocks wall/v2ray-geodata wall/UnblockNeteaseMusic ./ ; rm -rf wall
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall && mvdir openwrt-passwall
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall2 passwall2 && mv -n passwall2/luci-app-passwall2 ./;rm -rf passwall2
 git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall && mv -n passwall/luci-app-passwall ./;rm -rf passwall
@@ -135,10 +134,9 @@ svn export https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" net/miniupnpd net/mwan3 multimedia/UnblockNeteaseMusic-Go \
 net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
 net/qBittorrent-static net/qBittorrent libs/qtbase libs/qttools libs/rblibtorrent \
-net/uugamebooster net/verysync net/dnsforwarder net/nps multimedia/gmediarender net/tcpping
+net/uugamebooster net/verysync net/dnsforwarder net/nps net/tcpping
 
-git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/sub-web \
-net/dnsproxy net/haproxy net/v2raya net/cdnspeedtest \
+git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/sub-web net/dnsproxy net/haproxy net/v2raya net/cdnspeedtest \
 net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gowebdav \
 admin/bpytop libs/jpcre2 libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 \
 utils/cpulimit
