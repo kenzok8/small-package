@@ -144,8 +144,8 @@ luci-app-packet-capture luci-app-mail msmtp
 git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua-ipops luci-app-macvlan
 
 git_sparse_clone openwrt-22.03 "https://github.com/openwrt/openwrt" "22openwrt" package/libs/mbedtls \
-git_sparse_clone openwrt-22.03 "https://github.com/openwrt/packages" "22packages" \
-utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi net/ddns-scripts \
+git_sparse_clone openwrt-22.03 "https://github.com/openwrt/packages" "22opackages" \
+utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi \
 net/ariang admin/netdata net/transmission-web-control net/rp-pppoe net/tailscale
 
 git_sparse_clone openwrt-22.03 "https://github.com/openwrt/luci" "opluci" applications/luci-app-watchcat \
@@ -184,3 +184,4 @@ rm -rf create_acl_for_luci.err & rm -rf create_acl_for_luci.ok
 rm -rf create_acl_for_luci.warn
 
 exit 0
+
