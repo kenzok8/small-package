@@ -109,8 +109,8 @@ git clone --depth 1 https://github.com/vernesong/OpenClash && mv -n OpenClash/lu
 git clone --depth 1 https://github.com/messense/aliyundrive-webdav aliyundrive && mv -n aliyundrive/openwrt/* ./ ; rm -rf aliyundrive
 git clone --depth 1 https://github.com/messense/aliyundrive-fuse aliyundrive && mv -n aliyundrive/openwrt/* ./;rm -rf aliyundrive
 git clone --depth 1 https://github.com/kenzok8/litte && mv -n litte/luci-theme-atmaterial_new litte/luci-theme-mcat litte/luci-theme-tomato ./ ; rm -rf litte
-git clone --depth 1 https://github.com/fw876/helloworld && mv -n helloworld/luci-app-ssr-plus ./ ; rm -rf helloworld
-git clone --depth 1 https://github.com/kenzok78/wall && mv -n wall/ wall/adguardhome wall/filebrowser wall/gost wall/mosdns wall/lua-neturl wall/lucky wall/smartdns wall/naiveproxy wall/sagernet-core wall/tcping wall/redsocks2 wall/microsocks wall/v2ray-geodata wall/UnblockNeteaseMusic ./ ; rm -rf wall
+git clone --depth 1 https://github.com/fw876/helloworld && mv -n helloworld/luci-app-ssr-plus helloworld/naiveproxy ./ ; rm -rf helloworld
+git clone --depth 1 https://github.com/kenzok78/wall && mv -n wall/ wall/adguardhome wall/filebrowser wall/gost wall/mosdns wall/lua-neturl wall/lucky wall/smartdns wall/sagernet-core wall/tcping wall/redsocks2 wall/microsocks wall/v2ray-geodata wall/UnblockNeteaseMusic ./ ; rm -rf wall
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall && mvdir openwrt-passwall
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall2 passwall2 && mv -n passwall2/luci-app-passwall2 ./;rm -rf passwall2
 git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall && mv -n passwall/luci-app-passwall ./;rm -rf passwall
