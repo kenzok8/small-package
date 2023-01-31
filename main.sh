@@ -122,7 +122,10 @@ git clone --depth 1 https://github.com/immortalwrt/luci && mv -n luci/applicatio
 git clone --depth 1 https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest cloudflarespeedtest && mv -n cloudflarespeedtest/applications/* ./;rm -rf cloudflarespeedtest
 git clone --depth 1 https://github.com/doushang/luci-app-shortcutmenu luci-shortcutmenu && mv -n luci-shortcutmenu/luci-app-shortcutmenu ./ ; rm -rf luci-shortcutmenu
 git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
-git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic-Go packages/net/miniupnpd packages/net/mwan3 packages/net/amule packages/net/baidupcs-web packages/multimedia/gmediarender packages/net/go-aliyundrive-webdav packages/net/msd_lite ackages/net/qBittorrent-static packages/net/qBittorrent libs/qtbase libs/qttools libs/rblibtorrent packages/net/uugamebooster packages/net/verysync packages/net/dnsforwarder packages/net/nps packages/net/tcpping ./ ; rm -rf packages
+git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic-Go \
+packages/net/amule packages/net/baidupcs-web packages/multimedia/gmediarender packages/net/go-aliyundrive-webdav packages/net/msd_lite \
+packages/libs//qtbase packages/libs//qttools packages/libs//rblibtorrent packages/net/uugamebooster packages/net/dnsforwarder \
+packages/net/nps packages/net/tcpping ./ ; rm -rf packages
 
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
 svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
