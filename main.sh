@@ -110,7 +110,7 @@ git clone --depth 1 https://github.com/messense/aliyundrive-webdav aliyundrive &
 git clone --depth 1 https://github.com/messense/aliyundrive-fuse aliyundrive && mv -n aliyundrive/openwrt/* ./;rm -rf aliyundrive
 git clone --depth 1 https://github.com/kenzok8/litte && mv -n litte/luci-theme-atmaterial_new litte/luci-theme-mcat litte/luci-theme-tomato ./ ; rm -rf litte
 git clone --depth 1 https://github.com/fw876/helloworld && mv -n helloworld/luci-app-ssr-plus helloworld/naiveproxy ./ ; rm -rf helloworld
-git clone --depth 1 https://github.com/kenzok78/wall && mv -n wall/ wall/adguardhome wall/filebrowser wall/gost wall/mosdns wall/lua-neturl wall/lucky wall/smartdns wall/sagernet-core wall/tcping wall/redsocks2 wall/microsocks wall/v2raya wall/v2ray-geodata wall/UnblockNeteaseMusic ./ ; rm -rf wall
+git clone --depth 1 https://github.com/kenzok78/wall && mv -n wall/ wall/adguardhome wall/filebrowser wall/gost wall/mosdns wall/lua-neturl wall/lucky wall/smartdns wall/sagernet-core wall/tcping wall/redsocks2 wall/microsocks wall/v2ray-geodata wall/v2raya wall/UnblockNeteaseMusic ./ ; rm -rf wall
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall && mvdir openwrt-passwall
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall2 passwall2 && mv -n passwall2/luci-app-passwall2 ./;rm -rf passwall2
 git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall && mv -n passwall/luci-app-passwall ./;rm -rf passwall
@@ -122,10 +122,7 @@ git clone --depth 1 https://github.com/immortalwrt/luci && mv -n luci/applicatio
 git clone --depth 1 https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest cloudflarespeedtest && mv -n cloudflarespeedtest/applications/* ./;rm -rf cloudflarespeedtest
 git clone --depth 1 https://github.com/doushang/luci-app-shortcutmenu luci-shortcutmenu && mv -n luci-shortcutmenu/luci-app-shortcutmenu ./ ; rm -rf luci-shortcutmenu
 git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
-git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic-Go \
-packages/net/amule packages/net/baidupcs-web packages/multimedia/gmediarender packages/net/go-aliyundrive-webdav packages/net/msd_lite \
-packages/libs//qtbase packages/libs//qttools packages/libs//rblibtorrent packages/net/uugamebooster packages/net/dnsforwarder \
-packages/net/nps packages/net/tcpping ./ ; rm -rf packages
+git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic-Go packages/net/msd_lite ./ ; rm -rf packages
 
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
 svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
@@ -134,6 +131,11 @@ svn export https://github.com/Lienol/openwrt-package/branches/other/lean/luci-ap
 svn export https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn export https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 
+git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" net/miniupnpd net/mwan3 multimedia/UnblockNeteaseMusic-Go \
+net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
+net/qBittorrent-static net/qBittorrent libs/qtbase libs/qttools libs/rblibtorrent \
+net/uugamebooster net/verysync net/dnsforwarder net/nps net/tcpping
+
 git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/sub-web net/dnsproxy net/haproxy net/cdnspeedtest \
 net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gowebdav \
 libs/jpcre2 libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 \
@@ -141,15 +143,15 @@ utils/cpulimit
 
 git_sparse_clone develop "https://github.com/Ysurac/openmptcprouter-feeds" "enmptcp" luci-app-snmpd \
 luci-app-packet-capture luci-app-mail msmtp
-git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua-ipops luci-app-macvlan
 
+git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua-ipops luci-app-macvlan
 git_sparse_clone openwrt-22.03 "https://github.com/openwrt/openwrt" "22openwrt" package/libs/mbedtls \
-git_sparse_clone openwrt-22.03 "https://github.com/openwrt/packages" "22opackages" \
-utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi \
+
+git_sparse_clone openwrt-22.03 "https://github.com/openwrt/packages" "22packages" \
+utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi net/ddns-scripts \
 net/ariang admin/netdata net/transmission-web-control net/rp-pppoe net/tailscale
 
 git_sparse_clone openwrt-22.03 "https://github.com/openwrt/luci" "opluci" applications/luci-app-watchcat \
-
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
@@ -175,6 +177,7 @@ sed -i 's/ +uhttpd-mod-ubus//' luci-app-packet-capture/Makefile
 sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/wifidog/wifidog_cfg.lua
 sed -i "s/nas/services/g" `grep nas -rl luci-app-fileassistant`
 sed -i "s/NAS/Services/g" `grep NAS -rl luci-app-fileassistant`
+
 find -type f -name Makefile -exec sed -ri  's#mosdns[-_]neo#mosdns#g' {} \;
 
 bash diy/create_acl_for_luci.sh -a >/dev/null 2>&1
