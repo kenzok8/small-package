@@ -7,9 +7,13 @@ on:
       - 'diy/**'
   schedule:
     - cron: 0 */12 * * *
-  watch:
-    types: started
   repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
 
 jobs:
   build:
