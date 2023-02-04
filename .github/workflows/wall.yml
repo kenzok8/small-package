@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/wall.yml'
+      - 'main.sh'
       - 'diy/**'
   schedule:
     - cron: 0 */12 * * *
