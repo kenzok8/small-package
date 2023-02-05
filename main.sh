@@ -156,9 +156,6 @@ git_sparse_clone openwrt-22.03 "https://github.com/openwrt/luci" "opluci" applic
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
 
-rm -rf ./*/.git & rm -f ./*/.gitattributes
-rm -rf ./*/.svn & rm -rf ./*/.github & rm -rf ./*/.gitignore
-
 sed -i \
 -e 's?include \.\./\.\./\(lang\|devel\)?include $(TOPDIR)/feeds/packages/\1?' \
 -e 's?2. Clash For OpenWRT?3. Applications?' \
@@ -183,11 +180,6 @@ sed -i 's/luciversion = "$(date +%b)"/luciversion = "Feb"/g' diy/default-setting
 
 find -type f -name Makefile -exec sed -ri  's#mosdns[-_]neo#mosdns#g' {} \;
 
-bash diy/create_acl_for_luci.sh -a >/dev/null 2>&1
-bash diy/convert_translation.sh -a >/dev/null 2>&1
-
-rm -rf create_acl_for_luci.err & rm -rf create_acl_for_luci.ok
-rm -rf create_acl_for_luci.warn
 
 exit 0
 
