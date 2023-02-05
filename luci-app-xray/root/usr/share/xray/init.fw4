@@ -10,7 +10,7 @@ setup_firewall() {
     /usr/bin/utpl ${FIREWALL_INCLUDE} > /var/etc/xray/firewall_include.nft
 
     logger -st xray[$$] -p4 "Triggering firewall4 restart..."
-    /etc/init.d/firewall restart > /dev/null 2>&1
+    /etc/init.d/firewall restart
     /etc/hotplug.d/iface/01-transparent-proxy-ipset
 }
 
@@ -24,7 +24,7 @@ flush_firewall() {
     rm -f /var/etc/xray/firewall_include.nft
 
     logger -st xray[$$] -p4 "Triggering firewall4 restart..."
-    /etc/init.d/firewall restart > /dev/null 2>&1
+    /etc/init.d/firewall restart
     /etc/hotplug.d/iface/01-transparent-proxy-ipset
 }
 
