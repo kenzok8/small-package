@@ -201,7 +201,7 @@ cache,true
 offline_mode,false
 dnscrypt_ephemeral_keys,false
 tls_disable_session_tickets,false
-cert_ignore_timestamp,false
+cert_ignore_timestamp,true
 '
     append_yes_no() {
         local sets=$1
