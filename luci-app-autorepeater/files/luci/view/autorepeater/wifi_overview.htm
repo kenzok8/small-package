@@ -38,7 +38,7 @@
 	for _, inet in ipairs(ntm:get_networks()) do
 		local tiface = inet:get_interface()
 		local z = fwm:get_zone_by_network(inet:name())
-		if inet:name() ~= "loopback" and tiface:type() ~= "ethernet" and z:name() ~= "lan" then
+		if z ~= nil and tiface ~= nil and inet:name() ~= "loopback" and tiface:type() ~= "ethernet" and z:name() ~= "lan" then
 			ifaces[#ifaces+1] = inet:name()
 			inetlist[#inetlist+1] = {
 				inet:name(), z and z:name() or "-", z

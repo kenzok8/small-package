@@ -74,7 +74,7 @@ o.force_defaults = {
 ["offline_mode"] = "false",
 ["dnscrypt_ephemeral_keys"] = "false",
 ["tls_disable_session_tickets"] = "false",
-["cert_ignore_timestamp"] = "false",
+["cert_ignore_timestamp"] = "true",
 ["use_syslog"] = "false",
 }
 for k, v in pairs(o.force_defaults) do o:value(k, translate(k)) end

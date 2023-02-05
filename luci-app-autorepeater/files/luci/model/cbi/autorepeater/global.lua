@@ -22,7 +22,7 @@ local fwm = require "luci.model.firewall".init()
 	for _, inet in ipairs(ntm:get_networks()) do
 		local tiface = inet:get_interface()
 		local z = fwm:get_zone_by_network(inet:name())
-		if inet:name() ~= "loopback" and tiface:type() ~= "ethernet" and z:name() ~= "lan" then
+		if z ~= nil and tiface ~= nil and net:name() ~= "loopback" and tiface:type() ~= "ethernet" and z:name() ~= "lan" then
 			ezl[#ezl+1] = inet:name()
 		end
 	end
