@@ -249,7 +249,7 @@ function restart_app(){
 		echolog "passwall2重启完成"		 
 	fi
 
-	if [ "x${bypass_started}" == "x1" ] ;then
+	if [ "x${vssr_started}" == "x1" ] ;then
       	if [ $proxy_mode  == "close" ] ;then
         	uci set vssr.@global[0].global_server="${vssr_original_server}"		
       	elif [ $proxy_mode  == "gfw" ] ;then
@@ -260,7 +260,7 @@ function restart_app(){
     	echolog "Vssr重启完成"
 	fi
 
-	if [ "x${vssr_started}" == "x1" ] ;then
+	if [ "x${bypass_started}" == "x1" ] ;then
 		if [ $proxy_mode  == "close" ] ;then
         	uci set bypass.@global[0].global_server="${bypass_original_server}"		
       	elif [ $proxy_mode  == "gfw" ] ;then
