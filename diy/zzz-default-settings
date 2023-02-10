@@ -40,9 +40,9 @@ sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
 wifi up
 
 sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
-echo "DISTRIB_REVISION='v$(date +%Y.%m.%d)'" >> /etc/openwrt_release
+echo "DISTRIB_REVISION='v$(date +'%Y.%m.%d')'" >> /etc/openwrt_release
 sed -i '/DISTRIB_RELEASE/d' /etc/openwrt_release
-echo "DISTRIB_RELEASE='v$(date +%Y.%m.%d)'" >> /etc/openwrt_release
+echo "DISTRIB_RELEASE='v$(date +'%Y.%m.%d')'" >> /etc/openwrt_release
 sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
 echo "DISTRIB_DESCRIPTION='Openwrt '" >> /etc/openwrt_release
 
