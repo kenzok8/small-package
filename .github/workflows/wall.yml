@@ -11,13 +11,13 @@ on:
   workflow_dispatch:
     inputs:
       ssh:
-        description: 'SSH connection to Actions'
+        description: 'SSH Actions'
         required: false
         default: 'false'
 
 jobs:
   build:
-    if: github.event.repository.owner.id == github.event.sender.id || ! github.event.sender.id
+    if: github.event.repository.owner.id == github.event.sender.id || !github.event.sender.id
     runs-on: ubuntu-latest
 
     name: Update ${{matrix.target}}
@@ -27,46 +27,47 @@ jobs:
         target: [main]
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@main
-      with:
-        fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{github.head_ref}}
+          fetch-depth: 0
 
-    - name: Initialization environment
-      run : |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "github-actions[bot]"
-        sudo timedatectl set-timezone "Asia/Shanghai"
-        
-    - name: Clone packages
-      run: |
-        cd $GITHUB_WORKSPACE
-        chmod +x diy/${{matrix.target}}.sh
-        git clone -b ${{matrix.target}} https://github.com/kenzok8/small-package.git ${{matrix.target}}
-        cd ${{matrix.target}}
-        git rm -r --cache * >/dev/null 2>&1 &
-        rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
-        $GITHUB_WORKSPACE/diy/${{matrix.target}}.sh
-        bash /$GITHUB_WORKSPACE/diy/convert_translation.sh
-        bash /$GITHUB_WORKSPACE/diy/create_acl_for_luci.sh -a
-        bash /$GITHUB_WORKSPACE/diy/Modify.sh
+      - name: Initialization environment
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          sudo timedatectl set-timezone "Asia/Shanghai"
 
-    - name: Upload packages
+      - name: Clone packages
+        run: |
+          cd $GITHUB_WORKSPACE
+          chmod +x diy/${{matrix.target}}.sh
+          git clone -b ${{matrix.target}} https://github.com/kenzok8/small-package.git ${{matrix.target}}
+          cd ${{matrix.target}}
+          git rm -r --cached * >/dev/null 2>&1 &
+          rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
+          $GITHUB_WORKSPACE/diy/${{matrix.target}}.sh
+          bash $GITHUB_WORKSPACE/diy/convert_translation.sh
+          bash $GITHUB_WORKSPACE/diy/create_acl_for_luci.sh -a
+          bash $GITHUB_WORKSPACE/diy/Modify.sh
+
+      - name: Upload packages
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
-          cd $GITHUB_WORKSPACE
-          if [ -e "$GITHUB_WORKSPACE/${{matrix.target}}/index.js" ] && ! git diff-index --quiet HEAD --; then
+          cd $GITHUB_WORKSPACE/${{matrix.target}}
+          if [ -e "index.js" ] && ! git diff-index --quiet HEAD --; then
             git config user.name "kenzok8"
             git add .
             git commit -m "Update packages"
             git push --quiet "https://${ACCESS_TOKEN}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
           else
             echo "No files changed"
-          fi
 
-    - name: Delete workflow runs
-      uses: Mattraks/delete-workflow-runs@main
-      with:
-        retain_days: 1
-        keep_minimum_runs: 1       
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain-days: 1
+          keep-minimum-runs: 1
+ 
