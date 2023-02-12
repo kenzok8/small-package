@@ -52,15 +52,18 @@ jobs:
         bash /$GITHUB_WORKSPACE/diy/Modify.sh
 
     - name: Upload packages
-      env: 
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      run: |
-        [ -e $GITHUB_WORKSPACE/LICENSE ] && cp $GITHUB_WORKSPACE/LICENSE $GITHUB_WORKSPACE/${{matrix.target}}
-        [ -e $GITHUB_WORKSPACE/README.md ] && cp $GITHUB_WORKSPACE/README.md $GITHUB_WORKSPACE/${{matrix.target}}
-        cd $GITHUB_WORKSPACE/${{matrix.target}}
-        git add .
-        git commit -am "update $(date +%Y-%m-%d" "%H:%M:%S)"
-        git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        run: |
+          cd $GITHUB_WORKSPACE
+          if [ -e "$GITHUB_WORKSPACE/${{matrix.target}}/index.js" ] && ! git diff-index --quiet HEAD --; then
+            git config user.name "kenzok8"
+            git add .
+            git commit -m "Update packages"
+            git push --quiet "https://${ACCESS_TOKEN}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
+          else
+            echo "No files changed"
+          fi
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
