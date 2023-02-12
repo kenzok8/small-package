@@ -59,6 +59,7 @@ jobs:
           cd $GITHUB_WORKSPACE/${{matrix.target}}
           if [ -e "index.js" ] && ! git diff-index --quiet HEAD --; then
             git config user.name "kenzok8"
+            git config user.email "kenzok8@gmail.com"
             git add .
             git commit -m "Update packages"
             git push --quiet "https://${ACCESS_TOKEN}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
