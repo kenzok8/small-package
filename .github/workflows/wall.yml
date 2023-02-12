@@ -51,16 +51,25 @@ jobs:
         bash /$GITHUB_WORKSPACE/diy/create_acl_for_luci.sh -a
         bash /$GITHUB_WORKSPACE/diy/Modify.sh
 
-    - name: Upload packages
+    - name: Upload
       env: 
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       run: |
-        [ -e $GITHUB_WORKSPACE/LICENSE ] && cp $GITHUB_WORKSPACE/LICENSE $GITHUB_WORKSPACE/${{matrix.target}}
-        [ -e $GITHUB_WORKSPACE/README.md ] && cp $GITHUB_WORKSPACE/README.md $GITHUB_WORKSPACE/${{matrix.target}}
+        if [ -e $GITHUB_WORKSPACE/LICENSE ]; then
+          cp $GITHUB_WORKSPACE/LICENSE $GITHUB_WORKSPACE/${{matrix.target}}
+        fi
+        if [ -e $GITHUB_WORKSPACE/README.md ]; then
+          cp $GITHUB_WORKSPACE/README.md $GITHUB_WORKSPACE/${{matrix.target}}
+        fi
         cd $GITHUB_WORKSPACE/${{matrix.target}}
-        git add .
-        git commit -am "update $(date +%Y-%m-%d" "%H:%M:%S)"
-        git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
+        if git status --porcelain | grep .; then
+          git add .
+          git commit -am "update $(date '+%Y-%m-%d %H:%M:%S')"
+          git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/kenzok8/small-package.git" HEAD:${{matrix.target}}
+        else
+          echo "nothing to commit"
+          exit 0
+        fi || exit 0
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
