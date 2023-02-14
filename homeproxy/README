@@ -1,6 +1,5 @@
 TODO:
 - Check bugs in ACL, config generator etc.
-- Allow use redirect/tproxy mode for custom routing
 - Subscription page slow response with a large number of nodes
 - Refactor nft rules
 - Any other improvements

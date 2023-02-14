@@ -95,13 +95,16 @@ return view.extend({
 	load: function() {
 		return Promise.all([
 			uci.load('homeproxy'),
+			hp.getBuiltinFeatures(),
 			network.getHostHints()
 		]);
 	},
 
 	render: function(data) {
 		var m, s, o, ss, so;
-		var hosts = data[1]?.hosts;
+
+		var features = data[1],
+		    hosts = data[2]?.hosts;
 
 		m = new form.Map('homeproxy', _('HomeProxy'),
 			_('The modern ImmortalWrt proxy platform for ARM64/AMD64.'));
@@ -146,51 +149,8 @@ return view.extend({
 		for (var i in proxy_nodes)
 			o.value(i, proxy_nodes[i]);
 		o.default = 'nil';
-		o.depends({'routing_mode': 'custom', '!reverse': true});
+		o.depends({'routing_mode': /^((?!custom).)+$/, 'proxy_mode': /^((?!redirect$).)+$/});
 		o.rmempty = false;
-
-		o = s.taboption('routing', form.Flag, 'ipv6_support', _('IPv6 support'));
-		o.default = o.enabled;
-		o.rmempty = false;
-		o.depends({'routing_mode': 'custom', '!reverse': true});
-
-		o = s.taboption('routing', form.ListValue, 'routing_mode', _('Routing mode'));
-		o.value('gfwlist', _('GFWList'));
-		o.value('bypass_mainland_china', _('Bypass mainland China'));
-		o.value('proxy_mainland_china', _('Only proxy mainland China'));
-		o.value('custom', _('Custom routing'));
-		o.value('global', _('Global'));
-		o.default = 'bypass_mainland_china';
-		o.rmempty = false;
-		o.onchange = function(ev, section_id, value) {
-			if (section_id && value === 'custom')
-				this.map.save(null, true);
-		}
-
-		o = s.taboption('routing', form.Value, 'routing_port', _('Routing ports'),
-			_('Specify target port(s) that get proxied. Multiple ports must be separated by commas.'));
-		o.value('all', _('All ports'));
-		o.value('common', _('Common ports only (bypass P2P traffic)'));
-		o.default = 'common';
-		o.rmempty = false;
-		o.depends({'routing_mode': 'custom', '!reverse': true});
-		o.validate = function(section_id, value) {
-			if (section_id && value !== 'all' && value !== 'common') {
-				if (!value)
-					return _('Expecting: %s').format(_('valid port value'));
-
-				var ports = [];
-				for (var i of value.split(',')) {
-					if (!stubValidator.apply('port', i))
-						return _('Expecting: %s').format(_('valid port value'));
-					if (ports.includes(i))
-						return _('Port %s alrealy exists!').format(i);
-					ports = ports.concat(i);
-				}
-			}
-
-			return true;
-		}
 
 		o = s.taboption('routing', form.Value, 'dns_server', _('DNS server'),
 			_('You can only have one server set. Custom DNS server format as plain IPv4/IPv6.'));
@@ -216,210 +176,57 @@ return view.extend({
 			return true;
 		}
 
-		/* Regular mode ACL settings start */
-		s.tab('control', _('Access Control'));
-
-		o = s.taboption('control', form.SectionValue, '_control', form.NamedSection, 'control', 'homeproxy');
-		o.depends({'routing_mode': 'custom', '!reverse': true});
-		ss = o.subsection;
-
-		/* Interface control start */
-		ss.tab('interface', _('Interface Control'));
-
-		so = ss.taboption('interface', widgets.DeviceSelect, 'listen_interfaces', _('Listen interfaces'),
-			_('Only process traffic from specific interfaces. Leave empty for all.'));
-		so.multiple = true;
-		so.noaliases = true;
-
-		so = ss.taboption('interface', widgets.DeviceSelect, 'bind_interface', _('Bind interface'),
-			_('Bind outbound traffic to specific interface. Leave empty to auto detect.'));
-		so.multiple = false;
-		so.noaliases = true;
-		/* Interface control end */
-
-		/* LAN IP policy start */
-		ss.tab('lan_ip_policy', _('LAN IP Policy'));
-
-		var ipaddrs = {}, ip6addrs = {};
-		Object.keys(hosts).forEach(function(mac) {
-			var addrs = L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4);
-
-			for (var i = 0; i < addrs.length; i++)
-				ipaddrs[addrs[i]] = hosts[mac].name || mac;
-		});
-		Object.keys(hosts).forEach(function(mac) {
-			var addrs = L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6);
-
-			for (var i = 0; i < addrs.length; i++)
-				ip6addrs[addrs[i]] = hosts[mac].name || mac;
-		});
-
-		so = ss.taboption('lan_ip_policy', form.ListValue, 'lan_proxy_mode', _('Proxy filter mode'));
-		so.value('disabled', _('Disable'));
-		so.value('listed_only', _('Proxy listed only'));
-		so.value('except_listed', _('Proxy all except listed'));
-		so.default = 'disabled';
-		so.rmempty = false;
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_mac_addrs', _('Direct MAC addresses'));
-		so.datatype = 'macaddr';
-		so.depends('lan_proxy_mode', 'except_listed');
-		Object.keys(hosts).forEach(function(mac) {
-			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
-			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_ipv4_ips', _('Direct IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
-		so.depends('lan_proxy_mode', 'except_listed');
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
-			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_ipv6_ips', _('Direct IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
-		so.depends('lan_proxy_mode', 'except_listed');
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
-			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_mac_addrs', _('Proxy MAC addresses'));
-		so.datatype = 'macaddr';
-		so.depends('lan_proxy_mode', 'listed_only');
-		Object.keys(hosts).forEach(function(mac) {
-			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
-			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_ipv4_ips', _('Proxy IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
-		so.depends('lan_proxy_mode', 'listed_only');
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
-			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_ipv6_ips', _('Proxy IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
-		so.depends('lan_proxy_mode', 'listed_only');
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
-			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_mac_addrs', _('Gaming mode MAC addresses'));
-		so.datatype = 'macaddr';
-		Object.keys(hosts).forEach(function(mac) {
-			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
-			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
-			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_ipv6_ips', _('Gaming mode IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
-			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_global_proxy_mac_addrs', _('Global proxy MAC addresses'));
-		so.datatype = 'macaddr';
-		Object.keys(hosts).forEach(function(mac) {
-			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
-			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_global_proxy_ipv4_ips', _('Global proxy IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
-			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
-		});
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_global_proxy_ipv6_ips', _('Global proxy IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
-			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
-		});
-		/* LAN IP policy end */
-
-		/* WAN IP policy start */
-		ss.tab('wan_ip_policy', _('WAN IP Policy'));
-
-		so = ss.taboption('wan_ip_policy', form.DynamicList, 'wan_proxy_ipv4_ips', _('Proxy IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
-
-		so = ss.taboption('wan_ip_policy', form.DynamicList, 'wan_proxy_ipv6_ips', _('Proxy IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
-
-		so = ss.taboption('wan_ip_policy', form.DynamicList, 'wan_direct_ipv4_ips', _('Direct IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
-
-		so = ss.taboption('wan_ip_policy', form.DynamicList, 'wan_direct_ipv6_ips', _('Direct IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
-		/* WAN IP policy end */
-
-		/* Proxy domain list start */
-		ss.tab('proxy_domain_list', _('Proxy Domain List'));
-
-		so = ss.taboption('proxy_domain_list', form.TextValue, '_proxy_domain_list');
-		so.rows = 10;
-		so.monospace = true;
-		so.datatype = 'hostname';
-		so.load = function(section_id) {
-			return L.resolveDefault(callReadDomainList('proxy_list')).then((res) => {
-				return res.content;
-			}, {});
+		o = s.taboption('routing', form.ListValue, 'routing_mode', _('Routing mode'));
+		o.value('gfwlist', _('GFWList'));
+		o.value('bypass_mainland_china', _('Bypass mainland China'));
+		o.value('proxy_mainland_china', _('Only proxy mainland China'));
+		o.value('custom', _('Custom routing'));
+		o.value('global', _('Global'));
+		o.default = 'bypass_mainland_china';
+		o.rmempty = false;
+		o.onchange = function(ev, section_id, value) {
+			if (section_id && value === 'custom')
+				this.map.save(null, true);
 		}
-		so.write = function(section_id, value) {
-			return callWriteDomainList('proxy_list', value);
-		}
-		so.remove = function(section_id, value) {
-			return callWriteDomainList('proxy_list', '');
-		}
-		so.validate = function(section_id, value) {
-			if (section_id && value) {
-				for (var i of value.split('\n')) {
-					if (i && !stubValidator.apply('hostname', i))
-						return _('Expecting: %s').format(_('valid hostname'));
+
+		o = s.taboption('routing', form.Value, 'routing_port', _('Routing ports'),
+			_('Specify target port(s) that get proxied. Multiple ports must be separated by commas.'));
+		o.value('all', _('All ports'));
+		o.value('common', _('Common ports only (bypass P2P traffic)'));
+		o.default = 'common';
+		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id && value !== 'all' && value !== 'common') {
+				if (!value)
+					return _('Expecting: %s').format(_('valid port value'));
+
+				var ports = [];
+				for (var i of value.split(',')) {
+					if (!stubValidator.apply('port', i))
+						return _('Expecting: %s').format(_('valid port value'));
+					if (ports.includes(i))
+						return _('Port %s alrealy exists!').format(i);
+					ports = ports.concat(i);
 				}
 			}
 
 			return true;
 		}
-		/* Proxy domain list end */
 
-		/* Direct domain list start */
-		ss.tab('direct_domain_list', _('Direct Domain List'));
+		o = s.taboption('routing', form.ListValue, 'proxy_mode', _('Proxy mode'));
+		o.value('redirect', _('Redirect TCP'));
+		o.value('redirect_tproxy', _('Redirect TCP + TProxy UDP'));
+		/* This detection is required as the `system` stack doesn't work currently */
+		if (features.with_gvisor || features.with_lwip) {
+			o.value('redirect_tun', _('Redirect TCP + Tun UDP'));
+			o.value('tun', _('Tun TCP/UDP'));
+		}
+		o.default = 'redirect_tproxy';
+		o.rmempty = false;
 
-		so = ss.taboption('direct_domain_list', form.TextValue, '_direct_domain_list');
-		so.rows = 10;
-		so.monospace = true;
-		so.datatype = 'hostname';
-		so.load = function(section_id) {
-			return L.resolveDefault(callReadDomainList('direct_list')).then((res) => {
-				return res.content;
-			}, {});
-		}
-		so.write = function(section_id, value) {
-			return callWriteDomainList('direct_list', value);
-		}
-		so.remove = function(section_id, value) {
-			return callWriteDomainList('direct_list', '');
-		}
-		so.validate = function(section_id, value) {
-			if (section_id && value) {
-				for (var i of value.split('\n')) {
-					if (i && !stubValidator.apply('hostname', i))
-						return _('Expecting: %s').format(_('valid hostname'));
-				}
-			}
-
-			return true;
-		}
-		/* Direct domain list end */
-		/* Regular mode ACL settings end */
+		o = s.taboption('routing', form.Flag, 'ipv6_support', _('IPv6 support'));
+		o.default = o.enabled;
+		o.rmempty = false;
 
 		/* Custom routing settings start */
 		/* Routing settings start */
@@ -427,6 +234,44 @@ return view.extend({
 		o.depends('routing_mode', 'custom');
 
 		ss = o.subsection;
+		so = ss.option(form.ListValue, 'tcpip_stack', _('TCP/IP stack'),
+			_('TCP/IP stack.'));
+		if (features.with_gvisor)
+			so.value('gvisor', _('gVisor'));
+		if (features.with_lwip)
+			so.value('lwip', _('LWIP'));
+		/*
+		* The `system` stack doesn't work properly on OpenWrt, so hide it
+		* until it gets fixed.
+		*
+		* o.value('system', _('System'));
+		*/
+		so.default = 'gvisor';
+		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');
+		so.depends('homeproxy.config.proxy_mode', 'tun');
+		so.rmempty = false;
+		so.onchange = function(ev, section_id, value) {
+			var desc = ev.target.nextElementSibling;
+			if (value === 'gvisor')
+				desc.innerHTML = _('Based on google/gvisor (recommended).');
+			else if (value === 'lwip')
+				desc.innerHTML = _('Upstream archived. Not recommended.');
+			else if (value === 'system')
+				desc.innerHTML = _('Less compatibility and sometimes better performance.');
+		}
+
+		so = ss.option(form.Flag, 'endpoint_independent_nat', _('Enable endpoint-independent NAT'),
+			_('Performance may degrade slightly, so it is not recommended to enable on when it is not needed.'));
+		so.default = so.enabled;
+		so.depends('tcpip_stack', 'gvisor');
+		so.depends('tcpip_stack', 'gvisor');
+		so.rmempty = false;
+
+		so = ss.option(form.Flag, 'bypass_cn_traffic', _('Bypass CN traffic'),
+			_('Bypass mainland China traffic via firewall rules by default.'));
+		so.default = so.disabled;
+		so.rmempty = false;
+
 		so = ss.option(form.Flag, 'sniff_override', _('Override destination'),
 			_('Override the connection destination address with the sniffed domain.'));
 		so.default = so.enabled;
@@ -448,31 +293,6 @@ return view.extend({
 			return this.super('load', section_id);
 		}
 		so.default = 'nil';
-		so.rmempty = false;
-
-		so = ss.option(widgets.DeviceSelect, 'default_interface', _('Default interface'),
-			_('Bind outbound connections to the specified NIC by default.<br/>Auto detect if leave empty.'));
-		so.multiple = false;
-		so.noaliases = true;
-
-		so = ss.option(form.ListValue, 'tcpip_stack', _('TCP/IP stack'),
-			_('TCP/IP stack.'));
-		so.value('gvisor', _('gVisor'));
-		so.value('system', _('System'));
-		so.default = 'gvisor';
-		so.rmempty = false;
-		so.onchange = function(ev, section_id, value) {
-			var desc = ev.target.nextElementSibling;
-			if (value === 'gvisor')
-				desc.innerHTML = _('Based on google/gvisor (recommended).');
-			else
-				desc.innerHTML = _('Less compatibility and sometimes better performance.');
-		}
-
-		so = ss.option(form.Flag, 'endpoint_independent_nat', _('Enable endpoint-independent NAT'),
-			_('Performance may degrade slightly, so it is not recommended to enable on when it is not needed.'));
-		so.default = so.enabled;
-		so.depends('tcpip_stack', 'gvisor');
 		so.rmempty = false;
 		/* Routing settings end */
 
@@ -707,10 +527,7 @@ return view.extend({
 		so = ss.option(form.ListValue, 'dns_strategy', _('DNS strategy'),
 			_('The DNS strategy for resolving the domain name in the address.'));
 		for (var i in hp.dns_strategy)
-			if (i)
-				so.value(i, hp.dns_strategy[i]);
-		so.default = 'prefer_ipv4';
-		so.rmempty = false;
+			so.value(i, hp.dns_strategy[i]);
 
 		so = ss.option(form.ListValue, 'default_server', _('Default DNS server'));
 		so.load = function(section_id) {
@@ -984,6 +801,203 @@ return view.extend({
 		so.modalonly = true;
 		/* DNS rules end */
 		/* Custom routing settings end */
+
+		/* ACL settings start */
+		s.tab('control', _('Access Control'));
+
+		o = s.taboption('control', form.SectionValue, '_control', form.NamedSection, 'control', 'homeproxy');
+		ss = o.subsection;
+
+		/* Interface control start */
+		ss.tab('interface', _('Interface Control'));
+
+		so = ss.taboption('interface', widgets.DeviceSelect, 'listen_interfaces', _('Listen interfaces'),
+			_('Only process traffic from specific interfaces. Leave empty for all.'));
+		so.multiple = true;
+		so.noaliases = true;
+
+		so = ss.taboption('interface', widgets.DeviceSelect, 'bind_interface', _('Bind interface'),
+			_('Bind outbound traffic to specific interface. Leave empty to auto detect.'));
+		so.multiple = false;
+		so.noaliases = true;
+		/* Interface control end */
+
+		/* LAN IP policy start */
+		ss.tab('lan_ip_policy', _('LAN IP Policy'));
+
+		var ipaddrs = {}, ip6addrs = {};
+		Object.keys(hosts).forEach(function(mac) {
+			var addrs = L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4);
+
+			for (var i = 0; i < addrs.length; i++)
+				ipaddrs[addrs[i]] = hosts[mac].name || mac;
+		});
+		Object.keys(hosts).forEach(function(mac) {
+			var addrs = L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6);
+
+			for (var i = 0; i < addrs.length; i++)
+				ip6addrs[addrs[i]] = hosts[mac].name || mac;
+		});
+
+		so = ss.taboption('lan_ip_policy', form.ListValue, 'lan_proxy_mode', _('Proxy filter mode'));
+		so.value('disabled', _('Disable'));
+		so.value('listed_only', _('Proxy listed only'));
+		so.value('except_listed', _('Proxy all except listed'));
+		so.default = 'disabled';
+		so.rmempty = false;
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_mac_addrs', _('Direct MAC addresses'));
+		so.datatype = 'macaddr';
+		so.depends('lan_proxy_mode', 'except_listed');
+		Object.keys(hosts).forEach(function(mac) {
+			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
+			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_ipv4_ips', _('Direct IPv4 IP-s'));
+		so.datatype = 'or(ip4addr, cidr4)';
+		so.depends('lan_proxy_mode', 'except_listed');
+		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
+			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_ipv6_ips', _('Direct IPv6 IP-s'));
+		so.datatype = 'or(ip6addr, cidr6)';
+		so.depends('lan_proxy_mode', 'except_listed');
+		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
+			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_mac_addrs', _('Proxy MAC addresses'));
+		so.datatype = 'macaddr';
+		so.depends('lan_proxy_mode', 'listed_only');
+		Object.keys(hosts).forEach(function(mac) {
+			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
+			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_ipv4_ips', _('Proxy IPv4 IP-s'));
+		so.datatype = 'or(ip4addr, cidr4)';
+		so.depends('lan_proxy_mode', 'listed_only');
+		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
+			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_ipv6_ips', _('Proxy IPv6 IP-s'));
+		so.datatype = 'or(ip6addr, cidr6)';
+		so.depends('lan_proxy_mode', 'listed_only');
+		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
+			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_mac_addrs', _('Gaming mode MAC addresses'));
+		so.datatype = 'macaddr';
+		Object.keys(hosts).forEach(function(mac) {
+			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
+			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'));
+		so.datatype = 'or(ip4addr, cidr4)';
+		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
+			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_ipv6_ips', _('Gaming mode IPv6 IP-s'));
+		so.datatype = 'or(ip6addr, cidr6)';
+		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
+			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
+		});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_global_proxy_ipv4_ips', _('Global proxy IPv4 IP-s'));
+		so.datatype = 'or(ip4addr, cidr4)';
+		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
+			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
+		});
+		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
+
+		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_global_proxy_ipv6_ips', _('Global proxy IPv6 IP-s'));
+		so.datatype = 'or(ip6addr, cidr6)';
+		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
+			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
+		});
+		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
+		/* LAN IP policy end */
+
+		/* WAN IP policy start */
+		ss.tab('wan_ip_policy', _('WAN IP Policy'));
+
+		so = ss.taboption('wan_ip_policy', form.DynamicList, 'wan_proxy_ipv4_ips', _('Proxy IPv4 IP-s'));
+		so.datatype = 'or(ip4addr, cidr4)';
+
+		so = ss.taboption('wan_ip_policy', form.DynamicList, 'wan_proxy_ipv6_ips', _('Proxy IPv6 IP-s'));
+		so.datatype = 'or(ip6addr, cidr6)';
+
+		so = ss.taboption('wan_ip_policy', form.DynamicList, 'wan_direct_ipv4_ips', _('Direct IPv4 IP-s'));
+		so.datatype = 'or(ip4addr, cidr4)';
+
+		so = ss.taboption('wan_ip_policy', form.DynamicList, 'wan_direct_ipv6_ips', _('Direct IPv6 IP-s'));
+		so.datatype = 'or(ip6addr, cidr6)';
+		/* WAN IP policy end */
+
+		/* Proxy domain list start */
+		ss.tab('proxy_domain_list', _('Proxy Domain List'));
+
+		so = ss.taboption('proxy_domain_list', form.TextValue, '_proxy_domain_list');
+		so.rows = 10;
+		so.monospace = true;
+		so.datatype = 'hostname';
+		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
+		so.load = function(section_id) {
+			return L.resolveDefault(callReadDomainList('proxy_list')).then((res) => {
+				return res.content;
+			}, {});
+		}
+		so.write = function(section_id, value) {
+			return callWriteDomainList('proxy_list', value);
+		}
+		so.remove = function(section_id, value) {
+			return callWriteDomainList('proxy_list', '');
+		}
+		so.validate = function(section_id, value) {
+			if (section_id && value)
+				for (var i of value.split('\n'))
+					if (i && !stubValidator.apply('hostname', i))
+						return _('Expecting: %s').format(_('valid hostname'));
+
+			return true;
+		}
+		/* Proxy domain list end */
+
+		/* Direct domain list start */
+		ss.tab('direct_domain_list', _('Direct Domain List'));
+
+		so = ss.taboption('direct_domain_list', form.TextValue, '_direct_domain_list');
+		so.rows = 10;
+		so.monospace = true;
+		so.datatype = 'hostname';
+		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
+		so.load = function(section_id) {
+			return L.resolveDefault(callReadDomainList('direct_list')).then((res) => {
+				return res.content;
+			}, {});
+		}
+		so.write = function(section_id, value) {
+			return callWriteDomainList('direct_list', value);
+		}
+		so.remove = function(section_id, value) {
+			return callWriteDomainList('direct_list', '');
+		}
+		so.validate = function(section_id, value) {
+			if (section_id && value)
+				for (var i of value.split('\n'))
+					if (i && !stubValidator.apply('hostname', i))
+						return _('Expecting: %s').format(_('valid hostname'));
+
+			return true;
+		}
+		/* Direct domain list end */
+		/* ACL settings end */
 
 		return m.render();
 	}

@@ -212,7 +212,7 @@ return baseclass.extend({
 			expect: { '': {} }
 		});
 
-		return ui.uploadFile(String.format('/tmp/homeproxy_certificate.tmp', filename), ev.target)
+		return ui.uploadFile('/tmp/homeproxy_certificate.tmp', ev.target)
 		.then(L.bind((btn, res) => {
 			return L.resolveDefault(callWriteCertificate(filename), {}).then((ret) => {
 				if (ret.result === true)
