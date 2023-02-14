@@ -47,7 +47,6 @@ const methods = {
 
 			system(`mkdir -p ${HP_DIR}/resources`);
 			writefile(file, content);
-			system('env -i /etc/init.d/homeproxy restart >/dev/null &');
 
 			return { result: true };
 		}

@@ -7,11 +7,18 @@
 	const uci = cursor();
 	uci.load(cfgname);
 
-	const routing_mode = uci.get(cfgname, 'config', 'routing_mode') || 'bypass_mainland_china';
-	let outbound_node = 'nil', tun_name;
-	if (routing_mode === 'custom') {
-		outbound_node = uci.get(cfgname, 'routing', 'default_outbound') || 'nil';
-		tun_name = uci.get(cfgname, 'infra', 'tun_name') || 'singtun0';
+	const routing_mode = uci.get(cfgname, 'config', 'routing_mode') || 'bypass_mainland_china',
+	      proxy_mode = uci.get(cfgname, 'config', 'proxy_mode') || 'redirect_tproxy';
+
+	let outbound_node, tun_name;
+	if (match(proxy_mode, /tun/)) {
+		if (routing_mode === 'custom')
+			outbound_node = uci.get(cfgname, 'routing', 'default_outbound') || 'nil';
+		else
+			outbound_node = uci.get(cfgname, 'config', 'main_node') || 'nil';
+
+		if (outbound_node !== 'nil')
+			tun_name = uci.get(cfgname, 'infra', 'tun_name') || 'singtun0';
 	}
 
 	const server_enabled = uci.get(cfgname, 'server', 'enabled');
@@ -21,7 +28,7 @@
 
 -%}
 
-{% if (outbound_node !== 'nil'): %}
+{% if (tun_name): %}
 chain forward {
 	oifname {{ tun_name }} counter accept comment "!{{ cfgname }}: accept tun forward"
 }

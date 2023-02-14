@@ -23,8 +23,9 @@ log() {
 start_service() {
 	config_load "$CONF"
 
-	local routing_mode
+	local routing_mode proxy_mode
 	config_get routing_mode "config" "routing_mode" "bypass_mainland_china"
+	config_get proxy_mode "config" "proxy_mode" "redirect_tproxy"
 
 	local outbound_node
 	if [ "$routing_mode" != "custom" ]; then
@@ -101,10 +102,10 @@ start_service() {
 		# Setup firewall
 		local table_mark
 		config_get table_mark "infra" "table_mark" "100"
-		if [ "$routing_mode" != "custom" ]; then
+		if [ "$proxy_mode" = "redirect_tproxy" ]; then
 			local outbound_udp_node
 			config_get outbound_udp_node "config" "main_udp_node" "nil"
-			if [ "$outbound_udp_node" != "nil" ]; then
+			if [ "$outbound_udp_node" != "nil" ] || [ "$routing_mode" = "custom" ]; then
 				local tproxy_mark
 				config_get tproxy_mark "infra" "tproxy_mark" "101"
 
@@ -116,7 +117,7 @@ start_service() {
 					ip -6 route add local ::/0 dev lo table "$table_mark"
 				fi
 			fi
-		else
+		elif [ "$proxy_mode" = "redirect_tun" ] || [ "$proxy_mode" = "tun" ]; then
 			local tun_name tun_mark
 			config_get tun_name "infra" "tun_name" "singtun0"
 			config_get tun_mark "infra" "tun_mark" "102"
@@ -159,11 +160,7 @@ start_service() {
 	log "$(sing-box version | awk 'NR==1{print $1,$3}') started."
 }
 
-service_started() {
-	procd_set_config_changed firewall
-}
-
-service_stopped() {
+stop_service() {
 	sed -i "/$CONF/d" "/etc/crontabs/root" 2>"/dev/null"
 	/etc/init.d/cron restart >"/dev/null" 2>&1
 
@@ -196,7 +193,9 @@ service_stopped() {
 	for i in "homeproxy_dstnat_redir" "homeproxy_output_redir" \
 		 "homeproxy_redirect" "homeproxy_redirect_proxy" \
 		 "homeproxy_mangle_prerouting" "homeproxy_mangle_output" \
-		 "homeproxy_mangle_tproxy" "homeproxy_mangle_mark"; do
+		 "homeproxy_mangle_tproxy" "homeproxy_mangle_mark" \
+		 "homeproxy_mangle_tun" "homeproxy_mangle_tun_mark" \
+		 "homeproxy_mangle_prerouting_tun"; do
 		nft flush chain inet fw4 "$i" 2>"/dev/null"
 		nft delete chain inet fw4 "$i" 2>"/dev/null"
 	done
