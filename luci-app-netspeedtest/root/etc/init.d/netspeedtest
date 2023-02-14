@@ -40,7 +40,6 @@ nstest() {
     limit_log $LOG 200
     init_env
     touch $LOCK
-    
     echo -ne "\n  speedtest测速"       | tee -a $LOG
     /usr/bin/speedtest --share  > $TMP_T
     echo -ne  "\n  测服信息:$(cat  $TMP_T | grep 'Hosted by'| cut -c10- | awk -F: '{printf $1}')  延时：$(cat  $TMP_T | grep 'Hosted by' | awk -F: '{printf $2}')" >> $LOG
@@ -62,16 +61,11 @@ homebox_prepare() {
 	pgrep -f homebox | xargs kill -9 >/dev/null 2>&1 
 }
 
-stop_service() {
-	# homebox_prepare
-	echo "homebox stop"
-}
-
 start_service() {
 	homebox_prepare
 	config_load netspeedtest
         config_foreach get_config homebox
-	[ "x$enabled" == "x1" ] || return 1
+	[ "x$enabled" != "x1" ] && exit 1
 	procd_open_instance
 	procd_set_param command $PROG
 	[ "x$logger" == x1 ] && procd_set_param stderr 1
