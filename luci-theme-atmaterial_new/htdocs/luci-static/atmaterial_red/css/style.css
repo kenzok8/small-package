@@ -507,6 +507,14 @@ header > .container > a[class="brand"]:after {
     content: "\e00f";
 }
 
+.main > .main-left > .nav > .slide > a[data-title="iStore"]:before {
+    content: "\e01d";
+}
+
+.main > .main-left > .nav > .slide > a[data-title="DockerMan"]:before {
+    content: "\e01e";
+}
+
 .main > .main-left > .nav > li > a[data-title="Logout"] {
     padding-left:36px;
     line-height:40px;
