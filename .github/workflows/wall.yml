@@ -6,7 +6,7 @@ on:
       - '.github/workflows/wall.yml'
       - 'main.sh'
   schedule:
-    - cron: 0 */12 * * *
+    - cron: 0 */8 * * *
   repository_dispatch:
   workflow_dispatch:
     inputs:
