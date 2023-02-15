@@ -516,13 +516,6 @@ color: #8965e0!important;
   color: #1E90FF!important;
 }
 
-.main > .main-left > .nav > .slide > a[data-title="iStore"]:before {
-    content: "\e01d";
-}
-
-.main > .main-left > .nav > .slide > a[data-title="DockerMan"]:before {
-    content: "\e01e";
-}
 
 .main > .main-left > .nav > .slide > a[data-title="Bandwidth Monitor"]:before {
     content: "\e00f";
