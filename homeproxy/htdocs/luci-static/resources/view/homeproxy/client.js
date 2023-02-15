@@ -162,7 +162,7 @@ return view.extend({
 		o.value('223.5.5.5', _('Aliyun Public DNS (223.5.5.5)'));
 		o.value('119.29.29.29', _('Tencent Public DNS (119.29.29.29)'));
 		o.value('114.114.114.114', _('Xinfeng Public DNS (114.114.114.114)'));
-		o.default = '8.8.8.8';
+		o.default = '208.67.222.222';
 		o.rmempty = false;
 		o.depends({'routing_mode': 'custom', '!reverse': true});
 		o.validate = function(section_id, value) {
