@@ -173,8 +173,7 @@ sed -i 's/\(+luci-compat\)/\1 +luci-theme-argon/' luci-app-argon-config/Makefile
 sed -i 's/\(+luci-compat\)/\1 +luci-theme-argonne/' luci-app-argonne-config/Makefile
 sed -i 's/ +uhttpd-mod-ubus//' luci-app-packet-capture/Makefile
 sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/wifidog/wifidog_cfg.lua
-sed -i "s/nas/services/g" `grep nas -rl luci-app-fileassistant`
-sed -i "s/NAS/Services/g" `grep NAS -rl luci-app-fileassistant`
+find ./ -type f -exec sed -i 's/nas/NAS/g; s/services/Services/g' {} +
 
 sed -i 's/luciversion = "$(date +%b)"/luciversion = "Feb"/g' diy/zzz-default-settings
 sed -i 's/luciversion = "$(date +%b)"/luciversion = "Feb"/g' diy/default-settings
