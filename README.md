@@ -20,7 +20,8 @@
 *  感谢以上github仓库所有者！
 
 ##### 插件下载:
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok8/compile-package?style=for-the-badge&label=插件每日更新)](https://github.com/kenzok8/compile-package/releases/latest)
+
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok8/compile-package?style=for-the-badge&label=插件更新下载)
 
 ##### 关于Secrets、TOKEN的小知识
 
