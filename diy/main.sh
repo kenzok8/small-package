@@ -173,11 +173,8 @@ sed -i 's/\(+luci-compat\)/\1 +luci-theme-argon/' luci-app-argon-config/Makefile
 sed -i 's/\(+luci-compat\)/\1 +luci-theme-argonne/' luci-app-argonne-config/Makefile
 sed -i 's/ +uhttpd-mod-ubus//' luci-app-packet-capture/Makefile
 sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/wifidog/wifidog_cfg.lua
-find ./ -type f -exec sed -i 's/nas/NAS/g; s/services/Services/g' {} +
 
-sed -i 's/luciversion = "$(date +%b)"/luciversion = "Feb"/g' diy/zzz-default-settings
-sed -i 's/luciversion = "$(date +%b)"/luciversion = "Feb"/g' diy/default-settings
-
+find ./ -type f -exec sed -i 's/nas/NAS/g; s/services/Services/g' {} 
 find -type f -name Makefile -exec sed -ri  's#mosdns[-_]neo#mosdns#g' {} \;
 
 
