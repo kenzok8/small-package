@@ -182,7 +182,7 @@ export function parseURL(url) {
 		return '';
 	});
 
-	objurl.pathname = url ?? '/';
+	objurl.pathname = url || '/';
 
 	if (!objurl.protocol || !objurl.hostname)
 		return null;

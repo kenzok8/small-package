@@ -23,6 +23,13 @@ o.rmempty = false
 o.default = "3003"
 o.datatype = "port"
 
+o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o.rmempty = false
+o.datatype = "string"
+o:value("jxxghp/nas-tools", "jxxghp/nas-tools")
+o:value("sungamma/nas-tools:2.9.1", "sungamma/nas-tools:2.9.1")
+o.default = "sungamma/nas-tools:2.9.1"
+
 local blocks = nastools_model.blocks()
 local home = nastools_model.home()
 
