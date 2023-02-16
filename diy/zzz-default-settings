@@ -52,7 +52,7 @@ sed -i 's/LuCI openwrt-18.06-k5.4 branch/kenzo/g' /usr/lib/lua/luci/version.lua
 sed -i 's/LuCI 17.01 Lienol/kenzo/g' /usr/lib/lua/luci/version.lua
 sed -i 's/LuCI openwrt-21.02 branch/kenzo/g' /usr/lib/lua/luci/version.lua
 sed -i '/luciversion/d' /usr/lib/lua/luci/version.lua
-echo 'luciversion = "Feb"' >> /usr/lib/lua/luci/version.lua
+echo "luciversion ='$(date +'%m.%d')'" >> /usr/lib/lua/luci/version.lua
 
 # 删除状态页不需显示的
 rm -rf /usr/lib/lua/luci/view/admin_status/index
