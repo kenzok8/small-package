@@ -187,10 +187,14 @@ set homeproxy_proxy_addr_v6 {
 
 {# TCP redirect #}
 {% if (match(proxy_mode, /redirect/)): %}
-chain homeproxy_redirect_proxy {
+chain homeproxy_redirect_proxy_port {
 	{% if (routing_port !== 'all'): %}
 	tcp dport != { {{ routing_port }} } counter return
 	{% endif %}
+	goto homeproxy_redirect_proxy
+}
+
+chain homeproxy_redirect_proxy {
 	meta l4proto tcp counter redirect to :{{ redirect_port }}
 }
 
@@ -204,7 +208,7 @@ chain homeproxy_redirect {
 	{% if (control_info.lan_proxy_ipv4_ips): %}
 	ip saddr != { {{ array_to_nftstr(control_info.lan_proxy_ipv4_ips) }} } counter return
 	{% endif /* lan_proxy_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_proxy_ipv6_ips): %}
+	{% if (control_info.lan_proxy_ipv6_ips): %}
 	ip6 saddr != { {{ array_to_nftstr(control_info.lan_proxy_ipv6_ips) }} } counter return
 	{% endif /* lan_proxy_ipv6_ips */ %}
 	{% elif (control_info.lan_proxy_mode === 'except_listed'): %}
@@ -214,14 +218,14 @@ chain homeproxy_redirect {
 	{% if (control_info.lan_proxy_ipv4_ips): %}
 	ip saddr { {{ array_to_nftstr(control_info.lan_direct_ipv4_ips) }} } counter return
 	{% endif /* lan_direct_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_direct_ipv6_ips): %}
+	{% if (control_info.lan_direct_ipv6_ips): %}
 	ip6 saddr { {{ array_to_nftstr(control_info.lan_direct_ipv6_ips) }} } counter return
 	{% endif /* lan_direct_ipv6_ips */ %}
 	{% endif /* lan_proxy_mode */ %}
 
-	ip daddr @homeproxy_proxy_addr_v4 counter goto homeproxy_redirect_proxy
+	ip daddr @homeproxy_proxy_addr_v4 counter goto homeproxy_redirect_proxy_port
 	{% if (ipv6_support === '1'): %}
-	ip6 daddr @homeproxy_proxy_addr_v6 counter goto homeproxy_redirect_proxy
+	ip6 daddr @homeproxy_proxy_addr_v6 counter goto homeproxy_redirect_proxy_port
 	{% endif %}
 
 	ip daddr @homeproxy_local_addr_v4 counter return
@@ -230,16 +234,16 @@ chain homeproxy_redirect {
 	{% endif %}
 
 	{% if (control_info.lan_global_proxy_ipv4_ips && routing_mode !== 'custom'): %}
-	ip saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv4_ips) }} } counter goto homeproxy_redirect_proxy
+	ip saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv4_ips) }} } counter goto homeproxy_redirect_proxy_port
 	{% endif /* lan_global_proxy_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_global_proxy_ipv6_ips && routing_mode !== 'custom'): %}
-	ip6 saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv6_ips) }} } counter goto homeproxy_redirect_proxy
+	{% if (control_info.lan_global_proxy_ipv6_ips && routing_mode !== 'custom'): %}
+	ip6 saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv6_ips) }} } counter goto homeproxy_redirect_proxy_port
 	{% endif /* lan_global_proxy_ipv6_ips */ %}
 
 	{% if (control_info.wan_direct_ipv4_ips): %}
 	ip daddr { {{ array_to_nftstr(control_info.wan_direct_ipv4_ips) }} } counter return
 	{% endif /* wan_direct_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.wan_direct_ipv6_ips): %}
+	{% if (control_info.wan_direct_ipv6_ips): %}
 	ip6 daddr { {{ array_to_nftstr(control_info.wan_direct_ipv6_ips) }} } counter return
 	{% endif /* wan_direct_ipv6_ips */ %}
 
@@ -261,16 +265,16 @@ chain homeproxy_redirect {
 	{% endif /* routing_mode */ %}
 
 	{% if (control_info.lan_gaming_mode_mac_addrs): %}
-	ether saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_mac_addrs) }} } meta l4proto tcp counter redirect to :{{ redirect_port }}
+	ether saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_mac_addrs) }} } counter goto homeproxy_redirect_proxy
 	{% endif /* lan_gaming_mode_mac_addrs */ %}
 	{% if (control_info.lan_gaming_mode_ipv4_ips): %}
-	ip saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv4_ips) }} } meta l4proto tcp counter redirect to :{{ redirect_port }}
+	ip saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv4_ips) }} } counter goto homeproxy_redirect_proxy
 	{% endif /* lan_gaming_mode_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_gaming_mode_ipv6_ips): %}
-	ip6 saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv6_ips) }} } meta l4proto tcp counter redirect to :{{ redirect_port }}
+	{% if (control_info.lan_gaming_mode_ipv6_ips): %}
+	ip6 saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv6_ips) }} } counter goto homeproxy_redirect_proxy
 	{% endif /* lan_gaming_mode_ipv6_ips */ %}
 
-	counter goto homeproxy_redirect_proxy
+	counter goto homeproxy_redirect_proxy_port
 }
 
 chain homeproxy_dstnat_redir {
@@ -293,10 +297,14 @@ chain dstnat {
 
 {# UDP tproxy #}
 {% if (match(proxy_mode, /tproxy/) && (outbound_udp_node !== 'nil' || routing_mode === 'custom')): %}
-chain homeproxy_mangle_tproxy {
+chain homeproxy_mangle_tproxy_port {
 	{% if (routing_port !== 'all'): %}
 	udp dport != { {{ routing_port }} } counter return
 	{% endif %}
+	goto homeproxy_mangle_tproxy
+}
+
+chain homeproxy_mangle_tproxy {
 	meta l4proto udp mark set {{ tproxy_mark }} tproxy ip to 127.0.0.1:{{ tproxy_port }} counter accept
 	{% if (ipv6_support === '1'): %}
 	meta l4proto udp mark set {{ tproxy_mark }} tproxy ip6 to [::]:{{ tproxy_port }} counter accept
@@ -324,7 +332,7 @@ chain homeproxy_mangle_prerouting {
 	{% if (control_info.lan_proxy_ipv4_ips): %}
 	ip saddr != { {{ array_to_nftstr(control_info.lan_proxy_ipv4_ips) }} } counter return
 	{% endif /* lan_proxy_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_proxy_ipv6_ips): %}
+	{% if (control_info.lan_proxy_ipv6_ips): %}
 	ip6 saddr != { {{ array_to_nftstr(control_info.lan_proxy_ipv6_ips) }} } counter return
 	{% endif /* lan_proxy_ipv6_ips */ %}
 	{% elif (control_info.lan_proxy_mode === 'except_listed'): %}
@@ -334,14 +342,14 @@ chain homeproxy_mangle_prerouting {
 	{% if (control_info.lan_proxy_ipv4_ips): %}
 	ip saddr { {{ array_to_nftstr(control_info.lan_direct_ipv4_ips) }} } counter return
 	{% endif /* lan_direct_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_direct_ipv6_ips): %}
+	{% if (control_info.lan_direct_ipv6_ips): %}
 	ip6 saddr { {{ array_to_nftstr(control_info.lan_direct_ipv6_ips) }} } counter return
 	{% endif /* lan_direct_ipv6_ips */ %}
 	{% endif /* lan_proxy_mode */ %}
 
-	ip daddr @homeproxy_proxy_addr_v4 counter goto homeproxy_mangle_tproxy
+	ip daddr @homeproxy_proxy_addr_v4 counter goto homeproxy_mangle_tproxy_port
 	{% if (ipv6_support === '1'): %}
-	ip6 daddr @homeproxy_proxy_addr_v6 counter goto homeproxy_mangle_tproxy
+	ip6 daddr @homeproxy_proxy_addr_v6 counter goto homeproxy_mangle_tproxy_port
 	{% endif %}
 
 	ip daddr @homeproxy_local_addr_v4 counter return
@@ -350,16 +358,16 @@ chain homeproxy_mangle_prerouting {
 	{% endif %}
 
 	{% if (control_info.lan_global_proxy_ipv4_ips && routing_mode !== 'custom'): %}
-	ip saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv4_ips) }} } counter goto homeproxy_mangle_tproxy
+	ip saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv4_ips) }} } counter goto homeproxy_mangle_tproxy_port
 	{% endif /* lan_global_proxy_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_global_proxy_ipv6_ips && routing_mode !== 'custom'): %}
-	ip6 saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv6_ips) }} } counter goto homeproxy_mangle_tproxy
+	{% if (control_info.lan_global_proxy_ipv6_ips && routing_mode !== 'custom'): %}
+	ip6 saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv6_ips) }} } counter goto homeproxy_mangle_tproxy_port
 	{% endif /* lan_global_proxy_ipv6_ips */ %}
 
 	{% if (control_info.wan_direct_ipv4_ips): %}
 	ip daddr { {{ array_to_nftstr(control_info.wan_direct_ipv4_ips) }} } counter return
 	{% endif /* wan_direct_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.wan_direct_ipv6_ips): %}
+	{% if (control_info.wan_direct_ipv6_ips): %}
 	ip6 daddr { {{ array_to_nftstr(control_info.wan_direct_ipv6_ips) }} } counter return
 	{% endif /* wan_direct_ipv6_ips */ %}
 
@@ -385,16 +393,16 @@ chain homeproxy_mangle_prerouting {
 	{% endif /* routing_mode */ %}
 
 	{% if (control_info.lan_gaming_mode_mac_addrs): %}
-	ether saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_mac_addrs) }} } meta l4proto udp mark set {{ tproxy_mark }} counter accept
+	ether saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_mac_addrs) }} } counter goto homeproxy_mangle_tproxy
 	{% endif /* lan_gaming_mode_mac_addrs */ %}
 	{% if (control_info.lan_gaming_mode_ipv4_ips): %}
-	ip saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv4_ips) }} } meta l4proto udp mark set {{ tproxy_mark }} counter accept
+	ip saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv4_ips) }} } counter goto homeproxy_mangle_tproxy
 	{% endif /* lan_gaming_mode_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_gaming_mode_ipv6_ips): %}
-	ip6 saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv6_ips) }} } meta l4proto udp mark set {{ tproxy_mark }} counter accept
+	{% if (control_info.lan_gaming_mode_ipv6_ips): %}
+	ip6 saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv6_ips) }} } counter goto homeproxy_mangle_tproxy
 	{% endif /* lan_gaming_mode_ipv6_ips */ %}
 
-	counter goto homeproxy_mangle_tproxy
+	counter goto homeproxy_mangle_tproxy_port
 }
 
 chain homeproxy_mangle_output {
@@ -413,7 +421,7 @@ chain homeproxy_mangle_output {
 	{% if (control_info.wan_direct_ipv4_ips): %}
 	ip daddr { {{ array_to_nftstr(control_info.wan_direct_ipv4_ips) }} } counter return
 	{% endif /* wan_direct_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.wan_direct_ipv6_ips): %}
+	{% if (control_info.wan_direct_ipv6_ips): %}
 	ip6 daddr { {{ array_to_nftstr(control_info.wan_direct_ipv6_ips) }} } counter return
 	{% endif /* wan_direct_ipv6_ips */ %}
 
@@ -475,7 +483,7 @@ chain homeproxy_mangle_tun {
 	{% if (control_info.lan_proxy_ipv4_ips): %}
 	ip saddr != { {{ array_to_nftstr(control_info.lan_proxy_ipv4_ips) }} } counter return
 	{% endif /* lan_proxy_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_proxy_ipv6_ips): %}
+	{% if (control_info.lan_proxy_ipv6_ips): %}
 	ip6 saddr != { {{ array_to_nftstr(control_info.lan_proxy_ipv6_ips) }} } counter return
 	{% endif /* lan_proxy_ipv6_ips */ %}
 	{% elif (control_info.lan_proxy_mode === 'except_listed'): %}
@@ -485,7 +493,7 @@ chain homeproxy_mangle_tun {
 	{% if (control_info.lan_proxy_ipv4_ips): %}
 	ip saddr { {{ array_to_nftstr(control_info.lan_direct_ipv4_ips) }} } counter return
 	{% endif /* lan_direct_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_direct_ipv6_ips): %}
+	{% if (control_info.lan_direct_ipv6_ips): %}
 	ip6 saddr { {{ array_to_nftstr(control_info.lan_direct_ipv6_ips) }} } counter return
 	{% endif /* lan_direct_ipv6_ips */ %}
 	{% endif /* lan_proxy_mode */ %}
@@ -503,14 +511,14 @@ chain homeproxy_mangle_tun {
 	{% if (control_info.lan_global_proxy_ipv4_ips && routing_mode !== 'custom'): %}
 	ip saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv4_ips) }} } counter goto homeproxy_mangle_tun_mark
 	{% endif /* lan_global_proxy_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_global_proxy_ipv6_ips && routing_mode !== 'custom'): %}
+	{% if (control_info.lan_global_proxy_ipv6_ips && routing_mode !== 'custom'): %}
 	ip6 saddr { {{ array_to_nftstr(control_info.lan_global_proxy_ipv6_ips) }} } counter goto homeproxy_mangle_tun_mark
 	{% endif /* lan_global_proxy_ipv6_ips */ %}
 
 	{% if (control_info.wan_direct_ipv4_ips): %}
 	ip daddr { {{ array_to_nftstr(control_info.wan_direct_ipv4_ips) }} } counter return
 	{% endif /* wan_direct_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.wan_direct_ipv6_ips): %}
+	{% if (control_info.wan_direct_ipv6_ips): %}
 	ip6 daddr { {{ array_to_nftstr(control_info.wan_direct_ipv6_ips) }} } counter return
 	{% endif /* wan_direct_ipv6_ips */ %}
 
@@ -541,7 +549,7 @@ chain homeproxy_mangle_tun {
 	{% if (control_info.lan_gaming_mode_ipv4_ips): %}
 	ip saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv4_ips) }} } counter mark set {{ tun_mark }}
 	{% endif /* lan_gaming_mode_ipv4_ips */ %}
-	{% if (ipv6_support === '1' && control_info.lan_gaming_mode_ipv6_ips): %}
+	{% if (control_info.lan_gaming_mode_ipv6_ips): %}
 	ip6 saddr { {{ array_to_nftstr(control_info.lan_gaming_mode_ipv6_ips) }} } counter mark set {{ tun_mark }}
 	{% endif /* lan_gaming_mode_ipv6_ips */ %}
 

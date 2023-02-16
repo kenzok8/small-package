@@ -8,18 +8,15 @@ get_image() {
 }
 
 do_install() {
-  get_image
-  echo "docker pull ${IMAGE_NAME}"
-  docker pull ${IMAGE_NAME}
-  docker rm -f nastools
-
-  do_install_detail
-}
-
-do_install_detail() {
   local config=`uci get nastools.@nastools[0].config_path 2>/dev/null`
   local port=`uci get nastools.@nastools[0].http_port 2>/dev/null`
   local auto_update=`uci get nastools.@nastools[0].auto_upgrade 2>/dev/null`
+  local image_name=`uci get nastools.@nastools[0].image_name 2>/dev/null`
+
+  [ -z "$image_name" ] && image_name="sungamma/nas-tools:2.9.1"
+  echo "docker pull ${image_name}"
+  docker pull ${image_name}
+  docker rm -f nastools
 
   if [ -z "$config" ]; then
       echo "config path is empty!"
@@ -49,7 +46,7 @@ do_install_detail() {
   cmd="$cmd -v /mnt:/mnt"
   mountpoint -q /mnt && cmd="$cmd:rslave"
 
-  cmd="$cmd --name nastools \"$IMAGE_NAME\""
+  cmd="$cmd --name nastools \"$image_name\""
 
   echo "$cmd"
   eval "$cmd"
