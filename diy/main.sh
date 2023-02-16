@@ -174,7 +174,8 @@ sed -i 's/\(+luci-compat\)/\1 +luci-theme-argonne/' luci-app-argonne-config/Make
 sed -i 's/ +uhttpd-mod-ubus//' luci-app-packet-capture/Makefile
 sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/wifidog/wifidog_cfg.lua
 
-find ./ -type d -name "luci-app-fileassistant" -exec sh -c 'find {} -type f -exec sed -i "s/nas/NAS/g; s/services/Services/g" {} +' \;
+find -type f -name "luci-app-fileassistant" -exec sh -c 'find {} -type f -exec sed -i "s/nas/NAS/g; s/services/Services/g" {} +' \;
+
 find -type f -name Makefile -exec sed -ri  's#mosdns[-_]neo#mosdns#g' {} \;
 
 
