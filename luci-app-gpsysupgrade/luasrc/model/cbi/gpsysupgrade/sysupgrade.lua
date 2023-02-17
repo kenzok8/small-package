@@ -560,10 +560,22 @@ function to_check()
 		model = "ath79_nand/zte_mf286"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-ath79-nand-zte_mf286-squashfs-sysupgrade.bin"
-    elseif board_name:match("mt7981$") then
-		model = "mediatek_gl/mt7981"
+    elseif board_name:match("gl%-mt2500$") then
+		model = "mt7981/glinet_gl-mt2500"
 		check_update()
 		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mediatek_gl-mt7981-glinet_gl-mt2500-squashfs-sysupgrade.bin"
+    elseif board_name:match("gl%-mt3000$") then
+		model = "mt7981/glinet_gl-mt3000"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mediatek_gl-mt7981-glinet_gl-mt3000-squashfs-sysupgrade.bin"
+    elseif board_name:match("gl%-x3000$") then
+		model = "mt7981/glinet_gl-x3000"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mediatek_gl-mt7981-glinet_gl-x3000-squashfs-sysupgrade.bin"
+    elseif board_name:match("gl%-xe3000$") then
+		model = "mt7981/glinet_gl-xe3000"
+		check_update()
+		download_url = "https://op.supes.top/firmware/" ..model.. "/" ..remote_version.. "-openwrt-mediatek_gl-mt7981-glinet_gl-xe3000-squashfs-sysupgrade.bin"
     else
 		local needs_update = false
 		return {
