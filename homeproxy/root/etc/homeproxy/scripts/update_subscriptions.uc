@@ -16,7 +16,7 @@ import { init_action } from 'luci.sys';
 
 import {
 	calcStringMD5, CURL, executeCommand, decodeBase64Str,
-	isEmpty, parseURL, removeBlankAttrs, validation,
+	isEmpty, parseURL, validation,
 	HP_DIR, RUN_DIR
 } from 'homeproxy';
 
@@ -59,7 +59,7 @@ function filter_check(name) {
 	if (filter_mode === 'whitelist')
 		ret = !ret;
 
-	return ret
+	return ret;
 }
 /* String helper end */
 

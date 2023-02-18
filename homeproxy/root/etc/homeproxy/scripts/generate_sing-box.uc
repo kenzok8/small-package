@@ -114,7 +114,6 @@ if (match(proxy_mode), /tun/) {
 		endpoint_independent_nat = uci.get(uciconfig, uciroutingsetting, 'endpoint_independent_nat') || '1';
 	}
 }
-
 /* UCI config end */
 
 /* Config helper start */
@@ -516,7 +515,6 @@ if (server_enabled === '1')
 			} : null
 		});
 	});
-
 /* Inbound end */
 
 /* Outbound start */
@@ -548,7 +546,6 @@ if (!isEmpty(main_node)) {
 		push(config.outbounds, generate_outbound(main_udp_node_cfg));
 		config.outbounds[length(config.outbounds)-1].tag = 'main-udp-out';
 	}
-
 } else if (!isEmpty(default_outbound))
 	uci.foreach(uciconfig, uciroutingnode, (cfg) => {
 		if (cfg.enabled !== '1')
