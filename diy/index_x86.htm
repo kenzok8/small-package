@@ -54,7 +54,7 @@
 			cpuusage    = cpu_usage,
 			userinfo    = user_info,
 			uptime     = sysinfo.uptime or 0,
-			localtime  = os.date("%Y.%m.%d") .. " " .. os.date("%X") .. " " .. translate(os.date("%A")),
+			localtime  = os.date("%Y.%m.%d %H:%M:%S"),
 			loadavg    = sysinfo.load or { 0, 0, 0 },
 			memory     = meminfo,
 			memcached  = mem_cached,
