@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 # Author Qier LU <lvqier@gmail.com>
 
-START=55
+START=18
 
 gen_config_file() {
     local section="${1}"
@@ -19,7 +19,7 @@ gen_config_file() {
     then
         config_get upstream_dns_server "${section}" "upstream_dns_server"
     fi
-    handle_domain() {
+    handle_domain_ipt() {
         local domain="${1}"
         if [ ${dns_forward} ]
         then
@@ -27,13 +27,26 @@ gen_config_file() {
         fi
         echo "ipset=/${domain}/${ipset_name}" >> "${config_file_name}"
     }
-    config_list_foreach "${section}" "managed_domain" handle_domain
+    handle_domain_nft() {
+        local domain="${1}"
+        if [ ${dns_forward} ]
+        then
+            echo "server=/${domain}/${upstream_dns_server}" >> "${config_file_name}"
+        fi
+        echo "nftset=/${domain}/inet#fw4#${ipset_name}" >> "${config_file_name}"
+    }
+    if which nft > /dev/null
+    then
+        config_list_foreach "${section}" "managed_domain" handle_domain_nft
+    else
+        config_list_foreach "${section}" "managed_domain" handle_domain_ipt
+    fi
 }
 
 gen_config_files() {
     rm -rf /tmp/dnsmasq.d/ipset-*.conf
-    config_load 'dnsmasq-ipset'
-    config_foreach gen_config_file 'ipsets'
+    config_load dnsmasq-ipset
+    config_foreach gen_config_file ipsets
 }
 
 start() {
