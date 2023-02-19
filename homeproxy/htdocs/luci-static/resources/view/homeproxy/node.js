@@ -474,6 +474,7 @@ return view.extend({
 		so.depends('type', 'shadowsocksr');
 		so.depends('type', 'trojan');
 		so.depends({'type': 'shadowtls', 'shadowtls_version': '2'});
+		so.depends({'type': 'shadowtls', 'shadowtls_version': '3'});
 		so.depends({'type': 'socks', 'socks_version': '5'});
 		so.validate = function(section_id, value) {
 			if (section_id) {
@@ -672,6 +673,7 @@ return view.extend({
 		so = ss.option(form.ListValue, 'shadowtls_version', _('ShadowTLS version'));
 		so.value('1', _('v1'));
 		so.value('2', _('v2'));
+		so.value('3', _('v3'));
 		so.default = '1';
 		so.depends('type', 'shadowtls');
 		so.rmempty = false;
