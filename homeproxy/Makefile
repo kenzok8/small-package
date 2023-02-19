@@ -12,7 +12,8 @@ LUCI_PKGARCH:=all
 LUCI_DEPENDS:= \
 	+sing-box \
 	+@SING_BOX_BUILD_GVISOR \
-	+curl
+	+curl \
+	+firewall4
 
 define Package/luci-app-homeproxy/conffiles
 /etc/config/homeproxy
