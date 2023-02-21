@@ -20,8 +20,7 @@
 		{
 			output.innerHTML =
 				'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
-				'<%:Waiting for command to complete...%>'
-			;
+				'<%:Waiting for command to complete...%>';
 
 			legend.parentNode.style.display = 'block';
 			legend.style.display = 'inline';
@@ -46,25 +45,30 @@
 //]]></script>
 
 <form method="post" action="<%=url('admin/network/netspeedtest')%>">
-      <table>
-        <tr><td  class="cbi-value-title"  ><input style="margin: 5px 0"  type="hidden" value="" name="iperf" />
-            <select name="iperf_to" style="width:auto">
-              <option value="0" selected="selected"><%:iperfstart%></option>
-              <option value="1"><%:iperfstop%></option>
-            </select></td>
-        <td class="cbi-value-field" style="width:100%;" >
-            <input type="button" value="<%:Perform operation%>" class="cbi-button cbi-button-apply" onclick="update_status(this.form.iperf,this.form.iperf_to.selectedIndex)" /></td>
-        </tr>
-        <tr><td  class="cbi-value-title" ><%:iperf3 instructions%></td>
-          <td class="cbi-value-field"  ><%:The speed measurement terminal must be in the same LAN as the router that starts the speed measurement%><br /><%:Operation steps: start router speed measurement service download test client run speed measurement client input IP address of router speed measurement service%></td>
-        </tr>
-        <tr>
-          <td class="cbi-value-title"><%:Iperf3 speed measurement software download%></td>
-          <td class="cbi-value-field"  >
-            <input type="button" class="cbi-button cbi-input-reload" value="<%:Domestic download password:%>cpd6" onclick="javascript:window.open('https://sipdboy.lanzoui.com/b01c3esih','target');" />
-            <input type="button" class="cbi-button cbi-input-reload" value="<%:Download from foreign official websites%>" onclick="javascript:window.open('https://iperf.fr/iperf-download.php','target');" /></td>
-        </tr>
-      </table>
+
+		<div class="cbi-section-node" >
+			<div class="cbi-value" >
+				<label class="cbi-value-title"  ><%:Select function%></label>
+				<div class="cbi-value-field">
+  			    	<input style="margin: 5px 0"  type="hidden" value="" name="iperf" />
+                    <select name="iperf_to" style="width:auto">
+                    <option value="0" selected="selected"><%:iperfstart%></option>
+                    <option value="1"><%:iperfstop%></option>
+                    </select> 
+					<div class="cbi-value-description">
+				            <span class="cbi-value-helpicon"><img src="/luci-static/resources/cbi/help.gif" /></span>
+				             <%:The speed measurement terminal must be in the same LAN as the router that starts the speed measurement%><br />
+				             <%:Operation steps: start router speed measurement service download test client run speed measurement client input IP address of router speed measurement service%>
+			 </div></div></div>
+			<div class="cbi-value" ><label class="cbi-value-title"  ><%:Perform operation%></label>
+		    	<div class="cbi-value-field"><input type="button" value="<%:Perform operation%>" class="cbi-button cbi-button-apply" onclick="update_status(this.form.iperf,this.form.iperf_to.selectedIndex)" />
+		    </div></div>
+			<div class="cbi-value" >
+			   <label class="cbi-value-title"><%:Iperf3 speed measurement software download%></label>
+		           <div class="cbi-value-field">
+				         <input type="button" class="cbi-button cbi-input-reload" value="<%:Domestic download password:%>cpd6" onclick="javascript:window.open('https://sipdboy.lanzoui.com/b01c3esih','target');" />
+                         <input type="button" class="cbi-button cbi-input-reload" value="<%:Download from foreign official websites%>" onclick="javascript:window.open('https://iperf.fr/iperf-download.php','target');" />
+		    </div></div></div>
   <fieldset class="cbi-section" style="display:none">
     <legend id="test-iperf-legend">
     <%:Collecting data...%>

@@ -48,7 +48,7 @@ nstest() {
     echo -ne "\n  测试时间: "  >> $LOG
     echo $(date +%Y-%m-%d" "%H:%M:%S)  >> $LOG
     echo -ne "  ————————————————————————————\n"  >> $LOG
-    echo -ne $(cat  $TMP_T  | grep 'results:' | cut -c16- )
+    echo -ne $(cat  $TMP_T  | grep 'results:' | cut -c16- ) || echo -ne $(cat  $TMP_T )
     rm -f $LOCK
 }
 
@@ -59,10 +59,12 @@ get_config() {
 
 homebox_prepare() {
 	pgrep -f homebox | xargs kill -9 >/dev/null 2>&1 
+	killall homebox
+	killall homebox
 }
 
 start_service() {
-	homebox_prepare
+	homebox_prepare 
 	config_load netspeedtest
         config_foreach get_config homebox
 	[ "x$enabled" != "x1" ] && exit 1
@@ -76,4 +78,3 @@ start_service() {
 service_triggers() {
       procd_add_reload_trigger "netspeedtest"
 }
-

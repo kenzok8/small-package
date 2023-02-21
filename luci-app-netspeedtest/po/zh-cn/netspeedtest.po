@@ -55,8 +55,12 @@ msgstr "iperf服务启动"
 msgid "iperfstop"
 msgstr "iperf服务停止"
 
+msgid "Select function"
+msgstr "选择功能"
+
 msgid "Perform operation"
 msgstr "执行操作"
+
 
 msgid "iperf3 instructions"
 msgstr "iperf3使用说明"
