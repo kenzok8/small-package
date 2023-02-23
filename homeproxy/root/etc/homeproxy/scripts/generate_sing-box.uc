@@ -175,9 +175,9 @@ function generate_outbound(node) {
 		multiplex: (node.multiplex === '1') ? {
 			enabled: true,
 			protocol: node.multiplex_protocol,
-			max_connections: node.multiplex_max_connections,
-			min_streams: node.multiplex_min_streams,
-			max_streams: node.multiplex_max_streams
+			max_connections: strToInt(node.multiplex_max_connections),
+			min_streams: strToInt(node.multiplex_min_streams),
+			max_streams: strToInt(node.multiplex_max_streams)
 		} : null,
 		tls: (node.tls === '1') ? {
 			enabled: true,
@@ -204,7 +204,7 @@ function generate_outbound(node) {
 			host: node.http_host || node.ws_host,
 			path: node.http_path || node.ws_path,
 			method: node.http_method,
-			max_early_data: node.websocket_early_data,
+			max_early_data: strToInt(node.websocket_early_data),
 			early_data_header_name: node.websocket_early_data_header,
 			service_name: node.grpc_servicename
 		} : null,
@@ -507,8 +507,11 @@ if (server_enabled === '1')
 
 			transport: !isEmpty(cfg.transport) ? {
 				type: cfg.transport,
-				host: cfg.http_host || cfg.ws_host,
+				host: cfg.http_host,
 				path: cfg.http_path || cfg.ws_path,
+				headers: cfg.ws_host ? {
+					Host: cfg.ws_host
+				} : null,
 				method: cfg.http_method,
 				max_early_data: cfg.websocket_early_data,
 				early_data_header_name: cfg.websocket_early_data_header,
