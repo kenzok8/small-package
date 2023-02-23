@@ -453,8 +453,6 @@ if (server_enabled === '1')
 			up_mbps: strToInt(cfg.hysteria_up_mbps),
 			down_mbps: strToInt(cfg.hysteria_down_mbps),
 			obfs: cfg.hysteria_obfs_password,
-			auth: (cfg.hysteria_auth_type === 'base64') ? cfg.hysteria_auth_payload : null,
-			auth_str: (cfg.hysteria_auth_type === 'string') ? cfg.hysteria_auth_payload : null,
 			recv_window_conn: strToInt(cfg.hysteria_recv_window_conn),
 			recv_window_client: strToInt(cfg.hysteria_revc_window_client),
 			max_conn_client: strToInt(cfg.hysteria_max_conn_client),
@@ -464,15 +462,18 @@ if (server_enabled === '1')
 			method: (cfg.type === 'shadowsocks') ? cfg.shadowsocks_encrypt_method : null,
 			password: (cfg.type in ['shadowsocks', 'shadowtls']) ? cfg.password : null,
 
-			/* ShadowTLS */
-			version: (cfg.type === 'shadowtls') ? strToInt(cfg.shadowtls_version) : null,
-
-			/* HTTP / Socks / Trojan / VMess */
+			/* HTTP / Hysteria / Socks / Trojan / VMess */
 			users: (cfg.type !== 'shadowsocks') ? [
 				{
-					name: (cfg.type in ['trojan', 'vmess']) ? 'cfg-' + cfg['.name'] + '-server' : null,
+					name: !(cfg.type in ['http', 'socks']) ? 'cfg-' + cfg['.name'] + '-server' : null,
 					username: cfg.username,
 					password: cfg.password,
+
+					/* Hysteria */
+					auth: (cfg.hysteria_auth_type === 'base64') ? cfg.hysteria_auth_payload : null,
+					auth_str: (cfg.hysteria_auth_type === 'string') ? cfg.hysteria_auth_payload : null,
+
+					/* VMess */
 					uuid: cfg.uuid,
 					alterId: strToInt(cfg.vmess_alterid)
 				}

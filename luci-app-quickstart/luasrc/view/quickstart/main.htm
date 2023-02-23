@@ -11,6 +11,9 @@
   if luci.sys.call("[ -e /etc/init.d/dockerd ] >/dev/null 2>&1") == 0 then
       features[#features+1] = "dockerd"
   end
+  if luci.sys.call("[ -e /etc/init.d/unishare ] >/dev/null 2>&1") == 0 then
+      features[#features+1] = "unishare"
+  end
 -%>
 <script>
     (function(){
