@@ -95,7 +95,6 @@ return view.extend({
 		o.depends('type', 'shadowsocks');
 		o.depends('type', 'socks');
 		o.depends('type', 'trojan');
-		o.depends({'type': 'shadowtls', 'shadowtls_version': '2'});
 		o.validate = function(section_id, value) {
 			if (section_id) {
 				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
@@ -193,15 +192,6 @@ return view.extend({
 			o.value(i);
 		o.default = 'aes-128-gcm';
 		o.depends('type', 'shadowsocks');
-		o.modalonly = true;
-
-		/* ShadowTLS config */
-		o = s.option(form.ListValue, 'shadowtls_version', _('ShadowTLS version'));
-		o.value('1', _('v1'));
-		o.value('2', _('v2'));
-		o.default = '1';
-		o.depends('type', 'shadowtls');
-		o.rmempty = false;
 		o.modalonly = true;
 
 		/* VMess config start */
