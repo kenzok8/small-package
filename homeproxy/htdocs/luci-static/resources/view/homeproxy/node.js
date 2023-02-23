@@ -796,7 +796,7 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'packet_encoding', _('Packet encoding'));
 		so.value('', _('none'));
-		so.value('packet', _('packet (v2ray-core v5+)'));
+		so.value('packetaddr', _('packet addr (v2ray-core v5+)'));
 		so.value('xudp', _('Xudp (Xray-core)'));
 		so.default = 'xudp';
 		so.depends('type', 'vless');
@@ -1076,7 +1076,7 @@ return view.extend({
 
 		o = s.taboption('subscription', form.ListValue, 'packet_encoding', _('Default packet encoding'));
 		o.value('', _('none'));
-		o.value('packet', _('packet (v2ray-core v5+)'));
+		o.value('packetaddr', _('packet addr (v2ray-core v5+)'));
 		o.value('xudp', _('Xudp (Xray-core)'));
 		o.default = 'xudp';
 
