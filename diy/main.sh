@@ -146,7 +146,8 @@ git_sparse_clone develop "https://github.com/Ysurac/openmptcprouter-feeds" "enmp
 luci-app-packet-capture luci-app-mail msmtp
 
 git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua-ipops luci-app-macvlan
-git_sparse_clone openwrt-22.03 "https://github.com/openwrt/openwrt" "22openwrt" package/libs/mbedtls \
+git_sparse_clone master "https://github.com/immortalwrt/immortalwrt" "immortal" package/network/utils/nftables \
+package/utils/mhz package/libs/mbedtls package/libs/libnftnl
 
 git_sparse_clone openwrt-22.03 "https://github.com/openwrt/packages" "22packages" \
 utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi net/ddns-scripts \
