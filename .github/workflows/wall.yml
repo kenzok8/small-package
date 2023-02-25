@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/wall.yml'
-      - 'main.sh'
+      - '.github/diy/main.sh'
   schedule:
     - cron: 0 */8 * * *
   repository_dispatch:
@@ -46,10 +46,10 @@ jobs:
         cd ${{matrix.target}}
         git rm -r --cache * >/dev/null 2>&1 &
         rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
-        $GITHUB_WORKSPACE/diy/${{matrix.target}}.sh
-        bash /$GITHUB_WORKSPACE/diy/convert_translation.sh
-        bash /$GITHUB_WORKSPACE/diy/create_acl_for_luci.sh -a
-        bash /$GITHUB_WORKSPACE/diy/Modify.sh
+        $GITHUB_WORKSPACE/.github/diy/${{matrix.target}}.sh
+        bash /$GITHUB_WORKSPACE/.github/diy/convert_translation.sh
+        bash /$GITHUB_WORKSPACE/.github/diy/create_acl_for_luci.sh -a
+        bash /$GITHUB_WORKSPACE/.github/diy/Modify.sh
 
     - name: Upload
       env: 
