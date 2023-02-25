@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       ssh:
-        description: 'SSH connection to Actions'
+        description: 'SSH Actions'
         required: false
         default: 'false'
 
@@ -41,7 +41,7 @@ jobs:
     - name: Clone packages
       run: |
         cd $GITHUB_WORKSPACE
-        chmod +x diy/${{matrix.target}}.sh
+        chmod +x .github/diy/${{matrix.target}}.sh
         git clone -b ${{matrix.target}} https://github.com/kenzok8/small-package.git ${{matrix.target}}
         cd ${{matrix.target}}
         git rm -r --cache * >/dev/null 2>&1 &
