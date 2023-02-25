@@ -687,11 +687,17 @@ return view.extend({
 		so.rmempty = false;
 		so.modalonly = true;
 
-		/* VMess config start */
+		/* VMess / VLESS config start */
 		so = ss.option(form.Value, 'uuid', _('UUID'));
 		so.depends('type', 'vless');
 		so.depends('type', 'vmess');
 		so.validate = hp.validateUUID;
+		so.modalonly = true;
+
+		so = ss.option(form.ListValue, 'vless_flow', _('Flow'));
+		so.value('', _('None'));
+		so.value('xtls-rprx-vision');
+		so.depends('type', 'vless');
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'vmess_alterid', _('Alter ID'),
@@ -991,6 +997,21 @@ return view.extend({
 			so.value('random', _('Random'));
 			so.value('safari', _('Safari'));
 			so.depends('tls', '1');
+			so.modalonly = true;
+
+			so = ss.option(form.Flag, 'tls_reality', _('REALITY'));
+			so.default = so.disabled;
+			so.depends('tls', '1');
+			so.modalonly = true;
+
+			so = ss.option(form.Value, 'tls_reality_public_key', _('REALITY public key'));
+			so.depends('tls_reality', '1');
+			so.rmempty = false;
+			so.modalonly = true;
+
+			so = ss.option(form.Value, 'tls_reality_short_id', _('REALITY short ID'));
+			so.depends('tls_reality', '1');
+			so.rmempty = false;
 			so.modalonly = true;
 		}
 		/* TLS config end */
