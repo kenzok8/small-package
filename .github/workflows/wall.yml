@@ -50,6 +50,8 @@ jobs:
         bash /$GITHUB_WORKSPACE/.github/diy/convert_translation.sh
         bash /$GITHUB_WORKSPACE/.github/diy/create_acl_for_luci.sh -a
         bash /$GITHUB_WORKSPACE/.github/diy/Modify.sh
+	cp -f $GITHUB_WORKSPACE/.github/diy/packages/files/usr/lib/lua/luci/view/admin_status/index/links.htm my-default-settings/files/usr/lib/lua/luci/view/admin_status/index/links.htm
+
 
     - name: Upload
       env: 
