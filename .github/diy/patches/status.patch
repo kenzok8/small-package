@@ -1,97 +1,3 @@
---- a/luci-base/root/usr/libexec/rpcd/luci
-+++ b/luci-base/root/usr/libexec/rpcd/luci
-@@ -45,2 +45,29 @@
- 
-+    getCPUInfo = {
-+        call = function()
-+            local sys = require "luci.sys"
-+            local rv = {}
-+            rv.cpufreq      = sys.exec("/sbin/cpuinfo")
-+            rv.cpufree      = (sys.exec("expr 100 - $(top -n 1 | grep 'CPU:' | awk -F '%' '{print$4}' | awk -F ' ' '{print$2}')") or "2.33") .. "%"
-+            rv.cpumark      = sys.exec("cat /etc/bench.log")
-+            return rv
-+        end
-+    },
-+
-+	getEthInfo = {
-+		call = function()
-+			local sys = require "luci.sys"
-+			local result = sys.exec("ethinfo 2>/dev/null")
-+			return { result = result }
-+		end
-+	},
-+
-+	getUserInfo = {
-+		call = function()
-+			local sys = require "luci.sys"
-+			local result = sys.exec("cat /proc/net/arp | grep 'br-lan' | grep '0x2' | wc -l")
-+			return { result = result }
-+		end
-+	},
-+
- 	setLocaltime = {
-
---- a/luci-mod-system/root/usr/share/rpcd/acl.d/luci-mod-system.json
-+++ b/luci-mod-system/root/usr/share/rpcd/acl.d/luci-mod-system.json
-@@ -3,7 +3,7 @@
- 		"description": "Grant access to system configuration",
- 		"read": {
- 			"ubus": {
--				"luci": [ "getInitList", "getLEDs", "getTimezones", "getUSBDevices" ],
-+				"luci": [ "getInitList", "getLEDs", "getTimezones", "getUSBDevices", "getCPUInfo", "getEthInfo", "getUserInfo" ],
- 				"system": [ "info" ]
- 			},
- 			"uci": [ "luci", "system" ]
-
---- a/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js
-+++ b/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js
-@@ -13,6 +13,11 @@ var callSystemInfo = rpc.declare({
- 	method: 'info'
- });
- 
-+var callCPUInfo = rpc.declare({
-+    object: 'luci',
-+    method: 'getCPUInfo'
-+});
-+
- return baseclass.extend({
- 	title: _('System'),
- 
-@@ -20,6 +25,7 @@ return baseclass.extend({
- 		return Promise.all([
- 			L.resolveDefault(callSystemBoard(), {}),
- 			L.resolveDefault(callSystemInfo(), {}),
-+			L.resolveDefault(callCPUInfo(), {}),
- 			fs.lines('/usr/lib/lua/luci/version.lua')
- 		]);
- 	},
-@@ -27,7 +33,8 @@ return baseclass.extend({
- 	render: function(data) {
- 		var boardinfo   = data[0],
- 		    systeminfo  = data[1],
--		    luciversion = data[2];
-+		    cpuinfo     = data[2],
-+		    luciversion = data[3];
- 
- 		luciversion = luciversion.filter(function(l) {
- 			return l.match(/^\s*(luciname|luciversion)\s*=/);
-@@ -52,13 +59,14 @@ return baseclass.extend({
- 
- 		var fields = [
- 			_('Hostname'),         boardinfo.hostname,
--			_('Model'),            boardinfo.model,
-+			_('Model'),            boardinfo.model + ' ' + cpuinfo.cpumark,
- 			_('Architecture'),     boardinfo.system,
- 			_('Target Platform'),  (L.isObject(boardinfo.release) ? boardinfo.release.target : ''),
- 			_('Firmware Version'), (L.isObject(boardinfo.release) ? boardinfo.release.description + ' / ' : '') + (luciversion || ''),
- 			_('Kernel Version'),   boardinfo.kernel,
- 			_('Local Time'),       datestr,
- 			_('Uptime'),           systeminfo.uptime ? '%t'.format(systeminfo.uptime) : null,
-+			_('CPU Info'),         cpuinfo.cpufreq,
- 			_('Load Average'),     Array.isArray(systeminfo.load) ? '%.2f, %.2f, %.2f'.format(
- 				systeminfo.load[0] / 65535.0,
- 				systeminfo.load[1] / 65535.0,
-
 --- a/luci-mod-status/htdocs/luci-static/resources/view/status/include/30_network.js
 +++ b/luci-mod-status/htdocs/luci-static/resources/view/status/include/30_network.js
 @@ -2,6 +2,7 @@
@@ -108,7 +14,7 @@
  
 +var callUserInfo = rpc.declare({
 +    object: 'luci',
-+    method: 'getUserInfo'
++    method: 'getOnlineUsers'
 +});
 +
  return baseclass.extend({
@@ -140,7 +46,7 @@
  			]));
 +			ctstatus.appendChild(E('div', { 'class': 'tr' }, [
 +				E('div', { 'class': 'td left' }, _('Online Users')),
-+				E('div', { 'class': 'td left' },  userinfo.result)
++				E('div', { 'class': 'td left' },  userinfo.onlineusers)
 +			]));
  		}
  
@@ -154,7 +60,7 @@
  		var fields = [
 -			_('Total Available'), (mem.available) ? mem.available : (mem.total && mem.free && mem.buffered) ? mem.free + mem.buffered : null, mem.total,
 -			_('Used'),            (mem.total && mem.free) ? (mem.total - mem.free) : null, mem.total,
-+			_('Used'),            (mem.total && mem.available) ? (mem.total - mem.available) : null, mem.total,
++			_('Used'),            (mem.total && mem.available) ? (mem.total - mem.free - mem.buffered - mem.cached) : null, mem.total,
  		];
  
  		if (mem.buffered)
@@ -170,3 +76,114 @@
  
  		for (var i = 0; i < fields.length; i += 3) {
  			table.appendChild(E('tr', { 'class': 'tr' }, [
+
+--- a/luci-mod-status/htdocs/luci-static/resources/view/status/nftables.js
++++ b/luci-mod-status/htdocs/luci-static/resources/view/status/nftables.js
+@@ -669,7 +669,6 @@ return view.extend({
+ 	checkLegacyRules: function(ipt4save, ipt6save) {
+ 		if (ipt4save.match(/\n-A /) || ipt6save.match(/\n-A /)) {
+ 			ui.addNotification(_('Legacy rules detected'), [
+-				E('p', _('There are legacy iptables rules present on the system. Mixing iptables and nftables rules is discouraged and may lead to incomplete traffic filtering.')),
+ 				E('button', {
+ 					'class': 'btn cbi-button',
+ 					'click': function() { location.href = 'nftables/iptables' }
+
+--- a/luci-mod-system/root/usr/share/rpcd/acl.d/luci-mod-system.json
++++ b/luci-mod-system/root/usr/share/rpcd/acl.d/luci-mod-system.json
+@@ -3,7 +3,7 @@
+ 		"description": "Grant access to system configuration",
+ 		"read": {
+ 			"ubus": {
+-				"luci": [ "getInitList", "getLEDs", "getTimezones", "getUSBDevices" ],
++				"luci": [ "getInitList", "getLEDs", "getTimezones", "getUSBDevices", "getCPUInfo", "getETHInfo", "getTempInfo", "getCPUBench", "getCPUUsage", "getOnlineUsers" ],
+ 				"system": [ "info" ]
+ 			},
+ 			"uci": [ "luci", "system" ]
+
+--- a/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js
++++ b/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js
+@@ -13,6 +13,26 @@ var callSystemInfo = rpc.declare({
+ 	method: 'info'
+ });
+ 
++var callCPUBench = rpc.declare({
++	object: 'luci',
++	method: 'getCPUBench'
++});
++
++var callCPUInfo = rpc.declare({
++	object: 'luci',
++	method: 'getCPUInfo'
++});
++
++var callCPUUsage = rpc.declare({
++	object: 'luci',
++	method: 'getCPUUsage'
++});
++
++var callTempInfo = rpc.declare({
++	object: 'luci',
++	method: 'getTempInfo'
++});
++
+ return baseclass.extend({
+ 	title: _('System'),
+ 
+@@ -20,6 +40,10 @@ return baseclass.extend({
+ 		return Promise.all([
+ 			L.resolveDefault(callSystemBoard(), {}),
+ 			L.resolveDefault(callSystemInfo(), {}),
++			L.resolveDefault(callCPUBench(), {}),
++			L.resolveDefault(callCPUInfo(), {}),
++			L.resolveDefault(callCPUUsage(), {}),
++			L.resolveDefault(callTempInfo(), {}),
+ 			fs.lines('/usr/lib/lua/luci/version.lua')
+ 		]);
+ 	},
+@@ -27,7 +51,11 @@ return baseclass.extend({
+ 	render: function(data) {
+ 		var boardinfo   = data[0],
+ 		    systeminfo  = data[1],
+-		    luciversion = data[2];
++		    cpubench    = data[2],
++		    cpuinfo     = data[3],
++		    cpuusage    = data[4],
++		    tempinfo    = data[5],
++		    luciversion = data[6];
+ 
+ 		luciversion = luciversion.filter(function(l) {
+ 			return l.match(/^\s*(luciname|luciversion)\s*=/);
+@@ -52,8 +80,6 @@ return baseclass.extend({
+ 
+ 		var fields = [
+ 			_('Hostname'),         boardinfo.hostname,
+-			_('Model'),            boardinfo.model,
+-			_('Architecture'),     boardinfo.system,
+ 			_('Target Platform'),  (L.isObject(boardinfo.release) ? boardinfo.release.target : ''),
+ 			_('Firmware Version'), (L.isObject(boardinfo.release) ? boardinfo.release.description + ' / ' : '') + (luciversion || ''),
+ 			_('Kernel Version'),   boardinfo.kernel,
+@@ -66,6 +92,24 @@ return baseclass.extend({
+ 			) : null
+ 		];
+ 
++		if (tempinfo.tempinfo) {
++			fields.splice(6, 0, _('Temperature'));
++			fields.splice(7, 0, tempinfo.tempinfo);
++		}
++		if (boardinfo.model == "Default string Default string") {
++			if (cpuinfo.cpuinfo) {
++			fields.splice(2, 0, _('Architecture'));
++			fields.splice(3, 0, cpuinfo.cpuinfo + cpubench.cpubench);
++			}
++		} else {
++			fields.splice(2, 0, _('Model'));
++			fields.splice(3, 0, boardinfo.model + cpubench.cpubench);
++			if (cpuinfo.cpuinfo) {
++			fields.splice(4, 0, _('Architecture'));
++			fields.splice(5, 0, cpuinfo.cpuinfo);
++			}
++		}
++
+ 		var table = E('table', { 'class': 'table' });
+ 
+ 		for (var i = 0; i < fields.length; i += 2) {

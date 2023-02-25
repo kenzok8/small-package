@@ -18,7 +18,6 @@
             fastcgi_param PATH_INFO $fastcgi_path_info;
             include /etc/nginx/fastcgi_params;
             client_max_body_size |upload_max_filesize|;
-            client_body_temp_path |temp_path|;
             client_body_timeout 3600s;
             fastcgi_connect_timeout 3600s;
             fastcgi_send_timeout 3600s;
