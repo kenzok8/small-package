@@ -176,6 +176,8 @@ sed -i 's/ +uhttpd-mod-ubus//' luci-app-packet-capture/Makefile
 sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/wifidog/wifidog_cfg.lua
 sed -i -e 's/nas/system/g' -e 's/NAS/System/g' $(grep -rl 'nas\|NAS' luci-app-fileassistant)
 sed -i 's/pkg_web_version:=.*/pkg_web_version:=$pkg_version/' alist/Makefile
-cp -f diy/packages/files/usr/lib/lua/luci/view/admin_status/index/links.htm my-default-settings/files/usr/lib/lua/luci/view/admin_status/index/links.htm
+
+cp -f .github/diy/packages/files/usr/lib/lua/luci/view/admin_status/index/links.htm my-default-settings/files/usr/lib/lua/luci/view/admin_status/index/links.htm
+
 exit 0
 
