@@ -47,6 +47,7 @@ jobs:
         git rm -r --cache * >/dev/null 2>&1 &
         rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
         $GITHUB_WORKSPACE/diy/${{matrix.target}}.sh
+        cp -f $GITHUB_WORKSPACE/diy/packages/files/usr/lib/lua/luci/view/admin_status/index/links.htm $GITHUB_WORKSPACE/my-default-settings/files/usr/lib/lua/luci/view/admin_status/index/links.htm 
         bash /$GITHUB_WORKSPACE/diy/convert_translation.sh
         bash /$GITHUB_WORKSPACE/diy/create_acl_for_luci.sh -a
         bash /$GITHUB_WORKSPACE/diy/Modify.sh
