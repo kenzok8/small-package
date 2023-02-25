@@ -4,8 +4,8 @@
  		}
  
  		if (image.name != undefined) {
--			var sysupgrade_url = `${this.data.url}/store/${res.bin_dir}/${image.name}`;
-+			var sysupgrade_url = `${this.data.url}/store/${res.request_hash}/${image.name}`;
+-			var sysupgrade_url = `${this.data.url}/store/${response.bin_dir}/${image.name}`;
++			var sysupgrade_url = `${this.data.url}/store/${response.request_hash}/${image.name}`;
  
  			var keep = E('input', { type: 'checkbox' });
  			keep.checked = true;
@@ -27,7 +27,7 @@
  
  		ui.showModal(_('Searching...'), [
  			E('p', { 'class': 'spinning' },
-@@ -311,35 +308,10 @@ return view.extend({
+@@ -311,40 +308,10 @@ return view.extend({
  					]);
  					return;
  				}
@@ -61,10 +61,15 @@
 -						}
 -					}
 -				}
+-
+-				// allow to re-install running firmware in advanced mode
+-				if (this.data.advanced_mode == 1) {
+-					candidates.unshift([version, revision])
+-				}
  
  				if (candidates.length) {
  					var m, s, o;
-@@ -348,7 +320,7 @@ return view.extend({
+@@ -353,7 +320,7 @@ return view.extend({
  						request: {
  							profile: this.firmware.profile,
  							version: candidates[0][0],
@@ -73,7 +78,7 @@
  						},
  					};
  
-@@ -391,6 +363,9 @@ return view.extend({
+@@ -401,6 +368,9 @@ return view.extend({
  						E('p', _('The device runs the latest firmware version %s - %s').format(version, revision)),
  						E('div', { class: 'right' }, [
  							E('div', { class: 'btn', click: ui.hideModal }, _('Close')),
@@ -83,23 +88,20 @@
  						]),
  					]);
  				}
-@@ -414,9 +389,15 @@ return view.extend({
- 		this.firmware.profile = res[1].board_name;
- 		this.firmware.target = res[1].release.target;
- 		this.firmware.version = res[1].release.version;
-+		this.firmware.partsize = res[1].release.distribution;
- 		this.data.branch = get_branch(res[1].release.version);
- 		this.data.revision = res[1].release.revision;
- 		this.data.efi = res[2];
+@@ -429,6 +399,12 @@ return view.extend({
+ 		this.data.revision = response[1].release.revision;
+ 
+ 		this.data.efi = response[2];
++		this.firmware.partsize = response[1].release.distribution;
 +		if (this.data.efi) {
 +			this.firmware.efi = "efi";
 +		} else {
 +			this.firmware.efi = "not";
 +		}
- 		if (res[1].rootfs_type) {
- 			this.firmware.filesystem = res[1].rootfs_type;
- 		} else {
-@@ -449,6 +430,17 @@ return view.extend({
+ 
+ 		this.data.url = uci.get_first('attendedsysupgrade', 'server', 'url');
+ 		this.data.advanced_mode = uci.get_first('attendedsysupgrade', 'client', 'advanced_mode') || 0
+@@ -438,6 +414,17 @@ return view.extend({
  			E('p', _('The attended sysupgrade service allows to easily upgrade vanilla and custom firmware images.')),
  			E('p', _('This is done by building a new firmware on demand via an online service.')),
  			E('p', _('Currently running: %s - %s').format(this.firmware.version, this.data.revision)),
@@ -120,28 +122,33 @@
 
 --- a/luci-app-attendedsysupgrade/po/zh_Hans/attendedsysupgrade.po
 +++ b/luci-app-attendedsysupgrade/po/zh_Hans/attendedsysupgrade.po
-@@ -263,3 +263,24 @@ msgstr "版本"
- #: applications/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js:264
- msgid "Wrong checksum"
- msgstr "错误的校验和"
-+
-+msgid "Attended Sysupgrade"
+@@ -46,7 +46,10 @@ msgstr "高级模式"
+ #: applications/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js:437
+ #: applications/luci-app-attendedsysupgrade/root/usr/share/luci/menu.d/luci-app-attendedsysupgrade.json:3
+ msgid "Attended Sysupgrade"
+-msgstr "值守式系统更新"
 +msgstr "定制系统升级"
 +
 +msgid "Force Sysupgrade"
 +msgstr "强制重刷"
-+
-+msgid "Error building the sysupgrade"
-+msgstr "构建固件时出错"
-+
-+msgid "Error during download of firmware. Please try again"
-+msgstr "固件下载出错, 请重试"
-+
-+msgid "Installing the sysupgrade. Do not unpower device!"
-+msgstr "正在刷入固件。不要切断电源！"
-+
-+msgid "Request in build queue position %s"
-+msgstr "排队中...当前位置 %s "
-+
-+msgid "The attended sysupgrade service allows to easily upgrade vanilla and custom firmware images."
+ 
+ #: applications/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/configuration.js:10
+ msgid "Attendedsysupgrade Configuration."
+@@ -187,7 +190,7 @@ msgstr "请求固件镜像"
+ 
+ #: applications/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js:162
+ msgid "Request in build queue position %s"
+-msgstr "构建队列位置 %s 中的请求"
++msgstr "排队中...当前位置 %s"
+ 
+ #: applications/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js:110
+ msgid "SHA256"
+@@ -237,7 +240,7 @@ msgstr "目标"
+ msgid ""
+ "The attended sysupgrade service allows to easily upgrade vanilla and custom "
+ "firmware images."
+-msgstr "值守式系统升级服务可让您轻松升级原版和自定义固件镜像。"
 +msgstr "定制和更新适用于您设备的OpenWrt固件。"
+ 
+ #: applications/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js:401
+ msgid "The device runs the latest firmware version %s - %s"

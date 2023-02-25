@@ -1,14 +1,17 @@
---- a/base-files/files/bin/board_detect
-+++ b/base-files/files/bin/board_detect
-@@ -6,7 +6,7 @@ CFG=$1
- 
- [ -d "/etc/board.d/" -a ! -s "$CFG" ] && {
- 	for a in $(ls /etc/board.d/*); do
--		[ -x $a ] || continue;
-+		[ -s $a ] || continue;
- 		$(. $a)
- 	done
+--- a/base-files/files/etc/rc.common
++++ b/base-files/files/etc/rc.common
+@@ -28,7 +28,10 @@ restart() {
  }
+ 
+ boot() {
+-	start "$@"
++	name="$(basename "${initscript}")"
++	name="${name##S[0-9][0-9]}"
++	[[ "$(uci -q get $name.$name[0].enabled)" == 0 || "$(uci -q get $name.config.enabled)" == 0 || "$(uci -q get $name.$name.enabled)" == 0 || "$(uci -q get $name.main.enabled)" == 0 || "$(uci -q get $name.$name[0].enable)" == 0 || "$(uci -q get $name.config.enable)" == 0 || "$(uci -q get $name.$name.enable)" == 0 || "$(uci -q get $name.main.enable)" == 0 ]] || start "$@";
++	
+ }
+ 
+ shutdown() {
 
 --- a/base-files/files/lib/functions.sh
 +++ b/base-files/files/lib/functions.sh
@@ -35,13 +38,13 @@
  
  alias ll='ls -alF --color=auto'
 +alias reboot='(/bin/busybox reboot &);sleep 3;/bin/busybox reboot -f'
-+PS1='\[\033[35;1m\]\u\[\033[0m\]@\[\033[31;1m\]\h \[\e[36m\]\@\[\e[m\] \[\033[32;1m\]\W\[\033[0m\]\[\033[31m\]\$\[\033[0m\] '
++PS1='\[\e[32m\][\[\e[m\]\[\e[31m\]\u\[\e[m\]\[\e[33m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]:\[\e[m\]\[\e[32m\]\[\e[1;32m\]\@\[\e[36m\] \w\[\e[m\]\[\e[32m\]]\[\e[0m\] \$\[\e[m\] '
  
  [ -z "$KSH_VERSION" -o \! -s /etc/mkshrc ] || . /etc/mkshrc
 
 --- a/base-files/files/sbin/sysupgrade
 +++ b/base-files/files/sbin/sysupgrade
-@@ -231,24 +231,10 @@ do_save_conffiles() {
+@@ -231,24 +231,15 @@ do_save_conffiles() {
  	ask_bool 0 "Edit config file list" && vi "$CONFFILES"
  
  	if [ "$SAVE_INSTALLED_PKGS" -eq 1 ]; then
@@ -63,9 +66,14 @@
 -			\( -exec test -f /overlay/upper/{} \; -exec echo {} overlay \; \) -o \
 -			\( -exec echo {} unknown \; \) \
 -			\) | sed -e 's,.*/,,;s/\.control /\t/' > ${INSTALLED_PACKAGES}
-+		. /etc/profile.d/opkg.sh; opkg save
++		. /etc/profile.d/opkg.sh && opkg save
++		[ -f /rom/etc/uci-defaults/zz-asu-defaults ] && {
++		 cp -f /rom/etc/uci-defaults/zz-asu-defaults /etc/uci-defaults/zz-asu-defaults
++		 echo "/etc/uci-defaults/zz-asu-defaults" >> $CONFFILES
++		}
 +	else
 +		uci -q del opkg.auto
++		uci -q del opkg.custom
 +		uci commit opkg
  	fi
  
@@ -85,13 +93,28 @@
 
 --- a/base-files/files/etc/profile
 +++ b/base-files/files/etc/profile
-@@ -22,7 +23,7 @@ esac
+@@ -22,7 +23,11 @@ esac
  
  [ -n "$FAILSAFE" ] || {
  	for FILE in /etc/profile.d/*.sh; do
 -		[ -e "$FILE" ] && . "$FILE"
-+		[ -e "$FILE" ] && [ "$FILE" == "/etc/profile.d/sysinfo.sh" ] && env -i bash "$FILE" || . "$FILE"
++		if [ "$FILE" == "/etc/profile.d/sysinfo.sh" ]; then
++		 [ "$(which bash)" ] && env -i bash "$FILE"
++		else
++		 [ -e "$FILE" ] && . "$FILE"
++		fi
  	done
  	unset FILE
  }
+
+--- a/base-files/files/lib/preinit/02_sysinfo
++++ b/base-files/files/lib/preinit/02_sysinfo
+@@ -5,6 +5,7 @@ do_sysinfo_generic() {
+ 		echo "$(strings /proc/device-tree/compatible | head -1)" > /tmp/sysinfo/board_name
+ 	[ ! -e /tmp/sysinfo/model -a -e /proc/device-tree/model ] && \
+ 		echo "$(cat /proc/device-tree/model)" > /tmp/sysinfo/model
++	sed -i "s/friendlyelec/friendlyarm/" /tmp/sysinfo/board_name
+ }
+ 
+ boot_hook_add preinit_main do_sysinfo_generic
 

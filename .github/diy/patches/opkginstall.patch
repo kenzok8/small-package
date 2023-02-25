@@ -125,19 +125,19 @@
  				E('div', {}, [
  					E('label', {}, _('Filter') + ':'),
  					E('span', { 'class': 'control-group' }, [
--						E('input', { 'type': 'text', 'name': 'filter', 'placeholder': _('Type to filter…'), 'value': query, 'keyup': handleKeyUp }),
-+						E('input', { 'type': 'text', 'name': 'filter', 'placeholder': _('Type to filter…'), 'value': 'luci-app-', 'keyup': handleKeyUp }),
+-						E('input', { 'type': 'text', 'name': 'filter', 'placeholder': _('Type to filter…'), 'value': query, 'input': handleInput }),
++						E('input', { 'type': 'text', 'name': 'filter', 'placeholder': _('Type to filter…'), 'value': 'luci-app-', 'input': handleInput }),
  						E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ])
  					])
  				]),
-@@ -1043,6 +1060,7 @@ return view.extend({
- 				E('div', {}, [
+@@ -1044,6 +1061,7 @@ return view.extend({
  					E('label', {}, _('Actions') + ':'), ' ',
  					E('span', { 'class': 'control-group' }, [
-+						E('button', { 'class': 'btn cbi-button-negative', 'data-command': 'upgradeall', 'click': handleOpkg, 'disabled': isReadonlyView }, [ _('Upgrade all…') ]), ' ',
  						E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleOpkg, 'disabled': isReadonlyView }, [ _('Update lists…') ]), ' ',
++						E('button', { 'class': 'btn cbi-button-negative', 'data-command': 'upgradeall', 'click': handleOpkg, 'disabled': isReadonlyView }, [ _('Upgrade all…') ]), ' ',
  						E('button', { 'class': 'btn cbi-button-action', 'click': handleUpload, 'disabled': isReadonlyView }, [ _('Upload Package…') ]), ' ',
  						E('button', { 'class': 'btn cbi-button-neutral', 'click': handleConfig }, [ _('Configure opkg…') ])
+ 					])
 @@ -1056,14 +1074,6 @@ return view.extend({
  				E('li', { 'data-mode': 'updates', 'class': 'installed cbi-tab-disabled', 'click': handleMode }, E('a', { 'href': '#' }, [ _('Updates') ]))
  			]),
@@ -187,7 +187,7 @@
  						opkg="$opkg $1"
  						shift
  					;;
-@@ -33,10 +33,49 @@ case "$action" in
+@@ -33,10 +33,51 @@ case "$action" in
  			done
  
  			if flock -x 200; then
@@ -200,9 +200,9 @@
 +					if [ $code == 0 ]; then
 +						. /etc/profile.d/opkg.sh
 +						if [[ "$(cat `opkg export au`)" ]] && lock -n /var/lock/opkg-upgrade; then
-+						opkg upgr </dev/null >>/tmp/opkg.out 2>>/tmp/opkg.err
-+						code=$?
-+						lock -u /var/lock/opkg-upgrade
++						 opkg upgr </dev/null >>/tmp/opkg.out 2>>/tmp/opkg.err
++						 code=$?
++						 lock -u /var/lock/opkg-upgrade
 +						else
 +							echo "🎉 所有软件包已是最新~" >>/tmp/opkg.out
 +							code=0
@@ -212,25 +212,27 @@
 +					$opkg $action "$@" </dev/null >/tmp/opkg.out 2>/tmp/opkg.err
 +					code=$?
 +				fi
-+				if [[ $@ == luci-app-* && "$(opkg list | grep luci-i18n-"$(echo $@ | cut -d - -f 3-)"-zh-cn)" ]]; then
-+					$opkg install luci-i18n-"$(echo $@ | cut -d - -f 3-)"-zh-cn </dev/null >>/tmp/opkg.out 2>/dev/null || true
-+				fi
++				pkgn="$(echo $@ | cut -d - -f 3-)"
 +				case "$action" in
 +					install|upgrade)
-+						[ "$(opkg list-installed | cut -f 1 -d ' ' | grep -w $@)" ] && {
++					if [ "$(opkg list-installed | cut -f 1 -d ' ' | grep -w $@)" ]; then
++							if [[ "$@" == luci-app-* && "$(opkg list | grep luci-i18n-$pkgn-zh-cn)" && ! -f /usr/lib/lua/luci/i18n/$pkgn.zh-cn.lmo ]]; then
++								$opkg install luci-i18n-$pkgn-zh-cn </dev/null >>/tmp/opkg.out 2>/dev/null || true
++							fi
 +							rm -f /tmp/opkg.err
-+						}
++							([ -f /etc/profile.d/opkg.sh ] && . /etc/profile.d/opkg.sh && opkg save) &
++					fi
 +					;;
 +					remove)
-+						[ ! "$(opkg list-installed | cut -f 1 -d ' ' | grep -w $@)" ] && {
++						if [ ! "$(opkg list-installed | cut -f 1 -d ' ' | grep -w $@)" ]; then
 +							rm -f /tmp/opkg.err
-+						}
++							if [[ "$@" == luci-app-* && "$(opkg list-installed | grep luci-i18n-$pkgn-zh-cn)" ]]; then
++								$opkg remove luci-i18n-$pkgn-zh-cn </dev/null >>/tmp/opkg.out 2>/dev/null || true
++							fi
++							([ -f /etc/profile.d/opkg.sh ] && . /etc/profile.d/opkg.sh && opkg save) &
++						fi
 +					;;
 +				esac
-+				grep -q "wget returned 8" /tmp/opkg.err && {
-+						opkg update </dev/null >/tmp/opkg.out 2>/tmp/opkg.err
-+						$opkg $action "$@" </dev/null >>/tmp/opkg.out 2>>/tmp/opkg.err
-+					}
  				stderr=$(cat /tmp/opkg.err)
 +				[ -n "$stderr" ] || {
 +					echo "🎉 已完成, 请关闭本窗口~" >>/tmp/opkg.out
@@ -240,7 +242,7 @@
  			else
  				code=255
  				stderr="Failed to acquire lock"
-@@ -53,7 +92,7 @@ case "$action" in
+@@ -53,7 +98,7 @@ case "$action" in
  	;;
  	*)
  		echo "Usage: $0 {list-installed|list-available}"       >&2
@@ -272,3 +274,14 @@
  				};
  
  				var cntbtn = E('button', {
+@@ -302,6 +303,10 @@ return view.extend({
+ 				opts.keep[0].addEventListener('change', function(ev) {
+ 					opts.skip_orig[0].disabled = !ev.target.checked;
+ 					opts.backup_pkgs[0].disabled = !ev.target.checked;
++					if (ev.target.checked == false){
++						opts.skip_orig[0].checked =false
++						opts.backup_pkgs[0].checked =false
++					}
+ 
+ 				});
+ 

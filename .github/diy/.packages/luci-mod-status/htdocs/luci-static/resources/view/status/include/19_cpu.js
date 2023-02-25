@@ -3,7 +3,7 @@
 
 var callCPUFreeInfo = rpc.declare({
 	object: 'luci',
-	method: 'getCPUInfo'
+	method: 'getCPUUsage'
 });
 
 function progressbar(value, max) {
@@ -26,7 +26,7 @@ return L.Class.extend({
 
 	render: function(info) {
 		var fields = [
-			_('Used'), (info.cpufree) ? info.cpufree : 0, 100
+			_('Used'), (info.cpuusage) ? info.cpuusage : 0, 100
 		];
 
 		var table = E('div', { 'class': 'table cpu' });
