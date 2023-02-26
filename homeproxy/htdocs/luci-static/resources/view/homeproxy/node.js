@@ -910,7 +910,7 @@ return view.extend({
 		so = ss.option(form.Flag, 'tls_insecure', _('Allow insecure'),
 			_('Allow insecure connection at TLS client.') +
 			'<br/>' +
-			_('This is <b>DANGEROUS</b>, your traffic is almost like <b>PLAIN TEXT</b>! Use at your own risk!'));
+			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 		so.default = so.disabled;
 		so.depends('tls', '1');
 		so.onchange = allowInsecureConfirm;
@@ -1039,7 +1039,7 @@ return view.extend({
 		s.tab('subscription', _('Subscriptions'));
 
 		o = s.taboption('subscription', form.Flag, 'auto_update', _('Auto update'),
-			_('Auto update subscriptions, geoip and geosite.'));
+			_('Auto update subscriptions, GeoIP and GeoSite.'));
 		o.default = o.disabled;
 		o.rmempty = false;
 
@@ -1087,7 +1087,7 @@ return view.extend({
 		o = s.taboption('subscription', form.Flag, 'allow_insecure', _('Allow insecure'),
 			_('Allow insecure connection by default when add nodes from subscriptions.') +
 			'<br/>' +
-			_('This is <b>DANGEROUS</b>, your traffic is almost like <b>PLAIN TEXT</b>! Use at your own risk!'));
+			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 		o.default = o.disabled;
 		o.rmempty = false;
 		o.onchange = allowInsecureConfirm;

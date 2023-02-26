@@ -99,7 +99,7 @@ function getRuntimeLog(name) {
 
 	var log;
 	poll.add(L.bind(function() {
-		return fs.read_direct(`${hp_dir}/${name.toLowerCase()}.log`, 'text')
+		return fs.read_direct(String.format('%s/%s.log', hp_dir, name.toLowerCase()), 'text')
 		.then(function(res) {
 			log = E('pre', { 'wrap': 'pre' }, [
 				res.trim() || _('Log is empty.')
