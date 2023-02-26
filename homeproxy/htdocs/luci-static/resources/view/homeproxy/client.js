@@ -127,8 +127,8 @@ return view.extend({
 		var proxy_nodes = {};
 		uci.sections(data[0], 'node', (res) => {
 			proxy_nodes[res['.name']] =
-				String.format('[%s] %s', res.type, res.label || (stubValidator.apply('ip6addr', res.address || '') ?
-					`[${res.address}]` : res.address) + ':' + res.port);
+			String.format('[%s] %s', res.type, res.label || (stubValidator.apply('ip6addr', res.address || '') ?
+				String.format('[%s]', res.address) : res.address) + ':' + res.port);
 		});
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
@@ -848,14 +848,6 @@ return view.extend({
 		so.default = 'disabled';
 		so.rmempty = false;
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_mac_addrs', _('Direct MAC addresses'));
-		so.datatype = 'macaddr';
-		so.depends('lan_proxy_mode', 'except_listed');
-		Object.keys(hosts).forEach(function(mac) {
-			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
-			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
-		});
-
 		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_ipv4_ips', _('Direct IPv4 IP-s'));
 		so.datatype = 'or(ip4addr, cidr4)';
 		so.depends('lan_proxy_mode', 'except_listed');
@@ -871,14 +863,6 @@ return view.extend({
 		});
 		so.depends('homeproxy.config.ipv6_support', '1');
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_mac_addrs', _('Proxy MAC addresses'));
-		so.datatype = 'macaddr';
-		so.depends('lan_proxy_mode', 'listed_only');
-		Object.keys(hosts).forEach(function(mac) {
-			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
-			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
-		});
-
 		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_ipv4_ips', _('Proxy IPv4 IP-s'));
 		so.datatype = 'or(ip4addr, cidr4)';
 		so.depends('lan_proxy_mode', 'listed_only');
@@ -893,13 +877,6 @@ return view.extend({
 			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
 		});
 		so.depends('homeproxy.config.ipv6_support', '1');
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_mac_addrs', _('Gaming mode MAC addresses'));
-		so.datatype = 'macaddr';
-		Object.keys(hosts).forEach(function(mac) {
-			var hint = hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0];
-			so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
-		});
 
 		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'));
 		so.datatype = 'or(ip4addr, cidr4)';

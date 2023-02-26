@@ -601,11 +601,27 @@ if (!isEmpty(main_node) || !isEmpty(default_outbound))
 
 if (!isEmpty(main_node)) {
 	/* Routing rules */
+	/* LAN ACL */
+	if (length(lan_proxy_ips)) {
+		push(config.route.rules, {
+			source_ip_cidr: lan_proxy_ips,
+			network: dedicated_udp_node ? 'tcp' : null,
+			outbound: 'main-out'
+		});
+
+		if (dedicated_udp_node) {
+			push(config.route.rules, {
+				source_ip_cidr: lan_proxy_ips,
+				network: 'udp',
+				outbound: 'main-udp-out'
+			});
+		}
+	}
+
 	/* Proxy list */
-	if (length(proxy_domain_list) || length(lan_proxy_ips) || length(wan_proxy_ips)) {
+	if (length(proxy_domain_list) || length(wan_proxy_ips)) {
 		push(config.route.rules, {
 			domain_keyword: proxy_domain_list,
-			source_ip_cidr: lan_proxy_ips,
 			ip_cidr: wan_proxy_ips,
 			network: dedicated_udp_node ? 'tcp' : null,
 			outbound: 'main-out'
@@ -614,7 +630,6 @@ if (!isEmpty(main_node)) {
 		if (dedicated_udp_node) {
 			push(config.route.rules, {
 				domain_keyword: proxy_domain_list,
-				source_ip_cidr: lan_proxy_ips,
 				ip_cidr: wan_proxy_ips,
 				network: 'udp',
 				outbound: 'main-udp-out'
