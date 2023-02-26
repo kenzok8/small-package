@@ -173,8 +173,10 @@ return baseclass.extend({
 		var label = uci.get(uciconfig, ucisection, 'label');
 		if (label)
 			return label;
-		else
+		else {
+			uci.set(uciconfig, ucisection, 'label', ucisection);
 			return ucisection;
+		}
 	},
 
 	loadModalTitle: function(title, addtitle, uciconfig, ucisection) {

@@ -849,7 +849,6 @@ return view.extend({
 		so.depends('type', 'shadowsocks');
 		so.depends('type', 'trojan');
 		so.depends('type', 'vmess');
-		so.rmempty = false;
 		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'multiplex_protocol', _('Protocol'),

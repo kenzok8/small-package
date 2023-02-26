@@ -162,15 +162,6 @@ set homeproxy_mainland_addr_v6 {
 
 {# LAN ACL addresses #}
 {% if (control_info.lan_proxy_mode === 'listed_only'): %}
-set homeproxy_lan_proxy_addr_mac {
-	type ether_addr
-	flags interval
-	auto-merge
-{% if (control_info.lan_proxy_mac_addrs): %}
-	elements = { {{ join(', ', control_info.lan_proxy_mac_addrs) }} }
-{% endif %}
-}
-
 set homeproxy_lan_proxy_addr_v4 {
 	type ipv4_addr
 	flags interval
@@ -191,15 +182,6 @@ set homeproxy_lan_proxy_addr_v6 {
 {% endif /* ipv6_support */ %}
 }
 {% elif (control_info.lan_proxy_mode === 'except_listed'): %}
-set homeproxy_lan_direct_addr_mac {
-	type ether_addr
-	flags interval
-	auto-merge
-{% if (control_info.lan_direct_mac_addrs): %}
-	elements = { {{ join(', ', control_info.lan_direct_mac_addrs) }} }
-{% endif %}
-}
-
 set homeproxy_lan_direct_addr_v4 {
 	type ipv4_addr
 	flags interval
@@ -220,15 +202,6 @@ set homeproxy_lan_direct_addr_v6 {
 }
 {% endif /* ipv6_support */ %}
 {% endif /* lan_proxy_mode */ %}
-
-set homeproxy_lan_gaming_addr_mac {
-	type ether_addr
-	flags interval
-	auto-merge
-{% if (control_info.lan_gaming_mode_mac_addrs): %}
-	elements = { {{ join(', ', control_info.lan_gaming_mode_mac_addrs) }} }
-{% endif %}
-}
 
 set homeproxy_lan_gaming_addr_v4 {
 	type ipv4_addr
@@ -339,13 +312,11 @@ chain homeproxy_redirect {
 	meta mark {{ self_mark }} counter return
 
 	{% if (control_info.lan_proxy_mode === 'listed_only'): %}
-	ether saddr != @homeproxy_lan_proxy_addr_mac counter return
 	ip saddr != @homeproxy_lan_proxy_addr_v4 counter return
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr != @homeproxy_lan_proxy_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 	{% elif (control_info.lan_proxy_mode === 'except_listed'): %}
-	ether saddr @homeproxy_lan_direct_addr_mac counter return
 	ip saddr @homeproxy_lan_direct_addr_v4 counter return
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr @homeproxy_lan_direct_addr_v6 counter return
@@ -391,7 +362,6 @@ chain homeproxy_redirect {
 	{% endif /* ipv6_support */ %}
 	{% endif /* routing_mode */ %}
 
-	ether saddr @homeproxy_lan_gaming_addr_mac counter goto homeproxy_redirect_proxy
 	ip saddr @homeproxy_lan_gaming_addr_v4 counter goto homeproxy_redirect_proxy
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr @homeproxy_lan_gaming_addr_v6 counter goto homeproxy_redirect_proxy
@@ -449,13 +419,11 @@ chain homeproxy_mangle_prerouting {
 	meta mark {{ self_mark }} counter return
 
 	{% if (control_info.lan_proxy_mode === 'listed_only'): %}
-	ether saddr != @homeproxy_lan_proxy_addr_mac counter return
 	ip saddr != @homeproxy_lan_proxy_addr_v4 counter return
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr != @homeproxy_lan_proxy_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 	{% elif (control_info.lan_proxy_mode === 'except_listed'): %}
-	ether saddr @homeproxy_lan_direct_addr_mac counter return
 	ip saddr @homeproxy_lan_direct_addr_v4 counter return
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr @homeproxy_lan_direct_addr_v6 counter return
@@ -505,7 +473,6 @@ chain homeproxy_mangle_prerouting {
 	{% endif /* ipv6_support */ %}
 	{% endif /* routing_mode */ %}
 
-	ether saddr @homeproxy_lan_gaming_addr_mac counter goto homeproxy_mangle_tproxy
 	ip saddr @homeproxy_lan_gaming_addr_v4 counter goto homeproxy_mangle_tproxy
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr @homeproxy_lan_gaming_addr_v6 counter goto homeproxy_mangle_tproxy
@@ -585,13 +552,11 @@ chain homeproxy_mangle_tun {
 	iifname {{ tun_name }} counter return
 
 	{% if (control_info.lan_proxy_mode === 'listed_only'): %}
-	ether saddr != @homeproxy_lan_proxy_addr_mac counter return
 	ip saddr != @homeproxy_lan_proxy_addr_v4 counter return
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr != @homeproxy_lan_proxy_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 	{% elif (control_info.lan_proxy_mode === 'except_listed'): %}
-	ether saddr @homeproxy_lan_direct_addr_mac counter return
 	ip saddr @homeproxy_lan_direct_addr_v4 counter return
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr @homeproxy_lan_direct_addr_v6 counter return
@@ -643,7 +608,6 @@ chain homeproxy_mangle_tun {
 	{% endif /* ipv6_support */ %}
 	{% endif /* routing_mode */ %}
 
-	ether saddr @homeproxy_lan_gaming_addr_mac counter mark set {{ tun_mark }}
 	ip saddr @homeproxy_lan_gaming_addr_v4 counter mark set {{ tun_mark }}
 	{% if (ipv6_support === '1'): %}
 	ip6 saddr @homeproxy_lan_gaming_addr_v6 counter mark set {{ tun_mark }}
