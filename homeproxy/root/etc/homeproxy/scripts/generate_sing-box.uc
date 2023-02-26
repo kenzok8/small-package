@@ -46,7 +46,7 @@ else
 const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, sniff_override = '1',
-    dns_server, dns_strategy, dns_default_server, dns_disable_cache, dns_disable_cache_expire,
+    dns_server, dns_default_strategy, dns_default_server, dns_disable_cache, dns_disable_cache_expire,
     lan_proxy_ips, wan_proxy_ips, proxy_domain_list, direct_domain_list;
 
 if (routing_mode !== 'custom') {
@@ -84,7 +84,7 @@ if (routing_mode !== 'custom') {
 		direct_domain_list = split(direct_domain_list, /[\r\n]/);
 } else {
 	/* DNS settings */
-	dns_strategy = uci.get(uciconfig, ucidnssetting, 'dns_strategy');
+	dns_default_strategy = uci.get(uciconfig, ucidnssetting, 'default_strategy');
 	dns_default_server = uci.get(uciconfig, ucidnssetting, 'default_server');
 	dns_disable_cache = uci.get(uciconfig, ucidnssetting, 'disable_cache');
 	dns_disable_cache_expire = uci.get(uciconfig, ucidnssetting, 'disable_cache_expire');
@@ -288,7 +288,7 @@ config.dns = {
 		}
 	],
 	rules: [],
-	strategy: dns_strategy,
+	strategy: dns_default_strategy,
 	disable_cache: (dns_disable_cache === '1'),
 	disable_expire: (dns_disable_cache_expire === '1')
 };
@@ -434,7 +434,6 @@ if (!isEmpty(main_node) || !isEmpty(default_outbound)) {
 			stack: tcpip_stack,
 			sniff: true,
 			sniff_override_destination: (sniff_override === '1'),
-			domain_strategy: dns_strategy
 		});
 }
 

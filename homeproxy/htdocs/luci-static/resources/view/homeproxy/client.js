@@ -204,7 +204,7 @@ return view.extend({
 
 				var ports = [];
 				for (var i of value.split(',')) {
-					if (!stubValidator.apply('port', i))
+					if (!stubValidator.apply('port', i) && !stubValidator.apply('portrange', i))
 						return _('Expecting: %s').format(_('valid port value'));
 					if (ports.includes(i))
 						return _('Port %s alrealy exists!').format(i);
@@ -452,20 +452,20 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'source_geoip', _('Source GeoIP'),
-			_('Match source geoip.'));
+			_('Match source GeoIP.'));
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'geoip', _('GeoIP'),
-			_('Match geoip.'));
+			_('Match GeoIP.'));
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'source_ip_cidr', _('Source IP CIDR'),
-			_('Match source ip cidr.'));
+			_('Match source IP CIDR.'));
 		so.datatype = 'or(cidr, ipaddr)';
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'ip_cidr', _('IP CIDR'),
-			_('Match ip cidr.'));
+			_('Match IP CIDR.'));
 		so.datatype = 'or(cidr, ipaddr)';
 		so.modalonly = true;
 
@@ -526,7 +526,7 @@ return view.extend({
 		o.depends('routing_mode', 'custom');
 
 		ss = o.subsection;
-		so = ss.option(form.ListValue, 'dns_strategy', _('DNS strategy'),
+		so = ss.option(form.ListValue, 'default_strategy', _('Default DNS strategy'),
 			_('The DNS strategy for resolving the domain name in the address.'));
 		for (var i in hp.dns_strategy)
 			so.value(i, hp.dns_strategy[i]);
@@ -717,16 +717,16 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'source_geoip', _('Source GeoIP'),
-			_('Match source geoip.'));
+			_('Match source GeoIP.'));
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'source_ip_cidr', _('Source IP CIDR'),
-			_('Match source ip cidr.'));
+			_('Match source IP CIDR.'));
 		so.datatype = 'or(cidr, ipaddr)';
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'ip_cidr', _('IP CIDR'),
-			_('Match ip cidr.'));
+			_('Match IP CIDR.'));
 		so.datatype = 'or(cidr, ipaddr)';
 		so.modalonly = true;
 
