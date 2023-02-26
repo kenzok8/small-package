@@ -203,7 +203,8 @@ stop_service() {
 	for i in "homeproxy_local_addr_v4" "homeproxy_local_addr_v6" \
 		 "homeproxy_gfw_list_v4" "homeproxy_gfw_list_v6" \
 		 "homeproxy_mainland_addr_v4" "homeproxy_mainland_addr_v6" \
-		 "homeproxy_proxy_addr_v4" "homeproxy_proxy_addr_v6"; do
+		 "homeproxy_proxy_addr_v4" "homeproxy_proxy_addr_v6" \
+		 "homeproxy_routing_port"; do
 		nft flush set inet fw4 "$i"
 		nft delete set inet fw4 "$i"
 	done 2>"/dev/null"

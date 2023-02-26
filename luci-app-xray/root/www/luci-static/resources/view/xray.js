@@ -347,7 +347,7 @@ return view.extend({
 
         o = ss.taboption('transport', form.DynamicList, "http_host", _("[tcp][fake_http] Host"))
         o.depends("tcp_guise", "http")
-        o.rmempty = true
+        o.rmempty = false
         o.modalonly = true
 
         o = ss.taboption('transport', form.DynamicList, "http_path", _("[tcp][fake_http] Path"))

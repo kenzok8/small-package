@@ -185,11 +185,24 @@ set homeproxy_proxy_addr_v6 {
 }
 {% endif /* ipv6_support */ %}
 
+{% if (routing_port !== 'all'): %}
+set homeproxy_routing_port {
+	type inet_service
+	flags interval
+	auto-merge
+	elements = {
+		{% for (let rport in split(routing_port, ',')): %}
+		{{ rport }},
+		{% endfor %}
+	}
+}
+{% endif %}
+
 {# TCP redirect #}
 {% if (match(proxy_mode, /redirect/)): %}
 chain homeproxy_redirect_proxy_port {
 	{% if (routing_port !== 'all'): %}
-	tcp dport != { {{ routing_port }} } counter return
+	tcp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	goto homeproxy_redirect_proxy
 }
@@ -299,7 +312,7 @@ chain dstnat {
 {% if (match(proxy_mode, /tproxy/) && (outbound_udp_node !== 'nil' || routing_mode === 'custom')): %}
 chain homeproxy_mangle_tproxy_port {
 	{% if (routing_port !== 'all'): %}
-	udp dport != { {{ routing_port }} } counter return
+	udp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	goto homeproxy_mangle_tproxy
 }
@@ -313,7 +326,7 @@ chain homeproxy_mangle_tproxy {
 
 chain homeproxy_mangle_mark {
 	{% if (routing_port !== 'all'): %}
-	udp dport != { {{ routing_port }} } counter return
+	udp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	meta l4proto udp mark set {{ tproxy_mark }} counter accept
 }
@@ -466,10 +479,11 @@ chain homeproxy_mangle_prerouting_tun {
 chain homeproxy_mangle_tun_mark {
 	{% if (routing_port !== 'all'): %}
 	{% if (proxy_mode === 'tun'): %}
-	tcp dport != { {{ routing_port }} } counter return
+	tcp dport != @homeproxy_routing_port counter return
 	{% endif /* proxy_mode */ %}
-	udp dport != { {{ routing_port }} } counter return
+	udp dport != @homeproxy_routing_port counter return
 	{% endif /* routing_port */ %}
+
 	counter mark set {{ tun_mark }}
 }
 
