@@ -23,6 +23,7 @@ define Package/lua-ipops
   DEPENDS:=
   PKGARCH:=all
   TITLE:=lua ipops lib
+  DEPENDS:=+lua
 endef
 
 define Package/lua-ipops/install
