@@ -99,7 +99,7 @@ git clone --depth 1 https://github.com/linkease/nas-packages && mv -n nas-packag
 git clone --depth 1 https://github.com/linkease/nas-packages-luci && mv -n nas-packages-luci/luci/* ./; rm -rf nas-packages-luci
 git clone --depth 1 https://github.com/linkease/istore && mv -n istore/luci/* ./; rm -rf istore
 git clone --depth 1 https://github.com/AlexZhuo/luci-app-bandwidthd
-git clone --depth 1 https://github.com/linkease/openwrt-app-actions && mv -n openwrt-app-actions/applications/* ./;rm -rf openwrt-app-actions
+git clone --depth 1 https://github.com/linkease/openwrt-app-actions
 git clone --depth 1 https://github.com/ZeaKyX/luci-app-speedtest-web
 git clone --depth 1 https://github.com/ZeaKyX/speedtest-web
 git clone --depth 1 https://github.com/Huangjoe123/luci-app-eqos
@@ -157,7 +157,7 @@ git_sparse_clone openwrt-22.03 "https://github.com/openwrt/luci" "opluci" applic
 
 mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
-
+mv -n openwrt-app-actions/applications/* ./;rm -rf openwrt-app-actions
 sed -i \
 -e 's?include \.\./\.\./\(lang\|devel\)?include $(TOPDIR)/feeds/packages/\1?' \
 -e 's?2. Clash For OpenWRT?3. Applications?' \
