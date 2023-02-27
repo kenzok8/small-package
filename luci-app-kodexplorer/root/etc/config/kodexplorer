@@ -1,4 +1,11 @@
-config kodexplorer
-  option 'cache_path' ''
-  option 'port' '8081'
-  option 'image_name' 'kodcloud/kodbox:latest'
+
+config global
+	option port '8081'
+	option upload_max_filesize '64M'
+	list open_basedir '/'
+	option https '0'
+	option project_directory '/tmp/kodexplorer'
+	option ipv6 '0'
+	option memory_limit '64M'
+	option enable '0'
+
