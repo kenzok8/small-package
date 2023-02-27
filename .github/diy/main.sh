@@ -176,6 +176,7 @@ sed -i 's/ +uhttpd-mod-ubus//' luci-app-packet-capture/Makefile
 sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/wifidog/wifidog_cfg.lua
 sed -i -e 's/nas/system/g' -e 's/NAS/System/g' $(grep -rl 'nas\|NAS' luci-app-fileassistant)
 sed -i 's/pkg_web_version:=.*/pkg_web_version:=$pkg_version/' alist/Makefile
+sed -i 's/option binpath '\''\/tmp\/AdGuardHome\/AdGuardHome'\''/option binpath '\''\/usr\/bin\/AdGuardHome'\''/g' luci-app-adguardhome/root/etc/config/AdGuardHome
 
 exit 0
 
