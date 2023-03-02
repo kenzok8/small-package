@@ -123,16 +123,13 @@ update() {
     exec 1000>/var/run/rtbwmon.lock
     flock -n 1000 2>/dev/null || {
         flock 1000 2>/dev/null
-        [ -f /var/run/rtbwmon.csv ] && {
-            cat /var/run/rtbwmon.csv
-            flock -u 1000 2>/dev/null
-            return 1
-        }
+        [ -f /var/run/rtbwmon.csv ] && cat /var/run/rtbwmon.csv
+        flock -u 1000 2>/dev/null
+        return 1
     }
 
     if [ -z "$WAN_INTERFACE" ]; then
         do_clean
-        > /var/run/rtbwmon.csv
     else
         do_update "$WAN_INTERFACE" 2>/dev/null
         cat /var/run/rtbwmon.csv
@@ -162,7 +159,7 @@ run_gc() {
             break
         fi
     done
-    clean
+    [ -f /var/run/rtbwmon.csv ] && clean
     flock -u 1001
     return 0
 }
@@ -171,6 +168,17 @@ show_ifaces() {
     local WAN_INTERFACE=`get_wan_iface`
     [ -z "$WAN_INTERFACE" ] && return 1
     ip addr show scope global up | grep '^ \+inet ' | sed -n -e 's/^.* \([^ ]\+\)$/\1/p' | grep -Fv "$WAN_INTERFACE" | sort -u
+}
+
+prerm() {
+    # avoid invoke
+    chmod 644 /usr/libexec/rtbwmon.sh
+
+    exec 1000>/var/run/rtbwmon.lock
+    flock 1000
+    sleep 1 </dev/null >/dev/null 2>&1 1000>/dev/null
+    do_clean
+    flock -u 1000
 }
 
 case $1 in
@@ -185,6 +193,9 @@ case $1 in
     ;;
 "gc")
     run_gc
+    ;;
+"prerm")
+    prerm
     ;;
 *)
 	echo \
