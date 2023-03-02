@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 
 #
-# Copyright (C) 2020-2022  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/netspeedtest
+# Copyright (C) 2020-2023  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/netspeedtest
 
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -40,7 +40,7 @@ nstest() {
     limit_log $LOG 200
     init_env
     touch $LOCK
-    echo -ne "\n  speedtest测速"       | tee -a $LOG
+    echo -ne "\n  speedtest测速"     >> $LOG
     /usr/bin/speedtest --share  > $TMP_T
     echo -ne  "\n  测服信息:$(cat  $TMP_T | grep 'Hosted by'| cut -c10- | awk -F: '{printf $1}')  延时：$(cat  $TMP_T | grep 'Hosted by' | awk -F: '{printf $2}')" >> $LOG
     echo -ne "\n  下行速率:$(cat  $TMP_T  | grep 'Download:' |awk -F: '{printf $2}' )"   >> $LOG
@@ -71,7 +71,7 @@ start_service() {
 	procd_open_instance
 	procd_set_param command $PROG
 	[ "x$logger" == x1 ] && procd_set_param stderr 1
-	procd_set_param respawn
+	# procd_set_param respawn
 	procd_close_instance
 }
 

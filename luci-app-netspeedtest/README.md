@@ -46,7 +46,19 @@ luci-app-netspeedtest 网络速度诊断测试（包括：内网网页版测速�
 
 ## 版本说明
 
-### 2022.10.18  网速测试V2.0.2：
+
+### 2023.3.2  网速测试V2.1.3：
+   - 修复测速Speedtest看不到测试报名问题。
+   - 重新调试IPERF3测试页面代码，解决某些主题显示不优雅的问题。
+   - 修复取消服务自动启用的问题
+   
+### 2023.1.15  网速测试V2.1：
+   - 内网测试速度WEB页采用homebox。
+   - 修复WEB页内网测试自动启用问题。
+   - 外网测速加入Netperf测试。
+   - 外网测速Speedtest某些节点会禁止测速。要测速建议关了留国的插件。
+
+### 2022.10.18  网速测试V2.0.3：
    - 代码基本重写和优化。
    - Iperf3可实时体现服务状态。
    - 增加内网测试网页版。
@@ -60,26 +72,7 @@ luci-app-netspeedtest 网络速度诊断测试（包括：内网网页版测速�
 
 将NetSpeedTest 主题添加至 LEDE/OpenWRT 源码的方法。 
 
-### 下载源码方法一：
-- 编辑源码文件夹根目录feeds.conf.default并加入如下内容:
-
-```Brach
-
-    # feeds获取源码：
-	
-    src-git netspeedtest https://github.com/sirpdboy/netspeedtest
- ``` 
-  ```Brach
-  
-   # 更新feeds，并安装主题：
-   
-    scripts/feeds update netspeedtest
-	scripts/feeds install netspeedtest
- ``` 	
-
-### 下载源码方法二：
-
- ```Brach
+### 下载源码：
  
     # 下载源码
 	
@@ -136,7 +129,7 @@ luci-app-netspeedtest 网络速度诊断测试（包括：内网网页版测速�
 
 ## 感谢
 
-感谢superspeed、user1121114685、ZeaKyX、佐须之男、lean等。因为有你们珠玉在前！
+感谢sivel、superspeed、user1121114685、ZeaKyX、佐须之男、lean等。因为有你们珠玉在前！
 
 ## 捐助
 
