@@ -1,0 +1,24 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(3, '<%=luci.dispatcher.build_url("admin", "services", "msd_lite", "status")%>', null,
+	function(x, data) {
+		var tb = document.getElementById('msd_lite_status');
+		if (data && tb) {
+			var links = "";
+			if (data.running) {
+				links = '<b><font color=green>msd_lite - <%:RUNNING%></font></b></em>';
+			} else {
+				links = '<b><font color=red>msd_lite - <%:NOT RUNNING%></font></b>';
+			}
+
+			tb.innerHTML = links;
+		}
+	}
+);
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="msd_lite_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
