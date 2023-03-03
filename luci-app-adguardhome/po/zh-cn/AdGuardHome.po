@@ -8,8 +8,8 @@ msgstr "日志"
 msgid "AdGuardHome's version"
 msgstr "AdGuardHome 版本"
 
-msgid "Needed to click 'save&apply' to generate the configuration file"
-msgstr "需要点击“保存并应用”才能生成配置文件"
+msgid 'Needed to click "save apply" to generate the configuration file'
+msgstr '需要点击“保存并应用”才能生成配置文件'
 
 msgid "In case of the latest realease is a source code that can not download the binary file"
 msgstr "防止最新release只有源码，导致下载不成功"
@@ -41,10 +41,9 @@ msgstr "启用"
 msgid "Browser management port"
 msgstr "网页管理账号和密码:admin ,端口:"
 
-msgid "Update"
-msgstr "更新"
+msgid "Upgrade Core"
+msgstr "更新核心"
 
-#button change
 msgid "Update core version"
 msgstr "更新核心版本"
 
@@ -56,15 +55,22 @@ msgstr "已更新"
 
 #button hide
 msgid "Force update"
-msgstr "强制更新"
+msgstr "强制更新核心"
 
 msgid "Fast config"
 msgstr "快速配置"
 
-#
-msgid "core version:"
-msgstr "核心版本:"
-#description change
+msgid "Core Version"
+msgstr "核心版本"
+
+msgid "Latest Version"
+msgstr "最新版"
+
+msgid "Beta Version"
+msgstr "测试版"
+
+msgid "Current core version:"
+msgstr "当前核心版本:"
 
 msgid "no config"
 msgstr "没有配置文件"
@@ -119,8 +125,8 @@ msgid "try even more compression variants [very slow]"
 msgstr "尝试更多变体压缩手段[很慢]"
 
 msgid "bin use less space,but may have compatibility issues"
-msgstr "减小执行文件空间占用，但是可能压缩后有兼容性问题"
-#
+msgstr "减小执行文件空间占用, 压缩后存在兼容性问题"
+
 msgid "Config Path"
 msgstr "配置文件路径"
 
@@ -190,7 +196,7 @@ msgid "is empty"
 msgstr "为空"
 
 msgid "Press load culculate model and culculate finally save/apply"
-msgstr "按载入计算模块 然后计算 最后保存/提交"
+msgstr "先输入你想要的密码, 点击[载入计算模块], 然后点击[计算], 最后点击下方[保存&应用]"
 
 #
 msgid "Keep files when system upgrade"
@@ -211,13 +217,13 @@ msgstr "审计日志.json"
 
 #
 msgid "On boot when network ok restart"
-msgstr "开机后网络准备好时重启"
+msgstr "开机后网络就绪时重启"
 
 msgid "Backup workdir files when shutdown"
-msgstr "在关机时备份工作目录文件"
+msgstr "在关机时备份以下文件"
 
 msgid "Will be restore when workdir/data is empty"
-msgstr "在工作目录/data为空的时候恢复"
+msgstr "备份将在 工作目录/data 为空的时候恢复"
 
 msgid "Backup workdir path"
 msgstr "工作目录备份路径"
@@ -235,16 +241,16 @@ msgid "Auto tail runtime log"
 msgstr "自动截短运行日志"
 
 msgid "Auto update ipv6 hosts and restart adh"
-msgstr "自动更新ipv6主机并重启adh"
+msgstr "自动更新 IPv6 主机并重启 AdGuardHome"
 
 msgid "Auto update gfwlist and restart adh"
-msgstr "自动更新gfw列表并重启adh"
+msgstr "自动更新 GFW 列表并重启 AdGuardHome"
 
 msgid "Please change time and args in crontab"
 msgstr "请在计划任务中修改时间和参数"
 
-msgid "Download links for update"
-msgstr "升级用的下载链接"
+msgid "Core Update URL"
+msgstr "核心更新地址"
 
 #/cgi-bin/luci/admin/services/AdGuardHome/log/
 msgid "reverse"
@@ -254,7 +260,7 @@ msgid "localtime"
 msgstr "本地时间"
 
 msgid "Please add log path in config to enable log"
-msgstr "请在设置里填写日志路径以启用日志"
+msgstr "请在设置里填写运行日志路径以启用日志"
 
 msgid "dellog"
 msgstr "删除日志"
@@ -266,16 +272,14 @@ msgstr "下载日志"
 msgid "Use template"
 msgstr "使用模板"
 
-#hide button
 msgid "Reload Config"
 msgstr "重新载入配置"
 
 msgid "WARNING!!! no bin found apply config will not be test"
-msgstr "警告！！！未找到执行文件，提交配置将不会进行校验"
+msgstr "警告!!! 未找到执行文件, 提交配置将不会进行校验"
 
-#unused
 msgid "Change browser management username"
-msgstr "改变网页登录用户名"
+msgstr "更改网页登录用户名"
 
 msgid "Username"
 msgstr "用户名"
@@ -290,4 +294,4 @@ msgid "Keep database when system upgrade"
 msgstr "系统升级时保留数据"
 
 msgid "Boot delay until network ok"
-msgstr "开机时直到网络准备好再启动"
+msgstr "开机时等到网络就绪后再启动"
