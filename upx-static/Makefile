@@ -3,8 +3,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upx-static
-PKG_VERSION:=4.0.2
-PKG_RELEASE:=1
+PKG_VERSION:=3.96
+PKG_RELEASE:=20220422
 
 ifeq ($(ARCH),x86_64)
 	PKG_ARCH:=amd64
@@ -37,7 +37,7 @@ endif
 PKG_FILE:=upx-$(PKG_VERSION).tar.xz
 PKG_URL:=https://github.com/upx/upx/releases/download/v$(PKG_VERSION)/upx-$(PKG_VERSION)-$(PKG_ARCH)_linux.tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
-PKG_HASH:=540c512bae2f32995729f74921282b11da2f72e3c0cec2dbd63c91fe9b00b011
+PKG_HASH:=skip
 
 include $(INCLUDE_DIR)/package.mk
 
