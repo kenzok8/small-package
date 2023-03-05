@@ -62,4 +62,9 @@ o.datatype = "uinteger"
 o.default = "2"
 o.description = translate("Multicast receive timeout.")
 
+o = s:option(Value, "rejoin_time", translate("IGMP/MLD rejoin time"))
+o.datatype = "uinteger"
+o.default = "0"
+o.description = translate("Do IGMP/MLD leave+join every X seconds. Leave <em>0</em> to disable.")
+
 return m
