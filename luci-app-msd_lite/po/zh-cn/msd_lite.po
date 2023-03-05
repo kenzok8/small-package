@@ -61,3 +61,9 @@ msgstr "接收超时"
 
 msgid "Multicast receive timeout."
 msgstr "组播接收超时。"
+
+msgid "Do IGMP/MLD leave+join every X seconds. Leave <em>0</em> to disable."
+msgstr "每隔 X 秒执行 IGMP/MLD 退出重进。设置为 <em>0</em> 以禁用。"
+
+msgid "IGMP/MLD rejoin time"
+msgstr "IGMP/MLD 重新加入时间"
