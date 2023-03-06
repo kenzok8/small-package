@@ -647,7 +647,7 @@ function upstream_domain_names() {
 
 function domain_rules(k) {
     if (proxy[k] == null) {
-        return null
+        return []
     }
     return filter(proxy[k], function (x) {
         if (substr(x, 0, 8) == "geosite:") {
@@ -676,20 +676,12 @@ function dns_conf() {
         {
             address: fast_dns_object["address"],
             port: fast_dns_object["port"],
-            domains: upstream_domain_names(),
+            domains: [...upstream_domain_names(), ...fast_domain_rules()],
         },
         default_dns_object,
     ];
 
-    if (fast_domain_rules() != null) {
-        splice(servers, 1, 0, {
-            address: fast_dns_object["address"],
-            port: fast_dns_object["port"],
-            domains: fast_domain_rules(),
-        });
-    }
-
-    if (secure_domain_rules() != null) {
+    if (length(secure_domain_rules()) > 0) {
         const secure_dns_object = split_ipv4_host_port(proxy["secure_dns"], 53);
         splice(servers, 1, 0, {
             address: secure_dns_object["address"],
@@ -699,7 +691,7 @@ function dns_conf() {
     }
 
     let hosts = null;
-    if (blocked_domain_rules() != null) {
+    if (length(blocked_domain_rules()) > 0) {
         hosts = {};
         for (rule in (blocked_domain_rules())) {
             hosts[rule] = ["127.127.127.127", "100::6c62:636f:656b:2164"] // blocked!
