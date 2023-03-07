@@ -481,8 +481,9 @@ if (server_enabled === '1')
 					auth: (cfg.hysteria_auth_type === 'base64') ? cfg.hysteria_auth_payload : null,
 					auth_str: (cfg.hysteria_auth_type === 'string') ? cfg.hysteria_auth_payload : null,
 
-					/* VMess */
+					/* VLESS / VMess */
 					uuid: cfg.uuid,
+					flow: cfg.vless_flow,
 					alterId: strToInt(cfg.vmess_alterid)
 				}
 			] : null,

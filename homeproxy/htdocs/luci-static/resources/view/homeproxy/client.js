@@ -127,8 +127,8 @@ return view.extend({
 		var proxy_nodes = {};
 		uci.sections(data[0], 'node', (res) => {
 			proxy_nodes[res['.name']] =
-			String.format('[%s] %s', res.type, res.label || (stubValidator.apply('ip6addr', res.address || '') ?
-				String.format('[%s]', res.address) : res.address) + ':' + res.port);
+				String.format('[%s] %s', res.type, res.label || (stubValidator.apply('ip6addr', res.address || '') ?
+					String.format('[%s]', res.address) : res.address) + ':' + res.port);
 		});
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
