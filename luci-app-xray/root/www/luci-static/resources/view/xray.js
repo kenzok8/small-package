@@ -193,6 +193,7 @@ return view.extend({
         const geoip_direct_code = uci.get_first(config_data, "general", "geoip_direct_code");
         const { geoip_existence, geoip_size, geosite_existence, geosite_size, optional_features, firewall4, xray_bin_default, xray_running } = check_resource_files(load_result[1]);
         const status_text = xray_running ? _("[Xray is running]") : _("[Xray is stopped]");
+        const fw_text = firewall4 ? _("[fw4]"): _("[fw3]");
 
         let asset_file_status = _('WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly. See <a href="https://github.com/yichya/luci-app-xray">here</a> for help.')
         if (geoip_existence) {
@@ -201,7 +202,7 @@ return view.extend({
             }
         }
 
-        const m = new form.Map('xray', _('Xray'), status_text + " " + asset_file_status);
+        const m = new form.Map('xray', _('Xray'), status_text + " " + fw_text + " " + asset_file_status);
 
         var s, o, ss;
 
