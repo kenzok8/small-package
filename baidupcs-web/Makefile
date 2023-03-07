@@ -1,55 +1,85 @@
-# SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2022 ImmortalWrt.org
+# Copyright (C) 2019 OpenWrt.org
+#
+# KFERMercer <KFER.Mercer@gmail.com>
+#
+# This is free software, licensed under the GNU General Public License v3.
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=baidupcs-web
-PKG_VERSION:=3.7.4-nnew
-PKG_RELEASE:=$(AUTORELEASE)
-
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/Erope/BaiduPCS-Go/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=6efd1c5e4cf5cf876204bed246c70ea0212ad078d4eb7703d7f1179b39551d1d
-PKG_BUILD_DIR:=$(BUILD_DIR)/BaiduPCS-Go-$(PKG_VERSION)
-
-PKG_LICENSE:=Apache-2.0
-PKG_LICENSE_FILES:=LICENSE
-
-PKG_BUILD_DEPENDS:=golang/host go-rice/host
-PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
-
-GO_PKG:=github.com/Erope/BaiduPCS-Go
-GO_PKG_LDFLAGS_X:=main.Version=v$(PKG_VERSION)
+PKG_VERSION:=3.7.1
+PKG_RELEASE:=2
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
 define Package/baidupcs-web
   SECTION:=net
   CATEGORY:=Network
-  SUBMENU:=Download Manager
-  TITLE:=A web controller for BaiduPCS-Go
-  URL:=https://github.com/Erope/BaiduPCS-Go
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
+  TITLE:=BaiduPCS-Web is a web controller for BaiduPCS-Go
+  URL:=https://github.com/Erope/baidupcs-web
+endef
+
+define Package/$(PKG_NAME)/description
+BaiduPCS-Web is a web controller for BaiduPCS-Go
+endef
+
+# 禁止OpenWrt对二进制文件进行strip
+STRIP:=true
+
+ifeq ($(ARCH),i386)
+	PKG_ARCH_BAIDUPCS-WEB:=386
+endif
+
+ifeq ($(ARCH),x86_64)
+	PKG_ARCH_BAIDUPCS-WEB:=amd64
+endif
+
+ifeq ($(ARCH),mipsel)
+	PKG_ARCH_BAIDUPCS-WEB:=mipsle
+endif
+
+ifeq ($(ARCH),mips)
+	PKG_ARCH_BAIDUPCS-WEB:=mipsle
+endif
+
+ifeq ($(ARCH),arm)
+ifeq ($(BOARD),bcm53xx)
+	PKG_ARCH_BAIDUPCS-WEB:=armv5
+else ifeq ($(BOARD),kirkwood)
+	PKG_ARCH_BAIDUPCS-WEB:=armv5
+else
+	PKG_ARCH_BAIDUPCS-WEB:=armv7
+endif
+endif
+
+ifeq ($(ARCH),aarch64)
+	PKG_ARCH_BAIDUPCS-WEB:=arm64
+endif
+
+PKG_SOURCE:=BaiduPCS-Go-v$(PKG_VERSION)-linux-$(PKG_ARCH_BAIDUPCS-WEB).zip
+PKG_SOURCE_URL:=https://github.com/coolsnowwolf/baidupcs-web/raw/master/
+
+UNZIP_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/$(PKG_NAME)-unzip
+
+PKG_HASH:=skip
+
+define Build/Prepare
+	mkdir -vp $(UNZIP_DIR)
+	unzip -od $(UNZIP_DIR) $(DL_DIR)/$(PKG_SOURCE)
+endef
+
+define Build/Configure
 endef
 
 define Build/Compile
-	( \
-		pushd "$(PKG_BUILD_DIR)/internal/pcsweb" ; \
-		rice embed-go ; \
-		popd ; \
-		$(call GoPackage/Build/Compile) ; \
-	)
 endef
 
 define Package/baidupcs-web/install
-	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
-
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/BaiduPCS-Go $(1)/usr/bin/baidupcs-web
+	$(INSTALL_BIN) $(UNZIP_DIR)/*/BaiduPCS-Go $(1)/usr/bin/baidupcs-web
+	chmod 755 $(1)/usr/bin/baidupcs-web
 endef
 
-$(eval $(call GoBinPackage,baidupcs-web))
 $(eval $(call BuildPackage,baidupcs-web))

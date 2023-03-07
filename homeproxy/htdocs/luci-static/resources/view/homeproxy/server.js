@@ -202,6 +202,12 @@ return view.extend({
 		o.validate = hp.validateUUID;
 		o.modalonly = true;
 
+		o = s.option(form.ListValue, 'vless_flow', _('Flow'));
+		o.value('', _('None'));
+		o.value('xtls-rprx-vision');
+		o.depends('type', 'vless');
+		o.modalonly = true;
+
 		o = s.option(form.Value, 'vmess_alterid', _('Alter ID'),
 			_('Legacy protocol support (VMess MD5 Authentication) is provided for compatibility purposes only, use of alterId > 1 is not recommended.'));
 		o.datatype = 'uinteger';
