@@ -960,7 +960,7 @@ function rules() {
         })
     }
     if (proxy["tproxy_sniffing"] == "1") {
-        if (secure_domain_rules() != null) {
+        if (length(secure_domain_rules()) > 0) {
             splice(result, 0, 0, {
                 type: "field",
                 inboundTag: ["tproxy_udp_inbound"],
@@ -974,7 +974,7 @@ function rules() {
                 domain: secure_domain_rules(),
             });
         }
-        if (blocked_domain_rules() != null) {
+        if (length(blocked_domain_rules()) > 0) {
             splice(result, 0, 0, {
                 type: "field",
                 inboundTag: ["tproxy_tcp_inbound", "tproxy_udp_inbound", "dns_conf_inbound"],
