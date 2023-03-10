@@ -5,7 +5,7 @@ local m,s,o,o1
 local fs=require"nixio.fs"
 local uci=require"luci.model.uci".cursor()
 local configpath=uci:get("AdGuardHome","AdGuardHome","configpath") or "/etc/AdGuardHome.yaml"
-local binpath=uci:get("AdGuardHome","AdGuardHome","binpath") or "/usr/bin/AdGuardHome"
+local binpath = uci:get("AdGuardHome", "AdGuardHome", "binpath") or "/usr/bin/AdGuardHome/AdGuardHome"
 httpport=uci:get("AdGuardHome","AdGuardHome","httpport") or "3000"
 m = Map("AdGuardHome", "AdGuard Home")
 m.description = translate("Free and open source, powerful network-wide ads & trackers blocking DNS server.")
@@ -50,7 +50,7 @@ o = s:option(ListValue, "core_version", translate("Core Version"))
 o:value("latest", translate("Latest Version"))
 o:value("beta", translate("Beta Version"))
 o.default = "latest"
-o=s:option(Button,"restart",translate("Update"))
+o = s:option(Button, "restart", translate("Upgrade Core"))
 o.inputtitle=translate("Update core version")
 o.template = "AdGuardHome/AdGuardHome_check"
 o.showfastconfig=(not fs.access(configpath))
@@ -69,8 +69,8 @@ o.default     = "none"
 o.optional = true
 ---- bin path
 o = s:option(Value, "binpath", translate("Bin Path"), translate("AdGuardHome Bin path if no bin will auto download"))
-o.default     = "/usr/bin/AdGuardHome"
-o.datatype    = "string"
+o.default = "/usr/bin/AdGuardHome/AdGuardHome"
+o.datatype = "string"
 o.optional = false
 o.rmempty=false
 o.validate=function(self, value)
@@ -122,8 +122,8 @@ return value
 end
 ---- work dir
 o = s:option(Value, "workdir", translate("Work dir"), translate("AdGuardHome work dir include rules,audit log and database"))
-o.default     = "/etc/AdGuardHome"
-o.datatype    = "string"
+o.default = "/usr/bin/AdGuardHome"
+o.datatype = "string"
 o.optional = false
 o.rmempty=false
 o.validate=function(self, value)
@@ -212,7 +212,7 @@ o = s:option(Flag, "waitonboot", translate("On boot when network ok restart"))
 o.default = 1
 o.optional = true
 ---- backup workdir on shutdown
-local workdir=uci:get("AdGuardHome","AdGuardHome","workdir") or "/etc/AdGuardHome"
+local workdir = uci:get("AdGuardHome", "AdGuardHome", "workdir") or "/usr/bin/AdGuardHome"
 o = s:option(MultiValue, "backupfile", translate("Backup workdir files when shutdown"))
 o1 = s:option(Value, "backupwdpath", translate("Backup workdir path"))
 local name
@@ -238,7 +238,7 @@ o.optional=false
 o.description=translate("Will be restore when workdir/data is empty")
 ----backup workdir path
 
-o1.default     = "/etc/AdGuardHome"
+o1.default = "/usr/bin/AdGuardHome"
 o1.datatype    = "string"
 o1.optional = false
 o1.validate=function(self, value)
