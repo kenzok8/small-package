@@ -45,6 +45,11 @@ else
 	end
 	e=version..e
 end
+
+o = s:option(ListValue, "core_version", translate("Core Version"))
+o:value("latest", translate("Latest Version"))
+o:value("beta", translate("Beta Version"))
+o.default = "latest"
 o=s:option(Button,"restart",translate("Update"))
 o.inputtitle=translate("Update core version")
 o.template = "AdGuardHome/AdGuardHome_check"
@@ -263,18 +268,12 @@ o.widget = "checkbox"
 o.default = nil
 o.optional=true
 
-----downloadpath
-o = s:option(TextValue, "downloadlinks",translate("Download links for update"))
+o = s:option(Value, "update_url", translate("Core Update URL"))
+o.default = "https://github.com/AdguardTeam/AdGuardHome/releases/download/${Cloud_Version}/AdGuardHome_linux_${Arch}.tar.gz"
+o.placeholder = "https://github.com/AdguardTeam/AdGuardHome/releases/download/${Cloud_Version}/AdGuardHome_linux_${Arch}.tar.gz"
+o.rmempty = false
 o.optional = false
-o.rows = 4
-o.wrap = "soft"
-o.cfgvalue = function(self, section)
-	return fs.readfile("/usr/share/AdGuardHome/links.txt")
-end
-o.write = function(self, section, value)
-	fs.writefile("/usr/share/AdGuardHome/links.txt", value:gsub("\r\n", "\n"))
-end
-fs.writefile("/var/run/lucilogpos","0")
+
 function m.on_commit(map)
 	if (fs.access("/var/run/AdGserverdis")) then
 		io.popen("/etc/init.d/AdGuardHome reload &")
@@ -297,7 +296,7 @@ function m.on_commit(map)
 				uci:set("AdGuardHome","AdGuardHome","ucitracktest","2")
 			end
 		end
-		uci:save("AdGuardHome")
+        uci:commit("AdGuardHome")
 	end
 end
 return m

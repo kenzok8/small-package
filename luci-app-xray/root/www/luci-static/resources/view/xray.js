@@ -581,6 +581,25 @@ return view.extend({
         o.rmempty = true
         o.modalonly = true
 
+        o = ss.taboption('transport', form.Flag, "h2_health_check", _("[h2] Health Check"))
+        o.depends("transport", "h2")
+        o.rmempty = true
+        o.modalonly = true
+
+        o = ss.taboption('transport', form.Value, "h2_read_idle_timeout", _("[h2] Read Idle Timeout"))
+        o.depends({ "transport": "h2", "h2_health_check": "1" })
+        o.rmempty = true
+        o.modalonly = true
+        o.default = 10
+        o.datatype = 'integer'
+
+        o = ss.taboption('transport', form.Value, "h2_health_check_timeout", _("[h2] Health Check Timeout"))
+        o.depends({ "transport": "h2", "h2_health_check": "1" })
+        o.rmempty = true
+        o.modalonly = true
+        o.default = 20
+        o.datatype = 'integer'
+
         o = ss.taboption('transport', form.Value, "grpc_service_name", _("[grpc] Service Name"))
         o.depends("transport", "grpc")
         o.rmempty = true
