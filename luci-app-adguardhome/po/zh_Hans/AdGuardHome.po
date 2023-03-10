@@ -41,8 +41,8 @@ msgstr "启用"
 msgid "Browser management port"
 msgstr "网页管理账号和密码:admin ,端口:"
 
-msgid "Update"
-msgstr "更新"
+msgid "Upgrade Core"
+msgstr "更新核心"
 
 #button change
 msgid "Update core version"
@@ -56,16 +56,22 @@ msgstr "已更新"
 
 #button hide
 msgid "Force update"
-msgstr "强制更新"
+msgstr "强制更新核心"
 
 msgid "Fast config"
 msgstr "快速配置"
 
-#
-msgid "core version:"
-msgstr "核心版本:"
-#description change
+msgid "Core Version"
+msgstr "核心版本"
 
+msgid "Latest Version"
+msgstr "最新版"
+
+msgid "Beta Version"
+msgstr "测试版"
+
+msgid "Current core version:"
+msgstr "当前核心版本:"
 msgid "no config"
 msgstr "没有配置文件"
 
@@ -134,17 +140,17 @@ msgid "AdGuardHome work dir include rules,audit log and database"
 msgstr "AdGuardHome 工作目录包含规则，审计日志和数据库"
 
 msgid "Runtime log file"
-msgstr "运行日志"
+msgstr "运行日志路径"
 
 msgid "AdGuardHome runtime Log file if 'syslog': write to system log;if empty no log"
-msgstr "AdGuardHome 运行日志 如果填syslog将写入系统日志；如果空则不记录日志"
+msgstr "AdGuardHome 运行日志, 如果填 syslog 将写入系统日志; 如果该项为空则不记录运行日志"
 
 msgid "Verbose log"
-msgstr "详细日志"
+msgstr "输出详细日志"
 
 #hide div
 msgid "Add gfwlist"
-msgstr "加入gfw列表"
+msgstr "添加 GFW 列表"
 
 msgid "Add"
 msgstr "添加"
@@ -171,7 +177,7 @@ msgstr "gfw列表域名上游服务器"
 
 #hide div
 msgid "Change browser management password"
-msgstr "改变网页登录密码"
+msgstr "更改网页登录密码"
 
 msgid "Culculate"
 msgstr "计算"
@@ -184,13 +190,13 @@ msgid "loading..."
 msgstr "载入中"
 
 msgid "Please save/apply"
-msgstr "请提交"
+msgstr "请点击[保存/应用]"
 
 msgid "is empty"
 msgstr "为空"
 
 msgid "Press load culculate model and culculate finally save/apply"
-msgstr "按载入计算模块 然后计算 最后保存/提交"
+msgstr "先输入你想要的密码, 点击[载入计算模块], 然后点击[计算], 最后点击下方[保存&应用]"
 
 #
 msgid "Keep files when system upgrade"
@@ -243,8 +249,8 @@ msgstr "自动更新gfw列表并重启adh"
 msgid "Please change time and args in crontab"
 msgstr "请在计划任务中修改时间和参数"
 
-msgid "Download links for update"
-msgstr "升级用的下载链接"
+msgid "Core Update URL"
+msgstr "核心更新地址"
 
 #/cgi-bin/luci/admin/services/AdGuardHome/log/
 msgid "reverse"
