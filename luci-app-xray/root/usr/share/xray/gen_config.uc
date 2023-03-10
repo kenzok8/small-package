@@ -105,7 +105,9 @@ function stream_h2(server) {
     if (server["transport"] == "h2") {
         return {
             path: server["h2_path"],
-            host: server["h2_host"]
+            host: server["h2_host"],
+            read_idle_timeout: server["h2_health_check"] == "1" ? int(server["h2_read_idle_timeout"] || 10) : null,
+            health_check_timeout: server["h2_health_check"] == "1" ? int(server["h2_health_check_timeout"] || 20) : null,
         }
     }
     return null;

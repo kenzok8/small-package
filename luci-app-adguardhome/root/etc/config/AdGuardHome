@@ -1,7 +1,7 @@
 config AdGuardHome 'AdGuardHome'
 	option enabled '0'
 	option httpport '3000'
-	option redirect 'none'
+	option redirect 'dnsmasq-upstream'
 	option configpath '/etc/AdGuardHome.yaml'
 	option workdir '/etc/AdGuardHome'
 	option logfile '/tmp/AdGuardHome.log'

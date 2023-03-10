@@ -122,7 +122,9 @@ local function stream_h2(server)
     if (server.transport == "h2") then
         return {
             path = server.h2_path,
-            host = server.h2_host
+            host = server.h2_host,
+            read_idle_timeout = server.h2_health_check == "1" and tonumber(server.h2_read_idle_timeout or 10) or nil,
+            health_check_timeout = server.h2_health_check == "1" and tonumber(server.h2_health_check_timeout or 20) or nil,
         }
     else
         return nil
