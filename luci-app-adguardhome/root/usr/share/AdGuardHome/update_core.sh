@@ -1,17 +1,20 @@
-#!/bin/bash
-
+#!/bin/sh
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 binpath=$(uci get AdGuardHome.AdGuardHome.binpath)
-if [ -z "$binpath" ]; then
-uci set AdGuardHome.AdGuardHome.binpath="/tmp/AdGuardHome/AdGuardHome"
-binpath="/tmp/AdGuardHome/AdGuardHome"
+if [[ -z ${binpath} ]]; then
+	uci set AdGuardHome.AdGuardHome.binpath="/tmp/AdGuardHome/AdGuardHome"
+	binpath="/tmp/AdGuardHome/AdGuardHome"
 fi
-mkdir -p ${binpath%/*}
+[[ ! -d ${binpath%/*} ]] && mkdir -p ${binpath%/*}
 upxflag=$(uci get AdGuardHome.AdGuardHome.upxflag 2>/dev/null)
+LOCKU=/var/lock/AdGuardHome-update.lock
+[ -f $LOCKU ] && EXIT 1
+touch $LOCKU
 
 check_if_already_running(){
-	running_tasks="$(ps |grep "AdGuardHome" |grep "update_core" |grep -v "grep" |awk '{print $1}' |wc -l)"
-	[ "${running_tasks}" -gt "2" ] && echo -e "\nA task is already running."  && EXIT 2
+
+	running_tasks=$(ps |grep 'AdGuardHome' |grep 'update_core' |grep -v 'grep' |awk '{print $1}' |wc -l)
+	[ "x${running_tasks}" != "x0" ] && echo -e "\nA task is already running."  && EXIT 2
 }
 
 check_wgetcurl(){
@@ -123,48 +126,37 @@ doupdate_core(){
 	mkdir -p "/tmp/AdGuardHomeupdate"
 	rm -rf /tmp/AdGuardHomeupdate/* >/dev/null 2>&1
 	Archt="$(opkg info kernel | grep Architecture | awk -F "[ _]" '{print($2)}')"
-	case $Archt in
-	"i386")
-		Arch="386"
-		;;
-	"i686")
-		Arch="386"
-		;;
-	"x86")
-		Arch="amd64"
-		;;
-	"mipsel")
-		Arch="mipsle"
-		;;
-	"mips64el")
-		Arch="mips64le"
-		Arch="mipsle"
-		echo -e "mips64el use $Arch may have bug"
-		;;
-	"mips")
-		Arch="mips"
-		;;
-	"mips64")
-		Arch="mips64"
-		Arch="mips"
-		echo -e "mips64 use $Arch may have bug"
-		;;
-	"arm")
-		Arch="arm"
-		;;
-	"aarch64")
-		Arch="arm64"
-		;;
-	"powerpc")
-		Arch="ppc"
-		echo -e "error not support $Archt"
-		EXIT 1
-		;;
-	"powerpc64")
-		Arch="ppc64"
-		echo -e "error not support $Archt"
-		EXIT 1
-		;;
+	case "${Archt}" in
+	i386)
+		Arch=i386
+	;;
+	i686)
+		Arch=i386
+	;;
+	x86)
+		Arch=amd64
+	;;
+	mipsel)
+		Arch=mipsle_softfloat
+	;;
+	mips)
+		Arch=mips_softfloat
+	;;
+	mips64el)
+		Arch=mips64le_softfloat
+	;;
+	mips64)
+		Arch=mips64_softfloat
+	;;
+	arm)
+		Arch=arm
+	;;
+	armeb)
+		Arch=armeb
+	;;
+	aarch64)
+		Arch=arm64
+	;;
 	*)
 		echo -e "error not support $Archt if you can use offical release please issue a bug"
 		EXIT 1
@@ -221,13 +213,13 @@ doupdate_core(){
 }
 
 EXIT(){
-	rm /var/run/update_core 2>/dev/null
+	rm /var/run/update_core  rm -rf $LOCKU 2>/dev/null
 	[ "$1" != "0" ] && touch /var/run/update_core_error
 	exit $1
 }
 
 main(){
-	check_if_already_running
+	# check_if_already_running
 	check_latest_version $1
 }
 	trap "EXIT 1" SIGTERM SIGINT

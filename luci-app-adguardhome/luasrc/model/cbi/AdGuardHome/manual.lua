@@ -6,32 +6,30 @@ require("string")
 require("io")
 require("table")
 function gen_template_config()
-    local b
-    local d = ""
-	local file = "/tmp/resolv.conf.d/resolv.conf.auto"
-	if not fs.access(file) then
-		file = "/tmp/resolv.conf.auto"
+	local b
+	local d=""
+	for cnt in io.lines("/tmp/resolv.conf.d/resolv.conf.auto") do
+		b=string.match (cnt,"^[^#]*nameserver%s+([^%s]+)$")
+		if (b~=nil) then
+			d=d.."  - "..b.."\n"
+		end
 	end
-    for cnt in io.lines(file) do
-        b = string.match(cnt, "^[^#]*nameserver%s+([^%s]+)$")
-        if (b ~= nil) then d = d .. "  - " .. b .. "\n" end
-    end
-    local f = io.open("/usr/share/AdGuardHome/AdGuardHome_template.yaml", "r+")
-    local tbl = {}
-    local a = ""
-    while (1) do
-        a = f:read("*l")
-        if (a == "#bootstrap_dns") then
-            a = d
-        elseif (a == "#upstream_dns") then
-            a = d
-        elseif (a == nil) then
-            break
-        end
-        table.insert(tbl, a)
-    end
-    f:close()
-    return table.concat(tbl, "\n")
+	local f=io.open("/usr/share/AdGuardHome/AdGuardHome_template.yaml", "r+")
+	local tbl = {}
+	local a=""
+	while (1) do
+    	a=f:read("*l")
+		if (a=="#bootstrap_dns") then
+			a=d
+		elseif (a=="#upstream_dns") then
+			a=d
+		elseif (a==nil) then
+			break
+		end
+		table.insert(tbl, a)
+	end
+	f:close()
+	return table.concat(tbl, "\n")
 end
 m = Map("AdGuardHome")
 local configpath = uci:get("AdGuardHome","AdGuardHome","configpath")

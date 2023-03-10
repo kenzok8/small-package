@@ -8,23 +8,24 @@ auth_attempts: 5
 block_auth_min: 15
 http_proxy: ""
 language: zh-cn
+rlimit_nofile: 0
 debug_pprof: false
 web_session_ttl: 720
 dns:
   bind_hosts:
   - 0.0.0.0
   port: 5553
-  statistics_interval: 30
+  statistics_interval: 1
   querylog_enabled: true
   querylog_file_enabled: true
-  querylog_interval: 6h
+  querylog_interval: 1
   querylog_size_memory: 1000
   anonymize_client_ip: false
   protection_enabled: true
   blocking_mode: default
   blocking_ipv4: ""
   blocking_ipv6: ""
-  blocked_response_ttl: 60
+  blocked_response_ttl: 10
   parental_block_host: family-block.dns.adguard.com
   safebrowsing_block_host: standard-block.dns.adguard.com
   ratelimit: 0
@@ -211,7 +212,29 @@ filters:
   name: Adaway HOST
   id: 139789187
 whitelist_filters: []
-user_rules: []
+user_rules:
+- '@@||taobao.com^$important'
+- '@@||tmall.com^$important'
+- '@@||jd.com^important'
+- '@@||flyme.cn^$important'
+- '@@||meizu.com^$important'
+- '@@||wl.jd.com^$important'
+- '@@||flydigi.com^'
+- '@@||pv.sohu.com^$important'
+- /googleads.$~script,domain=~googleads.github.io
+- /pagead/lvz?
+- '||google.com/pagead/'
+- '||static.doubleclick.net^$domain=youtube.com'
+- '||youtube.com/get_midroll_'
+- '||5hz.org^'
+- '@@||000714.xyz^'
+- '@@||blueskyxn.com^'
+- '||topnewsfeeds.net^'
+- '||nbryb.com^'
+- '||superbdolly.com^'
+- '||salutationcheerlessdemote.com^'
+- '||buildingdoodlesquare.com^'
+- '||colonistnobilityheroic.com^'
 dhcp:
   enabled: false
   interface_name: ""
@@ -236,8 +259,4 @@ log_max_size: 100
 log_max_age: 3
 log_file: ""
 verbose: false
-os:
-  group: ""
-  user: ""
-  rlimit_nofile: 0
-schema_version: 12
+schema_version: 10
