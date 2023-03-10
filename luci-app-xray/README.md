@@ -6,6 +6,11 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Warnings
 
+* About experimental REALITY support
+    * may change quite frequently so keep in mind about following warnings
+    * currently only implemented in ucode, which means OpenWrt 22.03 versions (or master branch) and fw4 is required. Support for previous versions (19.07 / 21.02) will be added later.
+    * server role support **involves breaking changes if you use HTTPS server**: certificate settings are now bound to stream security, so previously uploaded certificate and key files will disappear in LuCI, but this won't prevent Xray from using them. Your previously uploaded file are still there, just select them again in LuCI. If Xray fails to start up and complains about missing certificate files, also try picking them again.
+    * may supersede legacy XTLS support soon. This project will also remove legacy XTLS support later so please migrate to xtls-rprx-vision as soon as possible.
 * Since OpenWrt 22.03 release, the recommended firewall implementation for this project is now **firewall4** with some caveats
     * currently this project still works on OpenWrt 19.07 / 21.02 versions. There's a warning about missing `kmod-nft-tproxy` when using these versions, just ignore it. This problem will be fixed later.
     * support for versions mentioned above will soon be **deprecated**, which means that most new features won't be implemented for these old versions. Check changelog for details about future changes and availability of various new features.
@@ -33,6 +38,7 @@ Clone this repository under `package/extra` and find `luci-app-xray` under `Extr
 * 2023-01-01 feat: optional restart of dnsmasq on interface change
 * 2023-01-18 `[OpenWrt 22.03 or above only]` feat: option to ignore TP_SPEC_DEF_GW
 * 2023-01-23 `[OpenWrt 22.03 or above only]` feat: custom configurations in outbounds. Say if you want to try [XTLS/Xray-core#1540](https://github.com/XTLS/Xray-core/pull/1540) before its release, you can specify `{"streamSettings": {"tlsSettings": {"fingerprint": "xray_random"}}}` in "Custom Options" tab of the corresponding outbound. See the help text in LuCI ui for the rules of configuration override.
+* 2023-03-10 `[OpenWrt 22.03 or above only]` feat: experimental REALITY support
 
 ## Changelog 2022
 
