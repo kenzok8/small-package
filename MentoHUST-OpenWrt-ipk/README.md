@@ -3,7 +3,7 @@
 这是一个积累了很长时间的项目。从2014年起，就陆续在折腾这些东西，期间还自己写了一个基于OpenWrt的神州数码客户端[802.1X Evasi0n](https://github.com/KyleRicardo/802.1X-Evasi0n)，服役了大半年的时间，表现良好，内存占用小，工作效率高。后来，学校所有神州数码服务器全部换成了锐捷，导致我的项目失去了光彩，我又翻出了大名鼎鼎的MentoHUST，在反复折腾交叉编译和功能性修补过程中，有了这样一个版本。该版本非常适合于在OpenWrt的SDK环境下编译出MentoHUST的ipk包。
 
 
-## 特点
+## 特性
 
 - ~~修复了原MentoHUST在shell下由于libiconv库编译或工作不正常导致的反馈信息乱码问题~~
 - 去除了libiconv库的依赖，加入了轻量级的strnormalize库，GBK to UTF-8转换良好
@@ -27,8 +27,47 @@
 
 欢迎提交Issue(Feature Request)或PR。我会尽力完善这个项目。
 
+## 从Release下载
 
-## PreOperation
+受@sbwml启发（非常感谢），该仓库现已集成GitHub Actions。现在你可以从Release下载编译好的ipk啦。
+
+在路由器的SSH中，使用`opkg print-architecture`命令查看支持的ipk架构。以红米AX6000为例：
+
+```
+$ opkg print-architecture
+arch all 1
+arch noarch 1
+arch aarch64_cortex-a53 10
+```
+
+我们根据对应的架构，下载对应的ipk：
+
+```bash
+$ cd /tmp
+$ wget https://github.com/KyleRicardo/MentoHUST-OpenWrt-ipk/releases/download/v0.3.1/mentohust_0.3.1-1_aarch64_cortex-a53.ipk
+```
+
+先安装`libpcap`依赖：
+
+```bash
+$ opkg update
+$ opkg install libpcap
+```
+
+然后安装`MentoHUST`：
+
+```bash
+$ opkg install mentohust_0.3.1-1_aarch64_cortex-a53.ipk
+```
+
+下载的ipk安装包可以视情况保留或删除。
+
+上述操作在红米AX6000上实机测试通过。其他架构请自行测试。
+
+
+## 从源码编译
+
+强烈建议从Release下载编译好的ipk。现如今不是所有的架构都能从OpenWrt官网找到对应的SDK，会导致编译比较麻烦。
 
 ### 预备知识
 
@@ -46,7 +85,7 @@
 
 注：OpenWrt SDK在[官网](https://downloads.openwrt.org/snapshots/targets/)找到对应架构后，在最下面`Supplementary Files → openwrt-sdk-<Platform>_gcc-<version>_musl.Linux-x86_64.tar.xz`，比如斐讯k2p是[openwrt-sdk-ramips-mt7621_gcc-12.2.0_musl.Linux-x86_64.tar.xz](https://downloads.openwrt.org/snapshots/targets/ramips/mt7621/openwrt-sdk-ramips-mt7621_gcc-12.2.0_musl.Linux-x86_64.tar.xz)。
 
-### 虚拟机的安装（Tips）
+### 小贴士: 关于虚拟机
 关于虚拟机，在这里不多赘述，仅提供一些Tips。如果对虚拟机完全不了解，建议不要继续观看本教程，先找百度谷歌充充电。（也可以是ChatGPT或New Bing...？
 
 - 推荐新手使用**Ubuntu**
@@ -63,10 +102,9 @@
 
 > 还有一点需要提醒的是，安装好后，在右上角“系统”菜单的“首选项”中选择“屏幕保护程序”，然后去掉左下角的“计算机空闲时激活屏幕保护程序”，然后按“关闭”，这个窗口是没有“应用”或“确定”之类的，直接关闭它就会保存。用惯了WINDOWS的用户注意了。为什么要做这步呢？因为整个编译过程中有些步骤要等一段时间的，老是自动启用屏幕保护程序，然后还要重新输密码才能退出，也是麻烦事。开始的时候我忘了设置这一步，后来有一次把黑屏状态的虚拟机唤醒的时候，显卡瞬间崩溃了，虚拟机直接死机，然后编译了好久的数据丢失了，白白浪费了几个小时。这个教训也希望大家引起重视。
 
-## PreCompile
-现在进入正题了，首先要做的是配置好SDK的交叉编译环境。
-
 ### 获取OpenWrt SDK
+
+现在进入正题了，首先要做的是配置好SDK的交叉编译环境。
 
 使用`Ctrl+Alt+T`组合快捷键打开终端，然后在左侧的Dock中，右键单击，将其锁定，方便以后打开。如下图：
 
@@ -124,7 +162,7 @@ Makefile的语法规则并不算复杂，但是新手研究起来也很头大，
 原始的mentohust编码转换是使用的libiconv库，这个库问题特别多，效率低，不方便编译，受802.1X Evasi0n项目的启发，我干脆摒弃了libiconv库，使用了strnormalize这个文件代替了它，一次性解决了编码转换问题。所以现在，Makefile里面再也找不到iconv的依赖了，现在mentohust唯一依赖的库就是libpcap，编译起来也是相当轻松了。
 
 Makefile既然已经包括在源码中，那么我们可以开始配置我们的编译器了。使用命令：
-```
+```bash
 $ make menuconfig
 ```
 这个命令会启用图形化的选项，我们在其中进行调节即可。
@@ -141,9 +179,7 @@ $ make menuconfig
 
 用M键选中后，我们用光标键右几次选中Save，保存后，再多次Exit，最终退出这个界面。
 
-
-
-## Compile
+### 编译
 
 ```bash
 $ make package/mentohust/compile -j$((`nproc`+1)) V=s
@@ -165,7 +201,7 @@ $ make package/mentohust/compile V=s
 
 其中还包含其依赖的libpcap.ipk。如果你的路由器默认没有安装libpcap包，可以一并安装。
 
-## Install
+### 安装
 
 将上面拷贝出来的mentohust及libpcap的ipk，通过SCP拷贝到路由器的`/tmp`目录下。
 
@@ -178,13 +214,11 @@ $ opkg install mentohust_0.3.1-1_mipsel_24kc.ipk
 
 结束。现在2023年了，很多之前会出现的问题已经不复存在了。
 
-## Usage
+## 用法
 
 安装好后可以立即使用，配置文件在`/etc/mentohust.conf`，可以自行编辑。
 
 关于mentohust的用法，想必不用我多说吧。我都已经帮忙帮到这一步了。这里提一下，mentohust未能智能识别路由器WAN口对应的网卡，请手动在mentohust.conf的末尾DHCP脚本中添加自己WAN口对应的网卡。最终脚本类似`udhcpc -i eth1`。
-
-最后，可以将mentohust添加到开机启动，怎么弄不用我多说了吧。
 
 ## 已知问题
 
