@@ -60,9 +60,9 @@ start_service() {
 		# Auto update
 		local auto_update auto_update_time
 		config_get_bool auto_update "subscription" "auto_update" "0"
-		if [ "auto_update" = "1" ]; then
+		if [ "$auto_update" = "1" ]; then
 			config_get auto_update_time "subscription" "auto_update_time" "2"
-			echo "0 ${auto_update_time} * * * $HP_DIR/scripts/update_crond.sh" >> "/etc/crontabs/root"
+			echo -e "0 $auto_update_time * * * $HP_DIR/scripts/update_crond.sh" >> "/etc/crontabs/root"
 			/etc/init.d/cron restart
 		fi
 
@@ -92,9 +92,9 @@ start_service() {
 			EOF
 		fi
 
-		if [ "$routing_mode" != "custom" ]; then
+		if [ "$routing_mode" != "custom" ] && [ -s "$DNSMASQ_DIR/proxy_list.conf" ]; then
 			[ "$ipv6_support" -eq "0" ] || nftset_v6=",6#inet#fw4#homeproxy_wan_proxy_addr_v6"
-			sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_wan_proxy_addr_v4$nftset_v6/g" \
+			sed -r -e '/^\s*$/d' -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_wan_proxy_addr_v4$nftset_v6/g" \
 				"$HP_DIR/resources/proxy_list.txt" > "$DNSMASQ_DIR/proxy_list.conf"
 		fi
 		/etc/init.d/dnsmasq restart >"/dev/null" 2>&1
