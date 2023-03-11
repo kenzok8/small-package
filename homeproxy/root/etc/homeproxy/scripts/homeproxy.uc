@@ -60,7 +60,7 @@ export function calcStringMD5(str) {
 	return trim(output.stdout);
 };
 
-export function CURL(url) {
+export function cURL(url) {
 	if (!url || type(url) !== 'string')
 		return null;
 

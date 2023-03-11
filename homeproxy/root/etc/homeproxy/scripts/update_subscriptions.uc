@@ -15,7 +15,7 @@ import { urldecode, urlencode, urldecode_params } from 'luci.http';
 import { init_action } from 'luci.sys';
 
 import {
-	calcStringMD5, CURL, executeCommand, decodeBase64Str,
+	calcStringMD5, cURL, executeCommand, decodeBase64Str,
 	isEmpty, parseURL, validation,
 	HP_DIR, RUN_DIR
 } from 'homeproxy';
@@ -378,7 +378,7 @@ function main() {
 	}
 
 	for (let url in subscription_urls) {
-		const res = CURL(url);
+		const res = cURL(url);
 		if (!res) {
 			log(sprintf('Failed to fetch resources from %s.', url));
 			continue;

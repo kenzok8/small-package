@@ -994,6 +994,7 @@ return view.extend({
 			so.value('ios', _('iOS'));
 			so.value('qq', _('QQ'));
 			so.value('random', _('Random'));
+			so.value('randomized', _('Randomized'));
 			so.value('safari', _('Safari'));
 			so.depends('tls', '1');
 			so.modalonly = true;
