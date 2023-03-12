@@ -7,7 +7,7 @@ PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for Excalidraw
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+docker +luci-lib-taskd +luci-lib-docker +docker-compose
+LUCI_DEPENDS:=+lsblk +docker +luci-lib-taskd +luci-lib-docker +docker-compose
 
 define Package/luci-app-excalidraw/conffiles
 /etc/config/excalidraw

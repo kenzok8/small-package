@@ -7,7 +7,7 @@ PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for Emby
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+docker +luci-lib-taskd
+LUCI_DEPENDS:=+lsblk +docker +luci-lib-taskd
 
 define Package/luci-app-emby/conffiles
 /etc/config/emby

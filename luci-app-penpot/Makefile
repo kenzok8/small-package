@@ -7,7 +7,7 @@ PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for Penpot
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+docker +luci-lib-taskd +docker-compose
+LUCI_DEPENDS:=+lsblk +docker +luci-lib-taskd +docker-compose
 
 define Package/luci-app-penpot/conffiles
 /etc/config/penpot

@@ -20,5 +20,6 @@ chmod 755 /tmp/is-opkg
 /tmp/is-opkg update
 # /tmp/is-opkg install taskd
 /tmp/is-opkg opkg install --force-reinstall luci-lib-taskd luci-lib-xterm
-/tmp/is-opkg opkg install --force-reinstall luci-app-store
+/tmp/is-opkg opkg install --force-reinstall luci-app-store || exit $?
 [ -s "/etc/init.d/tasks" ] || /tmp/is-opkg opkg install --force-reinstall taskd
+[ -s "/usr/lib/lua/luci/cbi.lua" ] || /tmp/is-opkg opkg install luci-compat >/dev/null 2>&1
