@@ -180,7 +180,7 @@ sed -i 's/ +uhttpd-mod-ubus//' luci-app-packet-capture/Makefile
 sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/wifidog/wifidog_cfg.lua
 sed -i -e 's/nas/services/g' -e 's/NAS/Services/g' $(grep -rl 'nas\|NAS' luci-app-fileassistant)
 sed -i 's/pkg_web_version:=.*/pkg_web_version:=$pkg_version/' alist/Makefile
-sed -i 's/PKG_HASH:=.*/PKG_HASH:=skip/' chinadns-ng/Makefile
+
 rm -rf luci-app-adguardhome/po/zh_Hans
 cp -Rf luci-app-adguardhome/po/zh-cn luci-app-adguardhome/po/zh_Hans
 exit 0
