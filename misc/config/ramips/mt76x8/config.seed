@@ -1,0 +1,63 @@
+CONFIG_TARGET_ramips=y
+CONFIG_TARGET_ramips_mt76x8=y
+CONFIG_TARGET_MULTI_PROFILE=y
+CONFIG_TARGET_DEVICE_ramips_mt76x8_DEVICE_widora_neo-16m=y
+CONFIG_TARGET_DEVICE_ramips_mt76x8_DEVICE_widora_neo-32m=y
+# CONFIG_FEED_mmdvm is not set
+# CONFIG_IPV6 is not set
+# CONFIG_KERNEL_IPV6 is not set
+CONFIG_LUCI_APP_MMDVM=y
+CONFIG_LUCI_APP_MMDVM_SRCDIET=y
+CONFIG_LUCI_SRCDIET=y
+CONFIG_OPENSSL_WITH_DEPRECATED=y
+CONFIG_OPENSSL_WITH_EC=y
+CONFIG_OPENSSL_WITH_NPN=y
+CONFIG_OPENSSL_WITH_PSK=y
+CONFIG_OPENSSL_WITH_SRP=y
+CONFIG_PACKAGE_kmod-gpio-button-hotplug=m
+CONFIG_PACKAGE_kmod-leds-gpio=m
+CONFIG_PACKAGE_kmod-lib-crc-ccitt=m
+# CONFIG_PACKAGE_kmod-nf-ipt6 is not set
+CONFIG_PACKAGE_kmod-nfnetlink=y
+CONFIG_PACKAGE_kmod-ppp=m
+CONFIG_PACKAGE_kmod-pppoe=m
+CONFIG_PACKAGE_kmod-pppox=m
+CONFIG_PACKAGE_kmod-slhc=m
+# CONFIG_PACKAGE_kmod-usb-ohci is not set
+# CONFIG_PACKAGE_kmod-usb2 is not set
+CONFIG_PACKAGE_libbz2=m
+CONFIG_PACKAGE_libevent2=m
+# CONFIG_PACKAGE_libip6tc is not set
+CONFIG_PACKAGE_libiwinfo-lua=m
+CONFIG_PACKAGE_liblua=m
+CONFIG_PACKAGE_liblucihttp=m
+CONFIG_PACKAGE_liblucihttp-lua=m
+CONFIG_PACKAGE_libncurses=y
+CONFIG_PACKAGE_libopenssl=m
+CONFIG_PACKAGE_librt=m
+CONFIG_PACKAGE_libstdcpp=y
+CONFIG_PACKAGE_libubox-lua=m
+CONFIG_PACKAGE_libubus-lua=m
+CONFIG_PACKAGE_lua=m
+CONFIG_PACKAGE_luci=m
+CONFIG_PACKAGE_luci-app-firewall=m
+CONFIG_PACKAGE_luci-base=m
+CONFIG_PACKAGE_luci-lib-ip=m
+CONFIG_PACKAGE_luci-lib-jsonc=m
+CONFIG_PACKAGE_luci-lib-nixio=m
+CONFIG_PACKAGE_luci-mod-admin-full=m
+CONFIG_PACKAGE_luci-proto-ppp=m
+CONFIG_PACKAGE_luci-theme-bootstrap=m
+CONFIG_PACKAGE_mmdvm-host=m
+CONFIG_PACKAGE_mmdvm-luci-plugin=m
+CONFIG_PACKAGE_mt7601u-firmware=m
+CONFIG_PACKAGE_p25-clients=m
+# CONFIG_PACKAGE_ppp is not set
+CONFIG_PACKAGE_rpcd=m
+CONFIG_PACKAGE_rpcd-mod-rrdns=m
+CONFIG_PACKAGE_terminfo=y
+CONFIG_PACKAGE_travelmate=y
+CONFIG_PACKAGE_uhttpd=m
+CONFIG_PACKAGE_ysf-clients=m
+CONFIG_PACKAGE_kmod-nls-base=y
+CONFIG_PACKAGE_kmod-usb-core=y
