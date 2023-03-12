@@ -35,15 +35,19 @@ do_install() {
 
   RET=$?
   if [ "$RET" = "0" ]; then
+    echo "Wait 10 seconds for homeassistant boot..."
+    sleep 10
     do_hacs_install
   fi
 }
 
 do_hacs_install() {
-  echo "wget -O - https://get.hacs.xyz | bash -" | docker exec -i homeassistant bash -
+  echo "Install HACS"
+  echo "rm -f custom_components/hacs.zip config/custom_components/hacs.zip ; wget -O - https://get.hacs.xyz | bash -" | docker exec -i homeassistant bash -
   sleep 3
   echo "restart homeassistant"
   docker restart homeassistant
+  return 0
 }
 
 usage() {

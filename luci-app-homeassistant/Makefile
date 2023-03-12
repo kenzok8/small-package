@@ -2,12 +2,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.1.1-20230108
+PKG_VERSION:=1.1.2-20230312
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for homeassistant
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+docker +luci-lib-taskd
+LUCI_DEPENDS:=+lsblk +docker +luci-lib-taskd
 
 define Package/luci-app-homeassistant/conffiles
 /etc/config/homeassistant

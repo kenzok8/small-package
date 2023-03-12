@@ -22,8 +22,10 @@ o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("homeassistant/home-assistant:latest", "homeassistant/home-assistant:latest")
+o:value("homeassistant/home-assistant:2023.3.3", "homeassistant/home-assistant:2023.3.3")
+o:value("homeassistant/home-assistant:dev", "homeassistant/home-assistant:dev")
 o:value("ghcr.io/home-assistant/home-assistant:stable", "ghcr.io/home-assistant/home-assistant:stable")
-o:value("ghcr.io/home-assistant/home-assistant:2022.11.4", "ghcr.io/home-assistant/home-assistant:2022.11.4")
+o:value("ghcr.io/home-assistant/home-assistant:2023.3.3", "ghcr.io/home-assistant/home-assistant:2023.3.3")
 o.default = "homeassistant/home-assistant:latest"
 
 local blocks = homeassistant_model.blocks()

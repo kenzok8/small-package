@@ -7,7 +7,7 @@ PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for jackett
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+docker +luci-lib-taskd
+LUCI_DEPENDS:=+lsblk +docker +luci-lib-taskd
 
 define Package/luci-app-jackett/conffiles
 /etc/config/jackett
