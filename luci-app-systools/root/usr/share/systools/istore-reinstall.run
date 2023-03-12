@@ -1,62 +1,24 @@
 #!/bin/sh
+ISTORE_REPO=https://istore.linkease.com/repo/all/store
+FCURL="curl --fail --show-error"
 
-version="1.0"
-APP_URL='https://istore.linkease.com/repo/all/store'
-luci_store=luci-app-store_0.1.12-9_all.ipk
-luci_taskd=luci-lib-taskd_1.0.17_all.ipk
-xterm=luci-lib-xterm_4.18.0_all.ipk
-task=taskd_1.0.3-1_all.ipk
-
-setup_color() {
-    # Only use colors if connected to a terminal
-    if [ -t 1 ]; then
-        RED=$(printf '\033[31m')
-        GREEN=$(printf '\033[32m')
-        YELLOW=$(printf '\033[33m')
-        BLUE=$(printf '\033[34m')
-        BOLD=$(printf '\033[1m')
-        RESET=$(printf '\033[m')
-    else
-        RED=""
-        GREEN=""
-        YELLOW=""
-        BLUE=""
-        BOLD=""
-        RESET=""
-    fi
-}
-setup_color
-command_exists() {
-    command -v "$@" >/dev/null 2>&1
-}
-error() {
-    echo ${RED}"Error: $@"${RESET} >&2
+curl -V >/dev/null 2>&1 || {
+  echo "prereq: install curl"
+  opkg info curl | grep -Fqm1 curl || opkg update
+  opkg install curl
 }
 
-Download_Files(){
-  local URL=$1
-  local FileName=$2
-  if command_exists curl; then
-    curl -sSLk ${URL} -o ${FileName}
-  elif command_exists wget; then
-    wget -c --no-check-certificate ${URL} -O ${FileName}
-  fi
-}
+IPK=`$FCURL "$ISTORE_REPO/Packages.gz" | zcat | grep -m1 '^Filename: luci-app-store.*\.ipk$' | sed -n -e 's/^Filename: \(.\+\)$/\1/p'`
 
-clean_app(){
-    rm -f /tmp/${luci_store} /tmp/${luci_taskd} /tmp/${xterm} /tmp/${task}
-}
+[ -n "$IPK" ] || exit 1
 
-command_exists opkg || {
-    error "The program only supports Openwrt."
-    clean_app
-    exit 1
-}
+$FCURL "$ISTORE_REPO/$IPK" | tar -xzO ./data.tar.gz | tar -xzO ./bin/is-opkg > /tmp/is-opkg
 
-( set -x; Download_Files ${APP_URL}/${luci_store} /tmp/${luci_store};
-  Download_Files ${APP_URL}/${luci_taskd} /tmp/${luci_taskd};
-  Download_Files ${APP_URL}/${task} /tmp/${task};
-  Download_Files ${APP_URL}/${xterm} /tmp/${xterm}; )
-  
-opkg install --force-reinstall /tmp/${task} /tmp/${xterm} /tmp/${luci_taskd} /tmp/${luci_store}
+[ -s "/tmp/is-opkg" ] || exit 1
 
+chmod 755 /tmp/is-opkg
+/tmp/is-opkg update
+# /tmp/is-opkg install taskd
+/tmp/is-opkg opkg install --force-reinstall luci-lib-taskd luci-lib-xterm
+/tmp/is-opkg opkg install --force-reinstall luci-app-store
+[ -s "/etc/init.d/tasks" ] || /tmp/is-opkg opkg install --force-reinstall taskd
