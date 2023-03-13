@@ -32,7 +32,7 @@
      * @returns {string}
      */
     const getSize = function(size, suffix) {
-        let prefix = [' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z'];
+        let prefix = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z'];
         let precision, base = 1000, pos = 0;
         while (size > base) {
             size /= base;

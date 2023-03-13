@@ -36,6 +36,13 @@ get_arp_excluded() {
     tail -n +2 /proc/net/arp | grep -v " ${1//\./\\\.}\$" | sed -n -e 's/^\([^ ]\+\) \+0x[^ ]\+ \+0x2 \+\([^ ]\+\) .* \([^ ]\+\)$/\1\t\2\t\3/p'
 }
 
+enforce_wan_iface() {
+    local INTERFACE="$1"
+    [[ "$INTERFACE" = "br-lan" ]] && INTERFACE=`uci show network.wan | grep -E 'network\.wan\.(device|ifname)' | sed -n -e "1s/network\\.wan\\.[^=]\\+='\\([^']\\+\\)'\$/\\1/p"`
+    [ -z "$INTERFACE" ] && INTERFACE="/"
+    echo "$INTERFACE"
+}
+
 merge() {
     local arpfile="$1"
     local countfile="$2"
@@ -92,7 +99,7 @@ do_update() {
 
     # save system state
     iptables -t mangle -nvxL RTBWMON_IP | tail -n +3 | grep -Fv 'Zeroing chain' | sed -e 's/ \+/\t/g' | cut -f2,3,9,10 >/var/run/rtbwmon.tmp.count
-    get_arp_excluded "$INTERFACE" >/var/run/rtbwmon.tmp.arp
+    get_arp_excluded "$(enforce_wan_iface "$INTERFACE")" >/var/run/rtbwmon.tmp.arp
 
     # get ip
     cut -f3 /var/run/rtbwmon.tmp.count | grep -Fv '0.0.0.0/0' >/var/run/rtbwmon.tmp.oips
@@ -167,6 +174,7 @@ run_gc() {
 show_ifaces() {
     local WAN_INTERFACE=`get_wan_iface`
     [ -z "$WAN_INTERFACE" ] && return 1
+    WAN_INTERFACE="$(enforce_wan_iface "$WAN_INTERFACE")"
     ip addr show scope global up | grep '^ \+inet ' | sed -n -e 's/^.* \([^ ]\+\)$/\1/p' | grep -Fv "$WAN_INTERFACE" | sort -u
 }
 
@@ -183,11 +191,11 @@ prerm() {
 
 case $1 in
 "clean")
-	clean
-	;;
+    clean
+    ;;
 "update")
-	update
-	;;
+    update
+    ;;
 "ifaces")
     show_ifaces
     ;;
@@ -198,12 +206,12 @@ case $1 in
     prerm
     ;;
 *)
-	echo \
-		"Usage: $0 {update|clean|ifaces}
+    echo \
+        "Usage: $0 {update|clean|ifaces}
 Actions:
    update update and get
    clean clean iptables and temp files
    ifaces show up interfaces
 "
-	;;
+    ;;
 esac
