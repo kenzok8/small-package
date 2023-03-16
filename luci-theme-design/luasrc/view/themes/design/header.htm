@@ -242,13 +242,15 @@
 				<span class="label success" id="xhr_poll_status_on"><span id="refresh_on" class="mobile-hide"></span></span>
 				<span class="label" id="xhr_poll_status_off" style="display:none"><span id="refresh_off" class="mobile-hide"></span></span>
 			</span>
+		<script>
+		const pollStatus = document.getElementById('xhr_poll_status');
+		const notice = document.querySelector('.notice');
+		if (pollStatus) {
+ 			 notice.style.marginRight = pollStatus.style.display === 'none' ? '0' : '30px';
+		}	
+		</script>
 		<% end %>
 		</div>
-
-
-
-        
- 	
 		</div>
 </header>
 
