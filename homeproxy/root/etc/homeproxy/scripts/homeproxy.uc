@@ -114,7 +114,7 @@ export function validation(datatype, data) {
 		return null;
 
 	const ret = system(`/sbin/validate_data ${shellQuote(datatype)} ${shellQuote(data)} 2>/dev/null`);
-	return ret;
+	return (ret === 0);
 };
 /* String helper end */
 
@@ -174,9 +174,9 @@ export function parseURL(url) {
 			return '';
 		});
 
-		if (validation('ip4addr', val) === 0 ||
-		    validation('ip6addr', replace(val, /\[|\]/g, '')) === 0 ||
-		    validation('hostname', val) === 0)
+		if (validation('ip4addr', val) ||
+		    validation('ip6addr', replace(val, /\[|\]/g, '')) ||
+		    validation('hostname', val))
 			objurl.hostname = val;
 
 		return '';

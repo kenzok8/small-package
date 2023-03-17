@@ -293,6 +293,7 @@ return view.extend({
 		var m, s, o, ss, so;
 		var main_node = uci.get(data[0], 'config', 'main_node');
 		var routing_mode = uci.get(data[0], 'config', 'routing_mode');
+		var features = data[1];
 
 		m = new form.Map('homeproxy', _('Edit nodes'));
 
@@ -334,7 +335,7 @@ return view.extend({
 								var packet_encoding = uci.get(data[0], 'subscription', 'packet_encoding');
 								var imported_node = 0;
 								input_links.forEach((l) => {
-									var config = parseShareLink(l, data[1]);
+									var config = parseShareLink(l, features);
 									if (config) {
 										if (config.tls === '1' && allow_insecure === '1')
 											config.tls_insecure = '1'
@@ -428,15 +429,15 @@ return view.extend({
 		so = ss.option(form.ListValue, 'type', _('Type'));
 		so.value('direct', _('Direct'));
 		so.value('http', _('HTTP'));
-		if (data[1].with_quic)
+		if (features.with_quic)
 			so.value('hysteria', _('Hysteria'));
 		so.value('shadowsocks', _('Shadowsocks'));
-		if (data[1].with_shadowsocksr)
+		if (features.with_shadowsocksr)
 			so.value('shadowsocksr', _('ShadowsocksR'));
 		so.value('shadowtls', _('ShadowTLS'));
 		so.value('socks', _('Socks'));
 		so.value('trojan', _('Trojan'));
-		if (data[1].with_wireguard)
+		if (features.with_wireguard)
 			so.value('wireguard', _('WireGuard'));
 		so.value('vless', _('VLESS'));
 		so.value('vmess', _('VMess'));
@@ -751,13 +752,39 @@ return view.extend({
 				desc.innerHTML = _('No additional encryption support: It\'s basically duplicate encryption.');
 			else
 				desc.innerHTML = _('No TCP transport, plain HTTP is merged into the HTTP transport.');
+
+			var tls_element = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+			if ((value === 'http' && tls_element.checked) || (value === 'grpc' && !features.with_grpc)) {
+				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
+					_('Specifies the period of time after which a health check will be performed using a ping frame if no frames have been received on the connection.<br/>' +
+						'Please note that a ping response is considered a received frame, so if there is no other traffic on the connection, the health check will be executed every interval.');
+
+				this.map.findElement('id', 'cbid.homeproxy.%s.http_ping_timeout'.format(section_id)).nextElementSibling.innerHTML =
+					_('Specifies the timeout duration after sending a PING frame, within which a response must be received.<br/>' +
+						'If a response to the PING frame is not received within the specified timeout duration, the connection will be closed.');
+			} else if (value === 'grpc' && features.with_grpc) {
+				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
+					_('If the transport doesn\'t see any activity after a duration of this time, it pings the client to check if the connection is still active.');
+
+				this.map.findElement('id', 'cbid.homeproxy.%s.http_ping_timeout'.format(section_id)).nextElementSibling.innerHTML =
+					_('The timeout that after performing a keepalive check, the client will wait for activity. If no activity is detected, the connection will be closed.');
+			}
 		}
 		so.modalonly = true;
 
-		/* gRPC config */
+		/* gRPC config start */
 		so = ss.option(form.Value, 'grpc_servicename', _('gRPC service name'));
 		so.depends('transport', 'grpc');
 		so.modalonly = true;
+
+		if (features.with_grpc) {
+			so = ss.option(form.Flag, 'grpc_permit_without_stream', _('gRPC permit without stream'),
+				_('If enabled, the client transport sends keepalive pings even with no active connections.'));
+			so.default = so.disabled;
+			so.depends('transport', 'grpc');
+			so.modalonly = true;
+		}
+		/* gRPC config end */
 
 		/* HTTP config start */
 		so = ss.option(form.DynamicList, 'http_host', _('Host'));
@@ -773,6 +800,22 @@ return view.extend({
 		so.value('get', _('GET'));
 		so.value('put', _('PUT'));
 		so.depends('transport', 'http');
+		so.modalonly = true;
+
+		so = ss.option(form.Value, 'http_idle_timeout', _('Idle timeout'),
+			_('Specifies the period of time after which a health check will be performed using a ping frame if no frames have been received on the connection.<br/>' +
+				'Please note that a ping response is considered a received frame, so if there is no other traffic on the connection, the health check will be executed every interval.'));
+		so.datatype = 'uinteger';
+		so.depends('transport', 'grpc');
+		so.depends({'transport': 'http', 'tls': '1'});
+		so.modalonly = true;
+
+		so = ss.option(form.Value, 'http_ping_timeout', _('Ping timeout'),
+			_('Specifies the timeout duration after sending a PING frame, within which a response must be received.<br/>' +
+				'If a response to the PING frame is not received within the specified timeout duration, the connection will be closed.'));
+		so.datatype = 'uinteger';
+		so.depends('transport', 'grpc');
+		so.depends({'transport': 'http', 'tls': '1'});
 		so.modalonly = true;
 		/* HTTP config end */
 
@@ -960,7 +1003,7 @@ return view.extend({
 		so.onclick = L.bind(hp.uploadCertificate, this, _('certificate'), 'client_ca');
 		so.modalonly = true;
 
-		if (data[1].with_ech) {
+		if (features.with_ech) {
 			so = ss.option(form.Flag, 'tls_ech', _('Enable ECH'),
 				_('ECH (Encrypted Client Hello) is a TLS extension that allows a client to encrypt the first part of its ClientHello message.'));
 			so.depends('tls', '1');
@@ -982,7 +1025,7 @@ return view.extend({
 			so.modalonly = true;
 		}
 
-		if (data[1].with_utls) {
+		if (features.with_utls) {
 			so = ss.option(form.ListValue, 'tls_utls', _('uTLS fingerprint'),
 				_('uTLS is a fork of "crypto/tls", which provides ClientHello fingerprinting resistance.'));
 			so.value('', _('Disable'));
@@ -997,6 +1040,15 @@ return view.extend({
 			so.value('randomized', _('Randomized'));
 			so.value('safari', _('Safari'));
 			so.depends('tls', '1');
+			so.validate = function(section_id, value) {
+				if (section_id) {
+					let tls_reality = this.map.lookupOption('tls_reality', section_id)[0].formvalue(section_id);
+					if (tls_reality && !value)
+						return _('Expecting: %s').format(_('non-empty value'));
+				}
+
+				return true;
+			}
 			so.modalonly = true;
 
 			so = ss.option(form.Flag, 'tls_reality', _('REALITY'));

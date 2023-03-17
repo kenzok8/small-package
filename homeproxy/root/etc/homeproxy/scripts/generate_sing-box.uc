@@ -10,8 +10,11 @@
 import { readfile, writefile } from 'fs';
 import { cursor } from 'uci';
 
-import { executeCommand, isEmpty, strToInt, removeBlankAttrs, validateHostname, validation } from 'homeproxy';
-import { HP_DIR, RUN_DIR } from 'homeproxy';
+import {
+	executeCommand, isEmpty, strToInt,
+	removeBlankAttrs, validateHostname, validation,
+	HP_DIR, RUN_DIR
+} from 'homeproxy';
 
 /* UCI config start */
 const uci = cursor();
@@ -215,7 +218,10 @@ function generate_outbound(node) {
 			method: node.http_method,
 			max_early_data: strToInt(node.websocket_early_data),
 			early_data_header_name: node.websocket_early_data_header,
-			service_name: node.grpc_servicename
+			service_name: node.grpc_servicename,
+			idle_timeout: node.http_idle_timeout ? (node.http_idle_timeout + 's') : null,
+			ping_timeout: node.http_ping_timeout ? (node.http_ping_timeout + 's') : null,
+			permit_without_stream: (node.grpc_permit_without_stream === '1') || null
 		} : null,
 		udp_over_tcp: (node.udp_over_tcp === '1') || null,
 		tcp_fast_open: (node.tcp_fast_open === '1') || null,
@@ -325,7 +331,7 @@ if (!isEmpty(main_node)) {
 	if (dns_server !== wan_dns) {
 		push(config.dns.servers, {
 			tag: 'main-dns',
-			address: 'tcp://' + ((validation('ip6addr', dns_server) === 0) ? `[${dns_server}]` : dns_server),
+			address: 'tcp://' + (validation('ip6addr', dns_server) ? `[${dns_server}]` : dns_server),
 			strategy: (ipv6_support !== '1') ? 'ipv4_only' : null,
 			detour: 'main-out'
 		});
@@ -524,7 +530,9 @@ if (server_enabled === '1')
 				method: cfg.http_method,
 				max_early_data: strToInt(cfg.websocket_early_data),
 				early_data_header_name: cfg.websocket_early_data_header,
-				service_name: cfg.grpc_servicename
+				service_name: cfg.grpc_servicename,
+				idle_timeout: cfg.http_idle_timeout ? (cfg.http_idle_timeout + 's') : null,
+				ping_timeout: cfg.http_ping_timeout ? (cfg.http_ping_timeout + 's') : null
 			} : null
 		});
 	});

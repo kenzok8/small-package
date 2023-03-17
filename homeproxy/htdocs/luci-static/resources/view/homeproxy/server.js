@@ -21,6 +21,7 @@ return view.extend({
 
 	render: function(data) {
 		var m, s, o;
+		var features = data[1];
 
 		m = new form.Map('homeproxy', _('Edit servers'));
 
@@ -54,7 +55,7 @@ return view.extend({
 
 		o = s.option(form.ListValue, 'type', _('Type'));
 		o.value('http', _('HTTP'));
-		if (data[1].with_quic) {
+		if (features.with_quic) {
 			o.value('hysteria', _('Hysteria'));
 			o.value('naive', _('NaïveProxy'));
 		}
@@ -231,16 +232,26 @@ return view.extend({
 				desc.innerHTML = _('No additional encryption support: It\'s basically duplicate encryption.');
 			else
 				desc.innerHTML = _('No TCP transport, plain HTTP is merged into the HTTP transport.');
+
+			var tls_element = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+			if ((value === 'http' && tls_element.checked) || (value === 'grpc' && !features.with_grpc))
+				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
+					_('Specifies the time until idle clients should be closed with a GOAWAY frame. PING frames are not considered as activity.');
+			else if (value === 'grpc' && features.with_grpc)
+				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
+					_('If the transport doesn\'t see any activity after a duration of this time, it pings the client to check if the connection is still active.');
 		}
 		o.depends('type', 'trojan');
 		o.depends('type', 'vless');
 		o.depends('type', 'vmess');
 		o.modalonly = true;
 
-		/* gRPC config */
+		/* gRPC config start */
 		o = s.option(form.Value, 'grpc_servicename', _('gRPC service name'));
 		o.depends('transport', 'grpc');
 		o.modalonly = true;
+
+		/* gRPC config end */
 
 		/* HTTP config start */
 		o = s.option(form.DynamicList, 'http_host', _('Host'));
@@ -255,6 +266,21 @@ return view.extend({
 		o = s.option(form.Value, 'http_method', _('Method'));
 		o.depends('transport', 'http');
 		o.modalonly = true;
+
+		o = s.option(form.Value, 'http_idle_timeout', _('Idle timeout'),
+			_('Specifies the time until idle clients should be closed with a GOAWAY frame. PING frames are not considered as activity.'));
+		o.datatype = 'uinteger';
+		o.depends('transport', 'grpc');
+		o.depends({'transport': 'http', 'tls': '1'});
+		o.modalonly = true;
+
+		if (features.with_grpc) {
+			o = s.option(form.Value, 'http_ping_timeout', _('Ping timeout'),
+				_('The timeout that after performing a keepalive check, the client will wait for activity. If no activity is detected, the connection will be closed.'));
+			o.datatype = 'uinteger';
+			o.depends('transport', 'grpc');
+			o.modalonly = true;
+		}
 		/* HTTP config end */
 
 		/* WebSocket config start */
@@ -330,7 +356,7 @@ return view.extend({
 		o.optional = true;
 		o.modalonly = true;
 
-		if (data[1].with_acme) {
+		if (features.with_acme) {
 			o = s.option(form.Flag, 'tls_acme', _('Enable ACME'),
 				_('Use ACME TLS certificate issuer.'));
 			o.default = o.disabled;
