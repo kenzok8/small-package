@@ -360,11 +360,11 @@ function parse_uri(uri) {
 		if (config.address)
 			config.address = replace(config.address, /\[|\]/g, '');
 
-		if (validation('host', config.address) !== 0 || validation('port', config.port) !== 0) {
+		if (!validation('host', config.address) || !validation('port', config.port)) {
 			log(sprintf('Skipping invalid %s node: %s.', config.type, config.label || 'NULL'));
 			return null;
 		} else if (!config.label)
-			config.label = (validation('ip6addr', config.address) === 0 ?
+			config.label = (validation('ip6addr', config.address) ?
 				`[${config.address}]` : config.address) + ':' + config.port;
 	}
 
