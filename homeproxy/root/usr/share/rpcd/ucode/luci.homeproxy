@@ -148,6 +148,8 @@ const methods = {
 				fd.close();
 			}
 
+			features.hp_has_tun = access('/etc/modules.d/30-tun');
+
 			return features;
 		}
 	},

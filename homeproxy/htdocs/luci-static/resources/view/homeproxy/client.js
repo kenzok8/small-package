@@ -218,8 +218,7 @@ return view.extend({
 		o = s.taboption('routing', form.ListValue, 'proxy_mode', _('Proxy mode'));
 		o.value('redirect', _('Redirect TCP'));
 		o.value('redirect_tproxy', _('Redirect TCP + TProxy UDP'));
-		/* This detection is required as the `system` stack doesn't work currently */
-		if (features.with_gvisor || features.with_lwip) {
+		if (features.hp_has_tun) {
 			o.value('redirect_tun', _('Redirect TCP + Tun UDP'));
 			o.value('tun', _('Tun TCP/UDP'));
 		}
@@ -242,13 +241,8 @@ return view.extend({
 			so.value('gvisor', _('gVisor'));
 		if (features.with_lwip)
 			so.value('lwip', _('LWIP'));
-		/*
-		* The `system` stack doesn't work properly on OpenWrt, so hide it
-		* until it gets fixed.
-		*
-		* o.value('system', _('System'));
-		*/
-		so.default = 'gvisor';
+		so.value('system', _('System'));
+		so.default = 'system';
 		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');
 		so.depends('homeproxy.config.proxy_mode', 'tun');
 		so.rmempty = false;
@@ -265,7 +259,6 @@ return view.extend({
 		so = ss.option(form.Flag, 'endpoint_independent_nat', _('Enable endpoint-independent NAT'),
 			_('Performance may degrade slightly, so it is not recommended to enable on when it is not needed.'));
 		so.default = so.enabled;
-		so.depends('tcpip_stack', 'gvisor');
 		so.depends('tcpip_stack', 'gvisor');
 		so.rmempty = false;
 

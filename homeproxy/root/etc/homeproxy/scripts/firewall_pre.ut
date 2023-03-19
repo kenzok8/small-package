@@ -34,8 +34,11 @@ chain forward {
 }
 {% endif %}
 
-{% if (auto_firewall === '1'): %}
+{% if (tun_name || auto_firewall === '1'): %}
 chain input {
+	{% if (tun_name): %}
+	iifname {{ tun_name }} counter accept comment "!{{ cfgname }}: accept tun input"
+	{% endif %}
 {%
 	uci.foreach(cfgname, 'server', (s) => {
 		if (s.enabled !== '1')
