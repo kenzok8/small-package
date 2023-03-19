@@ -64,7 +64,6 @@ sed -i '/log-facility/d' /etc/dnsmasq.conf
 echo "log-facility=/dev/null" >> /etc/dnsmasq.conf
 
 echo 'hsts=0' > /root/.wgetrc
-
 rm -rf /tmp/luci-modulecache/
 rm -f /tmp/luci-indexcache
 
