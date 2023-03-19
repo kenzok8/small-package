@@ -102,7 +102,7 @@ const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'redirect_tproxy
       default_interface = uci.get(uciconfig, ucicontrol, 'bind_interface');
 
 let self_mark, redirect_port, tproxy_port,
-    tun_name, tcpip_stack = 'gvisor', endpoint_independent_nat = '1';
+    tun_name, tcpip_stack = 'system', endpoint_independent_nat;
 if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(uciconfig, 'infra', 'self_mark') || '100';
 	redirect_port = uci.get(uciconfig, 'infra', 'redirect_port') || '5331';
@@ -113,8 +113,8 @@ if (match(proxy_mode), /tproxy/)
 if (match(proxy_mode), /tun/) {
 	tun_name = uci.get(uciconfig, uciinfra, 'tun_name') || 'singtun0';
 	if (routing_mode === 'custom') {
-		tcpip_stack = uci.get(uciconfig, uciroutingsetting, 'tcpip_stack') || 'gvisor';
-		endpoint_independent_nat = uci.get(uciconfig, uciroutingsetting, 'endpoint_independent_nat') || '1';
+		tcpip_stack = uci.get(uciconfig, uciroutingsetting, 'tcpip_stack') || 'system';
+		endpoint_independent_nat = uci.get(uciconfig, uciroutingsetting, 'endpoint_independent_nat');
 	}
 }
 /* UCI config end */
@@ -223,7 +223,10 @@ function generate_outbound(node) {
 			ping_timeout: node.http_ping_timeout ? (node.http_ping_timeout + 's') : null,
 			permit_without_stream: (node.grpc_permit_without_stream === '1') || null
 		} : null,
-		udp_over_tcp: (node.udp_over_tcp === '1') || null,
+		udp_over_tcp: (node.udp_over_tcp === '1') ? {
+			enabled: true,
+			version: strToInt(node.udp_over_tcp_version)
+		} : null,
 		tcp_fast_open: (node.tcp_fast_open === '1') || null,
 		udp_fragment: (node.udp_fragment === '1') || null
 	};

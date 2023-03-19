@@ -442,18 +442,6 @@ return view.extend({
 		so.value('vless', _('VLESS'));
 		so.value('vmess', _('VMess'));
 		so.rmempty = false;
-		so.onchange = function(ev, section_id, value) {
-			var tls_element = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
-			if (['hysteria', 'shadowtls'].includes(value)) {
-				var event = document.createEvent('HTMLEvents');
-				event.initEvent('change', true, true);
-
-				tls_element.checked = true;
-				tls_element.dispatchEvent(event);
-				tls_element.disabled = true;
-			} else
-				tls_element.disabled = null;
-		}
 
 		so = ss.option(form.Value, 'address', _('Address'));
 		so.datatype = 'host';
@@ -753,8 +741,8 @@ return view.extend({
 			else
 				desc.innerHTML = _('No TCP transport, plain HTTP is merged into the HTTP transport.');
 
-			var tls_element = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
-			if ((value === 'http' && tls_element.checked) || (value === 'grpc' && !features.with_grpc)) {
+			var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+			if ((value === 'http' && tls.checked) || (value === 'grpc' && !features.with_grpc)) {
 				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
 					_('Specifies the period of time after which a health check will be performed using a ping frame if no frames have been received on the connection.<br/>' +
 						'Please note that a ping response is considered a received frame, so if there is no other traffic on the connection, the health check will be executed every interval.');
@@ -937,6 +925,20 @@ return view.extend({
 		so.depends('type', 'trojan');
 		so.depends('type', 'vless');
 		so.depends('type', 'vmess');
+		so.validate = function(section_id, value) {
+			if (section_id) {
+				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
+				var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+
+				if (['hysteria', 'shadowtls'].includes(type)) {
+					tls.checked = true;
+					tls.disabled = true;
+				} else
+					tls.disabled = null;
+			}
+
+			return true;
+		}
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'tls_sni', _('TLS SNI'),
@@ -1039,11 +1041,11 @@ return view.extend({
 			so.value('random', _('Random'));
 			so.value('randomized', _('Randomized'));
 			so.value('safari', _('Safari'));
-			so.depends('tls', '1');
+			so.depends({'tls': '1', 'type': /^((?!hysteria$).)+$/});
 			so.validate = function(section_id, value) {
 				if (section_id) {
 					let tls_reality = this.map.lookupOption('tls_reality', section_id)[0].formvalue(section_id);
-					if (tls_reality && !value)
+					if (tls_reality.checked && !value)
 						return _('Expecting: %s').format(_('non-empty value'));
 				}
 
@@ -1083,6 +1085,13 @@ return view.extend({
 		so.default = so.disabled;
 		so.depends('type', 'socks');
 		so.depends({'type': 'shadowsocks', 'multiplex': '0'});
+		so.modalonly = true;
+
+		so = ss.option(form.ListValue, 'udp_over_tcp_version', _('SUoT version'));
+		so.value('1', _('v1'));
+		so.value('2', _('v2'));
+		so.default = '2';
+		so.depends('udp_over_tcp', '1');
 		so.modalonly = true;
 		/* Extra settings end */
 		/* Nodes settings end */
