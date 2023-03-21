@@ -875,9 +875,7 @@ return view.extend({
 
         o = s.taboption('xray_server', form.Value, 'web_server_address', _('Default Fallback HTTP Server'), _("Only HTTP/1.1 supported here. For HTTP/2 upstream, use Fallback Servers below"))
         o.datatype = 'hostport'
-        o.depends({"web_server_enable": "1", "web_server_protocol": "trojan"})
-        o.depends({"web_server_enable": "1", "web_server_protocol": "vless", "vless_tls": "tls"})
-        o.depends({"web_server_enable": "1", "web_server_protocol": "vless", "vless_tls": "xtls"})
+        o.depends("web_server_enable", "1")
 
         o = s.taboption('xray_server', form.SectionValue, "xray_server_fallback", form.GridSection, 'fallback', _('Fallback Servers'), _("Specify upstream servers here."))
         o.depends({"web_server_enable": "1", "web_server_protocol": "trojan"})
