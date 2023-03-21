@@ -10,7 +10,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
     * may change quite frequently so keep in mind about following warnings
     * currently only implemented in ucode, which means OpenWrt 22.03 versions (or master branch) and fw4 is required. Support for previous versions (19.07 / 21.02) will be added later.
     * server role support **involves breaking changes if you use HTTPS server**: certificate settings are now bound to stream security, so previously uploaded certificate and key files will disappear in LuCI, but this won't prevent Xray from using them. Your previously uploaded file are still there, just select them again in LuCI. If Xray fails to start up and complains about missing certificate files, also try picking them again.
-    * may supersede legacy XTLS support soon. This project will also remove legacy XTLS support later so please migrate to xtls-rprx-vision as soon as possible.
+    * legacy XTLS support has already been removed in version 1.8.0. This project will also remove legacy XTLS support in the next few updates so please migrate to xtls-rprx-vision or as soon as possible.
 * Since OpenWrt 22.03 release, the recommended firewall implementation for this project is now **firewall4** with some caveats
     * currently this project still works on OpenWrt 19.07 / 21.02 versions. There's a warning about missing `kmod-nft-tproxy` when using these versions, just ignore it. This problem will be fixed later.
     * support for versions mentioned above will soon be **deprecated**, which means that most new features won't be implemented for these old versions. Check changelog for details about future changes and availability of various new features.
