@@ -12,9 +12,7 @@
       global.remove();
     }
   }
-
-
-
+  
   document.addEventListener("DOMContentLoaded", function () {
     // Fixed scrollbar styles for browsers on different platforms
     settingGlobalScroll();
