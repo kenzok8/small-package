@@ -5,17 +5,17 @@ function index()
 		return
 	end
 
-	local page = entry({"admin", "nas", "alist"}, alias("admin", "nas", "alist", "basic"), _("Alist"), 20)
+	local page = entry({"admin", "services", "alist"}, alias("admin", "services", "alist", "basic"), _("Alist"), 20)
 	page.dependent = true
 	page.acl_depends = { "luci-app-alist" }
 
-	entry({"admin", "nas"}, firstchild(), "NAS", 44).dependent = false
-	entry({"admin", "nas", "alist", "basic"}, cbi("alist/basic"), _("Basic Setting"), 1).leaf = true
-	entry({"admin", "nas", "alist", "log"}, cbi("alist/log"), _("Logs"), 2).leaf = true
-	entry({"admin", "nas", "alist", "alist_status"}, call("alist_status")).leaf = true
-	entry({"admin", "nas", "alist", "get_log"}, call("get_log")).leaf = true
-	entry({"admin", "nas", "alist", "clear_log"}, call("clear_log")).leaf = true
-	entry({"admin", "nas", "alist", "admin_info"}, call("admin_info")).leaf = true
+	entry({"admin", "services"}, firstchild(), "Services", 44).dependent = false
+	entry({"admin", "services", "alist", "basic"}, cbi("alist/basic"), _("Basic Setting"), 1).leaf = true
+	entry({"admin", "services", "alist", "log"}, cbi("alist/log"), _("Logs"), 2).leaf = true
+	entry({"admin", "services", "alist", "alist_status"}, call("alist_status")).leaf = true
+	entry({"admin", "services", "alist", "get_log"}, call("get_log")).leaf = true
+	entry({"admin", "services", "alist", "clear_log"}, call("clear_log")).leaf = true
+	entry({"admin", "services", "alist", "admin_info"}, call("admin_info")).leaf = true
 end
 
 function alist_status()
