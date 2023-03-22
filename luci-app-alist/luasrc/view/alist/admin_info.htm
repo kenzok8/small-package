@@ -4,7 +4,7 @@
 	{
 		btn.disabled = true;
 		btn.value = '<%:Reading...%>';
-		XHR.get('<%=luci.dispatcher.build_url("admin", "nas", "alist", "admin_info")%>',
+		XHR.get('<%=luci.dispatcher.build_url("admin", "services", "alist", "admin_info")%>',
 			null,
 			function(x,rv)
 			{
