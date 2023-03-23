@@ -36,6 +36,7 @@ return view.extend({
 
 		s = m.section(form.GridSection, 'server');
 		s.addremove = true;
+		s.rowcolors = true;
 		s.sortable = true;
 		s.nodescriptions = true;
 		s.modaltitle = L.bind(hp.loadModalTitle, this, _('Server'), _('Add a server'), data[0]);
@@ -65,18 +66,6 @@ return view.extend({
 		o.value('vless', _('VLESS'));
 		o.value('vmess', _('VMess'));
 		o.rmempty = false;
-		o.onchange = function(ev, section_id, value) {
-			var tls_element = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
-			if (value === 'hysteria') {
-				var event = document.createEvent('HTMLEvents');
-				event.initEvent('change', true, true);
-
-				tls_element.checked = true;
-				tls_element.dispatchEvent(event);
-				tls_element.disabled = true;
-			} else
-				tls_element.disabled = null;
-		}
 
 		o = s.option(form.Value, 'port', _('Port'),
 			_('The port must be unique.'));
@@ -320,6 +309,20 @@ return view.extend({
 		o.depends('type', 'vless');
 		o.depends('type', 'vmess');
 		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id) {
+				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
+				var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+
+				if (['hysteria'].includes(type)) {
+					tls.checked = true;
+					tls.disabled = true;
+				} else
+					tls.disabled = null;
+			}
+
+			return true;
+		}
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'tls_sni', _('TLS SNI'),

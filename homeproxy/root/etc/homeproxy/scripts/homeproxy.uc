@@ -75,7 +75,7 @@ export function isEmpty(res) {
 };
 
 export function strToInt(str) {
-	return !isEmpty(str) ? int(str) || null : null;
+	return !isEmpty(str) ? (int(str) || null) : null;
 };
 
 export function removeBlankAttrs(res) {

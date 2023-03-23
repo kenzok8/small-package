@@ -25,6 +25,21 @@ function parseShareLink(uri, features) {
 	uri = uri.split('://');
 	if (uri[0] && uri[1]) {
 		switch (uri[0]) {
+		case 'http':
+		case 'https':
+			var url = new URL('http://' + uri[1]);
+
+			config = {
+				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
+				type: 'http',
+				address: url.hostname,
+				port: url.port || '80',
+				username: url.username ? decodeURIComponent(url.username) : null,
+				password: url.password ? decodeURIComponent(url.password) : null,
+				tls: (uri[0] === 'https') ? '1' : '0'
+			};
+
+			break;
 		case 'hysteria':
 			/* https://github.com/HyNetwork/hysteria/wiki/URI-Scheme */
 			var url = new URL('http://' + uri[1]);
@@ -49,7 +64,25 @@ function parseShareLink(uri, features) {
 				tls_sni: params.get('peer'),
 				tls_alpn: params.get('alpn'),
 				tls_insecure: params.get('insecure') ? '1' : '0'
-			}
+			};
+
+			break;
+		case 'socks':
+		case 'socks4':
+		case 'socks4a':
+		case 'socsk5':
+		case 'socks5h':
+			var url = new URL('http://' + uri[1]);
+
+			config = {
+				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
+				type: 'socks',
+				address: url.hostname,
+				port: url.port || '80',
+				username: url.username ? decodeURIComponent(url.username) : null,
+				password: url.password ? decodeURIComponent(url.password) : null,
+				socks_version: (uri[0].includes('4')) ? '4' : '5'
+			};
 
 			break;
 		case 'ss':
@@ -305,6 +338,7 @@ return view.extend({
 		o = s.taboption('node', form.SectionValue, '_node', form.GridSection, 'node');
 		ss = o.subsection;
 		ss.addremove = true;
+		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.modaltitle = L.bind(hp.loadModalTitle, this, _('Node'), _('Add a node'), data[0]);
