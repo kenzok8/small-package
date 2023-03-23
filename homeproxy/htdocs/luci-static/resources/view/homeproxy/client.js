@@ -298,6 +298,7 @@ return view.extend({
 
 		ss = o.subsection;
 		ss.addremove = true;
+		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.modaltitle = L.bind(hp.loadModalTitle, this, _('Routing node'), _('Add a routing node'), data[0]);
@@ -373,6 +374,7 @@ return view.extend({
 
 		ss = o.subsection;
 		ss.addremove = true;
+		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.modaltitle = L.bind(hp.loadModalTitle, this, _('Routing rule'), _('Add a routing rule'), data[0]);
@@ -556,6 +558,7 @@ return view.extend({
 
 		ss = o.subsection;
 		ss.addremove = true;
+		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.modaltitle = L.bind(hp.loadModalTitle, this, _('DNS server'), _('Add a DNS server'), data[0]);
@@ -644,6 +647,7 @@ return view.extend({
 
 		ss = o.subsection;
 		ss.addremove = true;
+		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.modaltitle = L.bind(hp.loadModalTitle, this, _('DNS rule'), _('Add a DNS rule'), data[0]);

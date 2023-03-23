@@ -102,6 +102,21 @@ function parse_uri(uri) {
 		uri = split(trim(uri), '://');
 
 		switch (uri[0]) {
+		case 'http':
+		case 'https':
+			const http_url = parseURL('http://' + uri[1]);
+
+			config = {
+				label: http_url.hash ? urldecode(http_url.hash) : null,
+				type: 'http',
+				address: http_url.hostname,
+				port: http_url.port || '80',
+				username: http_url.username ? urldecode(http_url.username) : null,
+				password: http_url.password ? urldecode(http_url.password) : null,
+				tls: (uri[0] === 'https') ? '1' : '0'
+			};
+
+			break;
 		case 'hysteria':
 			/* https://github.com/HyNetwork/hysteria/wiki/URI-Scheme */
 			const hysteria_url = parseURL('http://' + uri[1]),
@@ -116,7 +131,7 @@ function parse_uri(uri) {
 			}
 
 			config = {
-				label: urldecode(hysteria_url.hash),
+				label: hysteria_url.hash ? urldecode(hysteria_url.hash) : null,
 				type: 'hysteria',
 				address: hysteria_url.hostname,
 				port: hysteria_url.port,
@@ -130,6 +145,24 @@ function parse_uri(uri) {
 				tls_insecure: (hysteria_params.insecure in ['true', '1']) ? '1' : '0',
 				tls_sni: hysteria_params.peer,
 				tls_alpn: hysteria_params.alpn
+			};
+
+			break;
+		case 'socks':
+		case 'socks4':
+		case 'socks4a':
+		case 'socsk5':
+		case 'socks5h':
+			const socks_url = parseURL('http://' + uri[1]);
+
+			config = {
+				label: socks_url.hash ? urldecode(socks_url.hash) : null,
+				type: 'socks',
+				address: socks_url.hostname,
+				port: socks_url.port || '80',
+				username: socks_url.username ? urldecode(socks_url.username) : null,
+				password: socks_url.password ? urldecode(socks_url.password) : null,
+				socks_version: (match(uri[0], /4/)) ? '4' : '5'
 			};
 
 			break;
