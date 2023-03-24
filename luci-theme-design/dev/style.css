@@ -376,13 +376,6 @@ svg {
     background-color: var(--sectionbgColor);
 }
 
-/* fix p#aliyundrive-webdav_status b */
-
-/* p#aliyundrive-webdav_status b {
-    color: #ff6666 !important;
-    text-transform:capitalize;
-} */
-
 /* fix .cbi-section .cbi-section */
 .cbi-section .cbi-section {
     margin: 10px;
@@ -1139,6 +1132,8 @@ header > .container > .brand {
     float:left;
     font-weight:900;
     letter-spacing:1px;
+    padding: 0 67px;
+    transition: 0.1s ease-in-out;
 }
 header > .container > a[class="brand"]:after {
     content:"";
@@ -1935,8 +1930,8 @@ form.inline + form.inline,
 }
 
 .cbi-tabmenu > li[class~="cbi-tab"] a {
-    color: var(--activeColor) ;
-    border-bottom: 2px solid var(--activeColor);
+    color: var(--activeColor) !important;
+    border-bottom: 2px solid var(--activeColor) !important;
 }
 
 .cbi-section-node-tabbed {
