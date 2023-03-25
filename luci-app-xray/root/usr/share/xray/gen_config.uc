@@ -1053,7 +1053,14 @@ function rules() {
             inboundTag: ["tproxy_tcp_inbound", "tproxy_udp_inbound", "dns_conf_inbound", "https_inbound", "http_inbound"],
             outboundTag: "direct",
             domain: fast_domain_rules()
-        })
+        });
+        if (proxy["direct_bittorrent"] == "1") {
+            splice(result, 0, 0, {
+                type: "field",
+                outboundTag: "direct",
+                protocol: ["bittorrent"]
+            })
+        }
     }
     splice(result, 0, 0, ...manual_tproxy_rules());
     splice(result, 0, 0, ...bridge_rules());

@@ -1001,6 +1001,13 @@ local function rules()
             outboundTag = "direct",
             domain = fast_domain_rules()
         })
+        if proxy.direct_bittorrent == "1" then
+            table.insert(result, 1, {
+                type = "field",
+                outboundTag: "direct",
+                protocol: ["bittorrent"]
+            })
+        end
     end
     for _, v in ipairs(manual_tproxy_rules()) do
         table.insert(result, 1, v)

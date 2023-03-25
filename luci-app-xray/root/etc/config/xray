@@ -29,6 +29,7 @@ config general
 	option uplink_only '2'
 	option downlink_only '5'
 	option buffer_size '512'
+	option direct_bittorrent '1'
 
 config servers
 	option security 'auto'
