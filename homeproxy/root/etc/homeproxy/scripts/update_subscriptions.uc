@@ -110,7 +110,7 @@ function parse_uri(uri) {
 				label: http_url.hash ? urldecode(http_url.hash) : null,
 				type: 'http',
 				address: http_url.hostname,
-				port: http_url.port || '80',
+				port: http_url.port,
 				username: http_url.username ? urldecode(http_url.username) : null,
 				password: http_url.password ? urldecode(http_url.password) : null,
 				tls: (uri[0] === 'https') ? '1' : '0'
@@ -159,7 +159,7 @@ function parse_uri(uri) {
 				label: socks_url.hash ? urldecode(socks_url.hash) : null,
 				type: 'socks',
 				address: socks_url.hostname,
-				port: socks_url.port || '80',
+				port: socks_url.port,
 				username: socks_url.username ? urldecode(socks_url.username) : null,
 				password: socks_url.password ? urldecode(socks_url.password) : null,
 				socks_version: (match(uri[0], /4/)) ? '4' : '5'
@@ -282,10 +282,14 @@ function parse_uri(uri) {
 				port: vless_url.port,
 				uuid: vless_url.username,
 				transport: (vless_params.type !== 'tcp') ? vless_params.type : null,
-				tls: vless_params.security ? '1' : '0',
+				tls: (vless_params.security in ['tls', 'xtls', 'reality']) ? '1' : '0',
 				tls_sni: vless_params.sni,
 				tls_alpn: vless_params.alpn ? split(urldecode(vless_params.alpn), ',') : null,
-				tls_utls: sing_features.with_utls ? vless_params.fp : null
+				tls_reality: (vless_params.security === 'reality') ? '1' : '0',
+				tls_reality_public_key: vless_params.pbk ? urldecode(vless_params.pbk) : null,
+				tls_reality_short_id: vless_params.sid,
+				tls_utls: sing_features.with_utls ? vless_params.fp : null,
+				vless_flow: (vless_params.security in ['tls', 'reality']) ? vless_params.flow : null
 			};
 			switch(vless_params.type) {
 			case 'grpc':
