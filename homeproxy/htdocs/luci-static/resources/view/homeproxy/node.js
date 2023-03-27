@@ -1082,7 +1082,7 @@ return view.extend({
 			so.depends({'tls': '1', 'type': /^((?!hysteria$).)+$/});
 			so.validate = function(section_id, value) {
 				if (section_id) {
-					let tls_reality = this.map.lookupOption('tls_reality', section_id)[0].formvalue(section_id);
+					let tls_reality = this.map.findElement('id', 'cbid.homeproxy.%s.tls_reality'.format(section_id)).firstElementChild;
 					if (tls_reality.checked && !value)
 						return _('Expecting: %s').format(_('non-empty value'));
 
@@ -1097,7 +1097,7 @@ return view.extend({
 
 			so = ss.option(form.Flag, 'tls_reality', _('REALITY'));
 			so.default = so.disabled;
-			so.depends('tls', '1');
+			so.depends({'tls': '1', 'type': 'vless'});
 			so.modalonly = true;
 
 			so = ss.option(form.Value, 'tls_reality_public_key', _('REALITY public key'));
