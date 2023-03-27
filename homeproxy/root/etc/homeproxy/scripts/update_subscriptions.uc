@@ -16,7 +16,7 @@ import { init_action } from 'luci.sys';
 
 import {
 	calcStringMD5, cURL, executeCommand, decodeBase64Str,
-	isEmpty, parseURL, validation,
+	getTime, isEmpty, parseURL, validation,
 	HP_DIR, RUN_DIR
 } from 'homeproxy';
 
@@ -74,10 +74,8 @@ const sing_features = ubus.call('luci.homeproxy', 'singbox_get_features', {}) ||
 /* Log */
 system(`mkdir -p ${RUN_DIR}`);
 function log(...args) {
-	const logtime = trim(executeCommand('date "+%Y-%m-%d %H:%M:%S"').stdout);
-
 	const logfile = open(`${RUN_DIR}/homeproxy.log`, 'a');
-	logfile.write(`${logtime} [SUBSCRIBE] ${join(' ', args)}\n`);
+	logfile.write(`${getTime()} [SUBSCRIBE] ${join(' ', args)}\n`);
 	logfile.close();
 }
 

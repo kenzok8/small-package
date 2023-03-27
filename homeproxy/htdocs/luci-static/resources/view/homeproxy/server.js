@@ -32,7 +32,8 @@ return view.extend({
 		o.rmempty = false;
 
 		o = s.option(form.Flag, 'auto_firewall', _('Auto configure firewall'));
-		o.default = o.enabled;
+		o.default = o.disabled;
+		o.rmempty = false;
 
 		s = m.section(form.GridSection, 'server');
 		s.addremove = true;
