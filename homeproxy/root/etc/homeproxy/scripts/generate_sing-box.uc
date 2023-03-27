@@ -508,6 +508,16 @@ if (server_enabled === '1')
 						key_id: cfg.tls_acme_ea_keyid,
 						mac_key: cfg.tls_acme_ea_mackey
 					} : null
+				} : null,
+				reality: (cfg.tls_reality === '1') ? {
+					enabled: true,
+					private_key: cfg.tls_reality_private_key,
+					short_id: cfg.tls_reality_short_id,
+					max_time_difference: cfg.tls_reality_max_time_difference ? (cfg.max_time_difference + 's') : null,
+					handshake: {
+						server: cfg.tls_reality_server_addr,
+						server_port: cfg.tls_reality_server_port
+					}
 				} : null
 			} : null,
 

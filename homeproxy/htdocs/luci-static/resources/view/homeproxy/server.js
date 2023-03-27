@@ -328,7 +328,8 @@ return view.extend({
 
 		o = s.option(form.Value, 'tls_sni', _('TLS SNI'),
 			_('Used to verify the hostname on the returned certificates unless insecure is given.'));
-		o.depends('tls', '1');
+		o.depends({'tls': '1', 'tls_reality': '0'});
+		o.depends({'tls': '1', 'tls_reality': null});
 		o.modalonly = true;
 
 		o = s.option(form.DynamicList, 'tls_alpn', _('TLS ALPN'),
@@ -442,11 +443,48 @@ return view.extend({
 			o.modalonly = true;
 		}
 
+		if (features.with_reality_server) {
+			o = s.option(form.Flag, 'tls_reality', _('REALITY'));
+			o.default = o.disabled;
+			o.depends({'tls': '1', 'tls_acme': '0', 'type': 'vless'});
+			o.depends({'tls': '1', 'tls_acme': null, 'type': 'vless'});
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'tls_reality_private_key', _('REALITY private key'));
+			o.depends('tls_reality', '1');
+			o.rmempty = false;
+			o.modalonly = true;
+
+			o = s.option(form.DynamicList, 'tls_reality_short_id', _('REALITY short ID'));
+			o.depends('tls_reality', '1');
+			o.rmempty = false;
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'tls_reality_max_time_difference', _('Max time difference'),
+				_('The maximum time difference between the server and the client.'));
+			o.depends('tls_reality', '1');
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'tls_reality_server_addr', _('Handshake server address'));
+			o.datatype = 'hostname';
+			o.depends('tls_reality', '1');
+			o.rmempty = false;
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'tls_reality_server_port', _('Handshake server port'));
+			o.datatype = 'port';
+			o.depends('tls_reality', '1');
+			o.rmempty = false;
+			o.modalonly = true;
+		}
+
 		o = s.option(form.Value, 'tls_cert_path', _('Certificate path'),
 			_('The server public key, in PEM format.'));
 		o.value('/etc/homeproxy/certs/server_publickey.pem');
-		o.depends({'tls': '1', 'tls_acme': null});
-		o.depends({'tls': '1', 'tls_acme': '0'});
+		o.depends({'tls': '1', 'tls_acme': '0', 'tls_reality': null});
+		o.depends({'tls': '1', 'tls_acme': '0', 'tls_reality': '0'});
+		o.depends({'tls': '1', 'tls_acme': null, 'tls_reality': '0'});
+		o.depends({'tls': '1', 'tls_acme': null, 'tls_reality': null});
 		o.rmempty = false;
 		o.modalonly = true;
 
@@ -461,8 +499,10 @@ return view.extend({
 		o = s.option(form.Value, 'tls_key_path', _('Key path'),
 			_('The server private key, in PEM format.'));
 		o.value('/etc/homeproxy/certs/server_privatekey.pem');
-		o.depends({'tls': '1', 'tls_acme': null});
-		o.depends({'tls': '1', 'tls_acme': '0'});
+		o.depends({'tls': '1', 'tls_acme': '0', 'tls_reality': '0'});
+		o.depends({'tls': '1', 'tls_acme': '0', 'tls_reality': null});
+		o.depends({'tls': '1', 'tls_acme': null, 'tls_reality': '0'});
+		o.depends({'tls': '1', 'tls_acme': null, 'tls_reality': null});
 		o.rmempty = false;
 		o.modalonly = true;
 
