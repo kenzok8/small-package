@@ -70,7 +70,8 @@
     const createTR = function(content) {
         let res = document.createElement('tr');
         res.classList.add("tr");
-        res.replaceChildren(...content)
+        res.innerHTML="";
+        res.append(...content);
         return res;
     };
 
@@ -238,7 +239,8 @@
 
         // display data
         let table = document.getElementById('clients');
-        table.replaceChildren(...data.map(rowToTr));
+        table.innerHTML="";
+        table.append(...data.map(rowToTr));
     };
 
     // HEADER
@@ -305,7 +307,8 @@
     const initHeader = function() {
         // set sorting arrows
         let theader = document.getElementById('theader');
-        theader.replaceChildren(...wrt.headers.map(h=>createTH(h.title, h)).map(th=>{
+        theader.innerHTML="";
+        theader.append(...wrt.headers.map(h=>createTH(h.title, h)).map(th=>{
             th.appendChild(document.createElement("span"));
             return th;
         }));
@@ -517,7 +520,8 @@
                 return option;
             });
             let first = iface_select.firstElementChild;
-            iface_select.replaceChildren(first, ...ifaces);
+            iface_select.innerHTML="";
+            iface_select.append(first, ...ifaces);
         }, function(err) {
             alert(err);
         });
