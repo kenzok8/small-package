@@ -138,12 +138,14 @@ check_updated() {
         curl -s \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/${server_firmware_url}/releases |
-            jq -r --arg RTK "${releases_tag_keywords}" '.[] | select(.tag_name | contains($RTK))' |
+            jq '.[]' |
+            jq -s --arg RTK "${releases_tag_keywords}" '.[] | select(.tag_name | contains($RTK))' |
             jq -s '.[] | {data:.published_at, url:.assets[].browser_download_url }' |
             jq -s --arg BOARD "_${BOARD}_" --arg MLV "${main_line_version}." '.[] | select((.url | contains($BOARD)) and (.url | contains($MLV)))' |
             jq -s 'sort_by(.data)|reverse[]' |
             jq -s '.[0]' -c
     )"
+    [[ "${latest_version}" == "null" ]] && tolog "02.01 Invalid OpenWrt download address." "1"
     latest_updated_at="$(echo ${latest_version} | jq -r '.data')"
     latest_url="$(echo ${latest_version} | jq -r '.url')"
 
@@ -156,7 +158,7 @@ check_updated() {
     if [[ -f "${op_release_code}" ]]; then
         update_check_code="$(cat ${op_release_code} | xargs)"
         if [[ -n "${update_check_code}" && "${update_check_code}" == "${down_check_code}" ]]; then
-            tolog "02.01 Already the latest version, no need to update." "1"
+            tolog "02.02 Already the latest version, no need to update." "1"
         fi
     fi
 
@@ -164,7 +166,7 @@ check_updated() {
     if [[ "${latest_url}" == "http"* ]]; then
         tolog '<input type="button" class="cbi-button cbi-button-reload" value="Download" onclick="return b_check_firmware(this, '"'download_${latest_updated_at}@${latest_url##*download/}'"')"/> Latest updated: '${date_display_format}'' "1"
     else
-        tolog "02.02 [${latest_url}] No firmware available, please use another kernel branch." "1"
+        tolog "02.03 [${latest_url}] No OpenWrt available, please use another kernel branch." "1"
     fi
 
     exit 0
@@ -192,7 +194,10 @@ download_firmware() {
 
     # Download firmware
     opfile_path="$(echo ${download_version} | awk -F'@' '{print $2}')"
-    latest_url="https://github.com/ophub/amlogic-s9xxx-openwrt/releases/download/${opfile_path}"
+    # Restore converted characters in file names(%2B to +)
+    firmware_download_oldname="${opfile_path//%2B/+}"
+    latest_url="https://github.com/${server_firmware_url}/releases/download/${firmware_download_oldname}"
+    #tolog "${latest_url}"
 
     # Download to OpenWrt file
     firmware_download_name="openwrt_${BOARD}_k${main_line_version}_github${firmware_suffix}"
@@ -205,14 +210,11 @@ download_firmware() {
 
     # Download address of sha256sums file
     shafile_path="$(echo ${opfile_path} | awk -F'/' '{print $1}')"
-    shafile_file="https://github.com/ophub/amlogic-s9xxx-openwrt/releases/download/${shafile_path}/sha256sums"
-    # Restore converted characters in file names(%2B to +)
-    firmware_download_oldname="${opfile_path##*/}"
-    firmware_download_oldname="${firmware_download_oldname//%2B/+}"
+    shafile_file="https://github.com/${server_firmware_url}/releases/download/${shafile_path}/sha256sums"
     # Download sha256sums file
     if wget "${shafile_file}" -q -O "${FIRMWARE_DOWNLOAD_PATH}/sha256sums" 2>/dev/null; then
         tolog "03.03 Sha256sums downloaded successfully."
-        releases_firmware_sha256sums="$(cat sha256sums | grep ${firmware_download_oldname} | awk '{print $1}')"
+        releases_firmware_sha256sums="$(cat sha256sums | grep ${firmware_download_oldname##*/} | awk '{print $1}')"
         download_firmware_sha256sums="$(sha256sum ${firmware_download_name} | awk '{print $1}')"
         [[ -n "${releases_firmware_sha256sums}" && "${releases_firmware_sha256sums}" != "${download_firmware_sha256sums}" ]] && tolog "03.04 The sha256sum check is different." "1"
     fi
