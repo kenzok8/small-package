@@ -53,6 +53,7 @@ sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
 echo "DISTRIB_DESCRIPTION='Openwrt '" >> /etc/openwrt_release
 
 sed -i 's/LuCI Master/kenzo/g' /usr/lib/lua/luci/version.lua
+sed -i 's/LuCI openwrt-21.02 branch/kenzo/g' /usr/lib/lua/luci/version.lua
 sed -i 's/LuCI openwrt-18.06 branch/kenzo/g' /usr/lib/lua/luci/version.lua
 sed -i 's/LuCI openwrt-18.06-k5.4 branch/kenzo/g' /usr/lib/lua/luci/version.lua
 sed -i 's/LuCI 17.01 Lienol/kenzo/g' /usr/lib/lua/luci/version.lua
