@@ -609,24 +609,8 @@ if (!isEmpty(main_node) || !isEmpty(default_outbound))
 		default_interface: default_interface
 	};
 
+/* Routing rules */
 if (!isEmpty(main_node)) {
-	/* Routing rules */
-	/* LAN ACL */
-	if (length(lan_proxy_ips)) {
-		if (dedicated_udp_node) {
-			push(config.route.rules, {
-				source_ip_cidr: lan_proxy_ips,
-				network: 'udp',
-				outbound: 'main-udp-out'
-			});
-		}
-
-		push(config.route.rules, {
-			source_ip_cidr: lan_proxy_ips,
-			outbound: 'main-out'
-		});
-	}
-
 	/* Direct list */
 	if (length(direct_domain_list))
 		push(config.route.rules, {

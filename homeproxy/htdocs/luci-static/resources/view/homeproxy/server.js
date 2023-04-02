@@ -35,7 +35,7 @@ return view.extend({
 		o.default = o.disabled;
 		o.rmempty = false;
 
-		s = m.section(form.GridSection, 'server');
+		s = m.section(form.GridSection, 'server', _('Server settings'));
 		s.addremove = true;
 		s.rowcolors = true;
 		s.sortable = true;

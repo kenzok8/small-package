@@ -133,7 +133,6 @@ start_service() {
 		fi
 
 		utpl -S "$HP_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fw4_post.nft"
-
 	fi
 
 	utpl -S "$HP_DIR/scripts/firewall_pre.ut" > "$RUN_DIR/fw4_pre.nft"
@@ -191,22 +190,18 @@ stop_service() {
 
 	# Nftables rules
 	for i in "homeproxy_dstnat_redir" "homeproxy_output_redir" \
-		 "homeproxy_redirect" "homeproxy_redirect_proxy_port" \
-		 "homeproxy_redirect_proxy" "homeproxy_mangle_prerouting" \
-		 "homeproxy_mangle_output" "homeproxy_mangle_tproxy_port" \
-		 "homeproxy_mangle_tproxy" "homeproxy_mangle_mark" \
-		 "homeproxy_mangle_tun" "homeproxy_mangle_tun_mark" \
-		 "homeproxy_mangle_prerouting_tun"; do
+		 "homeproxy_redirect" "homeproxy_redirect_proxy" \
+		 "homeproxy_redirect_proxy_port" "homeproxy_redirect_lanac" \
+		 "homeproxy_mangle_prerouting" "homeproxy_mangle_output" \
+		 "homeproxy_mangle_tproxy" "homeproxy_mangle_tproxy_port" \
+		 "homeproxy_mangle_tproxy_lanac" "homeproxy_mangle_mark" \
+		 "homeproxy_mangle_tun" "homeproxy_mangle_tun_mark"; do
 		nft flush chain inet fw4 "$i"
 		nft delete chain inet fw4 "$i"
 	done 2>"/dev/null"
 	for i in "homeproxy_local_addr_v4" "homeproxy_local_addr_v6" \
 		 "homeproxy_gfw_list_v4" "homeproxy_gfw_list_v6" \
 		 "homeproxy_mainland_addr_v4" "homeproxy_mainland_addr_v6" \
-		 "homeproxy_lan_proxy_addr_v4" "homeproxy_lan_proxy_addr_v6" \
-		 "homeproxy_lan_direct_addr_v4" "homeproxy_lan_direct_addr_v6" \
-		 "homeproxy_lan_gaming_addr_v4" "homeproxy_lan_gaming_addr_v6" \
-		 "homeproxy_lan_global_proxy_addr_v4" "homeproxy_lan_global_proxy_addr_v6" \
 		 "homeproxy_wan_proxy_addr_v4" "homeproxy_wan_proxy_addr_v6" \
 		 "homeproxy_wan_direct_addr_v4" "homeproxy_wan_direct_addr_v6" \
 		 "homeproxy_routing_port"; do

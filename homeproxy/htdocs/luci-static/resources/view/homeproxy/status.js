@@ -9,6 +9,7 @@
 'require fs';
 'require poll';
 'require rpc';
+'require uci';
 'require ui';
 'require view';
 
@@ -74,7 +75,8 @@ function getResVersion(self, type) {
 			}, [ _('Check update') ]),
 			' ',
 			E('strong', { 'style': (res.error ? 'color:red' : 'color:green') },
-				[ res.error ? 'not found' : res.version ]),
+				[ res.error ? 'not found' : res.version ]
+			),
 		]);
 
 		self.default = spanTemp;
@@ -144,21 +146,30 @@ function getRuntimeLog(name) {
 }
 
 return view.extend({
-	render: function() {
+	load: function() {
+		return Promise.all([
+			uci.load('homeproxy')
+		]);
+	},
+
+	render: function(data) {
 		var m, s, o;
+		var routing_mode = uci.get(data[0], 'config', 'routing_mode') || 'bypass_mainland_china';
 
 		m = new form.Map('homeproxy');
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;
 
-		o = s.option(form.DummyValue, '_geoip_version', _('GeoIP version'));
-		o.cfgvalue = function() { return getResVersion(this, 'geoip') };
-		o.rawhtml = true;
+		if (routing_mode === 'custom') {
+			o = s.option(form.DummyValue, '_geoip_version', _('GeoIP version'));
+			o.cfgvalue = function() { return getResVersion(this, 'geoip') };
+			o.rawhtml = true;
 
-		o = s.option(form.DummyValue, '_geosite_version', _('GeoSite version'));
-		o.cfgvalue = function() { return getResVersion(this, 'geosite') };
-		o.rawhtml = true;
+			o = s.option(form.DummyValue, '_geosite_version', _('GeoSite version'));
+			o.cfgvalue = function() { return getResVersion(this, 'geosite') };
+			o.rawhtml = true;
+		}
 
 		o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
 		o.cfgvalue = function() { return getResVersion(this, 'china_ip4') };
@@ -168,12 +179,12 @@ return view.extend({
 		o.cfgvalue = function() { return getResVersion(this, 'china_ip6') };
 		o.rawhtml = true;
 
-		o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
-		o.cfgvalue = function() { return getResVersion(this, 'gfw_list') };
-		o.rawhtml = true;
-
 		o = s.option(form.DummyValue, '_china_list_version', _('China list version'));
 		o.cfgvalue = function() { return getResVersion(this, 'china_list') };
+		o.rawhtml = true;
+
+		o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
+		o.cfgvalue = function() { return getResVersion(this, 'gfw_list') };
 		o.rawhtml = true;
 
 		o = s.option(form.DummyValue, '_homeproxy_logview');
