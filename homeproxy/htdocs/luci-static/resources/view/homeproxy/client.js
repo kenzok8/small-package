@@ -14,6 +14,7 @@
 'require view';
 
 'require homeproxy as hp';
+'require tools.firewall as fwtool';
 'require tools.widgets as widgets';
 
 var callServiceList = rpc.declare({
@@ -217,7 +218,8 @@ return view.extend({
 
 		o = s.taboption('routing', form.ListValue, 'proxy_mode', _('Proxy mode'));
 		o.value('redirect', _('Redirect TCP'));
-		o.value('redirect_tproxy', _('Redirect TCP + TProxy UDP'));
+		if (features.hp_has_tproxy)
+			o.value('redirect_tproxy', _('Redirect TCP + TProxy UDP'));
 		if (features.hp_has_tun) {
 			o.value('redirect_tun', _('Redirect TCP + Tun UDP'));
 			o.value('tun', _('Tun TCP/UDP'));
@@ -824,20 +826,6 @@ return view.extend({
 		/* LAN IP policy start */
 		ss.tab('lan_ip_policy', _('LAN IP Policy'));
 
-		var ipaddrs = {}, ip6addrs = {};
-		Object.keys(hosts).forEach(function(mac) {
-			var addrs = L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4);
-
-			for (var i = 0; i < addrs.length; i++)
-				ipaddrs[addrs[i]] = hosts[mac].name || mac;
-		});
-		Object.keys(hosts).forEach(function(mac) {
-			var addrs = L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6);
-
-			for (var i = 0; i < addrs.length; i++)
-				ip6addrs[addrs[i]] = hosts[mac].name || mac;
-		});
-
 		so = ss.taboption('lan_ip_policy', form.ListValue, 'lan_proxy_mode', _('Proxy filter mode'));
 		so.value('disabled', _('Disable'));
 		so.value('listed_only', _('Proxy listed only'));
@@ -845,62 +833,39 @@ return view.extend({
 		so.default = 'disabled';
 		so.rmempty = false;
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_ipv4_ips', _('Direct IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_direct_ipv4_ips', _('Direct IPv4 IP-s'), null, 'ipv4', hosts, true);
 		so.depends('lan_proxy_mode', 'except_listed');
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
-			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
-		});
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_direct_ipv6_ips', _('Direct IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_direct_ipv6_ips', _('Direct IPv6 IP-s'), null, 'ipv6', hosts, true);
+		so.depends({'lan_proxy_mode': 'except_listed', 'homeproxy.config.ipv6_support': '1'});
+
+		so = fwtool.addMACOption(ss, 'lan_ip_policy', 'lan_direct_mac_addrs', _('Direct MAC-s'), null, hosts);
 		so.depends('lan_proxy_mode', 'except_listed');
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
-			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
-		});
-		so.depends('homeproxy.config.ipv6_support', '1');
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_ipv4_ips', _('Proxy IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_proxy_ipv4_ips', _('Proxy IPv4 IP-s'), null, 'ipv4', hosts, true);
 		so.depends('lan_proxy_mode', 'listed_only');
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
-			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
-		});
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_proxy_ipv6_ips', _('Proxy IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_proxy_ipv6_ips', _('Proxy IPv6 IP-s'), null, 'ipv6', hosts, true);
+		so.depends({'lan_proxy_mode': 'listed_only', 'homeproxy.config.ipv6_support': '1'});
+
+		so = fwtool.addMACOption(ss, 'lan_ip_policy', 'lan_proxy_mac_addrs', _('Proxy MAC-s'), null, hosts);
 		so.depends('lan_proxy_mode', 'listed_only');
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
-			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
-		});
+
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'), null, 'ipv4', hosts, true);
+
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_gaming_mode_ipv6_ips', _('Gaming mode IPv6 IP-s'), null, 'ipv6', hosts, true);
 		so.depends('homeproxy.config.ipv6_support', '1');
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
-			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
-		});
+		so = fwtool.addMACOption(ss, 'lan_ip_policy', 'lan_gaming_mode_mac_addrs', _('Gaming mode MAC-s'), null, hosts);
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_gaming_mode_ipv6_ips', _('Gaming mode IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
-			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
-		});
-		so.depends('homeproxy.config.ipv6_support', '1');
-
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_global_proxy_ipv4_ips', _('Global proxy IPv4 IP-s'));
-		so.datatype = 'or(ip4addr, cidr4)';
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
-			so.value(ipv4, '%s (%s)'.format(ipv4, ipaddrs[ipv4]));
-		});
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_global_proxy_ipv4_ips', _('Global proxy IPv4 IP-s'), null, 'ipv4', hosts, true);
 		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
 
-		so = ss.taboption('lan_ip_policy', form.DynamicList, 'lan_global_proxy_ipv6_ips', _('Global proxy IPv6 IP-s'));
-		so.datatype = 'or(ip6addr, cidr6)';
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
-			so.value(ipv6, '%s (%s)'.format(ipv6, ip6addrs[ipv6]));
-		});
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_global_proxy_ipv6_ips', _('Global proxy IPv6 IP-s'), null, 'ipv6', hosts, true);
 		so.depends({'homeproxy.config.routing_mode': /^((?!custom).)+$/, 'homeproxy.config.ipv6_support': '1'});
+
+		so = fwtool.addMACOption(ss, 'lan_ip_policy', 'lan_global_proxy_mac_addrs', _('Global proxy MAC-s'), null, hosts);
+		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
 		/* LAN IP policy end */
 
 		/* WAN IP policy start */
