@@ -184,7 +184,7 @@ sed -i -e 's/nas/services/g' -e 's/NAS/Services/g' $(grep -rl 'nas\|NAS' luci-ap
 sed -i 's/pkg_web_version:=.*/pkg_web_version:=$pkg_version/' alist/Makefile
 sed -i 's/option binpath '\''\/usr\/bin\/AdGuardHome\/AdGuardHome'\''/option binpath '\''\/usr\/bin\/AdGuardHome'\''/g' luci-app-adguardhome/root/etc/config/AdGuardHome
 sed -i '65,73d' adguardhome/Makefile
-rm -rf luci-app-adguardhome/po/zh_Hans
-cp -Rf luci-app-adguardhome/po/zh-cn luci-app-adguardhome/po/zh_Hans
+rm -rf luci-app-adguardhome/po/zh_Hans && cp -Rf luci-app-adguardhome/po/zh-cn luci-app-adguardhome/po/zh_Hans
+sed -i 's/mosdns-v5/mosdns/g' luci-app-mosdns/Makefile
 exit 0
 
