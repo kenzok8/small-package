@@ -1,0 +1,34 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8"
+
+msgid "Access AP / Modem"
+msgstr "访问AP/光猫"
+
+msgid "Allows clients in the local network to access AP or modem on different subnet."
+msgstr "让局域网客户端访问不同子网的AP或光猫"
+
+msgid "Global Settings"
+msgstr "全局设置"
+
+msgid "Interface Settings"
+msgstr "网络接口配置"
+
+msgid "AP on LAN side"
+msgstr "位于LAN口的AP"
+
+msgid "AP / Modem on WAN side"
+msgstr "位于WAN口的AP或光猫"
+
+msgid "Virtual IP"
+msgstr "虚拟IP地址"
+
+msgid ""
+"Here add the IP address of the same subnet as the target device, but not the same as the target device. "
+"<br>Do not add IPs already used by other devices. "
+"<br>For example, the address of the AP is 192.168.31.1, then you can add 192.168.31.254"
+msgstr ""
+"这里添加与目标设备同子网的IP地址，但不能与目标设备IP完全相同。<br>不要添加其他设备已经使用的IP。<br>例如，AP后台的地址是192.168.31.1，那可以添加192.168.31.254"
+
+msgid "Supports \"IP/MASK\", \"IP/PREFIX\", and pure \"IP\" format, pure \"IP\" assumes a prefix of 24 bits"
+msgstr "支持“IP/掩码”、“IP/前缀长度”、以及纯“IP”格式，纯“IP”则假设前缀24位"
