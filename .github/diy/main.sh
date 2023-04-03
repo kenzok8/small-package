@@ -82,7 +82,7 @@ git clone --depth 1 https://github.com/CCnut/feed-netkeeper && mvdir feed-netkee
 git clone --depth 1 https://github.com/sensec/luci-app-udp2raw
 git clone --depth 1 https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-sysuh3c
 git clone --depth 1 https://github.com/Hyy2001X/AutoBuild-Packages && rm -rf AutoBuild-Packages/luci-app-adguardhome && mvdir AutoBuild-Packages
-git clone --depth 1 https://github.com/sirpdboy/sirpdboy-package && mv -n sirpdboy-package/{luci-app-adguardhome,luci-app-dockerman} ./ ; rm -rf sirpdboy-package 
+git clone --depth 1 https://github.com/sirpdboy/sirpdboy-package && mv -n sirpdboy-package/luci-app-dockerman ./ ; rm -rf sirpdboy-package 
 git clone --depth 1 https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd1/luci-app-cupsd cupsd1/cups/cups ./ ; rm -rf cupsd1
 git clone --depth 1 https://github.com/kenzok8/wall && mv -n wall/* ./ ; rm -rf alist && rm -rf wall
 git clone --depth 1 https://github.com/peter-tank/luci-app-fullconenat
@@ -182,9 +182,7 @@ sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/w
 sed -i -e 's/nas/services/g' -e 's/NAS/Services/g' $(grep -rl 'nas\|NAS' luci-app-fileassistant)
 sed -i -e 's/nas/services/g' -e 's/NAS/Services/g' $(grep -rl 'nas\|NAS' luci-app-alist)
 sed -i 's/pkg_web_version:=.*/pkg_web_version:=$pkg_version/' alist/Makefile
-sed -i 's/option binpath '\''\/usr\/bin\/AdGuardHome\/AdGuardHome'\''/option binpath '\''\/usr\/bin\/AdGuardHome'\''/g' luci-app-adguardhome/root/etc/config/AdGuardHome
 sed -i '65,73d' adguardhome/Makefile
-rm -rf luci-app-adguardhome/po/zh_Hans && cp -Rf luci-app-adguardhome/po/zh-cn luci-app-adguardhome/po/zh_Hans
 sed -i 's/mosdns-v5/mosdns/g' luci-app-mosdns/Makefile
 exit 0
 
