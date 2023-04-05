@@ -122,8 +122,8 @@
  
  LUCI_TITLE:=LuCI support for homeassistant
  LUCI_PKGARCH:=all
--LUCI_DEPENDS:=+docker +luci-lib-taskd
-+LUCI_DEPENDS:=@(aarch64||arm||x86_64) +luci-app-dockerman +luci-lib-taskd
+-LUCI_DEPENDS:=+lsblk +docker +luci-lib-taskd
++LUCI_DEPENDS:=@(aarch64||arm||x86_64) +lsblk +docker +dockerd +luci-lib-taskd
  
  define Package/luci-app-homeassistant/conffiles
  /etc/config/homeassistant
@@ -249,6 +249,20 @@
  	PKGARCH:=all
  	DEPENDS:=+dnsmasq-full +coreutils +coreutils-nohup +bash +curl +ca-certificates +ipset +ip-full \
 -	+libcap +libcap-bin +ruby +ruby-yaml +kmod-tun +unzip
-+	+libcap +libcap-bin +ruby +ruby-yaml +kmod-tun +unzip +libcap-bin +iptables-mod-extra +kmod-inet-diag +kmod-ipt-nat +iptables-mod-tproxy +iptables-mod-extra
++	+libcap +libcap-bin +ruby +ruby-yaml +kmod-tun +unzip +kmod-inet-diag +kmod-ipt-nat +iptables-mod-tproxy +iptables-mod-extra
  	MAINTAINER:=vernesong
+ endef
+ 
+
+--- a/dockerd/Makefile
++++ b/dockerd/Makefile
+@@ -47,7 +47,8 @@ define Package/dockerd
+     +kmod-veth \
+     +libnetwork \
+     +tini \
+-    +uci-firewall
++    +uci-firewall \
++    +fuse-overlayfs +cgroupfs-mount
+   USERID:=docker:docker
+   MENU:=1
  endef

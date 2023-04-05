@@ -1,6 +1,6 @@
 --- a/luci-app-opkg/htdocs/luci-static/resources/view/opkg.js
 +++ b/luci-app-opkg/htdocs/luci-static/resources/view/opkg.js
-@@ -182,7 +182,7 @@ function parseList(s, dest)
+@@ -184,7 +184,7 @@ function parseList(s, dest)
  			val = RegExp.$2.trim();
  		}
  		else if (pkg) {
@@ -9,7 +9,7 @@
  
  			var provides = dest.providers[pkg.name] ? [] : [ pkg.name ];
  
-@@ -232,7 +232,7 @@ function display(pattern)
+@@ -248,7 +248,7 @@ function display(pattern)
  			var avail = packages.available.pkgs[name],
  			    inst  = packages.installed.pkgs[name];
  
@@ -18,7 +18,7 @@
  				continue;
  
  			if (!avail || compareVersion(avail.version, pkg.version) <= 0)
-@@ -245,6 +245,7 @@ function display(pattern)
+@@ -261,6 +261,7 @@ function display(pattern)
  			btn = E('div', {
  				'class': 'btn cbi-button-positive',
  				'data-package': name,
@@ -26,17 +26,7 @@
  				'click': handleInstall
  			}, _('Upgrade…'));
  		}
-@@ -260,6 +261,9 @@ function display(pattern)
- 			}, _('Remove…'));
- 		}
- 		else {
-+			if (pkg.name.includes('luci-i18n'))
-+			   continue;
-+
- 			var inst = packages.installed.pkgs[name];
- 
- 			ver = truncateVersion(pkg.version || '-');
-@@ -268,12 +272,14 @@ function display(pattern)
+@@ -284,12 +285,14 @@ function display(pattern)
  				btn = E('div', {
  					'class': 'btn cbi-button-action',
  					'data-package': name,
@@ -52,7 +42,7 @@
  					'click': handleInstall
  				}, _('Upgrade…'));
  			else
-@@ -370,6 +376,12 @@ function handleMode(ev)
+@@ -392,6 +395,12 @@ function handleMode(ev)
  
  	currentDisplayMode = tab.getAttribute('data-mode');
  
@@ -65,24 +55,25 @@
  	display(document.querySelector('input[name="filter"]').value);
  
  	ev.target.blur();
-@@ -631,6 +643,7 @@ function handleReset(ev)
+@@ -660,6 +669,7 @@ function handleReset(ev)
  function handleInstall(ev)
  {
  	var name = ev.target.getAttribute('data-package'),
-+		action = ev.target.getAttribute('action'),
++	    action = ev.target.getAttribute('action'),
  	    pkg = packages.available.pkgs[name],
  	    depcache = {},
  	    size;
-@@ -687,7 +700,7 @@ function handleInstall(ev)
- 		errs || inst || '',
- 		E('div', { 'class': 'right' }, [
- 			E('label', { 'class': 'cbi-checkbox', 'style': 'float:left' }, [
--				E('input', { 'id': 'overwrite-cb', 'type': 'checkbox', 'name': 'overwrite', 'disabled': isReadonlyView }), ' ',
-+				E('input', { 'id': 'overwrite-cb', 'type': 'checkbox', 'name': 'overwrite', 'checked': 'checked', 'disabled': isReadonlyView }), ' ',
- 				E('label', { 'for': 'overwrite-cb' }), ' ',
- 				_('Overwrite files from other package(s)')
- 			]),
-@@ -697,7 +710,7 @@ function handleInstall(ev)
+@@ -785,7 +795,8 @@ function handleInstall(ev)
+ 						'id': 'overwrite-cb',
+ 						'type': 'checkbox',
+ 						'name': 'overwrite',
+-						'disabled': isReadonlyView
++						'disabled': isReadonlyView,
++						'checked': true
+ 					}), ' ',
+ 					E('label', { 'for': 'overwrite-cb' }), ' ',
+ 					_('Allow overwriting conflicting package files')
+@@ -799,7 +810,7 @@ function handleInstall(ev)
  			}, _('Cancel')),
  			' ',
  			E('div', {
@@ -91,29 +82,29 @@
  				'data-package': name,
  				'class': 'btn cbi-button-action',
  				'click': handleOpkg,
-@@ -881,6 +894,10 @@ function handleOpkg(ev)
- 		]);
+@@ -985,6 +996,10 @@ function handleOpkg(ev)
  
  		var argv = [ cmd, '--force-removal-of-dependent-packages' ];
-+		
+ 
 +		argv.push('--force-checksum');
 +		
 +		argv.push('--force-depends');
- 
++
  		if (rem && rem.checked)
  			argv.push('--autoremove');
-@@ -984,8 +1001,8 @@ function updateLists(data)
+ 
+@@ -1090,8 +1105,8 @@ function updateLists(data)
  		    mount = L.toArray(data[0].filter(function(m) { return m.mount == '/' || m.mount == '/overlay' }))
  		    	.sort(function(a, b) { return a.mount > b.mount })[0] || { size: 0, free: 0 };
  
 -		pg.firstElementChild.style.width = Math.floor(mount.size ? ((100 / mount.size) * mount.free) : 100) + '%';
--		pg.setAttribute('title', '%s (%.1024mB)'.format(pg.firstElementChild.style.width, mount.free));
+-		pg.setAttribute('title', '%s (%1024mB)'.format(pg.firstElementChild.style.width, mount.free));
 +		pg.firstElementChild.style.width = Math.floor(mount.size ? ((100 / mount.size) * (mount.size-mount.free)) : 100) + '%';
 +		pg.setAttribute('title', '%.1024mB / %.1024mB (%s)'.format((mount.size-mount.free), mount.size, pg.firstElementChild.style.width));
  
  		parseList(data[1], packages.available);
  		parseList(data[2], packages.installed);
-@@ -1020,14 +1037,14 @@ return view.extend({
+@@ -1130,14 +1145,14 @@ return view.extend({
  
  			E('div', { 'class': 'controls' }, [
  				E('div', {}, [
@@ -130,7 +121,7 @@
  						E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ])
  					])
  				]),
-@@ -1044,6 +1061,7 @@ return view.extend({
+@@ -1154,6 +1169,7 @@ return view.extend({
  					E('label', {}, _('Actions') + ':'), ' ',
  					E('span', { 'class': 'control-group' }, [
  						E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleOpkg, 'disabled': isReadonlyView }, [ _('Update lists…') ]), ' ',
@@ -138,36 +129,6 @@
  						E('button', { 'class': 'btn cbi-button-action', 'click': handleUpload, 'disabled': isReadonlyView }, [ _('Upload Package…') ]), ' ',
  						E('button', { 'class': 'btn cbi-button-neutral', 'click': handleConfig }, [ _('Configure opkg…') ])
  					])
-@@ -1056,14 +1074,6 @@ return view.extend({
- 				E('li', { 'data-mode': 'updates', 'class': 'installed cbi-tab-disabled', 'click': handleMode }, E('a', { 'href': '#' }, [ _('Updates') ]))
- 			]),
- 
--			E('div', { 'class': 'controls', 'style': 'display:none' }, [
--				E('div', { 'id': 'pager', 'class': 'center' }, [
--					E('button', { 'class': 'btn cbi-button-neutral prev', 'aria-label': _('Previous page'), 'click': handlePage }, [ '«' ]),
--					E('div', { 'class': 'text' }, [ 'dummy' ]),
--					E('button', { 'class': 'btn cbi-button-neutral next', 'aria-label': _('Next page'), 'click': handlePage }, [ '»' ])
--				])
--			]),
--
- 			E('table', { 'id': 'packages', 'class': 'table' }, [
- 				E('tr', { 'class': 'tr cbi-section-table-titles' }, [
- 					E('th', { 'class': 'th col-2 left' }, [ _('Package name') ]),
-@@ -1072,6 +1082,14 @@ return view.extend({
- 					E('th', { 'class': 'th col-10 left' }, [ _('Description') ]),
- 					E('th', { 'class': 'th right cbi-section-actions' }, [ '\u00a0' ])
- 				])
-+			]),
-+			
-+			E('div', { 'class': 'controls', 'style': 'display:none' }, [
-+				E('div', { 'id': 'pager', 'class': 'center' }, [
-+					E('button', { 'class': 'btn cbi-button-neutral prev', 'aria-label': _('Previous page'), 'click': handlePage }, [ '«' ]),
-+					E('div', { 'class': 'text' }, [ 'dummy' ]),
-+					E('button', { 'class': 'btn cbi-button-neutral next', 'aria-label': _('Next page'), 'click': handlePage }, [ '»' ])
-+				])
- 			])
- 		]);
- 
 
 --- a/luci-app-opkg/root/usr/libexec/opkg-call
 +++ b/luci-app-opkg/root/usr/libexec/opkg-call
@@ -187,7 +148,7 @@
  						opkg="$opkg $1"
  						shift
  					;;
-@@ -33,10 +33,51 @@ case "$action" in
+@@ -33,10 +33,45 @@ case "$action" in
  			done
  
  			if flock -x 200; then
@@ -216,9 +177,6 @@
 +				case "$action" in
 +					install|upgrade)
 +					if [ "$(opkg list-installed | cut -f 1 -d ' ' | grep -w $@)" ]; then
-+							if [[ "$@" == luci-app-* && "$(opkg list | grep luci-i18n-$pkgn-zh-cn)" && ! -f /usr/lib/lua/luci/i18n/$pkgn.zh-cn.lmo ]]; then
-+								$opkg install luci-i18n-$pkgn-zh-cn </dev/null >>/tmp/opkg.out 2>/dev/null || true
-+							fi
 +							rm -f /tmp/opkg.err
 +							([ -f /etc/profile.d/opkg.sh ] && . /etc/profile.d/opkg.sh && opkg save) &
 +					fi
@@ -226,9 +184,6 @@
 +					remove)
 +						if [ ! "$(opkg list-installed | cut -f 1 -d ' ' | grep -w $@)" ]; then
 +							rm -f /tmp/opkg.err
-+							if [[ "$@" == luci-app-* && "$(opkg list-installed | grep luci-i18n-$pkgn-zh-cn)" ]]; then
-+								$opkg remove luci-i18n-$pkgn-zh-cn </dev/null >>/tmp/opkg.out 2>/dev/null || true
-+							fi
 +							([ -f /etc/profile.d/opkg.sh ] && . /etc/profile.d/opkg.sh && opkg save) &
 +						fi
 +					;;
@@ -242,7 +197,7 @@
  			else
  				code=255
  				stderr="Failed to acquire lock"
-@@ -53,7 +98,7 @@ case "$action" in
+@@ -53,7 +88,7 @@ case "$action" in
  	;;
  	*)
  		echo "Usage: $0 {list-installed|list-available}"       >&2
