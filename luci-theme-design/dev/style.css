@@ -1542,9 +1542,11 @@ table {
     border: 0px solid #eee;
 }
 
-table tr th:empty {
+/* fix qwrt network share table style */
+/* table tr th:empty {
     display: none;
-}
+} */
+
 strong {
     font-weight: bold;
     padding: 2px;
