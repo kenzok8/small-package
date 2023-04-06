@@ -209,8 +209,7 @@ input {
     margin: 3px 3px 3px 0;
     height: 2.8rem;
     line-height: 2.8rem;
-    max-width: 550px;
-    
+    max-width: 550px; 
 }
 
 select:not([multiple="multiple"]):focus,
@@ -533,6 +532,64 @@ li img[src*="/luci-static/resources/icons/ethernet_disabled.png"]
     padding: 0 0 0 16px;
 }
 #__status-ifc-signal img[src*="/luci-static/resources/icons/ethernet_disabled.png"]
+{
+    background-size: 32px 32px!important;
+    height: 32px !important;
+    width: 32px!important;
+    padding: 0 0 0 32px!important;
+    width: 0;
+}
+
+#wan4_i img[src*="/luci-static/resources/icons/switch.png"],
+#wan6_i img[src*="/luci-static/resources/icons/switch.png"],
+img[src*="/luci-static/resources/icons/switch.png"] {
+    background-image: url(../images/switch.png);
+    background-size: 32px 32px;
+    height: 32px;
+    width: 32px;
+    padding: 0 0 0 32px;
+    width: 0;
+}
+#cbi-network-lan-ifname_multi img[src*="/luci-static/resources/icons/switch.png"],
+#cbi-network-1-_ifname img[src*="/luci-static/resources/icons/switch.png"],
+.ifacebadge img[src*="/luci-static/resources/icons/switch.png"],
+li img[src*="/luci-static/resources/icons/switch.png"]
+ {
+    background-size: 16px 16px;
+    height: 16px;
+    width: 16px;
+    padding: 0 0 0 16px;
+}
+#__status-ifc-signal img[src*="/luci-static/resources/icons/switch.png"]
+{
+    background-size: 32px 32px!important;
+    height: 32px !important;
+    width: 32px!important;
+    padding: 0 0 0 32px!important;
+    width: 0;
+}
+
+#wan4_i img[src*="/luci-static/resources/icons/switch_disabled.png"],
+#wan6_i img[src*="/luci-static/resources/icons/switch_disabled.png"],
+img[src*="/luci-static/resources/icons/switch_disabled.png"] {
+    background-image: url(../images/switch_disabled.png);
+    background-size: 32px 32px;
+    height: 32px;
+    width: 32px;
+    padding: 0 0 0 32px;
+    width: 0;
+}
+#cbi-network-lan-ifname_multi img[src*="/luci-static/resources/icons/switch_disabled.png"],
+#cbi-network-1-_ifname img[src*="/luci-static/resources/icons/switch_disabled.png"],
+.ifacebadge img[src*="/luci-static/resources/icons/switch_disabled.png"],
+li img[src*="/luci-static/resources/icons/switch_disabled.png"]
+ {
+    background-size: 16px 16px;
+    height: 16px;
+    width: 16px;
+    padding: 0 0 0 16px;
+}
+#__status-ifc-signal img[src*="/luci-static/resources/icons/switch_disabled.png"]
 {
     background-size: 32px 32px!important;
     height: 32px !important;
@@ -1721,6 +1778,13 @@ fieldset > table > tbody > tr:nth-of-type(odd) {
     white-space: nowrap;
 }
 
+#cbi-network .cbi-value-field ul input[type="text"],
+#cbi-wireless .cbi-value-field ul input[type="text"],
+#cbi-firewall .cbi-value-field ul input[type="text"] {
+    max-width: 10rem;
+    width: 100% !important;
+}
+
 div [id*="cbi-network-"] [id*="-__status"] table,
 div [id*="cbi-wireless"] [id*="-__status"] table {
     width: auto;
@@ -1734,6 +1798,25 @@ div [id*="cbi-wireless"] [id*="-__status"] table td {
 div [id*="cbi-network-"] [id*="-__status"] table td small,
 div [id*="cbi-wireless"] [id*="-__status"] table td small {
     width: auto;
+}
+
+/* adapt to mt798x series closed source wireless driver page */
+/* open source wireless style */
+.node-network-wifi .cbi-section-table tr .cbi-value-field,
+.node-network-wireless .cbi-section-table tr .cbi-value-field {
+    width: unset !important;
+    text-align: right;
+}
+.node-network-wireless #iw-assoclist .cbi-section-table-row td[colspan="6"],
+.node-network-wireless .cbi-section-table .cbi-section-table-row td[colspan="6"],
+.node-network-wifi .cbi-section-table .cbi-section-table-row td[colspan="8"] {
+    text-align: center !important;
+}
+.node-network-wifi table, td, th {
+    border-top: unset !important;
+}
+.node-network-wifi .cbi-section-table td[colspan="2"]  {
+    padding-left: unset !important
 }
 
 /* fix node-status-routes */
@@ -3344,19 +3427,7 @@ form[action="/cgi-bin/luci/admin/network/wireless_join"] input[class="cbi-button
 .node-network-firewall label strong {
     color: var(--ifaceboxFontColor);
 }
-/* adapt to mt798x series closed source wireless driver page */
-/* open source wireless style */
-.node-network-wifi .cbi-section-table tr .cbi-value-field,
-.node-network-wireless .cbi-section-table tr .cbi-value-field {
-    width: unset !important;
-    text-align: right;
-}
-.node-network-wifi table, td, th {
-    border-top: unset !important;
-}
-.node-network-wifi .cbi-section-table td[colspan="2"]  {
-    padding-left: unset !important
-}
+
 /* fix new version luci-app-openclash style */
 .node-services-openclash  ul li.selected {
     background-color: var(--liSelectedColor) !important;
