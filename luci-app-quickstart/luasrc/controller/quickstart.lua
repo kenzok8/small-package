@@ -23,7 +23,7 @@ function index()
 end
 
 function networkguide_index()
-    luci.http.redirect(luci.dispatcher.build_url("admin","network_guide","pages","network"))
+    luci.http.redirect(luci.dispatcher.build_url("admin", "network_guide", "pages", "network"))
 end
 
 function redirect_fallback()
