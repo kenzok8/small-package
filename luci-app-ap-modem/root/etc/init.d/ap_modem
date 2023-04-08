@@ -36,6 +36,11 @@ generate_config() {
         echo "network.lan.device != br-lan in uci" >&2
         return 1
     }
+    local wan_dev="`uci -q get network.wan.device`"
+    [[ -z "$wan_dev" ]] && {
+        echo "get network.wan.device in uci failed" >&2
+        return 1
+    }
     local lan_dev=`find_uci_section network device name 'br-lan' | head -1`
     [[ -z "$lan_dev" ]] && {
         echo "network.device.name=br-lan not found in uci" >&2
@@ -85,16 +90,20 @@ EOF
         uci -q batch <<-EOF >/dev/null
             set network.vap_wan=interface
             set network.vap_wan.proto=static
-            set network.vap_wan.device=@wan
+            set network.vap_wan.device=$wan_dev
             set network.vap_wan.defaultroute=0
             set network.vap_wan.delegate=0
 EOF
     fi
     # firewall
-    uci -q get "firewall.$wan_zone.network" | grep -Fwq 'vap_lan' || uci -q batch <<-EOF >/dev/null
+    local fw_wan_net="`uci -q get firewall.$wan_zone.network`"
+    echo "$fw_wan_net" | grep -Fwq 'vap_lan' || uci -q batch <<-EOF >/dev/null
         add_list firewall.$wan_zone.network=vap_lan
-        commit firewall
 EOF
+    echo "$fw_wan_net" | grep -Fwq 'vap_wan' || uci -q batch <<-EOF >/dev/null
+        add_list firewall.$wan_zone.network=vap_wan
+EOF
+    uci commit firewall
 
     # ip
     local bip
@@ -155,6 +164,27 @@ EOF
     uci commit network
 }
 
+clean_config() {
+    local wan_zone=`find_uci_section firewall zone name 'wan' | head -1`
+    [[ -z "$wan_zone" ]] || uci -q batch <<-EOF >/dev/null
+        del_list firewall.$wan_zone.network=vap_lan
+        del_list firewall.$wan_zone.network=vap_wan
+        commit firewall
+EOF
+    local lan_dev=`find_uci_section network device name 'br-lan' | head -1`
+    [[ -z "$lan_dev" ]] || {
+        uci del_list "network.$lan_dev.ports=vap-lan"
+    }
+
+    uci -q batch <<-EOF >/dev/null
+        set network.vap_lan.auto=0
+        set network.vap_wan.auto=0
+        delete network.veth_lan_peer
+        delete network.veth_lan
+        commit network
+EOF
+}
+
 start_service() {
     config_load ap_modem
     config_get_bool enabled "config" enabled 0
@@ -166,12 +196,13 @@ EOF
     if [[ "$enabled" = "1" ]]; then
         generate_config
     else
-        uci -q batch <<-EOF >/dev/null
-            set network.vap_lan.auto=0
-            set network.vap_wan.auto=0
-            commit network
-EOF
+        clean_config
     fi
     /etc/init.d/network reload
     return 0
+}
+
+stop_service() {
+    clean_config
+    /etc/init.d/network reload
 }

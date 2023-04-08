@@ -59,8 +59,28 @@ EOF
     return 0
 }
 
+clean_config() {
+    local wan_dev="`uci -q get network.wan.device`"
+    [[ -z "$wan_dev" ]] && {
+        return 1
+    }
+
+    local wan_dev_s=`find_uci_section network device name "$wan_dev" | head -1`
+    [[ -z "$wan_dev_s" ]] && {
+        return 1
+    }
+    uci -q batch <<-EOF >/dev/null
+        delete network.$wan_dev_s.macaddr
+        commit network
+EOF
+}
+
 start_service() {
     config_load wan_mac
     generate_config && /etc/init.d/network reload
     return 0
+}
+
+stop_service() {
+    clean_config && /etc/init.d/network reload
 }
