@@ -15,18 +15,6 @@
  		uwsgi_param SERVER_ADDR $server_addr;
  		uwsgi_modifier1 9;
  		uwsgi_pass unix:////var/run/luci-cgi_io.socket;
-@@ -15,3 +17,11 @@ location ~ /cgi-bin/cgi-(backup|download|upload|exec) {
- location /luci-static {
- 		error_log stderr crit;
- }
-+
-+location = / {
-+		return 301 $scheme://$http_host/cgi-bin/luci/;
-+}
-+
-+location = /luci/ {
-+		return 301 $scheme://$http_host/cgi-bin/luci/;
-+}
 
 --- a/nginx/files/nginx.init
 +++ b/nginx/files/nginx.init
