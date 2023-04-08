@@ -169,6 +169,8 @@ sed -i \
 -e 's?2. Clash For OpenWRT?3. Applications?' \
 -e 's?\.\./\.\./luci.mk?$(TOPDIR)/feeds/luci/luci.mk?' \
 -e 's/ca-certificates/ca-bundle/' \
+-e 's/php7/php8/g' \
+-e 's/+docker /+docker +dockerd /g' \
 */Makefile
 
 sed -i 's/luci-lib-ipkg/luci-base/g' luci-app-store/Makefile
@@ -184,5 +186,6 @@ sed -i 's/	ip.neighbors/	luci.ip.neighbors/' luci-app-wifidog/luasrc/model/cbi/w
 sed -i -e 's/nas/services/g' -e 's/NAS/Services/g' $(grep -rl 'nas\|NAS' luci-app-fileassistant)
 sed -i -e 's/nas/services/g' -e 's/NAS/Services/g' $(grep -rl 'nas\|NAS' luci-app-alist)
 sed -i '65,73d' adguardhome/Makefile
+find . -type f -name Makefile -exec sed -i 's/PKG_USE_MIPS16:=0/PKG_BUILD_FLAGS:=no-mips16/g' {} +
 exit 0
 
