@@ -7,7 +7,7 @@ PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for nastools
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+lsblk +docker +luci-lib-taskd
+LUCI_DEPENDS:=+lsblk +docker +dockerd +luci-lib-taskd
 
 define Package/luci-app-nastools/conffiles
 /etc/config/nastools
