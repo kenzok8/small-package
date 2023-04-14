@@ -40,11 +40,11 @@ to_upper() {
 check_geodata_update() {
 	local geotype="$1"
 	local georepo="$2"
-	local curl="curl --connect-timeout 5 -fsSL"
+	local wget="wget --timeout=10 -q"
 
 	set_lock "set" "$geotype"
 
-	local geodata_ver="$($curl "https://api.github.com/repos/$georepo/releases/latest" | jsonfilter -e "@.tag_name")"
+	local geodata_ver="$($wget -O- "https://api.github.com/repos/$georepo/releases/latest" | jsonfilter -e "@.tag_name")"
 	if [ -z "$geodata_ver" ]; then
 		log "[$(to_upper "$geotype")] Failed to get the latest version, please retry later."
 
@@ -64,8 +64,8 @@ check_geodata_update() {
 	fi
 
 	local geodata_hash
-	$curl "https://github.com/$georepo/releases/download/$geodata_ver/$geotype.db" -o "$RUN_DIR/$geotype.db"
-	geodata_hash="$($curl "https://github.com/$georepo/releases/download/$geodata_ver/$geotype.db.sha256sum" | awk '{print $1}')"
+	$wget "https://github.com/$georepo/releases/download/$geodata_ver/$geotype.db" -O "$RUN_DIR/$geotype.db"
+	geodata_hash="$($wget -O- "https://github.com/$georepo/releases/download/$geodata_ver/$geotype.db.sha256sum" | awk '{print $1}')"
 	if ! echo -e "$geodata_hash $RUN_DIR/$geotype.db" | sha256sum -s -c -; then
 		rm -f "$RUN_DIR/$geotype.db"
 		log "[$(to_upper "$geotype")] Update failed."
@@ -87,11 +87,11 @@ check_list_update() {
 	local listrepo="$2"
 	local listref="$3"
 	local listname="$4"
-	local curl="curl --connect-timeout 5 -fsSL"
+	local wget="wget --timeout=10 -q"
 
 	set_lock "set" "$listtype"
 
-	local list_info="$($curl "https://api.github.com/repos/$listrepo/commits?sha=$listref&path=$listname")"
+	local list_info="$($wget -O- "https://api.github.com/repos/$listrepo/commits?sha=$listref&path=$listname")"
 	local list_sha="$(echo -e "$list_info" | jsonfilter -e "@[0].sha")"
 	local list_ver="$(echo -e "$list_info" | jsonfilter -e "@[0].commit.message" | grep -Eo "[0-9-]+" | tr -d '-')"
 	if [ -z "$list_sha" ] || [ -z "$list_ver" ]; then
@@ -112,7 +112,7 @@ check_list_update() {
 		log "[$(to_upper "$listtype")] Local version: $local_list_ver, latest version: $list_ver."
 	fi
 
-	$curl "https://fastly.jsdelivr.net/gh/$listrepo@$list_sha/$listname" -o "$RUN_DIR/$listname"
+	$wget "https://fastly.jsdelivr.net/gh/$listrepo@$list_sha/$listname" -O "$RUN_DIR/$listname"
 	if [ ! -s "$RUN_DIR/$listname" ]; then
 		rm -f "$RUN_DIR/$listname"
 		log "[$(to_upper "$listtype")] Update failed."
@@ -137,10 +137,10 @@ case "$1" in
 	check_geodata_update "$1" "1715173329/sing-geosite"
 	;;
 "china_ip4")
-	check_list_update "$1" "gaoyifan/china-operator-ip" "ip-lists" "china.txt"
+	check_list_update "$1" "1715173329/IPCIDR-CHINA" "master" "ipv4.txt"
 	;;
 "china_ip6")
-	check_list_update "$1" "gaoyifan/china-operator-ip" "ip-lists" "china6.txt"
+	check_list_update "$1" "1715173329/IPCIDR-CHINA" "master" "ipv6.txt"
 	;;
 "gfw_list")
 	check_list_update "$1" "Loyalsoldier/v2ray-rules-dat" "release" "gfw.txt"

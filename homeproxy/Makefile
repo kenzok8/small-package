@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-homeproxy
-PKG_VERSION:=dev-230402
+PKG_VERSION:=dev-230414
 
 LUCI_TITLE:=The modern ImmortalWrt proxy platform for ARM64/AMD64
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:= \
 	+sing-box \
-	+curl \
+	+chinadns-ng \
 	+firewall4 \
 	+kmod-nft-tproxy
 

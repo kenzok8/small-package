@@ -5,6 +5,7 @@ config homeproxy 'infra'
 	option redirect_port '5331'
 	option tproxy_port '5332'
 	option dns_port '5333'
+	option china_dns_port '5334'
 	option tun_name 'singtun0'
 
 	option table_mark '100'

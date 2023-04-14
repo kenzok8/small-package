@@ -15,7 +15,7 @@ import { urldecode, urlencode, urldecode_params } from 'luci.http';
 import { init_action } from 'luci.sys';
 
 import {
-	calcStringMD5, cURL, executeCommand, decodeBase64Str,
+	calcStringMD5, wGET, executeCommand, decodeBase64Str,
 	getTime, isEmpty, parseURL, validation,
 	HP_DIR, RUN_DIR
 } from 'homeproxy';
@@ -413,7 +413,7 @@ function main() {
 	}
 
 	for (let url in subscription_urls) {
-		const res = cURL(url);
+		const res = wGET(url);
 		if (!res) {
 			log(sprintf('Failed to fetch resources from %s.', url));
 			continue;
@@ -561,7 +561,8 @@ if (!isEmpty(subscription_urls))
 		call(main);
 	} catch(e) {
 		log('[FATAL ERROR] An error occurred during updating subscriptions:');
-		log(e);
+		log(sprintf('%s: %s', e.type, e.message));
+		log(e.stacktrace[0].context);
 
 		log('Restarting service...');
 		init_action('homeproxy', 'stop');
