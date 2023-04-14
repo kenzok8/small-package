@@ -39,11 +39,12 @@ const uci = cursor();
 uci.load(cfgname);
 
 const routing_mode = uci.get(cfgname, 'config', 'routing_mode') || 'bypass_mainland_china';
-let outbound_node, outbound_udp_node, bypass_cn_traffic;
+let outbound_node, outbound_udp_node, china_dns_server, bypass_cn_traffic;
 
 if (routing_mode !== 'custom') {
 	outbound_node = uci.get(cfgname, 'config', 'main_node') || 'nil';
 	outbound_udp_node = uci.get(cfgname, 'config', 'main_udp_node') || 'nil';
+	china_dns_server = uci.get(cfgname, 'config', 'china_dns_server');
 } else {
 	outbound_node = uci.get(cfgname, 'routing', 'default_outbound') || 'nil';
 	bypass_cn_traffic = uci.get(cfgname, 'routing', 'bypass_cn_traffic') || '0';
@@ -163,7 +164,7 @@ set homeproxy_mainland_addr_v4 {
 		{% endfor %}
 	}
 }
-{% if (ipv6_support === '1'): %}
+{% if ((ipv6_support === '1') || china_dns_server): %}
 set homeproxy_mainland_addr_v6 {
 	type ipv6_addr
 	flags interval

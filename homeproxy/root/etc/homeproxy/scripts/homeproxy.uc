@@ -60,26 +60,26 @@ export function calcStringMD5(str) {
 	return trim(output.stdout);
 };
 
-export function cURL(url) {
+export function getTime(epoch) {
+	const local_time = localtime(epoch);
+	return replace(replace(sprintf(
+		'%d-%2d-%2d@%2d:%2d:%2d',
+		local_time.year,
+		local_time.mon,
+		local_time.mday,
+		local_time.hour,
+		local_time.min,
+		local_time.sec
+	), ' ', '0'), '@', ' ');
+
+};
+
+export function wGET(url) {
 	if (!url || type(url) !== 'string')
 		return null;
 
-	const output = executeCommand(`/usr/bin/curl -fsL --connect-timeout '10' --retry '3' ${shellQuote(url)}`) || {};
+	const output = executeCommand(`/usr/bin/wget -qO- --timeout=10 ${shellQuote(url)}`) || {};
 	return trim(output.stdout);
-};
-
-export function getTime(epoch) {
-	const local_time = localtime(epoch);
-	return sprintf(
-		'%s-%s-%s %s:%s:%s',
-		local_time.year,
-		(local_time.mon >= 10) ? local_time.mon : ('0' + local_time.mon),
-		(local_time.mday >= 10) ? local_time.mday : ('0' + local_time.mday),
-		(local_time.hour >= 10) ? local_time.hour : ('0' + local_time.hour),
-		(local_time.min >= 10) ? local_time.min : ('0' + local_time.min),
-		(local_time.sec >= 10) ? local_time.sec : ('0' + local_time.sec)
-	);
-
 };
 /* Utilities end */
 
