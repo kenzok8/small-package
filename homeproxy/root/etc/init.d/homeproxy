@@ -164,6 +164,16 @@ start_service() {
 	procd_set_param command "$PROG"
 	procd_append_param command run --config "$RUN_DIR/sing-box.json"
 
+	if [ -x "/sbin/ujail" ] && [ "$routing_mode" != "custom" ] && ! grep -Eq '"type": "(wireguard|tun)"' "$RUN_DIR/sing-box.json"; then
+		procd_add_jail "sing-box" log procfs
+		procd_add_jail_mount "$RUN_DIR/sing-box.json"
+		procd_add_jail_mount_rw "$RUN_DIR/sing-box.log"
+		procd_set_param capabilities "/etc/capabilities/homeproxy.json"
+		procd_set_param no_new_privs 1
+		procd_set_param user sing-box
+		procd_set_param group sing-box
+	fi
+
 	procd_set_param limits core="unlimited"
 	procd_set_param limits nofile="1000000 1000000"
 	procd_set_param stderr 1
@@ -190,6 +200,15 @@ start_service() {
 		procd_append_param command --gfwlist-file "$HP_DIR/resources/gfw_list.txt"
 		[ "$ipv6_support" -eq "1" ] || procd_append_param command --no-ipv6=tC
 
+		if [ -x "/sbin/ujail" ]; then
+			procd_add_jail "chinadns-ng" log
+			procd_add_jail_mount "$HP_DIR/resources/gfw_list.txt"
+			procd_set_param capabilities "/etc/capabilities/homeproxy.json"
+			procd_set_param no_new_privs 1
+			procd_set_param user sing-box
+			procd_set_param group sing-box
+		fi
+
 		procd_set_param limits core="unlimited"
 		procd_set_param limits nofile="1000000 1000000"
 		procd_set_param stderr 1
@@ -204,7 +223,12 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 
+	# Update permissions for ujail
 	echo > "$RUN_DIR/sing-box.log"
+	chown sing-box:sing-box "$RUN_DIR/sing-box.log"
+	chown sing-box:sing-box "$RUN_DIR/sing-box.json"
+	chmod 0644 "$HP_DIR/resources/gfw_list.txt"
+
 	log "$(sing-box version | awk 'NR==1{print $1,$3}') started."
 }
 
@@ -257,8 +281,8 @@ stop_service() {
 		nft flush set inet fw4 "$i"
 		nft delete set inet fw4 "$i"
 	done 2>"/dev/null"
-	echo > "$RUN_DIR/fw4_pre.nft"
-	echo > "$RUN_DIR/fw4_post.nft"
+	echo > "$RUN_DIR/fw4_pre.nft" 2>"/dev/null"
+	echo > "$RUN_DIR/fw4_post.nft" 2>"/dev/null"
 	fw4 reload >"/dev/null" 2>&1
 
 	# Remove DNS hijack

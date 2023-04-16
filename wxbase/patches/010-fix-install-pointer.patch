@@ -1,8 +1,6 @@
-diff --git a/wx-config.in b/wx-config.in
-index b185bbb..0a9a341 100755
 --- a/wx-config.in
 +++ b/wx-config.in
-@@ -937,7 +937,7 @@ fi
+@@ -973,7 +973,7 @@ fi
  
  is_monolithic() { [ "x@MONOLITHIC@" = "x1" ]; }
  is_static()     { [ -n "$this_linkage" ]; }
