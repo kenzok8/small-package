@@ -904,6 +904,11 @@ return view.extend({
 		so.validate = L.bind(hp.validateBase64Key, this, 44);
 		so.modalonly = true;
 
+		so = ss.option(form.DynamicList, 'wireguard_reserved', _('Reserved field bytes'));
+		so.datatype = 'integer';
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
 		so = ss.option(form.Value, 'wireguard_mtu', _('MTU'));
 		so.datatype = 'range(0,9000)';
 		so.default = '1408';

@@ -50,7 +50,7 @@ const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, sniff_override = '1',
     dns_server, dns_default_strategy, dns_default_server, dns_disable_cache, dns_disable_cache_expire,
-    lan_proxy_ips, direct_domain_list;
+    direct_domain_list;
 
 if (routing_mode !== 'custom') {
 	main_node = uci.get(uciconfig, ucimain, 'main_node') || 'nil';
@@ -60,15 +60,6 @@ if (routing_mode !== 'custom') {
 	dns_server = uci.get(uciconfig, ucimain, 'dns_server');
 	if (isEmpty(dns_server) || dns_server === 'wan')
 		dns_server = wan_dns;
-
-	for (let i in ['lan_global_proxy_ipv4_ips', 'lan_global_proxy_ipv6_ips']) {
-		const global_proxy_ips = uci.get(uciconfig, ucicontrol, i);
-		if (length(global_proxy_ips)) {
-			if (!lan_proxy_ips)
-				lan_proxy_ips = [];
-			map(global_proxy_ips, (v) => push(lan_proxy_ips, v));
-		}
-	}
 
 	direct_domain_list = trim(readfile(HP_DIR + '/resources/direct_list.txt'));
 	if (direct_domain_list)
@@ -90,7 +81,8 @@ const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'redirect_tproxy
       default_interface = uci.get(uciconfig, ucicontrol, 'bind_interface');
 
 let self_mark, redirect_port, tproxy_port,
-    tun_name, tcpip_stack = 'system', endpoint_independent_nat;
+    tun_name, tun_addr4, tun_addr6, tun_mtu,
+    tcpip_stack, endpoint_independent_nat;
 if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(uciconfig, 'infra', 'self_mark') || '100';
 	redirect_port = uci.get(uciconfig, 'infra', 'redirect_port') || '5331';
@@ -100,6 +92,10 @@ if (match(proxy_mode), /tproxy/)
 		tproxy_port = uci.get(uciconfig, 'infra', 'tproxy_port') || '5332';
 if (match(proxy_mode), /tun/) {
 	tun_name = uci.get(uciconfig, uciinfra, 'tun_name') || 'singtun0';
+	tun_addr4 = uci.get(uciconfig, uciinfra, 'tun_addr4') || '172.19.0.1/30';
+	tun_addr6 = uci.get(uciconfig, uciinfra, 'tun_addr6') || 'fdfe:dcba:9876::1/126';
+	tun_mtu = uci.get(uciconfig, uciinfra, 'tun_mtu') || '9000';
+	tcpip_stack = 'system';
 	if (routing_mode === 'custom') {
 		tcpip_stack = uci.get(uciconfig, uciroutingsetting, 'tcpip_stack') || 'system';
 		endpoint_independent_nat = uci.get(uciconfig, uciroutingsetting, 'endpoint_independent_nat');
@@ -162,6 +158,7 @@ function generate_outbound(node) {
 		private_key: node.wireguard_private_key,
 		peer_public_key: node.wireguard_peer_public_key,
 		pre_shared_key: node.wireguard_pre_shared_key,
+		reserved: parse_port(node.wireguard_reserved),
 		mtu: node.wireguard_mtu,
 
 		multiplex: (node.multiplex === '1') ? {
@@ -423,9 +420,9 @@ if (!isEmpty(main_node) || !isEmpty(default_outbound)) {
 			tag: 'tun-in',
 
 			interface_name: tun_name,
-			inet4_address: '172.19.0.1/30',
-			inet6_address: 'fdfe:dcba:9876::1/126',
-			mtu: 9000,
+			inet4_address: tun_addr4,
+			inet6_address: (ipv6_support === '1') ? tun_addr6 : null,
+			mtu: strToInt(tun_mtu),
 			auto_route: false,
 			endpoint_independent_nat: (endpoint_independent_nat === '1') || null,
 			stack: tcpip_stack,
