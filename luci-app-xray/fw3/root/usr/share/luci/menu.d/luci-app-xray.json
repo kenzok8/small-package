@@ -1,0 +1,17 @@
+{
+    "admin/services/xray_fw3": {
+        "title": "Xray (firewall3)",
+        "action": {
+            "type": "view",
+            "path": "xray_fw3"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-xray"
+            ],
+            "uci": {
+                "xray_fw3": true
+            }
+        }
+    }
+}

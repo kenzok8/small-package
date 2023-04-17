@@ -16,7 +16,8 @@ s = m:section(NamedSection, arg[1], "share", "")
 s.addremove = false
 s.dynamic = false
 
-path = s:option(Value, "path", translate("Path"))
+path = s:option(Value, "path", translate("Path"), 
+    translate("Note: '/mnt' is not suitable as a writable share, because Windows will recognize the wrong capacity"))
 path.datatype = "string"
 path.rmempty = false
 path.validate = function(self, value, section)

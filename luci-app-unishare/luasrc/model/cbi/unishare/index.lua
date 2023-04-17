@@ -10,7 +10,9 @@ s.addremove = false
 o = s:taboption("general", Flag, "enabled", translate("Enabled"))
 o.default = 0
 
-o = s:taboption("general", Flag, "anonymous", translate("Allow Anonymous"))
+o = s:taboption("general", Flag, "anonymous", translate("Allow Anonymous"),
+    translatef("For logged in users, please manage on the '%s' page",
+        "<a href=\""..luci.dispatcher.build_url("admin", "nas", "unishare", "users").."\" >"..translate("Users").."</a>"))
 o.default = 0
 
 o = s:taboption("webdav", Value, "webdav_port", translate("WebDAV Port"))

@@ -13,6 +13,9 @@ msgstr "全局"
 msgid "Allow Anonymous"
 msgstr "允许匿名用户"
 
+msgid "For logged in users, please manage on the '%s' page"
+msgstr "对于登录用户，请在 '%s' 页面进行管理"
+
 msgid "WebDAV Port"
 msgstr "WebDAV 端口"
 
@@ -43,6 +46,9 @@ msgstr "登录用户"
 msgid "'Everyone' includes anonymous if enabled, 'Logged Users' includes all users configured in '%s' tab"
 msgstr "'任何人'包括所有登录用户和匿名用户（如果允许匿名用户），'登录用户'包括所有在'%s'标签页配置的用户"
 
+msgid "Note: '/mnt' is not suitable as a writable share, because Windows will recognize the wrong capacity"
+msgstr "注意：'/mnt' 不适合作为可写共享，因为 Windows 会认错容量"
+
 msgid "Name cannot be empty when Path is /"
 msgstr "路径是/时，名称不能为空"
 
@@ -54,3 +60,6 @@ msgstr "名称不能包含这些特殊字符'%s'"
 
 msgid "Username must matchs regex '%s'"
 msgstr "用户名必须满足正则表达式'%s'"
+
+msgid "Note: Do not use the 'root' user, as Samba forbids 'root' user login by default"
+msgstr "注意：不要使用 'root' 用户，因为 Samba 默认禁止 'root' 用户登录"

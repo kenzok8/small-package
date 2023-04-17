@@ -6,11 +6,15 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Warnings
 
+* Since version 2.0.0 this project is split into `fw3` and `fw4` variants and **this breaks compatibility**:
+    * Configuration files and init scripts are renamed. Manually refill configurations or run `mv /etc/config/xray /etc/config/xray_fw4` (for fw4, similar for fw3) for migration.
+    * installation method is changed. See `Installation` below for details.
+    * `fw3` variant is no longer in active development (version 2.0.0 is not tested as well, just merged first). It is strongly recommended to use `fw4` variant.
 * About experimental REALITY support
     * may change quite frequently so keep in mind about following warnings
     * currently only implemented in ucode, which means OpenWrt 22.03 versions (or master branch) and fw4 is required. Support for previous versions (19.07 / 21.02) will be added later.
     * server role support **involves breaking changes if you use HTTPS server**: certificate settings are now bound to stream security, so previously uploaded certificate and key files will disappear in LuCI, but this won't prevent Xray from using them. Your previously uploaded file are still there, just select them again in LuCI. If Xray fails to start up and complains about missing certificate files, also try picking them again.
-    * legacy XTLS support has already been removed in version 1.8.0. This project will also remove legacy XTLS support in the next few updates so please migrate to xtls-rprx-vision or as soon as possible.
+    * legacy XTLS support has already been removed in version 1.8.0 and is also removed by this project since version 2.0.0.
 * Since OpenWrt 22.03 release, the recommended firewall implementation for this project is now **firewall4** with some caveats
     * currently this project still works on OpenWrt 19.07 / 21.02 versions. There's a warning about missing `kmod-nft-tproxy` when using these versions, just ignore it. This problem will be fixed later.
     * support for versions mentioned above will soon be **deprecated**, which means that most new features won't be implemented for these old versions. Check changelog for details about future changes and availability of various new features.
@@ -31,7 +35,12 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Installation
 
-Clone this repository under `package/extra` and find `luci-app-xray` under `Extra Packages`.
+Choose one below:
+
+* Add `src-git-full luci-app-xray https://github.com/yichya/luci-app-xray` to `feeds.conf.default` and run `./scripts/feeds update -a; ./scripts/feeds install -a` 
+* Clone this repository under `package`
+
+Then find `luci-app-xray` under `Extra Packages`.
 
 ## Changelog 2023
 
