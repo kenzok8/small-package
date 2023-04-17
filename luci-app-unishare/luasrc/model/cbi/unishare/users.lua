@@ -6,7 +6,8 @@ s.anonymous = true
 s.addremove = true
 s.template = "cbi/tblsection"
 
-o = s:option(Value, "username", translate("Username"))
+o = s:option(Value, "username", translate("Username"),
+    translate("Note: Do not use the 'root' user, as Samba forbids 'root' user login by default"))
 o.datatype = "string"
 o.rmempty = false
 o.validate = function(self, value)
