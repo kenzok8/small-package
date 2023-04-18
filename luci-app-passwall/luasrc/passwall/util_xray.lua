@@ -675,7 +675,7 @@ function gen_config(var)
 			local preproxy_node = preproxy_enabled and preproxy_node_id and uci:get_all(appname, preproxy_node_id) or nil
 			local preproxy_is_balancer
 
-			if not preproxy_node and api.parseURL(preproxy_node_id) then
+			if not preproxy_node and preproxy_node_id and api.parseURL(preproxy_node_id) then
 				local parsed1 = api.parseURL(preproxy_node_id)
 				local _node = {
 					type = "Xray",
