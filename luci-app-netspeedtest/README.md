@@ -117,19 +117,37 @@ luci-app-netspeedtest 网络速度诊断测试（包括：内网网页版测速�
 ![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/netspeedtest4.jpg)
 
 
-## 其它
-- 我的其它项目：
+
+## 使用与授权相关说明
+ 
+- 本人开源的所有源码，任何引用需注明本处出处，如需修改二次发布必告之本人，未经许可不得做于任何商用用途。
+
+
+# My other project
+
 - 网络速度测试 ：https://github.com/sirpdboy/NetSpeedTest
+
 - 定时设置插件 : https://github.com/sirpdboy/luci-app-autotimeset
+
 - 关机功能插件 : https://github.com/sirpdboy/luci-app-poweroffdevice
-- btmob 主题: https://github.com/sirpdboy/luci-theme-btmob
+
+- opentopd主题 : https://github.com/sirpdboy/luci-theme-opentopd
+
+- kucat 主题: https://github.com/sirpdboy/luci-theme-kucat
+
+- 家长控制: https://github.com/sirpdboy/luci-theme-parentcontrol
+
 - 系统高级设置 : https://github.com/sirpdboy/luci-app-advanced
+
 - ddns-go动态域名: https://github.com/sirpdboy/luci-app-ddns-go
-- Lucky(大吉): https://github.com/sirpdboy/luci-app-lucky
 
-## 感谢
+- 进阶设置（系统高级设置+主题设置kucat/agron/opentopd）: https://github.com/sirpdboy/luci-app-advancedplus
 
-感谢sivel、superspeed、user1121114685、ZeaKyX、佐须之男、lean等。因为有你们珠玉在前！
+- 设置向导: https://github.com/sirpdboy/luci-app-wizard
+
+- 分区扩容: https://github.com/sirpdboy/luci-app-partexp
+
+- lukcy大吉: https://github.com/sirpdboy/luci-app-lukcy
 
 ## 捐助
 

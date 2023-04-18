@@ -37,7 +37,7 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 Choose one below:
 
-* Add `src-git-full luci-app-xray https://github.com/yichya/luci-app-xray` to `feeds.conf.default` and run `./scripts/feeds update -a; ./scripts/feeds install -a` 
+* Add `src-git-full luci_app_xray https://github.com/yichya/luci-app-xray` to `feeds.conf.default` and run `./scripts/feeds update -a; ./scripts/feeds install -a` 
 * Clone this repository under `package`
 
 Then find `luci-app-xray` under `Extra Packages`.
