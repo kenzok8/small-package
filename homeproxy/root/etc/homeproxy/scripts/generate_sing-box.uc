@@ -104,6 +104,18 @@ if (match(proxy_mode), /tun/) {
 /* UCI config end */
 
 /* Config helper start */
+function parse_port(strport) {
+	if (type(strport) !== 'array' || isEmpty(strport))
+		return null;
+
+	let ports = [];
+	for (let i in strport)
+		push(ports, int(i));
+
+	return ports;
+
+}
+
 function generate_outbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -242,18 +254,6 @@ function get_resolver(cfg) {
 		return cfg;
 	else
 		return 'cfg-' + cfg + '-dns';
-}
-
-function parse_port(strport) {
-	if (type(strport) !== 'array' || isEmpty(strport))
-		return null;
-
-	let ports = [];
-	for (let i in strport)
-		push(ports, int(i));
-
-	return ports;
-
 }
 /* Config helper end */
 
