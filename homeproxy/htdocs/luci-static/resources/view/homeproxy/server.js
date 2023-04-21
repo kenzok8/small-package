@@ -77,15 +77,12 @@ return view.extend({
 		o.depends('type', 'http');
 		o.depends('type', 'naive');
 		o.depends('type', 'socks');
-		o.rmempty = false;
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'password', _('Password'));
 		o.password = true;
-		o.depends('type', 'http');
-		o.depends('type', 'naive');
+		o.depends({'type': /^(http|naive|socks)$/, 'username': /[\s\S]/});
 		o.depends('type', 'shadowsocks');
-		o.depends('type', 'socks');
 		o.depends('type', 'trojan');
 		o.validate = function(section_id, value) {
 			if (section_id) {
@@ -99,6 +96,7 @@ return view.extend({
 					else if (['2022-blake3-aes-256-gcm', '2022-blake3-chacha20-poly1305'].includes(encmode))
 						return hp.validateBase64Key(44, section_id, value);
 				}
+
 				if (!value)
 					return _('Expecting: %s').format(_('non-empty value'));
 			}
