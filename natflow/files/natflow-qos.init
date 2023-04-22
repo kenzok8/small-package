@@ -117,6 +117,60 @@ natflow_qos_setup()
 	echo "$cmd" >$DEVCTL
 }
 
+natflow_qos_zone_setup_tc()
+{
+	local idx=$zone_idx
+	zone_idx=$((zone_idx+1))
+	local cfg="$1"
+	local fw_zone ifname type
+
+	config_get fw_zone "$cfg" fw_zone
+	config_get ifname "$cfg" ifname
+	config_get type "$cfg" type
+
+	(for fwz in $fw_zone; do
+		fw3 -q zone $fwz
+	done; \
+	for ifn in $ifname; do
+		echo $ifn
+	done) | sed 's/+$/\*/' | sort | uniq | while read IFN; do
+		#echo $type $idx=$IFN >$DEVCTL
+		case $type in
+		lan_zone)
+			ifconfig -a | grep "^$IFN" | awk '{print $1}' | while read lan; do
+				if [ "${lan}" = "${lan//:}" ]; then
+					cat /dev/qos_ctl | grep "^add user=" | while read line; do
+						line="${line/*rxbytes=}"
+						rxbytes="${line/,*}"
+						tc qdisc del dev $lan root &>/dev/null
+						tc qdisc add dev $lan root handle 1: htb
+						tc class add dev $lan parent 1: classid 1:1 htb rate ${rxbytes}Bps
+						tc filter add dev $lan parent 1: protocol ip prio 1 handle 1 fw classid 1:1
+						tc filter add dev $lan parent 1: protocol 0x8864 prio 2 handle 1 fw classid 1:1
+						echo setup tc for $lan @lan rxbytes=$rxbytes
+					done
+				fi
+			done
+		;;
+		wan_zone)
+			ifconfig -a | grep "^$IFN" | awk '{print $1}' | while read wan; do
+				if [ "${wan}" = "${wan//:}" ]; then
+					cat /dev/qos_ctl | grep "^add user=" | while read line; do
+						txbytes="${line/*,txbytes=}"
+						tc qdisc del dev $wan root &>/dev/null
+						tc qdisc add dev $wan root handle 1: htb
+						tc class add dev $wan parent 1: classid 1:1 htb rate ${txbytes}Bps
+						tc filter add dev $wan parent 1: protocol ip prio 1 handle 1 fw classid 1:1
+						tc filter add dev $wan parent 1: protocol 0x8864 prio 2 handle 1 fw classid 1:1
+						echo setup tc for $wan @wan txbytes=$txbytes
+					done
+				fi
+			done
+		;;
+		esac
+	done
+}
+
 start() {
 	test -c $DEVCTL || return 0
 
@@ -124,6 +178,12 @@ start() {
 
 	config_load natflow
 	config_foreach natflow_qos_setup qos
+	if [ "$(uci get natflow.main.tc_classid_mode 2>/dev/null || echo 0)" = "1" ]; then
+		echo tc_classid_mode=1 >/dev/qos_ctl
+		config_foreach natflow_qos_zone_setup_tc zone
+	else
+		echo tc_classid_mode=0 >/dev/qos_ctl
+	fi
 }
 
 stop() {
