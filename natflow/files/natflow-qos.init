@@ -139,15 +139,20 @@ natflow_qos_zone_setup_tc()
 		lan_zone)
 			ifconfig -a | grep "^$IFN" | awk '{print $1}' | while read lan; do
 				if [ "${lan}" = "${lan//:}" ]; then
+					qos_id=0
+					tc qdisc add dev $lan root handle 1: htb
 					cat /dev/qos_ctl | grep "^add user=" | while read line; do
 						line="${line/*rxbytes=}"
 						rxbytes="${line/,*}"
-						tc qdisc del dev $lan root &>/dev/null
-						tc qdisc add dev $lan root handle 1: htb
-						tc class add dev $lan parent 1: classid 1:1 htb rate ${rxbytes}Bps
-						tc filter add dev $lan parent 1: protocol ip prio 1 handle 1 fw classid 1:1
-						tc filter add dev $lan parent 1: protocol 0x8864 prio 2 handle 1 fw classid 1:1
-						echo setup tc for $lan @lan rxbytes=$rxbytes
+						quantum=$(($rxbytes/1000))
+						if test $quantum -lt 256; then
+							quantum=256
+						fi
+						qos_id=$((qos_id+1))
+						echo setup tc for $lan @lan rxbytes=$rxbytes quantum=$quantum qos_id=$qos_id
+						tc class add dev $lan parent 1: classid 1:${qos_id} htb rate ${rxbytes}Bps quantum $quantum
+						tc filter add dev $lan parent 1: protocol ip prio 1 handle ${qos_id} fw classid 1:${qos_id}
+						tc filter add dev $lan parent 1: protocol 0x8864 prio 2 handle ${qos_id} fw classid 1:${qos_id}
 					done
 				fi
 			done
@@ -155,19 +160,33 @@ natflow_qos_zone_setup_tc()
 		wan_zone)
 			ifconfig -a | grep "^$IFN" | awk '{print $1}' | while read wan; do
 				if [ "${wan}" = "${wan//:}" ]; then
+					qos_id=0
+					tc qdisc add dev $wan root handle 1: htb
 					cat /dev/qos_ctl | grep "^add user=" | while read line; do
 						txbytes="${line/*,txbytes=}"
-						tc qdisc del dev $wan root &>/dev/null
-						tc qdisc add dev $wan root handle 1: htb
-						tc class add dev $wan parent 1: classid 1:1 htb rate ${txbytes}Bps
-						tc filter add dev $wan parent 1: protocol ip prio 1 handle 1 fw classid 1:1
-						tc filter add dev $wan parent 1: protocol 0x8864 prio 2 handle 1 fw classid 1:1
-						echo setup tc for $wan @wan txbytes=$txbytes
+						quantum=$(($txbytes/1000))
+						if test $quantum -lt 256; then
+							quantum=256
+						fi
+						qos_id=$((qos_id+1))
+						echo setup tc for $wan @wan txbytes=$txbytes quantum=$quantum qos_id=$qos_id
+						tc class add dev $wan parent 1: classid 1:${qos_id} htb rate ${txbytes}Bps quantum $quantum
+						tc filter add dev $wan parent 1: protocol ip prio 1 handle ${qos_id} fw classid 1:${qos_id}
+						tc filter add dev $wan parent 1: protocol 0x8864 prio 2 handle ${qos_id} fw classid 1:${qos_id}
 					done
 				fi
 			done
 		;;
 		esac
+	done
+}
+
+natflow_qos_clear_tc()
+{
+	ifconfig | grep "^[^ ]" | awk '{print $1}' | while read ifname; do
+		if [ "${ifname}" = "${ifname//:}" ]; then
+			tc qdisc del dev $ifname root &>/dev/null
+		fi
 	done
 }
 
@@ -178,6 +197,9 @@ start() {
 
 	config_load natflow
 	config_foreach natflow_qos_setup qos
+
+	natflow_qos_clear_tc
+
 	if [ "$(uci get natflow.main.tc_classid_mode 2>/dev/null || echo 0)" = "1" ]; then
 		echo tc_classid_mode=1 >/dev/qos_ctl
 		config_foreach natflow_qos_zone_setup_tc zone
@@ -193,6 +215,8 @@ stop() {
 	ipset list -n | grep ^qos_ | while read ipset; do
 		ipset destroy $ipset
 	done
+
+	natflow_qos_clear_tc
 }
 
 restart() {
