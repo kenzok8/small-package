@@ -7,13 +7,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-ddns-go
-PKG_VERSION:=1.2.0
-PKG_RELEASE:=7
+PKG_VERSION:=1.2.1
+PKG_RELEASE:=8
 
 LUCI_TITLE:=LuCI Support for Dynamic ddns-go Client
 LUCI_DEPENDS:=+ddnsgo
 LUCI_PKGARCH:=all
 
-include $(TOPDIR)/feeds/luci/luci.mk
+define Package/$PKG_NAME/conffiles
+/etc/config/ddnsgo
+/etc/ddns-go/ddnsgo-config.yaml
+endef
 
+include $(TOPDIR)/feeds/luci/luci.mk
 # call BuildPackage - OpenWrt buildroot signature
