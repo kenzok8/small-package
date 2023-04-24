@@ -158,10 +158,13 @@ function ip_replace(){
 function host_ip() {
     if [ "x${HOST_enabled}" == "x1" ] ;then
         get_servers_config "host_domain"
-        HOSTS_LINE="$bestip $host_domain"
-        if [ -n "$(grep $host_domain /etc/hosts)" ]
+        HOSTS_LINE=$(echo "$host_domain" | sed 's/,/ /g' | sed "s/^/$bestip /g")
+        host_domain_first=$(echo "$host_domain" | awk -F, '{print $1}')
+
+        if [ -n "$(grep $host_domain_first /etc/hosts)" ]
         then
-            sed -i".bak" "/$host_domain/d" /etc/hosts
+            echo $host_domain_first
+            sed -i".bak" "/$host_domain_first/d" /etc/hosts
             echo $HOSTS_LINE >> /etc/hosts;
         else
             echo $HOSTS_LINE >> /etc/hosts;
