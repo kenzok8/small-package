@@ -31,6 +31,9 @@ div > label + select {
 	min-width: unset;
 	width: auto;
 }
+#control_panel input[type="checkbox"]{
+	margin: 0
+}
 #control_panel + div {
 	display: flex;
 	margin-bottom: .5rem;
@@ -56,6 +59,9 @@ div > label + select {
 }
 #thFirstSeen, #thLastSeen {
 	width: 15%;
+}
+#progressbar_panel > .tr {
+	background: none;
 }
 #progressbar_panel > .tr > .td:nth-child(1) {
 	width: 10%;
