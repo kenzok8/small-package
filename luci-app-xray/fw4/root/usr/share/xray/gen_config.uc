@@ -678,17 +678,17 @@ function dns_conf() {
     const fast_dns_object = split_ipv4_host_port(proxy["fast_dns"], 53);
     const default_dns_object = split_ipv4_host_port(proxy["default_dns"], 53);
     let servers = [
+        default_dns_object,
         {
             address: fast_dns_object["address"],
             port: fast_dns_object["port"],
             domains: [...upstream_domain_names(), ...fast_domain_rules()],
         },
-        default_dns_object,
     ];
 
     if (length(secure_domain_rules()) > 0) {
         const secure_dns_object = split_ipv4_host_port(proxy["secure_dns"], 53);
-        splice(servers, 1, 0, {
+        push(servers, {
             address: secure_dns_object["address"],
             port: secure_dns_object["port"],
             domains: secure_domain_rules(),
