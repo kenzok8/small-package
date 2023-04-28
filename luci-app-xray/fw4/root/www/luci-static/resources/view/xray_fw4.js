@@ -6,6 +6,8 @@
 'require network';
 'require tools.widgets as widgets';
 
+const variant = "xray_fw4";
+
 function validate_object(id, a) {
     if (a == "") {
         return true
@@ -245,7 +247,7 @@ function check_resource_files(load_result) {
 return view.extend({
     load: function () {
         return Promise.all([
-            uci.load("xray_fw4"),
+            uci.load(variant),
             fs.list("/usr/share/xray"),
             network.getHostHints()
         ])
@@ -264,7 +266,7 @@ return view.extend({
             }
         }
 
-        const m = new form.Map('xray_fw4', _('Xray (firewall4)'), status_text + " " + asset_file_status);
+        const m = new form.Map(variant, _('Xray (firewall4)'), status_text + " " + asset_file_status);
 
         var s, o, ss;
 

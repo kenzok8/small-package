@@ -219,31 +219,26 @@ local function tls_settings(server, protocol)
     return result
 end
 
-local function xtls_settings(server, protocol)
+local function reality_settings(server, protocol)
     local result = {
-        serverName = server[protocol .. "_xtls_host"],
-        allowInsecure = server[protocol .. "_xtls_insecure"] ~= "0",
+        fingerprint = server[protocol .. "_reality_fingerprint"],
+        serverName = server[protocol .. "_reality_server_name"],
+        publicKey = server[protocol .. "_reality_public_key"],
+        shortId = server[protocol .. "_reality_short_id"],
+        spiderX = server[protocol .. "_reality_spider_x"],
     }
-
-    if server[protocol .. "_xtls_alpn"] ~= nil then
-        local alpn = {}
-        for _, x in ipairs(server[protocol .. "_xtls_alpn"]) do
-            table.insert(alpn, x)
-        end
-        result["alpn"] = alpn
-    end
 
     return result
 end
 
-local function stream_settings(server, protocol, xtls, tag)
+local function stream_settings(server, protocol, tag)
     local security = server[protocol .. "_tls"]
     local tlsSettings = nil
-    local xtlsSettings = nil
+    local realitySettings = nil
     if security == "tls" then
         tlsSettings = tls_settings(server, protocol)
-    elseif security == "xtls" and xtls then
-        xtlsSettings = xtls_settings(server, protocol)
+    elseif security == "reality" then
+        realitySettings = reality_settings(server, protocol)
     end
     local dialerProxySection = nil
     local dialerProxy = nil
@@ -260,7 +255,7 @@ local function stream_settings(server, protocol, xtls, tag)
         },
         security = security,
         tlsSettings = tlsSettings,
-        xtlsSettings = xtlsSettings,
+        realitySettings = realitySettings,
         quicSettings = stream_quic(server),
         tcpSettings = stream_tcp(server),
         kcpSettings = stream_kcp(server),
@@ -271,7 +266,7 @@ local function stream_settings(server, protocol, xtls, tag)
 end
 
 local function shadowsocks_outbound(server, tag)
-    local streamSettings, dialerProxy = stream_settings(server, "shadowsocks", false, tag)
+    local streamSettings, dialerProxy = stream_settings(server, "shadowsocks", tag)
     return {
         protocol = "shadowsocks",
         tag = tag,
@@ -291,7 +286,7 @@ local function shadowsocks_outbound(server, tag)
 end
 
 local function vmess_outbound(server, tag)
-    local streamSettings, dialerProxy = stream_settings(server, "vmess", false, tag)
+    local streamSettings, dialerProxy = stream_settings(server, "vmess", tag)
     return {
         protocol = "vmess",
         tag = tag,
@@ -316,15 +311,15 @@ end
 
 local function vless_outbound(server, tag)
     local flow = nil
-    if server.vless_tls == "xtls" then
-        flow = server.vless_flow
-    elseif server.vless_tls == "tls" then
+    if server.vless_tls == "tls" then
         flow = server.vless_flow_tls
+    elseif server.vless_tls == "reality" then
+        flow = server.vless_flow_reality
     end
     if flow == "none" then
         flow = nil
     end
-    local streamSettings, dialerProxy = stream_settings(server, "vless", true, tag)
+    local streamSettings, dialerProxy = stream_settings(server, "vless", tag)
     return {
         protocol = "vless",
         tag = tag,
@@ -348,14 +343,7 @@ local function vless_outbound(server, tag)
 end
 
 local function trojan_outbound(server, tag)
-    local flow = nil
-    if server.trojan_tls == "xtls" then
-        flow = server.trojan_flow
-    end
-    if flow == "none" then
-        flow = nil
-    end
-    local streamSettings, dialerProxy = stream_settings(server, "trojan", true, tag)
+    local streamSettings, dialerProxy = stream_settings(server, "trojan", tag)
     return {
         protocol = "trojan",
         tag = tag,
@@ -365,7 +353,6 @@ local function trojan_outbound(server, tag)
                     address = server.server,
                     port = tonumber(server.server_port),
                     password = server.password,
-                    flow = flow,
                 }
             }
         },
@@ -491,28 +478,43 @@ local function fallbacks()
     return f
 end
 
-local function tls_inbound_settings()
+local function tls_inbound_settings(protocol_name)
+    local wscert = proxy[protocol_name .. "_tls_cert_file"]
+    if wscert == nil then
+        wscert = proxy.web_server_cert_file
+    end
+    local wskey = proxy[protocol_name .. "_tls_key_file"]
+    if wskey == nil then
+        wskey = proxy.web_server_key_file
+    end
     return {
         alpn = {
             "http/1.1"
         },
         certificates = {
             {
-                certificateFile = proxy.web_server_cert_file,
-                keyFile = proxy.web_server_key_file
+                certificateFile = wscert,
+                keyFile = wskey
             }
         }
     }
 end
 
+local function reality_inbound_settings(protocol_name) 
+    return {
+        show = proxy[protocol_name .. "_reality_show"],
+        dest = proxy[protocol_name .. "_reality_dest"],
+        xver = proxy[protocol_name .. "_reality_xver"],
+        serverNames = proxy[protocol_name .. "_reality_server_names"],
+        privateKey = proxy[protocol_name .. "_reality_private_key"],
+        minClientVer = proxy[protocol_name .. "_reality_min_client_ver"],
+        maxClientVer = proxy[protocol_name .. "_reality_max_client_ver"],
+        maxTimeDiff = proxy[protocol_name .. "_reality_max_time_diff"],
+        shortIds = proxy[protocol_name .. "_reality_short_ids"],
+    }
+end
+
 local function https_trojan_inbound()
-    local flow = nil
-    if proxy.trojan_tls == "xtls" then
-        flow = proxy.trojan_flow
-    end
-    if flow == "none" then
-        flow = nil
-    end
     return {
         port = proxy.web_server_port or 443,
         protocol = "trojan",
@@ -520,8 +522,7 @@ local function https_trojan_inbound()
         settings = {
             clients = {
                 {
-                    password = proxy.web_server_password,
-                    flow = flow
+                    password = proxy.web_server_password
                 }
             },
             fallbacks = fallbacks()
@@ -529,18 +530,17 @@ local function https_trojan_inbound()
         streamSettings = {
             network = "tcp",
             security = proxy.trojan_tls,
-            tlsSettings = proxy.trojan_tls == "tls" and tls_inbound_settings() or nil,
-            xtlsSettings = proxy.trojan_tls == "xtls" and tls_inbound_settings() or nil
+            tlsSettings = proxy.trojan_tls == "tls" and tls_inbound_settings("trojan") or nil
         }
     }
 end
 
 local function https_vless_inbound()
     local flow = nil
-    if proxy.vless_tls == "xtls" then
-        flow = proxy.vless_flow
-    elseif proxy.vless_tls == "tls" then
+    if proxy.vless_tls == "tls" then
         flow = proxy.vless_flow_tls
+    elseif proxy.vless_tls == "reality" then
+        flow = proxy.vless_flow_reality
     end
     if flow == "none" then
         flow = nil
@@ -562,8 +562,8 @@ local function https_vless_inbound()
         streamSettings = {
             network = "tcp",
             security = proxy.vless_tls,
-            tlsSettings = proxy.vless_tls == "tls" and tls_inbound_settings() or nil,
-            xtlsSettings = proxy.vless_tls == "xtls" and tls_inbound_settings() or nil
+            tlsSettings = proxy.vless_tls == "tls" and tls_inbound_settings("vless") or nil,
+            realitySettigns = proxy.vless_tls == "reality" and reality_inbound_settings("vless") or nil
         }
     }
 end
@@ -665,33 +665,48 @@ local function blocked_domain_rules()
     return domain_rules("blocked_domain_rules")
 end
 
+local function merge_ipairs(a, b)
+    local domain_names = {}
+    local hash = {}
+    local result = {}
+    if a ~= nil then
+        for _, i in ipairs(a) do
+            table.insert(domain_names, i)
+        end
+    end
+    if b ~= nil then
+        for _, j in ipairs(b) do
+            table.insert(domain_names, j)
+        end
+    end
+    for _, v in ipairs(domain_names) do
+        if (not hash[v]) then
+            result[#result+1] = v
+            hash[v] = true
+        end
+    end
+    return result
+end
+
 local function dns_conf()
     local fast_dns_ip, fast_dns_port = split_ipv4_host_port(proxy.fast_dns, 53)
     local default_dns_ip, default_dns_port = split_ipv4_host_port(proxy.default_dns, 53)
     local hosts = nil
     local servers = {
         {
-            address = fast_dns_ip,
-            port = fast_dns_port,
-            domains = upstream_domain_names(),
-        },
-        {
             address = default_dns_ip,
             port = default_dns_port,
+        },
+        {
+            address = fast_dns_ip,
+            port = fast_dns_port,
+            domains = merge_ipairs(upstream_domain_names(), fast_domain_rules()),
         }
     }
 
-    if fast_domain_rules() ~= nil then
-        table.insert(servers, 2, {
-            address = fast_dns_ip,
-            port = fast_dns_port,
-            domains = fast_domain_rules(),
-        })
-    end
-
     if secure_domain_rules() ~= nil then
         local secure_dns_ip, secure_dns_port = split_ipv4_host_port(proxy.secure_dns, 53)
-        table.insert(servers, 2, {
+        table.insert(servers, {
             address = secure_dns_ip,
             port = secure_dns_port,
             domains = secure_domain_rules(),
@@ -1004,8 +1019,8 @@ local function rules()
         if proxy.direct_bittorrent == "1" then
             table.insert(result, 1, {
                 type = "field",
-                outboundTag: "direct",
-                protocol: ["bittorrent"]
+                outboundTag = "direct",
+                protocol = {"bittorrent"}
             })
         end
     end

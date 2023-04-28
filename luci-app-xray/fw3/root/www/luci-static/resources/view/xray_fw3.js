@@ -6,6 +6,8 @@
 'require network';
 'require tools.widgets as widgets';
 
+const variant = "xray_fw3";
+
 function validate_object(id, a) {
     if (a == "") {
         return true
@@ -24,7 +26,20 @@ function validate_object(id, a) {
     }
 }
 
-function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, protocol_name, have_xtls, have_tls_flow, client_side) {
+function fingerprints(o) {
+    o.value("chrome", "chrome")
+    o.value("firefox", "firefox")
+    o.value("safari", "safari")
+    o.value("ios", "ios")
+    o.value("android", "android")
+    o.value("edge", "edge")
+    o.value("360", "360")
+    o.value("qq", "qq")
+    o.value("random", "random")
+    o.value("randomized", "randomized")
+} 
+
+function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, protocol_name, have_tls_flow, client_side) {
     let o = s.taboption(tab_name, form.ListValue, `${protocol_name}_tls`, _(`[${protocol_name}] Stream Security`))
     let odep = {}
     odep[depends_field_name] = protocol_name
@@ -35,36 +50,12 @@ function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, prot
         odep["web_server_enable"] = "1"
     }
     o.value("tls", "TLS")
-    if (have_xtls) {
-        o.value("xtls", "XTLS")
-    }
     if (have_tls_flow) {
         o.value("reality", "REALITY (Experimental)")
     }
     o.depends(odep)
     o.rmempty = false
     o.modalonly = true
-
-    if (have_xtls) {
-        let flow = s.taboption(tab_name, form.ListValue, `${protocol_name}_flow`, _(`[${protocol_name}][xtls] Flow`))
-        let flow_dep = {}
-        flow_dep[depends_field_name] = protocol_name
-        flow_dep[`${protocol_name}_tls`] = "xtls"
-        flow.value("none", "none")
-        flow.value("xtls-rprx-origin", "xtls-rprx-origin")
-        flow.value("xtls-rprx-origin-udp443", "xtls-rprx-origin-udp443")
-        flow.value("xtls-rprx-direct", "xtls-rprx-direct")
-        flow.value("xtls-rprx-direct-udp443", "xtls-rprx-direct-udp443")
-        if (client_side) {
-            flow.value("xtls-rprx-splice", "xtls-rprx-splice")
-            flow.value("xtls-rprx-splice-udp443", "xtls-rprx-splice-udp443")
-        } else {
-            flow_dep["web_server_enable"] = "1"
-        }
-        flow.depends(flow_dep)
-        flow.rmempty = false
-        flow.modalonly = true
-    }
 
     if (have_tls_flow) {
         let flow_tls = s.taboption(tab_name, form.ListValue, `${protocol_name}_flow_tls`, _(`[${protocol_name}][tls] Flow`))
@@ -119,16 +110,7 @@ function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, prot
         o = s.taboption(tab_name, form.Value, `${protocol_name}_tls_fingerprint`, _(`[${protocol_name}][tls] Fingerprint`))
         o.depends(`${protocol_name}_tls`, "tls")
         o.value("", "(not set)")
-        o.value("chrome", "chrome")
-        o.value("firefox", "firefox")
-        o.value("safari", "safari")
-        o.value("ios", "ios")
-        o.value("android", "android")
-        o.value("edge", "edge")
-        o.value("360", "360")
-        o.value("qq", "qq")
-        o.value("random", "random")
-        o.value("randomized", "randomized")
+        fingerprints(o)
         o.rmempty = true
         o.modalonly = true
 
@@ -139,37 +121,10 @@ function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, prot
         o.rmempty = true
         o.modalonly = true
 
-        if (have_xtls) {
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_xtls_host`, _(`[${protocol_name}][xtls] Server Name`))
-            o.depends(`${protocol_name}_tls`, "xtls")
-            o.rmempty = true
-            o.modalonly = true
-
-            o = s.taboption(tab_name, form.Flag, `${protocol_name}_xtls_insecure`, _(`[${protocol_name}][xtls] Allow Insecure`))
-            o.depends(`${protocol_name}_tls`, "xtls")
-            o.rmempty = false
-            o.modalonly = true
-
-            o = s.taboption(tab_name, form.DynamicList, `${protocol_name}_xtls_alpn`, _(`[${protocol_name}][xtls] ALPN`))
-            o.depends(`${protocol_name}_tls`, "xtls")
-            o.value("h2", "h2")
-            o.value("http/1.1", "http/1.1")
-            o.rmempty = true
-            o.modalonly = true
-        }
         if (have_tls_flow) {
             o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_fingerprint`, _(`[${protocol_name}][reality] Fingerprint`))
             o.depends(`${protocol_name}_tls`, "reality")
-            o.value("chrome", "chrome")
-            o.value("firefox", "firefox")
-            o.value("safari", "safari")
-            o.value("ios", "ios")
-            o.value("android", "android")
-            o.value("edge", "edge")
-            o.value("360", "360")
-            o.value("qq", "qq")
-            o.value("random", "random")
-            o.value("randomized", "randomized")
+            fingerprints(o)
             o.rmempty = false
             o.modalonly = true
 
@@ -203,19 +158,6 @@ function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, prot
         o = s.taboption(tab_name, form.FileUpload, `${protocol_name}_tls_key_file`, _(`[${protocol_name}][tls] Private Key File`));
         o.root_directory = "/etc/luci-uploads/xray"
         o.depends(tls_cert_key_dep)
-
-        if (have_xtls) {
-            let xtls_cert_key_dep = {"web_server_enable": "1"}
-            xtls_cert_key_dep[`${protocol_name}_tls`] = "xtls"
-
-            o = s.taboption(tab_name, form.FileUpload, `${protocol_name}_xtls_cert_file`, _(`[${protocol_name}][xtls] Certificate File`));
-            o.root_directory = "/etc/luci-uploads/xray"
-            o.depends(xtls_cert_key_dep)
-            
-            o = s.taboption(tab_name, form.FileUpload, `${protocol_name}_xtls_key_file`, _(`[${protocol_name}][xtls] Private Key File`));
-            o.root_directory = "/etc/luci-uploads/xray"
-            o.depends(xtls_cert_key_dep)
-        }
 
         if (have_tls_flow) {
             o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_dest`, _(`[${protocol_name}][reality] Dest`))
@@ -305,7 +247,7 @@ function check_resource_files(load_result) {
 return view.extend({
     load: function () {
         return Promise.all([
-            uci.load("xray_fw3"),
+            uci.load(variant),
             fs.list("/usr/share/xray"),
             network.getHostHints()
         ])
@@ -324,7 +266,7 @@ return view.extend({
             }
         }
 
-        const m = new form.Map('xray_fw3', _('Xray (firewall3)'), status_text + " " + fw_text + " " + asset_file_status);
+        const m = new form.Map(variant, _('Xray (firewall3)'), status_text + " " + asset_file_status);
 
         var s, o, ss;
 
@@ -402,7 +344,7 @@ return view.extend({
         o.value("shadowsocks", "Shadowsocks")
         o.rmempty = false
 
-        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "trojan", true, false, true)
+        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "trojan", false, true)
 
         o = ss.taboption('protocol', form.ListValue, "shadowsocks_security", _("[shadowsocks] Encrypt Method"))
         o.depends("protocol", "shadowsocks")
@@ -421,7 +363,7 @@ return view.extend({
         o.rmempty = false
         o.modalonly = true
 
-        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "shadowsocks", false, false, true)
+        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "shadowsocks", false, true)
 
         o = ss.taboption('protocol', form.ListValue, "vmess_security", _("[vmess] Encrypt Method"))
         o.depends("protocol", "vmess")
@@ -443,7 +385,7 @@ return view.extend({
         o.rmempty = false
         o.modalonly = true
 
-        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "vmess", false, false, true)
+        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "vmess", false, true)
 
         o = ss.taboption('protocol', form.ListValue, "vless_encryption", _("[vless] Encrypt Method"))
         o.depends("protocol", "vless")
@@ -451,7 +393,7 @@ return view.extend({
         o.rmempty = false
         o.modalonly = true
 
-        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "vless", true, true, true)
+        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "vless", true, true)
 
         ss.tab('transport', _('Transport Settings'));
 
@@ -845,9 +787,9 @@ return view.extend({
         o.rmempty = false
         o.depends("web_server_enable", "1")
 
-        add_flow_and_stream_security_conf(s, "xray_server", "web_server_protocol", "vless", true, true, false)
+        add_flow_and_stream_security_conf(s, "xray_server", "web_server_protocol", "vless", true, false)
 
-        add_flow_and_stream_security_conf(s, "xray_server", "web_server_protocol", "trojan", true, false, false)
+        add_flow_and_stream_security_conf(s, "xray_server", "web_server_protocol", "trojan", false, false)
 
         o = s.taboption('xray_server', form.Value, 'web_server_password', _('UserId / Password'), _('Fill user_id for vmess / VLESS, or password for shadowsocks / trojan (also supports <a href="https://github.com/XTLS/Xray-core/issues/158">Xray UUID Mapping</a>)'))
         o.depends("web_server_enable", "1")

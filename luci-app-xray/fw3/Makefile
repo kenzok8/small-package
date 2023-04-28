@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray-fw3
-PKG_VERSION:=2.0.0
+PKG_VERSION:=2.0.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -51,7 +51,7 @@ $(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./root/etc/hotplug.d/iface/01-transparent-proxy-ipset.fw3 $(1)/etc/hotplug.d/iface/01-transparent-proxy-ipset
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view
-	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray_fw3.js $(1)/www/luci-static/resources/view/xray.js
+	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray_fw3.js $(1)/www/luci-static/resources/view/xray_fw3.js
 	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
 	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-app-xray.json $(1)/usr/share/luci/menu.d/luci-app-xray.json
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
