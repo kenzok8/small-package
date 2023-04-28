@@ -1,13 +1,19 @@
 name: Sync packages
 
 on:
- workflow_dispatch:
   push:
     paths:
       - '.github/workflows/wall.yml'
       - '.github/diy/main.sh'
   schedule:
     - cron: 0 */8 * * *
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'packages'
+        required: false
+        default: 'false'	
 
 jobs:
   build:
