@@ -27,7 +27,7 @@
 #control_panel > div > label {
 	margin-right: .5rem;
 }
-#control_panel > div > label + select {
+div > label + select {
 	min-width: unset;
 	width: auto;
 }

@@ -175,7 +175,7 @@ function handleConfig(ev) {
 		arglist = [
 			[ui.Select, _('Default Protocol'), {'ipv4': _('ipv4'), 'ipv6': _('ipv6')}, {}, ''],
 			[ui.Select, _('Default Refresh Interval'), {'-1': _('Disabled'), '2': _('2 seconds'), '5': _('5 seconds'), '10': _('10 seconds'), '30': _('30 seconds')}, {sort: ['-1', '2', '5', '10', '30']}, ''],
-			[ui.Dropdown, _('Default More Columns'), columns, {multiple: true, sort: false, custom_placeholder: '', dropdown_items: 3}, ''],
+			[ui.Dropdown, _('Default Columns'), columns, {multiple: true, sort: false, custom_placeholder: '', dropdown_items: 3}, ''],
 			[ui.Checkbox, _('Show Zeros'), {value_enabled: true, value_disabled: false}, ''],
 			[ui.Checkbox, _('Transfer Speed in Bits'), {value_enabled: true, value_disabled: false}, ''],
 			[ui.Select, _('Multiple of Unit'), {'1000': _('SI - 1000'), '1024': _('IEC - 1024')}, {}, ''],
@@ -283,8 +283,7 @@ function progressbar(query, v, m, useBits, useMultiple) {
 	    fv = formatSpeed(v, useBits, useMultiple),
 	    pc = '%.2f'.format((100 / mn) * vn),
 	    wt = Math.floor(pc > 100 ? 100 : pc),
-	    bgc = (pc >= 95 ? 'red' : (pc >= 80 ? 'darkorange' : (pc >= 60 ? 'yellow' : 'lime'))),
-	    tc = (pc >= 80 ? 'white' : '#404040');
+	    bgc = (pc >= 95 ? 'red' : (pc >= 80 ? 'darkorange' : (pc >= 60 ? 'yellow' : 'lime')));
 	if (pg) {
 		pg.firstElementChild.style.width = wt + '%';
 		pg.firstElementChild.style.background = bgc;
