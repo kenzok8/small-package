@@ -10,6 +10,17 @@
 var cachedData = [];
 var luciConfig = '/etc/luci-wrtbwmon.conf';
 var hostNameFile = '/etc/wrtbwmon.user';
+var columns = {
+	thClient: _('Clients'),
+	thMAC: _('MAC'),
+	thDownload: _('Download'),
+	thUpload: _('Upload'),
+	thTotalDown: _('Total Down'),
+	thTotalUp: _('Total Up'),
+	thTotal: _('Total'),
+	thFirstSeen: _('First Seen'),
+	thLastSeen: _('Last Seen')
+};
 
 var callLuciDHCPLeases = rpc.declare({
 	object: 'luci-rpc',
@@ -89,26 +100,9 @@ function clickToSelectProtocol(settings, table, updated, updating, ev) {
 	updateData(settings, table, updated, updating, true);
 }
 
-function clickToShowMore(settings, table, ev) {
-	var t = table.querySelector('.tr.table-totals');
-	    settings.showMore = ev.target.checked
-
-	if (t && t.firstElementChild)
-		t.firstElementChild.textContent = _('TOTAL') + (settings.showMore ? '' : ': ' + (table.childElementCount - 2));
-
-	table.querySelectorAll('.showMore').forEach(function(e) {
-		e.classList.toggle('hide');
-	});
-
-	if (!settings.showMore && table.querySelector('.th.sorted').classList.contains('hide')) {
-		table.querySelector('[id="thTotal"]').click();
-	}
-}
-
 function createOption(args, val) {
 	var cstr = args[0], title = args[1], desc = args.slice(-1), widget, frame;
-	val = val != null ?  val : args[2];
-	widget = args.length == 5 ? new cstr(val, args[3]) : new cstr(val, args[3], args[4]);
+	widget = args.length == 4 ? new cstr(val, args[2]) : new cstr(val, args[2], args[3]);
 
 	frame = E('div', {'class': 'cbi-value'}, [
 		E('label', {'class': 'cbi-value-title'}, title),
@@ -123,13 +117,12 @@ function createOption(args, val) {
 
 function displayTable(tb, settings) {
 	var elm, elmID, col, sortedBy, flag, IPVer;
-	var thID = ['thClient', 'thMAC', 'thDownload', 'thUpload', 'thTotalDown', 'thTotalUp', 'thTotal', 'thFirstSeen', 'thLastSeen', ''];
 
 	elm = tb.querySelector('.th.sorted');
 	elmID = elm ? elm.id : 'thTotal';
 	sortedBy = elm && elm.classList.contains('ascent') ? 'asc' : 'desc';
 
-	col = thID.indexOf(elmID);
+	col = Object.keys(columns).indexOf(elmID);
 	IPVer = col == 0 ? settings.protocol : null;
 	flag = sortedBy == 'desc' ? 1 : -1;
 
@@ -156,8 +149,8 @@ function formatSpeed(speed, useBits, useMultiple) {
 }
 
 function formatDate(d) {
-	var Y = d.getFullYear(), M = d.getMonth() + 1, D = d.getDate();
-	var hh = d.getHours(), mm = d.getMinutes(), ss = d.getSeconds();
+	var Y = d.getFullYear(), M = d.getMonth() + 1, D = d.getDate(),
+	    hh = d.getHours(), mm = d.getMinutes(), ss = d.getSeconds();
 	return '%04d/%02d/%02d %02d:%02d:%02d'.format(Y, M, D, hh, mm, ss);
 }
 
@@ -180,17 +173,17 @@ function handleConfig(ev) {
 		var arglist, keylist = Object.keys(settings), res, cstrs = {}, node = [], body;
 
 		arglist = [
-			[ui.Select, _('Default Protocol'), 'ipv4', {'ipv4': _('ipv4'), 'ipv6': _('ipv6')}, {}, ''],
-			[ui.Select, _('Default Refresh Interval'), '5', {'-1': _('Disabled'), '2': _('2 seconds'), '5': _('5 seconds'), '10': _('10 seconds'), '30': _('30 seconds')}, {sort: ['-1', '2', '5', '10', '30']}, ''],
-			[ui.Checkbox, _('Default More Columns'), false, {value_enabled: true, value_disabled: false}, ''],
-			[ui.Checkbox, _('Show Zeros'), true, {value_enabled: true, value_disabled: false}, ''],
-			[ui.Checkbox, _('Transfer Speed in Bits'), false, {value_enabled: true, value_disabled: false}, ''],
-			[ui.Select, _('Multiple of Unit'), '1000', {'1000': _('SI - 1000'), '1024': _('IEC - 1024')}, {}, ''],
-			[ui.Checkbox, _('Use DSL Bandwidth'), false, {value_enabled: true, value_disabled: false}, ''],
-			[ui.Textfield, _('Upstream Bandwidth'), '100', {datatype: 'ufloat'}, 'Mbps'],
-			[ui.Textfield, _('Downstream Bandwidth'), '100', {datatype: 'ufloat'}, 'Mbps'],
-			[ui.DynamicList, _('Hide MAC Addresses'), [], '', {datatype: 'macaddr'}, '']
-		]; // [constructor, label, default_value(, all_values), options, description]
+			[ui.Select, _('Default Protocol'), {'ipv4': _('ipv4'), 'ipv6': _('ipv6')}, {}, ''],
+			[ui.Select, _('Default Refresh Interval'), {'-1': _('Disabled'), '2': _('2 seconds'), '5': _('5 seconds'), '10': _('10 seconds'), '30': _('30 seconds')}, {sort: ['-1', '2', '5', '10', '30']}, ''],
+			[ui.Dropdown, _('Default More Columns'), columns, {multiple: true, sort: false, custom_placeholder: '', dropdown_items: 3}, ''],
+			[ui.Checkbox, _('Show Zeros'), {value_enabled: true, value_disabled: false}, ''],
+			[ui.Checkbox, _('Transfer Speed in Bits'), {value_enabled: true, value_disabled: false}, ''],
+			[ui.Select, _('Multiple of Unit'), {'1000': _('SI - 1000'), '1024': _('IEC - 1024')}, {}, ''],
+			[ui.Checkbox, _('Use DSL Bandwidth'), {value_enabled: true, value_disabled: false}, ''],
+			[ui.Textfield, _('Upstream Bandwidth'), {datatype: 'ufloat'}, 'Mbps'],
+			[ui.Textfield, _('Downstream Bandwidth'), {datatype: 'ufloat'}, 'Mbps'],
+			[ui.DynamicList, _('Hide MAC Addresses'), '', {datatype: 'macaddr'}, '']
+		]; // [constructor, label(, all_choices), options, description]
 
 		for (var i = 0; i < keylist.length; i++) {
 			res = createOption(arglist[i], settings[keylist[i]]);
@@ -229,59 +222,58 @@ function loadCss(path) {
 	head.appendChild(link);
 }
 
-function parseDatabase(values, hosts, showZero, hideMACs) {
-	var valArr = [], totals = [0, 0, 0, 0, 0], valToRows, row;
+function parseDatabase(raw, hosts, showZero, hideMACs) {
+	var values = [],
+	    totals = [0, 0, 0, 0, 0],
+	    rows = raw.trim().split(/\r?\n|\r/g),
+	    rowIndex = [1, 0, 3, 4, 5, 6, 7, 8, 9, 0];
 
-	valToRows = values.replace(/(^\s*)|(\s*$)/g, '').split(/\r?\n|\r/g);
-	valToRows.shift();
+	rows.shift();
 
-	for (var i = 0; i < valToRows.length; i++) {
-		row = valToRows[i].split(',');
+	for (var i = 0; i < rows.length; i++) {
+		var row = rows[i].split(',');
 		if ((!showZero && row[7] == 0) || hideMACs.indexOf(row[0]) >= 0) continue;
 
 		for (var j = 0; j < totals.length; j++) {
 			totals[j] += parseInt(row[3 + j]);
 		}
 
-		row = Array.prototype.concat(row.slice(0, 2).reverse(), row.slice(3), row.slice(0, 1));
-		if (row[1] in hosts && hosts[row[1]] != '-') {
-			row[9] = hosts[row[1]];
+		var newRow = rowIndex.map(function(i) { return row[i] });
+		if (newRow[1].toLowerCase() in hosts) {
+			newRow[9] = hosts[newRow[1].toLowerCase()];
 		}
-		valArr.push(row);
+		values.push(newRow);
 	}
 
-	return [valArr, totals];
+	return [values, totals];
 }
 
 function parseDefaultSettings(file) {
-	var keylist = ['protocol', 'interval', 'showMore', 'showZero', 'useBits', 'useMultiple', 'useDSL', 'upstream', 'downstream', 'hideMACs'];
-	var valuelist = ['ipv4', '5', false, true, false, '1000', false, '100', '100', []];
+	var defaultColumns = ['thClient', 'thDownload', 'thUpload', 'thTotalDown', 'thTotalUp', 'thTotal'],
+	    keylist = ['protocol', 'interval', 'showColumns', 'showZero', 'useBits', 'useMultiple', 'useDSL', 'upstream', 'downstream', 'hideMACs'],
+	    valuelist = ['ipv4', '5', defaultColumns, true, false, '1000', false, '100', '100', []];
 
-	return fs.read_direct(file).then(function(json) {
-		var settings;
-		try {
-			settings = JSON.parse(json);
-		}
-		catch(err) {
-			settings = {};
-		}
-
+	return fs.read_direct(file, 'json').then(function(oldSettings) {
+		var settings = {};
 		for (var i = 0; i < keylist.length; i++) {
-			if (!(keylist[i] in settings))
+			if (!(keylist[i] in oldSettings))
 				settings[keylist[i]] = valuelist[i];
+			else
+				settings[keylist[i]] = oldSettings[keylist[i]];
 		}
 
 		if (settings.useDSL) {
 			return getDSLBandwidth().then(function(dsl) {
-				settings.upstream = dsl.upstream || settings.upstream;
-				settings.downstream = dsl.downstream || settings.downstream;
+				for (var s in dsl)
+					settings[s] = dsl[s];
 				return settings;
 			});
 		}
 		else {
 			return settings;
 		}
-	});
+	})
+	.catch(function() { return {} });
 }
 
 function progressbar(query, v, m, useBits, useMultiple) {
@@ -317,8 +309,11 @@ function setupThisDOM(settings, table) {
 				displayTable(table, settings);
 			});
 
-			if (e.classList.contains('showMore'))
-				settings.showMore ? e.classList.remove('hide') : e.classList.add('hide');
+			if (settings.showColumns.indexOf(e.id) >= 0)
+				e.classList.remove('hide');
+			else
+				e.classList.add('hide');
+
 		}
 	});
 }
@@ -333,13 +328,13 @@ function renameFile(str, tag) {
 function resolveCustomizedHostName() {
 	return fs.stat(hostNameFile).then(function() {
 		return fs.read_direct(hostNameFile).then(function(raw) {
-			var hostNames = [], arr = raw.trim().split(/\r?\n/), row;
+			var arr = raw.trim().split(/\r?\n/), hosts = {}, row;
 			for (var i = 0; i < arr.length; i++) {
 				row = arr[i].split(',');
 				if (row.length == 2 && row[0])
-					hostNames.push({ macaddr: row[0], hostname: row[1] });
+					hosts[row[0].toLowerCase()] = row[1];
 			}
-			return hostNames;
+			return hosts;
 		})
 	})
 	.catch(function() { return []; });
@@ -350,23 +345,18 @@ function resolveHostNameByMACAddr() {
 		resolveCustomizedHostName(),
 		callLuciDHCPLeases()
 	]).then(function(res) {
-		var leaseNames, macaddr, hostNames = {};
-		leaseNames = [
-			res[0],
-			Array.isArray(res[1].dhcp_leases) ? res[1].dhcp_leases : [],
-			Array.isArray(res[1].dhcp6_leases) ? res[1].dhcp6_leases : []
-		];
-		for (var i = 0; i < leaseNames.length; i++) {
-			for (var j = 0; j < leaseNames[i].length; j++) {
-				if (leaseNames[i][j].macaddr) {
-					macaddr = leaseNames[i][j].macaddr.toLowerCase();
-					if (!(macaddr in hostNames) || hostNames[macaddr] == '-') {
-						hostNames[macaddr] = leaseNames[i][j].hostname || '-';
-					}
+		var hosts = res[0];
+		for (var key in res[1]) {
+			var leases = Array.isArray(res[1][key]) ? res[1][key] : [];
+			for (var i = 0; i < leases.length; i++) {
+				if(leases[i].macaddr) {
+					var macaddr = leases[i].macaddr.toLowerCase();
+					if (!(macaddr in hosts) && Boolean(leases[i].hostname))
+						hosts[macaddr] = leases[i].hostname;
 				}
 			}
 		}
-		return hostNames;
+		return hosts;
 	});
 }
 
@@ -413,7 +403,10 @@ function sortTable(col, IPVer, flag, x, y) {
 }
 
 function updateData(settings, table, updated, updating, once) {
-	if (!(poll.tick % settings.interval) || once) {
+	var tick = poll.tick,
+	    interval = settings.interval,
+	    sec = (interval - tick % interval) % interval;
+	if (!sec || once) {
 		callGetDatabasePath()
 		.then(function(res) {
 			var params = settings.protocol == 'ipv4' ? '-4' : '-6';
@@ -433,17 +426,10 @@ function updateData(settings, table, updated, updating, once) {
 			//console.timeEnd('start');
 		});
 	}
-	updatePerSec(updating, settings.interval);
-}
 
-function updatePerSec(e, interval) {
-	var tick = poll.tick;
-	var sec = tick % interval ? interval - tick % interval : 0;
-
-	setUpdateMessage(e, sec);
-	if (sec == 0) {
-		setTimeout(setUpdateMessage.bind(this, e, interval), 100);
-	}
+	setUpdateMessage(updating, sec);
+	if (!sec)
+		setTimeout(setUpdateMessage.bind(this, updating, interval), 100);
 }
 
 function updateTable(tb, values, placeholder, settings) {
@@ -460,10 +446,10 @@ function updateTable(tb, values, placeholder, settings) {
 				newNode = fragment.firstChild.cloneNode(true);
 			}
 			else {
-				newNode = document.createElement('div');
-				childTD = document.createElement('div');
+				newNode = document.createElement('tr');
+				childTD = document.createElement('td');
 				for (var j = 0; j < tbTitle.children.length; j++) {
-					childTD.className = 'td' + ('178'.indexOf(j) != -1 ? ' showMore' + (settings.showMore ? '' : ' hide') : '');
+					childTD.className = 'td' + (settings.showColumns.indexOf(tbTitle.children[j].id) >= 0 ? '' : ' hide');
 					childTD.setAttribute('data-title', tbTitle.children[j].textContent);
 					newNode.appendChild(childTD.cloneNode(true));
 				}
@@ -502,9 +488,9 @@ function updateTable(tb, values, placeholder, settings) {
 
 	//Append the totals or placeholder row.
 	if (formData.length == 0) {
-		newNode = document.createElement('div');
+		newNode = document.createElement('tr');
 		newNode.className = 'tr placeholder';
-		childTD = document.createElement('div');
+		childTD = document.createElement('td');
 		childTD.className = 'td';
 		childTD.innerHTML = placeholder;
 		newNode.appendChild(childTD);
@@ -513,7 +499,7 @@ function updateTable(tb, values, placeholder, settings) {
 		newNode = fragment.firstChild.cloneNode(true);
 		newNode.className = 'tr table-totals';
 
-		newNode.children[0].textContent = _('TOTAL') + (settings.showMore ? '' : ': ' + formData.length);
+		newNode.children[0].textContent = _('TOTAL') + (settings.showColumns.indexOf('thMAC') >= 0 ? '' : ': ' + formData.length);
 		newNode.children[1].textContent = formData.length + ' ' + _('Clients');
 
 		for (var j = 0; j < tbTitle.childElementCount; j++) {
@@ -565,20 +551,20 @@ return view.extend({
 		var settings = data[0],
 		    labelUpdated = E('label'),
 		    labelUpdating = E('label'),
-		    table = E('div', { 'class': 'table', 'id': 'traffic' }, [
-					E('div', { 'class': 'tr table-titles' }, [
-						E('div', { 'class': 'th', 'id': 'thClient' }, _('Clients')),
-						E('div', { 'class': 'th showMore hide', 'id': 'thMAC' }, _('MAC')),
-						E('div', { 'class': 'th', 'id': 'thDownload' }, _('Download')),
-						E('div', { 'class': 'th', 'id': 'thUpload' }, _('Upload')),
-						E('div', { 'class': 'th', 'id': 'thTotalDown' }, _('Total Down')),
-						E('div', { 'class': 'th', 'id': 'thTotalUp' }, _('Total Up')),
-						E('div', { 'class': 'th sorted', 'id': 'thTotal' }, _('Total')),
-						E('div', { 'class': 'th showMore hide', 'id': 'thFirstSeen' }, _('First Seen')),
-						E('div', { 'class': 'th showMore hide', 'id': 'thLastSeen' }, _('Last Seen'))
+		    table = E('table', { 'class': 'table', 'id': 'traffic' }, [
+					E('tr', { 'class': 'tr table-titles' }, [
+						E('th', { 'class': 'th', 'id': 'thClient' }, _('Clients')),
+						E('th', { 'class': 'th hide', 'id': 'thMAC' }, _('MAC')),
+						E('th', { 'class': 'th', 'id': 'thDownload' }, _('Download')),
+						E('th', { 'class': 'th', 'id': 'thUpload' }, _('Upload')),
+						E('th', { 'class': 'th', 'id': 'thTotalDown' }, _('Total Down')),
+						E('th', { 'class': 'th', 'id': 'thTotalUp' }, _('Total Up')),
+						E('th', { 'class': 'th sorted', 'id': 'thTotal' }, _('Total')),
+						E('th', { 'class': 'th hide', 'id': 'thFirstSeen' }, _('First Seen')),
+						E('th', { 'class': 'th hide', 'id': 'thLastSeen' }, _('Last Seen'))
 					]),
-					E('div', {'class': 'tr placeholder'}, [
-						E('div', { 'class': 'td' }, E('em', {}, _('Collecting data...')))
+					E('tr', {'class': 'tr placeholder'}, [
+						E('td', { 'class': 'td' }, E('em', {}, _('Collecting data...')))
 					])
 				]);
 
@@ -597,15 +583,6 @@ return view.extend({
 								'ipv4': 'ipv4',
 								'ipv6': 'ipv6'
 								}, settings.protocol))
-					]),
-					E('div', {}, [
-						E('label', { 'for': 'showMore' }, _('Show More Columns:')),
-						E('input', {
-							'id': 'showMore',
-							'type': 'checkbox',
-							'click': clickToShowMore.bind(this, settings, table),
-							'checked': settings.showMore ? '' : null
-						}),
 					]),
 					E('div', {}, [
 						E('button', {
@@ -636,24 +613,24 @@ return view.extend({
 								}, settings.interval))
 					])
 				]),
-				E('div', { 'id': 'progressbar_panel', 'class': 'table' }, [
-					E('div', { 'class': 'tr' }, [
-						E('div', { 'class': 'td' }, E('div', {}, _('Downstream:'))),
-						E('div', { 'class': 'td' }, E('div', {
+				E('div', { 'id': 'progressbar_panel' }, [
+					E('div', {}, [
+						E('label', {},  _('Downstream:')),
+						E('div', {
 							'id': 'downstream',
 							'class': 'cbi-progressbar',
 							'title': '-'
 							}, E('div')
-						))
+						)
 					]),
-					E('div', { 'class': 'tr' }, [
-						E('div', { 'class': 'td' }, E('div', {}, _('Upstream:'))),
-						E('div', { 'class': 'td' }, E('div', {
+					E('div', {}, [
+						E('label', {}, _('Upstream:')),
+						E('div', {
 							'id': 'upstream',
 							'class': 'cbi-progressbar',
 							'title': '-'
 							}, E('div')
-						))
+						)
 					]),
 				]),
 				table
