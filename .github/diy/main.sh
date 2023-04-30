@@ -155,6 +155,10 @@ git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua
 git_sparse_clone master "https://github.com/immortalwrt/immortalwrt" "immortal" package/network/utils/nftables \
 package/utils/mhz package/libs/mbedtls package/libs/libnftnl
 
+git_sparse_clone openwrt-22.03 "https://github.com/openwrt/openwrt" "openwrt" \
+package/base-files package/network/config/firewall4 package/network/config/firewall package/system/opkg package/network/services/ppp \
+package/network/services/dnsmasq package/libs/openssl
+
 git_sparse_clone openwrt-22.03 "https://github.com/openwrt/packages" "22packages" \
 utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi net/ddns-scripts \
 net/ariang admin/netdata net/transmission-web-control net/rp-pppoe net/tailscale
