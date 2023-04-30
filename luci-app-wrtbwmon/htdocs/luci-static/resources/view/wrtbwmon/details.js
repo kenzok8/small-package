@@ -287,7 +287,6 @@ function progressbar(query, v, m, useBits, useMultiple) {
 	if (pg) {
 		pg.firstElementChild.style.width = wt + '%';
 		pg.firstElementChild.style.background = bgc;
-		pg.style.color = tc;
 		pg.setAttribute('title', '%s (%f%%)'.format(fv, pc));
 	}
 }
