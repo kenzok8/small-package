@@ -292,3 +292,20 @@ msgstr "Nie"
 msgid "Yes"
 msgstr "Tak"
 
+msgid "Merge algorithm"
+msgstr "Algorytm scalania"
+
+msgid "Simple (merge without sorting)"
+msgstr "Prosty (scala bez sortowania)"
+
+msgid "Advanced (merges with sorting)"
+msgstr "Zaawansowany (scala z sortowaniem)"
+
+msgid "Direction of message merging"
+msgstr "Kierunek łączenia wiadomości"
+
+msgid "From beginning to end"
+msgstr "Od początku do końca"
+
+msgid "From end to beginning"
+msgstr "Od końca do początku"
