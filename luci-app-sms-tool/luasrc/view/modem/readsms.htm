@@ -10,11 +10,14 @@
 	local smsmem = tostring(uci:get("sms_tool", "general", "storage"))
 	local sms = tostring(luci.sys.exec("sms_tool -s" .. smsmem .. " -d " .. devv .. " -f '%Y-%m-%d %H:%M' -j recv 2>/dev/null"))
 	local smsmer = tostring(uci:get("sms_tool", "general", "mergesms"))
+	local directx = tostring(uci:get("sms_tool", "general", "direction"))
+	local algox = tostring(uci:get("sms_tool", "general", "algorithm"))
 	local smscuta = string.sub (sms, 8)
 	local smscut = smscuta:sub(1, #smscuta - 2)
 	local statusb = luci.util.exec("sms_tool -s" .. smsmem .. " -d ".. devv .. " status")
 	local all = statusb:match('[^: ]+$')
 	local location = ""
+
 	local l = string.sub (statusb, 15, 16)
 	if l == "SM" then
       		location = translate("SIM card")
@@ -27,7 +30,7 @@
 <%+header%>
 
 <!--
--- Copyright 2020-2022 Rafał Wabik (IceG) - From eko.one.pl forum
+-- Copyright 2020-2023 Rafał Wabik (IceG) - From eko.one.pl forum
 -- Licensed to the GNU General Public License v3.0.
 -->
 
@@ -72,6 +75,9 @@ tr:nth-child(odd) {background-color: var(--background-color-medium)}
 			);
 
 			var msgm = <%=smsmer%>;
+			var algo = "<%=algox%>";
+			var direct = "<%=directx%>";
+
 			if ( msgm == "0" ) {
 
 			var array = <%=smscut%>;
@@ -97,42 +103,89 @@ tr:nth-child(odd) {background-color: var(--background-color-medium)}
 
 			if ( msgm == "1" ) {
 
-			var array = <%=smscut%>;
-			var sortedData = array .sort((function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp) }));
-			var table = document.getElementById("smsTable");
+				if (algo == 'Simple') {
 
-			var MergeMySMS = sortedData;
-    			result = [];
+					var array = <%=smscut%>;
+					var sortedData = array .sort((function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp) }));
+					var table = document.getElementById("smsTable");
 
-			MergeMySMS.forEach(function (o) {
-    			if (!this[o.sender]) {
-    			if(o.part > 0){
-        		this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content, contentparts: [] };
-        		this[o.sender].contentparts[o.part] = o.content;
-        		}else{
-        		this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content};
-        		}
-        		result.push(this[o.sender]);
-        		return;
-    			}
-			if (this[o.sender].total == o.total && this[o.sender].timestamp == o.timestamp && this[o.sender].sender == o.sender && this[o.sender].part > 0) {
-    			this[o.sender].index += '-' + o.index;
-            		this[o.sender].contentparts[o.part] = o.content;}
-			else {
-			this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content };
-        		result.push(this[o.sender]);
-        		return;
-			}
-			}, Object.create(null));
-			result.forEach(function(o) {
-                		if(o.contentparts){
-                    		o.contentparts.shift();
-                    		o.content = o.contentparts.join('');
-                		}
-			});
+					var MergeMySMS = sortedData;
+    					result = [];
 
-			var data = JSON.stringify(result);
-			var json = JSON.parse(data);
+					MergeMySMS.forEach(function (o) {
+    					if (!this[o.sender]) {
+        				this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content };
+        				result.push(this[o.sender]);
+        				return;
+    					}
+					if (this[o.sender].total == o.total && this[o.sender].part > 0) {
+    					this[o.sender].content += o.content;
+    					this[o.sender].index += '-' + o.index;}
+					else {
+					this[o.sender] = { index: o.index, sender: o.sender, timestamp: o.timestamp, part: o.part, total: o.total, content: o.content };
+        				result.push(this[o.sender]);
+        				return;
+					}
+					}, Object.create(null));
+
+					var data = JSON.stringify(result);
+					var json = JSON.parse(data);
+
+				}
+
+				if (algo == 'Advanced') {
+
+					var array = <%=smscut%>;
+					var table = document.getElementById("smsTable");
+
+    					result = [];
+
+												switch (direct) {
+  														case 'Start':
+    															var Data = array.sort((a, b) => {
+  																if (a.timestamp === b.timestamp && a.sender === b.sender) {
+    																	return a.part - b.part;
+  																} else if (a.timestamp === b.timestamp) {
+    																	return a.sender - b.sender;
+  																} else {
+    																	return a.timestamp.localeCompare(b.timestamp);
+  																}
+															});
+    															break;
+  														case 'End':
+    															var Data = array.sort((a, b) => {
+  																if (a.timestamp === b.timestamp && a.sender === b.sender) {
+    																	return b.part - a.part;
+  																} else if (a.timestamp === b.timestamp) {
+    																	return a.sender - b.sender;
+  																} else {
+    																	return a.timestamp.localeCompare(b.timestamp);
+  																}
+															});
+    															break;
+  														default:
+												}
+
+												var SortedSMS = Data.sort((function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp) }));
+
+												var combinedjson = {};
+
+												for (const parts of SortedSMS) {
+  													const { sender, timestamp, total, content, index } = parts;
+  													const key = `${sender}-${timestamp}-${total}`;
+  														if (combinedjson[key]) {
+  															combinedjson[key].content += content;
+  															combinedjson[key].index += '-'+index;
+  														} else {
+    															combinedjson[key] = { sender, timestamp, total, content, index };
+  															}
+														}
+												var result = Object.values(combinedjson);
+
+					var data = JSON.stringify(result);
+					var json = JSON.parse(data);
+
+				}
 
 			var x = <%=all%>;
         		for (var d = 0; d < json.length; d++) {
@@ -147,7 +200,11 @@ tr:nth-child(odd) {background-color: var(--background-color-medium)}
   						cell2.innerHTML = json[d].timestamp;
     						cell1.innerHTML = json[d].content;
 				}
+
+
 			}
+
+	
 	}
 
 
@@ -283,3 +340,4 @@ if (document.querySelectorAll('input[name="smsn"]:checked').length === document.
 	</div>
 
 <%+footer%>
+

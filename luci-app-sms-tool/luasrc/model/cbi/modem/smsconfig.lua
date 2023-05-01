@@ -1,4 +1,4 @@
--- Copyright 2020-2022 Rafa³ Wabik (IceG) - From eko.one.pl forum
+-- Copyright 2020-2023 Rafaï¿½ Wabik (IceG) - From eko.one.pl forum
 -- Licensed to the GNU General Public License v3.0.
 
 local util = require "luci.util"
@@ -67,6 +67,20 @@ mem.rmempty = true
 
 local msm = s:taboption(this_tab, Flag, "mergesms", translate("Merge split messages"), translate("Checking this option will make it easier to read the messages, but it will cause a discrepancy in the number of messages shown and received."))
 msm.rmempty = false
+
+msma = s:taboption(this_tab, ListValue, "algorithm", translate("Merge algorithm"), translate(""))
+msma.default = "Simple"
+msma:value("Simple", translate("Simple (merge without sorting)"))
+msma:value("Advanced", translate("Advanced (merges with sorting)"))
+msma:depends("mergesms", "1")
+msma.rmempty = true
+
+msmd = s:taboption(this_tab, ListValue, "direction", translate("Direction of message merging"), translate(""))
+msmd.default = "Start"
+msmd:value("Start", translate("From beginning to end"))
+msmd:value("End", translate("From end to beginning"))
+msmd:depends("algorithm", "Advanced")
+msmd.rmempty = true
 
 dev2 = s:taboption(this_tab, Value, "sendport", translate("SMS Sending Port"))
 if try_devices2 then
