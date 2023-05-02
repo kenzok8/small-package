@@ -21,7 +21,7 @@ index ed9770f070..1fea4ee29b 100644
  LUCI_PKGARCH:=all
  LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +curl \
 +	+lua-maxminddb +ipset +ipt2socks +iptables-mod-conntrack-extra +iptables-mod-iprange +iptables-mod-socket +iptables-mod-tproxy +kmod-ipt-nat \
- 	+dns2socks +dns2tcp +ip-full +libuci-lua +lua +luci-compat +luci-lib-jsonc \
+ 	+chinadns-ng +dns2socks +dns2tcp +ip-full +libuci-lua +lua +luci-compat +luci-lib-jsonc \
  	+microsocks +resolveip +tcping +unzip \
  	+PACKAGE_$(PKG_NAME)_INCLUDE_Brook:brook \
 @@ -55,7 +56,7 @@ LUCI_DEPENDS:=+coreutils +coreutils-base64 +coreutils-nohup +curl \
@@ -33,15 +33,6 @@ index ed9770f070..1fea4ee29b 100644
  	+PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_Plugin:v2ray-plugin \
  	+PACKAGE_$(PKG_NAME)_INCLUDE_Xray:xray-core \
  	+PACKAGE_$(PKG_NAME)_INCLUDE_Xray_Plugin:xray-plugin
-@@ -95,7 +96,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Brook
- config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG
- 	bool "Include ChinaDNS-NG"
- 	select PACKAGE_ipset
--	default n
-+	default y
- 
- config PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy
- 	bool "Include Haproxy"
 @@ -150,11 +151,11 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan_Plus
  
  config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray
