@@ -1,5 +1,5 @@
 config server 'server'
-	option url 'https://op.supes.top'
+	option url 'https://supes.top'
 
 config client 'client'
 	option upgrade_packages '1'

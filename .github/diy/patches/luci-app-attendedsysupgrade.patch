@@ -92,7 +92,7 @@
  		this.data.revision = response[1].release.revision;
  
  		this.data.efi = response[2];
-+		this.firmware.partsize = response[1].release.distribution;
++		this.firmware.rootfs_size_mb = Number(response[1].release.distribution);
 +		if (this.data.efi) {
 +			this.firmware.efi = "efi";
 +		} else {
