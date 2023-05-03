@@ -55,13 +55,13 @@ ifneq ($(CONFIG_CCACHE),)
   export naive_ccache_flags=cc_wrapper="$(CCACHE)"
 endif
 
-CLANG_VER:=17-init-2387-g68e81d7e-1
+CLANG_VER:=17-init-3170-g6e30dffe-1
 CLANG_FILE:=clang-llvmorg-$(CLANG_VER).tgz
 define Download/CLANG
 	URL:=https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64
 	URL_FILE:=$(CLANG_FILE)
 	FILE:=$(CLANG_FILE)
-	HASH:=6335f2e1f35bb235b8fe610559bbf97e630c4e50662a31b6e70226c2f4b0c290
+	HASH:=b0d56ea4b320b36d77b97e10d410964ba53463c372f7ecfc816349ee7fa67b56
 endef
 
 PGO_VER:=5615-1679995307-0baae343d55c36a01b20eb4c600fca3ba7e0825e
