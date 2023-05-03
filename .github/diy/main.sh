@@ -137,6 +137,7 @@ svn export https://github.com/Lienol/openwrt-package/branches/other/lean/luci-ap
 svn export https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn export https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 svn export https://github.com/kenzok8/jell/trunk/gn
+svn export https://github.com/kenzok8/jell/trunk/luci-app-bridge
 
 git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" net/miniupnpd net/mwan3 \
 net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
