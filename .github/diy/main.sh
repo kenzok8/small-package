@@ -91,8 +91,8 @@ git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n open
 git clone --depth 1 https://github.com/zxlhhyccc/luci-app-v2raya
 git clone --depth 1 https://github.com/kenzok8/luci-theme-ifit ifit && mv -n ifit/luci-theme-ifit ./;rm -rf ifit
 git clone --depth 1 https://github.com/kenzok78/openwrt-minisign
-git clone --depth 1 https://github.com/kenzok78/luci-theme-argonne
-git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
+git clone --depth 1 https://github.com/kenzok78/luci-theme-argone
+git clone --depth 1 https://github.com/kenzok78/luci-app-argone-config
 git clone --depth 1 https://github.com/kenzok78/luci-app-adguardhome
 git clone --depth 1 https://github.com/gngpp/luci-theme-design
 git clone --depth 1 https://github.com/gngpp/luci-app-design-config
