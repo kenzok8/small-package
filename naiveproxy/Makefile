@@ -55,22 +55,22 @@ ifneq ($(CONFIG_CCACHE),)
   export naive_ccache_flags=cc_wrapper="$(CCACHE)"
 endif
 
-CLANG_VER:=17-init-3170-g6e30dffe-1
+CLANG_VER:=17-init-4759-g547e3456-1
 CLANG_FILE:=clang-llvmorg-$(CLANG_VER).tgz
 define Download/CLANG
 	URL:=https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64
 	URL_FILE:=$(CLANG_FILE)
 	FILE:=$(CLANG_FILE)
-	HASH:=b0d56ea4b320b36d77b97e10d410964ba53463c372f7ecfc816349ee7fa67b56
+	HASH:=1949427e0030523dc86bdf4b63dac88228cfe05c57318be2d0b0b290297925f6
 endef
 
-PGO_VER:=5615-1679995307-0baae343d55c36a01b20eb4c600fca3ba7e0825e
+PGO_VER:=5672-1682419203-4df9c2f8b97b0e23303fa2b15279906232abc306
 PGO_FILE:=chrome-linux-$(PGO_VER).profdata
 define Download/PGO_PROF
 	URL:=https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles
 	URL_FILE:=$(PGO_FILE)
 	FILE:=$(PGO_FILE)
-	HASH:=06a181474ca4b34f53dec1d2993e97895665cad85e5c4456ae94ed0c1d10e3ec
+	HASH:=5fae812f617d882222cd5aa5620fb355583391127f608759b030c231b71d4c90
 endef
 
 define Build/Prepare
