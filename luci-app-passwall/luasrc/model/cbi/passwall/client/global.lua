@@ -155,7 +155,7 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 	end
 	if #normal_list > 0 then
 		for k, v in pairs(shunt_list) do
-			local vid = v.id:sub(1, 8)
+			local vid = v.id
 			-- shunt node type, V2ray or Xray
 			local type = s:taboption("Main", ListValue, vid .. "-type", translate("Type"))
 			if has_v2ray then
@@ -400,7 +400,7 @@ end
 o = s:taboption("DNS", Button, "clear_ipset", translate("Clear IPSET"), translate("Try this feature if the rule modification does not take effect."))
 o.inputstyle = "remove"
 function o.write(e, e)
-	luci.sys.call("[ -n \"$(nft list sets 2>/dev/null | grep \"gfwlist\")\" ] && sh /usr/share/" .. appname .. "/nftables.sh flush_nftset || sh /usr/share/" .. appname .. "/iptables.sh flush_ipset > /dev/null 2>&1 &")
+	luci.sys.call("[ -n \"$(nft list sets 2>/dev/null | grep \"passwall_\")\" ] && sh /usr/share/" .. appname .. "/nftables.sh flush_nftset || sh /usr/share/" .. appname .. "/iptables.sh flush_ipset > /dev/null 2>&1 &")
 	luci.http.redirect(api.url("log"))
 end
 
@@ -512,7 +512,7 @@ s.anonymous = true
 s.addremove = true
 s.template = "cbi/tblsection"
 function s.create(e, t)
-	TypedSection.create(e, api.gen_uuid())
+	TypedSection.create(e, api.gen_short_uuid())
 end
 
 o = s:option(DummyValue, "status", translate("Status"))
