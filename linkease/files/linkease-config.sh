@@ -5,19 +5,19 @@ source /lib/functions.sh
 case "$1" in
   save)
     if [ ! -z "$2" ]; then
-      uci set linkease.@linkease[0].preconfig=$2
+      uci set "linkease.@linkease[0].preconfig=$2"
       uci commit
     fi
     ;;
 
   load)
     if [ -f "/usr/sbin/preconfig.data" ]; then
-      data=`cat /usr/sbin/preconfig.data`
-      uci set linkease.@linkease[0].preconfig=${data}
+      data="`cat /usr/sbin/preconfig.data`"
+      uci set "linkease.@linkease[0].preconfig=${data}"
       uci commit
       rm /usr/sbin/preconfig.data
     else
-      data=`uci get linkease.@linkease[0].preconfig 2>/dev/null`
+      data="`uci -q get linkease.@linkease[0].preconfig`"
     fi
 
     if [ -z "${data}" ]; then
@@ -30,9 +30,9 @@ case "$1" in
 
   local_save)
     if [ ! -z "$2" ]; then
-      uci set linkease.@linkease[0].local_home=$2
+      uci set "linkease.@linkease[0].local_home=$2"
       uci commit
-      ROOT_DIR=$2
+      ROOT_DIR="$2"
       if [ -f "/etc/config/quickstart" ]; then
         config_load quickstart
         config_get MAIN_DIR main main_dir ""
@@ -64,10 +64,10 @@ case "$1" in
 
   local_load)
     if [ -f "/etc/config/quickstart" ]; then
-      data=`uci get quickstart.main.main_dir 2>/dev/null`
+      data="`uci -q get quickstart.main.main_dir`"
     fi
     if [ -z "$data" ]; then
-      data=`uci get linkease.@linkease[0].local_home 2>/dev/null` 
+      data="`uci -q get linkease.@linkease[0].local_home`"
     fi
 
     if [ -z "${data}" ]; then
