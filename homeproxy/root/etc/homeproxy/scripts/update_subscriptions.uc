@@ -358,7 +358,6 @@ function parse_uri(uri) {
 				vmess_alterid: uri.aid,
 				vmess_encrypt: uri.scy || 'auto',
 				vmess_global_padding: '1',
-				vmess_authenticated_length: '1',
 				transport: (uri.net !== 'tcp') ? uri.net : null,
 				tls: (uri.tls === 'tls') ? '1' : '0',
 				tls_sni: uri.sni || uri.host,

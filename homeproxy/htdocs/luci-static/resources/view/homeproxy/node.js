@@ -744,7 +744,7 @@ return view.extend({
 		so.rmempty = false;
 		so.modalonly = true;
 
-		so = ss.option(form.Flag, 'vmess_global_padding', 'Global padding',
+		so = ss.option(form.Flag, 'vmess_global_padding', _('Global padding'),
 			_('Protocol parameter. Will waste traffic randomly if enabled (enabled by default in v2ray and cannot be disabled).'));
 		so.default = so.enabled;
 		so.depends('type', 'vmess');
@@ -753,9 +753,8 @@ return view.extend({
 
 		so = ss.option(form.Flag, 'vmess_authenticated_length', _('Authenticated length'),
 			_('Protocol parameter. Enable length block encryption.'));
-		so.default = so.enabled;
+		so.default = so.disabled;
 		so.depends('type', 'vmess');
-		so.rmempty = false;
 		so.modalonly = true;
 		/* VMess config end */
 
