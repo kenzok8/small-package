@@ -21,13 +21,13 @@ define Download/geoip
   HASH:=4d0a5784471992dccc26e0ffd525f44cc9c9b8c6ab90fb922582b0bccb2613de
 endef
 
-GEOSITE_VER:=20230519184410
+GEOSITE_VER:=20230520021741
 GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
 define Download/geosite
   URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
   URL_FILE:=dlc.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=677e0cafe8d335bb286253d8f20a38cfa1e4c8b1793ff700ff21560d5b46a5ad
+  HASH:=5eec2292b1d7dc4831a48be0eef432251117c07a7ea3f234ebb334c27fd124ed
 endef
 
 define Package/v2ray-geodata/template
