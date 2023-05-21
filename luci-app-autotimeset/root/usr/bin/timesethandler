@@ -1,6 +1,38 @@
 #!/bin/sh
 # author 2021 jjm2473
 # author 2020-2023 sirpdboy
+TMP_T=/var/autotimeset/autotimeset.tmp
+LOG=/etc/autotimeset/autotimeset.log
+log(){
+	echo "$(date +'%Y-%m-%d %H:%M:%S') $*" >> $LOG
+}
+
+limit_log() {
+	local logf=$1
+	[ ! -f "$logf" ] && return
+	local sc=100
+	[ -n "$2" ] && sc=$2
+	local count=$(grep -c "" $logf)
+	if [ $count -gt $sc ];then
+		let count=count-$sc
+		sed -i "1,$count d" $logf
+	fi
+}
+
+remwan3() {
+while true; do   
+    status=$(/usr/sbin/mwan3 status | grep error)
+    if [ -z $status ]; then
+        log  "Mwan3 is OK"
+	exit 1
+    else
+        log "mwan3 restarting ... $status"  
+        /usr/sbin/mwan3 restart
+    fi 
+    sleep 60
+done
+
+}
 
 disreconnwan() {
 i=0
@@ -41,21 +73,20 @@ trigger() {
 		sync && echo 3 > /proc/sys/vm/drop_caches
 		;;
 	sysfree)
-		scd /overlay
+		cd /overlay
 		rm -rf `ls | egrep -v '(upper|.fs_state)'`
 		cd /overlay/upper
 		rm -rf `ls | egrep -v '(etc|usr)'`
 		cd /overlay/upper/usr
 		rm -rf `ls | egrep -v '(share)'`
 		cd /overlay/upper/usr/share
-		rm -rf `ls | egrep -v '(unblockneteasemusic|passwall)'`
+		rm -rf `ls | egrep -v '(unblockneteasemusic|passwall|AdGuardHome|openclash|softethervpn|bypass|)'`
 		cd /overlay/upper/etc
-		rm -rf `ls | egrep -v '(config|smartdns|ssrplus|bench.log|shadow|openclash|rebootschedule)'`
-		cd /overlay/upper/etc/config
-		rm -rf `ls | egrep -v '(timecontrol|arpbind|ksmbd|access_control|netspeedtest|rebootschedule|wrtbwmon|ddns|wolplus|advanced|firewall|jd-dailybonus|network|oled|openclash|passwall|serverchan|shadowsocksr|sqm|unblockneteasemusic|weburl|zerotier|vssr|zero|dhcp)'`
-		rm -f /tmp/luci*
-		rm -f /tmp/cache/*
-		sync && echo 3 > /proc/sys/vm/drop_caches
+		rm -rf `ls | egrep -v '(config|init.d|uci-defaults|hotplug.d|nginx|rc.d|ppp|smartdns|ssrplus|bench.log|shadow|openclash|firewall.user)'`
+		rm -rf /var/luci-modulecache
+		rm -rf /var/luci-indexcache
+		rm -rf /tmp/cache/*
+		reboot
 		;;
 	restartsamba)
 		/etc/init.d/ksmdb restart
@@ -63,8 +94,8 @@ trigger() {
 		/etc/init.d/samba4 restart
 		;;
 	restartwan)
-		# ifdown wan 
 		ifup wan
+		log  "Redial succeeded!"
 		;;
 		
 	closewan)
@@ -74,11 +105,26 @@ trigger() {
 		disreconnwan
 		if [ $PingErr = 1 ]; then
 		  ifup wan
+		  log  "Redial succeeded!"
 		fi
+		;;
+	restartmwan3)
+		remwan3
+		;;
+	customscript)
+	         script=`cat /etc/autotimeset/timesetcustomscript | grep '#!/bin/sh'` >/dev/null 2>&1
+	         [ $script ] || {
+		      script=` cat /etc/autotimeset/timesetcustomscript `
+		      echo '#!/bin/sh' >/etc/autotimeset/timesetcustomscript
+		      echo  $script >>/etc/autotimeset/timesetcustomscript
+		 }
+		source /etc/autotimeset/timesetcustomscript
+		 log  "CustomScript succeeded!"
 		;;
 	esac
 }
 
+limit_log $LOG 200
 PingErr=0
-logger -p warn -t "autotimeset" "Automatic timing operation execution operation:$@, execution time: `date `" && trigger $@
+log  "Scheduled operation:$@" && trigger $@
 

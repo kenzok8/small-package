@@ -1,0 +1,119 @@
+#! /bin/bash
+
+#允许尝试错误的次数
+tryErrNum=10
+#允许尝试错误在多长时间范围，单位秒，与tryErrNum一起生效
+tryTimeOut=300
+#需要被封禁的多个ip字符串，逗号隔开,这里为空
+dropIpList=""
+#logread里面标识字符串，Bad password attempt for 是ssh root登录密码错误log，luci: failed login on 是登录web错误log
+errStr=("Bad password attempt for" "luci: failed login on")
+#查询logread 日志的时间间隔,单位秒
+timesleep=30
+
+#从根据字符串从日志里面提取要封禁的ip，追加到 dropIpList 变量
+getdropip() {
+    #对过滤的日志倒叙
+    lines=$(logread | grep $1 | sed -n '1!G;h;$p')
+    linesNum=$(echo -n "$lines" | wc -l)
+    #定义字典变量
+    declare -A dict
+    #
+    if [ "$linesNum" -gt "$tryErrNum" ];then
+        while read line;
+        do
+            ip=$(echo -n "$line" | awk '{print $NF}' | awk -F":" '{print $1}')
+            time=$(echo -n "$line" | awk '{print $4}' | awk -F":" '{sum += $1*3600 + $2*60 + $3};END {print sum}')
+            ok=${dict[$ip]}
+            if [ -z $ok ];then
+                dict[$ip]=1
+                time=$(date | awk '{print $4}' | awk -F":" '{sum += $1*3600 + $2*60+ $3};END {print sum}')
+                dict[${ip}_endtime]=$time
+            else
+                if [ ${dict[$ip]} -lt "$tryErrNum" ];then
+                    dict[$ip]=$(expr ${dict[$ip]} + 1)
+                    dict[${ip}_starttime]=$time
+                fi
+            fi
+        done < <(echo -n "$lines")
+
+        for key in ${!dict[@]};
+        do
+            if ! [[ "$key" =~ "starttime" ]] && ! [[ "$key" =~ "endtime" ]];then
+                if [ ${dict[$key]} -eq "$tryErrNum" ];then
+                    timeDiff=$(expr ${dict[${key}_endtime]} - ${dict[${key}_starttime]})
+                    if [ "$timeDiff" -gt 0 ] && [ "$timeDiff" -lt "$tryTimeOut" ];then
+                        #追加需要封禁的ip到变量
+                        dropIpList=$dropIpList,$key
+                    fi
+                fi
+            fi
+        done
+
+    fi
+
+}
+
+#errStr 字符串遍历，分别从log里面匹配，提取要封禁ip
+startGetDropIp(){
+    i=0
+    while :
+    do
+            errstr=${errStr[$i]}
+            if [ -z "$errstr" ];then
+                    break
+            fi
+            i=$(expr $i + 1)
+
+        getdropip $errstr
+
+    done
+}
+
+#初始化ipset iptable
+intEnv(){
+    ipset list BlockIpList
+    if  ! [ "$?" == 0 ];
+    then
+        ipset create BlockIpList hash:net timeout 300
+        iptables -I INPUT -m set --match-set BlockIpList src -p tcp -m tcp --dport 22 -j DROP
+        iptables -I INPUT -m set --match-set BlockIpList src -p tcp -m tcp --dport 80 -j DROP
+        iptables -I INPUT -s 192.168.0.0/16 -j ACCEPT
+    fi
+}
+#把要封禁的ip添加到ipset BlockIpList集合
+ipsetAddIp(){
+    dropIpListNew=""
+    for ip in $(echo -n "$dropIpList" | sed 's/,/ /g')
+    do
+        ipset add BlockIpList $ip
+        if [ "$?" -eq 0 ];then
+            dropIpListNew=$dropIpListNew,$ip
+        fi
+    done
+}
+
+sendlogger(){
+    if [ -n "$dropIpListNew" ];then
+        echo -e  "autotimeset:MyOpenwrt IP封禁提醒:$dropIpListNew"  
+        logger -p warn -t "autotimeset" ",定时设置提醒: IP封禁:$dropIpListNew ---- 时间：`date `"  
+    fi
+}
+
+#检查当前进程是否存在
+PocessNum=$(ps | grep timesetsecurity | grep -v grep | wc -l)
+if [ "$PocessNum" -gt 2 ];then
+    #已经存在进程，直接退出当前进程
+    kill -9 $$
+else
+    intEnv
+
+    while :
+    do
+        sleep $timesleep
+        dropIpList=""
+        startGetDropIp
+        ipsetAddIp
+	sendlogger
+    done
+fi
