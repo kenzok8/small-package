@@ -3,54 +3,77 @@
 
 START=95
 STOP=10
-
+Log=/etc/autotimeset/autotimeset.log
+TMP=/etc/autotimeset
+[ ! -d $TMP ] && mkdir -p $TMP 2>/dev/null
+[ -s $LOG ] && echo ' ' >> $LOG
 run_autotimeset()
 {
 ssum=$(grep -c stime /etc/config/autotimeset)
+
+		
+customscript=$(uci -q get autotimeset.@global[0].customscript )  || customscript='#!/bin/sh'
+script=`echo $customscript | grep '#!/bin/sh'` >/dev/null 2>&1
+[ $script ] || {
+	echo '#!/bin/sh' >/etc/autotimeset/timesetcustomscript
+	echo  $script >>/etc/autotimeset/timesetcustomscript
+}
 for i in $(seq 0 $((ssum-1)))
 do
 	enable=$(uci -q get autotimeset.@stime[$i].enable )
-	if [ "$enable" == 1 ]; then
+	if [ "x$enable" = "x1" ]; then
+	
+		month=$(uci -q get autotimeset.@stime[$i].month ) || month="*"
 		stype=$(uci -q get autotimeset.@stime[$i].stype )
-		week=$(uci -q get autotimeset.@stime[$i].week )
-		minute=$(uci -q get autotimeset.@stime[$i].minute )
-		hour=$(uci -q get autotimeset.@stime[$i].hour )
-		[ "x$minute" == "x0" ] && minute="00"
+		week=$(uci -q get autotimeset.@stime[$i].week ) || week="*"
+		minute=$(uci -q get autotimeset.@stime[$i].minute ) || minute="00"
+		hour=$(uci -q get autotimeset.@stime[$i].hour )  || hour="*"
+		[ "x$hour" = "x0" ] && hour="00"
+		[ "x$minute" = "x0" ] && minute="00"
 		case "$stype" in
 			1)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler reboot" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler reboot" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 			2)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler poweroff" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler poweroff" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 			3)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler network" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler network" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 			4)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler restartsamba" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler restartsamba" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 			5)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler restartwan" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler restartwan" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 			6)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler closewan" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler closewan" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 			7)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler clearmem" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler clearmem" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 			8)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler sysfree" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler sysfree" 
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 			9)
-				local cmd="$minute $hour * * $week /usr/bin/timesethandler disreconn" 
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler disreconn" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			10)
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler restartmwan3" 
+				echo "$cmd" >> /etc/crontabs/root
+				;;
+			11)
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler customscript" 
+				echo $customscript > /etc/autotimeset/timesetcustomscript
 				echo "$cmd" >> /etc/crontabs/root
 				;;
 		esac
