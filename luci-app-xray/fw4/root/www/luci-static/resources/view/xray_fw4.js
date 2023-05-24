@@ -737,6 +737,33 @@ return view.extend({
         o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_ips", _("Forwarded IP"))
         o.datatype = "ip4addr"
         o.rmempty = true
+        
+        o = s.taboption('transparent_proxy_rules', form.ListValue, 'transparent_default_port_policy', _('Default Ports Policy'))
+        o.value("forwarded", _("Forwarded"))
+        o.value("bypassed", _("Bypassed"))
+        o.default = "forwarded"
+        o.datatype = "portrange"
+        o.rmempty = false
+
+        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_tcp_ports", _("Forwarded TCP Ports"), _("Requests to these TCP Ports will be forwarded through Xray.<br>80, 443, 853 is recommend."))
+        o.depends("transparent_default_port_policy", "bypassed")
+        o.datatype = "portrange"
+        o.rmempty = true
+
+        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_udp_ports", _("Forwarded UDP Ports"), _("Requests to these UDP Ports will be forwarded through Xray.<br>53, 443 is recommend."))
+        o.depends("transparent_default_port_policy", "bypassed")
+        o.datatype = "portrange"
+        o.rmempty = true
+
+        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_bp_tcp_ports", _("Bypassed TCP Ports"), _("Requests to these TCP Ports won't be forwarded through Xray."))
+        o.depends("transparent_default_port_policy", "forwarded")
+        o.datatype = "portrange"
+        o.rmempty = true
+
+        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_bp_udp_ports", _("Bypassed UDP Ports"), _("Requests to these UDP Ports won't be forwarded through Xray."))
+        o.depends("transparent_default_port_policy", "forwarded")
+        o.datatype = "portrange"
+        o.rmempty = true
 
         o = s.taboption('transparent_proxy_rules', form.SectionValue, "access_control_manual_tproxy", form.GridSection, 'manual_tproxy', _('Manual Transparent Proxy'), _('Compared to iptables REDIRECT, Xray could do NAT46 / NAT64 (for example accessing IPv6 only sites). See <a href="https://github.com/v2ray/v2ray-core/issues/2233">FakeDNS</a> for details.'))
 
