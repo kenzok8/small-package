@@ -17,6 +17,11 @@
     const wan_bp_ips = uniq(wan_bp_ips_no_dns);
     const wan_fw_ips = uniq(wan_fw_ips_no_dns);
     const ignore_tp_spec_def_gw = fs.stat("/usr/share/xray/ignore_tp_spec_def_gw");
+    const transparent_default_port_policy = general.transparent_default_port_policy || "forwarded";
+    const wan_fw_tcp_ports = general.wan_fw_tcp_ports || [];
+    const wan_fw_udp_ports = general.wan_fw_udp_ports || [];
+    const wan_bp_tcp_ports = general.wan_bp_tcp_ports || [];
+    const wan_bp_udp_ports = general.wan_bp_udp_ports || [];
 %}
     set tp_spec_src_ac {
         type ether_addr
@@ -103,7 +108,22 @@
     }
 
     chain tp_spec_lan_re {
+{% if (transparent_default_port_policy == "bypassed"): %}
+    {% if (length(wan_fw_tcp_ports) > 0): %}
+        tcp dport { {{ join(", ", wan_fw_tcp_ports) }} } goto tp_spec_lan_ac
+    {% endif %}
+    {% if (length(wan_fw_udp_ports) > 0): %}
+        udp dport { {{ join(", ", wan_fw_udp_ports) }} } goto tp_spec_lan_ac
+    {% endif %}
+{% else %}
+    {% if (length(wan_bp_tcp_ports) > 0): %}
+        tcp dport { {{ join(", ", wan_bp_tcp_ports) }} } return
+    {% endif %}
+    {% if (length(wan_bp_udp_ports) > 0): %}
+        udp dport { {{ join(", ", wan_bp_udp_ports) }} } return
+    {% endif %}
         meta l4proto { tcp, udp } goto tp_spec_lan_ac
+{% endif %}
     }
 
     chain tp_spec_wan_ac {
@@ -130,7 +150,22 @@
     }
 
     chain tp_spec_wan_re {
+{% if (transparent_default_port_policy == "bypassed"): %}
+    {% if (length(wan_fw_tcp_ports) > 0): %}
+        tcp dport { {{ join(", ", wan_fw_tcp_ports) }} } meta mark set 0x000000fc
+    {% endif %}
+    {% if (length(wan_fw_udp_ports) > 0): %}
+        udp dport { {{ join(", ", wan_fw_udp_ports) }} } meta mark set 0x000000fc
+    {% endif %}
+{% else %}
+    {% if (length(wan_bp_tcp_ports) > 0): %}
+        tcp dport { {{ join(", ", wan_bp_tcp_ports) }} } return
+    {% endif %}
+    {% if (length(wan_bp_udp_ports) > 0): %}
+        udp dport { {{ join(", ", wan_bp_udp_ports) }} } return
+    {% endif %}
         meta l4proto { tcp, udp } meta mark set 0x000000fc
+{% endif %}
     }
 
     chain tp_spec_wan_fw {
