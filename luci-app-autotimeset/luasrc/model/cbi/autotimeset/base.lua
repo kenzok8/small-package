@@ -4,7 +4,7 @@ local s=require"nixio.fs"
 local e=luci.model.uci.cursor()
 local m,s,e
 
-m=Map("autotimeset",translate("Scheduled Setting"),translate("<b>Timing settings include: timing restart, timing shutdown, timing restart network, all functions can be used together.</b></br>") ..
+m=Map("autotimeset",translate("Scheduled task/startup task settings"),translate("<b>The original [Timing Settings] includes scheduled task execution and startup task execution. Presets include over 10 functions, including restart, shutdown, network restart, memory release, system cleaning, network sharing, network shutdown, automatic detection of network disconnects and reconnection, MWAN3 load balancing detection of reconnection, and custom scripts</b></br>") ..
 translate("N1-N5 is continuous, N1, N3, N5 is discontinuous, */N represents every N hours or every N minutes.The week can only be 0~6, the hour can only be 0~23, the minute can only be 0~59, the unavailable time is 48 hours.") ..
 translate("&nbsp;&nbsp;&nbsp;<input class=\"cbi-button cbi-button-apply\" type=\"button\" value=\"" ..
 translate("Test/Verify Settings") ..
@@ -13,7 +13,7 @@ translate("Test/Verify Settings") ..
 s = m:section(TypedSection, 'global')
 s.anonymous=true
 
-e=s:option(TextValue, "customscript") 
+e=s:option(TextValue, "customscript" ,translate("Edit Custom Script"))
 e.description = translate("Only by editing the content of the custom script well and scheduling the custom script task can it be executed effectively.")
 e.rows = 5
 e.default = '#!/bin/sh'
@@ -37,6 +37,14 @@ e:value(9,translate("Scheduled DisReconn"))
 e:value(10,translate("Scheduled Restartmwan3"))
 e:value(11,translate("Scheduled Customscript"))
 e.default=2
+
+e=s:option(ListValue,"ttype",translate("Task Type"))
+e:value(0,translate("Scheduled task execution"))
+e:value(1,translate("Startup task"))
+e.default=0
+
+e=s:option(Value,"delay",translate("Startup delay time"))
+e.default=10
 
 e=s:option(Value,"month",translate("Month(0~11)"))
 e.rmempty = false
@@ -65,5 +73,10 @@ e.default = 0
 e=s:option(Flag,"enable",translate("Enable"))
 e.rmempty = false
 e.default=0
+
+m.apply_on_parse = true
+m.on_after_apply = function(self,map)
+	luci.sys.exec("/etc/init.d/autotimeset start")
+end
 
 return m

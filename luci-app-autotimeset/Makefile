@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=LuCI support for Scheduled Time setting
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=1.9.3
-PKG_RELEASE:=20230521
+PKG_VERSION:=2.0.0
+PKG_RELEASE:=20230523
 
 
 define Package/$(PKG_NAME)/conffiles
