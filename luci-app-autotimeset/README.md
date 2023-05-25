@@ -8,6 +8,9 @@
 
 ## 功能说明：
 
+### 定时设置2.0版
+#### 2023.5.23 定时设置2.0版：定时执行任务设置和开机启动任务设置二合一版，并增加自定义脚本功能。
+
 ### 定时设置1.9版
 #### 2023.4.1 定时设置1.9版：加入定时断网重连、定时检测WAN3重启等服务。
 
@@ -75,7 +78,7 @@
 
 - 网络速度测试 ：https://github.com/sirpdboy/NetSpeedTest
 
-- 定时设置插件 : https://github.com/sirpdboy/luci-app-autotimeset
+- 任务设置（定时和开机二合一）插件 : https://github.com/sirpdboy/luci-app-autotimeset
 
 - 关机功能插件 : https://github.com/sirpdboy/luci-app-poweroffdevice
 

@@ -124,7 +124,7 @@ trigger() {
 	esac
 }
 
-limit_log $LOG 200
+limit_log $LOG 500
 PingErr=0
-log  "Scheduled operation:$@" && trigger $@
+log  "Scheduled operation $2: $1" && trigger $1
 
