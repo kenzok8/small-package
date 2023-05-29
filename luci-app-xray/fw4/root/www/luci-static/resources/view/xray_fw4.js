@@ -37,7 +37,7 @@ function fingerprints(o) {
     o.value("qq", "qq")
     o.value("random", "random")
     o.value("randomized", "randomized")
-} 
+}
 
 function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, protocol_name, have_tls_flow, client_side) {
     let o = s.taboption(tab_name, form.ListValue, `${protocol_name}_tls`, _(`[${protocol_name}] Stream Security`))
@@ -149,12 +149,12 @@ function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, prot
             o.modalonly = true
         }
     } else {
-        let tls_cert_key_dep = {"web_server_enable": "1"}
+        let tls_cert_key_dep = { "web_server_enable": "1" }
         tls_cert_key_dep[`${protocol_name}_tls`] = "tls"
         o = s.taboption(tab_name, form.FileUpload, `${protocol_name}_tls_cert_file`, _(`[${protocol_name}][tls] Certificate File`));
         o.root_directory = "/etc/luci-uploads/xray"
         o.depends(tls_cert_key_dep)
-        
+
         o = s.taboption(tab_name, form.FileUpload, `${protocol_name}_tls_key_file`, _(`[${protocol_name}][tls] Private Key File`));
         o.root_directory = "/etc/luci-uploads/xray"
         o.depends(tls_cert_key_dep)
@@ -600,7 +600,7 @@ return view.extend({
 
         ss.tab('custom', _('Custom Options'));
 
-        o = ss.taboption('custom', form.TextValue, 'custom_config', _('Custom Configurations'), _('Configurations here override settings in the previous tabs with the following rules: <ol><li>Object values will be replaced recursively so settings in previous tabs matters.</li><li>Arrays will be replaced entirely instead of being merged.</li><li>Tag <code>tag</code> is ignored. </li></ol>Override rules here may be changed later. Use this only for experimental or pre-release features.'))
+        o = ss.taboption('custom', form.TextValue, 'custom_config', _('Custom Configurations'), _('Configurations here override settings in the previous tabs with the following rules: <ol><li>Object values will be replaced recursively so settings in previous tabs matter.</li><li>Arrays will be replaced entirely instead of being merged.</li><li>Tag <code>tag</code> is ignored. </li></ol>Override rules here may be changed later. Use this only for experimental or pre-release features.'))
         o.modalonly = true
         o.monospace = true
         o.rows = 10
@@ -737,7 +737,7 @@ return view.extend({
         o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_ips", _("Forwarded IP"))
         o.datatype = "ip4addr"
         o.rmempty = true
-        
+
         o = s.taboption('transparent_proxy_rules', form.ListValue, 'transparent_default_port_policy', _('Default Ports Policy'))
         o.value("forwarded", _("Forwarded"))
         o.value("bypassed", _("Bypassed"))
@@ -745,12 +745,12 @@ return view.extend({
         o.datatype = "portrange"
         o.rmempty = false
 
-        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_tcp_ports", _("Forwarded TCP Ports"), _("Requests to these TCP Ports will be forwarded through Xray.<br>80, 443, 853 is recommend."))
+        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_tcp_ports", _("Forwarded TCP Ports"), _("Requests to these TCP Ports will be forwarded through Xray. Recommended ports: 80, 443, 853"))
         o.depends("transparent_default_port_policy", "bypassed")
         o.datatype = "portrange"
         o.rmempty = true
 
-        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_udp_ports", _("Forwarded UDP Ports"), _("Requests to these UDP Ports will be forwarded through Xray.<br>53, 443 is recommend."))
+        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_udp_ports", _("Forwarded UDP Ports"), _("Requests to these UDP Ports will be forwarded through Xray. Recommended ports: 53, 443"))
         o.depends("transparent_default_port_policy", "bypassed")
         o.datatype = "portrange"
         o.rmempty = true
@@ -840,9 +840,9 @@ return view.extend({
         o.depends("web_server_enable", "1")
 
         o = s.taboption('xray_server', form.SectionValue, "xray_server_fallback", form.GridSection, 'fallback', _('Fallback Servers'), _("Specify upstream servers here."))
-        o.depends({"web_server_enable": "1", "web_server_protocol": "trojan"})
-        o.depends({"web_server_enable": "1", "web_server_protocol": "vless", "vless_tls": "tls"})
-        o.depends({"web_server_enable": "1", "web_server_protocol": "vless", "vless_tls": "xtls"})
+        o.depends({ "web_server_enable": "1", "web_server_protocol": "trojan" })
+        o.depends({ "web_server_enable": "1", "web_server_protocol": "vless", "vless_tls": "tls" })
+        o.depends({ "web_server_enable": "1", "web_server_protocol": "vless", "vless_tls": "xtls" })
 
         ss = o.subsection;
         ss.sortable = false
@@ -885,6 +885,8 @@ return view.extend({
         o = s.taboption('extra_options', form.Flag, 'stats', _('Enable Statistics'), _('Enable statistics of inbounds / outbounds data. Use Xray API to query values.'))
 
         o = s.taboption('extra_options', form.Flag, 'observatory', _('Enable Observatory'), _('Enable latency measurement for TCP and UDP outbounds. Support for balancers and strategy will be added later.'))
+
+        o = s.taboption('extra_options', form.Flag, 'fw4_counter', _('Enable firewall4 counters'), _('Add <a href="/cgi-bin/luci/admin/status/nftables">counters to firewall4</a> for transparent proxy rules. (Not supported in all OpenWrt versions. )'))
 
         o = s.taboption('extra_options', form.Flag, 'metrics_server_enable', _('Enable Xray Metrics Server'), _("Enable built-in metrics server for pprof and expvar. See <a href='https://github.com/XTLS/Xray-core/pull/1000'>here</a> for details."));
 

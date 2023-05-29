@@ -22,6 +22,11 @@
     const wan_fw_udp_ports = general.wan_fw_udp_ports || [];
     const wan_bp_tcp_ports = general.wan_bp_tcp_ports || [];
     const wan_bp_udp_ports = general.wan_bp_udp_ports || [];
+    const counter_template = "counter packets 0 bytes 0";
+    let counter = "";
+    if (general.fw4_counter == "1") {
+        counter = counter_template;
+    };
 %}
     set tp_spec_src_ac {
         type ether_addr
@@ -81,94 +86,94 @@
 
     chain xray_prerouting {
         type filter hook prerouting priority filter; policy accept;
-        meta mark 0x000000fc goto tp_spec_wan_ac
-        iifname "{{ general.lan_ifaces }}" goto tp_spec_lan_dg
+        meta mark 0x000000fc {{ counter }} goto tp_spec_wan_ac
+        iifname "{{ general.lan_ifaces }}" {{ counter }} goto tp_spec_lan_dg
     }
 
     chain xray_output {
         type route hook output priority filter; policy accept;
-        goto tp_spec_wan_dg
+        {{ counter }} goto tp_spec_wan_dg
     }
 
     chain tp_spec_lan_ac {
-        ether saddr @tp_spec_src_bp return
-        ether saddr @tp_spec_src_fw goto tp_spec_wan_fw
-        ether saddr @tp_spec_src_ac goto tp_spec_wan_ac
-        goto tp_spec_wan_ac
+        ether saddr @tp_spec_src_bp {{ counter }} return
+        ether saddr @tp_spec_src_fw {{ counter }} goto tp_spec_wan_fw
+        ether saddr @tp_spec_src_ac {{ counter }} goto tp_spec_wan_ac
+        {{ counter }} goto tp_spec_wan_ac
     }
 
     chain tp_spec_lan_dg {
-        ip daddr @tp_spec_dst_fw goto tp_spec_lan_re
-        ip daddr @tp_spec_dst_sp return
-        ip daddr @tp_spec_dst_bp return
+        ip daddr @tp_spec_dst_fw {{ counter }} goto tp_spec_lan_re
+        ip daddr @tp_spec_dst_sp {{ counter }} return
+        ip daddr @tp_spec_dst_bp {{ counter }} return
 {% if (ignore_tp_spec_def_gw == null): %}
-        ip daddr @tp_spec_def_gw return
+        ip daddr @tp_spec_def_gw {{ counter }} return
 {% endif %}
-        goto tp_spec_lan_re
+        {{ counter }} goto tp_spec_lan_re
     }
 
     chain tp_spec_lan_re {
 {% if (transparent_default_port_policy == "bypassed"): %}
     {% if (length(wan_fw_tcp_ports) > 0): %}
-        tcp dport { {{ join(", ", wan_fw_tcp_ports) }} } goto tp_spec_lan_ac
+        tcp dport { {{ join(", ", wan_fw_tcp_ports) }} } {{ counter }} goto tp_spec_lan_ac
     {% endif %}
     {% if (length(wan_fw_udp_ports) > 0): %}
-        udp dport { {{ join(", ", wan_fw_udp_ports) }} } goto tp_spec_lan_ac
+        udp dport { {{ join(", ", wan_fw_udp_ports) }} } {{ counter }} goto tp_spec_lan_ac
     {% endif %}
 {% else %}
     {% if (length(wan_bp_tcp_ports) > 0): %}
-        tcp dport { {{ join(", ", wan_bp_tcp_ports) }} } return
+        tcp dport { {{ join(", ", wan_bp_tcp_ports) }} } {{ counter }} return
     {% endif %}
     {% if (length(wan_bp_udp_ports) > 0): %}
-        udp dport { {{ join(", ", wan_bp_udp_ports) }} } return
+        udp dport { {{ join(", ", wan_bp_udp_ports) }} } {{ counter }} return
     {% endif %}
-        meta l4proto { tcp, udp } goto tp_spec_lan_ac
+        meta l4proto { tcp, udp } {{ counter }} goto tp_spec_lan_ac
 {% endif %}
     }
 
     chain tp_spec_wan_ac {
-        ip daddr @tp_spec_dst_fw goto tp_spec_wan_fw
-        ip daddr @tp_spec_dst_bp return
-        goto tp_spec_wan_fw
+        ip daddr @tp_spec_dst_fw {{ counter }} goto tp_spec_wan_fw
+        ip daddr @tp_spec_dst_bp {{ counter }} return
+        {{ counter }} goto tp_spec_wan_fw
     }
 
     chain tp_spec_wan_dg {
 {% if (length(uids_direct) > 0): %}
-        meta skuid { {{ join(", ", uids_direct) }} } return
+        meta skuid { {{ join(", ", uids_direct) }} } {{ counter }} return
 {% endif %}
 {% if (length(gids_direct) > 0): %}
-        meta skgid { {{ join(", ", gids_direct) }} } return
+        meta skgid { {{ join(", ", gids_direct) }} } {{ counter }} return
 {% endif %}
-        meta mark {{ sprintf("0x%08x", general.mark) }} return
-        ip daddr @tp_spec_dst_fw goto tp_spec_wan_re
-        ip daddr @tp_spec_dst_sp return
-        ip daddr @tp_spec_dst_bp return
+        meta mark {{ sprintf("0x%08x", general.mark) }} {{ counter }} return
+        ip daddr @tp_spec_dst_fw {{ counter }} goto tp_spec_wan_re
+        ip daddr @tp_spec_dst_sp {{ counter }} return
+        ip daddr @tp_spec_dst_bp {{ counter }} return
 {% if (ignore_tp_spec_def_gw == null): %}
-        ip daddr @tp_spec_def_gw return
+        ip daddr @tp_spec_def_gw {{ counter }} return
 {% endif %}
-        goto tp_spec_wan_re
+        {{ counter }} goto tp_spec_wan_re
     }
 
     chain tp_spec_wan_re {
 {% if (transparent_default_port_policy == "bypassed"): %}
     {% if (length(wan_fw_tcp_ports) > 0): %}
-        tcp dport { {{ join(", ", wan_fw_tcp_ports) }} } meta mark set 0x000000fc
+        tcp dport { {{ join(", ", wan_fw_tcp_ports) }} } {{ counter }} meta mark set 0x000000fc
     {% endif %}
     {% if (length(wan_fw_udp_ports) > 0): %}
-        udp dport { {{ join(", ", wan_fw_udp_ports) }} } meta mark set 0x000000fc
+        udp dport { {{ join(", ", wan_fw_udp_ports) }} } {{ counter }} meta mark set 0x000000fc
     {% endif %}
 {% else %}
     {% if (length(wan_bp_tcp_ports) > 0): %}
-        tcp dport { {{ join(", ", wan_bp_tcp_ports) }} } return
+        tcp dport { {{ join(", ", wan_bp_tcp_ports) }} } {{ counter }} return
     {% endif %}
     {% if (length(wan_bp_udp_ports) > 0): %}
-        udp dport { {{ join(", ", wan_bp_udp_ports) }} } return
+        udp dport { {{ join(", ", wan_bp_udp_ports) }} } {{ counter }} return
     {% endif %}
-        meta l4proto { tcp, udp } meta mark set 0x000000fc
+        meta l4proto { tcp, udp } {{ counter }} meta mark set 0x000000fc
 {% endif %}
     }
 
     chain tp_spec_wan_fw {
-        meta l4proto tcp meta mark set 0x000000fb tproxy ip to 0.0.0.0:{{ general.tproxy_port_tcp }} accept
-        meta l4proto udp meta mark set 0x000000fb tproxy ip to 0.0.0.0:{{ general.tproxy_port_udp }} accept
+        meta l4proto tcp {{ counter }} meta mark set 0x000000fb tproxy ip to 0.0.0.0:{{ general.tproxy_port_tcp }} accept
+        meta l4proto udp {{ counter }} meta mark set 0x000000fb tproxy ip to 0.0.0.0:{{ general.tproxy_port_udp }} accept
     }
