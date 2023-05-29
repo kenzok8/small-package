@@ -6,19 +6,16 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Warnings
 
+* Since the last OpenWrt version with `firewall3` as default firewall implementation (which is OpenWrt 21.02.7) is now EoL, the `fw3` variant of this project is no longer maintained. 
+    * It is strongly recommended to use `fw4` variant. 
+    * The old version is still kept there and should work but no new features (added after Xray v1.8.1) or bugfixes will be added there.
 * Since version 2.0.0 this project is split into `fw3` and `fw4` variants and **this breaks compatibility**:
     * Configuration files and init scripts are renamed. Manually refill configurations or run `mv /etc/config/xray /etc/config/xray_fw4` (for fw4, similar for fw3) for migration.
     * installation method is changed. See `Installation` below for details.
-    * `fw3` variant is no longer in active development. It is strongly recommended to use `fw4` variant.
 * About experimental REALITY support
     * may change quite frequently so keep in mind about following warnings
     * server role support **involves breaking changes if you use HTTPS server**: certificate settings are now bound to stream security, so previously uploaded certificate and key files will disappear in LuCI, but this won't prevent Xray from using them. Your previously uploaded file are still there, just select them again in LuCI. If Xray fails to start up and complains about missing certificate files, also try picking them again.
     * legacy XTLS support has already been removed in version 1.8.0 and is also removed by this project since version 2.0.0.
-* Since OpenWrt 22.03 release, the recommended firewall implementation for this project is now **firewall4** with some caveats
-    * currently this project still works on OpenWrt 19.07 / 21.02 versions. There's a warning about missing `kmod-nft-tproxy` when using these versions, just ignore it. This problem will be fixed later.
-    * support for versions mentioned above will soon be **deprecated**, which means that most new features won't be implemented for these old versions. Check changelog for details about future changes and availability of various new features.
-    * there is a possible bug in nftables 1.0.3 / 1.0.4 which breaks tproxy, so if you use master branch, make sure your source code is newer than [36bec544d73dbed46f06875fdfa570e89a40e553](https://github.com/openwrt/openwrt/commit/36bec544d73dbed46f06875fdfa570e89a40e553)
-    * currently building ipk with OpenWrt SDK is **NOT** tested and is **NOT** likely to work right now. If you are building ipks yourself, use the proper version of buildroot toolchain which matches the firewall implementation (fw3 or fw4) you are using.
 * There will be a series of **BREAKING CHANGES** in the following months due to some major refactor of DNS module. Please read changelog carefully to know about breaking changes and always backup your configuration files before updating.
 * If you see `WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly` and don't know what to do:
     * try `opkg update && opkg install xray-geodata` (at least OpenWrt 21.02 releases)
@@ -32,7 +29,11 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 * For OpenWrt 19.07 releases, you need to prepare your own xray-core package (just download from [Releases · yichya/openwrt-xray](https://github.com/yichya/openwrt-xray/releases) and install that) because building Xray from source requires Go 1.17 which is currently only available in at least OpenWrt 21.02 releases.
 * This project may change its code structure, configuration files format, user interface or dependencies quite frequently since it is still in its very early stage. 
 
-## Installation
+## Installation (Fw4 only)
+
+Just use `opkg -i *` to install both ipks from Releases.
+
+## Installation (Manually building OpenWrt)
 
 Choose one below:
 
@@ -51,6 +52,8 @@ Then find `luci-app-xray` under `Extra Packages`.
 * 2023-04-03 feat: split this project into `fw3` and `fw4` variants
 * 2023-04-17 chore: provide prebuilt packages for `fw4` variant
 * 2023-04-29 fix: make `fw3` variant actually usable; add REALITY support for `fw3` variant
+* 2023-05-24 feat: `[OpenWrt 22.03 or above only]` support transparent proxy ports filter (fw4)
+* 2023-05-29 feat: `[OpenWrt 22.03 or above only]` add counter in fw4
 
 ## Changelog 2022
 
