@@ -12,7 +12,7 @@ local ip_addr = arg[5]
 local server = ucursor:get_all("bypass", server_section)
 local outbound_settings = nil
 
-local tls_host = (tls_host) and tls_host or server.server																	   
+local tls_host = (server.tls_host) and server.tls_host or server.server																	   
 function vmess_vless()
 	outbound_settings = {
 		vnext = {
