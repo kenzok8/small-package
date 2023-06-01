@@ -1897,6 +1897,10 @@ msgstr ""
 msgid "Update subscriptions via proxy."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1153
+msgid "Update time"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1159
 msgid "Update via proxy"
 msgstr ""
