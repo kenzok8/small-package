@@ -1150,7 +1150,7 @@ return view.extend({
 		o.default = o.disabled;
 		o.rmempty = false;
 
-		o = s.taboption('subscription', form.ListValue, 'auto_update_time', 'Update time');
+		o = s.taboption('subscription', form.ListValue, 'auto_update_time', _('Update time'));
 		for (var i = 0; i < 24; i++)
 			o.value(i, i + ':00');
 		o.default = '2';

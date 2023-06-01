@@ -1945,6 +1945,10 @@ msgstr "从订阅更新节点"
 msgid "Update subscriptions via proxy."
 msgstr "使用代理更新订阅。"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1153
+msgid "Update time"
+msgstr "更新时间"
+
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1159
 msgid "Update via proxy"
 msgstr "使用代理更新"
