@@ -83,7 +83,7 @@ function getResVersion(self, type) {
 	});
 }
 
-function getRuntimeLog(name) {
+function getRuntimeLog(name, filename) {
 	var callLogClean = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'log_clean',
@@ -101,7 +101,7 @@ function getRuntimeLog(name) {
 
 	var log;
 	poll.add(L.bind(function() {
-		return fs.read_direct(String.format('%s/%s.log', hp_dir, name.toLowerCase()), 'text')
+		return fs.read_direct(String.format('%s/%s.log', hp_dir, filename), 'text')
 		.then(function(res) {
 			log = E('pre', { 'wrap': 'pre' }, [
 				res.trim() || _('Log is empty.')
@@ -131,7 +131,7 @@ function getRuntimeLog(name) {
 				E('button', {
 					'class': 'btn cbi-button cbi-button-action',
 					'click': ui.createHandlerFn(this, function() {
-						return L.resolveDefault(callLogClean(name.toLowerCase()), {});
+						return L.resolveDefault(callLogClean(filename), {});
 					})
 				}, [ _('Clean log') ])
 			]),
@@ -188,10 +188,13 @@ return view.extend({
 		o.rawhtml = true;
 
 		o = s.option(form.DummyValue, '_homeproxy_logview');
-		o.render = L.bind(getRuntimeLog, this, 'HomeProxy');
+		o.render = L.bind(getRuntimeLog, this, _('HomeProxy'), 'homeproxy');
 
-		o = s.option(form.DummyValue, '_sing-box_logview');
-		o.render = L.bind(getRuntimeLog, this, 'sing-box');
+		o = s.option(form.DummyValue, '_sing-box-c_logview');
+		o.render = L.bind(getRuntimeLog, this, _('sing-box client'), 'sing-box-c');
+
+		o = s.option(form.DummyValue, '_sing-box-s_logview');
+		o.render = L.bind(getRuntimeLog, this, _('sing-box server'), 'sing-box-s');
 
 		return m.render();
 	},
