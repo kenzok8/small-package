@@ -7,11 +7,13 @@
 
 A plugin for OpenWRT routers to push various information to a mobile phone via WeChat or Telegram.
 Supported services:
-- [x] WeChat: Server Chan                       https://sct.ftqq.com/
-- [x] WeChat for Enterprise: Application Push   https://work.weixin.qq.com/api/doc/90000/90135/90248
-- [x] WeChat: WxPusher                          https://wxpusher.zjiecode.com/docs
-- [x] WeChat: PushPlus                          http://www.pushplus.plus/
-- [x] Telegram bot                              https://t.me/BotFather
+| Push application | Method | description |
+| :-------- | :----- | :----- |
+| WeChat | Server Chan | https://sct.ftqq.com/
+| WeChat | PushPlus | http://www.pushplus.plus/
+| WeChat | WxPusher | https://wxpusher.zjiecode.com/docs
+| WeChat for Enterprise | Application Push | https://work.weixin.qq.com/api/doc/90000/90135/90248
+| Telegram | bot | https://t.me/BotFather
 
 Limited resources are available. If you need services such as DingTalk push, Feishu push, Bark push, etc., please try another branch at https://github.com/zzsj0928/luci-app-pushbot, or use custom API settings.
 

@@ -9,11 +9,13 @@
 
 推送服务支持列表：
 
-- [x] 微信：Server酱                https://sct.ftqq.com/
-- [x] 微信：推送加                    http://www.pushplus.plus/
-- [x] 微信： WxPusher            https://wxpusher.zjiecode.com/docs
-- [x] 企业微信：应用推送         https://work.weixin.qq.com/api/doc/90000/90135/90248
-- [x] Telegram：bot		   https://t.me/BotFather
+| 推送应用 | 方式 | 接口说明 |
+| :-------- | :----- | :----- |
+| 微信 | Server酱 | https://sct.ftqq.com/
+| 微信 | 推送加 | http://www.pushplus.plus/
+| 微信 | WxPusher | https://wxpusher.zjiecode.com/docs
+| 企业微信 | 应用推送 | https://work.weixin.qq.com/api/doc/90000/90135/90248
+| Telegram | bot | https://t.me/BotFather
 
 精力有限，如需要钉钉推送、飞书推送、Bark 推送等请尝试另一个分支 https://github.com/zzsj0928/luci-app-pushbot ，或使用自定义 API 设置
 
@@ -71,8 +73,8 @@
 
 ## 下载
 
-| 支持的 OpenWrt 版本        |   下载地址   |
-| :--------  | :-----  |
+| 支持的 OpenWrt 版本 | 下载地址 |
+| :-------- | :----- |
 | openwrt-19.07.0 ... latest | [![Lastest Release](https://img.shields.io/github/release/tty228/luci-app-wechatpush.svg?style=flat)](https://github.com/tty228/luci-app-wechatpush/releases)
 | openwrt-18.06 | [![Release v2.06.2](https://img.shields.io/badge/release-v2.06.2-lightgrey.svg)](https://github.com/tty228/luci-app-wechatpush/releases/tag/v2.06.2)
 
