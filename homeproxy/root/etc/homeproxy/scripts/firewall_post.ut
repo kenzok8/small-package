@@ -349,7 +349,7 @@ chain dstnat {
 chain homeproxy_mangle_tproxy {
 	meta l4proto udp mark set {{ tproxy_mark }} tproxy ip to 127.0.0.1:{{ tproxy_port }} counter accept
 	{% if (ipv6_support === '1'): %}
-	meta l4proto udp mark set {{ tproxy_mark }} tproxy ip6 to [::]:{{ tproxy_port }} counter accept
+	meta l4proto udp mark set {{ tproxy_mark }} tproxy ip6 to [::1]:{{ tproxy_port }} counter accept
 	{% endif %}
 }
 

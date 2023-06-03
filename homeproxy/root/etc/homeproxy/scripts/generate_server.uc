@@ -139,9 +139,8 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 	});
 });
 
-if (length(config.inbounds) === 0) {
+if (length(config.inbounds) === 0)
 	exit(1);
-}
 
 system('mkdir -p ' + RUN_DIR);
 writefile(RUN_DIR + '/sing-box-s.json', sprintf('%.J\n', removeBlankAttrs(config)));
