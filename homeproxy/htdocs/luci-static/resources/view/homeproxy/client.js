@@ -42,7 +42,7 @@ function getServiceStatus() {
 	return L.resolveDefault(callServiceList('homeproxy'), {}).then((res) => {
 		var isRunning = false;
 		try {
-			isRunning = res['homeproxy']['instances']['sing-box']['running'];
+			isRunning = res['homeproxy']['instances']['sing-box-c']['running'];
 		} catch (e) { }
 		return isRunning;
 	});
