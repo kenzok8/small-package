@@ -403,7 +403,7 @@ run_v2ray() {
 		_extra_param="${_extra_param} -dns_query_strategy UseIP"
 		_extra_param="${_extra_param} -direct_dns_port ${direct_dnsmasq_listen_port} -direct_dns_udp_server 127.0.0.1"
 		_extra_param="${_extra_param} -remote_dns_port ${dns_remote_listen_port} -remote_dns_udp_server 127.0.0.1"
-		[ "$remote_fakedns" = "1" ] && _extra_param="${_extra_param} -remote_dns_fake 1"
+		[ "$remote_fakedns" = "1" ] && _extra_param="${_extra_param} -remote_dns_fake 1 -remote_dns_fake_strategy ${remote_dns_query_strategy}"
 	}
 
 	lua $UTIL_XRAY gen_config -node $node -redir_port $redir_port -tcp_proxy_way $tcp_proxy_way -loglevel $loglevel ${_extra_param} > $config_file
@@ -995,8 +995,7 @@ start() {
 stop() {
 	clean_log
 	[ -n "$($(source $APP_PATH/iptables.sh get_ipt_bin) -t mangle -t nat -L -nv 2>/dev/null | grep "PSW2")" ] && source $APP_PATH/iptables.sh stop
-	[ -n "$(nft list chains 2>/dev/null | grep "PSW2")" ] && source $APP_PATH/nftables.sh stop
-	source $APP_PATH/iptables.sh stop
+	[ -n "$(nft list sets 2>/dev/null | grep "${CONFIG}_")" ] && source $APP_PATH/nftables.sh stop
 	delete_ip2route
 	kill_all v2ray-plugin obfs-local
 	pgrep -f "sleep.*(6s|9s|58s)" | xargs kill -9 >/dev/null 2>&1
