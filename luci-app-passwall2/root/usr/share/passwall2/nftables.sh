@@ -149,11 +149,35 @@ get_action_chain_name() {
 }
 
 gen_lanlist() {
-	cat $RULES_PATH/lanlist_ipv4 | tr -s '\n' | grep -v "^#"
+	cat <<-EOF
+		0.0.0.0/8
+		10.0.0.0/8
+		100.64.0.0/10
+		127.0.0.0/8
+		169.254.0.0/16
+		172.16.0.0/12
+		192.168.0.0/16
+		224.0.0.0/4
+		240.0.0.0/4
+	EOF
 }
 
 gen_lanlist_6() {
-	cat $RULES_PATH/lanlist_ipv6 | tr -s '\n' | grep -v "^#"
+	cat <<-EOF
+		::/128
+		::1/128
+		::ffff:0:0/96
+		::ffff:0:0:0/96
+		64:ff9b::/96
+		100::/64
+		2001::/32
+		2001:20::/28
+		2001:db8::/32
+		2002::/16
+		fc00::/7
+		fe80::/10
+		ff00::/8
+	EOF
 }
 
 get_wan_ip() {
@@ -437,7 +461,7 @@ filter_node() {
 		for _ipt in 4 6; do
 			[ "$_ipt" == "4" ] && _ip_type=ip4 && _set_name=$NFTSET_VPSLIST
 			[ "$_ipt" == "6" ] && _ip_type=ip6 && _set_name=$NFTSET_VPSLIST6
-			nft "list chain inet fw4 $nft_output_chain" | grep -q "${address}:${port}"
+			nft "list chain inet fw4 $nft_output_chain" 2>/dev/null | grep -q "${address}:${port}"
 			if [ $? -ne 0 ]; then
 				unset dst_rule
 				local dst_rule="jump PSW2_RULE"
@@ -809,7 +833,7 @@ add_firewall_rule() {
 
 del_firewall_rule() {
 	for nft in "input" "forward" "dstnat" "srcnat" "nat_output" "mangle_prerouting" "mangle_output"; do
-        local handles=$(nft -a list chain inet fw4 ${nft} | grep -E "PSW2" | awk -F '# handle ' '{print$2}')
+        local handles=$(nft -a list chain inet fw4 ${nft} 2>/dev/null | grep -E "PSW2" | awk -F '# handle ' '{print$2}')
 		for handle in $handles; do
 			nft delete rule inet fw4 ${nft} handle ${handle} 2>/dev/null
 		done
@@ -836,7 +860,7 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_VPSLIST6
 	destroy_nftset $NFTSET_WHITELIST6
 
-	echolog "删除相关防火墙规则完成。"
+	$DIR/app.sh echolog "删除相关防火墙规则完成。"
 }
 
 flush_nftset() {
@@ -853,7 +877,7 @@ flush_include() {
 gen_include() {
 	local nft_chain_file=$TMP_PATH/PSW2.nft
 	echo "" > $nft_chain_file
-	for chain in $(nft -a list chains |grep -E "chain PSW2" |awk -F ' ' '{print$2}'); do
+	for chain in $(nft -a list chains | grep -E "chain PSW2" |awk -F ' ' '{print$2}'); do
 		nft list chain inet fw4 ${chain} >> $nft_chain_file
 	done
 
