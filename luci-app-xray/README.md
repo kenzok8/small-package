@@ -54,6 +54,7 @@ Then find `luci-app-xray` under `Extra Packages`.
 * 2023-04-29 fix: make `fw3` variant actually usable; add REALITY support for `fw3` variant
 * 2023-05-24 feat: `[OpenWrt 22.03 or above only]` support transparent proxy ports filter (fw4)
 * 2023-05-29 feat: `[OpenWrt 22.03 or above only]` add counter in fw4
+* 2023-05-29 chore: change default config to not using proxy
 
 ## Changelog 2022
 
