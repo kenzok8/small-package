@@ -177,6 +177,7 @@ function parseShareLink(uri, features) {
 		case 'trojan':
 			/* https://p4gefau1t.github.io/trojan-go/developer/url/ */
 			var url = new URL('http://' + uri[1]);
+			var params = url.searchParams;
 
 			/* Check if password exists */
 			if (!url.username)
@@ -188,9 +189,26 @@ function parseShareLink(uri, features) {
 				address: url.hostname,
 				port: url.port || '80',
 				password: decodeURIComponent(url.username),
+				transport: params.get('type') !== 'tcp' ? params.get('type') : null,
 				tls: '1',
-				tls_sni: url.searchParams.get('sni')
+				tls_sni: params.get('sni')
 			};
+			switch (params.get('type')) {
+			case 'grpc':
+				config.grpc_servicename = params.get('serviceName');
+				break;
+			case 'ws':
+				/* We don't parse "host" param when TLS is enabled, as some providers are abusing it (host vs sni)
+				 * config.ws_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
+				 */
+				config.ws_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
+				if (config.ws_path && config.ws_path.includes('?ed=')) {
+					config.websocket_early_data_header = 'Sec-WebSocket-Protocol';
+					config.websocket_early_data = config.ws_path.split('?ed=')[1];
+					config.ws_path = config.ws_path.split('?ed=')[0];
+				}
+				break;
+			}
 
 			break;
 		case 'vless':
@@ -235,6 +253,7 @@ function parseShareLink(uri, features) {
 				}
 				break;
 			case 'ws':
+				/* We don't parse "host" param when TLS is enabled, as some providers are abusing it (host vs sni) */
 				config.ws_host = (config.tls !== '1' && params.get('host')) ? decodeURIComponent(params.get('host')) : null;
 				config.ws_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
 				if (config.ws_path && config.ws_path.includes('?ed=')) {
@@ -292,6 +311,7 @@ function parseShareLink(uri, features) {
 				}
 				break;
 			case 'ws':
+				/* We don't parse "host" param when TLS is enabled, as some providers are abusing it (host vs sni) */
 				config.ws_host = (config.tls !== '1') ? uri.host : null;
 				config.ws_path = uri.path;
 				if (config.ws_path && config.ws_path.includes('?ed=')) {
@@ -1111,7 +1131,6 @@ return view.extend({
 
 			so = ss.option(form.Value, 'tls_reality_short_id', _('REALITY short ID'));
 			so.depends('tls_reality', '1');
-			so.rmempty = false;
 			so.modalonly = true;
 		}
 		/* TLS config end */

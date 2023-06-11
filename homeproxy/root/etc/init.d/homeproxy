@@ -161,6 +161,8 @@ start_service() {
 			procd_add_jail_mount_rw "$RUN_DIR/sing-box-c.log"
 			procd_add_jail_mount "$HP_DIR/certs/"
 			procd_add_jail_mount "/etc/ssl/"
+			procd_add_jail_mount "/etc/localtime"
+			procd_add_jail_mount "/etc/TZ"
 			procd_set_param capabilities "/etc/capabilities/homeproxy.json"
 			procd_set_param no_new_privs 1
 			procd_set_param user sing-box
@@ -234,6 +236,8 @@ start_service() {
 			procd_add_jail_mount "$RUN_DIR/sing-box-s.json"
 			procd_add_jail_mount_rw "$RUN_DIR/sing-box-s.log"
 			procd_add_jail_mount "$HP_DIR/certs/"
+			procd_add_jail_mount "/etc/localtime"
+			procd_add_jail_mount "/etc/TZ"
 			procd_set_param capabilities "/etc/capabilities/homeproxy.json"
 			procd_set_param no_new_privs 1
 			procd_set_param user sing-box
