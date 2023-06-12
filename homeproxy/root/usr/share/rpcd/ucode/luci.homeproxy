@@ -117,6 +117,26 @@ const methods = {
 		}
 	},
 
+	connection_check: {
+		args: { site: 'site' },
+		call: function(req) {
+			let url;
+			switch(req.args?.site) {
+			case 'baidu':
+				url = 'https://www.baidu.com';
+				break;
+			case 'google':
+				url = 'https://www.google.com';
+				break;
+			default:
+				return { result: false, error: 'illegal site' };
+				break;
+			}
+
+			return { result: (system(`/usr/bin/wget -sqT3 ${url} 2>"/dev/null"`, 3100) === 0) };
+		}
+	},
+
 	log_clean: {
 		args: { type: 'type' },
 		call: function(req) {
