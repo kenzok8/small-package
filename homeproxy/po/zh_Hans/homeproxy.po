@@ -8,7 +8,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:129
+#: htdocs/luci-static/resources/view/homeproxy/status.js:158
 msgid "%s log"
 msgstr "%s 日志"
 
@@ -106,11 +106,11 @@ msgstr "从订阅获取节点时，默认允许不安全连接。"
 msgid "Allowed payload size is in the request."
 msgstr "请求中允许的载荷大小。"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:65
+#: htdocs/luci-static/resources/view/homeproxy/status.js:94
 msgid "Already at the latest version."
 msgstr "已是最新版本"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:62
+#: htdocs/luci-static/resources/view/homeproxy/status.js:91
 msgid "Already in updating."
 msgstr "已在更新中"
 
@@ -177,6 +177,10 @@ msgstr "自动更新"
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1168
 msgid "Auto update subscriptions, GeoIP and GeoSite."
 msgstr "自动更新订阅、GeoIP 和 GeoSite"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js:193
+msgid "BaiDu"
+msgstr "百度"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:573
 #: htdocs/luci-static/resources/view/homeproxy/server.js:180
@@ -248,7 +252,11 @@ msgstr "取消"
 msgid "Certificate path"
 msgstr "证书路径"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:75
+#: htdocs/luci-static/resources/view/homeproxy/status.js:56
+msgid "Check"
+msgstr "检查"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js:104
 msgid "Check update"
 msgstr "检查更新"
 
@@ -256,15 +264,15 @@ msgstr "检查更新"
 msgid "China DNS server"
 msgstr "国内 DNS 服务器"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:174
+#: htdocs/luci-static/resources/view/homeproxy/status.js:213
 msgid "China IPv4 list version"
 msgstr "大陆 IPv4 库版本"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:178
+#: htdocs/luci-static/resources/view/homeproxy/status.js:217
 msgid "China IPv6 list version"
 msgstr "大陆 IPv6 库版本"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:182
+#: htdocs/luci-static/resources/view/homeproxy/status.js:221
 msgid "China list version"
 msgstr "大陆域名列表版本"
 
@@ -281,7 +289,7 @@ msgstr "密码套件"
 msgid "Cisco Public DNS (208.67.222.222)"
 msgstr "思科公共 DNS（208.67.222.222）"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:136
+#: htdocs/luci-static/resources/view/homeproxy/status.js:165
 msgid "Clean log"
 msgstr "清空日志"
 
@@ -295,13 +303,17 @@ msgstr "CloudFlare 公共 DNS（1.1.1.1）"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:123
 #: htdocs/luci-static/resources/view/homeproxy/server.js:70
-#: htdocs/luci-static/resources/view/homeproxy/status.js:99
+#: htdocs/luci-static/resources/view/homeproxy/status.js:128
 msgid "Collecting data..."
 msgstr "收集数据中..."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:221
 msgid "Common ports only (bypass P2P traffic)"
 msgstr "仅常用端口（绕过 P2P 流量）"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js:190
+msgid "Connection check"
+msgstr "连接检查"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:209
 msgid "Custom routing"
@@ -651,7 +663,7 @@ msgstr "流控"
 msgid "GET"
 msgstr "GET"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:186
+#: htdocs/luci-static/resources/view/homeproxy/status.js:225
 msgid "GFW list version"
 msgstr "GFW 域名列表版本"
 
@@ -675,11 +687,11 @@ msgstr "游戏模式 MAC 地址"
 msgid "GeoIP"
 msgstr "GeoIP"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:165
+#: htdocs/luci-static/resources/view/homeproxy/status.js:204
 msgid "GeoIP version"
 msgstr "GeoIP 版本"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:169
+#: htdocs/luci-static/resources/view/homeproxy/status.js:208
 msgid "GeoSite version"
 msgstr "GeoSite 版本"
 
@@ -712,6 +724,10 @@ msgstr "全局代理 MAC 地址"
 msgid "Global settings"
 msgstr "全局设置"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js:196
+msgid "Google"
+msgstr "谷歌"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:161
 msgid "Google Public DNS (8.8.8.8)"
 msgstr "谷歌公共 DNS（8.8.8.8）"
@@ -740,7 +756,7 @@ msgstr "握手服务器端口"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:55
 #: htdocs/luci-static/resources/view/homeproxy/client.js:57
 #: htdocs/luci-static/resources/view/homeproxy/client.js:110
-#: htdocs/luci-static/resources/view/homeproxy/status.js:191
+#: htdocs/luci-static/resources/view/homeproxy/status.js:233
 #: root/usr/share/luci/menu.d/luci-app-homeproxy.json:3
 msgid "HomeProxy"
 msgstr "HomeProxy"
@@ -906,7 +922,7 @@ msgstr "支持的应用层协议协商列表，按顺序排列。"
 msgid "Listen interfaces"
 msgstr "监听接口"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:97
+#: htdocs/luci-static/resources/view/homeproxy/status.js:126
 msgid "Loading"
 msgstr "加载中"
 
@@ -914,11 +930,11 @@ msgstr "加载中"
 msgid "Local address"
 msgstr "本地地址"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:114
+#: htdocs/luci-static/resources/view/homeproxy/status.js:143
 msgid "Log file does not exist."
 msgstr "日志文件不存在。"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:107
+#: htdocs/luci-static/resources/view/homeproxy/status.js:136
 msgid "Log is empty."
 msgstr "日志为空。"
 
@@ -1428,7 +1444,7 @@ msgstr "Redirect TCP + TProxy UDP"
 msgid "Redirect TCP + Tun UDP"
 msgstr "Redirect TCP + Tun UDP"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:141
+#: htdocs/luci-static/resources/view/homeproxy/status.js:170
 msgid "Refresh every %s seconds."
 msgstr "每 %s 秒刷新。"
 
@@ -1448,7 +1464,7 @@ msgstr "保留字段字节"
 msgid "Resolve strategy"
 msgstr "解析策略"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:161
+#: htdocs/luci-static/resources/view/homeproxy/status.js:200
 msgid "Resources management"
 msgstr "资源管理"
 
@@ -1649,7 +1665,7 @@ msgstr "订阅"
 msgid "Successfully imported %s nodes of total %s."
 msgstr "成功导入 %s 个节点，共 %s 个。"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:56
+#: htdocs/luci-static/resources/view/homeproxy/status.js:85
 msgid "Successfully updated."
 msgstr "更新成功。"
 
@@ -1924,11 +1940,11 @@ msgstr "UDP over TCP"
 msgid "UUID"
 msgstr "UUID"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:68
+#: htdocs/luci-static/resources/view/homeproxy/status.js:97
 msgid "Unknown error."
 msgstr "未知错误。"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:118
+#: htdocs/luci-static/resources/view/homeproxy/status.js:147
 msgid "Unknown error: %s"
 msgstr "未知错误：%s"
 
@@ -1940,7 +1956,7 @@ msgstr "不支持的指纹！"
 msgid "Update %s subscriptions"
 msgstr "更新 %s 个订阅"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:59
+#: htdocs/luci-static/resources/view/homeproxy/status.js:88
 msgid "Update failed."
 msgstr "上传失败。"
 
@@ -2090,6 +2106,10 @@ msgstr "证书"
 msgid "default"
 msgstr "默认"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js:52
+msgid "failed"
+msgstr "失败"
+
 #: htdocs/luci-static/resources/view/homeproxy/node.js:785
 #: htdocs/luci-static/resources/view/homeproxy/server.js:257
 msgid "gRPC"
@@ -2132,15 +2152,19 @@ msgstr "无"
 msgid "packet addr (v2ray-core v5+)"
 msgstr "packet addr (v2ray-core v5+)"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js:49
+msgid "passed"
+msgstr "通过"
+
 #: htdocs/luci-static/resources/view/homeproxy/server.js:558
 msgid "private key"
 msgstr "私钥"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:194
+#: htdocs/luci-static/resources/view/homeproxy/status.js:236
 msgid "sing-box client"
 msgstr "sing-box 客户端"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:197
+#: htdocs/luci-static/resources/view/homeproxy/status.js:239
 msgid "sing-box server"
 msgstr "sing-box 服务端"
 
@@ -2154,6 +2178,10 @@ msgid ""
 "resistance."
 msgstr ""
 "uTLS 是 \"crypto/tls\" 的一个分支，拥有抵抗 ClientHello 指纹识别的能力。"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js:58
+msgid "unchecked"
+msgstr "未检查"
 
 #: htdocs/luci-static/resources/homeproxy.js:206
 #: htdocs/luci-static/resources/view/homeproxy/node.js:443

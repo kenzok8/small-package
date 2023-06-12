@@ -30,6 +30,35 @@ var css = '				\
 
 var hp_dir = '/var/run/homeproxy';
 
+function getConnStat(self, site) {
+	var callConnStat = rpc.declare({
+		object: 'luci.homeproxy',
+		method: 'connection_check',
+		params: ['site'],
+		expect: { '': {} }
+	});
+
+	self.default = E('div', { 'style': 'cbi-value-field' }, [
+		E('button', {
+			'class': 'btn cbi-button cbi-button-action',
+			'click': ui.createHandlerFn(this, function() {
+				return L.resolveDefault(callConnStat(site), {}).then((ret) => {
+                                        var ele = self.default.firstElementChild.nextElementSibling;
+					if (ret.result) {
+						ele.style.setProperty('color', 'green');
+                                                ele.innerHTML = _('passed');
+					} else {
+						ele.style.setProperty('color', 'red');
+                                                ele.innerHTML = _('failed');
+					}
+				});
+			})
+		}, [ _('Check') ]),
+		' ',
+		E('strong', { 'style': 'color:gray' }, _('unchecked')),
+	]);
+}
+
 function getResVersion(self, type) {
 	var callResVersion = rpc.declare({
 		object: 'luci.homeproxy',
@@ -158,6 +187,16 @@ return view.extend({
 
 		m = new form.Map('homeproxy');
 
+		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Connection check'));
+		s.anonymous = true;
+
+		o = s.option(form.DummyValue, '_check_baidu', _('BaiDu'));
+		o.cfgvalue = function() { return getConnStat(this, 'baidu') };
+
+		o = s.option(form.DummyValue, '_check_google', _('Google'));
+		o.cfgvalue = function() { return getConnStat(this, 'google') };
+
+
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;
 
@@ -186,6 +225,9 @@ return view.extend({
 		o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
 		o.cfgvalue = function() { return getResVersion(this, 'gfw_list') };
 		o.rawhtml = true;
+
+		s = m.section(form.NamedSection, 'config', 'homeproxy');
+		s.anonymous = true;
 
 		o = s.option(form.DummyValue, '_homeproxy_logview');
 		o.render = L.bind(getRuntimeLog, this, _('HomeProxy'), 'homeproxy');
