@@ -36,9 +36,22 @@ get_rate_data()
 	echo -n $num # assume num bps
 }
 
+dispatch_userinfo_event_fifo()
+{
+	pgrep -f "sh -c echo .*>/tmp/userinfo_event_fifo" >/dev/null && {
+		#event fifo is busy
+		return
+	}
+	sh -c "echo $1>/tmp/userinfo_event_fifo" &
+	return 0
+}
+
 qos_simple_watch()
 {
+	dispatch_userinfo_event_fifo ""
+
 	cat /dev/userinfo_event_ctl 2>/dev/null | while read line; do
+		dispatch_userinfo_event_fifo "$line"
 		ip=${line//,*}
 		idx=0
 		while uci get natflow.@qos_simple[$idx] &>/dev/null; do
@@ -81,11 +94,13 @@ start() {
 		done
 	done
 
+	test -e /tmp/userinfo_event_fifo || mkfifo /tmp/userinfo_event_fifo
 	qos_simple_watch &
 }
 
 stop() {
 	kill -TERM $(pgrep -f "cat /dev/userinfo_event_ctl") &>/dev/null
+	kill -TERM $(pgrep -f "sh -c echo .*>/tmp/userinfo_event_fifo") &>/dev/null
 	cat /dev/userinfo_ctl | while read line; do
 		ip=${line//,*}
 		echo set-token-ctrl $ip 0 0 >/dev/userinfo_ctl
