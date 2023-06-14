@@ -6,7 +6,7 @@ uci -q batch <<-EOF >/dev/null
     set firewall.wxedge.name="wxedge"
     set firewall.wxedge.target="ACCEPT"
     set firewall.wxedge.src="wan"
-    set firewall.wxedge.dest_port="40000-65535"
+    set firewall.wxedge.dest_port="1024-65535"
     set firewall.wxedge.enabled="0"
     commit firewall
 EOF

@@ -2,15 +2,15 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.1.3-20230614
+PKG_VERSION:=1.0.0-20230614
 PKG_RELEASE:=
 
-LUCI_TITLE:=LuCI support for wxedge
+LUCI_TITLE:=LuCI support for bmtedge
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:=+lsblk +docker +dockerd +luci-lib-taskd
 
-define Package/luci-app-wxedge/conffiles
-/etc/config/wxedge
+define Package/luci-app-bmtedge/conffiles
+/etc/config/bmtedge
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
