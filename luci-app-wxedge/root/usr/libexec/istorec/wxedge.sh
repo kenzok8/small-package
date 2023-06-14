@@ -3,26 +3,19 @@
 ACTION=${1}
 shift 1
 
-get_image() {
-  IMAGE_NAME="registry.hub.docker.com/onething1/wxedge"
-}
-
 do_install() {
-  get_image
-  echo "docker pull ${IMAGE_NAME}"
-  docker pull ${IMAGE_NAME}
-  docker rm -f wxedge
-
-  do_install_detail
-}
-
-do_install_detail() {
   local path=`uci get wxedge.@wxedge[0].cache_path 2>/dev/null`
+  local image_name=`uci get wxedge.@wxedge[0].image_name 2>/dev/null`
 
   if [ -z "$path" ]; then
       echo "path is empty!"
       exit 1
   fi
+
+  [ -z "$image_name" ] && image_name="onething1/wxedge"
+  echo "docker pull ${image_name}"
+  docker pull ${image_name}
+  docker rm -f wxedge
 
   local cmd="docker run --restart=unless-stopped -d \
     --privileged \
@@ -37,7 +30,7 @@ do_install_detail() {
   local tz="`uci get system.@system[0].zonename`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
-  cmd="$cmd --name wxedge \"$IMAGE_NAME\""
+  cmd="$cmd --name wxedge \"$image_name\""
 
   echo "$cmd"
   eval "$cmd"
