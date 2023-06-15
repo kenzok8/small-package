@@ -8,7 +8,7 @@ local m, s, o
 
 m = taskd.docker_map("bmtedge", "bmtedge", "/usr/libexec/istorec/bmtedge.sh",
 	translate("BlueMountain Edge"),
-	"蓝山云-流量宝由蓝山联合金山云推出的一款镜像软件，通过简单安装后可快速加入蓝山的边缘计算生态，在线共享带宽即可赚钱，每月可获取一定的现金汇报！了解更多，请登录「<a href=\"www.bmtcloud.com.cn\" target=\"_blank\" >蓝山云官网</a>」")
+	"蓝山云-流量宝由蓝山联合金山云推出的一款镜像软件，通过简单安装后可快速加入蓝山的边缘计算生态，在线共享带宽即可赚钱，每月可获取一定的现金回报！了解更多，请登录「<a href=\"https://www.bmtcloud.com.cn\" target=\"_blank\" >蓝山云官网</a>」并查看<a href=\"https://doc.linkease.com/zh/guide/istoreos/software/bmtedge.html\" target=\"_blank\">「教程」</a>")
 
 s = m:section(SimpleSection, translate("Service Status"), translate("BlueMountain Edge status:"), "注意网心云会以超级权限运行！")
 s:append(Template("bmtedge/status"))
