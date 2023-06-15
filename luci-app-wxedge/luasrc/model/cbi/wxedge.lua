@@ -8,7 +8,7 @@ local m, s, o
 
 m = taskd.docker_map("wxedge", "wxedge", "/usr/libexec/istorec/wxedge.sh",
 	translate("Onething Edge"),
-	"「网心云-容器魔方」由网心云推出的一款 docker 容器镜像软件，通过在简单安装后即可快速加入网心云共享计算生态网络，用户可根据每日的贡献量获得相应的现金收益回报。了解更多，请登录「<a href=\"https://www.onethingcloud.com/\" target=\"_blank\" >网心云官网</a>」")
+	"「网心云-容器魔方」由网心云推出的一款 docker 容器镜像软件，通过在简单安装后即可快速加入网心云共享计算生态网络，用户可根据每日的贡献量获得相应的现金收益回报。了解更多，请登录「<a href=\"https://www.onethingcloud.com/\" target=\"_blank\" >网心云官网</a>」并查看<a href=\"https://doc.linkease.com/zh/guide/istoreos/software/wxedge.html\" target=\"_blank\">「教程」</a>")
 
 s = m:section(SimpleSection, translate("Service Status"), translate("Onething Edge status:"), "注意网心云会以超级权限运行！")
 s:append(Template("wxedge/status"))

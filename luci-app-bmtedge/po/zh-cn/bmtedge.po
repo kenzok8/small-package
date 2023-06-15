@@ -22,14 +22,18 @@ msgstr "以下参数只在安装或者升级时才会生效："
 msgid "Status"
 msgstr "状态"
 
-msgid "BlueMountain Edge is running"
-msgstr "蓝山云运行中"
+msgid "Running, click to show QR"
+msgstr "运行中，点击查看二维码"
 
 msgid "BlueMountain Edge is not running"
 msgstr "蓝山云未运行"
 
-msgid "Open the BlueMountain Edge"
-msgstr "打开蓝山云"
+
+msgid "Use “蓝山云” Wechat Little APP to scan the QR, click:"
+msgstr "用“蓝山云”小程序扫码，请查看："
+
+msgid "Guide"
+msgstr "教程"
 
 msgid "UID"
 msgstr "唯一标识"
