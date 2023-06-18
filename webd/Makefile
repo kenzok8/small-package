@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Copyright (C) 2020-2023 Hyy2001X <https://github.com/Hyy2001X>
 # See more information at https://webd.cf/
 
@@ -95,5 +94,3 @@ define Package/$(PKG_NAME)/install
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
-=======
->>>>>>> main
