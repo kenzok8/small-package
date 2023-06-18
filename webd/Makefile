@@ -73,8 +73,7 @@ ifeq ($(ARCH),x86_64)
 endif
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(ARCH)-openwrt-linux-$(TARGET_ARCH).tar.gz
-SOURCE_URL:=https://cnt2.cf/fidx.html\#
-PKG_SOURCE_URL:=$(SOURCE_URL)/webd/$(PKG_VERSION)/
+PKG_SOURCE_URL:=https://cnt2.cf/fidx.html/webd/$(PKG_VERSION)/
 PKG_HASH:=skip
 
 UNTAR_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
