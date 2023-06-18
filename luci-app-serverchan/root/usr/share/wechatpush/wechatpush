@@ -121,10 +121,15 @@ function init(){
 	[ -n "$notification_load" ] && [ -n "$cpu_load_threshold" ] && local cpu_fuzai=`cat /proc/loadavg|awk '{print $1}'` 2>/dev/null || local cpu_fuzai="null"
 	[ -z "$cpu_fuzai" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法读取设备负载，请检查命令" >> ${logfile}
 
-	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv4"
-	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv6"
 	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] && init_ip_black "ipv4"
 	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] && init_ip_black "ipv6"
+	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv4"
+	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv6"
+
+	tmp_ip_list=`echo "$login_ip_white_list"|grep -v "^$"|sort -u`
+	while IFS= read -r tmp_ip; do
+		[ -n "$tmp_ip" ] && add_ip_white "$tmp_ip" "0"
+	done <<< "$tmp_ip_list"
 	set_ip_black
 	return 0
 }
@@ -500,7 +505,7 @@ function time_for_humans {
 	fi
 }
 
-# 计算字符真实长度
+# 计算字符显示宽度
 function length_str {
 	[ ! "$1" ] && return
 	
@@ -729,10 +734,10 @@ function geterrdevicealiases(){
 	if [ ! -z "$sheep_starttime" ] && [ "$((`date +%s`-$sheep_starttime))" -ge "3600" ]; then
 		> ${dir}sheep_usage
 		local MACLIST=`echo "$unattended_device_aliases"|grep -v "^$"|sort -u`
-		for mac in $MACLIST; do
+		while IFS= read -r mac; do
 			[ ! -z "$mac" ] && local tmptotal=`usage get ${mac} bytes`
 			[ ! -z "$tmptotal" ] && awk 'BEGIN{printf "%.0f\n",'$tmptotal'/'204800'}' 2>/dev/null >> ${dir}sheep_usage
-		done
+		done <<< "$MACLIST"
 		old_sheep_usage=`cat ${dir}old_sheep_usage` 2>/dev/null
 		sheep_usage=`cat ${dir}sheep_usage` 2>/dev/null
 		[ "$old_sheep_usage" == "$sheep_usage" ] && [ -z "$sheep_nousage_starttime" ] && sheep_nousage_starttime=`date +%s`
@@ -1093,62 +1098,76 @@ function get_disk() {
 	local_disk_names=()
 	pve_disk_names=()
 
-	# 查询硬盘名
-	local_disk_names=($(df -h | grep "/dev/sd" | awk '{print $1}' | sed 's/.*\///' | sort -u))
-	if [ ! -z "$server_host" ]; then
+	# 查询本地硬盘名
+	local_disk_names=($(df -h | awk '/\/dev\/sd/ {print $1}' | awk -F '/' '{print $NF}' | sort -u))
+	local_disk_tags=($(for _ in "${local_disk_names[@]}"; do echo "local"; done))
+
+	# 查询远程硬盘名
+	if [ -n "$server_host" ]; then
 		ssh_command="ssh -o StrictHostKeyChecking=yes -o BatchMode=yes -i /root/.ssh/id_rsa root@${server_host} -p ${server_port}"
 		pve_disk_names=($(eval ${ssh_command} lsblk | awk '$NF=="disk" {print $1}' | sort -u))
+		pve_disk_tags=($(for _ in "${pve_disk_names[@]}"; do echo "pve"; done))
 	fi
+
+	# 合并本地和远程硬盘名及标记
 	all_disk_names=("${local_disk_names[@]}" "${pve_disk_names[@]}")
+	all_disk_tags=("${local_disk_tags[@]}" "${pve_disk_tags[@]}")
 
-	for tmp_name in "${all_disk_names[@]}"; do
-		if [[ ${pve_disk_names[@]} =~ ${tmp_name} ]]; then
-			ssh_command="ssh -o StrictHostKeyChecking=yes -o BatchMode=yes -i /root/.ssh/id_rsa root@${server_host} -p ${server_port}"
-			disk_type="(pve)"
+	for i in "${!all_disk_names[@]}"; do
+		tmp_name=${all_disk_names[i]}
+		tmp_tag=${all_disk_tags[i]}
+		unset tmp_command disk_type
+
+		# 判断硬盘类型
+		if [ "$tmp_tag" == "pve" ]; then
+			tmp_command="$ssh_command"
+			disk_type="_pve"
 		fi
-
+		file_path="${dir}disk_info/${tmp_name}${disk_type}"
+		
 		# 手上的硬盘不能休眠，不确定命令是否会唤醒硬盘，每天只运行一次
-		last_disk_time=$(date -r "${dir}disk_info/${tmp_name}" +%s 2>/dev/null) || last_disk_time=0
+		last_disk_time=$(date -r "${file_path}" +%s 2>/dev/null) || last_disk_time=0
 
-		if [ $(( $(date +%s) - $last_disk_time )) -gt 86400 ]; then
-			${ssh_command} smartctl -i -n standby "/dev/${tmp_name}" | grep "STANDBY" && {
-				echo "STANDBY" > "${dir}disk_info/${tmp_name}"
+		if [ $(( $(date +%s) - $last_disk_time )) -gt 86000 ]; then
+			eval ${tmp_command} smartctl -i -n standby "/dev/${tmp_name}" | grep "STANDBY" && {
+				echo "STANDBY" > "${file_path}"
 			} || \
-			${ssh_command} smartctl -i -n standby "/dev/${tmp_name}" | grep "No such device\|Unknown USB bridge" | grep "STANDBY" && {
+			eval ${tmp_command} smartctl -i -n standby "/dev/${tmp_name}" | grep "No such device\|Unknown USB bridge" | grep "STANDBY" && {
 				continue
 			} || \
-			${ssh_command} smartctl -a -j /dev/${tmp_name} > ${dir}disk_info/${tmp_name}
+			eval ${tmp_command} smartctl -a -j /dev/${tmp_name} > ${file_path}
 		fi
 
 		# 硬盘状态
-		if [ -f "${dir}disk_info/${tmp_name}" ] && ( ! cat "${dir}disk_info/${tmp_name}" | grep -q -v "STANDBY" ); then
+		if [ -f "${file_path}" ] && ( ! cat "${file_path}" | grep -q -v "STANDBY" ); then
 			printf "\n${str_title_start} 硬盘名称：${tmp_name}${disk_type}${str_title_end}\n${str_tab}硬盘休眠中" >> "$output_dir/get_disk"
-		elif [ -f "${dir}disk_info/${tmp_name}" ]; then
+		elif [ -f "${file_path}" ]; then
 			printf "\n${str_title_start} 硬盘名称：${tmp_name}${disk_type}${str_title_end}" >> "$output_dir/get_disk"
 			# 硬盘错误
-			disk_err=$(jq -r .ata_smart_error_log.summary.count ${dir}disk_info/${tmp_name})
+			disk_err=$(jq -r .ata_smart_error_log.summary.count ${file_path})
 			[[ -n $disk_err && $disk_err != null && $disk_err != 0 ]] && printf "\n${str_tab}硬盘错误：${disk_err}" >> "$output_dir/get_disk"
 			# 自检错误
-			disk_test_err=$(jq -r .ata_smart_self_test_log.standard.error_count_total ${dir}disk_info/${tmp_name})
+			disk_test_err=$(jq -r .ata_smart_self_test_log.standard.error_count_total ${file_path})
 			[[ -n $disk_test_err && $disk_test_err != null && $disk_test_err != 0 ]] && printf "\n${str_tab}自检错误：${disk_test_err}" >> "$output_dir/get_disk"
 			# 0E 错误
-			disk_0e_err=$(jq -r .nvme_smart_health_information_log.media_errors ${dir}disk_info/${tmp_name})
+			disk_0e_err=$(jq -r .nvme_smart_health_information_log.media_errors ${file_path})
 			[[ -n $disk_0e_err && $disk_0e_err != null && $disk_0e_err != 0 ]] && printf "\n${str_tab}0E 错误：${disk_0e_err}" >> "$output_dir/get_disk"
 			# 硬盘温度
-			disk_temp=$(jq -r .temperature.current ${dir}disk_info/${tmp_name})
+			disk_temp=$(jq -r .temperature.current ${file_path})
 			[[ -n $disk_temp && $disk_temp != null && $disk_temp != 0 ]] && printf "\n${str_tab}硬盘温度：${disk_temp}℃" >> "$output_dir/get_disk"
 			# 通电时间
-			disk_time=$(jq -r .power_on_time.hours ${dir}disk_info/${tmp_name})
+			disk_time=$(jq -r .power_on_time.hours ${file_path})
 			[[ -n $disk_time && $disk_time != null ]] && printf "\n${str_tab}通电时间：${disk_time}h" >> "$output_dir/get_disk"
 			# 使用空间
 			disk_use=$(df -h | grep -w "^/dev/${tmp_name}" | awk '{print $5}' | sort -u)
-			[ -n "$disk_use" ] && [ -n "${disk_use// }" ] && printf "\n${str_tab}使用空间：${disk_use}%%" >> "$output_dir/get_disk"
+			[ -n "$disk_use" ] && [ -n "${disk_use// }" ] && echo -e -n "\n${str_tab}使用空间：${disk_use}" >> "$output_dir/get_disk"
 			# 使用寿命
-			disk_health=$(jq -r .nvme_smart_health_information_log.percentage_used ${dir}disk_info/${tmp_name})
-			[[ -n $disk_health && $disk_health != null ]] && printf "\n${str_tab}使用寿命：${disk_health}%%" >> "$output_dir/get_disk"
+			disk_health=$(jq -r .nvme_smart_health_information_log.percentage_used ${file_path})
+			[[ -n $disk_health && $disk_health != null ]] && echo -e -n "\n${str_tab}使用寿命：${disk_health}%" >> "$output_dir/get_disk"
 		fi
 	done
 }
+
 
 # 查询 IP 归属地
 function get_ip_attribution(){
@@ -1165,10 +1184,14 @@ function get_ip_attribution(){
 
 # 登录提醒通知
 function login_send(){
-	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv4"
-	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv6"
 	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] && init_ip_black "ipv4"
 	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] && init_ip_black "ipv6"
+	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv4"
+	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv6"
+	tmp_ip_list=`echo "$login_ip_white_list"|grep -v "^$"|sort -u`
+	while IFS= read -r tmp_ip; do
+		[ -n "$tmp_ip" ] && add_ip_white "$tmp_ip" "0"
+	done <<< "$tmp_ip_list"
 	[ -z "$web_logged" ] && [ -z "$ssh_logged" ] && [ -z "$web_login_failed" ] && [ -z "$ssh_login_failed" ] && return
 	set_ip_black
 	sys_log=$(logread notice)
@@ -1284,14 +1307,15 @@ function login_send(){
 # 添加白名单，懒得写删除项和信息显示了，纯粹就是懒
 function add_ip_white() {
 	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] || return
+	[ -z "$2" ] && timeout=$login_ip_white_timeout || timeout=$2
 	# 检查 IP 版本
 	( echo "$1"|grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$' ) && local ipset_name="wechatpush_whitelist"
 	( echo "$1"|grep -Eq '^([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}$' ) && local ipset_name="wechatpush_whitelistv6"
 	[ -z "$ipset_name" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【!!!】白名单添加失败，IP 格式错误" >> ${logfile} && return
 
 	[ -n "$nftables_version" ] && nft delete element inet fw4 $ipset_name { $1 } >/dev/null 2>&1
-	[ -n "$nftables_version" ] && nft add element inet fw4 $ipset_name { $1 expires ${login_ip_white_timeout}s } && return #没找到刷新时间的命令，删除再添加
-	ipset -exist add $ipset_name $1 timeout $login_ip_white_timeout
+	[ -n "$nftables_version" ] && nft add element inet fw4 $ipset_name { $1 expires ${timeout}s } && return #没找到刷新时间的命令，删除再添加
+	ipset -exist add $ipset_name $1 timeout $timeout
 }
 
 # 初始化白名单
@@ -1336,7 +1360,7 @@ function init_ip_white() {
 	fi
 	unset handle
 	# 端口转发
-	for port_forward in `echo "$login_port_forward_list"`; do
+	while IFS= read -r port_forward; do
 		port_forward=`echo "$port_forward"|sed 's/,/ /g'` 2>/dev/null
 		[ `echo $port_forward| awk -F" " '{print NF}'` -ne "4" ] && continue
 		local src_ip=`echo ${port_forward}|awk '{print $1}'`
@@ -1350,7 +1374,7 @@ function init_ip_white() {
 			${ip_version}tables -t nat -C PREROUTING -m set --match-set $ipset_name src -p tcp --dport $src_port -j DNAT --to-destination "$dst_ip:$dst_port" >/dev/null 2>&1 || ${ip_version}tables -t nat -I PREROUTING -m set --match-set $ipset_name src -p tcp --dport $src_port -j DNAT --to-destination "$dst_ip:$dst_port" >/dev/null 2>&1
 			${ip_version}tables -t nat -C POSTROUTING -m set --match-set $ipset_name src -p tcp -d $dst_ip --dport $dst_port -j SNAT --to-source $src_ip >/dev/null 2>&1 || ${ip_version}tables -t nat -I POSTROUTING -m set --match-set $ipset_name src -p tcp -d $dst_ip --dport $dst_port -j SNAT --to-source $src_ip >/dev/null 2>&1
 		fi
-	done
+	done <<< "$login_port_forward_list"
 	unset port_forward
 }
 
@@ -1424,13 +1448,12 @@ function set_ip_black(){
 	[ -z "$nftables_version" ] && fw_info_blacklistv6=$(ipset list wechatpush_blacklistv6 | grep "timeout" 2>/dev/null)
 
 	fw_info_blacklist="${fw_info_blacklist}\n${fw_info_blacklistv6}"
-	IFS=$'\n'
-	for ip_black_info in $(printf "%b" "$fw_info_blacklist"); do
+	while IFS= read -r ip_black_info; do
 		ip_black=$(echo "$ip_black_info"|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
 		[ -z "$ip_black" ] && ip_black=$(echo "$ip_black_info"|grep -Eo "([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}")
 		[ -z "$ip_black" ] && continue
 		cat ${ip_blacklist_path}|grep -q -w -i ${ip_black} && sed -i "/^${ip_black}/d" ${ip_blacklist_path} && echo ${ip_black_info} >> ${ip_blacklist_path} || del_ip_black ${ip_black}
-	done
+	done <<< "$fw_info_blacklist"
 }
 
 # 发送定时数据
@@ -1668,7 +1691,7 @@ while [ "$enable" -eq "1" ]; do
 	[ ! -f "${dir}send_enable.lock" ] && cpu_load
 
 	# 硬盘检测
-	[ ! -f "${dir}send_enable.lock" ] && get_disk
+	#[ ! -f "${dir}send_enable.lock" ] && get_disk
 
 	# 异常流量检测
 	[ ! -f "${dir}send_enable.lock" ] && get_client_usage
