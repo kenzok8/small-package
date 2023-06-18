@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2022 Hyy2001X <https://github.com/Hyy2001X>
+# Copyright (C) 2020-2023 Hyy2001X <https://github.com/Hyy2001X>
 # See more information at https://webd.cf/
 
 include $(TOPDIR)/rules.mk
