@@ -1,0 +1,96 @@
+# Copyright (C) 2020-2023 Hyy2001X <https://github.com/Hyy2001X>
+# See more information at https://webd.cf/
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=webd
+PKG_VERSION:=20230604
+PKG_RELEASE:=$(AUTORELESE)
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/$(PKG_NAME)
+	SECTION:=net
+	CATEGORY:=Network
+	TITLE:=A Lightweight self-hosted netdisk application
+	DEPENDS:=@(arm||x86_64||mipsel||mips||aarch64)
+	URL:=https://webd.cf
+endef
+
+ifeq ($(ARCH),aarch64)
+	ifeq ($(BOARD),cortex-a53)
+		TARGET_ARCH:=musl.brcm2708-bcm2710
+	endif
+	ifeq ($(BOARD),rockchip)
+		TARGET_ARCH:=musl.rockchip-armv8
+	endif	
+endif
+
+ifeq ($(ARCH),arm)
+	ifeq ($(BOARD),ipq806x)
+		TARGET_ARCH:=muslgnueabi.ipq806x
+	endif
+	ifeq ($(BOARD),ipq40xx)
+		TARGET_ARCH:=muslgnueabi.ipq40xx
+	endif
+	ifeq ($(BOARD),bcm53xx)
+		TARGET_ARCH:=muslgnueabi.bcm53xx
+	endif
+	ifeq ($(BOARD),oxnas)
+		TARGET_ARCH:=muslgnueabi.oxnas
+	endif
+	ifeq ($(BOARD),kirkwood)
+		TARGET_ARCH:=muslgnueabi.kirkwood
+	endif
+	ifeq ($(BOARD),mvebu)
+		TARGET_ARCH:=muslgnueabi.mvebu-cortexa9
+	endif
+endif
+
+ifeq ($(ARCH),mipsel)
+	ifeq ($(BOARD),bcm47xx)
+		TARGET_ARCH:=musl.brcm47xx-mips74k
+	endif
+	ifeq ($(BOARD),ramips)
+		TARGET_ARCH:=musl.ramips-mt7620
+	endif
+endif
+
+ifeq ($(ARCH),mips)
+	ifeq ($(BOARD),ath79)
+		TARGET_ARCH:=musl.ath79
+	endif
+	ifeq ($(BOARD),bcm63xx)
+		TARGET_ARCH:=uclibc.brcm63xx
+	endif
+	ifeq ($(BOARD),ar71xx)
+		TARGET_ARCH:=uclibc.ar71xx
+	endif
+endif
+
+ifeq ($(ARCH),x86_64)
+	TARGET_ARCH:=musl.x86-64
+endif
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(ARCH)-openwrt-linux-$(TARGET_ARCH).tar.gz
+PKG_SOURCE_URL:=https://cnt2.cf/fidx.html\#/webd/$(PKG_VERSION)/
+PKG_HASH:=skip
+
+UNTAR_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+
+define Build/Prepare
+	mkdir -p $(UNTAR_DIR)
+	tar -zxvf $(DL_DIR)/$(PKG_SOURCE) -C $(UNTAR_DIR)
+endef
+
+define Build/Compile
+endef
+
+define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(UNTAR_DIR)/webd/webd $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/share/$(PKG_NAME)
+	$(INSTALL_BIN) $(UNTAR_DIR)/webd/web/.player.htm $(1)/usr/share/$(PKG_NAME)
+endef
+
+$(eval $(call BuildPackage,$(PKG_NAME)))
