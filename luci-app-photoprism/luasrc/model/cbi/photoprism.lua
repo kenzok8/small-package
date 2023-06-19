@@ -23,7 +23,6 @@ o = s:option(Value, "http_port", translate("HTTP Port").."<b>*</b>")
 o.rmempty = false
 o.default = "2342"
 o.datatype = "string"
-o:depends("hostnet", 0)
 
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false

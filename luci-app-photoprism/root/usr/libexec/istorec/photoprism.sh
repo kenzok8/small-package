@@ -67,7 +67,7 @@ case ${ACTION} in
     docker ps --all -f 'name=photoprism' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=photoprism' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=photoprism' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->2342/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage

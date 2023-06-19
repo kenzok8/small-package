@@ -37,5 +37,5 @@ msgstr "UnifiController 未运行"
 msgid "Open UnifiController"
 msgstr "打开 UnifiController"
 
-msgid "Not required, all disk is mounted in"
-msgstr "可不填，所有硬盘都在"
+msgid "UnifiController running in host network, port is always 8443 if enabled"
+msgstr "在宿主网络运行 UnifiController，如果启用则端口固定为8443，注意此端口可能与其他应用冲突"

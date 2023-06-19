@@ -26,7 +26,6 @@ s.anonymous=true
 o = s:option(Value, "port", translate("Port").."<b>*</b>")
 o.default = "32400"
 o.datatype = "port"
-o:depends("hostnet", 0)
 
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false

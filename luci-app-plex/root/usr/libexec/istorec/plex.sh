@@ -98,9 +98,7 @@ case ${ACTION} in
     docker ps --all -f 'name=plex' --format '{{.State}}'
   ;;
   "port")
-    local port=`docker ps --all -f 'name=plex' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->32400/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'`
-    [ -z "$port" ] && port=32400
-    echo $port
+    docker ps --all -f 'name=plex' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->32400/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage
