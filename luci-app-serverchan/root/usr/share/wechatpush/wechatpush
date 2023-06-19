@@ -1174,11 +1174,11 @@ function get_ip_attribution(){
 	ip="$1"
 	[ -f ${dir}ipAddress ] && ( cat ${dir}ipAddress|grep -q -w -i "$ip" ) && echo "本地网络" && return
 	ip_attribution_urls=$(cat /usr/share/wechatpush/api/ip_attribution.list)
-	for ip_attribution_command in ${ip_attribution_urls}; do
+	while IFS= read -r ip_attribution_command; do
 		login_ip_attribution=$(eval "$ip_attribution_command" 2>/dev/null)
 		[ "$login_ip_attribution" == "null" ] && unset login_ip_attribution
 		[ -n "$login_ip_attribution" ] && break
-	done
+	done <<< "$ip_attribution_urls"
 	echo "$login_ip_attribution"
 }
 
