@@ -81,7 +81,7 @@ natflow_qos_setup()
 		user=qos_u$idx
 	fi
 
-	if [ "$(echo $user_port | sed 's/,/ /g' | wc -w)" -gt 1 ]; then
+	if [ "$(echo $user_port | sed 's/,/ /g;s/-/ /g' | wc -w)" -gt 1 ]; then
 		ipset create qos_up$idx bitmap:port range 0-65535 2>/dev/null
 		ipset flush qos_up$idx
 		for port in $(echo $user_port | sed 's/,/ /g'); do
@@ -100,7 +100,7 @@ natflow_qos_setup()
 		remote=qos_r$idx
 	fi
 
-	if [ "$(echo $remote_port | sed 's/,/ /g' | wc -w)" -gt 1 ]; then
+	if [ "$(echo $remote_port | sed 's/,/ /g;s/-/ /g' | wc -w)" -gt 1 ]; then
 		ipset create qos_rp$idx bitmap:port range 0-65535 2>/dev/null
 		ipset flush qos_rp$idx
 		for port in $(echo $remote_port | sed 's/,/ /g'); do
@@ -133,11 +133,11 @@ natflow_qos_zone_setup_tc()
 	done; \
 	for ifn in $ifname; do
 		echo $ifn
-	done) | sed 's/+$/\*/' | sort | uniq | while read IFN; do
+	done) | sed 's/+$/\.\*/' | sort | uniq | while read IFN; do
 		#echo $type $idx=$IFN >$DEVCTL
 		case $type in
 		lan_zone)
-			ifconfig -a | grep "^$IFN" | awk '{print $1}' | while read lan; do
+			ifconfig -a | grep "^$IFN " | awk '{print $1}' | while read lan; do
 				if [ "${lan}" = "${lan//:}" ]; then
 					qos_id=0
 					tc qdisc add dev $lan root handle 1: htb
@@ -158,7 +158,7 @@ natflow_qos_zone_setup_tc()
 			done
 		;;
 		wan_zone)
-			ifconfig -a | grep "^$IFN" | awk '{print $1}' | while read wan; do
+			ifconfig -a | grep "^$IFN " | awk '{print $1}' | while read wan; do
 				if [ "${wan}" = "${wan//:}" ]; then
 					qos_id=0
 					tc qdisc add dev $wan root handle 1: htb
