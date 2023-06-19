@@ -75,8 +75,7 @@ case ${ACTION} in
     docker ps --all -f 'name=unifi' --format '{{.State}}'
   ;;
   "port")
-    http_port=`uci get unifi.@main[0].http_port 2>/dev/null`
-    echo $http_port
+    docker ps --all -f 'name=unifi' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->8443/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage

@@ -34,5 +34,5 @@ msgstr "Owntone 未运行"
 msgid "Open Owntone"
 msgstr "打开 Owntone"
 
-msgid "Owntone only works in host network"
-msgstr "Owntone 只工作在 Host 网络"
+msgid "Owntone only works in host network with port 3689"
+msgstr "Owntone 只工作在宿主网络，管理端口 3689"

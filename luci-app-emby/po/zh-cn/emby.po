@@ -39,3 +39,6 @@ msgstr "打开 Emby"
 
 msgid "Not required, all disk is mounted in"
 msgstr "可不填，所有硬盘都在"
+
+msgid "Emby running in host network, for DLNA application, port is always 8096 if enabled"
+msgstr "在宿主网络运行 Emby，以支持 DLNA 等应用，例如投屏，如果启用则端口固定为8096，需注意端口与 Jellyfin 冲突"

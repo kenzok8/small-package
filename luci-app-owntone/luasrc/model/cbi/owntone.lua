@@ -18,7 +18,7 @@ s = m:section(TypedSection, "main", translate("Setup"), translate("The following
 s.addremove=false
 s.anonymous=true
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>", translate("Owntone only works in host network"))
+o = s:option(Value, "image_name", translate("Image").."<b>*</b>", translate("Owntone only works in host network with port 3689"))
 o.rmempty = false
 o.datatype = "string"
 o:value("lscr.io/linuxserver/daapd:latest", "lscr.io/linuxserver/daapd:latest")

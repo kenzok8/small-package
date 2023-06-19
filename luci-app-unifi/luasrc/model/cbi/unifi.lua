@@ -18,7 +18,7 @@ s = m:section(TypedSection, "main", translate("Setup"), translate("The following
 s.addremove=false
 s.anonymous=true
 
-o = s:option(Flag, "hostnet", translate("Host network"), translate("UnifiController running in host network, for DLNA application, port is always 8096 if enabled"))
+o = s:option(Flag, "hostnet", translate("Host network"), translate("UnifiController running in host network, port is always 8443 if enabled"))
 o.default = 0
 o.rmempty = false
 

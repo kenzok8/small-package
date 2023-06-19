@@ -38,7 +38,7 @@ msgid "Host network"
 msgstr "宿主网络"
 
 msgid "Jellyfin running in host network, for DLNA application, port is always 8096 if enabled"
-msgstr "在宿主网络运行 Jellyfin，以支持 DLNA 等应用，例如投屏，如果启用则端口固定为8096"
+msgstr "在宿主网络运行 Jellyfin，以支持 DLNA 等应用，例如投屏，如果启用则端口固定为8096，需注意端口与 Emby 冲突"
 
 msgid "Default use 'transcodes' in 'config path' if not set, please make sure there has enough space"
 msgstr "留空则使用配置文件路径下的 transcodes，请确保有足够空间"
