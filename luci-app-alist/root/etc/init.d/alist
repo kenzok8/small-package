@@ -54,7 +54,7 @@ start_service() {
 	[ "$ssl" -eq 1 ] && SSL=true || SSL=false
 	[ "$log" -eq 1 ] && LOG=true || LOG=false
 	if [ -e /proc/uptime ]; then
-		[ $(awk -F. '{print $1}' /proc/uptime) -lt "300" ] && delayed_start=$delayed_start || delayed_start=0
+		[ $(awk -F. '{print $1}' /proc/uptime) -lt "120" ] && delayed_start=$delayed_start || delayed_start=0
 	else
 		delayed_start=$delayed_start
 	fi
