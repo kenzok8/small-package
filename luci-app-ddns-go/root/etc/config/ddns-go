@@ -1,4 +1,4 @@
-config ddnsgo 'ddnsgo'
+config ddns-go 'ddns-go'
 	option enabled '0'
 	option logger '1'
 	option port 9876

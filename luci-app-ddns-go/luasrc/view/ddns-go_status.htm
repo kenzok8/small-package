@@ -1,0 +1,27 @@
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(3, '<%=url([[admin]], [[services]], [[ddns-go_status]])%>', null,
+		function(x, data) {
+			var tb = document.getElementById('ddns-go_status');
+			if (data && tb)
+			{
+				if (data.running)
+				{
+				var URL = ""+ window.location.protocol + "//" + window.location.hostname +":"+ data.port"";
+					tb.innerHTML = '<em><b style=\"color:green\"><%:The DDNS-GO service is running.%></b></em>';
+					tb.innerHTML +='<em> <br/><br/>' + ' <b > <%:Click the new page to open Lucky%>  <a href="' +URL+'"'+' target="_blank">' + URL + ' </a><br/> </em>';
+				}
+				else
+				{
+					tb.innerHTML = '<em style=\"color:red\"><%:The DDNS-GO service is not running.%></em><br/>';
+				}
+			}
+		}
+	);
+//]]></script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<legend><%:DDNS-GO Status%></legend>
+	<p id="ddns-go_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
