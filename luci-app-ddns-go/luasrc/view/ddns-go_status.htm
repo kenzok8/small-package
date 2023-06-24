@@ -1,14 +1,14 @@
 <script type="text/javascript">//<![CDATA[
-	XHR.poll(3, '<%=url([[admin]], [[services]], [[ddns-go_status]])%>', null,
+	XHR.poll(3, '<%=url([[admin]], [[services]], [[ddnsgo_status]])%>', null,
 		function(x, data) {
-			var tb = document.getElementById('ddns-go_status');
+			var tb = document.getElementById('ddnsgo_status');
 			if (data && tb)
 			{
 				if (data.running)
 				{
-				var URL = ""+ window.location.protocol + "//" + window.location.hostname +":"+ data.port"";
+				    var URL = ""+ window.location.protocol + "//" + window.location.hostname +":<%=luci.model.uci.cursor():get_first("ddns-go", "basic", "port") %>";
 					tb.innerHTML = '<em><b style=\"color:green\"><%:The DDNS-GO service is running.%></b></em>';
-					tb.innerHTML +='<em> <br/><br/>' + ' <b > <%:Click the new page to open Lucky%>  <a href="' +URL+'"'+' target="_blank">' + URL + ' </a><br/> </em>';
+					tb.innerHTML +='<em> <br/><br/>' + ' <b > <%:Click the new page to open ddns-go%>  <a href="' +URL+'"'+' target="_blank">' + URL + ' </a><br/> </em>';
 				}
 				else
 				{
@@ -21,7 +21,7 @@
 <style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
 <fieldset class="cbi-section">
 	<legend><%:DDNS-GO Status%></legend>
-	<p id="ddns-go_status">
+	<p id="ddnsgo_status">
 		<em><%:Collecting data...%></em>
 	</p>
 </fieldset>

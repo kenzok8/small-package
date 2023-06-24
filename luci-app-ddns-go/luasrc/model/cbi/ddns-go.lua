@@ -8,7 +8,7 @@ m.description = translate("DDNS-GO automatically obtains your public IPv4 or IPv
 
 m:section(SimpleSection).template = "ddns-go_status"
 
-s = m:section(TypedSection, "ddns-go", translate("Global Settings"))
+s = m:section(TypedSection, "basic", translate("Global Settings"))
 s.addremove = false
 s.anonymous = true
 
@@ -18,6 +18,9 @@ o.default = 0
 o = s:option(Value, "port",translate("Set the DDNS-TO access port"))
 o.datatype = "uinteger"
 o.default=9876
+
+o = s:option(Value, "time",translate("update interval"))
+o.default=300
 
 m.apply_on_parse = true
 m.on_after_apply = function(self,map)
