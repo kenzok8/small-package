@@ -11,15 +11,13 @@ function index()
 	entry({"admin",  "services", "ddns-go"}, alias("admin", "services", "ddns-go", "setting"),_("DDNS-GO"), 58).dependent = true
 	entry({"admin", "services", "ddns-go", "setting"}, cbi("ddns-go"), _("Base Setting"), 20).leaf=true
 	entry({"admin",  "services", "ddns-go", "ddns-go"}, template("ddns-go"), _("DDNS-GO"), 30).leaf = true
-	entry({"admin", "services", "ddns-go_status"}, call("act_status"))
+	entry({"admin", "services", "ddnsgo_status"}, call("act_status"))
 end
 
 function act_status()
 	local sys  = require "luci.sys"
-	local port = tonumber(uci:get_first("ddns-go", "ddns-go", "port"))
 	local e = { }
 	e.running = sys.call("pidof ddns-go >/dev/null") == 0
-	e.port = (port or 9876)
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
