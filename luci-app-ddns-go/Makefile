@@ -7,16 +7,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-ddns-go
-PKG_VERSION:=1.2.1
-PKG_RELEASE:=8
+PKG_VERSION:=1.2.2
+PKG_RELEASE:=9
 
 LUCI_TITLE:=LuCI Support for Dynamic ddns-go Client
-LUCI_DEPENDS:=+ddnsgo
+LUCI_DEPENDS:=+ddns-go
 LUCI_PKGARCH:=all
 
 define Package/$(PKG_NAME)/conffiles
-/etc/config/ddnsgo
-/etc/ddns-go/ddnsgo-config.yaml
+/etc/config/ddns-go
+/etc/ddns-go/ddns-go-config.yaml
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
