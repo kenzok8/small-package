@@ -15,5 +15,4 @@ uci -q batch <<-EOF >"/dev/null"
 	commit firewall
 EOF
 
-rm -f /tmp/luci-indexcache
 exit 0

@@ -78,7 +78,7 @@ export function wGET(url) {
 	if (!url || type(url) !== 'string')
 		return null;
 
-	const output = executeCommand(`/usr/bin/wget -qO- --timeout=10 ${shellQuote(url)}`) || {};
+	const output = executeCommand(`/usr/bin/wget -qO- --user-agent 'Wget/1.21 (HomeProxy)' --timeout=10 ${shellQuote(url)}`) || {};
 	return trim(output.stdout);
 };
 /* Utilities end */
