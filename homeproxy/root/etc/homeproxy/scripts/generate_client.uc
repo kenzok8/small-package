@@ -176,7 +176,8 @@ function generate_outbound(node) {
 			protocol: node.multiplex_protocol,
 			max_connections: strToInt(node.multiplex_max_connections),
 			min_streams: strToInt(node.multiplex_min_streams),
-			max_streams: strToInt(node.multiplex_max_streams)
+			max_streams: strToInt(node.multiplex_max_streams),
+			padding: (node.multiplex_padding === '1')
 		} : null,
 		tls: (node.tls === '1') ? {
 			enabled: true,

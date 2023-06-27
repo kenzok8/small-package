@@ -941,40 +941,41 @@ return view.extend({
 		so.default = so.disabled;
 		so.depends('type', 'shadowsocks');
 		so.depends('type', 'trojan');
+		so.depends('type', 'vless');
 		so.depends('type', 'vmess');
 		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'multiplex_protocol', _('Protocol'),
 			_('Multiplex protocol.'));
+		so.value('h2mux');
 		so.value('smux');
 		so.value('yamux');
-		so.default = 'smux';
-		so.depends({'type': 'shadowsocks', 'multiplex': '1'});
-		so.depends({'type': 'trojan', 'multiplex': '1'});
-		so.depends({'type': 'vmess', 'multiplex': '1'});
+		so.default = 'h2mux';
+		so.depends('multiplex', '1');
 		so.rmempty = false;
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'multiplex_max_connections', _('Maximum connections'));
 		so.datatype = 'uinteger';
-		so.depends({'type': 'shadowsocks', 'multiplex': '1'});
-		so.depends({'type': 'trojan', 'multiplex': '1'});
-		so.depends({'type': 'vmess', 'multiplex': '1'});
+		so.depends('multiplex', '1');
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'multiplex_min_streams', _('Minimum streams'),
 			_('Minimum multiplexed streams in a connection before opening a new connection.'));
 		so.datatype = 'uinteger';
-		so.depends({'type': 'shadowsocks', 'multiplex': '1'});
-		so.depends({'type': 'trojan', 'multiplex': '1'});
-		so.depends({'type': 'vmess', 'multiplex': '1'});
+		so.depends('multiplex', '1');
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'multiplex_max_streams', _('Maximum streams'),
 			_('Maximum multiplexed streams in a connection before opening a new connection.<br/>' +
 				'Conflict with <code>Maximum connections</code> and <code>Minimum streams</code>.'));
 		so.datatype = 'uinteger';
-		so.depends({'type': /^(shadowsocks|trojan|vmess)$/, 'multiplex': '1', 'multiplex_max_connections': '', 'multiplex_min_streams': ''});
+		so.depends({'multiplex': '1', 'multiplex_max_connections': '', 'multiplex_min_streams': ''});
+		so.modalonly = true;
+
+		so = ss.option(form.Flag, 'multiplex_padding', _('Enable padding'));
+		so.default = so.disabled;
+		so.depends('multiplex', '1');
 		so.modalonly = true;
 		/* Mux config end */
 
