@@ -874,7 +874,7 @@ function bridge_outbounds() {
         const v = config[key];
         i = i + 1;
         const bridge_server = config[v["upstream"]];
-        for (i in server_outbound(bridge_server, sprintf("bridge_upstream_outbound_%d", i))) {
+        for (f in server_outbound(bridge_server, sprintf("bridge_upstream_outbound_%d", i))) {
             splice(result, 0, 0, f);
         }
         splice(result, 0, 0, {
