@@ -133,7 +133,7 @@ const methods = {
 				break;
 			}
 
-			return { result: (system(`/usr/bin/wget -sqT3 ${url} 2>"/dev/null"`, 3100) === 0) };
+			return { result: (system(`/usr/bin/wget --spider -qT3 ${url} 2>"/dev/null"`, 3100) === 0) };
 		}
 	},
 

@@ -289,13 +289,13 @@ chain homeproxy_redirect {
 
 	{% if (routing_mode !== 'custom'): %}
 	{% if (!isEmpty(control_info.lan_global_proxy_ipv4_ips)): %}
-	ip saddr {{ array_to_nftarr(control_info.lan_global_proxy_ipv4_ips) }} counter goto homeproxy_redirect
+	ip saddr {{ array_to_nftarr(control_info.lan_global_proxy_ipv4_ips) }} counter goto homeproxy_redirect_proxy_port
 	{% endif /* lan_global_proxy_ipv4_ips */ %}
 	{% for (let ipv6 in control_info.lan_global_proxy_ipv6_ips): %}
-	ip6 saddr {{ resolve_ipv6(ipv6) }} counter goto homeproxy_redirect
+	ip6 saddr {{ resolve_ipv6(ipv6) }} counter goto homeproxy_redirect_proxy_port
 	{% endfor /* lan_global_proxy_ipv6_ips */ %}
 	{% if (!isEmpty(control_info.lan_global_proxy_mac_addrs)): %}
-	ether saddr {{ array_to_nftarr(control_info.lan_global_proxy_mac_addrs) }} counter goto homeproxy_redirect
+	ether saddr {{ array_to_nftarr(control_info.lan_global_proxy_mac_addrs) }} counter goto homeproxy_redirect_proxy_port
 	{% endif /* lan_global_proxy_mac_addrs */ %}
 	{% endif /* routing_mode */ %}
 
