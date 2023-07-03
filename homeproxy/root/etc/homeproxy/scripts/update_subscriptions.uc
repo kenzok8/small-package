@@ -432,14 +432,14 @@ function main() {
 	}
 
 	for (let url in subscription_urls) {
+		const groupHash = calcStringMD5(url);
+		node_cache[groupHash] = {};
+
 		const res = wGET(url);
 		if (!res) {
 			log(sprintf('Failed to fetch resources from %s.', url));
 			continue;
 		}
-
-		const groupHash = calcStringMD5(url);
-		node_cache[groupHash] = {};
 
 		push(node_result, []);
 		const subindex = length(node_result) - 1;
@@ -505,7 +505,12 @@ function main() {
 
 	let added = 0, removed = 0;
 	uci.foreach(uciconfig, ucinode, (cfg) => {
+		/* Nodes created by the user */
 		if (!cfg.grouphash)
+			return null;
+
+		/* Empty object - failed to fetch nodes */
+		if (length(node_cache[cfg.grouphash]) === 0)
 			return null;
 
 		if (!node_cache[cfg.grouphash] || !node_cache[cfg.grouphash][cfg['.name']]) {
