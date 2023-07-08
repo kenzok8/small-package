@@ -140,7 +140,7 @@ const methods = {
 	log_clean: {
 		args: { type: 'type' },
 		call: function(req) {
-			if (!(req.args?.type in ['homeproxy', 'sing-box']))
+			if (!(req.args?.type in ['homeproxy', 'sing-box-c', 'sing-box-s']))
 				return { result: false, error: 'illegal type' };
 
 			const filestat = lstat(`${RUN_DIR}/${req.args?.type}.log`);
