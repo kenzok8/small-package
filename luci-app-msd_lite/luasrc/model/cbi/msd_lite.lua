@@ -23,10 +23,13 @@ o = s:option(DynamicList, "address", translate("Bind address"))
 o.datatype = "list(ipaddrport(1))"
 o.rmempty = false
 
-o = s:option(ListValue, "interface", translate("Source interface"))
-local interfaces = luci.sys.exec("ls -l /sys/class/net/ 2>/dev/null |awk '{print $9}' 2>/dev/null")
-for interface in string.gmatch(interfaces, "%S+") do
-   o:value(interface)
+o = s:option(ListValue, "network", translate("Source interface"))
+local x = luci.model.uci.cursor()
+local net = x:get_all("network")
+for interface, config in pairs(net) do
+    if interface ~= "loopback" and config.proto ~= nil then
+        o:value(interface)
+    end
 end
 o:value("", translate("Disable"))
 o.default = ""
