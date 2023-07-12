@@ -1,10 +1,10 @@
 'use strict';
-'require view';
-'require uci';
 'require form';
 'require fs';
 'require network';
 'require tools.widgets as widgets';
+'require uci';
+'require view';
 
 const variant = "xray_fw4";
 
@@ -304,7 +304,7 @@ return view.extend({
         o = s.taboption('general', form.Flag, 'route_only', _('Route Only'), _('Use sniffed domain for routing only but still access through IP. Reduces unnecessary DNS requests. See <a href="https://github.com/XTLS/Xray-core/commit/a3023e43ef55d4498b1afbc9a7fe7b385138bb1a">here</a> for help.'))
         o.depends({ "transparent_proxy_enable": "1", "tproxy_sniffing": "1" })
 
-        o = s.taboption('general', form.Flag, 'direct_bittorrent', _('Bittorrent Direct'), _("If enabled, all bittorrent request won't be forwarded through Xray."))
+        o = s.taboption('general', form.Flag, 'direct_bittorrent', _('Bittorrent Direct'), _("If enabled, no bittorrent request will be forwarded through Xray."))
         o.depends({ "transparent_proxy_enable": "1", "tproxy_sniffing": "1" })
 
         o = s.taboption('general', form.SectionValue, "xray_servers", form.GridSection, 'servers', _('Xray Servers'), _("Servers are referenced by index (order in the following list). Deleting servers may result in changes of upstream servers actually used by proxy and bridge."))
@@ -690,6 +690,9 @@ return view.extend({
         }
         o.rmempty = true
 
+        o = s.taboption('dns', form.Flag, 'blocked_as_nxdomain', _('Use NXDOMAIN for blocked'), _('Return <code>NXDOMAIN</code> as response for blocked domain rules. If not selected, a loopback address will be returned.'))
+        o.modalonly = true
+
         o = s.taboption('dns', form.Value, 'dns_port', _('Xray DNS Server Port'), _("Do not use port 53 (dnsmasq), port 5353 (mDNS) or other common ports"))
         o.datatype = 'port'
         o.default = 5300
@@ -792,6 +795,12 @@ return view.extend({
         o.value("UseIPv4")
         o.value("UseIPv6")
         o.default = "UseIP"
+        o.modalonly = true
+
+        o = ss.option(form.DynamicList, "domain_names", _("Domain names to associate"))
+        o.rmempty = true
+
+        o = ss.option(form.Flag, 'rebind_domain_ok', _('Exempt rebind protection'), _('Avoid dnsmasq filtering RFC1918 IP addresses (and some TESTNET addresses as well) from result.'))
         o.modalonly = true
 
         o = ss.option(form.Flag, 'force_forward', _('Force Forward'), _('This destination must be forwarded through an outbound server.'))

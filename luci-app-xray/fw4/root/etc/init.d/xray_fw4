@@ -109,17 +109,7 @@ gen_config_file() {
 }
 
 setup_dnsmasq() {
-    local dns_port=$(uci_get_by_type general dns_port)
-    local dns_count=$(uci_get_by_type general dns_count 0)
-
-    echo "# Generated dnsmasq configurations by luci-app-xray" > /tmp/dnsmasq.d/xray.conf
-    echo "strict-order" >> /tmp/dnsmasq.d/xray.conf
-    echo "server=/#/127.0.0.1#${dns_port}" >> /tmp/dnsmasq.d/xray.conf
-    local cur_port
-    for cur_port in $(seq ${dns_port} $(expr ${dns_port} + ${dns_count})); do
-        echo "server=127.0.0.1#${cur_port}" >> /tmp/dnsmasq.d/xray.conf
-    done
-
+    utpl /usr/share/xray/dnsmasq_include.ut > /tmp/dnsmasq.d/xray.conf
     logger -st xray[$$] -p4 $(cat /tmp/dnsmasq.d/xray.conf)
     /etc/init.d/dnsmasq restart > /dev/null 2>&1
 }
