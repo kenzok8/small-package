@@ -1,15 +1,23 @@
 #!/usr/bin/ucode
-const uci = require("uci");
-const fs = require("fs");
-const cursor = uci.cursor();
-cursor.load("xray_fw4");
-const config = cursor.get_all("xray_fw4");
-const share_dir = fs.lsdir("/usr/share/xray");
+"use strict";
+import { cursor } from "uci";
+import { lsdir } from "fs";
+
+const config = function () {
+    const uci = cursor();
+    uci.load("xray_fw4");
+    return uci.get_all("xray_fw4");
+}();
 
 const proxy = config[filter(keys(config), k => config[k][".type"] == "general")[0]];
+const bridge = filter(keys(config), k => config[k][".type"] == "bridge") || [];
+const fallback = filter(keys(config), k => config[k][".type"] == "fallback") || [];
+const manual_tproxy = filter(keys(config), k => config[k][".type"] == "manual_tproxy") || [];
+
 const tcp_server = config[proxy["main_server"]];
 const udp_server = config[proxy["tproxy_udp_server"]];
 
+const share_dir = lsdir("/usr/share/xray");
 const geoip_existence = index(share_dir, "geoip.dat") > 0;
 const geosite_existence = index(share_dir, "geosite.dat") > 0;
 
@@ -363,7 +371,7 @@ function override_custom_config_recursive(x, y) {
     if (type(x) != "object" || type(y) != "object") {
         return y;
     }
-    for (k in y) {
+    for (let k in y) {
         x[k] = override_custom_config_recursive(x[k], y[k])
     }
     return x;
@@ -387,8 +395,8 @@ function server_outbound_recursive(t, server, tag) {
     const custom_config_outbound_string = server["custom_config"];
 
     if (custom_config_outbound_string != null && custom_config_outbound_string != "") {
-        let custom_config_outbound = json(custom_config_outbound_string);
-        for (k in custom_config_outbound) {
+        const custom_config_outbound = json(custom_config_outbound_string);
+        for (let k in custom_config_outbound) {
             if (k == "tag") {
                 continue;
             }
@@ -479,7 +487,7 @@ function socks_inbound() {
 
 function fallbacks() {
     let f = [];
-    for (key in filter(keys(config), k => config[k][".type"] == "fallback")) {
+    for (let key in fallback) {
         const s = config[key];
         if (s["dest"] != null) {
             push(f, {
@@ -594,7 +602,7 @@ function https_inbound() {
     if (proxy["web_server_protocol"] == "trojan") {
         return https_trojan_inbound()
     }
-    return nil
+    return null;
 }
 
 function dns_server_inbounds() {
@@ -695,11 +703,17 @@ function dns_conf() {
         });
     }
 
-    let hosts = null;
+    let hosts = {};
     if (length(blocked_domain_rules()) > 0) {
-        hosts = {};
-        for (rule in (blocked_domain_rules())) {
+        for (let rule in (blocked_domain_rules())) {
             hosts[rule] = ["127.127.127.127", "100::6c62:636f:656b:2164"] // blocked!
+        }
+    }
+    for (let key in manual_tproxy) {
+        if (config[key].domain_names != null) {
+            for (let d in config[key].domain_names) {
+                hosts[d] = [config[key].source_addr];
+            }
         }
     }
 
@@ -773,13 +787,13 @@ function inbounds() {
 function manual_tproxy_outbounds() {
     let result = [];
     let i = 0;
-    for (key in filter(keys(config), k => config[k][".type"] == "manual_tproxy")) {
+    for (let key in manual_tproxy) {
         const v = config[key];
         i = i + 1;
         let tcp_tag = "direct";
         let udp_tag = "direct";
         if (v["force_forward"] == "1") {
-            if (v["force_forward_server_tcp"] != nil) {
+            if (v["force_forward_server_tcp"] != null) {
                 if (v["force_forward_server_tcp"] == proxy["main_server"]) {
                     tcp_tag = "tcp_outbound"
                 } else {
@@ -790,7 +804,7 @@ function manual_tproxy_outbounds() {
             } else {
                 tcp_tag = "tcp_outbound"
             }
-            if (v["force_forward_server_udp"] != nil) {
+            if (v["force_forward_server_udp"] != null) {
                 if (v["force_forward_server_udp"] == proxy["tproxy_udp_server"]) {
                     udp_tag = "udp_outbound"
                 } else {
@@ -832,7 +846,7 @@ function manual_tproxy_outbounds() {
 function manual_tproxy_rules() {
     let result = [];
     let i = 0;
-    for (key in filter(keys(config), k => config[k][".type"] == "manual_tproxy")) {
+    for (let key in manual_tproxy) {
         const v = config[key];
         i = i + 1;
         splice(result, 0, 0, {
@@ -856,7 +870,7 @@ function manual_tproxy_rules() {
 function bridges() {
     let result = [];
     let i = 0;
-    for (key in filter(keys(config), k => config[k][".type"] == "bridge")) {
+    for (let key in bridge) {
         const v = config[key];
         i = i + 1;
         push(result, {
@@ -870,11 +884,11 @@ function bridges() {
 function bridge_outbounds() {
     let result = [];
     let i = 0;
-    for (key in filter(keys(config), k => config[k][".type"] == "bridge")) {
+    for (let key in bridge) {
         const v = config[key];
         i = i + 1;
         const bridge_server = config[v["upstream"]];
-        for (f in server_outbound(bridge_server, sprintf("bridge_upstream_outbound_%d", i))) {
+        for (let f in server_outbound(bridge_server, sprintf("bridge_upstream_outbound_%d", i))) {
             splice(result, 0, 0, f);
         }
         splice(result, 0, 0, {
@@ -890,7 +904,7 @@ function bridge_outbounds() {
 
 function bridge_rules() {
     let result = [];
-    for (key in filter(keys(config), k => config[k][".type"] == "bridge")) {
+    for (let key in bridge) {
         const v = config[key];
         i = i + 1;
         push(result, {
@@ -924,13 +938,15 @@ function rules() {
             type: "field",
             inboundTag: dns_server_tags(),
             outboundTag: "dns_server_outbound"
-        },
-        {
+        }
+    ];
+    if (proxy["xray_api"] == '1') {
+        push(result, {
             type: "field",
             inboundTag: ["api"],
             outboundTag: "api"
-        }
-    ];
+        });
+    }
     if (proxy["metrics_server_enable"] == "1") {
         splice(result, 0, 0, {
             type: "field",
