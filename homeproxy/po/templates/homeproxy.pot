@@ -1617,7 +1617,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:219
 msgid ""
-"Specify target port(s) that get proxied. Multiple ports must be separated by "
+"Specify target ports to be proxied. Multiple ports must be separated by "
 "commas."
 msgstr ""
 

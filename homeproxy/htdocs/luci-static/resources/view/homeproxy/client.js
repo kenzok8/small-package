@@ -216,7 +216,7 @@ return view.extend({
 		}
 
 		o = s.taboption('routing', form.Value, 'routing_port', _('Routing ports'),
-			_('Specify target port(s) that get proxied. Multiple ports must be separated by commas.'));
+			_('Specify target ports to be proxied. Multiple ports must be separated by commas.'));
 		o.value('all', _('All ports'));
 		o.value('common', _('Common ports only (bypass P2P traffic)'));
 		o.default = 'common';
