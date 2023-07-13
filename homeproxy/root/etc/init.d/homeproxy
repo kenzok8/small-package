@@ -106,7 +106,7 @@ start_service() {
 			;;
 		esac
 
-		if [ "$routing_mode" != "custom" ] && [ -s "$DNSMASQ_DIR/proxy_list.conf" ]; then
+		if [ "$routing_mode" != "custom" ] && [ -s "$HP_DIR/resources/proxy_list.txt" ]; then
 			[ "$ipv6_support" -eq "0" ] || local wan_nftset_v6=",6#inet#fw4#homeproxy_wan_proxy_addr_v6"
 			sed -r -e '/^\s*$/d' -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_wan_proxy_addr_v4$wan_nftset_v6/g" \
 				"$HP_DIR/resources/proxy_list.txt" > "$DNSMASQ_DIR/proxy_list.conf"
@@ -351,5 +351,5 @@ reload_service() {
 
 service_triggers() {
 	procd_add_reload_trigger "$CONF"
-	procd_add_interface_trigger "interface.*.up" wan /etc/init.d/$CONF restart
+	procd_add_interface_trigger "interface.*.up" wan /etc/init.d/$CONF reload
 }
