@@ -4,7 +4,7 @@
 START=95
 STOP=10
 TMP=/etc/autotimeset
-Log=$TMP/autotimeset.log
+LOG=$TMP/autotimeset.log
 TT=/etc/init.d/autotimesetrun
 CR=/etc/crontabs/root
 [ ! -d $TMP ] && mkdir -p $TMP 2>/dev/null
@@ -70,10 +70,15 @@ do
 				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler disreconn  Startup_task" >>$TT
 				;;
 			10)
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler disrereboot Scheduled_task" 
+				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler disrereboot  Startup_task" >>$TT
+				;;
+				
+			11)
 				local cmd="$minute $hour * $month $week /usr/bin/timesethandler restartmwan3 Scheduled_task" 
 				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler restartmwan3  Startup_task" >>$TT
 				;;
-			11)
+			12)
 				local cmd="$minute $hour * $month $week /usr/bin/timesethandler customscript Scheduled_task" 
 				[ $ttype = '0' ] && echo "$cmd" >> $CR ||  echo  "sleep $delay &&  /usr/bin/timesethandler customscript  Startup_task" >>$TT
 				;;

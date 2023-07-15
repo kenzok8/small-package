@@ -34,8 +34,9 @@ e:value(6,translate("Scheduled Closewan"))
 e:value(7,translate("Scheduled Clearmem"))
 e:value(8,translate("Scheduled Sysfree"))
 e:value(9,translate("Scheduled DisReconn"))
-e:value(10,translate("Scheduled Restartmwan3"))
-e:value(11,translate("Scheduled Customscript"))
+e:value(10,translate("Scheduled DisRereboot"))
+e:value(11,translate("Scheduled Restartmwan3"))
+e:value(12,translate("Scheduled Customscript"))
 e.default=2
 
 e=s:option(ListValue,"ttype",translate("Task Type"))
