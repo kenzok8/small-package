@@ -26,7 +26,7 @@ while true; do
         log  "Mwan3 is OK"
 	exit 1
     else
-        log "mwan3 restarting ... $status"  
+        log "mwan3 restarting ..."  
         /usr/sbin/mwan3 restart
     fi 
     sleep 60
@@ -97,7 +97,6 @@ trigger() {
 		ifup wan
 		log  "Redial succeeded!"
 		;;
-		
 	closewan)
 		ifdown wan
 		;;
@@ -106,6 +105,13 @@ trigger() {
 		if [ $PingErr = 1 ]; then
 		  ifup wan
 		  log  "Redial succeeded!"
+		fi
+		;;
+	disrereboot)
+		disreconnwan
+		if [ $PingErr = 1 ]; then
+		  log  "Reboot succeeded!"
+		  reboot
 		fi
 		;;
 	restartmwan3)
