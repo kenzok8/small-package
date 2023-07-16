@@ -11,12 +11,13 @@ PKG_NAME:=ddns-go
 PKG_VERSION:=5.3.7
 PKG_RELEASE:=1
 
+PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/jeessy2/ddns-go/tar.gz/v$(PKG_VERSION)?
+PKG_SOURCE_URL:=https://github.com/jeessy2/ddns-go.git
 PKG_MIRROR_HASH:=264e1ff04eb10f5d8ee3f793e5c5d33b0f2dfe8e3f724e68ab6a3c1f3bf657bb
 PKG_SOURCE_VERSION:=e009a82a470d6a702ce0159fae17c24e872b8e57
 
-PKG_LICENSE:=MIT
+PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=herboy2008 <herboy2008@gmail.com>
 
