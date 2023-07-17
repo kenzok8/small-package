@@ -51,7 +51,7 @@ define Package/ddns-go/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./file/ddnsgo.init $(1)/etc/init.d/ddnsgo
+	$(INSTALL_BIN) ./file/ddns-go.init $(1)/etc/init.d/ddns-go
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./file/luci-ddns-go.uci-default $(1)/etc/uci-defaults/luci-ddns-go
