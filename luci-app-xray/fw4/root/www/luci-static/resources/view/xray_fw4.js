@@ -690,7 +690,7 @@ return view.extend({
         }
         o.rmempty = true
 
-        o = s.taboption('dns', form.Flag, 'blocked_as_nxdomain', _('Use NXDOMAIN for blocked'), _('Return <code>NXDOMAIN</code> as response for blocked domain rules. If not selected, a loopback address will be returned.'))
+        o = s.taboption('dns', form.Flag, 'blocked_to_loopback', _('Blocked to loopback'), _('Return <code>127.127.127.127</code> as response for blocked domain rules. If not selected, <code>NXDOMAIN</code> will be returned.'))
         o.modalonly = true
 
         o = s.taboption('dns', form.Value, 'dns_port', _('Xray DNS Server Port'), _("Do not use port 53 (dnsmasq), port 5353 (mDNS) or other common ports"))

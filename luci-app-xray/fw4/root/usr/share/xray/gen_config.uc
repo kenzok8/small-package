@@ -638,6 +638,9 @@ function dns_server_tags() {
 function dns_server_outbound() {
     return {
         protocol: "dns",
+        settings: {
+            nonIPQuery: "skip"
+        },
         streamSettings: {
             sockopt: {
                 mark: int(proxy["mark"])
