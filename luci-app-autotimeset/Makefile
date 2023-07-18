@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for Scheduled Time setting
 LUCI_PKGARCH:=all
 
 PKG_VERSION:=2.0.2
-PKG_RELEASE:=20230715
+PKG_RELEASE:=20230718
 
 
 define Package/$(PKG_NAME)/conffiles
