@@ -1,7 +1,6 @@
 local util  = require "luci.util"
 local http = require "luci.http"
 local lng = require "luci.i18n"
-local iform = require "luci.iform"
 local jsonc = require "luci.jsonc"
 
 module("luci.controller.systools", package.seeall)
