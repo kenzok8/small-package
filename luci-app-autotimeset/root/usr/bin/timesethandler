@@ -75,14 +75,10 @@ trigger() {
 	sysfree)
 		cd /overlay
 		rm -rf `ls | egrep -v '(upper|.fs_state)'`
-		cd /overlay/upper
-		rm -rf `ls | egrep -v '(etc|usr)'`
-		cd /overlay/upper/usr
-		rm -rf `ls | egrep -v '(share)'`
-		cd /overlay/upper/usr/share
-		rm -rf `ls | egrep -v '(unblockneteasemusic|passwall|AdGuardHome|openclash|softethervpn|bypass|)'`
-		cd /overlay/upper/etc
-		rm -rf `ls | egrep -v '(config|init.d|uci-defaults|hotplug.d|nginx|rc.d|ppp|smartdns|ssrplus|bench.log|shadow|openclash|firewall.user)'`
+		cd upper
+		rm -rf `ls | egrep -v '(etc)'`
+		cd etc
+		rm -rf `ls | egrep -v '(config|ssr|bench.log|shadow)'`
 		rm -rf /var/luci-modulecache
 		rm -rf /var/luci-indexcache
 		rm -rf /tmp/cache/*
@@ -115,16 +111,11 @@ trigger() {
 		fi
 		;;
 	restartmwan3)
-		remwan3
+		[ -s /usr/sbin/mwan3 ] && remwan3
 		;;
 	customscript)
-	         script=`cat /etc/autotimeset/timesetcustomscript | grep '#!/bin/sh'` >/dev/null 2>&1
-	         [ $script ] || {
-		      script=` cat /etc/autotimeset/timesetcustomscript `
-		      echo '#!/bin/sh' >/etc/autotimeset/timesetcustomscript
-		      echo  $script >>/etc/autotimeset/timesetcustomscript
-		 }
-		source /etc/autotimeset/timesetcustomscript
+	         script=`cat /etc/autotimeset/timesetcustomscript ` >/dev/null 2>&1
+	         [ $script ] && source /etc/autotimeset/timesetcustomscript
 		 log  "CustomScript succeeded!"
 		;;
 	esac

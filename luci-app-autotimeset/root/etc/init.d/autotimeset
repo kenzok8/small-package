@@ -16,7 +16,7 @@ customscript=$(uci -q get autotimeset.@global[0].customscript )  || customscript
 script=`echo $customscript | grep '#!/bin/sh'` >/dev/null 2>&1
 [ $script ] && echo $script > /etc/autotimeset/timesetcustomscript || {
 	echo '#!/bin/sh' >/etc/autotimeset/timesetcustomscript
-	echo  $script >>/etc/autotimeset/timesetcustomscript
+	echo  $customscript >>/etc/autotimeset/timesetcustomscript
 }
 echo 'start(){'  >>$TT
 for i in $(seq 0 $((ssum-1)))

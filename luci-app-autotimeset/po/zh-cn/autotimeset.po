@@ -27,7 +27,7 @@ msgid "Startup task"
 msgstr "开机启动任务"
 
 msgid "Startup delay time"
-msgstr "延迟时间【开机任务用】"
+msgstr "延迟时间【开机用】"
 
 msgid "Log"
 msgstr "日志"
@@ -75,17 +75,17 @@ msgid "Only by editing the content of the custom script well and scheduling the 
 msgstr "编辑好自定义脚本内容，自定义脚本任务才能有效执行。"
 
 msgid "Month(0~11)"
-msgstr "月份(0~11)【定时任务用】"
+msgstr "月份(0~11)【定时用】"
 
 msgid "Week Day(0~6)"
-msgstr "星期(0~6)【定时任务用】"
+msgstr "星期(0~6)【定时用】"
 
 msgid "Everyday"
-msgstr "每天【定时任务用】"
+msgstr "每天【定时用】"
 
 msgid "Hour(0~23)"
-msgstr "小时(0~23)【定时任务用】"
+msgstr "小时(0~23)【定时用】"
 
 msgid "Minute(0~59)"
-msgstr "分钟(0~59)【定时任务用】"
+msgstr "分钟(0~59)【定时用】"
 
