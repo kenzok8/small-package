@@ -3,7 +3,7 @@
 # routers are listed at https://github.com/sirpdboy/luci-app-poweroffdevice
 # This is free software, licensed under the GNU General Public License v3.
 
-msgid "Power Off"
+msgid "PowerOff"
 msgstr "关机"
 
 msgid "Power Off Device"

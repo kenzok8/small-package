@@ -5,21 +5,23 @@
 
 
 <%+header%>
-<br />
+<style title="text/css">
+h2 {
+    padding: 1rem;
+	margin: 1rem;
+}
+p {
+     padding: 1rem;
+	 margin: 1rem;
+}
+</style>
+
 <h2 name="content"><%:Power Off Device%></h2>
-<br />
-
 <p><%:Turn off the power to the device you are using%></p>
-
-<br />
-	<p class="alert-message warning"><%:WARNING: Power off might result in a pw on a device which not support power off.%></p>
-<%- end -%>
-<br />
-<hr />
+<p class="alert-message warning"><%:WARNING: Power off might result in a reboot on a device which not support power off.%></p>
 
 <script type="text/javascript">//<![CDATA[
 	var tries = 0;
-
 	function ok() {
 		window.location = "<%=controller%>/admin";
 	}
