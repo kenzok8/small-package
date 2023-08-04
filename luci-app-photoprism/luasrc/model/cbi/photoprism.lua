@@ -31,7 +31,7 @@ o:value("photoprism/photoprism:latest", "photoprism/photoprism:latest")
 o:value("photoprism/photoprism:221105-armv7", "photoprism/photoprism:221105-armv7")
 o.default = "photoprism/photoprism:latest"
 
-o = s:option(Value, "password", translate("Default Password").."<b>*</b>")
+o = s:option(Value, "password", translate("Default Password").."<b>*</b>", translate("Only works on first install or after using a fresh 'Config path'"))
 o.password = true
 o.rmempty = false
 o.datatype = "string"

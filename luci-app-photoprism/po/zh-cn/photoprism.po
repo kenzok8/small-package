@@ -45,3 +45,6 @@ msgstr "初始密码"
 
 msgid "Default User:"
 msgstr "默认用户："
+
+msgid "Only works on first install or after using a fresh 'Config path'"
+msgstr "只在初次安装时或使用全新的'配置文件路径'后有效"
