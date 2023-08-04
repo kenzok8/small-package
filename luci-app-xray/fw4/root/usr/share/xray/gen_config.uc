@@ -27,13 +27,13 @@ function split_ipv4_host_port(val, port_default) {
         return {
             address: val,
             port: int(port_default)
-        }
+        };
     }
 
     return {
         address: result[1],
         port: int(result[2])
-    }
+    };
 }
 
 function direct_outbound(tag) {
@@ -48,14 +48,14 @@ function direct_outbound(tag) {
                 mark: int(proxy["mark"])
             }
         }
-    }
+    };
 }
 
 function blackhole_outbound() {
     return {
         tag: "blackhole_outbound",
         protocol: "blackhole"
-    }
+    };
 }
 
 function stream_tcp_fake_http_request(server) {
@@ -74,9 +74,9 @@ function stream_tcp_fake_http_request(server) {
                 Connection: ["keep-alive"],
                 Pragma: "no-cache"
             }
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function stream_tcp_fake_http_response(server) {
@@ -91,9 +91,9 @@ function stream_tcp_fake_http_response(server) {
                 Connection: ["keep-alive"],
                 Pragma: "no-cache"
             }
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function stream_tcp(server) {
@@ -104,7 +104,7 @@ function stream_tcp(server) {
                 request: stream_tcp_fake_http_request(server),
                 response: stream_tcp_fake_http_response(server)
             }
-        }
+        };
     }
     return null;
 }
@@ -116,7 +116,7 @@ function stream_h2(server) {
             host: server["h2_host"],
             read_idle_timeout: server["h2_health_check"] == "1" ? int(server["h2_read_idle_timeout"] || 10) : null,
             health_check_timeout: server["h2_health_check"] == "1" ? int(server["h2_health_check_timeout"] || 20) : null,
-        }
+        };
     }
     return null;
 }
@@ -130,9 +130,9 @@ function stream_grpc(server) {
             idle_timeout: server["grpc_health_check"] == "1" ? int(server["grpc_idle_timeout"] || 10) : null,
             health_check_timeout: server["grpc_health_check"] == "1" ? int(server["grpc_health_check_timeout"] || 20) : null,
             permit_without_stream: server["grpc_health_check"] == "1" ? (server["grpc_permit_without_stream"] == "1") : null
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function stream_ws(server) {
@@ -141,14 +141,14 @@ function stream_ws(server) {
         if (server["ws_host"] != null) {
             headers = {
                 Host: server["ws_host"]
-            }
+            };
         }
         return {
             path: server["ws_path"],
             headers: headers
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function stream_kcp(server) {
@@ -169,9 +169,9 @@ function stream_kcp(server) {
             header: {
                 type: server["mkcp_guise"]
             }
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function stream_quic(server) {
@@ -182,9 +182,9 @@ function stream_quic(server) {
             header: {
                 type: server["quic_guise"]
             }
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function tls_settings(server, protocol) {
@@ -249,7 +249,7 @@ function stream_settings(server, protocol, tag) {
             httpSettings: stream_h2(server)
         },
         dialer_proxy: dialer_proxy
-    }
+    };
 }
 
 function shadowsocks_outbound(server, tag) {
@@ -274,7 +274,7 @@ function shadowsocks_outbound(server, tag) {
             streamSettings: stream_settings_result
         },
         dialer_proxy: dialer_proxy
-    }
+    };
 }
 
 function vmess_outbound(server, tag) {
@@ -303,15 +303,15 @@ function vmess_outbound(server, tag) {
             streamSettings: stream_settings_result
         },
         dialer_proxy: dialer_proxy
-    }
+    };
 }
 
 function vless_outbound(server, tag) {
     let flow = null;
     if (server["vless_tls"] == "tls") {
-        flow = server["vless_flow_tls"]
+        flow = server["vless_flow_tls"];
     } else if (server["vless_tls"] == "reality") {
-        flow = server["vless_flow_reality"]
+        flow = server["vless_flow_reality"];
     }
     if (flow == "none") {
         flow = null;
@@ -341,7 +341,7 @@ function vless_outbound(server, tag) {
             streamSettings: stream_settings_result
         },
         dialer_proxy: dialer_proxy
-    }
+    };
 }
 
 function trojan_outbound(server, tag) {
@@ -364,7 +364,7 @@ function trojan_outbound(server, tag) {
             streamSettings: stream_settings_result
         },
         dialer_proxy: dialer_proxy
-    }
+    };
 }
 
 function override_custom_config_recursive(x, y) {
@@ -372,7 +372,7 @@ function override_custom_config_recursive(x, y) {
         return y;
     }
     for (let k in y) {
-        x[k] = override_custom_config_recursive(x[k], y[k])
+        x[k] = override_custom_config_recursive(x[k], y[k]);
     }
     return x;
 }
@@ -400,7 +400,7 @@ function server_outbound_recursive(t, server, tag) {
             if (k == "tag") {
                 continue;
             }
-            outbound[k] = override_custom_config_recursive(outbound[k], custom_config_outbound[k])
+            outbound[k] = override_custom_config_recursive(outbound[k], custom_config_outbound[k]);
         }
     }
 
@@ -409,16 +409,16 @@ function server_outbound_recursive(t, server, tag) {
 
     if (dialer_proxy != null) {
         const dialer_proxy_section = config[dialer_proxy];
-        return server_outbound_recursive(result, dialer_proxy_section, "dialer_proxy_" + tag)
+        return server_outbound_recursive(result, dialer_proxy_section, "dialer_proxy_" + tag);
     }
-    return result
+    return result;
 }
 
 function server_outbound(server, tag) {
     if (server == null) {
-        return [direct_outbound(tag)]
+        return [direct_outbound(tag)];
     }
-    return server_outbound_recursive([], server, tag)
+    return server_outbound_recursive([], server, tag);
 }
 
 function tproxy_tcp_inbound() {
@@ -442,7 +442,7 @@ function tproxy_tcp_inbound() {
                 mark: int(proxy["mark"])
             }
         }
-    }
+    };
 }
 
 function tproxy_udp_inbound() {
@@ -460,7 +460,7 @@ function tproxy_udp_inbound() {
                 mark: int(proxy["mark"])
             }
         }
-    }
+    };
 }
 
 function http_inbound() {
@@ -471,7 +471,7 @@ function http_inbound() {
         settings: {
             allowTransparent: false
         }
-    }
+    };
 }
 
 function socks_inbound() {
@@ -482,7 +482,7 @@ function socks_inbound() {
         settings: {
             udp: true
         }
-    }
+    };
 }
 
 function fallbacks() {
@@ -496,23 +496,23 @@ function fallbacks() {
                 name: s["name"],
                 xver: s["xver"],
                 path: s["path"]
-            })
+            });
         }
     }
     push(f, {
         dest: proxy["web_server_address"]
     });
-    return f
+    return f;
 }
 
 function tls_inbound_settings(protocol_name) {
     let wscert = proxy[protocol_name + "_tls_cert_file"];
     if (wscert == null) {
-        wscert = proxy["web_server_cert_file"]
+        wscert = proxy["web_server_cert_file"];
     }
     let wskey = proxy[protocol_name + "_tls_key_file"];
     if (wskey == null) {
-        wskey = proxy["web_server_key_file"]
+        wskey = proxy["web_server_key_file"];
     }
     return {
         alpn: [
@@ -524,7 +524,7 @@ function tls_inbound_settings(protocol_name) {
                 keyFile: wskey
             }
         ]
-    }
+    };
 }
 
 function reality_inbound_settings(protocol_name) {
@@ -538,7 +538,7 @@ function reality_inbound_settings(protocol_name) {
         maxClientVer: proxy[protocol_name + "_reality_max_client_ver"],
         maxTimeDiff: proxy[protocol_name + "_reality_max_time_diff"],
         shortIds: proxy[protocol_name + "_reality_short_ids"],
-    }
+    };
 }
 
 function https_trojan_inbound() {
@@ -559,15 +559,15 @@ function https_trojan_inbound() {
             security: proxy["trojan_tls"],
             tlsSettings: proxy["trojan_tls"] == "tls" ? tls_inbound_settings("trojan") : null
         }
-    }
+    };
 }
 
 function https_vless_inbound() {
     let flow = null;
     if (proxy["vless_tls"] == "tls") {
-        flow = proxy["vless_flow_tls"]
+        flow = proxy["vless_flow_tls"];
     } else if (proxy["vless_tls"] == "reality") {
-        flow = proxy["vless_flow_reality"]
+        flow = proxy["vless_flow_reality"];
     }
     if (flow == "none") {
         flow = null;
@@ -592,15 +592,15 @@ function https_vless_inbound() {
             tlsSettings: proxy["vless_tls"] == "tls" ? tls_inbound_settings("vless") : null,
             realitySettings: proxy["vless_tls"] == "reality" ? reality_inbound_settings("vless") : null,
         }
-    }
+    };
 }
 
 function https_inbound() {
     if (proxy["web_server_protocol"] == "vless") {
-        return https_vless_inbound()
+        return https_vless_inbound();
     }
     if (proxy["web_server_protocol"] == "trojan") {
-        return https_trojan_inbound()
+        return https_trojan_inbound();
     }
     return null;
 }
@@ -622,7 +622,7 @@ function dns_server_inbounds() {
             }
         });
     }
-    return result
+    return result;
 }
 
 function dns_server_tags() {
@@ -632,7 +632,7 @@ function dns_server_tags() {
     for (let i = dns_port; i <= dns_port + dns_count; i++) {
         push(result, sprintf("dns_server_inbound_%d", i));
     }
-    return result
+    return result;
 }
 
 function dns_server_outbound() {
@@ -647,7 +647,7 @@ function dns_server_outbound() {
             }
         },
         tag: "dns_server_outbound"
-    }
+    };
 }
 
 function upstream_domain_names() {
@@ -658,19 +658,19 @@ function upstream_domain_names() {
     if (udp_server != null) {
         domain_names_set[udp_server["server"]] = true;
     }
-    return keys(domain_names_set)
+    return keys(domain_names_set);
 }
 
 function domain_rules(k) {
     if (proxy[k] == null) {
-        return []
+        return [];
     }
     return filter(proxy[k], function (x) {
         if (substr(x, 0, 8) == "geosite:") {
             return geosite_existence;
         }
         return true;
-    })
+    });
 }
 
 function secure_domain_rules() {
@@ -709,7 +709,7 @@ function dns_conf() {
     let hosts = {};
     if (length(blocked_domain_rules()) > 0) {
         for (let rule in (blocked_domain_rules())) {
-            hosts[rule] = ["127.127.127.127", "100::6c62:636f:656b:2164"] // blocked!
+            hosts[rule] = ["127.127.127.127", "100::6c62:636f:656b:2164"]; // blocked!
         }
     }
     for (let key in manual_tproxy) {
@@ -725,7 +725,7 @@ function dns_conf() {
         servers: servers,
         tag: "dns_conf_inbound",
         queryStrategy: "UseIPv4"
-    }
+    };
 }
 
 function api_conf() {
@@ -737,18 +737,18 @@ function api_conf() {
                 "LoggerService",
                 "StatsService"
             ]
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function metrics_conf() {
     if (proxy["metrics_server_enable"] == "1") {
         return {
             tag: "metrics"
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function inbounds() {
@@ -771,7 +771,7 @@ function inbounds() {
                 address: "127.0.0.1"
             },
             tag: "metrics"
-        })
+        });
     }
     if (proxy["xray_api"] == '1') {
         push(i, {
@@ -782,9 +782,9 @@ function inbounds() {
                 address: "127.0.0.1"
             },
             tag: "api"
-        })
+        });
     }
-    return i
+    return i;
 }
 
 function manual_tproxy_outbounds() {
@@ -798,18 +798,18 @@ function manual_tproxy_outbounds() {
         if (v["force_forward"] == "1") {
             if (v["force_forward_server_tcp"] != null) {
                 if (v["force_forward_server_tcp"] == proxy["main_server"]) {
-                    tcp_tag = "tcp_outbound"
+                    tcp_tag = "tcp_outbound";
                 } else {
                     tcp_tag = sprintf("manual_tproxy_force_forward_tcp_outbound_%d", i);
                     const force_forward_server_tcp = config[v["force_forward_server_tcp"]];
                     push(result, ...server_outbound(force_forward_server_tcp, tcp_tag));
                 }
             } else {
-                tcp_tag = "tcp_outbound"
+                tcp_tag = "tcp_outbound";
             }
             if (v["force_forward_server_udp"] != null) {
                 if (v["force_forward_server_udp"] == proxy["tproxy_udp_server"]) {
-                    udp_tag = "udp_outbound"
+                    udp_tag = "udp_outbound";
                 } else {
                     udp_tag = sprintf("manual_tproxy_force_forward_udp_outbound_%d", i);
                     const force_forward_server_udp = config[v["force_forward_server_udp"]];
@@ -817,7 +817,7 @@ function manual_tproxy_outbounds() {
                 }
 
             } else {
-                udp_tag = "udp_outbound"
+                udp_tag = "udp_outbound";
             }
         }
         push(result, {
@@ -843,7 +843,7 @@ function manual_tproxy_outbounds() {
             }
         });
     }
-    return result
+    return result;
 }
 
 function manual_tproxy_rules() {
@@ -867,7 +867,7 @@ function manual_tproxy_rules() {
             outboundTag: sprintf("manual_tproxy_outbound_udp_%d", i)
         });
     }
-    return result
+    return result;
 }
 
 function bridges() {
@@ -879,9 +879,9 @@ function bridges() {
         push(result, {
             tag: sprintf("bridge_inbound_%d", i),
             domain: v["domain"]
-        })
+        });
     }
-    return result
+    return result;
 }
 
 function bridge_outbounds() {
@@ -900,9 +900,9 @@ function bridge_outbounds() {
             settings: {
                 redirect: v["redirect"]
             }
-        })
+        });
     }
-    return result
+    return result;
 }
 
 function bridge_rules() {
@@ -922,7 +922,7 @@ function bridge_rules() {
             outboundTag: sprintf("bridge_upstream_outbound_%d", i)
         });
     }
-    return result
+    return result;
 }
 
 function rules() {
@@ -955,7 +955,7 @@ function rules() {
             type: "field",
             inboundTag: ["metrics"],
             outboundTag: "metrics"
-        })
+        });
     }
     if (geoip_existence) {
         if (proxy["geoip_direct_code"] == null || proxy["geoip_direct_code"] == "upgrade") {
@@ -966,7 +966,7 @@ function rules() {
                     inboundTag: ["tproxy_tcp_inbound", "tproxy_udp_inbound", "dns_conf_inbound"],
                     outboundTag: "direct",
                     ip: geoip_direct_code_list
-                })
+                });
             }
         } else {
             splice(result, 0, 0, {
@@ -974,14 +974,14 @@ function rules() {
                 inboundTag: ["tproxy_tcp_inbound", "tproxy_udp_inbound", "dns_conf_inbound"],
                 outboundTag: "direct",
                 ip: ["geoip:" + proxy["geoip_direct_code"]]
-            })
+            });
         }
         splice(result, 0, 0, {
             type: "field",
             inboundTag: ["tproxy_tcp_inbound", "tproxy_udp_inbound", "dns_conf_inbound", "socks_inbound", "https_inbound", "http_inbound"],
             outboundTag: "direct",
             ip: ["geoip:private"]
-        })
+        });
     }
     if (proxy["tproxy_sniffing"] == "1") {
         if (length(secure_domain_rules()) > 0) {
@@ -1004,7 +1004,7 @@ function rules() {
                 inboundTag: ["tproxy_tcp_inbound", "tproxy_udp_inbound", "dns_conf_inbound"],
                 outboundTag: "blackhole_outbound",
                 domain: blocked_domain_rules(),
-            })
+            });
         }
         splice(result, 0, 0, {
             type: "field",
@@ -1017,12 +1017,12 @@ function rules() {
                 type: "field",
                 outboundTag: "direct",
                 protocol: ["bittorrent"]
-            })
+            });
         }
     }
     splice(result, 0, 0, ...manual_tproxy_rules());
     splice(result, 0, 0, ...bridge_rules());
-    return result
+    return result;
 }
 
 function outbounds() {
@@ -1034,7 +1034,7 @@ function outbounds() {
         ...server_outbound(udp_server, "udp_outbound"),
         ...manual_tproxy_outbounds(),
         ...bridge_outbounds()
-    ]
+    ];
 }
 
 function policy() {
@@ -1057,7 +1057,7 @@ function policy() {
             statsOutboundUplink: stats,
             statsOutboundDownlink: stats
         }
-    }
+    };
 }
 
 function logging() {
@@ -1065,7 +1065,7 @@ function logging() {
         access: proxy["access_log"] == "1" ? "" : "none",
         loglevel: proxy["loglevel"] || "warning",
         dnsLog: proxy["dns_log"] == "1"
-    }
+    };
 }
 
 function observatory() {
@@ -1074,9 +1074,9 @@ function observatory() {
             subjectSelector: ["tcp_outbound", "udp_outbound", "direct", "manual_tproxy_force_forward"],
             probeInterval: "1s",
             probeUrl: "http://www.apple.com/library/test/success.html"
-        }
+        };
     }
-    return null
+    return null;
 }
 
 function gen_config() {
@@ -1099,7 +1099,7 @@ function gen_config() {
             domainStrategy: proxy["routing_domain_strategy"] || "AsIs",
             rules: rules()
         }
-    }
+    };
 }
 
 print(gen_config());
