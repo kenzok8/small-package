@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_quickstart:=$(ARCH)
 
 PKG_NAME:=quickstart
-PKG_VERSION:=0.7.12
+PKG_VERSION:=0.7.13
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/linkease/istore-packages/releases/download/prebuilt/
-PKG_HASH:=34b8e74d80741eff55d753abe99ad854d9c0db89fb8e172b677a90f64d42bc35
+PKG_HASH:=55ee322d99cbe7f5c0cbb2d3910dfcc0f63465904fb4fe9fe25442c0df2bbc23
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
