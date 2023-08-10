@@ -694,6 +694,7 @@ function dns_conf() {
             address: fast_dns_object["address"],
             port: fast_dns_object["port"],
             domains: [...upstream_domain_names(), ...fast_domain_rules()],
+            skipFallback: true,
         },
     ];
 
