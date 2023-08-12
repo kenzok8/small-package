@@ -12,6 +12,7 @@ TMP_ID_PATH=$TMP_PATH/id
 TMP_PORT_PATH=$TMP_PATH/port
 TMP_ROUTE_PATH=$TMP_PATH/route
 TMP_ACL_PATH=$TMP_PATH/acl
+TMP_IFACE_PATH=$TMP_PATH/iface
 TMP_PATH2=/tmp/etc/${CONFIG}_tmp
 DNSMASQ_PATH=/etc/dnsmasq.d
 TMP_DNSMASQ_PATH=/tmp/dnsmasq.d/passwall2
@@ -21,7 +22,6 @@ RULES_PATH=/usr/share/${CONFIG}/rules
 TUN_DNS_PORT=15353
 TUN_DNS="127.0.0.1#${TUN_DNS_PORT}"
 DEFAULT_DNS=
-IFACES=
 ENABLED_DEFAULT_ACL=0
 ENABLED_ACLS=0
 PROXY_IPV6=0
@@ -319,11 +319,6 @@ run_v2ray() {
 	local buffer_size=$(config_t_get global_forwarding buffer_size)
 	[ -n "${buffer_size}" ] && _extra_param="${_extra_param} -buffer_size ${buffer_size}"
 
-	local protocol=$(config_n_get $node protocol)
-	[ "$protocol" == "_iface" ] && {
-		IFACES="$IFACES $(config_n_get $node iface)"
-	}
-
 	[ -n "$dns_listen_port" ] && {
 		V2RAY_DNS_DIRECT_CONFIG="${TMP_PATH}/${flag}_dns_direct.json"
 		V2RAY_DNS_DIRECT_LOG="${TMP_PATH}/${flag}_dns_direct.log"
@@ -369,12 +364,18 @@ run_v2ray() {
 		ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $V2RAY_DNS_DIRECT_LOG run -c "$V2RAY_DNS_DIRECT_CONFIG"
 		
 		direct_dnsmasq_listen_port=$(get_new_port $(expr $dns_direct_listen_port + 1) udp)
+		local set_flag="${flag}"
+		local direct_ipset_conf=$TMP_PATH/dnsmasq_${flag}_direct.conf
+		[ -n "$(echo ${flag} | grep '^acl')" ] && {
+			direct_ipset_conf=${TMP_ACL_PATH}/${sid}/dnsmasq_${flag}_direct.conf
+			set_flag=$(echo ${flag} | awk -F '_' '{print $2}')
+		}
 		if [ "${nftflag}" = "1" ]; then
-			local direct_nftset="4#inet#fw4#passwall2_whitelist,6#inet#fw4#passwall2_whitelist6"
+			local direct_nftset="4#inet#fw4#passwall2_${set_flag}_whitelist,6#inet#fw4#passwall2_${set_flag}_whitelist6"
 		else
-			local direct_ipset="passwall2_whitelist,passwall2_whitelist6"
+			local direct_ipset="passwall2_${set_flag}_whitelist,passwall2_${set_flag}_whitelist6"
 		fi
-		run_ipset_dnsmasq listen_port=${direct_dnsmasq_listen_port} server_dns=127.0.0.1#${dns_direct_listen_port} ipset="${direct_ipset}" nftset="${direct_nftset}" config_file=$TMP_PATH/dnsmasq_${flag}_direct.conf
+		run_ipset_dnsmasq listen_port=${direct_dnsmasq_listen_port} server_dns=127.0.0.1#${dns_direct_listen_port} ipset="${direct_ipset}" nftset="${direct_nftset}" config_file=${direct_ipset_conf}
 
 		V2RAY_DNS_REMOTE_CONFIG="${TMP_PATH}/${flag}_dns_remote.json"
 		V2RAY_DNS_REMOTE_LOG="${TMP_PATH}/${flag}_dns_remote.log"
@@ -876,7 +877,6 @@ acl_app() {
 		redir_port=11200
 		dns_port=11300
 		dnsmasq_port=11400
-		echolog "访问控制："
 		for item in $items; do
 			index=$(expr $index + 1)
 			local enabled sid remarks sources node direct_dns_protocol direct_dns direct_dns_doh direct_dns_client_ip direct_dns_query_strategy remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_fakedns remote_dns_query_strategy
@@ -908,7 +908,7 @@ acl_app() {
 			tcp_proxy_mode="global"
 			udp_proxy_mode="global"
 			node=${node:-default}
-			direct_dns_protocol=${direct_dns_protocol:-auto}
+			direct_dns_protocol="auto"
 			direct_dns=${direct_dns:-119.29.29.29}
 			[ "$direct_dns_protocol" = "doh" ] && direct_dns=${direct_dns_doh:-https://223.5.5.5/dns-query}
 			direct_dns_query_strategy=${direct_dns_query_strategy:-UseIP}
@@ -1070,6 +1070,7 @@ TCP_PROXY_MODE="global"
 UDP_PROXY_MODE="global"
 LOCALHOST_PROXY=$(config_t_get global localhost_proxy '1')
 DIRECT_DNS_PROTOCOL=$(config_t_get global direct_dns_protocol tcp)
+DIRECT_DNS_PROTOCOL="auto"
 DIRECT_DNS=$(config_t_get global direct_dns 119.29.29.29:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 DIRECT_DNS_QUERY_STRATEGY=$(config_t_get global direct_dns_query_strategy UseIP)
 REMOTE_DNS_PROTOCOL=$(config_t_get global remote_dns_protocol tcp)
@@ -1092,7 +1093,7 @@ PROXY_IPV6=$(config_t_get global_forwarding ipv6_tproxy 0)
 
 export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/v2ray/")
 export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
-mkdir -p /tmp/etc $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_PATH2
+mkdir -p /tmp/etc $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ID_PATH $TMP_PORT_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_IFACE_PATH $TMP_PATH2
 
 arg1=$1
 shift

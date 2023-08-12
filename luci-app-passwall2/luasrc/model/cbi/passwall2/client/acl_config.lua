@@ -158,7 +158,10 @@ o:value("default", translate("Default"))
 o:value("1:65535", translate("All"))
 
 ---- UDP No Redir Ports
-o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"))
+o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
+	"<font color='red'>" ..
+	translate("If you don't want to let the device in the list to go proxy, please choose all.") ..
+	"</font>")
 o.default = "default"
 o:value("disable", translate("No patterns are used"))
 o:value("default", translate("Default"))
@@ -189,10 +192,12 @@ end
 o = s:option(ListValue, "direct_dns_protocol", translate("Direct DNS Protocol"))
 o.default = "auto"
 o:value("auto", translate("Auto"))
+--[[
 o:value("udp", "UDP")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:depends({ node = "default",  ['!reverse'] = true })
+]]--
 ---- DNS Forward
 o = s:option(Value, "direct_dns", translate("Direct DNS"))
 o.datatype = "or(ipaddr,ipaddrport)"
