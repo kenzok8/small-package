@@ -7,8 +7,8 @@ syncdial_num=2
 macvlan_index=0
 command=$1
 track_ip='119.29.29.29 www.baidu.com 114.114.114.114'
-add_mwan=$(uci get multiaccountdial.@base_setting[0].add_mwan)
-dial_num=$(uci get multiaccountdial.@base_setting[0].dial_num)
+add_mwan=$(uci -q get  multiaccountdial.@base_setting[0].add_mwan)
+dial_num=$(uci -q get  multiaccountdial.@base_setting[0].dial_num)
 if [ "$dial_num" != "" ]; then
     syncdial_num=$dial_num
 fi
@@ -90,6 +90,7 @@ set network.vwan$index.password=$password
 set network.vwan$index.metric=$metric
 set network.vwan$index.defaultroute=0
 set network.vwan$index.ipv6=0
+set network.vwan$index.scriptmark=1
 add_list firewall.@zone[1].network=vwan$index
 set dhcp.vwan$index=dhcp
 set dhcp.vwan$index.interface=vwan$index
@@ -153,6 +154,35 @@ do
 done
 }
 
+redial_if(){
+    local if_cfg=$1
+    uci -q get network.${if_cfg}.scriptmark && {
+        echo redial interface ${if_cfg}
+        ifdown $if_cfg
+        ifup $if_cfg
+    }   
+}
+
+redial_all(){
+    config_load network
+    config_foreach redial_if interface
+}
+
+count_if(){
+    local if_cfg=$1  
+    uci -q get network.${if_cfg}.scriptmark>/dev/null && {
+        local up=$(ifstatus ${if_cfg} |grep '"up": true,' |wc -l )
+        local down=$(ifstatus ${if_cfg} |grep '"up": false,' |wc -l )
+        if [ $up -eq 1 ];then online=${online}1;fi
+        if [ $down -eq 1 ];then offline=${offline}1;fi
+   }   
+}
+
+count_all(){
+    config_load network
+    config_foreach count_if interface
+}
+
 case $command in
     "add")
         add_vwan
@@ -165,6 +195,14 @@ case $command in
         uci commit network
         uci commit firewall
         uci commit mwan3
+        ;;
+    "redial")
+        redial_all
+        ;;
+    "count_online")
+        count_all
+        echo 在线:$(echo -e $online | wc -L)
+        echo 离线:$(echo -e $offline | wc -L)
         ;;
     *)
         echo "unknown command $command"

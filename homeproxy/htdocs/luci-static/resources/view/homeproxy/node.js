@@ -420,8 +420,9 @@ return view.extend({
 									.then(L.bind(this.map.reset, this.map))
 									.then(L.ui.hideModal)
 									.catch(function() {});
-							} else
+							} else {
 								return ui.hideModal();
+							}
 						})
 					}, [ _('Import') ])
 				])
@@ -996,8 +997,9 @@ return view.extend({
 				if (['hysteria', 'shadowtls'].includes(type)) {
 					tls.checked = true;
 					tls.disabled = true;
-				} else
+				} else {
 					tls.disabled = null;
+				}
 			}
 
 			return true;
@@ -1237,9 +1239,9 @@ return view.extend({
 		o.inputstyle = 'apply';
 		o.inputtitle = function(section_id) {
 			var sublist = uci.get(data[0], section_id, 'subscription_url') || [];
-			if (sublist.length > 0)
+			if (sublist.length > 0) {
 				return _('Update %s subscriptions').format(sublist.length);
-			else {
+			} else {
 				this.readonly = true;
 				return _('No subscription available')
 			}

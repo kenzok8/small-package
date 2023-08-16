@@ -154,9 +154,9 @@ return baseclass.extend({
 		if (padding)
 			str = str + Array(padding + 1).join('=');
 
-		return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => {
-			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-		}).join(''));
+		return decodeURIComponent(Array.prototype.map.call(atob(str), (c) =>
+			'%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+		).join(''));
 	},
 
 	getBuiltinFeatures: function() {
@@ -171,16 +171,16 @@ return baseclass.extend({
 
 	generateUUIDv4: function() {
 		/* Thanks to https://stackoverflow.com/a/2117523 */
-		return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+		return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c) =>
 			(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
 		);
 	},
 
 	loadDefaultLabel: function(uciconfig, ucisection) {
 		var label = uci.get(uciconfig, ucisection, 'label');
-		if (label)
+		if (label) {
 			return label;
-		else {
+		} else {
 			uci.set(uciconfig, ucisection, 'label', ucisection);
 			return ucisection;
 		}
@@ -226,9 +226,8 @@ return baseclass.extend({
 			return L.resolveDefault(callWriteCertificate(filename), {}).then((ret) => {
 				if (ret.result === true)
 					ui.addNotification(null, E('p', _('Your %s was successfully uploaded. Size: %sB.').format(type, res.size)));
-				else {
+				else
 					ui.addNotification(null, E('p', _('Failed to upload %s, error: %s.').format(type, ret.error)));
-				}
 			});
 		}, this, ev.target))
 		.catch((e) => { ui.addNotification(null, E('p', e.message)) });
