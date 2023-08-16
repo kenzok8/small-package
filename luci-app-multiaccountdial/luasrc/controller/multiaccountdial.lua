@@ -12,28 +12,25 @@ function index()
 end
 
 function redial()
-	os.execute("killall -9 pppd")
+	os.execute("/usr/libexec/multiaccountdial/multi_account_dial redial")
 	os.execute("logger -t multiaccountdial redial")
 end
 
 
 function add_vwan()
-	os.execute("multi_account_dial add")
+	os.execute("/usr/libexec/multiaccountdial/multi_account_dial add")
 	os.execute("logger -t multiaccountdial add_vwan")
 end
 
 function del_vwan()
-	os.execute("multi_account_dial del")
+	os.execute("/usr/libexec/multiaccountdial/multi_account_dial del")
 	os.execute("logger -t multiaccountdial del_vwan")
 end
 
 function act_status()
 	local e = {}
-	local mwan3_status = luci.util.exec("mwan3 status")
-	e.num_online = 0
-	for _ in mwan3_status:gmatch("tracking is active") do
-		e.num_online = e.num_online + 1
-	end
+	local num_online = luci.util.exec("/usr/libexec/multiaccountdial/multi_account_dial count_online")
+	e.num_online = num_online
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end

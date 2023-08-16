@@ -33,11 +33,10 @@ function getServiceStatus() {
 function renderStatus(isRunning) {
 	var spanTemp = '<em><span style="color:%s"><strong>%s %s</strong></span></em>';
 	var renderHTML;
-	if (isRunning) {
+	if (isRunning)
 		renderHTML = spanTemp.format('green', _('HomeProxy Server'), _('RUNNING'));
-	} else {
+	else
 		renderHTML = spanTemp.format('red', _('HomeProxy Server'), _('NOT RUNNING'));
-	}
 
 	return renderHTML;
 }
@@ -362,8 +361,9 @@ return view.extend({
 				if (['hysteria'].includes(type)) {
 					tls.checked = true;
 					tls.disabled = true;
-				} else
+				} else {
 					tls.disabled = null;
+				}
 			}
 
 			return true;
