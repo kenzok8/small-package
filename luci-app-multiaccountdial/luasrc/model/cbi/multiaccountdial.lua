@@ -20,7 +20,7 @@ base_setting_section = m:section(TypedSection, "base_setting", translate("base s
 base_setting_section.anonymous = false
 base_setting_section.addremove = false
 
-dial_num = base_setting_section:option(Value, "dial_num", translate("多播数量"))
+dial_num = base_setting_section:option(Value, "dial_num", translate("多拨数量"))
 dial_num.default = 2
 dial_num.datatype = "range(1,249)"
 
