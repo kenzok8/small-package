@@ -4,17 +4,17 @@ local api = require "luci.passwall.api"
 
 <script type="text/javascript">
 	//<![CDATA[
+	let socks_id = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1)
 	function add_node_by_key() {
 		var key = prompt("<%:Please enter the node keyword, pay attention to distinguish between spaces, uppercase and lowercase.%>", "");
 		if (key) {
-			window.location.href = '<%=api.url("autoswitch_add_node")%>' + "?key=" + key;
+			window.location.href = '<%=api.url("socks_autoswitch_add_node")%>' + "?id=" + socks_id + "&key=" + key;
 		}
 	}
-
 	function remove_node_by_key() {
 		var key = prompt("<%:Please enter the node keyword, pay attention to distinguish between spaces, uppercase and lowercase.%>", "");
 		if (key) {
-			window.location.href = '<%=api.url("autoswitch_remove_node")%>' + "?key=" + key;
+			window.location.href = '<%=api.url("socks_autoswitch_remove_node")%>' + "?id=" + socks_id + "&key=" + key;
 		}
 	}
 	//]]>
