@@ -46,42 +46,9 @@ s:tab("Main", translate("Main"))
 o = s:taboption("Main", Flag, "enabled", translate("Main switch"))
 o.rmempty = false
 
-local auto_switch_tip
-local shunt_remark
-local current_node = luci.sys.exec(string.format("[ -f '/tmp/etc/%s/id/global' ] && echo -n $(cat /tmp/etc/%s/id/global)", appname, appname))
-if current_node and current_node ~= "" and current_node ~= "nil" then
-	local n = uci:get_all(appname, current_node)
-	if n then
-		if tonumber(m:get("@auto_switch[0]", "enable") or 0) == 1 then
-			if n.protocol == "_shunt" then
-				local shunt_logic = tonumber(m:get("@auto_switch[0]", "shunt_logic"))
-				if shunt_logic == 1 or shunt_logic == 2 then
-					if shunt_logic == 1 then
-						shunt_remark = "default"
-					elseif shunt_logic == 2 then
-						shunt_remark = "main"
-					end
-					current_node = luci.sys.exec(string.format("[ -f '/tmp/etc/%s/id/global_%s' ] && echo -n $(cat /tmp/etc/%s/id/global_%s)", appname, shunt_remark, appname, shunt_remark))
-					if current_node and current_node ~= "" and current_node ~= "nil" then
-						n = uci:get_all(appname, current_node)
-					end
-				end
-			end
-			if n then
-				local remarks = api.get_node_remarks(n)
-				local url = api.url("node_config", n[".name"])
-				auto_switch_tip = translatef("Current node: %s", string.format('<a href="%s">%s</a>', url, remarks)) .. "<br />"
-			end
-		end
-	end
-end
-
 ---- Node
 node = s:taboption("Main", ListValue, "node", "<a style='color: red'>" .. translate("Node") .. "</a>")
 node:value("nil", translate("Close"))
-if not shunt_remark and auto_switch_tip then
-	node.description = auto_switch_tip
-end
 
 -- 分流
 if (has_v2ray or has_xray) and #nodes_table > 0 then
@@ -151,9 +118,6 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			end
 			o.cfgvalue = get_cfgvalue(v.id, "main_node")
 			o.write = get_write(v.id, "main_node")
-			if shunt_remark == "main" and auto_switch_tip then
-				o.description = auto_switch_tip
-			end
 
 			if (has_v2ray and has_xray) or (v.type == "V2ray" and not has_v2ray) or (v.type == "Xray" and not has_xray) then
 				type:depends("node", v.id)
@@ -211,9 +175,6 @@ if (has_v2ray or has_xray) and #nodes_table > 0 then
 			for k1, v1 in pairs(normal_list) do
 				o:value(v1.id, v1.remark)
 			end
-			if shunt_remark == "default" and auto_switch_tip then
-				o.description = auto_switch_tip
-			end
 
 			local id = "default_proxy_tag"
 			o = s:taboption("Main", ListValue, vid .. "-" .. id, string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
@@ -260,47 +221,6 @@ end
 ]]--
 
 s:tab("DNS", translate("DNS"))
-
-o = s:taboption("DNS", ListValue, "direct_dns_protocol", translate("Direct DNS Protocol"))
-o.default = "auto"
-o:value("auto", translate("Auto"))
---[[
-o:value("udp", "UDP")
-o:value("tcp", "TCP")
-o:value("doh", "DoH")
-]]--
-
----- DNS Forward
-o = s:taboption("DNS", Value, "direct_dns", translate("Direct DNS"))
-o.datatype = "or(ipaddr,ipaddrport)"
-o.default = "119.29.29.29"
-o:value("114.114.114.114", "114.114.114.114 (114DNS)")
-o:value("119.29.29.29", "119.29.29.29 (DNSPod)")
-o:value("223.5.5.5", "223.5.5.5 (AliDNS)")
-o:depends("direct_dns_protocol", "udp")
-o:depends("direct_dns_protocol", "tcp")
-
----- DoH
-o = s:taboption("DNS", Value, "direct_dns_doh", translate("Direct DNS DoH"))
-o.default = "https://223.5.5.5/dns-query"
-o:value("https://1.12.12.12/dns-query", "DNSPod 1")
-o:value("https://120.53.53.53/dns-query", "DNSPod 2")
-o:value("https://223.5.5.5/dns-query", "AliDNS")
-o.validate = doh_validate
-o:depends("direct_dns_protocol", "doh")
-
-o = s:taboption("DNS", Value, "direct_dns_client_ip", translate("Direct DNS EDNS Client Subnet"))
-o.description = translate("Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address).") .. "<br />" ..
-				translate("This feature requires the DNS server to support the Edns Client Subnet (RFC7871).")
-o.datatype = "ipaddr"
-o:depends("direct_dns_protocol", "tcp")
-o:depends("direct_dns_protocol", "doh")
-
-o = s:taboption("DNS", ListValue, "direct_dns_query_strategy", translate("Direct Query Strategy"))
-o.default = "UseIP"
-o:value("UseIP")
-o:value("UseIPv4")
-o:value("UseIPv6")
 
 o = s:taboption("DNS", ListValue, "remote_dns_protocol", translate("Remote DNS Protocol"))
 o:value("tcp", "TCP")
@@ -385,11 +305,15 @@ o = s:taboption("Main", Flag, "socks_enabled", "Socks " .. translate("Main switc
 o.rmempty = false
 
 s = m:section(TypedSection, "socks", translate("Socks Config"))
+s.template = "cbi/tblsection"
 s.anonymous = true
 s.addremove = true
-s.template = "cbi/tblsection"
+s.extedit = api.url("socks_config", "%s")
 function s.create(e, t)
-	TypedSection.create(e, api.gen_short_uuid())
+	local uuid = api.gen_short_uuid()
+	t = uuid
+	TypedSection.create(e, t)
+	luci.http.redirect(e.extedit:format(t))
 end
 
 o = s:option(DummyValue, "status", translate("Status"))

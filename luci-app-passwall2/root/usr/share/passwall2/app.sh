@@ -329,6 +329,7 @@ run_v2ray() {
 		[ "$direct_dns_protocol" = "auto" ] && {
 			direct_dns_protocol="udp"
 			direct_dns_udp_server=${AUTO_DNS}
+			direct_dns_query_strategy="UseIP"
 		}
 		case "$direct_dns_protocol" in
 			udp)
@@ -336,25 +337,6 @@ run_v2ray() {
 				local _dns_address=$(echo ${_dns} | awk -F ':' '{print $1}')
 				local _dns_port=$(echo ${_dns} | awk -F ':' '{print $2}')
 				V2RAY_DNS_DIRECT_ARGS="${V2RAY_DNS_DIRECT_ARGS} -direct_dns_server ${_dns_address} -direct_dns_port ${_dns_port} -direct_dns_udp_server ${_dns_address}"
-			;;
-			tcp)
-				local _dns=$(get_first_dns direct_dns_tcp_server 53 | sed 's/#/:/g')
-				local _dns_address=$(echo ${_dns} | awk -F ':' '{print $1}')
-				local _dns_port=$(echo ${_dns} | awk -F ':' '{print $2}')
-				V2RAY_DNS_DIRECT_ARGS="${V2RAY_DNS_DIRECT_ARGS} -direct_dns_server ${_dns_address} -direct_dns_port ${_dns_port} -direct_dns_tcp_server tcp://${_dns}"
-			;;
-			doh)
-				local _doh_url=$(echo $direct_dns_doh | awk -F ',' '{print $1}')
-				local _doh_host_port=$(lua_api "get_domain_from_url(\"${_doh_url}\")")
-				#local _doh_host_port=$(echo $_doh_url | sed "s/https:\/\///g" | awk -F '/' '{print $1}')
-				local _doh_host=$(echo $_doh_host_port | awk -F ':' '{print $1}')
-				local is_ip=$(lua_api "is_ip(\"${_doh_host}\")")
-				local _doh_port=$(echo $_doh_host_port | awk -F ':' '{print $2}')
-				[ -z "${_doh_port}" ] && _doh_port=443
-				local _doh_bootstrap=$(echo $direct_dns_doh | cut -d ',' -sf 2-)
-				[ "${is_ip}" = "true" ] && _doh_bootstrap=${_doh_host}
-				[ -n "$_doh_bootstrap" ] && V2RAY_DNS_DIRECT_ARGS="${V2RAY_DNS_DIRECT_ARGS} -direct_dns_server ${_doh_bootstrap}"
-				V2RAY_DNS_DIRECT_ARGS="${V2RAY_DNS_DIRECT_ARGS} -direct_dns_port ${_doh_port} -direct_dns_doh_url ${_doh_url} -direct_dns_doh_host ${_doh_host}"
 			;;
 		esac
 		[ -n "$direct_dns_query_strategy" ] && V2RAY_DNS_DIRECT_ARGS="${V2RAY_DNS_DIRECT_ARGS} -dns_query_strategy ${direct_dns_query_strategy}"
@@ -553,46 +535,26 @@ run_socks() {
 	unset http_flag
 }
 
-node_switch() {
-	local flag new_node shunt_logic
+socks_node_switch() {
+	local flag new_node
 	eval_set_val $@
 	[ -n "$flag" ] && [ -n "$new_node" ] && {
 		pgrep -af "$TMP_BIN_PATH" | awk -v P1="${flag}" 'BEGIN{IGNORECASE=1}$0~P1 && !/acl\/|acl_/{print $1}' | xargs kill -9 >/dev/null 2>&1
-		rm -rf $TMP_PATH/${flag}*
-		[ "$shunt_logic" != "0" ] && {
-			local node=$(config_t_get global node nil)
-			[ "$(config_n_get $node protocol nil)" = "_shunt" ] && {
-				if [ "$shunt_logic" = "1" ]; then
-					uci set $CONFIG.$node.default_node="$new_node"
-				elif [ "$shunt_logic" = "2" ]; then
-					uci set $CONFIG.$node.main_node="$new_node"
-				fi
-				uci commit $CONFIG
-			}
-			new_node=$node
-		}
+		rm -rf $TMP_PATH/SOCKS_${flag}*
+		rm -rf $TMP_PATH/HTTP2SOCKS_${flag}*
 
-		[ -s "$TMP_SCRIPT_FUNC_PATH/_${flag}" ] && {
-			for filename in $(ls ${TMP_SCRIPT_FUNC_PATH} | grep -v "^_"); do
-				cmd=$(cat ${TMP_SCRIPT_FUNC_PATH}/${filename})
-				[ -n "$(echo $cmd | grep "${flag}")" ] && rm -f ${TMP_SCRIPT_FUNC_PATH}/${filename}
-			done
-			local script_func=$(cat $TMP_SCRIPT_FUNC_PATH/_${flag})
-			local now_node_arg=$(echo $script_func | grep -o -E "node=.*" | awk -F ' ' '{print $1}')
-			new_script_func=$(echo $script_func | sed "s#${now_node_arg}#node=${new_node}#g")
-			${new_script_func}
-			echo $new_node > $TMP_ID_PATH/${flag}
-
-			[ "$shunt_logic" != "0" ] && [ "$(config_n_get $new_node protocol nil)" = "_shunt" ] && {
-				echo $(config_n_get $new_node default_node nil) > $TMP_ID_PATH/${flag}_default
-				echo $(config_n_get $new_node main_node nil) > $TMP_ID_PATH/${flag}_main
-				uci commit $CONFIG
-			}
-
-			#uci set $CONFIG.@global[0].node=$node
-			#uci commit $CONFIG
-			source $APP_PATH/helper_dnsmasq.sh logic_restart no_log=1
-		}
+		for filename in $(ls ${TMP_SCRIPT_FUNC_PATH}); do
+			cmd=$(cat ${TMP_SCRIPT_FUNC_PATH}/${filename})
+			[ -n "$(echo $cmd | grep "${flag}")" ] && rm -f ${TMP_SCRIPT_FUNC_PATH}/${filename}
+		done
+		local port=$(config_n_get $flag port)
+		local config_file="SOCKS_${flag}.json"
+		local log_file="SOCKS_${flag}.log"
+		local http_port=$(config_n_get $flag http_port 0)
+		local http_config_file="HTTP2SOCKS_${flag}.json"
+		LOG_FILE="/dev/null"
+		run_socks flag=$flag node=$new_node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file
+		echo $new_node > $TMP_ID_PATH/socks_${flag}
 	}
 }
 
@@ -614,7 +576,7 @@ run_global() {
 		PROXY_IPV6_UDP=1
 	fi
 	V2RAY_ARGS="flag=global node=$NODE redir_port=$REDIR_PORT"
-	V2RAY_ARGS="${V2RAY_ARGS} dns_listen_port=${TUN_DNS_PORT} direct_dns_query_strategy=${DIRECT_DNS_QUERY_STRATEGY} remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY} dns_cache=${DNS_CACHE}"
+	V2RAY_ARGS="${V2RAY_ARGS} dns_listen_port=${TUN_DNS_PORT} direct_dns_query_strategy=UseIP remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY} dns_cache=${DNS_CACHE}"
 	local msg="${TUN_DNS} （"
 	[ -n "$DIRECT_DNS_PROTOCOL" ] && {
 		V2RAY_ARGS="${V2RAY_ARGS} direct_dns_protocol=${DIRECT_DNS_PROTOCOL}"
@@ -685,7 +647,6 @@ run_global() {
 	[ "$node_http_port" != "0" ] && V2RAY_ARGS="${V2RAY_ARGS} http_port=${node_http_port}"
 
 	run_v2ray $V2RAY_ARGS
-	echo "run_v2ray $V2RAY_ARGS" > $TMP_SCRIPT_FUNC_PATH/_global
 }
 
 start_socks() {
@@ -704,7 +665,11 @@ start_socks() {
 				local http_port=$(config_n_get $id http_port 0)
 				local http_config_file="HTTP2SOCKS_${id}.json"
 				run_socks flag=$id node=$node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file
-				echo $node > $TMP_ID_PATH/SOCKS_${id}
+				echo $node > $TMP_ID_PATH/socks_${id}
+
+				#自动切换逻辑
+				local enable_autoswitch=$(config_n_get $id enable_autoswitch 0)
+				[ "$enable_autoswitch" = "1" ] && $APP_PATH/socks_auto_switch.sh ${id} > /dev/null 2>&1 &
 			done
 		}
 	}
@@ -789,9 +754,6 @@ start_crontab() {
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		start_daemon=$(config_t_get global_delay start_daemon 0)
 		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
-
-		AUTO_SWITCH_ENABLE=$(config_t_get auto_switch enable 0)
-		[ "$AUTO_SWITCH_ENABLE" = "1" ] && $APP_PATH/test.sh > /dev/null 2>&1 &
 	else
 		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
 	fi
@@ -911,7 +873,7 @@ acl_app() {
 			direct_dns_protocol="auto"
 			direct_dns=${direct_dns:-119.29.29.29}
 			[ "$direct_dns_protocol" = "doh" ] && direct_dns=${direct_dns_doh:-https://223.5.5.5/dns-query}
-			direct_dns_query_strategy=${direct_dns_query_strategy:-UseIP}
+			direct_dns_query_strategy="UseIP"
 			remote_dns_protocol=${remote_dns_protocol:-tcp}
 			remote_dns=${remote_dns:-1.1.1.1}
 			[ "$remote_dns_protocol" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
@@ -1045,7 +1007,7 @@ stop() {
 	[ -s "$TMP_PATH/bridge_nf_ipt" ] && sysctl -w net.bridge.bridge-nf-call-iptables=$(cat $TMP_PATH/bridge_nf_ipt) >/dev/null 2>&1
 	[ -s "$TMP_PATH/bridge_nf_ip6t" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=$(cat $TMP_PATH/bridge_nf_ip6t) >/dev/null 2>&1
 	rm -rf ${TMP_PATH}
-	rm -rf /tmp/lock/${CONFIG}_script.lock
+	rm -rf /tmp/lock/${CONFIG}_socks_auto_switch*
 	echolog "清空并关闭相关程序和缓存完成。"
 	exit 0
 }
@@ -1072,7 +1034,6 @@ LOCALHOST_PROXY=$(config_t_get global localhost_proxy '1')
 DIRECT_DNS_PROTOCOL=$(config_t_get global direct_dns_protocol tcp)
 DIRECT_DNS_PROTOCOL="auto"
 DIRECT_DNS=$(config_t_get global direct_dns 119.29.29.29:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
-DIRECT_DNS_QUERY_STRATEGY=$(config_t_get global direct_dns_query_strategy UseIP)
 REMOTE_DNS_PROTOCOL=$(config_t_get global remote_dns_protocol tcp)
 REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
 REMOTE_FAKEDNS=$(config_t_get global remote_fakedns '0')
@@ -1110,8 +1071,8 @@ run_v2ray)
 run_socks)
 	run_socks $@
 	;;
-node_switch)
-	node_switch $@
+socks_node_switch)
+	socks_node_switch $@
 	;;
 echolog)
 	echolog $@
