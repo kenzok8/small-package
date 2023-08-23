@@ -123,15 +123,15 @@ function generate_outbound(node) {
 		tag: 'cfg-' + node['.name'] + '-out',
 		routing_mark: strToInt(self_mark),
 
-		server: (node.type !== 'direct') ? node.address : null,
-		server_port: (node.type !== 'direct') ? int(node.port) : null,
+		server: node.address,
+		server_port: int(node.port),
 
 		username: node.username,
 		password: node.password,
 
 		/* Direct */
-		override_address: (node.type === 'direct') ? node.address : null,
-		override_port: (node.type === 'direct') ? node.port : null,
+		override_address: node.override_address,
+		override_port: strToInt(node.override_port),
 		proxy_protocol: strToInt(node.proxy_protocol),
 		/* Hysteria */
 		up_mbps: strToInt(node.hysteria_down_mbps),
@@ -153,8 +153,14 @@ function generate_outbound(node) {
 		obfs_param: node.shadowsocksr_obfs_param,
 		/* ShadowTLS / Socks */
 		version: (node.type === 'shadowtls') ? strToInt(node.shadowtls_version) : ((node.type === 'socks') ? node.socks_version : null),
-		/* VLESS / VMess */
+		/* Tuic */
 		uuid: node.uuid,
+		congestion_control: node.tuic_congestion_control,
+		udp_relay_mode: node.tuic_udp_relay_mode,
+		udp_over_stream: (node.tuic_udp_over_stream === '1') || null,
+		zero_rtt_handshake: (node.tuic_enable_zero_rtt === '1') || null,
+		heartbeat: node.tuic_heartbeat ? (node.tuic_heartbeat + 's') : null,
+		/* VLESS / VMess */
 		flow: node.vless_flow,
 		alter_id: strToInt(node.vmess_alterid),
 		security: node.vmess_encrypt,

@@ -211,6 +211,30 @@ function parseShareLink(uri, features) {
 			}
 
 			break;
+		case 'tuic':
+			/* https://github.com/daeuniverse/dae/discussions/182 */
+			var url = new URL('http://' + uri[1]);
+			var params = url.searchParams;
+
+			/* Check if uuid exists */
+			if (!url.username)
+				return null;
+
+			config = {
+				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
+				type: 'tuic',
+				address: url.hostname,
+				port: url.port || '80',
+				uuid: url.username,
+				password: url.password ? decodeURIComponent(url.password) : null,
+				tuic_congestion_control: params.get('congestion_control'),
+				tuic_udp_relay_mode: params.get('udp_relay_mode'),
+				tls: '1',
+				tls_sni: params.get('sni'),
+				tls_alpn: params.get('alpn') ? decodeURIComponent(params.get('alpn')).split(',') : null
+			};
+
+			break;
 		case 'vless':
 			/* https://github.com/XTLS/Xray-core/discussions/716 */
 			var url = new URL('http://' + uri[1]);
@@ -496,6 +520,8 @@ return view.extend({
 		so.value('shadowtls', _('ShadowTLS'));
 		so.value('socks', _('Socks'));
 		so.value('trojan', _('Trojan'));
+		if (features.with_quic)
+			so.value('tuic', _('Tuic'));
 		if (features.with_wireguard)
 			so.value('wireguard', _('WireGuard'));
 		so.value('vless', _('VLESS'));
@@ -504,10 +530,12 @@ return view.extend({
 
 		so = ss.option(form.Value, 'address', _('Address'));
 		so.datatype = 'host';
+		so.depends({'type': 'direct', '!reverse': true});
 		so.rmempty = false;
 
 		so = ss.option(form.Value, 'port', _('Port'));
 		so.datatype = 'port';
+		so.depends({'type': 'direct', '!reverse': true});
 		so.rmempty = false;
 
 		so = ss.option(form.Value, 'username', _('Username'));
@@ -521,6 +549,7 @@ return view.extend({
 		so.depends('type', 'shadowsocks');
 		so.depends('type', 'shadowsocksr');
 		so.depends('type', 'trojan');
+		so.depends('type', 'tuic');
 		so.depends({'type': 'shadowtls', 'shadowtls_version': '2'});
 		so.depends({'type': 'shadowtls', 'shadowtls_version': '3'});
 		so.depends({'type': 'socks', 'socks_version': '5'});
@@ -549,6 +578,16 @@ return view.extend({
 		so.modalonly = true;
 
 		/* Direct config */
+		so = ss.option(form.Value, 'override_address', _('Override address'),
+			_('Override the connection destination address.'));
+		so.datatype = 'host';
+		so.depends('type', 'direct');
+
+		so = ss.option(form.Value, 'override_port', _('Override port'),
+			_('Override the connection destination port.'));
+		so.datatype = 'port';
+		so.depends('type', 'direct');
+
 		so = ss.option(form.ListValue, 'proxy_protocol', _('Proxy protocol'),
 			_('Write Proxy Protocol in the connection header.'));
 		so.value('', _('Disable'));
@@ -735,13 +774,54 @@ return view.extend({
 		so.rmempty = false;
 		so.modalonly = true;
 
-		/* VMess / VLESS config start */
+		/* TUIC config start */
 		so = ss.option(form.Value, 'uuid', _('UUID'));
+		so.depends('type', 'tuic');
 		so.depends('type', 'vless');
 		so.depends('type', 'vmess');
 		so.validate = hp.validateUUID;
 		so.modalonly = true;
 
+		so = ss.option(form.ListValue, 'tuic_congestion_control', _('Congestion control algorithm'),
+			_('QUIC congestion control algorithm.'));
+		so.value('cubic', _('CUBIC'));
+		so.value('new_reno', _('New Reno'));
+		so.value('bbr', _('BBR'));
+		so.default = 'cubic';
+		so.depends('type', 'tuic');
+		so.rmempty = false;
+		so.modalonly = true;
+
+		so = ss.option(form.ListValue, 'tuic_udp_relay_mode', _('UDP relay mode'),
+			_('UDP packet relay mode.'));
+		so.value('native', _('Native'));
+		so.value('quic', _('QUIC'));
+		so.default = 'native';
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.option(form.Flag, 'tuic_udp_over_stream', _('UDP over stream'),
+			_('This is the TUIC port of the UDP over TCP protocol, designed to provide a QUIC stream based UDP relay mode that TUIC does not provide.'));
+		so.default = so.disabled;
+		so.depends({'type': 'tuic','tuic_udp_relay_mode': 'native'});
+		so.modalonly = true;
+
+		so = ss.option(form.Flag, 'tuic_enable_zero_rtt', _('Enable 0-RTT handshake'),
+			_('Enable 0-RTT QUIC connection handshake on the client side. This is not impacting much on the performance, as the protocol is fully multiplexed.<br/>' +
+				'Disabling this is highly recommended, as it is vulnerable to replay attacks.'));
+		so.default = so.disabled;
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.option(form.Value, 'tuic_heartbeat', _('Heartbeat interval'),
+			_('Interval for sending heartbeat packets for keeping the connection alive (in seconds).'));
+		so.datatype = 'uinteger';
+		so.default = '10';
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+		/* Tuic config end */
+
+		/* VMess / VLESS config start */
 		so = ss.option(form.ListValue, 'vless_flow', _('Flow'));
 		so.value('', _('None'));
 		so.value('xtls-rprx-vision');
@@ -802,18 +882,18 @@ return view.extend({
 			var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 			if ((value === 'http' && tls.checked) || (value === 'grpc' && !features.with_grpc)) {
 				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
-					_('Specifies the period of time after which a health check will be performed using a ping frame if no frames have been received on the connection.<br/>' +
+					_('Specifies the period of time (in seconds) after which a health check will be performed using a ping frame if no frames have been received on the connection.<br/>' +
 						'Please note that a ping response is considered a received frame, so if there is no other traffic on the connection, the health check will be executed every interval.');
 
 				this.map.findElement('id', 'cbid.homeproxy.%s.http_ping_timeout'.format(section_id)).nextElementSibling.innerHTML =
-					_('Specifies the timeout duration after sending a PING frame, within which a response must be received.<br/>' +
+					_('Specifies the timeout duration (in seconds) after sending a PING frame, within which a response must be received.<br/>' +
 						'If a response to the PING frame is not received within the specified timeout duration, the connection will be closed.');
 			} else if (value === 'grpc' && features.with_grpc) {
 				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
-					_('If the transport doesn\'t see any activity after a duration of this time, it pings the client to check if the connection is still active.');
+					_('If the transport doesn\'t see any activity after a duration of this time (in seconds), it pings the client to check if the connection is still active.');
 
 				this.map.findElement('id', 'cbid.homeproxy.%s.http_ping_timeout'.format(section_id)).nextElementSibling.innerHTML =
-					_('The timeout that after performing a keepalive check, the client will wait for activity. If no activity is detected, the connection will be closed.');
+					_('The timeout (in seconds) that after performing a keepalive check, the client will wait for activity. If no activity is detected, the connection will be closed.');
 			}
 		}
 		so.modalonly = true;
@@ -849,7 +929,7 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'http_idle_timeout', _('Idle timeout'),
-			_('Specifies the period of time after which a health check will be performed using a ping frame if no frames have been received on the connection.<br/>' +
+			_('Specifies the period of time (in seconds) after which a health check will be performed using a ping frame if no frames have been received on the connection.<br/>' +
 				'Please note that a ping response is considered a received frame, so if there is no other traffic on the connection, the health check will be executed every interval.'));
 		so.datatype = 'uinteger';
 		so.depends('transport', 'grpc');
@@ -857,7 +937,7 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'http_ping_timeout', _('Ping timeout'),
-			_('Specifies the timeout duration after sending a PING frame, within which a response must be received.<br/>' +
+			_('Specifies the timeout duration (in seconds) after sending a PING frame, within which a response must be received.<br/>' +
 				'If a response to the PING frame is not received within the specified timeout duration, the connection will be closed.'));
 		so.datatype = 'uinteger';
 		so.depends('transport', 'grpc');
@@ -987,6 +1067,7 @@ return view.extend({
 		so.depends('type', 'hysteria');
 		so.depends('type', 'shadowtls');
 		so.depends('type', 'trojan');
+		so.depends('type', 'tuic');
 		so.depends('type', 'vless');
 		so.depends('type', 'vmess');
 		so.validate = function(section_id, value) {
@@ -994,7 +1075,7 @@ return view.extend({
 				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
 				var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 
-				if (['hysteria', 'shadowtls'].includes(type)) {
+				if (['hysteria', 'shadowtls', 'tuic'].includes(type)) {
 					tls.checked = true;
 					tls.disabled = true;
 				} else {
