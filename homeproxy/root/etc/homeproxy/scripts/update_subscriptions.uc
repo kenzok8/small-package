@@ -274,6 +274,33 @@ function parse_uri(uri) {
 			}
 
 			break;
+		case 'tuic':
+			/* https://github.com/daeuniverse/dae/discussions/182 */
+			const tuic_url = parseURL('http://' + uri[1]),
+			      tuic_params = tuic_url.searchParams || {};
+
+			if (!sing_features.with_quic) {
+				log(sprintf('Skipping unsupported %s node: %s.', 'tuic', urldecode(tuic_url.hash) || tuic_url.hostname));
+				log(sprintf('Please rebuild sing-box with %s support!', 'QUIC'));
+
+				return null;
+			}
+
+			config = {
+				label: tuic_url.hash ? urldecode(tuic_url.hash) : null,
+				type: 'tuic',
+				address: tuic_url.hostname,
+				port: tuic_url.port,
+				uuid: tuic_url.username,
+				password: tuic_url.password ? urldecode(tuic_url.password) : null,
+				tuic_congestion_control: tuic_params.congestion_control,
+				tuic_udp_relay_mode: tuic_params.udp_relay_mode,
+				tls: '1',
+				tls_sni: tuic_params.sni,
+				tls_alpn: tuic_params.alpn ? split(urldecode(tuic_params.alpn), ',') : null,
+			};
+
+			break;
 		case 'vless':
 			/* https://github.com/XTLS/Xray-core/discussions/716 */
 			const vless_url = parseURL('http://' + uri[1]),

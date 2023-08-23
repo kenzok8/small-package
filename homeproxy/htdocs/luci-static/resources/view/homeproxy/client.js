@@ -261,8 +261,10 @@ return view.extend({
 		ss = o.subsection;
 		so = ss.option(form.ListValue, 'tcpip_stack', _('TCP/IP stack'),
 			_('TCP/IP stack.'));
-		if (features.with_gvisor)
+		if (features.with_gvisor) {
+			so.value('mixed', _('Mixed'));
 			so.value('gvisor', _('gVisor'));
+		}
 		if (features.with_lwip)
 			so.value('lwip', _('LWIP'));
 		so.value('system', _('System'));
@@ -272,8 +274,10 @@ return view.extend({
 		so.rmempty = false;
 		so.onchange = function(ev, section_id, value) {
 			var desc = ev.target.nextElementSibling;
-			if (value === 'gvisor')
-				desc.innerHTML = _('Based on google/gvisor (recommended).');
+			if (value === 'mixed')
+				desc.innerHTML = _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.')
+			else if (value === 'gvisor')
+				desc.innerHTML = _('Based on google/gvisor.');
 			else if (value === 'lwip')
 				desc.innerHTML = _('Upstream archived. Not recommended.');
 			else if (value === 'system')
