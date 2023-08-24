@@ -1,6 +1,6 @@
 # luci-app-oled
 
-This is the LuCI app written for openwrt (**tested ~~only~~ on NanoPi R2S**) which supports ssd 1306 0.91' oled display.
+This is the LuCI app written for openwrt (**tested on Hinlink H69K**) which supports ssd 1306 0.91' oled display.
 
 **Raspberry Pi CM4**
 

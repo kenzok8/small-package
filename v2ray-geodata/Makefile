@@ -12,13 +12,13 @@ PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 include $(INCLUDE_DIR)/package.mk
 
-GEOIP_VER:=202308170035
+GEOIP_VER:=202308240036
 GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
 define Download/geoip
   URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
   URL_FILE:=geoip.dat
   FILE:=$(GEOIP_FILE)
-  HASH:=6570442896a2387a49c4b757f172c12ad01d0523aa1df98f941f72e1c1468083
+  HASH:=1982be239f54a97d26803bd8892365cb27af27a63256e85293f159f77ef49273
 endef
 
 GEOSITE_VER:=20230821154916
