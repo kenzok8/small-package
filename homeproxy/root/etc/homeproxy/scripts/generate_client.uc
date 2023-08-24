@@ -124,7 +124,7 @@ function generate_outbound(node) {
 		routing_mark: strToInt(self_mark),
 
 		server: node.address,
-		server_port: int(node.port),
+		server_port: strToInt(node.port),
 
 		username: node.username,
 		password: node.password,
