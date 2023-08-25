@@ -1,6 +1,6 @@
 local m, s = ...
 
-local api = require "luci.passwall.api"
+local api = require "luci.passwall2.api"
 
 if not api.is_finded("xray") and not api.is_finded("v2ray") then
 	return
