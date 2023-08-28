@@ -167,7 +167,7 @@ net/ariang admin/netdata net/transmission-web-control net/rp-pppoe net/tailscale
 
 git_sparse_clone openwrt-22.03 "https://github.com/openwrt/luci" "opluci" applications/luci-app-watchcat \
 
-mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
+#mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
 mv -n openwrt-app-actions/applications/* ./;rm -rf openwrt-app-actions
 sed -i \
