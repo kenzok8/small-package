@@ -6,10 +6,10 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=Argone kenzo
+LUCI_TITLE:=Argone test
 LUCI_DEPENDS:=+curl +jsonfilter
-PKG_VERSION:=1.7.7
-PKG_RELEASE:=4
+PKG_VERSION:=1.8.3
+PKG_RELEASE:=5
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
