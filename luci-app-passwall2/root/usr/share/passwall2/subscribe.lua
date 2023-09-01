@@ -234,7 +234,7 @@ do
 
 			for k, e in pairs(rules) do
 				local _node_id = node[e[".name"]] or nil
-				if _node_id and (_node_id:find("socks://") == 1 or _node_id:find("http://") == 1) then
+				if _node_id and api.parseURL(_node_id) then
 				else
 					CONFIG[#CONFIG + 1] = {
 						log = false,
