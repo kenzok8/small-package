@@ -10,7 +10,7 @@ PKG_VERSION:=1.16.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/shadowsocks/shadowsocks-rust/tar.gz/v$(PKG_VERSION)?
+PKG_SOURCE_URL:=https://codeload.github.com/shadowsocks/shadowsocks-rust/tar.gz/v$(PKG_VERSION)
 PKG_HASH:=da4c6256247207b2579721046292bab1a2ac62301878c73ff778c168caa8a990
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
