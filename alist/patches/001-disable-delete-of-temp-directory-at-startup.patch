@@ -1,5 +1,5 @@
---- a/internal/bootstrap/config.go
-+++ b/internal/bootstrap/config.go
+--- internal/bootstrap/config.go
++++ internal/bootstrap/config.go
 @@ -68,11 +68,7 @@ func InitConfig() {
  		}
  		conf.Conf.TempDir = absPath
