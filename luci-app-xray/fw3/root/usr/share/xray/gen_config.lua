@@ -916,13 +916,13 @@ local function bridge_rules()
         table.insert(result, {
             type = "field",
             inboundTag = {string.format("bridge_inbound_%d", i)},
-            outboundTag = string.format("bridge_freedom_outbound_%d", i)
+            domain = {string.format("full:%s", v.domain)},
+            outboundTag = string.format("bridge_upstream_outbound_%d", i)
         })
         table.insert(result, {
             type = "field",
             inboundTag = {string.format("bridge_inbound_%d", i)},
-            domain = {string.format("full:%s", v.domain)},
-            outboundTag = string.format("bridge_upstream_outbound_%d", i)
+            outboundTag = string.format("bridge_freedom_outbound_%d", i)
         })
     end)
     return result
