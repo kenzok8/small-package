@@ -914,13 +914,13 @@ function bridge_rules() {
         push(result, {
             type: "field",
             inboundTag: [sprintf("bridge_inbound_%d", i)],
-            outboundTag: sprintf("bridge_freedom_outbound_%d", i)
+            domain: [sprintf("full:%s", v["domain"])],
+            outboundTag: sprintf("bridge_upstream_outbound_%d", i)
         });
         push(result, {
             type: "field",
             inboundTag: [sprintf("bridge_inbound_%d", i)],
-            domain: [sprintf("full:%s", v["domain"])],
-            outboundTag: sprintf("bridge_upstream_outbound_%d", i)
+            outboundTag: sprintf("bridge_freedom_outbound_%d", i)
         });
     }
     return result;
