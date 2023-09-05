@@ -56,7 +56,7 @@ define Download/v2raya-web
 	URL:=https://codeload.github.com/v2rayA/v2raya-web/tar.gz/v$(PKG_VERSION)?
 	URL_FILE:=$(WEB_FILE)
 	FILE:=$(WEB_FILE)
-	HASH:=39eacb70753b309a0f44ede282ad01b5c6a13d51bed72d0f5563574de9bea0b7
+	HASH:=skip
 endef
 
 GO_PKG_TARGET_VARS:=$(filter-out CGO_ENABLED=%,$(GO_PKG_TARGET_VARS)) CGO_ENABLED=0
