@@ -25,7 +25,7 @@ GO_PKG:=github.com/v2rayA/v2rayA
 GO_PKG_LDFLAGS_X:= \
 	$(GO_PKG)/conf.Version=$(PKG_VERSION) \
 	$(GO_PKG)/core/iptables.TproxyNotSkipBr=true
-skip
+
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
