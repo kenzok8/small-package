@@ -376,7 +376,7 @@ if (!isEmpty(main_node)) {
 			invert: (cfg.invert === '1'),
 			outbound: get_outbound(cfg.outbound),
 			server: get_resolver(cfg.server),
-			disable_cache: (cfg.disable_cache === '1')
+			disable_cache: (cfg.dns_disable_cache === '1')
 		});
 	});
 
