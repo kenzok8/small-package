@@ -1,6 +1,6 @@
 local m, s = ...
 
-local api = require "luci.passwall2.api"
+local api = require "luci.passwall.api"
 
 local singbox_bin = api.finded_com("singbox")
 
@@ -53,7 +53,7 @@ local security_list = { "none", "auto", "aes-128-gcm", "chacha20-poly1305", "zer
 
 -- [[ sing-box ]]
 
-s.fields["type"]:value(type_name, translate("Sing-Box"))
+s.fields["type"]:value(type_name, "Sing-Box")
 
 o = s:option(ListValue, option_name("protocol"), translate("Protocol"))
 o:value("socks", "Socks")

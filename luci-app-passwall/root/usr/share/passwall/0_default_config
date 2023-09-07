@@ -31,7 +31,7 @@ config global_forwarding
 	option tcp_no_redir_ports 'disable'
 	option udp_no_redir_ports 'disable'
 	option tcp_proxy_drop_ports 'disable'
-	option udp_proxy_drop_ports '80,443'
+	option udp_proxy_drop_ports '443'
 	option tcp_redir_ports '22,25,53,143,465,587,853,993,995,80,443'
 	option udp_redir_ports '1:65535'
 	option accept_icmp '0'
@@ -42,6 +42,13 @@ config global_forwarding
 config global_xray
 	option sniffing '1'
 	option route_only '0'
+	
+config global_singbox
+	option sniff_override_destination '1'
+	option geoip_path '/usr/share/singbox/geoip.db'
+	option geoip_url 'https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db'
+	option geosite_path '/usr/share/singbox/geosite.db'
+	option geosite_url 'https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db'
 
 config global_other
 	option nodes_ping 'auto_ping tcping'
@@ -65,7 +72,7 @@ config global_rules
 	option v2ray_location_asset '/usr/share/v2ray/'
 
 config global_app
-	option v2ray_file '/usr/bin/v2ray'
+	option singbox_file '/usr/bin/sing-box'
 	option xray_file '/usr/bin/xray'
 	option trojan_go_file '/usr/bin/trojan-go'
 	option brook_file '/usr/bin/brook'

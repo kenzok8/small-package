@@ -1,6 +1,6 @@
 local m, s = ...
 
-local api = require "luci.passwall2.api"
+local api = require "luci.passwall.api"
 
 local singbox_bin = api.finded_com("singbox")
 

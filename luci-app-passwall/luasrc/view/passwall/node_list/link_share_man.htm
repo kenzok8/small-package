@@ -1,8 +1,8 @@
 <%+cbi/valueheader%>
 <%
 local api = require "luci.passwall.api"
-local has_v2ray = api.is_finded("v2ray")
-local has_xray = api.is_finded("xray")
+local has_singbox = api.finded_com("singbox")
+local has_xray = api.finded_com("xray")
 -%>
 <script type="text/javascript">//<![CDATA[
 	function padright(str, cnt, pad) {
@@ -147,8 +147,10 @@ local has_xray = api.is_finded("xray")
 		} else if (v_type === "Hysteria") {
 			dom_prefix = "hysteria_"
 			protocol = "hysteria"
-		} else if (v_type === "V2ray" || v_type === "Xray") {
+		} else if (v_type === "Xray") {
 			dom_prefix = "xray_"
+		} else if (v_type === "sing-box") {
+			dom_prefix = "singbox_"
 		}
 		var _address = ""
 		if (dom_prefix && dom_prefix != null) {
@@ -236,7 +238,7 @@ local has_xray = api.is_finded("xray")
 				"&protoparam=" + b64encsafe(v_protocol_param.value) +
 				"&remarks=" + b64encutf8safe(v_alias.value);
 			url = b64encsafe(ssr_str);
-		} else if ((v_type === "V2ray" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "vmess") {
+		} else if ((v_type === "sing-box" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "vmess") {
 			protocol = "vmess";
 			var info = {};
 			info.v = "2";
@@ -281,7 +283,7 @@ local has_xray = api.is_finded("xray")
 				info.sni = opt.get(dom_prefix + "tls_serverName").value;
 			}
 			url = b64EncodeUnicode(JSON.stringify(info));
-		} else if ((v_type === "V2ray" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "vless") {
+		} else if ((v_type === "sing-box" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "vless") {
 			protocol = "vless";
 			var v_password = opt.get(dom_prefix + "uuid");
 			var v_port = opt.get(dom_prefix + "port");
@@ -334,8 +336,8 @@ local has_xray = api.is_finded("xray")
 					params += opt.query("sid", "reality_shortId");
 					params += opt.query("spx", "reality_spiderX");
 				}
-				if (opt.get(dom_prefix + "tlsflow") && opt.get(dom_prefix + "tlsflow").value) {
-					let v_flow = opt.get(dom_prefix + "tlsflow").value;
+				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
+					let v_flow = opt.get(dom_prefix + "flow").value;
 					params += "&flow=" + v_flow;
 				}
 				params += "&security=" + v_security;
@@ -404,7 +406,7 @@ local has_xray = api.is_finded("xray")
 				params = params.substring(1);
 			}
 			url += params;
-		} else if (((v_type === "V2ray" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "trojan")) {
+		} else if (((v_type === "sing-box" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "trojan")) {
 			protocol = "trojan";
 			var v_password = opt.get(dom_prefix + "password");
 			var v_port = opt.get(dom_prefix + "port");
@@ -629,7 +631,6 @@ local has_xray = api.is_finded("xray")
 				opt.set('remarks', b64decutf8safe(rem));
 		}
 		if (ssu[0] === "ss") {
-			dom_prefix = "ss_"
 			var url0 = "", param = "";
 			var sipIndex = ssu[1].indexOf("@");
 			var ploc = ssu[1].indexOf("#");
@@ -659,11 +660,28 @@ local has_xray = api.is_finded("xray")
 					method = userInfo.substr(0, userInfoSplitIndex);
 					password = userInfo.substr(userInfoSplitIndex + 1);
 				}
-				if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha8-poly1305", "2022-blake3-chacha20-poly1305"].includes(method)) {
+				if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"].includes(method)) {
+					<% if has_singbox then %>
+					opt.set('type', "sing-box");
+					dom_prefix = "singbox_"
+					<% elseif has_xray then %>
+					opt.set('type', "Xray");
+					dom_prefix = "xray_"
+					<% else %>
 					opt.set('type', "SS-Rust");
 					dom_prefix = "ssrust_"
+					<% end %>
 				} else {
+					<% if has_singbox then %>
+					opt.set('type', "sing-box");
+					dom_prefix = "singbox_"
+					<% elseif has_xray then %>
+					opt.set('type', "Xray");
+					dom_prefix = "xray_"
+					<% else %>
 					opt.set('type', "SS");
+					dom_prefix = "ss_"
+					<% end %>
 				}
 				opt.set(dom_prefix + 'address', server);
 				opt.set(dom_prefix + 'port', port);
@@ -677,9 +695,18 @@ local has_xray = api.is_finded("xray")
 					opt.set('remarks', decodeURI(param));
 				}
 			} else {
+				<% if has_singbox then %>
+				opt.set('type', "sing-box");
+				dom_prefix = "singbox_"
+				<% elseif has_xray then %>
+				opt.set('type', "Xray");
+				dom_prefix = "xray_"
+				<% else %>
+				opt.set('type', "SS");
+				dom_prefix = "ss_"
+				<% end %>
 				var sstr = b64decsafe(url0);
 				var team = sstr.split('@');
-				opt.set('type', "SS");
 				var part1 = team[0].split(':');
 				var part2 = team[1].split(':');
 				opt.set(dom_prefix + 'address', part2[0]);
@@ -694,7 +721,16 @@ local has_xray = api.is_finded("xray")
 			}
 		}
 		if (ssu[0] === "trojan" || ssu[0] === "trojan-plus") {
+			<% if has_singbox then %>
+			opt.set('type', "sing-box");
+			dom_prefix = "singbox_"
+			<% elseif has_xray then %>
+			opt.set('type', "Xray");
+			dom_prefix = "xray_"
+			<% else %>
+			opt.set('type', "Trojan-Plus");
 			dom_prefix = "trojan_plus_"
+			<% end %>
 			var m = parseNodeUrl(ssrurl);
 			var password = m.passwd;
 			if (password === "") {
@@ -715,7 +751,6 @@ local has_xray = api.is_finded("xray")
 			if (queryParam.mux || queryParam.ws || queryParam.h2 || queryParam.ss || queryParam.plugin) {
 				ssu[0] = "trojan-go"
 			}
-			opt.set('type', "Trojan-Plus");
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
@@ -801,13 +836,14 @@ local has_xray = api.is_finded("xray")
 			}
 		}
 		if (ssu[0] === "vmess") {
-			dom_prefix = "xray_"
 			var sstr = b64DecodeUnicode(ssu[1]);
 			var ploc = sstr.indexOf("/?");
-			<% if has_v2ray then %>
-			opt.set('type', "V2ray");
+			<% if has_singbox then %>
+			opt.set('type', "sing-box");
+			dom_prefix = "singbox_"
 			<% elseif has_xray then %>
 			opt.set('type', "Xray");
+			dom_prefix = "xray_"
 			<% end %>
 			opt.set(dom_prefix + 'protocol', "vmess");
 			var url0, param = "";
@@ -854,11 +890,12 @@ local has_xray = api.is_finded("xray")
 			}
 		}
 		if (ssu[0] === "vless") {
-			dom_prefix = "xray_"
-			<% if has_xray then %>
+			<% if has_singbox then %>
+			opt.set('type', "sing-box");
+			dom_prefix = "singbox_"
+			<% elseif has_xray then %>
 			opt.set('type', "Xray");
-			<% elseif has_v2ray then %>
-			opt.set('type', "V2ray");
+			dom_prefix = "xray_"
 			<% end %>
 			opt.set(dom_prefix + 'protocol', "vless");
 			var m = parseNodeUrl(ssrurl);
@@ -887,7 +924,7 @@ local has_xray = api.is_finded("xray")
 				if (queryParam.security == "tls") {
 					opt.set(dom_prefix + 'tls', true);
 					opt.set('reality', false)
-					opt.set(dom_prefix + 'tlsflow', queryParam.flow || '');
+					opt.set(dom_prefix + 'flow', queryParam.flow || '');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					opt.set(dom_prefix + 'tls_allowInsecure', true);
 					if (queryParam.allowinsecure === '0') {
@@ -901,7 +938,7 @@ local has_xray = api.is_finded("xray")
 				if (queryParam.security == "reality") {
 					opt.set(dom_prefix + 'tls', true);
 					opt.set('reality', true)
-					opt.set(dom_prefix + 'tlsflow', queryParam.flow || '');
+					opt.set(dom_prefix + 'flow', queryParam.flow || '');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					if (queryParam.fp && queryParam.fp.trim() != "") {
 						opt.set('reality_fingerprint', queryParam.fp);
@@ -1003,8 +1040,13 @@ local has_xray = api.is_finded("xray")
 			}
 		}
 		if (ssu[0] === "hysteria") {
+			<% if has_singbox then %>
+			opt.set('type', "sing-box");
+			dom_prefix = "singbox_"
+			<% else %>
+			opt.set('type', "Hysteria");
 			dom_prefix = "hysteria_"
-			var stype = "Hysteria";
+			<% end %>
 			var m = parseNodeUrl(ssrurl);
 			var queryParam = {};
 			if (m.search.length > 1) {
@@ -1017,7 +1059,6 @@ local has_xray = api.is_finded("xray")
 					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
 				}
 			}
-			opt.set('type', stype);
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'protocol', queryParam.protocol);
