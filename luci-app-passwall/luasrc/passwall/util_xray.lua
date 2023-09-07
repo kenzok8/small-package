@@ -47,8 +47,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 			proxy_tag = proxy_table.tag or "nil"
 		end
 
-		if node.type == "V2ray" or node.type == "Xray" then
-			if node.type == "Xray" and node.tlsflow == "xtls-rprx-vision" then
+		if node.type == "Xray" then
+			if node.flow == "xtls-rprx-vision" then
 			else
 				proxy = 0
 				if proxy_tag ~= "nil" then
@@ -60,7 +60,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 		end
 
-		if node.type ~= "V2ray" and node.type ~= "Xray" then
+		if node.type ~= "Xray" then
 			if node.type == "Socks" then
 				node.protocol = "socks"
 				node.transport = "tcp"
@@ -91,7 +91,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 			node.stream_security = "none"
 		end
 
-		if node.type == "V2ray" or node.type == "Xray" then
+		if node.type == "Xray" then
 			if node.tls and node.tls == "1" then
 				node.stream_security = "tls"
 				if node.type == "Xray" and node.reality and node.reality == "1" then
@@ -137,7 +137,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				tlsSettings = (node.stream_security == "tls") and {
 					serverName = node.tls_serverName,
 					allowInsecure = (node.tls_allowInsecure == "1") and true or false,
-					fingerprint = (node.type == "Xray" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or nil
+					fingerprint = (node.type == "Xray" and node.utls == "1" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or nil
 				} or nil,
 				realitySettings = (node.stream_security == "reality") and {
 					serverName = node.tls_serverName,
@@ -208,7 +208,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 								level = 0,
 								security = (node.protocol == "vmess") and node.security or nil,
 								encryption = node.encryption or "none",
-								flow = (node.protocol == "vless" and node.tls == '1' and node.tlsflow) and node.tlsflow or nil
+								flow = (node.protocol == "vless" and node.tls == "1" and node.transport == "tcp" and node.flow and node.flow ~= "") and node.flow or nil
 							}
 						}
 					}
@@ -271,7 +271,7 @@ function gen_config_server(node)
 			for i = 1, #node.uuid do
 				clients[i] = {
 					id = node.uuid[i],
-					flow = ("vless" == node.protocol and "1" == node.tls and node.tlsflow) and node.tlsflow or nil
+					flow = ("vless" == node.protocol and "1" == node.tls and "tcp" == node.transport and node.flow and node.flow ~= "") and node.flow or nil
 				}
 			end
 			settings = {
@@ -762,10 +762,10 @@ function gen_config(var)
 						else
 							if proxy then
 								local pre_proxy = nil
-								if _node.type ~= "V2ray" and _node.type ~= "Xray" then
+								if _node.type ~= "Xray" then
 									pre_proxy = true
 								end
-								if _node.type == "Xray" and _node.tlsflow == "xtls-rprx-vision" then
+								if _node.type == "Xray" and _node.flow == "xtls-rprx-vision" then
 									pre_proxy = true
 								end
 								if pre_proxy then

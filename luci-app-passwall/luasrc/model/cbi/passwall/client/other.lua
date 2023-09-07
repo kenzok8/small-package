@@ -1,8 +1,8 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
 local fs = api.fs
-local has_v2ray = api.is_finded("v2ray")
-local has_xray = api.is_finded("xray")
+local has_singbox = api.finded_com("singbox")
+local has_xray = api.finded_com("xray")
 local has_fw3 = api.is_finded("fw3")
 local has_fw4 = api.is_finded("fw4")
 
@@ -80,9 +80,9 @@ o:value("disable", translate("No patterns are used"))
 
 ---- UDP Proxy Drop Ports
 o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
-o.default = "80,443"
+o.default = "443"
 o:value("disable", translate("No patterns are used"))
-o:value("80,443", translate("QUIC"))
+o:value("443", translate("QUIC"))
 
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
@@ -140,8 +140,8 @@ o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
 o:depends("ipv6_tproxy", true)
 o.default = 0
 
-if has_v2ray or has_xray then
-	s = m:section(TypedSection, "global_xray", "V2Ray/Xray " .. translate("Settings"))
+if has_xray then
+	s = m:section(TypedSection, "global_xray", "Xray " .. translate("Settings"))
 	s.anonymous = true
 	s.addremove = false
 
@@ -171,4 +171,34 @@ if has_v2ray or has_xray then
 		o.datatype = "uinteger"
 	end
 end
+
+if has_singbox then
+	s = m:section(TypedSection, "global_singbox", "Sing-Box " .. translate("Settings"))
+	s.anonymous = true
+	s.addremove = false
+
+	o = s:option(Flag, "sniff_override_destination", translate("Override the connection destination address"), translate("Override the connection destination address with the sniffed domain."))
+	o.default = 1
+	o.rmempty = false
+
+	o = s:option(Value, "geoip_path", translate("Custom geoip Path"))
+	o.default = "/tmp/singbox/geoip.db"
+	o.rmempty = false
+
+	o = s:option(Value, "geoip_url", translate("Custom geoip URL"))
+	o.default = "https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db"
+	o:value("https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db")
+	o.rmempty = false
+
+	o = s:option(Value, "geosite_path", translate("Custom geosite Path"))
+	o.default = "/tmp/singbox/geosite.db"
+	o.rmempty = false
+
+	o = s:option(Value, "geosite_url", translate("Custom geosite URL"))
+	o.default = "https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db"
+	o:value("https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db")
+	o.rmempty = false
+
+end
+
 return m
