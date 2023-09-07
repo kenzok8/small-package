@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2021-2022 ImmortalWrt.org
+# Copyright (C) 2021-2023 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v2ray-geodata
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
@@ -52,16 +52,6 @@ define Package/v2ray-geosite
   LICENSE:=MIT
 endef
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-ifneq ($(CONFIG_PACKAGE_v2ray-geoip),)
-	$(call Download,geoip)
-endif
-ifneq ($(CONFIG_PACKAGE_v2ray-geosite),)
-	$(call Download,geosite)
-endif
-endef
-
 define Build/Compile
 endef
 
@@ -75,5 +65,7 @@ define Package/v2ray-geosite/install
 	$(INSTALL_DATA) $(DL_DIR)/$(GEOSITE_FILE) $(1)/usr/share/v2ray/geosite.dat
 endef
 
+$(eval $(call Download,geoip))
+$(eval $(call Download,geosite))
 $(eval $(call BuildPackage,v2ray-geoip))
 $(eval $(call BuildPackage,v2ray-geosite))
