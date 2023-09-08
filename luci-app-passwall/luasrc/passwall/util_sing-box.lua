@@ -228,7 +228,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if node.protocol == "vless" then
 			protocol_table = {
 				uuid = node.uuid,
-				flow = (node.tls == '1' and node.tlsflow) and node.tlsflow or nil,
+				flow = (node.tls == '1' and node.flow) and node.flow or nil,
 				tls = tls,
 				packet_encoding = "xudp", --UDP 包编码。(空)：禁用	packetaddr：由 v2ray 5+ 支持	xudp：由 xray 支持
 				transport = v2ray_transport,
@@ -306,6 +306,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
+						node.tuic_alpn
+					} or nil,
 				},
 			}
 		end
@@ -548,6 +551,9 @@ function gen_config_server(node)
 				enabled = true,
 				certificate_path = node.tls_certificateFile,
 				key_path = node.tls_keyFile,
+				alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
+					node.tuic_alpn
+				} or nil,
 			},
 		}
 	end
@@ -1135,6 +1141,7 @@ function gen_config(var)
 				tag = dns_tag,
 				address_strategy = "prefer_ipv4",
 				strategy = remote_strategy,
+				address_resolver = "direct",
 				detour = dns_outTag,
 			}
 	
@@ -1153,7 +1160,9 @@ function gen_config(var)
 				server.address = remote_dns_doh_url
 			end
 	
-			table.insert(dns.servers, server)
+			if server.address then
+				table.insert(dns.servers, server)
+			end
 	
 			if remote_dns_fake then
 				dns.fakeip = {
@@ -1161,14 +1170,20 @@ function gen_config(var)
 					inet4_range = "198.18.0.0/16",
 					inet6_range = "fc00::/18",
 				}
-	
+
+				local fakedns_tag = dns_tag .. "_fakeip"
+				
+				if not server.address then
+					fakedns_tag = dns_tag
+				end
+				
 				table.insert(dns.servers, {
-					tag = dns_tag .. "_fakeip",
+					tag = fakedns_tag,
 					address = "fakeip",
 					strategy = remote_strategy,
 				})
 	
-				rule_server = dns_tag .. "_fakeip"
+				rule_server = fakedns_tag
 
 				if tags and tags:find("with_clash_api") then
 					if not experimental then

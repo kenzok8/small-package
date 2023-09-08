@@ -14,26 +14,6 @@ local function option_name(name)
 	return option_prefix .. name
 end
 
-local function rm_prefix_cfgvalue(self, section)
-	if self.option:find(option_prefix) == 1 then
-		return m:get(section, self.option:sub(1 + #option_prefix))
-	end
-end
-local function rm_prefix_write(self, section, value)
-	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		if self.option:find(option_prefix) == 1 then
-			m:set(section, self.option:sub(1 + #option_prefix), value)
-		end
-	end
-end
-local function rm_prefix_remove(self, section, value)
-	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		if self.option:find(option_prefix) == 1 then
-			m:del(section, self.option:sub(1 + #option_prefix))
-		end
-	end
-end
-
 local encrypt_methods_ss_aead = {
 	"chacha20-ietf-poly1305",
 	"aes-128-gcm",
@@ -82,15 +62,7 @@ o = s:option(ListValue, option_name("transport"), translate("Transport"))
 o:value("original", translate("Original"))
 o:value("ws", "WebSocket")
 o.default = "original"
-o.not_rewrite = true
-function o.cfgvalue(self, section)
-	return m:get(section, "trojan_transport")
-end
-function o.write(self, section, value)
-	if s.fields["type"]:formvalue(arg[1]) == type_name then
-		m:set(section, "trojan_transport", value)
-	end
-end
+o.rewrite_option = "trojan_transport"
 
 o = s:option(ListValue, option_name("plugin_type"), translate("Transport Plugin"))
 o:value("plaintext", "Plain Text")
@@ -144,21 +116,4 @@ o = s:option(Value, option_name("smux_idle_timeout"), translate("Mux idle timeou
 o.default = 60
 o:depends({ [option_name("smux")] = true })
 
-for key, value in pairs(s.fields) do
-	if key:find(option_prefix) == 1 then
-		if not s.fields[key].not_rewrite then
-			s.fields[key].cfgvalue = rm_prefix_cfgvalue
-			s.fields[key].write = rm_prefix_write
-			s.fields[key].remove = rm_prefix_remove
-		end
-
-		local deps = s.fields[key].deps
-		if #deps > 0 then
-			for index, value in ipairs(deps) do
-				deps[index]["type"] = type_name
-			end
-		else
-			s.fields[key]:depends({ type = type_name })
-		end
-	end
-end
+api.luci_types(arg[1], m, s, type_name, option_prefix)
