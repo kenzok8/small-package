@@ -144,28 +144,31 @@ git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" ne
 net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
 net/qBittorrent-static net/qBittorrent libs/qtbase libs/qttools libs/rblibtorrent \
 net/uugamebooster net/verysync net/dnsforwarder net/nps net/tcpping
+mv -f miniupnpd miniupnpd-iptables
+
+git_sparse_clone openwrt-23.05 "https://github.com/openwrt/packages" "22packages" \
+utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi net/ddns-scripts \
+net/ariang admin/netdata net/transmission-web-control net/rp-pppoe net/tailscale
+git_sparse_clone openwrt-23.05 "https://github.com/openwrt/openwrt" "openwrt" \
+package/base-files package/network/config/firewall4 package/network/config/firewall package/system/opkg package/network/services/ppp \
+package/network/services/dnsmasq package/libs/openssl
 
 git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/sub-web net/dnsproxy net/haproxy net/cdnspeedtest \
 net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gowebdav \
-libs/jpcre2 libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 \
+admin/btop libs/jpcre2 libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 libs/libtorrent-rasterbar \
+libs/libdouble-conversion libs/qt6base libs/cxxopts libs/jpcre2 libs/alac \
 utils/cpulimit
 
 git_sparse_clone develop "https://github.com/Ysurac/openmptcprouter-feeds" "enmptcp" luci-app-snmpd \
 luci-app-packet-capture luci-app-mail msmtp
+git_sparse_clone master "https://github.com/xiaoqingfengATGH/feeds-xiaoqingfeng" "xiaoqingfeng" homeredirect luci-app-homeredirect
 
 git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua-ipops luci-app-macvlan
 git_sparse_clone master "https://github.com/immortalwrt/immortalwrt" "immortal" package/network/utils/nftables \
-package/utils/mhz package/libs/mbedtls package/libs/libnftnl
+package/network/utils/fullconenat package/network/utils/fullconenat-nft \
+package/utils/mhz package/libs/libnftnl package/firmware/wireless-regdb
 
-git_sparse_clone openwrt-22.03 "https://github.com/openwrt/openwrt" "openwrt" \
-package/base-files package/network/config/firewall4 package/network/config/firewall package/system/opkg package/network/services/ppp \
-package/network/services/dnsmasq package/libs/openssl
-
-git_sparse_clone openwrt-22.03 "https://github.com/openwrt/packages" "22packages" \
-utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi net/ddns-scripts \
-net/ariang admin/netdata net/transmission-web-control net/rp-pppoe net/tailscale
-
-git_sparse_clone openwrt-22.03 "https://github.com/openwrt/luci" "opluci" applications/luci-app-watchcat \
+git_sparse_clone openwrt-23.05 "https://github.com/openwrt/luci" "opluci" applications/luci-app-watchcat \
 
 #mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
