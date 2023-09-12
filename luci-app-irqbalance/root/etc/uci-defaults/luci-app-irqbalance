@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@irqbalance[-1]
+	add ucitrack irqbalance
+	set ucitrack.@irqbalance[-1].init=irqbalance
+	commit ucitrack
+EOF
+
+rm -rf /tmp/luci-modulecache
+rm -f /tmp/luci-indexcache
+exit 0
+
