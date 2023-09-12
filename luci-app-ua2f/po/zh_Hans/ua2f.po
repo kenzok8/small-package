@@ -1,0 +1,44 @@
+msgid "Brukamen_UA2F"
+msgstr "UA2F配置中心"
+
+msgid "The plugin is developed by Brukamen"
+msgstr "插件界面支持由Brukamen开发"
+
+msgid "Version number: 2.0.2"
+msgstr "版本号：2.0.2"
+
+msgid "169296793@qq.com"
+msgstr "邮箱：169296793@qq.com"
+
+msgid "<a href=\"http://ua.233996.xyz/\">http://ua.233996.xyz/</a>"
+msgstr "测试网址：<a href=\"http://ua.233996.xyz/\">http://ua.233996.xyz/</a>"
+
+msgid "ON/OFF UA2F"
+msgstr "启用/禁用 UA2F-->开启后开机自动运行"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Disable"
+msgstr "禁用"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "-OFF"
+msgstr "：已停用"
+
+msgid "-ON(PID %s)"
+msgstr "：运行中（进程号：%s）"
+
+msgid "Handle Firewall"
+msgstr "自动配置防火墙（建议开启）"
+
+msgid "Handle TLS"
+msgstr "处理443端口流量，443端口出现 http 流量的概率较低（建议关闭）"
+
+msgid "Handle mmtls"
+msgstr "处理mmtls流量（微信不能正常使用时关闭）"
+
+msgid "Handle intranet"
+msgstr "处理内网流量，防止访问内网时被检测（建议开启）"
