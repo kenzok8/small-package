@@ -990,12 +990,14 @@ return view.extend({
 		so.password = true;
 		so.depends('type', 'wireguard');
 		so.validate = L.bind(hp.validateBase64Key, this, 44);
+		so.rmempty = false;
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'wireguard_peer_public_key', _('Peer pubkic key'),
 			_('WireGuard peer public key.'));
 		so.depends('type', 'wireguard');
 		so.validate = L.bind(hp.validateBase64Key, this, 44);
+		so.rmempty = false;
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'wireguard_pre_shared_key', _('Pre-shared key'),
@@ -1224,6 +1226,12 @@ return view.extend({
 		so = ss.option(form.Flag, 'tcp_fast_open', _('TCP fast open'));
 		so.default = so.disabled;
 		so.modalonly = true;
+
+		if (features.has_mptcp) {
+			so = ss.option(form.Flag, 'tcp_multi_path', _('MultiPath TCP'));
+			so.default = so.disabled;
+			so.modalonly = true;
+		}
 
 		so = ss.option(form.Flag, 'udp_fragment', _('UDP Fragment'),
 			_('Enable UDP fragmentation.'));

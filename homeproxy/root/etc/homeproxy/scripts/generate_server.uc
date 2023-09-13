@@ -11,7 +11,7 @@ import { readfile, writefile } from 'fs';
 import { cursor } from 'uci';
 
 import {
-	executeCommand, isEmpty, strToInt,
+	executeCommand, isEmpty, strToBool, strToInt,
 	removeBlankAttrs, validateHostname, validation,
 	HP_DIR, RUN_DIR
 } from 'homeproxy';
@@ -46,13 +46,14 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 
 		listen: '::',
 		listen_port: strToInt(cfg.port),
-		tcp_fast_open: (cfg.tcp_fast_open === '1') || null,
-		udp_fragment: (cfg.udp_fragment === '1') || null,
+		tcp_fast_open: strToBool(cfg.tcp_fast_open),
+		tcp_multi_path: strToBool(cfg.tcp_multi_path),
+		udp_fragment: strToBool(cfg.udp_fragment),
 		sniff: true,
 		sniff_override_destination: (cfg.sniff_override === '1'),
 		domain_strategy: cfg.domain_strategy,
-		proxy_protocol: (cfg.proxy_protocol === '1') || null,
-		proxy_protocol_accept_no_header: (cfg.proxy_protocol_accept_no_header === '1') || null,
+		proxy_protocol: strToBool(cfg.proxy_protocol),
+		proxy_protocol_accept_no_header: strToBool(cfg.proxy_protocol_accept_no_header),
 		network: cfg.network,
 
 		/* Hysteria */
@@ -62,7 +63,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		recv_window_conn: strToInt(cfg.hysteria_recv_window_conn),
 		recv_window_client: strToInt(cfg.hysteria_revc_window_client),
 		max_conn_client: strToInt(cfg.hysteria_max_conn_client),
-		disable_mtu_discovery: (cfg.hysteria_disable_mtu_discovery === '1') || null,
+		disable_mtu_discovery: strToBool(cfg.hysteria_disable_mtu_discovery),
 
 		/* Shadowsocks */
 		method: (cfg.type === 'shadowsocks') ? cfg.shadowsocks_encrypt_method : null,
@@ -71,7 +72,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		/* Tuic */
 		congestion_control: cfg.tuic_congestion_control,
 		auth_timeout: cfg.tuic_auth_timeout ? (cfg.tuic_auth_timeout + 's') : null,
-		zero_rtt_handshake: (cfg.tuic_enable_zero_rtt === '1') || null,
+		zero_rtt_handshake: strToBool(cfg.tuic_enable_zero_rtt),
 		heartbeat: cfg.tuic_heartbeat ? (cfg.tuic_heartbeat + 's') : null,
 
 		/* HTTP / Hysteria / Socks / Trojan / Tuic / VLESS / VMess */
