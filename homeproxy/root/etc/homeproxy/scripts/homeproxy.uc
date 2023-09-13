@@ -88,6 +88,10 @@ export function isEmpty(res) {
 	return !res || res === 'nil' || (type(res) in ['array', 'object'] && length(res) === 0);
 };
 
+export function strToBool(str) {
+	return (str === '1') || null;
+};
+
 export function strToInt(str) {
 	return !isEmpty(str) ? (int(str) || null) : null;
 };
@@ -224,4 +228,4 @@ export function parseURL(url) {
 
 	return objurl;
 };
-/* String parser start */
+/* String parser end */

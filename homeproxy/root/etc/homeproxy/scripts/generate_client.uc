@@ -11,7 +11,7 @@ import { readfile, writefile } from 'fs';
 import { cursor } from 'uci';
 
 import {
-	executeCommand, isEmpty, strToInt,
+	executeCommand, isEmpty, strToBool, strToInt,
 	removeBlankAttrs, validateHostname, validation,
 	HP_DIR, RUN_DIR
 } from 'homeproxy';
@@ -141,7 +141,7 @@ function generate_outbound(node) {
 		auth_str: (node.hysteria_auth_type === 'string') ? node.hysteria_auth_payload : null,
 		recv_window_conn: strToInt(node.hysteria_recv_window_conn),
 		recv_window: strToInt(node.hysteria_revc_window),
-		disable_mtu_discovery: (node.hysteria_disable_mtu_discovery === '1') || null,
+		disable_mtu_discovery: strToBool(node.hysteria_disable_mtu_discovery),
 		/* Shadowsocks */
 		method: node.shadowsocks_encrypt_method || node.shadowsocksr_encrypt_method,
 		plugin: node.shadowsocks_plugin,
@@ -157,8 +157,8 @@ function generate_outbound(node) {
 		uuid: node.uuid,
 		congestion_control: node.tuic_congestion_control,
 		udp_relay_mode: node.tuic_udp_relay_mode,
-		udp_over_stream: (node.tuic_udp_over_stream === '1') || null,
-		zero_rtt_handshake: (node.tuic_enable_zero_rtt === '1') || null,
+		udp_over_stream: strToBool(node.tuic_udp_over_stream),
+		zero_rtt_handshake: strToBool(node.tuic_enable_zero_rtt),
 		heartbeat: node.tuic_heartbeat ? (node.tuic_heartbeat + 's') : null,
 		/* VLESS / VMess */
 		flow: node.vless_flow,
@@ -175,7 +175,7 @@ function generate_outbound(node) {
 		peer_public_key: node.wireguard_peer_public_key,
 		pre_shared_key: node.wireguard_pre_shared_key,
 		reserved: parse_port(node.wireguard_reserved),
-		mtu: node.wireguard_mtu,
+		mtu: strToInt(node.wireguard_mtu),
 
 		multiplex: (node.multiplex === '1') ? {
 			enabled: true,
@@ -223,14 +223,15 @@ function generate_outbound(node) {
 			service_name: node.grpc_servicename,
 			idle_timeout: node.http_idle_timeout ? (node.http_idle_timeout + 's') : null,
 			ping_timeout: node.http_ping_timeout ? (node.http_ping_timeout + 's') : null,
-			permit_without_stream: (node.grpc_permit_without_stream === '1') || null
+			permit_without_stream: strToBool(node.grpc_permit_without_stream)
 		} : null,
 		udp_over_tcp: (node.udp_over_tcp === '1') ? {
 			enabled: true,
 			version: strToInt(node.udp_over_tcp_version)
 		} : null,
-		tcp_fast_open: (node.tcp_fast_open === '1') || null,
-		udp_fragment: (node.udp_fragment === '1') || null
+		tcp_fast_open: strToBool(node.tcp_fast_open),
+		tcp_multi_path: strToBool(node.tcp_multi_path),
+		udp_fragment: strToBool(node.udp_fragment)
 	};
 
 	return outbound;
@@ -428,7 +429,7 @@ if (match(proxy_mode, /tun/))
 		inet6_address: (ipv6_support === '1') ? tun_addr6 : null,
 		mtu: strToInt(tun_mtu),
 		auto_route: false,
-		endpoint_independent_nat: (endpoint_independent_nat === '1') || null,
+		endpoint_independent_nat: strToBool(endpoint_independent_nat),
 		stack: tcpip_stack,
 		sniff: true,
 		sniff_override_destination: (sniff_override === '1'),

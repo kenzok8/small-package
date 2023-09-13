@@ -235,12 +235,9 @@ return baseclass.extend({
 
 	validateBase64Key: function(length, section_id, value) {
 		/* Thanks to luci-proto-wireguard */
-		if (section_id) {
-			if (!value)
-				return _('Expecting: %s').format('non-empty value');
-			else if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
+		if (section_id && value)
+			if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
 				return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
-		}
 
 		return true;
 	},
