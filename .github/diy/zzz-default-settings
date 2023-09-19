@@ -21,6 +21,7 @@ sed -i '/other/d' /etc/opkg/distfeeds.conf
 #sed -i 's/downloads.openwrt.org/openwrt.proxy.ustclug.org/g' /etc/opkg/distfeeds.conf
 #sed -i 's/http/https/g' /etc/opkg/distfeeds.conf
 sed -i "s/# //g" /etc/opkg/distfeeds.conf
+sed -i '/check_signature/d' /etc/opkg.conf
 
 #sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 
