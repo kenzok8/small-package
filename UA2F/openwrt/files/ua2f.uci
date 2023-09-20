@@ -1,0 +1,14 @@
+#!/bin/sh
+
+uci -q delete firewall.ua2f
+
+if [ -z "$(command -v fw4)" ]; then
+	uci -q batch <<-EOF >/dev/null
+		set firewall.ua2f=include
+		set firewall.ua2f.type=script
+		set firewall.ua2f.path=/var/etc/ua2f.include
+		set firewall.ua2f.reload=1
+	EOF
+fi
+
+uci -q commit firewall
