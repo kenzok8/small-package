@@ -5,10 +5,10 @@
             max-width: 1920px;
             height: 888px;
             border-radius: 8px;
-            background-color: #fff;
-            overflow: auto;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-        }
+    background-color: rgba(255,255,255,0.5);
+    overflow: auto;
+}
+
 
         .overlay {
             width: 100%;
@@ -34,7 +34,7 @@
         .chatnav {
             width: 250px;
             border-right: 1px solid #e0e0e0;;
-            background-color: #f6f6f6;
+    background-color: rgba(255,255,255,0.5);
             top: 0;
             z-index: 99;
             flex-shrink: 0;
@@ -63,9 +63,9 @@
                 visibility: visible;
             }
         .top_menu {
-            background-color: #f6f6f6;
-            width: 100%;
-            height: 50px;
+    width: 100%;
+    background-color: rgba(255,255,255,0.5);
+    height: 50px;
             padding: 5px 0;
         }
 
@@ -80,7 +80,7 @@
         }
 
         .top_menu .toggler:hover {
-            background: #e0e0e0;;
+            background: #e0e0e0;
         }
 
         .top_menu .toggler .button {
@@ -107,7 +107,6 @@
         }
 
         .top_menu .title {
-            color: #909090; 
             font-size: 20px;
             height: 40px;
             line-height: 40px;
@@ -169,7 +168,7 @@
         #setDialog::-webkit-scrollbar-thumb,
         .allList::-webkit-scrollbar-thumb,
         .sysDetail::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.1);
+            background-color: rgba(0, 0, 0, 0.2);
             background-clip: padding-box;
             border: solid transparent;
             border-radius: 10px;
@@ -262,7 +261,7 @@
         }
 
         #chatlog .response {
-            background: #f7f7f8; 
+    background-color: rgba(255,255,255,0.2);
             position: relative;
         }
 
@@ -270,7 +269,7 @@
             margin: 18px 65px 18px 0px;
             flex: 1;
 	    font-size: 15px;
-            background: #f7f7f8!important;
+            background-color: rgba(255,255,255,0)!important;
         }
 
         #chatlog .markdown-body>pre {
@@ -278,7 +277,7 @@
             padding: 10px;
             position: relative;
             white-space: pre-wrap;
-            background: #f0f0f0;
+            background-color: rgba(255,255,255,0.5)!important;
         }
 
         #chatlog .markdown-body>pre>code {
@@ -378,19 +377,15 @@
         }
 
         .bottom_wrapper .message_input_wrapper {
-            border: none;
-            width: calc(100% - 137px);
+    width: calc(100% - 134px);
             position: relative;
             text-align: left;
         }
 
         .bottom_wrapper .message_input_wrapper .message_input_text {
-border-radius: 4px;
-    border: none;
+    border-radius: 4px;
     outline: none;
-    resize: none;
-    background: #f6f6f6;
-    color: #24292f;
+    background-color: rgba(255,255,255,0.2);
     height: 47px;
     font-size: 16px;
     max-height: 200px;
@@ -402,7 +397,7 @@ border-radius: 4px;
         }
 
         .bottom_wrapper .message_input_wrapper .message_input_text:focus {
-            background: #f0f0f0;
+               background-color: rgba(255,255,255,0.5);
         }
 
         .bottom_wrapper .message_input_wrapper .message_input_text::-webkit-scrollbar {
@@ -416,7 +411,8 @@ border-radius: 4px;
     height: 47px;
     font-size: 18px;
     font-weight: bold;
-    background-color: #8ed135;
+    color: #fff;
+    background-color: #7ac516;
     padding: 0.5rem 0.5rem;
     transition: all 0.2s linear;
     position: absolute;
@@ -536,14 +532,19 @@ border-radius: 4px;
         .switch-slide input:checked+label:after {
             left: 21px;
         }
+.settings {
+    padding: 5px 7px;
+    margin-right: 10px;
+    display: flex;
+    position: absolute;
+    float: right;
+    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    top: 5px;
+}
 
-        .settings {
-            margin-right: 10px;
-            display: flex;
-            position: absolute;
-            right: 0;
-            top: 5px;
-        }
 
         .setBtn {
             margin-left: 2px;
@@ -554,12 +555,12 @@ border-radius: 4px;
             border-radius: 4px;
         }
 
-        .setBtn>svg {
+        #setting>svg {
             display: block;
             color: #909090; 
         }
 
-        .setBtn:hover {
+        #setting:hover {
             background: #e0e0e0;;
         }
 
@@ -1318,8 +1319,6 @@ border-radius: 4px;
             -webkit-user-select: none;
             user-select: none;
             border-radius: 3px;
-            background-color: #f6f6f6;
-            box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
         }
 
         #voiceRecSetting select {
@@ -1327,7 +1326,6 @@ border-radius: 4px;
             outline: none;
             height: 28px;
             border-radius: 3px;
-            border-color: rgba(0, 0, 0, .3);
         }
 
         .presetModelCls label {
