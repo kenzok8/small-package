@@ -3,7 +3,9 @@
  Licensed to the public under the Apache License 2.0.
 -%>
 <%
-local uci = require "luci.model.uci".cursor()
+local fs = require "nixio.fs"
+local dsp = require "luci.dispatcher"
+local uci = luci.model.uci.cursor()
 local apihosts = uci:get_first('chatgpt-web', 'basic', 'apiHost')
 local apikeys = uci:get_first('chatgpt-web', 'basic', 'apikey')
 local modelver = uci:get_first('chatgpt-web', 'basic', 'modelver')
@@ -11,9 +13,12 @@ local userpic = "/luci-static/chatgpt-web/user/" .. uci:get_first('chatgpt-web',
 local sysrole = uci:get_first('chatgpt-web', 'basic', 'systemrole')
 
 -%>
-<%+header%>
+<script>
+function cbi_validate_form(form) {
 
-<div class="cbi-map"> 
+}
+</script>
+
 <fieldset class="cbi-section">
     <link href="/luci-static/chatgpt-web/chatgpt-web.css" rel="stylesheet">
 
@@ -257,15 +262,13 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
                     <div class="button maximize"></div>
                 </div>
                 <div class="title"><span>ChatGPT</span></div>
-                <div class="settings">
-                    <button class="setBtn" id="setting">
+                <div class="settings"  id="setting">
                         <svg viewBox="0 0 100 100" width="30" height="30">
                             <title>设置</title>
                             <circle cx="50" cy="20" r="10" fill="#000" />
                             <circle cx="50" cy="50" r="10" fill="#000" />
                             <circle cx="50" cy="80" r="10" fill="#000" />
                         </svg>
-                    </button>
                 </div>
                 <div id="setDialog" style="display:none;">
                     <div class="setSwitch">
@@ -644,7 +647,7 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
             ]
         });
         const windowEle = document.getElementsByClassName("chat_window")[0];
-        const messagsEle = document.getElementsByClassName("messages")[0];
+        const messagesEle = document.getElementsByClassName("messages")[0];
         const chatlog = document.getElementById("chatlog");
         const stopEle = document.getElementById("stopChat");
         const sendBtnEle = document.getElementById("sendbutton");
@@ -661,10 +664,11 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
         const searchChatEle = document.getElementById("searchChat");
         const voiceRecEle = document.getElementById("voiceRecIcon");
         const voiceRecSetEle = document.getElementById("voiceRecSetting");
+        // const preEle = document.getElementById("preSetSystem");
         let voiceType = 1; // 设置 0: 提问语音，1：回答语音
         let voiceRole = []; // 语音
-        let voiceVolume = []; //音量
         let voiceTestText; // 测试语音文本
+        let voiceVolume = []; //音量
         let voiceRate = []; // 语速
         let voicePitch = []; // 音调
         let enableContVoice; // 连续朗读
@@ -697,12 +701,15 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
             textarea.style.height = textarea.scrollHeight + "px";
         };
         textarea.oninput = textInputEvent;
-        document.body.addEventListener("click", event => {
+        const toggleNavEv = () => {
+            let isShowNav = document.body.classList.toggle("show-nav");
+            if (window.innerWidth > 800) {
+                localStorage.setItem("pinNav", isShowNav)
+            }
+        }
+        document.body.addEventListener("mousedown", event => {
             if (event.target.className === "toggler") {
-                document.body.classList.toggle("show-nav");
-                if (window.innerWidth > 800) {
-                    localStorage.setItem("pinNav", document.body.classList.contains("show-nav"))
-                }
+                toggleNavEv();
             } else if (event.target.className === "overlay") {
                 document.body.classList.remove("show-nav");
             } else if (event.target === document.body) {
@@ -711,6 +718,7 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
                 }
             }
         });
+
         const endSetEvent = (ev) => {
             if (!document.getElementById("sysContent").contains(ev.target)) {
                 ev.preventDefault();
@@ -1408,13 +1416,13 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
 
         // console.log ( "apihots:" + apiHost +"  ..  customAPIKey:" +customAPIKey);
         const scrollToBottom = () => {
-            if (messagsEle.scrollHeight - messagsEle.scrollTop - messagsEle.clientHeight < 128) {
-                messagsEle.scrollTo(0, messagsEle.scrollHeight)
+            if (messagesEle.scrollHeight - messagesEle.scrollTop - messagesEle.clientHeight < 128) {
+                messagesEle.scrollTo(0, messagesEle.scrollHeight)
             }
         }
         const scrollToBottomLoad = (ele) => {
-            if (messagsEle.scrollHeight - messagsEle.scrollTop - messagsEle.clientHeight < ele.clientHeight + 128) {
-                messagsEle.scrollTo(0, messagsEle.scrollHeight)
+            if (messagesEle.scrollHeight - messagesEle.scrollTop - messagesEle.clientHeight < ele.clientHeight + 128) {
+                messagesEle.scrollTo(0, messagesEle.scrollHeight)
             }
         }
         const escapeTextarea = document.createElement("textarea");
@@ -1781,7 +1789,7 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
             }
             mdOption.onclick = mdOptionEvent;
         }
-        let allEle = chatListEle.parentElement;
+        let allListEle = chatListEle.parentElement;
         let folderData = [];
         let chatsData = [];
         let chatIdxs = [];
@@ -1841,7 +1849,7 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
         folderListEle.ondragenter = chatListEle.ondragenter = function (ev) {
             ev.preventDefault();
             if (ev.target === dragLi) return;
-            allEle.querySelectorAll(".dragingChat").forEach(ele => {
+            allListEle.querySelectorAll(".dragingChat").forEach(ele => {
                 ele.classList.remove("dragingChat");
             })
             if (dragType === "chat") {
@@ -1916,7 +1924,7 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
         }
         folderListEle.ondragend = chatListEle.ondragend = (ev) => {
             document.getElementsByClassName("dragingLi")[0].classList.remove("dragingLi");
-            allEle.querySelectorAll(".dragingChat").forEach(ele => {
+            allListEle.querySelectorAll(".dragingChat").forEach(ele => {
                 ele.classList.remove("dragingChat");
             })
             dragType = dragIdx = dragLi = void 0;
@@ -2081,6 +2089,7 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
         };
         const addNewChat = () => {
             let chat = {name: "新的会话", data: []};
+
             chatsData.push(chat);
             chatIdxs.push(chatsData.length - 1);
             updateChats();
@@ -2255,10 +2264,10 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
         }
         const activeChat = (ele) => {
             data = chatsData[activeChatIdx]["data"];
-            allEle.querySelectorAll(".activeChatLi").forEach(ele => {
+            allListEle.querySelectorAll(".activeChatLi").forEach(ele => {
                 ele.classList.remove("activeChatLi");
             })
-            allEle.querySelectorAll(".activeFolder").forEach(ele => {
+            allListEle.querySelectorAll(".activeFolder").forEach(ele => {
                 ele.classList.remove("activeFolder")
             })
             if (!ele) ele = getChatEle(activeChatIdx);
@@ -2542,8 +2551,8 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
         document.getElementById("resetSet").onclick = () => {
             if (confirmAction("是否还原所有设置为默认值?")) {
                 endAll();
-                let data = {};
                 if (existVoice === 3) localStorage.removeItem(azureRegion + "voiceData");
+                let data = {};
                 for (let i = 0; i < localSetKeys.length; i++) {
                     let key = localSetKeys[i];
                     let val = localStorage.removeItem(key);
@@ -2565,6 +2574,10 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
             if (editingIdx !== void 0) editingIdx += plus;
         }
         const initSetting = (force = false) => {
+		
+         modelVersion = "<%=modelver%>"; // 模型版本
+         apiHost = "<%=apihosts%>"; // api反代地址
+         customAPIKey = "<%=apikeys%>"; // 自定义apiKey
             let localSystem = localStorage.getItem("system");
             systemEle.onchange = () => {
                 systemRole = systemEle.value;
@@ -2650,11 +2663,7 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
                 enableLongReply = longEle.checked;
                 localStorage.setItem("enableLongReply", enableLongReply);
             }
-            longEle.dispatchEvent(new Event("change"));
-            let localPin = localStorage.getItem("pinNav");
-            if (window.innerWidth > 800 && !(localPin && localPin === "false")) {
-                document.body.classList.add("show-nav");
-            };
+
            
 
 
@@ -2671,10 +2680,12 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
             }
         }
         settingEle.onmousedown = () => {
+		
             dialogEle.style.display = dialogEle.style.display === "block" ? "none" : "block";
             if (dialogEle.style.display === "block") {
                 document.addEventListener("mousedown", closeEvent, true);
                 settingEle.classList.add("showSetting");
+				
             } else {
                 document.removeEventListener("mousedown", closeEvent, true);
                 settingEle.classList.remove("showSetting");
@@ -3339,7 +3350,7 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
                 if (systemRole) {dataSlice.unshift(data[0]);}
             }
             try {
-			
+			 
                 const res = await fetch(apiHost + API_URL, {
                     method: "POST",
                     headers,
@@ -3558,23 +3569,19 @@ L20.4018 25.4983L16.071 22.9985V17.9991Z">
             downRoleController.abort();
         }, 10000);
         const preEle = document.getElementById("preSetSystem");
-        fetch("/luci-static/chatgpt-web/prompts-zh.json", {
-            signal: downRoleController.signal
-        }).then(async (response) => {
-            let res = await response.json();
-            for (let i = 0; i < res.length; i++) {
-                let key = "act" + i;
-                presetRoleData[key] = res[i].prompt.trim();
-                let optionEle = document.createElement("option");
-                optionEle.text = res[i].act;
-                optionEle.value = key;
-                preEle.options.add(optionEle);
-            }
-        }).catch(e => { })
+                fetch("/luci-static/chatgpt-web/prompts-zh.json", {
+                    signal: downRoleController.signal
+                }).then(async (response) => {
+                    let res = await response.json();
+                    for (let i = 0; i < res.length; i++) {
+                        let key = "act" + i;
+                        presetRoleData[key] = res[i].prompt.trim();
+                        let optionEle = document.createElement("option");
+                        optionEle.text = res[i].act;
+                        optionEle.value = key;
+                        preEle.options.add(optionEle);
+                    }
+                }).catch(e => { })
     </script>
 </body>
 </fieldset>
-
-</div>
-
-<%+footer%>
