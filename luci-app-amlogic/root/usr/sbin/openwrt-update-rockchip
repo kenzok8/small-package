@@ -623,7 +623,7 @@ cat >>./etc/crontabs/root <<EOF
 EOF
 
 sed -e 's/ttyAMA0/ttyS2/' -i ./etc/inittab
-[ "${SOC}" != "h28k" ] && $sed -e 's/ttyS0/tty1/' -i ./etc/inittab
+[ "${SOC}" != "h28k" ] && sed -e 's/ttyS0/tty1/' -i ./etc/inittab
 sss=$(date +%s)
 ddd=$((sss / 86400))
 sed -e "s/:0:0:99999:7:::/:${ddd}:0:99999:7:::/" -i ./etc/shadow
