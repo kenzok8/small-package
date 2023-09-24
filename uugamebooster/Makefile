@@ -12,18 +12,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uugamebooster
-PKG_VERSION:=v3.13.4
+PKG_VERSION:=3.15.0
 PKG_RELEASE:=1
 
-include $(INCLUDE_DIR)/package.mk
-
-define Package/uugamebooster
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=@(aarch64||arm||mipsel||x86_64) +kmod-tun
-  TITLE:=NetEase UU Game Booster
-  URL:=https://uu.163.com
-endef
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(ARCH).tar.gz
+PKG_SOURCE_URL:=https://uu.gdl.netease.com/uuplugin/openwrt-$(ARCH)/v$(PKG_VERSION)/uu.tar.gz?
+ifeq ($(ARCH),aarch64)
+  PKG_HASH:=4200ea60177a3cc427e2e3c1bbff318551fc2ddbf0fcabd85a9be139e3a947db
+else ifeq ($(ARCH),arm)
+  PKG_HASH:=5fc9aa0219ce1e4518d0db0bfbe88779cbf42c5cea57ed8799b34fa7a3afa1d5
+else ifeq ($(ARCH),mipsel)
+  PKG_HASH:=40fc0e47b40379c6264e24e83d40e41bf566812b80b0561ba3a4b4187973e11b
+else ifeq ($(ARCH),x86_64)
+  PKG_HASH:=7132328abc3cde3bb0201ff39cb209c128182ce8b27ba2f4c01355d0e67b4912
+endif
 
 define Package/uugamebooster/description
   NetEase's UU Game Booster Accelerates Triple-A Gameplay and Market
