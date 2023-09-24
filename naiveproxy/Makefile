@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=117.0.5938.44-2
+PKG_VERSION:=117.0.5938.44-4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/klzgrad/naiveproxy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=fa10ce129a3d6307cc45c811b4e4e67638421de247fda543112449682c78a75b
+PKG_HASH:=2c4f628ba5f4b2bfd12eb365d7bbb44bb32e3a0737bc538f68d108e614a7b5cb
 
 PKG_LICENSE:=BSD 3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -18,7 +18,6 @@ PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 PKG_BUILD_DEPENDS:=gn/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
 PKG_BUILD_FLAGS:=no-mips16
 
 ifneq ($(CONFIG_CPU_TYPE)," ")
