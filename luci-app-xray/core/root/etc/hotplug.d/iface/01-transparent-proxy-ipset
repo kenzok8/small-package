@@ -1,0 +1,2 @@
+#!/bin/sh
+logger -st transparent-proxy-ipset[$$] -p6 "$(ucode /usr/share/xray/default_gateway.uc)"
