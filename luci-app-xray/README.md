@@ -37,6 +37,7 @@ Then find `luci-app-xray` under `Extra Packages`.
 ## Changelog since 3.0.0
 
 * 2023-09-26 Version 3.0.0 merge master
+* 2023-09-27 fix: sniffing inboundTag; fix: upstream_domain_names
 
 ## Star History
 

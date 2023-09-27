@@ -24,16 +24,12 @@ function split_ipv4_host_port(val, port_default) {
 
 function upstream_domain_names(proxy, config) {
     let domain_names_set = {};
-    for (let i in balancer(proxy, "tcp_balancer", "tcp_balancer")) {
-        const server = config[substr(i, -9)];
-        if (server) {
-            domain_names_set[server["server"]] = true;
-        }
-    }
-    for (let i in balancer(proxy, "udp_balancer", "udp_balancer")) {
-        const server = config[substr(i, -9)];
-        if (server) {
-            domain_names_set[server["server"]] = true;
+    for (let b in ["tcp_balancer_v4", "tcp_balancer_v6", "udp_balancer_v4", "udp_balancer_v6"]) {
+        for (let i in balancer(proxy, b, b)) {
+            const server = config[substr(i, -9)];
+            if (server) {
+                domain_names_set[server["server"]] = true;
+            }
         }
     }
     // todo: add dialer proxy references here

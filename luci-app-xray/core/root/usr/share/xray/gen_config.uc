@@ -175,27 +175,37 @@ function rules(geoip_existence, proxy, bridge, manual_tproxy, extra_inbound, fak
         if (length(secure_domain_rules(proxy)) > 0) {
             splice(result, 0, 0, {
                 type: "field",
-                inboundTag: [...tproxy_tcp_inbound_tags, ...extra_inbound_global_tcp],
+                inboundTag: [...tproxy_tcp_inbound_v4_tags, ...extra_inbound_global_tcp],
                 balancerTag: "tcp_outbound_v4",
                 domain: secure_domain_rules(proxy),
             }, {
                 type: "field",
-                inboundTag: [...tproxy_udp_inbound_tags, ...extra_inbound_global_udp],
+                inboundTag: [...tproxy_udp_inbound_v4_tags, ...extra_inbound_global_udp],
                 balancerTag: "udp_outbound_v4",
+                domain: secure_domain_rules(proxy),
+            }, {
+                type: "field",
+                inboundTag: [...tproxy_tcp_inbound_v6_tags],
+                balancerTag: "tcp_outbound_v6",
+                domain: secure_domain_rules(proxy),
+            }, {
+                type: "field",
+                inboundTag: [...tproxy_udp_inbound_v6_tags],
+                balancerTag: "udp_outbound_v6",
                 domain: secure_domain_rules(proxy),
             });
         }
         if (length(blocked_domain_rules(proxy)) > 0) {
             splice(result, 0, 0, {
                 type: "field",
-                inboundTag: [...tproxy_tcp_inbound_tags, ...tproxy_tcp_inbound_tags, ...extra_inbound_global_tcp, ...extra_inbound_global_udp],
+                inboundTag: [...tproxy_tcp_inbound_v4_tags, ...tproxy_udp_inbound_v4_tags, ...tproxy_tcp_inbound_v6_tags, ...tproxy_udp_inbound_v6_tags, ...extra_inbound_global_tcp, ...extra_inbound_global_udp],
                 outboundTag: "blackhole_outbound",
                 domain: blocked_domain_rules(proxy),
             });
         }
         splice(result, 0, 0, {
             type: "field",
-            inboundTag: [...tproxy_tcp_inbound_tags, ...tproxy_tcp_inbound_tags, ...extra_inbound_global_tcp, ...extra_inbound_global_udp],
+            inboundTag: [...tproxy_tcp_inbound_v4_tags, ...tproxy_udp_inbound_v4_tags, ...tproxy_tcp_inbound_v6_tags, ...tproxy_udp_inbound_v6_tags, ...extra_inbound_global_tcp, ...extra_inbound_global_udp],
             outboundTag: "direct",
             domain: fast_domain_rules(proxy)
         });
