@@ -104,6 +104,7 @@ return view.extend({
 		o.value('http', _('HTTP'));
 		if (features.with_quic) {
 			o.value('hysteria', _('Hysteria'));
+			o.value('hysteria2', _('Hysteria2'));
 			o.value('naive', _('NaïveProxy'));
 		}
 		o.value('shadowsocks', _('Shadowsocks'));
@@ -129,31 +130,36 @@ return view.extend({
 		o = s.option(form.Value, 'password', _('Password'));
 		o.password = true;
 		o.depends({'type': /^(http|naive|socks)$/, 'username': /[\s\S]/});
+		o.depends('type', 'hysteria2');
 		o.depends('type', 'shadowsocks');
 		o.depends('type', 'trojan');
 		o.depends('type', 'tuic');
 		o.validate = function(section_id, value) {
 			if (section_id) {
 				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
-				if (type === 'shadowsocks') {
-					var encmode = this.map.lookupOption('shadowsocks_encrypt_method', section_id)[0].formvalue(section_id);
-					if (encmode === 'none')
-						return true;
-					else if (encmode === '2022-blake3-aes-128-gcm')
-						return hp.validateBase64Key(24, section_id, value);
-					else if (['2022-blake3-aes-256-gcm', '2022-blake3-chacha20-poly1305'].includes(encmode))
-						return hp.validateBase64Key(44, section_id, value);
-				}
+				var required_type = [ 'http', 'naive', 'socks', 'shadowsocks' ];
 
-				if (!value)
-					return _('Expecting: %s').format(_('non-empty value'));
+				if (required_type.includes(type)) {
+					if (type === 'shadowsocks') {
+						var encmode = this.map.lookupOption('shadowsocks_encrypt_method', section_id)[0].formvalue(section_id);
+						if (encmode === 'none')
+							return true;
+						else if (encmode === '2022-blake3-aes-128-gcm')
+							return hp.validateBase64Key(24, section_id, value);
+						else if (['2022-blake3-aes-256-gcm', '2022-blake3-chacha20-poly1305'].includes(encmode))
+							return hp.validateBase64Key(44, section_id, value);
+					}
+
+					if (!value)
+						return _('Expecting: %s').format(_('non-empty value'));
+				}
 			}
 
 			return true;
 		}
 		o.modalonly = true;
 
-		/* Hysteria config start */
+		/* Hysteria (2) config start */
 		o = s.option(form.ListValue, 'hysteria_protocol', _('Protocol'));
 		o.value('udp');
 		/* WeChat-Video / FakeTCP are unsupported by sing-box currently
@@ -169,31 +175,37 @@ return view.extend({
 			_('Max download speed in Mbps.'));
 		o.datatype = 'uinteger';
 		o.depends('type', 'hysteria');
+		o.depends('type', 'hysteria2');
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'hysteria_up_mbps', _('Max upload speed'),
 			_('Max upload speed in Mbps.'));
 		o.datatype = 'uinteger';
 		o.depends('type', 'hysteria');
+		o.depends('type', 'hysteria2');
 		o.modalonly = true;
 
 		o = s.option(form.ListValue, 'hysteria_auth_type', _('Authentication type'));
-		o.value('disabled', _('Disable'));
+		o.value('', _('Disable'));
 		o.value('base64', _('Base64'));
 		o.value('string', _('String'));
-		o.default = 'disabled';
 		o.depends('type', 'hysteria');
-		o.rmempty = false;
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'hysteria_auth_payload', _('Authentication payload'));
-		o.depends({'type': 'hysteria', 'hysteria_auth_type': 'base64'});
-		o.depends({'type': 'hysteria', 'hysteria_auth_type': 'string'});
+		o.depends({'type': 'hysteria', 'hysteria_auth_type': /[\s\S]/});
 		o.rmempty = false;
+		o.modalonly = true;
+
+		o = s.option(form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
+		o.value('', _('Disable'));
+		o.value('salamander', _('Salamander'));
+		o.depends('type', 'hysteria2');
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'hysteria_obfs_password', _('Obfuscate password'));
 		o.depends('type', 'hysteria');
+		o.depends({'type': 'hysteria2', 'hysteria_obfs_type': /[\s\S]/});
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'hysteria_recv_window_conn', _('QUIC stream receive window'),
@@ -222,7 +234,18 @@ return view.extend({
 		o.default = o.disabled;
 		o.depends('type', 'hysteria');
 		o.modalonly = true;
-		/* Hysteria config end */
+
+		o = s.option(form.Flag, 'hysteria_ignore_client_bandwidth', _('Ignore client bandwidth'),
+			_('Tell the client to use the BBR flow control algorithm instead of Hysteria CC.'));
+		o.default = o.disabled;
+		o.depends({'type': 'hysteria2', 'hysteria_down_mbps': '', 'hysteria_up_mbps': ''});
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'hysteria_masquerade', _('Masquerade'),
+			_('HTTP3 server behavior when authentication fails.<br/>A 404 page will be returned if empty.'));
+		o.depends('type', 'hysteria2');
+		o.modalonly = true;
+		/* Hysteria (2) config end */
 
 		/* Shadowsocks config */
 		o = s.option(form.ListValue, 'shadowsocks_encrypt_method', _('Encrypt method'));
@@ -384,6 +407,7 @@ return view.extend({
 		o.default = o.disabled;
 		o.depends('type', 'http');
 		o.depends('type', 'hysteria');
+		o.depends('type', 'hysteria2');
 		o.depends('type', 'naive');
 		o.depends('type', 'trojan');
 		o.depends('type', 'vless');
@@ -394,7 +418,7 @@ return view.extend({
 				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
 				var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 
-				if (['hysteria', 'tuic'].includes(type)) {
+				if (['hysteria', 'hysteria2', 'tuic'].includes(type)) {
 					tls.checked = true;
 					tls.disabled = true;
 				} else {
@@ -483,26 +507,59 @@ return view.extend({
 			o.rmempty = false;
 			o.modalonly = true;
 
-			o = s.option(form.Flag, 'tls_acme_dhc', _('Disable HTTP challenge'));
+			o = s.option(form.Flag, 'tls_dns01_challenge', _('DNS01 challenge'))
 			o.default = o.disabled;
 			o.depends('tls_acme', '1');
 			o.modalonly = true;
 
+			o = s.option(form.ListValue, 'tls_dns01_provider', _('DNS provider'));
+			o.value('alidns', _('Alibaba Cloud DNS'));
+			o.value('cloudflare', _('Cloudflare'));
+			o.depends('tls_dns01_challenge', '1');
+			o.default = 'cloudflare';
+			o.rmempty = false;
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'tls_dns01_ali_akid', _('Access key ID'));
+			o.depends('tls_dns01_provider', 'alidns');
+			o.rmempty = false;
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'tls_dns01_ali_aksec', _('Access key secret'));
+			o.depends('tls_dns01_provider', 'alidns');
+			o.rmempty = false;
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'tls_dns01_ali_rid', _('Region ID'));
+			o.depends('tls_dns01_provider', 'alidns');
+			o.rmempty = false;
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'tls_dns01_cf_api_token', _('API token'));
+			o.depends('tls_dns01_provider', 'cloudflare');
+			o.rmempty = false;
+			o.modalonly = true;
+
+			o = s.option(form.Flag, 'tls_acme_dhc', _('Disable HTTP challenge'));
+			o.default = o.disabled;
+			o.depends('tls_dns01_challenge', '0');
+			o.modalonly = true;
+
 			o = s.option(form.Flag, 'tls_acme_dtac', _('Disable TLS ALPN challenge'));
 			o.default = o.disabled;
-			o.depends('tls_acme', '1');
+			o.depends('tls_dns01_challenge', '0');
 			o.modalonly = true;
 
 			o = s.option(form.Value, 'tls_acme_ahp', _('Alternative HTTP port'),
 				_('The alternate port to use for the ACME HTTP challenge; if non-empty, this port will be used instead of 80 to spin up a listener for the HTTP challenge.'));
 			o.datatype = 'port';
-			o.depends('tls_acme', '1');
+			o.depends('tls_dns01_challenge', '0');
 			o.modalonly = true;
 
 			o = s.option(form.Value, 'tls_acme_atp', _('Alternative TLS port'),
 				_('The alternate port to use for the ACME TLS-ALPN challenge; the system must forward 443 to this port for challenge to succeed.'));
 			o.datatype = 'port';
-			o.depends('tls_acme', '1');
+			o.depends('tls_dns01_challenge', '0');
 			o.modalonly = true;
 
 			o = s.option(form.Flag, 'tls_acme_external_account', _('External Account Binding'),

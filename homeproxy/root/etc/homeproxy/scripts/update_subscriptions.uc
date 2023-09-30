@@ -146,6 +146,34 @@ function parse_uri(uri) {
 			};
 
 			break;
+		case 'hysteria2':
+		case 'hy2':
+			/* https://v2.hysteria.network/docs/developers/URI-Scheme/ */
+			const hysteria2_url = parseURL('http://' + uri[1]),
+			      hysteria2_params = hysteria2_url.searchParams;
+
+			if (!sing_features.with_quic || (hysteria2_params.password)) {
+				log(sprintf('Skipping unsupported %s node: %s.', 'hysteria2', urldecode(hysteria2_url.hash) || hysteria2_url.hostname));
+				if (!sing_features.with_quic)
+					log(sprintf('Please rebuild sing-box with %s support!', 'QUIC'));
+
+				return null;
+			}
+
+			config = {
+				label: hysteria2_url.hash ? urldecode(hysteria2_url.hash) : null,
+				type: 'hysteria2',
+				address: hysteria2_url.hostname,
+				port: hysteria2_url.port,
+				password: hysteria2_url.password ? urldecode(hysteria2_url.password) : null,
+				hysteria_obfs_type: hysteria2_params.obfs,
+				hysteria_obfs_password: hysteria2_params['obfs-password'],
+				tls: '1',
+				tls_insecure: hysteria2_params.insecure ? '1' : '0',
+				tls_sni: hysteria2_params.sni
+			};
+
+			break;
 		case 'socks':
 		case 'socks4':
 		case 'socks4a':

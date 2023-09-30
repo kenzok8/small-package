@@ -59,11 +59,16 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		/* Hysteria */
 		up_mbps: strToInt(cfg.hysteria_up_mbps),
 		down_mbps: strToInt(cfg.hysteria_down_mbps),
-		obfs: cfg.hysteria_obfs_password,
+		obfs: cfg.hysteria_obfs_type ? {
+			type: cfg.hysteria_obfs_type,
+			password: cfg.hysteria_obfs_password
+		} : cfg.hysteria_obfs_password,
 		recv_window_conn: strToInt(cfg.hysteria_recv_window_conn),
 		recv_window_client: strToInt(cfg.hysteria_revc_window_client),
 		max_conn_client: strToInt(cfg.hysteria_max_conn_client),
 		disable_mtu_discovery: strToBool(cfg.hysteria_disable_mtu_discovery),
+		ignore_client_bandwidth: strToBool(cfg.hysteria_ignore_client_bandwidth),
+		masquerade: cfg.hysteria_masquerade,
 
 		/* Shadowsocks */
 		method: (cfg.type === 'shadowsocks') ? cfg.shadowsocks_encrypt_method : null,
@@ -75,7 +80,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		zero_rtt_handshake: strToBool(cfg.tuic_enable_zero_rtt),
 		heartbeat: cfg.tuic_heartbeat ? (cfg.tuic_heartbeat + 's') : null,
 
-		/* HTTP / Hysteria / Socks / Trojan / Tuic / VLESS / VMess */
+		/* HTTP / Hysteria (2) / Socks / Trojan / Tuic / VLESS / VMess */
 		users: (cfg.type !== 'shadowsocks') ? [
 			{
 				name: !(cfg.type in ['http', 'socks']) ? 'cfg-' + cfg['.name'] + '-server' : null,
@@ -117,6 +122,13 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 				external_account: (cfg.tls_acme_external_account === '1') ? {
 					key_id: cfg.tls_acme_ea_keyid,
 					mac_key: cfg.tls_acme_ea_mackey
+				} : null,
+				dns01_challenge: (cfg.tls_dns01_challenge === '1') ? {
+					provider: cfg.tls_dns01_provider,
+					access_key_id: cfg.tls_dns01_ali_akid,
+					access_key_secret: cfg.tls_dns01_ali_aksec,
+					region_id: cfg.tls_dns01_ali_rid,
+					api_token: cfg.tls_dns01_cf_api_token
 				} : null
 			} : null,
 			reality: (cfg.tls_reality === '1') ? {

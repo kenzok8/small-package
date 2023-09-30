@@ -67,6 +67,30 @@ function parseShareLink(uri, features) {
 			};
 
 			break;
+		case 'hysteria2':
+		case 'hy2':
+			/* https://v2.hysteria.network/docs/developers/URI-Scheme/ */
+			var url = new URL('http://' + uri[1]);
+			var params = url.searchParams;
+
+			/* userpass auth is not supported by sing-box */
+			if (!features.with_quic || url.password)
+				return null;
+
+			config = {
+				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
+				type: 'hysteria2',
+				address: url.hostname,
+				port: url.port || '80',
+				password: url.username ? decodeURIComponent(url.username) : null,
+				hysteria_obfs_type: params.get('obfs'),
+				hysteria_obfs_password: params.get('obfs-password'),
+				tls: '1',
+				tls_sni: params.get('sni'),
+				tls_insecure: params.get('insecure') ? '1' : '0'
+			};
+
+			break;
 		case 'socks':
 		case 'socks4':
 		case 'socks4a':
@@ -512,8 +536,10 @@ return view.extend({
 		so = ss.option(form.ListValue, 'type', _('Type'));
 		so.value('direct', _('Direct'));
 		so.value('http', _('HTTP'));
-		if (features.with_quic)
+		if (features.with_quic) {
 			so.value('hysteria', _('Hysteria'));
+			so.value('hysteria2', _('Hysteria2'));
+		}
 		so.value('shadowsocks', _('Shadowsocks'));
 		if (features.with_shadowsocksr)
 			so.value('shadowsocksr', _('ShadowsocksR'));
@@ -546,6 +572,7 @@ return view.extend({
 		so = ss.option(form.Value, 'password', _('Password'));
 		so.password = true;
 		so.depends('type', 'http');
+		so.depends('type', 'hysteria2');
 		so.depends('type', 'shadowsocks');
 		so.depends('type', 'shadowsocksr');
 		so.depends('type', 'trojan');
@@ -596,7 +623,7 @@ return view.extend({
 		so.depends('type', 'direct');
 		so.modalonly = true;
 
-		/* Hysteria config start */
+		/* Hysteria (2) config start */
 		so = ss.option(form.ListValue, 'hysteria_protocol', _('Protocol'));
 		so.value('udp');
 		/* WeChat-Video / FakeTCP are unsupported by sing-box currently
@@ -609,34 +636,40 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'hysteria_auth_type', _('Authentication type'));
-		so.value('disabled', _('Disable'));
+		so.value('', _('Disable'));
 		so.value('base64', _('Base64'));
 		so.value('string', _('String'));
-		so.default = 'disabled';
 		so.depends('type', 'hysteria');
-		so.rmempty = false;
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'hysteria_auth_payload', _('Authentication payload'));
-		so.depends({'type': 'hysteria', 'hysteria_auth_type': 'base64'});
-		so.depends({'type': 'hysteria', 'hysteria_auth_type': 'string'});
+		so.depends({'type': 'hysteria', 'hysteria_auth_type': /[\s\S]/});
 		so.rmempty = false;
+		so.modalonly = true;
+
+		so = ss.option(form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
+		so.value('', _('Disable'));
+		so.value('salamander', _('Salamander'));
+		so.depends('type', 'hysteria2');
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'hysteria_obfs_password', _('Obfuscate password'));
 		so.depends('type', 'hysteria');
+		so.depends({'type': 'hysteria2', 'hysteria_obfs_type': /[\s\S]/});
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'hysteria_down_mbps', _('Max download speed'),
 			_('Max download speed in Mbps.'));
 		so.datatype = 'uinteger';
 		so.depends('type', 'hysteria');
+		so.depends('type', 'hysteria2');
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'hysteria_up_mbps', _('Max upload speed'),
 			_('Max upload speed in Mbps.'));
 		so.datatype = 'uinteger';
 		so.depends('type', 'hysteria');
+		so.depends('type', 'hysteria2');
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'hysteria_recv_window_conn', _('QUIC stream receive window'),
@@ -656,7 +689,7 @@ return view.extend({
 		so.default = so.disabled;
 		so.depends('type', 'hysteria');
 		so.modalonly = true;
-		/* Hysteria config end */
+		/* Hysteria (2) config end */
 
 		/* Shadowsocks config start */
 		so = ss.option(form.ListValue, 'shadowsocks_encrypt_method', _('Encrypt method'));
@@ -1067,6 +1100,7 @@ return view.extend({
 		so.default = so.disabled;
 		so.depends('type', 'http');
 		so.depends('type', 'hysteria');
+		so.depends('type', 'hysteria2');
 		so.depends('type', 'shadowtls');
 		so.depends('type', 'trojan');
 		so.depends('type', 'tuic');
@@ -1077,7 +1111,7 @@ return view.extend({
 				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
 				var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 
-				if (['hysteria', 'shadowtls', 'tuic'].includes(type)) {
+				if (['hysteria', 'hysteria2', 'shadowtls', 'tuic'].includes(type)) {
 					tls.checked = true;
 					tls.disabled = true;
 				} else {
@@ -1189,7 +1223,7 @@ return view.extend({
 			so.value('random', _('Random'));
 			so.value('randomized', _('Randomized'));
 			so.value('safari', _('Safari'));
-			so.depends({'tls': '1', 'type': /^((?!hysteria$).)+$/});
+			so.depends({'tls': '1', 'type': /^((?!hysteria2?$).)+$/});
 			so.validate = function(section_id, value) {
 				if (section_id) {
 					let tls_reality = this.map.findElement('id', 'cbid.homeproxy.%s.tls_reality'.format(section_id)).firstElementChild;
