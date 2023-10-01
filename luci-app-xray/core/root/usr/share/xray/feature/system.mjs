@@ -36,11 +36,11 @@ export function policy(proxy) {
     return {
         levels: {
             "0": {
-                handshake: proxy["handshake"] == null ? 4 : int(proxy["handshake"]),
-                connIdle: proxy["conn_idle"] == null ? 300 : int(proxy["conn_idle"]),
-                uplinkOnly: proxy["uplink_only"] == null ? 2 : int(proxy["uplink_only"]),
-                downlinkOnly: proxy["downlink_only"] == null ? 5 : int(proxy["downlink_only"]),
-                bufferSize: proxy["buffer_size"] == null ? 4 : int(proxy["buffer_size"]),
+                handshake: int(proxy["handshake"] || 4),
+                connIdle: int(proxy["conn_idle"] || 300),
+                uplinkOnly: int(proxy["uplink_only"] || 2),
+                downlinkOnly: int(proxy["downlink_only"] || 5),
+                bufferSize: int(proxy["buffer_size"] || 4),
                 statsUserUplink: stats,
                 statsUserDownlink: stats,
             }

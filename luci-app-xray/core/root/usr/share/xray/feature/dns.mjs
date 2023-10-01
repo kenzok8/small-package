@@ -4,6 +4,9 @@ import { lsdir } from "fs";
 import { balancer } from "./system.mjs";
 import { fake_dns_domains } from "./fake_dns.mjs";
 
+const fallback_fast_dns = "223.5.5.5:53";
+const fallback_secure_dns = "8.8.8.8:53";
+const fallback_default_dns = "1.1.1.1:53";
 const share_dir = lsdir("/usr/share/xray");
 const geosite_existence = index(share_dir, "geosite.dat") > 0;
 
@@ -61,10 +64,10 @@ export function blocked_domain_rules(proxy) {
 };
 
 export function dns_server_inbounds(proxy) {
-    const default_dns = split_ipv4_host_port(proxy["default_dns"], 53);
     let result = [];
-    const dns_port = int(proxy["dns_port"]);
-    const dns_count = int(proxy["dns_count"] || 0);
+    const dns_port = int(proxy["dns_port"] || 5300);
+    const dns_count = int(proxy["dns_count"] || 3);
+    const default_dns = split_ipv4_host_port(proxy["default_dns"] || fallback_default_dns, 53);
     for (let i = dns_port; i <= dns_port + dns_count; i++) {
         push(result, {
             port: i,
@@ -82,8 +85,8 @@ export function dns_server_inbounds(proxy) {
 
 export function dns_server_tags(proxy) {
     let result = [];
-    const dns_port = int(proxy["dns_port"]);
-    const dns_count = int(proxy["dns_count"] || 0);
+    const dns_port = int(proxy["dns_port"] || 5300);
+    const dns_count = int(proxy["dns_count"] || 3);
     for (let i = dns_port; i <= dns_port + dns_count; i++) {
         push(result, sprintf("dns_server_inbound:%d", i));
     }
@@ -106,8 +109,8 @@ export function dns_server_outbound() {
 };
 
 export function dns_conf(proxy, config, manual_tproxy, fakedns) {
-    const fast_dns_object = split_ipv4_host_port(proxy["fast_dns"], 53);
-    const default_dns_object = split_ipv4_host_port(proxy["default_dns"], 53);
+    const fast_dns_object = split_ipv4_host_port(proxy["fast_dns"] || fallback_fast_dns, 53);
+    const default_dns_object = split_ipv4_host_port(proxy["default_dns"] || fallback_default_dns, 53);
     let servers = [
         default_dns_object,
         ...fake_dns_domains(fakedns),
@@ -120,7 +123,7 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
     ];
 
     if (length(secure_domain_rules(proxy)) > 0) {
-        const secure_dns_object = split_ipv4_host_port(proxy["secure_dns"], 53);
+        const secure_dns_object = split_ipv4_host_port(proxy["secure_dns"] || fallback_secure_dns, 53);
         push(servers, {
             address: secure_dns_object["address"],
             port: secure_dns_object["port"],
