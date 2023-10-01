@@ -6,6 +6,7 @@
     const ignore_tp_spec_def_gw = stat("/usr/share/xray/ignore_tp_spec_def_gw");
     const config = load_config();
     const general = config[filter(keys(config), k => config[k][".type"] == "general")[0]];
+    const general_mark = general.mark || 255;
     const tcp4_enabled = length(general.tcp_balancer_v4 || []) > 0;
     const udp4_enabled = length(general.udp_balancer_v4 || []) > 0;
     const tcp6_enabled = length(general.tcp_balancer_v6 || []) > 0;
@@ -14,8 +15,8 @@
     const gids_direct = uniq(general.gids_direct || []);
     let wan_bp_ips_no_dns = general.wan_bp_ips || [];
     let wan_fw_ips_no_dns = general.wan_fw_ips || [];
-    push(wan_bp_ips_no_dns, split(general.fast_dns, ":")[0]);
-    push(wan_fw_ips_no_dns, split(general.secure_dns, ":")[0]);
+    push(wan_bp_ips_no_dns, split(general.fast_dns || "223.5.5.5:53", ":")[0]);
+    push(wan_fw_ips_no_dns, split(general.secure_dns || "8.8.8.8:53", ":")[0]);
     const wan_bp_ips_v4 = filter(uniq(wan_bp_ips_no_dns), v => index(v, ":") == -1);
     const wan_bp_ips_v6 = filter(uniq(wan_bp_ips_no_dns), v => index(v, ":") != -1);
     const wan_fw_ips_v4 = filter(uniq(wan_fw_ips_no_dns), v => index(v, ":") == -1);
@@ -324,22 +325,22 @@
 {% if (tcp4_enabled): %}
         ip protocol tcp {{ counter }} tproxy ip to :{{ general.tproxy_port_tcp_v4 || 1082 }} accept
 {% else %}
-        ip protocol tcp {{ counter }} meta mark set {{ sprintf("0x%08x", general.mark) }} accept
+        ip protocol tcp {{ counter }} meta mark set {{ sprintf("0x%08x", general_mark) }} accept
 {% endif %}
 {% if (udp4_enabled): %}
         ip protocol udp {{ counter }} tproxy ip to :{{ general.tproxy_port_udp_v4 || 1084 }} accept
 {% else %}
-        ip protocol udp {{ counter }} meta mark set {{ sprintf("0x%08x", general.mark) }} accept
+        ip protocol udp {{ counter }} meta mark set {{ sprintf("0x%08x", general_mark) }} accept
 {% endif %}
 {% if (tcp6_enabled): %}
         ip6 nexthdr tcp {{ counter }} tproxy ip6 to :{{ general.tproxy_port_tcp_v6 || 1083 }} accept
 {% else %}
-        ip6 nexthdr tcp {{ counter }} meta mark set {{ sprintf("0x%08x", general.mark) }} accept
+        ip6 nexthdr tcp {{ counter }} meta mark set {{ sprintf("0x%08x", general_mark) }} accept
 {% endif %}
 {% if (udp6_enabled): %}
         ip6 nexthdr udp {{ counter }} tproxy ip6 to :{{ general.tproxy_port_udp_v6 || 1085 }} accept
 {% else %}
-        ip6 nexthdr udp {{ counter }} meta mark set {{ sprintf("0x%08x", general.mark) }} accept
+        ip6 nexthdr udp {{ counter }} meta mark set {{ sprintf("0x%08x", general_mark) }} accept
 {% endif %}
         {{ counter }} accept
     }
@@ -403,7 +404,7 @@
         ip6 nexthdr udp mark 0x000000fc {{ counter }} {{ dynamic_direct_udp6 }} accept comment "Xray direct outbound UDP6"
         meta mark 0x000000fd {{ counter }} accept comment "Xray transparent proxy outbound"
         meta mark 0x000000fe {{ counter }} accept comment "Xray non-IP DNS query outbound"
-        meta mark {{ sprintf("0x%08x", general.mark) }} {{ counter }} accept comment "Xray specified mark {{ general.mark }} outbound"
+        meta mark {{ sprintf("0x%08x", general_mark) }} {{ counter }} accept comment "Xray specified mark {{ general_mark }} outbound"
         {{ counter }} goto tp_spec_lan_ac
     }
 

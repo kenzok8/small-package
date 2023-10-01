@@ -627,29 +627,35 @@ return view.extend({
 
         s.tab('proxy', _('Proxy Settings'));
 
-        o = s.taboption('proxy', form.Value, 'tproxy_port_tcp_v4', _('Transparent proxy port (TCP4)'));
-        o.datatype = 'port';
-        o.default = 1082;
-
-        o = s.taboption('proxy', form.Value, 'tproxy_port_udp_v4', _('Transparent proxy port (UDP4)'));
-        o.datatype = 'port';
-        o.default = 1084;
-
-        o = s.taboption('proxy', form.Value, 'tproxy_port_tcp_v6', _('Transparent proxy port (TCP6)'));
-        o.datatype = 'port';
-        o.default = 1083;
-
-        o = s.taboption('proxy', form.Value, 'tproxy_port_udp_v6', _('Transparent proxy port (UDP6)'));
-        o.datatype = 'port';
-        o.default = 1085;
-
         o = s.taboption('proxy', form.Value, 'socks_port', _('Socks5 proxy port'));
         o.datatype = 'port';
-        o.default = 1080;
+        o.placeholder = 1080;
+        o.rmempty = true;
 
         o = s.taboption('proxy', form.Value, 'http_port', _('HTTP proxy port'));
         o.datatype = 'port';
-        o.default = 1081;
+        o.placeholder = 1081;
+        o.rmempty = true;
+
+        o = s.taboption('proxy', form.Value, 'tproxy_port_tcp_v4', _('Transparent proxy port (TCP4)'));
+        o.datatype = 'port';
+        o.placeholder = 1082;
+        o.rmempty = true;
+
+        o = s.taboption('proxy', form.Value, 'tproxy_port_tcp_v6', _('Transparent proxy port (TCP6)'));
+        o.datatype = 'port';
+        o.placeholder = 1083;
+        o.rmempty = true;
+
+        o = s.taboption('proxy', form.Value, 'tproxy_port_udp_v4', _('Transparent proxy port (UDP4)'));
+        o.datatype = 'port';
+        o.placeholder = 1084;
+        o.rmempty = true;
+
+        o = s.taboption('proxy', form.Value, 'tproxy_port_udp_v6', _('Transparent proxy port (UDP6)'));
+        o.datatype = 'port';
+        o.placeholder = 1085;
+        o.rmempty = true;
 
         o = s.taboption('proxy', form.DynamicList, 'uids_direct', _('Bypass tproxy for uids'), _("Processes started by users with these uids won't be forwarded through Xray."));
         o.datatype = "integer";
@@ -659,7 +665,8 @@ return view.extend({
 
         o = s.taboption('proxy', form.Value, 'firewall_priority', _('Priority for firewall rules'), _('See firewall status page for rules Xray used and <a href="https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks#Priority_within_hook">Netfilter Internal Priority</a> for reference.'));
         o.datatype = 'range(-49, 49)';
-        o.default = 10;
+        o.placeholder = 10;
+        o.rmempty = true;
 
         o = s.taboption('proxy', widgets.DeviceSelect, 'lan_ifaces', _("Interfaces for tproxy"), _("Enable transparent proxy on these interfaces."));
         o.noaliases = true;
@@ -671,7 +678,8 @@ return view.extend({
 
         o = s.taboption('dns', form.Value, 'fast_dns', _('Fast DNS'), _("DNS for resolving outbound domains and following bypassed domains"));
         o.datatype = 'or(ip4addr, ip4addrport)';
-        o.placeholder = "223.5.5.5";
+        o.placeholder = "223.5.5.5:53";
+        o.rmempty = true;
 
         if (geosite_existence) {
             o = s.taboption('dns', form.DynamicList, "bypassed_domain_rules", _('Bypassed domain rules'), _('Specify rules like <code>geosite:cn</code> or <code>domain:bilibili.com</code>. See <a href="https://xtls.github.io/config/dns.html#dnsobject">documentation</a> for details.'));
@@ -682,7 +690,8 @@ return view.extend({
 
         o = s.taboption('dns', form.Value, 'secure_dns', _('Secure DNS'), _("DNS for resolving known polluted domains (specify forwarded domain rules here)"));
         o.datatype = 'or(ip4addr, ip4addrport)';
-        o.placeholder = "1.1.1.1";
+        o.placeholder = "8.8.8.8:53";
+        o.rmempty = true;
 
         if (geosite_existence) {
             o = s.taboption('dns', form.DynamicList, "forwarded_domain_rules", _('Forwarded domain rules'), _('Specify rules like <code>geosite:geolocation-!cn</code> or <code>domain:youtube.com</code>. See <a href="https://xtls.github.io/config/dns.html#dnsobject">documentation</a> for details.'));
@@ -693,7 +702,8 @@ return view.extend({
 
         o = s.taboption('dns', form.Value, 'default_dns', _('Default DNS'), _("DNS for resolving other sites (not in the rules above) and DNS records other than A or AAAA (TXT and MX for example)"));
         o.datatype = 'or(ip4addr, ip4addrport)';
-        o.placeholder = "8.8.8.8";
+        o.placeholder = "1.1.1.1:53";
+        o.rmempty = true;
 
         if (geosite_existence) {
             o = s.taboption('dns', form.DynamicList, "blocked_domain_rules", _('Blocked domain rules'), _('Specify rules like <code>geosite:category-ads</code> or <code>domain:baidu.com</code>. See <a href="https://xtls.github.io/config/dns.html#dnsobject">documentation</a> for details.'));
@@ -707,11 +717,13 @@ return view.extend({
 
         o = s.taboption('dns', form.Value, 'dns_port', _('Xray DNS Server Port'), _("Do not use port 53 (dnsmasq), port 5353 (mDNS) or other common ports"));
         o.datatype = 'port';
-        o.default = 5300;
+        o.placeholder = 5300;
+        o.rmempty = true;
 
         o = s.taboption('dns', form.Value, 'dns_count', _('Extra DNS Server Ports'), _('Listen for DNS Requests on multiple ports (all of which serves as dnsmasq upstream servers).<br/>For example if Xray DNS Server Port is 5300 and use 3 extra ports, 5300 - 5303 will be used for DNS requests.<br/>Increasing this value may help reduce the possibility of temporary DNS lookup failures.'));
         o.datatype = 'range(0, 50)';
-        o.default = 0;
+        o.placeholder = 3;
+        o.rmempty = true;
 
         o = s.taboption('dns', form.ListValue, 'routing_domain_strategy', _('Routing Domain Strategy'), _("Domain resolution strategy when matching domain against rules. (For tproxy, this is effective only when sniffing is enabled.)"));
         o.value("AsIs", "AsIs");
@@ -779,7 +791,8 @@ return view.extend({
 
         o = s.taboption('transparent_proxy_rules', form.Value, 'mark', _('Socket Mark Number'), _('Avoid proxy loopback problems with local (gateway) traffic'));
         o.datatype = 'range(1, 255)';
-        o.default = 255;
+        o.placeholder = 255;
+        o.rmempty = true;
 
         o = s.taboption('transparent_proxy_rules', form.SectionValue, "access_control_manual_tproxy", form.GridSection, 'manual_tproxy', _('Manual Transparent Proxy'), _('Compared to iptables REDIRECT, Xray could do NAT46 / NAT64 (for example accessing IPv6 only sites). See <a href="https://github.com/v2ray/v2ray-core/issues/2233">FakeDNS</a> for details.'));
 
@@ -912,31 +925,32 @@ return view.extend({
         o.depends("metrics_server_enable", "1");
         o.datatype = 'port';
         o.placeholder = '18888';
+        o.rmempty = true;
 
         o = s.taboption('extra_options', form.Value, 'handshake', _('Handshake Timeout'), _('Policy: Handshake timeout when connecting to upstream. See <a href="https://xtls.github.io/config/policy.html#levelpolicyobject">here</a> for help.'));
         o.datatype = 'uinteger';
         o.placeholder = 4;
-        o.default = 4;
+        o.rmempty = true;
 
         o = s.taboption('extra_options', form.Value, 'conn_idle', _('Connection Idle Timeout'), _('Policy: Close connection if no data is transferred within given timeout. See <a href="https://xtls.github.io/config/policy.html#levelpolicyobject">here</a> for help.'));
         o.datatype = 'uinteger';
         o.placeholder = 300;
-        o.default = 300;
+        o.rmempty = true;
 
         o = s.taboption('extra_options', form.Value, 'uplink_only', _('Uplink Only Timeout'), _('Policy: How long to wait before closing connection after server closed connection. See <a href="https://xtls.github.io/config/policy.html#levelpolicyobject">here</a> for help.'));
         o.datatype = 'uinteger';
         o.placeholder = 2;
-        o.default = 2;
+        o.rmempty = true;
 
         o = s.taboption('extra_options', form.Value, 'downlink_only', _('Downlink Only Timeout'), _('Policy: How long to wait before closing connection after client closed connection. See <a href="https://xtls.github.io/config/policy.html#levelpolicyobject">here</a> for help.'));
         o.datatype = 'uinteger';
         o.placeholder = 5;
-        o.default = 5;
+        o.rmempty = true;
 
         o = s.taboption('extra_options', form.Value, 'buffer_size', _('Buffer Size'), _('Policy: Internal cache size per connection. See <a href="https://xtls.github.io/config/policy.html#levelpolicyobject">here</a> for help.'));
         o.datatype = 'uinteger';
         o.placeholder = 512;
-        o.default = 512;
+        o.rmempty = true;
 
         o = s.taboption('extra_options', form.SectionValue, "xray_bridge", form.TableSection, 'bridge', _('Bridge'), _('Reverse proxy tool. Currently only client role (bridge) is supported. See <a href="https://xtls.github.io/config/reverse.html#bridgeobject">here</a> for help.'));
 
