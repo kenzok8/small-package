@@ -158,7 +158,7 @@ const methods = {
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (match(trim(line), /Environment: (go[0-9\.]+)/))
-						features['has_mptcp'] = (index(line, 'go1.19') === -1) ? true : false;
+						features['has_mptcp'] = (index(line, 'go1.20') === -1) ? true : false;
 
 					let tags = match(trim(line), /Tags: (.*)/);
 					if (!tags)

@@ -132,7 +132,6 @@ function generate_outbound(node) {
 		/* Direct */
 		override_address: node.override_address,
 		override_port: strToInt(node.override_port),
-		proxy_protocol: strToInt(node.proxy_protocol),
 		/* Hysteria (2) */
 		up_mbps: strToInt(node.hysteria_down_mbps),
 		down_mbps: strToInt(node.hysteria_down_mbps),
