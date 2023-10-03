@@ -682,18 +682,6 @@ return view.extend({
 			o.value(i, hp.dns_strategy[i])
 		o.modalonly = true;
 
-		o = s.option(form.Flag, 'proxy_protocol', _('Proxy protocol'),
-			_('Parse Proxy Protocol in the connection header.'));
-		o.default = o.disabled;
-		o.depends({'network': 'udp', '!reverse': true});
-		o.modalonly = true;
-
-		o = s.option(form.Flag, 'proxy_protocol_accept_no_header', _('Accept no header'),
-			_('Accept connections without Proxy Protocol header.'));
-		o.default = o.disabled;
-		o.depends('proxy_protocol', '1');
-		o.modalonly = true;
-
 		o = s.option(form.ListValue, 'network', _('Network'));
 		o.value('tcp', _('TCP'));
 		o.value('udp', _('UDP'));
