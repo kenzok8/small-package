@@ -47,47 +47,38 @@ return view.extend({
         let tproxy_port_tcp_f4 = s.taboption('fake_dns', form.Value, 'tproxy_port_tcp_f4', _('Transparent proxy port (TCP4)'));
         tproxy_port_tcp_f4.datatype = 'port';
         tproxy_port_tcp_f4.placeholder = 1086;
-        tproxy_port_tcp_f4.rmempty = true;
 
         let tproxy_port_tcp_f6 = s.taboption('fake_dns', form.Value, 'tproxy_port_tcp_f6', _('Transparent proxy port (TCP6)'));
         tproxy_port_tcp_f6.datatype = 'port';
         tproxy_port_tcp_f6.placeholder = 1087;
-        tproxy_port_tcp_f6.rmempty = true;
 
         let tproxy_port_udp_f4 = s.taboption('fake_dns', form.Value, 'tproxy_port_udp_f4', _('Transparent proxy port (UDP4)'));
         tproxy_port_udp_f4.datatype = 'port';
         tproxy_port_udp_f4.placeholder = 1088;
-        tproxy_port_udp_f4.rmempty = true;
 
         let tproxy_port_udp_f6 = s.taboption('fake_dns', form.Value, 'tproxy_port_udp_f6', _('Transparent proxy port (UDP6)'));
         tproxy_port_udp_f6.datatype = 'port';
         tproxy_port_udp_f6.placeholder = 1089;
-        tproxy_port_udp_f6.rmempty = true;
 
         let pool_v4 = s.taboption('fake_dns', form.Value, 'pool_v4', _('Address Pool (IPv4)'));
         pool_v4.datatype = 'ip4addr';
         pool_v4.placeholder = "198.18.0.0/15";
-        pool_v4.rmempty = true;
 
         let pool_v4_size = s.taboption('fake_dns', form.Value, 'pool_v4_size', _('Address Pool Size (IPv4)'));
         pool_v4_size.datatype = 'integer';
         pool_v4_size.placeholder = 65535;
-        pool_v4_size.rmempty = true;
 
         let pool_v6 = s.taboption('fake_dns', form.Value, 'pool_v6', _('Address Pool (IPv6)'));
         pool_v6.datatype = 'ip6addr';
         pool_v6.placeholder = "fc00::/18";
-        pool_v6.rmempty = true;
 
         let pool_v6_size = s.taboption('fake_dns', form.Value, 'pool_v6_size', _('Address Pool Size (IPv6)'));
         pool_v6_size.datatype = 'integer';
         pool_v6_size.placeholder = 65535;
-        pool_v6_size.rmempty = true;
 
         let fake_dns_timeout = s.taboption('fake_dns', form.Value, 'fake_dns_timeout', _('Connection Idle Timeout'), _('Policy: Close connection if no data is transferred within given timeout. See <a href="https://xtls.github.io/config/policy.html#levelpolicyobject">here</a> for help.'));
         fake_dns_timeout.datatype = 'uinteger';
         fake_dns_timeout.placeholder = 300;
-        fake_dns_timeout.default = 300;
 
         let fs = s.taboption('fake_dns', form.SectionValue, "fake_dns_section", form.GridSection, 'fakedns', _('FakeDNS Routing'), _('See <a href="https://github.com/v2ray/v2ray-core/issues/2233">FakeDNS</a> for details.')).subsection;
         fs.sortable = false;
@@ -115,11 +106,9 @@ return view.extend({
 
         let inbound_addr = extra_inbounds.option(form.Value, "inbound_addr", _("Listen Address"));
         inbound_addr.datatype = "ip4addr";
-        inbound_addr.rmempty = true;
 
         let inbound_port = extra_inbounds.option(form.Value, "inbound_port", _("Listen Port"));
         inbound_port.datatype = "port";
-        inbound_port.rmempty = true;
 
         let inbound_type = extra_inbounds.option(form.ListValue, "inbound_type", _("Inbound Type"));
         inbound_type.value("socks5", _("Socks5 Proxy"));
@@ -177,7 +166,6 @@ return view.extend({
 
         let access_control_forward_tcp_v4 = lan_hosts.option(form.ListValue, "access_control_forward_tcp_v4", _("Extra inbound (TCP4)"));
         access_control_forward_tcp_v4.depends("access_control_strategy_v4", "forward");
-        access_control_forward_tcp_v4.rmempty = true;
         access_control_forward_tcp_v4.textvalue = function (s) {
             switch (uci.get(config_data, s, "access_control_strategy_v4")) {
                 case "global": {
@@ -192,7 +180,6 @@ return view.extend({
 
         let access_control_forward_udp_v4 = lan_hosts.option(form.ListValue, "access_control_forward_udp_v4", _("Extra inbound (UDP4)"));
         access_control_forward_udp_v4.depends("access_control_strategy_v4", "forward");
-        access_control_forward_udp_v4.rmempty = true;
         access_control_forward_udp_v4.textvalue = function (s) {
             switch (uci.get(config_data, s, "access_control_strategy_v4")) {
                 case "global": {
@@ -214,7 +201,6 @@ return view.extend({
 
         let access_control_forward_tcp_v6 = lan_hosts.option(form.ListValue, "access_control_forward_tcp_v6", _("Extra inbound (TCP6)"));
         access_control_forward_tcp_v6.depends("access_control_strategy_v6", "forward");
-        access_control_forward_tcp_v6.rmempty = true;
         access_control_forward_tcp_v6.textvalue = function (s) {
             switch (uci.get(config_data, s, "access_control_strategy_v6")) {
                 case "global": {
@@ -229,7 +215,6 @@ return view.extend({
 
         let access_control_forward_udp_v6 = lan_hosts.option(form.ListValue, "access_control_forward_udp_v6", _("Extra inbound (UDP6)"));
         access_control_forward_udp_v6.depends("access_control_strategy_v6", "forward");
-        access_control_forward_udp_v6.rmempty = true;
         access_control_forward_udp_v6.textvalue = function (s) {
             switch (uci.get(config_data, s, "access_control_strategy_v6")) {
                 case "global": {
@@ -261,25 +246,21 @@ return view.extend({
 
         s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_tcp4', _('Enable for IPv4 TCP'), _("This should improve performance with large number of connections."));
         s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_tcp6', _('Enable for IPv4 UDP'), _("This may cause problems but worth a try."));
-        s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_udp4', _('Enable for IPv6 TCP'), _("This may not be very useful but it should be good enouth for a try."));
+        s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_udp4', _('Enable for IPv6 TCP'), _("This may not be very useful but it should be good enough for a try."));
         s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_udp6', _('Enable for IPv6 UDP'), _("This may cause problems and is not very useful at the same time. Not recommended."));
 
         let dynamic_direct_timeout = s.taboption('dynamic_direct', form.Value, 'dynamic_direct_timeout', _('Dynamic Direct Timeout'), _("Larger value consumes more memory and performs generally better. Unit in seconds."));
         dynamic_direct_timeout.datatype = 'uinteger';
         dynamic_direct_timeout.placeholder = 300;
-        dynamic_direct_timeout.rmempty = true;
 
         let ttl_override = s.taboption('dynamic_direct', form.Value, 'ttl_override', _('Override IPv4 TTL'), _("Strongly not recommended. Only used for some network environments with specific restrictions."));
         ttl_override.datatype = 'uinteger';
-        ttl_override.rmempty = true;
 
         let hop_limit_override = s.taboption('dynamic_direct', form.Value, 'hop_limit_override', _('Override IPv6 Hop Limit'), _("Strongly not recommended. Only used for some network environments with specific restrictions."));
         hop_limit_override.datatype = 'uinteger';
-        hop_limit_override.rmempty = true;
 
         let ttl_hop_limit_match = s.taboption('dynamic_direct', form.Value, 'ttl_hop_limit_match', _('TTL / Hop Limit Match'), _("Only override TTL / hop limit for packets with specific TTL / hop limit."));
         ttl_hop_limit_match.datatype = 'uinteger';
-        ttl_hop_limit_match.rmempty = true;
 
         return m.render();
     }
