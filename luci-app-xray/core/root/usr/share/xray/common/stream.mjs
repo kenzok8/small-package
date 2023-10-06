@@ -102,16 +102,16 @@ function stream_kcp(server) {
             mkcp_seed = server["mkcp_seed"];
         }
         return {
-            mtu: int(server["mkcp_mtu"]),
-            tti: int(server["mkcp_tti"]),
-            uplinkCapacity: int(server["mkcp_uplink_capacity"]),
-            downlinkCapacity: int(server["mkcp_downlink_capacity"]),
+            mtu: int(server["mkcp_mtu"] || 1350),
+            tti: int(server["mkcp_tti"] || 50),
+            uplinkCapacity: int(server["mkcp_uplink_capacity"] || 5),
+            downlinkCapacity: int(server["mkcp_downlink_capacity"] || 20),
             congestion: server["mkcp_congestion"] == "1",
-            readBufferSize: int(server["mkcp_read_buffer_size"]),
-            writeBufferSize: int(server["mkcp_write_buffer_size"]),
+            readBufferSize: int(server["mkcp_read_buffer_size"] || 2),
+            writeBufferSize: int(server["mkcp_write_buffer_size"] || 2),
             seed: mkcp_seed,
             header: {
-                type: server["mkcp_guise"]
+                type: server["mkcp_guise"] || "none"
             }
         };
     }

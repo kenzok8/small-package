@@ -17,7 +17,7 @@ export function dokodemo_inbound(listen, port, tag, sniffing, sniffing_route_onl
         settings: {
             network: network,
             followRedirect: true,
-            timeout: timeout == null ? 300 : int(timeout),
+            timeout: int(timeout || 300),
         },
         streamSettings: {
             sockopt: {
