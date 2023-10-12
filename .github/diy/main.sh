@@ -132,6 +132,7 @@ git clone --depth 1 https://github.com/doushang/luci-app-shortcutmenu luci-short
 git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
 git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic-Go packages/net/msd_lite ./ ; rm -rf packages
 
+svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-homeproxy
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
 svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
 svn export https://github.com/x-wrt/luci/trunk/applications/luci-app-nft-qos
