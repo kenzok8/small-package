@@ -172,6 +172,7 @@ const methods = {
 			}
 
 			features.hp_has_chinadns_ng = access('/usr/bin/chinadns-ng');
+			features.hp_has_ip_full = access('/usr/libexec/ip-full');
 			features.hp_has_tproxy = access('/etc/modules.d/nft-tproxy');
 			features.hp_has_tun = access('/etc/modules.d/30-tun');
 
