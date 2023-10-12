@@ -44,7 +44,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		type: cfg.type,
 		tag: 'cfg-' + cfg['.name'] + '-in',
 
-		listen: '::',
+		listen: cfg.address || '::',
 		listen_port: strToInt(cfg.port),
 		tcp_fast_open: strToBool(cfg.tcp_fast_open),
 		tcp_multi_path: strToBool(cfg.tcp_multi_path),

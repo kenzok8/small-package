@@ -948,8 +948,8 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'http_method', _('Method'));
-		so.value('get', _('GET'));
-		so.value('put', _('PUT'));
+		so.value('GET', _('GET'));
+		so.value('PUT', _('PUT'));
 		so.depends('transport', 'http');
 		so.modalonly = true;
 
