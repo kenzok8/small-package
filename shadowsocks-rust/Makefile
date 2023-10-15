@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadowsocks-rust
-PKG_VERSION:=1.16.2
+PKG_VERSION:=1.17.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_HEADER:=shadowsocks-v$(PKG_VERSION)
@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-rust/releases/downloa
 
 ifeq ($(ARCH),aarch64)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).aarch64-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-  PKG_HASH:=da51732b2a55d0f2e3270f70b638a32f303b675c0db636abefa5ce316e3269f7
+  PKG_HASH:=ef964ac60a499a0c8313d48284a7542c085f9c7672eb121a796b70d49163f35a
 else ifeq ($(ARCH),arm)
   # Referred to golang/golang-values.mk
   ARM_CPU_FEATURES:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
