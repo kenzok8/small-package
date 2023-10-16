@@ -16,6 +16,7 @@
 volatile int should_exit = false;
 
 void signal_handler(int signum) {
+    syslog(LOG_ERR, "Signal %s received, exiting...", strsignal(signum));
     should_exit = true;
 }
 
@@ -30,6 +31,8 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
     signal(SIGQUIT, signal_handler);
+    signal(SIGSEGV, signal_handler);
+    signal(SIGABRT, signal_handler);
 
     struct nf_queue queue[1];
     memset(queue, 0, sizeof(struct nf_queue));
