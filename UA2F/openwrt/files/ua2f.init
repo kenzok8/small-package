@@ -15,7 +15,7 @@ FW_DIR="/var/etc"
 FW_CONF="$FW_DIR/ua2f.include"
 
 HAS_IPT6="$(command -v ip6tables)"
-FW4="$(command -v fw4)"
+HAS_NFT="$(command -v nft)"
 
 if type extra_command >"/dev/null" 2>&1; then
 	extra_command "setup_firewall"
@@ -35,7 +35,7 @@ setup_firewall() {
 	config_get_bool handle_intranet "firewall" "handle_intranet" "0"
 	config_get_bool handle_mmtls "firewall" "handle_mmtls" "0"
 
-	if [ -n "$FW4" ]; then
+	if [ -n "$HAS_NFT" ]; then
 		nft -f- <<-EOF
 			table inet ua2f {
 				set localaddr_v4 {
@@ -66,8 +66,6 @@ setup_firewall() {
 				chain prerouting {
 					type filter hook prerouting priority mangle -5; policy accept;
 
-					meta l4proto != tcp counter return comment "!ua2f: not tcp";
-
 					$([ "$handle_intranet" -ne "1" ] || echo 'ip daddr @localaddr_v4 counter return;')
 					$([ "$handle_intranet" -ne "1" ] || echo 'ip6 daddr @localaddr_v6 counter return;')
 
@@ -75,7 +73,7 @@ setup_firewall() {
 					$([ "$handle_tls" -eq "1" ] || echo 'tcp dport 443 counter return comment "!ua2f: bypass HTTPS";')
 					tcp dport 80 counter ct mark set 44;
 					ct mark 43 counter return comment "!ua2f: bypass non-http stream";
-					ct direction original counter queue num 10010 bypass;
+					meta l4proto tcp ct direction original counter queue num 10010 bypass;
 				}
 			}
 		EOF
@@ -149,7 +147,7 @@ start_service() {
 	config_get_bool handle_fw "firewall" "handle_fw" "0"
 	if [ "$handle_fw" -eq "1" ]; then
 		setup_firewall
-		[ -n "$FW4" ] || {
+		[ -n "$HAS_NFT" ] || {
 			mkdir -p "$FW_DIR"
 			echo -e "/etc/init.d/$NAME setup_firewall" > "$FW_CONF"
 		}
@@ -163,7 +161,7 @@ start_service() {
 }
 
 stop_service() {
-	if [ -n "$FW4" ]; then
+	if [ -n "$HAS_NFT" ]; then
 		nft flush table inet ua2f
 		nft delete table inet ua2f
 	else
