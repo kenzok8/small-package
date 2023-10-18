@@ -2,7 +2,7 @@
 
 uci -q delete firewall.ua2f
 
-if [ -z "$(command -v fw4)" ]; then
+if [ -z "$(command -v nft)" ]; then
 	uci -q batch <<-EOF >/dev/null
 		set firewall.ua2f=include
 		set firewall.ua2f.type=script
