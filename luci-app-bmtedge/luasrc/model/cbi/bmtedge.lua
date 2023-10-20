@@ -23,6 +23,8 @@ o.rmempty = false
 o.datatype = "string"
 o:value("jinshanyun/jinshan-x86_64", "jinshanyun/jinshan-x86_64")
 o:value("jinshanyun/jinshan-arm64", "jinshanyun/jinshan-arm64")
+o:value("jinshanyun/jinshan-x86_64:v1.2", "jinshanyun/jinshan-x86_64:v1.2")
+o:value("jinshanyun/jinshan-arm64:v2.2", "jinshanyun/jinshan-arm64:v2.2")
 o.default = default_image
 
 local default_uid = bmtedge_model.default_uid()
