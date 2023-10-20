@@ -53,15 +53,15 @@
 --- a/luci-app-turboacc/root/etc/init.d/turboacc
 +++ b/luci-app-turboacc/root/etc/init.d/turboacc
 @@ -22,7 +22,7 @@ inital_conf(){
+ 	config_get "dns_caching_mode" "config" "dns_caching_mode" "0"
  	config_get "dns_caching_dns" "config" "dns_caching_dns"
  
- 	[ ! -e "/lib/modules/$(uname -r)/mtkhnat.ko" ] && hw_flow="0";
 -	[ ! -e "/lib/modules/$(uname -r)/xt_FLOWOFFLOAD.ko" ] && { sw_flow="0"; hw_flow="0"; }
 +	[[ ! -e "/lib/modules/$(uname -r)/xt_FLOWOFFLOAD.ko" && ! -e "/lib/modules/$(uname -r)/nft_flow_offload.ko" ]] && { sw_flow="0"; hw_flow="0"; }
  	[ ! -e "/lib/modules/$(uname -r)/tcp_bbr.ko" ] && bbr_cca="0"
  }
  
-@@ -324,10 +324,10 @@ restart(){
+@@ -346,10 +346,10 @@ restart(){
  check_status(){
  	case "$1" in
  	"fastpath")
@@ -74,7 +74,7 @@
  		    [ -e /sys/kernel/debug/hnat/hnat_version ]; then
  			echo -n "MediaTek HWNAT"
  			exit 0
-@@ -348,7 +348,7 @@ check_status(){
+@@ -370,7 +370,7 @@ check_status(){
  		fi
  		;;
  	"fullconenat")
@@ -102,7 +102,7 @@
  	option hw_flow '1'
  	option sfe_flow '1'
 -	option fullcone_nat '2'
-+	option fullcone_nat '0'
++	option fullcone_nat '1'
+ 	option hw_wed '0'
  	option bbr_cca '0'
  	option dns_caching '0'
- 	option dns_caching_mode '1'

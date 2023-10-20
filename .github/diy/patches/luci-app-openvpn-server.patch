@@ -1,5 +1,5 @@
---- a/luci-app-openvpn-server/root/etc/uci-defaults/luci-openvpn
-+++ b/luci-app-openvpn-server/root/etc/uci-defaults/luci-openvpn
+--- a/luci-app-openvpn-server/root/etc/uci-defaults/openvpn
++++ b/luci-app-openvpn-server/root/etc/uci-defaults/openvpn
 @@ -1,5 +1,10 @@
  #!/bin/sh
  
@@ -9,5 +9,4 @@
 +fi
 +
  openvpn_port="$(uci -q get openvpn.myvpn.port)"
- [ -z "$openvpn_port" ] && openvpn_port=1194
- 
+ [ -z "$openvpn_port" ] && openvpn_port=1197

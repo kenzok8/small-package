@@ -1,94 +1,93 @@
 --- a/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js
 +++ b/luci-app-attendedsysupgrade/htdocs/luci-static/resources/view/attendedsysupgrade/overview.js
-@@ -100,7 +100,7 @@ return view.extend({
- 		}
+@@ -108,7 +108,7 @@ return view.extend({
  
  		if (image.name != undefined) {
--			var sysupgrade_url = `${this.data.url}/store/${response.bin_dir}/${image.name}`;
-+			var sysupgrade_url = `${this.data.url}/store/${response.request_hash}/${image.name}`;
+ 			this.data.sha256_unsigned = image.sha256_unsigned;
+-			let sysupgrade_url = `${this.data.url}/store/${response.bin_dir}/${image.name}`;
++			let sysupgrade_url = `${this.data.url}/store/${response.request_hash}/${image.name}`;
  
- 			var keep = E('input', { type: 'checkbox' });
+ 			let keep = E('input', { type: 'checkbox' });
  			keep.checked = true;
-@@ -284,15 +284,12 @@ return view.extend({
+@@ -398,14 +398,11 @@ return view.extend({
  			});
  	},
  
 -	handleCheck: function () {
 +	handleCheck: function (force) {
- 		var { url, revision } = this.data
- 		var { version, target } = this.firmware
- 		var candidates = [];
- 		var response;
--		var request_url = `${url}/api/overview`;
+ 		let { url, revision } = this.data;
+ 		let { version, target } = this.firmware;
+ 		let candidates = [];
+-		let request_url = `${url}/api/overview`;
 -		if (version.endsWith('SNAPSHOT')) {
 -			request_url = `${url}/api/v1/revision/${version}/${target}`;
 -		}
-+		var request_url = `${url}/api/v1/revision/${version}/${target}`;
++		let request_url = `${url}/api/v1/revision/${version}/${target}`;
  
  		ui.showModal(_('Searching...'), [
- 			E('p', { 'class': 'spinning' },
-@@ -311,40 +308,10 @@ return view.extend({
- 					]);
- 					return;
+ 			E(
+@@ -435,40 +432,12 @@ return view.extend({
+ 				]);
+ 				return;
+ 			}
+-			if (version.endsWith('SNAPSHOT')) {
+ 				const remote_revision = response.json().revision;
+ 				if (
+-					get_revision_count(revision) < get_revision_count(remote_revision)
++					revision < remote_revision || force == 1
+ 				) {
+ 					candidates.push([version, remote_revision]);
  				}
--				if (version.endsWith('SNAPSHOT')) {
- 					const remote_revision = response.json().revision;
--					if (get_revision_count(revision) < get_revision_count(remote_revision)) {
-+					if (revision < remote_revision || force == 1) {
- 						candidates.push([version, remote_revision]);
- 					}
--				} else {
--					const latest = response.json().latest;
+-			} else {
+-				const latest = response.json().latest;
 -
--					for (let remote_version of latest) {
--						var remote_branch = get_branch(remote_version);
+-				for (let remote_version of latest) {
+-					let remote_branch = get_branch(remote_version);
 -
--						// already latest version installed
--						if (version == remote_version) {
--							break;
--						}
+-					// already latest version installed
+-					if (version == remote_version) {
+-						break;
+-					}
 -
--						// skip branch upgrades outside the advanced mode
--						if (this.data.branch != remote_branch && this.data.advanced_mode == 0) {
--							continue;
--						}
+-					// skip branch upgrades outside the advanced mode
+-					if (
+-						this.data.branch != remote_branch &&
+-						this.data.advanced_mode == 0
+-					) {
+-						continue;
+-					}
 -
--						candidates.unshift([remote_version, null]);
+-					candidates.unshift([remote_version, null]);
 -
--						// don't offer branches older than the current
--						if (this.data.branch == remote_branch) {
--							break;
--						}
+-					// don't offer branches older than the current
+-					if (this.data.branch == remote_branch) {
+-						break;
 -					}
 -				}
--
--				// allow to re-install running firmware in advanced mode
--				if (this.data.advanced_mode == 1) {
--					candidates.unshift([version, revision])
--				}
+-			}
  
- 				if (candidates.length) {
- 					var m, s, o;
-@@ -353,7 +320,7 @@ return view.extend({
- 						request: {
- 							profile: this.firmware.profile,
- 							version: candidates[0][0],
--							packages: Object.keys(this.firmware.packages).sort(),
-+							packages: Object.keys(this.firmware.packages).filter((value) => value.search("-zh-cn") == -1).sort(),
- 						},
- 					};
+ 			// allow to re-install running firmware in advanced mode
+ 			if (this.data.advanced_mode == 1) {
+@@ -482,7 +451,7 @@ return view.extend({
+ 					request: {
+ 						profile: this.firmware.profile,
+ 						version: candidates[0][0],
+-						packages: Object.keys(this.firmware.packages).sort(),
++						packages: Object.keys(this.firmware.packages).filter((value) => value.search("-zh-cn") == -1).sort(),
+ 					},
+ 				};
  
-@@ -401,6 +368,9 @@ return view.extend({
- 						E('p', _('The device runs the latest firmware version %s - %s').format(version, revision)),
- 						E('div', { class: 'right' }, [
- 							E('div', { class: 'btn', click: ui.hideModal }, _('Close')),
-+							E('div', { class: 'btn cbi-button cbi-button-positive', click: ui.createHandlerFn(this, function () {
+@@ -565,6 +534,9 @@ return view.extend({
+ 					),
+ 					E('div', { class: 'right' }, [
+ 						E('div', { class: 'btn', click: ui.hideModal }, _('Close')),
++					E('div', { class: 'btn cbi-button cbi-button-positive', click: ui.createHandlerFn(this, function () {
 +											this.handleCheck(1)
 +										}) }, _('Force Sysupgrade')),
- 						]),
- 					]);
- 				}
-@@ -429,6 +399,12 @@ return view.extend({
+ 					]),
+ 				]);
+ 			}
+@@ -593,6 +565,12 @@ return view.extend({
  		this.data.revision = response[1].release.revision;
  
  		this.data.efi = response[2];
@@ -100,15 +99,14 @@
 +		}
  
  		this.data.url = uci.get_first('attendedsysupgrade', 'server', 'url');
- 		this.data.advanced_mode = uci.get_first('attendedsysupgrade', 'client', 'advanced_mode') || 0
-@@ -438,6 +414,17 @@ return view.extend({
- 			E('p', _('The attended sysupgrade service allows to easily upgrade vanilla and custom firmware images.')),
- 			E('p', _('This is done by building a new firmware on demand via an online service.')),
- 			E('p', _('Currently running: %s - %s').format(this.firmware.version, this.data.revision)),
-+			E('p', [_('更多个性化定制请使用网页版: '),
-+					E('a', {
+ 		this.data.advanced_mode =
+@@ -624,6 +602,16 @@ return view.extend({
+ 					this.data.revision
+ 				)
+ 			),
++			E('p', [_('更多个性化定制请使用网页版: '),E('a', {
 +				'class': '',
-+				'href': 'https://supes.top',
++				'href': 'https://openwrt.ai',
 +				'target': '_balank',
 +			}, _('在线定制网页版'))]),
 +			E('p', [_('非定制固件请在此更新: '),E('a', {
@@ -116,9 +114,9 @@
 +				'href': '/cgi-bin/luci/admin/services/gpsysupgrade',
 +				'target': '_balank',
 +			}, _('系统在线更新')),E('br')]),
- 			E('button', {
- 				'class': 'btn cbi-button cbi-button-positive important',
- 				'click': ui.createHandlerFn(this, this.handleCheck)
+ 			E(
+ 				'button',
+ 				{
 
 --- a/luci-app-attendedsysupgrade/po/zh_Hans/attendedsysupgrade.po
 +++ b/luci-app-attendedsysupgrade/po/zh_Hans/attendedsysupgrade.po

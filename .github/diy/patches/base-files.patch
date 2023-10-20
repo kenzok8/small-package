@@ -98,7 +98,7 @@
  [ -n "$FAILSAFE" ] || {
  	for FILE in /etc/profile.d/*.sh; do
 -		[ -e "$FILE" ] && . "$FILE"
-+		if [ "$FILE" == "/etc/profile.d/sysinfo.sh" ]; then
++		if [ "$FILE" == "/etc/profile.d/30-sysinfo.sh" ]; then
 +		 [ "$(which bash)" ] && env -i bash "$FILE"
 +		else
 +		 [ -e "$FILE" ] && . "$FILE"

@@ -1,5 +1,5 @@
 config server 'server'
-	option url 'https://supes.top'
+	option url 'https://openwrt.ai'
 
 config client 'client'
 	option upgrade_packages '1'

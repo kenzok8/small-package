@@ -32,12 +32,16 @@
 +	procd_add_reload_trigger "dockerd"
 +}
 
---- a/transmission/files/transmission.init
-+++ b/transmission/files/transmission.init
-@@ -143,3 +143,6 @@ start_service() {
- 	config_foreach transmission 'transmission'
+--- a/luci-app-nezha/root/etc/init.d/nezha-agent
++++ b/luci-app-nezha/root/etc/init.d/nezha-agent
+@@ -25,7 +25,11 @@ start_service() {
+         procd_close_instance
  }
  
 +service_triggers() {
-+	procd_add_reload_trigger "transmission"
++	procd_add_reload_trigger "nezha-agent"
 +}
++
+ reload_service() {
+   stop
+   start
