@@ -4,7 +4,7 @@
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FZxilly%2FUA2F.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FZxilly%2FUA2F?ref=badge_shield)
 
-暂时来说，懒得写 README，请先参照 [博客文章](https://learningman.top/archives/304) 完成操作
+参照 [博客文章](https://learningman.top/archives/304) 完成操作
 
 如果遇到了任何问题，欢迎提出 Issues，但是更欢迎直接提交 Pull Request
 
@@ -29,6 +29,9 @@ uci set ua2f.firewall.handle_mmtls=1
 # 是否处理内网流量，如果你的路由器是在内网中，且你想要处理内网中的流量，那么请启用这一选项
 uci set ua2f.firewall.handle_intranet=1
 
+# 使用自定义 User-Agent
+uci set ua2f.main.custom_ua="Test UA/1.0"
+
 # 应用配置
 uci commit ua2f
 
@@ -41,13 +44,22 @@ service ua2f start
 
 ## 自定义 User-Agent
 
+### 集成到二进制
+
 `make menuconfig` 后，使用 option 设置
 
 ![image](https://github.com/Zxilly/UA2F/assets/31370133/09469f69-4481-4bd8-9ce3-7029df33838d)
 
 `UA2F_CUSTOM_UA` 的值必须是一个字符串，且长度不超过 `(65535 + (MNL_SOCKET_BUFFER_SIZE / 2))` 字节。 `MNL_SOCKET_BUFFER_SIZE` 的值通常为 8192。
 
-UA2F 不会修改包的大小，因此即使自定义了 User-Agent， 运行时实际的 User-Agent 会是一个从 custom ua 中截取的长度与原始 User-Agent 相同的子串。
+### 使用 uci 设置
+
+```bash
+uci set ua2f.main.custom_ua="Test UA/1.0"
+uci commit ua2f
+```
+
+> UA2F 不会修改包的大小，因此即使自定义了 User-Agent， 运行时实际的 User-Agent 会是一个从 custom ua 中截取的长度与原始 User-Agent 相同的子串，长度不足时会在末尾补空格。
 
 ## TODO
 
