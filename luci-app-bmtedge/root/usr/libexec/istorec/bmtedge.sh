@@ -13,6 +13,12 @@ do_install() {
       exit 1
   fi
 
+  local netdev=`ip route list|awk ' /^default/ {print $5}'`
+  if [ -z "$netdev" ]; then
+      echo "defualt gateway is empty!"
+      exit 1
+  fi
+
   [ -z "$image_name" ] && image_name="jinshanyun/jinshan-x86_64:latest"
   echo "docker pull ${image_name}"
   docker pull ${image_name}
@@ -22,14 +28,14 @@ do_install() {
     --privileged \
     --network=host \
     --dns=127.0.0.1 \
+    --dns=223.5.5.5 \
     --tmpfs /run \
     --tmpfs /tmp \
     -v \"$path:/data/ksc1\" \
     -v \"$path/containerd:/var/lib/containerd\" \
-    -e ksc_supplier_code=\"92101\" \
     -e ksc_datadir=\"/data/ksc1\" \
-    -e ksc_machine_code=\"lsyK17032_$uid\" \
-    -e ksc_refer=\"ruiyun_node\""
+    -e ksc_net=\"$netdev\" \
+    -e ksc_machine_code=\"lsyK17032_$uid\" "
 
   local tz="`uci get system.@system[0].zonename`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
