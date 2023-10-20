@@ -1,15 +1,3 @@
---- a/luci-app-acme/Makefile
-+++ b/luci-app-acme/Makefile
-@@ -8,7 +8,7 @@
- include $(TOPDIR)/rules.mk
- 
- LUCI_TITLE:=ACME package - LuCI interface
--LUCI_DEPENDS:=+luci-mod-admin-full +acme
-+LUCI_DEPENDS:=+luci-mod-admin-full +acme +acme-dnsapi
- 
- PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
- PKG_LICENSE:=GPL-3.0-or-later
-
 --- a/luci-app-aria2/Makefile
 +++ b/luci-app-aria2/Makefile
 @@ -7,7 +7,7 @@
@@ -67,7 +55,7 @@
  	+nftables-json \
 -	+ucode +ucode-mod-fs +ucode-mod-ubus +ucode-mod-uci
 +	+ucode +ucode-mod-fs +ucode-mod-ubus +ucode-mod-uci \
-+	+kmod-nft-fullcone +iptables-nft +ip6tables-nft +arptables-nft +ebtables-nft +xtables-nft +nftables-json +miniupnpd-nftables
++	+kmod-nft-fullcone +iptables-nft +ip6tables-nft +arptables-nft +ebtables-nft +xtables-nft +miniupnpd-nftables
    EXTRA_DEPENDS:=ucode (>= 2022-03-22)
    PROVIDES:=uci-firewall
  endef
@@ -145,16 +133,23 @@
 
 --- a/dockerd/Makefile
 +++ b/dockerd/Makefile
-@@ -95,14 +95,14 @@ define Build/Prepare
+@@ -47,6 +47,8 @@ define Package/dockerd
+     +kmod-veth \
+     +tini \
+     +uci-firewall \
++    +fuse-overlayfs +cgroupfs-mount \
++    +kmod-vxlan +kmod-macvlan +kmod-dummy +kmod-crypto-gcm +kmod-crypto-seqiv +kmod-crypto-ghash +kmod-ipsec +kmod-nf-nathelper +kmod-nf-nathelper-extra +btrfs-progs \
+     @!(mips||mipsel)
+   USERID:=docker:docker
+   MENU:=1
+@@ -95,13 +96,13 @@ define Build/Prepare
  	$(Build/Prepare/Default)
  
  	# Verify dependencies are the vendored version
 -	$(call EnsureVendoredVersion,../containerd/Makefile,containerd.installer)
--	$(call EnsureVendoredCommit,../libnetwork/Makefile,proxy.installer)
 -	$(call EnsureVendoredVersion,../runc/Makefile,runc.installer)
 -	$(call EnsureVendoredVersion,../tini/Makefile,tini.installer)
 +	$(call EnsureVendoredVersion,../../packages/utils/containerd/Makefile,containerd.installer)
-+	$(call EnsureVendoredCommit,../../packages/utils/libnetwork/Makefile,proxy.installer)
 +	$(call EnsureVendoredVersion,../../packages/utils/runc/Makefile,runc.installer)
 +	$(call EnsureVendoredVersion,../../packages/utils/tini/Makefile,tini.installer)
  
@@ -165,17 +160,6 @@
  		CLI_VERSION=$$$$( grep --only-matching --perl-regexp '(?<=PKG_VERSION:=)(.*)' "$$$${CLI_MAKEFILE}" ); \
  		if [ "$$$${CLI_VERSION}" != "$(PKG_VERSION)" ]; then \
  			echo "ERROR: Expected 'PKG_VERSION:=$(PKG_VERSION)' in '$$$${CLI_MAKEFILE}', found 'PKG_VERSION:=$$$${CLI_VERSION}'"; \
-
---- a/transmission-web-control/Makefile
-+++ b/transmission-web-control/Makefile
-@@ -19,7 +19,6 @@ define Package/transmission-web-control
-   SECTION:=net
-   CATEGORY:=Network
-   SUBMENU:=BitTorrent
--  DEPENDS:=+transmission-daemon
-   CONFLICTS:=transmission-web
-   TITLE:=Transmission Web Control
-   URL:=https://github.com/ronggang/transmission-web-control
 
 --- a/fullconenat/Makefile
 +++ b/fullconenat/Makefile
@@ -225,13 +209,15 @@
 
 --- a/luci-app-upnp/Makefile
 +++ b/luci-app-upnp/Makefile
-@@ -7,7 +7,6 @@
+@@ -7,7 +7,7 @@
  include $(TOPDIR)/rules.mk
  
  LUCI_TITLE:=Universal Plug & Play configuration module
--LUCI_DEPENDS:=+miniupnpd
+-LUCI_DEPENDS:=+miniupnpd +rpcd-mod-ucode
++LUCI_DEPENDS:=+rpcd-mod-ucode
  
- include $(TOPDIR)/feeds/luci/luci.mk
+ include ../../luci.mk
+ 
 
 --- a/luci-app-openclash/Makefile
 +++ b/luci-app-openclash/Makefile
@@ -243,17 +229,27 @@
 +	+libcap +libcap-bin +ruby +ruby-yaml +kmod-tun +unzip +kmod-inet-diag +kmod-ipt-nat +iptables-mod-tproxy +iptables-mod-extra
  	MAINTAINER:=vernesong
  endef
- 
 
---- a/dockerd/Makefile
-+++ b/dockerd/Makefile
-@@ -47,7 +47,8 @@ define Package/dockerd
-     +kmod-veth \
-     +libnetwork \
-     +tini \
--    +uci-firewall
-+    +uci-firewall \
-+    +fuse-overlayfs +cgroupfs-mount
-   USERID:=docker:docker
+--- a/wifidog-wiwiz/Makefile
++++ b/wifidog-wiwiz/Makefile
+@@ -21,7 +21,7 @@ define Package/wifidog-wiwiz
+   SUBMENU:=Portal
+   SECTION:=net
+   CATEGORY:=Wiwiz/PinPinWiFi
+-  DEPENDS:=+iptables-mod-extra +iptables-mod-ipopt +iptables-mod-nat-extra +libpthread +curl
++  DEPENDS:=+luci-app-eqos +dcc2-wiwiz-nossl +iptables-mod-extra +iptables-mod-ipopt +iptables-mod-nat-extra +libpthread +curl
+   TITLE:=wifidog-wiwiz
+   URL:=http://www.wiwiz.com
    MENU:=1
- endef
+
+--- a/luci-app-rclone/Makefile
++++ b/luci-app-rclone/Makefile
+@@ -15,7 +15,7 @@ PKG_CONFIG_DEPENDS:= \
+ 
+ LUCI_TITLE:=LuCI support for Rclone
+ LUCI_PKGARCH:=all
+-LUCI_DEPENDS:=+rclone-config \
++LUCI_DEPENDS:=+rclone-config +fuse-overlayfs +fuse3-utils \
+ 	+PACKAGE_$(PKG_NAME)_INCLUDE_rclone-webui:rclone-webui-react \
+ 	+PACKAGE_$(PKG_NAME)_INCLUDE_rclone-ng:rclone-ng
+

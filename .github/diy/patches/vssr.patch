@@ -9,3 +9,15 @@
      )
      return trim(stdout)
  end
+
+--- a/luci-app-vssr/luasrc/view/vssr/tblsection.htm
++++ b/luci-app-vssr/luasrc/view/vssr/tblsection.htm
+@@ -7,7 +7,7 @@
+         <button class="cbi-button  cbi-button-check ">
+             <%:Ping All Servers%>
+         </button><span class="panel-title">总计
+-            <%- print(self.des)-%>个节点
++            <%=self.des%>个节点
+         </span>
+         <div style="clear:both;"></div>
+     </div>

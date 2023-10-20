@@ -1,9 +1,9 @@
 --- a/luci-mod-network/htdocs/luci-static/resources/view/network/dhcp.js
 +++ b/luci-mod-network/htdocs/luci-static/resources/view/network/dhcp.js
-@@ -256,6 +256,29 @@ return view.extend({
- 		s.tab('leases', _('Static Leases'));
- 		s.tab('hosts', _('Hostnames'));
- 		s.tab('ipsets', _('IP Sets'));
+@@ -264,6 +264,29 @@ return view.extend({
+ 		s.tab('mxhosts', _('MX'));
+ 		s.tab('cnamehosts', _('CNAME'));
+ 		s.tab('pxe_tftp', _('PXE/TFTP Settings'));
 +		s.tab('custom_domain', _('Custom Redirect Domain'));
 +
 +		o = s.taboption('custom_domain', form.SectionValue, 'domain', form.GridSection, 'domain', null,
@@ -30,7 +30,7 @@
  
  		s.taboption('general', form.Flag, 'domainneeded',
  			_('Domain required'),
-@@ -368,6 +391,11 @@ return view.extend({
+@@ -439,6 +462,11 @@ return view.extend({
  		o.optional = true;
  		o.placeholder = '/etc/dnsmasq.hosts';
  
@@ -38,13 +38,13 @@
 +			_('Disable IPv6 DNS forwards'),
 +			_('Filter IPv6(AAAA) DNS Query Name Resolve'));
 +		o.optional = true;
-+		
++
  		o = s.taboption('advanced', form.Flag, 'quietdhcp',
  			_('Suppress logging'),
  			_('Suppress logging of the routine operation for the DHCP protocol.'));
-@@ -475,6 +503,13 @@ return view.extend({
+@@ -558,6 +586,13 @@ return view.extend({
  		o.datatype = 'range(0,10000)';
- 		o.placeholder = 150;
+ 		o.placeholder = 1000;
  
 +		o = s.taboption('advanced', form.Value, 'mini_ttl',
 +			_('Minimum TTL to send to clients'),
@@ -52,7 +52,7 @@
 +		o.optional = true;
 +		o.datatype = 'range(0,86400)';
 +		o.placeholder = 0;
-+		
++
  		o = s.taboption('pxe_tftp', form.Flag, 'enable_tftp',
  			_('Enable TFTP server'),
  			_('Enable the built-in single-instance TFTP server.'));

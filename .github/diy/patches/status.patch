@@ -1,57 +1,3 @@
---- a/luci-mod-status/htdocs/luci-static/resources/view/status/include/30_network.js
-+++ b/luci-mod-status/htdocs/luci-static/resources/view/status/include/30_network.js
-@@ -2,6 +2,7 @@
- 'require baseclass';
- 'require fs';
- 'require network';
-+'require rpc';
- 
- function progressbar(value, max, byte) {
- 	var vn = parseInt(value) || 0,
-@@ -59,6 +60,11 @@ function renderbox(ifc, ipv6) {
- 	]);
- }
- 
-+var callUserInfo = rpc.declare({
-+    object: 'luci',
-+    method: 'getOnlineUsers'
-+});
-+
- return baseclass.extend({
- 	title: _('Network'),
- 
-@@ -67,7 +73,8 @@ return baseclass.extend({
- 			fs.trimmed('/proc/sys/net/netfilter/nf_conntrack_count'),
- 			fs.trimmed('/proc/sys/net/netfilter/nf_conntrack_max'),
- 			network.getWANNetworks(),
--			network.getWAN6Networks()
-+			network.getWAN6Networks(),
-+			L.resolveDefault(callUserInfo(), {})
- 		]);
- 	},
- 
-@@ -75,7 +82,8 @@ return baseclass.extend({
- 		var ct_count  = +data[0],
- 		    ct_max    = +data[1],
- 		    wan_nets  = data[2],
--		    wan6_nets = data[3];
-+		    wan6_nets = data[3],
-+		    userinfo = data[4];
- 
- 		var fields = [
- 			_('Active Connections'), ct_max ? ct_count : null
-@@ -90,6 +98,10 @@ return baseclass.extend({
- 					(fields[i + 1] != null) ? progressbar(fields[i + 1], ct_max) : '?'
- 				])
- 			]));
-+			ctstatus.appendChild(E('div', { 'class': 'tr' }, [
-+				E('div', { 'class': 'td left' }, _('Online Users')),
-+				E('div', { 'class': 'td left' },  userinfo.onlineusers)
-+			]));
- 		}
- 
- 		var netstatus = E('div', { 'class': 'network-status-table' });
-
 --- a/luci-mod-status/htdocs/luci-static/resources/view/status/include/20_memory.js
 +++ b/luci-mod-status/htdocs/luci-static/resources/view/status/include/20_memory.js
 @@ -32,8 +32,7 @@ return baseclass.extend({
@@ -77,32 +23,21 @@
  		for (var i = 0; i < fields.length; i += 3) {
  			table.appendChild(E('tr', { 'class': 'tr' }, [
 
---- a/luci-mod-status/htdocs/luci-static/resources/view/status/nftables.js
-+++ b/luci-mod-status/htdocs/luci-static/resources/view/status/nftables.js
-@@ -669,7 +669,6 @@ return view.extend({
- 	checkLegacyRules: function(ipt4save, ipt6save) {
- 		if (ipt4save.match(/\n-A /) || ipt6save.match(/\n-A /)) {
- 			ui.addNotification(_('Legacy rules detected'), [
--				E('p', _('There are legacy iptables rules present on the system. Mixing iptables and nftables rules is discouraged and may lead to incomplete traffic filtering.')),
- 				E('button', {
- 					'class': 'btn cbi-button',
- 					'click': function() { location.href = 'nftables/iptables' }
-
---- a/luci-mod-system/root/usr/share/rpcd/acl.d/luci-mod-system.json
-+++ b/luci-mod-system/root/usr/share/rpcd/acl.d/luci-mod-system.json
+--- a/luci-mod-status/root/usr/share/rpcd/acl.d/luci-mod-status.json
++++ b/luci-mod-status/root/usr/share/rpcd/acl.d/luci-mod-status.json
 @@ -3,7 +3,7 @@
- 		"description": "Grant access to system configuration",
+ 		"description": "Grant access to realtime statistics",
  		"read": {
  			"ubus": {
--				"luci": [ "getInitList", "getLEDs", "getTimezones", "getUSBDevices" ],
-+				"luci": [ "getInitList", "getLEDs", "getTimezones", "getUSBDevices", "getCPUInfo", "getETHInfo", "getTempInfo", "getCPUBench", "getCPUUsage", "getOnlineUsers" ],
- 				"system": [ "info" ]
- 			},
- 			"uci": [ "luci", "system" ]
+-				"luci": [ "getConntrackList", "getRealtimeStats" ],
++				"luci": [ "getConntrackList", "getRealtimeStats", "getCPUBench", "getCPUUsage", "getOnlineUsers" ],
+ 				"network.rrdns": [ "lookup" ]
+ 			}
+ 		}
 
 --- a/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js
 +++ b/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js
-@@ -13,6 +13,26 @@ var callSystemInfo = rpc.declare({
+@@ -18,6 +18,21 @@ var callSystemInfo = rpc.declare({
  	method: 'info'
  });
  
@@ -116,11 +51,6 @@
 +	method: 'getCPUInfo'
 +});
 +
-+var callCPUUsage = rpc.declare({
-+	object: 'luci',
-+	method: 'getCPUUsage'
-+});
-+
 +var callTempInfo = rpc.declare({
 +	object: 'luci',
 +	method: 'getTempInfo'
@@ -129,31 +59,29 @@
  return baseclass.extend({
  	title: _('System'),
  
-@@ -20,6 +40,10 @@ return baseclass.extend({
+@@ -25,6 +45,9 @@ return baseclass.extend({
  		return Promise.all([
  			L.resolveDefault(callSystemBoard(), {}),
  			L.resolveDefault(callSystemInfo(), {}),
 +			L.resolveDefault(callCPUBench(), {}),
 +			L.resolveDefault(callCPUInfo(), {}),
-+			L.resolveDefault(callCPUUsage(), {}),
 +			L.resolveDefault(callTempInfo(), {}),
- 			fs.lines('/usr/lib/lua/luci/version.lua')
+ 			L.resolveDefault(callLuciVersion(), { revision: _('unknown version'), branch: 'LuCI' })
  		]);
  	},
-@@ -27,7 +51,11 @@ return baseclass.extend({
+@@ -32,7 +56,10 @@ return baseclass.extend({
  	render: function(data) {
  		var boardinfo   = data[0],
  		    systeminfo  = data[1],
 -		    luciversion = data[2];
 +		    cpubench    = data[2],
 +		    cpuinfo     = data[3],
-+		    cpuusage    = data[4],
-+		    tempinfo    = data[5],
-+		    luciversion = data[6];
++		    tempinfo    = data[4],
++		    luciversion = data[5];
  
- 		luciversion = luciversion.filter(function(l) {
- 			return l.match(/^\s*(luciname|luciversion)\s*=/);
-@@ -52,8 +80,6 @@ return baseclass.extend({
+ 		luciversion = luciversion.branch + ' ' + luciversion.revision;
+ 
+@@ -53,8 +81,6 @@ return baseclass.extend({
  
  		var fields = [
  			_('Hostname'),         boardinfo.hostname,
@@ -162,7 +90,7 @@
  			_('Target Platform'),  (L.isObject(boardinfo.release) ? boardinfo.release.target : ''),
  			_('Firmware Version'), (L.isObject(boardinfo.release) ? boardinfo.release.description + ' / ' : '') + (luciversion || ''),
  			_('Kernel Version'),   boardinfo.kernel,
-@@ -66,6 +92,24 @@ return baseclass.extend({
+@@ -67,6 +93,24 @@ return baseclass.extend({
  			) : null
  		];
  
@@ -187,3 +115,14 @@
  		var table = E('table', { 'class': 'table' });
  
  		for (var i = 0; i < fields.length; i += 2) {
+
+--- a/luci-mod-status/htdocs/luci-static/resources/view/status/nftables.js
++++ b/luci-mod-status/htdocs/luci-static/resources/view/status/nftables.js
+@@ -675,7 +675,6 @@ return view.extend({
+ 	checkLegacyRules: function(ipt4save, ipt6save) {
+ 		if (ipt4save.match(/\n-A /) || ipt6save.match(/\n-A /)) {
+ 			ui.addNotification(_('Legacy rules detected'), [
+-				E('p', _('There are legacy iptables rules present on the system. Mixing iptables and nftables rules is discouraged and may lead to incomplete traffic filtering.')),
+ 				E('button', {
+ 					'class': 'btn cbi-button',
+ 					'click': function() { location.href = 'nftables/iptables' }
