@@ -1,7 +1,3 @@
-//
-// Created by zxilly on 2023/5/22.
-//
-
 #ifndef UA2F_CLI_H
 #define UA2F_CLI_H
 

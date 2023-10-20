@@ -1,12 +1,9 @@
-//
-// Created by zxilly on 2023/4/20.
-//
-
 #include <arpa/inet.h>
 #include "handler.h"
 #include "cache.h"
 #include "util.h"
 #include "statistics.h"
+#include "config.h"
 #include "custom.h"
 
 #include <libnetfilter_queue/pktbuff.h>
@@ -30,13 +27,20 @@ static char *replacement_user_agent_string = NULL;
 void init_handler() {
     replacement_user_agent_string = malloc(MAX_USER_AGENT_LENGTH);
 
+    if (config.use_custom_ua) {
+        memset(replacement_user_agent_string, ' ', MAX_USER_AGENT_LENGTH);
+        strncpy(replacement_user_agent_string, config.custom_ua, strlen(config.custom_ua));
+        syslog(LOG_INFO, "Using config user agent string: %s", replacement_user_agent_string);
+    } else {
 #ifdef UA2F_CUSTOM_UA
-    memset(replacement_user_agent_string, ' ', MAX_USER_AGENT_LENGTH);
-    strncpy(replacement_user_agent_string, UA2F_CUSTOM_UA, strlen(UA2F_CUSTOM_UA));
-    syslog(LOG_INFO, "Custom user agent string: %s", replacement_user_agent_string);
+        memset(replacement_user_agent_string, ' ', MAX_USER_AGENT_LENGTH);
+        strncpy(replacement_user_agent_string, UA2F_CUSTOM_UA, strlen(UA2F_CUSTOM_UA));
+        syslog(LOG_INFO, "Using embed user agent string: %s", replacement_user_agent_string);
 #else
-    memset(replacement_user_agent_string, 'F', MAX_USER_AGENT_LENGTH);
+        memset(replacement_user_agent_string, 'F', MAX_USER_AGENT_LENGTH);
+        syslog(LOG_INFO, "Custom user agent string not set, using default F-string.");
 #endif
+    }
 
     syslog(LOG_INFO, "Handler initialized.");
 }
@@ -196,7 +200,7 @@ void handle_packet(struct nf_queue *queue, struct nf_packet *pkt) {
         }
     }
 
-    if (type == IPV4){
+    if (type == IPV4) {
         count_ipv4_packet();
     } else {
         count_ipv6_packet();

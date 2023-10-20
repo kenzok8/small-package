@@ -3,6 +3,8 @@ project(UA2F LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 17)
 
+OPTION(UA2F_BUILD_TESTS "Build tests" OFF)
+
 find_package(Git)
 if(GIT_FOUND)
     execute_process(
@@ -76,9 +78,10 @@ add_executable(ua2f
         src/cache.c
         src/handler.c
         src/cli.c
+        src/config.c
         src/third/nfqueue-mnl.c)
 
-target_link_libraries(ua2f mnl netfilter_queue pthread nfnetlink)
+target_link_libraries(ua2f mnl netfilter_queue pthread nfnetlink uci)
 
 install(TARGETS ua2f RUNTIME DESTINATION bin)
 
