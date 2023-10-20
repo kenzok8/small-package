@@ -1,6 +1,7 @@
 'use strict';
 'require form';
 'require network';
+'require tools.widgets as widgets';
 'require uci';
 'require view';
 
@@ -23,6 +24,20 @@ function extra_outbound_format(config_data, s, with_desc) {
         return `${inbound_addr}:${inbound_port} (${destination_format("destination")(s)})`;
     }
     return `${inbound_addr}:${inbound_port}`;
+}
+
+function access_control_format(config_data, s, t) {
+    return function (v) {
+        switch (uci.get(config_data, v, s)) {
+            case "tproxy": {
+                return _("Enable tproxy");
+            }
+            case "bypass": {
+                return _("Disable tproxy");
+            }
+        }
+        return extra_outbound_format(config_data, uci.get(config_data, v, t));
+    };
 }
 
 return view.extend({
@@ -145,7 +160,27 @@ return view.extend({
 
         s.tab("lan_hosts_access_control", _("LAN Hosts Access Control"));
 
-        let lan_hosts = s.taboption('lan_hosts_access_control', form.SectionValue, "lan_hosts_section", form.GridSection, 'lan_hosts', _('LAN Hosts Access Control'), _("Override global transparent proxy settings here.")).subsection;
+        let tproxy_ifaces_v4 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'tproxy_ifaces_v4', _("Devices to enable IPv4 tproxy"), _("Enable IPv4 transparent proxy on these interfaces / network devices."));
+        tproxy_ifaces_v4.noaliases = true;
+        tproxy_ifaces_v4.nocreate = true;
+        tproxy_ifaces_v4.multiple = true;
+
+        let tproxy_ifaces_v6 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'tproxy_ifaces_v6', _("Devices to enable IPV6 tproxy"), _("Enable IPv6 transparent proxy on these interfaces / network devices."));
+        tproxy_ifaces_v6.noaliases = true;
+        tproxy_ifaces_v6.nocreate = true;
+        tproxy_ifaces_v6.multiple = true;
+
+        let bypass_ifaces_v4 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'bypass_ifaces_v4', _("Devices to disable IPv4 tproxy"), _("This overrides per-device settings below. FakeDNS and manual transparent proxy won't be affected by this option."));
+        bypass_ifaces_v4.noaliases = true;
+        bypass_ifaces_v4.nocreate = true;
+        bypass_ifaces_v4.multiple = true;
+
+        let bypass_ifaces_v6 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'bypass_ifaces_v6', _("Devices to disable IPv6 tproxy"), _("This overrides per-device settings below. FakeDNS and manual transparent proxy won't be affected by this option."));
+        bypass_ifaces_v6.noaliases = true;
+        bypass_ifaces_v6.nocreate = true;
+        bypass_ifaces_v6.multiple = true;
+
+        let lan_hosts = s.taboption('lan_hosts_access_control', form.SectionValue, "lan_hosts_section", form.GridSection, 'lan_hosts', _('LAN Hosts Access Control'), _("Per-device settings here override per-interface enabling settings above. FakeDNS and manual transparent proxy won't be affected by these options.")).subsection;
         lan_hosts.sortable = false;
         lan_hosts.anonymous = true;
         lan_hosts.addremove = true;
@@ -158,74 +193,34 @@ return view.extend({
         });
 
         let access_control_strategy_v4 = lan_hosts.option(form.ListValue, "access_control_strategy_v4", _("Access Control Strategy (IPv4)"));
-        access_control_strategy_v4.value("global", _("Use global settings"));
-        access_control_strategy_v4.value("bypass", _("Bypass Xray completely"));
+        access_control_strategy_v4.value("tproxy", _("Enable transparent proxy"));
         access_control_strategy_v4.value("forward", _("Forward via extra inbound"));
+        access_control_strategy_v4.value("bypass", _("Disable transparent proxy"));
         access_control_strategy_v4.modalonly = true;
         access_control_strategy_v4.rmempty = false;
 
         let access_control_forward_tcp_v4 = lan_hosts.option(form.ListValue, "access_control_forward_tcp_v4", _("Extra inbound (TCP4)"));
         access_control_forward_tcp_v4.depends("access_control_strategy_v4", "forward");
-        access_control_forward_tcp_v4.textvalue = function (s) {
-            switch (uci.get(config_data, s, "access_control_strategy_v4")) {
-                case "global": {
-                    return _("Use Global Settings");
-                }
-                case "bypass": {
-                    return _("Bypass Xray completely");
-                }
-            }
-            return extra_outbound_format(config_data, uci.get(config_data, s, "access_control_forward_tcp_v4"));
-        };
+        access_control_forward_tcp_v4.textvalue = access_control_format(config_data, "access_control_strategy_v4", "access_control_forward_tcp_v4");
 
         let access_control_forward_udp_v4 = lan_hosts.option(form.ListValue, "access_control_forward_udp_v4", _("Extra inbound (UDP4)"));
         access_control_forward_udp_v4.depends("access_control_strategy_v4", "forward");
-        access_control_forward_udp_v4.textvalue = function (s) {
-            switch (uci.get(config_data, s, "access_control_strategy_v4")) {
-                case "global": {
-                    return _("Use Global Settings");
-                }
-                case "bypass": {
-                    return _("Bypass Xray completely");
-                }
-            }
-            return extra_outbound_format(config_data, uci.get(config_data, s, "access_control_forward_udp_v4"), false);
-        };
+        access_control_forward_udp_v4.textvalue = access_control_format(config_data, "access_control_strategy_v4", "access_control_forward_udp_v4");
 
         let access_control_strategy_v6 = lan_hosts.option(form.ListValue, "access_control_strategy_v6", _("Access Control Strategy (IPv6)"));
-        access_control_strategy_v6.value("global", _("Use global settings"));
-        access_control_strategy_v6.value("bypass", _("Bypass Xray completely"));
+        access_control_strategy_v6.value("tproxy", _("Enable transparent proxy"));
         access_control_strategy_v6.value("forward", _("Forward via extra inbound"));
+        access_control_strategy_v6.value("bypass", _("Disable transparent proxy"));
         access_control_strategy_v6.modalonly = true;
         access_control_strategy_v6.rmempty = false;
 
         let access_control_forward_tcp_v6 = lan_hosts.option(form.ListValue, "access_control_forward_tcp_v6", _("Extra inbound (TCP6)"));
         access_control_forward_tcp_v6.depends("access_control_strategy_v6", "forward");
-        access_control_forward_tcp_v6.textvalue = function (s) {
-            switch (uci.get(config_data, s, "access_control_strategy_v6")) {
-                case "global": {
-                    return _("Use Global Settings");
-                }
-                case "bypass": {
-                    return _("Bypass Xray completely");
-                }
-            }
-            return extra_outbound_format(config_data, uci.get(config_data, s, "access_control_forward_tcp_v6"));
-        };
+        access_control_forward_tcp_v6.textvalue = access_control_format(config_data, "access_control_strategy_v6", "access_control_forward_tcp_v6");
 
         let access_control_forward_udp_v6 = lan_hosts.option(form.ListValue, "access_control_forward_udp_v6", _("Extra inbound (UDP6)"));
         access_control_forward_udp_v6.depends("access_control_strategy_v6", "forward");
-        access_control_forward_udp_v6.textvalue = function (s) {
-            switch (uci.get(config_data, s, "access_control_strategy_v6")) {
-                case "global": {
-                    return _("Use Global Settings");
-                }
-                case "bypass": {
-                    return _("Bypass Xray completely");
-                }
-            }
-            return extra_outbound_format(config_data, uci.get(config_data, s, "access_control_forward_udp_v6"), false);
-        };
+        access_control_forward_udp_v6.textvalue = access_control_format(config_data, "access_control_strategy_v6", "access_control_forward_udp_v6");
 
         for (const v of uci.sections(config_data, "extra_inbound")) {
             switch (v["inbound_type"]) {

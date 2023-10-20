@@ -1,7 +1,6 @@
 'use strict';
 'require form';
 'require fs';
-'require tools.widgets as widgets';
 'require uci';
 'require view';
 
@@ -265,19 +264,15 @@ return view.extend({
 
         let tcp_balancer_v4 = s.taboption('general', form.MultiValue, 'tcp_balancer_v4', _('TCP Server (IPv4)'), _("Select multiple outbound servers to enable load balancing. Select none to disable TCP Outbound."));
         tcp_balancer_v4.datatype = "uciname";
-        tcp_balancer_v4.rmempty = true;
 
         let udp_balancer_v4 = s.taboption('general', form.MultiValue, 'udp_balancer_v4', _('UDP Server (IPv4)'), _("Select multiple outbound servers to enable load balancing. Select none to disable UDP Outbound."));
         udp_balancer_v4.datatype = "uciname";
-        udp_balancer_v4.rmempty = true;
 
         let tcp_balancer_v6 = s.taboption('general', form.MultiValue, 'tcp_balancer_v6', _('TCP Server (IPv6)'), _("Select multiple outbound servers to enable load balancing. Select none to disable TCP Outbound."));
         tcp_balancer_v6.datatype = "uciname";
-        tcp_balancer_v6.rmempty = true;
 
         let udp_balancer_v6 = s.taboption('general', form.MultiValue, 'udp_balancer_v6', _('UDP Server (IPv6)'), _("Select multiple outbound servers to enable load balancing. Select none to disable UDP Outbound."));
         udp_balancer_v6.datatype = "uciname";
-        udp_balancer_v6.rmempty = true;
 
         const servers = uci.sections(config_data, "servers");
         if (servers.length == 0) {
@@ -617,12 +612,6 @@ return view.extend({
         o = s.taboption('proxy', form.Value, 'firewall_priority', _('Priority for firewall rules'), _('See firewall status page for rules Xray used and <a href="https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks#Priority_within_hook">Netfilter Internal Priority</a> for reference.'));
         o.datatype = 'range(-49, 49)';
         o.placeholder = 10;
-
-        o = s.taboption('proxy', widgets.DeviceSelect, 'lan_ifaces', _("Interfaces for tproxy"), _("Enable transparent proxy on these interfaces."));
-        o.noaliases = true;
-        o.rmempty = false;
-        o.nocreate = true;
-        o.multiple = true;
 
         s.tab('dns', _('DNS Settings'));
 
