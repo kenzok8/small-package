@@ -1,8 +1,9 @@
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "cli.h"
+#include "config.h"
 
 // handle print --version and --help
 void try_print_info(int argc, char *argv[]) {
@@ -16,10 +17,15 @@ void try_print_info(int argc, char *argv[]) {
         printf("Git branch: %s\n", UA2F_GIT_BRANCH);
         printf("Git tag: %s\n", UA2F_GIT_TAG);
 #ifdef UA2F_CUSTOM_UA
-        printf("Custom UA: %s\n", UA2F_CUSTOM_UA);
+        printf("Embed UA: %s\n", UA2F_CUSTOM_UA);
 #else
-        printf("Custom UA: not set\n");
+        printf("Embed UA: not set\n");
 #endif
+        if (config.use_custom_ua) {
+            printf("Config UA: %s\n", config.custom_ua);
+        } else {
+            printf("Config UA: not set\n");
+        }
         exit(0);
     }
 
