@@ -45,6 +45,8 @@
     const manual_tproxy = filter(keys(config), k => config[k][".type"] == "manual_tproxy") || [];
     const manual_tproxy_source_ips = map(manual_tproxy, k => config[k]["source_addr"]) || [];
 
+    const tp_spec_sm4_tp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v4 == "tproxy"), k => config[k].macaddr) || []);
+    const tp_spec_sm6_tp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v6 == "tproxy"), k => config[k].macaddr) || []);
     const tp_spec_sm4_bp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v4 == "bypass"), k => config[k].macaddr) || []);
     const tp_spec_sm6_bp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v6 == "bypass"), k => config[k].macaddr) || []);
     const tp_spec_sm4_fw = map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v4 == "forward"), k => config[k]);
@@ -123,21 +125,65 @@
     }();
 %}
 
+    set tp_spec_dv4_sp {
+        type ipv4_addr
+        flags constant,interval
+        elements = { 0.0.0.0/8, 10.0.0.0/8,
+                     100.64.0.0/10, 127.0.0.0/8,
+                     169.254.0.0/16, 172.16.0.0/12,
+                     192.0.0.0/24, 192.52.193.0/24,
+                     192.168.0.0/16, 224.0.0.0/3 }
+    }
+
+    set tp_spec_dv6_sp {
+        type ipv6_addr
+        flags constant,interval
+        elements = { ::,
+                     ::1,
+                     ::ffff:0.0.0.0/96,
+                     ::ffff:0:0:0/96,
+                     64:ff9b::/96,
+                     100::/64,
+                     2001::/32,
+                     2001:20::/28,
+                     2001:db8::/32,
+                     2002::/16,
+                     fc00::/7,
+                     fe80::/10,
+                     ff00::/8 }
+    }
+
+{% if (length(tp_spec_sm4_bp) > 0): %}
     set tp_spec_sm4_bp {
         type ether_addr
         flags constant
-{% if (length(tp_spec_sm4_bp) > 0): %}
         elements = { {{ join(", ", tp_spec_sm4_bp) }} }
-{% endif %}
     }
+{% endif %}
 
+{% if (length(tp_spec_sm6_bp) > 0): %}
     set tp_spec_sm6_bp {
         type ether_addr
         flags constant
-{% if (length(tp_spec_sm6_bp) > 0): %}
         elements = { {{ join(", ", tp_spec_sm6_bp) }} }
-{% endif %}
     }
+{% endif %}
+
+{% if (length(tp_spec_sm4_tp) > 0): %}
+    set tp_spec_sm4_tp {
+        type ether_addr
+        flags constant
+        elements = { {{ join(", ", tp_spec_sm4_tp) }} }
+    }
+{% endif %}
+
+{% if (length(tp_spec_sm6_tp) > 0): %}
+    set tp_spec_sm6_tp {
+        type ether_addr
+        flags constant
+        elements = { {{ join(", ", tp_spec_sm6_tp) }} }
+    }
+{% endif %}
 
 {% for (let i in extra_inbound_tcp_v4_map): %}
     set tp_spec_sm4_ft_{{ i }} {
@@ -179,69 +225,41 @@
     }
 {% endif %}
 
-    set tp_spec_dv4_sp {
-        type ipv4_addr
-        flags constant,interval
-        elements = { 0.0.0.0/8, 10.0.0.0/8,
-                     100.64.0.0/10, 127.0.0.0/8,
-                     169.254.0.0/16, 172.16.0.0/12,
-                     192.0.0.0/24, 192.52.193.0/24,
-                     192.168.0.0/16, 224.0.0.0/3 }
-    }
-
-    set tp_spec_dv6_sp {
-        type ipv6_addr
-        flags constant,interval
-        elements = { ::,
-                     ::1,
-                     ::ffff:0.0.0.0/96,
-                     ::ffff:0:0:0/96,
-                     64:ff9b::/96,
-                     100::/64,
-                     2001::/32,
-                     2001:20::/28,
-                     2001:db8::/32,
-                     2002::/16,
-                     fc00::/7,
-                     fe80::/10,
-                     ff00::/8 }
-    }
-
+{% if (length(wan_bp_ips_v4) > 0): %}
     set tp_spec_dv4_bp {
         type ipv4_addr
         size {{ length(wan_bp_ips_v4) }}
-{% if (length(wan_bp_ips_v4) > 0): %}
         flags constant, interval
         elements = { {{ join(", ", wan_bp_ips_v4)}} }
-{% endif %}
     }
+{% endif %}
 
+{% if (length(wan_bp_ips_v6) > 0): %}
     set tp_spec_dv6_bp {
         type ipv6_addr
         size {{ length(wan_bp_ips_v6) }}
-{% if (length(wan_bp_ips_v6) > 0): %}
         flags constant, interval
         elements = { {{ join(", ", wan_bp_ips_v6)}} }
-{% endif %}
     }
+{% endif %}
 
+{% if (length(wan_fw_ips_v4) > 0): %}
     set tp_spec_dv4_fw {
         type ipv4_addr
         size {{ length(wan_fw_ips_v4) }}
-{% if (length(wan_fw_ips_v4) > 0): %}
         flags constant, interval
         elements = { {{ join(", ", wan_fw_ips_v4)}} }
-{% endif %}
     }
+{% endif %}
 
+{% if (length(wan_fw_ips_v6) > 0): %}
     set tp_spec_dv6_fw {
         type ipv6_addr
         size {{ length(wan_fw_ips_v6) }}
-{% if (length(wan_fw_ips_v6) > 0): %}
         flags constant, interval
         elements = { {{ join(", ", wan_fw_ips_v6)}} }
-{% endif %}
     }
+{% endif %}
 
 {% if (ignore_tp_spec_def_gw == null): %}
     set tp_spec_dv4_dg {
@@ -300,15 +318,15 @@
     }
 
     chain tp_spec_wan_fw {
-{% if (length(manual_tproxy_source_ips) > 0): %}
-        ip protocol tcp ip daddr @tp_spec_dv4_mt {{ counter }} tproxy ip to :{{ general.tproxy_port_tcp_v4 || 1082 }} accept
-        ip protocol udp ip daddr @tp_spec_dv4_mt {{ counter }} tproxy ip to :{{ general.tproxy_port_udp_v4 || 1084 }} accept
-{% endif %}
 {% if (length(fakedns) > 0): %}
         ip protocol tcp ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} tproxy ip to :{{ general.tproxy_port_tcp_f4 || 1086 }} accept
         ip protocol udp ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} tproxy ip to :{{ general.tproxy_port_udp_f4 || 1088 }} accept
         ip6 nexthdr tcp ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} tproxy ip6 to :{{ general.tproxy_port_tcp_f6 || 1087 }} accept
         ip6 nexthdr udp ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} tproxy ip6 to :{{ general.tproxy_port_udp_f6 || 1089 }} accept
+{% endif %}
+{% if (length(manual_tproxy_source_ips) > 0): %}
+        ip protocol tcp ip daddr @tp_spec_dv4_mt {{ counter }} tproxy ip to :{{ general.tproxy_port_tcp_v4 || 1082 }} accept
+        ip protocol udp ip daddr @tp_spec_dv4_mt {{ counter }} tproxy ip to :{{ general.tproxy_port_udp_v4 || 1084 }} accept
 {% endif %}
 {% for (let i in extra_inbound_tcp_v4_map): %}
         ip protocol tcp ether saddr @tp_spec_sm4_ft_{{ i }} {{ counter }} tproxy ip to :{{ config[i].inbound_port }} accept
@@ -353,10 +371,6 @@
 {% if (hop_limit_override > 0): %}
         ip6 hoplimit {{ ttl_hop_limit_match }} {{ counter }} ip6 hoplimit set {{ hop_limit_override }}
 {% endif %}
-        ip protocol tcp ether saddr @tp_spec_sm4_bp {{ counter }} accept
-        ip protocol udp ether saddr @tp_spec_sm4_bp {{ counter }} accept
-        ip6 nexthdr tcp ether saddr @tp_spec_sm6_bp {{ counter }} accept
-        ip6 nexthdr udp ether saddr @tp_spec_sm6_bp {{ counter }} accept
         {{ counter }} mark set ct mark
 {% if (general.dynamic_direct_tcp4 == "1"): %}
         ip protocol tcp meta mark 0x000000fa {{ counter }} accept comment "Xray dynamic direct TCP4"
@@ -371,10 +385,51 @@
         ip6 nexthdr udp meta mark 0x000000fa {{ counter }} accept comment "Xray dynamic direct UDP6"
 {% endif %}
         mark 0x000000fb {{ counter }} accept comment "Xray remarked from output"
-        ip protocol tcp iifname { "{{ join('", "', general.lan_ifaces) }}" } {{ counter }} goto tp_spec_lan_ac
-        ip protocol udp iifname { "{{ join('", "', general.lan_ifaces) }}" } {{ counter }} goto tp_spec_lan_ac
-        ip6 nexthdr tcp iifname { "{{ join('", "', general.lan_ifaces) }}" } {{ counter }} goto tp_spec_lan_ac
-        ip6 nexthdr udp iifname { "{{ join('", "', general.lan_ifaces) }}" } {{ counter }} goto tp_spec_lan_ac
+        {{ counter }} jump tp_spec_lan_mf comment "Xray FakeDNS / manual transparent proxy"
+{% if (length(general.bypass_ifaces_v4 || []) > 0): %}
+        ip protocol tcp iifname { "{{ join('", "', general.bypass_ifaces_v4) }}" } {{ counter }} accept
+        ip protocol udp iifname { "{{ join('", "', general.bypass_ifaces_v4) }}" } {{ counter }} accept
+{% endif %}
+{% if (length(general.bypass_ifaces_v6 || []) > 0): %}
+        ip6 nexthdr tcp iifname { "{{ join('", "', general.bypass_ifaces_v6) }}" } {{ counter }} accept
+        ip6 nexthdr udp iifname { "{{ join('", "', general.bypass_ifaces_v6) }}" } {{ counter }} accept
+{% endif %}
+{% if (length(tp_spec_sm4_bp) > 0): %}
+        ip protocol tcp ether saddr @tp_spec_sm4_bp {{ counter }} accept
+        ip protocol udp ether saddr @tp_spec_sm4_bp {{ counter }} accept
+{% endif %}
+{% if (length(tp_spec_sm6_bp) > 0): %}
+        ip6 nexthdr tcp ether saddr @tp_spec_sm6_bp {{ counter }} accept
+        ip6 nexthdr udp ether saddr @tp_spec_sm6_bp {{ counter }} accept
+{% endif %}
+{% for (let i in extra_inbound_tcp_v4_map): %}
+        ip protocol tcp ether saddr @tp_spec_sm4_ft_{{ i }} {{ counter }} goto tp_spec_lan_ac
+{% endfor %}
+{% for (let i in extra_inbound_udp_v4_map): %}
+        ip protocol udp ether saddr @tp_spec_sm4_fu_{{ i }} {{ counter }} goto tp_spec_lan_ac
+{% endfor %}
+{% for (let i in extra_inbound_tcp_v6_map): %}
+        ip6 nexthdr tcp ether saddr @tp_spec_sm6_ft_{{ i }} {{ counter }} goto tp_spec_lan_ac
+{% endfor %}
+{% for (let i in extra_inbound_udp_v6_map): %}
+        ip6 nexthdr udp ether saddr @tp_spec_sm6_fu_{{ i }} {{ counter }} goto tp_spec_lan_ac
+{% endfor %}
+{% if (length(tp_spec_sm4_tp) > 0): %}
+        ip protocol tcp ether saddr @tp_spec_sm4_tp {{ counter }} goto tp_spec_lan_ac
+        ip protocol udp ether saddr @tp_spec_sm4_tp {{ counter }} goto tp_spec_lan_ac
+{% endif %}
+{% if (length(tp_spec_sm6_tp) > 0): %}
+        ip6 nexthdr tcp ether saddr @tp_spec_sm6_tp {{ counter }} goto tp_spec_lan_ac
+        ip6 nexthdr udp ether saddr @tp_spec_sm6_tp {{ counter }} goto tp_spec_lan_ac
+{% endif %}
+{% if (length(general.tproxy_ifaces_v4 || []) > 0): %}
+        ip protocol tcp iifname { "{{ join('", "', general.tproxy_ifaces_v4) }}" } {{ counter }} goto tp_spec_lan_ac
+        ip protocol udp iifname { "{{ join('", "', general.tproxy_ifaces_v4) }}" } {{ counter }} goto tp_spec_lan_ac
+{% endif %}
+{% if (length(general.tproxy_ifaces_v6 || []) > 0): %}
+        ip6 nexthdr tcp iifname { "{{ join('", "', general.tproxy_ifaces_v6) }}" } {{ counter }} goto tp_spec_lan_ac
+        ip6 nexthdr udp iifname { "{{ join('", "', general.tproxy_ifaces_v6) }}" } {{ counter }} goto tp_spec_lan_ac
+{% endif %}
         ip protocol tcp {{ counter }} accept
         ip protocol udp {{ counter }} accept
         ip6 nexthdr tcp {{ counter }} accept
@@ -405,25 +460,41 @@
         meta mark 0x000000fd {{ counter }} accept comment "Xray transparent proxy outbound"
         meta mark 0x000000fe {{ counter }} accept comment "Xray non-IP DNS query outbound"
         meta mark {{ sprintf("0x%08x", general_mark) }} {{ counter }} accept comment "Xray specified mark {{ general_mark }} outbound"
+        {{ counter }} jump tp_spec_lan_mf
         {{ counter }} goto tp_spec_lan_ac
     }
 
-    chain tp_spec_lan_ac {
+    chain tp_spec_lan_mf {
 {% if (length(fakedns) > 0): %}
-        ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} goto tp_spec_lan_fw
-        ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} goto tp_spec_lan_fw
+        ip protocol tcp ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv4 Pool TCP"
+        ip protocol udp ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv4 Pool UDP"
+        ip6 nexthdr tcp ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv6 Pool TCP"
+        ip6 nexthdr udp ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv6 Pool UDP"
 {% endif %}
 {% if (length(manual_tproxy_source_ips) > 0): %}
-        ip daddr @tp_spec_dv4_mt {{ counter }} goto tp_spec_lan_fw
+        ip protocol tcp ip daddr @tp_spec_dv4_mt {{ counter }} goto tp_spec_lan_fw comment "Xray manual transparent proxy TCP"
+        ip protocol udp ip daddr @tp_spec_dv4_mt {{ counter }} goto tp_spec_lan_fw comment "Xray manual transparent proxy UDP"
 {% endif %}
+        {{ counter }} return
+    }
+
+    chain tp_spec_lan_ac {
+{% if (length(wan_fw_ips_v4) > 0): %}
         ip daddr @tp_spec_dv4_fw {{ counter }} goto tp_spec_lan_fw
+{% endif %}
+{% if (length(wan_fw_ips_v6) > 0): %}
         ip6 daddr @tp_spec_dv6_fw {{ counter }} goto tp_spec_lan_fw
+{% endif %}
 {% if (ignore_tp_spec_def_gw == null): %}
         ip daddr @tp_spec_dv4_dg {{ counter }} accept
 {% endif %}
         ip6 daddr @tp_spec_dv6_dg {{ counter }} accept
+{% if (length(wan_bp_ips_v4) > 0): %}
         ip daddr @tp_spec_dv4_bp {{ counter }} accept
+{% endif %}
+{% if (length(wan_bp_ips_v6) > 0): %}
         ip6 daddr @tp_spec_dv6_bp {{ counter }} accept
+{% endif %}
         ip daddr @tp_spec_dv4_sp {{ counter }} accept
         ip6 daddr @tp_spec_dv6_sp {{ counter }} accept
         {{ counter }} goto tp_spec_lan_re
