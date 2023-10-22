@@ -1,8 +1,8 @@
-![UA2F](https://socialify.git.ci/Zxilly/UA2F/image?description=1&descriptionEditable=Change%20User-agent%20to%20F-words%20on%20OpenWRT%20router.&font=Inter&language=1&pattern=Plus&stargazers=1&theme=Light)
-
 # UA2F
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FZxilly%2FUA2F.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FZxilly%2FUA2F?ref=badge_shield)
+[![CodeQL](https://github.com/Zxilly/UA2F/actions/workflows/codeql.yml/badge.svg)](https://github.com/Zxilly/UA2F/actions/workflows/codeql.yml)
+[![Build OpenWRT Package](https://github.com/Zxilly/UA2F/actions/workflows/ci.yml/badge.svg)](https://github.com/Zxilly/UA2F/actions/workflows/ci.yml)
 
 参照 [博客文章](https://learningman.top/archives/304) 完成操作
 
