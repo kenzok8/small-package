@@ -158,7 +158,7 @@ const methods = {
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (match(trim(line), /Environment: (go[0-9\.]+)/))
-						features['has_mptcp'] = (index(line, 'go1.19') === -1) ? true : false;
+						features['has_mptcp'] = (index(line, 'go1.20') === -1) ? true : false;
 
 					let tags = match(trim(line), /Tags: (.*)/);
 					if (!tags)
@@ -172,6 +172,7 @@ const methods = {
 			}
 
 			features.hp_has_chinadns_ng = access('/usr/bin/chinadns-ng');
+			features.hp_has_ip_full = access('/usr/libexec/ip-full');
 			features.hp_has_tproxy = access('/etc/modules.d/nft-tproxy');
 			features.hp_has_tun = access('/etc/modules.d/30-tun');
 
