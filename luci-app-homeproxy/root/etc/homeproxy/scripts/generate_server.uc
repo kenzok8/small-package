@@ -44,7 +44,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		type: cfg.type,
 		tag: 'cfg-' + cfg['.name'] + '-in',
 
-		listen: '::',
+		listen: cfg.address || '::',
 		listen_port: strToInt(cfg.port),
 		tcp_fast_open: strToBool(cfg.tcp_fast_open),
 		tcp_multi_path: strToBool(cfg.tcp_multi_path),
@@ -52,8 +52,6 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		sniff: true,
 		sniff_override_destination: (cfg.sniff_override === '1'),
 		domain_strategy: cfg.domain_strategy,
-		proxy_protocol: strToBool(cfg.proxy_protocol),
-		proxy_protocol_accept_no_header: strToBool(cfg.proxy_protocol_accept_no_header),
 		network: cfg.network,
 
 		/* Hysteria */

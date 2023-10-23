@@ -162,7 +162,7 @@ return view.extend({
 		o.value('223.5.5.5', _('Aliyun Public DNS (223.5.5.5)'));
 		o.value('119.29.29.29', _('Tencent Public DNS (119.29.29.29)'));
 		o.value('114.114.114.114', _('Xinfeng Public DNS (114.114.114.114)'));
-		o.default = '208.67.222.222';
+		o.default = '8.8.8.8';
 		o.rmempty = false;
 		o.depends({'routing_mode': 'custom', '!reverse': true});
 		o.validate = function(section_id, value) {
@@ -242,7 +242,7 @@ return view.extend({
 		o.value('redirect', _('Redirect TCP'));
 		if (features.hp_has_tproxy)
 			o.value('redirect_tproxy', _('Redirect TCP + TProxy UDP'));
-		if (features.hp_has_tun) {
+		if (features.hp_has_ip_full && features.hp_has_tun) {
 			o.value('redirect_tun', _('Redirect TCP + Tun UDP'));
 			o.value('tun', _('Tun TCP/UDP'));
 		}

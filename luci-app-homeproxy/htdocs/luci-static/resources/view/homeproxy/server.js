@@ -116,7 +116,12 @@ return view.extend({
 		o.value('vmess', _('VMess'));
 		o.rmempty = false;
 
-		o = s.option(form.Value, 'port', _('Port'),
+		o = s.option(form.Value, 'address', _('Listen address'));
+		o.placeholder = '::';
+		o.datatype = 'ipaddr';
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'port', _('Listen port'),
 			_('The port must be unique.'));
 		o.datatype = 'port';
 		o.validate = L.bind(hp.validateUniqueValue, this, data[0], 'server', 'port');
@@ -680,18 +685,6 @@ return view.extend({
 			_('If set, the requested domain name will be resolved to IP before routing.'));
 		for (var i in hp.dns_strategy)
 			o.value(i, hp.dns_strategy[i])
-		o.modalonly = true;
-
-		o = s.option(form.Flag, 'proxy_protocol', _('Proxy protocol'),
-			_('Parse Proxy Protocol in the connection header.'));
-		o.default = o.disabled;
-		o.depends({'network': 'udp', '!reverse': true});
-		o.modalonly = true;
-
-		o = s.option(form.Flag, 'proxy_protocol_accept_no_header', _('Accept no header'),
-			_('Accept connections without Proxy Protocol header.'));
-		o.default = o.disabled;
-		o.depends('proxy_protocol', '1');
 		o.modalonly = true;
 
 		o = s.option(form.ListValue, 'network', _('Network'));
