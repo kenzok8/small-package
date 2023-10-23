@@ -171,7 +171,7 @@ function generate_outbound(node) {
 		packet_encoding: node.packet_encoding,
 		/* WireGuard */
 		system_interface: (node.type === 'wireguard') || null,
-		interface_name: (node.type === 'wireguard') ? 'singwg-cfg-' + node['.name'] + '-out' : null,
+		interface_name: (node.type === 'wireguard') ? 'wg-' + node['.name'] + '-out' : null,
 		local_address: node.wireguard_local_address,
 		private_key: node.wireguard_private_key,
 		peer_public_key: node.wireguard_peer_public_key,
