@@ -165,7 +165,7 @@ return view.extend({
         tproxy_ifaces_v4.nocreate = true;
         tproxy_ifaces_v4.multiple = true;
 
-        let tproxy_ifaces_v6 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'tproxy_ifaces_v6', _("Devices to enable IPV6 tproxy"), _("Enable IPv6 transparent proxy on these interfaces / network devices."));
+        let tproxy_ifaces_v6 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'tproxy_ifaces_v6', _("Devices to enable IPv6 tproxy"), _("Enable IPv6 transparent proxy on these interfaces / network devices."));
         tproxy_ifaces_v6.noaliases = true;
         tproxy_ifaces_v6.nocreate = true;
         tproxy_ifaces_v6.multiple = true;
