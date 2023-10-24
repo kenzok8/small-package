@@ -43,6 +43,10 @@ Then find `luci-app-xray` under `Extra Packages`.
 * 2023-10-19 feat: detailed status page via metrics
 * 2023-10-20 feat: better network interface control. **Requires reselection of LAN interfaces in** `Xray (preview)` -> `LAN Hosts Access Control`
 
+## Changelog since 3.1.0
+
+* 2023-10-24 chore: bump version
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=yichya/luci-app-xray&type=Date)](https://star-history.com/#yichya/luci-app-xray&Date)
