@@ -195,7 +195,6 @@ function check_resource_files(load_result) {
     let geosite_size = 0;
     let xray_bin_default = false;
     let xray_running = false;
-    let optional_features = {};
     for (const f of load_result) {
         if (f.name == "xray") {
             xray_bin_default = true;
@@ -211,16 +210,12 @@ function check_resource_files(load_result) {
             geosite_existence = true;
             geosite_size = '%.2mB'.format(f.size);
         }
-        if (f.name.startsWith("optional_feature_")) {
-            optional_features[f.name] = true;
-        }
     }
     return {
         geoip_existence: geoip_existence,
         geoip_size: geoip_size,
         geosite_existence: geosite_existence,
         geosite_size: geosite_size,
-        optional_features: optional_features,
         xray_bin_default: xray_bin_default,
         xray_running: xray_running,
     };
@@ -236,7 +231,7 @@ return view.extend({
 
     render: function (load_result) {
         const config_data = load_result[0];
-        const { geoip_existence, geoip_size, geosite_existence, geosite_size, optional_features, xray_bin_default, xray_running } = check_resource_files(load_result[1]);
+        const { geoip_existence, geoip_size, geosite_existence, geosite_size, xray_bin_default, xray_running } = check_resource_files(load_result[1]);
         const status_text = xray_running ? _("[Xray is running]") : _("[Xray is stopped]");
 
         let asset_file_status = _('WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly. See <a href="https://github.com/yichya/luci-app-xray">here</a> for help.');
@@ -314,9 +309,11 @@ return view.extend({
         ss.tab('general', _('General Settings'));
 
         o = ss.taboption('general', form.Value, "alias", _("Alias (optional)"));
+        o.optional = true;
 
         o = ss.taboption('general', form.Value, 'server', _('Server Hostname'));
         o.datatype = 'host';
+        o.rmempty = false;
 
         o = ss.taboption('general', form.ListValue, 'domain_strategy', _('Domain Strategy'));
         o.value("UseIP");
@@ -327,10 +324,11 @@ return view.extend({
 
         o = ss.taboption('general', form.Value, 'server_port', _('Server Port'));
         o.datatype = 'port';
-        o.placeholder = '443';
+        o.rmempty = false;
 
         o = ss.taboption('general', form.Value, 'password', _('UserId / Password'), _('Fill user_id for vmess / VLESS, or password for shadowsocks / trojan (also supports <a href="https://github.com/XTLS/Xray-core/issues/158">Xray UUID Mapping</a>)'));
         o.modalonly = true;
+        o.rmempty = false;
 
         ss.tab('protocol', _('Protocol Settings'));
 
