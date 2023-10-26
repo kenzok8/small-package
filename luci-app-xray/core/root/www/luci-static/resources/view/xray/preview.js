@@ -10,6 +10,9 @@ const variant = "xray_core";
 function destination_format(k) {
     return function (s) {
         const dest = uci.get(variant, s, k) || [];
+        if (dest.length == 0) {
+            return "<i>direct</i>";
+        }
         return dest.map(v => uci.get(variant, v, "alias")).join(", ");
     };
 }
@@ -139,7 +142,6 @@ return view.extend({
         destination.depends("specify_outbound", "1");
         destination.datatype = "uciname";
         destination.textvalue = destination_format("destination");
-        destination.rmempty = false;
 
         const servers = uci.sections(config_data, "servers");
         if (servers.length == 0) {
