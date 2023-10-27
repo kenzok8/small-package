@@ -10,9 +10,9 @@ function index()
     else
         entry({"admin", "istorex"}, call("redirect_fallback")).leaf = true
     end
-    entry({"admin", "istorex_api","status"}, call("istorex_api_status"))
-    entry({"admin", "istorex_api","update"}, call("istorex_api_update"))
-    entry({"admin", "istorex_api","upload-bg"}, call("istorex_api_uploadbg"))
+    entry({"admin", "istorex_api","status"}, call("istorex_api_status")).dependent = false
+    entry({"admin", "istorex_api","update"}, call("istorex_api_update")).dependent = false
+    entry({"admin", "istorex_api","upload-bg"}, call("istorex_api_uploadbg")).dependent = false
 end
 
 local function user_id()
