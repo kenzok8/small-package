@@ -135,10 +135,6 @@ function displayTable(tb, settings) {
 	progressbar('upstream', cachedData[1][1], settings.upstream, settings.useBits, settings.useMultiple);
 }
 
-function formatBandWidth(bdw, useBits) {
-	return bdw * Math.pow(1000, 2) / (useBits ? 1 : 8);
-}
-
 function formatSize(size, useBits, useMultiple) {
 	var res = String.format('%%%s.2m%s'.format(useMultiple, (useBits ? 'bit' : 'B')), useBits ? size * 8 : size);
 	return useMultiple == '1024' ? res.replace(/([KMGTPEZ])/, '$&i') : res;
@@ -277,9 +273,10 @@ function parseDefaultSettings(file) {
 }
 
 function progressbar(query, v, m, useBits, useMultiple) {
+	// v = B/s, m = Mb/s
 	var pg = $(query),
-	    vn = v || 0,
-	    mn = formatBandWidth(m, useBits) || 100,
+	    vn = (v * 8) || 0,
+	    mn = (m || 100) * Math.pow(1000, 2),
 	    fv = formatSpeed(v, useBits, useMultiple),
 	    pc = '%.2f'.format((100 / mn) * vn),
 	    wt = Math.floor(pc > 100 ? 100 : pc),
