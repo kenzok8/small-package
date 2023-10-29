@@ -246,7 +246,7 @@ function parse_uri(uri) {
 			if (!uri)
 				return null;
 
-			const userinfo = split(uri[0], ':'),
+			const userinfo = split(uri[0], ':');
 			params = urldecode_params(uri[1]);
 
 			if (!sing_features.with_shadowsocksr) {
