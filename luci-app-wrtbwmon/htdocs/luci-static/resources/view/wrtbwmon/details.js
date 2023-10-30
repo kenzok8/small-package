@@ -136,8 +136,8 @@ function displayTable(tb, settings) {
 }
 
 function formatSize(size, useBits, useMultiple) {
-	var res = String.format('%%%s.2m%s'.format(useMultiple, (useBits ? 'bit' : 'B')), useBits ? size * 8 : size);
-	return useMultiple == '1024' ? res.replace(/([KMGTPEZ])/, '$&i') : res;
+	// String.format automatically adds the i for KiB if the multiple is 1024
+	return String.format('%%%s.2m%s'.format(useMultiple, (useBits ? 'bit' : 'B')), useBits ? size * 8 : size);
 }
 
 function formatSpeed(speed, useBits, useMultiple) {
