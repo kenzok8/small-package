@@ -31,14 +31,7 @@ _Noreturn static void check_cache() {
     }
 }
 
-static _Atomic bool cache_initialized = false;
-
 void init_not_http_cache() {
-    if (cache_initialized) {
-        return;
-    }
-    cache_initialized = true;
-
     if (pthread_rwlock_init(&cacheLock, NULL) != 0) {
         syslog(LOG_ERR, "Failed to init cache lock");
         exit(EXIT_FAILURE);

@@ -111,7 +111,8 @@ static void send_verdict(
     }
 }
 
-static _Atomic bool conntrack_info_available = true;
+static bool conntrack_info_available = true;
+static bool cache_initialized = false;
 
 static void add_to_cache(struct nf_packet *pkt) {
     char *ip_str = ip_to_str(&pkt->orig.dst, pkt->orig.dst_port, pkt->orig.ip_version);
@@ -173,7 +174,10 @@ void handle_packet(struct nf_queue *queue, struct nf_packet *pkt) {
             syslog(LOG_WARNING, "Packet has no conntrack. Switching to no cache mode.");
             syslog(LOG_WARNING, "Note that this may lead to performance degradation. Especially on low-end routers.");
         } else {
-            init_not_http_cache();
+            if (!cache_initialized) {
+                init_not_http_cache();
+                cache_initialized = true;
+            }
         }
     }
 
