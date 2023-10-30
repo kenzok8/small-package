@@ -23,4 +23,5 @@ rebind-domain-ok={{ j }}
 {% endfor %}
 {% if (general["blocked_to_loopback"] != "1"): %}
 bogus-nxdomain=127.127.127.127
+bogus-nxdomain=100::6c62:636f:656b:2164
 {% endif %}
