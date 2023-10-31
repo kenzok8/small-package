@@ -40,6 +40,7 @@ Then find `luci-app-xray` under `Extra Packages`.
 * 2023-10-25 fix: set required for some fields; remove unused code
 * 2023-10-26 fix: allow empty selection for extra inbound outbound balancer
 * 2023-10-30 fix: blocked as nxdomain for IPv6
+* 2023-10-31 chore: bump version to 3.1.1
 
 ## Changelog since 3.0.0
 

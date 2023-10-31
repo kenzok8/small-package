@@ -259,6 +259,12 @@ return view.extend({
         let ttl_hop_limit_match = s.taboption('dynamic_direct', form.Value, 'ttl_hop_limit_match', _('TTL / Hop Limit Match'), _("Only override TTL / hop limit for packets with specific TTL / hop limit."));
         ttl_hop_limit_match.datatype = 'uinteger';
 
+        s.tab('custom_options', _('Custom Options'));
+        let custom_configuration_hook = s.taboption('custom_options', form.TextValue, 'custom_configuration_hook', _('Custom Configuration Hook'), _('Have full control over the configuration file here. Read <a href="https://ucode.mein.io/">ucode Documentation</a> for the language used.'));
+        custom_configuration_hook.placeholder = "return function(config) {\n    return config;\n};";
+        custom_configuration_hook.monospace = true;
+        custom_configuration_hook.rows = 10;
+
         return m.render();
     }
 });
