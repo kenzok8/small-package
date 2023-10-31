@@ -226,7 +226,7 @@ void handle_packet(struct nf_queue *queue, struct nf_packet *pkt) {
 
     __auto_type tcp_hdr = nfq_tcp_get_hdr(pkt_buff);
     if (tcp_hdr == NULL) {
-        // This packet is not tcp, just pass it
+        // This packet is not tcp, pass it
         send_verdict(queue, pkt, (struct mark_op) {false, 0}, NULL);
         syslog(LOG_WARNING, "Received non-tcp packet. You may set wrong firewall rules.");
         goto end;
@@ -239,7 +239,20 @@ void handle_packet(struct nf_queue *queue, struct nf_packet *pkt) {
         send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
         goto end;
     }
+
     count_tcp_packet();
+
+    // cannot find User-Agent: in this packet
+    if (tcp_payload_len - 2 < USER_AGENT_MATCH_LENGTH) {
+        send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
+        goto end;
+    }
+
+    if (!is_http_protocol(tcp_payload, tcp_payload_len)) {
+        send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
+        goto end;
+    }
+    count_http_packet();
 
     void *search_start = tcp_payload;
     unsigned int search_length = tcp_payload_len;
@@ -299,3 +312,13 @@ void handle_packet(struct nf_queue *queue, struct nf_packet *pkt) {
 
     try_print_statistics();
 }
+
+#undef MAX_USER_AGENT_LENGTH
+#undef USER_AGENT_MATCH_LENGTH
+
+#undef CONNMARK_ESTIMATE_LOWER
+#undef CONNMARK_ESTIMATE_UPPER
+#undef CONNMARK_ESTIMATE_VERDICT
+
+#undef CONNMARK_NOT_HTTP
+#undef CONNMARK_HTTP

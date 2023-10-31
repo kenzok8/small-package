@@ -9,6 +9,8 @@ void count_ipv4_packet();
 
 void count_ipv6_packet();
 
+void count_http_packet();
+
 void init_statistics();
 
 void try_print_statistics();

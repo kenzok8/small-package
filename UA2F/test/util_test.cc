@@ -70,3 +70,18 @@ TEST(MemNCaseMemTest, UserAgentStrange) {
 
     EXPECT_EQ(result, (void *) l);
 }
+
+TEST(HttpProtocolTest, RealWorldRequests) {
+    const char* getPayload = "GET /index.html HTTP/1.1\r\nHost: example.com\r\n\r\n";
+    const char* postPayload = "POST /submit HTTP/1.1\r\nHost: example.com\r\n\r\n";
+    const char* optionsPayload = "OPTIONS /test HTTP/1.1\r\nHost: example.com\r\n\r\n";
+
+    EXPECT_TRUE(is_http_protocol(getPayload, strlen(getPayload))) << "GET method failed";
+    EXPECT_TRUE(is_http_protocol(postPayload, strlen(postPayload))) << "POST method failed";
+    EXPECT_TRUE(is_http_protocol(optionsPayload, strlen(optionsPayload))) << "OPTIONS method failed";
+
+    const char* invalidPayload = "INVALID string";
+
+    // Check that these cases return false
+    EXPECT_FALSE(is_http_protocol(invalidPayload, strlen(invalidPayload))) << "Invalid method passed";
+}
