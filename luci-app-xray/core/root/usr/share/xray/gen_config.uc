@@ -280,8 +280,9 @@ function gen_config() {
     const fakedns = map(filter(keys(config), k => config[k][".type"] == "fakedns") || [], k => config[k]);
     const extra_inbound = map(filter(keys(config), k => config[k][".type"] == "extra_inbound") || [], k => config[k]);
     const manual_tproxy = map(filter(keys(config), k => config[k][".type"] == "manual_tproxy") || [], k => config[k]);
+    const custom_configuration_hook = loadstring(general["custom_configuration_hook"] || "return i => i;")();
 
-    return {
+    return custom_configuration_hook({
         inbounds: inbounds(general, config, extra_inbound),
         outbounds: outbounds(general, config, manual_tproxy, bridge, extra_inbound, fakedns),
         dns: dns_conf(general, config, manual_tproxy, fakedns),
@@ -302,7 +303,7 @@ function gen_config() {
             rules: rules(geoip_existence, general, bridge, manual_tproxy, extra_inbound, fakedns),
             balancers: balancers(general, extra_inbound, fakedns, balancer_strategy)
         }
-    };
+    });
 }
 
 print(gen_config());
