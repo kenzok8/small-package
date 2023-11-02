@@ -27,16 +27,21 @@ function split_ipv4_host_port(val, port_default) {
 
 function upstream_domain_names(proxy, config) {
     let domain_names_set = {};
+    let domain_extra_options = {};
     for (let b in ["tcp_balancer_v4", "tcp_balancer_v6", "udp_balancer_v4", "udp_balancer_v6"]) {
         for (let i in balancer(proxy, b, b)) {
             const server = config[substr(i, -9)];
             if (server) {
-                domain_names_set[server["server"]] = true;
+                if (!server["domain_resolve_dns"]) {
+                    domain_names_set[server["server"]] = true;
+                } else {
+                    domain_extra_options[server["server"]] = server["domain_resolve_dns"];
+                }
             }
         }
     }
     // todo: add dialer proxy references here
-    return keys(domain_names_set);
+    return [keys(domain_names_set), domain_extra_options];
 }
 
 function domain_rules(proxy, k) {
@@ -111,13 +116,20 @@ export function dns_server_outbound() {
 export function dns_conf(proxy, config, manual_tproxy, fakedns) {
     const fast_dns_object = split_ipv4_host_port(proxy["fast_dns"] || fallback_fast_dns, 53);
     const default_dns_object = split_ipv4_host_port(proxy["default_dns"] || fallback_default_dns, 53);
+    const upstream_domain_options = upstream_domain_names(proxy, config);
     let servers = [
         default_dns_object,
         ...fake_dns_domains(fakedns),
+        ...map(keys(upstream_domain_options[1]), function (k) {
+            const i = split_ipv4_host_port(upstream_domain_options[1][k]);
+            i["domains"] = [k];
+            i["skipFallback"] = true;
+            return i;
+        }),
         {
             address: fast_dns_object["address"],
             port: fast_dns_object["port"],
-            domains: [...upstream_domain_names(proxy, config), ...fast_domain_rules(proxy)],
+            domains: [...upstream_domain_options[0], ...fast_domain_rules(proxy)],
             skipFallback: true,
         },
     ];

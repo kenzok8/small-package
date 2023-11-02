@@ -315,11 +315,15 @@ return view.extend({
         o.datatype = 'host';
         o.rmempty = false;
 
-        o = ss.taboption('general', form.ListValue, 'domain_strategy', _('Domain Strategy'));
+        o = ss.taboption('general', form.ListValue, 'domain_strategy', _('Domain Strategy'), _("Whether to use IPv4 or IPv6 address if Server Hostname is a domain."));
         o.value("UseIP");
         o.value("UseIPv4");
         o.value("UseIPv6");
         o.default = "UseIP";
+        o.modalonly = true;
+
+        o = ss.taboption('general', form.Value, 'domain_resolve_dns', _('Resolve Domain via DNS'), _("Specify a DNS to resolve server hostname. Only works for main balancers (those on General Settings tab)."));
+        o.datatype = 'hostport';
         o.modalonly = true;
 
         o = ss.taboption('general', form.Value, 'server_port', _('Server Port'));
@@ -879,7 +883,7 @@ return view.extend({
         s.tab('custom_options', _('Custom Options'));
         o = s.taboption('custom_options', form.TextValue, 'custom_config', _('Custom Configurations'), _('Check <code>/var/etc/xray/config.json</code> for tags of generated inbounds and outbounds. See <a href="https://xtls.github.io/config/features/multiple.html">here</a> for help'));
         o.monospace = true;
-        o.rows = 10;
+        o.rows = 20;
         o.validate = validate_object;
 
         return m.render();

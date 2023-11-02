@@ -41,6 +41,8 @@ Then find `luci-app-xray` under `Extra Packages`.
 * 2023-10-26 fix: allow empty selection for extra inbound outbound balancer
 * 2023-10-30 fix: blocked as nxdomain for IPv6
 * 2023-10-31 chore: bump version to 3.1.1
+* 2023-11-01 feat: custom configuration hook
+* 2023-11-02 feat: specify DNS to resolve outbound server name
 
 ## Changelog since 3.0.0
 

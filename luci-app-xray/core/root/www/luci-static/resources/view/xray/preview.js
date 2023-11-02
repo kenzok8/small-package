@@ -260,10 +260,10 @@ return view.extend({
         ttl_hop_limit_match.datatype = 'uinteger';
 
         s.tab('custom_options', _('Custom Options'));
-        let custom_configuration_hook = s.taboption('custom_options', form.TextValue, 'custom_configuration_hook', _('Custom Configuration Hook'), _('Have full control over the configuration file here. Read <a href="https://ucode.mein.io/">ucode Documentation</a> for the language used.'));
+        let custom_configuration_hook = s.taboption('custom_options', form.TextValue, 'custom_configuration_hook', _('Custom Configuration Hook'), _('Read <a href="https://ucode.mein.io/">ucode Documentation</a> for the language used. Code filled here may need to change after upgrading luci-app-xray.'));
         custom_configuration_hook.placeholder = "return function(config) {\n    return config;\n};";
         custom_configuration_hook.monospace = true;
-        custom_configuration_hook.rows = 10;
+        custom_configuration_hook.rows = 20;
 
         return m.render();
     }

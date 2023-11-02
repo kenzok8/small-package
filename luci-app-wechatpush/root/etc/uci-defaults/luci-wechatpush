@@ -168,6 +168,9 @@ serverchan_to_wechatpush_get \
 	"unattended_enable" "zerotier_helper" "unattended_only_on_disturb_time" "unattended_device_aliases" "network_disconnect_event" "unattended_autoreboot_mode" "autoreboot_system_uptime" "autoreboot_network_uptime" \
 	"gateway_info_enable" "gateway_host_url" "gateway_info_url" "gateway_logout_url" "gateway_username_id" "gateway_password_id" "gateway_username" "gateway_password" "gateway_sleeptime"
 
+uci set wechatpush.config.cpu_threshold_duration='300'
+uci set wechatpush.config.cpu_notification_delay='3600'
+
 uci commit wechatpush
 rm -rf "$serverchan_config" 2>/dev/null
 dir="/tmp/wechatpush/" && mkdir -p ${dir}
