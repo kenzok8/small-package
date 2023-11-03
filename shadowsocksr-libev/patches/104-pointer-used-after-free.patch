@@ -1,0 +1,31 @@
+diff -ur a/server/server.c b/server/server.c
+--- a/server/server.c
++++ b/server/server.c
+@@ -1942,12 +1942,12 @@
+             text = (char*)malloc(strlen(protocol) - 11);
+             memcpy(text, protocol, strlen(protocol) - 11);
+             int length = strlen(protocol) - 11;
+-            free(protocol);
+             obfs = (char*)malloc(length);
+             memset(protocol, 0x00, length);
+             memcpy(protocol, text, length);
+             LOGI("protocol compatible enable, %s", protocol);
+             free(text);
++            free(protocol);
+             protocol_compatible = 1;
+         }
+     }
+@@ -1964,12 +1964,12 @@
+             text = (char*)malloc(strlen(obfs) - 11);
+             memcpy(text, obfs, strlen(obfs) - 11);
+             int length = strlen(obfs) - 11;
+-            free(obfs);
+             obfs = (char*)malloc(length);
+             memset(obfs, 0x00, length);
+             memcpy(obfs, text, length);
+             LOGI("obfs compatible enable, %s", obfs);
+             free(text);
++            free(obfs);
+             obfs_compatible = 1;
+         }
+     }
