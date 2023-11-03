@@ -1,2 +1,0 @@
-If you are using dnsmasq v2.87, keep this file. 
-See https://thekelleys.org.uk/dnsmasq/CHANGELOG for fixes in version 2.88 about the bug introduced in version 2.87, which could result in DNS servers being removed from the configuration when reloading server configuration.
