@@ -15,17 +15,3 @@ diff -ur a/server/server.c b/server/server.c
              protocol_compatible = 1;
          }
      }
-@@ -1964,12 +1964,12 @@
-             text = (char*)malloc(strlen(obfs) - 11);
-             memcpy(text, obfs, strlen(obfs) - 11);
-             int length = strlen(obfs) - 11;
--            free(obfs);
-             obfs = (char*)malloc(length);
-             memset(obfs, 0x00, length);
-             memcpy(obfs, text, length);
-             LOGI("obfs compatible enable, %s", obfs);
-             free(text);
-+            free(obfs);
-             obfs_compatible = 1;
-         }
-     }
