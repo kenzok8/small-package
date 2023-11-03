@@ -713,7 +713,7 @@ msgid "When CPU temperature or load exceeds the threshold continuously for (s) s
 msgstr "当 CPU 温度或负载超过阈值持续超过（秒）"
 
 #: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js:686
-msgid "If set to 0, it\'s a single check without considering duration."
+msgid "If set to 0, it's a single check without considering duration."
 msgstr "如果设置为 0，则为单次检测，不考虑持续时间"
 
 #: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js:688
