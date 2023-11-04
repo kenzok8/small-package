@@ -187,7 +187,8 @@ if args then
 	if args == "geo_data" then
 		string = luci.sys.exec("/usr/share/shadowsocksr/geodata_update.sh")
 		if string.find(string, "111") then
-			log(0)
+			icount = luci.sys.exec("cat /etc/ssrplus/mosdns-chinadns/geosite* | wc -l")
+			log(0, tonumber(icount))
 		else
 			log(-1)
 		end
