@@ -69,7 +69,7 @@ o:depends("netflix_enable", "1")
 
 o = s:option(ListValue, "shunt_dns_mode", translate("DNS Query Mode For Shunt Mode"))
 o:value("1", translate("Use DNS2SOCKS query and cache"))
-o:value("2", translate("Use MOSDNS query"))
+o:value("2", translate("Use MosDNS query"))
 o:depends("netflix_enable", "1")
 o.default = 1
 
