@@ -1,3 +1,7 @@
+# Author: sbwml
+# Origin from repository: https://github.com/sbwml/luci-app-mosdns
+# Reference: https://github.com/sbwml/luci-app-mosdns/blob/v5/luci-app-mosdns/root/usr/share/mosdns/default.yaml
+# Modify by: XiaoliChan
 log:
     level: info
 plugins:
