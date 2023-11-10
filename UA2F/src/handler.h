@@ -5,6 +5,6 @@
 
 void init_handler();
 
-void handle_packet(struct nf_queue *queue, struct nf_packet *pkt);
+void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt);
 
 #endif //UA2F_HANDLER_H

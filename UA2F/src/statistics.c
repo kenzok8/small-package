@@ -41,8 +41,8 @@ void count_ipv6_packet() {
 
 static char time_string_buffer[100];
 
-char *fill_time_string(double sec) {
-    int s = (int) sec;
+char *fill_time_string(const double sec) {
+    const int s = (int) sec;
     memset(time_string_buffer, 0, sizeof(time_string_buffer));
     if (s <= 60) {
         sprintf(time_string_buffer, "%d seconds", s);
@@ -61,7 +61,7 @@ char *fill_time_string(double sec) {
 void try_print_statistics() {
     if (user_agent_packet_count / last_report_count == 2 || user_agent_packet_count - last_report_count >= 8192) {
         last_report_count = user_agent_packet_count;
-        time_t current_t = time(NULL);
+        const time_t current_t = time(NULL);
         syslog(
                 LOG_INFO,
                 "UA2F has handled %lld ua http, %lld http, %lld tcp. %lld ipv4, %lld ipv6 packets in %s.",
