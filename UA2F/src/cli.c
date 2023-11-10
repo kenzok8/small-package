@@ -6,7 +6,7 @@
 #include "config.h"
 
 // handle print --version and --help
-void try_print_info(int argc, char *argv[]) {
+void try_print_info(const int argc, char *argv[]) {
     if (argc != 2) {
         return;
     }

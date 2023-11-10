@@ -347,7 +347,7 @@ static bool inline read_ip_addr(struct nlattr *attr, int af, ip_address_t *ip_nu
         void *addr = mnl_attr_get_payload(attr);
         if (addr == NULL)
             return false;
-        int ip_ver = 0;
+        int ip_ver;
         if (af == AF_INET) {
             memset(&ip_num->ip, 0, sizeof(ip_num->ip));
             memcpy(&ip_num->ip4, addr, sizeof(uint32_t));

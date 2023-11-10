@@ -10,7 +10,7 @@ struct ua2f_config config = {
 };
 
 void load_config() {
-    __auto_type ctx = uci_alloc_context();
+    const __auto_type ctx = uci_alloc_context();
     if (!ctx) {
         syslog(LOG_ERR, "Failed to allocate uci context");
         return;
@@ -22,12 +22,12 @@ void load_config() {
     }
 
     // find ua2f.main.custom_ua
-    __auto_type section = uci_lookup_section(ctx, package, "main");
+    const __auto_type section = uci_lookup_section(ctx, package, "main");
     if (!section) {
         goto cleanup;
     }
 
-    __auto_type custom_ua = uci_lookup_option_string(ctx, section, "custom_ua");
+    const __auto_type custom_ua = uci_lookup_option_string(ctx, section, "custom_ua");
     if (!custom_ua) {
         goto cleanup;
     }

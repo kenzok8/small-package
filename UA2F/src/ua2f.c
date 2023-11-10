@@ -15,12 +15,12 @@
 
 volatile int should_exit = false;
 
-void signal_handler(int signum) {
+void signal_handler(const int signum) {
     syslog(LOG_ERR, "Signal %s received, exiting...", strsignal(signum));
     should_exit = true;
 }
 
-int main(int argc, char *argv[]) {
+int main(const int argc, char *argv[]) {
     openlog("UA2F", LOG_PID, LOG_SYSLOG);
 
     load_config();
@@ -36,12 +36,10 @@ int main(int argc, char *argv[]) {
     signal(SIGSEGV, signal_handler);
     signal(SIGABRT, signal_handler);
 
-    struct nf_queue queue[1];
-    memset(queue, 0, sizeof(struct nf_queue));
-    struct nf_buffer buf[1];
-    memset(buf, 0, sizeof(struct nf_buffer));
+    struct nf_queue queue[1] = {0};
+    struct nf_buffer buf[1] = {0};
 
-    __auto_type ret = nfqueue_open(queue, QUEUE_NUM, 0);
+    const __auto_type ret = nfqueue_open(queue, QUEUE_NUM, 0);
     if (!ret) {
         syslog(LOG_ERR, "Failed to open nfqueue");
         return EXIT_FAILURE;

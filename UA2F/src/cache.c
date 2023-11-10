@@ -14,7 +14,7 @@ _Noreturn static void check_cache() {
     while (true) {
         pthread_rwlock_wrlock(&cacheLock);
 
-        time_t now = time(NULL);
+        const time_t now = time(NULL);
         struct cache *cur, *tmp;
 
         HASH_ITER(hh, not_http_dst_cache, cur, tmp) {
@@ -39,7 +39,7 @@ void init_not_http_cache() {
     syslog(LOG_INFO, "Cache lock initialized");
 
     pthread_t cleanup_thread;
-    __auto_type ret = pthread_create(&cleanup_thread, NULL, (void *(*)(void *)) check_cache, NULL);
+    const __auto_type ret = pthread_create(&cleanup_thread, NULL, check_cache, NULL);
     if (ret) {
         syslog(LOG_ERR, "Failed to create cleanup thread: %d", ret);
         exit(EXIT_FAILURE);
