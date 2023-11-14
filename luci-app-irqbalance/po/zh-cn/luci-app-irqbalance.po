@@ -1,0 +1,12 @@
+msgid "Irqbalance is a Linux daemon that distributes interrupts over multiple logical CPUs. This design intent being to improve overall performance which can result in a balanced load and power consumption.</br>For more information, visiting: https://openwrt.org/docs/guide-user/services/irqbalance"
+msgstr "Irqbalance 是一个 Linux 守护进程，它在多个逻辑 CPU 上分配中断。此设计旨在提高整体性能，从而实现平衡的负载和功耗。访问 https://openwrt.org/docs/guide-user/services/irqbalance 可获取更多信息。"
+
+msgid "Irqbalance"
+msgstr "中断均衡器"
+
+msgid "Interval (Seconds) "
+msgstr "间隔（秒）"
+
+msgid "Ignore (ID of irq)"
+msgstr "忽略（中断ID）"
+
