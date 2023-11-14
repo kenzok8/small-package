@@ -20,7 +20,23 @@ o.datatype = "uinteger"
 o.default=9876
 
 o = s:option(Value, "time",translate("update interval"))
-o.default=300
+o.default=600
+
+o = s:option(Value, "ctimes",translate("Compare with service provider N times intervals"))
+o.default=5
+
+o = s:option(Flag,"skipverify",translate("Skip verifying certificates"))
+o.default = 0
+
+o = s:option(ListValue, "dns",translate("Specify DNS resolution server"))
+o:value("223.5.5.5", ""..translate("Ali").." DNS (223.5.5.5)")
+o:value("223.6.6.6", ""..translate("Ali").." DNS (223.6.6.6)")
+o:value("119.29.29.29", ""..translate("Tencent").." DNS (119.29.29.29)")
+o:value("1.1.1.1", translate("CloudFlare DNS(1.1.1.1)"))
+o.default = "223.5.5.5"
+
+o = s:option(Flag,"noweb",translate("Do not start web services"))
+o.default = 0
 
 m.apply_on_parse = true
 m.on_after_apply = function(self,map)
