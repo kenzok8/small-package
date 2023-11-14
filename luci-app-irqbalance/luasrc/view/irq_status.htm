@@ -1,0 +1,39 @@
+<style type="text/css">
+<%
+local dsp = require "luci.dispatcher"
+-%>
+fieldset > fieldset, .cbi-section > .cbi-section {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: #000000d9;
+    color: #dacb02;
+    border-radius: 10px;
+}
+</style>
+
+
+<div class="cbi-map">
+	<fieldset class="cbi-section">
+		<fieldset class="cbi-section-node">
+			<div id="log_text"></div>
+		</fieldset>
+	</fieldset>
+</div>
+
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=v21.10.5.1009"></script>
+<script type="text/javascript">//<![CDATA[
+	var log_id=document.getElementById('log_text');
+	XHR.poll(2,'<%=luci.dispatcher.build_url("admin","system","irqbalance","status")%>',null,function(x,data){
+		if (log_id&&data){
+			log_id.innerHTML=String.format(
+				'<pre>%s</pre>',
+				data.syslog || '<%:No data.%>'
+			);
+		}else if (log_id){
+			log_id.innerHTML='<strong><%:读取错误，请刷新或稍等。%></strong>';
+		}
+	});
+//]]></script>
+
