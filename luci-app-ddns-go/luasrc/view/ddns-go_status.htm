@@ -1,3 +1,7 @@
+<%
+protocol="http://"
+%>
+
 <script type="text/javascript">//<![CDATA[
 	XHR.poll(3, '<%=url([[admin]], [[services]], [[ddnsgo_status]])%>', null,
 		function(x, data) {
@@ -6,9 +10,11 @@
 			{
 				if (data.running)
 				{
-				    var URL = ""+ window.location.protocol + "//" + window.location.hostname +":<%=luci.model.uci.cursor():get_first("ddns-go", "basic", "port") %>";
+					var URL = "<%=protocol%>" + window.location.hostname +":<%=luci.model.uci.cursor():get_first("ddns-go", "basic", "port") %>";
 					tb.innerHTML = '<em><b style=\"color:green\"><%:The DDNS-GO service is running.%></b></em>';
-					tb.innerHTML +='<em> <br/><br/>' + ' <b > <%:Click the new page to open ddns-go%>  <a href="' +URL+'"'+' target="_blank">' + URL + ' </a><br/> </em>';
+					tb.innerHTML +='<em> <br/><br/>' + ' <b > <%:Click the new page to open ddns-go%> </em>';
+					tb.innerHTML += "<input class=\"cbi-button cbi-button-reload \" type=\"button\" value=\" "+ URL+ "\" onclick=\"window.open('"+ URL+ "/')\"/>";
+
 				}
 				else
 				{
