@@ -1,0 +1,14 @@
+#!/bin/sh
+
+main() {
+    case "$1" in
+        list)
+            echo '{"statsquery":{},"statssys":{},"restartlogger":{}}'
+            ;;
+        call)
+            shift
+            xray api $@
+    esac
+}
+
+main "$@"

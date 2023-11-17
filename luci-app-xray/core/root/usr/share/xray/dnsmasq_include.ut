@@ -1,0 +1,27 @@
+#!/usr/bin/utpl
+{%
+    "use strict";
+    import { load_config } from "./common/config.mjs";
+    const config = load_config();
+    const general = config[filter(keys(config), k => config[k][".type"] == "general")[0]];
+    const dns_port = int(general["dns_port"] || 5300);
+    const dns_count = int(general["dns_count"] || 3);
+    const manual_tproxy = filter(keys(config), k => config[k][".type"] == "manual_tproxy") || [];
+%}
+# Generated dnsmasq configurations by luci-app-xray
+strict-order
+server=/#/127.0.0.1#{{ dns_port }}
+{% for (let i = dns_port; i <= dns_port + dns_count; i++): %}
+server=127.0.0.1#{{ i }}
+{% endfor %}
+{% for (let i in manual_tproxy): %}
+{% if (config[i]["rebind_domain_ok"] == "1"): %}
+{% for (let j in config[i]["domain_names"]): %}
+rebind-domain-ok={{ j }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% if (general["blocked_to_loopback"] != "1"): %}
+bogus-nxdomain=127.127.127.127
+bogus-nxdomain=100::6c62:636f:656b:2164
+{% endif %}
