@@ -1,0 +1,1 @@
+include "/var/etc/xray/*.nft"

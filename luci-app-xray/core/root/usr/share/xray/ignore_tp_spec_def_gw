@@ -1,0 +1,1 @@
+Ignore TP_SPEC_DEF_GW (nftables only). TP_SPEC_DEF_GW is only useful when you have publicly routable IPv4 address on your router.
