@@ -31,6 +31,7 @@ o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("emby/embyserver", "emby/embyserver")
+o:value("emby/embyserver:4.8.0.59", "emby/embyserver:4.8.0.59")
 o:value("emby/embyserver_arm32v7", "emby/embyserver_arm32v7")
 o:value("emby/embyserver_arm64v8", "emby/embyserver_arm64v8")
 o.default = "emby/embyserver"
