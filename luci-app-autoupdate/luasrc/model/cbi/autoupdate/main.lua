@@ -1,6 +1,6 @@
 m = Map("autoupdate", translate("AutoUpdate"),
 translate("AutoUpdate LUCI supports scheduled upgrade & one-click firmware upgrade")
-.. [[<br /><br /><a href="https://github.com/Hyy2001X/AutoBuild-Actions">]]
+.. [[<br /><br /><a href="https://github.com/Hyy2001X/AutoBuild-Actions-BETA">]]
 .. translate("Powered by AutoBuild-Actions")
 .. [[</a>]]
 )
