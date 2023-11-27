@@ -193,6 +193,7 @@ natflow_qos_zone_setup_tc()
 
 natflow_qos_clear_tc()
 {
+	which tc &>/dev/null || return
 	ifconfig | grep "^[^ ]" | awk '{print $1}' | while read ifname; do
 		if [ "${ifname}" = "${ifname//:}" ]; then
 			tc qdisc del dev $ifname root &>/dev/null
@@ -210,7 +211,7 @@ start() {
 
 	natflow_qos_clear_tc
 
-	if [ "$(uci get natflow.main.tc_classid_mode 2>/dev/null || echo 0)" = "1" ]; then
+	if [ "$(uci get natflow.main.tc_classid_mode 2>/dev/null || echo 0)" = "1" ] && which tc &>/dev/null; then
 		echo tc_classid_mode=1 >/dev/qos_ctl
 		config_foreach natflow_qos_zone_setup_tc zone
 	else
