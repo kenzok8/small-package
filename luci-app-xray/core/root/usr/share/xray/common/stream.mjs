@@ -145,7 +145,7 @@ export function stream_settings(server, protocol, tag) {
     let dialer_proxy_tag = null;
     if (server["dialer_proxy"] != null && server["dialer_proxy"] != "disabled") {
         dialer_proxy = server["dialer_proxy"];
-        dialer_proxy_tag = "dialer_proxy:" + tag;
+        dialer_proxy_tag = tag + `@dialer_proxy:${dialer_proxy}`;
     }
     return {
         stream_settings: {

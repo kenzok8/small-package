@@ -1,7 +1,8 @@
 
 config homeproxy 'infra'
 	option __warning 'DO NOT EDIT THIS SECTION, OR YOU ARE ON YOUR OWN!'
-	option common_port '22,53,80,143,443,465,853,993,995,8080,8443,9418'
+	option common_port '22,53,80,143,443,465,853,873,993,995,8080,8443,9418'
+	option mixed_port '5330'
 	option redirect_port '5331'
 	option tproxy_port '5332'
 	option dns_port '5333'
