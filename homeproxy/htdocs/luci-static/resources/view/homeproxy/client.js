@@ -562,6 +562,7 @@ return view.extend({
 			delete this.vallist;
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
+			this.value('system-dns', _('System DNS'));
 			this.value('block-dns', _('Block DNS queries'));
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
@@ -617,6 +618,7 @@ return view.extend({
 
 			this.value('', _('None'));
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
+			this.value('system-dns', _('System DNS'));
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res['.name'] !== section_id && res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -696,18 +698,15 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'mode', _('Mode'),
 			_('The default rule uses the following matching logic:<br/>' +
-			'<code>(domain || domain_suffix || domain_keyword || domain_regex || geosite || ip_cidr)</code> &&<br/>' +
+			'<code>(domain || domain_suffix || domain_keyword || domain_regex || geosite)</code> &&<br/>' +
+			'<code>(port || port_range)</code> &&<br/>' +
 			'<code>(source_geoip || source_ip_cidr)</code> &&<br/>' +
+			'<code>(source_port || source_port_range)</code> &&<br/>' +
 			'<code>other fields</code>.'));
 		so.value('default', _('Default'));
 		so.default = 'default';
 		so.rmempty = false;
 		so.readonly = true;
-
-		so = ss.option(form.Flag, 'invert', _('Invert'),
-			_('Invert match result.'));
-		so.default = so.disabled;
-		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'network', _('Network'));
 		so.value('tcp', _('TCP'));
@@ -743,17 +742,22 @@ return view.extend({
 			_('Match geosite.'));
 		so.modalonly = true;
 
+		so = ss.option(form.DynamicList, 'port', _('Port'),
+			_('Match port.'));
+		so.datatype = 'port';
+		so.modalonly = true;
+
+		so = ss.option(form.DynamicList, 'port_range', _('Port range'),
+			_('Match port range. Format as START:/:END/START:END.'));
+		so.validate = validatePortRange;
+		so.modalonly = true;
+
 		so = ss.option(form.DynamicList, 'source_geoip', _('Source GeoIP'),
 			_('Match source GeoIP.'));
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'source_ip_cidr', _('Source IP CIDR'),
 			_('Match source IP CIDR.'));
-		so.datatype = 'or(cidr, ipaddr)';
-		so.modalonly = true;
-
-		so = ss.option(form.DynamicList, 'ip_cidr', _('IP CIDR'),
-			_('Match IP CIDR.'));
 		so.datatype = 'or(cidr, ipaddr)';
 		so.modalonly = true;
 
@@ -764,16 +768,6 @@ return view.extend({
 
 		so = ss.option(form.DynamicList, 'source_port_range', _('Source port range'),
 			_('Match source port range. Format as START:/:END/START:END.'));
-		so.validate = validatePortRange;
-		so.modalonly = true;
-
-		so = ss.option(form.DynamicList, 'port', _('Port'),
-			_('Match port.'));
-		so.datatype = 'port';
-		so.modalonly = true;
-
-		so = ss.option(form.DynamicList, 'port_range', _('Port range'),
-			_('Match port range. Format as START:/:END/START:END.'));
 		so.validate = validatePortRange;
 		so.modalonly = true;
 
@@ -789,12 +783,18 @@ return view.extend({
 			_('Match user name.'));
 		so.modalonly = true;
 
+		so = ss.option(form.Flag, 'invert', _('Invert'),
+			_('Invert match result.'));
+		so.default = so.disabled;
+		so.modalonly = true;
+
 		so = ss.option(form.MultiValue, 'outbound', _('Outbound'),
 			_('Match outbound.'));
 		so.load = function(section_id) {
 			delete this.keylist;
 			delete this.vallist;
 
+			this.value('any-out', _('Any'));
 			this.value('direct-out', _('Direct'));
 			this.value('block-out', _('Block'));
 			uci.sections(data[0], 'routing_node', (res) => {
@@ -813,6 +813,7 @@ return view.extend({
 			delete this.vallist;
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
+			this.value('system-dns', _('System DNS'));
 			this.value('block-dns', _('Block DNS queries'));
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')

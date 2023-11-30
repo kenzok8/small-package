@@ -78,6 +78,7 @@ const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'redirect_tproxy
       ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0',
       default_interface = uci.get(uciconfig, ucicontrol, 'bind_interface');
 
+const mixed_port = uci.get(uciconfig, uciinfra, 'mixed_port') || '5330';
 let self_mark, redirect_port, tproxy_port,
     tun_name, tun_addr4, tun_addr6, tun_mtu,
     tcpip_stack, endpoint_independent_nat;
@@ -243,14 +244,24 @@ function get_outbound(cfg) {
 	if (isEmpty(cfg))
 		return null;
 
-	if (cfg in ['direct-out', 'block-out'])
-		return cfg;
-	else {
-		const node = uci.get(uciconfig, cfg, 'node');
-		if (isEmpty(node))
-			die(sprintf("%s's node is missing, please check your configuration.", cfg));
-		else
-			return 'cfg-' + node + '-out';
+	if (type(cfg) === 'array') {
+		if ('any-out' in cfg)
+			return 'any';
+
+		let outbounds = [];
+		for (let i in cfg)
+			push(outbounds, get_outbound(i));
+		return outbounds;
+	} else {
+		if (cfg in ['direct-out', 'block-out']) {
+			return cfg;
+		} else {
+			const node = uci.get(uciconfig, cfg, 'node');
+			if (isEmpty(node))
+				die(sprintf("%s's node is missing, please check your configuration.", cfg));
+			else
+				return 'cfg-' + node + '-out';
+		}
 	}
 }
 
@@ -258,7 +269,7 @@ function get_resolver(cfg) {
 	if (isEmpty(cfg))
 		return null;
 
-	if (cfg in ['default-dns', 'block-dns'])
+	if (cfg in ['default-dns', 'system-dns', 'block-dns'])
 		return cfg;
 	else
 		return 'cfg-' + cfg + '-dns';
@@ -282,6 +293,11 @@ config.dns = {
 		{
 			tag: 'default-dns',
 			address: wan_dns,
+			detour: 'direct-out'
+		},
+		{
+			tag: 'system-dns',
+			address: 'local',
 			detour: 'direct-out'
 		},
 		{
@@ -359,7 +375,6 @@ if (!isEmpty(main_node)) {
 			return;
 
 		push(config.dns.rules, {
-			invert: cfg.invert,
 			network: cfg.network,
 			protocol: cfg.protocol,
 			domain: cfg.domain,
@@ -367,12 +382,12 @@ if (!isEmpty(main_node)) {
 			domain_keyword: cfg.domain_keyword,
 			domain_regex: cfg.domain_regex,
 			geosite: cfg.geosite,
+			port: parse_port(cfg.port),
+			port_range: cfg.port_range,
 			source_geoip: cfg.source_geoip,
 			source_ip_cidr: cfg.source_ip_cidr,
 			source_port: parse_port(cfg.source_port),
 			source_port_range: cfg.source_port_range,
-			port: parse_port(cfg.port),
-			port_range: cfg.port_range,
 			process_name: cfg.process_name,
 			process_path: cfg.process_path,
 			user: cfg.user,
@@ -398,6 +413,16 @@ push(config.inbounds, {
 	tag: 'dns-in',
 	listen: '::',
 	listen_port: int(dns_port)
+});
+
+push(config.inbounds, {
+	type: 'mixed',
+	tag: 'mixed-in',
+	listen: '::',
+	listen_port: int(mixed_port),
+	sniff: true,
+	sniff_override_destination: (sniff_override === '1'),
+	set_system_proxy: false
 });
 
 if (match(proxy_mode, /redirect/))
