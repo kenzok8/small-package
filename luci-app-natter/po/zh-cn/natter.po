@@ -77,7 +77,7 @@ msgid "FullCone NAT"
 msgstr "FullCone NAT"
 
 msgid "Please DO NOT handle the IP address/domain name/port of the TCP/UDP STUN server (3478) while running proxy"
-msgstr "请不要使用任何代理软件代理 TCP/UDP STUN 服务器的IP 地址/域名/端口 (3478)"
+msgstr "请不要使用任何代理软件代理 STUN 服务器地址"
 
 msgid "Local IP Address"
 msgstr "本地 IP 地址"

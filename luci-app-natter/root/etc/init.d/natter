@@ -4,7 +4,7 @@ START=98
 USE_PROCD=0
 
 start_service() {
-	local basic_list="enable enable_fullcone_nat log_path tcp_stun_server udp_stun_server keep_alive_url local_ip"
+	local basic_list="enable log_path tcp_stun_server udp_stun_server keep_alive_url local_ip"
 	local port_list="enable_port id remarks port enable_forward \
 		forward_mode external_port port_type delay log_level \
 		internal_ip internal_port hook"
@@ -12,25 +12,6 @@ start_service() {
 	do
 		local eval $i="$(uci_get_by_type base 0 $i)"
 	done ; unset i
-	if [ "$enable_fullcone_nat" == 1 ]
-	then
-		echo "Starting Natter ..."
-		if [ "$(uci get firewall.@defaults[0].fullcone > /dev/null ; echo $?)" == 0 ]
-		then
-			if [ "$(uci get firewall.@defaults[0].fullcone)" == 0 ]
-			then
-				echo "Starting FullCone NAT ..."
-				uci set firewall.@defaults[0].fullcone="1"
-				uci commit firewall
-			else
-				echo "FullCone NAT was already started ..."
-			fi
-		else
-			echo "Failed to start FullCone NAT ..."
-			uci set natter.@base[0].enable_fullcone_nat="0"
-			uci commit natter
-		fi
-	fi
 	if [ "$enable" == 1 ]
 	then
 		include_file=/var/etc/natter.include
@@ -167,9 +148,9 @@ iptables -I INPUT -j natter 2> /dev/null
 					for i in $iptables_type
 					do
 						# iptables -A natter \
-							-p $i -m $i --dport $external_port \
-							-m comment --comment "nt-op-$id-$remarks" \
-							-j ACCEPT
+						#	-p $i -m $i --dport $external_port \
+						#	-m comment --comment "nt-op-$id-$remarks" \
+						#	-j ACCEPT
 						# echo "iptables -A natter -p $i -m $i --dport $external_port -m comment --comment \"nt-op-$id-$remarks\" -j ACCEPT" >> ${include_file}
 						iptables -t nat -A PREROUTING \
 							-p $i -m $i --dport $external_port \
