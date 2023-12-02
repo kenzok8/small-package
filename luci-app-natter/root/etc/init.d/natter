@@ -1,7 +1,6 @@
 #!/bin/sh /etc/rc.common
 
 START=98
-USE_PROCD=0
 
 start_service() {
 	local basic_list="enable log_path tcp_stun_server udp_stun_server keep_alive_url local_ip"
