@@ -11,9 +11,6 @@ end
 enable = s:option(Flag, "enable", translate("Enable"))
 enable.default = 0
 
-enable_fullcone_nat = s:option(Flag, "enable_fullcone_nat", translate("FullCone NAT"))
-enable_fullcone_nat.default = 0
-
 if check_file("/tmp/natter_nat_type") then
 	natter_nat_type_tcp = luci.sys.exec ("grep TCP /tmp/natter_nat_type")
 	natter_nat_type_udp = luci.sys.exec ("grep UDP /tmp/natter_nat_type")
