@@ -255,10 +255,13 @@ void handle_packet(const struct nf_queue* queue,const struct nf_packet* pkt) {
         goto end;
     }
 
-    if (!is_http_protocol(tcp_payload, tcp_payload_len)) {
-        send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
-        goto end;
-    }
+// FIXME: can lead to false positive,
+//        should also get CTA_COUNTERS_ORIG to check if this packet is a initial tcp packet
+
+//    if (!is_http_protocol(tcp_payload, tcp_payload_len)) {
+//        send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
+//        goto end;
+//    }
     count_http_packet();
 
     const void* search_start = tcp_payload;
