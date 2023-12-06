@@ -98,6 +98,16 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 			}
 		] : null,
 
+		multiplex: (cfg.multiplex === '1') ? {
+			enabled: true,
+			padding: (cfg.multiplex_padding === '1'),
+			brutal: (cfg.multiplex_brutal === '1') ? {
+				enabled: true,
+				up_mbps: cfg.multiplex_brutal_down,
+				down_mbps: cfg.multiplex_brutal_up
+			} : null
+		} : null,
+
 		tls: (cfg.tls === '1') ? {
 			enabled: true,
 			server_name: cfg.tls_sni,
@@ -143,7 +153,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 
 		transport: !isEmpty(cfg.transport) ? {
 			type: cfg.transport,
-			host: cfg.http_host,
+			host: cfg.http_host || cfg.httpupgrade_host,
 			path: cfg.http_path || cfg.ws_path,
 			headers: cfg.ws_host ? {
 				Host: cfg.ws_host
