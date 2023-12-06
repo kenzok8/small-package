@@ -715,7 +715,7 @@ return view.extend({
 		so.rmempty = false;
 		so.readonly = true;
 
-		so = ss.option(form.ListValue, 'ip_version', _('IP Version'));
+		so = ss.option(form.ListValue, 'ip_version', _('IP version'));
 		so.value('4', _('IPv4'));
 		so.value('6', _('IPv6'));
 		so.value('', _('Both'));
