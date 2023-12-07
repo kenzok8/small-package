@@ -15,6 +15,10 @@ do_install() {
   fi
   [ -z "$port" ] && port=6009
 
+  echo "start vmease"
+  /etc/init.d/vmease start
+  sleep 1
+
   echo "docker pull ${IMAGE_NAME}"
   docker pull ${IMAGE_NAME}
   docker rm -f webvirtcloud
@@ -24,7 +28,6 @@ do_install() {
     --tmpfs /tmp \
     --tmpfs /run/lock \
     -v /sys/fs/cgroup:/sys/fs/cgroup \
-    -v /mnt:/mnt:rslave \
     -v \"$config/dbconfig:/srv/webvirtcloud/dbconfig\" \
     -v \"$config/libvirt:/etc/libvirt\" \
     -v \"$config/images:/var/lib/libvirt/images\" \
@@ -39,6 +42,9 @@ do_install() {
     tz="`uci get system.@system[0].zonename`"
   fi
   [ -z "$tz" ] || cmd="$cmd -e TZ=\"$tz\""
+
+  cmd="$cmd -v /mnt:/mnt"
+  mountpoint -q /mnt && cmd="$cmd:rslave"
 
   cmd="$cmd --name webvirtcloud \"$IMAGE_NAME\""
 
@@ -75,7 +81,18 @@ case ${ACTION} in
   "rm")
     docker rm -f webvirtcloud
   ;;
-  "start" | "stop" | "restart")
+  "start")
+    /etc/init.d/vmease start
+    sleep 1
+    docker ${ACTION} webvirtcloud
+  ;;
+  "stop")
+    /etc/init.d/vmease stop
+    docker ${ACTION} webvirtcloud
+  ;;
+  "restart")
+    /etc/init.d/vmease start
+    sleep 1
     docker ${ACTION} webvirtcloud
   ;;
   "status")
