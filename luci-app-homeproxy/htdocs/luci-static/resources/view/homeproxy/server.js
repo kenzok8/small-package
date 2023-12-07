@@ -319,8 +319,12 @@ return view.extend({
 		o.value('', _('None'));
 		o.value('grpc', _('gRPC'));
 		o.value('http', _('HTTP'));
+		o.value('httpupgrade', _('HTTPUpgrade'));
 		o.value('quic', _('QUIC'));
 		o.value('ws', _('WebSocket'));
+		o.depends('type', 'trojan');
+		o.depends('type', 'vless');
+		o.depends('type', 'vmess');
 		o.onchange = function(ev, section_id, value) {
 			var desc = this.map.findElement('id', 'cbid.homeproxy.%s.transport'.format(section_id)).nextElementSibling;
 			if (value === 'http')
@@ -338,9 +342,6 @@ return view.extend({
 				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
 					_('If the transport doesn\'t see any activity after a duration of this time (in seconds), it pings the client to check if the connection is still active.');
 		}
-		o.depends('type', 'trojan');
-		o.depends('type', 'vless');
-		o.depends('type', 'vmess');
 		o.modalonly = true;
 
 		/* gRPC config start */
@@ -350,14 +351,20 @@ return view.extend({
 
 		/* gRPC config end */
 
-		/* HTTP config start */
+		/* HTTP(Upgrade) config start */
 		o = s.option(form.DynamicList, 'http_host', _('Host'));
 		o.datatype = 'hostname';
 		o.depends('transport', 'http');
 		o.modalonly = true;
 
+		o = s.option(form.Value, 'httpupgrade_host', _('Host'));
+		o.datatype = 'hostname';
+		o.depends('transport', 'httpupgrade');
+		o.modalonly = true;
+
 		o = s.option(form.Value, 'http_path', _('Path'));
 		o.depends('transport', 'http');
+		o.depends('transport', 'httpupgrade');
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'http_method', _('Method'));
@@ -406,6 +413,41 @@ return view.extend({
 		/* WebSocket config end */
 
 		/* Transport config end */
+
+		/* Mux config start */
+		o = s.option(form.Flag, 'multiplex', _('Multiplex'));
+		o.default = o.disabled;
+		o.depends('type', 'shadowsocks');
+		o.depends('type', 'trojan');
+		o.depends('type', 'vless');
+		o.depends('type', 'vmess');
+		o.modalonly = true;
+
+		o = s.option(form.Flag, 'multiplex_padding', _('Enable padding'));
+		o.default = o.disabled;
+		o.depends('multiplex', '1');
+		o.modalonly = true;
+
+		if (features.hp_has_tcp_brutal) {
+			o = s.option(form.Flag, 'multiplex_brutal', _('Enable TCP Brutal'),
+				_('Enable TCP Brutal congestion control algorithm'));
+			o.default = o.disabled;
+			o.depends('multiplex', '1');
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'multiplex_brutal_down', _('Download bandwidth'),
+				_('Download bandwidth in Mbps.'));
+			o.datatype = 'uinteger';
+			o.depends('multiplex_brutal', '1');
+			o.modalonly = true;
+
+			o = s.option(form.Value, 'multiplex_brutal_up', _('Upload bandwidth'),
+				_('Upload bandwidth in Mbps.'));
+			o.datatype = 'uinteger';
+			o.depends('multiplex_brutal', '1');
+			o.modalonly = true;
+		}
+		/* Mux config end */
 
 		/* TLS config start */
 		o = s.option(form.Flag, 'tls', _('TLS'));

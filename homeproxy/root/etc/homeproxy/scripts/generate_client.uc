@@ -149,7 +149,7 @@ function generate_outbound(node) {
 		override_address: node.override_address,
 		override_port: strToInt(node.override_port),
 		/* Hysteria (2) */
-		up_mbps: strToInt(node.hysteria_down_mbps),
+		up_mbps: strToInt(node.hysteria_up_mbps),
 		down_mbps: strToInt(node.hysteria_down_mbps),
 		obfs: node.hysteria_obfs_type ? {
 			type: node.hysteria_obfs_type,

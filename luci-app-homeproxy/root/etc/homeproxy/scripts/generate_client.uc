@@ -8,6 +8,7 @@
 'use strict';
 
 import { readfile, writefile } from 'fs';
+import { isnan } from 'math';
 import { cursor } from 'uci';
 
 import {
@@ -48,7 +49,7 @@ const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, sniff_override = '1',
     dns_server, dns_default_strategy, dns_default_server, dns_disable_cache, dns_disable_cache_expire,
-    direct_domain_list;
+    dns_independent_cache, direct_domain_list;
 
 if (routing_mode !== 'custom') {
 	main_node = uci.get(uciconfig, ucimain, 'main_node') || 'nil';
@@ -68,6 +69,7 @@ if (routing_mode !== 'custom') {
 	dns_default_server = uci.get(uciconfig, ucidnssetting, 'default_server');
 	dns_disable_cache = uci.get(uciconfig, ucidnssetting, 'disable_cache');
 	dns_disable_cache_expire = uci.get(uciconfig, ucidnssetting, 'disable_cache_expire');
+	dns_independent_cache = uci.get(uciconfig, ucidnssetting, 'independent_cache');
 
 	/* Routing settings */
 	default_outbound = uci.get(uciconfig, uciroutingsetting, 'default_outbound') || 'nil';
@@ -115,6 +117,18 @@ function parse_port(strport) {
 
 }
 
+function parse_dnsquery(strquery) {
+	if (type(strquery) !== 'array' || isEmpty(strquery))
+		return null;
+
+	let querys = [];
+	for (let i in strquery)
+		isnan(int(i)) ? push(querys, i) : push(querys, int(i));
+
+	return querys;
+
+}
+
 function generate_outbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -127,14 +141,15 @@ function generate_outbound(node) {
 		server: node.address,
 		server_port: strToInt(node.port),
 
-		username: node.username,
+		username: (node.type !== 'ssh') ? node.username : null,
+		user: (node.type === 'ssh') ? node.username : null,
 		password: node.password,
 
 		/* Direct */
 		override_address: node.override_address,
 		override_port: strToInt(node.override_port),
 		/* Hysteria (2) */
-		up_mbps: strToInt(node.hysteria_down_mbps),
+		up_mbps: strToInt(node.hysteria_up_mbps),
 		down_mbps: strToInt(node.hysteria_down_mbps),
 		obfs: node.hysteria_obfs_type ? {
 			type: node.hysteria_obfs_type,
@@ -146,16 +161,17 @@ function generate_outbound(node) {
 		recv_window: strToInt(node.hysteria_revc_window),
 		disable_mtu_discovery: strToBool(node.hysteria_disable_mtu_discovery),
 		/* Shadowsocks */
-		method: node.shadowsocks_encrypt_method || node.shadowsocksr_encrypt_method,
+		method: node.shadowsocks_encrypt_method,
 		plugin: node.shadowsocks_plugin,
 		plugin_opts: node.shadowsocks_plugin_opts,
-		/* ShadowsocksR */
-		protocol: node.shadowsocksr_protocol,
-		protocol_param: node.shadowsocksr_protocol_param,
-		obfs: node.shadowsocksr_obfs,
-		obfs_param: node.shadowsocksr_obfs_param,
 		/* ShadowTLS / Socks */
 		version: (node.type === 'shadowtls') ? strToInt(node.shadowtls_version) : ((node.type === 'socks') ? node.socks_version : null),
+		/* SSH */
+		client_version: node.ssh_client_version,
+		host_key: node.ssh_host_key,
+		host_key_algorithms: node.ssh_host_key_algo,
+		private_key: node.ssh_priv_key,
+		private_key_passphrase: node.ssh_priv_key_pp,
 		/* Tuic */
 		uuid: node.uuid,
 		congestion_control: node.tuic_congestion_control,
@@ -186,7 +202,12 @@ function generate_outbound(node) {
 			max_connections: strToInt(node.multiplex_max_connections),
 			min_streams: strToInt(node.multiplex_min_streams),
 			max_streams: strToInt(node.multiplex_max_streams),
-			padding: (node.multiplex_padding === '1')
+			padding: (node.multiplex_padding === '1'),
+			brutal: (node.multiplex_brutal === '1') ? {
+				enabled: true,
+				up_mbps: node.multiplex_brutal_down,
+				down_mbps: node.multiplex_brutal_up
+			} : null
 		} : null,
 		tls: (node.tls === '1') ? {
 			enabled: true,
@@ -215,7 +236,7 @@ function generate_outbound(node) {
 		} : null,
 		transport: !isEmpty(node.transport) ? {
 			type: node.transport,
-			host: node.http_host,
+			host: node.http_host || node.httpupgrade_host,
 			path: node.http_path || node.ws_path,
 			headers: node.ws_host ? {
 				Host: node.ws_host
@@ -308,7 +329,8 @@ config.dns = {
 	rules: [],
 	strategy: dns_default_strategy,
 	disable_cache: (dns_disable_cache === '1'),
-	disable_expire: (dns_disable_cache_expire === '1')
+	disable_expire: (dns_disable_cache_expire === '1'),
+	independent_cache: (dns_independent_cache === '1')
 };
 
 if (!isEmpty(main_node)) {
@@ -375,6 +397,8 @@ if (!isEmpty(main_node)) {
 			return;
 
 		push(config.dns.rules, {
+			ip_version: strToInt(cfg.ip_version),
+			query_type: parse_dnsquery(cfg.query_type),
 			network: cfg.network,
 			protocol: cfg.protocol,
 			domain: cfg.domain,
@@ -394,7 +418,8 @@ if (!isEmpty(main_node)) {
 			invert: (cfg.invert === '1'),
 			outbound: get_outbound(cfg.outbound),
 			server: get_resolver(cfg.server),
-			disable_cache: (cfg.dns_disable_cache === '1')
+			disable_cache: (cfg.dns_disable_cache === '1'),
+			rewrite_ttl: strToInt(cfg.rewrite_ttl)
 		});
 	});
 
@@ -555,10 +580,9 @@ if (!isEmpty(main_node)) {
 			return null;
 
 		push(config.route.rules, {
-			invert: cfg.invert,
-			ip_version: cfg.ip_version,
-			network: cfg.network,
+			ip_version: strToInt(cfg.ip_version),
 			protocol: cfg.protocol,
+			network: cfg.network,
 			domain: cfg.domain,
 			domain_suffix: cfg.domain_suffix,
 			domain_keyword: cfg.domain_keyword,
