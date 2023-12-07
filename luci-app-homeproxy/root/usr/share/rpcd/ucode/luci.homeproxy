@@ -14,6 +14,10 @@ function shellquote(s) {
 	return `'${replace(s, "'", "'\\''")}'`;
 }
 
+function hasKernelModule(kmod) {
+	return (system(sprintf('[ -e "/lib/modules/$(uname -r)"/%s ]', shellquote(kmod))) === 0);
+}
+
 const HP_DIR = '/etc/homeproxy';
 const RUN_DIR = '/var/run/homeproxy';
 
@@ -173,8 +177,9 @@ const methods = {
 
 			features.hp_has_chinadns_ng = access('/usr/bin/chinadns-ng');
 			features.hp_has_ip_full = access('/usr/libexec/ip-full');
-			features.hp_has_tproxy = access('/etc/modules.d/nft-tproxy');
-			features.hp_has_tun = access('/etc/modules.d/30-tun');
+			features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
+			features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
+			features.hp_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
 
 			return features;
 		}
