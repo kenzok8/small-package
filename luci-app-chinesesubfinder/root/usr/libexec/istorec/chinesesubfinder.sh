@@ -29,7 +29,7 @@ do_install() {
      --log-driver \"json-file\" \
      --log-opt \"max-size=100m\" "
 
-  local tz="`uci get system.@system[0].zonename`"
+  local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   [ -z "$media" ] || cmd="$cmd -v \"$media:/media\""

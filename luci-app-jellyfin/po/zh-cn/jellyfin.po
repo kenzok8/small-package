@@ -10,8 +10,8 @@ msgstr "Jellyfin 是志愿者构建的媒体解决方案，可让您控制自己
 msgid "The following models support hardware transcoding without configuration in Jellyfin:"
 msgstr "以下机型无需在Jellyfin配置即支持硬件转码："
 
-msgid "RK3568 series (e.g. R5S, R68s, R66s, etc.) with iStoreOS firmware (version 20221123 and above). Other firmwares require MPP and RGA to be turned on, and are not guaranteed to be available."
-msgstr "RK3568 系列（例如R5S，R68s，R66s等）并使用 iStoreOS 固件（版本20221123及以上）。其他固件需开启MPP和RGA，不保证可用。"
+msgid "RK35xx series (e.g. R6S, R5S, R68s, R66s, H28K, etc.) with iStoreOS firmware (version 20221123 and above). Other firmwares require MPP and RGA to be turned on, and are not guaranteed to be available."
+msgstr "RK35xx 系列（例如R6S，R5S，R68s，R66s，H28K等）并使用 iStoreOS 固件（版本20221123及以上）。其他固件需开启MPP和RGA，不保证可用。"
 
 msgid "The following models may support hardware transcoding by referring to the official Jellyfin documentation:"
 msgstr "以下机型参考 Jellyfin 官方文档配置可能支持硬件转码："

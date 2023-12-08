@@ -27,7 +27,7 @@ do_install() {
     -e PHOTOPRISM_UPLOAD_NSFW=\"true\" \
     -e PHOTOPRISM_ADMIN_PASSWORD=\"$password\" "
 
-  local tz="`uci get system.@system[0].zonename`"
+  local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   [ -z "$picture" ] || cmd="$cmd -v \"$picture:/photoprism/originals\""

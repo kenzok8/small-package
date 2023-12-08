@@ -39,7 +39,7 @@ do_install() {
     --dns=223.5.5.5 "
 
   if [ -z "$tz" ]; then
-    tz="`uci get system.@system[0].zonename`"
+    tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
   fi
   [ -z "$tz" ] || cmd="$cmd -e TZ=\"$tz\""
 

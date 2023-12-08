@@ -37,7 +37,7 @@ do_install() {
     -p $port:34400 "
 
   if [ -z "$tz" ]; then
-    tz="`uci get system.@system[0].zonename`"
+    tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
   fi
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
