@@ -12,7 +12,7 @@ m = taskd.docker_map("jellyfin", "jellyfin", "/usr/libexec/istorec/jellyfin.sh",
 		.. translate("Official website:") .. ' <a href=\"https://jellyfin.org/\" target=\"_blank\">https://jellyfin.org/</a>'
 		.. "<dl><dt>" .. translate("The following models support hardware transcoding without configuration in Jellyfin:") .. "</dt>"
 		.. "<dd>- Easepi ARS2</dd>"
-		.. "<dd>- " .. translate("RK3568 series (e.g. R5S, R68s, R66s, etc.) with iStoreOS firmware (version 20221123 and above). Other firmwares require MPP and RGA to be turned on, and are not guaranteed to be available.") .. "</dd>"
+		.. "<dd>- " .. translate("RK35xx series (e.g. R6S, R5S, R68s, R66s, H28K, etc.) with iStoreOS firmware (version 20221123 and above). Other firmwares require MPP and RGA to be turned on, and are not guaranteed to be available.") .. "</dd>"
 		.. "<dt>" .. translate("The following models may support hardware transcoding by referring to the official Jellyfin documentation:") .. "</dt>"
 		.. "<dd>- " .. translate("x86 series") .. "</dd>"
 		.. "<dd>- " .. translate("Raspberry Pi series") .. "</dd>"

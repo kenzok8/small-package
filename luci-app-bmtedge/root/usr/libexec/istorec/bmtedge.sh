@@ -37,7 +37,7 @@ do_install() {
     -e ksc_net=\"$netdev\" \
     -e ksc_machine_code=\"lsyK17032_$uid\" "
 
-  local tz="`uci get system.@system[0].zonename`"
+  local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
   cmd="$cmd --name bmtedge \"$image_name\""
