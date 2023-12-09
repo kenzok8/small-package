@@ -2,5 +2,5 @@
 
 START=99
 start(){
-
+auto=1
 }
