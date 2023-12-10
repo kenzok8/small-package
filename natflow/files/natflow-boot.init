@@ -28,25 +28,25 @@ start() {
 	skip_qos_to_slow_path=$(uci get natflow.main.skip_qos_to_slow_path 2>/dev/null || echo 0)
 	ifname_filter=$(uci get natflow.main.ifname_filter 2>/dev/null)
 
-	echo debug=$debug >/dev/natflow_ctl
-	echo disabled=$((!enabled)) >/dev/natflow_ctl
-	cat /dev/natflow_ctl | grep -q hwnat= && echo hwnat=$hwnat >/dev/natflow_ctl
-	cat /dev/natflow_ctl | grep -q hwnat_wed_disabled= && echo hwnat_wed_disabled=$((!hwnat_wed)) >/dev/natflow_ctl
+	echo "debug=$debug" >/dev/natflow_ctl
+	echo "disabled=$((!enabled))" >/dev/natflow_ctl
+	grep -q "hwnat=" </dev/natflow_ctl && echo "hwnat=$hwnat" >/dev/natflow_ctl
+	grep -q "hwnat_wed_disabled=" </dev/natflow_ctl && echo "hwnat_wed_disabled=$((!hwnat_wed))" >/dev/natflow_ctl
 	if [ "${hwnat_wed}" = "1" ]; then
 		for p in /sys/module/*/parameters/wed_enable; do
-			echo Y >$p
+			test -e "$p" && echo Y >"$p"
 		done
 	else
 		for p in /sys/module/*/parameters/wed_enable; do
-			echo N >$p
+			test -e "$p" && echo N >"$p"
 		done
 	fi
 
-	echo delay_pkts=$delay_pkts >/dev/natflow_ctl
-	echo skip_qos_to_slow_path=$skip_qos_to_slow_path >/dev/natflow_ctl
+	echo "delay_pkts=$delay_pkts" >/dev/natflow_ctl
+	echo "skip_qos_to_slow_path=$skip_qos_to_slow_path" >/dev/natflow_ctl
 	echo ifname_clear >/dev/natflow_ctl
 	for ifn in ${ifname_filter}; do
-		echo ifname_add=$ifn >/dev/natflow_ctl
+		echo "ifname_add=$ifn" >/dev/natflow_ctl
 	done
 }
 
