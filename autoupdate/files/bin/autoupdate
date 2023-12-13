@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.9.6
+Version=V6.9.7
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -471,12 +471,10 @@ function UPDATE_SCRIPT() {
 	then
 		chmod +x ${Tmp_Path}/autoupdate
 		Script_Version="$(awk -F '=' '/Version/{print $2}' ${Tmp_Path}/autoupdate | awk 'NR==1')"
-		Banner_Version="$(egrep -o "V[0-9.]+" /etc/banner)"
 		mv -f ${Tmp_Path}/autoupdate $1
 		if [[ $? == 0 ]]
 		then
-			[[ ${Banner_Version} && $1 == /bin ]] && sed -i "s?${Banner_Version}?${Script_Version}?g" /etc/banner
-			ECHO y "[${Banner_Version} > ${Script_Version}] autoupdate 程序更新成功!"
+			ECHO y "[${Version} > ${Script_Version}] autoupdate 程序更新成功!"
 			REMOVE_CACHE
 			return 0
 		else
@@ -535,7 +533,7 @@ function ANALYZE_API() {
 	local API_Cache=${Tmp_Path}/API_Cache
 	if [[ $(CHECK_TIME ${API_File} 1) == false ]]
 	then
-		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DL_DEPENDS[@]} --url "${Github_API}@@1 $(Proxy_X ${Github_Release}/API G@@1 F@@1)" --no-url-name --timeout 5
+		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DL_DEPENDS[@]} --url "${Github_API}@@1 $(Proxy_X ${Github_Release}/API G@@1 F@@1 A@@1)" --no-url-name --timeout 5
 		[[ ! $? == 0 || -z $(cat ${API_Cache} 2> /dev/null) ]] && {
 			ECHO r "Github API 请求错误,请检查网络后再试!"
 			exit 2
@@ -624,7 +622,7 @@ function GET_CLOUD_LOG() {
 	;;
 	esac
 	[[ $(CHECK_TIME ${Tmp_Path}/Update_Logs.json 1) == false ]] && {
-		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DL_DEPENDS[@]} --url "$(Proxy_X ${Github_Release} G@@1)" --timeout 5
+		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DL_DEPENDS[@]} --url "$(Proxy_X ${Github_Release} G@@1 F@@1 A@@1)" --timeout 5
 	}
 	[[ ! -s ${Tmp_Path}/Update_Logs.json ]] && return 1
 	log_Test="$(jq '."'"${TARGET_PROFILE}"'"."'"${Version}"'"' ${Tmp_Path}/Update_Logs.json 2> /dev/null)"
@@ -655,7 +653,7 @@ function UPGRADE() {
 		;;
 		-P | --proxy)
 			case $2 in
-			F | G)
+			A | F | G)
 				Proxy_Type=$2
 				shift
 			;;
@@ -787,14 +785,14 @@ $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
 	esac
 	local URL
 	case "${Proxy_Type}" in
-	F | G)
-		URL="$(Proxy_X ${CLOUD_FW_Url} ${Proxy_Type}@@3)"
+	A | F | G)
+		URL="$(Proxy_X ${CLOUD_FW_Url} ${Proxy_Type}@@5)"
 	;;
 	All)
-		URL="$(Proxy_X ${CLOUD_FW_Url} G@@1 F@@1 X@@1)"
+		URL="$(Proxy_X ${CLOUD_FW_Url} G@@2 F@@1 A@@1 X@@1)"
 	;;
 	*)
-		URL="$(Proxy_X ${CLOUD_FW_Url} X@@3 G@@1 F@@1)"
+		URL="$(Proxy_X ${CLOUD_FW_Url} X@@3 G@@1 F@@1 A@@1)"
 	;;
 	esac
 	DOWNLOADER --file-name ${CLOUD_FW_Name} --no-url-name --dl ${DL_DEPENDS[@]} --url ${URL} --path ${Firmware_Path} --timeout 15 --type 固件
@@ -904,7 +902,7 @@ function DOWNLOADER() {
 		;;
 		--url)
 			shift
-			DL_URL=($(egrep -o "https://.*@@[0-9]+|https://.*@@[0-9]+|ftp://.*@@[0-9]+" <<< $@))
+			DL_URL=($(egrep -o "https://.*@@[0-9]+|http://.*@@[0-9]+|ftp://.*@@[0-9]+" <<< $@))
 			if [[ ! ${DL_URL[*]} ]]
 			then
 				DL_URL=($1)
@@ -1104,21 +1102,27 @@ function Proxy_X() {
 	
 	case "${Type}" in
 	raw)
+		A=https://raw.fgit.cf/$(echo ${URL##*com/})
 		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
-		G=https://ghproxy.com/${URL}
+		G=https://mirror.ghproxy.com/${URL}
 	;;
 	release)
+		A=https://hub.fgit.cf/$(echo ${URL##*com/})
 		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
-		G=https://ghproxy.com/${URL}
+		G=https://mirror.ghproxy.com/${URL}
 	;;
 	codeload)
+		A=https://hub.fgit.cf/$(echo ${URL##*com/})
 		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
-		G=https://ghproxy.com/${URL}
+		G=https://mirror.ghproxy.com/${URL}
 	;;
 	esac
 	while [[ $1 ]];do
 		local URL_Cache=$1 URL_Final
 		case $1 in
+		A@@*)
+			URL_Final="${URL_Cache/A/${A}}"
+		;;
 		F@@*)
 			URL_Final="${URL_Cache/F/${F}}"
 		;;
@@ -1325,7 +1329,7 @@ function AutoUpdate_Main() {
 		;;
 		-x)
 			shift
-			URL="$(Proxy_X ${Script_Url} X@@1 G@@1)"
+			URL="$(Proxy_X ${Script_Url} X@@1 G@@1 A@@1)"
 			if [[ $(NETWORK_CHECK 223.5.5.5 2) == false ]]
 			then
 				ECHO r "网络连接错误,请稍后再试!"
