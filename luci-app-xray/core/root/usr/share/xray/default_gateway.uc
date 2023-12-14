@@ -22,7 +22,9 @@ function get_default_gateway(dump) {
         for (let j in i["route"] || []) {
             if (j["target"] == "0.0.0.0") {
                 dgs[j["nexthop"]] = true;
-                dgs[j["source"]] = true;
+                if (j["source"] != "0.0.0.0/0") {
+                    dgs[j["source"]] = true;
+                }
             }
         }
     };
