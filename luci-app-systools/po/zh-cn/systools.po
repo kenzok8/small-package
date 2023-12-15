@@ -13,6 +13,12 @@ msgstr "修复系统软件"
 msgid "Turn off IPv6"
 msgstr "关闭 IPv6"
 
+msgid "Full IPv6"
+msgstr "开启 IPv6"
+
+msgid "Half IPv6 (Only Router)"
+msgstr "半 IPv6（仅路由器）"
+
 msgid "Reset qBittorrent Password"
 msgstr "重置 qBittorrent 密码"
 

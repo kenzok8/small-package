@@ -87,9 +87,11 @@ function main_container(data, extra)
           required = true,
           title = "可执行操作",
           type = "string",
-          enum = {"turn_off_ipv6", "reset_rom_pkgs", "qb_reset_password", "disk_power_mode", "speedtest", "openssl-aes256gcm", "openssl-chacha20-poly1305", "istore-reinstall", "disable-wandrop"},
+          enum = {"turn_off_ipv6", "full_ipv6", "half_ipv6", "reset_rom_pkgs", "qb_reset_password", "disk_power_mode", "speedtest", "openssl-aes256gcm", "openssl-chacha20-poly1305", "istore-reinstall", "disable-wandrop"},
           enumNames = {
             lng.translate("Turn off IPv6"), 
+            lng.translate("Full IPv6"),
+            lng.translate("Half IPv6 (Only Router)"),
             lng.translate("Reset rom pkgs"), 
             lng.translate("Reset qBittorrent Password"),
             lng.translate("HDD hibernation Status"),

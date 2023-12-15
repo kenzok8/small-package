@@ -8,6 +8,8 @@ usage() {
   echo "usage: $0 sub-command"
   echo "where sub-command is one of:"
   echo "      turn_off_ipv6                   Disable IPv6"
+  echo "      full_ipv6                       Full IPv6"
+  echo "      half_ipv6                       Half IPv6 (Only Router)"
   echo "      reset_rom_pkgs                  Reset pkgs from rom"
   echo "      qb_reset_password               Reset qBitorent password"
   echo "      disk_power_mode                 Show disk power status"
@@ -15,7 +17,9 @@ usage() {
 }
 
 case ${ACTION} in
-  "turn_off_ipv6")
+  "turn_off_ipv6"|\
+  "full_ipv6"|\
+  "half_ipv6")
     bash "/usr/share/systools/${ACTION}.run"
   ;;
   "reset_rom_pkgs")
