@@ -1,6 +1,6 @@
 {
     "admin/services/xray_core": {
-        "title": "Xray (core)",
+        "title": "Xray",
         "action": {
             "type": "view",
             "path": "xray/core"
@@ -25,7 +25,11 @@
                 "luci-app-xray"
             ],
             "uci": {
-                "xray_core": true
+                "xray_core": {
+                    "@general[0]": {
+                        "preview_or_deprecated": true
+                    }
+                }
             }
         }
     }

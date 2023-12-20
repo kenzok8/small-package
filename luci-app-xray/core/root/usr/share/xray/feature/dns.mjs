@@ -1,8 +1,8 @@
 "use strict";
 
 import { lsdir } from "fs";
-import { balancer } from "./system.mjs";
 import { fake_dns_domains } from "./fake_dns.mjs";
+import { balancer } from "./system.mjs";
 
 const fallback_fast_dns = "223.5.5.5:53";
 const fallback_secure_dns = "8.8.8.8:53";
@@ -118,14 +118,14 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
     const default_dns_object = split_ipv4_host_port(proxy["default_dns"] || fallback_default_dns, 53);
     const upstream_domain_options = upstream_domain_names(proxy, config);
     let servers = [
-        default_dns_object,
         ...fake_dns_domains(fakedns),
         ...map(keys(upstream_domain_options[1]), function (k) {
             const i = split_ipv4_host_port(upstream_domain_options[1][k]);
-            i["domains"] = [k];
+            i["domains"] = [`domain:${k}`];
             i["skipFallback"] = true;
             return i;
         }),
+        default_dns_object,
         {
             address: fast_dns_object["address"],
             port: fast_dns_object["port"],
