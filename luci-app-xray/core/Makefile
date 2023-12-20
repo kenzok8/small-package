@@ -98,6 +98,9 @@ endif
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/xray
 	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray/core.js $(1)/www/luci-static/resources/view/xray/core.js
 	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray/preview.js $(1)/www/luci-static/resources/view/xray/preview.js
+	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray/protocol.js $(1)/www/luci-static/resources/view/xray/protocol.js
+	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray/shared.js $(1)/www/luci-static/resources/view/xray/shared.js
+	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray/transport.js $(1)/www/luci-static/resources/view/xray/transport.js
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
 	$(INSTALL_BIN) ./root/usr/libexec/rpcd/xray $(1)/usr/libexec/rpcd/xray
 	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d

@@ -3,14 +3,14 @@
 
 import { lsdir } from "fs";
 import { load_config } from "./common/config.mjs";
-import { balancer, api_conf, metrics_conf, logging, policy, system_route_rules } from "./feature/system.mjs";
-import { blocked_domain_rules, fast_domain_rules, secure_domain_rules, dns_server_tags, dns_server_inbounds, dns_server_outbound, dns_conf } from "./feature/dns.mjs";
-import { socks_inbound, http_inbound, https_inbound, dokodemo_inbound } from "./feature/inbound.mjs";
-import { blackhole_outbound, direct_outbound, server_outbound } from "./feature/outbound.mjs";
-import { bridges, bridge_outbounds, bridge_rules } from "./feature/bridge.mjs";
-import { extra_inbounds, extra_inbound_rules, extra_inbound_global_tcp_tags, extra_inbound_global_udp_tags, extra_inbound_balancers } from "./feature/extra_inbound.mjs";
-import { manual_tproxy_outbounds, manual_tproxy_outbound_tags, manual_tproxy_rules } from "./feature/manual_tproxy.mjs";
+import { bridge_outbounds, bridge_rules, bridges } from "./feature/bridge.mjs";
+import { blocked_domain_rules, dns_conf, dns_server_inbounds, dns_server_outbound, dns_server_tags, fast_domain_rules, secure_domain_rules } from "./feature/dns.mjs";
+import { extra_inbound_balancers, extra_inbound_global_tcp_tags, extra_inbound_global_udp_tags, extra_inbound_rules, extra_inbounds } from "./feature/extra_inbound.mjs";
 import { fake_dns_balancers, fake_dns_conf, fake_dns_rules } from "./feature/fake_dns.mjs";
+import { dokodemo_inbound, http_inbound, https_inbound, socks_inbound } from "./feature/inbound.mjs";
+import { manual_tproxy_outbound_tags, manual_tproxy_outbounds, manual_tproxy_rules } from "./feature/manual_tproxy.mjs";
+import { blackhole_outbound, direct_outbound, server_outbound } from "./feature/outbound.mjs";
+import { api_conf, balancer, logging, metrics_conf, policy, system_route_rules } from "./feature/system.mjs";
 
 function inbounds(proxy, config, extra_inbound) {
     let i = [
@@ -22,10 +22,10 @@ function inbounds(proxy, config, extra_inbound) {
         dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_v6"] || 1085, "tproxy_udp_inbound_v6", proxy["tproxy_sniffing"], proxy["route_only"], ["quic"], "0", "udp", "tproxy", proxy["conn_idle"]),
         ...extra_inbounds(proxy, extra_inbound),
         ...dns_server_inbounds(proxy),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_f4"] || 1086, "tproxy_tcp_inbound_f4", "1", "0", ["fakedns"], "1", "tcp", "tproxy", proxy["fake_dns_timeout"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_f6"] || 1087, "tproxy_tcp_inbound_f6", "1", "0", ["fakedns"], "1", "tcp", "tproxy", proxy["fake_dns_timeout"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_f4"] || 1088, "tproxy_udp_inbound_f4", "1", "0", ["fakedns"], "1", "udp", "tproxy", proxy["fake_dns_timeout"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_f6"] || 1089, "tproxy_udp_inbound_f6", "1", "0", ["fakedns"], "1", "udp", "tproxy", proxy["fake_dns_timeout"]),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_f4"] || 1086, "tproxy_tcp_inbound_f4", "1", "0", ["fakedns"], "1", "tcp", "tproxy", proxy["conn_idle"]),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_f6"] || 1087, "tproxy_tcp_inbound_f6", "1", "0", ["fakedns"], "1", "tcp", "tproxy", proxy["conn_idle"]),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_f4"] || 1088, "tproxy_udp_inbound_f4", "1", "0", ["fakedns"], "1", "udp", "tproxy", proxy["conn_idle"]),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_f6"] || 1089, "tproxy_udp_inbound_f6", "1", "0", ["fakedns"], "1", "udp", "tproxy", proxy["conn_idle"]),
     ];
     if (proxy["web_server_enable"] == "1") {
         push(i, https_inbound(proxy, config));
@@ -220,38 +220,39 @@ function rules(geoip_existence, proxy, bridge, manual_tproxy, extra_inbound, fak
     return result;
 }
 
-function balancers(proxy, extra_inbound, fakedns, balancer_strategy) {
+function balancers(proxy, extra_inbound, fakedns) {
+    const general_balancer_strategy = proxy["general_balancer_strategy"] || "random";
     let result = [
         {
             "tag": "tcp_outbound_v4",
             "selector": balancer(proxy, "tcp_balancer_v4", "tcp_balancer_v4"),
             "strategy": {
-                "type": balancer_strategy
+                "type": general_balancer_strategy
             }
         },
         {
             "tag": "udp_outbound_v4",
             "selector": balancer(proxy, "udp_balancer_v4", "udp_balancer_v4"),
             "strategy": {
-                "type": balancer_strategy
+                "type": general_balancer_strategy
             }
         },
         {
             "tag": "tcp_outbound_v6",
             "selector": balancer(proxy, "tcp_balancer_v6", "tcp_balancer_v6"),
             "strategy": {
-                "type": balancer_strategy
+                "type": general_balancer_strategy
             }
         },
         {
             "tag": "udp_outbound_v6",
             "selector": balancer(proxy, "udp_balancer_v6", "udp_balancer_v6"),
             "strategy": {
-                "type": balancer_strategy
+                "type": general_balancer_strategy
             }
         },
-        ...extra_inbound_balancers(extra_inbound, balancer_strategy),
-        ...fake_dns_balancers(fakedns, balancer_strategy),
+        ...extra_inbound_balancers(extra_inbound),
+        ...fake_dns_balancers(fakedns),
     ];
 
     return result;
@@ -269,8 +270,6 @@ function observatory(proxy, manual_tproxy) {
 }
 
 function gen_config() {
-    const balancer_strategy = "random";
-
     const share_dir = lsdir("/usr/share/xray");
     const geoip_existence = index(share_dir, "geoip.dat") > 0;
 
@@ -301,7 +300,7 @@ function gen_config() {
         routing: {
             domainStrategy: general["routing_domain_strategy"] || "AsIs",
             rules: rules(geoip_existence, general, bridge, manual_tproxy, extra_inbound, fakedns),
-            balancers: balancers(general, extra_inbound, fakedns, balancer_strategy)
+            balancers: balancers(general, extra_inbound, fakedns)
         }
     });
 }

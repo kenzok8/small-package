@@ -1,243 +1,36 @@
 'use strict';
 'require form';
-'require network';
-'require tools.widgets as widgets';
-'require uci';
 'require view';
-
-const variant = "xray_core";
-
-function destination_format(k) {
-    return function (s) {
-        const dest = uci.get(variant, s, k) || [];
-        if (dest.length == 0) {
-            return "<i>direct</i>";
-        }
-        return dest.map(v => uci.get(variant, v, "alias")).join(", ");
-    };
-}
-
-function extra_outbound_format(config_data, s, with_desc) {
-    const inbound_addr = uci.get(config_data, s, "inbound_addr") || "";
-    const inbound_port = uci.get(config_data, s, "inbound_port") || "";
-    if (inbound_addr == "" && inbound_port == "") {
-        return "-";
-    }
-    if (with_desc) {
-        return `${inbound_addr}:${inbound_port} (${destination_format("destination")(s)})`;
-    }
-    return `${inbound_addr}:${inbound_port}`;
-}
-
-function access_control_format(config_data, s, t) {
-    return function (v) {
-        switch (uci.get(config_data, v, s)) {
-            case "tproxy": {
-                return _("Enable tproxy");
-            }
-            case "bypass": {
-                return _("Disable tproxy");
-            }
-        }
-        return extra_outbound_format(config_data, uci.get(config_data, v, t));
-    };
-}
+'require view.xray.shared as shared';
 
 return view.extend({
-    load: function () {
-        return Promise.all([
-            uci.load(variant),
-            network.getHostHints()
-        ]);
-    },
-
-    render: function (load_result) {
-        const m = new form.Map(variant, _('Xray (preview)'), _("WARNING: These features are experimental, may cause a lot of problems and are not guaranteed to be compatible across minor versions."));
-        const config_data = load_result[0];
-        const hosts = load_result[1].hosts;
+    render: function () {
+        const m = new form.Map(shared.variant, _('Xray (preview)'), _("WARNING: These features are experimental, may cause a lot of problems and are not guaranteed to be compatible across minor versions."));
 
         let s = m.section(form.TypedSection, 'general');
         s.addremove = false;
         s.anonymous = true;
 
-        s.tab('fake_dns', _('FakeDNS'));
+        s.tab("ttl_override", _("TTL Override"));
 
-        let tproxy_port_tcp_f4 = s.taboption('fake_dns', form.Value, 'tproxy_port_tcp_f4', _('Transparent proxy port (TCP4)'));
-        tproxy_port_tcp_f4.datatype = 'port';
-        tproxy_port_tcp_f4.placeholder = 1086;
+        let ttl_override = s.taboption('ttl_override', form.Value, 'ttl_override', _('Override IPv4 TTL'), _("Strongly not recommended. Only used for some network environments with specific restrictions."));
+        ttl_override.datatype = 'uinteger';
 
-        let tproxy_port_tcp_f6 = s.taboption('fake_dns', form.Value, 'tproxy_port_tcp_f6', _('Transparent proxy port (TCP6)'));
-        tproxy_port_tcp_f6.datatype = 'port';
-        tproxy_port_tcp_f6.placeholder = 1087;
+        let hop_limit_override = s.taboption('ttl_override', form.Value, 'hop_limit_override', _('Override IPv6 Hop Limit'), _("Strongly not recommended. Only used for some network environments with specific restrictions."));
+        hop_limit_override.datatype = 'uinteger';
 
-        let tproxy_port_udp_f4 = s.taboption('fake_dns', form.Value, 'tproxy_port_udp_f4', _('Transparent proxy port (UDP4)'));
-        tproxy_port_udp_f4.datatype = 'port';
-        tproxy_port_udp_f4.placeholder = 1088;
+        let ttl_hop_limit_match = s.taboption('ttl_override', form.Value, 'ttl_hop_limit_match', _('TTL / Hop Limit Match'), _("Only override TTL / hop limit for packets with specific TTL / hop limit."));
+        ttl_hop_limit_match.datatype = 'uinteger';
 
-        let tproxy_port_udp_f6 = s.taboption('fake_dns', form.Value, 'tproxy_port_udp_f6', _('Transparent proxy port (UDP6)'));
-        tproxy_port_udp_f6.datatype = 'port';
-        tproxy_port_udp_f6.placeholder = 1089;
+        s.tab("sniffing", _("Sniffing"));
 
-        let pool_v4 = s.taboption('fake_dns', form.Value, 'pool_v4', _('Address Pool (IPv4)'));
-        pool_v4.datatype = 'ip4addr';
-        pool_v4.placeholder = "198.18.0.0/15";
+        s.taboption('sniffing', form.Flag, 'tproxy_sniffing', _('Enable Sniffing'), _('Route requests according to domain settings in "DNS Settings" tab in core settings. Deprecated; use FakeDNS instead.'));
 
-        let pool_v4_size = s.taboption('fake_dns', form.Value, 'pool_v4_size', _('Address Pool Size (IPv4)'));
-        pool_v4_size.datatype = 'integer';
-        pool_v4_size.placeholder = 65535;
+        let route_only = s.taboption('sniffing', form.Flag, 'route_only', _('Route Only'), _('Use sniffed domain for routing only but still access through IP. Reduces unnecessary DNS requests. See <a href="https://github.com/XTLS/Xray-core/commit/a3023e43ef55d4498b1afbc9a7fe7b385138bb1a">here</a> for help.'));
+        route_only.depends("tproxy_sniffing", "1");
 
-        let pool_v6 = s.taboption('fake_dns', form.Value, 'pool_v6', _('Address Pool (IPv6)'));
-        pool_v6.datatype = 'ip6addr';
-        pool_v6.placeholder = "fc00::/18";
-
-        let pool_v6_size = s.taboption('fake_dns', form.Value, 'pool_v6_size', _('Address Pool Size (IPv6)'));
-        pool_v6_size.datatype = 'integer';
-        pool_v6_size.placeholder = 65535;
-
-        let fake_dns_timeout = s.taboption('fake_dns', form.Value, 'fake_dns_timeout', _('Connection Idle Timeout'), _('Policy: Close connection if no data is transferred within given timeout. See <a href="https://xtls.github.io/config/policy.html#levelpolicyobject">here</a> for help.'));
-        fake_dns_timeout.datatype = 'uinteger';
-        fake_dns_timeout.placeholder = 300;
-
-        let fs = s.taboption('fake_dns', form.SectionValue, "fake_dns_section", form.GridSection, 'fakedns', _('FakeDNS Routing'), _('See <a href="https://github.com/v2ray/v2ray-core/issues/2233">FakeDNS</a> for details.')).subsection;
-        fs.sortable = false;
-        fs.anonymous = true;
-        fs.addremove = true;
-
-        let fake_dns_domain_names = fs.option(form.DynamicList, "fake_dns_domain_names", _("Domain names to associate"));
-        fake_dns_domain_names.rmempty = true;
-
-        let fake_dns_forward_server_tcp = fs.option(form.MultiValue, 'fake_dns_forward_server_tcp', _('Force Forward server (TCP)'));
-        fake_dns_forward_server_tcp.datatype = "uciname";
-        fake_dns_forward_server_tcp.textvalue = destination_format("fake_dns_forward_server_tcp");
-
-        let fake_dns_forward_server_udp = fs.option(form.MultiValue, 'fake_dns_forward_server_udp', _('Force Forward server (UDP)'));
-        fake_dns_forward_server_udp.datatype = "uciname";
-        fake_dns_forward_server_udp.textvalue = destination_format("fake_dns_forward_server_udp");
-
-        s.tab("extra_inbounds", "Extra Inbounds");
-
-        let extra_inbounds = s.taboption('extra_inbounds', form.SectionValue, "extra_inbound_section", form.GridSection, 'extra_inbound', _('Extra Inbounds'), _("Add more socks5 / http inbounds and redirect to other outbounds.")).subsection;
-        extra_inbounds.sortable = false;
-        extra_inbounds.anonymous = true;
-        extra_inbounds.addremove = true;
-        extra_inbounds.nodescriptions = true;
-
-        let inbound_addr = extra_inbounds.option(form.Value, "inbound_addr", _("Listen Address"));
-        inbound_addr.datatype = "ip4addr";
-
-        let inbound_port = extra_inbounds.option(form.Value, "inbound_port", _("Listen Port"));
-        inbound_port.datatype = "port";
-
-        let inbound_type = extra_inbounds.option(form.ListValue, "inbound_type", _("Inbound Type"));
-        inbound_type.value("socks5", _("Socks5 Proxy"));
-        inbound_type.value("http", _("HTTP Proxy"));
-        inbound_type.value("tproxy_tcp", _("Transparent Proxy (TCP)"));
-        inbound_type.value("tproxy_udp", _("Transparent Proxy (UDP)"));
-        inbound_type.rmempty = false;
-
-        let specify_outbound = extra_inbounds.option(form.Flag, 'specify_outbound', _('Specify Outbound'), _('If not selected, this inbound will use global settings (including sniffing settings). '));
-        specify_outbound.modalonly = true;
-
-        let destination = extra_inbounds.option(form.MultiValue, 'destination', _('Destination'), _("Select multiple outbounds for load balancing. If none selected, requests will be sent via direct outbound."));
-        destination.depends("specify_outbound", "1");
-        destination.datatype = "uciname";
-        destination.textvalue = destination_format("destination");
-
-        const servers = uci.sections(config_data, "servers");
-        if (servers.length == 0) {
-            destination.value("direct", _("No server configured"));
-            fake_dns_forward_server_tcp.value("direct", _("No server configured"));
-            fake_dns_forward_server_udp.value("direct", _("No server configured"));
-
-            destination.readonly = true;
-            fake_dns_forward_server_tcp.readonly = true;
-            fake_dns_forward_server_udp.readonly = true;
-        } else {
-            for (const v of uci.sections(config_data, "servers")) {
-                destination.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                fake_dns_forward_server_tcp.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                fake_dns_forward_server_udp.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-            }
-        }
-
-        s.tab("lan_hosts_access_control", _("LAN Hosts Access Control"));
-
-        let tproxy_ifaces_v4 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'tproxy_ifaces_v4', _("Devices to enable IPv4 tproxy"), _("Enable IPv4 transparent proxy on these interfaces / network devices."));
-        tproxy_ifaces_v4.noaliases = true;
-        tproxy_ifaces_v4.nocreate = true;
-        tproxy_ifaces_v4.multiple = true;
-
-        let tproxy_ifaces_v6 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'tproxy_ifaces_v6', _("Devices to enable IPv6 tproxy"), _("Enable IPv6 transparent proxy on these interfaces / network devices."));
-        tproxy_ifaces_v6.noaliases = true;
-        tproxy_ifaces_v6.nocreate = true;
-        tproxy_ifaces_v6.multiple = true;
-
-        let bypass_ifaces_v4 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'bypass_ifaces_v4', _("Devices to disable IPv4 tproxy"), _("This overrides per-device settings below. FakeDNS and manual transparent proxy won't be affected by this option."));
-        bypass_ifaces_v4.noaliases = true;
-        bypass_ifaces_v4.nocreate = true;
-        bypass_ifaces_v4.multiple = true;
-
-        let bypass_ifaces_v6 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'bypass_ifaces_v6', _("Devices to disable IPv6 tproxy"), _("This overrides per-device settings below. FakeDNS and manual transparent proxy won't be affected by this option."));
-        bypass_ifaces_v6.noaliases = true;
-        bypass_ifaces_v6.nocreate = true;
-        bypass_ifaces_v6.multiple = true;
-
-        let lan_hosts = s.taboption('lan_hosts_access_control', form.SectionValue, "lan_hosts_section", form.GridSection, 'lan_hosts', _('LAN Hosts Access Control'), _("Per-device settings here override per-interface enabling settings above. FakeDNS and manual transparent proxy won't be affected by these options.")).subsection;
-        lan_hosts.sortable = false;
-        lan_hosts.anonymous = true;
-        lan_hosts.addremove = true;
-
-        let macaddr = lan_hosts.option(form.Value, "macaddr", _("MAC Address"));
-        macaddr.datatype = "macaddr";
-        macaddr.rmempty = false;
-        L.sortedKeys(hosts).forEach(function (mac) {
-            macaddr.value(mac, E([], [mac, ' (', E('strong', [hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0] || L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6)[0] || '?']), ')']));
-        });
-
-        let access_control_strategy_v4 = lan_hosts.option(form.ListValue, "access_control_strategy_v4", _("Access Control Strategy (IPv4)"));
-        access_control_strategy_v4.value("tproxy", _("Enable transparent proxy"));
-        access_control_strategy_v4.value("forward", _("Forward via extra inbound"));
-        access_control_strategy_v4.value("bypass", _("Disable transparent proxy"));
-        access_control_strategy_v4.modalonly = true;
-        access_control_strategy_v4.rmempty = false;
-
-        let access_control_forward_tcp_v4 = lan_hosts.option(form.ListValue, "access_control_forward_tcp_v4", _("Extra inbound (TCP4)"));
-        access_control_forward_tcp_v4.depends("access_control_strategy_v4", "forward");
-        access_control_forward_tcp_v4.textvalue = access_control_format(config_data, "access_control_strategy_v4", "access_control_forward_tcp_v4");
-
-        let access_control_forward_udp_v4 = lan_hosts.option(form.ListValue, "access_control_forward_udp_v4", _("Extra inbound (UDP4)"));
-        access_control_forward_udp_v4.depends("access_control_strategy_v4", "forward");
-        access_control_forward_udp_v4.textvalue = access_control_format(config_data, "access_control_strategy_v4", "access_control_forward_udp_v4");
-
-        let access_control_strategy_v6 = lan_hosts.option(form.ListValue, "access_control_strategy_v6", _("Access Control Strategy (IPv6)"));
-        access_control_strategy_v6.value("tproxy", _("Enable transparent proxy"));
-        access_control_strategy_v6.value("forward", _("Forward via extra inbound"));
-        access_control_strategy_v6.value("bypass", _("Disable transparent proxy"));
-        access_control_strategy_v6.modalonly = true;
-        access_control_strategy_v6.rmempty = false;
-
-        let access_control_forward_tcp_v6 = lan_hosts.option(form.ListValue, "access_control_forward_tcp_v6", _("Extra inbound (TCP6)"));
-        access_control_forward_tcp_v6.depends("access_control_strategy_v6", "forward");
-        access_control_forward_tcp_v6.textvalue = access_control_format(config_data, "access_control_strategy_v6", "access_control_forward_tcp_v6");
-
-        let access_control_forward_udp_v6 = lan_hosts.option(form.ListValue, "access_control_forward_udp_v6", _("Extra inbound (UDP6)"));
-        access_control_forward_udp_v6.depends("access_control_strategy_v6", "forward");
-        access_control_forward_udp_v6.textvalue = access_control_format(config_data, "access_control_strategy_v6", "access_control_forward_udp_v6");
-
-        for (const v of uci.sections(config_data, "extra_inbound")) {
-            switch (v["inbound_type"]) {
-                case "tproxy_tcp": {
-                    access_control_forward_tcp_v4.value(v[".name"], `${extra_outbound_format(config_data, v[".name"], true)}`);
-                    access_control_forward_tcp_v6.value(v[".name"], `${extra_outbound_format(config_data, v[".name"], true)}`);
-                    break;
-                }
-                case "tproxy_udp": {
-                    access_control_forward_udp_v4.value(v[".name"], `${extra_outbound_format(config_data, v[".name"], true)}`);
-                    access_control_forward_udp_v6.value(v[".name"], `${extra_outbound_format(config_data, v[".name"], true)}`);
-                    break;
-                }
-            }
-        }
+        let direct_bittorrent = s.taboption('sniffing', form.Flag, 'direct_bittorrent', _('Bittorrent Direct'), _("If enabled, no bittorrent request will be forwarded through Xray."));
+        direct_bittorrent.depends("tproxy_sniffing", "1");
 
         s.tab('dynamic_direct', _('Dynamic Direct'));
 
@@ -250,20 +43,11 @@ return view.extend({
         dynamic_direct_timeout.datatype = 'uinteger';
         dynamic_direct_timeout.placeholder = 300;
 
-        let ttl_override = s.taboption('dynamic_direct', form.Value, 'ttl_override', _('Override IPv4 TTL'), _("Strongly not recommended. Only used for some network environments with specific restrictions."));
-        ttl_override.datatype = 'uinteger';
-
-        let hop_limit_override = s.taboption('dynamic_direct', form.Value, 'hop_limit_override', _('Override IPv6 Hop Limit'), _("Strongly not recommended. Only used for some network environments with specific restrictions."));
-        hop_limit_override.datatype = 'uinteger';
-
-        let ttl_hop_limit_match = s.taboption('dynamic_direct', form.Value, 'ttl_hop_limit_match', _('TTL / Hop Limit Match'), _("Only override TTL / hop limit for packets with specific TTL / hop limit."));
-        ttl_hop_limit_match.datatype = 'uinteger';
-
         s.tab('custom_options', _('Custom Options'));
-        let custom_configuration_hook = s.taboption('custom_options', form.TextValue, 'custom_configuration_hook', _('Custom Configuration Hook'), _('Read <a href="https://ucode.mein.io/">ucode Documentation</a> for the language used. Code filled here may need to change after upgrading luci-app-xray.'));
-        custom_configuration_hook.placeholder = "return function(config) {\n    return config;\n};";
-        custom_configuration_hook.monospace = true;
-        custom_configuration_hook.rows = 20;
+        let custom_config = s.taboption('custom_options', form.TextValue, 'custom_config', _('Custom Configurations'), _('Check <code>/var/etc/xray/config.json</code> for tags of generated inbounds and outbounds. See <a href="https://xtls.github.io/config/features/multiple.html">here</a> for help'));
+        custom_config.monospace = true;
+        custom_config.rows = 20;
+        custom_config.validate = shared.validate_object;
 
         return m.render();
     }

@@ -1,191 +1,67 @@
 'use strict';
 'require form';
 'require fs';
+'require network';
+'require tools.widgets as widgets';
 'require uci';
 'require view';
+'require view.xray.protocol as protocol';
+'require view.xray.shared as shared';
+'require view.xray.transport as transport';
 
-const variant = "xray_core";
-
-function validate_object(id, a) {
-    if (a == "") {
-        return true;
-    }
-    try {
-        const t = JSON.parse(a);
-        if (Array.isArray(t)) {
-            return "TypeError: Requires an object here, got an array";
+function list_folded_format(config_data, k, n) {
+    return function (s) {
+        const records = uci.get(config_data, s, k) || [];
+        switch (records.length) {
+            case 0: {
+                return "-";
+            }
+            case 1: {
+                return records[0];
+            }
         }
-        if (t instanceof Object) {
-            return true;
-        }
-        return "TypeError: Requires an object here, got a " + typeof t;
-    } catch (e) {
-        return e;
-    }
+        return E([], [
+            records[0],
+            ", ... ",
+            shared.badge(`+<strong>${records.length - 1}</strong>`, `${records.length} ${n}\n${records.join("\n")}`)
+        ]);
+    };
 }
 
-function fingerprints(o) {
-    o.value("chrome", "chrome");
-    o.value("firefox", "firefox");
-    o.value("safari", "safari");
-    o.value("ios", "ios");
-    o.value("android", "android");
-    o.value("edge", "edge");
-    o.value("360", "360");
-    o.value("qq", "qq");
-    o.value("random", "random");
-    o.value("randomized", "randomized");
+function destination_format(config_data, k) {
+    return function (s) {
+        const dest = uci.get(config_data, s, k) || [];
+        if (dest.length == 0) {
+            return "<i>direct</i>";
+        }
+        return dest.map(v => uci.get(config_data, v, "alias")).join(", ");
+    };
 }
 
-function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, protocol_name, have_tls_flow, client_side) {
-    let o = s.taboption(tab_name, form.ListValue, `${protocol_name}_tls`, _(`[${protocol_name}] Stream Security`));
-    let odep = {};
-    odep[depends_field_name] = protocol_name;
-    if (client_side) {
-        o.depends(depends_field_name, protocol_name);
-        o.value("none", "None");
-    } else {
-        odep["web_server_enable"] = "1";
+function extra_outbound_format(config_data, s, with_desc) {
+    const inbound_addr = uci.get(config_data, s, "inbound_addr") || "";
+    const inbound_port = uci.get(config_data, s, "inbound_port") || "";
+    if (inbound_addr == "" && inbound_port == "") {
+        return "-";
     }
-    o.value("tls", "TLS");
-    if (have_tls_flow) {
-        o.value("reality", "REALITY (Experimental)");
+    if (with_desc) {
+        return `${inbound_addr}:${inbound_port} (${destination_format(config_data, "destination")(s)})`;
     }
-    o.depends(odep);
-    o.rmempty = false;
-    o.modalonly = true;
+    return `${inbound_addr}:${inbound_port}`;
+}
 
-    if (have_tls_flow) {
-        let flow_tls = s.taboption(tab_name, form.ListValue, `${protocol_name}_flow_tls`, _(`[${protocol_name}][tls] Flow`));
-        let flow_tls_dep = {};
-        flow_tls_dep[depends_field_name] = protocol_name;
-        flow_tls_dep[`${protocol_name}_tls`] = "tls";
-        flow_tls.value("none", "none");
-        flow_tls.value("xtls-rprx-vision", "xtls-rprx-vision");
-        flow_tls.value("xtls-rprx-vision-udp443", "xtls-rprx-vision-udp443");
-        if (client_side) {
-            // wait for some other things
-        } else {
-            flow_tls_dep["web_server_enable"] = "1";
+function access_control_format(config_data, s, t) {
+    return function (v) {
+        switch (uci.get(config_data, v, s)) {
+            case "tproxy": {
+                return _("Enable tproxy");
+            }
+            case "bypass": {
+                return _("Disable tproxy");
+            }
         }
-        flow_tls.depends(flow_tls_dep);
-        flow_tls.rmempty = false;
-        flow_tls.modalonly = true;
-
-        let flow_reality = s.taboption(tab_name, form.ListValue, `${protocol_name}_flow_reality`, _(`[${protocol_name}][reality] Flow`));
-        let flow_reality_dep = {};
-        flow_reality_dep[depends_field_name] = protocol_name;
-        flow_reality_dep[`${protocol_name}_tls`] = "reality";
-        flow_reality.value("none", "none");
-        flow_reality.value("xtls-rprx-vision", "xtls-rprx-vision");
-        flow_reality.value("xtls-rprx-vision-udp443", "xtls-rprx-vision-udp443");
-        if (client_side) {
-            // wait for some other things
-        } else {
-            flow_reality_dep["web_server_enable"] = "1";
-        }
-        flow_reality.depends(flow_reality_dep);
-        flow_reality.rmempty = false;
-        flow_reality.modalonly = true;
-
-        o = s.taboption(tab_name, form.Flag, `${protocol_name}_reality_show`, _(`[${protocol_name}][reality] Show`));
-        o.depends(`${protocol_name}_tls`, "reality");
-        o.modalonly = true;
-    }
-
-    if (client_side) {
-        o = s.taboption(tab_name, form.Value, `${protocol_name}_tls_host`, _(`[${protocol_name}][tls] Server Name`));
-        o.depends(`${protocol_name}_tls`, "tls");
-        o.modalonly = true;
-
-        o = s.taboption(tab_name, form.Flag, `${protocol_name}_tls_insecure`, _(`[${protocol_name}][tls] Allow Insecure`));
-        o.depends(`${protocol_name}_tls`, "tls");
-        o.rmempty = false;
-        o.modalonly = true;
-
-        o = s.taboption(tab_name, form.Value, `${protocol_name}_tls_fingerprint`, _(`[${protocol_name}][tls] Fingerprint`));
-        o.depends(`${protocol_name}_tls`, "tls");
-        o.value("", "(not set)");
-        fingerprints(o);
-        o.modalonly = true;
-
-        o = s.taboption(tab_name, form.DynamicList, `${protocol_name}_tls_alpn`, _(`[${protocol_name}][tls] ALPN`));
-        o.depends(`${protocol_name}_tls`, "tls");
-        o.value("h2", "h2");
-        o.value("http/1.1", "http/1.1");
-        o.modalonly = true;
-
-        if (have_tls_flow) {
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_fingerprint`, _(`[${protocol_name}][reality] Fingerprint`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            fingerprints(o);
-            o.rmempty = false;
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_server_name`, _(`[${protocol_name}][reality] Server Name`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_public_key`, _(`[${protocol_name}][reality] Public Key`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_short_id`, _(`[${protocol_name}][reality] Short Id`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_spider_x`, _(`[${protocol_name}][reality] SpiderX`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-        }
-    } else {
-        let tls_cert_key_dep = { "web_server_enable": "1" };
-        tls_cert_key_dep[`${protocol_name}_tls`] = "tls";
-        o = s.taboption(tab_name, form.FileUpload, `${protocol_name}_tls_cert_file`, _(`[${protocol_name}][tls] Certificate File`));
-        o.root_directory = "/etc/luci-uploads/xray";
-        o.depends(tls_cert_key_dep);
-
-        o = s.taboption(tab_name, form.FileUpload, `${protocol_name}_tls_key_file`, _(`[${protocol_name}][tls] Private Key File`));
-        o.root_directory = "/etc/luci-uploads/xray";
-        o.depends(tls_cert_key_dep);
-
-        if (have_tls_flow) {
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_dest`, _(`[${protocol_name}][reality] Dest`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.datatype = "hostport";
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_xver`, _(`[${protocol_name}][reality] Xver`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.datatype = "integer";
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.DynamicList, `${protocol_name}_reality_server_names`, _(`[${protocol_name}][reality] Server Names`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_private_key`, _(`[${protocol_name}][reality] Private Key`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_min_client_ver`, _(`[${protocol_name}][reality] Min Client Ver`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_max_client_ver`, _(`[${protocol_name}][reality] Max Client Ver`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.Value, `${protocol_name}_reality_max_time_diff`, _(`[${protocol_name}][reality] Max Time Diff`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.datatype = "integer";
-            o.modalonly = true;
-
-            o = s.taboption(tab_name, form.DynamicList, `${protocol_name}_reality_short_ids`, _(`[${protocol_name}][reality] Short Ids`));
-            o.depends(`${protocol_name}_tls`, "reality");
-            o.modalonly = true;
-        }
-    }
+        return extra_outbound_format(config_data, uci.get(config_data, v, t));
+    };
 }
 
 function check_resource_files(load_result) {
@@ -224,8 +100,9 @@ function check_resource_files(load_result) {
 return view.extend({
     load: function () {
         return Promise.all([
-            uci.load(variant),
-            fs.list("/usr/share/xray")
+            uci.load(shared.variant),
+            fs.list("/usr/share/xray"),
+            network.getHostHints()
         ]);
     },
 
@@ -233,6 +110,7 @@ return view.extend({
         const config_data = load_result[0];
         const { geoip_existence, geoip_size, geosite_existence, geosite_size, xray_bin_default, xray_running } = check_resource_files(load_result[1]);
         const status_text = xray_running ? _("[Xray is running]") : _("[Xray is stopped]");
+        const hosts = load_result[2].hosts;
 
         let asset_file_status = _('WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly. See <a href="https://github.com/yichya/luci-app-xray">here</a> for help.');
         if (geoip_existence) {
@@ -241,7 +119,7 @@ return view.extend({
             }
         }
 
-        const m = new form.Map(variant, _('Xray (core)'), status_text + " " + asset_file_status);
+        const m = new form.Map(shared.variant, _('Xray'), status_text + " " + asset_file_status);
 
         let s, o, ss;
 
@@ -251,11 +129,7 @@ return view.extend({
 
         s.tab('general', _('General Settings'));
 
-        o = s.taboption('general', form.Value, 'xray_bin', _('Xray Executable Path'));
-        o.rmempty = false;
-        if (xray_bin_default) {
-            o.value("/usr/bin/xray", _("/usr/bin/xray (default, exist)"));
-        }
+        o = s.taboption('general', form.Flag, 'transparent_proxy_enable', _('Enable Xray Service'), _('Uncheck this to disable the entire Xray service.'));
 
         let tcp_balancer_v4 = s.taboption('general', form.MultiValue, 'tcp_balancer_v4', _('TCP Server (IPv4)'), _("Select multiple outbound servers to enable load balancing. Select none to disable TCP Outbound."));
         tcp_balancer_v4.datatype = "uciname";
@@ -269,36 +143,11 @@ return view.extend({
         let udp_balancer_v6 = s.taboption('general', form.MultiValue, 'udp_balancer_v6', _('UDP Server (IPv6)'), _("Select multiple outbound servers to enable load balancing. Select none to disable UDP Outbound."));
         udp_balancer_v6.datatype = "uciname";
 
-        const servers = uci.sections(config_data, "servers");
-        if (servers.length == 0) {
-            tcp_balancer_v4.value("direct", _("No server configured"));
-            udp_balancer_v4.value("direct", _("No server configured"));
-            tcp_balancer_v6.value("direct", _("No server configured"));
-            udp_balancer_v6.value("direct", _("No server configured"));
-
-            tcp_balancer_v4.readonly = true;
-            udp_balancer_v4.readonly = true;
-            tcp_balancer_v6.readonly = true;
-            udp_balancer_v6.readonly = true;
-        } else {
-            for (const v of servers) {
-                tcp_balancer_v4.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                udp_balancer_v4.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                tcp_balancer_v6.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                udp_balancer_v6.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-            }
-        }
-
-        o = s.taboption('general', form.Flag, 'transparent_proxy_enable', _('Enable Transparent Proxy'), _('This enables DNS query forwarding and TProxy for both TCP and UDP connections.'));
-
-        o = s.taboption('general', form.Flag, 'tproxy_sniffing', _('Enable Sniffing'), _('If sniffing is enabled, requests will be routed according to domain settings in "DNS Settings" tab.'));
-        o.depends("transparent_proxy_enable", "1");
-
-        o = s.taboption('general', form.Flag, 'route_only', _('Route Only'), _('Use sniffed domain for routing only but still access through IP. Reduces unnecessary DNS requests. See <a href="https://github.com/XTLS/Xray-core/commit/a3023e43ef55d4498b1afbc9a7fe7b385138bb1a">here</a> for help.'));
-        o.depends({ "transparent_proxy_enable": "1", "tproxy_sniffing": "1" });
-
-        o = s.taboption('general', form.Flag, 'direct_bittorrent', _('Bittorrent Direct'), _("If enabled, no bittorrent request will be forwarded through Xray."));
-        o.depends({ "transparent_proxy_enable": "1", "tproxy_sniffing": "1" });
+        let general_balancer_strategy = s.taboption('general', form.Value, 'general_balancer_strategy', _('Balancer Strategy'), _('Strategy <code>leastPing</code> requires observatory (see "Extra Options" tab) to be enabled.'));
+        general_balancer_strategy.value("random");
+        general_balancer_strategy.value("leastPing");
+        general_balancer_strategy.default = "random";
+        general_balancer_strategy.rmempty = false;
 
         o = s.taboption('general', form.SectionValue, "xray_servers", form.GridSection, 'servers', _('Xray Servers'), _("Servers are referenced by index (order in the following list). Deleting servers may result in changes of upstream servers actually used by proxy and bridge."));
         ss = o.subsection;
@@ -337,231 +186,14 @@ return view.extend({
         ss.tab('protocol', _('Protocol Settings'));
 
         o = ss.taboption('protocol', form.ListValue, "protocol", _("Protocol"));
-        o.value("vmess", "VMess");
-        o.value("vless", "VLESS");
-        o.value("trojan", "Trojan");
-        o.value("shadowsocks", "Shadowsocks");
+        protocol.add_client_protocol(o, ss, 'protocol');
         o.rmempty = false;
-
-        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "trojan", false, true);
-
-        o = ss.taboption('protocol', form.ListValue, "shadowsocks_security", _("[shadowsocks] Encrypt Method"));
-        o.depends("protocol", "shadowsocks");
-        o.value("none", "none");
-        o.value("aes-256-gcm", "aes-256-gcm");
-        o.value("aes-128-gcm", "aes-128-gcm");
-        o.value("chacha20-poly1305", "chacha20-poly1305");
-        o.value("2022-blake3-aes-128-gcm", "2022-blake3-aes-128-gcm");
-        o.value("2022-blake3-aes-256-gcm", "2022-blake3-aes-256-gcm");
-        o.value("2022-blake3-chacha20-poly1305", "2022-blake3-chacha20-poly1305");
-        o.rmempty = false;
-        o.modalonly = true;
-
-        o = ss.taboption('protocol', form.Flag, 'shadowsocks_udp_over_tcp', _('[shadowsocks] UDP over TCP'), _('Only available for shadowsocks-2022 ciphers (2022-*)'));
-        o.depends("shadowsocks_security", /2022/);
-        o.rmempty = false;
-        o.modalonly = true;
-
-        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "shadowsocks", false, true);
-
-        o = ss.taboption('protocol', form.ListValue, "vmess_security", _("[vmess] Encrypt Method"));
-        o.depends("protocol", "vmess");
-        o.value("none", "none");
-        o.value("auto", "auto");
-        o.value("aes-128-gcm", "aes-128-gcm");
-        o.value("chacha20-poly1305", "chacha20-poly1305");
-        o.rmempty = false;
-        o.modalonly = true;
-
-        o = ss.taboption('protocol', form.ListValue, "vmess_alter_id", _("[vmess] AlterId"), _("Deprecated. Make sure you always use VMessAEAD."));
-        o.depends("protocol", "vmess");
-        o.value(0, "0 (this enables VMessAEAD)");
-        o.value(1, "1");
-        o.value(4, "4");
-        o.value(16, "16");
-        o.value(64, "64");
-        o.value(256, "256");
-        o.rmempty = false;
-        o.modalonly = true;
-
-        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "vmess", false, true);
-
-        o = ss.taboption('protocol', form.ListValue, "vless_encryption", _("[vless] Encrypt Method"));
-        o.depends("protocol", "vless");
-        o.value("none", "none");
-        o.rmempty = false;
-        o.modalonly = true;
-
-        add_flow_and_stream_security_conf(ss, "protocol", "protocol", "vless", true, true);
 
         ss.tab('transport', _('Transport Settings'));
 
         o = ss.taboption('transport', form.ListValue, 'transport', _('Transport'));
-        o.value("tcp", "TCP");
-        o.value("mkcp", "mKCP");
-        o.value("ws", "WebSocket");
-        o.value("h2", "HTTP/2");
-        o.value("quic", "QUIC");
-        o.value("grpc", "gRPC");
+        transport.init(o, ss, 'transport');
         o.rmempty = false;
-
-        o = ss.taboption('transport', form.ListValue, "tcp_guise", _("[tcp] Fake Header Type"));
-        o.depends("transport", "tcp");
-        o.value("none", _("None"));
-        o.value("http", "HTTP");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.DynamicList, "http_host", _("[tcp][fake_http] Host"));
-        o.depends("tcp_guise", "http");
-        o.rmempty = false;
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.DynamicList, "http_path", _("[tcp][fake_http] Path"));
-        o.depends("tcp_guise", "http");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.ListValue, "mkcp_guise", _("[mkcp] Fake Header Type"));
-        o.depends("transport", "mkcp");
-        o.value("none", _("None"));
-        o.value("srtp", _("VideoCall (SRTP)"));
-        o.value("utp", _("BitTorrent (uTP)"));
-        o.value("wechat-video", _("WechatVideo"));
-        o.value("dtls", "DTLS 1.2");
-        o.value("wireguard", "WireGuard");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "mkcp_mtu", _("[mkcp] Maximum Transmission Unit"));
-        o.datatype = "uinteger";
-        o.depends("transport", "mkcp");
-        o.placeholder = 1350;
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "mkcp_tti", _("[mkcp] Transmission Time Interval"));
-        o.datatype = "uinteger";
-        o.depends("transport", "mkcp");
-        o.placeholder = 50;
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "mkcp_uplink_capacity", _("[mkcp] Uplink Capacity"));
-        o.datatype = "uinteger";
-        o.depends("transport", "mkcp");
-        o.placeholder = 5;
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "mkcp_downlink_capacity", _("[mkcp] Downlink Capacity"));
-        o.datatype = "uinteger";
-        o.depends("transport", "mkcp");
-        o.placeholder = 20;
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "mkcp_read_buffer_size", _("[mkcp] Read Buffer Size"));
-        o.datatype = "uinteger";
-        o.depends("transport", "mkcp");
-        o.placeholder = 2;
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "mkcp_write_buffer_size", _("[mkcp] Write Buffer Size"));
-        o.datatype = "uinteger";
-        o.depends("transport", "mkcp");
-        o.placeholder = 2;
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Flag, "mkcp_congestion", _("[mkcp] Congestion Control"));
-        o.depends("transport", "mkcp");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "mkcp_seed", _("[mkcp] Seed"));
-        o.depends("transport", "mkcp");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.ListValue, "quic_security", _("[quic] Security"));
-        o.depends("transport", "quic");
-        o.value("none", "none");
-        o.value("aes-128-gcm", "aes-128-gcm");
-        o.value("chacha20-poly1305", "chacha20-poly1305");
-        o.rmempty = false;
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "quic_key", _("[quic] Key"));
-        o.depends("transport", "quic");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.ListValue, "quic_guise", _("[quic] Fake Header Type"));
-        o.depends("transport", "quic");
-        o.value("none", _("None"));
-        o.value("srtp", _("VideoCall (SRTP)"));
-        o.value("utp", _("BitTorrent (uTP)"));
-        o.value("wechat-video", _("WechatVideo"));
-        o.value("dtls", "DTLS 1.2");
-        o.value("wireguard", "WireGuard");
-        o.default = "none";
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.DynamicList, "h2_host", _("[http2] Host"));
-        o.depends("transport", "h2");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "h2_path", _("[http2] Path"));
-        o.depends("transport", "h2");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Flag, "h2_health_check", _("[h2] Health Check"));
-        o.depends("transport", "h2");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "h2_read_idle_timeout", _("[h2] Read Idle Timeout"));
-        o.depends({ "transport": "h2", "h2_health_check": "1" });
-        o.modalonly = true;
-        o.placeholder = 10;
-        o.datatype = 'integer';
-
-        o = ss.taboption('transport', form.Value, "h2_health_check_timeout", _("[h2] Health Check Timeout"));
-        o.depends({ "transport": "h2", "h2_health_check": "1" });
-        o.modalonly = true;
-        o.placeholder = 20;
-        o.datatype = 'integer';
-
-        o = ss.taboption('transport', form.Value, "grpc_service_name", _("[grpc] Service Name"));
-        o.depends("transport", "grpc");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Flag, "grpc_multi_mode", _("[grpc] Multi Mode"));
-        o.depends("transport", "grpc");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Flag, "grpc_health_check", _("[grpc] Health Check"));
-        o.depends("transport", "grpc");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "grpc_idle_timeout", _("[grpc] Idle Timeout"));
-        o.depends({ "transport": "grpc", "grpc_health_check": "1" });
-        o.modalonly = true;
-        o.placeholder = 10;
-        o.datatype = 'integer';
-
-        o = ss.taboption('transport', form.Value, "grpc_health_check_timeout", _("[grpc] Health Check Timeout"));
-        o.depends({ "transport": "grpc", "grpc_health_check": "1" });
-        o.modalonly = true;
-        o.placeholder = 20;
-        o.datatype = 'integer';
-
-        o = ss.taboption('transport', form.Flag, "grpc_permit_without_stream", _("[grpc] Permit Without Stream"));
-        o.depends({ "transport": "grpc", "grpc_health_check": "1" });
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "grpc_initial_windows_size", _("[grpc] Initial Windows Size"), _("Set to 524288 to avoid Cloudflare sending ENHANCE_YOUR_CALM."));
-        o.depends("transport", "grpc");
-        o.modalonly = true;
-        o.placeholder = 0;
-        o.datatype = 'integer';
-
-        o = ss.taboption('transport', form.Value, "ws_host", _("[websocket] Host"));
-        o.depends("transport", "ws");
-        o.modalonly = true;
-
-        o = ss.taboption('transport', form.Value, "ws_path", _("[websocket] Path"));
-        o.depends("transport", "ws");
-        o.modalonly = true;
 
         o = ss.taboption('transport', form.ListValue, 'dialer_proxy', _('Dialer Proxy'), _('Similar to <a href="https://xtls.github.io/config/outbound.html#proxysettingsobject">ProxySettings.Tag</a>'));
         o.datatype = "uciname";
@@ -577,45 +209,154 @@ return view.extend({
         o.modalonly = true;
         o.monospace = true;
         o.rows = 10;
-        o.validate = validate_object;
+        o.validate = shared.validate_object;
 
-        s.tab('proxy', _('Proxy Settings'));
+        s.tab('inbounds', _('Inbounds'));
 
-        o = s.taboption('proxy', form.Value, 'socks_port', _('Socks5 proxy port'));
+        o = s.taboption('inbounds', form.Value, 'socks_port', _('Socks5 proxy port'));
         o.datatype = 'port';
         o.placeholder = 1080;
 
-        o = s.taboption('proxy', form.Value, 'http_port', _('HTTP proxy port'));
+        o = s.taboption('inbounds', form.Value, 'http_port', _('HTTP proxy port'));
         o.datatype = 'port';
         o.placeholder = 1081;
 
-        o = s.taboption('proxy', form.Value, 'tproxy_port_tcp_v4', _('Transparent proxy port (TCP4)'));
+        o = s.taboption('inbounds', form.Value, 'tproxy_port_tcp_v4', _('Transparent proxy port (TCP4)'));
         o.datatype = 'port';
         o.placeholder = 1082;
 
-        o = s.taboption('proxy', form.Value, 'tproxy_port_tcp_v6', _('Transparent proxy port (TCP6)'));
+        o = s.taboption('inbounds', form.Value, 'tproxy_port_tcp_v6', _('Transparent proxy port (TCP6)'));
         o.datatype = 'port';
         o.placeholder = 1083;
 
-        o = s.taboption('proxy', form.Value, 'tproxy_port_udp_v4', _('Transparent proxy port (UDP4)'));
+        o = s.taboption('inbounds', form.Value, 'tproxy_port_udp_v4', _('Transparent proxy port (UDP4)'));
         o.datatype = 'port';
         o.placeholder = 1084;
 
-        o = s.taboption('proxy', form.Value, 'tproxy_port_udp_v6', _('Transparent proxy port (UDP6)'));
+        o = s.taboption('inbounds', form.Value, 'tproxy_port_udp_v6', _('Transparent proxy port (UDP6)'));
         o.datatype = 'port';
         o.placeholder = 1085;
 
-        o = s.taboption('proxy', form.DynamicList, 'uids_direct', _('Bypass tproxy for uids'), _("Processes started by users with these uids won't be forwarded through Xray."));
+        o = s.taboption('inbounds', form.DynamicList, 'uids_direct', _('Bypass tproxy for uids'), _("Processes started by users with these uids won't be forwarded through Xray."));
         o.datatype = "integer";
 
-        o = s.taboption('proxy', form.DynamicList, 'gids_direct', _('Bypass tproxy for gids'), _("Processes started by users in groups with these gids won't be forwarded through Xray."));
+        o = s.taboption('inbounds', form.DynamicList, 'gids_direct', _('Bypass tproxy for gids'), _("Processes started by users in groups with these gids won't be forwarded through Xray."));
         o.datatype = "integer";
 
-        o = s.taboption('proxy', form.Value, 'firewall_priority', _('Priority for firewall rules'), _('See firewall status page for rules Xray used and <a href="https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks#Priority_within_hook">Netfilter Internal Priority</a> for reference.'));
-        o.datatype = 'range(-49, 49)';
-        o.placeholder = 10;
+        let extra_inbounds = s.taboption('inbounds', form.SectionValue, "extra_inbound_section", form.GridSection, 'extra_inbound', _('Extra Inbounds'), _("Add more socks5 / http inbounds and redirect to other outbounds.")).subsection;
+        extra_inbounds.sortable = false;
+        extra_inbounds.anonymous = true;
+        extra_inbounds.addremove = true;
+        extra_inbounds.nodescriptions = true;
 
-        s.tab('dns', _('DNS Settings'));
+        let inbound_addr = extra_inbounds.option(form.Value, "inbound_addr", _("Listen Address"));
+        inbound_addr.datatype = "ip4addr";
+
+        let inbound_port = extra_inbounds.option(form.Value, "inbound_port", _("Listen Port"));
+        inbound_port.datatype = "port";
+
+        let inbound_type = extra_inbounds.option(form.ListValue, "inbound_type", _("Inbound Type"));
+        inbound_type.value("socks5", _("Socks5 Proxy"));
+        inbound_type.value("http", _("HTTP Proxy"));
+        inbound_type.value("tproxy_tcp", _("Transparent Proxy (TCP)"));
+        inbound_type.value("tproxy_udp", _("Transparent Proxy (UDP)"));
+        inbound_type.rmempty = false;
+
+        let specify_outbound = extra_inbounds.option(form.Flag, 'specify_outbound', _('Specify Outbound'), _('If not selected, this inbound will use global settings (including sniffing settings). '));
+        specify_outbound.modalonly = true;
+
+        let destination = extra_inbounds.option(form.MultiValue, 'destination', _('Destination'), _("Select multiple outbounds for load balancing. If none selected, requests will be sent via direct outbound."));
+        destination.depends("specify_outbound", "1");
+        destination.datatype = "uciname";
+        destination.textvalue = destination_format(config_data, "destination");
+
+        let balancer_strategy = extra_inbounds.option(form.Value, 'balancer_strategy', _('Balancer Strategy'), _('Strategy <code>leastPing</code> requires observatory (see "Extra Options" tab) to be enabled.'));
+        balancer_strategy.value("random");
+        balancer_strategy.value("leastPing");
+        balancer_strategy.default = "random";
+        balancer_strategy.rmempty = false;
+        balancer_strategy.modalonly = true;
+
+        s.tab("lan_hosts_access_control", _("LAN Hosts Access Control"));
+
+        let tproxy_ifaces_v4 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'tproxy_ifaces_v4', _("Devices to enable IPv4 tproxy"), _("Enable IPv4 transparent proxy on these interfaces / network devices."));
+        tproxy_ifaces_v4.noaliases = true;
+        tproxy_ifaces_v4.nocreate = true;
+        tproxy_ifaces_v4.multiple = true;
+
+        let tproxy_ifaces_v6 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'tproxy_ifaces_v6', _("Devices to enable IPv6 tproxy"), _("Enable IPv6 transparent proxy on these interfaces / network devices."));
+        tproxy_ifaces_v6.noaliases = true;
+        tproxy_ifaces_v6.nocreate = true;
+        tproxy_ifaces_v6.multiple = true;
+
+        let bypass_ifaces_v4 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'bypass_ifaces_v4', _("Devices to disable IPv4 tproxy"), _("This overrides per-device settings below. FakeDNS and manual transparent proxy won't be affected by this option."));
+        bypass_ifaces_v4.noaliases = true;
+        bypass_ifaces_v4.nocreate = true;
+        bypass_ifaces_v4.multiple = true;
+
+        let bypass_ifaces_v6 = s.taboption('lan_hosts_access_control', widgets.DeviceSelect, 'bypass_ifaces_v6', _("Devices to disable IPv6 tproxy"), _("This overrides per-device settings below. FakeDNS and manual transparent proxy won't be affected by this option."));
+        bypass_ifaces_v6.noaliases = true;
+        bypass_ifaces_v6.nocreate = true;
+        bypass_ifaces_v6.multiple = true;
+
+        let lan_hosts = s.taboption('lan_hosts_access_control', form.SectionValue, "lan_hosts_section", form.GridSection, 'lan_hosts', _('LAN Hosts Access Control'), _("Per-device settings here override per-interface enabling settings above. FakeDNS and manual transparent proxy won't be affected by these options.")).subsection;
+        lan_hosts.sortable = false;
+        lan_hosts.anonymous = true;
+        lan_hosts.addremove = true;
+
+        let macaddr = lan_hosts.option(form.Value, "macaddr", _("MAC Address"));
+        macaddr.datatype = "macaddr";
+        macaddr.rmempty = false;
+        L.sortedKeys(hosts).forEach(function (mac) {
+            macaddr.value(mac, E([], [mac, ' (', E('strong', [hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0] || L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6)[0] || '?']), ')']));
+        });
+
+        let access_control_strategy_v4 = lan_hosts.option(form.ListValue, "access_control_strategy_v4", _("Access Control Strategy (IPv4)"));
+        access_control_strategy_v4.value("tproxy", _("Enable transparent proxy"));
+        access_control_strategy_v4.value("forward", _("Forward via extra inbound"));
+        access_control_strategy_v4.value("bypass", _("Disable transparent proxy"));
+        access_control_strategy_v4.modalonly = true;
+        access_control_strategy_v4.rmempty = false;
+
+        let access_control_forward_tcp_v4 = lan_hosts.option(form.ListValue, "access_control_forward_tcp_v4", _("Extra inbound (TCP4)"));
+        access_control_forward_tcp_v4.depends("access_control_strategy_v4", "forward");
+        access_control_forward_tcp_v4.textvalue = access_control_format(config_data, "access_control_strategy_v4", "access_control_forward_tcp_v4");
+
+        let access_control_forward_udp_v4 = lan_hosts.option(form.ListValue, "access_control_forward_udp_v4", _("Extra inbound (UDP4)"));
+        access_control_forward_udp_v4.depends("access_control_strategy_v4", "forward");
+        access_control_forward_udp_v4.textvalue = access_control_format(config_data, "access_control_strategy_v4", "access_control_forward_udp_v4");
+
+        let access_control_strategy_v6 = lan_hosts.option(form.ListValue, "access_control_strategy_v6", _("Access Control Strategy (IPv6)"));
+        access_control_strategy_v6.value("tproxy", _("Enable transparent proxy"));
+        access_control_strategy_v6.value("forward", _("Forward via extra inbound"));
+        access_control_strategy_v6.value("bypass", _("Disable transparent proxy"));
+        access_control_strategy_v6.modalonly = true;
+        access_control_strategy_v6.rmempty = false;
+
+        let access_control_forward_tcp_v6 = lan_hosts.option(form.ListValue, "access_control_forward_tcp_v6", _("Extra inbound (TCP6)"));
+        access_control_forward_tcp_v6.depends("access_control_strategy_v6", "forward");
+        access_control_forward_tcp_v6.textvalue = access_control_format(config_data, "access_control_strategy_v6", "access_control_forward_tcp_v6");
+
+        let access_control_forward_udp_v6 = lan_hosts.option(form.ListValue, "access_control_forward_udp_v6", _("Extra inbound (UDP6)"));
+        access_control_forward_udp_v6.depends("access_control_strategy_v6", "forward");
+        access_control_forward_udp_v6.textvalue = access_control_format(config_data, "access_control_strategy_v6", "access_control_forward_udp_v6");
+
+        for (const v of uci.sections(config_data, "extra_inbound")) {
+            switch (v["inbound_type"]) {
+                case "tproxy_tcp": {
+                    access_control_forward_tcp_v4.value(v[".name"], extra_outbound_format(config_data, v[".name"], true));
+                    access_control_forward_tcp_v6.value(v[".name"], extra_outbound_format(config_data, v[".name"], true));
+                    break;
+                }
+                case "tproxy_udp": {
+                    access_control_forward_udp_v4.value(v[".name"], extra_outbound_format(config_data, v[".name"], true));
+                    access_control_forward_udp_v6.value(v[".name"], extra_outbound_format(config_data, v[".name"], true));
+                    break;
+                }
+            }
+        }
+
+        s.tab('dns', _('DNS'));
 
         o = s.taboption('dns', form.Value, 'fast_dns', _('Fast DNS'), _("DNS for resolving outbound domains and following bypassed domains"));
         o.datatype = 'or(ip4addr, ip4addrport)';
@@ -665,60 +406,118 @@ return view.extend({
         o.default = "AsIs";
         o.rmempty = false;
 
-        s.tab('transparent_proxy_rules', _('Transparent Proxy Rules'));
+        s.tab('fake_dns', _('FakeDNS'));
+
+        let tproxy_port_tcp_f4 = s.taboption('fake_dns', form.Value, 'tproxy_port_tcp_f4', _('Transparent proxy port (TCP4)'));
+        tproxy_port_tcp_f4.datatype = 'port';
+        tproxy_port_tcp_f4.placeholder = 1086;
+
+        let tproxy_port_tcp_f6 = s.taboption('fake_dns', form.Value, 'tproxy_port_tcp_f6', _('Transparent proxy port (TCP6)'));
+        tproxy_port_tcp_f6.datatype = 'port';
+        tproxy_port_tcp_f6.placeholder = 1087;
+
+        let tproxy_port_udp_f4 = s.taboption('fake_dns', form.Value, 'tproxy_port_udp_f4', _('Transparent proxy port (UDP4)'));
+        tproxy_port_udp_f4.datatype = 'port';
+        tproxy_port_udp_f4.placeholder = 1088;
+
+        let tproxy_port_udp_f6 = s.taboption('fake_dns', form.Value, 'tproxy_port_udp_f6', _('Transparent proxy port (UDP6)'));
+        tproxy_port_udp_f6.datatype = 'port';
+        tproxy_port_udp_f6.placeholder = 1089;
+
+        let pool_v4 = s.taboption('fake_dns', form.Value, 'pool_v4', _('Address Pool (IPv4)'));
+        pool_v4.datatype = 'ip4addr';
+        pool_v4.placeholder = "198.18.0.0/15";
+
+        let pool_v4_size = s.taboption('fake_dns', form.Value, 'pool_v4_size', _('Address Pool Size (IPv4)'));
+        pool_v4_size.datatype = 'integer';
+        pool_v4_size.placeholder = 65535;
+
+        let pool_v6 = s.taboption('fake_dns', form.Value, 'pool_v6', _('Address Pool (IPv6)'));
+        pool_v6.datatype = 'ip6addr';
+        pool_v6.placeholder = "fc00::/18";
+
+        let pool_v6_size = s.taboption('fake_dns', form.Value, 'pool_v6_size', _('Address Pool Size (IPv6)'));
+        pool_v6_size.datatype = 'integer';
+        pool_v6_size.placeholder = 65535;
+
+        let fs = s.taboption('fake_dns', form.SectionValue, "fake_dns_section", form.GridSection, 'fakedns', _('FakeDNS Routing'), _('See <a href="https://github.com/v2ray/v2ray-core/issues/2233">FakeDNS</a> for details.')).subsection;
+        fs.sortable = false;
+        fs.anonymous = true;
+        fs.addremove = true;
+
+        let fake_dns_domain_names = fs.option(form.DynamicList, "fake_dns_domain_names", _("Domain names"));
+        fake_dns_domain_names.rmempty = false;
+        fake_dns_domain_names.textvalue = list_folded_format(config_data, "fake_dns_domain_names", "domains");
+
+        let fake_dns_forward_server_tcp = fs.option(form.MultiValue, 'fake_dns_forward_server_tcp', _('Force Forward server (TCP)'));
+        fake_dns_forward_server_tcp.datatype = "uciname";
+        fake_dns_forward_server_tcp.textvalue = destination_format(config_data, "fake_dns_forward_server_tcp");
+
+        let fake_dns_forward_server_udp = fs.option(form.MultiValue, 'fake_dns_forward_server_udp', _('Force Forward server (UDP)'));
+        fake_dns_forward_server_udp.datatype = "uciname";
+        fake_dns_forward_server_udp.textvalue = destination_format(config_data, "fake_dns_forward_server_udp");
+
+        let fake_dns_balancer_strategy = fs.option(form.Value, 'fake_dns_balancer_strategy', _('Balancer Strategy'), _('Strategy <code>leastPing</code> requires observatory (see "Extra Options" tab) to be enabled.'));
+        fake_dns_balancer_strategy.value("random");
+        fake_dns_balancer_strategy.value("leastPing");
+        fake_dns_balancer_strategy.default = "random";
+        fake_dns_balancer_strategy.rmempty = false;
+        fake_dns_balancer_strategy.modalonly = true;
+
+        s.tab('outbound_routing', _('Outbound Routing'));
 
         if (geoip_existence) {
-            let geoip_direct_code_list = s.taboption('transparent_proxy_rules', form.DynamicList, 'geoip_direct_code_list', _('GeoIP Direct Code List (IPv4)'), _("Hosts in these GeoIP sets will not be forwarded through Xray. Remove all items to forward all non-private hosts."));
+            let geoip_direct_code_list = s.taboption('outbound_routing', form.DynamicList, 'geoip_direct_code_list', _('GeoIP Direct Code List (IPv4)'), _("Hosts in these GeoIP sets will not be forwarded through Xray. Remove all items to forward all non-private hosts."));
             geoip_direct_code_list.datatype = "string";
             geoip_direct_code_list.value("cn", "cn");
             geoip_direct_code_list.value("telegram", "telegram");
 
-            let geoip_direct_code_list_v6 = s.taboption('transparent_proxy_rules', form.DynamicList, 'geoip_direct_code_list_v6', _('GeoIP Direct Code List (IPv6)'), _("Hosts in these GeoIP sets will not be forwarded through Xray. Remove all items to forward all non-private hosts."));
+            let geoip_direct_code_list_v6 = s.taboption('outbound_routing', form.DynamicList, 'geoip_direct_code_list_v6', _('GeoIP Direct Code List (IPv6)'), _("Hosts in these GeoIP sets will not be forwarded through Xray. Remove all items to forward all non-private hosts."));
             geoip_direct_code_list_v6.datatype = "string";
             geoip_direct_code_list_v6.value("cn", "cn");
             geoip_direct_code_list_v6.value("telegram", "telegram");
         } else {
-            let geoip_direct_code_list = s.taboption('transparent_proxy_rules', form.DynamicList, 'geoip_direct_code_list', _('GeoIP Direct Code List (IPv4)'), _("Resource file /usr/share/xray/geoip.dat not exist. All network traffic will be forwarded. <br/> Compile your firmware again with data files to use this feature, or<br/><a href=\"https://github.com/v2fly/geoip\">download one</a> (maybe disable transparent proxy first) and upload it to your router."));
+            let geoip_direct_code_list = s.taboption('outbound_routing', form.DynamicList, 'geoip_direct_code_list', _('GeoIP Direct Code List (IPv4)'), _("Resource file /usr/share/xray/geoip.dat not exist. All network traffic will be forwarded. <br/> Compile your firmware again with data files to use this feature, or<br/><a href=\"https://github.com/v2fly/geoip\">download one</a> (maybe disable transparent proxy first) and upload it to your router."));
             geoip_direct_code_list.readonly = true;
             geoip_direct_code_list.datatype = "string";
 
-            let geoip_direct_code_list_v6 = s.taboption('transparent_proxy_rules', form.DynamicList, 'geoip_direct_code_list_v6', _('GeoIP Direct Code List (IPv6)'), _("Resource file /usr/share/xray/geoip.dat not exist. All network traffic will be forwarded. <br/> Compile your firmware again with data files to use this feature, or<br/><a href=\"https://github.com/v2fly/geoip\">download one</a> (maybe disable transparent proxy first) and upload it to your router."));
+            let geoip_direct_code_list_v6 = s.taboption('outbound_routing', form.DynamicList, 'geoip_direct_code_list_v6', _('GeoIP Direct Code List (IPv6)'), _("Resource file /usr/share/xray/geoip.dat not exist. All network traffic will be forwarded. <br/> Compile your firmware again with data files to use this feature, or<br/><a href=\"https://github.com/v2fly/geoip\">download one</a> (maybe disable transparent proxy first) and upload it to your router."));
             geoip_direct_code_list_v6.readonly = true;
             geoip_direct_code_list_v6.datatype = "string";
         }
 
-        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_bp_ips", _("Bypassed IP"), _("Requests to these IPs won't be forwarded through Xray."));
+        o = s.taboption('outbound_routing', form.DynamicList, "wan_bp_ips", _("Bypassed IP"), _("Requests to these IPs won't be forwarded through Xray."));
         o.datatype = "ipaddr";
 
-        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_ips", _("Forwarded IP"), _("Requests to these IPs will always be handled by Xray (but still might be bypassed by Xray itself, like private addresses).<br/>Useful for some really strange network. If you really need to forward private addresses, try Manual Transparent Proxy below."));
+        o = s.taboption('outbound_routing', form.DynamicList, "wan_fw_ips", _("Forwarded IP"), _("Requests to these IPs will always be handled by Xray (but still might be bypassed by Xray itself, like private addresses).<br/>Useful for some really strange network. If you really need to forward private addresses, try Manual Transparent Proxy below."));
         o.datatype = "ipaddr";
 
-        o = s.taboption('transparent_proxy_rules', form.ListValue, 'transparent_default_port_policy', _('Default Ports Policy'));
+        o = s.taboption('outbound_routing', form.ListValue, 'transparent_default_port_policy', _('Default Ports Policy'));
         o.value("forwarded", _("Forwarded"));
         o.value("bypassed", _("Bypassed"));
         o.default = "forwarded";
 
-        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_tcp_ports", _("Forwarded TCP Ports"), _("Requests to these TCP Ports will be forwarded through Xray. Recommended ports: 80, 443, 853"));
+        o = s.taboption('outbound_routing', form.DynamicList, "wan_fw_tcp_ports", _("Forwarded TCP Ports"), _("Requests to these TCP Ports will be forwarded through Xray. Recommended ports: 80, 443, 853"));
         o.depends("transparent_default_port_policy", "bypassed");
         o.datatype = "portrange";
 
-        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_fw_udp_ports", _("Forwarded UDP Ports"), _("Requests to these UDP Ports will be forwarded through Xray. Recommended ports: 53, 443"));
+        o = s.taboption('outbound_routing', form.DynamicList, "wan_fw_udp_ports", _("Forwarded UDP Ports"), _("Requests to these UDP Ports will be forwarded through Xray. Recommended ports: 53, 443"));
         o.depends("transparent_default_port_policy", "bypassed");
         o.datatype = "portrange";
 
-        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_bp_tcp_ports", _("Bypassed TCP Ports"), _("Requests to these TCP Ports won't be forwarded through Xray."));
+        o = s.taboption('outbound_routing', form.DynamicList, "wan_bp_tcp_ports", _("Bypassed TCP Ports"), _("Requests to these TCP Ports won't be forwarded through Xray."));
         o.depends("transparent_default_port_policy", "forwarded");
         o.datatype = "portrange";
 
-        o = s.taboption('transparent_proxy_rules', form.DynamicList, "wan_bp_udp_ports", _("Bypassed UDP Ports"), _("Requests to these UDP Ports won't be forwarded through Xray."));
+        o = s.taboption('outbound_routing', form.DynamicList, "wan_bp_udp_ports", _("Bypassed UDP Ports"), _("Requests to these UDP Ports won't be forwarded through Xray."));
         o.depends("transparent_default_port_policy", "forwarded");
         o.datatype = "portrange";
 
-        o = s.taboption('transparent_proxy_rules', form.Value, 'mark', _('Socket Mark Number'), _('Avoid proxy loopback problems with local (gateway) traffic'));
+        o = s.taboption('outbound_routing', form.Value, 'mark', _('Socket Mark Number'), _('Avoid proxy loopback problems with local (gateway) traffic'));
         o.datatype = 'range(1, 255)';
         o.placeholder = 255;
 
-        o = s.taboption('transparent_proxy_rules', form.SectionValue, "access_control_manual_tproxy", form.GridSection, 'manual_tproxy', _('Manual Transparent Proxy'), _('Compared to iptables REDIRECT, Xray could do NAT46 / NAT64 (for example accessing IPv6 only sites). See <a href="https://github.com/v2ray/v2ray-core/issues/2233">FakeDNS</a> for details.'));
+        o = s.taboption('outbound_routing', form.SectionValue, "access_control_manual_tproxy", form.GridSection, 'manual_tproxy', _('Manual Transparent Proxy'), _('Compared to iptables REDIRECT, Xray could do NAT46 / NAT64 (for example accessing IPv6 only sites). See <a href="https://github.com/v2ray/v2ray-core/issues/2233">FakeDNS</a> for details.'));
 
         ss = o.subsection;
         ss.sortable = false;
@@ -737,6 +536,7 @@ return view.extend({
         o.datatype = "port";
 
         o = ss.option(form.DynamicList, "domain_names", _("Domain names to associate"));
+        o.textvalue = list_folded_format(config_data, "domain_names", "domains");
 
         o = ss.option(form.Flag, 'rebind_domain_ok', _('Exempt rebind protection'), _('Avoid dnsmasq filtering RFC1918 IP addresses (and some TESTNET addresses as well) from result.<br/>Must be enabled for TESTNET addresses (<code>192.0.2.0/24</code>, <code>198.51.100.0/24</code>, <code>203.0.113.0/24</code>). Addresses like <a href="https://www.as112.net/">AS112 Project</a> (<code>192.31.196.0/24</code>, <code>192.175.48.0/24</code>) or <a href="https://www.nyiix.net/technical/rtbh/">NYIIX RTBH</a> (<code>198.32.160.7</code>) can avoid that.'));
         o.modalonly = true;
@@ -773,14 +573,9 @@ return view.extend({
         o.depends("web_server_enable", "1");
 
         o = s.taboption('xray_server', form.ListValue, "web_server_protocol", _("Protocol"), _("Only protocols which support fallback are available. Note that REALITY does not support fallback right now."));
-        o.value("vless", "VLESS");
-        o.value("trojan", "Trojan");
+        protocol.add_server_protocol(o, s, 'xray_server');
         o.rmempty = false;
         o.depends("web_server_enable", "1");
-
-        add_flow_and_stream_security_conf(s, "xray_server", "web_server_protocol", "vless", true, false);
-
-        add_flow_and_stream_security_conf(s, "xray_server", "web_server_protocol", "trojan", false, false);
 
         o = s.taboption('xray_server', form.DynamicList, 'web_server_password', _('UserId / Password'), _('Fill user_id for vmess / VLESS, or password for shadowsocks / trojan (also supports <a href="https://github.com/XTLS/Xray-core/issues/158">Xray UUID Mapping</a>)'));
         o.depends("web_server_enable", "1");
@@ -813,6 +608,12 @@ return view.extend({
 
         s.tab('extra_options', _('Extra Options'));
 
+        o = s.taboption('extra_options', form.Value, 'xray_bin', _('Xray Executable Path'));
+        o.rmempty = false;
+        if (xray_bin_default) {
+            o.value("/usr/bin/xray", _("/usr/bin/xray (default, exist)"));
+        }
+
         o = s.taboption('extra_options', form.ListValue, 'loglevel', _('Log Level'), _('Read Xray log in "System Log" or use <code>logread</code> command.'));
         o.value("debug");
         o.value("info");
@@ -829,7 +630,7 @@ return view.extend({
 
         o = s.taboption('extra_options', form.Flag, 'stats', _('Enable Statistics'), _('Enable statistics of inbounds / outbounds data. Use Xray API to query values.'));
 
-        o = s.taboption('extra_options', form.Flag, 'observatory', _('Enable Observatory'), _('Enable latency measurement for TCP and UDP outbounds. Support for balancers and strategy will be added later.'));
+        o = s.taboption('extra_options', form.Flag, 'observatory', _('Enable Observatory'), _('Enable latency measurement for TCP and UDP outbounds.'));
 
         o = s.taboption('extra_options', form.Flag, 'fw4_counter', _('Enable firewall4 counters'), _('Add <a href="/cgi-bin/luci/admin/status/nftables">counters to firewall4</a> for transparent proxy rules. (Not supported in all OpenWrt versions. )'));
 
@@ -860,6 +661,12 @@ return view.extend({
         o.datatype = 'uinteger';
         o.placeholder = 512;
 
+        o = s.taboption('extra_options', form.Value, 'firewall_priority', _('Priority for Firewall Rules'), _('See firewall status page for rules Xray used and <a href="https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks#Priority_within_hook">Netfilter Internal Priority</a> for reference.'));
+        o.datatype = 'range(-49, 49)';
+        o.placeholder = 10;
+
+        o = s.taboption('extra_options', form.Flag, 'preview_or_deprecated', _('Preview or Deprecated'), _("Show preview or deprecated features (requires reboot to take effect)."));
+
         o = s.taboption('extra_options', form.SectionValue, "xray_bridge", form.TableSection, 'bridge', _('Bridge'), _('Reverse proxy tool. Currently only client role (bridge) is supported. See <a href="https://xtls.github.io/config/reverse.html#bridgeobject">here</a> for help.'));
 
         ss = o.subsection;
@@ -881,10 +688,39 @@ return view.extend({
         o.rmempty = false;
 
         s.tab('custom_options', _('Custom Options'));
-        o = s.taboption('custom_options', form.TextValue, 'custom_config', _('Custom Configurations'), _('Check <code>/var/etc/xray/config.json</code> for tags of generated inbounds and outbounds. See <a href="https://xtls.github.io/config/features/multiple.html">here</a> for help'));
-        o.monospace = true;
-        o.rows = 20;
-        o.validate = validate_object;
+        let custom_configuration_hook = s.taboption('custom_options', form.TextValue, 'custom_configuration_hook', _('Custom Configuration Hook'), _('Read <a href="https://ucode.mein.io/">ucode Documentation</a> for the language used. Code filled here may need to change after upgrading luci-app-xray.'));
+        custom_configuration_hook.placeholder = "return function(config) {\n    return config;\n};";
+        custom_configuration_hook.monospace = true;
+        custom_configuration_hook.rows = 20;
+
+        const servers = uci.sections(config_data, "servers");
+        if (servers.length == 0) {
+            destination.value("direct", _("No server configured"));
+            tcp_balancer_v4.value("direct", _("No server configured"));
+            udp_balancer_v4.value("direct", _("No server configured"));
+            tcp_balancer_v6.value("direct", _("No server configured"));
+            udp_balancer_v6.value("direct", _("No server configured"));
+            fake_dns_forward_server_tcp.value("direct", _("No server configured"));
+            fake_dns_forward_server_udp.value("direct", _("No server configured"));
+
+            destination.readonly = true;
+            tcp_balancer_v4.readonly = true;
+            udp_balancer_v4.readonly = true;
+            tcp_balancer_v6.readonly = true;
+            udp_balancer_v6.readonly = true;
+            fake_dns_forward_server_tcp.readonly = true;
+            fake_dns_forward_server_udp.readonly = true;
+        } else {
+            for (const v of servers) {
+                destination.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+                tcp_balancer_v4.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+                udp_balancer_v4.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+                tcp_balancer_v6.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+                udp_balancer_v6.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+                fake_dns_forward_server_tcp.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+                fake_dns_forward_server_udp.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+            }
+        }
 
         return m.render();
     }

@@ -4,21 +4,19 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
 
 ## Warnings
 
-* Version 3.0.0 involves a lot of breaking changes and is completely not compatible with older versions. Configurations needs to be filled in again.
-* Since the last OpenWrt version with `firewall3` as default firewall implementation (which is OpenWrt 21.02.7) is now EoL, the `fw3` variant of this project is dropped.
-    * Check out [tag v2.1.2](https://github.com/yichya/luci-app-xray/tree/v2.1.2) and compile fw3 variant yourself if you really need that.
-* About experimental REALITY support
-    * may change quite frequently so keep in mind about following warnings
-    * server role support **involves breaking changes if you use HTTPS server**: certificate settings are now bound to stream security, so previously uploaded certificate and key files will disappear in LuCI, but this won't prevent Xray from using them. Your previously uploaded file are still there, just select them again in LuCI. If Xray fails to start up and complains about missing certificate files, also try picking them again.
-    * legacy XTLS support has already been removed in version 1.8.0 and is also removed by this project since version 2.0.0.
-* If you see `WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly` and don't know what to do:
-    * try `opkg update && opkg install xray-geodata` (at least OpenWrt 21.02 releases)
-    * if that doesn't work or you are using OpenWrt 19.07 releases, see [#52](https://github.com/yichya/luci-app-xray/issues/52#issuecomment-856059905)
+* Since version 3.2.0 sniffing and global custom settings are deprecated. 
+    * These features are moved out of main luci app. Select "Preview or Deprecated" in "Extra Settings" tab and reboot to let those settings show again in preview app.
+    * These likely to be removed in version 4.0.0. Use FakeDNS instead of sniffing and use "Custom Configuration Hook" for global custom settings. 
 * This project **DOES NOT SUPPORT** the following versions of OpenWrt because of the requirements of firewall4 and cilent-side rendering LuCI:
     * LEDE / OpenWrt prior to 22.03
     * [Lean's OpenWrt Source](https://github.com/coolsnowwolf/lede) (which uses a variant of LuCI shipped with OpenWrt 18.06)
 
     If this is your case, use Passwall or similar projects instead (you could find links in [XTLS/Xray-core](https://github.com/XTLS/Xray-core/)).
+* About experimental REALITY support
+    * it may change quite frequently (before the release of official documents about the protocol). Keep in mind for (maybe) breaking changes.
+* If you see `WARNING: at least one of asset files (geoip.dat, geosite.dat) is not found under /usr/share/xray. Xray may not work properly` and don't know what to do:
+    * try `opkg update && opkg install v2ray-geoip v2ray-geosite`
+    * if that doesn't work, see [#52](https://github.com/yichya/luci-app-xray/issues/52#issuecomment-856059905)
 * This project may change its code structure, configuration files format, user interface or dependencies quite frequently since it is still in its very early stage. 
 
 ## Installation (Fw4 only)
@@ -34,6 +32,10 @@ Choose one below:
 
 Then find `luci-app-xray` under `Extra Packages`.
 
+## Changelog since 3.2.0
+
+* 2023-12-20 chore: bump version
+
 ## Changelog since 3.1.0
 
 * 2023-10-24 chore: bump version
@@ -43,6 +45,9 @@ Then find `luci-app-xray` under `Extra Packages`.
 * 2023-10-31 chore: bump version to 3.1.1
 * 2023-11-01 feat: custom configuration hook
 * 2023-11-02 feat: specify DNS to resolve outbound server name
+* 2023-11-30 fix: dialer proxy tag
+* 2023-12-14 fix: default gateway
+* 2023-12-20 chore: deprecate sniffing; move some preview features to main app; add custom configuration hook; refactor web files
 
 ## Changelog since 3.0.0
 

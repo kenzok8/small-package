@@ -1,7 +1,7 @@
 "use strict";
 
+import { dokodemo_inbound, http_inbound, socks_inbound } from "./inbound.mjs";
 import { balancer } from "./system.mjs";
-import { socks_inbound, http_inbound, dokodemo_inbound } from "./inbound.mjs";
 
 export function extra_inbounds(proxy, extra_inbound) {
     let result = [];
@@ -36,7 +36,7 @@ export function extra_inbound_rules(extra_inbound) {
     return result;
 };
 
-export function extra_inbound_balancers(extra_inbound, balancer_strategy) {
+export function extra_inbound_balancers(extra_inbound) {
     let result = [];
     for (let e in extra_inbound) {
         if (e["specify_outbound"] == "1") {
@@ -44,7 +44,7 @@ export function extra_inbound_balancers(extra_inbound, balancer_strategy) {
                 "tag": `extra_inbound_outbound:${e[".name"]}`,
                 "selector": balancer(e, "destination", `extra_inbound:${e[".name"]}`),
                 "strategy": {
-                    "type": balancer_strategy
+                    "type": e["balancer_strategy"] || "random"
                 }
             });
         }
