@@ -278,7 +278,7 @@ function parse_uri(uri) {
 			params = url.searchParams || {};
 
 			if (!sing_features.with_quic) {
-				log(sprintf('Skipping unsupported %s node: %s.', 'tuic', urldecode(url.hash) || url.hostname));
+				log(sprintf('Skipping unsupported %s node: %s.', 'TUIC', urldecode(url.hash) || url.hostname));
 				log(sprintf('Please rebuild sing-box with %s support!', 'QUIC'));
 
 				return null;
@@ -338,7 +338,7 @@ function parse_uri(uri) {
 				break;
 			case 'http':
 			case 'tcp':
-				if (config.transport === 'http' || params.headerType === 'http') {
+				if (params.type === 'http' || params.headerType === 'http') {
 					config.http_host = params.host ? split(urldecode(params.host), ',') : null;
 					config.http_path = params.path ? urldecode(params.path) : null;
 				}
@@ -394,7 +394,7 @@ function parse_uri(uri) {
 			 */
 
 			config = {
-				label: uri.ps,
+				label: uri.ps ? urldecode(uri.ps) : null,
 				type: 'vmess',
 				address: uri.add,
 				port: uri.port,

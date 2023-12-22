@@ -485,7 +485,7 @@ chain homeproxy_mangle_output {
 	{% if (ipv6_support === '1'): %}
 	ip6 daddr != @homeproxy_gfw_list_v6 counter return
 	{% endif /* ipv6_support */ %}
-	{% elif (routing_mode === 'bypass_mainland_china'): %}
+	{% elif (routing_mode === 'bypass_mainland_china' || bypass_cn_traffic === '1'): %}
 	ip daddr @homeproxy_mainland_addr_v4 counter return
 	{% if (ipv6_support === '1'): %}
 	ip6 daddr @homeproxy_mainland_addr_v6 counter return
