@@ -5,6 +5,12 @@ do_pre_kmodload()
 	test -e /etc/modules.d/mt7915e && {
 		cat /etc/modules.d/mt7915e | grep -q wed_enable=Y || echo mt7915e wed_enable=Y >/etc/modules.d/mt7915e
 	}
+	# help to update wo firmware
+	test -d /lib/firmware/mediatek/update && {
+		cd /lib/firmware/mediatek && {
+			ln -sf /lib/firmware/mediatek/update/* .
+		}
+	}
 }
 
 boot_hook_add preinit_main do_pre_kmodload

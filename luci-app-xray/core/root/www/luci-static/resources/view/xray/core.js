@@ -9,33 +9,37 @@
 'require view.xray.shared as shared';
 'require view.xray.transport as transport';
 
-function list_folded_format(config_data, k, n) {
+function list_folded_format(config_data, k, noun, max_chars, mapping, empty) {
     return function (s) {
-        const records = uci.get(config_data, s, k) || [];
-        switch (records.length) {
-            case 0: {
-                return "-";
+        const null_mapping = v => v;
+        const records = (uci.get(config_data, s, k) || []).map(mapping || null_mapping);
+        if (records.length == 0) {
+            return empty || "-";
+        }
+
+        const max_items = function () {
+            for (const i in records) {
+                const pos = parseInt(i);
+                if (records.slice(0, pos + 1).join(", ").length > max_chars) {
+                    return pos;
+                }
             }
-            case 1: {
-                return records[0];
-            }
+            return records.length;
+        }() || 1;
+
+        if (records.length <= max_items) {
+            return records.join(", ");
         }
         return E([], [
-            records[0],
+            records.slice(0, max_items).join(", "),
             ", ... ",
-            shared.badge(`+<strong>${records.length - 1}</strong>`, `${records.length} ${n}\n${records.join("\n")}`)
+            shared.badge(`+<strong>${records.length - max_items}</strong>`, `${records.length} ${noun}\n${records.join("\n")}`)
         ]);
     };
 }
 
-function destination_format(config_data, k) {
-    return function (s) {
-        const dest = uci.get(config_data, s, k) || [];
-        if (dest.length == 0) {
-            return "<i>direct</i>";
-        }
-        return dest.map(v => uci.get(config_data, v, "alias")).join(", ");
-    };
+function destination_format(config_data, k, max_chars) {
+    return list_folded_format(config_data, k, "outbounds", max_chars, v => uci.get(config_data, v, "alias"), "<i>direct</i>");
 }
 
 function extra_outbound_format(config_data, s, with_desc) {
@@ -45,7 +49,7 @@ function extra_outbound_format(config_data, s, with_desc) {
         return "-";
     }
     if (with_desc) {
-        return `${inbound_addr}:${inbound_port} (${destination_format(config_data, "destination")(s)})`;
+        return `${inbound_addr}:${inbound_port} (${destination_format(config_data, "destination", 60)(s)})`;
     }
     return `${inbound_addr}:${inbound_port}`;
 }
@@ -146,6 +150,7 @@ return view.extend({
         let general_balancer_strategy = s.taboption('general', form.Value, 'general_balancer_strategy', _('Balancer Strategy'), _('Strategy <code>leastPing</code> requires observatory (see "Extra Options" tab) to be enabled.'));
         general_balancer_strategy.value("random");
         general_balancer_strategy.value("leastPing");
+        general_balancer_strategy.value("roundRobin");
         general_balancer_strategy.default = "random";
         general_balancer_strategy.rmempty = false;
 
@@ -268,11 +273,12 @@ return view.extend({
         let destination = extra_inbounds.option(form.MultiValue, 'destination', _('Destination'), _("Select multiple outbounds for load balancing. If none selected, requests will be sent via direct outbound."));
         destination.depends("specify_outbound", "1");
         destination.datatype = "uciname";
-        destination.textvalue = destination_format(config_data, "destination");
+        destination.textvalue = destination_format(config_data, "destination", 60);
 
         let balancer_strategy = extra_inbounds.option(form.Value, 'balancer_strategy', _('Balancer Strategy'), _('Strategy <code>leastPing</code> requires observatory (see "Extra Options" tab) to be enabled.'));
         balancer_strategy.value("random");
         balancer_strategy.value("leastPing");
+        balancer_strategy.value("roundRobin");
         balancer_strategy.default = "random";
         balancer_strategy.rmempty = false;
         balancer_strategy.modalonly = true;
@@ -447,19 +453,20 @@ return view.extend({
 
         let fake_dns_domain_names = fs.option(form.DynamicList, "fake_dns_domain_names", _("Domain names"));
         fake_dns_domain_names.rmempty = false;
-        fake_dns_domain_names.textvalue = list_folded_format(config_data, "fake_dns_domain_names", "domains");
+        fake_dns_domain_names.textvalue = list_folded_format(config_data, "fake_dns_domain_names", "domains", 20);
 
         let fake_dns_forward_server_tcp = fs.option(form.MultiValue, 'fake_dns_forward_server_tcp', _('Force Forward server (TCP)'));
         fake_dns_forward_server_tcp.datatype = "uciname";
-        fake_dns_forward_server_tcp.textvalue = destination_format(config_data, "fake_dns_forward_server_tcp");
+        fake_dns_forward_server_tcp.textvalue = destination_format(config_data, "fake_dns_forward_server_tcp", 40);
 
         let fake_dns_forward_server_udp = fs.option(form.MultiValue, 'fake_dns_forward_server_udp', _('Force Forward server (UDP)'));
         fake_dns_forward_server_udp.datatype = "uciname";
-        fake_dns_forward_server_udp.textvalue = destination_format(config_data, "fake_dns_forward_server_udp");
+        fake_dns_forward_server_udp.textvalue = destination_format(config_data, "fake_dns_forward_server_udp", 40);
 
         let fake_dns_balancer_strategy = fs.option(form.Value, 'fake_dns_balancer_strategy', _('Balancer Strategy'), _('Strategy <code>leastPing</code> requires observatory (see "Extra Options" tab) to be enabled.'));
         fake_dns_balancer_strategy.value("random");
         fake_dns_balancer_strategy.value("leastPing");
+        fake_dns_balancer_strategy.value("roundRobin");
         fake_dns_balancer_strategy.default = "random";
         fake_dns_balancer_strategy.rmempty = false;
         fake_dns_balancer_strategy.modalonly = true;
@@ -536,7 +543,7 @@ return view.extend({
         o.datatype = "port";
 
         o = ss.option(form.DynamicList, "domain_names", _("Domain names to associate"));
-        o.textvalue = list_folded_format(config_data, "domain_names", "domains");
+        o.textvalue = list_folded_format(config_data, "domain_names", "domains", 20);
 
         o = ss.option(form.Flag, 'rebind_domain_ok', _('Exempt rebind protection'), _('Avoid dnsmasq filtering RFC1918 IP addresses (and some TESTNET addresses as well) from result.<br/>Must be enabled for TESTNET addresses (<code>192.0.2.0/24</code>, <code>198.51.100.0/24</code>, <code>203.0.113.0/24</code>). Addresses like <a href="https://www.as112.net/">AS112 Project</a> (<code>192.31.196.0/24</code>, <code>192.175.48.0/24</code>) or <a href="https://www.nyiix.net/technical/rtbh/">NYIIX RTBH</a> (<code>198.32.160.7</code>) can avoid that.'));
         o.modalonly = true;
@@ -694,34 +701,16 @@ return view.extend({
         custom_configuration_hook.rows = 20;
 
         const servers = uci.sections(config_data, "servers");
-        if (servers.length == 0) {
-            destination.value("direct", _("No server configured"));
-            tcp_balancer_v4.value("direct", _("No server configured"));
-            udp_balancer_v4.value("direct", _("No server configured"));
-            tcp_balancer_v6.value("direct", _("No server configured"));
-            udp_balancer_v6.value("direct", _("No server configured"));
-            fake_dns_forward_server_tcp.value("direct", _("No server configured"));
-            fake_dns_forward_server_udp.value("direct", _("No server configured"));
-
-            destination.readonly = true;
-            tcp_balancer_v4.readonly = true;
-            udp_balancer_v4.readonly = true;
-            tcp_balancer_v6.readonly = true;
-            udp_balancer_v6.readonly = true;
-            fake_dns_forward_server_tcp.readonly = true;
-            fake_dns_forward_server_udp.readonly = true;
-        } else {
+        for (let selection of [destination, fake_dns_forward_server_tcp, fake_dns_forward_server_udp, tcp_balancer_v4, tcp_balancer_v6, udp_balancer_v4, udp_balancer_v6]) {
+            if (servers.length == 0) {
+                selection.value("direct", _("No server configured"));
+                selection.readonly = true;
+                continue
+            }
             for (const v of servers) {
-                destination.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                tcp_balancer_v4.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                udp_balancer_v4.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                tcp_balancer_v6.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                udp_balancer_v6.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                fake_dns_forward_server_tcp.value(v[".name"], v.alias || v.server + ":" + v.server_port);
-                fake_dns_forward_server_udp.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+                selection.value(v[".name"], v.alias || v.server + ":" + v.server_port);
             }
         }
-
         return m.render();
     }
 });
