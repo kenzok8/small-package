@@ -21,11 +21,16 @@ void try_print_info(const int argc, char *argv[]) {
 #else
         printf("Embed UA: not set\n");
 #endif
+
+#ifdef UA2F_ENABLE_UCI
         if (config.use_custom_ua) {
             printf("Config UA: %s\n", config.custom_ua);
         } else {
             printf("Config UA: not set\n");
         }
+#else
+        printf("UCI support disabled\n");
+#endif
         exit(0);
     }
 

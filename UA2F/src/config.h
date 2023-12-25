@@ -1,3 +1,4 @@
+#ifdef UA2F_ENABLE_UCI
 #ifndef UA2F_CONFIG_H
 #define UA2F_CONFIG_H
 
@@ -13,3 +14,4 @@ void load_config();
 extern struct ua2f_config config;
 
 #endif //UA2F_CONFIG_H
+#endif

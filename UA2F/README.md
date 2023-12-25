@@ -61,11 +61,15 @@ uci commit ua2f
 
 > UA2F 不会修改包的大小，因此即使自定义了 User-Agent， 运行时实际的 User-Agent 会是一个从 custom ua 中截取的长度与原始 User-Agent 相同的子串，长度不足时会在末尾补空格。
 
+## 在非 OpenWRT 系统上运行
+
+自 `v4.5.0 起`，UA2F 支持在非 OpenWRT 系统上运行，但是需要手动配置防火墙规则，将需要处理的流量转发到 `netfilter-queue` 的 10010 队列中。
+
+编译时，需要添加 `-DUA2F_ENABLE_UCI=OFF` flag 至 CMake。
+
 ## TODO
 
 - [ ] pthread 支持，由不同线程完成入队出队
-- [ ] 清除 TCP Header 中的 timestamp，有论文认为这可以被用来识别 NAT 后的多设备，劫持 NTP 服务器并不一定有效
-
 
 ## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FZxilly%2FUA2F.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FZxilly%2FUA2F?ref=badge_large)
