@@ -4,6 +4,7 @@ project(UA2F LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 17)
 
 OPTION(UA2F_BUILD_TESTS "Build tests" OFF)
+OPTION(UA2F_ENABLE_UCI "Enable UCI support" ON)
 
 find_package(Git)
 if(GIT_FOUND)
@@ -81,7 +82,14 @@ add_executable(ua2f
         src/config.c
         src/third/nfqueue-mnl.c)
 
-target_link_libraries(ua2f mnl netfilter_queue pthread nfnetlink uci)
+target_link_libraries(ua2f mnl netfilter_queue pthread nfnetlink)
+
+if (UA2F_ENABLE_UCI)
+    add_compile_definitions(UA2F_ENABLE_UCI=1)
+    target_link_libraries(ua2f uci)
+else ()
+    message(STATUS "UCI support is disabled.")
+endif ()
 
 install(TARGETS ua2f RUNTIME DESTINATION bin)
 

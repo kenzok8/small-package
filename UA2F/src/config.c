@@ -1,3 +1,4 @@
+#ifdef UA2F_ENABLE_UCI
 #include <uci.h>
 #include <string.h>
 #include <syslog.h>
@@ -39,3 +40,4 @@ void load_config() {
     cleanup:
     uci_free_context(ctx);
 }
+#endif
