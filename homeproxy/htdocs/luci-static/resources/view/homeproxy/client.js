@@ -126,9 +126,12 @@ return view.extend({
 		/* Cache all configured proxy nodes, they will be called multiple times */
 		var proxy_nodes = {};
 		uci.sections(data[0], 'node', (res) => {
+			var nodeaddr = ((res.type === 'direct') ? res.override_address : res.address) || '',
+			    nodeport = ((res.type === 'direct') ? res.override_port : res.port) || '';
+
 			proxy_nodes[res['.name']] =
-				String.format('[%s] %s', res.type, res.label || (stubValidator.apply('ip6addr', res.address || '') ?
-					String.format('[%s]', res.address) : res.address) + ':' + res.port);
+				String.format('[%s] %s', res.type, res.label || ((stubValidator.apply('ip6addr', nodeaddr) ?
+					String.format('[%s]', nodeaddr) : nodeaddr) + ':' + nodeport));
 		});
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
