@@ -554,6 +554,7 @@ function gen_config(var)
 
 	if local_socks_port then
 		local inbound = {
+			tag = "socks-in",
 			listen = local_socks_address,
 			port = tonumber(local_socks_port),
 			protocol = "socks",
@@ -874,6 +875,21 @@ function gen_config(var)
 							table.insert(protocols, w)
 						end)
 					end
+					local inboundTag = nil
+					if e["inbound"] and e["inbound"] ~= "" then
+						inboundTag = {}
+						if e["inbound"]:find("tproxy") then
+							if redir_port then
+								table.insert(inboundTag, "tcp_redir")
+								table.insert(inboundTag, "udp_redir")
+							end
+						end
+						if e["inbound"]:find("socks") then
+							if local_socks_port then
+								table.insert(inboundTag, "socks-in")
+							end
+						end
+					end
 					local domains = nil
 					if e.domain_list then
 						domains = {}
@@ -912,6 +928,7 @@ function gen_config(var)
 					local rule = {
 						_flag = e.remarks,
 						type = "field",
+						inboundTag = inboundTag,
 						outboundTag = outboundTag,
 						balancerTag = balancerTag,
 						network = e["network"] or "tcp,udp",
@@ -1244,11 +1261,14 @@ function gen_config(var)
 			end
 			if direct_nftset then
 				string.gsub(direct_nftset, '[^' .. "," .. ']+', function(w)
-					local s = string.reverse(w)
-					local _, i = string.find(s, "#")
-					local m = string.len(s) - i + 1
-					local n = w:sub(m + 1)
-					sys.call("nft flush set inet fw4 " .. n .. " 2>/dev/null")
+					local split = api.split(w, "#")
+					if #split > 3 then
+						local ip_type = split[1]
+						local family = split[2]
+						local table_name = split[3]
+						local set_name = split[4]
+						sys.call(string.format("nft flush set %s %s %s 2>/dev/null", family, table_name, set_name))
+					end
 				end)
 			end
 		end
@@ -1607,7 +1627,7 @@ function gen_dns_config(var)
 			tag = "dns-in",
 			settings = {
 				address = other_type_dns_server or "1.1.1.1",
-				port = 53,
+				port = other_type_dns_port or 53,
 				network = "tcp,udp"
 			}
 		})
