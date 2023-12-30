@@ -415,7 +415,7 @@ if (!isEmpty(main_node)) {
 			process_name: cfg.process_name,
 			process_path: cfg.process_path,
 			user: cfg.user,
-			invert: (cfg.invert === '1'),
+			invert: (cfg.invert === '1') || null,
 			outbound: get_outbound(cfg.outbound),
 			server: get_resolver(cfg.server),
 			disable_cache: (cfg.dns_disable_cache === '1'),
@@ -599,7 +599,7 @@ if (!isEmpty(main_node)) {
 			process_name: cfg.process_name,
 			process_path: cfg.process_path,
 			user: cfg.user,
-			invert: (cfg.invert === '1'),
+			invert: (cfg.invert === '1') || null,
 			outbound: get_outbound(cfg.outbound)
 		});
 	});
