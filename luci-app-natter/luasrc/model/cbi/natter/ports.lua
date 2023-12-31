@@ -17,7 +17,7 @@ remarks.rmempty = false
 forward_mode = s:option(ListValue, "forward_mode", translate("Forward Mode"))
 forward_mode:value('1', translate("1 - Natter"))
 forward_mode:value('2', translate("2 - Firewall"))
-forward_mode.default = 2
+forward_mode.default = 1
 
 external_port = s:option(Value, "external_port", translate("External Port"), translate("Specify the port opened by Natter"))
 external_port.datatype = "port"

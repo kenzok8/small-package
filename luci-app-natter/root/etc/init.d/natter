@@ -160,12 +160,25 @@ iptables -I INPUT -j natter 2> /dev/null
 					done ; unset i
 				;;
 				esac
+				uci set natter.@ports[$u].external_port_tcp="WAIT"
+				uci set natter.@ports[$u].external_port_udp="WAIT"
+				uci commit natter
+				{
+					sleep 10
+					external_port_tcp=$(grep "[INFO]" $log_file 2> /dev/null | grep TCP | egrep -o "[0-9]+" | awk 'END{print}')
+					external_port_udp=$(grep "[INFO]" $log_file 2> /dev/null | grep UDP | egrep -o "[0-9]+" | awk 'END{print}')
+					[ "${external_port_tcp}" ] || external_port_tcp="none"
+					[ "${external_port_udp}" ] || external_port_udp="none"
+					uci set natter.@ports[$u].external_port_tcp="$external_port_tcp"
+					uci set natter.@ports[$u].external_port_udp="$external_port_udp"
+					uci commit natter
+				} &
 			fi
 			for i in $port_list
 			do
 				unset $(echo $i)
 			done ; unset i
-			unset iptables_type internal_tcp internal_udp external_tcp external_udp
+			unset iptables_type internal_tcp internal_udp external_tcp external_udp external_port_tcp external_port_udp
 		done ; unset u
 	else
 		echo "Natter is disabled ..."
@@ -205,6 +218,7 @@ restart() {
 	stop
 	start
 }
+
 service_triggers() {
 	procd_add_reload_trigger "natter"
 }

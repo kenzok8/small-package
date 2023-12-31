@@ -60,17 +60,14 @@ enable_port = s:option(Flag, "enable_port", translate("Enable"))
 enable_port.default = 1
 enable_port.width = "5%"
 
-id = s:option(DummyValue, "id", translate("ID"))
-id.width = "8%"
-
 remarks = s:option(DummyValue, "remarks", translate("Remarks"))
-remarks.width = "10%"
+remarks.width = "8%"
 
-forward_mode = s:option(DummyValue, "forward_mode", translate("Forward Mode"))
-forward_mode.width = "8%"
+external_port_tcp = s:option(DummyValue, "external_port_tcp", translate("External TCP Port"))
+external_port_tcp.width = "12%"
 
-external_port = s:option(DummyValue, "external_port", translate("External Port"))
-external_port.width = "12%"
+external_port_udp = s:option(DummyValue, "external_port_udp", translate("External UDP Port"))
+external_port_udp.width = "12%"
 
 enable_forward = s:option(Flag, "enable_forward", translate("Forward"))
 enable_forward.default = 0
