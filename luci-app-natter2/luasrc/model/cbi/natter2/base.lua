@@ -19,9 +19,12 @@ enable.default = 0
 if check_file("/tmp/natter2_nat_type") then
 	natter_nat_type_tcp = luci.sys.exec ("grep TCP /tmp/natter2_nat_type")
 	natter_nat_type_udp = luci.sys.exec ("grep UDP /tmp/natter2_nat_type")
-	nat_check = s:option (Button, "nat_check", translate("Check NAT Status"), translate("Proxy programs may affect NAT types") .. "<br><br>" .. natter_nat_type_tcp .. "<br><br>" .. natter_nat_type_udp)
+	nat_check = s:option (Button, "nat_check", translate("Check NAT Status"), translate("") .. "<br><br>" .. natter_nat_type_tcp .. "<br><br>" .. natter_nat_type_udp)
 else
-	nat_check = s:option (Button, "nat_check", translate("Check NAT Status"))
+	nat_check = s:option (Button, "nat_check", translate("Check NAT Status"), translate("Tips")
+	.. [[<br />]] .. translate("Recommended to accept high UDP ports in system firewall")
+	.. [[<br />]] .. translate("Turn off transparent proxies to ensure detection accuracy")
+	.. [[<br />]] .. translate("After clicking Exec button, please wait for the luci to refresh"))
 end
 
 nat_check.inputtitle = translate("Exec")
