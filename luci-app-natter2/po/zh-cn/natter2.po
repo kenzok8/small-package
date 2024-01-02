@@ -1,5 +1,5 @@
 msgid "Natter v2"
-msgstr "Natter v2"
+msgstr "Natter v2 测试版"
 
 msgid "Base Settings"
 msgstr "基础设置"
@@ -141,3 +141,15 @@ msgstr "使用自定义的 STUN 服务器"
 
 msgid "Using customized Keepalive server"
 msgstr "使用自定义的保活服务器"
+
+msgid "Tips"
+msgstr "提示"
+
+msgid "Recommended to accept high UDP ports in system firewall"
+msgstr "建议在防火墙中放行高位 UDP 端口"
+
+msgid "Turn off transparent proxies to ensure detection accuracy"
+msgstr "关闭透明代理以确保检测准确性"
+
+msgid "After clicking Exec button, please wait for the luci to refresh"
+msgstr "点击执行后，请耐心等待页面自动刷新"
