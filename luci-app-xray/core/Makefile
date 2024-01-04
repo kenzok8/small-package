@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=3.1.1
+PKG_VERSION:=3.2.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -29,10 +29,6 @@ menu "luci-app-xray Configuration"
 
 config PACKAGE_XRAY_INCLUDE_CLOUDFLARE_ORIGIN_ROOT_CA
 	bool "Include Cloudflare Origin Root CA"
-	default n
-
-config PACKAGE_XRAY_INFINITE_RETRY_ON_STARTUP
-	bool "Retry infinitely on Xray startup (may solve some startup problems)"
 	default n
 
 config PACKAGE_XRAY_RLIMIT_NOFILE_LARGE
@@ -93,8 +89,6 @@ endif
 	$(INSTALL_BIN) ./root/etc/uci-defaults/xray_core $(1)/etc/uci-defaults/xray_core
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./root/etc/hotplug.d/iface/01-transparent-proxy-ipset $(1)/etc/hotplug.d/iface/01-transparent-proxy-ipset
-	$(INSTALL_DIR) $(1)/etc/nftables.d
-	$(LN) /usr/share/xray/include.nft $(1)/etc/nftables.d/99-xray.nft
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/xray
 	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray/core.js $(1)/www/luci-static/resources/view/xray/core.js
 	$(INSTALL_DATA) ./root/www/luci-static/resources/view/xray/preview.js $(1)/www/luci-static/resources/view/xray/preview.js
@@ -105,6 +99,8 @@ endif
 	$(INSTALL_BIN) ./root/usr/libexec/rpcd/xray $(1)/usr/libexec/rpcd/xray
 	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
 	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-app-xray.json $(1)/usr/share/luci/menu.d/luci-app-xray.json
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/table-pre
+	$(INSTALL_DATA) ./root/usr/share/nftables.d/table-pre/xray_core.nft $(1)/usr/share/nftables.d/table-pre/xray_core.nft
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(INSTALL_DATA) ./root/usr/share/rpcd/acl.d/luci-app-xray.json $(1)/usr/share/rpcd/acl.d/luci-app-xray.json
 	$(INSTALL_DIR) $(1)/usr/share/xray
@@ -116,9 +112,6 @@ endif
 ifdef CONFIG_PACKAGE_XRAY_RESTART_DNSMASQ_ON_IFACE_CHANGE
 	$(INSTALL_DATA) ./root/usr/share/xray/restart_dnsmasq_on_iface_change $(1)/usr/share/xray/restart_dnsmasq_on_iface_change
 endif
-ifdef CONFIG_PACKAGE_XRAY_INFINITE_RETRY_ON_STARTUP
-	$(INSTALL_DATA) ./root/usr/share/xray/infinite_retry $(1)/usr/share/xray/infinite_retry
-endif
 ifdef CONFIG_PACKAGE_XRAY_RLIMIT_NOFILE_LARGE
 	$(INSTALL_DATA) ./root/usr/share/xray/rlimit_nofile_large $(1)/usr/share/xray/rlimit_nofile
 endif
@@ -128,7 +121,6 @@ endif
 ifdef CONFIG_PACKAGE_XRAY_RLIMIT_DATA_LARGE
 	$(INSTALL_DATA) ./root/usr/share/xray/rlimit_data_large $(1)/usr/share/xray/rlimit_data
 endif
-	$(INSTALL_DATA) ./root/usr/share/xray/include.nft $(1)/usr/share/xray/include.nft
 	$(INSTALL_BIN) ./root/usr/share/xray/default_gateway.uc $(1)/usr/share/xray/default_gateway.uc
 	$(INSTALL_BIN) ./root/usr/share/xray/dnsmasq_include.ut $(1)/usr/share/xray/dnsmasq_include.ut
 	$(INSTALL_BIN) ./root/usr/share/xray/firewall_include.ut $(1)/usr/share/xray/firewall_include.ut

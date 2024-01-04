@@ -19,10 +19,6 @@ Focus on making the most of Xray (HTTP/HTTPS/Socks/TProxy inbounds, multiple pro
     * if that doesn't work, see [#52](https://github.com/yichya/luci-app-xray/issues/52#issuecomment-856059905)
 * This project may change its code structure, configuration files format, user interface or dependencies quite frequently since it is still in its very early stage. 
 
-## Installation (Fw4 only)
-
-Just use `opkg -i *` to install both ipks from Releases.
-
 ## Installation (Manually building OpenWrt)
 
 Choose one below:
@@ -32,9 +28,19 @@ Choose one below:
 
 Then find `luci-app-xray` under `Extra Packages`.
 
+## Installation (Use GitHub actions to build ipks)
+
+Fork this repository and:
+
+* Create a release by pushing a tag
+* Wait until actions finish
+* Use `opkg -i *` to install both ipks from Releases.
+
 ## Changelog since 3.2.0
 
 * 2023-12-20 chore: bump version
+* 2023-12-22 chore: optimize list folded format; add roundRobin balancer
+* 2024-01-04 chore: start later than sysntpd; change firewall include file path
 
 ## Changelog since 3.1.0
 
