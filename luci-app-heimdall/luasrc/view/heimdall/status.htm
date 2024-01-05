@@ -17,15 +17,26 @@ local container_running = container_status == "running"
 <%
 if container_running then
     local port=util.trim(util.exec("/usr/libexec/istorec/heimdall.sh port"))
+    local https_port=util.trim(util.exec("/usr/libexec/istorec/heimdall.sh https_port"))
     if port == "" then
         port="8088"
     end
+    if https_port == "" then
+        https_port="8089"
+    end
 -%>
-<div class="cbi-value cbi-value-last">
+<div class="cbi-value">
     <label class="cbi-value-title">&nbsp;</label>
     <div class="cbi-value-field">
 
     <input type="button" class="btn cbi-button cbi-button-apply" name="start" value="<%:Open Heimdall%>" onclick="window.open('http://'+location.hostname+':<%=port%>/', '_blank')">
+    </div>
+</div>
+<div class="cbi-value cbi-value-last">
+    <label class="cbi-value-title">&nbsp;</label>
+    <div class="cbi-value-field">
+
+    <input type="button" class="btn cbi-button cbi-button-apply" name="start" value="<%:Open Heimdall%> (HTTPS)" onclick="window.open('https://'+location.hostname+':<%=https_port%>/', '_blank')">
     </div>
 </div>
 <% end %>
