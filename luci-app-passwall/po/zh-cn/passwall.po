@@ -1018,6 +1018,12 @@ msgstr "配置路由etc/hosts文件，如果你不知道自己在做什么，请
 msgid "These had been joined ip addresses will be block. Please input the ip address or ip address segment, every line can input only one ip address."
 msgstr "加入的IP段将屏蔽。可输入IP地址或地址段，每个地址段一行。"
 
+msgid "Inbound Tag"
+msgstr "入站标签"
+
+msgid "Transparent proxy"
+msgstr "透明代理"
+
 msgid "Not valid domain name, please re-enter!"
 msgstr "不是有效域名，请重新输入！"
 
@@ -1174,11 +1180,8 @@ msgstr "允许不安全连接"
 msgid "Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."
 msgstr "是否允许不安全连接。当勾选时，将跳过证书验证。"
 
-msgid "SS AEAD Node Use Type"
-msgstr "SS AEAD节点使用类型"
-
-msgid "Trojan Node Use Type"
-msgstr "Trojan节点使用类型"
+msgid "%s Node Use Type"
+msgstr "%s 节点使用类型"
 
 msgid "Set the TUIC proxy server ip address"
 msgstr "指定远程TUIC服务器IP"
@@ -1509,6 +1512,12 @@ msgstr "自定义geosite文件路径"
 
 msgid "Custom geosite URL"
 msgstr "自定义geosite文件更新链接"
+
+msgid "Remove resource files"
+msgstr "删除资源文件"
+
+msgid "Sing-Box will automatically download resource files when starting, you can use this feature achieve upgrade resource files."
+msgstr "Sing-Box 会在启动时自动下载资源文件，您可以使用此功能实现升级资源文件。"
 
 msgid "Override the connection destination address"
 msgstr "覆盖连接目标地址"
