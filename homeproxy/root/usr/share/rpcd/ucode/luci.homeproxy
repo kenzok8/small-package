@@ -161,9 +161,6 @@ const methods = {
 			const fd = popen('/usr/bin/sing-box version');
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
-					if (match(trim(line), /Environment: (go[0-9\.]+)/))
-						features['has_mptcp'] = (index(line, 'go1.20') === -1) ? true : false;
-
 					let tags = match(trim(line), /Tags: (.*)/);
 					if (!tags)
 						continue;

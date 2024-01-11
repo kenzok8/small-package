@@ -82,7 +82,7 @@ const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'redirect_tproxy
 
 const mixed_port = uci.get(uciconfig, uciinfra, 'mixed_port') || '5330';
 let self_mark, redirect_port, tproxy_port,
-    tun_name, tun_addr4, tun_addr6, tun_mtu,
+    tun_name, tun_addr4, tun_addr6, tun_mtu, tun_gso,
     tcpip_stack, endpoint_independent_nat;
 if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(uciconfig, 'infra', 'self_mark') || '100';
@@ -96,6 +96,7 @@ if (match(proxy_mode), /tun/) {
 	tun_addr4 = uci.get(uciconfig, uciinfra, 'tun_addr4') || '172.19.0.1/30';
 	tun_addr6 = uci.get(uciconfig, uciinfra, 'tun_addr6') || 'fdfe:dcba:9876::1/126';
 	tun_mtu = uci.get(uciconfig, uciinfra, 'tun_mtu') || '9000';
+	tun_gso = uci.get(uciconfig, uciinfra, 'tun_gso') || '0';
 	tcpip_stack = 'system';
 	if (routing_mode === 'custom') {
 		tcpip_stack = uci.get(uciconfig, uciroutingsetting, 'tcpip_stack') || 'system';
@@ -188,6 +189,7 @@ function generate_outbound(node) {
 		packet_encoding: node.packet_encoding,
 		/* WireGuard */
 		system_interface: (node.type === 'wireguard') || null,
+		gso: (node.wireguard_gso === '1') || null,
 		interface_name: (node.type === 'wireguard') ? 'wg-' + node['.name'] + '-out' : null,
 		local_address: node.wireguard_local_address,
 		private_key: node.wireguard_private_key,
@@ -418,7 +420,7 @@ if (!isEmpty(main_node)) {
 			invert: (cfg.invert === '1') || null,
 			outbound: get_outbound(cfg.outbound),
 			server: get_resolver(cfg.server),
-			disable_cache: (cfg.dns_disable_cache === '1'),
+			disable_cache: (cfg.dns_disable_cache === '1') || null,
 			rewrite_ttl: strToInt(cfg.rewrite_ttl)
 		});
 	});
@@ -480,6 +482,7 @@ if (match(proxy_mode, /tun/))
 		inet4_address: tun_addr4,
 		inet6_address: (ipv6_support === '1') ? tun_addr6 : null,
 		mtu: strToInt(tun_mtu),
+		gso: (tun_gso === '1'),
 		auto_route: false,
 		endpoint_independent_nat: strToBool(endpoint_independent_nat),
 		stack: tcpip_stack,

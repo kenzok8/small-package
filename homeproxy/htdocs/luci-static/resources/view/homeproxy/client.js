@@ -264,14 +264,18 @@ return view.extend({
 		o.depends('routing_mode', 'custom');
 
 		ss = o.subsection;
+		so = ss.option(form.Flag, 'tun_gso', _('Generic segmentation offload'));
+		so.default = so.disabled;
+		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');
+		so.depends('homeproxy.config.proxy_mode', 'tun');
+		so.rmempty = false;
+
 		so = ss.option(form.ListValue, 'tcpip_stack', _('TCP/IP stack'),
 			_('TCP/IP stack.'));
 		if (features.with_gvisor) {
 			so.value('mixed', _('Mixed'));
 			so.value('gvisor', _('gVisor'));
 		}
-		if (features.with_lwip)
-			so.value('lwip', _('LWIP'));
 		so.value('system', _('System'));
 		so.default = 'system';
 		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');

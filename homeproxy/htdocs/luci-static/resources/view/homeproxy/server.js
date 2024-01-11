@@ -706,12 +706,10 @@ return view.extend({
 		o.depends({'network': 'udp', '!reverse': true});
 		o.modalonly = true;
 
-		if (features.has_mptcp) {
-			o = s.option(form.Flag, 'tcp_multi_path', _('MultiPath TCP'));
-			o.default = o.disabled;
-			o.depends({'network': 'udp', '!reverse': true});
-			o.modalonly = true;
-		}
+		o = s.option(form.Flag, 'tcp_multi_path', _('MultiPath TCP'));
+		o.default = o.disabled;
+		o.depends({'network': 'udp', '!reverse': true});
+		o.modalonly = true;
 
 		o = s.option(form.Flag, 'udp_fragment', _('UDP Fragment'),
 			_('Enable UDP fragmentation.'));
