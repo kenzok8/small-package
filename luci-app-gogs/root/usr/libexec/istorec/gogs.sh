@@ -70,8 +70,7 @@ case ${ACTION} in
     docker ps --all -f 'name=gogs' --format '{{.State}}'
   ;;
   "port")
-    local http_port=`uci get gogs.@main[0].http_port 2>/dev/null`
-    echo $http_port
+    uci -q get gogs.@main[0].http_port 2>/dev/null
   ;;
   *)
     usage
