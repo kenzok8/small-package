@@ -164,7 +164,7 @@ git_sparse_clone master "https://github.com/immortalwrt/packages" "immpack" net/
 net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gowebdav \
 admin/btop libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 libs/libtorrent-rasterbar \
 libs/libdouble-conversion libs/qt6base libs/cxxopts libs/jpcre2 libs/alac \
-utils/cpulimit
+utils/cpulimit devel/gn
 
 git_sparse_clone develop "https://github.com/Ysurac/openmptcprouter-feeds" "enmptcp" luci-app-snmpd \
 luci-app-packet-capture luci-app-mail msmtp
