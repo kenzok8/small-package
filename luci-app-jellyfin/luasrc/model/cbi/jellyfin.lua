@@ -58,6 +58,5 @@ local paths, default_path = jellyfin_model.find_paths(blocks, home, "Caches")
 for _, val in pairs(paths) do
   o:value(val, val)
 end
-o.default = default_path
 
 return m

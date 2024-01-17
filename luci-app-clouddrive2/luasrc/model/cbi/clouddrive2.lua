@@ -51,6 +51,8 @@ local paths, default_path = clouddrive2_model.find_paths(blocks, home, "Caches")
 for _, val in pairs(paths) do
   o:value(val, val)
 end
-o.default = default_path
+
+o = s:option(Flag, "share_mnt", translate("Share /mnt"), translate("CloudDrive can read and write other mount points under /mnt for its synchronization or backup functions"))
+o.default = 0
 
 return m
