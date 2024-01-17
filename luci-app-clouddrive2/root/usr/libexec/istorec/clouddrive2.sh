@@ -7,7 +7,7 @@ shift 1
 IMAGE_NAME='default'
 
 get_image() {
-  IMAGE_NAME=`uci get clouddrive2.@clouddrive2[0].image 2>/dev/null`
+  IMAGE_NAME=`uci -q get clouddrive2.@clouddrive2[0].image 2>/dev/null`
   if [ -z "$IMAGE_NAME" -o "$IMAGE_NAME" == "default" ]; then
     IMAGE_NAME="cloudnas/clouddrive2"
   fi
@@ -24,9 +24,10 @@ do_install() {
 }
 
 do_install_detail() {
-  local config=`uci get clouddrive2.@clouddrive2[0].config_path 2>/dev/null`
-  local cache=`uci get clouddrive2.@clouddrive2[0].cache_path 2>/dev/null`
-  local port=`uci get clouddrive2.@clouddrive2[0].port 2>/dev/null`
+  local config=`uci -q get clouddrive2.@clouddrive2[0].config_path 2>/dev/null`
+  local cache=`uci -q get clouddrive2.@clouddrive2[0].cache_path 2>/dev/null`
+  local port=`uci -q get clouddrive2.@clouddrive2[0].port 2>/dev/null`
+  local share_mnt=`uci -q get clouddrive2.@clouddrive2[0].share_mnt 2>/dev/null`
 
   if [ -z "$config" ]; then
       echo "config path is empty!"
@@ -42,12 +43,16 @@ do_install_detail() {
     --dns=172.17.0.1 \
     -p $port:19798"
 
-  local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
+  local tz="`uci -q get system.@system[0].zonename | sed 's/ /_/g'`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
-  # make sure shared mount point
+  # make sure shared mount point existed
   /etc/init.d/clouddrive2 boot
 
+  if [ "$share_mnt" = 1 ]; then
+    cmd="$cmd -v /mnt:/mnt"
+    mountpoint -q /mnt && cmd="$cmd:rslave"
+  fi
   cmd="$cmd -v /mnt/CloudNAS:/mnt/CloudNAS:shared"
 
   # fuse

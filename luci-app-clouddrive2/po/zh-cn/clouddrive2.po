@@ -28,6 +28,12 @@ msgstr "临时文件路径"
 msgid "Default use 'temp' in 'config path' if not set, please make sure there has enough space"
 msgstr "留空则使用配置文件路径下的 temp，请确保有足够空间"
 
+msgid "Share /mnt"
+msgstr "共享 /mnt"
+
+msgid "CloudDrive can read and write other mount points under /mnt for its synchronization or backup functions"
+msgstr "CloudDrive 能够读写 /mnt 下的其他挂载点，用于支持其同步或备份功能"
+
 msgid "Service Status"
 msgstr "服务状态"
 
