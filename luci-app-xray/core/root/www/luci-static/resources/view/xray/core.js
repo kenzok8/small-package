@@ -176,7 +176,7 @@ return view.extend({
         o.default = "UseIP";
         o.modalonly = true;
 
-        o = ss.taboption('general', form.Value, 'domain_resolve_dns', _('Resolve Domain via DNS'), _("Specify a DNS to resolve server hostname. Only works for main balancers (those on General Settings tab)."));
+        o = ss.taboption('general', form.Value, 'domain_resolve_dns', _('Resolve Domain via DNS'), _("Specify a DNS to resolve server hostname. Be careful of possible recursion."));
         o.datatype = 'hostport';
         o.modalonly = true;
 
