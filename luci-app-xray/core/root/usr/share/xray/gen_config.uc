@@ -13,19 +13,23 @@ import { blackhole_outbound, direct_outbound, server_outbound } from "./feature/
 import { api_conf, balancer, logging, metrics_conf, policy, system_route_rules } from "./feature/system.mjs";
 
 function inbounds(proxy, config, extra_inbound) {
+    const tproxy_sniffing = proxy["tproxy_sniffing"];
+    const route_only = proxy["route_only"];
+    const conn_idle = proxy["conn_idle"];
+
     let i = [
         socks_inbound("0.0.0.0", proxy["socks_port"] || 1080, "socks_inbound"),
         http_inbound("0.0.0.0", proxy["http_port"] || 1081, "http_inbound"),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_v4"] || 1082, "tproxy_tcp_inbound_v4", proxy["tproxy_sniffing"], proxy["route_only"], ["http", "tls"], "0", "tcp", "tproxy", proxy["conn_idle"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_v6"] || 1083, "tproxy_tcp_inbound_v6", proxy["tproxy_sniffing"], proxy["route_only"], ["http", "tls"], "0", "tcp", "tproxy", proxy["conn_idle"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_v4"] || 1084, "tproxy_udp_inbound_v4", proxy["tproxy_sniffing"], proxy["route_only"], ["quic"], "0", "udp", "tproxy", proxy["conn_idle"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_v6"] || 1085, "tproxy_udp_inbound_v6", proxy["tproxy_sniffing"], proxy["route_only"], ["quic"], "0", "udp", "tproxy", proxy["conn_idle"]),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_v4"] || 1082, "tproxy_tcp_inbound_v4", tproxy_sniffing, route_only, ["http", "tls"], "0", "tcp", "tproxy", conn_idle),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_v6"] || 1083, "tproxy_tcp_inbound_v6", tproxy_sniffing, route_only, ["http", "tls"], "0", "tcp", "tproxy", conn_idle),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_v4"] || 1084, "tproxy_udp_inbound_v4", tproxy_sniffing, route_only, ["quic"], "0", "udp", "tproxy", conn_idle),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_v6"] || 1085, "tproxy_udp_inbound_v6", tproxy_sniffing, route_only, ["quic"], "0", "udp", "tproxy", conn_idle),
         ...extra_inbounds(proxy, extra_inbound),
         ...dns_server_inbounds(proxy),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_f4"] || 1086, "tproxy_tcp_inbound_f4", "1", "0", ["fakedns"], "1", "tcp", "tproxy", proxy["conn_idle"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_f6"] || 1087, "tproxy_tcp_inbound_f6", "1", "0", ["fakedns"], "1", "tcp", "tproxy", proxy["conn_idle"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_f4"] || 1088, "tproxy_udp_inbound_f4", "1", "0", ["fakedns"], "1", "udp", "tproxy", proxy["conn_idle"]),
-        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_f6"] || 1089, "tproxy_udp_inbound_f6", "1", "0", ["fakedns"], "1", "udp", "tproxy", proxy["conn_idle"]),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_f4"] || 1086, "tproxy_tcp_inbound_f4", "1", "0", ["fakedns"], "1", "tcp", "tproxy", conn_idle),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_tcp_f6"] || 1087, "tproxy_tcp_inbound_f6", "1", "0", ["fakedns"], "1", "tcp", "tproxy", conn_idle),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_f4"] || 1088, "tproxy_udp_inbound_f4", "1", "0", ["fakedns"], "1", "udp", "tproxy", conn_idle),
+        dokodemo_inbound("0.0.0.0", proxy["tproxy_port_udp_f6"] || 1089, "tproxy_udp_inbound_f6", "1", "0", ["fakedns"], "1", "udp", "tproxy", conn_idle),
     ];
     if (proxy["web_server_enable"] == "1") {
         push(i, https_inbound(proxy, config));
@@ -274,13 +278,13 @@ function gen_config() {
     const geoip_existence = index(share_dir, "geoip.dat") > 0;
 
     const config = load_config();
-    const general = config[filter(keys(config), k => config[k][".type"] == "general")[0]];
-    const bridge = map(filter(keys(config), k => config[k][".type"] == "bridge") || [], k => config[k]);
-    const fakedns = map(filter(keys(config), k => config[k][".type"] == "fakedns") || [], k => config[k]);
-    const extra_inbound = map(filter(keys(config), k => config[k][".type"] == "extra_inbound") || [], k => config[k]);
-    const manual_tproxy = map(filter(keys(config), k => config[k][".type"] == "manual_tproxy") || [], k => config[k]);
-    const custom_configuration_hook = loadstring(general["custom_configuration_hook"] || "return i => i;")();
+    const bridge = filter(values(config), v => v[".type"] == "bridge") || [];
+    const fakedns = filter(values(config), v => v[".type"] == "fakedns") || [];
+    const extra_inbound = filter(values(config), v => v[".type"] == "extra_inbound") || [];
+    const manual_tproxy = filter(values(config), v => v[".type"] == "manual_tproxy") || [];
 
+    const general = filter(values(config), k => k[".type"] == "general")[0] || {};
+    const custom_configuration_hook = loadstring(general["custom_configuration_hook"] || "return i => i;")();
     return custom_configuration_hook({
         inbounds: inbounds(general, config, extra_inbound),
         outbounds: outbounds(general, config, manual_tproxy, bridge, extra_inbound, fakedns),

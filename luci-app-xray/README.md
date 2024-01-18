@@ -41,6 +41,7 @@ Fork this repository and:
 * 2023-12-20 chore: bump version
 * 2023-12-22 chore: optimize list folded format; add roundRobin balancer
 * 2024-01-04 chore: start later than sysntpd; change firewall include file path
+* 2024-01-18 feat: make "Resolve Domain via DNS" available to all outbounds
 
 ## Changelog since 3.1.0
 
