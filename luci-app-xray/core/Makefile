@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=3.2.1
+PKG_VERSION:=3.3.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -143,6 +143,8 @@ endif
 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/trojan.mjs $(1)/usr/share/xray/protocol/trojan.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/vless.mjs $(1)/usr/share/xray/protocol/vless.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/vmess.mjs $(1)/usr/share/xray/protocol/vmess.mjs
+	$(INSTALL_DATA) ./root/usr/share/xray/protocol/socks.mjs $(1)/usr/share/xray/protocol/socks.mjs
+	$(INSTALL_DATA) ./root/usr/share/xray/protocol/http.mjs $(1)/usr/share/xray/protocol/http.mjs
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

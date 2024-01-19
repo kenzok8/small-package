@@ -223,6 +223,16 @@ function vless_client(protocol, sub_section, tab_name) {
     add_flow_and_stream_security_conf(sub_section, tab_name, "protocol", "vless", true, false);
 }
 
+function socks_client(protocol, sub_section, tab_name) {
+    protocol.value("socks", "SOCKS");
+    add_flow_and_stream_security_conf(sub_section, tab_name, "protocol", "socks", false, false);
+}
+
+function http_client(protocol, sub_section, tab_name) {
+    protocol.value("http", "HTTP");
+    add_flow_and_stream_security_conf(sub_section, tab_name, "protocol", "http", false, false);
+}
+
 function vless_server(protocol, section, tab_name) {
     protocol.value("vless", "VLESS");
     add_flow_and_stream_security_conf(section, tab_name, "web_server_protocol", "vless", true, true);
@@ -244,6 +254,8 @@ return baseclass.extend({
         vless_client(protocol, sub_section, tab_name);
         trojan_client(protocol, sub_section, tab_name);
         shadowsocks_client(protocol, sub_section, tab_name);
+        http_client(protocol, sub_section, tab_name);
+        socks_client(protocol, sub_section, tab_name);
     },
     add_server_protocol: function (protocol, section, tab_name) {
         vless_server(protocol, section, tab_name);

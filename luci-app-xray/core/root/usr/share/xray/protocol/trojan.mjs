@@ -22,6 +22,7 @@ export function trojan_outbound(server, tag) {
                     {
                         address: server["server"],
                         port: int(server["server_port"]),
+                        email: server["username"],
                         password: server["password"]
                     }
                 ]

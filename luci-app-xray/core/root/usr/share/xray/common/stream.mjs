@@ -9,14 +9,14 @@ function stream_tcp_fake_http_request(server) {
             method: "GET",
             path: server["http_path"],
             headers: {
-                Host: server["http_host"],
-                User_Agent: [
-                    "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
+                "Host": server["http_host"],
+                "User-Agent": [
+                    "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
                     "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46"
                 ],
-                Accept_Encoding: ["gzip, deflate"],
-                Connection: ["keep-alive"],
-                Pragma: "no-cache"
+                "Accept-Encoding": ["gzip, deflate"],
+                "Connection": ["keep-alive"],
+                "Pragma": "no-cache"
             }
         };
     }

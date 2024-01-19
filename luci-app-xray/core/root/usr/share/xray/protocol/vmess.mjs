@@ -17,6 +17,7 @@ export function vmess_outbound(server, tag) {
                         port: int(server["server_port"]),
                         users: [
                             {
+                                email: server["username"],
                                 id: server["password"],
                                 alterId: int(server["alter_id"]),
                                 security: server["vmess_security"]
