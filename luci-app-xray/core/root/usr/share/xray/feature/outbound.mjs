@@ -4,6 +4,8 @@ import { shadowsocks_outbound } from "../protocol/shadowsocks.mjs";
 import { trojan_outbound } from "../protocol/trojan.mjs";
 import { vless_outbound } from "../protocol/vless.mjs";
 import { vmess_outbound } from "../protocol/vmess.mjs";
+import { http_outbound } from "../protocol/http.mjs";
+import { socks_outbound } from "../protocol/socks.mjs";
 
 function override_custom_config_recursive(x, y) {
     if (type(x) != "object" || type(y) != "object") {
@@ -25,6 +27,10 @@ function server_outbound_recursive(t, server, tag, config) {
         outbound_result = shadowsocks_outbound(server, tag);
     } else if (server["protocol"] == "trojan") {
         outbound_result = trojan_outbound(server, tag);
+    } else if (server["protocol"] == "http") {
+        outbound_result = http_outbound(server, tag);
+    } else if (server["protocol"] == "socks") {
+        outbound_result = socks_outbound(server, tag);
     }
     if (outbound_result == null) {
         die(`unknown outbound server protocol ${server["protocol"]}`);

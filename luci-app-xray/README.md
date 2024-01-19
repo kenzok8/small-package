@@ -36,12 +36,17 @@ Fork this repository and:
 * Wait until actions finish
 * Use `opkg -i *` to install both ipks from Releases.
 
+## Changelog since 3.3.0
+
+* 2024-01-19 chore: bump version
+
 ## Changelog since 3.2.0
 
 * 2023-12-20 chore: bump version
 * 2023-12-22 chore: optimize list folded format; add roundRobin balancer
 * 2024-01-04 chore: start later than sysntpd; change firewall include file path
 * 2024-01-18 feat: make "Resolve Domain via DNS" available to all outbounds
+* 2024-01-19 feat: socks / http outbound
 
 ## Changelog since 3.1.0
 

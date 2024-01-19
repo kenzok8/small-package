@@ -34,6 +34,7 @@ export function vless_outbound(server, tag) {
                         port: int(server["server_port"]),
                         users: [
                             {
+                                email: server["username"],
                                 id: server["password"],
                                 flow: flow,
                                 encryption: server["vless_encryption"]
