@@ -103,8 +103,8 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 			padding: (cfg.multiplex_padding === '1'),
 			brutal: (cfg.multiplex_brutal === '1') ? {
 				enabled: true,
-				up_mbps: cfg.multiplex_brutal_up,
-				down_mbps: cfg.multiplex_brutal_down
+				up_mbps: strToInt(cfg.multiplex_brutal_up),
+				down_mbps: strToInt(cfg.multiplex_brutal_down)
 			} : null
 		} : null,
 

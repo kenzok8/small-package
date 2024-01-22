@@ -1252,7 +1252,7 @@ return view.extend({
 		s.tab('subscription', _('Subscriptions'));
 
 		o = s.taboption('subscription', form.Flag, 'auto_update', _('Auto update'),
-			_('Auto update subscriptions, GeoIP and GeoSite.'));
+			_('Auto update subscriptions.'));
 		o.default = o.disabled;
 		o.rmempty = false;
 

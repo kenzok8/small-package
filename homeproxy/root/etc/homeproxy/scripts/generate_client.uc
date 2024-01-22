@@ -25,6 +25,7 @@ uci.load(uciconfig);
 
 const uciinfra = 'infra',
       ucimain = 'config',
+      uciexp = 'experimental',
       ucicontrol = 'control';
 
 const ucidnssetting = 'dns',
@@ -36,6 +37,7 @@ const uciroutingsetting = 'routing',
       uciroutingrule = 'routing_rule';
 
 const ucinode = 'node';
+const uciruleset = 'ruleset';
 
 const routing_mode = uci.get(uciconfig, ucimain, 'routing_mode') || 'bypass_mainland_china';
 
@@ -207,8 +209,8 @@ function generate_outbound(node) {
 			padding: (node.multiplex_padding === '1'),
 			brutal: (node.multiplex_brutal === '1') ? {
 				enabled: true,
-				up_mbps: node.multiplex_brutal_up,
-				down_mbps: node.multiplex_brutal_down
+				up_mbps: strToInt(node.multiplex_brutal_up),
+				down_mbps: strToInt(node.multiplex_brutal_down)
 			} : null
 		} : null,
 		tls: (node.tls === '1') ? {
@@ -296,6 +298,16 @@ function get_resolver(cfg) {
 		return cfg;
 	else
 		return 'cfg-' + cfg + '-dns';
+}
+
+function get_ruleset(cfg) {
+	if (isEmpty(cfg))
+		return null;
+
+	let rules = [];
+	for (let i in cfg)
+		push(rules, isEmpty(i) ? null : 'cfg-' + i + '-rule');
+	return rules;
 }
 /* Config helper end */
 
@@ -407,16 +419,16 @@ if (!isEmpty(main_node)) {
 			domain_suffix: cfg.domain_suffix,
 			domain_keyword: cfg.domain_keyword,
 			domain_regex: cfg.domain_regex,
-			geosite: cfg.geosite,
 			port: parse_port(cfg.port),
 			port_range: cfg.port_range,
-			source_geoip: cfg.source_geoip,
 			source_ip_cidr: cfg.source_ip_cidr,
+			source_ip_is_private: (cfg.source_ip_is_private === '1') || null,
 			source_port: parse_port(cfg.source_port),
 			source_port_range: cfg.source_port_range,
 			process_name: cfg.process_name,
 			process_path: cfg.process_path,
 			user: cfg.user,
+			rule_set: get_ruleset(cfg.rule_set),
 			invert: (cfg.invert === '1') || null,
 			outbound: get_outbound(cfg.outbound),
 			server: get_resolver(cfg.server),
@@ -536,16 +548,6 @@ if (!isEmpty(main_node)) {
 /* Routing rules start */
 /* Default settings */
 config.route = {
-	geoip: !isEmpty(default_outbound) ? {
-		path: HP_DIR + '/resources/geoip.db',
-		download_url: 'https://github.com/1715173329/sing-geoip/releases/latest/download/geoip.db',
-		download_detour: get_outbound(default_outbound)
-	} : null,
-	geosite: !isEmpty(default_outbound) ? {
-		path: HP_DIR + '/resources/geosite.db',
-		download_url: 'https://github.com/1715173329/sing-geosite/releases/latest/download/geosite.db',
-		download_detour: get_outbound(default_outbound)
-	} : null,
 	rules: [
 		{
 			inbound: 'dns-in',
@@ -556,6 +558,7 @@ config.route = {
 			outbound: 'dns-out'
 		}
 	],
+	rule_set: [],
 	auto_detect_interface: isEmpty(default_interface) ? true : null,
 	default_interface: default_interface
 };
@@ -590,11 +593,10 @@ if (!isEmpty(main_node)) {
 			domain_suffix: cfg.domain_suffix,
 			domain_keyword: cfg.domain_keyword,
 			domain_regex: cfg.domain_regex,
-			geosite: cfg.geosite,
-			source_geoip: cfg.source_geoip,
-			geoip: cfg.geoip,
 			source_ip_cidr: cfg.source_ip_cidr,
+			source_ip_is_private: (cfg.source_ip_is_private === '1') || null,
 			ip_cidr: cfg.ip_cidr,
+			ip_is_private: (cfg.ip_is_private === '1') || null,
 			source_port: parse_port(cfg.source_port),
 			source_port_range: cfg.source_port_range,
 			port: parse_port(cfg.port),
@@ -602,14 +604,45 @@ if (!isEmpty(main_node)) {
 			process_name: cfg.process_name,
 			process_path: cfg.process_path,
 			user: cfg.user,
+			rule_set: get_ruleset(cfg.rule_set),
+			rule_set_ipcidr_match_source: (cfg.rule_set_ipcidr_match_source === '1') || null,
 			invert: (cfg.invert === '1') || null,
 			outbound: get_outbound(cfg.outbound)
 		});
 	});
 
 	config.route.final = get_outbound(default_outbound);
+};
+
+/* Rule set */
+if (routing_mode === 'custom') {
+	uci.foreach(uciconfig, uciruleset, (cfg) => {
+		if (cfg.enabled !== '1')
+			return null;
+
+		push(config.route.rule_set, {
+			type: cfg.type,
+			tag: 'cfg-' + cfg['.name'] + '-rule',
+			format: cfg.format,
+			path: cfg.path,
+			url: cfg.url,
+			download_detour: get_outbound(cfg.outbound),
+			update_interval: cfg.update_interval
+		});
+	});
 }
 /* Routing rules end */
+
+/* Experimental start */
+if (routing_mode === 'custom') {
+	config.experimental = {
+		cache_file: {
+			enabled: true,
+			path: HP_DIR + '/cache.db'
+		}
+	};
+}
+/* Experimental end */
 
 system('mkdir -p ' + RUN_DIR);
 writefile(RUN_DIR + '/sing-box-c.json', sprintf('%.J\n', removeBlankAttrs(config)));
