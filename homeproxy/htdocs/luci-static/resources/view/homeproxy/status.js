@@ -200,16 +200,6 @@ return view.extend({
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;
 
-		if (routing_mode === 'custom') {
-			o = s.option(form.DummyValue, '_geoip_version', _('GeoIP version'));
-			o.cfgvalue = function() { return getResVersion(this, 'geoip') };
-			o.rawhtml = true;
-
-			o = s.option(form.DummyValue, '_geosite_version', _('GeoSite version'));
-			o.cfgvalue = function() { return getResVersion(this, 'geosite') };
-			o.rawhtml = true;
-		}
-
 		o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
 		o.cfgvalue = function() { return getResVersion(this, 'china_ip4') };
 		o.rawhtml = true;

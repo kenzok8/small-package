@@ -258,6 +258,11 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 
+	# Prepare ruleset directory for custom routing mode
+	if [ "$routing_mode" = "custom" ]; then
+		[ -d "$HP_DIR/ruleset" ] || mkdir -p "$HP_DIR/ruleset"
+	fi
+
 	# Update permissions for ujail
 	if [ "$outbound_node" != "nil" ]; then
 		echo > "$RUN_DIR/sing-box-c.log"
