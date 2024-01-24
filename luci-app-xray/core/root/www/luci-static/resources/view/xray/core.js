@@ -9,6 +9,10 @@
 'require view.xray.shared as shared';
 'require view.xray.transport as transport';
 
+function server_alias(v) {
+    return v.alias || v.server + ":" + v.server_port;
+}
+
 function list_folded_format(config_data, k, noun, max_chars, mapping, empty) {
     return function (s) {
         const null_mapping = v => v;
@@ -38,20 +42,38 @@ function list_folded_format(config_data, k, noun, max_chars, mapping, empty) {
     };
 }
 
-function destination_format(config_data, k, max_chars) {
-    return list_folded_format(config_data, k, "outbounds", max_chars, v => uci.get(config_data, v, "alias"), "<i>direct</i>");
+function destination_format(config_data, k, max_chars, null_itatic) {
+    const null_placeholder = function () {
+        if (null_itatic) {
+            return `<i>${_("direct")}</i>`;
+        }
+        return _("direct");
+    }();
+    return list_folded_format(config_data, k, "outbounds", max_chars, v => uci.get(config_data, v, "alias"), null_placeholder);
 }
 
-function extra_outbound_format(config_data, s, with_desc) {
+function extra_outbound_format(config_data, s, select_item) {
     const inbound_addr = uci.get(config_data, s, "inbound_addr") || "";
     const inbound_port = uci.get(config_data, s, "inbound_port") || "";
     if (inbound_addr == "" && inbound_port == "") {
         return "-";
     }
-    if (with_desc) {
-        return `${inbound_addr}:${inbound_port} (${destination_format(config_data, "destination", 60)(s)})`;
+    const destination = (uci.get(config_data, s, "destination") || []).map(x => server_alias(uci.get(config_data, x)));
+    if (select_item) {
+        if (destination.length == 0) {
+            return `${inbound_addr}:${inbound_port} [direct]`;
+        }
+        return `${inbound_addr}:${inbound_port} (${destination.join(", ")})`;
     }
-    return `${inbound_addr}:${inbound_port}`;
+    return E([], [
+        `${inbound_addr}:${inbound_port} `,
+        function () {
+            if (destination.length == 0) {
+                return shared.badge("<strong>...</strong>", "direct");
+            }
+            return shared.badge("<strong>...</strong>", `${destination.length} outbounds\n${destination.join("\n")}`);
+        }()
+    ]);
 }
 
 function access_control_format(config_data, s, t) {
@@ -64,7 +86,7 @@ function access_control_format(config_data, s, t) {
                 return _("Disable tproxy");
             }
         }
-        return extra_outbound_format(config_data, uci.get(config_data, v, t));
+        return extra_outbound_format(config_data, uci.get(config_data, v, t), false);
     };
 }
 
@@ -207,7 +229,7 @@ return view.extend({
         o.datatype = "uciname";
         o.value("disabled", _("Disabled"));
         for (const v of uci.sections(config_data, "servers")) {
-            o.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+            o.value(v[".name"], server_alias(v));
         }
         o.modalonly = true;
 
@@ -276,7 +298,7 @@ return view.extend({
         let destination = extra_inbounds.option(form.MultiValue, 'destination', _('Destination'), _("Select multiple outbounds for load balancing. If none selected, requests will be sent via direct outbound."));
         destination.depends("specify_outbound", "1");
         destination.datatype = "uciname";
-        destination.textvalue = destination_format(config_data, "destination", 60);
+        destination.textvalue = destination_format(config_data, "destination", 60, true);
 
         let balancer_strategy = extra_inbounds.option(form.Value, 'balancer_strategy', _('Balancer Strategy'), _('Strategy <code>leastPing</code> requires observatory (see "Extra Options" tab) to be enabled.'));
         balancer_strategy.value("random");
@@ -313,9 +335,24 @@ return view.extend({
         lan_hosts.anonymous = true;
         lan_hosts.addremove = true;
 
+        let title = lan_hosts.option(form.DummyValue, "title", _("Alias / MAC Address"));
+        title.modalonly = false;
+        title.textvalue = function (s) {
+            const item = uci.get(config_data, s);
+            if (item.alias) {
+                return E([], [item.alias, " ", shared.badge("<strong>...</strong>", item.macaddr)]);
+            }
+            return item.macaddr;
+        };
+
+        let alias = lan_hosts.option(form.Value, "alias", _("Alias (optional)"));
+        alias.optional = true;
+        alias.modalonly = true;
+
         let macaddr = lan_hosts.option(form.Value, "macaddr", _("MAC Address"));
         macaddr.datatype = "macaddr";
         macaddr.rmempty = false;
+        macaddr.modalonly = true;
         L.sortedKeys(hosts).forEach(function (mac) {
             macaddr.value(mac, E([], [mac, ' (', E('strong', [hosts[mac].name || L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4)[0] || L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6)[0] || '?']), ')']));
         });
@@ -460,11 +497,11 @@ return view.extend({
 
         let fake_dns_forward_server_tcp = fs.option(form.MultiValue, 'fake_dns_forward_server_tcp', _('Force Forward server (TCP)'));
         fake_dns_forward_server_tcp.datatype = "uciname";
-        fake_dns_forward_server_tcp.textvalue = destination_format(config_data, "fake_dns_forward_server_tcp", 40);
+        fake_dns_forward_server_tcp.textvalue = destination_format(config_data, "fake_dns_forward_server_tcp", 40, true);
 
         let fake_dns_forward_server_udp = fs.option(form.MultiValue, 'fake_dns_forward_server_udp', _('Force Forward server (UDP)'));
         fake_dns_forward_server_udp.datatype = "uciname";
-        fake_dns_forward_server_udp.textvalue = destination_format(config_data, "fake_dns_forward_server_udp", 40);
+        fake_dns_forward_server_udp.textvalue = destination_format(config_data, "fake_dns_forward_server_udp", 40, true);
 
         let fake_dns_balancer_strategy = fs.option(form.Value, 'fake_dns_balancer_strategy', _('Balancer Strategy'), _('Strategy <code>leastPing</code> requires observatory (see "Extra Options" tab) to be enabled.'));
         fake_dns_balancer_strategy.value("random");
@@ -558,7 +595,7 @@ return view.extend({
         o.depends("force_forward_tcp", "1");
         o.datatype = "uciname";
         for (const v of uci.sections(config_data, "servers")) {
-            o.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+            o.value(v[".name"], server_alias(v));
         }
         o.modalonly = true;
 
@@ -569,7 +606,7 @@ return view.extend({
         o.depends("force_forward_udp", "1");
         o.datatype = "uciname";
         for (const v of uci.sections(config_data, "servers")) {
-            o.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+            o.value(v[".name"], server_alias(v));
         }
         o.modalonly = true;
 
@@ -687,7 +724,7 @@ return view.extend({
         o = ss.option(form.ListValue, "upstream", _("Upstream"));
         o.datatype = "uciname";
         for (const v of uci.sections(config_data, "servers")) {
-            o.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+            o.value(v[".name"], server_alias(v));
         }
 
         o = ss.option(form.Value, "domain", _("Domain"));
@@ -708,10 +745,10 @@ return view.extend({
             if (servers.length == 0) {
                 selection.value("direct", _("No server configured"));
                 selection.readonly = true;
-                continue
+                continue;
             }
             for (const v of servers) {
-                selection.value(v[".name"], v.alias || v.server + ":" + v.server_port);
+                selection.value(v[".name"], server_alias(v));
             }
         }
         return m.render();
