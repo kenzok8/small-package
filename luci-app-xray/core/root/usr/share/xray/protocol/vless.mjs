@@ -6,6 +6,7 @@ import { tls_inbound_settings, reality_inbound_settings, fallbacks } from "../co
 function vless_inbound_user(k, flow) {
     return {
         id: k,
+        email: k,
         flow: flow,
     };
 }

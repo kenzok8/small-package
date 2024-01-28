@@ -5,6 +5,7 @@ import { tls_inbound_settings, fallbacks } from "../common/tls.mjs";
 
 function trojan_inbound_user(k) {
     return {
+        email: k,
         password: k,
     };
 }

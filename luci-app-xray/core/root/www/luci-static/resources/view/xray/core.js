@@ -560,10 +560,6 @@ return view.extend({
         o.depends("transparent_default_port_policy", "forwarded");
         o.datatype = "portrange";
 
-        o = s.taboption('outbound_routing', form.Value, 'mark', _('Socket Mark Number'), _('Avoid proxy loopback problems with local (gateway) traffic'));
-        o.datatype = 'range(1, 255)';
-        o.placeholder = 255;
-
         o = s.taboption('outbound_routing', form.SectionValue, "access_control_manual_tproxy", form.GridSection, 'manual_tproxy', _('Manual Transparent Proxy'), _('Compared to iptables REDIRECT, Xray could do NAT46 / NAT64 (for example accessing IPv6 only sites). See <a href="https://github.com/v2ray/v2ray-core/issues/2233">FakeDNS</a> for details.'));
 
         ss = o.subsection;
@@ -679,7 +675,7 @@ return view.extend({
 
         o = s.taboption('extra_options', form.Flag, 'observatory', _('Enable Observatory'), _('Enable latency measurement for TCP and UDP outbounds.'));
 
-        o = s.taboption('extra_options', form.Flag, 'fw4_counter', _('Enable firewall4 counters'), _('Add <a href="/cgi-bin/luci/admin/status/nftables">counters to firewall4</a> for transparent proxy rules. (Not supported in all OpenWrt versions. )'));
+        o = s.taboption('extra_options', form.Flag, 'fw4_counter', _('Enable Firewall Counters'), _('Add <a href="/cgi-bin/luci/admin/status/nftables">counters to firewall4</a> for transparent proxy rules. (Not supported in all OpenWrt versions. )'));
 
         o = s.taboption('extra_options', form.Flag, 'metrics_server_enable', _('Enable Xray Metrics Server'), _("Enable built-in metrics server for pprof and expvar. See <a href='https://github.com/XTLS/Xray-core/pull/1000'>here</a> for details."));
 
@@ -707,10 +703,6 @@ return view.extend({
         o = s.taboption('extra_options', form.Value, 'buffer_size', _('Buffer Size'), _('Policy: Internal cache size per connection. See <a href="https://xtls.github.io/config/policy.html#levelpolicyobject">here</a> for help.'));
         o.datatype = 'uinteger';
         o.placeholder = 512;
-
-        o = s.taboption('extra_options', form.Value, 'firewall_priority', _('Priority for Firewall Rules'), _('See firewall status page for rules Xray used and <a href="https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks#Priority_within_hook">Netfilter Internal Priority</a> for reference.'));
-        o.datatype = 'range(-49, 49)';
-        o.placeholder = 10;
 
         o = s.taboption('extra_options', form.Flag, 'preview_or_deprecated', _('Preview or Deprecated'), _("Show preview or deprecated features (requires reboot to take effect)."));
 
