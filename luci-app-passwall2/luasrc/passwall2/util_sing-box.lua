@@ -184,7 +184,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 				version = "5",
 				username = (node.username and node.password) and node.username or nil,
 				password = (node.username and node.password) and node.password or nil,
-				udp_over_tcp = false,
+				udp_over_tcp = node.uot == "1" and {
+					enabled = true,
+					version = 2
+				} or nil,
 			}
 		end
 
@@ -735,6 +738,8 @@ function gen_config(var)
 	local loglevel = var["-loglevel"] or "warn"
 	local logfile = var["-logfile"] or "/dev/null"
 	local node_id = var["-node"]
+	local server_host = var["-server_host"]
+	local server_port = var["-server_port"]
 	local tcp_proxy_way = var["-tcp_proxy_way"]
 	local redir_port = var["-redir_port"]
 	local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
@@ -862,6 +867,10 @@ function gen_config(var)
 	local default_outTag = nil
 
 	if node then
+		if server_host and server_port then
+			node.address = server_host
+			node.port = server_port
+		end
 		if node.protocol == "_shunt" then
 			local rules = {}
 
@@ -879,6 +888,7 @@ function gen_config(var)
 					password = parsed1.password,
 					address = parsed1.host,
 					port = parsed1.port,
+					uot = "1",
 				}
 				local preproxy_outbound = gen_outbound(flag, _node, preproxy_tag)
 				if preproxy_outbound then
@@ -935,6 +945,7 @@ function gen_config(var)
 						password = parsed1.password,
 						address = parsed1.host,
 						port = parsed1.port,
+						uot = "1",
 					}
 					local _outbound = gen_outbound(flag, _node, rule_name)
 					if _outbound then
@@ -963,10 +974,6 @@ function gen_config(var)
 								local pre_proxy = nil
 								if _node.type ~= "sing-box" then
 									pre_proxy = true
-								else
-									if _node.flow == "xtls-rprx-vision" then
-										pre_proxy = true
-									end
 								end
 								if pre_proxy then
 									new_port = get_new_port()

@@ -1,13 +1,12 @@
 "use strict";
 
-import { lsdir } from "fs";
+import { access } from "fs";
 import { fake_dns_domains } from "./fake_dns.mjs";
 
 const fallback_fast_dns = "223.5.5.5:53";
 const fallback_secure_dns = "8.8.8.8:53";
 const fallback_default_dns = "1.1.1.1:53";
-const share_dir = lsdir("/usr/share/xray");
-const geosite_existence = index(share_dir, "geosite.dat") > 0;
+const geosite_existence = access("/usr/share/xray/geosite.dat") || false;
 
 function split_ipv4_host_port(val, port_default) {
     const result = match(val, /([0-9\.]+):([0-9]+)/);
