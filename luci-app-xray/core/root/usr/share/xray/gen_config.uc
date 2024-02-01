@@ -1,7 +1,7 @@
 #!/usr/bin/ucode
 "use strict";
 
-import { lsdir } from "fs";
+import { access } from "fs";
 import { load_config } from "./common/config.mjs";
 import { bridge_outbounds, bridge_rules, bridges } from "./feature/bridge.mjs";
 import { blocked_domain_rules, dns_conf, dns_server_inbounds, dns_server_outbound, dns_server_tags, fast_domain_rules, secure_domain_rules } from "./feature/dns.mjs";
@@ -102,7 +102,8 @@ function outbounds(proxy, config, manual_tproxy, bridge, extra_inbound, fakedns)
     return result;
 }
 
-function rules(geoip_existence, proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
+function rules(proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
+    const geoip_existence = access("/usr/share/xray/geoip.dat") || false;
     const tproxy_tcp_inbound_v4_tags = ["tproxy_tcp_inbound_v4"];
     const tproxy_udp_inbound_v4_tags = ["tproxy_udp_inbound_v4"];
     const tproxy_tcp_inbound_v6_tags = ["tproxy_tcp_inbound_v6"];
@@ -226,40 +227,21 @@ function rules(geoip_existence, proxy, bridge, manual_tproxy, extra_inbound, fak
 
 function balancers(proxy, extra_inbound, fakedns) {
     const general_balancer_strategy = proxy["general_balancer_strategy"] || "random";
-    let result = [
-        {
-            "tag": "tcp_outbound_v4",
-            "selector": balancer(proxy, "tcp_balancer_v4", "tcp_balancer_v4"),
-            "strategy": {
-                "type": general_balancer_strategy
-            }
-        },
-        {
-            "tag": "udp_outbound_v4",
-            "selector": balancer(proxy, "udp_balancer_v4", "udp_balancer_v4"),
-            "strategy": {
-                "type": general_balancer_strategy
-            }
-        },
-        {
-            "tag": "tcp_outbound_v6",
-            "selector": balancer(proxy, "tcp_balancer_v6", "tcp_balancer_v6"),
-            "strategy": {
-                "type": general_balancer_strategy
-            }
-        },
-        {
-            "tag": "udp_outbound_v6",
-            "selector": balancer(proxy, "udp_balancer_v6", "udp_balancer_v6"),
-            "strategy": {
-                "type": general_balancer_strategy
-            }
-        },
+    const built_in_outbounds = ["tcp_outbound_v4", "udp_outbound_v4", "tcp_outbound_v6", "udp_outbound_v6"];
+    const built_in_balancers = ["tcp_balancer_v4", "udp_balancer_v4", "tcp_balancer_v6", "udp_balancer_v6"];
+    return [
+        ...map(built_in_balancers, function (balancer_tag, index) {
+            return {
+                "tag": built_in_outbounds[index],
+                "selector": balancer(proxy, balancer_tag, balancer_tag),
+                "strategy": {
+                    "type": general_balancer_strategy
+                }
+            };
+        }),
         ...extra_inbound_balancers(extra_inbound),
         ...fake_dns_balancers(fakedns),
     ];
-
-    return result;
 };
 
 function observatory(proxy, manual_tproxy) {
@@ -274,9 +256,6 @@ function observatory(proxy, manual_tproxy) {
 }
 
 function gen_config() {
-    const share_dir = lsdir("/usr/share/xray");
-    const geoip_existence = index(share_dir, "geoip.dat") > 0;
-
     const config = load_config();
     const bridge = filter(values(config), v => v[".type"] == "bridge") || [];
     const fakedns = filter(values(config), v => v[".type"] == "fakedns") || [];
@@ -303,7 +282,7 @@ function gen_config() {
         },
         routing: {
             domainStrategy: general["routing_domain_strategy"] || "AsIs",
-            rules: rules(geoip_existence, general, bridge, manual_tproxy, extra_inbound, fakedns),
+            rules: rules(general, bridge, manual_tproxy, extra_inbound, fakedns),
             balancers: balancers(general, extra_inbound, fakedns)
         }
     });
