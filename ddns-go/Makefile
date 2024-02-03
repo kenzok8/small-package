@@ -9,7 +9,6 @@
 include $(TOPDIR)/rules.mk
 
 PKG_VERSION:=6.1.1
-PKG_VERSION:=6.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
