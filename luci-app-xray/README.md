@@ -39,6 +39,8 @@ Fork this repository and:
 ## Changelog since 3.3.0
 
 * 2024-01-19 chore: bump version
+* 2024-01-24 feat: add alias to LAN Hosts Access Control
+* 2024-02-04 fix: avoid firewall restart failure & some minor adjustments
 
 ## Changelog since 3.2.0
 

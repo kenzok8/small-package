@@ -127,7 +127,8 @@
 
     set tp_spec_dv4_sp {
         type ipv4_addr
-        flags constant,interval
+        size 32
+        flags interval
         elements = { 0.0.0.0/8, 10.0.0.0/8,
                      100.64.0.0/10, 127.0.0.0/8,
                      169.254.0.0/16, 172.16.0.0/12,
@@ -137,7 +138,8 @@
 
     set tp_spec_dv6_sp {
         type ipv6_addr
-        flags constant,interval
+        size 32
+        flags interval
         elements = { ::,
                      ::1,
                      ::ffff:0.0.0.0/96,
@@ -156,7 +158,7 @@
 {% if (length(tp_spec_sm4_bp) > 0): %}
     set tp_spec_sm4_bp {
         type ether_addr
-        flags constant
+        size {{ length(tp_spec_sm4_bp) * 2 + 1 }}
         elements = { {{ join(", ", tp_spec_sm4_bp) }} }
     }
 {% endif %}
@@ -164,7 +166,7 @@
 {% if (length(tp_spec_sm6_bp) > 0): %}
     set tp_spec_sm6_bp {
         type ether_addr
-        flags constant
+        size {{ length(tp_spec_sm6_bp) * 2 + 1 }}
         elements = { {{ join(", ", tp_spec_sm6_bp) }} }
     }
 {% endif %}
@@ -172,7 +174,7 @@
 {% if (length(tp_spec_sm4_tp) > 0): %}
     set tp_spec_sm4_tp {
         type ether_addr
-        flags constant
+        size {{ length(tp_spec_sm4_tp) * 2 + 1 }}
         elements = { {{ join(", ", tp_spec_sm4_tp) }} }
     }
 {% endif %}
@@ -180,7 +182,7 @@
 {% if (length(tp_spec_sm6_tp) > 0): %}
     set tp_spec_sm6_tp {
         type ether_addr
-        flags constant
+        size {{ length(tp_spec_sm6_tp) * 2 + 1 }}
         elements = { {{ join(", ", tp_spec_sm6_tp) }} }
     }
 {% endif %}
@@ -188,7 +190,7 @@
 {% for (let i in extra_inbound_tcp_v4_map): %}
     set tp_spec_sm4_ft_{{ i }} {
         type ether_addr
-        flags constant
+        size {{ length(extra_inbound_tcp_v4_map) * 2 + 1 }}
         elements = { {{ join(", ", extra_inbound_tcp_v4_map[i]) }} }
     }
 {% endfor %}
@@ -196,7 +198,7 @@
 {% for (let i in extra_inbound_udp_v4_map): %}
     set tp_spec_sm4_fu_{{ i }} {
         type ether_addr
-        flags constant
+        size {{ length(extra_inbound_udp_v4_map) * 2 + 1 }}
         elements = { {{ join(", ", extra_inbound_udp_v4_map[i]) }} }
     }
 {% endfor %}
@@ -204,7 +206,7 @@
 {% for (let i in extra_inbound_tcp_v6_map): %}
     set tp_spec_sm6_ft_{{ i }} {
         type ether_addr
-        flags constant
+        size {{ length(extra_inbound_tcp_v6_map) * 2 + 1 }}
         elements = { {{ join(", ", extra_inbound_tcp_v6_map[i]) }} }
     }
 {% endfor %}
@@ -212,7 +214,7 @@
 {% for (let i in extra_inbound_udp_v6_map): %}
     set tp_spec_sm6_fu_{{ i }} {
         type ether_addr
-        flags constant
+        size {{ length(extra_inbound_udp_v6_map) * 2 + 1 }}
         elements = { {{ join(", ", extra_inbound_udp_v6_map[i]) }} }
     }
 {% endfor %}
@@ -220,7 +222,7 @@
 {% if (length(manual_tproxy_source_ips) > 0): %}
     set tp_spec_dv4_mt {
         type ipv4_addr
-        flags constant, interval
+        size {{ length(manual_tproxy_source_ips) * 2 + 1 }}
         elements = { {{ join(", ", manual_tproxy_source_ips) }} }
     }
 {% endif %}
@@ -228,8 +230,8 @@
 {% if (length(wan_bp_ips_v4) > 0): %}
     set tp_spec_dv4_bp {
         type ipv4_addr
-        size {{ length(wan_bp_ips_v4) }}
-        flags constant, interval
+        size {{ length(wan_bp_ips_v4) * 2 + 1 }}
+        flags interval
         elements = { {{ join(", ", wan_bp_ips_v4)}} }
     }
 {% endif %}
@@ -237,8 +239,8 @@
 {% if (length(wan_bp_ips_v6) > 0): %}
     set tp_spec_dv6_bp {
         type ipv6_addr
-        size {{ length(wan_bp_ips_v6) }}
-        flags constant, interval
+        size {{ length(wan_bp_ips_v6) * 2 + 1 }}
+        flags interval
         elements = { {{ join(", ", wan_bp_ips_v6)}} }
     }
 {% endif %}
@@ -246,8 +248,8 @@
 {% if (length(wan_fw_ips_v4) > 0): %}
     set tp_spec_dv4_fw {
         type ipv4_addr
-        size {{ length(wan_fw_ips_v4) }}
-        flags constant, interval
+        size {{ length(wan_fw_ips_v4) * 2 + 1 }}
+        flags interval
         elements = { {{ join(", ", wan_fw_ips_v4)}} }
     }
 {% endif %}
@@ -255,8 +257,8 @@
 {% if (length(wan_fw_ips_v6) > 0): %}
     set tp_spec_dv6_fw {
         type ipv6_addr
-        size {{ length(wan_fw_ips_v6) }}
-        flags constant, interval
+        size {{ length(wan_fw_ips_v6) * 2 + 1 }}
+        flags interval
         elements = { {{ join(", ", wan_fw_ips_v6)}} }
     }
 {% endif %}
