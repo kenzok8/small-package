@@ -1,7 +1,7 @@
 #!/usr/bin/ucode
 "use strict";
 
-import { popen, stat } from "fs";
+import { open, popen, stat } from "fs";
 import { connect } from "ubus";
 
 function network_dump() {
@@ -48,24 +48,44 @@ function gen_tp_spec_dv4_dg(dg) {
         return "";
     }
     if (length(dg) > 0) {
-        return `flush set inet fw4 tp_spec_dv4_dg\nadd element inet fw4 tp_spec_dv4_dg { ${join(", ", dg)} }\n`;
+        return `set tp_spec_dv4_dg {
+            type ipv4_addr
+            size 16
+            flags interval
+            elements = { ${join(", ", dg)} }
+        }\n`;
     }
     return "";
 }
 
 function gen_tp_spec_dv6_dg(pd) {
     if (length(pd) > 0) {
-        return `flush set inet fw4 tp_spec_dv6_dg\nadd element inet fw4 tp_spec_dv6_dg { ${join(", ", pd)} }\n`;
+        return `set tp_spec_dv6_dg {
+            type ipv6_addr
+            size 16
+            flags interval
+            elements = { ${join(", ", pd)} }
+        }\n`;
     }
     return "";
 }
 
-function update_nft(dg, pd) {
-    const process = popen("nft -f -", "w");
-    process.write(gen_tp_spec_dv4_dg(dg));
-    process.write(gen_tp_spec_dv6_dg(pd));
-    process.flush();
-    process.close();
+function generate_include(rule_dg, rule_pd, file_path) {
+    const handle = open(file_path, "w");
+    handle.write(rule_dg);
+    handle.write(rule_pd);
+    handle.flush();
+    handle.close();
+}
+
+function update_nft(rule_dg, rule_pd) {
+    const handle = popen("nft -f -", "w");
+    handle.write(`table inet fw4 {
+        ${rule_dg}
+        ${rule_pd}
+    }`);
+    handle.flush();
+    handle.close();
 }
 
 function restart_dnsmasq_if_necessary() {
@@ -82,6 +102,9 @@ if (log == "") {
     print("default gateway not available, please wait for interface ready");
 } else {
     print(`default gateway available at ${log}\n`);
-    update_nft(dg, pd);
+    const rule_dg = gen_tp_spec_dv4_dg(dg);
+    const rule_pd = gen_tp_spec_dv6_dg(pd);
+    update_nft(rule_dg, rule_pd);
+    generate_include(rule_dg, rule_pd, "/var/etc/xray/02_default_gateway_include.nft");
 }
 restart_dnsmasq_if_necessary();
