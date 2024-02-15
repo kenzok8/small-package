@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2023 ImmortalWrt.org
+# Copyright (C) 2021 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
@@ -14,7 +14,7 @@ PKG_HASH:=efd15d2ad1fc13a42d0e4a75f5c7396b1219e9923a10ccef2c6f45251266c9a5
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-app-v$(PKG_VERSION)
 
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=LICENSE
+PKG_LICENSE_FILE:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 PKG_BUILD_DEPENDS:=golang/host
@@ -37,7 +37,7 @@ define Package/hysteria
   SECTION:=net
   CATEGORY:=Network
   TITLE:=A feature-packed network utility optimized for networks of poor quality
-  URL:=https://github.com/tobyxdd/hysteria
+  URL:=https://github.com/apernet/hysteria
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
 endef
 
@@ -51,7 +51,7 @@ endef
 define Package/hysteria/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/app $(1)/usr/bin/hysteria
 endef
 

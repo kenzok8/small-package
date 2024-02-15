@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2021-2023 ImmortalWrt.org
+# Copyright (C) 2021 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v2rayA
 PKG_VERSION:=2.2.4.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/v2rayA/v2rayA/tar.gz/v$(PKG_VERSION)?
@@ -57,10 +57,10 @@ endef
 
 WEB_FILE:=$(PKG_NAME)-web-$(PKG_VERSION).tar.gz
 define Download/v2raya-web
-	URL:=https://codeload.github.com/v2rayA/v2raya-web/tar.gz/v$(PKG_VERSION)?
-	URL_FILE:=$(WEB_FILE)
+	URL:=https://github.com/v2rayA/v2rayA/releases/download/v$(PKG_VERSION)/
+	URL_FILE:=web.tar.gz
 	FILE:=$(WEB_FILE)
-          HASH:=be724e6312864781b32fec5825d3c48902f8713a63f01c7471061ff6aa4fc357
+	HASH:=09109442abac13801b7b82433fccbb769657b1d292ac4820af179c297e845135
 endef
 
 define Build/Prepare
@@ -68,7 +68,7 @@ define Build/Prepare
 
 	( \
 		mkdir -p $(PKG_BUILD_DIR)/server/router/web ; \
-		unzip -q -d $(PKG_BUILD_DIR)/server/router/web $(DL_DIR)/$(WEB_FILE) ; \
+		gzip -dc $(DL_DIR)/$(WEB_FILE) | $(HOST_TAR) -C $(PKG_BUILD_DIR)/server/router/web $(TAR_OPTIONS) ; \
 	)
 endef
 
