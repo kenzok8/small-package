@@ -31,25 +31,48 @@ export function dokodemo_inbound(listen, port, tag, sniffing, sniffing_route_onl
     return result;
 };
 
-export function http_inbound(addr, port, tag) {
+export function http_inbound(addr, port, tag, username, password) {
+    let accounts = null;
+    if (username && password) {
+        accounts = [
+            {
+                "user": username,
+                "pass": password
+            }
+        ];
+    }
     return {
         listen: addr || "0.0.0.0",
         port: port,
         protocol: "http",
         tag: tag,
         settings: {
+            accounts: accounts,
             allowTransparent: false
         }
     };
 };
 
-export function socks_inbound(addr, port, tag) {
+export function socks_inbound(addr, port, tag, username, password) {
+    let auth = "noauth";
+    let accounts = null;
+    if (username && password) {
+        auth = "password";
+        accounts = [
+            {
+                "user": username,
+                "pass": password
+            }
+        ];
+    }
     return {
         listen: addr || "0.0.0.0",
         port: port,
         protocol: "socks",
         tag: tag,
         settings: {
+            auth: auth,
+            accounts: accounts,
             udp: true
         }
     };
