@@ -45,7 +45,8 @@ Fork this repository and:
 * 2024-01-19 chore: bump version
 * 2024-01-24 feat: add alias to LAN Hosts Access Control
 * 2024-02-04 fix: avoid firewall restart failure & some minor adjustments
-* 2024-02-17 feat: add DNS Hijacking (preview)
+* 2024-02-16 feat: dns hijacking preview; deprecate global http / socks inbound
+* 2024-02-17 feat: add username / password for extra socks / http inbound
 
 ## Changelog since 3.2.0
 

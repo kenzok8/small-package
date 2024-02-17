@@ -8,9 +8,9 @@ export function extra_inbounds(proxy, extra_inbound) {
     for (let v in extra_inbound) {
         const tag = `extra_inbound:${v[".name"]}`;
         if (v["inbound_type"] == "http") {
-            push(result, http_inbound(v["inbound_addr"] || "0.0.0.0", v["inbound_port"], tag));
+            push(result, http_inbound(v["inbound_addr"] || "0.0.0.0", v["inbound_port"], tag, v["inbound_username"], v["inbound_password"]));
         } else if (v["inbound_type"] == "socks5") {
-            push(result, socks_inbound(v["inbound_addr"] || "0.0.0.0", v["inbound_port"], tag));
+            push(result, socks_inbound(v["inbound_addr"] || "0.0.0.0", v["inbound_port"], tag, v["inbound_username"], v["inbound_password"]));
         } else if (v["inbound_type"] == "tproxy_tcp") {
             push(result, dokodemo_inbound(v["inbound_addr"] || "0.0.0.0", v["inbound_port"], tag, proxy["tproxy_sniffing"], proxy["route_only"], ["http", "tls"], "0", "tcp", "tproxy"));
         } else if (v["inbound_type"] == "tproxy_udp") {
