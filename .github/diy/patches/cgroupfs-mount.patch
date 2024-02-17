@@ -1,0 +1,62 @@
+diff --git a/utils/cgroupfs-mount/files/cgroupfs-mount.init b/utils/cgroupfs-mount/files/cgroupfs-mount.init
+index 0d6b68d..4ae3185 100755
+--- a/cgroupfs-mount/files/cgroupfs-mount.init
++++ b/cgroupfs-mount/files/cgroupfs-mount.init
+@@ -4,9 +4,17 @@ START=01
+ 
+ boot() {
+ 	# Procd mounts non-hierarchical cgroupfs so unmount first before cgroupfs-mount
+-	if mountpoint -q /sys/fs/cgroup; then
+-		umount /sys/fs/cgroup/
+-	fi
++	umount_cgroup() {
++		for sys in $(awk '!/^#/ { if ($4 == 1) print $1 }' /proc/cgroups); do
++			if mountpoint -q /sys/fs/cgroup/$sys; then
++				umount /sys/fs/cgroup/$sys || true
++			fi
++		done
++		if mountpoint -q /sys/fs/cgroup; then
++			umount /sys/fs/cgroup || true
++		fi
++	}
+ 
+-	cgroupfs-mount
++	umount_cgroup
++	cgroupfs-mount v2
+ }
+
+new file mode 100644
+index 00000000000..919684514af
+--- /dev/null
++++ b/cgroupfs-mount/patches/900-add-cgroupfs2.patch
+@@ -0,0 +1,30 @@
++--- a/cgroupfs-mount
+++++ b/cgroupfs-mount
++@@ -26,7 +26,11 @@ fi
++ 
++ # mount /sys/fs/cgroup if not already done
++ if ! mountpoint -q /sys/fs/cgroup; then
++-	mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
+++	if [ "$1" = "v2" ]; then
+++		mount -t cgroup2 cgroup2 /sys/fs/cgroup
+++	else
+++		mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
+++	fi
++ fi
++ 
++ cd /sys/fs/cgroup
++@@ -34,9 +38,11 @@ cd /sys/fs/cgroup
++ # get/mount list of enabled cgroup controllers
++ for sys in $(awk '!/^#/ { if ($4 == 1) print $1 }' /proc/cgroups); do
++ 	mkdir -p $sys
++-	if ! mountpoint -q $sys; then
++-		if ! mount -n -t cgroup -o $sys cgroup $sys; then
++-			rmdir $sys || true
+++	if [ "$1" != "v2" ]; then
+++		if ! mountpoint -q $sys; then
+++			if ! mount -n -t cgroup -o $sys cgroup $sys; then
+++				rmdir $sys || true
+++			fi
++ 		fi
++ 	fi
++ done

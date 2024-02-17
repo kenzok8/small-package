@@ -42,7 +42,7 @@
  					'click': handleInstall
  				}, _('Upgrade…'));
  			else
-@@ -392,6 +395,12 @@ function handleMode(ev)
+@@ -393,6 +396,12 @@ function handleMode(ev)
  
  	currentDisplayMode = tab.getAttribute('data-mode');
  
@@ -55,7 +55,7 @@
  	display(document.querySelector('input[name="filter"]').value);
  
  	ev.target.blur();
-@@ -660,6 +669,7 @@ function handleReset(ev)
+@@ -661,6 +670,7 @@ function handleReset(ev)
  function handleInstall(ev)
  {
  	var name = ev.target.getAttribute('data-package'),
@@ -63,7 +63,7 @@
  	    pkg = packages.available.pkgs[name],
  	    depcache = {},
  	    size;
-@@ -785,7 +795,8 @@ function handleInstall(ev)
+@@ -786,7 +796,8 @@ function handleInstall(ev)
  						'id': 'overwrite-cb',
  						'type': 'checkbox',
  						'name': 'overwrite',
@@ -73,7 +73,7 @@
  					}), ' ',
  					E('label', { 'for': 'overwrite-cb' }), ' ',
  					_('Allow overwriting conflicting package files')
-@@ -799,7 +810,7 @@ function handleInstall(ev)
+@@ -800,7 +811,7 @@ function handleInstall(ev)
  			}, _('Cancel')),
  			' ',
  			E('div', {
@@ -82,7 +82,7 @@
  				'data-package': name,
  				'class': 'btn cbi-button-action',
  				'click': handleOpkg,
-@@ -985,6 +996,10 @@ function handleOpkg(ev)
+@@ -986,6 +997,10 @@ function handleOpkg(ev)
  
  		var argv = [ cmd, '--force-removal-of-dependent-packages' ];
  
@@ -93,26 +93,16 @@
  		if (rem && rem.checked)
  			argv.push('--autoremove');
  
-@@ -1090,8 +1105,8 @@ function updateLists(data)
- 		    mount = L.toArray(data[0].filter(function(m) { return m.mount == '/' || m.mount == '/overlay' }))
- 		    	.sort(function(a, b) { return a.mount > b.mount })[0] || { size: 0, free: 0 };
+@@ -1088,7 +1103,7 @@ function updateLists(data)
  
--		pg.firstElementChild.style.width = Math.floor(mount.size ? ((100 / mount.size) * mount.free) : 100) + '%';
--		pg.setAttribute('title', '%s (%1024mB)'.format(pg.firstElementChild.style.width, mount.free));
-+		pg.firstElementChild.style.width = Math.floor(mount.size ? ((100 / mount.size) * (mount.size-mount.free)) : 100) + '%';
-+		pg.setAttribute('title', '%.1024mB / %.1024mB (%s)'.format((mount.size-mount.free), mount.size, pg.firstElementChild.style.width));
+ 	return (data ? Promise.resolve(data) : downloadLists()).then(function(data) {
+ 		var pg = document.querySelector('.cbi-progressbar'),
+-			mount = L.toArray(data[0].filter(function(m) { return m.mount == '/' || m.mount == '/overlay' }))
++		    mount = L.toArray(data[0].filter(function(m) { return m.mount == '/' || m.mount == '/overlay' }))
+ 				.sort(function(a, b) { return a.mount > b.mount })[0] || { size: 0, free: 0 };
  
- 		parseList(data[1], packages.available);
- 		parseList(data[2], packages.installed);
-@@ -1130,14 +1145,14 @@ return view.extend({
- 
- 			E('div', { 'class': 'controls' }, [
- 				E('div', {}, [
--					E('label', {}, _('Free space') + ':'),
-+					E('label', {}, _('Used space') + ':'),
- 					E('div', { 'class': 'cbi-progressbar', 'title': _('unknown') }, E('div', {}, [ '\u00a0' ]))
- 				]),
- 
+ 		pg.firstElementChild.style.width = Math.floor(mount.size ? (100 / mount.size) * (mount.size - mount.free) : 100) + '%';
+@@ -1138,7 +1153,7 @@ return view.extend({
  				E('div', {}, [
  					E('label', {}, _('Filter') + ':'),
  					E('span', { 'class': 'control-group' }, [
@@ -121,7 +111,7 @@
  						E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ])
  					])
  				]),
-@@ -1154,6 +1169,7 @@ return view.extend({
+@@ -1155,6 +1170,7 @@ return view.extend({
  					E('label', {}, _('Actions') + ':'), ' ',
  					E('span', { 'class': 'control-group' }, [
  						E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleOpkg, 'disabled': isReadonlyView }, [ _('Update lists…') ]), ' ',

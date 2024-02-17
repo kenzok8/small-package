@@ -1,16 +1,3 @@
---- a/dnsmasq/Makefile
-+++ b/dnsmasq/Makefile
-@@ -113,9 +113,6 @@ define Package/dnsmasq-full/config
- 	config PACKAGE_dnsmasq_full_ipset
- 		bool "Build with IPset support."
- 		default n
--	config PACKAGE_dnsmasq_full_nftset
--		bool "Build with Nftset support."
--		default y
- 	config PACKAGE_dnsmasq_full_conntrack
- 		bool "Build with Conntrack support."
- 		default y
-
 --- a/dnsmasq/files/dnsmasq.init
 +++ b/dnsmasq/files/dnsmasq.init
 @@ -411,6 +411,21 @@ dhcp_this_host_add() {
@@ -35,14 +22,6 @@
  
  	if [ "$mode" -gt 0 ] ; then
  		ifdashname="${ifname//./-}"
-@@ -931,6 +946,7 @@ dnsmasq_start()
- 	append_bool "$cfg" noping "--no-ping"
- 	append_bool "$cfg" rapidcommit "--dhcp-rapid-commit"
- 	append_bool "$cfg" scriptarp "--script-arp"
-+	append_parm "$cfg" mini_ttl "--min-ttl"
- 
- 	append_parm "$cfg" logfacility "--log-facility"
- 	config_get logfacility "$cfg" "logfacility"
 @@ -1173,6 +1190,14 @@ dnsmasq_start()
  	esac
  

@@ -173,18 +173,6 @@
  
  define KernelPackage/ipt-fullconenat
 
---- a/luci-app-easymesh/Makefile
-+++ b/luci-app-easymesh/Makefile
-@@ -5,7 +5,7 @@
- include $(TOPDIR)/rules.mk
- 
- LUCI_TITLE:=LuCI Support for easymesh
--LUCI_DEPENDS:=+kmod-cfg80211 +batctl-default +kmod-batman-adv +wpad-openssl +dawn
-+LUCI_DEPENDS:=+kmod-cfg80211 +batctl-default +kmod-batman-adv +wpad-wolfssl +dawn
- LUCI_PKGARCH:=all
- 
- PKG_NAME:=luci-app-easymesh
-
 --- a/phtunnel/Makefile
 +++ b/phtunnel/Makefile
 @@ -36,7 +36,6 @@ PKG_SOURCE:=phtunnel
