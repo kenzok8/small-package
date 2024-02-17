@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=3.3.1
+PKG_VERSION:=3.4.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -132,7 +132,6 @@ endif
 	$(INSTALL_DIR) $(1)/usr/share/xray/feature
 	$(INSTALL_DATA) ./root/usr/share/xray/feature/bridge.mjs $(1)/usr/share/xray/feature/bridge.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/feature/dns.mjs $(1)/usr/share/xray/feature/dns.mjs
-	$(INSTALL_DATA) ./root/usr/share/xray/feature/extra_inbound.mjs $(1)/usr/share/xray/feature/extra_inbound.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/feature/fake_dns.mjs $(1)/usr/share/xray/feature/fake_dns.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/feature/inbound.mjs $(1)/usr/share/xray/feature/inbound.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/feature/manual_tproxy.mjs $(1)/usr/share/xray/feature/manual_tproxy.mjs
