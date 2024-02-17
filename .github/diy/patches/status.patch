@@ -126,3 +126,15 @@
  				E('button', {
  					'class': 'btn cbi-button',
  					'click': function() { location.href = 'nftables/iptables' }
+
+--- a/luci-mod-status/htdocs/luci-static/resources/view/status/include/29_ports.js
++++ b/luci-mod-status/htdocs/luci-static/resources/view/status/include/29_ports.js
+@@ -309,8 +309,6 @@ return baseclass.extend({
+ 	},
+ 
+ 	render: function(data) {
+-		if (L.hasSystemFeature('swconfig'))
+-			return null;
+ 
+ 		var board = JSON.parse(data[1]),
+ 		    known_ports = [],

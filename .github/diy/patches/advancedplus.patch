@@ -1,0 +1,46 @@
+--- a/luci-app-advancedplus/luasrc/controller/advancedplus.lua
++++ b/luci-app-advancedplus/luasrc/controller/advancedplus.lua
+@@ -9,12 +9,14 @@ function index()
+ 	end
+ 
+ 	local page
+-	page = entry({"admin","system","advancedplus"},alias("admin","system","advancedplus","kucatset"),_("Advanced plus"),61)
++	page = entry({"admin","system","advancedplus"},alias("admin","system","advancedplus","advancededit"),_("Advanced plus"),61)
+ 	page.dependent = true
+ 	page.acl_depends = { "luci-app-advancedplus" }
++	if uci.cursor():get("luci", "main", "mediaurlbase") == "/luci-static/kucat" then
+ 	entry({"admin","system","advancedplus","kucatset"},cbi("advancedplus/kucatset"),_("KuCat Theme Config"),20).leaf = true
++	entry({"admin", "system","advancedplus","kucatupload"}, form("advancedplus/kucatupload"), _("Desktop background upload"), 80).leaf = true
++	end
+ 	entry({"admin","system","advancedplus","advancedset"},cbi("advancedplus/advancedset"),_("Advanced Setting"),10).leaf = true
+-	entry({"admin","system","advancedplus","advancededit"},cbi("advancedplus/advancededit"),_("Advanced Edit"),60).leaf = true
++	entry({"admin","system","advancedplus","advancededit"},cbi("advancedplus/advancededit"),_("Advanced Edit"),1).leaf = true
+ 	entry({"admin", "system","advancedplus","upload"}, form("advancedplus/upload"), _("Login Background Upload"), 70).leaf = true
+-	entry({"admin", "system","advancedplus","kucatupload"}, form("advancedplus/kucatupload"), _("Desktop background upload"), 80).leaf = true
+ end
+
+--- a/luci-app-advancedplus/luasrc/model/cbi/advancedplus/advancedset.lua
++++ b/luci-app-advancedplus/luasrc/model/cbi/advancedplus/advancedset.lua
+@@ -24,7 +24,9 @@ ul:depends("qos", true)
+ 
+ -- e = t:option(Flag, "uhttps",translate('Accessing using HTTPS'), translate('Open the address in the background and use HTTPS for secure access'))
+ 
++if fs.access('/usr/bin/zsh') then
+ e = t:option(Flag, "usshmenu",translate('No backend menu required'), translate('OPENWRT backend and SSH login do not display shortcut menus'))
++end
+ 
+ if fs.access('/etc/config/netwizard') then
+ e = t:option(Flag, "wizard",translate('Hide Wizard'), translate('Show or hide the setup wizard menu'))
+
+--- a/luci-app-advancedplus/root/etc/init.d/advancedplus
++++ b/luci-app-advancedplus/root/etc/init.d/advancedplus
+@@ -144,8 +144,10 @@ dev=`ifconfig | grep "Point-to-Point" | cut -d " " -f1`
+     fi
+     #cpumode=`uci -q get advancedplus.@basic[0].cpumode`
+     #[ ! $cpumode ] || cpumodeset $cpumode   /usr/bin/zsh
++if [ "$(which zsh)" ]; then
+     sed -i "\/bin\/zsh/d" /etc/profile
+     [ "x$(uci -q get advancedplus.@basic[0].usshmenu)" = "x1" ] || echo '/usr/bin/zsh'  >> /etc/profile
++fi
+     uci commit netwizard 
+ }
