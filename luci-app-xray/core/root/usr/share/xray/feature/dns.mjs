@@ -75,31 +75,34 @@ export function dns_rules(proxy, tcp_hijack_inbound_tags, udp_hijack_inbound_tag
     for (let i = dns_port; i <= dns_port + dns_count; i++) {
         push(dns_server_tags, sprintf("dns_server_inbound:%d", i));
     }
-    return [
-        {
-            type: "field",
-            port: "53",
-            inboundTag: tcp_hijack_inbound_tags,
-            outboundTag: "dns_tcp_hijack_outbound"
-        },
-        {
-            type: "field",
-            port: "53",
-            inboundTag: udp_hijack_inbound_tags,
-            outboundTag: "dns_udp_hijack_outbound"
-        },
+    let result = [
         {
             type: "field",
             inboundTag: dns_server_tags,
             outboundTag: "dns_server_outbound"
         },
     ];
+    if (proxy.dns_tcp_hijack) {
+        push(result, {
+            type: "field",
+            port: "53",
+            inboundTag: tcp_hijack_inbound_tags,
+            outboundTag: "dns_tcp_hijack_outbound"
+        });
+    }
+    if (proxy.dns_udp_hijack) {
+        push(result, {
+            type: "field",
+            port: "53",
+            inboundTag: udp_hijack_inbound_tags,
+            outboundTag: "dns_udp_hijack_outbound"
+        });
+    }
+    return result;
 };
 
 export function dns_server_outbounds(proxy) {
-    return [
-        direct_outbound("dns_tcp_hijack_outbound", proxy.dns_tcp_hijack || ""),
-        direct_outbound("dns_udp_hijack_outbound", proxy.dns_udp_hijack || ""),
+    let result = [
         {
             protocol: "dns",
             settings: {
@@ -113,6 +116,13 @@ export function dns_server_outbounds(proxy) {
             tag: "dns_server_outbound"
         }
     ];
+    if (proxy.dns_tcp_hijack) {
+        push(result, direct_outbound("dns_tcp_hijack_outbound", proxy.dns_tcp_hijack));
+    }
+    if (proxy.dns_udp_hijack) {
+        push(result, direct_outbound("dns_udp_hijack_outbound", proxy.dns_udp_hijack));
+    }
+    return result;
 };
 
 export function dns_conf(proxy, config, manual_tproxy, fakedns) {
@@ -136,7 +146,7 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
     let servers = [
         ...fake_dns_domains(fakedns),
         ...map(keys(domain_extra_options), function (k) {
-            const i = split_ipv4_host_port(domain_extra_options[k]);
+            let i = split_ipv4_host_port(domain_extra_options[k]);
             i["domains"] = [`domain:${k}`];
             i["skipFallback"] = true;
             return i;

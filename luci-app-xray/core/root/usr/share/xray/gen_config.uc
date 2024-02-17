@@ -5,9 +5,8 @@ import { access } from "fs";
 import { load_config } from "./common/config.mjs";
 import { bridge_outbounds, bridge_rules, bridges } from "./feature/bridge.mjs";
 import { blocked_domain_rules, dns_conf, dns_rules, dns_server_inbounds, dns_server_outbounds, fast_domain_rules, secure_domain_rules } from "./feature/dns.mjs";
-import { extra_inbound_balancers, extra_inbound_global_http, extra_inbound_global_socks5, extra_inbound_global_tcp, extra_inbound_global_udp, extra_inbound_rules, extra_inbounds } from "./feature/extra_inbound.mjs";
 import { fake_dns_balancers, fake_dns_conf, fake_dns_rules } from "./feature/fake_dns.mjs";
-import { dokodemo_inbound, http_inbound, https_inbound, socks_inbound } from "./feature/inbound.mjs";
+import { dokodemo_inbound, extra_inbound_balancers, extra_inbound_global, extra_inbound_rules, extra_inbounds, http_inbound, https_inbound, socks_inbound } from "./feature/inbound.mjs";
 import { manual_tproxy_outbound_tags, manual_tproxy_outbounds, manual_tproxy_rules } from "./feature/manual_tproxy.mjs";
 import { blackhole_outbound, direct_outbound, server_outbound } from "./feature/outbound.mjs";
 import { api_conf, balancer, logging, metrics_conf, policy, system_route_rules } from "./feature/system.mjs";
@@ -108,10 +107,11 @@ function rules(proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
     const tproxy_udp_inbound_v4_tags = ["tproxy_udp_inbound_v4"];
     const tproxy_tcp_inbound_v6_tags = ["tproxy_tcp_inbound_v6"];
     const tproxy_udp_inbound_v6_tags = ["tproxy_udp_inbound_v6"];
-    const extra_inbound_global_tcp_tags = extra_inbound_global_tcp() || [];
-    const extra_inbound_global_udp_tags = extra_inbound_global_udp() || [];
-    const extra_inbound_global_http_tags = extra_inbound_global_http() || [];
-    const extra_inbound_global_socks5_tags = extra_inbound_global_socks5() || [];
+    const extra_inbound_global_tags = extra_inbound_global();
+    const extra_inbound_global_tcp_tags = extra_inbound_global_tags["tproxy_tcp"] || [];
+    const extra_inbound_global_udp_tags = extra_inbound_global_tags["tproxy_udp"] || [];
+    const extra_inbound_global_http_tags = extra_inbound_global_tags["http"] || [];
+    const extra_inbound_global_socks5_tags = extra_inbound_global_tags["socks5"] || [];
     const built_in_tcp_inbounds = [...tproxy_tcp_inbound_v4_tags, ...extra_inbound_global_tcp_tags, ...extra_inbound_global_http_tags, ...extra_inbound_global_socks5_tags, "socks_inbound", "https_inbound", "http_inbound"];
     const built_in_udp_inbounds = [...tproxy_udp_inbound_v4_tags, ...extra_inbound_global_udp_tags, "dns_conf_inbound"];
     let result = [
