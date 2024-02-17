@@ -2,6 +2,7 @@
 
 import { access } from "fs";
 import { fake_dns_domains } from "./fake_dns.mjs";
+import { direct_outbound } from "./outbound.mjs";
 
 const fallback_fast_dns = "223.5.5.5:53";
 const fallback_secure_dns = "8.8.8.8:53";
@@ -67,29 +68,51 @@ export function dns_server_inbounds(proxy) {
     return result;
 };
 
-export function dns_server_tags(proxy) {
-    let result = [];
+export function dns_rules(proxy, tcp_hijack_inbound_tags, udp_hijack_inbound_tags) {
     const dns_port = int(proxy["dns_port"] || 5300);
     const dns_count = int(proxy["dns_count"] || 3);
+    let dns_server_tags = [];
     for (let i = dns_port; i <= dns_port + dns_count; i++) {
-        push(result, sprintf("dns_server_inbound:%d", i));
+        push(dns_server_tags, sprintf("dns_server_inbound:%d", i));
     }
-    return result;
+    return [
+        {
+            type: "field",
+            port: "53",
+            inboundTag: tcp_hijack_inbound_tags,
+            outboundTag: "dns_tcp_hijack_outbound"
+        },
+        {
+            type: "field",
+            port: "53",
+            inboundTag: udp_hijack_inbound_tags,
+            outboundTag: "dns_udp_hijack_outbound"
+        },
+        {
+            type: "field",
+            inboundTag: dns_server_tags,
+            outboundTag: "dns_server_outbound"
+        },
+    ];
 };
 
-export function dns_server_outbound() {
-    return {
-        protocol: "dns",
-        settings: {
-            nonIPQuery: "skip"
-        },
-        streamSettings: {
-            sockopt: {
-                mark: 254
-            }
-        },
-        tag: "dns_server_outbound"
-    };
+export function dns_server_outbounds(proxy) {
+    return [
+        direct_outbound("dns_tcp_hijack_outbound", proxy.dns_tcp_hijack || ""),
+        direct_outbound("dns_udp_hijack_outbound", proxy.dns_udp_hijack || ""),
+        {
+            protocol: "dns",
+            settings: {
+                nonIPQuery: "skip"
+            },
+            streamSettings: {
+                sockopt: {
+                    mark: 254
+                }
+            },
+            tag: "dns_server_outbound"
+        }
+    ];
 };
 
 export function dns_conf(proxy, config, manual_tproxy, fakedns) {

@@ -1,6 +1,6 @@
 "use strict";
 
-import { tls_outbound_settings, reality_outbound_settings } from "./tls.mjs";
+import { reality_outbound_settings, tls_outbound_settings } from "./tls.mjs";
 
 function stream_tcp_fake_http_request(server) {
     if (server["tcp_guise"] == "http") {

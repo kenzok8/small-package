@@ -1,7 +1,7 @@
 "use strict";
 
 import { stream_settings } from "../common/stream.mjs";
-import { tls_inbound_settings, reality_inbound_settings, fallbacks } from "../common/tls.mjs";
+import { fallbacks, reality_inbound_settings, tls_inbound_settings } from "../common/tls.mjs";
 
 function vless_inbound_user(k, flow) {
     return {

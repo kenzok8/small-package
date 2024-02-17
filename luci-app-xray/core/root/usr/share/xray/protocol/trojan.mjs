@@ -1,7 +1,7 @@
 "use strict";
 
 import { stream_settings } from "../common/stream.mjs";
-import { tls_inbound_settings, fallbacks } from "../common/tls.mjs";
+import { fallbacks, tls_inbound_settings } from "../common/tls.mjs";
 
 function trojan_inbound_user(k) {
     return {
