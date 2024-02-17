@@ -52,10 +52,18 @@ export function extra_inbound_balancers(extra_inbound) {
     return result;
 };
 
-export function extra_inbound_global_tcp_tags(extra_inbound) {
-    return map(filter(extra_inbound, v => v["specify_outbound"] != "1" && v["inbound_type"] != "tproxy_udp"), v => `extra_inbound_${v[".name"]}`);
+export function extra_inbound_global_tcp(extra_inbound) {
+    return map(filter(extra_inbound, v => v["specify_outbound"] != "1" && v["inbound_type"] == "tproxy_tcp"), v => `extra_inbound_${v[".name"]}`);
 };
 
-export function extra_inbound_global_udp_tags(extra_inbound) {
+export function extra_inbound_global_udp(extra_inbound) {
     return map(filter(extra_inbound, v => v["specify_outbound"] != "1" && v["inbound_type"] == "tproxy_udp"), v => `extra_inbound_${v[".name"]}`);
+};
+
+export function extra_inbound_global_http(extra_inbound) {
+    return map(filter(extra_inbound, v => v["specify_outbound"] != "1" && v["inbound_type"] == "http"), v => `extra_inbound_${v[".name"]}`);
+};
+
+export function extra_inbound_global_socks5(extra_inbound) {
+    return map(filter(extra_inbound, v => v["specify_outbound"] != "1" && v["inbound_type"] == "socks5"), v => `extra_inbound_${v[".name"]}`);
 };
