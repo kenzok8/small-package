@@ -43,6 +43,7 @@ Fork this repository and:
 ## Changelog since 3.4.0
 
 * 2024-02-18 chore: optimize code style; bump version
+* 2024-02-19 fix: several DNS related validation
 
 ## Changelog since 3.3.0
 

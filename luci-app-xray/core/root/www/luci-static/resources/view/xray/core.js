@@ -199,7 +199,6 @@ return view.extend({
         o.modalonly = true;
 
         o = ss.taboption('general', form.Value, 'domain_resolve_dns', _('Resolve Domain via DNS'), _("Specify a DNS to resolve server hostname. Be careful of possible recursion."));
-        o.datatype = 'hostport';
         o.modalonly = true;
 
         o = ss.taboption('general', form.Value, 'server_port', _('Server Port'));

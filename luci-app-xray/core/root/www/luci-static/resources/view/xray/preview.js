@@ -14,10 +14,10 @@ return view.extend({
         s.tab("dns_hijack", _("DNS Hijacking"));
 
         let dns_tcp_hijack = s.taboption('dns_hijack', form.Value, 'dns_tcp_hijack', _('Hijack TCP DNS Requests'), _("Redirect all outgoing TCP requests with destination port 53 to the address specified. In most cases not necessary."));
-        dns_tcp_hijack.datatype = 'or(ip4addr, ip4addrport)';
+        dns_tcp_hijack.datatype = 'ip4addrport';
 
         let dns_udp_hijack = s.taboption('dns_hijack', form.Value, 'dns_udp_hijack', _('Hijack UDP DNS Requests'), _("Redirect all outgoing UDP requests with destination port 53 to the address specified. Recommended to use <code>127.0.0.1:53</code>."));
-        dns_udp_hijack.datatype = 'or(ip4addr, ip4addrport)';
+        dns_udp_hijack.datatype = 'ip4addrport';
 
         s.tab("firewall", _("Extra Firewall Options"));
 
@@ -38,15 +38,7 @@ return view.extend({
         let ttl_hop_limit_match = s.taboption('firewall', form.Value, 'ttl_hop_limit_match', _('TTL / Hop Limit Match'), _("Only override TTL / hop limit for packets with specific TTL / hop limit."));
         ttl_hop_limit_match.datatype = 'uinteger';
 
-        s.tab("sniffing", _("Legacy Inbounds and Sniffing"));
-
-        let socks_port = s.taboption('sniffing', form.Value, 'socks_port', _('Socks5 proxy port'), _("Deprecated for security concerns. Use Extra Inbound instead."));
-        socks_port.datatype = 'port';
-        socks_port.placeholder = 1080;
-
-        let http_port = s.taboption('sniffing', form.Value, 'http_port', _('HTTP proxy port'), _("Deprecated for security concerns. Use Extra Inbound instead."));
-        http_port.datatype = 'port';
-        http_port.placeholder = 1081;
+        s.tab("sniffing", _("Sniffing"));
 
         s.taboption('sniffing', form.Flag, 'tproxy_sniffing', _('Enable Sniffing'), _('Route requests according to domain settings in "DNS Settings" tab in core settings. Deprecated; use FakeDNS instead.'));
 
@@ -67,8 +59,17 @@ return view.extend({
         dynamic_direct_timeout.datatype = 'uinteger';
         dynamic_direct_timeout.placeholder = 300;
 
-        s.tab('custom_options', _('Custom Options'));
-        let custom_config = s.taboption('custom_options', form.TextValue, 'custom_config', _('Custom Configurations'), _('Check <code>/var/etc/xray/config.json</code> for tags of generated inbounds and outbounds. See <a href="https://xtls.github.io/config/features/multiple.html">here</a> for help'));
+        s.tab('deprecated', _('Deprecated Features'));
+
+        let socks_port = s.taboption('deprecated', form.Value, 'socks_port', _('Socks5 proxy port'), _("Deprecated for security concerns and will be removed in next major version. Use Extra Inbound instead."));
+        socks_port.datatype = 'port';
+        socks_port.placeholder = 1080;
+
+        let http_port = s.taboption('deprecated', form.Value, 'http_port', _('HTTP proxy port'), _("Deprecated for security concerns and will be removed in next major version. Use Extra Inbound instead."));
+        http_port.datatype = 'port';
+        http_port.placeholder = 1081;
+
+        let custom_config = s.taboption('deprecated', form.TextValue, 'custom_config', _('Custom Configurations'), _('See <a href="https://xtls.github.io/config/features/multiple.html">here</a> for help. Deprecated and will be removed in next major version.'));
         custom_config.monospace = true;
         custom_config.rows = 20;
         custom_config.validate = shared.validate_object;

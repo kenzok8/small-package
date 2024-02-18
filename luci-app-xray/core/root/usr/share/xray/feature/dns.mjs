@@ -10,7 +10,7 @@ const fallback_default_dns = "1.1.1.1:53";
 const geosite_existence = access("/usr/share/xray/geosite.dat") || false;
 
 function split_ipv4_host_port(val, port_default) {
-    const result = match(val, /([0-9\.]+):([0-9]+)/);
+    const result = match(val, /^([0-9\.]+):([0-9]+)$/);
     if (result == null) {
         return {
             address: val,
@@ -143,11 +143,19 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
         }
     }
 
+    let resolve_merged = {};
+    for (let k in keys(domain_extra_options)) {
+        const v = domain_extra_options[k];
+        let original = resolve_merged[v] || [];
+        push(original, k);
+        resolve_merged[v] = original;
+    }
+
     let servers = [
         ...fake_dns_domains(fakedns),
-        ...map(keys(domain_extra_options), function (k) {
-            let i = split_ipv4_host_port(domain_extra_options[k]);
-            i["domains"] = [`domain:${k}`];
+        ...map(keys(resolve_merged), function (k) {
+            let i = split_ipv4_host_port(k);
+            i["domains"] = uniq(resolve_merged[k]);
             i["skipFallback"] = true;
             return i;
         }),
