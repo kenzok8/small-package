@@ -6,14 +6,12 @@
 				"/sys/class/leds": [ "list" ],
 				"/etc/internet-detector/up-script*": [ "read" ],
 				"/etc/internet-detector/down-script*": [ "read" ],
-				"/etc/internet-detector/public-ip-script*": [ "read" ],
-				"/usr/bin/internet-detector*": [ "exec" ],
-				"/usr/bin/mailsend": [ "exec" ]
+				"/etc/internet-detector/public-ip-script*": [ "read" ]
 			},
 			"uci": [ "internet-detector" ],
 			"ubus": {
 				"luci": [ "getInitList", "setInitAction" ],
-				"luci.internet-detector": [ "UIPoll" ]
+				"luci.internet-detector": [ "Init", "Status", "InetStatus", "UIPoll" ]
 			}
 		},
 		"write": {

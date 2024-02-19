@@ -26,9 +26,7 @@ msgstr ""
 msgid "Alive period"
 msgstr ""
 
-msgid ""
-"An email will be sent when the internet connection is restored after being "
-"disconnected."
+msgid "An email will be sent when connected or disconnected from the Internet."
 msgstr ""
 
 msgid "An error has occurred"
@@ -207,31 +205,6 @@ msgstr ""
 msgid "Loading"
 msgstr ""
 
-msgid ""
-"Longest period of time after connecting to Internet before \"up-script\" "
-"runs."
-msgstr ""
-
-msgid ""
-"Longest period of time after connecting to the Internet before sending a "
-"message."
-msgstr ""
-
-msgid ""
-"Longest period of time after disconnecting from Internet before \"down-script"
-"\" runs."
-msgstr ""
-
-msgid "Longest period of time without Internet access before modem restart."
-msgstr ""
-
-msgid "Longest period of time without Internet access before network restart."
-msgstr ""
-
-msgid ""
-"Longest period of time without Internet access until the device is rebooted."
-msgstr ""
-
 msgid "Mailsend is not available..."
 msgstr ""
 
@@ -249,10 +222,10 @@ msgstr ""
 msgid "Maximum timeout for waiting for a response from the host."
 msgstr ""
 
-msgid "Modem will be restarted when the Internet is disconnected."
+msgid "ModemManager is not available..."
 msgstr ""
 
-msgid "ModemManager is not available..."
+msgid "Modem will be restarted when the Internet is disconnected."
 msgstr ""
 
 msgid ""
@@ -288,6 +261,32 @@ msgid "Password"
 msgstr ""
 
 msgid "Password for SMTP authentication."
+msgstr ""
+
+msgid ""
+"Period of time after connecting to Internet before \"up-script\" runs."
+msgstr ""
+
+msgid ""
+"Period of time after connecting to the Internet before sending a message."
+msgstr ""
+
+msgid ""
+"Period of time after disconnecting from Internet before \"down-script\" runs."
+msgstr ""
+
+msgid ""
+"Period of time after disconnecting from Internet before sending a message."
+msgstr ""
+
+msgid "Period of time without Internet access before modem restart."
+msgstr ""
+
+msgid "Period of time without Internet access before network restart."
+msgstr ""
+
+msgid ""
+"Period of time without Internet access until the device is rebooted."
 msgstr ""
 
 msgid "Polling interval"
@@ -434,10 +433,22 @@ msgstr ""
 msgid "Web UI only: detector works only when the Web UI is open (UI detector)."
 msgstr ""
 
+msgid "When email will be sent"
+msgstr ""
+
 msgid "Windows: 32 bytes"
 msgstr ""
 
 msgid "Write messages to the system log."
+msgstr ""
+
+msgid "after connection"
+msgstr ""
+
+msgid "after disconnection"
+msgstr ""
+
+msgid "both"
 msgstr ""
 
 msgid "down-script"

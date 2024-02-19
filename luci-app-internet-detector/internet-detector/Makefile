@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=internet-detector
-PKG_VERSION:=1.2
+PKG_VERSION:=1.3
 PKG_RELEASE:=0
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/luci-app-internet-detector>
 
@@ -50,14 +50,13 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/etc/init.d/internet-detector $(1)/etc/init.d/internet-detector
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/internet-detector $(1)/usr/bin/internet-detector
-	$(INSTALL_DIR) $(1)/usr/lib/internet-detector
-	$(INSTALL_DATA) ./files/usr/lib/internet-detector/mod_email.lua $(1)/usr/lib/internet-detector/mod_email.lua
-	$(INSTALL_DATA) ./files/usr/lib/internet-detector/mod_public_ip.lua $(1)/usr/lib/internet-detector/mod_public_ip.lua
-	$(INSTALL_DATA) ./files/usr/lib/internet-detector/mod_led_control.lua $(1)/usr/lib/internet-detector/mod_led_control.lua
-	$(INSTALL_DATA) ./files/usr/lib/internet-detector/mod_modem_restart.lua $(1)/usr/lib/internet-detector/mod_modem_restart.lua
-	$(INSTALL_DATA) ./files/usr/lib/internet-detector/mod_network_restart.lua $(1)/usr/lib/internet-detector/mod_network_restart.lua
-	$(INSTALL_DATA) ./files/usr/lib/internet-detector/mod_reboot.lua $(1)/usr/lib/internet-detector/mod_reboot.lua
-	$(INSTALL_DATA) ./files/usr/lib/internet-detector/mod_user_scripts.lua $(1)/usr/lib/internet-detector/mod_user_scripts.lua
+	$(INSTALL_DIR) $(1)/usr/lib/lua/internet-detector
+	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/main.lua $(1)/usr/lib/lua/internet-detector/main.lua
+	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_led_control.lua $(1)/usr/lib/lua/internet-detector/mod_led_control.lua
+	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_reboot.lua $(1)/usr/lib/lua/internet-detector/mod_reboot.lua
+	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_network_restart.lua $(1)/usr/lib/lua/internet-detector/mod_network_restart.lua
+	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_public_ip.lua $(1)/usr/lib/lua/internet-detector/mod_public_ip.lua
+	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_user_scripts.lua $(1)/usr/lib/lua/internet-detector/mod_user_scripts.lua
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
