@@ -57,7 +57,6 @@ document.head.append(E('style', {'type': 'text/css'},
 return baseclass.extend({
 	title               : _('Internet'),
 	appName             : 'internet-detector',
-	execPath            : '/usr/bin/internet-detector',
 	currentAppMode      : null,
 	inetStatus          : null,
 
@@ -73,14 +72,16 @@ return baseclass.extend({
 		});
 	},
 
-	inetStatusFromJson(res) {
-		let inetStatData = null;
-		if(res.code === 0) {
-			try {
-				inetStatData = JSON.parse(res.stdout.trim());
-			} catch(e) {};
-		};
-		return inetStatData;
+	callInetStatus: rpc.declare({
+		object: 'luci.internet-detector',
+		method: 'InetStatus',
+		expect: { '': {} }
+	}),
+
+	getInetStatus() {
+		return this.callInetStatus().then(data => {
+			return data;
+		});
 	},
 
 	async load() {
@@ -94,7 +95,7 @@ return baseclass.extend({
 			return this.getUIPoll();
 		}
 		else if(this.currentAppMode === '1') {
-			return L.resolveDefault(fs.exec(this.execPath, [ 'inet-status' ]), null);
+			return L.resolveDefault(this.getInetStatus(), null);
 		};
 	},
 
@@ -102,9 +103,7 @@ return baseclass.extend({
 		if(this.currentAppMode === '0') {
 			return;
 		}
-		else if(this.currentAppMode === '1' && data) {
-			data = this.inetStatusFromJson(data);
-		};
+
 		this.inetStatus = data;
 
 		let inetStatusArea = E('div', {});

@@ -38,10 +38,8 @@ msgstr "Интервал при подключении"
 msgid "Alive period"
 msgstr "Период после подключения"
 
-msgid ""
-"An email will be sent when the internet connection is restored after being "
-"disconnected."
-msgstr "Сообщение будет отправлено при восстановлении соединения с Интернет после отключения."
+msgid "An email will be sent when connected or disconnected from the Internet."
+msgstr "Сообщение будет отправлено при подключении или отключении от Интернет."
 
 msgid "An error has occurred"
 msgstr "Произошла ошибка"
@@ -221,41 +219,8 @@ msgstr "Управление LED"
 msgid "Loading"
 msgstr "Загрузка"
 
-msgid ""
-"Longest period of time after connecting to Internet before \"up-script\" "
-"runs."
-msgstr ""
-"Максимальный промежуток времени после подключения к Интернет перед запуском "
-"\"up-script\"."
-
-msgid ""
-"Longest period of time after connecting to the Internet before sending a "
-"message."
-msgstr "Максимальный промежуток времени после подключения Интернет перед отправкой сообщения."
-
-msgid ""
-"Longest period of time after disconnecting from Internet before \"down-script"
-"\" runs."
-msgstr ""
-"Максимальный промежуток времени после отключения Интернет перед запуском "
-"\"down-script\"."
-
-msgid "Longest period of time without Internet access before modem restart."
-msgstr ""
-"Максимальное время отсутствия доступа в Интренет перед перезапуском модема."
-
-msgid "Longest period of time without Internet access before network restart."
-msgstr ""
-"Максимальное время отсутствия доступа в Интренет перед перезапуском сети."
-
-msgid ""
-"Longest period of time without Internet access until the device is rebooted."
-msgstr ""
-"Максимальное время отсутствия доступа в Интренет перед перезагрузкой "
-"устройства."
-
 msgid "Mailsend is not available..."
-msgstr "Mailsend недоступен..."
+msgstr "Mailsend не доступен..."
 
 msgid "Main settings"
 msgstr "Основные настройки"
@@ -273,11 +238,11 @@ msgstr ""
 msgid "Maximum timeout for waiting for a response from the host."
 msgstr "Максимальный таймаут ожидания ответа от хоста."
 
+msgid "ModemManager is not available..."
+msgstr "ModemManager не доступен..."
+
 msgid "Modem will be restarted when the Internet is disconnected."
 msgstr "Модем будет перезапущен при отключении Интернет."
-
-msgid "ModemManager is not available..."
-msgstr "ModemManager недоступен..."
 
 msgid ""
 "ModemManger interface. If specified, it will be restarted after restarting "
@@ -319,6 +284,35 @@ msgstr "Пароль"
 
 msgid "Password for SMTP authentication."
 msgstr "Пароль для SMTP-аутентификации."
+
+msgid ""
+"Period of time after connecting to Internet before \"up-script\" runs."
+msgstr ""
+"Период времени после подключения к Интернет перед запуском \"up-script\"."
+
+msgid ""
+"Period of time after connecting to the Internet before sending a message."
+msgstr "Период времени после подключения к Интернет перед отправкой сообщения."
+
+msgid ""
+"Period of time after disconnecting from Internet before \"down-script\" runs."
+msgstr ""
+"Период времени после отключения от Интернет перед запуском \"down-script\"."
+
+msgid ""
+"Period of time after disconnecting from Internet before sending a message."
+msgstr "Период времени отсутствия доступа в Интренет перед отправкой сообщения."
+
+msgid "Period of time without Internet access before modem restart."
+msgstr "Период времени отсутствия доступа в Интренет перед перезапуском модема."
+
+msgid "Period of time without Internet access before network restart."
+msgstr "Период времени отсутствия доступа в Интренет перед перезапуском сети."
+
+msgid ""
+"Period of time without Internet access until the device is rebooted."
+msgstr ""
+"Период времени отсутствия доступа в Интренет перед перезагрузкой устройства."
 
 msgid "Polling interval"
 msgstr "Интервал опроса"
@@ -468,11 +462,23 @@ msgstr ""
 "Только web-интерфейс: детектор работает только в web-интерфейсе (UI "
 "детектор)."
 
+msgid "When email will be sent"
+msgstr "Когда будет отправлено сообщение"
+
 msgid "Windows: 32 bytes"
 msgstr "Windows: 32 байта"
 
 msgid "Write messages to the system log."
 msgstr "Записывать сообщения в системный журнал."
+
+msgid "after connection"
+msgstr "после подключения"
+
+msgid "after disconnection"
+msgstr "после отключения"
+
+msgid "after connection or disconnection"
+msgstr "после подключения или отключения"
 
 msgid "down-script"
 msgstr "down-script"

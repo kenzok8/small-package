@@ -129,10 +129,8 @@ var Timefield = ui.Textfield.extend({
 
 return view.extend({
 	appName             : 'internet-detector',
-	execPath            : '/usr/bin/internet-detector',
 	configDir           : '/etc/internet-detector',
 	ledsPath            : '/sys/class/leds',
-	mtaPath             : '/usr/bin/mailsend',
 	pollInterval        : L.env.pollinterval,
 	appStatus           : 'stoped',
 	initStatus          : null,
@@ -144,7 +142,9 @@ return view.extend({
 	defaultHosts        : [ '8.8.8.8', '1.1.1.1' ],
 	leds                : [],
 	mm                  : false,
-	mta                 : false,
+	mmInit              : false,
+	email               : false,
+	emailExec           : false,
 
 	callInitStatus: rpc.declare({
 		object: 'luci',
@@ -185,6 +185,18 @@ return view.extend({
 		});
 	},
 
+	callInit: rpc.declare({
+		object: 'luci.internet-detector',
+		method: 'Init',
+		expect: { '': {} }
+	}),
+
+	getInit() {
+		return this.callInit().then(data => {
+			return data;
+		});
+	},
+
 	callUIPoll: rpc.declare({
 		object: 'luci.internet-detector',
 		method: 'UIPoll',
@@ -193,6 +205,30 @@ return view.extend({
 
 	getUIPoll() {
 		return this.callUIPoll().then(data => {
+			return data;
+		});
+	},
+
+	callStatus: rpc.declare({
+		object: 'luci.internet-detector',
+		method: 'Status',
+		expect: { '': {} }
+	}),
+
+	getStatus() {
+		return this.callStatus().then(data => {
+			return data;
+		});
+	},
+
+	callInetStatus: rpc.declare({
+		object: 'luci.internet-detector',
+		method: 'InetStatus',
+		expect: { '': {} }
+	}),
+
+	getInetStatus() {
+		return this.callInetStatus().then(data => {
 			return data;
 		});
 	},
@@ -240,25 +276,13 @@ return view.extend({
 		};
 	},
 
-	inetStatusFromJson(res) {
-		let inetStatData = null;
-		if(res.code === 0) {
-			try {
-				inetStatData = JSON.parse(res.stdout.trim());
-			} catch(e) {};
-		};
-		return inetStatData;
-	},
-
 	servicePoll() {
 		return Promise.all([
-			fs.exec(this.execPath, [ 'status' ]),
-			fs.exec(this.execPath, [ 'inet-status' ]),
+			this.getStatus(),
+			this.getInetStatus(),
 		]).then(stat => {
-			let curAppStatus = (stat[0].code === 0) ? stat[0].stdout.trim() : null;
-			let inetStatData = this.inetStatusFromJson(stat[1]);
-			this.appStatus  = curAppStatus;
-			this.inetStatus = inetStatData;
+			this.appStatus  = stat[0].status;
+			this.inetStatus = stat[1];
 			this.setInternetStatus();
 		}).catch(e => {
 			this.appStatus  = 'stoped';
@@ -467,11 +491,10 @@ return view.extend({
 
 	load() {
 		return Promise.all([
-			fs.exec(this.execPath, [ 'status' ]),
+			this.getStatus(),
 			this.getInitStatus(),
 			L.resolveDefault(fs.list(this.ledsPath), []),
-			this.callInitStatus('modemmanager'),
-			L.resolveDefault(fs.stat(this.mtaPath), null),
+			this.getInit(),
 			uci.load(this.appName),
 		]).catch(e => {
 			ui.addNotification(null, E('p', _('An error has occurred') + ': %s'.format(e.message)));
@@ -482,16 +505,24 @@ return view.extend({
 		if(!data) {
 			return;
 		};
-		this.appStatus           = (data[0].code === 0) ? data[0].stdout.trim() : null;
-		this.initStatus          = data[1];
-		this.leds                = data[2];
-		if(data[3].modemmanager) {
-			this.mm = true;
+		this.appStatus      = (data[0].code === 0) ? data[0].stdout.trim() : null;
+		this.initStatus     = data[1];
+		this.leds           = data[2];
+		if(data[3]) {
+			if(data[3].mm_mod) {
+				this.mm = true;
+			};
+			if(data[3].mm_init) {
+				this.mmInit = true;
+			};
+			if(data[3].email_mod) {
+				this.email = true;
+			};
+			if(data[3].email_exec) {
+				this.emailExec = true;
+			};
 		};
-		if(data[4]) {
-			this.mta = true;
-		};
-		this.currentAppMode      = uci.get(this.appName, 'config', 'mode');
+		this.currentAppMode = uci.get(this.appName, 'config', 'mode');
 
 		let s, o, ss;
 		let m = new form.Map(this.appName,
@@ -539,6 +570,7 @@ return view.extend({
 			_('Service: detector always runs as a system service.'),
 			_('Web UI only: detector works only when the Web UI is open (UI detector).')
 		);
+		mode.default = '0';
 
 
 		/* Service instances configuration */
@@ -551,6 +583,7 @@ return view.extend({
 				_('Write messages to the system log.')
 			);
 			o.rmempty = false;
+			o.default = '1';
 		};
 
 		s = m.section(form.GridSection, 'instance');
@@ -591,7 +624,6 @@ return view.extend({
 			'hosts', _('Hosts'),
 			_('Hosts to check Internet availability. Hosts are polled (in list order) until at least one of them responds.')
 		);
-		//o.datatype  = 'or(host,hostport)';
 		o.datatype = 'or(or(host,hostport),ipaddrport(1))';
 		o.default  = this.defaultHosts;
 		o.rmempty  = false;
@@ -692,13 +724,17 @@ return view.extend({
 			s.tab('led_control', _('LED control'));
 			s.tab('reboot_device', _('Reboot device'));
 			s.tab('restart_network', _('Restart network'));
-			s.tab('restart_modem', _('Restart modem'));
+			if(this.mm) {
+				s.tab('restart_modem', _('Restart modem'));
+			};
 		};
 
 		s.tab('public_ip', _('Public IP address'));
 
 		if(this.currentAppMode !== '2') {
-			s.tab('email', _('Email notification'));
+			if(this.email) {
+				s.tab('email', _('Email notification'));
+			};
 			s.tab('user_scripts', _('User scripts'));
 		};
 
@@ -777,7 +813,7 @@ return view.extend({
 				// dead_period
 				o = s.taboption('reboot_device', this.CBITimeInput,
 					'mod_reboot_dead_period', _('Dead period'),
-					_('Longest period of time without Internet access until the device is rebooted.')
+					_('Period of time without Internet access until the device is rebooted.')
 				);
 				o.default   = '3600';
 				o.rmempty   = false;
@@ -816,7 +852,7 @@ return view.extend({
 				// dead_period
 				o = s.taboption('restart_network', this.CBITimeInput,
 					'mod_network_restart_dead_period', _('Dead period'),
-					_('Longest period of time without Internet access before network restart.')
+					_('Period of time without Internet access before network restart.')
 				);
 				o.default   = '900';
 				o.rmempty   = false;
@@ -863,57 +899,56 @@ return view.extend({
 
 				// Restart modem
 
-				o = s.taboption('restart_modem', form.DummyValue, '_dummy');
-					o.rawhtml = true;
-					o.default = '<div class="cbi-section-descr">' +
-						_('Modem will be restarted when the Internet is disconnected.') +
-						'</div>';
-				o.modalonly = true;
-
 				if(this.mm) {
+					if(this.mmInit) {
+						o = s.taboption('restart_modem', form.DummyValue, '_dummy');
+							o.rawhtml = true;
+							o.default = '<div class="cbi-section-descr">' +
+								_('Modem will be restarted when the Internet is disconnected.') +
+								'</div>';
+						o.modalonly = true;
 
-					// enabled
-					o = s.taboption('restart_modem', form.Flag, 'mod_modem_restart_enabled',
-						_('Enabled'),
-					);
-					o.rmempty   = false;
-					o.modalonly = true;
+						// enabled
+						o = s.taboption('restart_modem', form.Flag, 'mod_modem_restart_enabled',
+							_('Enabled'),
+						);
+						o.rmempty   = false;
+						o.modalonly = true;
 
-					// dead_period
-					o = s.taboption('restart_modem', this.CBITimeInput,
-						'mod_modem_restart_dead_period', _('Dead period'),
-						_('Longest period of time without Internet access before modem restart.')
-					);
-					o.default   = '600';
-					o.rmempty   = false;
-					o.modalonly = true;
+						// dead_period
+						o = s.taboption('restart_modem', this.CBITimeInput,
+							'mod_modem_restart_dead_period', _('Dead period'),
+							_('Period of time without Internet access before modem restart.')
+						);
+						o.default   = '600';
+						o.rmempty   = false;
+						o.modalonly = true;
 
-					// any_band
-					o = s.taboption('restart_modem', form.Flag,
-						'mod_modem_restart_any_band', _('Unlock modem bands'),
-						_('Set the modem to be allowed to use any band.')
-					);
-					o.rmempty   = false;
-					o.modalonly = true;
+						// any_band
+						o = s.taboption('restart_modem', form.Flag,
+							'mod_modem_restart_any_band', _('Unlock modem bands'),
+							_('Set the modem to be allowed to use any band.')
+						);
+						o.rmempty   = false;
+						o.modalonly = true;
 
-					// iface
-					o = s.taboption('restart_modem', widgets.NetworkSelect, 'mod_modem_restart_iface',
-						_('Interface'),
-						_('ModemManger interface. If specified, it will be restarted after restarting ModemManager.')
-					);
-					o.multiple = false;
-					o.nocreate = true;
-					o.modalonly = true;
-
-				} else {
-					o         = s.taboption('restart_modem', form.DummyValue, '_dummy');
-					o.rawhtml = true;
-					o.default = '<label class="cbi-value-title"></label><div class="cbi-value-field"><em>' +
-						_('ModemManager is not available...') +
-						'</em></div>';
-					o.modalonly = true;
+						// iface
+						o = s.taboption('restart_modem', widgets.NetworkSelect, 'mod_modem_restart_iface',
+							_('Interface'),
+							_('ModemManger interface. If specified, it will be restarted after restarting ModemManager.')
+						);
+						o.multiple  = false;
+						o.nocreate  = true;
+						o.modalonly = true;
+					} else {
+						o         = s.taboption('restart_modem', form.DummyValue, '_dummy');
+						o.rawhtml = true;
+						o.default = '<label class="cbi-value-title"></label><div class="cbi-value-field"><em>' +
+							_('ModemManager is not available...') +
+							'</em></div>';
+						o.modalonly = true;
+					};
 				};
-
 			};
 
 			// Public IP address
@@ -996,97 +1031,118 @@ return view.extend({
 				);
 				o.modalonly = true;
 
-
 				// Email notification
 
-				o = s.taboption('email', form.DummyValue, '_dummy');
-					o.rawhtml = true;
-					o.default = '<div class="cbi-section-descr">' +
-						_('An email will be sent when the internet connection is restored after being disconnected.') +
-						'</div>';
-				o.modalonly = true;
+				if(this.email) {
+					if(this.emailExec) {
+						o = s.taboption('email', form.DummyValue, '_dummy');
+							o.rawhtml = true;
+							o.default = '<div class="cbi-section-descr">' +
+								_('An email will be sent when connected or disconnected from the Internet.') +
+								'</div>';
+						o.modalonly = true;
 
-				if(this.mta) {
+						// enabled
+						o = s.taboption('email', form.Flag, 'mod_email_enabled',
+							_('Enabled'));
+						o.rmempty = false;
+						o.modalonly = true;
 
-					// enabled
-					o = s.taboption('email', form.Flag, 'mod_email_enabled',
-						_('Enabled'));
-					o.rmempty = false;
-					o.modalonly = true;
+						// mode
+						o = s.taboption('email', form.ListValue,
+							'mod_email_mode', _('When email will be sent')
+						);
+						o.modalonly = true;
+						o.value(0, _('after connection'));
+						o.value(1, _('after disconnection'));
+						o.value(2, _('after connection or disconnection'));
+						o.default = '0';
 
-					// alive_period
-					o = s.taboption('email', this.CBITimeInput,
-						'mod_email_alive_period', _('Alive period'),
-						_('Longest period of time after connecting to the Internet before sending a message.')
-					);
-					o.rmempty = false;
-					o.modalonly = true;
+						// alive_period
+						o = s.taboption('email', this.CBITimeInput,
+							'mod_email_alive_period', _('Alive period'),
+							_('Period of time after connecting to the Internet before sending a message.')
+						);
+						o.rmempty = false;
+						o.modalonly = true;
+						o.depends({ 'mod_email_mode': '0' });
+						o.depends({ 'mod_email_mode': '2' });
+						o.default = '0';
 
-					// host_alias
-					o = s.taboption('email', form.Value, 'mod_email_host_alias',
-						_('Host alias'),
-						_('Host identifier in messages. If not specified, hostname will be used.'));
-					o.modalonly = true;
+						// dead_period
+						o = s.taboption('email', this.CBITimeInput,
+							'mod_email_dead_period', _('Dead period'),
+							_('Period of time after disconnecting from Internet before sending a message.')
+						);
+						o.rmempty = false;
+						o.modalonly = true;
+						o.depends({ 'mod_email_mode': '1' });
+						o.depends({ 'mod_email_mode': '2' });
+						o.default = '0';
 
-					// mail_recipient
-					o = s.taboption('email', form.Value,
-						'mod_email_mail_recipient', _('Recipient'));
-					o.description = _('Email address of the recipient.');
-					o.modalonly   = true;
+						// host_alias
+						o = s.taboption('email', form.Value, 'mod_email_host_alias',
+							_('Host alias'),
+							_('Host identifier in messages. If not specified, hostname will be used.'));
+						o.modalonly = true;
 
-					// mail_sender
-					o = s.taboption('email', form.Value,
-						'mod_email_mail_sender', _('Sender'));
-					o.description = _('Email address of the sender.');
-					o.modalonly   = true;
+						// mail_recipient
+						o = s.taboption('email', form.Value,
+							'mod_email_mail_recipient', _('Recipient'));
+						o.description = _('Email address of the recipient.');
+						o.modalonly   = true;
 
-					// mail_user
-					o = s.taboption('email', form.Value,
-						'mod_email_mail_user', _('User'));
-					o.description = _('Username for SMTP authentication.');
-					o.modalonly   = true;
+						// mail_sender
+						o = s.taboption('email', form.Value,
+							'mod_email_mail_sender', _('Sender'));
+						o.description = _('Email address of the sender.');
+						o.modalonly   = true;
 
-					// mail_password
-					o = s.taboption('email', form.Value,
-						'mod_email_mail_password', _('Password'));
-					o.description = _('Password for SMTP authentication.');
-					o.password    = true;
-					o.modalonly   = true;
+						// mail_user
+						o = s.taboption('email', form.Value,
+							'mod_email_mail_user', _('User'));
+						o.description = _('Username for SMTP authentication.');
+						o.modalonly   = true;
 
-					// mail_smtp
-					o = s.taboption('email', form.Value,
-						'mod_email_mail_smtp', _('SMTP server'));
-					o.description = _('Hostname/IP address of the SMTP server.');
-					o.datatype    = 'host';
-					o.default     = 'smtp.gmail.com';
-					o.modalonly   = true;
+						// mail_password
+						o = s.taboption('email', form.Value,
+							'mod_email_mail_password', _('Password'));
+						o.description = _('Password for SMTP authentication.');
+						o.password    = true;
+						o.modalonly   = true;
 
-					// mail_smtp_port
-					o = s.taboption('email', form.Value,
-						'mod_email_mail_smtp_port', _('SMTP server port'));
-					o.datatype    = 'port';
-					o.default   = '587';
-					o.modalonly = true;
+						// mail_smtp
+						o = s.taboption('email', form.Value,
+							'mod_email_mail_smtp', _('SMTP server'));
+						o.description = _('Hostname/IP address of the SMTP server.');
+						o.datatype    = 'host';
+						o.modalonly   = true;
 
-					// mail_security
-					o = s.taboption('email', form.ListValue,
-						'mod_email_mail_security', _('Security'));
-					o.description = '%s<br />%s'.format(
-						_('TLS: use STARTTLS if the server supports it.'),
-						_('SSL: SMTP over SSL.'),
-					);
-					o.value('tls', 'TLS');
-					o.value('ssl', 'SSL');
-					o.default   = 'tls';
-					o.modalonly = true;
+						// mail_smtp_port
+						o = s.taboption('email', form.Value,
+							'mod_email_mail_smtp_port', _('SMTP server port'));
+						o.datatype  = 'port';
+						o.modalonly = true;
 
-				} else {
-					o         = s.taboption('email', form.DummyValue, '_dummy');
-					o.rawhtml = true;
-					o.default = '<label class="cbi-value-title"></label><div class="cbi-value-field"><em>' +
-						_('Mailsend is not available...') +
-						'</em></div>';
-					o.modalonly = true;
+						// mail_security
+						o = s.taboption('email', form.ListValue,
+							'mod_email_mail_security', _('Security'));
+						o.description = '%s<br />%s'.format(
+							_('TLS: use STARTTLS if the server supports it.'),
+							_('SSL: SMTP over SSL.'),
+						);
+						o.value('tls', 'TLS');
+						o.value('ssl', 'SSL');
+						o.default   = 'tls';
+						o.modalonly = true;
+					} else {
+						o         = s.taboption('email', form.DummyValue, '_dummy');
+						o.rawhtml = true;
+						o.default = '<label class="cbi-value-title"></label><div class="cbi-value-field"><em>' +
+							_('Mailsend is not available...') +
+							'</em></div>';
+						o.modalonly = true;
+					};
 				};
 
 				// User scripts
@@ -1116,7 +1172,7 @@ return view.extend({
 				// alive_period
 				o = s.taboption('user_scripts', this.CBITimeInput,
 					'mod_user_scripts_alive_period', _('Alive period'),
-					_('Longest period of time after connecting to Internet before "up-script" runs.')
+					_('Period of time after connecting to Internet before "up-script" runs.')
 				);
 				o.default   = '0';
 				o.rmempty   = false;
@@ -1134,7 +1190,7 @@ return view.extend({
 				// dead_period
 				o = s.taboption('user_scripts', this.CBITimeInput,
 					'mod_user_scripts_dead_period', _('Dead period'),
-					_('Longest period of time after disconnecting from Internet before "down-script" runs.')
+					_('Period of time after disconnecting from Internet before "down-script" runs.')
 				);
 				o.default   = '0';
 				o.rmempty   = false;
@@ -1156,7 +1212,6 @@ return view.extend({
 	},
 
 	handleSaveApply(ev, mode) {
-		poll.stop();
 		return this.handleSave(ev).then(() => {
 			ui.changes.apply(mode == '0');
 			window.setTimeout(() => this.serviceRestart(), 3000);
