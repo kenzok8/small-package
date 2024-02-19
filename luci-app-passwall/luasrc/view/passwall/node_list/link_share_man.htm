@@ -140,12 +140,6 @@ local api = require "luci.passwall.api"
 		} else if (v_type === "Trojan-Plus") {
 			dom_prefix = "trojan_plus_"
 			protocol = "trojan"
-		} else if (v_type === "Trojan-Go") {
-			dom_prefix = "trojan_go_"
-			protocol = "trojan-go"
-		} else if (v_type === "Brook") {
-			dom_prefix = "brook_"
-			protocol = "brook"
 		} else if (v_type === "Hysteria2") {
 			dom_prefix = "hysteria2_"
 			protocol = "hysteria2"
@@ -345,74 +339,6 @@ local api = require "luci.passwall.api"
 			if (params[0] == "&") {
 				params = params.substring(1);
 			}
-			url += params;
-		} else if (v_type === "Trojan-Go") {
-			var v_password = opt.get(dom_prefix + "password");
-			var v_port = opt.get(dom_prefix + "port");
-			url = encodeURIComponent(v_password.value) +
-				"@" + _address +
-				":" + v_port.value + "/?";
-			var params = "";
-			if (opt.get(dom_prefix + "tls").checked) {
-				params += opt.query("sni", dom_prefix + "tls_serverName");
-			} else {
-				if (opt.get(dom_prefix + "transport").value === "original") {
-					var plugin = {};
-					plugin.type = opt.get(dom_prefix + "plugin_type").value;
-					if (plugin.type !== "plaintext") {
-						plugin.command = opt.get(dom_prefix + "plugin_cmd").value;
-						plugin.option = opt.get(dom_prefix + "plugin_option").value;
-						plugin.arg = opt.getlist(dom_prefix + "plugin_arg");
-					}
-					params += "&plugin=" + encodeURIComponent(JSON.stringify(plugin));
-				}
-			}
-			params += opt.query("type", dom_prefix + "transport");
-			var ws = (opt.get(dom_prefix + "transport").value.indexOf("ws") !== -1);
-			var h2 = (opt.get(dom_prefix + "transport").value.indexOf("h2") !== -1);
-			if (ws) {
-				params += opt.query("host", dom_prefix + "ws_host");
-				params += opt.query("path", dom_prefix + "ws_path");
-			}
-			var enc = "none";
-			if (opt.get(dom_prefix + "ss_aead").checked === true) {
-				enc = "ss;" +
-					opt.get(dom_prefix + "ss_aead_method").value +
-					":" + opt.get(dom_prefix + "ss_aead_pwd").value;
-			}
-			params += "&encryption=" + encodeURIComponent(enc);
-			params += "#" + encodeURI(v_alias.value);
-			if (params[0] == "&") {
-				params = params.substring(1);
-			}
-			url += params;
-		} else if (v_type === "Brook") {
-			var url = "";
-			var params = "?";
-			var v_protocol = opt.get(dom_prefix + "protocol");
-			var v_port = opt.get(dom_prefix + "port");
-			var v_password = opt.get(dom_prefix + "password");
-			var b_protocol_value = v_protocol.value.split('client').join('server');
-
-			var url_protocol = b_protocol_value;
-			params += opt.query("password", dom_prefix + "password");
-			if (b_protocol_value == "wsserver") {
-				var server = '';
-				var prefix = "ws://";
-				if (opt.get(dom_prefix + "tls").checked) {
-					prefix = "wss://";
-					url_protocol = 'wssserver';
-				}
-				var v_path = opt.get(dom_prefix + "ws_path");
-				var v_path_value = v_path.value || '/ws';
-				if (v_path_value.length > 1 && v_path_value.indexOf('/') < 0) {
-					v_path_value = '/' + v_path_value;
-				}
-				params += "&" + url_protocol + "=" + encodeURIComponent(prefix + _address + ":" + v_port.value + v_path_value);
-			} else {
-				params += "&" + url_protocol + "=" + encodeURIComponent(_address + ":" + v_port.value);
-			}
-			url += url_protocol;
 			url += params;
 		} else if ((v_type === "Hysteria2") || (v_type === "sing-box" && opt.get(dom_prefix + "protocol").value === "hysteria2")) {
 			protocol = "hysteria2"
@@ -725,89 +651,12 @@ local api = require "luci.passwall.api"
 					queryParam[decodeURIComponent(params[0]).toLowerCase()] = decodeURIComponent(params[1] || '');
 				}
 			}
-			if (queryParam.mux || queryParam.ws || queryParam.h2 || queryParam.ss || queryParam.plugin) {
-				ssu[0] = "trojan-go"
-			}
 			opt.set(dom_prefix + 'address', m.hostname);
 			opt.set(dom_prefix + 'port', m.port || "443");
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
 			opt.set(dom_prefix + 'tls', queryParam.tls === "1");
 			opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || '');
 			opt.set(dom_prefix + 'tls_allowInsecure', queryParam.allowinsecure === '1');
-			if (m.hash) {
-				opt.set('remarks', decodeURI(m.hash.substr(1)));
-			}
-		} if (ssu[0] === "trojan-go") {
-			dom_prefix = "trojan_go_"
-			var m = parseNodeUrl(ssrurl);
-			var password = m.passwd;
-			if (password === "") {
-				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
-				return false;
-			}
-			var queryParam = {};
-			if (m.search.length > 1) {
-				var query = m.search.split('?');
-				var queryParams = query[1];
-				var queryArray = queryParams.split('&');
-				for (i = 0; i < queryArray.length; i++) {
-					var params = queryArray[i].split('=');
-					queryParam[decodeURIComponent(params[0]).toLowerCase()] = decodeURIComponent(params[1] || '');
-				}
-			}
-			opt.set('type', 'Trojan-Go');
-			opt.set(dom_prefix + 'address', m.hostname);
-			opt.set(dom_prefix + 'port', m.port || "443");
-			opt.set(dom_prefix + 'password', decodeURIComponent(password));
-			opt.set(dom_prefix + 'tls', true);
-			opt.set(dom_prefix + 'tls_allowInsecure', '0');
-			opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || '');
-			var plugin = queryParam.plugin !== undefined;
-			if (plugin) {
-				opt.set(dom_prefix + 'transport', 'original');
-				var plugin = JSON.parse(queryParam.plugin);
-				if (plugin) {
-					opt.set(dom_prefix + 'plugin_type', plugin.type);
-					if (plugin.type !== "plaintext") {
-						opt.set(dom_prefix + 'plugin_cmd', plugin.command);
-						opt.set(dom_prefix + 'plugin_option', plugin.option);
-						opt.setlist(dom_prefix + 'plugin_arg', plugin.arg);
-					}
-				} else
-					alert(queryParam.plugin);
-			}
-			var tran = 'original';
-			var or = queryParam.type === undefined || queryParam.type === 'original';
-			var ws = null;
-			var h2 = null;
-			if (queryParam.type) {
-				ws = queryParam.type.indexOf('ws') !== -1;
-				h2 = queryParam.type.indexOf('h2') !== -1;
-			}
-			if (ws && h2) {
-				tran = 'h2+ws'
-			} else {
-				if (ws) tran = 'ws';
-				if (h2) tran = 'h2';
-			}
-			opt.set(dom_prefix + 'transport', tran);
-			if (ws) {
-				opt.set(dom_prefix + 'ws_host', queryParam.host || '');
-				opt.set(dom_prefix + 'ws_path', queryParam.path || '/');
-			}
-			var enc = {};
-			var ss = false;
-			if (queryParam.encryption) {
-				var r = queryParam.encryption.match(/^(ss);([^;:]*)[;:](.*)$/),
-					enc = { type: r[1], method: r[2], password: r[3] };
-			}
-			ss = enc.type === 'ss';
-			opt.set(dom_prefix + 'ss_aead', ss);
-			if (ss) {
-				opt.set(dom_prefix + 'ss_aead_method', enc.method.toLowerCase() || '');
-				opt.set(dom_prefix + 'ss_aead_pwd', enc.password || '');
-			}
-			opt.set(dom_prefix + 'smux', '1');
 			if (m.hash) {
 				opt.set('remarks', decodeURI(m.hash.substr(1)));
 			}
@@ -956,62 +805,6 @@ local api = require "luci.passwall.api"
 			} else if (queryParam.type === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', (queryParam.serviceName || queryParam.path) || "");
 				opt.set(dom_prefix + 'grpc_mode', queryParam.mode);
-			}
-
-			if (m.hash) {
-				opt.set('remarks', decodeURI(m.hash.substr(1)));
-			}
-		}
-		if (ssu[0] === "brook") {
-			dom_prefix = "brook_"
-			var stype = "Brook";
-			var m = parseNodeUrl(ssrurl);
-
-			var from_protocol = m.host;
-			var protocol = from_protocol.split('server').join('client');
-
-			var queryParam = {};
-			if (m.search.length > 1) {
-				var query = m.search.split('?');
-				var queryParams = query[1];
-				var queryArray = queryParams.split('&');
-				var params;
-				for (i = 0; i < queryArray.length; i++) {
-					params = queryArray[i].split('=');
-					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
-				}
-			}
-
-			var password = queryParam.password;
-			if (password === "") {
-				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
-				return false;
-			}
-
-			opt.set('type', stype);
-			opt.set(dom_prefix + 'protocol', protocol);
-			opt.set(dom_prefix + 'password', password);
-
-			if (protocol == 'wsclient' || protocol == 'wssclient') {
-				opt.set(dom_prefix + 'protocol', 'wsclient');
-				var wsserver = queryParam[from_protocol].split('://');
-				wsserver = wsserver[1].split('/');
-				var path = wsserver[1] && '/' + wsserver[1] || '/ws';
-				var server = wsserver[0].split(':');
-				opt.set(dom_prefix + 'address', server[0]);
-				opt.set(dom_prefix + 'port', server[1]);
-				opt.set(dom_prefix + 'ws_path', path);
-				if (protocol == 'wssclient') {
-					opt.set(dom_prefix + 'tls', true);
-				}
-			} else {
-				var server = queryParam[from_protocol].split(':');
-				if (server.length < 2) {
-					s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
-					return false;
-				}
-				opt.set(dom_prefix + 'address', server[0]);
-				opt.set(dom_prefix + 'port', server[1]);
 			}
 
 			if (m.hash) {
