@@ -3,6 +3,7 @@
     "use strict";
     import { stat } from "fs";
     import { load_config } from "./common/config.mjs";
+    import { dns_direct_servers } from "./feature/dns.mjs";
     const ignore_tp_spec_def_gw = stat("/usr/share/xray/ignore_tp_spec_def_gw");
     const config = load_config();
     const general = config[filter(keys(config), k => config[k][".type"] == "general")[0]];
@@ -16,6 +17,9 @@
     let wan_bp_ips_no_dns = general.wan_bp_ips || [];
     let wan_fw_ips_no_dns = general.wan_fw_ips || [];
     push(wan_bp_ips_no_dns, split(general.fast_dns || "223.5.5.5:53", ":")[0]);
+    for (let i in dns_direct_servers(config)) {
+        push(wan_bp_ips_no_dns, i);
+    }
     push(wan_fw_ips_no_dns, split(general.secure_dns || "8.8.8.8:53", ":")[0]);
     const wan_bp_ips_v4 = filter(uniq(wan_bp_ips_no_dns), v => index(v, ":") == -1);
     const wan_bp_ips_v6 = filter(uniq(wan_bp_ips_no_dns), v => index(v, ":") != -1);
