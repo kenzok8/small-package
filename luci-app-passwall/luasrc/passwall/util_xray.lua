@@ -42,9 +42,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		local proxy = 0
 		local proxy_tag = "nil"
+		local fragment = nil
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy = proxy_table.proxy or 0
 			proxy_tag = proxy_table.tag or "nil"
+			fragment = proxy_table.fragment or nil
 		end
 
 		if node.type == "Xray" then
@@ -130,7 +132,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 			-- 底层传输配置
 			streamSettings = (node.streamSettings or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
 				sockopt = {
-					mark = 255
+					mark = 255,
+					tcpMptcp = (node.tcpMptcp == "1") and true or nil,
+					tcpNoDelay = (node.tcpNoDelay == "1") and true or nil,
+					dialerProxy = fragment and "fragment" or nil
 				},
 				network = node.transport,
 				security = node.stream_security,
@@ -644,7 +649,7 @@ function gen_config(var)
 				end
 				if is_new_blc_node then
 					local blc_node = uci:get_all(appname, blc_node_id)
-					local outbound = gen_outbound(flag, blc_node, blc_node_tag)
+					local outbound = gen_outbound(flag, blc_node, blc_node_tag, { fragment = xray_settings.fragment == "1" or nil })
 					if outbound then
 						table.insert(outbounds, outbound)
 						valid_nodes[#valid_nodes + 1] = blc_node_tag
@@ -716,7 +721,7 @@ function gen_config(var)
 					preproxy_enabled = false
 				end
 			elseif preproxy_node and api.is_normal_node(preproxy_node) then
-				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag)
+				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag, { fragment = xray_settings.fragment == "1" or nil })
 				if preproxy_outbound then
 					table.insert(outbounds, preproxy_outbound)
 				else
@@ -818,7 +823,14 @@ function gen_config(var)
 									})
 								end
 							end
-							local _outbound = gen_outbound(flag, _node, rule_name, { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil })
+							local proxy_table = {
+								proxy = proxy and 1 or 0,
+								tag = proxy and preproxy_tag or nil
+							}
+							if xray_settings.fragment == "1" and not proxy_table.tag then
+								proxy_table.fragment = true
+							end
+							local _outbound = gen_outbound(flag, _node, rule_name, proxy_table)
 							if _outbound then
 								table.insert(outbounds, _outbound)
 								if proxy then preproxy_used = true end
@@ -989,7 +1001,7 @@ function gen_config(var)
 					sys.call("touch /tmp/etc/passwall/iface/" .. node.iface)
 				end
 			else
-				outbound = gen_outbound(flag, node)
+				outbound = gen_outbound(flag, node, nil, { fragment = xray_settings.fragment == "1" or nil })
 			end
 			if outbound then table.insert(outbounds, outbound) end
 			routing = {
@@ -1122,7 +1134,7 @@ function gen_config(var)
 					address = remote_dns_tcp_server,
 					port = tonumber(remote_dns_tcp_port),
 					network = "tcp",
-					nonIPQuery = "skip"
+					nonIPQuery = "drop"
 				}
 			})
 
@@ -1229,6 +1241,28 @@ function gen_config(var)
 				-- }
 			}
 		}
+		
+		if xray_settings.fragment == "1" then
+			table.insert(outbounds, {
+				protocol = "freedom",
+				tag = "fragment",
+				settings = {
+					domainStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP",
+					fragments = {
+						packets = (xray_settings.fragment_packets and xray_settings.fragment_packets ~= "") and xray_settings.fragment_packets,
+						length = (xray_settings.fragment_length and xray_settings.fragment_length ~= "") and xray_settings.fragment_length,
+						interval = (xray_settings.fragment_interval and xray_settings.fragment_interval ~= "") and xray_settings.fragment_interval
+					}
+				},
+				streamSettings = {
+					sockopt = {
+						mark = 255,
+						tcpNoDelay = true
+					}
+				}
+			})		
+		end
+		
 		table.insert(outbounds, {
 			protocol = "freedom",
 			tag = "direct",
