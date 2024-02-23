@@ -11,10 +11,10 @@ PKG_ARCH_sunpanel:=$(ARCH)
 
 PKG_NAME:=sunpanel
 PKG_VERSION:=1.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/linkease/istore-packages/releases/download/prebuilt/
-PKG_HASH:=8b1b5cf481bb3421180795600c55b2a4334a285ea1544fa0c2436cea62e8c997
+PKG_HASH:=3ce70530fad9788c4ce0a2969cffc5b80f010406c7a0185b9a40616e3e67f201
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
