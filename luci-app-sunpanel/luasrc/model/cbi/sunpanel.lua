@@ -4,7 +4,8 @@
 local block_model = require "luci.model.sunpanel"
 local m, s, o
 
-m = Map("sunpanel", translate("SunPanel"), translate("Server, NAS navigation panel, Homepage, Browser homepage."))
+m = Map("sunpanel", translate("SunPanel"), translate("Server, NAS navigation panel, Homepage, Browser homepage. Login:") .. "admin@sun.cc/12345678"
+    .. translate("Official website:") .. ' <a href=\"https://sun-panel-doc.enianteam.com/\" target=\"_blank\">https://sun-panel-doc.enianteam.com/</a>')
 
 m:section(SimpleSection).template  = "sunpanel/status"
 

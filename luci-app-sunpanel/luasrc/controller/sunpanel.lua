@@ -16,7 +16,7 @@ function sunpanel_status()
 	local port = tonumber(uci:get_first("sunpanel", "sunpanel", "port"))
 
 	local status = {
-		running = (sys.call("pidof sunpanel >/dev/null") == 0),
+		running = (sys.call("pidof sunpanelbin >/dev/null") == 0),
 		port = (port or 8897)
 	}
 
