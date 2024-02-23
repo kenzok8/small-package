@@ -72,7 +72,7 @@ end
 if #arg == 3 then 
   local cur = uci.cursor() 
   local configs = {}
-  cur:foreach(arg[1], "main", function(s)
+  cur:foreach(arg[1], arg[1], function(s)
     for k, v in pairs(s) do
       configs[k] = v
     end
