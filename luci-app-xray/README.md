@@ -45,6 +45,7 @@ Fork this repository and:
 * 2024-02-18 chore: optimize code style; bump version
 * 2024-02-19 fix: several DNS related validation
 * 2024-02-20 fix: domain match priority; stricter resolve options; socks / http auth
+* 2024-02-23 chore: bump version to 3.4.1
 
 ## Changelog since 3.3.0
 
