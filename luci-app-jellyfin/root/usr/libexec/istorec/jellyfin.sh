@@ -87,7 +87,7 @@ do_install_detail() {
     done
   elif [ -d /dev/dri ]; then
     cmd="$cmd\
-    --device /dev/dri:/dev/dri \
+    -v /dev/dri:/dev/dri \
     --privileged "
   fi
   if [ "$hostnet" = 1 ]; then
