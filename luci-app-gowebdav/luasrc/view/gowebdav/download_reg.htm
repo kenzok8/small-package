@@ -1,0 +1,15 @@
+<%+cbi/valueheader%>
+<script type="text/javascript">//<![CDATA[
+	function download(filename, reg) {
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(reg));
+		element.setAttribute('download', filename);
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+	};
+//]]>
+</script>
+<input type="button" class="btn cbi-button cbi-button-reload" value="<%:Click Download%>" onclick='download("allow_http.reg","Windows Registry Editor Version 5.00\r\n\r\n[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\WebClient\\Parameters]\r\n\"BasicAuthLevel\"=dword:00000002\r\n\"FileSizeLimitInBytes\"=dword:ffffffff")' />
+<%+cbi/valuefooter%>
