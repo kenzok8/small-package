@@ -7,43 +7,26 @@ CONFIG=socat
 CONFIG_PATH=/var/etc/$CONFIG
 
 add_rule() {
-	iptables -N SOCAT
-	iptables -I INPUT -j SOCAT
-	ip6tables -N SOCAT
-	ip6tables -I INPUT -j SOCAT
+	accept_port=$(cat /var/etc/$CONFIG.port | tr "\n" " ")
+	if [ "$accept_port" ]; then
+		uci -q delete firewall.socat
+		uci set firewall.socat=rule
+		uci set firewall.socat.name="socat"
+		uci set firewall.socat.target="ACCEPT"
+		uci set firewall.socat.src="wan"
+		uci set firewall.socat.dest_port="$accept_port"
+		uci set firewall.socat.enabled="1"
+		uci commit firewall
+		/etc/init.d/firewall reload >/dev/null 2>&1
+	else
+		del_rule
+	fi
 }
 
 del_rule() {
-	iptables -D INPUT -j SOCAT 2>/dev/null
-	iptables -F SOCAT 2>/dev/null
-	iptables -X SOCAT 2>/dev/null
-	ip6tables -D INPUT -j SOCAT 2>/dev/null
-	ip6tables -F SOCAT 2>/dev/null
-	ip6tables -X SOCAT 2>/dev/null
-}
-
-gen_include() {
-	echo '#!/bin/sh' > /var/etc/$CONFIG.include
-	extract_rules() {
-		local _ipt="iptables"
-		[ "$1" == "6" ] && _ipt="ip6tables"
-		
-		echo "*$2"
-		${_ipt}-save -t $2 | grep "SOCAT" | \
-		sed -e "s/^-A \(INPUT\)/-I \1 1/"
-		echo 'COMMIT'
-	}
-	cat <<-EOF >> /var/etc/$CONFIG.include
-		iptables-save -c | grep -v "SOCAT" | iptables-restore -c
-		iptables-restore -n <<-EOT
-		$(extract_rules 4 filter)
-		EOT
-		ip6tables-save -c | grep -v "SOCAT" | ip6tables-restore -c
-		ip6tables-restore -n <<-EOT
-		$(extract_rules 6 filter)
-		EOT
-	EOF
-	return 0
+	uci -q delete firewall.socat
+	uci commit firewall
+	/etc/init.d/firewall reload >/dev/null 2>&1
 }
 
 run_service() {
@@ -58,9 +41,6 @@ run_service() {
 	config_get dest_proto $1 dest_proto
 	config_get dest_ip $1 dest_ip
 	config_get dest_port $1 dest_port
-	config_get proxy $1 proxy
-	config_get proxy_server $1 proxy_server
-	config_get proxy_port $1 proxy_port
 	config_get firewall_accept $1 firewall_accept
 	ln -s /usr/bin/socat ${CONFIG_PATH}/$1
 	
@@ -80,36 +60,18 @@ run_service() {
 	if [ "$protocol" == "port_forwards" ]; then
 		listen=${proto}${family}
 		[ "$family" == "" ] && listen=${proto}6
-		[ "$proxy" != "" ] && {
-			proxy_arg=""
-			[ "$proxy" == "socks4/4a" ] && {
-				dest_proto="socks4a"
-				proxy_arg="socksport"
-			}
-			[ "$proxy" == "http" ] && {
-				dest_proto="proxy"
-				proxy_arg="proxyport"
-			}
-			[ -n "$proxy_server" ] && dest_proto="${dest_proto}:${proxy_server}"
-			[ -n "$proxy_port" ] && proxy_arg=",${proxy_arg}=${proxy_port}"
-		}
-		${CONFIG_PATH}/$1 ${listen}-listen:${listen_port}${ipv6only_params}${reuseaddr},fork ${dest_proto}:${dest_ip}:${dest_port}${proxy_arg} >/dev/null 2>&1 &
+		${CONFIG_PATH}/$1 ${listen}-listen:${listen_port}${ipv6only_params}${reuseaddr},fork ${dest_proto}:${dest_ip}:${dest_port} >/dev/null 2>&1 &
 	fi
 	
 	[ "$firewall_accept" == "1" ] && {
-		if [ -z "$family" ] || [ "$family" == "6" ]; then
-			ip6tables -A SOCAT -p $proto --dport $listen_port -m comment --comment "$remarks" -j ACCEPT
-		fi
-		if [ -z "$family" ] || [ "$family" == "4" ]; then
-			iptables -A SOCAT -p $proto --dport $listen_port -m comment --comment "$remarks" -j ACCEPT
-		fi
+		echo $listen_port >> /var/etc/$CONFIG.port
 	}
 }
 
 stop_service() {
 	busybox ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 	del_rule
-	rm -rf $CONFIG_PATH /var/etc/$CONFIG.include
+	rm -rf $CONFIG_PATH /var/etc/$CONFIG.port
 }
 
 start() {
@@ -118,10 +80,10 @@ start() {
 		stop_service
 	else
 		mkdir -p $CONFIG_PATH
-		add_rule
+		rm -f /var/etc/$CONFIG.port
 		config_load $CONFIG
 		config_foreach run_service "config"
-		gen_include
+		add_rule
 	fi
 }
 

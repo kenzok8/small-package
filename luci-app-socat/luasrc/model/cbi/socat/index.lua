@@ -3,7 +3,7 @@ local e = luci.model.uci.cursor()
 
 m = Map("socat")
 m.title = translate("Socat")
-m.description = translate("Socat is a versatile networking tool named after 'Socket CAT', which can be regarded as an N-fold enhanced version of NetCat")
+m.description = translate("Socat is a relay for bidirectional data transfer between two independent data channels.")
 
 s = m:section(NamedSection, "global", "global")
 s.anonymous = true
