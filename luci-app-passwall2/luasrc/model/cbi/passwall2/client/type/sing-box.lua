@@ -352,9 +352,8 @@ o = s:option(Flag, option_name("tls"), translate("TLS"))
 o.default = 0
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
-o:depends({ [option_name("protocol")] = "socks" })
+o:depends({ [option_name("protocol")] = "http" })
 o:depends({ [option_name("protocol")] = "trojan" })
-o:depends({ [option_name("protocol")] = "shadowsocks" })
 
 o = s:option(ListValue, option_name("alpn"), translate("alpn"))
 o.default = "default"
@@ -624,5 +623,12 @@ o:value("v2ray-plugin")
 
 o = s:option(Value, option_name("plugin_opts"), translate("opts"))
 o:depends({ [option_name("plugin_enabled")] = true })
+
+o = s:option(ListValue, option_name("domain_strategy"), "Domain Strategy", translate("If is domain name, The requested domain name will be resolved to IP before connect."))
+o.default = "prefer_ipv6"
+o:value("prefer_ipv4")
+o:value("prefer_ipv6")
+o:value("ipv4_only")
+o:value("ipv6_only")
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)
