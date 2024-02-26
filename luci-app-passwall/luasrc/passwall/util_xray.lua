@@ -248,6 +248,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 				reserved = (node.protocol == "wireguard" and node.wireguard_reserved) and node.wireguard_reserved or nil
 			}
 		}
+
+		if node.protocol == "wireguard" then
+			result.settings.kernelMode = false
+		end
+
 		local alpn = {}
 		if node.alpn and node.alpn ~= "default" then
 			string.gsub(node.alpn, '[^' .. "," .. ']+', function(w)
@@ -665,7 +670,7 @@ function gen_config(var)
 					selector = valid_nodes,
 					strategy = { type = _node.balancingStrategy or "random" }
 				}
-				if _node.balancingStrategy == "leastPing" then
+				if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" then
 					if not observatory then
 						observatory = {
 							subjectSelector = { "blc-" },
@@ -690,6 +695,34 @@ function gen_config(var)
 				end
 			end
 			return balancer, rule
+		end
+
+		local function set_outbound_detour(node, outbound, outbounds_table, shunt_rule_name)
+			if not node or not outbound or not outbounds_table then return nil end
+			local default_outTag = outbound.tag
+
+			if node.to_node then
+				local to_node = uci:get_all(appname, node.to_node)
+				if to_node then
+					local to_outbound = gen_outbound(nil, to_node)
+					if to_outbound then
+						if shunt_rule_name then
+							to_outbound.tag = outbound.tag
+							outbound.tag = node[".name"]
+						else
+							to_outbound.tag = outbound.tag .. " -> " .. to_outbound.tag
+						end
+
+						to_outbound.proxySettings = {
+							tag = outbound.tag,
+							transportLayer = true
+						}
+						table.insert(outbounds_table, to_outbound)
+						default_outTag = to_outbound.tag
+					end
+				end
+			end
+			return default_outTag
 		end
 
 		if node.protocol == "_shunt" then
@@ -723,6 +756,7 @@ function gen_config(var)
 			elseif preproxy_node and api.is_normal_node(preproxy_node) then
 				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag, { fragment = xray_settings.fragment == "1" or nil })
 				if preproxy_outbound then
+					set_outbound_detour(preproxy_node, preproxy_outbound, outbounds, preproxy_tag)
 					table.insert(outbounds, preproxy_outbound)
 				else
 					preproxy_enabled = false
@@ -738,7 +772,7 @@ function gen_config(var)
 				end
 			end
 
-			local function gen_shunt_node(rule_name, _node_id, as_proxy)
+			local function gen_shunt_node(rule_name, _node_id)
 				if not rule_name then return nil, nil end
 				if not _node_id then _node_id = node[rule_name] or "nil" end
 				local rule_outboundTag
@@ -832,6 +866,7 @@ function gen_config(var)
 							end
 							local _outbound = gen_outbound(flag, _node, rule_name, proxy_table)
 							if _outbound then
+								set_outbound_detour(_node, _outbound, outbounds, rule_name)
 								table.insert(outbounds, _outbound)
 								if proxy then preproxy_used = true end
 								rule_outboundTag = rule_name
@@ -984,26 +1019,27 @@ function gen_config(var)
 					}
 				}
 			end
-		else
-			local outbound = nil
-			if node.protocol == "_iface" then
-				if node.iface then
-					outbound = {
-						protocol = "freedom",
-						tag = "outbound",
-						streamSettings = {
-							sockopt = {
-								mark = 255,
-								interface = node.iface
-							}
+		elseif node.protocol == "_iface" then
+			if node.iface then
+				local outbound = {
+					protocol = "freedom",
+					tag = "outbound",
+					streamSettings = {
+						sockopt = {
+							mark = 255,
+							interface = node.iface
 						}
 					}
-					sys.call("touch /tmp/etc/passwall/iface/" .. node.iface)
-				end
-			else
-				outbound = gen_outbound(flag, node, nil, { fragment = xray_settings.fragment == "1" or nil })
+				}
+				table.insert(outbounds, outbound)
+				sys.call("touch /tmp/etc/passwall/iface/" .. node.iface)
 			end
-			if outbound then table.insert(outbounds, outbound) end
+		else
+			local outbound = gen_outbound(flag, node, nil, { fragment = xray_settings.fragment == "1" or nil })
+			if outbound then
+				set_outbound_detour(node, outbound, outbounds)
+				table.insert(outbounds, outbound)
+			end
 			routing = {
 				domainStrategy = "AsIs",
 				domainMatcher = "hybrid",

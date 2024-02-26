@@ -16,7 +16,7 @@ enable = s:option(Flag, "enable", translate("Enable"), translate("Automatically 
 enable.default = 0
 enable.optional = false
 
-proxy = s:option(Flag, "proxy", translate("Preference Mirror Speedup"), translate("Preference Mirror for speeding up downloads while upgrading (For Mainland)"))
+proxy = s:option(Flag, "proxy", translate("Preference Mirror Speedup"), translate("Preference Mirror for speeding up download"))
 proxy.default = 1
 proxy:depends("enable", "1")
 proxy.optional = false
@@ -24,8 +24,8 @@ proxy.optional = false
 proxy_type = s:option(ListValue, "proxy_type", translate("Mirror Station"))
 proxy_type.default = "A"
 proxy_type:value("A", translate("Automatic selection (Recommend)"))
-proxy_type:value("G", translate("GitHub Proxy - Ghproxy (Maybe faster)"))
-proxy_type:value("F", translate("FastGit UK"))
+proxy_type:value("G", translate("GitHub Proxy"))
+proxy_type:value("F", translate("CF Workers"))
 proxy_type:depends("proxy", "1")
 proxy_type.optional = false
 

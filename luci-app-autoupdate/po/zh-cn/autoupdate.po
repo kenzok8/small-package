@@ -25,14 +25,14 @@ msgstr "镜像站"
 msgid "Automatic selection (Recommend)"
 msgstr "自动选择 (推荐)"
 
-msgid "GitHub Proxy - Ghproxy (Maybe faster)"
-msgstr "GitHub Proxy - Ghproxy (也许更快)"
+msgid "GitHub Proxy"
+msgstr "GitHub Proxy - Ghproxy"
 
-msgid "FastGit UK"
-msgstr "FastGit UK"
+msgid "CF Workers"
+msgstr "Cloudflare Workers"
 
-msgid "Preference Mirror for speeding up downloads while upgrading (For Mainland)"
-msgstr "定时更新固件时优先启用镜像加速 (适用与被墙地区)"
+msgid "Preference Mirror for speeding up download"
+msgstr "优先使用镜像站加速下载"
 
 msgid "Advanced Settings"
 msgstr "高级设置"
@@ -53,7 +53,7 @@ msgid "Upgrade without keeping config"
 msgstr "不保留配置"
 
 msgid "Please don't select it unless you know what you're doing!"
-msgstr "请勿随意勾选除非你知道自己在做什么!"
+msgstr "请勿随意勾选,除非你知道自己在做什么!"
 
 msgid "Recommend to set the AUTOUPDATE time to an uncommon time"
 msgstr "建议设置定时更新时间为设备不常用的时间"

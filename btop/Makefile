@@ -1,7 +1,3 @@
-# SPDX-License-Identifier: GPL-3.0-only
-#
-# Copyright (C) 2022 ImmortalWrt.org
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btop
@@ -37,11 +33,11 @@ define Package/btop/description
   C++ version and continuation of bashtop and bpytop.
 endef
 
-PROG_LDFLAGS:=-pthread -DFMT_HEADER_ONLY -D_FILE_OFFSET_BITS=64
+BTOP_LDFLAGS:=-pthread -DFMT_HEADER_ONLY -D_FILE_OFFSET_BITS=64
 MAKE_FLAGS+= \
 	PLATFORM=Linux \
 	OPTFLAGS="$(TARGET_CXXFLAGS)" \
-	LDCXXFLAGS="$(TARGET_LDFLAGS) $(PROG_LDFLAGS)"
+	LDCXXFLAGS="$(TARGET_LDFLAGS) $(BTOP_LDFLAGS)"
 
 define Package/btop/install
 	$(INSTALL_DIR) $(1)/usr/bin
