@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2023 Hyy2001X <https://github.com/Hyy2001X>
+# Copyright (C) 2020-2024 Hyy2001X <https://github.com/Hyy2001X>
 
 include $(TOPDIR)/rules.mk
 
@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/description
-	autoupdate - Upgrade OpenWrt by one-key
+	autoupdate - One-key AutoUpdate
 endef
 
 define Build/Compile

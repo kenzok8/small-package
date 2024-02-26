@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.9.7
+Version=V6.9.8
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -22,6 +22,9 @@ function SHELL_HELP() {
     -f				跳过版本号校验,并强制刷写固件 ${Red}(危险)${White} *
     -F, --force-flash		强制刷写固件 ${Red}(危险)${White} *
     -P, --proxy			优先开启镜像加速下载固件 *
+    ${Next} A			自动选择
+    ${Next} F			Cloudflare Workers
+    ${Next} G			Ghproxy
     -D <Downloader>		使用指定的下载器 <wget-ssl | wget | curl | uclient-fetch> *
     --decompress		解压 img.gz 固件后再更新固件 *
     --skip-verify		跳过固件 SHA256 校验 ${Red}(危险)${White} *
@@ -653,15 +656,22 @@ function UPGRADE() {
 		;;
 		-P | --proxy)
 			case $2 in
-			A | F | G)
-				Proxy_Type=$2
+			A)
+				Proxy_Type="All"
+				Special_Commands="${Special_Commands} [镜像加速 Automatic]"
 				shift
 			;;
-			*)
-				Proxy_Type="All"
+			F)
+				Proxy_Type=$2
+				Special_Commands="${Special_Commands} [CF Workers]"
+				shift
+			;;
+			G)
+				Proxy_Type=$2
+				Special_Commands="${Special_Commands} [Ghproxy]"
+				shift
 			;;
 			esac
-			Special_Commands="${Special_Commands} [镜像加速 ${Proxy_Type}]"
 		;;
 		-D)
 			DL_DEPENDS=($2)
@@ -785,14 +795,14 @@ $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
 	esac
 	local URL
 	case "${Proxy_Type}" in
-	A | F | G)
+	F | G)
 		URL="$(Proxy_X ${CLOUD_FW_Url} ${Proxy_Type}@@5)"
 	;;
 	All)
-		URL="$(Proxy_X ${CLOUD_FW_Url} G@@2 F@@1 A@@1 X@@1)"
+		URL="$(Proxy_X ${CLOUD_FW_Url} G@@2 F@@2 X@@1)"
 	;;
 	*)
-		URL="$(Proxy_X ${CLOUD_FW_Url} X@@3 G@@1 F@@1 A@@1)"
+		URL="$(Proxy_X ${CLOUD_FW_Url} X@@3 G@@1 F@@1)"
 	;;
 	esac
 	DOWNLOADER --file-name ${CLOUD_FW_Name} --no-url-name --dl ${DL_DEPENDS[@]} --url ${URL} --path ${Firmware_Path} --timeout 15 --type 固件
@@ -1102,17 +1112,14 @@ function Proxy_X() {
 	
 	case "${Type}" in
 	raw)
-		A=https://raw.fgit.cf/$(echo ${URL##*com/})
 		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
 		G=https://mirror.ghproxy.com/${URL}
 	;;
 	release)
-		A=https://hub.fgit.cf/$(echo ${URL##*com/})
 		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
 		G=https://mirror.ghproxy.com/${URL}
 	;;
 	codeload)
-		A=https://hub.fgit.cf/$(echo ${URL##*com/})
 		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
 		G=https://mirror.ghproxy.com/${URL}
 	;;
@@ -1120,9 +1127,6 @@ function Proxy_X() {
 	while [[ $1 ]];do
 		local URL_Cache=$1 URL_Final
 		case $1 in
-		A@@*)
-			URL_Final="${URL_Cache/A/${A}}"
-		;;
 		F@@*)
 			URL_Final="${URL_Cache/F/${F}}"
 		;;
