@@ -223,7 +223,7 @@ return view.extend({
         o.value("tcp+local", _("TCP (direct)"));
         o.value("https", _("DNS over HTTPS"));
         o.value("https+local", _("DNS over HTTPS (direct)"));
-        o.default = "UseIP";
+        o.default = "udp";
         o.modalonly = true;
 
         ss.tab('protocol', _('Protocol Settings'));
