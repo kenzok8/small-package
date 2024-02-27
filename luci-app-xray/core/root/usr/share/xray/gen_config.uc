@@ -60,8 +60,8 @@ function inbounds(proxy, config, extra_inbound) {
 
 function outbounds(proxy, config, manual_tproxy, bridge, extra_inbound, fakedns) {
     let result = [
-        direct_outbound("direct", null),
         blackhole_outbound(),
+        direct_outbound("direct", null),
         ...dns_server_outbounds(proxy),
         ...manual_tproxy_outbounds(config, manual_tproxy),
         ...bridge_outbounds(config, bridge)
