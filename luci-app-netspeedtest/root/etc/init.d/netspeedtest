@@ -64,10 +64,12 @@ homebox_prepare() {
 }
 
 start_service() {
-	homebox_prepare 
 	config_load netspeedtest
         config_foreach get_config homebox
-	[ "x$enabled" != "x1" ] && exit 1
+	[ "x$enabled" != "x1" ] && {
+	    homebox_prepare 
+	   exit 
+	}
 	procd_open_instance
 	procd_set_param command $PROG
 	[ "x$logger" == x1 ] && procd_set_param stderr 1

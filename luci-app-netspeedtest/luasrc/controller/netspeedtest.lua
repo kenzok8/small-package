@@ -4,14 +4,16 @@ module("luci.controller.netspeedtest", package.seeall)
 local fs=require"nixio.fs"
 local sys  = require "luci.sys"
 function index()
-	entry({"admin","network","netspeedtest"},alias("admin", "network", "netspeedtest", "homebox"),_("Net Speedtest"), 90).dependent = true
+
+    if not nixio.fs.access("/etc/config/netspeedtest") then return end
+    local e = entry({"admin","network","netspeedtest"},alias("admin", "network", "netspeedtest", "homebox"),_("Net Speedtest"), 90)
+    e.dependent=false
+    e.acl_depends = { "luci-app-netspeedtest" }
 	entry({"admin","network","netspeedtest","homebox"},cbi("netspeedtest/homebox"),_("Lan homebox Web"),20).leaf = true
 	entry({"admin","network","netspeedtest","speedtestiperf3"},cbi("netspeedtest/speedtestiperf3", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Lan Speedtest Iperf3"),30).leaf = true
         entry({"admin","network","netspeedtest","speedtestwan"},cbi("netspeedtest/speedtestwan", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Wan Speedtest"), 40).leaf = true
-        entry({"admin","network","netspeedtest","netperftestwan"},cbi("netspeedtest/netperftestwan", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Netperf Speedtest"), 40).leaf = true
 
 	entry({"admin", "network", "netspeedtest", "checknet"}, call("check_net"))
-	entry({"admin", "network", "homebox_status"}, call("homebox_status"))
 	entry({"admin", "network", "iperf3_status"}, call("iperf3_status"))
 
 	entry({"admin", "network","test_iperf0"}, post("test_iperf0"), nil).leaf = true
@@ -24,15 +26,6 @@ function index()
 	entry({"admin", "network", "netspeedtest", "dellog"},call("dellog"))
 end
 
-
-function homebox_status()
-	local e = {
-		run = (sys.call("pidof homebox >/dev/null") == 0),
-		port = 3300
-	}
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
-end
 
 function iperf3_status()
 	local e={}
