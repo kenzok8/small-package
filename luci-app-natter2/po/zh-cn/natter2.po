@@ -85,14 +85,14 @@ msgstr "转发方式"
 msgid "Instructions for forwarding method"
 msgstr "转发方式说明"
 
-msgid "socket (Integrated)"
-msgstr "Socket（内置）"
+msgid "socket (Not Recommended)"
+msgstr "Socket（内置, 不推荐）"
 
-msgid "iptables (Kernel)"
-msgstr "iptables（内核级）"
+msgid "iptables (Recommended)"
+msgstr "iptables（防火墙, 推荐）"
 
-msgid "nftables (Kernel)"
-msgstr "nftables（内核级 新版）"
+msgid "nftables (Recommended)"
+msgstr "nftables（防火墙, 推荐）"
 
 msgid "Target Address"
 msgstr "目标地址"
@@ -144,12 +144,6 @@ msgstr "使用自定义的保活服务器"
 
 msgid "Tips"
 msgstr "提示"
-
-msgid "Recommended to accept high UDP ports in system firewall"
-msgstr "建议在防火墙中放行高位 UDP 端口"
-
-msgid "Turn off transparent proxies to ensure detection accuracy"
-msgstr "关闭透明代理以确保检测准确性"
 
 msgid "After clicking Exec button, please wait for the luci to refresh"
 msgstr "点击执行后，请耐心等待页面自动刷新"
