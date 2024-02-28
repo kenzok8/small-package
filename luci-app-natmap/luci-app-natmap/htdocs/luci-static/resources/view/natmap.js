@@ -175,7 +175,7 @@ return view.extend({
     o.value("ikuai", _("ikuai"));
     // o.depends('forward_enable', '1');
 
-    // forward_natmap
+    // forward_natmap, forward_ikuai, forward_firewall
     o = s.taboption(
       "forward",
       form.Value,
@@ -201,10 +201,11 @@ return view.extend({
     o.depends("forward_mode", "natmap");
     o.depends("forward_mode", "ikuai");
 
+    // forward_firewall
     o = s.taboption(
       "forward",
       widgets.NetworkSelect,
-      "forward_natmap_target_interface",
+      "forward_firewall_target_interface",
       _("Target_Interface")
     );
     o.modalonly = true;
@@ -367,7 +368,12 @@ return view.extend({
     o.depends("notify_mode", "telegram_bot");
 
     //notify_pushplus
-    o = s.taboption("notify", form.Value, "notify_pushplus_token", _("PushPlus Token"));
+    o = s.taboption(
+      "notify",
+      form.Value,
+      "notify_pushplus_token",
+      _("PushPlus Token")
+    );
     o.description =
       _("Get Instructions") +
       ' <a href="http://www.pushplus.plus/" target="_blank">' +
