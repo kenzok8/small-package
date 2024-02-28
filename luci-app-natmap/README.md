@@ -1,6 +1,8 @@
 ##  介绍
 
-####    本脚本为基于 openwrt master 分支的 natmap 插件
+####    基于 openwrt master 分支的 natmap 插件
+
+注意：自 openwrt23.0 之后，使用golang>= 1.20，luci2（js实现网页），部分插件不兼容。
 
 ## 基本功能
 

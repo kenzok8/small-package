@@ -1,24 +1,39 @@
-From 45368856980e030ddd95221289304c33e2749aa6 Mon Sep 17 00:00:00 2001
-From: Beginner-Go <70857188+Beginner-Go@users.noreply.github.com>
-Date: Mon, 26 Feb 2024 15:45:35 +0000
-Subject: [PATCH] fix go 1.21 build error
-
----
- go.mod | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/go.mod b/go.mod
-index 71a9a02..077ac79 100644
 --- a/go.mod
 +++ b/go.mod
-@@ -1,6 +1,6 @@
+@@ -1,12 +1,14 @@
  module github.com/teddysun/xray-plugin
- 
+
 -go 1.22
 +go 1.21.5
- 
+
  require (
  	github.com/xtls/xray-core v1.8.8
--- 
-2.34.1
+ 	google.golang.org/protobuf v1.32.0
+ )
+
++replace github.com/xtls/xray-core v1.8.8 => github.com/sbwml/xray-core v1.8.9-0.20240227052524-c11c9e4bc77e
++
+ require (
+ 	github.com/andybalholm/brotli v1.1.0 // indirect
+ 	github.com/cloudflare/circl v1.3.7 // indirect
+--- a/go.sum
++++ b/go.sum
+@@ -116,6 +116,8 @@ github.com/sagernet/sing v0.3.2 h1:CwWcxUBPkMvwgfe2/zUgY5oHG9qOL8Aob/evIFYK9jo=
+ github.com/sagernet/sing v0.3.2/go.mod h1:qHySJ7u8po9DABtMYEkNBcOumx7ZZJf/fbv2sfTkNHE=
+ github.com/sagernet/sing-shadowsocks v0.2.6 h1:xr7ylAS/q1cQYS8oxKKajhuQcchd5VJJ4K4UZrrpp0s=
+ github.com/sagernet/sing-shadowsocks v0.2.6/go.mod h1:j2YZBIpWIuElPFL/5sJAj470bcn/3QQ5lxZUNKLDNAM=
++github.com/sbwml/xray-core v1.8.9-0.20240227052524-c11c9e4bc77e h1:Mk0WrWhfHYoCBTs5iVZe84Hkf3R8cGU4ydjmSxcTxJ4=
++github.com/sbwml/xray-core v1.8.9-0.20240227052524-c11c9e4bc77e/go.mod h1:+tmaOCDyGjPcZawmhAirDiZzeQcrz46T2Z6BjAdKsaI=
+ github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb h1:XfLJSPIOUX+osiMraVgIrMR27uMXnRJWGm1+GL8/63U=
+ github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb/go.mod h1:bR6DqgcAl1zTcOX8/pE2Qkj9XO00eCNqmKb7lXP8EAg=
+ github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
+@@ -159,8 +161,6 @@ github.com/vishvananda/netns v0.0.4 h1:Oeaw1EM2JMxD51g9uhtC0D7erkIjgmj8+JZc26m1Y
+ github.com/vishvananda/netns v0.0.4/go.mod h1:SpkAiCQRtJ6TvvxPnOSyH3BMl6unz3xZlaprSwhNNJM=
+ github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19 h1:capMfFYRgH9BCLd6A3Er/cH3A9Nz3CU2KwxwOQZIePI=
+ github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19/go.mod h1:dm4y/1QwzjGaK17ofi0Vs6NpKAHegZky8qk6J2JJZAE=
+-github.com/xtls/xray-core v1.8.8 h1:6ApBa5pNkPZ+I7jyJDZod3v5sadizS/BZr0pW7zcs8o=
+-github.com/xtls/xray-core v1.8.8/go.mod h1:Zp33A8cxnhP5Kt6nguQrMgNH4A/tgq7LE8cBedeNje8=
+ go.opencensus.io v0.18.0/go.mod h1:vKdFvxhtzZ9onBp9VKHK8z/sRpBMnKAsufL7wlDrCOA=
+ go.uber.org/mock v0.4.0 h1:VcM4ZOtdbR4f6VXfiOpwpVJDL6lCReaZ6mw31wqh7KU=
+ go.uber.org/mock v0.4.0/go.mod h1:a6FSlNadKUHUa9IP5Vyt1zh4fC7uAwxMutEAscFbkZc=
 
