@@ -16,5 +16,6 @@ o.template ='netspeedtest/homebox'
 m.apply_on_parse = true
 m.on_after_apply = function(self,map)
   io.popen("/etc/init.d/netspeedtest restart")
+  luci.http.redirect(luci.dispatcher.build_url("admin","network","netspeedtest","homebox"))
 end
 return m
