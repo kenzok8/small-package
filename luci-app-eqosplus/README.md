@@ -1,43 +1,67 @@
-### 访问数：[![](https://visitor-badge.glitch.me/badge?page_id=sirpdboy-visitor-badge)] [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
+## 访问数：![hello](https://views.whatilearened.today/views/github/sirpdboy/deplives.svg)[![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
+
+[eqosplus  定时限速插件](https://github.com/sirpdboy/luci-app-eqosplus)
 
 ![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明1.jpg)
 
-[luci-app-netdata可控制的实时监控 ](https://github.com/sirpdboy/luci-app-netdata)
-======================
+请 **认真阅读完毕** 本页面，本页面包含注意事项和如何使用。
 
-### 下载源码方法:
+## 功能说明：
 
+### 定时限速1.2.2版
+#### 2023.7.19 定时限速1.2.2：增加更多日期：工作日和休息日，自定义日期1，2，3中间用逗号分隔;加入MAC地址限速，从此不用担心IPV6和IPV4的限速问题。
+
+### 定时限速1.0版
+#### 2022.12.24 定时限速在eqos的加强版，加入定时限制等功能。
+
+## 编译使用方法 [![](https://img.shields.io/badge/-编译使用方法-F5F5F5.svg)](#编译使用方法-)
+
+将luci-app-eqosplus添加至 LEDE/OpenWRT 源码的方法。
+
+### 下载源码方法一：
+编辑源码文件夹根目录feeds.conf.default并加入如下内容:
+
+```Brach
+    # feeds获取源码：
+    src-git eqosplus  https://github.com/sirpdboy/luci-app-eqosplus
+ ``` 
+  ```Brach
+   # 更新feeds，并安装主题：
+    scripts/feeds update eqosplus
+	scripts/feeds install luci-app-eqosplus
+ ``` 	
+
+### 下载源码方法：
  ```Brach
- 
     # 下载源码
-	
-    git clone https://github.com/sirpdboy/luci-app-netdata package/luci-app-netdata
+    git clone https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
     make menuconfig
-	
  ``` 
 ### 配置菜单
-
  ```Brach
     make menuconfig
-	# 找到 LuCI -> Applications, 选择 luci-app-netdata, 保存后退出。
+	# 找到 LuCI -> Applications, 选择 luci-app-eqosplus, 保存后退出。
  ``` 
- 
 ### 编译
-
  ```Brach 
     # 编译固件
-    make package/luci-app-netdata/compile V=s
+    make package/luci-app-eqosplus/compile V=s
  ```
 
+## 说明 [![](https://img.shields.io/badge/-说明-F5F5F5.svg)](#说明-)
 
-## 界面
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/netdata1.jpg)
+源码来源：https://github.com/sirpdboy/luci-app-eqosplus
 
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/netdata2.jpg)
+
+- 你可以随意使用其中的源码，但请注明出处。
 
 ![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明2.jpg)
 
+## 界面
 
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/eqosplus.png)
+
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/eqosplus2.png)
 
 ## 使用与授权相关说明
  
@@ -48,7 +72,7 @@
 
 - 网络速度测试 ：https://github.com/sirpdboy/NetSpeedTest
 
-- 定时设置插件 : https://github.com/sirpdboy/luci-app-autotimeset
+- 任务设置（定时和开机二合一）插件 : https://github.com/sirpdboy/luci-app-autotimeset
 
 - 关机功能插件 : https://github.com/sirpdboy/luci-app-poweroffdevice
 
