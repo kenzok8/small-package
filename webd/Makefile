@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=webd
-PKG_VERSION:=20230604
+PKG_VERSION:=20240302
 PKG_RELEASE:=$(AUTORELESE)
 
 include $(INCLUDE_DIR)/package.mk
@@ -19,7 +19,7 @@ endef
 
 ifeq ($(ARCH),x86_64)
 	TARGET_ARCH:=x86_64
-	TARGET_BOARD:=musl.x86-64
+	TARGET_BOARD:=musl
 endif
 
 ifeq ($(ARCH),mipsel)

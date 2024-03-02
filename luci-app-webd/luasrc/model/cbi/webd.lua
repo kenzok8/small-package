@@ -7,7 +7,7 @@ translate("Webd - A lightweight self hosted netdisk")
 
 m:section(SimpleSection).template  = "webd/webd_status"
 
-s = m:section(TypedSection, "webd", translate("Basic Settings"), translate("Set the basic settings of Webd Netdisk"))
+s = m:section(TypedSection, "webd", translate("Basic Settings"), translate("Set the basic settings of Webd"))
 s.anonymous = true
 
 enable = s:option(Flag, "enable", translate("Enable"))
@@ -21,7 +21,7 @@ port.rmempty = false
 enable_ipv6 = s:option(Flag, "enable_ipv6", translate("Listen IPv6"), translatef("Listen both IPv4 and IPv6 Address"))
 enable_ipv6.default = 0
 
-root = s:option(Value, "webd_root", translate("Local Directory"), translatef("Directory of Webd Netdisk"))
+root = s:option(Value, "webd_root", translate("Local Directory"), translatef("Directory of Webd"))
 root.default = "/mnt"
 root.rmempty = false
 
@@ -37,15 +37,16 @@ anonymous_perm:value("l", translate("Obtain file list"))
 anonymous_perm:value("u", translate("Upload files"))
 anonymous_perm:value("m", translate("Remove files"))
 anonymous_perm:value("S", translate("Show hidden files"))
+anonymous_perm:value("D", translate("Append download attribute"))
 anonymous_perm:value("T", translate("Play media"))
 anonymous_perm:depends("enable_anonymous", "1")
 anonymous_perm.description = translate("At least one permission must be choosed to allow anonymous access")
 
-webd_bin = s:option(Value, "webd_bin", translate("Binary Path"), translatef("Webd Netdisk binary Path"))
+webd_bin = s:option(Value, "webd_bin", translate("Binary Path"), translatef("Webd binary Path"))
 webd_bin.default = "/usr/bin/webd"
 webd_bin.rmempty = false
 
-webd_conf = s:option(Value, "webd_conf", translate("Config Path"), translatef("Webd Netdisk config Path"))
+webd_conf = s:option(Value, "webd_conf", translate("Config Path"), translatef("Webd config Path"))
 webd_conf.default = "/etc/webd.conf"
 webd_conf.rmempty = false
 
