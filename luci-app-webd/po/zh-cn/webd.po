@@ -7,8 +7,8 @@ msgstr "官网"
 msgid "Basic Settings"
 msgstr "基础设置"
 
-msgid "Set the basic settings of Webd Netdisk"
-msgstr "配置 Webd 网盘的基础设置"
+msgid "Set the basic settings of Webd"
+msgstr "配置 Webd 的基础设置"
 
 msgid "Listening Port"
 msgstr "监听端口"
@@ -37,20 +37,20 @@ msgstr "若要允许匿名访问则勾选至少一个权限"
 msgid "Binary Path"
 msgstr "程序路径"
 
-msgid "Webd Netdisk binary Path"
-msgstr "Webd 网盘二进制程序路径"
+msgid "Webd binary Path"
+msgstr "Webd 程序路径"
 
 msgid "Config Path"
 msgstr "配置文件路径"
 
-msgid "Webd Netdisk config Path"
-msgstr "Webd 网盘配置文件路径"
+msgid "Webd config Path"
+msgstr "Webd 配置文件路径"
 
 msgid "Local Directory"
 msgstr "本地路径"
 
-msgid "Directory of Webd Netdisk"
-msgstr "Webd 网盘监听路径"
+msgid "Directory of Webd"
+msgstr "Webd 监听路径"
 
 msgid "Recycle Bin"
 msgstr "回收站"
@@ -78,3 +78,6 @@ msgstr "显示隐藏文件"
 
 msgid "Play media"
 msgstr "播放媒体"
+
+msgid "Append download attribute"
+msgstr "附加下载属性"
