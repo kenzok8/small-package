@@ -11,8 +11,8 @@ LUCI_DEPENDS:=+netdata
 LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-netdata
-PKG_VERSION:=1.2
-PKG_RELEASE:=20240227
+PKG_VERSION:=1.3
+PKG_RELEASE:=20240303
 
 define Build/Compile
 endef
