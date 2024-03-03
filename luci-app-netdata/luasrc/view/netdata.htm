@@ -4,13 +4,12 @@
  Licensed to the public under the Apache License 2.0.
 -%>
 <%
-	local running = luci.sys.exec("pidof netdata | awk -F ' ' '{print $1}'")
+	local running = luci.sys.exec("busybox ps -w | grep netdata | grep -v grep  >/dev/null && echo -ne '1' ")
 %>
 <%+header%>
-
 <div class="cbi-map">
 
-<% if tonumber(running) ~= nil then %>
+<% if running == "1" then %>
 <iframe id="netdata" style="width: 100%; min-height: 780px; border: none; border-radius: .375rem;box-shadow: rgba(0, 0, 0, 0.75) 0px 0px 15px -5px;"></iframe>
 
 </div>

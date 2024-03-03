@@ -7,5 +7,5 @@
 [ -f /usr/share/netdata/webcn/index.html ] && mv -f /usr/share/netdata/webcn/index.html /usr/share/netdata/web/index.html
 [ -f /usr/share/netdata/webcn/netdata.init ] && mv -f /usr/share/netdata/webcn/netdata.init /etc/init.d/netdata
 rm -rf /tmp/luci-modulecache /tmp/luci-indexcache*
-chmod +x /etc/init.d/netdata
+chmod +x chmod +x /etc/init.d/netdata
 exit 0
