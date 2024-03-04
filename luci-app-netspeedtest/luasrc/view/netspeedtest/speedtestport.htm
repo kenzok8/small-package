@@ -1,79 +1,91 @@
 <%#
- Copyright 2020-2022 sirpdboy Wich <sirpdboy@qq.com>
+ Copyright 2020-2024 sirpdboy Wich <sirpdboy@qq.com>
  https://github.com/sirpdboy/netspeedtest
  Licensed to the public under the Apache License 2.0.
 -%>
-
-<script type="text/javascript" src="<%=resource%>/cbi.js?v=1.1"></script>
 <%+cbi/valueheader%>
+	   <div class="cbi-value" ><label class="cbi-value-title"><%= translate("Test server port delay") %></label>
+  	       <div class="cbi-value-field">
+  	       <input type="button" class="btn cbi-button cbi-button-apply" value='<%:Perform port test%>' onclick="return speedtestportrun(this, 'speedtestport')" />
+               <span id="speedtestport-status"></span>
+ 	        </div>
+	   </div>
+
+
 <script type="text/javascript">//<![CDATA[
 
-	var stxhr = new XHR();
-	function update_status(field, proto)
-	{
-		var tool = field.name;
-		var addr = field.value;
-		var protocol = proto ;
-        
-		var legend = document.getElementById('test-iperf-legend');
-		var output = document.getElementById('test-iperf-output');
-		if (legend && output)
-		{
-			output.innerHTML =
-				'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
-				'<%:Waiting for command to complete...%>'
-			;
 
-			legend.parentNode.style.display = 'block';
-			legend.style.display = 'inline';
+function speedtestportrun(btn,sid) {
+	var opt={
+    		base:"cbid.netspeedtest."+sid,
+    		get:function(opt){
+    			var id=this.base+'.'+opt;
+    			var obj=document.getElementsByName(id)[0] || document.getElementsByClassName(id)[0] || document.getElementById(id)
+    			if (obj){
+    				return obj;
+    			}else{
+    				return null;
+    			}
+    		},
+    		getlist:function(opt){
+    			var id=this.base+'.'+opt;
+    			var objs=document.getElementsByName(id) || document.getElementsByClassName(id);
+    			var ret=[];
+    			if (objs){
+    				for (var i=0;i < objs.length;i++){
+    					ret[i]=objs[i].value;
+    				}
+    			}else{
+    				alert("<%:Fatal on get option,please help in debug%>:"+opt);
+	    		}
+	    		return ret;
+    		},
+    		query:function(param,src,tval="1",fval="0"){
+    			var ret="&"+param+"=";
+    			var obj=this.get(src);
+    			if (obj){
+    				if (obj.type=="checkbox"){
+    					return ret+(obj.checked==true ? tval:fval);
+    				}else{
+    					return ret+encodeURIComponent(obj.value);
+    				}
+    			}
+    			return ''
+    		}
+    }
 
-			stxhr.post('<%=url('admin/network')%>/test_' + tool + protocol + '/' + addr, { token: '<%=token%>' },
-				function(x)
-				{
-					if (x.responseText)
-					{
-						legend.style.display = 'none';
-						output.innerHTML = String.format('<pre>%h</pre>', x.responseText);
+    const RUN_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","test_port")%>';
+    const S_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","speedtestport")%>';
+
+	var output=document.getElementById("speedtestport-status");
+
+		btn.value='<%:Check...%>';
+		btn.disabled=true;
+        var xdomain=opt.get("domain").value;
+        var xport=opt.get("port").value;
+		console.log(xdomain);
+		XHR.get(RUN_URL, {
+            domain:xdomain,
+            port:xport
+				},
+				function(x,rv) {
+
+					if (output)
+					{	
+					    console.log(x);
+						if (rv.ping=="0")
+						output.outerHTML = "<font style='color:red'><%:Test failed%></font>";
+						else
+						output.outerHTML = "<font style='color:green'><%:Test server port delay%> :" + rv.ping + " ms" + "</font>";
 					}
-					else
-					{
-						legend.style.display = 'none';
-						output.innerHTML ='</p>  <%:Operation execution complete%></p>';
-
-					}
-
+						btn.disabled=false;
+						btn.value='<%:Perform port test%>';
 				}
-			);
-		}
-}
-//]]></script>
+		);
+		return false;
+	}
+		
 
-<form method="post" action="<%=url('admin/network/netspeedtest')%>">
-      <table>
-        <tr><td  class="cbi-value-title"  ><input style="margin: 5px 0"  type="hidden" value="" name="iperf" />
-            <select name="iperf_to" style="width:auto">
-              <option value="0" selected="selected"><%:iperfstart%></option>
-              <option value="1"><%:iperfstop%></option>
-            </select></td>
-        <td class="cbi-value-field" style="width:100%;" >
-            <input type="button" value="<%:Perform operation%>" class="cbi-button cbi-button-apply" onclick="update_status(this.form.iperf,this.form.iperf_to.selectedIndex)" /></td>
-        </tr>
-        <tr><td  class="cbi-value-title" ><%:iperf3 instructions%></td>
-          <td class="cbi-value-field"  ><%:The speed measurement terminal must be in the same LAN as the router that starts the speed measurement%><br /><%:Operation steps: start router speed measurement service download test client run speed measurement client input IP address of router speed measurement service%></td>
-        </tr>
-        <tr>
-          <td class="cbi-value-title"><%:Iperf3 speed measurement software download%></td>
-          <td class="cbi-value-field"  >
-            <input type="button" class="cbi-button cbi-input-reload" value="<%:Domestic download password:%>cpd6" onclick="javascript:window.open('https://sipdboy.lanzoui.com/b01c3esih','target');" />
-            <input type="button" class="cbi-button cbi-input-reload" value="<%:Download from foreign official websites%>" onclick="javascript:window.open('https://iperf.fr/iperf-download.php','target');" /></td>
-        </tr>
-      </table>
-  <fieldset class="cbi-section" style="display:none">
-    <legend id="test-iperf-legend">
-    <%:Collecting data...%>
-    </legend>
-    <span id="test-iperf-output"></span>
-  </fieldset>
-</form>
+//]]></script>
 
 <%+cbi/valuefooter%>

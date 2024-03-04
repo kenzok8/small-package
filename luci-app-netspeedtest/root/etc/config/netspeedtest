@@ -8,3 +8,7 @@ config speedtestiperf3 'speedtestiperf3'
 
 config wanspeedtest 'wanspeedtest'
 	option surl ' ' 
+	
+config speedtestport 'speedtestport'
+	option domain ' ' 
+	option port ' ' 

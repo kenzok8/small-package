@@ -23,7 +23,7 @@ msgid "Lan Speedtest Iperf3"
 msgstr "内网iperf3吞吐测速"
 
 msgid "Lan homebox Web"
-msgstr "内网测速网页版"
+msgstr "Homebox内网测速网页版"
 
 msgid "Running state"
 msgstr "运行状态"
@@ -104,6 +104,24 @@ msgstr "网速测试中，请稍侯..."
 msgid "Download from foreign official websites"
 msgstr "国外官网"
 
-msgid "Server Port Speedtest"
-msgstr "端口延迟测试"
+msgid "Server Port Latency Test"
+msgstr "服务器端口延迟测试"
+
+msgid "Test server address"
+msgstr "测试服务器地址"
+
+msgid "Test server port"
+msgstr "测试服务器端口"
+
+msgid "Enter the domain name or IP address of the server that needs to be tested"
+msgstr "输入需要测试的服务器域名或者IP地址"
+
+msgid "Test server port delay"
+msgstr "测试端口延时"
+
+msgid "Perform port test"
+msgstr "执行测试"
+
+msgid "Test failed"
+msgstr "测试失败"
 

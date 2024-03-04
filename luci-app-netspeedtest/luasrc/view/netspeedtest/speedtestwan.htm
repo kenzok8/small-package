@@ -4,9 +4,11 @@
  Licensed to the public under the Apache License 2.0.
 -%>
 <%+cbi/valueheader%>
- 
+<label class="cbi-value-title"><%= translate("Net Speedtest") %></label>
+<div class="cbi-value-field">
     <input class="cbi-button cbi-button-apply" id="update_service" type="button"  onclick="run()" value="<%= translate('Perform Wan Speedtest') %>" />
- 
+</div>
+
   <fieldset class="cbi-section" style="display:none">
     <legend id="wanspeedtest-legend">
     <%:Collecting data...%>
