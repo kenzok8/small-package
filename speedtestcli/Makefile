@@ -35,12 +35,6 @@ define Package/$(PKG_NAME)/description
   SpeedTestCli is a network speed test command
 endef
 
-define Package/$(PKG_NAME)/conffiles
-endef
-
-define Package/$(PKG_NAME)/postinst
-endef
-
 define Build/Configure
 endef
 

@@ -63,8 +63,7 @@ case ${ACTION} in
     docker ps --all -f 'name=penpot_penpot-frontend_1' --format '{{.State}}'
   ;;
   "port")
-    http_port=`uci get penpot.@main[0].http_port 2>/dev/null`
-    echo $http_port
+    uci get -q penpot.@main[0].http_port 2>/dev/null
   ;;
   "create-user")
     echo docker exec -ti penpot_penpot-backend_1 ./manage.sh create-profile -u "${1}" -p "${2}" -n "${3}"

@@ -75,8 +75,7 @@ case ${ACTION} in
     docker ps --all -f 'name=vaultwarden' --format '{{.State}}'
   ;;
   "port")
-    http_port=`uci get vaultwarden.@main[0].http_port 2>/dev/null`
-    echo $http_port
+    uci get -q vaultwarden.@main[0].http_port 2>/dev/null
   ;;
   *)
     usage
