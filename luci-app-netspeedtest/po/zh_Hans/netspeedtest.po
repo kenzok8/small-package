@@ -20,10 +20,10 @@ msgid "Network speed diagnosis test (including intranet and extranet)<br/>For sp
 msgstr "网络速度诊断测试（包括内网、外网、特定端口服务器测速）<br/>使用说明见:"
 
 msgid "Lan Speedtest Iperf3"
-msgstr "内网iperf3吞吐测速"
+msgstr "本地iperf3吞吐测速"
 
-msgid "Lan homebox Web"
-msgstr "Homebox内网测速网页版"
+msgid "Lan Speedtest Web"
+msgstr "本地测速网页版"
 
 msgid "Running state"
 msgstr "运行状态"
@@ -61,9 +61,17 @@ msgstr "iperf服务停止"
 msgid "Select function"
 msgstr "选择功能"
 
-msgid "Perform operation"
-msgstr "执行操作"
+msgid "Execute selected functions"
+msgstr "执行选择的功能"
 
+msgid "Test broadband version"
+msgstr "测试宽带版本"
+
+msgid "python3-speedtest-cli"
+msgstr "python3网络测试客户端"
+
+msgid "ookla-speedtest-cli"
+msgstr "ookla网络测试客户端"
 
 msgid "iperf3 instructions"
 msgstr "iperf3使用说明"
@@ -77,23 +85,18 @@ msgstr "测速终端机必须与启动测速的路由器在同一局域网内"
 msgid "Operation steps: start router speed measurement service download test client run speed measurement client input IP address of router speed measurement service"
 msgstr "使用步骤：A.启动路由器测速服务 B.下载测试客户端 C.运行测速客户端 D.输入路由器测速服务IP地址。 "
 
-msgid "Domestic download password:"
-msgstr "国内下密码："
+msgid "Github download iperf3"
+msgstr "Github下载iperf3"
 
 msgid "Iperf3 speed measurement software download"
 msgstr "iperf3测速软件下载"
 
-msgid "Wan Speedtest"
-msgstr "Speedtest宽带测速"
+msgid "Broadband speed test"
+msgstr "宽带网速测试"
 
-msgid "Perform Wan Speedtest"
-msgstr "执行Speedtest宽带测速"
+msgid "speedtest.net Broadband speed test"
+msgstr "speedtest.net宽带网速测试"
 
-msgid "Netperf Speedtest"
-msgstr "Netperf宽带测速"
-
-msgid "Perform Netperf Speedtest"
-msgstr "执行Netperf宽带测速"
 
 msgid "Operation execution complete"
 msgstr "操作执行完毕"
@@ -119,9 +122,45 @@ msgstr "输入需要测试的服务器域名或者IP地址"
 msgid "Test server port delay"
 msgstr "测试端口延时"
 
-msgid "Perform port test"
-msgstr "执行测试"
+msgid "Click to execute"
+msgstr "点击执行"
 
 msgid "Test failed"
 msgstr "测试失败"
+
+msgid "Waiting (executing)..."
+msgstr "等待（执行）中"
+
+msgid "Server Port Delay Value"
+msgstr "服务器端口延时值"
+
+msgid "iperf3 commands reference"
+msgstr "iperf3命令参考"
+
+msgid "-b, --bandwidth ..<number>[KMG]...target bandwidth in bits/sec (0 for unlimited)"
+msgstr "-b, --bandwidth ..<number>[KMG]...目标带宽（以位/秒为单位）（0表示无限制）"
+
+msgid "-t, --time .......<number>........time in seconds to transmit for (default 10 secs)"
+msgstr "-t, --time .......<number>........传输时间（以秒为单位）（默认为10秒）"
+
+msgid "-i, --interval ...<number>........seconds between periodic bandwidth reports"
+msgstr "-i, --interval ...<number>........测试报告之间的秒数"
+
+msgid "-P, --parallel ...<number>........number of parallel client streams to run"
+msgstr "-P, --parallel ...<number>........多线程运行的数量"
+
+msgid "-R, --reverse ....................run in reverse mode (server sends, client receives)"
+msgstr "-R, --reverse ....................反向模式运行（服务器发送，客户端接收）"
+
+msgid  "-c, --client <host> ..............run in client mode, connecting to <host>"
+msgstr "-c, --client <host> ..............客户端模式下运行，连接到<host>"
+
+msgid  "-s, --server .....................run in server mode"
+msgstr "-s, --server .....................服务器模式下运行"
+
+msgid "-u, --udp ........................use UDP rather than TCP"
+msgstr "-u, --udp ........................测试传输使用UDP而不是TCP"
+
+msgid "Perform OK"
+msgstr "执行完成"
 

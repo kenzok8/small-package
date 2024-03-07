@@ -9,19 +9,19 @@
 START=99
 USE_PROCD=1
 
-
 PROG=/usr/bin/homebox
 EXTRA_COMMANDS="nstest"
 
-TMP_T=/var/netspeedtest.tmp
-LOCK=/var/lock/netspeedtest.lock
+TMP_T=/var/netspeedtest_nstest.tmp
+BINSPEEDTEST='/usr/bin/speedtest'
+LOCK=/var/lock/netspeedtest_nstest.lock
 LOG=/var/log/netspeedtest.log
-
+MAX_LOG=500
 limit_log() {
 	local logf=$1
+	local max=$2
 	[ ! -f "$logf" ] && return
-	local sc=100
-	[ -n "$2" ] && sc=$2
+	sc=${max:-$MAX_LOG}
 	local count=$(grep -c "" $logf)
 	if [ $count -gt $sc ];then
 		let count=count-$sc
@@ -29,27 +29,36 @@ limit_log() {
 	fi
 }
 
-init_env() {
-	[ ! -f "$LOG" ] && echo "" > $LOG
-	echo 1 > $TMP_T
-
+init_log() {
+	local logf=$1
+	[ ! -f "$logf" ] && echo "" > $logf
 }
+
+echone() {
+  echo -ne $* >> $LOG
+}
+
 
 nstest() {
     [ -f $LOCK ] && exit
-    limit_log $LOG 200
-    init_env
+    limit_log $LOG 500
+    init_log $LOG
     touch $LOCK
-    echo -ne "\n  speedtest测速"     >> $LOG
+    echo -ne "\n  ——————————speedtest测速"——————————     >> $LOG
     /usr/bin/speedtest --share  > $TMP_T
     echo -ne  "\n  测服信息:$(cat  $TMP_T | grep 'Hosted by'| cut -c10- | awk -F: '{printf $1}')  延时：$(cat  $TMP_T | grep 'Hosted by' | awk -F: '{printf $2}')" >> $LOG
     echo -ne "\n  下行速率:$(cat  $TMP_T  | grep 'Download:' |awk -F: '{printf $2}' )"   >> $LOG
     echo -ne "  ----  上行速率:$(cat  $TMP_T  | grep 'Upload:' |awk -F: '{printf $2}' )"  >> $LOG
-    echo -ne "\n  测试时间: "  >> $LOG
-    echo $(date +%Y-%m-%d" "%H:%M:%S)  >> $LOG
-    echo -ne "  ————————————————————————————\n"  >> $LOG
-    echo -ne $(cat  $TMP_T  | grep 'results:' | cut -c16- ) || echo -ne $(cat  $TMP_T )
+    echo -ne "\n  测试结果图片链接:$(cat  $TMP_T  | grep 'results:' | cut -c16- ) \n"  >> $LOG
+    echo -ne "\n  测试时间:`date +%Y-%m-%d" "%H:%M:%S` \n"  >> $LOG
+    echo -ne "  ——————————————————————————————\n"  >> $LOG
+    echo -ne $(cat  $TMP_T  | grep 'results:' | cut -c16- )
     rm -f $LOCK
+}
+
+tcptest(){
+    NDATA=`date +%Y-%m-%d' '%H:%M:%S`
+    echo -ne "\n  $NDATA  服务器：$1  ----  端口：$2  ----  TCP延时：$3 Ms \n"  >> $LOG
 }
 
 get_config() {
@@ -65,7 +74,7 @@ homebox_prepare() {
 
 start_service() {
 	config_load netspeedtest
-        config_foreach get_config homebox
+        config_foreach get_config netspeedtest
 	[ "x$enabled" != "x1" ] && {
 	    homebox_prepare 
 	   exit 

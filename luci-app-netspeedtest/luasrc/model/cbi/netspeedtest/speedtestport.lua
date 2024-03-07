@@ -8,13 +8,14 @@ t = o:section(TypedSection, "speedtestport", translate('Server Port Latency Test
 t.addremove=false
 t.anonymous=true
 
-e = t:option(Value, 'domain', translate('Test server address'))
+e = t:option(Value, 'sdomain', translate('Test server address'))
 e.default = "www.baidu.com"
-
 e.description = translate('Enter the domain name or IP address of the server that needs to be tested')
 
-e = t:option(Value, 'port', translate('Test server port'))
+e = t:option(Value, 'sport', translate('Test server port'))
 e.default = "443"
+
+e = t:option(Value, 'tcpspeed', translate('Server Port Delay Value'))
 
 e = t:option(DummyValue, '', '')
 e.rawhtml = true

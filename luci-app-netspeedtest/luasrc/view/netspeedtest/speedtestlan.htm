@@ -4,12 +4,13 @@
  Licensed to the public under the Apache License 2.0.
 -%>
 <%
-	local running = luci.sys.exec("pidof homebox")
+
+	local running = luci.sys.exec("busybox ps -w | grep homebox | grep -v grep  >/dev/null && echo -ne '1' ")
 %>
 <%+cbi/valueheader%>
 
 <div class="cbi-map">
-<% if tonumber(running) ~= nil then %>
+<% if running == "1" then %>
         <iframe id="homebox" style="width: 100%; min-height: 400px; height: 650px;border: none; border-radius: 3px;"></iframe>
 
 <script type="text/javascript">

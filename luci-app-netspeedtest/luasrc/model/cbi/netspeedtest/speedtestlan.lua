@@ -3,7 +3,7 @@ local m, s ,o
 
 m = Map("netspeedtest", "<font color='green'>" .. translate("Net Speedtest") .."</font>",translate( "Network speed diagnosis test (including intranet and extranet)<br/>For specific usage, see:") ..translate("<a href=\'https://github.com/sirpdboy/netspeedtest.git' target=\'_blank\'>GitHub @sirpdboy/netspeedtest</a>") )
 
-s = m:section(TypedSection, "homebox", translate('Lan homebox Web'))
+s = m:section(TypedSection, "netspeedtest", translate('Lan Speedtest Web'))
 s.anonymous = true
 
 o=s:option(Flag,"enabled",translate("Enable"))
@@ -11,11 +11,11 @@ o.default=0
 
 o = s:option(DummyValue, '', '')
 o.rawhtml = true
-o.template ='netspeedtest/homebox'
+o.template ='netspeedtest/speedtestlan'
 
 m.apply_on_parse = true
 m.on_after_apply = function(self,map)
   io.popen("/etc/init.d/netspeedtest restart")
-  luci.http.redirect(luci.dispatcher.build_url("admin","network","netspeedtest","homebox"))
+  luci.http.redirect(luci.dispatcher.build_url("admin","network","netspeedtest","speedtestlan"))
 end
 return m

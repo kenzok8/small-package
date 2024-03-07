@@ -4,31 +4,32 @@
  Licensed to the public under the Apache License 2.0.
 -%>
 <%+cbi/valueheader%>
-<label class="cbi-value-title"><%= translate("Net Speedtest") %></label>
-<div class="cbi-value-field">
-    <input class="cbi-button cbi-button-apply" id="update_service" type="button"  onclick="run()" value="<%= translate('Perform Wan Speedtest') %>" />
-</div>
 
+
+<label class="cbi-value-title"><%= translate("speedtest.net Broadband speed test") %></label>
+<div class="cbi-value-field">
+    <input class="cbi-button cbi-button-apply" id="run_service" type="button"  onclick="run(this)" value="<%=translate('Click to execute') %>" />
+</div>
   <fieldset class="cbi-section" style="display:none">
     <legend id="wanspeedtest-legend">
     <%:Collecting data...%>
     </legend>
     <span id="wanspeedtest-output"></span>
   </fieldset>
-
 <script type="text/javascript">
     const RUN_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","speedtestrun")%>';
-    function run(s) {
-	var legend = document.getElementById('wanspeedtest-legend');
-	var output = document.getElementById('wanspeedtest-output');
-			output.innerHTML =
+    function run(btn) {
+	var legend=document.getElementById('wanspeedtest-legend');
+	var output=document.getElementById('wanspeedtest-output');
+	btn.value='<%:Waiting (executing)...%>';
+	btn.disabled=true;
+	output.innerHTML =
 				'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
 				'<%:Network speed test, please wait...%>'
 			;
-			legend.parentNode.style.display = 'block';
-			legend.style.display = 'inline';
-        XHR.get(RUN_URL, null, 
-		
+	legend.parentNode.style.display = 'block';
+	legend.style.display = 'inline';
+	XHR.get(RUN_URL,null, 
 				function(x)
 				{
 					if (x.responseText)
@@ -43,11 +44,13 @@
 						output.innerHTML ='</p><%:Operation execution complete%></p>';
 
 					}
-
+					btn.disabled=false;
+					btn.value='<%:Click to execute%>';
 				}
-		);
-        return false;
-    }
+	);
+    return false;
+}
 
 </script>
+
 <%+cbi/valuefooter%>

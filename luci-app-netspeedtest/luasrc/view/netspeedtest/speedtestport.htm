@@ -3,19 +3,14 @@
  https://github.com/sirpdboy/netspeedtest
  Licensed to the public under the Apache License 2.0.
 -%>
-<%+cbi/valueheader%>
-	   <div class="cbi-value" ><label class="cbi-value-title"><%= translate("Test server port delay") %></label>
-  	       <div class="cbi-value-field">
-  	       <input type="button" class="btn cbi-button cbi-button-apply" value='<%:Perform port test%>' onclick="return speedtestportrun(this, 'speedtestport')" />
-               <span id="speedtestport-status"></span>
- 	        </div>
-	   </div>
 
+<%+cbi/valueheader%>
 
 <script type="text/javascript">//<![CDATA[
 
+function speedtestportrun(btn) {
 
-function speedtestportrun(btn,sid) {
+	var sid='speedtestport'
 	var opt={
     		base:"cbid.netspeedtest."+sid,
     		get:function(opt){
@@ -39,18 +34,6 @@ function speedtestportrun(btn,sid) {
     				alert("<%:Fatal on get option,please help in debug%>:"+opt);
 	    		}
 	    		return ret;
-    		},
-    		query:function(param,src,tval="1",fval="0"){
-    			var ret="&"+param+"=";
-    			var obj=this.get(src);
-    			if (obj){
-    				if (obj.type=="checkbox"){
-    					return ret+(obj.checked==true ? tval:fval);
-    				}else{
-    					return ret+encodeURIComponent(obj.value);
-    				}
-    			}
-    			return ''
     		}
     }
 
@@ -59,33 +42,40 @@ function speedtestportrun(btn,sid) {
 
 	var output=document.getElementById("speedtestport-status");
 
-		btn.value='<%:Check...%>';
-		btn.disabled=true;
-        var xdomain=opt.get("domain").value;
-        var xport=opt.get("port").value;
-		console.log(xdomain);
-		XHR.get(RUN_URL, {
-            domain:xdomain,
-            port:xport
-				},
-				function(x,rv) {
+	btn.value='<%:Waiting (executing)...%>';
+	btn.disabled=true;
+    var sdomain=opt.get("sdomain").value;
+    var sport=opt.get("sport").value;
+	XHR.get('<%=luci.dispatcher.build_url("admin/network/netspeedtest/test_port")%>',{
+            sdomain: sdomain,
+            sport: sport
+			},
+				(x) =>{
+				
+					if(x && x.status == 200) {
+						  output.innerHTML="<font style=\'color:green\'>"+"<%:Perform OK%>"+"</font>";
 
-					if (output)
-					{	
-					    console.log(x);
-						if (rv.ping=="0")
-						output.outerHTML = "<font style='color:red'><%:Test failed%></font>";
-						else
-						output.outerHTML = "<font style='color:green'><%:Test server port delay%> :" + rv.ping + " ms" + "</font>";
 					}
-						btn.disabled=false;
-						btn.value='<%:Perform port test%>';
+					else{
+						  output.innerHTML="<font style=\'color:green\'>"+"<%:Test failed%>"+"</font>";
+					}
+						  setTimeout(function(){
+			                 	window.location = S_URL
+			             },1000);
+					
+				btn.disabled=false;
+				btn.value='<%:Click to execute%>';
 				}
 		);
-		return false;
-	}
+        return false;
+    }
 		
 
 //]]></script>
 
+	   <label class="cbi-value-title"><%= translate("Test server port delay") %></label>
+  	   <div class="cbi-value-field">
+  	       <input type="button" class="btn cbi-button cbi-button-apply" value='<%:Click to execute%>' onclick="return speedtestportrun(this)" />
+               <span id="speedtestport-status"></span>
+ 	   </div>
 <%+cbi/valuefooter%>

@@ -6,10 +6,9 @@
 
 <script type="text/javascript" src="<%=resource%>/cbi.js?v=1.1"></script>
 <%+cbi/valueheader%>
-<script type="text/javascript">//<![CDATA[
-
+<script type="text/javascript">
 	var stxhr = new XHR();
-	function update_status(field, proto)
+	function update_status(btn,field, proto)
 	{
 		var tool = field.name;
 		var addr = field.value;
@@ -21,10 +20,10 @@
 			output.innerHTML =
 				'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
 				'<%:Waiting for command to complete...%>';
-
 			legend.parentNode.style.display = 'block';
 			legend.style.display = 'inline';
-
+			btn.value='<%:Waiting (executing)...%>';
+			btn.disabled=true;
 			stxhr.post('<%=url('admin/network')%>/test_' + tool + protocol + '/' + addr, { token: '<%=token%>' },
 				function(x)
 				{
@@ -38,15 +37,16 @@
 						legend.style.display = 'none';
 						output.innerHTML ='</p>  <%:Operation execution complete%></p>';
 					}
+				
+						btn.disabled=false;
+						btn.value='<%:Click to execute%>';
 				}
 			);
 		}
 }
-//]]></script>
+</script>
 
-<form method="post" action="<%=url('admin/network/netspeedtest')%>">
-
-		<div class="cbi-section-node" >
+<form method="post"  class="cbi-map" action="<%=url('admin/network/netspeedtest')%>">
 			<div class="cbi-value" >
 				<label class="cbi-value-title"  ><%:Select function%></label>
 				<div class="cbi-value-field">
@@ -56,19 +56,32 @@
                     <option value="1"><%:iperfstop%></option>
                     </select> 
 					<div class="cbi-value-description">
-				            <span class="cbi-value-helpicon"><img src="/luci-static/resources/cbi/help.gif" /></span>
 				             <%:The speed measurement terminal must be in the same LAN as the router that starts the speed measurement%><br />
 				             <%:Operation steps: start router speed measurement service download test client run speed measurement client input IP address of router speed measurement service%>
 			 </div></div></div>
-			<div class="cbi-value" ><label class="cbi-value-title"  ><%:Perform operation%></label>
-		    	<div class="cbi-value-field"><input type="button" value="<%:Perform operation%>" class="cbi-button cbi-button-apply" onclick="update_status(this.form.iperf,this.form.iperf_to.selectedIndex)" />
+			<div class="cbi-value" ><label class="cbi-value-title"  ><%:Execute selected functions%></label>
+		    	<div class="cbi-value-field"><input type="button" value="<%:Click to execute%>" class="cbi-button cbi-button-apply" onclick="return update_status(this,this.form.iperf,this.form.iperf_to.selectedIndex)" />
 		    </div></div>
 			<div class="cbi-value" >
 			   <label class="cbi-value-title"><%:Iperf3 speed measurement software download%></label>
 		           <div class="cbi-value-field">
-				         <input type="button" class="cbi-button cbi-input-reload" value="<%:Domestic download password:%>cpd6" onclick="javascript:window.open('https://sipdboy.lanzoui.com/b01c3esih','target');" />
+				         <input type="button" class="cbi-button cbi-input-reload" value="<%:Github download iperf3%>" onclick="javascript:window.open('https://github.com/sirpdboy/netspeedtest/releases','target');" />
                          <input type="button" class="cbi-button cbi-input-reload" value="<%:Download from foreign official websites%>" onclick="javascript:window.open('https://iperf.fr/iperf-download.php','target');" />
-		    </div></div></div>
+		          </div>
+			</div>
+			<div class="cbi-value" >
+			   <label class="cbi-value-title"><%:iperf3 commands reference%></label>
+		           <div class="cbi-value-field">
+							<%:-c, --client <host> ..............run in client mode, connecting to <host>%><br />
+							<%:-s, --server .....................run in server mode%><br />
+							<%:-u, --udp ........................use UDP rather than TCP%><br />
+							<%:-b, --bandwidth ..<number>[KMG]...target bandwidth in bits/sec (0 for unlimited)%><br />
+							<%:-t, --time .......<number>........time in seconds to transmit for (default 10 secs)%><br />
+							<%:-i, --interval ...<number>........seconds between periodic bandwidth reports%><br />
+							<%:-P, --parallel ...<number>........number of parallel client streams to run%><br />
+							<%:-R, --reverse ....................run in reverse mode (server sends, client receives)%><br />
+				  </div>
+		    </div>
   <fieldset class="cbi-section" style="display:none">
     <legend id="test-iperf-legend">
     <%:Collecting data...%>
