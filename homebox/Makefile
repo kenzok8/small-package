@@ -1,85 +1,57 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (c) 2020-2024 sirpdboy  herboy2008@gmail.com
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=homebox
-PKG_VERSION:=0.0.0-dev.2020062901
-PKG_RELEASE:=14
+PKG_VERSION:=0.0.0-dev.2023102203
+PKG_RELEASE:=3
 
-PKG_SOURCE_URL_FILE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/XGHeaven/homebox/archive/refs/tags/
-PKG_HASH:=skip
+ifeq ($(ARCH),aarch64)
+	H_ARCH:=arm64y
 
-PKG_BUILD_DEPENDS:=golang/host homebox/host
-PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+else ifeq ($(ARCH),arm)
+	H_ARCH:=arm
 
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/${PKG_NAME}
+else ifeq ($(ARCH),i386)
+	H_ARCH:=386
 
-include $(INCLUDE_DIR)/host-build.mk
+else ifeq ($(ARCH),mips)
+	H_ARCH:=mips
+
+else ifeq ($(ARCH),mipsel)
+	H_ARCH:=mips
+
+else ifeq ($(ARCH),x86_64)
+	H_ARCH:=amd64
+endif
+
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
 define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
-  SUBMENU:=Web Servers/Proxies
   TITLE:=A Toolbox for Home Local Networks
   URL:=https://github.com/XGHeaven/homebox
-  DEPENDS:=$(GO_ARCH_DEPENDS)
-  MENU:=1
+  DEPENDS:=@(i386||x86_64||arm||aarch64||mipsel||mips)
 endef
 
 define Package/$(PKG_NAME)/description
   A Toolbox for Home Local Networks Speed Test
 endef
 
-GO_PKG_BUILD_VARS += GO111MODULE=auto
-TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
-TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
-
-define Build/Configure
-	( \
-		cd $(PKG_BUILD_DIR)/server; \
-		$(GO_PKG_VARS) \
-		go get -d -modcacherw; \
-	)
-	( \
-		cd $(PKG_BUILD_DIR)/server; \
-		GOPATH=$(PKG_BUILD_DIR)/.go_work/build \
-		go install -modcacherw github.com/go-bindata/go-bindata/...@latest; \
-	)
+define Build/Prepare
+	[ ! -f $(PKG_BUILD_DIR)/server_Linux_$(H_ARCH).tar.gz ] && wget https://github.com/XGHeaven/homebox/releases/download/v$(PKG_VERSION)/server-linux-$(H_ARCH).tar.gz -O $(PKG_BUILD_DIR)/server-linux-$(H_ARCH).tar.gz
+	tar -xzvf $(PKG_BUILD_DIR)/server-linux-$(H_ARCH).tar.gz -C $(PKG_BUILD_DIR)
 endef
 
 define Build/Compile
-	rm -rf $(PKG_BUILD_DIR)/build/static
-	mkdir -p $(PKG_BUILD_DIR)/build
-	$(CP) $(HOST_BUILD_DIR)/build/static $(PKG_BUILD_DIR)/build/
-	( \
-		cd $(PKG_BUILD_DIR); \
-		$(GO_PKG_VARS) PATH=$(PKG_BUILD_DIR)/.go_work/build/bin:$$$$PATH \
-		$(MAKE) build-server; \
-	)
 endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/server $(1)/usr/bin/homebox
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/server-linux-$(H_ARCH) $(1)/usr/bin/homebox
 endef
 
-define Host/Configure
-	cd $(HOST_BUILD_DIR)/web && rm -f package-lock.json && npm --cache-min 1440 install
-endef
-
-define Host/Compile
-	cd $(HOST_BUILD_DIR) && $(MAKE) build-web
-endef
-
-define Host/Install
-endef
-
-define Host/Clean
-	rm -f $(HOST_BUILD_DIR)/build/static
-endef
-
-$(eval $(call HostBuild))
-$(eval $(call BuildPackage,homebox))
+$(eval $(call BuildPackage,$(PKG_NAME)))
