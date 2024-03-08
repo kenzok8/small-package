@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.9.8
+Version=V6.9.9
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -857,6 +857,7 @@ function DO_UPGRADE() {
 	$*
 	if [[ $? != 0 ]]
 	then
+		sleep 5
 		ECHO r "固件更新失败,请尝试使用 [autoupdate -F] 指令更新固件,执行此命令前请备份固件配置!"
 		exit 1
 	else
