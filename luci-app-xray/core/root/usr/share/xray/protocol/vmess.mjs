@@ -1,6 +1,6 @@
 "use strict";
 
-import { stream_settings } from "../common/stream.mjs";
+import { port_array, stream_settings } from "../common/stream.mjs";
 
 export function vmess_outbound(server, tag) {
     const stream_settings_object = stream_settings(server, "vmess", tag);
@@ -11,10 +11,10 @@ export function vmess_outbound(server, tag) {
             protocol: "vmess",
             tag: tag,
             settings: {
-                vnext: [
-                    {
+                vnext: map(port_array(server["server_port"]), function (v) {
+                    return {
                         address: server["server"],
-                        port: int(server["server_port"]),
+                        port: v,
                         users: [
                             {
                                 email: server["username"],
@@ -23,8 +23,8 @@ export function vmess_outbound(server, tag) {
                                 security: server["vmess_security"]
                             }
                         ]
-                    }
-                ]
+                    };
+                })
             },
             streamSettings: stream_settings_result
         },

@@ -1,6 +1,6 @@
 "use strict";
 
-import { stream_settings } from "../common/stream.mjs";
+import { port_array, stream_settings } from "../common/stream.mjs";
 
 export function shadowsocks_outbound(server, tag) {
     const stream_settings_object = stream_settings(server, "shadowsocks", tag);
@@ -11,16 +11,16 @@ export function shadowsocks_outbound(server, tag) {
             protocol: "shadowsocks",
             tag: tag,
             settings: {
-                servers: [
-                    {
+                servers: map(port_array(server["server_port"]), function (v) {
+                    return {
                         address: server["server"],
-                        port: int(server["server_port"]),
+                        port: v,
                         email: server["username"],
                         password: server["password"],
                         method: server["shadowsocks_security"],
                         uot: server["shadowsocks_udp_over_tcp"] == '1'
-                    }
-                ]
+                    };
+                })
             },
             streamSettings: stream_settings_result
         },

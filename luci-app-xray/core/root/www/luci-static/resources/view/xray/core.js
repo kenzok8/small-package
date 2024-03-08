@@ -184,6 +184,7 @@ return view.extend({
         ss.addremove = true;
 
         ss.tab('general', _('General Settings'));
+        ss.nodescriptions = true;
 
         o = ss.taboption('general', form.Value, "alias", _("Alias (optional)"));
         o.optional = true;
@@ -192,15 +193,15 @@ return view.extend({
         o.datatype = 'host';
         o.rmempty = false;
 
-        o = ss.taboption('general', form.Value, 'server_port', _('Server Port'));
+        o = ss.taboption('general', form.DynamicList, 'server_port', _('Server Port'));
         o.datatype = 'port';
         o.rmempty = false;
+        o.modalonly = true;
 
         o = ss.taboption('general', form.Value, 'username', _('Email / Username'), _('Optional; username for SOCKS / HTTP outbound, email for other outbound.'));
         o.modalonly = true;
 
         o = ss.taboption('general', form.Value, 'password', _('UserId / Password'), _('Fill user_id for vmess / VLESS, or password for other outbound (also supports <a href="https://github.com/XTLS/Xray-core/issues/158">Xray UUID Mapping</a>)'));
-        o.modalonly = true;
         o.rmempty = false;
 
         ss.tab('resolving', _("Server Hostname Resolving"));
