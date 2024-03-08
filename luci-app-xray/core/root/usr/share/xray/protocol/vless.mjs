@@ -1,6 +1,6 @@
 "use strict";
 
-import { stream_settings } from "../common/stream.mjs";
+import { port_array, stream_settings } from "../common/stream.mjs";
 import { fallbacks, reality_inbound_settings, tls_inbound_settings } from "../common/tls.mjs";
 
 function vless_inbound_user(k, flow) {
@@ -29,10 +29,10 @@ export function vless_outbound(server, tag) {
             protocol: "vless",
             tag: tag,
             settings: {
-                vnext: [
-                    {
+                vnext: map(port_array(server["server_port"]), function (v) {
+                    return {
                         address: server["server"],
-                        port: int(server["server_port"]),
+                        port: v,
                         users: [
                             {
                                 email: server["username"],
@@ -42,7 +42,7 @@ export function vless_outbound(server, tag) {
                             }
                         ]
                     }
-                ]
+                })
             },
             streamSettings: stream_settings_result
         },

@@ -1,6 +1,6 @@
 "use strict";
 
-import { stream_settings } from "../common/stream.mjs";
+import { port_array, stream_settings } from "../common/stream.mjs";
 
 export function socks_outbound(server, tag) {
     const stream_settings_object = stream_settings(server, "socks", tag);
@@ -20,13 +20,13 @@ export function socks_outbound(server, tag) {
             protocol: "socks",
             tag: tag,
             settings: {
-                servers: [
-                    {
+                servers: map(port_array(server["server_port"]), function (v) {
+                    return {
                         address: server["server"],
-                        port: int(server["server_port"]),
+                        port: v,
                         users: users
                     }
-                ]
+                })
             },
             streamSettings: stream_settings_result
         },
