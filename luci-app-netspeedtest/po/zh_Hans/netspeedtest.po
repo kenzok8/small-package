@@ -64,8 +64,8 @@ msgstr "选择功能"
 msgid "Execute selected functions"
 msgstr "执行选择的功能"
 
-msgid "Test broadband version"
-msgstr "测试宽带版本"
+msgid "client version selection"
+msgstr "客户端版本"
 
 msgid "python3-speedtest-cli"
 msgstr "python3网络测试客户端"
@@ -129,7 +129,7 @@ msgid "Test failed"
 msgstr "测试失败"
 
 msgid "Waiting (executing)..."
-msgstr "等待（执行）中"
+msgstr "努力执行中"
 
 msgid "Server Port Delay Value"
 msgstr "服务器端口延时值"
@@ -152,8 +152,8 @@ msgstr "-P, --parallel ...<number>........多线程运行的数量"
 msgid "-R, --reverse ....................run in reverse mode (server sends, client receives)"
 msgstr "-R, --reverse ....................反向模式运行（服务器发送，客户端接收）"
 
-msgid  "-c, --client <host> ..............run in client mode, connecting to <host>"
-msgstr "-c, --client <host> ..............客户端模式下运行，连接到<host>"
+msgid  "-c, --client host ................run in client mode, connecting to host"
+msgstr "-c, --client host ................客户端模式下运行，连接到host"
 
 msgid  "-s, --server .....................run in server mode"
 msgstr "-s, --server .....................服务器模式下运行"
