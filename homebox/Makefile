@@ -9,7 +9,7 @@ PKG_VERSION:=0.0.0-dev.2023102203
 PKG_RELEASE:=3
 
 ifeq ($(ARCH),aarch64)
-	H_ARCH:=arm64y
+	H_ARCH:=arm64
 
 else ifeq ($(ARCH),arm)
 	H_ARCH:=arm
