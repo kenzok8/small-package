@@ -13,13 +13,13 @@ function index()
     e.acl_depends = { "luci-app-netspeedtest" }
 	entry({"admin", "network", "netspeedtest", "speedtestlan"},cbi("netspeedtest/speedtestlan"),_("Lan Speedtest Web"),20).leaf = true
 	entry({"admin", "network", "netspeedtest", "speedtestiperf3"},cbi("netspeedtest/speedtestiperf3", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Lan Speedtest Iperf3"),30).leaf = true
-        entry({"admin", "network", "netspeedtest", "speedtestwan"},cbi("netspeedtest/speedtestwan", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Wan Speedtest"), 40).leaf = true
+        entry({"admin", "network", "netspeedtest", "speedtestwan"},cbi("netspeedtest/speedtestwan", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Broadband speed test"), 40).leaf = true
         entry({"admin", "network", "netspeedtest", "speedtestport"},cbi("netspeedtest/speedtestport", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Server Port Latency Test"), 50).leaf = true
 	entry({"admin", "network", "netspeedtest", "test_port"}, call("test_port"))
 	entry({"admin", "network", "iperf3_status"}, call("iperf3_status"))
 	entry({"admin", "network", "test_iperf0"}, post("test_iperf0"), nil).leaf = true
 	entry({"admin", "network", "test_iperf1"}, post("test_iperf1"), nil).leaf = true
-	entry({"admin","network","netspeedtest", "speedtestrun"}, call("speedtestrun"))
+	entry({"admin", "network", "netspeedtest", "speedtestwanrun"}, call("speedtestwanrun"))
 	entry({"admin", "network", "netspeedtest", "realtime_log"}, call("get_log")) 
 	entry({"admin", "network", "netspeedtest", "dellog"},call("dellog"))
 end
@@ -41,7 +41,7 @@ function test_port()
 	sys.exec(string.format('echo -ne "\n 【$(date)】 服务器：%s -- 端口：%s -- TCP延时：%s ms \n">> /var/log/netspeedtest.log',domain,port,e.ping))
 	uci:set(name, 'speedtestport', 'sdomain', domain)
 	uci:set(name, 'speedtestport', 'sport', port)
-	uci:set(name, 'speedtestport', 'tcpspeed', e.ping.." Ms")
+	uci:set(name, 'speedtestport', 'tcpspeed', e.ping.." ms")
 	uci:commit(name)
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
@@ -96,7 +96,10 @@ function dellog()
 	http.write('')
 end
 
-function speedtestrun()
-    testout("/etc/init.d/netspeedtest nstest ")
+function speedtestwanrun()
+	local cli = luci.http.formvalue('cli')
+	uci:set(name, 'speedtestwan', 'speedtest_cli', cli)
+	uci:commit(name)
+	testout("/etc/init.d/netspeedtest wantest "..cli)
 end
 
