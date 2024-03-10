@@ -1,20 +1,32 @@
-/**
- *  kucat is a clean HTML5 theme for LuCI. It is based on luci-theme-material
+/*
+ *  luci-theme-kucat
+ *  Copyright (C) 2019-2024 The Sirpdboy Team <herboy2008@gmail.com> 
  *
- *  luci-theme-material
- *      Copyright 2015 Lutty Yang <lutty@wcan.in>
- * 
- *      Copyright 2019-2023 sirpdboy <sirpdboy@qq.com>
+ *  Have a bug? Please create an issue here on GitHub!
+ *      https://github.com/sirpdboy/luci-theme-kucat/issues
+ *
+ *  luci-theme-bootstrap:
+ *      Copyright 2008 Steven Barth <steven@midlink.org>
+ *      Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+ *      Copyright 2012 David Menting <david@nut-bolt.nl>
+ *
+ *  luci-theme-material:
+ *      https://github.com/LuttyYang/luci-theme-material/
+ *  luci-theme-argon:
+ *      https://github.com/jerrykuku/luci-theme-argon
+ *  luci-theme-opentopd:
+ *      https://github.com/sirpdboy/luci-theme-opentopd
  *
  *  Licensed to the public under the Apache License 2.0
  */
+
 @font-face {
-  font-family: 'sirpdboy-kucat';
-  src:  url('../fonts/sirpdboy-kucat.eot?9qz8zf');
-  src:  url('../fonts/sirpdboy-kucat.eot?9qz8zf#iefix') format('embedded-opentype'),
-    url('../fonts/sirpdboy-kucat.ttf?9qz8zf') format('truetype'),
-    url('../fonts/sirpdboy-kucat.woff?9qz8zf') format('woff'),
-    url('../fonts/sirpdboy-kucat.svg?9qz8zf#sirpdboy-kucat') format('svg');
+  font-family: 'kucat';
+  src:  url('../fonts/kucat.eot?9qz8zf');
+  src:  url('../fonts/kucat.eot?9qz8zf#iefix') format('embedded-opentype'),
+    url('../fonts/kucat.ttf?9qz8zf') format('truetype'),
+    url('../fonts/kucat.woff?9qz8zf') format('woff'),
+    url('../fonts/kucat.svg?9qz8zf#kucat') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -22,7 +34,7 @@
 
 [class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
-  font-family: 'sirpdboy-kucat' !important;
+  font-family: 'kucat' !important;
   speak: never;
   font-style: normal;
   font-weight: normal;

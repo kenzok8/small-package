@@ -1,7 +1,26 @@
+/*
+ *  luci-theme-kucat
+ *  Copyright (C) 2019-2024 The Sirpdboy Team <herboy2008@gmail.com> 
+ *
+ *  Have a bug? Please create an issue here on GitHub!
+ *      https://github.com/sirpdboy/luci-theme-kucat/issues
+ *
+ *  luci-theme-bootstrap:
+ *      Copyright 2008 Steven Barth <steven@midlink.org>
+ *      Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+ *      Copyright 2012 David Menting <david@nut-bolt.nl>
+ *
+ *  luci-theme-material:
+ *      https://github.com/LuttyYang/luci-theme-material/
+ *  luci-theme-opentopd:
+ *      https://github.com/sirpdboy/luci-theme-opentopd
+ *
+ *  Licensed to the public under the Apache License 2.0
+ */
+
 'use strict';
 'require baseclass';
 'require ui';
-
 return baseclass.extend({
 	__init__: function() {
 		ui.menu.load().then(L.bind(this.render, this));
@@ -41,31 +60,36 @@ return baseclass.extend({
 	},
 
 	handleMenuExpand: function(ev) {
-		var a = ev.target, slide = a.parentNode, slide_menu = a.nextElementSibling;
+		var a = ev.target, ul1 = a.parentNode, ul2 = a.nextElementSibling;
 		var collapse = false;
 
-		document.querySelectorAll('.main .main-left .nav > li >ul.active').forEach(function (ul) {
-			$(ul).stop(true).slideUp("fast", function () {
-				ul.classList.remove('active');
-				ul.previousElementSibling.classList.remove('active');
-			});
-			if (!collapse && ul === slide_menu) {
+		document.querySelectorAll('li.slide.active').forEach(function(li) {
+			if (li !== a.parentNode || li == ul1) {
+				li.classList.remove('active');
+				li.childNodes[0].classList.remove('active');
+			}
+			if (!collapse && li == ul1) {
 				collapse = true;
 			}
-
 		});
 
-		if (!slide_menu)
+		if (!ul2)
 			return;
-		
-		
+
+		if (ul2.parentNode.offsetLeft + ul2.offsetWidth <= ul1.offsetLeft + ul1.offsetWidth)
+			ul2.classList.add('align-left');
 		if (!collapse) {
-			$(slide).find(".slide-menu").slideDown("fast",function(){
-				slide_menu.classList.add('active');
-				a.classList.add('active');
-			});
-			a.blur();
+			ul1.classList.add('active');
+			a.classList.add('active');
+
 		}
+		else
+		{
+			ul1.classList.remove('active');
+			a.classList.remove('active');
+		}
+		
+		a.blur();
 		ev.preventDefault();
 		ev.stopPropagation();
 	},
