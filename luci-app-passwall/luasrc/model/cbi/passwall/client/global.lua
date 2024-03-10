@@ -1,5 +1,5 @@
 local api = require "luci.passwall.api"
-local appname = api.appname
+local appname = "passwall"
 local uci = api.uci
 local datatypes = api.datatypes
 local has_singbox = api.finded_com("singbox")
@@ -444,7 +444,7 @@ udp_proxy_mode:value("disable", translate("No Proxy"))
 udp_proxy_mode:value("proxy", translate("Proxy"))
 udp_proxy_mode.default = "proxy"
 
-o = s:taboption("Proxy", DummyValue, "", " ")
+o = s:taboption("Proxy", DummyValue, "switch_mode", " ")
 o.template = appname .. "/global/proxy"
 
 o = s:taboption("Proxy", Flag, "localhost_proxy", translate("Localhost Proxy"), translate("When selected, localhost can transparent proxy."))

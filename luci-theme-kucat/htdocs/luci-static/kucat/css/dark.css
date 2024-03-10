@@ -1,4 +1,25 @@
-﻿
+﻿/*
+ *  luci-theme-kucat
+ *  Copyright (C) 2019-2024 The Sirpdboy Team <herboy2008@gmail.com> 
+ *
+ *  Have a bug? Please create an issue here on GitHub!
+ *      https://github.com/sirpdboy/luci-theme-kucat/issues
+ *
+ *  luci-theme-bootstrap:
+ *      Copyright 2008 Steven Barth <steven@midlink.org>
+ *      Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+ *      Copyright 2012 David Menting <david@nut-bolt.nl>
+ *
+ *  luci-theme-material:
+ *      https://github.com/LuttyYang/luci-theme-material/
+ *  luci-theme-argon:
+ *      https://github.com/jerrykuku/luci-theme-argon
+ *  luci-theme-opentopd:
+ *      https://github.com/sirpdboy/luci-theme-opentopd
+ *
+ *  Licensed to the public under the Apache License 2.0
+ */
+
 body {
     font-family:  "Microsoft Yahei", "Google Sans", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB"!important
 }
@@ -357,8 +378,6 @@ button:hover,
 .btn:hover,
 .cbi-button:hover,
 .item:hover::after {
-  transform: scale(1.05) translate(0, -0.15rem);
-  
      box-shadow: 0 0.5rem 1rem rgba(255,255,255, 0.35);
     -webkit-box-shadow: 0 0 6px rgba(255,255,255, 0.35);
     -moz-box-shadow: 0 0 6px rgba(255,255,255, 0.35);
@@ -368,8 +387,6 @@ button:hover,
 .cbi-button:active ,
 button:active,
 .item:hover::after {
-  transform: scale(1) translate(0, 0.15rem);
-  
      box-shadow: 0 0.5rem 1rem rgba(255,255,255, 0.15);
     -webkit-box-shadow: 0 0 6px rgba(255,255,255, 0.15);
     -moz-box-shadow: 0 0 6px rgba(255,255,255, 0.15);
@@ -540,8 +557,6 @@ h3 {
 .cbi-tabmenu li[class~="cbi-tab"] {
     border-right: 0.18751rem solid #fd8c73;
     border-left: 0.18751rem solid #fd8c73;
-
-  transform: scale(1) translate(0, 0.15rem);
   box-shadow: 0 0.5rem 1rem rgba(255, 255, 255, 0.15);
     background-color: rgba(255, 255, 255, 0.2);
 }
@@ -593,9 +608,9 @@ h3 {
     box-shadow: 0 0 1px rgba(255, 255, 255,  0.12);
 }
 #syslog {
-    color: #8391a2;
-    font-family: "Microsoft Yahei",-apple-system,  "WenQuanYi Micro Hei", "sans-serif";
-    background-color: rgba(0,0,0,0.1);
+color: #8391a2;
+font-family: monospace;
+background-color: rgba(0,0,0,0.1);
 }
 .request>.requestBody,
 .response .markdown-body,
