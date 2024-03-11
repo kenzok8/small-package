@@ -227,6 +227,9 @@ return view.extend({
         o.default = "udp";
         o.modalonly = true;
 
+        o = ss.taboption('resolving', form.DynamicList, 'domain_resolve_expect_ips', _('Expected Server IPs'), _("Filter resolved IPs by GeoIP or CIDR. Resource file <code>geoip.dat</code> is required for GeoIP filtering."));
+        o.modalonly = true;
+
         ss.tab('protocol', _('Protocol Settings'));
 
         o = ss.taboption('protocol', form.ListValue, "protocol", _("Protocol"));
