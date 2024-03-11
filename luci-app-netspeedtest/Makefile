@@ -1,4 +1,4 @@
-#
+
 # Copyright (C) 2020-2021 sirpdboy <herboy2008@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v3.
@@ -8,11 +8,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-netspeedtest
 
-PKG_VERSION:=2.2.1
-PKG_RELEASE:=20240307
+PKG_VERSION:=2.2.2
+PKG_RELEASE:=20240311
 
 LUCI_TITLE:=LuCI Support for netspeedtest
-LUCI_DEPENDS:=+python3 +iperf3-ssl +homebox +ca-bundle
+LUCI_DEPENDS:=+python3 +iperf3-ssl +homebox
 LUCI_PKGARCH:=all
 PKG_MAINTAINER:=<https://github.com/sirpdboy/netspeedtest>
 

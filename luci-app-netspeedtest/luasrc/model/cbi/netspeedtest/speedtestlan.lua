@@ -6,7 +6,7 @@ m = Map("netspeedtest", "<font color='green'>" .. translate("Net Speedtest") .."
 s = m:section(TypedSection, "netspeedtest", translate('Lan Speedtest Web'))
 s.anonymous = true
 
-o=s:option(Flag,"enabled",translate("Enable"))
+o=s:option(Flag,"enabled",translate("Enable Homebox service"))
 o.default=0
 
 o = s:option(DummyValue, '', '')
