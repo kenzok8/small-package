@@ -42,7 +42,7 @@ endif
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=pexcn <i@pexcn.me>
+PKG_MAINTAINER:=sbwml <admin@cooluc.com>
 
 include $(INCLUDE_DIR)/package.mk
 

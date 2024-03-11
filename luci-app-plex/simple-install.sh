@@ -3,8 +3,19 @@
 # run in router
 APPNAME=$1
 
+CURR=`pwd`
 if [ -z "${APPNAME}" ]; then
-  APPNAME=plex
+  APPNAME=`basename "$CURR"|cut -d '-' -f 3`
+fi
+
+if [ -z "${APPNAME}" ]; then
+  echo "please run in luci-app-xxx paths"
+  exit 1
+fi
+
+if [ ! -d luasrc ]; then
+  echo "luasrc not found, please run in luci-app-xxx paths"
+  exit 1
 fi
 
 mkdir -p /usr/lib/lua/luci/view/${APPNAME}
