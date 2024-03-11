@@ -5,18 +5,19 @@ local e=luci.model.uci.cursor()
 local m,s,e
 
 m=Map("autotimeset",translate("Scheduled task/startup task settings"),translate("<b>The original [Timing Settings] includes scheduled task execution and startup task execution. Presets include over 10 functions, including restart, shutdown, network restart, memory release, system cleaning, network sharing, network shutdown, automatic detection of network disconnects and reconnection, MWAN3 load balancing detection of reconnection, and custom scripts</b></br>") ..
-translate("N1-N5 is continuous, N1, N3, N5 is discontinuous, */N represents every N hours or every N minutes.The week can only be 0~6, the hour can only be 0~23, the minute can only be 0~59, the unavailable time is 48 hours.") ..
-translate("&nbsp;&nbsp;&nbsp;<input class=\"cbi-button cbi-button-apply\" type=\"button\" value=\"" ..
-translate("Test/Verify Settings") ..
-" \" onclick=\"window.open('https://tool.lu/crontab/')\"/>"))
+translate("N1-N5 is continuous, N1, N3, N5 is discontinuous, */N represents every N hours or every N minutes.The week can only be 0~6, the hour can only be 0~23, the minute can only be 0~59, the unavailable time is 48 hours."))
 
 s = m:section(TypedSection, 'global')
 s.anonymous=true
 
 e=s:option(TextValue, "customscript" ,translate("Edit Custom Script"))
-e.description = translate("Only by editing the content of the custom script well and scheduling the custom script task can it be executed effectively.")
+e.description = translate("The execution content of the [Scheduled Customscript] in the task name")
 e.rows = 5
-e.default = '#!/bin/sh'
+e.rmempty = false
+
+e=s:option(TextValue, "customscript2" ,translate("Edit Custom Script2"))
+e.description = translate("The execution content of the [Scheduled Customscript2] in the task name")
+e.rows = 5
 e.rmempty = false
 
 s=m:section(TypedSection,"stime","")
@@ -37,7 +38,14 @@ e:value(9,translate("Scheduled DisReconn"))
 e:value(10,translate("Scheduled DisRereboot"))
 e:value(11,translate("Scheduled Restartmwan3"))
 e:value(12,translate("Scheduled Customscript"))
+e:value(13,translate("Scheduled Customscript2"))
+e:value(14,translate("Scheduled Wifiup"))
+e:value(15,translate("Scheduled Wifidown"))
 e.default=2
+
+e=s:option(Flag,"enable",translate("Enable"))
+e.rmempty = false
+e.default=0
 
 e=s:option(ListValue,"ttype",translate("Task Type"))
 e:value(0,translate("Scheduled task execution"))
@@ -70,10 +78,6 @@ e.default = 0
 e=s:option(Value,"minute",translate("Minute(0~59)"))
 e.rmempty = false
 e.default = 0
-
-e=s:option(Flag,"enable",translate("Enable"))
-e.rmempty = false
-e.default=0
 
 m.apply_on_parse = true
 m.on_after_apply = function(self,map)
