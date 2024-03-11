@@ -8,17 +8,12 @@ LOG=$TMP/autotimeset.log
 TT=/etc/init.d/autotimesetrun
 CR=/etc/crontabs/root
 [ ! -d $TMP ] && mkdir -p $TMP 2>/dev/null
-[ -s $LOG ] && echo ' ' >> $LOG
+[ -s $LOG ] && echo -e '' >> $LOG
 run_autotimeset()
 {
 ssum=$(grep -c stime /etc/config/autotimeset)
-customscript=$(uci -q get autotimeset.@global[0].customscript )  || customscript='#!/bin/sh'
-script=`echo $customscript | grep '#!/bin/sh'` >/dev/null 2>&1
-[ $script ] && echo $script > /etc/autotimeset/timesetcustomscript || {
-	echo '#!/bin/sh' >/etc/autotimeset/timesetcustomscript
-	echo  $customscript >>/etc/autotimeset/timesetcustomscript
-}
-echo 'start(){'  >>$TT
+[  `uci -q get autotimeset.@global[0].customscript  |  wc -l ` > 0 ] && uci -q get autotimeset.@global[0].customscript > /etc/autotimeset/timesetcustomscript
+[  `uci -q get autotimeset.@global[0].customscript2  |  wc -l ` > 0 ] && uci -q get autotimeset.@global[0].customscript2 > /etc/autotimeset/timesetcustomscript2
 for i in $(seq 0 $((ssum-1)))
 do
 	enable=$(uci -q get autotimeset.@stime[$i].enable )
@@ -73,7 +68,6 @@ do
 				local cmd="$minute $hour * $month $week /usr/bin/timesethandler disrereboot Scheduled_task" 
 				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler disrereboot  Startup_task" >>$TT
 				;;
-				
 			11)
 				local cmd="$minute $hour * $month $week /usr/bin/timesethandler restartmwan3 Scheduled_task" 
 				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler restartmwan3  Startup_task" >>$TT
@@ -82,12 +76,21 @@ do
 				local cmd="$minute $hour * $month $week /usr/bin/timesethandler customscript Scheduled_task" 
 				[ $ttype = '0' ] && echo "$cmd" >> $CR ||  echo  "sleep $delay &&  /usr/bin/timesethandler customscript  Startup_task" >>$TT
 				;;
+			13)
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler customscript2 Scheduled_task" 
+				[ $ttype = '0' ] && echo "$cmd" >> $CR ||  echo  "sleep $delay &&  /usr/bin/timesethandler customscript2  Startup_task" >>$TT
+				;;
+			14)
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler upwifi Scheduled_task" 
+				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler upwifi  Startup_task" >>$TT
+				;;
+			15)
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler downwifi Scheduled_task" 
+				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler downwifi Startup_task" >>$TT
+				;;
 		esac
-	
     fi
-
  done
- echo '}'  >>$TT
 }
 
 start()
@@ -95,12 +98,14 @@ start()
 	del_cru
 	[ -n "`tail -c1 $CR`" ] && echo >> $CR
 	run_autotimeset
+	echo '}'  >>$TT
 	/etc/init.d/cron reload
 }
 
 stop()
 {
     del_cru
+    echo '}'  >>$TT
     /etc/init.d/cron reload
 }
 
@@ -110,8 +115,8 @@ restart()
 }
 
 del_cru()
-{
-    echo -e '#!/bin/sh /etc/rc.common\n\nSTART=99\n' > $TT
+{   
+    echo -e '#!/bin/sh /etc/rc.common\n\nSTART=99\nstart(){\necho "Service autotimesetrun started! " >> $LOG\n' > $TT
     sed -i '/timesethandler/d' $CR >/dev/null 2>&1
 }
 
