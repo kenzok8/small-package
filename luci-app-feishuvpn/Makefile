@@ -2,15 +2,15 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.0.2-20240313
+PKG_VERSION:=1.0.2-20231208
 PKG_RELEASE:=
 
-LUCI_TITLE:=LuCI support for TypeCho
+LUCI_TITLE:=LuCI support for FeiShuVpn
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:=+lsblk +docker +dockerd +luci-lib-taskd +luci-lib-docker
 
-define Package/luci-app-typecho/conffiles
-/etc/config/typecho
+define Package/luci-app-feishuvpn/conffiles
+/etc/config/feishuvpn
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
