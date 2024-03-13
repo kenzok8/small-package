@@ -41,7 +41,7 @@ export function vless_outbound(server, tag) {
                                 encryption: server["vless_encryption"]
                             }
                         ]
-                    }
+                    };
                 })
             },
             streamSettings: stream_settings_result
