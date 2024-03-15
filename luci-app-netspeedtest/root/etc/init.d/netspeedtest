@@ -50,28 +50,32 @@ wantest() {
     # echone "\n  BINTEMP:  $BINTEMP "
     case $TESTMODE in
     0) 
-    echone "\n  —————ookla-speedtest测速$TESTMODE—————"
-    info=$($BINTEMP > $TMP_T )
-    #$BINTEMP > $TMP_T
-    echo -ne  "\n  测服信息:`cat  $TMP_T | grep 'Server'| cut -c10- | awk -F: '{printf $2$3}'`  线路:`cat  $TMP_T | grep 'ISP' | awk -F: '{printf $2}' `  延时：`cat  $TMP_T | grep 'Latency' | awk -F: '{printf $2}'  | awk -F '(' '{printf $1}'`"  >> $LOG
-    echo -ne  "\n  下行速率:`cat  $TMP_T  | grep 'Download' |awk -F: '{printf $2}'  | awk -F '(' '{printf $1}'`  --"  >> $LOG
+    echo -ne "\n   —————ookla-speedtest测速$TESTMODE—————" >> $LOG
+    info=$($BINTEMP > $TMP_T 2>&1 )
+    RESULT=$(echo "$TMP_T" | grep "URL" | awk '{print $NF}')
+    if [ -n "$RESULT" ] ;then
+    echo -ne "\n   测服信息:`cat  $TMP_T | grep 'Server'| cut -c10- | awk -F: '{printf $2$3}'`  线路:`cat  $TMP_T | grep 'ISP' | awk -F: '{printf $2}' `  延时：`cat  $TMP_T | grep 'Latency' | awk -F: '{printf $2}'  | awk -F '(' '{printf $1}'`"  >> $LOG
+    echo -ne "\n   下行速率:`cat  $TMP_T  | grep 'Download' |awk -F: '{printf $2}'  | awk -F '(' '{printf $1}'`  --"  >> $LOG
     echo -ne  "--  上行速率:`cat  $TMP_T  | grep 'Upload' |awk -F: '{printf $2}' | awk -F '(' '{printf $1}'`"  >> $LOG
-    echo -ne  "\n  测速结果图片链接:`cat  $TMP_T | grep 'URL' | cut -c15-`"  >> $LOG
-    echo -ne  "\n  测试时间: `date +%Y-%m-%d' '%H:%M:%S`"  >> $LOG
-    echo -ne  "\n  ————————————————————\n"  >> $LOG
-    # cat $TMP_T | grep 'URL' | cut -c15- > /var/speedtesturl.tmp
-    echo -ne "`cat $TMP_T | grep 'URL' | cut -c15- `"
+    echo -ne "\n   测速结果图片链接:`cat  $TMP_T | grep 'URL' | cut -c15-`"  >> $LOG
+    echo -ne "$RESULT"
+    else
+    echo -ne "\n  因客户端在LUCI状态下无法执行，测试失败！" >> $LOG
+    echo -ne "\n  请SSH登陆后输入 ：/etc/init.d/netspeedtest wantest 0 然后等完成后，刷新后查看记录！" >> $LOG
+    fi
+    echo -ne "\n   测试时间: `date +%Y-%m-%d' '%H:%M:%S`"  >> $LOG
+    echo -ne "\n   ————————————————————\n"  >> $LOG
      ;;
     *)  
     echo -ne "\n  —————python3-speedtest测速$TESTMODE—————"  >> $LOG
-    $BINTEMP > $TMP_T
-    echo -ne  "\n  测服信息:$(cat  $TMP_T | grep 'Hosted by'| cut -c10- | awk -F: '{printf $1}')  延时：$(cat  $TMP_T | grep 'Hosted by' | awk -F: '{printf $2}')" >> $LOG
+    info=$($BINTEMP > $TMP_T 2>&1 )
+    echo -ne "\n   测服信息:$(cat  $TMP_T | grep 'Hosted by'| cut -c10- | awk -F: '{printf $1}')  延时：$(cat  $TMP_T | grep 'Hosted by' | awk -F: '{printf $2}')" >> $LOG
     echo -ne "\n  下行速率:$(cat  $TMP_T  | grep 'Download:' |awk -F: '{printf $2}' )"   >> $LOG
     echo -ne "  ----  上行速率:$(cat  $TMP_T  | grep 'Upload:' |awk -F: '{printf $2}' )"  >> $LOG
-    echo -ne "\n  测试结果图片链接:$(cat  $TMP_T  | grep 'results:' | cut -c16- )"  >> $LOG
-    echo -ne "\n  测试时间:`date +%Y-%m-%d" "%H:%M:%S`"  >> $LOG
-    echo -ne  "\n  ————————————————————\n"  >> $LOG
-    echo -ne $(cat  $TMP_T  | grep 'results:' | cut -c16- )
+    echo -ne "\n   测试结果图片链接:$(cat  $TMP_T  | grep 'results:' | cut -c16- )"  >> $LOG
+    echo -ne "\n   测试时间:`date +%Y-%m-%d" "%H:%M:%S`"  >> $LOG
+    echo -ne "\n   ————————————————————\n"  >> $LOG
+    echo -ne $(cat  $TMP_T  | grep 'results:' | awk '{print $NF}')
 
      ;;  
     esac

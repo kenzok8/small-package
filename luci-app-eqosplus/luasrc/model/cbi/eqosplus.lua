@@ -34,6 +34,9 @@ t.template = "cbi/tblsection"
 t.anonymous = true
 t.addremove = true
 
+comment = t:option(Value, "comment", translate("Comment"))
+comment.size = 8
+
 e = t:option(Flag, "enable", translate("Enabled"))
 e.rmempty = false
 e.size = 4
@@ -99,7 +102,5 @@ week:value('1,2,3,4,5',translate("Workday"))
 week:value('6,7',translate("Rest Day"))
 week.default='0'
 week.size = 6
-comment = t:option(Value, "comment", translate("Comment"))
-comment.size = 8
 
 return a
