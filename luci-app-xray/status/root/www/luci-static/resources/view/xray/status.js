@@ -7,6 +7,13 @@
 'require view';
 'require view.xray.shared as shared';
 
+function bool_translate(v) {
+    if (v === "1") {
+        return _("available");
+    }
+    return _("unavailable");
+}
+
 function greater_than_zero(n) {
     if (n < 0) {
         return 0;
@@ -297,17 +304,24 @@ function inbound_stats(vars, config) {
 
 return view.extend({
     load: function () {
-        return uci.load(shared.variant);
+        return Promise.all([
+            uci.load(shared.variant),
+            fs.read("/usr/share/xray/version.txt")
+        ]);
     },
 
-    render: function (config) {
-        if (uci.get_first(config, "general", "metrics_server_enable") != "1") {
+    render: function (load_result) {
+        const config = load_result[0];
+        if (uci.get_first(config, "general", "metrics_server_enable") !== "1") {
             return E([], [
                 E('h2', _('Xray (status)')),
                 E('p', { 'class': 'cbi-map-descr' }, _("Xray metrics server not enabled. Enable Xray metrics server to see details."))
             ]);
         }
-        const info = E('p', { 'class': 'cbi-map-descr' }, _("Collecting data. If any error occurs, check if wget is installed correctly."));
+        const version = load_result[1].split(" ");
+        const stats_available = bool_translate(uci.get_first(config, "general", "stats"));
+        const observatory_available = bool_translate(uci.get_first(config, "general", "observatory"));
+        const info = E('p', { 'class': 'cbi-map-descr' }, `${version[0]} Version ${version[1]} (${version[2]}) Built ${new Date(version[3] * 1000).toLocaleString()}. Statistics: ${stats_available}. Observatory: ${observatory_available}.`);
         const detail = E('div', {});
         poll.add(function () {
             fs.exec_direct("/usr/bin/wget", ["-O", "-", `http://127.0.0.1:${uci.get_first(config, "general", "metrics_server_port") || 18888}/debug/vars`], "json").then(function (vars) {
@@ -319,7 +333,6 @@ return view.extend({
                     ])
                 ]);
                 ui.tabs.initTabGroup(result.lastElementChild.childNodes);
-                dom.content(info, _("Show some statistics of Xray. If nothing here, enable statistics and / or observatory for Xray."));
                 dom.content(detail, result);
             });
         });

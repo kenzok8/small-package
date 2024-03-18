@@ -7,6 +7,7 @@ import { direct_outbound } from "./outbound.mjs";
 const fallback_fast_dns = "223.5.5.5:53";
 const fallback_secure_dns = "8.8.8.8:53";
 const fallback_default_dns = "1.1.1.1:53";
+const geoip_existence = access("/usr/share/xray/geoip.dat") || false;
 const geosite_existence = access("/usr/share/xray/geosite.dat") || false;
 
 function parse_ip_port(val, port_default) {
@@ -161,7 +162,7 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
             continue;
         }
         if (server["domain_resolve_dns"]) {
-            domain_extra_options[server["server"]] = `${server["domain_resolve_dns_method"] || "udp"};${server["domain_resolve_dns"]}`;
+            domain_extra_options[server["server"]] = `${server["domain_resolve_dns_method"] || "udp"};${server["domain_resolve_dns"]};${join(",", server["domain_resolve_expect_ips"] || [])}`;
         } else {
             domain_names_set[`domain:${server["server"]}`] = true;
         }
@@ -180,12 +181,24 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
         ...map(keys(resolve_merged), function (k) {
             const dns_split = split(k, ";");
             const resolve_dns_object = format_dns(dns_split[0], dns_split[1]);
-            return {
+            let result = {
                 address: resolve_dns_object["address"],
                 port: resolve_dns_object["port"],
                 domains: uniq(resolve_merged[k]),
                 skipFallback: true,
             };
+            if (length(dns_split[2]) > 0) {
+                const expect_ips = filter(split(dns_split[2], ",") || [], function (i) {
+                    if (!geoip_existence) {
+                        if (substr(i, 0, 6) === "geoip:") {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+                result["expectIPs"] = expect_ips;
+            }
+            return result;
         }),
         default_dns_object,
         {
