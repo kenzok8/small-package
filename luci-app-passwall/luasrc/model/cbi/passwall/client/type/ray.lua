@@ -54,28 +54,38 @@ for k, e in ipairs(api.get_valid_nodes()) do
 	if e.node_type == "normal" then
 		nodes_table[#nodes_table + 1] = {
 			id = e[".name"],
-			remarks = e["remark"],
+			remark = e["remark"],
 			type = e["type"]
 		}
 	end
 	if e.protocol == "_balancing" then
 		balancers_table[#balancers_table + 1] = {
 			id = e[".name"],
-			remarks = e["remark"]
+			remark = e["remark"]
 		}
 	end
 	if e.protocol == "_iface" then
 		iface_table[#iface_table + 1] = {
 			id = e[".name"],
-			remarks = e["remark"]
+			remark = e["remark"]
 		}
 	end
 end
 
+local socks_list = {}
+uci:foreach(appname, "socks", function(s)
+	if s.enabled == "1" and s.node then
+		socks_list[#socks_list + 1] = {
+			id = "Socks_" .. s[".name"],
+			remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port"))
+		}
+	end
+end)
+
 -- 负载均衡列表
 local o = s:option(DynamicList, option_name("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://toutyrater.github.io/routing/balance2.html'>document</a>"))
 o:depends({ [option_name("protocol")] = "_balancing" })
-for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
+for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 
 local o = s:option(ListValue, option_name("balancingStrategy"), translate("Balancing Strategy"))
 o:depends({ [option_name("protocol")] = "_balancing" })
@@ -106,22 +116,25 @@ if #nodes_table > 0 then
 	o = s:option(Flag, option_name("preproxy_enabled"), translate("Preproxy"))
 	o:depends({ [option_name("protocol")] = "_shunt" })
 
-	o = s:option(Value, option_name("main_node"), string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
+	o = s:option(ListValue, option_name("main_node"), string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 	o:depends({ [option_name("protocol")] = "_shunt", [option_name("preproxy_enabled")] = true })
+	for k, v in pairs(socks_list) do
+		o:value(v.id, v.remark)
+	end
 	for k, v in pairs(balancers_table) do
-		o:value(v.id, v.remarks)
+		o:value(v.id, v.remark)
 	end
 	for k, v in pairs(iface_table) do
-		o:value(v.id, v.remarks)
+		o:value(v.id, v.remark)
 	end
 	for k, v in pairs(nodes_table) do
-		o:value(v.id, v.remarks)
+		o:value(v.id, v.remark)
 	end
 	o.default = "nil"
 end
 uci:foreach(appname, "shunt_rules", function(e)
 	if e[".name"] and e.remarks then
-		o = s:option(Value, option_name(e[".name"]), string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", e[".name"]), e.remarks))
+		o = s:option(ListValue, option_name(e[".name"]), string.format('* <a href="%s" target="_blank">%s</a>', api.url("shunt_rules", e[".name"]), e.remarks))
 		o:value("nil", translate("Close"))
 		o:value("_default", translate("Default"))
 		o:value("_direct", translate("Direct Connection"))
@@ -129,18 +142,21 @@ uci:foreach(appname, "shunt_rules", function(e)
 		o:depends({ [option_name("protocol")] = "_shunt" })
 
 		if #nodes_table > 0 then
+			for k, v in pairs(socks_list) do
+				o:value(v.id, v.remark)
+			end
 			for k, v in pairs(balancers_table) do
-				o:value(v.id, v.remarks)
+				o:value(v.id, v.remark)
 			end
 			for k, v in pairs(iface_table) do
-				o:value(v.id, v.remarks)
+				o:value(v.id, v.remark)
 			end
 			local pt = s:option(ListValue, option_name(e[".name"] .. "_proxy_tag"), string.format('* <a style="color:red">%s</a>', e.remarks .. " " .. translate("Preproxy")))
 			pt:value("nil", translate("Close"))
 			pt:value("main", translate("Preproxy Node"))
 			pt.default = "nil"
 			for k, v in pairs(nodes_table) do
-				o:value(v.id, v.remarks)
+				o:value(v.id, v.remark)
 				pt:depends({ [option_name("protocol")] = "_shunt", [option_name("preproxy_enabled")] = true, [option_name(e[".name"])] = v.id })
 			end
 		end
@@ -155,24 +171,27 @@ o.cfgvalue = function(t, n)
 end
 o:depends({ [option_name("protocol")] = "_shunt" })
 
-local o = s:option(Value, option_name("default_node"), string.format('* <a style="color:red">%s</a>', translate("Default")))
+local o = s:option(ListValue, option_name("default_node"), string.format('* <a style="color:red">%s</a>', translate("Default")))
 o:depends({ [option_name("protocol")] = "_shunt" })
 o:value("_direct", translate("Direct Connection"))
 o:value("_blackhole", translate("Blackhole"))
 
 if #nodes_table > 0 then
+	for k, v in pairs(socks_list) do
+		o:value(v.id, v.remark)
+	end
 	for k, v in pairs(balancers_table) do
-		o:value(v.id, v.remarks)
+		o:value(v.id, v.remark)
 	end
 	for k, v in pairs(iface_table) do
-		o:value(v.id, v.remarks)
+		o:value(v.id, v.remark)
 	end
 	local dpt = s:option(ListValue, option_name("default_proxy_tag"), string.format('* <a style="color:red">%s</a>', translate("Default Preproxy")), translate("When using, localhost will connect this node first and then use this node to connect the default node."))
 	dpt:value("nil", translate("Close"))
 	dpt:value("main", translate("Preproxy Node"))
 	dpt.default = "nil"
 	for k, v in pairs(nodes_table) do
-		o:value(v.id, v.remarks)
+		o:value(v.id, v.remark)
 		dpt:depends({ [option_name("protocol")] = "_shunt", [option_name("preproxy_enabled")] = true, [option_name("default_node")] = v.id })
 	end
 end
@@ -328,19 +347,12 @@ o:value("h2", "HTTP/2")
 o:value("ds", "DomainSocket")
 o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
+o:value("httpupgrade", "HttpUpgrade")
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
 o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "trojan" })
-
---[[
-o = s:option(ListValue, option_name("ss_transport"), translate("Transport"))
-o:value("ws", "WebSocket")
-o:value("h2", "HTTP/2")
-o:value("h2+ws", "HTTP/2 & WebSocket")
-o:depends({ [option_name("protocol")] = "shadowsocks" })
-]]--
 
 o = s:option(Value, option_name("wireguard_public_key"), translate("Public Key"))
 o:depends({ [option_name("protocol")] = "wireguard" })
@@ -423,22 +435,18 @@ o:depends({ [option_name("transport")] = "mkcp" })
 -- [[ WebSocket部分 ]]--
 o = s:option(Value, option_name("ws_host"), translate("WebSocket Host"))
 o:depends({ [option_name("transport")] = "ws" })
-o:depends({ [option_name("ss_transport")] = "ws" })
 
 o = s:option(Value, option_name("ws_path"), translate("WebSocket Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "ws" })
-o:depends({ [option_name("ss_transport")] = "ws" })
 
 -- [[ HTTP/2部分 ]]--
 o = s:option(Value, option_name("h2_host"), translate("HTTP/2 Host"))
 o:depends({ [option_name("transport")] = "h2" })
-o:depends({ [option_name("ss_transport")] = "h2" })
 
 o = s:option(Value, option_name("h2_path"), translate("HTTP/2 Path"))
 o.placeholder = "/"
 o:depends({ [option_name("transport")] = "h2" })
-o:depends({ [option_name("ss_transport")] = "h2" })
 
 o = s:option(Flag, option_name("h2_health_check"), translate("Health check"))
 o:depends({ [option_name("transport")] = "h2" })
@@ -497,6 +505,14 @@ o = s:option(Value, option_name("grpc_initial_windows_size"), translate("Initial
 o.default = "0"
 o:depends({ [option_name("transport")] = "grpc" })
 
+-- [[ HttpUpgrade部分 ]]--
+o = s:option(Value, option_name("httpupgrade_host"), translate("HttpUpgrade Host"))
+o:depends({ [option_name("transport")] = "httpupgrade" })
+
+o = s:option(Value, option_name("httpupgrade_path"), translate("HttpUpgrade Path"))
+o.placeholder = "/"
+o:depends({ [option_name("transport")] = "httpupgrade" })
+
 -- [[ Mux ]]--
 o = s:option(Flag, option_name("mux"), translate("Mux"))
 o:depends({ [option_name("protocol")] = "vmess" })
@@ -531,7 +547,7 @@ o.default = ""
 o:value("", translate("Close(Not use)"))
 for k, v in pairs(nodes_table) do
 	if v.type == "Xray" then
-		o:value(v.id, v.remarks)
+		o:value(v.id, v.remark)
 	end
 end
 

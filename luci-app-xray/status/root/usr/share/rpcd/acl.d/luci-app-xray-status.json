@@ -8,6 +8,9 @@
             "file": {
                 "/usr/bin/wget": [
                     "exec"
+                ],
+                "/usr/share/xray/version.txt": [
+                    "read"
                 ]
             }
         }

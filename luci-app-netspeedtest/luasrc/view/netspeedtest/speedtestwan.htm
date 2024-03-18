@@ -17,21 +17,51 @@
     <span id="wanspeedtest-output"></span>
   </fieldset>
 <script type="text/javascript">
-    const RUN_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","speedtestrun")%>';
-    function run(btn) {
+function run(btn) {
+
+	const RUN_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","speedtestwanrun")%>';
+    const S_URL = '<%=luci.dispatcher.build_url("admin", "network", "netspeedtest","speedtestwan")%>';
+	var sid='speedtestwan'
+	var opt={
+    		base:"cbid.netspeedtest."+sid,
+    		get:function(opt){
+    			var id=this.base+'.'+opt;
+    			var obj=document.getElementsByName(id)[0] || document.getElementsByClassName(id)[0] || document.getElementById(id)
+    			if (obj){
+    				return obj;
+    			}else{
+    				return null;
+    			}
+    		},
+    		getlist:function(opt){
+    			var id=this.base+'.'+opt;
+    			var objs=document.getElementsByName(id) || document.getElementsByClassName(id);
+    			var ret=[];
+    			if (objs){
+    				for (var i=0;i < objs.length;i++){
+    					ret[i]=objs[i].value;
+    				}
+    			}else{
+    				alert("<%:Fatal on get option,please help in debug%>:"+opt);
+	    		}
+	    		return ret;
+    		}
+    }
 	var legend=document.getElementById('wanspeedtest-legend');
 	var output=document.getElementById('wanspeedtest-output');
 	btn.value='<%:Waiting (executing)...%>';
 	btn.disabled=true;
+    var cli=opt.get("speedtest_cli").value;
+	console.log(cli);
+	legend.parentNode.style.display = 'block';
+	legend.style.display = 'inline';
 	output.innerHTML =
 				'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
 				'<%:Network speed test, please wait...%>'
 			;
-	legend.parentNode.style.display = 'block';
-	legend.style.display = 'inline';
-	XHR.get(RUN_URL,null, 
-				function(x)
-				{
+
+        XHR.get(RUN_URL, { cli: cli	},
+		(x) =>{
 					if (x.responseText)
 					{
 						legend.style.display = 'none';

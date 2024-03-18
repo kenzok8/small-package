@@ -24,6 +24,7 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Build/Compile
+	echo "luci-app-xray $(PKG_VERSION)-$(PKG_RELEASE) `git rev-parse HEAD` `date +%s`" > $(PKG_BUILD_DIR)/version.txt
 endef
 
 define Package/$(PKG_NAME)/install
@@ -33,6 +34,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-app-xray-status.json $(1)/usr/share/luci/menu.d/luci-app-xray-status.json
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(INSTALL_DATA) ./root/usr/share/rpcd/acl.d/luci-app-xray-status.json $(1)/usr/share/rpcd/acl.d/luci-app-xray-status.json
+	$(INSTALL_DIR) $(1)/usr/share/xray
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/version.txt $(1)/usr/share/xray/version.txt
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

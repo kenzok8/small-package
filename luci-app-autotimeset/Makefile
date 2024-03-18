@@ -1,15 +1,18 @@
-# Copyright (C) 2019-2023  sirpdboy  https://github.com/sirpdboy/luci-app-autotimeset
-# 
+#
+# Copyright 2019-2023 sirpdboy 
+#
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
 
 include $(TOPDIR)/rules.mk
 
+NAME:=autotimeset
+PKG_NAME:=luci-app-$(NAME)
 LUCI_TITLE:=LuCI support for Scheduled Time setting
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=2.0.2
-PKG_RELEASE:=20230718
+PKG_VERSION:=2.1.0
+PKG_RELEASE:=20240311
 
 
 define Package/$(PKG_NAME)/conffiles

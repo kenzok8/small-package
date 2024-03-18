@@ -145,5 +145,5 @@ reload_service() {
 }
 
 service_triggers() {
-    procd_add_reload_trigger "xray_core"
+    procd_add_reload_trigger "xray_core" "dhcp"
 }

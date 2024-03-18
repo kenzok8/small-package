@@ -1,6 +1,6 @@
 #!/bin/sh
 # author 2021 jjm2473
-# author 2020-2023 sirpdboy
+# author 2020-2024 sirpdboy
 TMP_T=/var/autotimeset/autotimeset.tmp
 LOG=/etc/autotimeset/autotimeset.log
 log(){
@@ -114,9 +114,28 @@ trigger() {
 		[ -s /usr/sbin/mwan3 ] && remwan3
 		;;
 	customscript)
-	         script=`cat /etc/autotimeset/timesetcustomscript ` >/dev/null 2>&1
-	         [ $script ] && source /etc/autotimeset/timesetcustomscript
+	         script=`cat /etc/autotimeset/timesetcustomscript | wc -l`
+	         [[ $script > 0 ]] && source /etc/autotimeset/timesetcustomscript
 		 log  "CustomScript succeeded!"
+		;;
+	customscript2)
+	         script=`cat /etc/autotimeset/timesetcustomscript2 | wc -l`
+	         [[ $script > 0 ]] && source /etc/autotimeset/timesetcustomscript2
+		 log  "CustomScript succeeded!"
+		;;
+	upwifi)
+		ifconfig wlan0 up
+		uci set wireless.radio0.disabled=0
+		uci set wireless.radio1.disabled=0
+		uci commit wireless
+		wifi up
+		;;
+	downwifi)
+		ifconfig wlan0 down
+		uci set wireless.radio0.disabled=1
+		uci set wireless.radio1.disabled=1
+		uci commit wireless
+		wifi down
 		;;
 	esac
 }

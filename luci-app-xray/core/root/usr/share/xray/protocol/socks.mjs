@@ -25,7 +25,7 @@ export function socks_outbound(server, tag) {
                         address: server["server"],
                         port: v,
                         users: users
-                    }
+                    };
                 })
             },
             streamSettings: stream_settings_result
