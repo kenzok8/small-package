@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall2
-PKG_VERSION:=1.28-3
+PKG_VERSION:=1.28-4
 PKG_RELEASE:=
 
 PKG_CONFIG_DEPENDS:= \
@@ -148,6 +148,7 @@ define Package/$(PKG_NAME)/conffiles
 /etc/config/passwall2
 /etc/config/passwall2_server
 /usr/share/passwall2/domains_excluded
+/www/luci-static/resources/qrcode.min.js
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
