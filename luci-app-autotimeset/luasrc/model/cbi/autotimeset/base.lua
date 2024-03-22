@@ -13,12 +13,12 @@ s.anonymous=true
 e=s:option(TextValue, "customscript" ,translate("Edit Custom Script"))
 e.description = translate("The execution content of the [Scheduled Customscript] in the task name")
 e.rows = 5
-e.rmempty = false
+e.default=" "
 
 e=s:option(TextValue, "customscript2" ,translate("Edit Custom Script2"))
 e.description = translate("The execution content of the [Scheduled Customscript2] in the task name")
 e.rows = 5
-e.rmempty = false
+e.default=" "
 
 s=m:section(TypedSection,"stime","")
 s.addremove=true
@@ -38,9 +38,9 @@ e:value(9,translate("Scheduled DisReconn"))
 e:value(10,translate("Scheduled DisRereboot"))
 e:value(11,translate("Scheduled Restartmwan3"))
 e:value(12,translate("Scheduled Customscript"))
-e:value(13,translate("Scheduled Customscript2"))
-e:value(14,translate("Scheduled Wifiup"))
-e:value(15,translate("Scheduled Wifidown"))
+e:value(13,translate("Scheduled Wifiup"))
+e:value(14,translate("Scheduled Wifidown"))
+e:value(15,translate("Scheduled Customscript2"))
 e.default=2
 
 e=s:option(Flag,"enable",translate("Enable"))
