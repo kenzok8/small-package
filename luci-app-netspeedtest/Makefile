@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-netspeedtest
 
-PKG_VERSION:=2.2.3
-PKG_RELEASE:=20240315
+PKG_VERSION:=2.2.4
+PKG_RELEASE:=20240319
 
 LUCI_TITLE:=LuCI Support for netspeedtest
 LUCI_DEPENDS:=+python3 +iperf3-ssl +homebox
@@ -24,8 +24,7 @@ endef
 define Package/$(PKG_NAME)/postinst
 endef
 
-define Package/$(PKG_NAME)/prerm
-endef
+
 include $(TOPDIR)/feeds/luci/luci.mk
 
 

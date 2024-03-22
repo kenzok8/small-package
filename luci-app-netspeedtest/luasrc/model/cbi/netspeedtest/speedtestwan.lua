@@ -12,12 +12,8 @@ e:value("0",translate("ookla-speedtest-cli"))
 e:value("1",translate("python3-speedtest-cli"))
 e.default = "1"
 
-e = t:option(DummyValue, '', '')
-e.rawhtml = true
+e=t:option(Button, "restart", translate("speedtest.net Broadband speed test"))
+e.inputtitle=translate("Click to execute")
 e.template ='netspeedtest/speedtestwan'
-
-e =t:option(DummyValue, '', '')
-e.rawhtml = true
-e.template = 'netspeedtest/log'
 
 return o

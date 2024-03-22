@@ -1,6 +1,7 @@
 config global
 	option enabled '0'
-	option customscript '#!/bin/sh'
+	option customscript '# Sh script rules'
+	option customscript2 '# Sh script rules'
 
 config stime
 	option hour '*/4'

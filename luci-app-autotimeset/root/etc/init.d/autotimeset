@@ -77,16 +77,16 @@ do
 				[ $ttype = '0' ] && echo "$cmd" >> $CR ||  echo  "sleep $delay &&  /usr/bin/timesethandler customscript  Startup_task" >>$TT
 				;;
 			13)
-				local cmd="$minute $hour * $month $week /usr/bin/timesethandler customscript2 Scheduled_task" 
-				[ $ttype = '0' ] && echo "$cmd" >> $CR ||  echo  "sleep $delay &&  /usr/bin/timesethandler customscript2  Startup_task" >>$TT
-				;;
-			14)
 				local cmd="$minute $hour * $month $week /usr/bin/timesethandler upwifi Scheduled_task" 
 				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler upwifi  Startup_task" >>$TT
 				;;
-			15)
+			14)
 				local cmd="$minute $hour * $month $week /usr/bin/timesethandler downwifi Scheduled_task" 
 				[ $ttype = '0' ] && echo "$cmd" >> $CR || echo  "sleep $delay &&  /usr/bin/timesethandler downwifi Startup_task" >>$TT
+				;;
+			15)
+				local cmd="$minute $hour * $month $week /usr/bin/timesethandler customscript2 Scheduled_task" 
+				[ $ttype = '0' ] && echo "$cmd" >> $CR ||  echo  "sleep $delay &&  /usr/bin/timesethandler customscript2  Startup_task" >>$TT
 				;;
 		esac
     fi

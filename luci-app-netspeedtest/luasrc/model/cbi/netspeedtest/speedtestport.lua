@@ -21,8 +21,5 @@ e = t:option(DummyValue, '', '')
 e.rawhtml = true
 e.template ='netspeedtest/speedtestport'
 
-e =t:option(DummyValue, '', '')
-e.rawhtml = true
-e.template = 'netspeedtest/log'
 
 return o
