@@ -22,6 +22,9 @@ do_install() {
   echo "docker pull ${IMAGE_NAME}"
   docker pull ${IMAGE_NAME}
   docker rm -f webvirtcloud
+  mkdir -p "$config"
+  rm -rf "$config/vmwebvirt"
+  cp /usr/sbin/vmeasedaemon "$config/vmwebvirt"
 
   local cmd="docker run --restart=unless-stopped -d \
     --cgroupns=host \
@@ -31,7 +34,7 @@ do_install() {
     -v \"$config/dbconfig:/srv/webvirtcloud/dbconfig\" \
     -v \"$config/libvirt:/etc/libvirt\" \
     -v \"$config/images:/var/lib/libvirt/images\" \
-    -v /usr/sbin/vmeasedaemon:/usr/sbin/vmwebvirt \
+    -v \"$config/vmwebvirt:/usr/sbin/vmwebvirt\" \
     -v /var/run/vmease:/srv/vmease \
     -p $port:80 \
     --privileged \
@@ -87,7 +90,6 @@ case ${ACTION} in
     docker ${ACTION} webvirtcloud
   ;;
   "stop")
-    /etc/init.d/vmease stop
     docker ${ACTION} webvirtcloud
   ;;
   "restart")
