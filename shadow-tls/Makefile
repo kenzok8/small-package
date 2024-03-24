@@ -12,8 +12,8 @@ PKG_MAINTAINER:=FluffyTigerFear
 RELEASE_HEAD:=$(PKG_NAME)
 RELEASE_FOOT:=unknown-linux-musl
 ifeq ($(ARCH),aarch64)
-	RELEASE_ARCH:=$(RELEASE_HEAD)-aarch64-$(RELEASE_FOOT)
-	PKG_HASH:=3295476b37f549a68906519d3eaecb74bf3b6eaf9094cebb16ee84f0151373c6
+    RELEASE_ARCH:=$(RELEASE_HEAD)-aarch64-$(RELEASE_FOOT)
+    PKG_HASH:=3295476b37f549a68906519d3eaecb74bf3b6eaf9094cebb16ee84f0151373c6
 else ifeq ($(ARCH),arm)
     ifeq ($(CONFIG_CPU_TYPE),cortex-a7)
         RELEASE_ARCH:=$(RELEASE_HEAD)-armv7-$(RELEASE_FOOT)eabihf
@@ -26,11 +26,11 @@ else ifeq ($(ARCH),arm)
         PKG_HASH:=b6743bc60e1727972ece0fd5acf3a931e5be05cedee6f637e7e3d8c5b8d58f16
     endif
 else ifeq ($(ARCH),x86_64)
-	RELEASE_ARCH:=$(RELEASE_HEAD)-x86_64-$(RELEASE_FOOT)
-	PKG_HASH:=a173f5f2d57f45211b68e10ceeddc15b1791077b914fa89747bc705fddc71532
+    RELEASE_ARCH:=$(RELEASE_HEAD)-x86_64-$(RELEASE_FOOT)
+    PKG_HASH:=a173f5f2d57f45211b68e10ceeddc15b1791077b914fa89747bc705fddc71532
 else
-	PKG_SOURCE:=dummy
-	PKG_HASH:=dummy
+    PKG_SOURCE:=dummy
+    PKG_HASH:=dummy
 endif
 
 define Download/shadow-tls
