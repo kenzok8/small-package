@@ -55,8 +55,8 @@ API Key 请访问 https://dash.cloudflare.com/profile/api-tokens 复制 Global A
 
 ## 截图展示
 
-![图1](./img/natmap-1.png)
-![图2](./img/natmap-2.png)
+![图1](./.img/natmap-1.png)
+![图2](./.img/natmap-2.png)
 
 
 ## 使用
