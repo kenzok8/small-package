@@ -70,7 +70,15 @@ define Build/Prepare
 	( \
 	$(TAR) --strip-components=1 -C $(PKG_BUILD_DIR)/../ -xzf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.gz ; \
 	rm -rf $(PKG_BUILD_DIR) && git clone https://github.com/daeuniverse/dae-wing $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
+	pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
+	go get -u ; \
+	go mod tidy ; \
+	popd ; \
 	rm -rf $(PKG_BUILD_DIR)/dae-core && git clone https://github.com/daeuniverse/dae $(PKG_BUILD_DIR)/dae-core ; \
+	pushd $(PKG_BUILD_DIR)/dae-core ; \
+	go get -u ; \
+	go mod tidy ; \
+	popd ; \
 	rm -rf $(PKG_BUILD_DIR)/dae-core/control/kern/headers && git clone https://github.com/daeuniverse/dae_bpf_headers $(PKG_BUILD_DIR)/dae-core/control/kern/headers ; \
 	)
 endef
