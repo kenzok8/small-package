@@ -13,6 +13,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.xz
 PKG_SOURCE_URL:=https://github.com/upx/upx/releases/download/v$(PKG_VERSION)/$(PKG_SOURCE)
 PKG_HASH:=d6357eec6ed4c1b51f40af2316b0958ff1b7fa6f53ef3de12da1d5c96d30e412
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE)
 
 PKG_MAINTAINER:=Xingwang Liao <kuoruan@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
