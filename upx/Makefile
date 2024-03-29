@@ -1,9 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2011-2020 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# Copyright (C) 2022 ImmortalWrt.org
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upx
@@ -11,51 +9,48 @@ PKG_VERSION:=4.2.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.xz
-PKG_SOURCE_URL:=https://github.com/upx/upx/releases/download/v$(PKG_VERSION)/$(PKG_SOURCE)
+PKG_SOURCE_URL:=https://github.com/upx/upx/releases/download/v$(PKG_VERSION)
 PKG_HASH:=d6357eec6ed4c1b51f40af2316b0958ff1b7fa6f53ef3de12da1d5c96d30e412
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-src
 
-PKG_MAINTAINER:=Xingwang Liao <kuoruan@gmail.com>
-PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING LICENSE
+PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
-HOST_BUILD_DEPENDS:=ucl/host
-MAKE_PATH:=src
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_VERSION)-src
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-src
+CMAKE_BINARY_SUBDIR:=openwrt-build
 
-include $(INCLUDE_DIR)/package.mk
+PKG_BUILD_FLAGS:=no-mips16
+
 include $(INCLUDE_DIR)/host-build.mk
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/upx
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libucl +libstdcpp +zlib
+  SUBMENU:=Compression
   TITLE:=The Ultimate Packer for eXecutables
-  URL:=https://upx.github.io/
+  URL:=https://upx.github.io
+  DEPENDS:=+libstdcpp
 endef
+
+CMAKE_OPTS:= \
+	-DUPX_CONFIG_DISABLE_GITREV=ON \
+	-DUPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
+CMAKE_HOST_OPTIONS+= $(CMAKE_OPTS)
+CMAKE_OPTIONS+= $(CMAKE_OPTS)
 
 define Package/upx/description
-UPX is a free, secure, portable, extendable, high-performance
-executable packer for several executable formats.
-endef
-
-define Host/Compile
-	UPX_UCLDIR=$(STAGING_DIR_HOST) \
-	$(MAKE) -C $(HOST_BUILD_DIR)/src \
-		LDFLAGS="$(HOST_LDFLAGS)" \
-		CXX="$(HOSTCXX)"
-endef
-
-define Host/Install
-	$(CP) $(HOST_BUILD_DIR)/src/upx.out $(STAGING_DIR_HOST)/bin/upx
-endef
-
-define Host/Clean
-	rm -f $(STAGING_DIR_HOST)/bin/upx
+  UPX is an advanced executable file compressor. UPX will typically
+  reduce the file size of programs and DLLs by around 50%-70%, thus
+  reducing disk space, network load times, download times and
+  other distribution and storage costs.
 endef
 
 define Package/upx/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/upx.out $(1)/usr/bin/upx
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/upx $(1)/usr/bin/
 endef
 
 $(eval $(call HostBuild))
