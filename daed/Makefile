@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/daeuniverse/daed.git
-PKG_SOURCE_DATE:=2023-11-03
-PKG_SOURCE_VERSION:=54bc33934d0e323449df11fc26dc9569edbbe13c
-PKG_MIRROR_HASH:=1d4d8b4fd163834acec3d227ef56697d79ffa374309105a9e6b35dcf4aa96b14
+PKG_SOURCE_DATE:=2024-03-27
+PKG_SOURCE_VERSION:=2841ec229ff3a0675293b95a23f0f3aac2604982
+PKG_MIRROR_HASH:=f53d172431d76fc32fb2adb8761896c07900f1a9bf55ba219e5e6b1c40ac6796
 
 PKG_LICENSE:=AGPL-3.0-only MIT
 PKG_LICENSE_FILES:=LICENSE wing/LICENSE
@@ -48,7 +48,8 @@ define Package/daed
   TITLE:=A Modern Dashboard For dae
   # You need enable KERNEL_DEBUG_INFO_BTF and KERNEL_BPF_EVENTS
   DEPENDS:=$(GO_ARCH_DEPENDS) $(BPF_DEPENDS) \
-    +ca-bundle +kmod-sched-core +kmod-sched-bpf +kmod-xdp-sockets-diag
+    +ca-bundle +kmod-sched-core +kmod-sched-bpf +kmod-xdp-sockets-diag \
+    +kmod-veth
 endef
 
 define Package/daed-geoip
@@ -79,7 +80,7 @@ WEB_FILE:=$(PKG_NAME)-web-$(PKG_VERSION).zip
 define Download/daed-web
 	URL:=@IMMORTALWRT
 	FILE:=$(WEB_FILE)
-	HASH:=8cbff499a250ab5af859e3374f566c683925ef9b3efddce7ceeefdf44ef6fe04
+	HASH:=dee10f5c646cddb47b0ef1e377a956b7d4841dc90931ab720299f73da705f10b
 endef
 
 define Build/Prepare
