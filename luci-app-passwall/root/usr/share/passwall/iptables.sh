@@ -135,7 +135,9 @@ REDIRECT() {
 get_jump_ipt() {
 	case "$1" in
 	direct)
-		echo "-j RETURN"
+		local mark="-m mark ! --mark 1"
+		s="${mark} -j RETURN"
+		echo $s
 		;;
 	proxy)
 		if [ -n "$2" ] && [ -n "$(echo $2 | grep "^-")" ]; then
@@ -1174,10 +1176,15 @@ del_firewall_rule() {
 }
 
 flush_ipset() {
-	del_firewall_rule
+	$DIR/app.sh echolog "清空 IPSET。"
 	for _name in $(ipset list | grep "Name: " | grep "passwall_" | awk '{print $2}'); do
 		destroy_ipset ${_name}
 	done
+}
+
+flush_ipset_reload() {
+	del_firewall_rule
+	flush_ipset
 	rm -rf /tmp/singbox_passwall*
 	rm -rf /tmp/etc/passwall_tmp/dnsmasq*
 	/etc/init.d/passwall reload
@@ -1300,6 +1307,9 @@ insert_rule_after)
 	;;
 flush_ipset)
 	flush_ipset
+	;;
+flush_ipset_reload)
+	flush_ipset_reload
 	;;
 get_ipt_bin)
 	get_ipt_bin
