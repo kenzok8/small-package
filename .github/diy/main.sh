@@ -115,6 +115,7 @@ git clone --depth 1 https://github.com/immortalwrt/homeproxy
 git clone --depth 1 https://github.com/ximiTech/luci-app-msd_lite
 git clone --depth 1 -b master https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic
 git clone --depth 1 https://github.com/sbwml/luci-app-alist openwrt-alist && mv -n openwrt-alist/*alist ./ ; rm -rf openwrt-alist
+git clone --depth 1 https://github.com/sbwml/luci-app-qbittorrent openwrt-qb && mv -n openwrt-qb/* ./ ; rm -rf openwrt-qb
 git clone --depth 1 https://github.com/vernesong/OpenClash && mv -n OpenClash/luci-app-openclash ./; rm -rf OpenClash
 git clone --depth 1 https://github.com/messense/aliyundrive-webdav aliyundrive && mv -n aliyundrive/openwrt/* ./ ; rm -rf aliyundrive
 git clone --depth 1 https://github.com/messense/aliyundrive-fuse aliyundrive && mv -n aliyundrive/openwrt/* ./;rm -rf aliyundrive
@@ -158,7 +159,6 @@ svn export https://github.com/kenzok8/jell/trunk/luci-app-bridge
 
 git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" net/miniupnpd net/mwan3 \
 net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
-net/qBittorrent-static net/qBittorrent libs/qtbase libs/qttools libs/rblibtorrent \
 net/uugamebooster net/verysync net/dnsforwarder net/nps net/tcpping
 mv -f miniupnpd miniupnpd-iptables
 
