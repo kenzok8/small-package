@@ -1,0 +1,162 @@
+# Telit LN940-CP
+
+O=$(sms_tool -d $DEVICE at "at#servinfo;#cainfo?")
+
+channeltoband()
+{
+	if [ $1 -ge 0 ] && [ $1 -le 599 ]; then
+		echo "1"
+	elif [ $1 -ge 1200 ] && [ $1 -le 1949 ]; then
+		echo "3"
+	elif [ $1 -ge 2750 ] && [ $1 -le 3449 ]; then
+		echo "7"
+	elif [ $1 -ge 3450 ] && [ $1 -le 3799 ]; then
+		echo "8"
+	elif [ $1 -ge 6150 ] && [ $1 -le 6449 ]; then
+		echo "20"
+	else
+		echo "?"
+	fi
+}
+
+case "$MODE_NUM" in
+	7*)
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $4}' | xargs)
+		[ -n "$COPS" ] && COPS="$T"
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $7}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			T_DEC=$(printf "%d" "0x$T")
+			ADDON="$ADDON"'{"TAC":"'$T_DEC' ('$T')"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $3}' | xargs)
+		if [ -n "$T" ]; then
+			RSSI=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"RSSI":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $10}' | xargs)
+		if [ -n "$T" ]; then
+			RSRP=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"RSRP":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $2}' | xargs)
+		if [ -n "$T" ]; then
+			EARFCN=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"EARFCN":"'$T'"}'
+		fi
+
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $3}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			T1=$(channeltoband $T)
+			PBAND="$(band $T1 "")"
+			ADDON="$ADDON"'{"Primary band":"'$(band $T1 "")'"}'
+			MODE=$(band $T1 "LTE ")
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $5}' | xargs)
+		if [ -n "$T" ]; then
+			PCI=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"PCI":"'$T'"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $7}' | xargs)
+		if [ -n "$T" ]; then
+			RSSI=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"RSSI":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $6}' | xargs)
+		if [ -n "$T" ]; then
+			RSRP=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"RSRP":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $8}' | xargs)
+		if [ -n "$T" ]; then
+			RSRQ=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"RSRQ":"'$T'"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $9}' | xargs)
+		if [ -n "$T" ]; then
+			SINR=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"SINR":"'$T'"}'
+		fi
+
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $15}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			T1=$(channeltoband $T)
+			S1BAND=="$(band $T1 "")"
+			ADDON="$ADDON"'{"(S1) band":"'$(band $T1 "")'"}'
+			MODE="${MODE/LTE/LTE_A} / "$(band $T1 "")
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $17}' | xargs)
+		if [ -n "$T" ]; then
+			S1PCI=$T
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S1) PCI":"'$T'"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $19}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S1) RSSI":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $18}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S1) RSRP":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $20}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S1) RSRQ":"'$T' dB"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $21}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S1) SINR":"'$T' dB"}'
+		fi
+
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $26}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			T1=$(channeltoband $T)
+			S2BAND=="$(band $T1 "")"
+			ADDON="$ADDON"'{"(S2) band":"'$(band $T1 "")'"}'
+			MODE="${MODE} / "$(band $T1 "")
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $28}' | xargs)
+		if [ -n "$T" ]; then
+			S2PCI="$T"
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S2) PCI":"'$T'"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $30}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S2) RSSI":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $29}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S2) RSRP":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $31}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S2) RSRQ":"'$T' dB"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#CAINFO/ {print $32}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			ADDON="$ADDON"'{"(S2) SINR":"'$T' dB"}'
+		fi
+		;;
+esac
+
+MODE=$(echo $MODE | sed 's,/,+,')

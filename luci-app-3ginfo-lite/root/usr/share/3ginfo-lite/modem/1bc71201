@@ -1,0 +1,42 @@
+# Telit LE910-EUG
+
+O=$(sms_tool -d $DEVICE at "at#servinfo")
+
+case "$MODE_NUM" in
+	7*)
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $4}' | xargs)
+		[ -n "$COPS" ] && COPS="$T"
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $7}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			T_DEC=$(printf "%d" "0x$T")
+			TAC_HEX=$T
+			TAC_DEC=$T_DEC
+			ADDON="$ADDON"'{"TAC":"'$T_DEC' ('$T')"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $3}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			RSSI="$T"
+			ADDON="$ADDON"'{"RSSI":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $10}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			RSRP="$T"
+			ADDON="$ADDON"'{"RSRP":"'$T' dBm"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $6}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			PCI="$(printf "%d" "0x$T")"
+			ADDON="$ADDON"'{"PCI":"'$(printf "%d" "0x$T")'"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^#SERVINFO/ {print $2}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			EARFCN="$T"
+			ADDON="$ADDON"'{"EARFCN":"'$T'"}'
+		fi
+		;;
+esac

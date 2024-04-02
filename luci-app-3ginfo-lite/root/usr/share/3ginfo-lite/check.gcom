@@ -1,0 +1,13 @@
+opengt
+ set com 115200n81
+ set comecho off
+ set senddelay 0.01
+ waitquiet 0.01 0.01
+
+ send "AT+CPIN?^m"
+ waitfor 2 "OK" "+CME ERROR"
+ if % = -1 goto timeout
+ exit 0
+
+:timeout
+ exit 1
