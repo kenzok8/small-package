@@ -1,0 +1,23 @@
+{
+        "admin/mesh": {
+                "title": "MESH",
+                "order": 60,
+                "action": {
+                        "type": "firstchild",
+                        "recurse": true
+                }
+        },
+	"admin/mesh/fakemesh": {
+		"title": "Fake Mesh",
+		"order": 1,
+		"action": {
+			"type": "firstchild",
+			"type": "view",
+			"path": "fakemesh/fakemesh"
+		},
+		"depends": {
+			"acl": [ "luci-app-fakemesh" ],
+			"uci": { "fakemesh": true }
+		}
+	}
+}

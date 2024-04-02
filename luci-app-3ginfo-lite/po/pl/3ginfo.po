@@ -1,0 +1,205 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Information about 3G/4G/5G connection"
+msgstr "Informacja o statusie połączenia 3G/4G/5G"
+
+msgid "More information about the 3ginfo on the %seko.one.pl forum%s."
+msgstr "Więcej informacji o 3ginfo na %sforum eko.one.pl%s."
+
+msgid "eko.one.pl forum"
+msgstr "forum eko.one.pl"
+
+msgid "Details"
+msgstr "Szczegóły"
+
+msgid "USB debug information"
+msgstr "Debugowanie portu USB"
+
+msgid "Configuration"
+msgstr "Konfiguracja"
+
+msgid "General Information"
+msgstr "Informacje ogólne"
+
+msgid "Modem Information"
+msgstr "Informacje o modemie"
+
+msgid "Cell / Signal Information"
+msgstr "Informacje o sieci / sygnale"
+
+msgid "Technology"
+msgstr "Technologia"
+
+msgid "Operator"
+msgstr "Operator"
+
+msgid "Signal strength"
+msgstr "Siła sygnału"
+
+msgid "Connection statistics"
+msgstr "Statystyki połączenia"
+
+msgid "Modem type"
+msgstr "Typ modemu"
+
+msgid "Additional information"
+msgstr "Informacje dodatkowe"
+
+msgid "Revision / Firmware"
+msgstr "Rewizja / Wersja firmware"
+
+msgid "IP adress / Communication Port"
+msgstr "Adres IP / Port do komunikacji"
+
+msgid "Chip Temperature"
+msgstr "Temperatura układu"
+
+msgid "Configuration 3ginfo-lite"
+msgstr "Konfiguracja 3ginfo-lite"
+
+msgid "Configuration panel for the 3ginfo-lite application."
+msgstr "Panel konfiguracyjny dla aplikacji 3ginfo-lite."
+
+msgid "Network"
+msgstr "Sieć"
+
+msgid "IP adress / Port for communication with the modem"
+msgstr "Adres IP / Port do komunikacji z modemem"
+
+msgid "Protocol"
+msgstr "Protokół"
+
+msgid ""
+"Select the appropriate settings. <br /> <br />Traditional "
+"modem. <br /> Select one of the available ttyUSBX "
+"ports.<br /> <br />HiLink modem. <br /> Enter the IP address "
+"192.168.X.X under which the modem is available."
+msgstr ""
+"Wybierz odpowiednie ustawienia. <br /> <br />Tradycyjny "
+"modem. <br /> Wybierz jeden z dostępnych portów "
+"ttyUSBX.<br /> <br />Modem typu HiLink. <br /> Wprowadź adres IP "
+"192.168.X.X pod którym dostępny jest modem."
+
+msgid "Very good"
+msgstr "Bardzo dobry"
+
+msgid "Good"
+msgstr "Dobry"
+
+msgid "Weak"
+msgstr "Słaby"
+
+msgid "Very weak"
+msgstr "Bardzo słaby"
+
+msgid "Excellent"
+msgstr "Doskonały"
+
+msgid "Good"
+msgstr "Dobry"
+
+msgid "Mid cell"
+msgstr "Średni zasięg"
+
+msgid "Cell edge"
+msgstr "Na krawędzi zasięgu"
+
+msgid "SIM status"
+msgstr "Status karty SIM"
+
+msgid "Not registered"
+msgstr "Nie zalogowana do sieci"
+
+msgid "Registered"
+msgstr "Zalogowana do sieci"
+
+msgid "Registered (roaming)"
+msgstr "Zalogowana do sieci (roaming)"
+
+msgid "Searching.."
+msgstr "Wyszukiwanie.."
+
+msgid "Registering denied"
+msgstr "Odmowa zalogowana do sieci"
+
+msgid "Waiting to read data from the modem..."
+msgstr "Oczekiwanie na odczyt danych z modemu..."
+
+msgid "Waiting for connection data..."
+msgstr "Oczekiwanie na dane połączenia..."
+
+msgid "BTS Search"
+msgstr "Lokalizacja stacji bazowej"
+
+msgid "Search"
+msgstr "Szukaj"
+
+msgid "Search BTS using Cell ID"
+msgstr "Wyszukaj BTS po Cell ID"
+
+msgid "Hint: To set up a BTS search engine, all you have to do is select the dedicated website for your location."
+msgstr "Wskazówka: Aby skonfigurować wyszukiwarkę BTS, wystarczy wybrać stronę odpowiednią dla swojej lokalizacji."
+
+msgid "BTS search settings"
+msgstr "Ustawienia wyszukiwania stacji bazowej"
+
+msgid "Website to search for BTS"
+msgstr "Strona do wyszukiwania BTS"
+
+msgid "Select a website for searching."
+msgstr "Wybierz stronę internetową służącą do wyszukiwania."
+
+msgid "SIM Slot"
+msgstr "Slot SIM"
+
+msgid "Problem with registering to the network, check the SIM card."
+msgstr "Problem z rejestracją do sieci, sprawdź kartę SIM."
+
+msgid "SIM PIN required"
+msgstr "Wymagany jest kod PIN dla karty SIM"
+
+msgid "SIM PUK required"
+msgstr "Wymagany jest kod PUK dla karty SIM"
+
+msgid "SIM failure"
+msgstr "Awaria karty SIM"
+
+msgid "SIM busy"
+msgstr "Karta SIM jest zajęta"
+
+msgid "SIM wrong"
+msgstr "Nieprawidłowa karta SIM"
+
+msgid "SIM PIN2 required"
+msgstr "Wymagany jest kod PIN2 dla karty SIM"
+
+msgid "SIM PUK2 required"
+msgstr "Wymagany jest kod PUK2 dla karty SIM"
+
+msgid ""
+"There is a problem reading data from the modem. <br /><br /><b>Please "
+"check:</b> <ul><li>1. Modem availability in the system.</li><li>2. The correct "
+"installation of the SIM card in the modem.</li><li> 3. Port for communication with the modem.</li><li><ul>"
+msgstr ""
+"Wystąpił problem z odczytem danych z modemu. <br /><br /><b>Proszę "
+"sprawdzić:</b> <ul><li>1. Dostępność modemu w systemie.</li><li>2. Poprawność "
+"montażu karty SIM w modemie.</li><li> 3. Port do komunikacji z modemem.</li><li><ul>"
+
+msgid ""
+"There is a problem reading connection data. <br /><br /><b>Please "
+"check:</b> <ul><li>1. Connection of the modem to the internet, the correctness of the entered APN. Some modems need to force the APN on the modem using at commands "
+"to connect to internet.</li><li> 2. Check that the correct interface assigned to the modem is selected. The default name of the interface in the package is wan.</li><li><ul>"
+msgstr ""
+"Wystąpił problem z odczytem danych połączenia. <br /><br /><b>Proszę "
+"sprawdzić:</b> <ul><li>1. Połączenie modemu z internetem, poprawność wprowadzonego APN. Niektóre modemy wymagają wymuszenia APN w modemie za pomocą komend at, aby "
+"połączyć się z internetem.</li><li> 2. Sprawdź, czy wybrany został właściwy interfejs przypisany do modemu. Domyślną nazwą interfejsu w pakiecie jest wan.</li><li><ul>"
+
+msgid "Defined modems"
+msgstr "Zdefiniowane modemy"
+
+msgid "Interface for selecting user defined modems."
+msgstr "Interfejs wyboru modemów zdefiniowanych przez użytkownika."
+
+msgid "Modem selection menu"
+msgstr "Menu wyboru modemu"

@@ -1,0 +1,139 @@
+# ZTE MF286R
+
+O=$(sms_tool -d $DEVICE at "at+zrssi;+zcellinfo?;+zcainfo?")
+
+case "$MODE_NUM" in
+	3*)
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $2}' | xargs)
+		RSSI="$T"
+		;;
+	2*|\
+	4*|\
+	5*|\
+	6*|\
+	8*)
+		T=$(echo "$O" | awk -F[,:] '/^\+ZCELLINFO/ {print $4}' | xargs)
+		[ -n "$T" ] && MODE="$T"
+		;;
+
+	7*|\
+	9*)
+		T=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $4}' | xargs)
+		if [ -n "$T" ] && [ "x$T" != "x0" ]; then
+			T_HEX=$(printf "%X" $T)
+			T_DEC=$T
+			LAC_DEC=$T_DEC
+			LAC_HEX=$T_HEX
+		fi
+
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $4}' | xargs)
+		RSSI="$T"
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $2}' | xargs)
+		RSRP="$T"
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $3}' | xargs)
+		RSRQ="$T"
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $5}' | xargs)
+		SINR="$T"
+
+		T=$(echo "$O" | awk -F[,:] '/^\+ZCELLINFO/ {print $4}' | xargs)
+		MODE="LTE $(band ${T/LTE B/})"
+		
+		T=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $3}' | xargs)
+		if [ -n "$T" ] && [ "x$T" != "x0" ]; then
+			T1=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $6}' | xargs)
+			PBAND="$(band $T "") @$T1 MHz"
+
+			T=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $2}' | xargs)
+			if [ -n "$T" ] && [ "x$T" != "x0" ]; then
+				PCI="$T"
+			fi
+			T=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $5}' | xargs)
+			if [ -n "$T" ] && [ "x$T" != "x0" ]; then
+				EARFCN="$T"
+			fi
+		fi
+
+		if [ "x$MODE_NUM" = "x9" ]; then
+			T=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $9}' | xargs)
+			if [ -n "$T" ] && [ "x$T" != "x0" ]; then
+				T1=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $11}' | xargs)
+				S1BAND="$(band $T "") @$T1 MHz"
+				MODE="${MODE/LTE/LTE_A} / $(band ${T})"
+
+				T=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $7}' | xargs)
+				[ -n "$T" ] && S1PCI="$T"
+				T=$(echo "$O" | awk -F[,:\;] '/^\+ZCAINFO/ {print $10}' | xargs)
+				[ -n "$T" ] && S1EARFCN="$T"
+			fi
+		fi
+		;;
+esac
+
+MODE=$(echo $MODE | sed "s/LTE_A/LTE-A |/g" | sed 's,/,+,')
+
+# Firmware
+FWB=$(sms_tool -d $DEVICE at "AT+GMR")
+FW=$(echo $FWB | tr -d " \t\n\r" | xargs)
+
+if [[ "$FW" == *"MF286RA"* && "$CSQ" == *"-"* ]]; then
+OQ=$(sms_tool -D -d $DEVICE at "AT+CSQ")
+CSQ=$(echo "$OQ" | awk -F[,\ ] '/^\+CSQ/ {print $2}')
+
+[ "x$CSQ" = "x" ] && CSQ=-1
+	if [ $CSQ -ge 0 -a $CSQ -le 31 ]; then
+		CSQ_PER=$(($CSQ * 100/31))
+	fi
+fi
+
+# Modem
+MODELA=$(sms_tool -d $DEVICE at "AT+CGMI" | tr -s "\n"  | xargs)
+
+if [[ "$MODELA" == *"ZTE"* ]]; then
+MODELACUT=$(echo $MODELA | awk -F'CGMI: ' '{print $2}' | sed 's/"//g' | sed 's/ CORPORATION//g')
+MODELO=$(echo $MODELACUT | tr -d " \t\n\r" | xargs)
+MODELB=$(sms_tool -d $DEVICE at "AT+CGMM")
+MODELBCUT=$(echo $MODELB | awk -F'CGMM: ' '{print $2}' | sed 's/"//g')
+MODELCUT=$(echo $MODELBCUT | tr -d " \t\n\r" | xargs)
+
+MODEL="$MODELO "$MODELCUT
+else
+MODELO=$(echo $MODELA | tr -d " \t\n\r" | cut -d ":" -f2 | xargs)
+MODELB=$(sms_tool -d $DEVICE at "AT+CGMM")
+MODELCUT=$(echo $MODELB | tr -d " \t\n\r" | cut -d ":" -f2 | xargs)
+
+MODEL="$MODELO "$MODELCUT
+fi
+
+# International Mobile Equipment Identity (IMEI)
+OI=$(sms_tool -d $DEVICE at "AT+GSN" | xargs)
+NR_I=$(echo "$OI" | sed 's/AT+GSN//g' | xargs)
+if [ -z "NR_I" ]; then
+	OIB=$(sms_tool -d $DEVICE at "AT*MRD_IMEI?" | xargs)
+	NR_I=$(echo "$OIB" | awk -F [:] '/^\*MRD_IMEI:/{print $2}' | xargs)
+	NR_IMEI="$NR_I"
+else
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+OS=$(sms_tool -d $DEVICE at "AT+CIMI" | xargs)
+NR_C=$(echo "$OS" | sed 's/AT+CIMI//g' | xargs)
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+# Integrated Circuit Card Identifier (ICCID)
+OD=$(sms_tool -d $DEVICE at "AT*ICCID?" | xargs)
+NR_D=$(echo "$OD" | awk -F [:] '/^\*ICCID: /{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices 2>/dev/null)
+PVCUT=$(echo $PV | awk -F 'Vendor=19d2 ProdID=1489' '{print $2}' | cut -c-1450)
+if echo "$PVCUT" | grep -q "rndis_host"
+then
+    PROTO="ncm"
+fi

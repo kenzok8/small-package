@@ -1,0 +1,93 @@
+# SIMCOM SIM8200EA-M2
+
+OT=$(sms_tool -d $DEVICE at "AT+CPMUTEMP")
+
+T=$(echo "$OT" | awk -F[,:] '/^\+CPMUTEMP: / {print $2}' | xargs)
+[ -n "$T" ] && TEMP="$T &deg;C"
+
+O=$(sms_tool -d $DEVICE at "AT+CPSI?")
+
+case $MODE_NUM in
+	7)
+        MODE="LTE |"
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $5}')
+		if [ -n "$T" ]; then
+			TAC_DEC=$(printf "%d" "$T")
+			TAC_HEX="${T/0x/}"
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $7}')
+		[ -n "$T" ] && PCI=$T
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $8}')
+		if [ -n "$T" ]; then
+			PBAND="$(band ${T/EUTRAN-BAND/})"
+			MODE="$MODE $(band ${T/EUTRAN-BAND/})"
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $9}')
+		[ -n "$T" ] && EARFCN=$T
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $10}')
+		[ -n "$T" ] && DLBW="DL: @$T MHz"
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $11}')
+		[ -n "$T" ] && ULBW="UL: @$T MHz"
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $12/10}')
+		[ -n "$T" ] && RSRQ=$T
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $13/10}')
+		[ -n "$T" ] && RSRP=$T
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $14/10}')
+		[ -n "$T" ] && RSSI=$T
+		T=$(echo "$O" | awk -F[,:] '/^\+CPSI: LTE/ {print $15}')
+		[ -n "$T" ] && SINR=$T
+		;;
+	11) MODE="5G-SA";;
+	13) MODE="5G-NSA";;
+esac
+
+MODE=$(echo $MODE | sed 's,/,+,'| sed 's,LTE B,LTE | B,')
+
+# Modem
+OF=$(sms_tool -d $DEVICE at "AT+CGMR")
+FWA=$(echo "$OF" | awk -F [:] '/^\+CGMR: /{print $2}' | xargs)
+if [ -n "$FWA" ]; then
+	FW="$FWA"
+fi
+
+OL=$(sms_tool -d $DEVICE at "AT+CGMM")
+MODELB=$(echo "$OL" | sed s/"AT+CGMM"// | tr -s "\n" | xargs)
+if [ -n "$MODELB" ]; then
+	MODEL="$(echo $MODELB | sed 's,_, ,')"
+fi
+
+# International Mobile Equipment Identity (IMEI)
+OM=$(sms_tool -d $DEVICE at "AT+CGSN")
+NR_I=$(echo "$OM" | sed s/"AT+CGSN"// | xargs)
+if [ -n "$NR_I" ]; then
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+OC=$(sms_tool -d $DEVICE at "AT+CIMI")
+NR_C=$(echo "$OC" | sed s/"AT+CIMI"// | tr -s "\n" | xargs)
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+#  Integrated Circuit Card Identifier (ICCID)
+OI=$(sms_tool -d $DEVICE at "AT+ICCID")
+NR_D=$(echo "$OI" | awk -F [:] '/^\+ICCID: /{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices 2>/dev/null)
+PVCUT=$(echo $PV | awk -F 'Vendor=1e0e ProdID=9001' '{print $2}' | cut -c-1290)
+if echo "$PVCUT" | grep -q "Driver=qmi_wwan"
+then
+    PROTO="qmi"
+elif echo "$PVCUT" | grep -q "Driver=cdc_mbim"
+then
+    PROTO="mbim"
+elif echo "$PVCUT" | grep -q "Driver=cdc_ether"
+then
+    PROTO="ecm"
+fi

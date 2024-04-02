@@ -1,0 +1,157 @@
+# Thales MV31-w (MBIM) /
+
+if [ "$REG" = "0" ] || [ "x$MODE_NUM" = "x11" ]; then
+	O=$(sms_tool -d $DEVICE at "at+c5greg=2;+c5greg?")
+
+	# C5GREG
+	eval $(echo "$O" | awk -F[,] '/^\+C5GREG/ {gsub(/[[:space:]"]+/,"");printf "T=\"%d\";TAC_HEX=\"%X\";CID_HEX=\"%s\";TAC_DEC=\"%d\";MODE_NUM=\"%d\"", $2, "0x"$3, $4, "0x"$3, $5}')
+	case "$T" in
+		0*) REG="0";;
+		1*) REG="1";;
+		2*) REG="2";;
+		3*) REG="3";;
+		5*) REG="5";;
+		*) REG="";;
+	esac
+	[ "x$REG" = "x1" ] || [ "x$REG" = "x5" ] && REGOK=1
+
+	[ "$TAC_DEC" != "0" ]
+	[ -n "$CID_HEX" ] && CID_DEC=$(printf "%d" "0x${CID_HEX}")
+fi
+
+O=$(sms_tool -D -d $DEVICE at "AT^CA_INFO?;^debug?;^temp?")
+
+MODE=$(echo "$O" | grep RAT: | cut -d: -f2 | tr -d '\n\r')
+
+	RSRP=$(echo "$O" | grep -o [rea]_rsrp:.* | awk -F [:] '{printf "%.0f\n",$2}')
+	RSRQ=$(echo "$O" | grep -o rsrq:.* | awk -F [:] '{printf "%.0f\n",$2}')
+	RSSI=$(echo "$O" | grep -o rssi:.* | awk -F [:] '{printf "%.0f\n",$2}')
+	SINR=$(echo "$O" | grep -o snr:.* | awk -F [:] '{printf "%.0f\n",$2}')
+	PCI=$(echo "$O" | grep -o pci:.* | awk -F [:] '{printf "%.0f\n",$2}')
+
+if echo "$MODE" | grep -qi LTE; then
+	PBAND=$(echo "$O" | grep -o _band:.* | awk -F [:] '{printf "%.0f\n",$2}')
+	PBAND_W=$(echo "$O" | grep -o _band_width:.* | awk -F [:] '{printf "%.0f\n",$2}')
+	PBAND="$(band $PBAND "") @${PBAND_W}MHz"
+fi
+	if [ "$TAC_DEC" = "0" ] || [ -z "$TAC_DEC" ]; then
+	TAC_DEC=$(echo "$O" | grep -o tac:.* | awk -F [:] '{printf "%.0f\n",$2}')
+	TAC_HEX=$(printf "%X" $TAC_DEC)
+	CID_DEC=$(echo "$O" | grep cell_id:.* | awk -F [:] '{printf "%.0f\n",$2}')
+	CID_HEX=$(printf "%X" $CID_DEC)
+	if
+	LAC_DEC=$(echo "$O" | grep -o lac.* | awk -F [:] '{printf "%.0f\n",$2}')
+	LAC_HEX=$(printf "%X" $((LAC_DEC + 0)))
+
+if test -z "$CSQ_PER"; then
+
+if test "$RSRP" -ge "-80"; then
+	CSQ_PER=80
+elif test "$RSRP" -ge "-100"; then
+	CSQ_PER=50
+else
+	CSQ_PER=25
+fi
+
+if [ -n "$RSSI" ]; then
+	_RSSI=$RSSI
+	[ $_RSSI -lt -113 ] && _RSSI="-113"
+	[ $_RSSI -gt -51 ] && _RSSI="-51"
+	[ -z "$CSQ_PER" ] && CSQ_PER=$(((_RSSI + 113) * 100 / 62 ))
+fi
+
+fi
+
+# Primary band
+T1=$(echo "$O" | awk '/PCC/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+if [ -n "$T1" ]; then
+	T2=$(echo "$O" | awk '/PCC/{print $8}' | sed -e 's/Band_width//g')
+	PBAND="$(band ${T1/B/} "") @$T2 MHz"
+	EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
+	PCI=$(echo "$TR" |awk -F [,] '{print $11}')
+fi
+
+test -n "$PCI" || PCI=$(echo "$O" | grep nr_pci: | cut -d: -f2 | tr -d '\n\r')
+
+# CA band (S1)
+T3=$(echo "$O" | awk '/SCC1/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+if [ -n "$T3" ]; then
+	T4=$(echo "$O" | awk '/SCC1/{print $8}' | sed -e 's/Band_width//g')
+	S1BAND="$(band ${T3/B/} "") @$T4 MHz"
+#	S1EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
+#	S1PCI=$(echo "$TR" |awk -F [,] '{print $11}')
+fi
+
+# CA band (S2)
+T5=$(echo "$O" | awk '/SCC2/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+if [ -n "$T5" ]; then
+	T6=$(echo "$O" | awk '/SCC2/{print $8}' | sed -e 's/Band_width//g')
+	S2BAND="$(band ${T5/B/} "") @$T6 MHz"
+#	S2EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
+#	S2PCI=$(echo "$TR" |awk -F [,] '{print $11}')
+fi
+
+# Temperature
+T=$(echo "$O" | grep TSENS: | awk -F [:] '{printf "%.0f\n",$2}')
+if [ -n "$T" ]; then
+	TEMP=$(echo "$T &deg;C")
+fi
+
+# Slot SIM
+O=$(sms_tool -d $DEVICE at "AT+CPIN?")
+T=$(echo "$O" | awk -F [:] '/^\+CPIN/{print $2}' | xargs)
+if [ "$T" = "READY" ]; then
+        SSIM=1
+fi
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices 2>/dev/null)
+PVCUT=$(echo $PV | awk -F 'Vendor=1e2d ProdID=00b3' '{print $2}' | cut -c-1220)
+
+if echo "$PVCUT" | grep -q "Driver=qmi_wwan"
+then
+	PROTO="qmi"
+elif echo "$PVCUT" | grep -q "Driver=cdc_mbim"
+then
+	PROTO="mbim"
+elif echo "$PVCUT" | grep -q "Driver=cdc_ether"
+then
+	PROTO="ecm"
+fi
+
+# Model
+PVMODEL=$(echo $PV | awk -F 'Vendor=1e2d ProdID=00b3' '{print $2}' | cut -c-150)
+if [ -z "$MODEL" ]
+then
+	MODELBCUT=$(echo $PVMODEL | awk -F 'Manufacturer=|S: Product=' '{print $2}'| xargs)
+	MODELACUT=$(echo $PVMODEL | awk -F 'Product=|S: SerialNumber' '{print $2}'| xargs)
+	MODELC="$MODELBCUT "$MODELACUT
+	MODEL=$(echo "$MODELC" | awk '{for (i=1;i<=NF;i++) if (!a[$i]++) printf("%s%s",$i,FS)}{printf("\n")}')
+fi
+
+# International Mobile Equipment Identity (IMEI)
+O=$(sms_tool -d $DEVICE at "AT+GSN" | xargs)
+NR_I=$(echo "$O" | awk -F " " '/GSN /{print $2}')
+if [ -n "$NR_I" ]; then
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+O=$(sms_tool -d $DEVICE at "AT+CIMI" | xargs)
+NR_C=$(echo "$O" | awk -F " " '/CIMI /{print $2}')
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+# Integrated Circuit Card Identifier (ICCID)
+O=$(sms_tool -d $DEVICE at "AT+ICCID" | xargs)
+NR_D=$(echo "$O" | awk -F [:] '/ICCID: /{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+# FW
+OF=$(sms_tool -d $DEVICE at "ati")
+DEV2=$(echo $OF | tr -s "\n" | xargs)
+FW=$(echo $DEV2 | awk -F 'Revision: | IMEI: ' '{print $2}' | cut -c-50)v
