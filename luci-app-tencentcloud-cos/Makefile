@@ -16,7 +16,7 @@ define Package/luci-app-tencentcloud-cos
 	SUBMENU:=3. Applications
 	TITLE:=COSFS Client for LuCI
 	PKGARCH:=all
-	DEPENDS=+vsftpd-alt
+	DEPENDS=+vsftpd
 endef
 
 define Package/luci-app-tencentcloud-cos/description
