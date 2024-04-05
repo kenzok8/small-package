@@ -283,6 +283,14 @@ msgstr "重定向规则名称"
 msgid "Redirect Rule Target URL"
 msgstr "重定向规则目标URL"
 
+#: natmap.js
+msgid "can used with ddns to redirect to the specified URL, such as http://1.2.3.4:1234 or http://abc.com:1234/abc ."
+msgstr "可以配合 ddns 使用，重定向到指定 URL ，例如 http://1.2.3.4:1234 或 http://abc.com:1234/abc 。"
+
+#: natmap.js
+msgid "if want to use natmap outter_port,NEW_PORT must be used instead of the port in the URL, such as http://1.2.3.4:1234/NEW_PORT/abc"
+msgstr "如果想要使用 natmap 的 外部端口 outter_port ,则使用 NEW_PORT 替代 URL 中的端口，例如 http://1.2.3.4:1234/NEW_PORT/abc"        
+
 #: natmap.js:97
 msgid "Restrict to address family"
 msgstr "地址族限制"
