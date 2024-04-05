@@ -552,13 +552,20 @@ return view.extend({
     o.datatype = "string";
     o.modalonly = true;
     o.depends("link_mode", "cloudflare_redirect_rule");
-
     o = s.taboption(
       "link",
       form.Value,
       "link_cloudflare_redirect_rule_target_url",
       _("Redirect Rule Target URL")
     );
+    o.description =
+      _(
+        "can used with ddns to redirect to the specified URL, such as http://1.2.3.4:1234 or http://abc.com:1234/abc ."
+      ) +
+      "<br />" +
+      _(
+        "if want to use natmap outter_port,NEW_PORT must be used instead of the port in the URL, such as http://1.2.3.4:1234/NEW_PORT/abc"
+      );
     o.datatype = "string";
     o.modalonly = true;
     o.depends("link_mode", "cloudflare_redirect_rule");
