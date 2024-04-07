@@ -20,6 +20,13 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILE:=LICENSE
 PKG_MAINTAINER:=sbwml <admin@cooluc.com>
 
+ifeq ($(ARCH),arm)
+  ARM_CPU_FEATURES:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
+  ifeq ($(ARM_CPU_FEATURES),)
+    ARCH:=armv6
+  endif
+endif
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
