@@ -1,0 +1,12 @@
+{
+	"admin/services/dnsproxy": {
+		"title": "DNS Proxy",
+		"action": {
+			"type": "view",
+			"path": "dnsproxy"
+		},
+		"depends": {
+			"acl": [ "luci-app-dnsproxy" ]
+		}
+	}
+}

@@ -1,0 +1,155 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:187
+msgid "Bogus-NXDOMAIN"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:200
+msgid "Bootstrap DNS Server"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:135
+msgid "Cache"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:146
+msgid "Cache size (in bytes)"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:70
+msgid "Collecting data ..."
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:192
+msgid "Convert matching single IP responses to NXDOMAIN"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:65
+#: applications/luci-app-dnsproxy/root/usr/share/luci/menu.d/luci-app-dnsproxy.json:3
+msgid "DNS Proxy"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:162
+msgid "DNS64"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:169
+msgid "DNS64 Prefix"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:113
+msgid "Disable IPv6"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:117
+msgid "Disable secure TLS cert validation"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:119
+msgid "DoH uses H3 first"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:175
+msgid "EDNS"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:182
+msgid "EDNS Client Address"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:78
+msgid "Enable"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:140
+msgid "Enable Cache"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:167
+msgid "Enable DNS64"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:180
+msgid "Enable EDNS"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:205
+msgid "Fallback DNS Server"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/root/usr/share/rpcd/acl.d/luci-app-dnsproxy.json:3
+msgid "Grant access to LuCI app dnsproxy"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:86
+msgid "Listen address"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:108
+msgid "Listen ports"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:83
+msgid "Log file path"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:76
+msgid "Main"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:157
+msgid "Max TTL value for DNS entries, in seconds"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:152
+msgid "Min TTL value for DNS entries, in seconds"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:142
+msgid "Optimistic Cache"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:130
+msgid "Parallel queries all upstream"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:124
+msgid "Ratelimit (requests per second)"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:115
+msgid "Refuse <code>ANY</code> requests"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:132
+msgid "Respond to A or AAAA requests only with the fastest IP address"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:54
+msgid "SERVER NOT RUNNING"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:52
+msgid "SERVER RUNNING"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:127
+msgid "Size of the UDP buffer in bytes. Set 0 use the system default"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:121
+msgid "Timeout for queries to remote upstream (default: 10s)"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:202
+msgid "Upstream DNS Server"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:195
+msgid "Upstreams"
+msgstr ""
+
+#: applications/luci-app-dnsproxy/htdocs/luci-static/resources/view/dnsproxy.js:81
+msgid "Verbose"
+msgstr ""
