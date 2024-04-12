@@ -400,7 +400,7 @@ cat <<EOF
 "cid_hex":"$CID_HEX",
 "pci":"$(echo -n $PCI | tr -d '\r')",
 "earfcn":"$EARFCN",
-"pband":"$PBAND",
+"pband":"$(echo -n $PBAND | tr -d '\r')",
 "s1band":"$S1BAND",
 "s1pci":"$S1PCI",
 "s1earfcn":"$S1EARFCN",
@@ -413,10 +413,10 @@ cat <<EOF
 "s4band":"$S4BAND",
 "s4pci":"$S4PCI",
 "s4earfcn":"$S4EARFCN",
-"rsrp":"$RSRP",
-"rsrq":"$RSRQ",
-"rssi":"$RSSI",
-"sinr":"$SINR"
+"rsrp":"$(echo $RSRP | tr '\r' ' ')",
+"rsrq":"$(echo $RSRQ | tr '\r' ' ')",
+"rssi":"$(echo $RSSI | tr '\r' ' ')",
+"sinr":"$(echo $SINR | tr '\r' ' ')"
 }
 EOF
 exit 0
