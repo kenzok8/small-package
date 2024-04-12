@@ -74,23 +74,30 @@ fi
 test -n "$PCI" || PCI=$(echo "$O" | grep nr_pci: | cut -d: -f2 | tr -d '\n\r')
 
 # CA band (S1)
-T3=$(echo "$O" | awk '/SCC1/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+T3=$(echo "$O" | awk '/SCC2/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
 if [ -n "$T3" ]; then
-	T4=$(echo "$O" | awk '/SCC1/{print $8}' | sed -e 's/Band_width//g')
+	T4=$(echo "$O" | awk '/SCC2/{print $8}' | sed -e 's/Band_width//g')
 	S1BAND="$(band ${T3/B/} "") @$T4 MHz"
 #	S1EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
 #	S1PCI=$(echo "$TR" |awk -F [,] '{print $11}')
 fi
 
 # CA band (S2)
-T5=$(echo "$O" | awk '/SCC2/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+T5=$(echo "$O" | awk '/SCC3/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
 if [ -n "$T5" ]; then
-	T6=$(echo "$O" | awk '/SCC2/{print $8}' | sed -e 's/Band_width//g')
+	T6=$(echo "$O" | awk '/SCC3/{print $8}' | sed -e 's/Band_width//g')
 	S2BAND="$(band ${T5/B/} "") @$T6 MHz"
 #	S2EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
 #	S2PCI=$(echo "$TR" |awk -F [,] '{print $11}')
 fi
-
+# CA band (S3)
+#T7=$(echo "$O" | awk '/SCC4/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+#if [ -n "$T6" ]; then
+#	T8=$(echo "$O" | awk '/SCC4/{print $8}' | sed -e 's/Band_width//g')
+#	S3BAND="$(band ${T7/B/} "") @$T8 MHz"
+#	S3EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
+#	S3PCI=$(echo "$TR" |awk -F [,] '{print $11}')
+#fi
 # Temperature
 T=$(echo "$O" | grep TSENS: | awk -F [:] '{printf "%.0f\n",$2}')
 if [ -n "$T" ]; then
