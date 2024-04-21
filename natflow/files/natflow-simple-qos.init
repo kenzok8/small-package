@@ -69,6 +69,11 @@ qos_simple_watch()
 			fi
 			idx=$((idx+1))
 		done
+		test -z "${ip//*:*}" && {
+			mac=$(echo $line | cut -d, -f2)
+			iface=$(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}')
+			test -n "$iface" && ip -6 neigh replace $ip lladdr $mac dev $iface nud reachable
+		}
 	done
 }
 
@@ -92,6 +97,11 @@ start() {
 			fi
 			idx=$((idx+1))
 		done
+		test -z "${ip//*:*}" && {
+			mac=$(echo $line | cut -d, -f2)
+			iface=$(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}')
+			test -n "$iface" && ip -6 neigh replace $ip lladdr $mac dev $iface nud reachable
+		}
 	done
 
 	test -e /tmp/userinfo_event_fifo || mkfifo /tmp/userinfo_event_fifo
