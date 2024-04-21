@@ -54,6 +54,7 @@ qos_simple_watch()
 		dispatch_userinfo_event_fifo "$line"
 		ip=${line//,*}
 		idx=0
+		if test -n "${ip//*:*}"; then
 		while uci get natflow.@qos_simple[$idx] &>/dev/null; do
 			disabled=$(uci get natflow.@qos_simple[$idx].disabled 2>/dev/null || echo 0)
 			if [ "$disabled" = "0" ]; then
@@ -69,6 +70,7 @@ qos_simple_watch()
 			fi
 			idx=$((idx+1))
 		done
+		fi
 		test -z "${ip//*:*}" && {
 			mac=$(echo $line | cut -d, -f2)
 			iface=$(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}')
@@ -81,6 +83,7 @@ start() {
 	cat /dev/userinfo_ctl | while read line; do
 		ip=${line//,*}
 		idx=0
+		if test -n "${ip//*:*}"; then
 		while uci get natflow.@qos_simple[$idx] &>/dev/null; do
 			disabled=$(uci get natflow.@qos_simple[$idx].disabled 2>/dev/null || echo 0)
 			if [ "$disabled" = "0" ]; then
@@ -97,6 +100,7 @@ start() {
 			fi
 			idx=$((idx+1))
 		done
+		fi
 		test -z "${ip//*:*}" && {
 			mac=$(echo $line | cut -d, -f2)
 			iface=$(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}')
