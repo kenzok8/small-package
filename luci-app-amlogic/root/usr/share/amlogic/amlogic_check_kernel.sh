@@ -132,8 +132,14 @@ kernel_tag="${kernel_tag/kernel_/}"
 check_kernel() {
     # 02. Query local version information
     tolog "02. Start checking the kernel version."
+
     # 02.01 Query the current version
-    current_kernel_v=$(uname -r 2>/dev/null | grep -oE '^[1-9]\.[0-9]{1,2}\.[0-9]+')
+    if [[ "${kernel_tag}" == "rk3588" || "${kernel_tag}" == "rk35xx" ]]; then
+        current_kernel_v=$(uname -r 2>/dev/null)
+    else
+        current_kernel_v=$(uname -r 2>/dev/null | grep -oE '^[1-9]\.[0-9]{1,2}\.[0-9]+')
+    fi
+    [[ -n "${current_kernel_v}" ]] || tolog "02.01 The current kernel version is not detected." "1"
     tolog "02.01 current version: ${current_kernel_v}"
     sleep 2
 
