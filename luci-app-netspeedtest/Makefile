@@ -12,7 +12,7 @@ PKG_VERSION:=2.2.4
 PKG_RELEASE:=20240319
 
 LUCI_TITLE:=LuCI Support for netspeedtest
-LUCI_DEPENDS:=+python3 +iperf3-ssl +homebox
+LUCI_DEPENDS:=+python3 +homebox
 LUCI_PKGARCH:=all
 PKG_MAINTAINER:=<https://github.com/sirpdboy/netspeedtest>
 
