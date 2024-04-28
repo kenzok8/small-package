@@ -257,7 +257,9 @@ if has_singbox or has_xray then
 	tcp_node_http_port.datatype = "port"
 end
 ]]--
-
+tcp_node_socks_bind_local = s:taboption("Main", Flag, "tcp_node_socks_bind_local", translate("TCP Node") .. " Socks " .. translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
+tcp_node_socks_bind_local.default = "1"
+tcp_node_socks_bind_local:depends({ tcp_node = "nil", ["!reverse"] = true })
 
 s:tab("DNS", translate("DNS"))
 
@@ -449,7 +451,7 @@ o = s:taboption("Proxy", Flag, "localhost_proxy", translate("Localhost Proxy"), 
 o.default = "1"
 o.rmempty = false
 
-o = s:taboption("Proxy", Flag, "client_proxy", translate("Client Proxy"), translate("When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy."))
+o = s:taboption("Proxy", Flag, "client_proxy", translate("Client Proxy"), translate("When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy. But you can still use access control to allow the designated device to proxy."))
 o.default = "1"
 o.rmempty = false
 
