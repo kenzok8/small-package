@@ -3,33 +3,33 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chinadns-ng
-PKG_VERSION:=2024.04.13
+PKG_VERSION:=2024.04.27
 PKG_RELEASE:=1
 
 ifeq ($(ARCH),aarch64)
   PKG_ARCH:=chinadns-ng@aarch64-linux-musl@generic+v8a@fast+lto
-  PKG_HASH:=dddbfcde000d4178fee2f8cdcfec7f10f8deb1f6673f9046b35d340dd2182ac5
+  PKG_HASH:=61eb8132c640bea1879d239169ed55cef79606f273ee46bbf1fd13872d1c8fca
 else ifeq ($(ARCH),arm)
   ARM_CPU_FEATURES:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
   ifeq ($(ARM_CPU_FEATURES),)
     PKG_ARCH:=chinadns-ng@arm-linux-musleabi@generic+v6+soft_float@fast+lto
-    PKG_HASH:=08fb1ae28eeb41ff48e9fd3b0dea3f58111885f1a39acea91978a883fb3d62ed
+    PKG_HASH:=05c5abfed04c0236bef25742f6753f800a5e14d9743ce18a506f6d205ca848d6
   else
     PKG_ARCH:=chinadns-ng@arm-linux-musleabihf@generic+v7a@fast+lto
-    PKG_HASH:=2653bc82f8ae622e793c28933da55321aef82e8b923df9fd3cedb72f3f34fa90
+    PKG_HASH:=489f2ac213391edd169233abeddec3efb1d2a763665db6fc51bddb2ecc553fd4
   endif
 else ifeq ($(ARCH),mips)
   PKG_ARCH:=chinadns-ng@mips-linux-musl@mips32+soft_float@fast+lto
-  PKG_HASH:=0245d23021867461524398b1074fc13abf8aae56ae93faa1ecd78b1bda6b5d76
+  PKG_HASH:=7d30ffe8496353c9dabda5ff13b53953a10545418c0977b9d6929771a08e3769
 else ifeq ($(ARCH),mipsel)
   PKG_ARCH:=chinadns-ng@mipsel-linux-musl@mips32+soft_float@fast+lto
-  PKG_HASH:=15845a0b03deba4e407dda963d60f47623e93fdf5d0e9ab0f83baa25be0bb36f
+  PKG_HASH:=067c04e1aaf1772c9857290a42b47f6ad285dacac281cc48a711c6d804b68d5d
 else ifeq ($(ARCH),i386)
   PKG_ARCH:=chinadns-ng@i386-linux-musl@i686@fast+lto
-  PKG_HASH:=5bfdf006971be9c96f59c797c554972337197aaf5d9b6d8402da61738147653d
+  PKG_HASH:=76b03582a5d9618ca95e7dcc712433683f0f74cfa9aba50aaeb2ac6316ef8721
 else ifeq ($(ARCH),x86_64)
   PKG_ARCH:=chinadns-ng@x86_64-linux-musl@x86_64@fast+lto
-  PKG_HASH:=af11c02a80f5b7db69832c86a15126adf822d54e8f0aa38bb1d88f75449180bc
+  PKG_HASH:=36792a45c39304eca69e1cd5bb38c985c836e54b8672ab8cefe06a915b05f5c9
 else
   PKG_HASH:=dummy
 endif
