@@ -73,11 +73,11 @@ define Build/Prepare
 	rm -rf $(PKG_BUILD_DIR)/dae-core && git clone https://github.com/daeuniverse/dae $(PKG_BUILD_DIR)/dae-core ; \
 	rm -rf $(PKG_BUILD_DIR)/dae-core/control/kern/headers && git clone https://github.com/daeuniverse/dae_bpf_headers $(PKG_BUILD_DIR)/dae-core/control/kern/headers ; \
 	pushd $(PKG_BUILD_DIR)/dae-core ; \
-	go get -u ; \
+	go get -u=patch ; \
 	go mod tidy ; \
 	popd ; \
 	pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
-	go get -u ; \
+	go get -u=patch ; \
 	go mod tidy ; \
 	popd ; \
 	)
