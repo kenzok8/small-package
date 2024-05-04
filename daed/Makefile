@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
 PKG_VERSION=0.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/daeuniverse/daed.git
@@ -88,8 +88,8 @@ define Build/Prepare
 	$(call Build/Prepare/Default)
 
 	( \
-		mkdir -p $(PKG_BUILD_DIR)/webrender/web ; \
-		unzip -q -d $(PKG_BUILD_DIR)/webrender/web $(DL_DIR)/$(WEB_FILE) ; \
+		mkdir -p $(PKG_BUILD_DIR)/webrender ; \
+		unzip -q -d $(PKG_BUILD_DIR)/webrender/ $(DL_DIR)/$(WEB_FILE) ; \
 		find $(PKG_BUILD_DIR)/webrender/web -type f -size +4k ! -name "*.gz" ! -name "*.woff"  ! -name "*.woff2" -exec sh -c '\
 			gzip -9 -k "{}"; \
 			if [ "$$$$(stat -c %s {})" -lt "$$$$(stat -c %s {}.gz)" ]; then \
