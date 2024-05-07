@@ -18,7 +18,7 @@ do_install() {
   docker pull ${image_name}
   docker rm -f feishuvpn
 
-  local cmd="docker run --restart=unless-stopped -d -h FeiShuVpnServer -v \"$config:/data/feishu/conf\" "
+  local cmd="docker run --restart=unless-stopped -d -h FeiShuVpnServer -v \"$config:/data/conf\" "
 
   cmd="$cmd\
   --cap-add=ALL \
