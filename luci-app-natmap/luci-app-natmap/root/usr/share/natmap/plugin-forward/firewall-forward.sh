@@ -23,21 +23,12 @@ if [ -z "$FORWARD_TARGET_IP" ]; then
 fi
 
 # get forward target port
-# final_forward_target_port=$([ "${FORWARD_TARGET_PORT}" == 0 ] ? $outter_port : "${FORWARD_TARGET_PORT}")
-# if [ "${FORWARD_TARGET_PORT}" == 0 ]; then
-# 	echo "FORWARD_TARGET_PORT is 0"
-# 	final_forward_target_port=$outter_port
-# else
-# 	echo "FORWARD_TARGET_PORT is not 0"
-# 	final_forward_target_port=$FORWARD_TARGET_PORT
-# fi
-
 final_forward_target_port=$((FORWARD_TARGET_PORT == 0 ? outter_port : FORWARD_TARGET_PORT))
 # echo "firewall_final_forward_target_port: $final_forward_target_port"
 
 # ipv4 firewall
 rule_name_v4=$(echo "${GENERAL_NAT_NAME}_v4" | sed 's/[^a-zA-Z0-9]/_/g' | awk '{print tolower($0)}')
-echo "firewall_rule_name_v4: $rule_name_v4"
+echo "firewall_rule_name_v4: $rule_name_v4" >>/var/log/natmap/natmap.log
 
 # ipv4 redirect
 uci set firewall.$rule_name_v4=redirect
@@ -58,7 +49,7 @@ uci commit firewall
 # QB and TR ipv6 forward
 # 检测link_enable
 if [ "${LINK_ENABLE}" != 1 ]; then
-	echo "LINK_ENABLE is not 1,exit,don't forward ipv6"
+	echo "$GENERAL_NAT_NAME - $FORWARD_MODE: LINK_ENABLE is not 1, exit, don't forward ipv6" >>/var/log/natmap/natmap.log
 	exit 0
 fi
 
@@ -67,7 +58,7 @@ if [ [ "${LINK_MODE}" = transmission ] && [ "${LINK_TR_ALLOW_IPV6}" = 1 ] ] || [
 	# get rule name
 	rule_name_v6=$(echo "${GENERAL_NAT_NAME}_v6_allow" | sed 's/[^a-zA-Z0-9]/_/g' | awk '{print tolower($0)}')
 
-	echo "firewall_rule_name_v6: $rule_name_v6"
+	echo "$GENERAL_NAT_NAME - $FORWARD_MODE: firewall_rule_name_v6: $rule_name_v6" >>/var/log/natmap/natmap.log
 	# ipv6 allow
 	uci set firewall.$rule_name_v6=rule
 	uci set firewall.$rule_name_v6.name=$rule_name_v6

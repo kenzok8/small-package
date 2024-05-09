@@ -32,7 +32,9 @@ API Key 请访问 https://dash.cloudflare.com/profile/api-tokens 复制 Global A
 
 ####    1.5.Cloudflare Redirect Rules
 
-    
+####    1.6.Cloudflare DDNS
+支持调用Cloudflare DDNS功能，通过ip4p格式的AAAA记录，存储外部IP和端口。
+
 ### 2.目前支持的通知功能
 ####    2.1.  Telegram Bot
 ####    2.2.  PushPlus

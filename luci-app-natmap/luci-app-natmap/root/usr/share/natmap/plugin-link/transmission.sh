@@ -33,7 +33,7 @@ for ((retry_count = 0; retry_count <= max_retries; retry_count++)); do
 
     # Check if the provided session ID contains the header "X-Transmission-Session-Id"
     if [[ $trsid == *"X-Transmission-Session-Id"* ]]; then
-        echo "$GENERAL_NAT_NAME - $LINK_MODE 登录成功"
+        echo "$GENERAL_NAT_NAME - $LINK_MODE 登录成功" >>/var/log/natmap/natmap.log
 
         # Modify the port using the Transmission API
         tr_result=$(curl -s -X POST \
@@ -43,10 +43,10 @@ for ((retry_count = 0; retry_count <= max_retries; retry_count++)); do
 
         # Check if the port modification was successful
         if [[ $(echo "$tr_result" | jq -r '.result') == "success" ]]; then
-            echo "transmission port modified successfully"
+            echo "transmission port modified successfully" >>/var/log/natmap/natmap.log
             break
         else
-            echo "transmission Failed to modify the port"
+            echo "transmission Failed to modify the port" >>/var/log/natmap/natmap.log
             # Sleep for a specified amount of time
             sleep $sleep_time
         fi
@@ -60,6 +60,6 @@ for ((retry_count = 0; retry_count <= max_retries; retry_count++)); do
 done
 
 if [ $retry_count -eq $max_retries ]; then
-    echo "$GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改"
+    echo "$GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改" >>/var/log/natmap/natmap.log
     exit 1
 fi
