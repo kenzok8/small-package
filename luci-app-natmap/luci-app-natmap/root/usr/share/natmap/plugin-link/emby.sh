@@ -25,10 +25,10 @@ for ((retry_count = 0; retry_count < max_retries; retry_count++)); do
     current_cfg=$(curl -v $LINK_EMBY_URL/emby/System/Configuration?api_key=$LINK_EMBY_API_KEY)
 
     if [ -z "$current_cfg" ]; then
-        # echo "$LINK_MODE 登录失败,休眠$sleep_time秒"
+        echo "$LINK_MODE 登录失败,休眠$sleep_time秒" >>/var/log/natmap/natmap.log
         sleep $sleep_time
     else
-        echo "$GENERAL_NAT_NAME - $LINK_MODE 登录成功"
+        echo "$GENERAL_NAT_NAME - $LINK_MODE 登录成功" >>/var/log/natmap/natmap.log
         new_cfg=$current_cfg
         if [ ! -z $LINK_EMBY_USE_HTTPS ] && [ $LINK_EMBY_USE_HTTPS = '1' ]; then
             new_cfg=$(echo $current_cfg | jq ".PublicHttpsPort = $outter_port")
@@ -47,6 +47,6 @@ done
 
 # Check if maximum retries reached
 if [ $retry_count -eq $max_retries ]; then
-    echo "$GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改"
+    echo "$GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改" >>/var/log/natmap/natmap.log
     exit 1
 fi

@@ -27,7 +27,7 @@ validate_section_natmap() {
 		'general_http_server:host' \
 		'general_bind_port:port' \
 		'forward_enable:bool:0' \
-		'forward_target_ip:host' \
+		'forward_target_ip:ip4addr' \
 		'forward_target_port:port' \
 		'forward_mode:string' \
 		'forward_firewall_target_interface:string' \
@@ -37,8 +37,8 @@ validate_section_natmap() {
 		'forward_ikuai_mapping_protocol:string' \
 		'forward_ikuai_mapping_wan_interface:string' \
 		'forward_advanced_enable:bool:0' \
-		'forward_advanced_max_retries:uinteger' \
-		'forward_advanced_sleep_time:uinteger' \
+		'forward_advanced_max_retries:uinteger:0' \
+		'forward_advanced_sleep_time:uinteger:0' \
 		'notify_enable:bool:0' \
 		'notify_mode:string' \
 		'notify_telegram_bot_chat_id:string' \
@@ -52,8 +52,8 @@ validate_section_natmap() {
 		'notify_gotify_token:string' \
 		'notify_gotify_priority:uinteger' \
 		'notify_advanced_enable:bool:0' \
-		'notify_advanced_max_retries:uinteger' \
-		'notify_advanced_sleep_time:uinteger' \
+		'notify_advanced_max_retries:uinteger:0' \
+		'notify_advanced_sleep_time:uinteger:0' \
 		'link_enable:bool:0' \
 		'link_mode:string' \
 		'link_emby_url:string' \
@@ -63,21 +63,23 @@ validate_section_natmap() {
 		'link_qb_web_url:string' \
 		'link_qb_username:string' \
 		'link_qb_password:string' \
-		'link_qb_ipv6_address:string' \
+		'link_qb_ipv6_address:ip6addr' \
 		'link_qb_allow_ipv6:bool:0' \
 		'link_tr_rpc_url:string' \
 		'link_tr_username:string' \
 		'link_tr_password:string' \
 		'link_tr_allow_ipv6:bool:0' \
-		'link_tr_ipv6_address:string' \
+		'link_tr_ipv6_address:ip6addr' \
 		'link_cloudflare_token:string' \
 		'link_cloudflare_zone_id:string' \
 		'link_cloudflare_origin_rule_name:string' \
 		'link_cloudflare_redirect_rule_name:string' \
 		'link_cloudflare_redirect_rule_target_url:string' \
+		'link_cloudflare_ddns_type:string' \
+		'link_cloudflare_ddns_domain:host' \
 		'link_advanced_enable:bool:0' \
-		'link_advanced_max_retries:uinteger' \
-		'link_advanced_sleep_time:uinteger' \
+		'link_advanced_max_retries:uinteger:0' \
+		'link_advanced_sleep_time:uinteger:0' \
 		'custom_script_enable:bool:0' \
 		'custom_script_path:file'
 }

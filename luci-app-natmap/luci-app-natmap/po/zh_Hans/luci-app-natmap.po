@@ -8,16 +8,16 @@ msgstr ""
 "Language: zh-Hans\n"
 
 #: natmap.js:337
-msgid "<br />If you want to send to a group/channel, please create a non-Chinese group/channel (for easier chatid lookup, you can rename it later).<br />Add the bot to the group, send a message, and use https://api.telegram.org/bot token /getUpdates to obtain the chatid."
-msgstr "<br />如需通过群组/频道推送，请创建一个非中文的群组或频道（便于查找 chatid，后续再更名）<br />将机器人添加至群组，发送信息后通过 https://api.telegram.org/bot token /getUpdates 获取 chatid"
+msgid ".<br />If you want to send to a group/channel, please create a non-Chinese group/channel (for easier chatid lookup, you can rename it later).<br />Add the bot to the group, send a message, and use https://api.telegram.org/bot token /getUpdates to obtain the chatid."
+msgstr "。<br />如需通过群组/频道推送，请创建一个非中文的群组或频道（便于查找 chatid，后续再更名）。<br />将机器人添加至群组，发送信息后通过 https://api.telegram.org/bot token /getUpdates 获取 chatid 。"
 
 #: natmap.js:354
-msgid "<br />Send a message to the created bot to initiate a conversation."
-msgstr "<br />与创建的机器人发一条消息，开启对话"
+msgid ".<br />Send a message to the created bot to initiate a conversation."
+msgstr "。<br />与创建的机器人发一条消息，开启对话。"
 
 #: natmap.js:393
-msgid "<br />Since the asynchronous push queue is used, only whether the put into the queue is successful is detected."
-msgstr "<br />由于使用异步推送队列，所以仅检测放入队列是否成功"
+msgid ".<br />Since the asynchronous push queue is used, only whether the put into the queue is successful is detected."
+msgstr "。<br />由于使用异步推送队列，所以仅检测放入队列是否成功。"
 
 #: natmap.js:196
 msgid "0 will forward to the out port get from STUN"
@@ -68,8 +68,8 @@ msgid "custom script"
 msgstr "自定义脚本"
 
 #: natmap.js:732
-msgid "custom script path,such as /etc/natmap/custom.sh"
-msgstr "自定义脚本路径，例如：/etc/natmap/custom.sh"
+msgid "custom script path,such as /etc/natmap/custom.sh .argument format:"
+msgstr "自定义脚本路径，例如：/etc/natmap/custom.sh 。参数格式如下："
 
 #: natmap.js:66
 msgid "Custom Settings"
@@ -288,8 +288,8 @@ msgid "can used with ddns to redirect to the specified URL, such as http://1.2.3
 msgstr "可以配合 ddns 使用，重定向到指定 URL ，例如 http://1.2.3.4:1234 或 http://abc.com:1234/abc 。"
 
 #: natmap.js
-msgid "if want to use natmap outter_port,NEW_PORT must be used instead of the port in the URL, such as http://1.2.3.4:1234/NEW_PORT/abc"
-msgstr "如果想要使用 natmap 的 外部端口 outter_port ,则使用 NEW_PORT 替代 URL 中的端口，例如 http://1.2.3.4:1234/NEW_PORT/abc"        
+msgid "<br />if want to use natmap outter_port, NEW_PORT must be used instead of the port in the URL, such as http://1.2.3.4:1234/NEW_PORT/abc ."
+msgstr "<br />如果想要使用 natmap 的 外部端口 outter_port ，则使用 NEW_PORT 替代 URL 中的端口，例如 http://1.2.3.4:1234/NEW_PORT/abc 。"        
 
 #: natmap.js:97
 msgid "Restrict to address family"
@@ -340,16 +340,12 @@ msgid "such as adsl_1 or wan"
 msgstr "例如：adsl_1 或 wan"
 
 #: natmap.js:416
-msgid "such as http://127.0.0.1:8080 or http://ikuai.lan:8080"
-msgstr "例如：http://127.0.0.1:8080 或 http://ikuai.lan:8080"
+msgid "such as http://127.0.0.1:8080 or http://ikuai.lan:8080 ."
+msgstr "例如：http://127.0.0.1:8080 或 http://ikuai.lan:8080 。"
 
 #: natmap.js:220 natmap.js:607 natmap.js:646
-msgid "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP and DNS"
-msgstr "例如：http://127.0.0.1:8080 或 http://ikuai.lan:8080。如果使用 host ，必须关闭 DHCP/DNS 中的重绑定保护"
-
-#: natmap.js:567
-msgid "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP/DNS"
-msgstr "例如 http://127.0.0.1:8080 或 http://ikuai.lan:8080。如果使用 host 地址而不是ip，则必须关闭 DHCP/DNS 中的重绑定保护"
+msgid "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP/DNS."
+msgstr "例如：http://127.0.0.1:8080 或 http://ikuai.lan:8080。如果使用 host ，必须关闭 DHCP/DNS 中的重绑定保护。"
 
 #: natmap.js:252
 msgid "such as tcp or udp or tcp+udp"
@@ -403,3 +399,17 @@ msgstr "WAN 接口"
 msgid "Web UI URL"
 msgstr "网页 URL"
 
+msgid "Cloudflare DNS Type"
+msgstr "Cloudflare DNS 类型"
+
+msgid "cloudflare dns type, eg: AAAA、HTTPS、SRV, default: AAAA(IP4P)."
+msgstr "cloudflare dns 类型，例如： AAAA、HTTPS、SRV，默认为AAAA(IP4P)。"
+
+msgid "Cloudflare DDNS Domain"
+msgstr "Cloudflare DDNS 域名"
+
+msgid "cloudflare ddns domain, eg: www.example.com."
+msgstr "cloudflare ddns 域名，例如：www.example.com。"
+
+msgid "<br />before use it, must add dns record in cloudflare DNS."
+msgstr "<br />使用之前，必须在 cloudflare dns 中添加对应dns记录。"

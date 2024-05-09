@@ -32,16 +32,16 @@ fi
 for ((retry_count = 1; retry_count <= max_retries; retry_count++)); do
     result=$(curl -X POST -s -o /dev/null -w "%{http_code}" "$url" "${message[@]}")
     if [ $result -eq 200 ]; then
-        echo "$GENERAL_NAT_NAME - $NOTIFY_MODE 发送成功"
+        echo "$GENERAL_NAT_NAME - $NOTIFY_MODE 发送成功" >>/var/log/natmap/natmap.log
         break
     else
-        # echo "$NOTIFY_MODE 登录失败,休眠$sleep_time秒"
+        echo "$NOTIFY_MODE 登录失败,休眠$sleep_time秒" >>/var/log/natmap/natmap.log
         sleep $sleep_time
     fi
 done
 
 # Check if maximum retries reached
 if [ $retry_count -eq $max_retries ]; then
-    echo "$GENERAL_NAT_NAME - $NOTIFY_MODE 达到最大重试次数，无法通知"
+    echo "$GENERAL_NAT_NAME - $NOTIFY_MODE 达到最大重试次数，无法通知" >>/var/log/natmap/natmap.log
     break
 fi

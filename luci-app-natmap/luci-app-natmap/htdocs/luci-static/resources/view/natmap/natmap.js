@@ -58,6 +58,7 @@ return view.extend({
     s = m.section(form.GridSection, "natmap");
     s.addremove = true;
     s.anonymous = true;
+    s.sortable = true;
 
     s.tab("general", _("General Settings"));
     s.tab("forward", _("Forward Settings"));
@@ -182,7 +183,7 @@ return view.extend({
       "forward_target_ip",
       _("Forward target")
     );
-    o.datatype = "host";
+    o.datatype = "ip4addr";
     o.modalonly = true;
     o.depends("forward_mode", "firewall");
     o.depends("forward_mode", "natmap");
@@ -218,7 +219,7 @@ return view.extend({
       "forward_ikuai_web_url",
       _("Ikuai Web URL"),
       _(
-        "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP and DNS"
+        "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP/DNS."
       )
     );
     o.datatype = "string";
@@ -288,6 +289,7 @@ return view.extend({
       _("max retries,default 0 means execute only once")
     );
     o.datatype = "uinteger";
+    o.default = 0;
     o.modalonly = true;
     o.depends("forward_advanced_enable", "1");
 
@@ -299,6 +301,7 @@ return view.extend({
       _("Retry Interval, unit is seconds, default 0 is 3 seconds")
     );
     o.datatype = "uinteger";
+    o.default = 0;
     o.modalonly = true;
     o.depends("forward_advanced_enable", "1");
 
@@ -335,7 +338,7 @@ return view.extend({
       _("Click here") +
       "</a>" +
       _(
-        "<br />If you want to send to a group/channel, please create a non-Chinese group/channel (for easier chatid lookup, you can rename it later).<br />Add the bot to the group, send a message, and use https://api.telegram.org/bot token /getUpdates to obtain the chatid."
+        ".<br />If you want to send to a group/channel, please create a non-Chinese group/channel (for easier chatid lookup, you can rename it later).<br />Add the bot to the group, send a message, and use https://api.telegram.org/bot token /getUpdates to obtain the chatid."
       );
     o.datatype = "string";
     o.modalonly = true;
@@ -352,7 +355,7 @@ return view.extend({
       ' <a href="https://t.me/BotFather" target="_blank">' +
       _("Click here") +
       "</a>" +
-      _("<br />Send a message to the created bot to initiate a conversation.");
+      _(".<br />Send a message to the created bot to initiate a conversation.");
     o.datatype = "string";
     o.modalonly = true;
     o.depends("notify_mode", "telegram_bot");
@@ -396,7 +399,7 @@ return view.extend({
       _("Click here") +
       "</a>" +
       _(
-        "<br />Since the asynchronous push queue is used, only whether the put into the queue is successful is detected."
+        ".<br />Since the asynchronous push queue is used, only whether the put into the queue is successful is detected."
       );
     o.datatype = "string";
     o.modalonly = true;
@@ -419,7 +422,9 @@ return view.extend({
       "notify_serverchan_advanced_url",
       _("Self-built Server Url")
     );
-    o.description = _("such as http://127.0.0.1:8080 or http://ikuai.lan:8080");
+    o.description = _(
+      "such as http://127.0.0.1:8080 or http://ikuai.lan:8080 ."
+    );
     o.datatype = "string";
     o.modalonly = true;
     o.depends("notify_serverchan_advanced_enable", "1");
@@ -478,6 +483,7 @@ return view.extend({
       _("max retries,default 0 means execute only once")
     );
     o.datatype = "uinteger";
+    o.default = 0;
     o.modalonly = true;
     o.depends("notify_advanced_enable", "1");
 
@@ -489,6 +495,7 @@ return view.extend({
       _("Retry Interval, unit is seconds, default 0 is 3 seconds")
     );
     o.datatype = "uinteger";
+    o.default = 0;
     o.modalonly = true;
     o.depends("notify_advanced_enable", "1");
 
@@ -507,7 +514,9 @@ return view.extend({
     o.value("transmission", _("Transmission"));
     o.value("cloudflare_origin_rule", _("Cloudflare Origin Rule"));
     o.value("cloudflare_redirect_rule", _("Cloudflare Redirect Rule"));
+    o.value("cloudflare_ddns", _("Cloudflare DDNS"));
 
+    //
     // link_cloudflare
     o = s.taboption(
       "link",
@@ -519,6 +528,7 @@ return view.extend({
     o.modalonly = true;
     o.depends("link_mode", "cloudflare_origin_rule");
     o.depends("link_mode", "cloudflare_redirect_rule");
+    o.depends("link_mode", "cloudflare_ddns");
 
     o = s.taboption(
       "link",
@@ -530,6 +540,37 @@ return view.extend({
     o.modalonly = true;
     o.depends("link_mode", "cloudflare_origin_rule");
     o.depends("link_mode", "cloudflare_redirect_rule");
+    o.depends("link_mode", "cloudflare_ddns");
+
+    //link_cloudflare_ddns
+    o = s.taboption(
+      "link",
+      form.ListValue,
+      "link_cloudflare_ddns_type",
+      _("Cloudflare DNS Type")
+    );
+    o.description = _(
+      "cloudflare dns type, eg: AAAA、HTTPS、SRV, default: AAAA(IP4P)."
+    );
+    o.modalonly = true;
+    o.default = "AAAA";
+    o.value("AAAA", _("AAAA (IP4P)"));
+    o.value("HTTPS", _("HTTPS"));
+    o.value("SRV", _("SRV"));
+    o.depends("link_mode", "cloudflare_ddns");
+
+    o = s.taboption(
+      "link",
+      form.Value,
+      "link_cloudflare_ddns_domain",
+      _("Cloudflare DDNS Domain")
+    );
+    o.description =
+      _("cloudflare ddns domain, eg: www.example.com.") +
+      _("<br />before use it, must add dns record in cloudflare DNS.");
+    o.datatype = "host";
+    o.modalonly = true;
+    o.depends("link_mode", "cloudflare_ddns");
 
     // link_cloudflare_origin_rule
     o = s.taboption(
@@ -562,9 +603,8 @@ return view.extend({
       _(
         "can used with ddns to redirect to the specified URL, such as http://1.2.3.4:1234 or http://abc.com:1234/abc ."
       ) +
-      "<br />" +
       _(
-        "if want to use natmap outter_port,NEW_PORT must be used instead of the port in the URL, such as http://1.2.3.4:1234/NEW_PORT/abc"
+        "<br />if want to use natmap outter_port, NEW_PORT must be used instead of the port in the URL, such as http://1.2.3.4:1234/NEW_PORT/abc ."
       );
     o.datatype = "string";
     o.modalonly = true;
@@ -577,7 +617,7 @@ return view.extend({
       "link_emby_url",
       _("EMBY URL"),
       _(
-        "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP/DNS"
+        "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP/DNS."
       )
     );
     o.datatype = "string";
@@ -617,7 +657,7 @@ return view.extend({
       "link_qb_web_url",
       _("Web UI URL"),
       _(
-        "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP and DNS"
+        "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP/DNS."
       )
     );
     o.datatype = "string";
@@ -645,7 +685,7 @@ return view.extend({
       "link_qb_ipv6_address",
       _("IPv6 Address")
     );
-    o.datatype = "string";
+    o.datatype = "ip6addr";
     o.modalonly = true;
     o.depends("link_qb_allow_ipv6", "1");
 
@@ -656,7 +696,7 @@ return view.extend({
       "link_tr_rpc_url",
       _("RPC URL"),
       _(
-        "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP and DNS"
+        "such as http://127.0.0.1:8080 or http://ikuai.lan:8080.if use host,must close Rebind protection in DHCP/DNS."
       )
     );
     o.datatype = "string";
@@ -684,7 +724,7 @@ return view.extend({
       "link_tr_ipv6_address",
       _("IPv6 Address")
     );
-    o.datatype = "string";
+    o.datatype = "ip6addr";
     o.modalonly = true;
     o.depends("link_tr_allow_ipv6", "1");
 
@@ -697,11 +737,12 @@ return view.extend({
     );
     o.default = false;
     o.modalonly = true;
-    o.depends("link_mode", "transmission");
-    o.depends("link_mode", "qbittorrent");
-    o.depends("link_mode", "emby");
-    o.depends("link_mode", "cloudflare_origin_rule");
-    o.depends("link_mode", "cloudflare_redirect_rule");
+    // o.depends("link_mode", "transmission");
+    // o.depends("link_mode", "qbittorrent");
+    // o.depends("link_mode", "emby");
+    // o.depends("link_mode", "cloudflare_origin_rule");
+    // o.depends("link_mode", "cloudflare_redirect_rule");
+    // o.depends("link_mode", "cloudflare_ddns");
 
     o = s.taboption(
       "link",
@@ -711,6 +752,7 @@ return view.extend({
       _("max retries,default 0 means execute only once")
     );
     o.datatype = "uinteger";
+    o.default = 0;
     o.modalonly = true;
     o.depends("link_advanced_enable", "1");
 
@@ -722,6 +764,7 @@ return view.extend({
       _("Retry Interval, unit is seconds, default 0 is 3 seconds")
     );
     o.datatype = "uinteger";
+    o.default = 0;
     o.modalonly = true;
     o.depends("link_advanced_enable", "1");
 
@@ -741,9 +784,16 @@ return view.extend({
       "custom",
       form.Value,
       "custom_script_path",
-      _("custom script"),
-      _("custom script path,such as /etc/natmap/custom.sh")
+      _("custom script")
     );
+    o.description =
+      _("custom script path,such as /etc/natmap/custom.sh .argument format:") +
+      _("<br />outter_ip=$1") +
+      _("<br />outter_port=$2") +
+      _("<br />ip4p=$3") +
+      _("<br />inner_port=$4") +
+      _("<br />protocol=$5");
+
     // o.depends('custom_script_enable', '1');
     o.datatype = "file";
     o.modalonly = true;
