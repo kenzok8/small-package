@@ -30,7 +30,7 @@ define Package/$(PKG_NAME)
 	TITLE:=LinkEase - the file cloud
 	DEPENDS:=@(arm||x86_64||aarch64) +ffmpeg-remux
 	PKGARCH:=all
-	URL:=https://www.ddnsto.com/linkease/
+	URL:=https://www.linkease.com/
 endef
 
 define Package/$(PKG_NAME)/description
