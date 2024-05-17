@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.9.9
+Version=V6.9.10
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -669,6 +669,11 @@ function UPGRADE() {
 			G)
 				Proxy_Type=$2
 				Special_Commands="${Special_Commands} [Ghproxy]"
+				shift
+			;;
+			*)
+				Proxy_Type="All"
+				Special_Commands="${Special_Commands} [镜像加速 Automatic]"
 				shift
 			;;
 			esac
