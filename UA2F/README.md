@@ -62,7 +62,7 @@ uci commit ua2f
 
 ## 在非 OpenWRT 系统上运行
 
-自 `v4.5.0 起`，UA2F 支持在非 OpenWRT 系统上运行，但是需要手动配置防火墙规则，将需要处理的流量转发到 `netfilter-queue` 的 10010 队列中。
+自 `v4.5.0` 起，UA2F 支持在非 OpenWRT 系统上运行，但是需要手动配置防火墙规则，将需要处理的流量转发到 `netfilter-queue` 的 10010 队列中。
 
 编译时，需要添加 `-DUA2F_ENABLE_UCI=OFF` flag 至 CMake。
 
