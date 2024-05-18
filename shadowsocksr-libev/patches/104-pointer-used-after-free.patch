@@ -1,6 +1,6 @@
 --- a/server/server.c
 +++ b/server/server.c
-@@ -1942,11 +1942,11 @@ main(int argc, char **argv)
+@@ -1942,12 +1942,12 @@
              text = (char*)malloc(strlen(protocol) - 11);
              memcpy(text, protocol, strlen(protocol) - 11);
              int length = strlen(protocol) - 11;
@@ -9,7 +9,8 @@
              memset(protocol, 0x00, length);
              memcpy(protocol, text, length);
              LOGI("protocol compatible enable, %s", protocol);
-+            free(protocol);
              free(text);
++            free(protocol);
              protocol_compatible = 1;
          }
+     }
