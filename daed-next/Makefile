@@ -77,6 +77,7 @@ define Build/Prepare
 	go mod tidy ; \
 	popd ; \
 	pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
+	wget -qO - https://github.com/daeuniverse/dae-wing/commit/ca0296173d36746335efed1923ff08c1300f7a61.patch | patch -p1 ; \
 	go get -u=patch ; \
 	go mod tidy ; \
 	popd ; \
