@@ -73,6 +73,7 @@ define Build/Prepare
 	rm -rf $(PKG_BUILD_DIR)/dae-core && git clone https://github.com/daeuniverse/dae $(PKG_BUILD_DIR)/dae-core ; \
 	rm -rf $(PKG_BUILD_DIR)/dae-core/control/kern/headers && git clone https://github.com/daeuniverse/dae_bpf_headers $(PKG_BUILD_DIR)/dae-core/control/kern/headers ; \
 	pushd $(PKG_BUILD_DIR)/dae-core ; \
+	sed -i -e 's!default:"30s"!default:"600s"!g' -e 's!default:"HEAD"!default:"CONNECT"!g' -e 's!default:"dns.google.com:53,8.8.8.8,2001:4860:4860::8888"!default:"one.one.one.one:53,1.0.0.1,2606:4700:4700::1111"!g' -e 's!default:"http://cp.cloudflare.com,1.1.1.1,2606:4700:4700::1111"!default:"http://cp.cloudflare.com,1.0.0.1,2606:4700:4700::1111"!g' config/config.go ; \
 	go get -u=patch ; \
 	go mod tidy ; \
 	popd ; \
