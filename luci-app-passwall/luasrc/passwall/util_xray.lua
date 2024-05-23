@@ -693,7 +693,7 @@ function gen_config(var)
 
 			-- fallback node
 			local fallback_node_id = _node.fallback_node
-			if fallback_node_id == "" then fallback_node_id = nil
+			if fallback_node_id == "" then fallback_node_id = nil end
 			if fallback_node_id then
 				local is_new_node = true
 				for _, outbound in ipairs(outbounds) do
