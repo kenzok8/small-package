@@ -475,7 +475,7 @@ function InternetDetector:stopInstance(pidFile)
 			end
 			if not ok then
 				io.stderr:write(string.format(
-					'Process stop error: %s (%s). PID: "%s"\n', errMsg, errNum, pidValue))
+					'Process stopping error: %s (%s). PID: "%s"\n', errMsg, errNum, pidValue))
 			end
 			if errNum == 3 then
 				os.remove(pidFile)
@@ -485,7 +485,7 @@ function InternetDetector:stopInstance(pidFile)
 	end
 	if not pidValue then
 		io.stderr:write(
-			string.format('PID file "%s" does not exist. %s not running?\n',
+			string.format('PID file "%s" does not exist. Is the %s not running?\n',
 				pidFile, self.appName))
 	end
 	return retVal
@@ -537,7 +537,7 @@ function InternetDetector:preRun()
 	end
 	if stat.stat(self.pidFile) then
 		io.stderr:write(
-			string.format('PID file "%s" already exist. %s already running?\n',
+			string.format('PID file "%s" exist. Is the %s already running?\n',
 				self.pidFile, self.appName))
 		return false
 	end
