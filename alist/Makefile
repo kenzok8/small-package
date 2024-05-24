@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=alist
 PKG_VERSION:=3.35.0
 PKG_WEB_VERSION:=3.35.0
-PKG_RELEASE:=5
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/alist-org/alist/tar.gz/v$(PKG_VERSION)?
@@ -58,6 +58,14 @@ define Package/$(PKG_NAME)/description
   A file list program that supports multiple storage, powered by Gin and Solidjs.
 endef
 
+ifeq ($(ARCH),arm)
+  ARM_CPU_FEATURES:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
+  ifeq ($(ARM_CPU_FEATURES),)
+    TARGET_CFLAGS:=
+    TARGET_LDFLAGS:=
+  endif
+endif
+
 ifneq ($(CONFIG_USE_MUSL),)
   TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
 endif
@@ -66,6 +74,9 @@ define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(eval $(call Download,$(PKG_NAME)-web))
 	$(TAR) --strip-components=1 -C $(PKG_BUILD_DIR)/public/dist -xzf $(DL_DIR)/$(PKG_NAME)-web-$(PKG_WEB_VERSION).tar.gz
+ifneq ($(CONFIG_ARCH_64BIT),y)
+	$(RM) -rf $(PKG_BUILD_DIR)/{drivers/lark.go,drivers/lark}
+endif
 endef
 
 define Package/$(PKG_NAME)/install
