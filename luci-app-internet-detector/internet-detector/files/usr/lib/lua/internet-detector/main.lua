@@ -485,7 +485,7 @@ function InternetDetector:stopInstance(pidFile)
 	end
 	if not pidValue then
 		io.stderr:write(
-			string.format('PID file "%s" does not exist. Is the %s not running?\n',
+			string.format('PID file "%s" does not exists. Is the %s not running?\n',
 				pidFile, self.appName))
 	end
 	return retVal
@@ -537,7 +537,7 @@ function InternetDetector:preRun()
 	end
 	if stat.stat(self.pidFile) then
 		io.stderr:write(
-			string.format('PID file "%s" exist. Is the %s already running?\n',
+			string.format('PID file "%s" exists. Is the %s already running?\n',
 				self.pidFile, self.appName))
 		return false
 	end
