@@ -21,7 +21,7 @@ endif
 
 ifeq ($(ARCH),aarch64)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).aarch64-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-  PKG_HASH:=dbad4f61c3d78ae446593e5510ae7a7c0ddbdfe7c902ff1f43c6bf67b4854723
+  PKG_HASH:=c0ac84f0efdae92b19e72f5477438da5d2c835d3e0bf14a2b8dea0e0b6bcc064
 else ifeq ($(ARCH),arm)
   # Referred to golang/golang-values.mk
   ARM_CPU_FEATURES:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
@@ -37,7 +37,7 @@ else ifeq ($(ARCH),i386)
   PKG_HASH:=074ac1591be87ba846df962f895b0dd7b07120ef900a1fbfee86b40f8f13d93d
 else ifeq ($(ARCH),x86_64)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).x86_64-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-  PKG_HASH:=45191675f76cb7d3dba0d37bc3207c075a8037dbd5c637df484201f0073acad2
+  PKG_HASH:=b2321bd795db6fb71b3bc70da03e1dd6aa64d194ce3183ffda789e08329edfd1
 else ifeq ($(ARCH),mips)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).mips-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
   PKG_HASH:=e5ba11eb81c94d5376586df8ad05793cf87038c83c2b02a6a1fbd3aebd6aecf8
