@@ -2,7 +2,7 @@
 
 ####    基于 openwrt master 分支的 natmap 插件
 
-注意：自 openwrt23.0 之后，使用golang>= 1.20，luci2（js实现网页），部分插件不兼容。
+注意：自 **openwrt23.0** 之后，使用 **golang>= 1.20，luci2**，部分插件不兼容。
 
 ## 基本功能
 
@@ -33,7 +33,8 @@ API Key 请访问 https://dash.cloudflare.com/profile/api-tokens 复制 Global A
 ####    1.5.Cloudflare Redirect Rules
 
 ####    1.6.Cloudflare DDNS
-支持调用Cloudflare DDNS功能，通过ip4p格式的AAAA记录，存储外部IP和端口。
+支持调用Cloudflare DDNS功能，存储外部IP和端口。
+注意，目前仅实装ip4p格式的**AAAA记录**。
 
 ### 2.目前支持的通知功能
 ####    2.1.  Telegram Bot
@@ -42,8 +43,9 @@ API Key 请访问 https://dash.cloudflare.com/profile/api-tokens 复制 Global A
 ####    2.4.  Gotify
 
 ### 3.端口转发功能
+注意：openwrt网关部署本插件时，可以直接使用 **natmap转发** 和 **firewall dnat转发**。  但在内网设备上部署时，若网关为**ikuai**，可使用 **ikuai端口映射**，其余情况需要在网关手动设置**端口映射**或**dmz**。
 ####    3.1.natmap转发
-支持使用natmap转发tcp和udp..
+支持使用natmap转发tcp和udp。
 
 ####    3.2.firewall dnat转发
 支持使用openwrt防火墙转发tcp和udp。
