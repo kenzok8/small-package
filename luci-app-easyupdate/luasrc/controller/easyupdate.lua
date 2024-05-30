@@ -6,9 +6,9 @@ function index()
 	end
 	local c=luci.model.uci.cursor()
 	local r=0
-	if not c:get("easyupdate", "main", "proxy") then
+	if not c:get("easyupdate", "main", "mirror") then
 	    r=1
-	    c:set("easyupdate", "main", "proxy", "1")
+	    c:set("easyupdate", "main", "mirror", "")
 	end
 	if not c:get("easyupdate", "main", "keepconfig") then
 	    r=1

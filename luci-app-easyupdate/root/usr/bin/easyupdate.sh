@@ -50,19 +50,11 @@ function downCloudVer() {
 	writeLog 'Get the cloud firmware link(获取云端固件链接)'
 	url=$(curl "https://api.github.com/repos/${github[2]}/${github[3]}/releases/latest" | jsonfilter -e '@.assets[*].browser_download_url' | sed -n "/$suffix/p")
 	writeLog "Cloud firmware link(云端固件链接):$url"
-	writeLog 'Get whether to use Chinese mirror(读取是否使用中国镜像)'
-	proxy=$(uci get easyupdate.main.proxy)
-	if [ $proxy -eq 1 ]; then
-		proxy='https://ghproxy.com/'
-		res='yes'
-	else
-		proxy=''
-		res='no'
-	fi
-	writeLog "Whether to use Chinese mirror(是否使用中国镜像):$res"
+	mirror=$(uci get easyupdate.main.mirror)
+	writeLog "Use mirror URL(使用镜像网站):$mirror"
 	fileName=(${url//// })
-	curl -o "/tmp/${fileName[7]}-sha256" "$proxy${url/${fileName[7]}/sha256sums}"
-	curl -o "/tmp/${fileName[7]}" "$proxy$url" >/tmp/easyupdate.log 2>&1 &
+	curl -o "/tmp/${fileName[7]}-sha256" -L "$mirror${url/${fileName[7]}/sha256sums}"
+	curl -o "/tmp/${fileName[7]}" -L "$mirror$url" >/tmp/easyupdate.log 2>&1 &
 	writeLog 'Start downloading firmware, log output in /tmp/easyupdate.log(开始下载固件，日志输出在/tmp/easyupdate.log)'
 }
 

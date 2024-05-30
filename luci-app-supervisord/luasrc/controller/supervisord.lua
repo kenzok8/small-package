@@ -77,11 +77,6 @@ function update()
     filename = "supervisord_" .. version:gsub("v", "") .. "_Linux_" .. arch .. ".tar.gz"
     nixio.fs.remove("/tmp/" .. filename)
     u=c:get("supervisord", "main", "usechinamirror")
-    if u then
-		u="https://ghproxy.com/"
-	else
-		u=""
-    end
     e.error=luci.sys.call("uclient-fetch -qO- -O '/tmp/" .. filename .. "' '" .. u .. "https://github.com/ochinchina/supervisord/releases/download/" .. version .. "/" .. filename .. "'")
     if e.error == 0 then
         e.error=luci.sys.exec("tar -xzvf '/tmp/" .. filename .. "' -C /tmp")

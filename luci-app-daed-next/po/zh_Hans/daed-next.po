@@ -83,4 +83,4 @@ msgid "Toggle"
 msgstr "开/关"
 
 msgid "Dashboard is a frontend management panel, meant for configuration use only."
-msgstr "仪表板是一个前端管理面板，仅应在配置过程中启用。"
+msgstr "仪表板是一个前端管理面板，仅应在配置过程中启用。(登录后若浏览器未自动跳转，请手动刷新页面)"

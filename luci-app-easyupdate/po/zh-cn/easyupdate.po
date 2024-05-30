@@ -10,8 +10,11 @@ msgstr "升级可能导致重启失败，请谨慎选择自动升级"
 msgid "When selected, firmware upgrade will be automatically at the specified time."
 msgstr "选中后，系统将在指定的时间自动升级固件。"
 
-msgid "When selected, will use the China mirror when accessing Github."
-msgstr "选中后，将在访问Github时使用中国镜像。"
+msgid "Mirror Url"
+msgstr "镜像网址"
+
+msgid "Once configured, the mirror URL will be used when accessing Github."
+msgstr "配置后，在访问Github时将使用镜像网址。"
 
 msgid "KEEP CONFIG"
 msgstr "保留配置"

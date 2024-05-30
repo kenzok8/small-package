@@ -11,9 +11,9 @@ e=s:option(Flag, "enable", translate("Enable"),translate("When selected, firmwar
 e.default=0
 e.optional=false
 
-p=s:option(Flag, "proxy", translate("Use China Mirror"),translate("When selected, will use the China mirror when accessing Github."))
-p.default=1
-p.optional=false
+p=s:option(Value,"mirror",translate("Mirror Url"),translate("Once configured, the mirror URL will be used when accessing Github."))
+p.default=''
+p.rmempty=false
 
 k= s:option(Flag, "keepconfig", translate("KEEP CONFIG"),translate("When selected, configuration is retained when firmware upgrade."))
 k.default=1
