@@ -59,7 +59,7 @@ export function tls_inbound_settings(proxy, protocol_name) {
 
 export function reality_outbound_settings(server, protocol) {
     let result = {
-        show: server[protocol + "_reality_show"],
+        show: server[protocol + "_reality_show"] === "1",
         fingerprint: server[protocol + "_reality_fingerprint"],
         serverName: server[protocol + "_reality_server_name"],
         publicKey: server[protocol + "_reality_public_key"],
