@@ -97,8 +97,8 @@ define Package/natflow-auth/install
 	$(INSTALL_DATA) ./files/natflow.config $(1)/etc/config/natflow
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DATA) ./files/20-natflow-zone.hotplug $(1)/etc/hotplug.d/iface/20-natflow-zone
-	$(INSTALL_DIR) $(1)/sbin
-	$(INSTALL_BIN) ./files/urllogger.sh $(1)/sbin/urllogger
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) ./files/urllogger-ctl.sh $(1)/usr/sbin/urllogger-ctl
 endef
 
 $(eval $(call KernelPackage,natflow))
