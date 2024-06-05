@@ -22,7 +22,7 @@ urllogger_read()
 	NOW=$(date +%s)
 	cat /dev/urllogger_queue | sed 's/,/ /' | while read time data; do
 		T=$((NOW+time-UP))
-		T=$(date +%Y%m%d%H%M%S -d @$T)
+		T=$(date "+%Y-%m-%d %H:%M:%S" -d @$T)
 		echo $T,$data
 	done
 }
