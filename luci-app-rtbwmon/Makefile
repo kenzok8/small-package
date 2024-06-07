@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.0.3-1
+PKG_VERSION:=1.0.4-1
 PKG_RELEASE:=
 PKG_MAINTAINER:=jjm2473 <jjm2473@gmail.com>
 

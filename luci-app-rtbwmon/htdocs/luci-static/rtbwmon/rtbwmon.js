@@ -511,6 +511,17 @@
             let iface_select = document.getElementById('iface_select');
             let selected = iface_select.value;
             let ifaces = responseText.trimEnd().split('\n').filter(line=>line).map(iface=>{
+                let priority = 0;
+                switch (iface) {
+                    case "br-lan":
+                        priority = -2;
+                        break;
+                    case "docker0":
+                        priority = -1;
+                        break;
+                }
+                return {iface:iface, priority:priority};
+            }).sort((a,b)=>a.priority-b.priority).map(o=>o.iface).map(iface=>{
                 let option = document.createElement('option');
                 option.value = iface;
                 option.innerHTML = iface;

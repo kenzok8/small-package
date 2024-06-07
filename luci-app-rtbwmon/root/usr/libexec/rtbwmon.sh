@@ -29,7 +29,7 @@ lookup() {
 }
 
 get_wan_iface() {
-    tail -n +2 /proc/net/route | sed -n -e 's/^\([^\t]\+\)\t00000000\t[^\t]\+\t[^\t]\+\t[^\t]\+\t[^\t]\+\t[^\t]\+\t00000000\t.*$/\1/p'
+    tail -n +2 /proc/net/route | sed -n -e 's/^\([^\t]\+\)\t00000000\t[^\t]\+\t[^\t]\+\t[^\t]\+\t[^\t]\+\t[^\t]\+\t00000000\t.*$/\1/p' | head -1
 }
 
 get_arp_excluded() {
@@ -38,7 +38,7 @@ get_arp_excluded() {
 
 enforce_wan_iface() {
     local INTERFACE="$1"
-    [[ "$INTERFACE" = "br-lan" ]] && INTERFACE=`uci show network.wan | grep -E 'network\.wan\.(device|ifname)' | sed -n -e "1s/network\\.wan\\.[^=]\\+='\\([^']\\+\\)'\$/\\1/p"`
+    [[ "$INTERFACE" = "br-lan" ]] && INTERFACE=`uci show network.wan | grep -E 'network\.wan\.(device|ifname)=' | sed -n -e "1s/network\\.wan\\.[^=]\\+='\\([^']\\+\\)'\$/\\1/p"`
     [ -z "$INTERFACE" ] && INTERFACE="/"
     echo "$INTERFACE"
 }
@@ -175,7 +175,7 @@ show_ifaces() {
     local WAN_INTERFACE=`get_wan_iface`
     [ -z "$WAN_INTERFACE" ] && return 1
     WAN_INTERFACE="$(enforce_wan_iface "$WAN_INTERFACE")"
-    ip addr show scope global up | grep '^ \+inet ' | sed -n -e 's/^.* \([^ ]\+\)$/\1/p' | grep -Fv "$WAN_INTERFACE" | sort -u
+    ip addr show scope global up | grep '^ \+inet ' | sed -n -e 's/^.* \([^ ]\+\)$/\1/p' | grep -Fxv "$WAN_INTERFACE" | sort -u
 }
 
 prerm() {
