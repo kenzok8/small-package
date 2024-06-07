@@ -97,8 +97,22 @@ define Package/natflow-auth/install
 	$(INSTALL_DATA) ./files/natflow.config $(1)/etc/config/natflow
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DATA) ./files/20-natflow-zone.hotplug $(1)/etc/hotplug.d/iface/20-natflow-zone
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) ./files/urllogger-ctl.sh $(1)/usr/sbin/urllogger-ctl
+endef
+
+define Package/natflow-hostacl
+  CATEGORY:=X
+  SUBMENU:=Fast Forward Stacks
+  TITLE:=natflow hostacl init script
+  DEPENDS:= +natflow-auth +urllogger
+endef
+
+define Package/natflow-hostacl/conffiles
+/etc/config/hostacl
+endef
+
+define Package/natflow-hostacl/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) ./files/natflow-hostacl.init $(1)/etc/init.d/natflow-hostacl
 	$(INSTALL_DATA) ./files/hostacl.config $(1)/etc/config/hostacl
 endef
@@ -106,3 +120,4 @@ endef
 $(eval $(call KernelPackage,natflow))
 $(eval $(call BuildPackage,natflow-boot))
 $(eval $(call BuildPackage,natflow-auth))
+$(eval $(call BuildPackage,natflow-hostacl))
