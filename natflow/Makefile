@@ -99,6 +99,8 @@ define Package/natflow-auth/install
 	$(INSTALL_DATA) ./files/20-natflow-zone.hotplug $(1)/etc/hotplug.d/iface/20-natflow-zone
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/urllogger-ctl.sh $(1)/usr/sbin/urllogger-ctl
+	$(INSTALL_BIN) ./files/natflow-hostacl.init $(1)/etc/init.d/natflow-hostacl
+	$(INSTALL_DATA) ./files/hostacl.config $(1)/etc/config/hostacl
 endef
 
 $(eval $(call KernelPackage,natflow))
