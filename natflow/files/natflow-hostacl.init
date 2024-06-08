@@ -29,6 +29,18 @@ ipv4set_add()
 	done
 }
 
+# ipset_add ipsetname net
+ipv6set_add()
+{
+	local ipsetname=$1
+	local net=$2
+	#hack for ::/0
+	[ "$net" = "::/0" ] && net="::/1 8000::/1"
+	for n in $net; do
+		ipset add $ipsetname $n
+	done
+}
+
 start()
 {
 	test -c /dev/hostacl_ctl || return 0
@@ -46,7 +58,7 @@ start()
 
 		ip=$(uci get hostacl.@rule[$idx].ip 2>/dev/null)
 		ip=$($IPOPS netStrings2ipcidrStrings "$ip")
-		if [ "$(echo $ip | sed 's/,/ /g' | wc -w)" -gt 1 ]; then
+		if [ "$(echo $ip | sed 's/,/ /g' | wc -w)" -ge 1 ]; then
 			ipset create host_acl_rule${idx}_ipv4 hash:net family inet 2>/dev/null
 			ipset flush host_acl_rule${idx}_ipv4
 			for net in $(echo $ip | sed 's/,/ /g'); do
@@ -59,7 +71,7 @@ start()
 			ipset create host_acl_rule${idx}_ipv6 hash:net family inet6 2>/dev/null
 			ipset flush host_acl_rule${idx}_ipv6
 			for net in $(echo $ipv6 | sed "s/,/ /g;s/'/ /g"); do
-				ipset add host_acl_rule${idx}_ipv6 $net
+				ipv6set_add host_acl_rule${idx}_ipv6 $net
 			done
 		fi
 
