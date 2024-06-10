@@ -49,7 +49,7 @@ uci commit firewall
 # QB and TR ipv6 forward
 # 检测link_enable
 if [ "${LINK_ENABLE}" != 1 ]; then
-	echo "$GENERAL_NAT_NAME - $FORWARD_MODE: LINK_ENABLE is not 1, exit, don't forward ipv6" >>/var/log/natmap/natmap.log
+	echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $FORWARD_MODE: LINK_ENABLE is not 1, exit, don't forward ipv6" >>/var/log/natmap/natmap.log
 	exit 0
 fi
 
@@ -58,7 +58,7 @@ if [ [ "${LINK_MODE}" = transmission ] && [ "${LINK_TR_ALLOW_IPV6}" = 1 ] ] || [
 	# get rule name
 	rule_name_v6=$(echo "${GENERAL_NAT_NAME}_v6_allow" | sed 's/[^a-zA-Z0-9]/_/g' | awk '{print tolower($0)}')
 
-	echo "$GENERAL_NAT_NAME - $FORWARD_MODE: firewall_rule_name_v6: $rule_name_v6" >>/var/log/natmap/natmap.log
+	echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $FORWARD_MODE: firewall_rule_name_v6: $rule_name_v6" >>/var/log/natmap/natmap.log
 	# ipv6 allow
 	uci set firewall.$rule_name_v6=rule
 	uci set firewall.$rule_name_v6.name=$rule_name_v6

@@ -32,7 +32,10 @@ else
 	touch /var/log/natmap/natmap.log
 fi
 
-echo "$(date +'%Y-%m-%d %H:%M:%S') - natmap update json: $(cat /var/run/natmap/$PPID.json)"
+echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - 开始更新" >>/var/log/natmap/natmap.log
+echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - 开始更新"
+echo "$(date +'%Y-%m-%d %H:%M:%S') : natmap update json: $(cat /var/run/natmap/$PPID.json)" >>/var/log/natmap/natmap.log
+echo "$(date +'%Y-%m-%d %H:%M:%S') : natmap update json: $(cat /var/run/natmap/$PPID.json)"
 
 # forward setting
 [ "${FORWARD_ENABLE}" == 1 ] && source /usr/share/natmap/forward.sh "$@"

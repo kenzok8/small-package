@@ -413,3 +413,33 @@ msgstr "cloudflare ddns 域名，例如：www.example.com。"
 
 msgid "<br />before use it, must add dns record in cloudflare DNS."
 msgstr "<br />使用之前，必须在 cloudflare dns 中添加对应dns记录。"
+
+msgid "dns record ttl"
+msgstr "dns 记录 ttl"
+
+msgid "ttl of dns record, use seconds as unit, default 60."
+msgstr "dns记录的ttl值，单位为秒，默认为 60。"
+
+msgid "HTTPS record Priority"
+msgstr "HTTPS 记录优先级"
+
+msgid "Priority of HTTPS record, default 1."
+msgstr "HTTPS 记录优先级，默认为 1 。"
+
+msgid "SRV record Target Domain"
+msgstr "SRV 记录的目标域名"
+
+msgid "Target domain of SRV record. eg: www.example.com."
+msgstr "SRV 记录的目标域名。例如，www.example.com 。"
+
+msgid "SRV record Priority"
+msgstr "SRV 记录优先级"
+
+msgid "Priority of SRV record, default 1."
+msgstr "SRV 记录优先级，默认为 1 。"
+
+msgid "SRV record Weight"
+msgstr "SRV 记录权重"
+
+msgid "Weight of SRV record, default 1."
+msgstr "SRV 记录权重，默认为 1 。"

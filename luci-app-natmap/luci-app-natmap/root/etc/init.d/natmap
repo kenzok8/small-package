@@ -77,6 +77,11 @@ validate_section_natmap() {
 		'link_cloudflare_redirect_rule_target_url:string' \
 		'link_cloudflare_ddns_type:string' \
 		'link_cloudflare_ddns_domain:host' \
+		'link_cloudflare_ddns_ttl:uinteger:60' \
+		'link_cloudflare_ddns_https_priority:uinteger:1' \
+		'link_cloudflare_ddns_srv_priority:uinteger:1' \
+		'link_cloudflare_ddns_srv_weight:uinteger:1' \
+		'link_cloudflare_ddns_srv_target_domain:host' \
 		'link_advanced_enable:bool:0' \
 		'link_advanced_max_retries:uinteger:0' \
 		'link_advanced_sleep_time:uinteger:0' \

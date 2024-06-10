@@ -39,6 +39,7 @@ if [ -n "${NOTIFY_MODE}" ]; then
 fi
 
 if [ -n "${notify_script}" ]; then
-	echo "$(date +'%Y-%m-%d %H:%M:%S') - $GENERAL_NAT_NAME execute notify script" >>/var/log/natmap/natmap.log
+	echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME execute notify script" >>/var/log/natmap/natmap.log
+	echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME execute notify script"
 	bash "$notify_script" "$msg"
 fi
