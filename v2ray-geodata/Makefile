@@ -30,13 +30,13 @@ define Download/geosite
   HASH:=146800cbe3ec546a8ca3ed75524ad34bb3bf9d77d6f707b361eef67e4cf45d07
 endef
 
-GEOSITE_IRAN_VER:=202406030028
+GEOSITE_IRAN_VER:=202406100028
 GEOSITE_IRAN_FILE:=iran.dat.$(GEOSITE_IRAN_VER)
 define Download/geosite-ir
   URL:=https://github.com/bootmortis/iran-hosted-domains/releases/download/$(GEOSITE_IRAN_VER)/
   URL_FILE:=iran.dat
   FILE:=$(GEOSITE_IRAN_FILE)
-  HASH:=5dc876f4ba837ae095f889a81a5529ee8fc07a6290e2f4ece3fcd6943c58996b
+  HASH:=d75a29732477b942cbff0e76b9ebec708a45db30d7e1d16cbd42fd4c4694918b
 endef
 
 define Package/v2ray-geodata/template
