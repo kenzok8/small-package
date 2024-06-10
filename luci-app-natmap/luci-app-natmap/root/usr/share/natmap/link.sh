@@ -15,6 +15,7 @@ if [ -n "${LINK_MODE}" ]; then
 fi
 
 if [ -n "${link_script}" ]; then
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $GENERAL_NAT_NAME execute link script" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME execute link script" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME execute link script"
     bash "${link_script}" "$@"
 fi

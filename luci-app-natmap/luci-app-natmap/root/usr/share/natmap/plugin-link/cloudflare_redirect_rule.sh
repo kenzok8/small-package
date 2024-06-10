@@ -6,9 +6,9 @@ outter_port=$2
 
 function get_current_rule() {
   curl --request GET \
-    --url https://api.cloudflare.com/client/v4/zones/$LINK_CLOUDFLARE_ZONE_ID/rulesets/phases/http_request_dynamic_redirect/entrypoint \
+    --url "https://api.cloudflare.com/client/v4/zones/$LINK_CLOUDFLARE_ZONE_ID/rulesets/phases/http_request_dynamic_redirect/entrypoint" \
     --header "Authorization: Bearer $LINK_CLOUDFLARE_TOKEN" \
-    --header 'Content-Type: application/json'
+    --header "Content-Type: application/json"
 }
 
 # 默认重试次数为1，休眠时间为3s
@@ -38,7 +38,7 @@ for (( ; retry_count < max_retries; retry_count++)); do
     echo "$LINK_MODE 登录失败,休眠$sleep_time秒" >>/var/log/natmap/natmap.log
     sleep $sleep_time
   else
-    echo "$GENERAL_NAT_NAME - $LINK_MODE 登录成功" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 登录成功" >>/var/log/natmap/natmap.log
     break
   fi
 done
@@ -51,28 +51,33 @@ for (( ; retry_count < max_retries; retry_count++)); do
   new_rule=$(echo "$currrent_rule" | jq '.result.rules| to_entries | map(select(.value.description == '"$cloudflare_redirect_rule_name"')) | .[].key')
   new_rule=$(echo "$currrent_rule" | jq '.result.rules['"$new_rule"'].action_parameters.from_value.target_url.value = "'"$redirect_rule_target_url"'"')
 
-  body=$(echo "$new_rule" | jq '.result')
+  request_data=$(echo "$new_rule" | jq '.result')
 
   # delete last_updated
-  body=$(echo "$body" | jq 'del(.last_updated)')
+  request_data=$(echo "$request_data" | jq 'del(.last_updated)')
   result=$(curl --request PUT \
-    --url https://api.cloudflare.com/client/v4/zones/$LINK_CLOUDFLARE_ZONE_ID/rulesets/$cloudflare_ruleset_id \
+    --url "https://api.cloudflare.com/client/v4/zones/$LINK_CLOUDFLARE_ZONE_ID/rulesets/$cloudflare_ruleset_id" \
     --header "Authorization: Bearer $LINK_CLOUDFLARE_TOKEN" \
-    --header 'Content-Type: application/json' \
-    --data "$body")
+    --header "Content-Type: application/json" \
+    --data "$request_data")
 
   if [ "$(echo "$result" | jq '.success' | sed 's/"//g')" == "true" ]; then
-    echo "$GENERAL_NAT_NAME - $LINK_MODE 更新成功" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 更新成功" >>/var/log/natmap/natmap.log
 
     break
   else
-    echo "$GENERAL_NAT_NAME - $LINK_MODE 修改失败,休眠$sleep_time秒" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 修改失败,休眠$sleep_time秒" >>/var/log/natmap/natmap.log
     sleep $sleep_time
   fi
 done
 
 # Check if maximum retries reached
 if [ $retry_count -eq $max_retries ]; then
-  echo "$GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改" >>/var/log/natmap/natmap.log
+  echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改" >>/var/log/natmap/natmap.log
+  echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改"
   exit 1
+else
+  echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 修改成功" >>/var/log/natmap/natmap.log
+  echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 修改成功"
+  exit 0
 fi

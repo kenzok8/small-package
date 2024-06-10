@@ -16,6 +16,7 @@ function curl_proxy() {
 # 默认重试次数为1，休眠时间为3s
 max_retries=1
 sleep_time=3
+retry_count=0
 
 # 判断是否开启高级功能
 if [ "${NOTIFY_ADVANCED_ENABLE}" == 1 ] && [ -n "$NOTIFY_ADVANCED_MAX_RETRIES" ] && [ -n "$NOTIFY_ADVANCED_SLEEP_TIME" ]; then
@@ -33,14 +34,14 @@ fi
 #     sleep_time="${NOTIFY_ADVANCED_SLEEP_TIME%/:-$sleep_time}"
 # fi
 
-for ((retry_count = 1; retry_count <= max_retries; retry_count++)); do
+for (( ; retry_count < max_retries; retry_count++)); do
     curl_proxy -4 -Ss -o /dev/null -X POST \
         -H 'Content-Type: application/json' \
         -d '{"chat_id": "'"${chat_id}"'", "text": "'"${title}\n\n${text}"'", "parse_mode": "HTML", "disable_notification": "false"}' \
         "https://api.telegram.org/bot${token}/sendMessage"
     status=$?
     if [ $status -eq 0 ]; then
-        echo "$GENERAL_NAT_NAME - $NOTIFY_MODE 发送成功" >>/var/log/natmap/natmap.log
+        echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $NOTIFY_MODE 发送成功" >>/var/log/natmap/natmap.log
         break
     else
         echo "$NOTIFY_MODE 登录失败,休眠$sleep_time秒" >>/var/log/natmap/natmap.log
@@ -50,6 +51,11 @@ done
 
 # Check if maximum retries reached
 if [ $retry_count -eq $max_retries ]; then
-    echo "$GENERAL_NAT_NAME - $NOTIFY_MODE 达到最大重试次数，无法通知" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $NOTIFY_MODE 达到最大重试次数，无法通知" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $NOTIFY_MODE 达到最大重试次数，无法通知"
     exit 1
+else
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $NOTIFY_MODE 通知成功" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $NOTIFY_MODE 通知成功"
+    exit 0
 fi

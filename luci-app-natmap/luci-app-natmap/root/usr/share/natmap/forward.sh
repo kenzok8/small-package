@@ -30,6 +30,7 @@ esac
 # fi
 
 if [ -n "${forward_script}" ]; then
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $GENERAL_NAT_NAME execute forward script" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME execute forward script" >>/var/log/natmap/natmap.log
+    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME execute forward script"
     bash "$forward_script" "$@"
 fi
