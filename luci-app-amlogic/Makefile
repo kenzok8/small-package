@@ -26,7 +26,8 @@ LUCI_TITLE:=LuCI support for Amlogic, Allwinner and Rockchip related boxs
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:= \
 	@(aarch64||arm) +luci +luci-lib-nixio +block-mount +blkid +parted +curl \
-	+dosfstools +e2fsprogs +jq +lsblk +pv +losetup +uuidgen +bash +perl +fdisk
+	+dosfstools +e2fsprogs +jq +lsblk +pv +losetup +uuidgen +bash +perl +fdisk \
+	+busybox
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/amlogic
