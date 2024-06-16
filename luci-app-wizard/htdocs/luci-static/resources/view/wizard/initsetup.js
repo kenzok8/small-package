@@ -8,13 +8,18 @@
 'require fs';
 
 return view.extend({
-	load: function() {
-		return Promise.all([
+	load: async function () {
+		const promises = await Promise.all([
 			fs.exec('/etc/init.d/wizard', ['reconfig']),
 			uci.changes(),
 			uci.load('wireless'),
-			uci.load('wizard')
+			uci.load('wizard'),
+			L.resolveDefault(fs.stat('/www/luci-static/istorex/style.css'), null)
 		]);
+	const data = {
+			istorex: promises[4]
+		};
+	return data;
 	},
 
 	render: function(data) {
@@ -90,6 +95,15 @@ return view.extend({
 		o = s.taboption('firmware', form.Flag, 'cookie_p', _('Persistent cookies'),
 			_('Keep the background login state to avoid the need to log in again every time the browser is closed'));
 		o.default = o.enabled;
+		
+		if (data.istorex){
+		o = s.taboption('firmware', form.ListValue, 'landing_page', _('主题模式'));
+		o.value('default', _('默认'));
+		o.value('nas', _('NAS模式'));
+		o.value('next-nas', _('NEXT-NAS模式'));
+		o.value('router', _('路由模式'));
+		o.default = 'default';
+		}
 
 		if (has_wifi) {
 			s.tab('wifisetup', _('Wireless Settings'), _('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'));
