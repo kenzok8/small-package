@@ -1,13 +1,13 @@
 #ifdef UA2F_ENABLE_UCI
-#include <uci.h>
 #include <string.h>
 #include <syslog.h>
+#include <uci.h>
 
 #include "config.h"
 
 struct ua2f_config config = {
-        .use_custom_ua = false,
-        .custom_ua = NULL,
+    .use_custom_ua = false,
+    .custom_ua = NULL,
 };
 
 void load_config() {
@@ -37,7 +37,7 @@ void load_config() {
         config.custom_ua = strdup(custom_ua);
     }
 
-    cleanup:
+cleanup:
     uci_free_context(ctx);
 }
 #endif
