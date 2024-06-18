@@ -1,17 +1,17 @@
-#include "statistics.h"
-#include "handler.h"
-#include "util.h"
 #include "cli.h"
+#include "handler.h"
+#include "statistics.h"
 #include "third/nfqueue-mnl.h"
+#include "util.h"
 
 #ifdef UA2F_ENABLE_UCI
 #include "config.h"
 #endif
 
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <signal.h>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
