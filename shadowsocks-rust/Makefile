@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadowsocks-rust
-PKG_VERSION:=1.20.0
+PKG_VERSION:=1.20.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_HEADER:=shadowsocks-v$(PKG_VERSION)
@@ -21,13 +21,13 @@ endif
 
 ifeq ($(ARCH),aarch64)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).aarch64-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-  PKG_HASH:=9fd207b3deb780ec4cbf5c6103410feb7025c64579d8d463e722ff2504b236b2
+  PKG_HASH:=a4551b599c0e0adbd395528681c748ac2ad71fd5ca37b39a900a49e767e8cc46
 else ifeq ($(ARCH),arm)
   # Referred to golang/golang-values.mk
   ARM_CPU_FEATURES:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
   ifeq ($(ARM_CPU_FEATURES),)
     PKG_SOURCE:=$(PKG_SOURCE_HEADER).arm-$(PKG_SOURCE_BODY)eabi.$(PKG_SOURCE_FOOTER)
-    PKG_HASH:=a53f5f5978b6f082d3ad94b495d7a6a0ec4bce3ac231fb6a257e1d21fcd7664b
+    PKG_HASH:=37fbb3d9ceecea96f8c9ecda6e6c7573e9546e107f84f8676554525ba90689be
   else
     PKG_SOURCE:=$(PKG_SOURCE_HEADER).arm-$(PKG_SOURCE_BODY)eabihf.$(PKG_SOURCE_FOOTER)
     PKG_HASH:=f661608d68c6e3f47054446714bbe50dcfc320fe60130f9d7121a7cb78d07191
