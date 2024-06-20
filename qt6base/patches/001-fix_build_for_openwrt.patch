@@ -1,6 +1,6 @@
 --- a/src/corelib/plugin/qelfparser_p.cpp
 +++ b/src/corelib/plugin/qelfparser_p.cpp
-@@ -386,7 +386,9 @@ Q_DECL_UNUSED Q_DECL_COLD_FUNCTION stati
+@@ -382,7 +382,9 @@ Q_DECL_UNUSED Q_DECL_COLD_FUNCTION static QDebug &operator<<(QDebug &d, ElfHeade
      case EM_ALPHA:      d << ", Alpha"; break;
      case EM_68K:        d << ", MC68000"; break;
      case EM_ARM:        d << ", ARM"; break;
