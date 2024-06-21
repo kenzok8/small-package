@@ -8,13 +8,13 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=Nginxer
 LUCI_DESCRIPTION:=Standard OpenWrt set including full admin with ppp support and the default Bootstrap theme
-PKG_VERSION:=0.0.1
+PKG_VERSION:=0.0.2
 PKG_RELEASE:=1
 LUCI_DEPENDS:=+luci-nginx
 
 define Package/luci-nginxer/postrm
 #!/bin/sh
-/etc/init.d/uhttpd enabled
+/etc/init.d/uhttpd enable
 /etc/init.d/uhttpd start
 exit 0
 endef
