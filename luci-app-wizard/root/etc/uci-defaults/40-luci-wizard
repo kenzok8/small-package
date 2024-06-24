@@ -1,5 +1,6 @@
+#!/bin/sh
+
 touch /etc/config/wizard
-touch /etc/config/wireless
 
 uci -q batch <<-EOF >/dev/null
 	delete ucitrack.@wizard[-1]
