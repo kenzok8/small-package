@@ -1,0 +1,26 @@
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(5, '<%=url("admin/services/istoreenhance_status")%>', null,
+		function(x, st)
+		{
+			var tb = document.getElementById('istoreenhance_status');
+			if (st && tb)
+			{
+				if (st.running)
+				{
+					tb.innerHTML = '<br/><em style=\"color:green\"><%:The iStoreEnhance service is running.%></em>';
+				}
+				else
+				{
+					tb.innerHTML = '<br/><em style=\"color:red\"><%:The iStoreEnhance service is not running.%></em>';
+				}
+			}
+		}
+	);
+//]]></script>
+
+<fieldset class="cbi-section">
+	<legend><%:iStoreEnhance Status%></legend>
+	<p id="istoreenhance_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
