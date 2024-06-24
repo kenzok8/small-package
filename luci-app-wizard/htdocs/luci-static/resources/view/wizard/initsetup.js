@@ -12,7 +12,7 @@ return view.extend({
 		const promises = await Promise.all([
 			fs.exec('/etc/init.d/wizard', ['reconfig']),
 			uci.changes(),
-			uci.load('wireless'),
+			L.resolveDefault(uci.load('wireless')),
 			uci.load('wizard'),
 			L.resolveDefault(fs.stat('/www/luci-static/istorex/style.css'), null)
 		]);
