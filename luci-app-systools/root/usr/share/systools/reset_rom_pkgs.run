@@ -15,13 +15,12 @@ reset_pkg() {
     local line
     local dep
     local deps
-    echo "${pkgname}" | grep -q "^kmod-\
-^kernel$\
-^libc$\
-^libgcc1$\
-^libatomic1$\
-^busybox$\
-" && return
+    echo "${pkgname}" | grep -q '^kmod-
+^kernel$
+^libc$
+^libgcc1$
+^libatomic1$
+^busybox$' && return
     if [ -f /rom/usr/lib/opkg/info/${pkgname}.control -a -e /overlay/upper/usr/lib/opkg/info/${pkgname}.control ]; then
         echo "reset ${pkgname}"
         if [ -f /rom/usr/lib/opkg/info/${pkgname}.list ]; then
