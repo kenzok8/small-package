@@ -60,7 +60,7 @@ add_wizard() {
 	config_get autoupgrade_pkg "$cfg" autoupgrade_pkg
 	
 	[ "$dhcp" == "0" ] && dhcp="1"
-	if [[ "${lan_gateway}" != "$(uci -q get network.lan.gateway)" ||  "${dhcp}" != "$(uci -q get dhcp.lan.ignore)" ]]; then
+	if [[ "${lan_gateway}" != "$(uci -q get network.lan.gateway)" || "${dhcp}" != "$(uci -q get dhcp.lan.ignore)" ]]; then
 	if [ "${siderouter}" == "1" ]; then
 		uci -q set network.lan.gateway="${lan_gateway}"
 		[ -n "$lan_dns" ] || lan_dns='223.5.5.5'
