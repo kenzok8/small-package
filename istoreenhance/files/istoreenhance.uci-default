@@ -1,0 +1,22 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@istoreenhance[-1]
+	add ucitrack istoreenhance
+	set ucitrack.@istoreenhance[-1].init=istoreenhance
+	commit ucitrack
+
+	delete firewall.istoreenhance
+	set firewall.istoreenhance=rule
+	set firewall.istoreenhance.name="istoreenhance"
+	set firewall.istoreenhance.target="ACCEPT"
+	set firewall.istoreenhance.src="wan"
+	set firewall.istoreenhance.proto="tcp"
+	set firewall.istoreenhance.dest_port="8443"
+	commit firewall
+EOF
+
+/etc/init.d/istoreenhance enable
+/etc/init.d/istoreenhance start
+
+exit 0
