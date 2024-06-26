@@ -125,7 +125,7 @@ function rules(proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
             let direct_rules = [];
             if (geoip_existence) {
                 if (proxy["geoip_direct_code_list"] != null) {
-                    const geoip_direct_code_list = map(proxy["geoip_direct_code_list"] || [], v => "geoip:" + v);
+                    const geoip_direct_code_list = map(proxy["geoip_direct_code_list"] || [], v => index(v, ":") > 0 ? v : `geoip:${v}`);
                     if (length(geoip_direct_code_list) > 0) {
                         push(direct_rules, {
                             type: "field",
@@ -134,7 +134,7 @@ function rules(proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
                             ip: geoip_direct_code_list
                         });
                     }
-                    const geoip_direct_code_list_v6 = map(proxy["geoip_direct_code_list_v6"] || [], v => "geoip:" + v);
+                    const geoip_direct_code_list_v6 = map(proxy["geoip_direct_code_list_v6"] || [], v => index(v, ":") > 0 ? v : `geoip:${v}`);
                     if (length(geoip_direct_code_list_v6) > 0) {
                         push(direct_rules, {
                             type: "field",
