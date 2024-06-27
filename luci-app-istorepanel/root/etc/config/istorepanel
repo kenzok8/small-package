@@ -1,0 +1,8 @@
+config main
+	option 'port' '10086'
+#	option 'config_path' ''
+#	option 'ver' 'v1.10.10-lts'
+#	option 'entrance' 'entrance'
+#	option 'username' '1panel'
+#	option 'password' 'password'
+
