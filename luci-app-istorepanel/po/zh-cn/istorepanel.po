@@ -1,0 +1,44 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Official website:"
+msgstr "官方网站："
+
+msgid "1Panel is the new generation Linux server maintenance panel."
+msgstr "1Panel 是新一代的 Linux 服务器运维管理面板"
+
+msgid "Config path"
+msgstr "配置文件路径"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Service Status"
+msgstr "服务状态"
+
+msgid "1Panel status:"
+msgstr "1Panel 的状态信息如下："
+
+msgid "Setup"
+msgstr "安装配置"
+
+msgid "The following parameters will only take effect during installation or upgrade:"
+msgstr "以下参数只在安装或者升级时才会生效："
+
+msgid "Status"
+msgstr "状态"
+
+msgid "1Panel is running"
+msgstr "1Panel 运行中"
+
+msgid "1Panel is not running"
+msgstr "1Panel 未运行"
+
+msgid "Open 1Panel"
+msgstr "打开 1Panel"
+
+msgid "The free space of Docker is less than 2GB, which may cause the installation to fail."
+msgstr "Docker 可用空间已不足2GB，可能导致安装失败。"
+
+msgid "Please make sure there has enough space"
+msgstr "请确保有足够空间"
