@@ -14,7 +14,7 @@ pthread_rwlock_t cacheLock;
 struct cache *not_http_dst_cache = NULL;
 static int check_interval;
 
-_Noreturn static void check_cache() {
+_Noreturn static void* check_cache(void*) {
     while (true) {
         pthread_rwlock_wrlock(&cacheLock);
 
