@@ -68,7 +68,7 @@ static void send_verdict(const struct nf_queue *queue, const struct nf_packet *p
         syslog(LOG_ERR, "failed to put nfqueue header");
         goto end;
     }
-    nfq_nlmsg_verdict_put(nlh, (int)pkt->packet_id, NF_ACCEPT);
+    nfq_nlmsg_verdict_put(nlh, pkt->packet_id, NF_ACCEPT);
 
     if (mark.should_set) {
         struct nlattr *nest = mnl_attr_nest_start_check(nlh, SEND_BUF_LEN, NFQA_CT);
@@ -98,7 +98,7 @@ end:
     }
 }
 
-static bool conntrack_info_available = true;
+bool conntrack_info_available = true;
 static bool cache_initialized = false;
 
 static void add_to_cache(const struct nf_packet *pkt) {

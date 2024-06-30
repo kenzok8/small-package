@@ -50,14 +50,36 @@ int read_buffer(struct nf_queue *queue, struct nf_buffer *buf) {
     }
 }
 
+bool retry_disable_conntrack(struct nf_queue *queue) {
+    nfqueue_close(queue);
+
+    syslog(LOG_INFO, "Retrying to disable conntrack");
+    const __auto_type ret = nfqueue_open(queue, QUEUE_NUM, 0, true);
+    if (!ret) {
+        syslog(LOG_ERR, "Failed to open nfqueue with conntrack disabled");
+        return false;
+    }
+    return true;
+}
+
 void main_loop(struct nf_queue *queue) {
     struct nf_buffer buf[1] = {0};
+    bool retried = false;
 
     while (!should_exit) {
         if (read_buffer(queue, buf) == IO_ERROR) {
-            break;
+            if (!retried) {
+                retried = true;
+                if (!retry_disable_conntrack(queue)) {
+                    break;
+                }
+            } else {
+                break;
+            }
         }
     }
+
+    free(buf->data);
 }
 
 int main(const int argc, char *argv[]) {
@@ -71,6 +93,8 @@ int main(const int argc, char *argv[]) {
 
     try_print_info(argc, argv);
 
+    require_root();
+
     init_statistics();
     init_handler();
 
@@ -82,50 +106,14 @@ int main(const int argc, char *argv[]) {
 
     struct nf_queue queue[1] = {0};
 
-    const __auto_type ret = nfqueue_open(queue, QUEUE_NUM, 0);
+    const __auto_type ret = nfqueue_open(queue, QUEUE_NUM, 0, false);
     if (!ret) {
         syslog(LOG_ERR, "Failed to open nfqueue");
         return EXIT_FAILURE;
     }
 
-    while (!should_exit) {
-        const __auto_type buf_status = nfqueue_receive(queue, buf, 0);
-        switch (buf_status) {
-        case IO_ERROR:
-            should_exit = true;
-            break;
-        case IO_NOTREADY:
-            continue;
-        case IO_READY:
-            while (!should_exit) {
-                struct nf_packet packet[1];
-                switch (nfqueue_next(buf, packet)) {
-                case IO_ERROR:
-                    should_exit = true;
-                    break;
-                case IO_READY:
-                    handle_packet(queue, packet);
-                    break;
-                case IO_NOTREADY:
-                    // we've read every packet in the buffer
-                    break;
-                default:
-                    // we should never reach this point
-                    syslog(LOG_ERR, "Unknown return value [%s:%d]", __FILE__, __LINE__);
-                    should_exit = true;
-                    break;
-                }
-            }
-            break;
-        default:
-            // we should never reach this point
-            syslog(LOG_ERR, "Unknown return value [%s:%d]", __FILE__, __LINE__);
-            should_exit = true;
-            break;
-        }
-    }
+    main_loop(queue);
 
-    free(buf->data);
     nfqueue_close(queue);
 
     return EXIT_SUCCESS;

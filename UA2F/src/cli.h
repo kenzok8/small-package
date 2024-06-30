@@ -21,4 +21,6 @@
 
 void try_print_info(int argc, char *argv[]);
 
+void require_root();
+
 #endif // UA2F_CLI_H
