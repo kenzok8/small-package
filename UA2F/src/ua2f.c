@@ -54,15 +54,27 @@ int main(const int argc, char *argv[]) {
 
     while (!should_exit) {
         if (nfqueue_receive(queue, buf, 0) == IO_READY) {
-            struct nf_packet packet[1];
-            while (nfqueue_next(buf, packet) == IO_READY) {
-                handle_packet(queue, packet);
+            while (!should_exit) {
+                struct nf_packet packet[1];
+                switch (nfqueue_next(buf, packet)) {
+                case IO_ERROR:
+                    should_exit = true;
+                case IO_READY:
+                    handle_packet(queue, packet);
+                case IO_NOTREADY:
+                    continue;
+                default:
+                    syslog(LOG_ERR, "Unknown return value [%s:%d]", __FILE__, __LINE__);
+                    should_exit = true;
+                }
             }
         }
     }
 
     free(buf->data);
     nfqueue_close(queue);
+
+    return EXIT_SUCCESS;
 }
 
 #pragma clang diagnostic pop

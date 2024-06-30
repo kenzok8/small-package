@@ -9,7 +9,7 @@
 
 > 由于新加入的 CONNMARK 影响，编译内核时需要添加 `NETFILTER_NETLINK_GLUE_CT` flag
 
-## uci command
+## Commands
 
 ```bash
 # 启用 UA2F
@@ -39,6 +39,9 @@ service ua2f enable
 
 # 启动 UA2F
 service ua2f start
+
+# 读取日志
+logread | grep UA2F
 ```
 
 ## 自定义 User-Agent

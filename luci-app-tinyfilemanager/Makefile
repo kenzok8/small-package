@@ -15,6 +15,8 @@ LUCI_DEPENDS:=+php8 +php8-cgi +php8-fastcgi +php8-fpm +php8-mod-session +php8-mo
 
 LUCI_DESCRIPTION:=A Web based File Manager in PHP
 
+PKG_UNPACK=$(CURDIR)/.prepare.sh $(PKG_NAME) $(CURDIR) $(PKG_BUILD_DIR)
+
 define Package/$(LUCI_NAME)/conffiles
 /etc/config/tinyfilemanager
 endef
