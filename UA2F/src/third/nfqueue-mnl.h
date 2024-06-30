@@ -240,7 +240,7 @@ nfqueue_receive() while packet object is being processed by another thread.
 
 // Return false on failure
 // If queue_len is zero, use default value
-bool nfqueue_open(struct nf_queue *q, int queue_num, uint32_t queue_len);
+bool nfqueue_open(struct nf_queue *q, int queue_num, uint32_t queue_len, bool skip_conntrack);
 
 void nfqueue_close(struct nf_queue *q);
 
