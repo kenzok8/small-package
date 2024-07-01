@@ -17,7 +17,7 @@ msgid "Enable or disable guest wifi"
 msgstr "启用/禁用访客网络"
 
 msgid "Create/Remove"
-msgstr"创建/删除"
+msgstr "创建/删除"
 
 msgid "Check to create guest wifi when enabled, or check to remove guest wifi when disabled."
 msgstr "与启用同时勾选，可创建和启用访客网络；启用不勾选时勾选，可删除访客网络。"
