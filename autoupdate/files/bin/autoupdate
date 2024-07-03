@@ -1,9 +1,9 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
 # AutoUpdate for Openwrt
-# Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
+# Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade nslookup
 
-Version=V6.9.10
+Version=V6.9.12
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -191,9 +191,10 @@ function CHECK_ENV() {
 	while [[ $1 ]];do
 		if [[ $(GET_VARIABLE $1 ${Config_Default} 2> /dev/null) ]]
 		then
-			ECHO y "检查环境变量: [$1] ... 正常"
+			ECHO y "环境变量: [${1}=$(GET_VARIABLE $1 ${Config_Default})]"
+			
 		else
-			ECHO r "检查环境变量: [$1] ... 错误"
+			ECHO r "环境变量: [$1] ... 错误"
 		fi
 		shift
 	done
@@ -208,6 +209,17 @@ function CHECK_PKG() {
 	else
 		LOGGER "检查软件包: [$1] ... 错误"
 		echo false
+		return 1
+	fi
+}
+
+function GET_IP() {
+	local Result="$(nslookup -type=a $1 $2 2> /dev/null | grep "Address:" | grep -v "$2" | egrep -o '([0-9]{1,3}\.){3}[0-9]{1,3}' | sort | uniq | tr '\n' ' ')"
+	if [[ ${Result} ]]
+	then
+		echo "${Result}"
+		return 0
+	else
 		return 1
 	fi
 }
@@ -918,7 +930,7 @@ function DOWNLOADER() {
 		;;
 		--url)
 			shift
-			DL_URL=($(egrep -o "https://.*@@[0-9]+|http://.*@@[0-9]+|ftp://.*@@[0-9]+" <<< $@))
+			DL_URL=($(egrep -o "https://.*@@[0-9]+|http://.*@@[0-9]+" <<< $@))
 			if [[ ! ${DL_URL[*]} ]]
 			then
 				DL_URL=($1)
@@ -997,7 +1009,7 @@ function DOWNLOADER() {
 		DL_Template="${DL_Downloader} --quiet --no-check-certificate -4 --timeout 10 -O"
 	;;
 	esac
-	if [[ ${Test_Mode} == 1  || ${Verbose_Mode} == 1 ]]
+	if [[ ${Test_Mode} == 1 || ${Verbose_Mode} == 1 ]]
 	then
 		DL_Template="${DL_Template/ --quiet / }"
 		DL_Template="${DL_Template/ --silent / }"
@@ -1009,7 +1021,26 @@ function DOWNLOADER() {
 		DL_Retries="${DL_URL_Cache##*@@}"
 		[[ ! ${DL_Retries} || ! ${DL_Retries} == [0-9] ]] && DL_Retries=1
 		DL_URL_Final="${DL_URL_Cache%*@@*}"
+		DL_URL_Final_Host=$(echo ${DL_URL_Final} | awk -F[/:] '{print $4}')
+		DL_URL_Final_IP=$(GET_IP ${DL_URL_Final_Host} 8.8.8.8)
 		LOGGER "当前 URL: [${DL_URL_Final}] URL 重试次数: [${DL_Retries}]"
+		if [[ ${DL_URL_Final_IP} ]]
+		then
+			LOGGER "当前 URL 信息: [${DL_URL_Final_Host}::${DL_URL_Final_IP}]"
+			case "${DL_Downloader}" in
+			curl)
+				case "${DL_URL_Final}"
+				in
+				https*)
+					DL_URL_Final="${DL_URL_Final} --resolve ${DL_URL_Final_Host}:443:${DL_URL_Final_IP}"
+				;;
+				*)
+					DL_URL_Final="${DL_URL_Final} --resolve ${DL_URL_Final_Host}:80:${DL_URL_Final_IP}"
+				;;
+				esac
+			;;
+			esac
+		fi
 		for u in $(seq ${DL_Retries})
 		do
 			sleep 1
@@ -1118,15 +1149,15 @@ function Proxy_X() {
 	
 	case "${Type}" in
 	raw)
-		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
+		F=https://proxy.hyy2001.workers.dev/$(echo ${URL##*com/})
 		G=https://mirror.ghproxy.com/${URL}
 	;;
 	release)
-		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
+		F=https://proxy.hyy2001.workers.dev/$(echo ${URL##*com/})
 		G=https://mirror.ghproxy.com/${URL}
 	;;
 	codeload)
-		F=https://git.hyy2001.workers.dev/$(echo ${URL##*com/})
+		F=https://proxy.hyy2001.workers.dev/$(echo ${URL##*com/})
 		G=https://mirror.ghproxy.com/${URL}
 	;;
 	esac
@@ -1427,6 +1458,7 @@ DL_DEPENDS=(
 	curl
 	wget
 	uclient-fetch
+	nslookup
 )
 REGEX_Skip_Format=".vdi|.vhdx|.vmdk|kernel|rootfs|factory"
 
