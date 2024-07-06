@@ -14,10 +14,12 @@ return view.extend({
 			uci.changes(),
 			L.resolveDefault(uci.load('wireless')),
 			uci.load('wizard'),
-			L.resolveDefault(fs.stat('/www/luci-static/istorex/style.css'), null)
+			L.resolveDefault(fs.stat('/www/luci-static/istorex/style.css'), null),
+			L.resolveDefault(fs.stat('/www/luci-static/routerdog/style.css'), null)
 		]);
 	const data = {
-			istorex: promises[4]
+			istorex: promises[4],
+			routerdog: promises[5]
 		};
 	return data;
 	},
@@ -96,12 +98,17 @@ return view.extend({
 			_('Keep the background login state to avoid the need to log in again every time the browser is closed'));
 		o.default = o.enabled;
 		
-		if (data.istorex){
+		if (data.istorex || data.routerdog){
 		o = s.taboption('firmware', form.ListValue, 'landing_page', _('主题模式'));
 		o.value('default', _('默认'));
+		if (data.routerdog){
+		o.value('routerdog', _('路由狗(专业NAS模式)'));
+		}
+		if (data.istorex){
 		o.value('nas', _('NAS模式'));
 		o.value('next-nas', _('NEXT-NAS模式'));
 		o.value('router', _('路由模式'));
+		}
 		o.default = 'default';
 		}
 
