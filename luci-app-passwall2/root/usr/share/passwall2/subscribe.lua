@@ -816,7 +816,7 @@ local function processData(szType, content, add_mode, add_from)
 		end
 		result.remarks = UrlDecode(alias)
 		
-		local dat = split(content, '%?')
+		local dat = split(content:gsub("/%?", "?"), '%?')
 		local host_port = dat[1]
 		local params = {}
 		for _, v in pairs(split(dat[2], '&')) do
@@ -1157,6 +1157,13 @@ local function update_node(manual)
 
 		uci:commit(appname)
 	end
+
+	if arg[3] == "cron" then
+		if not nixio.fs.access("/var/lock/" .. appname .. ".lock") then
+			luci.sys.call("touch /tmp/lock/" .. appname .. "_cron.lock")
+		end
+	end
+
 	luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
 end
 
