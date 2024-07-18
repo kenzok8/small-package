@@ -12,6 +12,7 @@ do_install() {
   local username=`uci get istorepanel.@main[0].username 2>/dev/null`
   local password=`uci get istorepanel.@main[0].password 2>/dev/null`
   local ver=`uci get istorepanel.@main[0].ver 2>/dev/null`
+  local include_host=`uci get istorepanel.@main[0].include_host 2>/dev/null`
 
   if [ -z "$config" ]; then
     echo "config path is empty!"
@@ -57,6 +58,10 @@ EOF
   --dns=172.17.0.1 \
   --dns=223.5.5.5 "
 
+  if [ "$include_host" = "1" ]; then
+    cmd="$cmd -v \"/:/ahost\" "
+  fi
+
   local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
@@ -74,6 +79,8 @@ EOF
     docker_status=`docker ps --all -f 'name=istorepanel' --format '{{.State}}'`
     if [[ $docker_status == *running* ]]; then
       docker exec istorepanel /app/reinstall.sh
+      echo "Installed OK, waiting 10s for running"
+      sleep 10
       break;
     else
       echo "istorepanel is not running, wait..."

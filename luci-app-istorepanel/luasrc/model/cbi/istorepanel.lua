@@ -70,4 +70,7 @@ for _, val in pairs(paths) do
 end
 o.default = default_path
 
+o = s:option(Flag, "include_host", translate("Include root path"))
+o.rmempty = false
+
 return m
