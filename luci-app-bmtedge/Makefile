@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.0.1-20231208
+PKG_VERSION:=1.0.1-20240718
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for bmtedge

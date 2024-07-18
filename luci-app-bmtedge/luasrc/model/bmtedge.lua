@@ -24,9 +24,9 @@ end
 
 bmtedge.default_image = function()
   if string.find(nixio.uname().machine, "x86_64") then
-    return "jinshanyun/jinshan-x86_64"
+    return "registry.cn-shanghai.aliyuncs.com/nsp-prod-1/public1:iaas-amd64-latest"
   else
-    return "jinshanyun/jinshan-arm64"
+    return "registry.cn-shanghai.aliyuncs.com/nsp-prod-1/public1:iaas_c-arm64-latest"
   end
 end
 
