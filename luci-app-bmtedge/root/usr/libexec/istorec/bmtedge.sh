@@ -31,6 +31,7 @@ do_install() {
     --dns=223.5.5.5 \
     --tmpfs /run \
     --tmpfs /tmp \
+    -e ksc_supplier_code=\"92101\" -e ksc_refer=\"ruiyun_node\" \
     -v \"$path:/data/ksc1\" \
     -v \"$path/containerd:/var/lib/containerd\" \
     -e ksc_datadir=\"/data/ksc1\" \
