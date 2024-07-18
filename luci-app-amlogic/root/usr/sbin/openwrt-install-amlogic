@@ -135,8 +135,8 @@ function display_database() {
             echo "$line >>>"
         else
             # Process data lines, starting with id
-            IFS=':' read -r f1 f2 f3 f7 <<<"$line"
-            printf "%4s. %-50s%-10s%-s\n" "$f1" "$f2" "$f3" "$f7"
+            IFS=':' read -r -a fields <<<"$line"
+            printf "%5s %-48s%-10s%-s\n" "${fields[0]}" "${fields[1]}" "${fields[2]}" "${fields[7]}"
         fi
     done < <(echo "${model_database}")
 }
