@@ -8,6 +8,8 @@
 如果遇到了任何问题，欢迎提出 Issues，但是更欢迎直接提交 Pull Request
 
 > 由于新加入的 CONNMARK 影响，编译内核时需要添加 `NETFILTER_NETLINK_GLUE_CT` flag
+ 
+> 可以在网页 [http://ua-check.stagoh.com](http://ua-check.stagoh.com) 上测试 UA2F 是否正常工作
 
 ## Commands
 
