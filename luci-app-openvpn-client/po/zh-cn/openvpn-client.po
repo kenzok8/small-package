@@ -46,6 +46,9 @@ msgstr "不拉取路由"
 msgid "Static Routes"
 msgstr "静态路由"
 
+msgid "Allow server access"
+msgstr "允许服务端访问"
+
 msgid "Auth"
 msgstr "身份认证"
 
