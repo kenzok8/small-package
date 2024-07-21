@@ -1,9 +1,9 @@
 #include "handler.h"
+#include <arpa/inet.h>
 #include "cache.h"
 #include "custom.h"
 #include "statistics.h"
 #include "util.h"
-#include <arpa/inet.h>
 
 #ifdef UA2F_ENABLE_UCI
 #include "config.h"
@@ -42,10 +42,12 @@ void init_handler() {
 #endif
 
 #ifdef UA2F_CUSTOM_UA
-    memset(replacement_user_agent_string, ' ', MAX_USER_AGENT_LENGTH);
-    strncpy(replacement_user_agent_string, UA2F_CUSTOM_UA, strlen(UA2F_CUSTOM_UA));
-    syslog(LOG_INFO, "Using embed user agent string: %s", replacement_user_agent_string);
-    ua_set = true;
+    if (!ua_set) {
+        memset(replacement_user_agent_string, ' ', MAX_USER_AGENT_LENGTH);
+        strncpy(replacement_user_agent_string, UA2F_CUSTOM_UA, strlen(UA2F_CUSTOM_UA));
+        syslog(LOG_INFO, "Using embed user agent string: %s", replacement_user_agent_string);
+        ua_set = true;
+    }
 #endif
 
     if (!ua_set) {
