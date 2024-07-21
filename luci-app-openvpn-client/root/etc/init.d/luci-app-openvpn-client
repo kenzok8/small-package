@@ -97,6 +97,10 @@ start_instance() {
 			_proxy="socks-proxy ${c_p_server} ${c_p_port} ${_proxy_auth}"
 		fi
 	}
+
+	local c_allow_access_action="ACCEPT"
+	local c_allow_access=$(uci -q get ${CONFIG}.${cfgid}.allow_access || echo "1")
+	[ "${c_allow_access}" = "0" ] && c_allow_access_action="DROP"
 	
 	echo "#!/bin/sh" > ${TMP_OVPN_PATH}/${cfgid}/up.sh
 	echo "#!/bin/sh" > ${TMP_OVPN_PATH}/${cfgid}/down.sh
@@ -124,6 +128,7 @@ start_instance() {
 		#允许服务端配置静态路由表访问内网
 		iptables -t nat -I POSTROUTING -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j MASQUERADE
 		iptables -t nat -I POSTROUTING -o ${c_dev} -m comment --comment "${c_dev}" -j MASQUERADE
+		iptables -I INPUT -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j ${c_allow_access_action}
 		iptables -I FORWARD -i ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
 		iptables -I FORWARD -o ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
 	EOF
@@ -135,6 +140,7 @@ start_instance() {
 				\$1 -w -D \$2 \$index 2>/dev/null
 			done
 		}
+		ipt_del "iptables" "INPUT"
 		ipt_del "iptables" "FORWARD"
 		ipt_del "iptables -t nat" "POSTROUTING"
 	EOF

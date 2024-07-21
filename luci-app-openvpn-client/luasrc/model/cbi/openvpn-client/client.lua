@@ -4,6 +4,11 @@ m = Map("luci-app-openvpn-client", translate("Client List"))
 m.apply_on_parse = true
 m.redirect = d.build_url("admin", "vpn", "openvpn-client")
 
+m.on_apply = function(self)
+    luci.sys.call("/etc/init.d/luci-app-openvpn-client start %s" % arg[1])
+    luci.http.redirect( self.redirect )
+end
+
 s = m:section(NamedSection, arg[1], "clients", "")
 s.addremove = false
 s.anonymous = true
@@ -40,6 +45,10 @@ o.rmempty = false
 
 o = s:option(DynamicList, "routes", translate("Static Routes"))
 o.placeholder = "192.168.10.0/24"
+
+o = s:option(Flag, "allow_access", translate("Allow server access"))
+o.default = "1"
+o.rmempty = false
 
 o = s:option(ListValue, "auth", translate("Auth"))
 o:value("", translate("None"))
