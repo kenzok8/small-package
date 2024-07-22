@@ -4,11 +4,41 @@ msgstr "管控"
 msgid "Running Status"
 msgstr "运行状态"
 
+msgid "Collecting data..."
+msgstr "正在收集数据..."
+
 msgid "NOT RUNNING"
 msgstr "未运行"
 
 msgid "RUNNING"
 msgstr "运行中"
 
+msgid "Access Control"
+msgstr "访问限制"
+
+msgid "Use the blacklist or whitelist mode to control whether a client in the list can connect to the Internet."
+msgstr "使用黑名单或者白名单模式控制列表中的客户端是否能够连接到互联网。"
+
+msgid "Global setting"
+msgstr "全局设置"
+
+msgid "Enable"
+msgstr "开启"
+
+msgid "Limit mode"
+msgstr "限制模式"
+
+msgid "Whitelist"
+msgstr "白名单"
+
 msgid "Blacklist"
 msgstr "黑名单"
+
+msgid "List setting"
+msgstr "名单设置"
+
+msgid "In blacklist mode, the client in the list is prohibited from connecting to the Internet. In whitelist mode, only the clients in the list can connect to the Internet."
+msgstr "如果是黑名单模式，列表中的客户端将被禁止连接到互联网；白名单模式表示仅有列表中的客户端可以连接到互联网。"
+
+msgid "MAC Address"
+msgstr "MAC 地址"

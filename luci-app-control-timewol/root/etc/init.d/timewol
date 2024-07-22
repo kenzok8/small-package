@@ -33,39 +33,40 @@ load_config() {
 }
 
 add_rule(){
-sed -i '/etherwake/d' /etc/crontabs/root >/dev/null 2>&1
-for i in $(seq 0 100)
-	do
-		local macaddr=$(uci_get_by_type macclient macaddr '' $i)
-		local maceth=$(uci_get_by_type macclient maceth '' $i)
-		local minute=$(uci_get_by_type macclient minute '' $i)
-		local hour=$(uci_get_by_type macclient hour '' $i)
-		local day=$(uci_get_by_type macclient day '' $i)
-		local month=$(uci_get_by_type macclient month '' $i)
-		local weeks=$(uci_get_by_type macclient weeks '' $i)
+	local items=$(uci show ${CONFIG} | grep "=macclient" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
+	for i in $items; do
+		local macaddr=$(uci -q get ${CONFIG}.${i}.macaddr)
+		local maceth=$(uci -q get ${CONFIG}.${i}.maceth)
+		local minute=$(uci -q get ${CONFIG}.${i}.minute)
+		local hour=$(uci -q get ${CONFIG}.${i}.hour)
+		local day=$(uci -q get ${CONFIG}.${i}.day)
+		local month=$(uci -q get ${CONFIG}.${i}.month)
+		local weeks=$(uci -q get ${CONFIG}.${i}.weeks)
 		if [ -z $macaddr ] || [ -z $maceth ]; then
-			break
+			continue
 		fi
 		if [ -z $minute ] ; then
-        minute="0"
+			minute="0"
 		fi
 		if [ -z $hour ] ; then
-        hour="*"
+			hour="*"
 		fi
 		if [ -z $day ] ; then
-        day="*"
+			day="*"
 		fi
 		if [ -z $month ] ; then
-        month="*"
+			month="*"
 		fi
 		if [ -z $weeks ] ; then
-        weeks="*"
+			weeks="*"
 		fi
-   echo "$minute $hour $day $month $weeks /usr/bin/etherwake -D -i $maceth $macaddr" >> /etc/crontabs/root
-done
+		echo "$minute $hour $day $month $weeks /usr/bin/etherwake -D -i $maceth $macaddr" >> /etc/crontabs/root
+		unset macaddr maceth minute hour day month weeks
+	done
 }
 
 start() {
+	stop
     ! load_config && exit 0
     add_rule
 }

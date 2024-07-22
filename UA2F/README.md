@@ -33,6 +33,9 @@ uci set ua2f.firewall.handle_intranet=1
 # 使用自定义 User-Agent
 uci set ua2f.main.custom_ua="Test UA/1.0"
 
+# 禁用 Conntrack 标记，这会降低性能，但是有助于和其他修改 Connmark 的软件共存
+uci set ua2f.main.disable_connmark=1
+
 # 应用配置
 uci commit ua2f
 
