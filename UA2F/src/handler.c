@@ -27,6 +27,9 @@ static char *replacement_user_agent_string = NULL;
 #define CONNMARK_NOT_HTTP 43
 #define CONNMARK_HTTP 44
 
+bool use_conntrack = true;
+static bool cache_initialized = false;
+
 void init_handler() {
     replacement_user_agent_string = malloc(MAX_USER_AGENT_LENGTH);
 
@@ -38,6 +41,11 @@ void init_handler() {
         strncpy(replacement_user_agent_string, config.custom_ua, strlen(config.custom_ua));
         syslog(LOG_INFO, "Using config user agent string: %s", replacement_user_agent_string);
         ua_set = true;
+    }
+
+    if (config.disable_connmark) {
+        use_conntrack = false;
+        syslog(LOG_INFO, "Conntrack cache disabled by config.");
     }
 #endif
 
@@ -100,9 +108,6 @@ end:
     }
 }
 
-bool conntrack_info_available = true;
-static bool cache_initialized = false;
-
 static void add_to_cache(const struct nf_packet *pkt) {
     struct addr_port target = {
         .addr = pkt->orig.dst,
@@ -113,7 +118,7 @@ static void add_to_cache(const struct nf_packet *pkt) {
 }
 
 static struct mark_op get_next_mark(const struct nf_packet *pkt, const bool has_ua) {
-    if (!conntrack_info_available) {
+    if (!use_conntrack) {
         return (struct mark_op){false, 0};
     }
 
@@ -162,9 +167,9 @@ bool should_ignore(const struct nf_packet *pkt) {
 }
 
 void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
-    if (conntrack_info_available) {
+    if (use_conntrack) {
         if (!pkt->has_conntrack) {
-            conntrack_info_available = false;
+            use_conntrack = false;
             syslog(LOG_WARNING, "Packet has no conntrack. Switching to no cache mode.");
             syslog(LOG_WARNING, "Note that this may lead to performance degradation. Especially on low-end routers.");
         } else {
@@ -175,19 +180,17 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
         }
     }
 
-    struct pkt_buff *pkt_buff = NULL;
-    if (conntrack_info_available && should_ignore(pkt)) {
+    if (use_conntrack && should_ignore(pkt)) {
         send_verdict(queue, pkt, (struct mark_op){true, CONNMARK_NOT_HTTP}, NULL);
         goto end;
     }
 
-    pkt_buff = pktb_alloc(AF_INET, pkt->payload, pkt->payload_len, 0);
-
+    struct pkt_buff *pkt_buff = pktb_alloc(AF_INET, pkt->payload, pkt->payload_len, 0);
     ASSERT(pkt_buff != NULL);
 
     int type;
 
-    if (conntrack_info_available) {
+    if (use_conntrack) {
         type = pkt->orig.ip_version;
     } else {
         const __auto_type ip_hdr = nfq_ip_get_hdr(pkt_buff);

@@ -9,6 +9,7 @@
 struct ua2f_config {
     bool use_custom_ua;
     char *custom_ua;
+    bool disable_connmark;
 };
 
 void load_config();

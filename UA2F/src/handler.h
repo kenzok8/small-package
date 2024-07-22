@@ -3,7 +3,7 @@
 
 #include "third/nfqueue-mnl.h"
 
-extern bool conntrack_info_available;
+extern bool use_conntrack;
 
 void init_handler();
 

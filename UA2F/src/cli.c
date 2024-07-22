@@ -29,6 +29,12 @@ void try_print_info(const int argc, char *argv[]) {
         } else {
             printf("Config UA: not set\n");
         }
+
+        if (config.disable_connmark) {
+            printf("Conntrack cache: disabled\n");
+        } else {
+            printf("Conntrack cache: auto\n");
+        }
 #else
         printf("UCI support disabled\n");
 #endif

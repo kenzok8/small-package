@@ -6,6 +6,7 @@ TIMECONTROL_ENABLE=0
 
 iptables_w(){
 	iptables -w 1 "$@"
+	ip6tables -w 1 "$@" 2>/dev/null
 }
 
 add_rule(){

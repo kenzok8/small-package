@@ -4,8 +4,50 @@ msgstr "管控"
 msgid "Running Status"
 msgstr "运行状态"
 
+msgid "Collecting data..."
+msgstr "正在收集数据..."
+
 msgid "NOT RUNNING"
 msgstr "未运行"
 
 msgid "RUNNING"
 msgstr "运行中"
+
+msgid "Timed Wakeup"
+msgstr "定时唤醒"
+
+msgid "Timed network wake-up"
+msgstr "定时网络唤醒"
+
+msgid "Wake up your LAN device regularly"
+msgstr "定时唤醒你的局域网设备"
+
+msgid "Basic setting"
+msgstr "基本设置"
+
+msgid "Enable"
+msgstr "开启"
+
+msgid "Client setting"
+msgstr "客户端设置"
+
+msgid "MAC Address"
+msgstr "MAC 地址"
+
+msgid "Network interface"
+msgstr "网络接口"
+
+msgid "minutes"
+msgstr "分钟"
+
+msgid "hour"
+msgstr "小时"
+
+msgid "day"
+msgstr "日"
+
+msgid "month"
+msgstr "月"
+
+msgid "weeks"
+msgstr "星期"

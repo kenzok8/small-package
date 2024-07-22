@@ -1,37 +1,38 @@
 local i = require "luci.sys"
-local t, e, o
-t = Map("timewol", translate("定时网络唤醒"),
-        translate("定时唤醒你的局域网设备"))
-t.template = "timewol/index"
-e = t:section(TypedSection, "basic", translate("Running Status"))
+
+t = Map("timewol", translate("Timed network wake-up"), translate("Wake up your LAN device regularly"))
+
+e = t:section(TypedSection, "basic", translate("Basic setting"))
 e.anonymous = true
-o = e:option(DummyValue, "timewol_status", translate("当前状态"))
-o.template = "timewol/timewol"
-o.value = translate("Collecting data...")
-e = t:section(TypedSection, "basic", translate("基本设置"))
-e.anonymous = true
-o = e:option(Flag, "enable", translate("开启"))
+
+o = e:option(Flag, "enable", translate("Enable"))
 o.rmempty = false
-e = t:section(TypedSection, "macclient", translate("客户端设置"))
+
+e = t:section(TypedSection, "macclient", translate("Client setting"))
 e.template = "cbi/tblsection"
 e.anonymous = true
 e.addremove = true
-nolimit_mac = e:option(Value, "macaddr", translate("客户端MAC"))
+
+nolimit_mac = e:option(Value, "macaddr", translate("MAC Address"))
 nolimit_mac.rmempty = false
 i.net.mac_hints(function(e, t) nolimit_mac:value(e, "%s (%s)" % {e, t}) end)
-nolimit_eth = e:option(Value, "maceth", translate("网络接口"))
+nolimit_eth = e:option(Value, "maceth", translate("Network interface"))
 nolimit_eth.rmempty = false
 for t, e in ipairs(i.net.devices()) do if e ~= "lo" then nolimit_eth:value(e) end end
-a = e:option(Value, "minute", translate("分钟"))
+
+a = e:option(Value, "minute", translate("minutes"))
 a.optional = false
-a = e:option(Value, "hour", translate("小时"))
+
+a = e:option(Value, "hour", translate("hour"))
 a.optional = false
-a = e:option(Value, "day", translate("日"))
+
+a = e:option(Value, "day", translate("day"))
 a.optional = false
-a = e:option(Value, "month", translate("月"))
+
+a = e:option(Value, "month", translate("month"))
 a.optional = false
-a = e:option(Value, "weeks", translate("星期"))
+
+a = e:option(Value, "weeks", translate("weeks"))
 a.optional = false
-local e = luci.http.formvalue("cbi.apply")
-if e then io.popen("/etc/init.d/timewol restart") end
+
 return t

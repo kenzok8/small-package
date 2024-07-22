@@ -4,8 +4,47 @@ msgstr "管控"
 msgid "Running Status"
 msgstr "运行状态"
 
+msgid "Collecting data..."
+msgstr "正在收集数据..."
+
 msgid "NOT RUNNING"
 msgstr "未运行"
 
 msgid "RUNNING"
 msgstr "运行中"
+
+msgid "URL Filter"
+msgstr "网址过滤"
+
+msgid "Set keyword filtering here, can be any character in the URL, can filter such as video sites, QQ, thunder, Taobao..."
+msgstr "在这里设置关键词过滤，可以是URL里任意字符，可以过滤如视频网站、QQ、迅雷、淘宝。。。"
+
+msgid "Basic setting"
+msgstr "基本设置"
+
+msgid "In general, normal filtering works fine, but forced filtering uses more complex algorithms and leads to higher CPU usage."
+msgstr "一般来说普通过滤效果就很好了，强制过滤会使用更复杂的算法导致更高的CPU占用。"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Forced filter"
+msgstr "强效过滤"
+
+msgid "Keyword setting"
+msgstr "关键词设置"
+
+msgid "MAC addresses do not filter out all clients. For example, only specified clients are filtered out. Filtering time is optional."
+msgstr "MAC不设置为全客户端过滤，如设置只过滤指定的客户端。过滤时间可不设置。"
+
+msgid "MAC Address"
+msgstr "MAC 地址"
+
+msgid "Start time"
+msgstr "开始时间"
+
+msgid "End time"
+msgstr "结束时间"
+
+msgid "Keyword"
+msgstr "关键字"

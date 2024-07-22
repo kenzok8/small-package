@@ -34,10 +34,11 @@ setup_firewall() {
 		return 1
 	fi
 
-	local handle_tls handle_intranet handle_mmtls
+	local handle_tls handle_intranet handle_mmtls disable_connmark
 	config_get_bool handle_tls "firewall" "handle_tls" "0"
 	config_get_bool handle_intranet "firewall" "handle_intranet" "0"
 	config_get_bool handle_mmtls "firewall" "handle_mmtls" "0"
+	config_get_bool disable_connmark "main" "disable_connmark" "0"
 
 	if [ -n "$HAS_NFT" ]; then
 		nft -f- <<-EOF
@@ -67,23 +68,23 @@ setup_firewall() {
 					};
 				}
 
-				chain prerouting {
-					type filter hook prerouting priority mangle -5; policy accept;
+				chain postrouting {
+					type filter hook postrouting priority mangle -5; policy accept;
 
 					$([ "$handle_intranet" -ne "1" ] || echo 'ip daddr @localaddr_v4 counter return;')
 					$([ "$handle_intranet" -ne "1" ] || echo 'ip6 daddr @localaddr_v6 counter return;')
 
 					tcp dport 22 counter return comment "!ua2f: bypass SSH";
 					$([ "$handle_tls" -eq "1" ] || echo 'tcp dport 443 counter return comment "!ua2f: bypass HTTPS";')
-					tcp dport 80 counter ct mark set 44;
-					ct mark 43 counter return comment "!ua2f: bypass non-http stream";
+					$([ "$disable_connmark" -eq "1" ] || echo 'tcp dport 80 counter ct mark set 44;')
+					$([ "$disable_connmark" -eq "1" ] || echo 'ct mark 43 counter return comment "!ua2f: bypass non-http stream";')
 					meta l4proto tcp ct direction original counter queue num 10010 bypass;
 				}
 			}
 		EOF
 	else
 		# Flush existing rules
-		$IPT_M -D FORWARD -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
+		$IPT_M -D POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
 
 		if $IPT_M -N ua2f; then
 			if [ "$handle_intranet" -ne "1" ]; then
@@ -98,16 +99,16 @@ setup_firewall() {
 			fi
 
 			[ "$handle_tls" -eq "1" ] || $IPT_M -A ua2f -p tcp --dport 443 -j RETURN # 不处理 HTTPS
-			$IPT_M -A ua2f -p tcp --dport 80 -j CONNMARK --set-mark 44
-			$IPT_M -A ua2f -m connmark --mark 43 -j RETURN # 不处理标记为非 http 的流
+			[ "$disable_connmark" -eq "1" ] || $IPT_M -A ua2f -p tcp --dport 80 -j CONNMARK --set-mark 44
+      [ "$disable_connmark" -eq "1" ] || $IPT_M -A ua2f -m connmark --mark 43 -j RETURN # 不处理标记为非 http 的流
 			[ "$handle_mmtls" -eq "1" ] || $IPT_M -A ua2f -p tcp --dport 80 -m string --string "/mmtls/" --algo bm -j RETURN # 不处理微信的mmtls
 			$IPT_M -A ua2f -j NFQUEUE --queue-num 10010 --queue-bypass
 		fi
-		$IPT_M -A FORWARD -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
+		$IPT_M -A POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
 
 		if [ -n "$HAS_IPT6" ]; then
 			# Flush existing rules
-			$IPT6_M -D FORWARD -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
+			$IPT6_M -D POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
 
 			if $IPT6_M -N ua2f; then
 				if [ "$handle_intranet" -ne "1" ]; then
@@ -127,12 +128,12 @@ setup_firewall() {
 				fi
 
 				[ "$handle_tls" -eq "1" ] || $IPT6_M -A ua2f -p tcp --dport 443 -j RETURN # 不处理 HTTPS
-				$IPT6_M -A ua2f -p tcp --dport 80 -j CONNMARK --set-mark 44
-				$IPT6_M -A ua2f -m connmark --mark 43 -j RETURN # 不处理标记为非 http 的流
+				[ "$disable_connmark" -eq "1" ] || $IPT6_M -A ua2f -p tcp --dport 80 -j CONNMARK --set-mark 44
+        [ "$disable_connmark" -eq "1" ] || $IPT6_M -A ua2f -m connmark --mark 43 -j RETURN # 不处理标记为非 http 的流
 				[ "$handle_mmtls" -eq "1" ] || $IPT6_M -A ua2f -p tcp --dport 80 -m string --string "/mmtls/" --algo bm -j RETURN # 不处理微信的mmtls
 				$IPT6_M -A ua2f -j NFQUEUE --queue-num 10010 --queue-bypass
 			fi
-			$IPT6_M -A FORWARD -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
+			$IPT6_M -A POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
 		fi
 	fi
 }
@@ -173,12 +174,12 @@ stop_service() {
 		nft flush table inet ua2f
 		nft delete table inet ua2f
 	else
-		$IPT_M -D FORWARD -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
+		$IPT_M -D POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
 		$IPT_M -F ua2f 2>"/dev/null"
 		$IPT_M -X ua2f 2>"/dev/null"
 
 		if [ -n "$HAS_IPT6" ]; then
-			$IPT6_M -D FORWARD -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
+			$IPT6_M -D POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
 			$IPT6_M -F ua2f 2>"/dev/null"
 			$IPT6_M -X ua2f 2>"/dev/null"
 		fi
