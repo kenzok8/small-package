@@ -69,7 +69,7 @@ function get_inbound_uci_description(config, key) {
     }
     const uci_key = key.slice(-9);
     const uci_item = uci.get(config, uci_key);
-    if (uci_item == null) {
+    if (uci_item === null) {
         return key;
     }
     switch (uci_item[".type"]) {
@@ -96,7 +96,7 @@ function get_outbound_uci_description(config, key) {
     }
     const uci_key = key.slice(-9);
     const uci_item = uci.get(config, uci_key);
-    if (uci_item == null) {
+    if (uci_item === null) {
         return "direct";
     }
     switch (uci_item[".type"]) {
@@ -120,7 +120,7 @@ function outbound_first_tag_format(tag_split, first_uci_description) {
     let result = [tag_split[0]];
 
     const first_tag = tag_split[0].split(":");
-    if (first_tag.length == 1) {
+    if (first_tag.length === 1) {
         return result;
     }
 
@@ -200,9 +200,9 @@ function outbound_middle_tag_format(tag_split, first_uci_description, current_ta
 }
 
 function outbound_last_tag_format(first_uci_description, last_tag, last_uci_description) {
-    if (last_tag[0] == "tcp_outbound") {
+    if (last_tag[0] === "tcp_outbound") {
         return shared.badge(`{ tcp: <strong>${first_uci_description}</strong> }`);
-    } else if (last_tag[0] == "udp_outbound") {
+    } else if (last_tag[0] === "udp_outbound") {
         return shared.badge(`{ udp: <strong>${first_uci_description}</strong> }`);
     }
     return shared.badge(`{ ${last_tag[0]}: <strong>${last_uci_description}</strong> }`, last_tag[1]);
@@ -216,7 +216,7 @@ function get_outbound_description(config, tag) {
     for (let i = 1; i < tag_split.length; i++) {
         const current_tag = tag_split[i].split(":");
         const current_uci_description = get_outbound_uci_description(config, current_tag[1]);
-        if (i == tag_split.length - 1) {
+        if (i === tag_split.length - 1) {
             result.push(" ", outbound_last_tag_format(first_uci_description, current_tag, current_uci_description));
         } else {
             result.push(" ", outbound_middle_tag_format(tag_split, first_uci_description, current_tag, current_uci_description));
@@ -247,7 +247,12 @@ function observatory(vars, config) {
                     }
                     return _("<i>unreachable</i>");
                 }(v)),
-                E('td', { 'class': 'td' }, '%d'.format(greater_than_zero(now_timestamp - v[1]["last_seen_time"])) + _('s ago')),
+                E('td', { 'class': 'td' }, function (c) {
+                    if (c[1]["last_seen_time"] === undefined) {
+                        return _("<i>never</i>");
+                    }
+                    return '%d'.format(greater_than_zero(now_timestamp - c[1]["last_seen_time"])) + _('s ago');
+                }(v)),
                 E('td', { 'class': 'td' }, '%d'.format(greater_than_zero(now_timestamp - v[1]["last_try_time"])) + _('s ago')),
             ]))
         ])
