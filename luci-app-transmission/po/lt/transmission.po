@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"PO-Revision-Date: 2024-07-04 05:50+0000\n"
-"Last-Translator: \"Džiugas Jan.\" <dziugas1959@hotmail.com>\n"
+"PO-Revision-Date: 2024-07-21 21:09+0000\n"
+"Last-Translator: Džiugas Januševičius <dziugas1959@hotmail.com>\n"
 "Language-Team: Lithuanian <https://hosted.weblate.org/projects/openwrt/"
 "luciapplicationstransmission/lt/>\n"
 "Language: lt\n"
@@ -109,7 +109,7 @@ msgstr "Įgalinti stebėjimo katalogą/vietovę"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:47
 msgid "Enabled"
-msgstr "Įjungta/Įgalinta (-as/-i)"
+msgstr "Įjungta/Įgalinta (-s/-i)"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:136
 msgid "Encryption"
@@ -200,7 +200,7 @@ msgstr "Išjungta/-s"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:38
 msgid "Open Web Interface"
-msgstr "Atidaryti žiniatinklio naudotojo/vartotojo sąsają"
+msgstr "Atidaryti žiniatinklio sąsają"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:153
 msgid "PEX enabled"
@@ -240,7 +240,9 @@ msgstr "Lygiarangio nustatymai"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:187
 msgid "Peer socket <abbr title=\"Type of Service\">TOS</abbr>"
-msgstr "Lygiarangio lizdas – <abbr title=\"Type of Service\">„TOS“</abbr>"
+msgstr ""
+"Lygiarangio lizdas – <abbr title=\"angl. Type of Service | liet. Tarnybos "
+"tipas\">„TOS“</abbr>"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:204
 msgid "Port forwarding enabled"
