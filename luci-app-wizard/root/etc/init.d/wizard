@@ -169,9 +169,46 @@ uci -q set wizard.default.lan_dns="$(uci -q get network.lan.dns)"
 uci commit wizard
 }
 
+process_shortcut() {
+	local shortcut to_url comments lanaddr
+	local cfg="$1"
+	lanaddr="$(uci get network.lan.ipaddr)"
+	[ -n $lanaddr ] && lanaddr="$(echo "$lanaddr" | sed -e "s/\/2\+//")"
+
+    config_get shortcut "$cfg" shortcut
+    config_get to_url "$cfg" to_url
+    config_get comments "$cfg" comments
+
+	uci -q set nginx._sc_$shortcut=server
+	uci -q set nginx._sc_$shortcut.server_name="$shortcut"
+	uci -q add_list nginx._sc_$shortcut.listen="80"
+	uci -q add_list nginx._sc_$shortcut.listen="443"
+	uci -q set nginx._sc_$shortcut.return="302 $to_url"
+
+	uci -q set dhcp._sc_$shortcut=domain
+	uci -q set dhcp._sc_$shortcut.name="$shortcut"
+	uci -q set dhcp._sc_$shortcut.ip="$lanaddr"
+	uci -q set dhcp._sc_$shortcut.comments="$comments"
+}
+
 start() {
 	config_load wizard
 	config_foreach add_wizard wizard
+	if [ -n "$(command -v nginx)" ]; then
+		for server in $(uci show nginx | grep '_sc_' | grep '=server' | cut -d. -f2 | cut -d= -f1); do
+		uci delete nginx.$server
+	done
+	for server in $(uci show dhcp | grep '_sc_' | grep '=domain' | cut -d. -f2 | cut -d= -f1); do
+		uci delete dhcp.$server
+	done
+		config_foreach process_shortcut shortcuts
+		uci commit nginx
+		uci commit dhcp
+		(
+	 /etc/init.d/dnsmasq reload
+	 /etc/init.d/nginx reload
+	 )&
+	fi
 }
 
 restart() {
