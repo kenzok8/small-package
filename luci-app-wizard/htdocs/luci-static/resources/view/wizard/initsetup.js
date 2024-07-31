@@ -125,7 +125,7 @@ return view.extend({
 		}
 
 		if (data.nginx) {
-		s.tab('shortcuts', _('ShortCuts'), _('比如设置google.com的快捷方式为字母g,则在此路由器网络的任何浏览器中输入g/即可访问google.com'));
+		s.tab('shortcuts', _('Shortcuts'), _('比如设置google.com的快捷方式为字母g,则在此路由器网络的任何浏览器中输入g/即可访问google.com'));
 
 		o = s.taboption('shortcuts', form.SectionValue, 'shortcuts', form.GridSection, 'shortcuts', null,
 			_('Shortcuts'));
