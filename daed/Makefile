@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
-PKG_VERSION=0.6.0
+PKG_VERSION:=0.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/daeuniverse/daed.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=a14a7c05816034d5beee050c535e636c39430253a00a9621202d8683373a7c71
+PKG_MIRROR_HASH:=d1d867e15e3abae1993260b3728c285ce0cd5bcce98f2ba79e0026a7dc544dd1
 
 PKG_LICENSE:=AGPL-3.0-only MIT
 PKG_LICENSE_FILES:=LICENSE wing/LICENSE
@@ -81,7 +81,7 @@ define Download/daed-web
 	URL:=https://github.com/daeuniverse/daed/releases/download/v$(PKG_VERSION)
 	URL_FILE:=web.zip
 	FILE:=$(WEB_FILE)
-	HASH:=f8a5f28643c990408f7b6d324b4cc8b5e7445e6255689a5f10f5545be033c1ad
+	HASH:=571ae9b49873f30640b71321f16a9a8ba11523356ad06bf381d44b307a8fa07a
 endef
 
 define Build/Prepare
@@ -117,7 +117,7 @@ define Build/Compile
 		export \
 		$(GO_GENERAL_BUILD_CONFIG_VARS) \
 		$(GO_PKG_BUILD_CONFIG_VARS) \
-		$(GO_PKG_BUILD_VARS); \
+		$(GO_PKG_BUILD_VARS) ; \
 		go generate ./... ; \
 		cd dae-core ; \
 		export \
