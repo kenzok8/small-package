@@ -126,11 +126,11 @@ start_instance() {
 	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/iptables_add.sh
 		${TMP_OVPN_PATH}/${cfgid}/iptables_del.sh
 		#允许服务端配置静态路由表访问内网
-		iptables -t nat -I POSTROUTING -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j MASQUERADE
-		iptables -t nat -I POSTROUTING -o ${c_dev} -m comment --comment "${c_dev}" -j MASQUERADE
-		iptables -I INPUT -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j ${c_allow_access_action}
-		iptables -I FORWARD -i ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
-		iptables -I FORWARD -o ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
+		iptables -t nat -I postrouting_rule -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j MASQUERADE
+		iptables -t nat -I postrouting_rule -o ${c_dev} -m comment --comment "${c_dev}" -j MASQUERADE
+		iptables -I input_rule -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j ${c_allow_access_action}
+		iptables -I forwarding_rule -i ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
+		iptables -I forwarding_rule -o ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
 	EOF
 	
 	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/iptables_del.sh
@@ -140,9 +140,9 @@ start_instance() {
 				\$1 -w -D \$2 \$index 2>/dev/null
 			done
 		}
-		ipt_del "iptables" "INPUT"
-		ipt_del "iptables" "FORWARD"
-		ipt_del "iptables -t nat" "POSTROUTING"
+		ipt_del "iptables" "input_rule"
+		ipt_del "iptables" "forwarding_rule"
+		ipt_del "iptables -t nat" "postrouting_rule"
 	EOF
 	
 	cat <<-EOF >> /var/etc/${CONFIG}.include
