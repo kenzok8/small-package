@@ -21,7 +21,7 @@ localip=$(config_t_get service localip 10.0.1.1)
 
 ipt_rule() {
 	if [ "$1" = "add" ]; then
-		iptables -t nat -I POSTROUTING -s ${localip%.*}.0/24 -m comment --comment "${ipt_flag}" -j MASQUERADE 2>/dev/null
+		iptables -t nat -I postrouting_rule -s ${localip%.*}.0/24 -m comment --comment "${ipt_flag}" -j MASQUERADE 2>/dev/null
 		iptables -I forwarding_rule -s ${localip%.*}.0/24 -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
 	else
 		ipt_del() {
@@ -31,7 +31,7 @@ ipt_rule() {
 			done
 		}
 		ipt_del "iptables" "forwarding_rule"
-		ipt_del "iptables -t nat" "POSTROUTING"
+		ipt_del "iptables -t nat" "postrouting_rule"
 	fi
 }
 

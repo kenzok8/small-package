@@ -24,16 +24,16 @@ get_enabled_anonymous_secs() {
 
 ipt_rule() {
 	if [ "$1" = "add" ]; then
-		iptables -t nat -I POSTROUTING -s ${vt_clientip} -m comment --comment "${ipt_flag}" -j MASQUERADE 2>/dev/null
+		iptables -t nat -I postrouting_rule -s ${vt_clientip} -m comment --comment "${ipt_flag}" -j MASQUERADE 2>/dev/null
 		iptables -I forwarding_rule -s ${vt_clientip} -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
 		iptables -I forwarding_rule -m policy --dir in --pol ipsec --proto esp -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
 		iptables -I forwarding_rule -m policy --dir out --pol ipsec --proto esp -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
-		iptables -I INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
+		iptables -I input_rule -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
 		iptables -t mangle -I OUTPUT -p udp -m multiport --sports 500,4500 -m comment --comment "${ipt_flag}" -j RETURN 2>/dev/null
 		[ "${l2tp_enabled}" = 1 ] && {
-			iptables -t nat -I POSTROUTING -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_flag}" -j MASQUERADE 2>/dev/null
+			iptables -t nat -I postrouting_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_flag}" -j MASQUERADE 2>/dev/null
 			iptables -I forwarding_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
-			iptables -I INPUT -p udp --dport 1701 -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
+			iptables -I input_rule -p udp --dport 1701 -m comment --comment "${ipt_flag}" -j ACCEPT 2>/dev/null
 			iptables -t mangle -I OUTPUT -p udp --sport 1701 -m comment --comment "${ipt_flag}" -j RETURN 2>/dev/null
 		}
 	else
@@ -44,8 +44,8 @@ ipt_rule() {
 			done
 		}
 		ipt_del "iptables" "forwarding_rule"
-		ipt_del "iptables" "INPUT"
-		ipt_del "iptables -t nat" "POSTROUTING"
+		ipt_del "iptables" "input_rule"
+		ipt_del "iptables -t nat" "postrouting_rule"
 		ipt_del "iptables -t mangle" "OUTPUT"
 	fi
 }
