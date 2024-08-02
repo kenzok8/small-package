@@ -112,7 +112,7 @@ XHR.poll(5, CHECK_IP_URL, null,
     );
 
 document.addEventListener('DOMContentLoaded', function() {
-    resize();
+    setTimeout("resize()",10)
     fetch(CHECK_IP_URL)
         .then(response => response.json())
         .then(data => {
