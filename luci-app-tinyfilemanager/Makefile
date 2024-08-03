@@ -1,5 +1,5 @@
 # Tiny File Manager by prasathmani <https://tinyfilemanager.github.io>
-# Copyright (C) 2022-2023 muink <https://github.com/muink>
+# Copyright (C) 2022-2024 muink <https://github.com/muink>
 #
 # This is free software, licensed under the GNU General Public License v3.
 # See /LICENSE for more information.
@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_NAME:=luci-app-tinyfilemanager
-PKG_VERSION:=2.5.3-20231119
+PKG_VERSION:=2.5.3-20240803
 #PKG_RELEASE:=1
 
 LUCI_TITLE:=LuCI Tiny File Manager
