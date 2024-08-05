@@ -29,6 +29,9 @@ else ifeq ($(ARCH),mips)
 else ifeq ($(ARCH),mipsel)
   PKG_ARCH:=chinadns-ng+wolfssl@mipsel-linux-musl@mips32+soft_float@fast+lto
   PKG_HASH:=82d07d148e2c20d4247df7baa0421f1c365954c0953e0e0fbe76e1cd78d1f1b2
+else ifeq ($(ARCH),mips64)
+  PKG_ARCH:=chinadns-ng+wolfssl@mips64-linux-musl@mips64+soft_float@fast+lto
+  PKG_HASH:=6ba3b1d6cd33b9cd448247fcd15d06ec0ea18f56bf7c998b4a2b679e14fe86cb
 else ifeq ($(ARCH),i386)
   PKG_ARCH:=chinadns-ng+wolfssl@i386-linux-musl@i686@fast+lto
   PKG_HASH:=8fd1f8cc1ee5f24a10a45367d3444a7af0618f01bf5ea1d14c8bfac856062a23
@@ -55,7 +58,7 @@ define Package/chinadns-ng
   SUBMENU:=IP Addresses and Names
   TITLE:=ChinaDNS next generation, refactoring with epoll and ipset.
   URL:=https://github.com/zfl9/chinadns-ng
-  DEPENDS:=@(aarch64||arm||i386||mips||mipsel||x86_64) +ipset
+  DEPENDS:=@(aarch64||arm||i386||mips||mipsel||mips64||x86_64) +ipset
 endef
 
 define Build/Compile
