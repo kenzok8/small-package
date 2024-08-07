@@ -14,7 +14,7 @@ EOF
 chmod +x /etc/init.d/bypass /usr/share/bypass/* >/dev/null 2>&1
 rm -rf /tmp/luci-*
 
-grep -q ipapi.co /etc/bypass/black.list ||
-	sed -i '$a ipapi.co' /etc/bypass/black.list
+grep -q ip-api.com /etc/bypass/black.list ||
+	sed -i '$a ip-api.com' /etc/bypass/black.list
 
 exit 0
