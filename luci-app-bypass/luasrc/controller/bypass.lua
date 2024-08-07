@@ -163,19 +163,19 @@ function check_site(host, port)
     return ret
 end
 
-function get_ip_geo_info(ip)
-    local result = luci.sys.exec('curl --retry 3 -m 10 -LfsA "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36" https://ipapi.co/json/')
+function get_ip_geo_info()
+    local result = luci.sys.exec('curl --retry 3 -m 10 -LfsA "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36" https://ip-api.com/json/')
     local json = require "luci.jsonc"
     local info = json.parse(result)
     
     return {
-        flag = string.lower(info.country_code) or "un",
-        country = get_country_name(info.country_code) or "Unknown",
-        ip = info.ip
+        flag = string.lower(info.countryCode) or "un",
+        country = get_country_name(info.countryCode) or "Unknown",
+        ip = info.query
     }
 end
 
-function get_country_name(country_code)
+function get_country_name(countryCode)
     local country_names = {
         US = "美国", CN = "中国", JP = "日本", GB = "英国", DE = "德国",
         FR = "法国", BR = "巴西", IT = "意大利", RU = "俄罗斯", CA = "加拿大",
@@ -188,7 +188,7 @@ function get_country_name(country_code)
         CZ = "捷克", RO = "罗马尼亚", VN = "越南", UA = "乌克兰", HU = "匈牙利",
         AE = "阿联酋", CO = "哥伦比亚", IN = "印度", EG = "埃及", PE = "秘鲁", TW = "台湾"
     }
-    return country_names[country_code]
+    return country_names[countryCode]
 end
 
 function check_ip()
