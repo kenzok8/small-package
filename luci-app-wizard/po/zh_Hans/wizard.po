@@ -70,3 +70,6 @@ msgstr "目标URL"
 msgid "Please enter a valid URL starting with http:// or https://"
 msgstr "URL需以http:// 或 https://开头"
 
+msgid "Force the use of HTTPS in the backend."
+msgstr "后台强制使用https"
+
