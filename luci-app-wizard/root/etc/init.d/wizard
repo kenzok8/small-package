@@ -136,7 +136,9 @@ add_wizard() {
 		uci commit wireless
 	}
 	fi
-	
+
+	sethttps
+
 	uci commit wizard
 	uci commit dhcp
 	uci commit firewall
@@ -163,6 +165,43 @@ uci -q set wizard.default.lan_gateway="$(uci -q get network.lan.gateway)"
 uci -q set wizard.default.lan_dns="$(uci -q get network.lan.dns)"
 [ "$(uci -q get dhcp.lan.ignore)" ] && uci -q set wizard.default.dhcp="0" || uci -q del wizard.default.dhcp
 uci commit wizard
+}
+
+sethttps() {
+	config_get https "$cfg" https
+	if [ -n "$(command -v nginx)" ]; then
+		if [ -z "`uci -q get nginx._redirect2ssl`" ]; then
+			uci -q set nginx._redirect2ssl=server
+			uci -q set nginx._redirect2ssl.server_name='_redirect2ssl'
+			uci -q set nginx._redirect2ssl.return='302 https://$host$request_uri'
+			uci -q set nginx._redirect2ssl.access_log='off; # logd openwrt'
+		fi
+    	if [ "x${https}" = "x1" ] ; then
+    		uci -q del nginx.default_server.listen
+    		uci -q add_list nginx.default_server.listen='80'
+    		uci -q add_list nginx.default_server.listen='[::]:80'
+    		uci -q del nginx._redirect2ssl.listen
+    		uci -q add_list nginx._redirect2ssl.listen='80 default_server'
+    		uci -q add_list nginx._redirect2ssl.listen='[::]:80 default_server'
+    	else
+	         uci -q del nginx._redirect2ssl.listen
+	         uci -q add_list nginx._redirect2ssl.listen='80'
+	         uci -q add_list nginx._redirect2ssl.listen='[::]:80'
+	         uci -q del nginx.default_server.listen
+	         uci -q add_list nginx.default_server.listen='80 default_server'
+	         uci -q add_list nginx.default_server.listen='[::]:80 default_server'
+    	fi
+		uci commit nginx
+    	/etc/init.d/nginx reload
+    else
+        if [ "x${https}" = "x1" ] ; then
+	         uci -q set uhttpd.main.redirect_https='1'
+		else
+	         uci -q set uhttpd.main.redirect_https='0'
+        fi
+		uci commit uhttpd
+	    /etc/init.d/uhttpd reload
+    fi
 }
 
 process_shortcut() {

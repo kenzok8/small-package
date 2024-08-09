@@ -99,7 +99,9 @@ return view.extend({
 		o = s.taboption('firmware', form.Flag, 'cookie_p', _('Persistent cookies'),
 			_('Keep the background login state to avoid the need to log in again every time the browser is closed'));
 		o.default = o.enabled;
-		
+
+		o = s.taboption('firmware', form.Flag, 'https', _('Force the use of HTTPS in the backend.'));
+
 		if (data.istorex || data.routerdog){
 		o = s.taboption('firmware', form.ListValue, 'landing_page', _('主题模式'));
 		o.value('default', _('默认'));
