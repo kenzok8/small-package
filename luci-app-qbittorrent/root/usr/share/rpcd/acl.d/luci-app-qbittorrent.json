@@ -2,6 +2,9 @@
 	"luci-app-qbittorrent": {
 		"description": "Grant UCI access for luci-app-qbittorrent",
 		"read": {
+			"ubus": {
+				"service": [ "list" ]
+			},
 			"uci": [ "qbittorrent" ]
 		},
 		"write": {

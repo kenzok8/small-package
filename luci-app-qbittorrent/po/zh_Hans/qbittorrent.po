@@ -10,10 +10,7 @@ msgstr "打开 Web 界面"
 msgid "qBittorrent is a cross-platform free and open-source BitTorrent client. Default username & password: admin / adminadmin"
 msgstr "qBittorrent 是一个基于 QT 的跨平台的开源 BitTorrent 客户端。默认用户名 & 密码：admin / adminadmin"
 
-msgid "Global settings"
-msgstr "全局设置"
-
-msgid "WebUI Port"
+msgid "WebUI Listen port"
 msgstr "WebUI 监听端口"
 
 msgid "Configuration files Path"

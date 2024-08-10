@@ -6,29 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-qbittorrent
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 
 LUCI_TITLE:=LuCI support for qBittorrent
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:= \
-	+PACKAGE_luci-app-qbittorrent_static:qBittorrent-static \
-	+PACKAGE_luci-app-qbittorrent_dynamic:qbittorrent
-
-define Package/$(PKG_NAME)/config
-	choice
-		prompt "Build Version Selection"
-		default PACKAGE_luci-app-qbittorrent_dynamic
-
-		config PACKAGE_luci-app-qbittorrent_static
-			bool "Static Build"
-			depends on arm||aarch64||x86_64
-
-		config PACKAGE_luci-app-qbittorrent_dynamic
-			bool "Dynamic Build"
-			
-	endchoice
-endef
+LUCI_DEPENDS:=+qbittorrent
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
