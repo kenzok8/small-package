@@ -104,6 +104,9 @@ start_instance() {
 	
 	echo "#!/bin/sh" > ${TMP_OVPN_PATH}/${cfgid}/up.sh
 	echo "#!/bin/sh" > ${TMP_OVPN_PATH}/${cfgid}/down.sh
+	echo "#!/bin/sh" > ${TMP_OVPN_PATH}/${cfgid}/ipchange.sh
+	echo "#!/bin/sh" > ${TMP_OVPN_PATH}/${cfgid}/tls-verify.sh
+	echo "#!/bin/sh" > ${TMP_OVPN_PATH}/${cfgid}/route-up.sh
 	[ ! -s "/var/etc/${CONFIG}.include" ] && echo '#!/bin/sh' > /var/etc/${CONFIG}.include
 	
 	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/up.sh
@@ -126,11 +129,11 @@ start_instance() {
 	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/iptables_add.sh
 		${TMP_OVPN_PATH}/${cfgid}/iptables_del.sh
 		#允许服务端配置静态路由表访问内网
-		iptables -t nat -I postrouting_rule -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j MASQUERADE
-		iptables -t nat -I postrouting_rule -o ${c_dev} -m comment --comment "${c_dev}" -j MASQUERADE
-		iptables -I input_rule -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j ${c_allow_access_action}
-		iptables -I forwarding_rule -i ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
-		iptables -I forwarding_rule -o ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
+		iptables -w -t nat -I postrouting_rule -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j MASQUERADE
+		iptables -w -t nat -I postrouting_rule -o ${c_dev} -m comment --comment "${c_dev}" -j MASQUERADE
+		iptables -w -I input_rule -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j ${c_allow_access_action}
+		iptables -w -I forwarding_rule -i ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
+		iptables -w -I forwarding_rule -o ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
 	EOF
 	
 	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/iptables_del.sh
@@ -140,9 +143,21 @@ start_instance() {
 				\$1 -w -D \$2 \$index 2>/dev/null
 			done
 		}
-		ipt_del "iptables" "input_rule"
-		ipt_del "iptables" "forwarding_rule"
-		ipt_del "iptables -t nat" "postrouting_rule"
+		ipt_del "iptables -w" "input_rule"
+		ipt_del "iptables -w" "forwarding_rule"
+		ipt_del "iptables -w -t nat" "postrouting_rule"
+	EOF
+	
+	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/ipchange.sh
+		[ -s "${TMP_OVPN_PATH}/${cfgid}/ip" ] && ${TMP_OVPN_PATH}/${cfgid}/iptables_add.sh
+	EOF
+	
+	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/tls-verify.sh
+		#tls-verify script
+	EOF
+	
+	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/route-up.sh
+		#route-up script
 	EOF
 	
 	cat <<-EOF >> /var/etc/${CONFIG}.include
@@ -155,11 +170,11 @@ start_instance() {
 			local c_network=$(echo -n "${c_route}" | awk -F ',' '{print $1}')
 			local c_gateway=$(echo -n "${c_route}" | awk -F ',' '{print $2}')
 			if [ -n "${c_gateway}" ]; then
-				echo "route add -net ${c_network} gw ${c_gateway} dev ${c_dev} >/dev/null 2>&1" >> ${TMP_OVPN_PATH}/${cfgid}/up.sh
-				echo "route del -net ${c_network} gw ${c_gateway} dev ${c_dev} >/dev/null 2>&1" >> ${TMP_OVPN_PATH}/${cfgid}/down.sh
+				echo "route add -net ${c_network} gw ${c_gateway} dev ${c_dev} >/dev/null 2>&1" >> ${TMP_OVPN_PATH}/${cfgid}/iptables_add.sh
+				echo "route del -net ${c_network} gw ${c_gateway} dev ${c_dev} >/dev/null 2>&1" >> ${TMP_OVPN_PATH}/${cfgid}/iptables_del.sh
 			else
-				echo "route add -net ${c_network} dev ${c_dev} >/dev/null 2>&1" >> ${TMP_OVPN_PATH}/${cfgid}/up.sh
-				echo "route del -net ${c_network} dev ${c_dev} >/dev/null 2>&1" >> ${TMP_OVPN_PATH}/${cfgid}/down.sh
+				echo "route add -net ${c_network} dev ${c_dev} >/dev/null 2>&1" >> ${TMP_OVPN_PATH}/${cfgid}/iptables_add.sh
+				echo "route del -net ${c_network} dev ${c_dev} >/dev/null 2>&1" >> ${TMP_OVPN_PATH}/${cfgid}/iptables_del.sh
 			fi
 		done
 	}
@@ -191,6 +206,9 @@ start_instance() {
 		
 		up up.sh
 		down down.sh
+		tls-verify tls-verify.sh
+		ipchange ipchange.sh
+		route-up route-up.sh
 		script-security 3
 		log         openvpn.log
 		log-append  openvpn.log
