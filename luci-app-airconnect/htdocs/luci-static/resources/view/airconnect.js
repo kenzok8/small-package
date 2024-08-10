@@ -65,6 +65,11 @@ return view.extend({
 
 		o = s.option(widgets.DeviceSelect, 'interface',
 			_('Bind interface'));
+		o.filter = function(section_id, value) {
+			var dev = this.devices.filter(function(dev) { return dev.getName() == value })[0];
+			var excludeDevice = ['docker', 'dummy', 'radio', 'sit', 'teql', 'veth', 'ztly'];
+			return (dev && dev.getName() != null && !excludeDevice.some(prefix => dev.getName().startsWith(prefix)));
+		}
 		o.rmempty = false;
 
 		o = s.option(form.Flag, 'airupnp', _('UPnP/Sonos'), _('Enable UPnP/Sonos Device Support'));
