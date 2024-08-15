@@ -27,7 +27,7 @@ echolog() {
 
 function read_config(){
     get_global_config "enabled" "speed" "custome_url" "threads" "custome_cors_enabled" "custome_cron" "t" "tp" "dt" "dn" "dd" "tl" "tll" "ipv6_enabled" "advanced" "proxy_mode"
-    get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "passwall2_enabled" "passwall2_services" "bypass_enabled" "bypass_services" "vssr_enabled" "vssr_services" "DNS_enabled" "HOST_enabled"
+    get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "passwall2_enabled" "passwall2_services" "bypass_enabled" "bypass_services" "vssr_enabled" "vssr_services" "DNS_enabled" "HOST_enabled" "MosDNS_enabled" "openclash_restart"
 }
 
 function appinit(){
@@ -39,17 +39,17 @@ function appinit(){
 }
 
 function speed_test(){
-    
+
     rm -rf $LOG_FILE
-    
+
     command="/usr/bin/cdnspeedtest -sl $((speed*125/1000)) -url ${custome_url} -o ${IP_FILE}"
-    
+
     if [ $ipv6_enabled -eq "1" ] ;then
         command="${command} -f ${IPV6_TXT}"
     else
         command="${command} -f ${IPV4_TXT}"
     fi
-    
+
     if [ $advanced -eq "1" ] ; then
         command="${command} -tl ${tl} -tll ${tll} -n ${threads} -t ${t} -dt ${dt} -dn ${dn}"
         if [ $dd -eq "1" ] ; then
@@ -61,9 +61,9 @@ function speed_test(){
     else
         command="${command} -tl 200 -tll 40 -n 200 -t 4 -dt 10 -dn 1"
     fi
-    
+
     appinit
-    
+
     ssr_original_server=$(uci get shadowsocksr.@global[0].global_server 2>/dev/null)
     ssr_original_run_mode=$(uci get shadowsocksr.@global[0].run_mode 2>/dev/null)
     if [ "x${ssr_original_server}" != "xnil" ] && [ "x${ssr_original_server}"  !=  "x" ] ;then
@@ -76,7 +76,7 @@ function speed_test(){
         uci commit shadowsocksr
         /etc/init.d/shadowsocksr restart
     fi
-    
+
     passwall_server_enabled=$(uci get passwall.@global[0].enabled 2>/dev/null)
     passwall_original_run_mode=$(uci get passwall.@global[0].tcp_proxy_mode 2>/dev/null)
     if [ "x${passwall_server_enabled}" == "x1" ] ;then
@@ -89,7 +89,7 @@ function speed_test(){
         uci commit passwall
         /etc/init.d/passwall  restart 2>/dev/null
     fi
-    
+
     passwall2_server_enabled=$(uci get passwall2.@global[0].enabled 2>/dev/null)
     passwall2_original_run_mode=$(uci get passwall2.@global[0].tcp_proxy_mode 2>/dev/null)
     if [ "x${passwall2_server_enabled}" == "x1" ] ;then
@@ -102,11 +102,11 @@ function speed_test(){
         uci commit passwall2
         /etc/init.d/passwall2 restart 2>/dev/null
     fi
-    
+
     vssr_original_server=$(uci get vssr.@global[0].global_server 2>/dev/null)
     vssr_original_run_mode=$(uci get vssr.@global[0].run_mode 2>/dev/null)
     if [ "x${vssr_original_server}" != "xnil" ] && [ "x${vssr_original_server}"  !=  "x" ] ;then
-        
+
         if [ $proxy_mode  == "close" ] ;then
             uci set vssr.@global[0].global_server="nil"
             elif  [ $proxy_mode  == "gfw" ] ;then
@@ -116,7 +116,7 @@ function speed_test(){
         uci commit vssr
         /etc/init.d/vssr restart
     fi
-    
+
     bypass_original_server=$(uci get bypass.@global[0].global_server 2>/dev/null)
     bypass_original_run_mode=$(uci get bypass.@global[0].run_mode 2>/dev/null)
     if [ "x${bypass_original_server}" != "x" ] ;then
@@ -129,7 +129,20 @@ function speed_test(){
         uci commit bypass
         /etc/init.d/bypass restart
     fi
-    
+
+    if [ "x${MosDNS_enabled}" == "x1" ] ;then
+        if [ -n "$(grep 'option cloudflare' /etc/config/mosdns)" ]
+        then
+            sed -i".bak" "/option cloudflare/d" /etc/config/mosdns
+        fi
+        sed -i '/^$/d' /etc/config/mosdns && echo -e "\toption cloudflare '0'" >> /etc/config/mosdns
+
+        /etc/init.d/mosdns restart &>/dev/null
+        if [ "x${openclash_restart}" == "x1" ] ;then
+            /etc/init.d/openclash restart &>/dev/null
+        fi
+    fi
+
     echo $command  >> $LOG_FILE 2>&1
     echolog "-----------start----------"
     $command >> $LOG_FILE 2>&1
@@ -137,13 +150,14 @@ function speed_test(){
 }
 
 function ip_replace(){
-    
+
     # 获取最快 IP（从 result.csv 结果文件中获取第一个 IP）
     bestip=$(sed -n "2,1p" $IP_FILE | awk -F, '{print $1}')
     if [[ -z "${bestip}" ]]; then
         echolog "CloudflareST 测速结果 IP 数量为 0,跳过下面步骤..."
     else
         host_ip
+        mosdns_ip
         alidns_ip
         ssr_best_ip
         vssr_best_ip
@@ -151,7 +165,7 @@ function ip_replace(){
         passwall_best_ip
         passwall2_best_ip
         restart_app
-        
+
     fi
 }
 
@@ -171,6 +185,26 @@ function host_ip() {
         fi
         /etc/init.d/dnsmasq reload &>/dev/null
         echolog "HOST 完成"
+    fi
+}
+
+function mosdns_ip() {
+    if [ "x${MosDNS_enabled}" == "x1" ] ;then
+        if [ -n "$(grep 'option cloudflare' /etc/config/mosdns)" ]
+        then
+            sed -i".bak" "/option cloudflare/d" /etc/config/mosdns
+        fi
+        if [ -n "$(grep 'list cloudflare_ip' /etc/config/mosdns)" ]
+        then
+            sed -i".bak" "/list cloudflare_ip/d" /etc/config/mosdns
+        fi
+        sed -i '/^$/d' /etc/config/mosdns && echo -e "\toption cloudflare '1'\n\tlist cloudflare_ip '$bestip'" >> /etc/config/mosdns
+
+        /etc/init.d/mosdns restart &>/dev/null
+        if [ "x${openclash_restart}" == "x1" ] ;then
+            /etc/init.d/openclash restart &>/dev/null
+        fi
+        echolog "MosDNS 写入完成"
     fi
 }
 
@@ -246,7 +280,7 @@ function restart_app(){
         /etc/init.d/shadowsocksr restart &>/dev/null
         echolog "ssr重启完成"
     fi
-    
+
     if [ "x${passwall_started}" == "x1" ] ;then
         if [ $proxy_mode  == "close" ] ;then
             uci set passwall.@global[0].enabled="${passwall_server_enabled}"
@@ -257,7 +291,7 @@ function restart_app(){
         /etc/init.d/passwall restart 2>/dev/null
         echolog "passwall重启完成"
     fi
-    
+
     if [ "x${passwall2_started}" == "x1" ] ;then
         if [ $proxy_mode  == "close" ] ;then
             uci set passwall2.@global[0].enabled="${passwall2_server_enabled}"
@@ -268,7 +302,7 @@ function restart_app(){
         /etc/init.d/passwall2 restart 2>/dev/null
         echolog "passwall2重启完成"
     fi
-    
+
     if [ "x${vssr_started}" == "x1" ] ;then
         if [ $proxy_mode  == "close" ] ;then
             uci set vssr.@global[0].global_server="${vssr_original_server}"
@@ -279,7 +313,7 @@ function restart_app(){
         /etc/init.d/vssr restart &>/dev/null
         echolog "Vssr重启完成"
     fi
-    
+
     if [ "x${bypass_started}" == "x1" ] ;then
         if [ $proxy_mode  == "close" ] ;then
             uci set bypass.@global[0].global_server="${bypass_original_server}"
