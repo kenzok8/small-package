@@ -24,7 +24,7 @@ o.rmempty=false
 
 o=s:option(Value,"speed",translate("Broadband speed"))
 o.description =translate("100M broadband download speed is about 12M/s. It is not recommended to fill in an excessively large value, and it may run all the time.");
-o.datatype ="uinteger" 
+o.datatype ="uinteger"
 o.rmempty=false
 
 o=s:option(Value,"custome_url",translate("Custome Url"))
@@ -59,46 +59,46 @@ o.default = 0
 o.rmempty=false
 
 o = s:option(Value, "threads", translate("Thread"))
-o.datatype ="uinteger" 
+o.datatype ="uinteger"
 o.default = 200
 o.rmempty=true
 o:depends("advanced", 1)
 
 o = s:option(Value, "tl", translate("Average Latency Cap"))
-o.datatype ="uinteger" 
+o.datatype ="uinteger"
 o.default = 200
 o.rmempty=true
 o:depends("advanced", 1)
 
 o = s:option(Value, "tll", translate("Average Latency Lower Bound"))
-o.datatype ="uinteger" 
+o.datatype ="uinteger"
 o.default = 40
 o.rmempty=true
 o:depends("advanced", 1)
 
 o = s:option(Value, "t", translate("Delayed speed measurement time"))
-o.datatype ="uinteger" 
+o.datatype ="uinteger"
 o.default = 4
 o.rmempty=true
 o:depends("advanced", 1)
- 
+
 o = s:option(Value, "dt", translate("Download speed test time"))
-o.datatype ="uinteger" 
+o.datatype ="uinteger"
 o.default = 10
 o.rmempty=true
 o:depends("advanced", 1)
- 
+
 o = s:option(Value, "dn", translate("Number of download speed tests"))
-o.datatype ="uinteger" 
+o.datatype ="uinteger"
 o.default = 1
 o.rmempty=true
-o:depends("advanced", 1)  
+o:depends("advanced", 1)
 
 o = s:option(Flag, "dd", translate("Disable download speed test"))
 o.default = 0
 o.rmempty=true
-o:depends("advanced", 1)  
- 
+o:depends("advanced", 1)
+
 o = s:option(Value, "tp", translate("Port"))
 o.rmempty=true
 o.default = 443
@@ -112,10 +112,10 @@ o.template = "cloudflarespeedtest/actions"
 s = m:section(NamedSection, "servers", "section", translate("Third party applications settings"))
 
 if nixio.fs.access("/etc/config/shadowsocksr") then
-	s:tab("ssr", translate("Shadowsocksr Plus+"))	
+	s:tab("ssr", translate("Shadowsocksr Plus+"))
 
 	o=s:taboption("ssr", Flag, "ssr_enabled",translate("Shadowsocksr Plus+ Enabled"))
-	o.rmempty=true	
+	o.rmempty=true
 
 	local ssr_server_table = {}
 	uci:foreach("shadowsocksr", "servers", function(s)
@@ -136,7 +136,7 @@ if nixio.fs.access("/etc/config/shadowsocksr") then
 	o = s:taboption("ssr", DynamicList, "ssr_services",
 			translate("Shadowsocksr Servers"),
 			translate("Please select a service"))
-			
+
 	for _, key in pairs(ssr_key_table) do
 		o:value(key, ssr_server_table[key])
 	end
@@ -150,7 +150,7 @@ if nixio.fs.access("/etc/config/passwall") then
 	s:tab("passwalltab", translate("passwall"))
 
 	o=s:taboption("passwalltab", Flag, "passwall_enabled",translate("Passwall Enabled"))
-	o.rmempty=true	
+	o.rmempty=true
 
 	local passwall_server_table = {}
 	uci:foreach("passwall", "nodes", function(s)
@@ -169,7 +169,7 @@ if nixio.fs.access("/etc/config/passwall") then
 	o = s:taboption("passwalltab", DynamicList, "passwall_services",
 			translate("Passwall Servers"),
 			translate("Please select a service"))
-			
+
 	for _, key in pairs(passwall_key_table) do
 		o:value(key, passwall_server_table[key])
 	end
@@ -182,7 +182,7 @@ if nixio.fs.access("/etc/config/passwall2") then
 	s:tab("passwall2tab", translate("passwall2"))
 
 	o=s:taboption("passwall2tab", Flag, "passwall2_enabled",translate("PassWall2 Enabled"))
-	o.rmempty=true	
+	o.rmempty=true
 
 	local passwall2_server_table = {}
 	uci:foreach("passwall2", "nodes", function(s)
@@ -201,7 +201,7 @@ if nixio.fs.access("/etc/config/passwall2") then
 	o = s:taboption("passwall2tab", DynamicList, "passwall2_services",
 			translate("Passwall2 Servers"),
 			translate("Please select a service"))
-			
+
 	for _, key in pairs(passwall2_key_table) do
 		o:value(key, passwall2_server_table[key])
 	end
@@ -212,9 +212,9 @@ end
 
 s:tab("bypasstab", translate("Bypass"))
 if nixio.fs.access("/etc/config/bypass") then
-	
+
 	o=s:taboption("bypasstab", Flag, "bypass_enabled",translate("Bypass Enabled"))
-	o.rmempty=true	
+	o.rmempty=true
 
 	local bypass_server_table = {}
 	uci:foreach("bypass", "servers", function(s)
@@ -235,7 +235,7 @@ if nixio.fs.access("/etc/config/bypass") then
 	o = s:taboption("bypasstab", DynamicList, "bypass_services",
 			translate("Bypass Servers"),
 			translate("Please select a service"))
-			
+
 	for _, key in pairs(bypass_key_table) do
 		o:value(key, bypass_server_table[key])
 	end
@@ -246,9 +246,9 @@ end
 
 s:tab("vssrtab", translate("Vssr"))
 if nixio.fs.access("/etc/config/vssr") then
-	
+
 	o=s:taboption("vssrtab", Flag, "vssr_enabled",translate("Vssr Enabled"))
-	o.rmempty=true	
+	o.rmempty=true
 
 	local vssr_server_table = {}
 	uci:foreach("vssr", "servers", function(s)
@@ -269,7 +269,7 @@ if nixio.fs.access("/etc/config/vssr") then
 	o = s:taboption("vssrtab", DynamicList, "vssr_services",
 			translate("Vssr Servers"),
 			translate("Please select a service"))
-			
+
 	for _, key in pairs(vssr_key_table) do
 		o:value(key, vssr_server_table[key])
 	end
@@ -313,6 +313,11 @@ o=s:taboption("dnshost", Flag, "HOST_enabled",translate("HOST Enabled"))
 o=s:taboption("dnshost", Value,"host_domain",translate("Domain"))
 o.rmempty=true
 o:depends("HOST_enabled", 1)
+
+s:tab("mosdns", translate("MosDNS"))
+o=s:taboption("mosdns", Flag, "MosDNS_enabled",translate("MosDNS Enabled"))
+o=s:taboption("mosdns", Flag, "openclash_restart",translate("OpenClash Restart"))
+o:depends("MosDNS_enabled", 1)
 
 e=m:section(TypedSection,"global",translate("Best IP"))
 e.anonymous=true

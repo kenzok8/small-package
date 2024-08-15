@@ -114,7 +114,7 @@ msgstr "启用IPv6"
 
 msgid "Delayed speed measurement time"
 msgstr "延迟测速次数"
- 
+
 msgid "Download speed test time"
 msgstr "下载测速时间"
 
@@ -136,7 +136,7 @@ msgstr "IPv4和IPv6只能选一个！！！！！！"
 msgid "<a href=\"https://github.com/XIU2/CloudflareSpeedTest/issues/168\" target=\"_blank\">How to create</a>"
 msgstr "<a href=\"https://github.com/XIU2/CloudflareSpeedTest/issues/168\" target=\"_blank\">如何创建</a>"
 
-msgid "RUNNING" 
+msgid "RUNNING"
 msgstr "运行中"
 
 msgid "NOT RUNNING"
@@ -219,3 +219,9 @@ msgstr "启用HOST"
 
 msgid "Domain"
 msgstr "域名"
+
+msgid "MosDNS Enabled"
+msgstr "写入 MosDNS"
+
+msgid "OpenClash Restart"
+msgstr "重启 OpenClash"
