@@ -5,6 +5,7 @@
 START=99
 USE_PROCD=1
 PROG=/usr/bin/alist
+LOG_FILE=/var/log/alist.log
 
 get_config() {
 	config_get_bool enabled $1 enabled 1
@@ -84,7 +85,7 @@ start_service() {
 	[ "$mysql" -eq 1 ] && database=$mysql_type || database=sqlite3
 
 	set_firewall
-	true > $temp_dir/alist.log
+	true > $LOG_FILE
 
 	# init config
 	json_init
@@ -123,7 +124,7 @@ start_service() {
 		json_add_boolean "force_https" "0"
 		json_add_string "cert_file" "$ssl_cert"
 		json_add_string "key_file" "$ssl_key"
-		json_add_string "unix_file" "/var/run/alist.sock"
+		json_add_string "unix_file" ""
 		json_add_string "unix_file_perm" ""
 	json_close_object
 
@@ -134,7 +135,7 @@ start_service() {
 	# log
 	json_add_object "log"
 		json_add_boolean "enable" "$log"
-		json_add_string "name" "$temp_dir/alist.log"
+		json_add_string "name" "$LOG_FILE"
 		json_add_int "max_size" "10"
 		json_add_int "max_backups" "5"
 		json_add_int "max_age" "28"
@@ -187,7 +188,7 @@ start_service() {
 
 	json_dump > $data_dir/config.json
 
-	procd_open_instance
+	procd_open_instance alist
 	procd_set_param command $PROG
 	procd_append_param command server --data $data_dir
 	procd_set_param stdout 0
@@ -195,7 +196,13 @@ start_service() {
 	procd_set_param respawn
 	procd_set_param limits core="unlimited"
 	procd_set_param limits nofile="200000 200000"
-	procd_close_instance
+	procd_close_instance alist
+}
+
+reload_service() {
+	stop
+	sleep 3
+	start
 }
 
 service_triggers() {
