@@ -287,7 +287,7 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
         const unsigned int ua_len = ua_end - ua_start;
         const unsigned long ua_offset = ua_start - tcp_payload;
 
-        // Looks it's impossible to mangle pocket failed, so we just drop it
+        // Looks it's impossible to mangle packet failed, so we just drop it
         if (type == IPV4) {
             nfq_tcp_mangle_ipv4(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len);
         } else {
