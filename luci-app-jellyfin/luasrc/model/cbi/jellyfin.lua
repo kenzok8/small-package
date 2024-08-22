@@ -10,7 +10,7 @@ m = taskd.docker_map("jellyfin", "jellyfin", "/usr/libexec/istorec/jellyfin.sh",
 	translate("Jellyfin"),
 	translate("Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way.")
 		.. translate("Official website:") .. ' <a href=\"https://jellyfin.org/\" target=\"_blank\">https://jellyfin.org/</a>'
-		.. "<dl><dt>" .. translate("The following models support hardware transcoding without configuration in Jellyfin:") .. "</dt>"
+		.. "<dl><dt>" .. translate("When using the default image, the following models support hardware transcoding without configuration in Jellyfin:") .. "</dt>"
 		.. "<dd>- Easepi ARS2</dd>"
 		.. "<dd>- " .. translate("RK35xx series (e.g. R6S, R5S, R68s, R66s, H28K, etc.) with iStoreOS firmware (version 20221123 and above). Other firmwares require MPP and RGA to be turned on, and are not guaranteed to be available.") .. "</dd>"
 		.. "<dt>" .. translate("The following models may support hardware transcoding by referring to the official Jellyfin documentation:") .. "</dt>"
@@ -26,6 +26,19 @@ s = m:section(TypedSection, "jellyfin", translate("Setup"),
 		.. "<br>" .. translate("The following parameters will only take effect during installation or upgrade:"))
 s.addremove=false
 s.anonymous=true
+
+o = s:option(Value, "image", translate("Image"))
+o.datatype = "string"
+o:value("", translate("Default"))
+if luci.sys.call("grep -q 'rockchip,' /proc/device-tree/compatible 2>/dev/null") == 0 then
+	o:value("jjm2473/jellyfin-mpp", "jjm2473/jellyfin-mpp")
+	o:value("nyanmisaka/jellyfin:latest-rockchip", "nyanmisaka/jellyfin:latest-rockchip")
+end
+o:value("jellyfin/jellyfin", "jellyfin/jellyfin")
+o:value("linuxserver/jellyfin", "linuxserver/jellyfin")
+if luci.sys.call("uname -m |grep -qw x86_64") == 0 then
+	o:value("nyanmisaka/jellyfin", "nyanmisaka/jellyfin")
+end
 
 o = s:option(Flag, "hostnet", translate("Host network"), translate("Jellyfin running in host network, for DLNA application, port is always 8096 if enabled"))
 o.default = 0

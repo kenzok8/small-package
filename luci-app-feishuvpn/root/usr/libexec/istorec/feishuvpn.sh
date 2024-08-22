@@ -62,7 +62,7 @@ case ${ACTION} in
     docker ${ACTION} feishuvpn
   ;;
   "status")
-    docker ps --all -f 'name=feishuvpn' --format '{{.State}}'
+    docker ps --all -f 'name=^/feishuvpn$' --format '{{.State}}'
   ;;
   "port")
     echo 9091

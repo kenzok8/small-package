@@ -91,10 +91,10 @@ EOF
     docker ${ACTION} bmtedge
   ;;
   "status")
-    docker ps --all -f 'name=bmtedge' --format '{{.State}}'
+    docker ps --all -f 'name=^/bmtedge$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=bmtedge' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=^/bmtedge$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
   ;;
   *)
     usage

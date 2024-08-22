@@ -2,9 +2,9 @@
 
 image_name=`uci get jellyfin.@jellyfin[0].image 2>/dev/null`
 
-if [ "$image_name" == "jjm2473/jellyfin-rtk:latest" ]; then
+if [ "$image_name" == "jjm2473/jellyfin-rtk:latest" -o "$image_name" == "default" ]; then
     uci -q batch <<-EOF >/dev/null
-        set jellyfin.@jellyfin[0].image="default"
+        delete jellyfin.@jellyfin[0].image
         commit jellyfin
 EOF
 fi

@@ -93,10 +93,10 @@ case ${ACTION} in
     docker ${ACTION} clouddrive2
   ;;
   "status")
-    docker ps --all -f 'name=clouddrive2' --format '{{.State}}'
+    docker ps --all -f 'name=^/clouddrive2$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=clouddrive2' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->19798/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/clouddrive2$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->19798/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage

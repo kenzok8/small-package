@@ -62,10 +62,10 @@ case ${ACTION} in
     docker ${ACTION} memos
   ;;
   "status")
-    docker ps --all -f 'name=memos' --format '{{.State}}'
+    docker ps --all -f 'name=^/memos$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=memos' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=^/memos$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
   ;;
   *)
     usage

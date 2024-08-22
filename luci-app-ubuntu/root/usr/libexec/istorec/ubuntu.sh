@@ -79,10 +79,10 @@ case ${ACTION} in
     docker ${ACTION} ubuntu
   ;;
   "status")
-    docker ps --all -f 'name=ubuntu' --format '{{.State}}'
+    docker ps --all -f 'name=^/ubuntu$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=ubuntu' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=^/ubuntu$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
   ;;
   *)
     usage

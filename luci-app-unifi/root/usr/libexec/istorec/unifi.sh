@@ -72,10 +72,10 @@ case ${ACTION} in
     docker ${ACTION} unifi
   ;;
   "status")
-    docker ps --all -f 'name=unifi' --format '{{.State}}'
+    docker ps --all -f 'name=^/unifi$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=unifi' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->8443/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/unifi$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->8443/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage

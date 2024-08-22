@@ -95,10 +95,10 @@ case ${ACTION} in
     docker ${ACTION} plex
   ;;
   "status")
-    docker ps --all -f 'name=plex' --format '{{.State}}'
+    docker ps --all -f 'name=^/plex$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=plex' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->32400/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/plex$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->32400/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage

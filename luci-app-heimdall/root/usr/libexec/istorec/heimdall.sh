@@ -73,13 +73,13 @@ case ${ACTION} in
     docker ${ACTION} heimdall
   ;;
   "status")
-    docker ps --all -f 'name=heimdall' --format '{{.State}}'
+    docker ps --all -f 'name=^/heimdall$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=heimdall' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->80/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/heimdall$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->80/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   "https_port")
-    docker ps --all -f 'name=heimdall' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->443/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/heimdall$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->443/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage

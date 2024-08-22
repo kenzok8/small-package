@@ -76,7 +76,7 @@ EOF
   for b in {1..30}
   do
     sleep 3
-    docker_status=`docker ps --all -f 'name=istorepanel' --format '{{.State}}'`
+    docker_status=`docker ps --all -f 'name=^/istorepanel$' --format '{{.State}}'`
     if [[ $docker_status == *running* ]]; then
       docker exec istorepanel /app/reinstall.sh
       echo "Installed OK, waiting 10s for running"
@@ -112,7 +112,7 @@ case ${ACTION} in
     docker ${ACTION} istorepanel
   ;;
   "status")
-    docker ps --all -f 'name=istorepanel' --format '{{.State}}'
+    docker ps --all -f 'name=^/istorepanel$' --format '{{.State}}'
   ;;
   "port")
     echo `uci get istorepanel.@main[0].port 2>/dev/null`

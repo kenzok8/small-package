@@ -63,10 +63,10 @@ case ${ACTION} in
     docker ${ACTION} typecho
   ;;
   "status")
-    docker ps --all -f 'name=typecho' --format '{{.State}}'
+    docker ps --all -f 'name=^/typecho$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=typecho' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->9080/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/typecho$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->9080/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage

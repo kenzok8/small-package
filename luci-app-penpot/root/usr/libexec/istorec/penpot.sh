@@ -60,7 +60,7 @@ case ${ACTION} in
     cd $config && docker-compose ${ACTION}
   ;;
   "status")
-    docker ps --all -f 'name=penpot_penpot-frontend_1' --format '{{.State}}'
+    docker ps --all -f 'name=^/penpot_penpot-frontend_1$' --format '{{.State}}'
   ;;
   "port")
     uci get -q penpot.@main[0].http_port 2>/dev/null

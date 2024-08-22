@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.0.3-20231208
+PKG_VERSION:=1.0.3-20240822
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for PhotoPrism

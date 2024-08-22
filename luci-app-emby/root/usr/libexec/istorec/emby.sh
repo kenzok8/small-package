@@ -81,10 +81,10 @@ case ${ACTION} in
     docker ${ACTION} emby
   ;;
   "status")
-    docker ps --all -f 'name=emby' --format '{{.State}}'
+    docker ps --all -f 'name=^/emby$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=emby' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->8096/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/emby$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->8096/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage
