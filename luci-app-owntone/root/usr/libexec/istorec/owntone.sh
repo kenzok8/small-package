@@ -60,7 +60,7 @@ case ${ACTION} in
     docker ${ACTION} owntone
   ;;
   "status")
-    docker ps --all -f 'name=owntone' --format '{{.State}}'
+    docker ps --all -f 'name=^/owntone$' --format '{{.State}}'
   ;;
   "port")
     echo 3689

@@ -72,7 +72,7 @@ case ${ACTION} in
     docker ${ACTION} vaultwarden
   ;;
   "status")
-    docker ps --all -f 'name=vaultwarden' --format '{{.State}}'
+    docker ps --all -f 'name=^/vaultwarden$' --format '{{.State}}'
   ;;
   "port")
     uci get -q vaultwarden.@main[0].http_port 2>/dev/null

@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.0.0-20221212
+PKG_VERSION:=1.0.0-20240822
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for DrawIO

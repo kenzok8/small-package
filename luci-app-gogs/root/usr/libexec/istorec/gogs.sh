@@ -67,7 +67,7 @@ case ${ACTION} in
     docker ${ACTION} gogs
   ;;
   "status")
-    docker ps --all -f 'name=gogs' --format '{{.State}}'
+    docker ps --all -f 'name=^/gogs$' --format '{{.State}}'
   ;;
   "port")
     uci -q get gogs.@main[0].http_port 2>/dev/null

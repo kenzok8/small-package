@@ -81,7 +81,7 @@ do_install_detail() {
     cmd="$cmd\
     -t \
     --privileged "
-    for dev in iep rga dri dma_heap mpp_service mpp-service vpu_service vpu-service \
+    for dev in iep rga dri dma_heap mali0 mpp_service mpp-service vpu_service vpu-service \
         hevc_service hevc-service rkvdec rkvenc avsd vepu h265e ; do
       [ -e "/dev/$dev" ] && cmd="$cmd --device /dev/$dev"
     done
@@ -139,10 +139,10 @@ case ${ACTION} in
     docker ${ACTION} jellyfin
   ;;
   "status")
-    docker ps --all -f 'name=jellyfin' --format '{{.State}}'
+    docker ps --all -f 'name=^/jellyfin$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=jellyfin' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->8096/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/jellyfin$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->8096/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage

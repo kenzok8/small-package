@@ -78,10 +78,10 @@ EOF
     docker ${ACTION} wxedge
   ;;
   "status")
-    docker ps --all -f 'name=wxedge' --format '{{.State}}'
+    docker ps --all -f 'name=^/wxedge$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=wxedge' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=^/wxedge$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
   ;;
   *)
     usage

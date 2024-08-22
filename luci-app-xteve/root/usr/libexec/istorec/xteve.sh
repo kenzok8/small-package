@@ -71,10 +71,10 @@ case ${ACTION} in
     docker ${ACTION} xteve
   ;;
   "status")
-    docker ps --all -f 'name=xteve' --format '{{.State}}'
+    docker ps --all -f 'name=^/xteve$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=xteve' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=^/xteve$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
   ;;
   *)
     usage

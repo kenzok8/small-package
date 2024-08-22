@@ -72,10 +72,10 @@ case ${ACTION} in
     docker ${ACTION} codeserver
   ;;
   "status")
-    docker ps --all -f 'name=codeserver' --format '{{.State}}'
+    docker ps --all -f 'name=^/codeserver$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=codeserver' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=^/codeserver$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
   ;;
   "git-config")
     docker exec codeserver git config --global user.name "${1}"

@@ -66,7 +66,7 @@ case ${ACTION} in
     docker ${ACTION} chinesesubfinder
   ;;
   "status")
-    docker ps --all -f 'name=chinesesubfinder' --format '{{.State}}'
+    docker ps --all -f 'name=^/chinesesubfinder$' --format '{{.State}}'
   ;;
   "port")
     uci -q get chinesesubfinder.@main[0].http_port 2>/dev/null
