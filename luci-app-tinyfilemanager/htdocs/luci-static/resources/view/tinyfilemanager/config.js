@@ -38,7 +38,7 @@ return view.extend({
 			return fs.exec('/etc/init.d/tinyfilemanager', ['reload'])
 				.catch(function(e) { ui.addNotification(null, E('p', e.message), 'error') });
 		};
-		if (! has_location) 
+		if (! has_location)
 			o.description = _('To enable SSL support, you may need to install <b>%s</b><br/>').format(['php-nginx']);
 
 		o = s.option(form.Flag, 'use_auth', _('Enable Authentication'));
@@ -169,12 +169,12 @@ return view.extend({
 			o = s.option(form.Button, '_uprgade', _('Uprgade ') + _('Tiny File Manager'));
 			o.inputtitle = _('Uprgade');
 			o.inputstyle = 'apply';
-			o.onclick = L.bind(function(ev, section_id) {
-				var releasestag=document.getElementById('widget.' + this.cbid(section_id).match(/.+\./) + '_releaseslist').value;
+			o.onclick = function(ev, section_id) {
+				var releasestag=this.section.getOption('_releaseslist').formvalue(section_id);
 				//alert(releasestag);
 				return fs.exec_direct('/usr/libexec/tinyfilemanager-update', [releasestag])
 					.catch(function(e) { ui.addNotification(null, E('p', e.message), 'error') });
-			}, o)
+			}
 		};
 
 //		s = m.section(form.TypedSection, '_updater');
