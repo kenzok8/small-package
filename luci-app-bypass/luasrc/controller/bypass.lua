@@ -164,14 +164,15 @@ function check_site(host, port)
 end
 
 function get_ip_geo_info()
-    local result = luci.sys.exec('curl --retry 3 -m 10 -LfsA "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36" https://ip-api.com/json/')
+    local result = luci.sys.exec('curl --retry 3 -m 10 -LfsA "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36" http://ip-api.com/json/')
     local json = require "luci.jsonc"
     local info = json.parse(result)
     
     return {
         flag = string.lower(info.countryCode) or "un",
         country = get_country_name(info.countryCode) or "Unknown",
-        ip = info.query
+        ip = info.query,
+        isp = info.isp
     }
 end
 
@@ -198,6 +199,7 @@ function check_ip()
     e.ip = geo_info.ip
     e.flag = geo_info.flag
     e.country = geo_info.country
+    e.isp = geo_info.isp
     e.baidu = check_site('www.baidu.com', port)
     e.taobao = check_site('www.taobao.com', port)
     e.google = check_site('www.google.com', port)

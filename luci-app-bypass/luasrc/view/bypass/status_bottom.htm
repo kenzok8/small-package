@@ -94,7 +94,7 @@ function resize() {
 
 function write_status(data) {
         document.querySelector(".flag img").src = _ASSETS + "flags/" + data.flag + ".svg";
-        document.querySelector(".status-info").innerHTML = data.ip + "<br>" + data.country;
+        document.querySelector(".status-info").innerHTML = data.ip + "<br>" + data.country + "&nbsp;" + data.isp;
     document.querySelector(".i1").src = data.baidu ? _ASSETS + "img/site_icon_01.png" : _ASSETS + "img/site_icon1_01.png";
     document.querySelector(".i2").src = data.taobao ? _ASSETS + "img/site_icon_02.png" : _ASSETS + "img/site_icon1_02.png";
     document.querySelector(".i3").src = data.google ? _ASSETS + "img/site_icon_03.png" : _ASSETS + "img/site_icon1_03.png";
@@ -112,7 +112,7 @@ XHR.poll(5, CHECK_IP_URL, null,
     );
 
 document.addEventListener('DOMContentLoaded', function() {
-    setTimeout("resize()",10)
+    setTimeout("resize()",100)
     fetch(CHECK_IP_URL)
         .then(response => response.json())
         .then(data => {
