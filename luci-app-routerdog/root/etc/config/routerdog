@@ -1,0 +1,6 @@
+config routerdog
+	option enabled '1'
+	option bgBlur  '0'
+	option hiddenApp  '0'
+	option hiddenDockerApp '1'
+	option hiddenUseApp '1'

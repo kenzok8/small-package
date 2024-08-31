@@ -1,0 +1,11 @@
+{
+	"luci-app-mfun": {
+		"description": "Grant UCI access for luci-app-mfun",
+		"read": {
+			"uci": [ "mfun" ]
+		},
+		"write": {
+			"uci": [ "mfun" ]
+		}
+	}
+}

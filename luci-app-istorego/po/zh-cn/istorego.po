@@ -1,0 +1,2 @@
+msgid "iStoreGo"
+msgstr "Docker应用市场"

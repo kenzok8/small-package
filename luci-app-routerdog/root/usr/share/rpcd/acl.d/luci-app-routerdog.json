@@ -1,0 +1,11 @@
+{
+	"luci-app-routerdog": {
+		"description": "Grant UCI access for luci-app-routerdog",
+		"read": {
+			"uci": [ "routerdog" ]
+		},
+		"write": {
+			"uci": [ "routerdog" ]
+		}
+	}
+}

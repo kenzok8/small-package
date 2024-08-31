@@ -1,0 +1,19 @@
+<%+header%>
+ <%+tasks/embed%>
+<script>
+    (function(){
+      window.token = "<%=token%>";
+      var vue_prefix="<%=prefix%>";
+      window.vue_base = vue_prefix + '/';
+    })();
+</script>
+<h2 name="content">
+    Docker应用市场
+    <a onclick="void(0)" href="https://github.com/Carseason/openwrt-packages/tree/main/luci/luci-app-istorego" target="_blank" style="text-decoration: none;">
+        <%# v=PKG_VERSION %>
+    </a>
+</h2>
+<div id="app"></div>
+<script type="module" crossorigin src="/luci-static/istorego/index.js<%# ?v=PKG_VERSION %>"></script>
+<link rel="stylesheet" href="/luci-static/istorego/style.css<%# ?v=PKG_VERSION %>">
+<%+footer%>
