@@ -1,0 +1,46 @@
+#!/bin/sh
+
+. $IPKG_INSTROOT/etc/mihomo/scripts/constants.sh
+
+action=$1
+shift
+
+case "$action" in
+	clear)
+		case "$1" in
+			app_log)
+				echo -n > "$RUN_APP_LOG_PATH"
+			;;
+			core_log)
+				echo -n > "$RUN_CORE_LOG_PATH"
+			;;
+		esac
+	;;
+	load)
+		case "$1" in
+			profile)
+				yq -M -o json < "$RUN_PROFILE_PATH"
+			;;
+		esac
+	;;
+	service)
+		case "$1" in
+			reload)
+				/etc/init.d/mihomo reload
+			;;
+			restart)
+				/etc/init.d/mihomo restart
+			;;
+		esac
+	;;
+	version)
+		case "$1" in
+			app)
+				opkg list-installed | grep "luci-app-mihomo" | cut -d " " -f 3
+			;;
+			core)
+				mihomo -v | grep "Mihomo" | cut -d " " -f 3
+			;;
+		esac
+	;;
+esac
