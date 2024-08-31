@@ -1,0 +1,10 @@
+{
+    "admin/routerdog": {
+        "title": "RouterDog",
+        "order": -1,
+        "action": {
+            "type": "template",
+            "path": "routerdog/index"
+        }
+    }
+}

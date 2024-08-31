@@ -1,0 +1,4 @@
+config mfun
+	option 'port' '8990'
+#	option 'config_path' ''
+#	option 'tmp_path' ''

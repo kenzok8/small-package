@@ -1,0 +1,7 @@
+#!/bin/sh
+
+
+/etc/init.d/routergo enable
+/etc/init.d/routergo start
+
+exit 0

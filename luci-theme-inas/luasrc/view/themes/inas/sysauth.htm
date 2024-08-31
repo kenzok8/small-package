@@ -1,0 +1,49 @@
+<%
+	local node = luci.dispatcher.context.dispatched;
+	local hostname = luci.sys.hostname();
+	local lang = luci.i18n.context.lang;
+	luci.http.prepare_content("text/html; charset=UTF-8");
+-%>
+    <!doctype html>
+    <html lang="<%=lang%>">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            <%=hostname%>
+        </title>
+    <link rel="stylesheet" crossorigin href="/luci-static/inas/login/style.css<%# ?v=PKG_VERSION %>">
+    </head>
+    <body name="<%=hostname%>" class="lang_<%=lang%> <% if node then %><%= striptags( node.title ) %><%- end %>">
+        <div id="app">
+            <form method="post" class="cbi-map">
+                <div class="logo">
+                    <span>
+                        <%=hostname%>
+                        <svg viewBox="0 0 190 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M97.4999 3.5C1.00023 10.2006 -26 77.5 38 83.5C127.5 91.8906 241 58.5 156.5 6.29944"
+                                stroke="#ddd" stroke-width="6" stroke-linecap="round"></path>
+                        </svg>
+                    </span>
+                </div>
+                <label>
+                    <span>登录账号</span>
+                    <input name="luci_username" placeholder="<%:Username%>" <%=attr("value", duser)%> required>
+                </label>
+                <label>
+                    <span>登录密码</span>
+                    <input name="luci_password" placeholder="<%:Password%>" type="password">
+                </label>
+                <% if fuser then %>
+                    <div class="message">
+						<%:Invalid username and/or password! Please try again.%>
+                    </div>
+				<% end %>
+                <button>
+                    <span><%:Login%></span>
+                </button>
+            </form>
+        </div>
+        </main>
+    </body>
+    </html>
