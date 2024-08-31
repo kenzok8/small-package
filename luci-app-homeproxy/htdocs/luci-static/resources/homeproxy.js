@@ -169,11 +169,26 @@ return baseclass.extend({
 		return L.resolveDefault(callGetSingBoxFeatures(), {});
 	},
 
-	generateUUIDv4: function() {
-		/* Thanks to https://stackoverflow.com/a/2117523 */
-		return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c) =>
-			(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-		);
+	generateRand: function(type, length) {
+		var byteArr;
+		if (['base64', 'hex'].includes(type))
+			byteArr = crypto.getRandomValues(new Uint8Array(length));
+		switch (type) {
+			case 'base64':
+				/* Thanks to https://stackoverflow.com/questions/9267899 */
+				return btoa(String.fromCharCode.apply(null, byteArr));
+			case 'hex':
+				return Array.from(byteArr, (byte) =>
+					(byte & 255).toString(16).padStart(2, '0')
+				).join('');
+			case 'uuid':
+				/* Thanks to https://stackoverflow.com/a/2117523 */
+				return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c) =>
+					(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+				);
+			default:
+				return null;
+		};
 	},
 
 	loadDefaultLabel: function(uciconfig, ucisection) {

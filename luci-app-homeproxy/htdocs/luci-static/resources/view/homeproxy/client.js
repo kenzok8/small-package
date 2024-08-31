@@ -313,6 +313,15 @@ return view.extend({
 		so.depends('tcpip_stack', 'gvisor');
 		so.rmempty = false;
 
+		so = ss.option(form.Value, 'udp_timeout', _('UDP NAT expiration time'),
+			_('In seconds. <code>300</code> is used by default.'));
+		so.datatype = 'uinteger';
+		so.default = '300';
+		so.depends('homeproxy.config.proxy_mode', 'redirect_tproxy');
+		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');
+		so.depends('homeproxy.config.proxy_mode', 'tun');
+		so.rmempty = false;
+
 		so = ss.option(form.Flag, 'bypass_cn_traffic', _('Bypass CN traffic'),
 			_('Bypass mainland China traffic via firewall rules by default.'));
 		so.default = so.disabled;

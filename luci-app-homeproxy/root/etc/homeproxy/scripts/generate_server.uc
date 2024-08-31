@@ -49,6 +49,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		tcp_fast_open: strToBool(cfg.tcp_fast_open),
 		tcp_multi_path: strToBool(cfg.tcp_multi_path),
 		udp_fragment: strToBool(cfg.udp_fragment),
+		udp_timeout: cfg.udp_timeout ? (cfg.udp_timeout + 's') : null,
 		sniff: true,
 		sniff_override_destination: (cfg.sniff_override === '1'),
 		domain_strategy: cfg.domain_strategy,
