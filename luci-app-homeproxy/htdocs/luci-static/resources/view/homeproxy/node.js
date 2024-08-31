@@ -468,6 +468,14 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.datatype = 'port';
 	o.depends('type', 'direct');
 
+	o = s.option(form.ListValue, 'proxy_protocol', _('Proxy protocol'),
+		_('Write proxy protocol in the connection header.'));
+	o.value('', _('Disable'));
+	o.value('1', _('v1'));
+	o.value('2', _('v2'));
+	o.depends('type', 'direct');
+	o.modalonly = true;
+
 	/* Hysteria (2) config start */
 	o = s.option(form.ListValue, 'hysteria_protocol', _('Protocol'));
 	o.value('udp');
