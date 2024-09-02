@@ -63,7 +63,7 @@ return view.extend({
 			});
 
 			return E('div', { class: 'cbi-section', id: 'status_bar' }, [
-					E('p', { id: 'service_status' }, _('Collecting data...'))
+					E('p', { id: 'service_status' }, _('Collecting data…'))
 			]);
 		}
 

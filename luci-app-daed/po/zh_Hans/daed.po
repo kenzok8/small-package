@@ -13,9 +13,9 @@ msgid "A modern dashboard for dae."
 msgstr "dae 现代化控制面板。"
 
 #: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/config.js:66
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:32
-msgid "Collecting data..."
-msgstr "收集数据中..."
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:30
+msgid "Collecting data…"
+msgstr "收集数据中…"
 
 #: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/config.js:72
 msgid "Enable"
@@ -29,19 +29,20 @@ msgstr "授予访问 daed 配置的权限"
 msgid "Listening address"
 msgstr "监听地址"
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:30
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:28
 msgid "Loading..."
 msgstr "加载中..."
 
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:77
 #: applications/luci-app-daed/root/usr/share/luci/menu.d/luci-app-daed.json:22
 msgid "Log"
 msgstr "日志"
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:48
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:46
 msgid "Log file does not exist."
 msgstr "日志文件不存在。"
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:39
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:37
 msgid "Log is empty."
 msgstr "日志为空"
 
@@ -65,9 +66,19 @@ msgstr "打开 Web 界面"
 msgid "RUNNING"
 msgstr "运行中"
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:65
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:83
 msgid "Refresh every %s seconds."
 msgstr "每 %s 秒刷新。"
+
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:69
+msgctxt "scroll to top (the head) of the log file"
+msgid "Scroll to head"
+msgstr "滚动到顶部"
+
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:60
+msgctxt "scroll to bottom (the tail) of the log file"
+msgid "Scroll to tail"
+msgstr "滚动到尾部"
 
 #: applications/luci-app-daed/root/usr/share/luci/menu.d/luci-app-daed.json:14
 msgid "Settings"
@@ -81,7 +92,7 @@ msgstr "要保留的最大旧日志文件数量。"
 msgid "The maximum size in megabytes of the log file before it gets rotated."
 msgstr "要保留的最大日志大小（单位：MB）。"
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:52
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:50
 msgid "Unknown error: %s"
 msgstr "未知错误：%s"
 
