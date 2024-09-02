@@ -6,8 +6,8 @@ msgid "A modern dashboard for dae."
 msgstr ""
 
 #: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/config.js:66
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:32
-msgid "Collecting data..."
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:30
+msgid "Collecting data…"
 msgstr ""
 
 #: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/config.js:72
@@ -22,19 +22,20 @@ msgstr ""
 msgid "Listening address"
 msgstr ""
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:30
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:28
 msgid "Loading..."
 msgstr ""
 
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:77
 #: applications/luci-app-daed/root/usr/share/luci/menu.d/luci-app-daed.json:22
 msgid "Log"
 msgstr ""
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:48
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:46
 msgid "Log file does not exist."
 msgstr ""
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:39
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:37
 msgid "Log is empty."
 msgstr ""
 
@@ -58,8 +59,18 @@ msgstr ""
 msgid "RUNNING"
 msgstr ""
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:65
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:83
 msgid "Refresh every %s seconds."
+msgstr ""
+
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:69
+msgctxt "scroll to top (the head) of the log file"
+msgid "Scroll to head"
+msgstr ""
+
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:60
+msgctxt "scroll to bottom (the tail) of the log file"
+msgid "Scroll to tail"
 msgstr ""
 
 #: applications/luci-app-daed/root/usr/share/luci/menu.d/luci-app-daed.json:14
@@ -74,7 +85,7 @@ msgstr ""
 msgid "The maximum size in megabytes of the log file before it gets rotated."
 msgstr ""
 
-#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:52
+#: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:50
 msgid "Unknown error: %s"
 msgstr ""
 
