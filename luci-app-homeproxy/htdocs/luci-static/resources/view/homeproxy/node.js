@@ -1152,6 +1152,15 @@ return view.extend({
 		var routing_mode = uci.get(data[0], 'config', 'routing_mode');
 		var features = data[1];
 
+		/* Cache subscription information, it will be called multiple times */
+		var subinfo = [];
+		for (var suburl of (uci.get(data[0], 'subscription', 'subscription_url') || [])) {
+			const url = new URL(suburl);
+			const urlhash = hp.calcStringMD5(suburl.replace(/#.*$/, ''));
+			const title = url.hash ? decodeURIComponent(url.hash.slice(1)) : url.hostname;
+			subinfo.push({ 'hash': urlhash, 'title': title });
+		}
+
 		m = new form.Map('homeproxy', _('Edit nodes'));
 
 		s = m.section(form.NamedSection, 'subscription', 'homeproxy');
@@ -1163,7 +1172,11 @@ return view.extend({
 		ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode);
 		ss.addremove = true;
 		ss.filter = function(section_id) {
-			return uci.get(data[0], section_id, 'grouphash') ? false : true;
+			for (var info of subinfo)
+				if (info.hash === uci.get(data[0], section_id, 'grouphash'))
+					return false;
+
+			return true;
 		}
 		/* Import subscription links start */
 		/* Thanks to luci-app-shadowsocks-libev */
@@ -1226,7 +1239,7 @@ return view.extend({
 				])
 			])
 		}
-		ss.renderSectionAdd = function(extra_class) {
+		ss.renderSectionAdd = function(/* ... */) {
 			var el = form.GridSection.prototype.renderSectionAdd.apply(this, arguments),
 				nameEl = el.querySelector('.cbi-section-create-name');
 
@@ -1258,16 +1271,12 @@ return view.extend({
 		/* User nodes end */
 
 		/* Subscription nodes start */
-		for (var suburl of (uci.get(data[0], 'subscription', 'subscription_url') || [])) {
-			const url = new URL(suburl);
-			const urlhash = hp.calcStringMD5(suburl.replace(/#.*$/, ''));
-			const title = url.hash ? decodeURIComponent(url.hash.slice(1)) : url.hostname;
-
-			s.tab('sub_' + urlhash, _('Sub (%s)').format(title));
-			o = s.taboption('sub_' + urlhash, form.SectionValue, '_sub_' + urlhash, form.GridSection, 'node');
+		for (const info of subinfo) {
+			s.tab('sub_' + info.hash, _('Sub (%s)').format(info.title));
+			o = s.taboption('sub_' + info.hash, form.SectionValue, '_sub_' + info.hash, form.GridSection, 'node');
 			ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode);
 			ss.filter = function(section_id) {
-				return (uci.get(data[0], section_id, 'grouphash') === urlhash);
+				return (uci.get(data[0], section_id, 'grouphash') === info.hash);
 			}
 		}
 		/* Subscription nodes end */

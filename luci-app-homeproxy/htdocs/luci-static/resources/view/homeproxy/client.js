@@ -164,7 +164,7 @@ return view.extend({
 		o.value('', '---');
 		o.value('223.5.5.5', _('Aliyun Public DNS (223.5.5.5)'));
 		o.value('119.29.29.29', _('Tencent Public DNS (119.29.29.29)'));
-		o.value('114.114.114.114', _('Xinfeng Public DNS (114.114.114.114)'));
+		o.value('117.50.10.10', _('ThreatBook Public DNS (117.50.10.10)'));
 		o.default = '8.8.8.8';
 		o.rmempty = false;
 		o.depends({'routing_mode': 'custom', '!reverse': true});
@@ -187,7 +187,7 @@ return view.extend({
 			o.value('223.5.5.5', _('Aliyun Public DNS (223.5.5.5)'));
 			o.value('210.2.4.8', _('CNNIC Public DNS (210.2.4.8)'));
 			o.value('119.29.29.29', _('Tencent Public DNS (119.29.29.29)'));
-			o.value('114.114.114.114', _('Xinfeng Public DNS (114.114.114.114)'));
+			o.value('117.50.10.10', _('ThreatBook Public DNS (117.50.10.10)'));
 			o.depends('routing_mode', 'bypass_mainland_china');
 			o.validate = function(section_id) {
 				if (section_id) {

@@ -88,6 +88,9 @@ const control_info = {};
 
 for (let i in control_options)
 	control_info[i] = uci.get(cfgname, 'control', i);
+
+const dns_hijacked = uci.get('dhcp', '@dnsmasq[0]', 'dns_redirect') || '0',
+      dns_port = uci.get('dhcp', '@dnsmasq[0]', 'port') || '53';
 /* UCI config end */
 -%}
 
@@ -228,6 +231,16 @@ set homeproxy_routing_port {
 }
 {% endif %}
 
+{# DNS hijack & TCP redirect #}
+chain dstnat {
+{% if (dns_hijacked !== '1'): %}
+	meta nfproto { ipv4, ipv6 } udp dport 53 counter redirect to :{{ dns_port }} comment "!{{ cfgname }}: DNS hijack"
+{% endif /* dns_hijacked */ %}
+{% if (match(proxy_mode, /redirect/)): %}
+	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump homeproxy_redirect_lanac
+{% endif /* proxy_mode */ %}
+}
+
 {# TCP redirect #}
 {% if (match(proxy_mode, /redirect/)): %}
 chain homeproxy_redirect_proxy {
@@ -338,10 +351,6 @@ chain homeproxy_output_redir {
 	type nat hook output priority filter -105; policy accept
 	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump homeproxy_redirect
 }
-
-chain dstnat {
-	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump homeproxy_redirect_lanac
-}
 {% endif %}
 
 {# UDP tproxy #}
@@ -371,6 +380,7 @@ chain homeproxy_mangle_lanac {
 	{% if (control_info.listen_interfaces): %}
 	meta iifname != {{ array_to_nftarr(split(join(' ', control_info.listen_interfaces) + ' lo', ' ')) }} counter return
 	{% endif %}
+	meta iifname != io udp dport 53 counter return
 	meta mark {{ self_mark }} counter return
 
 	{% if (control_info.lan_proxy_mode === 'listed_only'): %}
@@ -513,6 +523,7 @@ chain mangle_output {
 {% if (match(proxy_mode, /tun/)): %}
 chain homeproxy_mangle_lanac {
 	iifname {{ tun_name }} counter return
+	udp dport 53 counter return
 
 	{% if (control_info.listen_interfaces): %}
 	meta iifname != {{ array_to_nftarr(control_info.listen_interfaces) }} counter return
