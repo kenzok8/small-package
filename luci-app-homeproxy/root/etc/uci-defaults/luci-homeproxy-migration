@@ -11,6 +11,11 @@ elif echo "$china_dns_server" | grep -q ","; then
 		uci -q add_list "homeproxy.config.china_dns_server"="$dns"
 	done
 fi
+
+if [ "$(uci -q get homeproxy.config.routing_port)" = "all" ]; then
+	uci -q delete "homeproxy.config.routing_port"
+fi
+
 [ -z "$(uci -q changes "homeproxy")" ] || uci -q commit "homeproxy"
 
 exit 0
