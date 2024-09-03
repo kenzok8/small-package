@@ -50,7 +50,7 @@ if (routing_mode !== 'custom') {
 	bypass_cn_traffic = uci.get(cfgname, 'routing', 'bypass_cn_traffic') || '0';
 }
 
-let routing_port = uci.get(cfgname, 'config', 'routing_port') || 'common';
+let routing_port = uci.get(cfgname, 'config', 'routing_port');
 if (routing_port === 'common')
 	routing_port = uci.get(cfgname, 'infra', 'common_port') || '22,53,80,143,443,465,587,853,873,993,995,8080,8443,9418';
 
@@ -222,7 +222,7 @@ set homeproxy_wan_direct_addr_v6 {
 }
 {% endif /* ipv6_support */ %}
 
-{% if (routing_port !== 'all'): %}
+{% if (routing_port): %}
 set homeproxy_routing_port {
 	type inet_service
 	flags interval
@@ -248,7 +248,7 @@ chain homeproxy_redirect_proxy {
 }
 
 chain homeproxy_redirect_proxy_port {
-	{% if (routing_port !== 'all'): %}
+	{% if (routing_port): %}
 	tcp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	goto homeproxy_redirect_proxy
@@ -363,14 +363,14 @@ chain homeproxy_mangle_tproxy {
 }
 
 chain homeproxy_mangle_tproxy_port {
-	{% if (routing_port !== 'all'): %}
+	{% if (routing_port): %}
 	udp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	goto homeproxy_mangle_tproxy
 }
 
 chain homeproxy_mangle_mark {
-	{% if (routing_port !== 'all'): %}
+	{% if (routing_port): %}
 	udp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	meta l4proto udp mark set {{ tproxy_mark }} counter accept
@@ -557,7 +557,7 @@ chain homeproxy_mangle_lanac {
 }
 
 chain homeproxy_mangle_tun_mark {
-	{% if (routing_port !== 'all'): %}
+	{% if (routing_port): %}
 	{% if (proxy_mode === 'tun'): %}
 	tcp dport != @homeproxy_routing_port counter return
 	{% endif /* proxy_mode */ %}
