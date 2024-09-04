@@ -380,7 +380,7 @@ chain homeproxy_mangle_lanac {
 	{% if (control_info.listen_interfaces): %}
 	meta iifname != {{ array_to_nftarr(split(join(' ', control_info.listen_interfaces) + ' lo', ' ')) }} counter return
 	{% endif %}
-	meta iifname != io udp dport 53 counter return
+	meta iifname != lo udp dport 53 counter return
 	meta mark {{ self_mark }} counter return
 
 	{% if (control_info.lan_proxy_mode === 'listed_only'): %}

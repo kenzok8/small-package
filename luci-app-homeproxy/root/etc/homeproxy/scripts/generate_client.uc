@@ -49,7 +49,7 @@ else
 
 const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
-let main_node, main_udp_node, dedicated_udp_node, default_outbound, sniff_override = '1',
+let main_node, main_udp_node, dedicated_udp_node, default_outbound, domain_strategy, sniff_override = '1',
     dns_server, dns_default_strategy, dns_default_server, dns_disable_cache, dns_disable_cache_expire,
     dns_independent_cache, dns_client_subnet, direct_domain_list, proxy_domain_list;
 
@@ -80,6 +80,7 @@ if (routing_mode !== 'custom') {
 
 	/* Routing settings */
 	default_outbound = uci.get(uciconfig, uciroutingsetting, 'default_outbound') || 'nil';
+	domain_strategy = uci.get(uciconfig, uciroutingsetting, 'domain_strategy');
 	sniff_override = uci.get(uciconfig, uciroutingsetting, 'sniff_override');
 }
 
@@ -489,6 +490,7 @@ push(config.inbounds, {
 	udp_timeout: udp_timeout ? (udp_timeout + 's') : null,
 	sniff: true,
 	sniff_override_destination: (sniff_override === '1'),
+	domain_strategy: domain_strategy,
 	set_system_proxy: false
 });
 
@@ -500,7 +502,8 @@ if (match(proxy_mode, /redirect/))
 		listen: '::',
 		listen_port: int(redirect_port),
 		sniff: true,
-		sniff_override_destination: (sniff_override === '1')
+		sniff_override_destination: (sniff_override === '1'),
+		domain_strategy: domain_strategy,
 	});
 if (match(proxy_mode, /tproxy/))
 	push(config.inbounds, {
@@ -512,7 +515,8 @@ if (match(proxy_mode, /tproxy/))
 		network: 'udp',
 		udp_timeout: udp_timeout ? (udp_timeout + 's') : null,
 		sniff: true,
-		sniff_override_destination: (sniff_override === '1')
+		sniff_override_destination: (sniff_override === '1'),
+		domain_strategy: domain_strategy,
 	});
 if (match(proxy_mode, /tun/))
 	push(config.inbounds, {
@@ -530,6 +534,7 @@ if (match(proxy_mode, /tun/))
 		stack: tcpip_stack,
 		sniff: true,
 		sniff_override_destination: (sniff_override === '1'),
+		domain_strategy: domain_strategy,
 	});
 /* Inbound end */
 
@@ -668,7 +673,7 @@ if (routing_mode === 'custom') {
 	config.experimental = {
 		cache_file: {
 			enabled: true,
-			path: HP_DIR + '/cache.db',
+			path: RUN_DIR + '/cache.db',
 			store_rdrc: (cache_file_store_rdrc === '1') || null,
 			rdrc_timeout: cache_file_rdrc_timeout
 		}
