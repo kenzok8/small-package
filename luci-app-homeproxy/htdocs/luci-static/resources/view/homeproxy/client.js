@@ -324,6 +324,11 @@ return view.extend({
 		so.default = so.disabled;
 		so.rmempty = false;
 
+		so = ss.option(form.ListValue, 'domain_strategy', _('Domain strategy'),
+			_('If set, the requested domain name will be resolved to IP before routing.'));
+		for (var i in hp.dns_strategy)
+			so.value(i, hp.dns_strategy[i])
+
 		so = ss.option(form.Flag, 'sniff_override', _('Override destination'),
 			_('Override the connection destination address with the sniffed domain.'));
 		so.default = so.enabled;
