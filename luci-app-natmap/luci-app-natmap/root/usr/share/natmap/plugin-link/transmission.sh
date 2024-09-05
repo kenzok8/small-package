@@ -12,23 +12,15 @@ url="$LINK_TR_RPC_URL/transmission/rpc"
 trauth="-u $LINK_TR_USERNAME:$LINK_TR_PASSWORD"
 
 # 默认重试次数为1，休眠时间为3s
-max_retries=1
-sleep_time=3
-
-# 判断是否开启高级功能
-if [ "$LINK_ADVANCED_ENABLE" == 1 ] && [ -n "$LINK_ADVANCED_MAX_RETRIES" ] && [ -n "$LINK_ADVANCED_SLEEP_TIME" ]; then
-    # 获取最大重试次数
-    max_retries=$((LINK_ADVANCED_MAX_RETRIES == "0" ? 1 : LINK_ADVANCED_MAX_RETRIES))
-    # 获取休眠时间
-    sleep_time=$((LINK_ADVANCED_SLEEP_TIME == "0" ? 3 : LINK_ADVANCED_SLEEP_TIME))
-fi
+max_retries=$6
+sleep_time=$7
+retry_count=0
 
 # 初始化参数
 # # 获取trsid，直至重试次数用尽
 trsid=""
-retry_count=0
 
-for (( ; retry_count < max_retries; retry_count++)); do
+while (true); do
     trsid=$(curl -s $trauth $url | sed 's/.*<code>//g;s/<\/code>.*//g')
 
     # Check if the provided session ID contains the header "X-Transmission-Session-Id"
@@ -43,28 +35,23 @@ for (( ; retry_count < max_retries; retry_count++)); do
 
         # Check if the port modification was successful
         if [[ $(echo "$tr_result" | jq -r '.result') == "success" ]]; then
-            echo "transmission port modified successfully" >>/var/log/natmap/natmap.log
+            echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 修改成功" >>/var/log/natmap/natmap.log
+            echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 修改成功"
             break
-        else
-            echo "transmission Failed to modify the port" >>/var/log/natmap/natmap.log
-            # Sleep for a specified amount of time
-            sleep $sleep_time
         fi
-    else
-        # Sleep for a specified amount of time
-        sleep $sleep_time
     fi
 
     # Sleep for a specified amount of time
     sleep $sleep_time
-done
 
-if [ $retry_count -eq $max_retries ]; then
-    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改" >>/var/log/natmap/natmap.log
-    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改"
-    exit 1
-else
-    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 修改成功" >>/var/log/natmap/natmap.log
-    echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 修改成功"
-    exit 0
-fi
+    # 检测剩余重试次数
+    let retry_count++
+    if [ $retry_count -lt $max_retries ] || [ $max_retries -eq 0 ]; then
+        echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 登录失败,正在重试..." >>/var/log/natmap/natmap.log
+        sleep $sleep_time
+    else
+        echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改" >>/var/log/natmap/natmap.log
+        echo "$(date +'%Y-%m-%d %H:%M:%S') : $GENERAL_NAT_NAME - $LINK_MODE 达到最大重试次数，无法修改"
+        break
+    fi
+done

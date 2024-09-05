@@ -291,6 +291,7 @@ return view.extend({
     o.datatype = "uinteger";
     o.default = 10;
     o.modalonly = true;
+    o.rmempty = false;
     o.depends("forward_advanced_enable", "1");
 
     o = s.taboption(
@@ -303,6 +304,7 @@ return view.extend({
     o.datatype = "uinteger";
     o.default = 3;
     o.modalonly = true;
+    o.rmempty = false;
     o.depends("forward_advanced_enable", "1");
 
     // **********************************************************************
@@ -485,6 +487,7 @@ return view.extend({
     o.datatype = "uinteger";
     o.default = 10;
     o.modalonly = true;
+    o.rmempty = false;
     o.depends("notify_advanced_enable", "1");
 
     o = s.taboption(
@@ -497,6 +500,7 @@ return view.extend({
     o.datatype = "uinteger";
     o.default = 3;
     o.modalonly = true;
+    o.rmempty = false;
     o.depends("notify_advanced_enable", "1");
 
     // **********************************************************************
@@ -815,6 +819,7 @@ return view.extend({
     o.datatype = "uinteger";
     o.default = 10;
     o.modalonly = true;
+    o.rmempty = false;
     o.depends("link_advanced_enable", "1");
 
     o = s.taboption(
@@ -827,6 +832,7 @@ return view.extend({
     o.datatype = "uinteger";
     o.default = 3;
     o.modalonly = true;
+    o.rmempty = false;
     o.depends("link_advanced_enable", "1");
 
     // **********************************************************************
