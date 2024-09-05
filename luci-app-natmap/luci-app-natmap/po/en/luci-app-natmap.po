@@ -164,16 +164,16 @@ msgid "Max Retries"
 msgstr "Max Retries"
 
 #: natmap.js:287 natmap.js:472 natmap.js:698
-msgid "max retries,default 0 means execute only once"
-msgstr "max retries,default 0 means execute only once"
+msgid "The maximum number of retries, the default is 10. 0 means unlimited retries, use with caution."
+msgstr "The maximum number of retries, the default is 10. 0 means unlimited retries, use with caution."
 
 #: natmap.js:297 natmap.js:482 natmap.js:708
 msgid "Retry Interval"
 msgstr "Retry Interval"
 
 #: natmap.js:298 natmap.js:483 natmap.js:709
-msgid "Retry Interval, unit is seconds, default 0 is 3 seconds"
-msgstr "Retry Interval, unit is seconds, default 0 is 3 seconds"
+msgid "The retry interval is in seconds. The default value is 3 seconds. 0 means the interval is 0 seconds."
+msgstr "The retry interval is in seconds. The default value is 3 seconds. 0 means the interval is 0 seconds."
 
 #: natmap.js:307
 msgid "Enable Notify"

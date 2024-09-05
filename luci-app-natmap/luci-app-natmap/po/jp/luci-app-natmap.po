@@ -164,16 +164,16 @@ msgid "Max Retries"
 msgstr "最大再試行回数"
 
 #: natmap.js:287 natmap.js:472 natmap.js:698
-msgid "max retries,default 0 means execute only once"
-msgstr "最大再試行数、デフォルトの 0 は 1 回だけ実行することを意味します"
+msgid "The maximum number of retries, the default is 10. 0 means unlimited retries, use with caution."
+msgstr "最大再試行回数、デフォルトは 10 です。 0 は無制限の再試行を意味します。使用には注意が必要です。"
 
 #: natmap.js:297 natmap.js:482 natmap.js:708
 msgid "Retry Interval"
 msgstr "再試行間隔"
 
 #: natmap.js:298 natmap.js:483 natmap.js:709
-msgid "Retry Interval, unit is seconds, default 0 is 3 seconds"
-msgstr "再試行間隔、単位は秒、デフォルトは 0 で 3 秒です"
+msgid "The retry interval is in seconds. The default value is 3 seconds. 0 means the interval is 0 seconds."
+msgstr "再試行間隔は秒単位です。デフォルト値は 3 秒です。0 は間隔が 0 秒であることを意味します。"
 
 #: natmap.js:307
 msgid "Enable Notify"
