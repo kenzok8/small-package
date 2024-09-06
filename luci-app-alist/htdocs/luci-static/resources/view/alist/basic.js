@@ -127,7 +127,7 @@ return view.extend({
 		s.anonymous = true;
 
 		o = s.option(form.Flag, 'force', _('Force read config'),
-			_('By default AList reads the configuration from environment variables, set this field to true to force AList to read config from the configuration file.'));
+			_('Setting this to true will force the program to read the configuration file, ignoring environment variables.'));
 		o.default = true;
 		o.rmempty = false;
 
