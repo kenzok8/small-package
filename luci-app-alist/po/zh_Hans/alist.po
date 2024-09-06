@@ -1,3 +1,13 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: PACKAGE VERSION\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+
 msgid "Alist"
 msgstr "Alist 文件列表"
 
@@ -6,6 +16,9 @@ msgstr "打开 Web 界面"
 
 msgid "A file list program that supports multiple storage."
 msgstr "一款支持多种存储的目录文件列表程序。"
+
+msgid "Setting"
+msgstr "设置"
 
 msgid "Basic Setting"
 msgstr "基本设置"
@@ -19,8 +32,14 @@ msgstr "启用"
 msgid "Port"
 msgstr "端口"
 
+msgid "Web Protocol"
+msgstr "Web 协议"
+
 msgid "Enable SSL"
 msgstr "启用 SSL"
+
+msgid "Force HTTPS"
+msgstr "强制 HTTPS"
 
 msgid "SSL cert"
 msgstr "SSL 证书"
@@ -61,6 +80,18 @@ msgstr "允许从外网访问"
 msgid "Enable Logs"
 msgstr "启用日志"
 
+msgid "Max Size"
+msgstr "日志文大小"
+
+msgid "Max backups"
+msgstr "日志备份数量"
+
+msgid "Max age"
+msgstr "日志保存天数"
+
+msgid "Log Compress"
+msgstr "日志压缩"
+
 msgid "Clear logs"
 msgstr "清空日志"
 
@@ -79,6 +110,12 @@ msgstr "新密码："
 msgid "New password has been copied to clipboard."
 msgstr "新密码已复制到剪贴板。"
 
+msgid "Force read config"
+msgstr "强制读取配置"
+
+msgid "Setting this to true will force the program to read the configuration file, ignoring environment variables."
+msgstr "将此设置为 true 可以强制程序读取配置文件，而忽略环境变量"
+
 msgid "Login Validity Period (hours)"
 msgstr "登录有效期（小时）"
 
@@ -89,7 +126,16 @@ msgid "0 is unlimited, It is recommend to set a low number of concurrency (10-20
 msgstr "默认0不限制，低性能设备建议设置较低的并发数（10-20）"
 
 msgid "Site URL"
-msgstr "站点 URL"
+msgstr "站点地址"
+
+msgid "CDN URL"
+msgstr "CDN 地址"
+
+msgid "JWT Key"
+msgstr "JWT 密钥"
+
+msgid "Disable TLS Verify"
+msgstr "禁用 TLS 验证"
 
 msgid "When the web is reverse proxied to a subdirectory, this option must be filled out to ensure proper functioning of the web. Do not include '/' at the end of the URL"
 msgstr "Web 被反向代理到二级目录时，必须填写该选项以确保 Web 正常工作。URL 结尾请勿携带 '/'"
@@ -97,11 +143,11 @@ msgstr "Web 被反向代理到二级目录时，必须填写该选项以确保 W
 msgid "Delayed Start (seconds)"
 msgstr "开机延时启动（秒）"
 
-msgid "Enable Database"
-msgstr "启用远程数据库"
+msgid "Database"
+msgstr "数据库"
 
 msgid "Database Type"
-msgstr "类型"
+msgstr "数据库类型"
 
 msgid "Database Host"
 msgstr "主机"
@@ -126,4 +172,49 @@ msgstr "SSL模式"
 
 msgid "Database DSN"
 msgstr "DSN"
+
+msgid "Task threads"
+msgstr "任务线程"
+
+msgid "Download Workers"
+msgstr "下载任务线程数"
+
+msgid "Download Max Retry"
+msgstr "下载任务重试次数"
+
+msgid "Transfer Workers"
+msgstr "中转任务线程数"
+
+msgid "Transfer Max Retry"
+msgstr "中转任务下载重试次数"
+
+msgid "Upload Workers"
+msgstr "上传任务线程数"
+
+msgid "Upload Max Retry"
+msgstr "上传任务重试次数"
+
+msgid "Copy Workers"
+msgstr "复制任务线程数"
+
+msgid "Copy Max Retry"
+msgstr "复制任务重试次数"
+
+msgid "CORS Settings"
+msgstr "跨域设置"
+
+msgid "Allow Origins"
+msgstr "允许来源（Origins）"
+
+msgid "Allow Methods"
+msgstr "允许方法（Methods）"
+
+msgid "Allow Headers"
+msgstr "允许标头（Headers）"
+
+msgid "Object Storage"
+msgstr "对象存储"
+
+msgid "Enabled S3"
+msgstr "启用 S3"
 

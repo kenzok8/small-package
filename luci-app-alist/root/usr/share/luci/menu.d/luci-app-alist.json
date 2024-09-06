@@ -18,7 +18,7 @@
 		}
 	},
 	"admin/nas/alist/basic": {
-		"title": "Basic Setting",
+		"title": "Setting",
 		"order": 30,
 		"action": {
 			"type": "view",
