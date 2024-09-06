@@ -11,7 +11,7 @@ var logTextarea;
 function pollLog() {
 	return Promise.all([
 		fs.read_direct('/var/log/alist.log', 'text').then(function (res) {
-			return res.trim().split(/\n/).join('\n').replace(/\u001b\[33mWARN\u001b\[0m/g, '').replace(/\u001b\[36mINFO\u001b\[0m/g, '');
+			return res.trim().split(/\n/).join('\n').replace(/\u001b\[33mWARN\u001b\[0m/g, '').replace(/\u001b\[36mINFO\u001b\[0m/g, '').replace(/\u001b\[31mERRO\u001b\[0m/g, '');
 		}),
 	]).then(function (data) {
 		logTextarea.value = data[0] || _('No log data.');
