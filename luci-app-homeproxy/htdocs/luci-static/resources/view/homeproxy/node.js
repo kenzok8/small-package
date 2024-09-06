@@ -9,6 +9,7 @@
 'require fs';
 'require uci';
 'require ui';
+'require dom';
 'require view';
 
 'require homeproxy as hp';
@@ -355,7 +356,7 @@ function parseShareLink(uri, features) {
 	return config;
 }
 
-function renderNodeSettings(section, data, features, main_node, routing_mode) {
+function renderNodeSettings(section, data, features, main_node, routing_mode, subs_info, proxy_nodes) {
 	var s = section, o;
 	s.rowcolors = true;
 	s.sortable = true;
@@ -408,16 +409,18 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.value('wireguard', _('WireGuard'));
 	o.value('vless', _('VLESS'));
 	o.value('vmess', _('VMess'));
+	o.value('selector', _('Selector'));
+	o.value('urltest', _('URLTest'));
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'address', _('Address'));
 	o.datatype = 'host';
-	o.depends({'type': 'direct', '!reverse': true});
+	o.depends({'type': /^(direct|selector|urltest)$/, '!reverse': true});
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'port', _('Port'));
 	o.datatype = 'port';
-	o.depends({'type': 'direct', '!reverse': true});
+	o.depends({'type': /^(direct|selector|urltest)$/, '!reverse': true});
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'username', _('Username'));
@@ -462,18 +465,24 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('Override the connection destination address.'));
 	o.datatype = 'host';
 	o.depends('type', 'direct');
+	o.modalonly = true;
 
 	o = s.option(form.Value, 'override_port', _('Override port'),
 		_('Override the connection destination port.'));
 	o.datatype = 'port';
 	o.depends('type', 'direct');
+	o.modalonly = true;
 
-	o = s.option(form.ListValue, 'proxy_protocol', _('Proxy protocol'),
+	o = s.option(form.Flag, 'proxy_protocol', _('Proxy protocol'),
 		_('Write proxy protocol in the connection header.'));
-	o.value('', _('Disable'));
+	o.depends('type', 'direct');
+	o.modalonly = true;
+
+	o = s.option(form.ListValue, 'proxy_protocol_version', _('Proxy protocol version'));
 	o.value('1', _('v1'));
 	o.value('2', _('v2'));
-	o.depends('type', 'direct');
+	o.default = '2';
+	o.depends('proxy_protocol', '1');
 	o.modalonly = true;
 
 	/* Hysteria (2) config start */
@@ -706,6 +715,89 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends('type', 'vmess');
 	o.modalonly = true;
 	/* VMess config end */
+
+	/* Selector config start */
+	o = s.option(form.MultiValue, 'group', _('Subscription Groups'),
+		_('List of subscription groups.'));
+	o.value('', _('-- Please choose --'));
+	for (var key in subs_info) {
+		let title = subs_info[key].name;
+		o.value(key, _('Sub (%s)').format(title));
+	}
+	o.depends('type', 'selector');
+	o.depends('type', 'urltest');
+	o.modalonly = true;
+
+	o = s.option(form.MultiValue, 'order', _('Outbounds'),
+		_('List of outbound tags.'));
+	o.value('direct-out', _('Direct'));
+	o.value('block-out', _('Block'));
+	for (var key in proxy_nodes)
+		o.value(key, proxy_nodes[key]);
+	o.depends({'group': /^$/, 'type': /^(selector|urltest)$/});
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'default_selected', _('Default Outbound'),
+		_('The default outbound tag. The first outbound will be used if empty.'));
+	o.value('', _('Default'));
+	o.value('direct-out', _('Direct'));
+	o.value('block-out', _('Block'));
+	for (var key in proxy_nodes)
+		o.value(key, proxy_nodes[key]);
+	o.default = '';
+	o.depends({'group': /^$/, 'type': 'selector'});
+	o.modalonly = true;
+
+	o = s.option(form.ListValue, 'filter_nodes', _('Filter nodes'),
+		_('Drop/keep specific nodes from outbounds.'));
+	o.value('', _('Disable'));
+	o.value('blacklist', _('Blacklist mode'));
+	o.value('whitelist', _('Whitelist mode'));
+	o.default = '';
+	o.depends('type', 'selector');
+	o.depends('type', 'urltest');
+	o.modalonly = true;
+
+	o = s.option(form.DynamicList, 'filter_keywords', _('Filter keywords'),
+		_('Drop/keep nodes that contain the specific keywords. <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions">Regex</a> is supported.'));
+	o.depends({'filter_nodes': '', '!reverse': true});
+	o.modalonly = true;
+	/* Selector config end */
+
+	/* URLTest config start */
+	o = s.option(form.Value, 'test_url', _('Test URL'),
+		_('The URL to test. https://www.gstatic.com/generate_204 will be used if empty.'));
+	o.value('', _('Default'));
+	o.default = 'http://cp.cloudflare.com/';
+	o.depends('type', 'urltest');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'interval', _('Interval'),
+		_('The test interval. <code>3m</code> will be used if empty.'));
+	o.value('', _('Default'));
+	o.default = '10m';
+	o.depends('type', 'urltest');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'tolerance', _('Tolerance'),
+		_('The test tolerance in milliseconds. 50 will be used if empty.'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'urltest');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'idle_timeout', _('Idle timeout'),
+		_('The idle timeout. <code>30m</code> will be used if empty.'));
+	o.default = '30m';
+	o.depends('type', 'urltest');
+	o.modalonly = true;
+
+	o = s.option(form.Flag, 'interrupt_exist_connections', _('Interrupt existing connections'),
+		_('Interrupt existing connections when the selected outbound has changed.'));
+	o.default = o.disabled;
+	o.depends('type', 'selector');
+	o.depends('type', 'urltest');
+	o.modalonly = true;
+	/* URLTest config end */
 
 	/* Transport config start */
 	o = s.option(form.ListValue, 'transport', _('Transport'),
@@ -1109,15 +1201,18 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	/* Extra settings start */
 	o = s.option(form.Flag, 'tcp_fast_open', _('TCP fast open'));
 	o.default = o.disabled;
+	o.depends({'type': /^(selector|urltest)$/, '!reverse': true});
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'tcp_multi_path', _('MultiPath TCP'));
 	o.default = o.disabled;
+	o.depends({'type': /^(selector|urltest)$/, '!reverse': true});
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'udp_fragment', _('UDP Fragment'),
 		_('Enable UDP fragmentation.'));
 	o.default = o.disabled;
+	o.depends({'type': /^(selector|urltest)$/, '!reverse': true});
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'udp_over_tcp', _('UDP over TCP'),
@@ -1152,31 +1247,25 @@ return view.extend({
 		var routing_mode = uci.get(data[0], 'config', 'routing_mode');
 		var features = data[1];
 
-		/* Cache subscription information, it will be called multiple times */
-		var subinfo = [];
-		for (var suburl of (uci.get(data[0], 'subscription', 'subscription_url') || [])) {
-			const url = new URL(suburl);
-			const urlhash = hp.calcStringMD5(suburl.replace(/#.*$/, ''));
-			const title = url.hash ? decodeURIComponent(url.hash.slice(1)) : url.hostname;
-			subinfo.push({ 'hash': urlhash, 'title': title });
-		}
-
 		m = new form.Map('homeproxy', _('Edit nodes'));
+
+		/* Cache all subscription info, they will be called multiple times */
+		var subs_info = hp.loadSubscriptionInfo(data[0]);
+
+		/* Cache all configured proxy nodes, they will be called multiple times */
+		var proxy_nodes = hp.loadNodesList(data[0], subs_info);
 
 		s = m.section(form.NamedSection, 'subscription', 'homeproxy');
 
 		/* Node settings start */
 		/* User nodes start */
 		s.tab('node', _('Nodes'));
+
 		o = s.taboption('node', form.SectionValue, '_node', form.GridSection, 'node');
-		ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode);
+		ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode, subs_info, proxy_nodes);
 		ss.addremove = true;
 		ss.filter = function(section_id) {
-			for (var info of subinfo)
-				if (info.hash === uci.get(data[0], section_id, 'grouphash'))
-					return false;
-
-			return true;
+			return uci.get(data[0], section_id, 'grouphash') ? false : true;
 		}
 		/* Import subscription links start */
 		/* Thanks to luci-app-shadowsocks-libev */
@@ -1239,13 +1328,31 @@ return view.extend({
 				])
 			])
 		}
-		ss.renderSectionAdd = function(/* ... */) {
+		ss.renderSectionAdd = function(extra_class) {
 			var el = form.GridSection.prototype.renderSectionAdd.apply(this, arguments),
+				selectEl = E('select', {
+					class: 'cbi-input-select',
+					change: L.bind(function(section, ev) {
+						var el = dom.parent(ev.target, '.cbi-section-create'),
+							button = el.querySelector('.cbi-section-create > .cbi-button-add'),
+							inputname = el.querySelector('.cbi-section-create-name').value || '';
+						var uciconfig = section.uciconfig || section.map.config;
+
+						button.toggleAttribute('disabled',
+							!inputname ||
+							uci.get(uciconfig, inputname) ||
+							uci.get(uciconfig, ev.target.value + inputname));
+					}, this, ss)
+				}, [
+					E('option', { value: 'node_' }, _('node')),
+					E('option', { value: 'sub_' }, _('sub'))
+				]),
 				nameEl = el.querySelector('.cbi-section-create-name');
 
 			ui.addValidator(nameEl, 'uciname', true, (v) => {
 				var button = el.querySelector('.cbi-section-create > .cbi-button-add');
 				var uciconfig = this.uciconfig || this.map.config;
+				var prefix = el.querySelector('.cbi-input-select').value;
 
 				if (!v) {
 					button.disabled = true;
@@ -1253,11 +1360,16 @@ return view.extend({
 				} else if (uci.get(uciconfig, v)) {
 					button.disabled = true;
 					return _('Expecting: %s').format(_('unique UCI identifier'));
+				} else if (uci.get(uciconfig, prefix + v)) {
+					button.disabled = true;
+					return _('Expecting: %s').format(_('unique label'));
 				} else {
 					button.disabled = null;
 					return true;
 				}
 			}, 'blur', 'keyup');
+
+			el.prepend(E('div', {}, selectEl));
 
 			el.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
@@ -1267,16 +1379,26 @@ return view.extend({
 
 			return el;
 		}
+		ss.handleAdd = function(ev, name) {
+			var selectEl = ev.target.parentElement.firstElementChild.firstElementChild,
+				prefix = selectEl.value;
+
+			return form.GridSection.prototype.handleAdd.apply(this, [ ev, prefix + name ]);
+		}
 		/* Import subscription links end */
 		/* User nodes end */
 
 		/* Subscription nodes start */
-		for (const info of subinfo) {
-			s.tab('sub_' + info.hash, _('Sub (%s)').format(info.title));
-			o = s.taboption('sub_' + info.hash, form.SectionValue, '_sub_' + info.hash, form.GridSection, 'node');
-			ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode);
+		for (var key in subs_info) {
+			const urlhash = key,
+				  title = subs_info[key].name;
+
+			s.tab('sub_' + urlhash, _('Sub (%s)').format(title));
+
+			o = s.taboption('sub_' + urlhash, form.SectionValue, '_sub_' + urlhash, form.GridSection, 'node');
+			ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode, subs_info, proxy_nodes);
 			ss.filter = function(section_id) {
-				return (uci.get(data[0], section_id, 'grouphash') === info.hash);
+				return (uci.get(data[0], section_id, 'grouphash') === urlhash);
 			}
 		}
 		/* Subscription nodes end */
@@ -1286,14 +1408,16 @@ return view.extend({
 		s.tab('subscription', _('Subscriptions'));
 
 		o = s.taboption('subscription', form.Flag, 'auto_update', _('Auto update'),
-			_('Auto update subscriptions and geodata.'));
+			_('Auto update subscriptions.'));
 		o.default = o.disabled;
 		o.rmempty = false;
 
-		o = s.taboption('subscription', form.ListValue, 'auto_update_time', _('Update time'));
-		for (var i = 0; i < 24; i++)
-			o.value(i, i + ':00');
-		o.default = '2';
+		o = s.taboption('subscription', form.Value, 'auto_update_expr', _('Cron expression'),
+			_('The default value is 2:00 every day'));
+		o.default = '0 2 * * *';
+		o.placeholder = '0 2 * * *';
+		o.rmempty = false;
+		o.retain = true;
 		o.depends('auto_update', '1');
 
 		o = s.taboption('subscription', form.Flag, 'update_via_proxy', _('Update via proxy'),
@@ -1303,6 +1427,7 @@ return view.extend({
 
 		o = s.taboption('subscription', form.DynamicList, 'subscription_url', _('Subscription URL-s'),
 			_('Support Hysteria, Shadowsocks, Trojan, v2rayN (VMess), and XTLS (VLESS) online configuration delivery standard.'));
+		o.placeholder = 'https://sub_url#sub_name';
 		o.validate = function(section_id, value) {
 			if (section_id && value) {
 				try {
@@ -1320,16 +1445,15 @@ return view.extend({
 
 		o = s.taboption('subscription', form.ListValue, 'filter_nodes', _('Filter nodes'),
 			_('Drop/keep specific nodes from subscriptions.'));
-		o.value('disabled', _('Disable'));
+		o.value('', _('Disable'));
 		o.value('blacklist', _('Blacklist mode'));
 		o.value('whitelist', _('Whitelist mode'));
-		o.default = 'disabled';
-		o.rmempty = false;
+		o.default = '';
 
 		o = s.taboption('subscription', form.DynamicList, 'filter_keywords', _('Filter keywords'),
 			_('Drop/keep nodes that contain the specific keywords. <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions">Regex</a> is supported.'));
-		o.depends({'filter_nodes': 'disabled', '!reverse': true});
-		o.rmempty = false;
+		o.depends({'filter_nodes': '', '!reverse': true});
+		o.retain = true;
 
 		o = s.taboption('subscription', form.Flag, 'allow_insecure', _('Allow insecure'),
 			_('Allow insecure connection by default when add nodes from subscriptions.') +

@@ -105,7 +105,9 @@ return baseclass.extend({
             } else {
                 url = `http://${window.location.hostname}:${apiPort}/ui/?host=${window.location.hostname}&hostname=${window.location.hostname}&port=${apiPort}&secret=${apiSecret}`;
             }
-            window.open(url, '_blank');
+            if (!window.open(url, '_blank')) {
+                window.location.href = url;
+            }
         } else {
             alert(_('Service is not running.'));
         }

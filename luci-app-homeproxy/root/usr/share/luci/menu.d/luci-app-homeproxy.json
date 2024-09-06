@@ -26,6 +26,14 @@
 			"path": "homeproxy/node"
 		}
 	},
+	"admin/services/homeproxy/ruleset": {
+		"title": "Ruleset Settings",
+		"order": 18,
+		"action": {
+			"type": "view",
+			"path": "homeproxy/ruleset"
+		}
+	},
 	"admin/services/homeproxy/server": {
 		"title": "Server Settings",
 		"order": 20,

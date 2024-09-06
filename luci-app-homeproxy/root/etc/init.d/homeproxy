@@ -15,6 +15,7 @@ HP_DIR="/etc/homeproxy"
 RUN_DIR="/var/run/homeproxy"
 LOG_PATH="$RUN_DIR/homeproxy.log"
 DNSMASQ_DIR="/tmp/dnsmasq.d/dnsmasq-homeproxy.d"
+APILOCATION_PATH="/etc/nginx/conf.d/homeproxy.locations"
 
 log() {
 	echo -e "$(date "+%Y-%m-%d %H:%M:%S") [DAEMON] $*" >> "$LOG_PATH"
@@ -56,12 +57,22 @@ start_service() {
 		fi
 
 		# Auto update
-		local auto_update auto_update_time
+		local auto_update auto_update_expr
 		config_get_bool auto_update "subscription" "auto_update" "0"
 		if [ "$auto_update" = "1" ]; then
-			config_get auto_update_time "subscription" "auto_update_time" "2"
-			echo -e "0 $auto_update_time * * * $HP_DIR/scripts/update_crond.sh" >> "/etc/crontabs/root"
+			config_get auto_update_expr "subscription" "auto_update_expr" "0 2 * * *"
+			echo -e "$auto_update_expr $HP_DIR/scripts/update_crond.sh" >> "/etc/crontabs/root"
 			/etc/init.d/cron restart
+		fi
+
+		# Clash API uses Nginx reverse proxy
+		local clash_api_enabled clash_api_port nginx_support
+		config_get_bool clash_api_enabled "experimental" "clash_api_enabled" "0"
+		config_get_bool nginx_support "experimental" "nginx_support" "0"
+		if [ "$clash_api_enabled" = "1" -a "$nginx_support" = "1" ]; then
+			config_get clash_api_port "experimental" "clash_api_port" "9090"
+			[ "$(sed -En "s|^\s*proxy_pass\s+https?://[^:]+:(\d+).*|\1|p" "$APILOCATION_PATH")" = "$clash_api_port" ] || sed -Ei "/\bproxy_pass\b/{s|(proxy_pass\s+https?://[^:]+:)(\d+)(.*)|\1$clash_api_port\3|}" "$APILOCATION_PATH"
+			/etc/init.d/nginx reload
 		fi
 
 		# DNSMasq rules

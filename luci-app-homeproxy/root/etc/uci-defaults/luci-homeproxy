@@ -15,4 +15,6 @@ uci -q batch <<-EOF >"/dev/null"
 	commit firewall
 EOF
 
+[ -z "$(uci -q get homeproxy.experimental)" ] && uci set homeproxy.experimental=homeproxy && uci commit homeproxy
+
 exit 0
