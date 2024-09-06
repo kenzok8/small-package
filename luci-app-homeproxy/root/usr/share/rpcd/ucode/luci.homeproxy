@@ -179,27 +179,44 @@ const methods = {
 			features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
 			features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
 			features.hp_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
+			features.hp_has_nginx = access('/usr/sbin/nginx');
 
 			return features;
 		}
 	},
 
 	resources_get_version: {
-		args: { type: 'type' },
+		args: { type: 'type', repo: 'repo' },
 		call: function(req) {
-			const version = trim(readfile(`${HP_DIR}/resources/${req.args?.type}.ver`));
-			return { version: version, error: error() };
+			const versions = trim(readfile(`${HP_DIR}/resources/${req.args?.type}.ver`));
+			if (req.args?.repo && versions) {
+				const vers_arr = values(json(versions));
+				for (obj in vers_arr) {
+					if (obj.repo === req.args?.repo)
+						return { version: obj.version, error: 0 };
+				}
+				return { version: '', error: 1 };
+			} else
+				return { version: versions, error: error() };
 		}
 	},
 	resources_update: {
-		args: { type: 'type' },
+		args: { type: 'type', repo: 'repo' },
 		call: function(req) {
 			if (req.args?.type) {
-				const type = shellquote(req.args?.type);
-				const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${type}`);
+				const type = shellquote(req.args?.type),
+				      repo = shellquote(req.args?.repo);
+				const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${type} ${repo}`);
 				return { status: exit_code };
 			} else
 				return { status: 255, error: 'illegal type' };
+		}
+	},
+
+	clash_api_get_secret: {
+		call: function() {
+			const client_json = json(trim(readfile(`${RUN_DIR}/sing-box-c.json`)));
+			return { secret: client_json.experimental.clash_api.secret };
 		}
 	}
 };

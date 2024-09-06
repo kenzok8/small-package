@@ -1,5 +1,4 @@
-/*
- * SPDX-License-Identifier: GPL-2.0-only
+/* SPDX-License-Identifier: GPL-2.0-only
  *
  * Copyright (C) 2022-2023 ImmortalWrt.org
  */
@@ -60,27 +59,27 @@ function getConnStat(self, site) {
 	]);
 }
 
-function getResVersion(self, type) {
+function getResVersion(self, type, repo) {
 	var callResVersion = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_get_version',
-		params: ['type'],
+		params: ['type', 'repo'],
 		expect: { '': {} }
 	});
 
 	var callResUpdate = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_update',
-		params: ['type'],
+		params: ['type', 'repo'],
 		expect: { '': {} }
 	});
 
-	return L.resolveDefault(callResVersion(type), {}).then((res) => {
+	return L.resolveDefault(callResVersion(type, repo), {}).then((res) => {
 		var spanTemp = E('div', { 'style': 'cbi-value-field' }, [
 			E('button', {
 				'class': 'btn cbi-button cbi-button-action',
 				'click': ui.createHandlerFn(this, function() {
-					return L.resolveDefault(callResUpdate(type), {}).then((res) => {
+					return L.resolveDefault(callResUpdate(type, repo), {}).then((res) => {
 						switch (res.status) {
 						case 0:
 							self.description = _('Successfully updated.');
@@ -184,7 +183,8 @@ return view.extend({
 
 	render: function(data) {
 		var m, s, o;
-		var routing_mode = uci.get(data[0], 'config', 'routing_mode') || 'bypass_mainland_china';
+		var routing_mode = uci.get(data[0], 'config', 'routing_mode') || 'bypass_mainland_china',
+			dashboard_repo = uci.get(data[0], 'experimental', 'dashboard_repo') || '';
 
 		m = new form.Map('homeproxy');
 
@@ -200,6 +200,12 @@ return view.extend({
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;
+
+		if (routing_mode === 'custom' && dashboard_repo !== '') {
+			o = s.option(form.DummyValue, '_clash_dashboard_version', _('Clash dashboard version'));
+			o.cfgvalue = function() { return getResVersion(this, 'clash_dashboard', dashboard_repo) };
+			o.rawhtml = true;
+		}
 
 		o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
 		o.cfgvalue = function() { return getResVersion(this, 'china_ip4') };

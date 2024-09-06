@@ -3,6 +3,8 @@
 #
 # Copyright (C) 2022-2023 ImmortalWrt.org
 
+. /usr/share/libubox/jshn.sh
+
 NAME="homeproxy"
 
 RESOURCES_DIR="/etc/$NAME/resources"
@@ -35,6 +37,67 @@ set_lock() {
 
 to_upper() {
 	echo -e "$1" | tr "[a-z]" "[A-Z]"
+}
+
+get_local_vers() {
+	local ver_file="$1"
+	local repoid="$2"
+
+	local ver="$(eval "jsonfilter -qi \"$ver_file\" -e '@[\"$repoid\"].version'")"
+	[ -n "$ver" ] && echo "$ver" || return 1
+}
+
+check_clash_dashboard_update() {
+	local dashtype="$1"
+	local dashrepo="$2"
+	local dashrepoid="$(echo -n "$dashrepo" | md5sum | cut -f1 -d' ')"
+	local wget="wget --timeout=10 -q"
+
+	set_lock "set" "$dashtype"
+
+	local dashdata_ver="$($wget -O- "https://api.github.com/repos/$dashrepo/releases/latest" | jsonfilter -e "@.tag_name")"
+	[ -n "$dashdata_ver" ] || {
+		dashdata_ver="$($wget -O- "https://api.github.com/repos/$dashrepo/tags" | jsonfilter -e "@[*].name" | head -n1)"
+	}
+	if [ -z "$dashdata_ver" ]; then
+		log "[$(to_upper "$dashtype")] [$dashrepo] Failed to get the latest version, please retry later."
+
+		set_lock "remove" "$dashtype"
+		return 1
+	fi
+
+	local local_dashdata_ver="$(get_local_vers "$RESOURCES_DIR/$dashtype.ver" "$dashrepoid" || echo "NOT FOUND")"
+	if [ "$local_dashdata_ver" = "$dashdata_ver" ]; then
+		log "[$(to_upper "$dashtype")] [$dashrepo] Current version: $dashdata_ver."
+		log "[$(to_upper "$dashtype")] [$dashrepo] You're already at the latest version."
+
+		set_lock "remove" "$dashtype"
+		return 3
+	else
+		log "[$(to_upper "$dashtype")] [$dashrepo] Local version: $local_dashdata_ver, latest version: $dashdata_ver."
+	fi
+
+	$wget "https://codeload.github.com/$dashrepo/zip/refs/heads/gh-pages" -O "$RUN_DIR/$dashtype.zip"
+	if [ ! -s "$RUN_DIR/$dashtype.zip" ]; then
+		rm -f "$RUN_DIR/$dashtype.zip"
+		log "[$(to_upper "$dashtype")] [$dashrepo] Update failed."
+
+		set_lock "remove" "$dashtype"
+		return 1
+	fi
+
+	mv -f "$RUN_DIR/$dashtype.zip" "$RESOURCES_DIR/${dashrepo//\//_}.zip"
+	touch "$RESOURCES_DIR/$dashtype.ver"
+	json_init
+	json_load_file "$RESOURCES_DIR/$dashtype.ver"
+	json_select "$dashrepoid" 2>/dev/null || json_add_object "$dashrepoid"
+	json_add_string repo "$dashrepo"
+	json_add_string version "$dashdata_ver"
+	json_dump > "$RESOURCES_DIR/$dashtype.ver"
+	log "[$(to_upper "$dashtype")] [$dashrepo] Successfully updated."
+
+	set_lock "remove" "$dashtype"
+	return 0
 }
 
 check_list_update() {
@@ -85,6 +148,9 @@ check_list_update() {
 }
 
 case "$1" in
+"clash_dashboard")
+	check_clash_dashboard_update "$1" "$2"
+	;;
 "china_ip4")
 	check_list_update "$1" "1715173329/IPCIDR-CHINA" "master" "ipv4.txt"
 	;;
@@ -99,7 +165,7 @@ case "$1" in
 		sed -i -e "s/full://g" -e "/:/d" "$RESOURCES_DIR/china_list.txt"
 	;;
 *)
-	echo -e "Usage: $0 <china_ip4 / china_ip6 / gfw_list / china_list>"
+	echo -e "Usage: $0 <clash_dashboard / china_ip4 / china_ip6 / gfw_list / china_list>"
 	exit 1
 	;;
 esac

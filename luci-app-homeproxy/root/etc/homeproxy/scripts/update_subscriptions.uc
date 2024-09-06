@@ -16,7 +16,7 @@ import { init_action } from 'luci.sys';
 
 import {
 	calcStringMD5, wGET, executeCommand, decodeBase64Str,
-	getTime, isEmpty, parseURL, validation,
+	getTime, isEmpty, parseURL, validation, filterCheck,
 	HP_DIR, RUN_DIR
 } from 'homeproxy';
 
@@ -31,7 +31,7 @@ const ucimain = 'config',
       ucisubscription = 'subscription';
 
 const allow_insecure = uci.get(uciconfig, ucisubscription, 'allow_insecure') || '0',
-      filter_mode = uci.get(uciconfig, ucisubscription, 'filter_nodes') || 'disabled',
+      filter_mode = uci.get(uciconfig, ucisubscription, 'filter_nodes') || 'nil',
       filter_keywords = uci.get(uciconfig, ucisubscription, 'filter_keywords') || [],
       packet_encoding = uci.get(uciconfig, ucisubscription, 'packet_encoding') || 'xudp',
       subscription_urls = uci.get(uciconfig, ucisubscription, 'subscription_url') || [],
@@ -46,21 +46,6 @@ if (routing_mode !== 'custom') {
 /* UCI config end */
 
 /* String helper start */
-function filter_check(name) {
-	if (isEmpty(name) || filter_mode === 'disabled' || isEmpty(filter_keywords))
-		return false;
-
-	let ret = false;
-	for (let i in filter_keywords) {
-		const patten = regexp(i);
-		if (match(name, patten))
-			ret = true;
-	}
-	if (filter_mode === 'whitelist')
-		ret = !ret;
-
-	return ret;
-}
 /* String helper end */
 
 /* Common var start */
@@ -489,7 +474,7 @@ function main() {
 			      nameHash = calcStringMD5(label);
 			config.label = label;
 
-			if (filter_check(config.label))
+			if (filterCheck(config.label, filter_mode, filter_keywords))
 				log(sprintf('Skipping blacklist node: %s.', config.label));
 			else if (node_cache[groupHash][confHash] || node_cache[groupHash][nameHash])
 				log(sprintf('Skipping duplicate node: %s.', config.label));
@@ -543,10 +528,7 @@ function main() {
 			log(sprintf('Removing node: %s.', cfg.label || cfg['name']));
 		} else {
 			map(keys(node_cache[cfg.grouphash][cfg['.name']]), (v) => {
-				if (v in node_cache[cfg.grouphash][cfg['.name']])
-					uci.set(uciconfig, cfg['.name'], v, node_cache[cfg.grouphash][cfg['.name']][v]);
-				else
-					uci.delete(uciconfig, cfg['.name'], v);
+				uci.set(uciconfig, cfg['.name'], v, node_cache[cfg.grouphash][cfg['.name']][v]);
 			});
 			node_cache[cfg.grouphash][cfg['.name']].isExisting = true;
 		}

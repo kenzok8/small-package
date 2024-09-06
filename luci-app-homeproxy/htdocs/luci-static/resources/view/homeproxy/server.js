@@ -6,6 +6,7 @@
 
 'use strict';
 'require form';
+'require fs';
 'require poll';
 'require rpc';
 'require uci';
@@ -54,6 +55,7 @@ function handleGenKey(option) {
 		required_method = this.section.getOption('shadowsocks_encrypt_method')?.formvalue(section_id);
 
 	switch (required_method) {
+		/* AEAD */
 		case 'aes-128-gcm':
 		case '2022-blake3-aes-128-gcm':
 			password = hp.generateRand('base64', 16);
@@ -68,12 +70,15 @@ function handleGenKey(option) {
 		case '2022-blake3-chacha20-poly1305':
 			password = hp.generateRand('base64', 32);
 			break;
+		/* NONE */
 		case 'none':
 			password = '';
 			break;
+		/* UUID */
 		case 'uuid':
 			password = hp.generateRand('uuid');
 			break;
+		/* PLAIN */
 		default:
 			password = hp.generateRand('hex', 16);
 			break;
@@ -113,6 +118,17 @@ return view.extend({
 
 		s = m.section(form.NamedSection, 'server', 'homeproxy', _('Global settings'));
 
+		o = s.option(form.Button, '_reload_server', _('Quick Reload'));
+		o.inputtitle = _('Reload');
+		o.inputstyle = 'apply';
+		o.onclick = function() {
+			return fs.exec('/etc/init.d/homeproxy', ['reload', 'server'])
+				.then((res) => { return window.location = window.location.href.split('#')[0] })
+				.catch((e) => {
+					ui.addNotification(null, E('p', _('Failed to execute "/etc/init.d/homeproxy %s %s" reason: %s').format('reload', 'server', e)));
+				});
+		};
+
 		o = s.option(form.Flag, 'enabled', _('Enable'));
 		o.default = o.disabled;
 		o.rmempty = false;
@@ -122,13 +138,15 @@ return view.extend({
 		o.rmempty = false;
 
 		s = m.section(form.GridSection, 'server', _('Server settings'));
+		var prefmt = { 'prefix': 'server_', 'suffix': '' };
 		s.addremove = true;
 		s.rowcolors = true;
 		s.sortable = true;
 		s.nodescriptions = true;
 		s.modaltitle = L.bind(hp.loadModalTitle, this, _('Server'), _('Add a server'), data[0]);
 		s.sectiontitle = L.bind(hp.loadDefaultLabel, this, data[0]);
-		s.renderSectionAdd = L.bind(hp.renderSectionAdd, this, s);
+		s.renderSectionAdd = L.bind(hp.renderSectionAdd, this, s, prefmt, false);
+		s.handleAdd = L.bind(hp.handleAdd, this, s, prefmt);
 
 		o = s.option(form.Value, 'label', _('Label'));
 		o.load = L.bind(hp.loadDefaultLabel, this, data[0]);

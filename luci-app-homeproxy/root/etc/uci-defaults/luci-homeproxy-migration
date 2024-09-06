@@ -11,11 +11,18 @@ elif echo "$china_dns_server" | grep -q ","; then
 		uci -q add_list "homeproxy.config.china_dns_server"="$dns"
 	done
 fi
-
-if [ "$(uci -q get homeproxy.config.routing_port)" = "all" ]; then
-	uci -q delete "homeproxy.config.routing_port"
+# rm Subscription Name-s
+subscription_urls="$(uci -q get "homeproxy.subscription.subscription_url")"
+subscription_names="$(uci -q get "homeproxy.subscription.subscription_name")"
+if [ -n "$subscription_names" ]; then
+	uci -q delete "homeproxy.subscription.subscription_url"
+	uci -q delete "homeproxy.subscription.subscription_name"
+	i=1
+	for suburl in $subscription_urls; do
+		uci -q add_list "homeproxy.subscription.subscription_url"="${suburl}#$(echo "$subscription_names" | cut -f$i -d' ')"
+		let i++
+	done
 fi
-
 [ -z "$(uci -q changes "homeproxy")" ] || uci -q commit "homeproxy"
 
 exit 0

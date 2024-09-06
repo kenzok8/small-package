@@ -27,6 +27,9 @@ config homeproxy 'config'
 	option proxy_mode 'redirect_tproxy'
 	option ipv6_support '1'
 
+config homeproxy 'experimental'
+	option clash_api_port '9090'
+
 config homeproxy 'control'
 	option lan_proxy_mode 'disabled'
 	list wan_proxy_ipv4_ips '91.105.192.0/23'
