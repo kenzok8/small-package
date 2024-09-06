@@ -51,6 +51,7 @@ WebUI\HTTPS\KeyPath=
 WebUI\HostHeaderValidation=true
 WebUI\LocalHostAuth=true
 WebUI\MaxAuthenticationFailCount=20
+WebUI\Password_PBKDF2="@ByteArray(jitR5BGNNzYwj+fDyesHIg==:PzUTXosIj4MeWbd/42TEWE26dazmXMwZuTOIjcjD681eFq/PIdyu/6YAmoGl16ekasJDDAvnhgllDIXB+cfFHQ==)"
 WebUI\Port=8080
 WebUI\ReverseProxySupportEnabled=false
 WebUI\RootFolder=
