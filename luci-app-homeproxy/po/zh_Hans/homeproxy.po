@@ -217,11 +217,11 @@ msgstr "自动配置防火墙"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1121
 msgid "Auto set backend"
-msgstr ""
+msgstr "自动设置后端"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1122
 msgid "Auto set backend address for dashboard."
-msgstr ""
+msgstr "自动设置面板后端地址"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1398
 msgid "Auto update"
@@ -233,7 +233,7 @@ msgstr "自动更新订阅。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1130
 msgid "Automatically generated if empty"
-msgstr ""
+msgstr "如果为空则自动生成"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:634
 msgid "BBR"
@@ -361,17 +361,17 @@ msgstr "思科公共 DNS（208.67.222.222）"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1060
 msgid "Clash API settings"
-msgstr ""
+msgstr "Clash API 设置"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1090
 #: htdocs/luci-static/resources/view/homeproxy/status.js:205
 msgid "Clash dashboard version"
-msgstr ""
+msgstr "Clash 面板版本"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:619
 #: htdocs/luci-static/resources/view/homeproxy/client.js:964
 msgid "Clash mode"
-msgstr ""
+msgstr "Clash 模式"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:165
 msgid "Clean log"
@@ -401,7 +401,7 @@ msgstr "收集数据中..."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:109
 msgid "Command failed"
-msgstr ""
+msgstr "命令执行失败"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:294
 msgid "Common ports only (bypass P2P traffic)"
@@ -418,7 +418,7 @@ msgstr "连接检查"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1403
 msgid "Cron expression"
-msgstr ""
+msgstr "Cron 表达式"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:282
 msgid "Custom routing"
@@ -483,7 +483,7 @@ msgstr "默认 DNS 解析策略"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:728
 msgid "Default Outbound"
-msgstr ""
+msgstr "默认出站"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:799
 msgid "Default domain strategy for resolving the domain names."
@@ -641,7 +641,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:740
 msgid "Drop/keep specific nodes from outbounds."
-msgstr ""
+msgstr "从出站规则中删除/保留 指定节点"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1435
 msgid "Drop/keep specific nodes from subscriptions."
@@ -696,7 +696,7 @@ msgstr "修改节点"
 
 #: htdocs/luci-static/resources/view/homeproxy/ruleset.js:82
 msgid "Edit ruleset"
-msgstr ""
+msgstr "编辑规则集"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:535
 msgid "Email"
@@ -733,7 +733,7 @@ msgstr "启用 ACME"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1065
 msgid "Enable Clash API"
-msgstr ""
+msgstr "启用 clash API"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1117
 msgid "Enable ECH"
@@ -830,7 +830,7 @@ msgstr "外部账户密钥标识符"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:113
 msgid "Failed to execute \"/etc/init.d/%s %s\" action: %s"
-msgstr ""
+msgstr "执行“/etc/init.d/%s %s”操作失败：%s"
 
 #: htdocs/luci-static/resources/homeproxy.js:274
 msgid "Failed to upload %s, error: %s."
@@ -1047,7 +1047,7 @@ msgstr "空闲超时"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1017
 msgid "If Any is selected, uncheck others"
-msgstr ""
+msgstr "如果选择了 '任意'，取消勾选其他选项"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:837
 msgid ""
@@ -1069,7 +1069,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1089
 msgid "If the selected dashboard is <code>"
-msgstr ""
+msgstr "如果选定的仪表板是 <code>"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:822
 #: htdocs/luci-static/resources/view/homeproxy/server.js:345
@@ -1099,7 +1099,7 @@ msgstr "导入"
 #: htdocs/luci-static/resources/view/homeproxy/ruleset.js:173
 #: htdocs/luci-static/resources/view/homeproxy/ruleset.js:175
 msgid "Import rule-set links"
-msgstr ""
+msgstr "导入规则集链接"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1262
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1364
@@ -1113,7 +1113,7 @@ msgstr "独立缓存"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1104
 msgid "Installed"
-msgstr ""
+msgstr "已安装"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1143
 msgid "Interface Control"
@@ -1121,15 +1121,15 @@ msgstr "接口控制"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:782
 msgid "Interrupt existing connections"
-msgstr ""
+msgstr "中断现有连接""
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:783
 msgid "Interrupt existing connections when the selected outbound has changed."
-msgstr ""
+msgstr "当选定的出站规则更改时，中断现有连接"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:763
 msgid "Interval"
-msgstr ""
+msgstr "间隔"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:662
 #: htdocs/luci-static/resources/view/homeproxy/server.js:297
@@ -1194,11 +1194,11 @@ msgstr "分配给接口的 IP（v4 或 v6）地址前缀列表。"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:720
 msgid "List of outbound tags."
-msgstr ""
+msgstr "出站标签列表"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:709
 msgid "List of subscription groups."
-msgstr ""
+msgstr "订阅组列表"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1058
 #: htdocs/luci-static/resources/view/homeproxy/server.js:488
@@ -1239,11 +1239,11 @@ msgstr "日志为空。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1078
 msgid "Log level"
-msgstr ""
+msgstr "日志级别"
 
 #: htdocs/luci-static/resources/homeproxy.js:237
 msgid "Lowercase only"
-msgstr ""
+msgstr "仅小写"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:955
 msgid "MTU"
@@ -1290,7 +1290,7 @@ msgstr "匹配 IP CIDR。"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:620
 #: htdocs/luci-static/resources/view/homeproxy/client.js:965
 msgid "Match clash mode."
-msgstr ""
+msgstr "匹配 Clash 模式"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:556
 #: htdocs/luci-static/resources/view/homeproxy/client.js:901
@@ -1499,7 +1499,7 @@ msgstr "New Reno"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1068
 msgid "Nginx Support"
-msgstr ""
+msgstr "Nginx 支持"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:792
 #: htdocs/luci-static/resources/view/homeproxy/node.js:809
@@ -1523,7 +1523,7 @@ msgstr "无订阅节点"
 
 #: htdocs/luci-static/resources/view/homeproxy/ruleset.js:130
 msgid "No valid rule-set link found."
-msgstr ""
+msgstr "未找到有效的规则集链接"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1301
 msgid "No valid share link found."
@@ -1577,7 +1577,7 @@ msgstr "仅代理中国大陆"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:97
 msgid "Open Clash Dashboard"
-msgstr ""
+msgstr " Clash 面板"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:502
 #: htdocs/luci-static/resources/view/homeproxy/client.js:843
@@ -1598,7 +1598,7 @@ msgstr "出站节点"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:719
 msgid "Outbounds"
-msgstr ""
+msgstr "出站"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:464
 msgid "Override address"
@@ -1817,7 +1817,7 @@ msgstr "请求类型"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:400
 msgid "Quick Reload"
-msgstr ""
+msgstr "快速加载"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:724
 msgid "RDRC timeout"
@@ -1880,7 +1880,7 @@ msgstr "区域 ID"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:401
 msgid "Reload"
-msgstr ""
+msgstr "加载"
 
 #: htdocs/luci-static/resources/view/homeproxy/ruleset.js:196
 msgid "Remote"
@@ -1945,7 +1945,7 @@ msgstr "路由规则"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:623
 #: htdocs/luci-static/resources/view/homeproxy/client.js:968
 msgid "Rule"
-msgstr ""
+msgstr "规则"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:627
 #: htdocs/luci-static/resources/view/homeproxy/client.js:972
@@ -1963,7 +1963,7 @@ msgstr "规则集 URL"
 
 #: root/usr/share/luci/menu.d/luci-app-homeproxy.json:30
 msgid "Ruleset Settings"
-msgstr ""
+msgstr "规则集设置"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:505
 #: htdocs/luci-static/resources/view/homeproxy/client.js:846
@@ -2007,15 +2007,15 @@ msgstr "保存订阅设置"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1130
 msgid "Secret"
-msgstr ""
+msgstr "密钥"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1088
 msgid "Select Clash Dashboard"
-msgstr ""
+msgstr "选择 Clash 面板"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:412
 msgid "Selector"
-msgstr ""
+msgstr "选择项"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1023
 #: htdocs/luci-static/resources/view/homeproxy/server.js:89
@@ -2182,7 +2182,7 @@ msgstr "成功导入 %s 个节点，共 %s 个。"
 
 #: htdocs/luci-static/resources/view/homeproxy/ruleset.js:132
 msgid "Successfully imported %s rule-set of total %s."
-msgstr ""
+msgstr "成功导入 %s 个规则集，共 %s 个。"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:85
 msgid "Successfully updated."
@@ -2290,7 +2290,7 @@ msgstr "腾讯公共 DNS（119.29.29.29）"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:756
 msgid "Test URL"
-msgstr ""
+msgstr "测试 URL"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:551
 msgid "The ACME CA provider to use."
@@ -2313,7 +2313,7 @@ msgstr "用于接收数据的 QUIC 流级流控制窗口。"
 #: htdocs/luci-static/resources/view/homeproxy/node.js:757
 msgid ""
 "The URL to test. https://www.gstatic.com/generate_204 will be used if empty."
-msgstr ""
+msgstr "用于测试的 URL。如果为空，将使用 https://www.gstatic.com/generate_204。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:757
 msgid "The address of the dns server. Support UDP, TCP, DoT, DoH and RCode."
@@ -2337,15 +2337,15 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1113
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1116
 msgid "The current API URL is <code>%s</code>"
-msgstr ""
+msgstr "当前的 API URL 是 `<code>%s</code>`"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1133
 msgid "The current Secret is <code>"
-msgstr ""
+msgstr "当前的密钥是 <code>"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:729
 msgid "The default outbound tag. The first outbound will be used if empty."
-msgstr ""
+msgstr "默认出站标签。如果为空，将使用第一个出站标签。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:519
 msgid ""
@@ -2381,7 +2381,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1404
 msgid "The default value is 2:00 every day"
-msgstr ""
+msgstr "默认值是每天 2:00"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:793
 msgid ""
@@ -2404,7 +2404,7 @@ msgstr "创建或选择现有 ACME 服务器帐户时使用的电子邮件地址
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:777
 msgid "The idle timeout. <code>30m</code> will be used if empty."
-msgstr ""
+msgstr "空闲超时。如果为空，将使用 <code>30m</code>"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1080
 #: htdocs/luci-static/resources/view/homeproxy/server.js:501
@@ -2459,11 +2459,11 @@ msgstr "上游出站的标签。<br/>启用时，其他拨号字段将被忽略�
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:764
 msgid "The test interval. <code>3m</code> will be used if empty."
-msgstr ""
+msgstr "测试间隔时间。如果为空，将使用 `<code>3m</code>`。"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:771
 msgid "The test tolerance in milliseconds. 50 will be used if empty."
-msgstr ""
+msgstr "测试灵敏度（毫秒）。如果为空，将使用 50。`。"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:825
 #: htdocs/luci-static/resources/view/homeproxy/server.js:385
@@ -2514,11 +2514,12 @@ msgstr ""
 msgid ""
 "To enable this feature you need install <b>luci-nginx</b> and <b>luci-ssl-"
 "nginx</b><br/> first"
-msgstr ""
+msgstr "要启用此功能，您需要安装<b>luci-nginx</b> and <b>luci-ssl-"
+"nginx</b><br/>"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:770
 msgid "Tolerance"
-msgstr ""
+msgstr "灵敏度"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:791
 #: htdocs/luci-static/resources/view/homeproxy/server.js:319
@@ -2574,7 +2575,7 @@ msgstr "UDP 中继模式"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:413
 msgid "URLTest"
-msgstr ""
+msgstr "URL测试"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:623
 #: htdocs/luci-static/resources/view/homeproxy/server.js:266
@@ -2652,7 +2653,7 @@ msgstr "使用 ACME TLS 证书颁发机构。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1101
 msgid "Use Online Dashboard"
-msgstr ""
+msgstr "使用在线面板"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1053
 #: htdocs/luci-static/resources/view/homeproxy/server.js:483
@@ -2778,7 +2779,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1335
 msgid "node"
-msgstr ""
+msgstr "节点"
 
 #: htdocs/luci-static/resources/homeproxy.js:292
 #: htdocs/luci-static/resources/homeproxy.js:310
@@ -2823,7 +2824,7 @@ msgstr "sing-box 服务端"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1336
 msgid "sub"
-msgstr ""
+msgstr "订阅"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1139
 msgid "uTLS fingerprint"
@@ -2850,7 +2851,7 @@ msgstr "独立 UCI 标识"
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1353
 #: htdocs/luci-static/resources/view/homeproxy/ruleset.js:164
 msgid "unique label"
-msgstr ""
+msgstr "唯一标签"
 
 #: htdocs/luci-static/resources/homeproxy.js:301
 msgid "unique value"
