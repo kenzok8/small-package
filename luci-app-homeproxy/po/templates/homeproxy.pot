@@ -2845,3 +2845,8 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1097
 msgid "yacd-meta"
 msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js:313
+#: htdocs/luci-static/resources/view/homeproxy/server.js:782
+msgid "UDP NAT expiration time"
+msgstr ""
