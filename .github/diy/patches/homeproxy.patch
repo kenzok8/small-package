@@ -1,15 +1,20 @@
-diff --git a/luci-app-homeproxy/po/zh-cn b/luci-app-homeproxy/po/zh-cn
-new file mode 120000
-index 0000000..8d69574
---- /dev/null
-+++ b/luci-app-homeproxy/po/zh-cn
-@@ -0,0 +1 @@
-+zh_Hans
-\ No newline at end of file
-diff --git a/luci-app-homeproxy1/po/zh_Hans/homeproxy.po b/luci-app-homeproxy/po/zh_Hans/homeproxy.po
-index 1af8fc5..389d6fa 100644
---- a/luci-app-homeproxy1/po/zh_Hans/homeproxy.po
-+++ b/luci-app-homeproxy/po/zh_Hans/homeproxy.po
+diff --git a/luci-app-homeproxy/po/templates/homeproxy.pot b/luci-app-homeproxy1/po/templates/homeproxy.pot
+index dcaccd4..e4c1497 100644
+--- a/luci-app-homeproxy/po/templates/homeproxy.pot
++++ b/luci-app-homeproxy1/po/templates/homeproxy.pot
+@@ -2845,3 +2845,8 @@ msgstr ""
+ #: htdocs/luci-static/resources/view/homeproxy/client.js:1097
+ msgid "yacd-meta"
+ msgstr ""
++
++#: htdocs/luci-static/resources/view/homeproxy/client.js:313
++#: htdocs/luci-static/resources/view/homeproxy/server.js:782
++msgid "UDP NAT expiration time"
++msgstr ""
+diff --git a/luci-app-homeproxy/po/zh_Hans/homeproxy.po b/luci-app-homeproxy1/po/zh_Hans/homeproxy.po
+index 1af8fc5..6909a58 100644
+--- a/luci-app-homeproxy/po/zh_Hans/homeproxy.po
++++ b/luci-app-homeproxy1/po/zh_Hans/homeproxy.po
 @@ -217,11 +217,11 @@ msgstr "自动配置防火墙"
  
  #: htdocs/luci-static/resources/view/homeproxy/client.js:1121
@@ -393,7 +398,19 @@ index 1af8fc5..389d6fa 100644
  
  #: htdocs/luci-static/resources/view/homeproxy/node.js:791
  #: htdocs/luci-static/resources/view/homeproxy/server.js:319
-@@ -2574,7 +2575,7 @@ msgstr "UDP 中继模式"
+@@ -2560,6 +2561,11 @@ msgstr "UDP 分片"
+ msgid "UDP over TCP"
+ msgstr "UDP over TCP"
+ 
++#: htdocs/luci-static/resources/view/homeproxy/client.js:313
++#: htdocs/luci-static/resources/view/homeproxy/server.js:782
++msgid "UDP NAT expiration time"
++msgstr "UDP NAT 过期时间"
++
+ #: htdocs/luci-static/resources/view/homeproxy/node.js:648
+ msgid "UDP over stream"
+ msgstr "UDP over stream"
+@@ -2574,7 +2580,7 @@ msgstr "UDP 中继模式"
  
  #: htdocs/luci-static/resources/view/homeproxy/node.js:413
  msgid "URLTest"
@@ -402,7 +419,7 @@ index 1af8fc5..389d6fa 100644
  
  #: htdocs/luci-static/resources/view/homeproxy/node.js:623
  #: htdocs/luci-static/resources/view/homeproxy/server.js:266
-@@ -2652,7 +2653,7 @@ msgstr "使用 ACME TLS 证书颁发机构。"
+@@ -2652,7 +2658,7 @@ msgstr "使用 ACME TLS 证书颁发机构。"
  
  #: htdocs/luci-static/resources/view/homeproxy/client.js:1101
  msgid "Use Online Dashboard"
@@ -411,7 +428,7 @@ index 1af8fc5..389d6fa 100644
  
  #: htdocs/luci-static/resources/view/homeproxy/node.js:1053
  #: htdocs/luci-static/resources/view/homeproxy/server.js:483
-@@ -2778,7 +2779,7 @@ msgstr ""
+@@ -2778,7 +2784,7 @@ msgstr ""
  
  #: htdocs/luci-static/resources/view/homeproxy/node.js:1335
  msgid "node"
@@ -420,7 +437,7 @@ index 1af8fc5..389d6fa 100644
  
  #: htdocs/luci-static/resources/homeproxy.js:292
  #: htdocs/luci-static/resources/homeproxy.js:310
-@@ -2823,7 +2824,7 @@ msgstr "sing-box 服务端"
+@@ -2823,7 +2829,7 @@ msgstr "sing-box 服务端"
  
  #: htdocs/luci-static/resources/view/homeproxy/node.js:1336
  msgid "sub"
@@ -429,7 +446,7 @@ index 1af8fc5..389d6fa 100644
  
  #: htdocs/luci-static/resources/view/homeproxy/node.js:1139
  msgid "uTLS fingerprint"
-@@ -2850,7 +2851,7 @@ msgstr "独立 UCI 标识"
+@@ -2850,7 +2856,7 @@ msgstr "独立 UCI 标识"
  #: htdocs/luci-static/resources/view/homeproxy/node.js:1353
  #: htdocs/luci-static/resources/view/homeproxy/ruleset.js:164
  msgid "unique label"
