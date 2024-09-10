@@ -2561,6 +2561,11 @@ msgstr "UDP 分片"
 msgid "UDP over TCP"
 msgstr "UDP over TCP"
 
+#: htdocs/luci-static/resources/view/homeproxy/client.js:313
+#: htdocs/luci-static/resources/view/homeproxy/server.js:782
+msgid "UDP NAT expiration time"
+msgstr "UDP NAT 过期时间"
+
 #: htdocs/luci-static/resources/view/homeproxy/node.js:648
 msgid "UDP over stream"
 msgstr "UDP over stream"
