@@ -101,8 +101,6 @@ int main(const int argc, char *argv[]) {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
     signal(SIGQUIT, signal_handler);
-    signal(SIGSEGV, signal_handler);
-    signal(SIGABRT, signal_handler);
 
     struct nf_queue queue[1] = {0};
 
