@@ -7,47 +7,69 @@ OPTION(UA2F_BUILD_TESTS "Build tests" OFF)
 OPTION(UA2F_ENABLE_UCI "Enable UCI support" ON)
 
 find_package(Git)
-if(GIT_FOUND)
+if (GIT_FOUND)
     execute_process(
             COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             OUTPUT_VARIABLE GIT_TAG
             OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE GIT_TAG_RESULT
     )
+    if ((NOT GIT_TAG_RESULT EQUAL 0) OR (GIT_TAG STREQUAL ""))
+        set(GIT_TAG "unknown")
+    endif ()
+
     execute_process(
             COMMAND ${GIT_EXECUTABLE} branch --show-current
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             OUTPUT_VARIABLE GIT_BRANCH
             OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE GIT_BRANCH_RESULT
     )
+    if ((NOT GIT_BRANCH_RESULT EQUAL 0) OR (GIT_BRANCH STREQUAL ""))
+        set(GIT_BRANCH "unknown")
+    endif ()
+
     execute_process(
             COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             OUTPUT_VARIABLE GIT_COMMIT
             OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE GIT_COMMIT_RESULT
     )
-else()
+    if ((NOT GIT_COMMIT_RESULT EQUAL 0) OR (GIT_COMMIT STREQUAL ""))
+        set(GIT_COMMIT "unknown")
+    endif ()
+else ()
     set(GIT_COMMIT "unknown")
     set(GIT_BRANCH "unknown")
     set(GIT_TAG "unknown")
-endif()
+endif ()
 
-if(UA2F_VERSION_STR)
+if (UA2F_VERSION_STR)
     message(STATUS "Using version string: ${UA2F_VERSION_STR}")
 else ()
     set(UA2F_VERSION_STR "unknown")
     message(STATUS "Using version string: unknown")
-endif()
+endif ()
 
-# Define macros
 add_compile_definitions(UA2F_GIT_COMMIT="${GIT_COMMIT}")
 add_compile_definitions(UA2F_GIT_BRANCH="${GIT_BRANCH}")
 add_compile_definitions(UA2F_GIT_TAG="${GIT_TAG}")
 add_compile_definitions(UA2F_VERSION="${UA2F_VERSION_STR}")
 
+if (DEFINED ENV{UA2F_ENABLE_ASAN})
+    set(UA2F_ENABLE_ASAN $ENV{UA2F_ENABLE_ASAN})
+    message(STATUS "UA2F_ENABLE_ASAN set from environment: ${UA2F_ENABLE_ASAN}")
+else ()
+    set(UA2F_ENABLE_ASAN OFF)
+    message(STATUS "UA2F_ENABLE_ASAN not set in environment, using default: OFF")
+endif ()
+
 if (UA2F_ENABLE_ASAN)
     add_compile_options(-fsanitize=address)
     add_link_options(-fsanitize=address)
+    message(STATUS "AddressSanitizer is enabled.")
 else ()
     message(STATUS "AddressSanitizer is disabled.")
 endif ()
@@ -55,18 +77,16 @@ endif ()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-gc-sections")
 
-if(UA2F_CUSTOM_USER_AGENT)
-    if(NOT UA2F_USER_AGENT_STRING)
+if (UA2F_CUSTOM_USER_AGENT)
+    if (NOT UA2F_USER_AGENT_STRING)
         message(FATAL_ERROR "UA2F_USER_AGENT_STRING is not set")
-    endif()
+    endif ()
     message(STATUS "Using custom user agent string: ${UA2F_USER_AGENT_STRING}")
     add_compile_definitions(UA2F_USE_CUSTOM_UA=1)
-endif()
+endif ()
 
-# Configure the header file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/custom.h.in ${CMAKE_CURRENT_BINARY_DIR}/custom.h)
 
-# Include the binary directory to find the generated header file
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(ua2f
