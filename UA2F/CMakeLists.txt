@@ -40,10 +40,26 @@ if (GIT_FOUND)
     if ((NOT GIT_COMMIT_RESULT EQUAL 0) OR (GIT_COMMIT STREQUAL ""))
         set(GIT_COMMIT "unknown")
     endif ()
+
+    execute_process(
+            COMMAND ${GIT_EXECUTABLE} status --porcelain
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            OUTPUT_VARIABLE GIT_DIRTY_OUTPUT
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE GIT_DIRTY_RESULT
+    )
+    if ((NOT GIT_DIRTY_RESULT EQUAL 0))
+        set(GIT_DIRTY "unknown")
+    elseif (GIT_DIRTY_OUTPUT STREQUAL "")
+        set(GIT_DIRTY "clean")
+    else ()
+        set(GIT_DIRTY "dirty")
+    endif ()
 else ()
     set(GIT_COMMIT "unknown")
     set(GIT_BRANCH "unknown")
     set(GIT_TAG "unknown")
+    set(GIT_DIRTY "unknown")
 endif ()
 
 if (UA2F_VERSION_STR)
@@ -56,14 +72,14 @@ endif ()
 add_compile_definitions(UA2F_GIT_COMMIT="${GIT_COMMIT}")
 add_compile_definitions(UA2F_GIT_BRANCH="${GIT_BRANCH}")
 add_compile_definitions(UA2F_GIT_TAG="${GIT_TAG}")
+add_compile_definitions(UA2F_GIT_DIRTY="${GIT_DIRTY}")
 add_compile_definitions(UA2F_VERSION="${UA2F_VERSION_STR}")
 
 if (DEFINED ENV{UA2F_ENABLE_ASAN})
     set(UA2F_ENABLE_ASAN $ENV{UA2F_ENABLE_ASAN})
     message(STATUS "UA2F_ENABLE_ASAN set from environment: ${UA2F_ENABLE_ASAN}")
 else ()
-    set(UA2F_ENABLE_ASAN OFF)
-    message(STATUS "UA2F_ENABLE_ASAN not set in environment, using default: OFF")
+    message(STATUS "UA2F_ENABLE_ASAN not set in environment")
 endif ()
 
 if (UA2F_ENABLE_ASAN)
