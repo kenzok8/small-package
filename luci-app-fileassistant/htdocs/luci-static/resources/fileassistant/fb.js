@@ -19,7 +19,7 @@ String.prototype.replaceAll = function(search, replacement) {
   function removePath(filename, isdir) {
     var c = confirm('你确定要删除 ' + filename + ' 吗？');
     if (c) {
-      iwxhr.get('/cgi-bin/luci/admin/system/fileassistant/delete',
+      iwxhr.get('/cgi-bin/luci/admin/nas/fileassistant/delete',
         {
           path: concatPath(currentPath, filename),
           isdir: isdir
@@ -44,7 +44,7 @@ String.prototype.replaceAll = function(search, replacement) {
     }
     var c = confirm('你确定要安装 ' + filename + ' 吗？');
     if (c) {
-      iwxhr.get('/cgi-bin/luci/admin/system/fileassistant/install',
+      iwxhr.get('/cgi-bin/luci/admin/nas/fileassistant/install',
         {
           filepath: concatPath(currentPath, filename),
           isdir: isdir
@@ -76,7 +76,7 @@ String.prototype.replaceAll = function(search, replacement) {
       newname = newname.trim();
       if (newname != filename) {
         var newpath = concatPath(currentPath, newname);
-        iwxhr.get('/cgi-bin/luci/admin/system/fileassistant/rename',
+        iwxhr.get('/cgi-bin/luci/admin/nas/fileassistant/rename',
           {
             filepath: concatPath(currentPath, filename),
             newpath: newpath
@@ -94,7 +94,7 @@ String.prototype.replaceAll = function(search, replacement) {
   function chmodPath(filename, isdir) {
     var newmod = prompt('请输入新的权限位（支持八进制权限位或者a+x格式）：', isdir === "1" ? "0755" : "0644");
     if (newmod) {
-      iwxhr.get('/cgi-bin/luci/admin/system/fileassistant/chmod',
+      iwxhr.get('/cgi-bin/luci/admin/nas/fileassistant/chmod',
         {
           filepath: concatPath(currentPath, filename),
           newmod: newmod
@@ -111,7 +111,7 @@ String.prototype.replaceAll = function(search, replacement) {
   function chownPath(filename) {
     var newown = prompt('请输入新的用户名（支持用户名或用户名:群组格式）：', "root");
     if (newown) {
-      iwxhr.get('/cgi-bin/luci/admin/system/fileassistant/chown',
+      iwxhr.get('/cgi-bin/luci/admin/nas/fileassistant/chown',
         {
           filepath: concatPath(currentPath, filename),
           newown: newown
@@ -127,7 +127,7 @@ String.prototype.replaceAll = function(search, replacement) {
 
   function openpath(filename, dirname) {
     dirname = dirname || currentPath;
-    window.open('/cgi-bin/luci/admin/system/fileassistant/open?path='
+    window.open('/cgi-bin/luci/admin/nas/fileassistant/open?path='
       + encodeURIComponent(dirname) + '&filename='
       + encodeURIComponent(filename));
   }
@@ -260,7 +260,7 @@ String.prototype.replaceAll = function(search, replacement) {
     opt = opt || {};
     path = concatPath(path, '');
     if (currentPath != path) {
-      iwxhr.get('/cgi-bin/luci/admin/system/fileassistant/list',
+      iwxhr.get('/cgi-bin/luci/admin/nas/fileassistant/list',
         {path: path},
         function (x, res) {
           if (res.ec === 0) {
@@ -305,7 +305,7 @@ String.prototype.replaceAll = function(search, replacement) {
       formData.append('upload-dir', concatPath(currentPath, ''));
       formData.append('upload-file', uploadinput.files[0]);
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/cgi-bin/luci/admin/system/fileassistant/upload", true);
+      xhr.open("POST", "/cgi-bin/luci/admin/nas/fileassistant/upload", true);
       xhr.onload = function() {
         if (xhr.status == 200) {
           var res = JSON.parse(xhr.responseText);
@@ -327,7 +327,7 @@ String.prototype.replaceAll = function(search, replacement) {
       formData.append('path', currentPath);
       formData.append('dirname', dirname);
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/cgi-bin/luci/admin/system/fileassistant/mkdir", true);
+      xhr.open("POST", "/cgi-bin/luci/admin/nas/fileassistant/mkdir", true);
       xhr.onload = function() {
         if (xhr.status == 200) {
           var res = JSON.parse(xhr.responseText);
