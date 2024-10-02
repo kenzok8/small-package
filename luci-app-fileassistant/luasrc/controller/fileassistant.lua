@@ -2,36 +2,38 @@ module("luci.controller.fileassistant", package.seeall)
 
 function index()
 
+    entry({"admin", "nas"}, firstchild(), "NAS", 44).dependent = false
+
     local page
-    page = entry({"admin", "system", "fileassistant"}, template("fileassistant"), _("文件管理"), 50)
+    page = entry({"admin", "nas", "fileassistant"}, template("fileassistant"), _("文件助手"), 1)
     page.i18n = "base"
     page.dependent = true
 
-    page = entry({"admin", "system", "fileassistant", "list"}, call("fileassistant_list"), nil)     
+    page = entry({"admin", "nas", "fileassistant", "list"}, call("fileassistant_list"), nil)     
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "open"}, call("fileassistant_open"), nil)
+    page = entry({"admin", "nas", "fileassistant", "open"}, call("fileassistant_open"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "delete"}, call("fileassistant_delete"), nil)
+    page = entry({"admin", "nas", "fileassistant", "delete"}, call("fileassistant_delete"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "rename"}, call("fileassistant_rename"), nil)
+    page = entry({"admin", "nas", "fileassistant", "rename"}, call("fileassistant_rename"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "upload"}, call("fileassistant_upload"), nil)
+    page = entry({"admin", "nas", "fileassistant", "upload"}, call("fileassistant_upload"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "install"}, call("fileassistant_install"), nil)
+    page = entry({"admin", "nas", "fileassistant", "install"}, call("fileassistant_install"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "mkdir"}, call("fileassistant_mkdir"), nil)
+    page = entry({"admin", "nas", "fileassistant", "mkdir"}, call("fileassistant_mkdir"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "chmod"}, call("fileassistant_chmod"), nil)
+    page = entry({"admin", "nas", "fileassistant", "chmod"}, call("fileassistant_chmod"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "chown"}, call("fileassistant_chown"), nil)
+    page = entry({"admin", "nas", "fileassistant", "chown"}, call("fileassistant_chown"), nil)
     page.leaf = true
 end
 
