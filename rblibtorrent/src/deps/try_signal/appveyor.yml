@@ -1,0 +1,50 @@
+version: "{build}"
+branches:
+  only:
+  - master
+os: Visual Studio 2015
+clone_depth: 1
+environment:
+  matrix:
+  - variant: debug
+    compiler: msvc-14.0
+    model: 64
+  - variant: debug
+    compiler: msvc-14.0
+    model: 32
+  - variant: release
+    compiler: msvc-14.0
+    model: 64
+  - variant: debug
+    compiler: gcc
+    model: 32
+  - variant: debug
+    compiler: gcc
+    model: 64
+  - variant: release
+    compiler: gcc
+    model: 32
+
+install:
+- set ROOT_DIRECTORY=%CD%
+- set BOOST_ROOT=c:\Libraries\boost_1_67_0
+- set BOOST_BUILD_PATH=%BOOST_ROOT%\tools\build
+- echo %BOOST_ROOT%
+- echo %BOOST_BUILD_PATH%
+- set PATH=%PATH%;%BOOST_BUILD_PATH%\src\engine\bin.ntx86
+- ps: '"using msvc : 14.0 ;`nusing gcc : : : <cxxflags>-std=c++11 ;" | Set-Content $env:HOMEDRIVE\$env:HOMEPATH\user-config.jam'
+- type %HOMEDRIVE%%HOMEPATH%\user-config.jam
+- set PATH=c:\msys64\mingw32\bin;%PATH%
+- g++ --version
+- python --version
+- echo %ROOT_DIRECTORY%
+- cd %BOOST_BUILD_PATH%\src\engine
+- build.bat >nul
+- cd %ROOT_DIRECTORY%
+
+build_script:
+# examples
+- b2.exe warnings=all warnings-as-errors=on -j2 %compiler% address-model=%model% variant=%variant% stage_test
+
+test_script:
+- test
