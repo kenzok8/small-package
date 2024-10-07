@@ -1,0 +1,18 @@
+lib try_signal
+	: # sources
+	signal_error_code.cpp try_signal.cpp
+	: # requirements
+	: # default build
+	<link>static
+	: # usage requirements
+	<include>.
+	;
+
+exe test : test.cpp : <library>try_signal <link>static ;
+explicit test ;
+
+exe example : example.cpp : <library>try_signal <link>static ;
+explicit example ;
+
+install stage_test : test : <location>. ;
+
