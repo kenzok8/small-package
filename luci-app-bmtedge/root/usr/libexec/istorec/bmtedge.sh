@@ -32,6 +32,7 @@ do_install() {
     --dns=223.5.5.5 \
     -v \"$path:/data/lsy_cloud\" \
     -e ksc_datadir=\"/data/lsy_cloud\" \
+    -e ksc_net=\"$netdev\" \
     -e ksc_machine_code=\"lsyK18000_$uid\" "
 
   local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"

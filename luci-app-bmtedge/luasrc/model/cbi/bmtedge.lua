@@ -21,8 +21,10 @@ local default_image = bmtedge_model.default_image()
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
-o:value("registry.cn-shanghai.aliyuncs.com/nsp-prod-1/public1:iaas-amd64-latest", "registry.cn-shanghai.aliyuncs.com/nsp-prod-1/public1:iaas-amd64-latest")
-o:value("registry.cn-shanghai.aliyuncs.com/nsp-prod-1/public1:iaas_c-arm64-latest", "registry.cn-shanghai.aliyuncs.com/nsp-prod-1/public1:iaas_c-arm64-latest")
+local dockeramd64 = "registry.cn-shanghai.aliyuncs.com/nsp-prod-1/public1:lsy-iaas-amd64-latest"
+local dockerarm64 = "registry.cn-shanghai.aliyuncs.com/nsp-prod-1/public1:lsy-iaas-arm64-latest"
+o:value(dockeramd64, dockeramd64)
+o:value(dockerarm64, dockerarm64)
 o.default = default_image
 
 local default_uid = bmtedge_model.default_uid()
