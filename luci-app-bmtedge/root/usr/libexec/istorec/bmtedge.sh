@@ -25,18 +25,14 @@ do_install() {
   docker rm -f bmtedge
 
   local cmd="docker run --restart=unless-stopped -d \
+    --init \
     --privileged \
     --network=host \
     --dns=127.0.0.1 \
     --dns=223.5.5.5 \
-    --tmpfs /run \
-    --tmpfs /tmp \
-    -e ksc_supplier_code=\"92101\" -e ksc_refer=\"ruiyun_node\" \
-    -v \"$path:/data/ksc1\" \
-    -v \"$path/containerd:/var/lib/containerd\" \
-    -e ksc_datadir=\"/data/ksc1\" \
-    -e ksc_net=\"$netdev\" \
-    -e ksc_machine_code=\"lsyK17032_$uid\" "
+    -v \"$path:/data/lsy_cloud\" \
+    -e ksc_datadir=\"/data/lsy_cloud\" \
+    -e ksc_machine_code=\"lsyK18000_$uid\" "
 
   local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
