@@ -1,0 +1,5 @@
+#!/bin/sh
+
+[ -f /etc/init.d/p910nd ] && /etc/init.d/p910nd disable
+
+exit 0
