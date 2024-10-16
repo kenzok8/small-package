@@ -1,0 +1,4 @@
+{
+	"config": "usb_printer",
+	"init": [ "usb_printer" ]
+}
