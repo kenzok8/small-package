@@ -32,7 +32,7 @@ else ifeq ($(ARCH_PACKAGES),arm_arm926ej-s)
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a15_neon-vfpv4)
   PKG_HASH:=047552793e62294bc3465130a70f0491544f10e1307a3ded396ea9b771fcaf48
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a5_vfpv4)
-  PKG_HASH:=87aa43d7d73980aff913cba2655be5e2f8a565e8f842c59987e17555f944adaf
+  PKG_HASH:=b30362ab16a8d9f49f1318ca435733b5ef6c28397f3c8fd1e2f5ff9985f0d094
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a7)
   PKG_HASH:=ff478984a8d3253de99e3db51213a64adbe89433f5560774c7cac35632f4ac2a
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a7_neon-vfpv4)
@@ -44,13 +44,13 @@ else ifeq ($(ARCH_PACKAGES),arm_cortex-a8_vfpv3)
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a9)
   PKG_HASH:=d8c7f6b658e2539c1cba83d275947ade2eace8ecb71dcf9dd04f26b6700ac28a
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a9_neon)
-  PKG_HASH:=a6fe68edc537e56f41bd1ea30d0f8e0f9a585b6e464be7ad4042a72cac8c680e
+  PKG_HASH:=7704e250a56d313c12059fca5a036cee120860a2b3c290c616ea2e340a14d466
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a9_vfpv3-d16)
   PKG_HASH:=4462b1b2d95c516fdc4bd24535db32e4655a551b8b86a3036956d72d42ff7a4a
 else ifeq ($(ARCH_PACKAGES),arm_mpcore)
   PKG_HASH:=c106d135b23139c6a7b1b43008d30ced6687b4eb0746185c04baa0d1baa2d5f3
 else ifeq ($(ARCH_PACKAGES),arm_xscale)
-  PKG_HASH:=e2683fa31170ca028220dd8cc9fdf106ea6ead13f1e6884b12e64e8d0c7162b6
+  PKG_HASH:=349e2c60e5c3344c317b699fa06dbcb377776bf4949c34d6e7b19808f5478b57
 else ifeq ($(ARCH_PACKAGES),mipsel_24kc)
   PKG_HASH:=7130c03db4b1de3a7c84f57a3e1d678625d370492addfe04d54f9d8d2d098a8f
 else ifeq ($(ARCH_PACKAGES),mipsel_mips32)
