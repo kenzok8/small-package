@@ -1,3 +1,4 @@
+
 #!/bin/sh
 #
 #	USAGE: git-short-commit.sh <GIT_URL> <GIT_REF> <GIT_DIR>
@@ -26,7 +27,7 @@ if [ -z "${GIT_DIR}" ]; then
 fi
 
 clean_up() {
-	rm --force --recursive "${GIT_DIR}"
+	rm -rf "${GIT_DIR}"
 }
 trap clean_up EXIT
 

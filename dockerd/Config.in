@@ -9,7 +9,7 @@ config DOCKER_CHECK_CONFIG
 
 config DOCKER_CGROUP_OPTIONS
 	bool "Enable available kernel support for CGroupsV1"
-	default n
+	default y
 	depends on PACKAGE_dockerd
 	select KERNEL_CGROUP_DEVICE
 	select KERNEL_CGROUP_FREEZER
@@ -54,7 +54,7 @@ menu "Network"
 
 	config DOCKER_NET_MACVLAN
 		bool "Includes macvlan kernel modules"
-		default n
+		default y
 		select PACKAGE_kmod-macvlan
 		select PACKAGE_kmod-dummy
 
@@ -75,7 +75,7 @@ menu "Storage"
 
 	config DOCKER_STO_EXT4
 		bool "Enables support for ext3 or ext4 as the backing filesystem"
-		default n
+		default y
 		select KERNEL_EXT4_FS_POSIX_ACL
 		select KERNEL_EXT4_FS_SECURITY
 
