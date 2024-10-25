@@ -17,7 +17,6 @@ PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
 PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/docker/docker
@@ -46,9 +45,9 @@ define Package/dockerd
     +kmod-ipt-physdev \
     +kmod-nf-ipvs \
     +kmod-veth \
-    +libnetwork \
     +tini \
-    +uci-firewall
+    +uci-firewall \
+    @!(mips||mips64||mipsel)
   USERID:=docker:docker
   MENU:=1
 endef
@@ -61,7 +60,6 @@ define Package/dockerd/description
 The Docker CE Engine.
 endef
 
-GO_PKG_BUILD_VARS += GO111MODULE=auto
 TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
 TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lc -lgcc_eh)
@@ -97,7 +95,6 @@ define Build/Prepare
 
 	# Verify dependencies are the vendored version
 	$(call EnsureVendoredVersion,../containerd/Makefile,containerd.installer)
-	$(call EnsureVendoredCommit,../libnetwork/Makefile,proxy.installer)
 	$(call EnsureVendoredVersion,../runc/Makefile,runc.installer)
 	$(call EnsureVendoredVersion,../tini/Makefile,tini.installer)
 
@@ -143,6 +140,7 @@ endef
 define Package/dockerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bundles/binary-daemon/dockerd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bundles/binary-daemon/docker-proxy $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/opt/docker/
 
