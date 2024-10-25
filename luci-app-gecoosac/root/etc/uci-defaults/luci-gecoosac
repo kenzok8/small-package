@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@gecoosac[-1]
+	add ucitrack gecoosac
+	set ucitrack.@gecoosac[-1].init=gecoosac
+	commit ucitrack
+EOF
+
+rm -rf /tmp/luci-*
+exit 0
