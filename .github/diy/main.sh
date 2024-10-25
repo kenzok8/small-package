@@ -136,7 +136,8 @@ git clone --depth 1 https://github.com/immortalwrt/luci && mv -n luci/applicatio
 git clone --depth 1 https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest cloudflarespeedtest && mv -n cloudflarespeedtest/applications/* ./;rm -rf cloudflarespeedtest
 git clone --depth 1 https://github.com/doushang/luci-app-shortcutmenu luci-shortcutmenu && mv -n luci-shortcutmenu/luci-app-shortcutmenu ./ ; rm -rf luci-shortcutmenu
 git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
-git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic-Go packages/net/msd_lite ./ ; rm -rf packages
+#git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic-Go packages/net/msd_lite ./ ; rm -rf packages
+git clone --depth 1 https://github.com/coolsnowwolf/luci && mv -n luci/applications/luci-app-unblockmusic luci/libs/luci-lib-fs./ ; rm -rf luci
 git clone --depth 1 https://github.com/gSpotx2f/luci-app-internet-detector
 git clone --depth 1 https://github.com/vinewx/NanoHatOLED; mv NanoHatOLED/nanohatoled ./;rm -rf NanoHatOLED
 git clone --depth 1 https://github.com/zerolabnet/luci-app-torbp
@@ -149,6 +150,7 @@ git clone --depth 1 https://github.com/morytyann/OpenWrt-mihomo OpenWrt-mihomo &
 git clone --depth 1 https://github.com/Carseason/openwrt-packages Carseason && mv -n Carseason/*/* ./;mv services/routergo ./;rm -rf Carseason
 git clone --depth 1 https://github.com/Carseason/openwrt-themedog && mv -n openwrt-themedog/luci/* ./;rm -rf openwrt-themedog
 git clone --depth 1 https://github.com/Carseason/openwrt-app-actions Carseason && mv -n Carseason/applications/* ./;rm -rf Carseason
+git clone --depth 1 https://github.com/Akimio521/luci-app-gecoosac
 
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
 svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
@@ -165,8 +167,9 @@ svn export https://github.com/kenzok8/jell/trunk/vsftpd-alt
 svn export https://github.com/kenzok8/jell/trunk/luci-app-bridge
 
 git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" net/miniupnpd net/mwan3 \
-net/amule net/baidupcs-web multimedia/gmediarender net/go-aliyundrive-webdav \
-net/verysync net/dnsforwarder net/nps net/tcpping
+multimedia/gmediarender multimedia/UnblockNeteaseMusic-Go \
+net/go-aliyundrive-webdav net/verysync net/dnsforwarder net/msd_lite \
+net/nps net/tcpping net/amule net/baidupcs-web 
 mv -f miniupnpd miniupnpd-iptables
 
 git_sparse_clone openwrt-23.05 "https://github.com/openwrt/packages" "22packages" \
