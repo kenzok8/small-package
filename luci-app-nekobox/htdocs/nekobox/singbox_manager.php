@@ -195,14 +195,16 @@ if (!file_exists($subscriptionFile)) {
     file_put_contents($subscriptionFile, json_encode([]));
 }
 $subscriptions = json_decode(file_get_contents($subscriptionFile), true);
-if (!$subscriptions) {
-    for ($i = 0; $i < 3; $i++) {
-        $subscriptions[$i] = [
+if (!$subscriptions || !is_array($subscriptions)) {  
+    $subscriptions = [];  
+    for ($i = 1; $i <= 3; $i++) {  
+        $subscriptions[$i - 1] = [
             'url' => '',
             'file_name' => "subscription_{$i}.yaml",
         ];
     }
 }
+
 if (isset($_POST['saveSubscription'])) {
     $index = intval($_POST['index']);
     if ($index >= 0 && $index < 3) {

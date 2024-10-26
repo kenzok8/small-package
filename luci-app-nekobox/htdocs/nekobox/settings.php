@@ -41,6 +41,22 @@ function getSingboxVersion() {
 
 $singBoxVersion = getSingboxVersion();
 ?>
+
+<?php
+
+function getUiVersion() {
+    $versionFile = '/etc/neko/ui/metacubexd/version.txt';
+    
+    if (file_exists($versionFile)) {
+        return trim(file_get_contents($versionFile));
+    } else {
+        return "版本文件不存在";
+    }
+}
+
+$uiVersion = getUiVersion();
+?>
+
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme,0,-4) ?>">
   <head>
@@ -53,6 +69,7 @@ $singBoxVersion = getSingboxVersion();
     <link href="./assets/css/custom.css" rel="stylesheet">
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
+    <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
   </head>
@@ -99,42 +116,55 @@ $singBoxVersion = getSingboxVersion();
                 <tr>
                     <td colspan="2">
                         <div class="row">
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <div class="text-center">
                                     <h3>客户端版本</h3>
                                     <div class="form-control text-center" style="font-family: monospace; text-align: center;">
                                         <span id="cliver"></span>&nbsp;<span id="NewCliver"> </span>
                                     </div>
                                     <div class="text-center mt-2">
-                                        <button class="btn btn-cyan" id="checkCliverButton">🔍 检测</button>
-                                        <button class="btn btn-info" id="updateButton" title="更新到最新版本">🔄 更新</button>
+                                        <button class="btn btn-pink" id="checkCliverButton">🔍 检测版本</button>
+                                        <button class="btn btn-info" id="updateButton" title="更新到最新版本">🔄 更新版本</button>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <div class="text-center">
-                                    <h3>Sing-box核心版本</h3>
+                                    <h3>Metacubexd 面板</h3>
+                                    <div class="form-control text-center">
+                                        <?php echo htmlspecialchars($uiVersion); ?>&nbsp;<span id="NewUi"> </span>
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <button class="btn btn-pink" id="checkUiButton">🔍 检测版本</button> 
+                                        <button class="btn btn-info" id="updateUiButton" title="更新 Metacubexd 面板">🔄 更新版本</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="text-center">
+                                    <h3>Sing-box 核心版本</h3>
                                     <div class="form-control text-center">
                                         <div id="singBoxCorever">
                                             <?php echo htmlspecialchars($singBoxVersion); ?>&nbsp;<span id="NewSingbox"></span>
                                         </div>
                                     </div>
                                     <div class="text-center mt-2">
-                                        <button class="btn btn-cyan" id="checkSingboxButton">🔍 检测</button>
-                                        <button class="btn btn-pink" id="updateSingboxButton" title="更新 Singbox 内核">🔄 更新</button>
-                                        <button class="btn btn-info" id="updatePuernyaButton" title="切换 Puernya 内核">🔄 切换</button>
+                                        <button class="btn btn-pink" id="checkSingboxButton">🔍 检测版本</button>
+                                        <button class="btn btn-success" id="updatePuernyaButton" title="切换 Puernya 内核">🔄 切换内核</button>
+                                        <button class="btn btn-info" id="updateSingboxButton" title="更新 Singbox 内核">🔄 更新版本</button>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <div class="text-center">
-                                    <h3>Mihomo核心版本</h3>
+                                    <h3>Mihomo 核心版本</h3>
                                     <div class="form-control text-center">
                                         <span id="corever"></span>&nbsp;<span id="NewMihomo"> </span>
                                     </div>
                                     <div class="text-center mt-2">
-                                        <button class="btn btn-cyan" id="checkMihomoButton">🔍 检测</button> 
-                                        <button class="btn btn-success" id="updateCoreButton" title="更新 Mihomo 内核">🔄 更新</button>
+                                        <button class="btn btn-pink" id="checkMihomoButton">🔍 检测版本</button> 
+                                        <button id="updateConfigButton" class="btn btn-primary" title="更新 Mihomo 配置文件">🔄 更新配置</button>
+                                        <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核">🔄 更新版本</button>
                                     </div>
                                 </div>
                             </div>
@@ -143,267 +173,235 @@ $singBoxVersion = getSingboxVersion();
                 </tr>
             </tbody>
         </table>
+   <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+       <div class="modal-dialog modal-dialog-centered" role="document">
+           <div class="modal-content">
+               <div class="modal-header">
+                   <h5 class="modal-title" id="updateModalLabel">更新状态</h5>
+                   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                       <span aria-hidden="true">&times;</span>
+                   </button>
+               </div>
+               <div class="modal-body">
+                   <pre id="logOutput">开始下载更新...</pre>
+               </div>
+           </div>
+       </div>
+   </div>
+<div id="logOutput" class="mt-3"></div>
 
-        <div id="logOutput" class="mt-3"></div>
+<style>
+    .table-container {
+        overflow-x: auto;
+    }
 
-        <style>
-            .table-container {
-                overflow-x: auto;
-            }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
 
-            .table {
-                width: 100%;
-                border-collapse: collapse;
-            }
+    .table td {
+        padding: 10px;
+        word-wrap: break-word;
+    }
 
-            .table td {
-                padding: 10px;
-                word-wrap: break-word;
-            }
+    .form-control {
+        width: 100%;
+    }
 
-            .form-control {
-                width: 100%;
-            }
+    .btn {
+        white-space: nowrap;
+        flex: 1;
+    }
 
-            .btn {
-                white-space: nowrap;
-                flex: 1;
-            }
+    @media (max-width: 767px) {
+        .table td {
+            display: block;
+            width: 100%;
+        }
 
-            @media (max-width: 767px) {
-                .table td {
-                    display: block;
-                    width: 100%;
-                }
+        .form-control {
+            display: flex;
+            flex-direction: column;
+        }
 
-                .form-control {
-                    display: flex;
-                    flex-direction: column;
-                }
+        .btn-group {
+            flex-direction: column;
+        }
+    }
 
-                .btn-group {
-                    flex-direction: column;
-                }
-            }
+    #updateButton:hover {
+        background-color: #20B2AA;
+    }
 
-            #updateButton:hover {
-                background-color: #20B2AA;
-            }
+    #updateSingboxButton:hover {
+        background-color: #FF69B4;
+    }
 
-            #updateSingboxButton:hover {
-                background-color: #FF69B4;
-            }
+    #updateCoreButton:hover {
+        background-color: #90EE90;
+    }
 
-            #updateCoreButton:hover {
-                background-color: #90EE90;
-            }
-
-            #updatePuernyaButton:hover {
-                background-color: #87CEFA;
-            }
-
-        </style>
+    #updatePuernyaButton:hover {
+        background-color: #87CEFA;
+    }
+</style>
 
 <script>
-    document.getElementById('updateButton').addEventListener('click', function() {
+    function initiateUpdate(url, logMessage) {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'update_script.php', true);
+        xhr.open('POST', url, true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
-        document.getElementById('logOutput').innerHTML = '开始下载更新...';
+        $('#updateModal').modal('show');
+        document.getElementById('logOutput').textContent = logMessage;
 
         xhr.onload = function() {
             if (xhr.status === 200) {
-                document.getElementById('logOutput').innerHTML += '\n更新完成！';
-                document.getElementById('logOutput').innerHTML += '\n' + xhr.responseText;
+                document.getElementById('logOutput').textContent += '\n更新完成！';
+                document.getElementById('logOutput').textContent += '\n' + xhr.responseText;
+
                 setTimeout(function() {
-                    location.reload(); 
-                }, 3000);
+                    $('#updateModal').modal('hide');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 500); 
+                }, 10000);
             } else {
-                document.getElementById('logOutput').innerHTML += '\n发生错误：' + xhr.statusText;
+                document.getElementById('logOutput').textContent += '\n发生错误：' + xhr.statusText;
             }
         };
 
+        xhr.onerror = function() {
+            document.getElementById('logOutput').textContent += '\n网络错误，请稍后再试。';
+        };
+
         xhr.send();
+    }
+
+    document.getElementById('updateButton').addEventListener('click', function() {
+        initiateUpdate('update_script.php', '开始下载更新...');
     });
 
     document.getElementById('updateSingboxButton').addEventListener('click', function() {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'singbox.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-        document.getElementById('logOutput').innerHTML = '开始下载核心更新...';
-
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                document.getElementById('logOutput').innerHTML += '\n核心更新完成！';
-                document.getElementById('logOutput').innerHTML += '\n' + xhr.responseText;
-                setTimeout(function() {
-                    location.reload(); 
-                }, 3000);
-            } else {
-                document.getElementById('logOutput').innerHTML += '\n发生错误：' + xhr.statusText;
-            }
-        };
-
-        xhr.send();
+        initiateUpdate('singbox.php', '开始下载 Singbox 核心更新...');
     });
 
     document.getElementById('updatePuernyaButton').addEventListener('click', function() {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'puernya.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-        document.getElementById('logOutput').innerHTML = '开始下载核心更新...';
-
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                document.getElementById('logOutput').innerHTML += '\n核心更新完成！';
-                document.getElementById('logOutput').innerHTML += '\n' + xhr.responseText;
-                setTimeout(function() {
-                    location.reload(); 
-                }, 3000);
-            } else {
-                document.getElementById('logOutput').innerHTML += '\n发生错误：' + xhr.statusText;
-            }
-        };
-
-        xhr.send();
+        initiateUpdate('puernya.php', '开始下载 Puernya 核心更新...');
     });
 
     document.getElementById('updateCoreButton').addEventListener('click', function() {
+        initiateUpdate('core.php', '开始下载 Mihomo 核心更新...');
+    });
+
+    document.getElementById('updateUiButton').addEventListener('click', function() {
+        initiateUpdate('ui.php', '开始下载 UI 面板更新...');
+    });
+</script>
+
+<script>
+    document.getElementById('updateConfigButton').addEventListener('click', function() {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'core.php', true);
+        xhr.open('POST', 'update_config.php', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-        document.getElementById('logOutput').innerHTML = '开始下载核心更新...';
-
         xhr.onload = function() {
             if (xhr.status === 200) {
-                document.getElementById('logOutput').innerHTML += '\n核心更新完成！';
-                document.getElementById('logOutput').innerHTML += '\n' + xhr.responseText;
-                setTimeout(function() {
-                    location.reload(); 
-                }, 3000);
+                alert(xhr.responseText); 
             } else {
-                document.getElementById('logOutput').innerHTML += '\n发生错误：' + xhr.statusText;
+                alert('更新失败，请稍后重试。');
             }
         };
-
-        xhr.send();
+        xhr.send('action=update_config'); 
     });
 </script>
 
 <script>
+    function checkVersion(buttonId, outputId, url) {
+        document.getElementById(outputId).innerHTML = '正在检查新版本...';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url + '?check_version=true', true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                document.getElementById(outputId).innerHTML = xhr.responseText;
+            } else {
+                document.getElementById(outputId).innerHTML = '版本检测失败，请稍后重试。';
+            }
+        };
+        xhr.onerror = function() {
+            document.getElementById(outputId).innerHTML = '网络错误，请稍后重试';
+        };
+        xhr.send();
+    }
+
     document.getElementById('checkCliverButton').addEventListener('click', function() {
-        document.getElementById('NewCliver').innerHTML = '正在检查新版本...';
-        
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'update_script.php?check_version=true', true);
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                document.getElementById('NewCliver').innerHTML = xhr.responseText;
-            } else {
-                document.getElementById('NewCliver').innerHTML = '版本检测失败，请稍后重试。';
-            }
-        };
-        xhr.onerror = function() {
-            document.getElementById('NewCliver').innerHTML = '网络错误，请稍后重试';
-        };
-        xhr.send();
+        checkVersion('checkCliverButton', 'NewCliver', 'update_script.php');
     });
-</script>
 
-<script>
     document.getElementById('checkMihomoButton').addEventListener('click', function() {
-        document.getElementById('NewMihomo').innerHTML = '正在检查新版本...';
-        
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'core.php?check_version=true', true);
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                document.getElementById('NewMihomo').innerHTML = xhr.responseText;
-            } else {
-                document.getElementById('NewMihomo').innerHTML = '版本检测失败，请稍后重试。';
-            }
-        };
-        xhr.onerror = function() {
-            document.getElementById('NewMihomo').innerHTML = '网络错误，请稍后重试';
-        };
-        xhr.send();
+        checkVersion('checkMihomoButton', 'NewMihomo', 'core.php');
     });
-</script>
 
-<script>
     document.getElementById('checkSingboxButton').addEventListener('click', function() {
-        document.getElementById('NewSingbox').innerHTML = '正在检查新版本...';
-        
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'singbox.php?check_version=true', true);
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                document.getElementById('NewSingbox').innerHTML = xhr.responseText;
-            } else {
-                document.getElementById('NewSingbox').innerHTML = '版本检测失败，请稍后重试。';
-            }
-        };
-        xhr.onerror = function() {
-            document.getElementById('NewSingbox').innerHTML = '网络错误，请稍后重试';
-        };
-        xhr.send();
+        checkVersion('checkSingboxButton', 'NewSingbox', 'singbox.php');
+    });
+
+    document.getElementById('checkUiButton').addEventListener('click', function() {
+        checkVersion('checkUiButton', 'NewUi', 'ui.php');
     });
 </script>
 
 <script>
-function compareVersions(v1, v2) {
-    const v1parts = v1.split(/[-.]/).filter(x => x !== 'alpha' && x !== 'beta');
-    const v2parts = v2.split(/[-.]/).filter(x => x !== 'alpha' && x !== 'beta');
-    
-    for (let i = 0; i < Math.max(v1parts.length, v2parts.length); ++i) {
-        const v1part = parseInt(v1parts[i]) || 0;
-        const v2part = parseInt(v2parts[i]) || 0;
+    function compareVersions(v1, v2) {
+        const v1parts = v1.split(/[-.]/).filter(x => x !== 'alpha' && x !== 'beta');
+        const v2parts = v2.split(/[-.]/).filter(x => x !== 'alpha' && x !== 'beta');
         
-        if (v1part > v2part) return 1;
-        if (v1part < v2part) return -1;
-    }
-    
-    return 0;
-}
-
-function checkSingboxVersion() {
-    var currentVersion = '<?php echo getSingboxVersion(); ?>';
-    var minVersion = '1.10.0';
-    
-    if (compareVersions(currentVersion, minVersion) >= 0) {
-        return;
+        for (let i = 0; i < Math.max(v1parts.length, v2parts.length); ++i) {
+            const v1part = parseInt(v1parts[i]) || 0;
+            const v2part = parseInt(v2parts[i]) || 0;
+            
+            if (v1part > v2part) return 1;
+            if (v1part < v2part) return -1;
+        }
+        
+        return 0;
     }
 
-    var modalHtml = `
-        <div class="modal fade" id="versionWarningModal" tabindex="-1" aria-labelledby="versionWarningModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="versionWarningModalLabel">版本警告</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>您的 Sing-box 版本 (${currentVersion}) 低于推荐的最低版本 (v1.10.0)。</p>
-                        <p>请考虑升级到更高版本以获得最佳性能。</p>
+    function checkSingboxVersion() {
+        var currentVersion = '<?php echo getSingboxVersion(); ?>';
+        var minVersion = '1.10.0';
+        
+        if (compareVersions(currentVersion, minVersion) >= 0) {
+            return;
+        }
+
+        var modalHtml = `
+            <div class="modal fade" id="versionWarningModal" tabindex="-1" aria-labelledby="versionWarningModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="versionWarningModalLabel">版本警告</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>您的 Sing-box 版本 (${currentVersion}) 低于推荐的最低版本 (v1.10.0)。</p>
+                            <p>请考虑升级到更高版本以获得最佳性能。</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    var modal = new bootstrap.Modal(document.getElementById('versionWarningModal'));
-    modal.show();
-    
-    setTimeout(function() {
-        modal.hide();
-    }, 5000);
-}
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        var modal = new bootstrap.Modal(document.getElementById('versionWarningModal'));
+        modal.show();
+        
+        setTimeout(function() {
+            modal.hide();
+        }, 5000);
+    }
 
-document.addEventListener('DOMContentLoaded', checkSingboxVersion);
+    document.addEventListener('DOMContentLoaded', checkSingboxVersion);
 </script>
 
 <!DOCTYPE html>
