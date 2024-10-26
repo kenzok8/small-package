@@ -1,0 +1,280 @@
+#!/usr/bin/ucode
+
+'use strict';
+
+import { access, lsdir, lstat, popen, readfile, writefile } from 'fs';
+
+/* Kanged from ucode/luci */
+function shellquote(s) {
+	return `'${replace(s, "'", "'\\''")}'`;
+}
+
+function hasKernelModule(kmod) {
+	return (system(sprintf('[ -e "/lib/modules/$(uname -r)"/%s ]', shellquote(kmod))) === 0);
+}
+
+function yqRead(flags, command, filepath) {
+	let out = '';
+
+	const fd = popen(`yq ${flags} ${shellquote(command)} ${filepath}`);
+	if (fd) {
+		out = fd.read('all');
+		fd.close();
+	}
+
+	return out;
+}
+
+function wGET(url, header, filepath) {
+	if (!url || type(url) !== 'string')
+		return null;
+
+	let ua = 'Wget/1.21 (FullCombo Mihomo)';
+
+	if (header) {
+		header = json(trim(header) || {});
+
+		header = join(' ', filter(map(keys(header), (k) => {
+			let v = join(', ', type(header[k]) === 'array' ? filter(header[k], v => v) : []);
+			if (k === 'User-Agent') {
+				ua = v;
+				v = null;
+			}
+			return v ? '--header=' + shellquote(`${k}: ${v}`) : null;
+		}), v => v));
+	} else
+		header = '';
+
+	let exitcode = system(`wget --tries=1 --timeout=10 --user-agent ${shellquote(ua)} ${header} -q ${shellquote(url)} -O ${shellquote(filepath)}`);
+
+	return exitcode;
+}
+
+const HM_DIR = '/etc/fchomo';
+const RUN_DIR = '/var/run/fchomo';
+const RES_TYPE = ['certs', 'provider', 'ruleset', 'resources', 'templates'];
+
+const methods = {
+	get_features: {
+		call: function() {
+			let features = {};
+
+			const fd = popen('/usr/bin/mihomo -v');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					let ver = match(trim(line), /Mihomo Meta (.*)/);
+					if (ver)
+						features.core_version = split(ver[1], ' ')[0];
+					let tags = match(trim(line), /Use tags: (.*)/);
+					if (tags)
+						for (let k in split(tags[1], ','))
+							features[k] = true;
+				}
+
+				fd.close();
+			}
+
+			const fp = popen(`opkg list-installed luci-app-fchomo | awk '{print $NF}'`);
+			if (fp) {
+				features.luciapp_version = trim(fp.read('line')) || null;
+
+				fp.close();
+			}
+
+			features.hm_has_dnsmasq_full = system(`[ -n "$(opkg list-installed dnsmasq-full)" ]`) == 0 || null;
+			features.hm_has_ip_full = access('/usr/libexec/ip-full');
+			features.hm_has_tcp_brutal = hasKernelModule('brutal.ko');
+			features.hm_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
+			features.hm_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
+
+			return features;
+		}
+	},
+
+	get_clash_api: {
+		args: { instance: 'instance' },
+		call: function(req) {
+			if (req.args?.instance) {
+				const instance = req.args?.instance;
+
+				let config = json(trim(yqRead('-oj', '.[] |= with(select(type == "!!map"); del(.)) |= with(select(type == "!!seq"); del(.))', `${RUN_DIR}/${instance}.yaml`)) || '{}');
+
+				return {
+					http: config['external-controller'],
+					https: config['external-controller-tls'],
+					doh: config['external-doh-server'],
+					secret: config.secret
+				};
+			} else
+				return {}
+		}
+	},
+
+	connection_check: {
+		args: { url: 'url' },
+		call: function(req) {
+			if (!req.args?.url)
+				return { httpcode: null, error: 'illegal url' };
+
+			let httpcode = '-1';
+			const fd = popen("wget --spider -t1 -ST3 '" + req.args?.url + "' 2>&1 | awk '/^\\s*HTTP\\//{print $2}'");
+			if (fd) {
+				httpcode = trim(fd.read('line')) || httpcode;
+
+				fd.close();
+			}
+
+			return { httpcode: httpcode };
+		}
+	},
+
+	crond_set: {
+		args: { type: 'type', expr: 'expr' },
+		call: function(req) {
+			if (req.args?.type == 'resources') {
+				system(`sed -i "/${replace(HM_DIR, "/", "\\/")}\\/scripts\\/update_resources.sh/d" /etc/crontabs/root`);
+				if (req.args?.expr)
+					system(`echo -e "` + req.args?.expr + ` ${HM_DIR}/scripts/update_resources.sh ALL" >> /etc/crontabs/root`);
+			} else
+				return { result: false, error: 'illegal type' };
+
+			system(`/etc/init.d/cron restart`);
+			return { result: true };
+		}
+	},
+
+	log_clean: {
+		args: { type: 'type' },
+		call: function(req) {
+			if (!(req.args?.type in ['fchomo', 'mihomo-c', 'mihomo-s']))
+				return { result: false, error: 'illegal type' };
+
+			const filestat = lstat(`${RUN_DIR}/${req.args?.type}.log`);
+			if (filestat)
+				writefile(`${RUN_DIR}/${req.args?.type}.log`, '');
+			return { result: true };
+		}
+	},
+
+	resources_get_version: {
+		args: { type: 'type', repo: 'repo' },
+		call: function(req) {
+			const resources = json(trim(readfile(`${HM_DIR}/resources.json`)) || '{}');
+			const versions = resources[req.args?.type];
+			if (req.args?.repo) {
+				for (let obj in values(versions))
+					if (obj.repo === req.args?.repo)
+						return { version: obj.version };
+
+				return { version: null };
+			} else
+				return { version: versions };
+		}
+	},
+
+	resources_update: {
+		args: { type: 'type', repo: 'repo' },
+		call: function(req) {
+			if (req.args?.type) {
+				const type = shellquote(req.args?.type),
+				      repo = shellquote(req.args?.repo);
+				const exit_code = system(`${HM_DIR}/scripts/update_resources.sh ${type} ${repo}`);
+				return { status: exit_code };
+			} else
+				return { status: 255, error: 'illegal type' };
+		}
+	},
+
+	dir_ls: {
+		args: { type: 'type' },
+		call: function(req) {
+			if (!(req.args?.type in RES_TYPE))
+				return { result: null, error: 'illegal type' };
+
+			const list = lsdir(`${HM_DIR}/${req.args?.type}/`);
+			return { result: list };
+		}
+	},
+
+	file_read: {
+		args: { type: 'type', filename: 'filename' },
+		call: function(req) {
+			if (!(req.args?.type in RES_TYPE))
+				return { content: null, error: 'illegal type' };
+
+			if ((!req.args?.filename) || match(req.args?.filename, /\.\.\//))
+				return { content: null, error: 'illegal filename' };
+
+			const filecontent = readfile(`${HM_DIR}/${req.args?.type}/${req.args?.filename}`);
+			return { content: filecontent };
+		}
+	},
+
+	file_write: {
+		args: { type: 'type', filename: 'filename', content: 'content' },
+		call: function(req) {
+			if (!(req.args?.type in RES_TYPE))
+				return { result: false, error: 'illegal type' };
+
+			if ((!req.args?.filename) || match(req.args?.filename, /\.\.\//))
+				return { result: false, error: 'illegal filename' };
+
+			const file = `${HM_DIR}/${req.args?.type}/${req.args?.filename}`;
+			let content = req.args?.content;
+
+			/* Sanitize content */
+			if (content) {
+				content = trim(content);
+				content = replace(content, /\r\n?/g, '\n');
+				if (!match(content, /\n$/))
+					content += '\n';
+			}
+
+			//system(`mkdir -p ${HM_DIR}/${req.args?.type}`);
+			writefile(file, content);
+
+			return { result: true };
+		}
+	},
+
+	file_download: {
+		args: { type: 'type', filename: 'filename', url: 'url', header: 'header' },
+		call: function(req) {
+			if (!(req.args?.type in RES_TYPE))
+				return { result: false, error: 'illegal type' };
+
+			if ((!req.args?.filename) || match(req.args?.filename, /\.\.\//))
+				return { result: false, error: 'illegal filename' };
+
+			if (!req.args?.url)
+				return { result: false, error: 'illegal url' };
+
+			const file = `${HM_DIR}/${req.args?.type}/${req.args?.filename}`;
+
+			//system(`mkdir -p ${HM_DIR}/${req.args?.type}`);
+			let exitcode = wGET(req.args?.url, req.args?.header, file);
+
+			if (exitcode === 0) {
+				return { result: true };
+			} else
+				return { result: false, error: 'wget exitcode: ' + sprintf("%d", exitcode) };
+		}
+	},
+
+	file_remove: {
+		args: { type: 'type', filename: 'filename' },
+		call: function(req) {
+			if (!(req.args?.type in RES_TYPE))
+				return { result: false, error: 'illegal type' };
+
+			if ((!req.args?.filename) || match(req.args?.filename, /\.\.\//))
+				return { result: false, error: 'illegal filename' };
+
+			system(`rm -f ${HM_DIR}/${req.args?.type}/${req.args?.filename}`);
+
+			return { result: true };
+		}
+	}
+};
+
+return { 'luci.fchomo': methods };
