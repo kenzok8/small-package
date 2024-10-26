@@ -302,6 +302,10 @@ start_service() {
 		nft -f "$HIJACK_NFT" -D FW_MARK="$FW_MARK" -D FW_MARK_MASK="$FW_MARK_MASK" -D TUN_DEVICE="$TUN_DEVICE" -D DNS_PORT="$dns_port" -D REDIR_PORT="$redir_port" -D TPROXY_PORT="$tproxy_port"
 		nft -f "$RESERVED_IP_NFT"
 		nft -f "$RESERVED_IP6_NFT"
+		if [ "$tcp_transparent_proxy_mode" != "redirect" ]; then
+			nft flush chain inet "$FW_TABLE" nat_output
+			nft flush chain inet "$FW_TABLE" dstnat
+		fi
 		nft add element inet "$FW_TABLE" bypass_group \{ "$MIHOMO_GROUP" \}
 		nft add element inet "$FW_TABLE" fake_ip \{ "$fake_ip_range" \}
 		# dns hijack
