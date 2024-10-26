@@ -1,0 +1,440 @@
+#!/bin/sh /etc/rc.common
+
+. "${IPKG_INSTROOT}/lib/functions/network.sh"
+
+USE_PROCD=1
+
+START=99
+STOP=10
+
+CONF="fchomo"
+PROG="/usr/bin/mihomo"
+
+HM_DIR="/etc/fchomo"
+TEMPS_DIR="$HM_DIR/templates"
+RUN_DIR="/var/run/fchomo"
+LOG_PATH="$RUN_DIR/fchomo.log"
+DNSMASQ_DIR="/tmp/dnsmasq.d/dnsmasq-fchomo.d"
+
+config_load "$CONF"
+
+# define global var: DEF_WAN DEF_WAN6 NIC_* NIC6_*
+define_nic() {
+	local dev sub addr
+	# get all active NICs
+	for dev in $(ls /sys/class/net/); do
+		#ipv4
+		sub=$(ip -o -4 addr|sed -En "s|.*${dev}\s+inet\s+([0-9\./]+).*|\1|gp")
+		eval "NIC_${dev//[[:punct:]]/_}=\"\$sub\""
+		#ipv6
+		sub=$(ip -o -6 addr|sed -En "s|.*${dev}\s+inet6\s+([A-Za-z0-9\./:]+).*|\1|gp")
+		# ref: https://github.com/openwrt/openwrt/blob/main/package/base-files/files/lib/functions/network.sh#L53 #network_get_subnet6()
+		for _ in $sub; do
+			for addr in $sub; do
+				case "$addr" in fe[8ab]?:*|f[cd]??:*)
+					continue
+				esac
+				sub=$addr; break
+			done
+			# Attempt to return first non-fe80::/10 range
+			for addr in $sub; do
+				case "$addr" in fe[8ab]?:*)
+					continue
+				esac
+				sub=$addr; break
+			done
+			# Return first item
+			for addr in $sub; do
+				sub=$addr; break
+			done
+		done
+		eval "NIC6_${dev//[[:punct:]]/_}=\"\$sub\""
+	done
+	# get default gateway 0.0.0.0/::
+	network_find_wan DEF_WAN true
+	network_find_wan6 DEF_WAN6 true
+
+	return 0
+}
+define_nic
+
+load_interfaces() {
+	local bind_ifname
+	config_get bind_ifname "$1" "bind_interface"
+
+	[ -z "$bind_ifname" ] || interfaces=" $(uci -q show network|grep "device='$bind_ifname'"|cut -f2 -d'.') $interfaces"
+}
+
+log() {
+	echo -e "$(date "+%Y-%m-%d %H:%M:%S") [DAEMON] $*" >> "$LOG_PATH"
+}
+
+start_service() {
+	local default_proxy server_enabled server_auto_firewall
+	config_get default_proxy "routing" "default_proxy" ""
+	config_get_bool server_enabled "routing" "server_enabled" "0"
+	config_get_bool server_auto_firewall "routing" "server_auto_firewall" "0"
+
+	if [ -z "$default_proxy" -a "$server_enabled" = "0" ]; then
+		return 1
+	fi
+
+	mkdir -p "$RUN_DIR"
+
+	# Client
+	if [ -n "$default_proxy" ]; then
+	if [ -z "$1" -o "$1" = "mihomo-c" ]; then
+		# Generate/Validate client config
+		ucode -S "$HM_DIR/scripts/generate_client.uc" 2>>"$LOG_PATH" | yq -Poy | yq \
+			'.sniffer["force-domain"][] style="double"
+			| .sniffer["skip-domain"][] style="double"
+			| with(.dns["nameserver-policy"] | keys; .. style="double")
+			| .dns["fallback-filter"].domain[] style="double"' \
+		> "$RUN_DIR/mihomo-c.yaml"
+		yq eval-all -i '. as $item ireduce ({}; . * $item )' "$RUN_DIR/mihomo-c.yaml" "$TEMPS_DIR/"*.yaml
+
+		if [ ! -e "$RUN_DIR/mihomo-c.yaml" ]; then
+			log "Error: failed to generate client configuration."
+			return 1
+		elif ! "$PROG" -t -d "$HM_DIR" -f "$RUN_DIR/mihomo-c.yaml" >/dev/null 2>>"$LOG_PATH"; then
+			log "Error: wrong client configuration detected."
+			return 1
+		fi
+		echo > "$RUN_DIR/mihomo-c.log"
+
+		# Deploy Clash API Dashboard
+		local dashboard_repo
+		config_get dashboard_repo "api" "dashboard_repo" ""
+
+		if [ -n "$dashboard_repo" -a ! -d "$RUN_DIR/ui" ]; then
+			tar -xzf "$HM_DIR/resources/$(echo "$dashboard_repo" | sed 's|\W|_|g').tgz" -C "$RUN_DIR/"
+			mv "$RUN_DIR/"*-gh-pages/ "$RUN_DIR/ui/"
+		fi
+
+		# Setup DNSMasq servers and IP-sets
+		local global_ipv6 dns_ipv6
+		config_get_bool global_ipv6 "global" "ipv6" "1"
+		config_get_bool dns_ipv6 "dns" "ipv6" "1"
+		local dns_port tcp_dns_port
+		config_get dns_port "dns" "port" "7853"
+		config_get tcp_dns_port "inbound" "tunnel_port" "7893"
+		local routing_mode routing_domain
+		config_get routing_mode "routing" "routing_mode" ""
+		config_get_bool routing_domain "routing" "routing_domain" "0"
+
+		mkdir -p "$DNSMASQ_DIR"
+		echo -e "conf-dir=$DNSMASQ_DIR" > "$DNSMASQ_DIR/../dnsmasq-fchomo.conf"
+		cat <<-EOF > "$DNSMASQ_DIR/forward-dns.conf"
+			no-poll
+			no-resolv
+			server=127.0.0.1#$dns_port
+		EOF
+
+		# <family> <set_name> <src> <dst> [yaml]
+		write_ipset_file() {
+			local family=$1
+			local set_name=$2
+			local src="$3"
+			local dst="$4"
+			local yaml="$5"
+
+			if [ -n "$yaml" ]; then
+				yq '.[] |= with(select(. == null); . = []) | .FQDN[]' "$src" | \
+				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" > "$dst"
+			else
+				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" "$src" > "$dst"
+			fi
+		}
+
+		# IP-sets
+		if [ -n "$(opkg list-installed dnsmasq-full)" ]; then
+			write_ipset_file 4 inet4_wan_direct_addr "$HM_DIR/resources/direct_list.yaml" "$DNSMASQ_DIR/direct_list.conf" yaml
+			[ "$global_ipv6" != "1" ] || \
+			write_ipset_file 6 inet6_wan_direct_addr "$HM_DIR/resources/direct_list.yaml" "$DNSMASQ_DIR/direct_list6.conf" yaml
+
+			write_ipset_file 4 inet4_wan_proxy_addr "$HM_DIR/resources/proxy_list.yaml" "$DNSMASQ_DIR/proxy_list.conf" yaml
+			[ "$global_ipv6" != "1" ] || \
+			write_ipset_file 6 inet6_wan_proxy_addr "$HM_DIR/resources/proxy_list.yaml" "$DNSMASQ_DIR/proxy_list6.conf" yaml
+
+			if [ "$routing_domain" = "1" ]; then
+				case "$routing_mode" in
+					bypass_cn)
+						write_ipset_file 4 inet4_china_list_addr "$HM_DIR/resources/china_list.txt" "$DNSMASQ_DIR/china_list.conf"
+						[ "$global_ipv6" != "1" ] || \
+						write_ipset_file 6 inet6_china_list_addr "$HM_DIR/resources/china_list.txt" "$DNSMASQ_DIR/china_list6.conf"
+						;;
+					routing_gfw)
+						write_ipset_file 4 inet4_gfw_list_addr "$HM_DIR/resources/gfw_list.txt" "$DNSMASQ_DIR/gfw_list.conf"
+						[ "$global_ipv6" != "1" ] || \
+						write_ipset_file 6 inet6_gfw_list_addr "$HM_DIR/resources/gfw_list.txt" "$DNSMASQ_DIR/gfw_list6.conf"
+						;;
+				esac
+			fi
+		fi
+
+		/etc/init.d/dnsmasq reload >/dev/null 2>&1
+
+		# Setup routing table
+		local proxy_mode table_id rule_pref
+		config_get proxy_mode "inbound" "proxy_mode" "redir_tproxy"
+		config_get table_id "config" "route_table_id" "2022"
+		config_get rule_pref "config" "route_rule_pref" "9000"
+		case "$proxy_mode" in
+			"redir_tproxy")
+				local tproxy_mark
+				config_get tproxy_mark "config" "tproxy_mark" "201"
+
+				ip rule add fwmark "$tproxy_mark" pref "$rule_pref" table "$table_id"
+				ip route add local default dev lo table "$table_id"
+
+				if [ "$global_ipv6" = "1" ]; then
+					ip -6 rule add fwmark "$tproxy_mark" pref "$rule_pref" table "$table_id"
+					ip -6 route add local default dev lo table "$table_id"
+				fi
+				;;
+			"redir_tun"|"tun")
+				local tun_name tun_mark
+				config_get tun_name "config" "tun_name" "hmtun0"
+				config_get tun_mark "config" "tun_mark" "202"
+
+				ip tuntap add mode tun user root name "$tun_name"
+				sleep 1s
+				ip link set "$tun_name" up
+
+				ip route replace default dev "$tun_name" table "$table_id"
+				ip rule add fwmark "$tun_mark" pref "$rule_pref" table "$table_id"
+
+				if [ "$global_ipv6" = "1" ]; then
+					ip -6 route replace default dev "$tun_name" table "$table_id"
+					ip -6 rule add fwmark "$tun_mark" pref "$rule_pref" table "$table_id"
+				fi
+				;;
+		esac
+
+		# mihomo (client)
+		procd_open_instance "mihomo-c"
+
+		procd_set_param command /bin/sh
+		procd_append_param command -c "'$PROG' -d '$HM_DIR' -f '$RUN_DIR/mihomo-c.yaml' >> '$RUN_DIR/mihomo-c.log' 2>&1"
+
+		# Only supports `Global`` and does not support `Proxy Group` and `Proxy Node`
+		local bind_ifname
+		config_get bind_ifname "routing" "bind_interface"
+
+		procd_set_param netdev "br-lan"
+		if [ -n "$bind_ifname" ]; then
+			procd_append_param netdev "$bind_ifname"
+		else
+			local ifname
+			network_get_device ifname "$DEF_WAN" && procd_append_param netdev "$ifname"
+			network_get_device ifname "$DEF_WAN6" && procd_append_param netdev "$ifname"
+		fi
+
+		#procd_set_param capabilities "/etc/capabilities/fchomo.json"
+		#procd_set_param user mihomo
+		#procd_set_param group mihomo
+
+		procd_set_param limits core="unlimited"
+		procd_set_param limits nofile="1000000 1000000"
+		procd_set_param stderr 1
+		procd_set_param respawn
+
+		procd_close_instance
+	fi
+	fi
+
+	# Server
+	if [ "$server_enabled" = "1" ]; then
+	if [ -z "$1" -o "$1" = "mihomo-s" ]; then
+		# Generate/Validate server config
+		ucode -S "$HM_DIR/scripts/generate_server.uc" 2>>"$LOG_PATH" | yq -Poy > "$RUN_DIR/mihomo-s.yaml"
+
+		if [ ! -e "$RUN_DIR/mihomo-s.yaml" ]; then
+			log "Error: failed to generate server configuration."
+			return 1
+		elif ! "$PROG" -t -d "$HM_DIR" -f "$RUN_DIR/mihomo-s.yaml" >/dev/null 2>>"$LOG_PATH"; then
+			log "Error: wrong server configuration detected."
+			return 1
+		fi
+		echo > "$RUN_DIR/mihomo-s.log"
+
+		# mihomo (server)
+		procd_open_instance "mihomo-s"
+
+		procd_set_param command /bin/sh
+		procd_append_param command -c "'$PROG' -d '$HM_DIR' -f '$RUN_DIR/mihomo-s.yaml' >> '$RUN_DIR/mihomo-s.log' 2>&1"
+
+		#procd_set_param capabilities "/etc/capabilities/fchomo.json"
+		#procd_set_param user mihomo
+		#procd_set_param group mihomo
+
+		procd_set_param limits core="unlimited"
+		procd_set_param limits nofile="1000000 1000000"
+		procd_set_param stderr 1
+		procd_set_param respawn
+
+		if [ "$server_auto_firewall" = "1" ]; then
+			add_firewall() {
+				local enabled udp proto port
+				config_get_bool enabled "$1" "enabled" "1"
+				config_get_bool udp "$1" "udp" "1"
+				[ "$udp" = "0" ] && proto='tcp' || proto='tcp udp'
+				config_get port "$1" "port"
+				
+				[ "$enabled" = "0" ] && return 0
+
+				json_add_object ''
+				json_add_string type rule
+				json_add_string target ACCEPT
+				json_add_string name "$1"
+				json_add_string proto "$proto"
+				json_add_string src "*"
+				json_add_string dest_port "$port"
+				json_close_object
+			}
+
+			procd_open_data
+			# configure firewall
+			json_add_array firewall
+				# meta l4proto %s th dport %s counter accept comment "!%s: accept server instance [%s]"
+				config_foreach add_firewall "server"
+			json_close_array
+			procd_close_data
+		fi
+
+		procd_close_instance
+	fi
+	fi
+
+	# log-cleaner
+	procd_open_instance "log-cleaner"
+	procd_set_param command "$HM_DIR/scripts/clean_log.sh"
+	procd_set_param respawn
+	procd_close_instance
+
+	# Setup firewall
+	utpl -S "$HM_DIR/scripts/firewall_pre.ut" > "$RUN_DIR/fchomo_pre.nft"
+	# Setup Nftables rules
+	if [ -n "$default_proxy" ]; then
+		[ -z "$1" -o "$1" = "mihomo-c" ] && utpl -S "$HM_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fchomo_post.nft"
+	fi
+	fw4 reload >"/dev/null" 2>&1
+
+	log "$(mihomo -v | awk 'NR==1{print $1,$3}') started."
+}
+
+stop_service() {
+	# Client
+	[ -z "$1" -o "$1" = "mihomo-c" ] && stop_client
+	# Server
+	[ -z "$1" -o "$1" = "mihomo-s" ] && stop_server
+	# Setup firewall
+	echo > "$RUN_DIR/fchomo_pre.nft" 2>"/dev/null"
+	fw4 reload >"/dev/null" 2>&1
+	return 0
+}
+
+stop_client() {
+	# Load config
+	local table_id tproxy_mark tun_mark tun_name
+	config_get table_id "cofnig" "route_table_id" "2022"
+	config_get rule_pref "config" "route_rule_pref" "9000"
+	config_get tproxy_mark "cofnig" "tproxy_mark" "201"
+	config_get tun_mark "cofnig" "tun_mark" "202"
+	config_get tun_name "cofnig" "tun_name" "hmtun0"
+
+	# Remove routing table
+	# Tproxy
+	ip rule del pref "$rule_pref" table "$table_id" 2>"/dev/null"
+	ip route del local default dev lo table "$table_id" 2>"/dev/null"
+
+	ip -6 rule del pref "$rule_pref" table "$table_id" 2>"/dev/null"
+	ip -6 route del local default dev lo table "$table_id" 2>"/dev/null"
+
+	# TUN
+	ip route del default dev "$tun_name" table "$table_id" 2>"/dev/null"
+	ip rule del pref "$rule_pref" table "$table_id" 2>"/dev/null"
+
+	ip -6 route del default dev "$tun_name" table "$table_id" 2>"/dev/null"
+	ip -6 rule del pref "$rule_pref" table "$table_id" 2>"/dev/null"
+
+	# Remove Nftables rules
+	nft flush  table inet fchomo 2>"/dev/null"
+	nft delete table inet fchomo 2>"/dev/null"
+	echo > "$RUN_DIR/fchomo_post.nft" 2>"/dev/null"
+
+	# Remove DNSMasq servers
+	rm -rf "$DNSMASQ_DIR/../dnsmasq-fchomo.conf" "$DNSMASQ_DIR"
+	/etc/init.d/dnsmasq reload >/dev/null 2>&1
+
+	# Remove Clash API Dashboard
+	rm -rf "$RUN_DIR/ui"
+
+	# Remove client config
+	rm -f "$RUN_DIR/mihomo-c.yaml" "$RUN_DIR/mihomo-c.log"
+
+	log "Service mihomo-c stopped."
+}
+
+stop_server() {
+	# Remove server config
+	rm -f "$RUN_DIR/mihomo-s.yaml" "$RUN_DIR/mihomo-s.log"
+
+	log "Service mihomo-s stopped."
+}
+
+service_stopped() {
+	sleep 1s # Wait for procd_kill complete
+	# Client
+	[ -n "$(/etc/init.d/$CONF info | jsonfilter -q -e '@.'"$CONF"'.instances["mihomo-c"]')" ] || client_stopped
+	# Server
+	return 0
+}
+
+client_stopped() {
+	# Load config
+	local tun_name
+	config_get tun_name "config" "tun_name" "hmtun0"
+
+	# TUN
+	ip link set "$tun_name" down 2>"/dev/null"
+	ip tuntap del mode tun name "$tun_name" 2>"/dev/null"
+
+	ip -6 rule del oif "$tun_name" 2>"/dev/null"
+}
+
+server_stopped() {
+	return 0
+}
+
+reload_service() {
+	log "Reloading service${1:+ $1}..."
+
+	stop  "$@"
+	start "$@"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$CONF" 'network'
+
+	local interfaces
+
+	# Only supports `Global`` and does not support `Proxy Group` and `Proxy Node`
+	load_interfaces 'routing'
+	[ -n "$interfaces" ] && {
+		for n in $interfaces; do
+			procd_add_reload_interface_trigger $n
+		done
+	} || {
+		for n in $DEF_WAN $DEF_WAN6; do
+			procd_add_reload_interface_trigger $n
+		done
+	}
+
+	interfaces=$(uci show network|grep "device='br-lan'"|cut -f2 -d'.')
+	[ -n "$interfaces" ] && {
+		for n in $interfaces; do
+			procd_add_reload_interface_trigger $n
+		done
+	}
+}

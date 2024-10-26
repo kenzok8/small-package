@@ -1,0 +1,69 @@
+{
+	"admin/services/fchomo": {
+		"title": "FullCombo Mihomo",
+		"order": 12,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [ "luci-app-fchomo" ],
+			"uci": { "fchomo": true }
+		}
+	},
+	"admin/services/fchomo/global": {
+		"title": "Global",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "fchomo/global"
+		}
+	},
+	"admin/services/fchomo/client": {
+		"title": "Client",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "fchomo/client"
+		}
+	},
+	"admin/services/fchomo/hosts": {
+		"title": "Hosts",
+		"order": 25,
+		"action": {
+			"type": "view",
+			"path": "fchomo/hosts"
+		}
+	},
+	"admin/services/fchomo/node": {
+		"title": "Node",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "fchomo/node"
+		}
+	},
+	"admin/services/fchomo/ruleset": {
+		"title": "Ruleset",
+		"order": 35,
+		"action": {
+			"type": "view",
+			"path": "fchomo/ruleset"
+		}
+	},
+	"admin/services/fchomo/server": {
+		"title": "Server",
+		"order": 40,
+		"action": {
+			"type": "view",
+			"path": "fchomo/server"
+		}
+	},
+	"admin/services/fchomo/log": {
+		"title": "Log",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "fchomo/log"
+		}
+	}
+}
