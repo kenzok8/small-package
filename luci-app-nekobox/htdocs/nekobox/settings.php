@@ -298,21 +298,9 @@ $uiVersion = getUiVersion();
     document.getElementById('updateUiButton').addEventListener('click', function() {
         initiateUpdate('ui.php', '开始下载 UI 面板更新...');
     });
-</script>
 
-<script>
     document.getElementById('updateConfigButton').addEventListener('click', function() {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'update_config.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                alert(xhr.responseText); 
-            } else {
-                alert('更新失败，请稍后重试。');
-            }
-        };
-        xhr.send('action=update_config'); 
+        initiateUpdate('update_config.php', '开始下载 Mihomo 配置文件更新...');
     });
 </script>
 
