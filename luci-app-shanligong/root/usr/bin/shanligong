@@ -1,0 +1,80 @@
+#!/bin/sh
+
+IFCONFIG="$(uci get shanligong.config.interface)"
+USER_ACCOUNT="$(uci get shanligong.config.user_account)"
+USER_PASSWORD="$(uci get shanligong.config.user_password)"
+USER_ACCOUNT2="$(uci get shanligong.config.user_account2)"
+USER_PASSWORD2="$(uci get shanligong.config.user_password2)"
+alternative="$(uci get shanligong.config.alternative)"
+TIME="$(uci get shanligong.config.time)"
+WLAN_USER_IP="$(ifconfig $IFCONFIG | grep 'inet addr:' | grep -oE '([0-9]{1,3}.){3}.[0-9]{1,3}' | head -n 1)"
+response_file="/tmp/response.txt"
+
+portal() {
+    rm "$response_file"
+    echo "请求参数：" >> "$log_file"
+    echo "用户名：$1" >> "$log_file"
+    echo "密码：$2" >> "$log_file"
+    echo "IP地址：$3" >> "$log_file"
+	curl "http://111.17.200.130:801/eportal/portal/login?callback=dr1003&login_method=1&user_account=$1&user_password=$2&wlan_user_ip=$3&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.1&terminal_type=1&lang=zh-cn&v=6915&lang=zh" \
+	  -H "Accept: */*" \
+	  -H "Accept-Language: zh-CN,zh;q=0.9" \
+	  -H "Connection: keep-alive" \
+	  -H "Referer: http://111.17.200.130/" \
+	  -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36" \
+	  -o "$response_file"
+    response=$(cat "$response_file")
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 服务器返回：$response" >> "$log_file"
+
+}
+
+log_file="/tmp/log/shanligong.log"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] 开始运行" >> "$log_file"
+
+while true; do
+    while true; do
+        if ping -c 1 8.8.8.8 >/dev/null; then
+            sleep $TIME
+        else
+            log_line_count=$(wc -l < "$log_file")
+            if [ "$log_line_count" -gt 200 ]; then
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] 日志达到上限200行，已覆盖" > "$log_file"
+            fi
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] 网络异常，进行二次网络监测，避免误测" >> "$log_file"
+            sleep 3
+            break
+        fi
+    done
+
+    while true; do
+        if ping -c 1 8.8.8.8 >/dev/null; then
+            break
+        else
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] 网络异常，发起认证请求..." >> "$log_file"
+            
+            portal $USER_ACCOUNT $USER_PASSWORD $WLAN_USER_IP
+            sleep 3
+
+            if ping -c 1 8.8.8.8 >/dev/null; then
+                
+                echo "认证成功！！" >> "$log_file"
+            else
+                if [ "$alternative" = "1" ]; then
+                    
+                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 好像被封号了耶，尝试使用备选账号登录..." >> "$log_file"
+                    portal $USER_ACCOUNT2 $USER_PASSWORD2 $WLAN_USER_IP
+                    sleep 3
+                    if ping -c 1 8.8.8.8 >/dev/null; then
+                    	echo "[$(date '+%Y-%m-%d %H:%M:%S')] 备选账号认证成功！" >> "$log_file"
+                        break
+                    else
+                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 备选账号认证失败！" >> "$log_file"
+                    fi
+                else
+                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 认证失败，重试..." >> "$log_file"
+                fi  
+            fi
+        fi
+    done
+done
+

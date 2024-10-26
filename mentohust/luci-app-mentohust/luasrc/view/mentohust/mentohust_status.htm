@@ -1,0 +1,23 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(1, '<%=url([[admin]], [[services]], [[mentohust]], [[status]])%>', null,
+	function(x, data) {
+		var tb = document.getElementById('mentohust_status');
+		if (data && tb) {
+			if (data.running) {
+				var links = '<em style=\"color:green\"><b>MentoHUST <%:运行中%></b></em>';
+				tb.innerHTML = links;
+			} else {
+				tb.innerHTML = '<em style=\"color:red\"><b>MentoHUST <%:未运行%></b></em>';
+			}
+		}
+	}
+);
+
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="mentohust_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>

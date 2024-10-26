@@ -1,0 +1,35 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+log_file="/tmp/log/chongyoung.log"
+
+start() {
+    enabled=$(uci get chongyoung.config.enabled)
+    if [ "$enabled" -eq 1 ]; then
+        kill -9 $(pgrep -f "/usr/bin/chongyong") 2>/dev/null
+        sh /usr/bin/chongyong &
+        echo "[$(date "+%Y-%m-%d %H:%M:%S")]: 已启用" >> "$log_file"
+        return 1
+    else
+        kill -9 $(pgrep -f "/usr/bin/chongyong") 2>/dev/null
+        echo "[$(date "+%Y-%m-%d %H:%M:%S")]: 停止认证" >> "$log_file"
+    fi
+}
+
+stop() {
+    kill -9 $(pgrep -f "/usr/bin/chongyong") 2>/dev/null
+    echo "[$(date "+%Y-%m-%d %H:%M:%S")]: 已停用" >> "$log_file"
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+    echo "$(date "+%Y-%m-%d %H:%M:%S"): 已重新启动 /etc/autoshell.sh"
+}
+
+disable() {
+    echo "禁用功能未实现"
+}
+

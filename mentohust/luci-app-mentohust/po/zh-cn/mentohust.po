@@ -1,0 +1,111 @@
+msgid "MentoHUST"
+msgstr "锐捷认证"
+
+msgid "MentoHUST is a program that supports Ruijie authentication on Windows, Linux and Mac OS (with support for Searle authentication)."
+msgstr "MentoHUST 是一个支持Windows、Linux、Mac OS下锐捷认证的程序（附带支持赛尔认证）"
+
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "Collecting data..."
+msgstr "获取数据中..."
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Network interface"
+msgstr "网络接口"
+
+msgid "IP address"
+msgstr "IP 地址"
+
+msgid "Leave blank or set 0.0.0.0 to use local IP (DHCP)"
+msgstr "留空或设置 0.0.0.0 则使用本机 IP（DHCP）"
+
+msgid "Gateway"
+msgstr "网关"
+
+msgid "Subnet Mask"
+msgstr "子网掩码"
+
+msgid "DNS"
+msgstr "DNS"
+
+msgid "Ping Host"
+msgstr "Ping 主机"
+
+msgid "Ping host for drop detection, 0.0.0.0 to turn off this feature."
+msgstr "Ping 主机，用于掉线检测，0.0.0.0 表示禁用该功能"
+
+msgid "Authentication Timeout (Seconds)"
+msgstr "认证超时（秒）"
+
+msgid "Response Interval (Seconds)"
+msgstr "响应间隔（秒）"
+
+msgid "Await Failure(Seconds)"
+msgstr "失败等待（秒）"
+
+msgid "Allow Failure Count"
+msgstr "允许失败次数"
+
+msgid "Default 0, indicating no limit."
+msgstr "默认 0，表示无限制"
+
+msgid "Multicast Address"
+msgstr "组播地址"
+
+msgid "Standard"
+msgstr "标准"
+
+msgid "Ruijie"
+msgstr "锐捷"
+
+msgid "Searle"
+msgstr "赛尔"
+
+msgid "DHCP Mode"
+msgstr "DHCP 方式"
+
+msgid "None"
+msgstr "不使用"
+
+msgid "Two-factor authentication"
+msgstr "二次认证"
+
+msgid "After authentication"
+msgstr "认证后"
+
+msgid "Before authentication"
+msgstr "认证前"
+
+msgid "DHCP Script"
+msgstr "DHCP 脚本"
+
+msgid "Default udhcpc -i"
+msgstr "默认 udhcpc -i"
+
+msgid "Client Version Number"
+msgstr "客户端版本号"
+
+msgid "Default 0.00，indicating compatibility with xrgsu"
+msgstr "默认 0.00，表示兼容 xrgsu"
+
+msgid "ruijie LOG"
+msgstr "运行日志"
+
+msgid "_LOG"
+msgstr "捕获最后20行"
+
+msgid "_log"
+msgstr "请刷新界面以更新日志"
+

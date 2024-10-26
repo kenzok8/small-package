@@ -1,0 +1,128 @@
+#!/bin/bash
+#
+# Copyright (C) 2024 Thaolga
+
+arch=`uname -m`
+neko_dir="/etc/neko"
+tmp_dir="/tmp"
+log="$neko_dir/tmp/log.txt"
+    
+
+core_ver="neko"
+url_core="https://github.com/Thaolga/neko/releases/download/core_neko"
+url_geo="https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest"
+
+geoip_path="${neko_dir}/geoip.metadb"
+geosite_path="${neko_dir}/geosite.db"
+neko_bin="${neko_dir}/core/mihomo"
+
+rpid=`pgrep "neko/core"`
+if [[ -n $rpid ]] ; then
+    kill $rpid 
+fi
+
+echo "[ `date +%T` ] - Checking Files"
+
+files_check() {
+    uci set uhttpd.main.index_page='index.php'
+    uci set uhttpd.main.interpreter='.php=/usr/bin/php-cgi'
+    uci commit uhttpd
+
+    /etc/init.d/uhttpd restart
+
+    case "$arch" in
+    aarch64)
+        arch="arm64"
+        ;;
+    arm)
+        arch="armv7"
+    	;;
+    x86_64)
+        arch="amd64"
+        ;;
+    mips)
+        arch="mips_24"
+    	;;
+    *)
+        arch="0"
+        ;;
+    esac
+    
+    if [ $arch == "0" ] ; then
+        echo "[ `date +%T` ] - ERROR!!! Arch not supported"
+    else
+        if [ -f ${neko_bin} ]; then
+            echo "[ `date +%T` ] - Mihomo OK"
+        else
+            echo "[ `date +%T` ] - Downloading Mihomo Binary - $arch"
+            echo "[ `date +%T` ] - Downloading Mihomo Binary - $arch" >> $log
+            wget -q --no-check-certificate -O ${neko_dir}/core/mihomo.gz ${url_core}/mihomo-linux-${arch}-${core_ver}.gz
+            gzip -d ${neko_dir}/core/mihomo.gz
+        fi
+
+        if [ -f ${geoip_path} ]; then
+            echo "[ `date +%T` ] - GeoIP OK"
+        else
+            echo "[ `date +%T` ] - Downloading GeoIP"
+            echo "[ `date +%T` ] - Downloading GeoIP" >> $log
+            wget -q --no-check-certificate -O ${geoip_path} ${url_geo}/geoip.metadb
+        fi
+
+        if [ -f ${geosite_path} ]; then
+            echo "[ `date +%T` ] - GeoSite OK"
+        else
+            echo "[ `date +%T` ] - Downloading GeoSite"
+            echo "[ `date +%T` ] - Downloading GeoSite" >> $log
+            wget -q --no-check-certificate -O ${neko_dir} ${url_geo}/geosite.db
+        fi
+    fi
+    chmod +x $neko_dir/core/mihomo
+}
+if [ -f "/tmp/neko/neko.bak" ]; then
+    echo "[ `date +%T` ] - Old Files Detected"
+    if [ -f "/tmp/neko/core/mihomo" ]; then
+        cp -rf "/tmp/neko/core/mihomo" "/etc/neko/core/mihomo"
+    else
+        echo "mihomo Not Detected, Downloading"
+        mkdir ${tmp_dir}/neko
+        wget -q --no-check-certificate -O ${tmp_dir}/neko/mihomo.gz ${url_core}/mihomo-linux-${arch}-${core_ver}.gz
+        gzip -d ${tmp_dir}/neko/mihomo.gz
+        cp -rf ${tmp_dir}/neko/mihomo ${neko_dir}/core/mihomo
+        rm -rf ${tmp_dir}/neko/mihomo
+    fi
+    chmod 0755 /etc/neko/core/mihomo
+
+    if [ -f "/tmp/neko/geoip.metadb" ]; then
+        cp -rf "/tmp/neko/geoip.metadb" "/etc/neko/geoip.metadb"
+    else
+        echo "GeoIP Not Detected, Downloading"
+        wget -q --no-check-certificate -O ${geoip_path} ${url_geo}/geoip.metadb
+    fi
+
+    if [ -f "/tmp/neko/geosite.db" ]; then
+        cp -rf "/tmp/neko/geosite.db" "/etc/neko/geosite.db"
+    else
+        echo "GeoSite Not Detected, Downloading"
+        wget -q --no-check-certificate -O ${neko_dir} ${url_geo}/geosite.db
+    fi
+
+    if [ -f "/tmp/neko/cache.db" ]; then
+        cp -rf "/tmp/neko/cache.db" "/etc/neko/cache.db"
+    else
+        echo "Neko Cache Not Detected, Skipped"
+    fi
+    
+    cp -rf /tmp/neko/config/* "/etc/neko/config/"
+    cp -rf /tmp/neko/proxy_provider/* "/etc/neko/proxy_provider/"
+    cp -rf /tmp/neko/rule_provider/* "/etc/neko/rule_provider/"
+else
+    echo "[ `date +%T` ] - Old Files Not Detected, Checking Files"
+    files_check
+fi
+
+if [ $arch == "mips_24" ]; then
+    sed -i "s/#wget/wget/g" /etc/neko/core/neko
+fi
+
+uci set neko.cfg.enabled='0'
+uci commit neko

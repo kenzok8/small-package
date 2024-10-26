@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+
+run_reboot()
+{
+	local enable
+	config_get_bool enable $1 enable
+
+	if [ $enable ]; then
+		local minute
+		local hour
+
+		config_get minute $1 minute
+		config_get hour $1 hour
+
+		sed '/reboot/ d' /etc/crontabs/root > /tmp/crontab_root_tmp
+		cp /tmp/crontab_root_tmp /etc/crontabs/root
+		echo "$minute $hour * * * reboot &" >> /etc/crontabs/root
+
+		echo "Auto REBOOT has started."
+		/etc/init.d/cron restart
+	else
+		sed '/reboot/ d' /etc/crontabs/root > /tmp/crontab_root_tmp
+		cp /tmp/crontab_root_tmp /etc/crontabs/root
+		echo "Auto REBOOT has started."
+		/etc/init.d/cron restart
+	fi
+}
+
+start()
+{
+	config_load autoreboot
+	config_foreach run_reboot login
+}
+
+stop()
+{
+	echo "Auto REBOOT has stoped."
+}

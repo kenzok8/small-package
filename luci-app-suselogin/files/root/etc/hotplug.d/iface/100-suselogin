@@ -1,0 +1,75 @@
+#!/bin/sh
+
+# Copyright 2020 BlackYau <blackyau426@gmail.com>
+# GNU General Public License v3.0
+
+# Place in /etc/hotplug.d/iface
+
+enable=$(uci get suselogin.@login[0].enable)
+[ $enable -eq 0 ] && exit 0
+
+dir="/tmp/log/suselogin/" && mkdir -p ${dir}
+logfile="${dir}suselogin.log"
+ua="User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36"
+
+function isonline(){
+	local captiveReturnCode=`curl -s -I -m 10 -o /dev/null -s -w %{http_code} http://www.google.cn/generate_204`
+	if [ "$captiveReturnCode" = "204" ]; then
+		return
+	fi
+	false
+}
+
+function up(){
+	if isonline; then
+		echo "$(date "+%Y-%m-%d %H:%M:%S"): 您已连接到网络(hotplug)" >> ${logfile}
+		sleep 1 && return
+	fi
+
+	# Get referer page
+	local refererPage=`curl -s "http://www.google.cn/generate_204" | awk -F \' '{print $2}'`
+
+	# Structure loginURL
+	local loginURL=`echo $refererPage | awk -F \? '{print $1}'`
+	local loginURL="${loginURL/index.jsp/InterFace.do?method=login}"
+
+	# Structure queryString
+	local queryString=`echo $refererPage | awk -F \? '{print $2}'`
+	local queryString="${queryString//&/%2526}"
+	local queryString="${queryString//=/%253D}"
+
+	# Login
+	if [ -n "$loginURL" ]; then
+		curl -s -A "${ua}" \
+			-e "$refererPage" \
+			-b "EPORTAL_COOKIE_OPERATORPWD=; EPORTAL_AUTO_LAND=; EPORTAL_COOKIE_USERNAME=; EPORTAL_COOKIE_PASSWORD=; EPORTAL_COOKIE_SERVER=; EPORTAL_COOKIE_SERVER_NAME=; EPORTAL_COOKIE_DOMAIN=; EPORTAL_COOKIE_SAVEPASSWORD=false; EPORTAL_COOKIE_DOMAIN=false;" \
+			-d "userId=$username&password=$password&service=$isp&queryString=$queryString&operatorPwd=&operatorUserId=&validcode=&passwordEncrypt=false" \
+			-H "Accept: */*" \
+			-H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8" \
+			-m 5 \
+			"$loginURL" > ${dir}login.log
+		wait
+	else
+		echo "$(date "+%Y-%m-%d %H:%M:%S"): 获取登录地址失败(hotplug)" >> ${logfile} && return
+	fi
+
+	if isonline; then
+		ntpd -n -q -p ntp1.aliyun.com  # 登录成功后校准时间
+		wait # 等待校准时间完毕
+		echo "$(date "+%Y-%m-%d %H:%M:%S"): 登录成功(hotplug)" >> ${logfile} && sleep 2 && return
+	else
+		echo -n "$(date "+%Y-%m-%d %H:%M:%S"): 登录失败,错误信息(hotplug): " >> ${logfile}
+		echo "$(cat /tmp/log/suselogin/login.log)" >> ${logfile}
+	fi
+}
+
+if [ "$INTERFACE" = wan ]; then  # Place in /etc/hotplug.d/iface
+	if [ "$ACTION" = ifup ]; then
+		echo "$(date "+%Y-%m-%d %H:%M:%S"): 检测到 WAN 口状态变化,准备尝试拨号" >> ${logfile}
+		username=$(uci get suselogin.@login[0].username)
+		password=$(uci get suselogin.@login[0].password)
+		isp=$(uci get suselogin.@login[0].isp)
+		up
+	fi
+fi
+exit 0

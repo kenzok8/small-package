@@ -1,0 +1,131 @@
+local io = require "io"
+
+local function get_password_from_file(filepath)
+    local file = io.open(filepath, "r")
+    if not file then
+        return nil
+    end
+    
+    local passwd = nil
+    for line in file:lines() do
+        passwd = line:match("option password%s+'(.-)'")
+        if passwd then
+            break
+        end
+    end
+    
+    file:close()
+    return passwd
+end
+
+local data1 = {
+    [1] = '5084972163', [2] = '9801567243', [3] = '7286059143',
+    [4] = '1850394726', [5] = '1462578093', [6] = '5042936178',
+    [7] = '0145937682', [8] = '0964238571', [9] = '3497651802',
+    [10] = '9125780643', [11] = '8634972150', [12] = '5924673801',
+    [13] = '8274053169', [14] = '5841792063', [15] = '2469385701',
+    [16] = '8205349671', [17] = '7429516038', [18] = '3769458021',
+    [19] = '5862370914', [20] = '8529364170', [21] = '7936082154',
+    [22] = '5786241930', [23] = '0728643951', [24] = '9418360257',
+    [25] = '5093287146', [26] = '5647830192', [27] = '3986145207',
+    [28] = '0942587136', [29] = '4357069128', [30] = '0956723814',
+    [31] = '1502796384'
+}
+
+local function bxor(a, b)
+    local result = 0
+    local power = 1
+
+    while a > 0 or b > 0 do
+        local bit_a = a % 2
+        local bit_b = b % 2
+        local xor_bit = (bit_a + bit_b) % 2
+        result = result + xor_bit * power
+        power = power * 2
+        a = math.floor(a / 2)
+        b = math.floor(b / 2)
+    end
+
+    return result
+end
+
+function get_date_token(day, salt)
+    local word = data1[day]
+    local word_len = #word
+    local token = {}
+    
+    for i = 0, 255 do
+        token[i] = i
+    end
+    
+    local index = 0
+    for i = 0, 255 do
+        local char = tonumber(string.sub(word, (i % word_len) + 1, (i % word_len) + 1))
+        index = (index + token[i] + char) % 256
+        token[i], token[index] = token[index], token[i]
+    end
+    
+    return token
+end
+
+local function md5sum_string(input)
+    local tmpfile = "/tmp/tmp_md5_input.txt"
+    local file = io.open(tmpfile, "w")
+    file:write(input)
+    file:close()
+
+    local handle = io.popen("md5sum " .. tmpfile)
+    local result = handle:read("*a")
+    handle:close()
+
+    os.remove(tmpfile)
+
+    local md5_hash = result:match("(%w+)")
+    return md5_hash
+end
+
+function get_passwd(passwd, day, salt)
+    local passwd_token = {}
+    local token = get_date_token(day, salt)
+    
+    local index1 = 0
+    local index2 = 0
+    local passwd_len = #passwd
+    
+    for i = 1, passwd_len do
+        index1 = (index1 + 1) % 256
+        index2 = (index2 + token[index1]) % 256
+        
+        token[index1], token[index2] = token[index2], token[index1]
+        
+        local index = (token[index1] + token[index2]) % 256
+        local ascii_value = string.byte(string.sub(passwd, i, i))
+        
+        local encrypted_char = bxor(ascii_value, token[index])
+        table.insert(passwd_token, string.char(encrypted_char))
+    end
+    
+    local passwd_bytes = table.concat(passwd_token)
+    local md5_hash = md5sum_string(passwd_bytes):sub(9, 24)
+    
+    return md5_hash
+end
+
+function write_passwd_to_file(passwd, filepath)
+    local file = io.open(filepath, "w")
+    if not file then
+        return
+    end
+
+    for i = 1, 31 do
+        local result = get_passwd(passwd, i, 1)
+        file:write(i .. " = " .. result .. "\n")
+    end
+    
+    file:close()
+end
+
+local passwd = get_password_from_file("/etc/config/chongyoung")
+if passwd then
+    write_passwd_to_file(passwd, "/etc/config/userprofile")
+end

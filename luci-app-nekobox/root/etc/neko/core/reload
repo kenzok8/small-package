@@ -1,0 +1,151 @@
+#!/bin/bash
+
+neko_status=$(uci -q get neko.cfg.enabled)
+singbox_status=$(uci -q get neko.cfg.singbox_enabled)
+neko_new_interface=$(uci -q get neko.cfg.new_interface)
+neko_delay=$(uci -q get neko.cfg.delay)
+neko_dir="/etc/neko"
+tun_bin="$neko_dir/core/tun"
+neko_pid="$neko_dir/tmp/neko_pid.txt"
+singbox_pid="$neko_dir/tmp/singbox_pid.txt"
+log="$neko_dir/tmp/log.txt"
+firewall="/etc/init.d/firewall"
+neko_version=$1
+
+check_singbox_running() {
+    if [ -f "$singbox_pid" ]; then
+        pid=$(cat "$singbox_pid")
+        if [ -n "$pid" ] && [ -d "/proc/$pid" ]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+check_neko_running() {
+    if [ -f "$neko_pid" ]; then
+        pid=$(cat "$neko_pid")
+        if [ -n "$pid" ] && [ -d "/proc/$pid" ]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+neko_checknewver(){
+    new_version=$(curl -m 5 -f -s https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/main/nekobox_version)
+    if [ -z "$new_version" ] || [ "$(printf '%s\n' "$neko_version" "$new_version" | sort -V | head -n1)" = "$new_version" ]; then
+        strversion="- Latest"
+    else
+        strversion="- New v.$new_version"
+        if [ "$1" == "log" ]; then
+            echo "[ `date +%T` ] New Version detected. v.$new_version" >> "$log"
+        fi
+    fi
+}
+
+check_interface_changes() {
+    local service_name=$1
+    
+    echo "Checking New Interfaces for $service_name"
+    dt=`ubus call network.interface dump`
+    len=`echo $dt | jq '.interface' | jq length`
+    need_reload=0
+
+    for (( i=0; i<$len; i++ ))
+    do
+        tmpdt=`echo $dt | jq ".interface[$i]"`
+        status=`echo $tmpdt | jq '.up'`
+        if [ $status = true ]; then
+            iface=`echo $tmpdt | jq '.interface' | sed 's/"//g'`
+            uptime=`echo $tmpdt | jq '.uptime'`
+            if [ "$iface" == "loopback" -o "$iface" == "lan" ]; then
+                echo "Interfaces $iface is whitlisted"
+                continue
+            fi
+
+            if [[ ! -d "/tmp/iface_$service_name" ]]; then
+                echo "creating tmp dir for $service_name"
+                mkdir -p "/tmp/iface_$service_name"
+            fi
+        
+            if [ ! -e "/tmp/iface_$service_name/$iface" ]; then
+                echo $uptime > "/tmp/iface_$service_name/$iface"
+                need_reload=1
+                echo "[ `date +%T` ] - $service_name: New interface $iface detected" >> $log
+            else
+                last_uptime=`cat "/tmp/iface_$service_name/$iface"`
+                if (( $uptime < $last_uptime )) || [ -z $last_uptime ]; then
+                    need_reload=1
+                    echo "[ `date +%T` ] - $service_name: Interface $iface changed" >> $log
+                fi
+                echo $uptime > "/tmp/iface_$service_name/$iface"
+            fi
+            echo "- $iface Uptime $uptime s, last Uptime ${last_uptime:-new} s"
+        fi
+    done
+
+    if [ $need_reload -eq 1 ]; then
+        echo "[ `date +%T` ] - $service_name: Reloading firewall due to interface changes" >> $log
+        $firewall restart
+        sleep 1
+        $tun_bin -ks
+
+        if [ "$service_name" == "neko" ] && ! check_singbox_running; then
+            uptime_now=`cat /proc/uptime | cut -d. -f1`
+            if [ "$uptime_now" -lt 60 ]; then
+                service neko restart
+                echo "[ `date +%T` ] - NekoBox service restarted" >> $log
+            fi
+        elif [ "$service_name" == "singbox" ] && ! check_neko_running; then
+            uptime_now=`cat /proc/uptime | cut -d. -f1`
+            if [ "$uptime_now" -lt 60 ]; then
+                kill -HUP $(cat $singbox_pid)
+                echo "[ `date +%T` ] - Sing-box service restarted" >> $log
+            fi
+        fi
+    fi
+}
+
+if [ "$neko_new_interface" == 1 ]; then
+    if [ "$neko_status" == 1 ]; then
+        if check_singbox_running; then
+            echo "[ `date +%T` ] - NekoBox Auto Restart : DISABLED (Sing-box is running) " >> $log
+            exit 0
+        else
+            echo "[ `date +%T` ] - NekoBox Auto Restart : ON " >> $log
+        fi
+    fi
+    
+    if [ "$singbox_status" == 1 ]; then
+        if check_neko_running; then
+            echo "[ `date +%T` ] - Sing-box Auto Restart : DISABLED (NekoBox is running) " >> $log
+            exit 0
+        else
+            echo "[ `date +%T` ] - Sing-box Auto Restart : ON " >> $log
+        fi
+    fi
+    
+    cnt=0
+    while true
+    do
+        ((cnt++))
+        sleep "$neko_delay"
+        
+        if [ "$neko_status" == 1 ] && ! check_singbox_running; then
+            check_interface_changes "neko"
+        fi
+        
+        if [ "$singbox_status" == 1 ] && ! check_neko_running; then
+            check_interface_changes "singbox"
+        fi
+        
+        if [ $cnt == 30 ]; then
+            neko_checknewver "log"
+            cnt=0
+        fi
+    done
+else
+    echo "[ `date +%T` ] - Auto Restart : OFF " >> $log
+    sleep 20 && neko_checknewver "log"
+fi

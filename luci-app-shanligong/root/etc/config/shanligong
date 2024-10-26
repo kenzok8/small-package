@@ -1,0 +1,7 @@
+
+config shandong 'config'
+	option user_account ''
+	option user_password ''
+	option enabled '0'
+	option ifconfig ''
+	option time '30'

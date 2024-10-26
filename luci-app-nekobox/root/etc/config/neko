@@ -1,0 +1,5 @@
+config neko 'cfg'
+	option enabled '0'
+	option php_server '0'
+	option new_interface '1'
+	option delay '2'

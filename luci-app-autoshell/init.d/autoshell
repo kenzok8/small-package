@@ -1,0 +1,35 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+log_file="/tmp/log/autoshell.log"
+
+start() {
+    state=$(pgrep -f "/etc/autoshell.sh")
+    
+    config_content=$(cat /etc/config/autoshell)
+    if echo "$config_content" | grep -q "禁用"; then
+        echo "[$(date "+%Y-%m-%d %H:%M:%S")]: 脚本已禁用" >> "$log_file"
+        return 1
+    
+    else
+        /etc/autoshell.sh &
+        echo "[$(date "+%Y-%m-%d %H:%M:%S")]: 已启动认证脚本" >> "$log_file"
+    fi
+}
+
+stop() {
+    kill -9 $(pgrep -f "/etc/autoshell.sh") 2>/dev/null
+    echo "$(date "+%Y-%m-%d %H:%M:%S"): 已停止认证" >>
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+    echo "$(date "+%Y-%m-%d %H:%M:%S"): 已重新启动 /etc/autoshell.sh"
+}
+
+disable() {
+    echo "禁用功能未实现"
+}
