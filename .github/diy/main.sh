@@ -137,7 +137,7 @@ git clone --depth 1 https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest c
 git clone --depth 1 https://github.com/doushang/luci-app-shortcutmenu luci-shortcutmenu && mv -n luci-shortcutmenu/luci-app-shortcutmenu ./ ; rm -rf luci-shortcutmenu
 git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
 #git clone --depth 1 https://github.com/coolsnowwolf/packages && mv -n packages/multimedia/UnblockNeteaseMusic-Go packages/net/msd_lite ./ ; rm -rf packages
-git clone --depth 1 https://github.com/coolsnowwolf/luci && mv -n luci/applications/luci-app-unblockmusic luci/libs/luci-lib-fs./ ; rm -rf luci
+#git clone --depth 1 https://github.com/coolsnowwolf/luci && mv -n luci/applications/luci-app-unblockmusic luci/libs/luci-lib-fs./ ; rm -rf luci
 git clone --depth 1 https://github.com/gSpotx2f/luci-app-internet-detector
 git clone --depth 1 https://github.com/vinewx/NanoHatOLED; mv NanoHatOLED/nanohatoled ./;rm -rf NanoHatOLED
 git clone --depth 1 https://github.com/zerolabnet/luci-app-torbp
@@ -171,6 +171,9 @@ multimedia/gmediarender multimedia/UnblockNeteaseMusic-Go \
 net/go-aliyundrive-webdav net/verysync net/dnsforwarder net/msd_lite \
 net/nps net/tcpping net/amule net/baidupcs-web 
 mv -f miniupnpd miniupnpd-iptables
+
+git_sparse_clone master "https://github.com/coolsnowwolf/luci" "leanluci" applications/luci-app-unblockmusic \
+libs/luci-lib-fs
 
 git_sparse_clone openwrt-23.05 "https://github.com/openwrt/packages" "22packages" \
 utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi net/ddns-scripts \
