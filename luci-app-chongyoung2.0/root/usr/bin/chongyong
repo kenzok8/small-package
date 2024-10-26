@@ -1,0 +1,72 @@
+#!/bin/sh
+
+userprofile="/etc/config/userprofile"
+
+logfile="/tmp/log/chongyoung.log"
+
+time=$(uci get chongyoung.config.time)
+
+edition="/etc/config/edition"
+
+init() {
+    user=$(uci get chongyoung.config.user)
+    fyxml=`curl -H "Accept: */*" -H "User-Agent:CDMA+WLAN(Maod)" -H "Accept-Language: zh-Hans-CN;q=1" -H "Accept-Encoding: gzip, deflate" -H "Connection: keep-alive" -H "Content-Type:application/x-www-form-urlencoded" -L "http://100.64.0.1"`
+    fylgurl=`echo $fyxml | awk -v head="CDATA[" -v tail="]" '{print substr($0, index($0,head)+length(head),index($0,tail)-index($0,head)-length(head))}'`
+    usmac=`echo $fyxml | awk -v head="sermac=" -v tail="&wlanacname" '{print substr($0, index($0,head)+length(head),index($0,tail)-index($0,head)-length(head))}'`
+    acname=`echo $fyxml | awk -v head="wlanacname=" -v tail="&wlanuserip" '{print substr($0, index($0,head)+length(head),index($0,tail)-index($0,head)-length(head))}'`
+    usip=`echo $fyxml | awk -v head="wlanuserip=" -v tail="]" '{print substr($0, index($0,head)+length(head),index($0,tail)-index($0,head)-length(head))}'`
+    AidcAuthAttr1=`echo $fyxml | awk -v head="Attr1>" -v tail="</Aidc" '{print substr($0, index($0,head)+length(head),index($0,tail)-index($0,head)-length(head))}'`
+    system=`cat $edition | grep -vE "^#" | grep system |awk '{print $2}'`
+    prefix=`cat $edition | grep -vE "^#" | grep prefix |awk '{print $2}'`
+    AidcAuthAttr3=`cat $edition | grep -vE "^#" | grep AidcAuthAttr3 |awk '{print $2}'`
+    AidcAuthAttr4=`cat $edition | grep -vE "^#" | grep AidcAuthAttr4 |awk '{print $2}'`
+    AidcAuthAttr5=`cat $edition | grep -vE "^#" | grep AidcAuthAttr5 |awk '{print $2}'`
+    AidcAuthAttr6=`cat $edition | grep -vE "^#" | grep AidcAuthAttr6 |awk '{print $2}'`
+    AidcAuthAttr8=`cat $edition | grep -vE "^#" | grep AidcAuthAttr8 |awk '{print $2}'`
+    AidcAuthAttr15=`cat $edition | grep -vE "^#" | grep AidcAuthAttr15 |awk '{print $2}'`
+    AidcAuthAttr22=`cat $edition | grep -vE "^#" | grep AidcAuthAttr22 |awk '{print $2}'`
+    AidcAuthAttr23=`cat $edition | grep -vE "^#" | grep AidcAuthAttr23 |awk '{print $2}'`
+}
+
+login() {
+
+    lgg=`echo "curl -d \"&createAuthorFlag=0&UserName=${prefix}${user}&Password=${passwd}&AidcAuthAttr1=${AidcAuthAttr1}&AidcAuthAttr3=${AidcAuthAttr3}&AidcAuthAttr4=${AidcAuthAttr4}&AidcAuthAttr5=${AidcAuthAttr5}&AidcAuthAttr6=${AidcAuthAttr6}&AidcAuthAttr8=${AidcAuthAttr8}&AidcAuthAttr15=${AidcAuthAttr15}&AidcAuthAttr22=${AidcAuthAttr22}&AidcAuthAttr23=${AidcAuthAttr23}\" -H \"User-Agent: ${system}\" -H \"Content-Type: application/x-www-form-urlencoded\"  \"${fylgurl}\"" | sh`
+    result=`echo $lgg | awk -v head="ReplyMessage>" -v tail="</ReplyMessage" '{print substr($0, index($0,head)+length(head),index($0,tail)-index($0,head)-length(head))}'`
+}
+
+heart() {
+    sys="CDMA+WLAN(Maod)"
+    hht=`echo "curl -d \"\" -H \"User-Agent: ${sys}\" -H \"Content-Type: application/x-www-form-urlencoded\"  \"http://58.53.199.146:8007/Hv6_dW\" " | sh`
+    ht=echo $hht
+}
+
+while true; do
+    log_line_count=$(wc -l < "$logfile")
+    if [ "$log_line_count" -gt 100 ]; then
+        echo "日志行数达到上限，已覆盖" > "$logfile"
+    fi
+    
+    ping -c 3 8.8.8.8 >/dev/null
+    if [ $? -eq 0 ]; then
+        echo "[$(date "+%Y-%m-%d %H:%M:%S")] 已登陆" >> $logfile
+        heart
+        echo $hht
+    else
+        echo "[$(date "+%Y-%m-%d %H:%M:%S")] 未登录，正在连接" >> $logfile
+        init
+        day=`echo ${AidcAuthAttr1:6:2} | sed -r 's/^0*([^0]+|0)$/\1/'`
+        day="^$day="
+        passwd=`cat $userprofile | grep -vE "^#" | grep -E $day |awk -F= '{print $2}' `
+        login
+        echo "$result" >> $logfile
+        echo "用户账号:$user" >> $logfile
+        echo "用户密码:$passwd" >> $logfile
+        echo "用户设备MAC:$usmac" >> $logfile
+        echo "用户IP地址:$usip" >> $logfile
+        echo "服务器地址:$acname" >> $logfile
+        echo "服务器时间:$AidcAuthAttr1" >> $logfile
+    fi
+    
+    sleep $time
+done
+

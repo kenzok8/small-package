@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+log_file="/tmp/log/shanligong.log"
+ENABLED="$(uci get shanligong.config.enabled)"
+
+start() {
+  if [ "$ENABLED" -eq 0 ]; then
+    kill -9 $(pgrep -f "sh /usr/bin/shanligong") 2>/dev/null
+    echo "[$(date "+%Y-%m-%d %H:%M:%S")]: 已停用" >> "$log_file"
+    return 1
+  else
+    kill -9 $(pgrep -f "sh /usr/bin/shanligong") 2>/dev/null
+    sh /usr/bin/shanligong &
+    echo "[$(date "+%Y-%m-%d %H:%M:%S")]: 启用认证" >> "$log_file"
+  fi
+}
+
+stop() {
+    kill -9 $(pgrep -f "sh /usr/bin/shanligong") 2>/dev/null
+    echo "[$(date "+%Y-%m-%d %H:%M:%S")]: 已停止认证" >> "$log_file"
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+    echo "$(date "+%Y-%m-%d %H:%M:%S"): 已重新启动"
+}
+
+

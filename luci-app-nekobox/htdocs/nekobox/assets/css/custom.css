@@ -1,0 +1,130 @@
+body {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+  overflow-y: scroll;
+}
+
+.container-bg {
+  /* filter: drop-shadow(0.5px 2px 4px black); */
+}
+
+.col-8 {
+  width: 100%;
+}
+
+.nav {
+  justify-content: center;
+}
+
+.form-control {
+  font-family: Andale Mono, monospace;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.btn-pink {
+  background-color: #e83e8c;
+  color: #fff;
+}
+
+.btn-pink:hover {
+  background-color: #d63384;
+  color: #fff;
+}
+
+.btn-pink:active {
+  background-color: #c8235c;
+  color: #fff;
+}
+
+.btn-pink-outline {
+  border-color: #e83e8c;
+  color: #e83e8c;
+}
+
+.btn-pink-outline:hover {
+  background-color: #e83e8c;
+  color: #fff;
+}
+
+.btn-cyan {
+  background-color: #17a2b8;
+  color: #fff;
+}
+
+.btn-cyan:hover {
+  background-color: #138496;
+  color: #fff;
+}
+
+.btn-cyan:active {
+  background-color: #117a8b;
+  color: #fff;
+}
+
+.btn-cyan-outline {
+  border-color: #17a2b8;
+  color: #17a2b8;
+}
+
+.btn-cyan-outline:hover {
+  background-color: #17a2b8;
+  color: #fff;
+}
+
+.btn-skyblue {
+  background-color: #87ceeb;
+  color: #fff;
+}
+
+.btn-skyblue:hover {
+  background-color: #76c3e0;
+  color: #fff;
+}
+
+.btn-skyblue:active {
+  background-color: #63b0d4;
+  color: #fff;
+}
+
+.btn-skyblue-outline {
+  border-color: #87ceeb;
+  color: #87ceeb;
+}
+
+.btn-skyblue-outline:hover {
+  background-color: #87ceeb;
+  color: #fff;
+}
+
+.btn-deepskyblue {
+  background-color: #00bfff;
+  color: #fff;
+}
+
+.btn-deepskyblue:hover {
+  background-color: #00a2e1;
+  color: #fff;
+}
+
+.btn-deepskyblue:active {
+  background-color: #009ac1;
+  color: #fff;
+}
+
+.btn-deepskyblue-outline {
+  border-color: #00bfff;
+  color: #00bfff;
+}
+
+.btn-deepskyblue-outline:hover {
+  background-color: #00bfff;
+  color: #fff;
+}

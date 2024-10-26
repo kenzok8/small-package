@@ -1,0 +1,430 @@
+#!/bin/bash
+
+neko_dir="/etc/neko"
+neko_tmp_dir="$neko_dir/tmp"
+neko_core="$neko_dir/core"
+neko_bin="$neko_dir/core/mihomo"
+neko_www="/www/nekobox"
+neko_config=`cat $neko_www/lib/selected_config.txt`
+
+php_bin="/usr/bin/php"
+php_address="0.0.0.0"
+php_port="8080"
+
+tun_bin="$neko_dir/core/tun"
+reload_bin="$neko_dir/core/reload"
+firewall="/etc/init.d/firewall"
+
+neko_log="$neko_tmp_dir/neko_log.txt"
+neko_pid_path="$neko_tmp_dir/neko_pid.txt"
+neko_status=`uci -q get neko.cfg.enabled`
+php_pid_path="$neko_tmp_dir/php_pid.txt"
+log="$neko_dir/tmp/log.txt"
+
+singbox_bin="/usr/bin/sing-box"
+singbox_log="/var/log/singbox_log.txt"
+singbox_config_dir="/etc/neko/config"
+singbox_pid_path="$neko_tmp_dir/singbox_pid.txt"
+
+core_ver="neko"
+url_core="https://github.com/Thaolga/neko/releases/download/core_neko"
+url_geo="https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest"
+
+neko_ver(){
+    neko_version="1.4.9"
+}
+
+logs() {
+    echo "[ `date +%T` ] $1"
+    echo "[ `date +%T` ] $1" >> $log
+}
+
+neko_logs() {
+    echo "[ `date +%T` ] $1" >> $neko_log
+}
+
+singbox_logs() {
+    local timestamp=$(date +"%T")
+    echo -e "[ $timestamp ] $1" >> "$neko_dir/tmp/log.txt"
+}
+
+check_depedency() {
+    opw_version=`cat /etc/os-release | grep VERSION_ID | cut -d\" -f 2`
+    logs "- Check Depedencies : $opw_version"
+    if [[ $opw_version == 18.* ]]; then
+        req=(curl php7 php7-cgi iptables kmod-tun)
+        list=`opkg list-installed | grep -E "curl|php7|iptables|kmod-tun" | awk '{ print $1 }'`
+        for req_pkg in ${req[@]}; do
+            for lst_pkg in $list; do
+                stat=0
+                if [ ${req_pkg} == $lst_pkg ] ; then
+                    logs "- $req_pkg Installed" 1
+                    stat=0
+                    break;
+                else
+                    stat=1
+                fi
+            done
+            if [ $stat = 1 ] ; then
+                logs "- Package $req_pkg " 1
+                logs "- Installing $req_pkg "
+                opkg install $req_pkg
+            fi
+        done
+    elif [[ $opw_version == 21.* ]]; then
+        req=(curl php7 php7-cgi iptables kmod-tun)
+        list=`opkg list-installed | grep -E "curl|php7|iptables|kmod-tun" | awk '{ print $1 }'`
+        for req_pkg in ${req[@]}; do
+            for lst_pkg in $list; do
+                stat=0
+                if [ ${req_pkg} == $lst_pkg ] ; then
+                    logs "- $req_pkg Installed" 1
+                    stat=0
+                    break;
+                else
+                    stat=1
+                fi
+            done
+            if [ $stat = 1 ] ; then
+                logs "- Package $req_pkg " 1
+                logs "- Installing $req_pkg "
+                opkg install $req_pkg
+            fi
+        done
+    elif [[ $opw_version == 22.* ]]; then
+        req=(curl php8 php8-cgi firewall4 xtables-nft kmod-tun)
+        list=`opkg list-installed | grep -E "curl|php8|firewall4|kmod-tun|xtables-nft" | awk '{ print $1 }'`
+        for req_pkg in ${req[@]}; do
+            for lst_pkg in $list; do
+                stat=0
+                if [ ${req_pkg} == $lst_pkg ] ; then
+                    logs "- $req_pkg Installed" 1
+                    stat=0
+                    break;
+                else
+                    stat=1
+                fi
+            done
+            if [ $stat = 1 ] ; then
+                logs "- Package $req_pkg " 1
+                logs "- Installing $req_pkg "
+                opkg install $req_pkg
+            fi
+        done
+    elif [[ $opw_version == 23.* ]]; then
+        req=(curl php8 php8-cgi firewall4 xtables-nft kmod-tun)
+        list=`opkg list-installed | grep -E "curl|php8|firewall4|kmod-tun|xtables-nft" | awk '{ print $1 }'`
+        for req_pkg in ${req[@]}; do
+            for lst_pkg in $list; do
+                stat=0
+                if [ ${req_pkg} == $lst_pkg ] ; then
+                    logs "- $req_pkg Installed" 1
+                    stat=0
+                    break;
+                else
+                    stat=1
+                fi
+            done
+            if [ $stat = 1 ] ; then
+                logs "- Package $req_pkg " 1
+                logs "- Installing $req_pkg "
+                opkg install $req_pkg
+            fi
+        done
+    else
+        echo "Zonk."
+    fi
+}
+
+files_check() {
+    arch=`uname -m`
+    geoip_path="${neko_dir}/geoip.metadb"
+    geosite_path="${neko_dir}/geosite.db"
+    case "$arch" in
+    aarch64)
+        arch="arm64"
+        ;;
+    arm)
+        arch="armv7"
+    	;;
+    x86_64)
+        arch="amd64"
+        ;;
+    mips)
+        arch="mips_24"
+    	;;
+    *)
+        arch="0"
+        ;;
+    esac
+    
+    if [ $arch == "0" ] ; then
+        logs "- ERROR!!! Arch not supported"
+    else
+        if [ -f ${neko_bin} ]; then
+            logs "- Mihomo OK" 1
+            core_version=`$neko_bin -v | head -1 | awk '{print $1 " " $5 " " $3}'`
+            logs "- Core Detected : $core_version"
+        else
+            logs "- Downloading Mihomo Binary - $arch"
+            wget -q --no-check-certificate -O ${neko_dir}/core/mihomo.gz ${url_core}/mihomo-linux-${arch}-${core_ver}.gz
+            gzip -d ${neko_dir}/core/mihomo.gz
+        fi
+
+        if [ -f ${geoip_path} ]; then
+            logs "- GeoIP OK" 1
+        else
+            logs "- Downloading GeoIP"
+            wget -q --no-check-certificate -O ${geoip_path} ${url_geo}/geoip.metadb
+        fi
+
+        if [ -f ${geosite_path} ]; then
+            logs "- GeoSite OK" 1
+        else
+            logs "- Downloading GeoSite"
+            wget -q --no-check-certificate -O ${neko_dir} ${url_geo}/geosite.db
+        fi
+    fi
+    for file in "$neko_core"/*; do
+        if [ ! -x "$file" ]; then
+            chmod +x "$file"
+        fi
+    done
+}
+
+singbox_start(){
+    singbox_logs() {
+        local timestamp=$(date +"%T")
+        echo -e "[ $timestamp ] - $1" >> "$neko_dir/tmp/log.txt"
+    }
+    
+    singbox_logs "Starting Sing-box"
+    singbox_logs "- Auto Restart Firewall : ON"
+     
+    local config_file="$singbox_config_dir/config.json"
+    singbox_logs "Config file: $config_file"
+    singbox_logs "Creating start script"
+    create_start_script "$config_file"
+    
+    local singbox_version=$($singbox_bin version)
+    singbox_logs "Sing-box version: $singbox_version"
+    
+    (while true; do
+        $singbox_bin run -c $config_file 2>&1 | while read line; do
+            singbox_logs "$line"
+        done
+    done) &
+    
+    sleep 1
+    singbox_pid=$(pgrep sing-box)
+    if [[ -n $singbox_pid ]]; then
+        singbox_logs "- Sing-box Started. PID : $singbox_pid"
+        echo $singbox_pid > $singbox_pid_path
+        uci set neko.cfg.singbox_enabled='1'
+        uci commit neko
+    else
+        singbox_logs "- Failed to start Sing-box"
+    fi
+    singbox_logs "Done"
+    
+}
+
+singbox_stop(){
+    logs "Stopping Sing-box" 2
+    local pid=$(pgrep -f "$singbox_bin")
+    if [ -n "$pid" ] ; then
+        logs "- Killing Sing-box PID: $pid"
+        kill -15 $pid
+        pkill -f "while.*sing-box"  
+        sleep 2
+        if kill -0 $pid 2>/dev/null; then
+            logs "- Sing-box didn't stop gracefully. Forcing stop."
+            kill -9 $pid
+            pkill -9 -f "while.*sing-box"  
+        fi
+        rm -f $singbox_pid_path
+        uci set neko.cfg.singbox_enabled='0'
+        uci commit neko
+        logs "Sing-box has been stopped"
+    else
+        logs "Sing-box is not Running"
+    fi
+}
+
+singbox_restart(){
+    logs "Restarting Sing-box" 2
+    singbox_stop
+    sleep 1
+    singbox_start
+    logs "Restarting Sing-box - Done"
+}
+
+neko_start(){
+    neko_ver
+    logs "Starting Neko v.$neko_version" 2
+    if [ -f "/tmp/neko/neko.bak" ]; then
+        rm -r /tmp/neko/neko.bak
+        rm -r $neko_tmp_dir/first_install.txt
+    elif [ -f "$neko_tmp_dir/first_install.txt" ]; then
+        logs "- First Install Detected."
+        rm -r $neko_tmp_dir/first_install.txt
+        logs "Neko Not Running" 3
+    else
+        logs "- Checking Package..."
+        check_depedency
+        files_check
+        logs "- Checking Package Done."
+    fi
+    if [ -f $neko_pid_path ] ; then
+        logs "- Neko is Running. Killing Neko PID : `cat $neko_pid_path`"
+        $tun_bin -k >> $log
+        kill `cat $neko_pid_path`
+        uci set neko.cfg.enabled='0'
+        uci commit neko
+        rm $neko_pid_path
+        logs "- Retry Starting Neko..."
+    fi
+    if [ -f $neko_bin ] ; then
+        rpid=`pgrep "mihomo|reload"`
+        if [[ -n $rpid ]] ; then
+            kill $rpid 
+        fi
+        rm $neko_log
+        logs "- Restarting Firewall"
+        $firewall restart
+        $neko_bin -f $neko_config -d $neko_dir >> $neko_log &
+        sleep 1
+        neko_pid=`pgrep mihomo`
+        if [[ -z $neko_pid ]]; then
+            for file in "$neko_core"/*; do
+                if [ ! -x "$file" ]; then
+                    logs "- `basename $file` Binary Permission is not executable, Changing..."
+                    chmod +x "$file"
+                fi
+            done
+            logs "- Retry Starting Neko"
+            $neko_bin -f $neko_config -d $neko_dir >> $neko_log &
+            sleep 1
+            neko_pid=`pgrep mihomo`
+        fi
+        logs "- Neko Started. PID : $neko_pid"
+        logs "- Configs : $neko_config"
+        echo $neko_pid > $neko_pid_path
+        $tun_bin -s >> $log
+        uci set neko.cfg.enabled='1'
+        uci commit neko
+        $reload_bin "$neko_version" > /dev/null 2>&1 &
+    else
+        logs "- Core not Detected!!!"
+    fi
+    logs "Done"
+}
+
+php_start(){
+    logs "Checking PHP Server Status..."
+    if [ -f $php_pid_path ] ; then
+        logs "- PHP Server is Running..."
+        logs "- Destroy PHP Server. PID : `cat $php_pid_path`"
+        kill `cat $php_pid_path`
+        rm $php_pid_path
+    else  
+        logs "- PHP Server not Running..."
+    fi
+    nohup $php_bin -S $php_address:$php_port -t ${neko_www} > /dev/null 2>&1 &
+    php_pid=`pgrep php`
+    logs "- PHP Server Started. PID:$php_pid"
+    logs "- PHP Running at $php_address:$php_port"
+    echo $php_pid > $php_pid_path
+    logs "Done"
+}
+
+neko_stop(){
+    logs "Disable Neko" 2
+    $tun_bin -k >> $log
+    if [ -f $neko_pid_path ] ; then
+        logs "- Killing Neko PID : `cat $neko_pid_path`"
+        logs "- Restarting Firewall"
+        $firewall restart
+        kill `cat $neko_pid_path`
+        rm $neko_pid_path
+        rpid=`pgrep "mihomo|reload"`
+        if [[ -n $rpid ]] ; then
+            kill $rpid 
+        fi
+        logs "Neko has Disabled"
+        logs "Neko Disabled." > $neko_log
+    else
+        logs "Neko is not Running"
+    fi
+    uci set neko.cfg.enabled='0'
+    uci commit neko
+}
+
+neko_restart(){
+    logs "Restarting Neko" 2
+    neko_start
+    logs "Restarting Neko - Done"
+}
+
+php_stop(){
+    if [ -f $php_pid_path ] ; then
+        logs "- Killing PHP PID : `cat $php_pid_path`"
+        kill `cat $php_pid_path`
+        rm $php_pid_path
+        logs "- Done..."
+    else
+        logs "- PHP Server Not Running"
+    fi
+}
+
+cleanup(){
+    logs "Cleanup Temporary..." 2
+    neko_stop
+    php_stop
+    logs "Cleanup Done..."
+}
+
+while getopts ":skrpcvh" signal ; do
+    case $signal in
+        s)
+            neko_start
+            ;;
+        S)
+            singbox_start
+            ;;
+        k)
+            neko_stop
+            ;;
+        K)
+            singbox_stop
+            ;;
+        r)
+            neko_restart
+            ;;
+        R)
+            singbox_restart
+            ;;
+        p)
+            php_start
+            ;;
+        c)
+            cleanup
+            ;;
+        v)
+            neko_ver
+            neko_checknewver
+            echo "v.$neko_version $strversion"
+            ;;
+        h)
+            echo "Neko"
+            echo "      -s : Start Mihomo Proxy and Sing-box"
+            echo "      -p : Start PHP Server"
+            echo "      -k : Kill/Stop Mihomo Proxy and Sing-box"
+            echo "      -r : Restart Mihomo Proxy and Sing-box"
+            echo "      -c : cleanup (kill mihomo, sing-box, and php server)"
+            echo "      -v : Version"
+            echo "      -h : help (this text)"
+            echo "Please Use ROOT User"
+            ;;
+    esac
+done

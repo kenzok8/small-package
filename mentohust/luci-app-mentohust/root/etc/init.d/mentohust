@@ -1,0 +1,55 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+PROG=/usr/sbin/mentohust
+
+get_config() {
+	config_load mentohust
+	config_get "enable" "config" "enable" "0"
+	config_get "username" "config" "username"
+	config_get "password" "config" "password"
+	config_get "interface" "config" "interface"
+	config_get "ipaddr" "config" "ipaddr"
+	config_get "gateway" "config" "gateway" "0.0.0.0"
+	config_get "mask" "config" "mask" "255.255.255.0"
+	config_get "dns" "config" "dns" "0.0.0.0"
+	config_get "ping" "config" "ping" "0.0.0.0"
+	config_get "timeout" "config" "timeout" "8"
+	config_get "interval" "config" "interval" "30"
+	config_get "wait" "config" "wait" "15"
+	config_get "fail_number" "config" "fail_number" "0"
+	config_get "multicast_address" "config" "multicast_address" "0"
+	config_get "dhcp_mode" "config" "dhcp_mode" "1"
+	config_get "dhcp_script" "config" "dhcp_script"
+	config_get "version" "config" "version" "0.00"
+}
+
+start_service() {
+	get_config
+	[ "$enable" -ne "1" ] && return 1
+	[ -n "$ipaddr" ] && IPADDR="-i$ipaddr" || IPADDR=""
+	[ -n "$dns" ] && DNS="-s$dns" || DNS=""
+	[ -n "$dhcp_script" ] && DHCP_SCRIPT="-c$dhcp_script" || DHCP_SCRIPT=""
+	procd_open_instance mentohust
+	procd_set_param command $PROG
+	procd_append_param command -u$username -p$password -n$interface $IPADDR -m$mask -g$gateway $DNS -o$ping -t$timeout -e$interval -r$wait -a$multicast_address -d$dhcp_mode -b0 -v$version $DHCP_SCRIPT
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance mentohust
+}
+
+service_triggers() {
+	procd_add_reload_trigger "mentohust"
+}
+
+reload_service() {
+	stop
+	sleep 1
+	start
+}
+
+stop_service() {
+	pgrep -f /usr/sbin/mentohust | xargs kill -9 >/dev/null 2>&1
+}

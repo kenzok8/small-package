@@ -1,0 +1,24 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(1, '<%=url([[admin]], [[services]], [[shanligong]], [[status]])%>', null,
+	function(x, data) {
+		var tb = document.getElementById('ua2f_status');
+		if (data && tb) {
+			if (data.running) {
+				var links = '<em style=\"color:green\"><b>正在运行</b></em>';
+				tb.innerHTML = links;
+			} else {
+				tb.innerHTML = '<em style=\"color:red\"><b>停止服务</b></em>';
+			}
+		}
+	}
+);
+
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="ua2f_status">
+		<em><%:正在查询运行状态，请稍后...%></em>
+	</p>
+</fieldset>
+

@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+# Copyright 2020 BlackYau <blackyau426@gmail.com>
+# GNU General Public License v3.0
+
+START=99
+
+
+start()
+{
+	if [ ! -d /tmp/log/suselogin ];then
+		mkdir -p /tmp/log/suselogin
+	fi
+	rm -rf /tmp/log/suselogin/login.log
+	state=`pgrep -f "/usr/lib/suselogin/login.sh"`
+	if [ ! -z "$state" ]; then
+		restart
+	else
+		/usr/lib/suselogin/login.sh &
+	fi
+    echo "$(date "+%Y-%m-%d %H:%M:%S"): 已启动"
+}
+
+stop()
+{
+	kill -9 `pgrep -f "/usr/lib/suselogin/login.sh"` 2>/dev/null
+    echo "$(date "+%Y-%m-%d %H:%M:%S"): 已停止"
+}
+
+restart()
+{
+	stop
+	sleep 1
+	start
+	echo "$(date "+%Y-%m-%d %H:%M:%S"): 已重新启动"
+}
+
+disable(){
+	rm -rf /tmp/log/suselogin/* && echo '已清空日志'
+}

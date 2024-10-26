@@ -1,0 +1,12 @@
+
+config mentohust 'config'
+	option interface 'eth0.2'
+	option mask '255.255.255.0'
+	option timeout '8'
+	option interval '30'
+	option wait '15'
+	option fail_number '0'
+	option multicast_address '1'
+	option dhcp_mode '1'
+	option dhcp_script 'udhcpc -i'
+	option ping 'www.baidu.com'

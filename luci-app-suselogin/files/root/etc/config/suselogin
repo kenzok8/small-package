@@ -1,0 +1,7 @@
+config login
+	option enable '0'
+	option username ''
+	option password ''
+	option isp ''
+	option interval '5'
+	option auto_offline '0'

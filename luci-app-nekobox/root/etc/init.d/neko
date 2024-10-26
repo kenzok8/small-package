@@ -1,0 +1,33 @@
+#!/bin/sh /etc/rc.common
+# (C) 2024 nosignal
+
+START=99
+
+BIN="/etc/neko/core/neko"
+
+start() {
+	sleep 1 && $BIN -s
+	if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
+		$BIN -p
+	fi
+}
+
+restart() {
+	$BIN -r
+}
+
+stop_service() {
+	if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
+		$BIN -c
+	else
+		$BIN -k
+	fi
+}
+
+stop() {
+	if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
+		$BIN -c
+	else
+		$BIN -k
+	fi
+}

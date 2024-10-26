@@ -1,0 +1,15 @@
+#默认模拟安卓登陆
+system CDMA+WLAN(Maod)
+
+#设备系统前缀
+prefix %21%5EAdcm0
+
+#AidcAuthAttr系统版本参数
+AidcAuthAttr3 47dnVRav
+AidcAuthAttr4 gPwzFkyhP04Z6c7pbsAg7um8YYOF5bdMhDM287AMbR7Xpjk%3D
+AidcAuthAttr5 46lnVROuQxpFton6Esgh%2Fpf5N43uue8PnUBpq%2FZSLEDCpyUGI67httmCm433
+AidcAuthAttr6 4qttSxWgXRtHtJfzFcMq%2Fok%3D
+AidcAuthAttr8 %2FqhnThW2QBpR6si9BZ5xutqma9H%2F6bdP0BM87v9JM0DfoCcaKbO%2F952MzsKyBsVfv0JLLXpIFPlQGcstHb0cPsY2cz5jSGqL99ONjVD7t5SxkcHEoS4%3D
+AidcAuthAttr15 465kShc%3D
+AidcAuthAttr22 4g%3D%3D
+AidcAuthAttr23 oew0GEDpHg%3D%3D
