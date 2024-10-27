@@ -369,72 +369,6 @@ if (isset($_POST['update_index'])) {
 }
 ?>
 
-
-<?php
-$url = "https://github.com/Thaolga/neko/releases/download/1.2.0/nekoclash.zip";
-$zipFile = "/tmp/nekoclash.zip";
-$extractPath = "/www/nekobox";
-$logFile = "/tmp/update_log.txt";
-
-function logMessage($message) {
-    global $logFile;
-    $timestamp = date("Y-m-d H:i:s");
-    file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
-}
-
-function downloadFile($url, $path) {
-    $fp = fopen($path, 'w+');
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 50);
-    curl_setopt($ch, CURLOPT_FILE, $fp);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_exec($ch);
-    curl_close($ch);
-    fclose($fp);
-    logMessage("文件下载成功，保存到: $path");
-}
-
-function unzipFile($zipFile, $extractPath) {
-    $zip = new ZipArchive;
-    if ($zip->open($zipFile) === TRUE) {
-        if (!is_dir($extractPath)) {
-            mkdir($extractPath, 0755, true);
-        }
-
-        for ($i = 0; $i < $zip->numFiles; $i++) {
-            $filename = $zip->getNameIndex($i);
-            $filePath = $extractPath . '/' . preg_replace('/^nekoclash\//', '', $filename);
-
-            if (substr($filename, -1) == '/') {
-                if (!is_dir($filePath)) {
-                    mkdir($filePath, 0755, true);
-                }
-            } else {
-                copy("zip://".$zipFile."#".$filename, $filePath);
-            }
-        }
-
-        $zip->close();
-        logMessage("文件解压成功");
-        return true;
-    } else {
-        return false;
-    }
-}
-
-if (isset($_POST['update'])) {
-    downloadFile($url, $zipFile);
-    
-    if (unzipFile($zipFile, $extractPath)) {
-        echo "规则集更新成功！";
-        logMessage("规则集更新成功");
-    } else {
-        echo "解压失败！";
-        logMessage("规则集更新失败");
-    }
-}
-?>
-
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
 <head>
@@ -774,19 +708,6 @@ function showUpdateAlertSub(message) {
     <h1 style="margin-top: 20px; margin-bottom: 20px;" title="只支持Sing-box格式的订阅">Sing-box 订阅</h1>
 
 <style>
-    button, .button {
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-    }
-    
-    button:hover, .button:hover {
-        background-color: #45a049;
-    }
-
     #updateAlert .close,
     #updateAlertSub .close {
         color: white;
@@ -823,13 +744,6 @@ function showUpdateAlertSub(message) {
  </style>
 </head>
 <body>
-    <form method="post" style="display: inline;">
-        <button type="submit" name="update" title="更新需要安装php8-mod-zip">🔄 更新规则集</button>
-    </form>
-    <a href="https://github.com/Thaolga/neko/releases/download/1.2.0/nekobox.zip" class="button" style="text-decoration: none; padding: 1.2px 12px; display: inline-block; color: white;" title="下载文件解压通过文件助手上传到/www/nekobox/对应目录，包含Sing-box和P核的所有规则">📥 下载规则集</a>
-</body>
-     </br>
-     </br>
         <?php if ($message): ?>
             <p><?php echo nl2br(htmlspecialchars($message)); ?></p>
         <?php endif; ?>

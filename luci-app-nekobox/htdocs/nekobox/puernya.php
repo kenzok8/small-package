@@ -78,6 +78,7 @@ $extracted_file = glob("$temp_dir/CrashCore")[0] ?? '';
 if ($extracted_file && file_exists($extracted_file)) {
     exec("cp -f '$extracted_file' '$install_path'");
     exec("chmod 0755 '$install_path'");
+    $latest_version = "1.10.0-alpha.29-067c81a7";
     writeVersionToFile($latest_version); 
     echo "更新完成！当前版本: $latest_version";
 } else {

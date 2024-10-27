@@ -151,6 +151,7 @@ $uiVersion = getUiVersion();
                                     <div class="text-center mt-2">
                                         <button class="btn btn-pink" id="checkSingboxButton">🔍 检测版本</button>
                                         <button class="btn btn-success" id="updatePuernyaButton" title="切换 Puernya 内核">🔄 切换内核</button>
+                                        <button class="btn btn-primary" id="updateRuleButton" title="更新 Singbox 规则集<配合 Puernya 内核可以使用 Singbox 的配置文件和本地规则集>">🔄 更新规则</button>
                                         <button class="btn btn-info" id="updateSingboxButton" title="更新 Singbox 内核">🔄 更新版本</button>
                                     </div>
                                 </div>
@@ -174,11 +175,11 @@ $uiVersion = getUiVersion();
             </tbody>
         </table>
    <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
-       <div class="modal-dialog modal-dialog-centered" role="document">
+       <div class="modal-dialog" role="document">
            <div class="modal-content">
                <div class="modal-header">
                    <h5 class="modal-title" id="updateModalLabel">更新状态</h5>
-                   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                   <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                        <span aria-hidden="true">&times;</span>
                    </button>
                </div>
@@ -245,6 +246,13 @@ $uiVersion = getUiVersion();
     #updatePuernyaButton:hover {
         background-color: #87CEFA;
     }
+
+    #updateModal #logOutput {
+        font-family: 'Courier New', monospace;
+        font-size: 1rem;
+        color: #333;
+    }
+
 </style>
 
 <script>
@@ -301,6 +309,10 @@ $uiVersion = getUiVersion();
 
     document.getElementById('updateConfigButton').addEventListener('click', function() {
         initiateUpdate('update_config.php', '开始下载 Mihomo 配置文件更新...');
+    });
+
+    document.getElementById('updateRuleButton').addEventListener('click', function() {
+        initiateUpdate('update_rule.php', '开始下载 Singbox 规则集更新...');
     });
 </script>
 
