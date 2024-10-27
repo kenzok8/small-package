@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade nslookup
 
-Version=V6.9.12
+Version=V6.10.0
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -22,9 +22,10 @@ function SHELL_HELP() {
     -f				跳过版本号校验,并强制刷写固件 ${Red}(危险)${White} *
     -F, --force-flash		强制刷写固件 ${Red}(危险)${White} *
     -P, --proxy			优先开启镜像加速下载固件 *
-    ${Next} A			自动选择
-    ${Next} F			Cloudflare Workers
-    ${Next} G			Ghproxy
+    ${Next} A			自动选择镜像地址
+	${Next} E			hub.gitmirror.com
+    ${Next} F			gh.con.sh
+    ${Next} G			ghp.ci
     -D <Downloader>		使用指定的下载器 <wget-ssl | wget | curl | uclient-fetch> *
     --decompress		解压 img.gz 固件后再更新固件 *
     --skip-verify		跳过固件 SHA256 校验 ${Red}(危险)${White} *
@@ -218,9 +219,11 @@ function GET_IP() {
 	if [[ ${Result} ]]
 	then
 		echo "${Result}"
+		LOGGER "DNS $2 解析 $1 ... ${Result}"
 		return 0
 	else
 		return 1
+		LOGGER "DNS $2 解析 $1 ... 失败"
 	fi
 }
 
@@ -232,13 +235,14 @@ function ECHO() {
 	else
 		while [[ $1 ]];do
 			case $1 in
-			r | g | b | y | x)
+			r | g | b | y | x | w)
 				case $1 in
 				r) Color="${Red}";;
 				g) Color="${Green}";;
 				b) Color="${Blue}";;
 				y) Color="${Yellow}";;
 				x) Color="${Grey}";;
+				w) Color="${White}";;
 				esac
 				shift
 			;;
@@ -548,7 +552,7 @@ function ANALYZE_API() {
 	local API_Cache=${Tmp_Path}/API_Cache
 	if [[ $(CHECK_TIME ${API_File} 1) == false ]]
 	then
-		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DL_DEPENDS[@]} --url "${Github_API}@@1 $(Proxy_X ${Github_Release}/API G@@1 F@@1 A@@1)" --no-url-name --timeout 5
+		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DL_DEPENDS[@]} --url "${Github_API}@@1 $(Proxy_X ${Github_Release}/API G@@1 F@@1 E@@1)" --no-url-name --timeout 5
 		[[ ! $? == 0 || -z $(cat ${API_Cache} 2> /dev/null) ]] && {
 			ECHO r "Github API 请求错误,请检查网络后再试!"
 			exit 2
@@ -637,7 +641,7 @@ function GET_CLOUD_LOG() {
 	;;
 	esac
 	[[ $(CHECK_TIME ${Tmp_Path}/Update_Logs.json 1) == false ]] && {
-		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DL_DEPENDS[@]} --url "$(Proxy_X ${Github_Release} G@@1 F@@1 A@@1)" --timeout 5
+		DOWNLOADER --path ${Tmp_Path} --file-name Update_Logs.json --dl ${DL_DEPENDS[@]} --url "$(Proxy_X ${Github_Release} G@@1 F@@1 E@@1)" --timeout 5
 	}
 	[[ ! -s ${Tmp_Path}/Update_Logs.json ]] && return 1
 	log_Test="$(jq '."'"${TARGET_PROFILE}"'"."'"${Version}"'"' ${Tmp_Path}/Update_Logs.json 2> /dev/null)"
@@ -654,10 +658,13 @@ function GET_CLOUD_LOG() {
 function UPGRADE() {
 	TITLE
 	KILL_PROCESS ${Script_File}
-	[[ $(NETWORK_CHECK 223.5.5.5 2) == false ]] && {
+	if [[ $(NETWORK_CHECK www.baidu.com 2) == false ]]
+	then
 		ECHO r "网络连接错误,请稍后再试!"
 		exit 1
-	}
+	else
+		ECHO y "网络连接正常"
+	fi
 	Firmware_Path="${Tmp_Path}"
 	Upgrade_Option="$(command -v sysupgrade) -q"
 	MSG="更新固件"
@@ -673,14 +680,19 @@ function UPGRADE() {
 				Special_Commands="${Special_Commands} [镜像加速 Automatic]"
 				shift
 			;;
+			E)
+				Proxy_Type=$2
+				Special_Commands="${Special_Commands} [hub.gitmirror.com]"
+				shift
+			;;
 			F)
 				Proxy_Type=$2
-				Special_Commands="${Special_Commands} [CF Workers]"
+				Special_Commands="${Special_Commands} [gh.con.sh]"
 				shift
 			;;
 			G)
 				Proxy_Type=$2
-				Special_Commands="${Special_Commands} [Ghproxy]"
+				Special_Commands="${Special_Commands} [ghp.ci]"
 				shift
 			;;
 			*)
@@ -812,14 +824,14 @@ $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
 	esac
 	local URL
 	case "${Proxy_Type}" in
-	F | G)
+	E | F | G)
 		URL="$(Proxy_X ${CLOUD_FW_Url} ${Proxy_Type}@@5)"
 	;;
 	All)
-		URL="$(Proxy_X ${CLOUD_FW_Url} G@@2 F@@2 X@@1)"
+		URL="$(Proxy_X ${CLOUD_FW_Url} E@@1 F@@1 G@@2 X@@1)"
 	;;
 	*)
-		URL="$(Proxy_X ${CLOUD_FW_Url} X@@3 G@@1 F@@1)"
+		URL="$(Proxy_X ${CLOUD_FW_Url} X@@2 E@@1 F@@1 G@@1)"
 	;;
 	esac
 	DOWNLOADER --file-name ${CLOUD_FW_Name} --no-url-name --dl ${DL_DEPENDS[@]} --url ${URL} --path ${Firmware_Path} --timeout 15 --type 固件
@@ -1022,7 +1034,11 @@ function DOWNLOADER() {
 		[[ ! ${DL_Retries} || ! ${DL_Retries} == [0-9] ]] && DL_Retries=1
 		DL_URL_Final="${DL_URL_Cache%*@@*}"
 		DL_URL_Final_Host=$(echo ${DL_URL_Final} | awk -F[/:] '{print $4}')
-		DL_URL_Final_IP=$(GET_IP ${DL_URL_Final_Host} 8.8.8.8)
+		case "${DL_Downloader}" in
+		curl)
+			DL_URL_Final_IP=$(GET_IP ${DL_URL_Final_Host} 8.8.8.8)
+		;;
+		esac
 		LOGGER "当前 URL: [${DL_URL_Final}] URL 重试次数: [${DL_Retries}]"
 		if [[ ${DL_URL_Final_IP} ]]
 		then
@@ -1149,21 +1165,27 @@ function Proxy_X() {
 	
 	case "${Type}" in
 	raw)
-		F=https://proxy.hyy2001.workers.dev/$(echo ${URL##*com/})
-		G=https://mirror.ghproxy.com/${URL}
+		E=https://hub.gitmirror.com/${URL}
+		F=https://gh.con.sh/${URL}
+		G=https://ghp.ci/${URL}
 	;;
 	release)
-		F=https://proxy.hyy2001.workers.dev/$(echo ${URL##*com/})
-		G=https://mirror.ghproxy.com/${URL}
+		E=https://hub.gitmirror.com/${URL}
+		F=https://gh.con.sh/${URL}
+		G=https://ghp.ci/${URL}
 	;;
 	codeload)
-		F=https://proxy.hyy2001.workers.dev/$(echo ${URL##*com/})
-		G=https://mirror.ghproxy.com/${URL}
+		E=https://hub.gitmirror.com/${URL}
+		F=https://gh.con.sh/${URL}
+		G=https://ghp.ci/${URL}
 	;;
 	esac
 	while [[ $1 ]];do
 		local URL_Cache=$1 URL_Final
 		case $1 in
+		E@@*)
+			URL_Final="${URL_Cache/E/${E}}"
+		;;
 		F@@*)
 			URL_Final="${URL_Cache/F/${F}}"
 		;;
@@ -1301,9 +1323,15 @@ function AutoUpdate_Main() {
 			CHECK_PKG_DEPENDS -e ${PKG_DEPENDS[@]} ${DL_DEPENDS[@]}
 			if [[ $(NETWORK_CHECK www.baidu.com 2) == false ]]
 			then
-				ECHO r "基础网络连接错误!"
+				ECHO r "Baidu 连接错误!"
 			else
-				ECHO y "基础网络连接正常!"
+				ECHO y "Baidu 连接正常!"
+			fi
+			if [[ $(NETWORK_CHECK 223.5.5.5 2) == false ]]
+			then
+				ECHO r "AliDNS 连接错误!"
+			else
+				ECHO y "AliDNS 连接正常!"
 			fi
 			if [[ $(GOOGLE_CHECK) == false ]]
 			then
@@ -1370,7 +1398,7 @@ function AutoUpdate_Main() {
 		;;
 		-x)
 			shift
-			URL="$(Proxy_X ${Script_Url} X@@1 G@@1 A@@1)"
+			URL="$(Proxy_X ${Script_Url} X@@1 G@@1 F@@1)"
 			if [[ $(NETWORK_CHECK 223.5.5.5 2) == false ]]
 			then
 				ECHO r "网络连接错误,请稍后再试!"
