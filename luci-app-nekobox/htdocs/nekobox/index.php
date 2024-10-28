@@ -873,7 +873,7 @@ $lang = $_GET['lang'] ?? 'en';
             </form>
             <form action="index.php" method="post">
                 <td class="d-grid">
-                    <select name="config_file" id="config_file" class="form-select">
+                    <select name="config_file" id="config_file" class="form-select" onchange="saveConfigSelection()">
                         <?php foreach ($availableConfigs as $config): ?>
                             <option value="<?= htmlspecialchars($config) ?>" <?= isset($_POST['config_file']) && $_POST['config_file'] === $config ? 'selected' : '' ?>>
                                 <?= htmlspecialchars(basename($config)) ?>
@@ -906,6 +906,20 @@ $lang = $_GET['lang'] ?? 'en';
         </tr>
     </tbody>
 </table>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const savedConfig = localStorage.getItem("configSelection");
+        if (savedConfig) {
+            document.getElementById("config_file").value = savedConfig;
+        }
+    });
+
+    function saveConfigSelection() {
+        const selectedConfig = document.getElementById("config_file").value;
+        localStorage.setItem("configSelection", selectedConfig);
+    }
+</script>
 
     <style>
         .icon-container { display: flex; justify-content: space-between; margin-top: 20px; }
