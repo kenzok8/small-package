@@ -63,73 +63,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (isset($_POST['oldFileName'], $_POST['newFileName'], $_POST['fileType'])) {
-        $oldFileName = basename($_POST['oldFileName']);
-        $newFileName = basename($_POST['newFileName']);
-    
-        if ($_POST['fileType'] === 'proxy') {
-            $oldFilePath = $uploadDir . $oldFileName;
-            $newFilePath = $uploadDir . $newFileName;
-        } elseif ($_POST['fileType'] === 'config') {
-            $oldFilePath = $configDir . $oldFileName;
-            $newFilePath = $configDir . $newFileName;
-        } else {
-            echo '无效的文件类型';
-            exit;
-        }
+if (isset($_POST['oldFileName'], $_POST['newFileName'], $_POST['fileType'])) {
+    $oldFileName = basename($_POST['oldFileName']);
+    $newFileName = basename($_POST['newFileName']);
+    $fileType = $_POST['fileType'];
 
-        if (file_exists($oldFilePath) && !file_exists($newFilePath)) {
-            if (rename($oldFilePath, $newFilePath)) {
-                echo '文件重命名成功：' . htmlspecialchars($oldFileName) . ' -> ' . htmlspecialchars($newFileName);
-            } else {
-                echo '文件重命名失败！';
-            }
-        } else {
-            echo '文件重命名失败，文件不存在或新文件名已存在。';
-        }
+    if ($fileType === 'proxy') {
+        $oldFilePath = $uploadDir . $oldFileName;
+        $newFilePath = $uploadDir . $newFileName;
+    } elseif ($fileType === 'config') {
+        $oldFilePath = $configDir . $oldFileName;
+        $newFilePath = $configDir . $newFileName;
+    } else {
+        echo '无效的文件类型';
+        exit;
     }
 
-    if (isset($_POST['editFile']) && isset($_POST['fileType'])) {
-        $fileToEdit = ($_POST['fileType'] === 'proxy') ? $uploadDir . basename($_POST['editFile']) : $configDir . basename($_POST['editFile']);
-        $fileContent = '';
-        $editingFileName = htmlspecialchars($_POST['editFile']);
-
-        if (file_exists($fileToEdit)) {
-            $handle = fopen($fileToEdit, 'r');
-            if ($handle) {
-                while (($line = fgets($handle)) !== false) {
-                    $fileContent .= htmlspecialchars($line);
-                }
-                fclose($handle);
-            } else {
-                echo '无法打开文件';
-            }
+    if (file_exists($oldFilePath) && !file_exists($newFilePath)) {
+        if (rename($oldFilePath, $newFilePath)) {
+            echo '文件重命名成功：' . htmlspecialchars($oldFileName) . ' -> ' . htmlspecialchars($newFileName);
+        } else {
+            echo '文件重命名失败！';
         }
+    } else {
+        echo '文件重命名失败，文件不存在或新文件名已存在。';
     }
+}
 
     if (isset($_POST['saveContent'], $_POST['fileName'], $_POST['fileType'])) {
         $fileToSave = ($_POST['fileType'] === 'proxy') ? $uploadDir . basename($_POST['fileName']) : $configDir . basename($_POST['fileName']);
         $contentToSave = $_POST['saveContent'];
         file_put_contents($fileToSave, $contentToSave);
         echo '<p>文件内容已更新：' . htmlspecialchars(basename($fileToSave)) . '</p>';
-    }
-
-    if (isset($_GET['customFile'])) {
-        $customDir = rtrim($_GET['customDir'], '/') . '/';
-        $customFilePath = $customDir . basename($_GET['customFile']);
-        if (file_exists($customFilePath)) {
-            header('Content-Description: File Transfer');
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="' . basename($customFilePath) . '"');
-            header('Expires: 0');
-            header('Cache-Control: must-revalidate');
-            header('Pragma: public');
-            header('Content-Length: ' . filesize($customFilePath));
-            readfile($customFilePath);
-            exit;
-        } else {
-            echo '文件不存在！';
-        }
     }
 }
 
@@ -165,6 +130,18 @@ function formatSize($size) {
         $unit++;
     }
     return round($size, 2) . ' ' . $units[$unit];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editFile'], $_GET['fileType'])) {
+    $filePath = ($_GET['fileType'] === 'proxy') ? $uploadDir . basename($_GET['editFile']) : $configDir . basename($_GET['editFile']);
+    if (file_exists($filePath)) {
+        header('Content-Type: text/plain');
+        echo file_get_contents($filePath);
+        exit;
+    } else {
+        echo '文件不存在';
+        exit;
+    }
 }
 ?>
 
@@ -382,6 +359,8 @@ if (isset($_POST['update_index'])) {
     <script src="./assets/js/feather.min.js"></script>
     <script src="./assets/js/jquery-2.1.3.min.js"></script>
     <script src="./assets/js/neko.js"></script>
+    <script src="./assets/bootstrap/popper.min.js"></script>
+    <script src="./assets/bootstrap/bootstrap.min.js"></script>
 </head>
 <body>
 <div class="position-fixed w-100 d-flex justify-content-center" style="top: 20px; z-index: 1050">
@@ -501,15 +480,27 @@ function showUpdateAlertSub(message) {
     width: 100%;
 }
 
+.table th, .table td {
+    vertical-align: middle;
+    text-align: center;
+    padding: 8px;
+}
+
+.btn-group .btn {
+    flex: 1 1 auto;
+    font-size: 12px;
+    padding: 6px 8px;
+}
+
 @media (max-width: 767px) {
     .table th,
     .table td {
         padding: 6px 8px; 
-        font-size: 14px; 
+        font-size: 14px;
     }
 
     .table th:nth-child(1), .table td:nth-child(1) {
-        width: 10%; 
+        width: 25%; 
     }
     .table th:nth-child(2), .table td:nth-child(2) {
         width: 20%; 
@@ -518,32 +509,60 @@ function showUpdateAlertSub(message) {
         width: 25%; 
     }
     .table th:nth-child(4), .table td:nth-child(4) {
-        width: 45%; 
-        white-space: nowrap;
+        width: 100%; 
     }
 
-    .btn-group {
-        display: flex;
-        flex-wrap: wrap; 
-        justify-content: space-between; 
-    }
+.btn-group, .d-flex {
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    gap: 5px;
+}
 
-    .btn-group .btn {
-        flex: 1 1 22%; 
-        margin-bottom: 5px; 
-        margin-right: 5px; 
-        text-align: center; 
-        font-size: 9px; 
-    }
+.btn-group .btn {
+    flex: 1 1 auto; 
+    font-size: 12px;
+    padding: 6px 8px;
+}
 
-    .btn-group .btn-rename {
-        width: 70px; 
-        font-size: 9px; 
-    }
+.btn-group .btn:last-child {
+    margin-right: 0;
+  }
+}
 
-    .btn-group .btn:last-child {
-        margin-right: 0;
-    }
+@media (max-width: 767px) {
+    .btn-rename {
+    width: 70px !important; 
+    font-size: 0.6rem; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    display: inline-block;
+    text-align: center; 
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px; 
+    justify-content: center; 
+}
+
+.btn {
+    margin: 0; 
+}
+
+td {
+    vertical-align: middle;
+}
+
+.action-btn {
+    padding: 6px 12px; 
+    font-size: 0.85rem; 
+    display: inline-block;
+}
+
+.btn-group.d-flex {
+    flex-wrap: wrap;
 }
 </style>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
@@ -555,22 +574,9 @@ function showUpdateAlertSub(message) {
         <a href="./filekit.php" class="col btn btn-lg">📦 文件助手</a>
     <div class="text-center">
       <h1 style="margin-top: 40px; margin-bottom: 20px;">Sing-box 文件管理</h1>
-        <h5>代理文件管理 ➤ p核专用</h5>
-<style>
-    .btn-group {
-        display: flex;
-        gap: 10px; 
-        justify-content: center; 
-    }
-    .btn {
-        margin: 0; 
-    }
-
-    td {
-        vertical-align: middle;
-    }
-</style>
+        
 <div class="container">
+    <h5>代理文件管理 ➤ p核专用</h5>
     <div class="table-responsive">
         <table class="table table-striped table-bordered text-center">
             <thead class="thead-dark">
@@ -589,24 +595,22 @@ function showUpdateAlertSub(message) {
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
                         <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?></td>
                         <td>
-                            <div class="btn-group">
+                            <div class="d-flex justify-content-center">
                                 <form action="" method="post" class="d-inline">
                                     <input type="hidden" name="deleteFile" value="<?php echo htmlspecialchars($file); ?>">
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
+                                    <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
                                 </form>
                                 <form action="" method="post" class="d-inline">
-                                    <input type="hidden" name="editFile" value="<?php echo htmlspecialchars($file); ?>">
+                                    <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
                                     <input type="hidden" name="fileType" value="proxy">
-                                    <button type="button" class="btn btn-success btn-sm btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy"><i>✏️</i> 重命名</button>
+                                    <button type="button" class="btn btn-success btn-sm mx-1 btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy"><i>✏️</i> 重命名</button>
                                 </form>
-                                <form action="" method="post" class="d-inline">
-                                    <input type="hidden" name="editFile" value="<?php echo htmlspecialchars($file); ?>">
-                                    <input type="hidden" name="fileType" value="proxy"> 
-                                    <button type="submit" class="btn btn-warning btn-sm"><i>📝</i> 编辑</button>
+                                 <form action="" method="post" class="d-inline">
+                                    <button type="button" class="btn btn-warning btn-sm mx-1" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'proxy')"><i>📝</i> 编辑</button>
                                 </form>
                                 <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn">
                                     <input type="file" name="fileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                    <button type="button" class="btn btn-info btn-sm" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
+                                    <button type="button" class="btn btn-info btn-sm mx-1" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
                                 </form>
                             </div>
                         </td>
@@ -637,23 +641,22 @@ function showUpdateAlertSub(message) {
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
                         <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?></td>
                         <td>
-                            <div class="btn-group">
+                            <div class="d-flex justify-content-center">
                                 <form action="" method="post" class="d-inline">
                                     <input type="hidden" name="deleteConfigFile" value="<?php echo htmlspecialchars($file); ?>">
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
+                                    <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
                                 </form>
                                 <form action="" method="post" class="d-inline">
-                                    <input type="hidden" name="editFile" value="<?php echo htmlspecialchars($file); ?>">
-                                    <button type="button" class="btn btn-success btn-sm btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config"><i>✏️</i> 重命名</button>
+                                    <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
+                                    <input type="hidden" name="fileType" value="config">
+                                    <button type="button" class="btn btn-success btn-sm mx-1 btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config"><i>✏️</i> 重命名</button>
                                 </form>
                                 <form action="" method="post" class="d-inline">
-                                    <input type="hidden" name="editFile" value="<?php echo htmlspecialchars($file); ?>">
-                                    <input type="hidden" name="fileType" value="<?php echo htmlspecialchars($file); ?>">
-                                    <button type="submit" class="btn btn-warning btn-sm"><i>📝</i> 编辑</button>
-                                </form>
+                                   <button type="button" class="btn btn-warning btn-sm mx-1" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'config')"><i>📝</i> 编辑</button>
+                                   </form>
                                 <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn">
                                     <input type="file" name="configFileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                    <button type="button" class="btn btn-info btn-sm" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
+                                    <button type="button" class="btn btn-info btn-sm mx-1" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
                                 </form>
                             </div>
                         </td>
@@ -664,48 +667,348 @@ function showUpdateAlertSub(message) {
     </div>
 </div>
 
-<?php if (isset($fileContent)): ?>
-    <?php if (isset($_POST['editFile'])): ?>
-        <?php $fileToEdit = ($_POST['fileType'] === 'proxy') ? $uploadDir . basename($_POST['editFile']) : $configDir . basename($_POST['editFile']); ?>
-        <h2 class="mt-5">编辑文件: <?php echo $editingFileName; ?></h2>
-        <p>最后更新日期: <?php echo date('Y-m-d H:i:s', filemtime($fileToEdit)); ?></p>
-
-        <div class="btn-group mb-3">
-            <button type="button" class="btn btn-primary" id="toggleBasicEditor">普通编辑器</button>
-            <button type="button" class="btn btn-warning" id="toggleAceEditor">高级编辑器</button>
-            <button type="button" class="btn btn-info" id="toggleFullScreenEditor">全屏编辑</button>
-        </div>
-
-        <div class="editor-container">
-            <form action="" method="post">
-                <textarea name="saveContent" id="basicEditor" class="editor"><?php echo $fileContent; ?></textarea><br>
-
-                <div id="aceEditorContainer" class="d-none resizable" style="height: 400px; width: 100%;"></div>
-
-                <div id="fontSizeContainer" class="d-none mb-3">
-                    <label for="fontSizeSelector">字体大小:</label>
-                    <select id="fontSizeSelector" class="form-control" style="width: auto; display: inline-block;">
-                        <option value="18px">18px</option>
-                        <option value="20px">20px</option>
-                        <option value="24px">24px</option>
-                        <option value="26px">26px</option>
-                    </select>
-                </div>
-
-                <input type="hidden" name="fileName" value="<?php echo htmlspecialchars($_POST['editFile']); ?>">
-                <input type="hidden" name="fileType" value="<?php echo htmlspecialchars($_POST['fileType']); ?>">
-                <button type="submit" class="btn btn-primary mt-2" onclick="syncEditorContent()"><i>💾</i> 保存内容</button>
-            </form>
-            <button id="closeEditorButton" class="close-fullscreen" onclick="closeEditor()">X</button>
-            <div id="aceEditorError" class="error-popup d-none">
-                <span id="aceEditorErrorMessage"></span>
-                <button id="closeErrorPopup">关闭</button>
+<div class="modal fade" id="renameModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="renameModalLabel">重命名文件</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="renameForm" action="" method="post">
+                    <input type="hidden" name="oldFileName" id="oldFileName">
+                    <input type="hidden" name="fileType" id="fileType">
+                    <div class="form-group">
+                        <label for="newFileName">新文件名</label>
+                        <input type="text" class="form-control" id="newFileName" name="newFileName" required>
+                    </div>
+                    <div class="form-group text-right">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">确定</button>
+                    </div>
+                </form>
             </div>
         </div>
-    <?php endif; ?>
-<?php endif; ?>
+    </div>
+</div>
 
-    <h1 style="margin-top: 20px; margin-bottom: 20px;" title="只支持Sing-box格式的订阅">Sing-box 订阅</h1>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify.min.js"></script> 
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">编辑文件: <span id="editingFileName"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" action="" method="post" onsubmit="syncEditorContent()">
+                    <textarea name="saveContent" id="fileContent" class="form-control" style="height: 500px;"></textarea>
+                    <input type="hidden" name="fileName" id="hiddenFileName">
+                    <input type="hidden" name="fileType" id="hiddenFileType">
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <button type="button" class="btn btn-pink" onclick="openFullScreenEditor()">高级编辑</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="fullScreenEditorModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-fullscreen" role="document">
+        <div class="modal-content" style="border: none;">
+            <div class="modal-header d-flex justify-content-between align-items-center" style="border-bottom: none;">
+                <div class="d-flex align-items-center">
+                    <h5 class="modal-title mr-3">高级编辑 - 全屏模式</h5>
+                    <select id="fontSize" onchange="changeFontSize()" class="form-select mx-1" style="width: auto; font-size: 0.8rem;">
+                        <option value="18px">18px</option>
+                        <option value="20px" selected>20px</option>
+                        <option value="22px">22px</option>
+                        <option value="24px">24px</option>
+                        <option value="26px">26px</option>
+                        <option value="28px">28px</option>
+                        <option value="30px">30px</option>
+                        <option value="32px">32px</option>
+                        <option value="34px">34px</option>
+                        <option value="36px">36px</option>
+                        <option value="38px">38px</option>
+                        <option value="40px">40px</option>
+                    </select>
+
+                    <select id="editorTheme" onchange="changeEditorTheme()" class="form-select mx-1" style="width: auto; font-size: 0.9rem;">
+                        <option value="ace/theme/vibrant_ink">Vibrant Ink</option>
+                        <option value="ace/theme/monokai">Monokai</option>
+                        <option value="ace/theme/github">GitHub</option>
+                        <option value="ace/theme/tomorrow">Tomorrow</option>
+                        <option value="ace/theme/twilight">Twilight</option>
+                        <option value="ace/theme/solarized_dark">Solarized Dark</option>
+                        <option value="ace/theme/solarized_light">Solarized Light</option>
+                        <option value="ace/theme/textmate">TextMate</option>
+                        <option value="ace/theme/terminal">Terminal</option>
+                        <option value="ace/theme/chrome">Chrome</option>
+                        <option value="ace/theme/eclipse">Eclipse</option>
+                        <option value="ace/theme/dreamweaver">Dreamweaver</option>
+                        <option value="ace/theme/xcode">Xcode</option>
+                        <option value="ace/theme/kuroir">Kuroir</option>
+                        <option value="ace/theme/katzenmilch">KatzenMilch</option>
+                        <option value="ace/theme/sqlserver">SQL Server</option>
+                        <option value="ace/theme/ambiance">Ambiance</option>
+                        <option value="ace/theme/chaos">Chaos</option>
+                        <option value="ace/theme/clouds_midnight">Clouds Midnight</option>
+                        <option value="ace/theme/cobalt">Cobalt</option>
+                        <option value="ace/theme/gruvbox">Gruvbox</option>
+                        <option value="ace/theme/idle_fingers">Idle Fingers</option>
+                        <option value="ace/theme/kr_theme">krTheme</option>
+                        <option value="ace/theme/merbivore">Merbivore</option>
+                        <option value="ace/theme/mono_industrial">Mono Industrial</option>
+                        <option value="ace/theme/pastel_on_dark">Pastel on Dark</option>
+                    </select>
+
+                    <button type="button" class="btn btn-success btn-sm mx-1" onclick="formatContent()">格式化缩进</button>
+                    <button type="button" class="btn btn-info btn-sm mx-1" id="jsonValidationBtn" onclick="validateJsonSyntax()">验证 JSON 语法</button>
+                    <button type="button" class="btn btn-info btn-sm mx-1" id="yamlValidationBtn" onclick="validateYamlSyntax()" style="display: none;">验证 YAML 语法</button>
+                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="saveFullScreenContent()">保存并关闭</button>
+                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="openSearch()">搜索</button>
+                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="closeFullScreenEditor()">取消</button>
+                    <button type="button" class="btn btn-warning btn-sm mx-1" id="toggleFullscreenBtn" onclick="toggleFullscreen()">全屏</button>
+                </div>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeFullScreenEditor()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="d-flex justify-content-center align-items-center my-1" id="editorStatus" style="font-weight: bold; font-size: 0.9rem;">
+                    <span id="lineColumnDisplay" style="color: blue; font-size: 1.1rem;">行: 1, 列: 1</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="charCountDisplay" style="color: blue; font-size: 1.1rem;">字符数: 0</span>
+                </div>
+                    <div class="modal-body" style="padding: 0; height: 100%;">
+                <div id="aceEditorContainer" style="height: 100%; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let isJsonDetected = false;
+
+let aceEditorInstance;
+
+function initializeAceEditor() {
+    aceEditorInstance = ace.edit("aceEditorContainer");
+    const savedTheme = localStorage.getItem("editorTheme") || "ace/theme/monokai";
+    aceEditorInstance.setTheme(savedTheme);
+    aceEditorInstance.session.setMode("ace/mode/javascript"); 
+    aceEditorInstance.setOptions({
+        fontSize: "20px",
+        wrap: true
+    });
+
+    document.getElementById("editorTheme").value = savedTheme;
+    aceEditorInstance.getSession().on('change', () => {
+        updateEditorStatus();
+        detectContentFormat();
+    });
+    aceEditorInstance.selection.on('changeCursor', updateEditorStatus);
+    detectContentFormat(); 
+    }
+
+    function openFullScreenEditor() {
+        aceEditorInstance.setValue(document.getElementById('fileContent').value, -1); 
+        $('#fullScreenEditorModal').modal('show'); 
+        updateEditorStatus(); 
+    }
+
+    function saveFullScreenContent() {
+        document.getElementById('fileContent').value = aceEditorInstance.getValue();
+        $('#fullScreenEditorModal').modal('hide'); 
+        $('#editModal').modal('hide'); 
+        document.getElementById('editForm').submit(); 
+    }
+
+    function closeFullScreenEditor() {
+        $('#fullScreenEditorModal').modal('hide');
+    }
+
+    function changeFontSize() {
+        const fontSize = document.getElementById("fontSize").value;
+        aceEditorInstance.setFontSize(fontSize);
+    }
+
+    function changeEditorTheme() {
+        const theme = document.getElementById("editorTheme").value;
+        aceEditorInstance.setTheme(theme);
+        localStorage.setItem("editorTheme", theme); 
+    }
+
+    function openSearch() {
+        aceEditorInstance.execCommand("find");
+    }
+
+    function detectContentFormat() {
+        const content = aceEditorInstance.getValue().trim();
+
+        if (isJsonDetected) {
+            document.getElementById("jsonValidationBtn").style.display = "inline-block";
+            document.getElementById("yamlValidationBtn").style.display = "none";
+            return;
+        }
+
+        try {
+            JSON.parse(content);
+            document.getElementById("jsonValidationBtn").style.display = "inline-block";
+            document.getElementById("yamlValidationBtn").style.display = "none";
+            isJsonDetected = true; 
+        } catch {
+        if (isYamlFormat(content)) {
+            document.getElementById("jsonValidationBtn").style.display = "none";
+            document.getElementById("yamlValidationBtn").style.display = "inline-block";
+        } else {
+            document.getElementById("jsonValidationBtn").style.display = "none";
+            document.getElementById("yamlValidationBtn").style.display = "none";
+            }
+        }
+    }
+
+    function isYamlFormat(content) {
+            const yamlPattern = /^(---|\w+:\s)/m;
+            return yamlPattern.test(content);
+    }
+
+    function validateJsonSyntax() {
+            const content = aceEditorInstance.getValue();
+            let annotations = [];
+        try {
+            JSON.parse(content);
+            alert("JSON 语法正确");
+        } catch (e) {
+            const line = e.lineNumber ? e.lineNumber - 1 : 0;
+            annotations.push({
+            row: line,
+            column: 0,
+            text: e.message,
+            type: "error"
+        });
+        aceEditorInstance.session.setAnnotations(annotations);
+        alert("JSON 语法错误: " + e.message);
+        }
+    }
+
+    function validateYamlSyntax() {
+            const content = aceEditorInstance.getValue();
+            let annotations = [];
+        try {
+            jsyaml.load(content); 
+            alert("YAML 语法正确");
+        } catch (e) {
+            const line = e.mark ? e.mark.line : 0;
+            annotations.push({
+            row: line,
+            column: 0,
+            text: e.message,
+            type: "error"
+        });
+        aceEditorInstance.session.setAnnotations(annotations);
+        alert("YAML 语法错误: " + e.message);
+        }
+    }
+
+    function formatContent() {
+        const content = aceEditorInstance.getValue();
+        const mode = aceEditorInstance.session.$modeId;
+        let formattedContent;
+
+        try {
+            if (mode === "ace/mode/json") {
+                formattedContent = JSON.stringify(JSON.parse(content), null, 4);
+                aceEditorInstance.setValue(formattedContent, -1);
+                alert("JSON 格式化成功");
+            } else if (mode === "ace/mode/javascript") {
+                formattedContent = js_beautify(content, { indent_size: 4 });
+                aceEditorInstance.setValue(formattedContent, -1);
+                alert("JavaScript 格式化成功");
+            } else {
+                alert("当前模式不支持格式化缩进");
+            }
+        } catch (e) {
+            alert("格式化错误: " + e.message);
+        }
+    }
+
+    function openEditModal(fileName, fileType) {
+        document.getElementById('editingFileName').textContent = fileName;
+        document.getElementById('hiddenFileName').value = fileName;
+        document.getElementById('hiddenFileType').value = fileType;
+
+        fetch(`?editFile=${encodeURIComponent(fileName)}&fileType=${fileType}`)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('fileContent').value = data; 
+                $('#editModal').modal('show');
+            })
+            .catch(error => console.error('获取文件内容失败:', error));
+    }
+
+    function syncEditorContent() {
+        document.getElementById('fileContent').value = document.getElementById('fileContent').value;
+    }
+
+    function updateEditorStatus() {
+        const cursor = aceEditorInstance.getCursorPosition();
+        const line = cursor.row + 1;
+        const column = cursor.column + 1;
+        const charCount = aceEditorInstance.getValue().length;
+
+        document.getElementById('lineColumnDisplay').textContent = `行: ${line}, 列: ${column}`;
+        document.getElementById('charCountDisplay').textContent = `字符数: ${charCount}`;
+    }
+
+    $(document).ready(function() {
+        initializeAceEditor();
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const renameButtons = document.querySelectorAll(".btn-rename");
+        renameButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const oldFileName = this.getAttribute("data-filename");
+                const fileType = this.getAttribute("data-filetype");
+                document.getElementById("oldFileName").value = oldFileName;
+                document.getElementById("fileType").value = fileType;
+                document.getElementById("newFileName").value = oldFileName;
+                $('#renameModal').modal('show');
+            });
+        });
+    });
+
+    function toggleFullscreen() {
+        const modal = document.getElementById('fullScreenEditorModal');
+    
+        if (!document.fullscreenElement) {
+            modal.requestFullscreen()
+                .then(() => {
+                    document.getElementById('toggleFullscreenBtn').textContent = '退出全屏';
+                })
+                .catch((err) => console.error(`Error attempting to enable full-screen mode: ${err.message}`));
+        } else {
+            document.exitFullscreen()
+                .then(() => {
+                    document.getElementById('toggleFullscreenBtn').textContent = '全屏';
+                })
+                .catch((err) => console.error(`Error attempting to exit full-screen mode: ${err.message}`));
+            }
+       }
+       
+</script>
+
+<h1 style="margin-top: 20px; margin-bottom: 20px;" title="只支持Sing-box格式的订阅">Sing-box 订阅</h1>
 
 <style>
     #updateAlert .close,
@@ -808,273 +1111,11 @@ function showUpdateAlertSub(message) {
     <?php endfor; ?>
 </div>
 
-        <div class="modal fade" id="renameModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="renameModalLabel">重命名文件</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="renameForm" action="" method="post">
-                            <input type="hidden" name="oldFileName" id="oldFileName">
-                            <input type="hidden" name="fileType" id="fileType">
-                            <div class="form-group">
-                                <label for="newFileName">新文件名</label>
-                                <input type="text" class="form-control" id="newFileName" name="newFileName" required>
-                            </div>
-                            <p>是否确定要重命名这个文件?</p>
-                            <div class="form-group text-right">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                                <button type="submit" class="btn btn-primary">确定</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-<script src="./assets/bootstrap/jquery-3.5.1.slim.min.js"></script>
-<script src="./assets/bootstrap/popper.min.js"></script>
-<script src="./assets/bootstrap/bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
 
-<script>
-    $('#renameModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); 
-        var oldFileName = button.data('filename'); 
-        var fileType = button.data('filetype');
-        var modal = $(this);
-        modal.find('#oldFileName').val(oldFileName); 
-        modal.find('#fileType').val(fileType);
-        modal.find('#newFileName').val(oldFileName); 
-    });
 
-    function closeEditor() {
-        window.location.href = window.location.href; 
-    }
 
-    var aceEditor = ace.edit("aceEditorContainer");
-    aceEditor.setTheme("ace/theme/monokai");
-    aceEditor.session.setMode("ace/mode/json");
-    aceEditor.session.setUseWorker(true);
-    aceEditor.getSession().setUseWrapMode(true);
 
-    function setDefaultFontSize() {
-        var defaultFontSize = '20px';
-        document.getElementById('basicEditor').style.fontSize = defaultFontSize;
-        aceEditor.setFontSize(defaultFontSize);
-    }
 
-    document.addEventListener('DOMContentLoaded', setDefaultFontSize);
 
-    aceEditor.setValue(document.getElementById('basicEditor').value);
-
-    aceEditor.session.on('changeAnnotation', function() {
-        var annotations = aceEditor.getSession().getAnnotations();
-        if (annotations.length > 0) {
-            var errorMessage = annotations[0].text;
-            var errorLine = annotations[0].row + 1;
-            showErrorPopup('JSON 语法错误: 行 ' + errorLine + ': ' + errorMessage);
-        } else {
-            hideErrorPopup();
-        }
-    });
-
-    document.getElementById('toggleBasicEditor').addEventListener('click', function() {
-        document.getElementById('basicEditor').classList.remove('d-none');
-        document.getElementById('aceEditorContainer').classList.add('d-none');
-        document.getElementById('fontSizeContainer').classList.remove('d-none');
-    });
-
-    document.getElementById('toggleAceEditor').addEventListener('click', function() {
-        document.getElementById('basicEditor').classList.add('d-none');
-        document.getElementById('aceEditorContainer').classList.remove('d-none');
-        document.getElementById('fontSizeContainer').classList.remove('d-none');
-        aceEditor.setValue(document.getElementById('basicEditor').value);
-    });
-
-    document.getElementById('toggleFullScreenEditor').addEventListener('click', function() {
-        var editorContainer = document.getElementById('aceEditorContainer');
-        if (!document.fullscreenElement) {
-            editorContainer.requestFullscreen().then(function() {
-                aceEditor.resize();
-                enableFullScreenMode();
-            });
-        } else {
-            document.exitFullscreen().then(function() {
-                aceEditor.resize();
-                disableFullScreenMode();
-            });
-        }
-    });
-
-    function syncEditorContent() {
-        if (!document.getElementById('basicEditor').classList.contains('d-none')) {
-            aceEditor.setValue(document.getElementById('basicEditor').value);
-        } else {
-            document.getElementById('basicEditor').value = aceEditor.getValue();
-        }
-    }
-
-    document.getElementById('fontSizeSelector').addEventListener('change', function() {
-        var newFontSize = this.value;
-        aceEditor.setFontSize(newFontSize);
-        document.getElementById('basicEditor').style.fontSize = newFontSize;
-    });
-
-    function enableFullScreenMode() {
-        document.getElementById('aceEditorContainer').classList.add('fullscreen');
-        document.getElementById('aceEditorError').classList.add('fullscreen-popup');
-        document.getElementById('fullscreenCancelButton').classList.remove('d-none');
-    }
-
-    function disableFullScreenMode() {
-        document.getElementById('aceEditorContainer').classList.remove('fullscreen');
-        document.getElementById('aceEditorError').classList.remove('fullscreen-popup');
-        document.getElementById('fullscreenCancelButton').classList.add('d-none');
-    }
-
-    function showErrorPopup(message) {
-        var errorPopup = document.getElementById('aceEditorError');
-        var errorMessage = document.getElementById('aceEditorErrorMessage');
-        errorMessage.innerText = message;
-        errorPopup.classList.remove('d-none');
-    }
-
-    function hideErrorPopup() {
-        var errorPopup = document.getElementById('aceEditorError');
-        errorPopup.classList.add('d-none');
-    }
-
-    document.getElementById('closeErrorPopup').addEventListener('click', function() {
-        hideErrorPopup();
-    });
-
-    (function() {
-        const resizable = document.querySelector('.resizable');
-        if (!resizable) return;
-
-        const handle = document.createElement('div');
-        handle.className = 'resize-handle';
-        resizable.appendChild(handle);
-
-        handle.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        });
-
-        function onMouseMove(e) {
-            resizable.style.width = e.clientX - resizable.getBoundingClientRect().left + 'px';
-            resizable.style.height = e.clientY - resizable.getBoundingClientRect().top + 'px';
-            aceEditor.resize();
-        }
-
-        function onMouseUp() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        }
-    })();
-</script>
-
-<style>
-    .btn--warning {
-        background-color: #ff9800;
-        color: white !important; 
-        border: none; 
-        padding: 10px 20px; 
-        border-radius: 5px; 
-        cursor: pointer; 
-        font-family: Arial, sans-serif; 
-        font-weight: bold; 
-    }
-
-    .resizable {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .resizable .resize-handle {
-        width: 10px;
-        height: 10px;
-        background: #ddd;
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        cursor: nwse-resize;
-        z-index: 10;
-    }
-
-    .fullscreen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 9999;
-        background-color: #1a1a1a;
-    }
-
-    #aceEditorError {
-        color: red;
-        font-weight: bold;
-        margin-top: 10px;
-    }
-
-    .fullscreen-popup {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        z-index: 9999;
-    }
-
-    .close-fullscreen {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 10000;
-        background-color: red;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        font-size: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-
-    #aceEditorError button {
-        margin-top: 10px;
-        padding: 5px 10px;
-        background-color: #ff6666;
-        border: none;
-        cursor: pointer;
-    }
-
-    textarea.editor {
-        font-size: 20px;
-        width: 100%; 
-        height: 400px; 
-        resize: both; 
-    }
-
-    .ace_editor {
-        font-size: 20px;
-    }
-</style>
-</body>
 
