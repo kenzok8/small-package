@@ -1,13 +1,13 @@
 <?php
 ob_start();
 include './cfg.php';
-$uploadDir = '/www/nekobox/proxy/';
+$proxyDir  = '/www/nekobox/proxy/';
 $configDir = '/etc/neko/config/';
 
 ini_set('memory_limit', '256M');
 
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+if (!is_dir($proxyDir)) {
+    mkdir($proxyDir, 0755, true);
 }
 
 if (!is_dir($configDir)) {
@@ -17,7 +17,7 @@ if (!is_dir($configDir)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['fileInput'])) {
         $file = $_FILES['fileInput'];
-        $uploadFilePath = $uploadDir . basename($file['name']);
+        $uploadFilePath = $proxyDir . basename($file['name']);
 
         if ($file['error'] === UPLOAD_ERR_OK) {
             if (move_uploaded_file($file['tmp_name'], $uploadFilePath)) {
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['deleteFile'])) {
-        $fileToDelete = $uploadDir . basename($_POST['deleteFile']);
+        $fileToDelete = $proxyDir . basename($_POST['deleteFile']);
         if (file_exists($fileToDelete) && unlink($fileToDelete)) {
             echo '文件删除成功：' . htmlspecialchars(basename($_POST['deleteFile']));
         } else {
@@ -69,8 +69,8 @@ if (isset($_POST['oldFileName'], $_POST['newFileName'], $_POST['fileType'])) {
     $fileType = $_POST['fileType'];
 
     if ($fileType === 'proxy') {
-        $oldFilePath = $uploadDir . $oldFileName;
-        $newFilePath = $uploadDir . $newFileName;
+        $oldFilePath = $proxyDir . $oldFileName;
+        $newFilePath = $proxyDir . $newFileName;
     } elseif ($fileType === 'config') {
         $oldFilePath = $configDir . $oldFileName;
         $newFilePath = $configDir . $newFileName;
@@ -91,7 +91,7 @@ if (isset($_POST['oldFileName'], $_POST['newFileName'], $_POST['fileType'])) {
 }
 
     if (isset($_POST['saveContent'], $_POST['fileName'], $_POST['fileType'])) {
-        $fileToSave = ($_POST['fileType'] === 'proxy') ? $uploadDir . basename($_POST['fileName']) : $configDir . basename($_POST['fileName']);
+        $fileToSave = ($_POST['fileType'] === 'proxy') ? $proxyDir . basename($_POST['fileName']) : $configDir . basename($_POST['fileName']);
         $contentToSave = $_POST['saveContent'];
         file_put_contents($fileToSave, $contentToSave);
         echo '<p>文件内容已更新：' . htmlspecialchars(basename($fileToSave)) . '</p>';
@@ -107,7 +107,7 @@ function formatFileModificationTime($filePath) {
     }
 }
 
-$proxyFiles = scandir($uploadDir);
+$proxyFiles = scandir($proxyDir);
 $configFiles = scandir($configDir);
 
 if ($proxyFiles !== false) {
@@ -133,7 +133,7 @@ function formatSize($size) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editFile'], $_GET['fileType'])) {
-    $filePath = ($_GET['fileType'] === 'proxy') ? $uploadDir . basename($_GET['editFile']) : $configDir . basename($_GET['editFile']);
+    $filePath = ($_GET['fileType'] === 'proxy') ? $proxyDir . basename($_GET['editFile']) : $configDir . basename($_GET['editFile']);
     if (file_exists($filePath)) {
         header('Content-Type: text/plain');
         echo file_get_contents($filePath);
@@ -589,7 +589,7 @@ td {
             </thead>
             <tbody>
                 <?php foreach ($proxyFiles as $file): ?>
-                    <?php $filePath = $uploadDir . $file; ?>
+                    <?php $filePath = $proxyDir . $file; ?>
                     <tr>
                         <td class="align-middle"><a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a></td>
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>

@@ -95,7 +95,7 @@ include './cfg.php';
 
         <?php
         $dataFilePath = '/tmp/subscription_data.txt';
-        $configFilePath = '/etc/neko/config/config.json';
+        $configFilePath = '/etc/neko/config/sing-box.json';
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
             $subscribeUrl = trim($_POST['subscribeUrl']);
@@ -118,7 +118,7 @@ include './cfg.php';
             }
 
             $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}&file={$templateUrlEncoded}";
-            $tempFilePath = '/tmp/config.json';
+            $tempFilePath = '/tmp/sing-box.json';
             $command = "wget -O " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
             exec($command, $output, $returnVar);
             $logMessages = [];
