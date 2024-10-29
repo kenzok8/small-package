@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade nslookup
 
-Version=V6.10.0
+Version=V6.10.1
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -211,19 +211,6 @@ function CHECK_PKG() {
 		LOGGER "检查软件包: [$1] ... 错误"
 		echo false
 		return 1
-	fi
-}
-
-function GET_IP() {
-	local Result="$(nslookup -type=a $1 $2 2> /dev/null | grep "Address:" | grep -v "$2" | egrep -o '([0-9]{1,3}\.){3}[0-9]{1,3}' | sort | uniq | tr '\n' ' ')"
-	if [[ ${Result} ]]
-	then
-		echo "${Result}"
-		LOGGER "DNS $2 解析 $1 ... ${Result}"
-		return 0
-	else
-		return 1
-		LOGGER "DNS $2 解析 $1 ... 失败"
 	fi
 }
 
@@ -828,10 +815,10 @@ $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
 		URL="$(Proxy_X ${CLOUD_FW_Url} ${Proxy_Type}@@5)"
 	;;
 	All)
-		URL="$(Proxy_X ${CLOUD_FW_Url} E@@1 F@@1 G@@2 X@@1)"
+		URL="$(Proxy_X ${CLOUD_FW_Url} G@@2 X@@1 E@@1 F@@1)"
 	;;
 	*)
-		URL="$(Proxy_X ${CLOUD_FW_Url} X@@2 E@@1 F@@1 G@@1)"
+		URL="$(Proxy_X ${CLOUD_FW_Url} X@@2 G@@1 E@@1 F@@1)"
 	;;
 	esac
 	DOWNLOADER --file-name ${CLOUD_FW_Name} --no-url-name --dl ${DL_DEPENDS[@]} --url ${URL} --path ${Firmware_Path} --timeout 15 --type 固件
@@ -1033,30 +1020,6 @@ function DOWNLOADER() {
 		DL_Retries="${DL_URL_Cache##*@@}"
 		[[ ! ${DL_Retries} || ! ${DL_Retries} == [0-9] ]] && DL_Retries=1
 		DL_URL_Final="${DL_URL_Cache%*@@*}"
-		DL_URL_Final_Host=$(echo ${DL_URL_Final} | awk -F[/:] '{print $4}')
-		case "${DL_Downloader}" in
-		curl)
-			DL_URL_Final_IP=$(GET_IP ${DL_URL_Final_Host} 8.8.8.8)
-		;;
-		esac
-		LOGGER "当前 URL: [${DL_URL_Final}] URL 重试次数: [${DL_Retries}]"
-		if [[ ${DL_URL_Final_IP} ]]
-		then
-			LOGGER "当前 URL 信息: [${DL_URL_Final_Host}::${DL_URL_Final_IP}]"
-			case "${DL_Downloader}" in
-			curl)
-				case "${DL_URL_Final}"
-				in
-				https*)
-					DL_URL_Final="${DL_URL_Final} --resolve ${DL_URL_Final_Host}:443:${DL_URL_Final_IP}"
-				;;
-				*)
-					DL_URL_Final="${DL_URL_Final} --resolve ${DL_URL_Final_Host}:80:${DL_URL_Final_IP}"
-				;;
-				esac
-			;;
-			esac
-		fi
 		for u in $(seq ${DL_Retries})
 		do
 			sleep 1
@@ -1399,7 +1362,7 @@ function AutoUpdate_Main() {
 		-x)
 			shift
 			URL="$(Proxy_X ${Script_Url} X@@1 G@@1 F@@1)"
-			if [[ $(NETWORK_CHECK 223.5.5.5 2) == false ]]
+			if [[ $(NETWORK_CHECK www.baidu.com 2) == false ]]
 			then
 				ECHO r "网络连接错误,请稍后再试!"
 				exit 1
