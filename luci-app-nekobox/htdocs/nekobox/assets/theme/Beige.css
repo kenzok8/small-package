@@ -1,39 +1,34 @@
 
-
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&family=Cinzel+Decorative:wght@700;900&display=swap');
-[data-bs-theme=pink] {
+
+[data-bs-theme=Beige] {
   color-scheme: light;
   --bs-body-font-family: 'Roboto', sans-serif;
   --bs-body-font-weight: 400;
   --bs-body-color: #333;
-  --bs-body-bg: #fef0f5;
-  --bs-primary: #ff69b4;
-  --bs-secondary: #FFCCCB;
+  --bs-body-bg: #faf3e0; 
+  --bs-primary: #d18b47; 
+  --bs-secondary: #c97b50; 
   --bs-success: #4caf50;
-
   --bs-warning: #ffc107;
   --bs-danger: #f44336;
 
-  --bs-body-font-family: 'Roboto', sans-serif;
-  --bs-heading-font-family: 'Montserrat', sans-serif;
-  --bs-primary: #ff69b4;
-  --bs-secondary: #f06292;
-  --bs-heading-1: #ff69b4; 
-  --bs-heading-2: #f06292;
-  --bs-heading-3: #e91e63;
-  --bs-heading-4: #9c27b0;
-  --bs-heading-5: #673ab7;
-  --bs-heading-6: #3f51b5;
-  
+  --bs-heading-1: #d18b47; 
+  --bs-heading-2: #c97b50;
+  --bs-heading-3: #a65f3c;
+  --bs-heading-4: #8e4d2e;
+  --bs-heading-5: #7b3b24;
+  --bs-heading-6: #653219;
+
   --bs-heading-font-family: 'Montserrat', sans-serif;
   --bs-heading-font-weight: 700;
   --bs-heading-letter-spacing: 0.05em;
   --bs-heading-text-transform: uppercase;
 
-  --bs-shadow-light: 0 4px 8px rgba(255, 105, 180, 0.1);
-  --bs-shadow-medium: 0 8px 16px rgba(255, 105, 180, 0.15);
-  --bs-shadow-heavy: 0 12px 24px rgba(255, 105, 180, 0.2);
+  --bs-shadow-light: 0 4px 8px rgba(209, 139, 71, 0.1);
+  --bs-shadow-medium: 0 8px 16px rgba(209, 139, 71, 0.15);
+  --bs-shadow-heavy: 0 12px 24px rgba(209, 139, 71, 0.2);
   --bs-transition-speed: 0.3s;
 
   --bs-btn-color: #fff;
@@ -379,10 +374,6 @@ h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
     font-family: 'Cinzel Decorative', cursive;
     font-weight: 900;
     font-size: 80px;
-    color: var(--bs-primary);
-    text-shadow: 
-        2px 2px 4px rgba(142, 68, 173, 0.7),
-        0 0 20px rgba(142, 68, 173, 0.3);
     letter-spacing: 4px;
     text-align: center;
     margin-top: 20px;
@@ -391,9 +382,7 @@ h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
 
 .royal-style:hover {
     transform: skew(-5deg);
-    text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
 }
-
 
 @media (max-width: 767px) {
   body {

@@ -508,6 +508,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="./assets/bootstrap/popper.min.js"></script>
     <script src="./assets/bootstrap/bootstrap.min.js"></script>
 </head>
+<?php if ($subscriptionFile): ?>
+    <script>
+        if (!sessionStorage.getItem('refreshed')) {
+            sessionStorage.setItem('refreshed', 'true');
+            window.location.reload();
+        } else {
+            sessionStorage.removeItem('refreshed'); 
+        }
+    </script>
+<?php endif; ?>
 <body>
 <div class="position-fixed w-100 d-flex justify-content-center" style="top: 20px; z-index: 1050">
     <div id="updateAlert" class="alert alert-success alert-dismissible fade" role="alert" style="display: none; min-width: 300px; max-width: 600px;">
@@ -709,6 +719,8 @@ function showUpdateAlert() {
     </div>
     <div class="text-center">
         <h1 style="margin-top: 40px; margin-bottom: 20px;">Mihomo 文件管理</h1>
+       <div class="card mb-4">
+    <div class="card-body">
     <div class="container">
     <h5>代理文件管理</h5>
     <div class="table-responsive">
