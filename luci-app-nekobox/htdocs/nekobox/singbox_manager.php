@@ -146,36 +146,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editFile'], $_GET['file
 ?>
 
 <?php
-$subscriptionPath = '/www/nekobox/proxy/';
-$subscriptionFile = $subscriptionPath . 'subscriptions.json';
-$subscriptions = [];
+$configPath = '/www/nekobox/proxy/';
+$configFile = $configPath . 'subscriptions.json';
+$subscriptionList = [];
+
 while (ob_get_level() > 0) {
     ob_end_flush();
 }
 
 function outputMessage($message) {
-    if (!isset($_SESSION['update_messages'])) {
-        $_SESSION['update_messages'] = array();
+    if (!isset($_SESSION['notification_messages'])) {
+        $_SESSION['notification_messages'] = [];
     }
-
-    if (empty($_SESSION['update_messages'])) {
-        $_SESSION['update_messages'][] = '<div class="text-warning" style="margin-bottom: 8px;"><strong>⚠️ 注意：</strong> 当前配置文件必须配合 <strong>Puernya</strong> 内核使用，不支持其他内核！</div>';
-    }
-    $_SESSION['update_messages'][] = $message;
+    $_SESSION['notification_messages'][] = $message;
 }
 
+if (!isset($_SESSION['help_message'])) {
+    $_SESSION['help_message'] = '<div class="text-warning" style="margin-bottom: 8px;">
+        <strong>⚠️ 注意：</strong> 当前配置文件必须配合 <strong>Puernya</strong> 内核使用，不支持其他内核！
+    </div>';
+}
 
-if (!file_exists($subscriptionPath)) {
-    mkdir($subscriptionPath, 0755, true);
+if (!file_exists($configPath)) {
+    mkdir($configPath, 0755, true);
 }
-if (!file_exists($subscriptionFile)) {
-    file_put_contents($subscriptionFile, json_encode([]));
+
+if (!file_exists($configFile)) {
+    file_put_contents($configFile, json_encode([]));
 }
-$subscriptions = json_decode(file_get_contents($subscriptionFile), true);
-if (!$subscriptions || !is_array($subscriptions)) {  
-    $subscriptions = [];  
-    for ($i = 1; $i <= 3; $i++) {  
-        $subscriptions[$i - 1] = [
+
+$subscriptionList = json_decode(file_get_contents($configFile), true);
+if (!$subscriptionList || !is_array($subscriptionList)) {
+    $subscriptionList = [];
+    for ($i = 1; $i <= 3; $i++) {
+        $subscriptionList[$i - 1] = [
             'url' => '',
             'file_name' => "subscription_{$i}.yaml",
         ];
@@ -187,18 +191,19 @@ if (isset($_POST['saveSubscription'])) {
     if ($index >= 0 && $index < 3) {
         $url = $_POST['subscription_url'] ?? '';
         $customFileName = $_POST['custom_file_name'] ?? "subscription_{$index}.yaml";
-        $subscriptions[$index]['url'] = $url;
-        $subscriptions[$index]['file_name'] = $customFileName;
-        
+        $subscriptionList[$index]['url'] = $url;
+        $subscriptionList[$index]['file_name'] = $customFileName;
+
         if (!empty($url)) {
-            $finalPath = $subscriptionPath . $customFileName;
-            $command = sprintf("curl -fsSL -o %s %s", 
-                escapeshellarg($finalPath), 
+            $finalPath = $configPath . $customFileName;
+            $command = sprintf(
+                "curl -fsSL -o %s %s",
+                escapeshellarg($finalPath),
                 escapeshellarg($url)
             );
-            
+
             exec($command . ' 2>&1', $output, $return_var);
-            
+
             if ($return_var === 0) {
                 outputMessage("订阅链接 {$url} 更新成功！文件已保存到: {$finalPath}");
             } else {
@@ -207,11 +212,11 @@ if (isset($_POST['saveSubscription'])) {
         } else {
             outputMessage("第" . ($index + 1) . "个订阅链接为空！");
         }
-        
-        file_put_contents($subscriptionFile, json_encode($subscriptions));
+
+        file_put_contents($configFile, json_encode($subscriptionList));
     }
 }
-$updateCompleted = isset($_POST['saveSubscription']); 
+$updateCompleted = isset($_POST['saveSubscription']);
 ?>
 
 <?php
@@ -362,15 +367,27 @@ if (isset($_POST['update_index'])) {
     <script src="./assets/bootstrap/popper.min.js"></script>
     <script src="./assets/bootstrap/bootstrap.min.js"></script>
 </head>
+<?php if ($updateCompleted): ?>
+    <script>
+        if (!sessionStorage.getItem('refreshed')) {
+            sessionStorage.setItem('refreshed', 'true');
+            window.location.reload();
+        } else {
+            sessionStorage.removeItem('refreshed'); 
+        }
+    </script>
+<?php endif; ?>
+
 <body>
 <div class="position-fixed w-100 d-flex justify-content-center" style="top: 20px; z-index: 1050">
-    <div id="updateAlert" class="alert alert-success alert-dismissible fade" role="alert" style="display: none; min-width: 300px; max-width: 600px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+    <div id="updateAlert" class="alert alert-success alert-dismissible fade" role="alert" 
+         style="display: none; min-width: 300px; max-width: 600px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
         <div class="d-flex align-items-center mb-2">
             <span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
             <strong>更新完成</strong>
         </div>
-        <div id="updateMessages" class="small" style="word-break: break-all;">
-        </div>
+        <div id="helpMessage" class="small" style="word-break: break-all;"></div>
+        <div id="updateMessages" class="small mt-2" style="word-break: break-all;"></div>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">×</span>
         </button>
@@ -394,51 +411,31 @@ if (isset($_POST['update_index'])) {
 <script>
 function showUpdateAlert() {
     const alert = $('#updateAlert');
-    const messages = <?php echo json_encode($_SESSION['update_messages'] ?? []); ?>;
-    
+    const helpMessage = <?php echo json_encode($_SESSION['help_message'] ?? ''); ?>;
+    const messages = <?php echo json_encode($_SESSION['notification_messages'] ?? []); ?>;
+    $('#helpMessage').html(helpMessage);
+
     if (messages.length > 0) {
         const messagesHtml = messages.map(msg => `<div>${msg}</div>`).join('');
         $('#updateMessages').html(messagesHtml);
     }
-    
+
     alert.show().addClass('show');
-    
-    setTimeout(function() {
+    setTimeout(function () {
         alert.removeClass('show');
-        setTimeout(function() {
+        setTimeout(function () {
             alert.hide();
             $('#updateMessages').html('');
         }, 150);
-    }, 18000); 
-}
-
-function showUpdateAlertSub(message) {
-    const alert = $('#updateAlertSub');
-    $('#updateMessagesSub').html(`<div>${message}</div>`);
-    alert.show().addClass('show');
-    
-    setTimeout(function() {
-        alert.removeClass('show');
-        setTimeout(function() {
-            alert.hide();
-            $('#updateMessagesSub').html('');
-        }, 150);
-    }, 18000); 
+    }, 18000);
 }
 
 <?php if ($updateCompleted): ?>
-    $(document).ready(function() {
+    $(document).ready(function () {
         showUpdateAlert();
     });
 <?php endif; ?>
-
-<?php if ($message): ?>
-    $(document).ready(function() {
-        showUpdateAlertSub(`<?php echo str_replace(["\r", "\n"], '', addslashes($message)); ?>`);
-    });
-<?php endif; ?>
 </script>
-
 <style>
 #updateAlert .close {
     color: white;
@@ -565,6 +562,7 @@ td {
     flex-wrap: wrap;
 }
 </style>
+
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
@@ -574,7 +572,8 @@ td {
         <a href="./filekit.php" class="col btn btn-lg">📦 文件助手</a>
     <div class="text-center">
       <h1 style="margin-top: 40px; margin-bottom: 20px;">Sing-box 文件管理</h1>
-        
+       <div class="card mb-4">
+    <div class="card-body"> 
 <div class="container">
     <h5>代理文件管理 ➤ p核专用</h5>
     <div class="table-responsive">
@@ -803,7 +802,7 @@ let aceEditorInstance;
 
 function initializeAceEditor() {
     aceEditorInstance = ace.edit("aceEditorContainer");
-    const savedTheme = localStorage.getItem("editorTheme") || "ace/theme/monokai";
+    const savedTheme = localStorage.getItem("editorTheme") || "ace/theme/Vibrant Ink";
     aceEditorInstance.setTheme(savedTheme);
     aceEditorInstance.session.setMode("ace/mode/javascript"); 
     aceEditorInstance.setOptions({
@@ -1007,7 +1006,6 @@ function initializeAceEditor() {
        }
        
 </script>
-
 <h1 style="margin-top: 20px; margin-bottom: 20px;" title="只支持Sing-box格式的订阅">Sing-box 订阅</h1>
 
 <style>
@@ -1079,29 +1077,29 @@ function initializeAceEditor() {
 <div class="help-text mb-3 text-start">
     <strong>2. 注意：</strong> 通用模板（<code>puernya.json</code>）最多支持<strong>3个</strong>订阅链接，请勿更改默认名称。
 </div>
- <div class="help-text mb-3 text-start"> 
-    <strong>3. 只支持Clash和Sing-box格式的订阅，不支持通用格式
-    </div>
+<div class="help-text mb-3 text-start"> 
+    <strong>3. 支持通用格式订阅，无需转换。
+</div>
 <div class="help-text mb-3 text-start"> 
     <strong>4. 保存与更新：</strong> 填写完毕后，请点击"更新配置"按钮进行保存。
 </div>
-        <div class="row">
-            <?php for ($i = 0; $i < 3; $i++): ?>
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">订阅链接 <?php echo ($i + 1); ?></h5>
-                            <form method="post">
-                                <div class="input-group mb-3">
-                                    <input type="text" name="subscription_url" id="subscriptionurl<?php echo $i; ?>" 
-                                           value="<?php echo htmlspecialchars($subscriptions[$i]['url']); ?>" required 
-                                           class="form-control" placeholder="输入链接">
-                                    <input type="text" name="custom_file_name" id="custom_filename<?php echo $i; ?>" 
-                                           value="<?php echo htmlspecialchars($subscriptions[$i]['file_name']); ?>" 
-                                           class="form-control" placeholder="自定义文件名">
-                                    <input type="hidden" name="index" value="<?php echo $i; ?>">
-                                    <button type="submit" name="saveSubscription" class="btn btn-success ml-2">
-                                        <i>🔄</i> 更新
+<div class="row">
+    <?php for ($i = 0; $i < 3; $i++): ?>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">订阅链接 <?php echo ($i + 1); ?></h5>
+                    <form method="post">
+                        <div class="input-group mb-3">
+                            <input type="text" name="subscription_url" id="subscriptionurl<?php echo $i; ?>" 
+                                   value="<?php echo htmlspecialchars($subscriptionList[$i]['url']); ?>" 
+                                   required class="form-control" placeholder="输入链接">
+                            <input type="text" name="custom_file_name" id="custom_filename<?php echo $i; ?>" 
+                                   value="<?php echo htmlspecialchars($subscriptionList[$i]['file_name']); ?>" 
+                                   class="form-control" placeholder="自定义文件名">
+                            <input type="hidden" name="index" value="<?php echo $i; ?>">
+                            <button type="submit" name="saveSubscription" class="btn btn-success ml-2">
+                                <i>🔄</i> 更新
                             </button>
                         </div>
                     </form>

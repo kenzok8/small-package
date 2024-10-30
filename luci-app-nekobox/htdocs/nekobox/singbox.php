@@ -102,7 +102,7 @@ if ($extracted_file && file_exists($extracted_file)) {
     exec("cp -f '$extracted_file' '$install_path'");
     exec("chmod 0755 '$install_path'");
     writeVersionToFile($latest_version); 
-    echo "Update completed! Current version: $latest_version";
+    echo "更新完成! 当前版本: $latest_version";
 } else {
     die("Extracted file 'sing-box' does not exist.");
 }

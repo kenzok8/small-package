@@ -204,7 +204,7 @@
             "includes": [
 
             ],
-            "excludes": "(?i)🇭🇰|🇯🇵|🇺🇸|🇸🇬|🇹🇼|🇰🇷|港|hk|hongkong|台|tw|taiwan|日|jp|japan|新|sg|singapore|美|us|unitedstates|KR|KOREA|Korea"
+            "excludes": "(?i)🇭🇰|🇯🇵|🇺🇸|🇸🇬|🇹🇼|🇰🇷|港|hk|hongkong|台|tw|taiwan|日|jp|japan|新|sg|singapore|美|us|unitedstates|韩|KR|KOREA|Korea"
         },
         {
             "tag": "📹 YouTube",
@@ -463,7 +463,7 @@
             "tolerance": 50,
             "use_all_providers": true,
             "includes": [
-                "🇭🇰|🇯🇵|🇺🇸|🇸🇬|🇹🇼|🇰🇷|港|hk|hongkong|台|tw|taiwan|日|jp|japan|新|sg|singapore|美|us|unitedstates|KR|KOREA|Korea"
+                "🇭🇰|🇯🇵|🇺🇸|🇸🇬|🇹🇼|🇰🇷|港|hk|hongkong|台|tw|taiwan|日|jp|japan|新|sg|singapore|美|us|unitedstates|韩|KR|KOREA|Korea"
             ]
         },
         {
@@ -495,7 +495,7 @@
             "type": "selector",
             "use_all_providers": true,
             "includes": [
-                "🇰🇷|KR|KOREA|Korea"
+                "🇰🇷|韩|KR|KOREA|Korea"
             ]
         },
         {

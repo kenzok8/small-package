@@ -42,6 +42,21 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 1rem;
 }
 
+.table {
+  width: 100%; 
+  margin-bottom: 1rem;
+  color: var(--bs-body-color);
+  border-collapse: collapse; 
+}
+
+.table th {
+  background-color: var(--bs-secondary); 
+  color: #fff; 
+  text-align: center; 
+  padding: 0.75rem; 
+  border: 1px solid var(--bs-body-color); 
+}
+
 .fancy-heading {
   background: linear-gradient(45deg, var(--bs-primary), var(--bs-secondary));
   -webkit-background-clip: text;
