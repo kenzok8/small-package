@@ -729,7 +729,7 @@ function showUpdateAlert() {
                     <tr>
                         <td class="align-middle"><a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a></td>
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
-                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?></td>
+                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath) + 8 * 60 * 60)); ?></td>
                         <td>
                             <div class="d-flex justify-content-center">
                                 <form action="" method="post" class="d-inline">
@@ -775,7 +775,7 @@ function showUpdateAlert() {
                     <tr>
                         <td class="align-middle"><a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a></td>
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
-                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?></td>
+                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath) + 8 * 60 * 60)); ?></td>
                         <td>
                             <div class="d-flex justify-content-center">
                                 <form action="" method="post" class="d-inline">
@@ -939,7 +939,7 @@ let aceEditorInstance;
 
 function initializeAceEditor() {
     aceEditorInstance = ace.edit("aceEditorContainer");
-    const savedTheme = localStorage.getItem("editorTheme") || "ace/theme/Vibrant Ink";
+    const savedTheme = localStorage.getItem("editorTheme") || "ace/theme/vibrant_ink";
     aceEditorInstance.setTheme(savedTheme);
     aceEditorInstance.session.setMode("ace/mode/javascript"); 
     aceEditorInstance.setOptions({
