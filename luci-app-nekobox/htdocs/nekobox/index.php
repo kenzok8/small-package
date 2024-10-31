@@ -467,42 +467,52 @@ if (isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'n
 ?>
 
 <?php
-$systemIP = $_SERVER['SERVER_ADDR'];
-$dt=json_decode((shell_exec("ubus call system board")), true);
-$devices=$dt['model'];
+if (isset($_GET['ajax'])) {
+    $dt = json_decode(shell_exec("ubus call system board"), true);
+    $devices = $dt['model'];
 
-$kernelv = exec("cat /proc/sys/kernel/ostype"); 
-$osrelease = exec("cat /proc/sys/kernel/osrelease"); 
-$OSVer = $dt['release']['distribution'] . ' ' . $dt['release']['version']; 
-$kernelParts = explode('.', $osrelease, 3);
-$kernelv = 'Linux ' . 
-           (isset($kernelParts[0]) ? $kernelParts[0] : '') . '.' . 
-           (isset($kernelParts[1]) ? $kernelParts[1] : '') . '.' . 
-           (isset($kernelParts[2]) ? $kernelParts[2] : '');
-$kernelv = strstr($kernelv, '-', true) ?: $kernelv;
-$fullOSInfo = $kernelv . ' ' . $OSVer;
+    $kernelv = exec("cat /proc/sys/kernel/ostype"); 
+    $osrelease = exec("cat /proc/sys/kernel/osrelease"); 
+    $OSVer = $dt['release']['distribution'] . ' ' . $dt['release']['version']; 
+    $kernelParts = explode('.', $osrelease, 3);
+    $kernelv = 'Linux ' . 
+               (isset($kernelParts[0]) ? $kernelParts[0] : '') . '.' . 
+               (isset($kernelParts[1]) ? $kernelParts[1] : '') . '.' . 
+               (isset($kernelParts[2]) ? $kernelParts[2] : '');
+    $kernelv = strstr($kernelv, '-', true) ?: $kernelv;
+    $fullOSInfo = $kernelv . ' ' . $OSVer;
 
+    $tmpramTotal = exec("cat /proc/meminfo | grep MemTotal | awk '{print $2}'");
+    $tmpramAvailable = exec("cat /proc/meminfo | grep MemAvailable | awk '{print $2}'");
 
-$tmpramTotal=exec("cat /proc/meminfo | grep MemTotal | awk '{print $2}'");
-$tmpramAvailable=exec("cat /proc/meminfo | grep MemAvailable | awk '{print $2}'");
+    $ramTotal = number_format(($tmpramTotal / 1000), 1);
+    $ramAvailable = number_format(($tmpramAvailable / 1000), 1);
+    $ramUsage = number_format((($tmpramTotal - $tmpramAvailable) / 1000), 1);
 
-$ramTotal=number_format(($tmpramTotal/1000),1);
-$ramAvailable=number_format(($tmpramAvailable/1000),1);
-$ramUsage=number_format((($tmpramTotal-$tmpramAvailable)/1000),1);
+    $raw_uptime = exec("cat /proc/uptime | awk '{print $1}'");
+    $days = floor($raw_uptime / 86400);
+    $hours = floor(($raw_uptime / 3600) % 24);
+    $minutes = floor(($raw_uptime / 60) % 60);
+    $seconds = $raw_uptime % 60;
 
-$raw_uptime = exec("cat /proc/uptime | awk '{print $1}'");
-$days = floor($raw_uptime / 86400);
-$hours = floor(($raw_uptime / 3600) % 24);
-$minutes = floor(($raw_uptime / 60) % 60);
-$seconds = $raw_uptime % 60;
+    $cpuLoad = shell_exec("cat /proc/loadavg");
+    $cpuLoad = explode(' ', $cpuLoad);
+    $cpuLoadAvg1Min = round($cpuLoad[0], 2);
+    $cpuLoadAvg5Min = round($cpuLoad[1], 2);
+    $cpuLoadAvg15Min = round($cpuLoad[2], 2);
 
-$cpuLoad = shell_exec("cat /proc/loadavg");
-$cpuLoad = explode(' ', $cpuLoad);
-$cpuLoadAvg1Min = round($cpuLoad[0], 2);
-$cpuLoadAvg5Min = round($cpuLoad[1], 2);
-$cpuLoadAvg15Min = round($cpuLoad[2], 2);
+    echo json_encode([
+        'systemInfo' => "$devices - $fullOSInfo",
+        'ramUsage' => "$ramUsage/$ramTotal MB",
+        'cpuLoad' => "$cpuLoadAvg1Min $cpuLoadAvg5Min $cpuLoadAvg15Min",
+        'uptime' => "{$days}天 {$hours}小时 {$minutes}分钟 {$seconds}秒",
+        'cpuLoadAvg1Min' => $cpuLoadAvg1Min,
+        'ramTotal' => $ramTotal,
+        'ramUsageOnly' => $ramUsage,
+    ]);
+    exit;
+}
 ?>
-
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme,0,-4) ?>">
   <head>
@@ -937,42 +947,60 @@ $lang = $_GET['lang'] ?? 'en';
     <table class="table table-borderless rounded-4 mb-2">
         <tbody>
                 <td>系统信息</td>
-                <td class="col-7"><?php echo  $devices . ' - ' . $fullOSInfo; ?></td>
+                <td class="col-7" id="systemInfo"></td>
             </tr>
             <tr>
                 <td>内存</td>
-                <td class="col-7"><?php echo "$ramUsage/$ramTotal MB" ?></td>
+                <td class="col-7" id="ramUsage"></td>
             </tr>
             <tr>
                 <td>平均负载</td>
-                <td class="col-7"><?php echo "$cpuLoadAvg1Min $cpuLoadAvg5Min $cpuLoadAvg15Min" ?></td>
+                <td class="col-7" id="cpuLoad"></td>
             </tr>
             <tr>
                 <td>运行时间</td>
-                <td class="col-7"><?php echo "{$days}天 {$hours}小时 {$minutes}分钟 {$seconds}秒" ?></td>
+                <td class="col-7" id="uptime"></td>
             </tr>
         </tbody>
     </table>
 
-        <div class="icon-container">
-            <div class="icon">
-                <i class="fas fa-microchip"></i>
-                <p>CPU</p>
-                <p><?php echo isset($cpuLoadAvg1Min) ? $cpuLoadAvg1Min : 'N/A'; ?></p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-memory"></i>
-                <p>内存</p>
-                <p><?php echo (isset($ramUsage) && isset($ramTotal)) ? $ramUsage . ' / ' . $ramTotal . ' MB' : 'N/A'; ?></p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-exchange-alt"></i>
-                <p>交换空间</p>
-                <p>N/A</p>
-            </div>
+    <div class="icon-container">
+        <div class="icon">
+            <i class="fas fa-microchip"></i>
+            <p>CPU</p>
+            <p id="cpuLoadAvg1Min">N/A</p>
+        </div>
+        <div class="icon">
+            <i class="fas fa-memory"></i>
+            <p>内存</p>
+            <p id="ramUsageOnly">N/A</p>
+        </div>
+        <div class="icon">
+            <i class="fas fa-exchange-alt"></i>
+            <p>交换空间</p>
+            <p>N/A</p>
         </div>
     </div>
 
+    <script>
+        function fetchSystemStatus() {
+            fetch('?ajax=1')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('systemInfo').innerText = data.systemInfo;
+                    document.getElementById('ramUsage').innerText = data.ramUsage;
+                    document.getElementById('cpuLoad').innerText = data.cpuLoad;
+                    document.getElementById('uptime').innerText = data.uptime;
+                    document.getElementById('cpuLoadAvg1Min').innerText = data.cpuLoadAvg1Min;
+                    document.getElementById('ramUsageOnly').innerText = data.ramUsageOnly + ' / ' + data.ramTotal + ' MB';
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        setInterval(fetchSystemStatus, 1000);
+
+        fetchSystemStatus();
+    </script>
 <div style="border: 1px solid black; padding: 10px; text-align: center;">
     <table style="width: 100%;">
         <tbody>
@@ -987,6 +1015,7 @@ $lang = $_GET['lang'] ?? 'en';
         </tbody>
     </table>
 </div>
+
 <!DOCTYPE html>
 <html lang="zh">
 <head>
