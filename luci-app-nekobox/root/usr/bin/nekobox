@@ -332,6 +332,30 @@ install_puernya() {
     echo "Puernya core installation completed successfully."
 }
 
+download_ruleset() {
+    local ruleset_url="https://github.com/Thaolga/openwrt-nekobox/releases/download/1.5.0/nekobox.zip"
+    local temp_file="/tmp/nekobox.zip"
+    local extract_dir="/www/nekobox"
+
+    echo "正在下载 Sing-box 规则集..."
+    wget -O "$temp_file" "$ruleset_url"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}下载失败！${NC}"
+        exit 1
+    fi
+
+    echo "正在解压规则集到 $extract_dir..."
+    mkdir -p "$extract_dir"
+    unzip -o "$temp_file" -d "$extract_dir"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}解压失败！${NC}"
+        exit 1
+    fi
+
+    echo "规则集下载和解压完成！"
+    rm -f "$temp_file"
+}
+
 install_ui() {
     GREEN='\033[0;32m'
     RED='\033[0;31m'
@@ -453,13 +477,15 @@ install_core_menu() {
         if [ "$language" = "cn" ]; then
             printf "${CLCyan}  %-54s ${NC}\n" "1. 安装 Sing-box 核心"
             printf "${CLCyan}  %-54s ${NC}\n" "2. 安装 puernya 核心"
-            printf "${CLCyan}  %-54s ${NC}\n" "3. 返回主菜单"
+            printf "${CLCyan}  %-54s ${NC}\n" "3. 下载 Sing-box 规则集"
+            printf "${CLCyan}  %-54s ${NC}\n" "4. 返回主菜单"
             echo -e "${CLCyan}╚════════════════════════════════════════════════════════╝"
             read -p "请选择要安装的核心: " core_choice
         else
             printf "${CLCyan}  %-54s ${NC}\n" "1. Install Sing-box Core"
             printf "${CLCyan}  %-54s ${NC}\n" "2. Install puernya Core"
-            printf "${CLCyan}  %-54s ${NC}\n" "3. Return to Main Menu"
+            printf "${CLCyan}  %-54s ${NC}\n" "3. Download Sing-box Ruleset"
+            printf "${CLCyan}  %-54s ${NC}\n" "4. Return to Main Menu"
             echo -e "${CLCyan}╚════════════════════════════════════════════════════════╝"
             read -p "Please select a core to install: " core_choice
         fi
@@ -471,6 +497,9 @@ install_core_menu() {
                 install_puernya
                 ;;
             3)
+                download_ruleset
+                ;;
+            4)
                 return
                 ;;
             *)
