@@ -9,8 +9,15 @@ include './cfg.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="./assets/img/favicon.png">
+    <link rel="icon" href="./assets/img/nekobox.png">
+    <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./assets/css/custom.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
+    <script type="text/javascript" src="./assets/js/feather.min.js"></script>
+    <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="./assets/js/neko.js"></script>
+</head>
+<body>
     <style>
         .controls {
             display: flex;
@@ -32,6 +39,7 @@ include './cfg.php';
     </style>
 </head>
 <body>
+<div class="container my-3 p-3 border border-3 rounded-4" style="background-color: #f8f9fa;">
     <div class="controls">
         <label for="main-toggle">系统开关</label>
         <input type="checkbox" id="main-toggle">
@@ -46,11 +54,12 @@ include './cfg.php';
             <span id="current-city" style="font-weight: bold; color: #33FF57;">未设置</span>
         </p>
     </div>
-  <div class="controls">
-     <label>城市设置</label>
-       <input type="text" id="city-input" class="form-control" placeholder="如 Beijing" style="padding: 5px;">
-       <button onclick="saveCity()" class="btn btn-success" style="padding: 3px 10px;">保存城市</button
-      </div>
+  
+    <div class="controls mt-3">
+        <label>城市设置</label>
+        <input type="text" id="city-input" class="form-control" placeholder="如 Beijing" style="padding: 5px;">
+        <button onclick="saveCity()" class="btn btn-success mt-2" style="padding: 3px 10px;">保存城市</button>
+    </div>
     <script>
     let city = 'Beijing'; 
     const apiKey = 'fc8bd2637768c286c6f1ed5f1915eb22'; 
@@ -528,9 +537,8 @@ include './cfg.php';
 </head>
 <body>
   </div>
-
  <div id="player"  onclick="toggleAnimation()">
-        <p id="hidePlayer">Mihomo</p>
+        <p id="hidePlayer">NeKoBox</p>
         <p id="timeDisplay">00:00</p>
         <audio id="audioPlayer" controls>
             <source src="" type="audio/mpeg">
@@ -636,7 +644,7 @@ include './cfg.php';
             applyGradient(displayString, 'timeDisplay');
         }
 
-        applyGradient('Mihomo', 'hidePlayer');
+        applyGradient('NeKoBox', 'hidePlayer');
         updateTime();
         setInterval(updateTime, 1000);
 
@@ -672,7 +680,7 @@ include './cfg.php';
                 showTooltip('播放被禁止');
                 audioPlayer.pause();
                 playButton.textContent = '播放';
-                speakMessage('播放被禁用');
+                speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
             }
         }
 
@@ -693,7 +701,7 @@ include './cfg.php';
                     speakMessage('顺序播放');
                 }
             } else {
-                speakMessage('播放被禁用');
+                speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
             }
         }
 
@@ -704,7 +712,7 @@ include './cfg.php';
                         document.getElementById('prev').click();
                     } else {
                         showTooltip('播放被禁止');
-                        speakMessage('播放被禁用');
+                        speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
                     }
                     break;
                 case 'ArrowRight':
@@ -712,7 +720,7 @@ include './cfg.php';
                         document.getElementById('next').click();
                     } else {
                         showTooltip('播放被禁止');
-                        speakMessage('播放被禁用');
+                        speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
                     }
                     break;
                 case ' ':
@@ -749,7 +757,7 @@ include './cfg.php';
                 speakMessage('下一首');
             } else {
                 showTooltip('播放被禁止');
-                speakMessage('播放被禁用');
+                speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
             }
         });
         document.getElementById('prev').addEventListener('click', function() {
@@ -760,7 +768,7 @@ include './cfg.php';
                 speakMessage('上一首');
             } else {
                 showTooltip('播放被禁止');
-                speakMessage('播放被禁用');
+                speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
             }
         });
         document.getElementById('orderLoop').addEventListener('click', handleOrderLoop);
