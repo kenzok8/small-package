@@ -4,10 +4,10 @@ ini_set('memory_limit', '128M');
 
 $logMessages = [];
 
-function logMessage($message) {
+function logMessage($filename, $message) {
     global $logMessages;
     $timestamp = date('H:i:s', strtotime('+8 hours'));
-    $logMessages[] = "[$timestamp] $message";
+    $logMessages[] = "[$timestamp] $filename: $message";
 }
 
 $urls = [
@@ -59,30 +59,47 @@ $urls = [
     "https://raw.githubusercontent.com/Thaolga/neko/luci-app-neko/nekobox/geosite.db" => "/www/nekobox/geosite.db"
 ];
 
-function downloadFile($url, $path, $retries = 3) {
-    for ($i = 0; $i < $retries; $i++) {
-        $command = "curl -L --fail -o '$path' '$url'";
-        exec($command, $output, $return_var);
+$multiHandle = curl_multi_init();
+$curlHandles = [];
 
-        if ($return_var === 0) {
-            logMessage(basename($path) . " 文件已成功更新！");
-            return true;
-        } else {
-            logMessage("下载失败：$path，重试中（" . ($i + 1) . "/$retries）...");
-            sleep(2);  
+foreach ($urls as $url => $path) {
+    $ch = curl_init($url);
+    $directory = dirname($path);
+    if (!is_dir($directory)) {
+        if (!mkdir($directory, 0755, true)) {
+            logMessage("创建目录失败: $directory");
+            continue;
         }
     }
-    logMessage("下载失败：$path，已超过最大重试次数！");
-    return false;
+
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FILE, fopen($path, 'w'));
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_multi_add_handle($multiHandle, $ch);
+    $curlHandles[$url] = $ch; 
 }
 
-foreach ($urls as $download_url => $destination_path) {
-    if (!is_dir(dirname($destination_path))) {
-        mkdir(dirname($destination_path), 0755, true);
+$running = null;
+do {
+    curl_multi_exec($multiHandle, $running);
+    curl_multi_select($multiHandle);
+} while ($running > 0);
+
+foreach ($curlHandles as $url => $ch) {
+    $return_var = curl_errno($ch);
+    $filename = basename($urls[$url]); 
+    if ($return_var !== CURLE_OK) {
+        logMessage($filename, "下载失败: " . curl_error($ch));
+    } else {
+        logMessage($filename, "成功下载到: " . $urls[$url]);
     }
-    downloadFile($download_url, $destination_path);
+    curl_multi_remove_handle($multiHandle, $ch);
+    curl_close($ch);
 }
 
-echo implode("\n", $logMessages);
+curl_multi_close($multiHandle);
 
+foreach ($logMessages as $logMessage) {
+    echo $logMessage . "\n";
+}
 ?>

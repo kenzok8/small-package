@@ -263,7 +263,7 @@ function getDirectoryContents($dir) {
                 if (!is_dir($path)) {
                     $size = formatSize(filesize($path));
                 }
-                $mtime = date("Y-m-d H:i:s", filemtime($path));
+                $mtime = date("Y-m-d H:i:s", filemtime($path) + 8 * 60 * 60);
                 $owner = function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($path))['name'] : fileowner($path);
             }
             $contents[] = array(
