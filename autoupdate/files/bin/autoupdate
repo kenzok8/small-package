@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.10.1
+Version=V6.10.3
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -38,7 +38,6 @@ function SHELL_HELP() {
 
 其他参数:
     --help			打印 AutoUpdate 程序帮助信息
-    -B, --boot-mode <TYPE>	指定 x86 设备下载 <TYPE> 引导的固件 (e.g. UEFI BIOS)
     -C <Github URL>		更改 Github 地址为提供的 <Github URL>
     --api			打印 Github API 内容
     --backup			备份当前系统配置到当前路径
@@ -85,9 +84,6 @@ OpenWrt Source:		https://github.com/${OP_AUTHOR}/${OP_REPO}:${OP_BRANCH} *
 日志文件:		${Log_Path}/${Log_File}
 可用下载器:		< ${DL_DEPENDS[@]} >
 EOF
-	[[ ${TARGET_BOARD} == x86 ]] && {
-		echo "固件引导:		${x86_Boot_Method}"
-	}
 	echo
 	return 0
 }
@@ -135,7 +131,7 @@ function RM() {
 }
 
 GET_DOWNLOADER() {
-	for i in curl uclient-fetch wget 
+	for i in ${DL_DEPENDS[@]}
 	do
 		if [[ $(CHECK_PKG $i) == true ]]
 		then
@@ -143,6 +139,7 @@ GET_DOWNLOADER() {
 			return 0
 		fi
 	done
+	LOGGER "没有可用的下载器!"
 	return 1
 }
 
@@ -381,14 +378,6 @@ function LOAD_VARIABLE() {
 	Github_Release="${Github}/releases/download/AutoUpdate"
 	Github_Raw="https://raw.githubusercontent.com/${Firmware_Author}/master"
 	Github_API="https://api.github.com/repos/${Firmware_Author}/releases/latest"
-	case "${TARGET_BOARD}" in
-	x86)
-		if [[ ! ${x86_Boot_Method} ]]
-		then
-			[ -d /sys/firmware/efi ] && x86_Boot_Method="UEFI" || x86_Boot_Method="BIOS"
-		fi
-	;;
-	esac
 	Log_Full="${Log_Path}/${Log_File}"
 }
 
@@ -420,22 +409,6 @@ function ALTER_GITHUB() {
 		ECHO g "Github 地址未修改!"
 	fi
 	return 0
-}
-
-function ALTER_BOOT() {
-	[[ ${TARGET_BOARD} != x86 ]] && exit 1
-	case $1 in
-	UEFI | BIOS)
-		EDIT_VARIABLE edit ${Config_Custom} x86_Boot_Method $1
-		ECHO r "警告: 修改此设置后更新固件后可能导致设备无法启动!"
-		ECHO y "固件引导格式已修改为: [$1]"
-		return 0
-	;;
-	*)
-		ECHO r "错误的参数: [$1],当前支持的选项: [UEFI/BIOS]"
-		return 1
-	;;
-	esac
 }
 
 function ALTER_FLAG() {
@@ -600,7 +573,7 @@ function GET_FW_INFO() {
 		ECHO r "未检测到 API 文件!"
 		exit 1
 	}
-	Info=$(grep "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" ${API_File} | grep "${x86_Boot_Method}" | grep "${TARGET_FLAG}" | awk 'BEGIN {MAX = 0} {if ($6+0 > MAX+0) {MAX=$6 ;content=$0} } END {print content}')
+	Info=$(grep "AutoBuild-${OP_REPO}-${TARGET_PROFILE}" ${API_File} | grep "${TARGET_FLAG}" | awk 'BEGIN {MAX = 0} {if ($6+0 > MAX+0) {MAX=$6 ;content=$0} } END {print content}')
 	Result="$(awk '{print $"'${1}'"}' <<< ${Info} 2> /dev/null)"
 	case $1 in
 	1) Type="固件名称";;
@@ -780,7 +753,7 @@ ${Grey}### 系统 & 云端固件详情 ###${White}
 设备名称: ${TARGET_PROFILE}
 固件标签: ${TARGET_FLAG}
 内核版本: $(uname -sr)
-$([[ ${TARGET_BOARD} == x86 ]] && echo "固件格式: ${CLOUD_FW_Format} / ${x86_Boot_Method}" || echo "固件格式: ${CLOUD_FW_Format}")
+$(echo "固件格式: ${CLOUD_FW_Format}")
 
 $(echo -e "当前固件版本: ${OP_VERSION}${CURRENT_Type}")
 $(echo -e "云端固件版本: ${CLOUD_FW_Version}${CHECKED_Type}")
@@ -1177,7 +1150,7 @@ function Proxy_X() {
 function NETWORK_CHECK() {
 	case $(GET_DOWNLOADER) in
 	curl)
-		local Result=$(curl -I -s --connect-timeout 2 $1 -w %{http_code} 2> /dev/null | tail -n1)
+		local Result=$(curl -I -o /dev/null -skL --connect-timeout 3 --retry 0 -w %{http_code} $1 2> /dev/null | tail -n1)
 		if [[ ${Result} == 204 ]]
 		then
 			echo true
@@ -1185,9 +1158,19 @@ function NETWORK_CHECK() {
 			return 0
 		fi
 	;;
-	wget | wget-ssl | uclient-fetch)
+	wget | wget-ssl)
 		rm -f "${Tmp_Path}/generate_204" > /dev/null 2>&1
-		$(GET_DOWNLOADER) "$1" --quiet --no-proxy --no-check-certificate --spider
+		$(GET_DOWNLOADER) "$1" -q --no-check-certificate --spider --timeout=3 --no-dns-cache -4 --tries 1
+		if [[ $? == 0 ]]
+		then
+			echo true
+			LOGGER "[$(GET_DOWNLOADER)] [$1] 连通性测试正常!"
+			return 0
+		fi
+	;;
+	uclient-fetch)
+		rm -f "${Tmp_Path}/generate_204" > /dev/null 2>&1
+		uclient-fetch "$1" --quiet --no-check-certificate --spider --timeout=3
 		if [[ $? == 0 ]]
 		then
 			echo true
@@ -1375,11 +1358,6 @@ function AutoUpdate_Main() {
 			UPDATE_SCRIPT ${Script_Path} ${URL}
 			exit $?
 		;;
-		-B | --boot-mode)
-			shift
-			ALTER_BOOT $1
-			exit $?
-		;;
 		-C)
 			shift
 			ALTER_GITHUB $*
@@ -1410,7 +1388,7 @@ function AutoUpdate_Main() {
 }
 
 function KILL_PROCESS() {
-	local i ; for i in $(ps -efww | grep -v grep | grep $1 | grep -v $$ | awk '{print $1}')
+	local i ; for i in $(ps -ef 2> /dev/null | grep -v grep | grep $1 | grep -v $$ | awk '{print $1}' 2> /dev/null)
 	do
 		kill -9 ${i} 2> /dev/null &
 		LOGGER "结束进程: ${i}"
