@@ -1,7 +1,7 @@
 #!/bin/bash
 # AutoBuild Module by Hyy2001 <https://github.com/Hyy2001X/AutoBuild-Actions>
 # AutoUpdate for Openwrt
-# Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade nslookup
+# Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
 Version=V6.10.1
 
@@ -132,6 +132,18 @@ function RM() {
 		rm -r "$i" 2> /dev/null
 		LOGGER "删除文件: [$i]"
 	done
+}
+
+GET_DOWNLOADER() {
+	for i in curl uclient-fetch wget 
+	do
+		if [[ $(CHECK_PKG $i) == true ]]
+		then
+			echo "$i"
+			return 0
+		fi
+	done
+	return 1
 }
 
 function STRING() {
@@ -644,14 +656,9 @@ function GET_CLOUD_LOG() {
 
 function UPGRADE() {
 	TITLE
+	LOGGER "结束其他 autoupdate 进程 ..."
 	KILL_PROCESS ${Script_File}
-	if [[ $(NETWORK_CHECK www.baidu.com 2) == false ]]
-	then
-		ECHO r "网络连接错误,请稍后再试!"
-		exit 1
-	else
-		ECHO y "网络连接正常"
-	fi
+	LOGGER "运行: $0 $*"
 	Firmware_Path="${Tmp_Path}"
 	Upgrade_Option="$(command -v sysupgrade) -q"
 	MSG="更新固件"
@@ -738,7 +745,7 @@ function UPGRADE() {
 	ECHO g "执行: ${MSG}${Special_MSG}"
 	if [[ ! ${Proxy_Type} ]]
 	then
-		[[ $(GOOGLE_CHECK) != true ]] && {
+		[[ $(NETWORK_CHECK https://www.google.com/generate_204) != true ]] && {
 			ECHO r "Google 连接错误,优先使用镜像加速下载!"
 			Proxy_Type="All"
 		}
@@ -1168,26 +1175,33 @@ function Proxy_X() {
 }
 
 function NETWORK_CHECK() {
-	ping $1 -c 1 -W $2 > /dev/null 2>&1
-	[[ $? == 0 ]] && echo true || echo false
-}
-
-function GOOGLE_CHECK() {
-	if [[ $(CHECK_PKG curl) == true ]]
-	then
-		local Result=$(curl -I -s --connect-timeout 3 google.com -w %{http_code} 2> /dev/null | tail -n1)
-		LOGGER "Google 连接检查结果: [${Result}]"
-		if [[ ${Result} == 301 ]]
+	case $(GET_DOWNLOADER) in
+	curl)
+		local Result=$(curl -I -s --connect-timeout 2 $1 -w %{http_code} 2> /dev/null | tail -n1)
+		if [[ ${Result} == 204 ]]
 		then
 			echo true
+			LOGGER "[$(GET_DOWNLOADER)] [$1] 连通性测试正常!"
 			return 0
-		else
-			echo false
-			return 1
 		fi
-	else
+	;;
+	wget | wget-ssl | uclient-fetch)
+		rm -f "${Tmp_Path}/generate_204" > /dev/null 2>&1
+		$(GET_DOWNLOADER) "$1" --quiet --no-proxy --no-check-certificate --spider
+		if [[ $? == 0 ]]
+		then
+			echo true
+			LOGGER "[$(GET_DOWNLOADER)] [$1] 连通性测试正常!"
+			return 0
+		fi
+	;;
+	*)
 		return 1
-	fi
+	;;
+	esac
+	echo false
+	LOGGER "[$(GET_DOWNLOADER)] [$1] 连通性测试失败!"
+	return 1
 }
 
 function AutoUpdate_Main() {
@@ -1284,19 +1298,13 @@ function AutoUpdate_Main() {
 		--chk)
 			shift
 			CHECK_PKG_DEPENDS -e ${PKG_DEPENDS[@]} ${DL_DEPENDS[@]}
-			if [[ $(NETWORK_CHECK www.baidu.com 2) == false ]]
+			if [[ $(NETWORK_CHECK https://connectivitycheck.platform.hicloud.com/generate_204) == false ]]
 			then
-				ECHO r "Baidu 连接错误!"
+				ECHO r "HiCloud 连接错误!"
 			else
-				ECHO y "Baidu 连接正常!"
+				ECHO y "HiCloud 连接正常!"
 			fi
-			if [[ $(NETWORK_CHECK 223.5.5.5 2) == false ]]
-			then
-				ECHO r "AliDNS 连接错误!"
-			else
-				ECHO y "AliDNS 连接正常!"
-			fi
-			if [[ $(GOOGLE_CHECK) == false ]]
+			if [[ $(NETWORK_CHECK https://www.google.com/generate_204) == false ]]
 			then
 				ECHO r "Google 连接错误!"
 			else
@@ -1362,11 +1370,6 @@ function AutoUpdate_Main() {
 		-x)
 			shift
 			URL="$(Proxy_X ${Script_Url} X@@1 G@@1 F@@1)"
-			if [[ $(NETWORK_CHECK www.baidu.com 2) == false ]]
-			then
-				ECHO r "网络连接错误,请稍后再试!"
-				exit 1
-			fi
 			[[ ${Custom_Path} ]] && Script_Path="${Custom_Path}"
 			[[ ${Custom_URL} ]] && URL="${Custom_URL}"
 			UPDATE_SCRIPT ${Script_Path} ${URL}
@@ -1410,7 +1413,7 @@ function KILL_PROCESS() {
 	local i ; for i in $(ps -efww | grep -v grep | grep $1 | grep -v $$ | awk '{print $1}')
 	do
 		kill -9 ${i} 2> /dev/null &
-		LOGGER "Killed ${i}"
+		LOGGER "结束进程: ${i}"
 	done
 }
 
@@ -1449,7 +1452,6 @@ DL_DEPENDS=(
 	curl
 	wget
 	uclient-fetch
-	nslookup
 )
 REGEX_Skip_Format=".vdi|.vhdx|.vmdk|kernel|rootfs|factory"
 
@@ -1462,3 +1464,4 @@ Green="\e[32m"
 
 [[ $* ]] && COMMAND="$0 $*" || COMMAND="$0"
 AutoUpdate_Main $*
+
