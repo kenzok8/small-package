@@ -4,10 +4,10 @@ ini_set('memory_limit', '128M');
 
 $logMessages = [];
 
-function logMessage($message) {
+function logMessage($filename, $message) {
     global $logMessages;
     $timestamp = date('H:i:s', strtotime('+8 hours'));
-    $logMessages[] = "[$timestamp] $message";
+    $logMessages[] = "[$timestamp] $filename: $message";
 }
 
 $urls = [
@@ -15,78 +15,47 @@ $urls = [
     "https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/nekobox/luci-app-nekobox/root/etc/neko/config/Puernya.json" => "/etc/neko/config/Puernya.json"
 ];
 
-$maxConnections = 5;
-$retries = 3;
-$downloadedFiles = []; 
+$multiHandle = curl_multi_init();
+$curlHandles = [];
 
-function parallelDownload($urls, $retries, $maxConnections) {
-    $multiCurl = curl_multi_init();
-    $handles = [];
-    $failedUrls = [];
-    
-    global $downloadedFiles;
-
-    foreach ($urls as $url => $path) {
-        if (in_array($path, $downloadedFiles)) {
+foreach ($urls as $url => $path) {
+    $ch = curl_init($url);
+    $directory = dirname($path);
+    if (!is_dir($directory)) {
+        if (!mkdir($directory, 0755, true)) {
+            logMessage("创建目录失败: $directory");
             continue;
         }
-
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FAILONERROR, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($curl, $data) use ($path) {
-            $fp = fopen($path, 'a'); 
-            if ($fp === false) {
-                return -1; 
-            }
-            fwrite($fp, $data);
-            fclose($fp);
-            return strlen($data);
-        });
-
-        curl_multi_add_handle($multiCurl, $ch);
-        $handles[] = ['handle' => $ch, 'path' => $path, 'url' => $url];
     }
 
-    do {
-        curl_multi_exec($multiCurl, $running);
-        curl_multi_select($multiCurl);
-    } while ($running > 0);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FILE, fopen($path, 'w'));
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_multi_add_handle($multiHandle, $ch);
+    $curlHandles[$url] = $ch; 
+}
 
-    foreach ($handles as $data) {
-        $ch = $data['handle'];
-        $path = $data['path'];
+$running = null;
+do {
+    curl_multi_exec($multiHandle, $running);
+    curl_multi_select($multiHandle);
+} while ($running > 0);
 
-        if (curl_errno($ch) === 0) {
-            logMessage(basename($path) . " 文件已成功更新！");
-            $downloadedFiles[] = $path;
-        } else {
-            $failedUrls[$data['url']] = $path;
-            logMessage("下载失败：{$data['url']}，重试中...");
-        }
-        curl_multi_remove_handle($multiCurl, $ch);
-        curl_close($ch);
+foreach ($curlHandles as $url => $ch) {
+    $return_var = curl_errno($ch);
+    $filename = basename($urls[$url]); 
+    if ($return_var !== CURLE_OK) {
+        logMessage($filename, "下载失败: " . curl_error($ch));
+    } else {
+        logMessage($filename, "成功下载到: " . $urls[$url]);
     }
-
-    curl_multi_close($multiCurl);
-
-    return $failedUrls;
+    curl_multi_remove_handle($multiHandle, $ch);
+    curl_close($ch);
 }
 
-$failedUrls = parallelDownload($urls, $retries, $maxConnections);
+curl_multi_close($multiHandle);
 
-if (!empty($failedUrls)) {
-    logMessage("重试下载失败的文件...");
-    parallelDownload($failedUrls, $retries, $maxConnections);
+foreach ($logMessages as $logMessage) {
+    echo $logMessage . "\n";
 }
-
-echo implode("\n", $logMessages);
-
 ?>

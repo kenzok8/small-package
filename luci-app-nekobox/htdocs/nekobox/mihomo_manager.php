@@ -145,15 +145,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editFile'], $_GET['file
 }
 ?>
 
-
 <?php
 $subscriptionPath = '/etc/neko/proxy_provider/';
 $subscriptionFile = $subscriptionPath . 'subscriptions.json';
 $clashFile = $subscriptionPath . 'subscription_6.yaml';
-
 $message = "";
 $decodedContent = ""; 
 $subscriptions = [];
+$updateCompleted = false; 
 
 function outputMessage($message) {
     if (!isset($_SESSION['update_messages'])) {
@@ -189,36 +188,36 @@ if (isset($_POST['update'])) {
     $subscriptions[$index]['url'] = $url;
     $subscriptions[$index]['file_name'] = $customFileName;
 
+    if (!empty($url)) {
+        $finalPath = $subscriptionPath . $customFileName;
+        $command = "curl -fsSL -o {$finalPath} {$url}";
+        exec($command . ' 2>&1', $output, $return_var);
 
-if (!empty($url)) {
-    $finalPath = $subscriptionPath . $customFileName;
-    $command = "curl -fsSL -o {$finalPath} {$url}";
-    exec($command . ' 2>&1', $output, $return_var);
-
-    if ($return_var === 0) {
-        $_SESSION['update_messages'] = array();
-        $_SESSION['update_messages'][] = '<div class="alert alert-warning" style="margin-bottom: 8px;">
-            <strong>⚠️ 使用说明：</strong>
-            <ul class="mb-0 pl-3">
-                <li>通用模板（mihomo.yaml）最多支持<strong>6个</strong>订阅链接</li>
-                <li>请勿更改默认文件名称</li>
-                <li>该模板支持所有格式订阅链接，无需额外转换</li>
-            </ul>
-        </div>';
-        $_SESSION['update_messages'][] = "订阅链接 {$url} 更新成功！文件已保存到: {$finalPath}";
-        $message = '更新成功';
+        if ($return_var === 0) {
+            $_SESSION['update_messages'] = array();
+            $_SESSION['update_messages'][] = '<div class="alert alert-warning" style="margin-bottom: 8px;">
+                <strong>⚠️ 使用说明：</strong>
+                <ul class="mb-0 pl-3">
+                    <li>通用模板（mihomo.yaml）最多支持<strong>6个</strong>订阅链接</li>
+                    <li>请勿更改默认文件名称</li>
+                    <li>该模板支持所有格式订阅链接，无需额外转换</li>
+                </ul>
+            </div>';
+            $_SESSION['update_messages'][] = "订阅链接 {$url} 更新成功！文件已保存到: {$finalPath}";
+            $message = '更新成功';
+            $updateCompleted = true; 
+        } else {
+            $_SESSION['update_messages'] = array();
+            $_SESSION['update_messages'][] = "配置更新失败！错误信息: " . implode("\n", $output);
+            $message = '更新失败';
+        }
     } else {
         $_SESSION['update_messages'] = array();
-        $_SESSION['update_messages'][] = "配置更新失败！错误信息: " . implode("\n", $output);
+        $_SESSION['update_messages'][] = "第" . ($index + 1) . "个订阅链接为空！";
         $message = '更新失败';
     }
-} else {
-    $_SESSION['update_messages'] = array();
-    $_SESSION['update_messages'][] = "第" . ($index + 1) . "个订阅链接为空！";
-    $message = '更新失败';
-}
 
-file_put_contents($subscriptionFile, json_encode($subscriptions));
+    file_put_contents($subscriptionFile, json_encode($subscriptions));
 }
 
 if (isset($_POST['convert_base64'])) {
@@ -240,6 +239,7 @@ if (isset($_POST['convert_base64'])) {
     }
 }
 ?>
+
 <?php
 
 function parseVmess($base) {
@@ -508,6 +508,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="./assets/bootstrap/popper.min.js"></script>
     <script src="./assets/bootstrap/bootstrap.min.js"></script>
 </head>
+<?php if ($updateCompleted): ?>
+    <script>
+        if (!sessionStorage.getItem('refreshed')) {
+            sessionStorage.setItem('refreshed', 'true');
+            window.location.reload(); 
+        } else {
+            sessionStorage.removeItem('refreshed'); 
+        }
+    </script>
+<?php endif; ?>
 <body>
 <div class="position-fixed w-100 d-flex justify-content-center" style="top: 20px; z-index: 1050">
     <div id="updateAlert" class="alert alert-success alert-dismissible fade" role="alert" style="display: none; min-width: 300px; max-width: 600px;">
@@ -690,7 +700,7 @@ function showUpdateAlert() {
             alert.hide();
             $('#updateMessages').html('');
         }, 150);
-    }, 18000);
+    }, 12000);
 }
 
 <?php if (!empty($message)): ?>
