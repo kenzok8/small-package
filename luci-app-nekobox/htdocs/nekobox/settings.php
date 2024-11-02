@@ -72,6 +72,7 @@ $uiVersion = getUiVersion();
     <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
+    <?php include './status-bar.php'; ?>
   </head>
   <body>
     <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
