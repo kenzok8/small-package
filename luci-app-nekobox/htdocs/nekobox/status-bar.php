@@ -116,190 +116,161 @@ $lang = $_GET['lang'] ?? 'en';
     <link rel="preconnect" href="https://qqwry.api.skk.moe">
     <link rel="preconnect" href="https://d.skk.moe">
 <style>
-<style>
    body {
        font-family: 'Montserrat', sans-serif;
        line-height: 1.6;
    }
    
-.cbi-section {
-   position: fixed;
-   bottom: 60px;
-   left: 50%;
-   transform: translateX(-50%);
-   width: 100%;
-   max-width: 1140px;
-   margin: 0 auto;
-   padding: 0 15px;
-   z-index: 1030;
-}
-
-.status {
-   display: flex;
-   align-items: center;
-   justify-content: space-between;
-   text-align: left;
-   flex-direction: row;
-   height: 50px;
-   letter-spacing: 0.5px;
-}
-
-.img-con {
-   margin-right: 1.5rem;
-}
-
-.img-con img {
-   width: 65px;
-   height: auto;
-   border-radius: 5px; 
-}
-
-.block {
-   display: flex;
-   flex-direction: column;
-   justify-content: center;
-   min-width: 200px;
-}
-
-.ip-address {
-   color: #2dce89;
-   font-weight: bold;
-   font-size: 1.1rem;
-   margin: 0;
-}
-
-.info {
-   color: #fb6340;
-   font-style: italic;
-   font-size: 1rem;
-   margin: 0;
-}
-
-.site-status {
-   display: flex;
-   align-items: center;
-}
-
-.status-icons {
-   display: flex;
-   align-items: center;
-}
-
-.site-icon {
-   margin: 0 0.75rem;
-}
-
-.status-icon {
-   width: auto;
-   height: auto;
-   max-height: 48px;
-   cursor: pointer;
-   transition: all 0.3s ease;
-   object-fit: contain;
-}
-
-.status-icon:hover {
-   transform: scale(1.1);
-}
-
-.ping-status {
-    text-align: center;
-    margin: 10px 0;
-    padding: 5px;
-}
-#ping-result {
-    margin: 0;
-    color: #666;
-    font-size: 14px;
-}
-.site-icon {
-    cursor: pointer;
-}
-
-#flag {
-    cursor: pointer;  
-}
-
-@media (max-width: 768px) {
    .cbi-section {
-       padding: 0 10px;
-       bottom: 40px;
+       position: fixed;
+       bottom: 60px;
+       left: 50%;
+       transform: translateX(-50%);
+       width: 100%;
+       max-width: 1300px;
+       margin: 0 auto;
+       padding: 0 15px;
+       z-index: 1030;
    }
-   
+
    .status {
-       flex-direction: row;
+       display: flex;
+       align-items: center;
        justify-content: space-between;
-       height: 50px;
+       background-color: #E6E6FA;
+       color: var(--bs-btn-color);
+       text-align: left;
+       border-radius: 8px;
+       height: 65px;
+       letter-spacing: 0.5px;
+       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+       padding: 0 30px;
+       width: 100%;
    }
-   
+
+   .img-con {
+       margin-right: 1.5rem;
+   }
+
+   .img-con img {
+       width: 65px;
+       height: auto;
+       border-radius: 5px; 
+   }
+
+   .block {
+       display: flex;
+       flex-direction: column;
+       justify-content: center;
+       min-width: 200px;
+   }
+
+   .ip-address {
+       color: #2dce89;
+       font-weight: bold;
+       font-size: 1.1rem;
+       margin: 0;
+   }
+
+   .info {
+       font-style: italic;
+       color: #fb6340;
+       font-weight: 520; 
+       font-size: 1.1rem;
+       margin: 0;
+       letter-spacing: 0.02em; 
+       font-style: normal; 
+       -webkit-font-smoothing: antialiased;
+       -moz-osx-font-smoothing: grayscale;
+       text-rendering: optimizeLegibility;
+   }
+
    .site-status {
-       flex-shrink: 0;
+       display: flex;
+       align-items: center;
+       min-width: 300px;
    }
-   
+
    .status-icons {
        display: flex;
        align-items: center;
+       gap: 25px;
+       margin-left: auto;
+       height: 100%;
    }
-   
+
    .site-icon {
-       margin: 0 0.3rem;
+       display: flex;
+       align-items: center;
+       height: 100%;
    }
-   
-   .img-con {
-       margin-right: 0.8rem;
-   }
-   
-   .img-con img {
-       width: 45px;
-   }
-   
+
    .status-icon {
-       max-height: 32px;
+       width: auto;
+       height: 48px;
+       max-height: 48px;
+       cursor: pointer;
+       transition: all 0.3s ease;
+       object-fit: contain;
+       vertical-align: middle;
    }
 
-   .ip-address {
-       font-size: 0.9rem;
+   .status-icon:hover {
+       transform: scale(1.1);
    }
 
-   .info {
-       font-size: 0.8rem;
+   .ping-status {
+       flex-grow: 1;
+       text-align: center;
+       margin: 0 20px;
    }
-}
 
-@media (max-width: 480px) {
+   #ping-result {
+       margin: 0;
+       color: #666;
+       font-size: 14px;
+   }
+
    .site-icon {
-       margin: 0 0.2rem;
+       cursor: pointer;
    }
-   
-   .img-con img {
-       width: 40px;
-   }
-   
-   .status-icon {
-       max-height: 28px;
-   }
-   
-   .ip-address {
-       font-size: 0.8rem;
-   }
-   
-   .info {
-       font-size: 0.7rem;
-   }
-}
 
-@media (max-width: 768px) {
-   .cbi-section {
-       bottom: 60px;
-       padding: 0 10px;
+   #flag {
+       cursor: pointer;  
    }
-}
 
-@media (max-width: 480px) {
-   .cbi-section {
-       bottom: 50px;
+   @media screen and (max-width: 480px) {
+       .status-icons {
+           gap: 4px;
+       }
+       
+       .status-icon {
+           width: 24px;
+           height: 24px;  
+       }
+
+       .status {  
+           padding: 0 8px;
+           height: auto;
+           margin-bottom: 4px;
+       }
+
+       .img-con img {
+           width: 32px;
+       }
+
+       .ip-address {
+           font-size: 0.5rem;
+       }
+       
+       .info {
+           font-size: 0.7rem;
+       }
+
+       .ping-status {
+           margin-top: 0;
+       }
    }
-}
 </style>
 
 <?php if (in_array($lang, ['zh-cn', 'en', 'auto'])): ?>
@@ -377,7 +348,7 @@ $lang = $_GET['lang'] ?? 'en';
         const resultElement = document.getElementById('ping-result');
     
         try {
-            resultElement.innerHTML = `正在测试 ${siteName} 的连接延迟...`;
+            resultElement.innerHTML = `<span style="font-size: 20px">正在测试 ${siteName} 的连接延迟...`;
             resultElement.style.color = '#666';        
             const startTime = performance.now();
             await fetch(url, {
