@@ -7,13 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alist
-PKG_VERSION:=3.38.0
+PKG_VERSION:=3.39.0
 PKG_WEB_VERSION:=3.38.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/alist-org/alist/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=bc8983900786afdc2ac3d4a60d5e71a1e5db0c2c63f00190c728974ee266ce12
+PKG_HASH:=fedfa7e9474d4b241bb7ea6d206c84c8af5eace91effe77bcab49f7cb8ad7b2f
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILE:=LICENSE
