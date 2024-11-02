@@ -1,6 +1,6 @@
 <?php
-
-ini_set('memory_limit', '128M'); 
+ini_set('memory_limit', '128M');
+ini_set('max_execution_time', 300);
 
 $logMessages = [];
 
@@ -10,52 +10,81 @@ function logMessage($filename, $message) {
     $logMessages[] = "[$timestamp] $filename: $message";
 }
 
+function downloadFile($url, $destination, $retries = 3, $timeout = 30) {
+    $attempt = 1;
+    
+    while ($attempt <= $retries) {
+        try {
+            $dir = dirname($destination);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => $timeout,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            ]);
+
+            $content = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            
+            if ($content === false) {
+                throw new Exception("下载失败: " . curl_error($ch));
+            }
+            
+            if ($httpCode !== 200) {
+                throw new Exception("HTTP 响应码错误: $httpCode");
+            }
+            
+            if (file_put_contents($destination, $content) === false) {
+                throw new Exception("无法保存文件到 $destination");
+            }
+            
+            curl_close($ch);
+            logMessage(basename($destination), "下载并保存成功");
+            return true;
+            
+        } catch (Exception $e) {
+            logMessage(basename($destination), "第 $attempt 次尝试失败: " . $e->getMessage());
+            curl_close($ch);
+            
+            if ($attempt === $retries) {
+                logMessage(basename($destination), "所有下载尝试均失败");
+                return false;
+            }
+            
+            $attempt++;
+            sleep(2);
+        }
+    }
+    
+    return false;
+}
+
+echo "开始更新配置文件...\n";
+
 $urls = [
     "https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/nekobox/luci-app-nekobox/root/etc/neko/config/mihomo.yaml" => "/etc/neko/config/mihomo.yaml",
     "https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/nekobox/luci-app-nekobox/root/etc/neko/config/Puernya.json" => "/etc/neko/config/Puernya.json"
 ];
 
-$multiHandle = curl_multi_init();
-$curlHandles = [];
-
-foreach ($urls as $url => $path) {
-    $ch = curl_init($url);
-    $directory = dirname($path);
-    if (!is_dir($directory)) {
-        if (!mkdir($directory, 0755, true)) {
-            logMessage("创建目录失败: $directory");
-            continue;
-        }
-    }
-
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FILE, fopen($path, 'w'));
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_multi_add_handle($multiHandle, $ch);
-    $curlHandles[$url] = $ch; 
-}
-
-$running = null;
-do {
-    curl_multi_exec($multiHandle, $running);
-    curl_multi_select($multiHandle);
-} while ($running > 0);
-
-foreach ($curlHandles as $url => $ch) {
-    $return_var = curl_errno($ch);
-    $filename = basename($urls[$url]); 
-    if ($return_var !== CURLE_OK) {
-        logMessage($filename, "下载失败: " . curl_error($ch));
+foreach ($urls as $url => $destination) {
+    logMessage(basename($destination), "开始从 $url 下载");
+    
+    if (downloadFile($url, $destination)) {
+        logMessage(basename($destination), "文件更新成功");
     } else {
-        logMessage($filename, "成功下载到: " . $urls[$url]);
+        logMessage(basename($destination), "文件更新失败");
     }
-    curl_multi_remove_handle($multiHandle, $ch);
-    curl_close($ch);
 }
 
-curl_multi_close($multiHandle);
+echo "\n配置文件更新完成！\n\n";
 
-foreach ($logMessages as $logMessage) {
-    echo $logMessage . "\n";
+foreach ($logMessages as $message) {
+    echo $message . "\n";
 }
 ?>
