@@ -202,6 +202,24 @@ $lang = $_GET['lang'] ?? 'en';
    transform: scale(1.1);
 }
 
+.ping-status {
+    text-align: center;
+    margin: 10px 0;
+    padding: 5px;
+}
+#ping-result {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+.site-icon {
+    cursor: pointer;
+}
+
+#flag {
+    cursor: pointer;  
+}
+
 @media (max-width: 768px) {
    .cbi-section {
        padding: 0 10px;
@@ -289,29 +307,32 @@ $lang = $_GET['lang'] ?? 'en';
         <div class="status">
             <div class="site-status">
                 <div class="img-con">
-                    <img src="./assets/neko/img/loading.svg" id="flag" class="pure-img" title="国旗">
+                    <img src="./assets/neko/img/loading.svg" id="flag" class="pure-img" title="国旗" onclick="IP.getIpipnetIP()">
                 </div>
                 <div class="block">
                     <p id="d-ip" class="ip-address">Checking...</p>
                     <p id="ipip" class="info"></p>
                 </div>
-            </div>          
+            </div>  
+                <div class="ping-status">
+                    <p id="ping-result"></p>
+                </div>         
             <div class="status-icons">
                 <div class="site-icon">
-                    <img src="./assets/neko/img/site_icon_01.png" id="baidu-normal" class="status-icon" style="display: none;">
-                    <img src="./assets/neko/img/site_icon1_01.png" id="baidu-gray" class="status-icon">
+                    <img src="./assets/neko/img/site_icon_01.png" id="baidu-normal" class="status-icon" style="display: none;" onclick="pingHost('baidu', 'Baidu')">
+                    <img src="./assets/neko/img/site_icon1_01.png" id="baidu-gray" class="status-icon" onclick="pingHost('baidu', 'Baidu')">
                 </div>
                 <div class="site-icon">
-                    <img src="./assets/neko/img/site_icon_02.png" id="taobao-normal" class="status-icon" style="display: none;">
-                    <img src="./assets/neko/img/site_icon1_02.png" id="taobao-gray" class="status-icon">
+                    <img src="./assets/neko/img/site_icon_02.png" id="taobao-normal" class="status-icon" style="display: none;" onclick="pingHost('taobao', '淘宝')">
+                    <img src="./assets/neko/img/site_icon1_02.png" id="taobao-gray" class="status-icon" onclick="pingHost('taobao', '淘宝')">
                 </div>
                 <div class="site-icon">
-                    <img src="./assets/neko/img/site_icon_03.png" id="google-normal" class="status-icon" style="display: none;">
-                    <img src="./assets/neko/img/site_icon1_03.png" id="google-gray" class="status-icon">
+                    <img src="./assets/neko/img/site_icon_03.png" id="google-normal" class="status-icon" style="display: none;" onclick="pingHost('google', 'Google')">
+                    <img src="./assets/neko/img/site_icon1_03.png" id="google-gray" class="status-icon" onclick="pingHost('google', 'Google')">
                 </div>
                 <div class="site-icon">
-                    <img src="./assets/neko/img/site_icon_04.png" id="youtube-normal" class="status-icon" style="display: none;">
-                    <img src="./assets/neko/img/site_icon1_04.png" id="youtube-gray" class="status-icon">
+                    <img src="./assets/neko/img/site_icon_04.png" id="youtube-normal" class="status-icon" style="display: none;" onclick="pingHost('youtube', 'YouTube')">
+                    <img src="./assets/neko/img/site_icon1_04.png" id="youtube-gray" class="status-icon" onclick="pingHost('youtube', 'YouTube')">
                 </div>
             </div>
         </div>
@@ -351,7 +372,30 @@ $lang = $_GET['lang'] ?? 'en';
         }
     };
 
+    async function pingHost(site, siteName) {
+        const url = checkSiteStatus.sites[site];
+        const resultElement = document.getElementById('ping-result');
+    
+        try {
+            resultElement.innerHTML = `正在测试 ${siteName} 的连接延迟...`;
+            resultElement.style.color = '#666';        
+            const startTime = performance.now();
+            await fetch(url, {
+                mode: 'no-cors',
+                cache: 'no-cache'
+            });
+            const endTime = performance.now();
+            const pingTime = Math.round(endTime - startTime);      
+            resultElement.innerHTML = `<span style="font-size: 20px">${siteName} 连接延迟: ${pingTime}ms</span>`;
+            resultElement.style.color = pingTime > 200 ? '#ff6b6b' : '#20c997';
+        } catch (error) {
+            resultElement.innerHTML = `${siteName} 连接超时`;
+            resultElement.style.color = '#ff6b6b';
+        }
+    }
+
     let IP = {
+        isRefreshing: false,
         fetchIP: async () => {
             try {
                 const [ipifyResp, ipsbResp] = await Promise.all([
@@ -368,8 +412,12 @@ $lang = $_GET['lang'] ?? 'en';
                 throw error;
             }
         },
+
         get: (url, type) =>
-            fetch(url, { method: 'GET' }).then((resp) => {
+            fetch(url, { 
+                method: 'GET',
+                cache: 'no-store'
+            }).then((resp) => {
                 if (type === 'text')
                     return Promise.all([resp.ok, resp.status, resp.text(), resp.headers]);
                 else
@@ -384,21 +432,18 @@ $lang = $_GET['lang'] ?? 'en';
                 console.error("Error fetching data:", error);
                 throw error;
             }),
+
         Ipip: async (ip, elID) => {
-            if (ip === cachedIP && cachedInfo) {
-                console.log("Using cached IP info");
-                IP.updateUI(cachedInfo, elID);
-            } else {
-                try {
-                    const resp = await IP.get(`https://api.ip.sb/geoip/${ip}`, 'json');
-                    cachedIP = ip;
-                    cachedInfo = resp.data;
-                    IP.updateUI(resp.data, elID);
-                } catch (error) {
-                    console.error("Error in Ipip function:", error);
-                }
+            try {
+                const resp = await IP.get(`https://api.ip.sb/geoip/${ip}`, 'json');
+                cachedIP = ip;
+                cachedInfo = resp.data;
+                IP.updateUI(resp.data, elID);
+            } catch (error) {
+                console.error("Error in Ipip function:", error);
             }
         },
+
         updateUI: (data, elID) => {
             let country = translate[data.country] || data.country;
             let isp = translate[data.isp] || data.isp;
@@ -413,20 +458,30 @@ $lang = $_GET['lang'] ?? 'en';
             $("#flag").attr("src", _IMG + "flags/" + countryAbbr + ".png");
             document.getElementById(elID).style.color = '#FF00FF';
         },
+
         getIpipnetIP: async () => {
+            if(IP.isRefreshing) return;
+        
             try {
+                IP.isRefreshing = true;
+                document.getElementById('d-ip').innerHTML = "Checking...";
+                document.getElementById('ipip').innerHTML = "Loading...";
+                $("#flag").attr("src", _IMG + "img/loading.svg");
+            
                 const ip = await IP.fetchIP();
                 await IP.Ipip(ip, 'ipip');
             } catch (error) {
                 console.error("Error in getIpipnetIP function:", error);
+            } finally {
+                IP.isRefreshing = false;
             }
         }
     };
 
     IP.getIpipnetIP();
     checkSiteStatus.check();
-    setInterval(IP.getIpipnetIP, 5000);
-    setInterval(() => checkSiteStatus.check(), 30000);
+    setInterval(() => checkSiteStatus.check(), 30000);  
+    setInterval(IP.getIpipnetIP, 180000);  
 </script>
 </body>
 </html>
