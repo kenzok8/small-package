@@ -240,11 +240,11 @@
                 break;
 
             default:
-                include 'mihomo_manager.php';
+                include 'box.php';
                 break;
         }
     } else {
-        include 'mihomo_manager.php';
+        include 'box.php';
     }
     ?>
 </div>
