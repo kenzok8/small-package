@@ -15,7 +15,7 @@ mkdir -p "$PKG_BUILD_BIN"
 curl -L "https://github.com/jqlang/jq/releases/download/jq-${JQVERSION}/jq-${OS}-${ARCH}" -o "$PKG_BUILD_BIN"/jq
 chmod +x "$PKG_BUILD_BIN"/jq
 latest="$(curl -L https://api.github.com/repos/kpym/gm/releases/latest | jq -rc '.tag_name' 2>/dev/null)"
-curl -L "https://github.com/kpym/gm/releases/download/${latest}/gm_${latest#v}_Linux_64bit.tar.gz" -o- | tar -xz -C "$PKG_BUILD_BIN"
+curl -L "https://github.com/kpym/gm/releases/download/${latest}/gm_${latest#v}_Linux_intel64.tar.gz" -o- | tar -xz -C "$PKG_BUILD_BIN"
 latest="$(curl -L https://api.github.com/repos/tdewolff/minify/releases/latest | jq -rc '.tag_name' 2>/dev/null)"
 curl -L "https://github.com/tdewolff/minify/releases/download/${latest}/minify_${OS}_${ARCH}.tar.gz" -o- | tar -xz -C "$PKG_BUILD_BIN"
 chmod -R +x "$PKG_BUILD_BIN"

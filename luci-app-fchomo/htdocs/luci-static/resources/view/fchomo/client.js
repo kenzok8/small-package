@@ -295,7 +295,7 @@ return view.extend({
 			]);
 		}
 
-		s = m.section(form.NamedSection, 'global', 'fchomo');
+		s = m.section(form.NamedSection, 'routing', 'fchomo', null);
 
 		/* Proxy Group START */
 		s.tab('group', _('Proxy Group'));
@@ -307,7 +307,6 @@ return view.extend({
 		o.onclick = L.bind(hm.handleReload, o, 'mihomo-c');
 
 		o = s.taboption('group', form.ListValue, 'default_proxy', _('Default outbound'));
-		o.ucisection = 'routing';
 		o.load = L.bind(hm.loadProxyGroupLabel, o, hm.preset_outbound.direct);
 
 		/* Proxy Group */

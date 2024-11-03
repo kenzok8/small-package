@@ -54,6 +54,17 @@ return baseclass.extend({
 		['https://www.gstatic.com/generate_204']
 	],
 
+	inbound_type: [
+		['http', _('HTTP')],
+		['socks', _('SOCKS')],
+		['mixed', _('Mixed')],
+		['shadowsocks', _('Shadowsocks')],
+		['vmess', _('VMess')],
+		['tuic', _('TUIC')],
+		['hysteria2', _('Hysteria2')],
+		//['tunnel', _('Tunnel')]
+	],
+
 	ip_version: [
 		['', _('Keep default')],
 		['dual', _('Dual stack')],
@@ -163,6 +174,34 @@ return baseclass.extend({
 		//'SUB-RULE': 0,
 	},
 
+	shadowsocks_cipher_methods: [
+		/* Stream */
+		['none', _('none')],
+		/* AEAD */
+		['aes-128-gcm', _('aes-128-gcm')],
+		['aes-192-gcm', _('aes-192-gcm')],
+		['aes-256-gcm', _('aes-256-gcm')],
+		['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')],
+		['xchacha20-ietf-poly1305', _('xchacha20-ietf-poly1305')],
+		/* AEAD 2022 */
+		['2022-blake3-aes-128-gcm', _('2022-blake3-aes-128-gcm')],
+		['2022-blake3-aes-256-gcm', _('2022-blake3-aes-256-gcm')],
+		['2022-blake3-chacha20-poly1305', _('2022-blake3-chacha20-poly1305')]
+	],
+
+	shadowsocks_cipher_length: {
+		/* AEAD */
+		'aes-128-gcm': 0,
+		'aes-192-gcm': 0,
+		'aes-256-gcm': 0,
+		'chacha20-ietf-poly1305': 0,
+		'xchacha20-ietf-poly1305': 0,
+		/* AEAD 2022 */
+		'2022-blake3-aes-128-gcm': 16,
+		'2022-blake3-aes-256-gcm': 32,
+		'2022-blake3-chacha20-poly1305': 32
+	},
+
 	tls_client_fingerprints: [
 		['chrome'],
 		['firefox'],
@@ -264,13 +303,36 @@ return baseclass.extend({
 
 		/* Thanks to luci-app-ssr-plus */
 		str = str.replace(/-/g, '+').replace(/_/g, '/');
-		var padding = (4 - str.length % 4) % 4;
+		var padding = (4 - (str.length % 4)) % 4;
 		if (padding)
 			str = str + Array(padding + 1).join('=');
 
 		return decodeURIComponent(Array.prototype.map.call(atob(str), (c) =>
 			'%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
 		).join(''));
+	},
+
+	generateRand: function(type, length) {
+		var byteArr;
+		if (['base64', 'hex'].includes(type))
+			byteArr = crypto.getRandomValues(new Uint8Array(length));
+		switch (type) {
+			case 'base64':
+				/* Thanks to https://stackoverflow.com/questions/9267899 */
+				return btoa(String.fromCharCode.apply(null, byteArr));
+			case 'hex':
+				return Array.from(byteArr, (byte) =>
+					(byte & 255).toString(16).padStart(2, '0')
+				).join('');
+			case 'uuid':
+				/* Thanks to https://stackoverflow.com/a/2117523 */
+				return (location.protocol === 'https:') ? crypto.randomUUID() :
+				([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c) =>
+					(c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+				);
+			default:
+				return null;
+		};
 	},
 
 	getFeatures: function() {
@@ -554,6 +616,29 @@ return baseclass.extend({
 		return this.vallist[i];
 	},
 
+	validateAuth: function(section_id, value) {
+		if (!value)
+			return true;
+		if (!value.match(/^[\w-]{3,}:[^:]+$/))
+			return _('Expecting: %s').format('[A-Za-z0-9_-]{3,}:[^:]+');
+
+		return true;
+	},
+	validateAuthUsername: function(section_id, value) {
+		if (!value)
+			return true;
+		if (!value.match(/^[\w-]{3,}$/))
+			return _('Expecting: %s').format('[A-Za-z0-9_-]{3,}');
+
+		return true;
+	},
+	validateAuthPassword: function(section_id, value) {
+		if (!value.match(/^[^:]+$/))
+			return _('Expecting: %s').format('[^:]+');
+
+		return true;
+	},
+
 	validateCommonPort: function(section_id, value) {
 		// thanks to homeproxy
 		var stubValidator = {
@@ -617,7 +702,7 @@ return baseclass.extend({
 		uci.sections(this.config, this.section.sectiontype, (res) => {
 			if (res['.name'] !== section_id)
 				if (res[this.option] === value)
-					duplicate = true
+					duplicate = true;
 		});
 		if (duplicate)
 			return _('Expecting: %s').format(_('unique value'));
@@ -637,6 +722,15 @@ return baseclass.extend({
 		catch(e) {
 			return _('Expecting: %s').format(_('valid URL'));
 		}
+
+		return true;
+	},
+
+	validateUUID: function(section_id, value) {
+		if (!value)
+			return true;
+		else if (value.match('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') === null)
+			return _('Expecting: %s').format(_('valid uuid'));
 
 		return true;
 	},
@@ -719,5 +813,26 @@ return baseclass.extend({
 			} else
 				throw res.error || 'unknown error';
 		});
+	},
+
+	// thanks to homeproxy
+	uploadCertificate: function(type, filename, ev) {
+		var callWriteCertificate = rpc.declare({
+			object: 'luci.fchomo',
+			method: 'certificate_write',
+			params: ['filename'],
+			expect: { '': {} }
+		});
+
+		return ui.uploadFile('/tmp/fchomo_certificate.tmp', ev.target)
+		.then(L.bind((btn, res) => {
+			return L.resolveDefault(callWriteCertificate(filename), {}).then((ret) => {
+				if (ret.result === true)
+					ui.addNotification(null, E('p', _('Your %s was successfully uploaded. Size: %sB.').format(type, res.size)));
+				else
+					ui.addNotification(null, E('p', _('Failed to upload %s, error: %s.').format(type, ret.error)));
+			});
+		}, this, ev.target))
+		.catch((e) => { ui.addNotification(null, E('p', e.message)) });
 	}
 });

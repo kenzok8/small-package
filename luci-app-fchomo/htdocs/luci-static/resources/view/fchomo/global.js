@@ -34,7 +34,7 @@ function handleResUpdate(type, repo) {
 	});
 
 	// Dynamic repo
-	var label
+	var label;
 	if (repo) {
 		var section_id = this.section.section;
 		var weight = document.getElementById(this.cbid(section_id));
@@ -188,7 +188,7 @@ return view.extend({
 						});
 					})
 				}, [ _('Check') ]),
-				E('strong', { id: ElId}, [
+				E('strong', { id: ElId }, [
 					E('span', { style: 'color:gray' }, ' ' + _('unchecked'))
 				])
 			]);
@@ -328,14 +328,7 @@ return view.extend({
 		so = ss.option(form.DynamicList, 'authentication', _('User Authentication'));
 		so.datatype = 'list(string)';
 		so.placeholder = 'user1:pass1';
-		so.validate = function(section_id, value) {
-			if (!value)
-				return true;
-			if (!value.match(/^[\w-]{3,}:[^:]+$/))
-				return _('Expecting: %s').format('[A-Za-z0-9_-]{3,}:[^:]+');
-
-			return true;
-		}
+		so.validate = L.bind(hm.validateAuth, so);
 
 		so = ss.option(form.DynamicList, 'skip_auth_prefixes', _('No Authentication IP ranges'));
 		so.datatype = 'list(cidr)';
@@ -350,22 +343,22 @@ return view.extend({
 		ss = o.subsection;
 
 		so = ss.option(form.Value, 'mixed_port', _('Mixed port'));
-		so.datatype = 'port'
+		so.datatype = 'port';
 		so.placeholder = '7890';
 		so.rmempty = false;
 
 		so = ss.option(form.Value, 'redir_port', _('Redir port'));
-		so.datatype = 'port'
+		so.datatype = 'port';
 		so.placeholder = '7891';
 		so.rmempty = false;
 
 		so = ss.option(form.Value, 'tproxy_port', _('Tproxy port'));
-		so.datatype = 'port'
+		so.datatype = 'port';
 		so.placeholder = '7892';
 		so.rmempty = false;
 
 		so = ss.option(form.Value, 'tunnel_port', _('DNS port'));
-		so.datatype = 'port'
+		so.datatype = 'port';
 		so.placeholder = '7893';
 		so.rmempty = false;
 
@@ -397,7 +390,7 @@ return view.extend({
 		so.onchange = function(ev, section_id, value) {
 			var desc = ev.target.nextSibling;
 			if (value === 'mixed')
-				desc.innerHTML = _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.')
+				desc.innerHTML = _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.');
 			else if (value === 'gvisor')
 				desc.innerHTML = _('Based on google/gvisor.');
 			else if (value === 'system')
@@ -588,20 +581,20 @@ return view.extend({
 
 		so = ss.taboption('interface', form.Value, 'route_table_id', _('Routing table ID'));
 		so.ucisection = 'config';
-		so.datatype = 'uinteger'
+		so.datatype = 'uinteger';
 		so.placeholder = '2022';
 		so.rmempty = false;
 
 		so = ss.taboption('interface', form.Value, 'route_rule_pref', _('Routing rule priority'));
 		so.ucisection = 'config';
-		so.datatype = 'uinteger'
+		so.datatype = 'uinteger';
 		so.placeholder = '9000';
 		so.rmempty = false;
 
 		so = ss.taboption('interface', form.Value, 'self_mark', _('Routing mark'),
 			_('Priority: Proxy Node > Proxy Group > Global.'));
 		so.ucisection = 'config';
-		so.datatype = 'uinteger'
+		so.datatype = 'uinteger';
 		so.placeholder = '200';
 		so.rmempty = false;
 
