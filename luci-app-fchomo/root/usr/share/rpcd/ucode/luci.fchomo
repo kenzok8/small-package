@@ -9,6 +9,14 @@ function shellquote(s) {
 	return `'${replace(s, "'", "'\\''")}'`;
 }
 
+function isBinary(str) {
+	for (let off = 0, byte = ord(str); off < length(str); byte = ord(str, ++off))
+		if (byte <= 8 || (byte >= 14 && byte <= 31))
+			return true;
+
+	return false;
+}
+
 function hasKernelModule(kmod) {
 	return (system(sprintf('[ -e "/lib/modules/$(uname -r)"/%s ]', shellquote(kmod))) === 0);
 }
@@ -273,6 +281,74 @@ const methods = {
 			system(`rm -f ${HM_DIR}/${req.args?.type}/${req.args?.filename}`);
 
 			return { result: true };
+		}
+	},
+
+	// thanks to homeproxy
+	certificate_write: {
+		args: { filename: 'filename' },
+		call: function(req) {
+			const writeCertificate = function(filename, priv) {
+				const tmpcert = '/tmp/fchomo_certificate.tmp';
+				const filestat = lstat(tmpcert);
+
+				if (!filestat || filestat.type !== 'file' || filestat.size <= 0) {
+					system(`rm -f ${tmpcert}`);
+					return { result: false, error: 'empty certificate file' };
+				}
+
+				let filecontent = readfile(tmpcert);
+				if (isBinary(filecontent)) {
+					system(`rm -f ${tmpcert}`);
+					return { result: false, error: 'illegal file type: binary' };
+				}
+
+				/* Kanged from luci-proto-openconnect */
+				const beg = priv ? /^-----BEGIN (RSA|EC) PRIVATE KEY-----$/ : /^-----BEGIN CERTIFICATE-----$/,
+				      end = priv ? /^-----END (RSA|EC) PRIVATE KEY-----$/ : /^-----END CERTIFICATE-----$/,
+				      lines = split(trim(filecontent), /[\r\n]/);
+				let start = false, i;
+
+				for (i = 0; i < length(lines); i++) {
+					if (match(lines[i], beg))
+						start = true;
+					else if (start && !b64dec(lines[i]) && length(lines[i]) !== 64)
+						break;
+				}
+
+				if (!start || i < length(lines) - 1 || !match(lines[i], end)) {
+					system(`rm -f ${tmpcert}`);
+					return { result: false, error: 'this does not look like a correct PEM file' };
+				}
+
+				/* Sanitize certificate */
+				filecontent = trim(filecontent);
+				filecontent = replace(filecontent, /\r\n?/g, '\n');
+				if (!match(filecontent, /\n$/))
+					filecontent += '\n';
+
+				system(`mkdir -p ${HM_DIR}/certs`);
+				writefile(`${HM_DIR}/certs/${filename}.pem`, filecontent);
+				system(`rm -f ${tmpcert}`);
+
+				return { result: true };
+			};
+
+			const filename = req.args?.filename;
+			if (!filename || match(filename, /\.\.\//))
+				return { result: false, error: 'illegal cerificate filename' };
+			switch (filename) {
+			case 'client_ca':
+			case 'server_publickey':
+				return writeCertificate(filename, false);
+				break;
+			case 'server_privatekey':
+				return writeCertificate(filename, true);
+				break;
+			default:
+				return { result: false, error: 'illegal cerificate filename' };
+				break;
+			}
 		}
 	}
 };

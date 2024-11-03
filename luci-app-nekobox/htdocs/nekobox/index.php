@@ -526,7 +526,7 @@ if (isset($_GET['ajax'])) {
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
-    <?php include './status-bar.php'; ?>
+    <?php include './ping.php'; ?>
   </head>
 <body>
     <?php if ($isNginx): ?>

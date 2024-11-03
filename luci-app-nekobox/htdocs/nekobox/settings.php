@@ -72,7 +72,7 @@ $uiVersion = getUiVersion();
     <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
-    <?php include './status-bar.php'; ?>
+    <?php include './ping.php'; ?>
   </head>
   <body>
     <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
@@ -186,10 +186,13 @@ $uiVersion = getUiVersion();
                </div>
                <div class="modal-body text-center"> 
                    <pre id="logOutput" style="white-space: pre-wrap; word-wrap: break-word; text-align: left; display: inline-block;">开始下载更新...</pre>
+                <div class="alert alert-info mt-3" role="alert">
+                    提示: 如遇到更新失败，请在终端输入 <code>nokobox</code> 进行更新！
                </div>
            </div>
        </div>
    </div>
+</div>
 <div id="logOutput" class="mt-3"></div>
 
 <style>

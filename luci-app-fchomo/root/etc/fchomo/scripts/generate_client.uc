@@ -9,7 +9,7 @@ import { cursor } from 'uci';
 import { urldecode, urlencode } from 'luci.http';
 
 import {
-	isEmpty, strToBool, strToInt,
+	isEmpty, strToBool, strToInt, durationToSecond,
 	removeBlankAttrs,
 	HM_DIR, RUN_DIR, PRESET_OUTBOUND
 } from 'fchomo';
@@ -105,28 +105,6 @@ function parse_filter(cfg) {
 		return cfg;
 }
 
-function parse_time_duration(time) {
-	if (isEmpty(time))
-		return null;
-
-	let seconds = 0;
-	let arr = match(time, /^(\d+)(s|m|h|d)?$/);
-	if (arr) {
-		if (arr[2] === 's') {
-			seconds = strToInt(arr[1]);
-		} else if (arr[2] === 'm') {
-			seconds = strToInt(arr[1]) * 60;
-		} else if (arr[2] === 'h') {
-			seconds = strToInt(arr[1]) * 3600;
-		} else if (arr[2] === 'd') {
-			seconds = strToInt(arr[1]) * 86400;
-		} else
-			seconds = strToInt(arr[1]);
-	}
-
-	return seconds;
-}
-
 function get_proxynode(cfg) {
 	if (isEmpty(cfg))
 		return null;
@@ -191,8 +169,8 @@ config["etag-support"] = (uci.get(uciconf, uciglobal, 'etag_support') === '0') ?
 config.ipv6 = (uci.get(uciconf, uciglobal, 'ipv6') === '0') ? false : true;
 config["unified-delay"] = strToBool(uci.get(uciconf, uciglobal, 'unified_delay')) || false;
 config["tcp-concurrent"] = strToBool(uci.get(uciconf, uciglobal, 'tcp_concurrent')) || false;
-config["keep-alive-interval"] = parse_time_duration(uci.get(uciconf, uciglobal, 'keep_alive_interval')) || 30;
-config["keep-alive-idle"] = parse_time_duration(uci.get(uciconf, uciglobal, 'keep_alive_idle')) || 600;
+config["keep-alive-interval"] = durationToSecond(uci.get(uciconf, uciglobal, 'keep_alive_interval')) || 30;
+config["keep-alive-idle"] = durationToSecond(uci.get(uciconf, uciglobal, 'keep_alive_idle')) || 600;
 /* ACL settings */
 config["interface-name"] = bind_interface;
 config["routing-mark"] = self_mark;
@@ -345,7 +323,7 @@ if (match(proxy_mode, /tun/))
 		"route-exclude-address-set": [],
 		"include-interface": [],
 		"exclude-interface": [],
-		"udp-timeout": parse_time_duration(uci.get(uciconf, uciinbound, 'tun_udp_timeout')) || 300,
+		"udp-timeout": durationToSecond(uci.get(uciconf, uciinbound, 'tun_udp_timeout')) || 300,
 		"endpoint-independent-nat": strToBool(uci.get(uciconf, uciinbound, 'tun_endpoint_independent_nat')),
 		"auto-detect-interface": true
 	});
@@ -452,7 +430,7 @@ uci.foreach(uciconf, ucipgrp, (cfg) => {
 		["routing-mark"]: strToInt(cfg.routing_mark),
 		// Health fields
 		url: cfg.url,
-		interval: cfg.url ? parse_time_duration(cfg.interval) || 600 : null,
+		interval: cfg.url ? durationToSecond(cfg.interval) || 600 : null,
 		timeout: cfg.url ? strToInt(cfg.timeout) || 5000 : null,
 		lazy: (cfg.lazy === '0') ? false : null,
 		"expected-status": cfg.url ? cfg.expected_status || '204' : null,
@@ -476,7 +454,7 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 		type: cfg.type,
 		path: HM_DIR + '/provider/' + cfg['.name'],
 		url: cfg.url,
-		interval: (cfg.type === 'http') ? parse_time_duration(cfg.interval) || 86400 : null,
+		interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) || 86400 : null,
 		proxy: get_proxygroup(cfg.proxy),
 		header: cfg.header ? json(cfg.header) : null,
 		"health-check": {},
@@ -513,7 +491,7 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 		config["proxy-providers"][cfg['.name']]["health-check"] = {
 			enable: true,
 			url: cfg.health_url,
-			interval: parse_time_duration(cfg.health_interval) || 600,
+			interval: durationToSecond(cfg.health_interval) || 600,
 			timeout: strToInt(cfg.health_timeout) || 5000,
 			lazy: (cfg.health_lazy === '0') ? false : null,
 			"expected-status": cfg.health_expected_status || '204'
@@ -535,7 +513,7 @@ uci.foreach(uciconf, ucirule, (cfg) => {
 		behavior: cfg.behavior,
 		path: HM_DIR + '/ruleset/' + cfg['.name'],
 		url: cfg.url,
-		interval: (cfg.type === 'http') ? parse_time_duration(cfg.interval) || 259200 : null,
+		interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) || 259200 : null,
 		proxy: get_proxygroup(cfg.proxy)
 	};
 });
