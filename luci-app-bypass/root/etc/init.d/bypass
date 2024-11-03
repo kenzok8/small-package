@@ -15,7 +15,13 @@ CON_T=$SDNS/rules.conf
 PID=/var/run/smartdns.pid
 LOG=/var/log/bypass.log
 BIN_DIR=/usr/share/bypass
-DNS_FILE=/tmp/dnsmasq.d/dnsmasq-by.conf
+# Get the default DNSMasq config ID from the UCI configuration
+DEFAULT_DNSMASQ_CFGID=$(uci show dhcp.@dnsmasq[0] | awk -F '.' '{print $2}' | awk -F '=' '{print $1}' | head -1)
+# Locate the dnsmasq.conf file that contains the conf-dir option
+DNSMASQ_CONF_PATH=$(grep -l "^conf-dir=" "/tmp/etc/dnsmasq.conf.${DEFAULT_DNSMASQ_CFGID}")
+# Extract the directory path from the conf-dir line
+DNSMASQ_CONF_DIR=$(grep '^conf-dir=' "$DNSMASQ_CONF_PATH" | cut -d'=' -f2 | head -n 1)
+DNS_FILE=${DNSMASQ_CONF_DIR%*/}/dnsmasq-by.conf
 DNS_DIR=/tmp/dnsmasq.by
 O=$DNS_DIR/tmp
 CRON="grep -q $BIN_DIR $CRON_FILE && sed -i '/\/share\/bypass/d' $CRON_FILE"
@@ -698,7 +704,7 @@ gen_dns(){
 		for i in $dns_tmp;do ipset add ss_spec_wan_ac $i 2>/dev/null;done
 	fi
 	smartdns_flag=1
-	mkdir -p /tmp/dnsmasq.d $SDNS $DNS_DIR
+	mkdir -p ${DNSMASQ_CONF_DIR%*/} $SDNS $DNS_DIR
 	cat >$DNS_T <<-EOF
 		force-AAAA-SOA yes
 		speed-check-mode none
