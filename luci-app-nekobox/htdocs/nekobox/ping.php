@@ -119,37 +119,77 @@ $lang = $_GET['lang'] ?? 'en';
     <link rel="preconnect" href="https://d.skk.moe">
 <style>
 .img-con {
- width: 55px;  
- height: 55px; 
- display: flex;
- justify-content: center; 
- align-items: center;     
- overflow: visible; 
+  width: 65px;  
+  height: 55px; 
+  display: flex;
+  justify-content: center;
+  overflow: visible;
 }
 
 #flag {
  width: auto;
  height: auto;
- max-width: 100%;
- max-height: 100%;  
+  max-width: 65px; 
+  max-height: 55px;
+  object-fit: contain;
 }
 
 .status-icon {
- width: auto;
- height: auto;
- max-width: 50px;
- max-height: 50px;
+  width: 58px; 
+  height: 58px; 
+  object-fit: contain; 
+  display: block;
+}
+
+.status-icons {
+  display: flex;
+  height: 55px;
+  margin-left: auto;
+}
+
+.site-icon {
+  display: flex;
+  justify-content: center;
+  height: 55px;
+  margin: 0 6px; 
+}
+
+.mx-1 {
+  margin: 0 4px;
+}
+
+.site-icon[onclick*="github"] .status-icon {
+  width: 61px; 
+  height: 59px;
+}
+
+.site-icon[onclick*="github"] {
+  width: 60px;
+  height: 57px;
+  display: flex;
+  justify-content: center;
 }
 
 .container-sm.container-bg.callout.border {
- padding-top: 0.5rem;
- padding-bottom: 0.5rem;
+  padding: 12px 15px; 
+  min-height: 70px; 
+  display: flex;
+  margin-bottom: 15px;
 }
 
 .row.align-items-center {
- display: flex;
- justify-content: space-between;
- align-items: center;
+  width: 100%;
+  margin: 0;
+  display: flex;
+  gap: 15px; 
+  height: 55px; /
+}
+
+.col-3 {
+  height: 55px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .col.text-center {
@@ -168,11 +208,9 @@ $lang = $_GET['lang'] ?? 'en';
 }
 
 #ping-result {
-  font-size: 18px !important;
-  margin: 0 !important;
-  white-space: nowrap !important;
-  font-weight: bold !important;
-  text-align: left !important;
+  font-size: 14px;
+  margin-left: 15px;
+  font-weight: 500;
 }
 
 #d-ip {
@@ -202,74 +240,16 @@ $lang = $_GET['lang'] ?? 'en';
  opacity: 0.8 !important;
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
- .container-sm.container-bg.callout.border {
-   width: 100% !important;
- }
- 
- .row.align-items-center {
-   display: flex !important;
-   flex-wrap: wrap !important;
-   width: 100% !important;
-   gap: 8px !important;
- }
- 
- .col-auto {
-   flex: 0 0 30px !important;
-   width: 30px !important;
-   min-width: 30px !important;
- }
- 
- .img-con, #flag {
-   width: 30px !important;
-   height: 30px !important;
-   object-fit: contain !important;
- }
- 
- .col-3 {
-   flex: 1 1 auto !important;
-   width: auto !important;
-   min-width: 0 !important;
- }
- 
- #d-ip, .info.small {
-   font-size: 14px !important;
-   margin: 0 !important;
-   overflow: hidden !important;
-   text-overflow: ellipsis !important;
-   white-space: nowrap !important;
- }
- 
- .col-4 {
-   flex: 0 1 auto !important;
-   padding: 0 !important;
-   order: 3 !important;
- }
- 
- #ping-result {
-   font-size: 14px !important;
-   margin: 0 !important;
- }
- 
- .status-icons {
-   display: flex !important;
-   flex: 0 0 auto !important;
-   margin-left: auto !important;
-   order: 2 !important;
- }
- 
- .status-icon {
-   width: 30px !important;
-   height: 30px !important;
-   object-fit: contain !important;
+@media (max-width: 1280px) {
+ .site-icon[onclick*="baidu"],
+ .site-icon[onclick*="taobao"], 
+ .site-icon[onclick*="google"],
+ .site-icon[onclick*="youtube"],
+ .site-icon[onclick*="github"] {
+   display: none !important;
  }
 }
 
-@media screen and (max-width: 768px) {
-  #status-bar-component {
-    display: none !important;
-  }
-}
 </style>
 <?php if (in_array($lang, ['zh-cn', 'en', 'auto'])): ?>
     <div id="status-bar-component" class="container-sm container-bg callout border">
@@ -304,6 +284,10 @@ $lang = $_GET['lang'] ?? 'en';
                         <img src="./assets/neko/img/site_icon_04.png" id="youtube-normal" class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_04.png" id="youtube-gray" class="status-icon">
                     </div>
+                    <div class="site-icon mx-1" onclick="pingHost('github', 'GitHub')">
+                        <img src="./assets/neko/img/site_icon_05.png" id="github-normal" class="status-icon" style="display: none;">
+                        <img src="./assets/neko/img/site_icon1_05.png" id="github-gray" class="status-icon">
+                    </div>
                 </div>
             </div>
         </div>
@@ -322,7 +306,8 @@ const checkSiteStatus = {
         baidu: 'https://www.baidu.com',
         taobao: 'https://www.taobao.com',
         google: 'https://www.google.com',
-        youtube: 'https://www.youtube.com'
+        youtube: 'https://www.youtube.com',
+        github: 'https://www.github.com'
     },
     
     check: async function() {

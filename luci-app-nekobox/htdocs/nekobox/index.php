@@ -583,7 +583,6 @@ $(document).ready(function() {
     });
 });
 </script>
-
 <h2 class="royal-style">NekoBox</h2>
 <table class="table table-borderless mb-2">
     <tbody>
@@ -616,10 +615,10 @@ $(document).ready(function() {
             <td>控制</td>
             <form action="index.php" method="post">
                 <td class="d-grid">
-                    <div class="btn-group col" role="group" aria-label="ctrl">
-                        <button type="submit" name="neko" value="start" class="btn btn<?php if ($neko_status == 1) echo "-outline" ?>-success <?php if ($neko_status == 1) echo "disabled" ?> d-grid">启用 Mihomo</button>
-                        <button type="submit" name="neko" value="disable" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-danger <?php if ($neko_status == 0) echo "disabled" ?> d-grid">停用 Mihomo</button>
-                        <button type="submit" name="neko" value="restart" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-warning <?php if ($neko_status == 0) echo "disabled" ?> d-grid">重启 Mihomo</button>
+                    <div class="btn-group" role="group" aria-label="ctrl">
+                        <button type="submit" name="neko" value="start" class="btn btn<?php if ($neko_status == 1) echo "-outline" ?>-success <?php if ($neko_status == 1) echo "disabled" ?>">启用 Mihomo</button>
+                        <button type="submit" name="neko" value="disable" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-danger <?php if ($neko_status == 0) echo "disabled" ?>">停用 Mihomo</button>
+                        <button type="submit" name="neko" value="restart" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-warning <?php if ($neko_status == 0) echo "disabled" ?>">重启 Mihomo</button>
                     </div>
                 </td>
             </form>
@@ -632,10 +631,10 @@ $(document).ready(function() {
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <div class="btn-group col" role="group" aria-label="ctrl">
-                        <button type="submit" name="singbox" value="start" class="btn btn<?php echo ($singbox_status == 1) ? "-outline" : "" ?>-success <?php echo ($singbox_status == 1) ? "disabled" : "" ?> d-grid">启用 Sing-box</button>
-                        <button type="submit" name="singbox" value="disable" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-danger <?php echo ($singbox_status == 0) ? "disabled" : "" ?> d-grid">停用 Sing-box</button>
-                        <button type="submit" name="singbox" value="restart" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-warning <?php echo ($singbox_status == 0) ? "disabled" : "" ?> d-grid">重启 Sing-box</button>
+                    <div class="btn-group" role="group" aria-label="ctrl">
+                        <button type="submit" name="singbox" value="start" class="btn btn<?php echo ($singbox_status == 1) ? "-outline" : "" ?>-success <?php echo ($singbox_status == 1) ? "disabled" : "" ?>">启用 Sing-box</button>
+                        <button type="submit" name="singbox" value="disable" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-danger <?php echo ($singbox_status == 0) ? "disabled" : "" ?>">停用 Sing-box</button>
+                        <button type="submit" name="singbox" value="restart" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-warning <?php echo ($singbox_status == 0) ? "disabled" : "" ?>">重启 Sing-box</button>
                     </div>
                 </td>
             </form>
@@ -673,52 +672,76 @@ $(document).ready(function() {
     }
 </script>
 
-    <style>
-        .icon-container { display: flex; justify-content: space-between; margin-top: 20px; }
-        .icon { text-align: center; width: 30%; }
-        .icon i { font-size: 48px; }
-    </style>
-    <link rel="stylesheet" href="./assets/bootstrap/all.min.css">
-    <div class="container">
-    <h2 class="text-center p-2" >系统状态</h2>
-    <table class="table table-borderless rounded-4 mb-2">
-        <tbody>
-                <td>系统信息</td>
-                <td class="col-7" id="systemInfo"></td>
-            </tr>
-            <tr>
-                <td>内存</td>
-                <td class="col-7" id="ramUsage"></td>
-            </tr>
-            <tr>
-                <td>平均负载</td>
-                <td class="col-7" id="cpuLoad"></td>
-            </tr>
-            <tr>
-                <td>运行时间</td>
-                <td class="col-7" id="uptime"></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="icon-container">
-        <div class="icon">
-            <i class="fas fa-microchip"></i>
-            <p>CPU</p>
-            <p id="cpuLoadAvg1Min">N/A</p>
+ <link rel="stylesheet" href="./assets/bootstrap/all.min.css">
+ <h2 class="text-center p-2" >系统状态</h2>
+<table class="table table-borderless rounded-4 mb-2">
+    <tbody>
+        <tr>
+            <td style="width: 30%;">系统信息</td>
+            <td class="col-7" id="systemInfo"></td>
+        </tr>
+        <tr>
+            <td style="width: 30%;">内存</td>
+            <td class="col-7" id="ramUsage"></td>
+        </tr>
+        <tr>
+            <td style="width: 30%;">平均负载</td>
+            <td class="col-7" id="cpuLoad"></td>
+        </tr>
+        <tr>
+            <td style="width: 30%;">运行时间</td>
+            <td class="col-7" id="uptime"></td>
+        </tr>
+    </tbody>
+</table>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-6 col-md-6">
+            <table class="table text-center border-0">
+                <tbody>
+                    <tr>
+                        <td>
+                            <i class="fas fa-microchip" style="font-size: 40px;"></i>
+                            <p>CPU</p>
+                            <p id="cpuLoadAvg1Min">N/A</p>
+                        </td>
+                        <td>
+                            <i class="fas fa-memory" style="font-size: 40px;"></i>
+                            <p>内存</p>
+                            <p id="ramUsageOnly">N/A</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        <div class="icon">
-            <i class="fas fa-memory"></i>
-            <p>内存</p>
-            <p id="ramUsageOnly">N/A</p>
-        </div>
-        <div class="icon">
-            <i class="fas fa-exchange-alt"></i>
-            <p>交换空间</p>
-            <p>N/A</p>
+        <div class="col-6 col-md-6">
+            <table class="table text-center border-0">
+                <tbody>
+                    <tr>
+                        <td>
+                            <i class="fas fa-download" style="font-size: 40px;"></i>
+                            <p>下载总计</p>
+                            <p id="downtotal">-</p>
+                        </td>
+                        <td>
+                            <i class="fas fa-upload" style="font-size: 40px;"></i>
+                            <p>上传总计</p>
+                            <p id="uptotal">-</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
-
+</div>
+<style>
+    .table {
+        border: none !important; 
+    }
+    .table td {
+        border: none !important; 
+    }
+</style>
     <script>
         function fetchSystemStatus() {
             fetch('?ajax=1')
@@ -738,20 +761,6 @@ $(document).ready(function() {
 
         fetchSystemStatus();
     </script>
-<div style="border: 1px solid black; padding: 10px; text-align: center;">
-    <table style="width: 100%;">
-        <tbody>
-            <tr>
-                <td style="width: 50%;">下载-总计</td>
-                <td style="width: 50%;">上传-总计</td>
-            </tr>
-            <tr>
-                <td><span id="downtotal">-</span></td>
-                <td><span id="uptotal">-</span></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
 
 <!DOCTYPE html>
 <html lang="zh">
@@ -773,62 +782,64 @@ $(document).ready(function() {
 </head>
 <body>
     <h2 class="text-center my-4">日志</h2>
-    <div class="row">
-        <div class="col-12"> 
-            <div class="card log-card">
-                <div class="card-header">
-                    <h4 class="card-title text-center mb-0">NeKoBox 日志</h4>
-                </div>
-                <div class="card-body">
-                    <pre id="plugin_log" class="log-container form-control"></pre>
-                </div>
-                <div class="card-footer text-center">
-                    <form action="index.php" method="post">
-                        <button type="submit" name="clear_plugin_log" class="btn btn-danger">🗑️ 清空日志</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            <div class="card log-card">
-                <div class="card-header">
-                    <h4 class="card-title text-center mb-0">Mihomo 日志</h4>
-                </div>
-                <div class="card-body">
-                    <pre id="bin_logs" class="log-container form-control"></pre>
-                </div>
-                <div class="card-footer text-center">
-                    <form action="index.php" method="post">
-                        <button type="submit" name="neko" value="clear" class="btn btn-danger">🗑️ 清空日志</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-<div class="row">
-    <div class="col-12">
-        <div class="card log-card">
-            <div class="card-header">
-                <h4 class="card-title text-center mb-0">Sing-box 日志</h4>
-            </div>
-            <div class="card-body">
-                <pre id="singbox_log" class="log-container form-control"></pre>
-            </div>
-            <div class="card-footer text-center">
-                <form action="index.php" method="post" class="d-inline-block">
-                    <div class="form-check form-check-inline mb-2">
-                        <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
-                        <label class="form-check-label" for="autoRefresh">自动刷新</label>
+    <div class="container">
+        <div class="row">
+            <div class="col-12"> 
+                <div class="card log-card">
+                    <div class="card-header">
+                        <h4 class="card-title text-center mb-0">NeKoBox 日志</h4>
                     </div>
-                    <button type="submit" name="clear_singbox_log" class="btn btn-danger">🗑️ 清空日志</button>
-                    <button type="submit" name="update_log" value="update" class="btn btn-primary">🔄 更新时区</button>
-                </form>
+                    <div class="card-body">
+                        <pre id="plugin_log" class="log-container form-control"></pre>
+                    </div>
+                    <div class="card-footer text-center">
+                        <form action="index.php" method="post">
+                            <button type="submit" name="clear_plugin_log" class="btn btn-danger">🗑️ 清空日志</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card log-card">
+                    <div class="card-header">
+                        <h4 class="card-title text-center mb-0">Mihomo 日志</h4>
+                    </div>
+                    <div class="card-body">
+                        <pre id="bin_logs" class="log-container form-control"></pre>
+                    </div>
+                    <div class="card-footer text-center">
+                        <form action="index.php" method="post">
+                            <button type="submit" name="neko" value="clear" class="btn btn-danger">🗑️ 清空日志</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card log-card">
+                    <div class="card-header">
+                        <h4 class="card-title text-center mb-0">Sing-box 日志</h4>
+                    </div>
+                    <div class="card-body">
+                        <pre id="singbox_log" class="log-container form-control"></pre>
+                    </div>
+                    <div class="card-footer text-center">
+                        <form action="index.php" method="post" class="d-inline-block">
+                            <div class="form-check form-check-inline mb-2">
+                                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                                <label class="form-check-label" for="autoRefresh">自动刷新</label>
+                            </div>
+                            <button type="submit" name="clear_singbox_log" class="btn btn-danger">🗑️ 清空日志</button>
+                            <button type="submit" name="update_log" value="update" class="btn btn-primary">🔄 更新时区</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 <?php
 if (isset($_POST['update_log'])) {
