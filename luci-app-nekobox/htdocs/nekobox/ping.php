@@ -208,9 +208,7 @@ $lang = $_GET['lang'] ?? 'en';
 }
 
 #ping-result {
-  font-size: 14px;
-  margin-left: 15px;
-  font-weight: 500;
+  font-weight: bold;
 }
 
 #d-ip {
@@ -249,7 +247,6 @@ $lang = $_GET['lang'] ?? 'en';
    display: none !important;
  }
 }
-
 </style>
 <?php if (in_array($lang, ['zh-cn', 'en', 'auto'])): ?>
     <div id="status-bar-component" class="container-sm container-bg callout border">
@@ -263,7 +260,7 @@ $lang = $_GET['lang'] ?? 'en';
                 <p id="d-ip" class="ip-address mb-0">Checking...</p>
                 <p id="ipip" class="info small mb-0"></p>
             </div>
-            <div class="col-4 d-flex justify-content-center">
+            <div class="col text-center"> 
                 <p id="ping-result" class="mb-0"></p>
             </div>
             <div class="col-auto ms-auto">
@@ -285,7 +282,7 @@ $lang = $_GET['lang'] ?? 'en';
                         <img src="./assets/neko/img/site_icon1_04.png" id="youtube-gray" class="status-icon">
                     </div>
                     <div class="site-icon mx-1" onclick="pingHost('github', 'GitHub')">
-                        <img src="./assets/neko/img/site_icon_05.png" id="github-normal" class="status-icon" style="display: none;">
+                        <img src="./assets/neko/img/site_icon_05.png" id="github-normal" title="测试 GitHub 延迟" class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_05.png" id="github-gray" class="status-icon">
                     </div>
                 </div>
@@ -333,7 +330,7 @@ async function pingHost(site, siteName) {
     const resultElement = document.getElementById('ping-result');
 
     try {
-        resultElement.innerHTML = `<span style="font-size: 18px">正在测试 ${siteName} 的连接延迟...`;
+        resultElement.innerHTML = `<span style="font-size: 22px">正在测试 ${siteName} 的连接延迟...`;
         resultElement.style.color = '#87CEFA';        
         const startTime = performance.now();
         await fetch(url, {
@@ -342,7 +339,7 @@ async function pingHost(site, siteName) {
         });
         const endTime = performance.now();
         const pingTime = Math.round(endTime - startTime);      
-        resultElement.innerHTML = `<span style="font-size: 18px">${siteName} 连接延迟: ${pingTime}ms</span>`;
+        resultElement.innerHTML = `<span style="font-size: 22px">${siteName} 连接延迟: ${pingTime}ms</span>`;
         if(pingTime <= 100) {
                 resultElement.style.color = '#09B63F'; 
         } else if(pingTime <= 200) {
@@ -351,7 +348,7 @@ async function pingHost(site, siteName) {
                 resultElement.style.color = '#ff6b6b'; 
         }
     } catch (error) {
-        resultElement.innerHTML = `<span style="font-size: 18px">${siteName} 连接超时`;
+        resultElement.innerHTML = `<span style="font-size: 22px">${siteName} 连接超时`;
         resultElement.style.color = '#ff6b6b';
     }
 }
@@ -417,7 +414,7 @@ let IP = {
             
             const mergedData = {
                 ...ipsbResp.data,
-                chinaIpInfo: chinaIpInfo
+               // chinaIpInfo: chinaIpInfo
             };
             
             IP.updateUI(mergedData, elID);
@@ -452,7 +449,7 @@ let IP = {
             let ipLocation = isChinaIP ? 
                 '<span style="color: #00FF00;">[国内 IP]</span> ' : 
                 '<span style="color: #FF0000;">[境外 IP]</span> ';
-            firstLineInfo += ipLocation;
+           // firstLineInfo += ipLocation;
         
             if (data.chinaIpInfo) {
                 firstLineInfo += `[${data.chinaIpInfo}]`;
