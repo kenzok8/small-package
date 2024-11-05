@@ -77,8 +77,8 @@
 	const dnsmasq_hijacked = uci.get('dhcp', '@dnsmasq[0]', 'dns_redirect') || '0',
 	      dnsmasq_port = uci.get('dhcp', '@dnsmasq[0]', 'port') || '53';
 
-	let default_proxy, routing_tcpport, routing_udpport, routing_mode, routing_domain;
-	default_proxy = uci.get(cfgname, 'routing', 'default_proxy') || null,
+	let client_enabled, routing_tcpport, routing_udpport, routing_mode, routing_domain;
+	client_enabled = uci.get(cfgname, 'routing', 'client_enabled') || '0',
 	routing_tcpport = uci.get(cfgname, 'routing', 'routing_tcpport') || null;
 	routing_udpport = uci.get(cfgname, 'routing', 'routing_udpport') || null;
 	routing_mode = uci.get(cfgname, 'routing', 'routing_mode') || null;

@@ -66,7 +66,20 @@ class DNSAddress {
 class RulesEntry {
 	constructor(entry) {
 		this.input = entry || '';
-		this.rawparams = this.input.split(',');
+		var content = this.input;
+		this.subrule = content.split(',');
+		if (this.subrule.shift() === 'SUB-RULE') {
+			var subrule_payload = this.subrule.join(',').match(/^\(.*\)/);
+			if (subrule_payload) {
+				content = subrule_payload[0].slice(1, -1);
+				this.subrule = this.subrule.pop() || ' ';
+			} else {
+				content = this.subrule.join(',');
+				this.subrule = ' ';
+			}
+		} else
+			this.subrule = false;
+		this.rawparams = content.split(',');
 		this.type = this.rawparams.shift() || '';
 		var logical_payload, rawfactor;
 		(function(rawparams_typecuted) {
@@ -78,6 +91,8 @@ class RulesEntry {
 				rawfactor = this.rawparams.shift() || '';
 		}.call(this, this.rawparams.join(',')));
 		this.detour = this.rawparams.shift() || '';
+		if (this.type === 'MATCH')
+			this.detour = rawfactor;
 
 		this.payload = [];
 		if (logical_payload) { // ꓹ ႇ ❟
@@ -144,9 +159,15 @@ class RulesEntry {
 		} else
 			factor = this.payload[0].factor;
 
-		return [this.type, factor, this.detour].concat(
-			['no-resolve', 'src'].filter(k => this.params[k])
-		).join(',');
+		if (this.subrule) {
+			return 'SUB-RULE,(%s),%s'.format([this.type, factor].join(','), this.subrule);
+		} else
+			if (this.type === 'MATCH') {
+				return [this.type, this.detour].join(',');
+			} else
+				return [this.type, factor, this.detour].concat(
+					['no-resolve', 'src'].filter(k => this.params[k])
+				).join(',');
 	}
 }
 
@@ -223,18 +244,23 @@ function renderPayload(s, total, uciconfig) {
 		if (n === 0) {
 			o.depends({type: /\bDOMAIN\b/});
 			o.depends({type: /\bGEO(SITE|IP)\b/});
+			o.depends({type: /\bASN\b/});
 			o.depends({type: /\bPROCESS\b/});
 		}
 		o.depends(Object.fromEntries([[prefix + 'type', /\bDOMAIN\b/]]));
 		o.depends(Object.fromEntries([[prefix + 'type', /\bGEO(SITE|IP)\b/]]));
+		o.depends(Object.fromEntries([[prefix + 'type', /\bASN\b/]]));
 		o.depends(Object.fromEntries([[prefix + 'type', /\bPROCESS\b/]]));
 		initPayload(o, n, 'factor', uciconfig);
 
 		o = s.option(form.Value, prefix + 'ip', _('Factor') + ` ${n+1}`);
 		o.datatype = 'cidr';
-		if (n === 0)
-			o.depends({type: /\bIP\b/});
-		o.depends(Object.fromEntries([[prefix + 'type', /\bIP\b/]]));
+		if (n === 0) {
+			o.depends({type: /\b(CIDR|CIDR6)\b/});
+			o.depends({type: /\bIP-SUFFIX\b/});
+		}
+		o.depends(Object.fromEntries([[prefix + 'type', /\b(CIDR|CIDR6)\b/]]));
+		o.depends(Object.fromEntries([[prefix + 'type', /\bIP-SUFFIX\b/]]));
 		initPayload(o, n, 'factor', uciconfig);
 
 		o = s.option(form.Value, prefix + 'port', _('Factor') + ` ${n+1}`);
@@ -264,6 +290,118 @@ function renderPayload(s, total, uciconfig) {
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key];
 		}, o, n, 'factor', uciconfig)
 	}
+}
+
+function renderRules(s, uciconfig) {
+	var o;
+
+	o = s.option(form.DummyValue, 'entry', _('Entry'));
+	o.load = function(section_id) {
+		return form.DummyValue.prototype.load.call(this, section_id) || '%s,%s,%s'.format(hm.rules_type[0][0], '', hm.preset_outbound.full[0][0]);
+	}
+	o.write = L.bind(form.AbstractValue.prototype.write, o);
+	o.remove = L.bind(form.AbstractValue.prototype.remove, o);
+	o.editable = true;
+
+	o = s.option(form.ListValue, 'type', _('Type'));
+	o.default = hm.rules_type[0][0];
+	[...hm.rules_type, ...hm.rules_logical_type].forEach((res) => {
+		o.value.apply(o, res);
+	})
+	o.load = function(section_id) {
+		return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).type;
+	}
+	o.validate = function(section_id, value) {
+		// params only available for types other than
+		// https://github.com/muink/mihomo/blob/43f21c0b412b7a8701fe7a2ea6510c5b985a53d6/config/config.go#L1050
+		// https://github.com/muink/mihomo/blob/43f21c0b412b7a8701fe7a2ea6510c5b985a53d6/rules/parser.go#L12
+		if (['GEOIP', 'IP-ASN', 'IP-CIDR', 'IP-CIDR6', 'IP-SUFFIX', 'RULE-SET'].includes(value)) {
+			['no-resolve', 'src'].forEach((opt) => {
+				let UIEl = this.section.getUIElement(section_id, opt);
+				UIEl.node.querySelector('input').disabled = null;
+			});
+		} else {
+			['no-resolve', 'src'].forEach((opt) => {
+				let UIEl = this.section.getUIElement(section_id, opt);
+				UIEl.setValue('');
+				UIEl.node.querySelector('input').disabled = 'true';
+			});
+
+			var UIEl = this.section.getUIElement(section_id, 'entry');
+
+			var newvalue = new RulesEntry(UIEl.getValue()).setParam('no-resolve').setParam('src').toString();
+
+			UIEl.node.previousSibling.innerText = newvalue;
+			UIEl.setValue(newvalue);
+		}
+
+		return true;
+	}
+	o.onchange = function(ev, section_id, value) {
+		var UIEl = this.section.getUIElement(section_id, 'entry');
+
+		var newvalue = new RulesEntry(UIEl.getValue()).setKey('type', value).toString();
+
+		UIEl.node.previousSibling.innerText = newvalue;
+		return UIEl.setValue(newvalue);
+	}
+	o.write = function() {};
+	o.rmempty = false;
+	o.modalonly = true;
+
+	renderPayload(s, Math.max(...Object.values(hm.rules_logical_payload_count)), uciconfig);
+
+	o = s.option(form.ListValue, 'detour', _('Proxy group'));
+	o.load = function(section_id) {
+		hm.loadProxyGroupLabel.call(this, hm.preset_outbound.full, section_id);
+
+		return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).detour;
+	}
+	o.onchange = function(ev, section_id, value) {
+		var UIEl = this.section.getUIElement(section_id, 'entry');
+
+		var newvalue = new RulesEntry(UIEl.getValue()).setKey('detour', value).toString();
+
+		UIEl.node.previousSibling.innerText = newvalue;
+		return UIEl.setValue(newvalue);
+	}
+	o.write = function() {};
+	//o.depends('SUB-RULE', '0');
+	o.editable = true;
+
+	o = s.option(form.Flag, 'src', _('src'));
+	o.default = o.disabled;
+	o.load = function(section_id) {
+		return strToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getParam('src'));
+	}
+	o.onchange = function(ev, section_id, value) {
+		var UIEl = this.section.getUIElement(section_id, 'entry');
+
+		var newvalue = new RulesEntry(UIEl.getValue()).setParam('src', flagToStr(value)).toString();
+
+		UIEl.node.previousSibling.innerText = newvalue;
+		UIEl.setValue(newvalue);
+	}
+	o.write = function() {};
+	o.depends('SUB-RULE', '0');
+	o.modalonly = true;
+
+	o = s.option(form.Flag, 'no-resolve', _('no-resolve'));
+	o.default = o.disabled;
+	o.load = function(section_id) {
+		return strToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getParam('no-resolve'));
+	}
+	o.onchange = function(ev, section_id, value) {
+		var UIEl = this.section.getUIElement(section_id, 'entry');
+
+		var newvalue = new RulesEntry(UIEl.getValue()).setParam('no-resolve', flagToStr(value)).toString();
+
+		UIEl.node.previousSibling.innerText = newvalue;
+		UIEl.setValue(newvalue);
+	}
+	o.write = function() {};
+	o.depends('SUB-RULE', '0');
+	o.modalonly = true;
 }
 
 return view.extend({
@@ -306,8 +444,8 @@ return view.extend({
 		o.inputstyle = 'apply';
 		o.onclick = L.bind(hm.handleReload, o, 'mihomo-c');
 
-		o = s.taboption('group', form.ListValue, 'default_proxy', _('Default outbound'));
-		o.load = L.bind(hm.loadProxyGroupLabel, o, hm.preset_outbound.direct);
+		o = s.taboption('group', form.Flag, 'client_enabled', _('Enable'));
+		o.default = o.disabled;
 
 		/* Proxy Group */
 		o = s.taboption('group', form.SectionValue, '_group', form.GridSection, 'proxy_group', null);
@@ -521,111 +659,84 @@ return view.extend({
 		so.default = so.enabled;
 		so.editable = true;
 
-		so = ss.option(form.DummyValue, 'entry', _('Entry'));
-		so.load = function(section_id) {
-			return form.DummyValue.prototype.load.call(this, section_id) || '%s,%s,%s'.format(hm.rules_type[0][0], '', hm.preset_outbound.full[0][0]);
-		}
-		so.write = L.bind(form.AbstractValue.prototype.write, so);
-		so.remove = L.bind(form.AbstractValue.prototype.remove, so);
-		so.editable = true;
+		renderRules(ss, data[0]);
 
-		so = ss.option(form.ListValue, 'type', _('Type'));
-		so.default = hm.rules_type[0][0];
-		[...hm.rules_type, ...hm.rules_logical_type].forEach((res) => {
-			so.value.apply(so, res);
-		})
+		so = ss.option(form.Flag, 'SUB-RULE', _('SUB-RULE'));
+		so.default = so.disabled;
 		so.load = function(section_id) {
-			return new RulesEntry(uci.get(data[0], section_id, 'entry')).type;
+			return strToFlag(new RulesEntry(uci.get(data[0], section_id, 'entry')).subrule ? 'true' : 'false');
 		}
 		so.validate = function(section_id, value) {
-			// params only available for types other than
-			// https://github.com/muink/mihomo/blob/43f21c0b412b7a8701fe7a2ea6510c5b985a53d6/config/config.go#L1050
-			// https://github.com/muink/mihomo/blob/43f21c0b412b7a8701fe7a2ea6510c5b985a53d6/rules/parser.go#L12
-			if (['GEOIP', 'IP-ASN', 'IP-CIDR', 'IP-CIDR6', 'IP-SUFFIX', 'RULE-SET'].includes(value)) {
-				this.section.getUIElement(section_id, 'no-resolve').node.querySelector('input').disabled = null;
-				this.section.getUIElement(section_id, 'src').node.querySelector('input').disabled = null;
-			} else {
-				var UIEl = this.section.getUIElement(section_id, 'entry');
+			value = this.formvalue(section_id);
 
-				var newvalue = new RulesEntry(UIEl.getValue()).setParam('no-resolve').setParam('src').toString();
-
-				UIEl.node.previousSibling.innerText = newvalue;
-				UIEl.setValue(newvalue);
-
-				['no-resolve', 'src'].forEach((opt) => {
-					let UIEl = this.section.getUIElement(section_id, opt);
-					UIEl.setValue('');
-					UIEl.node.querySelector('input').disabled = 'true';
-				});
-			}
+			this.section.getUIElement(section_id, 'detour').node.querySelector('select').disabled = (value === '1') ? 'true' : null;
 
 			return true;
 		}
 		so.onchange = function(ev, section_id, value) {
 			var UIEl = this.section.getUIElement(section_id, 'entry');
 
-			var newvalue = new RulesEntry(UIEl.getValue()).setKey('type', value).toString();
+			var newvalue = new RulesEntry(UIEl.getValue()).setKey('subrule', value === '1' ? ' ' : false).toString();
 
 			UIEl.node.previousSibling.innerText = newvalue;
 			return UIEl.setValue(newvalue);
 		}
 		so.write = function() {};
+		so.modalonly = true;
+
+		so = ss.option(form.ListValue, 'sub_rule', _('Sub rule'));
+		so.load = function(section_id) {
+			hm.loadSubRuleGroup.call(this, section_id);
+
+			return new RulesEntry(uci.get(data[0], section_id, 'entry')).subrule || '';
+		}
+		so.onchange = function(ev, section_id, value) {
+			var UIEl = this.section.getUIElement(section_id, 'entry');
+
+			var newvalue = new RulesEntry(UIEl.getValue()).setKey('subrule', value).toString();
+
+			UIEl.node.previousSibling.innerText = newvalue;
+			return UIEl.setValue(newvalue);
+		}
 		so.rmempty = false;
-		so.modalonly = true;
-
-		renderPayload(ss, Math.max(...Object.values(hm.rules_logical_payload_count)), data[0]);
-		// dev: Features under development
-		// SUB-RULE
-
-		so = ss.option(form.ListValue, 'detour', _('Proxy group'));
-		so.load = function(section_id) {
-			hm.loadProxyGroupLabel.call(this, hm.preset_outbound.full, section_id);
-
-			return new RulesEntry(uci.get(data[0], section_id, 'entry')).detour;
-		}
-		so.onchange = function(ev, section_id, value) {
-			var UIEl = this.section.getUIElement(section_id, 'entry');
-
-			var newvalue = new RulesEntry(UIEl.getValue()).setKey('detour', value).toString();
-
-			UIEl.node.previousSibling.innerText = newvalue;
-			return UIEl.setValue(newvalue);
-		}
 		so.write = function() {};
-		so.editable = true;
-
-		so = ss.option(form.Flag, 'src', _('src'));
-		so.default = so.disabled;
-		so.load = function(section_id) {
-			return strToFlag(new RulesEntry(uci.get(data[0], section_id, 'entry')).getParam('src'));
-		}
-		so.onchange = function(ev, section_id, value) {
-			var UIEl = this.section.getUIElement(section_id, 'entry');
-
-			var newvalue = new RulesEntry(UIEl.getValue()).setParam('src', flagToStr(value)).toString();
-
-			UIEl.node.previousSibling.innerText = newvalue;
-			UIEl.setValue(newvalue);
-		}
-		so.write = function() {};
-		so.modalonly = true;
-
-		so = ss.option(form.Flag, 'no-resolve', _('no-resolve'));
-		so.default = so.disabled;
-		so.load = function(section_id) {
-			return strToFlag(new RulesEntry(uci.get(data[0], section_id, 'entry')).getParam('no-resolve'));
-		}
-		so.onchange = function(ev, section_id, value) {
-			var UIEl = this.section.getUIElement(section_id, 'entry');
-
-			var newvalue = new RulesEntry(UIEl.getValue()).setParam('no-resolve', flagToStr(value)).toString();
-
-			UIEl.node.previousSibling.innerText = newvalue;
-			UIEl.setValue(newvalue);
-		}
-		so.write = function() {};
+		so.depends('SUB-RULE', '1');
 		so.modalonly = true;
 		/* Routing rules END */
+
+		/* Sub rules START */
+		s.tab('subrules', _('Sub rule'));
+
+		/* Sub rules */
+		o = s.taboption('subrules', form.SectionValue, '_subrules', form.GridSection, 'subrules', null);
+		ss = o.subsection;
+		var prefmt = { 'prefix': '', 'suffix': '_subhost' };
+		ss.addremove = true;
+		ss.rowcolors = true;
+		ss.sortable = true;
+		ss.nodescriptions = true;
+		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('Sub rule'), _('Add a sub rule'));
+		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
+		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, false);
+		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
+
+		so = ss.option(form.Value, 'label', _('Label'));
+		so.load = L.bind(hm.loadDefaultLabel, so);
+		so.validate = L.bind(hm.validateUniqueValue, so);
+		so.modalonly = true;
+
+		so = ss.option(form.Flag, 'enabled', _('Enable'));
+		so.default = so.enabled;
+		so.editable = true;
+
+		so = ss.option(form.Value, 'group', _('Sub rule group'));
+		so.value('sub-rule1');
+		so.rmempty = false;
+		so.validate = L.bind(hm.validateAuthUsername, so);
+		so.editable = true;
+
+		renderRules(ss, data[0]);
+		/* Sub rules END */
 
 		/* DNS settings START */
 		s.tab('dns', _('DNS settings'));

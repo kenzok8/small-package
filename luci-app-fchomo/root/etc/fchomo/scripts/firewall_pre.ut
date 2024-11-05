@@ -8,11 +8,11 @@
 	uci.load(cfgname);
 
 	const proxy_mode = uci.get(cfgname, 'inbound', 'proxy_mode') || 'redir_tproxy';
-	let default_proxy, tun_name;
+	let client_enabled, tun_name;
 	if (match(proxy_mode, /tun/)) {
-		default_proxy = uci.get(cfgname, 'routing', 'default_proxy') || null;
+		client_enabled = uci.get(cfgname, 'routing', 'client_enabled') || '0';
 
-		if (default_proxy)
+		if (client_enabled === '1')
 			tun_name = uci.get(cfgname, 'config', 'tun_name') || 'hmtun0';
 	}
 -%}

@@ -132,11 +132,11 @@ return baseclass.extend({
 		['IP-CIDR'],
 		['IP-CIDR6'],
 		['IP-SUFFIX'],
-		//['IP-ASN'],
+		['IP-ASN'],
 		['GEOIP'],
 
 		['SRC-GEOIP'],
-		//['SRC-IP-ASN'],
+		['SRC-IP-ASN'],
 		['SRC-IP-CIDR'],
 		['SRC-IP-SUFFIX'],
 
@@ -158,6 +158,8 @@ return baseclass.extend({
 		//['DSCP'],
 
 		['RULE-SET'],
+
+		['MATCH']
 	],
 
 	rules_logical_type: [
@@ -442,6 +444,23 @@ return baseclass.extend({
 			if (res.enabled !== '0')
 				if (behaviors ? behaviors.includes(res.behavior) : true)
 					this.value(res['.name'], res.label);
+		});
+
+		return this.super('load', section_id);
+	},
+
+	loadSubRuleGroup: function(section_id) {
+		delete this.keylist;
+		delete this.vallist;
+
+		this.value('', _('-- Please choose --'));
+		let groups = {};
+		uci.sections(this.config, 'subrules', (res) => {
+			if (res.enabled !== '0')
+				groups[res.group] = res.group;
+		});
+		Object.keys(groups).forEach((group) => {
+			this.value(group, group);
 		});
 
 		return this.super('load', section_id);

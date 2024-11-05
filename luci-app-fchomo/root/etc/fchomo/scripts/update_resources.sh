@@ -210,7 +210,7 @@ check_list_update() {
 case "$1" in
 "ALL")
 	# Since the VER_PATH lock is not designed, parallelism is not currently supported.
-	for _type in geoip geosite china_ip4 china_ip6 gfw_list china_list; do
+	for _type in geoip geosite asn china_ip4 china_ip6 gfw_list china_list; do
 		"$0" "$_type"
 	done
 	# dashboard
@@ -232,6 +232,10 @@ case "$1" in
 "geosite")
 	check_geodata_update "$1" "Loyalsoldier/v2ray-rules-dat"
 	;;
+"asn")
+	check_list_update "$1" "Loyalsoldier/geoip" "release" "GeoLite2-ASN.mmdb" &&
+		mv -f "$RESOURCES_DIR/asn.mmdb" "$RESOURCES_DIR/../asn.mmdb"
+	;;
 "china_ip4")
 	check_list_update "$1" "muink/route-list" "release" "china_ipv4.txt"
 	;;
@@ -245,7 +249,7 @@ case "$1" in
 	check_list_update "$1" "muink/route-list" "release" "china_list2.txt"
 	;;
 *)
-	echo -e "Usage: $0 <ALL / dashboard / geoip / geosite / china_ip4 / china_ip6 / gfw_list / china_list>"
+	echo -e "Usage: $0 <ALL / dashboard / geoip / geosite / asn / china_ip4 / china_ip6 / gfw_list / china_list>"
 	exit 1
 	;;
 esac
