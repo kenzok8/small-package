@@ -2,30 +2,39 @@ module("luci.controller.fileassistant", package.seeall)
 
 function index()
 
+    entry({"admin", "nas"}, firstchild(), "NAS", 44).dependent = false
+
     local page
-    page = entry({"admin", "system", "fileassistant"}, template("fileassistant"), _("文件管理"), 50)
+    page = entry({"admin", "nas", "fileassistant"}, template("fileassistant"), _("文件助手"), 1)
     page.i18n = "base"
     page.dependent = true
-    page.acl_depends = { "luci-app-fileassistant" }
 
-    page = entry({"admin", "system", "fileassistant", "list"}, call("fileassistant_list"), nil)     
+    page = entry({"admin", "nas", "fileassistant", "list"}, call("fileassistant_list"), nil)     
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "open"}, call("fileassistant_open"), nil)
+    page = entry({"admin", "nas", "fileassistant", "open"}, call("fileassistant_open"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "delete"}, call("fileassistant_delete"), nil)
+    page = entry({"admin", "nas", "fileassistant", "delete"}, call("fileassistant_delete"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "rename"}, call("fileassistant_rename"), nil)
+    page = entry({"admin", "nas", "fileassistant", "rename"}, call("fileassistant_rename"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "upload"}, call("fileassistant_upload"), nil)
+    page = entry({"admin", "nas", "fileassistant", "upload"}, call("fileassistant_upload"), nil)
     page.leaf = true
 
-    page = entry({"admin", "system", "fileassistant", "install"}, call("fileassistant_install"), nil)
+    page = entry({"admin", "nas", "fileassistant", "install"}, call("fileassistant_install"), nil)
     page.leaf = true
 
+    page = entry({"admin", "nas", "fileassistant", "mkdir"}, call("fileassistant_mkdir"), nil)
+    page.leaf = true
+
+    page = entry({"admin", "nas", "fileassistant", "chmod"}, call("fileassistant_chmod"), nil)
+    page.leaf = true
+
+    page = entry({"admin", "nas", "fileassistant", "chown"}, call("fileassistant_chown"), nil)
+    page.leaf = true
 end
 
 function list_response(path, success)
@@ -109,15 +118,18 @@ function installIPK(filepath)
 end
 
 function fileassistant_upload()
-    local filecontent = luci.http.formvalue("upload-file")
-    local filename = luci.http.formvalue("upload-filename")
-    local uploaddir = luci.http.formvalue("upload-dir")
-    local filepath = uploaddir..filename
-
     local fp
+    -- MUST setfilehandler before formvalue,
+    -- beacuse formvalue will parse form and write body to /tmp if filehandler not present
     luci.http.setfilehandler(
         function(meta, chunk, eof)
             if not fp and meta and meta.name == "upload-file" then
+                local filename = luci.http.formvalue("upload-filename")
+                local uploaddir = luci.http.formvalue("upload-dir")
+                if not uploaddir or not filename then
+                    error("uploaddir or filename is nil")
+                end
+                local filepath = uploaddir..filename
                 fp = io.open(filepath, "w")
             end
             if fp and chunk then
@@ -129,7 +141,28 @@ function fileassistant_upload()
       end
     )
 
-    list_response(uploaddir, true)
+    list_response(luci.http.formvalue("upload-dir"), true)
+end
+
+function fileassistant_mkdir()
+    local path = luci.http.formvalue("path")
+    local dirname = luci.http.formvalue("dirname")
+    local success = os.execute('sh -c \'cd "'..path..'" && mkdir -p "'..dirname..'"\'')
+    list_response(path, success)
+end
+
+function fileassistant_chmod()
+    local path = luci.http.formvalue("filepath")
+    local newmod = luci.http.formvalue("newmod")
+    local success = os.execute('chmod '..newmod..' "'..path..'"')
+    list_response(nixio.fs.dirname(path), success)
+end
+
+function fileassistant_chown()
+    local path = luci.http.formvalue("filepath")
+    local newown = luci.http.formvalue("newown")
+    local success = os.execute('chown '..newown..' "'..path..'"')
+    list_response(nixio.fs.dirname(path), success)
 end
 
 function scandir(directory)
