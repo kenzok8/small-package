@@ -551,7 +551,7 @@ if (isset($_GET['ajax'])) {
         <a href="#" class="col btn btn-lg">🏠 首页</a>
         <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
         <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
-        <a href="/nekobox/mon.php" class="col btn btn-lg d-flex align-items-center justify-content-center"></i>📦 订阅</a> 
+        <a href="./mon.php" class="col btn btn-lg"></i>📦 订阅</a> 
         <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     <div class="container-sm text-center col-8">
   <img src="./assets/img/nekobox.png">
@@ -584,80 +584,127 @@ $(document).ready(function() {
 });
 </script>
 <h2 class="royal-style">NekoBox</h2>
-<table class="table table-borderless mb-2">
-    <tbody>
-        <tr>
-            <style>
-                .btn-group .btn {
-                    width: 100%;
-                }
-            </style>
-            <td>状态</td>
-            <td class="d-grid">
-                <div class="btn-group" role="group" aria-label="ctrl">
-                    <?php
-                    if ($neko_status == 1) {
-                        echo "<button type=\"button\" class=\"btn btn-success\">Mihomo 运行中</button>\n";
-                    } else {
-                        echo "<button type=\"button\" class=\"btn btn-outline-danger\">Mihomo 未运行</button>\n";
-                    }
-                    echo "<button type=\"button\" class=\"btn btn-deepskyblue\">$str_cfg</button>\n";
-                    if ($singbox_status == 1) {
-                        echo "<button type=\"button\" class=\"btn btn-success\">Sing-box 运行中</button>\n";
-                    } else {
-                        echo "<button type=\"button\" class=\"btn btn-outline-danger\">Sing-box 未运行</button>\n";
-                    }
-                    ?>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td>控制</td>
-            <form action="index.php" method="post">
-                <td class="d-grid">
-                    <div class="btn-group" role="group" aria-label="ctrl">
-                        <button type="submit" name="neko" value="start" class="btn btn<?php if ($neko_status == 1) echo "-outline" ?>-success <?php if ($neko_status == 1) echo "disabled" ?>">启用 Mihomo</button>
-                        <button type="submit" name="neko" value="disable" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-danger <?php if ($neko_status == 0) echo "disabled" ?>">停用 Mihomo</button>
-                        <button type="submit" name="neko" value="restart" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-warning <?php if ($neko_status == 0) echo "disabled" ?>">重启 Mihomo</button>
-                    </div>
-                </td>
-            </form>
-            <form action="index.php" method="post">
-                <td class="d-grid">
-                    <select name="config_file" id="config_file" class="form-select" onchange="saveConfigSelection()">
-                        <?php foreach ($availableConfigs as $config): ?>
-                            <option value="<?= htmlspecialchars($config) ?>" <?= isset($_POST['config_file']) && $_POST['config_file'] === $config ? 'selected' : '' ?>>
-                                <?= htmlspecialchars(basename($config)) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div class="btn-group" role="group" aria-label="ctrl">
-                        <button type="submit" name="singbox" value="start" class="btn btn<?php echo ($singbox_status == 1) ? "-outline" : "" ?>-success <?php echo ($singbox_status == 1) ? "disabled" : "" ?>">启用 Sing-box</button>
-                        <button type="submit" name="singbox" value="disable" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-danger <?php echo ($singbox_status == 0) ? "disabled" : "" ?>">停用 Sing-box</button>
-                        <button type="submit" name="singbox" value="restart" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-warning <?php echo ($singbox_status == 0) ? "disabled" : "" ?>">重启 Sing-box</button>
-                    </div>
-                </td>
-            </form>
-        </tr>
-        <tr>
-            <td>运行模式</td>
-            <td class="d-grid">
-                <?php
-                $mode_placeholder = '';
-                if ($neko_status == 1) {
-                    $mode_placeholder = $neko_cfg['echanced'] . " | " . $neko_cfg['mode'];
-                } elseif ($singbox_status == 1) {
-                    $mode_placeholder = "Rule 模式";
-                } else {
-                    $mode_placeholder = "未运行";
-                }
-                ?>
-                <input class="form-control text-center" name="mode" type="text" placeholder="<?php echo $mode_placeholder; ?>" disabled>
-            </td>
-        </tr>
-    </tbody>
-</table>
+<style>
+   .section-container {
+       padding-left: 48px;  
+       padding-right: 48px;
+   }
 
+   .btn-group .btn {
+       width: 120%;
+   }
+
+   .log-container {
+       height: 270px; 
+       overflow-y: auto;
+       overflow-x: hidden;
+       white-space: pre-wrap;
+       word-wrap: break-word;
+   }
+
+   .log-card {
+       margin-bottom: 20px;
+   }
+
+   @media (max-width: 1206px) {
+       td:first-child {
+       display: block;
+       width: 100%;
+       font-weight: bold;
+       margin-bottom: 5px;
+    }
+    
+   td:last-child {
+       display: block;
+       width: 100%;
+   }
+
+   .btn-group .btn {
+       font-size: 0.475rem;
+       white-space: nowrap;
+       padding: 0.375rem 0.5rem;
+   }
+
+   tr {
+       margin-bottom: 15px;
+       display: block;
+   }
+}
+</style>
+<div class="section-container">
+   <table class="table table-borderless mb-2">
+       <tbody>
+           <tr>
+               <td style="width:150px">状态</td>
+               <td class="d-grid">
+                   <div class="btn-group w-100" role="group" aria-label="ctrl">
+                       <?php
+                       if ($neko_status == 1) {
+                           echo "<button type=\"button\" class=\"btn btn-success\">Mihomo 运行中</button>\n";
+                       } else {
+                           echo "<button type=\"button\" class=\"btn btn-outline-danger\">Mihomo 未运行</button>\n";
+                       }
+                       echo "<button type=\"button\" class=\"btn btn-deepskyblue\">$str_cfg</button>\n";
+                       if ($singbox_status == 1) {
+                           echo "<button type=\"button\" class=\"btn btn-success\">Sing-box 运行中</button>\n";
+                       } else {
+                           echo "<button type=\"button\" class=\"btn btn-outline-danger\">Sing-box 未运行</button>\n";
+                       }
+                       ?>
+                   </div>
+               </td>
+           </tr>
+           <tr>
+               <td style="width:150px">控制</td>
+               <td class="d-grid">
+                   <form action="index.php" method="post">
+                       <div class="btn-group w-100">
+                           <button type="submit" name="neko" value="start" class="btn btn<?php if ($neko_status == 1) echo "-outline" ?>-success <?php if ($neko_status == 1) echo "disabled" ?>">启用 Mihomo</button>
+                           <button type="submit" name="neko" value="disable" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-danger <?php if ($neko_status == 0) echo "disabled" ?>">停用 Mihomo</button>
+                           <button type="submit" name="neko" value="restart" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-warning <?php if ($neko_status == 0) echo "disabled" ?>">重启 Mihomo</button>
+                       </div>
+                   </form>
+               </td>
+           </tr>
+           <tr>
+               <td style="width:150px"></td>
+               <td class="d-grid">
+                   <form action="index.php" method="post">
+                       <div class="input-group mb-2">
+                           <select name="config_file" id="config_file" class="form-select" onchange="saveConfigSelection()">
+                               <?php foreach ($availableConfigs as $config): ?>
+                                   <option value="<?= htmlspecialchars($config) ?>" <?= isset($_POST['config_file']) && $_POST['config_file'] === $config ? 'selected' : '' ?>>
+                                       <?= htmlspecialchars(basename($config)) ?>
+                                   </option>
+                               <?php endforeach; ?>
+                           </select>
+                       </div>
+                       <div class="btn-group w-100">
+                           <button type="submit" name="singbox" value="start" class="btn btn<?php echo ($singbox_status == 1) ? "-outline" : "" ?>-success <?php echo ($singbox_status == 1) ? "disabled" : "" ?>">启用 Sing-box</button>
+                           <button type="submit" name="singbox" value="disable" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-danger <?php echo ($singbox_status == 0) ? "disabled" : "" ?>">停用 Sing-box</button>
+                           <button type="submit" name="singbox" value="restart" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-warning <?php echo ($singbox_status == 0) ? "disabled" : "" ?>">重启 Sing-box</button>
+                       </div>
+                   </form>
+               </td>
+           </tr>
+           <tr>
+               <td style="width:150px">运行模式</td>
+               <td class="d-grid">
+                   <?php
+                   $mode_placeholder = '';
+                   if ($neko_status == 1) {
+                       $mode_placeholder = $neko_cfg['echanced'] . " | " . $neko_cfg['mode'];
+                   } elseif ($singbox_status == 1) {
+                       $mode_placeholder = "Rule 模式";
+                   } else {
+                       $mode_placeholder = "未运行";
+                   }
+                   ?>
+                   <input class="form-control text-center" name="mode" type="text" placeholder="<?php echo $mode_placeholder; ?>" disabled>
+               </td>
+           </tr>
+       </tbody>
+   </table>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const savedConfig = localStorage.getItem("configSelection");
@@ -665,83 +712,36 @@ $(document).ready(function() {
             document.getElementById("config_file").value = savedConfig;
         }
     });
-
     function saveConfigSelection() {
         const selectedConfig = document.getElementById("config_file").value;
         localStorage.setItem("configSelection", selectedConfig);
     }
 </script>
-
- <link rel="stylesheet" href="./assets/bootstrap/all.min.css">
- <h2 class="text-center p-2" >系统状态</h2>
+<h2 class="text-center">系统状态</h2>
 <table class="table table-borderless rounded-4 mb-2">
-    <tbody>
-        <tr>
-            <td style="width: 30%;">系统信息</td>
-            <td class="col-7" id="systemInfo"></td>
-        </tr>
-        <tr>
-            <td style="width: 30%;">内存</td>
-            <td class="col-7" id="ramUsage"></td>
-        </tr>
-        <tr>
-            <td style="width: 30%;">平均负载</td>
-            <td class="col-7" id="cpuLoad"></td>
-        </tr>
-        <tr>
-            <td style="width: 30%;">运行时间</td>
-            <td class="col-7" id="uptime"></td>
-        </tr>
-    </tbody>
+   <tbody>
+       <tr>
+           <td style="width:150px">系统信息</td>
+           <td id="systemInfo"></td>
+       </tr>
+       <tr>
+           <td style="width:150px">内存</td>
+           <td id="ramUsage"></td>
+       </tr>
+       <tr>
+           <td style="width:150px">平均负载</td>
+           <td id="cpuLoad"></td>
+       </tr>
+       <tr>
+           <td style="width:150px">运行时间</td>
+           <td id="uptime"></td>
+       </tr>
+       <tr>
+           <td style="width:150px">流量统计</td>
+           <td>⬇️ <span id="downtotal"></span> | ⬆️ <span id="uptotal"></span></td>
+       </tr>
+   </tbody>
 </table>
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-6 col-md-6">
-            <table class="table text-center border-0">
-                <tbody>
-                    <tr>
-                        <td>
-                            <i class="fas fa-microchip" style="font-size: 40px;"></i>
-                            <p>CPU</p>
-                            <p id="cpuLoadAvg1Min">N/A</p>
-                        </td>
-                        <td>
-                            <i class="fas fa-memory" style="font-size: 40px;"></i>
-                            <p>内存</p>
-                            <p id="ramUsageOnly">N/A</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="col-6 col-md-6">
-            <table class="table text-center border-0">
-                <tbody>
-                    <tr>
-                        <td>
-                            <i class="fas fa-download" style="font-size: 40px;"></i>
-                            <p>下载总计</p>
-                            <p id="downtotal">-</p>
-                        </td>
-                        <td>
-                            <i class="fas fa-upload" style="font-size: 40px;"></i>
-                            <p>上传总计</p>
-                            <p id="uptotal">-</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<style>
-    .table {
-        border: none !important; 
-    }
-    .table td {
-        border: none !important; 
-    }
-</style>
     <script>
         function fetchSystemStatus() {
             fetch('?ajax=1')
@@ -756,90 +756,56 @@ $(document).ready(function() {
                 })
                 .catch(error => console.error('Error fetching data:', error));
         }
-
         setInterval(fetchSystemStatus, 1000);
-
         fetchSystemStatus();
     </script>
-
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        .log-container {
-            height: 270px; 
-            overflow-y: auto;
-            overflow-x: hidden;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        .log-card {
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <h2 class="text-center my-4">日志</h2>
-    <div class="container">
-        <div class="row">
-            <div class="col-12"> 
-                <div class="card log-card">
-                    <div class="card-header">
-                        <h4 class="card-title text-center mb-0">NeKoBox 日志</h4>
-                    </div>
-                    <div class="card-body">
-                        <pre id="plugin_log" class="log-container form-control"></pre>
-                    </div>
-                    <div class="card-footer text-center">
-                        <form action="index.php" method="post">
-                            <button type="submit" name="clear_plugin_log" class="btn btn-danger">🗑️ 清空日志</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="card log-card">
-                    <div class="card-header">
-                        <h4 class="card-title text-center mb-0">Mihomo 日志</h4>
-                    </div>
-                    <div class="card-body">
-                        <pre id="bin_logs" class="log-container form-control"></pre>
-                    </div>
-                    <div class="card-footer text-center">
-                        <form action="index.php" method="post">
-                            <button type="submit" name="neko" value="clear" class="btn btn-danger">🗑️ 清空日志</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="card log-card">
-                    <div class="card-header">
-                        <h4 class="card-title text-center mb-0">Sing-box 日志</h4>
-                    </div>
-                    <div class="card-body">
-                        <pre id="singbox_log" class="log-container form-control"></pre>
-                    </div>
-                    <div class="card-footer text-center">
-                        <form action="index.php" method="post" class="d-inline-block">
-                            <div class="form-check form-check-inline mb-2">
-                                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
-                                <label class="form-check-label" for="autoRefresh">自动刷新</label>
-                            </div>
-                            <button type="submit" name="clear_singbox_log" class="btn btn-danger">🗑️ 清空日志</button>
-                            <button type="submit" name="update_log" value="update" class="btn btn-primary">🔄 更新时区</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+ <h2 class="text-center">日志</h2>
+<div class="card log-card">
+    <div class="card-header">
+        <h4 class="card-title text-center mb-0">NeKoBox 日志</h4>
     </div>
+    <div class="card-body">
+        <pre id="plugin_log" class="log-container form-control"></pre>
+    </div>
+    <div class="card-footer text-center">
+        <form action="index.php" method="post">
+            <button type="submit" name="clear_plugin_log" class="btn btn-danger">🗑️ 清空日志</button>
+        </form>
+    </div>
+</div>
+
+<div class="card log-card">
+    <div class="card-header">
+        <h4 class="card-title text-center mb-0">Mihomo 日志</h4>
+    </div>
+    <div class="card-body">
+        <pre id="bin_logs" class="log-container form-control"></pre>
+    </div>
+    <div class="card-footer text-center">
+        <form action="index.php" method="post">
+            <button type="submit" name="neko" value="clear" class="btn btn-danger">🗑️ 清空日志</button>
+        </form>
+    </div>
+</div>
+
+<div class="card log-card">
+    <div class="card-header">
+        <h4 class="card-title text-center mb-0">Sing-box 日志</h4>
+    </div>
+    <div class="card-body">
+        <pre id="singbox_log" class="log-container form-control"></pre>
+    </div>
+    <div class="card-footer text-center">
+        <form action="index.php" method="post" class="d-inline-block">
+            <div class="form-check form-check-inline mb-2">
+                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                <label class="form-check-label" for="autoRefresh">自动刷新</label>
+            </div>
+            <button type="submit" name="clear_singbox_log" class="btn btn-danger">🗑️ 清空日志</button>
+            <button type="submit" name="update_log" value="update" class="btn btn-primary">🔄 更新时区</button>
+        </form>
+    </div>
+</div>
 
 <?php
 if (isset($_POST['update_log'])) {
@@ -858,14 +824,12 @@ if (isset($_POST['update_log'])) {
     }
 }
 ?>
-
 <script src="./assets/js/bootstrap.bundle.min.js"></script>
 <script>
     function scrollToBottom(elementId) {
         var logElement = document.getElementById(elementId);
         logElement.scrollTop = logElement.scrollHeight;
     }
-
     function fetchLogs() {
         if (!document.getElementById('autoRefresh').checked) {
             return;
@@ -886,10 +850,8 @@ if (isset($_POST['update_log'])) {
         })
         .catch(err => console.error('Error fetching logs:', err));
     }
-
     fetchLogs();
     let intervalId = setInterval(fetchLogs, 5000);
-
     document.getElementById('autoRefresh').addEventListener('change', function() {
         if (this.checked) {
             intervalId = setInterval(fetchLogs, 5000);
@@ -898,6 +860,28 @@ if (isset($_POST['update_log'])) {
         }
     });
 </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const autoRefreshCheckbox = document.getElementById('autoRefresh');
+        const isChecked = localStorage.getItem('autoRefresh') === 'true';
+        autoRefreshCheckbox.checked = isChecked;
+
+        if (isChecked) {
+            intervalId = setInterval(fetchLogs, 5000);
+        }
+    });
+
+    document.getElementById('autoRefresh').addEventListener('change', function() {
+        localStorage.setItem('autoRefresh', this.checked);
+        if (this.checked) {
+            intervalId = setInterval(fetchLogs, 5000);
+        } else {
+            clearInterval(intervalId);
+        }
+    });
+</script>
+
 </body>
 </html>
     <footer class="text-center">
