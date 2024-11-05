@@ -23,6 +23,7 @@ define Package/luci-app-fchomo/conffiles
 /etc/fchomo/resources.json
 /etc/fchomo/geoip.dat
 /etc/fchomo/geosite.dat
+/etc/fchomo/asn.mmdb
 /etc/fchomo/cache.db
 endef
 

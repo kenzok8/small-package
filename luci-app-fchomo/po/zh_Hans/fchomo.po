@@ -76,6 +76,10 @@ msgstr "API TLS 私钥"
 msgid "API secret"
 msgstr "API 令牌"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:262
+msgid "ASN version"
+msgstr "ASN 版本"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:562
 #: htdocs/luci-static/resources/view/fchomo/global.js:612
 msgid "Access Control"
@@ -92,6 +96,10 @@ msgstr "新增 DNS 服务器"
 #: htdocs/luci-static/resources/view/fchomo/node.js:35
 msgid "Add a Node"
 msgstr "新增 节点"
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:717
+msgid "Add a sub rule"
+msgstr "新增 子规则"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:67
 msgid "Add a provider"
@@ -1518,6 +1526,18 @@ msgstr "堆栈"
 #: htdocs/luci-static/resources/view/fchomo/client.js:474
 msgid "Strategy"
 msgstr "策略"
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:646
+msgid "SUB-RULE"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:664
+msgid "Sub rule"
+msgstr "子规则"
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:731
+msgid "Sub rule group"
+msgstr "子规则组"
 
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:140
 msgid "Successfully imported %s rule-set of total %s."

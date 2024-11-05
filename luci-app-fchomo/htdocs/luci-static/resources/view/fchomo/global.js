@@ -259,6 +259,9 @@ return view.extend({
 		so = ss.option(form.DummyValue, '_geosite_version', _('GeoSite version'));
 		so.cfgvalue = function() { return renderResVersion.call(this, null, 'geosite') };
 
+		so = ss.option(form.DummyValue, '_asn_version', _('ASN version'));
+		so.cfgvalue = function() { return renderResVersion.call(this, null, 'asn') };
+
 		so = ss.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
 		so.cfgvalue = function() { return renderResVersion.call(this, null, 'china_ip4') };
 

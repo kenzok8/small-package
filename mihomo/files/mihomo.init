@@ -8,8 +8,8 @@ USE_PROCD=1
 . "$IPKG_INSTROOT/etc/mihomo/scripts/constants.sh"
 
 boot() {
-	# init log
-	init_log
+	# prepare log
+	prepare_log
 	# load config
 	config_load mihomo
 	# start delay
@@ -25,8 +25,8 @@ boot() {
 }
 
 start_service() {
-	# clear log
-	clear_log
+	# prepare log
+	prepare_log
 	# load config
 	config_load mihomo
 	# check if enabled
@@ -480,15 +480,20 @@ cleanup() {
 	/etc/init.d/cron restart
 }
 
-init_log() {
-	mkdir "$LOG_DIR"
-	touch "$APP_LOG_PATH"
-	touch "$CORE_LOG_PATH"
-}
-
-clear_log() {
-	echo -n > "$APP_LOG_PATH"
-	echo -n > "$CORE_LOG_PATH"
+prepare_log() {
+	if [ ! -d "$LOG_DIR" ]; then
+		mkdir -p "$LOG_DIR"
+	fi
+	if [ ! -f "$APP_LOG_PATH" ]; then
+		touch "$APP_LOG_PATH"
+	else
+		echo -n > "$APP_LOG_PATH"
+	fi
+	if [ ! -f "$CORE_LOG_PATH" ]; then
+		touch "$CORE_LOG_PATH"
+	else
+		echo -n > "$CORE_LOG_PATH"
+	fi
 }
 
 log() {

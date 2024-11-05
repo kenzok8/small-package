@@ -40,7 +40,8 @@ const ucisniff = 'sniff',
       ucipgrp = 'proxy_group',
       uciprov = 'provider',
       ucirule = 'ruleset',
-      ucirout = 'rules';
+      ucirout = 'rules',
+      ucisubro = 'subrules';
 
 /* Hardcode options */
 const common_tcpport = uci.get(uciconf, ucifchm, 'common_tcpport') || '20-21,22,53,80,110,143,443,465,853,873,993,995,8080,8443,9418',
@@ -68,7 +69,7 @@ const listen_interfaces = uci.get(uciconf, uciroute, 'listen_interfaces') || nul
       lan_proxy_ipv6_ips = uci.get(uciconf, uciroute, 'lan_proxy_ipv6_ips') || null,
       lan_proxy_mac_addrs = uci.get(uciconf, uciroute, 'lan_proxy_mac_addrs') || null,
       proxy_router = (uci.get(uciconf, uciroute, 'proxy_router') === '0') ? null : true,
-      default_proxy = uci.get(uciconf, uciroute, 'default_proxy') || null,
+      client_enabled = uci.get(uciconf, uciroute, 'client_enabled') || '0',
       routing_tcpport = uci.get(uciconf, uciroute, 'routing_tcpport') || null,
       routing_udpport = uci.get(uciconf, uciroute, 'routing_udpport') || null,
       routing_mode = uci.get(uciconf, uciroute, 'routing_mode') || null,
@@ -153,6 +154,24 @@ function get_nameserver(cfg, detour) {
 	}
 
 	return servers;
+}
+
+function parse_entry(cfg) {
+	if (isEmpty(cfg))
+		return null;
+
+	let arr = split(cfg, ',');
+	if (arr[0] === 'MATCH') {
+		arr[1] = get_proxygroup(arr[1]);
+	} else if (arr[0] === 'SUB-RULE') {
+		arr[1] = replace(arr[1], /ꓹ|‚/g, ','); // U+A4F9 | U+201A
+		arr[2] = replace(arr[2], /ꓹ|‚/g, ','); // U+A4F9 | U+201A
+	} else {
+		arr[1] = replace(arr[1], /ꓹ|‚/g, ','); // U+A4F9 | U+201A
+		arr[2] = get_proxygroup(arr[2]);
+	}
+
+	return join(',', arr);
 }
 /* Config helper END */
 
@@ -529,14 +548,21 @@ uci.foreach(uciconf, ucirout, (cfg) => {
 	if (cfg.enabled === '0')
 		return null;
 
-	push(config.rules, function(arr) {
-			arr[1] = replace(arr[1], /ꓹ|‚/g, ','); // U+A4F9 | U+201A
-			arr[2] = get_proxygroup(arr[2]);
-			return join(',', arr);
-		}(split(cfg.entry, ','))
-	);
+	push(config.rules, parse_entry(cfg.entry));
 });
-push(config.rules, 'MATCH,' + get_proxygroup(default_proxy));
 /* Routing rules END */
+
+/* Sub rules START */
+/* Sub rules */
+config["sub-rules"] = {};
+uci.foreach(uciconf, ucisubro, (cfg) => {
+	if (cfg.enabled === '0')
+		return null;
+
+	if (!config["sub-rules"][cfg.group])
+		config["sub-rules"][cfg.group] = [];
+	push(config["sub-rules"][cfg.group], parse_entry(cfg.entry));
+});
+/* Sub rules END */
 
 printf('%.J\n', removeBlankAttrs(config));

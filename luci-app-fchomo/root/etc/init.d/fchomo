@@ -70,19 +70,19 @@ log() {
 }
 
 start_service() {
-	local default_proxy server_enabled server_auto_firewall
-	config_get default_proxy "routing" "default_proxy" ""
+	local client_enabled server_enabled server_auto_firewall
+	config_get client_enabled "routing" "client_enabled" "0"
 	config_get_bool server_enabled "routing" "server_enabled" "0"
 	config_get_bool server_auto_firewall "routing" "server_auto_firewall" "0"
 
-	if [ -z "$default_proxy" -a "$server_enabled" = "0" ]; then
+	if [ "$client_enabled" = "0" -a "$server_enabled" = "0" ]; then
 		return 1
 	fi
 
 	mkdir -p "$RUN_DIR"
 
 	# Client
-	if [ -n "$default_proxy" ]; then
+	if [ "$client_enabled" = "1" ]; then
 	if [ -z "$1" -o "$1" = "mihomo-c" ]; then
 		# Generate/Validate client config
 		ucode -S "$HM_DIR/scripts/generate_client.uc" 2>>"$LOG_PATH" | yq -Poy | yq \
@@ -317,7 +317,7 @@ start_service() {
 	# Setup firewall
 	utpl -S "$HM_DIR/scripts/firewall_pre.ut" > "$RUN_DIR/fchomo_pre.nft"
 	# Setup Nftables rules
-	if [ -n "$default_proxy" ]; then
+	if [ "$client_enabled" = "1" ]; then
 		[ -z "$1" -o "$1" = "mihomo-c" ] && utpl -S "$HM_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fchomo_post.nft"
 	fi
 	fw4 reload >"/dev/null" 2>&1
