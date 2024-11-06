@@ -82,117 +82,141 @@ $uiVersion = getUiVersion();
             <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
             <a href="/nekobox/mon.php" class="col btn btn-lg d-flex align-items-center justify-content-center"></i>📦 订阅</a> 
             <a href="#" class="col btn btn-lg">🛠️ 设定</a>
-        <h2 class="text-center p-2 mb-3">主题设定</h2>
-        <form action="settings.php" method="post">
-            <div class="container text-center justify-content-md-center">
+         <div class="container px-4">
+    <h2 class="text-center p-2 mb-3">主题设定</h2>
+    <form action="settings.php" method="post">
+        <div class="text-center justify-content-md-center">
+            <div class="row justify-content-md-center">
+                <div class="col mb-3 justify-content-md-center">
+                    <select class="form-select" name="themechange" aria-label="themex">
+                        <option selected>Change Theme (<?php echo $neko_theme ?>)</option>
+                        <?php foreach ($arrFiles as $file) echo "<option value=\"".$file.'">'.$file."</option>" ?>
+                    </select>
+                </div>
                 <div class="row justify-content-md-center">
-                    <div class="col mb-3 justify-content-md-center">
-                        <select class="form-select" name="themechange" aria-label="themex">
-                            <option selected>Change Theme (<?php echo $neko_theme ?>)</option>
-                            <?php foreach ($arrFiles as $file) echo "<option value=\"".$file.'">'.$file."</option>" ?>
-                        </select>
-                    </div>
-                    <div class="row justify-content-md-center">
-                        <div class="col justify-content-md-center mb-3">
-                            <input class="btn btn-info" type="submit" value="🖫 更改主题">
-                        </div>
+                    <div class="col justify-content-md-center mb-3">
+                        <input class="btn btn-info" type="submit" value="🖫 更改主题">
                     </div>
                 </div>
             </div>
-        </form>
-        <h2 class="text-center p-2 mb-3">软体资讯</h2>
-        <table class="table table-borderless mb-3">
-            <tbody>
-                <tr>
-                    <td colspan="2">
-                        <h3 class="text-center mb-3">自动重载防火墙</h3>
-                        <form action="settings.php" method="post">
-                            <div class="btn-group d-flex justify-content-center">
-                                <button type="submit" name="fw" value="enable" class="btn btn<?php if($fwstatus==1) echo "-outline" ?>-success <?php if($fwstatus==1) echo "disabled" ?>">启用</button>
-                                <button type="submit" name="fw" value="disable" class="btn btn<?php if($fwstatus==0) echo "-outline" ?>-danger <?php if($fwstatus==0) echo "disabled" ?>">停用</button>
-                            </div>
-                        </form>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div class="text-center">
-                                    <h3>客户端版本</h3>
-                                    <div class="form-control text-center" style="font-family: monospace; text-align: center;">
-                                        <span id="cliver"></span>&nbsp;<span id="NewCliver"> </span>
-                                    </div>
-                                    <div class="text-center mt-2">
-                                        <button class="btn btn-pink" id="checkCliverButton">🔍 检测版本</button>
-                                        <button class="btn btn-info" id="updateButton" title="更新到最新版本">🔄 更新版本</button>
-                                    </div>
+        </div>
+    </form>   
+    <div class="card mb-4">
+    <div class="card-body"> 
+    <table class="table table-borderless mb-3">
+        <tbody>
+            <tr>
+                <td colspan="2">
+                    <h2 class="text-center mb-3">自动重载防火墙</h2>
+                    <form action="settings.php" method="post">
+                        <div class="btn-group d-flex justify-content-center">
+                            <button type="submit" name="fw" value="enable" class="btn btn<?php if($fwstatus==1) echo "-outline" ?>-success <?php if($fwstatus==1) echo "disabled" ?>">启用</button>
+                            <button type="submit" name="fw" value="disable" class="btn btn<?php if($fwstatus==0) echo "-outline" ?>-danger <?php if($fwstatus==0) echo "disabled" ?>">停用</button>
+                        </div>
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div class="row g-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="text-center">
+                                <h3>客户端版本</h3>
+                                <div class="form-control text-center" style="font-family: monospace; text-align: center;">
+                                    <span id="cliver"></span>&nbsp;<span id="NewCliver"> </span>
                                 </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="text-center">
-                                    <h3>Metacubexd 面板</h3>
-                                    <div class="form-control text-center">
-                                        <?php echo htmlspecialchars($uiVersion); ?>&nbsp;<span id="NewUi"> </span>
-                                    </div>
-                                    <div class="text-center mt-2">
-                                        <button class="btn btn-pink" id="checkUiButton">🔍 检测版本</button> 
-                                        <button class="btn btn-info" id="updateUiButton" title="更新 Metacubexd 面板">🔄 更新版本</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="text-center">
-                                    <h3>Sing-box 核心版本</h3>
-                                    <div class="form-control text-center">
-                                        <div id="singBoxCorever">
-                                            <?php echo htmlspecialchars($singBoxVersion); ?>&nbsp;<span id="NewSingbox"></span>
-                                        </div>
-                                    </div>
-                                    <div class="text-center mt-2">
-                                        <button class="btn btn-pink" id="checkSingboxButton">🔍 检测版本</button>
-                                        <button class="btn btn-success" id="updatePuernyaButton" title="切换 Puernya 内核">🔄 切换内核</button>
-                                        <button class="btn btn-primary" id="updateRuleButton" title="更新 Singbox 规则集<配合 Puernya 内核可以使用 Singbox 的配置文件和本地规则集>">🔄 更新规则</button>
-                                        <button class="btn btn-info" id="updateSingboxButton" title="更新 Singbox 内核">🔄 更新版本</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="text-center">
-                                    <h3>Mihomo 核心版本</h3>
-                                    <div class="form-control text-center">
-                                        <span id="corever"></span>&nbsp;<span id="NewMihomo"> </span>
-                                    </div>
-                                    <div class="text-center mt-2">
-                                        <button class="btn btn-pink" id="checkMihomoButton">🔍 检测版本</button> 
-                                        <button id="updateConfigButton" class="btn btn-primary" title="更新 Mihomo 配置文件">🔄 更新配置</button>
-                                        <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核">🔄 更新版本</button>
-                                    </div>
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-pink" id="checkCliverButton">🔍 检测版本</button>
+                                    <button class="btn btn-info" id="updateButton" title="更新到最新版本">🔄 更新版本</button>
                                 </div>
                             </div>
                         </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-   <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-       <div class="modal-dialog modal-lg" role="document">
-           <div class="modal-content">
-               <div class="modal-header">
-                   <h5 class="modal-title" id="updateModalLabel">更新状态</h5>
-                   <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                       <span aria-hidden="true">&times;</span>
-                   </button>
-               </div>
-               <div class="modal-body text-center"> 
-                   <pre id="logOutput" style="white-space: pre-wrap; word-wrap: break-word; text-align: left; display: inline-block;">开始下载更新...</pre>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-center">
+                                <h3>Metacubexd 面板</h3>
+                                <div class="form-control text-center">
+                                    <?php echo htmlspecialchars($uiVersion); ?>&nbsp;<span id="NewUi"> </span>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-pink" id="checkUiButton">🔍 检测版本</button> 
+                                    <button class="btn btn-info" id="updateUiButton" title="更新 Metacubexd 面板">🔄 更新版本</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-center">
+                                <h3>Sing-box 核心版本</h3>
+                                <div class="form-control text-center">
+                                    <div id="singBoxCorever">
+                                        <?php echo htmlspecialchars($singBoxVersion); ?>&nbsp;<span id="NewSingbox"></span>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-pink" id="checkSingboxButton">🔍 检测版本</button>
+                                    <button class="btn btn-info" id="singboxOptionsButton" title="Singbox 相关操作">🔄 更新版本</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-center">
+                                <h3>Mihomo 核心版本</h3>
+                                <div class="form-control text-center">
+                                    <span id="corever"></span>&nbsp;<span id="NewMihomo"> </span>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-pink" id="checkMihomoButton">🔍 检测版本</button> 
+                                    <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核">🔄 更新版本</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+<div class="modal fade" id="optionsModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="optionsModalLabel">选择操作</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-info" onclick="selectOperation('singbox')">更新 Singbox 内核（官方稳定版）</button>
+                    <button class="btn btn-success" onclick="selectOperation('sing-box')">更新 Singbox 内核（未编译版本）</button>
+                    <button class="btn btn-success" onclick="selectOperation('puernya')">切换 Puernya 内核</button>
+                    <button class="btn btn-primary" onclick="selectOperation('rule')">更新 Singbox 规则集</button>
+                    <button class="btn btn-primary" onclick="selectOperation('config')">更新 Mihomo 配置文件</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateModalLabel">更新状态</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="updateDescription" class="alert alert-info mb-3"></div>
+                <pre id="logOutput" style="white-space: pre-wrap; word-wrap: break-word; text-align: left; display: inline-block;">等待操作开始...</pre>
                 <div class="alert alert-info mt-3" role="alert">
                     提示: 如遇到更新失败，请在终端输入 <code>nekobox</code> 进行更新！
-               </div>
-           </div>
-       </div>
-   </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 <div id="logOutput" class="mt-3"></div>
 
 <style>
@@ -235,89 +259,97 @@ $uiVersion = getUiVersion();
         }
     }
 
-    #updateButton:hover {
-        background-color: #20B2AA;
-    }
-
-    #updateSingboxButton:hover {
-        background-color: #FF69B4;
-    }
-
-    #updateCoreButton:hover {
-        background-color: #90EE90;
-    }
-
-    #updatePuernyaButton:hover {
-        background-color: #87CEFA;
-    }
-
-    #updateModal #logOutput {
-        font-family: 'Courier New', monospace;
-        font-size: 1rem;
-        color: #333;
-    }
-
 </style>
 
 <script>
-    function initiateUpdate(url, logMessage) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', url, true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-        $('#updateModal').modal('show');
-        document.getElementById('logOutput').textContent = logMessage;
-
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                document.getElementById('logOutput').textContent += '\n更新完成！';
-                document.getElementById('logOutput').textContent += '\n' + xhr.responseText;
-
-                setTimeout(function() {
-                    $('#updateModal').modal('hide');
-                    setTimeout(function() {
-                        location.reload();
-                    }, 500); 
-                }, 10000);
-            } else {
-                document.getElementById('logOutput').textContent += '\n发生错误：' + xhr.statusText;
-            }
-        };
-
-        xhr.onerror = function() {
-            document.getElementById('logOutput').textContent += '\n网络错误，请稍后再试。';
-        };
-
-        xhr.send();
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('singboxOptionsButton').addEventListener('click', function() {
+        $('#optionsModal').modal('show');
+    });
 
     document.getElementById('updateButton').addEventListener('click', function() {
-        initiateUpdate('update_script.php', '开始下载更新...');
-    });
-
-    document.getElementById('updateSingboxButton').addEventListener('click', function() {
-        initiateUpdate('singbox.php', '开始下载 Singbox 核心更新...');
-    });
-
-    document.getElementById('updatePuernyaButton').addEventListener('click', function() {
-        initiateUpdate('puernya.php', '开始下载 Puernya 核心更新...');
-    });
-
-    document.getElementById('updateCoreButton').addEventListener('click', function() {
-        initiateUpdate('core.php', '开始下载 Mihomo 核心更新...');
+        initiateUpdate('update_script.php', '开始下载客户端更新...', '正在更新客户端到最新版本');
     });
 
     document.getElementById('updateUiButton').addEventListener('click', function() {
-        initiateUpdate('ui.php', '开始下载 UI 面板更新...');
+        initiateUpdate('ui.php', '开始下载 UI 面板更新...', '正在更新 Metacubexd 面板到最新版本');
     });
 
-    document.getElementById('updateConfigButton').addEventListener('click', function() {
-        initiateUpdate('update_config.php', '开始下载 Mihomo 配置文件更新...');
+    document.getElementById('updateCoreButton').addEventListener('click', function() {
+        initiateUpdate('core.php', '开始下载 Mihomo 核心更新...', '正在更新 Mihomo 核心到最新版本');
     });
+});
 
-    document.getElementById('updateRuleButton').addEventListener('click', function() {
-        initiateUpdate('update_rule.php', '开始下载 Singbox 规则集更新...');
-    });
+function selectOperation(type) {
+    $('#optionsModal').modal('hide');
+    
+    const operations = {
+        'singbox': {
+            url: 'update_singbox_core.php',
+            message: '开始下载 Singbox 核心更新...',
+            description: '正在更新 Singbox 核心到最新版本'
+        },
+        'sing-box': {
+            url: 'singbox.php',
+            message: '开始下载 Singbox 核心更新...',
+            description: '正在更新 Singbox 核心到最新版本'
+        },
+        'puernya': {
+            url: 'puernya.php',
+            message: '开始切换 Puernya 核心...',
+            description: '正在切换到 Puernya 内核，此操作将替换当前的 Singbox 核心'
+        },
+        'rule': {
+            url: 'update_rule.php',
+            message: '开始下载 Singbox 规则集...',
+            description: '正在更新 Singbox 规则集，配合 Puernya 内核可以使用 Singbox 的配置文件和本地规则集'
+        },
+        'config': {
+            url: 'update_config.php',
+            message: '开始下载 Mihomo 配置文件...',
+            description: '正在更新 Mihomo 配置文件到最新版本'
+        }
+    };
+
+    const operation = operations[type];
+    if (operation) {
+        setTimeout(function() {
+            initiateUpdate(operation.url, operation.message, operation.description);
+        }, 500);
+    }
+}
+
+function initiateUpdate(url, logMessage, description) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+    $('#updateModal').modal('show');
+    document.getElementById('updateDescription').textContent = description;
+    document.getElementById('logOutput').textContent = logMessage;
+
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            document.getElementById('logOutput').textContent += '\n更新完成！';
+            document.getElementById('logOutput').textContent += '\n' + xhr.responseText;
+
+            setTimeout(function() {
+                $('#updateModal').modal('hide');
+                setTimeout(function() {
+                    location.reload();
+                }, 500);
+            }, 10000);
+        } else {
+            document.getElementById('logOutput').textContent += '\n发生错误：' + xhr.statusText;
+        }
+    };
+
+    xhr.onerror = function() {
+        document.getElementById('logOutput').textContent += '\n网络错误，请稍后再试。';
+    };
+
+    xhr.send();
+}
 </script>
 
 <script>
@@ -358,23 +390,23 @@ $uiVersion = getUiVersion();
 
 <script>
     function compareVersions(v1, v2) {
-        const v1parts = v1.split(/[-.]/).filter(x => x !== 'alpha' && x !== 'beta');
-        const v2parts = v2.split(/[-.]/).filter(x => x !== 'alpha' && x !== 'beta');
+        const v1parts = v1.split(/[-.]/).filter(x => !isNaN(x)); 
+        const v2parts = v2.split(/[-.]/).filter(x => !isNaN(x)); 
         
         for (let i = 0; i < Math.max(v1parts.length, v2parts.length); ++i) {
-            const v1part = parseInt(v1parts[i]) || 0;
-            const v2part = parseInt(v2parts[i]) || 0;
+            const v1part = parseInt(v1parts[i]) || 0;  
+            const v2part = parseInt(v2parts[i]) || 0;  
             
             if (v1part > v2part) return 1;
             if (v1part < v2part) return -1;
         }
         
-        return 0;
+        return 0; 
     }
 
     function checkSingboxVersion() {
         var currentVersion = '<?php echo getSingboxVersion(); ?>';
-        var minVersion = '1.10.0';
+        var minVersion = '1.10.0'; 
         
         if (compareVersions(currentVersion, minVersion) >= 0) {
             return;
@@ -480,6 +512,10 @@ $uiVersion = getUiVersion();
             padding: 10px;
             text-decoration: none;
             color: #000000;
+        }
+        .container {
+            padding-left: 10px;
+            padding-right: 10px;
         }
     </style>
 </head>
