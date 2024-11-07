@@ -2,97 +2,202 @@
 ob_start();
 include './cfg.php';
 $translate = [
-    'United States' => '美国',
-    'China' => '中国',
-    'ISP' => '互联网服务提供商',
-    'Japan' => '日本',
-    'South Korea' => '韩国',
-    'Germany' => '德国',
-    'France' => '法国',
-    'United Kingdom' => '英国',
-    'Canada' => '加拿大',
+    'Argentina' => '阿根廷',
     'Australia' => '澳大利亚',
-    'Russia' => '俄罗斯',
-    'India' => '印度',
+    'Austria' => '奥地利',
+    'Belgium' => '比利时',
     'Brazil' => '巴西',
-    'Netherlands' => '荷兰',
-    'Singapore' => '新加坡',
-    'Hong Kong' => '香港',
-    'Saudi Arabia' => '沙特阿拉伯',
-    'Turkey' => '土耳其',
-    'Italy' => '意大利',
-    'Spain' => '西班牙',
-    'Thailand' => '泰国',
-    'Malaysia' => '马来西亚',
+    'Canada' => '加拿大',
+    'Chile' => '智利',
+    'China' => '中国',
+    'Colombia' => '哥伦比亚',
+    'Denmark' => '丹麦',
+    'Egypt' => '埃及',
+    'Finland' => '芬兰',
+    'France' => '法国',
+    'Germany' => '德国',
+    'Greece' => '希腊',
+    'Hong Kong' => '中国香港',
+    'India' => '印度',
     'Indonesia' => '印度尼西亚',
-    'South Africa' => '南非',
-    'Mexico' => '墨西哥',
+    'Iran' => '伊朗',
+    'Ireland' => '爱尔兰',
     'Israel' => '以色列',
+    'Italy' => '意大利',
+    'Japan' => '日本',
+    'Kazakhstan' => '哈萨克斯坦',
+    'Kenya' => '肯尼亚',
+    'Macao' => '中国澳门',
+    'Malaysia' => '马来西亚',
+    'Mexico' => '墨西哥',
+    'Morocco' => '摩洛哥',
+    'The Netherlands' => '荷兰',
+    'New Zealand' => '新西兰',
+    'Nigeria' => '尼日利亚',
+    'Norway' => '挪威',
+    'Pakistan' => '巴基斯坦',
+    'Philippines' => '菲律宾',
+    'Poland' => '波兰',
+    'Portugal' => '葡萄牙',
+    'Russia' => '俄罗斯',
+    'Saudi Arabia' => '沙特阿拉伯',
+    'Singapore' => '新加坡',
+    'South Africa' => '南非',
+    'South Korea' => '韩国',
+    'Spain' => '西班牙',
     'Sweden' => '瑞典',
     'Switzerland' => '瑞士',
-    'Norway' => '挪威',
-    'Denmark' => '丹麦',
-    'Belgium' => '比利时',
-    'Finland' => '芬兰',
-    'Poland' => '波兰',
-    'Austria' => '奥地利',
-    'Greece' => '希腊',
-    'Portugal' => '葡萄牙',
-    'Ireland' => '爱尔兰',
-    'New Zealand' => '新西兰',
+    'Taiwan' => '中国台湾',
+    'Thailand' => '泰国',
+    'Turkey' => '土耳其',
     'United Arab Emirates' => '阿拉伯联合酋长国',
-    'Argentina' => '阿根廷',
-    'Chile' => '智利',
-    'Colombia' => '哥伦比亚',
-    'Philippines' => '菲律宾',
+    'United Kingdom' => '英国',
+    'United States' => '美国',
     'Vietnam' => '越南',
-    'Pakistan' => '巴基斯坦',
-    'Egypt' => '埃及',
-    'Nigeria' => '尼日利亚',
-    'Kenya' => '肯尼亚',
+    'Afghanistan' => '阿富汗',
+    'Albania' => '阿尔巴尼亚',
+    'Armenia' => '亚美尼亚',
+    'Bahrain' => '巴林',
+    'Bangladesh' => '孟加拉国',
+    'Barbados' => '巴巴多斯',
+    'Belarus' => '白俄罗斯',
+    'Bhutan' => '不丹',
+    'Bolivia' => '玻利维亚',
+    'Bosnia and Herzegovina' => '波斯尼亚和黑塞哥维那',
+    'Botswana' => '博茨瓦纳',
+    'Brunei' => '文莱',
+    'Bulgaria' => '保加利亚',
+    'Burkina Faso' => '布基纳法索',
+    'Burundi' => '布隆迪',
+    'Cambodia' => '柬埔寨',
+    'Cameroon' => '喀麦隆',
+    'Central African Republic' => '中非共和国',
+    'Chad' => '乍得',
+    'Comoros' => '科摩罗',
+    'Congo' => '刚果',
+    'Czech Republic' => '捷克共和国',
+    'Dominica' => '多米尼加',
+    'Dominican Republic' => '多米尼加共和国',
+    'Ecuador' => '厄瓜多尔',
+    'El Salvador' => '萨尔瓦多',
+    'Equatorial Guinea' => '赤道几内亚',
+    'Ethiopia' => '埃塞俄比亚',
+    'Fiji' => '斐济',
+    'Gabon' => '加蓬',
+    'Gambia' => '冈比亚',
+    'Georgia' => '格鲁吉亚',
+    'Ghana' => '加纳',
+    'Grenada' => '格林纳达',
+    'Guatemala' => '危地马拉',
+    'Guinea' => '几内亚',
+    'Guinea-Bissau' => '几内亚比绍',
+    'Haiti' => '海地',
+    'Honduras' => '洪都拉斯',
+    'Hungary' => '匈牙利',
+    'Iceland' => '冰岛',
+    'Jamaica' => '牙买加',
+    'Jordan' => '约旦',
+    'Kazakhstan' => '哈萨克斯坦',
+    'Kuwait' => '科威特',
+    'Kyrgyzstan' => '吉尔吉斯斯坦',
+    'Laos' => '老挝',
+    'Latvia' => '拉脱维亚',
+    'Lebanon' => '黎巴嫩',
+    'Lesotho' => '莱索托',
+    'Liberia' => '利比里亚',
+    'Libya' => '利比亚',
+    'Liechtenstein' => '列支敦士登',
+    'Lithuania' => '立陶宛',
+    'Luxembourg' => '卢森堡',
+    'Madagascar' => '马达加斯加',
+    'Malawi' => '马拉维',
+    'Maldives' => '马尔代夫',
+    'Mali' => '马里',
+    'Malta' => '马耳他',
+    'Mauritania' => '毛里塔尼亚',
+    'Mauritius' => '毛里求斯',
+    'Moldova' => '摩尔多瓦',
+    'Monaco' => '摩纳哥',
+    'Mongolia' => '蒙古',
+    'Montenegro' => '黑山',
     'Morocco' => '摩洛哥',
-    'Google' => '谷歌',
-    'Amazon' => '亚马逊',
-    'Microsoft' => '微软',
-    'Facebook' => '脸书',
-    'Apple' => '苹果',
-    'IBM' => 'IBM',
-    'Alibaba' => '阿里巴巴',
-    'Tencent' => '腾讯',
-    'Baidu' => '百度',
-    'Verizon' => '威瑞森',
-    'AT&T' => '美国电话电报公司',
-    'T-Mobile' => 'T-移动',
-    'Vodafone' => '沃达丰',
-    'China Telecom' => '中国电信',
-    'China Unicom' => '中国联通',
-    'China Mobile' => '中国移动', 
-    'Chunghwa Telecom' => '中华电信',   
-    'Amazon Web Services (AWS)' => '亚马逊网络服务 (AWS)',
-    'Google Cloud Platform (GCP)' => '谷歌云平台 (GCP)',
-    'Microsoft Azure' => '微软Azure',
-    'Oracle Cloud' => '甲骨文云',
-    'Alibaba Cloud' => '阿里云',
-    'Tencent Cloud' => '腾讯云',
-    'DigitalOcean' => '数字海洋',
-    'Linode' => '林诺德',
-    'OVHcloud' => 'OVH 云',
-    'Hetzner' => '赫兹纳',
-    'Vultr' => '沃尔特',
-    'OVH' => 'OVH',
-    'DreamHost' => '梦想主机',
-    'InMotion Hosting' => '动态主机',
-    'HostGator' => '主机鳄鱼',
-    'Bluehost' => '蓝主机',
-    'A2 Hosting' => 'A2主机',
-    'SiteGround' => '站点地',
-    'Liquid Web' => '液态网络',
-    'Kamatera' => '卡玛特拉',
-    'IONOS' => 'IONOS',
-    'InterServer' => '互联服务器',
-    'Hostwinds' => '主机之风',
-    'ScalaHosting' => '斯卡拉主机',
-    'GreenGeeks' => '绿色极客'
+    'Mozambique' => '莫桑比克',
+    'Myanmar' => '缅甸',
+    'Namibia' => '纳米比亚',
+    'Nauru' => '瑙鲁',
+    'Nepal' => '尼泊尔',
+    'Nicaragua' => '尼加拉瓜',
+    'Niger' => '尼日尔',
+    'Nigeria' => '尼日利亚',
+    'North Korea' => '朝鲜',
+    'North Macedonia' => '北马其顿',
+    'Norway' => '挪威',
+    'Oman' => '阿曼',
+    'Pakistan' => '巴基斯坦',
+    'Palau' => '帕劳',
+    'Panama' => '巴拿马',
+    'Papua New Guinea' => '巴布亚新几内亚',
+    'Paraguay' => '巴拉圭',
+    'Peru' => '秘鲁',
+    'Philippines' => '菲律宾',
+    'Poland' => '波兰',
+    'Portugal' => '葡萄牙',
+    'Qatar' => '卡塔尔',
+    'Romania' => '罗马尼亚',
+    'Russia' => '俄罗斯',
+    'Rwanda' => '卢旺达',
+    'Saint Kitts and Nevis' => '圣基茨和尼维斯',
+    'Saint Lucia' => '圣卢西亚',
+    'Saint Vincent and the Grenadines' => '圣文森特和格林纳丁斯',
+    'Samoa' => '萨摩亚',
+    'San Marino' => '圣马力诺',
+    'Sao Tome and Principe' => '圣多美和普林西比',
+    'Saudi Arabia' => '沙特阿拉伯',
+    'Senegal' => '塞内加尔',
+    'Serbia' => '塞尔维亚',
+    'Seychelles' => '塞舌尔',
+    'Sierra Leone' => '塞拉利昂',
+    'Singapore' => '新加坡',
+    'Slovakia' => '斯洛伐克',
+    'Slovenia' => '斯洛文尼亚',
+    'Solomon Islands' => '所罗门群岛',
+    'Somalia' => '索马里',
+    'South Africa' => '南非',
+    'South Korea' => '韩国',
+    'South Sudan' => '南苏丹',
+    'Spain' => '西班牙',
+    'Sri Lanka' => '斯里兰卡',
+    'Sudan' => '苏丹',
+    'Suriname' => '苏里南',
+    'Sweden' => '瑞典',
+    'Switzerland' => '瑞士',
+    'Syria' => '叙利亚',
+    'Taiwan' => '中国台湾',
+    'Tajikistan' => '塔吉克斯坦',
+    'Tanzania' => '坦桑尼亚',
+    'Thailand' => '泰国',
+    'Timor-Leste' => '东帝汶',
+    'Togo' => '多哥',
+    'Tonga' => '汤加',
+    'Trinidad and Tobago' => '特立尼达和多巴哥',
+    'Tunisia' => '突尼斯',
+    'Turkey' => '土耳其',
+    'Turkmenistan' => '土库曼斯坦',
+    'Tuvalu' => '图瓦卢',
+    'Uganda' => '乌干达',
+    'Ukraine' => '乌克兰',
+    'United Arab Emirates' => '阿拉伯联合酋长国',
+    'United Kingdom' => '英国',
+    'United States' => '美国',
+    'Uruguay' => '乌拉圭',
+    'Uzbekistan' => '乌兹别克斯坦',
+    'Vanuatu' => '瓦努阿图',
+    'Vatican City' => '梵蒂冈',
+    'Venezuela' => '委内瑞拉',
+    'Vietnam' => '越南',
+    'Yemen' => '也门',
+    'Zambia' => '赞比亚',
+    'Zimbabwe' => '津巴布韦'
 ];
 $lang = $_GET['lang'] ?? 'en';
 ?>
@@ -216,6 +321,14 @@ $lang = $_GET['lang'] ?? 'en';
   font-weight: 700 !important;
 }
 
+#d-ip > .ip-main {
+    font-size: 15px !important;
+}
+
+#d-ip .badge-primary {
+    font-size: 13px !important;
+}
+
 .info.small {
  color: #ff69b4;
  font-weight: 600;
@@ -238,7 +351,7 @@ $lang = $_GET['lang'] ?? 'en';
  opacity: 0.8 !important;
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1206px) {
  .site-icon[onclick*="baidu"],
  .site-icon[onclick*="taobao"], 
  .site-icon[onclick*="google"],
@@ -248,6 +361,7 @@ $lang = $_GET['lang'] ?? 'en';
  }
 }
 </style>
+
 <?php if (in_array($lang, ['zh-cn', 'en', 'auto'])): ?>
     <div id="status-bar-component" class="container-sm container-bg callout border">
         <div class="row align-items-center">
@@ -269,7 +383,7 @@ $lang = $_GET['lang'] ?? 'en';
                         <img src="./assets/neko/img/site_icon_01.png" id="baidu-normal" class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_01.png" id="baidu-gray" class="status-icon">
                     </div>
-                    <div class="site-icon mx-1" onclick="pingHost('taobao', '淘宝')">
+                    <div class="site-icon mx-1" onclick="pingHost('taobao', 'Taobao')">
                         <img src="./assets/neko/img/site_icon_02.png" id="taobao-normal" class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_02.png" id="taobao-gray" class="status-icon">
                     </div>
@@ -297,6 +411,31 @@ const translate = <?php echo json_encode($translate, JSON_UNESCAPED_UNICODE); ?>
 let cachedIP = null;
 let cachedInfo = null;
 let random = parseInt(Math.random() * 100000000);
+
+const sitesToPing = {
+    baidu: { url: 'https://www.baidu.com', name: 'Baidu' },
+    taobao: { url: 'https://www.taobao.com', name: 'Taobao' },
+    google: { url: 'https://www.google.com', name: 'Google' },
+    youtube: { url: 'https://www.youtube.com', name: 'YouTube' },
+    github: { url: 'https://www.github.com', name: 'GitHub' }
+};
+
+async function checkAllPings() {
+    const pingResults = {};
+    for (const [key, site] of Object.entries(sitesToPing)) {
+        const { url, name } = site;
+        try {
+            const startTime = performance.now();
+            await fetch(url, { mode: 'no-cors', cache: 'no-cache' });
+            const endTime = performance.now();
+            const pingTime = Math.round(endTime - startTime);
+            pingResults[key] = { name, pingTime };
+        } catch (error) {
+            pingResults[key] = { name, pingTime: '超时' };
+        }
+    }
+    return pingResults;
+}
 
 const checkSiteStatus = {
     sites: {
@@ -353,24 +492,135 @@ async function pingHost(site, siteName) {
     }
 }
 
+async function onlineTranslate(text, targetLang = 'zh') {
+    if (!text || typeof text !== 'string' || text.trim() === '') {
+        return text;
+    }
+
+    const cacheKey = `trans_${text}_${targetLang}`;
+    const cachedTranslation = localStorage.getItem(cacheKey);
+    if (cachedTranslation) {
+        return cachedTranslation;
+    }
+
+    const apis = [
+        {
+            url: 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + targetLang,
+            method: 'GET',
+            parseResponse: (data) => data.responseData.translatedText
+        },
+        {
+            url: 'https://libretranslate.com/translate',
+            method: 'POST',
+            body: JSON.stringify({
+                q: text,
+                source: 'en',
+                target: targetLang,
+                format: 'text'
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            parseResponse: (data) => data.translatedText
+        },
+        {
+            url: `https://lingva.ml/api/v1/en/${targetLang}/${encodeURIComponent(text)}`,
+            method: 'GET',
+            parseResponse: (data) => data.translation
+        },
+        {
+            url: `https://simplytranslate.org/api/translate?engine=google&from=en&to=${targetLang}&text=${encodeURIComponent(text)}`,
+            method: 'GET',
+            parseResponse: (data) => data.translatedText
+        }
+    ];
+
+    for (const api of apis) {
+        try {
+            const response = await fetch(api.url, {
+                method: api.method,
+                headers: api.headers || {},
+                body: api.body || null
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const translatedText = api.parseResponse(data);
+                
+                try {
+                    localStorage.setItem(cacheKey, translatedText);
+                } catch (e) {
+                    clearOldCache();
+                    localStorage.setItem(cacheKey, translatedText);
+                }
+                
+                return translatedText;
+            }
+        } catch (error) {
+            continue;
+        }
+    }
+
+    return text;
+}
+
+function clearOldCache() {
+    const cachePrefix = 'trans_';
+    const cacheKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith(cachePrefix)
+    );
+    
+    if (cacheKeys.length > 1000) {
+        const itemsToRemove = cacheKeys.slice(0, cacheKeys.length - 1000);
+        itemsToRemove.forEach(key => localStorage.removeItem(key));
+    }
+}
+
+async function translateText(text, targetLang = 'zh') {
+    if (translate[text]) {
+        return translate[text];
+    } 
+    return await onlineTranslate(text, targetLang);
+}
+
 let IP = {
     isRefreshing: false,
-    fetchIP: async () => {
-        try {
-            const [ipifyResp, ipsbResp, chinaIpResp] = await Promise.all([
-                IP.get('https://api.ipify.org?format=json', 'json'),
-                IP.get('https://api-ipv4.ip.sb/geoip', 'json'),
-                IP.get('https://myip.ipip.net', 'text')  
-            ]);
+    lastGeoData: null, 
+    ipApis: [
+        {url: 'https://api.ipify.org?format=json', type: 'json', key: 'ip'},
+        {url: 'https://api-ipv4.ip.sb/geoip', type: 'json', key: 'ip'},
+        {url: 'https://myip.ipip.net', type: 'text'},
+        {url: 'http://pv.sohu.com/cityjson', type: 'text'},
+        {url: 'https://ipinfo.io/json', type: 'json', key: 'ip'},
+        {url: 'https://ipapi.co/json/', type: 'json'},
+        {url: 'https://freegeoip.app/json/', type: 'json'}
+    ],
 
-            const ipData = ipifyResp.data.ip || ipsbResp.data.ip;
-            cachedIP = ipData;
-            document.getElementById('d-ip').innerHTML = ipData;
-            return ipData;
-        } catch (error) {
-            console.error("Error fetching IP:", error);
-            throw error;
+    fetchIP: async () => {
+        let error;
+        for(let api of IP.ipApis) {
+            try {
+                const response = await IP.get(api.url, api.type);
+                if(api.type === 'json') {
+                    const ipData = api.key ? response.data[api.key] : response.data;
+                    cachedIP = ipData;
+                    document.getElementById('d-ip').innerHTML = ipData;
+                    return ipData;
+                } else {
+                    const ipData = response.data.match(/\d+\.\d+\.\d+\.\d+/)?.[0];
+                    if(ipData) {
+                        cachedIP = ipData;
+                        document.getElementById('d-ip').innerHTML = ipData;
+                        return ipData;
+                    }
+                }
+            } catch(e) {
+                error = e;
+                console.error(`Error with ${api.url}:`, e);
+                continue;
+            }
         }
+        throw error || new Error("All IP APIs failed");
     },
 
     get: (url, type) =>
@@ -394,76 +644,162 @@ let IP = {
         }),
 
     Ipip: async (ip, elID) => {
-        try {
-            const [ipsbResp, chinaIpResp] = await Promise.all([
-                IP.get(`https://api.ip.sb/geoip/${ip}`, 'json'),
-                IP.get(`https://myip.ipip.net`, 'text')
-            ]);
-            
-            cachedIP = ip;
-            cachedInfo = ipsbResp.data;
+        const geoApis = [
+            {url: `https://api.ip.sb/geoip/${ip}`, type: 'json'},
+            {url: 'https://myip.ipip.net', type: 'text'},
+            {url: `http://ip-api.com/json/${ip}`, type: 'json'},
+            {url: `https://ipinfo.io/${ip}/json`, type: 'json'},
+            {url: `https://ipapi.co/${ip}/json/`, type: 'json'},
+            {url: `https://freegeoip.app/json/${ip}`, type: 'json'}
+        ];
 
-            let chinaIpInfo = null;
+        let geoData = null;
+        let error;
+
+        for(let api of geoApis) {
             try {
-                if(chinaIpResp.data) {
-                    chinaIpInfo = chinaIpResp.data;
-                }
+                const response = await IP.get(api.url, api.type);
+                geoData = response.data;
+                break;
             } catch(e) {
-                console.error("Error parsing China IP info:", e);
+                error = e;
+                console.error(`Error with ${api.url}:`, e);
+                continue;
             }
-            
-            const mergedData = {
-                ...ipsbResp.data,
-               // chinaIpInfo: chinaIpInfo
-            };
-            
-            IP.updateUI(mergedData, elID);
+        }
+
+        if(!geoData) {
+            throw error || new Error("All Geo APIs failed");
+        }
+
+        cachedIP = ip;
+        IP.lastGeoData = geoData; 
+        
+        IP.updateUI(geoData, elID);
+    },
+
+    updateUI: async (data, elID) => {
+        try {
+            const country = await translateText(data.country || "未知");
+            const region = await translateText(data.region || "");
+            const city = await translateText(data.city || "");
+            const isp = await translateText(data.isp || "");
+            const asnOrganization = await translateText(data.asn_organization || "");
+
+            let location = `${region && city && region !== city ? `${region} ${city}` : region || city || ''}`;
+            let simpleDisplay = `
+                <div class="ip-main" style="cursor: pointer;" onclick="IP.showDetailModal()">
+                    ${cachedIP} <span class="badge badge-primary" style="color: #333;">${country}</span>
+                </div>`;
+        
+            let locationInfo = `<span style="margin-left: 8px;">${location} ${isp} ${data.asn || ''} ${asnOrganization}</span>`;
+        
+            document.getElementById('d-ip').innerHTML = simpleDisplay;
+            document.getElementById('ipip').innerHTML = locationInfo;
+            $("#flag").attr("src", _IMG + "flags/" + (data.country_code || 'unknown').toLowerCase() + ".png");
+        
         } catch (error) {
-            console.error("Error in Ipip function:", error);
-            document.getElementById(elID).innerHTML = "获取IP信息失败";
+            console.error("Error in updateUI:", error);
+            document.getElementById('d-ip').innerHTML = "更新 IP 信息失败";
         }
     },
 
-    updateUI: (data, elID) => {
-        try {
-            if (!data || !data.country_code) {
-                document.getElementById('d-ip').innerHTML = "无法获取IP信息";
-                return;
-            }
+    showDetailModal: async () => {
+        const data = IP.lastGeoData;
+        if (!data) return;
 
-            let country = translate[data.country] || data.country || "未知";
-            let isp = translate[data.isp] || data.isp || "";
-            let asnOrganization = translate[data.asn_organization] || data.asn_organization || "";
+        const translatedCountry = await translateText(data.country, 'zh');
+        const translatedRegion = await translateText(data.region, 'zh');  
+        const translatedCity = await translateText(data.city, 'zh');
+        const translatedIsp = await translateText(data.isp, 'zh');
+        const translatedAsnOrganization = await translateText(data.asn_organization, 'zh');
 
-            if (data.country === 'Taiwan') {
-                country = (navigator.language === 'en') ? 'China Taiwan' : '中国台湾';
-            }
+        let country = translatedCountry || data.country || "未知";
+        let region = translatedRegion || data.region || "";
+        let city = translatedCity || data.city || "";
+        let isp = translatedIsp || data.isp || "";
+        let asnOrganization = translatedAsnOrganization || data.asn_organization || "";
+        let timezone = data.timezone || "";
+        let asn = data.asn || "";
 
-            const countryAbbr = data.country_code.toLowerCase();
-            const isChinaIP = ['cn', 'hk', 'mo', 'tw'].includes(countryAbbr);
-        
-            let firstLineInfo = `<div style="white-space: nowrap;">`;
-        
-            firstLineInfo += cachedIP + ' ';
-        
-            let ipLocation = isChinaIP ? 
-                '<span style="color: #00FF00;">[国内 IP]</span> ' : 
-                '<span style="color: #FF0000;">[境外 IP]</span> ';
-           // firstLineInfo += ipLocation;
-        
-            if (data.chinaIpInfo) {
-                firstLineInfo += `[${data.chinaIpInfo}]`;
-            }
-            firstLineInfo += `</div>`;
-        
-            document.getElementById('d-ip').innerHTML = firstLineInfo;
-            document.getElementById('ipip').innerHTML = `${country} ${isp} ${asnOrganization}`;
-            document.getElementById('ipip').style.color = '#FF00FF';
-            $("#flag").attr("src", _IMG + "flags/" + countryAbbr + ".png");
-        } catch (error) {
-            console.error("Error in updateUI:", error);
-            document.getElementById('d-ip').innerHTML = "更新IP信息显示失败";
+        let ipSupport;
+        const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+        const ipv6Regex = /^[a-fA-F0-9:]+$/;
+
+        if (ipv4Regex.test(cachedIP)) {
+            ipSupport = 'IPv4 支持';
+        } else if (ipv6Regex.test(cachedIP)) {
+            ipSupport = 'IPv6 支持';
+        } else {
+            ipSupport = '未检测到 IPv4 或 IPv6 支持';
         }
+
+        const pingResults = await checkAllPings();
+        const delayInfoHTML = Object.entries(pingResults).map(([key, { name, pingTime }]) => {
+            let color = '#ff6b6b'; 
+            if (typeof pingTime === 'number') {
+                color = pingTime <= 100 ? '#09B63F' : pingTime <= 200 ? '#FFA500' : '#ff6b6b';
+            }
+            return `<span style="margin-right: 20px; font-size: 18px; color: ${color};">${name}: ${pingTime === '超时' ? '超时' : `${pingTime}ms`}</span>`;
+        }).join('');
+        const modalHTML = `
+            <div class="modal fade custom-modal" id="ipDetailModal" tabindex="-1" role="dialog" aria-labelledby="ipDetailModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="ipDetailModalLabel">IP详细信息</h5>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="ip-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">IP支持:</span>
+                                    <span class="detail-value">${ipSupport}</span>
+                            </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">IP地址:</span>
+                                    <span class="detail-value">${cachedIP}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">地区:</span>
+                                    <span class="detail-value">${country} ${region} ${city}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">运营商:</span>
+                                    <span class="detail-value">${isp}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">ASN:</span>
+                                    <span class="detail-value">${asn} ${asnOrganization}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">时区:</span>
+                                    <span class="detail-value">${timezone}</span>
+                                </div>
+                                ${data.latitude && data.longitude ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">经纬度:</span>
+                                    <span class="detail-value">${data.latitude}, ${data.longitude}</span>
+                                </div>` : ''}
+                                <h5 style="margin-top: 15px;">延迟信息:</h5>
+                                <div class="detail-row" style="display: flex; flex-wrap: wrap;">
+                                    ${delayInfoHTML}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('#ipDetailModal').remove();
+        $('body').append(modalHTML);
+        $('#ipDetailModal').modal('show');
     },
 
     getIpipnetIP: async () => {
@@ -471,8 +807,13 @@ let IP = {
     
         try {
             IP.isRefreshing = true;
-            document.getElementById('d-ip').innerHTML = "Checking...";
-            document.getElementById('ipip').innerHTML = "Loading...";
+            document.getElementById('d-ip').innerHTML = `
+                <div class="ip-main">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    检查中...
+                </div>
+            `;
+            document.getElementById('ipip').innerHTML = "";
             $("#flag").attr("src", _IMG + "img/loading.svg");
         
             const ip = await IP.fetchIP();
@@ -486,10 +827,139 @@ let IP = {
     }
 };
 
+const style = document.createElement('style');
+style.textContent = `
+.ip-main {
+    font-size: 14px;
+    padding: 5px;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge-primary {
+    color: #ff69b4 !important;
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6;
+}
+
+#ipip {
+    margin-left: -3px;
+}
+
+.ip-main:hover {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.ip-details {
+    font-size: 18px !important;
+    line-height: 1.6;
+}
+
+.detail-row {
+    margin-bottom: 12px;
+    display: flex;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #666;
+    flex: 0 0 80px;
+}
+
+.detail-value {
+    color: #333;
+    flex: 1;
+}
+
+.modal-content {
+    border-radius: 8px;
+}
+
+.modal-header {
+    background: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.custom-modal .modal-header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 16px 20px;
+    border-bottom: 1px solid #ddd;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.custom-modal .custom-close {
+    color: #fff;
+    font-size: 1.5rem;
+    opacity: 0.7;
+}
+
+.custom-modal .custom-close:hover {
+    color: #ddd;
+    opacity: 1;
+}
+
+.custom-modal .modal-body {
+    padding: 20px;
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.6;
+}
+
+.custom-modal .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.custom-modal .detail-label {
+    font-weight: 600;
+    color: #555;
+}
+
+.custom-modal .detail-value {
+    font-weight: 400;
+    color: #333;
+}
+
+.custom-modal .modal-footer {
+    background-color: #f7f7f7;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #ddd;
+}
+
+.custom-modal .custom-close-btn {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.custom-modal .custom-close-btn:hover {
+    background-color: #0056b3;
+}
+`;
+document.head.appendChild(style);
 IP.getIpipnetIP();
-checkSiteStatus.check();
-setInterval(() => checkSiteStatus.check(), 30000);  
+if(typeof checkSiteStatus !== 'undefined') {
+    checkSiteStatus.check();
+    setInterval(() => checkSiteStatus.check(), 30000);
+}
+
 setInterval(IP.getIpipnetIP, 180000);
 </script>
-</body>
-</html>
