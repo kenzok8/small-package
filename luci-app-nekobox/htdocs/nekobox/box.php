@@ -40,15 +40,16 @@ include './cfg.php';
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
-            <p>请选择一个模板以生成配置文件：根据订阅节点信息选择对应模板，否则启动不了。</p><p>1 - 5模板只支持Sing-box版本到v1.11.0-alpha.6 默认模板 6 无版本限制，支持最新的v1.11.0-alpha.7版本。</p>
+            <p>请选择一个模板以生成配置文件：根据订阅节点信息选择对应模板，否则启动不了。</p><p><1 - 5>模板只支持Sing-box版本到v1.11.0-alpha.6   <6 - 8>模板无版本限制，支持最新内核。</p>
             <ul>
                 <li><strong>默认模板 1</strong>：香港 台湾 新加坡 日本 美国 韩国。</li>
                 <li><strong>默认模板 2</strong>：新加坡 日本 美国 韩国。</li>
                 <li><strong>默认模板 3</strong>：香港 新加坡 日本 美国。</li>
                 <li><strong>默认模板 4</strong>：香港 日本 美国。</li>
                 <li><strong>默认模板 5</strong>：无地区 通用。</li>
-                <li><strong>默认模板 6</strong>：无地区 通用。</li>
-             
+                <li><strong>默认模板 6</strong>：无地区  无分组 通用。</li>
+                <li><strong>默认模板 7</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 无分流规则。</li>
+                <li><strong>默认模板 8</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 带分流规则。</li>
             </ul>
         </div>
         <form method="post" action="">
@@ -87,6 +88,14 @@ include './cfg.php';
                         <input type="radio" class="form-check-input" id="useDefaultTemplate6" name="defaultTemplate" value="alpha7">
                         <label class="form-check-label" for="useDefaultTemplate5">默认模板 6</label>
                     </div>
+                    <div class="col">
+                        <input type="radio" class="form-check-input" id="useDefaultTemplate7" name="defaultTemplate" value="alpha8">
+                        <label class="form-check-label" for="useDefaultTemplate5">默认模板 7</label>
+                    </div>
+                    <div class="col">
+                        <input type="radio" class="form-check-input" id="useDefaultTemplate8" name="defaultTemplate" value="alpha9">
+                        <label class="form-check-label" for="useDefaultTemplate5">默认模板 8</label>
+                    </div>
                 </div>
                 <div class="mt-3">
                     <input type="radio" class="form-check-input" id="useCustomTemplate" name="templateOption" value="custom">
@@ -119,7 +128,9 @@ include './cfg.php';
                     'fakeip' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_3.json",
                     'tun' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_4.json",
                     'ip' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_5.json",
-                    'alpha7' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_7.json"
+                    'alpha7' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_7.json",
+                    'alpha8' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_6.json",
+                    'alpha9' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json"
                 ];
                 $templateUrlEncoded = urlencode($defaultTemplates[$_POST['defaultTemplate']] ?? $defaultTemplates['mixed']);
             }
