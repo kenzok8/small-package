@@ -186,12 +186,37 @@ $uiVersion = getUiVersion();
             </div>
             <div class="modal-body">
                 <div class="d-grid gap-2">
-                    <button class="btn btn-info" onclick="selectOperation('singbox')">更新 Singbox 内核（官方稳定版）</button>
+                    <button class="btn btn-info" onclick="showSingboxVersionSelector()">更新 Singbox 内核（官方稳定版）</button>
                     <button class="btn btn-success" onclick="selectOperation('sing-box')">更新 Singbox 内核（未编译版本）</button>
                     <button class="btn btn-success" onclick="selectOperation('puernya')">切换 Puernya 内核</button>
                     <button class="btn btn-primary" onclick="selectOperation('rule')">更新 Singbox 规则集</button>
                     <button class="btn btn-primary" onclick="selectOperation('config')">更新 Mihomo 配置文件</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="versionSelectionModal" tabindex="-1" aria-labelledby="versionSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="versionSelectionModalLabel">选择 Singbox 内核版本</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <select id="singboxVersionSelect" class="form-select">
+                    <option value="v1.11.0-alpha.6">v1.11.0-alpha.6</option>
+                    <option value="v1.11.0-alpha.7">v1.11.0-alpha.7</option>
+                    <option value="v1.11.0-alpha.8">v1.11.0-alpha.8</option>
+                    <option value="v1.11.0-alpha.9">v1.11.0-alpha.9</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmSingboxVersion()">确认</button>
             </div>
         </div>
     </div>
@@ -262,30 +287,30 @@ $uiVersion = getUiVersion();
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('singboxOptionsButton').addEventListener('click', function() {
-        $('#optionsModal').modal('show');
-    });
+let selectedSingboxVersion = 'v1.11.0-alpha.6';  
 
-    document.getElementById('updateButton').addEventListener('click', function() {
-        initiateUpdate('update_script.php', '开始下载客户端更新...', '正在更新客户端到最新版本');
-    });
+function showSingboxVersionSelector() {
+    $('#optionsModal').modal('hide');  
+    $('#versionSelectionModal').modal('show');  
+}
 
-    document.getElementById('updateUiButton').addEventListener('click', function() {
-        initiateUpdate('ui.php', '开始下载 UI 面板更新...', '正在更新 Metacubexd 面板到最新版本');
-    });
+function confirmSingboxVersion() {
+    selectedSingboxVersion = document.getElementById('singboxVersionSelect').value;
+    $('#versionSelectionModal').modal('hide');  
 
-    document.getElementById('updateCoreButton').addEventListener('click', function() {
-        initiateUpdate('core.php', '开始下载 Mihomo 核心更新...', '正在更新 Mihomo 核心到最新版本');
-    });
+    selectOperation('singbox');
+}
+
+document.getElementById('singboxOptionsButton').addEventListener('click', function() {
+    $('#optionsModal').modal('show');
 });
 
 function selectOperation(type) {
-    $('#optionsModal').modal('hide');
-    
+    $('#optionsModal').modal('hide'); 
+
     const operations = {
         'singbox': {
-            url: 'update_singbox_core.php',
+            url: 'update_singbox_core.php?version=' + selectedSingboxVersion,  
             message: '开始下载 Singbox 核心更新...',
             description: '正在更新 Singbox 核心到最新版本'
         },
@@ -323,16 +348,13 @@ function initiateUpdate(url, logMessage, description) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
     $('#updateModal').modal('show');
     document.getElementById('updateDescription').textContent = description;
     document.getElementById('logOutput').textContent = logMessage;
-
     xhr.onload = function() {
         if (xhr.status === 200) {
             document.getElementById('logOutput').textContent += '\n更新完成！';
             document.getElementById('logOutput').textContent += '\n' + xhr.responseText;
-
             setTimeout(function() {
                 $('#updateModal').modal('hide');
                 setTimeout(function() {
@@ -341,7 +363,7 @@ function initiateUpdate(url, logMessage, description) {
             }, 10000);
         } else {
             document.getElementById('logOutput').textContent += '\n发生错误：' + xhr.statusText;
-        }
+        } 
     };
 
     xhr.onerror = function() {
