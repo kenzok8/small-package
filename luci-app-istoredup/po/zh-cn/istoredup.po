@@ -1,0 +1,48 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Official website:"
+msgstr "官方网站："
+
+msgid "A duplica of iStoreOS."
+msgstr "iStoreOS 的分身，可以把风险高的软件安装到分身里面，出问题不影响到主系统。"
+
+msgid "Service Status"
+msgstr "服务状态"
+
+msgid "iStoreDup status:"
+msgstr "iStoreDup 的状态信息如下："
+
+msgid "Setup"
+msgstr "安装配置"
+
+msgid "The following parameters will only take effect during installation or upgrade:"
+msgstr "以下参数只在安装或者升级时才会生效："
+
+msgid "Status"
+msgstr "状态"
+
+msgid "iStoreDup is running"
+msgstr "iStoreDup 运行中"
+
+msgid "iStoreDup is not running"
+msgstr "iStoreDup 未运行"
+
+msgid "Open the iStoreDup"
+msgstr "打开 iStoreDup"
+
+msgid "Tool"
+msgstr "操作"
+
+msgid "Console"
+msgstr "控制台"
+
+msgid "Only works in LAN"
+msgstr "只在内网环境下工作。"
+
+msgid "Execute"
+msgstr "执行"
+
+msgid "Timezone"
+msgstr "时区"
+
