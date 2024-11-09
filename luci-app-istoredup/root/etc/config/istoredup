@@ -1,4 +1,1 @@
 config istoredup
-	option 'config_path' ''
-	option 'image_name' 'istoredup/home-assistant:latest'
-	option 'time_zone' ''

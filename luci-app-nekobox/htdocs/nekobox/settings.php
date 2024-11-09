@@ -212,6 +212,7 @@ $uiVersion = getUiVersion();
                     <option value="v1.11.0-alpha.7">v1.11.0-alpha.7</option>
                     <option value="v1.11.0-alpha.8">v1.11.0-alpha.8</option>
                     <option value="v1.11.0-alpha.9">v1.11.0-alpha.9</option>
+                    <option value="v1.11.0-alpha.10">v1.11.0-alpha.10</option>
                 </select>
             </div>
             <div class="modal-footer">
@@ -372,6 +373,24 @@ function initiateUpdate(url, logMessage, description) {
 
     xhr.send();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('singboxOptionsButton').addEventListener('click', function() {
+        $('#optionsModal').modal('show');
+    });
+
+    document.getElementById('updateButton').addEventListener('click', function() {
+        initiateUpdate('update_script.php', '开始下载客户端更新...', '正在更新客户端到最新版本');
+    });
+
+    document.getElementById('updateUiButton').addEventListener('click', function() {
+        initiateUpdate('ui.php', '开始下载 UI 面板更新...', '正在更新 Metacubexd 面板到最新版本');
+    });
+
+    document.getElementById('updateCoreButton').addEventListener('click', function() {
+        initiateUpdate('core.php', '开始下载 Mihomo 核心更新...', '正在更新 Mihomo 核心到最新版本');
+    });
+});
 </script>
 
 <script>
