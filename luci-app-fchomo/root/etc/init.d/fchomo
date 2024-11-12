@@ -14,7 +14,15 @@ HM_DIR="/etc/fchomo"
 TEMPS_DIR="$HM_DIR/templates"
 RUN_DIR="/var/run/fchomo"
 LOG_PATH="$RUN_DIR/fchomo.log"
-DNSMASQ_DIR="/tmp/dnsmasq.d/dnsmasq-fchomo.d"
+
+# thanks to homeproxy
+# we don't know which is the default server, just take the first one
+DNSMASQ_UCI_CONFIG="$(uci -q show "dhcp.@dnsmasq[0]" | awk 'NR==1 {split($0, conf, /[.=]/); print conf[2]}')"
+if [ -f "/tmp/etc/dnsmasq.conf.$DNSMASQ_UCI_CONFIG" ]; then
+	DNSMASQ_DIR="$(awk -F '=' '/^conf-dir=/ {print $2}' "/tmp/etc/dnsmasq.conf.$DNSMASQ_UCI_CONFIG")/dnsmasq-fchomo.d"
+else
+	DNSMASQ_DIR="/tmp/dnsmasq.d/dnsmasq-fchomo.d"
+fi
 
 config_load "$CONF"
 
