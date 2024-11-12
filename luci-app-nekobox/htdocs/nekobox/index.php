@@ -17,6 +17,8 @@ if (!file_exists($log_dir)) {
 $start_script_template = <<<'EOF'
 #!/bin/bash
 
+export ENABLE_DEPRECATED_TUN_ADDRESS_X=true 
+
 SINGBOX_LOG="%s"
 CONFIG_FILE="%s"
 SINGBOX_BIN="%s"

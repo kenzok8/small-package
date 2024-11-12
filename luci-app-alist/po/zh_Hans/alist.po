@@ -74,8 +74,8 @@ msgstr "网络存储"
 msgid "User Manual"
 msgstr "用户手册"
 
-msgid "Allow Access From Internet"
-msgstr "允许从外网访问"
+msgid "Open firewall port"
+msgstr "打开防火墙端口"
 
 msgid "Enable Logs"
 msgstr "启用日志"

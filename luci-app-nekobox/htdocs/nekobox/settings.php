@@ -187,7 +187,7 @@ $uiVersion = getUiVersion();
             <div class="modal-body">
                 <div class="d-grid gap-2">
                     <button class="btn btn-info" onclick="showSingboxVersionSelector()">更新 Singbox 内核（官方稳定版）</button>
-                    <button class="btn btn-success" onclick="selectOperation('sing-box')">更新 Singbox 内核（未编译版本）</button>
+                    <button class="btn btn-success" onclick="selectOperation('sing-box')">更新 Singbox 内核（官方测试版）</button>
                     <button class="btn btn-success" onclick="selectOperation('puernya')">切换 Puernya 内核</button>
                     <button class="btn btn-primary" onclick="selectOperation('rule')">更新 Singbox 规则集</button>
                     <button class="btn btn-primary" onclick="selectOperation('config')">更新 Mihomo 配置文件</button>
@@ -198,7 +198,7 @@ $uiVersion = getUiVersion();
 </div>
 
 <div class="modal fade" id="versionSelectionModal" tabindex="-1" aria-labelledby="versionSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="versionSelectionModalLabel">选择 Singbox 内核版本</h5>
@@ -394,39 +394,59 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-    function checkVersion(buttonId, outputId, url) {
-        document.getElementById(outputId).innerHTML = '正在检查新版本...';
+function checkVersion(buttonId, outputId, url) {
+    document.getElementById(outputId).innerHTML = '正在检查新版本...';
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url + '?check_version=true', true);
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                document.getElementById(outputId).innerHTML = xhr.responseText;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url + '?check_version=true', true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            let responseText = xhr.responseText.trim();
+            const versionMatch = responseText.match(/最新版本:\s*([^\s]+)/);
+
+            if (versionMatch && versionMatch[1]) {
+                const newVersion = versionMatch[1];
+                document.getElementById(outputId).innerHTML = `最新版本: ${newVersion}`;
+
+                if (buttonId === 'checkSingboxButton') {
+                    const select = document.getElementById('singboxVersionSelect');
+                    let versionExists = Array.from(select.options).some(option => option.value === newVersion);
+
+                    if (!versionExists) {
+                        const newOption = document.createElement('option');
+                        newOption.value = newVersion;
+                        newOption.textContent = newVersion;
+                        select.appendChild(newOption);
+                    }
+                }
             } else {
-                document.getElementById(outputId).innerHTML = '版本检测失败，请稍后重试。';
+                document.getElementById(outputId).innerHTML = '无法解析版本信息，请稍后重试。';
             }
-        };
-        xhr.onerror = function() {
-            document.getElementById(outputId).innerHTML = '网络错误，请稍后重试';
-        };
-        xhr.send();
-    }
+        } else {
+            document.getElementById(outputId).innerHTML = '版本检测失败，请稍后重试。';
+        }
+    };
+    xhr.onerror = function() {
+        document.getElementById(outputId).innerHTML = '网络错误，请稍后重试';
+    };
+    xhr.send();
+}
 
-    document.getElementById('checkCliverButton').addEventListener('click', function() {
-        checkVersion('checkCliverButton', 'NewCliver', 'update_script.php');
-    });
+document.getElementById('checkSingboxButton').addEventListener('click', function() {
+    checkVersion('checkSingboxButton', 'NewSingbox', 'singbox.php');
+});
 
-    document.getElementById('checkMihomoButton').addEventListener('click', function() {
-        checkVersion('checkMihomoButton', 'NewMihomo', 'core.php');
-    });
+document.getElementById('checkCliverButton').addEventListener('click', function() {
+    checkVersion('checkCliverButton', 'NewCliver', 'update_script.php');
+});
 
-    document.getElementById('checkSingboxButton').addEventListener('click', function() {
-        checkVersion('checkSingboxButton', 'NewSingbox', 'singbox.php');
-    });
+document.getElementById('checkMihomoButton').addEventListener('click', function() {
+    checkVersion('checkMihomoButton', 'NewMihomo', 'core.php');
+});
 
-    document.getElementById('checkUiButton').addEventListener('click', function() {
-        checkVersion('checkUiButton', 'NewUi', 'ui.php');
-    });
+document.getElementById('checkUiButton').addEventListener('click', function() {
+    checkVersion('checkUiButton', 'NewUi', 'ui.php');
+});
 </script>
 
 <script>
