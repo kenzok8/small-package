@@ -154,6 +154,8 @@ chain {{ inchain }} {
 {%- function render_acl_dst(inchain, outchain): %}
 chain {{ inchain }} {
 		meta mark {{ self_mark }} counter return
+		fib daddr type { local } counter return
+		ct direction reply counter return
 
 		ip daddr @inet4_local_addr counter return
 		{% if (global_ipv6 === '1'): %}
@@ -423,7 +425,7 @@ table inet fchomo {
 	{{ render_acl_dport('tproxy_acl_dport_reroute', 'tproxy_mark', 'udp') }}
 	chain tproxy_mark {
 		{#- DNS hijack #}
-		udp dport 53 counter accept comment "!{{ cfgname }}: DNS hijack (bypass rerouter)"
+		udp dport 53 counter accept comment "!{{ cfgname }}: DNS hijack (bypass router udp)"
 
 		meta l4proto udp meta mark set {{ tproxy_mark }} counter accept
 	}
