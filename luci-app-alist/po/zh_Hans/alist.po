@@ -80,8 +80,11 @@ msgstr "允许从外网访问"
 msgid "Enable Logs"
 msgstr "启用日志"
 
-msgid "Max Size"
-msgstr "日志文大小"
+msgid "Log path"
+msgstr "日志文件路径"
+
+msgid "Max Size (MB)"
+msgstr "日志文件大小（MB）"
 
 msgid "Max backups"
 msgstr "日志备份数量"
