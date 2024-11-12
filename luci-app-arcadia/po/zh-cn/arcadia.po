@@ -1,0 +1,59 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Official website:"
+msgstr "官方网站："
+
+msgid "Arcadia one-stop code operation and maintenance platform."
+msgstr "Arcadia 一站式代码运维平台。"
+
+msgid "Arcadia is mainly aimed at scripting language programming and is suitable for development and operation environments of small and medium-sized teams and individuals."
+msgstr "Arcadia 主要面向于脚本语言编程，适用于中小型团队与个人的开发与运维环境。"
+
+msgid "In addition to code maintenance, Arcadia is also a powerful scheduled task maintenance platform with a comprehensive file system and underlying CLI command design."
+msgstr "除了代码运维外 Arcadia 还是一个强大的定时任务运维平台，并且有着完善的文件系统和底层CLI命令设计。"
+
+msgid "Image"
+msgstr "镜像"
+
+msgid "Default"
+msgstr "默认"
+
+msgid "Config path"
+msgstr "配置文件路径"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Host network"
+msgstr "宿主网络"
+
+msgid "Arcadia running in host network, port is always 5678 if enabled"
+msgstr "在宿主网络运行 Arcadia，如果启用则端口固定为5678"
+
+msgid "Service Status"
+msgstr "服务状态"
+
+msgid "Arcadia status:"
+msgstr "Arcadia 的状态信息如下："
+
+msgid "Setup"
+msgstr "安装配置"
+
+msgid "The initial installation of Arcadia requires at least 2GB of space, please make sure that the Docker data directory has enough space. It is recommended to migrate Docker to a hard drive before installing Arcadia."
+msgstr "初次安装 Arcadia 至少需要2GB空间，请确保 Docker 数据目录有足够空间。建议安装 Arcadia 前将 Docker 迁移到硬盘上。"
+
+msgid "The following parameters will only take effect during installation or upgrade:"
+msgstr "以下参数只在安装或者升级时才会生效："
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Arcadia is running"
+msgstr "Arcadia 运行中"
+
+msgid "Arcadia is not running"
+msgstr "Arcadia 未运行"
+
+msgid "Open Arcadia"
+msgstr "打开 Arcadia"

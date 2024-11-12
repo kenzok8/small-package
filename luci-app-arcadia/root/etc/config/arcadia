@@ -1,0 +1,5 @@
+config arcadia
+	option 'hostnet' '0'
+	option 'port' '5678'
+#	option 'image' 'default'
+#	option 'config_path' ''
