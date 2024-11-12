@@ -4,7 +4,7 @@
 		"read": {
 			"file": {
 				"/usr/bin/alist": [ "exec" ],
-				"/var/log/alist.log": [ "read" ]
+				"/*": [ "read" ]
 			},
 			"ubus": {
 				"service": [ "list" ]
@@ -13,7 +13,7 @@
 		},
 		"write": {
 			"file": {
-				"/var/log/alist.log": [ "write" ]
+				"/*": [ "write" ]
 			},
 			"uci": [ "alist" ]
 		}

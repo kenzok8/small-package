@@ -53,7 +53,7 @@ define Package/aria2
   SUBMENU:=File Transfer
   TITLE:=lightweight download utility
   URL:=https://aria2.github.io/
-  DEPENDS:=+zlib +libstdcpp +ARIA2_OPENSSL:libopenssl +ARIA2_GNUTLS:libgnutls \
+  DEPENDS:=+zlib +libstdcpp +ARIA2_OPENSSL:libopenssl +ARIA2_OPENSSL:libopenssl-legacy +ARIA2_GNUTLS:libgnutls \
 	+ARIA2_NETTLE:libnettle +ARIA2_LIBGCRYPT:libgcrypt +ARIA2_GMP:libgmp \
 	+ARIA2_LIBXML2:libxml2 +ARIA2_EXPAT:libexpat +ARIA2_SFTP:libssh2 \
 	+ARIA2_ASYNC_DNS:libcares +ARIA2_COOKIE:libsqlite3
