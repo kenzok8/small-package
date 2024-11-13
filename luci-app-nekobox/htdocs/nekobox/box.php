@@ -1,7 +1,28 @@
 <?php
 ob_start();
 include './cfg.php';
+
+$dataFilePath = '/tmp/subscription_data.txt';
+$lastSubscribeUrl = '';
+
+if (file_exists($dataFilePath)) {
+    $fileContent = file_get_contents($dataFilePath);
+    $lastPos = strrpos($fileContent, '订阅链接地址:');
+    if ($lastPos !== false) {
+        $urlSection = substr($fileContent, $lastPos);
+        $httpPos = strpos($urlSection, 'http');
+        if ($httpPos !== false) {
+            $endPos = strpos($urlSection, '自定义模板URL:', $httpPos);
+            if ($endPos !== false) {
+                $lastSubscribeUrl = trim(substr($urlSection, $httpPos, $endPos - $httpPos));
+            } else {
+                $lastSubscribeUrl = trim(substr($urlSection, $httpPos));
+            }
+        }
+    }
+}
 ?>
+
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
 <head>
@@ -12,7 +33,9 @@ include './cfg.php';
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
+    <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
+    <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
 </head>
@@ -40,17 +63,20 @@ include './cfg.php';
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
-            <p>请选择一个模板以生成配置文件：根据订阅节点信息选择对应模板，否则启动不了。
+            <p>请选择一个模板以生成配置文件：根据订阅节点信息选择相应的模板。若选择带有地区分组的模板，请确保您的节点包含以下线路。挂梯子更新！</p>
             <ul>
                 <li><strong>默认模板 1</strong>：无地区  无分组 通用。</li>
                 <li><strong>默认模板 2</strong>：无地区  带分流规则 通用。</li>
-                <li><strong>默认模板 3</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 带分流规则。</li>
+                <li><strong>默认模板 3</strong>：香港 日本 美国 分组 带分流规则。</li>
+                <li><strong>默认模板 4</strong>：香港 新加坡 日本 美国 分组 带分流规则。</li>
+                <li><strong>默认模板 5</strong>：新加坡 日本 美国 韩国 分组 带分流规则。</li>
+                <li><strong>默认模板 6</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 带分流规则。</li>
             </ul>
         </div>
         <form method="post" action="">
             <div class="mb-3">
                 <label for="subscribeUrl" class="form-label">订阅链接地址:</label>
-                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" required>
+                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($lastSubscribeUrl); ?>" required>
             </div>
             <div class="mb-3">
                 <label for="customFileName" class="form-label">自定义文件名（无需输入后缀）</label>
@@ -75,6 +101,14 @@ include './cfg.php';
                         <input type="radio" class="form-check-input" id="useDefaultTemplate4" name="defaultTemplate" value="4">
                         <label class="form-check-label" for="useDefaultTemplate3">默认模板 4</label>
                     </div>
+                    <div class="col">
+                        <input type="radio" class="form-check-input" id="useDefaultTemplate5" name="defaultTemplate" value="5">
+                        <label class="form-check-label" for="useDefaultTemplate3">默认模板 5</label>
+                    </div>
+                    <div class="col">
+                        <input type="radio" class="form-check-input" id="useDefaultTemplate6" name="defaultTemplate" value="6">
+                        <label class="form-check-label" for="useDefaultTemplate3">默认模板 6</label>
+                    </div>
                 </div>
                 <div class="mt-3">
                     <input type="radio" class="form-check-input" id="useCustomTemplate" name="templateOption" value="custom">
@@ -86,7 +120,6 @@ include './cfg.php';
                 <button type="submit" name="generateConfig" class="btn btn-info">生成配置文件</button>
             </div>
         </form>
-
         <?php
         $dataFilePath = '/tmp/subscription_data.txt';
         $configFilePath = '/etc/neko/config/sing-box.json';
@@ -115,8 +148,10 @@ include './cfg.php';
                 $defaultTemplates = [
                     '1' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_7.json",
                     '2' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_6.json",
-                    '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json",
-                    '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_9.json"
+                    '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_9.json",
+                    '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_10.json",
+                    '5' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_11.json",
+                    '6' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json"
                 ];
 
                 $templateUrlEncoded = urlencode($defaultTemplates[$_POST['defaultTemplate']] ?? $defaultTemplates['mixed']);
@@ -205,6 +240,54 @@ include './cfg.php';
         document.execCommand("copy");
         alert("已复制到剪贴板");
     }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+    const savedFileName = localStorage.getItem('customFileName');
+
+    if (savedFileName) {
+        document.getElementById('customFileName').value = savedFileName;
+        }
+    });
+
+document.getElementById('customFileName').addEventListener('input', function() {
+    const customFileName = this.value.trim();
+    localStorage.setItem('customFileName', customFileName);
+    });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const savedTemplate = localStorage.getItem("selectedTemplate");
+    const customTemplateUrl = localStorage.getItem("customTemplateUrl");
+
+    if (savedTemplate) {
+        const templateInput = document.querySelector(`input[name="defaultTemplate"][value="${savedTemplate}"]`);
+        if (templateInput) {
+            templateInput.checked = true;
+        }
+    }
+
+    if (customTemplateUrl) {
+        document.getElementById("customTemplateUrl").value = customTemplateUrl;
+        document.getElementById("useCustomTemplate").checked = true;
+    }
+
+    document.querySelectorAll('input[name="defaultTemplate"]').forEach(input => {
+        input.addEventListener("change", function () {
+            localStorage.setItem("selectedTemplate", this.value);
+            localStorage.removeItem("customTemplateUrl"); 
+        });
+    });
+
+    document.getElementById("customTemplateUrl").addEventListener("input", function () {
+        localStorage.setItem("customTemplateUrl", this.value);
+        localStorage.setItem("selectedTemplate", "custom"); 
+    });
+
+    document.getElementById("useCustomTemplate").addEventListener("change", function () {
+        localStorage.setItem("selectedTemplate", "custom");
+    });
+});
 </script>
 </body>
 </html>
