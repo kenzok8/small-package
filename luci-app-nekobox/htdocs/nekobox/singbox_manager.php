@@ -1090,16 +1090,19 @@ function initializeAceEditor() {
 
 <h2 class="text-success text-center mt-4 mb-4">订阅管理 ➤ p核专用</h2>
 <div class="help-text mb-3 text-start">
-    <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。我们建议使用 P 核心。确保将出站和入站防火墙规则都设置为“接受”并启用它们。
+    <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站防火墙规则都设置为“接受”并启用它们。
 </div>
 <div class="help-text mb-3 text-start">
-    <strong>2. 注意：</strong> 通用模板（<code>puernya.json</code>）最多支持<strong>3个</strong>订阅链接，请勿更改默认名称。
+    <strong>2. 注意：</strong> 通用模板（<code>puernya.json</code>）最多支持<strong>3 个</strong>订阅链接。请勿更改默认文件名称，并确保使用 puernya 内核。
 </div>
 <div class="help-text mb-3 text-start"> 
     <strong>3. 支持通用格式订阅，无需转换。
 </div>
 <div class="help-text mb-3 text-start"> 
     <strong>4. 保存与更新：</strong> 填写完毕后，请点击"更新配置"按钮进行保存。
+</div>
+<div class="help-text mb-3 text-start"> 
+    <strong>5. 说明：</strong> 上述 Sing-box 订阅适用于原版 Sing-box 内核，仅支持后缀为 Sing-box 格式的机场订阅链接。对于通用订阅，请使用转换模板以确保兼容性。
 </div>
 <div class="row">
     <?php for ($i = 0; $i < 3; $i++): ?>
