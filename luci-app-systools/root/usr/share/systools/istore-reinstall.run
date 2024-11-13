@@ -1,5 +1,5 @@
 #!/bin/sh
-ISTORE_REPO=https://istore.linkease.com/repo/all/store
+ISTORE_REPO=https://istore.istoreos.com/repo/all/store
 FCURL="curl --fail --show-error"
 
 curl -V >/dev/null 2>&1 || {
