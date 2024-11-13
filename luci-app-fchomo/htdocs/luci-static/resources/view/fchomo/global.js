@@ -319,7 +319,7 @@ return view.extend({
 		so.placeholder = '30';
 		so.validate = L.bind(hm.validateTimeDuration, so);
 
-		so = ss.option(form.Value, 'keep_alive_idle', _('TCP-Keep-Alive idle'),
+		so = ss.option(form.Value, 'keep_alive_idle', _('TCP-Keep-Alive idle timeout'),
 			_('In seconds. <code>%s</code> will be used if empty.').format('600'));
 		so.placeholder = '600';
 		so.validate = L.bind(hm.validateTimeDuration, so);

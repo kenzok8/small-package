@@ -190,12 +190,17 @@ chain {{ inchain }} {
 
 {%- function render_acl_dport(inchain, outchain, l4proto): %}
 chain {{ inchain }} {
+		{#- DNS hijack #}
+		meta l4proto { tcp, udp } th dport 53 counter goto {{ outchain }} comment "!{{ cfgname }}: DNS hijack"
+
 		{% if ((l4proto === 'tcp' || !l4proto) && routing_tcpport): %}
-		tcp dport @tcp_routing_port counter goto {{ outchain }}
+		tcp dport != @tcp_routing_port counter return
 		{% endif %}
 		{% if ((l4proto === 'udp' || !l4proto) && routing_udpport): %}
-		udp dport @udp_routing_port counter goto {{ outchain }}
+		udp dport != @udp_routing_port counter return
 		{% endif %}
+
+		counter goto {{ outchain }}
 	}
 {% endfunction %}
 {# Common function END -#}
@@ -349,7 +354,7 @@ table inet fchomo {
 		type nat hook prerouting priority dstnat + 5; policy accept;
 		{#- DNS hijack #}
 		{% if (dnsmasq_hijacked !== '1'): %}
-		meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto { tcp, udp } th dport 53 counter redirect to :{{ dnsmasq_port }} comment "!{{ cfgname }}: DNS hijack (subnet)"
+		meta iifname != lo meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto { tcp, udp } th dport 53 counter redirect to :{{ dnsmasq_port }} comment "!{{ cfgname }}: DNS hijack (subnet)"
 		{% endif %}
 		{#- TCP redirect entrypoint #}
 		{% if (match(proxy_mode, /redir/)): %}
@@ -360,7 +365,7 @@ table inet fchomo {
 	chain prerouting {
 		type filter hook prerouting priority 5; policy accept;
 		{#- DNS hijack #}
-		meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto { tcp, udp } th dport { {{ join(', ', [dnsmasq_port, dns_port, tunnel_port]) }} } counter accept comment "!{{ cfgname }}: DNS hijack (bypass local dnsserver)"
+		fib daddr type local meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto { tcp, udp } th dport { {{ join(', ', [dnsmasq_port, dns_port, tunnel_port]) }} } counter accept comment "!{{ cfgname }}: DNS hijack (bypass local dnsserver)"
 		{#- UDP tproxy entrypoint #}
 		{% if (match(proxy_mode, /tproxy/)): %}
 		meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto udp jump tproxy_acl_src
@@ -424,8 +429,8 @@ table inet fchomo {
 	{{ render_acl_dst('tproxy_acl_dst_reroute', 'tproxy_acl_dport_reroute') }}
 	{{ render_acl_dport('tproxy_acl_dport_reroute', 'tproxy_mark', 'udp') }}
 	chain tproxy_mark {
-		{#- DNS hijack #}
-		udp dport 53 counter accept comment "!{{ cfgname }}: DNS hijack (bypass router udp)"
+		{#- DNS hijack (router udp) #}
+		{# tproxy_mark --> route_table_id --reroute-to--> lo --> prerouting #}
 
 		meta l4proto udp meta mark set {{ tproxy_mark }} counter accept
 	}
