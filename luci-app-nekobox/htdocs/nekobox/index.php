@@ -222,12 +222,49 @@ function writeToLog($message) {
     }
 }
 
-function rotateLogs($logFile, $maxSize = 1048576) {
-   if (file_exists($logFile) && filesize($logFile) > $maxSize) {
-       rename($logFile, $logFile . '.old');
-       touch($logFile);
-       chmod($logFile, 0644);
-   }
+function createCronScript() {
+    $log_rotate_script = '/nekobox/rotate_logs.php';  
+    $cron_schedule = "0 1 * * * /usr/bin/php8-cli $log_rotate_script";
+    $cronScriptPath = '/etc/neko/core/set_cron.sh';  
+    $cronScriptContent = <<<EOL
+#!/bin/bash
+
+LOG_ROTATE_SCRIPT="$log_rotate_script"
+
+CRON_SCHEDULE="0 1 * * * /usr/bin/php8-cli \$LOG_ROTATE_SCRIPT"
+crontab -l | grep -q "\$LOG_ROTATE_SCRIPT"
+if [ \$? -ne 0 ]; then
+    (crontab -l 2>/dev/null; echo "\$CRON_SCHEDULE") | crontab -
+    echo "Cron job added to run log rotation daily at 1 AM."
+else
+    echo "Cron job already exists."
+fi
+EOL;
+
+    file_put_contents($cronScriptPath, $cronScriptContent);
+    chmod($cronScriptPath, 0755);
+    shell_exec("sh $cronScriptPath");
+    writeToLog("Cron job setup script created and executed to add a daily log rotation task.");
+}
+
+function rotateLogs($logFile, $maxSize = 5048576, $maxOldLogs = 3) {
+    if (file_exists($logFile) && filesize($logFile) > $maxSize) {
+        $oldLogFile = $logFile . '.old';
+        rename($logFile, $oldLogFile);
+        shell_exec("gzip $oldLogFile");
+        $oldLogs = glob($logFile . '.old.gz');
+        if (count($oldLogs) > $maxOldLogs) {
+            array_multisort(array_map('filemtime', $oldLogs), SORT_ASC, $oldLogs);  
+            $logsToDelete = array_slice($oldLogs, 0, count($oldLogs) - $maxOldLogs);
+            foreach ($logsToDelete as $logToDelete) {
+                unlink($logToDelete);  
+            }
+        }
+
+        touch($logFile);
+        chmod($logFile, 0644);
+        file_put_contents($logFile, '');
+    }
 }
 
 function isSingboxRunning() {
@@ -327,6 +364,7 @@ if (isset($_POST['singbox'])) {
                rotateLogs($singbox_log);
                
                createStartScript($config_file);
+               createCronScript();
                $output = shell_exec("sh $start_script_path >> $singbox_log 2>&1 &");
                writeToLog("Shell output: " . ($output ?: "No output"));
                

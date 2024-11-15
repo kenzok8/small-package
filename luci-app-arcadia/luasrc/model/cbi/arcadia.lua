@@ -11,7 +11,8 @@ m = taskd.docker_map("arcadia", "arcadia", "/usr/libexec/istorec/arcadia.sh",
 	translate("Arcadia one-stop code operation and maintenance platform.")
 		.. translate("Official website:") .. ' <a href=\"https://arcadia.cool\" target=\"_blank\">https://arcadia.cool</a>'
 		.. "<dl><dt>" .. translate("Arcadia is mainly aimed at scripting language programming and is suitable for development and operation environments of small and medium-sized teams and individuals.") .. "</dt>"
-		.. translate("In addition to code maintenance, Arcadia is also a powerful scheduled task maintenance platform with a comprehensive file system and underlying CLI command design.")
+		.. "<dt>" .. translate("In addition to code maintenance, Arcadia is also a powerful scheduled task maintenance platform with a comprehensive file system and underlying CLI command design.") .. "</dt>"
+		.. "<dt>" .. translate("The initial username and password are 'useradmin' and 'passwd' respectively.") .. "</dt>"
 		.. "</dl>")
 
 s = m:section(SimpleSection, translate("Service Status"), translate("Arcadia status:"))
