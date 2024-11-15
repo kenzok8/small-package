@@ -1210,11 +1210,4 @@ return view.extend({
 		mapPromise.then(node => node.classList.add('fade-in'));
 		return mapPromise;
 	},
-
-	handleSaveApply(ev, mode) {
-		return this.handleSave(ev).then(() => {
-			ui.changes.apply(mode == '0');
-			window.setTimeout(() => this.serviceRestart(), 3000);
-		});
-	},
 });
