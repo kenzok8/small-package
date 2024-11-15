@@ -223,24 +223,54 @@ function writeToLog($message) {
 }
 
 function createCronScript() {
-    $log_rotate_script = '/nekobox/rotate_logs.php';  
-    $cron_schedule = "0 1 * * * /usr/bin/php8-cli $log_rotate_script";
-    $cronScriptPath = '/etc/neko/core/set_cron.sh';  
+    $log_file = '/var/log/singbox_log.txt';
+    $max_size = 1048576;  
+    $max_old_logs = 5;    
+    $cron_schedule = "0 1 * * * /bin/bash /etc/neko/core/set_cron.sh";
+
     $cronScriptContent = <<<EOL
 #!/bin/bash
 
-LOG_ROTATE_SCRIPT="$log_rotate_script"
+LOG_FILE="$log_file"
+MAX_SIZE=$max_size
+MAX_OLD_LOGS=$max_old_logs
 
-CRON_SCHEDULE="0 1 * * * /usr/bin/php8-cli \$LOG_ROTATE_SCRIPT"
-crontab -l | grep -q "\$LOG_ROTATE_SCRIPT"
-if [ \$? -ne 0 ]; then
+CRON_SCHEDULE="0 1 * * * /bin/bash /etc/neko/core/set_cron.sh"
+
+crontab -l | grep -q "/etc/neko/core/set_cron.sh"
+if [ $? -ne 0 ]; then
     (crontab -l 2>/dev/null; echo "\$CRON_SCHEDULE") | crontab -
     echo "Cron job added to run log rotation daily at 1 AM."
 else
     echo "Cron job already exists."
 fi
+
+if [ -f "\$LOG_FILE" ] && [ \$(stat -c %s "\$LOG_FILE") -gt \$MAX_SIZE ]; then
+    echo "Log file size exceeds \$MAX_SIZE bytes. Rotating logs..."
+    mv "\$LOG_FILE" "\$LOG_FILE.old"
+    gzip "\$LOG_FILE.old"    
+    touch "\$LOG_FILE"
+    chmod 644 "\$LOG_FILE"
+    
+    echo "Log file rotated and compressed."
+else
+    echo "Log file is within the size limit, no rotation needed."
+fi
+
+OLD_LOGS=\$(ls -t /var/log/singbox_log*.gz)
+COUNT=0
+for LOG in \$OLD_LOGS; do
+    if [ \$COUNT -ge \$MAX_OLD_LOGS ]; then
+        echo "Deleting old log: \$LOG"
+        rm "\$LOG"
+    fi
+    COUNT=\$((COUNT + 1))
+done
+
+echo "Log rotation completed."
 EOL;
 
+    $cronScriptPath = '/etc/neko/core/set_cron.sh';
     file_put_contents($cronScriptPath, $cronScriptContent);
     chmod($cronScriptPath, 0755);
     shell_exec("sh $cronScriptPath");
