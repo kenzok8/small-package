@@ -426,10 +426,16 @@ install_php() {
         PHP_CGI_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-cgi_8.3.10-1_aarch64_generic.ipk"
         PHP_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8_8.3.10-1_aarch64_generic.ipk"
         PHP_MOD_CURL_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-mod-curl_8.3.10-1_aarch64_generic.ipk"
+        PHP_MOD_ZIP_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-mod-zip_8.2.21-1_aarch64_generic.ipk"
+        JQ_URL="https://github.com/Thaolga/neko/releases/download/core_neko/jq_1.6-2_aarch64_generic.ipk"
+        PHP_CLI_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-cli_8.3.12-r1_aarch64_generic.ipk"
     elif [ "$ARCH" == "x86_64" ]; then
         PHP_CGI_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-cgi_8.3.10-1_x86_64.ipk"
         PHP_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8_8.3.10-1_x86_64.ipk"
         PHP_MOD_CURL_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-mod-curl_8.3.10-1_x86_64.ipk"
+        PHP_MOD_ZIP_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-mod-zip_8.2.21-1_x86_64.ipk"
+        JQ_URL="https://github.com/Thaolga/neko/releases/download/core_neko/jq_1.6-2_x86_64.ipk"
+        PHP_CLI_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-cli_8.3.12-r1_x86_64.ipk"
     else
         echo -e "${RED}Unsupported architecture: $ARCH${RESET}"
         exit 1
@@ -459,7 +465,31 @@ install_php() {
         echo -e "${RED}PHP curl module installation failed.${RESET}"
     fi
 
-    rm -f /tmp/php8-cgi.ipk /tmp/php8.ipk /tmp/php8-mod-curl.ipk
+    echo -e "${GREEN}Downloading and installing PHP zip module...${RESET}"
+    wget "$PHP_MOD_ZIP_URL" -O /tmp/php8-mod-zip.ipk
+    if opkg install --force-reinstall --force-overwrite /tmp/php8-mod-zip.ipk; then
+        echo -e "${GREEN}PHP zip module installed successfully.${RESET}"
+    else
+        echo -e "${RED}PHP zip module installation failed.${RESET}"
+    fi
+
+    echo -e "${GREEN}Downloading and installing jq...${RESET}"
+    wget "$JQ_URL" -O /tmp/jq.ipk
+    if opkg install --force-reinstall --force-overwrite /tmp/jq.ipk; then
+        echo -e "${GREEN}jq installed successfully.${RESET}"
+    else
+        echo -e "${RED}jq installation failed.${RESET}"
+    fi
+    
+    echo -e "${GREEN}Downloading and installing PHP CLI...${RESET}"
+    wget "$PHP_CLI_URL" -O /tmp/php8-cli.ipk
+    if opkg install --force-reinstall --force-overwrite /tmp/php8-cli.ipk; then
+        echo -e "${GREEN}PHP CLI installed successfully.${RESET}"
+    else
+        echo -e "${RED}PHP CLI installation failed.${RESET}"
+    fi
+
+    rm -f /tmp/php8-cgi.ipk /tmp/php8.ipk /tmp/php8-mod-curl.ipk /tmp/php8-mod-zip.ipk /tmp/php8-cli.ipk
 
     echo -e "${GREEN}Installation complete.${RESET}"
     echo -e "${YELLOW}Please restart the server to apply changes.${RESET}"

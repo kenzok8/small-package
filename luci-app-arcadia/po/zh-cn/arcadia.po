@@ -13,6 +13,9 @@ msgstr "Arcadia 主要面向于脚本语言编程，适用于中小型团队与�
 msgid "In addition to code maintenance, Arcadia is also a powerful scheduled task maintenance platform with a comprehensive file system and underlying CLI command design."
 msgstr "除了代码运维外 Arcadia 还是一个强大的定时任务运维平台，并且有着完善的文件系统和底层CLI命令设计。"
 
+msgid "The initial username and password are 'useradmin' and 'passwd' respectively."
+msgstr "初始的用户名和密码分别是'useradmin'和'passwd'。"
+
 msgid "Image"
 msgstr "镜像"
 
