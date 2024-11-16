@@ -148,8 +148,6 @@ return view.extend({
 
 			return node;
 		}
-		o.validate = function(section_id, value) {
-		}
 		o.validate = L.bind(hm.validateAuthPassword, o);
 		o.rmempty = false;
 		o.depends({type: /^(http|socks|mixed|hysteria2)$/, username: /.+/});
@@ -229,21 +227,8 @@ return view.extend({
 			return node;
 		}
 		o.validate = function(section_id, value) {
-				var encmode = this.section.getOption('shadowsocks_chipher').formvalue(section_id);
-				var length = hm.shadowsocks_cipher_length[encmode];
-				if (length) {
-					length = Math.ceil(length/3)*4;
-					if (encmode.match(/^2022-/)) {
-						if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
-							return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
-					} else {
-						if (length !== 0 && value.length !== length)
-							return _('Expecting: %s').format(_('valid key length with %d characters').format(length));
-					}
-				} else
-					return true;
-
-			return true;
+			var encmode = this.section.getOption('shadowsocks_chipher').formvalue(section_id);
+			return hm.validateShadowsocksPassword.call(this, hm, encmode, section_id, value);
 		}
 		o.depends({type: 'shadowsocks', shadowsocks_chipher: /.+/});
 		o.modalonly = true;
@@ -275,6 +260,12 @@ return view.extend({
 		o.depends('type', 'tuic');
 		o.modalonly = true;
 
+		o = s.option(form.Value, 'tuic_max_udp_relay_packet_size', _('Max UDP relay packet size'));
+		o.datatype = 'uinteger';
+		o.default = '1500';
+		o.depends('type', 'tuic');
+		o.modalonly = true;
+
 		o = s.option(form.Value, 'tuic_max_idle_time', _('Idle timeout'),
 			_('In seconds.'));
 		o.default = '15000';
@@ -286,12 +277,6 @@ return view.extend({
 			_('In seconds.'));
 		o.default = '1000';
 		o.validate = L.bind(hm.validateTimeDuration, o);
-		o.depends('type', 'tuic');
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'tuic_max_udp_relay_packet_size', _('Max UDP relay packet size'));
-		o.datatype = 'uinteger';
-		o.default = '1500';
 		o.depends('type', 'tuic');
 		o.modalonly = true;
 

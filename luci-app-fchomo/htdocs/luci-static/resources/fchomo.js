@@ -81,6 +81,7 @@ return baseclass.extend({
 	],
 
 	outbound_type: [
+		['direct', _('DIRECT')],
 		['http', _('HTTP')],
 		['socks5', _('SOCKS5')],
 		['ss', _('Shadowsocks')],
@@ -89,7 +90,7 @@ return baseclass.extend({
 		['vmess', _('VMess')],
 		['vless', _('VLESS')],
 		['trojan', _('Trojan')],
-		['hysteria', _('Hysteria')],
+		//['hysteria', _('Hysteria')],
 		['hysteria2', _('Hysteria2')],
 		['tuic', _('TUIC')],
 		['wireguard', _('WireGuard')],
@@ -652,6 +653,8 @@ return baseclass.extend({
 		return true;
 	},
 	validateAuthPassword: function(section_id, value) {
+		if (!value)
+			return true;
 		if (!value.match(/^[^:]+$/))
 			return _('Expecting: %s').format('[^:]+');
 
@@ -699,6 +702,25 @@ return baseclass.extend({
 		catch(e) {
 			return _('Expecting: %s').format(_('valid JSON format'));
 		}
+
+		return true;
+	},
+
+	validateShadowsocksPassword: function(self, encmode, section_id, value) {
+		var length = self.shadowsocks_cipher_length[encmode];
+		if (typeof length !== 'undefined') {
+			length = Math.ceil(length/3)*4;
+			if (encmode.match(/^2022-/)) {
+				if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
+					return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
+			} else {
+				if (length === 0 && !value)
+					return _('Expecting: %s').format(_('non-empty value'));
+				if (length !== 0 && value.length !== length)
+					return _('Expecting: %s').format(_('valid key length with %d characters').format(length));
+			}
+		} else
+			return true;
 
 		return true;
 	},
