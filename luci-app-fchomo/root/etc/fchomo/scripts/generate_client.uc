@@ -10,7 +10,7 @@ import { urldecode, urlencode } from 'luci.http';
 
 import {
 	isEmpty, strToBool, strToInt, durationToSecond,
-	removeBlankAttrs,
+	arrToObj, removeBlankAttrs,
 	HM_DIR, RUN_DIR, PRESET_OUTBOUND
 } from 'fchomo';
 
@@ -38,6 +38,7 @@ const ucisniff = 'sniff',
       ucidnser = 'dns_server',
       ucidnspoli = 'dns_policy',
       ucipgrp = 'proxy_group',
+      ucinode = 'node',
       uciprov = 'provider',
       ucirule = 'ruleset',
       ucirout = 'rules',
@@ -419,6 +420,156 @@ config.proxies = [
 		type: 'dns'
 	}
 ];
+uci.foreach(uciconf, ucinode, (cfg) => {
+	if (cfg.enabled === '0')
+		return null;
+
+	push(config.proxies, {
+		name: cfg.label,
+		type: cfg.type,
+
+		server: cfg.server,
+		port: strToInt(cfg.port),
+
+		/* Dial fields */
+		tfo: strToBool(cfg.tfo),
+		mptcp: strToBool(cfg.mptcp),
+		// dev: Features under development
+		["dialer-proxy"]: null, //cfg.dialer_proxy,
+		["interface-name"]: cfg.interface_name,
+		["routing-mark"]: strToInt(cfg.routing_mark),
+		["ip-version"]: cfg.ip_version,
+
+		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / hysteria2 / TUIC / SSH */
+		username: cfg.username,
+		uuid: cfg.vmess_uuid || cfg.uuid,
+		cipher: cfg.vmess_chipher || cfg.shadowsocks_chipher,
+		password: cfg.shadowsocks_password || cfg.password,
+		headers: cfg.headers ? json(cfg.headers) : null,
+
+		/* Hysteria / Hysteria2 */
+		ports: isEmpty(cfg.hysteria_ports) ? null : join(',', cfg.hysteria_ports),
+		up: cfg.hysteria_up_mbps ? cfg.hysteria_up_mbps + ' Mbps' : null,
+		down: cfg.hysteria_down_mbps ? cfg.hysteria_down_mbps + ' Mbps' : null,
+		obfs: cfg.hysteria_obfs_type,
+		["obfs-password"]: cfg.hysteria_obfs_password,
+
+		/* SSH */
+		["private-key"]: cfg.ssh_priv_key,
+		["private-key-passphrase"]: cfg.ssh_priv_key_passphrase,
+		["host-key-algorithms"]: cfg.ssh_host_key_algorithms,
+		["host-key"]: cfg.ssh_host_key,
+
+		/* Shadowsocks */
+
+		/* Snell */
+		psk: cfg.snell_psk,
+		version: cfg.snell_version,
+		["obfs-opts"]: cfg.type === 'snell' ? {
+			mode: cfg.plugin_opts_obfsmode,
+			host: cfg.plugin_opts_host,
+		} : null,
+
+		/* TUIC */
+		ip: cfg.tuic_ip,
+		["congestion-controller"]: cfg.tuic_congestion_controller,
+		["udp-relay-mode"]: cfg.tuic_udp_relay_mode,
+		["udp-over-stream"]: strToBool(cfg.tuic_udp_over_stream),
+		["udp-over-stream-version"]: cfg.tuic_udp_over_stream_version,
+		["max-udp-relay-packet-size"]: strToInt(cfg.tuic_max_udp_relay_packet_size),
+		["reduce-rtt"]: strToBool(cfg.tuic_reduce_rtt),
+		["heartbeat-interval"]: strToInt(cfg.tuic_heartbeat),
+		["request-timeout"]: strToInt(cfg.tuic_request_timeout),
+		// fast-open: true
+		// max-open-streams: 20
+
+		/* Trojan */
+		["ss-opts"]: cfg.trojan_ss_enabled === '1' ? {
+			enabled: true,
+			method: cfg.trojan_ss_chipher,
+			password: cfg.trojan_ss_password
+		}: null,
+
+		/* VMess / VLESS */
+		flow: cfg.vless_flow,
+		alterId: strToInt(cfg.vmess_alterid),
+		["global-padding"]: cfg.type === 'vmess' ? (cfg.vmess_global_padding === '0' ? false : true) : null,
+		["authenticated-length"]: strToBool(cfg.vmess_authenticated_length),
+		["packet-encoding"]: cfg.vmess_packet_encoding,
+
+		/* Plugin fields */
+		plugin: cfg.plugin,
+		["plugin-opts"]: cfg.plugin ? {
+			mode: cfg.plugin_opts_obfsmode,
+			host: cfg.plugin_opts_host,
+			password: cfg.plugin_opts_thetlspassword,
+			version: cfg.plugin_opts_shadowtls_version,
+			["version-hint"]: cfg.plugin_opts_restls_versionhint,
+			["restls-script"]: cfg.plugin_opts_restls_script
+		} : null,
+
+		/* Extra fields */
+		udp: strToBool(cfg.udp),
+		["udp-over-tcp"]: strToBool(cfg.uot),
+		["udp-over-tcp-version"]: cfg.uot_version,
+
+		/* TLS fields */
+		tls: (cfg.type in ['trojan', 'hysteria', 'hysteria2', 'tuic']) ? null : strToBool(cfg.tls),
+		["disable-sni"]: strToBool(cfg.tls_disable_sni),
+		...arrToObj([[(cfg.type in ['vmess', 'vless']) ? 'servername' : 'sni', cfg.tls_sni]]),
+		fingerprint: cfg.tls_fingerprint,
+		alpn: cfg.tls_alpn, // Array
+		["skip-cert-verify"]: strToBool(cfg.tls_skip_cert_verify),
+		["client-fingerprint"]: cfg.tls_client_fingerprint,
+		["reality-opts"]: cfg.tls_reality === '1' ? {
+			["public-key"]: cfg.tls_reality_public_key,
+			["short-id"]: cfg.tls_reality_short_id
+		} : null,
+
+		/* Transport fields */
+		// https://github.com/muink/mihomo/blob/3e966e82c793ca99e3badc84bf3f2907b100edae/adapter/outbound/vmess.go#L74
+		...(cfg.transport_enabled === '1' ? {
+			network: cfg.transport_type,
+			["http-opts"]: cfg.transport_type === 'http' ? {
+				method: cfg.transport_http_method,
+				path: isEmpty(cfg.transport_paths) ? ['/'] : cfg.transport_paths, // Array
+				headers: cfg.transport_http_headers ? json(cfg.transport_http_headers) : null,
+			} : null,
+			["h2-opts"]: cfg.transport_type === 'h2' ? {
+				host: cfg.transport_hosts, // Array
+				path: cfg.transport_path || '/',
+			} : null,
+			["grpc-opts"]: cfg.transport_type === 'grpc' ? {
+				["grpc-service-name"]: cfg.transport_grpc_servicename
+			} : null,
+			["ws-opts"]: cfg.transport_type === 'ws' ? {
+				path: cfg.transport_path || '/',
+				headers: cfg.transport_http_headers ? json(cfg.transport_http_headers) : null,
+				["max-early-data"]: strToInt(cfg.transport_ws_max_early_data),
+				["early-data-header-name"]: cfg.transport_ws_early_data_header,
+				["v2ray-http-upgrade"]: strToBool(cfg.transport_ws_v2ray_http_upgrade),
+				["v2ray-http-upgrade-fast-open"]: strToBool(cfg.transport_ws_v2ray_http_upgrade_fast_open)
+			} : null
+		} : {}),
+
+		/* Multiplex fields */
+		smux: cfg.smux_enabled === '1' ? {
+			enabled: true,
+			protocol: cfg.smux_protocol,
+			["max-connections"]: strToInt(cfg.smux_max_connections),
+			["min-streams"]: strToInt(cfg.smux_min_streams),
+			["max-streams"]: strToInt(cfg.smux_max_streams),
+			statistic: strToBool(cfg.smux_statistic),
+			["only-tcp"]: strToBool(cfg.smux_only_tcp),
+			padding: strToBool(cfg.smux_padding),
+			["brutal-opts"]: cfg.smux_brutal === '1' ? {
+				enabled: true,
+				up: strToInt(cfg.smux_brutal_up), // Mbps
+				down: strToInt(cfg.smux_brutal_down) // Mbps
+			} : null
+		} : null
+	});
+});
 /* Proxy Node END */
 
 /* Proxy Group START */

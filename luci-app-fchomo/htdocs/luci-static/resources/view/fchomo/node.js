@@ -37,20 +37,672 @@ return view.extend({
 		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, true);
 		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
 
-		so = ss.option(form.Value, 'label', _('Label'));
+		ss.tab('field_general', _('General fields'));
+		ss.tab('field_tls', _('TLS fields'));
+		ss.tab('field_transport', _('Transport fields'));
+		ss.tab('field_multiplex', _('Multiplex fields'));
+		ss.tab('field_dial', _('Dial fields'));
+
+		so = ss.taboption('field_general', form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
 		so.validate = L.bind(hm.validateUniqueValue, so);
 		so.modalonly = true;
 
-		so = ss.option(form.Flag, 'enabled', _('Enable'));
+		so = ss.taboption('field_general', form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;
 		so.editable = true;
 
-		so = ss.option(form.ListValue, 'type', _('Type'));
+		so = ss.taboption('field_general', form.ListValue, 'type', _('Type'));
 		so.default = hm.outbound_type[0][0];
 		hm.outbound_type.forEach((res) => {
 			so.value.apply(so, res);
 		})
+
+		so = ss.taboption('field_general', form.Value, 'server', _('Server address'));
+		so.datatype = 'host';
+		so.rmempty = false;
+		so.depends({type: 'direct', '!reverse': true});
+
+		so = ss.taboption('field_general', form.Value, 'port', _('Port'));
+		so.datatype = 'port';
+		so.rmempty = false;
+		so.depends({type: 'direct', '!reverse': true});
+
+		/* HTTP / SOCKS fields */
+		/* hm.validateAuth */
+		so = ss.taboption('field_general', form.Value, 'username', _('Username'));
+		so.validate = L.bind(hm.validateAuthUsername, so);
+		so.depends({type: /^(http|socks5|ssh)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'password', _('Password'));
+		so.password = true;
+		so.validate = L.bind(hm.validateAuthPassword, so);
+		so.depends({type: /^(http|socks5|trojan|hysteria2|tuic|ssh)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.TextValue, 'headers', _('HTTP header'));
+		so.renderWidget = function(/* ... */) {
+			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
+
+			frameEl.firstChild.style.fontFamily = hm.monospacefonts.join(',');
+
+			return frameEl;
+		}
+		so.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
+		so.validate = L.bind(hm.validateJson, so);
+		so.depends('type', 'http');
+		so.modalonly = true;
+
+		/* Hysteria / Hysteria2 fields */
+		so = ss.taboption('field_general', form.DynamicList, 'hysteria_ports', _('Ports pool'));
+		so.datatype = 'or(port, portrange)';
+		so.depends({type: /^(hysteria|hysteria2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'hysteria_up_mbps', _('Max upload speed'),
+			_('In Mbps.'));
+		so.datatype = 'uinteger';
+		so.depends({type: /^(hysteria|hysteria2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'hysteria_down_mbps', _('Max download speed'),
+			_('In Mbps.'));
+		so.datatype = 'uinteger';
+		so.depends({type: /^(hysteria|hysteria2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
+		so.value('', _('Disable'));
+		so.value('salamander', _('Salamander'));
+		so.depends('type', 'hysteria2');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_password', _('Obfuscate password'),
+			_('Enabling obfuscation will make the server incompatible with standard QUIC connections, losing the ability to masquerade with HTTP/3.'));
+		so.password = true;
+		so.rmempty = false;
+		so.depends('type', 'hysteria');
+		so.depends({type: 'hysteria2', hysteria_obfs_type: /.+/});
+		so.modalonly = true;
+
+		/* SSH fields */
+		so = ss.taboption('field_general', form.TextValue, 'ssh_priv_key', _('Priv-key'));
+		so.depends('type', 'ssh');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'ssh_priv_key_passphrase', _('Priv-key passphrase'));
+		so.password = true;
+		so.depends({type: 'ssh', ssh_priv_key: /.+/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'ssh_host_key_algorithms', _('Host-key algorithms'));
+		so.placeholder = 'rsa';
+		so.depends('type', 'ssh');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'ssh_host_key', _('Host-key'));
+		so.placeholder = 'ssh-rsa AAAAB3NzaC1yc2EAA...';
+		so.depends({type: 'ssh', ssh_host_key_algorithms: /.+/});
+		so.modalonly = true;
+
+		/* Shadowsocks fields */
+		so = ss.taboption('field_general', form.ListValue, 'shadowsocks_chipher', _('Chipher'));
+		so.default = hm.shadowsocks_cipher_methods[1][0];
+		hm.shadowsocks_cipher_methods.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.depends('type', 'ss');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'shadowsocks_password', _('Password'));
+		so.password = true;
+		so.validate = function(section_id, value) {
+			var encmode = this.section.getOption('shadowsocks_chipher').formvalue(section_id);
+			return hm.validateShadowsocksPassword.call(this, hm, encmode, section_id, value);
+		}
+		so.depends({type: 'ss', shadowsocks_chipher: /.+/});
+		so.modalonly = true;
+
+		/* Snell fields */
+		so = ss.taboption('field_general', form.Value, 'snell_psk', _('Pre-shared key'));
+		so.password = true;
+		so.rmempty = false;
+		so.validate = L.bind(hm.validateAuthPassword, so);
+		so.depends('type', 'snell');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'snell_version', _('Version'));
+		so.value('1', _('v1'));
+		so.value('2', _('v2'));
+		so.value('3', _('v3'));
+		so.default = '3';
+		so.depends('type', 'snell');
+		so.modalonly = true;
+
+		/* TUIC fields */
+		so = ss.taboption('field_general', form.Value, 'uuid', _('UUID'));
+		so.rmempty = false;
+		so.validate = L.bind(hm.validateUUID, so);
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'tuic_ip', _('IP override'),
+			_('Override the IP address of the server that DNS response.'));
+		so.datatype = 'ipaddr(1)';
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'tuic_congestion_controller', _('Congestion controller'),
+			_('QUIC congestion controller.'));
+		so.default = 'cubic';
+		so.value('cubic', _('cubic'));
+		so.value('new_reno', _('new_reno'));
+		so.value('bbr', _('bbr'));
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'tuic_udp_relay_mode', _('UDP relay mode'),
+			_('UDP packet relay mode.'));
+		so.value('', _('Default'));
+		so.value('native', _('Native'));
+		so.value('quic', _('QUIC'));
+		so.depends({type: 'tuic', tuic_udp_over_stream: '0'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'tuic_udp_over_stream', _('UDP over stream'),
+			_('This is the TUIC port of the SUoT protocol, designed to provide a QUIC stream based UDP relay mode that TUIC does not provide.'));
+		so.default = so.disabled;
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'tuic_udp_over_stream_version', _('UDP over stream version'));
+		so.value('1', _('v1'));
+		so.depends({type: 'tuic', tuic_udp_over_stream: '1'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'tuic_max_udp_relay_packet_size', _('Max UDP relay packet size'));
+		so.datatype = 'uinteger';
+		so.placeholder = '1500';
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'tuic_reduce_rtt', _('Enable 0-RTT handshake'),
+			_('Enable 0-RTT QUIC connection handshake on the client side. This is not impacting much on the performance, as the protocol is fully multiplexed.<br/>' +
+				'Disabling this is highly recommended, as it is vulnerable to replay attacks.'));
+		so.default = so.disabled;
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'tuic_heartbeat', _('Heartbeat interval'),
+			_('In millisecond.'));
+		so.datatype = 'uinteger';
+		so.placeholder = '10000';
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'tuic_request_timeout', _('Request timeout'),
+			_('In millisecond.'));
+		so.datatype = 'uinteger';
+		so.placeholder = '8000';
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		/* Trojan fields */
+		so = ss.taboption('field_general', form.Flag, 'trojan_ss_enabled', _('Shadowsocks encrypt'));
+		so.default = so.disabled;
+		so.depends('type', 'trojan');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'trojan_ss_chipher', _('Shadowsocks chipher'));
+		so.value('aes-128-gcm', _('aes-128-gcm'));
+		so.value('aes-256-gcm', _('aes-256-gcm'));
+		so.value('chacha20-ietf-poly1305', _('chacha20-ietf-poly1305'));
+		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'trojan_ss_password', _('Shadowsocks password'));
+		so.password = true;
+		so.validate = function(section_id, value) {
+			var encmode = this.section.getOption('trojan_ss_chipher').formvalue(section_id);
+			return hm.validateShadowsocksPassword.call(this, hm, encmode, section_id, value);
+		}
+		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
+		so.modalonly = true;
+
+		/* VMess / VLESS fields */
+		so = ss.taboption('field_general', form.Value, 'vmess_uuid', _('UUID'));
+		so.rmempty = false;
+		so.validate = L.bind(hm.validateUUID, so);
+		so.depends({type: /^(vmess|vless)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'vless_flow', _('Flow'));
+		so.value('', _('None'));
+		so.value('xtls-rprx-vision');
+		so.depends('type', 'vless');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'vmess_alterid', _('Alter ID'));
+		so.datatype = 'uinteger';
+		so.default = '0';
+		so.depends('type', 'vmess');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'vmess_chipher', _('Chipher'));
+		so.default = 'auto';
+		so.value('auto', _('auto'));
+		so.value('none', _('none'));
+		so.value('zero', _('zero'));
+		so.value('aes-128-gcm', _('aes-128-gcm'));
+		so.value('chacha20-poly1305', _('chacha20-poly1305'));
+		so.depends('type', 'vmess');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'vmess_global_padding', _('Global padding'),
+			_('Protocol parameter. Will waste traffic randomly if enabled (enabled by default in v2ray and cannot be disabled).'));
+		so.default = so.enabled;
+		so.depends('type', 'vmess');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'vmess_authenticated_length', _('Authenticated length'),
+			_('Protocol parameter. Enable length block encryption.'));
+		so.default = so.disabled;
+		so.depends('type', 'vmess');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'vmess_packet_encoding', _('Packet encoding'));
+		so.value('', _('none'));
+		so.value('packetaddr', _('packet addr (v2ray-core v5+)'));
+		so.value('xudp', _('Xudp (Xray-core)'));
+		so.depends({type: /^(vmess|vless)$/});
+		so.modalonly = true;
+
+		/* Plugin fields */
+		so = ss.taboption('field_general', form.ListValue, 'plugin', _('Plugin'));
+		so.value('', _('none'));
+		so.value('obfs', _('obfs-simple'));
+		//so.value('v2ray-plugin', _('v2ray-plugin'));
+		so.value('shadow-tls', _('shadow-tls'));
+		so.value('restls', _('restls'));
+		so.depends('type', 'ss');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'plugin_opts_obfsmode', _('Plugin: ') + _('Obfs Mode'));
+		so.value('http', _('HTTP'));
+		so.value('tls', _('TLS'));
+		so.depends('plugin', 'obfs');
+		so.depends('type', 'snell');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'plugin_opts_host', _('Plugin: ') + _('Host that supports TLS 1.3'));
+		so.placeholder = 'cloud.tencent.com';
+		so.rmempty = false;
+		so.depends({plugin: /^(obfs|v2ray-plugin|shadow-tls|restls)$/});
+		so.depends('type', 'snell');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'plugin_opts_thetlspassword', _('Plugin: ') + _('Password'));
+		so.password = true;
+		so.rmempty = false;
+		so.depends({plugin: /^(shadow-tls|restls)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'plugin_opts_shadowtls_version', _('Plugin: ') + _('Version'));
+		so.value('1', _('v1'));
+		so.value('2', _('v2'));
+		so.value('3', _('v3'));
+		so.default = '2';
+		so.depends({plugin: 'shadow-tls'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'plugin_opts_restls_versionhint', _('Plugin: ') + _('Version hint'));
+		so.default = 'tls13';
+		so.rmempty = false;
+		so.depends({plugin: 'restls'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'plugin_opts_restls_script', _('Plugin: ') + _('Restls script'));
+		so.default = '300?100<1,400~100,350~100,600~100,300~200,300~100';
+		so.rmempty = false;
+		so.depends({plugin: 'restls'});
+		so.modalonly = true;
+
+		/* Extra fields */
+		so = ss.taboption('field_general', form.Flag, 'udp', _('UDP'));
+		so.default = so.disabled;
+		so.depends({type: /^(direct|socks5|ss|vmess|vless|trojan|wireguard)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'uot', _('UoT'),
+			_('Enable the SUoT protocol, requires server support. Conflict with Multiplex.'));
+		so.default = so.disabled;
+		so.depends('type', 'ss');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'uot_version', _('SUoT version'));
+		so.value('1', _('v1'));
+		so.value('2', _('v2'));
+		so.default = '2';
+		so.depends('uot', '1');
+		so.modalonly = true;
+
+		/* TLS fields */
+		so = ss.taboption('field_general', form.Flag, 'tls', _('TLS'));
+		so.default = so.disabled;
+		so.validate = function(section_id, value) {
+			var type = this.section.getOption('type').formvalue(section_id);
+			var tls = this.section.getUIElement(section_id, 'tls').node.querySelector('input');
+			var tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
+
+			// Force enabled
+			if (['trojan', 'hysteria', 'hysteria2', 'tuic'].includes(type)) {
+				tls.checked = true;
+				tls.disabled = true;
+			} else {
+				tls.disabled = null;
+			}
+
+			// Default alpn
+			if (!`${tls_alpn.getValue()}`) {
+				let def_alpn;
+
+				switch (type) {
+					case 'hysteria':
+					case 'hysteria2':
+					case 'tuic':
+						def_alpn = ['h3'];
+						break;
+					case 'vmess':
+					case 'vless':
+					case 'trojan':
+						def_alpn = ['h2', 'http/1.1'];
+						break;
+					default:
+						def_alpn = [];
+				}
+
+				tls_alpn.setValue(def_alpn);
+			}
+
+			return true;
+		}
+		so.depends({type: /^(http|socks5|vmess|vless|trojan|hysteria|hysteria2|tuic)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Flag, 'tls_disable_sni', _('Disable SNI'),
+			_('Donot send server name in ClientHello.'));
+		so.default = so.disabled;
+		so.depends({tls: '1', type: /^(tuic)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Value, 'tls_sni', _('TLS SNI'),
+			_('Used to verify the hostname on the returned certificates.'));
+		so.depends({tls: '1', type: /^(http|vmess|vless|trojan|hysteria|hysteria2)$/});
+		so.depends({tls: '1', tls_disable_sni: '0', type: /^(tuic)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),
+			_('List of supported application level protocols, in order of preference.'));
+		so.depends({tls: '1', type: /^(vmess|vless|trojan|hysteria|hysteria2|tuic)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Value, 'tls_fingerprint', _('Cert fingerprint'),
+			_('Certificate fingerprint. Used to implement SSL Pinning and prevent MitM.'));
+		so.validate = function(section_id, value) {
+			if (!value)
+				return true;
+			if (!((value.length === 64) && (value.match(/^[0-9a-fA-F]+$/))))
+				return _('Expecting: %s').format(_('valid SHA256 string with %d characters').format(64));
+
+			return true;
+		}
+		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|hysteria|hysteria2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Flag, 'tls_skip_cert_verify', _('Skip cert verify'),
+			_('Donot verifying server certificate.') +
+			'<br/>' +
+			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
+		so.default = so.disabled;
+		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|hysteria|hysteria2|tuic)$/});
+		so.modalonly = true;
+
+		// uTLS fields
+		so = ss.taboption('field_tls', form.ListValue, 'tls_client_fingerprint', _('Client fingerprint'));
+		so.default = hm.tls_client_fingerprints[0][0];
+		hm.tls_client_fingerprints.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.depends({tls: '1', type: /^(vmess|vless|trojan)$/});
+		so.depends({type: 'ss', plugin: /^(shadow-tls|restls)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Flag, 'tls_reality', _('REALITY'));
+		so.default = so.disabled;
+		so.depends({tls: '1', type: /^(vmess|vless|trojan)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Value, 'tls_reality_public_key', _('REALITY public key'));
+		so.rmempty = false;
+		so.depends('tls_reality', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Value, 'tls_reality_short_id', _('REALITY short ID'));
+		so.rmempty = false;
+		so.depends('tls_reality', '1');
+		so.modalonly = true;
+
+		/* Transport fields */
+		so = ss.taboption('field_general', form.Flag, 'transport_enabled', _('Transport'));
+		so.default = so.disabled;
+		so.depends({type: /^(vmess|vless|trojan)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.ListValue, 'transport_type', _('Transport type'));
+		so.default = 'http';
+		so.value('http', _('HTTP'));
+		so.value('h2', _('HTTPUpgrade'));
+		so.value('grpc', _('gRPC'));
+		so.value('ws', _('WebSocket'));
+		so.validate = function(section_id, value) {
+			var type = this.section.getOption('type').formvalue(section_id);
+
+			switch (type) {
+				case 'vmess':
+				case 'vless':
+					if (!['http', 'h2', 'grpc', 'ws'].includes(value))
+						return _('Expecting: only support %s.').format(_('HTTP') +
+							' / ' + _('HTTPUpgrade') +
+							' / ' + _('gRPC') +
+							' / ' + _('WebSocket'));
+					break;
+				case 'trojan':
+					if (!['grpc', 'ws'].includes(value))
+						return _('Expecting: only support %s.').format(_('gRPC') +
+							' / ' + _('WebSocket'));
+					break;
+				default:
+					break;
+			}
+
+			return true;
+		}
+		so.depends('transport_enabled', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.DynamicList, 'transport_hosts', _('Server hostname'));
+		so.datatype = 'list(hostname)';
+		so.placeholder = 'example.com';
+		so.depends({transport_enabled: '1', transport_type: 'h2'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.Value, 'transport_http_method', _('HTTP request method'));
+		so.value('GET', _('GET'));
+		so.value('POST', _('POST'));
+		so.value('PUT', _('PUT'));
+		so.default = 'GET';
+		so.rmempty = false;
+		so.depends({transport_enabled: '1', transport_type: 'http'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.DynamicList, 'transport_paths', _('Request path'));
+		so.placeholder = '/video';
+		so.default = '/';
+		so.rmempty = false;
+		so.depends({transport_enabled: '1', transport_type: 'http'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.Value, 'transport_path', _('Request path'));
+		so.placeholder = '/';
+		so.default = '/';
+		so.rmempty = false;
+		so.depends({transport_enabled: '1', transport_type: /^(h2|ws)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.TextValue, 'transport_http_headers', _('HTTP header'));
+		so.renderWidget = function(/* ... */) {
+			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
+
+			frameEl.firstChild.style.fontFamily = hm.monospacefonts.join(',');
+
+			return frameEl;
+		}
+		so.placeholder = '{\n  "Host": "example.com",\n  "Connection": [\n    "keep-alive"\n  ]\n}';
+		so.validate = L.bind(hm.validateJson, so);
+		so.depends({transport_enabled: '1', transport_type: /^(http|ws)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.Value, 'transport_grpc_servicename', _('gRPC service name'));
+		so.depends({transport_enabled: '1', transport_type: 'grpc'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.Value, 'transport_ws_max_early_data', _('Max Early Data'),
+			_('Early Data first packet length limit.'));
+		so.datatype = 'uinteger';
+		so.value('2048');
+		so.depends({transport_enabled: '1', transport_type: 'ws'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.Value, 'transport_ws_early_data_header', _('Early Data header name'));
+		so.value('Sec-WebSocket-Protocol');
+		so.depends({transport_enabled: '1', transport_type: 'ws'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.Flag, 'transport_ws_v2ray_http_upgrade', _('V2ray HTTPUpgrade'));
+		so.default = so.disabled;
+		so.depends({transport_enabled: '1', transport_type: 'ws'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_transport', form.Flag, 'transport_ws_v2ray_http_upgrade_fast_open', _('V2ray HTTPUpgrade fast open'));
+		so.default = so.disabled;
+		so.depends({transport_enabled: '1', transport_type: 'ws', transport_ws_v2ray_http_upgrade: '1'});
+		so.modalonly = true;
+
+		/* Multiplex fields */ // TCP protocol only
+		so = ss.taboption('field_general', form.Flag, 'smux_enabled', _('Multiplex'));
+		so.default = so.disabled;
+		so.depends({type: /^(vmess|vless|trojan)$/});
+		so.depends({type: 'ss', uot: '0'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.ListValue, 'smux_protocol', _('Protocol'));
+		so.default = 'h2mux';
+		so.value('smux', _('smux'));
+		so.value('yamux', _('yamux'));
+		so.value('h2mux', _('h2mux'));
+		so.depends('smux_enabled', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Value, 'smux_max_connections', _('Maximum connections'));
+		so.datatype = 'uinteger';
+		so.placeholder = '4';
+		so.depends('smux_enabled', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Value, 'smux_min_streams', _('Minimum streams'),
+			_('Minimum multiplexed streams in a connection before opening a new connection.'));
+		so.datatype = 'uinteger';
+		so.placeholder = '4';
+		so.depends('smux_enabled', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Value, 'smux_max_streams', _('Maximum streams'),
+			_('Maximum multiplexed streams in a connection before opening a new connection.<br/>' +
+			'Conflict with <code>%s</code> and <code>%s</code>.')
+			.format(_('Maximum connections'), _('Minimum streams')));
+		so.datatype = 'uinteger';
+		so.placeholder = '0';
+		so.depends({smux_enabled: '1', smux_max_connections: '', smux_min_streams: ''});
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Flag, 'smux_padding', _('Enable padding'));
+		so.default = so.disabled;
+		so.depends('smux_enabled', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Flag, 'smux_only_tcp', _('TCP only'),
+			_('Enable multiplexing only for TCP.'));
+		so.default = so.disabled;
+		so.depends('smux_enabled', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Flag, 'smux_statistic', _('Enable statistic'),
+			_('Show connections in the dashboard for breaking connections easier.'));
+		so.default = so.disabled;
+		so.depends('smux_enabled', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Flag, 'smux_brutal', _('Enable TCP Brutal'),
+			_('Enable TCP Brutal congestion control algorithm'));
+		so.default = so.disabled;
+		so.depends('smux_enabled', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Value, 'smux_brutal_up', _('Upload bandwidth'),
+			_('Upload bandwidth in Mbps.'));
+		so.datatype = 'uinteger';
+		so.depends('smux_brutal', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_multiplex', form.Value, 'smux_brutal_down', _('Download bandwidth'),
+			_('Download bandwidth in Mbps.'));
+		so.datatype = 'uinteger';
+		so.depends('smux_brutal', '1');
+		so.modalonly = true;
+
+		/* Dial fields */
+		so = ss.taboption('field_dial', form.Flag, 'tfo', _('TFO'));
+		so.default = so.disabled;
+		so.modalonly = true;
+
+		so = ss.taboption('field_dial', form.Flag, 'mptcp', _('mpTCP'));
+		so.default = so.disabled;
+		so.modalonly = true;
+
+		// dev: Features under development
+		so = ss.taboption('field_dial', form.Value, 'dialer_proxy', _('dialer-proxy'));
+		so.readonly = true;
+		so.modalonly = true;
+
+		so = ss.taboption('field_dial', widgets.DeviceSelect, 'interface_name', _('Bind interface'),
+			_('Bind outbound interface.</br>') +
+			_('Priority: Proxy Node > Proxy Group > Global.'));
+		so.multiple = false;
+		so.noaliases = true;
+		so.modalonly = true;
+
+		so = ss.taboption('field_dial', form.Value, 'routing_mark', _('Routing mark'),
+			_('Priority: Proxy Node > Proxy Group > Global.'));
+		so.datatype = 'uinteger';
+		so.modalonly = true;
+
+		so = ss.taboption('field_dial', form.ListValue, 'ip_version', _('IP version'));
+		so.default = hm.ip_version[0][0];
+		hm.ip_version.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.modalonly = true;
 		/* Proxy Node END */
 
 		/* Provider START */
@@ -210,7 +862,8 @@ return view.extend({
 		so.default = so.enabled;
 		so.modalonly = true;
 
-		so = ss.taboption('field_override', form.Flag, 'override_uot', _('UoT'));
+		so = ss.taboption('field_override', form.Flag, 'override_uot', _('UoT'),
+			_('Enable the SUoT protocol, requires server support. Conflict with Multiplex.'));
 		so.default = so.disabled;
 		so.modalonly = true;
 
@@ -224,7 +877,10 @@ return view.extend({
 		so.datatype = 'uinteger';
 		so.modalonly = true;
 
-		so = ss.taboption('field_override', form.Flag, 'override_skip_cert_verify', _('skip-cert-verify'));
+		so = ss.taboption('field_override', form.Flag, 'override_skip_cert_verify', _('Skip cert verify'),
+			_('Donot verifying server certificate.') +
+			'<br/>' +
+			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 		so.default = so.disabled;
 		so.modalonly = true;
 
@@ -245,7 +901,7 @@ return view.extend({
 		so.datatype = 'uinteger';
 		so.modalonly = true;
 
-		so = ss.taboption('field_override', form.ListValue, 'override_ip_version', _('ip-version'));
+		so = ss.taboption('field_override', form.ListValue, 'override_ip_version', _('IP version'));
 		so.default = hm.ip_version[0][0];
 		hm.ip_version.forEach((res) => {
 			so.value.apply(so, res);
