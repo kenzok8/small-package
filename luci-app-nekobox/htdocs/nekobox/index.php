@@ -225,7 +225,7 @@ function writeToLog($message) {
 function createCronScript() {
     $log_file = '/var/log/singbox_log.txt';
     $max_size = 1048576;  
-    $max_old_logs = 5;    
+    $max_old_logs = 2;    
     $cron_schedule = "0 1 * * * /bin/bash /etc/neko/core/set_cron.sh";
 
     $cronScriptContent = <<<EOL
@@ -277,7 +277,7 @@ EOL;
     writeToLog("Cron job setup script created and executed to add a daily log rotation task.");
 }
 
-function rotateLogs($logFile, $maxSize = 5048576, $maxOldLogs = 3) {
+function rotateLogs($logFile, $maxSize = 1048576, $maxOldLogs = 2) {
     if (file_exists($logFile) && filesize($logFile) > $maxSize) {
         $oldLogFile = $logFile . '.old';
         rename($logFile, $oldLogFile);
