@@ -16,7 +16,8 @@
 		},
 		"write": {
 			"file": {
-				"/tmp/fchomo_certificate.tmp": [ "write" ]
+				"/tmp/fchomo_certificate.tmp": [ "write" ],
+				"/tmp/fchomo_initialpack.tmp": [ "write" ]
 			},
 			"uci": [ "fchomo" ]
 		}

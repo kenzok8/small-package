@@ -684,6 +684,10 @@ msgstr ""
 msgid "Failed to upload %s, error: %s."
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:893
+msgid "Failed to upload, error: %s."
+msgstr ""
+
 #: htdocs/luci-static/resources/fchomo.js:120
 msgid "Fallback"
 msgstr ""
@@ -1884,6 +1888,10 @@ msgstr ""
 msgid "Successfully updated."
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:890
+msgid "Successfully uploaded."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:105
 msgid ""
 "Supports rule-set links of type: <code>file, http</code> and format: "
@@ -2136,6 +2144,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:343
 msgid "Upload certificate"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:204
+msgid "Upload initial package"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:358
