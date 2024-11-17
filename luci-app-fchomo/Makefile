@@ -8,7 +8,7 @@ LUCI_DEPENDS:= \
 	+firewall4 \
 	+kmod-inet-diag \
 	+kmod-nft-tproxy \
-	+yq \
+	+yq +wget-ssl \
 #	+ip-full +kmod-tun +dnsmasq-full \
 
 PKG_NAME:=luci-app-fchomo
