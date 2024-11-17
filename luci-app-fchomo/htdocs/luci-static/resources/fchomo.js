@@ -875,5 +875,24 @@ return baseclass.extend({
 			});
 		}, this, ev.target))
 		.catch((e) => { ui.addNotification(null, E('p', e.message)) });
+	},
+	uploadInitialPack: function(ev, section_id) {
+		var callWriteInitialPack = rpc.declare({
+			object: 'luci.fchomo',
+			method: 'initialpack_write',
+			expect: { '': {} }
+		});
+
+		return ui.uploadFile('/tmp/fchomo_initialpack.tmp', ev.target)
+		.then(L.bind((btn, res) => {
+			return L.resolveDefault(callWriteInitialPack(), {}).then((ret) => {
+				if (ret.result === true) {
+					ui.addNotification(null, E('p', _('Successfully uploaded.')));
+					return window.location = window.location.href.split('#')[0];
+				} else
+					ui.addNotification(null, E('p', _('Failed to upload, error: %s.').format(ret.error)));
+			});
+		}, this, ev.target))
+		.catch((e) => { ui.addNotification(null, E('p', e.message)) });
 	}
 });

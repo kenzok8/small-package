@@ -694,6 +694,10 @@ msgstr "无法执行 \"/etc/init.d/fchomo %s %s\" 原因: %s"
 msgid "Failed to upload %s, error: %s."
 msgstr "上传 %s 失败，错误：%s。"
 
+#: htdocs/luci-static/resources/fchomo.js:893
+msgid "Failed to upload, error: %s."
+msgstr "上传失败，错误：%s。"
+
 #: htdocs/luci-static/resources/fchomo.js:120
 msgid "Fallback"
 msgstr "自动回退"
@@ -1903,6 +1907,10 @@ msgstr "已成功导入 %s 个规则集 (共 %s 个)。"
 msgid "Successfully updated."
 msgstr "更新成功。"
 
+#: htdocs/luci-static/resources/fchomo.js:890
+msgid "Successfully uploaded."
+msgstr "已成功上传。"
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:105
 msgid ""
 "Supports rule-set links of type: <code>file, http</code> and format: "
@@ -2162,6 +2170,10 @@ msgstr "上传带宽（单位：Mbps）。"
 #: htdocs/luci-static/resources/view/fchomo/server.js:343
 msgid "Upload certificate"
 msgstr "上传证书"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:204
+msgid "Upload initial package"
+msgstr "上传初始资源包"
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:358
 msgid "Upload key"

@@ -350,6 +350,26 @@ const methods = {
 				break;
 			}
 		}
+	},
+	initialpack_write: {
+		call: function(req) {
+			const writeResources = function() {
+				const tmpcert = '/tmp/fchomo_initialpack.tmp';
+				const filestat = lstat(tmpcert);
+
+				if (!filestat || filestat.type !== 'file' || filestat.size <= 0) {
+					system(`rm -f ${tmpcert}`);
+					return { result: false, error: 'empty initialpack file' };
+				}
+
+				system(`tar -C '${HM_DIR}/' -xzf ${tmpcert} `);
+				system(`rm -f ${tmpcert}`);
+
+				return { result: true };
+			};
+
+			return writeResources();
+		}
 	}
 };
 

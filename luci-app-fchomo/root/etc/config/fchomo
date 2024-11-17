@@ -40,8 +40,6 @@ config fchomo 'inbound'
 	option tun_stack 'system'
 
 config fchomo 'tls'
-	option tls_cert_path '/etc/uhttpd.crt'
-	option tls_key_path '/etc/uhttpd.key'
 
 config fchomo 'api'
 	option external_controller_port '9090'
