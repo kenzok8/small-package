@@ -1363,7 +1363,7 @@ function gen_config(var)
 		end
 	
 		local default_dns_flag = "remote"
-		if (not COMMON.default_balancer_tag and COMMON.default_balancer_tag) or COMMON.default_outbound_tag == "direct" then
+		if (not COMMON.default_balancer_tag and not COMMON.default_outbound_tag) or COMMON.default_outbound_tag == "direct" then
 			default_dns_flag = "direct"
 		end
 	
