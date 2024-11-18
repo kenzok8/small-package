@@ -224,76 +224,50 @@ function writeToLog($message) {
 
 function createCronScript() {
     $log_file = '/var/log/singbox_log.txt';
+    $tmp_log_file = '/etc/neko/tmp/neko_log.txt'; 
     $max_size = 1048576;  
-    $max_old_logs = 2;    
-    $cron_schedule = "0 1 * * * /bin/bash /etc/neko/core/set_cron.sh";
-
+    $cron_schedule = "0 */4 * * * /bin/bash /etc/neko/core/set_cron.sh"; 
     $cronScriptContent = <<<EOL
 #!/bin/bash
 
 LOG_FILE="$log_file"
+TMP_LOG_FILE="$tmp_log_file"  
 MAX_SIZE=$max_size
-MAX_OLD_LOGS=$max_old_logs
 
-CRON_SCHEDULE="0 1 * * * /bin/bash /etc/neko/core/set_cron.sh"
-
-crontab -l | grep -q "/etc/neko/core/set_cron.sh"
-if [ $? -ne 0 ]; then
-    (crontab -l 2>/dev/null; echo "\$CRON_SCHEDULE") | crontab -
-    echo "Cron job added to run log rotation daily at 1 AM."
-else
-    echo "Cron job already exists."
-fi
+crontab -l | grep -v "/etc/neko/core/set_cron.sh" | crontab - 
+(crontab -l 2>/dev/null; echo "$cron_schedule") | crontab -
 
 if [ -f "\$LOG_FILE" ] && [ \$(stat -c %s "\$LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "Log file size exceeds \$MAX_SIZE bytes. Rotating logs..."
-    mv "\$LOG_FILE" "\$LOG_FILE.old"
-    gzip "\$LOG_FILE.old"    
-    touch "\$LOG_FILE"
-    chmod 644 "\$LOG_FILE"
-    
-    echo "Log file rotated and compressed."
+    echo "Log file (\$LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    > "\$LOG_FILE"  
+    echo "Log file (\$LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
 else
-    echo "Log file is within the size limit, no rotation needed."
+    echo "Log file (\$LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
 fi
 
-OLD_LOGS=\$(ls -t /var/log/singbox_log*.gz)
-COUNT=0
-for LOG in \$OLD_LOGS; do
-    if [ \$COUNT -ge \$MAX_OLD_LOGS ]; then
-        echo "Deleting old log: \$LOG"
-        rm "\$LOG"
-    fi
-    COUNT=\$((COUNT + 1))
-done
+if [ -f "\$TMP_LOG_FILE" ] && [ \$(stat -c %s "\$TMP_LOG_FILE") -gt \$MAX_SIZE ]; then
+    echo "Temp log file (\$TMP_LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    > "\$TMP_LOG_FILE"  
+    echo "Temp log file (\$TMP_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
+else
+    echo "Temp log file (\$TMP_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
+fi
 
-echo "Log rotation completed."
+echo "Log rotation completed." >> /var/log/cron_debug.log 2>&1
 EOL;
 
     $cronScriptPath = '/etc/neko/core/set_cron.sh';
     file_put_contents($cronScriptPath, $cronScriptContent);
     chmod($cronScriptPath, 0755);
     shell_exec("sh $cronScriptPath");
-    writeToLog("Cron job setup script created and executed to add a daily log rotation task.");
+    writeToLog("Cron job setup script created and executed to add or update the daily log clearing task for $log_file and $tmp_log_file.");
 }
 
-function rotateLogs($logFile, $maxSize = 1048576, $maxOldLogs = 2) {
+function rotateLogs($logFile, $maxSize = 1048576) {
     if (file_exists($logFile) && filesize($logFile) > $maxSize) {
-        $oldLogFile = $logFile . '.old';
-        rename($logFile, $oldLogFile);
-        shell_exec("gzip $oldLogFile");
-        $oldLogs = glob($logFile . '.old.gz');
-        if (count($oldLogs) > $maxOldLogs) {
-            array_multisort(array_map('filemtime', $oldLogs), SORT_ASC, $oldLogs);  
-            $logsToDelete = array_slice($oldLogs, 0, count($oldLogs) - $maxOldLogs);
-            foreach ($logsToDelete as $logToDelete) {
-                unlink($logToDelete);  
-            }
-        }
-
-        touch($logFile);
-        chmod($logFile, 0644);
         file_put_contents($logFile, '');
+        chmod($logFile, 0644);      
+        echo "Log file cleared successfully.\n";
     }
 }
 
@@ -408,32 +382,32 @@ if (isset($_POST['singbox'])) {
            }
            break;
            
-    case 'disable':
-        writeToLog("Stopping Sing-box");
-        $pid = getSingboxPID();
-        if ($pid) {
-            writeToLog("Killing Sing-box PID: $pid");
-            shell_exec("kill $pid");
-            if (file_exists('/usr/sbin/fw4')) {
-                shell_exec("nft flush ruleset");
-            } else {
-                shell_exec("iptables -t mangle -F");
-                shell_exec("iptables -t mangle -X");
-        }
-            shell_exec("/etc/init.d/firewall restart");
-            writeToLog("Cleared firewall rules and restarted firewall");
-            sleep(1);
-            if (!isSingboxRunning()) {
-                writeToLog("Sing-box has been stopped successfully");
-            } else {
-                writeToLog("Force killing Sing-box");
-                shell_exec("kill -9 $pid");
-                writeToLog("Sing-box has been force stopped");
-            }
-        } else {
-            writeToLog("Sing-box is not running");
-        }
-        break;
+       case 'disable':
+           writeToLog("Stopping Sing-box");
+           $pid = getSingboxPID();
+           if ($pid) {
+               writeToLog("Killing Sing-box PID: $pid");
+               shell_exec("kill $pid");
+               if (file_exists('/usr/sbin/fw4')) {
+                   shell_exec("nft flush ruleset");
+               } else {
+                   shell_exec("iptables -t mangle -F");
+                   shell_exec("iptables -t mangle -X");
+           }
+               shell_exec("/etc/init.d/firewall restart");
+               writeToLog("Cleared firewall rules and restarted firewall");
+               sleep(1);
+               if (!isSingboxRunning()) {
+                   writeToLog("Sing-box has been stopped successfully");
+               } else {
+                   writeToLog("Force killing Sing-box");
+                   shell_exec("kill -9 $pid");
+                   writeToLog("Sing-box has been force stopped");
+               }
+           } else {
+               writeToLog("Sing-box is not running");
+           }
+           break;
            
        case 'restart':
            if (isNekoBoxRunning()) {
@@ -484,7 +458,6 @@ if (isset($_POST['clear_plugin_log'])) {
     file_put_contents($plugin_log_file, '');
     writeToLog("NeKoBox log cleared");
 }
-
 
 $neko_status = exec("uci -q get neko.cfg.enabled");
 $singbox_status = isSingboxRunning() ? '1' : '0';
@@ -676,7 +649,7 @@ $(document).ready(function() {
        margin-bottom: 20px;
    }
 
-   @media (max-width: 1206px) {
+   @media (max-width: 1024px) {
        td:first-child {
        display: block;
        width: 100%;
@@ -700,6 +673,7 @@ $(document).ready(function() {
        display: block;
    }
 }
+
 </style>
 <div class="section-container">
    <table class="table table-borderless mb-2">
