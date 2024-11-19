@@ -33,6 +33,8 @@ local trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_typ
 local vmess_type_default = uci:get(appname, "@global_subscribe[0]", "vmess_type") or "xray"
 local vless_type_default = uci:get(appname, "@global_subscribe[0]", "vless_type") or "xray"
 local hysteria2_type_default = uci:get(appname, "@global_subscribe[0]", "hysteria2_type") or "hysteria2"
+local domain_strategy_default = uci:get(appname, "@global_subscribe[0]", "domain_strategy") or ""
+local domain_strategy_node = ""
 -- 判断是否过滤节点关键字
 local filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 local filter_keyword_discard_list_default = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
@@ -454,7 +456,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.h2_host = info.host
 			result.h2_path = info.path
 		end
-		if info.net == 'tcp' then
+		if info.net == 'raw' or info.net == 'tcp' then
 			if info.type and info.type ~= "http" then
 				info.type = "none"
 			end
@@ -480,9 +482,9 @@ local function processData(szType, content, add_mode, add_from)
 		if info.net == 'grpc' then
 			result.grpc_serviceName = info.path
 		end
-		if info.net == 'splithttp' then
-			result.splithttp_host = info.host
-			result.splithttp_path = info.path
+		if info.net == 'xhttp' or info.net == 'splithttp' then
+			result.xhttp_host = info.host
+			result.xhttp_path = info.path
 		end
 		if not info.security then result.security = "auto" end
 		if info.tls == "tls" or info.tls == "1" then
@@ -493,7 +495,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.tls = "0"
 		end
 
-		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
+		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "raw" or result.transport == "splithttp") then
 			log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 			return nil
 		end
@@ -653,7 +655,7 @@ local function processData(szType, content, add_mode, add_from)
 							result.h2_path = params.path
 						end
 					end
-					if params.type == 'tcp' then
+					if params.type == 'raw' or params.type == 'tcp' then
 						result.tcp_guise = params.headerType or "none"
 						result.tcp_guise_http_host = params.host
 						result.tcp_guise_http_path = params.path
@@ -800,7 +802,7 @@ local function processData(szType, content, add_mode, add_from)
 					result.h2_path = params.path
 				end
 			end
-			if params.type == 'tcp' then
+			if params.type == 'raw' or params.type == 'tcp' then
 				result.tcp_guise = params.headerType or "none"
 				result.tcp_guise_http_host = params.host
 				result.tcp_guise_http_path = params.path
@@ -826,16 +828,16 @@ local function processData(szType, content, add_mode, add_from)
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
 				result.grpc_mode = params.mode
 			end
-			if params.type == 'splithttp' then
-				result.splithttp_host = params.host
-				result.splithttp_path = params.path
+			if info.net == 'xhttp' or info.net == 'splithttp' then
+				result.xhttp_host = params.host
+				result.xhttp_path = params.path
 			end
 
 			result.encryption = params.encryption or "none"
 
 			result.flow = params.flow or nil
 
-			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
+			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "raw" or result.transport == "splithttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 				return nil
 			end
@@ -932,7 +934,7 @@ local function processData(szType, content, add_mode, add_from)
 					result.h2_path = params.path
 				end
 			end
-			if params.type == 'tcp' then
+			if params.type == 'raw' or params.type == 'tcp' then
 				result.tcp_guise = params.headerType or "none"
 				result.tcp_guise_http_host = params.host
 				result.tcp_guise_http_path = params.path
@@ -957,9 +959,9 @@ local function processData(szType, content, add_mode, add_from)
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
 				result.grpc_mode = params.mode
 			end
-			if params.type == 'splithttp' then
-				result.splithttp_host = params.host
-				result.splithttp_path = params.path
+			if info.net == 'xhttp' or info.net == 'splithttp' then
+				result.xhttp_host = params.host
+				result.xhttp_path = params.path
 			end
 			
 			result.encryption = params.encryption or "none"
@@ -983,7 +985,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.port = port
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 
-			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "splithttp") then
+			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "raw" or result.transport == "splithttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 				return nil
 			end
@@ -1351,6 +1353,10 @@ local function update_node(manual)
 			local cfgid = uci:section(appname, "nodes", api.gen_short_uuid())
 			for kkk, vvv in pairs(vv) do
 				uci:set(appname, cfgid, kkk, vvv)
+				-- sing-box 域名解析策略
+				if kkk == "type" and vvv == "sing-box" then
+					uci:set(appname, cfgid, "domain_strategy", domain_strategy_node)
+				end
 			end
 		end
 	end
@@ -1543,6 +1549,12 @@ local execute = function()
 			local hysteria2_type = value.hysteria2_type or "global"
 			if hysteria2_type ~= "global" then
 				hysteria2_type_default = hysteria2_type
+			end
+			local domain_strategy = value.domain_strategy or "global"
+			if domain_strategy ~= "global" then
+				domain_strategy_node = domain_strategy
+			else
+				domain_strategy_node = domain_strategy_default
 			end
 			local ua = value.user_agent
 			log('正在订阅:【' .. remark .. '】' .. url)

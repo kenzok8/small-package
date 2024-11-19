@@ -964,6 +964,47 @@ function to_move(app_name,file)
 	return {code = 0}
 end
 
+function get_version()
+	local version = sys.exec("opkg list-installed luci-app-passwall2 2>/dev/null | awk '{print $3}'")
+	if not version or #version == 0 then
+		version = sys.exec("apk info luci-app-passwall2 2>/dev/null | awk 'NR == 1 {print $1}' | cut -d'-' -f4-")
+	end
+	return version or ""
+end
+
+function to_check_self()
+	local url = "https://raw.githubusercontent.com/xiaorouji/openwrt-passwall2/main/luci-app-passwall2/Makefile"
+	local tmp_file = "/tmp/passwall2_makefile"
+	local return_code, result = curl_logic(url, tmp_file, curl_args)
+	result = return_code == 0
+	if not result then
+		exec("/bin/rm", {"-f", tmp_file})
+		return {
+			code = 1,
+			error = i18n.translatef("Failed")
+		}
+	end
+	local local_version  = get_version()
+	local remote_version = sys.exec("echo -n $(grep 'PKG_VERSION' /tmp/passwall2_makefile|awk -F '=' '{print $2}')")
+				.. "-" ..  sys.exec("echo -n $(grep 'PKG_RELEASE' /tmp/passwall2_makefile|awk -F '=' '{print $2}')")
+
+	local has_update = compare_versions(local_version, "<", remote_version)
+	if not has_update then
+		return {
+			code = 0,
+			local_version = local_version,
+			remote_version = remote_version
+		}
+	end
+	return {
+		code = 1,
+		has_update = true,
+		local_version = local_version,
+		remote_version = remote_version,
+		error = i18n.translatef("The latest version: %s, currently does not support automatic update, if you need to update, please compile or download the ipk and then manually install.", remote_version)
+	}
+end
+
 function cacheFileCompareToLogic(file, str)
 	local result = nil
 	if file and str then
