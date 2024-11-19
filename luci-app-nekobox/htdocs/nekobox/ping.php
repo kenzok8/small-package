@@ -696,11 +696,14 @@ let IP = {
         
             document.getElementById('d-ip').innerHTML = simpleDisplay;
             document.getElementById('ipip').innerHTML = locationInfo;
-            $("#flag").attr("src", _IMG + "flags/" + (data.country_code || 'unknown').toLowerCase() + ".png");
+            const countryCode = data.country_code || 'unknown';
+            const flagSrc = (countryCode !== 'unknown') ? _IMG + "flags/" + countryCode.toLowerCase() + ".png" : './assets/neko/flags/mo.png';
+            $("#flag").attr("src", flagSrc);
         
         } catch (error) {
             console.error("Error in updateUI:", error);
             document.getElementById('d-ip').innerHTML = "更新 IP 信息失败";
+            $("#flag").attr("src", "./assets/neko/flags/mo.png");
         }
     },
 
