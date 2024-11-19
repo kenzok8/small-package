@@ -13,12 +13,16 @@ $allowed_files = [
 $file = $_GET['file'] ?? '';
 $max_lines = 100; 
 $max_chars = 1000000; 
+$max_line_length = 300; 
 
 if (array_key_exists($file, $allowed_files)) {
     $file_path = $allowed_files[$file];
 
     if (file_exists($file_path)) {
         $lines = file($file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = array_filter($lines, function($line) use ($max_line_length) {
+            return strlen($line) <= $max_line_length;
+        });
         
         $content = implode(PHP_EOL, $lines);
         

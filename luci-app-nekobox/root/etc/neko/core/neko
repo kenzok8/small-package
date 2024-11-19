@@ -31,7 +31,7 @@ url_core="https://github.com/Thaolga/neko/releases/download/core_neko"
 url_geo="https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest"
 
 neko_ver(){
-    neko_version="1.5.2"
+    neko_version="1.5.3"
 }
 
 logs() {
