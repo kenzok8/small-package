@@ -21,6 +21,99 @@ if (file_exists($dataFilePath)) {
         }
     }
 }
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['setCron'])) {
+    $cronExpression = trim($_POST['cronExpression']);
+    $shellScriptPath = '/etc/neko/core/update_subscription.sh'; 
+
+    if (preg_match('/^(\*|\d+)( (\*|\d+)){4}$/', $cronExpression)) {
+        $cronJob = "$cronExpression $shellScriptPath";
+        $currentCrons = shell_exec('crontab -l 2>/dev/null'); 
+        $updatedCrons = preg_replace(
+            "/^.*".preg_quote($shellScriptPath, '/').".*$/m",
+            '', 
+            $currentCrons
+        ); 
+
+        $updatedCrons = trim($updatedCrons) . "\n" . $cronJob . "\n"; 
+
+        $tempCronFile = tempnam(sys_get_temp_dir(), 'cron');
+        file_put_contents($tempCronFile, $updatedCrons);
+        exec("crontab $tempCronFile"); 
+        unlink($tempCronFile); 
+
+        echo "<div class='alert alert-success'>定时任务已设置: $cronExpression</div>";
+    } else {
+        echo "<div class='alert alert-danger'>无效的 Cron 表达式，请检查格式。</div>";
+    }
+}
+
+?>
+
+<?php
+$shellScriptPath = '/etc/neko/core/update_subscription.sh';
+$DATA_FILE = '/tmp/subscription_data.txt'; 
+$LOG_FILE = '/tmp/update_subscription.log'; 
+$SUBSCRIBE_URL = '';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['subscribeUrl'])) {
+        $SUBSCRIBE_URL = trim($_POST['subscribeUrl']);
+        
+        if (empty($SUBSCRIBE_URL)) {
+            echo "<div class='alert alert-warning'>订阅链接不能为空。</div>";
+            exit;
+        }
+        
+        file_put_contents($DATA_FILE, "订阅链接地址: $SUBSCRIBE_URL\n", FILE_APPEND);
+        echo "<div class='alert alert-success'>订阅链接已接收: $SUBSCRIBE_URL</div>";
+    }
+
+    if (isset($_POST['createShellScript'])) {
+        $shellScriptContent = <<<EOL
+#!/bin/sh
+
+DATA_FILE="/tmp/subscription_data.txt"
+CONFIG_DIR="/etc/neko/config"
+LOG_FILE="/tmp/update_subscription.log"
+TEMPLATE_URL="https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json"
+SUBSCRIBE_URL=$(grep "订阅链接地址:" "$DATA_FILE" | tail -1 | cut -d ':' -f2- | tr -d '\n\r' | xargs)
+
+if [ -z "\$SUBSCRIBE_URL" ]; then
+  echo "\$(date): 订阅链接地址为空或提取失败。" >> "\$LOG_FILE"
+  exit 1
+fi
+
+COMPLETE_URL="https://sing-box-subscribe-doraemon.vercel.app/config/\${SUBSCRIBE_URL}&file=\${TEMPLATE_URL}"
+echo "\$(date): 生成的订阅链接: \$COMPLETE_URL" >> "\$LOG_FILE"
+
+if [ ! -d "\$CONFIG_DIR" ]; then
+  mkdir -p "\$CONFIG_DIR"
+  if [ \$? -ne 0 ]; then
+    echo "\$(date): 无法创建配置目录: \$CONFIG_DIR" >> "\$LOG_FILE"
+    exit 1
+  fi
+fi
+
+CONFIG_FILE="\$CONFIG_DIR/sing-box.json"
+wget -O "\$CONFIG_FILE" "\$COMPLETE_URL" >> "\$LOG_FILE" 2>&1
+
+if [ \$? -eq 0 ]; then
+  echo "\$(date): 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
+else
+  echo "\$(date): 配置文件更新失败，请检查链接或网络。" >> "\$LOG_FILE"
+  exit 1
+fi
+EOL;
+
+        if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
+            chmod($shellScriptPath, 0755);
+            echo "<div class='alert alert-success'>Shell 脚本已创建成功！路径: $shellScriptPath</div>";
+        } else {
+            echo "<div class='alert alert-danger'>无法创建 Shell 脚本，请检查权限。</div>";
+        }
+    }
+}
 ?>
 
 <!doctype html>
@@ -38,6 +131,7 @@ if (file_exists($dataFilePath)) {
     <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
 <style>
@@ -63,7 +157,10 @@ if (file_exists($dataFilePath)) {
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
-            <p>请选择一个模板以生成配置文件：根据订阅节点信息选择相应的模板。若选择带有地区分组的模板，请确保您的节点包含以下线路。挂梯子更新！</p>
+            <p>
+                  请选择一个模板以生成配置文件：根据订阅节点信息选择相应的模板。若选择带有地区分组的模板，请确保您的节点包含以下线路。挂梯子更新！</p>
+                 <strong>说明：</strong>定时任务为自动更新操作，默认使用 6 号模板生成配置文件，文件名为 <strong>sing-box.json</strong>。
+            </p>
             <ul>
                 <li><strong>默认模板 1</strong>：无地区  无分组 通用。</li>
                 <li><strong>默认模板 2</strong>：无地区  带分流规则 通用。</li>
@@ -76,7 +173,7 @@ if (file_exists($dataFilePath)) {
         <form method="post" action="">
             <div class="mb-3">
                 <label for="subscribeUrl" class="form-label">订阅链接地址:</label>
-                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($lastSubscribeUrl); ?>" required>
+                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($lastSubscribeUrl); ?>" placeholder="输入订阅链接" required>
             </div>
             <div class="mb-3">
                 <label for="customFileName" class="form-label">自定义文件名（无需输入后缀）</label>
@@ -116,10 +213,58 @@ if (file_exists($dataFilePath)) {
                     <input type="text" class="form-control" id="customTemplateUrl" name="customTemplateUrl" placeholder="输入自定义模板URL">
                 </div>
             </fieldset>
-            <div class="mb-3">
-                <button type="submit" name="generateConfig" class="btn btn-info">生成配置文件</button>
+            <div class="row mb-4"> 
+                <div class="col-auto">
+                    <form method="post" action="">
+                        <button type="submit" name="generateConfig" class="btn btn-info">
+                            <i class="bi bi-file-earmark-text"></i> 生成配置文件
+                        </button>
+                    </form>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cronModal">
+                        <i class="bi bi-clock"></i> 设置定时任务
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <form method="post" action="">
+                        <button type="submit" name="createShellScript" class="btn btn-primary">
+                            <i class="bi bi-terminal"></i> 生成更新脚本
+                        </button>
+                    </form>
+                </div>
             </div>
-        </form>
+        <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="cronModalLabel">设置定时任务</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form method="post" action="">
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="cronExpression" class="form-label">Cron 表达式</label>
+                    <input type="text" class="form-control" id="cronExpression" name="cronExpression" placeholder="如: 0 2 * * *" required>
+                  </div>
+                  <div class="alert alert-info">
+                    <strong>提示:</strong> Cron 表达式格式：
+                    <ul>
+                      <li><code>分钟 小时 日 月 星期</code></li>
+                      <li>示例: 每天凌晨 2 点: <code>0 2 * * *</code></li>
+                      <li>每周一凌晨 3 点: <code>0 3 * * 1</code></li>
+                      <li>工作日（周一至周五）的上午 9 点: <code>0 9 * * 1-5</code></li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                  <button type="submit" name="setCron" class="btn btn-primary">保存</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
         <?php
         $dataFilePath = '/tmp/subscription_data.txt';
         $configFilePath = '/etc/neko/config/sing-box.json';
@@ -185,14 +330,14 @@ if (file_exists($dataFilePath)) {
             echo "<div class='mb-3'>";
             echo "<textarea id='configContent' name='configContent' class='form-control' style='height: 300px;'>" . htmlspecialchars($downloadedContent) . "</textarea>";
             echo "</div>";
-            echo "<div class='text-center'>";
-            echo "<button class='btn btn-info' type='button' onclick='copyToClipboard()'><i class='fas fa-copy'></i> 复制到剪贴</button>";
+            echo "<div class='text-center' mb-3>";
+            echo "<button class='btn btn-info me-3' type='button' onclick='copyToClipboard()'><i class='bi bi-clipboard'></i> 复制到剪贴</button>";
             echo "<input type='hidden' name='saveContent' value='1'>";
-            echo "<button class='btn btn-success' type='submit'>保存修改</button>";
+            echo "<button class='btn btn-success' type='submit'><i class='bi bi-save'></i>保存修改</button>";
             echo "</div>";
             echo "</form>";
             echo "</div>";
-            echo "<div class='alert alert-info' style='word-wrap: break-word; overflow-wrap: break-word;'>";
+            echo "<div class='alert alert-info mt-3' style='word-wrap: break-word; overflow-wrap: break-word;'>";
             foreach ($logMessages as $message) {
             echo $message . "<br>";
             }
