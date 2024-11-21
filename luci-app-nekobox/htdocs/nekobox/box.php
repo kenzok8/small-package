@@ -65,8 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit;
         }
         
-        file_put_contents($DATA_FILE, "订阅链接地址: $SUBSCRIBE_URL\n", FILE_APPEND);
-        echo "<div class='alert alert-success'>订阅链接已接收: $SUBSCRIBE_URL</div>";
+        echo "<div class='alert alert-success'>提交成功: 订阅链接已保存为 $SUBSCRIBE_URL</div>";
     }
 
     if (isset($_POST['createShellScript'])) {
@@ -77,7 +76,7 @@ DATA_FILE="/tmp/subscription_data.txt"
 CONFIG_DIR="/etc/neko/config"
 LOG_FILE="/tmp/update_subscription.log"
 TEMPLATE_URL="https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json"
-SUBSCRIBE_URL=$(grep "订阅链接地址:" "$DATA_FILE" | tail -1 | cut -d ':' -f2- | tr -d '\n\r' | xargs)
+SUBSCRIBE_URL=$(grep "订阅链接地址:" "$DATA_FILE" | tail -1 | sed 's/^[^|]*| //g' | cut -d ':' -f2- | tr -d '\n\r' | xargs)
 
 if [ -z "\$SUBSCRIBE_URL" ]; then
   echo "\$(date): 订阅链接地址为空或提取失败。" >> "\$LOG_FILE"
@@ -274,10 +273,8 @@ EOL;
             $subscribeUrl = trim($_POST['subscribeUrl']);
             $customTemplateUrl = trim($_POST['customTemplateUrl']);
             $templateOption = $_POST['templateOption'] ?? 'default';
-            $dataContent = "订阅链接地址: " . $subscribeUrl . "\n" . "自定义模板URL: " . $customTemplateUrl . "\n";
-            file_put_contents($dataFilePath, $dataContent, FILE_APPEND);
-            $subscribeUrlEncoded = urlencode($subscribeUrl);
-            
+            $currentTime = date('Y-m-d H:i:s', strtotime('+8 hours'));
+            $dataContent = $currentTime . " | 订阅链接地址: " . $subscribeUrl . "\n";            
             $customFileName = trim($_POST['customFileName']);
             if (empty($customFileName)) {
                $customFileName = 'sing-box';  
@@ -287,6 +284,19 @@ EOL;
                 $customFileName .= '.json';
             }
 
+            $currentData = file_exists($dataFilePath) ? file_get_contents($dataFilePath) : '';
+            $logEntries = array_filter(explode("\n\n", trim($currentData)));
+            if (!in_array(trim($dataContent), $logEntries)) {
+                $logEntries[] = trim($dataContent);
+            }
+
+            while (count($logEntries) > 10) {
+                array_shift($logEntries);
+            }
+
+            file_put_contents($dataFilePath, implode("\n\n", $logEntries) . "\n\n");
+
+            $subscribeUrlEncoded = urlencode($subscribeUrl);
             if ($templateOption === 'custom' && !empty($customTemplateUrl)) {
                 $templateUrlEncoded = urlencode($customTemplateUrl);
             } else {
