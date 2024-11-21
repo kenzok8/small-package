@@ -448,6 +448,45 @@ if (isset($_POST['singbox'])) {
    writeToLog("Singbox status set to: $singbox_status");
 }
 
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cronTime'])) {
+    $cronTime = $_POST['cronTime'];
+
+    if (empty($cronTime)) {
+        echo "请提供有效的 Cron 时间格式！";
+        exit;
+    }
+
+    $startScriptPath = '/etc/neko/core/start.sh';  
+
+    $restartScriptContent = <<<EOL
+#!/bin/bash
+if pgrep -x "singbox" > /dev/null
+then
+    echo "Sing-box 正在运行，正在重启..."
+    kill $(pgrep -x "singbox")
+    sleep 2
+    sh $startScriptPath  
+    echo "Sing-box 重启成功!"
+else
+    echo "Sing-box 没有运行, 启动 Sing-box..."
+    sh $startScriptPath  
+    echo "Sing-box 启动成功!"
+fi
+EOL;
+
+    $scriptPath = '/etc/neko/core/restart_singbox.sh';
+    file_put_contents($scriptPath, $restartScriptContent);
+    chmod($scriptPath, 0755);  
+
+    $cronSchedule = $cronTime . " /bin/bash $scriptPath"; 
+    exec("crontab -l | grep -v '$scriptPath' | crontab -");  
+    exec("(crontab -l 2>/dev/null; echo \"$cronSchedule\") | crontab -");  
+
+    error_log("定时任务已设置成功，Sing-box 将在 $cronTime 自动重启。");
+    echo json_encode(['success' => true, 'message' => '定时任务已设置成功']);
+    exit;
+}
+
 if (isset($_POST['clear_singbox_log'])) {
    file_put_contents($singbox_log, '');
    writeToLog("Singbox log cleared");
@@ -848,6 +887,7 @@ $(document).ready(function() {
             </div>
             <button type="submit" name="clear_singbox_log" class="btn btn-danger">🗑️ 清空日志</button>
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#helpModal">🔄 更正时区</button>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cronModal">⏰ 定时重启</button>
         </form>
     </div>
 </div>
@@ -883,6 +923,63 @@ date
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="cronModal" tabindex="-1" role="dialog" aria-labelledby="cronModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cronModalLabel">设置 Cron 任务时间</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="cronForm" method="POST">
+          <div class="form-group ">
+            <label for="cronTime">设置 Sing-box 重启时间</label>
+            <input type="text" class="form-control mt-3" id="cronTime" name="cronTime" placeholder="例如：0 3 * * *（每天 3 点）" required>
+          </div>
+          <div class="alert alert-info mt-3">
+            <strong>提示:</strong> Cron 表达式格式：
+            <ul>
+              <li><code>分钟 小时 日 月 星期</code></li>
+              <li>示例: 每天凌晨 2 点: <code>0 2 * * *</code></li>
+              <li>每周一凌晨 3 点: <code>0 3 * * 1</code></li>
+              <li>工作日（周一至周五）的上午 9 点: <code>0 9 * * 1-5</code></li>
+            </ul>
+          </div>
+        </form>
+        <div id="resultMessage" class="mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" form="cronForm">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+    $('#cronForm').submit(function(event) {
+        event.preventDefault(); 
+        var cronTime = $('#cronTime').val(); 
+        $.ajax({
+            type: 'POST',
+            url: '',  
+            data: { cronTime: cronTime },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $('#resultMessage').html('<div class="alert alert-success">' + response.message + '</div>');
+                    setTimeout(function() {
+                        $('#cronModal').modal('hide'); 
+                    }, 2000);
+                }
+            },
+            error: function() {
+                $('#resultMessage').html('<div class="alert alert-danger">设置 Cron 任务失败，请重试！</div>');
+            }
+        });
+    });
+</script>
 <script>
     function scrollToBottom(elementId) {
         var logElement = document.getElementById(elementId);
