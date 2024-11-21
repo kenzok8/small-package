@@ -569,6 +569,7 @@ if (isset($_GET['ajax'])) {
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
+    <script type="text/javascript" src="./assets/bootstrap/bootstrap.min.js"></script>
     <?php include './ping.php'; ?>
   </head>
 <body>
@@ -846,29 +847,42 @@ $(document).ready(function() {
                 <label class="form-check-label" for="autoRefresh">自动刷新</label>
             </div>
             <button type="submit" name="clear_singbox_log" class="btn btn-danger">🗑️ 清空日志</button>
-            <button type="submit" name="update_log" value="update" class="btn btn-primary">🔄 更新时区</button>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#helpModal">🔄 更正时区</button>
         </form>
     </div>
 </div>
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="helpModalLabel">时区错误的解决方案</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>以下是解决时区错误的具体步骤：</p>
+        <pre>
+# 确保系统时区正确。检查时区文件是否存在：
+ls /usr/share/zoneinfo/Asia/Shanghai
 
-<?php
-if (isset($_POST['update_log'])) {
-    $logFilePath = '/www/nekobox/lib/log.php'; 
-    $url = 'https://raw.githubusercontent.com/Thaolga/neko/main/log.php'; 
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);     
-    $newLogContent = curl_exec($ch);
-    curl_close($ch);
-    if ($newLogContent !== false) {
-        file_put_contents($logFilePath, $newLogContent);
-        echo "<script>alert('时区已更新成功！');</script>";
-    } else {
-        echo "<script>alert('更新时区失败！');</script>";
-    }
-}
-?>
-<script src="./assets/js/bootstrap.bundle.min.js"></script>
+# 如果不存在，需要安装：
+opkg update
+opkg install zoneinfo-asia
+
+# 然后设置时区：
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+# 确认系统时区是否已正确应用：
+date
+        </pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
     function scrollToBottom(elementId) {
         var logElement = document.getElementById(elementId);
