@@ -609,6 +609,7 @@ if (isset($_GET['ajax'])) {
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
     <script type="text/javascript" src="./assets/bootstrap/bootstrap.min.js"></script>
+    <script src="./assets/js/bootstrap.bundle.min.js"></script>
     <?php include './ping.php'; ?>
   </head>
 <body>
@@ -849,7 +850,7 @@ $(document).ready(function() {
         <h4 class="card-title text-center mb-0">NeKoBox 日志</h4>
     </div>
     <div class="card-body">
-        <pre id="plugin_log" class="log-container form-control"></pre>
+        <pre id="plugin_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 245px; white-space: pre-wrap;" contenteditable="true"></pre>
     </div>
     <div class="card-footer text-center">
         <form action="index.php" method="post">
@@ -863,7 +864,7 @@ $(document).ready(function() {
         <h4 class="card-title text-center mb-0">Mihomo 日志</h4>
     </div>
     <div class="card-body">
-        <pre id="bin_logs" class="log-container form-control"></pre>
+        <pre id="bin_logs" class="log-container form-control" style="resize: vertical; overflow: auto; height: 245px; white-space: pre-wrap;" contenteditable="true"></pre>
     </div>
     <div class="card-footer text-center">
         <form action="index.php" method="post">
@@ -877,7 +878,7 @@ $(document).ready(function() {
         <h4 class="card-title text-center mb-0">Sing-box 日志</h4>
     </div>
     <div class="card-body">
-        <pre id="singbox_log" class="log-container form-control"></pre>
+        <pre id="singbox_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 245px; white-space: pre-wrap;" contenteditable="true"></pre>
     </div>
     <div class="card-footer text-center">
         <form action="index.php" method="post" class="d-inline-block">
@@ -892,7 +893,7 @@ $(document).ready(function() {
     </div>
 </div>
 <div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-lg" role="document">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="helpModalLabel">时区错误的解决方案</h5>
@@ -925,7 +926,7 @@ date
 </div>
 
 <div class="modal fade" id="cronModal" tabindex="-1" role="dialog" aria-labelledby="cronModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-lg" role="document">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="cronModalLabel">设置 Cron 任务时间</h5>
@@ -952,6 +953,7 @@ date
         <div id="resultMessage" class="mt-3"></div>
       </div>
       <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
         <button type="submit" class="btn btn-primary" form="cronForm">保存</button>
       </div>
     </div>
