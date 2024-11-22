@@ -100,14 +100,25 @@ gen_config_file() {
     [ ! "${#custom_config}" == "0" ] && echo ${custom_config} > /var/etc/xray/config_custom.json
 }
 
+setup_dnsmasq_instance() {
+    mkdir -p $1
+    utpl /usr/share/xray/dnsmasq_include.ut > $1/xray.conf
+    logger -st xray[$$] -p4 $(cat $1/xray.conf)
+}
+
 setup_dnsmasq() {
-    utpl /usr/share/xray/dnsmasq_include.ut > /tmp/dnsmasq.d/xray.conf
-    logger -st xray[$$] -p4 $(cat /tmp/dnsmasq.d/xray.conf)
+    if [ "$(uci_get_by_type general dnsmasq_integration_mode)" == "per_instance" ]; then
+        for instance in $(uci_get_by_type general dnsmasq_instances); do
+            setup_dnsmasq_instance /tmp/dnsmasq.${instance}.d
+        done
+    else
+        setup_dnsmasq_instance /tmp/dnsmasq.d
+    fi
     /etc/init.d/dnsmasq restart > /dev/null 2>&1
 }
 
 flush_dnsmasq() {
-    rm -f /tmp/dnsmasq.d/xray.conf
+    rm -f /tmp/dnsmasq.d/xray.conf /tmp/dnsmasq.*.d/xray.conf
     /etc/init.d/dnsmasq restart > /dev/null 2>&1
 }
 

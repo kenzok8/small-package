@@ -1,10 +1,15 @@
 'use strict';
 'require form';
+'require uci';
 'require view';
 'require view.xray.shared as shared';
 
 return view.extend({
-    render: function () {
+    load: function () {
+        return uci.load("dhcp");
+    },
+
+    render: function (result) {
         const m = new form.Map(shared.variant, _('Xray (preview)'), _("WARNING: These features are experimental, may cause a lot of problems and are not guaranteed to be compatible across minor versions."));
 
         let s = m.section(form.TypedSection, 'general');
@@ -12,6 +17,22 @@ return view.extend({
         s.anonymous = true;
 
         s.tab("dns_hijack", _("DNS Hijacking"));
+
+        let dnsmasq_integration_mode = s.taboption('dns_hijack', form.ListValue, 'dnsmasq_integration_mode', _('Dnsmasq Integration Mode'), _('Global mode may not work on OpenWrt 24.10 or later; per instance mode is NOT supported on OpenWrt 23.05 or earlier.'));
+        dnsmasq_integration_mode.value("global", _("Global"));
+        dnsmasq_integration_mode.value("per_instance", _("Per Instance"));
+        dnsmasq_integration_mode.default = "global";
+
+        let dnsmasq_instances = s.taboption('dns_hijack', form.MultiValue, 'dnsmasq_instances', _('Integrated Instances'), _('Select none to disable dnsmasq integration. This could also be used to avoid conflicts with other DNS services, for example<br/>AdGuard Home. Some features like manual transparent proxy with associated domain names still need dnsmasq integration.'));
+        dnsmasq_instances.depends("dnsmasq_integration_mode", "per_instance");
+        for (let i of uci.sections("dhcp", "dnsmasq")) {
+            dnsmasq_instances.value(i[".name"], function () {
+                if (i[".anonymous"]) {
+                    return _("Default instance");
+                }
+                return `${_("Instance")} "${i[".name"]}"`;
+            }());
+        }
 
         let dns_tcp_hijack = s.taboption('dns_hijack', form.Value, 'dns_tcp_hijack', _('Hijack TCP DNS Requests'), _("Redirect all outgoing TCP requests with destination port 53 to the address specified. In most cases not necessary."));
         dns_tcp_hijack.datatype = 'ip4addrport';
@@ -37,6 +58,9 @@ return view.extend({
 
         let ttl_hop_limit_match = s.taboption('firewall', form.Value, 'ttl_hop_limit_match', _('TTL / Hop Limit Match'), _("Only override TTL / hop limit for packets with specific TTL / hop limit."));
         ttl_hop_limit_match.datatype = 'uinteger';
+
+        let ttl_override_bypass_ports = s.taboption('firewall', form.DynamicList, 'ttl_override_bypass_ports', _('Ports to bypass TTL override'), _("Do not override TTL for packets with these destination TCP / UDP ports."));
+        ttl_override_bypass_ports.datatype = 'port';
 
         s.tab("sniffing", _("Sniffing"));
 
