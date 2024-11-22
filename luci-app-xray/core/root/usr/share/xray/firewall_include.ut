@@ -105,25 +105,25 @@
     const ttl_hop_limit_match = int(general.ttl_hop_limit_match);
     const dynamic_direct_tcp4 = function () {
         if (general.dynamic_direct_tcp4 == "1") {
-            return `add @tp_spec_dv4_dt { ip daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
+            return `update @tp_spec_dv4_dt { ip daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
         }
         return "";
     }();
     const dynamic_direct_tcp6 = function () {
         if (general.dynamic_direct_tcp6 == "1") {
-            return `add @tp_spec_dv6_dt { ip6 daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
+            return `update @tp_spec_dv6_dt { ip6 daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
         }
         return "";
     }();
     const dynamic_direct_udp4 = function () {
         if (general.dynamic_direct_udp4 == "1") {
-            return `add @tp_spec_dv4_du { ip daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
+            return `update @tp_spec_dv4_du { ip daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
         }
         return "";
     }();
     const dynamic_direct_udp6 = function () {
         if (general.dynamic_direct_udp6 == "1") {
-            return `add @tp_spec_dv6_du { ip6 daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
+            return `update @tp_spec_dv6_du { ip6 daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
         }
         return "";
     }();
@@ -371,6 +371,10 @@
 
     chain xray_prerouting {
         type filter hook prerouting priority mangle {{ firewall_priority }}; policy accept;
+{% if (length(general.ttl_override_bypass_ports) > 0): %}
+        tcp dport { {{ join(', ', general.ttl_override_bypass_ports) }} } {{ counter }} accept
+        udp dport { {{ join(', ', general.ttl_override_bypass_ports) }} } {{ counter }} accept
+{% endif %}
 {% if (ttl_override > 0): %}
         ip ttl {{ ttl_hop_limit_match }} {{ counter }} ip ttl set {{ ttl_override }}
 {% endif %}
