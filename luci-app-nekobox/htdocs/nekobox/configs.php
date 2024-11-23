@@ -5,15 +5,31 @@ $tmpPath = "$neko_www/lib/selected_config.txt";
 $arrFiles = array();
 $arrFiles = glob("$dirPath/*.yaml"); 
 $error = "";
+$logMessage = "";  
+$selected_config = trim(file_get_contents($tmpPath));
+
+if (empty($selected_config) || !file_exists($selected_config)) {
+    $selected_config = "$dirPath/default_config.yaml";
+    if (!file_exists($selected_config)) {
+        $default_config_content = "external-controller: 0.0.0.0:9090\n";
+        $default_config_content .= "secret: Akun\n";
+        $default_config_content .= "external-ui: ui\n";
+        $default_config_content .= "# 请根据需要编辑此文件\n";
+        file_put_contents($selected_config, $default_config_content);
+        $logMessage = "配置文件丢失，已创建默认配置文件。";
+    }
+
+    file_put_contents($tmpPath, $selected_config);
+}
 
 if (isset($_POST['clashconfig'])) {
     $dt = $_POST['clashconfig'];
-    
-    if (pathinfo($dt, PATHINFO_EXTENSION) === 'yaml') {
-        shell_exec("echo $dt > $tmpPath");
-        $selected_config = $dt;
+    $full_path = "$dirPath/$dt";
+    if (pathinfo($dt, PATHINFO_EXTENSION) === 'yaml' && file_exists($full_path)) {
+        shell_exec("echo $full_path > $tmpPath");  
+        $selected_config = $full_path;
     } else {
-        $error = "请选择一个 YAML 格式的配置文件。"; 
+        $error = "请选择一个有效的 YAML 配置文件。"; 
     }
 }
 
@@ -53,8 +69,8 @@ include './cfg.php';
             <div class="row justify-content-md-center">
                 <div class="col input-group mb-3 justify-content-md-center">
                     <select class="form-select" name="clashconfig" aria-label="themex">
-                        <option selected><?php echo $selected_config; ?></option>
-                        <?php foreach ($arrFiles as $file) echo "<option value=\"" . $file . '">' . $file . "</option>"; ?>
+                        <option selected><?php echo basename($selected_config); ?></option>
+                        <?php foreach ($arrFiles as $file) echo "<option value=\"" . basename($file) . '">' . basename($file) . "</option>"; ?>
                     </select>
                 </div>
                 <div class="row justify-content-md-center">
@@ -66,6 +82,13 @@ include './cfg.php';
             </div>
         </div>
     </form>
+    <div class="container mt-4">
+        <?php if ($logMessage): ?>
+            <div class="alert alert-info" role="alert">
+                <?php echo htmlspecialchars($logMessage); ?>
+            </div>
+        <?php endif; ?>
+    </div>
 <div class="container   rounded-4 col-12 mb-4">
     <ul class="nav d-flex justify-content-between w-100 text-center">
         <li class="nav-item flex-grow-1">

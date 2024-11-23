@@ -1,6 +1,6 @@
 <?php
 
-ini_set('memory_limit', '128M'); 
+ini_set('memory_limit', '256M'); 
 
 header('Content-Type: text/plain');
 
@@ -15,11 +15,23 @@ $max_lines = 100;
 $max_chars = 1000000; 
 $max_line_length = 300; 
 
+function remove_ansi_colors($string) {
+    $pattern = '/\033\[[0-9;]*m/';
+    return preg_replace($pattern, '', $string);
+}
+
+function format_datetime($line) {
+    $pattern = '/^(\+?\d{4}\s)(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/';   
+    return preg_replace($pattern, '[ \3 ]', $line);
+}
+
 if (array_key_exists($file, $allowed_files)) {
     $file_path = $allowed_files[$file];
 
     if (file_exists($file_path)) {
-        $lines = file($file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = file($file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);       
+        $lines = array_map('remove_ansi_colors', $lines);        
+        $lines = array_map('format_datetime', $lines);
         $lines = array_filter($lines, function($line) use ($max_line_length) {
             return strlen($line) <= $max_line_length;
         });
@@ -46,3 +58,4 @@ if (array_key_exists($file, $allowed_files)) {
     http_response_code(403);
     echo "Forbidden.";
 }
+?>
