@@ -17,11 +17,19 @@ $max_line_length = 300;
 
 function remove_ansi_colors($string) {
     $pattern = '/\033\[[0-9;]*m/';
+    if (@preg_match($pattern, '') === false) {
+        error_log("Invalid regex pattern: $pattern");
+        return $string; 
+    }
     return preg_replace($pattern, '', $string);
 }
 
 function format_datetime($line) {
     $pattern = '/^(\+?\d{4}\s)(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/';   
+    if (@preg_match($pattern, '') === false) {
+        error_log("Invalid regex pattern: $pattern");
+        return $line; 
+    }
     return preg_replace($pattern, '[ \3 ]', $line);
 }
 
