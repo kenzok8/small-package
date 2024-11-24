@@ -260,6 +260,8 @@ $uiVersion = getUiVersion();
                     <option value="v1.11.0-alpha.8">v1.11.0-alpha.8</option>
                     <option value="v1.11.0-alpha.9">v1.11.0-alpha.9</option>
                     <option value="v1.11.0-alpha.10">v1.11.0-alpha.10</option>
+                    <option value="v1.11.0-alpha.15">v1.11.0-alpha.15</option>
+                    <option value="v1.11.0-alpha.20">v1.11.0-alpha.20</option>
                 </select>
             </div>
             <div class="modal-footer">
