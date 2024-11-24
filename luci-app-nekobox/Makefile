@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_MAINTAINER:=Thaolga <https://github.com/Thaolga/luci-app-nekobox>
 PKG_NAME:=luci-app-nekobox
-PKG_VERSION:=1.5.4
+PKG_VERSION:=1.5.5
 PKG_RELEASE:=cn
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
@@ -60,8 +60,6 @@ endef
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 	if [ -f "/tmp/neko/neko.bak" ]; then
-		cp -rf "/tmp/neko/core/mihomo" "/etc/neko/core/mihomo"
-		chmod 0755 /etc/neko/core/mihomo
 		cp -rf "/tmp/neko/geoip.metadb" "/etc/neko/geoip.metadb"
 		cp -rf "/tmp/neko/geosite.db" "/etc/neko/geosite.db"
 

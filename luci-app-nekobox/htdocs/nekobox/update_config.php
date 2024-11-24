@@ -20,37 +20,27 @@ function downloadFile($url, $destination, $retries = 3, $timeout = 30) {
                 mkdir($dir, 0755, true);
             }
 
-            $ch = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_TIMEOUT => $timeout,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            ]);
+            $command = sprintf(
+                "wget -q --timeout=%d --tries=%d --header='Accept-Charset: utf-8' -O %s %s",
+                $timeout, 
+                $retries, 
+                escapeshellarg($destination),
+                escapeshellarg($url)
+            );
 
-            $content = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $output = [];
+            $return_var = null;
+            exec($command, $output, $return_var);
             
-            if ($content === false) {
-                throw new Exception("下载失败: " . curl_error($ch));
+            if ($return_var !== 0) {
+                throw new Exception("wget 错误信息: " . implode("\n", $output));
             }
             
-            if ($httpCode !== 200) {
-                throw new Exception("HTTP 响应码错误: $httpCode");
-            }
-            
-            if (file_put_contents($destination, $content) === false) {
-                throw new Exception("无法保存文件到 $destination");
-            }
-            
-            curl_close($ch);
             logMessage(basename($destination), "下载并保存成功");
             return true;
             
         } catch (Exception $e) {
             logMessage(basename($destination), "第 $attempt 次尝试失败: " . $e->getMessage());
-            curl_close($ch);
             
             if ($attempt === $retries) {
                 logMessage(basename($destination), "所有下载尝试均失败");

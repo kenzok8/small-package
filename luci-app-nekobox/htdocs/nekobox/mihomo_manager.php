@@ -190,7 +190,7 @@ if (isset($_POST['update'])) {
 
     if (!empty($url)) {
         $finalPath = $subscriptionPath . $customFileName;
-        $command = "curl -fsSL -o {$finalPath} {$url}";
+        $command = "wget -q --show-progress -O {$finalPath} {$url}";
         exec($command . ' 2>&1', $output, $return_var);
 
         if ($return_var === 0) {
