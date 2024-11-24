@@ -41,11 +41,11 @@ $dashboard_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/d
         <a href="/nekobox/mon.php" class="col btn btn-lg d-flex align-items-center justify-content-center">📦 订阅</a> 
         <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     </div>
-
 <div class="container text-left p-3">
         <div class="container h-100 mb-5">
             <h2 class="text-center p-2">Meta 面板</h2>
-            <iframe class="border border-3 rounded-4 w-100" style="height: 70vh;" src="http://<?php echo $yacd_link; ?>" title="yacd" allowfullscreen></iframe>
+            <button id="fullscreenToggle" class="btn btn-primary mb-2">全屏</button>
+            <iframe id="iframeMeta" class="border border-3 rounded-4 w-100" style="height: 88vh;" src="http://<?php echo $yacd_link; ?>" title="yacd" allowfullscreen></iframe>
             <table class="table table-borderless callout mb-2">
                 <tbody>
                     <tr class="text-center d-flex flex-wrap justify-content-center">
@@ -61,6 +61,40 @@ $dashboard_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/d
         <p><?php echo $footer; ?></p>
     </footer>
 </div>
-</body>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fullscreenToggle = document.getElementById('fullscreenToggle');
+        const iframe = document.getElementById('iframeMeta');
+        const iframeContainer = iframe.closest('div'); 
+        let isFullscreen = false; 
+        fullscreenToggle.addEventListener('click', function() {
+            if (!isFullscreen) {
+                if (iframeContainer.requestFullscreen) {
+                    iframeContainer.requestFullscreen();
+                } else if (iframeContainer.mozRequestFullScreen) { 
+                    iframeContainer.mozRequestFullScreen();
+                } else if (iframeContainer.webkitRequestFullscreen) {
+                    iframeContainer.webkitRequestFullscreen();
+                } else if (iframeContainer.msRequestFullscreen) {
+                    iframeContainer.msRequestFullscreen();
+                }
+                fullscreenToggle.textContent = '退出全屏';  
+                isFullscreen = true;  
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { 
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { 
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                fullscreenToggle.textContent = '全屏'; 
+                isFullscreen = false;  
+                }
+            });
+        });
+    </script>
+  </body>
 </html>
-
