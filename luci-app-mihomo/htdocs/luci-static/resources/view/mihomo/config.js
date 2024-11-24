@@ -378,10 +378,10 @@ return view.extend({
 
         o = s.taboption('external_control', form.Value, 'ui_url', '*' + ' ' + _('UI Url'));
         o.rmempty = false;
-        o.value('https://mirror.ghproxy.com/https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip', 'MetaCubeXD');
-        o.value('https://mirror.ghproxy.com/https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip', 'YACD');
-        o.value('https://mirror.ghproxy.com/https://github.com/MetaCubeX/Razord-meta/archive/refs/heads/gh-pages.zip', 'Razord');
-        o.value('https://mirror.ghproxy.com/https://github.com/Zephyruso/sing-box-dashboard/archive/refs/heads/gh-pages.zip', 'SD');
+        o.value('https://ghp.ci/https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip', 'MetaCubeXD');
+        o.value('https://ghp.ci/https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip', 'YACD');
+        o.value('https://ghp.ci/https://github.com/MetaCubeX/Razord-meta/archive/refs/heads/gh-pages.zip', 'Razord');
+        o.value('https://ghp.ci/https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip', 'Zashboard');
 
         o = s.taboption('external_control', form.Value, 'api_port', '*' + ' ' + _('API Port'));
         o.datatype = 'port';

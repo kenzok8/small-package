@@ -23,18 +23,15 @@ if (empty($new_version)) {
     die("未找到最新版本或版本信息为空。");
 }
 
+$installed_lang = isset($_GET['lang']) ? $_GET['lang'] : 'cn'; 
+
+if ($installed_lang !== 'cn' && $installed_lang !== 'en') {
+    die("无效的语言选择。请选择 'cn' 或 'en'。");
+}
+
 if (isset($_GET['check_version'])) {
     echo "最新版本: V" . $new_version; 
     exit;
-}
-
-$installed_package_info = shell_exec("opkg status " . escapeshellarg($package_name));
-$installed_lang = 'cn';
-
-if (strpos($installed_package_info, '-cn') !== false) {
-    $installed_lang = 'cn'; 
-} elseif (strpos($installed_package_info, '-en') !== false) {
-    $installed_lang = 'en';
 }
 
 $download_url = "https://github.com/$repo_owner/$repo_name/releases/download/$new_version/{$package_name}_{$new_version}-{$installed_lang}_all.ipk";
