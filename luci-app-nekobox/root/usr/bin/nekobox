@@ -153,7 +153,7 @@ install_core() {
     fi
 
     current_version=''
-    install_path='/etc/neko/core/mihomo'
+    install_path='/usr/bin/mihomo'
     temp_file='/tmp/mihomo.gz'
     temp_extract_path='/tmp/mihomo_temp'
 

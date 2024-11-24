@@ -60,7 +60,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 $latest_version = $data['tag_name'] ?? '';
 
 $current_version = ''; 
-$install_path = '/etc/neko/core/mihomo'; 
+$install_path = '/usr/bin/mihomo'; 
 $temp_file = '/tmp/mihomo.gz'; 
 
 if (file_exists($install_path)) {

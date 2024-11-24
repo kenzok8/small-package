@@ -197,7 +197,7 @@ if (isset($_POST['saveSubscription'])) {
         if (!empty($url)) {
             $finalPath = $configPath . $customFileName;
             $command = sprintf(
-                "curl -fsSL -o %s %s",
+                "wget -q --show-progress -O %s %s",
                 escapeshellarg($finalPath),
                 escapeshellarg($url)
             );
@@ -222,7 +222,6 @@ $updateCompleted = isset($_POST['saveSubscription']);
 <?php
 $subscriptionPath = '/etc/neko/config/';
 $dataFile = $subscriptionPath . 'subscription_data.json';
-
 $message = "";
 $defaultSubscriptions = [
     [
@@ -269,23 +268,27 @@ if (isset($_POST['update_index'])) {
 
         $originalContent = file_exists($finalPath) ? file_get_contents($finalPath) : '';
 
-        $ch = curl_init($subscriptionUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        $fileContent = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
+        $command = sprintf(
+            "wget -q --header='Accept-Charset: utf-8' -O %s %s",
+            escapeshellarg($finalPath),
+            escapeshellarg($subscriptionUrl)
+        );
 
-        if ($fileContent === false) {
-            $message = "订阅 $index 无法下载文件。cURL 错误信息: " . $error;
+        exec($command . ' 2>&1', $output, $return_var);
+
+        if ($return_var !== 0) {
+            $message = "订阅 $index 无法下载文件。wget 错误信息: " . implode("\n", $output);
         } else {
-            $fileContent = str_replace("\xEF\xBB\xBF", '', $fileContent);
+            $fileContent = file_get_contents($finalPath);
+            $fileContent = str_replace("\xEF\xBB\xBF", '', $fileContent); 
+
+            if (!isUtf8($fileContent)) {
+                $fileContent = utf8_encode($fileContent); 
+            }
 
             $parsedData = json_decode($fileContent, true);
             if ($parsedData === null && json_last_error() !== JSON_ERROR_NONE) {
-                file_put_contents($finalPath, $originalContent);
+                file_put_contents($finalPath, $originalContent); 
                 $message = "订阅 $index 解析 JSON 数据失败！错误信息: " . json_last_error_msg();
             } else {
                 if (isset($parsedData['inbounds'])) {
@@ -300,29 +303,29 @@ if (isset($_POST['update_index'])) {
                     }
 
                     $newInbounds[] = [
-                      "tag" => "tun",
-                      "type" => "tun",
-                      "inet4_address" => "172.19.0.0/30",
-                      "inet6_address" => "fdfe:dcba:9876::0/126",
-                      "stack" => "system",
-                      "auto_route" => true,
-                      "strict_route" => true,
-                      "sniff" => true,
-                      "platform" => [
-                        "http_proxy" => [
-                          "enabled" => true,
-                          "server" => "0.0.0.0",
-                          "server_port" => 7890
+                        "tag" => "tun",
+                        "type" => "tun",
+                        "inet4_address" => "172.19.0.0/30",
+                        "inet6_address" => "fdfe:dcba:9876::0/126",
+                        "stack" => "system",
+                        "auto_route" => true,
+                        "strict_route" => true,
+                        "sniff" => true,
+                        "platform" => [
+                            "http_proxy" => [
+                                "enabled" => true,
+                                "server" => "0.0.0.0",
+                                "server_port" => 7890
+                            ]
                         ]
-                      ]
                     ];
 
                     $newInbounds[] = [
-                      "tag" => "mixed",
-                      "type" => "mixed",
-                      "listen" => "0.0.0.0",
-                      "listen_port" => 7890,
-                      "sniff" => true
+                        "tag" => "mixed",
+                        "type" => "mixed",
+                        "listen" => "0.0.0.0",
+                        "listen_port" => 7890,
+                        "sniff" => true
                     ];
 
                     $parsedData['inbounds'] = $newInbounds;
@@ -348,6 +351,11 @@ if (isset($_POST['update_index'])) {
 
         file_put_contents($dataFile, json_encode($subscriptionData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
+}
+
+function isUtf8($string) {
+    $encoded = utf8_encode($string);
+    return $encoded === $string;
 }
 ?>
 

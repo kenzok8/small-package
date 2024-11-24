@@ -3,7 +3,7 @@
 // NEKO CONFIGURATION
 $neko_dir="/etc/neko";
 $neko_www="/www/nekobox";
-$neko_bin="$neko_dir/core/mihomo";
+$neko_bin="/usr/bin/mihomo";
 $neko_theme= exec("cat $neko_www/lib/theme.txt");
 $neko_status=exec("uci -q get neko.cfg.enabled");
 
