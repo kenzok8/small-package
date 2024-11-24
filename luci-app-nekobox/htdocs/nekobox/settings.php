@@ -165,7 +165,7 @@ $uiVersion = getUiVersion();
                                 </div>
                                 <div class="text-center mt-2">
                                     <button class="btn btn-pink" id="checkMihomoButton">🔍 检测版本</button> 
-                                    <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核">🔄 更新版本</button>
+                                    <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核" onclick="showMihomoVersionSelector()">🔄 更新版本</button>
                                 </div>
                             </div>
                         </div>
@@ -174,7 +174,28 @@ $uiVersion = getUiVersion();
             </tr>
         </tbody>
     </table>
-
+<div class="modal fade" id="mihomoVersionSelectionModal" tabindex="-1" aria-labelledby="mihomoVersionSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mihomoVersionSelectionModalLabel">选择 Mihomo 内核版本</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <select id="mihomoVersionSelect" class="form-select">
+                    <option value="stable">稳定版</option>
+                    <option value="preview">预览版</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmMihomoVersion()">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="optionsModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -186,8 +207,8 @@ $uiVersion = getUiVersion();
             </div>
             <div class="modal-body">
                 <div class="d-grid gap-2">
-                    <button class="btn btn-info" onclick="showSingboxVersionSelector()">更新 Singbox 内核（官方稳定版）</button>
-                    <button class="btn btn-success" onclick="selectOperation('sing-box')">更新 Singbox 内核（官方测试版）</button>
+                    <button class="btn btn-info" onclick="showSingboxVersionSelector()">更新 Singbox 内核（通道一）</button>
+                    <button class="btn btn-success" onclick="selectOperation('sing-box')">更新 Singbox 内核（通道二）</button>
                     <button class="btn btn-success" onclick="selectOperation('puernya')">切换 Puernya 内核</button>
                     <button class="btn btn-primary" onclick="selectOperation('rule')">更新 Singbox 规则集</button>
                     <button class="btn btn-primary" onclick="selectOperation('config')">更新 Mihomo 配置文件</button>
@@ -290,9 +311,21 @@ $uiVersion = getUiVersion();
 <script>
 let selectedSingboxVersion = 'v1.11.0-alpha.6';  
 
+let selectedMihomoVersion = 'stable';  
+
 function showSingboxVersionSelector() {
     $('#optionsModal').modal('hide');  
     $('#versionSelectionModal').modal('show');  
+}
+
+function showMihomoVersionSelector() {
+    $('#mihomoVersionSelectionModal').modal('show');
+}
+
+function confirmMihomoVersion() {
+    selectedMihomoVersion = document.getElementById('mihomoVersionSelect').value;
+    $('#mihomoVersionSelectionModal').modal('hide');  
+    selectOperation('mihomo');
 }
 
 function confirmSingboxVersion() {
@@ -334,6 +367,13 @@ function selectOperation(type) {
             url: 'update_config.php',
             message: '开始下载 Mihomo 配置文件...',
             description: '正在更新 Mihomo 配置文件到最新版本'
+        },
+        'mihomo': {
+            url: selectedMihomoVersion === 'stable' 
+                ? 'update_mihomo_stable.php' 
+                : 'update_mihomo_preview.php',  
+            message: '开始下载 Mihomo 内核更新...',
+            description: '正在更新 Mihomo 内核到最新版本 (' + selectedMihomoVersion + ')'
         }
     };
 
@@ -386,10 +426,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('updateUiButton').addEventListener('click', function() {
         initiateUpdate('ui.php', '开始下载 UI 面板更新...', '正在更新 Metacubexd 面板到最新版本');
     });
-
-    document.getElementById('updateCoreButton').addEventListener('click', function() {
-        initiateUpdate('core.php', '开始下载 Mihomo 核心更新...', '正在更新 Mihomo 核心到最新版本');
-    });
 });
 </script>
 
@@ -441,7 +477,7 @@ document.getElementById('checkCliverButton').addEventListener('click', function(
 });
 
 document.getElementById('checkMihomoButton').addEventListener('click', function() {
-    checkVersion('checkMihomoButton', 'NewMihomo', 'core.php');
+    checkVersion('checkMihomoButton', 'NewMihomo', 'update_mihomo_stable.php');
 });
 
 document.getElementById('checkUiButton').addEventListener('click', function() {
