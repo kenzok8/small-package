@@ -59,6 +59,12 @@ if ($return_var !== 0 || !file_exists($local_file)) {
 
 echo "<script>appendLog('下载完成。');</script>";
 
+echo "<script>appendLog('更新软件包列表...');</script>";
+$output = shell_exec("opkg update");
+echo "<pre>$output</pre>";
+
+echo "<script>appendLog('开始安装...');</script>";
+
 $output = shell_exec("opkg install --force-reinstall " . escapeshellarg($local_file));
 echo "<pre>$output</pre>";
 echo "<script>appendLog('安装完成。');</script>";
