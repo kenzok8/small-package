@@ -145,7 +145,7 @@ return view.extend({
                 asset_file_status = _('Asset files check: ') + `geoip.dat ${geoip_size}; geosite.dat ${geosite_size}. ` + _('Report issues or request for features <a href="https://github.com/yichya/luci-app-xray">here</a>.');
             }
         }
-
+        const firewall_mark = uci.get_first(shared.variant, "general", "mark") || '255';
         const m = new form.Map(shared.variant, _('Xray'), status_text + " " + asset_file_status);
 
         let s, o, ss;
@@ -252,7 +252,7 @@ return view.extend({
 
         ss.tab('custom', _('Custom Options'));
 
-        o = ss.taboption('custom', form.TextValue, 'custom_config', _('Custom Configurations'), _('Configurations here override settings in the previous tabs with the following rules: <ol><li>Object values will be replaced recursively so settings in previous tabs matter.</li><li>Arrays will be replaced entirely instead of being merged.</li><li>Tag <code>tag</code> and mark <code>streamSettings.sockopt.mark</code> is ignored. </li></ol>Override rules here may be changed later. Use this only for experimental or pre-release features.'));
+        o = ss.taboption('custom', form.TextValue, 'custom_config', _('Custom Configurations'), _(`Configurations here override settings in the previous tabs with the following rules: <ol><li>Object values will be replaced recursively so settings in previous tabs matter.</li><li>Arrays will be replaced entirely instead of being merged.</li><li>Tag <code>tag</code> and mark <code>streamSettings.sockopt.mark</code> are ignored. </li></ol>Aliases are not handled while merging configurations:<ol><li>Use <code>tcpSettings</code> instead of <code>rawSettings</code>.</li><li>Use <code>splithttpSettings</code> instead of <code>xhttpSettings</code>.</li></ol>Some transports like <code>splithttp</code> may use another <code>streamSettings.sockopt</code>:<ol><li><a href="https://github.com/yichya/luci-app-xray/issues/434">Read instructions here</a>, and use <code>${firewall_mark}</code> as <code>sockopt.mark</code> to avoid loopback traffic.</ol>Override rules here may be changed later. Use this only for experimental or pre-release features.`));
         o.modalonly = true;
         o.monospace = true;
         o.rows = 10;
