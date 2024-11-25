@@ -1,6 +1,6 @@
 <?php
 include './cfg.php';
-
+date_default_timezone_set('Asia/Shanghai');
 $str_cfg = substr($selected_config, strlen("$neko_dir/config") + 1);
 $_IMG = '/luci-static/ssr/';
 $singbox_bin = '/usr/bin/sing-box';
@@ -213,9 +213,8 @@ function createStartScript($configFile) {
 
 function writeToLog($message) {
     global $log;
-    $dateTime = new DateTime();
-    $dateTime->modify('+8 hours');  
-    $time = $dateTime->format('H:i:s');
+    $dateTime = new DateTime();  
+    $time = $dateTime->format('H:i:s'); 
     $logMessage = "[ $time ] $message\n";
     if (file_put_contents($log, $logMessage, FILE_APPEND) === false) {
         error_log("Failed to write to log file: $log");
