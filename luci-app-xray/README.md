@@ -40,12 +40,28 @@ Fork this repository and:
 * Wait until actions finish
 * Use `opkg -i *` to install both ipks from Releases.
 
+## Changelog since 3.5.0
+
+* 2024-11-26 chore: bump status version
+
 ## Changelog since 3.4.0
 
 * 2024-02-18 chore: optimize code style; bump version
 * 2024-02-19 fix: several DNS related validation
 * 2024-02-20 fix: domain match priority; stricter resolve options; socks / http auth
 * 2024-02-23 chore: bump version to 3.4.1
+* 2024-02-27 fix: block requests when leastPing not ready
+* 2024-03-08 feat: multiple ports for one outbound
+* 2024-03-11 feat: expectIPs for outbound domain resolving; restart on dnsmasq config change
+* 2024-03-14 feat: add version info display in status
+* 2024-03-17 fix: add ACL for version info
+* 2024-04-23 fix: use zstd for OpenWrt SDK decompression
+* 2024-05-03 fix: reality deserialization issue
+* 2024-06-26 feat: support ext in geoip direct codes
+* 2024-07-26 chore: minor code and style fixes
+* 2024-11-22 fix: dnsmasq jail adaptation; firewall improvements
+* 2024-11-25 feat: basic splithttp support
+* 2024-11-26 feat: httpupgrade support; avoid overriding mark
 
 ## Changelog since 3.3.0
 
