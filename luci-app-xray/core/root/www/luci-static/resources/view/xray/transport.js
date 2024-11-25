@@ -184,6 +184,18 @@ function transport_grpc(transport, sub_section, tab_name) {
     grpc_initial_windows_size.datatype = 'integer';
 }
 
+function transport_splithttp(transport, sub_section, tab_name) {
+    transport.value("splithttp", "SplitHTTP");
+
+    let splithttp_host = sub_section.taboption(tab_name, form.Value, "splithttp_host", _("[splithttp] Host"));
+    splithttp_host.depends("transport", "splithttp");
+    splithttp_host.modalonly = true;
+
+    let splithttp_path = sub_section.taboption(tab_name, form.Value, "splithttp_path", _("[splithttp] Path"));
+    splithttp_path.depends("transport", "splithttp");
+    splithttp_path.modalonly = true;
+}
+
 return baseclass.extend({
     init: function (transport, sub_section, tab_name) {
         transport_tcp(transport, sub_section, tab_name);
@@ -192,5 +204,6 @@ return baseclass.extend({
         transport_h2(transport, sub_section, tab_name);
         transport_quic(transport, sub_section, tab_name);
         transport_grpc(transport, sub_section, tab_name);
+        transport_splithttp(transport, sub_section, tab_name);
     }
 });
