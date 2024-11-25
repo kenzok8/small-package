@@ -159,8 +159,14 @@ start_service() {
 		cp -f "$profile_file" "$RUN_PROFILE_PATH"
 	elif [[ "$profile" == "subscription:"* ]]; then
 		local subscription_section; subscription_section="${profile/subscription:/}"
+		local subscription_name subscription_prefer
+		config_get subscription_name "$subscription_section" "name"
+		config_get subscription_prefer "$subscription_section" "prefer" "remote"
+		log "Use Subscription: $subscription_name."
 		local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.yaml"
-		update_subscription "$subscription_section"
+		if [ "$subscription_prefer" == "remote" ] || [[ "$subscription_prefer" == "local" && ! -f "$subscription_file" ]]; then
+			update_subscription "$subscription_section"
+		fi
 		if [ ! -f "$subscription_file" ]; then
 			log "Subscription file not found."
 			log "Exiting..."
