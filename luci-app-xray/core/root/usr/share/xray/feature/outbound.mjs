@@ -7,6 +7,9 @@ import { trojan_outbound } from "../protocol/trojan.mjs";
 import { vless_outbound } from "../protocol/vless.mjs";
 import { vmess_outbound } from "../protocol/vmess.mjs";
 
+const direct_mark = 252;
+const outbound_mark = 253;
+
 function override_custom_config_recursive(x, y) {
     if (type(x) != "object" || type(y) != "object") {
         return y;
@@ -41,12 +44,17 @@ function server_outbound_recursive(t, server, tag, config) {
     if (custom_config_outbound_string != null && custom_config_outbound_string != "") {
         const custom_config_outbound = json(custom_config_outbound_string);
         for (let k in custom_config_outbound) {
-            if (k == "tag") {
-                continue;
-            }
             outbound[k] = override_custom_config_recursive(outbound[k], custom_config_outbound[k]);
         }
     }
+    outbound["tag"] = tag;
+    if (type(outbound["streamSettings"]) != "object") {
+        outbound["streamSettings"] = {};
+    }
+    if (type(outbound["streamSettings"]["sockopt"]) != "object") {
+        outbound["streamSettings"]["sockopt"] = {};
+    }
+    outbound["streamSettings"]["sockopt"]["mark"] = outbound_mark;
 
     const dialer_proxy = outbound_result["dialer_proxy"];
     const result = [...t, outbound];
@@ -68,7 +76,7 @@ export function direct_outbound(tag, redirect) {
         },
         streamSettings: {
             sockopt: {
-                mark: 252,
+                mark: direct_mark,
             }
         }
     };

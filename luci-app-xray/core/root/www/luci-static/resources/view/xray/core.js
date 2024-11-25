@@ -252,7 +252,7 @@ return view.extend({
 
         ss.tab('custom', _('Custom Options'));
 
-        o = ss.taboption('custom', form.TextValue, 'custom_config', _('Custom Configurations'), _('Configurations here override settings in the previous tabs with the following rules: <ol><li>Object values will be replaced recursively so settings in previous tabs matter.</li><li>Arrays will be replaced entirely instead of being merged.</li><li>Tag <code>tag</code> is ignored. </li></ol>Override rules here may be changed later. Use this only for experimental or pre-release features.'));
+        o = ss.taboption('custom', form.TextValue, 'custom_config', _('Custom Configurations'), _('Configurations here override settings in the previous tabs with the following rules: <ol><li>Object values will be replaced recursively so settings in previous tabs matter.</li><li>Arrays will be replaced entirely instead of being merged.</li><li>Tag <code>tag</code> and mark <code>streamSettings.sockopt.mark</code> is ignored. </li></ol>Override rules here may be changed later. Use this only for experimental or pre-release features.'));
         o.modalonly = true;
         o.monospace = true;
         o.rows = 10;
