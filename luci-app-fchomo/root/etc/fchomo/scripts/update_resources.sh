@@ -81,8 +81,7 @@ check_dashboard_update() {
 		log "[$(to_upper "$dashtype")] [$dashrepo] Local version: $local_dash_ver, latest version: $dash_ver."
 	fi
 
-	$wget "https://codeload.github.com/$dashrepo/tar.gz/refs/heads/gh-pages" -O "$RUN_DIR/$dashtype.tgz"
-	if ! tar -tzf "$RUN_DIR/$dashtype.tgz" >/dev/null; then
+	if ! $wget "https://codeload.github.com/$dashrepo/tar.gz/refs/heads/gh-pages" -O "$RUN_DIR/$dashtype.tgz" || ! tar -tzf "$RUN_DIR/$dashtype.tgz" >/dev/null; then
 		rm -f "$RUN_DIR/$dashtype.tgz"
 		log "[$(to_upper "$dashtype")] [$dashrepo] Update failed."
 
@@ -186,8 +185,7 @@ check_list_update() {
 		log "[$(to_upper "$listtype")] Local version: $local_list_ver, latest version: $list_ver."
 	fi
 
-	$wget "https://fastly.jsdelivr.net/gh/$listrepo@$list_sha/$listname" -O "$RUN_DIR/$listname"
-	if [ ! -s "$RUN_DIR/$listname" ]; then
+	if ! $wget "https://fastly.jsdelivr.net/gh/$listrepo@$list_sha/$listname" -O "$RUN_DIR/$listname" || [ ! -s "$RUN_DIR/$listname" ]; then
 		rm -f "$RUN_DIR/$listname"
 		log "[$(to_upper "$listtype")] Update failed."
 

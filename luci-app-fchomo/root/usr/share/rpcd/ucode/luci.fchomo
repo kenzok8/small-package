@@ -67,6 +67,8 @@ const methods = {
 		call: function() {
 			let features = {};
 
+			const use_apk = system('command -v apk') == 0 || null;
+
 			const fd = popen('/usr/bin/mihomo -v');
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
@@ -82,14 +84,15 @@ const methods = {
 				fd.close();
 			}
 
-			const fp = popen(`opkg list-installed luci-app-fchomo | awk '{print $NF}'`);
+			const fp = popen(`${use_apk ? 'apk list -I' : 'opkg list-installed'} luci-app-fchomo | ` +
+				`awk '{print $${use_apk ? '1' : 'NF'}}'`);
 			if (fp) {
 				features.luciapp_version = trim(fp.read('line')) || null;
 
 				fp.close();
 			}
 
-			features.hm_has_dnsmasq_full = system(`[ -n "$(opkg list-installed dnsmasq-full)" ]`) == 0 || null;
+			features.hm_has_dnsmasq_full = system(`[ -n "$(${use_apk ? 'apk list -qI' : 'opkg list-installed'} dnsmasq-full)" ]`) == 0 || null;
 			features.hm_has_ip_full = access('/usr/libexec/ip-full');
 			features.hm_has_tcp_brutal = hasKernelModule('brutal.ko');
 			features.hm_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');

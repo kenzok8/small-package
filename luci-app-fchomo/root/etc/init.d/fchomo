@@ -15,6 +15,9 @@ TEMPS_DIR="$HM_DIR/templates"
 RUN_DIR="/var/run/fchomo"
 LOG_PATH="$RUN_DIR/fchomo.log"
 
+# Compatibility
+[ -x "$(command -v apk)" ] && OPM='apk' || OPM='opkg'
+#
 # thanks to homeproxy
 # we don't know which is the default server, just take the first one
 DNSMASQ_UCI_CONFIG="$(uci -q show "dhcp.@dnsmasq[0]" | awk 'NR==1 {split($0, conf, /[.=]/); print conf[2]}')"
@@ -23,6 +26,22 @@ if [ -f "/tmp/etc/dnsmasq.conf.$DNSMASQ_UCI_CONFIG" ]; then
 else
 	DNSMASQ_DIR="/tmp/dnsmasq.d/dnsmasq-fchomo.d"
 fi
+#
+# opmc action $@
+opmc() {
+	local action="$1"; shift;
+
+	if [ "$OPM" = "apk" ]; then
+	case "$action" in
+		"list")
+			action="list -q";;
+		"list-installed")
+			action="list -qI";;
+	esac
+	fi
+
+	$OPM $action "$@"
+}
 
 config_load "$CONF"
 
@@ -155,7 +174,7 @@ start_service() {
 		}
 
 		# IP-sets
-		if [ -n "$(opkg list-installed dnsmasq-full)" ]; then
+		if [ -n "$(opmc list-installed dnsmasq-full)" ]; then
 			write_ipset_file 4 inet4_wan_direct_addr "$HM_DIR/resources/direct_list.yaml" "$DNSMASQ_DIR/direct_list.conf" yaml
 			[ "$global_ipv6" != "1" ] || \
 			write_ipset_file 6 inet6_wan_direct_addr "$HM_DIR/resources/direct_list.yaml" "$DNSMASQ_DIR/direct_list6.conf" yaml
