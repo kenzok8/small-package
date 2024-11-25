@@ -184,6 +184,18 @@ function transport_grpc(transport, sub_section, tab_name) {
     grpc_initial_windows_size.datatype = 'integer';
 }
 
+function transport_httpupgrade(transport, sub_section, tab_name) {
+    transport.value("httpupgrade", "HTTPUpgrade");
+
+    let httpupgrade_host = sub_section.taboption(tab_name, form.Value, "httpupgrade_host", _("[httpupgrade] Host"));
+    httpupgrade_host.depends("transport", "httpupgrade");
+    httpupgrade_host.modalonly = true;
+
+    let httpupgrade_path = sub_section.taboption(tab_name, form.Value, "httpupgrade_path", _("[httpupgrade] Path"));
+    httpupgrade_path.depends("transport", "httpupgrade");
+    httpupgrade_path.modalonly = true;
+}
+
 function transport_splithttp(transport, sub_section, tab_name) {
     transport.value("splithttp", "SplitHTTP");
 
@@ -205,5 +217,6 @@ return baseclass.extend({
         transport_quic(transport, sub_section, tab_name);
         transport_grpc(transport, sub_section, tab_name);
         transport_splithttp(transport, sub_section, tab_name);
+        transport_httpupgrade(transport, sub_section, tab_name);
     }
 });

@@ -3,6 +3,7 @@
 CLCyan="\033[36m"
 CLWhite="\033[37m"
 CLYellow="\033[33m"
+CLGreen="\033[32m" 
 GREEN="\033[32m"
 RED="\033[31m"
 NC="\033[0m"
@@ -609,6 +610,15 @@ main_menu() {
     local language=${1:-"en"}
     while true; do
         show_menu "$language"
+
+        if [ "$language" = "cn" ]; then
+            echo -e "${CLGreen}注意: 执行 1. 安装 NeKoBox 后，正常情况下无需单独安装 UI 控制面板和 PHP8，只有缺少依赖时才需要安装。${NC}"
+        else
+            echo -e "${CLGreen}Note: After executing 1. Install NeKoBox, you generally do not need to install UI Control Panel and PHP8, unless dependencies are missing.${NC}"
+        fi
+
+        echo -e "${CLCyan}╠════════════════════════════════════════════════════════╣"
+
         if [ "$language" = "cn" ]; then
             read -p "请输入选项并按回车: " choice
         else
