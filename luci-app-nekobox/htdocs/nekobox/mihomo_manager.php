@@ -1,6 +1,7 @@
 <?php
 ob_start();
 include './cfg.php';
+date_default_timezone_set('Asia/Shanghai');
 $uploadDir = '/etc/neko/proxy_provider/';
 $configDir = '/etc/neko/config/';
 
@@ -739,7 +740,7 @@ function showUpdateAlert() {
                     <tr>
                         <td class="align-middle"><a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a></td>
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
-                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath) + 8 * 60 * 60)); ?></td>
+                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?></td>
                         <td>
                             <div class="d-flex justify-content-center">
                                 <form action="" method="post" class="d-inline">
@@ -785,7 +786,7 @@ function showUpdateAlert() {
                     <tr>
                         <td class="align-middle"><a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a></td>
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
-                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath) + 8 * 60 * 60)); ?></td>
+                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?></td>
                         <td>
                             <div class="d-flex justify-content-center">
                                 <form action="" method="post" class="d-inline">

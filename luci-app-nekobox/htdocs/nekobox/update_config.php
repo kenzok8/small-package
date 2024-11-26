@@ -1,12 +1,13 @@
 <?php
 ini_set('memory_limit', '128M');
 ini_set('max_execution_time', 300);
+date_default_timezone_set('Asia/Shanghai');
 
 $logMessages = [];
 
 function logMessage($filename, $message) {
     global $logMessages;
-    $timestamp = date('H:i:s', strtotime('+8 hours'));
+    $timestamp = date('H:i:s');
     $logMessages[] = "[$timestamp] $filename: $message";
 }
 

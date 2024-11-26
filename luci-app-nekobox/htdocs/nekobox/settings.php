@@ -234,7 +234,7 @@ $uiVersion = getUiVersion();
             <div class="modal-body">
                 <div class="d-grid gap-2">
                     <button class="btn btn-info" onclick="showSingboxVersionSelector()">更新 Singbox 内核（通道一）</button>
-                    <button class="btn btn-success" onclick="selectOperation('sing-box')">更新 Singbox 内核（通道二）</button>
+                    <button class="btn btn-success" onclick="showSingboxVersionSelectorForChannelTwo()">更新 Singbox 内核（通道二）</button>
                     <button class="btn btn-success" onclick="selectOperation('puernya')">切换 Puernya 内核</button>
                     <button class="btn btn-primary" onclick="selectOperation('rule')">更新 Singbox 规则集</button>
                     <button class="btn btn-primary" onclick="selectOperation('config')">更新 Mihomo 配置文件</button>
@@ -248,7 +248,7 @@ $uiVersion = getUiVersion();
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="versionSelectionModalLabel">选择 Singbox 内核版本</h5>
+                <h5 class="modal-title" id="versionSelectionModalLabel">选择 Singbox 内核版本 （通道一）</h5>
                 <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -267,6 +267,30 @@ $uiVersion = getUiVersion();
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" onclick="confirmSingboxVersion()">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="singboxVersionModal" tabindex="-1" aria-labelledby="singboxVersionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="singboxVersionModalLabel">选择 Singbox 核心版本（通道二）</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="singboxVersionSelectForChannelTwo">选择版本</label>
+                    <select id="singboxVersionSelectForChannelTwo" class="form-control">
+                        <option value="preview" selected>预览版</option>  
+                        <option value="stable">稳定版</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="confirmSingboxVersionForChannelTwo()">确认</button>
             </div>
         </div>
     </div>
@@ -340,6 +364,7 @@ $uiVersion = getUiVersion();
 let selectedSingboxVersion = 'v1.11.0-alpha.6';  
 let selectedMihomoVersion = 'stable';  
 let selectedLanguage = 'cn';  
+let selectedSingboxVersionForChannelTwo = 'preview'; 
 
 function showUpdateVersionModal() {
     $('#updateVersionModal').modal('show');  
@@ -355,6 +380,17 @@ function showSingboxVersionSelector() {
     $('#optionsModal').modal('hide');  
     $('#versionSelectionModal').modal('show');  
 }
+
+function showSingboxVersionSelectorForChannelTwo() {
+    $('#optionsModal').modal('hide');  
+    $('#singboxVersionModal').modal('show');  
+}
+
+function confirmSingboxVersionForChannelTwo() {
+    selectedSingboxVersionForChannelTwo = document.getElementById('singboxVersionSelectForChannelTwo').value; 
+    $('#singboxVersionModal').modal('hide'); 
+    selectOperation('sing-box');
+} 
 
 function showMihomoVersionSelector() {
     $('#mihomoVersionSelectionModal').modal('show');
@@ -387,9 +423,11 @@ function selectOperation(type) {
             description: '正在更新 Singbox 核心到最新版本'
         },
         'sing-box': {
-            url: 'singbox.php',
+            url: selectedSingboxVersionForChannelTwo === 'stable'  
+                ? 'update_singbox_stable.php'  
+                : 'update_singbox_preview.php', 
             message: '开始下载 Singbox 核心更新...',
-            description: '正在更新 Singbox 核心到最新版本'
+            description: '正在更新 Singbox 核心到 ' + selectedSingboxVersionForChannelTwo + ' 版本'
         },
         'puernya': {
             url: 'puernya.php',
@@ -508,7 +546,7 @@ function checkVersion(buttonId, outputId, url) {
 }
 
 document.getElementById('checkSingboxButton').addEventListener('click', function() {
-    checkVersion('checkSingboxButton', 'NewSingbox', 'singbox.php');
+    checkVersion('checkSingboxButton', 'NewSingbox', 'update_singbox_preview.php');
 });
 
 document.getElementById('checkCliverButton').addEventListener('click', function() {
