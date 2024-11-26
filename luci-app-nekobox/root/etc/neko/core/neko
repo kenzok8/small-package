@@ -22,7 +22,7 @@ php_pid_path="$neko_tmp_dir/php_pid.txt"
 log="$neko_dir/tmp/log.txt"
 
 neko_ver(){
-    neko_version="1.5.5"
+    neko_version="1.5.6"
 }
 
 logs() {

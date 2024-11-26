@@ -1,6 +1,7 @@
 <?php
 ini_set('memory_limit', '256M');
 ob_start();
+date_default_timezone_set('Asia/Shanghai');
 include './cfg.php';
 $root_dir = "/";
 $current_dir = isset($_GET['dir']) ? $_GET['dir'] : '';
@@ -263,7 +264,7 @@ function getDirectoryContents($dir) {
                 if (!is_dir($path)) {
                     $size = formatSize(filesize($path));
                 }
-                $mtime = date("Y-m-d H:i:s", filemtime($path) + 8 * 60 * 60);
+                $mtime = date("Y-m-d H:i:s", filemtime($path));
                 $owner = function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($path))['name'] : fileowner($path);
             }
             $contents[] = array(

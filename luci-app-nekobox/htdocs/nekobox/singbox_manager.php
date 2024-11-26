@@ -1,6 +1,7 @@
 <?php
 ob_start();
 include './cfg.php';
+date_default_timezone_set('Asia/Shanghai');
 $proxyDir  = '/www/nekobox/proxy/';
 $configDir = '/etc/neko/config/';
 
@@ -600,7 +601,7 @@ td {
                     <tr>
                         <td class="align-middle"><a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a></td>
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
-                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath) + 8 * 60 * 60)); ?></td>
+                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?></td>
                         <td>
                             <div class="d-flex justify-content-center">
                                 <form action="" method="post" class="d-inline">
@@ -646,7 +647,7 @@ td {
                     <tr>
                         <td class="align-middle"><a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a></td>
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
-                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath) + 8 * 60 * 60)); ?></td>
+                        <td class="align-middle"><?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?></td>
                         <td>
                             <div class="d-flex justify-content-center">
                                 <form action="" method="post" class="d-inline">
@@ -1098,7 +1099,7 @@ function initializeAceEditor() {
 
 <h2 class="text-success text-center mt-4 mb-4">订阅管理 ➤ p核专用</h2>
 <div class="help-text mb-3 text-start">
-    <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站防火墙规则都设置为“接受”并启用它们。
+    <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站/转发防火墙规则都设置为“接受”并启用它们。
 </div>
 <div class="help-text mb-3 text-start">
     <strong>2. 注意：</strong> 通用模板（<code>puernya.json</code>）最多支持<strong>3 个</strong>订阅链接。请勿更改默认文件名称，并确保使用 puernya 内核。

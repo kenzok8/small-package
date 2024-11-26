@@ -1,6 +1,7 @@
 <?php
 ob_start();
 include './cfg.php';
+date_default_timezone_set('Asia/Shanghai');
 
 $dataFilePath = '/tmp/subscription_data.txt';
 $lastSubscribeUrl = '';
@@ -273,7 +274,7 @@ EOL;
             $subscribeUrl = trim($_POST['subscribeUrl']);
             $customTemplateUrl = trim($_POST['customTemplateUrl']);
             $templateOption = $_POST['templateOption'] ?? 'default';
-            $currentTime = date('Y-m-d H:i:s', strtotime('+8 hours'));
+            $currentTime = date('Y-m-d H:i:s');
             $dataContent = $currentTime . " | 订阅链接地址: " . $subscribeUrl . "\n";            
             $customFileName = trim($_POST['customFileName']);
             if (empty($customFileName)) {
