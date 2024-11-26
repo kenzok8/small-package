@@ -43,6 +43,7 @@ Fork this repository and:
 ## Changelog since 3.5.0
 
 * 2024-11-26 chore: bump status version
+* 2024-11-27 chore: use OpenWrt SDK 23.05.5 to avoid using apk
 
 ## Changelog since 3.4.0
 
