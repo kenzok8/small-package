@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD 17)
 
 OPTION(UA2F_BUILD_TESTS "Build tests" OFF)
 OPTION(UA2F_ENABLE_UCI "Enable UCI support" ON)
+OPTION(UA2F_NO_CACHE "Disable cache" OFF)
 
 find_package(Git)
 if (GIT_FOUND)
@@ -122,6 +123,13 @@ if (UA2F_ENABLE_UCI)
     target_link_libraries(ua2f uci)
 else ()
     message(STATUS "UCI support is disabled.")
+endif ()
+
+if (UA2F_NO_CACHE)
+    add_compile_definitions(UA2F_NO_CACHE=1)
+    message(STATUS "Cache is disabled.")
+else ()
+    message(STATUS "Cache is auto.")
 endif ()
 
 install(TARGETS ua2f RUNTIME DESTINATION bin)

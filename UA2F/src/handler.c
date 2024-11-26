@@ -27,7 +27,12 @@ static char *replacement_user_agent_string = NULL;
 #define CONNMARK_NOT_HTTP 43
 #define CONNMARK_HTTP 44
 
+#ifndef UA2F_NO_CACHE
 bool use_conntrack = true;
+#else
+bool use_conntrack = false;
+#endif
+
 static bool cache_initialized = false;
 
 void init_handler() {
