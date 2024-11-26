@@ -8,6 +8,9 @@ import threading
 import time
 
 import requests
+from fake_useragent import UserAgent
+
+ua = UserAgent()
 
 PORT = 37491
 
@@ -18,14 +21,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
         # assert user_agent only contains F
         if not all([c == 'F' for c in user_agent]):
-            print("UA2F does not work!")
-            exit(1)
+            self.send_response(200)
         else:
-            print("Got a full F user agent with length", len(user_agent))
-
-        self.send_response(200)
+            self.send_response(400)
         self.end_headers()
-        self.wfile.write(b"Hello, world!")
+        ua_len = len(user_agent)
+        self.wfile.write(str(ua_len).encode())
 
 
 def start_server():
@@ -73,25 +74,14 @@ if __name__ == "__main__":
 
     time.sleep(2)
 
-    normal_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
+    for i in range(10000):
+        nxt = ua.random
+        response = requests.get(f"http://localhost:{PORT}", headers={
+            "User-Agent": nxt
+        })
+        assert response.ok
+        assert response.text == str(len(nxt))
 
-    response = requests.get(f"http://localhost:{PORT}", headers={
-        "User-Agent": normal_ua
-    })
-    assert response.ok
-    print("Tested with a normal user agent with length", len(normal_ua))
-
-    time.sleep(1)
-
-    random_ua = "Some random user agent"
-    response = requests.get(f"http://localhost:{PORT}", headers={
-        "User-Agent": random_ua
-    })
-    assert response.ok
-    print("Tested with a random user agent with length", len(random_ua))
-
-    time.sleep(1)  # wait for process
 
     # clean
     cleanup_iptables()
