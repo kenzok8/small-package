@@ -1,5 +1,7 @@
 import atexit
 import http.server
+import json
+import logging
 import os
 import socketserver
 import subprocess
@@ -9,6 +11,7 @@ import time
 
 import requests
 from fake_useragent import UserAgent
+from tqdm import tqdm
 
 ua = UserAgent()
 
@@ -16,14 +19,18 @@ PORT = 37491
 
 
 class MyHandler(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
+
     def do_GET(self):
         user_agent = self.headers.get('User-Agent')
 
         # assert user_agent only contains F
         if not all([c == 'F' for c in user_agent]):
-            self.send_response(200)
-        else:
             self.send_response(400)
+            logging.error(f"Invalid User-Agent: {user_agent}")
+        else:
+            self.send_response(200)
         self.end_headers()
         ua_len = len(user_agent)
         self.wfile.write(str(ua_len).encode())
@@ -72,16 +79,15 @@ if __name__ == "__main__":
 
     print(f"Starting UA2F: {ua2f}")
 
-    time.sleep(2)
+    time.sleep(3)
 
-    for i in range(10000):
+    for i in tqdm(range(10000)):
         nxt = ua.random
         response = requests.get(f"http://localhost:{PORT}", headers={
             "User-Agent": nxt
         })
         assert response.ok
         assert response.text == str(len(nxt))
-
 
     # clean
     cleanup_iptables()

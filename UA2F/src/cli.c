@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/syslog.h>
+#include <unistd.h>
 
 #include "cli.h"
 
@@ -48,7 +48,13 @@ void try_print_info(const int argc, char *argv[]) {
         }
 #else
         printf("UCI support disabled\n");
+#ifdef UA2F_NO_CACHE
+        printf("Conntrack cache: disabled\n");
+#else
+        printf("Conntrack cache: auto\n");
 #endif
+#endif
+
         exit(EXIT_SUCCESS);
     }
 
