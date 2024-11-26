@@ -31,12 +31,14 @@ return baseclass.extend({
 
 	dashrepos: [
 		['metacubex/metacubexd', _('metacubexd')],
+		['zephyruso/zashboard', _('zashboard')],
 		['metacubex/yacd-meta', _('yacd-meta')],
 		['metacubex/razord-meta', _('razord-meta')]
 	],
 
 	dashrepos_urlparams: {
 		'metacubex/metacubexd':  '#/setup' + '?hostname=%s&port=%s&secret=%s',
+		'zephyruso/zashboard':   '#/setup' + '?hostname=%s&port=%s&secret=%s',
 		'metacubex/yacd-meta':   '?hostname=%s&port=%s&secret=%s',
 		'metacubex/razord-meta': '?host=%s&port=%s&secret=%s'
 	},
