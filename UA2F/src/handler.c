@@ -124,7 +124,7 @@ static void add_to_cache(const struct nf_packet *pkt) {
 }
 
 static struct mark_op get_next_mark(const struct nf_packet *pkt, const bool has_ua) {
-    if (!use_conntrack) {
+    if (!use_conntrack || !pkt->has_conntrack) {
         return (struct mark_op){false, 0};
     }
 
@@ -202,7 +202,7 @@ static bool ipv6_set_transport_header(struct pkt_buff *pkt_buff) {
     return true;
 }
 
-static int set_transport_header(struct pkt_buff* pkt_buff, const int ip_type) {
+static int set_transport_header(struct pkt_buff *pkt_buff, const int ip_type) {
     if (ip_type == IPV4) {
         if (ipv4_set_transport_header(pkt_buff)) {
             count_ipv4_packet();
@@ -232,19 +232,13 @@ static int set_transport_header(struct pkt_buff* pkt_buff, const int ip_type) {
 
 void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     if (use_conntrack) {
-        if (!pkt->has_conntrack) {
-            use_conntrack = false;
-            syslog(LOG_WARNING, "Packet has no conntrack. Switching to no cache mode.");
-            syslog(LOG_WARNING, "Note that this may lead to performance degradation. Especially on low-end routers.");
-        } else {
-            if (!cache_initialized) {
-                init_not_http_cache(60);
-                cache_initialized = true;
-            }
+        if (!cache_initialized && pkt->has_conntrack) {
+            init_not_http_cache(60);
+            cache_initialized = true;
         }
     }
 
-    if (use_conntrack && should_ignore(pkt)) {
+    if (use_conntrack && pkt->has_conntrack && should_ignore(pkt)) {
         send_verdict(queue, pkt, (struct mark_op){true, CONNMARK_NOT_HTTP}, NULL);
         goto end;
     }
@@ -253,7 +247,7 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     assert(pkt_buff != NULL);
 
     int type;
-    if (use_conntrack) {
+    if (pkt->has_conntrack) {
         type = pkt->orig.ip_version;
         set_transport_header(pkt_buff, type);
     } else {
