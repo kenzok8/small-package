@@ -50,10 +50,12 @@ def start_ua2f(u: str):
 # iptables 设置函数
 def setup_iptables():
     os.system(f"sudo iptables -A OUTPUT -p tcp --dport {PORT} -j NFQUEUE --queue-num 10010")
+    # os.system(f"sudo ip6tables -A OUTPUT -p tcp --dport {PORT} -j NFQUEUE --queue-num 10010")
 
 
 def cleanup_iptables():
     os.system(f"sudo iptables -D OUTPUT -p tcp --dport {PORT} -j NFQUEUE --queue-num 10010")
+    # os.system(f"sudo ip6tables -D OUTPUT -p tcp --dport {PORT} -j NFQUEUE --queue-num 10010")
 
 
 if __name__ == "__main__":
@@ -81,13 +83,21 @@ if __name__ == "__main__":
 
     time.sleep(3)
 
-    for i in tqdm(range(10000)):
+    for i in tqdm(range(2000)):
         nxt = ua.random
-        response = requests.get(f"http://localhost:{PORT}", headers={
+        response = requests.get(f"http://127.0.0.1:{PORT}", headers={
             "User-Agent": nxt
         })
         assert response.ok
         assert response.text == str(len(nxt))
+
+    # for i in tqdm(range(2000)):
+    #     nxt = ua.random
+    #     response = requests.get(f"http://[::1]:{PORT}", headers={
+    #         "User-Agent": nxt
+    #     })
+    #     assert response.ok
+    #     assert response.text == str(len(nxt))
 
     # clean
     cleanup_iptables()

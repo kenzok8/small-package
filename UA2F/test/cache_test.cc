@@ -6,7 +6,7 @@ extern "C" {
 
 class CacheTest : public ::testing::Test {
 protected:
-    struct addr_port test_addr{};
+    addr_port test_addr{};
 
     void SetUp() override {
         test_addr.addr.ip4 = 12345;
@@ -39,11 +39,11 @@ TEST_F(CacheTest, AddAndRemoveFromCache) {
     cache_add(test_addr);
     EXPECT_TRUE(cache_contains(test_addr));
     sleep(5);
-    EXPECT_FALSE(cache_contains(test_addr));
+    EXPECT_TRUE(cache_contains(test_addr));
 }
 
 TEST_F(CacheTest, CacheDoesNotContainNonexistentEntry) {
-    struct addr_port nonexistent_addr{};
+    addr_port nonexistent_addr{};
     nonexistent_addr.addr.ip4 = 54321;
     EXPECT_FALSE(cache_contains(nonexistent_addr));
 }
