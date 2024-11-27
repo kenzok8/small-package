@@ -629,8 +629,9 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.DynamicList, 'exclude_type', _('Node exclude type'),
-			_('Exclude matched node types.'));
-		so.placeholder = 'ss|http';
+			_('Exclude matched node types. Available types see <a target="_blank" href="%s" rel="noreferrer noopener">here</a>.')
+			.format('https://wiki.metacubex.one/config/proxy-groups/#exclude-type'));
+		so.placeholder = 'Shadowsocks|Trojan';
 		so.modalonly = true;
 		/* Proxy Group END */
 
