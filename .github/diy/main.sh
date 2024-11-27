@@ -171,8 +171,8 @@ svn export https://github.com/kenzok8/jell/trunk/vsftpd-alt
 svn export https://github.com/kenzok8/jell/trunk/luci-app-bridge
 
 git_sparse_clone master "https://github.com/coolsnowwolf/packages" "leanpack" net/miniupnpd net/mwan3 \
-multimedia/gmediarender multimedia/UnblockNeteaseMusic-Go \
-net/go-aliyundrive-webdav net/verysync net/dnsforwarder net/msd_lite \
+multimedia/gmediarender multimedia/UnblockNeteaseMusic-Go net/phtunnel net/frp net/headscale net/go-aliyundrive-webdav \
+net/verysync net/vlmcsd net/dnsforwarder net/tcpping net/netatalk net/pgyvpn net/msd_lite \
 net/nps net/tcpping net/amule net/baidupcs-web 
 mv -f miniupnpd miniupnpd-iptables
 
