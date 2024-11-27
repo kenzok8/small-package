@@ -708,13 +708,21 @@ return baseclass.extend({
 		return true;
 	},
 
+	validateBase64Key: function(length, section_id, value) {
+		/* Thanks to luci-proto-wireguard */
+		if (value)
+			if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
+				return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
+
+		return true;
+	},
+
 	validateShadowsocksPassword: function(self, encmode, section_id, value) {
 		var length = self.shadowsocks_cipher_length[encmode];
 		if (typeof length !== 'undefined') {
 			length = Math.ceil(length/3)*4;
 			if (encmode.match(/^2022-/)) {
-				if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
-					return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
+				return self.validateBase64Key(length, section_id, value);
 			} else {
 				if (length === 0 && !value)
 					return _('Expecting: %s').format(_('non-empty value'));

@@ -318,6 +318,71 @@ return view.extend({
 		so.depends({type: /^(vmess|vless)$/});
 		so.modalonly = true;
 
+		/* WireGuard fields */
+		so = ss.taboption('field_general', form.Value, 'wireguard_ip', _('Local address'),
+			_('The %s address used by local machine in the Wireguard network.').format('IPv4'));
+		so.datatype = 'ip4addr(1)';
+		so.rmempty = false;
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'wireguard_ipv6', _('Local IPv6 address'),
+			_('The %s address used by local machine in the Wireguard network.').format('IPv6'));
+		so.datatype = 'ip6addr(1)';
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'wireguard_private_key', _('Private key'),
+			_('WireGuard requires base64-encoded private keys.'));
+		so.password = true;
+		so.validate = L.bind(hm.validateBase64Key, so, 44);
+		so.rmempty = false;
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'wireguard_peer_public_key', _('Peer pubkic key'),
+			_('WireGuard peer public key.'));
+		so.validate = L.bind(hm.validateBase64Key, so, 44);
+		so.rmempty = false;
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'wireguard_pre_shared_key', _('Pre-shared key'),
+			_('WireGuard pre-shared key.'));
+		so.password = true;
+		so.validate = L.bind(hm.validateBase64Key, so, 44);
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'wireguard_allowed_ips', _('Allowed IPs'),
+			_('Destination addresses allowed to be forwarded via Wireguard.'));
+		so.datatype = 'cidr';
+		so.placeholder = '0.0.0.0/0';
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'wireguard_reserved', _('Reserved field bytes'));
+		so.datatype = 'integer';
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'wireguard_mtu', _('MTU'));
+		so.datatype = 'range(0,9000)';
+		so.placeholder = '1408';
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'wireguard_remote_dns_resolve', _('Remote DNS resolve'),
+			_('Force DNS remote resolution.'));
+		so.default = so.disabled;
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'wireguard_dns', _('DNS server'));
+		so.datatype = 'or(host, hostport)';
+		so.depends('wireguard_remote_dns_resolve', '1');
+		so.modalonly = true;
+
 		/* Plugin fields */
 		so = ss.taboption('field_general', form.ListValue, 'plugin', _('Plugin'));
 		so.value('', _('none'));
