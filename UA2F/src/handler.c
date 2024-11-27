@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv4.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv6.h>
 #include <libnetfilter_queue/libnetfilter_queue_tcp.h>
@@ -114,7 +115,7 @@ end:
 }
 
 static void add_to_cache(const struct nf_packet *pkt) {
-    struct addr_port target = {
+    const struct addr_port target = {
         .addr = pkt->orig.dst,
         .port = pkt->orig.dst_port,
     };
@@ -171,6 +172,64 @@ bool should_ignore(const struct nf_packet *pkt) {
     return retval;
 }
 
+enum {
+    IP_UNK = 0,
+};
+
+static bool ipv4_set_transport_header(struct pkt_buff *pkt_buff) {
+    struct iphdr *ip_hdr = nfq_ip_get_hdr(pkt_buff);
+    if (ip_hdr == NULL) {
+        return false;
+    }
+
+    if (nfq_ip_set_transport_header(pkt_buff, ip_hdr) < 0) {
+        syslog(LOG_ERR, "Failed to set ipv4 transport header");
+        return false;
+    }
+    return true;
+}
+
+static bool ipv6_set_transport_header(struct pkt_buff *pkt_buff) {
+    struct ip6_hdr *ip_hdr = nfq_ip6_get_hdr(pkt_buff);
+    if (ip_hdr == NULL) {
+        return false;
+    }
+
+    if (nfq_ip6_set_transport_header(pkt_buff, ip_hdr, IPPROTO_TCP) < 0) {
+        syslog(LOG_ERR, "Failed to set ipv6 transport header");
+        return false;
+    }
+    return true;
+}
+
+static int set_transport_header(struct pkt_buff* pkt_buff, const int ip_type) {
+    if (ip_type == IPV4) {
+        if (ipv4_set_transport_header(pkt_buff)) {
+            count_ipv4_packet();
+            return IPV4;
+        }
+        return IP_UNK;
+    }
+    if (ip_type == IPV6) {
+        if (ipv6_set_transport_header(pkt_buff)) {
+            count_ipv6_packet();
+            return IPV6;
+        }
+        return IP_UNK;
+    }
+
+    // unknown ip type
+    if (ipv4_set_transport_header(pkt_buff)) {
+        count_ipv4_packet();
+        return IPV4;
+    }
+    if (ipv6_set_transport_header(pkt_buff)) {
+        count_ipv6_packet();
+        return IPV6;
+    }
+    return IP_UNK;
+}
+
 void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     if (use_conntrack) {
         if (!pkt->has_conntrack) {
@@ -191,36 +250,16 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     }
 
     struct pkt_buff *pkt_buff = pktb_alloc(AF_INET, pkt->payload, pkt->payload_len, 0);
-    ASSERT(pkt_buff != NULL);
+    assert(pkt_buff != NULL);
 
     int type;
     if (use_conntrack) {
         type = pkt->orig.ip_version;
+        set_transport_header(pkt_buff, type);
     } else {
-        const __auto_type ip_hdr = nfq_ip_get_hdr(pkt_buff);
-        if (ip_hdr == NULL) {
-            type = IPV6;
-        } else {
-            type = IPV4;
-        }
-    }
-
-    if (type == IPV4) {
-        count_ipv4_packet();
-    } else {
-        count_ipv6_packet();
-    }
-
-    if (type == IPV4) {
-        const __auto_type ip_hdr = nfq_ip_get_hdr(pkt_buff);
-        if (nfq_ip_set_transport_header(pkt_buff, ip_hdr) < 0) {
-            syslog(LOG_ERR, "Failed to set ipv4 transport header");
-            goto end;
-        }
-    } else {
-        const __auto_type ip_hdr = nfq_ip6_get_hdr(pkt_buff);
-        if (nfq_ip6_set_transport_header(pkt_buff, ip_hdr, IPPROTO_TCP) < 0) {
-            syslog(LOG_ERR, "Failed to set ipv6 transport header");
+        type = set_transport_header(pkt_buff, IP_UNK);
+        if (type == IP_UNK) {
+            syslog(LOG_ERR, "Failed to set transport header");
             goto end;
         }
     }
@@ -234,9 +273,13 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     }
 
     const __auto_type tcp_payload = nfq_tcp_get_payload(tcp_hdr, pkt_buff);
-    const __auto_type tcp_payload_len = nfq_tcp_get_payload_len(tcp_hdr, pkt_buff);
+    if (tcp_payload == NULL) {
+        send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
+        goto end;
+    }
 
-    if (tcp_payload == NULL || tcp_payload_len < USER_AGENT_MATCH_LENGTH) {
+    const __auto_type tcp_payload_len = nfq_tcp_get_payload_len(tcp_hdr, pkt_buff);
+    if (tcp_payload_len < USER_AGENT_MATCH_LENGTH) {
         send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
         goto end;
     }

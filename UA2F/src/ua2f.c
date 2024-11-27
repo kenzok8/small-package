@@ -8,10 +8,12 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdbool.h>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
@@ -28,11 +30,9 @@ int parse_packet(const struct nf_queue *queue, struct nf_buffer *buf) {
 
     while (!should_exit) {
         const __auto_type status = nfqueue_next(buf, packet);
-        switch (status) {
-        case IO_READY:
+        if (status == IO_READY) {
             handle_packet(queue, packet);
-            break;
-        default:
+        } else {
             return status;
         }
     }
@@ -42,12 +42,10 @@ int parse_packet(const struct nf_queue *queue, struct nf_buffer *buf) {
 
 int read_buffer(struct nf_queue *queue, struct nf_buffer *buf) {
     const __auto_type buf_status = nfqueue_receive(queue, buf, 0);
-    switch (buf_status) {
-    case IO_READY:
+    if (buf_status == IO_READY) {
         return parse_packet(queue, buf);
-    default:
-        return buf_status;
     }
+    return buf_status;
 }
 
 bool retry_without_conntrack(struct nf_queue *queue) {
@@ -109,6 +107,8 @@ int main(const int argc, char *argv[]) {
         syslog(LOG_ERR, "Failed to open nfqueue");
         return EXIT_FAILURE;
     }
+    assert(queue->queue_num == QUEUE_NUM);
+    assert(queue->nl_socket != NULL);
 
     main_loop(queue);
 
