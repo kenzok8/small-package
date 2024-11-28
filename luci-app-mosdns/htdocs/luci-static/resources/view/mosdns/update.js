@@ -60,7 +60,7 @@ return view.extend({
 		o = s.option(form.Value, 'github_proxy', _('GitHub Proxy'),
 			_('Update data files with GitHub Proxy, leave blank to disable proxy downloads.'));
 		o.value('https://hub.gitmirror.com', _('https://hub.gitmirror.com'));
-		o.value('https://mirror.ghproxy.com', _('https://mirror.ghproxy.com'));
+		o.value('https://ghp.ci', _('https://ghp.ci'));
 		o.rmempty = true;
 		o.default = '';
 
