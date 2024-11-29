@@ -650,7 +650,7 @@ update_subscription() {
 	local subscription_header_tmpfile; subscription_header_tmpfile="/tmp/$subscription_section.header"
 	local subscription_tmpfile; subscription_tmpfile="/tmp/$subscription_section.yaml"
 	local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.yaml"
-	if (curl -s -f --connect-timeout 15 --retry 3 -L -X GET -H "User-Agent: $subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"); then
+	if (curl -s -f --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"); then
 		log "Subscription update succeed."
 		local subscription_expire subscription_upload subscription_download subscription_total subscription_used subscription_avaliable
 		subscription_expire=$(grep "subscription-userinfo: " "$subscription_header_tmpfile" | grep -o -E "expire=[[:digit:]]+" | cut -d '=' -f 2)
