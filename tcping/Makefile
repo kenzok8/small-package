@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcping
 PKG_VERSION:=0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Mattraks/tcping/tar.gz/$(PKG_VERSION)?
@@ -22,8 +22,12 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tcping
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=tcping measures the latency of a tcp-connection
+  TITLE:=tcping measures the latency of a tcp-connection (IPv4/IPv6 support)
   URL:=https://github.com/jlyo/tcping
+endef
+
+define Build/Compile
+	$(MAKE) -C $(PKG_BUILD_DIR) CC="$(TARGET_CC)" CFLAGS="$(TARGET_CFLAGS) -Wall" LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 
 define Package/tcping/install
