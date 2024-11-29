@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.1.3-20241110
+PKG_VERSION:=1.1.5-20241129
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for istoredup
