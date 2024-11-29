@@ -353,7 +353,7 @@ agent_sync_config()
 
 				[ "$enabled" = "1" ] && {
 					for band in $bands; do
-						wbandstr=$(uci show wireless | grep .band=\'${band}\'$ -m1)
+						for wbandstr in $(uci show wireless | grep .band=\'${band}\'$); do
 						if test -n "$wbandstr"; then
 							radio=$(echo $wbandstr | cut -d\. -f2)
 
@@ -382,7 +382,7 @@ agent_sync_config()
 								uci set wireless.wifinet$K.ft_over_ds='1'
 								uci set wireless.wifinet$K.ft_psk_generate_local='1'
 							fi
-							if opkg list-installed | grep -q wpad-basic; then
+							if opkg list-installed 2>/dev/null | grep -q wpad-basic || apk list 2>/dev/null | grep wpad-basic | grep -q installed; then
 								:
 							else
 								uci set wireless.wifinet$K.bss_transition='1'
@@ -396,6 +396,7 @@ agent_sync_config()
 
 							K=$((K+1))
 						fi
+						done
 					done
 				}
 
