@@ -562,13 +562,13 @@ return view.extend({
 		o = s.taboption('experimental', form.SectionValue, '_experimental', form.NamedSection, 'experimental', 'fchomo', null);
 		ss = o.subsection;
 
-		so = ss.option(form.Flag, 'quic_go_disable_gso', _('quic-go-disable-gso'));
+		so = ss.option(form.Flag, 'quic_go_disable_gso', _('Disable GSO of quic-go'));
 		so.default = so.disabled;
 
-		so = ss.option(form.Flag, 'quic_go_disable_ecn', _('quic-go-disable-ecn'));
+		so = ss.option(form.Flag, 'quic_go_disable_ecn', _('Disable ECN of quic-go'));
 		so.default = so.disabled;
 
-		so = ss.option(form.Flag, 'dialer_ip4p_convert', _('dialer-ip4p-convert'));
+		so = ss.option(form.Flag, 'dialer_ip4p_convert', _('Enable IP4P conversion when dialing'));
 		so.default = so.disabled;
 		/* Experimental END */
 

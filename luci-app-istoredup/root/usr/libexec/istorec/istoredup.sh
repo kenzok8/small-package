@@ -7,9 +7,8 @@ do_install() {
   local IMAGE_NAME=`uci get istoredup.@istoredup[0].image_name 2>/dev/null`
   source /etc/openwrt_release
   case ${DISTRIB_TARGET} in
-  *x86)
-    echo "Unsupported ${DISTRIB_TARGET} NOW"
-    exit 1
+  *x86*)
+    echo "${DISTRIB_TARGET} supported"
     ;;
   *rk35xx)
     echo "${DISTRIB_TARGET} supported"
