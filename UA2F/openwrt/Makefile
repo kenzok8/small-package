@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UA2F
-PKG_VERSION:=4.9.2
+PKG_VERSION:=4.9.3
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0-only
@@ -45,12 +45,20 @@ define Package/ua2f/config
     default "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.68"
     help
       Specify the custom User-Agent string to use when UA2F_CUSTOM_USER_AGENT is enabled.
+
+  config UA2F_DEBUG_BUILD
+    bool "Enable debug build"
+    depends on PACKAGE_ua2f
+    default n
+    help
+      Enable this option to build UA2F with debug symbols and optimizations disabled.
 endef
 
 CMAKE_OPTIONS += \
 	-DUA2F_VERSION_STR="$(PKG_VERSION)" \
 	-DUA2F_CUSTOM_USER_AGENT=$(if $(CONFIG_UA2F_CUSTOM_USER_AGENT),ON,OFF) \
 	-DUA2F_USER_AGENT_STRING=$(CONFIG_UA2F_USER_AGENT_STRING) \
+	-DCMAKE_BUILD_TYPE=$(if $(CONFIG_UA2F_DEBUG_BUILD),Debug,Release)
 
 define Package/ua2f/description
   Change User-agent to Fwords to prevent being checked by Dr.Com.
