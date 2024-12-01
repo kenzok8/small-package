@@ -188,11 +188,11 @@ start_service() {
 		tun_enable="$tun_enable" tun_stack="$tun_stack" tun_device="$TUN_DEVICE" tun_mtu="$tun_mtu" tun_gso="$tun_gso" tun_gso_max_size="$tun_gso_max_size" tun_endpoint_independent_nat="$tun_endpoint_independent_nat" \
 		dns_enable="true" dns_listen="0.0.0.0:$dns_port" dns_mode="$dns_mode" fake_ip_range="$fake_ip_range" \
 		yq -M -i '
-		.log-level = env(log_level) | .ipv6 = env(ipv6) == 1 |
-		.external-ui = env(ui_path) | .external-ui-name = env(ui_name) | .external-ui-url = env(ui_url) | .external-controller = env(api_listen) | .secret = env(api_secret) |
+		.log-level = strenv(log_level) | .ipv6 = env(ipv6) == 1 |
+		.external-ui = strenv(ui_path) | .external-ui-name = strenv(ui_name) | .external-ui-url = strenv(ui_url) | .external-controller = strenv(api_listen) | .secret = strenv(api_secret) |
 		.allow-lan = env(allow_lan) == 1 | .port = env(http_port) | .socks-port = env(socks_port) | .mixed-port = env(mixed_port) | .redir-port = env(redir_port) | .tproxy-port = env(tproxy_port) |
-		.tun.enable = env(tun_enable) == 1 | .tun.stack = env(tun_stack) | .tun.device = env(tun_device) | .tun.mtu = env(tun_mtu) | .tun.gso = env(tun_gso) == 1 | .tun.gso-max-size = env(tun_gso_max_size) | .tun.endpoint-independent-nat = env(tun_endpoint_independent_nat) == 1 |
-		.dns.enable = env(dns_enable) | .dns.listen = env(dns_listen) | .dns.enhanced-mode = env(dns_mode) | .dns.fake-ip-range = env(fake_ip_range)
+		.tun.enable = env(tun_enable) == 1 | .tun.stack = strenv(tun_stack) | .tun.device = strenv(tun_device) | .tun.mtu = env(tun_mtu) | .tun.gso = env(tun_gso) == 1 | .tun.gso-max-size = env(tun_gso_max_size) | .tun.endpoint-independent-nat = env(tun_endpoint_independent_nat) == 1 |
+		.dns.enable = env(dns_enable) | .dns.listen = strenv(dns_listen) | .dns.enhanced-mode = strenv(dns_mode) | .dns.fake-ip-range = strenv(fake_ip_range)
 		' "$RUN_PROFILE_PATH"
 	else
 		log "Mixin is enabled, mixin all config."
@@ -206,19 +206,19 @@ start_service() {
 		geoip_format="$geoip_format" geodata_loader="$geodata_loader" geosite_url="$geosite_url" geoip_mmdb_url="$geoip_mmdb_url" geoip_dat_url="$geoip_dat_url" geoip_asn_url="$geoip_asn_url" \
 		geox_auto_update="$geox_auto_update" geox_update_interval="$geox_update_interval" \
 		yq -M -i '
-		.log-level = env(log_level) | .mode = env(mode) | .find-process-mode = env(match_process) | .keep-alive-idle = env(tcp_keep_alive_idle) | .keep-alive-interval = env(tcp_keep_alive_interval) | .ipv6 = env(ipv6) == 1 |
-		.external-ui = env(ui_path) | .external-ui-name = env(ui_name) | .external-ui-url = env(ui_url) | .external-controller = env(api_listen) | .secret = env(api_secret) | .profile.store-selected = env(selection_cache) == 1 |
+		.log-level = strenv(log_level) | .mode = strenv(mode) | .find-process-mode = strenv(match_process) | .keep-alive-idle = env(tcp_keep_alive_idle) | .keep-alive-interval = env(tcp_keep_alive_interval) | .ipv6 = env(ipv6) == 1 |
+		.external-ui = strenv(ui_path) | .external-ui-name = strenv(ui_name) | .external-ui-url = strenv(ui_url) | .external-controller = strenv(api_listen) | .secret = strenv(api_secret) | .profile.store-selected = env(selection_cache) == 1 |
 		.allow-lan = env(allow_lan) == 1 | .port = env(http_port) | .socks-port = env(socks_port) | .mixed-port = env(mixed_port) | .redir-port = env(redir_port) | .tproxy-port = env(tproxy_port) |
-		.tun.enable = env(tun_enable) == 1 | .tun.stack = env(tun_stack) | .tun.device = env(tun_device) | .tun.mtu = env(tun_mtu) | .tun.gso = env(tun_gso) == 1 | .tun.gso-max-size = env(tun_gso_max_size) | .tun.endpoint-independent-nat = env(tun_endpoint_independent_nat) == 1 |
-		.dns.enable = env(dns_enable) | .dns.listen = env(dns_listen) | .dns.enhanced-mode = env(dns_mode) | .dns.fake-ip-range = env(fake_ip_range) | .profile.store-fake-ip = env(fake_ip_cache) == 1 |
+		.tun.enable = env(tun_enable) == 1 | .tun.stack = strenv(tun_stack) | .tun.device = strenv(tun_device) | .tun.mtu = env(tun_mtu) | .tun.gso = env(tun_gso) == 1 | .tun.gso-max-size = env(tun_gso_max_size) | .tun.endpoint-independent-nat = env(tun_endpoint_independent_nat) == 1 |
+		.dns.enable = env(dns_enable) | .dns.listen = strenv(dns_listen) | .dns.enhanced-mode = strenv(dns_mode) | .dns.fake-ip-range = strenv(fake_ip_range) | .profile.store-fake-ip = env(fake_ip_cache) == 1 |
 		.dns.respect-rules = env(dns_respect_rules) == 1 | .dns.prefer-h3 = env(dns_doh_prefer_http3) == 1 | .dns.ipv6 = env(dns_ipv6) == 1 | .dns.use-system-hosts = env(dns_system_hosts) == 1 | .dns.use-hosts = env(dns_hosts) == 1 |
-		.geodata-mode = env(geoip_format) == "dat" | .geodata-loader = env(geodata_loader) | .geox-url.geosite = env(geosite_url) | .geox-url.mmdb = env(geoip_mmdb_url) | .geox-url.geoip = env(geoip_dat_url) | .geox-url.asn = env(geoip_asn_url) |
+		.geodata-mode = strenv(geoip_format) == "dat" | .geodata-loader = strenv(geodata_loader) | .geox-url.geosite = strenv(geosite_url) | .geox-url.mmdb = strenv(geoip_mmdb_url) | .geox-url.geoip = strenv(geoip_dat_url) | .geox-url.asn = strenv(geoip_asn_url) |
 		.geo-auto-update = env(geox_auto_update) == 1 | .geo-update-interval = env(geox_update_interval)
 		' "$RUN_PROFILE_PATH"
 
 		if [ "$fake_ip_filter" == 1 ]; then
 			fake_ip_filter_mode="$fake_ip_filter_mode" \
-			yq -M -i 'del(.dns.fake-ip-filter) | .dns.fake-ip-filter-mode = env(fake_ip_filter_mode)' "$RUN_PROFILE_PATH"
+			yq -M -i 'del(.dns.fake-ip-filter) | .dns.fake-ip-filter-mode = strenv(fake_ip_filter_mode)' "$RUN_PROFILE_PATH"
 			config_list_foreach "mixin" "fake_ip_filters" mixin_fake_ip_filters
 		fi
 		if [ "$hosts" == 1 ]; then
@@ -238,7 +238,7 @@ start_service() {
 	if [ -n "$outbound_interface" ]; then
 		local outbound_device; network_get_device outbound_device "$outbound_interface"
 		if [ -n "$outbound_device" ]; then
-			outbound_device="$outbound_device" yq -M -i '.interface-name = env(outbound_device)' "$RUN_PROFILE_PATH"
+			outbound_device="$outbound_device" yq -M -i '.interface-name = strenv(outbound_device)' "$RUN_PROFILE_PATH"
 		fi
 	fi
 	if [ "$authentication" == 1 ]; then
@@ -529,11 +529,11 @@ mixin_authentications() {
 		return
 	fi
 
-	authentication="$username:$password" yq -M -i '.authentication += [env(authentication)]' "$RUN_PROFILE_PATH"
+	authentication="$username:$password" yq -M -i '.authentication += [strenv(authentication)]' "$RUN_PROFILE_PATH"
 }
 
 mixin_fake_ip_filters() {
-	domain_name="$1" yq -M -i '.dns.fake-ip-filter += [env(domain_name)]' "$RUN_PROFILE_PATH"
+	domain_name="$1" yq -M -i '.dns.fake-ip-filter += [strenv(domain_name)]' "$RUN_PROFILE_PATH"
 }
 
 mixin_hosts() {
@@ -551,7 +551,7 @@ mixin_hosts() {
 }
 
 mixin_host() {
-	ip="$1" domain_name="$2" yq -M -i '.hosts.[env(domain_name)] += [env(ip)]' "$RUN_PROFILE_PATH"
+	ip="$1" domain_name="$2" yq -M -i '.hosts.[strenv(domain_name)] += [strenv(ip)]' "$RUN_PROFILE_PATH"
 }
 
 mixin_nameservers() {
@@ -569,7 +569,7 @@ mixin_nameservers() {
 }
 
 mixin_nameserver() {
-	nameserver="$1" type="$2" yq -M -i '.dns.[env(type)] += [env(nameserver)]' "$RUN_PROFILE_PATH"
+	nameserver="$1" type="$2" yq -M -i '.dns.[strenv(type)] += [strenv(nameserver)]' "$RUN_PROFILE_PATH"
 }
 
 mixin_nameserver_policies() {
@@ -587,7 +587,7 @@ mixin_nameserver_policies() {
 }
 
 mixin_nameserver_policy() {
-	nameserver="$1" matcher="$2" yq -M -i '.dns.nameserver-policy.[env(matcher)] += [env(nameserver)]' "$RUN_PROFILE_PATH"
+	nameserver="$1" matcher="$2" yq -M -i '.dns.nameserver-policy.[strenv(matcher)] += [strenv(nameserver)]' "$RUN_PROFILE_PATH"
 }
 
 add_bypass_user() {

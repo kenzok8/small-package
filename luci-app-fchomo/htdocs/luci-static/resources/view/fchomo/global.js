@@ -568,7 +568,8 @@ return view.extend({
 		so = ss.option(form.Flag, 'quic_go_disable_ecn', _('Disable ECN of quic-go'));
 		so.default = so.disabled;
 
-		so = ss.option(form.Flag, 'dialer_ip4p_convert', _('Enable IP4P conversion when dialing'));
+		so = ss.option(form.Flag, 'dialer_ip4p_convert', _('Enable <a target="_blank" href="%s" rel="noreferrer noopener">IP4P</a> conversion for outbound connections')
+			.format('https://github.com/heiher/natmap/wiki/faq#%E5%9F%9F%E5%90%8D%E8%AE%BF%E9%97%AE%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E7%9A%84'));
 		so.default = so.disabled;
 		/* Experimental END */
 

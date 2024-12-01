@@ -105,7 +105,7 @@ return baseclass.extend({
         if (running) {
             const uiName = uci.get('mihomo', 'mixin', 'ui_name');
             const apiPort = uci.get('mihomo', 'mixin', 'api_port');
-            const apiSecret = uci.get('mihomo', 'mixin', 'api_secret');
+            const apiSecret = encodeURIComponent(uci.get('mihomo', 'mixin', 'api_secret'));
             let url;
             if (uiName) {
                 url = `http://${window.location.hostname}:${apiPort}/ui/${uiName}/?host=${window.location.hostname}&hostname=${window.location.hostname}&port=${apiPort}&secret=${apiSecret}`;
