@@ -40,6 +40,7 @@ const ucisniff = 'sniff',
       ucipgrp = 'proxy_group',
       ucinode = 'node',
       uciprov = 'provider',
+      ucichain = 'dialer_proxy',
       ucirule = 'ruleset',
       ucirout = 'rules',
       ucisubro = 'subrules';
@@ -178,6 +179,25 @@ function parse_entry(cfg) {
 
 /* Main */
 const config = {};
+
+/* All Proxy chain object */
+const dialerproxy = {};
+uci.foreach(uciconf, ucichain, (cfg) => {
+	if (cfg.enabled === '0')
+		return;
+
+	let identifier = '';
+	if (cfg.type === 'provider')
+		identifier = cfg.chain_head_sub;
+	else if (cfg.type === 'node')
+		identifier = cfg.chain_head;
+	else
+		return;
+
+	dialerproxy[identifier] = {
+		detour: get_proxygroup(cfg.chain_tail_group) || get_proxynode(cfg.chain_tail)
+	};
+});
 
 /* General START */
 /* General settings */
@@ -434,8 +454,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		/* Dial fields */
 		tfo: strToBool(cfg.tfo),
 		mptcp: strToBool(cfg.mptcp),
-		// dev: Features under development
-		["dialer-proxy"]: null, //cfg.dialer_proxy,
+		["dialer-proxy"]: dialerproxy[cfg['.name']]?.detour,
 		["interface-name"]: cfg.interface_name,
 		["routing-mark"]: strToInt(cfg.routing_mark),
 		["ip-version"]: cfg.ip_version,
@@ -658,8 +677,7 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 		up: cfg.override_up ? cfg.override_up + ' Mbps' : null,
 		down: cfg.override_down ? cfg.override_down + ' Mbps' : null,
 		["skip-cert-verify"]: strToBool(cfg.override_skip_cert_verify) || false,
-		// dev: Features under development
-		["dialer-proxy"]: null, //cfg.override_dialer_proxy,
+		["dialer-proxy"]: dialerproxy[cfg['.name']]?.detour,
 		["interface-name"]: cfg.override_interface_name,
 		["routing-mark"]: strToInt(cfg.override_routing_mark),
 		["ip-version"]: cfg.override_ip_version
@@ -726,5 +744,8 @@ uci.foreach(uciconf, ucisubro, (cfg) => {
 	push(config["sub-rules"][cfg.group], parse_entry(cfg.entry));
 });
 /* Sub rules END */
+
+/* Debug dialer-proxy */
+//config.dialerproxy = dialerproxy;
 
 printf('%.J\n', removeBlankAttrs(config));
