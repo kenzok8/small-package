@@ -49,7 +49,7 @@ define Package/ua2f/config
   config UA2F_DEBUG_BUILD
     bool "Enable debug build"
     depends on PACKAGE_ua2f
-    default n
+    default y
     help
       Enable this option to build UA2F with debug symbols and optimizations disabled.
 endef
@@ -59,6 +59,10 @@ CMAKE_OPTIONS += \
 	-DUA2F_CUSTOM_USER_AGENT=$(if $(CONFIG_UA2F_CUSTOM_USER_AGENT),ON,OFF) \
 	-DUA2F_USER_AGENT_STRING=$(CONFIG_UA2F_USER_AGENT_STRING) \
 	-DCMAKE_BUILD_TYPE=$(if $(CONFIG_UA2F_DEBUG_BUILD),Debug,Release)
+
+ifeq ($(CONFIG_UA2F_DEBUG_BUILD),y)
+  PKG_BUILD_FLAGS += no-strip
+endif
 
 define Package/ua2f/description
   Change User-agent to Fwords to prevent being checked by Dr.Com.
