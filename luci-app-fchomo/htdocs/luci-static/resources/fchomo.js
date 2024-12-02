@@ -158,7 +158,7 @@ return baseclass.extend({
 		//['UID'],
 
 		['NETWORK'],
-		//['DSCP'],
+		['DSCP'],
 
 		['RULE-SET'],
 

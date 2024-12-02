@@ -278,6 +278,13 @@ function renderPayload(s, total, uciconfig) {
 		o.depends(prefix + 'type', 'NETWORK');
 		initPayload(o, n, 'factor', uciconfig);
 
+		o = s.option(form.Value, prefix + 'dscp', _('Factor') + ` ${n+1}`);
+		o.datatype = 'range(0, 63)';
+		if (n === 0)
+			o.depends('type', 'DSCP');
+		o.depends(prefix + 'type', 'DSCP');
+		initPayload(o, n, 'factor', uciconfig);
+
 		o = s.option(form.ListValue, prefix + 'rule_set', _('Factor') + ` ${n+1}`);
 		o.value('', _('-- Please choose --'));
 		if (n === 0)
