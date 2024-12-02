@@ -653,6 +653,9 @@ generate_config() {
 	json_add_object
 	json_add_string "exec" "\$fallback"
 	json_close_object
+	json_add_object
+	json_add_string "exec" "jump has_resp_sequence"
+	json_close_object
 	json_close_array
 	json_close_object
 	# plugin: udp_server
