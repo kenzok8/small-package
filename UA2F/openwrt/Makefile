@@ -61,7 +61,7 @@ CMAKE_OPTIONS += \
 	-DCMAKE_BUILD_TYPE=$(if $(CONFIG_UA2F_DEBUG_BUILD),Debug,Release)
 
 ifeq ($(CONFIG_UA2F_DEBUG_BUILD),y)
-  PKG_BUILD_FLAGS += no-strip
+  STRIP:=true
 endif
 
 define Package/ua2f/description
