@@ -10,7 +10,7 @@ static long long tcp_packet_count = 0;
 
 static long long ipv4_packet_count = 0;
 static long long ipv6_packet_count = 0;
-static long long last_report_count = 4;
+static long long last_report_count = 1;
 
 static time_t start_t;
 
@@ -29,7 +29,7 @@ void count_ipv4_packet() { ipv4_packet_count++; }
 
 void count_ipv6_packet() { ipv6_packet_count++; }
 
-static char time_string_buffer[100];
+static char time_string_buffer[512];
 
 char *fill_time_string(const double sec) {
     const int s = (int)sec;

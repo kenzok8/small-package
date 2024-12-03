@@ -10,6 +10,7 @@
 #endif
 
 #include <assert.h>
+#include <linux/if_ether.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv4.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv6.h>
 #include <libnetfilter_queue/libnetfilter_queue_tcp.h>
@@ -84,7 +85,7 @@ static void send_verdict(const struct nf_queue *queue, const struct nf_packet *p
         syslog(LOG_ERR, "failed to put nfqueue header");
         goto end;
     }
-    nfq_nlmsg_verdict_put(nlh, pkt->packet_id, NF_ACCEPT);
+    nfq_nlmsg_verdict_put(nlh, (int)pkt->packet_id, NF_ACCEPT);
 
     if (mark.should_set) {
         struct nlattr *nest = mnl_attr_nest_start_check(nlh, SEND_BUF_LEN, NFQA_CT);
@@ -202,32 +203,19 @@ static bool ipv6_set_transport_header(struct pkt_buff *pkt_buff) {
     return true;
 }
 
-static int set_transport_header(struct pkt_buff *pkt_buff, const int ip_type) {
-    if (ip_type == IPV4) {
-        if (ipv4_set_transport_header(pkt_buff)) {
-            count_ipv4_packet();
-            return IPV4;
-        }
-        return IP_UNK;
-    }
-    if (ip_type == IPV6) {
-        if (ipv6_set_transport_header(pkt_buff)) {
-            count_ipv6_packet();
-            return IPV6;
-        }
-        return IP_UNK;
+int get_pkt_ip_version(const struct nf_packet *pkt) {
+    if (pkt->has_conntrack) {
+        return pkt->orig.ip_version;
     }
 
-    // unknown ip type
-    if (ipv4_set_transport_header(pkt_buff)) {
-        count_ipv4_packet();
-        return IPV4;
+    switch (pkt->hw_protocol) {
+        case ETH_P_IP:
+            return IPV4;
+        case ETH_P_IPV6:
+            return IPV6;
+        default:
+            return IP_UNK;
     }
-    if (ipv6_set_transport_header(pkt_buff)) {
-        count_ipv6_packet();
-        return IPV6;
-    }
-    return IP_UNK;
 }
 
 void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
@@ -244,18 +232,22 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     }
 
     struct pkt_buff *pkt_buff = pktb_alloc(AF_INET, pkt->payload, pkt->payload_len, 0);
-    assert(pkt_buff != NULL);
+    if (pkt_buff == NULL) {
+        syslog(LOG_ERR, "Failed to allocate packet buffer");
+        goto end;
+    }
 
-    int type;
-    if (pkt->has_conntrack) {
-        type = pkt->orig.ip_version;
-        set_transport_header(pkt_buff, type);
-    } else {
-        type = set_transport_header(pkt_buff, IP_UNK);
-        if (type == IP_UNK) {
-            syslog(LOG_ERR, "Failed to set transport header");
-            goto end;
-        }
+    int type = get_pkt_ip_version(pkt);
+    if (type == IP_UNK) {
+        // will this happen?
+        send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
+        syslog(LOG_WARNING, "Received unknown ip packet %x. You may set wrong firewall rules.", pkt->hw_protocol);
+    }
+
+    if (type == IPV4) {
+        assert(ipv4_set_transport_header(pkt_buff));
+    } else if (type == IPV6) {
+        assert(ipv6_set_transport_header(pkt_buff));
     }
 
     const __auto_type tcp_hdr = nfq_tcp_get_hdr(pkt_buff);
@@ -347,7 +339,9 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
 
 end:
     free(pkt->payload);
-    pktb_free(pkt_buff);
+    if (pkt_buff != NULL) {
+        pktb_free(pkt_buff);
+    }
 
     try_print_statistics();
 }

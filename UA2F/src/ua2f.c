@@ -72,6 +72,7 @@ void main_loop(struct nf_queue *queue) {
                     break;
                 }
             } else {
+                should_exit = true;
                 break;
             }
         }
