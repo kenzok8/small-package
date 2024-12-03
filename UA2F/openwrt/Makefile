@@ -49,7 +49,7 @@ define Package/ua2f/config
   config UA2F_DEBUG_BUILD
     bool "Enable debug build"
     depends on PACKAGE_ua2f
-    default y
+    default n
     help
       Enable this option to build UA2F with debug symbols and optimizations disabled.
 endef
