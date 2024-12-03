@@ -55,21 +55,17 @@ void init_not_http_cache(const int interval) {
 }
 
 bool cache_contains(struct addr_port target) {
-    pthread_rwlock_rdlock(&cacheLock);
+    pthread_rwlock_wrlock(&cacheLock);
 
     struct cache *s;
     HASH_FIND(hh, not_http_dst_cache, &target, sizeof(struct addr_port), s);
+    if (s != NULL) {
+        s->last_time = time(NULL);
+    }
 
     pthread_rwlock_unlock(&cacheLock);
 
-    if (s != NULL) {
-        pthread_rwlock_wrlock(&cacheLock);
-        s->last_time = time(NULL);
-        pthread_rwlock_unlock(&cacheLock);
-        return true;
-    }
-
-    return false;
+    return s != NULL;
 }
 
 void cache_add(struct addr_port addr_port) {
