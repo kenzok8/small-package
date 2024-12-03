@@ -74,7 +74,7 @@ rm -rf /usr/lib/lua/luci/view/admin_status/index
 chmod 0755 /etc/init.d/*
 
 sed -i.bak '/^option overlay_root \/overlay/s/^/#/' /etc/opkg.conf
-sed -i.bak '/_smpackage/s#https://[^ ]*/packages/x86_64/smpackage#https://op.dllkids.xyz/packages/x86_64/#g' /etc/opkg/distfeeds.conf
+sed -i.bak '/_smpackage/s#https://[^ ]*/packages/x86_64/smpackage#https://op.dllkids.xyz/packages/x86_64#g' /etc/opkg/distfeeds.conf
 
 rm -rf /tmp/luci-*cache
 
