@@ -269,7 +269,6 @@ while getopts ":skrpcvh" signal ; do
             ;;
         v)
             neko_ver
-            neko_checknewver
             echo "v.$neko_version"
             ;;
         h)
