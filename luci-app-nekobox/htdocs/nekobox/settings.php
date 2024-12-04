@@ -312,6 +312,7 @@ $uiVersion = getUiVersion();
                     <select id="panelSelect" class="form-select">
                         <option value="zashboard">Zashboard 面板</option>
                         <option value="metacubexd">Metacubexd 面板</option>
+                        <option value="yacd-meat">Yacd-Meat 面板</option>
                     </select>
                 </div>
             </div>
@@ -516,13 +517,25 @@ function selectOperation(type) {
         'panel': { 
             url: selectedPanel === 'zashboard' 
                 ? 'update_zashboard.php' 
-                : 'update_metacubexd.php', 
+                : selectedPanel === 'yacd-meat' 
+                    ? 'update_meta.php' 
+                    : selectedPanel === 'metacubexd' 
+                        ? 'update_metacubexd.php' 
+                        : 'unknown_panel.php', 
             message: selectedPanel === 'zashboard' 
                 ? '开始下载 Zashboard 面板更新...' 
-                : '开始下载 Metacubexd 面板更新...', 
+                : selectedPanel === 'yacd-meat' 
+                    ? '开始下载 Yacd-Meat 面板更新...' 
+                    : selectedPanel === 'metacubexd' 
+                        ? '开始下载 Metacubexd 面板更新...' 
+                        : '未知面板更新类型...',
             description: selectedPanel === 'zashboard' 
                 ? '正在更新 Zashboard 面板到最新版本' 
-                : '正在更新 Metacubexd 面板到最新版本' 
+                : selectedPanel === 'yacd-meat' 
+                    ? '正在更新 Yacd-Meat 面板到最新版本' 
+                    : selectedPanel === 'metacubexd' 
+                        ? '正在更新 Metacubexd 面板到最新版本' 
+                        : '无法识别的面板类型，无法更新。'
         }
     };
     const operation = operations[type];
@@ -667,7 +680,8 @@ document.getElementById('checkMihomoButton').addEventListener('click', function 
 document.getElementById('checkUiButton').addEventListener('click', function () {
     const updateFiles = [
         { name: 'MetaCube', url: 'update_metacubexd.php' },
-        { name: 'Zashboard', url: 'update_zashboard.php' }
+        { name: 'Zashboard', url: 'update_zashboard.php' },
+        { name: 'yacd-meat', url: 'update_meta.php' }
     ];
     checkVersion('NewUi', updateFiles);
 });
