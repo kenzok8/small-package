@@ -590,8 +590,8 @@ function checkVersion(outputId, updateFiles, buttonId = null) {
                 <table style="border-collapse: collapse; width: 100%;">
                     <thead>
                         <tr>
-                            <th style="text-align: left; padding: 8px;">组件名称</th>
-                            <th style="text-align: left; padding: 8px;">最新版本</th>
+                            <th style="text-align: center; padding: 8px;">组件名称</th>
+                            <th style="text-align: center; padding: 8px;">最新版本</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -606,8 +606,8 @@ function checkVersion(outputId, updateFiles, buttonId = null) {
                 <table style="border-collapse: collapse; width: 100%;">
                     <thead>
                         <tr>
-                            <th style="text-align: left; padding: 8px;">组件名称</th>
-                            <th style="text-align: left; padding: 8px;">最新版本</th>
+                            <th style="text-align: center; padding: 8px;">组件名称</th>
+                            <th style="text-align: center; padding: 8px;">最新版本</th>
                         </tr>
                     </thead>
                     <tbody>
