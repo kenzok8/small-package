@@ -62,11 +62,19 @@ if ($return_var !== 0) {
 
 exec("tar -xzf '$temp_file' -C '$install_path'", $output, $return_var);
 if ($return_var !== 0) {
+    echo "解压失败，错误信息: " . implode("\n", $output);
     die("解压失败！");
+}
+
+exec("chown -R root:root '$install_path' 2>&1", $output, $return_var);
+if ($return_var !== 0) {
+    echo "更改文件所有者失败，错误信息: " . implode("\n", $output);
+    die();
 }
 
 writeVersionToFile($latest_version); 
 echo "更新完成！当前版本: $latest_version";
 
 unlink($temp_file);
+
 ?>
