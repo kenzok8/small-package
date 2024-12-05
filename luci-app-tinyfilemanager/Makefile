@@ -7,7 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_NAME:=luci-app-tinyfilemanager
-PKG_VERSION:=2.6-20241204
+PKG_VERSION:=2.6
+PKG_RELEASE:=20241204
 
 LUCI_TITLE:=LuCI Tiny File Manager
 LUCI_DEPENDS:=+php8 +php8-cgi +php8-fastcgi +php8-fpm +php8-mod-session +php8-mod-ctype +php8-mod-fileinfo +php8-mod-zip +php8-mod-iconv +php8-mod-mbstring +coreutils-stat +zoneinfo-asia +bash +curl +tar
