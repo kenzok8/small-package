@@ -5,7 +5,6 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_NAME:=luci-app-dnsproxy
-PKG_VERSION:=20231105
 
 LUCI_TITLE:=LuCI Support for dnsproxy
 LUCI_PKGARCH:=all

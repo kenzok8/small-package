@@ -219,6 +219,34 @@ load_acl() {
 					local ipset_whitelist6="passwall2_${sid}_whitelist6"
 					ipset -! create $ipset_whitelist nethash maxelem 1048576
 					ipset -! create $ipset_whitelist6 nethash family inet6 maxelem 1048576
+
+					#分流规则的IP列表(使用分流节点时导入)
+					local _USE_SHUNT_NODE=0
+					_NODE_PROTOCOL=$(config_n_get $node protocol)
+					[ "$_NODE_PROTOCOL" = "_shunt" ] && _USE_SHUNT_NODE=1
+					[ "$_USE_SHUNT_NODE" = "1" ] && {
+						local _SHUNT_DEFAULT_NODE=$(config_n_get $NODE default_node _direct)
+						local _GEOIP_CODE=""
+						local _shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+						for _shunt_id in $_shunt_ids; do
+							local _SHUNT_RULE_NODE=$(config_n_get $NODE ${_shunt_id} nil)
+							[ "${_SHUNT_RULE_NODE}" == "_default" ] && _SHUNT_RULE_NODE=${_SHUNT_DEFAULT_NODE}
+							[ "${_SHUNT_RULE_NODE}" == "_direct" ] && {
+								config_n_get $_shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $ipset_whitelist &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+								config_n_get $_shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $ipset_whitelist6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+								[ "$(config_t_get global_rules enable_geoview)" = "1" ] && {
+									local _geoip_code=$(config_n_get $_shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
+									[ -n "$_geoip_code" ] && _GEOIP_CODE="${_GEOIP_CODE:+$_GEOIP_CODE,}$_geoip_code"
+								}
+							}
+						done
+					}
+
+					if [ -n "$_GEOIP_CODE" ] && type geoview &> /dev/null; then
+						get_geoip $_GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $ipset_whitelist &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+						get_geoip $_GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $ipset_whitelist6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+						echolog "  - [$?]解析并加入分流节点 GeoIP 到 IPSET 完成"
+					fi
 				fi
 			}
 			
@@ -300,8 +328,10 @@ load_acl() {
 					msg2="${msg}使用 TCP 节点[$node_remark]"
 					if [ -n "${is_tproxy}" ]; then
 						msg2="${msg2}(TPROXY:${redir_port})"
+						ipt_j="-j PSW2_RULE"
 					else
 						msg2="${msg2}(REDIRECT:${redir_port})"
+						ipt_j="$(REDIRECT $redir_port)"
 					fi
 
 					[ "${write_ipset_direct}" = "1" ] && $ipt_tmp -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} $(dst $ipset_whitelist) ! -d $FAKE_IP -j RETURN
@@ -315,15 +345,11 @@ load_acl() {
 						$ip6t_n -A PSW2 $(comment "$remarks") -p ipv6-icmp ${_ipt_source} -d $FAKE_IP_6 $(REDIRECT) 2>/dev/null
 						$ip6t_n -A PSW2 $(comment "$remarks") -p ipv6-icmp ${_ipt_source} $(REDIRECT) 2>/dev/null
 					}
-					
-					if [ "${ipt_tmp}" = "${ipt_n}" ]; then
-						$ipt_n -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP $(REDIRECT $redir_port)
-						$ipt_n -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") $(REDIRECT $redir_port)
-					else
-						$ipt_m -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP -j PSW2_RULE
-						$ipt_m -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") -j PSW2_RULE
-						$ipt_m -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} $(REDIRECT $redir_port TPROXY)
-					fi
+
+					$ipt_tmp -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP ${ipt_j}
+					$ipt_tmp -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} $(factor $tcp_redir_ports "-m multiport --dport") ${ipt_j}
+					[ -n "${is_tproxy}" ] && $ipt_m -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} $(REDIRECT $redir_port TPROXY)
+
 					[ "$PROXY_IPV6" == "1" ] && {
 						[ "${write_ipset_direct}" = "1" ] && $ip6t_m -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} $(dst $ipset_whitelist6) ! -d $FAKE_IP_6 -j RETURN
 						$ip6t_m -A PSW2 $(comment "$remarks") -p tcp ${_ipt_source} -d $FAKE_IP_6 -j PSW2_RULE 2>/dev/null
@@ -353,7 +379,7 @@ load_acl() {
 				}
 				$ipt_m -A PSW2 $(comment "$remarks") ${_ipt_source} -p udp -j RETURN
 				$ip6t_m -A PSW2 $(comment "$remarks") ${_ipt_source} -p udp -j RETURN 2>/dev/null
-				unset ipt_tmp _ipt_source msg msg2
+				unset ipt_tmp ipt_j _ipt_source msg msg2
 			done
 			unset enabled sid remarks sources tcp_no_redir_ports udp_no_redir_ports tcp_redir_ports udp_redir_ports node interface
 			unset node_remark _acl_list
@@ -392,8 +418,10 @@ load_acl() {
 			msg2="${msg}使用 TCP 节点[$(config_n_get $NODE remarks)]"
 			if [ -n "${is_tproxy}" ]; then
 				msg2="${msg2}(TPROXY:${REDIR_PORT})"
+				ipt_j="-j PSW2_RULE"
 			else
 				msg2="${msg2}(REDIRECT:${REDIR_PORT})"
+				ipt_j="$(REDIRECT $REDIR_PORT)"
 			fi
 
 			[ "${WRITE_IPSET_DIRECT}" = "1" ] && $ipt_tmp -A PSW2 $(comment "默认") -p tcp $(dst $ipset_global_whitelist) ! -d $FAKE_IP -j RETURN
@@ -407,15 +435,10 @@ load_acl() {
 				$ip6t_n -A PSW2 $(comment "默认") -p ipv6-icmp -d $FAKE_IP_6 $(REDIRECT)
 				$ip6t_n -A PSW2 $(comment "默认") -p ipv6-icmp $(REDIRECT)
 			}
-			
-			if [ -z "${is_tproxy}" ]; then
-				$ipt_n -A PSW2 $(comment "默认") -p tcp -d $FAKE_IP $(REDIRECT $REDIR_PORT)
-				$ipt_n -A PSW2 $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(REDIRECT $REDIR_PORT)
-			else
-				$ipt_m -A PSW2 $(comment "默认") -p tcp -d $FAKE_IP -j PSW2_RULE
-				$ipt_m -A PSW2 $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j PSW2_RULE
-				$ipt_m -A PSW2 $(comment "默认") -p tcp $(REDIRECT $REDIR_PORT TPROXY)
-			fi
+
+			$ipt_tmp -A PSW2 $(comment "默认") -p tcp -d $FAKE_IP ${ipt_j}
+			$ipt_tmp -A PSW2 $(comment "默认") -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") ${ipt_j}
+			[ -n "${is_tproxy}" ] && $ipt_m -A PSW2 $(comment "默认") -p tcp $(REDIRECT $REDIR_PORT TPROXY)
 
 			[ "$PROXY_IPV6" == "1" ] && {
 				[ "${WRITE_IPSET_DIRECT}" = "1" ] && $ip6t_m -A PSW2 $(comment "默认") -p tcp $(dst $ipset_global_whitelist6) ! -d $FAKE_IP_6 -j RETURN
@@ -456,11 +479,10 @@ filter_haproxy() {
 }
 
 filter_vpsip() {
-	uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	uci show $CONFIG | grep ".address=" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSLIST6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	uci show $CONFIG | grep ".download_address=" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	uci show $CONFIG | grep ".download_address=" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSLIST6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	echolog "加入所有节点到ipset[$IPSET_VPSLIST]直连完成"
+	uci show $CONFIG | grep -E "(.address=|.download_address=)" | cut -d "'" -f 2 | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | grep -v "^127\.0\.0\.1$" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSLIST &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	echolog "  - [$?]加入所有IPv4节点到ipset[$IPSET_VPSLIST]直连完成"
+	uci show $CONFIG | grep -E "(.address=|.download_address=)" | cut -d "'" -f 2 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "/^$/d" | sed -e "s/^/add $IPSET_VPSLIST6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	echolog "  - [$?]加入所有IPv6节点到ipset[$IPSET_VPSLIST6]直连完成"
 }
 
 filter_node() {
@@ -626,6 +648,34 @@ add_firewall_rule() {
 	local ipset_global_whitelist6="passwall2_global_whitelist6"
 	ipset -! create $ipset_global_whitelist nethash maxelem 1048576 timeout 259200
 	ipset -! create $ipset_global_whitelist6 nethash family inet6 maxelem 1048576 timeout 259200
+
+	#分流规则的IP列表(使用分流节点时导入)
+	local USE_SHUNT_NODE=0
+	NODE_PROTOCOL=$(config_n_get $NODE protocol)
+	[ "$NODE_PROTOCOL" = "_shunt" ] && USE_SHUNT_NODE=1
+	[ "$USE_SHUNT_NODE" = "1" ] && {
+		local SHUNT_DEFAULT_NODE=$(config_n_get $NODE default_node _direct)
+		local GEOIP_CODE=""
+		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+		for shunt_id in $shunt_ids; do
+			local SHUNT_RULE_NODE=$(config_n_get $NODE ${shunt_id} nil)
+			[ "${SHUNT_RULE_NODE}" == "_default" ] && SHUNT_RULE_NODE=${SHUNT_DEFAULT_NODE}
+			[ "${SHUNT_RULE_NODE}" == "_direct" ] && {
+				config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $ipset_global_whitelist &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+				config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $ipset_global_whitelist6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+				[ "$(config_t_get global_rules enable_geoview)" = "1" ] && {
+					local geoip_code=$(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
+					[ -n "$geoip_code" ] && GEOIP_CODE="${GEOIP_CODE:+$GEOIP_CODE,}$geoip_code"
+				}
+			}
+		done
+	}
+
+	if [ -n "$GEOIP_CODE" ] && type geoview &> /dev/null; then
+		get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $ipset_global_whitelist &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+		get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $ipset_global_whitelist6 &/g" -e "s/$/ timeout 0/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+		echolog "  - [$?]解析并加入分流节点 GeoIP 到 IPSET 完成"
+	fi
 
 	#  过滤所有节点IP
 	filter_vpsip > /dev/null 2>&1 &
@@ -811,17 +861,20 @@ add_firewall_rule() {
 				$ip6t_n -A PSW2_OUTPUT -p ipv6-icmp $(REDIRECT)
 			}
 
-			if [ -z "${is_tproxy}" ]; then
-				$ipt_n -A PSW2_OUTPUT -p tcp -d $FAKE_IP $(REDIRECT $REDIR_PORT)
-				$ipt_n -A PSW2_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") $(REDIRECT $REDIR_PORT)
-				$ipt_n -A OUTPUT -p tcp -j PSW2_OUTPUT
+			if [ -n "${is_tproxy}" ]; then
+				ipt_j="-j PSW2_RULE"
 			else
-				$ipt_m -A PSW2_OUTPUT -p tcp -d $FAKE_IP -j PSW2_RULE
-				$ipt_m -A PSW2_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") -j PSW2_RULE
+				ipt_j="$(REDIRECT $REDIR_PORT)"
+			fi
+
+			$ipt_tmp -A PSW2_OUTPUT -p tcp -d $FAKE_IP ${ipt_j}
+			$ipt_tmp -A PSW2_OUTPUT -p tcp $(factor $TCP_REDIR_PORTS "-m multiport --dport") ${ipt_j}
+			[ -z "${is_tproxy}" ] && $ipt_n -A OUTPUT -p tcp -j PSW2_OUTPUT
+			[ -n "${is_tproxy}" ] && {
 				$ipt_m -A PSW2 $(comment "本机") -p tcp -i lo $(REDIRECT $REDIR_PORT TPROXY)
 				$ipt_m -A PSW2 $(comment "本机") -p tcp -i lo -j RETURN
 				insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW2) -p tcp -j PSW2_OUTPUT"
-			fi
+			}
 
 			if [ "$PROXY_IPV6" == "1" ]; then
 				$ip6t_m -A PSW2_OUTPUT -p tcp -d $FAKE_IP_6 -j PSW2_RULE
