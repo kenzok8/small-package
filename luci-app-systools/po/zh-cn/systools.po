@@ -7,6 +7,9 @@ msgstr "执行"
 msgid "Some convenient tools which can fix some errors."
 msgstr "一些便利的工具集，方便修复一些问题。"
 
+msgid "Disable LAN port keepalive"
+msgstr "禁用 LAN 口保活"
+
 msgid "Reset rom pkgs"
 msgstr "修复系统软件"
 

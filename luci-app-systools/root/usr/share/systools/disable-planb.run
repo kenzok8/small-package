@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ "x$(uci -q get quickstart.main.disable_dhns)" = x1 ]; then
+    echo "Already disabled!"
+else
+    echo "Disabling..."
+    uci set quickstart.main.disable_dhns=1
+    uci commit quickstart
+    /etc/init.d/quickstart restart
+    echo "Done"
+fi
