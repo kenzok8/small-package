@@ -820,6 +820,15 @@ msgstr "V2ray/Xray 资源文件目录"
 msgid "This variable specifies a directory where geoip.dat and geosite.dat files are."
 msgstr "此变量指定geoip.dat和geosite.dat文件所在的目录。"
 
+msgid "Enable Geo Data Parsing"
+msgstr "开启 Geo 数据解析"
+
+msgid "Analyzes and preloads GeoIP/Geosite data to enhance the shunt performance of Sing-box/Xray."
+msgstr "分析和预加载 GeoIP/Geosite 数据，以增强 Sing-box/Xray 的分流效果。"
+
+msgid "Note: Increases resource usage."
+msgstr "注：会增加一些系统资源的开销。"
+
 msgid "Shunt Rule"
 msgstr "分流规则"
 
@@ -888,6 +897,9 @@ msgstr "订阅备注（机场）"
 
 msgid "Subscribe URL"
 msgstr "订阅网址"
+
+msgid "Subscribe URL Access Method"
+msgstr "订阅网址访问方式"
 
 msgid "Please input the subscription url first, save and submit before manual subscription."
 msgstr "请输入订阅网址保存应用后再手动订阅。"
@@ -1474,8 +1486,8 @@ msgstr "Sing-Box 会在启动时自动下载资源文件，您可以使用此功
 msgid "Override the connection destination address"
 msgstr "覆盖连接目标地址"
 
-msgid "Override the connection destination address with the sniffed domain."
-msgstr "用探测出的域名覆盖连接目标地址。"
+msgid "Override the connection destination address with the sniffed domain.<br />When enabled, traffic will match only by domain, ignoring IP rules.<br />If using shunt nodes, configure the domain shunt rules correctly."
+msgstr "用探测出的域名覆盖连接目标地址。<br />启用后仅使用域名进行流量匹配，将忽略IP规则。<br />如使用分流节点，请正确设置域名分流规则。"
 
 msgid "Handshake Server"
 msgstr "握手服务器"
