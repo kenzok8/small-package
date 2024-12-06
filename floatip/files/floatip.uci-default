@@ -1,0 +1,14 @@
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@floatip[-1]
+	add ucitrack floatip
+	set ucitrack.@floatip[-1].init=floatip
+	commit ucitrack
+EOF
+
+[[ "`uci -q get network.lan.proto`" = "static" && -n "`uci -q get network.lan.gateway`" ]] || exit 0
+
+uci -q batch <<-EOF >/dev/null
+	set floatip.main.role=main
+	commit floatip
+EOF

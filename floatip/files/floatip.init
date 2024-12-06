@@ -1,0 +1,54 @@
+#!/bin/sh /etc/rc.common
+
+START=98
+USE_PROCD=1
+
+start_service() {
+	config_load floatip
+	config_get_bool enabled "main" enabled 0
+	ifdown floatip
+	[[ "$enabled" = 1 ]] || return 0
+	[[ "`uci -q get network.lan.proto`" = "static" ]] || return 0
+	local set_ip set_prefix
+	config_get set_ip "main" set_ip
+	[[ -n "$set_ip" ]] || return 0
+	eval "$(ipcalc.sh "$set_ip" )";set_prefix=$PREFIX;set_ip=$IP
+	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.2
+	[[ "$set_prefix" = 0 ]] && set_prefix=24
+	local lan_ip="`uci -q get network.lan.ipaddr`"
+	[[ -n "$lan_ip" ]] || return 0
+	local lan_net lan_prefix set_net ip
+	local in_range=0
+	if echo "$lan_ip" | grep -Fq '/'; then
+		for ip in $lan_ip; do
+			eval "$(ipcalc.sh ${ip/\// } )";lan_net=$NETWORK;lan_prefix=$PREFIX
+			[[ "$set_prefix" -ge "$lan_prefix" ]] || continue
+			eval "$(ipcalc.sh $set_ip $lan_prefix } )";set_net=$NETWORK
+			[[ "$set_net" = "$lan_net" ]] && {
+				in_range=1
+				break
+			}
+		done
+	else
+		local netmask="`uci -q get network.lan.netmask`"
+		eval "$(ipcalc.sh "$lan_ip" "$netmask" )";lan_net=$NETWORK;lan_prefix=$PREFIX
+		if [[ "$set_prefix" -ge "$lan_prefix" ]]; then
+			eval "$(ipcalc.sh $set_ip $lan_prefix } )";set_net=$NETWORK
+			[[ "$set_net" = "$lan_net" ]] && in_range=1
+		fi
+	fi
+	[[ $in_range = 1 ]] || return 0
+	procd_open_instance
+	procd_set_param command /usr/libexec/floatip.sh
+	procd_set_param stderr 1
+	procd_set_param file /etc/config/floatip
+	procd_close_instance
+}
+
+stop_service() {
+	ifdown floatip
+}
+
+service_triggers() {
+	procd_add_reload_trigger "network" "floatip"
+}
