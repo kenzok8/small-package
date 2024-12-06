@@ -1097,7 +1097,7 @@ function initializeAceEditor() {
     </div>
 </form>
 
-<h2 class="text-success text-center mt-4 mb-4">订阅管理 ➤ p核专用</h2>
+<h2 class=" text-center mt-4 mb-4">订阅管理 ➤ p核专用</h2>
 <div class="help-text mb-3 text-start">
     <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站/转发防火墙规则都设置为“接受”并启用它们。
 </div>
