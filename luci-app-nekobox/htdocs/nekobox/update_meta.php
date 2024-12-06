@@ -2,7 +2,7 @@
 
 ini_set('memory_limit', '128M');
 
-$fixed_version = "0.3.8";
+$fixed_version = "v0.3.8";
 
 function getUiVersion() {
     $versionFile = '/etc/neko/ui/meta/version.txt';
@@ -10,7 +10,7 @@ function getUiVersion() {
     if (file_exists($versionFile)) {
         return trim(file_get_contents($versionFile));
     } else {
-        return $fixed_version;
+        return null;
     }
 }
 
@@ -27,10 +27,9 @@ if (!is_dir($install_path)) {
     mkdir($install_path, 0755, true);
 }
 
-$current_version = $fixed_version;
+$current_version = getUiVersion();
 
 if (isset($_GET['check_version'])) {
-    echo "当前版本: $current_version\n";
     echo "最新版本: $fixed_version\n";
     exit;
 }
@@ -45,7 +44,7 @@ if (!file_exists($temp_file)) {
 }
 
 echo "开始解压文件...\n";
-exec("tar -xf '$temp_file' -C '$install_path'", $output, $return_var);
+exec("tar -xf '$temp_file' -C '$install_path' --overwrite", $output, $return_var);
 if ($return_var !== 0) {
     echo "解压失败，错误信息: " . implode("\n", $output);
     die("解压失败！");

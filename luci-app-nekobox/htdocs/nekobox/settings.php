@@ -681,7 +681,7 @@ document.getElementById('checkUiButton').addEventListener('click', function () {
     const updateFiles = [
         { name: 'MetaCube', url: 'update_metacubexd.php' },
         { name: 'Zashboard', url: 'update_zashboard.php' },
-        { name: 'yacd-meat', url: 'update_meta.php' }
+        { name: 'Yacd-Meat', url: 'update_meta.php' }
     ];
     checkVersion('NewUi', updateFiles);
 });

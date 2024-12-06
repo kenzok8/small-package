@@ -1173,7 +1173,7 @@ function initializeAceEditor() {
        }
 </script>
 
-<h2 class="text-success text-center mt-4 mb-4">订阅管理</h2>
+<h2 class="text-center mt-4 mb-4">订阅管理</h2>
 
 <?php if (isset($message) && $message): ?>
     <div class="alert alert-info">
@@ -1222,7 +1222,7 @@ function initializeAceEditor() {
     </div>
 
 <section id="base64-conversion" class="section-gap">
-    <h2 class="text-success">Base64 节点信息转换</h2>
+    <h2>Base64 节点信息转换</h2>
     <form method="post">
         <div class="form-group">
             <textarea name="base64_content" id="base64_content" rows="4" class="form-control" placeholder="粘贴 Base64 内容..." required></textarea>
@@ -1231,8 +1231,8 @@ function initializeAceEditor() {
     </form>
 </section>
 
-<section id="node-conversion" class="section-gap">
-    <h1 class="text-success">节点转换工具</h1>
+<section id="node-conversion" class="section-gap"  style="margin-top: 20px;">
+    <h2>节点转换工具</h2>
     <form method="post">
         <div class="form-group">
             <textarea name="input" rows="10" class="form-control" placeholder="粘贴 ss//vless//vmess//trojan//hysteria2 节点信息..." required></textarea>
