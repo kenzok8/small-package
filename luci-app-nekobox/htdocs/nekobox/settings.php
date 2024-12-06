@@ -21,6 +21,7 @@ if(isset($_POST['fw'])){
 }
 $fwstatus=shell_exec("uci get neko.cfg.new_interface");
 ?>
+
 <?php
 function getSingboxVersion() {
     $singBoxPath = '/usr/bin/sing-box'; 
@@ -36,25 +37,48 @@ function getSingboxVersion() {
         }
     }
     
-    return '未知版本';
+    return '未安装';
 }
 
 $singBoxVersion = getSingboxVersion();
+
 ?>
 
 <?php
-
 function getUiVersion() {
     $versionFile = '/etc/neko/ui/zashboard/version.txt';
     
     if (file_exists($versionFile)) {
         return trim(file_get_contents($versionFile));
     } else {
-        return "版本文件不存在";
+        return "未安装";
+    }
+}
+
+function getMetaCubexdVersion() {
+    $versionFile = '/etc/neko/ui/metacubexd/version.txt';
+    
+    if (file_exists($versionFile)) {
+        return trim(file_get_contents($versionFile));
+    } else {
+        return "未安装";
+    }
+}
+
+function getMetaVersion() {
+    $versionFile = '/etc/neko/ui/meta/version.txt';
+    
+    if (file_exists($versionFile)) {
+        return trim(file_get_contents($versionFile));
+    } else {
+        return "未安装";
     }
 }
 
 $uiVersion = getUiVersion();
+$metaCubexdVersion = getMetaCubexdVersion();
+$metaVersion = getMetaVersion();
+
 ?>
 
 <!doctype html>
@@ -587,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-function checkVersion(outputId, updateFiles) {
+function checkVersion(outputId, updateFiles, currentVersions) {
     const modalContent = document.getElementById('modalContent');
     const versionModal = new bootstrap.Modal(document.getElementById('versionModal'));
     modalContent.innerHTML = '<p>正在检查新版本...</p>';
@@ -608,6 +632,7 @@ function checkVersion(outputId, updateFiles) {
                     results.push(`
                         <tr class="table-success">
                             <td>${file.name}</td>
+                            <td>${currentVersions[file.name] || '未知'}</td>
                             <td>${newVersion}</td>
                         </tr>
                     `);
@@ -627,6 +652,7 @@ function checkVersion(outputId, updateFiles) {
                     results.push(`
                         <tr class="table-warning">
                             <td>${file.name}</td>
+                            <td>${currentVersions[file.name] || '未知'}</td>
                             <td>无法解析版本信息</td>
                         </tr>
                     `);
@@ -636,6 +662,7 @@ function checkVersion(outputId, updateFiles) {
                 results.push(`
                     <tr class="table-danger">
                         <td>${file.name}</td>
+                        <td>${currentVersions[file.name] || '未知'}</td>
                         <td>网络错误</td>
                     </tr>
                 `);
@@ -648,6 +675,7 @@ function checkVersion(outputId, updateFiles) {
                 <thead>
                     <tr>
                         <th class="text-center">组件名称</th>
+                        <th class="text-center">当前版本</th>
                         <th class="text-center">最新版本</th>
                     </tr>
                 </thead>
@@ -656,41 +684,56 @@ function checkVersion(outputId, updateFiles) {
                 </tbody>
             </table>
         `;
-        versionModal.show(); 
+        versionModal.show();
     });
 }
 
 document.getElementById('checkSingboxButton').addEventListener('click', function () {
+    const currentVersions = {
+        'Singbox 正式版': '<?php echo htmlspecialchars($singBoxVersion); ?>',
+        'Singbox 预览版': '<?php echo htmlspecialchars($singBoxVersion); ?>',
+    };
     const updateFiles = [
         { name: 'Singbox 正式版', url: 'update_singbox_stable.php' },
         { name: 'Singbox 预览版', url: 'update_singbox_preview.php' },
         { name: 'Puernya 预览版', url: 'puernya.php' }
     ];
-    checkVersion('NewSingbox', updateFiles);
+    checkVersion('NewSingbox', updateFiles, currentVersions);
 });
 
 document.getElementById('checkMihomoButton').addEventListener('click', function () {
+    const currentVersions = {
+        'Mihomo 正式版': document.getElementById('corever').textContent,
+        'Mihomo 预览版': document.getElementById('corever').textContent,
+    };
     const updateFiles = [
         { name: 'Mihomo 正式版', url: 'update_mihomo_stable.php' },
         { name: 'Mihomo 预览版', url: 'update_mihomo_preview.php' }
     ];
-    checkVersion('NewMihomo', updateFiles);
+    checkVersion('NewMihomo', updateFiles, currentVersions);
 });
 
 document.getElementById('checkUiButton').addEventListener('click', function () {
+    const currentVersions = {
+        'MetaCube': '<?php echo htmlspecialchars($metaCubexdVersion); ?>',
+        'Zashboard': '<?php echo htmlspecialchars($uiVersion); ?>',
+        'Yacd-Meat': '<?php echo htmlspecialchars($metaVersion); ?>',
+    };
     const updateFiles = [
         { name: 'MetaCube', url: 'update_metacubexd.php' },
         { name: 'Zashboard', url: 'update_zashboard.php' },
         { name: 'Yacd-Meat', url: 'update_meta.php' }
     ];
-    checkVersion('NewUi', updateFiles);
+    checkVersion('NewUi', updateFiles, currentVersions);
 });
 
 document.getElementById('checkCliverButton').addEventListener('click', function () {
+    const currentVersions = {
+        '客户端': document.getElementById('cliver').textContent,
+    };
     const updateFiles = [{ name: '客户端', url: 'update_script.php' }];
-    checkVersion('NewCliver', updateFiles);
+    checkVersion('NewCliver', updateFiles, currentVersions);
 });
-
 </script>
 
 <script>
