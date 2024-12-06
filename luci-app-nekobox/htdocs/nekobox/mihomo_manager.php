@@ -194,6 +194,11 @@ if (isset($_POST['update'])) {
         $command = "wget -q --show-progress -O {$finalPath} {$url}";
         exec($command . ' 2>&1', $output, $return_var);
 
+        if ($return_var !== 0) {
+            $command = "curl -s -o {$finalPath} {$url}";
+            exec($command . ' 2>&1', $output, $return_var);
+        }
+
         if ($return_var === 0) {
             $_SESSION['update_messages'] = array();
             $_SESSION['update_messages'][] = '<div class="alert alert-warning" style="margin-bottom: 8px;">
