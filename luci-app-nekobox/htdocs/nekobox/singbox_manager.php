@@ -205,6 +205,15 @@ if (isset($_POST['saveSubscription'])) {
 
             exec($command . ' 2>&1', $output, $return_var);
 
+            if ($return_var !== 0) {
+                $command = sprintf(
+                    "curl -s -o %s %s",
+                    escapeshellarg($finalPath),
+                    escapeshellarg($url)
+                );
+                exec($command . ' 2>&1', $output, $return_var);
+            }
+
             if ($return_var === 0) {
                 outputMessage("订阅链接 {$url} 更新成功！文件已保存到: {$finalPath}");
             } else {
@@ -276,6 +285,15 @@ if (isset($_POST['update_index'])) {
         );
 
         exec($command . ' 2>&1', $output, $return_var);
+
+        if ($return_var !== 0) {
+            $command = sprintf(
+                "curl -s -o %s %s",
+                escapeshellarg($finalPath),
+                escapeshellarg($subscriptionUrl)
+            );
+            exec($command . ' 2>&1', $output, $return_var);
+        }
 
         if ($return_var !== 0) {
             $message = "订阅 $index 无法下载文件。wget 错误信息: " . implode("\n", $output);
