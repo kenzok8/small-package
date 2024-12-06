@@ -52,9 +52,9 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
                 <tbody>
                     <tr class="text-center d-flex flex-wrap justify-content-center">
                         <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $yacd_link; ?>">YACD-META 面板</a></td>
-                        <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</a></td>
                         <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $dash_link; ?>">DASHBOARD 面板</a></td>
                         <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $meta_link; ?>">METACUBEXD 面板</a></td>
+                        <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</a></td>
                     </tr>
                 </tbody>
             </table>
