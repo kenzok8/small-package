@@ -20,10 +20,24 @@ function writeVersionToFile($version) {
 $repo_owner = "Thaolga";
 $repo_name = "neko";
 $api_url = "https://api.github.com/repos/$repo_owner/$repo_name/releases/latest";
-$response = shell_exec("curl -s -H 'User-Agent: PHP' --connect-timeout 10 " . escapeshellarg($api_url));
+
+function getApiResponseWithCurl($api_url) {
+    $response = shell_exec("curl -s -H 'User-Agent: PHP' --connect-timeout 10 " . escapeshellarg($api_url));
+    return $response;
+}
+
+function getApiResponseWithWget($api_url) {
+    $response = shell_exec("wget -qO- '$api_url'");
+    return $response;
+}
+
+$response = getApiResponseWithCurl($api_url);
 
 if ($response === false || empty($response)) {
-    die("GitHub API 请求失败。请检查网络连接或稍后重试。");
+    $response = getApiResponseWithWget($api_url);
+    if ($response === false || empty($response)) {
+        die("GitHub API 请求失败。请检查网络连接或稍后重试。");
+    }
 }
 
 $data = json_decode($response, true);
@@ -62,9 +76,25 @@ if (isset($_GET['check_version'])) {
     exit;
 }
 
-exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
-if ($return_var !== 0) {
-    die("下载失败！");
+echo "开始下载文件...\n";
+$download_success = false;
+
+if (shell_exec("which wget")) {
+    exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
+    if ($return_var === 0) {
+        $download_success = true;
+    }
+}
+
+if (!$download_success && shell_exec("which curl")) {
+    exec("curl -s -L -o '$temp_file' '$download_url'", $output, $return_var);
+    if ($return_var === 0) {
+        $download_success = true;
+    }
+}
+
+if (!$download_success) {
+    die("下载失败！请检查网络连接或稍后重试。");
 }
 
 if (!file_exists($temp_file)) {

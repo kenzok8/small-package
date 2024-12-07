@@ -315,13 +315,20 @@ EOL;
 
             $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}&file={$templateUrlEncoded}";
             $tempFilePath = '/tmp/' . $customFileName;
+            $logMessages = [];
             $command = "wget -O " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
             exec($command, $output, $returnVar);
-            $logMessages = [];
+
+            if ($returnVar !== 0) {
+                $command = "curl -s -L -o " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
+                exec($command, $output, $returnVar);
 
             if ($returnVar !== 0) {
                 $logMessages[] = "无法下载内容: " . htmlspecialchars($completeSubscribeUrl);
-            } else {
+                }
+            }
+
+            if ($returnVar === 0) {
                 $downloadedContent = file_get_contents($tempFilePath);
                 if ($downloadedContent === false) {
                     $logMessages[] = "无法读取下载的文件内容";

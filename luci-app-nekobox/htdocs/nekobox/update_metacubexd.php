@@ -21,11 +21,23 @@ $repo_owner = "MetaCubeX";
 $repo_name = "metacubexd";
 $api_url = "https://api.github.com/repos/$repo_owner/$repo_name/releases/latest";
 
-$curl_command = "curl -s -H 'User-Agent: PHP' --connect-timeout 10 " . escapeshellarg($api_url);
-$response = shell_exec($curl_command);
+function getApiResponseWithCurl($api_url) {
+    $response = shell_exec("curl -s -H 'User-Agent: PHP' --connect-timeout 10 " . escapeshellarg($api_url));
+    return $response;
+}
+
+function getApiResponseWithWget($api_url) {
+    $response = shell_exec("wget -qO- '$api_url'");
+    return $response;
+}
+
+$response = getApiResponseWithCurl($api_url);
 
 if ($response === false || empty($response)) {
-    die("GitHub API 请求失败。请检查网络连接或稍后重试。");
+    $response = getApiResponseWithWget($api_url);
+    if ($response === false || empty($response)) {
+        die("GitHub API 请求失败。请检查网络连接或稍后重试。");
+    }
 }
 
 $data = json_decode($response, true);
@@ -55,11 +67,32 @@ if (empty($download_url)) {
     die("未找到下载链接，请检查发布版本的资源。");
 }
 
-exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
-if ($return_var !== 0) {
-    die("下载失败！");
+echo "开始下载文件...\n";
+$download_success = false;
+
+if (shell_exec("which wget")) {
+    exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
+    if ($return_var === 0) {
+        $download_success = true;
+    }
 }
 
+if (!$download_success && shell_exec("which curl")) {
+    exec("curl -s -L -o '$temp_file' '$download_url'", $output, $return_var);
+    if ($return_var === 0) {
+        $download_success = true;
+    }
+}
+
+if (!$download_success) {
+    die("下载失败！请检查网络连接或稍后重试。");
+}
+
+if (!file_exists($temp_file)) {
+    die("下载的文件不存在！");
+}
+
+echo "开始解压文件...\n";
 exec("tar -xzf '$temp_file' -C '$install_path'", $output, $return_var);
 if ($return_var !== 0) {
     echo "解压失败，错误信息: " . implode("\n", $output);

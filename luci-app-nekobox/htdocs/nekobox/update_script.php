@@ -9,8 +9,16 @@ $local_api_response = "/tmp/api_response.json";
 $curl_command = "curl -H 'User-Agent: PHP' -s " . escapeshellarg($api_url) . " -o " . escapeshellarg($local_api_response);
 exec($curl_command . " 2>&1", $output, $return_var);
 
-if (!file_exists($local_api_response)) {
-    die("无法访问GitHub API。请检查URL或网络连接。输出: " . implode("\n", $output));
+if ($return_var !== 0 || !file_exists($local_api_response)) {
+    echo "<script>appendLog('curl 获取版本信息失败，尝试使用 wget...');</script>";
+    $wget_command = "wget -q --no-check-certificate " . escapeshellarg($api_url) . " -O " . escapeshellarg($local_api_response);
+    exec($wget_command . " 2>&1", $output, $return_var);
+
+    if ($return_var !== 0 || !file_exists($local_api_response)) {
+        die("无法访问GitHub API。请检查URL或网络连接。输出: " . implode("\n", $output));
+    }
+
+    echo "<script>appendLog('wget 获取版本信息完成。');</script>";
 }
 
 $response = file_get_contents($local_api_response);
@@ -49,15 +57,24 @@ echo "<script>
 echo "<script>appendLog('开始下载更新...');</script>";
 
 $local_file = "/tmp/{$package_name}_{$new_version}-{$installed_lang}_all.ipk";
+
 $curl_command = "curl -sL " . escapeshellarg($download_url) . " -o " . escapeshellarg($local_file);
 exec($curl_command . " 2>&1", $output, $return_var);
 
 if ($return_var !== 0 || !file_exists($local_file)) {
-    echo "<pre>下载失败。命令输出: " . implode("\n", $output) . "</pre>";
-    die("下载失败。未找到下载的文件。");
-}
+    echo "<script>appendLog('curl 下载失败，尝试使用 wget...');</script>";
+    $wget_command = "wget -q --show-progress --no-check-certificate " . escapeshellarg($download_url) . " -O " . escapeshellarg($local_file);
+    exec($wget_command . " 2>&1", $output, $return_var);
 
-echo "<script>appendLog('下载完成。');</script>";
+    if ($return_var !== 0 || !file_exists($local_file)) {
+        echo "<pre>下载失败。命令输出: " . implode("\n", $output) . "</pre>";
+        die("下载失败。未找到下载的文件。");
+    }
+
+    echo "<script>appendLog('wget 下载完成。');</script>";
+} else {
+    echo "<script>appendLog('curl 下载完成。');</script>";
+}
 
 echo "<script>appendLog('更新软件包列表...');</script>";
 $output = shell_exec("opkg update");

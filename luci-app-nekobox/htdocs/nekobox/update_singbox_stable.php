@@ -15,12 +15,22 @@ function writeVersionToFile($version) {
 $repo_owner = "SagerNet";
 $repo_name = "sing-box";
 $api_url = "https://api.github.com/repos/$repo_owner/$repo_name/releases";
+
 $curl_command = "curl -s -H 'User-Agent: PHP' --connect-timeout 10 " . escapeshellarg($api_url);
 $response = shell_exec($curl_command);
 
 if ($response === false || empty($response)) {
-    logMessage("GitHub API request failed, possibly due to network issues or GitHub API restrictions.");
-    die("GitHub API request failed. Please check your network connection or try again later.");
+    logMessage("GitHub API request using curl failed, trying wget...");
+    $wget_command = "wget -q --no-check-certificate --timeout=10 " . escapeshellarg($api_url) . " -O /tmp/api_response.json";
+    exec($wget_command, $output, $return_var);
+
+    if ($return_var !== 0 || !file_exists('/tmp/api_response.json')) {
+        logMessage("GitHub API request using wget failed.");
+        die("GitHub API request failed. Please check your network connection or try again later.");
+    }
+
+    $response = file_get_contents('/tmp/api_response.json');
+    unlink('/tmp/api_response.json');
 }
 
 logMessage("GitHub API response: " . substr($response, 0, 200) . "...");
@@ -32,7 +42,6 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 }
 
 $latest_version = '';
-
 if (is_array($data)) {
     foreach ($data as $release) {
         if (isset($release['tag_name']) && isset($release['prerelease']) && !$release['prerelease']) {
@@ -84,9 +93,18 @@ if (trim($current_version) === trim($latest_version)) {
     die("Current version is already the latest.");
 }
 
-exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
-if ($return_var !== 0) {
-    die("Download failed!");
+$curl_command = "curl -sL " . escapeshellarg($download_url) . " -o " . escapeshellarg($temp_file);
+exec($curl_command, $output, $return_var);
+
+if ($return_var !== 0 || !file_exists($temp_file)) {
+    logMessage("Download failed using curl, trying wget...");
+    $wget_command = "wget -q --show-progress --no-check-certificate " . escapeshellarg($download_url) . " -O " . escapeshellarg($temp_file);
+    exec($wget_command, $output, $return_var);
+
+    if ($return_var !== 0 || !file_exists($temp_file)) {
+        logMessage("Download failed using wget.");
+        die("Download failed!");
+    }
 }
 
 if (!is_dir($temp_dir)) {
@@ -95,6 +113,7 @@ if (!is_dir($temp_dir)) {
 
 exec("tar -xzf '$temp_file' -C '$temp_dir'", $output, $return_var);
 if ($return_var !== 0) {
+    logMessage("Extraction failed.");
     die("Extraction failed!");
 }
 
@@ -103,8 +122,10 @@ if ($extracted_file && file_exists($extracted_file)) {
     exec("cp -f '$extracted_file' '$install_path'");
     exec("chmod 0755 '$install_path'");
     writeVersionToFile($latest_version); 
+    logMessage("Update completed! Current version: $latest_version");
     echo "更新完成! 当前版本: $latest_version";
 } else {
+    logMessage("Extracted file 'sing-box' does not exist.");
     die("Extracted file 'sing-box' does not exist.");
 }
 
