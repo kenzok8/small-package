@@ -24,7 +24,17 @@ $curl_command = "curl -s -H 'User-Agent: PHP' " . escapeshellarg($api_url);
 $response = shell_exec($curl_command);
 
 if ($response === false || empty($response)) {
-    die("GitHub API 请求失败。请检查网络连接或稍后重试。");
+    logMessage("curl 请求失败，尝试使用 wget...");
+    $wget_command = "wget -q --no-check-certificate --timeout=10 " . escapeshellarg($api_url) . " -O /tmp/api_response.json";
+    exec($wget_command, $output, $return_var);
+
+    if ($return_var !== 0 || !file_exists('/tmp/api_response.json')) {
+        logMessage("GitHub API 请求失败，curl 和 wget 都失败了。");
+        die("GitHub API 请求失败。请检查网络连接或稍后重试。");
+    }
+
+    $response = file_get_contents('/tmp/api_response.json');
+    unlink('/tmp/api_response.json');
 }
 
 $data = json_decode($response, true);
@@ -45,21 +55,17 @@ if ($latest_prerelease === null) {
     die("没有找到最新的预览版！");
 }
 
-$latest_version = $latest_prerelease['tag_name'] ?? '';
+$latest_version = $latest_prerelease['tag_name'] ?? ''; 
+
 $assets = $latest_prerelease['assets'] ?? [];
 
 if (empty($latest_version)) {
-    echo "未找到最新版本信息。";
-    exit;
+    die("未找到最新版本信息。");
 }
-
-echo "最新版本: " . htmlspecialchars($latest_version) . "\n";
-
-$current_arch = trim(shell_exec("uname -m"));
-$base_version = ltrim($latest_version, 'v');  
 
 $download_url = '';
 $asset_found = false;
+$current_arch = trim(shell_exec("uname -m"));
 
 foreach ($assets as $asset) {
     if ($current_arch === 'x86_64' && strpos($asset['name'], 'linux-amd64-alpha') !== false && strpos($asset['name'], '.gz') !== false) {
@@ -83,38 +89,57 @@ if (!$asset_found) {
     die("未找到适合架构的预览版下载链接！");
 }
 
-echo "下载链接: $download_url\n";
+$filename = basename($download_url); 
+preg_match('/alpha-[\w-]+/', $filename, $matches); 
+$version_from_filename = $matches[0] ?? '未知版本'; 
+
+$latest_version = $version_from_filename; 
+
+echo "最新版本: " . htmlspecialchars($latest_version) . "\n";
 
 $temp_file = '/tmp/mihomo_prerelease.gz';
-exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
+$curl_command = "curl -sL " . escapeshellarg($download_url) . " -o " . escapeshellarg($temp_file);
+exec($curl_command, $output, $return_var);
+
+if ($return_var !== 0 || !file_exists($temp_file)) {
+    logMessage("下载失败，尝试使用 wget...");
+    $wget_command = "wget -q --show-progress --no-check-certificate " . escapeshellarg($download_url) . " -O " . escapeshellarg($temp_file);
+    exec($wget_command, $output, $return_var);
+
+    if ($return_var !== 0 || !file_exists($temp_file)) {
+        logMessage("下载失败，curl 和 wget 都失败了。");
+        die("下载失败！");
+    }
+}
+
+exec("gzip -d -c '$temp_file' > '/tmp/mihomo-linux-$current_arch'", $output, $return_var);
 
 if ($return_var === 0) {
-    exec("gzip -d -c '$temp_file' > '/tmp/mihomo-linux-$current_arch'", $output, $return_var);
+    $install_path = '/usr/bin/mihomo';
+    exec("mv '/tmp/mihomo-linux-$current_arch' '$install_path'", $output, $return_var);
 
     if ($return_var === 0) {
-        $install_path = '/usr/bin/mihomo';
-        exec("mv '/tmp/mihomo-linux-$current_arch' '$install_path'", $output, $return_var);
+        exec("chmod 0755 '$install_path'", $output, $return_var);
 
         if ($return_var === 0) {
-            exec("chmod 0755 '$install_path'", $output, $return_var);
-
-            if ($return_var === 0) {
-                echo "更新完成！当前版本: $latest_version";
-                writeVersionToFile($latest_version);
-            } else {
-                echo "设置权限失败！";
-            }
+            logMessage("更新完成！当前版本: $latest_version");
+            echo "更新完成！当前版本: $latest_version";
+            writeVersionToFile($latest_version);
         } else {
-            echo "移动文件失败！";
+            logMessage("设置权限失败！");
+            echo "设置权限失败！";
         }
     } else {
-        echo "解压失败！";
+        logMessage("移动文件失败！");
+        echo "移动文件失败！";
     }
 } else {
-    echo "下载失败！";
+    logMessage("解压失败！");
+    echo "解压失败！";
 }
 
 if (file_exists($temp_file)) {
     unlink($temp_file);
 }
+
 ?>

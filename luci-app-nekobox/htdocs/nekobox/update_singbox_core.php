@@ -4,7 +4,7 @@ $repo_owner = "Thaolga";
 $repo_name = "luci-app-nekoclash";
 $package_name = "sing-box";
 
-$new_version = isset($_GET['version']) ? $_GET['version'] : "v1.11.0-alpha.6";  
+$new_version = isset($_GET['version']) ? $_GET['version'] : "v1.11.0-alpha.10";  
 
 $new_version_cleaned = str_replace('v', '', $new_version);
 
