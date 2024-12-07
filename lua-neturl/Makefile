@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=neturl
-PKG_VERSION:=1.1-1
+PKG_VERSION:=1.2-1
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/golgote/neturl/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=25f3a94ba9f435ef1395555de2bf17d6f934d789fa515ed965405919e42be27b
+PKG_HASH:=fc4ea1b114125ae821bef385936cd12429485204576e77b6283692bd0cc9b1ab
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=MIT
