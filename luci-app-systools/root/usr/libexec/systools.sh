@@ -16,39 +16,17 @@ usage() {
   echo "      speedtest                       Start a speedtest"
 }
 
-case ${ACTION} in
-  "turn_off_ipv6"|\
-  "full_ipv6"|\
-  "half_ipv6")
-    bash "/usr/share/systools/${ACTION}.run"
-  ;;
-  "reset_rom_pkgs")
-    bash "/usr/share/systools/${ACTION}.run"
-  ;;
-  "qb_reset_password")
-    bash "/usr/share/systools/${ACTION}.run"
-  ;;
-  "disk_power_mode")
-    bash "/usr/share/systools/${ACTION}.run"
-  ;;
+case "${ACTION}" in
   "speedtest")
     /usr/share/systools/speedtest.run ${1}
   ;;
-  "openssl-aes256gcm")
-    bash "/usr/share/systools/${ACTION}.run"
-  ;;
-  "openssl-chacha20-poly1305")
-    bash "/usr/share/systools/${ACTION}.run"
-  ;;
-  "istore-reinstall")
-    bash "/usr/share/systools/${ACTION}.run"
-  ;;
-  "disable-wandrop")
-    bash "/usr/share/systools/${ACTION}.run"
-  ;;
   *)
-    usage
-    exit 1
+    if [ -n "${ACTION}" -a -s /usr/share/systools/${ACTION}.run ]; then
+      bash "/usr/share/systools/${ACTION}.run"
+    else
+      usage
+      exit 1
+    fi
   ;;
 esac
 

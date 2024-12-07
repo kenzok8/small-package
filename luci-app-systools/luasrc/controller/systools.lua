@@ -186,9 +186,9 @@ end
 function install_execute_systools(req)
   local cmd
   if req["tool"] == "speedtest" then
-    cmd = string.format("/usr/libexec/istorec/systools.sh %s %s", req["tool"], req["speedTestServer"])
+    cmd = string.format("/usr/libexec/systools.sh %s %s", req["tool"], req["speedTestServer"])
   else
-    cmd = string.format("/usr/libexec/istorec/systools.sh %s", req["tool"])
+    cmd = string.format("/usr/libexec/systools.sh %s", req["tool"])
   end
   cmd = "/etc/init.d/tasks task_add systools " .. luci.util.shellquote(cmd)
   os.execute(cmd .. " >/dev/null 2>&1")
