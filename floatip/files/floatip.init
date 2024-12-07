@@ -13,7 +13,7 @@ start_service() {
 	config_get set_ip "main" set_ip
 	[[ -n "$set_ip" ]] || return 0
 	eval "$(ipcalc.sh "$set_ip" )";set_prefix=$PREFIX;set_ip=$IP
-	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.2
+	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
 	[[ "$set_prefix" = 0 ]] && set_prefix=24
 	local lan_ip="`uci -q get network.lan.ipaddr`"
 	[[ -n "$lan_ip" ]] || return 0

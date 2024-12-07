@@ -45,7 +45,7 @@ fallback_loop() {
 	eval "$(ipcalc.sh "$set_ip" )";set_net=$NETWORK;set_prefix=$PREFIX;set_ip=$IP
 	[[ "$set_net" = 0.0.0.0 ]] && set_net=192.168.100.0
 	[[ "$set_prefix" = 0 ]] && set_prefix=24
-	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.2
+	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
 	local ipaddr="$set_ip/$set_prefix"
 	local valid_check_ip cip
 	for cip in $check_ip; do
@@ -104,7 +104,7 @@ main_loop() {
 	eval "$(ipcalc.sh "$set_ip" )";set_net=$NETWORK;set_prefix=$PREFIX;set_ip=$IP
 	[[ "$set_net" = 0.0.0.0 ]] && set_net=192.168.100.0
 	[[ "$set_prefix" = 0 ]] && set_prefix=24
-	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.2
+	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
 	local ipaddr="$set_ip/$set_prefix"
 	while :; do
 		# sleep 2-6s
