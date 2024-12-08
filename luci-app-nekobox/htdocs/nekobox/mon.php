@@ -231,7 +231,7 @@
                           fetch("/nekobox/lib/log.php?data=url_dash")
                               .then(response => response.json())
                               .then(data => {
-                                  document.getElementById("neko").src = data.meta;
+                                  document.getElementById("neko").src = data.zash;
                               })
                               .catch(error => {
                                   console.error("Error fetching URL data:", error);

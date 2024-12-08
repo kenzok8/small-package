@@ -2,10 +2,10 @@
 	"luci-app-nekobox": {
 		"description": "Grant UCI access for luci-app-nekobox",
 		"read": {
-			"uci": [ "neko" ]
+			"uci": [ "nekobox" ]
 		},
 		"write": {
-			"uci": [ "neko" ]
+			"uci": [ "nekobox" ]
 		}
 	}
 }

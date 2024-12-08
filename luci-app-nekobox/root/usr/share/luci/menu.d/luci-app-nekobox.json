@@ -1,0 +1,29 @@
+{
+	"admin/services/nekobox": {
+		"title": "NekoBox",
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [ "luci-app-nekobox" ]
+		}
+	},
+
+	"admin/services/nekobox/nekobox": {
+		"title": "首页",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "nekobox/nekobox"
+		}
+	},
+
+	"admin/services/nekobox/zashboard": {
+		"title": "面板",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "nekobox/zashboard"
+		}
+	}
+}
