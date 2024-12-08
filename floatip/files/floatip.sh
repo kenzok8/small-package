@@ -1,5 +1,7 @@
 #!/bin/sh
 
+DEFAULT_PREFIX=24
+
 # random number 0-255
 random() {
 	local num=$(dd if=/dev/urandom bs=1 count=1 2>/dev/null | hexdump -ve '1/1 "%u"')
@@ -44,7 +46,7 @@ fallback_loop() {
 	config_get check_ip "main" check_ip
 	eval "$(ipcalc.sh "$set_ip" )";set_net=$NETWORK;set_prefix=$PREFIX;set_ip=$IP
 	[[ "$set_net" = 0.0.0.0 ]] && set_net=192.168.100.0
-	[[ "$set_prefix" = 0 ]] && set_prefix=24
+	[[ "$set_prefix" = 0 ]] && set_prefix=$DEFAULT_PREFIX
 	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
 	local ipaddr="$set_ip/$set_prefix"
 	local valid_check_ip cip
@@ -103,7 +105,7 @@ main_loop() {
 	config_get set_ip "main" set_ip
 	eval "$(ipcalc.sh "$set_ip" )";set_net=$NETWORK;set_prefix=$PREFIX;set_ip=$IP
 	[[ "$set_net" = 0.0.0.0 ]] && set_net=192.168.100.0
-	[[ "$set_prefix" = 0 ]] && set_prefix=24
+	[[ "$set_prefix" = 0 ]] && set_prefix=$DEFAULT_PREFIX
 	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
 	local ipaddr="$set_ip/$set_prefix"
 	while :; do
@@ -130,5 +132,7 @@ main() {
 		fallback_loop
 	fi
 }
+
+[[ -n "$1" && "$1" -ge 0 && "$1" -lt 32 ]] && DEFAULT_PREFIX=$1
 
 main
