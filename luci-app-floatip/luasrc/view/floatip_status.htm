@@ -1,0 +1,26 @@
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(5, '<%=url("admin/services/floatip_status")%>', null,
+		function(x, st)
+		{
+			var tb = document.getElementById('floatip_status');
+			if (st && tb)
+			{
+				if (st.running)
+				{
+					tb.innerHTML = '<br/><em style=\"color:green\"><%:The floatip service is running.%></em>';
+				}
+				else
+				{
+					tb.innerHTML = '<br/><em style=\"color:red\"><%:The floatip service is not running.%></em>';
+				}
+			}
+		}
+	);
+//]]></script>
+
+<fieldset class="cbi-section">
+	<legend><%:FloatIP Status%></legend>
+	<p id="floatip_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>

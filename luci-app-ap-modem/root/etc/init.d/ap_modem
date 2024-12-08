@@ -111,14 +111,15 @@ EOF
     [[ "`uci -q get network.lan.proto`" = "static" ]] && {
         local lan_ip="`uci -q get network.lan.ipaddr`"
         if [[ -n "$lan_ip" ]]; then
-            if echo "$lan_ip" | grep -Fq '/'; then
-                for bip in $lan_ip; do
-                    eval "$(ipcalc.sh ${bip/\// } )";black_ip="$black_ip $IP/$PREFIX"
-                done
-            else
-                local netmask="`uci -q get network.lan.netmask`"
-                eval "$(ipcalc.sh "$lan_ip" "$netmask" )";black_ip="$black_ip $IP/$PREFIX"
-            fi
+            local netmask="`uci -q get network.lan.netmask`"
+            [[ -n "$netmask" ]] || netmask=255.255.255.255
+            for bip in $lan_ip; do
+                if [[ "$bip" = "*/*" ]]; then
+                    eval "$(ipcalc.sh $bip )";black_ip="$black_ip $IP/$PREFIX"
+                else
+                    eval "$(ipcalc.sh $bip $netmask )";black_ip="$black_ip $IP/$PREFIX"
+                fi
+            done
         fi
     }
 
@@ -133,32 +134,31 @@ EOF
     local vif
     for vif in lan wan; do
         config_get ipaddr $vif ipaddr
-        [[ -z "$ipaddr" ]] || {
-            for vip in $ipaddr; do
-                ok=1
-                eval "$(ipcalc.sh ${vip/\// } )";vip="$IP";vip_p="$PREFIX"
-                [[ "$vip_p" = 32 ]] && {
+        [[ -n "$ipaddr" ]] || continue
+        for vip in $ipaddr; do
+            ok=1
+            [[ "$vip" = "*/*" ]] || vip="$vip/24"
+            eval "$(ipcalc.sh $vip )";vip="$IP";vip_p="$PREFIX"
+            [[ "$vip_p" = 32 ]] && {
+                logger -t 'ap_modem' -p DEBUG "vap_$vif skip $vip/$vip_p"
+                break
+            }
+            for bip in $black_ip; do
+                eval "$(ipcalc.sh "$bip" )";bip="$IP";
+                [[ "$PREFIX" -le "$vip_p" ]] || PREFIX=$vip_p
+                eval "$(ipcalc.sh "$vip/$PREFIX" )";vnet="$NETWORK";
+                eval "$(ipcalc.sh "$bip/$PREFIX" )";bnet="$NETWORK";
+                if [[ "$vnet" = "$bnet" ]]; then
                     logger -t 'ap_modem' -p DEBUG "vap_$vif skip $vip/$vip_p"
+                    ok=0
                     break
-                }
-                [[ "$vip_p" = 0 ]] && vip_p=24
-                for bip in $black_ip; do
-                    eval "$(ipcalc.sh "$bip" )";bip="$IP";
-                    [[ "$PREFIX" -le "$vip_p" ]] || PREFIX=$vip_p
-                    eval "$(ipcalc.sh "$vip" "$PREFIX" )";vnet="$NETWORK";
-                    eval "$(ipcalc.sh "$bip" "$PREFIX" )";bnet="$NETWORK";
-                    if [[ "$vnet" = "$bnet" ]]; then
-                        logger -t 'ap_modem' -p DEBUG "vap_$vif skip $vip/$vip_p"
-                        ok=0
-                        break
-                    fi
-                done
-                [[ "$ok" = 1 ]] && {
-                    uci add_list "network.vap_$vif.ipaddr=$vip/$vip_p"
-                    black_ip="$black_ip $vip/$vip_p"
-                }
+                fi
             done
-        }
+            [[ "$ok" = 1 ]] && {
+                uci add_list "network.vap_$vif.ipaddr=$vip/$vip_p"
+                black_ip="$black_ip $vip/$vip_p"
+            }
+        done
     done
 
     uci commit network

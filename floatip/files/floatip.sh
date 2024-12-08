@@ -11,8 +11,10 @@ random() {
 	echo ${num:-1}
 }
 
+# check host alive, timeout in 2 seconds
 host_alive() {
-	ping -4 -c 2 -A -t 1 -W 1 -q "$1" >/dev/null
+	# ping -4 -c 2 -A -t 1 -W 1 -q "$1" >/dev/null
+	arping -f -q -b -c 2 -w 2 -i 1 -I br-lan "$1"
 }
 
 set_up() {
@@ -44,14 +46,15 @@ fallback_loop() {
 	local set_ip check_ip set_net set_prefix
 	config_get set_ip "main" set_ip
 	config_get check_ip "main" check_ip
+	[[ "$set_ip" = "*/*" ]] || set_ip="$set_ip/32"
 	eval "$(ipcalc.sh "$set_ip" )";set_net=$NETWORK;set_prefix=$PREFIX;set_ip=$IP
 	[[ "$set_net" = 0.0.0.0 ]] && set_net=192.168.100.0
-	[[ "$set_prefix" = 0 ]] && set_prefix=$DEFAULT_PREFIX
+	[[ "$set_prefix" = 32 ]] && set_prefix=$DEFAULT_PREFIX
 	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
 	local ipaddr="$set_ip/$set_prefix"
 	local valid_check_ip cip
 	for cip in $check_ip; do
-		eval "$(ipcalc.sh $cip $set_prefix )"
+		eval "$(ipcalc.sh $cip/$set_prefix )"
 		[[ "$NETWORK" = "$set_net" ]] && valid_check_ip="$valid_check_ip $cip"
 	done
 	valid_check_ip="$valid_check_ip "
@@ -103,9 +106,10 @@ fallback_loop() {
 main_loop() {
 	local set_ip set_net set_prefix
 	config_get set_ip "main" set_ip
+	[[ "$set_ip" = "*/*" ]] || set_ip="$set_ip/32"
 	eval "$(ipcalc.sh "$set_ip" )";set_net=$NETWORK;set_prefix=$PREFIX;set_ip=$IP
 	[[ "$set_net" = 0.0.0.0 ]] && set_net=192.168.100.0
-	[[ "$set_prefix" = 0 ]] && set_prefix=$DEFAULT_PREFIX
+	[[ "$set_prefix" = 32 ]] && set_prefix=$DEFAULT_PREFIX
 	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
 	local ipaddr="$set_ip/$set_prefix"
 	while :; do
@@ -133,6 +137,8 @@ main() {
 	fi
 }
 
-[[ -n "$1" && "$1" -ge 0 && "$1" -lt 32 ]] && DEFAULT_PREFIX=$1
+if [[ -n "$1" ]]; then
+	[[ "$1" -ge 0 && "$1" -lt 32 ]] && DEFAULT_PREFIX=$1
+fi
 
 main
