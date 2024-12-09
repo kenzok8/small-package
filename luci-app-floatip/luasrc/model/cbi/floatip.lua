@@ -43,7 +43,7 @@ function o.validate(self, value)
   end
 
 o = s:option(Value, "check_ip", translate("Check IP"))
-o.rmempty = false
+o.rmempty = true
 o.datatype = "ipaddr"
 o:depends("role", "fallback")
 
