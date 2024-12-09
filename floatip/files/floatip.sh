@@ -13,8 +13,8 @@ random() {
 
 # check host alive, timeout in 2 seconds
 host_alive() {
-	# ping -4 -c 2 -A -t 1 -W 1 -q "$1" >/dev/null
-	arping -f -q -b -c 2 -w 2 -i 1 -I br-lan "$1"
+	ping -4 -c 2 -A -t 1 -W 1 -q "$1" >/dev/null
+	# arping -f -q -b -c 2 -w 2 -i 1 -I br-lan "$1"
 }
 
 set_up() {

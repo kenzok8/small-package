@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=floatip
-PKG_VERSION:=1.0.4
+PKG_VERSION:=1.0.5
 PKG_RELEASE:=1
 PKG_MAINTAINER:=jjm2473 <jjm2473@gmail.com>
 
@@ -18,7 +18,6 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=IP Addresses and Names
 	TITLE:=Float IP
-	DEPENDS:=+iputils-arping
 	PKGARCH:=all
 endef
 
