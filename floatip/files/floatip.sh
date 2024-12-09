@@ -64,19 +64,25 @@ set_lan_ping() {
 	/etc/init.d/firewall reload 2>&1
 }
 
+safe_sleep() {
+	local sec="$1"
+	[[ "$sec" -lt 1 ]] && sec=1
+	sleep $sec
+}
+
 . /lib/functions.sh
 
 fallback_loop() {
 	local set_ip check_ip set_net set_prefix
 	config_get set_ip "main" set_ip
-	config_get check_ip "main" check_ip
-	[[ "$set_ip" = "*/*" ]] || set_ip="$set_ip/32"
+	[[ -n "$set_ip" ]] || return 1
+	[[ "$set_ip" = "*/*" ]] || set_ip="$set_ip/$DEFAULT_PREFIX"
 	eval "$(ipcalc.sh "$set_ip" )";set_net=$NETWORK;set_prefix=$PREFIX;set_ip=$IP
-	[[ "$set_net" = 0.0.0.0 ]] && set_net=192.168.100.0
-	[[ "$set_prefix" = 32 ]] && set_prefix=$DEFAULT_PREFIX
-	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
 	local ipaddr="$set_ip/$set_prefix"
+	echo "ipaddr=$ipaddr"
+
 	local valid_check_ip cip
+	config_get check_ip "main" check_ip
 	for cip in $check_ip; do
 		eval "$(ipcalc.sh $cip/$set_prefix )"
 		[[ "$NETWORK" = "$set_net" ]] && valid_check_ip="$valid_check_ip $cip"
@@ -108,16 +114,16 @@ fallback_loop() {
 			else
 				dead_counter=0
 			fi
-			[[ $consume_time -lt 10 ]] && sleep $((10 - $consume_time))
+			safe_sleep $((10 - $consume_time))
 			continue
 		fi
 		if [[ $floatip_up = 1 ]]; then
-			[[ $consume_time -lt 5 ]] && sleep $((5 - $consume_time))
+			safe_sleep $((5 - $consume_time))
 			continue
 		fi
 		dead_counter=$(($dead_counter + 1))
 		if [[ $dead_counter -lt 3 ]]; then
-			[[ $consume_time -lt 10 ]] && sleep $((10 - $consume_time))
+			safe_sleep $((10 - $consume_time))
 			continue
 		fi
 		echo "no host alive, set up floatip $ipaddr" >&2
@@ -128,14 +134,13 @@ fallback_loop() {
 }
 
 main_loop() {
-	local set_ip set_net set_prefix
+	local set_ip set_prefix
 	config_get set_ip "main" set_ip
-	[[ "$set_ip" = "*/*" ]] || set_ip="$set_ip/32"
-	eval "$(ipcalc.sh "$set_ip" )";set_net=$NETWORK;set_prefix=$PREFIX;set_ip=$IP
-	[[ "$set_net" = 0.0.0.0 ]] && set_net=192.168.100.0
-	[[ "$set_prefix" = 32 ]] && set_prefix=$DEFAULT_PREFIX
-	[[ "$set_ip" = 0.0.0.0 ]] && set_ip=192.168.100.3
+	[[ -n "$set_ip" ]] || return 1
+	[[ "$set_ip" = "*/*" ]] || set_ip="$set_ip/$DEFAULT_PREFIX"
+	eval "$(ipcalc.sh "$set_ip" )";set_prefix=$PREFIX;set_ip=$IP
 	local ipaddr="$set_ip/$set_prefix"
+	echo "ipaddr=$ipaddr"
 
 	local check_urls check_url_timeout
 	config_get check_urls "main" check_url
@@ -177,14 +182,16 @@ main_loop() {
 					set_up "$ipaddr"
 					floatip_up=1
 				fi
+			else
+				set_lan_ping 0
 			fi
-			[[ $consume_time -lt 5 ]] && sleep $((5 - $consume_time))
+			safe_sleep $((5 - $consume_time))
 			continue
 		else
 			if [[ $url_pass = 0 ]]; then
 				dead_counter=$(($dead_counter + 1))
 				if [[ $dead_counter -lt 3 ]]; then
-					[[ $consume_time -lt 5 ]] && sleep $((5 - $consume_time))
+					safe_sleep $((5 - $consume_time))
 					continue
 				fi
 				echo "set down floatip, and disable ping" >&2
