@@ -19,14 +19,29 @@ msgstr "服务状态"
 msgid "Collecting data..."
 msgstr "收集数据..."
 
-msgid "Preemptor"
+msgid "Node Role"
+msgstr "节点角色"
+
+msgid "Preempt Node"
 msgstr "旁路由"
 
-msgid "Fallback"
+msgid "Fallback Node"
 msgstr "主路由"
 
 msgid "Floating Gateway IP"
-msgstr "浮动网关IP"
+msgstr "浮动网关 IP"
 
-msgid "Check IP"
+msgid "Preempt Node IP"
 msgstr "旁路由 IP"
+
+msgid "Check URL"
+msgstr "检查 URL"
+
+msgid "If status code of the URL is not 2xx, then release the floating IP and disable LAN port pinging"
+msgstr "如果检查URL状态码不是2xx，则释放浮动IP，并禁止LAN口ping"
+
+msgid "Check URL Timeout (s)"
+msgstr "检查 URL 超时（秒）"
+
+msgid "Default is 5 seconds if not set"
+msgstr "默认5秒"

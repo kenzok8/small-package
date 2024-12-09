@@ -3,11 +3,21 @@
 START=98
 USE_PROCD=1
 
+enable_lan_ping() {
+	uci -q set firewall.floatip_lan_offline.enabled=0 || return 0
+	uci changes | grep -Fq 'firewall.floatip_lan_offline.enabled' || return 0
+	uci commit firewall
+	/etc/init.d/firewall reload
+}
+
 start_service() {
 	config_load floatip
 	config_get_bool enabled "main" enabled 0
 	ifdown floatip
-	[[ "$enabled" = 1 ]] || return 0
+	[[ "$enabled" = 1 ]] || {
+		enable_lan_ping
+		return 0
+	}
 	[[ "`uci -q get network.lan.proto`" = "static" ]] || return 0
 	local set_ip set_prefix
 	config_get set_ip "main" set_ip
@@ -48,6 +58,7 @@ start_service() {
 }
 
 stop_service() {
+	enable_lan_ping
 	ifdown floatip
 }
 

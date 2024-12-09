@@ -135,9 +135,12 @@ natflow_qos_zone_setup_tc()
 		echo $ifn
 	done) | sed 's/+$/\.\*/' | sort | uniq | while read IFN; do
 		#echo $type $idx=$IFN >$DEVCTL
+		l2dev=$(ubus call network.interface dump | grep "\"l3_device\": \"${IFN}\"" -A2 | grep "\"device\"" | cut -d\" -f4)
+		l2dev=$(for ifn in $IFN $l2dev; do echo $ifn; done | sort | uniq)
+		for ifn in $l2dev; do
 		case $type in
 		lan_zone)
-			ifconfig -a | grep "^$IFN " | awk '{print $1}' | while read lan; do
+			ifconfig -a | grep "^$ifn " | awk '{print $1}' | while read lan; do
 				if [ "${lan}" = "${lan//:}" ]; then
 					qos_id=0
 					cat /dev/qos_ctl | grep "^add user=" | while read line; do
@@ -163,7 +166,7 @@ natflow_qos_zone_setup_tc()
 			done
 		;;
 		wan_zone)
-			ifconfig -a | grep "^$IFN " | awk '{print $1}' | while read wan; do
+			ifconfig -a | grep "^$ifn " | awk '{print $1}' | while read wan; do
 				if [ "${wan}" = "${wan//:}" ]; then
 					qos_id=0
 					cat /dev/qos_ctl | grep "^add user=" | while read line; do
@@ -176,8 +179,7 @@ natflow_qos_zone_setup_tc()
 						QOSID=$((qos_id*2))
 						lower1=$(for vif in /sys/class/net/$wan/lower_*; do test -e $vif && echo ${vif##/sys/class/net/*/lower_}; done)
 						lower2=$(for dev in $lower1; do for vif in /sys/class/net/$dev/lower_*; do test -e $vif && echo ${vif##/sys/class/net/*/lower_}; done; done)
-						l2dev=$(ubus call network.interface dump | grep "\"l3_device\": \"${wan}\"" -A2 | grep "\"device\"" | cut -d\" -f4)
-						devs=$(for dev in $wan $lower1 $lower2 $l2dev; do echo $dev; done | sort | uniq);
+						devs=$(for dev in $wan $lower1 $lower2; do echo $dev; done | sort | uniq);
 						echo setup tc for @wan=[`echo $devs`] txbytes=$txbytes quantum=$quantum rule_id=${qos_id} QOSID=${QOSID}
 						for DEVICE in $devs; do
 							tc qdisc add dev $DEVICE root handle 1: htb &>/dev/null
@@ -189,6 +191,7 @@ natflow_qos_zone_setup_tc()
 			done
 		;;
 		esac
+		done
 	done
 }
 
