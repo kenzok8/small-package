@@ -2,13 +2,13 @@
 ob_start();
 include './cfg.php';
 date_default_timezone_set('Asia/Shanghai');
-$proxyDir  = '/www/nekobox/proxy/';
+$uploadDir = '/etc/neko/proxy_provider/';
 $configDir = '/etc/neko/config/';
 
 ini_set('memory_limit', '256M');
 
-if (!is_dir($proxyDir)) {
-    mkdir($proxyDir, 0755, true);
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0755, true);
 }
 
 if (!is_dir($configDir)) {
@@ -18,7 +18,7 @@ if (!is_dir($configDir)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['fileInput'])) {
         $file = $_FILES['fileInput'];
-        $uploadFilePath = $proxyDir . basename($file['name']);
+        $uploadFilePath = $uploadDir . basename($file['name']);
 
         if ($file['error'] === UPLOAD_ERR_OK) {
             if (move_uploaded_file($file['tmp_name'], $uploadFilePath)) {
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['deleteFile'])) {
-        $fileToDelete = $proxyDir . basename($_POST['deleteFile']);
+        $fileToDelete = $uploadDir . basename($_POST['deleteFile']);
         if (file_exists($fileToDelete) && unlink($fileToDelete)) {
             echo '文件删除成功：' . htmlspecialchars(basename($_POST['deleteFile']));
         } else {
@@ -64,21 +64,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-if (isset($_POST['oldFileName'], $_POST['newFileName'], $_POST['fileType'])) {
-    $oldFileName = basename($_POST['oldFileName']);
-    $newFileName = basename($_POST['newFileName']);
-    $fileType = $_POST['fileType'];
+    if (isset($_POST['oldFileName'], $_POST['newFileName'], $_POST['fileType'])) {
+        $oldFileName = basename($_POST['oldFileName']);
+        $newFileName = basename($_POST['newFileName']);
+        $fileType = $_POST['fileType'];
 
-    if ($fileType === 'proxy') {
-        $oldFilePath = $proxyDir . $oldFileName;
-        $newFilePath = $proxyDir . $newFileName;
-    } elseif ($fileType === 'config') {
-        $oldFilePath = $configDir . $oldFileName;
-        $newFilePath = $configDir . $newFileName;
-    } else {
-        echo '无效的文件类型';
-        exit;
-    }
+        if ($fileType === 'proxy') {
+            $oldFilePath = $uploadDir. $oldFileName;
+            $newFilePath = $uploadDir. $newFileName;
+        } elseif ($fileType === 'config') {
+            $oldFilePath = $configDir . $oldFileName;
+            $newFilePath = $configDir . $newFileName;
+        } else {
+            echo '无效的文件类型';
+            exit;
+        }
 
     if (file_exists($oldFilePath) && !file_exists($newFilePath)) {
         if (rename($oldFilePath, $newFilePath)) {
@@ -88,16 +88,16 @@ if (isset($_POST['oldFileName'], $_POST['newFileName'], $_POST['fileType'])) {
         }
     } else {
         echo '文件重命名失败，文件不存在或新文件名已存在。';
+        }
     }
-}
 
     if (isset($_POST['saveContent'], $_POST['fileName'], $_POST['fileType'])) {
-        $fileToSave = ($_POST['fileType'] === 'proxy') ? $proxyDir . basename($_POST['fileName']) : $configDir . basename($_POST['fileName']);
-        $contentToSave = $_POST['saveContent'];
-        file_put_contents($fileToSave, $contentToSave);
-        echo '<p>文件内容已更新：' . htmlspecialchars(basename($fileToSave)) . '</p>';
+            $fileToSave = ($_POST['fileType'] === 'proxy') ? $uploadDir . basename($_POST['fileName']) : $configDir . basename($_POST['fileName']);
+            $contentToSave = $_POST['saveContent'];
+            file_put_contents($fileToSave, $contentToSave);
+            echo '<p>文件内容已更新：' . htmlspecialchars(basename($fileToSave)) . '</p>';
+        }
     }
-}
 
 function formatFileModificationTime($filePath) {
     if (file_exists($filePath)) {
@@ -108,7 +108,7 @@ function formatFileModificationTime($filePath) {
     }
 }
 
-$proxyFiles = scandir($proxyDir);
+$proxyFiles = scandir($uploadDir);
 $configFiles = scandir($configDir);
 
 if ($proxyFiles !== false) {
@@ -134,7 +134,7 @@ function formatSize($size) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editFile'], $_GET['fileType'])) {
-    $filePath = ($_GET['fileType'] === 'proxy') ? $proxyDir . basename($_GET['editFile']) : $configDir . basename($_GET['editFile']);
+    $filePath = ($_GET['fileType'] === 'proxy') ? $uploadDir. basename($_GET['editFile']) : $configDir . basename($_GET['editFile']);
     if (file_exists($filePath)) {
         header('Content-Type: text/plain');
         echo file_get_contents($filePath);
@@ -144,89 +144,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editFile'], $_GET['file
         exit;
     }
 }
-?>
-
-<?php
-$configPath = '/www/nekobox/proxy/';
-$configFile = $configPath . 'subscriptions.json';
-$subscriptionList = [];
-
-while (ob_get_level() > 0) {
-    ob_end_flush();
-}
-
-function outputMessage($message) {
-    if (!isset($_SESSION['notification_messages'])) {
-        $_SESSION['notification_messages'] = [];
-    }
-    $_SESSION['notification_messages'][] = $message;
-}
-
-if (!isset($_SESSION['help_message'])) {
-    $_SESSION['help_message'] = '<div class="text-warning" style="margin-bottom: 8px;">
-        <strong>⚠️ 注意：</strong> 当前配置文件必须配合 <strong>Puernya</strong> 内核使用，不支持其他内核！
-    </div>';
-}
-
-if (!file_exists($configPath)) {
-    mkdir($configPath, 0755, true);
-}
-
-if (!file_exists($configFile)) {
-    file_put_contents($configFile, json_encode([]));
-}
-
-$subscriptionList = json_decode(file_get_contents($configFile), true);
-if (!$subscriptionList || !is_array($subscriptionList)) {
-    $subscriptionList = [];
-    for ($i = 1; $i <= 3; $i++) {
-        $subscriptionList[$i - 1] = [
-            'url' => '',
-            'file_name' => "subscription_{$i}.yaml",
-        ];
-    }
-}
-
-if (isset($_POST['saveSubscription'])) {
-    $index = intval($_POST['index']);
-    if ($index >= 0 && $index < 3) {
-        $url = $_POST['subscription_url'] ?? '';
-        $customFileName = $_POST['custom_file_name'] ?? "subscription_{$index}.yaml";
-        $subscriptionList[$index]['url'] = $url;
-        $subscriptionList[$index]['file_name'] = $customFileName;
-
-        if (!empty($url)) {
-            $finalPath = $configPath . $customFileName;
-            $command = sprintf(
-                "wget -q --show-progress -O %s %s",
-                escapeshellarg($finalPath),
-                escapeshellarg($url)
-            );
-
-            exec($command . ' 2>&1', $output, $return_var);
-
-            if ($return_var !== 0) {
-                $command = sprintf(
-                    "curl -s -o %s %s",
-                    escapeshellarg($finalPath),
-                    escapeshellarg($url)
-                );
-                exec($command . ' 2>&1', $output, $return_var);
-            }
-
-            if ($return_var === 0) {
-                outputMessage("订阅链接 {$url} 更新成功！文件已保存到: {$finalPath}");
-            } else {
-                outputMessage("配置更新失败！错误信息: " . implode("\n", $output));
-            }
-        } else {
-            outputMessage("第" . ($index + 1) . "个订阅链接为空！");
-        }
-
-        file_put_contents($configFile, json_encode($subscriptionList));
-    }
-}
-$updateCompleted = isset($_POST['saveSubscription']);
 ?>
 
 <?php
@@ -394,16 +311,6 @@ function isUtf8($string) {
     <script src="./assets/bootstrap/popper.min.js"></script>
     <script src="./assets/bootstrap/bootstrap.min.js"></script>
 </head>
-<?php if ($updateCompleted): ?>
-    <script>
-        if (!sessionStorage.getItem('refreshed')) {
-            sessionStorage.setItem('refreshed', 'true');
-            window.location.reload();
-        } else {
-            sessionStorage.removeItem('refreshed'); 
-        }
-    </script>
-<?php endif; ?>
 
 <body>
 <div class="position-fixed w-100 d-flex justify-content-center" style="top: 20px; z-index: 1050">
@@ -602,7 +509,7 @@ td {
        <div class="card mb-4">
     <div class="card-body"> 
 <div class="container">
-    <h5>代理文件管理 ➤ p核专用</h5>
+    <h5>代理文件管理</h5>
     <div class="table-responsive">
         <table class="table table-striped table-bordered text-center">
             <thead class="thead-dark">
@@ -615,7 +522,7 @@ td {
             </thead>
             <tbody>
                 <?php foreach ($proxyFiles as $file): ?>
-                    <?php $filePath = $proxyDir . $file; ?>
+                    <?php $filePath = $uploadDir. $file; ?>
                     <tr>
                         <td class="align-middle"><a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a></td>
                         <td class="align-middle"><?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?></td>
@@ -1115,46 +1022,14 @@ function initializeAceEditor() {
     </div>
 </form>
 
-<h2 class=" text-center mt-4 mb-4">订阅管理 ➤ p核专用</h2>
 <div class="help-text mb-3 text-start">
     <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站/转发防火墙规则都设置为“接受”并启用它们。
 </div>
 <div class="help-text mb-3 text-start">
-    <strong>2. 注意：</strong> 通用模板（<code>puernya.json</code>）最多支持<strong>3 个</strong>订阅链接。请勿更改默认文件名称，并确保使用 puernya 内核。
-</div>
-<div class="help-text mb-3 text-start"> 
-    <strong>3. 支持通用格式订阅，无需转换。
-</div>
-<div class="help-text mb-3 text-start"> 
-    <strong>4. 保存与更新：</strong> 填写完毕后，请点击"更新配置"按钮进行保存。
+    <strong>2. 注意：puernya订阅已合并至Mihomo订阅，并确保使用 puernya 内核。
 </div>
 <div class="help-text mb-3 text-start"> 
     <strong>5. 说明：</strong> 上述 Sing-box 订阅适用于原版 Sing-box 内核，仅支持后缀为 Sing-box 格式的机场订阅链接。对于通用订阅，请使用转换模板以确保兼容性。
-</div>
-<div class="row">
-    <?php for ($i = 0; $i < 3; $i++): ?>
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">订阅链接 <?php echo ($i + 1); ?></h5>
-                    <form method="post">
-                        <div class="input-group mb-3">
-                            <input type="text" name="subscription_url" id="subscriptionurl<?php echo $i; ?>" 
-                                   value="<?php echo htmlspecialchars($subscriptionList[$i]['url']); ?>" 
-                                   required class="form-control" placeholder="输入链接">
-                            <input type="text" name="custom_file_name" id="custom_filename<?php echo $i; ?>" 
-                                   value="<?php echo htmlspecialchars($subscriptionList[$i]['file_name']); ?>" 
-                                   class="form-control" placeholder="自定义文件名">
-                            <input type="hidden" name="index" value="<?php echo $i; ?>">
-                            <button type="submit" name="saveSubscription" class="btn btn-success ml-2">
-                                <i>🔄</i> 更新
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    <?php endfor; ?>
 </div>
 
 

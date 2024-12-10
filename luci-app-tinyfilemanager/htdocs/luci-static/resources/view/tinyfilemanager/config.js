@@ -24,7 +24,7 @@ return view.extend({
 			has_location = res[2].path,
 			pkgversion = '2.6';
 
-		var m, s, o;
+		let m, s, o;
 
 		m = new form.Map('tinyfilemanager');
 

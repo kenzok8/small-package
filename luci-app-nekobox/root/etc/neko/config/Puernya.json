@@ -506,7 +506,7 @@
             "tag": "🛫 ",
             "type": "remote",
             "download_url": "https://example.com/xxx/xxx&flag=clash",
-            "path": "./proxy/subscription_1.yaml",
+            "path": "/etc/neko/proxy_provider/subscription_1.yaml",
             "download_interval": "24h",
             "download_ua": "clash.meta",
             "includes": [
@@ -520,7 +520,7 @@
             "tag": "🛫. ",
             "type": "remote",
             "download_url": "https://example.com/xxx/xxx&flag=clash",
-            "path": "./proxy/subscription_2.yaml",
+            "path": "/etc/neko/proxy_provider/subscription_2.yaml",
             "download_interval": "24h",
             "download_ua": "clash.meta",
             "includes": [
@@ -534,7 +534,7 @@
             "tag": "🛫.. ",
             "type": "remote",
             "download_url": "https://example.com/xxx/xxx&flag=clash",
-            "path": "./proxy/subscription_3.yaml",
+            "path": "/etc/neko/proxy_provider/subscription_3.yaml",
             "download_interval": "24h",
             "download_ua": "clash.meta",
             "includes": [

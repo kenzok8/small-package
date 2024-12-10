@@ -10,14 +10,14 @@
 var conf = 'dnsproxy';
 var instance = 'dnsproxy';
 
-var callServiceList = rpc.declare({
+const callServiceList = rpc.declare({
 	object: 'service',
 	method: 'list',
 	params: ['name'],
 	expect: { '': {} }
 });
 
-var callHostHints = rpc.declare({
+const callHostHints = rpc.declare({
 	object: 'luci-rpc',
 	method: 'getHostHints',
 	expect: { '': {} }
@@ -60,7 +60,7 @@ return view.extend({
 		var isRunning = res[0],
 			hosts = res[1];
 
-		var m, s, o, ss, so;
+		let m, s, o, ss, so;
 
 		m = new form.Map('dnsproxy', _('DNS Proxy'));
 

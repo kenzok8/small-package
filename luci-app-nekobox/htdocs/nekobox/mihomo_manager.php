@@ -149,17 +149,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editFile'], $_GET['file
 <?php
 $subscriptionPath = '/etc/neko/proxy_provider/';
 $subscriptionFile = $subscriptionPath . 'subscriptions.json';
-$clashFile = $subscriptionPath . 'subscription_6.yaml';
 $message = "";
-$decodedContent = ""; 
 $subscriptions = [];
-$updateCompleted = false; 
+$updateCompleted = false;
 
 function outputMessage($message) {
     if (!isset($_SESSION['update_messages'])) {
-        $_SESSION['update_messages'] = array();
+        $_SESSION['update_messages'] = [];
     }
-
     $_SESSION['update_messages'][] = $message;
 }
 
@@ -176,7 +173,7 @@ if (!$subscriptions) {
     for ($i = 0; $i < 6; $i++) {
         $subscriptions[$i] = [
             'url' => '',
-            'file_name' => "subscription_{$i}.yaml",
+            'file_name' => "subscription_" . ($i + 1) . ".yaml",  
         ];
     }
 }
@@ -184,13 +181,14 @@ if (!$subscriptions) {
 if (isset($_POST['update'])) {
     $index = intval($_POST['index']);
     $url = $_POST['subscription_url'] ?? '';
-    $customFileName = $_POST['custom_file_name'] ?? "subscription_{$index}.yaml";
+    $customFileName = $_POST['custom_file_name'] ?? "subscription_" . ($index + 1) . ".yaml";  
 
     $subscriptions[$index]['url'] = $url;
     $subscriptions[$index]['file_name'] = $customFileName;
 
     if (!empty($url)) {
         $finalPath = $subscriptionPath . $customFileName;
+
         $command = "wget -q --show-progress -O {$finalPath} {$url}";
         exec($command . ' 2>&1', $output, $return_var);
 
@@ -209,16 +207,25 @@ if (isset($_POST['update'])) {
                     <li>该模板支持所有格式订阅链接，无需额外转换</li>
                 </ul>
             </div>';
-            $_SESSION['update_messages'][] = "订阅链接 {$url} 更新成功！文件已保存到: {$finalPath}";
-            $message = '更新成功';
-            $updateCompleted = true; 
+
+            $fileContent = file_get_contents($finalPath);
+            $decodedContent = base64_decode($fileContent);
+
+            if ($decodedContent === false) {
+                $_SESSION['update_messages'][] = "Base64 解码失败，请检查下载的文件内容是否有效！";
+                $message = "Base64 解码失败";
+            } else {
+                $clashFile = $subscriptionPath . $customFileName;
+                file_put_contents($clashFile, "# Clash Meta Config\n\n" . $decodedContent);
+                $_SESSION['update_messages'][] = "订阅链接 {$url} 更新成功，并解码内容保存到: {$clashFile}";
+                $message = '更新成功';
+                $updateCompleted = true;
+            }
         } else {
-            $_SESSION['update_messages'] = array();
             $_SESSION['update_messages'][] = "配置更新失败！错误信息: " . implode("\n", $output);
             $message = '更新失败';
         }
     } else {
-        $_SESSION['update_messages'] = array();
         $_SESSION['update_messages'][] = "第" . ($index + 1) . "个订阅链接为空！";
         $message = '更新失败';
     }
@@ -230,14 +237,13 @@ if (isset($_POST['convert_base64'])) {
     $base64Content = $_POST['base64_content'] ?? '';
 
     if (!empty($base64Content)) {
-        $decodedContent = base64_decode($base64Content); 
+        $decodedContent = base64_decode($base64Content);
 
         if ($decodedContent === false) {
-            $message = "Base64 解码失败，请检查输入！";
+            $message = "Base64 解码失败，请检查输入内容！";
         } else {
-            $clashConfig = "# Clash Meta Config\n\n";
-            $clashConfig .= $decodedContent;
-            file_put_contents($clashFile, $clashConfig);
+            $clashFile = $subscriptionPath . 'decoded_subscription.yaml';
+            file_put_contents($clashFile, "# Clash Meta Config\n\n" . $decodedContent);
             $message = "Clash 配置文件已生成并保存到: {$clashFile}";
         }
     } else {
@@ -503,7 +509,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mihomo - Neko</title>
+    <title>Mihomo - NekoBox</title>
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
@@ -1188,30 +1194,36 @@ function initializeAceEditor() {
 
 <?php if (isset($subscriptions) && is_array($subscriptions)): ?>
     <div class="row">
-        <?php for ($i = 0; $i < 6; $i++): ?>
+        <?php 
+        $maxSubscriptions = 6; 
+        for ($i = 0; $i < $maxSubscriptions; $i++): 
+            $displayIndex = $i + 1; 
+            $url = $subscriptions[$i]['url'] ?? '';
+            $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . ($displayIndex) . ".yaml"; 
+        ?>
             <div class="col-md-4 mb-3">
                 <form method="post" class="card">
                     <div class="card-body">
                         <div class="form-group">
-                            <h5 for="subscription_url_<?php echo $i; ?>" class="mb-2">订阅链接 <?php echo ($i + 1); ?></h5>
-                            <input type="text" name="subscription_url" id="subscription_url_<?php echo $i; ?>" value="<?php echo htmlspecialchars($subscriptions[$i]['url'] ?? ''); ?>" required class="form-control">
+                            <h5 for="subscription_url_<?php echo $displayIndex; ?>" class="mb-2">订阅链接 <?php echo $displayIndex; ?></h5>
+                            <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control">
                         </div>
                         <div class="form-group">
-                            <label for="custom_file_name_<?php echo $i; ?>">自定义文件名</label>
-                            <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $i; ?>" value="subscription_<?php echo ($i + 1); ?>.yaml" class="form-control">
+                            <label for="custom_file_name_<?php echo $displayIndex; ?>">自定义文件名</label>
+                            <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
                         </div>
                         <input type="hidden" name="index" value="<?php echo $i; ?>">
                         <div class="text-center mt-3"> 
-                            <button type="submit" name="update" class="btn btn-info">🔄 更新订阅 <?php echo ($i + 1); ?></button>
+                            <button type="submit" name="update" class="btn btn-info">🔄 更新订阅 <?php echo $displayIndex; ?></button>
                         </div>
                     </div>
                 </form>
             </div>
 
-            <?php if (($i + 1) % 3 == 0 && $i < 5): ?>
+            <?php if (($displayIndex) % 3 == 0 && $displayIndex < $maxSubscriptions): ?>
                 </div><div class="row">
             <?php endif; ?>
-            
+
         <?php endfor; ?>
     </div>
 <?php else: ?>

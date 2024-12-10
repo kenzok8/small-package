@@ -26,7 +26,7 @@ var css = '				\
 var hm_dir = '/var/run/fchomo';
 
 function getRuntimeLog(name, filename) {
-	var callLogClean = rpc.declare({
+	const callLogClean = rpc.declare({
 		object: 'luci.fchomo',
 		method: 'log_clean',
 		params: ['type'],
@@ -87,7 +87,7 @@ function getRuntimeLog(name, filename) {
 
 return view.extend({
 	render: function(data) {
-		var m, s, o;
+		let m, s, o;
 
 		m = new form.Map('fchomo');
 
