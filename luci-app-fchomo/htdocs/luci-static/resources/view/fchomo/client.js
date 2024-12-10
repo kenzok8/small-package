@@ -421,7 +421,7 @@ return view.extend({
 	render: function(data) {
 		var dashboard_repo = uci.get(data[0], 'api', 'dashboard_repo');
 
-		var m, s, o, ss, so;
+		let m, s, o, ss, so;
 
 		m = new form.Map('fchomo', _('Mihomo client'));
 

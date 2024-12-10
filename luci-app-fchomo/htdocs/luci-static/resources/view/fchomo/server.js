@@ -53,7 +53,7 @@ return view.extend({
 		var dashboard_repo = uci.get(data[0], 'api', 'dashboard_repo'),
 		    features = data[1];
 
-		var m, s, o;
+		let m, s, o;
 
 		m = new form.Map('fchomo', _('Mihomo server'),
 			_('When used as a server, HomeProxy is a better choice.'));

@@ -3,7 +3,7 @@ ob_start();
 include './cfg.php';
 date_default_timezone_set('Asia/Shanghai');
 
-$dataFilePath = '/tmp/subscription_data.txt';
+$dataFilePath = '/etc/neko/subscription_data.txt';
 $lastSubscribeUrl = '';
 
 if (file_exists($dataFilePath)) {
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['setCron'])) {
 
 <?php
 $shellScriptPath = '/etc/neko/core/update_subscription.sh';
-$DATA_FILE = '/tmp/subscription_data.txt'; 
+$DATA_FILE = '/etc/neko/subscription_data.txt'; 
 $LOG_FILE = '/tmp/update_subscription.log'; 
 $SUBSCRIBE_URL = '';
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $shellScriptContent = <<<EOL
 #!/bin/sh
 
-DATA_FILE="/tmp/subscription_data.txt"
+DATA_FILE="/etc/neko/subscription_data.txt"
 CONFIG_DIR="/etc/neko/config"
 LOG_FILE="/tmp/update_subscription.log"
 TEMPLATE_URL="https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json"
@@ -266,7 +266,7 @@ EOL;
           </div>
         </div>
         <?php
-        $dataFilePath = '/tmp/subscription_data.txt';
+        $dataFilePath = '/etc/neko/subscription_data.txt';
         $configFilePath = '/etc/neko/config/sing-box.json';
         $downloadedContent = ''; 
 
@@ -314,7 +314,7 @@ EOL;
             }
 
             $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}&file={$templateUrlEncoded}";
-            $tempFilePath = '/tmp/' . $customFileName;
+            $tempFilePath = '/etc/neko/' . $customFileName;
             $logMessages = [];
             $command = "wget -O " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
             exec($command, $output, $returnVar);

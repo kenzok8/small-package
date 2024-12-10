@@ -15,7 +15,7 @@ return view.extend({
 	},
 
 	render: function(data) {
-		var m, s, o, ss, so;
+		let m, s, o, ss, so;
 
 		m = new form.Map('fchomo', _('Edit node'));
 

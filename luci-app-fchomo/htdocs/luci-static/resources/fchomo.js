@@ -352,7 +352,7 @@ return baseclass.extend({
 	},
 
 	getFeatures: function() {
-		var callGetFeatures = rpc.declare({
+		const callGetFeatures = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'get_features',
 			expect: { '': {} }
@@ -363,7 +363,7 @@ return baseclass.extend({
 
 	getServiceStatus: function(instance) {
 		var conf = 'fchomo';
-		var callServiceList = rpc.declare({
+		const callServiceList = rpc.declare({
 			object: 'service',
 			method: 'list',
 			params: ['name'],
@@ -381,7 +381,7 @@ return baseclass.extend({
 	},
 
 	getClashAPI: function(instance) {
-		var callGetClashAPI = rpc.declare({
+		const callGetClashAPI = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'get_clash_api',
 			params: ['instance'],
@@ -798,7 +798,7 @@ return baseclass.extend({
 	},
 
 	lsDir: function(type) {
-		var callLsDir = rpc.declare({
+		const callLsDir = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'dir_ls',
 			params: ['type'],
@@ -814,7 +814,7 @@ return baseclass.extend({
 	},
 
 	readFile: function(type, filename) {
-		var callReadFile = rpc.declare({
+		const callReadFile = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'file_read',
 			params: ['type', 'filename'],
@@ -830,7 +830,7 @@ return baseclass.extend({
 	},
 
 	writeFile: function(type, filename, content) {
-		var callWriteFile = rpc.declare({
+		const callWriteFile = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'file_write',
 			params: ['type', 'filename', 'content'],
@@ -846,7 +846,7 @@ return baseclass.extend({
 	},
 
 	downloadFile: function(type, filename, url, header) {
-		var callDownloadFile = rpc.declare({
+		const callDownloadFile = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'file_download',
 			params: ['type', 'filename', 'url', 'header'],
@@ -862,7 +862,7 @@ return baseclass.extend({
 	},
 
 	removeFile: function(type, filename) {
-		var callRemoveFile = rpc.declare({
+		const callRemoveFile = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'file_remove',
 			params: ['type', 'filename'],
@@ -879,7 +879,7 @@ return baseclass.extend({
 
 	// thanks to homeproxy
 	uploadCertificate: function(type, filename, ev) {
-		var callWriteCertificate = rpc.declare({
+		const callWriteCertificate = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'certificate_write',
 			params: ['filename'],
@@ -898,7 +898,7 @@ return baseclass.extend({
 		.catch((e) => { ui.addNotification(null, E('p', e.message)) });
 	},
 	uploadInitialPack: function(ev, section_id) {
-		var callWriteInitialPack = rpc.declare({
+		const callWriteInitialPack = rpc.declare({
 			object: 'luci.fchomo',
 			method: 'initialpack_write',
 			expect: { '': {} }

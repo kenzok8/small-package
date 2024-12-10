@@ -11,14 +11,14 @@
 'require tools.firewall as fwtool';
 'require tools.widgets as widgets';
 
-var callResVersion = rpc.declare({
+const callResVersion = rpc.declare({
 	object: 'luci.fchomo',
 	method: 'resources_get_version',
 	params: ['type', 'repo'],
 	expect: { '': {} }
 });
 
-var callCrondSet = rpc.declare({
+const callCrondSet = rpc.declare({
 	object: 'luci.fchomo',
 	method: 'crond_set',
 	params: ['type', 'expr'],
@@ -26,7 +26,7 @@ var callCrondSet = rpc.declare({
 });
 
 function handleResUpdate(type, repo) {
-	var callResUpdate = rpc.declare({
+	const callResUpdate = rpc.declare({
 		object: 'luci.fchomo',
 		method: 'resources_update',
 		params: ['type', 'repo'],
@@ -122,7 +122,7 @@ return view.extend({
 
 		var dashboard_repo = uci.get(data[0], 'api', 'dashboard_repo');
 
-		var m, s, o, ss, so;
+		let m, s, o, ss, so;
 
 		m = new form.Map('fchomo', _('FullCombo Mihomo'),
 			'<img src="' + hm.sharktaikogif + '" title="Ciallo～(∠・ω< )⌒☆" height="52"></img>');
@@ -169,7 +169,7 @@ return view.extend({
 
 		so = ss.option(form.DummyValue, '_conn_check', _('Connection check'));
 		so.cfgvalue = function() {
-			var callConnStat = rpc.declare({
+			const callConnStat = rpc.declare({
 				object: 'luci.fchomo',
 				method: 'connection_check',
 				params: ['url'],
