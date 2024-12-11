@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.0.2-20241208
+PKG_VERSION:=1.0.2-20241211
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for bmtedge
@@ -17,7 +17,7 @@ endef
 # postrm
 define Package/luci-app-bmtedge/prerm
 #!/bin/sh
-docker rm -f bmtedge
+/root/usr/libexec/istorec/bmtedge.sh rm
 exit 0
 endef
 
