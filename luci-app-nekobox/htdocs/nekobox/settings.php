@@ -593,9 +593,9 @@ function selectOperation(type) {
                             ? '开始下载 Dashboard 面板更新...'  
                             : '未知面板更新类型...',
             description: selectedPanel === 'zashboard' 
-                ? '正在更新 Zashboard 面板到最新版本' 
+                ? '正在更新 Zashboard 面板到最新版本,如遇无法显示清除浏览器缓存。' 
                 : selectedPanel === 'yacd-meat' 
-                    ? '正在更新 Yacd-Meat 面板到最新版本' 
+                    ? '正在更新 Yacd-Meat 面板到最新版本，如遇无法显示清除浏览器缓存。' 
                     : selectedPanel === 'metacubexd' 
                         ? '正在更新 Metacubexd 面板到最新版本' 
                         : selectedPanel === 'dashboard'  
