@@ -1,8 +1,7 @@
 -- Copyright 2022-2023 sirpdboy <herboy2008@gmail.com>
 -- Licensed to the public under the Apache License 2.0.
 local sys = require "luci.sys"
-local ifaces = sys.net:devices()
-local WADM = require "luci.tools.webadmin"
+local interfaces = sys.exec("ls -l /sys/class/net/ 2>/dev/null |awk '{print $9}' 2>/dev/null")
 local ipc = require "luci.ip"
 local a, t, e
 
@@ -22,11 +21,10 @@ ipi = t:option(ListValue, "ifname", translate("Interface"), translate("Set the i
 ipi.default = "1"
 ipi:value(1,translate("Automatic settings"))
 ipi.rmempty = false
-for _, v in pairs(ifaces) do
-	net = WADM.iface_get_network(v)
-	if net and net ~= "loopback" then
-		ipi:value(v)
-	end
+for interface in string.gmatch(interfaces, "%S+") do
+    if interface and interface ~= "loopback" then
+        ipi:value(interface)
+    end
 end
 
 t = a:section(TypedSection, "device")
@@ -41,18 +39,26 @@ e = t:option(Flag, "enable", translate("Enabled"))
 e.rmempty = false
 e.size = 4
 
-ip = t:option(Value, "mac", translate("IP/MAC"))
+local lan_interfaces = {}
+for interface in string.gmatch(interfaces, "%S+") do
+    if string.match(interface, "lan") then
+        table.insert(lan_interfaces, interface)
+    end
+end
 
-ipc.neighbors({family = 4, dev = "br-lan"}, function(n)
-	if n.mac and n.dest then
-		ip:value(n.dest:string(), "%s (%s)" %{ n.dest:string(), n.mac })
-	end
-end)
-ipc.neighbors({family = 4, dev = "br-lan"}, function(n)
-	if n.mac and n.dest then
-		ip:value(n.mac, "%s (%s)" %{n.mac, n.dest:string() })
-	end
-end)
+ip = t:option(Value, "mac", translate("IP/MAC"))
+for _, lan_interface in ipairs(lan_interfaces) do
+    ipc.neighbors({family = 4, dev = lan_interface}, function(n)
+        if n.mac and n.dest then
+            ip:value(n.dest:string(), "%s (%s)" %{ n.dest:string(), n.mac })
+        end
+    end)
+    ipc.neighbors({family = 4, dev = lan_interface}, function(n)
+        if n.mac and n.dest then
+            ip:value(n.mac, "%s (%s)" %{n.mac, n.dest:string() })
+        end
+    end)
+end
 
 e.size = 8
 dl = t:option(Value, "download", translate("Downloads"))
