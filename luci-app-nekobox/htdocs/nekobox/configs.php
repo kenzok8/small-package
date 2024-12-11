@@ -61,7 +61,7 @@ include './cfg.php';
             <a href="./" class="col btn btn-lg">🏠 首页</a>
             <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
             <a href="#" class="col btn btn-lg">⚙️ 配置</a>
-           <a href="/nekobox/mon.php" class="col btn btn-lg d-flex align-items-center justify-content-center"></i>📦 订阅</a> 
+           <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
             <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     <h2 class="text-center p-2">配置</h2>
     <form action="configs.php" method="post">
@@ -102,9 +102,6 @@ include './cfg.php';
         </li>
         <li class="nav-item flex-grow-1">
             <a class="btn btn-lg w-100" data-bs-toggle="tab" href="#converter">转换</a>
-        </li>
-        <li class="nav-item flex-grow-1">
-            <a class="btn btn-lg w-100" data-bs-toggle="tab" href="#upload">订阅</a>
         </li>
         <li class="nav-item flex-grow-1">
             <a class="btn btn-lg w-100" data-bs-toggle="tab" href="#tip">提示</a>
@@ -192,12 +189,6 @@ include './cfg.php';
             <h2 class="text-center p-2 mb-5">转换器</h2>
             <div class="container h-100">
                 <iframe class="rounded-4 w-100" scrolling="no" height="700" src="./yamlconv.php" title="yacd" allowfullscreen></iframe>
-            </div>
-        </div>
-
-        <div id="upload" class="tab-pane fade">
-            <div class="container h-100">
-                <iframe class="rounded-4 w-100" scrolling="no" height="700" src="./mo.php" title="yacd" allowfullscreen></iframe>
             </div>
         </div>
 

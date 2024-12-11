@@ -142,7 +142,7 @@ $razordVersion = getRazordVersion();
             <a href="./" class="col btn btn-lg">🏠 首页</a>
             <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
             <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
-            <a href="./mon.php" class="col btn btn-lg"></i>📦 订阅</a> 
+            <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
             <a href="#" class="col btn btn-lg">🛠️ 设定</a>
          <div class="container px-4">
     <h2 class="text-center p-2 mb-3">主题设定</h2>

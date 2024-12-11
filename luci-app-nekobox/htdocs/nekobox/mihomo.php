@@ -2,9 +2,8 @@
 ob_start();
 include './cfg.php';
 ini_set('memory_limit', '256M');
-$subscription_file = '/etc/neko/config/subscription.txt'; 
+$subscription_file = '/etc/neko/subscription.txt'; 
 $download_path = '/etc/neko/config/'; 
-$php_script_path = '/www/nekobox/personal.php'; 
 $sh_script_path = '/etc/neko/update_config.sh'; 
 $log_file = '/var/log/neko_update.log'; 
 
@@ -34,7 +33,7 @@ secret: Akun
 bind-address: 0.0.0.0
 external-ui: ui
 tproxy-port: 7895
-tcp-concurrent: true	
+tcp-concurrent: true    
 enable-process: true
 find-process-mode: always
 ipv6: true
@@ -210,7 +209,7 @@ function saveSubscriptionContentToYaml($url, $filename) {
 }
 
 function generateShellScript() {
-    global $subscription_file, $download_path, $php_script_path, $sh_script_path;
+    global $subscription_file, $download_path, $sh_script_path;
 
     $sh_script_content = <<<EOD
 #!/bin/bash
@@ -218,7 +217,6 @@ function generateShellScript() {
 SUBSCRIPTION_FILE='$subscription_file'
 DOWNLOAD_PATH='$download_path'
 DEST_PATH='/etc/neko/config/config.yaml'
-PHP_SCRIPT_PATH='$php_script_path'
 
 if [ ! -f "\$SUBSCRIPTION_FILE" ]; then
     echo "未找到订阅文件: \$SUBSCRIPTION_FILE"
@@ -227,24 +225,146 @@ fi
 
 SUBSCRIPTION_URL=\$(cat "\$SUBSCRIPTION_FILE")
 
-php -f "\$PHP_SCRIPT_PATH" <<EOF
-POST
-subscription_url=\$SUBSCRIPTION_URL
-filename=config.yaml
-EOF
+subscription_data=\$(curl -s "\$SUBSCRIPTION_URL")
 
-UPDATED_FILE="\$DOWNLOAD_PATH/config.yaml"
-if [ ! -f "\$UPDATED_FILE" ]; then
-    echo "未找到更新后的配置文件: \$UPDATED_FILE"
+if [ -z "\$subscription_data" ]; then
+    echo "无法获取订阅内容，请检查订阅链接。"
     exit 1
 fi
 
-mv "\$UPDATED_FILE" "\$DEST_PATH"
+new_config_start="redir-port: 7892
+port: 7890
+socks-port: 7891
+mixed-port: 7893
+mode: rule
+log-level: info
+allow-lan: true
+unified-delay: true
+external-controller: 0.0.0.0:9090
+secret: Akun
+bind-address: 0.0.0.0
+external-ui: ui
+tproxy-port: 7895
+tcp-concurrent: true
+enable-process: true
+find-process-mode: always
+ipv6: true
+experimental:
+  ignore-resolve-fail: true
+  sniff-tls-sni: true
+  tracing: true
+hosts:
+  \"localhost\": 127.0.0.1
+profile:
+  store-selected: true
+  store-fake-ip: true
+sniffer:
+  enable: true
+  sniff:
+    http: { ports: [1-442, 444-8442, 8444-65535], override-destination: true }
+    tls: { ports: [1-79, 81-8079, 8081-65535], override-destination: true }
+  force-domain:
+      - \"+.v2ex.com\"
+      - www.google.com
+      - google.com
+  skip-domain:
+      - Mijia Cloud
+      - dlg.io.mi.com
+  sniffing:
+    - tls
+    - http
+  port-whitelist:
+    - \"80\"
+    - \"443\"
+tun:
+  enable: true
+  prefer-h3: true
+  listen: 0.0.0.0:53
+  stack: gvisor
+  dns-hijack:
+     - \"any:53\"
+     - \"tcp://any:53\"
+  auto-redir: true
+  auto-route: true
+  auto-detect-interface: true
+dns:
+  enable: true
+  ipv6: true
+  default-nameserver:
+    - '1.1.1.1'
+    - '8.8.8.8'
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - 'stun.*.*'
+    - 'stun.*.*.*'
+    - '+.stun.*.*'
+    - '+.stun.*.*.*'
+    - '+.stun.*.*.*.*'
+    - '+.stun.*.*.*.*.*'
+    - '*.lan'
+    - '+.msftncsi.com'
+    - msftconnecttest.com
+    - 'time?.*.com'
+    - 'time.*.com'
+    - 'time.*.gov'
+    - 'time.*.apple.com'
+    - time-ios.apple.com
+    - 'time1.*.com'
+    - 'time2.*.com'
+    - 'time3.*.com'
+    - 'time4.*.com'
+    - 'time5.*.com'
+    - 'time6.*.com'
+    - 'time7.*.com'
+    - 'ntp?.*.com'
+    - 'ntp.*.com'
+    - 'ntp1.*.com'
+    - 'ntp2.*.com'
+    - 'ntp3.*.com'
+    - 'ntp4.*.com'
+    - 'ntp5.*.com'
+    - 'ntp6.*.com'
+    - 'ntp7.*.com'
+    - '+.pool.ntp.org'
+    - '+.ipv6.microsoft.com'
+    - speedtest.cros.wr.pvp.net
+    - network-test.debian.org
+    - detectportal.firefox.com
+    - cable.auth.com
+    - miwifi.com
+    - routerlogin.com
+    - routerlogin.net
+    - tendawifi.com
+    - tendawifi.net
+    - tplinklogin.net
+    - tplinkwifi.net
+    - '*.xiami.com'
+    - tplinkrepeater.net
+    - router.asus.com
+    - '*.*.*.srv.nintendo.net'
+    - '*.*.stun.playstation.net'
+    - '*.openwrt.pool.ntp.org'
+    - resolver1.opendns.com
+    - 'GC._msDCS.*.*'
+    - 'DC._msDCS.*.*'
+    - 'PDC._msDCS.*.*'
+  use-hosts: true
+  nameserver:
+    - '8.8.4.4'
+    - '1.0.0.1'
+    - \"https://1.0.0.1/dns-query\"
+    - \"https://8.8.4.4/dns-query\"
+"
 
-if [ \$? -eq 0 ]; then
+echo -e "\$new_config_start\$subscription_data" > "\$DOWNLOAD_PATH/config.yaml"
+
+mv "\$DOWNLOAD_PATH/config.yaml" "\$DEST_PATH"
+
+if [ $? -eq 0 ]; then
     echo "配置文件已成功更新并移动到 \$DEST_PATH"
 else
-    echo "配置文件移动到 \$DEST_PATH 失败"
+    echo "配置文件移动失败"
     exit 1
 fi
 EOD;
@@ -344,10 +464,9 @@ $current_subscription_url = getSubscriptionUrlFromFile($subscription_file);
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 Mihomo</a>
-        <a href="./singbox_manager.php" class="col btn btn-lg">🗂️ Sing-box</a>
-        <a href="./box.php" class="col btn btn-lg">💹 订阅转换</a>
-        <a href="./personal.php" class="col btn btn-lg">📦 订阅</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 文件管理</a>
+        <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
+        <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
         <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;">Mihomo 订阅（Clash版）</h1>
 
         <div class="col-12">
