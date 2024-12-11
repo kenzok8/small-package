@@ -286,8 +286,8 @@ load_acl() {
 							local _SHUNT_RULE_NODE=$(config_n_get $NODE ${_shunt_id} nil)
 							[ "${_SHUNT_RULE_NODE}" == "_default" ] && _SHUNT_RULE_NODE=${_SHUNT_DEFAULT_NODE}
 							[ "${_SHUNT_RULE_NODE}" == "_direct" ] && {
-								insert_nftset $ipset_whitelist "0" $(config_n_get $_shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-								insert_nftset $ipset_whitelist6 "0" $(config_n_get $_shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+								insert_nftset $nftset_whitelist "0" $(config_n_get $_shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+								insert_nftset $nftset_whitelist6 "0" $(config_n_get $_shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 								[ "$(config_t_get global_rules enable_geoview)" = "1" ] && {
 									local _geoip_code=$(config_n_get $_shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 									[ -n "$_geoip_code" ] && _GEOIP_CODE="${_GEOIP_CODE:+$_GEOIP_CODE,}$_geoip_code"
@@ -297,8 +297,8 @@ load_acl() {
 					}
 
 					if [ -n "$_GEOIP_CODE" ] && type geoview &> /dev/null; then
-						insert_nftset $ipset_whitelist "0" $(get_geoip $_GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-						insert_nftset $ipset_whitelist6 "0" $(get_geoip $_GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+						insert_nftset $nftset_whitelist "0" $(get_geoip $_GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+						insert_nftset $nftset_whitelist6 "0" $(get_geoip $_GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 						echolog "  - [$?]解析并加入分流节点 GeoIP 到 IPSET 完成"
 					fi
 				fi
@@ -367,8 +367,21 @@ load_acl() {
 					fi
 				}
 
+				if ([ "$tcp_proxy_mode" != "disable" ] || [ "$udp_proxy_mode" != "disable" ]) && [ -n "$redir_port" ]; then
+					[ -s "${TMP_ACL_PATH}/${sid}/var_redirect_dns_port" ] && {
+						nft "add rule $NFTABLE_NAME PSW2_REDIRECT ip protocol udp ${_ipt_source} udp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port) comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW2_REDIRECT ip protocol tcp ${_ipt_source} tcp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port) comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW2_REDIRECT meta l4proto udp ${_ipt_source} udp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port) comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW2_REDIRECT meta l4proto tcp ${_ipt_source} tcp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port) comment \"$remarks\""
+					}
+				else
+					nft "add rule $NFTABLE_NAME PSW2_REDIRECT ip protocol udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
+					nft "add rule $NFTABLE_NAME PSW2_REDIRECT ip protocol tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+					nft "add rule $NFTABLE_NAME PSW2_REDIRECT meta l4proto udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
+					nft "add rule $NFTABLE_NAME PSW2_REDIRECT meta l4proto tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+				fi
+
 				[ "$tcp_proxy_mode" != "disable" ] && [ -n "$redir_port" ] && {
-					[ -s "${TMP_ACL_PATH}/${sid}/var_redirect_dns_port" ] && nft "add rule $NFTABLE_NAME PSW2_REDIRECT ip protocol udp ${_ipt_source} udp dport 53 counter redirect to $(cat ${TMP_ACL_PATH}/${sid}/var_redirect_dns_port) comment \"$remarks\""
 					msg2="${msg}使用 TCP 节点[$node_remark]"
 					if [ -n "${is_tproxy}" ]; then
 						msg2="${msg2}(TPROXY:${redir_port})"
@@ -389,7 +402,7 @@ load_acl() {
 
 					[ "$accept_icmpv6" = "1" ] && [ "$PROXY_IPV6" == "1" ] && {
 						nft "add rule $NFTABLE_NAME PSW2_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} ip6 daddr $FAKE_IP_6 $(REDIRECT) comment \"$remarks\"" 2>/dev/null
-						[ "${write_ipset_direct}" = "1" ] && nft "add rule $NFTABLE_NAME PSW2_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} ip6 daddr @$nftset_whitelist6 counter return comment \"$remarks\""
+						[ "${write_ipset_direct}" = "1" ] && nft "add rule $NFTABLE_NAME PSW2_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} ip6 daddr @$nftset_whitelist6 counter return comment \"$remarks\"" 2>/dev/null
 						nft "add rule $NFTABLE_NAME PSW2_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} $(REDIRECT) comment \"$remarks\"" 2>/dev/null
 						nft "add rule $NFTABLE_NAME PSW2_ICMP_REDIRECT meta l4proto icmpv6 ${_ipt_source} return comment \"$remarks\"" 2>/dev/null
 					}
@@ -401,7 +414,7 @@ load_acl() {
 
 					[ "$PROXY_IPV6" == "1" ] && {
 						nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto tcp ${_ipt_source} ip6 daddr $FAKE_IP_6 counter jump PSW2_RULE comment \"$remarks\""
-						[ "${write_ipset_direct}" = "1" ] && nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto tcp ${_ipt_source} ip6 daddr @$nftset_whitelist6 counter return comment \"$remarks\""
+						[ "${write_ipset_direct}" = "1" ] && nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto tcp ${_ipt_source} ip6 daddr @$nftset_whitelist6 counter return comment \"$remarks\"" 2>/dev/null
 						nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(factor $tcp_redir_ports "tcp dport") counter jump PSW2_RULE comment \"$remarks\"" 2>/dev/null
 						nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto tcp ${_ipt_source} $(REDIRECT $redir_port TPROXY) comment \"$remarks\"" 2>/dev/null
 					}
@@ -420,7 +433,7 @@ load_acl() {
 
 					[ "$PROXY_IPV6" == "1" ] && [ "$PROXY_IPV6_UDP" == "1" ] && {
 						nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto udp ${_ipt_source} ip6 daddr $FAKE_IP_6 counter jump PSW2_RULE comment \"$remarks\""
-						[ "${write_ipset_direct}" = "1" ] && nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto udp ${_ipt_source} ip6 daddr @$nftset_whitelist6 counter return comment \"$remarks\""
+						[ "${write_ipset_direct}" = "1" ] && nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto udp ${_ipt_source} ip6 daddr @$nftset_whitelist6 counter return comment \"$remarks\"" 2>/dev/null
 						nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto udp ${_ipt_source} $(factor $udp_redir_ports "udp dport") counter jump PSW2_RULE comment \"$remarks\"" 2>/dev/null
 						nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto udp ${_ipt_source} $(REDIRECT $redir_port TPROXY) comment \"$remarks\"" 2>/dev/null
 					}
@@ -460,6 +473,15 @@ load_acl() {
 				echolog "  - ${msg}不代理所有 UDP 端口"
 			fi
 		}
+
+		if ([ "$TCP_PROXY_MODE" != "disable" ] || [ "$UDP_PROXY_MODE" != "disable" ]) && [ "$NODE" != "nil" ]; then
+			[ -s "${TMP_ACL_PATH}/default/var_redirect_dns_port" ] && {
+				nft "add rule $NFTABLE_NAME PSW2_REDIRECT ip protocol udp udp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/default/var_redirect_dns_port) comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW2_REDIRECT ip protocol tcp tcp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/default/var_redirect_dns_port) comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW2_REDIRECT meta l4proto udp udp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/default/var_redirect_dns_port) comment \"默认\""
+				nft "add rule $NFTABLE_NAME PSW2_REDIRECT meta l4proto tcp tcp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/default/var_redirect_dns_port) comment \"默认\""
+			}
+		fi
 
 		if [ "$TCP_PROXY_MODE" != "disable" ] && [ "$NODE" != "nil" ]; then
 			msg2="${msg}使用 TCP 节点[$(config_n_get $NODE remarks)]"
@@ -650,22 +672,6 @@ filter_node() {
 	fi
 }
 
-dns_hijack() {
-	[ $(config_t_get global dns_redirect "0") = "1" ] && {
-		nft "add rule $NFTABLE_NAME PSW2_MANGLE ip protocol udp udp dport 53 counter return"
-		nft "add rule $NFTABLE_NAME PSW2_MANGLE ip protocol tcp tcp dport 53 counter return"
-		nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto udp udp dport 53 counter return"
-		nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto tcp tcp dport 53 counter return"
-		nft insert rule $NFTABLE_NAME dstnat position 0 tcp dport 53 counter redirect to :53 comment \"PSW2_DNS_Hijack\" 2>/dev/null
-		nft insert rule $NFTABLE_NAME dstnat position 0 udp dport 53 counter redirect to :53 comment \"PSW2_DNS_Hijack\" 2>/dev/null
-		nft insert rule $NFTABLE_NAME dstnat position 0 meta nfproto {ipv6} tcp dport 53 counter redirect to :53 comment \"PSW2_DNS_Hijack\" 2>/dev/null
-		nft insert rule $NFTABLE_NAME dstnat position 0 meta nfproto {ipv6} udp dport 53 counter redirect to :53 comment \"PSW2_DNS_Hijack\" 2>/dev/null
-		uci -q set dhcp.@dnsmasq[0].dns_redirect='0' 2>/dev/null
-		uci commit dhcp 2>/dev/null
-		echolog "  - 开启 DNS 重定向"
-	}
-}
-
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
 	gen_nft_tables
@@ -721,8 +727,8 @@ add_firewall_rule() {
 			local SHUNT_RULE_NODE=$(config_n_get $NODE ${shunt_id} nil)
 			[ "${SHUNT_RULE_NODE}" == "_default" ] && SHUNT_RULE_NODE=${SHUNT_DEFAULT_NODE}
 			[ "${SHUNT_RULE_NODE}" == "_direct" ] && {
-				insert_nftset $ipset_global_whitelist "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-				insert_nftset $ipset_global_whitelist6 "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+				insert_nftset $nftset_global_whitelist "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+				insert_nftset $nftset_global_whitelist6 "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 				[ "$(config_t_get global_rules enable_geoview)" = "1" ] && {
 					local geoip_code=$(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 					[ -n "$geoip_code" ] && GEOIP_CODE="${GEOIP_CODE:+$GEOIP_CODE,}$geoip_code"
@@ -732,8 +738,8 @@ add_firewall_rule() {
 	}
 
 	if [ -n "$GEOIP_CODE" ] && type geoview &> /dev/null; then
-		insert_nftset $ipset_global_whitelist "0" $(get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-		insert_nftset $ipset_global_whitelist6 "0" $(get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+		insert_nftset $nftset_global_whitelist "0" $(get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+		insert_nftset $nftset_global_whitelist6 "0" $(get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		echolog "  - [$?]解析并加入分流节点 GeoIP 到 IPSET 完成"
 	fi
 
@@ -917,7 +923,16 @@ add_firewall_rule() {
 				echolog "  - ${msg}不代理所有 UDP"
 			fi
 		}
-	
+
+		if [ "$NODE" != "nil" ] && ([ "$TCP_LOCALHOST_PROXY" = "1" ] || [ "$UDP_LOCALHOST_PROXY" = "1" ]); then
+			[ -s "${TMP_ACL_PATH}/default/var_redirect_dns_port" ] && {
+				nft "add rule $NFTABLE_NAME nat_output ip protocol udp oif lo udp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/default/var_redirect_dns_port) comment \"PSW2\""
+				nft "add rule $NFTABLE_NAME nat_output ip protocol tcp oif lo tcp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/default/var_redirect_dns_port) comment \"PSW2\""
+				nft "add rule $NFTABLE_NAME nat_output meta l4proto udp oif lo udp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/default/var_redirect_dns_port) comment \"PSW2\""
+				nft "add rule $NFTABLE_NAME nat_output meta l4proto tcp oif lo tcp dport 53 counter redirect to :$(cat ${TMP_ACL_PATH}/default/var_redirect_dns_port) comment \"PSW2\""
+			}
+		fi
+
 		# 加载路由器自身代理 TCP
 		if [ "$NODE" != "nil" ] && [ "$TCP_LOCALHOST_PROXY" = "1" ]; then
 			[ "$accept_icmp" = "1" ] && {
