@@ -231,279 +231,8 @@ if (isset($_POST['update'])) {
     }
 
     file_put_contents($subscriptionFile, json_encode($subscriptions));
-}
-
-if (isset($_POST['convert_base64'])) {
-    $base64Content = $_POST['base64_content'] ?? '';
-
-    if (!empty($base64Content)) {
-        $decodedContent = base64_decode($base64Content);
-
-        if ($decodedContent === false) {
-            $message = "Base64 解码失败，请检查输入内容！";
-        } else {
-            $clashFile = $subscriptionPath . 'decoded_subscription.yaml';
-            file_put_contents($clashFile, "# Clash Meta Config\n\n" . $decodedContent);
-            $message = "Clash 配置文件已生成并保存到: {$clashFile}";
-        }
-    } else {
-        $message = "Base64 内容为空！";
     }
-}
 ?>
-
-<?php
-
-function parseVmess($base) {
-    $decoded = base64_decode($base['host']);
-    $arrjs = json_decode($decoded, true);
-
-    if (json_last_error() !== JSON_ERROR_NONE || empty($arrjs['v'])) {
-        return "DECODING FAILED! PLEASE CHECK YOUR URL!";
-    }
-
-    return [
-        'cfgtype' => $base['scheme'] ?? '',
-        'name' => $arrjs['ps'] ?? '',
-        'host' => $arrjs['add'] ?? '',
-        'port' => $arrjs['port'] ?? '',
-        'uuid' => $arrjs['id'] ?? '',
-        'alterId' => $arrjs['aid'] ?? '',
-        'type' => $arrjs['net'] ?? '',
-        'path' => $arrjs['path'] ?? '',
-        'security' => $arrjs['type'] ?? '',
-        'sni' => $arrjs['host'] ?? '',
-        'tls' => $arrjs['tls'] ?? ''
-    ];
-}
-
-function parseShadowsocks($basebuff, &$urlparsed) {
-    $urlparsed['uuid'] = $basebuff['user'] ?? '';
-    $basedata = explode(":", base64_decode($urlparsed['uuid']));
-    if (count($basedata) == 2) {
-        $urlparsed['cipher'] = $basedata[0];
-        $urlparsed['uuid'] = $basedata[1];
-    }
-}
-
-function parseUrl($basebuff) {
-    $urlparsed = [
-        'cfgtype' => $basebuff['scheme'] ?? '',
-        'name' => $basebuff['fragment'] ?? '',
-        'host' => $basebuff['host'] ?? '',
-        'port' => $basebuff['port'] ?? ''
-    ];
-
-    if ($urlparsed['cfgtype'] == 'ss') {
-        parseShadowsocks($basebuff, $urlparsed);
-    } else {
-        $urlparsed['uuid'] = $basebuff['user'] ?? '';
-    }
-
-    $querybuff = [];
-    $tmpquery = $basebuff['query'] ?? '';
-
-    if ($urlparsed['cfgtype'] == 'ss') {
-        parse_str(str_replace(";", "&", $tmpquery), $querybuff);
-        $urlparsed['mux'] = $querybuff['mux'] ?? '';
-        $urlparsed['host2'] = $querybuff['host2'] ?? '';
-    } else {
-        parse_str($tmpquery, $querybuff);
-    }
-
-    $urlparsed['type'] = $querybuff['type'] ?? '';
-    $urlparsed['path'] = $querybuff['path'] ?? '';
-    $urlparsed['mode'] = $querybuff['mode'] ?? '';
-    $urlparsed['plugin'] = $querybuff['plugin'] ?? '';
-    $urlparsed['security'] = $querybuff['security'] ?? '';
-    $urlparsed['encryption'] = $querybuff['encryption'] ?? '';
-    $urlparsed['serviceName'] = $querybuff['serviceName'] ?? '';
-    $urlparsed['sni'] = $querybuff['sni'] ?? '';
-
-    return $urlparsed;
-}
-
-function generateConfig($data) {
-    $outcfg = "";
-
-    if (empty($GLOBALS['isProxiesPrinted'])) {
-        $outcfg .= "proxies:\n";
-        $GLOBALS['isProxiesPrinted'] = true;
-    }
-
-    switch ($data['cfgtype']) {
-        case 'vless':
-            $outcfg .= generateVlessConfig($data);
-            break;
-        case 'trojan':
-            $outcfg .= generateTrojanConfig($data);
-            break;
-        case 'hysteria2':
-        case 'hy2':
-            $outcfg .= generateHysteria2Config($data);
-            break;
-        case 'ss':
-            $outcfg .= generateShadowsocksConfig($data);
-            break;
-        case 'vmess':
-            $outcfg .= generateVmessConfig($data);
-            break;
-    }
-
-    return $outcfg;
-}
-
-function generateVlessConfig($data) {
-    $config = "    - name: " . ($data['name'] ?: "VLESS") . "\n";
-    $config .= "      type: {$data['cfgtype']}\n";
-    $config .= "      server: {$data['host']}\n";
-    $config .= "      port: {$data['port']}\n";
-    $config .= "      uuid: {$data['uuid']}\n";
-    $config .= "      cipher: auto\n";
-    $config .= "      tls: true\n";
-    if ($data['type'] == "ws") {
-        $config .= "      network: ws\n";
-        $config .= "      ws-opts:\n";
-        $config .= "        path: {$data['path']}\n";
-        $config .= "        Headers:\n";
-        $config .= "          Host: {$data['host']}\n";
-        $config .= "        flow:\n";
-        $config .= "          client-fingerprint: chrome\n";
-    } elseif ($data['type'] == "grpc") {
-        $config .= "      network: grpc\n";
-        $config .= "      grpc-opts:\n";
-        $config .= "        grpc-service-name: {$data['serviceName']}\n";
-    }
-    $config .= "      udp: true\n";
-    $config .= "      skip-cert-verify: true\n";
-    return $config;
-}
-
-function generateTrojanConfig($data) {
-    $config = "    - name: " . ($data['name'] ?: "TROJAN") . "\n";
-    $config .= "      type: {$data['cfgtype']}\n";
-    $config .= "      server: {$data['host']}\n";
-    $config .= "      port: {$data['port']}\n";
-    $config .= "      password: {$data['uuid']}\n";
-    $config .= "      sni: " . (!empty($data['sni']) ? $data['sni'] : $data['host']) . "\n";
-    if ($data['type'] == "ws") {
-        $config .= "      network: ws\n";
-        $config .= "      ws-opts:\n";
-        $config .= "        path: {$data['path']}\n";
-        $config .= "        Headers:\n";
-        $config .= "          Host: {$data['sni']}\n";
-    } elseif ($data['type'] == "grpc") {
-        $config .= "      network: grpc\n";
-        $config .= "      grpc-opts:\n";
-        $config .= "        grpc-service-name: {$data['serviceName']}\n";
-    }
-    $config .= "      udp: true\n";
-    $config .= "      skip-cert-verify: true\n";
-    return $config;
-}
-
-function generateHysteria2Config($data) {
-    return "    - name: " . ($data['name'] ?: "HYSTERIA2") . "\n" .
-           "      server: {$data['host']}\n" .
-           "      port: {$data['port']}\n" .
-           "      type: {$data['cfgtype']}\n" .
-           "      password: {$data['uuid']}\n" .
-           "      udp: true\n" .
-           "      ports: 20000-55000\n" .
-           "      mport: 20000-55000\n" .
-           "      skip-cert-verify: true\n" .
-           "      sni: " . (!empty($data['sni']) ? $data['sni'] : $data['host']) . "\n";
-}
-
-function generateShadowsocksConfig($data) {
-    $config = "    - name: " . ($data['name'] ?: "SHADOWSOCKS") . "\n";
-    $config .= "      type: {$data['cfgtype']}\n";
-    $config .= "      server: {$data['host']}\n";
-    $config .= "      port: {$data['port']}\n";
-    $config .= "      cipher: {$data['cipher']}\n";
-    $config .= "      password: {$data['uuid']}\n";
-    if (!empty($data['plugin'])) {
-        $config .= "      plugin: {$data['plugin']}\n";
-        $config .= "      plugin-opts:\n";
-        if ($data['plugin'] == "v2ray-plugin" || $data['plugin'] == "xray-plugin") {
-            $config .= "        mode: websocket\n";
-            $config .= "        mux: {$data['mux']}\n";
-        } elseif ($data['plugin'] == "obfs") {
-            $config .= "        mode: tls\n";
-        }
-    }
-    $config .= "      udp: true\n";
-    $config .= "      skip-cert-verify: true\n";
-    return $config;
-}
-
-function generateVmessConfig($data) {
-    $config = "    - name: " . ($data['name'] ?: "VMESS") . "\n";
-    $config .= "      type: {$data['cfgtype']}\n";
-    $config .= "      server: {$data['host']}\n";
-    $config .= "      port: {$data['port']}\n";
-    $config .= "      uuid: {$data['uuid']}\n";
-    $config .= "      alterId: {$data['alterId']}\n";
-    $config .= "      cipher: auto\n";
-    $config .= "      tls: " . ($data['tls'] === "tls" ? "true" : "false") . "\n";
-    $config .= "      servername: " . (!empty($data['sni']) ? $data['sni'] : $data['host']) . "\n";
-    $config .= "      network: {$data['type']}\n";
-    if ($data['type'] == "ws") {
-        $config .= "      ws-opts:\n";
-        $config .= "        path: {$data['path']}\n";
-        $config .= "        Headers:\n";
-        $config .= "          Host: {$data['sni']}\n";
-    } elseif ($data['type'] == "grpc") {
-        $config .= "      grpc-opts:\n";
-        $config .= "        grpc-service-name: {$data['serviceName']}\n";
-    }
-    $config .= "      udp: true\n";
-    $config .= "      skip-cert-verify: true\n";
-    return $config;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = $_POST['input'] ?? '';
-
-    if (empty($input)) {
-        echo ".";
-    } else {
-        $lines = explode("\n", trim($input));
-        $allcfgs = "";
-        $GLOBALS['isProxiesPrinted'] = false;
-
-        foreach ($lines as $line) {
-            $base64url = parse_url($line);
-            if ($base64url === false) {
-                $allcfgs .= "Invalid URL provided.\n";
-                continue;
-            }
-
-            $base64url = array_map('urldecode', $base64url);
-
-            if (isset($base64url['scheme']) && $base64url['scheme'] === 'vmess') {
-                $parsedData = parseVmess($base64url);
-            } else {
-                $parsedData = parseUrl($base64url);
-            }
-
-            if (is_array($parsedData)) {
-                $allcfgs .= generateConfig($parsedData);
-            } else {
-                $allcfgs .= $parsedData . "\n";
-            }
-        }
-
-        $file_path = '/etc/neko/proxy_provider/subscription_7.json';
-        file_put_contents($file_path, $allcfgs);
-
-        echo "<h2 style=\"color: #00FFFF;\">转换完成</h2>";
-        echo "<p>配置文件已经成功保存到 <strong>$file_path</strong></p>";
-
-    }
-}
-?>
-
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
 <head>
@@ -724,13 +453,12 @@ function showUpdateAlert() {
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 Mihomo</a>
-        <a href="./singbox_manager.php" class="col btn btn-lg">🗂️ Sing-box</a>
-        <a href="./box.php" class="col btn btn-lg">💹 订阅转换</a>
-        <a href="./filekit.php" class="col btn btn-lg">📦 文件助手</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 文件管理</a>
+        <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
+        <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
     </div>
     <div class="text-center">
-        <h1 style="margin-top: 40px; margin-bottom: 20px;">Mihomo 文件管理</h1>
+        <h1 style="margin-top: 40px; margin-bottom: 20px;">文件管理</h1>
        <div class="card mb-4">
     <div class="card-body">
     <div class="container">
@@ -1184,7 +912,7 @@ function initializeAceEditor() {
        }
 </script>
 
-<h2 class="text-center mt-4 mb-4">订阅管理</h2>
+<h2 class="text-center mt-4 mb-4">Mihomo订阅管理</h2>
 
 <?php if (isset($message) && $message): ?>
     <div class="alert alert-info">
@@ -1229,35 +957,6 @@ function initializeAceEditor() {
 <?php else: ?>
     <p>未找到订阅信息。</p>
 <?php endif; ?>
-    </div>
-</section>
-<div class="container text-center">
-<section id="subscription-management" class="section-gap">
-    <div class="btn-group mt-2 mb-4">
-        <button id="pasteButton" class="btn btn-primary">生成订阅链接网站</button>
-        <button id="base64Button" class="btn btn-primary">Base64 在线编码解码</button>
-    </div>
-
-<section id="base64-conversion" class="section-gap">
-    <h2>Base64 节点信息转换</h2>
-    <form method="post">
-        <div class="form-group">
-            <textarea name="base64_content" id="base64_content" rows="4" class="form-control" placeholder="粘贴 Base64 内容..." required></textarea>
-        </div>
-        <button type="submit" name="convert_base64" class="btn btn-primary btn-custom mt-3"><i>🔄</i> 生成节点信息</button> 
-    </form>
-</section>
-
-<section id="node-conversion" class="section-gap"  style="margin-top: 20px;">
-    <h2>节点转换工具</h2>
-    <form method="post">
-        <div class="form-group">
-            <textarea name="input" rows="10" class="form-control" placeholder="粘贴 ss//vless//vmess//trojan//hysteria2 节点信息..." required></textarea>
-        </div>
-        <button type="submit" name="convert" class="btn btn-primary mt-3"><i>🔄</i> 转换</button> 
-    </form>
-</section>
-
 <script>
     document.getElementById('pasteButton').onclick = function() {
         window.open('https://paste.gg', '_blank');
@@ -1285,3 +984,10 @@ function initializeAceEditor() {
         background-color: #5a32a3; 
     }
 </style>
+
+<div class="help-text mb-3 text-start">
+    <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站/转发防火墙规则都设置为“接受”并启用它们。
+</div>
+<div class="help-text mb-3 text-start">
+    <strong>2. 注意：puernya订阅已合并至Mihomo订阅，并确保使用 puernya 内核。
+</div>
