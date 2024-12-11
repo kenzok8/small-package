@@ -5,23 +5,22 @@ shift 1
 
 do_install() {
   local IMAGE_NAME=`uci get istoredup.@istoredup[0].image_name 2>/dev/null`
-  source /etc/openwrt_release
-  case ${DISTRIB_TARGET} in
-  *x86*)
-    echo "${DISTRIB_TARGET} supported"
-    ;;
-  *rk35xx)
-    echo "${DISTRIB_TARGET} supported"
-    ;;
-  *rk33xx)
-    echo "Unsupported ${DISTRIB_TARGET} NOW"
+  local arch=`uname -m`
+  if [ "$arch" = "x86_64" -o "$arch" = "aarch64" ]; then 
+    echo "${arch} supported"
+  else
+    echo "Unsupported ${arch} NOW"
+    sleep 10
     exit 1
-    ;;
-  *)
-    echo "Unsupported ${DISTRIB_TARGET} NOW"
-    exit 1
-    ;;
-  esac
+  fi
+
+  if [ -z ${IMAGE_NAME} ]; then
+    if [ "$arch" = "x86_64" ]; then
+      IMAGE_NAME=linkease/istoredupx86_64:latest
+    else
+      IMAGE_NAME=linkease/istoreduprk35xx:latest
+    fi
+  fi
 
   echo "docker pull ${IMAGE_NAME}"
   docker pull ${IMAGE_NAME}

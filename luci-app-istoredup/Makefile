@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.1.5-20241129
+PKG_VERSION:=1.1.6-20241211
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for istoredup
@@ -11,6 +11,12 @@ LUCI_DEPENDS:=+lsblk +docker +dockerd +luci-lib-taskd +vmease
 
 define Package/luci-app-istoredup/conffiles
 /etc/config/istoredup
+endef
+
+define Package/luci-app-istoredup/prerm
+#!/bin/sh
+/root/usr/libexec/istorec/istoredup.sh stop
+exit 0
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
