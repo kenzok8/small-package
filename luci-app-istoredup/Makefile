@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.1.6-20241211
+PKG_VERSION:=1.1.7-20241211
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for istoredup
@@ -15,7 +15,7 @@ endef
 
 define Package/luci-app-istoredup/prerm
 #!/bin/sh
-/root/usr/libexec/istorec/istoredup.sh stop
+/usr/libexec/istorec/istoredup.sh stop
 exit 0
 endef
 

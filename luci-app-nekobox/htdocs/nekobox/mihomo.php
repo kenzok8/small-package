@@ -416,6 +416,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $subscription_url = $_POST['subscription_url'];
         $filename = $_POST['filename'];
 
+        if (strpos($subscription_url, '&flag=meta') === false) {
+            $subscription_url .= '&flag=meta';
+        }
+
         if (empty($filename)) {
             $filename = 'config.yaml';
         }
@@ -515,7 +519,6 @@ $current_subscription_url = getSubscriptionUrlFromFile($subscription_file);
                 <li class="list-group-item"><strong>输入订阅链接:</strong> 在文本框中输入您的 Clash 订阅链接。</li>
                 <li class="list-group-item"><strong>输入保存文件名:</strong> 指定保存配置文件的文件名，默认为 "config.yaml"，无需添加后缀。</li>
                 <li class="list-group-item">点击 "更新订阅" 按钮，系统将下载订阅内容，并进行转换和保存。</li>
-                <li class="list-group-item"><strong>只支持Clash格式的订阅。</li>
             </ul>
         </div>
 
