@@ -807,9 +807,14 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
     }
 
     function checkSingboxVersion() {
-        var currentVersion = '<?php echo getSingboxVersion(); ?>';
+        var currentVersion = '<?php echo $singBoxVersion; ?>'; 
         var minVersion = '1.10.0'; 
         
+        if (currentVersion === '未安装') {
+            alert('未检测到 Sing-box 安装，请检查系统配置。');
+            return;
+        }
+
         if (compareVersions(currentVersion, minVersion) >= 0) {
             return;
         }
@@ -830,7 +835,11 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
                 </div>
             </div>
         `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        if (!document.getElementById('versionWarningModal')) {
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
         var modal = new bootstrap.Modal(document.getElementById('versionWarningModal'));
         modal.show();
         
