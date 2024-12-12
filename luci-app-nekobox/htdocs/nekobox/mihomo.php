@@ -19,12 +19,11 @@ function logMessage($message) {
     file_put_contents($log_file, "[$timestamp] $message\n", FILE_APPEND);
 }
 
-function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $backend_url) {
+function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo) {
     $encoded_subscription_url = urlencode($subscription_url);
     $encoded_config_url = urlencode($config_url);
     $encoded_include = urlencode($include);
     $encoded_exclude = urlencode($exclude);
-    
     $final_url = "{$backend_url}target=clash&url={$encoded_subscription_url}&insert=false&config={$encoded_config_url}";
 
     if (!empty($include)) {
@@ -34,7 +33,11 @@ function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $back
         $final_url .= "&exclude={$encoded_exclude}";
     }
 
-    $final_url .= "&emoji=true&list=false&xudp=false&udp=false&tfo=false&expand=true&scv=false&fdn=false&new_name=true";
+    $final_url .= "&emoji=" . (isset($_POST['emoji']) && $_POST['emoji'] === 'true' ? "true" : "false");
+    $final_url .= "&xudp=" . (isset($_POST['xudp']) && $_POST['xudp'] === 'true' ? "true" : "false");
+    $final_url .= "&udp=" . (isset($_POST['udp']) && $_POST['udp'] === 'true' ? "true" : "false");
+    $final_url .= "&tfo=" . (isset($_POST['tfo']) && $_POST['tfo'] === 'true' ? "true" : "false");
+    $final_url .= "&list=false&expand=true&scv=false&fdn=false&new_name=true";
 
     return $final_url;
 }
@@ -454,6 +457,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         '14' => 'https://gist.githubusercontent.com/tindy2013/1fa08640a9088ac8652dbd40c5d2715b/raw/connershua_backtocn.in?',
     ];
 
+    $emoji = isset($_POST['emoji']) ? $_POST['emoji'] === 'true' : true;
+    $udp = isset($_POST['udp']) ? $_POST['udp'] === 'true' : true;
+    $xudp = isset($_POST['xudp']) ? $_POST['xudp'] === 'true' : true;
+    $tfo = isset($_POST['tfo']) ? $_POST['tfo'] === 'true' : true;
+   
     $filename = isset($_POST['filename']) && $_POST['filename'] !== '' ? $_POST['filename'] : 'config.yaml'; 
     $subscription_url = isset($_POST['subscription_url']) ? $_POST['subscription_url'] : ''; 
     $backend_url = $_POST['backend_url'] ?? 'https://url.v1.mk/sub?';
@@ -461,18 +469,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $include = $_POST['include'] ?? ''; 
     $exclude = $_POST['exclude'] ?? '';        
     $template = $templates[$template_key] ?? '';
-    $final_url = buildFinalUrl($subscription_url, $template, $include, $exclude, $backend_url);
 
-    if (saveSubscriptionUrlToFile($final_url, $subscription_file)) {
-        $result = saveSubscriptionContentToYaml($final_url, $filename);
-        $result .= generateShellScript() . "<br>"; 
+    if (isset($_POST['action'])) {
+        if ($_POST['action'] === 'generate_subscription') {
+            $final_url = buildFinalUrl($subscription_url, $template, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo);
 
-        if (isset($_POST['cron_time'])) {
-            $cron_time = $_POST['cron_time'];
-            $cron_result .= setupCronJob($cron_time) . "<br>"; 
+            if (saveSubscriptionUrlToFile($final_url, $subscription_file)) {
+                $result = saveSubscriptionContentToYaml($final_url, $filename);
+                $result .= generateShellScript() . "<br>";
+
+                if (isset($_POST['cron_time'])) {
+                    $cron_time = $_POST['cron_time'];
+                    $cron_result = setupCronJob($cron_time) . "<br>";
+                }
+            } else {
+                echo "保存订阅链接到文件失败。";
+            }
+        } elseif ($_POST['action'] === 'update_cron') {
+            if (isset($_POST['cron_time']) && $_POST['cron_time']) {
+                $cron_time = $_POST['cron_time'];
+                $cron_result = setupCronJob($cron_time);
+            }
         }
-    } else {
-        echo "保存订阅链接到文件失败。";
     }
 }
 
@@ -567,21 +585,47 @@ function getSubscriptionUrlFromFile($file) {
                     <div class="mb-3">
                         <label for="template" class="form-label">选择订阅转换模板:</label>
                         <select class="form-select" id="template" name="template" required>
-                        <option value="1" <?php echo ($_POST['template'] ?? '') === '1' ? 'selected' : ''; ?>>默认</option>
-                        <option value="2" <?php echo ($_POST['template'] ?? '') === '2' ? 'selected' : ''; ?>>ACL_多国家版</option>
-                        <option value="3" <?php echo ($_POST['template'] ?? '') === '3' ? 'selected' : ''; ?>>ACL_全分组版</option>
-                        <option value="4" <?php echo ($_POST['template'] ?? '') === '4' ? 'selected' : ''; ?>>ACL_全分组谷歌版</option>
-                        <option value="5" <?php echo ($_POST['template'] ?? '') === '5' ? 'selected' : ''; ?>>ACL_全分组多模式版</option>
-                        <option value="6" <?php echo ($_POST['template'] ?? '') === '6' ? 'selected' : ''; ?>>ACL_全分组奈飞版</option>
-                        <option value="7" <?php echo ($_POST['template'] ?? '') === '7' ? 'selected' : ''; ?>>附带用于 Clash 的 AdGuard DNS</option>
-                        <option value="8" <?php echo ($_POST['template'] ?? '') === '8' ? 'selected' : ''; ?>>ACL_全分组 Dream修改版</option>
-                        <option value="9" <?php echo ($_POST['template'] ?? '') === '9' ? 'selected' : ''; ?>>ACL_精简分组 Dream修改版</option>
-                        <option value="10" <?php echo ($_POST['template'] ?? '') === '10' ? 'selected' : ''; ?>>emby-TikTok-流媒体分组-去广告加强版</option>
-                        <option value="11" <?php echo ($_POST['template'] ?? '') === '11' ? 'selected' : ''; ?>>lhl77全分组（定期更新）</option>
-                        <option value="12" <?php echo ($_POST['template'] ?? '') === '12' ? 'selected' : ''; ?>>品云专属配置（全地域分组）</option>
-                        <option value="13" <?php echo ($_POST['template'] ?? '') === '13' ? 'selected' : ''; ?>>lhie1 洞主规则完整版</option>
-                        <option value="14" <?php echo ($_POST['template'] ?? '') === '14' ? 'selected' : ''; ?>>神机规则 Inbound 回国专用</option>
+                            <option value="1" <?php echo ($_POST['template'] ?? '') === '1' ? 'selected' : ''; ?>>默认</option>
+                            <option value="2" <?php echo ($_POST['template'] ?? '') === '2' ? 'selected' : ''; ?>>ACL_多国家版</option>
+                            <option value="3" <?php echo ($_POST['template'] ?? '') === '3' ? 'selected' : ''; ?>>ACL_全分组版</option>
+                            <option value="4" <?php echo ($_POST['template'] ?? '') === '4' ? 'selected' : ''; ?>>ACL_全分组谷歌版</option>
+                            <option value="5" <?php echo ($_POST['template'] ?? '') === '5' ? 'selected' : ''; ?>>ACL_全分组多模式版</option>
+                            <option value="6" <?php echo ($_POST['template'] ?? '') === '6' ? 'selected' : ''; ?>>ACL_全分组奈飞版</option>
+                            <option value="7" <?php echo ($_POST['template'] ?? '') === '7' ? 'selected' : ''; ?>>附带用于 Clash 的 AdGuard DNS</option>
+                            <option value="8" <?php echo ($_POST['template'] ?? '') === '8' ? 'selected' : ''; ?>>ACL_全分组 Dream修改版</option>
+                            <option value="9" <?php echo ($_POST['template'] ?? '') === '9' ? 'selected' : ''; ?>>ACL_精简分组 Dream修改版</option>
+                            <option value="10" <?php echo ($_POST['template'] ?? '') === '10' ? 'selected' : ''; ?>>emby-TikTok-流媒体分组-去广告加强版</option>
+                            <option value="11" <?php echo ($_POST['template'] ?? '') === '11' ? 'selected' : ''; ?>>lhl77全分组（定期更新）</option>
+                            <option value="12" <?php echo ($_POST['template'] ?? '') === '12' ? 'selected' : ''; ?>>品云专属配置（全地域分组）</option>
+                            <option value="13" <?php echo ($_POST['template'] ?? '') === '13' ? 'selected' : ''; ?>>lhie1 洞主规则完整版</option>
+                            <option value="14" <?php echo ($_POST['template'] ?? '') === '14' ? 'selected' : ''; ?>>神机规则 Inbound 回国专用</option>
                         </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">选择额外配置选项:</label>
+                        <div class="d-flex flex-wrap align-items-center">
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="emoji" name="emoji" value="true"
+                                       <?php echo isset($_POST['emoji']) && $_POST['emoji'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="emoji">启用 Emoji</label>
+                            </div>
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="udp" name="udp" value="true"
+                                       <?php echo isset($_POST['udp']) && $_POST['udp'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="udp">启用 UDP</label>
+                            </div>
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="xudp" name="xudp" value="true"
+                                       <?php echo isset($_POST['xudp']) && $_POST['xudp'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="xudp">启用 XUDP</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="tfo" name="tfo" value="true"
+                                       <?php echo isset($_POST['tfo']) && $_POST['tfo'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="tfo">启用 TFO</label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -599,18 +643,18 @@ function getSubscriptionUrlFromFile($file) {
                     <button type="submit" class="btn btn-primary" name="action" value="generate_subscription">生成配置文件</button>
                 </form>
             </div>
+        </div>
 
-            <div class="form-section mt-4">
-                <form method="post">
-                    <div class="mb-3">
-                        <label for="cron_time" class="form-label">设置 Cron 时间 (例如: 0 3 * * *):</label>
-                        <input type="text" class="form-control" id="cron_time" name="cron_time"
-                               value="<?php echo htmlspecialchars(isset($_POST['cron_time']) ? $_POST['cron_time'] : '0 3 * * *'); ?>"
-                               placeholder="0 3 * * *">
-                    </div>
-                    <button type="submit" class="btn btn-primary" name="action" value="update_cron">更新 Cron 作业</button>
-                </form>
-            </div>
+        <div class="form-section mt-4">
+            <form method="post">
+                <div class="mb-3">
+                    <label for="cron_time" class="form-label">设置 Cron 时间 (例如: 0 3 * * *):</label>
+                    <input type="text" class="form-control" id="cron_time" name="cron_time"
+                           value="<?php echo htmlspecialchars(isset($_POST['cron_time']) ? $_POST['cron_time'] : '0 3 * * *'); ?>"
+                           placeholder="0 3 * * *">
+                </div>
+                <button type="submit" class="btn btn-primary" name="action" value="update_cron">更新 Cron 作业</button>
+            </form>
         </div>
 
         <div class="help mt-4">
@@ -643,18 +687,30 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('include'),
         document.getElementById('exclude'),
         document.getElementById('cron_time'),
+        document.getElementById('emoji'),  
+        document.getElementById('udp'),   
+        document.getElementById('xudp'),   
+        document.getElementById('tfo')    
     ];
 
     formInputs.forEach(input => {
         if (input) {
-            input.value = localStorage.getItem(input.id) || input.value;
+            if (input.type === 'checkbox') {
+                input.checked = localStorage.getItem(input.id) === 'true'; 
+            } else {
+                input.value = localStorage.getItem(input.id) || input.value;
+            }
         }
     });
 
     function saveSelections() {
         formInputs.forEach(input => {
             if (input) {
-                localStorage.setItem(input.id, input.value);
+                if (input.type === 'checkbox') {
+                    localStorage.setItem(input.id, input.checked);  
+                } else {
+                    localStorage.setItem(input.id, input.value);    
+                }
             }
         });
     }
@@ -669,5 +725,5 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
-
 </script>
+
