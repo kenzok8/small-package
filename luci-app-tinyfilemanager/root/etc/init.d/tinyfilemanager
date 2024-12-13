@@ -28,6 +28,7 @@ fi
 
 validate_section() {
 	uci_load_validate $CONFIG_NAME $TYPEDSECTION "$1" "$2" \
+		'defconf:string' \
 		'use_auth:bool:0' \
 		'auth_users:list(string)' \
 		'readonly_users:list(string)' \
@@ -43,12 +44,14 @@ validate_section() {
 }
 
 init_config() {
-	sed -n '/\/\/ --- EDIT BELOW CONFIGURATION CAREFULLY ---/,/\/\/ --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---/{ \
-		s|// --- EDIT BELOW CONFIGURATION CAREFULLY ---|\<?php|; \
+	local defconf="$(sed -n '/^\/\/Default Configuration/,/^$/p' "$WORKDIR/index.php" | tr '\n' '|' | sed 's,|,\\n,g')"
+
+	sed -n "/\/\/ --- EDIT BELOW CONFIGURATION CAREFULLY ---/,/\/\/ --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---/{ \
+		s|// --- EDIT BELOW CONFIGURATION CAREFULLY ---|\<?php\n$defconf|; \
 		s|// --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---|?\>|; \
 		/\/\/ if User has the external config file, try to use it to override the default config above/,/^}/d; \
 		p \
-	}' "$WORKDIR/index.php" > "$1"
+	}" "$WORKDIR/index.php" > "$1"
 
 	sed -Ei "s|(^\\\$root_path =)(.+)|\1 \\\$_SERVER['DOCUMENT_ROOT'].'/$HOMEPATH';|; \
 			 s|(^\\\$root_url =)(.+)|\1 '$HOMEPATH';|; \
@@ -67,6 +70,7 @@ apply_config() {
 
 	local exclude_items=$(echo "$exclude_items"|sed -E "s/('[^']+'|[^' ]+)/'\1'/g; s|''|'|g; s|' '|',\\\n    '|g; s|^|   |")
 
+sed -Ei "s|^\\\$CONFIG\s*=.*|\$CONFIG = '$defconf'\;|" "$_conf"
 [ "$use_auth" -eq "1" ] && sed -Ei "s|(^\\\$use_auth =)(.+)|\1 true;|" "$_conf" || sed -Ei "s|(^\\\$use_auth =)(.+)|\1 false;|" "$_conf"
 [ "$global_readonly" -eq "1" ] && sed -Ei "s|(^\\\$global_readonly =)(.+)|\1 true;|" "$_conf" || sed -Ei "s|(^\\\$global_readonly =)(.+)|\1 false;|" "$_conf"
 sed -Ei "/^\\\$auth_users /,/\);/{/^ /d}" "$_conf" && sed -Ei "/^\\\$auth_users /a\ $auth_users" "$_conf"
@@ -97,6 +101,13 @@ start_service() {
 
 	config_load "$CONFIG_NAME"
 	config_foreach validate_section "$TYPEDSECTION" apply_config
+
+	# CONFIG save
+	procd_open_instance "config-save"
+	procd_set_param command "/usr/libexec/tinyfilemanager-config-save"
+	procd_set_param env CONF=$CONF
+	procd_set_param file "$CONF"
+	procd_close_instance
 }
 
 service_triggers() {

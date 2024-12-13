@@ -1,0 +1,7 @@
+#!/bin/sh
+
+CONFIG_NAME='tinyfilemanager'
+eval "$(sed -En '/^\$CONFIG\s*=\s*/{s|^\$CONFIG\s*=\s*|CONFIG=|p}' $CONF)"
+
+uci set $CONFIG_NAME.@$TYPEDSECTION[0].defconf="$CONFIG"
+[ -z "$(uci changes $CONFIG_NAME)" ] || uci commit $CONFIG_NAME
