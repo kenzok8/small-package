@@ -97,17 +97,18 @@ start_service() {
 	mkdir /var/etc 2>/dev/null
 	touch "$CONF"
 	ln -s "$CONF" "$WORKDIR/config.php" 2>/dev/null
-	init_config "$CONF"
-
-	config_load "$CONFIG_NAME"
-	config_foreach validate_section "$TYPEDSECTION" apply_config
 
 	# CONFIG save
 	procd_open_instance "config-save"
 	procd_set_param command "/usr/libexec/tinyfilemanager-config-save"
 	procd_set_param env CONF=$CONF
-	procd_set_param file "$CONF"
+	procd_set_param file $CONF
+	procd_set_param respawn
 	procd_close_instance
+
+	init_config "$CONF"
+	config_load "$CONFIG_NAME"
+	config_foreach validate_section "$TYPEDSECTION" apply_config
 }
 
 service_triggers() {
@@ -123,8 +124,4 @@ check() {
 		| sed -E 's|",||g; s|^.+"([^"]+)|\1|g' \
 	> "$VARDIR/releaseslist"
 	[ "$?" != 0 ] || sed -i 'i\master' "$VARDIR/releaseslist"
-}
-
-restart() {
-	start
 }
