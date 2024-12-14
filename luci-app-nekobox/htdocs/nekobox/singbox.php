@@ -53,9 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['setCron'])) {
 
 <?php
 $shellScriptPath = '/etc/neko/core/update_subscription.sh';
-$DATA_FILE = '/etc/neko/subscription_data.txt'; 
 $LOG_FILE = '/tmp/update_subscription.log'; 
-$SUBSCRIBE_URL = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['subscribeUrl'])) {
@@ -73,20 +71,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $shellScriptContent = <<<EOL
 #!/bin/sh
 
-DATA_FILE="/etc/neko/subscription_data.txt"
-CONFIG_DIR="/etc/neko/config"
 LOG_FILE="/tmp/update_subscription.log"
-TEMPLATE_URL="https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json"
-SUBSCRIBE_URL=$(grep "订阅链接地址:" "$DATA_FILE" | tail -1 | sed 's/^[^|]*| //g' | cut -d ':' -f2- | tr -d '\n\r' | xargs)
+SUBSCRIBE_URL=$(cat /etc/neko/tmp/subscription.txt | tr -d '\n\r')
 
 if [ -z "\$SUBSCRIBE_URL" ]; then
   echo "\$(date): 订阅链接地址为空或提取失败。" >> "\$LOG_FILE"
   exit 1
 fi
 
-COMPLETE_URL="https://sing-box-subscribe-doraemon.vercel.app/config/\${SUBSCRIBE_URL}&file=\${TEMPLATE_URL}"
-echo "\$(date): 生成的订阅链接: \$COMPLETE_URL" >> "\$LOG_FILE"
+echo "\$(date): 使用的订阅链接: \$SUBSCRIBE_URL" >> "\$LOG_FILE"
 
+CONFIG_DIR="/etc/neko/config"
 if [ ! -d "\$CONFIG_DIR" ]; then
   mkdir -p "\$CONFIG_DIR"
   if [ \$? -ne 0 ]; then
@@ -96,7 +91,7 @@ if [ ! -d "\$CONFIG_DIR" ]; then
 fi
 
 CONFIG_FILE="\$CONFIG_DIR/sing-box.json"
-wget -O "\$CONFIG_FILE" "\$COMPLETE_URL" >> "\$LOG_FILE" 2>&1
+wget -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >> "\$LOG_FILE" 2>&1
 
 if [ \$? -eq 0 ]; then
   echo "\$(date): 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
@@ -151,14 +146,15 @@ EOL;
         <a href="./mihomo_manager.php" class="col btn btn-lg">📂 文件管理</a>
         <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
         <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
+        <a href="./subscription.php" class="col btn btn-lg">💹 Singbox</a>
 <div class="outer-container">
     <div class="container">
-        <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板</h1>
+        <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板 一</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
             <p>
                   请选择一个模板以生成配置文件：根据订阅节点信息选择相应的模板。若选择带有地区分组的模板，请确保您的节点包含以下线路。挂梯子更新！</p>
-                 <strong>说明：</strong>定时任务为自动更新操作，默认使用 6 号模板生成配置文件，文件名为 <strong>sing-box.json</strong>。
+                 <strong>说明：</strong>定时任务为自动更新操作，文件名为 <strong>sing-box.json</strong>。
             </p>
             <ul>
                 <li><strong>默认模板 1</strong>：无地区  无分组 通用。</li>
@@ -171,7 +167,7 @@ EOL;
         </div>
         <form method="post" action="">
             <div class="mb-3">
-                <label for="subscribeUrl" class="form-label">订阅链接地址:</label>
+                <label for="subscribeUrl" class="form-label">订阅链接地址</label>
                 <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($lastSubscribeUrl); ?>" placeholder="输入订阅链接（多个链接用  |  分隔）" required>
             </div>
             <div class="mb-3">
@@ -195,20 +191,20 @@ EOL;
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate4" name="defaultTemplate" value="4">
-                        <label class="form-check-label" for="useDefaultTemplate3">默认模板 4</label>
+                        <label class="form-check-label" for="useDefaultTemplate4">默认模板 4</label>
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate5" name="defaultTemplate" value="5">
-                        <label class="form-check-label" for="useDefaultTemplate3">默认模板 5</label>
+                        <label class="form-check-label" for="useDefaultTemplate5">默认模板 5</label>
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate6" name="defaultTemplate" value="6">
-                        <label class="form-check-label" for="useDefaultTemplate3">默认模板 6</label>
+                        <label class="form-check-label" for="useDefaultTemplate6">默认模板 6</label>
                     </div>
                 </div>
                 <div class="mt-3">
                     <input type="radio" class="form-check-input" id="useCustomTemplate" name="templateOption" value="custom">
-                    <label class="form-check-label" for="useCustomTemplate">使用自定义模板URL:</label>
+                    <label class="form-check-label" for="useCustomTemplate">使用自定义模板URL</label>
                     <input type="text" class="form-control" id="customTemplateUrl" name="customTemplateUrl" placeholder="输入自定义模板URL">
                 </div>
             </fieldset>
@@ -268,6 +264,7 @@ EOL;
         $dataFilePath = '/etc/neko/subscription_data.txt';
         $configFilePath = '/etc/neko/config/sing-box.json';
         $downloadedContent = ''; 
+        $fixedFileName = 'subscription.txt'; 
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
             $subscribeUrl = trim($_POST['subscribeUrl']);
@@ -332,12 +329,18 @@ EOL;
                 if ($downloadedContent === false) {
                     $logMessages[] = "无法读取下载的文件内容";
                 } else {
+                    $tmpFileSavePath = '/etc/neko/tmp/' . $fixedFileName;  
+                    if (file_put_contents($tmpFileSavePath, $completeSubscribeUrl) === false) {
+                        $logMessages[] = "无法保存订阅URL到文件: " . $tmpFileSavePath;
+                    } else {
+                        $logMessages[] = "订阅URL已成功保存到文件: " . $tmpFileSavePath;
+                    }
+
                     $configFilePath = '/etc/neko/config/' . $customFileName; 
                     if (file_put_contents($configFilePath, $downloadedContent) === false) {
                         $logMessages[] = "无法保存修改后的内容到: " . $configFilePath;
                     } else {
                         $logMessages[] = "配置文件生成并保存成功: " . $configFilePath;
-                        $logMessages[] = "生成并下载的订阅URL: <a href='" . htmlspecialchars($completeSubscribeUrl) . "' target='_blank'>" . htmlspecialchars($completeSubscribeUrl) . "</a>";
                     }
                 }
             }
@@ -451,5 +454,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+      <footer class="text-center">
+    <p><?php echo $footer ?></p>
+</footer>
 </body>
 </html>

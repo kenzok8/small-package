@@ -456,6 +456,7 @@ function showUpdateAlert() {
         <a href="./mihomo_manager.php" class="col btn btn-lg">📂 文件管理</a>
         <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
         <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
+        <a href="./subscription.php" class="col btn btn-lg">💹 Singbox</a>
     </div>
     <div class="text-center">
         <h1 style="margin-top: 40px; margin-bottom: 20px;">文件管理</h1>
@@ -991,3 +992,6 @@ function initializeAceEditor() {
 <div class="help-text mb-3 text-start">
     <strong>2. 注意：puernya订阅已合并至Mihomo订阅，并确保使用 puernya 内核。
 </div>
+      <footer class="text-center">
+    <p><?php echo $footer ?></p>
+</footer>

@@ -2,10 +2,9 @@
 ob_start();
 include './cfg.php';
 ini_set('memory_limit', '256M');
-
-$subscription_file = '/etc/neko/subscription.txt'; 
+$result = $result ?? ''; 
+$subscription_file = '/etc/neko/ singbox.txt'; 
 $download_path = '/etc/neko/config/'; 
-$sh_script_path = '/etc/neko/core/update_config.sh'; 
 $log_file = '/var/log/neko_update.log'; 
 
 $current_subscription_url = ''; 
@@ -19,12 +18,12 @@ function logMessage($message) {
     file_put_contents($log_file, "[$timestamp] $message\n", FILE_APPEND);
 }
 
-function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo) {
+function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo, $ipv6) {
     $encoded_subscription_url = urlencode($subscription_url);
     $encoded_config_url = urlencode($config_url);
     $encoded_include = urlencode($include);
     $encoded_exclude = urlencode($exclude);
-    $final_url = "{$backend_url}target=clash&url={$encoded_subscription_url}&insert=false&config={$encoded_config_url}";
+    $final_url = "{$backend_url}target=singbox&url={$encoded_subscription_url}&insert=false&config={$encoded_config_url}";
 
     if (!empty($include)) {
         $final_url .= "&include={$encoded_include}";
@@ -37,7 +36,11 @@ function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $back
     $final_url .= "&xudp=" . (isset($_POST['xudp']) && $_POST['xudp'] === 'true' ? "true" : "false");
     $final_url .= "&udp=" . (isset($_POST['udp']) && $_POST['udp'] === 'true' ? "true" : "false");
     $final_url .= "&tfo=" . (isset($_POST['tfo']) && $_POST['tfo'] === 'true' ? "true" : "false");
-    $final_url .= "&list=false&expand=true&scv=false&fdn=false&new_name=true";
+    $final_url .= "&list=false&expand=true&scv=false&fdn=false";
+
+    if ($ipv6 === 'true') {
+        $final_url .= "&singbox.ipv6=1";
+    }
 
     return $final_url;
 }
@@ -49,144 +52,95 @@ function saveSubscriptionUrlToFile($url, $file) {
 }
 
 function transformContent($content) {
-    $new_config_start = "redir-port: 7892
-port: 7890
-socks-port: 7891
-mixed-port: 7893
-mode: rule
-log-level: info
-allow-lan: true
-unified-delay: true
-external-controller: 0.0.0.0:9090
-secret: Akun
-bind-address: 0.0.0.0
-external-ui: ui
-tproxy-port: 7895
-tcp-concurrent: true    
-enable-process: true
-find-process-mode: always
-ipv6: true
-experimental:
-  ignore-resolve-fail: true
-  sniff-tls-sni: true
-  tracing: true
-hosts:
-  \"localhost\": 127.0.0.1
-profile:
-  store-selected: true
-  store-fake-ip: true
-sniffer:
-  enable: true
-  sniff:
-    http: { ports: [1-442, 444-8442, 8444-65535], override-destination: true }
-    tls: { ports: [1-79, 81-8079, 8081-65535], override-destination: true }
-  force-domain:
-      - \"+.v2ex.com\"
-      - www.google.com
-      - google.com
-  skip-domain:
-      - Mijia Cloud
-      - dlg.io.mi.com
-  sniffing:
-    - tls
-    - http
-  port-whitelist:
-    - \"80\"
-    - \"443\"
-tun:
-  enable: true
-  prefer-h3: true
-  listen: 0.0.0.0:53
-  stack: gvisor
-  dns-hijack:
-     - \"any:53\"
-     - \"tcp://any:53\"
-  auto-redir: true
-  auto-route: true
-  auto-detect-interface: true
-dns:
-  enable: true
-  ipv6: true
-  default-nameserver:
-    - '1.1.1.1'
-    - '8.8.8.8'
-  enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
-  fake-ip-filter:
-    - 'stun.*.*'
-    - 'stun.*.*.*'
-    - '+.stun.*.*'
-    - '+.stun.*.*.*'
-    - '+.stun.*.*.*.*'
-    - '+.stun.*.*.*.*.*'
-    - '*.lan'
-    - '+.msftncsi.com'
-    - msftconnecttest.com
-    - 'time?.*.com'
-    - 'time.*.com'
-    - 'time.*.gov'
-    - 'time.*.apple.com'
-    - time-ios.apple.com
-    - 'time1.*.com'
-    - 'time2.*.com'
-    - 'time3.*.com'
-    - 'time4.*.com'
-    - 'time5.*.com'
-    - 'time6.*.com'
-    - 'time7.*.com'
-    - 'ntp?.*.com'
-    - 'ntp.*.com'
-    - 'ntp1.*.com'
-    - 'ntp2.*.com'
-    - 'ntp3.*.com'
-    - 'ntp4.*.com'
-    - 'ntp5.*.com'
-    - 'ntp6.*.com'
-    - 'ntp7.*.com'
-    - '+.pool.ntp.org'
-    - '+.ipv6.microsoft.com'
-    - speedtest.cros.wr.pvp.net
-    - network-test.debian.org
-    - detectportal.firefox.com
-    - cable.auth.com
-    - miwifi.com
-    - routerlogin.com
-    - routerlogin.net
-    - tendawifi.com
-    - tendawifi.net
-    - tplinklogin.net
-    - tplinkwifi.net
-    - '*.xiami.com'
-    - tplinkrepeater.net
-    - router.asus.com
-    - '*.*.*.srv.nintendo.net'
-    - '*.*.stun.playstation.net'
-    - '*.openwrt.pool.ntp.org'
-    - resolver1.opendns.com
-    - 'GC._msDCS.*.*'
-    - 'DC._msDCS.*.*'
-    - 'PDC._msDCS.*.*'
-  use-hosts: true
-  nameserver:
-    - '8.8.4.4'
-    - '1.0.0.1'
-    - \"https://1.0.0.1/dns-query\"
-    - \"https://8.8.4.4/dns-query\"
-";
-
-    $parts = explode('proxies:', $content, 2);
-    if (count($parts) == 2) {
-        return $new_config_start . "\nproxies:" . $parts[1];
-    } else {
-        return $content;
+    $parsedData = json_decode($content, true);
+    if ($parsedData === null) {
+        logMessage("无法解析内容为 JSON 格式");
+        return "无法解析内容为 JSON 格式";
     }
+
+    if (isset($parsedData['inbounds'])) {
+        $newInbounds = [];
+
+        foreach ($parsedData['inbounds'] as $inbound) {
+            if (isset($inbound['type']) && $inbound['type'] === 'mixed' && $inbound['tag'] === 'mixed-in') {
+                if ($inbound['listen_port'] !== 2080) {
+                    $newInbounds[] = $inbound;
+                }
+            } elseif (isset($inbound['type']) && $inbound['type'] === 'tun') {
+                continue;
+            }
+        }
+
+        $newInbounds[] = [
+            "domain_strategy" => "prefer_ipv4",
+            "listen" => "127.0.0.1",
+            "listen_port" => 2334,
+            "sniff" => true,
+            "sniff_override_destination" => true,
+            "tag" => "mixed-in",
+            "type" => "mixed",
+            "users" => []
+        ];
+
+        $newInbounds[] = [
+            "tag" => "tun",
+            "type" => "tun",
+            "address" => [
+                "172.19.0.1/30",
+                "fdfe:dcba:9876::1/126"
+            ],
+            "route_address" => [
+                "0.0.0.0/1",
+                "128.0.0.0/1",
+                "::/1",
+                "8000::/1"
+            ],
+            "route_exclude_address" => [
+                "192.168.0.0/16",
+                "fc00::/7"
+            ],
+            "stack" => "system",
+            "auto_route" => true,
+            "strict_route" => true,
+            "sniff" => true,
+            "platform" => [
+                "http_proxy" => [
+                    "enabled" => true,
+                    "server" => "0.0.0.0",
+                    "server_port" => 1082
+                ]
+            ]
+        ];
+
+        $newInbounds[] = [
+            "tag" => "mixed",
+            "type" => "mixed",
+            "listen" => "0.0.0.0",
+            "listen_port" => 1082,
+            "sniff" => true
+        ];
+
+        $parsedData['inbounds'] = $newInbounds;
+    }
+
+    if (isset($parsedData['experimental']['clash_api'])) {
+        $parsedData['experimental']['clash_api'] = [
+            "external_ui" => "/etc/neko/ui/",
+            "external_controller" => "0.0.0.0:9090",
+            "secret" => "Akun"
+        ];
+    }
+
+    $fileContent = json_encode($parsedData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    return $fileContent;
 }
 
 function saveSubscriptionContentToYaml($url, $filename) {
     global $download_path;
 
-    if (pathinfo($filename, PATHINFO_EXTENSION) !== 'yaml') {
-        $filename .= '.yaml';
+    if (pathinfo($filename, PATHINFO_EXTENSION) !== 'json') {
+        $filename .= '.json';
     }
 
     if (strpbrk($filename, "!@#$%^&*()+=[]\\\';,/{}|\":<>?") !== false) {
@@ -233,8 +187,7 @@ function saveSubscriptionContentToYaml($url, $filename) {
         return $message;
     }
 
-    $decoded_data = (base64_decode($subscription_data, true) !== false) ? base64_decode($subscription_data) : $subscription_data;
-    $transformed_data = transformContent($decoded_data);
+    $transformed_data = transformContent($subscription_data);
 
     $file_path = $download_path . $filename;
     $success = file_put_contents($file_path, $transformed_data) !== false;
@@ -242,219 +195,6 @@ function saveSubscriptionContentToYaml($url, $filename) {
     logMessage($message);
     return $message;
 }
-
-function generateShellScript() {
-    global $subscription_file, $download_path, $sh_script_path;
-
-    $sh_script_content = <<<EOD
-#!/bin/bash
-
-SUBSCRIPTION_FILE='$subscription_file'
-DOWNLOAD_PATH='$download_path'
-DEST_PATH='/etc/neko/config/config.yaml'
-
-if [ ! -f "\$SUBSCRIPTION_FILE" ]; then
-    echo "未找到订阅文件: \$SUBSCRIPTION_FILE"
-    exit 1
-fi
-
-SUBSCRIPTION_URL=\$(cat "\$SUBSCRIPTION_FILE")
-
-subscription_data=\$(wget -qO- "\$SUBSCRIPTION_URL")
-if [ -z "\$subscription_data" ]; then
-    echo "无法获取订阅内容，请检查订阅链接。"
-    exit 1
-fi
-
-subscription_data=\$(echo "\$subscription_data" | sed '/port: 7890/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/socks-port: 7891/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/allow-lan: true/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/mode: Rule/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/log-level: info/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/external-controller: :9090/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/dns:/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/enabled: true/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/nameserver:/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/119.29.29.29/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/223.5.5.5/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/fallback:/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/8.8.8.8/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/8.8.4.4/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/tls:\/\/1.0.0.1:853/d')
-subscription_data=\$(echo "\$subscription_data" | sed '/- tls:\/\/dns.google:853/d')
-
-new_config_start="redir-port: 7892
-port: 7890
-socks-port: 7891
-mixed-port: 7893
-mode: rule
-log-level: info
-allow-lan: true
-unified-delay: true
-external-controller: 0.0.0.0:9090
-secret: Akun
-bind-address: 0.0.0.0
-external-ui: ui
-tproxy-port: 7895
-tcp-concurrent: true
-enable-process: true
-find-process-mode: always
-ipv6: true
-experimental:
-  ignore-resolve-fail: true
-  sniff-tls-sni: true
-  tracing: true
-hosts:
-  \"localhost\": 127.0.0.1
-profile:
-  store-selected: true
-  store-fake-ip: true
-sniffer:
-  enable: true
-  sniff:
-    http: { ports: [1-442, 444-8442, 8444-65535], override-destination: true }
-    tls: { ports: [1-79, 81-8079, 8081-65535], override-destination: true }
-  force-domain:
-      - \"+.v2ex.com\"
-      - www.google.com
-      - google.com
-  skip-domain:
-      - Mijia Cloud
-      - dlg.io.mi.com
-  sniffing:
-    - tls
-    - http
-  port-whitelist:
-    - \"80\"
-    - \"443\"
-tun:
-  enable: true
-  prefer-h3: true
-  listen: 0.0.0.0:53
-  stack: gvisor
-  dns-hijack:
-     - \"any:53\"
-     - \"tcp://any:53\"
-  auto-redir: true
-  auto-route: true
-  auto-detect-interface: true
-dns:
-  enable: true
-  ipv6: true
-  default-nameserver:
-    - '1.1.1.1'
-    - '8.8.8.8'
-  enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
-  fake-ip-filter:
-    - 'stun.*.*'
-    - 'stun.*.*.*'
-    - '+.stun.*.*'
-    - '+.stun.*.*.*'
-    - '+.stun.*.*.*.*'
-    - '+.stun.*.*.*.*.*'
-    - '*.lan'
-    - '+.msftncsi.com'
-    - msftconnecttest.com
-    - 'time?.*.com'
-    - 'time.*.com'
-    - 'time.*.gov'
-    - 'time.*.apple.com'
-    - time-ios.apple.com
-    - 'time1.*.com'
-    - 'time2.*.com'
-    - 'time3.*.com'
-    - 'time4.*.com'
-    - 'time5.*.com'
-    - 'time6.*.com'
-    - 'time7.*.com'
-    - 'ntp?.*.com'
-    - 'ntp.*.com'
-    - 'ntp1.*.com'
-    - 'ntp2.*.com'
-    - 'ntp3.*.com'
-    - 'ntp4.*.com'
-    - 'ntp5.*.com'
-    - 'ntp6.*.com'
-    - 'ntp7.*.com'
-    - '+.pool.ntp.org'
-    - '+.ipv6.microsoft.com'
-    - speedtest.cros.wr.pvp.net
-    - network-test.debian.org
-    - detectportal.firefox.com
-    - cable.auth.com
-    - miwifi.com
-    - routerlogin.com
-    - routerlogin.net
-    - tendawifi.com
-    - tendawifi.net
-    - tplinklogin.net
-    - tplinkwifi.net
-    - '*.xiami.com'
-    - tplinkrepeater.net
-    - router.asus.com
-    - '*.*.*.srv.nintendo.net'
-    - '*.*.stun.playstation.net'
-    - '*.openwrt.pool.ntp.org'
-    - resolver1.opendns.com
-    - 'GC._msDCS.*.*'
-    - 'DC._msDCS.*.*'
-    - 'PDC._msDCS.*.*'
-  use-hosts: true
-  nameserver:
-    - '8.8.4.4'
-    - '1.0.0.1'
-    - \"https://1.0.0.1/dns-query\"
-    - \"https://8.8.4.4/dns-query\"
-"
-
-echo -e "\$new_config_start\$subscription_data" > "\$DOWNLOAD_PATH/config.yaml"
-
-mv "\$DOWNLOAD_PATH/config.yaml" "\$DEST_PATH"
-
-if [ \$? -eq 0 ]; then
-    echo "配置文件已成功更新并移动到 \$DEST_PATH"
-else
-    echo "配置文件移动失败"
-    exit 1
-fi
-EOD;
-
-    $success = file_put_contents($sh_script_path, $sh_script_content) !== false;
-    logMessage($success ? "Shell 脚本已成功创建并赋予执行权限。" : "无法创建 Shell 脚本文件。");
-    if ($success) {
-        shell_exec("chmod +x $sh_script_path");
-    }
-    return $success ? "Shell 脚本已成功创建并赋予执行权限。" : "无法创建 Shell 脚本文件。";
-}
-
-function setupCronJob($cron_time) {
-    global $sh_script_path;
-    $cron_entry = "$cron_time $sh_script_path\n";
-    $current_cron = shell_exec('crontab -l 2>/dev/null');
-
-    if (empty($current_cron)) {
-        $updated_cron = $cron_entry;
-    } else {
-        $updated_cron = preg_replace('/.*' . preg_quote($sh_script_path, '/') . '/m', $cron_entry, $current_cron);
-        if ($updated_cron == $current_cron) {
-            $updated_cron .= $cron_entry;
-        }
-    }
-
-    $success = file_put_contents('/tmp/cron.txt', $updated_cron) !== false;
-    if ($success) {
-        shell_exec('crontab /tmp/cron.txt');
-        logMessage("Cron 作业已成功设置为 $cron_time 运行。");
-        return "Cron 作业已成功设置为 $cron_time 运行。";
-    } else {
-        logMessage("无法写入临时 Cron 文件。");
-        return "无法写入临时 Cron 文件。";
-    }
-}
-
-$result = '';
-$cron_result = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $templates = [
@@ -491,8 +231,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $udp = isset($_POST['udp']) ? $_POST['udp'] === 'true' : true;
     $xudp = isset($_POST['xudp']) ? $_POST['xudp'] === 'true' : true;
     $tfo = isset($_POST['tfo']) ? $_POST['tfo'] === 'true' : true;
-   
-    $filename = isset($_POST['filename']) && $_POST['filename'] !== '' ? $_POST['filename'] : 'config.yaml'; 
+    $ipv6 = isset($_POST['ipv6']) ? $_POST['ipv6'] : 'false';
+
+    $filename = isset($_POST['filename']) && $_POST['filename'] !== '' ? $_POST['filename'] : 'config.json'; 
     $subscription_url = isset($_POST['subscription_url']) ? $_POST['subscription_url'] : ''; 
     $backend_url = $_POST['backend_url'] ?? 'https://url.v1.mk/sub?';
     $template_key = $_POST['template'] ?? ''; 
@@ -500,39 +241,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $exclude = $_POST['exclude'] ?? '';        
     $template = $templates[$template_key] ?? '';
 
-    if (isset($_POST['action'])) {
-        if ($_POST['action'] === 'generate_subscription') {
-            $final_url = buildFinalUrl($subscription_url, $template, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo);
+    if (isset($_POST['action']) && $_POST['action'] === 'generate_subscription') {
+        $final_url = buildFinalUrl($subscription_url, $template, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo, $ipv6);
 
-            if (saveSubscriptionUrlToFile($final_url, $subscription_file)) {
-                $result = saveSubscriptionContentToYaml($final_url, $filename);
-                $result .= generateShellScript() . "<br>";
+        if (saveSubscriptionUrlToFile($final_url, $subscription_file)) {
+            $result = saveSubscriptionContentToYaml($final_url, $filename);
+        } else {
+            $result = "保存订阅链接到文件失败。";
+        }
+    }
 
-                if (isset($_POST['cron_time'])) {
-                    $cron_time = $_POST['cron_time'];
-                    $cron_result = setupCronJob($cron_time) . "<br>";
-                }
-            } else {
-                echo "保存订阅链接到文件失败。";
-            }
-        } elseif ($_POST['action'] === 'update_cron') {
-            if (isset($_POST['cron_time']) && $_POST['cron_time']) {
-                $cron_time = $_POST['cron_time'];
-                $cron_result = setupCronJob($cron_time);
-            }
+    if (isset($result)) {
+        echo nl2br(htmlspecialchars($result)); 
+    }
+
+    $download_option = $_POST['download_option'] ?? 'none';
+    if (isset($_POST['download_action']) && $_POST['download_action'] === 'download_files') {
+        if ($download_option === 'geoip') {
+            $geoip_url = "https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db";
+            $geoip_path = '/www/nekobox/geoip.db';
+            echo downloadFileWithWget($geoip_url, $geoip_path); 
+        } elseif ($download_option === 'geosite') {
+            $geosite_url = "https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db";
+            $geosite_path = '/www/nekobox/geosite.db';
+            echo downloadFileWithWget($geosite_url, $geosite_path); 
         }
     }
 }
 
-function getSubscriptionUrlFromFile($file) {
-    if (file_exists($file)) {
-        return file_get_contents($file);
+function downloadFileWithWget($url, $path) {
+    $command = "wget -q --no-check-certificate -O " . escapeshellarg($path) . " " . escapeshellarg($url);
+    exec($command, $output, $return_var);
+    
+    if ($return_var === 0) {
+        return "文件下载成功: $path<br>";
+    } else {
+        return "文件下载失败: $path<br>";
     }
-    return '';
 }
-
 ?>
-
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
 <head>
@@ -568,7 +315,7 @@ function getSubscriptionUrlFromFile($file) {
         <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
         <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
         <a href="./subscription.php" class="col btn btn-lg">💹 Singbox</a>
-        <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;">Mihomo 订阅转换模板</h1>
+        <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;">Sing-box 订阅转换模板 二</h1>
 
         <div class="col-12">
             <div class="form-section">
@@ -576,14 +323,14 @@ function getSubscriptionUrlFromFile($file) {
                     <div class="mb-3">
                         <label for="subscription_url" class="form-label">输入订阅链接</label>
                         <input type="text" class="form-control" id="subscription_url" name="subscription_url"
-                               value="<?php echo htmlspecialchars($current_subscription_url); ?>" placeholder="支持各种订阅链接或单节点链接，多个链接用 | 分隔"  required>
+                               value="<?php echo htmlspecialchars($current_subscription_url); ?>"placeholder="支持各种订阅链接或单节点链接，多个链接用 | 分隔" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="filename" class="form-label">自定义文件名 (默认: config.yaml)</label>
+                        <label for="filename" class="form-label">自定义文件名 (默认: config.json)</label>
                         <input type="text" class="form-control" id="filename" name="filename"
                                value="<?php echo htmlspecialchars(isset($_POST['filename']) ? $_POST['filename'] : ''); ?>"
-                               placeholder="config.yaml">
+                               placeholder="config.json">
                     </div>
 
                     <div class="mb-3">
@@ -664,10 +411,15 @@ function getSubscriptionUrlFromFile($file) {
                                        <?php echo isset($_POST['xudp']) && $_POST['xudp'] == 'true' ? 'checked' : ''; ?>>
                                 <label class="form-check-label" for="xudp">启用 XUDP</label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check me-3">
                                 <input type="checkbox" class="form-check-input" id="tfo" name="tfo" value="true"
                                        <?php echo isset($_POST['tfo']) && $_POST['tfo'] == 'true' ? 'checked' : ''; ?>>
                                 <label class="form-check-label" for="tfo">启用 TFO</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="ipv6" name="ipv6" value="true"
+                                       <?php echo isset($_POST['ipv6']) && $_POST['ipv6'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="ipv6">启用 IPv6</label>
                             </div>
                         </div>
                     </div>
@@ -684,32 +436,24 @@ function getSubscriptionUrlFromFile($file) {
                                value="<?php echo htmlspecialchars($_POST['exclude'] ?? ''); ?>" placeholder="要排除的节点，支持正则 | 分隔">
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label" for="download_option">选择要下载的数据库</label>
+                        <select class="form-select" id="download_option" name="download_option">
+                               <option value="geoip" <?php echo isset($_POST['download_option']) && $_POST['download_option'] === 'geoip' ? 'selected' : ''; ?>>GeoIP 数据库 (geoip.db)</option>
+                              <option value="geosite" <?php echo isset($_POST['download_option']) && $_POST['download_option'] === 'geosite' ? 'selected' : ''; ?>>Geosite 数据库 (geosite.db)</option>
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-primary" name="action" value="generate_subscription">生成配置文件</button>
+                    <button type="submit" class="btn btn-success" name="download_action" value="download_files">下载数据库</button>
                 </form>
             </div>
         </div>
-
-        <div class="form-section mt-4">
-            <form method="post">
-                <div class="mb-3">
-                    <label for="cron_time" class="form-label">设置 Cron 时间 (例如: 0 3 * * *)</label>
-                    <input type="text" class="form-control" id="cron_time" name="cron_time"
-                           value="<?php echo htmlspecialchars(isset($_POST['cron_time']) ? $_POST['cron_time'] : '0 3 * * *'); ?>"
-                           placeholder="0 3 * * *">
-                </div>
-                <button type="submit" class="btn btn-primary" name="action" value="update_cron">更新 Cron 作业</button>
-            </form>
-        </div>
-
         <div class="help mt-4">
-            <p style="color: red;">注意：在线订阅转换存在隐私泄露风险</p>
+            <p style="color: red;">注意：在线订阅转换存在隐私泄露风险，需下载geoip/geosite使用</p>
         </div>
-
         <div class="result mt-4">
             <?php echo nl2br(htmlspecialchars($result)); ?>
         </div>
-        <div class="result mt-2">
-            <?php echo nl2br(htmlspecialchars($cron_result)); ?>
         </div>
     </div>
 </div>
@@ -727,6 +471,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('emoji'),  
         document.getElementById('udp'),   
         document.getElementById('xudp'),   
+        document.getElementById('ipv6'), 
         document.getElementById('tfo')    
     ];
 
