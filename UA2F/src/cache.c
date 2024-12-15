@@ -22,7 +22,7 @@ _Noreturn static void* check_cache(void* arg __attribute__((unused))) {
         struct cache *cur, *tmp;
 
         HASH_ITER(hh, not_http_dst_cache, cur, tmp) {
-            if (difftime(now, cur->last_time) > check_interval * 2) {
+            if (difftime(now, cur->last_time) > check_interval) {
                 HASH_DEL(not_http_dst_cache, cur);
                 free(cur);
             }

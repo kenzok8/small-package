@@ -237,7 +237,7 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
         goto end;
     }
 
-    int type = get_pkt_ip_version(pkt);
+    const int type = get_pkt_ip_version(pkt);
     if (type == IP_UNK) {
         // will this happen?
         send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
@@ -246,8 +246,10 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
 
     if (type == IPV4) {
         assert(ipv4_set_transport_header(pkt_buff));
+        count_ipv4_packet();
     } else if (type == IPV6) {
         assert(ipv6_set_transport_header(pkt_buff));
+        count_ipv6_packet();
     }
 
     const __auto_type tcp_hdr = nfq_tcp_get_hdr(pkt_buff);
