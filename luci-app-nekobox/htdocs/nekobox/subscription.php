@@ -235,7 +235,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $filename = isset($_POST['filename']) && $_POST['filename'] !== '' ? $_POST['filename'] : 'config.json'; 
     $subscription_url = isset($_POST['subscription_url']) ? $_POST['subscription_url'] : ''; 
-    $backend_url = $_POST['backend_url'] ?? 'https://url.v1.mk/sub?';
+    $backend_url = isset($_POST['backend_url']) && $_POST['backend_url'] === 'custom' && !empty($_POST['custom_backend_url'])
+    ? rtrim($_POST['custom_backend_url'], '?') . '?'
+    : ($_POST['backend_url'] ?? 'https://url.v1.mk/sub?');
     $template_key = $_POST['template'] ?? ''; 
     $include = $_POST['include'] ?? ''; 
     $exclude = $_POST['exclude'] ?? '';        
@@ -357,7 +359,24 @@ function downloadFileWithWget($url, $path) {
                             <option value="https://api.wcc.best/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://api.wcc.best/sub?' ? 'selected' : ''; ?>>
                                 api.wcc.best
                             </option>
+                            <option value="https://yun-api.subcloud.xyz/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://yun-api.subcloud.xyz/sub?' ? 'selected' : ''; ?>>
+                                subcloud.xyz
+                            </option>
+                            <option value="https://sub.maoxiongnet.com/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.maoxiongnet.com/sub?' ? 'selected' : ''; ?>>
+                                sub.maoxiongnet.com(猫熊提供-稳定)
+                            </option>
+                            <option value="http://localhost:25500/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'http://localhost:25500/sub?' ? 'selected' : ''; ?>>
+                                localhost:25500 本地版
+                            </option>
+                            <option value="custom" <?php echo ($_POST['backend_url'] ?? '') === 'custom' ? 'selected' : ''; ?>>
+                                自定义后端地址
+                            </option>
                         </select>
+                    </div>
+
+                    <div class="mb-3" id="custom_backend_url_input" style="display: none;">
+                        <label for="custom_backend_url" class="form-label">请输入自定义后端地址</label>
+                        <input type="text" class="form-control" id="custom_backend_url" name="custom_backend_url" value="<?php echo htmlspecialchars($_POST['custom_backend_url'] ?? '') . (empty($_POST['custom_backend_url']) ? '' : '?'); ?>" />
                     </div>
 
                     <div class="mb-3">
@@ -468,11 +487,12 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('include'),
         document.getElementById('exclude'),
         document.getElementById('cron_time'),
-        document.getElementById('emoji'),  
-        document.getElementById('udp'),   
-        document.getElementById('xudp'),   
-        document.getElementById('ipv6'), 
-        document.getElementById('tfo')    
+        document.getElementById('emoji'),
+        document.getElementById('udp'),
+        document.getElementById('xudp'),
+        document.getElementById('ipv6'),
+        document.getElementById('custom_backend_url'),
+        document.getElementById('tfo')
     ];
 
     formInputs.forEach(input => {
@@ -506,7 +526,22 @@ document.addEventListener("DOMContentLoaded", function() {
             input.addEventListener('change', saveSelections);
         }
     });
+
+    toggleCustomBackendInput();
+    var backendSelect = document.getElementById('backend_url');
+    backendSelect.addEventListener('change', toggleCustomBackendInput);
 });
+
+function toggleCustomBackendInput() {
+    var backendSelect = document.getElementById('backend_url');
+    var customInput = document.getElementById('custom_backend_url_input');
+
+    if (backendSelect.value === 'custom') {
+        customInput.style.display = 'block';
+    } else {
+        customInput.style.display = 'none';
+    }
+}
 </script>
       <footer class="text-center">
     <p><?php echo $footer ?></p>
