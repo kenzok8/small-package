@@ -63,12 +63,12 @@ include './cfg.php';
             <a href="#" class="col btn btn-lg">⚙️ 配置</a>
            <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
             <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
-    <h2 class="text-center p-2">配置</h2>
     <form action="configs.php" method="post">
         <div class="container text-center justify-content-md-center">
             <div class="row justify-content-md-center">
-                <div class="col input-group mb-3 justify-content-md-center">
-                    <select class="form-select" name="clashconfig" aria-label="themex">
+                <div class="col mb-3 justify-content-md-center">
+                    <h2 for="clashconfig" class="form-label  p-4 m-2">选择 Mihomo 配置文件</h2>
+                    <select id="clashconfig" class="form-select" name="clashconfig" aria-label="themex">
                         <option selected><?php echo basename($selected_config); ?></option>
                         <?php foreach ($arrFiles as $file) echo "<option value=\"" . basename($file) . '">' . basename($file) . "</option>"; ?>
                     </select>
