@@ -2,9 +2,11 @@
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/iptables.sh
+IPSET_LOCALLIST="passwall2_locallist"
 IPSET_LANLIST="passwall2_lanlist"
 IPSET_VPSLIST="passwall2_vpslist"
 
+IPSET_LOCALLIST6="passwall2_locallist6"
 IPSET_LANLIST6="passwall2_lanlist6"
 IPSET_VPSLIST6="passwall2_vpslist6"
 
@@ -386,12 +388,10 @@ load_acl() {
 				}
 				
 				if ([ "$tcp_proxy_mode" != "disable" ] || [ "$udp_proxy_mode" != "disable" ]) && [ -n "$redir_port" ]; then
-					[ -n "$dns_redirect_port" ] && {
-						$ipt_n -A PSW2_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
-						$ip6t_n -A PSW2_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
-						$ipt_n -A PSW2_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
-						$ip6t_n -A PSW2_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
-					}
+					$ipt_n -A PSW2_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
+					$ip6t_n -A PSW2_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
+					$ipt_n -A PSW2_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port
+					$ip6t_n -A PSW2_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports $dns_redirect_port 2>/dev/null
 				else
 					$ipt_n -A PSW2_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN
 					$ip6t_n -A PSW2_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
@@ -678,11 +678,20 @@ filter_node() {
 
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
+	ipset -! create $IPSET_LOCALLIST nethash maxelem 1048576
 	ipset -! create $IPSET_LANLIST nethash maxelem 1048576
 	ipset -! create $IPSET_VPSLIST nethash maxelem 1048576
 
+	ipset -! create $IPSET_LOCALLIST6 nethash family inet6 maxelem 1048576
 	ipset -! create $IPSET_LANLIST6 nethash family inet6 maxelem 1048576
 	ipset -! create $IPSET_VPSLIST6 nethash family inet6 maxelem 1048576
+	
+	ipset -! -R <<-EOF
+		$(ip address show | grep -w "inet" | awk '{print $2}' | awk -F '/' '{print $1}' | sed -e "s/^/add $IPSET_LOCALLIST /")
+	EOF
+	ipset -! -R <<-EOF
+		$(ip address show | grep -w "inet6" | awk '{print $2}' | awk -F '/' '{print $1}' | sed -e "s/^/add $IPSET_LOCALLIST6 /")
+	EOF
 
 	ipset -! -R <<-EOF
 		$(gen_lanlist | sed -e "s/^/add $IPSET_LANLIST /")
@@ -764,7 +773,12 @@ add_firewall_rule() {
 	$ipt_n -A PSW2_OUTPUT -m mark --mark 0xff -j RETURN
 
 	$ipt_n -N PSW2_DNS
-	$ipt_n -I PREROUTING 1 -j PSW2_DNS
+	if [ $(config_t_get global dns_redirect "1") = "0" ]; then
+		#Only hijack when dest address is local IP
+		$ipt_n -I PREROUTING $(dst $IPSET_LOCALLIST) -j PSW2_DNS
+	else
+		$ipt_n -I PREROUTING -j PSW2_DNS
+	fi
 
 	$ipt_m -N PSW2_DIVERT
 	$ipt_m -A PSW2_DIVERT -j MARK --set-mark 1
@@ -816,7 +830,12 @@ add_firewall_rule() {
 	}
 	
 	$ip6t_n -N PSW2_DNS
-	$ip6t_n -I PREROUTING 1 -j PSW2_DNS
+	if [ $(config_t_get global dns_redirect "1") = "0" ]; then
+		#Only hijack when dest address is local IP
+		$ip6t_n -I PREROUTING $(dst $IPSET_LOCALLIST6) -j PSW2_DNS
+	else
+		$ip6t_n -I PREROUTING -j PSW2_DNS
+	fi
 
 	$ip6t_m -N PSW2_DIVERT
 	$ip6t_m -A PSW2_DIVERT -j MARK --set-mark 1

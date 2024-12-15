@@ -3,9 +3,11 @@
 DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/nftables.sh
 NFTABLE_NAME="inet passwall2"
+NFTSET_LOCALLIST="passwall2_locallist"
 NFTSET_LANLIST="passwall2_lanlist"
 NFTSET_VPSLIST="passwall2_vpslist"
 
+NFTSET_LOCALLIST6="passwall2_locallist6"
 NFTSET_LANLIST6="passwall2_lanlist6"
 NFTSET_VPSLIST6="passwall2_vpslist6"
 
@@ -738,11 +740,16 @@ filter_node() {
 add_firewall_rule() {
 	echolog "开始加载防火墙规则..."
 	gen_nft_tables
+	gen_nftset $NFTSET_LOCALLIST ipv4_addr 0 "-1"
 	gen_nftset $NFTSET_LANLIST ipv4_addr 0 "-1" $(gen_lanlist)
 	gen_nftset $NFTSET_VPSLIST ipv4_addr 0 0
 
+	gen_nftset $NFTSET_LOCALLIST6 ipv6_addr 0 "-1"
 	gen_nftset $NFTSET_LANLIST6 ipv6_addr 0 "-1" $(gen_lanlist_6)
 	gen_nftset $NFTSET_VPSLIST6 ipv6_addr 0 0
+
+	insert_nftset $NFTSET_LOCALLIST "-1" $(ip address show | grep -w "inet" | awk '{print $2}' | awk -F '/' '{print $1}' | sed -e "s/ /\n/g")
+	insert_nftset $NFTSET_LOCALLIST6 "-1" $(ip address show | grep -w "inet6" | awk '{print $2}' | awk -F '/' '{print $1}' | sed -e "s/ /\n/g")
 
 	# 忽略特殊IP段
 	local lan_ifname lan_ip
@@ -808,7 +815,13 @@ add_firewall_rule() {
 
 	nft "add chain $NFTABLE_NAME PSW2_DNS"
 	nft "flush chain $NFTABLE_NAME PSW2_DNS"
-	nft "insert rule $NFTABLE_NAME dstnat jump PSW2_DNS"
+	if [ $(config_t_get global dns_redirect "1") = "0" ]; then
+		#Only hijack when dest address is local IP
+		nft "insert rule $NFTABLE_NAME dstnat ip daddr @${NFTSET_LOCALLIST} jump PSW2_DNS"
+		nft "insert rule $NFTABLE_NAME dstnat ip6 daddr @${NFTSET_LOCALLIST6} jump PSW2_DNS"
+	else
+		nft "insert rule $NFTABLE_NAME dstnat jump PSW2_DNS"
+	fi
 
 	# for ipv4 ipv6 tproxy mark
 	nft "add chain $NFTABLE_NAME PSW2_RULE"
@@ -1086,9 +1099,11 @@ del_firewall_rule() {
 	ip -6 rule del fwmark 1 table 100 2>/dev/null
 	ip -6 route del local ::/0 dev lo table 100 2>/dev/null
 
+	destroy_nftset $NFTSET_LOCALLIST
 	destroy_nftset $NFTSET_LANLIST
 	destroy_nftset $NFTSET_VPSLIST
 
+	destroy_nftset $NFTSET_LOCALLIST6
 	destroy_nftset $NFTSET_LANLIST6
 	destroy_nftset $NFTSET_VPSLIST6
 
