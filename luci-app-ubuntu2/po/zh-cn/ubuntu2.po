@@ -1,0 +1,38 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Official website:"
+msgstr "官方网站："
+
+msgid "Ubuntu2 is a high-Performance ubuntu with web remote desktop. [username: abc, password is empty]"
+msgstr "Ubuntu2 是带浏览器桌面的高性能 Ubuntu. [用户名: abc, 密码为空]。"
+
+msgid "Config path"
+msgstr "配置文件路径"
+
+msgid "HTTPS Port"
+msgstr "HTTPS 端口"
+
+msgid "Service Status"
+msgstr "服务状态"
+
+msgid "Ubuntu2 status:"
+msgstr "Ubuntu2 的状态信息如下："
+
+msgid "Setup"
+msgstr "安装配置"
+
+msgid "The following parameters will only take effect during installation or upgrade:"
+msgstr "以下参数只在安装或者升级时才会生效："
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Ubuntu2 is running"
+msgstr "Ubuntu2 运行中"
+
+msgid "Ubuntu2 is not running"
+msgstr "Ubuntu2 未运行"
+
+msgid "Open Ubuntu2"
+msgstr "打开 Ubuntu2"

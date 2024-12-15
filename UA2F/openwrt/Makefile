@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UA2F
-PKG_VERSION:=4.9.3
+PKG_VERSION:=4.9.5
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0-only
