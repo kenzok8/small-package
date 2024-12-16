@@ -92,8 +92,8 @@ msgstr "Отключить принудительную перезагрузку
 msgid "Disabled"
 msgstr "Отключен"
 
-msgid "Detector is completely off."
-msgstr "Детектор полностью выключен."
+msgid "Disabled: detector is completely off."
+msgstr "Отключен: детектор полностью выключен."
 
 msgid "Disconnected"
 msgstr "Отключен"
@@ -353,8 +353,8 @@ msgstr "SMTP-сервер"
 msgid "SMTP server port"
 msgstr "Порт SMTP-сервера"
 
-msgid "SMTP over SSL."
-msgstr "SMTP поверх SSL."
+msgid "SSL: SMTP over SSL."
+msgstr "SSL: SMTP поверх SSL."
 
 msgid "Save"
 msgstr "Сохранить"
@@ -380,8 +380,8 @@ msgstr "Конфигурация службы"
 msgid "Service for determining the public IP address through DNS."
 msgstr "Сервис для определения публичного IP адреса через DNS."
 
-msgid "Detector always runs as a system service."
-msgstr "Детектор работает постоянно, как системная служба."
+msgid "Service: detector always runs as a system service."
+msgstr "Служба: детектор работает постоянно, как системная служба."
 
 msgid "Service instances"
 msgstr "Экземпляры службы"
@@ -419,8 +419,8 @@ msgstr "Подключение к TCP-порту"
 msgid "The type of record requested in the DNS query (if the service supports it)."
 msgstr "Тип записи запрашиваемой в DNS-запросе (если сервис поддерживает)."
 
-msgid "Use STARTTLS if the server supports it."
-msgstr "Использовать STARTTLS если сервер поддерживает."
+msgid "TLS: use STARTTLS if the server supports it."
+msgstr "TLS: использовать STARTTLS если сервер поддерживает."
 
 msgid "Timeout between stopping and starting the interface."
 msgstr "Таймаут между остановкой и запуском интерфейса."
@@ -457,8 +457,10 @@ msgstr ""
 msgid "Web UI only (UI detector)"
 msgstr "Только web-интерфейс (UI детектор)"
 
-msgid "Detector works only when the Web UI is open."
-msgstr "Детектор работает только в web-интерфейсе."
+msgid "Web UI only: detector works only when the Web UI is open (UI detector)."
+msgstr ""
+"Только web-интерфейс: детектор работает только в web-интерфейсе (UI "
+"детектор)."
 
 msgid "When email will be sent"
 msgstr "Когда будет отправлено сообщение"

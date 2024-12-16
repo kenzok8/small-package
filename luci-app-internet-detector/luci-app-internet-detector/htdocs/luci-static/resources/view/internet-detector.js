@@ -560,11 +560,16 @@ return view.extend({
 		/* Main settings */
 
 		// mode
-		let mode = s.option(form.RichListValue, 'mode',
+		let mode = s.option(form.ListValue, 'mode',
 			_('Internet detector mode'));
-		mode.value('0', _('Disabled'), _('Detector is completely off.'));
-		mode.value('1', _('Service'), _('Detector always runs as a system service.'));
-		mode.value('2', _('Web UI only (UI detector)'), _('Detector works only when the Web UI is open.'));
+		mode.value('0', _('Disabled'));
+		mode.value('1', _('Service'));
+		mode.value('2', _('Web UI only (UI detector)'));
+		mode.description = '%s<br />%s<br />%s'.format(
+			_('Disabled: detector is completely off.'),
+			_('Service: detector always runs as a system service.'),
+			_('Web UI only: detector works only when the Web UI is open (UI detector).')
+		);
 		mode.default = '0';
 
 
@@ -1120,10 +1125,14 @@ return view.extend({
 						o.modalonly = true;
 
 						// mail_security
-						o = s.taboption('email', form.RichListValue,
+						o = s.taboption('email', form.ListValue,
 							'mod_email_mail_security', _('Security'));
-						o.value('tls', 'TLS', _('Use STARTTLS if the server supports it.'));
-						o.value('ssl', 'SSL', _('SMTP over SSL.'));
+						o.description = '%s<br />%s'.format(
+							_('TLS: use STARTTLS if the server supports it.'),
+							_('SSL: SMTP over SSL.'),
+						);
+						o.value('tls', 'TLS');
+						o.value('ssl', 'SSL');
 						o.default   = 'tls';
 						o.modalonly = true;
 					} else {
