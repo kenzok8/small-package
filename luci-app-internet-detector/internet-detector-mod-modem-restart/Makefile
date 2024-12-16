@@ -17,6 +17,7 @@ define Package/$(PKG_NAME)
   TITLE:=Modem restart module for internet-detector
   URL:=https://github.com/gSpotx2f/luci-app-internet-detector
   PKGARCH:=all
+  #PKGARCH:=noarch
   DEPENDS:=+internet-detector +modemmanager
 endef
 

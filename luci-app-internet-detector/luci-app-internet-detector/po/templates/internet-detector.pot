@@ -80,7 +80,7 @@ msgstr ""
 msgid "Disabled"
 msgstr ""
 
-msgid "Disabled: detector is completely off."
+msgid "Detector is completely off."
 msgstr ""
 
 msgid "Disconnected"
@@ -328,7 +328,7 @@ msgstr ""
 msgid "SMTP server port"
 msgstr ""
 
-msgid "SSL: SMTP over SSL."
+msgid "SMTP over SSL."
 msgstr ""
 
 msgid "Save"
@@ -355,7 +355,7 @@ msgstr ""
 msgid "Service for determining the public IP address through DNS."
 msgstr ""
 
-msgid "Service: detector always runs as a system service."
+msgid "Detector always runs as a system service."
 msgstr ""
 
 msgid "Service instances"
@@ -394,7 +394,7 @@ msgstr ""
 msgid "The type of record requested in the DNS query (if the service supports it)."
 msgstr ""
 
-msgid "TLS: use STARTTLS if the server supports it."
+msgid "Use STARTTLS if the server supports it."
 msgstr ""
 
 msgid "Timeout between stopping and starting the interface."
@@ -430,7 +430,7 @@ msgstr ""
 msgid "Web UI only (UI detector)"
 msgstr ""
 
-msgid "Web UI only: detector works only when the Web UI is open (UI detector)."
+msgid "Detector works only when the Web UI is open."
 msgstr ""
 
 msgid "When email will be sent"
