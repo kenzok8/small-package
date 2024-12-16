@@ -296,12 +296,16 @@ $razordVersion = getRazordVersion();
                 </button>
             </div>
             <div class="modal-body">
+                <p class="text-warning">
+                    <strong>说明：</strong> 请优先选择通道一版本进行更新，以确保兼容性。系统会先检测并动态生成最新版本号供选择下载。 如果通道一更新不可用，可以尝试通道二版本。
+                </p>
                 <div class="d-grid gap-2">
                     <button class="btn btn-info" onclick="showSingboxVersionSelector()">更新 Singbox 内核（通道一）</button>
                     <button class="btn btn-success" onclick="showSingboxVersionSelectorForChannelTwo()">更新 Singbox 内核（通道二）</button>
                     <button class="btn btn-success" onclick="selectOperation('puernya')">切换 Puernya 内核</button>
                     <button class="btn btn-primary" onclick="selectOperation('rule')">更新 Singbox 规则集</button>
                     <button class="btn btn-primary" onclick="selectOperation('config')">更新 Mihomo 配置文件</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                 </div>
             </div>
         </div>

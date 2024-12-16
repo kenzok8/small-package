@@ -3,7 +3,7 @@ ob_start();
 include './cfg.php';
 ini_set('memory_limit', '256M');
 $result = $result ?? ''; 
-$subscription_file = '/etc/neko/ singbox.txt'; 
+$subscription_file = '/etc/neko/tmp/singbox.txt'; 
 $download_path = '/etc/neko/config/'; 
 $log_file = '/var/log/neko_update.log'; 
 
@@ -18,11 +18,12 @@ function logMessage($message) {
     file_put_contents($log_file, "[$timestamp] $message\n", FILE_APPEND);
 }
 
-function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo, $ipv6) {
+function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo, $ipv6, $tls13, $fdn, $sort, $rename) {
     $encoded_subscription_url = urlencode($subscription_url);
     $encoded_config_url = urlencode($config_url);
     $encoded_include = urlencode($include);
     $encoded_exclude = urlencode($exclude);
+    $encoded_rename = urlencode($rename); 
     $final_url = "{$backend_url}target=singbox&url={$encoded_subscription_url}&insert=false&config={$encoded_config_url}";
 
     if (!empty($include)) {
@@ -36,7 +37,14 @@ function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $back
     $final_url .= "&xudp=" . (isset($_POST['xudp']) && $_POST['xudp'] === 'true' ? "true" : "false");
     $final_url .= "&udp=" . (isset($_POST['udp']) && $_POST['udp'] === 'true' ? "true" : "false");
     $final_url .= "&tfo=" . (isset($_POST['tfo']) && $_POST['tfo'] === 'true' ? "true" : "false");
-    $final_url .= "&list=false&expand=true&scv=false&fdn=false";
+    $final_url .= "&fdn=" . (isset($_POST['fdn']) && $_POST['fdn'] === 'true' ? "true" : "false");
+    $final_url .= "&tls13=" . (isset($_POST['tls13']) && $_POST['tls13'] === 'true' ? "true" : "false");
+    $final_url .= "&sort=" . (isset($_POST['sort']) && $_POST['sort'] === 'true' ? "true" : "false");
+    $final_url .= "&list=false&expand=true&scv=false";
+
+    if (!empty($rename)) {
+        $final_url .= "&rename={$encoded_rename}"; 
+    }
 
     if ($ipv6 === 'true') {
         $final_url .= "&singbox.ipv6=1";
@@ -296,6 +304,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $udp = isset($_POST['udp']) ? $_POST['udp'] === 'true' : true;
     $xudp = isset($_POST['xudp']) ? $_POST['xudp'] === 'true' : true;
     $tfo = isset($_POST['tfo']) ? $_POST['tfo'] === 'true' : true;
+    $fdn = isset($_POST['fdn']) ? $_POST['fdn'] === 'true' : true;
+    $sort = isset($_POST['sort']) ? $_POST['sort'] === 'true' : true;
+    $tls13 = isset($_POST['tls13']) ? $_POST['tls13'] === 'true' : true;
     $ipv6 = isset($_POST['ipv6']) ? $_POST['ipv6'] : 'false';
 
     $filename = isset($_POST['filename']) && $_POST['filename'] !== '' ? $_POST['filename'] : 'config.json'; 
@@ -307,9 +318,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $include = $_POST['include'] ?? ''; 
     $exclude = $_POST['exclude'] ?? '';        
     $template = $templates[$template_key] ?? '';
+    $rename = isset($_POST['rename']) ? $_POST['rename'] : ''; 
 
     if (isset($_POST['action']) && $_POST['action'] === 'generate_subscription') {
-        $final_url = buildFinalUrl($subscription_url, $template, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo, $ipv6);
+        $final_url = buildFinalUrl($subscription_url, $template, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo, $ipv6, $rename, $tls13, $fdn, $sort);
 
         if (saveSubscriptionUrlToFile($final_url, $subscription_file)) {
             $result = saveSubscriptionContentToYaml($final_url, $filename);
@@ -347,6 +359,80 @@ function downloadFileWithWget($url, $path) {
     }
 }
 ?>
+<?php
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['createCronJob'])) {
+        $cronExpression = trim($_POST['cronExpression']);
+
+        if (empty($cronExpression)) {
+            echo "<div class='alert alert-warning'>Cron 表达式不能为空。</div>";
+            exit;
+        }
+
+        $cronJob = "$cronExpression /etc/neko/core/update_singbox.sh > /dev/null 2>&1";
+        exec("crontab -l | grep -v '/etc/neko/core/update_singbox.sh' | crontab -");
+        exec("(crontab -l; echo '$cronJob') | crontab -");
+        echo "<div class='alert alert-success'>Cron 任务已成功添加或更新！</div>";
+    }
+}
+?>
+<?php
+$shellScriptPath = '/etc/neko/core/update_singbox.sh';
+$LOG_FILE = '/tmp/update_subscription.log';
+$CONFIG_FILE = '/etc/neko/config.json'; 
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+    if (isset($_POST['createShellScript'])) {
+        $shellScriptContent = <<<EOL
+#!/bin/sh
+
+LOG_FILE="/tmp/update_subscription.log"
+LINK_FILE="/etc/neko/tmp/singbox.txt"
+CONFIG_FILE="$CONFIG_FILE" 
+
+echo "尝试读取订阅链接文件: \$LINK_FILE" >> "\$LOG_FILE"
+if [ ! -f "\$LINK_FILE" ]; then
+  echo "\$(date): 错误：文件 \$LINK_FILE 不存在。" >> "\$LOG_FILE"
+  exit 1
+fi
+
+SUBSCRIBE_URL=\$(awk 'NR==1 {print \$0}' "\$LINK_FILE" | tr -d '\n\r' | xargs)
+
+if [ -z "\$SUBSCRIBE_URL" ]; then
+  echo "\$(date): 订阅链接为空或提取失败。" >> "\$LOG_FILE"
+  exit 1
+fi
+
+echo "\$(date): 使用的订阅链接: \$SUBSCRIBE_URL" >> "\$LOG_FILE"
+
+echo "\$(date): 尝试下载并更新配置文件..." >> "\$LOG_FILE"
+wget -q -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >> "\$LOG_FILE" 2>&1
+
+if [ \$? -eq 0 ]; then
+  echo "\$(date): 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
+else
+  echo "\$(date): 配置文件更新失败，请检查链接或网络。" >> "\$LOG_FILE"
+  exit 1
+fi
+
+sed -i '/"inbounds"/{N;s/"inbounds".*/"inbounds": [{"domain_strategy": "prefer_ipv4", "listen": "127.0.0.1", "listen_port": 2334, "sniff": true, "sniff_override_destination": true, "tag": "mixed-in", "type": "mixed", "users": []}, {"tag": "tun", "type": "tun", "address": ["172.19.0.1/30", "fdfe:dcba:9876::1/126"], "route_address": ["0.0.0.0/1", "128.0.0.0/1", "::/1", "8000::/1"], "route_exclude_address": ["192.168.0.0/16", "fc00::/7"], "stack": "system", "auto_route": true, "strict_route": true, "sniff": true, "platform": {"http_proxy": {"enabled": true, "server": "0.0.0.0", "server_port": 1082}}}, {"tag": "mixed", "type": "mixed", "listen": "0.0.0.0", "listen_port": 1082, "sniff": true}]}"/' "$CONFIG_FILE"
+
+sed -i '/"experimental"/{N;s/"experimental".*/"experimental": {"clash_api": {"external_ui": "/etc/neko/ui/", "external_controller": "0.0.0.0:9090", "secret": "Akun"}}}/' "$CONFIG_FILE"
+
+echo "$(date): 配置文件内容替换成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
+
+EOL;
+
+        if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
+            chmod($shellScriptPath, 0755);
+            echo "<div class='alert alert-success'>Shell 脚本已创建成功！路径: $shellScriptPath</div>";
+        } else {
+            echo "<div class='alert alert-danger'>无法创建 Shell 脚本，请检查权限。</div>";
+        }
+    }
+}
+?>
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
 <head>
@@ -356,6 +442,7 @@ function downloadFileWithWget($url, $path) {
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
@@ -412,6 +499,9 @@ function downloadFileWithWget($url, $path) {
                             <option value="https://sub.xeton.dev/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.xeton.dev/sub?' ? 'selected' : ''; ?>>
                                 subconverter作者提供
                             </option>
+                            <option value="https://www.tline.website/sub/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://www.tline.website/sub/sub?' ? 'selected' : ''; ?>>
+                                tline.website
+                            </option>
                             <option value="https://api.dler.io/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://api.dler.io/sub?' ? 'selected' : ''; ?>>
                                 api.dler.io
                             </option>
@@ -428,7 +518,7 @@ function downloadFileWithWget($url, $path) {
                                 subcloud.xyz
                             </option>
                             <option value="https://sub.maoxiongnet.com/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.maoxiongnet.com/sub?' ? 'selected' : ''; ?>>
-                                sub.maoxiongnet.com(猫熊提供-稳定)
+                                sub.maoxiongnet.com(猫熊提供)
                             </option>
                             <option value="http://localhost:25500/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'http://localhost:25500/sub?' ? 'selected' : ''; ?>>
                                 localhost:25500 本地版
@@ -571,6 +661,21 @@ function downloadFileWithWget($url, $path) {
                                        <?php echo isset($_POST['tfo']) && $_POST['tfo'] == 'true' ? 'checked' : ''; ?>>
                                 <label class="form-check-label" for="tfo">启用 TFO</label>
                             </div>
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="fdn" name="fdn" value="true"
+                                       <?php echo isset($_POST['fdn']) && $_POST['fdn'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="tls13">启用 FDN</label>
+                            </div>
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="sort" name="sort" value="true"
+                                       <?php echo isset($_POST['sort']) && $_POST['sort'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="sort">启用 SORT</label>
+                            </div>
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="tls13" name="tls13" value="true"
+                                       <?php echo isset($_POST['tls13']) && $_POST['tls13'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="tls13">启用 TLS_1.3</label>
+                            </div>
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="ipv6" name="ipv6" value="true"
                                        <?php echo isset($_POST['ipv6']) && $_POST['ipv6'] == 'true' ? 'checked' : ''; ?>>
@@ -591,6 +696,13 @@ function downloadFileWithWget($url, $path) {
                                value="<?php echo htmlspecialchars($_POST['exclude'] ?? ''); ?>" placeholder="要排除的节点，支持正则 | 分隔">
                     </div>
 
+                   <div class="mb-3">
+                        <label for="rename" class="form-label">节点命名</label>
+                        <input type="text" class="form-control" id="rename" name="rename"
+                               value="<?php echo htmlspecialchars(isset($_POST['rename']) ? $_POST['rename'] : ''); ?>"
+                               placeholder="输入重命名内容（举例：`a@b``1@2`，|符可用\转义）">
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label" for="download_option">选择要下载的数据库</label>
                         <select class="form-select" id="download_option" name="download_option">
@@ -598,13 +710,59 @@ function downloadFileWithWget($url, $path) {
                               <option value="geosite" <?php echo isset($_POST['download_option']) && $_POST['download_option'] === 'geosite' ? 'selected' : ''; ?>>Geosite 数据库 (geosite.db)</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary" name="action" value="generate_subscription">生成配置文件</button>
-                    <button type="submit" class="btn btn-success" name="download_action" value="download_files">下载数据库</button>
+                   <button type="submit" class="btn btn-primary col" name="action" value="generate_subscription"><i class="bi bi-file-earmark-text"></i> 生成配置文件</button>
+                    <button type="submit" class="btn btn-success" name="download_action" value="download_files"><i class="bi bi-download"></i>  下载数据库</button>
                 </form>
             </div>
         </div>
+    <div class="container">
+        <form method="post">
+            <h5 style="margin-top: 20px;">定时任务</h5>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> 设置定时任务</button>
+            <button type="submit" name="createShellScript" value="true" class="btn btn-success"><i class="bi bi-terminal"></i> 生成更新脚本</button>
+        </form>
+    </div>
+        <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cronModalLabel">设置 Cron 计划任务</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="cronExpression" class="form-label">Cron 表达式</label>
+                                <input type="text" class="form-control" id="cronExpression" name="cronExpression"  placeholder="如: 0 2 * * *" required>
+                            </div>
+                            <div class="alert alert-info">
+                              <strong>提示:</strong> Cron 表达式格式：
+                              <ul>
+                                <li><code>分钟 小时 日  月 星期</code></li>
+                                <li><pre> *   *   *   *   *</pre></li>
+                                <li><pre> |   |   |   |   |</pre></li>
+                                <li><pre> |   |   |   |   +---- 星期几 (0 - 6) (Sunday = 0)</pre></li>
+                                <li><pre> |   |   |   +---- 月份 (1 - 12)</pre></li>
+                                <li><pre> |   |   +---- 日 (1 - 31)</pre></li>
+                                <li><pre> |   +---- 小时 (0 - 23)</pre></li>
+                                <li><pre> +---- 分钟 (0 - 59)</pre></li>
+                                <li>示例: 每天凌晨 2 点: <code>0 2 * * *</code></li>
+                                <li>每周一凌晨 3 点: <code>0 3 * * 1</code></li>
+                                <li>工作日（周一至周五）的上午 9 点: <code>0 9 * * 1-5</code></li>
+                              </ul>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" name="createCronJob" class="btn btn-primary">保存</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
         <div class="help mt-4">
-            <p style="color: red;">注意：在线订阅转换存在隐私泄露风险，需下载geoip/geosite使用</p>
+            <p style="color: red;">注意：在线订阅转换存在隐私泄露风险，请确保使用 Sing-box 的通道一版本，通道二版本不支持此功能。同时，需要下载并配置 geoip 和 geosite 文件以确保正常使用。</p>
             <p>订阅转换由肥羊提供</p>
             <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary">
             点击访问
@@ -631,6 +789,10 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('udp'),
         document.getElementById('xudp'),
         document.getElementById('ipv6'),
+        document.getElementById('sort'),
+        document.getElementById('fdn'),
+        document.getElementById('tls13'),
+        document.getElementById('rename'),
         document.getElementById('custom_backend_url'),
         document.getElementById('tfo')
     ];

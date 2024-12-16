@@ -19,11 +19,12 @@ function logMessage($message) {
     file_put_contents($log_file, "[$timestamp] $message\n", FILE_APPEND);
 }
 
-function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo) {
+function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo, $tls13, $fdn, $sort, $rename) {
     $encoded_subscription_url = urlencode($subscription_url);
     $encoded_config_url = urlencode($config_url);
     $encoded_include = urlencode($include);
     $encoded_exclude = urlencode($exclude);
+    $encoded_rename = urlencode($rename); 
     $final_url = "{$backend_url}target=clash&url={$encoded_subscription_url}&insert=false&config={$encoded_config_url}";
 
     if (!empty($include)) {
@@ -37,7 +38,10 @@ function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $back
     $final_url .= "&xudp=" . (isset($_POST['xudp']) && $_POST['xudp'] === 'true' ? "true" : "false");
     $final_url .= "&udp=" . (isset($_POST['udp']) && $_POST['udp'] === 'true' ? "true" : "false");
     $final_url .= "&tfo=" . (isset($_POST['tfo']) && $_POST['tfo'] === 'true' ? "true" : "false");
-    $final_url .= "&list=false&expand=true&scv=false&fdn=false&new_name=true";
+    $final_url .= "&fdn=" . (isset($_POST['fdn']) && $_POST['fdn'] === 'true' ? "true" : "false");
+    $final_url .= "&tls13=" . (isset($_POST['tls13']) && $_POST['tls13'] === 'true' ? "true" : "false");
+    $final_url .= "&sort=" . (isset($_POST['sort']) && $_POST['sort'] === 'true' ? "true" : "false");
+    $final_url .= "&list=false&expand=true&scv=false&new_name=true";
 
     return $final_url;
 }
@@ -556,6 +560,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $udp = isset($_POST['udp']) ? $_POST['udp'] === 'true' : true;
     $xudp = isset($_POST['xudp']) ? $_POST['xudp'] === 'true' : true;
     $tfo = isset($_POST['tfo']) ? $_POST['tfo'] === 'true' : true;
+    $fdn = isset($_POST['fdn']) ? $_POST['fdn'] === 'true' : true;
+    $sort = isset($_POST['sort']) ? $_POST['sort'] === 'true' : true;
+    $tls13 = isset($_POST['tls13']) ? $_POST['tls13'] === 'true' : true;
    
     $filename = isset($_POST['filename']) && $_POST['filename'] !== '' ? $_POST['filename'] : 'config.yaml'; 
     $subscription_url = isset($_POST['subscription_url']) ? $_POST['subscription_url'] : ''; 
@@ -566,10 +573,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $include = $_POST['include'] ?? ''; 
     $exclude = $_POST['exclude'] ?? '';        
     $template = $templates[$template_key] ?? '';
+    $rename = isset($_POST['rename']) ? $_POST['rename'] : ''; 
 
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'generate_subscription') {
-            $final_url = buildFinalUrl($subscription_url, $template, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo);
+            $final_url = buildFinalUrl($subscription_url, $template, $include, $exclude, $backend_url, $emoji, $udp, $xudp, $tfo, $rename, $tls13, $fdn, $sort);
 
             if (saveSubscriptionUrlToFile($final_url, $subscription_file)) {
                 $result = saveSubscriptionContentToYaml($final_url, $filename);
@@ -665,6 +673,10 @@ function getSubscriptionUrlFromFile($file) {
                             <option value="https://sub.xeton.dev/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.xeton.dev/sub?' ? 'selected' : ''; ?>>
                                 subconverter作者提供
                             </option>
+                            </option>
+                            <option value="https://www.tline.website/sub/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://www.tline.website/sub/sub?' ? 'selected' : ''; ?>>
+                                tline.website
+                            </option>
                             <option value="https://api.dler.io/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://api.dler.io/sub?' ? 'selected' : ''; ?>>
                                 api.dler.io
                             </option>
@@ -681,7 +693,7 @@ function getSubscriptionUrlFromFile($file) {
                                 subcloud.xyz
                             </option>
                             <option value="https://sub.maoxiongnet.com/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.maoxiongnet.com/sub?' ? 'selected' : ''; ?>>
-                                sub.maoxiongnet.com(猫熊提供-稳定)
+                                sub.maoxiongnet.com(猫熊提供)
                             </option>
                             <option value="http://localhost:25500/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'http://localhost:25500/sub?' ? 'selected' : ''; ?>>
                                 localhost:25500 本地版
@@ -819,6 +831,21 @@ function getSubscriptionUrlFromFile($file) {
                                        <?php echo isset($_POST['xudp']) && $_POST['xudp'] == 'true' ? 'checked' : ''; ?>>
                                 <label class="form-check-label" for="xudp">启用 XUDP</label>
                             </div>
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="fdn" name="fdn" value="true"
+                                       <?php echo isset($_POST['fdn']) && $_POST['fdn'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="tls13">启用 FDN</label>
+                            </div>
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="sort" name="sort" value="true"
+                                       <?php echo isset($_POST['sort']) && $_POST['sort'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="sort">启用 SORT</label>
+                            </div>
+                            <div class="form-check me-3">
+                                <input type="checkbox" class="form-check-input" id="tls13" name="tls13" value="true"
+                                       <?php echo isset($_POST['tls13']) && $_POST['tls13'] == 'true' ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="tls13">启用 TLS_1.3</label>
+                            </div>
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="tfo" name="tfo" value="true"
                                        <?php echo isset($_POST['tfo']) && $_POST['tfo'] == 'true' ? 'checked' : ''; ?>>
@@ -839,6 +866,12 @@ function getSubscriptionUrlFromFile($file) {
                                value="<?php echo htmlspecialchars($_POST['exclude'] ?? ''); ?>" placeholder="要排除的节点，支持正则 | 分隔">
                     </div>
 
+                   <div class="mb-3">
+                        <label for="rename" class="form-label">节点命名</label>
+                        <input type="text" class="form-control" id="rename" name="rename"
+                               value="<?php echo htmlspecialchars(isset($_POST['rename']) ? $_POST['rename'] : ''); ?>"
+                               placeholder="输入重命名内容（举例：`a@b``1@2`，|符可用\转义）">
+                    </div>
                     <button type="submit" class="btn btn-primary" name="action" value="generate_subscription">生成配置文件</button>
                 </form>
             </div>
@@ -886,7 +919,10 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('emoji'),
         document.getElementById('udp'),
         document.getElementById('xudp'),
-        document.getElementById('ipv6'),
+        document.getElementById('sort'),
+        document.getElementById('fdn'),
+        document.getElementById('tls13'),
+        document.getElementById('rename'),
         document.getElementById('custom_backend_url'),
         document.getElementById('tfo')
     ];
