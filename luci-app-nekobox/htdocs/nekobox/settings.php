@@ -189,7 +189,7 @@ $razordVersion = getRazordVersion();
                                 </div>
                                 <div class="text-center mt-2">
                                     <button class="btn btn-pink" id="checkCliverButton">🔍 检测版本</button>
-                                    <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showUpdateVersionModal()">🔄 更新版本</button>
+                                    <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showVersionTypeModal()">🔄 更新版本</button>
                                 </div>
                             </div>
                         </div>
@@ -237,27 +237,42 @@ $razordVersion = getRazordVersion();
         </tbody>
     </table>
 
-<div class="modal fade" id="updateVersionModal" tabindex="-1" aria-labelledby="updateVersionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal fade" id="updateVersionTypeModal" tabindex="-1" aria-labelledby="updateVersionTypeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="updateVersionModalLabel">选择更新版本语言</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <h5 class="modal-title" id="updateVersionTypeModalLabel">选择更新版本类型</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group text-center">
+                    <button id="stableBtn" class="btn btn-success btn-lg" style="margin: 10px;" onclick="selectVersionType('stable')">正式版</button>
+                    <button id="previewBtn" class="btn btn-warning btn-lg" style="margin: 10px;" onclick="selectVersionType('preview')">预览版</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="updateLanguageModal" tabindex="-1" aria-labelledby="updateLanguageModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateLanguageModalLabel">选择语言</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label for="languageSelect">选择语言</label>
                     <select id="languageSelect" class="form-select">
                         <option value="cn">中文版</option>
-                        <option value="en">英文版</option>
+                        <option value="en">英文版</option> 
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="confirmUpdateVersion()">确认</button>
+                <button type="button" class="btn btn-primary" onclick="confirmLanguageSelection()">确认</button>
             </div>
         </div>
     </div>
@@ -327,6 +342,7 @@ $razordVersion = getRazordVersion();
                     <option value="v1.11.0-alpha.15">v1.11.0-alpha.15</option>
                     <option value="v1.11.0-alpha.20">v1.11.0-alpha.20</option>
                     <option value="v1.11.0-beta.5">v1.11.0-beta.5</option>
+                    <option value="v1.11.0-beta.10">v1.11.0-beta.10</option>
                 </select>
             </div>
             <div class="modal-footer">
@@ -476,6 +492,7 @@ let selectedMihomoVersion = 'stable';
 let selectedLanguage = 'cn';  
 let selectedSingboxVersionForChannelTwo = 'preview'; 
 let selectedPanel = 'zashboard';
+let selectedVersionType = 'stable';
 
 function showPanelSelector() {
     $('#panelSelectionModal').modal('show');
@@ -487,14 +504,51 @@ function confirmPanelSelection() {
     selectOperation('panel');
 }
 
-function showUpdateVersionModal() {
-    $('#updateVersionModal').modal('show');  
+function showVersionTypeModal() {
+    $('#updateVersionTypeModal').modal('show');  
 }
 
-function confirmUpdateVersion() {
-    selectedLanguage = document.getElementById('languageSelect').value;  
-    $('#updateVersionModal').modal('hide');  
-    selectOperation('client'); 
+function confirmVersionTypeSelection() {
+    selectedVersionType = document.getElementById('versionTypeSelect').value;  
+    $('#updateVersionTypeModal').modal('hide');  
+
+    if (selectedVersionType === 'stable') {
+        $('#updateLanguageModal').modal('show');  
+    } else {
+        selectOperation('client');
+    }
+}
+
+function selectVersionType(type) {
+    selectedVersionType = type; 
+    
+    if (type === 'stable') {
+        document.getElementById('stableBtn').classList.add('btn-success');
+        document.getElementById('previewBtn').classList.remove('btn-warning');
+        document.getElementById('previewBtn').classList.add('btn-light');
+    } else {
+        document.getElementById('previewBtn').classList.add('btn-warning');
+        document.getElementById('stableBtn').classList.remove('btn-success');
+        document.getElementById('stableBtn').classList.add('btn-light');
+    }
+
+    handleVersionSelection();
+}
+
+function handleVersionSelection() {
+    $('#updateVersionTypeModal').modal('hide');  
+
+    if (selectedVersionType === 'stable') {
+        $('#updateLanguageModal').modal('show');  
+    } else {
+        selectOperation('client');
+    }
+}
+
+function confirmLanguageSelection() {
+    selectedLanguage = document.getElementById('languageSelect').value; 
+    $('#updateLanguageModal').modal('hide');  
+    selectOperation('client');  
 }
 
 function showSingboxVersionSelector() {
@@ -573,9 +627,15 @@ function selectOperation(type) {
             description: '正在更新 Mihomo 内核到最新版本 (' + selectedMihomoVersion + ')'
         },
         'client': {
-            url: 'update_script.php?lang=' + selectedLanguage,  
-            message: '开始下载客户端更新...',
-            description: '正在更新客户端到最新版本'
+            url: selectedVersionType === 'stable' 
+                ? 'update_script.php?lang=' + selectedLanguage  
+                : 'update_preview.php',  
+            message: selectedVersionType === 'stable' 
+                ? '开始下载客户端更新...' 
+                : '开始下载客户端预览版更新...',
+            description: selectedVersionType === 'stable' 
+                ? '正在更新客户端到最新正式版' 
+                : '正在更新客户端到最新预览版'
         },
         'panel': { 
             url: selectedPanel === 'zashboard' 
