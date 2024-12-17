@@ -233,6 +233,95 @@ if (isset($_POST['update'])) {
     file_put_contents($subscriptionFile, json_encode($subscriptions));
     }
 ?>
+<?php
+$shellScriptPath = '/etc/neko/core/update_mihomo.sh';
+$LOG_FILE = '/tmp/update_subscription.log';
+$JSON_FILE = '/etc/neko/proxy_provider/subscriptions.json';
+$SAVE_DIR = '/etc/neko/proxy_provider';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['createShellScript'])) {
+        $shellScriptContent = <<<EOL
+#!/bin/bash
+
+LOG_FILE="$LOG_FILE"
+JSON_FILE="$JSON_FILE"
+SAVE_DIR="$SAVE_DIR"
+
+if [ ! -f "\$JSON_FILE" ]; then
+    echo "\$(date): 错误: JSON 文件不存在: \$JSON_FILE" >> "\$LOG_FILE"
+    exit 1
+fi
+
+echo "\$(date): 开始处理订阅链接..." >> "\$LOG_FILE"
+
+jq -c '.[]' "\$JSON_FILE" | while read -r ITEM; do
+    URL=\$(echo "\$ITEM" | jq -r '.url')         
+    FILE_NAME=\$(echo "\$ITEM" | jq -r '.file_name')  
+
+    if [ -z "\$URL" ] || [ "\$URL" == "null" ]; then
+        echo "\$(date): 跳过空的 URL，文件名: \$FILE_NAME" >> "\$LOG_FILE"
+        continue
+    fi
+
+    if [ -z "\$FILE_NAME" ] || [ "\$FILE_NAME" == "null" ]; then
+        echo "\$(date): 错误: 文件名为空，跳过此链接: \$URL" >> "\$LOG_FILE"
+        continue
+    fi
+
+    SAVE_PATH="\$SAVE_DIR/\$FILE_NAME"
+    TEMP_PATH="\$SAVE_PATH.temp"  
+    echo "\$(date): 正在下载链接: \$URL 到临时文件: \$TEMP_PATH" >> "\$LOG_FILE"
+
+    wget -q -O "\$TEMP_PATH" "\$URL"
+
+    if [ \$? -eq 0 ]; then
+        echo "\$(date): 文件下载成功: \$TEMP_PATH" >> "\$LOG_FILE"
+        
+        base64 -d "\$TEMP_PATH" > "\$SAVE_PATH"
+
+        if [ \$? -eq 0 ]; then
+            echo "\$(date): 文件解码成功: \$SAVE_PATH" >> "\$LOG_FILE"
+        else
+            echo "\$(date): 错误: 文件解码失败: \$SAVE_PATH" >> "\$LOG_FILE"
+        fi
+
+        rm -f "\$TEMP_PATH"
+    else
+        echo "\$(date): 错误: 文件下载失败: \$URL" >> "\$LOG_FILE"
+    fi
+done
+
+echo "\$(date): 所有订阅链接处理完成。" >> "\$LOG_FILE"
+EOL;
+
+        if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
+            chmod($shellScriptPath, 0755);
+            echo "<div class='alert alert-success'>Shell 脚本已创建成功！路径: $shellScriptPath</div>";
+        } else {
+            echo "<div class='alert alert-danger'>无法创建 Shell 脚本，请检查权限。</div>";
+        }
+    }
+}
+?>
+
+<?php
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['createCronJob'])) {
+        $cronExpression = trim($_POST['cronExpression']);
+
+        if (empty($cronExpression)) {
+            echo "<div class='alert alert-warning'>Cron 表达式不能为空。</div>";
+            exit;
+        }
+
+        $cronJob = "$cronExpression /etc/neko/core/update_mihomo.sh > /dev/null 2>&1";
+        exec("crontab -l | grep -v '/etc/neko/core/update_mihomo.sh' | crontab -");
+        exec("(crontab -l; echo '$cronJob') | crontab -");
+        echo "<div class='alert alert-success'>Cron 任务已成功添加或更新！</div>";
+    }
+}
+?>
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
 <head>
@@ -509,7 +598,7 @@ function showUpdateAlert() {
 </div>
 
 <div class="container">
-    <h5 class="text-center">配置文件管理</h5>
+    <h5>配置文件管理</h5>
     <div class="table-responsive">
         <table class="table table-striped table-bordered text-center">
             <thead class="thead-dark">
@@ -912,7 +1001,6 @@ function initializeAceEditor() {
             }
        }
 </script>
-
 <h2 class="text-center mt-4 mb-4">Mihomo订阅管理</h2>
 
 <?php if (isset($message) && $message): ?>
@@ -958,6 +1046,56 @@ function initializeAceEditor() {
 <?php else: ?>
     <p>未找到订阅信息。</p>
 <?php endif; ?>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container">
+        <h4 class="mt-4 mb-4 text-center">自动更新</h4>
+        <form method="post" class="text-center">
+            <button type="button" class="btn btn-primary mx-2" data-toggle="modal" data-target="#cronModal">
+                设置定时任务
+            </button>
+            <button type="submit" name="createShellScript" value="true" class="btn btn-success mx-2">
+                生成更新脚本
+            </button>
+        </form>
+    </div>
+
+<form method="POST">
+    <div class="modal fade" id="cronModal" tabindex="-1" role="dialog" aria-labelledby="cronModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cronModalLabel">设置 Cron 计划任务</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="cronExpression">Cron 表达式</label>
+                        <input type="text" class="form-control" id="cronExpression" name="cronExpression" placeholder="如: 0 2 * * *" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>提示:</strong> Cron 表达式格式：
+                        <ul>
+                            <li><code>分钟 小时 日 月 星期</code></li>
+                            <li>示例: 每天凌晨 2 点: <code>0 2 * * *</code></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary mr-3" data-dismiss="modal">取消</button>
+                    <button type="submit" name="createCronJob" class="btn btn-primary">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 <script>
     document.getElementById('pasteButton').onclick = function() {
         window.open('https://paste.gg', '_blank');
@@ -986,11 +1124,6 @@ function initializeAceEditor() {
     }
 </style>
 
-<div class="help-text mb-3 text-start">
-    <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站/转发防火墙规则都设置为“接受”并启用它们。
-</div>
-<div class="help-text mb-3 text-start">
-    <strong>2. 注意：puernya订阅已合并至Mihomo订阅，并确保使用 puernya 内核。
 </div>
       <footer class="text-center">
     <p><?php echo $footer ?></p>

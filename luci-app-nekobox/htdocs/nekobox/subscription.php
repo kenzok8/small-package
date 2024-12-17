@@ -438,7 +438,7 @@ EOL;
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Personal - Neko</title>
+    <title>Sing-box - Neko</title>
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
@@ -762,6 +762,7 @@ EOL;
         </div>
     </div>
         <div class="help mt-4">
+             <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站/转发防火墙规则都设置为“接受”并启用它们。<p>
             <p style="color: red;">注意：在线订阅转换存在隐私泄露风险，请确保使用 Sing-box 的通道一版本，通道二版本不支持此功能。同时，需要下载并配置 geoip 和 geosite 文件以确保正常使用。</p>
             <p>订阅转换由肥羊提供</p>
             <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary">
