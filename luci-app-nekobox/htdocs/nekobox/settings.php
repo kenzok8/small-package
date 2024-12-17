@@ -104,6 +104,16 @@ function getRazordVersion() {
         return "未安装";
     }
 }
+
+function getCliverVersion() {
+    $versionFile = '/etc/neko/tmp/nekobox_version';
+    
+    if (file_exists($versionFile)) {
+        return trim(file_get_contents($versionFile));
+    } else {
+        return "未安装";
+    }
+}
 $singBoxVersionInfo = getSingboxVersion();
 $singBoxVersion = $singBoxVersionInfo['version'];
 $singBoxType = $singBoxVersionInfo['type'];
@@ -113,6 +123,7 @@ $mihomoVersionInfo = getMihomoVersion();
 $mihomoVersion = $mihomoVersionInfo['version'];
 $mihomoType = $mihomoVersionInfo['type'];
 $uiVersion = getUiVersion();
+$cliverVersion = getCliverVersion();
 $metaCubexdVersion = getMetaCubexdVersion();
 $metaVersion = getMetaVersion();
 $razordVersion = getRazordVersion();
@@ -846,7 +857,7 @@ document.getElementById('checkUiButton').addEventListener('click', function () {
 
 document.getElementById('checkCliverButton').addEventListener('click', function () {
     const currentVersions = {
-        '客户端': document.getElementById('cliver').textContent,
+        '客户端': '<?php echo htmlspecialchars($cliverVersion); ?>',
     };
     const updateFiles = [{ name: '客户端', url: 'update_script.php' }];
     checkVersion('NewCliver', updateFiles, currentVersions);

@@ -278,7 +278,6 @@ $lang = $_GET['lang'] ?? 'en';
 .container-sm.container-bg.callout.border {
   padding: 12px 15px; 
   min-height: 70px; 
-  display: flex;
   margin-bottom: 15px;
 }
 
