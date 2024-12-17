@@ -2,8 +2,7 @@
     "admin/services/mihomo": {
         "title": "MihomoTProxy",
         "action": {
-            "type": "alias",
-            "path": "admin/services/mihomo/config"
+            "type": "firstchild"
         },
         "depends": {
             "acl": [ "luci-app-mihomo" ],
@@ -11,16 +10,40 @@
         }
     },
     "admin/services/mihomo/config": {
-        "title": "Config",
+        "title": "App Config",
         "order": 10,
         "action": {
             "type": "view",
-            "path": "mihomo/config"
+            "path": "mihomo/app"
+        }
+    },
+    "admin/services/mihomo/profile": {
+        "title": "Profile",
+        "order": 20,
+        "action": {
+            "type": "view",
+            "path": "mihomo/profile"
+        }
+    },
+    "admin/services/mihomo/mixin": {
+        "title": "Mixin Config",
+        "order": 30,
+        "action": {
+            "type": "view",
+            "path": "mihomo/mixin"
+        }
+    },
+    "admin/services/mihomo/proxy": {
+        "title": "Proxy Config",
+        "order": 40,
+        "action": {
+            "type": "view",
+            "path": "mihomo/proxy"
         }
     },
     "admin/services/mihomo/editor": {
         "title": "Editor",
-        "order": 20,
+        "order": 50,
         "action": {
             "type": "view",
             "path": "mihomo/editor"
@@ -28,7 +51,7 @@
     },
     "admin/services/mihomo/log": {
         "title": "Log",
-        "order": 30,
+        "order": 60,
         "action": {
             "type": "view",
             "path": "mihomo/log"
