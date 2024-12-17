@@ -2,9 +2,8 @@
 'require form';
 'require view';
 'require uci';
-'require fs';
 'require poll';
-'require tools.mihomo as mihomo'
+'require tools.mihomo as mihomo';
 
 return view.extend({
     load: function () {
@@ -22,7 +21,7 @@ return view.extend({
 
         m = new form.Map('mihomo');
 
-        s = m.section(form.NamedSection, 'log', 'log');
+        s = m.section(form.NamedSection, 'log', 'log', _('Log'));
 
         s.tab('app_log', _('App Log'));
 
