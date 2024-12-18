@@ -278,7 +278,7 @@ ln_run() {
 lua_api() {
 	local func=${1}
 	[ -z "${func}" ] && {
-		echo "nil"
+		echo ""
 		return
 	}
 	echo $(lua -e "local api = require 'luci.passwall2.api' print(api.${func})")
@@ -442,6 +442,8 @@ run_xray() {
 
 	lua $UTIL_XRAY gen_config -node $node -redir_port $redir_port -tcp_proxy_way $tcp_proxy_way -loglevel $loglevel ${_extra_param} > $config_file
 	ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file run -c "$config_file"
+
+	[ -n "${redir_port}" ] && set_cache_var "node_${node}_redir_port" "${redir_port}"
 }
 
 run_singbox() {
@@ -541,6 +543,8 @@ run_singbox() {
 
 	lua $UTIL_SINGBOX gen_config -node $node -redir_port $redir_port -tcp_proxy_way $tcp_proxy_way ${_extra_param} > $config_file
 	ln_run "$(first_type $(config_t_get global_app singbox_file) sing-box)" "sing-box" "${log_file}" run -c "$config_file"
+
+	[ -n "${redir_port}" ] && set_cache_var "node_${node}_redir_port" "${redir_port}"
 }
 
 run_socks() {
@@ -701,11 +705,10 @@ socks_node_switch() {
 }
 
 run_global() {
-	[ "$NODE" = "nil" ] && return 1
-	TYPE=$(echo $(config_n_get $NODE type nil) | tr 'A-Z' 'a-z')
-	[ "$TYPE" = "nil" ] && return 1
+	[ -z "$NODE" ] && return 1
+	TYPE=$(echo $(config_n_get $NODE type) | tr 'A-Z' 'a-z')
+	[ -z "$TYPE" ] && return 1
 	mkdir -p $TMP_ACL_PATH/default
-	set_cache_var "GLOBAL_node" "$NODE"
 
 	if [ $PROXY_IPV6 == "1" ]; then
 		echolog "开启实验性IPv6透明代理(TProxy)，请确认您的节点及类型支持IPv6！"
@@ -774,6 +777,9 @@ run_global() {
 	GLOBAL_DNSMASQ_PORT=$(get_new_port 11400)
 	run_copy_dnsmasq flag="default" listen_port=$GLOBAL_DNSMASQ_PORT tun_dns="${TUN_DNS}"
 	DNS_REDIRECT_PORT=${GLOBAL_DNSMASQ_PORT}
+
+	set_cache_var "ACL_GLOBAL_node" "$NODE"
+	set_cache_var "ACL_GLOBAL_redir_port" "$REDIR_PORT"
 }
 
 start_socks() {
@@ -784,8 +790,8 @@ start_socks() {
 			for id in $ids; do
 				local enabled=$(config_n_get $id enabled 0)
 				[ "$enabled" == "0" ] && continue
-				local node=$(config_n_get $id node nil)
-				[ "$node" == "nil" ] && continue
+				local node=$(config_n_get $id node)
+				[ -z "$node" ] && continue
 				local bind_local=$(config_n_get $id bind_local 0)
 				local bind="0.0.0.0"
 				[ "$bind_local" = "1" ] && bind="127.0.0.1"
@@ -846,23 +852,43 @@ start_crontab() {
 		return
 	}
 
-	auto_on=$(config_t_get global_delay auto_on 0)
-	if [ "$auto_on" = "1" ]; then
-		time_off=$(config_t_get global_delay time_off)
-		time_on=$(config_t_get global_delay time_on)
-		time_restart=$(config_t_get global_delay time_restart)
-		[ -z "$time_off" -o "$time_off" != "nil" ] && {
-			echo "0 $time_off * * * /etc/init.d/$CONFIG stop" >>/etc/crontabs/root
-			echolog "配置定时任务：每天 $time_off 点关闭服务。"
-		}
-		[ -z "$time_on" -o "$time_on" != "nil" ] && {
-			echo "0 $time_on * * * /etc/init.d/$CONFIG start" >>/etc/crontabs/root
-			echolog "配置定时任务：每天 $time_on 点开启服务。"
-		}
-		[ -z "$time_restart" -o "$time_restart" != "nil" ] && {
-			echo "0 $time_restart * * * /etc/init.d/$CONFIG restart" >>/etc/crontabs/root
-			echolog "配置定时任务：每天 $time_restart 点重启服务。"
-		}
+	stop_week_mode=$(config_t_get global_delay stop_week_mode)
+	stop_time_mode=$(config_t_get global_delay stop_time_mode)
+	if [ -n "$stop_week_mode" ]; then
+		local t="0 $stop_time_mode * * $stop_week_mode"
+		[ "$stop_week_mode" = "7" ] && t="0 $stop_time_mode * * *"
+		if [ "$stop_week_mode" = "8" ]; then
+			update_loop=1
+		else
+			echo "$t /etc/init.d/$CONFIG stop > /dev/null 2>&1 &" >>/etc/crontabs/root
+		fi
+		echolog "配置定时任务：自动关闭服务。"
+	fi
+
+	start_week_mode=$(config_t_get global_delay start_week_mode)
+	start_time_mode=$(config_t_get global_delay start_time_mode)
+	if [ -n "$start_week_mode" ]; then
+		local t="0 $start_time_mode * * $start_week_mode"
+		[ "$start_week_mode" = "7" ] && t="0 $start_time_mode * * *"
+		if [ "$start_week_mode" = "8" ]; then
+			update_loop=1
+		else
+			echo "$t /etc/init.d/$CONFIG start > /dev/null 2>&1 &" >>/etc/crontabs/root
+		fi
+		echolog "配置定时任务：自动开启服务。"
+	fi
+
+	restart_week_mode=$(config_t_get global_delay restart_week_mode)
+	restart_time_mode=$(config_t_get global_delay restart_time_mode)
+	if [ -n "$restart_week_mode" ]; then
+		local t="0 $restart_time_mode * * $restart_week_mode"
+		[ "$restart_week_mode" = "7" ] && t="0 $restart_time_mode * * *"
+		if [ "$restart_week_mode" = "8" ]; then
+			update_loop=1
+		else
+			echo "$t /etc/init.d/$CONFIG restart > /dev/null 2>&1 &" >>/etc/crontabs/root
+		fi
+		echolog "配置定时任务：自动重启服务。"
 	fi
 
 	autoupdate=$(config_t_get global_rules auto_update)
@@ -1098,7 +1124,7 @@ acl_app() {
 		dnsmasq_port=${GLOBAL_DNSMASQ_PORT:-11400}
 		for item in $items; do
 			index=$(expr $index + 1)
-			local enabled sid remarks sources node direct_dns_query_strategy remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy interface use_interface
+			local enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports node direct_dns_query_strategy write_ipset_direct remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy
 			local _ip _mac _iprange _ipset _ip_or_mac source_list config_file
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
@@ -1127,30 +1153,46 @@ acl_app() {
 			mkdir -p $TMP_ACL_PATH/$sid
 			[ ! -z "${source_list}" ] && echo -e "${source_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/source_list
 
-			tcp_proxy_mode="global"
-			udp_proxy_mode="global"
 			node=${node:-default}
-			direct_dns_query_strategy=${direct_dns_query_strategy:-UseIP}
-			remote_dns_protocol=${remote_dns_protocol:-tcp}
-			remote_dns=${remote_dns:-1.1.1.1}
-			[ "$remote_dns_protocol" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
-			remote_dns_detour=${remote_dns_detour:-remote}
-			remote_fakedns=${remote_fakedns:-0}
-			remote_dns_query_strategy=${remote_dns_query_strategy:-UseIPv4}
+			tcp_no_redir_ports=${tcp_no_redir_ports:-default}
+			udp_no_redir_ports=${udp_no_redir_ports:-default}
+			[ "$tcp_no_redir_ports" = "default" ] && tcp_no_redir_ports=$TCP_NO_REDIR_PORTS
+			[ "$udp_no_redir_ports" = "default" ] && udp_no_redir_ports=$UDP_NO_REDIR_PORTS
+			[ "$tcp_no_redir_ports" == "1:65535" ] && [ "$udp_no_redir_ports" == "1:65535" ] && unset node
 
-			write_ipset_direct=${write_ipset_direct:-1}
+			[ -n "$node" ] && {
+				tcp_proxy_mode="global"
+				udp_proxy_mode="global"
+				direct_dns_query_strategy=${direct_dns_query_strategy:-UseIP}
+				write_ipset_direct=${write_ipset_direct:-1}
+				remote_dns_protocol=${remote_dns_protocol:-tcp}
+				remote_dns=${remote_dns:-1.1.1.1}
+				[ "$remote_dns_protocol" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
+				remote_dns_detour=${remote_dns_detour:-remote}
+				remote_fakedns=${remote_fakedns:-0}
+				remote_dns_query_strategy=${remote_dns_query_strategy:-UseIPv4}
 
-			[ "$node" != "nil" ] && {
+				local GLOBAL_node=$(get_cache_var "ACL_GLOBAL_node")
+				[ -n "${GLOBAL_node}" ] && GLOBAL_redir_port=$(get_cache_var "ACL_GLOBAL_redir_port")
+
 				if [ "$node" = "default" ]; then
-					node=$NODE
-					redir_port=$REDIR_PORT
+					if [ -n "${GLOBAL_node}" ]; then
+						set_cache_var "ACL_${sid}_node" "${GLOBAL_node}"
+						set_cache_var "ACL_${sid}_redir_port" "${GLOBAL_redir_port}"
+						set_cache_var "ACL_${sid}_dns_port" "${GLOBAL_DNSMASQ_PORT}"
+						set_cache_var "ACL_${sid}_default" "1"
+					else
+						echolog "  - 全局节点未启用，跳过【${remarks}】"
+					fi
 				else
-					[ "$(config_get_type $node nil)" = "nodes" ] && {
-						if [ "$node" = "$NODE" ]; then
-							redir_port=$REDIR_PORT
+					[ "$(config_get_type $node)" = "nodes" ] && {
+						if [ -n "${GLOBAL_node}" ] && [ "$node" = "${GLOBAL_node}" ]; then
+							set_cache_var "ACL_${sid}_node" "${GLOBAL_node}"
+							set_cache_var "ACL_${sid}_redir_port" "${GLOBAL_redir_port}"
+							set_cache_var "ACL_${sid}_dns_port" "${GLOBAL_DNSMASQ_PORT}"
+							set_cache_var "ACL_${sid}_default" "1"
 						else
 							redir_port=$(get_new_port $(expr $redir_port + 1))
-							eval node_${node}_redir_port=$redir_port
 
 							local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 							if [ -n "${type}" ]; then
@@ -1169,16 +1211,14 @@ acl_app() {
 							fi
 							dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
 							run_copy_dnsmasq flag="$sid" listen_port=$dnsmasq_port tun_dns="127.0.0.1#${dns_port}"
-							eval node_${node}_$(echo -n "${tcp_proxy_mode}${remote_dns}" | md5sum | cut -d " " -f1)=${dnsmasq_port}
-							filter_node $node TCP > /dev/null 2>&1 &
-							filter_node $node UDP > /dev/null 2>&1 &
+
+							set_cache_var "ACL_${sid}_node" "$node"
+							set_cache_var "ACL_${sid}_redir_port" "$redir_port"
 						fi
-						set_cache_var "ACL_${sid}_node" "${node}"
 					}
 				fi
-				set_cache_var "ACL_${sid}_redir_port" "${redir_port}"
 			}
-			unset enabled sid remarks sources interface node direct_dns_query_strategy remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy 
+			unset enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports node direct_dns_query_strategy write_ipset_direct remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy 
 			unset _ip _mac _iprange _ipset _ip_or_mac source_list config_file
 		done
 		unset redir_port dns_port dnsmasq_port
@@ -1272,9 +1312,9 @@ stop() {
 }
 
 ENABLED=$(config_t_get global enabled 0)
-NODE=$(config_t_get global node nil)
+NODE=$(config_t_get global node)
 [ "$ENABLED" == 1 ] && {
-	[ "$NODE" != "nil" ] && [ "$(config_get_type $NODE nil)" != "nil" ] && ENABLED_DEFAULT_ACL=1
+	[ -n "$NODE" ] && [ "$(config_get_type $NODE)" == "nodes" ] && ENABLED_DEFAULT_ACL=1
 }
 ENABLED_ACLS=$(config_t_get global acl_enable 0)
 [ "$ENABLED_ACLS" == 1 ] && {
