@@ -1062,6 +1062,11 @@ function initializeAceEditor() {
             <button type="submit" name="createShellScript" value="true" class="btn btn-success mx-2">
                 生成更新脚本
             </button>
+             <td>
+            <a class="btn btn-info btn-sm text-white" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
+                打开文件助手
+            </a>
+        </td>
         </form>
     </div>
 
