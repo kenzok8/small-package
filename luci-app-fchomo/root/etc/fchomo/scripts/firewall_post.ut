@@ -354,8 +354,11 @@ table inet fchomo {
 		type nat hook prerouting priority dstnat + 5; policy accept;
 		{#- DNS hijack #}
 		{% if (dnsmasq_hijacked !== '1'): %}
-		meta iifname != lo meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto { tcp, udp } th dport 53 counter redirect to :{{ dnsmasq_port }} comment "!{{ cfgname }}: DNS hijack (subnet)"
+		{% if (control_info.listen_interfaces): %}
+		meta iifname {{ array_to_nftarr(control_info.listen_interfaces) }}
 		{% endif %}
+		meta iifname != lo meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto { tcp, udp } th dport 53 counter redirect to :{{ dnsmasq_port }} comment "!{{ cfgname }}: DNS hijack (subnet)"
+		{% endif /* dnsmasq_hijacked */ %}
 		{#- TCP redirect entrypoint #}
 		{% if (match(proxy_mode, /redir/)): %}
 		meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump redir_acl_src
