@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0
+#
+# Copyright (C) 2024 Anya Lin <hukk1996@gmail.com>
+
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=FullCombo Mihomo supplies maximum customization on OpenWrt.
