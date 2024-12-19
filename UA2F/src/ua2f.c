@@ -1,12 +1,11 @@
 #include "cli.h"
 #include "handler.h"
 #include "statistics.h"
-#include "third/nfqueue-mnl.h"
 #include "util.h"
-
 #ifdef UA2F_ENABLE_UCI
 #include "config.h"
 #endif
+#include "third/nfqueue-mnl.h"
 
 #include <assert.h>
 #include <signal.h>
