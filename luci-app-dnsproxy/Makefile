@@ -1,6 +1,6 @@
-# Copyright (C) 2023 muink <https://github.com/muink>
+# SPDX-License-Identifier: Apache-2.0
 #
-# This is free software, licensed under the Apache License, Version 2.0
+# Copyright (C) 2023-2024 muink <https://github.com/muink>
 
 include $(TOPDIR)/rules.mk
 
