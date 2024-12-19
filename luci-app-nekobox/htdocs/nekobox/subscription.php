@@ -765,7 +765,7 @@ EOL;
              <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站/转发防火墙规则都设置为“接受”并启用它们。<p>
             <p style="color: red;">注意：在线订阅转换存在隐私泄露风险，请确保使用 Sing-box 的通道一版本，通道二版本不支持此功能。同时，需要下载并配置 geoip 和 geosite 文件以确保正常使用。</p>
             <p>订阅转换由肥羊提供</p>
-            <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary">
+            <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
             点击访问
             </a>
         </div>

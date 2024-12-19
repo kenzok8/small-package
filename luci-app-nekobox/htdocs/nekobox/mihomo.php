@@ -613,10 +613,11 @@ function getSubscriptionUrlFromFile($file) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Personal - Neko</title>
+    <title>Mihomo - Nekobox</title>
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
@@ -872,7 +873,7 @@ function getSubscriptionUrlFromFile($file) {
                                value="<?php echo htmlspecialchars(isset($_POST['rename']) ? $_POST['rename'] : ''); ?>"
                                placeholder="输入重命名内容（举例：`a@b``1@2`，|符可用\转义）">
                     </div>
-                    <button type="submit" class="btn btn-primary" name="action" value="generate_subscription">生成配置文件</button>
+                    <button type="submit" class="btn btn-primary" name="action" value="generate_subscription"><i class="bi bi-file-earmark-text"></i> 生成配置文件</button>
                 </form>
             </div>
         </div>
@@ -885,14 +886,14 @@ function getSubscriptionUrlFromFile($file) {
                            value="<?php echo htmlspecialchars(isset($_POST['cron_time']) ? $_POST['cron_time'] : '0 3 * * *'); ?>"
                            placeholder="0 3 * * *">
                 </div>
-                <button type="submit" class="btn btn-primary" name="action" value="update_cron">更新 Cron 作业</button>
+                <button type="submit" class="btn btn-primary" name="action" value="update_cron"><i class="bi bi-clock"></i> 设置定时任务</button>
             </form>
         </div>
 
         <div class="help mt-4">
             <p style="color: red;">注意：在线订阅转换存在隐私泄露风险</p>
             <p>订阅转换由肥羊提供</p>
-            <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary">
+            <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
             点击访问
             </a>
         </div>
