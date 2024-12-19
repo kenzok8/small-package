@@ -198,8 +198,6 @@ load_acl() {
 			udp_proxy_drop_ports=${udp_proxy_drop_ports:-default}
 			tcp_redir_ports=${tcp_redir_ports:-default}
 			udp_redir_ports=${udp_redir_ports:-default}
-			tcp_node=${tcp_node:-nil}
-			udp_node=${udp_node:-nil}
 			use_direct_list=${use_direct_list:-1}
 			use_proxy_list=${use_proxy_list:-1}
 			use_block_list=${use_block_list:-1}
@@ -215,25 +213,17 @@ load_acl() {
 			[ "$udp_redir_ports" = "default" ] && udp_redir_ports=$UDP_REDIR_PORTS
 
 			[ -n "$(get_cache_var "ACL_${sid}_tcp_node")" ] && tcp_node=$(get_cache_var "ACL_${sid}_tcp_node")
+			[ -n "$(get_cache_var "ACL_${sid}_tcp_redir_port")" ] && tcp_port=$(get_cache_var "ACL_${sid}_tcp_redir_port")
 			[ -n "$(get_cache_var "ACL_${sid}_udp_node")" ] && udp_node=$(get_cache_var "ACL_${sid}_udp_node")
-			[ -n "$(get_cache_var "ACL_${sid}_tcp_port")" ] && tcp_port=$(get_cache_var "ACL_${sid}_tcp_port")
-			[ -n "$(get_cache_var "ACL_${sid}_udp_port")" ] && udp_port=$(get_cache_var "ACL_${sid}_udp_port")
+			[ -n "$(get_cache_var "ACL_${sid}_udp_redir_port")" ] && udp_port=$(get_cache_var "ACL_${sid}_udp_redir_port")
 			[ -n "$(get_cache_var "ACL_${sid}_dns_port")" ] && dns_redirect_port=$(get_cache_var "ACL_${sid}_dns_port")
+			[ -n "$tcp_node" ] && tcp_node_remark=$(config_n_get $tcp_node remarks)
+			[ -n "$udp_node" ] && udp_node_remark=$(config_n_get $udp_node remarks)
 
 			use_shunt_tcp=0
 			use_shunt_udp=0
-			[ "$tcp_node" != "nil" ] && {
-				tcp_node_remark=$(config_n_get $tcp_node remarks)
-				[ "$(config_n_get $tcp_node protocol)" = "_shunt" ] && use_shunt_tcp=1
-			}
-			[ "$udp_node" != "nil" ] && {
-				udp_node_remark=$(config_n_get $udp_node remarks)
-				[ "$(config_n_get $udp_node protocol)" = "_shunt" ] && use_shunt_udp=1
-			}
-			[ "$udp_node" == "tcp" ] && {
-				udp_node_remark=$tcp_node_remark
-				use_shunt_udp=$use_shunt_tcp
-			}
+			[ -n "$tcp_node" ] && [ "$(config_n_get $tcp_node protocol)" = "_shunt" ] && use_shunt_tcp=1
+			[ -n "$udp_node" ] && [ "$(config_n_get $udp_node protocol)" = "_shunt" ] && use_shunt_udp=1
 
 			[ "${use_global_config}" = "1" ] && {
 				tcp_node_remark=$(config_n_get $TCP_NODE remarks)
@@ -503,7 +493,7 @@ load_acl() {
 		
 		local DNS_REDIRECT
 		[ $(config_t_get global dns_redirect "1") = "1" ] && DNS_REDIRECT=53
-		if ([ "$TCP_NODE" != "nil" ] && [ -n "${TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${UDP_PROXY_MODE}" ]); then
+		if ([ -n "$TCP_NODE" ] && [ -n "${TCP_PROXY_MODE}" ]) || ([ -n "$UDP_NODE" ] && [ -n "${UDP_PROXY_MODE}" ]); then
 			[ -n "${DNS_REDIRECT_PORT}" ] && DNS_REDIRECT=${DNS_REDIRECT_PORT}
 		else
 			[ -n "${DIRECT_DNSMASQ_PORT}" ] && DNS_REDIRECT=${DIRECT_DNSMASQ_PORT}
@@ -566,7 +556,7 @@ load_acl() {
 
 		#  加载TCP默认代理模式
 		if [ -n "${TCP_PROXY_MODE}" ]; then
-			[ "$TCP_NODE" != "nil" ] && {
+			[ -n "$TCP_NODE" ] && {
 				msg2="${msg}使用 TCP 节点[$(config_n_get $TCP_NODE remarks)]"
 				if [ -n "${is_tproxy}" ]; then
 					msg2="${msg2}(TPROXY:${TCP_REDIR_PORT})"
@@ -619,7 +609,7 @@ load_acl() {
 
 		#  加载UDP默认代理模式
 		if [ -n "${UDP_PROXY_MODE}" ]; then
-			[ "$UDP_NODE" != "nil" -o "$TCP_UDP" = "1" ] && {
+			[ -n "$UDP_NODE" -o "$TCP_UDP" = "1" ] && {
 				msg2="${msg}使用 UDP 节点[$(config_n_get $UDP_NODE remarks)](TPROXY:${UDP_REDIR_PORT})"
 
 				$ipt_m -A PSW $(comment "默认") -p udp -d $FAKE_IP -j PSW_RULE
@@ -686,7 +676,7 @@ filter_server_port() {
 filter_node() {
 	local node=${1}
 	local stream=${2}
-	if [ -n "$node" ] && [ "$node" != "nil" ]; then
+	if [ -n "$node" ]; then
 		local address=$(config_n_get $node address)
 		local port=$(config_n_get $node port)
 		[ -z "$address" ] && [ -z "$port" ] && {
@@ -736,12 +726,12 @@ add_firewall_rule() {
 	local USE_PROXY_LIST_ALL=${USE_PROXY_LIST}
 	local USE_DIRECT_LIST_ALL=${USE_DIRECT_LIST}
 	local USE_BLOCK_LIST_ALL=${USE_BLOCK_LIST}
-	local _TCP_NODE=$(config_t_get global tcp_node nil)
-	local _UDP_NODE=$(config_t_get global udp_node nil)
+	local _TCP_NODE=$(config_t_get global tcp_node)
+	local _UDP_NODE=$(config_t_get global udp_node)
 	local USE_GEOVIEW=$(config_t_get global_rules enable_geoview)
 
-	[ "$_TCP_NODE" != "nil" ] && [ "$(config_n_get $_TCP_NODE protocol)" = "_shunt" ] && USE_SHUNT_TCP=1 && USE_SHUNT_NODE=1
-	[ "$_UDP_NODE" != "nil" ] && [ "$(config_n_get $_UDP_NODE protocol)" = "_shunt" ] && USE_SHUNT_UDP=1 && USE_SHUNT_NODE=1
+	[ -n "$_TCP_NODE" ] && [ "$(config_n_get $_TCP_NODE protocol)" = "_shunt" ] && USE_SHUNT_TCP=1 && USE_SHUNT_NODE=1
+	[ -n "$_UDP_NODE" ] && [ "$(config_n_get $_UDP_NODE protocol)" = "_shunt" ] && USE_SHUNT_UDP=1 && USE_SHUNT_NODE=1
 	[ "$_UDP_NODE" = "tcp" ] && USE_SHUNT_UDP=$USE_SHUNT_TCP
 
 	for acl_section in $(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
@@ -1012,7 +1002,7 @@ add_firewall_rule() {
 	ip -6 rule add fwmark 1 table 100
 	ip -6 route add local ::/0 dev lo table 100
 	
-	[ "$TCP_UDP" = "1" ] && [ "$UDP_NODE" = "nil" ] && UDP_NODE=$TCP_NODE
+	[ "$TCP_UDP" = "1" ] && [ -z "$UDP_NODE" ] && UDP_NODE=$TCP_NODE
 
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && {
 		local ipt_tmp=$ipt_n
@@ -1046,7 +1036,7 @@ add_firewall_rule() {
 			fi
 		}
 
-		if ([ "$TCP_NODE" != "nil" ] && [ -n "${LOCALHOST_TCP_PROXY_MODE}" ]) || ([ "$UDP_NODE" != "nil" ] && [ -n "${LOCALHOST_UDP_PROXY_MODE}" ]); then
+		if ([ -n "$TCP_NODE" ] && [ -n "${LOCALHOST_TCP_PROXY_MODE}" ]) || ([ -n "$UDP_NODE" ] && [ -n "${LOCALHOST_UDP_PROXY_MODE}" ]); then
 			[ -n "$DNS_REDIRECT_PORT" ] && {
 				$ipt_n -A OUTPUT $(comment "PSW") -p udp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT
 				$ip6t_n -A OUTPUT $(comment "PSW") -p udp -o lo --dport 53 -j REDIRECT --to-ports $DNS_REDIRECT_PORT 2>/dev/null
@@ -1078,7 +1068,7 @@ add_firewall_rule() {
 		}
 
 		# 加载路由器自身代理 TCP
-		if [ "$TCP_NODE" != "nil" ]; then
+		if [ -n "$TCP_NODE" ]; then
 			_proxy_tcp_access() {
 				[ -n "${2}" ] || return 0
 				if echo "${2}" | grep -q -v ':'; then
@@ -1156,7 +1146,7 @@ add_firewall_rule() {
 		fi
 
 		# 加载路由器自身代理 UDP
-		if [ "$UDP_NODE" != "nil" -o "$TCP_UDP" = "1" ]; then
+		if [ -n "$UDP_NODE" -o "$TCP_UDP" = "1" ]; then
 			_proxy_udp_access() {
 				[ -n "${2}" ] || return 0
 				if echo "${2}" | grep -q -v ':'; then
