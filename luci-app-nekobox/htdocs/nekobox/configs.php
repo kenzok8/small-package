@@ -10,15 +10,6 @@ $selected_config = trim(file_get_contents($tmpPath));
 
 if (empty($selected_config) || !file_exists($selected_config)) {
     $selected_config = "$dirPath/default_config.yaml";
-    if (!file_exists($selected_config)) {
-        $default_config_content = "external-controller: 0.0.0.0:9090\n";
-        $default_config_content .= "secret: Akun\n";
-        $default_config_content .= "external-ui: ui\n";
-        $default_config_content .= "# 请根据需要编辑此文件\n";
-        file_put_contents($selected_config, $default_config_content);
-        $logMessage = "配置文件丢失，已创建默认配置文件。";
-    }
-
     file_put_contents($tmpPath, $selected_config);
 }
 

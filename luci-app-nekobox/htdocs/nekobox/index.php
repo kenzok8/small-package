@@ -594,6 +594,62 @@ if (isset($_GET['ajax'])) {
     exit;
 }
 ?>
+<?php
+$default_config = '/etc/neko/config/mihomo.yaml';
+
+$current_config = file_exists('/www/nekobox/lib/selected_config.txt') 
+    ? file_get_contents('/www/nekobox/lib/selected_config.txt') 
+    : $default_config;
+
+if (!file_exists($current_config)) {
+    $default_config_content = "external-controller: 0.0.0.0:9090\n";
+    $default_config_content .= "secret: Akun\n";
+    $default_config_content .= "external-ui: ui\n";
+    $default_config_content .= "# 请根据需要编辑此文件\n";
+    
+    file_put_contents($current_config, $default_config_content);
+    file_put_contents('/www/nekobox/lib/selected_config.txt', $current_config);
+    $logMessage = "配置文件丢失，已创建默认配置文件。";
+} else {
+    $config_content = file_get_contents($current_config);
+
+    $missing_config = false;
+    $default_config_content = [
+        "external-controller" => "0.0.0.0:9090",
+        "secret" => "Akun",
+        "external-ui" => "ui"
+    ];
+
+    foreach ($default_config_content as $key => $value) {
+        if (strpos($config_content, "$key:") === false) {
+            $config_content .= "$key: $value\n";
+            $missing_config = true;
+        }
+    }
+
+    if ($missing_config) {
+        file_put_contents($current_config, $config_content);
+        $logMessage = "配置文件缺少某些选项，已自动添加缺失的配置项。";
+    }
+}
+
+if (isset($logMessage)) {
+    echo "<script>alert('$logMessage');</script>";
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
+    $selected_file = $_POST['selected_config'];
+
+    $config_dir = '/etc/neko/config';
+    $selected_file_path = $config_dir . '/' . $selected_file;
+
+    if (file_exists($selected_file_path) && pathinfo($selected_file, PATHINFO_EXTENSION) == 'yaml') {
+        file_put_contents('/www/nekobox/lib/selected_config.txt', $selected_file_path);
+    } else {
+        echo "<script>alert('无效的配置文件');</script>";
+    }
+}
+?>
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme,0,-4) ?>">
   <head>
@@ -719,7 +775,7 @@ $(document).ready(function() {
    <table class="table table-borderless mb-2">
        <tbody>
            <tr>
-               <td style="width:150px">状态</td>
+               <td style="width:150px">运行状态</td>
                <td class="d-grid">
                    <div class="btn-group w-100" role="group" aria-label="ctrl">
                        <?php
@@ -738,10 +794,27 @@ $(document).ready(function() {
                    </div>
                </td>
            </tr>
-           <tr>
-               <td style="width:150px">控制</td>
+            <tr>
+               <td style="width:150px">Mihomo 控制</td>
                <td class="d-grid">
-                   <form action="index.php" method="post">
+                   <form action="index.php" method="post" style="display: inline-block; width: 100%; margin-bottom: 10px;">
+                       <div class="form-group">
+                           <select id="configSelect" class="form-select" name="selected_config" onchange="saveConfigToLocalStorage(); this.form.submit()">
+                               <option value="">请选择配置文件</option> 
+                               <?php
+                                   $config_dir = '/etc/neko/config';
+                                   $files = array_diff(scandir($config_dir), array('..', '.')); 
+                                   foreach ($files as $file) {
+                                       if (pathinfo($file, PATHINFO_EXTENSION) == 'yaml') {
+                                           $selected = (realpath($config_dir . '/' . $file) == realpath($current_config)) ? 'selected' : '';  
+                                           echo "<option value='$file' $selected>$file</option>";
+                                       }
+                                   }
+                               ?>
+                           </select>
+                       </div>
+                    </form>
+                   <form action="index.php" method="post" style="display: inline-block; width: 100%;">
                        <div class="btn-group w-100">
                            <button type="submit" name="neko" value="start" class="btn btn<?php if ($neko_status == 1) echo "-outline" ?>-success <?php if ($neko_status == 1) echo "disabled" ?>">启用 Mihomo</button>
                            <button type="submit" name="neko" value="disable" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-danger <?php if ($neko_status == 0) echo "disabled" ?>">停用 Mihomo</button>
@@ -751,7 +824,7 @@ $(document).ready(function() {
                </td>
            </tr>
            <tr>
-               <td style="width:150px"></td>
+               <td style="width:150px">Sing-box 控制</td>
                <td class="d-grid">
                    <form action="index.php" method="post">
                        <div class="input-group mb-2">
@@ -800,6 +873,23 @@ $(document).ready(function() {
         const selectedConfig = document.getElementById("config_file").value;
         localStorage.setItem("configSelection", selectedConfig);
     }
+</script>
+
+<script>
+function saveConfigToLocalStorage() {
+    const selectedConfig = document.getElementById('configSelect').value;
+    if (selectedConfig) {
+        localStorage.setItem('selected_config', selectedConfig);
+    }
+}
+
+window.onload = function() {
+    const savedConfig = localStorage.getItem('selected_config');
+    if (savedConfig) {
+        const configSelect = document.getElementById('configSelect');
+        configSelect.value = savedConfig; 
+    }
+};
 </script>
 <h2 class="text-center">系统状态</h2>
 <table class="table table-borderless rounded-4 mb-2">
@@ -886,42 +976,9 @@ $(document).ready(function() {
                 <label class="form-check-label" for="autoRefresh">自动刷新</label>
             </div>
             <button type="submit" name="clear_singbox_log" class="btn btn-danger">🗑️ 清空日志</button>
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#helpModal">🔄 更正时区</button>
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cronModal">⏰ 定时重启</button>
         </form>
     </div>
-</div>
-<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="helpModalLabel">时区错误的解决方案</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p>以下是解决时区错误的具体步骤：</p>
-        <pre>
-# 确保系统时区正确。检查时区文件是否存在：
-ls /usr/share/zoneinfo/Asia/Shanghai
-
-# 如果不存在，需要安装：
-opkg update
-opkg install zoneinfo-asia
-
-# 然后设置时区：
-ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-
-# 确认系统时区是否已正确应用：
-date
-        </pre>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div class="modal fade" id="cronModal" tabindex="-1" role="dialog" aria-labelledby="cronModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">

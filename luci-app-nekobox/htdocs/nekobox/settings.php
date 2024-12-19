@@ -109,11 +109,23 @@ function getCliverVersion() {
     $versionFile = '/etc/neko/tmp/nekobox_version';
     
     if (file_exists($versionFile)) {
-        return trim(file_get_contents($versionFile));
+        $version = trim(file_get_contents($versionFile));
+        
+        if (preg_match('/-cn$|en$/', $version)) {
+            return ['version' => $version, 'type' => '正式版'];
+        } elseif (preg_match('/-preview$|beta$/', $version)) {
+            return ['version' => $version, 'type' => '预览版'];
+        } else {
+            return ['version' => $version, 'type' => '未知'];
+        }
     } else {
-        return "未安装";
+        return ['version' => '未安装', 'type' => '未知'];
     }
 }
+
+$cliverData = getCliverVersion();
+$cliverVersion = $cliverData['version']; 
+$cliverType = $cliverData['type']; 
 $singBoxVersionInfo = getSingboxVersion();
 $singBoxVersion = $singBoxVersionInfo['version'];
 $singBoxType = $singBoxVersionInfo['type'];
@@ -123,7 +135,6 @@ $mihomoVersionInfo = getMihomoVersion();
 $mihomoVersion = $mihomoVersionInfo['version'];
 $mihomoType = $mihomoVersionInfo['type'];
 $uiVersion = getUiVersion();
-$cliverVersion = getCliverVersion();
 $metaCubexdVersion = getMetaCubexdVersion();
 $metaVersion = getMetaVersion();
 $razordVersion = getRazordVersion();
@@ -300,7 +311,7 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="modal-body">
                 <select id="mihomoVersionSelect" class="form-select">
-                    <option value="stable">稳定版</option>
+                    <option value="stable">正式版</option>
                     <option value="preview">预览版</option>
                 </select>
             </div>
@@ -376,7 +387,7 @@ $razordVersion = getRazordVersion();
                     <label for="singboxVersionSelectForChannelTwo">选择版本</label>
                     <select id="singboxVersionSelectForChannelTwo" class="form-control">
                         <option value="preview" selected>预览版</option>  
-                        <option value="stable">稳定版</option>
+                        <option value="stable">正式版</option>
                     </select>
                 </div>
             </div>
@@ -810,14 +821,14 @@ document.getElementById('checkSingboxButton').addEventListener('click', function
     const puernyaVersion = "<?php echo htmlspecialchars($puernyaVersion); ?>";
     const singboxPreviewVersion = "<?php echo htmlspecialchars($singboxPreviewVersion); ?>";
     const currentVersions = {
-        'Singbox 正式版': singBoxType === 'Singbox 正式版' ? singBoxVersion : '未安装',
-        'Singbox 预览版': singboxPreviewVersion,
-        'Puernya 预览版': puernyaVersion 
+        'Singbox [ 正式版 ]': singBoxType === 'Singbox 正式版' ? singBoxVersion : '未安装',
+        'Singbox [ 预览版 ]': singboxPreviewVersion,
+        'Puernya [ 预览版 ]': puernyaVersion 
     };
     const updateFiles = [
-        { name: 'Singbox 正式版', url: 'update_singbox_stable.php' },
-        { name: 'Singbox 预览版', url: 'update_singbox_preview.php' },
-        { name: 'Puernya 预览版', url: 'puernya.php' }
+        { name: 'Singbox [ 正式版 ]', url: 'update_singbox_stable.php' },
+        { name: 'Singbox [ 预览版 ]', url: 'update_singbox_preview.php' },
+        { name: 'Puernya [ 预览版 ]', url: 'puernya.php' }
     ];
     checkVersion('NewSingbox', updateFiles, currentVersions);
 });
@@ -827,13 +838,13 @@ document.getElementById('checkMihomoButton').addEventListener('click', function 
     const mihomoType = "<?php echo htmlspecialchars($mihomoType); ?>";
 
     const currentVersions = {
-        'Mihomo 正式版': mihomoType === '正式版' ? mihomoVersion : '未安装',
-        'Mihomo 预览版': mihomoType === '预览版' ? mihomoVersion : '未安装',
+        'Mihomo [ 正式版 ]': mihomoType === '正式版' ? mihomoVersion : '未安装',
+        'Mihomo [ 预览版 ]': mihomoType === '预览版' ? mihomoVersion : '未安装',
     };
 
     const updateFiles = [
-        { name: 'Mihomo 正式版', url: 'update_mihomo_stable.php' },
-        { name: 'Mihomo 预览版', url: 'update_mihomo_preview.php' }
+        { name: 'Mihomo [ 正式版 ]', url: 'update_mihomo_stable.php' },
+        { name: 'Mihomo [ 预览版 ]', url: 'update_mihomo_preview.php' }
     ];
 
     checkVersion('NewMihomo', updateFiles, currentVersions);
@@ -856,10 +867,19 @@ document.getElementById('checkUiButton').addEventListener('click', function () {
 });
 
 document.getElementById('checkCliverButton').addEventListener('click', function () {
+    const cliverVersion = "<?php echo htmlspecialchars($cliverVersion); ?>";
+    const cliverType = "<?php echo htmlspecialchars($cliverType); ?>";
+
     const currentVersions = {
-        '客户端': '<?php echo htmlspecialchars($cliverVersion); ?>',
+        '客户端 [ 正式版 ]': cliverType === '正式版' ? cliverVersion : '未安装',
+        '客户端 [ 预览版 ]': cliverType === '预览版' ? cliverVersion : '未安装',
     };
-    const updateFiles = [{ name: '客户端', url: 'update_script.php' }];
+
+    const updateFiles = [
+        { name: '客户端 [ 正式版 ]', url: 'update_script.php' },
+        { name: '客户端 [ 预览版 ]', url: 'update_preview.php' }
+    ];
+
     checkVersion('NewCliver', updateFiles, currentVersions);
 });
 

@@ -17,8 +17,6 @@ $yacd_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/meta?h
 $zash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/zashboard?hostname=' . $neko_cfg['ctrl_host'] . '&port=' . $neko_cfg['ctrl_port'] . '&secret=' . $neko_cfg['secret'];
 $meta_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/metacubexd?hostname=' . $neko_cfg['ctrl_host'] . '&port=' . $neko_cfg['ctrl_port'] . '&secret=' . $neko_cfg['secret'];
 $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashboard?hostname=' . $neko_cfg['ctrl_host'] . '&port=' . $neko_cfg['ctrl_port'] . '&secret=' . $neko_cfg['secret'];
-
-
 ?>
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme,0,-4) ?>">
@@ -34,8 +32,44 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <?php include './ping.php'; ?>
+    <style>
+        #fullscreenToggle {
+            position: fixed;  
+            top: 10px;        
+            right: 10px;     
+            z-index: 1000;    
+            padding: 5px 15px; 
+            background-color: #007bff;
+            color: white;     
+            border: none;      
+            border-radius: 5px; 
+            font-size: 14px;    
+            cursor: pointer;  
+            transition: background-color 0.3s ease;
+        }
+
+        #fullscreenToggle:hover {
+            background-color: #0056b3; 
+        }
+
+        #iframeMeta {
+            transition: height 0.3s ease; 
+            height: 70vh; 
+        }
+
+        body.fullscreen #iframeMeta {
+            height: 100vh; 
+        }
+
+        @media (max-width: 767px) {
+            #fullscreenToggle {
+                display: none; 
+            }
+        }
+    </style>
   </head>
   <body>
+    <button id="fullscreenToggle" class="btn btn-primary mb-2">全屏</button>
 <head>
 <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
     <div class="row">
@@ -47,10 +81,9 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
     </div>
 <div class="container text-left p-3">
         <div class="container h-100 mb-5">
-            <iframe id="iframeMeta" class="border border-3 rounded-4 w-100" style="height: 75vh;" src="http://<?php echo $zash_link; ?>" title="zash" allowfullscreen></iframe>
+            <iframe id="iframeMeta" class="border border-3 rounded-4 w-100" style="height: 70vh;" src="http://<?php echo $zash_link; ?>" title="zash" allowfullscreen></iframe>
             <table class="table table-borderless callout mb-2">
                 <tbody>
-            <button id="fullscreenToggle" class="btn btn-primary mb-2">全屏</button>
                     <tr class="text-center d-flex flex-wrap justify-content-center">
                         <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $yacd_link; ?>">YACD-META 面板</a></td>
                         <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $dash_link; ?>">DASHBOARD 面板</a></td>
@@ -96,6 +129,14 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
                 }
                 fullscreenToggle.textContent = '全屏'; 
                 isFullscreen = false;  
+                }
+            });
+
+            document.addEventListener('fullscreenchange', function() {
+                if (document.fullscreenElement) {
+                    iframeMeta.style.height = '100vh';
+                } else {
+                    iframeMeta.style.height = '70vh';
                 }
             });
         });

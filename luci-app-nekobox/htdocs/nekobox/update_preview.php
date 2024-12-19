@@ -31,9 +31,18 @@ if (empty($new_version)) {
     die("未找到最新版本或版本信息为空。");
 }
 
-$preview_suffix = "-preview";
+$installed_lang = isset($_GET['lang']) ? $_GET['lang'] : 'cn'; 
 
-$download_url = "https://github.com/$repo_owner/$repo_name/releases/download/$new_version/{$package_name}_{$new_version}{$preview_suffix}_all.ipk";
+if ($installed_lang !== 'cn' && $installed_lang !== 'en') {
+    die("无效的语言选择。请选择 'cn' 或 'en'。");
+}
+
+if (isset($_GET['check_version'])) {
+    echo "最新版本: V" . $new_version . "-beta";
+    exit;
+}
+
+$download_url = "https://github.com/$repo_owner/$repo_name/releases/download/$new_version/{$package_name}_{$new_version}-{$installed_lang}_all.ipk";
 
 echo "<pre>最新版本: $new_version</pre>";
 echo "<pre>下载URL: $download_url</pre>";
@@ -47,7 +56,7 @@ echo "<script>
 
 echo "<script>appendLog('开始下载更新...');</script>";
 
-$local_file = "/tmp/{$package_name}_{$new_version}{$preview_suffix}_all.ipk";
+$local_file = "/tmp/{$package_name}_{$new_version}-{$installed_lang}_all.ipk";
 
 $curl_command = "curl -sL " . escapeshellarg($download_url) . " -o " . escapeshellarg($local_file);
 exec($curl_command . " 2>&1", $output, $return_var);
