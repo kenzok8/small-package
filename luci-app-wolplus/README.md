@@ -1,9 +1,14 @@
+# luci-app-wolplusï¼ˆç½‘ç»œå”¤é†’++ï¼‰
 
-# luci-app-wolplus£¨ÍøÂç»½ĞÑ++£©
+<br>ä¸­æ–‡ | [English](README_en.md)
 
-Ò»¿î¸ü·½±ãµÄ»½ĞÑÍøÂçÉè±¸µÄ²å¼ş
+<a target="_blank" href="https://github.com/animegasan/luci-app-wolplus/releases"><img src="https://img.shields.io/github/downloads/animegasan/luci-app-wolplus/total?label=Total%20Download&labelColor=blue&style=for-the-badge"></a>
 
-### Ğ§¹ûÕ¹Ê¾
+ä¸€æ¬¾æ›´æ–¹ä¾¿çš„å”¤é†’ç½‘ç»œè®¾å¤‡çš„æ’ä»¶
+
+Source code : [sundaqiang](https://github.com/sundaqiang/openwrt-packages/tree/master/luci-app-wolplus)
+
+### æ•ˆæœå±•ç¤º
 ![wolplus][1]
 
   [1]: https://raw.githubusercontent.com/sundaqiang/openwrt-packages/master/img/wolplus.png
