@@ -49,6 +49,25 @@ export function strToInt(str) {
 	return !match(str, /^\d+$/) ? str : int(str) ?? null;
 };
 
+export function bytesizeToByte(str) {
+	if (isEmpty(str))
+		return null;
+
+	let bytes = 0;
+	let arr = match(str, /^(\d+)(k|m|g)?b?$/);
+	if (arr) {
+		if (arr[2] === 'k') {
+			bytes = strToInt(arr[1]) * 1024;
+		} else if (arr[2] === 'm') {
+			bytes = strToInt(arr[1]) * 1048576;
+		} else if (arr[2] === 'g') {
+			bytes = strToInt(arr[1]) * 1073741824;
+		} else
+			bytes = strToInt(arr[1]);
+	}
+
+	return bytes;
+};
 export function durationToSecond(str) {
 	if (isEmpty(str))
 		return null;

@@ -88,6 +88,7 @@ return baseclass.extend({
 		['socks5', _('SOCKS5')],
 		['ss', _('Shadowsocks')],
 		//['ssr', _('ShadowsocksR')], // Deprecated
+		['mieru', _('Mieru')],
 		['snell', _('Snell')],
 		['vmess', _('VMess')],
 		['vless', _('VLESS')],
@@ -746,12 +747,21 @@ return baseclass.extend({
 		return true;
 	},
 
+	validateBytesize: function(section_id, value) {
+		if (!value)
+			return true;
+
+		if (!value.match(/^(\d+)(k|m|g)?b?$/))
+			return _('Expecting: %s').format('^(\\d+)(k|m|g)?b?$');
+
+		return true;
+	},
 	validateTimeDuration: function(section_id, value) {
 		if (!value)
 			return true;
 
 		if (!value.match(/^(\d+)(s|m|h|d)?$/))
-			return _('Expecting: %s').format(_('/^(\\d+)(s|m|h|d)?$/'));
+			return _('Expecting: %s').format('^(\\d+)(s|m|h|d)?$');
 
 		return true;
 	},
