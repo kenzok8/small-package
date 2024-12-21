@@ -116,7 +116,8 @@ start_service() {
 			'.sniffer["force-domain"][] style="double"
 			| .sniffer["skip-domain"][] style="double"
 			| with(.dns["nameserver-policy"] | keys; .. style="double")
-			| .dns["fallback-filter"].domain[] style="double"' \
+			| .dns["fallback-filter"].domain[] style="double"
+			| with(.["rule-providers"][] | select(.payload); .payload style="literal")' | sed -E 's,^(\s*payload:) \|-,\1,' \
 		> "$RUN_DIR/mihomo-c.yaml"
 		yq eval-all -i '. as $item ireduce ({}; . * $item )' "$RUN_DIR/mihomo-c.yaml" "$TEMPS_DIR/"*.yaml
 

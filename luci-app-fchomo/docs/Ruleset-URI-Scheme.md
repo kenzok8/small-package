@@ -4,12 +4,13 @@
 
 **remote:** `http[s]://[auth@]<host><path>?fmt=<format>&behav=<behavior>[&key=value][#label]`  
 **local:**　`file://[host]<path>?fmt=<format>&behav=<behavior>[&fill=<base64edStr>][#label]`  
+**inline:** `inline://<Base64edStr>?behav=<behavior>[#label]`  
 
 ## Components
 
 ### Scheme
 
-Can be `http` or `https` or `file`.
+Can be `http` or `https` or `file` or `inline`.
 
 ### Auth
 
