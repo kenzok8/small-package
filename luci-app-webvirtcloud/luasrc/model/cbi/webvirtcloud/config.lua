@@ -26,6 +26,7 @@ o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("linkease/webvirtcloud:latest", "linkease/webvirtcloud:latest")
+o:value("linkease/webvirtcloud:0.8.5", "linkease/webvirtcloud:0.8.5")
 o:value("linkease/webvirtcloud:0.3.6", "linkease/webvirtcloud:0.3.6")
 o.default = "linkease/webvirtcloud:latest"
 
