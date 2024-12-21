@@ -54,7 +54,7 @@ do_install() {
   echo "$cmd"
   eval "$cmd"
 
-  sleep 5
+  sleep 8
   echo "Running status:"
   /usr/sbin/vmeasedaemon runningStatus --pretty
 }
