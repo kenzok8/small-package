@@ -87,20 +87,38 @@ function getRuntimeLog(name, filename) {
 
 return view.extend({
 	render: function(data) {
-		let m, s, o;
+		let m, s, o, ss, so;
 
 		m = new form.Map('fchomo');
 
 		s = m.section(form.NamedSection, 'config', 'fchomo');
 
-		o = s.option(form.DummyValue, '_fchomo_logview');
-		o.render = L.bind(getRuntimeLog, o, _('FullCombo Mihomo'), 'fchomo');
+		/* FullCombo Mihomo START */
+		s.tab('fchomo', _('FullCombo Mihomo'));
+		o = s.taboption('fchomo', form.SectionValue, '_fchomo', form.NamedSection, 'config', null);
+		ss = o.subsection;
 
-		o = s.option(form.DummyValue, '_mihomo-c_logview');
-		o.render = L.bind(getRuntimeLog, o, _('Mihomo client'), 'mihomo-c');
+		so = ss.option(form.DummyValue, '_fchomo_logview');
+		so.render = L.bind(getRuntimeLog, so, _('FullCombo Mihomo'), 'fchomo');
+		/* FullCombo Mihomo END */
 
-		o = s.option(form.DummyValue, '_mihomo-s_logview');
-		o.render = L.bind(getRuntimeLog, o, _('Mihomo server'), 'mihomo-s');
+		/* Mihomo client START */
+		s.tab('mihomo_c', _('Mihomo client'));
+		o = s.taboption('mihomo_c', form.SectionValue, '_mihomo_c', form.NamedSection, 'config', null);
+		ss = o.subsection;
+
+		so = ss.option(form.DummyValue, '_mihomo-c_logview');
+		so.render = L.bind(getRuntimeLog, so, _('Mihomo client'), 'mihomo-c');
+		/* Mihomo client END */
+
+		/* Mihomo server START */
+		s.tab('mihomo_s', _('Mihomo server'));
+		o = s.taboption('mihomo_s', form.SectionValue, '_mihomo_s', form.NamedSection, 'config', null);
+		ss = o.subsection;
+
+		so = ss.option(form.DummyValue, '_mihomo-s_logview');
+		so.render = L.bind(getRuntimeLog, so, _('Mihomo server'), 'mihomo-s');
+		/* Mihomo server END */
 
 		return m.render();
 	},
