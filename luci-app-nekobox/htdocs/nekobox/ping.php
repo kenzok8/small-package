@@ -201,27 +201,6 @@ $translate = [
 ];
 $lang = $_GET['lang'] ?? 'en';
 ?>
-
-<!DOCTYPE html>
-<html lang="<?php echo htmlspecialchars($lang); ?>">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-dns-prefetch-control" content="on">
-    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="//whois.pconline.com.cn">
-    <link rel="dns-prefetch" href="//forge.speedtest.cn">
-    <link rel="dns-prefetch" href="//api-ipv4.ip.sb">
-    <link rel="dns-prefetch" href="//api.ipify.org">
-    <link rel="dns-prefetch" href="//api.ttt.sh">
-    <link rel="dns-prefetch" href="//qqwry.api.skk.moe">
-    <link rel="dns-prefetch" href="//d.skk.moe">
-    <link rel="preconnect" href="https://forge.speedtest.cn">
-    <link rel="preconnect" href="https://whois.pconline.com.cn">
-    <link rel="preconnect" href="https://api-ipv4.ip.sb">
-    <link rel="preconnect" href="https://api.ipify.org">
-    <link rel="preconnect" href="https://api.ttt.sh">
-    <link rel="preconnect" href="https://qqwry.api.skk.moe">
-    <link rel="preconnect" href="https://d.skk.moe">
 <style>
 .img-con {
   width: 65px;  
@@ -366,7 +345,7 @@ $lang = $_GET['lang'] ?? 'en';
         <div class="row align-items-center">
             <div class="col-auto">
                 <div class="img-con">
-                    <img src="./assets/neko/img/loading.svg" id="flag" title="国旗" onclick="IP.getIpipnetIP()">
+                    <img src="./assets/neko/img/loading.svg" id="flag" title="点击刷新 IP 地址" onclick="IP.getIpipnetIP()">
                 </div>
             </div>
             <div class="col-3">
@@ -379,19 +358,19 @@ $lang = $_GET['lang'] ?? 'en';
             <div class="col-auto ms-auto">
                 <div class="status-icons d-flex">
                     <div class="site-icon mx-1" onclick="pingHost('baidu', 'Baidu')">
-                        <img src="./assets/neko/img/site_icon_01.png" id="baidu-normal" class="status-icon" style="display: none;">
+                        <img src="./assets/neko/img/site_icon_01.png" id="baidu-normal" title="测试 Baidu 延迟" class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_01.png" id="baidu-gray" class="status-icon">
                     </div>
                     <div class="site-icon mx-1" onclick="pingHost('taobao', 'Taobao')">
-                        <img src="./assets/neko/img/site_icon_02.png" id="taobao-normal" class="status-icon" style="display: none;">
+                        <img src="./assets/neko/img/site_icon_02.png" id="taobao-normal" title="测试 Taobao 延迟"  class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_02.png" id="taobao-gray" class="status-icon">
                     </div>
                     <div class="site-icon mx-1" onclick="pingHost('google', 'Google')">
-                        <img src="./assets/neko/img/site_icon_03.png" id="google-normal" class="status-icon" style="display: none;">
+                        <img src="./assets/neko/img/site_icon_03.png" id="google-normal" title="测试 Google 延迟"  class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_03.png" id="google-gray" class="status-icon">
                     </div>
                     <div class="site-icon mx-1" onclick="pingHost('youtube', 'YouTube')">
-                        <img src="./assets/neko/img/site_icon_04.png" id="youtube-normal" class="status-icon" style="display: none;">
+                        <img src="./assets/neko/img/site_icon_04.png" id="youtube-normal" title="测试 YouTube 延迟" class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_04.png" id="youtube-gray" class="status-icon">
                     </div>
                     <div class="site-icon mx-1" onclick="pingHost('github', 'GitHub')">
@@ -687,7 +666,7 @@ let IP = {
 
             let location = `${region && city && region !== city ? `${region} ${city}` : region || city || ''}`;
             let simpleDisplay = `
-                <div class="ip-main" style="cursor: pointer;" onclick="IP.showDetailModal()">
+                <div class="ip-main" style="cursor: pointer;" onclick="IP.showDetailModal()" title="点击查看 IP 详细信息">
                     ${cachedIP} <span class="badge badge-primary" style="color: #333;">${country}</span>
                 </div>`;
         

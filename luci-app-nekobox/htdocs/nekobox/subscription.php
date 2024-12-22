@@ -438,7 +438,7 @@ EOL;
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sing-box - Neko</title>
+    <title>singbox - Nekobox</title>
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
@@ -449,9 +449,15 @@ EOL;
     <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
+    <?php include './ping.php'; ?>
 </head>
 <body>
 <style>
+.custom-padding {
+    padding-left: 5ch;  
+    padding-right: 5ch;  
+}
+
 @media (max-width: 767px) {
     .row a {
         font-size: 9px; 
@@ -462,16 +468,16 @@ EOL;
     width: 100%;
 }
 </style>
-<div class="container-sm container-bg callout border border-3 rounded-4 col-11">
+<div class="container-sm container-bg callout border border-3 rounded-4 col-11 ">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 文件管理</a>
-        <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
-        <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
-        <a href="./subscription.php" class="col btn btn-lg">💹 Singbox</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg">🗃️ 文件管理</a>
+        <a href="./singbox.php" class="col btn btn-lg">🏪 模板 一</a>
+        <a href="./subscription.php" class="col btn btn-lg">🏦  模板 二</a>
+        <a href="./mihomo.php" class="col btn btn-lg">🏣 模板 三</a>
         <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;">Sing-box 订阅转换模板 二</h1>
 
-        <div class="col-12">
+        <div class="col-12 custom-padding">
             <div class="form-section">
                 <form method="post">
                     <div class="mb-3">
@@ -715,7 +721,7 @@ EOL;
                 </form>
             </div>
         </div>
-    <div class="container">
+    <div class="container custom-padding">
         <form method="post">
             <h5 style="margin-top: 20px;">定时任务</h5>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> 设置定时任务</button>
@@ -761,15 +767,15 @@ EOL;
             </div>
         </div>
     </div>
-        <div class="help mt-4">
+        <div class="help mt-4 custom-padding">
              <strong>1. 对于首次使用 Sing-box 的用户，必须将核心更新至版本 v1.10.0 或更高版本。确保将出站和入站/转发防火墙规则都设置为“接受”并启用它们。<p>
-            <p style="color: red;">注意：在线订阅转换存在隐私泄露风险，请确保使用 Sing-box 的通道一版本，通道二版本不支持此功能。同时，需要下载并配置 geoip 和 geosite 文件以确保正常使用。</p>
+            <p style="color: red;">注意：在线订阅转换存在隐私泄露风险，请确保使用 Sing-box 的通道一版本，通道二版本不支持此功能。同时，需要下载 geoip 和 geosite 文件以确保正常使用。</p>
             <p>订阅转换由肥羊提供</p>
             <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
             点击访问
             </a>
         </div>
-        <div class="result mt-4">
+        <div class="result mt-4 custom-padding">
             <?php echo nl2br(htmlspecialchars($result)); ?>
         </div>
         </div>

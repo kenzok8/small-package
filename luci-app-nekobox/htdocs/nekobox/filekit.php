@@ -1418,25 +1418,29 @@ function searchFiles($dir, $term) {
          </div>
       </div>
       
-        <div id="searchModal" class="modal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
+        <div id="searchModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" data-translate="searchFiles">Search Files</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="searchForm">
-                                <div class="input-group mb-3">
-                                    <input type="text" id="searchInput" class="form-control" data-translate="searchInputPlaceholder" data-translate-placeholder="searchInputPlaceholder" placeholder="Enter file name" required>
+                            <h5 class="modal-title" id="searchModalLabel" data-translate="searchFiles">Search Files</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="searchForm">
+                            <div class="input-group mb-3">
+                                <input type="text" id="searchInput" class="form-control" data-translate="searchInputPlaceholder" data-translate-placeholder="searchInputPlaceholder" placeholder="Enter file name" required>
+                                <div class="input-group-append">
                                     <button type="submit" class="btn btn-primary" data-translate="search">Search</button>
                                 </div>
-                            </form>
-                            <div id="searchResults"></div>
-                        </div>
+                            </div>
+                        </form>
+                        <div id="searchResults"></div>
                     </div>
                 </div>
             </div>
+        </div>
 
             <div id="editModal" class="modal">
                 <div class="modal-content">
@@ -3261,7 +3265,6 @@ function validateRename() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-beautify.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-spellcheck.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
