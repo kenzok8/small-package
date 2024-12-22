@@ -23,7 +23,7 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard - Neko</title>
+    <title>Dashboard - Nekobox</title>
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
@@ -73,11 +73,11 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
 <head>
 <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
     <div class="row">
-        <a href="./" class="col btn btn-lg">🏠 首页</a>
-        <a href="#" class="col btn btn-lg">📊 面板</a>
-        <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
-        <a href="./singbox.php" class="col btn btn-lg">📦 订阅</a> 
-        <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
+            <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
+            <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
+            <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
+            <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
+            <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     </div>
 <div class="container text-left p-3">
         <div class="container h-100 mb-5">

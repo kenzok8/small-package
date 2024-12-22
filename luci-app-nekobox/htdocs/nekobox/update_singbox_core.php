@@ -5,8 +5,22 @@ $repo_name = "luci-app-nekoclash";
 $package_name = "sing-box";
 
 $new_version = isset($_GET['version']) ? $_GET['version'] : "v1.11.0-alpha.10";  
-
 $new_version_cleaned = str_replace('v', '', $new_version);
+
+if (isset($_GET['check_version'])) {
+    $api_url = "https://api.github.com/repos/$repo_owner/$repo_name/releases/latest";
+    $curl_command = "curl -s -H 'User-Agent: PHP' --connect-timeout 10 " . escapeshellarg($api_url);
+    $latest_version_data = shell_exec($curl_command);
+    $latest_version_info = json_decode($latest_version_data, true);
+
+    if (isset($latest_version_info['tag_name'])) {
+        $latest_version = $latest_version_info['tag_name'];
+        echo "最新版本: $latest_version";
+    } else {
+        echo "无法获取最新版本信息";
+    }
+    exit;
+}
 
 $arch = shell_exec("opkg info " . escapeshellarg($package_name) . " | grep 'Architecture'");
 

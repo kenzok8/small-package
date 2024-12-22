@@ -598,7 +598,7 @@ if (isset($_GET['ajax'])) {
 $default_config = '/etc/neko/config/mihomo.yaml';
 
 $current_config = file_exists('/www/nekobox/lib/selected_config.txt') 
-    ? file_get_contents('/www/nekobox/lib/selected_config.txt') 
+    ? trim(file_get_contents('/www/nekobox/lib/selected_config.txt')) 
     : $default_config;
 
 if (!file_exists($current_config)) {
@@ -609,6 +609,7 @@ if (!file_exists($current_config)) {
     
     file_put_contents($current_config, $default_config_content);
     file_put_contents('/www/nekobox/lib/selected_config.txt', $current_config);
+
     $logMessage = "配置文件丢失，已创建默认配置文件。";
 } else {
     $config_content = file_get_contents($current_config);
@@ -622,7 +623,7 @@ if (!file_exists($current_config)) {
 
     foreach ($default_config_content as $key => $value) {
         if (strpos($config_content, "$key:") === false) {
-            $config_content .= "$key: $value\n";
+            $config_content .= "$key: $value\n"; 
             $missing_config = true;
         }
     }
@@ -639,7 +640,6 @@ if (isset($logMessage)) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
     $selected_file = $_POST['selected_config'];
-
     $config_dir = '/etc/neko/config';
     $selected_file_path = $config_dir . '/' . $selected_file;
 
@@ -650,12 +650,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
     }
 }
 ?>
+
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme,0,-4) ?>">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Home - Neko</title>
+    <title>Home - Nekobox</title>
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
@@ -687,11 +688,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
     <?php endif; ?>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
-        <a href="#" class="col btn btn-lg">🏠 首页</a>
-        <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
-        <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
-        <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
-        <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
+            <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
+            <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
+            <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
+            <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
+            <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     <div class="container-sm text-center col-8">
   <img src="./assets/img/nekobox.png">
 <div id="version-info">
@@ -708,7 +709,7 @@ $(document).ready(function() {
         dataType: 'json',
         success: function(data) {
             if (data.hasUpdate) {
-                $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/neko/refs/heads/main/Latest.svg');
+                $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/nekobox/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
             }
 
             console.log('Current Version:', data.currentVersion);

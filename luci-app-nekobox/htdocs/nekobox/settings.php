@@ -50,19 +50,29 @@ function getSingboxVersion() {
 }
 
 function getMihomoVersion() {
-    $versionFile = '/etc/neko/core/mihomo_version.txt';
+    $mihomoPath = '/usr/bin/mihomo';
+    $command = "$mihomoPath -v 2>&1";  
+    exec($command, $output, $returnVar);
 
-    if (file_exists($versionFile)) {
-        $content = trim(file_get_contents($versionFile));
-
-        if (strpos($content, 'alpha') !== false) {
-            return ['version' => $content, 'type' => '预览版'];
+    if ($returnVar === 0) {
+        foreach ($output as $line) {
+            if (strpos($line, 'Mihomo') !== false) {
+                preg_match('/alpha-[a-z0-9]+/', $line, $matches);
+                if (!empty($matches)) {
+                    $version = $matches[0];  
+                    return ['version' => $version, 'type' => '预览版'];
+                }
+                
+                preg_match('/([0-9]+(\.[0-9]+)+)/', $line, $matches);
+                if (!empty($matches)) {
+                    $version = $matches[0];  
+                    return ['version' => $version, 'type' => '正式版'];
+                }
+            }
         }
-
-        return ['version' => $content, 'type' => '正式版'];
-    } else {
-        return ['version' => '未安装', 'type' => '未知'];
     }
+
+    return ['version' => '未安装', 'type' => '未知']; 
 }
 
 function getUiVersion() {
@@ -146,7 +156,7 @@ $razordVersion = getRazordVersion();
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Settings - Neko</title>
+    <title>Settings - Nekobox</title>
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
@@ -158,35 +168,37 @@ $razordVersion = getRazordVersion();
     <script type="text/javascript" src="./assets/js/neko.js"></script>
     <?php include './ping.php'; ?>
   </head>
+<style>
+    .form-select {
+        margin-left: 10px;
+        margin-right: 16px;
+    }
+</style>
   <body>
     <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
         <div class="row">
-            <a href="./" class="col btn btn-lg">🏠 首页</a>
+            <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
             <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
             <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
             <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
-            <a href="#" class="col btn btn-lg">🛠️ 设定</a>
-         <div class="container px-4">
-    <h2 class="text-center p-2 mb-3">主题设定</h2>
-    <form action="settings.php" method="post">
-        <div class="text-center justify-content-md-center">
-            <div class="row justify-content-md-center">
-                <div class="col mb-3 justify-content-md-center">
+            <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
+    <div class="container px-4">
+        <h2 class="text-center p-2 mb-3">主题设定</h2>
+        <form action="settings.php" method="post">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-6 mb-3">
                     <select class="form-select" name="themechange" aria-label="themex">
                         <option selected>Change Theme (<?php echo $neko_theme ?>)</option>
                         <?php foreach ($arrFiles as $file) echo "<option value=\"".$file.'">'.$file."</option>" ?>
                     </select>
                 </div>
-                <div class="row justify-content-md-center">
-                    <div class="col justify-content-md-center mb-3">
+                <div class="col-12 col-md-6 mb-3">
+                    <div class="text-center">
                         <input class="btn btn-info" type="submit" value="🖫 更改主题">
                     </div>
                 </div>
             </div>
-        </div>
-    </form>   
-    <div class="card mb-4">
-    <div class="card-body"> 
+        </form>
     <table class="table table-borderless mb-3">
         <tbody>
             <tr>
@@ -300,6 +312,30 @@ $razordVersion = getRazordVersion();
     </div>
 </div>
 
+<div class="modal fade" id="previewLanguageModal" tabindex="-1" aria-labelledby="previewLanguageModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewLanguageModalLabel">选择预览版语言</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="previewLanguageSelect">选择语言</label>
+                    <select id="previewLanguageSelect" class="form-select">
+                        <option value="cn">中文预览版</option>
+                        <option value="en">英文预览版</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmPreviewLanguageSelection()">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="mihomoVersionSelectionModal" tabindex="-1" aria-labelledby="mihomoVersionSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -359,13 +395,20 @@ $razordVersion = getRazordVersion();
                 </button>
             </div>
             <div class="modal-body">
-                <select id="singboxVersionSelect" class="form-select">
-                    <option value="v1.11.0-alpha.10">v1.11.0-alpha.10</option>
-                    <option value="v1.11.0-alpha.15">v1.11.0-alpha.15</option>
-                    <option value="v1.11.0-alpha.20">v1.11.0-alpha.20</option>
-                    <option value="v1.11.0-beta.5">v1.11.0-beta.5</option>
-                    <option value="v1.11.0-beta.10">v1.11.0-beta.10</option>
-                </select>
+                <div class="mb-3">
+                    <select id="singboxVersionSelect" class="form-select w-100" style="transform: translateX(-10px);"> 
+                        <option value="v1.11.0-alpha.10">v1.11.0-alpha.10</option>
+                        <option value="v1.11.0-alpha.15">v1.11.0-alpha.15</option>
+                        <option value="v1.11.0-alpha.20">v1.11.0-alpha.20</option>
+                        <option value="v1.11.0-beta.5">v1.11.0-beta.5</option>
+                        <option value="v1.11.0-beta.10">v1.11.0-beta.10</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="manualVersionInput" class="form-label">输入自定义版本</label> 
+                    <input type="text" id="manualVersionInput" class="form-control w-100" value="例如：v1.11.0-beta.12">
+                </div>
+                <button type="button" class="btn btn-secondary mt-2" onclick="addManualVersion()">添加版本</button>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -563,13 +606,19 @@ function handleVersionSelection() {
     if (selectedVersionType === 'stable') {
         $('#updateLanguageModal').modal('show');  
     } else {
-        selectOperation('client');
+        $('#previewLanguageModal').modal('show');  
     }
 }
 
 function confirmLanguageSelection() {
     selectedLanguage = document.getElementById('languageSelect').value; 
     $('#updateLanguageModal').modal('hide');  
+    selectOperation('client');  
+}
+
+function confirmPreviewLanguageSelection() {
+    selectedLanguage = document.getElementById('previewLanguageSelect').value; 
+    $('#previewLanguageModal').modal('hide');  
     selectOperation('client');  
 }
 
@@ -597,6 +646,51 @@ function confirmMihomoVersion() {
     selectedMihomoVersion = document.getElementById('mihomoVersionSelect').value;
     $('#mihomoVersionSelectionModal').modal('hide');  
     selectOperation('mihomo');
+}
+
+function addManualVersion() {
+    var manualVersion = document.getElementById('manualVersionInput').value;
+
+    if (manualVersion.trim() === "") {
+        alert("请输入版本号！");
+        return;
+    }
+
+    var select = document.getElementById('singboxVersionSelect');
+
+    var versionExists = Array.from(select.options).some(function(option) {
+        return option.value === manualVersion;
+    });
+
+    if (versionExists) {
+        alert("该版本已存在！");
+        return;
+    }
+
+    var newOption = document.createElement("option");
+    newOption.value = manualVersion;
+    newOption.textContent = manualVersion;
+
+    select.innerHTML = '';
+
+    select.appendChild(newOption);
+
+    var options = [
+        "v1.11.0-alpha.10", 
+        "v1.11.0-alpha.15", 
+        "v1.11.0-alpha.20", 
+        "v1.11.0-beta.5", 
+        "v1.11.0-beta.10"
+    ];
+
+    options.forEach(function(version) {
+        var option = document.createElement("option");
+        option.value = version;
+        option.textContent = version;
+        select.appendChild(option);
+    });
+
+    document.getElementById('manualVersionInput').value = '';
 }
 
 function confirmSingboxVersion() {
@@ -651,7 +745,7 @@ function selectOperation(type) {
         'client': {
             url: selectedVersionType === 'stable' 
                 ? 'update_script.php?lang=' + selectedLanguage  
-                : 'update_preview.php',  
+                : 'update_preview.php?lang=' + selectedLanguage,
             message: selectedVersionType === 'stable' 
                 ? '开始下载客户端更新...' 
                 : '开始下载客户端预览版更新...',
@@ -823,11 +917,13 @@ document.getElementById('checkSingboxButton').addEventListener('click', function
     const currentVersions = {
         'Singbox [ 正式版 ]': singBoxType === 'Singbox 正式版' ? singBoxVersion : '未安装',
         'Singbox [ 预览版 ]': singboxPreviewVersion,
+        'Singbox [ 编译版 ]': singboxPreviewVersion,
         'Puernya [ 预览版 ]': puernyaVersion 
     };
     const updateFiles = [
         { name: 'Singbox [ 正式版 ]', url: 'update_singbox_stable.php' },
         { name: 'Singbox [ 预览版 ]', url: 'update_singbox_preview.php' },
+        { name: 'Singbox [ 编译版 ]', url: 'update_singbox_core.php' },
         { name: 'Puernya [ 预览版 ]', url: 'puernya.php' }
     ];
     checkVersion('NewSingbox', updateFiles, currentVersions);
@@ -836,6 +932,9 @@ document.getElementById('checkSingboxButton').addEventListener('click', function
 document.getElementById('checkMihomoButton').addEventListener('click', function () {
     const mihomoVersion = "<?php echo htmlspecialchars($mihomoVersion); ?>";
     const mihomoType = "<?php echo htmlspecialchars($mihomoType); ?>";
+
+    console.log('Mihomo Version:', mihomoVersion);  
+    console.log('Mihomo Type:', mihomoType);  
 
     const currentVersions = {
         'Mihomo [ 正式版 ]': mihomoType === '正式版' ? mihomoVersion : '未安装',
@@ -849,6 +948,7 @@ document.getElementById('checkMihomoButton').addEventListener('click', function 
 
     checkVersion('NewMihomo', updateFiles, currentVersions);
 });
+
 
 document.getElementById('checkUiButton').addEventListener('click', function () {
     const currentVersions = {
@@ -1017,10 +1117,6 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
             padding: 10px;
             text-decoration: none;
             color: #000000;
-        }
-        .container {
-            padding-left: 10px;
-            padding-right: 10px;
         }
     </style>
 </head>

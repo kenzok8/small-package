@@ -45,8 +45,12 @@ $latest_version = '';
 if (is_array($data)) {
     foreach ($data as $release) {
         if (isset($release['tag_name'])) {
-            $latest_version = $release['tag_name'];
-            break; 
+            $tag_name = $release['tag_name'];
+
+            if (preg_match('/^v[\d\.]+-[a-zA-Z]+/', $tag_name)) {
+                $latest_version = $tag_name;
+                break; 
+            }
         }
     }
 }

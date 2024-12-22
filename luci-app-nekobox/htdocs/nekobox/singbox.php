@@ -116,7 +116,7 @@ EOL;
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Box - Neko</title>
+    <title>singbox - Nekobox</title>
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
@@ -127,6 +127,7 @@ EOL;
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <?php include './ping.php'; ?>
 </head>
 <body>
 <style>
@@ -143,26 +144,26 @@ EOL;
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 文件管理</a>
-        <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
-        <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
-        <a href="./subscription.php" class="col btn btn-lg">💹 Singbox</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg">🗃️ 文件管理</a>
+        <a href="./singbox.php" class="col btn btn-lg">🏪 模板 一</a>
+        <a href="./subscription.php" class="col btn btn-lg">🏦  模板 二</a>
+        <a href="./mihomo.php" class="col btn btn-lg">🏣 模板 三</a>
 <div class="outer-container">
     <div class="container">
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板 一</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
             <p>
-                  请选择一个模板以生成配置文件：根据订阅节点信息选择相应的模板。若选择带有地区分组的模板，请确保您的节点包含以下线路。挂梯子更新！</p>
-                 <strong>说明：</strong>定时任务为自动更新操作，文件名为 <strong>sing-box.json</strong>。
+                  请选择一个模板以生成配置文件：根据订阅节点信息选择相应的模板。若选择带有地区分组的模板，请确保您的节点包含以下线路。
             </p>
             <ul>
-                <li><strong>默认模板 1</strong>：无地区  无分组 通用。</li>
-                <li><strong>默认模板 2</strong>：无地区  带分流规则 通用。</li>
-                <li><strong>默认模板 3</strong>：香港 日本 美国 分组 带分流规则。</li>
-                <li><strong>默认模板 4</strong>：香港 新加坡 日本 美国 分组 带分流规则。</li>
-                <li><strong>默认模板 5</strong>：新加坡 日本 美国 韩国 分组 带分流规则。</li>
-                <li><strong>默认模板 6</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 带分流规则。</li>
+                <li><strong>模板 1</strong>：无地区  无分组 通用。</li>
+                <li><strong>模板 2</strong>：无地区  带分流规则 通用。</li>
+                <li><strong>模板 3</strong>：香港 日本 美国 分组 带分流规则。</li>
+                <li><strong>模板 4</strong>：香港 新加坡 日本 美国 分组 带分流规则。</li>
+                <li><strong>模板 5</strong>：新加坡 日本 美国 韩国 分组 带分流规则。</li>
+                <li><strong>模板 6</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 带分流规则。</li>
+                <li><strong>模板 7</strong>：同上多规则</li>
             </ul>
         </div>
         <form method="post" action="">
@@ -171,40 +172,48 @@ EOL;
                 <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($lastSubscribeUrl); ?>" placeholder="输入订阅链接（多个链接用  |  分隔）" required>
             </div>
             <div class="mb-3">
-                <label for="customFileName" class="form-label">自定义文件名（无需输入后缀）</label>
-                <input type="text" class="form-control" id="customFileName" name="customFileName" placeholder="输入自定义文件名">
+                <label for="customFileName" class="form-label">自定义文件名（默认:sing-box.json）</label>
+                <input type="text" class="form-control" id="customFileName" name="customFileName" placeholder="sing-box.json">
             </div>
             <fieldset class="mb-3">
                 <legend class="form-label">选择模板</legend>
                 <div class="row">
                     <div class="col">
+                        <input type="radio" class="form-check-input" id="useDefaultTemplate0" name="defaultTemplate" value="0" checked>
+                        <label class="form-check-label" for="useDefaultTemplate0">默认模板</label>
+                    </div>
+                    <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate1" name="defaultTemplate" value="1" checked>
-                        <label class="form-check-label" for="useDefaultTemplate1">默认模板 1</label>
+                        <label class="form-check-label" for="useDefaultTemplate1">模板 1</label>
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate2" name="defaultTemplate" value="2">
-                        <label class="form-check-label" for="useDefaultTemplate2">默认模板 2</label>
+                        <label class="form-check-label" for="useDefaultTemplate2">模板 2</label>
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate3" name="defaultTemplate" value="3">
-                        <label class="form-check-label" for="useDefaultTemplate3">默认模板 3</label>
+                        <label class="form-check-label" for="useDefaultTemplate3">模板 3</label>
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate4" name="defaultTemplate" value="4">
-                        <label class="form-check-label" for="useDefaultTemplate4">默认模板 4</label>
+                        <label class="form-check-label" for="useDefaultTemplate4">模板 4</label>
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate5" name="defaultTemplate" value="5">
-                        <label class="form-check-label" for="useDefaultTemplate5">默认模板 5</label>
+                        <label class="form-check-label" for="useDefaultTemplate5">模板 5</label>
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate6" name="defaultTemplate" value="6">
-                        <label class="form-check-label" for="useDefaultTemplate6">默认模板 6</label>
+                        <label class="form-check-label" for="useDefaultTemplate6">模板 6</label>
+                    </div>
+                    <div class="col">
+                        <input type="radio" class="form-check-input" id="useDefaultTemplate7" name="defaultTemplate" value="7">
+                        <label class="form-check-label" for="useDefaultTemplate7">模板 7</label>
                     </div>
                 </div>
                 <div class="mt-3">
                     <input type="radio" class="form-check-input" id="useCustomTemplate" name="templateOption" value="custom">
-                    <label class="form-check-label" for="useCustomTemplate">使用自定义模板URL</label>
+                    <label class="form-check-label mb-3" for="useCustomTemplate">使用自定义模板URL</label>
                     <input type="text" class="form-control" id="customTemplateUrl" name="customTemplateUrl" placeholder="输入自定义模板URL">
                 </div>
             </fieldset>
@@ -260,6 +269,18 @@ EOL;
             </div>
           </div>
         </div>
+<script>
+    document.querySelectorAll('input[name="defaultTemplate"]').forEach((elem) => {
+        elem.addEventListener('change', function () {
+            const customTemplateDiv = document.getElementById('customTemplateUrlDiv');
+            if (this.value === 'custom') {
+                customTemplateDiv.style.display = 'block';
+            } else {
+                customTemplateDiv.style.display = 'none';
+            }
+        });
+    });
+</script>
         <?php
         $dataFilePath = '/etc/neko/subscription_data.txt';
         $configFilePath = '/etc/neko/config/sing-box.json';
@@ -294,7 +315,10 @@ EOL;
             file_put_contents($dataFilePath, implode("\n\n", $logEntries) . "\n\n");
 
             $subscribeUrlEncoded = urlencode($subscribeUrl);
-            if ($templateOption === 'custom' && !empty($customTemplateUrl)) {
+
+            if (isset($_POST['defaultTemplate']) && $_POST['defaultTemplate'] == '0') {
+                $templateUrlEncoded = '';  
+            } elseif ($templateOption === 'custom' && !empty($customTemplateUrl)) {
                 $templateUrlEncoded = urlencode($customTemplateUrl);
             } else {
                 $defaultTemplates = [
@@ -303,13 +327,19 @@ EOL;
                     '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_9.json",
                     '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_10.json",
                     '5' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_11.json",
-                    '6' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json"
+                    '6' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json",
+                    '7' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_12.json"
                 ];
 
-                $templateUrlEncoded = urlencode($defaultTemplates[$_POST['defaultTemplate']] ?? $defaultTemplates['mixed']);
+                $templateUrlEncoded = urlencode($defaultTemplates[$_POST['defaultTemplate']] ?? '');
             }
 
-            $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}&file={$templateUrlEncoded}";
+            if (empty($templateUrlEncoded)) {
+                $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}";
+            } else {
+                $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}&file={$templateUrlEncoded}";
+            }
+
             $tempFilePath = '/etc/neko/' . $customFileName;
             $logMessages = [];
             $command = "wget -O " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
@@ -329,6 +359,19 @@ EOL;
                 if ($downloadedContent === false) {
                     $logMessages[] = "无法读取下载的文件内容";
                 } else {
+
+                    if (isset($_POST['defaultTemplate']) && $_POST['defaultTemplate'] == '0') {
+                $replacement = '
+  "clash_api": {
+      "external_ui": "/etc/neko/ui/",
+      "external_controller": "0.0.0.0:9090",
+      "secret": "Akun",
+      "external_ui_download_url": ""
+    },';  
+
+                $downloadedContent = preg_replace('/"clash_api":\s*\{.*?\},/s', $replacement, $downloadedContent);
+            }
+
                     $tmpFileSavePath = '/etc/neko/tmp/' . $fixedFileName;  
                     if (file_put_contents($tmpFileSavePath, $completeSubscribeUrl) === false) {
                         $logMessages[] = "无法保存订阅URL到文件: " . $tmpFileSavePath;

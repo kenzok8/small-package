@@ -11,9 +11,11 @@ include './cfg.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="./assets/css/custom.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
+    <link href="./assets/css/custom.css" rel="stylesheet">
+    <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
+    <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
 </head>
@@ -39,7 +41,8 @@ include './cfg.php';
     </style>
 </head>
 <body>
-<div class="container my-3 p-3 border border-3 rounded-4" style="background-color: #f8f9fa;">
+
+<div class="container my-3 p-3 border border-3 rounded-4" style="background-color: transparent;">
     <div class="controls">
         <label for="main-toggle">系统开关</label>
         <input type="checkbox" id="main-toggle">
@@ -60,6 +63,31 @@ include './cfg.php';
         <input type="text" id="city-input" class="form-control" placeholder="如 Beijing" style="padding: 5px;">
         <button onclick="saveCity()" class="btn btn-success mt-2" style="padding: 3px 10px;">保存城市</button>
     </div>
+
+    <div id="player" onclick="toggleAnimation()" class="rounded-circle" style="background-color: transparent;">
+        <p id="hidePlayer">NeKoBox</p>
+        <p id="timeDisplay">00:00</p>
+        <audio id="audioPlayer" controls>
+            <source src="" type="audio/mpeg">
+            您的浏览器不支持音频播放。
+        </audio>
+        <div id="controls">
+            <button id="prev" class="rounded-button">⏮️</button>
+            <button id="orderLoop" class="rounded-button">🔁</button>
+            <button id="play" class="rounded-button">⏸️</button>
+            <button id="next" class="rounded-button">⏭️</button>
+        </div>
+    </div>
+
+    <div id="mobile-controls" style="display: flex; justify-content: center; gap: 10px;">
+            <button id="togglePlay" class="rounded-button">播放/暂停</button>
+            <button id="prevMobile" class="rounded-button">上一首</button>
+            <button id="nextMobile" class="rounded-button">下一首</button>
+            <button id="toggleEnable" class="rounded-button">启用/禁用</button>
+    </div>
+
+    <div id="tooltip"></div>
+</div>
     <script>
     let city = 'Beijing'; 
     const apiKey = 'fc8bd2637768c286c6f1ed5f1915eb22'; 
@@ -237,9 +265,17 @@ include './cfg.php';
         message += ` 西南风速为每小时${windSpeed}米。` +
                    ` 湿度为${humidity}%。`;
 
-        if (weatherDescription.includes('晴') || weatherDescription.includes('阳光明媚')) {
-            message += ` 紫外线指数适中，如果外出，请记得涂防晒霜。`;
-        } else if (weatherDescription.includes('雨') || weatherDescription.includes('阵雨') || weatherDescription.includes('雷暴')) {
+        if (temperature >= 25) {
+            message += ` 紫外线指数较高，如果外出，请记得涂防晒霜。`;
+        } else if (temperature >= 16 && temperature < 25) {
+            message += ` 紫外线指数适中，如果外出，建议涂防晒霜。`;
+        } else if (temperature >= 5 && temperature < 16) {
+            message += ` 当前天气较冷，外出时请注意保暖。`;
+        } else {
+            message += ` 当前天气非常寒冷，外出时请注意防寒保暖。`;
+        }
+
+        if (weatherDescription.includes('雨') || weatherDescription.includes('阵雨') || weatherDescription.includes('雷暴')) {
             message += ` 建议您外出时携带雨伞。`;
         }
 
@@ -536,30 +572,6 @@ include './cfg.php';
     </style>
 </head>
 <body>
-  </div>
- <div id="player"  onclick="toggleAnimation()">
-        <p id="hidePlayer">NeKoBox</p>
-        <p id="timeDisplay">00:00</p>
-        <audio id="audioPlayer" controls>
-            <source src="" type="audio/mpeg">
-            您的浏览器不支持音频播放。
-        </audio>
-        <br>
-        <div id="controls">
-            <button id="prev" class="rounded-button">⏮️</button>
-            <button id="orderLoop" class="rounded-button">🔁</button>
-            <button id="play" class="rounded-button">⏸️</button>
-            <button id="next" class="rounded-button">⏭️</button>
-       </div>
-    </div>
-    <div id="mobile-controls">
-        <button id="togglePlay" class="rounded-button">播放/暂停</button>
-        <button id="prevMobile" class="rounded-button">上一首</button>
-        <button id="nextMobile" class="rounded-button">下一首</button>
-        <button id="toggleEnable" class="rounded-button">启用/禁用</button>
-    </div>
-    <div id="tooltip"></div>
-
     <script>
         let colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
         let isPlayingAllowed = JSON.parse(localStorage.getItem('isPlayingAllowed')) || false;
@@ -680,7 +692,7 @@ include './cfg.php';
                 showTooltip('播放被禁止');
                 audioPlayer.pause();
                 playButton.textContent = '播放';
-                speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
+                speakMessage('播放被禁用。');
             }
         }
 
@@ -701,7 +713,7 @@ include './cfg.php';
                     speakMessage('顺序播放');
                 }
             } else {
-                speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
+                speakMessage('播放被禁用。');
             }
         }
 
@@ -712,7 +724,7 @@ include './cfg.php';
                         document.getElementById('prev').click();
                     } else {
                         showTooltip('播放被禁止');
-                        speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
+                        speakMessage('播放被禁用。');
                     }
                     break;
                 case 'ArrowRight':
@@ -720,7 +732,7 @@ include './cfg.php';
                         document.getElementById('next').click();
                     } else {
                         showTooltip('播放被禁止');
-                        speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
+                        speakMessage('播放被禁用。');
                     }
                     break;
                 case ' ':
@@ -736,7 +748,7 @@ include './cfg.php';
                         audioPlayer.pause();
                         audioPlayer.src = '';
                         showTooltip('播放已禁用');
-                        speakMessage('播放已禁用，按下 ESC 键重新启用播放。');
+                        speakMessage('播放已禁用。');
                     } else {
                         showTooltip('播放已启用');
                         speakMessage('播放已启用。');
@@ -757,7 +769,7 @@ include './cfg.php';
                 speakMessage('下一首');
             } else {
                 showTooltip('播放被禁止');
-                speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
+                speakMessage('播放被禁用。');
             }
         });
         document.getElementById('prev').addEventListener('click', function() {
@@ -768,7 +780,7 @@ include './cfg.php';
                 speakMessage('上一首');
             } else {
                 showTooltip('播放被禁止');
-                speakMessage('播放被禁用，按下 ESC 键重新启用播放。');
+                speakMessage('播放被禁用。');
             }
         });
         document.getElementById('orderLoop').addEventListener('click', handleOrderLoop);
@@ -782,7 +794,7 @@ include './cfg.php';
                 speakMessage('上一首');
             } else {
                 showTooltip('播放被禁止');
-                speakMessage('播放被禁用，按下 ESC 键即可启用音乐播放。');
+                speakMessage('播放被禁用。');
             }
         });
         document.getElementById('nextMobile').addEventListener('click', function() {
@@ -793,7 +805,7 @@ include './cfg.php';
                 speakMessage('下一首');
             } else {
                 showTooltip('播放被禁止');
-                speakMessage('播放被禁用，按下 ESC 键即可启用音乐播放。');
+                speakMessage('播放被禁用。');
             }
         });
         document.getElementById('toggleEnable').addEventListener('click', function() {
@@ -803,7 +815,7 @@ include './cfg.php';
                 audioPlayer.pause();
                 audioPlayer.src = '';
                 showTooltip('播放已禁用');
-                speakMessage('播放已禁用，按下 ESC 键重新启用播放。');
+                speakMessage('播放已禁用。');
             } else {
                 showTooltip('播放已启用');
                 speakMessage('播放已启用。');

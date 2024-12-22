@@ -624,9 +624,15 @@ function getSubscriptionUrlFromFile($file) {
     <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/neko.js"></script>
+    <?php include './ping.php'; ?>
 </head>
 <body>
 <style>
+.custom-padding {
+    padding-left: 5ch;  
+    padding-right: 5ch;  
+}
+
 @media (max-width: 767px) {
     .row a {
         font-size: 9px; 
@@ -640,13 +646,13 @@ function getSubscriptionUrlFromFile($file) {
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg">📂 文件管理</a>
-        <a href="./mihomo.php" class="col btn btn-lg">🗂️ Mihomo</a>
-        <a href="./singbox.php" class="col btn btn-lg">💹 Sing-box</a>
-        <a href="./subscription.php" class="col btn btn-lg">💹 Singbox</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg">🗃️ 文件管理</a>
+        <a href="./singbox.php" class="col btn btn-lg">🏪 模板 一</a>
+        <a href="./subscription.php" class="col btn btn-lg">🏦  模板 二</a>
+        <a href="./mihomo.php" class="col btn btn-lg">🏣 模板 三</a>
         <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;">Mihomo 订阅转换模板</h1>
 
-        <div class="col-12">
+        <div class="col-12 custom-padding">
             <div class="form-section">
                 <form method="post">
                     <div class="mb-3">
@@ -878,7 +884,7 @@ function getSubscriptionUrlFromFile($file) {
             </div>
         </div>
 
-        <div class="form-section mt-4">
+        <div class="form-section mt-4 custom-padding">
             <form method="post">
                 <div class="mb-3">
                     <label for="cron_time" class="form-label">设置 Cron 时间 (例如: 0 3 * * *)</label>
@@ -890,7 +896,7 @@ function getSubscriptionUrlFromFile($file) {
             </form>
         </div>
 
-        <div class="help mt-4">
+        <div class="help mt-4 custom-padding">
             <p style="color: red;">注意：在线订阅转换存在隐私泄露风险</p>
             <p>订阅转换由肥羊提供</p>
             <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
@@ -898,10 +904,10 @@ function getSubscriptionUrlFromFile($file) {
             </a>
         </div>
 
-        <div class="result mt-4">
+        <div class="result mt-4 custom-padding">
             <?php echo nl2br(htmlspecialchars($result)); ?>
         </div>
-        <div class="result mt-2">
+        <div class="result mt-2 custom-padding">
             <?php echo nl2br(htmlspecialchars($cron_result)); ?>
         </div>
     </div>
