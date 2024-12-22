@@ -24,7 +24,9 @@
 	local fs = require "nixio.fs"
 	local nutil = require "nixio.util"
 	local uci = require 'luci.model.uci'.cursor()
+	
 	local urlencode = luci.http.protocol and luci.http.protocol.urlencode or luci.util.urlencode
+
 	local boardinfo = util.ubus("system", "board") or { }
 
 	local node = disp.context.dispatched
@@ -39,75 +41,39 @@
 		end
 	end
     function getExtension(str)
-		return str:match(".+%.(%w+)$")
+		return urlencode(str:match(".+%.(%w+)$"))
 	end
 
 	http.prepare_content("text/html; charset=UTF-8")
 
-
 	local dark_css = fs.readfile('/www/luci-static/kucat/css/dark.css')
 	local bar='/cgi-bin/luci/admin/'
-	local mode = 'light'
-    local home = ''
-    local user = ''
-    local setbar = "1"
-	local bgqs = '1'
-    local ssr = ""
-    local gohome = bar .. 'status/'  ..home
-    local gouser = bar .. 'system/'  ..user
-    local gossr = bar .. 'services/'  ..ssr
-	local background = '0' 
-	local fontd = '1.2rem' 
-	local fontz = '0.92rem' 
-	local fontx = '0.875rem'
-	local primary_rgbbody = '248,248,248'
-	local primary_rgbm = '45,102,147'
-	local primary_rgbm_ts = '0.8'
-	local primary_rgbs = '132,188,218'
-	local primary_rgbs_ts = '0.1'
-	local primary_opacity = '0'
-	local bkuse = '0'
-	local bk_use='rgba(var(--primary-rgbbody),1)'
-    local loginbk_use = 'background: linear-gradient(0deg, rgba(var(--primary-rgbm), 1) 0%, rgba(var(--primary-rgbbody), 1) 100%)'
-	local bklock = '1'
-	local dayword = '0'
-	local kucat = ''
+	local bk_use='background: rgba(var(--primary-rgbbody),1)'
+    local loginbk_use = 'background: linear-gradient(0deg, rgba(var(--primary-rgbm), 1) 0%, rgba(var(--primary-rgbbody), 1) 100%);display: block;'
     if fs.access('/etc/config/advancedplus') then
       kucat = 'advancedplus'
 	elseif fs.access('/etc/config/kucat') then
 	    kucat = 'kucat'
 	end
 	if (kucat and kucat ~= '') then
-		primary_rgbbody = uci:get_first(kucat, 'basic', 'primary_rgbbody')
-		primary_rgbm = uci:get_first(kucat, 'basic', 'primary_rgbm')
-		primary_rgbm_ts = uci:get_first(kucat, 'basic', 'primary_rgbm_ts')
-		primary_opacity = uci:get_first(kucat, 'basic', 'primary_opacity')
-		primary_rgbs = uci:get_first(kucat, 'basic', 'primary_rgbs')
-		primary_rgbs_ts = uci:get_first(kucat, 'basic', 'primary_rgbs_ts')
-		mode = uci:get_first(kucat, 'basic', 'mode')
-		setbar = uci:get_first(kucat, 'basic', 'setbar')
-		home =  uci:get_first(kucat, 'basic', 'gohome')
-		user = uci:get_first(kucat, 'basic', 'gouser')
-		ssr =  uci:get_first(kucat, 'basic', 'gossr')
-		gohome = bar .. "status/" .. home
-		gouser = bar .. "system/" .. user
-		gossr = bar .. "services/" .. ssr
-		background = uci:get_first(kucat, 'basic', 'background')
-		bkuse = uci:get_first(kucat, 'basic', 'bkuse')
-		bklock = uci:get_first(kucat, 'basic', 'bklock')
-		fontd = uci:get_first(kucat, 'basic', 'font_d')
-		fontz = uci:get_first(kucat, 'basic', 'font_z')
-		fontx = uci:get_first(kucat, 'basic', 'font_x')
-		bgqs = uci:get_first(kucat, 'basic', 'bgqs')
-		dayword = uci:get_first(kucat, 'basic', 'dayword')
+	    local config = uci:get_all(kucat, "@basic[0]")
+		primary_rgbbody,primary_rgbm,primary_rgbm_ts,primary_opacity,primary_rgbs,primary_rgbs_ts,mode = config.primary_rgbbody,config.primary_rgbm,config.primary_rgbm_ts,config.primary_opacity,config.primary_rgbs,config.primary_rgbs_ts,config.mode
+		gohome,gouser,gossr = bar .. "status/" .. config.gohome,bar .. "system/" .. config.gouser,bar .. "services/" .. config.gossr
+		background,bkuse,bklock,fontd,fontz,fontx = config.background,config.bkuse,config.bklock,config.font_d,config.font_z,config.font_x
+		bgqs,setbar,dayword = config.bgqs,config.setbar,config.dayword
+	else
+		primary_rgbbody,primary_rgbm,primary_rgbm_ts,primary_opacity,primary_rgbs,primary_rgbs_ts,mode = '248,248,248','45,102,147','0.8','0','132,188,218','0.1','light'
+		gohome,gouser,gossr = bar .. "status/" ,bar .. "system/" ,bar .. "services/"
+		background,bkuse,bklock,fontd,fontz,fontx = '0','0','1','1.2rem' ,'0.92rem' ,'0.875rem'
+		bgqs,setbar,dayword = '1','1','0'
 	end
-	local primary_ufilter =  "saturate(150%) contrast(50%) blur(" .. primary_opacity .. "px)"
+	local ufilter = string.format("blur(%dpx)", tonumber(primary_opacity))
 	if primary_opacity == '0' then
-	    primary_ufilter = 'none'
+	    ufilter = 'none'
 	end
-	local bgqs_image = '-webkit-linear-gradient(45deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 75%, transparent)'
+	local bgqs_image = '-webkit-linear-gradient(135deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent)'
 	if bgqs == '1' then
-	    bgqs_image = 'rgba(var(--primary-rgbm),var(--primary-rgbm-ts))'
+	    bgqs_image = 'none'
 	end
 	local bg_url = media..'/img/bg1.jpg'
 	if background == '0' then
@@ -172,7 +138,7 @@
   	   showword = sys.exec("/usr/libexec/kucat/kucat_word")
 	end
 	if bkuse == '1'  then
-	   bk_use='url('..bg_lock..') no-repeat center center fixed'
+	   bk_use='background-image:url('..bg_lock..')'
  	   loginbk_use = "background-image:url(" .. bg_url .. ")"
 	end
 -%>
@@ -221,11 +187,10 @@
 		--primary-rgbm-ts: <%=primary_rgbm_ts%>;
 		--primary-rgbs: <%=primary_rgbs%>;
 		--primary-rgbs-ts: <%=primary_rgbs_ts%>;
-		--primary-ufilter: <%=primary_ufilter%>;
 		--font-d: <%=fontd%>;
 		--font-z: <%=fontz%>;
 		--font-x: <%=fontx%>;
-		--theme-background: <%=bk_use%>;
+		--ufilter: <%=ufilter%>;
 		--bgqs-image: <%=bgqs_image%>;
 	}
 
@@ -248,6 +213,8 @@
 	    display: block;
 	}
 	<% end -%>
+
+
  </style>
 
     <script src="<%=url('admin/translations', luci.i18n.context.lang)%><%# ?v=PKG_VERSION %>"></script>
@@ -256,7 +223,7 @@
 	<script src="<%=media%>/style.js"></script>
 
 </head>
-<body class="lang_<%=luci.i18n.context.lang%> <% if luci.dispatcher.context.authsession then %>logged-in<% end %> <% if not (path == "") then %>node-<%= path %><% else %>node-main-login<% end %>" data-page="<%= pcdata(path) %>"
+<body class="lang_<%=luci.i18n.context.lang%> <% if luci.dispatcher.context.authsession then %>logged-in<% end %> <% if not (path == "") then %>node-<%= path %><% else %>node-main-login<% end %>" data-page="<%= pcdata(path) %>" style="<%=bk_use%>; "
 	<% if mode ~= 'auto' then %>
 	data-theme = "<%= mode %>"
 	<% end -%>
@@ -275,9 +242,9 @@
     <header class="bar-primary">
 		<div id="header-bar-left" class="container-bar-left">
 			<a class="labelbar pdboy-closebar" href="javascript:void(0)" onclick="pdclosebar()" title="Close" ></a>
-  			<a class="labelbar pdboy-gohome" href="<%=gohome%>" title="<%=Status%>"></a>
-  		    <a class="labelbar pdboy-goadvanced" href="<%=gouser%>" title="<%=System%>"></a>
-  			<a class="labelbar pdboy-gossr" href="<%=gossr%>" title="<%=Services%>"></a>
+  			<a class="labelbar pdboy-gohome" href="<%=gohome%>" title="<%:Status%>"></a>
+  		    <a class="labelbar pdboy-goadvanced" href="<%=gouser%>" title="<%:System%>"></a>
+  			<a class="labelbar pdboy-gossr" href="<%=gossr%>" title="<%:Services%>"></a>
   		    <a class="labelbar pdboy-gonet" href="<%=url("admin/network/network")%>" title="<%:Network%>"></a>
   		    <a class="labelbar pdboy-gopoweroff" href="<%=url("admin/system/reboot")%>" title="<%:Reboot%>"></a>
 		</div>
