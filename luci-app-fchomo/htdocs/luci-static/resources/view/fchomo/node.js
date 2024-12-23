@@ -85,7 +85,7 @@ return view.extend({
 		so.renderWidget = function(/* ... */) {
 			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
 
-			frameEl.firstChild.style.fontFamily = hm.monospacefonts.join(',');
+			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
 
 			return frameEl;
 		}
@@ -650,7 +650,7 @@ return view.extend({
 		so.renderWidget = function(/* ... */) {
 			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
 
-			frameEl.firstChild.style.fontFamily = hm.monospacefonts.join(',');
+			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
 
 			return frameEl;
 		}
@@ -860,7 +860,7 @@ return view.extend({
 		so.renderWidget = function(/* ... */) {
 			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
 
-			frameEl.firstChild.style.fontFamily = hm.monospacefonts.join(',');
+			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
 
 			return frameEl;
 		}
@@ -909,7 +909,7 @@ return view.extend({
 		so.renderWidget = function(/* ... */) {
 			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
 
-			frameEl.firstChild.style.fontFamily = hm.monospacefonts.join(',');
+			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
 
 			return frameEl;
 		}
