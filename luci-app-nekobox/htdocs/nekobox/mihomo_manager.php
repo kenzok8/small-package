@@ -428,78 +428,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     color: rgba(255, 255, 255, 0.9);
 }
 
-@media (max-width: 767px) {
-    .table th,
-    .table td {
-        padding: 6px 8px; 
-        font-size: 14px;
-    }
-
-    .table th:nth-child(1), .table td:nth-child(1) {
-        width: 25%; 
-    }
-    .table th:nth-child(2), .table td:nth-child(2) {
-        width: 20%; 
-    }
-    .table th:nth-child(3), .table td:nth-child(3) {
-        width: 25%; 
-    }
-    .table th:nth-child(4), .table td:nth-child(4) {
-        width: 100%; 
-    }
-
-.btn-group, .d-flex {
-    display: flex;
-    flex-wrap: wrap; 
-    justify-content: center;
-    gap: 5px;
+html {
+    font-size: 16px;  
 }
 
-.btn-group .btn {
-    flex: 1 1 auto; 
-    font-size: 12px;
-    padding: 6px 8px;
+.container {
+    padding-left: 2.4em;  
+    padding-right: 2.4em; 
 }
 
-.btn-group .btn:last-child {
-    margin-right: 0;
-  }
-}
-
-@media (max-width: 767px) {
-    .btn-rename {
-    width: 70px !important; 
-    font-size: 0.6rem; 
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
-    display: inline-block;
-    text-align: center; 
-}
-
-.btn-group {
-    display: flex;
-    gap: 10px; 
-    justify-content: center; 
-}
-
-.btn {
-    margin: 0; 
-}
-
-td {
-    vertical-align: middle;
-}
-
-.action-btn {
-    padding: 6px 12px; 
-    font-size: 0.85rem; 
-    display: inline-block;
-}
-
-.btn-group.d-flex {
-    flex-wrap: wrap;
-}
 </style>
 
 <script>
@@ -578,41 +515,41 @@ function showUpdateAlert() {
                         <td class="align-middle">
                             <?php echo htmlspecialchars($fileType); ?>
                         </td>
-                        <td>
-                            <div class="d-flex justify-content-center">
+                        <td class="align-middle">
+                            <div class="action-buttons">
                                 <?php if ($fileType == '代理文件'): ?>
-                                    <form action="" method="post" class="d-inline">
+                                    <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="deleteFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
                                     </form>
-                                    <form action="" method="post" class="d-inline">
+                                    <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
                                         <input type="hidden" name="fileType" value="proxy">
-                                        <button type="button" class="btn btn-success btn-sm mx-1 btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy"><i>✏️</i> 重命名</button>
+                                        <button type="button" class="btn btn-success btn-sm btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy"><i>✏️</i> 重命名</button>
                                     </form>
-                                    <form action="" method="post" class="d-inline">
-                                        <button type="button" class="btn btn-warning btn-sm mx-1" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'proxy')"><i>📝</i> 编辑</button>
+                                    <form action="" method="post" class="d-inline mb-1">
+                                        <button type="button" class="btn btn-warning btn-sm" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'proxy')"><i>📝</i> 编辑</button>
                                     </form>
-                                    <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn">
+                                    <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn mb-1">
                                         <input type="file" name="fileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                        <button type="button" class="btn btn-info btn-sm mx-1" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
+                                        <button type="button" class="btn btn-info btn-sm" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
                                     </form>
                                 <?php else: ?>
-                                    <form action="" method="post" class="d-inline">
+                                    <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="deleteConfigFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
                                     </form>
-                                    <form action="" method="post" class="d-inline">
+                                    <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
                                         <input type="hidden" name="fileType" value="config">
-                                        <button type="button" class="btn btn-success btn-sm mx-1 btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config"><i>✏️</i> 重命名</button>
+                                        <button type="button" class="btn btn-success btn-sm btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config"><i>✏️</i> 重命名</button>
                                     </form>
-                                    <form action="" method="post" class="d-inline">
-                                        <button type="button" class="btn btn-warning btn-sm mx-1" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'config')"><i>📝</i> 编辑</button>
+                                    <form action="" method="post" class="d-inline mb-1">
+                                        <button type="button" class="btn btn-warning btn-sm" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'config')"><i>📝</i> 编辑</button>
                                     </form>
-                                    <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn">
+                                    <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn mb-1">
                                         <input type="file" name="configFileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                        <button type="button" class="btn btn-info btn-sm mx-1" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
+                                        <button type="button" class="btn btn-info btn-sm" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
                                     </form>
                                 <?php endif; ?>
                             </div>
@@ -990,38 +927,40 @@ function initializeAceEditor() {
 <?php endif; ?>
 
 <?php if (isset($subscriptions) && is_array($subscriptions)): ?>
-    <div class="row">
-        <?php 
-        $maxSubscriptions = 6; 
-        for ($i = 0; $i < $maxSubscriptions; $i++): 
-            $displayIndex = $i + 1; 
-            $url = $subscriptions[$i]['url'] ?? '';
-            $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . ($displayIndex) . ".yaml"; 
-        ?>
-            <div class="col-md-4 mb-3 px-4">
-                <form method="post" class="card">
-                    <div class="card-body">
-                        <div class="form-group">
-                            <h5 for="subscription_url_<?php echo $displayIndex; ?>" class="mb-2">订阅链接 <?php echo $displayIndex; ?></h5>
-                            <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" placeholder="请输入订阅链接">
+    <div class="container" style="padding-left: 2.4rem; padding-right: 2.4rem;">
+        <div class="row">
+            <?php 
+            $maxSubscriptions = 6; 
+            for ($i = 0; $i < $maxSubscriptions; $i++): 
+                $displayIndex = $i + 1; 
+                $url = $subscriptions[$i]['url'] ?? '';
+                $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . ($displayIndex) . ".yaml"; 
+            ?>
+                <div class="col-md-4 mb-3">
+                    <form method="post" class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <h5 for="subscription_url_<?php echo $displayIndex; ?>" class="mb-2">订阅链接 <?php echo $displayIndex; ?></h5>
+                                <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" placeholder="请输入订阅链接">
+                            </div>
+                            <div class="form-group">
+                                <label for="custom_file_name_<?php echo $displayIndex; ?>">自定义文件名</label>
+                                <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
+                            </div>
+                            <input type="hidden" name="index" value="<?php echo $i; ?>">
+                            <div class="text-center mt-3"> 
+                                <button type="submit" name="update" class="btn btn-info btn-block">🔄 更新订阅 <?php echo $displayIndex; ?></button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="custom_file_name_<?php echo $displayIndex; ?>">自定义文件名</label>
-                            <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
-                        </div>
-                        <input type="hidden" name="index" value="<?php echo $i; ?>">
-                        <div class="text-center mt-3"> 
-                            <button type="submit" name="update" class="btn btn-info">🔄 更新订阅 <?php echo $displayIndex; ?></button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+                    </form>
+                </div>
 
-            <?php if (($displayIndex) % 3 == 0 && $displayIndex < $maxSubscriptions): ?>
-                </div><div class="row">
-            <?php endif; ?>
+                <?php if (($displayIndex) % 3 == 0 && $displayIndex < $maxSubscriptions): ?>
+                    </div><div class="row">
+                <?php endif; ?>
 
-        <?php endfor; ?>
+            <?php endfor; ?>
+        </div>
     </div>
 <?php else: ?>
     <p>未找到订阅信息。</p>

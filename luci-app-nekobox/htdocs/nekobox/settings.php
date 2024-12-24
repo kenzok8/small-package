@@ -182,23 +182,23 @@ $razordVersion = getRazordVersion();
             <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
             <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
             <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
-    <div class="container px-4">
-        <h2 class="text-center p-2 mb-3">主题设定</h2>
-        <form action="settings.php" method="post">
-            <div class="row justify-content-center">
-                <div class="col-12 col-md-6 mb-3">
-                    <select class="form-select" name="themechange" aria-label="themex">
-                        <option selected>Change Theme (<?php echo $neko_theme ?>)</option>
-                        <?php foreach ($arrFiles as $file) echo "<option value=\"".$file.'">'.$file."</option>" ?>
-                    </select>
-                </div>
-                <div class="col-12 col-md-6 mb-3">
-                    <div class="text-center">
-                        <input class="btn btn-info" type="submit" value="🖫 更改主题">
-                    </div>
+<div class="container px-4">
+    <h2 class="text-center p-2 mb-4">主题设定</h2>
+    <form action="settings.php" method="post">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-6 mb-3">
+                <select class="form-select" name="themechange" aria-label="themex">
+                    <option selected>Change Theme (<?php echo $neko_theme ?>)</option>
+                    <?php foreach ($arrFiles as $file) echo "<option value=\"".$file.'">'.$file."</option>" ?>
+                </select>
+            </div>
+            <div class="col-12 col-md-6 mb-3" style="padding-right: 1.3rem;" >
+                <div class="d-grid">
+                    <input class="btn btn-info" type="submit" value="🖫 更改主题">
                 </div>
             </div>
-        </form>
+        </div>
+    </form>
     <table class="table table-borderless mb-3">
         <tbody>
             <tr>
@@ -206,71 +206,109 @@ $razordVersion = getRazordVersion();
                     <h2 class="text-center mb-3">自动重载防火墙</h2>
                     <form action="settings.php" method="post">
                         <div class="btn-group d-flex justify-content-center">
-                            <button type="submit" name="fw" value="enable" class="btn btn<?php if($fwstatus==1) echo "-outline" ?>-success <?php if($fwstatus==1) echo "disabled" ?>">启用</button>
+                            <button type="submit" name="fw" value="enable" class="btn btn<?php if($fwstatus==1) echo "-outline" ?>-success <?php if($fwstatus==1) echo "disabled" ?>" style="margin-right: 20px;">启用</button>
                             <button type="submit" name="fw" value="disable" class="btn btn<?php if($fwstatus==0) echo "-outline" ?>-danger <?php if($fwstatus==0) echo "disabled" ?>">停用</button>
+                         </div>
+                     </form>
+                 </td>
+             </tr>
+         <tr>
+     <tr>
+    <td>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>客户端版本</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center" style="font-family: monospace;">
+                        <span id="cliver"></span><span id="NewCliver"> </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">
+                        <button class="btn btn-pink" id="checkCliverButton">🔍 检测版本</button>
+                        <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showVersionTypeModal()">🔄 更新版本</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </td>
+    <td>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>UI 控制面板</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">
+                        <?php echo htmlspecialchars($uiVersion); ?><span id="NewUi"> </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">
+                        <button class="btn btn-pink" id="checkUiButton">🔍 检测版本</button>
+                        <button class="btn btn-info" id="updateUiButton" title="更新面板" onclick="showPanelSelector()">🔄 更新版本</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </td>
+</tr>
+<tr>
+    <td>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sing-box 核心版本</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">
+                        <div id="singBoxCorever">
+                            <?php echo htmlspecialchars($singBoxVersion); ?><span id="NewSingbox"></span>
                         </div>
-                    </form>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <div class="row g-4">
-                        <div class="col-md-6 mb-3">
-                            <div class="text-center">
-                                <h3>客户端版本</h3>
-                                <div class="form-control text-center" style="font-family: monospace; text-align: center;">
-                                    <span id="cliver"></span><span id="NewCliver"> </span>
-                                </div>
-                                <div class="text-center mt-2">
-                                    <button class="btn btn-pink" id="checkCliverButton">🔍 检测版本</button>
-                                    <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showVersionTypeModal()">🔄 更新版本</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="text-center">
-                                <h3>Ui 控制面板</h3>
-                                <div class="form-control text-center">
-                                    <?php echo htmlspecialchars($uiVersion); ?><span id="NewUi"> </span>
-                                </div>
-                                <div class="text-center mt-2">
-                                    <button class="btn btn-pink" id="checkUiButton">🔍 检测版本</button> 
-                                    <button class="btn btn-info" id="updateUiButton" title="更新面板" onclick="showPanelSelector()">🔄 更新版本</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="text-center">
-                                <h3>Sing-box 核心版本</h3>
-                                <div class="form-control text-center">
-                                    <div id="singBoxCorever">
-                                        <?php echo htmlspecialchars($singBoxVersion); ?><span id="NewSingbox"></span>
-                                    </div>
-                                </div>
-                                <div class="text-center mt-2">
-                                    <button class="btn btn-pink" id="checkSingboxButton">🔍 检测版本</button>
-                                    <button class="btn btn-info" id="singboxOptionsButton" title="Singbox 相关操作">🔄 更新版本</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="text-center">
-                                <h3>Mihomo 核心版本</h3>
-                                <div class="form-control text-center">
-                                    <span id="corever"></span><span id="NewMihomo"> </span>
-                                </div>
-                                <div class="text-center mt-2">
-                                    <button class="btn btn-pink" id="checkMihomoButton">🔍 检测版本</button> 
-                                    <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核" onclick="showMihomoVersionSelector()">🔄 更新版本</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">
+                        <button class="btn btn-pink" id="checkSingboxButton">🔍 检测版本</button>
+                        <button class="btn btn-info" id="singboxOptionsButton" title="Singbox 相关操作">🔄 更新版本</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </td>
+    <td>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Mihomo 核心版本</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">
+                        <span id="corever"></span><span id="NewMihomo"> </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">
+                        <button class="btn btn-pink" id="checkMihomoButton">🔍 检测版本</button>
+                        <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核" onclick="showMihomoVersionSelector()">🔄 更新版本</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </td>
+</tr>
+</tbody>
+</table>
 <div class="modal fade" id="updateVersionTypeModal" tabindex="-1" aria-labelledby="updateVersionTypeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -370,14 +408,14 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="modal-body">
                 <p class="text-warning">
-                    <strong>说明：</strong> 请优先选择通道一版本进行更新，以确保兼容性。系统会先检测并动态生成最新版本号供选择下载。 如果通道一更新不可用，可以尝试通道二版本。
+                    <strong>说明：</strong> 请优先选择通道一编译版本进行更新，以确保兼容性。系统会先检测并动态生成最新版本号供选择下载。 如果通道一更新不可用，可以尝试通道二版本。
                 </p>
                 <div class="d-grid gap-2">
                     <button class="btn btn-info" onclick="showSingboxVersionSelector()">更新 Singbox 内核（通道一）</button>
                     <button class="btn btn-success" onclick="showSingboxVersionSelectorForChannelTwo()">更新 Singbox 内核（通道二）</button>
                     <button class="btn btn-success" onclick="selectOperation('puernya')">切换 Puernya 内核</button>
-                    <button class="btn btn-primary" onclick="selectOperation('rule')">更新 Singbox 规则集</button>
-                    <button class="btn btn-primary" onclick="selectOperation('config')">更新 Mihomo 配置文件</button>
+                    <button class="btn btn-primary" onclick="selectOperation('rule')">更新 P核 规则集</button>
+                    <button class="btn btn-primary" onclick="selectOperation('config')">更新配置文件（备用）</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                 </div>
             </div>
@@ -389,7 +427,7 @@ $razordVersion = getRazordVersion();
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="versionSelectionModalLabel">选择 Singbox 内核版本 （通道一）</h5>
+                <h5 class="modal-title" id="versionSelectionModalLabel">选择 Singbox 内核版本 （编译通道一）</h5>
                 <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -422,7 +460,7 @@ $razordVersion = getRazordVersion();
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="singboxVersionModalLabel">选择 Singbox 核心版本（通道二）</h5>
+                <h5 class="modal-title" id="singboxVersionModalLabel">选择 Singbox 核心版本（官方通道二）</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">

@@ -55,7 +55,7 @@ include './cfg.php';
             <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
             <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     <form action="configs.php" method="post">
-        <div class="container text-center justify-content-md-center">
+        <div class="container text-center justify-content-md-center" style="padding-left: 4ch; padding-right: 4ch;">
             <div class="row justify-content-md-center">
                 <div class="col mb-3 justify-content-md-center">
                     <h2 for="clashconfig" class="form-label  p-4 m-2">选择 Mihomo 配置文件</h2>
@@ -73,14 +73,8 @@ include './cfg.php';
             </div>
         </div>
     </form>
-    <div class="container mt-4">
-        <?php if ($logMessage): ?>
-            <div class="alert alert-info" role="alert">
-                <?php echo htmlspecialchars($logMessage); ?>
-            </div>
-        <?php endif; ?>
-    </div>
-<div class="container   rounded-4 col-12 mb-4">
+
+<div class="container   rounded-4 col-12 mb-4" style="padding-left: 5ch; padding-right: 5ch;">
     <ul class="nav d-flex justify-content-between w-100 text-center">
         <li class="nav-item flex-grow-1">
             <a class="btn btn-lg w-100 active" data-bs-toggle="tab" href="#info">配置</a>
@@ -100,7 +94,7 @@ include './cfg.php';
     </ul>
 </div>
 
-   <div class="container rounded-4 col-12 mb-4">
+   <div class="container rounded-4 col-12 mb-4" style="padding-left: 5ch; padding-right: 5ch;">
     <div class="tab-content">
         <div id="info" class="tab-pane fade show active">
             <h2 class="text-center p-2">配置资讯</h2>
