@@ -140,6 +140,7 @@ EOL;
 .table-responsive {
     width: 100%;
 }
+
 </style>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
@@ -149,7 +150,7 @@ EOL;
         <a href="./subscription.php" class="col btn btn-lg">🏦  模板 二</a>
         <a href="./mihomo.php" class="col btn btn-lg">🏣 模板 三</a>
 <div class="outer-container">
-    <div class="container">
+    <div class="container" style="padding-left: 2.4em; padding-right: 2.4em;">
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板 一</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
@@ -163,7 +164,7 @@ EOL;
                 <li><strong>模板 4</strong>：香港 新加坡 日本 美国 分组 带分流规则。</li>
                 <li><strong>模板 5</strong>：新加坡 日本 美国 韩国 分组 带分流规则。</li>
                 <li><strong>模板 6</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 带分流规则。</li>
-                <li><strong>模板 7</strong>：同上多规则</li>
+                <li><strong>模板 7</strong>：同上多规则。</li>
             </ul>
         </div>
         <form method="post" action="">
@@ -217,7 +218,7 @@ EOL;
                     <input type="text" class="form-control" id="customTemplateUrl" name="customTemplateUrl" placeholder="输入自定义模板URL">
                 </div>
             </fieldset>
-            <div class="row mb-4"> 
+            <div class="d-flex flex-wrap gap-2 mb-4">
                 <div class="col-auto">
                     <form method="post" action="">
                         <button type="submit" name="generateConfig" class="btn btn-info">
