@@ -1,0 +1,18 @@
+instance_name = "default"
+instance_id = "f9f05421-7c6b-47d6-a67d-4d58d49f51d8"
+dhcp = true
+listeners = []
+exit_nodes = []
+rpc_portal = "0.0.0.0:15888"
+
+[network_identity]
+network_name = "mynetwork"
+network_secret = "mysecret"
+
+[[peer]]
+uri = "tcp://public.easytier.top:11010"
+
+[file_logger]
+level = "info"
+file = "easytier-default"
+dir = "/tmp"
