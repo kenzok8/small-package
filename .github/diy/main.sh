@@ -155,6 +155,7 @@ git clone --depth 1 https://github.com/Carseason/openwrt-packages Carseason && m
 git clone --depth 1 https://github.com/Carseason/openwrt-themedog && mv -n openwrt-themedog/luci/* ./;rm -rf openwrt-themedog
 git clone --depth 1 https://github.com/Carseason/openwrt-app-actions Carseason && mv -n Carseason/applications/* ./;rm -rf Carseason
 git clone --depth 1 https://github.com/Akimio521/luci-app-gecoosac
+git clone --depth 1 https://github.com/EasyTier/luci-app-easytier
 
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
 svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
