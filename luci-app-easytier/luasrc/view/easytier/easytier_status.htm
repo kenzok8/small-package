@@ -1,0 +1,23 @@
+
+<script type="text/javascript">//<![CDATA[
+XHR.poll(3, '<%=url([[admin]], [[vpn]], [[easytier]], [[status]])%>', null,
+    function(x, data) {
+        var st = document.getElementById('easytier_status');
+        if (data && st) {
+            var clientStatus = data.crunning ? "<span style='color:green;'> 运行中</span><img src='https://www.right.com.cn/forum/data/attachment/album/202401/30/081238k459q2d5klacs8rk.gif' width='30px' alt=''>" : "<span style='color:red;'> 未运行</span>";
+            var etstaContent = data.crunning ? "已运行：" + "<span style='color:#DA70D6;'>" + data.etsta + "</span>" : "";    
+            var etcpuContent = data.crunning ? "<br>" + "CPU占用：" + "<span style='color:#6A5ACD;'>" + data.etcpu + "</span>" : "";  
+            var etramContent = data.crunning ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;&nbsp;内存占用：" + "<span style='color:#0000CD;'>" + data.etram + "</span>" : "";
+            var ettagContent = data.crunning ? "<br>" + "当前版本：" + "<span style='color:#CD853F;'>" + data.ettag + "</span>" : ""; 
+            var etnewtagContent = data.crunning ? "&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;最新版本：" + "<span style='color:#FFA500;'>" + data.etnewtag + "</span>" : ""; 
+            st.innerHTML = "<em><b>easytier-core " + clientStatus + etstaContent + etcpuContent + etramContent + ettagContent + etnewtagContent + "</b></em>";          
+        }
+    }
+);
+//]]>
+</script>
+<fieldset class="cbi-section">
+    <p id="easytier_status">
+        <em><%:Collecting data...%></em>
+    </p>
+</fieldset>
