@@ -466,7 +466,7 @@ $razordVersion = getRazordVersion();
             <div class="modal-body">
                 <div class="form-group">
                     <label for="singboxVersionSelectForChannelTwo">选择版本</label>
-                    <select id="singboxVersionSelectForChannelTwo" class="form-control">
+                    <select id="singboxVersionSelectForChannelTwo" class="form-select">
                         <option value="preview" selected>预览版</option>  
                         <option value="stable">正式版</option>
                     </select>
