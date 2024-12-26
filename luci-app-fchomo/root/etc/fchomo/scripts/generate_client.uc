@@ -657,7 +657,11 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 	/* General fields */
 	config["proxy-providers"][cfg['.name']] = {
 		type: cfg.type,
-		path: HM_DIR + '/provider/' + cfg['.name'],
+		...(cfg.payload ? {
+			payload: trim(cfg.payload)
+		} : {
+			path: HM_DIR + '/provider/' + cfg['.name']
+		}),
 		url: cfg.url,
 		"size-limit": bytesizeToByte(cfg.size_limit) || null,
 		interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) || 86400 : null,
