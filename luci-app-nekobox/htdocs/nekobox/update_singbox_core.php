@@ -15,7 +15,7 @@ if (isset($_GET['check_version'])) {
 
     if (isset($latest_version_info['tag_name'])) {
         $latest_version = $latest_version_info['tag_name'];
-        echo "最新版本: $latest_version";
+        echo "最新版本: v$latest_version";
     } else {
         echo "无法获取最新版本信息";
     }
