@@ -11,7 +11,7 @@ PKG_ARCH_sunpanel:=$(ARCH)
 
 PKG_NAME:=sunpanel
 PKG_VERSION:=1.3.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/linkease/istore-packages/releases/download/prebuilt/
 PKG_HASH:=3ce70530fad9788c4ce0a2969cffc5b80f010406c7a0185b9a40616e3e67f201
@@ -44,6 +44,7 @@ define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -f /etc/uci-defaults/sunpanel ] && /etc/uci-defaults/sunpanel && rm -f /etc/uci-defaults/sunpanel
+	exit 0
 fi
 endef
 
