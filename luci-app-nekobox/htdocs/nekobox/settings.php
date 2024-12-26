@@ -896,7 +896,7 @@ function checkVersion(outputId, updateFiles, currentVersions) {
                         </tr>
                     `);
 
-                    if (file.url === 'update_singbox_preview.php') {
+                    if (file.url === 'update_singbox_core.php') {
                         const select = document.getElementById('singboxVersionSelect');
                         let versionExists = Array.from(select.options).some(option => option.value === newVersion);
 
