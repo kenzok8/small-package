@@ -413,6 +413,28 @@ $razordVersion = getRazordVersion();
                 <div class="d-grid gap-2">
                     <button class="btn btn-info" onclick="showSingboxVersionSelector()">更新 Singbox 内核（通道一）</button>
                     <button class="btn btn-success" onclick="showSingboxVersionSelectorForChannelTwo()">更新 Singbox 内核（通道二）</button>
+                    <button type="button" class="btn btn-warning" id="operationOptionsButton">其他操作</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="operationModal" tabindex="-1" aria-labelledby="operationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="operationModalLabel">选择操作</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="text-warning">
+                    <strong>说明：</strong> 请根据需求选择操作。
+                </p>
+                <div class="d-grid gap-2">
                     <button class="btn btn-success" onclick="selectOperation('puernya')">切换 Puernya 内核</button>
                     <button class="btn btn-primary" onclick="selectOperation('rule')">更新 P核 规则集</button>
                     <button class="btn btn-primary" onclick="selectOperation('config')">更新配置文件（备用）</button>
@@ -544,51 +566,21 @@ $razordVersion = getRazordVersion();
         </div>
     </div>
 </div>
-
-<div id="logOutput" class="mt-3"></div>
-
 <style>
-    .table-container {
-        overflow-x: auto;
-    }
-
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .table td {
-        padding: 10px;
-        word-wrap: break-word;
-    }
-
-    .form-control {
-        width: 100%;
-    }
-
-    .btn {
-        white-space: nowrap;
-        flex: 1;
-    }
-
     @media (max-width: 767px) {
         .table td {
             display: block;
             width: 100%;
         }
-
         .form-control {
             display: flex;
             flex-direction: column;
         }
-
         .btn-group {
             flex-direction: column;
         }
     }
-
 </style>
-
 <script>
 let selectedSingboxVersion = 'v1.11.0-alpha.10';  
 let selectedMihomoVersion = 'stable';  
@@ -860,7 +852,15 @@ function initiateUpdate(url, logMessage, description) {
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('singboxOptionsButton').addEventListener('click', function() {
+        $('#optionsModal').modal('hide');
+        
         $('#optionsModal').modal('show');
+    });
+
+    document.getElementById('operationOptionsButton').addEventListener('click', function() {
+        $('#optionsModal').modal('hide');
+        
+        $('#operationModal').modal('show');
     });
 
     document.getElementById('updateUiButton').addEventListener('click', function() {
