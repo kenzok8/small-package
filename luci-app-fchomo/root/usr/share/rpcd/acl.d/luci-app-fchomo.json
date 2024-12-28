@@ -3,6 +3,7 @@
 		"description": "Grant access to fchomo configuration",
 		"read": {
 			"file": {
+				"/etc/fchomo/scripts/natcheck.sh": [ "exec" ],
 				"/etc/init.d/fchomo reload *": [ "exec" ],
 				"/var/run/fchomo/fchomo.log": [ "read" ],
 				"/var/run/fchomo/mihomo-c.log": [ "read" ],
