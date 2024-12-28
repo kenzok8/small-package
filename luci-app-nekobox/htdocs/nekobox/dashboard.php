@@ -82,6 +82,17 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
 <div class="container text-left p-3">
         <div class="container h-100 mb-5">
             <iframe id="iframeMeta" class="border border-3 rounded-4 w-100" style="height: 70vh;" src="http://<?php echo $zash_link; ?>" title="zash" allowfullscreen></iframe>
+        
+            <div class="mb-3 mt-3">
+                <h4 for="panelSelect" class="form-label">选择面板</h4>
+                <select id="panelSelect" class="form-select">
+                    <option value="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</option>
+                    <option value="http://<?php echo $yacd_link; ?>">YACD-META 面板</option>
+                    <option value="http://<?php echo $dash_link; ?>">DASHBOARD 面板</option>
+                    <option value="http://<?php echo $meta_link; ?>">METACUBEXD 面板</option>
+                </select>
+            </div>
+        
             <table class="table table-borderless callout mb-2">
                 <tbody>
                     <tr class="text-center d-flex flex-wrap justify-content-center">
@@ -98,6 +109,22 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
         <p><?php echo $footer; ?></p>
     </footer>
 </div>
+    <script>
+        const panelSelect = document.getElementById('panelSelect');
+        const iframeMeta = document.getElementById('iframeMeta');
+
+        const savedPanel = localStorage.getItem('selectedPanel');
+
+        if (savedPanel) {
+            iframeMeta.src = savedPanel; 
+            panelSelect.value = savedPanel; 
+        }
+
+        panelSelect.addEventListener('change', function() {
+            iframeMeta.src = panelSelect.value;          
+            localStorage.setItem('selectedPanel', panelSelect.value);
+        });
+    </script>
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const fullscreenToggle = document.getElementById('fullscreenToggle');
