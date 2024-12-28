@@ -82,17 +82,6 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
 <div class="container text-left p-3">
         <div class="container h-100 mb-5">
             <iframe id="iframeMeta" class="border border-3 rounded-4 w-100" style="height: 70vh;" src="http://<?php echo $zash_link; ?>" title="zash" allowfullscreen></iframe>
-        
-            <div class="mb-3 mt-3">
-                <h4 for="panelSelect" class="form-label">选择面板</h4>
-                <select id="panelSelect" class="form-select">
-                    <option value="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</option>
-                    <option value="http://<?php echo $yacd_link; ?>">YACD-META 面板</option>
-                    <option value="http://<?php echo $dash_link; ?>">DASHBOARD 面板</option>
-                    <option value="http://<?php echo $meta_link; ?>">METACUBEXD 面板</option>
-                </select>
-            </div>
-        
             <table class="table table-borderless callout mb-2">
                 <tbody>
                     <tr class="text-center d-flex flex-wrap justify-content-center">
@@ -103,28 +92,64 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
                     </tr>
                 </tbody>
             </table>
+        
+            <div class="mb-3 mt-3">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#panelModal">
+                    面板设置
+                </button>
+            </div>
+
+            <div class="modal fade" id="panelModal" tabindex="-1" aria-labelledby="panelModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="panelModalLabel">选择面板</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select id="panelSelect" class="form-select">
+                                <option value="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</option>
+                                <option value="http://<?php echo $yacd_link; ?>">YACD-META 面板</option>
+                                <option value="http://<?php echo $dash_link; ?>">DASHBOARD 面板</option>
+                                <option value="http://<?php echo $meta_link; ?>">METACUBEXD 面板</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
     <footer class="text-center">
         <p><?php echo $footer; ?></p>
     </footer>
 </div>
-    <script>
-        const panelSelect = document.getElementById('panelSelect');
-        const iframeMeta = document.getElementById('iframeMeta');
+<script>
+    const panelSelect = document.getElementById('panelSelect');
+    const iframeMeta = document.getElementById('iframeMeta');
+    const savedPanel = localStorage.getItem('selectedPanel');
 
-        const savedPanel = localStorage.getItem('selectedPanel');
+    if (savedPanel) {
+        iframeMeta.src = savedPanel; 
+        panelSelect.value = savedPanel; 
+    }
 
-        if (savedPanel) {
-            iframeMeta.src = savedPanel; 
-            panelSelect.value = savedPanel; 
-        }
+    panelSelect.addEventListener('change', function() {
+        iframeMeta.src = panelSelect.value;          
+        localStorage.setItem('selectedPanel', panelSelect.value);
+    });
 
-        panelSelect.addEventListener('change', function() {
-            iframeMeta.src = panelSelect.value;          
-            localStorage.setItem('selectedPanel', panelSelect.value);
-        });
-    </script>
+    document.getElementById('confirmPanelSelection').addEventListener('click', function() {
+        var selectedPanel = panelSelect.value;
+        iframeMeta.src = selectedPanel;
+        var myModal = new bootstrap.Modal(document.getElementById('panelModal'));
+        myModal.hide();
+        localStorage.setItem('selectedPanel', selectedPanel);
+    });
+</script>
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const fullscreenToggle = document.getElementById('fullscreenToggle');
