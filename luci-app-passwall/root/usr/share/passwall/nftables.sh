@@ -130,10 +130,8 @@ destroy_nftset() {
 }
 
 gen_nft_tables() {
-	if [ -z "$(nft list tables | grep 'inet passwall')" ]; then
-		local nft_table_file="$TMP_PATH/PSW_TABLE.nft"
-		# Set the correct priority to fit fw4
-		cat > "$nft_table_file" <<-EOF
+	if ! nft list tables | grep -q "^table inet passwall$"; then
+		nft -f - <<-EOF
 		table $NFTABLE_NAME {
 			chain dstnat {
 				type nat hook prerouting priority dstnat - 1; policy accept;
@@ -149,33 +147,23 @@ gen_nft_tables() {
 			}
 		}
 		EOF
-
-		nft -f "$nft_table_file"
-		rm -rf "$nft_table_file"
 	fi
 }
 
 insert_nftset() {
 	local nftset_name="${1}"; shift
 	local timeout_argument="${1}"; shift
-	local defalut_timeout_argument="3650d"
-	local nftset_elements
-
+	local default_timeout_argument="3650d"
 	[ -n "${1}" ] && {
-		if [ "$timeout_argument" == "-1" ]; then
-			nftset_elements=$(echo -e $@ | sed 's/\s/, /g')
-		elif [ "$timeout_argument" == "0" ]; then
-			nftset_elements=$(echo -e $@ | sed "s/\s/ timeout $defalut_timeout_argument, /g" | sed "s/$/ timeout $defalut_timeout_argument/")
-		else
-			nftset_elements=$(echo -e $@ | sed "s/\s/ timeout $timeout_argument, /g" | sed "s/$/ timeout $timeout_argument/")
-		fi
-		mkdir -p $TMP_PATH2/nftset
-		cat > "$TMP_PATH2/nftset/$nftset_name" <<-EOF
-			define $nftset_name = {$nftset_elements}	
-			add element $NFTABLE_NAME $nftset_name \$$nftset_name
+		local nftset_elements
+		case "$timeout_argument" in
+			"-1") nftset_elements=$(echo -e $@ | sed 's/\s/, /g') ;;
+			 "0") nftset_elements=$(echo -e $@ | sed "s/\s/ timeout $default_timeout_argument, /g" | sed "s/$/ timeout $default_timeout_argument/") ;;
+			   *) nftset_elements=$(echo -e $@ | sed "s/\s/ timeout $timeout_argument, /g" | sed "s/$/ timeout $timeout_argument/") ;;
+		esac
+		nft -f - <<-EOF
+			add element $NFTABLE_NAME $nftset_name {$nftset_elements}
 		EOF
-		nft -f "$TMP_PATH2/nftset/$nftset_name"
-		rm -rf "$TMP_PATH2/nftset"
 	}
 }
 
@@ -859,10 +847,10 @@ add_firewall_rule() {
 
 	#直连列表
 	[ "$USE_DIRECT_LIST_ALL" = "1" ] && {
-		insert_nftset $NFTSET_WHITE "0" $(sed -e "s/\r//g" -e "/^#/d" -e "/^$/d" "$RULES_PATH/direct_ip" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-		insert_nftset $NFTSET_WHITE6 "0" $(sed -e "s/\r//g" -e "/^#/d" -e "/^$/d" "$RULES_PATH/direct_ip" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+		insert_nftset $NFTSET_WHITE "0" $(cat $RULES_PATH/direct_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+		insert_nftset $NFTSET_WHITE6 "0" $(cat $RULES_PATH/direct_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		[ "$USE_GEOVIEW" = "1" ] && {
-			local GEOIP_CODE=$(sed -e "s/\r//g" -e "/^$/d" "$RULES_PATH/direct_ip" | sed -e '/^geoip:private/d' -e '/^geoip:/!d' -e 's/^geoip://g' | tr '\n' ',' | sed 's/,$//')
+			local GEOIP_CODE=$(cat $RULES_PATH/direct_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 			if [ -n "$GEOIP_CODE" ] && type geoview &> /dev/null; then
 				insert_nftset $NFTSET_WHITE "0" $(get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 				insert_nftset $NFTSET_WHITE6 "0" $(get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
@@ -873,10 +861,10 @@ add_firewall_rule() {
 
 	#代理列表
 	[ "$USE_PROXY_LIST_ALL" = "1" ] && {
-		insert_nftset $NFTSET_BLACK "0" $(sed -e "s/\r//g" -e "/^#/d" -e "/^$/d" "$RULES_PATH/proxy_ip" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-		insert_nftset $NFTSET_BLACK6 "0" $(sed -e "s/\r//g" -e "/^#/d" -e "/^$/d" "$RULES_PATH/proxy_ip" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+		insert_nftset $NFTSET_BLACK "0" $(cat $RULES_PATH/proxy_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+		insert_nftset $NFTSET_BLACK6 "0" $(cat $RULES_PATH/proxy_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		[ "$USE_GEOVIEW" = "1" ] && {
-			local GEOIP_CODE=$(sed -e "s/\r//g" -e "/^$/d" "$RULES_PATH/proxy_ip" | sed -e '/^geoip:private/d' -e '/^geoip:/!d' -e 's/^geoip://g' | tr '\n' ',' | sed 's/,$//')
+			local GEOIP_CODE=$(cat $RULES_PATH/proxy_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 			if [ -n "$GEOIP_CODE" ] && type geoview &> /dev/null; then
 				insert_nftset $NFTSET_BLACK "0" $(get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 				insert_nftset $NFTSET_BLACK6 "0" $(get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
@@ -887,10 +875,10 @@ add_firewall_rule() {
 
 	#屏蔽列表
 	[ "$USE_BLOCK_LIST_ALL" = "1" ] && {
-		insert_nftset $NFTSET_BLOCK "0" $(sed -e "s/\r//g" -e "/^#/d" -e "/^$/d" "$RULES_PATH/block_ip" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-		insert_nftset $NFTSET_BLOCK6 "0" $(sed -e "s/\r//g" -e "/^#/d" -e "/^$/d" "$RULES_PATH/block_ip" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+		insert_nftset $NFTSET_BLOCK "0" $(cat $RULES_PATH/block_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+		insert_nftset $NFTSET_BLOCK6 "0" $(cat $RULES_PATH/block_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		[ "$USE_GEOVIEW" = "1" ] && {
-			local GEOIP_CODE=$(sed -e "s/\r//g" -e "/^$/d" "$RULES_PATH/block_ip" | sed -e '/^geoip:private/d' -e '/^geoip:/!d' -e 's/^geoip://g' | tr '\n' ',' | sed 's/,$//')
+			local GEOIP_CODE=$(cat $RULES_PATH/block_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 			if [ -n "$GEOIP_CODE" ] && type geoview &> /dev/null; then
 				insert_nftset $NFTSET_BLOCK "0" $(get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
 				insert_nftset $NFTSET_BLOCK6 "0" $(get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
@@ -904,10 +892,10 @@ add_firewall_rule() {
 		local GEOIP_CODE=""
 		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
 		for shunt_id in $shunt_ids; do
-			insert_nftset $NFTSET_SHUNT "0" $(config_n_get $shunt_id ip_list | sed -e "s/\r//g" -e "/^$/d" | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
-			insert_nftset $NFTSET_SHUNT6 "0" $(config_n_get $shunt_id ip_list | sed -e "s/\r//g" -e "/^$/d" | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
+			insert_nftset $NFTSET_SHUNT "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}")
+			insert_nftset $NFTSET_SHUNT6 "0" $(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -v "^#" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 			[ "$USE_GEOVIEW" = "1" ] && {
-				local geoip_code=$(config_n_get $shunt_id ip_list | sed -e 's/\r//g' -e '/^$/d' -e '/^geoip:private/d' -e '/^geoip:/!d' -e 's/^geoip://g' | tr '\n' ',' | sed 's/,$//')
+				local geoip_code=$(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 				[ -n "$geoip_code" ] && GEOIP_CODE="${GEOIP_CODE:+$GEOIP_CODE,}$geoip_code"
 			}
 		done
