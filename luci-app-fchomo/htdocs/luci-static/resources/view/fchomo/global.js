@@ -1,5 +1,6 @@
 'use strict';
 'require form';
+'require fs';
 'require network';
 'require poll';
 'require rpc';
@@ -24,6 +25,16 @@ const callCrondSet = rpc.declare({
 	params: ['type', 'expr'],
 	expect: { '': {} }
 });
+
+function getRandom(min, max) {
+	const floatRandom = Math.random()
+	const difference = max - min
+
+	// A random number between 0 and the difference
+	const random = Math.round(difference * floatRandom)
+
+	return random + min
+}
 
 function handleResUpdate(type, repo) {
 	const callResUpdate = rpc.declare({
@@ -93,6 +104,43 @@ function updateResVersion(El, version) {
 	}
 
 	return El;
+}
+
+function renderNATBehaviorTest(El) {
+	var resEl = E('div',  { 'class': 'control-group' }, [
+		E('select', {
+			'id': '_status_nattest_l4proto',
+			'class': 'cbi-input-select',
+			'style': 'width: 5em'
+		}, [
+			E('option', { 'value': 'udp' }, 'UDP'),
+			E('option', { 'value': 'tcp' }, 'TCP')
+		]),
+		E('button', {
+			'class': 'cbi-button cbi-button-apply',
+			'click': ui.createHandlerFn(this, function() {
+				var stun = this.formvalue(this.section.section);
+				var l4proto = document.getElementById('_status_nattest_l4proto').value;
+				var l4proto_idx = document.getElementById('_status_nattest_l4proto').selectedIndex;
+
+				return fs.exec_direct('/etc/fchomo/scripts/natcheck.sh', [stun, l4proto, getRandom(32768, 61000)]).then((stdout) => {
+					this.description = '<details><summary>' + _('Expand/Collapse result') + '</summary>' + stdout + '</details>';
+
+					return this.map.reset().then((res) => {
+						document.getElementById('_status_nattest_l4proto').selectedIndex = l4proto_idx;
+					});
+				});
+			})
+		}, [ _('Check') ])
+	]);
+
+	let newEl = E('div', { style: 'font-weight: bold; align-items: center; display: flex' }, []);
+	if (El) {
+		newEl.appendChild(E([El, resEl]));
+	} else
+		newEl.appendChild(resEl);
+
+	return newEl;
 }
 
 return view.extend({
@@ -198,6 +246,29 @@ return view.extend({
 			]);
 		}
 
+		so = ss.option(form.Value, '_nattest', _('Check routerself NAT Behavior'));
+		so.default = hm.stunserver[0][0];
+		hm.stunserver.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.rmempty = false;
+		if (!features.hm_has_stunclient) {
+			so.description = _('To check NAT Behavior you need to install <a href="%s"><b>stuntman-client</b></a> first')
+				.format('https://github.com/muink/openwrt-stuntman');
+			so.readonly = true;
+		} else {
+			so.renderWidget = function(/* ... */) {
+				var El = form.Value.prototype.renderWidget.apply(this, arguments);
+
+				return renderNATBehaviorTest.call(this, El);
+			}
+		}
+		so.onchange = function(ev, section_id, value) {
+			this.default = value;
+		}
+		so.write = function() {};
+		so.remove = function() {};
+
 		/* Resources management */
 		o = s.taboption('status', form.SectionValue, '_config', form.NamedSection, 'resources', 'fchomo', _('Resources management'));
 		ss = o.subsection;
@@ -248,7 +319,7 @@ return view.extend({
 		so.renderWidget = function(/* ... */) {
 			var El = form.ListValue.prototype.renderWidget.apply(this, arguments);
 
-			El.className = 'control-group';
+			El.classList.add('control-group');
 			El.firstChild.style.width = '10em';
 
 			return renderResVersion.call(this, El, 'dashboard', this.default);

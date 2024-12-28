@@ -94,6 +94,7 @@ const methods = {
 
 			features.hm_has_dnsmasq_full = system(`[ -n "$(${use_apk ? 'apk list -qI' : 'opkg list-installed'} dnsmasq-full)" ]`) == 0 || null;
 			features.hm_has_ip_full = access('/usr/libexec/ip-full');
+			features.hm_has_stunclient = access('/usr/bin/stunclient');
 			features.hm_has_tcp_brutal = hasKernelModule('brutal.ko');
 			features.hm_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
 			features.hm_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');

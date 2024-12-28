@@ -208,6 +208,15 @@ return baseclass.extend({
 		'2022-blake3-chacha20-poly1305': 32
 	},
 
+	stunserver: [
+		['stun.fitauto.ru:3478'],
+		['stun.hot-chilli.net:3478'],
+		['stun.pure-ip.com:3478'],
+		['stun.voipgate.com:3478'],
+		['stun.voipia.net:3478'],
+		['stunserver2024.stunprotocol.org:3478']
+	],
+
 	tls_client_fingerprints: [
 		['chrome'],
 		['firefox'],
