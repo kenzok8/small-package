@@ -12,7 +12,6 @@ TCP_RULE_PREF="1024"
 UDP_RULE_PREF="1025"
 TPROXY_ROUTE_TABLE="80"
 TUN_ROUTE_TABLE="81"
-TUN_DEVICE="mihomo"
 
 # paths
 PROG="/usr/bin/mihomo"
@@ -23,9 +22,17 @@ MIXIN_FILE_PATH="$HOME_DIR/mixin.yaml"
 RUN_DIR="$HOME_DIR/run"
 RUN_PROFILE_PATH="$RUN_DIR/config.yaml"
 RUN_UI_DIR="$RUN_DIR/ui"
+
+# log
 LOG_DIR="/var/log/mihomo"
 APP_LOG_PATH="$LOG_DIR/app.log"
 CORE_LOG_PATH="$LOG_DIR/core.log"
+
+# flag
+FLAG_DIR="/var/run/mihomo"
+STARTED_FLAG="$FLAG_DIR/started.flag"
+BRIDGE_NF_CALL_IPTABLES_FLAG="$FLAG_DIR/bridge_nf_call_iptables.flag"
+BRIDGE_NF_CALL_IP6TABLES_FLAG="$FLAG_DIR/bridge_nf_call_ip6tables.flag"
 
 # scripts
 SH_DIR="$HOME_DIR/scripts"
@@ -63,4 +70,28 @@ format_filesize() {
 	else
 		echo "$(awk "BEGIN {print $size / $pb}") PB"
 	fi
+}
+
+prepare_files() {
+	if [ ! -d "$LOG_DIR" ]; then
+		mkdir -p "$LOG_DIR"
+	fi
+	if [ ! -f "$APP_LOG_PATH" ]; then
+		touch "$APP_LOG_PATH"
+	fi
+	if [ ! -f "$CORE_LOG_PATH" ]; then
+		touch "$CORE_LOG_PATH"
+	fi
+	if [ ! -d "$FLAG_DIR" ]; then
+		mkdir -p "$FLAG_DIR"
+	fi
+}
+
+clear_log() {
+	echo -n > "$APP_LOG_PATH"
+	echo -n > "$CORE_LOG_PATH"
+}
+
+log() {
+	echo "[$(date "+%Y-%m-%d %H:%M:%S")] [$1] $2" >> "$APP_LOG_PATH"
 }
