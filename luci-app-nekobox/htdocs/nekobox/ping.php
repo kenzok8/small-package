@@ -382,6 +382,41 @@ $lang = $_GET['lang'] ?? 'en';
         </div>
     </div>
 <?php endif; ?>
+<style>
+    #leafletMap {
+        width: 100%;
+        height: 400px;
+        position: relative;
+    }
+
+    #leafletMap.fullscreen {
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+    }
+
+    .fullscreen-btn,
+    .exit-fullscreen-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        padding: 5px;
+        cursor: pointer;
+        border-radius: 50%;
+        font-size: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 10000;
+    }
+
+    .exit-fullscreen-btn {
+        display: none;
+    }
+</style>
 <script src="./assets/neko/js/jquery.min.js"></script>
 <link rel="stylesheet" href="./assets/bootstrap/leaflet.css" />
 <script src="./assets/bootstrap/leaflet.js"></script>
@@ -818,8 +853,34 @@ let IP = {
                 L.marker([lat, lon]).addTo(map)
                     .bindPopup(popupContent)
                     .openPopup();
+
+                const fullscreenButton = document.createElement('button');
+                fullscreenButton.classList.add('fullscreen-btn');
+                fullscreenButton.innerHTML = '🗖';  
+                document.getElementById('leafletMap').appendChild(fullscreenButton);
+
+                const exitFullscreenButton = document.createElement('button');
+                exitFullscreenButton.classList.add('exit-fullscreen-btn');
+                exitFullscreenButton.innerHTML = '❎';  
+                document.getElementById('leafletMap').appendChild(exitFullscreenButton);
+
+                fullscreenButton.onclick = function() {
+                    const mapContainer = document.getElementById('leafletMap');
+                    mapContainer.classList.add('fullscreen');  
+                    fullscreenButton.style.display = 'none';  
+                    exitFullscreenButton.style.display = 'block';  
+                    map.invalidateSize();
+                };
+
+                exitFullscreenButton.onclick = function() {
+                    const mapContainer = document.getElementById('leafletMap');
+                    mapContainer.classList.remove('fullscreen');  
+                    fullscreenButton.style.display = 'block';  
+                    exitFullscreenButton.style.display = 'none';  
+                    map.invalidateSize();
+                };
             }
-        }, 500); 
+        }, 500);
     },
 
     getIpipnetIP: async () => {
@@ -983,3 +1044,7 @@ if(typeof checkSiteStatus !== 'undefined') {
 
 setInterval(IP.getIpipnetIP, 180000);
 </script>
+
+
+
+
