@@ -40,6 +40,9 @@ function getSingboxVersion() {
                     }
                     return ['version' => $version, 'type' => 'Singbox 预览版'];
                 } else {
+                    if (strpos($version, 'v') !== false) {
+                        return ['version' => $version, 'type' => 'Singbox 编译版'];
+                    }
                     return ['version' => $version, 'type' => 'Singbox 正式版'];
                 }
             }
@@ -141,6 +144,7 @@ $singBoxVersion = $singBoxVersionInfo['version'];
 $singBoxType = $singBoxVersionInfo['type'];
 $puernyaVersion = ($singBoxType === 'Puernya 预览版') ? $singBoxVersion : '未安装';
 $singboxPreviewVersion = ($singBoxType === 'Singbox 预览版') ? $singBoxVersion : '未安装';
+$singboxCompileVersion = ($singBoxType === 'Singbox 编译版') ? $singBoxVersion : '未安装';
 $mihomoVersionInfo = getMihomoVersion();
 $mihomoVersion = $mihomoVersionInfo['version'];
 $mihomoType = $mihomoVersionInfo['type'];
@@ -948,22 +952,47 @@ function checkVersion(outputId, updateFiles, currentVersions) {
 }
 
 document.getElementById('checkSingboxButton').addEventListener('click', function () {
-    const singBoxVersion = "<?php echo htmlspecialchars($singBoxVersion); ?>";
+    const singBoxVersion = "<?php echo htmlspecialchars(trim($singBoxVersion)); ?>";
     const singBoxType = "<?php echo htmlspecialchars($singBoxType); ?>";
     const puernyaVersion = "<?php echo htmlspecialchars($puernyaVersion); ?>";
     const singboxPreviewVersion = "<?php echo htmlspecialchars($singboxPreviewVersion); ?>";
+    const singboxCompileVersion = "<?php echo htmlspecialchars($singboxCompileVersion); ?>";
+
+    let finalPreviewVersion = '未安装';
+    let finalCompileVersion = '未安装';
+    let finalOfficialVersion = '未安装';
+    let finalPuernyaVersion = '未安装';
+
+    if (puernyaVersion === '1.10.0-alpha.29-067c81a7') {
+        finalPuernyaVersion = puernyaVersion; 
+    }
+
+    if (singBoxVersion && /^v/.test(singBoxVersion) && /alpha|beta/.test(singBoxVersion)) {
+        finalCompileVersion = singBoxVersion;
+    }
+
+    if (singBoxVersion && /alpha|beta/.test(singBoxVersion) && puernyaVersion !== '1.10.0-alpha.29-067c81a7' && !/^v/.test(singBoxVersion)) {
+        finalPreviewVersion = singBoxVersion;  
+    }
+
+    if (singBoxVersion && !/[a-zA-Z]/.test(singBoxVersion)) {
+        finalOfficialVersion = singBoxVersion;  
+    }
+
     const currentVersions = {
-        'Singbox [ 正式版 ]': singBoxType === 'Singbox 正式版' ? singBoxVersion : '未安装',
-        'Singbox [ 预览版 ]': singboxPreviewVersion,
-        'Singbox [ 编译版 ]': singboxPreviewVersion,
-        'Puernya [ 预览版 ]': puernyaVersion 
+        'Singbox [ 正式版 ]': finalOfficialVersion,
+        'Singbox [ 预览版 ]': finalPreviewVersion,
+        'Singbox [ 编译版 ]': finalCompileVersion,
+        'Puernya [ 预览版 ]': finalPuernyaVersion
     };
+
     const updateFiles = [
         { name: 'Singbox [ 正式版 ]', url: 'update_singbox_stable.php' },
         { name: 'Singbox [ 预览版 ]', url: 'update_singbox_preview.php' },
         { name: 'Singbox [ 编译版 ]', url: 'update_singbox_core.php' },
         { name: 'Puernya [ 预览版 ]', url: 'puernya.php' }
     ];
+
     checkVersion('NewSingbox', updateFiles, currentVersions);
 });
 
