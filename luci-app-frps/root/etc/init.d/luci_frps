@@ -1,0 +1,347 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright 2020 lwz322 <lwz322@qq.com>
+# Licensed to the public under the MIT License.
+#
+
+START=99
+USE_PROCD=1
+
+NAME="frps"
+CONFIG_FOLDER="/var/etc/$NAME"
+
+_log() {
+	local level="$1" ; shift
+	local msg="$@"
+	logger -p "daemon.$level" -t "$NAME" "$msg"
+
+	echo "[$level] $msg" >&2
+}
+
+_info() {
+	_log "info" $@
+}
+
+_err() {
+	_log "err" $@
+}
+
+# 因Uci的option名不能带 . 号，故用 __ 替代；在调用此函数时，frp参数名称，分3类
+# 1.Toml字符串类，直接使用，并加双引号输出
+# 2.Toml布尔和整数，使用时，名称请附加 ..INT 后缀，在此处理后，并原样输出
+# 3.Toml数组，使用时请附加 ..ARR 后缀，网页端可 不加引号使用逗号或空格分隔 的简写方式，处理后，再加方括号输出
+# 4.uci值存在单独的 * 号时（如frpc参数allowUsers），可能导致for取值异常，要处理
+append_options() {
+	local file="$1" ; shift
+	local o v f
+	for o in "$@" ; do
+		f=""
+		if [ -n "$(echo $o | grep "..INT")" ];then
+            f=1
+            o=${o//..INT/}
+		fi
+        if [ -n "$(echo $o | grep "..ARR")" ];then
+            f=2
+            o=${o//..ARR/}
+        fi
+		eval v=\$${o//./__}
+		if [ -n "$v" ] ; then
+			[ "$f" == "" ] && echo "$o = \"$v\"" >>"$file"
+			[ "$f" == "1" ] && echo "$o = $v" >>"$file"
+            if [ "$f" == "2" ];then
+                local T M
+                M=""
+                if [ "$o" == "allowPorts" ];then
+                    # 对allowPorts特殊处理，标准写法和简写法
+                    if [ -n "$(echo "$v" | grep "{" | grep "}")" ];then
+                        echo "$o = [ $v ]" >>"$file"
+                    else
+                        v=${v//,/ }
+                        for T in $v ; do
+                        if [ -z "$(echo "$T" | grep "\-")" ];then
+                            T="{ single = $T }"
+                        else
+                            [ "${T%-*}" -ge "${T#*-}" ] && continue
+                            T="{ start = ${T%-*}, end = ${T#*-} }"
+                        fi
+                        [ -n "$M" ] && M="$M, "
+                        M=$M$T
+                        done
+                        echo "$o = [ $M ]" >>"$file"
+                    fi
+                else
+                    # 逗号替换为空格
+                    v=${v//,/ }
+                    # 查找单个的 * ，替换为 "*" 。
+                    if [ -n "$(echo "$v" | grep "^\* \| \* \| \*$")" ];then
+                        v="${v//\*/\"*\"}"
+                    fi
+                    [ "$v" == "*" ] && v=\"*\"
+                    for T in $v ; do    
+                    # 忽略单个的 ' 或 " 符。
+                    if [ "${T:0:1}" == "\"" -o "${T:0:1}" == "'" ] && [ "${#T}" == "1" ];then
+                        continue
+                    fi
+                    # 除首尾同是 ' 或同是 " 外，删除所有 ' 或 " ，并补全首尾的 " 。
+ #                   if [ "${T:0:1}" == "\"" -a "${T: -1}" == "\"" ] || [ "${T:0:1}" == "'" -a "${T: -1}" == "'" ];then
+					if [ "${T:0:1}" == "\"" -a "$(echo -n "$T" | tail -c 1)" == "\"" ] || [ "${T:0:1}" == "'" -a "$(echo -n "$T" | tail -c 1)" == "'" ];then
+                        true
+                    else
+                        T=${T//\'/}
+                        T=\"${T//\"/}\"
+                    fi
+                    # 用逗号+空格组合
+                    [ -n "$M" ] && M="$M, "
+                    M=$M$T
+                    done
+                    echo "$o = [$M]" >>"$file"
+                fi
+            fi
+		fi
+	done
+}
+
+append_setting() {
+	local file="$1" ; shift
+	local s="$1"
+	if [ -n "$s" ] ; then
+		echo "$s" >>"$file"
+	fi
+}
+
+frps_scetion_validate() {
+	uci_validate_section "$NAME" "frps" "$1" \
+		'enabled:bool:0' \
+		'client_file:file:/usr/bin/frps' \
+		'run_user:string' \
+		'set_firewall:string' \
+		'tcp_ports:string' \
+		'udp_ports:string' \
+		'enable_logging:bool:0' \
+		'std_redirect:bool:0' \
+		'log__to:string' \
+		'log__level:or("trace", "debug", "info", "warn", "error")' \
+		'log__maxDays:uinteger' \
+		'log__disablePrintColor:or("true", "false")' \
+		'bindAddr:string' \
+		'bindPort:integer' \
+		'auth__method:or("token", "oidc")' \
+		'auth__token:string' \
+		'transport__tcpMux:or("true", "false")' \
+		'transport__tcpMuxKeepaliveInterval:uinteger' \
+		'kcpBindPort:port' \
+		'quicBindPort:port' \
+		'vhostHTTPPort:port' \
+		'vhostHTTPSPort:port' \
+		'transport__maxPoolCount:uinteger' \
+		'maxPortsPerClient:uinteger' \
+		'allowPorts:string' \
+		'subDomainHost:host' \
+		'transport__tls__force:or("true", "false")' \
+		'transport__tls__certFile:file' \
+		'transport__tls__keyFile:file' \
+		'transport__tls__trustedCaFile:file' \
+		'transport__heartbeatTimeout:integer' \
+		'proxyBindAddr:string' \
+		'extra_setting:list(string)' \
+		'webServer__addr:host' \
+		'webServer__port:port' \
+		'webServer__user:string' \
+		'webServer__password:string' \
+		'webServer__tls__certFile:file' \
+		'webServer__tls__keyFile:file'
+}
+
+client_file_validate() {
+	local file="$1"
+
+	test -f "$file" || return 1
+	test -x "$file" || chmod 755 "$file"
+
+	eval "$file" -h | grep -q "$NAME"
+	return $?
+}
+
+add_rule_extra_option() {
+	append_setting "$2" "$1"
+}
+
+create_config_file() {
+	local config_file="$1"
+	local tmp_file="$(mktemp /tmp/frps-XXXXXX)"
+
+	echo "# 文件生成时间：$(date +%Y-%m-%d_%H:%M:%S)" > "$tmp_file"
+	
+	append_options "$tmp_file" \
+		"bindAddr" "bindPort..INT" "proxyBindAddr" "auth.method" "auth.token" "kcpBindPort..INT" "quicBindPort..INT" \
+		"vhostHTTPPort..INT" "vhostHTTPSPort..INT" "transport.tcpMux..INT" "transport.tcpMuxKeepaliveInterval..INT"
+
+	if [ "x$enable_logging" = "x1" ] ; then
+	
+		append_options "$tmp_file" \
+			"log.to" "log.level" "log.maxDays..INT" "log.disablePrintColor..INT"
+	fi
+
+	append_options "$tmp_file" \
+		"transport.maxPoolCount..INT" "maxPortsPerClient..INT" "transport.heartbeatTimeout..INT" "subDomainHost" "allowPorts..ARR" \
+		"transport.tls.force..INT" "transport.tls.certFile" "transport.tls.keyFile" "transport.tls.trustedCaFile" \
+		"webServer.addr" "webServer.port..INT" "webServer.user" "webServer.password" "webServer.tls.certFile" "webServer.tls.keyFile"
+
+    config_list_foreach "$section" "extra_setting" add_rule_extra_option "$tmp_file"
+    
+	sed '/^$/d' "$tmp_file" >"$config_file"
+
+	if [ "$?" = "0" ] ; then
+		rm -f "$tmp_file"
+	fi
+}
+
+add_firewall() {
+    if [ "$set_firewall" != "no" ]; then
+    local mark1=0
+    local mark2=0
+        if [ -n "$tcp_ports" ]; then
+            mark1=1
+            [ "$set_firewall" == "check" ] && [ "$tcp_ports" == "$(uci -q get firewall.frps_t_auto.dest_port)" ] && mark1=0
+            if [ "$mark1" == "1" ]; then
+                uci -q delete firewall.frps_t_auto
+                uci set firewall.frps_t_auto=rule
+                uci set firewall.frps_t_auto.name="frps_t_auto"
+                uci set firewall.frps_t_auto.target="ACCEPT"
+                uci set firewall.frps_t_auto.src="wan"
+                uci set firewall.frps_t_auto.proto="tcp"
+                uci set firewall.frps_t_auto.dest_port="$tcp_ports"
+                uci set firewall.frps_t_auto.enabled="1"
+            fi    
+        fi	    
+		if [ -n "$udp_ports" ]; then
+		    mark2=1
+            [ "$set_firewall" == "check" ] && [ "$udp_ports" == "$(uci -q get firewall.frps_u_auto.dest_port)" ] && mark2=0
+            if [ "$mark2" == "1" ]; then
+                uci -q delete firewall.frps_u_auto
+                uci set firewall.frps_u_auto=rule
+                uci set firewall.frps_u_auto.name="frps_u_auto"
+                uci set firewall.frps_u_auto.target="ACCEPT"
+                uci set firewall.frps_u_auto.src="wan"
+                uci set firewall.frps_u_auto.proto="udp"
+                uci set firewall.frps_u_auto.dest_port="$udp_ports"
+                uci set firewall.frps_u_auto.enabled="1"
+            fi    
+        fi
+        [ "$mark1" == "0" ] && [ "$mark2" == "0" ] && return 0
+		uci commit firewall
+		/etc/init.d/firewall reload >/dev/null 2>&1
+	fi
+}
+
+del_firewall() {
+    if [ "$set_firewall" == "force" ]; then
+        local A=$(uci -q show firewall.frps_t_auto)
+        local B=$(uci -q show firewall.frps_u_auto)
+        [ -n "$A" ] && uci -q delete firewall.frps_t_auto
+        [ -n "$B" ] && uci -q delete firewall.frps_u_auto
+        if [ -n "$A" ] || [ -n "$B" ]; then
+            uci commit firewall
+            /etc/init.d/firewall reload >/dev/null 2>&1
+        fi    
+    fi
+}
+logfile_prepare() {
+    if [ "x$enable_logging" != "x1" ];then
+        rm -f /tmp/frps_log_link.txt
+        rm -f /tmp/frps_std_redirect.log
+        echo "未配置日志输出保存" > /tmp/frps_log_link.txt
+        return 1
+    fi
+    
+    if [ "${std_redirect}" == "1" ];then
+        if [ -z "${log__to}" -o "${log__to}" == "console" ];then
+            log__to=/tmp/frps_std_redirect.log
+            true >"${log__to}"
+        else
+            mkdir -p "$(dirname "${log__to}")"
+            touch "${log__to}"
+            if [ "$?" != "0" ];then
+                log__to=/tmp/frps_std_redirect.log
+                echo "【$(date +%Y-%m-%d_%H:%M:%S)】--->警告：配置的日志文件路径似乎无效/只读！" > "${log__to}"
+            fi
+        fi
+    fi
+    
+    if [ -n "${log__to}" -a "${log__to}" != "console" ];then
+        mkdir -p "$(dirname "${log__to}")"
+        touch "${log__to}"
+    fi
+    
+    if [ -n "$run_user" ]; then
+        chmod 644 "$log__to"
+        chown "$run_user" "$log__to"
+    fi
+    # 创建log文件读取链接，用于luci查看日志
+    ln -sf "${log__to}" /tmp/frps_log_link.txt
+}
+
+start_instance() {
+	local section="$1"
+
+	if ! frps_scetion_validate "$section" ; then
+		_err "Config validate failed."
+		return 1
+	fi
+
+	if [ "x$enabled" != "x1" ] ; then
+		_info "Instance \"$section\" disabled."
+		del_firewall
+		return 1
+	fi
+
+	if [ -z "$client_file" ] || ( ! client_file_validate "$client_file" ) ; then
+		_err "Client file not valid."
+		return 1
+	fi
+
+	test -d "$CONFIG_FOLDER" || mkdir -p "$CONFIG_FOLDER"
+
+	local config_file="$CONFIG_FOLDER/frps.$section.toml"
+
+	create_config_file "$config_file"
+
+	if [ ! -f "$config_file" ] ; then
+		_err "Could not create config file: \"$config_file\""
+		return 1
+	fi
+	
+	logfile_prepare
+
+	procd_open_instance "$NAME.$section"
+	if [ "${std_redirect}" == "1" ];then
+	    procd_set_param command "/bin/sh"
+	    procd_append_param command -c "exec $client_file -c $config_file >>\"${log__to}\" 2>&1"
+	else
+    	procd_set_param command "$client_file"
+    	procd_append_param command -c "$config_file"
+	fi
+	procd_set_param respawn
+	procd_set_param file "$config_file"
+	if [ -n "$run_user" ] ; then
+		procd_set_param user "$run_user"
+	fi
+	procd_close_instance
+	
+	add_firewall
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+}
+
+start_service() {
+	config_load "$NAME"
+	config_foreach start_instance "frps"
+}
+stop_service() {
+#	config_load "$NAME"
+#	config_get set_firewall main set_firewall
+    set_firewall=$(uci get frps.main.set_firewall 2>/dev/null)
+	del_firewall
+}
