@@ -1,0 +1,4 @@
+config frps 'main'
+	option enabled '0'
+	option client_file '/usr/bin/frps'
+	option bindPort '7000'
