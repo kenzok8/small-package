@@ -76,29 +76,17 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
             <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
             <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
             <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
-            <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
+            <a href="./singbox.php" class="col btn btn-lg">📦 订阅</a> 
             <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     </div>
 <div class="container text-left p-3">
         <div class="container h-100 mb-5">
-            <iframe id="iframeMeta" class="border border-3 rounded-4 w-100" style="height: 70vh;" src="http://<?php echo $zash_link; ?>" title="zash" allowfullscreen></iframe>
-            <table class="table table-borderless callout mb-2">
-                <tbody>
-                    <tr class="text-center d-flex flex-wrap justify-content-center">
-                        <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $yacd_link; ?>">YACD-META 面板</a></td>
-                        <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $dash_link; ?>">DASHBOARD 面板</a></td>
-                        <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $meta_link; ?>">METACUBEXD 面板</a></td>
-                        <td><a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</a></td>
-                    </tr>
-                </tbody>
-            </table>
-        
+            <iframe id="iframeMeta" class="border border-3 rounded-4 w-100" style="height: 70vh;" src="http://<?php echo $zash_link; ?>" title="zash" allowfullscreen></iframe>   
             <div class="mb-3 mt-3">
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#panelModal">
                     面板设置
                 </button>
             </div>
-
             <div class="modal fade" id="panelModal" tabindex="-1" aria-labelledby="panelModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
@@ -107,12 +95,21 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <select id="panelSelect" class="form-select">
-                                <option value="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</option>
-                                <option value="http://<?php echo $yacd_link; ?>">YACD-META 面板</option>
-                                <option value="http://<?php echo $dash_link; ?>">DASHBOARD 面板</option>
-                                <option value="http://<?php echo $meta_link; ?>">METACUBEXD 面板</option>
-                            </select>
+                            <div>
+                                <label for="panelSelect" class="form-label">选择面板</label>
+                                <select id="panelSelect" class="form-select" onchange="changeIframe(this.value)">
+                                    <option value="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</option>
+                                    <option value="http://<?php echo $yacd_link; ?>">YACD-META 面板</option>
+                                    <option value="http://<?php echo $dash_link; ?>">DASHBOARD 面板</option>
+                                    <option value="http://<?php echo $meta_link; ?>">METACUBEXD 面板</option>
+                                </select>
+                            </div>
+                            <div class="d-flex justify-content-around mt-3">
+                                <a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $yacd_link; ?>">YACD-META 面板</a>
+                                <a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $dash_link; ?>">DASHBOARD 面板</a>
+                                <a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $meta_link; ?>">METACUBEXD 面板</a>
+                                <a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?php echo $zash_link; ?>">ZASHBOARD 面板</a>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
@@ -122,7 +119,9 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
             </div>
         </div>
     </div>
-</div>
+       </tbody>
+            </table>
+        </div>
     <footer class="text-center">
         <p><?php echo $footer; ?></p>
     </footer>
