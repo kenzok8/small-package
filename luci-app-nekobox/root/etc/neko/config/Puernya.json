@@ -723,148 +723,148 @@
                 "tag": "fakeip-filter",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/fakeip-filter.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/fakeip-filter.srs"
+                "path": "/etc/neko/rules/fakeip-filter.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/fakeip-filter.srs"
             },
             {
                 "tag": "geosite-tiktok",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/geosite/tiktok.srs",
-                "url": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tiktok.srs"
+                "path": "/etc/neko/rules/geosite/tiktok.srs",
+                "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tiktok.srs"
             },
             {
                 "tag": "geoip-tiktok",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/tiktok.srs",
-                "url": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo-lite/geosite/tiktok.srs"
+                "path": "/etc/neko/rules/tiktok.srs",
+                "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo-lite/geosite/tiktok.srs"
             },
             {
                 "tag": "applications",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/applications.srs",
+                "path": "/etc/neko/rules/applications.srs",
                 "url": "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@sing-box-ruleset/applications.srs"
             },
             {
                 "tag": "geosite-youtube",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/youtube.srs",
-                "url": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/youtube.srs"
+                "path": "/etc/neko/rules/youtube.srs",
+                "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/youtube.srs"
             },
             {
                 "tag": "geosite-disney",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/disney.srs",
-                "url": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/disney.srs"
+                "path": "/etc/neko/rules/disney.srs",
+                "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/disney.srs"
             },
             {
                 "tag": "geoip-netflix",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/netflix.srs",
-                "url": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/netflix.srs"
+                "path": "/etc/neko/rules/netflix.srs",
+                "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/netflix.srs"
             },
             {
                 "tag": "geosite-netflix",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/geosite/netflix.srs",
-                "url": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/netflix.srs"
+                "path": "/etc/neko/rules/geosite/netflix.srs",
+                "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/netflix.srs"
             },
             {
                 "tag": "ads",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/ads.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/ads.srs"
+                "path": "/etc/neko/rules/ads.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/ads.srs"
             },
             {
                 "tag": "private",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/private.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/private.srs"
+                "path": "/etc/neko/rules/private.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/private.srs"
             },
             {
                 "tag": "microsoft-cn",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/microsoft-cn.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/microsoft-cn.srs"
+                "path": "/etc/neko/rules/microsoft-cn.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/microsoft-cn.srs"
             },
             {
                 "tag": "apple-cn",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/apple-cn.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/apple-cn.srs"
+                "path": "/etc/neko/rules/apple-cn.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/apple-cn.srs"
             },
             {
                 "tag": "google-cn",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/google-cn.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/google-cn.srs"
+                "path": "/etc/neko/rules/google-cn.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/google-cn.srs"
             },
             {
                 "tag": "games-cn",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/games-cn.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/games-cn.srs"
+                "path": "/etc/neko/rules/games-cn.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/games-cn.srs"
             },
             {
                 "tag": "ai",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/ai.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/ai.srs"
+                "path": "/etc/neko/rules/ai.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/ai.srs"
             },
             {
                 "tag": "networktest",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/networktest.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/networktest.srs"
+                "path": "/etc/neko/rules/networktest.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/networktest.srs"
             },
             {
                 "tag": "proxy",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/proxy.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/proxy.srs"
+                "path": "/etc/neko/rules/proxy.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/proxy.srs"
             },
             {
                 "tag": "cn",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/cn.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/cn.srs"
+                "path": "/etc/neko/rules/cn.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/cn.srs"
             },
             {
                 "tag": "telegramip",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/telegramip.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/telegramip.srs"
+                "path": "/etc/neko/rules/telegramip.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/telegramip.srs"
             },
             {
                 "tag": "privateip",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/privateip.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/privateip.srs"
+                "path": "/etc/neko/rules/privateip.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/privateip.srs"
             },
             {
                 "tag": "cnip",
                 "type": "remote",
                 "format": "binary",
-                "path": "./rules/cnip.srs",
-                "url": "https://mirror.ghproxy.com/https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/cnip.srs"
+                "path": "/etc/neko/rules/cnip.srs",
+                "url": "https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/cnip.srs"
             }
         ],
         "final": "🐟 漏网之鱼",
