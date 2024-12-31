@@ -331,7 +331,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="icon" href="./assets/img/nekobox.png">
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
@@ -976,14 +976,14 @@ function initializeAceEditor() {
         <h2 class="mt-4 mb-4 text-center">自动更新</h2>
         <form method="post" class="text-center">
             <button type="button" class="btn btn-primary mx-2" data-bs-toggle="modal" data-bs-target="#cronModal">
-                设置定时任务
+                <i class="bi bi-clock"></i> 设置定时任务
             </button>
             <button type="submit" name="createShellScript" value="true" class="btn btn-success mx-2">
-                生成更新脚本
+                <i class="bi bi-terminal"></i> 生成更新脚本
             </button>
              <td>
             <a class="btn btn-info btn-sm text-white" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
-                打开文件助手
+                <i class="bi bi-file-earmark-text"></i> 打开文件助手
             </a>
         </td>
         </form>
