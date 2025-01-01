@@ -978,7 +978,7 @@ window.onload = function() {
 <h2 class="text-center">日志</h2>
 <ul class="nav nav-pills mb-3" id="logTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <a class="nav-link active" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true">NeKoBox 日志</a>
+        <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true">NeKoBox 日志</a>
     </li>
     <li class="nav-item" role="presentation">
         <a class="nav-link" id="mihomoLogTab" data-bs-toggle="pill" href="#mihomoLog" role="tab" aria-controls="mihomoLog" aria-selected="false">Mihomo 日志</a>
@@ -989,7 +989,7 @@ window.onload = function() {
 </ul>
 
 <div class="tab-content" id="logTabsContent">
-    <div class="tab-pane fade show active" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
+    <div class="tab-pane fade" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
         <div class="card log-card">
             <div class="card-body">
                 <pre id="plugin_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 350px; white-space: pre-wrap;" contenteditable="true"></pre>
@@ -1148,6 +1148,22 @@ window.onload = function() {
     });
 </script>
 
+<script>
+    window.addEventListener('load', function() {
+        const activeTab = localStorage.getItem('activeTab') || 'pluginLogTab'; 
+        const activeTabLink = document.getElementById(activeTab);
+        const activeTabPane = document.getElementById(activeTab.replace('Tab', ''));      
+        activeTabLink.classList.add('active');  
+        activeTabPane.classList.add('show', 'active');  
+    });
+
+    document.querySelectorAll('.nav-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const selectedTab = this.id;
+            localStorage.setItem('activeTab', selectedTab); 
+        });
+    });
+</script>
 </body>
 </html>
     <footer class="text-center">
