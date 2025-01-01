@@ -118,6 +118,14 @@ h6 { color: #8B4513; }
    padding: 15px;
 }
 
+.container-bg {
+  border-radius: 12px;
+  box-shadow: var(--bs-shadow-medium);
+  padding: 2rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
 .form-control {
    border-radius: 25px;
    border: 2px solid #0056b3;
