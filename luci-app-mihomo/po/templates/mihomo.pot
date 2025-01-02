@@ -61,6 +61,10 @@ msgstr ""
 msgid "Bypass China Mainland IP"
 msgstr ""
 
+#: applications/luci-app-mihomo/htdocs/luci-static/resources/view/mihomo/proxy.js:144
+msgid "Bypass DSCP"
+msgstr ""
+
 #: applications/luci-app-mihomo/htdocs/luci-static/resources/view/mihomo/proxy.js:124
 msgid "Bypass Group"
 msgstr ""
