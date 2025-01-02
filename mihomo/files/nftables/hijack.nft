@@ -16,6 +16,11 @@ table inet mihomo {
 		}
 	}
 
+	set bypass_dscp {
+		type dscp
+		flags interval
+	}
+
 	set dns_hijack_nfproto {
 		type nf_proto
 		flags interval
@@ -178,6 +183,8 @@ table inet mihomo {
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport ip daddr != $FAKE_IP counter return
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
+		meta l4proto { tcp, udp } ip dscp == @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
 	}
 
 	chain nat_output {
@@ -192,6 +199,8 @@ table inet mihomo {
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport ip daddr != $FAKE_IP counter return
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
+		meta l4proto { tcp, udp } ip dscp == @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
 	}
 
 	chain mangle_prerouting {
@@ -206,6 +215,8 @@ table inet mihomo {
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport ip daddr != $FAKE_IP counter return
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
+		meta l4proto { tcp, udp } ip dscp == @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
 		meta l4proto udp th dport 53 counter return
 	}
 
@@ -221,6 +232,8 @@ table inet mihomo {
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport ip daddr != $FAKE_IP counter return
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
+		meta l4proto { tcp, udp } ip dscp == @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
 		meta l4proto udp th dport 53 counter return
 	}
 }

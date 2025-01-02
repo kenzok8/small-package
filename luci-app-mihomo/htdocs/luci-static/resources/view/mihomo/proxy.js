@@ -140,6 +140,10 @@ return view.extend({
         o.rmempty = false;
         o.value('0-65535', _('All Port'));
         o.value('123 443 8443', _('Commonly Used Port'));
+
+        o = s.taboption('bypass', form.DynamicList, 'bypass_dscp', _('Bypass DSCP'));
+        o.datatype = 'range(0, 63)';
+
         return m.render();
     }
 });

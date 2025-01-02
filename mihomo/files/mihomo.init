@@ -350,11 +350,12 @@ service_started() {
 	config_get_bool router_proxy "proxy" "router_proxy" 0
 	config_get_bool lan_proxy "proxy" "lan_proxy" 0
 	### access control
-	local access_control_mode bypass_china_mainland_ip proxy_tcp_dport proxy_udp_dport
+	local access_control_mode bypass_china_mainland_ip proxy_tcp_dport proxy_udp_dport bypass_dscp
 	config_get access_control_mode "proxy" "access_control_mode"
 	config_get_bool bypass_china_mainland_ip "proxy" "bypass_china_mainland_ip" 0
 	config_get proxy_tcp_dport "proxy" "proxy_tcp_dport" "0-65535"
 	config_get proxy_udp_dport "proxy" "proxy_udp_dport" "0-65535"
+	config_get bypass_dscp "proxy" "bypass_dscp"
 	# prepare
 	local tproxy_enable; tproxy_enable=0
 	if [[ "$tcp_transparent_proxy_mode" == "tproxy" || "$udp_transparent_proxy_mode" == "tproxy" ]]; then
@@ -477,6 +478,13 @@ service_started() {
 	for proxy_dport in $proxy_udp_dport; do
 		nft add element inet "$FW_TABLE" proxy_dport \{ "udp" . "$proxy_dport" \}
 	done
+	if [ -n "$bypass_dscp" ]; then
+		log "Transparent Proxy" "Bypass DSCP: $bypass_dscp."
+		local dscp
+		for dscp in $bypass_dscp; do
+			nft add element inet "$FW_TABLE" bypass_dscp \{ "$dscp" \}
+		done
+	fi
 	# router proxy
 	if [ "$router_proxy" == 1 ]; then
 		log "Transparent Proxy" "Set proxy for router."
