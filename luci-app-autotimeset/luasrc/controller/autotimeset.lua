@@ -6,15 +6,15 @@ function index()
 		return
 	end
         entry({"admin", "control"}, firstchild(), "Control", 44).dependent = false
-        local e = entry({"admin", "control", "autotimeset"}, alias("admin", "control", "autotimeset", "base"), _("Scheduled Setting"), 20)
+        local e = entry({"admin", "control", "autotimeset"}, alias("admin", "control", "autotimeset", "scheduledtask"), _("Scheduled Setting"), 20)
 	e.dependent = false
 	e.acl_depends = { "luci-app-autotimeset" }
-        entry({"admin", "control", "autotimeset", "base"}, cbi("autotimeset/base"),  _("Scheduled Setting"), 1).leaf = true
-        entry({"admin", "control", "autotimeset", "log"}, form("autotimeset/log"), _("Log"), 2).leaf = true
+        entry({"admin", "control", "autotimeset", "scheduledtask"}, cbi("autotimeset/scheduledtask"),  _("Scheduled task"), 10).leaf = true
+        entry({"admin", "control", "autotimeset", "startuptask"}, cbi("autotimeset/startuptask"),  _("Startup task"), 20).leaf = true
+        entry({"admin", "control", "autotimeset", "log"}, form("autotimeset/log"), _("Log"), 30).leaf = true
         entry({"admin","control","autotimeset","dellog"},call("dellog"))
         entry({"admin","control","autotimeset","getlog"},call("getlog"))
 end
-
 
 function getlog()
 	logfile="/etc/autotimeset/autotimeset.log"

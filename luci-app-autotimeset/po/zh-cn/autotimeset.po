@@ -5,8 +5,17 @@ msgstr "<b>任务设置包括定时任务执行和开机启动任务执行，预
 msgid "N1-N5 is continuous, N1, N3, N5 is discontinuous, */N represents every N hours or every N minutes.The week can only be 0~6, the hour can only be 0~23, the minute can only be 0~59, the unavailable time is 48 hours."
 msgstr "N1-N5连续，N1,N3,N5不连续，*/N表示每N小时或每N分钟。月份范围0-11，星期范围0～6，小时范围0～23，分钟范围0～59，不可用72小时或者90分钟等连续范围。"
 
-msgid "Scheduled task/startup task settings"
-msgstr "定时执行任务/开机启动任务设置"
+msgid "Scheduled task"
+msgstr "定时执行任务"
+
+msgid "Startup task"
+msgstr "开机启动任务"
+
+msgid "The task to be executed upon startup, with a startup delay time unit of seconds."
+msgstr "开机启动执行的任务，启动延时时间单位为秒。"
+
+msgid "Control"
+msgstr "管控"
 
 msgid "Scheduled Setting"
 msgstr "任务设置"
@@ -15,19 +24,10 @@ msgid "Test/Verify Settings"
 msgstr "测试/验证设置"
 
 msgid "Scheduled Type"
-msgstr "任务名称"
-
-msgid "Task Type"
 msgstr "任务类型"
 
-msgid "Scheduled task execution"
-msgstr "定时执行任务"
-
-msgid "Startup task"
-msgstr "开机启动任务"
-
-msgid "Startup delay time"
-msgstr "延迟时间【开机用】"
+msgid "Delayed Start(seconds)"
+msgstr "开机任务延时(秒)"
 
 msgid "Log"
 msgstr "日志"
@@ -43,6 +43,9 @@ msgstr "重启网络"
 
 msgid "Scheduled RestartSamba"
 msgstr "重启网络共享"
+
+msgid "Scheduled Restartlan"
+msgstr "重启LAN"
 
 msgid "Scheduled Restartwan"
 msgstr "重启WAN"
@@ -90,17 +93,17 @@ msgid "The execution content of the [Scheduled Customscript2] in the task name"
 msgstr "任务名称中【自定义脚本2】执行内容"
 
 msgid "Month(0~11)"
-msgstr "月份(0~11)【定时用】"
+msgstr "月份(0~11)"
 
 msgid "Week Day(0~6)"
-msgstr "星期(0~6)【定时用】"
+msgstr "星期(0~6)"
 
 msgid "Everyday"
-msgstr "每天【定时用】"
+msgstr "每天"
 
 msgid "Hour(0~23)"
-msgstr "小时(0~23)【定时用】"
+msgstr "小时(0~23)"
 
 msgid "Minute(0~59)"
-msgstr "分钟(0~59)【定时用】"
+msgstr "分钟(0~59)"
 

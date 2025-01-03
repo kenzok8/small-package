@@ -11,8 +11,8 @@ PKG_NAME:=luci-app-$(NAME)
 LUCI_TITLE:=LuCI support for Scheduled Time setting
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=2.1.0
-PKG_RELEASE:=20240318
+PKG_VERSION:=2.2.0
+PKG_RELEASE:=20240412
 
 
 define Package/$(PKG_NAME)/conffiles
