@@ -25,6 +25,12 @@ msgstr "本地iperf3吞吐测速"
 msgid "Lan Speedtest Web"
 msgstr "本地测速网页版"
 
+msgid "Broadband speedtest"
+msgstr "宽带测速speedtest"
+
+msgid "Broadband OpenSpeedtest"
+msgstr "宽带测速OpenSpeedtest"
+
 msgid "Running state"
 msgstr "运行状态"
 
@@ -93,9 +99,6 @@ msgstr "Github下载iperf3"
 
 msgid "Iperf3 speed measurement software download"
 msgstr "iperf3测速软件下载"
-
-msgid "Broadband speed test"
-msgstr "宽带网速测试"
 
 msgid "speedtest.net Broadband speed test"
 msgstr "speedtest.net宽带网速测试"

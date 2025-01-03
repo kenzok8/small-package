@@ -1,10 +1,7 @@
-local o=require"luci.dispatcher"
-local e=require("luci.model.ipkg")
-local s=require"nixio.fs"
-local e=luci.model.uci.cursor()
+
 local m,s,e
 
-m=Map("autotimeset",translate("Scheduled task/startup task settings"),translate("<b>The original [Timing Settings] includes scheduled task execution and startup task execution. Presets include over 10 functions, including restart, shutdown, network restart, memory release, system cleaning, network sharing, network shutdown, automatic detection of network disconnects and reconnection, MWAN3 load balancing detection of reconnection, and custom scripts</b></br>") ..
+m=Map("autotimeset",translate("Scheduled task"),translate("<b>The original [Timing Settings] includes scheduled task execution and startup task execution. Presets include over 10 functions, including restart, shutdown, network restart, memory release, system cleaning, network sharing, network shutdown, automatic detection of network disconnects and reconnection, MWAN3 load balancing detection of reconnection, and custom scripts</b></br>") ..
 translate("N1-N5 is continuous, N1, N3, N5 is discontinuous, */N represents every N hours or every N minutes.The week can only be 0~6, the hour can only be 0~23, the minute can only be 0~59, the unavailable time is 48 hours."))
 
 s = m:section(TypedSection, 'global')
@@ -25,12 +22,17 @@ s.addremove=true
 s.anonymous=true
 s.template = "cbi/tblsection"
 
+e = s:option(Value, 'remarks', translate('Remarks'))
+
+e=s:option(Flag,"enable",translate("Enable"))
+e.rmempty = false
+e.default=0
+
 e=s:option(ListValue,"stype",translate("Scheduled Type"))
 e:value(1,translate("Scheduled Reboot"))
 e:value(2,translate("Scheduled Poweroff"))
 e:value(3,translate("Scheduled ReNetwork"))
 e:value(4,translate("Scheduled RestartSamba"))
-e:value(16,translate("Scheduled Restartlan"))
 e:value(5,translate("Scheduled Restartwan"))
 e:value(6,translate("Scheduled Closewan"))
 e:value(7,translate("Scheduled Clearmem"))
@@ -44,17 +46,6 @@ e:value(12,translate("Scheduled Customscript"))
 e:value(15,translate("Scheduled Customscript2"))
 e.default=2
 
-e=s:option(Flag,"enable",translate("Enable"))
-e.rmempty = false
-e.default=0
-
-e=s:option(ListValue,"ttype",translate("Task Type"))
-e:value(0,translate("Scheduled task execution"))
-e:value(1,translate("Startup task"))
-e.default=0
-
-e=s:option(Value,"delay",translate("Startup delay time"))
-e.default=10
 
 e=s:option(Value,"month",translate("Month(0~11)"))
 e.rmempty = false

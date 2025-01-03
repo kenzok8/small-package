@@ -31,7 +31,6 @@ while true; do
     fi 
     sleep 60
 done
-
 }
 
 disreconnwan() {
@@ -89,9 +88,14 @@ trigger() {
 		/etc/init.d/samba restart
 		/etc/init.d/samba4 restart
 		;;
+
+	restartlan)
+		ifdown lan && ifup lan
+		log  "restart lan succeeded!"
+		;;
 	restartwan)
 		ifup wan
-		log  "Redial succeeded!"
+		log  "restart wan succeeded!"
 		;;
 	closewan)
 		ifdown wan

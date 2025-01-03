@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 
 #
-# Copyright (C) 2020-2023  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/netspeedtest
+# Copyright (C) 2020-2025  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/netspeedtest
 
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -20,7 +20,7 @@ LOG=/var/log/netspeedtest.log
 LOGE=$LOGD/netspeedtest.log
 LOGT=$LOGD/netspeedtestpos
 [ -d "$LOGD" ] || mkdir -p $LOGD
-[ -f "$LOGE" ] || echo "start" > $LOG
+[ -f "$LOGE" ] || echo "start" > $LOGE
 [ -f "$LOGT" ] || echo "start" > $LOGT
 [ -f "$LOG" ] || echo "start" > $LOG
 

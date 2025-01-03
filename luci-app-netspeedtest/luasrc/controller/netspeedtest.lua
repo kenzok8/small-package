@@ -1,4 +1,4 @@
--- Copyright (C) 2020-2022  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/netspeedtest
+-- Copyright (C) 2020-2025  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/netspeedtest
 
 module("luci.controller.netspeedtest", package.seeall)
 local http = require "luci.http"
@@ -16,7 +16,8 @@ function index()
 	
 	entry({"admin", "network", "netspeedtest", "speedtestlan"},cbi("netspeedtest/speedtestlan"),_("Lan Speedtest Web"),20).leaf = true
 	entry({"admin", "network", "netspeedtest", "speedtestiperf3"},cbi("netspeedtest/speedtestiperf3", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Lan Speedtest Iperf3"),30).leaf = true
-        entry({"admin", "network", "netspeedtest", "speedtestwan"},cbi("netspeedtest/speedtestwan", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Broadband speed test"), 40).leaf = true
+        entry({"admin", "network", "netspeedtest", "speedtestwan"},cbi("netspeedtest/speedtestwan", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Broadband speedtest"), 40).leaf = true
+        entry({"admin", "network", "netspeedtest", "speedtestwanweb"},cbi("netspeedtest/speedtestwanweb", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Broadband OpenSpeedtest"), 41).leaf = true
         entry({"admin", "network", "netspeedtest", "speedtestport"},cbi("netspeedtest/speedtestport", {hideapplybtn=true, hidesavebtn=true, hideresetbtn=true}),_("Server Port Latency Test"), 50).leaf = true
         entry({"admin", "network", "netspeedtest", "log"}, form("netspeedtest/log"), _("Log"), 60).leaf = true
 	entry({"admin", "network", "netspeedtest", "test_port"}, call("test_port"))
@@ -31,12 +32,12 @@ end
 
 function netcheck()
 	http.prepare_content("text/plain; charset=utf-8")
-	local f=io.open("/etc/netspeedtest/netspeedtest.log", "r+")
-	local fdp=fs.readfile("/etc/netspeedtest/netspeedtestpos") or 0
+	local f=io.open("/tmp/netspeedtest.log", "r+")
+	local fdp=fs.readfile("/tmp/netspeedtestpos") or 0
 	f:seek("set",fdp)
 	local a=f:read(2048000) or ""
 	fdp=f:seek()
-	fs.writefile("/etc/netspeedtest/netspeedtestpos",tostring(fdp))
+	fs.writefile("/tmp/netspeedtestpos",tostring(fdp))
 	f:close()
 	http.write(a)
 end
@@ -45,10 +46,10 @@ function speedtestwanrun()
 	local cli = luci.http.formvalue('cli')
 	uci:set(name, 'speedtestwan', 'speedtest_cli', cli)
 	uci:commit(name)
-	fs.writefile("/etc/netspeedtest/netspeedtestpos","0")
+	fs.writefile("/tmp/netspeedtestpos","0")
 	http.prepare_content("application/json")
 	http.write('')
-	sys.exec(string.format("/etc/init.d/netspeedtest wantest " ..cli.. " > /etc/netspeedtest/netspeedtest.log 2>&1 &" ))
+	sys.exec(string.format("/etc/init.d/netspeedtest wantest " ..cli.. " > /tmp/netspeedtest.log 2>&1 &" ))
 end
 
 function test_port()
