@@ -18,13 +18,17 @@
   --bs-heading-font-weight: 700;
   --bs-heading-letter-spacing: 0.05em;
   --bs-heading-text-transform: uppercase;
-
   --bs-card-bg: #87ceeb;
-  --bs-card-border-color: transparent;
-  
+  --bs-card-border-color: transparent; 
   --bs-shadow-light: 0 4px 8px rgba(0, 86, 179, 0.1);
   --bs-shadow-medium: 0 8px 16px rgba(0, 86, 179, 0.15);
   --bs-transition-speed: 0.3s;
+  --bs-nav-pills-link-color: #004080;
+  --bs-nav-pills-link-hover-color: #28a745; 
+  --bs-table-heading-bg: #004080;
+  --bs-table-heading-color: #ffffff; 
+  --bs-table-odd-bg: #004080;
+  --bs-table-odd-color: #ffffff; 
 }
 
 body {
@@ -49,6 +53,44 @@ h3 { color: #006400; }
 h4 { color: #e74c3c !important; }
 h5 { color: #4B0082; }
 h6 { color: #8B4513; }
+
+.nav-pills .nav-link {
+  color: var(--bs-nav-pills-link-color);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--bs-nav-pills-link-active-color);
+  background-color: #ffffff;
+}
+
+.nav-pills .nav-link:hover {
+  color: var(--bs-nav-pills-link-hover-color);
+  background-color: #e6f2ff;
+}
+
+#pluginLogTab {
+  color: #004080; 
+}
+
+#mihomoLogTab {
+  color: #800000; 
+}
+
+#singboxLogTab {
+  color: #006400; 
+}
+
+.nav-pills .nav-link.active {
+  background-color: #0056b3;
+  color: #ffffff;
+}
+
+.nav-pills .nav-link:hover {
+  background-color: #007bff;
+  color: #ffffff;
+}
 
 .row .btn-lg {
    color: #0056b3 !important;
@@ -100,18 +142,18 @@ h6 { color: #8B4513; }
 }
 
 .table thead th {
-   background: linear-gradient(45deg, #004080, #0056b3);
-   color: #ffffff;
-   border: none;
-   text-transform: uppercase;
-   letter-spacing: 1px;
-   font-weight: 600;
-   padding: 15px;
-   position: relative;
+  background-color: var(--bs-table-heading-bg);
+  color: var(--bs-table-heading-color);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 15px;
+  border: none;
 }
 
-.table tbody tr:nth-child(even) {
-   background-color: #87ceeb;
+.table thead th {
+  color: #ffffff !important;  
+  background-color: #004080 !important;  
 }
 
 .table td {

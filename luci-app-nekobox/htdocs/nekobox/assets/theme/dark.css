@@ -6,7 +6,7 @@
   --bs-body-font-weight: 400;
   --bs-body-color: #e0e0e0;
   --bs-body-bg: #121212;
-  --bs-primary: #ff007c; 
+  --bs-primary: #00a2e8; 
   --bs-secondary: #00ffff; 
   --bs-success: #00ff85; 
   --bs-info: #7d5fff; 
@@ -14,11 +14,11 @@
   --bs-danger: #ff4500; 
 
   --bs-heading-font-family: 'Montserrat', sans-serif;
-  --bs-heading-1: #ff007c; 
-  --bs-heading-2: #7d5fff;
+  --bs-heading-1: #00a2e8;; 
+  --bs-heading-2: #00a2e8;;
   --bs-heading-3: #ffcc00;
   --bs-heading-4: #ff4500;
-  --bs-heading-5: #00ff85;
+  --bs-heading-5: #7d5fff;
   --bs-heading-6: #00ffff;
 
   --bs-heading-font-weight: 700;
@@ -158,6 +158,11 @@ h1, h2, h3, h4, h5, h6 {
   padding: 15px;
 }
 
+.table thead th {
+  color: #ffffff !important;  
+  background-color: #004080 !important;  
+}
+
 .form-control {
   background-color: #333; 
   border: 2px solid var(--bs-secondary); 
@@ -278,6 +283,50 @@ h1, h2, h3, h4, h5, h6 {
 .container-sm.container-bg.callout a:focus::after,
 .container-sm.container-bg.callout a.active::after {
   transform: scaleX(1);
+}
+
+.modal-content {
+  background-color: #f9f9f9; 
+  color: #333; 
+  border: 1px solid #ddd; 
+  border-radius: 8px; 
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); 
+}
+
+.modal-header {
+  background-color: #007bff; 
+  color: #fff; 
+  border-bottom: 1px solid #ccc; 
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.modal-body {
+  background-color: #f9f9f9; 
+  color: #333; 
+}
+
+button.btn-close {
+  color: #000 !important; 
+}
+
+button.btn-close:hover {
+  color: #333 !important; 
+}
+
+.form-group button {
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2); 
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group button:hover {
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3); 
 }
 
 @media (max-width: 991.98px) {

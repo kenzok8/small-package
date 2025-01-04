@@ -19,11 +19,19 @@
   --bs-info: #1890ff;
   --bs-warning: #faad14;
   --bs-danger: #f5222d;
+  --bs-heading-1: #ff9a3d; 
+  --bs-heading-2: #f1b88b;
+  --bs-heading-3: #ffcc00;
+  --bs-heading-4: #ff4500;
+  --bs-heading-5: #00ff85;
+  --bs-heading-6: #00ffff;
   
   --bs-heading-font-family: 'Noto Serif SC', serif;
   --bs-heading-font-weight: 700;
   --bs-heading-letter-spacing: 0.05em;
   --bs-heading-text-transform: uppercase;
+  --bs-nav-pills-link-color: #004080;
+  --bs-nav-pills-link-hover-color: #28a745; 
 }
 
 body {
@@ -38,8 +46,81 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: var(--bs-heading-font-weight);
   letter-spacing: var(--bs-heading-letter-spacing);
   text-transform: var(--bs-heading-text-transform);
-  color: #FFFF00;
+  color: var(--bs-primary);
   margin-bottom: 1rem;
+}
+
+h1 {
+  color: var(--bs-heading-1) !important;  
+}
+
+h2 {
+  color: var(--bs-heading-2) !important;  
+}
+
+h3 {
+  color: var(--bs-heading-3) !important;  
+}
+
+h4 {
+  color: var(--bs-heading-4) !important; 
+}
+
+h5 {
+  color: var(--bs-heading-5) !important;  
+}
+
+h6 {
+  color: var(--bs-heading-6) !important;  
+}
+
+.nav-pills .nav-link {
+  color: var(--bs-nav-pills-link-color);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--bs-nav-pills-link-active-color);
+  background-color: #ffffff;
+}
+
+.nav-pills .nav-link:hover {
+  color: var(--bs-nav-pills-link-hover-color);
+  background-color: #e6f2ff;
+}
+
+#pluginLogTab {
+  color: #004080; 
+  font-weight: bold;
+  font-size: 18px !important;
+}
+
+#mihomoLogTab {
+  color: #800000; 
+  font-weight: bold;
+  font-size: 18px !important;
+}
+
+#singboxLogTab {
+  color: #006400; 
+  font-weight: bold;
+  font-size: 18px !important;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #0056b3;
+  color: #ffffff;
+}
+
+.nav-pills .nav-link:hover {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+.table thead th {
+  color: #ffffff !important;  
+  background-color: #ff69b4 !important;  
 }
 
 .table-3d {
@@ -112,7 +193,6 @@ h1, h2, h3, h4, h5, h6 {
   text-align: center;
 }
 
-
 .btn {
   transition: transform var(--bs-transition-speed), box-shadow var(--bs-transition-speed);
 }
@@ -130,15 +210,6 @@ h1, h2, h3, h4, h5, h6 {
   padding: 2rem;
   margin-top: 2rem;
   margin-bottom: 2rem;
-}
-
-p, span, div, a, label, input, select, textarea {
-  color: #FF00FF;
-}
-
-a {
-  color: #FFFF00;
-  text-decoration: underline;
 }
 
 a:hover {
