@@ -1690,6 +1690,10 @@ msgstr "代理鏈"
 msgid "Proxy group"
 msgstr "代理組"
 
+#: htdocs/luci-static/resources/view/fchomo/client.js:1117
+msgid "Proxy group override"
+msgstr "代理組覆蓋"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:450
 msgid "Proxy mode"
 msgstr "代理模式"
