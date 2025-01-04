@@ -174,9 +174,9 @@ return baseclass.extend({
 	],
 
 	rules_logical_payload_count: {
-		'AND': 2,
-		'OR': 2,
-		'NOT': 1,
+		'AND': { req: 2, opt: undefined },
+		'OR': { req: 2, opt: undefined },
+		'NOT': { req: 1, opt: 0 },
 		//'SUB-RULE': 0,
 	},
 

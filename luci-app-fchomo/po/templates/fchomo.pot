@@ -1667,6 +1667,10 @@ msgstr ""
 msgid "Proxy group"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/client.js:1117
+msgid "Proxy group override"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:450
 msgid "Proxy mode"
 msgstr ""
