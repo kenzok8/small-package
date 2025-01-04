@@ -53,6 +53,11 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 1rem;
 }
 
+.table thead th {
+  color: #ffffff !important;  
+  background-color: #D2B48C !important;  
+}
+
 .table {
   width: 100%; 
   margin-bottom: 1rem;

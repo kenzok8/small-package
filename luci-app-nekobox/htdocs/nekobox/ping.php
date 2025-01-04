@@ -254,6 +254,19 @@ $lang = $_GET['lang'] ?? 'en';
   justify-content: center;
 }
 
+.site-icon[onclick*="openai"] .status-icon {
+  width: 62px; 
+  height: 64px;
+  margin-top: -2px;
+}
+
+.site-icon[onclick*="openai"] {
+  width: 62px;
+  height: 64px;
+  display: flex;
+  justify-content: center;
+}
+
 .container-sm.container-bg.callout.border {
   padding: 12px 15px; 
   min-height: 70px; 
@@ -333,15 +346,15 @@ $lang = $_GET['lang'] ?? 'en';
  .site-icon[onclick*="baidu"],
  .site-icon[onclick*="taobao"], 
  .site-icon[onclick*="google"],
+ .site-icon[onclick*="openai"],
  .site-icon[onclick*="youtube"],
  .site-icon[onclick*="github"] {
    display: none !important;
  }
 }
 </style>
-
 <?php if (in_array($lang, ['zh-cn', 'en', 'auto'])): ?>
-    <div id="status-bar-component" class="container-sm container-bg callout border">
+    <div id="status-bar-component" class="container-sm container-bg callout border border-3 rounded-4 col-11">
         <div class="row align-items-center">
             <div class="col-auto">
                 <div class="img-con">
@@ -368,6 +381,10 @@ $lang = $_GET['lang'] ?? 'en';
                     <div class="site-icon mx-1" onclick="pingHost('google', 'Google')">
                         <img src="./assets/neko/img/site_icon_03.png" id="google-normal" title="测试 Google 延迟"  class="status-icon" style="display: none;">
                         <img src="./assets/neko/img/site_icon1_03.png" id="google-gray" class="status-icon">
+                    </div>
+                    <div class="site-icon mx-1" onclick="pingHost('openai', 'OpenAI')">
+                        <img src="./assets/neko/img/site_icon_06.png" id="openai-normal" title="测试 OpenAI  延迟"  class="status-icon" style="display: none;">
+                        <img src="./assets/neko/img/site_icon1_06.png" id="openai-gray" class="status-icon">
                     </div>
                     <div class="site-icon mx-1" onclick="pingHost('youtube', 'YouTube')">
                         <img src="./assets/neko/img/site_icon_04.png" id="youtube-normal" title="测试 YouTube 延迟" class="status-icon" style="display: none;">
@@ -432,7 +449,8 @@ const sitesToPing = {
     taobao: { url: 'https://www.taobao.com', name: 'Taobao' },
     google: { url: 'https://www.google.com', name: 'Google' },
     youtube: { url: 'https://www.youtube.com', name: 'YouTube' },
-    github: { url: 'https://www.github.com', name: 'GitHub' }
+    github: { url: 'https://www.github.com', name: 'GitHub' },
+    openai : { url: 'https://www.openai.com', name: 'OpenAI' }
 };
 
 async function checkAllPings() {
@@ -458,7 +476,8 @@ const checkSiteStatus = {
         taobao: 'https://www.taobao.com',
         google: 'https://www.google.com',
         youtube: 'https://www.youtube.com',
-        github: 'https://www.github.com'
+        github: 'https://www.github.com',
+        openai: 'https://www.openai.com'
     },
     
     check: async function() {
@@ -494,9 +513,9 @@ async function pingHost(site, siteName) {
         const endTime = performance.now();
         const pingTime = Math.round(endTime - startTime);      
         resultElement.innerHTML = `<span style="font-size: 22px">${siteName} 连接延迟: ${pingTime}ms</span>`;
-        if(pingTime <= 100) {
+        if(pingTime <= 300) {
                 resultElement.style.color = '#09B63F'; 
-        } else if(pingTime <= 200) {
+        } else if(pingTime <= 700) {
                 resultElement.style.color = '#FFA500'; 
         } else {
                 resultElement.style.color = '#ff6b6b'; 
@@ -702,19 +721,30 @@ let IP = {
             const asnOrganization = await translateText(data.asn_organization || "");
 
             let location = `${region && city && region !== city ? `${region} ${city}` : region || city || ''}`;
+
+            let displayISP = isp;
+            let displayASN = asnOrganization;
+
+            if (isp && asnOrganization && asnOrganization.includes(isp)) {
+                displayISP = '';  
+            } else if (isp && asnOrganization && isp.includes(asnOrganization)) {
+                displayASN = '';  
+            }
+
+            let locationInfo = `<span style="margin-left: 8px;">${location} ${displayISP} ${data.asn || ''} ${displayASN}</span>`;
+
             let simpleDisplay = `
                 <div class="ip-main" style="cursor: pointer;" onclick="IP.showDetailModal()" title="点击查看 IP 详细信息">
                     ${cachedIP} <span class="badge badge-primary" style="color: #333;">${country}</span>
                 </div>`;
-        
-            let locationInfo = `<span style="margin-left: 8px;">${location} ${isp} ${data.asn || ''} ${asnOrganization}</span>`;
-        
+
             document.getElementById('d-ip').innerHTML = simpleDisplay;
             document.getElementById('ipip').innerHTML = locationInfo;
+
             const countryCode = data.country_code || 'unknown';
             const flagSrc = (countryCode !== 'unknown') ? _IMG + "flags/" + countryCode.toLowerCase() + ".png" : './assets/neko/flags/cn.png';
             $("#flag").attr("src", flagSrc);
-        
+
         } catch (error) {
             console.error("Error in updateUI:", error);
             document.getElementById('d-ip').innerHTML = "更新 IP 信息失败";
@@ -761,7 +791,7 @@ let IP = {
         const delayInfoHTML = Object.entries(pingResults).map(([key, { name, pingTime }]) => {
             let color = '#ff6b6b'; 
             if (typeof pingTime === 'number') {
-                color = pingTime <= 100 ? '#09B63F' : pingTime <= 200 ? '#FFA500' : '#ff6b6b';
+                color = pingTime <= 300 ? '#09B63F' : pingTime <= 700 ? '#FFA500' : '#ff6b6b';
             }
             return `<span style="margin-right: 20px; font-size: 18px; color: ${color};">${name}: ${pingTime === '超时' ? '超时' : `${pingTime}ms`}</span>`;
         }).join('');
@@ -782,7 +812,7 @@ let IP = {
 
         const modalHTML = `
             <div class="modal fade custom-modal" id="ipDetailModal" tabindex="-1" role="dialog" aria-labelledby="ipDetailModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-                <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="ipDetailModalLabel">IP详细信息</h5>

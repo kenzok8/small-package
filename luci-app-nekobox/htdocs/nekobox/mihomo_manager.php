@@ -144,6 +144,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editFile'], $_GET['file
         exit;
     }
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['downloadFile'], $_GET['fileType'])) {
+    $fileType = $_GET['fileType'];
+    $fileName = basename($_GET['downloadFile']);
+    $filePath = ($fileType === 'proxy') ? $uploadDir . $fileName : $configDir . $fileName;
+
+    if (file_exists($filePath)) {
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($filePath));
+        readfile($filePath);
+        exit;
+    } else {
+        echo '文件不存在。';
+    }
+}
 ?>
 
 <?php
@@ -437,6 +457,24 @@ html {
     padding-right: 2.4em; 
 }
 
+#dropZone {
+    height: 150px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#dropZone.bg-light {
+    background-color: #e9ecef;
+}
+
+#dropZone:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd;
+}
+
+.upload-icon {
+    font-size: 1.5rem; 
+}
 </style>
 
 <script>
@@ -520,36 +558,46 @@ function showUpdateAlert() {
                                 <?php if ($fileType == '代理文件'): ?>
                                     <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="deleteFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" title="🗑️ 删除"  onclick="return confirm('确定要删除这个文件吗？');"><i class="bi bi-trash"></i></button>
                                     </form>
                                     <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
                                         <input type="hidden" name="fileType" value="proxy">
-                                        <button type="button" class="btn btn-success btn-sm btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy"><i>✏️</i> 重命名</button>
+                                        <button type="button" class="btn btn-success btn-sm btn-rename" title="✏️ 重命名" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy"><i class="bi bi-pencil"></i></button>
                                     </form>
                                     <form action="" method="post" class="d-inline mb-1">
-                                        <button type="button" class="btn btn-warning btn-sm" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'proxy')"><i>📝</i> 编辑</button>
+                                        <button type="button" class="btn btn-warning btn-sm" title="📝 编辑" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'proxy')"><i class="bi bi-pen"></i></button>
                                     </form>
                                     <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn mb-1">
                                         <input type="file" name="fileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                        <button type="button" class="btn btn-info btn-sm" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
+                                        <button type="button" class="btn btn-info btn-sm" title="📤 上传" onclick="openUploadModal('proxy')"><i class="bi bi-upload"></i></button>
+                                    </form>
+                                    <form action="" method="get" class="d-inline mb-1">
+                                        <input type="hidden" name="downloadFile" value="<?php echo htmlspecialchars($file); ?>">
+                                        <input type="hidden" name="fileType" value="proxy">
+                                        <button type="submit" class="btn btn-primary btn-sm" title="📥 下载" ><i class="bi bi-download"></i></button>
                                     </form>
                                 <?php else: ?>
                                     <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="deleteConfigFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除这个文件吗？');"><i>🗑️</i> 删除</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" title="🗑️ 删除" onclick="return confirm('确定要删除这个文件吗？');"><i class="bi bi-trash"></i></button>
                                     </form>
                                     <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
                                         <input type="hidden" name="fileType" value="config">
-                                        <button type="button" class="btn btn-success btn-sm btn-rename" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config"><i>✏️</i> 重命名</button>
+                                        <button type="button" class="btn btn-success btn-sm btn-rename" title="✏️ 重命名" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config"><i class="bi bi-pencil"></i></button>
                                     </form>
                                     <form action="" method="post" class="d-inline mb-1">
-                                        <button type="button" class="btn btn-warning btn-sm" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'config')"><i>📝</i> 编辑</button>
+                                        <button type="button" class="btn btn-warning btn-sm" title="📝 编辑" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'config')"><i class="bi bi-pen"></i></button>
                                     </form>
                                     <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn mb-1">
                                         <input type="file" name="configFileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                        <button type="button" class="btn btn-info btn-sm" onclick="document.getElementById('fileInput-<?php echo htmlspecialchars($file); ?>').click();"><i>📤</i> 上传</button>
+                                        <button type="button" class="btn btn-info btn-sm" title="📤 上传" onclick="openUploadModal('config')"><i class="bi bi-upload"></i></button>
+                                    </form>
+                                    <form action="" method="get" class="d-inline mb-1">
+                                        <input type="hidden" name="downloadFile" value="<?php echo htmlspecialchars($file); ?>">
+                                        <input type="hidden" name="fileType" value="config">
+                                        <button type="submit" class="btn btn-primary btn-sm"  title="📥 下载" ><i class="bi bi-download"></i></button>
                                     </form>
                                 <?php endif; ?>
                             </div>
@@ -561,12 +609,38 @@ function showUpdateAlert() {
     </div>
 </div>
 
-<div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">上传文件</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="关闭">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="dropZone" class="border border-primary rounded text-center py-4 position-relative">
+                    <i class="bi bi-cloud-upload-fill text-primary upload-icon"></i>
+                    <p class="mb-0 mt-3">拖动文件到此区域上传<br>或者点击下方选择文件按钮</p>
+                </div>
+                <input type="file" id="fileInputModal" class="form-control mt-3" hidden>
+                <button id="selectFileBtn" class="btn btn-primary btn-block mt-3 w-100">选择文件</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="renameModalLabel">重命名文件</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="renameForm" action="" method="post">
@@ -597,7 +671,9 @@ function showUpdateAlert() {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel">编辑文件: <span id="editingFileName"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="editForm" action="" method="post" onsubmit="syncEditorContent()">
@@ -638,6 +714,7 @@ function showUpdateAlert() {
 
                     <select id="editorTheme" onchange="changeEditorTheme()" class="form-select mx-1" style="width: auto; font-size: 0.9rem;">
                         <option value="ace/theme/vibrant_ink">Vibrant Ink</option>
+                        <option value="ace/theme/gob">Gob</option>
                         <option value="ace/theme/monokai">Monokai</option>
                         <option value="ace/theme/github">GitHub</option>
                         <option value="ace/theme/tomorrow">Tomorrow</option>
@@ -651,6 +728,7 @@ function showUpdateAlert() {
                         <option value="ace/theme/dreamweaver">Dreamweaver</option>
                         <option value="ace/theme/xcode">Xcode</option>
                         <option value="ace/theme/kuroir">Kuroir</option>
+                        <option value="ace/theme/iplastic">Iplastic</option>
                         <option value="ace/theme/katzenmilch">KatzenMilch</option>
                         <option value="ace/theme/sqlserver">SQL Server</option>
                         <option value="ace/theme/ambiance">Ambiance</option>
@@ -917,6 +995,62 @@ function initializeAceEditor() {
                 .catch((err) => console.error(`Error attempting to exit full-screen mode: ${err.message}`));
             }
        }
+
+    let fileType = ''; 
+    function openUploadModal(type) {
+        fileType = type;
+        const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+        modal.show();
+    }
+
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropZone.classList.add('bg-light');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('bg-light');
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropZone.classList.remove('bg-light');
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileUpload(files[0]);
+        }
+    });
+
+    document.getElementById('selectFileBtn').addEventListener('click', () => {
+        document.getElementById('fileInputModal').click();
+    });
+
+    document.getElementById('fileInputModal').addEventListener('change', (event) => {
+        const files = event.target.files;
+        if (files.length > 0) {
+            handleFileUpload(files[0]);
+        }
+    });
+
+    function handleFileUpload(file) {
+        const formData = new FormData();
+        formData.append(fileType === 'proxy' ? 'fileInput' : 'configFileInput', file);
+
+        fetch('', {
+            method: 'POST',
+            body: formData,
+        })
+            .then((response) => response.text())
+            .then((result) => {
+                alert(result);
+                location.reload(); 
+        })
+            .catch((error) => {
+                alert('上传失败：' + error.message);
+        });
+    }
+
 </script>
 <h2 class="text-center mt-4 mb-4">Mihomo订阅管理</h2>
 
@@ -995,7 +1129,9 @@ function initializeAceEditor() {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="cronModalLabel">设置 Cron 计划任务</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">

@@ -318,7 +318,9 @@ $razordVersion = getRazordVersion();
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateVersionTypeModalLabel">选择更新版本类型</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="form-group text-center">
@@ -335,7 +337,9 @@ $razordVersion = getRazordVersion();
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateLanguageModalLabel">选择语言</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -359,7 +363,7 @@ $razordVersion = getRazordVersion();
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="previewLanguageModalLabel">选择预览版语言</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -487,7 +491,9 @@ $razordVersion = getRazordVersion();
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="singboxVersionModalLabel">选择 Singbox 核心版本（官方通道二）</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -511,7 +517,9 @@ $razordVersion = getRazordVersion();
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="panelSelectionModalLabel">选择面板</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -537,7 +545,9 @@ $razordVersion = getRazordVersion();
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="versionModalLabel">版本检测结果</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div id="modalContent">

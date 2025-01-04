@@ -11,9 +11,8 @@ $allowed_files = [
 ];
 
 $file = $_GET['file'] ?? '';
-$max_lines = 100; 
 $max_chars = 1000000; 
-$max_line_length = 300; 
+$max_line_length = 160; 
 
 function remove_ansi_colors($string) {
     $pattern = '/\033\[[0-9;]*m/';
@@ -43,21 +42,20 @@ if (array_key_exists($file, $allowed_files)) {
         $lines = array_filter($lines, function($line) use ($max_line_length) {
             return strlen($line) <= $max_line_length;
         });
-        
-        $content = implode(PHP_EOL, $lines);
-        
+
+        $lines_with_numbers = array_map(function($line, $index) {
+            return sprintf("%d %s", $index + 1, $line);  
+        }, $lines, array_keys($lines));
+
+        $content = implode(PHP_EOL, $lines_with_numbers);
+
         if (strlen($content) > $max_chars) {
             file_put_contents($file_path, ''); 
             echo "Log file has been cleared, exceeding the character limit.";
             return;
         }
 
-        if (count($lines) > $max_lines) {
-            $lines = array_slice($lines, -$max_lines); 
-            file_put_contents($file_path, implode(PHP_EOL, $lines)); 
-        }
-
-        echo htmlspecialchars(implode(PHP_EOL, $lines));
+        echo htmlspecialchars($content); 
     } else {
         http_response_code(404);
         echo "File not found.";

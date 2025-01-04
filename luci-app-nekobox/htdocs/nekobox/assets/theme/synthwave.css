@@ -141,6 +141,11 @@ h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
   color: #121212;
 }
 
+.table thead th {
+  color: #ffffff !important;  
+  background-color: #004080 !important;  
+}
+
 .form-control {
   background-color: #1a003d;
   border: 2px solid var(--bs-border-color);
@@ -199,6 +204,50 @@ h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
 .container-sm.container-bg.callout a:focus::after,
 .container-sm.container-bg.callout a.active::after {
   transform: scaleX(1);
+}
+
+.modal-content {
+  background-color: #f9f9f9; 
+  color: #333; 
+  border: 1px solid #ddd; 
+  border-radius: 8px; 
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); 
+}
+
+.modal-header {
+  background-color: #007bff; 
+  color: #fff; 
+  border-bottom: 1px solid #ccc; 
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.modal-body {
+  background-color: #f9f9f9; 
+  color: #333; 
+}
+
+button.btn-close {
+  color: #000 !important; 
+}
+
+button.btn-close:hover {
+  color: #333 !important; 
+}
+
+.form-group button {
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2); 
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group button:hover {
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3); 
 }
 
 .text-neon {

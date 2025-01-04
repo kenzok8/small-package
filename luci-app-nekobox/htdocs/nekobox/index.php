@@ -224,6 +224,7 @@ function writeToLog($message) {
 function createCronScript() {
     $log_file = '/var/log/singbox_log.txt';
     $tmp_log_file = '/etc/neko/tmp/neko_log.txt'; 
+    $additional_log_file = '/etc/neko/tmp/log.txt'; 
     $max_size = 1048576;  
     $cron_schedule = "0 */4 * * * /bin/bash /etc/neko/core/set_cron.sh"; 
     $cronScriptContent = <<<EOL
@@ -250,6 +251,14 @@ if [ -f "\$TMP_LOG_FILE" ] && [ \$(stat -c %s "\$TMP_LOG_FILE") -gt \$MAX_SIZE ]
     echo "Temp log file (\$TMP_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
 else
     echo "Temp log file (\$TMP_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
+fi
+
+if [ -f "\$ADDITIONAL_LOG_FILE" ] && [ \$(stat -c %s "\$ADDITIONAL_LOG_FILE") -gt \$MAX_SIZE ]; then
+    echo "Additional log file (\$ADDITIONAL_LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    > "\$ADDITIONAL_LOG_FILE"
+    echo "Additional log file (\$ADDITIONAL_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
+else
+    echo "Additional log file (\$ADDITIONAL_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
 fi
 
 echo "Log rotation completed." >> /var/log/cron_debug.log 2>&1
@@ -738,8 +747,8 @@ $(document).ready(function() {
     }
 
    .section-container {
-       padding-left: 48px;  
-       padding-right: 48px;
+       padding-left: 42px;  
+       padding-right: 42px;
    }
 
    .btn-group .btn {

@@ -9,12 +9,12 @@
   --bs-body-bg: #ffff;
 
   --bs-heading-font-family: 'Montserrat', sans-serif;
-  --bs-heading-1: #CD853F; 
-  --bs-heading-2: #A0522D;
-  --bs-heading-3: #B8860B;
-  --bs-heading-4: #e74c3c;
-  --bs-heading-5: #D2691E;
-  --bs-heading-6: #e74c3c;
+  --bs-heading-1: #00a2e8; 
+  --bs-heading-2: #00a2e8;
+  --bs-heading-3: #ffcc00;
+  --bs-heading-4: #ff4500;
+  --bs-heading-5: #7d5fff;
+  --bs-heading-6: #00ffff;
   
   --bs-heading-font-family: 'Montserrat', sans-serif;
   --bs-heading-font-weight: 700;
@@ -29,6 +29,8 @@
   --bs-btn-hover-color: #fff;
   --bs-btn-active-color: #fff;
   --bs-btn-disabled-color: #fff;
+  --bs-nav-pills-link-color: #004080;
+  --bs-nav-pills-link-hover-color: #28a745; 
 }
 
 body {
@@ -45,6 +47,50 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: var(--bs-heading-text-transform);
   color: var(--bs-primary);
   margin-bottom: 1rem;
+}
+
+.nav-pills .nav-link {
+  color: var(--bs-nav-pills-link-color);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--bs-nav-pills-link-active-color);
+  background-color: #ffffff;
+}
+
+.nav-pills .nav-link:hover {
+  color: var(--bs-nav-pills-link-hover-color);
+  background-color: #e6f2ff;
+}
+
+#pluginLogTab {
+  color: #004080; 
+  font-weight: bold;
+  font-size: 18px !important;
+}
+
+#mihomoLogTab {
+  color: #800000; 
+  font-weight: bold;
+  font-size: 18px !important;
+}
+
+#singboxLogTab {
+  color: #006400; 
+  font-weight: bold;
+  font-size: 18px !important;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #0056b3;
+  color: #ffffff;
+}
+
+.nav-pills .nav-link:hover {
+  background-color: #007bff;
+  color: #ffffff;
 }
 
 .table {
@@ -96,6 +142,11 @@ h1, h2, h3, h4, h5, h6 {
     6px 6px 1px var(--bs-secondary),
     7px 7px 1px var(--bs-secondary);
   transform: translate(-3px, -3px);
+}
+
+.table thead th {
+  color: #ffffff !important;  
+  background-color: #1E90FF !important;  
 }
 
 .table-3d {
@@ -415,13 +466,11 @@ h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
 
 .container-sm.callout .btn:hover {
     color: #000 !important;
-    background-color: #FFDEAD !important;  
     transition: all 0.3s ease;
 }
 
 .container-sm.callout .custom-btn-color:hover {
     color: #000 !important;
-    background-color: #FFDEAD !important;
     transition: all 0.3s ease;
 }
 
