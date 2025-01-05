@@ -1,0 +1,11 @@
+{
+	"luci-app-pve": {
+		"description": "Grant UCI access for luci-app-pve",
+		"read": {
+			"uci": [ "pve" ]
+		},
+		"write": {
+			"uci": [ "pve" ]
+		}
+	}
+}

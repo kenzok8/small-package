@@ -227,7 +227,7 @@ start_service() {
 		fi
 		if [ "$hosts" == 1 ]; then
 			yq -M -i 'del(.hosts)' "$RUN_PROFILE_PATH"
-			config_foreach mixin_hosts "host"
+			config_foreach mixin_hosts "hosts"
 		fi
 		if [ "$dns_nameserver" == 1 ]; then
 			yq -M -i 'del(.dns.default-nameserver) | del(.dns.proxy-server-nameserver) | del(.dns.direct-nameserver) | del(.dns.nameserver) | del(.dns.fallback)' "$RUN_PROFILE_PATH"

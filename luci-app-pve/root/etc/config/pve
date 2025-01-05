@@ -1,0 +1,4 @@
+config pve
+	option 'config_path' ''
+	option 'http_port' '8006'
+	option 'image_name' 'linkease/pve:latest'
