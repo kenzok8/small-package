@@ -44,6 +44,7 @@ Fork this repository and:
 
 * 2024-11-26 chore: bump status version
 * 2024-11-27 chore: use OpenWrt SDK 23.05.5 to avoid using apk
+* 2025-01-05 fix: direct output; remove unused check of geoip direct list
 
 ## Changelog since 3.4.0
 

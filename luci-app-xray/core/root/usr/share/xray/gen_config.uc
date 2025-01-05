@@ -124,25 +124,23 @@ function rules(proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
         ...function () {
             let direct_rules = [];
             if (geoip_existence) {
-                if (proxy["geoip_direct_code_list"] != null) {
-                    const geoip_direct_code_list = map(proxy["geoip_direct_code_list"] || [], v => index(v, ":") > 0 ? v : `geoip:${v}`);
-                    if (length(geoip_direct_code_list) > 0) {
-                        push(direct_rules, {
-                            type: "field",
-                            inboundTag: [...built_in_tcp_inbounds, ...built_in_udp_inbounds],
-                            outboundTag: "direct",
-                            ip: geoip_direct_code_list
-                        });
-                    }
-                    const geoip_direct_code_list_v6 = map(proxy["geoip_direct_code_list_v6"] || [], v => index(v, ":") > 0 ? v : `geoip:${v}`);
-                    if (length(geoip_direct_code_list_v6) > 0) {
-                        push(direct_rules, {
-                            type: "field",
-                            inboundTag: [...tproxy_tcp_inbound_v6_tags, ...tproxy_udp_inbound_v6_tags],
-                            outboundTag: "direct",
-                            ip: geoip_direct_code_list_v6
-                        });
-                    }
+                const geoip_direct_code_list = map(proxy["geoip_direct_code_list"] || [], v => index(v, ":") > 0 ? v : `geoip:${v}`);
+                if (length(geoip_direct_code_list) > 0) {
+                    push(direct_rules, {
+                        type: "field",
+                        inboundTag: [...built_in_tcp_inbounds, ...built_in_udp_inbounds],
+                        outboundTag: "direct",
+                        ip: geoip_direct_code_list
+                    });
+                }
+                const geoip_direct_code_list_v6 = map(proxy["geoip_direct_code_list_v6"] || [], v => index(v, ":") > 0 ? v : `geoip:${v}`);
+                if (length(geoip_direct_code_list_v6) > 0) {
+                    push(direct_rules, {
+                        type: "field",
+                        inboundTag: [...tproxy_tcp_inbound_v6_tags, ...tproxy_udp_inbound_v6_tags],
+                        outboundTag: "direct",
+                        ip: geoip_direct_code_list_v6
+                    });
                 }
                 push(direct_rules, {
                     type: "field",
