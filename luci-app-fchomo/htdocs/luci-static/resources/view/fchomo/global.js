@@ -758,6 +758,25 @@ return view.extend({
 		so.depends('routing_mode', 'bypass_cn');
 		so.depends('routing_mode', 'routing_gfw');
 
+		so = ss.taboption('routing_control', form.ListValue, 'routing_dscp_mode', _('Routing DSCP'));
+		so.value('', _('All allowed'));
+		so.value('bypass_dscp', _('Bypass DSCP'));
+		so.value('routing_dscp', _('Routing DSCP'));
+
+		so = ss.taboption('routing_control', form.Value, 'routing_dscp_list', _('DSCP list'));
+		so.placeholder = '0,10,12,14,63';
+		so.validate = function(section_id, value) {
+			if (!value)
+				return true;
+			else if (value.match('^(6[0-3]|[1-5]?[0-9])(,(6[0-3]|[1-5]?[0-9]))*$') === null)
+				return _('Expecting: %s').format(_('One or more numbers in the range 0-63 separated by commas'));
+
+			return true;
+		}
+		so.rmempty = false;
+		so.depends('routing_dscp_mode', 'bypass_dscp');
+		so.depends('routing_dscp_mode', 'routing_dscp');
+
 		/* Custom Direct list */
 		ss.tab('direct_list', _('Custom Direct List'));
 

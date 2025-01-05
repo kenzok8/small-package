@@ -258,6 +258,10 @@ msgstr "啟動 DNS 伺服器 (節點)"
 msgid "Bypass CN"
 msgstr "繞過 CN 流量"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:763
+msgid "Bypass DSCP"
+msgstr "繞過 DSCP"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:552
 msgid "CORS Allow origins"
 msgstr "CORS 允許的來源"
@@ -439,6 +443,10 @@ msgstr "DNS 伺服器"
 #: htdocs/luci-static/resources/view/fchomo/client.js:757
 msgid "DNS settings"
 msgstr "DNS 設定"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:766
+msgid "DSCP list"
+msgstr "DSCP 清單"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:314
 msgid "Dashboard version"
@@ -1195,7 +1203,7 @@ msgstr "有時效能較好。"
 #: htdocs/luci-static/resources/view/fchomo/node.js:532
 #: htdocs/luci-static/resources/view/fchomo/server.js:332
 msgid "List of supported application level protocols, in order of preference."
-msgstr "支援的應用層協議協商列表，依序排列。"
+msgstr "支援的應用層協議協商清單，依序排列。"
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:118
 msgid "Listen address"
@@ -1458,6 +1466,10 @@ msgstr "混淆密碼"
 #: htdocs/luci-static/resources/view/fchomo/server.js:176
 msgid "Obfuscate type"
 msgstr "混淆類型"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:772
+msgid "One or more numbers in the range 0-63 separated by commas"
+msgstr "0-63 範圍內的一個或多個數字，以逗號分隔"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:658
 msgid "Only process traffic from specific interfaces. Leave empty for all."
@@ -1821,6 +1833,11 @@ msgstr "Restls 劇本"
 #: htdocs/luci-static/resources/view/fchomo/global.js:727
 msgid "Routing Control"
 msgstr "路由控制"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:761
+#: htdocs/luci-static/resources/view/fchomo/global.js:764
+msgid "Routing DSCP"
+msgstr "路由 DSCP"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:747
 msgid "Routing GFW"

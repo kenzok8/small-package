@@ -238,31 +238,35 @@ MAX_SIZE=$max_size
 crontab -l | grep -v "/etc/neko/core/set_cron.sh" | crontab - 
 (crontab -l 2>/dev/null; echo "$cron_schedule") | crontab -
 
+timestamp() {
+    date "+%Y-%m-%d %H:%M:%S"
+}
+
 if [ -f "\$LOG_FILE" ] && [ \$(stat -c %s "\$LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "Log file (\$LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Log file (\$LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
     > "\$LOG_FILE"  
-    echo "Log file (\$LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Log file (\$LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
 else
-    echo "Log file (\$LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Log file (\$LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
 fi
 
 if [ -f "\$TMP_LOG_FILE" ] && [ \$(stat -c %s "\$TMP_LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "Temp log file (\$TMP_LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Temp log file (\$TMP_LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
     > "\$TMP_LOG_FILE"  
-    echo "Temp log file (\$TMP_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Temp log file (\$TMP_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
 else
-    echo "Temp log file (\$TMP_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Temp log file (\$TMP_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
 fi
 
 if [ -f "\$ADDITIONAL_LOG_FILE" ] && [ \$(stat -c %s "\$ADDITIONAL_LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "Additional log file (\$ADDITIONAL_LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Additional log file (\$ADDITIONAL_LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
     > "\$ADDITIONAL_LOG_FILE"
-    echo "Additional log file (\$ADDITIONAL_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Additional log file (\$ADDITIONAL_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
 else
-    echo "Additional log file (\$ADDITIONAL_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Additional log file (\$ADDITIONAL_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
 fi
 
-echo "Log rotation completed." >> /var/log/cron_debug.log 2>&1
+echo "\$(timestamp) Log rotation completed." >> /var/log/cron_debug.log 2>&1
 EOL;
 
     $cronScriptPath = '/etc/neko/core/set_cron.sh';
@@ -701,7 +705,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
     <div class="row">
             <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
             <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
-            <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
             <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
             <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     <div class="container-sm text-center col-8">

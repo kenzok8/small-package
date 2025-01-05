@@ -250,6 +250,10 @@ msgstr ""
 msgid "Bypass CN"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:763
+msgid "Bypass DSCP"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:552
 msgid "CORS Allow origins"
 msgstr ""
@@ -430,6 +434,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:757
 msgid "DNS settings"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:766
+msgid "DSCP list"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:314
@@ -1437,6 +1445,10 @@ msgstr ""
 msgid "Obfuscate type"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:772
+msgid "One or more numbers in the range 0-63 separated by commas"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:658
 msgid "Only process traffic from specific interfaces. Leave empty for all."
 msgstr ""
@@ -1797,6 +1809,11 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:727
 msgid "Routing Control"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:761
+#: htdocs/luci-static/resources/view/fchomo/global.js:764
+msgid "Routing DSCP"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:747

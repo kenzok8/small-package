@@ -44,16 +44,10 @@ include './cfg.php';
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
-    <?php include './ping.php'; ?>
   </head>
   <body>
     <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
         <div class="row">
-            <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-            <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
-            <a href="./configs.php" class="col btn btn-lg">⚙️ 配置</a>
-            <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
-            <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
     <form action="configs.php" method="post">
         <div class="container text-center justify-content-md-center" style="padding-left: 4ch; padding-right: 4ch;">
             <div class="row justify-content-md-center">
