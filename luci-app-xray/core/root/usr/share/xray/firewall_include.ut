@@ -471,6 +471,18 @@
         meta mark 0x000000fe {{ counter }} accept comment "Xray non-IP DNS query outbound"
         meta mark {{ sprintf("0x%08x", general_mark) }} {{ counter }} accept comment "Xray specified mark {{ general_mark }} outbound"
         {{ counter }} jump tp_spec_lan_mf
+{% if (!tcp4_enabled): %}
+        ip protocol tcp {{ counter }} accept
+{% endif %}
+{% if (!udp4_enabled): %}
+        ip protocol udp {{ counter }} accept
+{% endif %}
+{% if (!tcp6_enabled): %}
+        ip6 nexthdr tcp {{ counter }} accept
+{% endif %}
+{% if (!udp6_enabled): %}
+        ip6 nexthdr udp {{ counter }} accept
+{% endif %}
         {{ counter }} goto tp_spec_lan_ac
     }
 
