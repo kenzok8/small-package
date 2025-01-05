@@ -77,12 +77,14 @@
 	const dnsmasq_hijacked = uci.get('dhcp', '@dnsmasq[0]', 'dns_redirect') || '0',
 	      dnsmasq_port = uci.get('dhcp', '@dnsmasq[0]', 'port') || '53';
 
-	let client_enabled, routing_tcpport, routing_udpport, routing_mode, routing_domain;
+	let client_enabled, routing_tcpport, routing_udpport, routing_mode, routing_domain, routing_dscp_mode, routing_dscp_list;
 	client_enabled = uci.get(cfgname, 'routing', 'client_enabled') || '0',
 	routing_tcpport = uci.get(cfgname, 'routing', 'routing_tcpport') || null;
 	routing_udpport = uci.get(cfgname, 'routing', 'routing_udpport') || null;
 	routing_mode = uci.get(cfgname, 'routing', 'routing_mode') || null;
 	routing_domain = uci.get(cfgname, 'routing', 'routing_domain') || '0';
+	routing_dscp_mode = uci.get(cfgname, 'routing', 'routing_dscp_mode') || null;
+	routing_dscp_list = uci.get(cfgname, 'routing', 'routing_dscp_list') || null;
 
 	if (routing_tcpport === 'common')
 		routing_tcpport = common_tcpport;
@@ -183,6 +185,18 @@ chain {{ inchain }} {
 		ip6 daddr @inet6_china_list_addr counter return
 		{% endif %}
 		{% endif /* routing_mode */ %}
+
+		{% if (routing_dscp_mode === 'routing_dscp'): %}
+		ip dscp != @routing_dscp_list counter return
+		{% if (global_ipv6 === '1'): %}
+		ip6 dscp != @routing_dscp_list counter return
+		{% endif %}
+		{% elif (routing_dscp_mode === 'bypass_dscp'): %}
+		ip dscp @bypass_dscp_list counter return
+		{% if (global_ipv6 === '1'): %}
+		ip6 dscp @bypass_dscp_list counter return
+		{% endif %}
+		{% endif /* routing_dscp_mode */ %}
 
 		counter goto {{ outchain }}
 	}
@@ -328,6 +342,23 @@ table inet fchomo {
 	}
 	{% endif %}
 	{% endif /* routing_mode */ %}
+
+	{#- Routing DSCP #}
+	{% if (match(routing_dscp_mode, /bypass_dscp/)): %}
+	set bypass_dscp_list {
+		type dscp
+		flags interval
+		auto-merge
+		elements = { {{ join(', ', split(routing_dscp_list, ',')) }} }
+	}
+	{% elif (match(routing_dscp_mode, /routing_dscp/)): %}
+	set routing_dscp_list {
+		type dscp
+		flags interval
+		auto-merge
+		elements = { {{ join(', ', split(routing_dscp_list, ',')) }} }
+	}
+	{% endif /* routing_dscp_mode */ %}
 
 	{#- Routing port #}
 	{% if (routing_tcpport): %}

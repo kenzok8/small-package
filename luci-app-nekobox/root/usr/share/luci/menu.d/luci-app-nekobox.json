@@ -35,10 +35,19 @@
 			"path": "nekobox/yacd"
 		}
 	},
+	
+	"admin/services/nekobox/configs": {
+		"title": "配置",
+		"order": 4,
+		"action": {
+			"type": "view",
+			"path": "nekobox/configs"
+		}
+	},
 
 	"admin/services/nekobox/video": {
 		"title": "播放器",
-		"order": 4,
+		"order": 5,
 		"action": {
 			"type": "view",
 			"path": "nekobox/video"
@@ -47,7 +56,7 @@
 
 	"admin/services/nekobox/filekit": {
 		"title": "文件助手",
-		"order": 5,
+		"order": 6,
 		"action": {
 			"type": "view",
 			"path": "nekobox/filekit"

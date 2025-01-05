@@ -258,6 +258,10 @@ msgstr "启动 DNS 服务器 (节点)"
 msgid "Bypass CN"
 msgstr "绕过 CN 流量"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:763
+msgid "Bypass DSCP"
+msgstr "绕过 DSCP"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:552
 msgid "CORS Allow origins"
 msgstr "CORS 允许的来源"
@@ -439,6 +443,10 @@ msgstr "DNS 服务器"
 #: htdocs/luci-static/resources/view/fchomo/client.js:757
 msgid "DNS settings"
 msgstr "DNS 设置"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:766
+msgid "DSCP list"
+msgstr "DSCP 列表"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:314
 msgid "Dashboard version"
@@ -1459,6 +1467,10 @@ msgstr "混淆密码"
 msgid "Obfuscate type"
 msgstr "混淆类型"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:772
+msgid "One or more numbers in the range 0-63 separated by commas"
+msgstr "0-63 范围内的一个或多个数字，以逗号分隔"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:658
 msgid "Only process traffic from specific interfaces. Leave empty for all."
 msgstr "只处理来自指定接口的流量。留空表示全部。"
@@ -1821,6 +1833,11 @@ msgstr "Restls 剧本"
 #: htdocs/luci-static/resources/view/fchomo/global.js:727
 msgid "Routing Control"
 msgstr "路由控制"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:761
+#: htdocs/luci-static/resources/view/fchomo/global.js:764
+msgid "Routing DSCP"
+msgstr "路由 DSCP"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:747
 msgid "Routing GFW"
