@@ -42,6 +42,10 @@ for _, val in pairs(paths) do
 end
 o.default = default_path
 
+o = s:option(Value, "root_pwd", "ROOT_PASSWORD")
+o.password = true
+o.datatype = "string"
+
 o = s:option(Value, "time_zone", translate("Timezone"))
 o.datatype = "string"
 o:value("Asia/Shanghai", "Asia/Shanghai")
