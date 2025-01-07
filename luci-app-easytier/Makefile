@@ -6,11 +6,11 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=2.0.3
+PKG_VERSION:=2.1.1
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for EasyTier
-LUCI_DEPENDS:=
+LUCI_DEPENDS:=+kmod-tun
 LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-easytier

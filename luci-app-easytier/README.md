@@ -19,6 +19,11 @@ opkg remove luci-app-easytier
 #安装后openwrt管理界面里不显示easytier 请注销登录或关闭窗口重新打开  
 ```
 
+```bash
+#如果是新版openwrt使用的是apk包管理器 出现无法安装apk的可以尝试使用忽略证书验证
+apk add --allow-untrusted /tmp/tmp/luci-app-easytier.apk
+```
+
 此luci-app-easytier不包含二进制程序，需要自行在openwrt管理界面里的easytier插件界面里上传二进制程序
 
 ### 编译方法
