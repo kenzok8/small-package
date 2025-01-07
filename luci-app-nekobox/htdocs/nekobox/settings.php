@@ -524,7 +524,8 @@ $razordVersion = getRazordVersion();
                 <div class="form-group">
                     <label for="panelSelect">选择一个面板</label>
                     <select id="panelSelect" class="form-select">
-                        <option value="zashboard">Zashboard 面板</option>
+                        <option value="zashboard">Zashboard 面板 【小内存】</option>
+                        <option value="zashboard1">Zashboard 面板【大内存】</option>
                         <option value="metacubexd">Metacubexd 面板</option>
                         <option value="yacd-meat">Yacd-Meat 面板</option>
                         <option value="dashboard">Dashboard 面板</option>
@@ -572,9 +573,6 @@ $razordVersion = getRazordVersion();
             <div class="modal-body text-center">
                 <div id="updateDescription" class="alert alert-info mb-3"></div>
                 <pre id="logOutput" style="white-space: pre-wrap; word-wrap: break-word; text-align: left; display: inline-block;">等待操作开始...</pre>
-                <div class="alert alert-info mt-3" role="alert">
-                    提示: 如遇到更新失败，请在终端输入 <code>nekobox</code> 进行更新！
-                </div>
             </div>
         </div>
     </div>
@@ -798,7 +796,9 @@ function selectOperation(type) {
         },
         'panel': { 
             url: selectedPanel === 'zashboard' 
-                ? 'update_zashboard.php' 
+            ? 'update_zashboard.php?panel=zashboard&update_type=dist' 
+            : selectedPanel === 'zashboard1' 
+                ? 'update_zashboard.php?panel=zashboard1&update_type=fonts' 
                 : selectedPanel === 'yacd-meat' 
                     ? 'update_meta.php' 
                     : selectedPanel === 'metacubexd' 
@@ -807,7 +807,9 @@ function selectOperation(type) {
                             ? 'update_dashboard.php'  
                             : 'unknown_panel.php', 
             message: selectedPanel === 'zashboard' 
-                ? '开始下载 Zashboard 面板更新...' 
+            ? '开始下载 Zashboard 面板更新（dist.zip）...' 
+            : selectedPanel === 'zashboard1' 
+                ? '开始下载 Zashboard 面板 更新（dist-cdn-fonts.zip）...'
                 : selectedPanel === 'yacd-meat' 
                     ? '开始下载 Yacd-Meat 面板更新...' 
                     : selectedPanel === 'metacubexd' 
@@ -816,7 +818,9 @@ function selectOperation(type) {
                             ? '开始下载 Dashboard 面板更新...'  
                             : '未知面板更新类型...',
             description: selectedPanel === 'zashboard' 
-                ? '正在更新 Zashboard 面板到最新版本,如遇无法显示清除浏览器缓存。' 
+            ? '正在更新 Zashboard 面板到最新版本（dist.zip），如遇无法显示清除浏览器缓存。' 
+            : selectedPanel === 'zashboard1' 
+                ? '正在更新 Zashboard 面板到最新版本（dist-cdn-fonts.zip），如遇无法显示清除浏览器缓存。'  
                 : selectedPanel === 'yacd-meat' 
                     ? '正在更新 Yacd-Meat 面板到最新版本，如遇无法显示清除浏览器缓存。' 
                     : selectedPanel === 'metacubexd' 
@@ -1257,7 +1261,7 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
                 <tbody>
                     <tr class="text-center">
                         <td>Github</td>
-                        <td>Github</td>
+                        <td>Thaolga</td>
                     </tr>
                     <tr class="text-center">
                         <td>
@@ -1267,13 +1271,13 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
                         </td>
                         <td>
                             <div class="link-box">
-                                <a href="https://github.com/Thaolga/openwrt-nekobox" target="_blank">Thaolga</a>
+                                <a href="https://github.com/Thaolga/openwrt-nekobox" target="_blank">NEKOBOX</a>
                             </div>
                         </td>
                     </tr>
                     <tr class="text-center">
                         <td>Telegram</td>
-                        <td>MetaCubeX</td>
+                        <td>Zephyruso</td>
                     </tr>
                     <tr class="text-center">
                         <td>
@@ -1283,7 +1287,7 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
                         </td>
                         <td>
                             <div class="link-box">
-                                <a href="https://github.com/MetaCubeX" target="_blank">METACUBEX</a>
+                                <a href="https://github.com/Zephyruso/zashboard" target="_blank">ZASHBOARD</a>
                             </div>
                         </td>
                     </tr>

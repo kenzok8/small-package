@@ -30,6 +30,13 @@ $latest_version = $data['tag_name'] ?? '';
 $install_path = '/etc/neko/ui/zashboard';
 $temp_file = '/tmp/dist.zip';
 
+$dist_url = $data['assets'][0]['browser_download_url'] ?? ''; 
+$fonts_url = $data['assets'][1]['browser_download_url'] ?? ''; 
+
+if (empty($dist_url) || empty($fonts_url)) {
+    die("未找到下载链接");
+}
+
 if (!is_dir($install_path)) {
     mkdir($install_path, 0755, true);
 }
@@ -41,11 +48,9 @@ if (isset($_GET['check_version'])) {
     exit;
 }
 
-$download_url = $data['assets'][0]['browser_download_url'] ?? '';
+$update_type = $_GET['update_type'] ?? 'dist';
 
-if (empty($download_url)) {
-    die("未找到下载链接");
-}
+$download_url = ($update_type === 'fonts') ? $fonts_url : $dist_url;
 
 exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
 if ($return_var !== 0) {
