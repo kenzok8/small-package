@@ -2,6 +2,18 @@
 
 echo "uci settings"
 
+ipv6_disable_nat() {
+  NAT6=`uci -q get firewall.nat6.reload`
+  if [ "$NAT6" = "1" ]; then
+    uci -q delete network.wan6.sourcefilter
+    uci -q delete firewall.nat6
+    uci commit firewall
+    /etc/init.d/firewall restart
+  fi
+}
+
+ipv6_disable_nat
+
 uci -q batch <<-EOF
 	del dhcp.lan.ra
 	del dhcp.lan.dhcpv6

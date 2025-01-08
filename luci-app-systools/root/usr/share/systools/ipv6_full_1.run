@@ -1,5 +1,15 @@
 #!/bin/sh
 
+ipv6_disable_nat() {
+  NAT6=`uci -q get firewall.nat6.reload`
+  if [ "$NAT6" = "1" ]; then
+    uci -q delete network.wan6.sourcefilter
+    uci -q delete firewall.nat6
+    uci commit firewall
+    /etc/init.d/firewall restart
+  fi
+}
+
 ipv6_disable_lan_server() {
 	uci -q batch <<-EOF >/dev/null
 		del dhcp.lan.ra
@@ -51,6 +61,9 @@ is_wan_pppoe() {
 	[ "$(uci -q get network.wan.proto)" = "pppoe" ]
 }
 
+# disable ipv6 nat
+ipv6_disable_nat
+
 if is_lan_gateway; then
 	echo "Single-Port Router (LAN Gateway) mode"
 	ipv6_pppoe_mode
@@ -59,7 +72,7 @@ elif is_wan_pppoe; then
 	ipv6_pppoe_mode
 	uci -q delete network.wan.ipv6
 else
-	echo "DHCP-Client mode"
+	echo "DHCP-Client mode, and use relay mode"
 	ipv6_relay_mode
 fi
 
