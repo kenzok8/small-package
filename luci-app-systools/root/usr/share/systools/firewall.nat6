@@ -1,0 +1,143 @@
+# NAT6 + masquerading firewall script
+# https://github.com/akatrevorjay/openwrt-masq6
+# trevorj <github@trevor.joynson.io>
+#
+# You can configure in /etc/config/firewall per zone:
+# * IPv4 masquerading
+#     option masq 1
+# * IPv6 masquerading
+#     option masq6 1
+# * IPv6 privacy extensions
+#     option masq6_privacy 1
+ 
+set -e -o pipefail
+ 
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /usr/share/libubox/jshn.sh
+ 
+log() {
+    logger -t nat6 -s "${@}"
+}
+ 
+get_ula_prefix() {
+    uci get network.globals.ula_prefix
+}
+ 
+validate_ula_prefix() {
+    local ula_prefix="${1}"
+    if [ $(echo "${ula_prefix}" | grep -c -E -e "^([0-9a-fA-F]{4}):([0-9a-fA-F]{0,4}):") -ne 1 ] ; then
+        log "Fatal error: IPv6 ULA ula_prefix=\"${ula_prefix}\" seems invalid. Please verify that a ula_prefix is set and valid."
+        return 1
+    fi
+}
+ 
+ip6t() {
+    ip6tables "${@}"
+}
+ 
+ip6t_add() {
+    if ! ip6t -C "${@}" &> /dev/null; then
+        ip6t -I "${@}"
+    fi
+}
+ 
+nat6_init() {
+    iptables-save -t nat \
+    | sed -e "
+        /\sMASQUERADE$/d
+        /\s[DS]NAT\s/d
+        /\s--match-set\s\S*/s//\06/
+        /,BROADCAST\s/s// /" \
+    | grep -v FULLCONENAT \
+    | ip6tables-restore -T nat
+}
+ 
+masq6_network() {
+    # ${config} contains the ID of the current section
+    local network_name="${1}"
+ 
+    local device
+    network_get_device device "${network_name}" || return 0
+ 
+    local done_net_dev
+    for done_net_dev in ${DONE_NETWORK_DEVICES}; do
+        if [ "${done_net_dev}" = "${device}" ]; then
+            log "Already configured device=\"${device}\", so leaving as is."
+            return 0
+        fi
+    done
+ 
+    log "Found device=\"${device}\" for network_name=\"${network_name}\"."
+ 
+    if [ "${zone_masq6_privacy}" -eq 1 ]; then
+        log "Enabling IPv6 temporary addresses for device=\"${device}\"."
+ 
+        log "Accepting router advertisements on ${device} even if forwarding is enabled (required for temporary addresses)"
+        echo 2 > "/proc/sys/net/ipv6/conf/${device}/accept_ra" \
+        || log "Error: Failed to change router advertisements accept policy on ${device} (required for temporary addresses)"
+ 
+        log "Using temporary addresses for outgoing connections on interface ${device}"
+        echo 2 > "/proc/sys/net/ipv6/conf/${device}/use_tempaddr" \
+        || log "Error: Failed to enable temporary addresses for outgoing connections on interface ${device}"
+    fi
+ 
+    append DONE_NETWORK_DEVICES "${device}"
+}
+ 
+handle_zone() {
+    # ${config} contains the ID of the current section
+    local config="${1}"
+ 
+    local zone_name
+    config_get zone_name "${config}" name
+ 
+    # Enable masquerading via NAT6
+    local zone_masq6
+    config_get_bool zone_masq6 "${config}" masq6 0
+ 
+    log "Firewall config=\"${config}\" zone=\"${zone_name}\" zone_masq6=\"${zone_masq6}\"."
+ 
+    if [ "${zone_masq6}" -eq 0 ]; then
+        return 0
+    fi
+ 
+    # IPv6 privacy extensions: Use temporary addrs for outgoing connections?
+    local zone_masq6_privacy
+    config_get_bool zone_masq6_privacy "${config}" masq6_privacy 1
+ 
+    log "Found firewall zone_name=\"${zone_name}\" with zone_masq6=\"${zone_masq6}\" zone_masq6_privacy=\"${zone_masq6_privacy}\"."
+ 
+    log "Setting up masquerading nat6 for zone_name=\"${zone_name}\" with zone_masq6_privacy=\"${zone_masq6_privacy}\""
+ 
+    local ula_prefix="$(get_ula_prefix)"
+    validate_ula_prefix "${ula_prefix}" || return 1
+ 
+    local postrouting_chain="zone_${zone_name}_postrouting"
+    log "Ensuring ip6tables chain=\"${postrouting_chain}\" contains our MASQUERADE."
+    ip6t_add "${postrouting_chain}" -t nat \
+        -m comment --comment "!fw3" -j MASQUERADE
+ 
+    local input_chain="zone_${zone_name}_input"
+    log "Ensuring ip6tables chain=\"${input_chain}\" contains our permissive DNAT rule."
+    ip6t_add "${input_chain}" -t filter -m conntrack --ctstate DNAT \
+        -m comment --comment "!fw3: Accept port forwards" -j ACCEPT
+ 
+    local forward_chain="zone_${zone_name}_forward"
+    log "Ensuring ip6tables chain=\"${forward_chain}\" contains our permissive DNAT rule."
+    ip6t_add "${forward_chain}" -t filter -m conntrack --ctstate DNAT \
+        -m comment --comment "!fw3: Accept port forwards" -j ACCEPT
+ 
+    local DONE_NETWORK_DEVICES=""
+    config_list_foreach "${config}" network masq6_network
+ 
+    log "Done setting up nat6 for zone=\"${zone_name}\" on devices: ${DONE_NETWORK_DEVICES}"
+}
+ 
+main() {
+    nat6_init
+    config_load firewall
+    config_foreach handle_zone zone
+}
+ 
+main "${@}"

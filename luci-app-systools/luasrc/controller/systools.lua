@@ -87,13 +87,32 @@ function main_container(data, extra)
           required = true,
           title = "可执行操作",
           type = "string",
-          enum = {"disable-planb", "turn_off_ipv6", "full_ipv6", "half_ipv6", "reset_rom_pkgs", "qb_reset_password", "disk_power_mode", "speedtest", "openssl-aes256gcm", "openssl-chacha20-poly1305", "istore-reinstall", "disable-wandrop"},
+          enum = {
+            "select_none",
+            "turn_off_ipv6",
+            "ipv6_full_1", 
+            "ipv6_full_try_2", 
+            "ipv6_nat_3",
+            "ipv6_half_4", 
+            "disable-planb", 
+            "reset_rom_pkgs", 
+            "istore-reinstall", 
+            "qb_reset_password", 
+            "disk_power_mode", 
+            "speedtest", 
+            "openssl-aes256gcm",
+            "openssl-chacha20-poly1305", 
+          },
           enumNames = {
-            lng.translate("Disable LAN port keepalive"),
+            lng.translate("Select"), 
             lng.translate("Turn off IPv6"), 
-            lng.translate("Full IPv6"),
-            lng.translate("Half IPv6 (Only Router)"),
+            lng.translate("IPv6 Full"),
+            lng.translate("IPv6 Full try 2"),
+            lng.translate("IPv6 NAT 3"),
+            lng.translate("IPv6 Half (Only Router)"),
+            lng.translate("Disable LAN port keepalive"),
             lng.translate("Reset rom pkgs"), 
+            lng.translate("Reinstall iStore"), 
             lng.translate("Reset qBittorrent Password"),
             lng.translate("HDD hibernation Status"),
             lng.translate("Run SpeedTest"),
@@ -153,7 +172,7 @@ function get_data()
       extra["speedTestServers"] = get_speedtest_servers()
     end
   else
-    tool = "turn_off_ipv6"
+    tool = "select_none"
   end
   local data = {
     tool = tool,

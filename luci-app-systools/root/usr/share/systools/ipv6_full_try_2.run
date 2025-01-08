@@ -1,0 +1,70 @@
+#!/bin/sh
+
+ipv6_disable_nat() {
+  NAT6=`uci -q get firewall.nat6.reload`
+  if [ "$NAT6" = "1" ]; then
+    uci -q delete network.wan6.sourcefilter
+    uci -q delete firewall.nat6
+    uci commit firewall
+    /etc/init.d/firewall restart
+  fi
+}
+
+ipv6_disable_lan_server() {
+	uci -q batch <<-EOF >/dev/null
+		del dhcp.lan.ra
+		del dhcp.lan.ra_slaac
+		del dhcp.lan.ra_flags
+		del dhcp.lan.dhcpv6
+		del dhcp.lan.ndp
+EOF
+}
+
+ipv6_dns_on() {
+	uci -q delete 'dhcp.@dnsmasq[0].filter_aaaa'
+}
+
+ipv6_pppoe_mode() {
+	ipv6_disable_lan_server
+	ipv6_dns_on
+}
+
+is_lan_gateway() {
+	[ "$(uci -q get network.lan.defaultroute)" = "0" ] && return 1
+	[ "$(uci -q get network.lan.proto)" = "dhcp" ] && return 0
+	[ "$(uci -q get network.lan.proto)" = "static" ] || return 1
+	[ -n "$(uci -q get network.lan.gateway)" ]
+}
+
+is_wan_pppoe() {
+	[ "$(uci -q get network.wan.proto)" = "pppoe" ]
+}
+
+# disable ipv6 nat
+ipv6_disable_nat
+ipv6_pppoe_mode
+
+if is_lan_gateway; then
+	echo "Single-Port Router (LAN Gateway) mode"
+elif is_wan_pppoe; then
+	echo "PPPoE mode"
+	uci -q delete network.wan.ipv6
+else
+	echo "DHCP-Client mode, but disable lan server"
+  # enable ra server
+  uci -q set dhcp.lan.ra='server'
+  uci -q add_list dhcp.lan.ra_flags='managed-config'
+  uci -q add_list dhcp.lan.ra_flags='other-config'
+  uci -q set dhcp.lan.dhcpv6='server'
+fi
+
+uci -q batch <<-EOF >/dev/null
+	commit dhcp
+	commit network
+EOF
+
+/etc/init.d/odhcpd reload
+/etc/init.d/dnsmasq reload
+/etc/init.d/network reload
+
+echo "Done"
