@@ -244,6 +244,7 @@ return view.extend({
 	},
 
 	handleSaveApply: function (ev) {
+		var m = this.map;
 		onclick = L.bind(this.handleSave, this, m);
 		return fs.exec('/etc/init.d/mosdns', ['restart']);
 	},
