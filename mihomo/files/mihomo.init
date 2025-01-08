@@ -490,13 +490,13 @@ service_started() {
 		log "Transparent Proxy" "Set proxy for router."
 		if [ "$tcp_transparent_proxy_mode" == "redirect" ]; then
 			nft insert rule inet "$FW_TABLE" nat_output jump router_dns_hijack
-			nft add rule inet "$FW_TABLE" nat_output meta l4proto tcp jump router_${tcp_transparent_proxy_mode}
+			nft add rule inet "$FW_TABLE" nat_output meta l4proto tcp jump "router_${tcp_transparent_proxy_mode}"
 		else
 			nft flush chain inet "$FW_TABLE" nat_output
 			nft add rule inet "$FW_TABLE" nat_output jump router_dns_hijack
-			nft add rule inet "$FW_TABLE" mangle_output meta l4proto tcp jump router_reroute
+			nft add rule inet "$FW_TABLE" mangle_output meta l4proto tcp jump "router_${tcp_transparent_proxy_mode}"
 		fi
-		nft add rule inet "$FW_TABLE" mangle_output meta l4proto udp jump router_reroute
+		nft add rule inet "$FW_TABLE" mangle_output meta l4proto udp jump "router_${udp_transparent_proxy_mode}"
 	fi
 	# lan proxy
 	if [ "$lan_proxy" == 1 ]; then

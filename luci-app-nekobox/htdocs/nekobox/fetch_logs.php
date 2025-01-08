@@ -32,6 +32,10 @@ function format_datetime($line) {
     return preg_replace($pattern, '[ \3 ]', $line);
 }
 
+function is_bang_line($line) {
+    return preg_match('/^\[\!\]/', $line);
+}
+
 if (array_key_exists($file, $allowed_files)) {
     $file_path = $allowed_files[$file];
 
@@ -40,7 +44,7 @@ if (array_key_exists($file, $allowed_files)) {
         $lines = array_map('remove_ansi_colors', $lines);        
         $lines = array_map('format_datetime', $lines);
         $lines = array_filter($lines, function($line) use ($max_line_length) {
-            return strlen($line) <= $max_line_length;
+            return strlen($line) <= $max_line_length && !is_bang_line($line);
         });
 
         $lines_with_numbers = array_map(function($line, $index) {
