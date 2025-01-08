@@ -28,6 +28,14 @@ ipv6_pppoe_mode() {
 	ipv6_dns_on
 }
 
+if opkg list-installed | grep -q "kmod-ipt-nat6"; then
+  echo "kmod-ipt-nat6 found"
+else
+  echo "kmod-ipt-nat6 not found, installing"
+  opkg update
+  opkg install kmod-ipt-nat6
+fi
+
 echo "IPv6 NAT mode"
 ipv6_enable_nat
 ipv6_pppoe_mode
