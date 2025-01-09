@@ -1,0 +1,2 @@
+config tailscale 'settings'
+	option enabled '0'
