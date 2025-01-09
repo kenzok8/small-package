@@ -95,6 +95,15 @@ wget -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >> "\$LOG_FILE" 2>&1
 
 if [ \$? -eq 0 ]; then
   echo "\$(date): 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
+
+  sed -i 's/"outbounds":\s*\[\s*"Proxy"\s*\]/"outbounds": ["DIRECT"]/g' "\$CONFIG_FILE"
+
+  if [ \$? -eq 0 ]; then
+    echo "\$(date): 配置文件中的 Proxy 已成功替换为 DIRECT。" >> "\$LOG_FILE"
+  else
+    echo "\$(date): 替换 Proxy 为 DIRECT 失败，请检查配置文件。" >> "\$LOG_FILE"
+    exit 1
+  fi
 else
   echo "\$(date): 配置文件更新失败，请检查链接或网络。" >> "\$LOG_FILE"
   exit 1
@@ -155,16 +164,13 @@ EOL;
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
             <p>
-                  请选择一个模板以生成配置文件：根据订阅节点信息选择相应的模板。若选择带有地区分组的模板，请确保您的节点包含以下线路。
+                  请选择一个模板以生成配置文件
             </p>
             <ul>
-                <li><strong>模板 1</strong>：无地区  无分组 通用。</li>
-                <li><strong>模板 2</strong>：无地区  带分流规则 通用。</li>
-                <li><strong>模板 3</strong>：香港 日本 美国 分组 带分流规则。</li>
-                <li><strong>模板 4</strong>：香港 新加坡 日本 美国 分组 带分流规则。</li>
-                <li><strong>模板 5</strong>：新加坡 日本 美国 韩国 分组 带分流规则。</li>
-                <li><strong>模板 6</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 带分流规则。</li>
-                <li><strong>模板 7</strong>：同上多规则。</li>
+                <li><strong>模板 1</strong>：无地区  无分组 。</li>
+                <li><strong>模板 2</strong>：无地区  带分流规则 。</li>
+                <li><strong>模板 3</strong>：香港 台湾 新加坡 日本 美国 韩国 分组 带分流规则。</li>
+                <li><strong>模板 4</strong>：同上多规则。</li>
             </ul>
         </div>
         <form method="post" action="">
@@ -201,15 +207,7 @@ EOL;
                     </div>
                     <div class="col">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate5" name="defaultTemplate" value="5">
-                        <label class="form-check-label" for="useDefaultTemplate5">模板 5</label>
-                    </div>
-                    <div class="col">
-                        <input type="radio" class="form-check-input" id="useDefaultTemplate6" name="defaultTemplate" value="6">
-                        <label class="form-check-label" for="useDefaultTemplate6">模板 6</label>
-                    </div>
-                    <div class="col">
-                        <input type="radio" class="form-check-input" id="useDefaultTemplate7" name="defaultTemplate" value="7">
-                        <label class="form-check-label" for="useDefaultTemplate7">模板 7</label>
+                        <label class="form-check-label" for="useDefaultTemplate4">模板 5</label>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -327,11 +325,9 @@ EOL;
                 $defaultTemplates = [
                     '1' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_7.json",
                     '2' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_6.json",
-                    '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_9.json",
-                    '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_10.json",
-                    '5' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_11.json",
-                    '6' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json",
-                    '7' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_12.json"
+                    '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json",
+                    '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_12.json",
+                    '5' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_2.json"
                 ];
 
                 $templateUrlEncoded = urlencode($defaultTemplates[$_POST['defaultTemplate']] ?? '');
@@ -362,6 +358,13 @@ EOL;
                 if ($downloadedContent === false) {
                     $logMessages[] = "无法读取下载的文件内容";
                 } else {
+                    $downloadedContent = preg_replace_callback(
+                        '/\{\s*"tag":\s*"(.*?)",\s*"type":\s*"selector",\s*"outbounds":\s*\[\s*"Proxy"\s*\]\s*\}/s',
+                        function ($matches) {
+                            return str_replace('"Proxy"', '"DIRECT"', $matches[0]);
+                        },
+                        $downloadedContent
+                    );
 
                     if (isset($_POST['defaultTemplate']) && $_POST['defaultTemplate'] == '0') {
                 $replacement = '
