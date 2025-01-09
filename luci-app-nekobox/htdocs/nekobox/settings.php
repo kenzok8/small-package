@@ -165,6 +165,7 @@ $razordVersion = getRazordVersion();
     <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
     <link href="./assets/css/custom.css" rel="stylesheet">
+    <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
     <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
@@ -181,10 +182,10 @@ $razordVersion = getRazordVersion();
   <body>
     <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
         <div class="row">
-            <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-            <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
-            <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
-            <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
+            <a href="./index.php" class="col btn btn-lg"><i class="bi bi-house-door"></i> 首页</a>
+            <a href="./dashboard.php" class="col btn btn-lg"><i class="bi bi-bar-chart"></i> 面板</a>
+            <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-box"></i> 订阅</a> 
+            <a href="./settings.php" class="col btn btn-lg"><i class="bi bi-gear"></i> 设定</a>
 <div class="container px-4">
     <h2 class="text-center p-2 mb-4">主题设定</h2>
     <form action="settings.php" method="post">

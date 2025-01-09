@@ -470,11 +470,11 @@ EOL;
 </style>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11 ">
     <div class="row">
-        <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg">🗃️ 文件管理</a>
-        <a href="./singbox.php" class="col btn btn-lg">🏪 模板 一</a>
-        <a href="./subscription.php" class="col btn btn-lg">🏦  模板 二</a>
-        <a href="./mihomo.php" class="col btn btn-lg">🏣 模板 三</a>
+        <a href="./index.php" class="col btn btn-lg"><i class="bi bi-house-door"></i> 首页</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg"><i class="bi bi-folder"></i> 文件管理</a>
+        <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-shop"></i> 模板 一</a>
+        <a href="./subscription.php" class="col btn btn-lg"><i class="bi bi-bank"></i>  模板 二</a>
+        <a href="./mihomo.php" class="col btn btn-lg"><i class="bi bi-building"></i> 模板 三</a>
         <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;">Sing-box 订阅转换模板 二</h1>
 
         <div class="col-12 custom-padding">

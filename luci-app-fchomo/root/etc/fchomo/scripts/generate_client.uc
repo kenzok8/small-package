@@ -11,7 +11,7 @@ import { urldecode, urlencode } from 'luci.http';
 import {
 	isEmpty, strToBool, strToInt, bytesizeToByte, durationToSecond,
 	arrToObj, removeBlankAttrs,
-	HM_DIR, RUN_DIR, PRESET_OUTBOUND
+	HM_DIR, RUN_DIR, PRESET_OUTBOUND, RULES_LOGICAL_TYPE
 } from 'fchomo';
 
 const ubus = connect();
@@ -164,18 +164,35 @@ function parse_entry(cfg) {
 	if (isEmpty(cfg))
 		return null;
 
-	let arr = split(cfg, ',');
-	if (arr[0] === 'MATCH') {
-		arr[1] = get_proxygroup(arr[1]);
-	} else if (arr[0] === 'SUB-RULE') {
-		arr[1] = replace(arr[1], /ꓹ|‚/g, ','); // U+A4F9 | U+201A
-		arr[2] = replace(arr[2], /ꓹ|‚/g, ','); // U+A4F9 | U+201A
-	} else {
-		arr[1] = replace(arr[1], /ꓹ|‚/g, ','); // U+A4F9 | U+201A
-		arr[2] = get_proxygroup(arr[2]);
+	let rule = json(cfg);
+	if (rule.detour)
+		rule.detour = get_proxygroup(rule.detour);
+
+	function _payloadStrategy(payload) {
+		// LOGIC_TYPE,((payload1),(payload2))
+		if (payload.factor === null || (type(payload.factor) in ['bool', 'int', 'string'])) {
+			return sprintf(payload.deny ? 'NOT,((%s))' : '%s', join(',', [payload.type, payload.factor ?? '']));
+		} else if (type(payload.factor) === 'array') {
+			return sprintf(`${payload.type},(%s)`, join(',', map(payload.factor, p => `(${_payloadStrategy(p)})`)));
+		} else if (type(payload.factor) === 'object') {
+			die(sprintf(`Factor type cannot be an object: '%J'`, payload.factor));
+		} else
+			die(`Factor type is incorrect: '${payload.factor}'`);
 	}
 
-	return join(',', arr);
+	// toMihomo
+	let logical = (rule.type in RULES_LOGICAL_TYPE);
+	let payload = _payloadStrategy(logical ? {type: rule.type, factor: rule.payload} : rule.payload[0]);
+
+	if (rule.subrule)
+		return sprintf('SUB-RULE,(%s),%s', payload, rule.subrule);
+	else
+		if (rule.type === 'MATCH')
+			return join(',', [rule.type, rule.detour]);
+		else
+			return join(',', [...[payload, rule.detour],
+				...(rule.params ? keys(rule.params) : [])
+			]);
 }
 /* Config helper END */
 

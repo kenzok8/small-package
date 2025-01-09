@@ -84,16 +84,17 @@ return baseclass.extend({
         return L.resolveDefault(fs.exec_direct('/usr/libexec/mihomo-call', ['version', 'core']), _('Unknown'));
     },
 
-    callMihomoAPI: async function (method, path, body) {
+    callMihomoAPI: async function (method, path, params, body) {
         const running = await this.status();
         if (running) {
             const apiPort = uci.get('mihomo', 'mixin', 'api_port');
             const apiSecret = uci.get('mihomo', 'mixin', 'api_secret');
-            const url = `http://${window.location.hostname}:${apiPort}${path}`;
+            const query = new URLSearchParams(params).toString();
+            const url = `http://${window.location.hostname}:${apiPort}${path}?${query}`;
             await fetch(url, {
                 method: method,
                 headers: { 'Authorization': `Bearer ${apiSecret}` },
-                body: body
+                body: JSON.stringify(body)
             })
         } else {
             alert(_('Service is not running.'));

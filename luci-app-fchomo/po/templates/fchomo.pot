@@ -35,6 +35,10 @@ msgstr ""
 msgid "2022-blake3-chacha20-poly1305"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/client.js:423
+msgid "<code>0</code> or <code>1</code> only."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/server.js:344
 #: htdocs/luci-static/resources/view/fchomo/server.js:359
 msgid "<strong>Save your configuration before uploading files!</strong>"
@@ -1363,6 +1367,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:179
 msgid "Multiplexing"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:341
+msgid "NOT"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:915

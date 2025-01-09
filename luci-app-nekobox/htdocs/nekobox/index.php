@@ -703,10 +703,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
     <?php endif; ?>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
-            <a href="./index.php" class="col btn btn-lg">🏠 首页</a>
-            <a href="./dashboard.php" class="col btn btn-lg">📊 面板</a>
-            <a href="./singbox.php" class="col btn btn-lg"></i>📦 订阅</a> 
-            <a href="./settings.php" class="col btn btn-lg">🛠️ 设定</a>
+            <a href="./index.php" class="col btn btn-lg"><i class="bi bi-house-door"></i> 首页</a>
+            <a href="./dashboard.php" class="col btn btn-lg"><i class="bi bi-bar-chart"></i> 面板</a>
+            <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-box"></i> 订阅</a> 
+            <a href="./settings.php" class="col btn btn-lg"><i class="bi bi-gear"></i> 设定</a>
     <div class="container-sm text-center col-8">
   <img src="./assets/img/nekobox.png">
 <div id="version-info">
