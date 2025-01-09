@@ -156,6 +156,7 @@ git clone --depth 1 https://github.com/Carseason/openwrt-themedog && mv -n openw
 git clone --depth 1 https://github.com/Carseason/openwrt-app-actions Carseason && mv -n Carseason/applications/* ./;rm -rf Carseason
 git clone --depth 1 https://github.com/Akimio521/luci-app-gecoosac
 git clone --depth 1 https://github.com/EasyTier/luci-app-easytier
+git clone --depth 1 https://github.com/asvow/luci-app-tailscale
 
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
 svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
@@ -180,10 +181,10 @@ mv -f miniupnpd miniupnpd-iptables
 git_sparse_clone master "https://github.com/coolsnowwolf/luci" "leanluci" applications/luci-app-unblockmusic \
 libs/luci-lib-fs
 
-git_sparse_clone openwrt-23.05 "https://github.com/openwrt/packages" "22packages" \
+git_sparse_clone openwrt-24.10 "https://github.com/openwrt/packages" "24packages" \
 utils/cgroupfs-mount utils/coremark utils/watchcat utils/dockerd net/nginx net/uwsgi net/ddns-scripts \
 net/ariang admin/netdata net/transmission-web-control net/rp-pppoe net/tailscale
-git_sparse_clone openwrt-23.05 "https://github.com/openwrt/openwrt" "openwrt" \
+git_sparse_clone openwrt-24.10 "https://github.com/openwrt/openwrt" "openwrt" \
 package/base-files package/network/config/firewall4 package/network/config/firewall package/system/opkg package/network/services/ppp \
 package/network/services/dnsmasq package/libs/openssl
 
@@ -203,7 +204,7 @@ package/network/utils/fullconenat package/network/utils/fullconenat-nft \
 package/utils/mhz package/libs/libnftnl package/firmware/wireless-regdb
 
 git_sparse_clone master "https://github.com/sbwml/openwrt_pkgs" "openwrt_pkgs" luci-app-gowebdav luci-app-ota luci-app-socat \
-git_sparse_clone openwrt-23.05 "https://github.com/openwrt/luci" "opluci" applications/luci-app-watchcat \
+git_sparse_clone openwrt-24.10 "https://github.com/openwrt/luci" "opluci" applications/luci-app-watchcat \
 
 #mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
 rm -rf openssl
