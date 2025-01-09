@@ -174,9 +174,9 @@ return baseclass.extend({
 	],
 
 	rules_logical_payload_count: {
-		'AND': { req: 2, opt: undefined },
-		'OR': { req: 2, opt: undefined },
-		'NOT': { req: 1, opt: 0 },
+		'AND': { low: 2, high: undefined },
+		'OR': { low: 2, high: undefined },
+		'NOT': { low: 1, high: 1 },
 		//'SUB-RULE': 0,
 	},
 
@@ -359,6 +359,31 @@ return baseclass.extend({
 			default:
 				return null;
 		};
+	},
+
+	removeBlankAttrs: function(self, res) {
+		let content;
+
+		if (res?.constructor === Object) {
+			content = {};
+			Object.keys(res).map((k) => {
+				if ([Array, Object].includes(res[k]?.constructor))
+					content[k] = self.removeBlankAttrs(self, res[k]);
+				else if (res[k] !== null && res[k] !== '')
+					content[k] = res[k];
+			});
+		} else if (res?.constructor === Array) {
+			content = [];
+			res.map((k, i) => {
+				if ([Array, Object].includes(k?.constructor))
+					content.push(self.removeBlankAttrs(self, k));
+				else if (k !== null && k !== '')
+					content.push(k);
+			});
+		} else
+			return res;
+
+		return content;
 	},
 
 	getFeatures: function() {

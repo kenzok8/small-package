@@ -42,6 +42,10 @@ msgstr ""
 msgid "2022-blake3-chacha20-poly1305"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/client.js:423
+msgid "<code>0</code> or <code>1</code> only."
+msgstr "仅限 <code>0</code> 或 <code>1</code>。"
+
 #: htdocs/luci-static/resources/view/fchomo/server.js:344
 #: htdocs/luci-static/resources/view/fchomo/server.js:359
 msgid "<strong>Save your configuration before uploading files!</strong>"
@@ -1386,6 +1390,10 @@ msgstr "多路复用字段"
 #: htdocs/luci-static/resources/view/fchomo/node.js:179
 msgid "Multiplexing"
 msgstr "多路复用"
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:341
+msgid "NOT"
+msgstr "NOT"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:915
 msgid "Name of the Proxy group to download provider."

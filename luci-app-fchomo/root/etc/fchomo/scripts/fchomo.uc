@@ -12,6 +12,11 @@ export const PRESET_OUTBOUND = [
 	'PASS',
 	'COMPATIBLE'
 ];
+export const RULES_LOGICAL_TYPE = [
+	'AND',
+	'OR',
+	'NOT'
+];
 /* Global variables END */
 
 /* Utilities start */
