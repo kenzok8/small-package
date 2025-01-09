@@ -22,12 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($file['error'] === UPLOAD_ERR_OK) {
             if (move_uploaded_file($file['tmp_name'], $uploadFilePath)) {
-                echo '文件上传成功：' . htmlspecialchars(basename($file['name']));
+                echo '<div class="alert alert-success" role="alert">文件上传成功：' . htmlspecialchars(basename($file['name'])) . '</div>';
             } else {
-                echo '文件上传失败！';
+                echo '<div class="alert alert-danger" role="alert">文件上传失败！</div>';
             }
         } else {
-            echo '上传错误：' . $file['error'];
+            echo '<div class="alert alert-danger" role="alert">上传错误：' . $file['error'] . '</div>';
         }
     }
 
@@ -37,30 +37,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($file['error'] === UPLOAD_ERR_OK) {
             if (move_uploaded_file($file['tmp_name'], $uploadFilePath)) {
-                echo '配置文件上传成功：' . htmlspecialchars(basename($file['name']));
+                echo '<div class="alert alert-success" role="alert">配置文件上传成功：' . htmlspecialchars(basename($file['name'])) . '</div>';
             } else {
-                echo '配置文件上传失败！';
+                echo '<div class="alert alert-danger" role="alert">配置文件上传失败！</div>';
             }
         } else {
-            echo '上传错误：' . $file['error'];
+            echo '<div class="alert alert-danger" role="alert">上传错误：' . $file['error'] . '</div>';
         }
     }
 
     if (isset($_POST['deleteFile'])) {
         $fileToDelete = $uploadDir . basename($_POST['deleteFile']);
         if (file_exists($fileToDelete) && unlink($fileToDelete)) {
-            echo '文件删除成功：' . htmlspecialchars(basename($_POST['deleteFile']));
+            echo '<div class="alert alert-success" role="alert">
+                文件删除成功：' . htmlspecialchars(basename($_POST['deleteFile'])) . '</div>';
         } else {
-            echo '文件删除失败！';
+            echo '<div class="alert alert-danger" role="alert">文件删除失败！</div>';
         }
     }
 
     if (isset($_POST['deleteConfigFile'])) {
         $fileToDelete = $configDir . basename($_POST['deleteConfigFile']);
         if (file_exists($fileToDelete) && unlink($fileToDelete)) {
-            echo '配置文件删除成功：' . htmlspecialchars(basename($_POST['deleteConfigFile']));
+            echo '<div class="alert alert-success" role="alert">
+                配置文件删除成功：' . htmlspecialchars(basename($_POST['deleteConfigFile'])) . '</div>';
         } else {
-            echo '配置文件删除失败！';
+            echo '<div class="alert alert-danger" role="alert">配置文件删除失败！</div>';
         }
     }
 
@@ -82,12 +84,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (file_exists($oldFilePath) && !file_exists($newFilePath)) {
         if (rename($oldFilePath, $newFilePath)) {
-            echo '文件重命名成功：' . htmlspecialchars($oldFileName) . ' -> ' . htmlspecialchars($newFileName);
+            echo '<div class="alert alert-success" role="alert">
+                    文件重命名成功：' . htmlspecialchars($oldFileName) . ' -> ' . htmlspecialchars($newFileName) . ' </div>';
         } else {
-            echo '文件重命名失败！';
+            echo '<div class="alert alert-danger" role="alert">文件重命名失败！</div>';     
         }
     } else {
-        echo '文件重命名失败，文件不存在或新文件名已存在。';
+        echo '<div class="alert alert-danger" role="alert">文件重命名失败，文件不存在或新文件名已存在。</div>';
         }
     }
 
@@ -95,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fileToSave = ($_POST['fileType'] === 'proxy') ? $uploadDir . basename($_POST['fileName']) : $configDir . basename($_POST['fileName']);
             $contentToSave = $_POST['saveContent'];
             file_put_contents($fileToSave, $contentToSave);
-            echo '<p>文件内容已更新：' . htmlspecialchars(basename($fileToSave)) . '</p>';
+            echo '<div class="alert alert-info" role="alert">文件内容已更新：' . htmlspecialchars(basename($fileToSave)) . '</div>';
         }
     }
 
@@ -340,6 +343,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exec("(crontab -l; echo '$cronJob') | crontab -");
         echo "<div class='alert alert-success'>Cron 任务已成功添加或更新！</div>";
     }
+}
+?>
+<?php
+$file_urls = [
+    'geoip' => 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
+    'geosite' => 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
+    'cache' => 'https://github.com/Thaolga/neko/raw/main/cache.db' 
+];
+
+$download_directories = [
+    'geoip' => '/etc/neko/',
+    'geosite' => '/etc/neko/',
+    'cache' => '/www/nekobox/' 
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['file'])) {
+    $file = $_GET['file'];
+
+    if (isset($file_urls[$file])) {
+        $file_url = $file_urls[$file];
+        $destination_directory = $download_directories[$file];
+        $destination_path = $destination_directory . basename($file_url);
+
+        if (download_file($file_url, $destination_path)) {
+            echo "<div class='alert alert-success'>文件成功下载到 $destination_path</div>";
+        } else {
+            echo "<div class='alert alert-danger'>文件下载失败</div>";
+        }
+    } else {
+        echo "无效的文件请求";
+    }
+}
+
+function download_file($url, $destination) {
+    $ch = curl_init($url);
+    $fp = fopen($destination, 'wb');
+
+    curl_setopt($ch, CURLOPT_FILE, $fp);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+    $result = curl_exec($ch);
+    curl_close($ch);
+    fclose($fp);
+
+    return $result !== false;
 }
 ?>
 <!doctype html>
@@ -683,7 +732,6 @@ function showUpdateAlert() {
                     <div class="mt-3 d-flex justify-content-start gap-2">
                         <button type="submit" class="btn btn-primary">保存</button>
                         <button type="button" class="btn btn-pink" onclick="openFullScreenEditor()">高级编辑</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     </div>
                 </form>
             </div>
@@ -1115,13 +1163,46 @@ function initializeAceEditor() {
             <button type="submit" name="createShellScript" value="true" class="btn btn-success mx-2">
                 <i class="bi bi-terminal"></i> 生成更新脚本
             </button>
+            <button type="button" class="btn btn-primary mx-2" data-bs-toggle="modal" data-bs-target="#downloadModal">
+                <i class="bi bi-download"></i> 更新数据库
+            </button>
              <td>
-            <a class="btn btn-info btn-sm text-white" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
+            <a class="btn btn-info btn-sm text-white mx-2" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
                 <i class="bi bi-file-earmark-text"></i> 打开文件助手
             </a>
         </td>
         </form>
     </div>
+
+    <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="downloadModalLabel">选择数据库下载</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                </div>
+                <div class="modal-body">
+                    <form method="GET" action="">
+                        <div class="mb-3">
+                            <label for="fileSelect" class="form-label">选择文件</label>
+                            <select class="form-select" id="fileSelect" name="file">
+                                <option value="geoip">geoip.metadb</option>
+                                <option value="geosite">geosite.dat</option>
+                                <option value="cache">cache.db</option>
+                            </select>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary me-2">下载</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <form method="POST">
     <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
