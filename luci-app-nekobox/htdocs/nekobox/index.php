@@ -37,7 +37,7 @@ log() {
     echo "[$(date)] $1" >> "$FIREWALL_LOG"
 }
 
-log "Starting Sing-box with config: $CONFIG_FILE"
+//log "Starting Sing-box with config: $CONFIG_FILE"
 
 log "Restarting firewall..."
 /etc/init.d/firewall restart
@@ -205,10 +205,10 @@ function createStartScript($configFile) {
     file_put_contents('/etc/neko/core/start.sh', $script);
     chmod('/etc/neko/core/start.sh', 0755);
     
-    writeToLog("Created start script with config: $configFile");
-    writeToLog("Singbox binary: $singbox_bin");
-    writeToLog("Log file: $singbox_log"); 
-    writeToLog("Firewall log file: $log");
+    //writeToLog("Created start script with config: $configFile");
+    //writeToLog("Singbox binary: $singbox_bin");
+    //writeToLog("Log file: $singbox_log"); 
+    //writeToLog("Firewall log file: $log");
 }
 
 function writeToLog($message) {
@@ -280,7 +280,7 @@ function rotateLogs($logFile, $maxSize = 1048576) {
     if (file_exists($logFile) && filesize($logFile) > $maxSize) {
         file_put_contents($logFile, '');
         chmod($logFile, 0644);      
-        echo "Log file cleared successfully.\n";
+       // echo "Log file cleared successfully.\n";
     }
 }
 
@@ -327,7 +327,7 @@ function getAvailableConfigFiles() {
 
 $availableConfigs = getAvailableConfigFiles();
 
-writeToLog("Script started");
+//writeToLog("Script started");
 
 if(isset($_POST['neko'])){
    $dt = $_POST['neko'];
@@ -337,24 +337,24 @@ if(isset($_POST['neko'])){
            writeToLog("Cannot start NekoBox: Sing-box is running");
        } else {
            shell_exec("$neko_dir/core/neko -s");
-           writeToLog("NekoBox started successfully");
+           writeToLog("Mihomo started successfully");
        }
    }
    if ($dt == 'disable') {
        shell_exec("$neko_dir/core/neko -k");
-       writeToLog("NekoBox stopped");
+       writeToLog("Mihomo stopped");
    }
    if ($dt == 'restart') {
        if (isSingboxRunning()) {
            writeToLog("Cannot restart NekoBox: Sing-box is running");
        } else {
            shell_exec("$neko_dir/core/neko -r");
-           writeToLog("NekoBox restarted successfully");
+           writeToLog("Mihomo restarted successfully");
        }
    }
    if ($dt == 'clear') {
        shell_exec("echo \"Logs has been cleared...\" > $neko_dir/tmp/neko_log.txt");
-       writeToLog("NekoBox logs cleared");
+       writeToLog("Mihomo logs cleared");
    }
    writeToLog("Neko action completed: $dt");
 }
@@ -364,7 +364,7 @@ if (isset($_POST['singbox'])) {
    $config_file = isset($_POST['config_file']) ? $_POST['config_file'] : '';
    
    writeToLog("Received singbox action: $action");
-   writeToLog("Config file: $config_file");
+   //writeToLog("Config file: $config_file");
    
    switch ($action) {
        case 'start':
@@ -383,9 +383,9 @@ if (isset($_POST['singbox'])) {
                createStartScript($config_file);
                createCronScript();
                $output = shell_exec("sh $start_script_path >> $singbox_log 2>&1 &");
-               writeToLog("Shell output: " . ($output ?: "No output"));
+               //writeToLog("Shell output: " . ($output ?: "No output"));
                
-               sleep(1);
+               sleep(3);
                $pid = getSingboxPID();
                if ($pid) {
                    writeToLog("Sing-box Started successfully. PID: $pid");
@@ -442,7 +442,7 @@ if (isset($_POST['singbox'])) {
                createStartScript($config_file);
                shell_exec("sh $start_script_path >> $singbox_log 2>&1 &");
                
-               sleep(1);
+               sleep(3);
                $new_pid = getSingboxPID();
                if ($new_pid) {
                    writeToLog("Sing-box Restarted successfully. New PID: $new_pid");
@@ -458,7 +458,7 @@ if (isset($_POST['singbox'])) {
    $singbox_status = isSingboxRunning() ? '1' : '0';
    exec("uci set neko.cfg.singbox_enabled='$singbox_status'");
    exec("uci commit neko");
-   writeToLog("Singbox status set to: $singbox_status");
+   //writeToLog("Singbox status set to: $singbox_status");
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cronTime'])) {
@@ -508,7 +508,7 @@ if (isset($_POST['clear_singbox_log'])) {
 if (isset($_POST['clear_plugin_log'])) {
     $plugin_log_file = "$neko_dir/tmp/log.txt";
     file_put_contents($plugin_log_file, '');
-    writeToLog("NeKoBox log cleared");
+    writeToLog("Nekobox log cleared");
 }
 
 $neko_status = exec("uci -q get neko.cfg.enabled");
@@ -516,14 +516,14 @@ $singbox_status = isSingboxRunning() ? '1' : '0';
 exec("uci set neko.cfg.singbox_enabled='$singbox_status'");
 exec("uci commit neko");
 
-writeToLog("Final neko status: $neko_status");
-writeToLog("Final singbox status: $singbox_status");
+//writeToLog("Final neko status: $neko_status");
+//writeToLog("Final singbox status: $singbox_status");
 
 if ($singbox_status == '1') {
    $runningConfigFile = getRunningConfigFile();
    if ($runningConfigFile) {
        $str_cfg = htmlspecialchars(basename($runningConfigFile));
-       writeToLog("Running config file: $str_cfg");
+       //writeToLog("Running config file: $str_cfg");
    } else {
        $str_cfg = 'Sing-box 配置文件：未找到运行中的配置文件';
        writeToLog("No running config file found");

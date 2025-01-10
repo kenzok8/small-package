@@ -116,6 +116,9 @@ $configFiles = scandir($configDir);
 
 if ($proxyFiles !== false) {
     $proxyFiles = array_diff($proxyFiles, array('.', '..'));
+    $proxyFiles = array_filter($proxyFiles, function($file) {
+        return pathinfo($file, PATHINFO_EXTENSION) !== 'txt';
+    });
 } else {
     $proxyFiles = []; 
 }
