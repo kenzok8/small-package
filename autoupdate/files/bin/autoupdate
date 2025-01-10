@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.10.4
+Version=V6.10.5
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -149,10 +149,10 @@ function STRING() {
 	-f)
 		shift
 		[[ ! -r $1 ]] && return
-		egrep -q $2 $1 2> /dev/null && echo -n $2
+		grep -E -q $2 $1 2> /dev/null && echo -n $2
 	;;
 	*)
-		echo -n $1 | egrep -q $2 2> /dev/null && echo -n $2
+		echo -n $1 | grep -E -q $2 2> /dev/null && echo -n $2
 	;;
 	esac
 	return
@@ -539,9 +539,9 @@ function ANALYZE_API() {
 		case ${name} in
 		AutoBuild-${OP_REPO}-${TARGET_PROFILE}-* | Update_Logs.json)
 			LOGGER "可用固件/日志: ${name}"
-			eval format=$(egrep -o '\.[a-z]+.+' <<< ${name} | cut -c2-10)
-			eval version=$(egrep -o "R[0-9.]+-[0-9]+" <<< ${name})
-			eval sha256=$(egrep -o "\-[a-z0-9]+" <<< ${name} | cut -c2-6 | awk 'END{print}')
+			eval format=$(grep -E -o '\.[a-z]+.+' <<< ${name} | cut -c2-10)
+			eval version=$(grep -E -o "R[0-9.]+-[0-9]+" <<< ${name})
+			eval sha256=$(grep -E -o "\-[a-z0-9]+" <<< ${name} | cut -c2-6 | awk 'END{print}')
 			eval browser_download_url=$(jq ".assets[${i}].browser_download_url" ${API_Cache} 2> /dev/null)
 			eval size=$(jq ".assets[${i}].size" ${API_Cache} 2> /dev/null | awk '{a=$1/1048576} {printf("%.2f\n",a)}')
 			eval updated_at=$(jq ".assets[${i}].updated_at" ${API_Cache} 2> /dev/null | sed 's/[-:TZ]//g')
@@ -552,7 +552,7 @@ function ANALYZE_API() {
 			[[ ! ${updated_at} || ${updated_at} == null ]] && updated_at="-"
 			[[ ! ${download_count} || ${download_count} == null ]] && download_count="-"
 			[[ ! ${sha256} || ${sha256} == null ]] && sha256="-"
-			printf "%-75s %-15s %-5s %-8s %-20s %-10s %-15s %s\n" ${name} ${format} ${download_count} ${sha256} ${version} ${updated_at} ${size} ${browser_download_url} | egrep -v "${REGEX_Skip_Format}" >> ${API_File}
+			printf "%-75s %-15s %-5s %-8s %-20s %-10s %-15s %s\n" ${name} ${format} ${download_count} ${sha256} ${version} ${updated_at} ${size} ${browser_download_url} | grep -E -v "${REGEX_Skip_Format}" >> ${API_File}
 		;;
 		esac
 	done
@@ -620,7 +620,7 @@ function GET_CLOUD_LOG() {
 	if [[ ${log_Test} && ${log_Test} != null ]]
 	then
 		echo -e "\n${Grey}${Version} 固件更新日志:${Green}\n"
-		jq '."'"${TARGET_PROFILE}"'"."'"${Version}"'"' ${Tmp_Path}/Update_Logs.json 2> /dev/null | egrep -v "\[|\]"
+		jq '."'"${TARGET_PROFILE}"'"."'"${Version}"'"' ${Tmp_Path}/Update_Logs.json 2> /dev/null | grep -E -v "\[|\]"
 		echo -e "${White}"
 	else
 		LOGGER "未获取到 [${Version}] 固件的日志信息!"
@@ -909,14 +909,14 @@ function DOWNLOADER() {
 		;;
 		--url)
 			shift
-			DL_URL=($(egrep -o "https://.*@@[0-9]+|http://.*@@[0-9]+" <<< $@))
+			DL_URL=($(grep -E -o "https://.*@@[0-9]+|http://.*@@[0-9]+" <<< $@))
 			if [[ ! ${DL_URL[*]} ]]
 			then
 				DL_URL=($1)
 				DL_URL_Count="${#DL_URL[@]}"
 				DL_Retires_All="${DL_URL_Count}"
 			else
-				DL_Retires_All="$(egrep -o "@@[0-9]+" <<< ${DL_URL[*]} | egrep -o "[0-9]+" | awk '{Sum += $1};END {print Sum}')"
+				DL_Retires_All="$(grep -E -o "@@[0-9]+" <<< ${DL_URL[*]} | grep -E -o "[0-9]+" | awk '{Sum += $1};END {print Sum}')"
 				DL_URL_Count="${#DL_URL[@]}"
 			fi
 			while [[ $1 ]]
@@ -1342,7 +1342,7 @@ function AutoUpdate_Main() {
 			case $1 in
 			[Cc]loud)
 				URL="$(Proxy_X ${Script_Url} G@@1 X@@1)"
-				DOWNLOADER --dl ${DL_DEPENDS[@]} --url ${URL} --path ${Tmp_Path} --print --type 临时程序 | egrep -o "V[0-9].+"
+				DOWNLOADER --dl ${DL_DEPENDS[@]} --url ${URL} --path ${Tmp_Path} --print --type 临时程序 | grep -E -o "V[0-9].+"
 			;;
 			*)
 				echo ${Version}
