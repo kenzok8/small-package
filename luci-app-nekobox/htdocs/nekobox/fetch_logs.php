@@ -24,16 +24,28 @@ function remove_ansi_colors($string) {
 }
 
 function format_datetime($line) {
-    $pattern = '/^(\+?\d{4}\s)(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/';   
-    if (@preg_match($pattern, '') === false) {
-        error_log("Invalid regex pattern: $pattern");
-        return $line; 
+    $pattern = '/^\[\w{3} \w{3}\s+\d{1,2} (\d{2}:\d{2}:\d{2}) [A-Z]+ \d{4}\] (.*)$/';
+    
+    if (preg_match($pattern, $line, $matches)) {
+        return sprintf('[ %s ] %s', $matches[1], $matches[2]);
     }
-    return preg_replace($pattern, '[ \3 ]', $line);
+
+    $pattern_standard = '/^(\+?\d{4}\s)(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/';
+    if (preg_match($pattern_standard, $line, $matches)) {
+        return preg_replace($pattern_standard, '[ \3 ]', $line);
+    }
+
+    return $line;
 }
 
 function is_bang_line($line) {
     return preg_match('/^\[\!\]/', $line);
+}
+
+function filter_unwanted_lines($lines) {
+    return array_filter($lines, function($line) {
+        return !preg_match('/^(Environment|Tags|CGO):/', $line);
+    });
 }
 
 if (array_key_exists($file, $allowed_files)) {
@@ -43,9 +55,12 @@ if (array_key_exists($file, $allowed_files)) {
         $lines = file($file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);       
         $lines = array_map('remove_ansi_colors', $lines);        
         $lines = array_map('format_datetime', $lines);
+        $lines = filter_unwanted_lines($lines);
         $lines = array_filter($lines, function($line) use ($max_line_length) {
             return strlen($line) <= $max_line_length && !is_bang_line($line);
         });
+
+        $lines = array_values($lines);
 
         $lines_with_numbers = array_map(function($line, $index) {
             return sprintf("%d %s", $index + 1, $line);  

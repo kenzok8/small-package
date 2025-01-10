@@ -3,7 +3,7 @@ ob_start();
 include './cfg.php';
 date_default_timezone_set('Asia/Shanghai');
 
-$dataFilePath = '/etc/neko/subscription_data.txt';
+$dataFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
 $lastSubscribeUrl = '';
 
 if (file_exists($dataFilePath)) {
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 #!/bin/sh
 
 LOG_FILE="/tmp/update_subscription.log"
-SUBSCRIBE_URL=$(cat /etc/neko/tmp/subscription.txt | tr -d '\n\r')
+SUBSCRIBE_URL=$(cat /etc/neko/proxy_provider/subscription.txt | tr -d '\n\r')
 
 if [ -z "\$SUBSCRIBE_URL" ]; then
   echo "\$(date): 订阅链接地址为空或提取失败。" >> "\$LOG_FILE"
@@ -96,7 +96,7 @@ wget -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >> "\$LOG_FILE" 2>&1
 if [ \$? -eq 0 ]; then
   echo "\$(date): 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
 
-  sed -i 's/"outbounds":\s*\[\s*"Proxy"\s*\]/"outbounds": ["DIRECT"]/g' "\$CONFIG_FILE"
+  sed -i 's/"Proxy"/"DIRECT"/g' "\$CONFIG_FILE"
 
   if [ \$? -eq 0 ]; then
     echo "\$(date): 配置文件中的 Proxy 已成功替换为 DIRECT。" >> "\$LOG_FILE"
@@ -118,7 +118,7 @@ EOL;
         }
     }
 }
-?>
+?> 
 
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
@@ -163,9 +163,6 @@ EOL;
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板 一</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
-            <p>
-                  请选择一个模板以生成配置文件
-            </p>
             <ul>
                 <li><strong>模板 1</strong>：无地区  无分组 。</li>
                 <li><strong>模板 2</strong>：无地区  带分流规则 。</li>
@@ -176,7 +173,7 @@ EOL;
         <form method="post" action="">
             <div class="mb-3">
                 <label for="subscribeUrl" class="form-label">订阅链接地址</label>
-                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($lastSubscribeUrl); ?>" placeholder="输入订阅链接（多个链接用  |  分隔）" required>
+                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($lastSubscribeUrl); ?>" placeholder="输入订阅链接，多个链接用 | 分隔" required>
             </div>
             <div class="mb-3">
                 <label for="customFileName" class="form-label">自定义文件名（默认:sing-box.json）</label>
@@ -283,7 +280,7 @@ EOL;
     });
 </script>
         <?php
-        $dataFilePath = '/etc/neko/subscription_data.txt';
+        $dataFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
         $configFilePath = '/etc/neko/config/sing-box.json';
         $downloadedContent = ''; 
         $fixedFileName = 'subscription.txt'; 
@@ -378,7 +375,7 @@ EOL;
                 $downloadedContent = preg_replace('/"clash_api":\s*\{.*?\},/s', $replacement, $downloadedContent);
             }
 
-                    $tmpFileSavePath = '/etc/neko/tmp/' . $fixedFileName;  
+                    $tmpFileSavePath = '/etc/neko/proxy_provider/' . $fixedFileName;  
                     if (file_put_contents($tmpFileSavePath, $completeSubscribeUrl) === false) {
                         $logMessages[] = "无法保存订阅URL到文件: " . $tmpFileSavePath;
                     } else {
@@ -390,6 +387,13 @@ EOL;
                         $logMessages[] = "无法保存修改后的内容到: " . $configFilePath;
                     } else {
                         $logMessages[] = "配置文件生成并保存成功: " . $configFilePath;
+                    }
+
+                    if (file_exists($tempFilePath)) {
+                        unlink($tempFilePath); 
+                        $logMessages[] = "临时文件已被清理: " . $tempFilePath;
+                    } else {
+                        $logMessages[] = "未找到临时文件以进行清理: " . $tempFilePath;
                     }
                 }
             }
@@ -446,6 +450,8 @@ EOL;
         ?>
     </div>
 </div>
+    </div>
+</form>
 <script src="./assets/bootstrap/jquery.min.js"></script>
 <script>
     function copyToClipboard() {
@@ -503,6 +509,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+</div>
       <footer class="text-center">
     <p><?php echo $footer ?></p>
 </footer>
