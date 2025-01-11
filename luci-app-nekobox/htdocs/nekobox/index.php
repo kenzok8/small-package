@@ -37,7 +37,7 @@ log() {
     echo "[$(date)] $1" >> "$FIREWALL_LOG"
 }
 
-//log "Starting Sing-box with config: $CONFIG_FILE"
+log "Starting Sing-box with config: $CONFIG_FILE"
 
 log "Restarting firewall..."
 /etc/init.d/firewall restart
@@ -234,6 +234,7 @@ LOG_FILE="$log_file"
 TMP_LOG_FILE="$tmp_log_file"  
 ADDITIONAL_LOG_FILE="$additional_log_file"
 MAX_SIZE=$max_size
+LOG_PATH="/etc/neko/tmp/log.txt" 
 
 crontab -l | grep -v "/etc/neko/core/set_cron.sh" | crontab - 
 (crontab -l 2>/dev/null; echo "$cron_schedule") | crontab -
@@ -243,37 +244,37 @@ timestamp() {
 }
 
 if [ -f "\$LOG_FILE" ] && [ \$(stat -c %s "\$LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "\$(timestamp) Log file (\$LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Sing-box 日志文件 (\$LOG_FILE) 超过 \$MAX_SIZE 字节. 清理日志..." >> \$LOG_PATH 2>&1
     > "\$LOG_FILE"  
-    echo "\$(timestamp) Log file (\$LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Sing-box 日志文件 (\$LOG_FILE) 已清空." >> \$LOG_PATH 2>&1
 else
-    echo "\$(timestamp) Log file (\$LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Sing-box 日志文件 (\$LOG_FILE) 在大小限制内, 无需操作." >> \$LOG_PATH 2>&1
 fi
 
 if [ -f "\$TMP_LOG_FILE" ] && [ \$(stat -c %s "\$TMP_LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "\$(timestamp) Temp log file (\$TMP_LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Mihomo 日志文件 (\$TMP_LOG_FILE) 超过 \$MAX_SIZE 字节. 清理日志..." >> \$LOG_PATH 2>&1
     > "\$TMP_LOG_FILE"  
-    echo "\$(timestamp) Temp log file (\$TMP_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Mihomo 日志文件 (\$TMP_LOG_FILE) 已清空." >> \$LOG_PATH 2>&1
 else
-    echo "\$(timestamp) Temp log file (\$TMP_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) Mihomo 日志文件 (\$TMP_LOG_FILE) 在大小限制内, 无需操作." >> \$LOG_PATH 2>&1
 fi
 
 if [ -f "\$ADDITIONAL_LOG_FILE" ] && [ \$(stat -c %s "\$ADDITIONAL_LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "\$(timestamp) Additional log file (\$ADDITIONAL_LOG_FILE) size exceeds \$MAX_SIZE bytes. Clearing logs..." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) NeKoBox 日志文件 (\$ADDITIONAL_LOG_FILE) 超过 \$MAX_SIZE 字节. 清理日志..." >> \$LOG_PATH 2>&1
     > "\$ADDITIONAL_LOG_FILE"
-    echo "\$(timestamp) Additional log file (\$ADDITIONAL_LOG_FILE) cleared." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) NeKoBox 日志文件 (\$ADDITIONAL_LOG_FILE) 已清空." >> \$LOG_PATH 2>&1
 else
-    echo "\$(timestamp) Additional log file (\$ADDITIONAL_LOG_FILE) is within the size limit, no action needed." >> /var/log/cron_debug.log 2>&1
+    echo "\$(timestamp) NeKoBox 日志文件 (\$ADDITIONAL_LOG_FILE) 在大小限制内, 无需操作." >> \$LOG_PATH 2>&1
 fi
 
-echo "\$(timestamp) Log rotation completed." >> /var/log/cron_debug.log 2>&1
+echo "\$(timestamp) 日志轮换完成." >> \$LOG_PATH 2>&1
 EOL;
 
     $cronScriptPath = '/etc/neko/core/set_cron.sh';
     file_put_contents($cronScriptPath, $cronScriptContent);
     chmod($cronScriptPath, 0755);
     shell_exec("sh $cronScriptPath");
-    writeToLog("Cron job setup script created and executed to add or update the daily log clearing task for $log_file and $tmp_log_file.");
+    echo '<div class="alert alert-success">已创建并执行定时任务脚本，添加或更新日志清理任务，清理 $log_file 和 $tmp_log_file 的日志。</div>';
 }
 
 function rotateLogs($logFile, $maxSize = 1048576) {
@@ -465,37 +466,64 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cronTime'])) {
     $cronTime = $_POST['cronTime'];
 
     if (empty($cronTime)) {
-        echo "请提供有效的 Cron 时间格式！";
+        $logMessage = "请提供有效的 Cron 时间格式！";
+        file_put_contents('/etc/neko/tmp/log.txt', date('Y-m-d H:i:s') . " - ERROR: $logMessage\n", FILE_APPEND);
+        echo $logMessage;
         exit;
     }
 
-    $startScriptPath = '/etc/neko/core/start.sh';  
+    $startScriptPath = '/etc/neko/core/start.sh';
+
+    if (!file_exists('/etc/neko/tmp')) {
+        mkdir('/etc/neko/tmp', 0755, true);  
+    }
 
     $restartScriptContent = <<<EOL
 #!/bin/bash
-if pgrep -x "singbox" > /dev/null
-then
-    echo "Sing-box 正在运行，正在重启..."
-    kill $(pgrep -x "singbox")
-    sleep 2
-    sh $startScriptPath  
-    echo "Sing-box 重启成功!"
+LOG_PATH="/etc/neko/tmp/log.txt"
+
+timestamp() {
+    date "+%Y-%m-%d %H:%M:%S"
+}
+
+start_singbox() {
+    sh /etc/neko/core/start.sh  
+}
+
+echo "$(timestamp) Sing-box 正在重启..." >> \$LOG_PATH
+kill $(pgrep -x "singbox") 2>/dev/null  
+sleep 2
+start_singbox  
+
+RETRY_COUNT=0
+MAX_RETRIES=5
+RETRY_INTERVAL=5  
+
+while ! pgrep -x "singbox" > /dev/null && [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; do
+    echo "$(timestamp) Sing-box 启动失败，正在尝试重新启动... (\$((RETRY_COUNT + 1))/\$MAX_RETRIES)" >> \$LOG_PATH
+    sleep \$RETRY_INTERVAL
+    start_singbox 
+    ((RETRY_COUNT++))
+done
+
+if pgrep -x "singbox" > /dev/null; then
+    echo "$(timestamp) Sing-box 启动成功!" >> \$LOG_PATH
 else
-    echo "Sing-box 没有运行, 启动 Sing-box..."
-    sh $startScriptPath  
-    echo "Sing-box 启动成功!"
+    echo "$(timestamp) Sing-box 启动失败，已达到最大重试次数!" >> \$LOG_PATH
 fi
 EOL;
 
     $scriptPath = '/etc/neko/core/restart_singbox.sh';
     file_put_contents($scriptPath, $restartScriptContent);
-    chmod($scriptPath, 0755);  
+    chmod($scriptPath, 0755);
 
     $cronSchedule = $cronTime . " /bin/bash $scriptPath"; 
-    exec("crontab -l | grep -v '$scriptPath' | crontab -");  
+    exec("crontab -l | grep -v '$scriptPath' | crontab -"); 
     exec("(crontab -l 2>/dev/null; echo \"$cronSchedule\") | crontab -");  
 
-    error_log("定时任务已设置成功，Sing-box 将在 $cronTime 自动重启。");
+    $logMessage = "定时任务已设置成功，Sing-box 将在 $cronTime 自动重启。";
+    file_put_contents('/etc/neko/tmp/log.txt', date('Y-m-d H:i:s') . " - INFO: $logMessage\n", FILE_APPEND);
+
     echo json_encode(['success' => true, 'message' => '定时任务已设置成功']);
     exit;
 }
