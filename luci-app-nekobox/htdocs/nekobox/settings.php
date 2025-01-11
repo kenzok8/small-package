@@ -184,7 +184,7 @@ $razordVersion = getRazordVersion();
 
     @media (max-width: 576px) {
         .btn-custom {
-            width: 20%; 
+            width: 30%; 
             margin: 0 auto; 
             display: block; 
     }
