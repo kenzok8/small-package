@@ -376,63 +376,126 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
+
 <?php
 $shellScriptPath = '/etc/neko/core/update_singbox.sh';
-$LOG_FILE = '/tmp/update_subscription.log';
-$CONFIG_FILE = '/etc/neko/config.json'; 
+$LOG_FILE = '/etc/neko/tmp/log.txt';
+$CONFIG_FILE = '/etc/neko/config/config.json';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
     if (isset($_POST['createShellScript'])) {
         $shellScriptContent = <<<EOL
 #!/bin/sh
 
-LOG_FILE="/tmp/update_subscription.log"
+LOG_FILE="/etc/neko/tmp/log.txt"
 LINK_FILE="/etc/neko/tmp/singbox.txt"
-CONFIG_FILE="$CONFIG_FILE" 
+CONFIG_FILE="/etc/neko/config/config.json"
 
-echo "尝试读取订阅链接文件: \$LINK_FILE" >> "\$LOG_FILE"
+log() {
+  echo "[ \$(date +'%H:%M:%S') ] \$1" >> "\$LOG_FILE"
+}
+
+log "启动更新脚本..."
+log "尝试读取订阅链接文件：\$LINK_FILE"
+
 if [ ! -f "\$LINK_FILE" ]; then
-  echo "\$(date): 错误：文件 \$LINK_FILE 不存在。" >> "\$LOG_FILE"
+  log "错误：文件 \$LINK_FILE 不存在。"
   exit 1
 fi
 
-SUBSCRIBE_URL=\$(awk 'NR==1 {print \$0}' "\$LINK_FILE" | tr -d '\n\r' | xargs)
+SUBSCRIBE_URL=\$(awk 'NR==1 {print \$0}' "\$LINK_FILE" | tr -d '\\n\\r' | xargs)
 
 if [ -z "\$SUBSCRIBE_URL" ]; then
-  echo "\$(date): 订阅链接为空或提取失败。" >> "\$LOG_FILE"
+  log "错误：订阅链接为空或提取失败。"
   exit 1
 fi
 
-echo "\$(date): 使用的订阅链接: \$SUBSCRIBE_URL" >> "\$LOG_FILE"
+log "使用的订阅链接：\$SUBSCRIBE_URL"
+log "尝试下载并更新配置文件..."
 
-echo "\$(date): 尝试下载并更新配置文件..." >> "\$LOG_FILE"
 wget -q -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >> "\$LOG_FILE" 2>&1
 
 if [ \$? -eq 0 ]; then
-  echo "\$(date): 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
+  log "配置文件更新成功，保存路径：\$CONFIG_FILE"
 else
-  echo "\$(date): 配置文件更新失败，请检查链接或网络。" >> "\$LOG_FILE"
+  log "配置文件更新失败，请检查链接或网络。"
   exit 1
 fi
 
-sed -i '/"inbounds"/{N;s/"inbounds".*/"inbounds": [{"domain_strategy": "prefer_ipv4", "listen": "127.0.0.1", "listen_port": 2334, "sniff": true, "sniff_override_destination": true, "tag": "mixed-in", "type": "mixed", "users": []}, {"tag": "tun", "type": "tun", "address": ["172.19.0.1/30", "fdfe:dcba:9876::1/126"], "route_address": ["0.0.0.0/1", "128.0.0.0/1", "::/1", "8000::/1"], "route_exclude_address": ["192.168.0.0/16", "fc00::/7"], "stack": "system", "auto_route": true, "strict_route": true, "sniff": true, "platform": {"http_proxy": {"enabled": true, "server": "0.0.0.0", "server_port": 1082}}}, {"tag": "mixed", "type": "mixed", "listen": "0.0.0.0", "listen_port": 1082, "sniff": true}]}"/' "$CONFIG_FILE"
+jq '.inbounds = [
+  {
+    "domain_strategy": "prefer_ipv4",
+    "listen": "127.0.0.1",
+    "listen_port": 2334,
+    "sniff": true,
+    "sniff_override_destination": true,
+    "tag": "mixed-in",
+    "type": "mixed",
+    "users": []
+  },
+  {
+    "tag": "tun",
+    "type": "tun",
+    "address": [
+      "172.19.0.1/30",
+      "fdfe:dcba:9876::1/126"
+    ],
+    "route_address": [
+      "0.0.0.0/1",
+      "128.0.0.0/1",
+      "::/1",
+      "8000::/1"
+    ],
+    "route_exclude_address": [
+      "192.168.0.0/16",
+      "fc00::/7"
+    ],
+    "stack": "system",
+    "auto_route": true,
+    "strict_route": true,
+    "sniff": true,
+    "platform": {
+      "http_proxy": {
+        "enabled": true,
+        "server": "0.0.0.0",
+        "server_port": 1082
+      }
+    }
+  },
+  {
+    "tag": "mixed",
+    "type": "mixed",
+    "listen": "0.0.0.0",
+    "listen_port": 1082,
+    "sniff": true
+  }
+]' "\$CONFIG_FILE" > /tmp/config_temp.json && mv /tmp/config_temp.json "\$CONFIG_FILE"
 
-sed -i '/"experimental"/{N;s/"experimental".*/"experimental": {"clash_api": {"external_ui": "/etc/neko/ui/", "external_controller": "0.0.0.0:9090", "secret": "Akun"}}}/' "$CONFIG_FILE"
+jq '.experimental.clash_api = {
+  "external_ui": "/etc/neko/ui/",
+  "external_controller": "0.0.0.0:9090",
+  "secret": "Akun"
+}' "\$CONFIG_FILE" > /tmp/config_temp.json && mv /tmp/config_temp.json "\$CONFIG_FILE"
 
-echo "$(date): 配置文件内容替换成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
+if [ \$? -eq 0 ]; then
+  log "配置文件修改已成功完成。"
+else
+  log "错误：配置文件修改失败。"
+  exit 1
+fi
 
 EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
-            chmod($shellScriptPath, 0755);
-            echo "<div class='alert alert-success'>Shell 脚本已创建成功！路径: $shellScriptPath</div>";
+            chmod($shellScriptPath, 0755); 
+            echo "<div class='alert alert-success'>Shell 脚本已成功创建！路径: $shellScriptPath</div>";
         } else {
             echo "<div class='alert alert-danger'>无法创建 Shell 脚本，请检查权限。</div>";
         }
     }
 }
 ?>
+
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
 <head>

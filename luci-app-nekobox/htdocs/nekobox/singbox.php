@@ -25,35 +25,39 @@ if (file_exists($dataFilePath)) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['setCron'])) {
     $cronExpression = trim($_POST['cronExpression']);
-    $shellScriptPath = '/etc/neko/core/update_subscription.sh'; 
+    $shellScriptPath = '/etc/neko/core/update_subscription.sh';
+    $logFile = '/etc/neko/tmp/log.txt'; 
 
     if (preg_match('/^(\*|\d+)( (\*|\d+)){4}$/', $cronExpression)) {
         $cronJob = "$cronExpression $shellScriptPath";
-        $currentCrons = shell_exec('crontab -l 2>/dev/null'); 
+        $currentCrons = shell_exec('crontab -l 2>/dev/null');
         $updatedCrons = preg_replace(
-            "/^.*".preg_quote($shellScriptPath, '/').".*$/m",
-            '', 
+            "/^.*" . preg_quote($shellScriptPath, '/') . ".*$/m",
+            '',
             $currentCrons
-        ); 
+        );
 
-        $updatedCrons = trim($updatedCrons) . "\n" . $cronJob . "\n"; 
+        $updatedCrons = trim($updatedCrons) . "\n" . $cronJob . "\n";
 
         $tempCronFile = tempnam(sys_get_temp_dir(), 'cron');
         file_put_contents($tempCronFile, $updatedCrons);
-        exec("crontab $tempCronFile"); 
-        unlink($tempCronFile); 
+        exec("crontab $tempCronFile");
+        unlink($tempCronFile);
 
+        $timestamp = date('[ H:i:s ]');
+        file_put_contents($logFile, "$timestamp 定时任务已设置成功，Sing-box 将在 $cronExpression 自动更新。\n", FILE_APPEND);
         echo "<div class='alert alert-success'>定时任务已设置: $cronExpression</div>";
     } else {
+        $timestamp = date('[ H:i:s ]');
+        file_put_contents($logFile, "$timestamp 无效的 Cron 表达式: $cronExpression\n", FILE_APPEND);
         echo "<div class='alert alert-danger'>无效的 Cron 表达式，请检查格式。</div>";
     }
 }
-
 ?>
 
 <?php
 $shellScriptPath = '/etc/neko/core/update_subscription.sh';
-$LOG_FILE = '/tmp/update_subscription.log'; 
+$LOG_FILE = '/etc/neko/tmp/log.txt'; 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['subscribeUrl'])) {
@@ -71,41 +75,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $shellScriptContent = <<<EOL
 #!/bin/sh
 
-LOG_FILE="/tmp/update_subscription.log"
-SUBSCRIBE_URL=$(cat /etc/neko/proxy_provider/subscription.txt | tr -d '\n\r')
+LOG_FILE="$LOG_FILE"
+SUBSCRIBE_URL=\$(cat /etc/neko/proxy_provider/subscription.txt | tr -d '\\n\\r')
 
 if [ -z "\$SUBSCRIBE_URL" ]; then
-  echo "\$(date): 订阅链接地址为空或提取失败。" >> "\$LOG_FILE"
+  echo "\$(date '+[ %H:%M:%S ]') 订阅链接地址为空或提取失败。" >> "\$LOG_FILE"
   exit 1
 fi
 
-echo "\$(date): 使用的订阅链接: \$SUBSCRIBE_URL" >> "\$LOG_FILE"
+echo "\$(date '+[ %H:%M:%S ]') 使用的订阅链接: \$SUBSCRIBE_URL" >> "\$LOG_FILE"
 
 CONFIG_DIR="/etc/neko/config"
 if [ ! -d "\$CONFIG_DIR" ]; then
   mkdir -p "\$CONFIG_DIR"
   if [ \$? -ne 0 ]; then
-    echo "\$(date): 无法创建配置目录: \$CONFIG_DIR" >> "\$LOG_FILE"
+    echo "\$(date '+[ %H:%M:%S ]') 无法创建配置目录: \$CONFIG_DIR" >> "\$LOG_FILE"
     exit 1
   fi
 fi
 
 CONFIG_FILE="\$CONFIG_DIR/sing-box.json"
-wget -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >> "\$LOG_FILE" 2>&1
+wget -q -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >/dev/null 2>&1
 
 if [ \$? -eq 0 ]; then
-  echo "\$(date): 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
+  echo "\$(date '+[ %H:%M:%S ]') Sing-box 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
 
   sed -i 's/"Proxy"/"DIRECT"/g' "\$CONFIG_FILE"
 
   if [ \$? -eq 0 ]; then
-    echo "\$(date): 配置文件中的 Proxy 已成功替换为 DIRECT。" >> "\$LOG_FILE"
+    echo "\$(date '+[ %H:%M:%S ]') 配置文件中的 Proxy 已成功替换为 DIRECT。" >> "\$LOG_FILE"
   else
-    echo "\$(date): 替换 Proxy 为 DIRECT 失败，请检查配置文件。" >> "\$LOG_FILE"
+    echo "\$(date '+[ %H:%M:%S ]') 替换 Proxy 为 DIRECT 失败，请检查配置文件。" >> "\$LOG_FILE"
     exit 1
   fi
 else
-  echo "\$(date): 配置文件更新失败，请检查链接或网络。" >> "\$LOG_FILE"
+  echo "\$(date '+[ %H:%M:%S ]') 配置文件更新失败，请检查链接或网络。" >> "\$LOG_FILE"
   exit 1
 fi
 EOL;
@@ -118,7 +122,7 @@ EOL;
         }
     }
 }
-?> 
+?>
 
 <!doctype html>
 <html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
@@ -247,7 +251,7 @@ EOL;
                 <div class="modal-body">
                   <div class="mb-3">
                     <label for="cronExpression" class="form-label">Cron 表达式</label>
-                    <input type="text" class="form-control" id="cronExpression" name="cronExpression" placeholder="如: 0 2 * * *" required>
+                    <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
                   </div>
                   <div class="alert alert-info">
                     <strong>提示:</strong> Cron 表达式格式：

@@ -240,7 +240,7 @@ crontab -l | grep -v "/etc/neko/core/set_cron.sh" | crontab -
 (crontab -l 2>/dev/null; echo "$cron_schedule") | crontab -
 
 timestamp() {
-    date "+%Y-%m-%d %H:%M:%S"
+    date "+[ %H:%M:%S ]"
 }
 
 if [ -f "\$LOG_FILE" ] && [ \$(stat -c %s "\$LOG_FILE") -gt \$MAX_SIZE ]; then
@@ -547,7 +547,7 @@ EOL;
     exec("(crontab -l 2>/dev/null; echo \"$cronSchedule\") | crontab -");  
 
     $logMessage = "定时任务已设置成功，Sing-box 将在 $cronTime 自动重启。";
-    file_put_contents('/etc/neko/tmp/log.txt', date('Y-m-d H:i:s') . " - INFO: $logMessage\n", FILE_APPEND);
+    file_put_contents('/etc/neko/tmp/log.txt', date('[ H:i:s ] ') . "$logMessage\n", FILE_APPEND);
     echo json_encode(['success' => true, 'message' => '定时任务已设置成功']);
     exit;
 }
@@ -1136,7 +1136,7 @@ window.onload = function() {
         <form id="cronForm" method="POST">
           <div class="form-group ">
             <label for="cronTime">设置 Sing-box 重启时间</label>
-            <input type="text" class="form-control mt-3" id="cronTime" name="cronTime" placeholder="例如：0 3 * * *（每天 3 点）" required>
+            <input type="text" class="form-control mt-3" id="cronTime" name="cronTime" value="0 3 * * *" required>
           </div>
           <div class="alert alert-info mt-3">
             <strong>提示:</strong> Cron 表达式格式：

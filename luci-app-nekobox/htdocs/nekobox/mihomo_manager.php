@@ -261,7 +261,7 @@ if (isset($_POST['update'])) {
 ?>
 <?php
 $shellScriptPath = '/etc/neko/core/update_mihomo.sh';
-$LOG_FILE = '/tmp/update_subscription.log';
+$LOG_FILE = '/etc/neko/tmp/log.txt'; 
 $JSON_FILE = '/etc/neko/proxy_provider/subscriptions.json';
 $SAVE_DIR = '/etc/neko/proxy_provider';
 
@@ -275,50 +275,50 @@ JSON_FILE="$JSON_FILE"
 SAVE_DIR="$SAVE_DIR"
 
 if [ ! -f "\$JSON_FILE" ]; then
-    echo "\$(date): 错误: JSON 文件不存在: \$JSON_FILE" >> "\$LOG_FILE"
+    echo "\$(date '+[ %H:%M:%S ]') 错误: JSON 文件不存在: \$JSON_FILE" >> "\$LOG_FILE"
     exit 1
 fi
 
-echo "\$(date): 开始处理订阅链接..." >> "\$LOG_FILE"
+echo "\$(date '+[ %H:%M:%S ]') 开始处理订阅链接..." >> "\$LOG_FILE"
 
 jq -c '.[]' "\$JSON_FILE" | while read -r ITEM; do
     URL=\$(echo "\$ITEM" | jq -r '.url')         
     FILE_NAME=\$(echo "\$ITEM" | jq -r '.file_name')  
 
     if [ -z "\$URL" ] || [ "\$URL" == "null" ]; then
-        echo "\$(date): 跳过空的 URL，文件名: \$FILE_NAME" >> "\$LOG_FILE"
+        echo "\$(date '+[ %H:%M:%S ]') 跳过空的 URL，文件名: \$FILE_NAME" >> "\$LOG_FILE"
         continue
     fi
 
     if [ -z "\$FILE_NAME" ] || [ "\$FILE_NAME" == "null" ]; then
-        echo "\$(date): 错误: 文件名为空，跳过此链接: \$URL" >> "\$LOG_FILE"
+        echo "\$(date '+[ %H:%M:%S ]') 错误: 文件名为空，跳过此链接: \$URL" >> "\$LOG_FILE"
         continue
     fi
 
     SAVE_PATH="\$SAVE_DIR/\$FILE_NAME"
     TEMP_PATH="\$SAVE_PATH.temp"  
-    echo "\$(date): 正在下载链接: \$URL 到临时文件: \$TEMP_PATH" >> "\$LOG_FILE"
+    echo "\$(date '+[ %H:%M:%S ]') 正在下载链接: \$URL 到临时文件: \$TEMP_PATH" >> "\$LOG_FILE"
 
     wget -q -O "\$TEMP_PATH" "\$URL"
 
     if [ \$? -eq 0 ]; then
-        echo "\$(date): 文件下载成功: \$TEMP_PATH" >> "\$LOG_FILE"
+        echo "\$(date '+[ %H:%M:%S ]') 文件下载成功: \$TEMP_PATH" >> "\$LOG_FILE"
         
         base64 -d "\$TEMP_PATH" > "\$SAVE_PATH"
 
         if [ \$? -eq 0 ]; then
-            echo "\$(date): 文件解码成功: \$SAVE_PATH" >> "\$LOG_FILE"
+            echo "\$(date '+[ %H:%M:%S ]') 文件解码成功: \$SAVE_PATH" >> "\$LOG_FILE"
         else
-            echo "\$(date): 错误: 文件解码失败: \$SAVE_PATH" >> "\$LOG_FILE"
+            echo "\$(date '+[ %H:%M:%S ]') 错误: 文件解码失败: \$SAVE_PATH" >> "\$LOG_FILE"
         fi
 
         rm -f "\$TEMP_PATH"
     else
-        echo "\$(date): 错误: 文件下载失败: \$URL" >> "\$LOG_FILE"
+        echo "\$(date '+[ %H:%M:%S ]') 错误: 文件下载失败: \$URL" >> "\$LOG_FILE"
     fi
 done
 
-echo "\$(date): 所有订阅链接处理完成。" >> "\$LOG_FILE"
+echo "\$(date '+[ %H:%M:%S ]') 所有订阅链接处理完成。" >> "\$LOG_FILE"
 EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
@@ -332,22 +332,39 @@ EOL;
 ?>
 
 <?php
+$CRON_LOG_FILE = '/etc/neko/tmp/log.txt'; 
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['createCronJob'])) {
         $cronExpression = trim($_POST['cronExpression']);
 
         if (empty($cronExpression)) {
+            file_put_contents($CRON_LOG_FILE, date('[ H:i:s ] ') . "错误: Cron 表达式不能为空。\n", FILE_APPEND);
             echo "<div class='alert alert-warning'>Cron 表达式不能为空。</div>";
             exit;
         }
 
-        $cronJob = "$cronExpression /etc/neko/core/update_mihomo.sh > /dev/null 2>&1";
-        exec("crontab -l | grep -v '/etc/neko/core/update_mihomo.sh' | crontab -");
-        exec("(crontab -l; echo '$cronJob') | crontab -");
-        echo "<div class='alert alert-success'>Cron 任务已成功添加或更新！</div>";
+        $cronJob = "$cronExpression /etc/neko/core/update_mihomo.sh";
+
+        exec("crontab -l | grep -v '/etc/neko/core/update_mihomo.sh' | crontab -", $output, $returnVarRemove);
+        if ($returnVarRemove === 0) {
+            file_put_contents($CRON_LOG_FILE, date('[ H:i:s ] ') . "成功移除旧的 Cron 任务。\n", FILE_APPEND);
+        } else {
+            file_put_contents($CRON_LOG_FILE, date('[ H:i:s ] ') . "移除旧的 Cron 任务失败。\n", FILE_APPEND);
+        }
+
+        exec("(crontab -l; echo '$cronJob') | crontab -", $output, $returnVarAdd);
+        if ($returnVarAdd === 0) {
+            file_put_contents($CRON_LOG_FILE, date('[ H:i:s ] ') . "成功添加新的 Cron 任务: $cronJob\n", FILE_APPEND);
+            echo "<div class='alert alert-success'>Cron 任务已成功添加或更新！</div>";
+        } else {
+            file_put_contents($CRON_LOG_FILE, date('[ H:i:s ] ') . "添加新的 Cron 任务失败。\n", FILE_APPEND);
+            echo "<div class='alert alert-danger'>无法添加或更新 Cron 任务，请检查服务器权限。</div>";
+        }
     }
 }
 ?>
+
 <?php
 $file_urls = [
     'geoip' => 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
@@ -1220,7 +1237,7 @@ function initializeAceEditor() {
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="cronExpression" class="form-label">Cron 表达式</label>
-                        <input type="text" class="form-control" id="cronExpression" name="cronExpression" placeholder="如: 0 2 * * *" required>
+                        <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
                     </div>
                     <div class="alert alert-info">
                         <strong>提示:</strong> Cron 表达式格式：
