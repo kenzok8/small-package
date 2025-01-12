@@ -13,7 +13,7 @@
   --bs-body-font-weight: 400;
   --bs-body-color: #FFFF00;
   --bs-body-bg: #C8102E;
-  --bs-primary: #ffffff;
+  --bs-primary: #ffcc00;
   --bs-secondary: #ff4d4d;
   --bs-success: #52c41a;
   --bs-info: #1890ff;
@@ -23,8 +23,9 @@
   --bs-heading-2: #f1b88b;
   --bs-heading-3: #ffcc00;
   --bs-heading-4: #ff4500;
-  --bs-heading-5: #00ff85;
+  --bs-heading-5: #0F52BA;
   --bs-heading-6: #00ffff;
+  --bs-secondary: #00FFFF;
   
   --bs-heading-font-family: 'Noto Serif SC', serif;
   --bs-heading-font-weight: 700;
@@ -110,17 +111,25 @@ h6 {
 
 .nav-pills .nav-link.active {
   background-color: #0056b3;
-  color: #ffffff;
+  color: #ffcc00;
 }
 
 .nav-pills .nav-link:hover {
   background-color: #007bff;
-  color: #ffffff;
+  color: #ffcc00;
 }
 
 .table thead th {
-  color: #ffffff !important;  
-  background-color: #ff69b4 !important;  
+  color: #ffcc00 !important;  
+  background-color: #65000B !important;  
+}
+
+table td:nth-child(1) {
+    color: #00FF00; 
+}
+
+table td:nth-child(2) {
+    color: #1e90ff; 
 }
 
 .table-3d {
@@ -232,6 +241,83 @@ a:hover {
 
 .table-hover tbody tr:hover {
   background-color: #C8102E;
+}
+
+.modal-content {
+  color: #333; 
+  border: 1px solid #ddd; 
+  border-radius: 8px; 
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); 
+}
+
+.modal-header {
+  color: #fff; 
+  border-bottom: 1px solid #ccc; 
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.modal-body {
+  color: #333; 
+}
+
+button.btn-close {
+  color: #000 !important; 
+}
+
+button.btn-close:hover {
+  color: #333 !important; 
+}
+
+.form-group button {
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2); 
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.container-sm.container-bg.callout a {
+  color: var(--bs-primary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 1rem;
+  margin: 0 0.25rem;
+  position: relative;
+  transition: all var(--bs-transition-speed);
+  text-decoration: none;
+}
+
+.container-sm.container-bg.callout a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--bs-primary);
+  transform: scaleX(0);
+  transition: transform var(--bs-transition-speed);
+}
+
+.container-sm.container-bg.callout a:hover,
+.container-sm.container-bg.callout a:focus,
+.container-sm.container-bg.callout a.active {
+  color: var(--bs-secondary);
+}
+
+.container-sm.container-bg.callout a:hover::after,
+.container-sm.container-bg.callout a:focus::after,
+.container-sm.container-bg.callout a.active::after {
+  transform: scaleX(1);
 }
 
 .royal-style { 
