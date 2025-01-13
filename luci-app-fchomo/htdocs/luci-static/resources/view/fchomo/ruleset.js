@@ -260,16 +260,9 @@ return view.extend({
 		}
 		o.modalonly = false;
 
-		o = s.option(form.TextValue, '_editer', _('Editer'),
+		o = s.option(hm.CBITextValue, '_editer', _('Editer'),
 			_('Please type <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
 				.format('https://wiki.metacubex.one/config/rule-providers/content/', _('Contents')));
-		o.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
 		o.placeholder = _('Content will not be verified, Please make sure you enter it correctly.');
 		o.load = function(section_id) {
 			return L.resolveDefault(hm.readFile('ruleset', section_id), '');
@@ -281,16 +274,9 @@ return view.extend({
 		o.depends({'type': 'file', 'format': /^(text|yaml)$/});
 		o.modalonly = true;
 
-		o = s.option(form.TextValue, 'payload', 'payload:',
+		o = s.option(hm.CBITextValue, 'payload', 'payload:',
 			_('Please type <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
 				.format('https://wiki.metacubex.one/config/rule-providers/content/', _('Payload')));
-		o.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
 		o.placeholder = '- DOMAIN-SUFFIX,google.com\n# ' + _('Content will not be verified, Please make sure you enter it correctly.');
 		o.rmempty = false;
 		o.depends('type', 'inline');

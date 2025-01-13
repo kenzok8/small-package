@@ -463,24 +463,15 @@ return view.extend({
 		o = s.taboption('inbound', form.SectionValue, '_inbound', form.NamedSection, 'inbound', 'fchomo', _('Tun settings'));
 		ss = o.subsection;
 
-		so = ss.option(form.ListValue, 'tun_stack', _('Stack'),
+		so = ss.option(form.RichListValue, 'tun_stack', _('Stack'),
 			_('Tun stack.'));
-		so.value('system', _('System'));
+		so.value('system', _('System'), _('Less compatibility and sometimes better performance.'));
 		if (features.with_gvisor) {
-			so.value('gvisor', _('gVisor'));
-			so.value('mixed', _('Mixed'));
+			so.value('gvisor', _('gVisor'), _('Based on google/gvisor.'));
+			so.value('mixed', _('Mixed'), _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.'));
 		}
 		so.default = 'system';
 		so.rmempty = false;
-		so.onchange = function(ev, section_id, value) {
-			var desc = ev.target.nextSibling;
-			if (value === 'mixed')
-				desc.innerHTML = _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.');
-			else if (value === 'gvisor')
-				desc.innerHTML = _('Based on google/gvisor.');
-			else if (value === 'system')
-				desc.innerHTML = _('Less compatibility and sometimes better performance.');
-		}
 
 		so = ss.option(form.Value, 'tun_mtu', _('MTU'));
 		so.datatype = 'uinteger';
@@ -780,14 +771,7 @@ return view.extend({
 		/* Custom Direct list */
 		ss.tab('direct_list', _('Custom Direct List'));
 
-		so = ss.taboption('direct_list', form.TextValue, 'direct_list.yaml', null);
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
+		so = ss.taboption('direct_list', hm.CBITextValue, 'direct_list.yaml', null);
 		so.rows = 20;
 		so.default = 'FQDN:\nIPCIDR:\nIPCIDR6:\n';
 		so.placeholder = "FQDN:\n- mask.icloud.com\n- mask-h2.icloud.com\n- mask.apple-dns.net\nIPCIDR:\n- '223.0.0.0/12'\nIPCIDR6:\n- '2400:3200::/32'\n";
@@ -805,14 +789,7 @@ return view.extend({
 		/* Custom Proxy list */
 		ss.tab('proxy_list', _('Custom Proxy List'));
 
-		so = ss.taboption('proxy_list', form.TextValue, 'proxy_list.yaml', null);
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
+		so = ss.taboption('proxy_list', hm.CBITextValue, 'proxy_list.yaml', null);
 		so.rows = 20;
 		so.default = 'FQDN:\nIPCIDR:\nIPCIDR6:\n';
 		so.placeholder = "FQDN:\n- www.google.com\nIPCIDR:\n- '91.105.192.0/23'\nIPCIDR6:\n- '2001:67c:4e8::/48'\n";

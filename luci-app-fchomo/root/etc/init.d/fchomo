@@ -363,7 +363,7 @@ stop_service() {
 	# Server
 	[ -z "$1" -o "$1" = "mihomo-s" ] && stop_server
 	# Setup firewall
-	echo > "$RUN_DIR/fchomo_pre.nft" 2>"/dev/null"
+	echo 2>"/dev/null" > "$RUN_DIR/fchomo_pre.nft"
 	fw4 reload >"/dev/null" 2>&1
 	return 0
 }
@@ -395,7 +395,7 @@ stop_client() {
 	# Remove Nftables rules
 	nft flush  table inet fchomo 2>"/dev/null"
 	nft delete table inet fchomo 2>"/dev/null"
-	echo > "$RUN_DIR/fchomo_post.nft" 2>"/dev/null"
+	echo 2>"/dev/null" > "$RUN_DIR/fchomo_post.nft"
 
 	# Remove DNSMasq servers
 	rm -rf "$DNSMASQ_DIR/../dnsmasq-fchomo.conf" "$DNSMASQ_DIR"

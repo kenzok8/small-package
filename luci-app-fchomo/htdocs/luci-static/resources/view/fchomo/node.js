@@ -81,14 +81,7 @@ return view.extend({
 		so.depends({type: /^(http|socks5|mieru|trojan|hysteria2|tuic|ssh)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.TextValue, 'headers', _('HTTP header'));
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
+		so = ss.taboption('field_general', hm.CBITextValue, 'headers', _('HTTP header'));
 		so.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
 		so.validate = L.bind(hm.validateJson, so);
 		so.depends('type', 'http');
@@ -646,14 +639,7 @@ return view.extend({
 		so.depends({transport_enabled: '1', transport_type: /^(h2|ws)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_transport', form.TextValue, 'transport_http_headers', _('HTTP header'));
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
+		so = ss.taboption('field_transport', hm.CBITextValue, 'transport_http_headers', _('HTTP header'));
 		so.placeholder = '{\n  "Host": "example.com",\n  "Connection": [\n    "keep-alive"\n  ]\n}';
 		so.validate = L.bind(hm.validateJson, so);
 		so.depends({transport_enabled: '1', transport_type: /^(http|ws)$/});
@@ -857,16 +843,9 @@ return view.extend({
 		}
 		so.modalonly = false;
 
-		so = ss.taboption('field_general', form.TextValue, '_editer', _('Editer'),
+		so = ss.taboption('field_general', hm.CBITextValue, '_editer', _('Editer'),
 			_('Please type <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
 				.format('https://wiki.metacubex.one/config/proxy-providers/content/', _('Contents')));
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
 		so.placeholder = _('Content will not be verified, Please make sure you enter it correctly.');
 		so.load = function(section_id) {
 			return L.resolveDefault(hm.readFile('provider', section_id), '');
@@ -878,16 +857,9 @@ return view.extend({
 		so.depends('type', 'file');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.TextValue, 'payload', 'payload:',
+		so = ss.taboption('field_general', hm.CBITextValue, 'payload', 'payload:',
 			_('Please type <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
 				.format('https://wiki.metacubex.one/config/proxy-providers/content/', _('Payload')));
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
 		so.placeholder = '- name: "ss1"\n  type: ss\n  server: server\n  port: 443\n  cipher: chacha20-ietf-poly1305\n  password: "password"\n# ' + _('Content will not be verified, Please make sure you enter it correctly.');
 		so.rmempty = false;
 		so.depends('type', 'inline');
@@ -922,15 +894,8 @@ return view.extend({
 		//so.editable = true;
 		so.depends('type', 'http');
 
-		so = ss.taboption('field_general', form.TextValue, 'header', _('HTTP header'),
+		so = ss.taboption('field_general', hm.CBITextValue, 'header', _('HTTP header'),
 			_('Custom HTTP header.'));
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('textarea').style.fontFamily = hm.monospacefonts.join(',');
-
-			return frameEl;
-		}
 		so.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Accept": [\n    //"application/vnd.github.v3.raw"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
 		so.validate = L.bind(hm.validateJson, so);
 		so.depends('type', 'http');
@@ -1163,7 +1128,7 @@ return view.extend({
 		so.validate = function(section_id, value) {
 			var chain_head = this.section.getUIElement(section_id, 'chain_head').getValue();
 			var chain_tail = this.section.getUIElement(section_id, 'chain_tail').getValue();
-			var value = this.getUIElement(section_id).getValue();
+			value = this.getUIElement(section_id).getValue();
 
 			if (value.includes(chain_head) || value.includes(chain_tail))
 				return _('Expecting: %s').format(_('Different with chain head/tail'));
