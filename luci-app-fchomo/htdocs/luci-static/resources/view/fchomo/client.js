@@ -169,7 +169,7 @@ class RulesEntry {
 			type: this.type,
 			payload: factor,
 			detour: detour || null,
-			params: Object.values(params || {}).filter(v => v).length > 0 ? params : null,
+			params: params || null,
 			subrule: this.subrule || null,
 		});
 
@@ -357,10 +357,11 @@ function renderPayload(s, total, uciconfig) {
 	// DynamicList payload
 	var extenbox = {};
 	Object.entries(hm.rules_logical_payload_count).filter(e => e[1].high === undefined).forEach((e) => {
-		let n = e[1].low;
-		if (!Array.isArray(extenbox[n]))
-			extenbox[n] = [];
-		extenbox[n].push(e[0]);
+		let low = e[1].low;
+		let type = e[0];
+		if (!Array.isArray(extenbox[low]))
+			extenbox[low] = [];
+		extenbox[low].push(type);
 	})
 	Object.keys(extenbox).forEach((n) => {
 		prefix = `payload${n}_`;
@@ -511,14 +512,7 @@ function renderRules(s, uciconfig) {
 
 	renderPayload(s, Math.max(...Object.values(hm.rules_logical_payload_count).map(e => e.low)), uciconfig);
 
-	o = s.option(form.ListValue, 'detour', _('Proxy group'));
-	o.renderWidget = function(/* ... */) {
-		var frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
-
-		frameEl.querySelector('select').style["min-width"] = '10em';
-
-		return frameEl;
-	}
+	o = s.option(hm.CBIListValue, 'detour', _('Proxy group'));
 	o.load = function(section_id) {
 		hm.loadProxyGroupLabel.call(this, hm.preset_outbound.full, section_id);
 
@@ -1032,14 +1026,7 @@ return view.extend({
 		so.rmempty = false;
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'detour', _('Proxy group'));
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('select').style["min-width"] = '10em';
-
-			return frameEl;
-		}
+		so = ss.option(hm.CBIListValue, 'detour', _('Proxy group'));
 		so.load = function(section_id) {
 			hm.loadProxyGroupLabel.call(this, hm.preset_outbound.dns, section_id);
 
@@ -1171,15 +1158,8 @@ return view.extend({
 		so.rmempty = false;
 		so.editable = true;
 
-		so = ss.option(form.ListValue, 'proxy', _('Proxy group override'),
+		so = ss.option(hm.CBIListValue, 'proxy', _('Proxy group override'),
 			_('Override the Proxy group of DNS server.'));
-		so.renderWidget = function(/* ... */) {
-			var frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
-
-			frameEl.querySelector('select').style["min-width"] = '10em';
-
-			return frameEl;
-		}
 		so.default = hm.preset_outbound.direct[0][0];
 		hm.preset_outbound.direct.forEach((res) => {
 			so.value.apply(so, res);

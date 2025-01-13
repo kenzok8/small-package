@@ -305,9 +305,7 @@ uci.foreach(uciconf, ucisniff, (cfg) => {
 		return null;
 
 	config.sniffer.sniff[cfg.protocol] = {
-		ports: map(cfg.ports, (ports) => {
-			return strToInt(ports); // DEBUG ERROR data type *utils.IntRanges[uint16]
-		}),
+		ports: map(cfg.ports, ports => strToInt(ports) || null), // DEBUG ERROR data type *utils.IntRanges[uint16]
 		"override-destination": (cfg.override_destination === '0') ? false : true
 	};
 });
@@ -320,7 +318,7 @@ config.listeners = [];
 push(config.listeners, {
 	name: 'mixed-in',
 	type: 'mixed',
-	port: strToInt(uci.get(uciconf, uciinbound, 'mixed_port')) || '7890',
+	port: strToInt(uci.get(uciconf, uciinbound, 'mixed_port')) || 7890,
 	listen: '::',
 	udp: true
 });
@@ -328,21 +326,21 @@ if (match(proxy_mode, /redir/))
 	push(config.listeners, {
 		name: 'redir-in',
 		type: 'redir',
-		port: strToInt(uci.get(uciconf, uciinbound, 'redir_port')) || '7891',
+		port: strToInt(uci.get(uciconf, uciinbound, 'redir_port')) || 7891,
 		listen: '::'
 	});
 if (match(proxy_mode, /tproxy/))
 	push(config.listeners, {
 		name: 'tproxy-in',
 		type: 'tproxy',
-		port: strToInt(uci.get(uciconf, uciinbound, 'tproxy_port')) || '7892',
+		port: strToInt(uci.get(uciconf, uciinbound, 'tproxy_port')) || 7892,
 		listen: '::',
 		udp: true
 	});
 push(config.listeners, {
 	name: 'dns-in',
 	type: 'tunnel',
-	port: strToInt(uci.get(uciconf, uciinbound, 'tunnel_port')) || '7893',
+	port: strToInt(uci.get(uciconf, uciinbound, 'tunnel_port')) || 7893,
 	listen: '::',
 	network: ['tcp', 'udp'],
 	target: '1.1.1.1:53'
@@ -468,14 +466,14 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		type: cfg.type,
 
 		server: cfg.server,
-		port: strToInt(cfg.port),
+		port: strToInt(cfg.port) || null,
 
 		/* Dial fields */
 		tfo: strToBool(cfg.tfo),
 		mptcp: strToBool(cfg.mptcp),
 		"dialer-proxy": dialerproxy[cfg['.name']]?.detour,
 		"interface-name": cfg.interface_name,
-		"routing-mark": strToInt(cfg.routing_mark),
+		"routing-mark": strToInt(cfg.routing_mark) || null,
 		"ip-version": cfg.ip_version,
 
 		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / hysteria2 / TUIC / SSH / WireGuard */
@@ -519,10 +517,10 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"udp-relay-mode": cfg.tuic_udp_relay_mode,
 		"udp-over-stream": strToBool(cfg.tuic_udp_over_stream),
 		"udp-over-stream-version": cfg.tuic_udp_over_stream_version,
-		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size),
+		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size) || null,
 		"reduce-rtt": strToBool(cfg.tuic_reduce_rtt),
-		"heartbeat-interval": strToInt(cfg.tuic_heartbeat),
-		"request-timeout": strToInt(cfg.tuic_request_timeout),
+		"heartbeat-interval": strToInt(cfg.tuic_heartbeat) || null,
+		"request-timeout": strToInt(cfg.tuic_request_timeout) || null,
 		// fast-open: true
 		// max-open-streams: 20
 
@@ -547,7 +545,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"pre-shared-key": cfg.wireguard_pre_shared_key,
 		"allowed-ips": cfg.wireguard_allowed_ips,
 		reserved: cfg.wireguard_reserved,
-		mtu: strToInt(cfg.wireguard_mtu),
+		mtu: strToInt(cfg.wireguard_mtu) || null,
 		"remote-dns-resolve": strToBool(cfg.wireguard_remote_dns_resolve),
 		dns: cfg.wireguard_dns,
 
@@ -599,7 +597,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			"ws-opts": cfg.transport_type === 'ws' ? {
 				path: cfg.transport_path || '/',
 				headers: cfg.transport_http_headers ? json(cfg.transport_http_headers) : null,
-				"max-early-data": strToInt(cfg.transport_ws_max_early_data),
+				"max-early-data": strToInt(cfg.transport_ws_max_early_data) || null,
 				"early-data-header-name": cfg.transport_ws_early_data_header,
 				"v2ray-http-upgrade": strToBool(cfg.transport_ws_v2ray_http_upgrade),
 				"v2ray-http-upgrade-fast-open": strToBool(cfg.transport_ws_v2ray_http_upgrade_fast_open)
@@ -610,16 +608,16 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		smux: cfg.smux_enabled === '1' ? {
 			enabled: true,
 			protocol: cfg.smux_protocol,
-			"max-connections": strToInt(cfg.smux_max_connections),
-			"min-streams": strToInt(cfg.smux_min_streams),
-			"max-streams": strToInt(cfg.smux_max_streams),
+			"max-connections": strToInt(cfg.smux_max_connections) || null,
+			"min-streams": strToInt(cfg.smux_min_streams) || null,
+			"max-streams": strToInt(cfg.smux_max_streams) || null,
 			statistic: strToBool(cfg.smux_statistic),
 			"only-tcp": strToBool(cfg.smux_only_tcp),
 			padding: strToBool(cfg.smux_padding),
 			"brutal-opts": cfg.smux_brutal === '1' ? {
 				enabled: true,
-				up: strToInt(cfg.smux_brutal_up), // Mbps
-				down: strToInt(cfg.smux_brutal_down) // Mbps
+				up: strToInt(cfg.smux_brutal_up) || null, // Mbps
+				down: strToInt(cfg.smux_brutal_down) || null // Mbps
 			} : null
 		} : null
 	});
@@ -645,20 +643,20 @@ uci.foreach(uciconf, ucipgrp, (cfg) => {
 		"include-all-proxies": strToBool(cfg.include_all_proxies),
 		"include-all-providers": strToBool(cfg.include_all_providers),
 		// Url-test fields
-		tolerance: (cfg.type === 'url-test') ? strToInt(cfg.tolerance) || 150 : null,
+		tolerance: (cfg.type === 'url-test') ? strToInt(cfg.tolerance) ?? 150 : null,
 		// Load-balance fields
 		strategy: cfg.strategy,
 		// Override fields
 		"disable-udp": strToBool(cfg.disable_udp) || false,
 		"interface-name": cfg.interface_name,
-		"routing-mark": strToInt(cfg.routing_mark),
+		"routing-mark": strToInt(cfg.routing_mark) || null,
 		// Health fields
 		url: cfg.url,
-		interval: cfg.url ? durationToSecond(cfg.interval) || 600 : null,
+		interval: cfg.url ? durationToSecond(cfg.interval) ?? 600 : null,
 		timeout: cfg.url ? strToInt(cfg.timeout) || 5000 : null,
 		lazy: (cfg.lazy === '0') ? false : null,
 		"expected-status": cfg.url ? cfg.expected_status || '204' : null,
-		"max-failed-times": cfg.url ? strToInt(cfg.max_failed_times) || 5 : null,
+		"max-failed-times": cfg.url ? strToInt(cfg.max_failed_times) ?? 5 : null,
 		filter: parse_filter(cfg.filter),
 		"exclude-filter": parse_filter(cfg.exclude_filter),
 		"exclude-type": parse_filter(cfg.exclude_type)
@@ -683,7 +681,7 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 		}),
 		url: cfg.url,
 		"size-limit": bytesizeToByte(cfg.size_limit) || null,
-		interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) || 86400 : null,
+		interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) ?? 86400 : null,
 		proxy: get_proxygroup(cfg.proxy),
 		header: cfg.header ? json(cfg.header) : null,
 		"health-check": {},
@@ -708,7 +706,7 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 		"skip-cert-verify": strToBool(cfg.override_skip_cert_verify) || false,
 		"dialer-proxy": dialerproxy[cfg['.name']]?.detour,
 		"interface-name": cfg.override_interface_name,
-		"routing-mark": strToInt(cfg.override_routing_mark),
+		"routing-mark": strToInt(cfg.override_routing_mark) || null,
 		"ip-version": cfg.override_ip_version
 	};
 
@@ -719,7 +717,7 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 		config["proxy-providers"][cfg['.name']]["health-check"] = {
 			enable: true,
 			url: cfg.health_url,
-			interval: durationToSecond(cfg.health_interval) || 600,
+			interval: durationToSecond(cfg.health_interval) ?? 600,
 			timeout: strToInt(cfg.health_timeout) || 5000,
 			lazy: (cfg.health_lazy === '0') ? false : null,
 			"expected-status": cfg.health_expected_status || '204'
@@ -746,7 +744,7 @@ uci.foreach(uciconf, ucirule, (cfg) => {
 		}),
 		url: cfg.url,
 		"size-limit": bytesizeToByte(cfg.size_limit) || null,
-		interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) || 259200 : null,
+		interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) ?? 259200 : null,
 		proxy: get_proxygroup(cfg.proxy)
 	};
 });
