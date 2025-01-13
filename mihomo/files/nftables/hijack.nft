@@ -109,26 +109,26 @@ table inet mihomo {
 	}
 
 	chain router_redirect {
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } counter redirect to :$REDIR_PORT
+		meta nfproto @proxy_nfproto meta l4proto tcp counter redirect to :$REDIR_PORT
 	}
 
 	chain all_redirect {
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } counter redirect to :$REDIR_PORT
+		meta nfproto @proxy_nfproto meta l4proto tcp counter redirect to :$REDIR_PORT
 	}
 
 	chain allow_redirect {
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } ip saddr @acl_ip counter redirect to :$REDIR_PORT
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } ip6 saddr @acl_ip6 counter redirect to :$REDIR_PORT
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } ether saddr @acl_mac counter redirect to :$REDIR_PORT
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } iifname @acl_interface counter redirect to :$REDIR_PORT
+		meta nfproto @proxy_nfproto meta l4proto tcp ip saddr @acl_ip counter redirect to :$REDIR_PORT
+		meta nfproto @proxy_nfproto meta l4proto tcp ip6 saddr @acl_ip6 counter redirect to :$REDIR_PORT
+		meta nfproto @proxy_nfproto meta l4proto tcp ether saddr @acl_mac counter redirect to :$REDIR_PORT
+		meta nfproto @proxy_nfproto meta l4proto tcp iifname @acl_interface counter redirect to :$REDIR_PORT
 	}
 
 	chain block_redirect {
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } ip saddr @acl_ip counter return
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } ip6 saddr @acl_ip6 counter return
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } ether saddr @acl_mac counter return
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } iifname @acl_interface counter return
-		meta nfproto @proxy_nfproto meta l4proto { tcp, udp } counter redirect to :$REDIR_PORT
+		meta nfproto @proxy_nfproto meta l4proto tcp ip saddr @acl_ip counter return
+		meta nfproto @proxy_nfproto meta l4proto tcp ip6 saddr @acl_ip6 counter return
+		meta nfproto @proxy_nfproto meta l4proto tcp ether saddr @acl_mac counter return
+		meta nfproto @proxy_nfproto meta l4proto tcp iifname @acl_interface counter return
+		meta nfproto @proxy_nfproto meta l4proto tcp counter redirect to :$REDIR_PORT
 	}
 
 	chain router_tproxy {
