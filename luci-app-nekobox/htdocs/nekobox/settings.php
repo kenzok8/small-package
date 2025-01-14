@@ -220,12 +220,21 @@ $razordVersion = getRazordVersion();
                 </select>
             </div>
             <div class="col-12 col-md-6 mb-3" style="padding-right: 1.3rem;" >
-                <div class="d-grid">
+                <div class="d-flex justify-content-between gap-2">
                     <input class="btn btn-info btn-custom" type="submit" value="🖫 更改主题">
+                    
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#colorModal">
+                        主题编辑器
+                    </button>
+                    
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filesModal">
+                        上传并管理背景图片
+                    </button>
                 </div>
             </div>
         </div>
     </form>
+
     <table class="table table-borderless mb-3">
         <tbody>
             <tr>
@@ -605,11 +614,11 @@ $razordVersion = getRazordVersion();
 </div>
 
     <div class="modal fade" id="colorModal" tabindex="-1" aria-labelledby="colorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-lg">
+      <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="colorModalLabel">选择主题颜色</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           </div>
           <div class="modal-body">
             <form method="POST" action="theme.php" id="themeForm" enctype="multipart/form-data">
@@ -669,51 +678,69 @@ $razordVersion = getRazordVersion();
                 <label for="heading6Color" class="form-label">标题颜色6：</label>
                 <input type="color" class="form-control" name="heading6Color" id="heading6Color" value="#00ffff">
               </div>
-              <button type="submit" class="btn btn-success">保存主题</button>
-              <button type="button" class="btn btn-info" id="resetButton">恢复默认值</button>
+              <button type="submit" class="btn btn-primary">保存主题</button>
+              <button type="button" class="btn btn-success" id="resetButton">恢复默认值</button>
             </form>
           </div>
         </div>
       </div>
     </div>
 
-<div class="mb-3">
-  <h2 class="mb-4">上传背景图片</h2> 
-  <form method="POST" action="theme.php" enctype="multipart/form-data">
-    <input type="file" class="form-control mb-3" name="imageFile" id="imageFile"> 
-    <button type="submit" class="btn btn-success" id="submitBtn">上传图片</button>
-  </form>
-</div>
+<div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="filesModalLabel">上传并管理背景图片</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="mb-4">
+          <h2 class="mb-3">上传背景图片</h2>
+          <form method="POST" action="theme.php" enctype="multipart/form-data">
+            <input type="file" class="form-control mb-3" name="imageFile" id="imageFile">
+            <button type="submit" class="btn btn-success" id="submitBtn">上传图片</button>
+          </form>
+        </div>
 
-<h2>上传的图片文件</h2>
-<table class="table table-bordered">
-  <thead>
-    <tr>
-      <th>文件名</th>
-      <th>文件大小</th>
-      <th>操作</th>
-    </tr>
-  </thead>
-  <tbody>
-    <?php
-    $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
-    if (is_dir($picturesDir)) {
-        $files = array_diff(scandir($picturesDir), array('..', '.'));
-        foreach ($files as $file) {
-            $filePath = $picturesDir . $file;
-            if (is_file($filePath)) {
-                $fileSize = filesize($filePath);
-                echo "<tr>
-                        <td>$file</td>
-                        <td>" . formatSize($fileSize) . "</td>
-                        <td><a href='?delete=$file' class='btn btn-danger btn-sm'>删除</a></td>
-                      </tr>";
+        <h2 class="mb-3">上传的图片文件</h2>
+        <table class="table table-bordered text-center">
+          <thead>
+            <tr>
+              <th>文件名</th>
+              <th>文件大小</th>
+              <th>预览</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php
+            $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+            if (is_dir($picturesDir)) {
+                $files = array_diff(scandir($picturesDir), array('..', '.'));
+                foreach ($files as $file) {
+                    $filePath = $picturesDir . $file;
+                    if (is_file($filePath)) {
+                        $fileSize = filesize($filePath);
+                        $fileUrl = '/nekobox/assets/Pictures/' . $file;
+                        echo "<tr>
+                                <td class='align-middle'>$file</td>
+                                <td class='align-middle'>" . formatSize($fileSize) . "</td>
+                                <td class='align-middle'><img src='$fileUrl' alt='$file' style='width: 100px; height: auto;'></td>
+                                <td class='align-middle'>
+                                  <a href='?delete=$file' class='btn btn-danger btn-sm'>删除</a>
+                                </td>
+                              </tr>";
+                    }
+                }
             }
-        }
-    }
-    ?>
-  </tbody>
-</table>
+            ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
 <?php
 if (isset($_GET['delete'])) {
@@ -774,9 +801,6 @@ function formatSize($size) {
     });
   });
 </script>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#colorModal">
-      主题编辑器
-    </button>
 <style>
     @media (max-width: 767px) {
         .table td {
