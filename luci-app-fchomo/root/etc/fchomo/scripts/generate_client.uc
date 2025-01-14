@@ -267,6 +267,7 @@ config["external-controller-tls"] = api_tls_port ? '[::]:' + api_tls_port : null
 config["external-doh-server"] = uci.get(uciconf, uciapi, 'external_doh_server');
 config.secret = uci.get(uciconf, uciapi, 'secret') || trim(readfile('/proc/sys/kernel/random/uuid'));
 config["external-ui"] = RUN_DIR + '/ui';
+config["external-ui-url"] = `https://codeload.github.com/${uci.get(uciconf, uciapi, 'dashboard_repo')}/zip/refs/heads/gh-pages`;
 /* API END */
 
 /* Cache START */
