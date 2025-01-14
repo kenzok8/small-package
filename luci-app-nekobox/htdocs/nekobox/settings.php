@@ -603,6 +603,180 @@ $razordVersion = getRazordVersion();
         </div>
     </div>
 </div>
+
+    <div class="modal fade" id="colorModal" tabindex="-1" aria-labelledby="colorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="colorModalLabel">选择主题颜色</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form method="POST" action="theme.php" id="themeForm" enctype="multipart/form-data">
+              <div class="mb-3">
+                <label for="primaryColor" class="form-label">主色：</label>
+                <input type="color" class="form-control" name="primaryColor" id="primaryColor" value="#ffcc00">
+              </div>
+              <div class="mb-3">
+                <label for="secondaryColor" class="form-label">副色：</label>
+                <input type="color" class="form-control" name="secondaryColor" id="secondaryColor" value="#00ffff">
+              </div>
+              <div class="mb-3">
+                <label for="bodyBgColor" class="form-label">背景色：</label>
+                <input type="color" class="form-control" name="bodyBgColor" id="bodyBgColor" value="#087990">
+              </div>
+              <div class="mb-3">
+                <label for="bodyColor" class="form-label">文本颜色：</label>
+                <input type="color" class="form-control" name="bodyColor" id="bodyColor" value="#ffff00">
+              </div>
+              <div class="mb-3">
+                <label for="infoBgSubtle" class="form-label">信息背景色：</label>
+                <input type="color" class="form-control" name="infoBgSubtle" id="infoBgSubtle" value="#6A5ACD">
+              </div>
+              <div class="mb-3">
+                <label for="primaryBorderSubtle" class="form-label">主边框颜色：</label>
+                <input type="color" class="form-control" name="primaryBorderSubtle" id="primaryBorderSubtle" value="#87ceeb">
+              </div>
+              <div class="mb-3">
+                <label for="tertiaryColor" class="form-label">文本字体颜色2：</label>
+                <input type="color" class="form-control" name="tertiaryColor" id="tertiaryColor" value="#00ff00">
+              </div>
+              <div class="mb-3">
+                <label for="tertiaryRgbColor" class="form-label">文本字体颜色3：</label>
+                <input type="color" class="form-control" name="tertiaryRgbColor" id="tertiaryRgbColor" value="#1e90ff">
+              </div>
+              <div class="mb-3">
+                <label for="heading1Color" class="form-label">标题颜色1：</label>
+                <input type="color" class="form-control" name="heading1Color" id="heading1Color" value="#00a2e8">
+              </div>
+              <div class="mb-3">
+                <label for="heading2Color" class="form-label">标题颜色2：</label>
+                <input type="color" class="form-control" name="heading2Color" id="heading2Color" value="#00a2e8">
+              </div>
+              <div class="mb-3">
+                <label for="heading3Color" class="form-label">标题颜色3：</label>
+                <input type="color" class="form-control" name="heading3Color" id="heading3Color" value="#ffcc00">
+              </div>
+              <div class="mb-3">
+                <label for="heading4Color" class="form-label">标题颜色4：</label>
+                <input type="color" class="form-control" name="heading4Color" id="heading4Color" value="#ff4500">
+              </div>
+              <div class="mb-3">
+                <label for="heading5Color" class="form-label">标题颜色5：</label>
+                <input type="color" class="form-control" name="heading5Color" id="heading5Color" value="#7d5fff">
+              </div>
+              <div class="mb-3">
+                <label for="heading6Color" class="form-label">标题颜色6：</label>
+                <input type="color" class="form-control" name="heading6Color" id="heading6Color" value="#00ffff">
+              </div>
+              <button type="submit" class="btn btn-success">保存主题</button>
+              <button type="button" class="btn btn-info" id="resetButton">恢复默认值</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="mb-3">
+  <h2 class="mb-4">上传背景图片</h2> 
+  <form method="POST" action="theme.php" enctype="multipart/form-data">
+    <input type="file" class="form-control mb-3" name="imageFile" id="imageFile"> 
+    <button type="submit" class="btn btn-success" id="submitBtn">上传图片</button>
+  </form>
+</div>
+
+<h2>上传的图片文件</h2>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>文件名</th>
+      <th>文件大小</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?php
+    $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+    if (is_dir($picturesDir)) {
+        $files = array_diff(scandir($picturesDir), array('..', '.'));
+        foreach ($files as $file) {
+            $filePath = $picturesDir . $file;
+            if (is_file($filePath)) {
+                $fileSize = filesize($filePath);
+                echo "<tr>
+                        <td>$file</td>
+                        <td>" . formatSize($fileSize) . "</td>
+                        <td><a href='?delete=$file' class='btn btn-danger btn-sm'>删除</a></td>
+                      </tr>";
+            }
+        }
+    }
+    ?>
+  </tbody>
+</table>
+
+<?php
+if (isset($_GET['delete'])) {
+    $fileToDelete = $_GET['delete'];
+    $filePath = $picturesDir . $fileToDelete;
+    if (file_exists($filePath)) {
+        unlink($filePath); 
+        echo '<script>window.location.href = "settings.php";</script>';
+        exit;
+    }
+}
+
+function formatSize($size) {
+    if ($size >= 1073741824) {
+        return number_format($size / 1073741824, 2) . ' GB';
+    } elseif ($size >= 1048576) {
+        return number_format($size / 1048576, 2) . ' MB';
+    } elseif ($size >= 1024) {
+        return number_format($size / 1024, 2) . ' KB';
+    } else {
+        return $size . ' bytes';
+    }
+}
+?>
+  </tbody>
+</table>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const colorInputs = document.querySelectorAll('input[type="color"]');
+    
+    colorInputs.forEach(input => {
+      if (localStorage.getItem(input.name)) {
+        input.value = localStorage.getItem(input.name);
+      }
+
+      input.addEventListener('input', function() {
+        localStorage.setItem(input.name, input.value);
+      });
+    });
+
+    document.getElementById('resetButton').addEventListener('click', function() {
+      document.getElementById('primaryColor').value = '#ffcc00';
+      document.getElementById('secondaryColor').value = '#00ffff';
+      document.getElementById('bodyBgColor').value = '#087990';
+      document.getElementById('bodyColor').value = '#ffff00';
+      document.getElementById('infoBgSubtle').value = '#6A5ACD';
+      document.getElementById('primaryBorderSubtle').value = '#87ceeb';
+      document.getElementById('tertiaryColor').value = '#00ff00';
+      document.getElementById('tertiaryRgbColor').value = '#1e90ff';
+      document.getElementById('heading1Color').value = '#00a2e8';
+      document.getElementById('heading2Color').value = '#00a2e8';
+      document.getElementById('heading3Color').value = '#ffcc00';
+      document.getElementById('heading4Color').value = '#ff4500';
+      document.getElementById('heading5Color').value = '#7d5fff';
+      document.getElementById('heading6Color').value = '#00ffff';
+
+      localStorage.clear();
+    });
+  });
+</script>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#colorModal">
+      主题编辑器
+    </button>
 <style>
     @media (max-width: 767px) {
         .table td {
