@@ -1100,7 +1100,7 @@ return view.extend({
 		so.modalonly = false;
 
 		so = ss.option(form.ListValue, 'chain_head_sub', _('Chain head'));
-		so.load = L.bind(hm.loadProviderLabel, so);
+		so.load = L.bind(hm.loadProviderLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.depends('type', 'provider');
 		so.modalonly = true;
@@ -1108,7 +1108,7 @@ return view.extend({
 		so = ss.option(form.ListValue, 'chain_head', _('Chain head'),
 			_('Recommended to use UoT node.</br>such as <code>%s</code>.')
 			.format('ss|ssr|vmess|vless|trojan|tuic'));
-		so.load = L.bind(hm.loadNodeLabel, so);
+		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.validate = function(section_id, value) {
 			const chain_tail = this.section.getUIElement(section_id, 'chain_tail').getValue();
@@ -1121,33 +1121,7 @@ return view.extend({
 		so.depends('type', 'node');
 		so.modalonly = true;
 
-		/*
-		so = ss.option(hm.CBIStaticList, 'chain_body', _('Chain body'));
-		so.value('', _('-- Please choose --'));
-		so.load = L.bind(hm.loadNodeLabel, so);
-		so.validate = function(section_id, value) {
-			const chain_head = this.section.getUIElement(section_id, 'chain_head').getValue();
-			const chain_tail = this.section.getUIElement(section_id, 'chain_tail').getValue();
-			value = this.getUIElement(section_id).getValue();
-
-			if (value.includes(chain_head) || value.includes(chain_tail))
-				return _('Expecting: %s').format(_('Different with chain head/tail'));
-
-			return true;
-		}
-		so.textvalue = function(section_id) {
-			let cvals = this.cfgvalue(section_id);
-			//alert(Array.prototype.join.call(cvals, ':'));
-			return cvals ? '» ' + cvals.map((cval) => {
-				let i = this.keylist.indexOf(cval);
-
-				return this.vallist[i];
-			}).join(' » ') + ' »' : '»';
-		}
-		*/
-
 		so = ss.option(form.ListValue, 'chain_tail_group', _('Chain tail'));
-		so.value('', _('-- Please choose --'));
 		so.load = L.bind(hm.loadProxyGroupLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.depends({chain_tail: /.+/, '!reverse': true});
@@ -1156,7 +1130,7 @@ return view.extend({
 		so = ss.option(form.ListValue, 'chain_tail', _('Chain tail'),
 			_('Recommended to use UoT node.</br>such as <code>%s</code>.')
 			.format('ss|ssr|vmess|vless|trojan|tuic'));
-		so.load = L.bind(hm.loadNodeLabel, so);
+		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.validate = function(section_id, value) {
 			const chain_head = this.section.getUIElement(section_id, 'chain_head').getValue();

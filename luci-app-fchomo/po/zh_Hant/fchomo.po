@@ -801,13 +801,13 @@ msgstr "兜底 DNS 伺服器"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:786
 #: htdocs/luci-static/resources/view/fchomo/client.js:800
-msgid "Final DNS server (Used to Domestic-IP response)"
-msgstr "兜底 DNS 伺服器  (用於 境內-IP 回應)"
+msgid "Final DNS server (For non-poisoned domains)"
+msgstr "兜底 DNS 伺服器  (用於未被汙染的網域)"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:793
 #: htdocs/luci-static/resources/view/fchomo/client.js:801
-msgid "Final DNS server (Used to Overseas-IP response)"
-msgstr "兜底 DNS 伺服器  (用於 境外-IP 回應)"
+msgid "Final DNS server (For poisoned domains)"
+msgstr "兜底 DNS 伺服器  (用於已被汙染的網域)"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:301
 msgid "Flow"
@@ -2167,13 +2167,13 @@ msgstr "預設值為每天 2:00。"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1051
 msgid "The matching <code>%s</code> will be deemed as not-poisoned."
-msgstr "匹配的 <code>%s</code> 將被視為未被污染。"
+msgstr "匹配的 <code>%s</code> 將被視為未被汙染。"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1060
 #: htdocs/luci-static/resources/view/fchomo/client.js:1064
 #: htdocs/luci-static/resources/view/fchomo/client.js:1069
 msgid "The matching <code>%s</code> will be deemed as poisoned."
-msgstr "匹配的 <code>%s</code> 將被視為已被污染。"
+msgstr "匹配的 <code>%s</code> 將被視為已被汙染。"
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:352
 msgid "The server private key, in PEM format."

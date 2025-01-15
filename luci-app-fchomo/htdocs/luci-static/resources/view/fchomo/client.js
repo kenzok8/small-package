@@ -229,6 +229,7 @@ function renderPayload(s, total, uciconfig) {
 		o.modalonly = true;
 	}
 	let initDynamicPayload = function(o, n, key, uciconfig) {
+		o.allowduplicates = true;
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayloads().slice(n).map(e => e[key] ?? '');
 		}, o, n, key, uciconfig);
@@ -325,13 +326,12 @@ function renderPayload(s, total, uciconfig) {
 		initPayload(o, n, 'factor', uciconfig);
 
 		o = s.option(form.ListValue, prefix + 'rule_set', _('Factor') + ` ${n+1}`);
-		o.value('', _('-- Please choose --'));
 		if (n === 0)
 			o.depends('type', 'RULE-SET');
 		o.depends(prefix + 'type', 'RULE-SET');
 		initPayload(o, n, 'factor', uciconfig);
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
-			hm.loadRulesetLabel.call(this, null, section_id);
+			hm.loadRulesetLabel.call(this, [], null, section_id);
 
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key];
 		}, o, n, 'factor', uciconfig)
@@ -341,7 +341,7 @@ function renderPayload(s, total, uciconfig) {
 		o.depends(Object.fromEntries([[prefix + 'type', /.+/]]));
 		initPayload(o, n, 'deny', uciconfig);
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
-			return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key]);
+			return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key] ? true : false);
 		}, o, n, 'deny', uciconfig);
 		o.onchange = function(ev, section_id, value) {
 			let UIEl = this.section.getUIElement(section_id, 'entry');
@@ -366,7 +366,7 @@ function renderPayload(s, total, uciconfig) {
 	Object.keys(extenbox).forEach((n) => {
 		prefix = `payload${n}_`;
 
-		o = s.option(form.DynamicList, prefix + 'type', _('Type') + ' ++');
+		o = s.option(hm.CBIStaticList, prefix + 'type', _('Type') + ' ++');
 		o.default = hm.rules_type[0][0];
 		hm.rules_type.forEach((res) => {
 			o.value.apply(o, res);
@@ -384,7 +384,7 @@ function renderPayload(s, total, uciconfig) {
 			value.forEach((val) => {
 				rule.setPayload(n, {type: val}); n++;
 			});
-			rule.setPayload(n, {factor: null}, n);
+			rule.setPayload(n, {type: null}, n);
 
 			UIEl.node.previousSibling.innerText = rule.toString('mihomo');
 			UIEl.setValue(rule.toString('json'));
@@ -394,28 +394,24 @@ function renderPayload(s, total, uciconfig) {
 
 		o = s.option(form.DynamicList, prefix + 'fused', _('Factor') + ' ++',
 			_('Content will not be verified, Please make sure you enter it correctly.'));
-		o.value('', _('-- Please choose --'));
 		extenbox[n].forEach((type) => {
 			o.depends(Object.fromEntries([['type', type], [prefix + 'type', /.+/]]));
 		})
 		initDynamicPayload(o, n, 'factor', uciconfig);
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			let fusedval = [
-				['', _('-- Please choose --')],
 				['NETWORK', '-- NETWORK --'],
 				['udp', _('UDP')],
 				['tcp', _('TCP')],
 				['RULESET', '-- RULE-SET --']
 			];
-			hm.loadRulesetLabel.call(this, null, section_id);
-			this.keylist = [...fusedval.map(e => e[0]), ...this.keylist];
-			this.vallist = [...fusedval.map(e => e[1]), ...this.vallist];
+			hm.loadRulesetLabel.call(this, fusedval, null, section_id);
 			this.super('load', section_id);
 
-			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayloads().slice(n).map(e => e[key]);
+			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayloads().slice(n).map(e => e[key] ?? '');
 		}, o, n, 'factor', uciconfig)
 
-		o = s.option(form.DynamicList, prefix + 'NOTs', _('NOT') + ' ++',
+		o = s.option(hm.CBIStaticList, prefix + 'NOTs', _('NOT') + ' ++',
 			_('<code>0</code> or <code>1</code> only.'));
 		o.value('0');
 		o.value('1');
@@ -433,8 +429,8 @@ function renderPayload(s, total, uciconfig) {
 
 			let n = this.option.match(/^payload(\d+)_/)[1];
 			let limit = rule.getPayloads().length;
-			value.forEach((val) => {
-				rule.setPayload(n, {deny: flagToBool(val) || null}); n++;
+			value.forEach((value) => {
+				rule.setPayload(n, {deny: flagToBool(value) || null}); n++;
 			});
 			rule.setPayload(limit, {deny: null}, limit);
 
@@ -527,13 +523,13 @@ function renderRules(s, uciconfig) {
 		UIEl.setValue(rule.toString('json'));
 	}
 	o.write = function() {};
-	//o.depends('SUB-RULE', '0');
+	//o.depends('SUB-RULE', '');
 	o.editable = true;
 
 	o = s.option(form.Flag, 'src', _('src'));
 	o.default = o.disabled;
 	o.load = function(section_id) {
-		return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getParam('src'));
+		return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getParam('src') ? true : false);
 	}
 	o.onchange = function(ev, section_id, value) {
 		let UIEl = this.section.getUIElement(section_id, 'entry');
@@ -544,13 +540,13 @@ function renderRules(s, uciconfig) {
 		UIEl.setValue(rule.toString('json'));
 	}
 	o.write = function() {};
-	o.depends('SUB-RULE', '0');
+	o.depends('SUB-RULE', '');
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'no-resolve', _('no-resolve'));
 	o.default = o.disabled;
 	o.load = function(section_id) {
-		return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getParam('no-resolve'));
+		return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getParam('no-resolve') ? true : false);
 	}
 	o.onchange = function(ev, section_id, value) {
 		let UIEl = this.section.getUIElement(section_id, 'entry');
@@ -561,7 +557,7 @@ function renderRules(s, uciconfig) {
 		UIEl.setValue(rule.toString('json'));
 	}
 	o.write = function() {};
-	o.depends('SUB-RULE', '0');
+	o.depends('SUB-RULE', '');
 	o.modalonly = true;
 }
 
@@ -655,7 +651,7 @@ return view.extend({
 
 		so = ss.taboption('field_general', form.MultiValue, 'proxies', _('Node'));
 		so.value('', _('-- Please choose --'));
-		so.load = L.bind(hm.loadNodeLabel, so);
+		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
 		so.validate = function(section_id, value) {
 			if (this.section.getOption('include_all').formvalue(section_id) === '1' ||
 			    this.section.getOption('include_all_proxies').formvalue(section_id) === '1')
@@ -669,7 +665,7 @@ return view.extend({
 
 		so = ss.taboption('field_general', form.MultiValue, 'use', _('Provider'));
 		so.value('', _('-- Please choose --'));
-		so.load = L.bind(hm.loadProviderLabel, so);
+		so.load = L.bind(hm.loadProviderLabel, so, [['', _('-- Please choose --')]]);
 		so.validate = function(section_id, value) {
 			if (this.section.getOption('include_all').formvalue(section_id) === '1' ||
 			    this.section.getOption('include_all_providers').formvalue(section_id) === '1')
@@ -823,34 +819,18 @@ return view.extend({
 
 		renderRules(ss, data[0]);
 
-		so = ss.option(form.Flag, 'SUB-RULE', _('SUB-RULE'));
-		so.default = so.disabled;
+		so = ss.option(form.ListValue, 'SUB-RULE', _('SUB-RULE'));
 		so.load = function(section_id) {
-			return boolToFlag(new RulesEntry(uci.get(data[0], section_id, 'entry')).subrule ? 'true' : 'false');
+			hm.loadSubRuleGroup.call(this, [['', _('-- Please choose --')]], section_id);
+
+			return new RulesEntry(uci.get(data[0], section_id, 'entry')).subrule || '';
 		}
 		so.validate = function(section_id, value) {
 			value = this.formvalue(section_id);
 
-			this.section.getUIElement(section_id, 'detour').node.querySelector('select').disabled = (value === '1') ? 'true' : null;
+			this.section.getUIElement(section_id, 'detour').node.querySelector('select').disabled = value ? 'true' : null;
 
 			return true;
-		}
-		so.onchange = function(ev, section_id, value) {
-			let UIEl = this.section.getUIElement(section_id, 'entry');
-
-			let rule = new RulesEntry(UIEl.getValue()).setKey('subrule', value === '1' ? ' ' : false);
-
-			UIEl.node.previousSibling.innerText = rule.toString('mihomo');
-			UIEl.setValue(rule.toString('json'));
-		}
-		so.write = function() {};
-		so.modalonly = true;
-
-		so = ss.option(form.ListValue, 'sub_rule', _('Sub rule'));
-		so.load = function(section_id) {
-			hm.loadSubRuleGroup.call(this, section_id);
-
-			return new RulesEntry(uci.get(data[0], section_id, 'entry')).subrule || '';
 		}
 		so.onchange = function(ev, section_id, value) {
 			let UIEl = this.section.getUIElement(section_id, 'entry');
@@ -860,9 +840,7 @@ return view.extend({
 			UIEl.node.previousSibling.innerText = rule.toString('mihomo');
 			UIEl.setValue(rule.toString('json'));
 		}
-		so.rmempty = false;
 		so.write = function() {};
-		so.depends('SUB-RULE', '1');
 		so.modalonly = true;
 		/* Routing rules END */
 
@@ -930,22 +908,22 @@ return view.extend({
 		so.rmempty = false;
 
 		so = ss.option(form.MultiValue, 'default_server', _('Default DNS server'));
-		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? _('Final DNS server (Used to Domestic-IP response)') : _('Final DNS server');
+		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? _('Final DNS server (For non-poisoned domains)') : _('Final DNS server');
 		so.default = 'default-dns';
 		so.load = L.bind(loadDNSServerLabel, so);
 		so.validate = L.bind(validateNameserver, so);
 		so.rmempty = false;
 
 		so = ss.option(form.MultiValue, 'fallback_server', _('Fallback DNS server'));
-		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? _('Final DNS server (Used to Overseas-IP response)') : _('Fallback DNS server');
+		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? _('Final DNS server (For poisoned domains)') : _('Fallback DNS server');
 		so.load = L.bind(loadDNSServerLabel, so);
 		so.validate = L.bind(validateNameserver, so);
 		so.onchange = function(ev, section_id, value) {
 			let ddesc = this.section.getUIElement(section_id, 'default_server').node.nextSibling;
 			let fdesc = ev.target.nextSibling;
 			if (value.length > 0) {
-				ddesc.innerHTML = _('Final DNS server (Used to Domestic-IP response)');
-				fdesc.innerHTML = _('Final DNS server (Used to Overseas-IP response)');
+				ddesc.innerHTML = _('Final DNS server (For non-poisoned domains)');
+				fdesc.innerHTML = _('Final DNS server (For poisoned domains)');
 			} else {
 				ddesc.innerHTML = _('Final DNS server');
 				fdesc.innerHTML = _('Fallback DNS server');
@@ -1046,7 +1024,7 @@ return view.extend({
 		so = ss.option(form.Flag, 'h3', _('HTTP/3'));
 		so.default = so.disabled;
 		so.load = function(section_id) {
-			return boolToFlag(new DNSAddress(uci.get(data[0], section_id, 'address')).parseParam('h3'));
+			return boolToFlag(new DNSAddress(uci.get(data[0], section_id, 'address')).parseParam('h3') ? true : false);
 		}
 		so.onchange = function(ev, section_id, value) {
 			let UIEl = this.section.getUIElement(section_id, 'address');
@@ -1079,7 +1057,7 @@ return view.extend({
 			_('Override ECS in original request.'));
 		so.default = so.disabled;
 		so.load = function(section_id) {
-			return boolToFlag(new DNSAddress(uci.get(data[0], section_id, 'address')).parseParam('ecs-override'));
+			return boolToFlag(new DNSAddress(uci.get(data[0], section_id, 'address')).parseParam('ecs-override') ? true : false);
 		}
 		so.onchange = function(ev, section_id, value) {
 			let UIEl = this.section.getUIElement(section_id, 'address');
@@ -1138,7 +1116,7 @@ return view.extend({
 		so = ss.option(form.MultiValue, 'rule_set', _('Rule set'),
 			_('Match rule set.'));
 		so.value('', _('-- Please choose --'));
-		so.load = L.bind(hm.loadRulesetLabel, so, ['domain', 'classical']);
+		so.load = L.bind(hm.loadRulesetLabel, so, [['', _('-- Please choose --')]], ['domain', 'classical']);
 		so.depends('type', 'rule_set');
 		so.modalonly = true;
 

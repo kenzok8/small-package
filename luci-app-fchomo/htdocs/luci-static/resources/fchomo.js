@@ -483,11 +483,13 @@ return baseclass.extend({
 		return this.super('load', section_id);
 	},
 
-	loadNodeLabel(section_id) {
+	loadNodeLabel(preadds, section_id) {
 		delete this.keylist;
 		delete this.vallist;
 
-		this.value('', _('-- Please choose --'));
+		preadds?.forEach((arr) => {
+			this.value.apply(this, arr);
+		});
 		uci.sections(this.config, 'node', (res) => {
 			if (res.enabled !== '0')
 				this.value(res['.name'], res.label);
@@ -496,11 +498,13 @@ return baseclass.extend({
 		return this.super('load', section_id);
 	},
 
-	loadProviderLabel(section_id) {
+	loadProviderLabel(preadds, section_id) {
 		delete this.keylist;
 		delete this.vallist;
 
-		this.value('', _('-- Please choose --'));
+		preadds?.forEach((arr) => {
+			this.value.apply(this, arr);
+		});
 		uci.sections(this.config, 'provider', (res) => {
 			if (res.enabled !== '0')
 				this.value(res['.name'], res.label);
@@ -509,11 +513,13 @@ return baseclass.extend({
 		return this.super('load', section_id);
 	},
 
-	loadRulesetLabel(behaviors, section_id) {
+	loadRulesetLabel(preadds, behaviors, section_id) {
 		delete this.keylist;
 		delete this.vallist;
 
-		this.value('', _('-- Please choose --'));
+		preadds?.forEach((arr) => {
+			this.value.apply(this, arr);
+		});
 		uci.sections(this.config, 'ruleset', (res) => {
 			if (res.enabled !== '0')
 				if (behaviors ? behaviors.includes(res.behavior) : true)
@@ -523,11 +529,13 @@ return baseclass.extend({
 		return this.super('load', section_id);
 	},
 
-	loadSubRuleGroup(section_id) {
+	loadSubRuleGroup(preadds, section_id) {
 		delete this.keylist;
 		delete this.vallist;
 
-		this.value('', _('-- Please choose --'));
+		preadds?.forEach((arr) => {
+			this.value.apply(this, arr);
+		});
 		let groups = {};
 		uci.sections(this.config, 'subrules', (res) => {
 			if (res.enabled !== '0')
