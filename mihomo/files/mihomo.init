@@ -673,7 +673,7 @@ mixin_nameserver_policy() {
 }
 
 mixin_sniffer_domain_names() {
-	domain_name="$1" type="$2" yq -M -i '.sniffer.[env(type)] += [env(domain_name)]' "$RUN_PROFILE_PATH"
+	domain_name="$1" type="$2" yq -M -i '.sniffer.[strenv(type)] += [strenv(domain_name)]' "$RUN_PROFILE_PATH"
 }
 
 mixin_sniffs() {
@@ -685,12 +685,12 @@ mixin_sniffs() {
 	if [ "$enabled" == 0 ]; then
 		return
 	fi
-	protocol="$protocol" overwrite_destination="$overwrite_destination" yq -M -i '.sniffer.sniff.[env(protocol)].override-destination = env(overwrite_destination) == 1' "$RUN_PROFILE_PATH"
+	protocol="$protocol" overwrite_destination="$overwrite_destination" yq -M -i '.sniffer.sniff.[strenv(protocol)].override-destination = env(overwrite_destination) == 1' "$RUN_PROFILE_PATH"
 	config_list_foreach "$section" "port" mixin_sniff "$protocol"
 }
 
 mixin_sniff() {
-	port="$1" protocol="$2" yq -M -i '.sniffer.sniff.[env(protocol)].ports += [env(port)]' "$RUN_PROFILE_PATH"
+	port="$1" protocol="$2" yq -M -i '.sniffer.sniff.[strenv(protocol)].ports += [env(port)]' "$RUN_PROFILE_PATH"
 }
 
 add_bypass_user() {
