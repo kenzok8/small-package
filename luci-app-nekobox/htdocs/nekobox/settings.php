@@ -686,7 +686,7 @@ $razordVersion = getRazordVersion();
             <label class="form-check-label" for="useBackgroundImage">使用自定义背景图片</label>
           </div>
 
-          <div class="mb-3" id="backgroundImageContainer" style="display:none;">
+          <div class="mb-3" id="backgroundImageContainer" style="display:none; position: relative; left: -1ch;">
             <label for="backgroundImage" class="form-label">选择背景图片</label>
             <select class="form-select" id="backgroundImage" name="backgroundImage">
               <option value="">请选择图片</option>
@@ -702,8 +702,10 @@ $razordVersion = getRazordVersion();
             </select>
           </div>
 
-          <button type="submit" class="btn btn-primary  me-2">保存主题</button>
-          <button type="button" class="btn btn-success  me-2" id="resetButton">恢复默认值</button>
+          <button type="submit" class="btn btn-primary  mb-3 me-2">保存主题</button>
+          <button type="button" class="btn btn-success  mb-3 me-2" id="resetButton">恢复默认值</button>
+          <button type="button" class="btn btn-info mb-3" id="exportButton">导出设置</button>
+          <input type="file" id="importButton" class="form-control mb-3" accept="application/json">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
         </form>
       </div>
@@ -854,6 +856,81 @@ function formatSize($size) {
       document.getElementById('heading6Color').value = '#00ffff';
       
       localStorage.clear();
+    });
+
+    document.getElementById('exportButton').addEventListener('click', function() {
+      const settings = {
+        primaryColor: document.getElementById('primaryColor').value,
+        secondaryColor: document.getElementById('secondaryColor').value,
+        bodyBgColor: document.getElementById('bodyBgColor').value,
+        infoBgSubtle: document.getElementById('infoBgSubtle').value,
+        primaryBorderSubtle: document.getElementById('primaryBorderSubtle').value,
+        bodyColor: document.getElementById('bodyColor').value,
+        tertiaryColor: document.getElementById('tertiaryColor').value,
+        tertiaryRgbColor: document.getElementById('tertiaryRgbColor').value,
+        heading1Color: document.getElementById('heading1Color').value,
+        heading2Color: document.getElementById('heading2Color').value,
+        heading3Color: document.getElementById('heading3Color').value,
+        heading4Color: document.getElementById('heading4Color').value,
+        heading5Color: document.getElementById('heading5Color').value,
+        heading6Color: document.getElementById('heading6Color').value,
+        useBackgroundImage: document.getElementById('useBackgroundImage').checked,
+        backgroundImage: document.getElementById('backgroundImage').value
+      };
+
+      const blob = new Blob([JSON.stringify(settings)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'theme-settings.json';
+      link.click();
+    });
+
+    document.getElementById('importButton').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file && file.type === 'application/json') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const settings = JSON.parse(e.target.result);
+
+          document.getElementById('primaryColor').value = settings.primaryColor;
+          document.getElementById('secondaryColor').value = settings.secondaryColor;
+          document.getElementById('bodyBgColor').value = settings.bodyBgColor;
+          document.getElementById('infoBgSubtle').value = settings.infoBgSubtle;
+          document.getElementById('primaryBorderSubtle').value = settings.primaryBorderSubtle;
+          document.getElementById('bodyColor').value = settings.bodyColor;
+          document.getElementById('tertiaryColor').value = settings.tertiaryColor;
+          document.getElementById('tertiaryRgbColor').value = settings.tertiaryRgbColor;
+          document.getElementById('heading1Color').value = settings.heading1Color;
+          document.getElementById('heading2Color').value = settings.heading2Color;
+          document.getElementById('heading3Color').value = settings.heading3Color;
+          document.getElementById('heading4Color').value = settings.heading4Color;
+          document.getElementById('heading5Color').value = settings.heading5Color;
+          document.getElementById('heading6Color').value = settings.heading6Color;
+          document.getElementById('useBackgroundImage').checked = settings.useBackgroundImage;
+
+          const backgroundImageContainer = document.getElementById('backgroundImageContainer');
+          backgroundImageContainer.style.display = settings.useBackgroundImage ? 'block' : 'none';
+          document.getElementById('backgroundImage').value = settings.backgroundImage || '';
+
+          localStorage.setItem('primaryColor', settings.primaryColor);
+          localStorage.setItem('secondaryColor', settings.secondaryColor);
+          localStorage.setItem('bodyBgColor', settings.bodyBgColor);
+          localStorage.setItem('infoBgSubtle', settings.infoBgSubtle);
+          localStorage.setItem('primaryBorderSubtle', settings.primaryBorderSubtle);
+          localStorage.setItem('bodyColor', settings.bodyColor);
+          localStorage.setItem('tertiaryColor', settings.tertiaryColor);
+          localStorage.setItem('tertiaryRgbColor', settings.tertiaryRgbColor);
+          localStorage.setItem('heading1Color', settings.heading1Color);
+          localStorage.setItem('heading2Color', settings.heading2Color);
+          localStorage.setItem('heading3Color', settings.heading3Color);
+          localStorage.setItem('heading4Color', settings.heading4Color);
+          localStorage.setItem('heading5Color', settings.heading5Color);
+          localStorage.setItem('heading6Color', settings.heading6Color);
+          localStorage.setItem('useBackgroundImage', settings.useBackgroundImage);
+          localStorage.setItem('backgroundImage', settings.backgroundImage);
+        };
+        reader.readAsText(file);
+      }
     });
   });
 </script>
