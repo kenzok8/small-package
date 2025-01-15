@@ -9,7 +9,7 @@
 'require view';
 
 /* Thanks to luci-app-aria2 */
-var css = '				\
+const css = '				\
 #log_textarea {				\
 	padding: 10px;			\
 	text-align: left;		\
@@ -23,7 +23,7 @@ var css = '				\
 	background-color: #33ccff;	\
 }';
 
-var hm_dir = '/var/run/fchomo';
+const hm_dir = '/var/run/fchomo';
 
 function getRuntimeLog(name, filename) {
 	const callLogClean = rpc.declare({
@@ -33,13 +33,13 @@ function getRuntimeLog(name, filename) {
 		expect: { '': {} }
 	});
 
-	var log_textarea = E('div', { 'id': 'log_textarea' },
+	let log_textarea = E('div', { 'id': 'log_textarea' },
 		E('pre', {
 			'class': 'spinning'
 		}, _('Collecting data...'))
 	);
 
-	var log;
+	let log;
 	poll.add(L.bind(function() {
 		return fs.read_direct(String.format('%s/%s.log', hm_dir, filename), 'text')
 		.then(function(res) {
@@ -86,7 +86,7 @@ function getRuntimeLog(name, filename) {
 }
 
 return view.extend({
-	render: function(data) {
+	render(data) {
 		let m, s, o, ss, so;
 
 		m = new form.Map('fchomo');

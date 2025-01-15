@@ -8,10 +8,10 @@
 'require fchomo as hm';
 
 function handleGenKey(option) {
-	var section_id = this.section.section;
-	var type = this.section.getOption('type').formvalue(section_id);
-	var widget = this.map.findElement('id', 'widget.cbid.fchomo.%s.%s'.format(section_id, option));
-	var password, required_method;
+	const section_id = this.section.section;
+	const type = this.section.getOption('type').formvalue(section_id);
+	let widget = this.map.findElement('id', 'widget.cbid.fchomo.%s.%s'.format(section_id, option));
+	let password, required_method;
 
 	if (option === 'uuid' || option.match(/_uuid/))
 		required_method = 'uuid';
@@ -44,8 +44,8 @@ function handleGenKey(option) {
 const CBIPWGenValue = form.Value.extend({
 	__name__: 'CBI.PWGenValue',
 
-	renderWidget: function() {
-		var node = form.Value.prototype.renderWidget.apply(this, arguments);
+	renderWidget() {
+		let node = form.Value.prototype.renderWidget.apply(this, arguments);
 
 		(node.querySelector('.control-group') || node).appendChild(E('button', {
 			'class': 'cbi-button cbi-button-add',
@@ -58,16 +58,16 @@ const CBIPWGenValue = form.Value.extend({
 });
 
 return view.extend({
-	load: function() {
+	load() {
 		return Promise.all([
 			uci.load('fchomo'),
 			hm.getFeatures()
 		]);
 	},
 
-	render: function(data) {
-		var dashboard_repo = uci.get(data[0], 'api', 'dashboard_repo'),
-		    features = data[1];
+	render(data) {
+		const dashboard_repo = uci.get(data[0], 'api', 'dashboard_repo');
+		const features = data[1];
 
 		let m, s, o;
 
@@ -210,7 +210,7 @@ return view.extend({
 		o = s.option(CBIPWGenValue, 'shadowsocks_password', _('Password'));
 		o.password = true;
 		o.validate = function(section_id, value) {
-			var encmode = this.section.getOption('shadowsocks_chipher').formvalue(section_id);
+			const encmode = this.section.getOption('shadowsocks_chipher').formvalue(section_id);
 			return hm.validateShadowsocksPassword.call(this, hm, encmode, section_id, value);
 		}
 		o.depends({type: 'shadowsocks', shadowsocks_chipher: /.+/});
@@ -270,9 +270,9 @@ return view.extend({
 		o = s.option(form.Flag, 'tls', _('TLS'));
 		o.default = o.disabled;
 		o.validate = function(section_id, value) {
-			var type = this.section.getOption('type').formvalue(section_id);
-			var tls = this.section.getUIElement(section_id, 'tls').node.querySelector('input');
-			var tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
+			const type = this.section.getOption('type').formvalue(section_id);
+			let tls = this.section.getUIElement(section_id, 'tls').node.querySelector('input');
+			let tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
 
 			// Force enabled
 			if (['tuic', 'hysteria2'].includes(type)) {
