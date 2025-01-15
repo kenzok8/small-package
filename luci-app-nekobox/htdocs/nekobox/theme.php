@@ -4,7 +4,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $secondaryColor = $_POST['secondaryColor'] ?? '#00ffff'; 
     $bodyBgColor = $_POST['bodyBgColor'] ?? '#087990'; 
     $bodyColor = $_POST['bodyColor'] ?? '#ffff00'; 
-    $infoBgSubtle = $_POST['infoBgSubtle'] ?? '#6A5ACD'; 
+    $infoBgSubtle = $_POST['infoBgSubtle'] ?? '#6a5acd'; 
     $primaryBorderSubtle = $_POST['primaryBorderSubtle'] ?? '#87ceeb'; 
     $tertiaryColor = $_POST['tertiaryColor'] ?? '#00ff00'; 
     $tertiaryRgbColor = $_POST['tertiaryRgbColor'] ?? '#1e90ff'; 
@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    $backgroundImagePath = $_POST['backgroundImage'] ?? '';
     $cssContent = "
 
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap');
@@ -75,7 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-      " . ($uploadedImagePath ? "background-image: url('$uploadedImagePath'); background-repeat: no-repeat; background-position: center center; background-attachment: fixed; background-size: cover;" : "") . "
+      " . ($backgroundImagePath ? "background-image: url('$backgroundImagePath'); background-repeat: no-repeat; background-position: center center; background-attachment: fixed; background-size: cover;" : "") . "
+      " . ($uploadedImagePath && empty($backgroundImagePath) ? "background-image: url('$uploadedImagePath'); background-repeat: no-repeat; background-position: center center; background-attachment: fixed; background-size: cover;" : "") . "
     }
 
     h1 { color: var(--bs-heading-1); }
@@ -110,6 +112,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: var(--bs-tertiary-rgb) !important; 
     }
 
+    table td:nth-child(3) { 
+      color: #ffffff !important; 
+    }
+    table td:nth-child(4) { 
+      color: #ffffff !important; 
+    }
     button {
       background-color: var(--bs-primary);
       border: 1px solid rgba(255, 255, 255, 0.5);
@@ -141,6 +149,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       padding: 2rem;
       margin-top: 2rem;
       margin-bottom: 2rem;
+    }
+
+    .modal-header .close {
+      color: black !important;  
+      opacity: 1 !important;   
+      font-size: 1.5rem !important; 
+      background: none !important;  
+      border: none !important;  
+    }
+
+    .modal-header .close:hover,
+    .modal-header .close:focus {
+      color: black !important; 
+      background-color: transparent !important; 
+      border: none !important; 
     }
 
     button, .btn-warning, .btn-info, .card, .modal-content { transition: transform 0.2s ease, box-shadow 0.2s ease; }
