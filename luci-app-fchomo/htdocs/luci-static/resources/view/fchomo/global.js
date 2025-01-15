@@ -529,7 +529,6 @@ return view.extend({
 			delete this.keylist;
 			delete this.vallist;
 
-			this.value('', _('-- Please choose --'));
 			hm.dashrepos.forEach((repo) => {
 				L.resolveDefault(callResVersion('dashboard', repo[0]), {}).then((res) => {
 					this.value(repo[0], repo[1] + ' - ' + (res.version || _('Not Installed')));

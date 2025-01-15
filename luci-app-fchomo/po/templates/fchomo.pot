@@ -787,12 +787,12 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:786
 #: htdocs/luci-static/resources/view/fchomo/client.js:800
-msgid "Final DNS server (Used to Domestic-IP response)"
+msgid "Final DNS server (For non-poisoned domains)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:793
 #: htdocs/luci-static/resources/view/fchomo/client.js:801
-msgid "Final DNS server (Used to Overseas-IP response)"
+msgid "Final DNS server (For poisoned domains)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:301

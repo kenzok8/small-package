@@ -801,13 +801,13 @@ msgstr "兜底 DNS 服务器"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:786
 #: htdocs/luci-static/resources/view/fchomo/client.js:800
-msgid "Final DNS server (Used to Domestic-IP response)"
-msgstr "兜底 DNS 服务器  (用于 境内-IP 响应)"
+msgid "Final DNS server (For non-poisoned domains)"
+msgstr "兜底 DNS 服务器  (用于未被污染的域名)"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:793
 #: htdocs/luci-static/resources/view/fchomo/client.js:801
-msgid "Final DNS server (Used to Overseas-IP response)"
-msgstr "兜底 DNS 服务器  (用于 境外-IP 响应)"
+msgid "Final DNS server (For poisoned domains)"
+msgstr "兜底 DNS 服务器  (用于已被污染的域名)"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:301
 msgid "Flow"
