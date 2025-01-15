@@ -265,7 +265,7 @@ $razordVersion = getRazordVersion();
                 </tr>
                 <tr>
                     <td class="text-center">
-                        <button class="btn btn-pink" id="checkCliverButton">🔍 检测版本</button>
+                        <button class="btn btn-pink me-1" id="checkCliverButton">🔍 检测版本</button>
                         <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showVersionTypeModal()">🔄 更新版本</button>
                     </td>
                 </tr>
@@ -287,7 +287,7 @@ $razordVersion = getRazordVersion();
                 </tr>
                 <tr>
                     <td class="text-center">
-                        <button class="btn btn-pink" id="checkUiButton">🔍 检测版本</button>
+                        <button class="btn btn-pink me-1" id="checkUiButton">🔍 检测版本</button>
                         <button class="btn btn-info" id="updateUiButton" title="更新面板" onclick="showPanelSelector()">🔄 更新版本</button>
                     </td>
                 </tr>
@@ -313,7 +313,7 @@ $razordVersion = getRazordVersion();
                 </tr>
                 <tr>
                     <td class="text-center">
-                        <button class="btn btn-pink" id="checkSingboxButton">🔍 检测版本</button>
+                        <button class="btn btn-pink me-1" id="checkSingboxButton">🔍 检测版本</button>
                         <button class="btn btn-info" id="singboxOptionsButton" title="Singbox 相关操作">🔄 更新版本</button>
                     </td>
                 </tr>
@@ -335,7 +335,7 @@ $razordVersion = getRazordVersion();
                 </tr>
                 <tr>
                     <td class="text-center">
-                        <button class="btn btn-pink" id="checkMihomoButton">🔍 检测版本</button>
+                        <button class="btn btn-pink me-1" id="checkMihomoButton">🔍 检测版本</button>
                         <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核" onclick="showMihomoVersionSelector()">🔄 更新版本</button>
                     </td>
                 </tr>
@@ -613,78 +613,110 @@ $razordVersion = getRazordVersion();
     </div>
 </div>
 
-    <div class="modal fade" id="colorModal" tabindex="-1" aria-labelledby="colorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="colorModalLabel">选择主题颜色</h5>
-            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<div class="modal fade" id="colorModal" tabindex="-1" aria-labelledby="colorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="colorModalLabel">选择主题颜色</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="theme.php" id="themeForm" enctype="multipart/form-data">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="primaryColor" class="form-label">主色</label>
+              <input type="color" class="form-control" name="primaryColor" id="primaryColor" value="#ffcc00">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="secondaryColor" class="form-label">副色</label>
+              <input type="color" class="form-control" name="secondaryColor" id="secondaryColor" value="#00ffff">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="bodyBgColor" class="form-label">主背景色</label>
+              <input type="color" class="form-control" name="bodyBgColor" id="bodyBgColor" value="#087990">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="infoBgSubtle" class="form-label">信息背景色</label>
+              <input type="color" class="form-control" name="infoBgSubtle" id="infoBgSubtle" value="#6a5acd">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="primaryBorderSubtle" class="form-label">主边框颜色</label>
+              <input type="color" class="form-control" name="primaryBorderSubtle" id="primaryBorderSubtle" value="#87ceeb">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="bodyColor" class="form-label">文本颜色 1</label>
+              <input type="color" class="form-control" name="bodyColor" id="bodyColor" value="#ffff00">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="tertiaryColor" class="form-label">文本颜色 2</label>
+              <input type="color" class="form-control" name="tertiaryColor" id="tertiaryColor" value="#00ff00">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="tertiaryRgbColor" class="form-label">文本颜色 3</label>
+              <input type="color" class="form-control" name="tertiaryRgbColor" id="tertiaryRgbColor" value="#1e90ff">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="heading1Color" class="form-label">标题颜色 1</label>
+              <input type="color" class="form-control" name="heading1Color" id="heading1Color" value="#00a2e8">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="heading2Color" class="form-label">标题颜色 2</label>
+              <input type="color" class="form-control" name="heading2Color" id="heading2Color" value="#00a2e8">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="heading3Color" class="form-label">标题颜色 3</label>
+              <input type="color" class="form-control" name="heading3Color" id="heading3Color" value="#ffcc00">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="heading4Color" class="form-label">标题颜色 4</label>
+              <input type="color" class="form-control" name="heading4Color" id="heading4Color" value="#ff4500">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="heading5Color" class="form-label">标题颜色 5</label>
+              <input type="color" class="form-control" name="heading5Color" id="heading5Color" value="#7d5fff">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="heading6Color" class="form-label">标题颜色 6</label>
+              <input type="color" class="form-control" name="heading6Color" id="heading6Color" value="#00ffff">
+            </div>
           </div>
-          <div class="modal-body">
-            <form method="POST" action="theme.php" id="themeForm" enctype="multipart/form-data">
-              <div class="mb-3">
-                <label for="primaryColor" class="form-label">主色：</label>
-                <input type="color" class="form-control" name="primaryColor" id="primaryColor" value="#ffcc00">
-              </div>
-              <div class="mb-3">
-                <label for="secondaryColor" class="form-label">副色：</label>
-                <input type="color" class="form-control" name="secondaryColor" id="secondaryColor" value="#00ffff">
-              </div>
-              <div class="mb-3">
-                <label for="bodyBgColor" class="form-label">背景色：</label>
-                <input type="color" class="form-control" name="bodyBgColor" id="bodyBgColor" value="#087990">
-              </div>
-              <div class="mb-3">
-                <label for="bodyColor" class="form-label">文本颜色：</label>
-                <input type="color" class="form-control" name="bodyColor" id="bodyColor" value="#ffff00">
-              </div>
-              <div class="mb-3">
-                <label for="infoBgSubtle" class="form-label">信息背景色：</label>
-                <input type="color" class="form-control" name="infoBgSubtle" id="infoBgSubtle" value="#6A5ACD">
-              </div>
-              <div class="mb-3">
-                <label for="primaryBorderSubtle" class="form-label">主边框颜色：</label>
-                <input type="color" class="form-control" name="primaryBorderSubtle" id="primaryBorderSubtle" value="#87ceeb">
-              </div>
-              <div class="mb-3">
-                <label for="tertiaryColor" class="form-label">文本字体颜色2：</label>
-                <input type="color" class="form-control" name="tertiaryColor" id="tertiaryColor" value="#00ff00">
-              </div>
-              <div class="mb-3">
-                <label for="tertiaryRgbColor" class="form-label">文本字体颜色3：</label>
-                <input type="color" class="form-control" name="tertiaryRgbColor" id="tertiaryRgbColor" value="#1e90ff">
-              </div>
-              <div class="mb-3">
-                <label for="heading1Color" class="form-label">标题颜色1：</label>
-                <input type="color" class="form-control" name="heading1Color" id="heading1Color" value="#00a2e8">
-              </div>
-              <div class="mb-3">
-                <label for="heading2Color" class="form-label">标题颜色2：</label>
-                <input type="color" class="form-control" name="heading2Color" id="heading2Color" value="#00a2e8">
-              </div>
-              <div class="mb-3">
-                <label for="heading3Color" class="form-label">标题颜色3：</label>
-                <input type="color" class="form-control" name="heading3Color" id="heading3Color" value="#ffcc00">
-              </div>
-              <div class="mb-3">
-                <label for="heading4Color" class="form-label">标题颜色4：</label>
-                <input type="color" class="form-control" name="heading4Color" id="heading4Color" value="#ff4500">
-              </div>
-              <div class="mb-3">
-                <label for="heading5Color" class="form-label">标题颜色5：</label>
-                <input type="color" class="form-control" name="heading5Color" id="heading5Color" value="#7d5fff">
-              </div>
-              <div class="mb-3">
-                <label for="heading6Color" class="form-label">标题颜色6：</label>
-                <input type="color" class="form-control" name="heading6Color" id="heading6Color" value="#00ffff">
-              </div>
-              <button type="submit" class="btn btn-primary">保存主题</button>
-              <button type="button" class="btn btn-success" id="resetButton">恢复默认值</button>
-            </form>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="useBackgroundImage" name="useBackgroundImage">
+            <label class="form-check-label" for="useBackgroundImage">使用自定义背景图片</label>
           </div>
-        </div>
+
+          <div class="mb-3" id="backgroundImageContainer" style="display:none;">
+            <label for="backgroundImage" class="form-label">选择背景图片</label>
+            <select class="form-select" id="backgroundImage" name="backgroundImage">
+              <option value="">请选择图片</option>
+              <?php
+              $dir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+              $files = array_diff(scandir($dir), array('..', '.')); 
+              foreach ($files as $file) {
+                  if (in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png'])) {
+                      echo "<option value='/nekobox/assets/Pictures/$file'>$file</option>";
+                  }
+              }
+              ?>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary  me-2">保存主题</button>
+          <button type="button" class="btn btn-success  me-2" id="resetButton">恢复默认值</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        </form>
       </div>
     </div>
+  </div>
+</div>
+
+<script>
+    document.getElementById('useBackgroundImage').addEventListener('change', function() {
+        const container = document.getElementById('backgroundImageContainer');
+        container.style.display = this.checked ? 'block' : 'none';
+    });
+</script>
 
 <div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-xl">
@@ -738,10 +770,12 @@ $razordVersion = getRazordVersion();
           </tbody>
         </table>
       </div>
+   <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+      </div>
     </div>
   </div>
 </div>
-
 <?php
 if (isset($_GET['delete'])) {
     $fileToDelete = $_GET['delete'];
@@ -781,12 +815,34 @@ function formatSize($size) {
       });
     });
 
+    const useBackgroundImageCheckbox = document.getElementById('useBackgroundImage');
+    const backgroundImageContainer = document.getElementById('backgroundImageContainer');
+
+    const savedBackgroundImageState = localStorage.getItem('useBackgroundImage');
+    if (savedBackgroundImageState === 'true') {
+      useBackgroundImageCheckbox.checked = true;
+      backgroundImageContainer.style.display = 'block';
+    } else {
+      useBackgroundImageCheckbox.checked = false;
+      backgroundImageContainer.style.display = 'none';
+    }
+
+    useBackgroundImageCheckbox.addEventListener('change', function() {
+      if (useBackgroundImageCheckbox.checked) {
+        backgroundImageContainer.style.display = 'block';
+      } else {
+        backgroundImageContainer.style.display = 'none';
+      }
+
+      localStorage.setItem('useBackgroundImage', useBackgroundImageCheckbox.checked);
+    });
+
     document.getElementById('resetButton').addEventListener('click', function() {
       document.getElementById('primaryColor').value = '#ffcc00';
       document.getElementById('secondaryColor').value = '#00ffff';
       document.getElementById('bodyBgColor').value = '#087990';
       document.getElementById('bodyColor').value = '#ffff00';
-      document.getElementById('infoBgSubtle').value = '#6A5ACD';
+      document.getElementById('infoBgSubtle').value = '#6a5acd';
       document.getElementById('primaryBorderSubtle').value = '#87ceeb';
       document.getElementById('tertiaryColor').value = '#00ff00';
       document.getElementById('tertiaryRgbColor').value = '#1e90ff';
@@ -796,7 +852,7 @@ function formatSize($size) {
       document.getElementById('heading4Color').value = '#ff4500';
       document.getElementById('heading5Color').value = '#7d5fff';
       document.getElementById('heading6Color').value = '#00ffff';
-
+      
       localStorage.clear();
     });
   });
