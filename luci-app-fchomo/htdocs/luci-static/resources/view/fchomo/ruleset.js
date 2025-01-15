@@ -7,7 +7,7 @@
 'require fchomo as hm';
 
 function parseRulesetLink(uri) {
-	var config,
+	let config,
 		filefmt = new RegExp(/^(text|yaml|mrs)$/),
 		filebehav = new RegExp(/^(domain|ipcidr|classical)$/),
 		unuciname = new RegExp(/[^a-zA-Z0-9_]+/, "g");
@@ -26,7 +26,7 @@ function parseRulesetLink(uri) {
 				.replace(/[\s\.-]/g, '_').replace(unuciname, '');
 
 			if (filefmt.test(format) && filebehav.test(behavior)) {
-				var fullpath = (url.username ? url.username + '@' : '') + url.host + url.pathname + (rawquery ? '?' + decodeURIComponent(rawquery) : '');
+				let fullpath = (url.username ? url.username + '@' : '') + url.host + url.pathname + (rawquery ? '?' + decodeURIComponent(rawquery) : '');
 				config = {
 					label: url.hash ? decodeURIComponent(url.hash.slice(1)) : name ? name : null,
 					type: 'http',
@@ -90,13 +90,13 @@ function parseRulesetLink(uri) {
 }
 
 return view.extend({
-	load: function() {
+	load() {
 		return Promise.all([
 			uci.load('fchomo')
 		]);
 	},
 
-	render: function(data) {
+	render(data) {
 		let m, s, o;
 
 		m = new form.Map('fchomo', _('Edit ruleset'));
@@ -113,7 +113,7 @@ return view.extend({
 		s.sectiontitle = L.bind(hm.loadDefaultLabel, s);
 		/* Import rule-set links and Remove idle files start */
 		s.handleLinkImport = function() {
-			var textarea = new ui.Textarea('', {
+			let textarea = new ui.Textarea('', {
 				'placeholder': 'http(s)://github.com/ACL4SSR/ACL4SSR/raw/refs/heads/master/Clash/Providers/BanAD.yaml?fmt=yaml&behav=classical&rawq=good%3Djob#BanAD\n' +
 							   'file:///example.txt?fmt=text&behav=domain&fill=LmNuCg#CN%20TLD\n' +
 							   'inline://LSAnLmhrJwoK?behav=domain#HK%20TLD\n'
@@ -133,17 +133,17 @@ return view.extend({
 					E('button', {
 						class: 'btn cbi-button-action',
 						click: ui.createHandlerFn(this, function() {
-							var input_links = textarea.getValue().trim().split('\n');
+							let input_links = textarea.getValue().trim().split('\n');
 							if (input_links && input_links[0]) {
 								/* Remove duplicate lines */
 								input_links = input_links.reduce((pre, cur) =>
 									(!pre.includes(cur) && pre.push(cur), pre), []);
 
-								var imported_ruleset = 0;
+								let imported_ruleset = 0;
 								input_links.forEach((l) => {
-									var config = parseRulesetLink(l);
+									let config = parseRulesetLink(l);
 									if (config) {
-										var sid = uci.add(data[0], 'ruleset', config.id);
+										let sid = uci.add(data[0], 'ruleset', config.id);
 										config.id = null;
 										Object.keys(config).forEach((k) => {
 											uci.set(data[0], sid, k, config[k] || '');
@@ -172,7 +172,7 @@ return view.extend({
 			])
 		}
 		s.renderSectionAdd = function(/* ... */) {
-			var el = hm.renderSectionAdd.apply(this, [prefmt, false].concat(Array.prototype.slice.call(arguments)));
+			let el = hm.renderSectionAdd.apply(this, [prefmt, false].concat(Array.prototype.slice.call(arguments)));
 
 			el.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
@@ -212,7 +212,7 @@ return view.extend({
 		o.value('mrs', _('Binary file'));
 		o.default = 'yaml';
 		o.validate = function(section_id, value) {
-			var behavior = this.section.getUIElement(section_id, 'behavior').getValue();
+			const behavior = this.section.getUIElement(section_id, 'behavior').getValue();
 
 			if (value === 'mrs' && behavior === 'classical')
 				return _('Expecting: %s').format(_('Binary format only supports domain / ipcidr'));
@@ -220,8 +220,8 @@ return view.extend({
 			return true;
 		}
 		o.textvalue = function(section_id) {
-			var cval = this.cfgvalue(section_id) || this.default;
-			var inline = L.bind(function() {
+			let cval = this.cfgvalue(section_id) || this.default;
+			let inline = L.bind(function() {
 				let cval = this.cfgvalue(section_id) || this.default;
 				return (cval === 'inline') ? true : false;
 			}, s.getOption('type'));
@@ -235,7 +235,7 @@ return view.extend({
 		o.value('ipcidr');
 		o.default = 'classical';
 		o.validate = function(section_id, value) {
-			var format = this.section.getUIElement(section_id, 'format').getValue();
+			const format = this.section.getUIElement(section_id, 'format').getValue();
 
 			if (value === 'classical' && format === 'mrs')
 				return _('Expecting: %s').format(_('Binary format only supports domain / ipcidr'));
@@ -245,7 +245,7 @@ return view.extend({
 
 		o = s.option(form.DummyValue, '_value', _('Value'));
 		o.load = function(section_id) {
-			var option = uci.get(data[0], section_id, 'type');
+			const option = uci.get(data[0], section_id, 'type');
 
 			switch (option) {
 				case 'file':

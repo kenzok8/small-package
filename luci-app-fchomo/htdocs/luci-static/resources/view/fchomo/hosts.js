@@ -4,15 +4,15 @@
 
 'require fchomo as hm';
 
-var isReadonlyView = !L.hasViewPermission() || null;
+const isReadonlyView = !L.hasViewPermission() || null;
 
 return view.extend({
-	load: function() {
+	load() {
 		return L.resolveDefault(hm.readFile('templates', 'hosts.yaml'), '');
 	},
 
-	handleSave: function(ev) {
-		var value = (document.querySelector('textarea').value || '').trim().replace(/\r\n/g, '\n') + '\n';
+	handleSave(ev) {
+		let value = (document.querySelector('textarea').value || '').trim().replace(/\r\n/g, '\n') + '\n';
 
 		return hm.writeFile('templates', 'hosts.yaml', value).then(function(rc) {
 			document.querySelector('textarea').value = value;
@@ -22,7 +22,7 @@ return view.extend({
 		});
 	},
 
-	render: function(content) {
+	render(content) {
 		return E([
 			E('h2', _('Hosts')),
 			E('p', { 'class': 'cbi-section-descr' }, _('Custom internal hosts. Support <code>yaml</code> or <code>json</code> format.')),

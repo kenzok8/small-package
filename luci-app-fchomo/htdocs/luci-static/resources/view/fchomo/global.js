@@ -45,10 +45,10 @@ function handleResUpdate(type, repo) {
 	});
 
 	// Dynamic repo
-	var label;
+	let label;
 	if (repo) {
-		var section_id = this.section.section;
-		var weight = document.getElementById(this.cbid(section_id));
+		const section_id = this.section.section;
+		let weight = document.getElementById(this.cbid(section_id));
 		if (weight)
 			repo = weight.firstChild.value,
 			label = weight.firstChild.selectedOptions[0].label;
@@ -79,7 +79,7 @@ function handleResUpdate(type, repo) {
 
 function renderResVersion(El, type, repo) {
 	return L.resolveDefault(callResVersion(type, repo), {}).then((res) => {
-		var resEl = E([
+		let resEl = E([
 			E('button', {
 				'class': 'cbi-button cbi-button-apply',
 				'click': ui.createHandlerFn(this, handleResUpdate, type, repo)
@@ -107,7 +107,7 @@ function updateResVersion(El, version) {
 }
 
 function renderNATBehaviorTest(El) {
-	var resEl = E('div',  { 'class': 'control-group' }, [
+	let resEl = E('div',  { 'class': 'control-group' }, [
 		E('select', {
 			'id': '_status_nattest_l4proto',
 			'class': 'cbi-input-select',
@@ -119,9 +119,9 @@ function renderNATBehaviorTest(El) {
 		E('button', {
 			'class': 'cbi-button cbi-button-apply',
 			'click': ui.createHandlerFn(this, function() {
-				var stun = this.formvalue(this.section.section);
-				var l4proto = document.getElementById('_status_nattest_l4proto').value;
-				var l4proto_idx = document.getElementById('_status_nattest_l4proto').selectedIndex;
+				const stun = this.formvalue(this.section.section);
+				const l4proto = document.getElementById('_status_nattest_l4proto').value;
+				const l4proto_idx = document.getElementById('_status_nattest_l4proto').selectedIndex;
 
 				return fs.exec_direct('/etc/fchomo/scripts/natcheck.sh', [stun, l4proto, getRandom(32768, 61000)]).then((stdout) => {
 					this.description = '<details><summary>' + _('Expand/Collapse result') + '</summary>' + stdout + '</details>';
@@ -144,7 +144,7 @@ function renderNATBehaviorTest(El) {
 }
 
 return view.extend({
-	load: function() {
+	load() {
 		return Promise.all([
 			uci.load('fchomo'),
 			hm.getFeatures(),
@@ -158,17 +158,17 @@ return view.extend({
 		]);
 	},
 
-	render: function(data) {
-		var features = data[1],
-		    hosts = data[2]?.hosts,
-		    CisRunning = data[3],
-		    CclashAPI = data[4],
-		    SisRunning = data[5],
-		    SclashAPI = data[6],
-		    res_ver_geoip = data[7],
-		    res_ver_geosite = data[8];
+	render(data) {
+		const features = data[1];
+		const hosts = data[2]?.hosts;
+		const CisRunning = data[3];
+		const CclashAPI = data[4];
+		const SisRunning = data[5];
+		const SclashAPI = data[6];
+		const res_ver_geoip = data[7];
+		const res_ver_geosite = data[8];
 
-		var dashboard_repo = uci.get(data[0], 'api', 'dashboard_repo');
+		const dashboard_repo = uci.get(data[0], 'api', 'dashboard_repo');
 
 		let m, s, o, ss, so;
 
@@ -224,13 +224,13 @@ return view.extend({
 				expect: { '': {} }
 			});
 
-			var ElId = '_connection_check_results';
+			const ElId = '_connection_check_results';
 
 			return E([
 				E('button', {
 					'class': 'cbi-button cbi-button-apply',
 					'click': ui.createHandlerFn(this, function() {
-						var weight = document.getElementById(ElId);
+						let weight = document.getElementById(ElId);
 
 						weight.innerHTML = '';
 						return hm.checkurls.forEach((site) => {
@@ -258,7 +258,7 @@ return view.extend({
 			so.readonly = true;
 		} else {
 			so.renderWidget = function(/* ... */) {
-				var El = form.Value.prototype.renderWidget.apply(this, arguments);
+				let El = form.Value.prototype.renderWidget.apply(this, arguments);
 
 				return renderNATBehaviorTest.call(this, El);
 			}
@@ -317,7 +317,7 @@ return view.extend({
 			so.value.apply(so, repo);
 		})
 		so.renderWidget = function(/* ... */) {
-			var El = form.ListValue.prototype.renderWidget.apply(this, arguments);
+			let El = form.ListValue.prototype.renderWidget.apply(this, arguments);
 
 			El.classList.add('control-group');
 			El.firstChild.style.width = '10em';
@@ -327,7 +327,7 @@ return view.extend({
 		so.onchange = function(ev, section_id, value) {
 			this.default = value;
 
-			var weight = ev.target;
+			let weight = ev.target;
 			if (weight)
 				return L.resolveDefault(callResVersion('dashboard', value), {}).then((res) => {
 					updateResVersion(weight.lastChild, res.version);
