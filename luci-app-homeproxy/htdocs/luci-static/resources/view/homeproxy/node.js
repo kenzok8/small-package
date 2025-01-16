@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: GPL-2.0-only
  *
- * Copyright (C) 2022 ImmortalWrt.org
+ * Copyright (C) 2022-2025 ImmortalWrt.org
  */
 
 'use strict';
@@ -9,26 +9,25 @@
 'require fs';
 'require uci';
 'require ui';
-'require dom';
 'require view';
 
 'require homeproxy as hp';
 'require tools.widgets as widgets';
 
-function allowInsecureConfirm(ev, section_id, value) {
+function allowInsecureConfirm(ev, _section_id, value) {
 	if (value === '1' && !confirm(_('Are you sure to allow insecure?')))
 		ev.target.firstElementChild.checked = null;
 }
 
 function parseShareLink(uri, features) {
-	var config;
+	let config, url, params;
 
 	uri = uri.split('://');
 	if (uri[0] && uri[1]) {
 		switch (uri[0]) {
 		case 'http':
 		case 'https':
-			var url = new URL('http://' + uri[1]);
+			url = new URL('http://' + uri[1]);
 
 			config = {
 				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
@@ -43,8 +42,8 @@ function parseShareLink(uri, features) {
 			break;
 		case 'hysteria':
 			/* https://github.com/HyNetwork/hysteria/wiki/URI-Scheme */
-			var url = new URL('http://' + uri[1]);
-			var params = url.searchParams;
+			url = new URL('http://' + uri[1]);
+			params = url.searchParams;
 
 			/* WeChat-Video / FakeTCP are unsupported by sing-box currently */
 			if (!features.with_quic || (params.get('protocol') && params.get('protocol') !== 'udp'))
@@ -71,8 +70,8 @@ function parseShareLink(uri, features) {
 		case 'hysteria2':
 		case 'hy2':
 			/* https://v2.hysteria.network/docs/developers/URI-Scheme/ */
-			var url = new URL('http://' + uri[1]);
-			var params = url.searchParams;
+			url = new URL('http://' + uri[1]);
+			params = url.searchParams;
 
 			if (!features.with_quic)
 				return null;
@@ -98,7 +97,7 @@ function parseShareLink(uri, features) {
 		case 'socks4a':
 		case 'socsk5':
 		case 'socks5h':
-			var url = new URL('http://' + uri[1]);
+			url = new URL('http://' + uri[1]);
 
 			config = {
 				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
@@ -115,7 +114,7 @@ function parseShareLink(uri, features) {
 			try {
 				/* "Lovely" Shadowrocket format */
 				try {
-					var suri = uri[1].split('#'), slabel = '';
+					let suri = uri[1].split('#'), slabel = '';
 					if (suri.length <= 2) {
 						if (suri.length === 2)
 							slabel = '#' + suri[1];
@@ -124,9 +123,9 @@ function parseShareLink(uri, features) {
 				} catch(e) { }
 
 				/* SIP002 format https://shadowsocks.org/guide/sip002.html */
-				var url = new URL('http://' + uri[1]);
+				url = new URL('http://' + uri[1]);
 
-				var userinfo;
+				let userinfo;
 				if (url.username && url.password)
 					/* User info encoded with URIComponent */
 					userinfo = [url.username, decodeURIComponent(url.password)];
@@ -137,9 +136,9 @@ function parseShareLink(uri, features) {
 				if (!hp.shadowsocks_encrypt_methods.includes(userinfo[0]))
 					return null;
 
-				var plugin, plugin_opts;
+				let plugin, plugin_opts;
 				if (url.search && url.searchParams.get('plugin')) {
-					var plugin_info = url.searchParams.get('plugin').split(';');
+					let plugin_info = url.searchParams.get('plugin').split(';');
 					plugin = plugin_info[0];
 					plugin_opts = plugin_info.slice(1) ? plugin_info.slice(1).join(';') : null;
 				}
@@ -174,8 +173,8 @@ function parseShareLink(uri, features) {
 			break;
 		case 'trojan':
 			/* https://p4gefau1t.github.io/trojan-go/developer/url/ */
-			var url = new URL('http://' + uri[1]);
-			var params = url.searchParams;
+			url = new URL('http://' + uri[1]);
+			params = url.searchParams;
 
 			/* Check if password exists */
 			if (!url.username)
@@ -209,8 +208,8 @@ function parseShareLink(uri, features) {
 			break;
 		case 'tuic':
 			/* https://github.com/daeuniverse/dae/discussions/182 */
-			var url = new URL('http://' + uri[1]);
-			var params = url.searchParams;
+			url = new URL('http://' + uri[1]);
+			params = url.searchParams;
 
 			/* Check if uuid exists */
 			if (!url.username)
@@ -233,8 +232,8 @@ function parseShareLink(uri, features) {
 			break;
 		case 'vless':
 			/* https://github.com/XTLS/Xray-core/discussions/716 */
-			var url = new URL('http://' + uri[1]);
-			var params = url.searchParams;
+			url = new URL('http://' + uri[1]);
+			params = url.searchParams;
 
 			/* Unsupported protocol */
 			if (params.get('type') === 'kcp')
@@ -356,8 +355,8 @@ function parseShareLink(uri, features) {
 	return config;
 }
 
-function renderNodeSettings(section, data, features, main_node, routing_mode, subs_info, proxy_nodes) {
-	var s = section, o;
+function renderNodeSettings(section, data, features, main_node, routing_mode) {
+	let s = section, o;
 	s.rowcolors = true;
 	s.sortable = true;
 	s.nodescriptions = true;
@@ -405,22 +404,20 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	o.value('trojan', _('Trojan'));
 	if (features.with_quic)
 		o.value('tuic', _('Tuic'));
-	if (features.with_wireguard)
+	if (features.with_wireguard && features.with_gvisor)
 		o.value('wireguard', _('WireGuard'));
 	o.value('vless', _('VLESS'));
 	o.value('vmess', _('VMess'));
-	o.value('selector', _('Selector'));
-	o.value('urltest', _('URLTest'));
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'address', _('Address'));
 	o.datatype = 'host';
-	o.depends({'type': /^(direct|selector|urltest)$/, '!reverse': true});
+	o.depends({'type': 'direct', '!reverse': true});
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'port', _('Port'));
 	o.datatype = 'port';
-	o.depends({'type': /^(direct|selector|urltest)$/, '!reverse': true});
+	o.depends({'type': 'direct', '!reverse': true});
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'username', _('Username'));
@@ -442,12 +439,12 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	o.depends({'type': 'socks', 'socks_version': '5'});
 	o.validate = function(section_id, value) {
 		if (section_id) {
-			var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
-			var required_type = [ 'shadowsocks', 'shadowtls', 'trojan' ];
+			let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
+			let required_type = [ 'shadowsocks', 'shadowtls', 'trojan' ];
 
 			if (required_type.includes(type)) {
 				if (type === 'shadowsocks') {
-					var encmode = this.map.lookupOption('shadowsocks_encrypt_method', section_id)[0].formvalue(section_id);
+					let encmode = this.map.lookupOption('shadowsocks_encrypt_method', section_id)[0].formvalue(section_id);
 					if (encmode === 'none')
 						return true;
 				}
@@ -465,24 +462,18 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 		_('Override the connection destination address.'));
 	o.datatype = 'host';
 	o.depends('type', 'direct');
-	o.modalonly = true;
 
 	o = s.option(form.Value, 'override_port', _('Override port'),
 		_('Override the connection destination port.'));
 	o.datatype = 'port';
 	o.depends('type', 'direct');
-	o.modalonly = true;
 
-	o = s.option(form.Flag, 'proxy_protocol', _('Proxy protocol'),
+	o = s.option(form.ListValue, 'proxy_protocol', _('Proxy protocol'),
 		_('Write proxy protocol in the connection header.'));
-	o.depends('type', 'direct');
-	o.modalonly = true;
-
-	o = s.option(form.ListValue, 'proxy_protocol_version', _('Proxy protocol version'));
+	o.value('', _('Disable'));
 	o.value('1', _('v1'));
 	o.value('2', _('v2'));
-	o.default = '2';
-	o.depends('proxy_protocol', '1');
+	o.depends('type', 'direct');
 	o.modalonly = true;
 
 	/* Hysteria (2) config start */
@@ -555,7 +546,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 
 	/* Shadowsocks config start */
 	o = s.option(form.ListValue, 'shadowsocks_encrypt_method', _('Encrypt method'));
-	for (var i of hp.shadowsocks_encrypt_methods)
+	for (let i of hp.shadowsocks_encrypt_methods)
 		o.value(i);
 	/* Stream ciphers */
 	o.value('aes-128-ctr');
@@ -716,89 +707,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	o.modalonly = true;
 	/* VMess config end */
 
-	/* Selector config start */
-	o = s.option(form.MultiValue, 'group', _('Subscription Groups'),
-		_('List of subscription groups.'));
-	o.value('', _('-- Please choose --'));
-	for (var key in subs_info) {
-		let title = subs_info[key].name;
-		o.value(key, _('Sub (%s)').format(title));
-	}
-	o.depends('type', 'selector');
-	o.depends('type', 'urltest');
-	o.modalonly = true;
-
-	o = s.option(form.MultiValue, 'order', _('Outbounds'),
-		_('List of outbound tags.'));
-	o.value('direct-out', _('Direct'));
-	o.value('block-out', _('Block'));
-	for (var key in proxy_nodes)
-		o.value(key, proxy_nodes[key]);
-	o.depends({'group': /^$/, 'type': /^(selector|urltest)$/});
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'default_selected', _('Default Outbound'),
-		_('The default outbound tag. The first outbound will be used if empty.'));
-	o.value('', _('Default'));
-	o.value('direct-out', _('Direct'));
-	o.value('block-out', _('Block'));
-	for (var key in proxy_nodes)
-		o.value(key, proxy_nodes[key]);
-	o.default = '';
-	o.depends({'group': /^$/, 'type': 'selector'});
-	o.modalonly = true;
-
-	o = s.option(form.ListValue, 'filter_nodes', _('Filter nodes'),
-		_('Drop/keep specific nodes from outbounds.'));
-	o.value('', _('Disable'));
-	o.value('blacklist', _('Blacklist mode'));
-	o.value('whitelist', _('Whitelist mode'));
-	o.default = '';
-	o.depends('type', 'selector');
-	o.depends('type', 'urltest');
-	o.modalonly = true;
-
-	o = s.option(form.DynamicList, 'filter_keywords', _('Filter keywords'),
-		_('Drop/keep nodes that contain the specific keywords. <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions">Regex</a> is supported.'));
-	o.depends({'filter_nodes': '', '!reverse': true});
-	o.modalonly = true;
-	/* Selector config end */
-
-	/* URLTest config start */
-	o = s.option(form.Value, 'test_url', _('Test URL'),
-		_('The URL to test. https://www.gstatic.com/generate_204 will be used if empty.'));
-	o.value('', _('Default'));
-	o.default = 'http://cp.cloudflare.com/';
-	o.depends('type', 'urltest');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'interval', _('Interval'),
-		_('The test interval. <code>3m</code> will be used if empty.'));
-	o.value('', _('Default'));
-	o.default = '10m';
-	o.depends('type', 'urltest');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'tolerance', _('Tolerance'),
-		_('The test tolerance in milliseconds. 50 will be used if empty.'));
-	o.datatype = 'uinteger';
-	o.depends('type', 'urltest');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'idle_timeout', _('Idle timeout'),
-		_('The idle timeout. <code>30m</code> will be used if empty.'));
-	o.default = '30m';
-	o.depends('type', 'urltest');
-	o.modalonly = true;
-
-	o = s.option(form.Flag, 'interrupt_exist_connections', _('Interrupt existing connections'),
-		_('Interrupt existing connections when the selected outbound has changed.'));
-	o.default = o.disabled;
-	o.depends('type', 'selector');
-	o.depends('type', 'urltest');
-	o.modalonly = true;
-	/* URLTest config end */
-
 	/* Transport config start */
 	o = s.option(form.ListValue, 'transport', _('Transport'),
 		_('No TCP transport, plain HTTP is merged into the HTTP transport.'));
@@ -812,7 +720,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
 	o.onchange = function(ev, section_id, value) {
-		var desc = this.map.findElement('id', 'cbid.homeproxy.%s.transport'.format(section_id)).nextElementSibling;
+		let desc = this.map.findElement('id', 'cbid.homeproxy.%s.transport'.format(section_id)).nextElementSibling;
 		if (value === 'http')
 			desc.innerHTML = _('TLS is not enforced. If TLS is not configured, plain HTTP 1.1 is used.');
 		else if (value === 'quic')
@@ -820,7 +728,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 		else
 			desc.innerHTML = _('No TCP transport, plain HTTP is merged into the HTTP transport.');
 
-		var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+		let tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 		if ((value === 'http' && tls.checked) || (value === 'grpc' && !features.with_grpc)) {
 			this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
 				_('Specifies the period of time (in seconds) after which a health check will be performed using a ping frame if no frames have been received on the connection.<br/>' +
@@ -966,9 +874,8 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 
 	o = s.option(form.Value, 'wireguard_mtu', _('MTU'));
 	o.datatype = 'range(0,9000)';
-	o.default = '1408';
+	o.placeholder = '1408';
 	o.depends('type', 'wireguard');
-	o.rmempty = false;
 	o.modalonly = true;
 	/* Wireguard config end */
 
@@ -1044,10 +951,10 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	o.depends('type', 'tuic');
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
-	o.validate = function(section_id, value) {
+	o.validate = function(section_id, _value) {
 		if (section_id) {
-			var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
-			var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+			let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
+			let tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 
 			if (['hysteria', 'hysteria2', 'shadowtls', 'tuic'].includes(type)) {
 				tls.checked = true;
@@ -1083,7 +990,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	o = s.option(form.ListValue, 'tls_min_version', _('Minimum TLS version'),
 		_('The minimum TLS version that is acceptable.'));
 	o.value('', _('default'));
-	for (var i of hp.tls_versions)
+	for (let i of hp.tls_versions)
 		o.value(i);
 	o.depends('tls', '1');
 	o.modalonly = true;
@@ -1091,14 +998,14 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	o = s.option(form.ListValue, 'tls_max_version', _('Maximum TLS version'),
 		_('The maximum TLS version that is acceptable.'));
 	o.value('', _('default'));
-	for (var i of hp.tls_versions)
+	for (let i of hp.tls_versions)
 		o.value(i);
 	o.depends('tls', '1');
 	o.modalonly = true;
 
-	o = s.option(form.MultiValue, 'tls_cipher_suites', _('Cipher suites'),
+	o = s.option(hp.CBIStaticList, 'tls_cipher_suites', _('Cipher suites'),
 		_('The elliptic curves that will be used in an ECDHE handshake, in preference order. If empty, the default will be used.'));
-	for (var i of hp.tls_cipher_suites)
+	for (let i of hp.tls_cipher_suites)
 		o.value(i);
 	o.depends('tls', '1');
 	o.optional = true;
@@ -1114,6 +1021,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 		_('The path to the server certificate, in PEM format.'));
 	o.value('/etc/homeproxy/certs/client_ca.pem');
 	o.depends('tls_self_sign', '1');
+	o.validate = L.bind(hp.validateCertificatePath, this);
 	o.rmempty = false;
 	o.modalonly = true;
 
@@ -1142,8 +1050,18 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 		o.default = o.disabled;
 		o.modalonly = true;
 
-		o = s.option(form.DynamicList, 'tls_ech_config', _('ECH config'));
+		o = s.option(form.Value, 'tls_ech_config_path', _('ECH config path'),
+			_('The path to the ECH config, in PEM format. If empty, load from DNS will be attempted.'));
+		o.value('/etc/homeproxy/certs/client_ech_conf.pem');
 		o.depends('tls_ech', '1');
+		o.modalonly = true;
+
+		o = s.option(form.Button, '_upload_ech_config', _('Upload ECH config'),
+			_('<strong>Save your configuration before uploading files!</strong>'));
+		o.inputstyle = 'action';
+		o.inputtitle = _('Upload...');
+		o.depends({'tls_ech': '1', 'tls_ech_config_path': '/etc/homeproxy/certs/client_ech_conf.pem'});
+		o.onclick = L.bind(hp.uploadCertificate, this, _('ECH config'), 'client_ech_conf');
 		o.modalonly = true;
 	}
 
@@ -1154,11 +1072,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 		o.value('360');
 		o.value('android');
 		o.value('chrome');
-		o.value('chrome_psk');
-		o.value('chrome_psk_shuffle');
-		o.value('chrome_padding_psk_shuffle');
-		o.value('chrome_pq');
-		o.value('chrome_pq_psk');
 		o.value('edge');
 		o.value('firefox');
 		o.value('ios');
@@ -1201,18 +1114,15 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	/* Extra settings start */
 	o = s.option(form.Flag, 'tcp_fast_open', _('TCP fast open'));
 	o.default = o.disabled;
-	o.depends({'type': /^(selector|urltest)$/, '!reverse': true});
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'tcp_multi_path', _('MultiPath TCP'));
 	o.default = o.disabled;
-	o.depends({'type': /^(selector|urltest)$/, '!reverse': true});
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'udp_fragment', _('UDP Fragment'),
 		_('Enable UDP fragmentation.'));
 	o.default = o.disabled;
-	o.depends({'type': /^(selector|urltest)$/, '!reverse': true});
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'udp_over_tcp', _('UDP over TCP'),
@@ -1234,43 +1144,49 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 }
 
 return view.extend({
-	load: function() {
+	load() {
 		return Promise.all([
 			uci.load('homeproxy'),
 			hp.getBuiltinFeatures()
 		]);
 	},
 
-	render: function(data) {
-		var m, s, o, ss, so;
-		var main_node = uci.get(data[0], 'config', 'main_node');
-		var routing_mode = uci.get(data[0], 'config', 'routing_mode');
-		var features = data[1];
+	render(data) {
+		let m, s, o, ss, so;
+		let main_node = uci.get(data[0], 'config', 'main_node');
+		let routing_mode = uci.get(data[0], 'config', 'routing_mode');
+		let features = data[1];
+
+		/* Cache subscription information, it will be called multiple times */
+		let subinfo = [];
+		for (let suburl of (uci.get(data[0], 'subscription', 'subscription_url') || [])) {
+			const url = new URL(suburl);
+			const urlhash = hp.calcStringMD5(suburl.replace(/#.*$/, ''));
+			const title = url.hash ? decodeURIComponent(url.hash.slice(1)) : url.hostname;
+			subinfo.push({ 'hash': urlhash, 'title': title });
+		}
 
 		m = new form.Map('homeproxy', _('Edit nodes'));
-
-		/* Cache all subscription info, they will be called multiple times */
-		var subs_info = hp.loadSubscriptionInfo(data[0]);
-
-		/* Cache all configured proxy nodes, they will be called multiple times */
-		var proxy_nodes = hp.loadNodesList(data[0], subs_info);
 
 		s = m.section(form.NamedSection, 'subscription', 'homeproxy');
 
 		/* Node settings start */
 		/* User nodes start */
 		s.tab('node', _('Nodes'));
-
 		o = s.taboption('node', form.SectionValue, '_node', form.GridSection, 'node');
-		ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode, subs_info, proxy_nodes);
+		ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode);
 		ss.addremove = true;
 		ss.filter = function(section_id) {
-			return uci.get(data[0], section_id, 'grouphash') ? false : true;
+			for (let info of subinfo)
+				if (info.hash === uci.get(data[0], section_id, 'grouphash'))
+					return false;
+
+			return true;
 		}
 		/* Import subscription links start */
 		/* Thanks to luci-app-shadowsocks-libev */
 		ss.handleLinkImport = function() {
-			var textarea = new ui.Textarea();
+			let textarea = new ui.Textarea();
 			ui.showModal(_('Import share links'), [
 				E('p', _('Support Hysteria, Shadowsocks, Trojan, v2rayN (VMess), and XTLS (VLESS) online configuration delivery standard.')),
 				textarea.render(),
@@ -1283,25 +1199,25 @@ return view.extend({
 					E('button', {
 						class: 'btn cbi-button-action',
 						click: ui.createHandlerFn(this, function() {
-							var input_links = textarea.getValue().trim().split('\n');
+							let input_links = textarea.getValue().trim().split('\n');
 							if (input_links && input_links[0]) {
 								/* Remove duplicate lines */
 								input_links = input_links.reduce((pre, cur) =>
 									(!pre.includes(cur) && pre.push(cur), pre), []);
 
-								var allow_insecure = uci.get(data[0], 'subscription', 'allow_insecure');
-								var packet_encoding = uci.get(data[0], 'subscription', 'packet_encoding');
-								var imported_node = 0;
+								let allow_insecure = uci.get(data[0], 'subscription', 'allow_insecure');
+								let packet_encoding = uci.get(data[0], 'subscription', 'packet_encoding');
+								let imported_node = 0;
 								input_links.forEach((l) => {
-									var config = parseShareLink(l, features);
+									let config = parseShareLink(l, features);
 									if (config) {
 										if (config.tls === '1' && allow_insecure === '1')
 											config.tls_insecure = '1'
 										if (['vless', 'vmess'].includes(config.type))
 											config.packet_encoding = packet_encoding
 
-										var nameHash = hp.calcStringMD5(config.label);
-										var sid = uci.add(data[0], 'node', nameHash);
+										let nameHash = hp.calcStringMD5(config.label);
+										let sid = uci.add(data[0], 'node', nameHash);
 										Object.keys(config).forEach((k) => {
 											uci.set(data[0], sid, k, config[k]);
 										});
@@ -1328,31 +1244,13 @@ return view.extend({
 				])
 			])
 		}
-		ss.renderSectionAdd = function(extra_class) {
-			var el = form.GridSection.prototype.renderSectionAdd.apply(this, arguments),
-				selectEl = E('select', {
-					class: 'cbi-input-select',
-					change: L.bind(function(section, ev) {
-						var el = dom.parent(ev.target, '.cbi-section-create'),
-							button = el.querySelector('.cbi-section-create > .cbi-button-add'),
-							inputname = el.querySelector('.cbi-section-create-name').value || '';
-						var uciconfig = section.uciconfig || section.map.config;
-
-						button.toggleAttribute('disabled',
-							!inputname ||
-							uci.get(uciconfig, inputname) ||
-							uci.get(uciconfig, ev.target.value + inputname));
-					}, this, ss)
-				}, [
-					E('option', { value: 'node_' }, _('node')),
-					E('option', { value: 'sub_' }, _('sub'))
-				]),
+		ss.renderSectionAdd = function(/* ... */) {
+			let el = form.GridSection.prototype.renderSectionAdd.apply(this, arguments),
 				nameEl = el.querySelector('.cbi-section-create-name');
 
 			ui.addValidator(nameEl, 'uciname', true, (v) => {
-				var button = el.querySelector('.cbi-section-create > .cbi-button-add');
-				var uciconfig = this.uciconfig || this.map.config;
-				var prefix = el.querySelector('.cbi-input-select').value;
+				let button = el.querySelector('.cbi-section-create > .cbi-button-add');
+				let uciconfig = this.uciconfig || this.map.config;
 
 				if (!v) {
 					button.disabled = true;
@@ -1360,16 +1258,11 @@ return view.extend({
 				} else if (uci.get(uciconfig, v)) {
 					button.disabled = true;
 					return _('Expecting: %s').format(_('unique UCI identifier'));
-				} else if (uci.get(uciconfig, prefix + v)) {
-					button.disabled = true;
-					return _('Expecting: %s').format(_('unique label'));
 				} else {
 					button.disabled = null;
 					return true;
 				}
 			}, 'blur', 'keyup');
-
-			el.prepend(E('div', {}, selectEl));
 
 			el.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
@@ -1379,26 +1272,16 @@ return view.extend({
 
 			return el;
 		}
-		ss.handleAdd = function(ev, name) {
-			var selectEl = ev.target.parentElement.firstElementChild.firstElementChild,
-				prefix = selectEl.value;
-
-			return form.GridSection.prototype.handleAdd.apply(this, [ ev, prefix + name ]);
-		}
 		/* Import subscription links end */
 		/* User nodes end */
 
 		/* Subscription nodes start */
-		for (var key in subs_info) {
-			const urlhash = key,
-				  title = subs_info[key].name;
-
-			s.tab('sub_' + urlhash, _('Sub (%s)').format(title));
-
-			o = s.taboption('sub_' + urlhash, form.SectionValue, '_sub_' + urlhash, form.GridSection, 'node');
-			ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode, subs_info, proxy_nodes);
+		for (const info of subinfo) {
+			s.tab('sub_' + info.hash, _('Sub (%s)').format(info.title));
+			o = s.taboption('sub_' + info.hash, form.SectionValue, '_sub_' + info.hash, form.GridSection, 'node');
+			ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode);
 			ss.filter = function(section_id) {
-				return (uci.get(data[0], section_id, 'grouphash') === urlhash);
+				return (uci.get(data[0], section_id, 'grouphash') === info.hash);
 			}
 		}
 		/* Subscription nodes end */
@@ -1408,16 +1291,14 @@ return view.extend({
 		s.tab('subscription', _('Subscriptions'));
 
 		o = s.taboption('subscription', form.Flag, 'auto_update', _('Auto update'),
-			_('Auto update subscriptions.'));
+			_('Auto update subscriptions and geodata.'));
 		o.default = o.disabled;
 		o.rmempty = false;
 
-		o = s.taboption('subscription', form.Value, 'auto_update_expr', _('Cron expression'),
-			_('The default value is 2:00 every day'));
-		o.default = '0 2 * * *';
-		o.placeholder = '0 2 * * *';
-		o.rmempty = false;
-		o.retain = true;
+		o = s.taboption('subscription', form.ListValue, 'auto_update_time', _('Update time'));
+		for (let i = 0; i < 24; i++)
+			o.value(i, i + ':00');
+		o.default = '2';
 		o.depends('auto_update', '1');
 
 		o = s.taboption('subscription', form.Flag, 'update_via_proxy', _('Update via proxy'),
@@ -1427,11 +1308,10 @@ return view.extend({
 
 		o = s.taboption('subscription', form.DynamicList, 'subscription_url', _('Subscription URL-s'),
 			_('Support Hysteria, Shadowsocks, Trojan, v2rayN (VMess), and XTLS (VLESS) online configuration delivery standard.'));
-		o.placeholder = 'https://sub_url#sub_name';
 		o.validate = function(section_id, value) {
 			if (section_id && value) {
 				try {
-					var url = new URL(value);
+					let url = new URL(value);
 					if (!url.hostname)
 						return _('Expecting: %s').format(_('valid URL'));
 				}
@@ -1445,15 +1325,19 @@ return view.extend({
 
 		o = s.taboption('subscription', form.ListValue, 'filter_nodes', _('Filter nodes'),
 			_('Drop/keep specific nodes from subscriptions.'));
-		o.value('', _('Disable'));
+		o.value('disabled', _('Disable'));
 		o.value('blacklist', _('Blacklist mode'));
 		o.value('whitelist', _('Whitelist mode'));
-		o.default = '';
+		o.default = 'disabled';
+		o.rmempty = false;
 
 		o = s.taboption('subscription', form.DynamicList, 'filter_keywords', _('Filter keywords'),
 			_('Drop/keep nodes that contain the specific keywords. <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions">Regex</a> is supported.'));
-		o.depends({'filter_nodes': '', '!reverse': true});
-		o.retain = true;
+		o.depends({'filter_nodes': 'disabled', '!reverse': true});
+		o.rmempty = false;
+
+		o = s.taboption('subscription', form.Value, 'user_agent', _('User-Agent'));
+		o.placeholder = 'Wget/1.21 (HomeProxy, like v2rayN)';
 
 		o = s.taboption('subscription', form.Flag, 'allow_insecure', _('Allow insecure'),
 			_('Allow insecure connection by default when add nodes from subscriptions.') +
@@ -1480,7 +1364,7 @@ return view.extend({
 		o = s.taboption('subscription', form.Button, '_update_subscriptions', _('Update nodes from subscriptions'));
 		o.inputstyle = 'apply';
 		o.inputtitle = function(section_id) {
-			var sublist = uci.get(data[0], section_id, 'subscription_url') || [];
+			let sublist = uci.get(data[0], section_id, 'subscription_url') || [];
 			if (sublist.length > 0) {
 				return _('Update %s subscriptions').format(sublist.length);
 			} else {
@@ -1500,7 +1384,7 @@ return view.extend({
 		o = s.taboption('subscription', form.Button, '_remove_subscriptions', _('Remove all nodes from subscriptions'));
 		o.inputstyle = 'reset';
 		o.inputtitle = function() {
-			var subnodes = [];
+			let subnodes = [];
 			uci.sections(data[0], 'node', (res) => {
 				if (res.grouphash)
 					subnodes = subnodes.concat(res['.name'])
@@ -1514,13 +1398,13 @@ return view.extend({
 			}
 		}
 		o.onclick = function() {
-			var subnodes = [];
+			let subnodes = [];
 			uci.sections(data[0], 'node', (res) => {
 				if (res.grouphash)
 					subnodes = subnodes.concat(res['.name'])
 			});
 
-			for (var i in subnodes)
+			for (let i in subnodes)
 				uci.remove(data[0], subnodes[i]);
 
 			if (subnodes.includes(uci.get(data[0], 'config', 'main_node')))

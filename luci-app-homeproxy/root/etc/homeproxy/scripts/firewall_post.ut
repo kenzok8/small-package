@@ -30,6 +30,26 @@ function resolve_ipv6(str) {
 		return `& ${ipv6.mask} == ${ipv6.addr}`;
 }
 
+function resolve_mark(str) {
+	if (isEmpty(str))
+		return null;
+
+	let mark = fw4.parse_mark(str);
+	if (isEmpty(mark))
+		return null;
+
+	if (mark.mask === 0xffffffff)
+		return fw4.hex(mark.mark);
+	else if (mark.mark === 0)
+		return `mark and ${fw4.hex(~mark.mask & 0xffffffff)}`;
+	else if (mark.mark === mark.mask)
+		return `mark or ${fw4.hex(mark.mark)}`;
+	else if (mark.mask === 0)
+		return `mark xor ${fw4.hex(mark.mark)}`;
+	else
+		return `mark and ${fw4.hex(~mark.mask & 0xffffffff)} xor ${fw4.hex(mark.mark)}`;
+}
+
 /* Misc config */
 const resources_dir = '/etc/homeproxy/resources';
 
@@ -50,7 +70,7 @@ if (routing_mode !== 'custom') {
 	bypass_cn_traffic = uci.get(cfgname, 'routing', 'bypass_cn_traffic') || '0';
 }
 
-let routing_port = uci.get(cfgname, 'config', 'routing_port') || 'common';
+let routing_port = uci.get(cfgname, 'config', 'routing_port');
 if (routing_port === 'common')
 	routing_port = uci.get(cfgname, 'infra', 'common_port') || '22,53,80,143,443,465,587,853,873,993,995,8080,8443,9418';
 
@@ -68,11 +88,11 @@ if (match(proxy_mode, /redirect/)) {
 if (match(proxy_mode, /tproxy/))
 	if (outbound_udp_node !== 'nil' || routing_mode === 'custom') {
 		tproxy_port = uci.get(cfgname, 'infra', 'tproxy_port') || '5332';
-		tproxy_mark = uci.get(cfgname, 'infra', 'tproxy_mark') || '101';
+		tproxy_mark = resolve_mark(uci.get(cfgname, 'infra', 'tproxy_mark') || '101');
 	}
 if (match(proxy_mode, /tun/)) {
 	tun_name = uci.get(cfgname, 'infra', 'tun_name') || 'singtun0';
-	tun_mark = uci.get(cfgname, 'infra', 'tun_mark') || '102';
+	tun_mark = resolve_mark(uci.get(cfgname, 'infra', 'tun_mark') || '102');
 }
 
 const control_options = [
@@ -88,6 +108,9 @@ const control_info = {};
 
 for (let i in control_options)
 	control_info[i] = uci.get(cfgname, 'control', i);
+
+const dns_hijacked = uci.get('dhcp', '@dnsmasq[0]', 'dns_redirect') || '0',
+      dns_port = uci.get('dhcp', '@dnsmasq[0]', 'port') || '53';
 /* UCI config end */
 -%}
 
@@ -219,7 +242,7 @@ set homeproxy_wan_direct_addr_v6 {
 }
 {% endif /* ipv6_support */ %}
 
-{% if (routing_port !== 'all'): %}
+{% if (routing_port): %}
 set homeproxy_routing_port {
 	type inet_service
 	flags interval
@@ -228,6 +251,19 @@ set homeproxy_routing_port {
 }
 {% endif %}
 
+{# DNS hijack & TCP redirect #}
+chain dstnat {
+{% if (dns_hijacked !== '1'): %}
+	{% if (control_info.listen_interfaces): %}
+	meta iifname {{ array_to_nftarr(control_info.listen_interfaces) }}
+	{%- endif /* listen_interfaces */ %}
+	meta nfproto { ipv4, ipv6 } udp dport 53 counter redirect to :{{ dns_port }} comment "!{{ cfgname }}: DNS hijack"
+{% endif /* dns_hijacked */ %}
+{% if (match(proxy_mode, /redirect/)): %}
+	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump homeproxy_redirect_lanac
+{% endif /* proxy_mode */ %}
+}
+
 {# TCP redirect #}
 {% if (match(proxy_mode, /redirect/)): %}
 chain homeproxy_redirect_proxy {
@@ -235,7 +271,7 @@ chain homeproxy_redirect_proxy {
 }
 
 chain homeproxy_redirect_proxy_port {
-	{% if (routing_port !== 'all'): %}
+	{% if (routing_port): %}
 	tcp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	goto homeproxy_redirect_proxy
@@ -338,39 +374,36 @@ chain homeproxy_output_redir {
 	type nat hook output priority filter -105; policy accept
 	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump homeproxy_redirect
 }
-
-chain dstnat {
-	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump homeproxy_redirect_lanac
-}
 {% endif %}
 
 {# UDP tproxy #}
 {% if (match(proxy_mode, /tproxy/) && (outbound_udp_node !== 'nil' || routing_mode === 'custom')): %}
 chain homeproxy_mangle_tproxy {
-	meta l4proto udp mark set {{ tproxy_mark }} tproxy ip to 127.0.0.1:{{ tproxy_port }} counter accept
+	meta l4proto udp meta mark set {{ tproxy_mark }} tproxy ip to 127.0.0.1:{{ tproxy_port }} counter accept
 	{% if (ipv6_support === '1'): %}
-	meta l4proto udp mark set {{ tproxy_mark }} tproxy ip6 to [::1]:{{ tproxy_port }} counter accept
+	meta l4proto udp meta mark set {{ tproxy_mark }} tproxy ip6 to [::1]:{{ tproxy_port }} counter accept
 	{% endif %}
 }
 
 chain homeproxy_mangle_tproxy_port {
-	{% if (routing_port !== 'all'): %}
+	{% if (routing_port): %}
 	udp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	goto homeproxy_mangle_tproxy
 }
 
 chain homeproxy_mangle_mark {
-	{% if (routing_port !== 'all'): %}
+	{% if (routing_port): %}
 	udp dport != @homeproxy_routing_port counter return
 	{% endif %}
-	meta l4proto udp mark set {{ tproxy_mark }} counter accept
+	meta l4proto udp meta mark set {{ tproxy_mark }} counter accept
 }
 
 chain homeproxy_mangle_lanac {
 	{% if (control_info.listen_interfaces): %}
-	meta iifname != {{ array_to_nftarr(split(join(' ', control_info.listen_interfaces) + ' lo', ' ')) }} counter return
+	meta iifname != {{ array_to_nftarr(uniq([...control_info.listen_interfaces, ...['lo']])) }} counter return
 	{% endif %}
+	meta iifname != lo udp dport 53 counter return
 	meta mark {{ self_mark }} counter return
 
 	{% if (control_info.lan_proxy_mode === 'listed_only'): %}
@@ -513,6 +546,7 @@ chain mangle_output {
 {% if (match(proxy_mode, /tun/)): %}
 chain homeproxy_mangle_lanac {
 	iifname {{ tun_name }} counter return
+	udp dport 53 counter return
 
 	{% if (control_info.listen_interfaces): %}
 	meta iifname != {{ array_to_nftarr(control_info.listen_interfaces) }} counter return
@@ -546,14 +580,14 @@ chain homeproxy_mangle_lanac {
 }
 
 chain homeproxy_mangle_tun_mark {
-	{% if (routing_port !== 'all'): %}
+	{% if (routing_port): %}
 	{% if (proxy_mode === 'tun'): %}
 	tcp dport != @homeproxy_routing_port counter return
 	{% endif /* proxy_mode */ %}
 	udp dport != @homeproxy_routing_port counter return
 	{% endif /* routing_port */ %}
 
-	counter mark set {{ tun_mark }}
+	counter meta mark set {{ tun_mark }}
 }
 
 chain homeproxy_mangle_tun {
@@ -610,13 +644,13 @@ chain homeproxy_mangle_tun {
 	{% endif /* routing_mode */ %}
 
 	{% if (!isEmpty(control_info.lan_gaming_mode_ipv4_ips)): %}
-	ip saddr {{ array_to_nftarr(control_info.lan_gaming_mode_ipv4_ips) }} counter mark set {{ tun_mark }}
+	ip saddr {{ array_to_nftarr(control_info.lan_gaming_mode_ipv4_ips) }} counter meta mark set {{ tun_mark }}
 	{% endif /* lan_gaming_mode_ipv4_ips */ %}
 	{% for (let ipv6 in control_info.lan_gaming_mode_ipv6_ips): %}
-	ip6 saddr {{ resolve_ipv6(ipv6) }} counter mark set {{ tun_mark }}
+	ip6 saddr {{ resolve_ipv6(ipv6) }} counter meta mark set {{ tun_mark }}
 	{% endfor /* lan_gaming_mode_ipv6_ips */ %}
 	{% if (!isEmpty(control_info.lan_gaming_mode_mac_addrs)): %}
-	ether saddr {{ array_to_nftarr(control_info.lan_gaming_mode_mac_addrs) }} counter mark set {{ tun_mark }}
+	ether saddr {{ array_to_nftarr(control_info.lan_gaming_mode_mac_addrs) }} counter meta mark set {{ tun_mark }}
 	{% endif /* lan_gaming_mode_mac_addrs */ %}
 
 	counter goto homeproxy_mangle_tun_mark

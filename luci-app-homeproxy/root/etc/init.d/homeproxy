@@ -14,8 +14,14 @@ PROG="/usr/bin/sing-box"
 HP_DIR="/etc/homeproxy"
 RUN_DIR="/var/run/homeproxy"
 LOG_PATH="$RUN_DIR/homeproxy.log"
-DNSMASQ_DIR="/tmp/dnsmasq.d/dnsmasq-homeproxy.d"
-APILOCATION_PATH="/etc/nginx/conf.d/homeproxy.locations"
+
+# we don't know which is the default server, just take the first one
+DNSMASQ_UCI_CONFIG="$(uci -q show "dhcp.@dnsmasq[0]" | awk 'NR==1 {split($0, conf, /[.=]/); print conf[2]}')"
+if [ -f "/tmp/etc/dnsmasq.conf.$DNSMASQ_UCI_CONFIG" ]; then
+	DNSMASQ_DIR="$(awk -F '=' '/^conf-dir=/ {print $2}' "/tmp/etc/dnsmasq.conf.$DNSMASQ_UCI_CONFIG")/dnsmasq-homeproxy.d"
+else
+	DNSMASQ_DIR="/tmp/dnsmasq.d/dnsmasq-homeproxy.d"
+fi
 
 log() {
 	echo -e "$(date "+%Y-%m-%d %H:%M:%S") [DAEMON] $*" >> "$LOG_PATH"
@@ -57,63 +63,37 @@ start_service() {
 		fi
 
 		# Auto update
-		local auto_update auto_update_expr
+		local auto_update auto_update_time
 		config_get_bool auto_update "subscription" "auto_update" "0"
 		if [ "$auto_update" = "1" ]; then
-			config_get auto_update_expr "subscription" "auto_update_expr" "0 2 * * *"
-			echo -e "$auto_update_expr $HP_DIR/scripts/update_crond.sh" >> "/etc/crontabs/root"
+			config_get auto_update_time "subscription" "auto_update_time" "2"
+			sed -i "/update_crond.sh/d" "/etc/crontabs/root" 2>"/dev/null"
+			echo -e "0 $auto_update_time * * * $HP_DIR/scripts/update_crond.sh" >> "/etc/crontabs/root"
 			/etc/init.d/cron restart
 		fi
 
-		# Clash API uses Nginx reverse proxy
-		local clash_api_enabled clash_api_port nginx_support
-		config_get_bool clash_api_enabled "experimental" "clash_api_enabled" "0"
-		config_get_bool nginx_support "experimental" "nginx_support" "0"
-		if [ "$clash_api_enabled" = "1" -a "$nginx_support" = "1" ]; then
-			config_get clash_api_port "experimental" "clash_api_port" "9090"
-			[ "$(sed -En "s|^\s*proxy_pass\s+https?://[^:]+:(\d+).*|\1|p" "$APILOCATION_PATH")" = "$clash_api_port" ] || sed -Ei "/\bproxy_pass\b/{s|(proxy_pass\s+https?://[^:]+:)(\d+)(.*)|\1$clash_api_port\3|}" "$APILOCATION_PATH"
-			/etc/init.d/nginx reload
-		fi
-
 		# DNSMasq rules
-		local ipv6_support
+		local ipv6_support dns_port
 		config_get_bool ipv6_support "config" "ipv6_support" "0"
-		local dns_port china_dns_server china_dns_port
 		config_get dns_port "infra" "dns_port" "5333"
 		mkdir -p "$DNSMASQ_DIR"
 		echo -e "conf-dir=$DNSMASQ_DIR" > "$DNSMASQ_DIR/../dnsmasq-homeproxy.conf"
 		case "$routing_mode" in
-		"gfwlist")
-			[ "$ipv6_support" -eq "0" ] || local gfw_nftset_v6=",6#inet#fw4#homeproxy_gfw_list_v6"
-			sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_gfw_list_v4$gfw_nftset_v6/g" \
-				"$HP_DIR/resources/gfw_list.txt" > "$DNSMASQ_DIR/gfw_list.conf"
-			;;
-		"bypass_mainland_china")
-			config_get china_dns_server "config" "china_dns_server"
-			config_get china_dns_port "infra" "china_dns_port" "5334"
-
-			if [ -e "/usr/bin/chinadns-ng" ] && [ -n "$china_dns_server" ]; then
-				cat <<-EOF >> "$DNSMASQ_DIR/redirect-dns.conf"
-					no-poll
-					no-resolv
-					server=127.0.0.1#$china_dns_port
-				EOF
-			else
-				china_dns_server=""
-				sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port/g" \
-					"$HP_DIR/resources/gfw_list.txt" > "$DNSMASQ_DIR/gfw_list.conf"
-			fi
-			;;
-		"proxy_mainland_china")
-			sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port/g" \
-				"$HP_DIR/resources/china_list.txt" > "$DNSMASQ_DIR/china_list.conf"
-			;;
-		"custom"|"global")
+		"bypass_mainland_china"|"custom"|"global")
 			cat <<-EOF >> "$DNSMASQ_DIR/redirect-dns.conf"
 				no-poll
 				no-resolv
 				server=127.0.0.1#$dns_port
 			EOF
+			;;
+		"gfwlist")
+			[ "$ipv6_support" -eq "0" ] || local gfw_nftset_v6=",6#inet#fw4#homeproxy_gfw_list_v6"
+			sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_gfw_list_v4$gfw_nftset_v6/g" \
+				"$HP_DIR/resources/gfw_list.txt" > "$DNSMASQ_DIR/gfw_list.conf"
+			;;
+		"proxy_mainland_china")
+			sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port/g" \
+				"$HP_DIR/resources/china_list.txt" > "$DNSMASQ_DIR/china_list.conf"
 			;;
 		esac
 
@@ -171,6 +151,7 @@ start_service() {
 			procd_add_jail "sing-box-c" log procfs
 			procd_add_jail_mount "$RUN_DIR/sing-box-c.json"
 			procd_add_jail_mount_rw "$RUN_DIR/sing-box-c.log"
+			[ "$routing_mode" != "bypass_mainland_china" ] || procd_add_jail_mount_rw "$RUN_DIR/cache.db"
 			procd_add_jail_mount "$HP_DIR/certs/"
 			procd_add_jail_mount "/etc/ssl/"
 			procd_add_jail_mount "/etc/localtime"
@@ -187,53 +168,6 @@ start_service() {
 		procd_set_param respawn
 
 		procd_close_instance
-
-		# chinadns-ng
-		if [ -n "$china_dns_server" ]; then
-			local wandns="$(ifstatus wan | jsonfilter -e '@["dns-server"][0]' || echo "119.29.29.29")"
-			china_dns_server="${china_dns_server/wan/$wandns}"
-			china_dns_server="${china_dns_server// /,}"
-
-			for i in $(seq 1 "$(grep -c "processor" "/proc/cpuinfo")"); do
-				procd_open_instance "chinadns-ng-$i"
-
-				procd_set_param command "/usr/bin/chinadns-ng"
-				procd_append_param command --bind-port "$china_dns_port"
-				procd_append_param command --china-dns "$china_dns_server"
-				procd_append_param command --trust-dns "127.0.0.1#$dns_port"
-				procd_append_param command --ipset-name4 "inet@fw4@homeproxy_mainland_addr_v4"
-				procd_append_param command --ipset-name6 "inet@fw4@homeproxy_mainland_addr_v6"
-				procd_append_param command --chnlist-file "$HP_DIR/resources/china_list.txt"
-				procd_append_param command --gfwlist-file "$HP_DIR/resources/gfw_list.txt"
-				procd_append_param command --reuse-port
-
-				if chinadns-ng --version | grep -q "target:"; then
-					procd_append_param command --cache 10000
-					procd_append_param command --cache-stale 3600
-					procd_append_param command --verdict-cache 10000
-					[ "$ipv6_support" -eq "1" ] || procd_append_param command --no-ipv6=ip:non_china
-				else
-					[ "$ipv6_support" -eq "1" ] || procd_append_param command --no-ipv6=tC
-				fi
-
-				if [ -x "/sbin/ujail" ]; then
-					procd_add_jail "chinadns-ng" log
-					procd_add_jail_mount "$HP_DIR/resources/china_list.txt"
-					procd_add_jail_mount "$HP_DIR/resources/gfw_list.txt"
-					procd_set_param capabilities "/etc/capabilities/homeproxy.json"
-					procd_set_param no_new_privs 1
-					procd_set_param user sing-box
-					procd_set_param group sing-box
-				fi
-
-				procd_set_param limits core="unlimited"
-				procd_set_param limits nofile="1000000 1000000"
-				procd_set_param stderr 1
-				procd_set_param respawn
-
-				procd_close_instance
-			done
-		fi
 	fi
 
 	if [ "$server_enabled" = "1" ]; then
@@ -258,7 +192,9 @@ start_service() {
 			procd_add_jail "sing-box-s" log procfs
 			procd_add_jail_mount "$RUN_DIR/sing-box-s.json"
 			procd_add_jail_mount_rw "$RUN_DIR/sing-box-s.log"
-			procd_add_jail_mount "$HP_DIR/certs/"
+			procd_add_jail_mount_rw "$HP_DIR/certs/"
+			procd_add_jail_mount "/etc/acme/"
+			procd_add_jail_mount "/etc/ssl/"
 			procd_add_jail_mount "/etc/localtime"
 			procd_add_jail_mount "/etc/TZ"
 			procd_set_param capabilities "/etc/capabilities/homeproxy.json"
@@ -281,23 +217,25 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 
-	# Prepare ruleset directory for custom routing mode
-	if [ "$routing_mode" = "custom" ]; then
+	case "$routing_mode" in
+	"bypass_mainland_china")
+		# Prepare cache db
+		[ -e "$RUN_DIR/cache.db" ] || touch "$RUN_DIR/cache.db"
+		;;
+	"custom")
+		# Prepare ruleset directory
 		[ -d "$HP_DIR/ruleset" ] || mkdir -p "$HP_DIR/ruleset"
+		;;
+	esac
+
+	[ "$outbound_node" = "nil" ] || echo > "$RUN_DIR/sing-box-c.log"
+	if [ "$server_enabled" = "1" ]; then
+		echo > "$RUN_DIR/sing-box-s.log"
+		mkdir -p "$HP_DIR/certs"
 	fi
 
 	# Update permissions for ujail
-	if [ "$outbound_node" != "nil" ]; then
-		echo > "$RUN_DIR/sing-box-c.log"
-		chown sing-box:sing-box "$RUN_DIR/sing-box-c.log"
-		chown sing-box:sing-box "$RUN_DIR/sing-box-c.json"
-		chmod 0644 "$HP_DIR/resources/gfw_list.txt"
-	fi
-	if [ "$server_enabled" = "1" ]; then
-		echo > "$RUN_DIR/sing-box-s.log"
-		chown sing-box:sing-box "$RUN_DIR/sing-box-s.log"
-		chown sing-box:sing-box "$RUN_DIR/sing-box-s.json"
-	fi
+	chown -R sing-box:sing-box "$RUN_DIR"
 
 	# Setup firewall
 	utpl -S "$HP_DIR/scripts/firewall_pre.ut" > "$RUN_DIR/fw4_pre.nft"
@@ -308,7 +246,7 @@ start_service() {
 }
 
 stop_service() {
-	sed -i "/$CONF/d" "/etc/crontabs/root" 2>"/dev/null"
+	sed -i "/update_crond.sh/d" "/etc/crontabs/root" 2>"/dev/null"
 	/etc/init.d/cron restart >"/dev/null" 2>&1
 
 	# Setup firewall
@@ -353,8 +291,8 @@ stop_service() {
 		nft flush set inet fw4 "$i"
 		nft delete set inet fw4 "$i"
 	done 2>"/dev/null"
-	echo > "$RUN_DIR/fw4_pre.nft" 2>"/dev/null"
-	echo > "$RUN_DIR/fw4_post.nft" 2>"/dev/null"
+	echo 2>"/dev/null" > "$RUN_DIR/fw4_pre.nft"
+	echo 2>"/dev/null" > "$RUN_DIR/fw4_post.nft"
 	fw4 reload >"/dev/null" 2>&1
 
 	# Remove DNS hijack
