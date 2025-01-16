@@ -86,26 +86,26 @@ table inet mihomo {
 	chain router_dns_hijack {
 		meta skuid @bypass_user counter return
 		meta skgid @bypass_group counter return
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 counter redirect to :$DNS_PORT
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter redirect to :$DNS_PORT
 	}
 
 	chain all_dns_hijack {
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 counter redirect to :$DNS_PORT
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter redirect to :$DNS_PORT
 	}
 
 	chain allow_dns_hijack {
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 ip saddr @acl_ip counter redirect to :$DNS_PORT
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 ip6 saddr @acl_ip6 counter redirect to :$DNS_PORT
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 ether saddr @acl_mac counter redirect to :$DNS_PORT
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 iifname @acl_interface counter redirect to :$DNS_PORT
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 ip saddr @acl_ip counter redirect to :$DNS_PORT
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 ip6 saddr @acl_ip6 counter redirect to :$DNS_PORT
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 ether saddr @acl_mac counter redirect to :$DNS_PORT
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 iifname @acl_interface counter redirect to :$DNS_PORT
 	}
 
 	chain block_dns_hijack {
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 ip saddr @acl_ip counter return
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 ip6 saddr @acl_ip6 counter return
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 ether saddr @acl_mac counter return
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 iifname @acl_interface counter return
-		meta nfproto @dns_hijack_nfproto meta l4proto udp th dport 53 counter redirect to :$DNS_PORT
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 ip saddr @acl_ip counter return
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 ip6 saddr @acl_ip6 counter return
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 ether saddr @acl_mac counter return
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 iifname @acl_interface counter return
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter redirect to :$DNS_PORT
 	}
 
 	chain router_redirect {
@@ -221,7 +221,7 @@ table inet mihomo {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
 		meta l4proto { tcp, udp } ip dscp == @bypass_dscp ip daddr != $FAKE_IP counter return
 		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
-		meta nfproto @dns_hijack_nfproto udp dport 53 counter return
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 	}
 
 	chain mangle_output {
@@ -238,6 +238,6 @@ table inet mihomo {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
 		meta l4proto { tcp, udp } ip dscp == @bypass_dscp ip daddr != $FAKE_IP counter return
 		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
-		meta nfproto @dns_hijack_nfproto udp dport 53 counter return
+		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 	}
 }

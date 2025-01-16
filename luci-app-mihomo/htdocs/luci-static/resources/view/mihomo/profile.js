@@ -71,9 +71,9 @@ return view.extend({
         o.default = 'clash';
         o.modalonly = true;
         o.rmempty = false;
-        o.value('mihomo');
-        o.value('clash.meta');
         o.value('clash');
+        o.value('clash.meta');
+        o.value('mihomo');
 
         o = s.option(form.ListValue, 'prefer', _('Prefer'));
         o.default = 'remote';
