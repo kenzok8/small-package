@@ -716,18 +716,22 @@ return view.extend({
 		/* Routing control */
 		ss.tab('routing_control', _('Routing Control'));
 
-		so = ss.taboption('routing_control', form.Value, 'routing_tcpport', _('Routing ports') + ' (TCP)',
+		so = ss.taboption('routing_control', form.MultiValue, 'routing_tcpport', _('Routing ports') + ' (TCP)',
 			_('Specify target ports to be proxied. Multiple ports must be separated by commas.'));
-		so.value('', _('All ports'));
-		so.value('common', _('Common ports only (bypass P2P traffic)'));
-		so.value('common_stun', _('Common and STUN ports'));
+		so.create = true;
+		hm.routing_port_type.forEach((res) => {
+			if (res[0] !== 'common_udpport')
+				so.value.apply(so, res);
+		})
 		so.validate = L.bind(hm.validateCommonPort, so);
 
-		so = ss.taboption('routing_control', form.Value, 'routing_udpport', _('Routing ports') + ' (UDP)',
+		so = ss.taboption('routing_control', form.MultiValue, 'routing_udpport', _('Routing ports') + ' (UDP)',
 			_('Specify target ports to be proxied. Multiple ports must be separated by commas.'));
-		so.value('', _('All ports'));
-		so.value('common', _('Common ports only (bypass P2P traffic)'));
-		so.value('common_stun', _('Common and STUN ports'));
+		so.create = true;
+		hm.routing_port_type.forEach((res) => {
+			if (res[0] !== 'common_tcpport')
+				so.value.apply(so, res);
+		})
 		so.validate = L.bind(hm.validateCommonPort, so);
 
 		so = ss.taboption('routing_control', form.ListValue, 'routing_mode', _('Routing mode'),
