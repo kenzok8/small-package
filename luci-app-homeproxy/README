@@ -1,14 +1,5 @@
-Recently, sagernet blocked my account unilaterally and without any reason.
-So this fork will not continue to provide support for new SB features in the future.
-Goodbye. everyone.
-
-For developers:
-The code of the dev/* branch has supported new SB features up to 1.10.0-beta.3.
-You can merge it yourself if necessary.
-
 TODO:
 - Subscription page slow response with a large number of nodes
 - Refactor nft rules
-- Support Clash selector, urltest etc.
 - Move ACL settings to a dedicated page
 - Any other improvements

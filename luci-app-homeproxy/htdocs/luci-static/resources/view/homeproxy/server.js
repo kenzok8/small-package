@@ -1,12 +1,11 @@
 /*
  * SPDX-License-Identifier: GPL-2.0-only
  *
- * Copyright (C) 2022-2023 ImmortalWrt.org
+ * Copyright (C) 2022-2025 ImmortalWrt.org
  */
 
 'use strict';
 'require form';
-'require fs';
 'require poll';
 'require rpc';
 'require uci';
@@ -15,7 +14,7 @@
 
 'require homeproxy as hp';
 
-var callServiceList = rpc.declare({
+const callServiceList = rpc.declare({
 	object: 'service',
 	method: 'list',
 	params: ['name'],
@@ -24,7 +23,7 @@ var callServiceList = rpc.declare({
 
 function getServiceStatus() {
 	return L.resolveDefault(callServiceList('homeproxy'), {}).then((res) => {
-		var isRunning = false;
+		let isRunning = false;
 		try {
 			isRunning = res['homeproxy']['instances']['sing-box-s']['running'];
 		} catch (e) { }
@@ -32,22 +31,22 @@ function getServiceStatus() {
 	});
 }
 
-function renderStatus(isRunning) {
-	var spanTemp = '<em><span style="color:%s"><strong>%s %s</strong></span></em>';
-	var renderHTML;
+function renderStatus(isRunning, version) {
+	let spanTemp = '<em><span style="color:%s"><strong>%s (sing-box v%s) %s</strong></span></em>';
+	let renderHTML;
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy Server'), _('RUNNING'));
+		renderHTML = spanTemp.format('green', _('HomeProxy Server'), version, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy Server'), _('NOT RUNNING'));
+		renderHTML = spanTemp.format('red', _('HomeProxy Server'), version, _('NOT RUNNING'));
 
 	return renderHTML;
 }
 
 function handleGenKey(option) {
-	var section_id = this.section.section;
-	var type = this.section.getOption('type').formvalue(section_id);
-	var widget = this.map.findElement('id', 'widget.cbid.homeproxy.%s.%s'.format(section_id, option));
-	var password, required_method;
+	let section_id = this.section.section;
+	let type = this.section.getOption('type').formvalue(section_id);
+	let widget = this.map.findElement('id', 'widget.cbid.homeproxy.%s.%s'.format(section_id, option));
+	let password, required_method;
 
 	if (option === 'uuid')
 		required_method = 'uuid';
@@ -55,7 +54,6 @@ function handleGenKey(option) {
 		required_method = this.section.getOption('shadowsocks_encrypt_method')?.formvalue(section_id);
 
 	switch (required_method) {
-		/* AEAD */
 		case 'aes-128-gcm':
 		case '2022-blake3-aes-128-gcm':
 			password = hp.generateRand('base64', 16);
@@ -70,15 +68,12 @@ function handleGenKey(option) {
 		case '2022-blake3-chacha20-poly1305':
 			password = hp.generateRand('base64', 32);
 			break;
-		/* NONE */
 		case 'none':
 			password = '';
 			break;
-		/* UUID */
 		case 'uuid':
 			password = hp.generateRand('uuid');
 			break;
-		/* PLAIN */
 		default:
 			password = hp.generateRand('hex', 16);
 			break;
@@ -88,16 +83,16 @@ function handleGenKey(option) {
 }
 
 return view.extend({
-	load: function() {
+	load() {
 		return Promise.all([
 			uci.load('homeproxy'),
 			hp.getBuiltinFeatures()
 		]);
 	},
 
-	render: function(data) {
-		var m, s, o;
-		var features = data[1];
+	render(data) {
+		let m, s, o;
+		let features = data[1];
 
 		m = new form.Map('homeproxy', _('HomeProxy Server'),
 			_('The modern ImmortalWrt proxy platform for ARM64/AMD64.'));
@@ -106,8 +101,8 @@ return view.extend({
 		s.render = function () {
 			poll.add(function () {
 				return L.resolveDefault(getServiceStatus()).then((res) => {
-					var view = document.getElementById('service_status');
-					view.innerHTML = renderStatus(res);
+					let view = document.getElementById('service_status');
+					view.innerHTML = renderStatus(res, features.version);
 				});
 			});
 
@@ -118,17 +113,6 @@ return view.extend({
 
 		s = m.section(form.NamedSection, 'server', 'homeproxy', _('Global settings'));
 
-		o = s.option(form.Button, '_reload_server', _('Quick Reload'));
-		o.inputtitle = _('Reload');
-		o.inputstyle = 'apply';
-		o.onclick = function() {
-			return fs.exec('/etc/init.d/homeproxy', ['reload', 'server'])
-				.then((res) => { return window.location = window.location.href.split('#')[0] })
-				.catch((e) => {
-					ui.addNotification(null, E('p', _('Failed to execute "/etc/init.d/homeproxy %s %s" reason: %s').format('reload', 'server', e)));
-				});
-		};
-
 		o = s.option(form.Flag, 'enabled', _('Enable'));
 		o.default = o.disabled;
 		o.rmempty = false;
@@ -138,15 +122,13 @@ return view.extend({
 		o.rmempty = false;
 
 		s = m.section(form.GridSection, 'server', _('Server settings'));
-		var prefmt = { 'prefix': 'server_', 'suffix': '' };
 		s.addremove = true;
 		s.rowcolors = true;
 		s.sortable = true;
 		s.nodescriptions = true;
 		s.modaltitle = L.bind(hp.loadModalTitle, this, _('Server'), _('Add a server'), data[0]);
 		s.sectiontitle = L.bind(hp.loadDefaultLabel, this, data[0]);
-		s.renderSectionAdd = L.bind(hp.renderSectionAdd, this, s, prefmt, false);
-		s.handleAdd = L.bind(hp.handleAdd, this, s, prefmt);
+		s.renderSectionAdd = L.bind(hp.renderSectionAdd, this, s);
 
 		o = s.option(form.Value, 'label', _('Label'));
 		o.load = L.bind(hp.loadDefaultLabel, this, data[0]);
@@ -166,6 +148,7 @@ return view.extend({
 			o.value('hysteria2', _('Hysteria2'));
 			o.value('naive', _('NaïveProxy'));
 		}
+		o.value('mixed', _('Mixed'));
 		o.value('shadowsocks', _('Shadowsocks'));
 		o.value('socks', _('Socks'));
 		o.value('trojan', _('Trojan'));
@@ -187,19 +170,20 @@ return view.extend({
 
 		o = s.option(form.Value, 'username', _('Username'));
 		o.depends('type', 'http');
+		o.depends('type', 'mixed');
 		o.depends('type', 'naive');
 		o.depends('type', 'socks');
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'password', _('Password'));
 		o.password = true;
-		o.depends({'type': /^(http|naive|socks)$/, 'username': /[\s\S]/});
+		o.depends({'type': /^(http|mixed|naive|socks)$/, 'username': /[\s\S]/});
 		o.depends('type', 'hysteria2');
 		o.depends('type', 'shadowsocks');
 		o.depends('type', 'trojan');
 		o.depends('type', 'tuic');
 		o.renderWidget = function() {
-			var node = form.Value.prototype.renderWidget.apply(this, arguments);
+			let node = form.Value.prototype.renderWidget.apply(this, arguments);
 
 			(node.querySelector('.control-group') || node).appendChild(E('button', {
 				'class': 'cbi-button cbi-button-apply',
@@ -211,12 +195,12 @@ return view.extend({
 		}
 		o.validate = function(section_id, value) {
 			if (section_id) {
-				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
-				var required_type = [ 'http', 'naive', 'socks', 'shadowsocks' ];
+				let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
+				let required_type = [ 'http', 'mixed', 'naive', 'socks', 'shadowsocks' ];
 
 				if (required_type.includes(type)) {
 					if (type === 'shadowsocks') {
-						var encmode = this.map.lookupOption('shadowsocks_encrypt_method', section_id)[0].formvalue(section_id);
+						let encmode = this.map.lookupOption('shadowsocks_encrypt_method', section_id)[0].formvalue(section_id);
 						if (encmode === 'none')
 							return true;
 						else if (encmode === '2022-blake3-aes-128-gcm')
@@ -281,6 +265,17 @@ return view.extend({
 		o = s.option(form.Value, 'hysteria_obfs_password', _('Obfuscate password'));
 		o.depends('type', 'hysteria');
 		o.depends({'type': 'hysteria2', 'hysteria_obfs_type': /[\s\S]/});
+		o.renderWidget = function() {
+			let node = form.Value.prototype.renderWidget.apply(this, arguments);
+
+			(node.querySelector('.control-group') || node).appendChild(E('button', {
+				'class': 'cbi-button cbi-button-apply',
+				'title': _('Generate'),
+				'click': ui.createHandlerFn(this, handleGenKey, this.option)
+			}, [ _('Generate') ]));
+
+			return node;
+		}
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'hysteria_recv_window_conn', _('QUIC stream receive window'),
@@ -324,7 +319,7 @@ return view.extend({
 
 		/* Shadowsocks config */
 		o = s.option(form.ListValue, 'shadowsocks_encrypt_method', _('Encrypt method'));
-		for (var i of hp.shadowsocks_encrypt_methods)
+		for (let i of hp.shadowsocks_encrypt_methods)
 			o.value(i);
 		o.default = 'aes-128-gcm';
 		o.depends('type', 'shadowsocks');
@@ -336,7 +331,7 @@ return view.extend({
 		o.depends('type', 'vless');
 		o.depends('type', 'vmess');
 		o.renderWidget = function() {
-			var node = form.Value.prototype.renderWidget.apply(this, arguments);
+			let node = form.Value.prototype.renderWidget.apply(this, arguments);
 
 			(node.querySelector('.control-group') || node).appendChild(E('button', {
 				'class': 'cbi-button cbi-button-apply',
@@ -407,7 +402,7 @@ return view.extend({
 		o.depends('type', 'vless');
 		o.depends('type', 'vmess');
 		o.onchange = function(ev, section_id, value) {
-			var desc = this.map.findElement('id', 'cbid.homeproxy.%s.transport'.format(section_id)).nextElementSibling;
+			let desc = this.map.findElement('id', 'cbid.homeproxy.%s.transport'.format(section_id)).nextElementSibling;
 			if (value === 'http')
 				desc.innerHTML = _('TLS is not enforced. If TLS is not configured, plain HTTP 1.1 is used.');
 			else if (value === 'quic')
@@ -415,7 +410,7 @@ return view.extend({
 			else
 				desc.innerHTML = _('No TCP transport, plain HTTP is merged into the HTTP transport.');
 
-			var tls_element = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+			let tls_element = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 			if ((value === 'http' && tls_element.checked) || (value === 'grpc' && !features.with_grpc))
 				this.map.findElement('id', 'cbid.homeproxy.%s.http_idle_timeout'.format(section_id)).nextElementSibling.innerHTML =
 					_('Specifies the time (in seconds) until idle clients should be closed with a GOAWAY frame. PING frames are not considered as activity.');
@@ -538,13 +533,14 @@ return view.extend({
 		o.depends('type', 'hysteria2');
 		o.depends('type', 'naive');
 		o.depends('type', 'trojan');
+		o.depends('type', 'tuic');
 		o.depends('type', 'vless');
 		o.depends('type', 'vmess');
 		o.rmempty = false;
 		o.validate = function(section_id, value) {
 			if (section_id) {
-				var type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
-				var tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
+				let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
+				let tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 
 				if (['hysteria', 'hysteria2', 'tuic'].includes(type)) {
 					tls.checked = true;
@@ -571,7 +567,7 @@ return view.extend({
 		o = s.option(form.ListValue, 'tls_min_version', _('Minimum TLS version'),
 			_('The minimum TLS version that is acceptable.'));
 		o.value('', _('default'));
-		for (var i of hp.tls_versions)
+		for (let i of hp.tls_versions)
 			o.value(i);
 		o.depends('tls', '1');
 		o.modalonly = true;
@@ -579,14 +575,14 @@ return view.extend({
 		o = s.option(form.ListValue, 'tls_max_version', _('Maximum TLS version'),
 			_('The maximum TLS version that is acceptable.'));
 		o.value('', _('default'));
-		for (var i of hp.tls_versions)
+		for (let i of hp.tls_versions)
 			o.value(i);
 		o.depends('tls', '1');
 		o.modalonly = true;
 
-		o = s.option(form.MultiValue, 'tls_cipher_suites', _('Cipher suites'),
+		o = s.option(hp.CBIStaticList, 'tls_cipher_suites', _('Cipher suites'),
 			_('The elliptic curves that will be used in an ECDHE handshake, in preference order. If empty, the default will be used.'));
-		for (var i of hp.tls_cipher_suites)
+		for (let i of hp.tls_cipher_suites)
 			o.value(i);
 		o.depends('tls', '1');
 		o.optional = true;
@@ -749,6 +745,7 @@ return view.extend({
 		o.depends({'tls': '1', 'tls_acme': '0', 'tls_reality': '0'});
 		o.depends({'tls': '1', 'tls_acme': null, 'tls_reality': '0'});
 		o.depends({'tls': '1', 'tls_acme': null, 'tls_reality': null});
+		o.validate = L.bind(hp.validateCertificatePath, this);
 		o.rmempty = false;
 		o.modalonly = true;
 
@@ -767,6 +764,7 @@ return view.extend({
 		o.depends({'tls': '1', 'tls_acme': '0', 'tls_reality': null});
 		o.depends({'tls': '1', 'tls_acme': null, 'tls_reality': '0'});
 		o.depends({'tls': '1', 'tls_acme': null, 'tls_reality': null});
+		o.validate = L.bind(hp.validateCertificatePath, this);
 		o.rmempty = false;
 		o.modalonly = true;
 
@@ -798,9 +796,9 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'udp_timeout', _('UDP NAT expiration time'),
-			_('In seconds. <code>300</code> is used by default.'));
+			_('In seconds.'));
 		o.datatype = 'uinteger';
-		o.default = '300';
+		o.placeholder = '300';
 		o.depends({'network': 'tcp', '!reverse': true});
 		o.modalonly = true;
 
@@ -810,7 +808,7 @@ return view.extend({
 
 		o = s.option(form.ListValue, 'domain_strategy', _('Domain strategy'),
 			_('If set, the requested domain name will be resolved to IP before routing.'));
-		for (var i in hp.dns_strategy)
+		for (let i in hp.dns_strategy)
 			o.value(i, hp.dns_strategy[i])
 		o.modalonly = true;
 

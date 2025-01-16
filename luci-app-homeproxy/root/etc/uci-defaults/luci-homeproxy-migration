@@ -3,26 +3,24 @@
 china_dns_server="$(uci -q get "homeproxy.config.china_dns_server")"
 if [ "$china_dns_server" = "wan_114" ]; then
 	uci -q delete "homeproxy.config.china_dns_server"
-	uci -q add_list "homeproxy.config.china_dns_server"="wan"
-	uci -q add_list "homeproxy.config.china_dns_server"="114.114.114.114"
+	uci -q set "homeproxy.config.china_dns_server"="114.114.114.114"
 elif echo "$china_dns_server" | grep -q ","; then
 	uci -q delete "homeproxy.config.china_dns_server"
-	for dns in ${china_dns_server//,/ }; do
-		uci -q add_list "homeproxy.config.china_dns_server"="$dns"
-	done
+	uci -q set "homeproxy.config.china_dns_server"="${china_dns_server%%,*}"
+elif echo "$china_dns_server" | grep -q " "; then
+	uci -q delete "homeproxy.config.china_dns_server"
+	uci -q set "homeproxy.config.china_dns_server"="${china_dns_server%% *}"
 fi
-# rm Subscription Name-s
-subscription_urls="$(uci -q get "homeproxy.subscription.subscription_url")"
-subscription_names="$(uci -q get "homeproxy.subscription.subscription_name")"
-if [ -n "$subscription_names" ]; then
-	uci -q delete "homeproxy.subscription.subscription_url"
-	uci -q delete "homeproxy.subscription.subscription_name"
-	i=1
-	for suburl in $subscription_urls; do
-		uci -q add_list "homeproxy.subscription.subscription_url"="${suburl}#$(echo "$subscription_names" | cut -f$i -d' ')"
-		let i++
-	done
+
+if [ "$(uci -q get homeproxy.config.routing_port)" = "all" ]; then
+	uci -q delete "homeproxy.config.routing_port"
 fi
+
+[ -z "$(uci -q show homeproxy.experimental)" ] || uci -q delete "homeproxy.experimental"
+
 [ -z "$(uci -q changes "homeproxy")" ] || uci -q commit "homeproxy"
+
+sed -i "s/rule_set_ipcidr_match_source/rule_set_ip_cidr_match_source/g" "/etc/config/homeproxy"
+sed -i "/china_dns_port/d" "/etc/config/homeproxy"
 
 exit 0

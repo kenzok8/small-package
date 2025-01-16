@@ -2,12 +2,12 @@
 /*
  * SPDX-License-Identifier: GPL-2.0-only
  *
- * Copyright (C) 2023 ImmortalWrt.org
+ * Copyright (C) 2023-2024 ImmortalWrt.org
  */
 
 'use strict';
 
-import { access, error, lstat, mkstemp, popen, readfile, writefile } from 'fs';
+import { access, error, lstat, popen, readfile, writefile } from 'fs';
 
 /* Kanged from ucode/luci */
 function shellquote(s) {
@@ -161,62 +161,43 @@ const methods = {
 			const fd = popen('/usr/bin/sing-box version');
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
-					let tags = match(trim(line), /Tags: (.*)/);
-					if (!tags)
-						continue;
+					if (match(trim(line), /^sing-box version (.*)/))
+						features.version = match(trim(line), /^sing-box version (.*)/)[1];
 
-					for (let i in split(tags[1], ','))
-						features[i] = true;
+					let tags = match(trim(line), /^Tags: (.*)/);
+					if (tags)
+						for (let i in split(tags[1], ','))
+							features[i] = true;
 				}
 
 				fd.close();
 			}
 
-			features.hp_has_chinadns_ng = access('/usr/bin/chinadns-ng');
-			if (features.hp_has_chinadns_ng)
-				features.hp_has_chinadns_ng_v2 = (system('/usr/bin/chinadns-ng --version | grep -q "target:"') === 0);
 			features.hp_has_ip_full = access('/usr/libexec/ip-full');
 			features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
 			features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
 			features.hp_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
-			features.hp_has_nginx = access('/usr/sbin/nginx');
 
 			return features;
 		}
 	},
 
 	resources_get_version: {
-		args: { type: 'type', repo: 'repo' },
+		args: { type: 'type' },
 		call: function(req) {
-			const versions = trim(readfile(`${HP_DIR}/resources/${req.args?.type}.ver`));
-			if (req.args?.repo && versions) {
-				const vers_arr = values(json(versions));
-				for (obj in vers_arr) {
-					if (obj.repo === req.args?.repo)
-						return { version: obj.version, error: 0 };
-				}
-				return { version: '', error: 1 };
-			} else
-				return { version: versions, error: error() };
+			const version = trim(readfile(`${HP_DIR}/resources/${req.args?.type}.ver`));
+			return { version: version, error: error() };
 		}
 	},
 	resources_update: {
-		args: { type: 'type', repo: 'repo' },
+		args: { type: 'type' },
 		call: function(req) {
 			if (req.args?.type) {
-				const type = shellquote(req.args?.type),
-				      repo = shellquote(req.args?.repo);
-				const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${type} ${repo}`);
+				const type = shellquote(req.args?.type);
+				const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${type}`);
 				return { status: exit_code };
 			} else
 				return { status: 255, error: 'illegal type' };
-		}
-	},
-
-	clash_api_get_secret: {
-		call: function() {
-			const client_json = json(trim(readfile(`${RUN_DIR}/sing-box-c.json`)));
-			return { secret: client_json.experimental.clash_api.secret };
 		}
 	}
 };

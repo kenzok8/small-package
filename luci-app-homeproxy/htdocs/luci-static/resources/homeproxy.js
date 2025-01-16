@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: GPL-2.0-only
  *
- * Copyright (C) 2022-2023 ImmortalWrt.org
+ * Copyright (C) 2022-2025 ImmortalWrt.org
  */
 
 'use strict';
@@ -11,7 +11,6 @@
 'require rpc';
 'require uci';
 'require ui';
-'require validation';
 
 return baseclass.extend({
 	dns_strategy: {
@@ -64,7 +63,17 @@ return baseclass.extend({
 		'1.3'
 	],
 
-	calcStringMD5: function(e) {
+	CBIStaticList: form.DynamicList.extend({
+		__name__: 'CBI.StaticList',
+
+		renderWidget: function(/* ... */) {
+			var dl = form.DynamicList.prototype.renderWidget.apply(this, arguments);
+			dl.querySelector('.add-item ul > li[data-value="-"]')?.remove();
+			return dl;
+		}
+	}),
+
+	calcStringMD5(e) {
 		/* Thanks to https://stackoverflow.com/a/41602636 */
 		function h(a, b) {
 			var c, d, e, f, g;
@@ -145,7 +154,7 @@ return baseclass.extend({
 		return (p(a) + p(b) + p(c) + p(d)).toLowerCase();
 	},
 
-	decodeBase64Str: function(str) {
+	decodeBase64Str(str) {
 		if (!str)
 			return null;
 
@@ -160,8 +169,8 @@ return baseclass.extend({
 		).join(''));
 	},
 
-	getBuiltinFeatures: function() {
-		var callGetSingBoxFeatures = rpc.declare({
+	getBuiltinFeatures() {
+		const callGetSingBoxFeatures = rpc.declare({
 			object: 'luci.homeproxy',
 			method: 'singbox_get_features',
 			expect: { '': {} }
@@ -170,7 +179,7 @@ return baseclass.extend({
 		return L.resolveDefault(callGetSingBoxFeatures(), {});
 	},
 
-	generateRand: function(type, length) {
+	generateRand(type, length) {
 		var byteArr;
 		if (['base64', 'hex'].includes(type))
 			byteArr = crypto.getRandomValues(new Uint8Array(length));
@@ -184,8 +193,7 @@ return baseclass.extend({
 				).join('');
 			case 'uuid':
 				/* Thanks to https://stackoverflow.com/a/2117523 */
-				return (location.protocol === 'https:') ? crypto.randomUUID() :
-				([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c) =>
+				return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c) =>
 					(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
 				);
 			default:
@@ -193,7 +201,7 @@ return baseclass.extend({
 		};
 	},
 
-	loadDefaultLabel: function(uciconfig, ucisection) {
+	loadDefaultLabel(uciconfig, ucisection) {
 		var label = uci.get(uciconfig, ucisection, 'label');
 		if (label) {
 			return label;
@@ -203,60 +211,24 @@ return baseclass.extend({
 		}
 	},
 
-	loadModalTitle: function(title, addtitle, uciconfig, ucisection) {
+	loadModalTitle(title, addtitle, uciconfig, ucisection) {
 		var label = uci.get(uciconfig, ucisection, 'label');
 		return label ? title + ' » ' + label : addtitle;
 	},
 
-	loadSubscriptionInfo: function(uciconfig) {
-		var subs = {};
-		for (var suburl of (uci.get(uciconfig, 'subscription', 'subscription_url') || [])) {
-			const url = new URL(suburl);
-			const urlhash = this.calcStringMD5(suburl.replace(/#.*$/, ''));
-			subs[urlhash] = {
-				"url": suburl.replace(/#.*$/, ''),
-				"name": url.hash ? decodeURIComponent(url.hash.slice(1)) : url.hostname
-			};
-		}
-		return subs;
-	},
-
-	loadNodesList: function(uciconfig, subinfo) {
-		var nodelist = {};
-		uci.sections(uciconfig, 'node', (res) => {
-			var nodeaddr = ((res.type === 'direct') ? res.override_address : res.address) || '',
-			    nodeport = ((res.type === 'direct') ? res.override_port : res.port) || '';
-
-			nodelist[res['.name']] =
-				String.format('%s [%s] %s', res.grouphash ?
-					String.format('[%s]', subinfo[res.grouphash]?.name || res.grouphash) : '',
-					res.type, res.label || ((validation.parseIPv6(nodeaddr) ?
-					String.format('[%s]', nodeaddr) : nodeaddr) + ':' + nodeport));
-		});
-		return nodelist;
-	},
-
-	renderSectionAdd: function(section, prefmt, LC, extra_class) {
+	renderSectionAdd(section, extra_class) {
 		var el = form.GridSection.prototype.renderSectionAdd.apply(section, [ extra_class ]),
 			nameEl = el.querySelector('.cbi-section-create-name');
 		ui.addValidator(nameEl, 'uciname', true, (v) => {
 			var button = el.querySelector('.cbi-section-create > .cbi-button-add');
 			var uciconfig = section.uciconfig || section.map.config;
-			var prefix = prefmt?.prefix ? prefmt.prefix : '',
-				suffix = prefmt?.suffix ? prefmt.suffix : '';
 
 			if (!v) {
 				button.disabled = true;
 				return true;
-			} else if (LC && (v !== v.toLowerCase())) {
-				button.disabled = true;
-				return _('Expecting: %s').format(_('Lowercase only'));
 			} else if (uci.get(uciconfig, v)) {
 				button.disabled = true;
 				return _('Expecting: %s').format(_('unique UCI identifier'));
-			} else if (uci.get(uciconfig, prefix + v + suffix)) {
-				button.disabled = true;
-				return _('Expecting: %s').format(_('unique label'));
 			} else {
 				button.disabled = null;
 				return true;
@@ -266,15 +238,8 @@ return baseclass.extend({
 		return el;
 	},
 
-	handleAdd: function(section, prefmt, ev, name) {
-		var prefix = prefmt?.prefix ? prefmt.prefix : '',
-			suffix = prefmt?.suffix ? prefmt.suffix : '';
-
-		return form.GridSection.prototype.handleAdd.apply(section, [ ev, prefix + name + suffix ]);
-	},
-
-	uploadCertificate: function(option, type, filename, ev) {
-		var callWriteCertificate = rpc.declare({
+	uploadCertificate(_option, type, filename, ev) {
+		const callWriteCertificate = rpc.declare({
 			object: 'luci.homeproxy',
 			method: 'certificate_write',
 			params: ['filename'],
@@ -282,7 +247,7 @@ return baseclass.extend({
 		});
 
 		return ui.uploadFile('/tmp/homeproxy_certificate.tmp', ev.target)
-		.then(L.bind((btn, res) => {
+		.then(L.bind((_btn, res) => {
 			return L.resolveDefault(callWriteCertificate(filename), {}).then((ret) => {
 				if (ret.result === true)
 					ui.addNotification(null, E('p', _('Your %s was successfully uploaded. Size: %sB.').format(type, res.size)));
@@ -293,7 +258,7 @@ return baseclass.extend({
 		.catch((e) => { ui.addNotification(null, E('p', e.message)) });
 	},
 
-	validateBase64Key: function(length, section_id, value) {
+	validateBase64Key(length, section_id, value) {
 		/* Thanks to luci-proto-wireguard */
 		if (section_id && value)
 			if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
@@ -302,10 +267,20 @@ return baseclass.extend({
 		return true;
 	},
 
-	validateUniqueValue: function(uciconfig, ucisection, ucioption, section_id, value) {
+	validateCertificatePath(section_id, value) {
+		if (section_id && value)
+			if (!value.match(/^(\/etc\/homeproxy\/certs\/|\/etc\/acme\/|\/etc\/ssl\/).+$/))
+				return _('Expecting: %s').format(_('/etc/homeproxy/certs/..., /etc/acme/..., /etc/ssl/...'));
+
+		return true;
+	},
+
+	validateUniqueValue(uciconfig, ucisection, ucioption, section_id, value) {
 		if (section_id) {
 			if (!value)
 				return _('Expecting: %s').format(_('non-empty value'));
+			if (ucioption === 'node' && value === 'urltest')
+				return true;
 
 			var duplicate = false;
 			uci.sections(uciconfig, ucisection, (res) => {
@@ -320,7 +295,7 @@ return baseclass.extend({
 		return true;
 	},
 
-	validateUUID: function(section_id, value) {
+	validateUUID(section_id, value) {
 		if (section_id) {
 			if (!value)
 				return _('Expecting: %s').format(_('non-empty value'));
