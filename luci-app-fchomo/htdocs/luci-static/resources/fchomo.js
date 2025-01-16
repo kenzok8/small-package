@@ -127,6 +127,14 @@ return baseclass.extend({
 		//['relay', _('Relay')], // Deprecated
 	],
 
+	routing_port_type: [
+		['all', _('All ports')],
+		['common_tcpport', _('Common ports only (bypass P2P traffic)')],
+		['common_udpport', _('Common ports only (bypass P2P traffic)')],
+		['stun_port', _('STUN ports')],
+		['turn_port', _('TURN ports')],
+	],
+
 	rules_type: [
 		['DOMAIN'],
 		['DOMAIN-SUFFIX'],
@@ -757,14 +765,24 @@ return baseclass.extend({
 			}
 		};
 
-		if (value && !value.match(/common(_stun)?/)) {
-			let ports = [];
-			for (let i of value.split(',')) {
-				if (!stubValidator.apply('port', i) && !stubValidator.apply('portrange', i))
-					return _('Expecting: %s').format(_('valid port value'));
-				if (ports.includes(i))
-					return _('Port %s alrealy exists!').format(i);
-				ports = ports.concat(i);
+		const arr = value.trim().split(' ');
+
+		if (arr.length === 0 || arr.includes(''))
+			return _('Expecting: %s').format(_('non-empty value'));
+
+		if (arr.length > 1 && arr.includes('all'))
+			return _('Expecting: %s').format(_('If All ports is selected, uncheck others'));
+
+		for (let custom of arr) {
+			if (!hm.routing_port_type.map(e => e[0]).includes(custom)) {
+				let ports = [];
+				for (let i of custom.split(',')) {
+					if (!stubValidator.apply('port', i) && !stubValidator.apply('portrange', i))
+						return _('Expecting: %s').format(_('valid port value'));
+					if (ports.includes(i))
+						return _('Port %s alrealy exists!').format(i);
+					ports = ports.concat(i);
+				}
 			}
 		}
 

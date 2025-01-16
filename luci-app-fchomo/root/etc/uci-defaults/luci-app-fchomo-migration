@@ -12,4 +12,26 @@ if [ -n "$default_proxy" ]; then
 	EOF
 fi
 
+for option in routing_tcpport routing_udpport; do
+	value=$(uci -q get fchomo.routing.$option)
+	if [ -z "$value" ]; then
+		uci -q batch <<-EOF >"/dev/null"
+			delete fchomo.routing.$option
+			add_list fchomo.routing.$option="all"
+		EOF
+	elif [ "$value" = "common" ]; then
+		uci -q batch <<-EOF >"/dev/null"
+			delete fchomo.routing.$option
+			add_list fchomo.routing.$option="${option/routing/common}"
+		EOF
+	elif [ "$value" = "common_stun" ]; then
+		uci -q batch <<-EOF >"/dev/null"
+			delete fchomo.routing.$option
+			add_list fchomo.routing.$option="${option/routing/common}"
+			add_list fchomo.routing.$option="stun_port"
+		EOF
+	fi
+done
+commit fchomo
+
 exit 0
