@@ -25,6 +25,14 @@ const monospacefonts = [
 	'monospace'
 ];
 
+const routing_port_type = [
+	['all', _('All ports')],
+	['common_tcpport', _('Common ports only (bypass P2P traffic)')],
+	['common_udpport', _('Common ports only (bypass P2P traffic)')],
+	['stun_port', _('STUN ports')],
+	['turn_port', _('TURN ports')],
+];
+
 return baseclass.extend({
 	rulesetdoc,
 	sharktaikogif,
@@ -127,13 +135,7 @@ return baseclass.extend({
 		//['relay', _('Relay')], // Deprecated
 	],
 
-	routing_port_type: [
-		['all', _('All ports')],
-		['common_tcpport', _('Common ports only (bypass P2P traffic)')],
-		['common_udpport', _('Common ports only (bypass P2P traffic)')],
-		['stun_port', _('STUN ports')],
-		['turn_port', _('TURN ports')],
-	],
+	routing_port_type,
 
 	rules_type: [
 		['DOMAIN'],
@@ -774,7 +776,7 @@ return baseclass.extend({
 			return _('Expecting: %s').format(_('If All ports is selected, uncheck others'));
 
 		for (let custom of arr) {
-			if (!hm.routing_port_type.map(e => e[0]).includes(custom)) {
+			if (!routing_port_type.map(e => e[0]).includes(custom)) {
 				let ports = [];
 				for (let i of custom.split(',')) {
 					if (!stubValidator.apply('port', i) && !stubValidator.apply('portrange', i))
