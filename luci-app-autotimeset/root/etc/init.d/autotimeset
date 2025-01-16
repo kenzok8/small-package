@@ -179,7 +179,7 @@ restart()
 
 del_cru()
 {   
-    echo -e '#!/bin/sh \n\nSTART=99\nstart(){\necho "Service autotimesetrun started! " >> $LOG\n' > $TT
+    echo -e '#!/bin/sh /etc/rc.common\n\nSTART=99\nstart(){\necho "Service autotimesetrun started! " >> $LOG\n' > $TT
     sed -i '/timesethandler/d' $CR >/dev/null 2>&1
 }
 
