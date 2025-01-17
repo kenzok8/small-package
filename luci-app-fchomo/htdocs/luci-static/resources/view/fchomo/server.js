@@ -26,7 +26,7 @@ return view.extend({
 
 		s = m.section(form.TypedSection);
 		s.render = function () {
-			poll.add(function () {
+			poll.add(function() {
 				return hm.getServiceStatus('mihomo-s').then((isRunning) => {
 					hm.updateStatus(document.getElementById('_server_bar'), isRunning ? { dashboard_repo: dashboard_repo } : false, 'mihomo-s', true);
 				});

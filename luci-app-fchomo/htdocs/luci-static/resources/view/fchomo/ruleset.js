@@ -162,7 +162,7 @@ return view.extend({
 									.then(L.bind(this.map.load, this.map))
 									.then(L.bind(this.map.reset, this.map))
 									.then(L.ui.hideModal)
-									.catch(function() {});
+									.catch(() => {});
 							} else {
 								return ui.hideModal();
 							}

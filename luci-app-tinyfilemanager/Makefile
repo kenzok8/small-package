@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 #
-# Copyright (C) 2022-2024 muink <https://github.com/muink>
+# Copyright (C) 2022-2025 muink <https://github.com/muink>
 
 include $(TOPDIR)/rules.mk
 

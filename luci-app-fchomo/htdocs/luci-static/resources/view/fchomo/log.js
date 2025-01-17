@@ -42,13 +42,13 @@ function getRuntimeLog(name, filename) {
 	let log;
 	poll.add(L.bind(function() {
 		return fs.read_direct(String.format('%s/%s.log', hm_dir, filename), 'text')
-		.then(function(res) {
+		.then((res) => {
 			log = E('pre', { 'wrap': 'pre' }, [
 				res.trim() || _('Log is empty.')
 			]);
 
 			dom.content(log_textarea, log);
-		}).catch(function(err) {
+		}).catch((err) => {
 			if (err.toString().includes('NotFoundError'))
 				log = E('pre', { 'wrap': 'pre' }, [
 					_('Log file does not exist.')

@@ -7,8 +7,8 @@
 'require view';
 'require tools.widgets as widgets';
 
-var conf = 'dnsproxy';
-var instance = 'dnsproxy';
+const conf = 'dnsproxy';
+const instance = 'dnsproxy';
 
 const callServiceList = rpc.declare({
 	object: 'service',
@@ -25,8 +25,8 @@ const callHostHints = rpc.declare({
 
 function getServiceStatus() {
 	return L.resolveDefault(callServiceList(conf), {})
-		.then(function (res) {
-			var isrunning = false;
+		.then((res) => {
+			let isrunning = false;
 			try {
 				isrunning = res[conf]['instances'][instance]['running'];
 			} catch (e) { }
@@ -36,7 +36,7 @@ function getServiceStatus() {
 
 return view.extend({
 
-	load: function() {
+	load() {
 	return Promise.all([
 		getServiceStatus(),
 		callHostHints(),
@@ -44,9 +44,9 @@ return view.extend({
 	]);
 	},
 
-	poll_status: function(nodes, stat) {
-		var isRunning = stat[0],
-			view = nodes.querySelector('#service_status');
+	poll_status(nodes, stat) {
+		const isRunning = stat[0];
+		let view = nodes.querySelector('#service_status');
 
 		if (isRunning) {
 			view.innerHTML = "<span style=\"color:green;font-weight:bold\">" + instance + " - " + _("SERVER RUNNING") + "</span>";
@@ -56,9 +56,9 @@ return view.extend({
 		return;
 	},
 
-	render: function(res) {
-		var isRunning = res[0],
-			hosts = res[1];
+	render(res) {
+		const isRunning = res[0];
+		const hosts = res[1];
 
 		let m, s, o, ss, so;
 
@@ -88,20 +88,20 @@ return view.extend({
 		o.value('127.0.0.1');
 		o.value('::1');
 
-		var ipaddrs = {}, ip6addrs = {};
-		Object.keys(hosts).forEach(function(mac) {
-			var addrs = L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4),
-				addrs6 = L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6);
+		let ipaddrs = {}, ip6addrs = {};
+		Object.keys(hosts).forEach((mac) => {
+			let addrs = L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4);
+			let addrs6 = L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6);
 
-			for (var i = 0; i < addrs.length; i++)
+			for (let i = 0; i < addrs.length; i++)
 				ipaddrs[addrs[i]] = hosts[mac].name || mac;
-			for (var i = 0; i < addrs6.length; i++)
+			for (let i = 0; i < addrs6.length; i++)
 				ip6addrs[addrs6[i]] = hosts[mac].name || mac;
 		});
-		L.sortedKeys(ipaddrs, null, 'addr').forEach(function(ipv4) {
+		L.sortedKeys(ipaddrs, null, 'addr').forEach((ipv4) => {
 			o.value(ipv4, ipaddrs[ipv4] ? '%s (%s)'.format(ipv4, ipaddrs[ipv4]) : ipv4);
 		});
-		L.sortedKeys(ip6addrs, null, 'addr').forEach(function(ipv6) {
+		L.sortedKeys(ip6addrs, null, 'addr').forEach((ipv6) => {
 			o.value(ipv6, ip6addrs[ipv6] ? '%s (%s)'.format(ipv6, ip6addrs[ipv6]) : ipv6);
 		});
 

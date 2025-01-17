@@ -577,7 +577,7 @@ return view.extend({
 
 		s = m.section(form.TypedSection);
 		s.render = function () {
-			poll.add(function () {
+			poll.add(function() {
 				return hm.getServiceStatus('mihomo-c').then((isRunning) => {
 					hm.updateStatus(document.getElementById('_client_bar'), isRunning ? { dashboard_repo: dashboard_repo } : false, 'mihomo-c', true);
 				});

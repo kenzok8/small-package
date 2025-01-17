@@ -14,10 +14,10 @@ return view.extend({
 	handleSave(ev) {
 		let value = (document.querySelector('textarea').value || '').trim().replace(/\r\n/g, '\n') + '\n';
 
-		return hm.writeFile('templates', 'hosts.yaml', value).then(function(rc) {
+		return hm.writeFile('templates', 'hosts.yaml', value).then((rc) => {
 			document.querySelector('textarea').value = value;
 			ui.addNotification(null, E('p', _('Contents have been saved.')), 'info');
-		}).catch(function(e) {
+		}).catch((e) => {
 			ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e)));
 		});
 	},
