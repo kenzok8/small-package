@@ -81,7 +81,7 @@ return view.extend({
 		so.depends({type: /^(http|socks5|mieru|trojan|hysteria2|tuic|ssh)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', hm.CBITextValue, 'headers', _('HTTP header'));
+		so = ss.taboption('field_general', hm.TextValue, 'headers', _('HTTP header'));
 		so.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
 		so.validate = L.bind(hm.validateJson, so);
 		so.depends('type', 'http');
@@ -152,7 +152,7 @@ return view.extend({
 		so.password = true;
 		so.validate = function(section_id, value) {
 			const encmode = this.section.getOption('shadowsocks_chipher').formvalue(section_id);
-			return hm.validateShadowsocksPassword.call(this, hm, encmode, section_id, value);
+			return hm.validateShadowsocksPassword.call(this, encmode, section_id, value);
 		}
 		so.depends({type: 'ss', shadowsocks_chipher: /.+/});
 		so.modalonly = true;
@@ -279,7 +279,7 @@ return view.extend({
 		so.password = true;
 		so.validate = function(section_id, value) {
 			const encmode = this.section.getOption('trojan_ss_chipher').formvalue(section_id);
-			return hm.validateShadowsocksPassword.call(this, hm, encmode, section_id, value);
+			return hm.validateShadowsocksPassword.call(this, encmode, section_id, value);
 		}
 		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
 		so.modalonly = true;
@@ -639,7 +639,7 @@ return view.extend({
 		so.depends({transport_enabled: '1', transport_type: /^(h2|ws)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_transport', hm.CBITextValue, 'transport_http_headers', _('HTTP header'));
+		so = ss.taboption('field_transport', hm.TextValue, 'transport_http_headers', _('HTTP header'));
 		so.placeholder = '{\n  "Host": "example.com",\n  "Connection": [\n    "keep-alive"\n  ]\n}';
 		so.validate = L.bind(hm.validateJson, so);
 		so.depends({transport_enabled: '1', transport_type: /^(http|ws)$/});
@@ -798,7 +798,7 @@ return view.extend({
 			el.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('Remove idles'),
-				'click': ui.createHandlerFn(this, hm.handleRemoveIdles, hm)
+				'click': ui.createHandlerFn(this, hm.handleRemoveIdles)
 			}, [ _('Remove idles') ]));
 
 			return el;
@@ -843,7 +843,7 @@ return view.extend({
 		}
 		so.modalonly = false;
 
-		so = ss.taboption('field_general', hm.CBITextValue, '_editer', _('Editer'),
+		so = ss.taboption('field_general', hm.TextValue, '_editer', _('Editer'),
 			_('Please type <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
 				.format('https://wiki.metacubex.one/config/proxy-providers/content/', _('Contents')));
 		so.placeholder = _('Content will not be verified, Please make sure you enter it correctly.');
@@ -857,7 +857,7 @@ return view.extend({
 		so.depends('type', 'file');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', hm.CBITextValue, 'payload', 'payload:',
+		so = ss.taboption('field_general', hm.TextValue, 'payload', 'payload:',
 			_('Please type <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
 				.format('https://wiki.metacubex.one/config/proxy-providers/content/', _('Payload')));
 		so.placeholder = '- name: "ss1"\n  type: ss\n  server: server\n  port: 443\n  cipher: chacha20-ietf-poly1305\n  password: "password"\n# ' + _('Content will not be verified, Please make sure you enter it correctly.');
@@ -894,7 +894,7 @@ return view.extend({
 		//so.editable = true;
 		so.depends('type', 'http');
 
-		so = ss.taboption('field_general', hm.CBITextValue, 'header', _('HTTP header'),
+		so = ss.taboption('field_general', hm.TextValue, 'header', _('HTTP header'),
 			_('Custom HTTP header.'));
 		so.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Accept": [\n    //"application/vnd.github.v3.raw"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
 		so.validate = L.bind(hm.validateJson, so);
@@ -1041,7 +1041,7 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.DummyValue, '_update');
-		so.cfgvalue = L.bind(hm.renderResDownload, so, hm);
+		so.cfgvalue = L.bind(hm.renderResDownload, so);
 		so.editable = true;
 		so.modalonly = false;
 		/* Provider END */
