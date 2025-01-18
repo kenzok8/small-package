@@ -4,7 +4,7 @@ for d in certs provider ruleset resources templates; do
 	mkdir -p "/etc/fchomo/$d/" 2>/dev/null
 done
 
-if ! uci -q get fchomo.global.authentication; then
+if ! uci -q get fchomo.global.authentication >/dev/null; then
 	uci add_list fchomo.global.authentication="fchomodef:$(cat /proc/sys/kernel/random/uuid)"
 	uci commit fchomo
 fi
