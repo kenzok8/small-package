@@ -32,6 +32,7 @@ for option in routing_tcpport routing_udpport; do
 		EOF
 	fi
 done
-commit fchomo
+
+uci commit fchomo
 
 exit 0
