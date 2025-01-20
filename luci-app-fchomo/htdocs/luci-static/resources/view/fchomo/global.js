@@ -168,6 +168,7 @@ return view.extend({
 		const res_ver_geoip = data[7];
 		const res_ver_geosite = data[8];
 
+		const less_24_10 = !form.RichListValue;
 		const dashboard_repo = uci.get(data[0], 'api', 'dashboard_repo');
 
 		let m, s, o, ss, so;
@@ -472,7 +473,7 @@ return view.extend({
 		}
 		so.default = 'system';
 		so.rmempty = false;
-		if (!form.RichListValue)
+		if (less_24_10)
 			so.onchange = function(ev, section_id, value) {
 				var desc = ev.target.nextSibling;
 				if (value === 'mixed')
