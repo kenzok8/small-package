@@ -15,6 +15,11 @@ const sharktaikogif = function() {
 'c2hhcmstdGFpa28uZ2lm'
 }()
 
+const less_24_10 = !form.RichListValue;
+
+const pr7558_merged = false;
+const pr7574_merged = false;
+
 const monospacefonts = [
 	'"Cascadia Code"',
 	'"Cascadia Mono"',
@@ -235,6 +240,29 @@ const tls_client_fingerprints = [
 ];
 
 /* Prototype */
+const CBIDynamicList = form.DynamicList.extend({
+	__name__: 'CBI.DynamicList',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		const value = (cfgvalue != null) ? cfgvalue : this.default;
+		const choices = this.transformChoices();
+		const items = L.toArray(value);
+
+		const widget = new UIDynamicList(items, choices, {
+			id: this.cbid(section_id),
+			sort: this.keylist,
+			allowduplicates: this.allowduplicates,
+			optional: this.optional || this.rmempty,
+			datatype: this.datatype,
+			placeholder: this.placeholder,
+			validate: L.bind(this.validate, this, section_id),
+			disabled: (this.readonly != null) ? this.readonly : this.map.readonly
+		});
+
+		return widget.render();
+	}
+});
+
 const CBIGenValue = form.Value.extend({
 	__name__: 'CBI.GenValue',
 
@@ -268,7 +296,7 @@ const CBIStaticList = form.DynamicList.extend({
 	__name__: 'CBI.StaticList',
 
 	renderWidget(/* ... */) {
-		let El = form.DynamicList.prototype.renderWidget.apply(this, arguments);
+		let El = ((less_24_10 || !pr7558_merged) ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments);
 
 		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
 
@@ -278,11 +306,42 @@ const CBIStaticList = form.DynamicList.extend({
 
 const CBITextValue = form.TextValue.extend({
 	renderWidget(/* ... */) {
+		if (pr7574_merged)
+			this.monospace = monospacefonts.join(',');
+
 		let frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
 
-		frameEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
+		if (!pr7574_merged)
+			frameEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
 
 		return frameEl;
+	}
+});
+
+const UIDynamicList = ui.DynamicList.extend({
+	addItem(dl, value, text, flash) {
+		if (this.options.allowduplicates) {
+			const new_item = E('div', { 'class': flash ? 'item flash' : 'item', 'tabindex': 0, 'draggable': !less_24_10 }, [
+				E('span', {}, [ text ?? value ]),
+				E('input', {
+					'type': 'hidden',
+					'name': this.options.name,
+					'value': value })]);
+	
+			const ai = dl.querySelector('.add-item');
+			ai.parentNode.insertBefore(new_item, ai);
+		}
+
+		ui.DynamicList.prototype.addItem.call(this, dl, value, text, flash);
+	},
+
+	handleDropdownChange(ev) {
+		ui.DynamicList.prototype.handleDropdownChange.call(this, ev);
+
+		if (this.options.allowduplicates) {
+			const sbVal = ev.detail.value;
+			sbVal?.element.removeAttribute('unselectable');
+		}
 	}
 });
 
@@ -1067,6 +1126,9 @@ return baseclass.extend({
 	/* Member */
 	rulesetdoc,
 	sharktaikogif,
+	less_24_10,
+	pr7558_merged,
+	pr7574_merged,
 	monospacefonts,
 	dashrepos,
 	dashrepos_urlparams,
@@ -1088,6 +1150,7 @@ return baseclass.extend({
 	tls_client_fingerprints,
 
 	/* Prototype */
+	DynamicList: CBIDynamicList,
 	GenValue: CBIGenValue,
 	ListValue: CBIListValue,
 	StaticList: CBIStaticList,
