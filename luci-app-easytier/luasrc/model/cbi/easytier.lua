@@ -297,6 +297,15 @@ log:value("trace",translate("跟踪"))
 log:depends("etcmd", "etcmd")
 log:depends("etcmd", "config")
 
+et_forward = s:taboption("privacy",MultiValue, "et_forward", translate("访问控制"),
+	translate("设置不同网络区域之间的流量允许规则"))
+et_forward:value("etfwlan", translate("允许从虚拟网络 EasyTier 到局域网 lan 的流量"))
+et_forward:value("etfwwan", translate("允许从虚拟网络 EasyTier 到广域网 wan 的流量"))
+et_forward:value("lanfwet", translate("允许从局域网 lan 到虚拟网络 EasyTier 的流量"))
+et_forward:value("wanfwet", translate("允许从广域网 wan 到虚拟网络 EasyTier 的流量"))
+et_forward.default = "etfwlan etfwwan lanfwet"
+et_forward.rmempty = true
+
 check = s:taboption("privacy",Flag, "check", translate("通断检测"),
         translate("开启通断检测后，可以指定对端的设备IP，当所有指定的IP都ping不通时将会重启easytier程序"))
 
