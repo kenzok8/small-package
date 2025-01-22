@@ -130,10 +130,10 @@ const proxy_group_type = [
 
 const routing_port_type = [
 	['all', _('All ports')],
-	['common_tcpport', _('Common ports only (bypass P2P traffic)')],
-	['common_udpport', _('Common ports only (bypass P2P traffic)')],
-	['stun_port', _('STUN ports')],
-	['turn_port', _('TURN ports')],
+	['common_tcpport', _('Common ports only (bypass P2P traffic)'), uci.get('fchomo', 'routing', 'common_tcpport') || '20-21,22,53,80,110,143,443,465,853,873,993,995,5222,8080,8443,9418'],
+	['common_udpport', _('Common ports only (bypass P2P traffic)'), uci.get('fchomo', 'routing', 'common_udpport') || '20-21,22,53,80,110,143,443,853,993,995,8080,8443,9418'],
+	['stun_port', _('STUN ports'), uci.get('fchomo', 'routing', 'stun_port') || '3478,19302'],
+	['turn_port', _('TURN ports'), uci.get('fchomo', 'routing', 'turn_port') || '5349'],
 ];
 
 const rules_type = [
@@ -290,6 +290,12 @@ const CBIListValue = form.ListValue.extend({
 
 		return frameEl;
 	}
+});
+
+const CBIRichMultiValue = form.MultiValue.extend({
+	__name__: 'CBI.RichMultiValue',
+
+	value: (form.RichListValue || form.MultiValue).prototype.value
 });
 
 const CBIStaticList = form.DynamicList.extend({
@@ -1153,6 +1159,7 @@ return baseclass.extend({
 	DynamicList: CBIDynamicList,
 	GenValue: CBIGenValue,
 	ListValue: CBIListValue,
+	RichMultiValue: CBIRichMultiValue,
 	StaticList: CBIStaticList,
 	TextValue: CBITextValue,
 
