@@ -1,13 +1,15 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $primaryColor = $_POST['primaryColor'] ?? '#ffcc00'; 
+    $primaryColor = $_POST['primaryColor'] ?? '#0ceda2'; 
     $secondaryColor = $_POST['secondaryColor'] ?? '#00ffff'; 
     $bodyBgColor = $_POST['bodyBgColor'] ?? '#087990'; 
-    $bodyColor = $_POST['bodyColor'] ?? '#ffff00'; 
+    $bodyColor = $_POST['bodyColor'] ?? '#00ccff'; 
     $infoBgSubtle = $_POST['infoBgSubtle'] ?? '#6a5acd'; 
-    $primaryBorderSubtle = $_POST['primaryBorderSubtle'] ?? '#87ceeb'; 
+    $primaryBorderSubtle = $_POST['primaryBorderSubtle'] ?? '#1815d1'; 
     $tertiaryColor = $_POST['tertiaryColor'] ?? '#00ff00'; 
     $tertiaryRgbColor = $_POST['tertiaryRgbColor'] ?? '#1e90ff'; 
+    $selectColor = $_POST['selectColor'] ?? '#087990'; 
+    $backgroundColor = $_POST['backgroundColor'] ?? '#20cdd9'; 
     $heading1Color = $_POST['heading1Color'] ?? '#00a2e8'; 
     $heading2Color = $_POST['heading2Color'] ?? '#00a2e8'; 
     $heading3Color = $_POST['heading3Color'] ?? '#ffcc00'; 
@@ -44,8 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       --bs-primary-border-subtle: $primaryBorderSubtle; 
       --bs-tertiary: $tertiaryColor; 
       --bs-tertiary-rgb: $tertiaryRgbColor; 
-      --bs-tertiary-color: $primaryColor;
-      --bs-tertiary-color-rgb: $secondaryColor; 
+      --bs-tertiary-color: $primaryBorderSubtle;
+      --bs-tertiary-color-rgb: $backgroundColor; 
+      --bs-form-select: $selectColor; 
 
       --bs-heading-1: $heading1Color; 
       --bs-heading-2: $heading2Color; 
@@ -93,6 +96,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: #ffffff;
     }
 
+   input::placeholder {
+       color: blue !important;
+       font-weight: bold; 
+    }
+
+    .detail-label {
+        color: #FF00FF !important;
+    }
+
+    .detail-value {
+        color: #00ff00 !important;
+    }
+
+    .fullscreen-btn {
+        background-color: #00ff00 !important;
+
+    }
+
+    .form-select {
+        background-color: var(--bs-form-select);
+        color: white !important;            
+        border: 1px solid gray;    
+        border-radius: 5px;       
+    }
+
+    .form-select option {
+        background-color: var(--bs-form-select);    
+        color: white !important;           
+    }
+
     .form-control {
       background-color: transparent;
       border-color: #000000;
@@ -105,19 +138,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: var(--bs-tertiary-color) !important; 
       background-color: var(--bs-tertiary-color-rgb) !important; 
     }
+
     table td:nth-child(1) { 
       color: var(--bs-tertiary) !important; 
     }
+
     table td:nth-child(2) { 
       color: var(--bs-tertiary-rgb) !important; 
     }
 
     table td:nth-child(3) { 
-      color: #ffffff !important; 
+      color: #FF00FF !important; 
     }
+
     table td:nth-child(4) { 
-      color: #ffffff !important; 
+      color: #00FFFF !important; 
     }
+
+    table.table tr,
+    table.table td {
+        background-color: transparent !important; 
+    }
+
+    table.table tbody td:nth-child(5), 
+    table.table tbody td:nth-child(6),
+    table.table tbody td:nth-child(7) {
+        color: white !important; 
+    }
+
+    table.table tbody td:nth-child(2) a {
+        color: #FF00FF !important; 
+    }
+
+    .btn-outline-secondary i {
+        color: white; 
+    }
+
     button {
       background-color: var(--bs-primary);
       border: 1px solid rgba(255, 255, 255, 0.5);
