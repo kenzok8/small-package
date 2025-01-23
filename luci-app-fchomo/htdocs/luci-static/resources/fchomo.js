@@ -18,7 +18,6 @@ const sharktaikogif = function() {
 const less_24_10 = !form.RichListValue;
 
 const pr7558_merged = false;
-const pr7574_merged = false;
 
 const monospacefonts = [
 	'"Cascadia Code"',
@@ -295,7 +294,7 @@ const CBIListValue = form.ListValue.extend({
 const CBIRichMultiValue = form.MultiValue.extend({
 	__name__: 'CBI.RichMultiValue',
 
-	value: (form.RichListValue || form.MultiValue).prototype.value
+	value: (form.RichListValue || form.MultiValue).prototype.value // less_24_10
 });
 
 const CBIStaticList = form.DynamicList.extend({
@@ -312,13 +311,9 @@ const CBIStaticList = form.DynamicList.extend({
 
 const CBITextValue = form.TextValue.extend({
 	renderWidget(/* ... */) {
-		if (pr7574_merged)
-			this.monospace = monospacefonts.join(',');
-
 		let frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
 
-		if (!pr7574_merged)
-			frameEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
+		frameEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
 
 		return frameEl;
 	}
@@ -1134,7 +1129,6 @@ return baseclass.extend({
 	sharktaikogif,
 	less_24_10,
 	pr7558_merged,
-	pr7574_merged,
 	monospacefonts,
 	dashrepos,
 	dashrepos_urlparams,
