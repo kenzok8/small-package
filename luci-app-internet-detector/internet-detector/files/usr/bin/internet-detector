@@ -15,13 +15,13 @@ local InternetDetector = require("internet-detector.main")
 
 local function help()
 	return string.format(
-		"Usage: %s service <UCI instance> | nodaemon <UCI instance> | debug <UCI instance> | stop | status | inet-status | uipoll | --help",
+		"Usage: %s daemon <UCI instance> | nodaemon <UCI instance> | debug <UCI instance> | stop | status | inet-status | uipoll | --help",
 		arg[0]
 	)
 end
 
 local helpArgs = { ["-h"] = true, ["--help"] = true, help = true }
-if arg[1] == "service" then
+if arg[1] == "daemon" then
 	if arg[2] then
 		if InternetDetector:setServiceConfig(arg[2]) then
 			InternetDetector:daemon()
