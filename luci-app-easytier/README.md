@@ -34,7 +34,8 @@ tar -xJf /opt/sdk.tar.xz -C /opt
 
 cd /opt/openwrt-sdk*/package
 #克隆luci-app-easytier到sdk的package目录里
-git clone https://github.com/EasyTier/luci-app-easytier.git
+git clone https://github.com/EasyTier/luci-app-easytier.git /opt/luci-app-easytier
+cp -R /opt/luci-app-easytier/luci-app-easytier .
 
 cd /opt/openwrt-sdk*
 #升级脚本创建模板
