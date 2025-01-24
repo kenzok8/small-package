@@ -676,6 +676,30 @@ $razordVersion = getRazordVersion();
               <input type="color" class="form-control" name="tertiaryRgbColor" id="tertiaryRgbColor" value="#1e90ff">
             </div>
             <div class="col-md-6 mb-3">
+              <label for="outlineColor" class="form-label">按键色（青色）</label>
+              <input type="color" class="form-control" name="outlineColor" id="outlineColor" value="#0dcaf0">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="successColor" class="form-label">按键色（绿色）</label>
+              <input type="color" class="form-control" name="successColor" id="successColor" value="#28a745">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="infoColor" class="form-label">按键色（蓝色）</label>
+              <input type="color" class="form-control" name="infoColor" id="infoColor" value="#0ca2ed">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="warningColor" class="form-label">按键色（黄色）</label>
+              <input type="color" class="form-control" name="warningColor" id="warningColor" value="#ffc107">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="pinkColor" class="form-label">按键色（粉红色）</label>
+              <input type="color" class="form-control" name="pinkColor" id="pinkColor" value="#f82af2">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="dangerColor" class="form-label">按键色（红色）</label>
+              <input type="color" class="form-control" name="dangerColor" id="dangerColor" value="#dc3545">
+            </div>
+            <div class="col-md-6 mb-3">
               <label for="heading1Color" class="form-label">标题色 1</label>
               <input type="color" class="form-control" name="heading1Color" id="heading1Color" value="#21e4f2">
             </div>
@@ -904,6 +928,12 @@ function formatSize($size) {
       document.getElementById('backgroundColor').value = '#20cdd9';
       document.getElementById('placeholderColor').value = '#f82af2';
       document.getElementById('logTextColor').value = '#f8f9fa';
+      document.getElementById('outlineColor').value = '#0dcaf0';
+      document.getElementById('successColor').value = '#28a745';
+      document.getElementById('infoColor').value = '#0ca2ed';
+      document.getElementById('warningColor').value = '#ffc107';
+      document.getElementById('pinkColor').value = '#f82af2';
+      document.getElementById('dangerColor').value = '#dc3545';
       
       localStorage.clear();
     });
@@ -924,6 +954,13 @@ function formatSize($size) {
         heading4Color: document.getElementById('heading4Color').value,
         heading5Color: document.getElementById('heading5Color').value,
         heading6Color: document.getElementById('heading6Color').value,
+
+        outlineColor: document.getElementById('outlineColor').value,
+        successColor: document.getElementById('successColor').value,
+        infoColor: document.getElementById('infoColor').value,
+        warningColor: document.getElementById('warningColor').value,
+        pinkColor: document.getElementById('pinkColor').value,
+        dangerColor: document.getElementById('dangerColor').value,
         primaryBorderSubtle: document.getElementById('primaryBorderSubtle').value,
         backgroundColor: document.getElementById('backgroundColor').value,
         placeholderColor: document.getElementById('placeholderColor').value,
@@ -960,6 +997,12 @@ function formatSize($size) {
           document.getElementById('heading4Color').value = settings.heading4Color;
           document.getElementById('heading5Color').value = settings.heading5Color;
           document.getElementById('heading6Color').value = settings.heading6Color;
+          document.getElementById('outlineColor').value = settings.outlineColor;
+          document.getElementById('successColor').value = settings.successColor;
+          document.getElementById('infoColor').value = settings.infoColor;
+          document.getElementById('warningColor').value = settings.warningColor;
+          document.getElementById('pinkColor').value = settings.pinkColor;
+          document.getElementById('dangerColor').value = settings.dangerColor;
           document.getElementById('primaryBorderSubtle').value = settings.primaryBorderSubtle;
           document.getElementById('backgroundColor').value = settings.backgroundColor;
           document.getElementById('placeholderColor').value = settings.placeholderColor;
@@ -984,6 +1027,13 @@ function formatSize($size) {
           localStorage.setItem('heading4Color', settings.heading4Color);
           localStorage.setItem('heading5Color', settings.heading5Color);
           localStorage.setItem('heading6Color', settings.heading6Color);
+
+          localStorage.setItem('outlineColor', settings.outlineColor);
+          localStorage.setItem('successColor', settings.successColor);
+          localStorage.setItem('infoColor', settings.infoColor);
+          localStorage.setItem('warningColor', settings.warningColor);
+          localStorage.setItem('pinkColor', settings.pinkColor);
+          localStorage.setItem('dangerColor', settings.dangerColor);
           localStorage.setItem('primaryBorderSubtle', settings.primaryBorderSubtle);
           localStorage.setItem('backgroundColor', settings.backgroundColor);
           localStorage.setItem('placeholderColor', settings.placeholderColor);

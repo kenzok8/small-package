@@ -18,6 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $heading4Color = $_POST['heading4Color'] ?? '#ff4500'; 
     $heading5Color = $_POST['heading5Color'] ?? '#ba13f6'; 
     $heading6Color = $_POST['heading6Color'] ?? '#00ffff'; 
+    $outlineColor = $_POST['outlineColor'] ?? '#0dcaf0'; 
+    $successColor = $_POST['successColor'] ?? '#28a745'; 
+    $infoColor = $_POST['infoColor'] ?? '#0ca2ed'; 
+    $warningColor = $_POST['warningColor'] ?? '#ffc107'; 
+    $pinkColor = $_POST['pinkColor'] ?? '#f82af2';
+    $dangerColor = $_POST['dangerColor'] ?? '#dc3545';
 
     $uploadedImagePath = '';
     if (isset($_FILES['imageFile']) && $_FILES['imageFile']['error'] === UPLOAD_ERR_OK) {
@@ -45,6 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       --bs-body-color: $bodyColor;
       --bs-info-bg-subtle: $infoBgSubtle;
       --placeholder-color: $placeholderColor;
+      --bs-btn-outline-bg: $outlineColor;
+      --bs-btn-success-bg: $successColor;
+      --bs-btn-info-bg: $infoColor;
+      --bs-btn-warning-bg: $warningColor;
+      --bs-btn-pink-bg: $pinkColor;
+      --bs-btn-danger-bg: $dangerColor;
 
       --bs-primary-border-subtle: $primaryBorderSubtle; 
       --bs-tertiary: $tertiaryColor; 
@@ -230,6 +242,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .btn-pink:hover {
         background-color: #d6336c;
+    }
+
+    .btn-primary {
+      background-color: var(--bs-btn-outline-bg) !important;
+      border-color: var(--bs-btn-outline-bg) !important;
+    }
+
+    .btn-success {
+      background-color: var(--bs-btn-success-bg) !important;
+      border-color: var(--bs-btn-success-bg) !important;
+    }
+
+    .btn-info {
+      background-color: var(--bs-btn-info-bg) !important;
+      border-color: var(--bs-btn-info-bg) !important;
+    }
+
+    .btn-warning {
+      background-color: var(--bs-btn-warning-bg) !important;
+      border-color: var(--bs-btn-warning-bg) !important;
+    }
+
+    .btn-pink {
+      background-color: var(--bs-btn-pink-bg) !important;
+      border-color: var(--bs-btn-pink-bg) !important;
+    }
+
+    .btn-danger {
+      background-color: var(--bs-btn-danger-bg) !important;
+      border-color: var(--bs-btn-danger-bg) !important;
     }
 
     .container-bg {
