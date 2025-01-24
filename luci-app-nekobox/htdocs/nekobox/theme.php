@@ -4,17 +4,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $secondaryColor = $_POST['secondaryColor'] ?? '#00ffff'; 
     $bodyBgColor = $_POST['bodyBgColor'] ?? '#087990'; 
     $bodyColor = $_POST['bodyColor'] ?? '#00ccff'; 
-    $infoBgSubtle = $_POST['infoBgSubtle'] ?? '#6a5acd'; 
+    $infoBgSubtle = $_POST['infoBgSubtle'] ?? '#087990'; 
     $primaryBorderSubtle = $_POST['primaryBorderSubtle'] ?? '#1815d1'; 
     $tertiaryColor = $_POST['tertiaryColor'] ?? '#00ff00'; 
     $tertiaryRgbColor = $_POST['tertiaryRgbColor'] ?? '#1e90ff'; 
     $selectColor = $_POST['selectColor'] ?? '#087990'; 
     $backgroundColor = $_POST['backgroundColor'] ?? '#20cdd9'; 
-    $heading1Color = $_POST['heading1Color'] ?? '#00a2e8'; 
-    $heading2Color = $_POST['heading2Color'] ?? '#00a2e8'; 
+    $placeholderColor = $_POST['placeholderColor'] ?? '#f82af2';
+    $logTextColor = $_POST['logTextColor'] ?? '#f8f9fa'; 
+    $heading1Color = $_POST['heading1Color'] ?? '#21e4f2'; 
+    $heading2Color = $_POST['heading2Color'] ?? '#65f1fb'; 
     $heading3Color = $_POST['heading3Color'] ?? '#ffcc00'; 
     $heading4Color = $_POST['heading4Color'] ?? '#ff4500'; 
-    $heading5Color = $_POST['heading5Color'] ?? '#7d5fff'; 
+    $heading5Color = $_POST['heading5Color'] ?? '#ba13f6'; 
     $heading6Color = $_POST['heading6Color'] ?? '#00ffff'; 
 
     $uploadedImagePath = '';
@@ -42,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       --bs-body-bg: $bodyBgColor; 
       --bs-body-color: $bodyColor;
       --bs-info-bg-subtle: $infoBgSubtle;
+      --placeholder-color: $placeholderColor;
 
       --bs-primary-border-subtle: $primaryBorderSubtle; 
       --bs-tertiary: $tertiaryColor; 
@@ -49,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       --bs-tertiary-color: $primaryBorderSubtle;
       --bs-tertiary-color-rgb: $backgroundColor; 
       --bs-form-select: $selectColor; 
-
+      --log-text-color: $logTextColor; 
       --bs-heading-1: $heading1Color; 
       --bs-heading-2: $heading2Color; 
       --bs-heading-3: $heading3Color; 
@@ -83,22 +86,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       " . ($uploadedImagePath && empty($backgroundImagePath) ? "background-image: url('$uploadedImagePath'); background-repeat: no-repeat; background-position: center center; background-attachment: fixed; background-size: cover;" : "") . "
     }
 
-    h1 { color: var(--bs-heading-1); }
-    h2 { color: var(--bs-heading-2); }
-    h3 { color: var(--bs-heading-3); }
-    h4 { color: var(--bs-heading-4); }
-    h5 { color: var(--bs-heading-5); }
-    h6 { color: var(--bs-heading-6); }
+    h1 { color: var(--bs-heading-1) !important; }
+    h2 { color: var(--bs-heading-2) !important; }
+    h3 { color: var(--bs-heading-3) !important; }
+    h4 { color: var(--bs-heading-4) !important; }
+    h5 { color: var(--bs-heading-5) !important; }
+    h6 { color: var(--bs-heading-6) !important; }
 
-   input::placeholder { color: #ffffff !important; }
-    .table, .form-control, .card, button, label, li, td, th, blockquote, q, code, pre {
-      background-color: transparent;
-      color: #ffffff;
+    input::placeholder { color: #ffffff !important; }
+     .table, .form-control, .card, button, label, li, td, th, blockquote, q, code, pre {
+       background-color: transparent;
+       color: #ffffff;
     }
 
-   input::placeholder {
-       color: blue !important;
-       font-weight: bold; 
+    input::placeholder {
+        color: var(--placeholder-color) !important;
+        font-weight: bold; 
+    }
+
+    .alert-info {
+        color: #FF00FF; 
+    }
+
+    #plugin_log,
+    #bin_logs,
+    #singbox_log {
+        color: var(--log-text-color);
     }
 
     .detail-label {
@@ -197,6 +210,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .btn-info:focus, 
     .btn-info:active {
       color: #ffffff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0069d9;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    .btn-info:hover {
+        background-color: #17a2b8;
+    }
+
+    .btn-warning:hover {
+        background-color: #e0a800;
+    }
+
+    .btn-pink:hover {
+        background-color: #d6336c;
     }
 
     .container-bg {

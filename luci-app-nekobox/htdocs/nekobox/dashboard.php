@@ -29,6 +29,8 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
     <link href="./assets/css/custom.css" rel="stylesheet">
     <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=<?php echo time(); ?>" />
+    <script src="script.js?v=<?php echo time(); ?>"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
     <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
