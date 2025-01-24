@@ -17,7 +17,7 @@ const sharktaikogif = function() {
 
 const less_24_10 = !form.RichListValue;
 
-const pr7558_merged = false;
+const pr7558_merged = form.DynamicList.prototype.renderWidget.toString().match('this\.allowduplicates');
 
 const monospacefonts = [
 	'"Cascadia Code"',
