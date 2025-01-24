@@ -410,7 +410,7 @@ EOL;
             echo "<div class='text-center' mb-3>";
             echo "<button class='btn btn-info me-3' type='button' onclick='copyToClipboard()'><i class='bi bi-clipboard'></i> 复制到剪贴</button>";
             echo "<input type='hidden' name='saveContent' value='1'>";
-            echo "<button class='btn btn-success' type='submit'><i class='bi bi-save'></i>保存修改</button>";
+            echo "<button class='btn btn-success' type='submit'><i class='bi bi-save'></i> 保存修改</button>";
             echo "</div>";
             echo "</form>";
             echo "</div>";
