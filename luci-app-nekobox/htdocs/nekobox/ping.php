@@ -1075,6 +1075,241 @@ if(typeof checkSiteStatus !== 'undefined') {
 setInterval(IP.getIpipnetIP, 180000);
 </script>
 
+<script>
+window.addEventListener('load', function() {
+    let snowContainer = document.querySelector('#snow-container');
+
+    if (snowContainer) {
+        snowContainer.innerHTML = ''; 
+    }
+
+    if (snowContainer) {
+        for (let i = 0; i < 80; i++) {  
+            let snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+            
+            let size = Math.random() * 10 + 5 + 'px';  
+            snowflake.style.width = size;
+            snowflake.style.height = size;
+            
+            let speed = Math.random() * 3 + 2 + 's'; 
+            snowflake.style.animationDuration = speed;
+
+            let rotate = Math.random() * 360 + 'deg'; 
+            let rotateSpeed = Math.random() * 5 + 2 + 's'; 
+            snowflake.style.animationName = 'fall';
+            snowflake.style.animationDuration = speed;
+            snowflake.style.animationTimingFunction = 'linear';
+            snowflake.style.animationIterationCount = 'infinite';
+
+            let leftPosition = Math.random() * 100 + 'vw';  
+            snowflake.style.left = leftPosition;
+
+            snowflake.style.animationDelay = Math.random() * 5 + 's';  
+
+            snowContainer.appendChild(snowflake);
+        }
+    }
+});
+</script>
+
+<script>
+    const audioPlayer = new Audio();  
+    let songs = [];  
+    let currentSongIndex = 0;  
+    let isPlaying = false;  
+    let isReportingTime = false; 
+
+    function loadDefaultPlaylist() {
+        fetch('https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/songs.txt')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('加载播放列表失败');
+                }
+                return response.text();
+            })
+            .then(data => {
+                songs = data.split('\n').filter(url => url.trim() !== ''); 
+                if (songs.length === 0) {
+                    throw new Error('播放列表中没有有效的歌曲');
+                }
+                console.log('播放列表已加载:', songs);
+                restorePlayerState(); 
+            })
+            .catch(error => {
+                console.error('加载播放列表时出错:', error.message);
+            });
+    }
+
+    function loadSong(index) {
+        if (index >= 0 && index < songs.length) {
+            audioPlayer.src = songs[index];  
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                const savedState = JSON.parse(localStorage.getItem('playerState'));
+                if (savedState && savedState.currentSongIndex === index) {
+                    audioPlayer.currentTime = savedState.currentTime || 0; 
+                    if (savedState.isPlaying) {
+                        audioPlayer.play().catch(error => {
+                            console.error('恢复播放失败:', error);
+                        });
+                    }
+                }
+            }, { once: true }); 
+        }
+    }
+
+    document.addEventListener('dblclick', function() {
+        if (!isPlaying) {
+            loadSong(currentSongIndex);
+            audioPlayer.play().then(() => {
+                isPlaying = true;
+                savePlayerState(); 
+                console.log('开始播放');
+            }).catch(error => {
+                console.log('播放失败:', error);
+            });
+        } else {
+            audioPlayer.pause();
+            isPlaying = false;
+            savePlayerState(); 
+            console.log('播放已暂停');
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowLeft') {
+            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length; 
+            loadSong(currentSongIndex);
+            savePlayerState(); 
+            if (isPlaying) {
+                audioPlayer.play();  
+            }
+        } else if (event.key === 'ArrowRight') {
+            currentSongIndex = (currentSongIndex + 1) % songs.length; 
+            loadSong(currentSongIndex);
+            savePlayerState(); 
+            if (isPlaying) {
+                audioPlayer.play();  
+            }
+        }
+    });
+
+    function startHourlyAlert() {
+        setInterval(() => {
+            const now = new Date();
+            const hours = now.getHours();
+
+            if (now.getMinutes() === 0 && !isReportingTime) {
+                isReportingTime = true;  
+
+                const timeAnnouncement = new SpeechSynthesisUtterance(`整点报时，现在是北京时间 ${hours} 点整`);
+                timeAnnouncement.lang = 'zh-CN';
+                speechSynthesis.speak(timeAnnouncement);
+
+                console.log(`整点报时：现在是北京时间 ${hours} 点整`);
+            }
+
+            if (now.getMinutes() !== 0) {
+                isReportingTime = false;
+            }
+        }, 60000); 
+    }
+
+    audioPlayer.addEventListener('ended', function() {
+        currentSongIndex = (currentSongIndex + 1) % songs.length;  
+        loadSong(currentSongIndex);  
+        savePlayerState(); 
+        audioPlayer.play(); 
+    });
+
+    function savePlayerState() {
+        const state = {
+            currentSongIndex,       
+            currentTime: audioPlayer.currentTime,
+            isPlaying              
+        };
+        localStorage.setItem('playerState', JSON.stringify(state));
+    }
+
+    function restorePlayerState() {
+        const state = JSON.parse(localStorage.getItem('playerState')); 
+        if (state) {
+            currentSongIndex = state.currentSongIndex || 0;  
+            loadSong(currentSongIndex);                    
+        }
+    }
+
+    loadDefaultPlaylist();
+    startHourlyAlert();
+</script>
+
+<script>
+    const websites = [
+        'https://www.youtube.com/',
+        'https://www.google.com/',
+        'https://www.facebook.com/',
+        'https://www.twitter.com/',
+        'https://www.github.com/'
+    ];
+
+    function speakMessage(message) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'zh-CN';  
+        speechSynthesis.speak(utterance);
+    }
+
+    function getWebsiteStatusMessage(url, status) {
+        const statusMessages = {
+            'https://www.youtube.com/': status ? 'YouTube 网站访问正常。' : '无法访问 YouTube 网站，请检查网络连接。',
+            'https://www.google.com/': status ? 'Google 网站访问正常。' : '无法访问 Google 网站，请检查网络连接。',
+            'https://www.facebook.com/': status ? 'Facebook 网站访问正常。' : '无法访问 Facebook 网站，请检查网络连接。',
+            'https://www.twitter.com/': status ? 'Twitter 网站访问正常。' : '无法访问 Twitter 网站，请检查网络连接。',
+            'https://www.github.com/': status ? 'GitHub 网站访问正常。' : '无法访问 GitHub 网站，请检查网络连接。',
+        };
+
+        return statusMessages[url] || (status ? `${url} 网站访问正常。` : `无法访问 ${url} 网站，请检查网络连接。`);
+    }
+
+    function checkWebsiteAccess(urls) {
+        const statusMessages = [];
+        let requestsCompleted = 0;
+
+        urls.forEach(url => {
+            fetch(url, { mode: 'no-cors' })
+                .then(response => {
+                    const isAccessible = response.type === 'opaque';  
+                    statusMessages.push(getWebsiteStatusMessage(url, isAccessible));
+                })
+                .catch(() => {
+                    statusMessages.push(getWebsiteStatusMessage(url, false));
+                })
+                .finally(() => {
+                    requestsCompleted++;
+                    if (requestsCompleted === urls.length) {
+                        speakMessage(statusMessages.join(' '));  
+                    }
+                });
+        });
+    }
+
+    let isDetectionStarted = false;
+
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();  
+        
+        if (!isDetectionStarted) {
+            speakMessage('开始检测网站连通性...');
+            checkWebsiteAccess(websites);  
+            isDetectionStarted = true;  
+        }
+    });
+
+</script>
+
+
+
+
+
 
 
 
