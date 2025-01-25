@@ -379,6 +379,24 @@ local function trim(text)
 	return (sgsub(text, "^%s*(.-)%s*$", "%1"))
 end
 
+-- 取机场信息（剩余流量、到期时间）
+local subscribe_info = {}
+local function get_subscribe_info(cfgid, value)
+	if type(cfgid) ~= "string" or cfgid == "" or type(value) ~= "string" then
+		return
+	end
+	value = value:gsub("%s+", "")
+	local expired_date = value:match("套餐到期：(.+)")
+	local rem_traffic = value:match("剩余流量：(.+)")
+	subscribe_info[cfgid] = subscribe_info[cfgid] or {expired_date = "", rem_traffic = ""}
+	if expired_date then
+		subscribe_info[cfgid]["expired_date"] = expired_date
+	end
+	if rem_traffic then
+		subscribe_info[cfgid]["rem_traffic"] = rem_traffic
+	end
+end
+
 -- 处理数据
 local function processData(szType, content, add_mode, add_from)
 	--log(content, add_mode, add_from)
@@ -518,6 +536,10 @@ local function processData(szType, content, add_mode, add_from)
 				else
 					result.download_address = nil
 				end
+		end
+		if info.net == 'httpupgrade' then
+			result.httpupgrade_host = info.host
+			result.httpupgrade_path = info.path
 		end
 		if not info.security then result.security = "auto" end
 		if info.tls == "tls" or info.tls == "1" then
@@ -882,6 +904,10 @@ local function processData(szType, content, add_mode, add_from)
 				result.xhttp_host = params.host
 				result.xhttp_path = params.path
 			end
+			if params.type == 'httpupgrade' then
+				result.httpupgrade_host = params.host
+				result.httpupgrade_path = params.path
+			end
 
 			result.encryption = params.encryption or "none"
 
@@ -1021,6 +1047,21 @@ local function processData(szType, content, add_mode, add_from)
 			if params.type == 'xhttp' or params.type == 'splithttp' then
 				result.xhttp_host = params.host
 				result.xhttp_path = params.path
+				result.xhttp_mode = params.mode or "auto"
+				result.use_xhttp_extra = (params.extra and params.extra ~= "") and "1" or nil
+				result.xhttp_extra = (params.extra and params.extra ~= "") and params.extra or nil
+				local success, Data = pcall(jsonParse, params.extra)
+				if success and Data then
+					local address = (Data.extra and Data.extra.downloadSettings and Data.extra.downloadSettings.address)
+							or (Data.downloadSettings and Data.downloadSettings.address)
+					result.download_address = address and address ~= "" and address or nil
+				else
+					result.download_address = nil
+				end
+			end
+			if params.type == 'httpupgrade' then
+				result.httpupgrade_host = params.host
+				result.httpupgrade_path = params.path
 			end
 			
 			result.encryption = params.encryption or "none"
@@ -1279,7 +1320,7 @@ local function truncate_nodes(add_from)
 	end)
 	if add_from then
 		uci:foreach(appname, "subscribe_list", function(o)
-			if o.remark == add_from then
+			if add_from == "all-node" or add_from == o.remark then
 				uci:delete(appname, o['.name'], "md5")
 			end
 		end)
@@ -1438,6 +1479,16 @@ local function update_node(manual)
 			end
 		end
 	end
+	-- 更新机场信息
+	for cfgid, info in pairs(subscribe_info) do
+		for key, value in pairs(info) do
+			if value ~= "" then
+				uci:set(appname, cfgid, key, value)
+			else
+				uci:delete(appname, cfgid, key)
+			end
+		end
+	end
 	api.uci_save(uci, appname, true)
 
 	if next(CONFIG) then
@@ -1469,7 +1520,7 @@ local function update_node(manual)
 	luci.sys.call("/etc/init.d/" .. appname .. " restart > /dev/null 2>&1 &")
 end
 
-local function parse_link(raw, add_mode, add_from)
+local function parse_link(raw, add_mode, add_from, cfgid)
 	if raw and #raw > 0 then
 		local nodes, szType
 		local node_list = {}
@@ -1530,6 +1581,9 @@ local function parse_link(raw, add_mode, add_from)
 							log('丢弃过滤节点: ' .. result.type .. ' 节点, ' .. result.remarks)
 						else
 							tinsert(node_list, result)
+						end
+						if add_mode == "2" then
+							get_subscribe_info(cfgid, result.remarks)
 						end
 					end
 				end, function (err)
@@ -1634,7 +1688,7 @@ local execute = function()
 					log('订阅:【' .. remark .. '】没有变化，无需更新。')
 				else
 					os.remove("/tmp/" .. cfgid)
-					parse_link(raw, "2", remark)
+					parse_link(raw, "2", remark, cfgid)
 					uci:set(appname, cfgid, "md5", new_md5)
 				end
 			else
