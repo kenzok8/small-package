@@ -1177,20 +1177,28 @@ window.addEventListener('load', function() {
     });
 
     document.addEventListener('keydown', function(event) {
-        if (event.key === 'ArrowLeft') {
+        if (event.key === 'ArrowUp') {
             currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length; 
             loadSong(currentSongIndex);
             savePlayerState(); 
             if (isPlaying) {
                 audioPlayer.play();  
             }
-        } else if (event.key === 'ArrowRight') {
+        } else if (event.key === 'ArrowDown') {
             currentSongIndex = (currentSongIndex + 1) % songs.length; 
             loadSong(currentSongIndex);
             savePlayerState(); 
             if (isPlaying) {
                 audioPlayer.play();  
             }
+        } else if (event.key === 'ArrowLeft') {
+            audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0); 
+            console.log('快退 10 秒');
+            savePlayerState();
+        } else if (event.key === 'ArrowRight') {
+            audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration || Infinity); 
+            console.log('快进 10 秒');
+            savePlayerState();
         }
     });
 
@@ -1226,16 +1234,16 @@ window.addEventListener('load', function() {
         const state = {
             currentSongIndex,       
             currentTime: audioPlayer.currentTime,
-            isPlaying              
+            isPlaying         
         };
         localStorage.setItem('playerState', JSON.stringify(state));
     }
 
     function restorePlayerState() {
-        const state = JSON.parse(localStorage.getItem('playerState')); 
+        const state = JSON.parse(localStorage.getItem('playerState'));
         if (state) {
-            currentSongIndex = state.currentSongIndex || 0;  
-            loadSong(currentSongIndex);                    
+            currentSongIndex = state.currentSongIndex || 0;
+            loadSong(currentSongIndex);
         }
     }
 
