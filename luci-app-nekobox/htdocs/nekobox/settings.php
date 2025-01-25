@@ -20,8 +20,8 @@ if(isset($_POST['fw'])){
     if ($dt == 'disable') shell_exec("uci set neko.cfg.new_interface='0' && uci commit neko");
 }
 $fwstatus=shell_exec("uci get neko.cfg.new_interface");
+$enableSnow = false;
 ?>
-
 <?php
 function getSingboxVersion() {
     $singBoxPath = '/usr/bin/sing-box'; 
@@ -637,11 +637,11 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="col-md-6 mb-3">
               <label for="bodyBgColor" class="form-label">主背景色</label>
-              <input type="color" class="form-control" name="bodyBgColor" id="bodyBgColor" value="#087990">
+              <input type="color" class="form-control" name="bodyBgColor" id="bodyBgColor" value="#23407e">
             </div>
             <div class="col-md-6 mb-3">
               <label for="infoBgSubtle" class="form-label">信息背景色</label>
-              <input type="color" class="form-control" name="infoBgSubtle" id="infoBgSubtle" value="#087990">
+              <input type="color" class="form-control" name="infoBgSubtle" id="infoBgSubtle" value="#23407e">
             </div>
             <div class="col-md-6 mb-3">
               <label for="backgroundColor" class="form-label">表格背景色</label>
@@ -661,15 +661,15 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="col-md-6 mb-3">
               <label for="selectColor" class="form-label">主边框背景色</label>
-              <input type="color" class="form-control" name="selectColor" id="selectColor" value="#087990">
+              <input type="color" class="form-control" name="selectColor" id="selectColor" value="#23407e">
             </div>
             <div class="col-md-6 mb-3">
               <label for="bodyColor" class="form-label">表格文本色 1</label>
-              <input type="color" class="form-control" name="bodyColor" id="bodyColor" value="#00ccff">
+              <input type="color" class="form-control" name="bodyColor" id="bodyColor" value="#04f153">
             </div>
             <div class="col-md-6 mb-3">
               <label for="tertiaryColor" class="form-label">表格文本色 2</label>
-              <input type="color" class="form-control" name="tertiaryColor" id="tertiaryColor" value="#00ff00">
+              <input type="color" class="form-control" name="tertiaryColor" id="tertiaryColor" value="#46e1ec">
             </div>
             <div class="col-md-6 mb-3">
               <label for="tertiaryRgbColor" class="form-label">表格文本色 3</label>
@@ -724,14 +724,15 @@ $razordVersion = getRazordVersion();
               <input type="color" class="form-control" name="heading6Color" id="heading6Color" value="#00ffff">
             </div>
           </div>
-
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="enableSnowEffect" name="enableSnowEffect" <?php echo $enableSnow ? 'checked' : ''; ?>>
+              <label class="form-check-label" for="enableSnowEffect">启用雪花动画（要禁用重复勾选2次）</label>
+          </div>
           <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="useBackgroundImage" name="useBackgroundImage">
             <label class="form-check-label" for="useBackgroundImage">使用自定义背景图片</label>
           </div>
-
           <div class="mb-3" id="backgroundImageContainer" style="display:none; position: relative; left: -1ch;">
-            <label for="backgroundImage" class="form-label">选择背景图片</label>
             <select class="form-select" id="backgroundImage" name="backgroundImage">
               <option value="">请选择图片</option>
               <?php
@@ -788,6 +789,42 @@ $razordVersion = getRazordVersion();
             reader.readAsText(file);
         }
     });
+</script>
+
+<script>
+const tooltip = document.createElement('div');
+tooltip.style.position = 'fixed';
+tooltip.style.top = '10px';
+tooltip.style.left = '10px';
+tooltip.style.backgroundColor = 'rgba(0, 128, 0, 0.7)';  
+tooltip.style.color = 'white';
+tooltip.style.padding = '10px';
+tooltip.style.borderRadius = '5px';
+tooltip.style.zIndex = '9999';
+tooltip.style.display = 'none';  
+document.body.appendChild(tooltip);
+
+function showTooltip(message) {
+    tooltip.textContent = message;
+    tooltip.style.display = 'block'; 
+    setTimeout(() => {
+        tooltip.style.display = 'none';  
+    }, 5000);  
+}
+
+window.onload = function() {
+    showTooltip('双击左键打开播放器，双击右键开启网站连通性检测');
+};
+</script>
+
+<script>
+document.getElementById('enableSnowEffect').addEventListener('change', function() {
+    var isChecked = this.checked;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'save_snow_status.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.send('enableSnowEffect=' + (isChecked ? '1' : '0'));
+});
 </script>
 
 <div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -912,11 +949,11 @@ function formatSize($size) {
     document.getElementById('resetButton').addEventListener('click', function() {
       document.getElementById('primaryColor').value = '#0ceda2';
       document.getElementById('secondaryColor').value = '#00ffff';
-      document.getElementById('bodyBgColor').value = '#087990';
-      document.getElementById('bodyColor').value = '#00ccff';
-      document.getElementById('infoBgSubtle').value = '#087990';
-      document.getElementById('selectColor').value = '#087990';
-      document.getElementById('tertiaryColor').value = '#00ff00';
+      document.getElementById('bodyBgColor').value = '#23407e';
+      document.getElementById('bodyColor').value = '#04f153';
+      document.getElementById('infoBgSubtle').value = '#23407e';
+      document.getElementById('selectColor').value = '#23407e';
+      document.getElementById('tertiaryColor').value = '#46e1ec';
       document.getElementById('tertiaryRgbColor').value = '#1e90ff';
       document.getElementById('heading1Color').value = '#21e4f2';
       document.getElementById('heading2Color').value = '#65f1fb';
@@ -1769,3 +1806,9 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
     </div>
 </body>
 </html>
+
+
+
+
+
+
