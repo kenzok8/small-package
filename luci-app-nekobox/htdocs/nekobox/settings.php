@@ -713,7 +713,7 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="col-md-6 mb-3">
               <label for="heading4Color" class="form-label">标题色 4</label>
-              <input type="color" class="form-control" name="heading4Color" id="heading4Color" value="#ff4500">
+              <input type="color" class="form-control" name="heading4Color" id="heading4Color" value="#00fbff">
             </div>
             <div class="col-md-6 mb-3">
               <label for="heading5Color" class="form-label">标题色 5</label>
@@ -958,7 +958,7 @@ function formatSize($size) {
       document.getElementById('heading1Color').value = '#21e4f2';
       document.getElementById('heading2Color').value = '#65f1fb';
       document.getElementById('heading3Color').value = '#ffcc00';
-      document.getElementById('heading4Color').value = '#ff4500';
+      document.getElementById('heading4Color').value = '#00fbff';
       document.getElementById('heading5Color').value = '#ba13f6';
       document.getElementById('heading6Color').value = '#00ffff';
       document.getElementById('primaryBorderSubtle').value = '#1815d1';

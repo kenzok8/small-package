@@ -779,7 +779,7 @@ EOL;
                               <option value="geosite" <?php echo isset($_POST['download_option']) && $_POST['download_option'] === 'geosite' ? 'selected' : ''; ?>>Geosite 数据库 (geosite.db)</option>
                         </select>
                     </div>
-                   <button type="submit" class="btn btn-primary col" name="action" value="generate_subscription"><i class="bi bi-file-earmark-text"></i> 生成配置文件</button>
+                   <button type="submit" class="btn btn-primary col mx-2" name="action" value="generate_subscription"><i class="bi bi-file-earmark-text"></i> 生成配置文件</button>
                     <button type="submit" class="btn btn-success" name="download_action" value="download_files"><i class="bi bi-download"></i>  下载数据库</button>
                 </form>
             </div>
@@ -787,7 +787,7 @@ EOL;
     <div class="container custom-padding">
         <form method="post">
             <h5 style="margin-top: 20px;">定时任务</h5>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> 设置定时任务</button>
+            <button type="button" class="btn btn-primary mx-2" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> 设置定时任务</button>
             <button type="submit" name="createShellScript" value="true" class="btn btn-success"><i class="bi bi-terminal"></i> 生成更新脚本</button>
         </form>
     </div>
@@ -804,19 +804,12 @@ EOL;
                         <form method="POST">
                             <div class="mb-3">
                                 <label for="cronExpression" class="form-label">Cron 表达式</label>
-                                <input type="text" class="form-control" id="cronExpression" name="cronExpression"  placeholder="如: 0 2 * * *" required>
+                                <input type="text" class="form-control" id="cronExpression" name="cronExpression"  value="0 2 * * *" required>
                             </div>
                             <div class="alert alert-info">
                               <strong>提示:</strong> Cron 表达式格式：
                               <ul>
                                 <li><code>分钟 小时 日  月 星期</code></li>
-                                <li><pre> *   *   *   *   *</pre></li>
-                                <li><pre> |   |   |   |   |</pre></li>
-                                <li><pre> |   |   |   |   +---- 星期几 (0 - 6) (Sunday = 0)</pre></li>
-                                <li><pre> |   |   |   +---- 月份 (1 - 12)</pre></li>
-                                <li><pre> |   |   +---- 日 (1 - 31)</pre></li>
-                                <li><pre> |   +---- 小时 (0 - 23)</pre></li>
-                                <li><pre> +---- 分钟 (0 - 59)</pre></li>
                                 <li>示例: 每天凌晨 2 点: <code>0 2 * * *</code></li>
                                 <li>每周一凌晨 3 点: <code>0 3 * * 1</code></li>
                                 <li>工作日（周一至周五）的上午 9 点: <code>0 9 * * 1-5</code></li>

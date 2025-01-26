@@ -226,7 +226,7 @@ EOL;
                     </form>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cronModal">
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#cronModal">
                         <i class="bi bi-clock"></i> 设置定时任务
                     </button>
                 </div>
