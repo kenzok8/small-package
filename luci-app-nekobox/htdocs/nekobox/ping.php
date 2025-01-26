@@ -1119,6 +1119,49 @@ window.addEventListener('load', function() {
     let currentSongIndex = 0;  
     let isPlaying = false;  
     let isReportingTime = false; 
+    let isLooping = false; 
+    let hasModalShown = false;
+
+    const logBox = document.createElement('div');
+    logBox.style.position = 'fixed';
+    logBox.style.top = '90%';  
+    logBox.style.left = '20px';
+    logBox.style.padding = '10px';
+    logBox.style.backgroundColor = 'green';
+    logBox.style.color = 'white';
+    logBox.style.borderRadius = '5px';
+    logBox.style.zIndex = '9999';
+    logBox.style.maxWidth = '250px'; 
+    logBox.style.fontSize = '14px';
+    logBox.style.display = 'none'; 
+    logBox.style.maxWidth = '300px';  
+    logBox.style.wordWrap = 'break-word'; 
+    document.body.appendChild(logBox);
+
+    function showLogMessage(message) {
+        logBox.textContent = message;
+        logBox.style.display = 'block';
+        logBox.style.animation = 'scrollUp 8s ease-out forwards'; 
+        logBox.style.width = 'auto'; 
+        logBox.style.maxWidth = '300px'; 
+
+        setTimeout(() => {
+            logBox.style.display = 'none';
+        }, 8000); 
+    }
+
+    const styleSheet = document.createElement('style');
+    styleSheet.innerHTML = `
+        @keyframes scrollUp {
+            0% {
+                top: 90%;
+            }
+            100% {
+                top: 50%;
+            }
+        }
+    `;
+    document.head.appendChild(styleSheet);
 
     function loadDefaultPlaylist() {
         fetch('https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/songs.txt')
@@ -1158,7 +1201,7 @@ window.addEventListener('load', function() {
         }
     }
 
-    document.addEventListener('dblclick', function() {
+    document.addEventListener('dblclick', function () {
         if (!isPlaying) {
             loadSong(currentSongIndex);
             audioPlayer.play().then(() => {
@@ -1176,7 +1219,7 @@ window.addEventListener('load', function() {
         }
     });
 
-    document.addEventListener('keydown', function(event) {
+    window.addEventListener('keydown', function (event) {
         if (event.key === 'ArrowUp') {
             currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length; 
             loadSong(currentSongIndex);
@@ -1184,23 +1227,70 @@ window.addEventListener('load', function() {
             if (isPlaying) {
                 audioPlayer.play();  
             }
+            const songName = getSongName(songs[currentSongIndex]); 
+            showLogMessage(`上一首：${songName}`);
         } else if (event.key === 'ArrowDown') {
             currentSongIndex = (currentSongIndex + 1) % songs.length; 
             loadSong(currentSongIndex);
-            savePlayerState(); 
+            savePlayerState();
             if (isPlaying) {
-                audioPlayer.play();  
+                audioPlayer.play();
             }
+            const songName = getSongName(songs[currentSongIndex]); 
+            showLogMessage(`下一首：${songName}`);
         } else if (event.key === 'ArrowLeft') {
             audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0); 
             console.log('快退 10 秒');
             savePlayerState();
+            showLogMessage('快退 10 秒');
         } else if (event.key === 'ArrowRight') {
             audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration || Infinity); 
             console.log('快进 10 秒');
             savePlayerState();
+            showLogMessage('快进 10 秒');
+        } else if (event.key === 'Escape') { 
+            localStorage.removeItem('playerState');
+            currentSongIndex = 0;
+            loadSong(currentSongIndex);
+            savePlayerState();
+            console.log('恢复到第一首');
+            showLogMessage('恢复到第一首');
+            if (isPlaying) {
+                audioPlayer.play();
+            }
+        } else if (event.key === ' ') { 
+            if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                savePlayerState(); 
+                console.log('暂停播放');
+                showLogMessage('暂停播放');
+            } else {
+                audioPlayer.play().then(() => {
+                    isPlaying = true;
+                    savePlayerState(); 
+                    console.log('开始播放');
+                    showLogMessage('开始播放');
+                }).catch(error => {
+                    console.log('播放失败:', error);
+                });
+            }
+        } else if (event.key === 'F2') { 
+            isLooping = !isLooping;
+            if (isLooping) {
+                console.log('循环播放');
+                showLogMessage('循环播放');
+            } else {
+                console.log('顺序播放');
+                showLogMessage('顺序播放');
+            }
         }
     });
+
+    function getSongName(url) {
+        const pathParts = url.split('/');
+        return pathParts[pathParts.length - 1]; 
+    }
 
     function startHourlyAlert() {
         setInterval(() => {
@@ -1223,36 +1313,102 @@ window.addEventListener('load', function() {
         }, 60000); 
     }
 
-    audioPlayer.addEventListener('ended', function() {
-        currentSongIndex = (currentSongIndex + 1) % songs.length;  
-        loadSong(currentSongIndex);  
-        savePlayerState(); 
-        audioPlayer.play(); 
+    audioPlayer.addEventListener('ended', function () {
+        if (isLooping) {
+            loadSong(currentSongIndex); 
+            savePlayerState();
+            audioPlayer.play();
+        } else {
+            currentSongIndex = (currentSongIndex + 1) % songs.length;  
+            loadSong(currentSongIndex);  
+            savePlayerState(); 
+            audioPlayer.play();
+        }
     });
 
     function savePlayerState() {
         const state = {
             currentSongIndex,       
             currentTime: audioPlayer.currentTime,
-            isPlaying         
+            isPlaying,
+            isLooping,
+            timestamp: Date.now()
         };
         localStorage.setItem('playerState', JSON.stringify(state));
     }
+
+    function clearExpiredPlayerState() {
+        const state = JSON.parse(localStorage.getItem('playerState'));
+    
+        if (state) {
+            const currentTime = Date.now();
+            const stateAge = currentTime - state.timestamp;  
+
+            const expirationTime = 60 * 60 * 1000;  
+
+            if (stateAge > expirationTime) {
+                localStorage.removeItem('playerState');  
+                console.log('播放状态已过期，已清除');
+            }
+        }
+    }
+
+    setInterval(clearExpiredPlayerState, 10 * 60 * 1000);
 
     function restorePlayerState() {
         const state = JSON.parse(localStorage.getItem('playerState'));
         if (state) {
             currentSongIndex = state.currentSongIndex || 0;
+            isLooping = state.isLooping || false; 
             loadSong(currentSongIndex);
+            if (state.isPlaying) {
+                isPlaying = true;
+                audioPlayer.currentTime = state.currentTime || 0;
+                audioPlayer.play().catch(error => {
+                    console.error('恢复播放失败:', error);
+                });
+            }
         }
     }
 
+    document.addEventListener('dblclick', function () {
+        if (!hasModalShown) {  
+            const modal = new bootstrap.Modal(document.getElementById('keyHelpModal'));
+            modal.show();
+            hasModalShown = true;  
+        }
+    });
+
     loadDefaultPlaylist();
     startHourlyAlert();
+    restorePlayerState(); 
 </script>
+
+<div class="modal fade" id="keyHelpModal" tabindex="-1" aria-labelledby="keyHelpModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="keyHelpModalLabel">键盘操作说明</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li><strong>空格键:</strong> 播放/暂停</li>
+                    <li><strong>箭头上下键:</strong> 切换上一首/下一首</li>
+                    <li><strong>箭头左右键:</strong> 快进/快退 10 秒</li>
+                    <li><strong>ESC键:</strong> 恢复到第一首</li>
+                    <li><strong>F2键:</strong> 切换循环播放和顺序播放</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const websites = [
+        'https://www.baidu.com/', 
+        'https://www.cloudflare.com/', 
+        'https://openai.com/',
         'https://www.youtube.com/',
         'https://www.google.com/',
         'https://www.facebook.com/',
@@ -1268,6 +1424,9 @@ window.addEventListener('load', function() {
 
     function getWebsiteStatusMessage(url, status) {
         const statusMessages = {
+            'https://www.baidu.com/': status ? 'Baidu 网站访问正常。' : '无法访问 Baidu 网站，请检查网络连接。',
+            'https://www.cloudflare.com/': status ? 'Cloudflare 网站访问正常。' : '无法访问 Cloudflare 网站，请检查网络连接。',
+            'https://openai.com/': status ? 'OpenAI 网站访问正常。' : '无法访问 OpenAI 网站，请检查网络连接。',
             'https://www.youtube.com/': status ? 'YouTube 网站访问正常。' : '无法访问 YouTube 网站，请检查网络连接。',
             'https://www.google.com/': status ? 'Google 网站访问正常。' : '无法访问 Google 网站，请检查网络连接。',
             'https://www.facebook.com/': status ? 'Facebook 网站访问正常。' : '无法访问 Facebook 网站，请检查网络连接。',
@@ -1295,10 +1454,16 @@ window.addEventListener('load', function() {
                     requestsCompleted++;
                     if (requestsCompleted === urls.length) {
                         speakMessage(statusMessages.join(' '));  
+                        speakMessage('网站检查已完毕'); 
                     }
                 });
         });
     }
+
+    setInterval(() => {
+        speakMessage('开始检测网站连通性...');
+        checkWebsiteAccess(websites);  
+    }, 3600000);  
 
     let isDetectionStarted = false;
 
@@ -1313,7 +1478,6 @@ window.addEventListener('load', function() {
     });
 
 </script>
-
 
 
 

@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $heading1Color = $_POST['heading1Color'] ?? '#21e4f2'; 
     $heading2Color = $_POST['heading2Color'] ?? '#65f1fb'; 
     $heading3Color = $_POST['heading3Color'] ?? '#ffcc00'; 
-    $heading4Color = $_POST['heading4Color'] ?? '#ff4500'; 
+    $heading4Color = $_POST['heading4Color'] ?? '#00fbff'; 
     $heading5Color = $_POST['heading5Color'] ?? '#ba13f6'; 
     $heading6Color = $_POST['heading6Color'] ?? '#00ffff'; 
     $outlineColor = $_POST['outlineColor'] ?? '#0dcaf0'; 

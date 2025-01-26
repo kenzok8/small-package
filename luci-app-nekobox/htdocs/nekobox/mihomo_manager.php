@@ -1183,11 +1183,11 @@ function initializeAceEditor() {
             <button type="submit" name="createShellScript" value="true" class="btn btn-success mx-2">
                 <i class="bi bi-terminal"></i> 生成更新脚本
             </button>
-            <button type="button" class="btn btn-primary mx-2" data-bs-toggle="modal" data-bs-target="#downloadModal">
+            <button type="button" class="btn btn-warning mx-2" data-bs-toggle="modal" data-bs-target="#downloadModal">
                 <i class="bi bi-download"></i> 更新数据库
             </button>
              <td>
-            <a class="btn btn-info btn-sm text-white mx-2" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
+            <a class="btn btn-pink btn-sm text-white mx-2" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
                 <i class="bi bi-file-earmark-text"></i> 打开文件助手
             </a>
         </td>
