@@ -1287,7 +1287,7 @@ window.addEventListener('load', function() {
             if (isPlaying) {
                 audioPlayer.play();
             }
-        } else if (event.key === ' ') { 
+        } else if (event.key === 'F9') { 
             if (isPlaying) {
                 audioPlayer.pause();
                 isPlaying = false;
@@ -1401,10 +1401,17 @@ window.addEventListener('load', function() {
     }
 
     document.addEventListener('dblclick', function () {
-        if (!hasModalShown) {  
-            const modal = new bootstrap.Modal(document.getElementById('keyHelpModal'));
-            modal.show();
-            hasModalShown = true;  
+        const lastShownTime = localStorage.getItem('lastModalShownTime'); 
+        const currentTime = new Date().getTime(); 
+
+        if (!lastShownTime || (currentTime - lastShownTime) > 4 * 60 * 60 * 1000) { 
+            if (!hasModalShown) {  
+                const modal = new bootstrap.Modal(document.getElementById('keyHelpModal'));
+                modal.show();
+                hasModalShown = true;
+
+                localStorage.setItem('lastModalShownTime', currentTime);
+            }
         }
     });
 
@@ -1422,7 +1429,7 @@ window.addEventListener('load', function() {
             </div>
             <div class="modal-body">
                 <ul>
-                    <li><strong>空格键:</strong> 播放/暂停</li>
+                    <li><strong>F9键:</strong> 播放/暂停</li>
                     <li><strong>箭头上下键:</strong> 切换上一首/下一首</li>
                     <li><strong>箭头左右键:</strong> 快进/快退 10 秒</li>
                     <li><strong>ESC键:</strong> 恢复到第一首</li>
@@ -1506,7 +1513,6 @@ window.addEventListener('load', function() {
     });
 
 </script>
-
 
 
 
