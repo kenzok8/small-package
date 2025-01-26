@@ -1,1 +1,1 @@
-pink.css
+transparent.css
