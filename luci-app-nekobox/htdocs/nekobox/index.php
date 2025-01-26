@@ -274,7 +274,7 @@ EOL;
     file_put_contents($cronScriptPath, $cronScriptContent);
     chmod($cronScriptPath, 0755);
     shell_exec("sh $cronScriptPath");
-    echo '<div class="alert alert-success">已创建并执行定时任务脚本，添加或更新日志清理任务，清理 $log_file 和 $tmp_log_file 的日志。</div>';
+    echo '<div id="cron-success-message" style="display: none;" class="alert alert-success">已创建并执行定时任务脚本，添加或更新日志清理任务，清理 $log_file 和 $tmp_log_file 的日志。</div>';
 }
 
 function rotateLogs($logFile, $maxSize = 1048576) {
@@ -950,6 +950,16 @@ $(document).ready(function() {
     function saveConfigSelection() {
         const selectedConfig = document.getElementById("config_file").value;
         localStorage.setItem("configSelection", selectedConfig);
+    }
+</script>
+
+<script>
+    const lastShownTime = localStorage.getItem('lastCronMessageShownTime');
+    const currentTime = new Date().getTime(); 
+
+    if (!lastShownTime || (currentTime - lastShownTime) > 12 * 60 * 60 * 1000) {
+        document.getElementById('cron-success-message').style.display = 'block';
+        localStorage.setItem('lastCronMessageShownTime', currentTime);
     }
 </script>
 
