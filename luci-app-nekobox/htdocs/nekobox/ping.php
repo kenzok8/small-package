@@ -1467,13 +1467,12 @@ window.addEventListener('load', function() {
 
     let isDetectionStarted = false;
 
-    document.addEventListener('contextmenu', function(event) {
-        event.preventDefault();  
-        
-        if (!isDetectionStarted) {
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'F8' && !isDetectionStarted) {  
+            event.preventDefault();  
             speakMessage('开始检测网站连通性...');
-            checkWebsiteAccess(websites);  
-            isDetectionStarted = true;  
+            checkWebsiteAccess(websites);
+            isDetectionStarted = true;
         }
     });
 

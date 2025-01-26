@@ -813,7 +813,7 @@ function showTooltip(message) {
 }
 
 window.onload = function() {
-    showTooltip('双击左键打开播放器，双击右键开启网站连通性检测');
+    showTooltip('双击左键打开播放器，F8键开启网站连通性检测');
 };
 </script>
 
