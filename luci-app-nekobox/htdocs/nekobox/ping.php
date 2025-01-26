@@ -732,21 +732,23 @@ let IP = {
                 displayASN = '';  
             }
 
-            let locationInfo = `<span style="margin-left: 8px;">${location} ${displayISP} ${data.asn || ''} ${displayASN}</span>`;
+            let locationInfo = `<span style="margin-left: 8px; position: relative; top: -4px;">${location} ${displayISP} ${data.asn || ''} ${displayASN}</span>`;
 
             const isHidden = localStorage.getItem("ipHidden") === "true";
 
             let simpleDisplay = `
-                <div style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding-left: 5px; margin-bottom: 5px;">
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span id="ip-address">${isHidden ? '***.***.***.***.***' : cachedIP}</span> 
-                        <span class="badge badge-primary" style="color: #333;">${country}</span>
+                <div class="ip-main" style="cursor: pointer; position: relative; top: -4px;" onclick="IP.showDetailModal()" title="点击查看 IP 详细信息">
+                    <div style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; ">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span id="ip-address">${isHidden ? '***.***.***.***.***' : cachedIP}</span> 
+                            <span class="badge badge-primary" style="color: #333;">${country}</span>
+                        </div>
                     </div>
-
-                    <span id="toggle-ip" style="cursor: pointer;" title="点击隐藏/显示 IP">
-                        <i class="fa ${isHidden ? 'bi bi-eye-slash' : 'bi bi-eye'}"></i>  
-                    </span>
-                </div>`;
+                </div>
+                <span id="toggle-ip" style="cursor: pointer; position: relative; top: -3px;  text-indent: 1ch; padding-top: 2px;" title="点击隐藏/显示 IP">
+                    <i class="fa ${isHidden ? 'bi-eye-slash' : 'bi-eye'}"></i>  
+                </span>
+            `;
 
             document.getElementById('d-ip').innerHTML = simpleDisplay;
             document.getElementById('ipip').innerHTML = locationInfo;
@@ -761,13 +763,13 @@ let IP = {
 
                 if (ipElement.textContent === cachedIP) {
                     ipElement.textContent = '***.***.***.***.***';
-                    iconElement.classList.remove('bi bi-eye');
-                    iconElement.classList.add('bi bi-eye-slash');  
+                    iconElement.classList.remove('bi-eye');
+                    iconElement.classList.add('bi-eye-slash');  
                     localStorage.setItem("ipHidden", "true");  
                 } else {
                     ipElement.textContent = cachedIP;  
-                    iconElement.classList.remove('bi bi-eye-slash');
-                    iconElement.classList.add('bi bi-eye');  
+                    iconElement.classList.remove('bi-eye-slash');
+                    iconElement.classList.add('bi-eye');  
                     localStorage.setItem("ipHidden", "false");  
                 }
             });
