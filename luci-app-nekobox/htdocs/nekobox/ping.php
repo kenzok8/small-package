@@ -434,6 +434,7 @@ $lang = $_GET['lang'] ?? 'en';
         display: none;
     }
 </style>
+<link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <script src="./assets/neko/js/jquery.min.js"></script>
 <link rel="stylesheet" href="./assets/bootstrap/leaflet.css" />
 <script src="./assets/bootstrap/leaflet.js"></script>
@@ -733,17 +734,43 @@ let IP = {
 
             let locationInfo = `<span style="margin-left: 8px;">${location} ${displayISP} ${data.asn || ''} ${displayASN}</span>`;
 
+            const isHidden = localStorage.getItem("ipHidden") === "true";
+
             let simpleDisplay = `
-                <div class="ip-main" style="cursor: pointer;" onclick="IP.showDetailModal()" title="点击查看 IP 详细信息">
-                    ${cachedIP} <span class="badge badge-primary" style="color: #333;">${country}</span>
+                <div style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding-left: 5px; margin-bottom: 5px;">
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span id="ip-address">${isHidden ? '***.***.***.***.***' : cachedIP}</span> 
+                        <span class="badge badge-primary" style="color: #333;">${country}</span>
+                    </div>
+
+                    <span id="toggle-ip" style="cursor: pointer;" title="点击隐藏/显示 IP">
+                        <i class="fa ${isHidden ? 'bi bi-eye-slash' : 'bi bi-eye'}"></i>  
+                    </span>
                 </div>`;
 
             document.getElementById('d-ip').innerHTML = simpleDisplay;
             document.getElementById('ipip').innerHTML = locationInfo;
 
             const countryCode = data.country_code || 'unknown';
-            const flagSrc = (countryCode !== 'unknown') ? _IMG + "flags/" + countryCode.toLowerCase() + ".png" : './assets/neko/flags/cn.png';
+            const flagSrc = (countryCode === 'TW') ? _IMG + "flags/cn.png"  : (countryCode !== 'unknown') ? _IMG + "flags/" + countryCode.toLowerCase() + ".png"  : './assets/neko/flags/cn.png';
             $("#flag").attr("src", flagSrc);
+
+            document.getElementById('toggle-ip').addEventListener('click', () => {
+                const ipElement = document.getElementById('ip-address');
+                const iconElement = document.getElementById('toggle-ip').querySelector('i');
+
+                if (ipElement.textContent === cachedIP) {
+                    ipElement.textContent = '***.***.***.***.***';
+                    iconElement.classList.remove('bi bi-eye');
+                    iconElement.classList.add('bi bi-eye-slash');  
+                    localStorage.setItem("ipHidden", "true");  
+                } else {
+                    ipElement.textContent = cachedIP;  
+                    iconElement.classList.remove('bi bi-eye-slash');
+                    iconElement.classList.add('bi bi-eye');  
+                    localStorage.setItem("ipHidden", "false");  
+                }
+            });
 
         } catch (error) {
             console.error("Error in updateUI:", error);
