@@ -433,6 +433,13 @@ $lang = $_GET['lang'] ?? 'en';
     .exit-fullscreen-btn {
         display: none;
     }
+
+    #d-ip {
+        display: flex;
+        align-items: center;
+        gap: 5px;  
+        flex-wrap: nowrap;  
+    }
 </style>
 <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <script src="./assets/neko/js/jquery.min.js"></script>
@@ -1513,7 +1520,6 @@ window.addEventListener('load', function() {
     });
 
 </script>
-
 
 
 
