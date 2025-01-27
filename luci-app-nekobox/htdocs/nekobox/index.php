@@ -940,6 +940,37 @@ $(document).ready(function() {
            </tr>
        </tbody>
    </table>
+
+<div class="modal fade" id="singboxModal" tabindex="-1" aria-labelledby="singboxModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="singboxModalLabel">Sing-box 启动提示</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>如遇启动失败，请前往文件管理 ⇨ 更新数据库 ⇨ 下载 cache.db 缓存数据。</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        var lastShown = localStorage.getItem('singboxModalLastShown');
+        var currentTime = new Date().getTime();
+
+        if (!lastShown || (currentTime - lastShown) > 12 * 60 * 60 * 1000) {
+            $('#singboxModal').modal('show');  
+        }
+
+        localStorage.setItem('singboxModalLastShown', currentTime);
+    });
+</script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const savedConfig = localStorage.getItem("configSelection");
