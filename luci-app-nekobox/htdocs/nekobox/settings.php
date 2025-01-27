@@ -508,11 +508,12 @@ $razordVersion = getRazordVersion();
                         <option value="v1.11.0-beta.10">v1.11.0-beta.10</option>
                         <option value="v1.11.0-beta.15">v1.11.0-beta.15</option>
                         <option value="v1.11.0-beta.20">v1.11.0-beta.20</option>
+                        <option value="v1.11.0-rc.1">v1.11.0-rc.1</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <label for="manualVersionInput" class="form-label">输入自定义版本</label> 
-                    <input type="text" id="manualVersionInput" class="form-control w-100" value="例如：v1.11.0-beta.12">
+                    <input type="text" id="manualVersionInput" class="form-control w-100" value="v1.11.0-rc.1">
                 </div>
                 <button type="button" class="btn btn-secondary mt-2" onclick="addManualVersion()">添加版本</button>
             </div>
@@ -1529,11 +1530,11 @@ document.getElementById('checkSingboxButton').addEventListener('click', function
         finalPuernyaVersion = puernyaVersion; 
     }
 
-    if (singBoxVersion && /^v/.test(singBoxVersion) && /alpha|beta/.test(singBoxVersion)) {
+    if (singBoxVersion && /^v/.test(singBoxVersion) && /-.+/.test(singBoxVersion)) {
         finalCompileVersion = singBoxVersion;
     }
 
-    if (singBoxVersion && /alpha|beta/.test(singBoxVersion) && puernyaVersion !== '1.10.0-alpha.29-067c81a7' && !/^v/.test(singBoxVersion)) {
+    if (singBoxVersion && /-.+/.test(singBoxVersion) && puernyaVersion !== '1.10.0-alpha.29-067c81a7' && !/^v/.test(singBoxVersion)) {
         finalPreviewVersion = singBoxVersion;  
     }
 
