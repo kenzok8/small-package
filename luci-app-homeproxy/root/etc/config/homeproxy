@@ -16,6 +16,7 @@ config homeproxy 'infra'
 	option self_mark '100'
 	option tproxy_mark '101'
 	option tun_mark '102'
+	option github_token ''
 
 config homeproxy 'config'
 	option main_node 'nil'

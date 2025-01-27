@@ -649,7 +649,6 @@ return view.extend({
 		so = ss.taboption('field_source_ip', form.Flag, 'source_ip_is_private', _('Private source IP'),
 			_('Match private source IP.'));
 		so.default = so.disabled;
-		so.rmempty = false;
 		so.modalonly = true;
 
 		so = ss.taboption('field_host', form.DynamicList, 'ip_cidr', _('IP CIDR'),
@@ -660,7 +659,6 @@ return view.extend({
 		so = ss.taboption('field_host', form.Flag, 'ip_is_private', _('Private IP'),
 			_('Match private IP.'));
 		so.default = so.disabled;
-		so.rmempty = false;
 		so.modalonly = true;
 
 		so = ss.taboption('field_source_port', form.DynamicList, 'source_port', _('Source port'),
