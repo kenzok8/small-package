@@ -726,7 +726,7 @@ $razordVersion = getRazordVersion();
           </div>
             <div class="mb-3 form-check">
               <input type="checkbox" class="form-check-input" id="enableSnowEffect" name="enableSnowEffect" <?php echo $enableSnow ? 'checked' : ''; ?>>
-              <label class="form-check-label" for="enableSnowEffect">启用雪花动画（启用会生成动画CSS，禁用必须二次勾选禁用开关，无需保存主题，右上角会提示勾选状态有显示问题清除浏览器缓存）</label>
+              <label class="form-check-label" for="enableSnowEffect">启用雪花动画（Ctrl + F6快捷键启用/禁用）</label>
           </div>
           <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="useBackgroundImage" name="useBackgroundImage">
@@ -827,15 +827,32 @@ $razordVersion = getRazordVersion();
 
 <script>
 document.getElementById('enableSnowEffect').addEventListener('change', function() {
-    var isChecked = this.checked;
+    toggleSnowEffect(this.checked);
+});
+
+
+document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.code === 'F6') {
+        var checkbox = document.getElementById('enableSnowEffect');
+        checkbox.checked = !checkbox.checked;  
+        toggleSnowEffect(checkbox.checked);
+
+        var message = checkbox.checked ? '已启用雪花效果' : '已禁用雪花效果';
+        showNotification(message);
+    }
+});
+
+function toggleSnowEffect(isChecked) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', 'save_snow_status.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.send('enableSnowEffect=' + (isChecked ? '1' : '0'));
-    
     var message = isChecked ? '已启用' : '已禁用';
     console.log(message);
-    
+    showNotification(message);
+}
+
+function showNotification(message) {
     var notification = document.createElement('div');
     notification.style.position = 'fixed';
     notification.style.top = '10px';
@@ -846,13 +863,11 @@ document.getElementById('enableSnowEffect').addEventListener('change', function(
     notification.style.borderRadius = '5px';
     notification.style.zIndex = '9999';
     notification.innerText = message;
-    
     document.body.appendChild(notification);
-    
     setTimeout(function() {
         notification.style.display = 'none';
-    }, 5000);
-});
+    }, 5000); 
+}
 </script>
 
 <div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
