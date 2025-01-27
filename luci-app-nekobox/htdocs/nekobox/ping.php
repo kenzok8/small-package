@@ -1112,6 +1112,52 @@ setInterval(IP.getIpipnetIP, 180000);
 </script>
 
 <script>
+document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.shiftKey && event.code === 'KeyC') {
+        clearCache();
+        event.preventDefault();  
+    }
+});
+
+function clearCache() {
+    location.reload(true); 
+
+    localStorage.clear();
+    sessionStorage.clear();
+
+    sessionStorage.setItem('cacheCleared', 'true');
+
+    showNotification('缓存已清除');
+}
+
+function showNotification(message) {
+    var notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.top = '10px';
+    notification.style.right = '30px';
+    notification.style.backgroundColor = '#4CAF50';
+    notification.style.color = '#fff';
+    notification.style.padding = '10px';
+    notification.style.borderRadius = '5px';
+    notification.style.zIndex = '9999';
+    notification.innerText = message;
+
+    document.body.appendChild(notification);
+
+    setTimeout(function() {
+        notification.style.display = 'none';
+    }, 5000); 
+}
+
+window.addEventListener('load', function() {
+    if (sessionStorage.getItem('cacheCleared') === 'true') {
+        showNotification('缓存已清除');
+        sessionStorage.removeItem('cacheCleared'); 
+    }
+});
+</script>
+
+<script>
 window.addEventListener('load', function() {
     let snowContainer = document.querySelector('#snow-container');
 
@@ -1427,8 +1473,8 @@ window.addEventListener('load', function() {
     restorePlayerState(); 
 </script>
 
-<div class="modal fade" id="keyHelpModal" tabindex="-1" aria-labelledby="keyHelpModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="keyHelpModal" tabindex="-1" aria-labelledby="keyHelpModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="keyHelpModalLabel">键盘操作说明</h5>
@@ -1436,11 +1482,15 @@ window.addEventListener('load', function() {
             </div>
             <div class="modal-body">
                 <ul>
+                    <li><strong>鼠标左键:</strong> 双击打开音乐播放器</li>
                     <li><strong>F9键:</strong> 播放/暂停</li>
                     <li><strong>箭头上下键:</strong> 切换上一首/下一首</li>
                     <li><strong>箭头左右键:</strong> 快进/快退 10 秒</li>
                     <li><strong>ESC键:</strong> 恢复到第一首</li>
                     <li><strong>F2键:</strong> 切换循环播放和顺序播放</li>
+                    <li><strong>F8键:</strong> 开启网站连通性检测</li>
+                    <li><strong>Ctrl + F6键:</strong> 开启/禁用雪花动画 （设置界面有效）</li>
+                    <li><strong>Ctrl + Shift + C键:</strong> 清除缓存数据</li>
                 </ul>
             </div>
         </div>
