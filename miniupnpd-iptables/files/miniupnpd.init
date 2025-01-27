@@ -69,7 +69,7 @@ upnpd() {
 	local extip port usesysuptime conffile serial_number model_number
 	local uuid notify_interval presentation_url enable_upnp
 	local upnp_lease_file clean_ruleset_threshold clean_ruleset_interval
-        local ipv6_listening_ip enabled
+	local args ifname ipv6_listening_ip enabled
 
 	config_get_bool enabled config enabled 1
 
@@ -94,22 +94,18 @@ upnpd() {
 	config_get clean_ruleset_interval config clean_ruleset_interval
 	config_get ipv6_listening_ip config ipv6_listening_ip
 
-	local args
-
 	. /lib/functions/network.sh
 
-	local ifname
-
-        # manual external interface overrides everything
-        if [ -z "$extiface" ] ; then
-            # manual external zone (if dynamically find interfaces
-            # belonging to it) overrides network_find_wan*
-            if [ -n "$extzone" ] ; then
-                ifname=$(fw3 -q zone $extzone | head -1)
-            fi
-            [ -n "$extiface" ] || network_find_wan extiface
-            [ -n "$extiface" ] || network_find_wan6 extiface
-        fi
+	# manual external interface overrides everything
+	if [ -z "$extiface" ] ; then
+		# manual external zone (if dynamically find interfaces
+		# belonging to it) overrides network_find_wan*
+		if [ -n "$extzone" ] ; then
+			ifname=$(fw3 -q zone $extzone | head -1)
+		fi
+		[ -n "$extiface" ] || network_find_wan extiface
+		[ -n "$extiface" ] || network_find_wan6 extiface
+	fi
 
 	[ -n "$ifname" ] || network_get_device ifname ${extiface}
 
@@ -181,9 +177,8 @@ upnpd() {
 		[ -n "${model_number}" ] && \
 			echo "model_number=${model_number}" >>$tmpconf
 
-	    config_foreach conf_rule_add perm_rule "$tmpconf"
+		config_foreach conf_rule_add perm_rule "$tmpconf"
 	fi
-
 
 	if [ -n "$ifname" ]; then
 		# start firewall
@@ -191,7 +186,7 @@ upnpd() {
 	else
 		logger -t "upnp daemon" "external interface not found, not starting"
 	fi
-	
+
 	procd_open_instance
 	procd_set_param command "$PROG"
 	procd_set_param respawn
@@ -204,9 +199,9 @@ stop_service() {
 	iptables -t nat -F MINIUPNPD 2>/dev/null
 	iptables -t filter -F MINIUPNPD 2>/dev/null
 
-        [ -x /usr/sbin/ip6tables ] && {
-	    ip6tables -t filter -F MINIUPNPD 2>/dev/null
-        }
+	[ -x /usr/sbin/ip6tables ] && {
+		ip6tables -t filter -F MINIUPNPD 2>/dev/null
+	}
 }
 
 start_service() {
