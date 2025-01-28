@@ -765,7 +765,7 @@ $razordVersion = getRazordVersion();
           </div>
       <div class="d-flex flex-wrap justify-content-center align-items-center mb-3 gap-2">
           <button type="submit" class="btn btn-primary">保存主题</button>
-          <button type="button" class="btn btn-success" id="resetButton" title="按 Ctrl + Shift + C 恢复默认值">恢复默认值</button>
+          <button type="button" class="btn btn-success" id="resetButton" onclick="clearCache()">恢复默认值</button>
           <button type="button" class="btn btn-info" id="exportButton">立即备份</button>
           <button type="button" class="btn btn-warning" id="restoreButton">恢复备份</button> 
           <input type="file" id="importButton" class="form-control" accept="application/json" style="display: none;"> 
@@ -804,6 +804,21 @@ $razordVersion = getRazordVersion();
                 }
             };
             reader.readAsText(file);
+        }
+    });
+</script>
+
+<script>
+    function clearCache() {
+        location.reload(true);        
+        localStorage.clear();   
+        sessionStorage.clear(); 
+        sessionStorage.setItem('cacheCleared', 'true'); 
+    }
+
+    window.addEventListener('load', function() {
+        if (sessionStorage.getItem('cacheCleared') === 'true') {
+            sessionStorage.removeItem('cacheCleared'); 
         }
     });
 </script>
