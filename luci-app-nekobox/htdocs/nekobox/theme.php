@@ -38,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $backgroundImagePath = $_POST['backgroundImage'] ?? '';
-    $enableSnowEffect = isset($_POST['enableSnowEffect']) ? true : false; 
     $cssContent = "
 
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap');
@@ -312,6 +311,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border: none !important; 
     }
 
+    ::-webkit-scrollbar {
+      width: 8px; 
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.5); 
+      border-radius: 4px; 
+      transition: background 0.3s ease; 
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.7); 
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent; 
+    }
+
+    .scrollable-container {
+      overflow: hidden; 
+      position: relative; 
+    }
+
+    .scrollable-container:hover {
+      overflow: auto; 
+    }
+
     button, .btn-warning, .btn-info, .card, .modal-content { transition: transform 0.2s ease, box-shadow 0.2s ease; }
     button:active, .btn-warning:active, .btn-info:active, .card:active, .modal-content:active { transform: translateY(-6px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); }
     button:hover, .btn-warning:hover, .btn-info:hover, .card:hover, .modal-content:hover { transform: translateY(-6px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); }
@@ -549,120 +576,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     ";
-
-    if ($enableSnowEffect) {
-        $snowEffectCSS = "
-    #snow-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 9999;
-        display: block;
-    }
-
-    .snowflake {
-        position: absolute;
-        top: -10px;  
-        width: 10px;
-        height: 10px;
-        background-color: white;
-        border-radius: 50%;
-        animation: fall linear infinite;  
-    }
-
-    @keyframes fall {
-        0% {
-            transform: translateY(0) rotate(0deg); 
-        }
-        100% {
-            transform: translateY(100vh) rotate(360deg); 
-        }
-    }
-
-    .snowflake:nth-child(1) {
-        animation-duration: 8s;
-        animation-delay: -2s;
-        left: 10%;
-        width: 12px;
-        height: 12px;
-    }
-
-    .snowflake:nth-child(2) {
-        animation-duration: 10s;
-        animation-delay: -3s;
-        left: 20%;
-        width: 8px;
-        height: 8px;
-    }
-
-    .snowflake:nth-child(3) {
-        animation-duration: 12s;
-        animation-delay: -1s;
-        left: 30%;
-        width: 15px;
-        height: 15px;
-    }
-
-    .snowflake:nth-child(4) {
-        animation-duration: 9s;
-        animation-delay: -5s;
-        left: 40%;
-        width: 10px;
-        height: 10px;
-    }
-
-    .snowflake:nth-child(5) {
-        animation-duration: 11s;
-        animation-delay: -4s;
-        left: 50%;
-        width: 14px;
-        height: 14px;
-    }
-
-    .snowflake:nth-child(6) {
-        animation-duration: 7s;
-        animation-delay: -6s;
-        left: 60%;
-        width: 9px;
-        height: 9px;
-    }
-
-    .snowflake:nth-child(7) {
-        animation-duration: 8s;
-        animation-delay: -7s;
-        left: 70%;
-        width: 11px;
-        height: 11px;
-    }
-
-    .snowflake:nth-child(8) {
-        animation-duration: 10s;
-        animation-delay: -8s;
-        left: 80%;
-        width: 13px;
-        height: 13px;
-    }
-
-    .snowflake:nth-child(9) {
-        animation-duration: 6s;
-        animation-delay: -9s;
-        left: 90%;
-        width: 10px;
-        height: 10px;
-    }
-        ";
-        $pos = strpos($cssContent, "#plugin_log, #bin_logs, #singbox_log") + strlen("#plugin_log, #bin_logs, #singbox_log {");
-        $endPos = strpos($cssContent, "}", $pos);
-        
-        if ($pos !== false && $endPos !== false) {
-            $cssContent = substr_replace($cssContent, $snowEffectCSS, $endPos + 1, 0);
-        }
-    } else {
-        $cssContent .= "#snow-container { display: none; }\n";
-    }
 
     $filePath = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/theme/transparent.css';
     file_put_contents($filePath, $cssContent);
