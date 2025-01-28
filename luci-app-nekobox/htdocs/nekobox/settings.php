@@ -652,7 +652,23 @@ $razordVersion = getRazordVersion();
               <input type="color" class="form-control" name="primaryBorderSubtle" id="primaryBorderSubtle" value="#1815d1">
             </div>
             <div class="col-md-6 mb-3">
-              <label for="placeholderColor" class="form-label">输入框文本色</label>
+              <label for="checkColor" class="form-label">主标题文本色 1</label>
+              <input type="color" class="form-control" name="checkColor" id="checkColor" value="#0eaf3e">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="labelColor" class="form-label">主标题文本色 2</label>
+              <input type="color" class="form-control" name="labelColor" id="labelColor" value="#0eaf3e">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="lineColor" class="form-label">行数文本色</label>
+              <input type="color" class="form-control" name="lineColor" id="lineColor" value="#f515f9">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="controlColor" class="form-label">输入框文本色 1</label>
+              <input type="color" class="form-control" name="controlColor" id="controlColor" value="#0eaf3e">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="placeholderColor" class="form-label">输入框文本色 2</label>
               <input type="color" class="form-control" name="placeholderColor" id="placeholderColor" value="#f82af2">
             </div>
             <div class="col-md-6 mb-3">
@@ -724,6 +740,11 @@ $razordVersion = getRazordVersion();
               <input type="color" class="form-control" name="heading6Color" id="heading6Color" value="#00ffff">
             </div>
           </div>
+          <div class="col-12 mb-3">
+            <label for="themeName" class="form-label">自定义主题名称</label>
+            <input type="text" class="form-control" name="themeName" id="themeName" value="transparent">
+          </div>
+
           <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="useBackgroundImage" name="useBackgroundImage">
             <label class="form-check-label" for="useBackgroundImage">使用自定义背景图片</label>
@@ -744,7 +765,7 @@ $razordVersion = getRazordVersion();
           </div>
       <div class="d-flex flex-wrap justify-content-center align-items-center mb-3 gap-2">
           <button type="submit" class="btn btn-primary">保存主题</button>
-          <button type="button" class="btn btn-success" id="resetButton">恢复默认值</button>
+          <button type="button" class="btn btn-success" id="resetButton" title="按 Ctrl + Shift + C 恢复默认值">恢复默认值</button>
           <button type="button" class="btn btn-info" id="exportButton">立即备份</button>
           <button type="button" class="btn btn-warning" id="restoreButton">恢复备份</button> 
           <input type="file" id="importButton" class="form-control" accept="application/json" style="display: none;"> 
@@ -948,6 +969,10 @@ function formatSize($size) {
       document.getElementById('infoBgSubtle').value = '#23407e';
       document.getElementById('selectColor').value = '#23407e';
       document.getElementById('tertiaryColor').value = '#46e1ec';
+      document.getElementById('controlColor').value = '#0eaf3e';
+      document.getElementById('checkColor').value = '#0eaf3e';
+      document.getElementById('labelColor').value = '#0eaf3e';
+      document.getElementById('lineColor').value = '#f515f9';
       document.getElementById('tertiaryRgbColor').value = '#1e90ff';
       document.getElementById('heading1Color').value = '#21e4f2';
       document.getElementById('heading2Color').value = '#65f1fb';
@@ -979,6 +1004,10 @@ function formatSize($size) {
         bodyColor: document.getElementById('bodyColor').value,
         tertiaryColor: document.getElementById('tertiaryColor').value,
         tertiaryRgbColor: document.getElementById('tertiaryRgbColor').value,
+        controlColor: document.getElementById('controlColor').value,
+        checkColor: document.getElementById('checkColor').value,
+        labelColor: document.getElementById('labelColor').value,
+        lineColor: document.getElementById('lineColor').value,
         heading1Color: document.getElementById('heading1Color').value,
         heading2Color: document.getElementById('heading2Color').value,
         heading3Color: document.getElementById('heading3Color').value,
@@ -1022,6 +1051,10 @@ function formatSize($size) {
           document.getElementById('bodyColor').value = settings.bodyColor;
           document.getElementById('tertiaryColor').value = settings.tertiaryColor;
           document.getElementById('tertiaryRgbColor').value = settings.tertiaryRgbColor;
+          document.getElementById('controlColor').value = settings.controlColor;
+          document.getElementById('checkColor').value = settings.checkColor;
+          document.getElementById('labelColor').value = settings.labelColor;
+          document.getElementById('lineColor').value = settings.lineColor;
           document.getElementById('heading1Color').value = settings.heading1Color;
           document.getElementById('heading2Color').value = settings.heading2Color;
           document.getElementById('heading3Color').value = settings.heading3Color;
@@ -1052,6 +1085,10 @@ function formatSize($size) {
           localStorage.setItem('bodyColor', settings.bodyColor);
           localStorage.setItem('tertiaryColor', settings.tertiaryColor);
           localStorage.setItem('tertiaryRgbColor', settings.tertiaryRgbColor);
+          localStorage.setItem('controlColor', settings.controlColor);
+          localStorage.setItem('checkColor', settings.checkColor);
+          localStorage.setItem('labelColor', settings.labelColor);
+          localStorage.setItem('lineColor', settings.lineColor);
           localStorage.setItem('heading1Color', settings.heading1Color);
           localStorage.setItem('heading2Color', settings.heading2Color);
           localStorage.setItem('heading3Color', settings.heading3Color);
