@@ -1126,7 +1126,7 @@ window.onload = function() {
             </div>
             <div class="card-footer text-center">
                 <form action="index.php" method="post">
-                    <button type="submit" name="clear_plugin_log" class="btn btn-danger">🗑️ 清空日志</button>
+                    <button type="submit" name="clear_plugin_log" class="btn btn-danger"><i class="bi bi-trash"></i> 清空日志</button>
                 </form>
             </div>
         </div>
@@ -1139,7 +1139,7 @@ window.onload = function() {
             </div>
             <div class="card-footer text-center">
                 <form action="index.php" method="post">
-                    <button type="submit" name="neko" value="clear" class="btn btn-danger">🗑️ 清空日志</button>
+                    <button type="submit" name="neko" value="clear" class="btn btn-danger"><i class="bi bi-trash"></i> 清空日志</button>
                 </form>
             </div>
         </div>
@@ -1156,9 +1156,43 @@ window.onload = function() {
                         <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
                         <label class="form-check-label" for="autoRefresh">自动刷新</label>
                     </div>
-                    <button type="submit" name="clear_singbox_log" class="btn btn-danger">🗑️ 清空日志</button>
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cronModal">⏰ 定时重启</button>
+                    <button type="submit" name="clear_singbox_log" class="btn btn-danger me-2"><i class="bi bi-trash"></i> 清空日志</button>
+                    <button type="button" class="btn btn-primary me-2" data-toggle="modal" data-target="#cronModal"><i class="bi bi-clock"></i>  定时重启</button>
+                    <button id="showHelpButton" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#helpModal" type="button"><i class="bi bi-keyboard"></i> 键盘说明</button>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel">键盘操作说明</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li><strong>鼠标左键:</strong> 双击打开播放器界面</li>
+                    <li><strong>F9键:</strong> 切换播放/暂停</li>
+                    <li><strong>上下箭头键:</strong> 切换上一首/下一首</li>
+                    <li><strong>左右箭头键:</strong> 快进/快退 10 秒</li>
+                    <li><strong>ESC键:</strong> 返回播放列表的第一首</li>
+                    <li><strong>F2键:</strong> 切换循环播放和顺序播放模式</li>
+                    <li><strong>F8键:</strong> 启动网站连通性检查</li>
+                    <li><strong>F4键:</strong> 开启天气信息播报</li>
+                    <li><strong>Ctrl + F6键:</strong> 启动/停止雪花动画 </li>
+                    <li><strong>Ctrl + F7键:</strong> 启动/停止方块灯光动画 </li>
+                    <li><strong>Ctrl + F10键:</strong> 启动/停止方块动画 </li>
+                    <li><strong>Ctrl + F11键:</strong> 启动/停止光点动画 </li>
+                    <li><strong>Ctrl + Shift + C键:</strong> 清空缓存</li>
+                    <li><strong>Ctrl + Shift + V键:</strong> 定制播放列表</li>
+                    <li><strong>Ctrl + Shift + X键:</strong> 设置城市</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
             </div>
         </div>
     </div>

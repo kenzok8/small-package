@@ -1,4 +1,34 @@
 <?php
+$default_url = 'https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/songs.txt';
+
+$message = '';  
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['new_url'])) {
+        $new_url = $_POST['new_url'];  
+        $file_path = 'url_config.txt';  
+        if (file_put_contents($file_path, $new_url)) {
+            $message = 'URL 更新成功！';
+        } else {
+            $message = '更新 URL 失败！';
+        }
+    }
+
+    if (isset($_POST['reset_default'])) {
+        $file_path = 'url_config.txt';  
+        if (file_put_contents($file_path, $default_url)) {
+            $message = '恢复默认链接成功！';
+        } else {
+            $message = '恢复默认链接失败！';
+        }
+    }
+}
+else {
+    $new_url = file_exists('url_config.txt') ? file_get_contents('url_config.txt') : $default_url;
+}
+?>
+
+<?php
 ob_start();
 include './cfg.php';
 $translate = [
@@ -440,6 +470,7 @@ $lang = $_GET['lang'] ?? 'en';
         gap: 5px;  
         flex-wrap: nowrap;  
     }
+
 </style>
 <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <script src="./assets/neko/js/jquery.min.js"></script>
@@ -1158,44 +1189,6 @@ window.addEventListener('load', function() {
 </script>
 
 <script>
-window.addEventListener('load', function() {
-    let snowContainer = document.querySelector('#snow-container');
-
-    if (snowContainer) {
-        snowContainer.innerHTML = ''; 
-    }
-
-    if (snowContainer) {
-        for (let i = 0; i < 80; i++) {  
-            let snowflake = document.createElement('div');
-            snowflake.classList.add('snowflake');
-            
-            let size = Math.random() * 10 + 5 + 'px';  
-            snowflake.style.width = size;
-            snowflake.style.height = size;
-            
-            let speed = Math.random() * 3 + 2 + 's'; 
-            snowflake.style.animationDuration = speed;
-
-            let rotate = Math.random() * 360 + 'deg'; 
-            let rotateSpeed = Math.random() * 5 + 2 + 's'; 
-            snowflake.style.animationName = 'fall';
-            snowflake.style.animationDuration = speed;
-            snowflake.style.animationTimingFunction = 'linear';
-            snowflake.style.animationIterationCount = 'infinite';
-
-            let leftPosition = Math.random() * 100 + 'vw';  
-            snowflake.style.left = leftPosition;
-
-            snowflake.style.animationDelay = Math.random() * 5 + 's';  
-
-            snowContainer.appendChild(snowflake);
-        }
-    }
-});
-</script>
-
-<script>
     const audioPlayer = new Audio();  
     let songs = [];  
     let currentSongIndex = 0;  
@@ -1246,7 +1239,7 @@ window.addEventListener('load', function() {
     document.head.appendChild(styleSheet);
 
     function loadDefaultPlaylist() {
-        fetch('https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/songs.txt')
+        fetch('<?php echo $new_url; ?>')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('加载播放列表失败');
@@ -1473,6 +1466,78 @@ window.addEventListener('load', function() {
     restorePlayerState(); 
 </script>
 
+<div class="modal fade" id="urlModal" tabindex="-1" aria-labelledby="urlModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="urlModalLabel">更新播放列表链接</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="new_url" class="form-label">自定义播放列表链接（Ctrl + Shift + C键 清空数据，必须使用下载链接才能正常播放）</label>
+                        <input type="text" id="new_url" name="new_url" class="form-control" value="<?php echo htmlspecialchars($new_url); ?>" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">更新链接</button>
+                    <button type="button" id="resetButton" class="btn btn-secondary ms-2">恢复默认链接</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.shiftKey && event.key === 'V') {
+            var urlModal = new bootstrap.Modal(document.getElementById('urlModal'));
+            urlModal.show();
+        }
+    });
+
+    document.getElementById('resetButton').addEventListener('click', function() {
+        fetch('', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+        body: 'reset_default=true'
+    })
+        .then(response => response.text())  
+        .then(data => {
+            var urlModal = bootstrap.Modal.getInstance(document.getElementById('urlModal'));
+            urlModal.hide();
+
+            document.getElementById('new_url').value = '<?php echo $default_url; ?>';
+
+            showNotification('恢复默认链接成功！');
+        })
+        .catch(error => {
+            console.error('恢复默认链接时出错:', error);
+            showNotification('恢复默认链接时出错');
+        });
+    });
+
+    function showNotification(message) {
+        var notification = document.createElement('div');
+        notification.style.position = 'fixed';
+        notification.style.top = '10px';
+        notification.style.right = '30px';
+        notification.style.backgroundColor = '#4CAF50';
+        notification.style.color = '#fff';
+        notification.style.padding = '10px';
+        notification.style.borderRadius = '5px';
+        notification.style.zIndex = '9999';
+        notification.innerText = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(function() {
+            notification.style.display = 'none';
+        }, 5000); 
+    }
+</script>
+
 <div class="modal fade" id="keyHelpModal" tabindex="-1" aria-labelledby="keyHelpModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -1482,16 +1547,44 @@ window.addEventListener('load', function() {
             </div>
             <div class="modal-body">
                 <ul>
-                    <li><strong>鼠标左键:</strong> 双击打开音乐播放器</li>
-                    <li><strong>F9键:</strong> 播放/暂停</li>
-                    <li><strong>箭头上下键:</strong> 切换上一首/下一首</li>
-                    <li><strong>箭头左右键:</strong> 快进/快退 10 秒</li>
-                    <li><strong>ESC键:</strong> 恢复到第一首</li>
-                    <li><strong>F2键:</strong> 切换循环播放和顺序播放</li>
-                    <li><strong>F8键:</strong> 开启网站连通性检测</li>
-                    <li><strong>Ctrl + F6键:</strong> 开启/禁用雪花动画 （设置界面有效）</li>
-                    <li><strong>Ctrl + Shift + C键:</strong> 清除缓存数据</li>
+                    <li><strong>鼠标左键:</strong> 双击打开播放器界面</li>
+                    <li><strong>F9键:</strong> 切换播放/暂停</li>
+                    <li><strong>上下箭头键:</strong> 切换上一首/下一首</li>
+                    <li><strong>左右箭头键:</strong> 快进/快退 10 秒</li>
+                    <li><strong>ESC键:</strong> 返回播放列表的第一首</li>
+                    <li><strong>F2键:</strong> 切换循环播放和顺序播放模式</li>
+                    <li><strong>F8键:</strong> 开启网站连通性检查</li>
+                    <li><strong>F4键:</strong> 开启天气信息播报</li>
+                    <li><strong>Ctrl + F6键:</strong> 启动/停止雪花动画 </li>
+                    <li><strong>Ctrl + F7键:</strong> 启动/停止方块灯光动画 </li>
+                    <li><strong>Ctrl + F10键:</strong> 启动/停止方块动画 </li>
+                    <li><strong>Ctrl + F11键:</strong> 启动/停止光点动画 </li>
+                    <li><strong>Ctrl + Shift + C键:</strong> 清空缓存数据</li>
+                    <li><strong>Ctrl + Shift + V键:</strong> 定制播放列表</li>
+                    <li><strong>Ctrl + Shift + X键:</strong> 设置城市</li>
                 </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cityModal" tabindex="-1" aria-labelledby="cityModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cityModalLabel">设置城市</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label for="city-input">请输入城市名称：</label>
+                <input type="text" id="city-input" class="form-control" placeholder="请输入城市名称">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveCityBtn">保存城市</button>
             </div>
         </div>
     </div>
@@ -1571,7 +1664,647 @@ window.addEventListener('load', function() {
 
 </script>
 
+<script>
+let city = 'Beijing';
+const apiKey = 'fc8bd2637768c286c6f1ed5f1915eb22';
+let systemEnabled = true;
+let weatherEnabled = true;
 
+function speakMessage(message) {
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'zh-CN';
+    speechSynthesis.speak(utterance);
+}
 
+function speakWeather(weather) {
+    if (!weatherEnabled || !systemEnabled) return;
 
+    const descriptions = {
+        "clear sky": "晴天", "few clouds": "少量云", "scattered clouds": "多云",
+        "broken clouds": "多云", "shower rain": "阵雨", "rain": "雨", 
+        "light rain": "小雨", "moderate rain": "中雨", "heavy rain": "大雨",
+        "very heavy rain": "暴雨", "extreme rain": "极端降雨", "snow": "雪",
+        "light snow": "小雪", "moderate snow": "中雪", "heavy snow": "大雪",
+        "very heavy snow": "特大暴雪", "extreme snow": "极端降雪",
+        "sleet": "雨夹雪", "freezing rain": "冻雨", "mist": "薄雾",
+        "fog": "雾", "haze": "霾", "sand": "沙尘", "dust": "扬尘", "squall": "阵风",
+        "tornado": "龙卷风", "ash": "火山灰", "drizzle": "毛毛雨",
+        "overcast": "阴天", "partly cloudy": "局部多云", "cloudy": "多云",
+        "tropical storm": "热带风暴", "hurricane": "飓风", "cold": "寒冷", 
+        "hot": "炎热", "windy": "大风", "breezy": "微风", "blizzard": "暴风雪"
+    };
+
+    const weatherDescription = descriptions[weather.weather[0].description.toLowerCase()] || weather.weather[0].description;
+    const temperature = weather.main.temp;
+    const tempMax = weather.main.temp_max;
+    const tempMin = weather.main.temp_min;
+    const humidity = weather.main.humidity;
+    const windSpeed = weather.wind.speed;
+    const visibility = weather.visibility / 1000;
+
+    let message = `以下是今天${city}的天气预报：当前气温为${temperature}摄氏度，${weatherDescription}。` +
+                  `预计今天的最高气温为${tempMax}摄氏度，今晚的最低气温为${tempMin}摄氏度。` +
+                  `西南风速为每小时${windSpeed}米。湿度为${humidity}%。` +
+                  `能见度为${visibility}公里。`;
+
+    if (temperature >= 25) {
+        message += `紫外线指数较高，如果外出，请记得涂防晒霜。`;
+    } else if (temperature >= 16 && temperature < 25) {
+        message += `紫外线指数适中，如果外出，建议涂防晒霜。`;
+    } else if (temperature >= 5 && temperature < 16) {
+        message += `当前天气较冷，外出时请注意保暖。`;
+    } else {
+        message += `当前天气非常寒冷，外出时请注意防寒保暖。`;
+    }
+
+    if (weatherDescription.includes('雨') || weatherDescription.includes('阵雨') || weatherDescription.includes('雷暴')) {
+        message += `建议您外出时携带雨伞。`;
+    }
+
+    message += `请注意安全，保持好心情，祝您有美好的一天！`;
+
+    speakMessage(message);
+    }
+
+    function fetchWeather() {
+        if (!weatherEnabled || !systemEnabled) return;
+        
+        const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=zh_cn`; 
+        fetch(apiUrl)
+            .then(response => response.ok ? response.json() : Promise.reject('网络响应不正常'))
+            .then(data => {
+                if (data.weather && data.main) {
+                    speakWeather(data);
+                } else {
+                    console.error('无法获取天气数据');
+                }
+            })
+            .catch(error => console.error('获取天气数据时出错:', error));
+    }
+
+    function showNotification(message) {
+        var notification = document.createElement('div');
+        notification.style.position = 'fixed';
+        notification.style.top = '10px';
+        notification.style.left = '10px';
+        notification.style.backgroundColor = '#4CAF50';  
+        notification.style.color = '#fff';
+        notification.style.padding = '10px';
+        notification.style.borderRadius = '5px';
+        notification.style.zIndex = '9999';
+        notification.innerText = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(function() {
+            notification.style.display = 'none';
+        }, 6000); 
+    }
+
+    function saveCity() {
+        const cityInput = document.getElementById('city-input').value.trim();
+        const chineseCharPattern = /[\u4e00-\u9fff]/;
+        const startsWithUppercasePattern = /^[A-Z]/;
+        if (chineseCharPattern.test(cityInput)) {
+            speakMessage('请输入非中文的城市名称。');
+        } else if (!startsWithUppercasePattern.test(cityInput)) {
+            speakMessage('城市名称必须以大写英文字母开头。');
+        } else if (cityInput) {
+            city = cityInput;
+            localStorage.setItem('city', city); 
+            showNotification(`城市已保存为：${city}`);
+            speakMessage(`城市已保存为${city}，正在获取最新天气信息...`);
+            fetchWeather();
+            const cityModal = bootstrap.Modal.getInstance(document.getElementById('cityModal'));
+            cityModal.hide();
+        } else {
+            speakMessage('请输入有效的城市名称。');
+        }
+    }
+
+    window.onload = function() {
+        const storedCity = localStorage.getItem('city');
+        if (storedCity) {
+            city = storedCity;
+            document.getElementById('current-city').style.display = 'block';
+            document.getElementById('city-name').textContent = city
+        }
+    };
+
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.shiftKey && event.key === 'X') {
+            const cityModal = new bootstrap.Modal(document.getElementById('cityModal'));
+            cityModal.show();
+        }
+
+        if (event.key === 'F4') {
+            fetchWeather();
+        }
+    });
+
+    document.getElementById('saveCityBtn').addEventListener('click', saveCity);
+
+</script>
+
+<style>
+    .animated-box {
+        width: 50px;
+        height: 50px;
+        margin: 10px;
+        background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+        border-radius: 10px;
+        position: absolute;
+        animation: complex-animation 5s infinite alternate ease-in-out;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes complex-animation {
+        0% {
+            transform: rotate(0deg) scale(1);
+            background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+        }
+        25% {
+            transform: rotate(45deg) scale(1.2);
+            background: linear-gradient(135deg, #42a5f5, #66bb6a);
+        }
+        50% {
+            transform: rotate(90deg) scale(0.8);
+            background: linear-gradient(225deg, #ab47bc, #ff7043);
+        }
+        75% {
+            transform: rotate(135deg) scale(1.5);
+            background: linear-gradient(315deg, #29b6f6, #8e24aa);
+        }
+        100% {
+            transform: rotate(180deg) scale(1);
+            background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+        }
+    }
+</style>
+
+<script>
+    (function() {
+        let isAnimationActive = localStorage.getItem('animationActive') === 'true';
+        let intervalId;
+
+        function createAnimatedBox() {
+            const box = document.createElement('div');
+            box.className = 'animated-box';
+            document.body.appendChild(box);
+            const randomX = Math.random() * window.innerWidth;
+            const randomY = Math.random() * window.innerHeight;
+            box.style.left = randomX + 'px';
+            box.style.top = randomY + 'px';
+            const randomDuration = Math.random() * 3 + 3;
+            box.style.animationDuration = randomDuration + 's';
+            setTimeout(() => {
+                box.remove();
+            }, randomDuration * 1000);
+        }
+
+        function startAnimation() {
+            intervalId = setInterval(() => {
+                createAnimatedBox();
+            }, 1000);
+            localStorage.setItem('animationActive', 'true');
+        }
+
+        function stopAnimation() {
+            clearInterval(intervalId);
+            localStorage.setItem('animationActive', 'false');
+        }
+
+        function showNotification(message) {
+            var notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.top = '10px';
+            notification.style.right = '30px';
+            notification.style.backgroundColor = '#4CAF50';
+            notification.style.color = '#fff';
+            notification.style.padding = '10px';
+            notification.style.borderRadius = '5px';
+            notification.style.zIndex = '9999';
+            notification.innerText = message;
+            document.body.appendChild(notification);
+
+            setTimeout(function() {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
+        window.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'F10') {
+                isAnimationActive = !isAnimationActive;
+                if (isAnimationActive) {
+                    startAnimation();
+                    showNotification('动画已启动');
+                } else {
+                    stopAnimation();
+                    showNotification('动画已停止');
+                }
+            }
+        });
+
+        if (isAnimationActive) {
+            startAnimation();
+        }
+    })();
+</script>
+
+<style>
+    .snowflake {
+        position: absolute;
+        top: -10px;
+        width: 10px;
+        height: 10px;
+        background-color: white;
+        border-radius: 50%;
+        animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+        0% {
+            transform: translateY(0) rotate(0deg); 
+        }
+        100% {
+            transform: translateY(100vh) rotate(360deg); 
+        }
+    }
+
+    .snowflake:nth-child(1) {
+        animation-duration: 8s;
+        animation-delay: -2s;
+        left: 10%;
+        width: 12px;
+        height: 12px;
+    }
+
+    .snowflake:nth-child(2) {
+        animation-duration: 10s;
+        animation-delay: -3s;
+        left: 20%;
+        width: 8px;
+        height: 8px;
+    }
+
+    .snowflake:nth-child(3) {
+        animation-duration: 12s;
+        animation-delay: -1s;
+        left: 30%;
+        width: 15px;
+        height: 15px;
+    }
+
+    .snowflake:nth-child(4) {
+        animation-duration: 9s;
+        animation-delay: -5s;
+        left: 40%;
+        width: 10px;
+        height: 10px;
+    }
+
+    .snowflake:nth-child(5) {
+        animation-duration: 11s;
+        animation-delay: -4s;
+        left: 50%;
+        width: 14px;
+        height: 14px;
+    }
+
+    .snowflake:nth-child(6) {
+        animation-duration: 7s;
+        animation-delay: -6s;
+        left: 60%;
+        width: 9px;
+        height: 9px;
+    }
+
+    .snowflake:nth-child(7) {
+        animation-duration: 8s;
+        animation-delay: -7s;
+        left: 70%;
+        width: 11px;
+        height: 11px;
+    }
+
+    .snowflake:nth-child(8) {
+        animation-duration: 10s;
+        animation-delay: -8s;
+        left: 80%;
+        width: 13px;
+        height: 13px;
+    }
+
+    .snowflake:nth-child(9) {
+        animation-duration: 6s;
+        animation-delay: -9s;
+        left: 90%;
+        width: 10px;
+        height: 10px;
+    }
+</style>
+
+<script>
+    function createSnowflakes() {
+        for (let i = 0; i < 80; i++) {
+            let snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+                
+            let size = Math.random() * 10 + 5 + 'px';  
+            snowflake.style.width = size;
+            snowflake.style.height = size;
+                
+            let speed = Math.random() * 3 + 2 + 's'; 
+            snowflake.style.animationDuration = speed;
+
+            let rotate = Math.random() * 360 + 'deg'; 
+            let rotateSpeed = Math.random() * 5 + 2 + 's'; 
+            snowflake.style.animationName = 'fall';
+            snowflake.style.animationDuration = speed;
+            snowflake.style.animationTimingFunction = 'linear';
+            snowflake.style.animationIterationCount = 'infinite';
+
+            let leftPosition = Math.random() * 100 + 'vw';  
+            snowflake.style.left = leftPosition;
+
+            snowflake.style.animationDelay = Math.random() * 5 + 's';  
+
+            document.body.appendChild(snowflake);
+        }
+    }
+
+    function stopSnowflakes() {
+        let snowflakes = document.querySelectorAll('.snowflake');
+        snowflakes.forEach(snowflake => snowflake.remove());
+    }
+
+    function showNotification(message) {
+        var notification = document.createElement('div');
+        notification.style.position = 'fixed';
+        notification.style.top = '10px';
+        notification.style.right = '30px';
+        notification.style.backgroundColor = '#4CAF50';
+        notification.style.color = '#fff';
+        notification.style.padding = '10px';
+        notification.style.borderRadius = '5px';
+        notification.style.zIndex = '9999';
+        notification.innerText = message;
+        document.body.appendChild(notification);
+        setTimeout(function() {
+            notification.style.display = 'none';
+        }, 5000);
+    }
+
+    function getSnowingState() {
+        return localStorage.getItem('isSnowing') === 'true';
+    }
+
+    function saveSnowingState(state) {
+        localStorage.setItem('isSnowing', state);
+    }
+
+    let isSnowing = getSnowingState();
+
+    if (isSnowing) {
+        createSnowflakes();  
+    }
+
+    window.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.key === 'F6') {
+            isSnowing = !isSnowing;
+            saveSnowingState(isSnowing);
+            if (isSnowing) {
+                createSnowflakes(); 
+                showNotification('雪花动画已启动');
+            } else {
+                stopSnowflakes(); 
+                showNotification('雪花动画已停止');
+            }
+        }
+    });
+</script>
+
+<style>
+.floating-light {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255, 87, 51, 0.7), 0 0 20px rgba(255, 87, 51, 0.5);
+    transform: translateX(-50%);
+    animation: float-random 5s ease-in-out infinite;
+}
+
+.floating-light.color-1 {
+    background-color: #ff5733; 
+}
+
+.floating-light.color-2 {
+    background-color: #33ff57; 
+}
+
+.floating-light.color-3 {
+    background-color: #5733ff; 
+}
+
+.floating-light.color-4 {
+    background-color: #f5f533; 
+}
+
+.floating-light.color-5 {
+    background-color: #ff33f5; 
+}
+
+@keyframes float-random {
+    0% {
+        transform: translateX(var(--start-x)) translateY(var(--start-y)) rotate(var(--start-rotation));
+    }
+    100% {
+        transform: translateX(var(--end-x)) translateY(var(--end-y)) rotate(var(--end-rotation));
+    }
+}
+</style>
+<script>
+(function() {
+    let isLightAnimationActive = localStorage.getItem('lightAnimationStatus') === 'true'; 
+    let intervalId;
+    const colors = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5']; 
+
+    if (isLightAnimationActive) {
+        startLightAnimation(false);  
+    }
+
+    function createLightBox() {
+        const lightBox = document.createElement('div');
+        const randomColor = colors[Math.floor(Math.random() * colors.length)]; 
+        lightBox.classList.add('floating-light', randomColor);
+        
+        const startX = Math.random() * 100 - 50 + 'vw';  
+        const startY = Math.random() * 100 - 50 + 'vh';  
+        const endX = Math.random() * 100 - 50 + 'vw';  
+        const endY = Math.random() * 100 - 50 + 'vh';  
+        const rotation = Math.random() * 360 + 'deg';   
+
+        lightBox.style.setProperty('--start-x', startX);
+        lightBox.style.setProperty('--start-y', startY);
+        lightBox.style.setProperty('--end-x', endX);
+        lightBox.style.setProperty('--end-y', endY);
+        lightBox.style.setProperty('--start-rotation', rotation);
+        lightBox.style.setProperty('--end-rotation', Math.random() * 360 + 'deg');
+        
+        document.body.appendChild(lightBox);
+
+        setTimeout(() => {
+            lightBox.remove();
+        }, 5000); 
+    }
+
+    function startLightAnimation(showLog = true) {
+        intervalId = setInterval(createLightBox, 400); 
+        localStorage.setItem('lightAnimationStatus', 'true');  
+        if (showLog) showNotification('方块灯光动画已启动');
+    }
+
+    function stopLightAnimation(showLog = true) {
+        clearInterval(intervalId);
+        const allLights = document.querySelectorAll('.floating-light');
+        allLights.forEach(light => light.remove()); 
+        localStorage.setItem('lightAnimationStatus', 'false');  
+        if (showLog) showNotification('方块灯光动画已停止');
+    }
+
+    function showNotification(message) {
+        var notification = document.createElement('div');
+        notification.style.position = 'fixed';
+        notification.style.top = '10px';
+        notification.style.right = '30px';
+        notification.style.backgroundColor = '#4CAF50';
+        notification.style.color = '#fff';
+        notification.style.padding = '10px';
+        notification.style.borderRadius = '5px';
+        notification.style.zIndex = '9999';
+        notification.innerText = message;
+        document.body.appendChild(notification);
+
+        setTimeout(function() {
+            notification.style.display = 'none';
+        }, 5000);
+    }
+
+    window.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.key === 'F7') {
+            isLightAnimationActive = !isLightAnimationActive;
+            if (isLightAnimationActive) {
+                startLightAnimation(); 
+            } else {
+                stopLightAnimation();   
+            }
+        }
+    });
+})();
+</script>
+
+<style>
+@keyframes lightPulse {
+    0% {
+        transform: scale(0.5);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+.light-point {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2));
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    animation: lightPulse 3s linear infinite;
+}
+</style>
+
+<script>
+(function () {
+    let isLightEffectActive = localStorage.getItem('lightEffectAnimation') === 'true';
+    let lightInterval;
+
+    function createLightPoint() {
+        const lightPoint = document.createElement('div');
+        lightPoint.className = 'light-point';
+
+        const posX = Math.random() * window.innerWidth;
+        const posY = Math.random() * window.innerHeight;
+
+        lightPoint.style.left = `${posX}px`;
+        lightPoint.style.top = `${posY}px`;
+
+        const colors = ['#ffcc00', '#00ccff', '#ff6699', '#99ff66', '#cc99ff'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        lightPoint.style.background = `radial-gradient(circle, ${randomColor}, rgba(255, 255, 255, 0.1))`;
+
+        document.body.appendChild(lightPoint);
+        setTimeout(() => {
+            lightPoint.remove();
+        }, 3000); 
+    }
+
+    function startLightEffect(showLog = true) {
+        if (lightInterval) clearInterval(lightInterval);
+        lightInterval = setInterval(createLightPoint, 200); 
+        localStorage.setItem('lightEffectAnimation', 'true');
+        if (showLog) showNotification('光点动画已开启');
+    }
+
+    function stopLightEffect(showLog = true) {
+        clearInterval(lightInterval);
+        document.querySelectorAll('.light-point').forEach((light) => light.remove());
+        localStorage.setItem('lightEffectAnimation', 'false');
+        if (showLog) showNotification('光点动画已关闭');
+    }
+
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.position = 'fixed';
+        notification.style.top = '10px';
+        notification.style.right = '10px';
+        notification.style.padding = '10px';
+        notification.style.backgroundColor = '#4CAF50';
+        notification.style.color = '#fff';
+        notification.style.borderRadius = '5px';
+        notification.style.zIndex = 9999;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    window.addEventListener('keydown', function (event) {
+        if (event.ctrlKey && event.key === 'F11') {
+            isLightEffectActive = !isLightEffectActive;
+            if (isLightEffectActive) {
+                startLightEffect();
+            } else {
+                stopLightEffect();
+            }
+        }
+    });
+
+    if (isLightEffectActive) {
+        startLightEffect(false);
+    }
+})();
+</script>
 

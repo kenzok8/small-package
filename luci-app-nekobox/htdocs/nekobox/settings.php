@@ -20,7 +20,6 @@ if(isset($_POST['fw'])){
     if ($dt == 'disable') shell_exec("uci set neko.cfg.new_interface='0' && uci commit neko");
 }
 $fwstatus=shell_exec("uci get neko.cfg.new_interface");
-$enableSnow = false;
 ?>
 <?php
 function getSingboxVersion() {
@@ -269,8 +268,8 @@ $razordVersion = getRazordVersion();
                 </tr>
                 <tr>
                     <td class="text-center">
-                        <button class="btn btn-pink me-1" id="checkCliverButton">🔍 检测版本</button>
-                        <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showVersionTypeModal()">🔄 更新版本</button>
+                        <button class="btn btn-pink me-1" id="checkCliverButton"><i class="bi bi-search"></i> 检测版本</button>
+                        <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showVersionTypeModal()"><i class="bi bi-arrow-repeat"></i> 更新版本</button>
                     </td>
                 </tr>
             </tbody>
@@ -291,8 +290,8 @@ $razordVersion = getRazordVersion();
                 </tr>
                 <tr>
                     <td class="text-center">
-                        <button class="btn btn-pink me-1" id="checkUiButton">🔍 检测版本</button>
-                        <button class="btn btn-info" id="updateUiButton" title="更新面板" onclick="showPanelSelector()">🔄 更新版本</button>
+                        <button class="btn btn-pink me-1" id="checkUiButton"><i class="bi bi-search"></i> 检测版本</button>
+                        <button class="btn btn-info" id="updateUiButton" title="更新面板" onclick="showPanelSelector()"><i class="bi bi-arrow-repeat"></i> 更新版本</button>
                     </td>
                 </tr>
             </tbody>
@@ -317,8 +316,8 @@ $razordVersion = getRazordVersion();
                 </tr>
                 <tr>
                     <td class="text-center">
-                        <button class="btn btn-pink me-1" id="checkSingboxButton">🔍 检测版本</button>
-                        <button class="btn btn-info" id="singboxOptionsButton" title="Singbox 相关操作">🔄 更新版本</button>
+                        <button class="btn btn-pink me-1" id="checkSingboxButton"><i class="bi bi-search"></i> 检测版本</button>
+                        <button class="btn btn-info" id="singboxOptionsButton" title="Singbox 相关操作"><i class="bi bi-arrow-repeat"></i> 更新版本</button>
                     </td>
                 </tr>
             </tbody>
@@ -339,8 +338,8 @@ $razordVersion = getRazordVersion();
                 </tr>
                 <tr>
                     <td class="text-center">
-                        <button class="btn btn-pink me-1" id="checkMihomoButton">🔍 检测版本</button>
-                        <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核" onclick="showMihomoVersionSelector()">🔄 更新版本</button>
+                        <button class="btn btn-pink me-1" id="checkMihomoButton"><i class="bi bi-search"></i> 检测版本</button>
+                        <button class="btn btn-info" id="updateCoreButton" title="更新 Mihomo 内核" onclick="showMihomoVersionSelector()"><i class="bi bi-arrow-repeat"></i> 更新版本</button>
                     </td>
                 </tr>
             </tbody>
@@ -725,10 +724,6 @@ $razordVersion = getRazordVersion();
               <input type="color" class="form-control" name="heading6Color" id="heading6Color" value="#00ffff">
             </div>
           </div>
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" id="enableSnowEffect" name="enableSnowEffect" <?php echo $enableSnow ? 'checked' : ''; ?>>
-              <label class="form-check-label" for="enableSnowEffect">启用雪花动画（Ctrl + F6快捷键启用/禁用）</label>
-          </div>
           <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="useBackgroundImage" name="useBackgroundImage">
             <label class="form-check-label" for="useBackgroundImage">使用自定义背景图片</label>
@@ -824,51 +819,6 @@ $razordVersion = getRazordVersion();
             localStorage.setItem('lastTooltipShownTime', currentTime);
         }
     };
-</script>
-
-<script>
-document.getElementById('enableSnowEffect').addEventListener('change', function() {
-    toggleSnowEffect(this.checked);
-});
-
-
-document.addEventListener('keydown', function(event) {
-    if (event.ctrlKey && event.code === 'F6') {
-        var checkbox = document.getElementById('enableSnowEffect');
-        checkbox.checked = !checkbox.checked;  
-        toggleSnowEffect(checkbox.checked);
-
-        var message = checkbox.checked ? '已启用雪花效果' : '已禁用雪花效果';
-        showNotification(message);
-    }
-});
-
-function toggleSnowEffect(isChecked) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'save_snow_status.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.send('enableSnowEffect=' + (isChecked ? '1' : '0'));
-    var message = isChecked ? '已启用' : '已禁用';
-    console.log(message);
-    showNotification(message);
-}
-
-function showNotification(message) {
-    var notification = document.createElement('div');
-    notification.style.position = 'fixed';
-    notification.style.top = '10px';
-    notification.style.right = '30px';
-    notification.style.backgroundColor = '#4CAF50';
-    notification.style.color = '#fff';
-    notification.style.padding = '10px';
-    notification.style.borderRadius = '5px';
-    notification.style.zIndex = '9999';
-    notification.innerText = message;
-    document.body.appendChild(notification);
-    setTimeout(function() {
-        notification.style.display = 'none';
-    }, 5000); 
-}
 </script>
 
 <div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
