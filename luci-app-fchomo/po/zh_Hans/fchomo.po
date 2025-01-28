@@ -803,12 +803,12 @@ msgstr "兜底 DNS 服务器"
 #: htdocs/luci-static/resources/view/fchomo/client.js:917
 #: htdocs/luci-static/resources/view/fchomo/client.js:931
 msgid "Final DNS server (For non-poisoned domains)"
-msgstr "兜底 DNS 服务器  (用于未被污染的域名)"
+msgstr "兜底 DNS 服务器  (用于未被投毒污染的域名)"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:924
 #: htdocs/luci-static/resources/view/fchomo/client.js:932
 msgid "Final DNS server (For poisoned domains)"
-msgstr "兜底 DNS 服务器  (用于已被污染的域名)"
+msgstr "兜底 DNS 服务器  (用于已被投毒污染的域名)"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:294
 msgid "Flow"
@@ -2180,13 +2180,13 @@ msgstr "默认值为每天 2:00。"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1168
 msgid "The matching <code>%s</code> will be deemed as not-poisoned."
-msgstr "匹配的 <code>%s</code> 将被视为未被污染。"
+msgstr "匹配 <code>%s</code> 的将被视为未被投毒污染。"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1177
 #: htdocs/luci-static/resources/view/fchomo/client.js:1181
 #: htdocs/luci-static/resources/view/fchomo/client.js:1186
 msgid "The matching <code>%s</code> will be deemed as poisoned."
-msgstr "匹配的 <code>%s</code> 将被视为已被污染。"
+msgstr "匹配 <code>%s</code> 的将被视为已被投毒污染。"
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:313
 msgid "The server private key, in PEM format."
