@@ -1159,6 +1159,7 @@ function clearCache() {
     sessionStorage.setItem('cacheCleared', 'true');
 
     showNotification('缓存已清除');
+    speakMessage('缓存已清除');
 }
 
 function showNotification(message) {
@@ -1183,6 +1184,7 @@ function showNotification(message) {
 window.addEventListener('load', function() {
     if (sessionStorage.getItem('cacheCleared') === 'true') {
         showNotification('缓存已清除');
+        speakMessage('缓存已清除');
         sessionStorage.removeItem('cacheCleared'); 
     }
 });
@@ -1243,6 +1245,7 @@ window.addEventListener('load', function() {
             .then(response => {
                 if (!response.ok) {
                     throw new Error('加载播放列表失败');
+                    speakMessage('加载播放列表失败');
                 }
                 return response.text();
             })
@@ -1283,6 +1286,7 @@ window.addEventListener('load', function() {
                 isPlaying = true;
                 savePlayerState(); 
                 console.log('开始播放');
+                speakMessage('开始播放');
             }).catch(error => {
                 console.log('播放失败:', error);
             });
@@ -1291,6 +1295,7 @@ window.addEventListener('load', function() {
             isPlaying = false;
             savePlayerState(); 
             console.log('播放已暂停');
+            speakMessage('播放已暂停');
         }
     });
 
@@ -1304,6 +1309,7 @@ window.addEventListener('load', function() {
             }
             const songName = getSongName(songs[currentSongIndex]); 
             showLogMessage(`上一首：${songName}`);
+            speakMessage('上一首');
         } else if (event.key === 'ArrowDown') {
             currentSongIndex = (currentSongIndex + 1) % songs.length; 
             loadSong(currentSongIndex);
@@ -1313,6 +1319,7 @@ window.addEventListener('load', function() {
             }
             const songName = getSongName(songs[currentSongIndex]); 
             showLogMessage(`下一首：${songName}`);
+            speakMessage('下一首');
         } else if (event.key === 'ArrowLeft') {
             audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0); 
             console.log('快退 10 秒');
@@ -1330,6 +1337,7 @@ window.addEventListener('load', function() {
             savePlayerState();
             console.log('恢复到第一首');
             showLogMessage('恢复到第一首');
+            speakMessage('已返回播放列表的第一首');
             if (isPlaying) {
                 audioPlayer.play();
             }
@@ -1340,12 +1348,14 @@ window.addEventListener('load', function() {
                 savePlayerState(); 
                 console.log('暂停播放');
                 showLogMessage('暂停播放');
+                speakMessage('暂停播放');
             } else {
                 audioPlayer.play().then(() => {
                     isPlaying = true;
                     savePlayerState(); 
                     console.log('开始播放');
                     showLogMessage('开始播放');
+                    speakMessage('开始播放');
                 }).catch(error => {
                     console.log('播放失败:', error);
                 });
@@ -1355,9 +1365,11 @@ window.addEventListener('load', function() {
             if (isLooping) {
                 console.log('循环播放');
                 showLogMessage('循环播放');
+                speakMessage('循环播放');
             } else {
                 console.log('顺序播放');
                 showLogMessage('顺序播放');
+                speakMessage('顺序播放');
             }
         }
     });
@@ -1492,6 +1504,7 @@ window.addEventListener('load', function() {
         if (event.ctrlKey && event.shiftKey && event.key === 'V') {
             var urlModal = new bootstrap.Modal(document.getElementById('urlModal'));
             urlModal.show();
+            speakMessage('打开定制播放列表');
         }
     });
 
@@ -1640,7 +1653,7 @@ window.addEventListener('load', function() {
                     requestsCompleted++;
                     if (requestsCompleted === urls.length) {
                         speakMessage(statusMessages.join(' '));  
-                        speakMessage('网站检查已完毕'); 
+                        speakMessage('网站检查已完毕，感谢使用。'); 
                     }
                 });
         });
@@ -1656,7 +1669,7 @@ window.addEventListener('load', function() {
     document.addEventListener('keydown', function(event) {
         if (event.key === 'F8' && !isDetectionStarted) {  
             event.preventDefault();  
-            speakMessage('开始检测网站连通性...');
+            speakMessage('网站检测已开启，开始检测网站连通性...');
             checkWebsiteAccess(websites);
             isDetectionStarted = true;
         }
@@ -1795,10 +1808,12 @@ function speakWeather(weather) {
         if (event.ctrlKey && event.shiftKey && event.key === 'X') {
             const cityModal = new bootstrap.Modal(document.getElementById('cityModal'));
             cityModal.show();
+            speakMessage('打开城市设置');
         }
 
         if (event.key === 'F4') {
             fetchWeather();
+            speakMessage('天气播报已开启');
         }
     });
 
@@ -1897,10 +1912,12 @@ function speakWeather(weather) {
                 isAnimationActive = !isAnimationActive;
                 if (isAnimationActive) {
                     startAnimation();
-                    showNotification('动画已启动');
+                    showNotification('方块动画已启动');
+                    speakMessage('方块动画已启动');
                 } else {
                     stopAnimation();
-                    showNotification('动画已停止');
+                    showNotification('方块动画已停止');
+                    speakMessage('方块动画已停止');
                 }
             }
         });
@@ -2076,9 +2093,11 @@ function speakWeather(weather) {
             if (isSnowing) {
                 createSnowflakes(); 
                 showNotification('雪花动画已启动');
+                speakMessage('雪花动画已启动');
             } else {
                 stopSnowflakes(); 
                 showNotification('雪花动画已停止');
+                speakMessage('雪花动画已停止');
             }
         }
     });
@@ -2198,8 +2217,10 @@ function speakWeather(weather) {
             isLightAnimationActive = !isLightAnimationActive;
             if (isLightAnimationActive) {
                 startLightAnimation(); 
+                speakMessage('方块灯光动画已启动');
             } else {
                 stopLightAnimation();   
+                speakMessage('方块灯光动画已停止');
             }
         }
     });
@@ -2296,8 +2317,10 @@ function speakWeather(weather) {
             isLightEffectActive = !isLightEffectActive;
             if (isLightEffectActive) {
                 startLightEffect();
+                speakMessage('光点动画已启动');
             } else {
                 stopLightEffect();
+                speakMessage('光点动画已关闭');
             }
         }
     });
