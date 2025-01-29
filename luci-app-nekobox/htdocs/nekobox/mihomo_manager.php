@@ -173,17 +173,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['downloadFile'], $_GET['
 ?>
 
 <?php
+session_start();
+
 $subscriptionPath = '/etc/neko/proxy_provider/';
 $subscriptionFile = $subscriptionPath . 'subscriptions.json';
-$message = "";
+$notificationMessage = "";
 $subscriptions = [];
 $updateCompleted = false;
 
-function outputMessage($message) {
-    if (!isset($_SESSION['update_messages'])) {
-        $_SESSION['update_messages'] = [];
+function storeUpdateLog($message) {
+    if (!isset($_SESSION['update_logs'])) {
+        $_SESSION['update_logs'] = [];
     }
-    $_SESSION['update_messages'][] = $message;
+    $_SESSION['update_logs'][] = $message;
 }
 
 if (!file_exists($subscriptionPath)) {
@@ -224,41 +226,35 @@ if (isset($_POST['update'])) {
         }
 
         if ($return_var === 0) {
-            $_SESSION['update_messages'] = array();
-            $_SESSION['update_messages'][] = '<div class="alert alert-warning" style="margin-bottom: 8px;">
-                <strong>⚠️ 使用说明：</strong>
-                <ul class="mb-0 pl-3">
-                    <li>通用模板（mihomo.yaml）最多支持<strong>6个</strong>订阅链接</li>
-                    <li>请勿更改默认文件名称</li>
-                    <li>该模板支持所有格式订阅链接，无需额外转换</li>
-                </ul>
-            </div>';
+            $_SESSION['update_logs'] = array();
+            storeUpdateLog('<strong>✅ 更新成功:</strong> 订阅 ' . htmlspecialchars($url) . ' 已下载并保存为 ' . htmlspecialchars($customFileName));
 
             $fileContent = file_get_contents($finalPath);
             $decodedContent = base64_decode($fileContent);
 
             if ($decodedContent === false) {
-                $_SESSION['update_messages'][] = "Base64 解码失败，请检查下载的文件内容是否有效！";
-                $message = "Base64 解码失败";
+                storeUpdateLog("⚠️ Base64 解码失败，请检查下载的文件内容是否有效！");
+                $notificationMessage = "Base64 解码失败";
             } else {
                 $clashFile = $subscriptionPath . $customFileName;
                 file_put_contents($clashFile, "# Clash Meta Config\n\n" . $decodedContent);
-                $_SESSION['update_messages'][] = "订阅链接 {$url} 更新成功，并解码内容保存到: {$clashFile}";
-                $message = '更新成功';
+                storeUpdateLog("📂 配置已解码并保存到: " . htmlspecialchars($clashFile));
+                $notificationMessage = '更新成功';
                 $updateCompleted = true;
             }
         } else {
-            $_SESSION['update_messages'][] = "配置更新失败！错误信息: " . implode("\n", $output);
-            $message = '更新失败';
+            storeUpdateLog("❌ 配置更新失败！错误信息: " . implode("\n", $output));
+            $notificationMessage = '更新失败';
         }
     } else {
-        $_SESSION['update_messages'][] = "第" . ($index + 1) . "个订阅链接为空！";
-        $message = '更新失败';
+        storeUpdateLog("⚠️ 订阅链接为空！");
+        $notificationMessage = '更新失败';
     }
 
     file_put_contents($subscriptionFile, json_encode($subscriptions));
-    }
+}
 ?>
+
 <?php
 $shellScriptPath = '/etc/neko/core/update_mihomo.sh';
 $LOG_FILE = '/etc/neko/tmp/log.txt'; 
@@ -440,13 +436,24 @@ function download_file($url, $destination) {
     </script>
 <?php endif; ?>
 <body>
-<div class="position-fixed w-100 d-flex justify-content-center" style="top: 20px; z-index: 1050;">
-    <div id="updateAlert" class="alert alert-success alert-dismissible fade show" role="alert" style="display: none; min-width: 300px; max-width: 600px;">
+<div class="position-fixed w-100 d-flex flex-column align-items-center" style="top: 20px; z-index: 1050;">
+    <div id="updateNotification" class="alert alert-info alert-dismissible fade show shadow-lg" role="alert" style="display: none; min-width: 320px; max-width: 600px; opacity: 0.95;">
         <div class="d-flex align-items-center">
             <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-            <strong>更新完成</strong>
+            <strong>🔔 更新通知</strong>
         </div>
-        <div id="updateMessages" class="small mt-2"></div>
+        
+        <div class="alert alert-info mt-2 p-2 small">
+            <strong>⚠️ 使用说明：</strong>
+            <ul class="mb-0 pl-3">
+                <li>通用模板（mihomo.yaml）最多支持<strong>6个</strong>订阅链接</li>
+                <li>请勿更改默认文件名称</li>
+                <li>该模板支持所有格式订阅链接，无需额外转换</li>
+            </ul>
+        </div>
+
+        <div id="updateLogContainer" class="small mt-2"></div>
+
         <button type="button" class="btn-close custom-btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 </div>
@@ -544,32 +551,66 @@ html {
 .upload-icon {
     font-size: 1.5rem; 
 }
+
+@media (max-width: 768px) {
+    .table thead {
+        display: none; 
+    }
+
+    .table tbody, 
+    .table tr, 
+    .table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table td::before {
+        content: attr(data-label); 
+        font-weight: bold;
+        display: block;
+        text-transform: uppercase;
+        color: #23407E; 
+    }
+
+    .table tr {
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+}
+
+.container {
+    padding-left: 1.4em;  
+    padding-right: 1.4em; 
+}
+
 </style>
 
 <script>
-function showUpdateAlert() {
-    const alert = $('#updateAlert');
-    const messages = <?php echo json_encode($_SESSION['update_messages'] ?? []); ?>;
+function displayUpdateNotification() {
+    const notification = $('#updateNotification');
+    const updateLogs = <?php echo json_encode($_SESSION['update_logs'] ?? []); ?>;
     
-    if (messages.length > 0) {
-        const messagesHtml = messages.map(msg => `<div>${msg}</div>`).join('');
-        $('#updateMessages').html(messagesHtml);
+    if (updateLogs.length > 0) {
+        const logsHtml = updateLogs.map(log => `<div>${log}</div>`).join('');
+        $('#updateLogContainer').html(logsHtml);
     }
     
-    alert.show().addClass('show');
+    notification.fadeIn().addClass('show');
     
     setTimeout(function() {
-        alert.removeClass('show');
-        setTimeout(function() {
-            alert.hide();
-            $('#updateMessages').html('');
-        }, 150);
-    }, 12000);
+        notification.fadeOut(300, function() {
+            notification.hide();
+            $('#updateLogContainer').html('');
+        });
+    }, 10000);
 }
 
-<?php if (!empty($message)): ?>
+<?php if (!empty($notificationMessage)): ?>
     $(document).ready(function() {
-        showUpdateAlert();
+        displayUpdateNotification();
     });
 <?php endif; ?>
 </script>
@@ -610,16 +651,16 @@ function showUpdateAlert() {
                     $fileType = $fileTypes[$index];
                 ?>
                     <tr>
-                        <td class="align-middle">
+                        <td class="align-middle" data-label="文件名">
                             <a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a>
                         </td>
-                        <td class="align-middle">
+                        <td class="align-middle" data-label="大小">
                             <?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?>
                         </td>
-                        <td class="align-middle">
+                        <td class="align-middle" data-label="最后修改时间">
                             <?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?>
                         </td>
-                        <td class="align-middle">
+                        <td class="align-middle" data-label="文件类型">
                             <?php echo htmlspecialchars($fileType); ?>
                         </td>
                         <td class="align-middle">
