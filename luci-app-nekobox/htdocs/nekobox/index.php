@@ -791,6 +791,7 @@ $(document).ready(function() {
 </script>
 <h2 class="royal-style">NekoBox</h2>
 <style>
+
     .nav-pills .nav-link {
         background-color: transparent !important;
         color: inherit;
@@ -823,31 +824,19 @@ $(document).ready(function() {
        margin-bottom: 20px;
    }
 
-   @media (max-width: 1024px) {
-       td:first-child {
-       display: block;
-       width: 100%;
-       font-weight: bold;
-       margin-bottom: 5px;
-    }
-    
-   td:last-child {
-       display: block;
-       width: 100%;
+   @media (max-width: 768px) {
+      .section-container {
+         padding-left: 15px;
+         padding-right: 15px;
+      }
    }
 
-   .btn-group .btn {
-       font-size: 0.475rem;
-       white-space: nowrap;
-       padding: 0.375rem 0.5rem;
+   @media (max-width: 768px) {
+      tr {
+          margin-bottom: 15px;
+          display: block;
+      }
    }
-
-   tr {
-       margin-bottom: 15px;
-       display: block;
-   }
-}
-
 </style>
 <div class="section-container">
    <table class="table table-borderless mb-2">
