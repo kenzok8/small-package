@@ -173,8 +173,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['downloadFile'], $_GET['
 ?>
 
 <?php
-session_start();
-
 $subscriptionPath = '/etc/neko/proxy_provider/';
 $subscriptionFile = $subscriptionPath . 'subscriptions.json';
 $notificationMessage = "";
@@ -208,51 +206,77 @@ if (!$subscriptions) {
 
 if (isset($_POST['update'])) {
     $index = intval($_POST['index']);
-    $url = $_POST['subscription_url'] ?? '';
-    $customFileName = $_POST['custom_file_name'] ?? "subscription_" . ($index + 1) . ".yaml";  
+    $url = trim($_POST['subscription_url'] ?? '');
+    $customFileName = trim($_POST['custom_file_name'] ?? "subscription_" . ($index + 1) . ".yaml");  
 
     $subscriptions[$index]['url'] = $url;
     $subscriptions[$index]['file_name'] = $customFileName;
 
     if (!empty($url)) {
+        $tempPath = $subscriptionPath . $customFileName . ".temp";
         $finalPath = $subscriptionPath . $customFileName;
 
-        $command = "wget -q --show-progress -O {$finalPath} {$url}";
+        $command = "curl -s -L -o {$tempPath} {$url}";
         exec($command . ' 2>&1', $output, $return_var);
 
         if ($return_var !== 0) {
-            $command = "curl -s -o {$finalPath} {$url}";
+            $command = "wget -q --show-progress -O {$tempPath} {$url}";
             exec($command . ' 2>&1', $output, $return_var);
         }
 
         if ($return_var === 0) {
-            $_SESSION['update_logs'] = array();
-            storeUpdateLog('<strong>✅ 更新成功:</strong> 订阅 ' . htmlspecialchars($url) . ' 已下载并保存为 ' . htmlspecialchars($customFileName));
+            $_SESSION['update_logs'] = [];
+            storeUpdateLog("✅ 订阅 " . htmlspecialchars($url) . " 已下载并保存到临时文件: " . htmlspecialchars($tempPath));
 
-            $fileContent = file_get_contents($finalPath);
-            $decodedContent = base64_decode($fileContent);
+            $fileContent = file_get_contents($tempPath);
 
-            if ($decodedContent === false) {
-                storeUpdateLog("⚠️ Base64 解码失败，请检查下载的文件内容是否有效！");
-                $notificationMessage = "Base64 解码失败";
-            } else {
-                $clashFile = $subscriptionPath . $customFileName;
-                file_put_contents($clashFile, "# Clash Meta Config\n\n" . $decodedContent);
-                storeUpdateLog("📂 配置已解码并保存到: " . htmlspecialchars($clashFile));
+            if (base64_encode(base64_decode($fileContent, true)) === $fileContent) {
+                $decodedContent = base64_decode($fileContent);
+                if ($decodedContent !== false && strlen($decodedContent) > 0) {
+                    file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decodedContent);
+                    storeUpdateLog("📂 Base64 解码成功，配置已保存到: " . htmlspecialchars($finalPath));
+                    unlink($tempPath); 
+                    $notificationMessage = '更新成功';
+                    $updateCompleted = true;
+                } else {
+                    storeUpdateLog("⚠️ Base64 解码失败，请检查订阅链接内容！");
+                    unlink($tempPath); 
+                    $notificationMessage = '更新失败';
+                }
+            } 
+            elseif (substr($fileContent, 0, 2) === "\x1f\x8b") {
+                $decompressedContent = gzdecode($fileContent);
+                if ($decompressedContent !== false) {
+                    file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decompressedContent);
+                    storeUpdateLog("📂 Gzip 解压成功，配置已保存到: " . htmlspecialchars($finalPath));
+                    unlink($tempPath); 
+                    $notificationMessage = '更新成功';
+                    $updateCompleted = true;
+                } else {
+                    storeUpdateLog("⚠️ Gzip 解压失败，请检查订阅链接格式！");
+                    unlink($tempPath); 
+                    $notificationMessage = '更新失败';
+                }
+            } 
+            else {
+                rename($tempPath, $finalPath); 
+                storeUpdateLog("✅ 订阅内容已成功下载，无需解码");
                 $notificationMessage = '更新成功';
                 $updateCompleted = true;
             }
         } else {
-            storeUpdateLog("❌ 配置更新失败！错误信息: " . implode("\n", $output));
+            storeUpdateLog("❌ 订阅更新失败！错误信息: " . implode("\n", $output));
+            unlink($tempPath); 
             $notificationMessage = '更新失败';
         }
     } else {
-        storeUpdateLog("⚠️ 订阅链接为空！");
+        storeUpdateLog("⚠️ 第" . ($index + 1) . "个订阅链接为空！");
         $notificationMessage = '更新失败';
     }
 
     file_put_contents($subscriptionFile, json_encode($subscriptions));
 }
+
 ?>
 
 <?php
@@ -266,59 +290,82 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $shellScriptContent = <<<EOL
 #!/bin/bash
 
-LOG_FILE="$LOG_FILE"
-JSON_FILE="$JSON_FILE"
-SAVE_DIR="$SAVE_DIR"
+LOG_FILE="/etc/neko/tmp/log.txt"
+JSON_FILE="/etc/neko/proxy_provider/subscriptions.json"
+SAVE_DIR="/etc/neko/proxy_provider"
+
+log() {
+    echo "$(date '+[ %H:%M:%S ]') \$1" >> "\$LOG_FILE"
+}
+
+log "开始处理订阅更新任务..."
 
 if [ ! -f "\$JSON_FILE" ]; then
-    echo "\$(date '+[ %H:%M:%S ]') 错误: JSON 文件不存在: \$JSON_FILE" >> "\$LOG_FILE"
+    log "❌ 错误: JSON 文件不存在: \$JSON_FILE"
     exit 1
 fi
-
-echo "\$(date '+[ %H:%M:%S ]') 开始处理订阅链接..." >> "\$LOG_FILE"
 
 jq -c '.[]' "\$JSON_FILE" | while read -r ITEM; do
     URL=\$(echo "\$ITEM" | jq -r '.url')         
     FILE_NAME=\$(echo "\$ITEM" | jq -r '.file_name')  
 
     if [ -z "\$URL" ] || [ "\$URL" == "null" ]; then
-        echo "\$(date '+[ %H:%M:%S ]') 跳过空的 URL，文件名: \$FILE_NAME" >> "\$LOG_FILE"
+        log "⚠️ 跳过空的订阅链接，文件名: \$FILE_NAME"
         continue
     fi
 
     if [ -z "\$FILE_NAME" ] || [ "\$FILE_NAME" == "null" ]; then
-        echo "\$(date '+[ %H:%M:%S ]') 错误: 文件名为空，跳过此链接: \$URL" >> "\$LOG_FILE"
+        log "❌ 错误: 文件名为空，跳过此链接: \$URL"
         continue
     fi
 
     SAVE_PATH="\$SAVE_DIR/\$FILE_NAME"
     TEMP_PATH="\$SAVE_PATH.temp"  
-    echo "\$(date '+[ %H:%M:%S ]') 正在下载链接: \$URL 到临时文件: \$TEMP_PATH" >> "\$LOG_FILE"
 
-    wget -q -O "\$TEMP_PATH" "\$URL"
+    log "🔄 正在下载: \$URL 到临时文件: \$TEMP_PATH"
+
+    curl -s -L -o "\$TEMP_PATH" "\$URL"
+
+    if [ \$? -ne 0 ]; then
+        wget -q -O "\$TEMP_PATH" "\$URL"
+    fi
 
     if [ \$? -eq 0 ]; then
-        echo "\$(date '+[ %H:%M:%S ]') 文件下载成功: \$TEMP_PATH" >> "\$LOG_FILE"
-        
-        base64 -d "\$TEMP_PATH" > "\$SAVE_PATH"
+        log "✅ 文件下载成功: \$TEMP_PATH"
 
-        if [ \$? -eq 0 ]; then
-            echo "\$(date '+[ %H:%M:%S ]') 文件解码成功: \$SAVE_PATH" >> "\$LOG_FILE"
+        if base64 -d "\$TEMP_PATH" > /dev/null 2>&1; then
+            base64 -d "\$TEMP_PATH" > "\$SAVE_PATH"
+            if [ \$? -eq 0 ]; then
+                log "📂 Base64 解码成功，配置已保存: \$SAVE_PATH"
+                rm -f "\$TEMP_PATH"
+            else
+                log "⚠️ Base64 解码失败: \$SAVE_PATH"
+                rm -f "\$TEMP_PATH"
+            fi
+        elif file "\$TEMP_PATH" | grep -q "gzip compressed"; then
+            gunzip -c "\$TEMP_PATH" > "\$SAVE_PATH"
+            if [ \$? -eq 0 ]; then
+                log "📂 Gzip 解压成功，配置已保存: \$SAVE_PATH"
+                rm -f "\$TEMP_PATH"
+            else
+                log "⚠️ Gzip 解压失败: \$SAVE_PATH"
+                rm -f "\$TEMP_PATH"
+            fi
         else
-            echo "\$(date '+[ %H:%M:%S ]') 错误: 文件解码失败: \$SAVE_PATH" >> "\$LOG_FILE"
+            mv "\$TEMP_PATH" "\$SAVE_PATH"
+            log "✅ 订阅内容已成功下载，无需解码"
         fi
-
-        rm -f "\$TEMP_PATH"
     else
-        echo "\$(date '+[ %H:%M:%S ]') 错误: 文件下载失败: \$URL" >> "\$LOG_FILE"
+        log "❌ 订阅更新失败: \$URL"
+        rm -f "\$TEMP_PATH"
     fi
 done
 
-echo "\$(date '+[ %H:%M:%S ]') 所有订阅链接处理完成。" >> "\$LOG_FILE"
+log "🚀 所有订阅链接更新完成！"
 EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
-            chmod($shellScriptPath, 0755);
+            chmod($shellScriptPath, 0755); 
             echo "<div class='alert alert-success'>Shell 脚本已创建成功！路径: $shellScriptPath</div>";
         } else {
             echo "<div class='alert alert-danger'>无法创建 Shell 脚本，请检查权限。</div>";
@@ -1224,11 +1271,11 @@ function initializeAceEditor() {
             <button type="submit" name="createShellScript" value="true" class="btn btn-success mx-2">
                 <i class="bi bi-terminal"></i> 生成更新脚本
             </button>
-            <button type="button" class="btn btn-warning mx-2" data-bs-toggle="modal" data-bs-target="#downloadModal">
+            <button type="button" class="btn btn-cyan mx-2" data-bs-toggle="modal" data-bs-target="#downloadModal">
                 <i class="bi bi-download"></i> 更新数据库
             </button>
              <td>
-            <a class="btn btn-pink btn-sm text-white mx-2" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
+            <a class="btn btn-orange btn-sm text-white mx-2" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
                 <i class="bi bi-file-earmark-text"></i> 打开文件助手
             </a>
         </td>
