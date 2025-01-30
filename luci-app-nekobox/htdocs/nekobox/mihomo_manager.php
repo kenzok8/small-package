@@ -173,6 +173,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['downloadFile'], $_GET['
 ?>
 
 <?php
+
+
 $subscriptionPath = '/etc/neko/proxy_provider/';
 $subscriptionFile = $subscriptionPath . 'subscriptions.json';
 $notificationMessage = "";
@@ -628,11 +630,11 @@ html {
     }
 }
 
-.container {
-    padding-left: 1.4em;  
-    padding-right: 1.4em; 
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1.2em;  
+        padding-right: 1.2em; 
 }
-
 </style>
 
 <script>
@@ -1217,7 +1219,7 @@ function initializeAceEditor() {
 <?php endif; ?>
 
 <?php if (isset($subscriptions) && is_array($subscriptions)): ?>
-    <div class="container" style="padding-left: 2.4rem; padding-right: 2.4rem;">
+    <div class="container">
         <div class="row">
             <?php 
             $maxSubscriptions = 6; 
@@ -1265,20 +1267,20 @@ function initializeAceEditor() {
     <div class="container">
         <h2 class="mt-4 mb-4 text-center">自动更新</h2>
         <form method="post" class="text-center">
-            <button type="button" class="btn btn-primary mx-2" data-bs-toggle="modal" data-bs-target="#cronModal">
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cronModal">
                 <i class="bi bi-clock"></i> 设置定时任务
             </button>
-            <button type="submit" name="createShellScript" value="true" class="btn btn-success mx-2">
+            <button type="submit" name="createShellScript" value="true" class="btn btn-success">
                 <i class="bi bi-terminal"></i> 生成更新脚本
             </button>
-            <button type="button" class="btn btn-cyan mx-2" data-bs-toggle="modal" data-bs-target="#downloadModal">
+            <button type="button" class="btn btn-cyan" data-bs-toggle="modal" data-bs-target="#downloadModal">
                 <i class="bi bi-download"></i> 更新数据库
             </button>
-             <td>
-            <a class="btn btn-orange btn-sm text-white mx-2" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
+            <a class="btn btn-orange btn-sm text-white" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
                 <i class="bi bi-file-earmark-text"></i> 打开文件助手
             </a>
-        </td>
+        </div>
         </form>
     </div>
 

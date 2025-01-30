@@ -700,6 +700,18 @@ $razordVersion = getRazordVersion();
               <input type="color" class="form-control" name="tertiaryRgbColor" id="tertiaryRgbColor" value="#1e90ff">
             </div>
             <div class="col-md-4 mb-3">
+              <label for="ipColor" class="form-label">IP 文本色</label>
+              <input type="color" class="form-control" name="ipColor" id="ipColor" value="#09B63F">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="ipipColor" class="form-label">运营商文本色</label>
+              <input type="color" class="form-control" name="ipipColor" id="ipipColor" value="#ff69b4">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="detailColor" class="form-label">IP详情文本色</label>
+              <input type="color" class="form-control" name="detailColor" id="detailColor" value="#FFFFFF">
+            </div>
+            <div class="col-md-4 mb-3">
               <label for="outlineColor" class="form-label">按键色（青色）</label>
               <input type="color" class="form-control" name="outlineColor" id="outlineColor" value="#0dcaf0">
             </div>
@@ -1002,6 +1014,9 @@ function formatSize($size) {
       document.getElementById('radiusColor').value = '#14b863';
       document.getElementById('bodyColor').value = '#04f153';
       document.getElementById('tertiaryColor').value = '#46e1ec';
+      document.getElementById('ipColor').value = '#09b63f';
+      document.getElementById('ipipColor').value = '#ff69b4';
+      document.getElementById('detailColor').value = '#FFFFFF';
       document.getElementById('outlineColor').value = '#0dcaf0';
       document.getElementById('successColor').value = '#28a745';
       document.getElementById('infoColor').value = '#0ca2ed';
@@ -1038,6 +1053,9 @@ function formatSize($size) {
         bodyColor: document.getElementById('bodyColor').value,
         tertiaryColor: document.getElementById('tertiaryColor').value,
         tertiaryRgbColor: document.getElementById('tertiaryRgbColor').value,
+        ipColor: document.getElementById('ipColor').value,
+        ipipColor: document.getElementById('ipipColor').value,
+        detailColor: document.getElementById('detailColor').value,
         outlineColor: document.getElementById('outlineColor').value,
         successColor: document.getElementById('successColor').value,
         infoColor: document.getElementById('infoColor').value,
@@ -1086,6 +1104,9 @@ function formatSize($size) {
           document.getElementById('bodyColor').value = settings.bodyColor;
           document.getElementById('tertiaryColor').value = settings.tertiaryColor;
           document.getElementById('tertiaryRgbColor').value = settings.tertiaryRgbColor;
+          document.getElementById('ipColor').value = settings.ipColor;
+          document.getElementById('ipipColor').value = settings.ipipColor;
+          document.getElementById('detailColor').value = settings.detailColor;
           document.getElementById('outlineColor').value = settings.outlineColor;
           document.getElementById('successColor').value = settings.successColor;
           document.getElementById('infoColor').value = settings.infoColor;
@@ -1122,6 +1143,9 @@ function formatSize($size) {
           localStorage.setItem('bodyColor', settings.bodyColor);
           localStorage.setItem('tertiaryColor', settings.tertiaryColor);
           localStorage.setItem('tertiaryRgbColor', settings.tertiaryRgbColor);
+          localStorage.setItem('ipColor', settings.ipColor);
+          localStorage.setItem('ipipColor', settings.ipipColor);
+          localStorage.setItem('detailColor', settings.detailColor);
           localStorage.setItem('outlineColor', settings.outlineColor);
           localStorage.setItem('successColor', settings.successColor);
           localStorage.setItem('infoColor', settings.infoColor);

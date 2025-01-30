@@ -144,6 +144,11 @@ EOL;
 </head>
 <body>
 <style>
+.container {
+    padding-left: 2.4em;  
+    padding-right: 2.4em; 
+}
+
 @media (max-width: 767px) {
     .row a {
         font-size: 9px; 
@@ -154,17 +159,22 @@ EOL;
     width: 100%;
 }
 
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1.2em;  
+        padding-right: 1.2em; 
+}
 </style>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
-        <a href="./index.php" class="col btn btn-lg"><i class="bi bi-house-door"></i> 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg"><i class="bi bi-folder"></i> 文件管理</a>
-        <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-shop"></i> 模板 一</a>
-        <a href="./subscription.php" class="col btn btn-lg"><i class="bi bi-bank"></i>  模板 二</a>
-        <a href="./mihomo.php" class="col btn btn-lg"><i class="bi bi-building"></i> 模板 三</a>
+        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> 首页</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> 文件管理</a>
+        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> 模板 一</a>
+        <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i>  模板 二</a>
+        <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> 模板 三</a>
 <div class="outer-container">
-    <div class="container" style="padding-left: 2.4em; padding-right: 2.4em;">
-        <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 订阅转换模板 一</h1>
+    <div class="container">
+        <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 转换模板 一</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>
             <ul>
@@ -446,7 +456,7 @@ EOL;
             echo "<h2 class='card-title'>保存的数据</h2>";
             echo "<pre>" . htmlspecialchars($savedData) . "</pre>";
             echo "<form method='post' action=''>";
-            echo "<button class='btn btn-danger' type='submit' name='clearData'>清空数据</button>";
+            echo '<button class="btn btn-danger" type="submit" name="clearData"><i class="bi bi-trash"></i> 清空数据</button>';
             echo "</form>";
             echo "</div>";
             echo "</div>";
