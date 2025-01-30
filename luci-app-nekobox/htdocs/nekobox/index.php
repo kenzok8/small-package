@@ -1092,8 +1092,33 @@ window.onload = function() {
     .rotated {
         transform: rotate(180deg); 
     }
-</style>
 
+
+    .form-inline {
+        display: inline-block;  
+    }
+
+    @media (max-width: 767px) {
+        .form-inline {
+            display: flex;         
+            flex-wrap: nowrap;     
+            justify-content: center; 
+            gap: 5px;         
+        }
+
+        .form-check-inline, .btn {
+            font-size: 10px;      
+        }
+    }
+
+    @media (max-width: 767px) {
+        #logTabs .nav-item {
+            display: block;  
+            width: 100%;     
+        }
+    }
+
+</style>
 <h2 class="text-center">日志</h2>
 <ul class="nav nav-pills mb-3" id="logTabs" role="tablist">
     <li class="nav-item" role="presentation">
@@ -1106,7 +1131,6 @@ window.onload = function() {
         <a class="nav-link" id="singboxLogTab" data-bs-toggle="pill" href="#singboxLog" role="tab" aria-controls="singboxLog" aria-selected="false">Sing-box 日志</a>
     </li>
 </ul>
-
 <div class="tab-content" id="logTabsContent">
     <div class="tab-pane fade" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
         <div class="card log-card">
@@ -1140,13 +1164,13 @@ window.onload = function() {
                 <pre id="singbox_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 350px; white-space: pre-wrap;" contenteditable="true"></pre>
             </div>
             <div class="card-footer text-center">
-                <form action="index.php" method="post" class="d-inline-block">
+                <form action="index.php" method="post" class="form-inline">
                     <div class="form-check form-check-inline mb-2">
                         <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
                         <label class="form-check-label" for="autoRefresh">自动刷新</label>
                     </div>
                     <button type="submit" name="clear_singbox_log" class="btn btn-danger me-2"><i class="bi bi-trash"></i> 清空日志</button>
-                    <button type="button" class="btn btn-primary me-2" data-toggle="modal" data-target="#cronModal"><i class="bi bi-clock"></i>  定时重启</button>
+                    <button type="button" class="btn btn-primary me-2" data-toggle="modal" data-target="#cronModal"><i class="bi bi-clock"></i> 定时重启</button>
                     <button id="showHelpButton" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#helpModal" type="button"><i class="bi bi-keyboard"></i> 键盘说明</button>
                 </form>
             </div>

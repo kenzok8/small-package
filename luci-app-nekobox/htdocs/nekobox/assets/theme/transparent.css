@@ -23,6 +23,9 @@
       --bs-line-bg: #f515f9;
       --bs-disabled-bg: #23407e;
       --bs-radius-bg: #24f086;
+      --bs-ipip-bg: #ff69b4;
+      --bs-ip-bg: #09b63f;
+      --bs-detail-bg: #ffffff;
 
       --bs-primary-border-subtle: #1815d1; 
       --bs-tertiary: #46e1ec; 
@@ -89,6 +92,30 @@
 
     label[for="newPath"], label[for="permissions"], .form-text {
         color: white !important;
+    }
+
+    #ip-address {
+        color: var(--bs-ip-bg) !important;  
+    }
+
+    #ipip {
+        color: var(--bs-ipip-bg) !important;  
+    }
+
+    #ipDetailModal .detail-value {
+        color: var(--bs-detail-bg) !important;  
+    }
+
+    #ipDetailModal .detail-label {
+        color: var(--bs-detail-bg) !important; 
+    }
+
+    #ipDetailModal .modal-title:not([class]) {
+        color: var(--bs-heading-5) !important;
+    }
+
+    #ipDetailModal h5:not([class]) {
+        color: var(--bs-heading-5) !important;
     }
 
     .form-label {
