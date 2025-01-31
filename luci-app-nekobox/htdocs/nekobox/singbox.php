@@ -144,9 +144,10 @@ EOL;
 </head>
 <body>
 <style>
-.container {
-    padding-left: 2.4em;  
-    padding-right: 2.4em; 
+.container-fluid {
+    max-width: 2400px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 @media (max-width: 767px) {
@@ -159,11 +160,6 @@ EOL;
     width: 100%;
 }
 
-@media (max-width: 768px) {
-    .container {
-        padding-left: 1.2em;  
-        padding-right: 1.2em; 
-}
 </style>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
@@ -173,7 +169,7 @@ EOL;
         <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i>  模板 二</a>
         <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> 模板 三</a>
 <div class="outer-container">
-    <div class="container">
+    <div class="container-fluid">
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 转换模板 一</h1>
         <div class="alert alert-info">
             <h4 class="alert-heading">帮助信息</h4>

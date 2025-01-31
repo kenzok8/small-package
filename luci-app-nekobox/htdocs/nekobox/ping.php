@@ -471,6 +471,15 @@ $lang = $_GET['lang'] ?? 'en';
         flex-wrap: nowrap;  
     }
 
+    svg.feather {
+        width: 20px !important;
+        height: 20px !important;
+        vertical-align: middle !important;
+        margin-right: 5px !important;
+        stroke: #FF00FF !important; 
+        fill: none !important;
+    }
+
 </style>
 <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <script src="./assets/neko/js/jquery.min.js"></script>
@@ -883,7 +892,7 @@ let IP = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="ipDetailModalLabel">IP详细信息</h5>
-                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -1066,7 +1075,7 @@ style.textContent = `
 }
 
 .custom-modal .modal-header {
-    background-color: #007bff;
+    background-color: #fff;;
     color: #fff;
     padding: 16px 20px;
     border-bottom: 1px solid #ddd;
@@ -2331,3 +2340,8 @@ function speakWeather(weather) {
 })();
 </script>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        feather.replace();
+    });
+</script>

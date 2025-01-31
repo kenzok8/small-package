@@ -906,7 +906,7 @@ function getSubscriptionUrlFromFile($file) {
             <p style="color: red;">注意：在线订阅转换存在隐私泄露风险</p>
             <p>订阅转换由肥羊提供</p>
             <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
-            点击访问
+            <i data-feather="github"></i> 点击访问
             </a>
         </div>
 

@@ -577,9 +577,10 @@ html {
     font-size: 16px;  
 }
 
-.container {
-    padding-left: 2.4em;  
-    padding-right: 2.4em; 
+.container-fluid {
+    max-width: 2400px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 #dropZone {
@@ -630,11 +631,6 @@ html {
     }
 }
 
-@media (max-width: 768px) {
-    .container {
-        padding-left: 1.2em;  
-        padding-right: 1.2em; 
-}
 </style>
 
 <script>
@@ -673,7 +669,7 @@ function displayUpdateNotification() {
     </div>
     <div class="text-center">
         <h2 style="margin-top: 40px; margin-bottom: 20px;">文件管理</h2>
-<div class="container">
+<div class="container-fluid">
     <div class="table-responsive">
         <table class="table table-striped table-bordered text-center">
             <thead class="thead-dark">
@@ -1219,7 +1215,7 @@ function initializeAceEditor() {
 <?php endif; ?>
 
 <?php if (isset($subscriptions) && is_array($subscriptions)): ?>
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
             <?php 
             $maxSubscriptions = 6; 
@@ -1241,7 +1237,7 @@ function initializeAceEditor() {
                             </div>
                             <input type="hidden" name="index" value="<?php echo $i; ?>">
                             <div class="text-center mt-3"> 
-                                <button type="submit" name="update" class="btn btn-info btn-block">🔄 更新订阅 <?php echo $displayIndex; ?></button>
+                                <button type="submit" name="update" class="btn btn-info btn-block"><i class="bi bi-arrow-repeat"></i> 更新订阅 <?php echo $displayIndex; ?></button>
                             </div>
                         </div>
                     </form>
@@ -1274,10 +1270,10 @@ function initializeAceEditor() {
             <button type="submit" name="createShellScript" value="true" class="btn btn-success">
                 <i class="bi bi-terminal"></i> 生成更新脚本
             </button>
-            <button type="button" class="btn btn-cyan" data-bs-toggle="modal" data-bs-target="#downloadModal">
+            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#downloadModal">
                 <i class="bi bi-download"></i> 更新数据库
             </button>
-            <a class="btn btn-orange btn-sm text-white" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
+            <a class="btn btn-pink btn-sm text-white" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
                 <i class="bi bi-file-earmark-text"></i> 打开文件助手
             </a>
         </div>

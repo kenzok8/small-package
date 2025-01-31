@@ -5,41 +5,42 @@
     
     [data-bs-theme='transparent'] {
       color-scheme: dark;
-      --bs-primary: #0ceda2; 
+      --bs-primary: #30e8dc; 
       --bs-secondary: #00ffff; 
       --bs-body-bg: #23407e; 
-      --bs-body-color: #04f153;
+      --bs-body-color: #33e3f0;
       --bs-info-bg-subtle: #23407e;
-      --placeholder-color: #f82af2;
+      --placeholder-color: #f8f9fa;
       --bs-btn-outline-bg: #0dcaf0;
       --bs-btn-success-bg: #28a745;
       --bs-btn-info-bg: #0ca2ed;
       --bs-btn-warning-bg: #ffc107;
       --bs-btn-pink-bg: #f82af2;
       --bs-btn-danger-bg: #dc3545;
-      --bs-controlr-bg: #0eaf3e;
-      --bs-check-bg: #0eaf3e;
-      --bs-label-bg: #0eaf3e;
+      --bs-controlr-bg: #f8f9fa;
+      --bs-check-bg: #f8f9fa;
+      --bs-label-bg: #248cf5;
       --bs-line-bg: #f515f9;
       --bs-disabled-bg: #23407e;
-      --bs-radius-bg: #24f086;
-      --bs-ipip-bg: #ff69b4;
+      --bs-radius-bg: #28edf0;
       --bs-ip-bg: #09b63f;
-      --bs-detail-bg: #ffffff;
+      --bs-ipip-bg: #ff69b4;
+      --bs-detail-bg: #15d1bb;
+      --container-width: 1800px;
 
       --bs-primary-border-subtle: #1815d1; 
       --bs-tertiary: #46e1ec; 
-      --bs-tertiary-rgb: #1e90ff; 
+      --bs-tertiary-rgb: #b426e8; 
       --bs-tertiary-color: #1815d1;
       --bs-tertiary-color-rgb: #20cdd9; 
       --bs-form-select: #23407e; 
       --log-text-color: #f8f9fa; 
       --bs-heading-1: #21e4f2; 
-      --bs-heading-2: #65f1fb; 
+      --bs-heading-2: #23d0e7; 
       --bs-heading-3: #ffcc00; 
-      --bs-heading-4: #00fbff; 
+      --bs-heading-4: #1dcdaa; 
       --bs-heading-5: #ba13f6; 
-      --bs-heading-6: #00ffff; 
+      --bs-heading-6: #9a28d7; 
 
       --bs-heading-font-family: 'Montserrat', sans-serif;
       --bs-heading-font-weight: 700;
@@ -116,6 +117,12 @@
 
     #ipDetailModal h5:not([class]) {
         color: var(--bs-heading-5) !important;
+    }
+
+    .container-sm {
+        width: var(--container-width); 
+        max-width: 100%;
+        margin: 0 auto; 
     }
 
     .form-label {
