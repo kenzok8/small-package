@@ -266,7 +266,7 @@ start_service() {
 	fi
 	if [ "$mixin_file_content" == 1 ]; then
 		if [ -s "$MIXIN_FILE_PATH" ]; then
-			yq ea -M -i '. as $item ireduce ({}; . * $item ) | ... comments=""' "$RUN_PROFILE_PATH" "$MIXIN_FILE_PATH"
+			yq -M -i ea '. as $item ireduce ({}; . * $item ) | ... comments=""' "$RUN_PROFILE_PATH" "$MIXIN_FILE_PATH"
 		fi
 	fi
 	# test profile
@@ -376,7 +376,7 @@ service_started() {
 		local tun_interval; tun_interval=1
 		while [ "$tun_timeout" -gt 0 ]; do
 			if (ip link show dev "$tun_device" > /dev/null 2>&1); then
-				if [ $(ip -json addr show dev mihomo | yq '.[] | select(.ifname = "mihomo") | .addr_info | length') -gt 0 ]; then
+				if [ $(ip -json addr show dev mihomo | yq -M '.[] | select(.ifname = "mihomo") | .addr_info | length') -gt 0 ]; then
 					log "Transparent Proxy" "Tun device is online."
 					break
 				fi
@@ -575,11 +575,11 @@ cleanup() {
 	# delete hijack
 	nft delete table inet "$FW_TABLE" > /dev/null 2>&1
 	local handles handle
-	handles=$(nft --json list table inet fw4 | yq '.nftables[] | select(has("rule")) | .rule | select(.chain == "input" and .comment == "mihomo") | .handle')
+	handles=$(nft --json list table inet fw4 | yq -M '.nftables[] | select(has("rule")) | .rule | select(.chain == "input" and .comment == "mihomo") | .handle')
 	for handle in $handles; do
 		nft delete rule inet fw4 input handle "$handle"
 	done
-	handles=$(nft --json list table inet fw4 | yq '.nftables[] | select(has("rule")) | .rule | select(.chain == "forward" and .comment == "mihomo") | .handle')
+	handles=$(nft --json list table inet fw4 | yq -M '.nftables[] | select(has("rule")) | .rule | select(.chain == "forward" and .comment == "mihomo") | .handle')
 	for handle in $handles; do
 		nft delete rule inet fw4 forward handle "$handle"
 	done

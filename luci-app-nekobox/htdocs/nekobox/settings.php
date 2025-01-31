@@ -1509,6 +1509,39 @@ document.addEventListener('DOMContentLoaded', function() {
         text-align: center;
         border: 1px solid #ccc; 
     }
+
+@media (max-width: 767px) {
+    .custom-table {
+        display: block;
+        width: 100%;
+    }
+
+    .custom-table thead {
+        display: none;
+    }
+
+    .custom-table tbody {
+        display: block;
+    }
+
+    .custom-table tr {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1rem;
+        border: none;
+    }
+
+    .custom-table td {
+        display: block;
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+    }
+
+    .custom-table td:first-child {
+        font-weight: bold;
+    }
+}
 </style>
 
 <script>
