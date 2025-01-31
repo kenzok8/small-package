@@ -836,7 +836,7 @@ EOL;
             <p style="color: red;">注意：在线订阅转换存在隐私泄露风险，请确保使用 Sing-box 的通道一版本，通道二版本不支持此功能。同时，需要下载 geoip 和 geosite 文件以确保正常使用。</p>
             <p>订阅转换由肥羊提供</p>
             <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
-            点击访问
+            <i data-feather="github"></i> 点击访问
             </a>
         </div>
         <div class="result mt-4 custom-padding">

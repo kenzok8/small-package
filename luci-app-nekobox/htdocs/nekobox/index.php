@@ -842,7 +842,7 @@ $(document).ready(function() {
    <table class="table table-borderless mb-2">
        <tbody>
            <tr>
-               <td style="width:150px">运行状态</td>
+               <td style="width:150px; line-height: 2;"><i data-feather="activity"></i> 运行状态</td>
                <td class="d-grid">
                    <div class="btn-group w-100" role="group" aria-label="ctrl">
                        <?php
@@ -862,7 +862,7 @@ $(document).ready(function() {
                </td>
            </tr>
             <tr>
-               <td style="width:150px">Mihomo 控制</td>
+               <td style="width:150px; line-height: 2;"><i data-feather="box"></i> Mihomo</td>
                <td class="d-grid">
                    <form action="index.php" method="post" style="display: inline-block; width: 100%; margin-bottom: 10px;">
                        <div class="form-group">
@@ -891,7 +891,7 @@ $(document).ready(function() {
                </td>
            </tr>
            <tr>
-               <td style="width:150px">Sing-box 控制</td>
+               <td style="width:150px; line-height: 2;"><i data-feather="codesandbox"></i> Singbox</td>
                <td class="d-grid">
                    <form action="index.php" method="post">
                        <div class="input-group mb-2">
@@ -912,7 +912,7 @@ $(document).ready(function() {
                </td>
            </tr>
            <tr>
-               <td style="width:150px">运行模式</td>
+               <td style="width:150px; line-height: 2;"><i data-feather="settings"></i> 运行模式</td>
                <td class="d-grid">
                    <?php
                    $mode_placeholder = '';
@@ -1008,23 +1008,23 @@ window.onload = function() {
    <table class="table table-borderless rounded-4 mb-2">
        <tbody>
            <tr>
-               <td style="width:150px">系统信息</td>
+               <td style="width:150px"><i data-feather="cpu"></i> 系统信息</td>
                <td id="systemInfo"></td>
            </tr>
            <tr>
-               <td style="width:150px">内存</td>
+               <td style="width:150px"><i data-feather="database"></i> 系统内存</td>
                <td id="ramUsage"></td>
            </tr>
            <tr>
-               <td style="width:150px">平均负载</td>
+               <td style="width:150px"><i data-feather="zap"></i> 平均负载</td>
                <td id="cpuLoad"></td>
            </tr>
            <tr>
-               <td style="width:150px">运行时间</td>
+               <td style="width:150px"><i data-feather="clock"></i> 运行时间</td>
                <td id="uptime"></td>
            </tr>
            <tr>
-               <td style="width:150px">流量统计</td>
+               <td style="width:150px"><i data-feather="bar-chart-2"></i> 流量统计</td>
                <td>⬇️ <span id="downtotal"></span> | ⬆️ <span id="uptotal"></span></td>
            </tr>
        </tbody>
@@ -1135,7 +1135,7 @@ window.onload = function() {
     <div class="tab-pane fade" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
         <div class="card log-card">
             <div class="card-body">
-                <pre id="plugin_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 350px; white-space: pre-wrap;" contenteditable="true"></pre>
+                <pre id="plugin_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" contenteditable="true"></pre>
             </div>
             <div class="card-footer text-center">
                 <form action="index.php" method="post">
@@ -1148,7 +1148,7 @@ window.onload = function() {
     <div class="tab-pane fade" id="mihomoLog" role="tabpanel" aria-labelledby="mihomoLogTab">
         <div class="card log-card">
             <div class="card-body">
-                <pre id="bin_logs" class="log-container form-control" style="resize: vertical; overflow: auto; height: 350px; white-space: pre-wrap;" contenteditable="true"></pre>
+                <pre id="bin_logs" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" contenteditable="true"></pre>
             </div>
             <div class="card-footer text-center">
                 <form action="index.php" method="post">
@@ -1161,7 +1161,7 @@ window.onload = function() {
     <div class="tab-pane fade" id="singboxLog" role="tabpanel" aria-labelledby="singboxLogTab">
         <div class="card log-card">
             <div class="card-body">
-                <pre id="singbox_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 350px; white-space: pre-wrap;" contenteditable="true"></pre>
+                <pre id="singbox_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" contenteditable="true"></pre>
             </div>
             <div class="card-footer text-center">
                 <form action="index.php" method="post" class="form-inline">
