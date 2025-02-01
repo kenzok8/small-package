@@ -231,7 +231,7 @@ $razordVersion = getRazordVersion();
                     </button>
                     
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filesModal">
-                        <i class="bi-upload"></i> 上传并管理背景图片
+                        <i class="bi-camera-video"></i> 设置背景
                     </button>
                 </div>
             </div>
@@ -257,7 +257,7 @@ $razordVersion = getRazordVersion();
             <td>
                 <div class="table-container">
                     <h2>客户端版本</h2>
-                    <p id="cliver" class="text-center" style="font-family: monospace;"><?php echo htmlspecialchars($clientVersion); ?></p>
+                    <p id="cliver" class="text-center" style="font-family: monospace;"></p>
                     <div class="text-center">
                         <button class="btn btn-pink me-1" id="checkCliverButton"><i class="bi bi-search"></i> 检测版本</button>
                         <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showVersionTypeModal()"><i class="bi bi-arrow-repeat"></i> 更新版本</button>
@@ -721,25 +721,6 @@ $razordVersion = getRazordVersion();
             <label for="themeName" class="form-label">自定义主题名称</label>
             <input type="text" class="form-control" name="themeName" id="themeName" value="transparent">
           </div>
-
-          <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="useBackgroundImage" name="useBackgroundImage">
-            <label class="form-check-label" for="useBackgroundImage">使用自定义背景图片</label>
-          </div>
-          <div class="mb-3" id="backgroundImageContainer" style="display:none; position: relative; left: -1ch;">
-            <select class="form-select" id="backgroundImage" name="backgroundImage">
-              <option value="">请选择图片</option>
-              <?php
-              $dir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
-              $files = array_diff(scandir($dir), array('..', '.')); 
-              foreach ($files as $file) {
-                  if (in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png'])) {
-                      echo "<option value='/nekobox/assets/Pictures/$file'>$file</option>";
-                  }
-              }
-              ?>
-            </select>
-          </div>
       <div class="d-flex flex-wrap justify-content-center align-items-center mb-3 gap-2">
           <button type="submit" class="btn btn-primary">保存主题</button>
           <button type="button" class="btn btn-success" id="resetButton" onclick="clearCache()">恢复默认值</button>
@@ -904,72 +885,130 @@ $razordVersion = getRazordVersion();
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="filesModalLabel">上传并管理背景图片</h5>
+        <h5 class="modal-title" id="filesModalLabel">上传并管理背景图片/视频</h5>
         <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
       
       <div class="modal-body">
         <div class="mb-4">
-          <h2 class="mb-3">上传背景图片</h2>
-          <form method="POST" action="theme.php" enctype="multipart/form-data">
+          <h2 class="mb-3">上传背景图片/视频</h2>
+          <form method="POST" action="download.php" enctype="multipart/form-data">
             <input type="file" class="form-control mb-3" name="imageFile" id="imageFile">
-            <button type="submit" class="btn btn-success" id="submitBtn">上传图片</button>
+            <button type="submit" class="btn btn-success" id="submitBtn" title="PHP上传文件会有大小限制，如遇上传失败可以手动上传文件到 /nekobox/assets/Pictures 目录">上传图片/视频</button>
           </form>
         </div>
 
-        <h2 class="mb-3">上传的图片文件</h2>
-        <table class="table table-bordered text-center">
-          <thead>
-            <tr>
-              <th>文件名</th>
-              <th>文件大小</th>
-              <th>预览</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php
-            $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
-            if (is_dir($picturesDir)) {
-                $files = array_diff(scandir($picturesDir), array('..', '.'));
-                foreach ($files as $file) {
-                    $filePath = $picturesDir . $file;
-                    if (is_file($filePath)) {
-                        $fileSize = filesize($filePath);
-                        $fileUrl = '/nekobox/assets/Pictures/' . $file;
-                        echo "<tr>
-                                <td class='align-middle'>$file</td>
-                                <td class='align-middle'>" . formatSize($fileSize) . "</td>
-                                <td class='align-middle'><img src='$fileUrl' alt='$file' style='width: 100px; height: auto;'></td>
-                                <td class='align-middle'>
-                                  <a href='?delete=$file' class='btn btn-danger btn-sm'>删除</a>
-                                </td>
-                              </tr>";
+<h2 class="mb-3">上传的图片/视频文件</h2>
+<table class="table table-bordered text-center">
+    <thead>
+        <tr>
+            <th>文件名</th>
+            <th>文件大小</th>
+            <th>预览</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        function isImage($file) {
+            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            return in_array($fileExtension, $imageExtensions);
+        }
+
+        function isVideo($file) {
+            $videoExtensions = ['mp4', 'avi', 'mkv', 'mov', 'wmv'];
+            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            return in_array($fileExtension, $videoExtensions);
+        }
+
+        $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+        if (is_dir($picturesDir)) {
+            $files = array_diff(scandir($picturesDir), array('..', '.'));
+            foreach ($files as $file) {
+                $filePath = $picturesDir . $file;
+                if (is_file($filePath)) {
+                    $fileSize = filesize($filePath);
+                    $fileUrl = '/nekobox/assets/Pictures/' . $file;
+                    echo "<tr>
+                            <td class='align-middle'>$file</td>
+                            <td class='align-middle'>" . formatFileSize($fileSize) . "</td>
+                            <td class='align-middle'>"; 
+                    if (isVideo($file)) {
+                        $fileType = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                        echo "<video width='100' controls>
+                                <source src='$fileUrl' type='video/$fileType'>
+                                Your browser does not support the video tag.
+                              </video>";
+                    } elseif (isImage($file)) {
+                        echo "<img src='$fileUrl' alt='$file' style='width: 100px; height: auto;'>";
+                    } else {
+                        echo "未知文件类型";
                     }
+                    
+                    echo "</td>
+                    <td class='align-middle'>
+                        <a href='?delete=" . htmlspecialchars($file, ENT_QUOTES) . "' class='btn btn-danger' onclick='return confirm(\"确定要删除吗?\")'>删除</a>";
+                    
+                    if (isImage($file)) {
+                        echo "<button type=\"button\" onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'image')\" style=\"padding: 10px 14px; font-size: 14px; margin-left: 10px; background-color: #007bff; color: white; border-radius: 5px; border: none;\">设置图片背景</button>";
+                    } elseif (isVideo($file)) {
+                        echo "<button type=\"button\" onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'video')\" style=\"padding: 10px 14px; font-size: 14px; margin-left: 10px; background-color: #007bff; color: white; border-radius: 5px; border: none;\">设置视频背景</button>";
+                    }
+
+                    echo "</td>
+                        </tr>";
                 }
             }
-            ?>
-          </tbody>
-        </table>
-      </div>
-   <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        }
+        ?>
+    </tbody>
+</table>
+     </div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+    <button type="button" class="btn btn-danger" onclick="setBackground('', '', 'remove')">删除背景</button>
       </div>
     </div>
   </div>
 </div>
+
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $uploadedFilePath = '';
+    $allowedTypes = ['jpg', 'jpeg', 'png', 'mp4', 'avi', 'mkv']; 
+
+    if (isset($_FILES['imageFile']) && $_FILES['imageFile']['error'] === UPLOAD_ERR_OK) {
+        $targetDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+        if (!file_exists($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+
+        $fileExtension = strtolower(pathinfo($_FILES['imageFile']['name'], PATHINFO_EXTENSION));
+
+        if (in_array($fileExtension, $allowedTypes)) {
+            $targetFile = $targetDir . basename($_FILES['imageFile']['name']);
+            if (move_uploaded_file($_FILES['imageFile']['tmp_name'], $targetFile)) {
+                $uploadedFilePath = '/nekobox/assets/Pictures/' . basename($_FILES['imageFile']['name']);
+            }
+        } else {
+            echo "<script>alert('不支持的文件类型！');</script>";
+        }
+    }
+}
+
 if (isset($_GET['delete'])) {
     $fileToDelete = $_GET['delete'];
+    $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
     $filePath = $picturesDir . $fileToDelete;
     if (file_exists($filePath)) {
-        unlink($filePath); 
-        echo '<script>window.location.href = "settings.php";</script>';
+        unlink($filePath);
+        echo "<script>alert('文件已删除！'); window.location.href = 'settings.php';</script>";
         exit;
     }
 }
 
-function formatSize($size) {
+function formatFileSize($size) {
     if ($size >= 1073741824) {
         return number_format($size / 1073741824, 2) . ' GB';
     } elseif ($size >= 1048576) {
@@ -981,8 +1020,56 @@ function formatSize($size) {
     }
 }
 ?>
-  </tbody>
-</table>
+<script>
+function setBackground(filename, type, action = 'set') {
+    if (action === 'set') {
+        if (type === 'image') {
+            if (confirm("确定要将此图片设置为背景吗？")) {
+                fetch('/nekobox/set_background.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=set&filename=' + encodeURIComponent(filename) + '&type=image'
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);  
+                    location.reload();  
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        } else if (type === 'video') {
+            if (confirm("确定要将此视频设置为背景吗？")) {
+                fetch('/nekobox/set_background.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=set&filename=' + encodeURIComponent(filename) + '&type=video'
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);  
+                    location.reload(); 
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+    } else if (action === 'remove') {
+        if (confirm("确定要删除背景吗？")) {
+            fetch('/nekobox/set_background.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=remove'
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);  
+                location.reload(); 
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+}
+</script>
+
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const colorInputs = document.querySelectorAll('input[type="color"]');
