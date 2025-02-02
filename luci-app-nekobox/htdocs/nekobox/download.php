@@ -12,11 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $uploadedFiles = [];
         $fileErrors = [];
 
+        function cleanFilename($filename) {
+            $filename = preg_replace('/[^a-zA-Z0-9\-_\.]/', '', $filename); 
+            return $filename; 
+        }
+
         foreach ($_FILES['imageFile']['name'] as $key => $fileName) {
             $fileTmpName = $_FILES['imageFile']['tmp_name'][$key];
             $fileSize = $_FILES['imageFile']['size'][$key];
             $fileError = $_FILES['imageFile']['error'][$key];
             $fileType = $_FILES['imageFile']['type'][$key];
+
+            $cleanFileName = cleanFilename($fileName);
 
             if ($fileError === UPLOAD_ERR_OK) {
                 if ($fileSize > $maxFileSize) {
@@ -24,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     continue;
                 }
 
-                $uniqueFileName = uniqid() . '-' . basename($fileName);
+                $uniqueFileName = uniqid() . '-' . basename($cleanFileName);
                 $targetFile = $targetDir . $uniqueFileName;
                 $uploadedFilePath = '/nekobox/assets/Pictures/' . $uniqueFileName;
 

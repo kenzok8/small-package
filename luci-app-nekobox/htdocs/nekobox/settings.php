@@ -899,9 +899,10 @@ $razordVersion = getRazordVersion();
           <table class="table table-bordered text-center">
               <thead>
                   <tr>
-                      <th style="width: 30%;">文件名</th>
+                      <th style="width: 25%;">文件名</th>
                       <th style="width: 10%;">文件大小</th>
-                      <th style="width: 35%;">预览</th>
+                      <th style="width: 10%;">文件类型</th>
+                      <th style="width: 30%;">预览</th>
                       <th style="width: 25%;">操作</th>
                   </tr>
               </thead>
@@ -938,9 +939,19 @@ $razordVersion = getRazordVersion();
                     $fileSize = filesize($filePath);
                     $fileUrl = '/nekobox/assets/Pictures/' . $file;
                     $fileNameWithoutPrefix = getFileNameWithoutPrefix($file); 
+
+                    if (isImage($file)) {
+                      $fileType = "图片";
+                    } elseif (isVideo($file)) {
+                      $fileType = "视频";
+                    } else {
+                      $fileType = "未知类型";
+                    }
+
                     echo "<tr>
                             <td class='align-middle' data-label='文件名'>$fileNameWithoutPrefix</td>
                             <td class='align-middle' data-label='文件大小'>" . formatFileSize($fileSize) . "</td>
+                            <td class='align-middle' data-label='文件类型'>$fileType</td>
                             <td class='align-middle' data-label='预览'>";
                     if (isVideo($file)) {
                         echo "<video id='video-player' class='video-js vjs-default-skin' width='200' controls style='display: block; margin-left: auto; margin-right: auto;'>
