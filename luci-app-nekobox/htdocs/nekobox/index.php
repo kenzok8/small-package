@@ -837,6 +837,70 @@ $(document).ready(function() {
           display: block;
       }
    }
+
+@media (max-width: 767px) {
+    .section-container .table {
+        display: block;
+        width: 100%;
+    }
+
+    .section-container .table tbody,
+    .section-container .table thead,
+    .section-container .table tr {
+        display: block;
+    }
+
+    .section-container .table td {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+    }
+
+    .section-container .table td:first-child {
+        font-weight: bold;
+        background-color: #f8f9fa;
+    }
+
+    .section-container .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .section-container .form-select,
+    .section-container .form-control,
+    .section-container .input-group {
+        width: 100%;
+    }
+
+    .section-container .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 767px) {
+    .section-container .table td {
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-container .table td:first-child {
+        background-color: #f0f0f0;
+        font-size: 1.1em;
+    }
+
+    .section-container .btn {
+        border-radius: 5px;
+    }
+
+    .section-container .btn-group {
+        gap: 15px;
+    }
+}
+
 </style>
 <div class="section-container">
    <table class="table table-borderless mb-2">

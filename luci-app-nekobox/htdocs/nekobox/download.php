@@ -1,21 +1,62 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_FILES['imageFile']) && $_FILES['imageFile']['error'] === UPLOAD_ERR_OK) {
+    if (isset($_FILES['imageFile']) && is_array($_FILES['imageFile']['error'])) {
         $targetDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+        
         if (!file_exists($targetDir)) {
-            mkdir($targetDir, 0777, true); 
+            mkdir($targetDir, 0777, true);
         }
 
-        $targetFile = $targetDir . basename($_FILES['imageFile']['name']);
-        $uploadedImagePath = '/nekobox/assets/Pictures/' . basename($_FILES['imageFile']['name']);
+        $allowedFileTypes = ['image/jpeg', 'image/png', 'video/mp4']; 
+        $maxFileSize = 1024 * 1024 * 1024; 
 
-        if (move_uploaded_file($_FILES['imageFile']['tmp_name'], $targetFile)) {
+        $uploadedFiles = [];
+        $fileErrors = [];
+
+        foreach ($_FILES['imageFile']['name'] as $key => $fileName) {
+            $fileTmpName = $_FILES['imageFile']['tmp_name'][$key];
+            $fileSize = $_FILES['imageFile']['size'][$key];
+            $fileError = $_FILES['imageFile']['error'][$key];
+            $fileType = $_FILES['imageFile']['type'][$key];
+
+            if ($fileError === UPLOAD_ERR_OK) {
+                if (!in_array($fileType, $allowedFileTypes)) {
+                    $fileErrors[] = "文件 '$fileName' 类型不允许上传！";
+                    continue;
+                }
+
+                if ($fileSize > $maxFileSize) {
+                    $fileErrors[] = "文件 '$fileName' 大小超出限制！";
+                    continue;
+                }
+
+                $uniqueFileName = uniqid() . '-' . basename($fileName);
+                $targetFile = $targetDir . $uniqueFileName;
+                $uploadedFilePath = '/nekobox/assets/Pictures/' . $uniqueFileName;
+
+                if (move_uploaded_file($fileTmpName, $targetFile)) {
+                    $uploadedFiles[] = $uploadedFilePath;
+                } else {
+                    $fileErrors[] = "文件 '$fileName' 上传失败！";
+                }
+            } else {
+                $fileErrors[] = "文件 '$fileName' 上传出错，错误代码: $fileError";
+            }
+        }
+
+        if (count($uploadedFiles) > 0) {
             echo "<script>
-                    alert('图片或视频已上传成功！');
+                    alert('文件上传成功！');
                     window.location.href = 'settings.php'; 
                   </script>";
         } else {
-            echo "<script>alert('文件上传失败！');</script>";
+            if (count($fileErrors) > 0) {
+                foreach ($fileErrors as $error) {
+                    echo "<script>alert('$error');</script>";
+                }
+            } else {
+                echo "<script>alert('没有文件上传或上传出错！');</script>";
+            }
         }
     } else {
         echo "<script>alert('没有文件上传或上传出错！');</script>";
