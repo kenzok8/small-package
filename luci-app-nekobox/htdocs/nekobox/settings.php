@@ -882,7 +882,7 @@ $razordVersion = getRazordVersion();
 </script>
 
 <div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog custom-modal-width" style="max-width: 60%; margin: 30px auto;">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="filesModalLabel">上传并管理背景图片/视频</h5>
@@ -899,10 +899,10 @@ $razordVersion = getRazordVersion();
           <table class="table table-bordered text-center">
               <thead>
                   <tr>
-                      <th>文件名</th>
-                      <th>文件大小</th>
-                      <th>预览</th>
-                      <th>操作</th>
+                      <th style="width: 30%;">文件名</th>
+                      <th style="width: 10%;">文件大小</th>
+                      <th style="width: 35%;">预览</th>
+                      <th style="width: 25%;">操作</th>
                   </tr>
               </thead>
               <tbody>
@@ -943,13 +943,12 @@ $razordVersion = getRazordVersion();
                             <td class='align-middle' data-label='文件大小'>" . formatFileSize($fileSize) . "</td>
                             <td class='align-middle' data-label='预览'>";
                     if (isVideo($file)) {
-                        $fileType = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                        echo "<video width='100' controls>
-                                <source src='$fileUrl' type='video/$fileType'>
+                        echo "<video id='video-player' class='video-js vjs-default-skin' width='200' controls style='display: block; margin-left: auto; margin-right: auto;'>
+                                <source src='$fileUrl' type='video/" . strtolower(pathinfo($file, PATHINFO_EXTENSION)) . "'>
                                 Your browser does not support the video tag.
                               </video>";
                     } elseif (isImage($file)) {
-                        echo "<img src='$fileUrl' alt='$file' style='width: 100px; height: auto;'>";
+                        echo "<img src='$fileUrl' alt='$file' style='width: 200px; height: auto;'>";
                     } else {
                         echo "未知文件类型";
                     }
@@ -1107,7 +1106,10 @@ document.getElementById("updatePhpConfig").addEventListener("click", function() 
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $uploadedFilePath = '';
-    $allowedTypes = ['jpg', 'jpeg', 'png', 'mp4', 'avi', 'mkv']; 
+    $allowedTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp',
+        'video/mp4', 'video/avi', 'video/mkv', 'video/mov', 'video/wmv', 'video/3gp'
+    ];
 
     if (isset($_FILES['imageFile']) && $_FILES['imageFile']['error'] === UPLOAD_ERR_OK) {
         $targetDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
