@@ -155,6 +155,16 @@ return view.extend({
         o.retain = true;
         o.depends('tun_gso', '1');
 
+        o = s.taboption('tun', form.Flag, 'tun_dns_hijack', '*' + ' ' + _('Overwrite DNS Hijack'));
+        o.rmempty = false;
+
+        o = s.taboption('tun', form.DynamicList, 'tun_dns_hijacks', '*' + ' ' + _('Edit DNS Hijacks'));
+        o.retain = true;
+        o.rmempty = false;
+        o.depends('tun_dns_hijack', '1');
+        o.value('tcp://any:53');
+        o.value('udp://any:53');
+
         o = s.taboption('tun', form.Flag, 'tun_endpoint_independent_nat', '*' + ' ' + _('Endpoint Independent NAT'));
         o.rmempty = false;
 

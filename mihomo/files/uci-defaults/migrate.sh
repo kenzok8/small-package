@@ -93,6 +93,14 @@ sniffer=$(uci -q get mihomo.mixin.sniffer); [ -z "$sniffer" ] && {
 
 uci show mihomo | grep -E 'mihomo.@host\[[[:digit:]]+\]=host' | sed 's/mihomo.@host\[\([[:digit:]]\+\)\]=host/set mihomo.@host[\1]=hosts/' | uci batch
 
+# since v1.17.5
+
+tun_dns_hijack=$(uci -q get mihomo.mixin.tun_dns_hijack); [ -z "$tun_dns_hijack" ] && {
+	uci set mihomo.mixin.tun_dns_hijack=0
+	uci add_list mihomo.mixin.tun_dns_hijacks=tcp://any:53
+	uci add_list mihomo.mixin.tun_dns_hijacks=udp://any:53
+}
+
 # commit
 uci commit mihomo
 

@@ -86,12 +86,13 @@ start_service() {
 	config_get tproxy_port "mixin" "tproxy_port" "7892"
 	config_get_bool authentication "mixin" "authentication" 0
 	### tun
-	local tun_device tun_stack tun_mtu tun_gso tun_gso_max_size tun_endpoint_independent_nat
+	local tun_device tun_stack tun_mtu tun_gso tun_gso_max_size tun_dns_hijack tun_endpoint_independent_nat
 	config_get tun_device "mixin" "tun_device" "mihomo"
 	config_get tun_stack "mixin" "tun_stack" "system"
 	config_get tun_mtu "mixin" "tun_mtu" "9000"
 	config_get_bool tun_gso "mixin" "tun_gso" 0
 	config_get tun_gso_max_size "mixin" "tun_gso_max_size" "65536"
+	config_get_bool tun_dns_hijack "mixin" "tun_dns_hijack" 0
 	config_get_bool tun_endpoint_independent_nat "mixin" "tun_endpoint_independent_nat" 0
 	### dns
 	local dns_port dns_mode fake_ip_range fake_ip_filter fake_ip_filter_mode fake_ip_cache dns_respect_rules dns_doh_prefer_http3 dns_ipv6 dns_system_hosts dns_hosts hosts dns_nameserver dns_nameserver_policy
@@ -193,6 +194,7 @@ start_service() {
 		.external-ui = strenv(ui_path) | .external-ui-name = strenv(ui_name) | .external-ui-url = strenv(ui_url) | .external-controller = strenv(api_listen) | .secret = strenv(api_secret) |
 		.allow-lan = env(allow_lan) == 1 | .port = env(http_port) | .socks-port = env(socks_port) | .mixed-port = env(mixed_port) | .redir-port = env(redir_port) | .tproxy-port = env(tproxy_port) |
 		.tun.enable = env(tun_enable) == 1 | .tun.stack = strenv(tun_stack) | .tun.device = strenv(tun_device) | .tun.mtu = env(tun_mtu) | .tun.gso = env(tun_gso) == 1 | .tun.gso-max-size = env(tun_gso_max_size) | .tun.endpoint-independent-nat = env(tun_endpoint_independent_nat) == 1 |
+		.tun.auto-route = false | .tun.auto-redirect = false | .tun.auto-detect-interface = false |
 		.dns.enable = env(dns_enable) | .dns.listen = strenv(dns_listen) | .dns.enhanced-mode = strenv(dns_mode) | .dns.fake-ip-range = strenv(fake_ip_range)
 		' "$RUN_PROFILE_PATH"
 	else
@@ -213,6 +215,7 @@ start_service() {
 		.external-ui = strenv(ui_path) | .external-ui-name = strenv(ui_name) | .external-ui-url = strenv(ui_url) | .external-controller = strenv(api_listen) | .secret = strenv(api_secret) | .profile.store-selected = env(selection_cache) == 1 |
 		.allow-lan = env(allow_lan) == 1 | .port = env(http_port) | .socks-port = env(socks_port) | .mixed-port = env(mixed_port) | .redir-port = env(redir_port) | .tproxy-port = env(tproxy_port) |
 		.tun.enable = env(tun_enable) == 1 | .tun.stack = strenv(tun_stack) | .tun.device = strenv(tun_device) | .tun.mtu = env(tun_mtu) | .tun.gso = env(tun_gso) == 1 | .tun.gso-max-size = env(tun_gso_max_size) | .tun.endpoint-independent-nat = env(tun_endpoint_independent_nat) == 1 |
+		.tun.auto-route = false | .tun.auto-redirect = false | .tun.auto-detect-interface = false |
 		.dns.enable = env(dns_enable) | .dns.listen = strenv(dns_listen) | .dns.enhanced-mode = strenv(dns_mode) | .dns.fake-ip-range = strenv(fake_ip_range) | .profile.store-fake-ip = env(fake_ip_cache) == 1 |
 		.dns.respect-rules = env(dns_respect_rules) == 1 | .dns.prefer-h3 = env(dns_doh_prefer_http3) == 1 | .dns.ipv6 = env(dns_ipv6) == 1 | .dns.use-system-hosts = env(dns_system_hosts) == 1 | .dns.use-hosts = env(dns_hosts) == 1 |
 		.sniffer.enable = env(sniffer) == 1 | .sniffer.force-dns-mapping = env(sniffer_sniff_dns_mapping) == 1 | .sniffer.parse-pure-ip = env(sniffer_sniff_pure_ip) == 1 | .sniffer.override-destination = env(sniffer_overwrite_destination) == 1 |
@@ -261,8 +264,8 @@ start_service() {
 		yq -M -i 'del(.authentication)' "$RUN_PROFILE_PATH"
 		config_foreach mixin_authentications "authentication"
 	fi
-	if [ "$tun_enable" == 1 ]; then
-		yq -M -i '.tun.auto-route = false | .tun.auto-redirect = false | .tun.auto-detect-interface = false | .tun.dns-hijack = []' "$RUN_PROFILE_PATH"
+	if [ "$tun_dns_hijack" == 1 ]; then
+		config_list_foreach "mixin" "tun_dns_hijacks" mixin_tun_dns_hijacks
 	fi
 	if [ "$mixin_file_content" == 1 ]; then
 		if [ -s "$MIXIN_FILE_PATH" ]; then
@@ -295,8 +298,7 @@ start_service() {
 	procd_set_param user "$MIHOMO_USER"
 	procd_set_param group "$MIHOMO_GROUP"
 
-	procd_set_param limits core="unlimited"
-	procd_set_param limits nofile="1048576 1048576"
+	procd_set_param limits core="unlimited" nofile="1048576 1048576"
 
 	procd_close_instance
 	# cron
@@ -376,7 +378,7 @@ service_started() {
 		local tun_interval; tun_interval=1
 		while [ "$tun_timeout" -gt 0 ]; do
 			if (ip link show dev "$tun_device" > /dev/null 2>&1); then
-				if [ $(ip -json addr show dev mihomo | yq -M '.[] | select(.ifname = "mihomo") | .addr_info | length') -gt 0 ]; then
+				if [ $(ip -json addr show dev "$tun_device" | tun_device="$tun_device" yq -M '.[] | select(.ifname = strenv(tun_device)) | .addr_info | length') -gt 0 ]; then
 					log "Transparent Proxy" "Tun device is online."
 					break
 				fi
@@ -612,6 +614,10 @@ mixin_authentications() {
 	fi
 
 	authentication="$username:$password" yq -M -i '.authentication += [strenv(authentication)]' "$RUN_PROFILE_PATH"
+}
+
+mixin_tun_dns_hijacks() {
+	dns_hijack="$1" yq -M -i '.tun.dns_hijack += [strenv(dns_hijack)]' "$RUN_PROFILE_PATH"
 }
 
 mixin_fake_ip_filters() {
