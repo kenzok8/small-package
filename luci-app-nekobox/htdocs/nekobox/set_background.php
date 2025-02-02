@@ -20,7 +20,7 @@ if ($action === 'set' && !empty($filename)) {
     } elseif ($type === 'video') {
         $backgroundStyle = "\n<style>
             body {
-                background: none;
+                background: transparent;
                 position: relative;
                 margin: 0;
                 padding: 0;
@@ -28,7 +28,7 @@ if ($action === 'set' && !empty($filename)) {
             }
 
             .video-background {
-                position: absolute;
+                position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
@@ -40,7 +40,7 @@ if ($action === 'set' && !empty($filename)) {
             .control-toggle {
                 position: absolute;
                 top: 20px;
-                left: 20px;
+                right: 20px;
                 padding: 10px 20px;
                 background-color: #6f42c1;
                 color: white;
@@ -105,6 +105,7 @@ if ($action === 'set' && !empty($filename)) {
         <div class=\"popup\" id=\"popup\">
             <h3>🔧 控制面板</h3>
             <button onclick=\"toggleAudio()\" id=\"audio-btn\">🔊 切换音频</button>
+            <button onclick=\"toggleObjectFit()\" id=\"object-fit-btn\">切换视频显示模式</button>
             <button onclick=\"toggleFullScreen()\" id=\"fullscreen-btn\">⛶ 切换全屏</button>
             <button onclick=\"togglePopup()\">❌ 关闭</button>
         </div>\n";
