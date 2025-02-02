@@ -882,7 +882,7 @@ $razordVersion = getRazordVersion();
 </script>
 
 <div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog custom-modal-width" style="max-width: 60%; margin: 30px auto;">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="filesModalLabel">上传并管理背景图片/视频</h5>
@@ -954,10 +954,7 @@ $razordVersion = getRazordVersion();
                             <td class='align-middle' data-label='文件类型'>$fileType</td>
                             <td class='align-middle' data-label='预览'>";
                     if (isVideo($file)) {
-                        echo "<video id='video-player' class='video-js vjs-default-skin' width='200' controls style='display: block; margin-left: auto; margin-right: auto;'>
-                                <source src='$fileUrl' type='video/" . strtolower(pathinfo($file, PATHINFO_EXTENSION)) . "'>
-                                Your browser does not support the video tag.
-                              </video>";
+                        echo "<video width='200' controls><source src='$fileUrl' type='video/mp4'>Your browser does not support the video tag.</video>";
                     } elseif (isImage($file)) {
                         echo "<img src='$fileUrl' alt='$file' style='width: 200px; height: auto;'>";
                     } else {
