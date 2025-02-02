@@ -540,7 +540,7 @@ $lang = $_GET['lang'] ?? 'en';
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1440px) {
     .modal-dialog {
         max-width: 100% !important; 
         margin: 30px auto; 
@@ -1291,6 +1291,20 @@ setInterval(IP.getIpipnetIP, 180000);
         updateButtonStates();
     });
 
+    var longPressTimer;
+    var touchStartTime = 0;
+
+    document.addEventListener('touchstart', function (event) {
+        var touch = event.touches[0];
+        touchStartTime = new Date().getTime();
+    
+        if (touch.clientY < window.innerHeight / 2) {
+            longPressTimer = setTimeout(function () {
+                togglePopup();
+            }, 1000); 
+        }
+    });
+
     function togglePopup() {
         var popup = document.getElementById('popup');
         popup.style.display = (popup.style.display === "block") ? "none" : "block";
@@ -1802,6 +1816,7 @@ window.addEventListener('load', function() {
                     <li><strong>Ctrl + Shift + C键:</strong> 清空缓存数据</li>
                     <li><strong>Ctrl + Shift + V键:</strong> 定制播放列表</li>
                     <li><strong>Ctrl + Shift + X键:</strong> 设置城市</li>
+                    <li><strong>长按屏幕顶部</strong> 设置音频（视频模式下有效）</li>
                 </ul>
             </div>
             <div class="modal-footer">
