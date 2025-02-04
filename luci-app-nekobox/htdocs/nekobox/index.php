@@ -824,6 +824,15 @@ $(document).ready(function() {
        margin-bottom: 20px;
    }
 
+    .custom-icon {
+        width: 20px !important;
+        height: 20px !important;
+        vertical-align: middle !important;
+        margin-right: 5px !important;
+        stroke: #FF00FF !important; 
+        fill: none !important;
+        }
+
    @media (max-width: 768px) {
       .section-container {
          padding-left: 15px;
@@ -926,7 +935,7 @@ $(document).ready(function() {
                </td>
            </tr>
             <tr>
-               <td style="width:150px; line-height: 2;"><i data-feather="box"></i> Mihomo</td>
+               <td style="width:150px; line-height: 2;"><i class="fas fa-box custom-icon"></i> Mihomo</td>
                <td class="d-grid">
                    <form action="index.php" method="post" style="display: inline-block; width: 100%; margin-bottom: 10px;">
                        <div class="form-group">
@@ -976,7 +985,7 @@ $(document).ready(function() {
                </td>
            </tr>
            <tr>
-               <td style="width:150px; line-height: 2;"><i data-feather="settings"></i> 运行模式</td>
+               <td style="width:150px; line-height: 2;"><i class="fas fa-cog custom-icon"></i> 运行模式</td>
                <td class="d-grid">
                    <?php
                    $mode_placeholder = '';
@@ -993,36 +1002,6 @@ $(document).ready(function() {
            </tr>
        </tbody>
    </table>
-
-<div class="modal fade" id="singboxModal" tabindex="-1" aria-labelledby="singboxModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="singboxModalLabel">Sing-box 启动提示</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>如遇启动失败，请前往文件管理 ⇨ 更新数据库 ⇨ 下载 cache.db 缓存数据。</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-    $(document).ready(function() {
-        var lastShown = localStorage.getItem('singboxModalLastShown');
-        var currentTime = new Date().getTime();
-
-        if (!lastShown || (currentTime - lastShown) > 12 * 60 * 60 * 1000) {
-            $('#singboxModal').modal('show');  
-        }
-
-        localStorage.setItem('singboxModalLastShown', currentTime);
-    });
-</script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -1235,41 +1214,7 @@ window.onload = function() {
                     </div>
                     <button type="submit" name="clear_singbox_log" class="btn btn-danger me-2"><i class="bi bi-trash"></i> 清空日志</button>
                     <button type="button" class="btn btn-primary me-2" data-toggle="modal" data-target="#cronModal"><i class="bi bi-clock"></i> 定时重启</button>
-                    <button id="showHelpButton" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#helpModal" type="button"><i class="bi bi-keyboard"></i> 键盘说明</button>
                 </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="helpModalLabel">键盘操作说明</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <ul>
-                    <li><strong>鼠标左键:</strong> 双击打开播放器界面</li>
-                    <li><strong>F9键:</strong> 切换播放/暂停</li>
-                    <li><strong>上下箭头键:</strong> 切换上一首/下一首</li>
-                    <li><strong>左右箭头键:</strong> 快进/快退 10 秒</li>
-                    <li><strong>ESC键:</strong> 返回播放列表的第一首</li>
-                    <li><strong>F2键:</strong> 切换循环播放和顺序播放模式</li>
-                    <li><strong>F8键:</strong> 启动网站连通性检查</li>
-                    <li><strong>F4键:</strong> 开启天气信息播报</li>
-                    <li><strong>Ctrl + F6键:</strong> 启动/停止雪花动画 </li>
-                    <li><strong>Ctrl + F7键:</strong> 启动/停止方块灯光动画 </li>
-                    <li><strong>Ctrl + F10键:</strong> 启动/停止方块动画 </li>
-                    <li><strong>Ctrl + F11键:</strong> 启动/停止光点动画 </li>
-                    <li><strong>Ctrl + Shift + C键:</strong> 清空缓存</li>
-                    <li><strong>Ctrl + Shift + V键:</strong> 定制播放列表</li>
-                    <li><strong>Ctrl + Shift + X键:</strong> 设置城市</li>
-                </ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
             </div>
         </div>
     </div>
