@@ -524,6 +524,76 @@ $lang = $_GET['lang'] ?? 'en';
         background-color: #218838;
     }
 
+    .popup {
+        display: none; 
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        color: #333;
+        padding: 20px;
+        border-radius: 12px;
+        z-index: 1000;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        width: 620px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .popup h3 {
+        grid-column: span 3;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .popup button {
+        padding: 12px;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        background-color: rgba(0, 0, 0, 0.1);
+        color: #333;
+        transition: background 0.3s, transform 0.2s;
+    }
+
+    .popup button:hover {
+        background: rgba(0, 0, 0, 0.2);
+        transform: scale(1.05);
+    }
+
+    .popup button:active {
+        transform: scale(0.95);
+    }
+
+    .popup button:last-child {
+        grid-column: span 3;
+        justify-self: center;
+        width: 80%;
+        background: rgba(255, 0, 0, 0.2);
+        color: red;
+    }
+
+    .popup button:last-child:hover {
+        background: rgba(255, 0, 0, 0.4);
+    }
+
+    label[for="newPath"], label[for="permissions"], .form-text {
+        color: white !important;
+    }
+
+    .container-bg {
+      border-radius: 12px;
+      box-shadow: var(--bs-shadow-medium);
+      padding: 2rem;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    }
+
 @media (max-width: 768px) {
     .d-flex.justify-content-between.gap-2 {
         width: 100%;
@@ -540,10 +610,11 @@ $lang = $_GET['lang'] ?? 'en';
     }
 }
 
-@media (max-width: 1440px) {
+
+@media (max-width: 768px) {
     .modal-dialog {
-        max-width: 100% !important; 
-        margin: 30px auto; 
+        max-width: 100% !important;
+        margin: 30px auto;
     }
 
     .table thead {
@@ -579,21 +650,21 @@ $lang = $_GET['lang'] ?? 'en';
     }
 
     .table td .btn-container {
-        display: flex; 
-        justify-content: space-between; 
-        gap: 10px; 
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
     }
 
     .table td .btn {
-        flex: 1; 
-        text-align: center; 
+        flex: 1;
+        text-align: center;
         padding: 10px;
         font-size: 14px;
-        min-width: 0; 
+        min-width: 0;
     }
-}
 
-@media (max-width: 767px) {
+
+@media (max-width: 768px) {
     .control-toggle {
         display: none;
     }
@@ -910,11 +981,15 @@ let IP = {
                         <div style="display: flex; align-items: center; gap: 5px;">
                             <span id="ip-address">${isHidden ? '***.***.***.***.***' : cachedIP}</span> 
                             <span class="badge badge-primary" style="color: #333;">${country}</span>
+
                         </div>
                     </div>
                 </div>
                 <span id="toggle-ip" style="cursor: pointer; position: relative; top: -3px;  text-indent: 1ch; padding-top: 2px;" title="点击隐藏/显示 IP">
                     <i class="fa ${isHidden ? 'bi-eye-slash' : 'bi-eye'}"></i>  
+                </span>
+                <span class="control-toggle" style="cursor: pointer; margin-left: 10px; display: inline-flex; align-items: center; position: relative; top: -1px;"" onclick="togglePopup()" title="打开控制面板">
+                    <i class="bi bi-gear" style="font-size: 0.8rem; margin-right: 5px;"></i>  
                 </span>
             `;
 
@@ -1271,10 +1346,12 @@ if(typeof checkSiteStatus !== 'undefined') {
 
 setInterval(IP.getIpipnetIP, 180000);
 </script>
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var video = document.getElementById('background-video');
+        var popup = document.getElementById('popup');
+
+        popup.style.display = "none";
         
         var savedMuteState = localStorage.getItem("videoMuted");
         if (savedMuteState !== null) {
@@ -1307,8 +1384,12 @@ setInterval(IP.getIpipnetIP, 180000);
 
     function togglePopup() {
         var popup = document.getElementById('popup');
-        popup.style.display = (popup.style.display === "block") ? "none" : "block";
-        updateButtonStates();
+    
+        if (popup.style.display === "none" || popup.style.display === "") {
+            popup.style.display = "grid"; 
+        } else {
+            popup.style.display = "none"; 
+        }
     }
 
     function toggleAudio() {
@@ -1365,7 +1446,7 @@ setInterval(IP.getIpipnetIP, 180000);
         }
     }
 
-    function updateButtonStates() {
+  function updateButtonStates() {
         var video = document.getElementById('background-video');
         var audioBtn = document.getElementById('audio-btn');
         var fullscreenBtn = document.getElementById('fullscreen-btn');
@@ -1383,12 +1464,59 @@ setInterval(IP.getIpipnetIP, 180000);
     document.addEventListener("fullscreenchange", updateButtonStates);
 </script>
 
+<div class="popup" id="popup">
+    <h3>🔧 控制面板</h3>
+    <button onclick="toggleAudio()" id="audio-btn">🔊 切换音频</button>
+    <button onclick="toggleObjectFit()" id="object-fit-btn">🔲 切换视频显示模式</button>
+    <button onclick="toggleFullScreen()" id="fullscreen-btn">⛶ 切换全屏</button>
+    <button id="clear-cache-btn">🗑️ 清除缓存</button>
+    <button type="button" data-bs-toggle="modal" data-bs-target="#cityModal">🌆 设置城市</button>
+    <button type="button" data-bs-toggle="modal" data-bs-target="#urlModal">🔗 定制播放列表</button>
+    <button type="button" data-bs-toggle="modal" data-bs-target="#keyHelpModal">⌨️ 键盘快捷键</button>
+    <button type="button" data-bs-toggle="modal" data-bs-target="#singboxModal">🎤 Sing-box 启动提示</button>
+    <button id="openPlayerButton"  data-bs-toggle="modal" data-bs-target="#audioPlayerModal">🎶 音乐播放器</button>
+    <button id="startCheckBtn">🌐 启动网站检测</button>
+    <button id="startWeatherBtn">🌦️ 启动天气播报</button>
+    <button id="toggleModal"><i class="fas fa-arrows-alt-h"></i> 修改页面宽度</button>
+    <button id="toggleAnimationBtn">🖥️ 启动方块动画</button>
+    <button id="toggleSnowBtn">❄️ 启动雪花动画</button>
+    <button id="toggleLightAnimationBtn">💡 启动灯光动画</button>
+    <button id="toggleLightEffectBtn">✨ 启动光点动画</button>
+    <button type="button" data-bs-toggle="modal" data-bs-target="#colorModal"><i class="bi-palette"></i> 主题编辑器</button>                   
+    <button type="button" data-bs-toggle="modal" data-bs-target="#filesModal"><i class="bi-camera-video"></i> 设置背景</button>
+    <button onclick="togglePopup()">❌ 关闭</button>
+</div>
+
+<div class="modal fade" id="singboxModal" tabindex="-1" aria-labelledby="singboxModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="singboxModalLabel">Sing-box 启动提示</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+           <ul>
+                <li>如遇启动失败，请前往文件管理 ⇨ 更新数据库 ⇨ 下载 cache.db 缓存数据。</li>
+                <li>启动了无法联网，请前往防火墙设置 ⇨ 出站/入站/转发 ⇨ 接受  ⇨  保存应用</li>
+           </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('keydown', function(event) {
     if (event.ctrlKey && event.shiftKey && event.code === 'KeyC') {
         clearCache();
         event.preventDefault();  
     }
+});
+
+document.getElementById('clear-cache-btn').addEventListener('click', function() {
+    clearCache();
 });
 
 function clearCache() {
@@ -1431,296 +1559,624 @@ window.addEventListener('load', function() {
 });
 </script>
 
+<style>
+#audioPlayerModal .modal-content {
+  background: #222;
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+#audioPlayerModal .modal-header {
+  background: #333;
+  border-bottom: 1px solid #444;
+}
+
+#audioPlayerModal .modal-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#audioPlayerModal .close {
+  color: #fff;
+  opacity: 0.8;
+}
+
+#audioPlayerModal .close:hover {
+  opacity: 1;
+}
+
+.audio-player-container {
+  padding: 20px;
+
+}
+
+.audio-player-container button {
+  margin: 8px;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.audio-player-container .btn-primary {
+  background: #ff5733; 
+  color: white;
+}
+
+.audio-player-container .btn-primary:hover {
+  background: #ff6f4d; 
+}
+
+.audio-player-container .btn-secondary {
+  background: #6a1b9a; 
+  color: white;
+}
+
+.audio-player-container .btn-secondary:hover {
+  background: #8e24aa; 
+}
+
+.audio-player-container .btn-info {
+  background: #3498db; 
+  color: white;
+}
+
+.audio-player-container .btn-info:hover {
+  background: #5dade2; 
+}
+
+.audio-player-container .btn-warning {
+  background: #f39c12; 
+  color: black;
+}
+
+.audio-player-container .btn-warning:hover {
+  background: #f5b041;
+}
+
+.audio-player-container .btn-dark {
+  background: #2c3e50; 
+  color: white;
+}
+
+.audio-player-container .btn-dark:hover {
+  background: #34495e; 
+}
+
+.track-name {
+  margin-top: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #1db954;
+  text-align: center;
+}
+
+#tooltip {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 15px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+  text-align: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1050;
+}
+
+#tooltip.show {
+  visibility: visible;
+  opacity: 1;
+}
+
+.datetime-container {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffcc00;
+}
+
+#dateDisplay,
+#timeDisplay {
+  margin: 0 10px;
+}
+
+#timeDisplay {
+  font-style: italic;
+}
+
+#audioElement {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 600px; /* Limit the audio player width */
+  display: block;
+  margin-left: auto;
+  margin-right: auto; /* Center the audio player */
+}
+
+@media (max-width: 768px) {
+  .audio-player-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .audio-player-container button {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+</style>
+
+<div class="modal fade" id="audioPlayerModal" tabindex="-1" aria-labelledby="audioPlayerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="audioPlayerModalLabel">音乐播放器</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="datetime-container">
+          <span id="dateDisplay"></span> 
+          <span id="timeDisplay"></span>
+        </div>
+        <audio id="audioElement" controls>
+          <source id="audioSource" type="audio/mp3" src="your-audio-file.mp3">
+          您的浏览器不支持 audio 元素。
+        </audio>
+        <div class="audio-player-container text-center">
+          <button id="modalPlayPauseButton" class="btn btn-primary">▶ 播放</button>
+          <button id="modalPrevButton" class="btn btn-secondary">⏪ 上一首</button>
+          <button id="modalNextButton" class="btn btn-secondary">⏩ 下一首</button>
+          <button id="modalRewindButton" class="btn btn-dark">⏪ 快退</button>
+          <button id="modalFastForwardButton" class="btn btn-info">⏩ 快进</button>
+          <button id="modalLoopButton" class="btn btn-warning">🔁 循环</button>
+          <div class="track-name" id="trackName">没有歌曲</div>
+        </div>
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="position: absolute; bottom: 15px; right: 15px;">
+          取消
+        </button>
+        <div id="tooltip"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-    const audioPlayer = new Audio();  
-    let songs = [];  
-    let currentSongIndex = 0;  
-    let isPlaying = false;  
-    let isReportingTime = false; 
-    let isLooping = false; 
-    let hasModalShown = false;
+const audioPlayer = document.getElementById('audioElement');
+let songs = [];
+let currentSongIndex = 0;
+let isPlaying = false;
+let isReportingTime = false;
+let isLooping = false;
+let hasModalShown = false;
 
-    const logBox = document.createElement('div');
-    logBox.style.position = 'fixed';
-    logBox.style.top = '90%';  
-    logBox.style.left = '20px';
-    logBox.style.padding = '10px';
-    logBox.style.backgroundColor = 'green';
-    logBox.style.color = 'white';
-    logBox.style.borderRadius = '5px';
-    logBox.style.zIndex = '9999';
-    logBox.style.maxWidth = '250px'; 
-    logBox.style.fontSize = '14px';
-    logBox.style.display = 'none'; 
-    logBox.style.maxWidth = '300px';  
-    logBox.style.wordWrap = 'break-word'; 
-    document.body.appendChild(logBox);
+const logBox = document.createElement('div');
+logBox.style.position = 'fixed';
+logBox.style.top = '90%';
+logBox.style.left = '20px';
+logBox.style.padding = '10px';
+logBox.style.backgroundColor = 'green';
+logBox.style.color = 'white';
+logBox.style.borderRadius = '5px';
+logBox.style.zIndex = '9999';
+logBox.style.maxWidth = '250px';
+logBox.style.fontSize = '14px';
+logBox.style.display = 'none';
+logBox.style.maxWidth = '300px';
+logBox.style.wordWrap = 'break-word';
+document.body.appendChild(logBox);
 
-    function showLogMessage(message) {
-        logBox.textContent = message;
-        logBox.style.display = 'block';
-        logBox.style.animation = 'scrollUp 8s ease-out forwards'; 
-        logBox.style.width = 'auto'; 
-        logBox.style.maxWidth = '300px'; 
+function showLogMessage(message) {
+    const decodedMessage = decodeURIComponent(message);
+    logBox.textContent = decodedMessage;
+    logBox.style.display = 'block';
+    logBox.style.animation = 'scrollUp 8s ease-out forwards';
+    logBox.style.width = 'auto';
+    logBox.style.maxWidth = '300px';
 
-        setTimeout(() => {
-            logBox.style.display = 'none';
-        }, 8000); 
-    }
+    setTimeout(() => {
+        logBox.style.display = 'none';
+    }, 8000);
+}
 
-    const styleSheet = document.createElement('style');
-    styleSheet.innerHTML = `
-        @keyframes scrollUp {
-            0% {
-                top: 90%;
-            }
-            100% {
-                top: 50%;
-            }
+const styleSheet = document.createElement('style');
+styleSheet.innerHTML = `
+    @keyframes scrollUp {
+        0% {
+            top: 90%;
         }
-    `;
-    document.head.appendChild(styleSheet);
+        100% {
+            top: 50%;
+        }
+    }
+`;
+document.head.appendChild(styleSheet);
 
-    function loadDefaultPlaylist() {
-        fetch('<?php echo $new_url; ?>')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('加载播放列表失败');
-                    speakMessage('加载播放列表失败');
+function loadDefaultPlaylist() {
+    fetch('<?php echo $new_url; ?>')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('加载播放列表失败');
+                speakMessage('加载播放列表失败');
+            }
+            return response.text();
+        })
+        .then(data => {
+            songs = data.split('\n').filter(url => url.trim() !== '');
+            if (songs.length === 0) {
+                throw new Error('播放列表中没有有效的歌曲');
+            }
+            console.log('播放列表已加载:', songs);
+            restorePlayerState();
+            updateTrackName(); 
+        })
+        .catch(error => {
+            console.error('加载播放列表时出错:', error.message);
+        });
+}
+
+function loadSong(index) {
+    if (index >= 0 && index < songs.length) {
+        audioPlayer.src = songs[index];
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            const savedState = JSON.parse(localStorage.getItem('playerState'));
+            if (savedState && savedState.currentSongIndex === index) {
+                audioPlayer.currentTime = savedState.currentTime || 0;
+                if (savedState.isPlaying) {
+                    audioPlayer.play().catch(error => {
+                        console.error('恢复播放失败:', error);
+                    });
                 }
-                return response.text();
-            })
-            .then(data => {
-                songs = data.split('\n').filter(url => url.trim() !== ''); 
-                if (songs.length === 0) {
-                    throw new Error('播放列表中没有有效的歌曲');
-                }
-                console.log('播放列表已加载:', songs);
-                restorePlayerState(); 
-            })
-            .catch(error => {
-                console.error('加载播放列表时出错:', error.message);
+            }
+        }, { once: true });
+    }
+}
+
+const playPauseButton = document.getElementById('modalPlayPauseButton');
+playPauseButton.addEventListener('click', function() {
+    if (!isPlaying) {
+        loadSong(currentSongIndex);
+        audioPlayer.play().then(() => {
+            isPlaying = true;
+            savePlayerState();
+            console.log('开始播放');
+            speakMessage('开始播放');
+            playPauseButton.textContent = '⏸️ 暂停';
+            updateTrackName();
+        }).catch(error => {
+            console.log('播放失败:', error);
+        });
+    } else {
+        audioPlayer.pause();
+        isPlaying = false;
+        savePlayerState();
+        console.log('播放已暂停');
+        speakMessage('播放已暂停');
+        playPauseButton.textContent = '▶ 播放';
+    }
+});
+
+document.getElementById('modalPrevButton').addEventListener('click', () => {
+    currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+    loadSong(currentSongIndex);
+    savePlayerState();
+    if (isPlaying) {
+        audioPlayer.play();
+    }
+    updateTrackName();
+    const songName = getSongName(songs[currentSongIndex]);
+    showLogMessage(`上一首：${songName}`);
+});
+
+document.getElementById('modalNextButton').addEventListener('click', () => {
+    currentSongIndex = (currentSongIndex + 1) % songs.length;
+    loadSong(currentSongIndex);
+    savePlayerState();
+    if (isPlaying) {
+        audioPlayer.play();
+    }
+    updateTrackName();
+    const songName = getSongName(songs[currentSongIndex]);
+    showLogMessage(`下一首：${songName}`);
+});
+
+function updateTrackName() {
+    if (songs.length > 0) {
+        const currentSongUrl = songs[currentSongIndex];
+        const trackName = extractSongName(currentSongUrl);
+        document.getElementById('trackName').textContent = trackName || '未知歌曲';
+    } else {
+        document.getElementById('trackName').textContent = '没有歌曲';
+    }
+}
+
+function extractSongName(url) {
+    const parts = url.split('/');
+    return decodeURIComponent(parts[parts.length - 1]);
+}
+
+audioPlayer.addEventListener('ended', () => {
+    currentSongIndex = (currentSongIndex + 1) % songs.length;
+    loadSong(currentSongIndex);
+    savePlayerState();
+    if (isPlaying) {
+        audioPlayer.play();
+    }
+    updateTrackName();
+    const songName = getSongName(songs[currentSongIndex]);
+    showLogMessage(`自动切换到：${songName}`);
+});
+
+document.getElementById('modalRewindButton').addEventListener('click', () => {
+    audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0);
+    console.log('快退 10 秒');
+    savePlayerState();
+    showLogMessage('快退 10 秒');
+});
+
+document.getElementById('modalFastForwardButton').addEventListener('click', () => {
+    audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration || Infinity);
+    console.log('快进 10 秒');
+    savePlayerState();
+    showLogMessage('快进 10 秒');
+});
+
+const loopButton = document.getElementById('modalLoopButton');
+loopButton.addEventListener('click', () => {
+    isLooping = !isLooping;
+    
+    if (isLooping) {
+        loopButton.textContent = "🔁 循环";
+        console.log('循环播放');
+        showLogMessage('循环播放');
+        speakMessage('循环播放');
+        audioPlayer.loop = true;
+    } else {
+        loopButton.textContent = "🔄 顺序";
+        console.log('顺序播放');
+        showLogMessage('顺序播放');
+        speakMessage('顺序播放');
+        audioPlayer.loop = false;
+    }
+});
+
+function getSongName(url) {
+    const pathParts = url.split('/');
+    return pathParts[pathParts.length - 1];
+}
+
+function startHourlyAlert() {
+    setInterval(() => {
+        const now = new Date();
+        const hours = now.getHours();
+
+        if (now.getMinutes() === 0 && !isReportingTime) {
+            isReportingTime = true;
+
+            const timeAnnouncement = new SpeechSynthesisUtterance(`整点报时，现在是北京时间 ${hours} 点整`);
+            timeAnnouncement.lang = 'zh-CN';
+            speechSynthesis.speak(timeAnnouncement);
+
+            console.log(`整点报时：现在是北京时间 ${hours} 点整`);
+        }
+
+        if (now.getMinutes() !== 0) {
+            isReportingTime = false;
+        }
+    }, 60000);
+}
+
+function updateDateTime() {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+    document.getElementById('dateDisplay').textContent = `${year}年${month}月${day}日`;
+
+    const timeString = now.toLocaleTimeString('zh-CN', { hour12: false });
+
+    const hours = now.getHours();
+    let ancientTime;
+    if (hours >= 23 || hours < 1) ancientTime = '子时';
+    else if (hours >= 1 && hours < 3) ancientTime = '丑时';
+    else if (hours >= 3 && hours < 5) ancientTime = '寅时';
+    else if (hours >= 5 && hours < 7) ancientTime = '卯时';
+    else if (hours >= 7 && hours < 9) ancientTime = '辰时';
+    else if (hours >= 9 && hours < 11) ancientTime = '巳时';
+    else if (hours >= 11 && hours < 13) ancientTime = '午时';
+    else if (hours >= 13 && hours < 15) ancientTime = '未时';
+    else if (hours >= 15 && hours < 17) ancientTime = '申时';
+    else if (hours >= 17 && hours < 19) ancientTime = '酉时';
+    else if (hours >= 19 && hours < 21) ancientTime = '戌时';
+    else ancientTime = '亥时';
+
+    document.getElementById('timeDisplay').textContent = `${timeString} (${ancientTime})`;
+}
+
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
+audioPlayer.addEventListener('ended', function() {
+    if (isLooping) {
+        loadSong(currentSongIndex);
+        savePlayerState();
+        audioPlayer.play();
+    } else {
+        currentSongIndex = (currentSongIndex + 1) % songs.length;
+        loadSong(currentSongIndex);
+        savePlayerState();
+        audioPlayer.play();
+    }
+});
+
+function savePlayerState() {
+    const state = {
+        currentSongIndex,
+        currentTime: audioPlayer.currentTime,
+        isPlaying,
+        isLooping,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('playerState', JSON.stringify(state));
+}
+
+function clearExpiredPlayerState() {
+    const state = JSON.parse(localStorage.getItem('playerState'));
+
+    if (state) {
+        const currentTime = Date.now();
+        const stateAge = currentTime - state.timestamp;
+
+        const expirationTime = 60 * 60 * 1000;
+
+        if (stateAge > expirationTime) {
+            localStorage.removeItem('playerState');
+            console.log('播放状态已过期，已清除');
+        }
+    }
+}
+
+setInterval(clearExpiredPlayerState, 10 * 60 * 1000);
+
+function restorePlayerState() {
+    const state = JSON.parse(localStorage.getItem('playerState'));
+    if (state) {
+        currentSongIndex = state.currentSongIndex || 0;
+        isLooping = state.isLooping || false;
+        loadSong(currentSongIndex);
+        if (state.isPlaying) {
+            isPlaying = true;
+            playPauseButton.textContent = '暂停';
+            audioPlayer.currentTime = state.currentTime || 0;
+            audioPlayer.play().catch(error => {
+                console.error('恢复播放失败:', error);
             });
-    }
-
-    function loadSong(index) {
-        if (index >= 0 && index < songs.length) {
-            audioPlayer.src = songs[index];  
-            audioPlayer.addEventListener('loadedmetadata', () => {
-                const savedState = JSON.parse(localStorage.getItem('playerState'));
-                if (savedState && savedState.currentSongIndex === index) {
-                    audioPlayer.currentTime = savedState.currentTime || 0; 
-                    if (savedState.isPlaying) {
-                        audioPlayer.play().catch(error => {
-                            console.error('恢复播放失败:', error);
-                        });
-                    }
-                }
-            }, { once: true }); 
+            playPauseButton.textContent = '⏸️ 暂停';
         }
     }
+}
 
-    document.addEventListener('dblclick', function () {
-        if (!isPlaying) {
-            loadSong(currentSongIndex);
+document.addEventListener('dblclick', function() {
+    const lastShownTime = localStorage.getItem('lastModalShownTime');
+    const currentTime = new Date().getTime();
+
+    if (!lastShownTime || (currentTime - lastShownTime) > 4 * 60 * 60 * 1000) {
+        if (!hasModalShown) {
+            const modal = new bootstrap.Modal(document.getElementById('keyHelpModal'));
+            modal.show();
+            hasModalShown = true;
+
+            localStorage.setItem('lastModalShownTime', currentTime);
+        }
+    }
+});
+
+loadDefaultPlaylist();
+startHourlyAlert();
+restorePlayerState();
+
+$('#audioPlayerModal').on('shown.bs.modal', function () {
+    updateTrackName();
+});
+
+window.addEventListener('keydown', function(event) {
+    if (event.key === 'ArrowUp') {
+        currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+        loadSong(currentSongIndex);
+        savePlayerState();
+        if (isPlaying) {
+            audioPlayer.play();
+        }
+        const songName = getSongName(songs[currentSongIndex]);
+        showLogMessage(`上一首：${songName}`);
+        speakMessage('上一首');
+        updateTrackName();
+    } else if (event.key === 'ArrowDown') {
+        currentSongIndex = (currentSongIndex + 1) % songs.length;
+        loadSong(currentSongIndex);
+        savePlayerState();
+        if (isPlaying) {
+            audioPlayer.play();
+        }
+        const songName = getSongName(songs[currentSongIndex]);
+        showLogMessage(`下一首：${songName}`);
+        speakMessage('下一首');
+        updateTrackName();
+    } else if (event.key === 'ArrowLeft') {
+        audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0);
+        console.log('快退 10 秒');
+        savePlayerState();
+        showLogMessage('快退 10 秒');
+    } else if (event.key === 'ArrowRight') {
+        audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration || Infinity);
+        console.log('快进 10 秒');
+        savePlayerState();
+        showLogMessage('快进 10 秒');
+    } else if (event.key === 'Escape') {
+        localStorage.removeItem('playerState');
+        currentSongIndex = 0;
+        loadSong(currentSongIndex);
+        savePlayerState();
+        console.log('恢复到第一首');
+        showLogMessage('恢复到第一首');
+        speakMessage('已返回播放列表的第一首');
+        if (isPlaying) {
+            audioPlayer.play();
+        }
+    } else if (event.key === 'F9') {
+        if (isPlaying) {
+            audioPlayer.pause();
+            isPlaying = false;
+            savePlayerState();
+            console.log('暂停播放');
+            showLogMessage('暂停播放');
+            speakMessage('暂停播放');
+            playPauseButton.textContent = '▶ 播放';
+        } else {
             audioPlayer.play().then(() => {
                 isPlaying = true;
-                savePlayerState(); 
+                savePlayerState();
                 console.log('开始播放');
+                showLogMessage('开始播放');
                 speakMessage('开始播放');
+                playPauseButton.textContent = '⏸️ 暂停';
             }).catch(error => {
                 console.log('播放失败:', error);
             });
-        } else {
-            audioPlayer.pause();
-            isPlaying = false;
-            savePlayerState(); 
-            console.log('播放已暂停');
-            speakMessage('播放已暂停');
         }
-    });
-
-    window.addEventListener('keydown', function (event) {
-        if (event.key === 'ArrowUp') {
-            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length; 
-            loadSong(currentSongIndex);
-            savePlayerState(); 
-            if (isPlaying) {
-                audioPlayer.play();  
-            }
-            const songName = getSongName(songs[currentSongIndex]); 
-            showLogMessage(`上一首：${songName}`);
-            speakMessage('上一首');
-        } else if (event.key === 'ArrowDown') {
-            currentSongIndex = (currentSongIndex + 1) % songs.length; 
-            loadSong(currentSongIndex);
-            savePlayerState();
-            if (isPlaying) {
-                audioPlayer.play();
-            }
-            const songName = getSongName(songs[currentSongIndex]); 
-            showLogMessage(`下一首：${songName}`);
-            speakMessage('下一首');
-        } else if (event.key === 'ArrowLeft') {
-            audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0); 
-            console.log('快退 10 秒');
-            savePlayerState();
-            showLogMessage('快退 10 秒');
-        } else if (event.key === 'ArrowRight') {
-            audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration || Infinity); 
-            console.log('快进 10 秒');
-            savePlayerState();
-            showLogMessage('快进 10 秒');
-        } else if (event.key === 'Escape') { 
-            localStorage.removeItem('playerState');
-            currentSongIndex = 0;
-            loadSong(currentSongIndex);
-            savePlayerState();
-            console.log('恢复到第一首');
-            showLogMessage('恢复到第一首');
-            speakMessage('已返回播放列表的第一首');
-            if (isPlaying) {
-                audioPlayer.play();
-            }
-        } else if (event.key === 'F9') { 
-            if (isPlaying) {
-                audioPlayer.pause();
-                isPlaying = false;
-                savePlayerState(); 
-                console.log('暂停播放');
-                showLogMessage('暂停播放');
-                speakMessage('暂停播放');
-            } else {
-                audioPlayer.play().then(() => {
-                    isPlaying = true;
-                    savePlayerState(); 
-                    console.log('开始播放');
-                    showLogMessage('开始播放');
-                    speakMessage('开始播放');
-                }).catch(error => {
-                    console.log('播放失败:', error);
-                });
-            }
-        } else if (event.key === 'F2') { 
-            isLooping = !isLooping;
-            if (isLooping) {
-                console.log('循环播放');
-                showLogMessage('循环播放');
-                speakMessage('循环播放');
-            } else {
-                console.log('顺序播放');
-                showLogMessage('顺序播放');
-                speakMessage('顺序播放');
-            }
-        }
-    });
-
-    function getSongName(url) {
-        const pathParts = url.split('/');
-        return pathParts[pathParts.length - 1]; 
-    }
-
-    function startHourlyAlert() {
-        setInterval(() => {
-            const now = new Date();
-            const hours = now.getHours();
-
-            if (now.getMinutes() === 0 && !isReportingTime) {
-                isReportingTime = true;  
-
-                const timeAnnouncement = new SpeechSynthesisUtterance(`整点报时，现在是北京时间 ${hours} 点整`);
-                timeAnnouncement.lang = 'zh-CN';
-                speechSynthesis.speak(timeAnnouncement);
-
-                console.log(`整点报时：现在是北京时间 ${hours} 点整`);
-            }
-
-            if (now.getMinutes() !== 0) {
-                isReportingTime = false;
-            }
-        }, 60000); 
-    }
-
-    audioPlayer.addEventListener('ended', function () {
+    } else if (event.key === 'F2') {
+        isLooping = !isLooping;
+        const loopButton = document.getElementById('modalLoopButton');
         if (isLooping) {
-            loadSong(currentSongIndex); 
-            savePlayerState();
-            audioPlayer.play();
+            loopButton.textContent = "🔁 循环";
+            audioPlayer.loop = true;
+            console.log('循环播放');
+            showLogMessage('循环播放');
+            speakMessage('循环播放');
         } else {
-            currentSongIndex = (currentSongIndex + 1) % songs.length;  
-            loadSong(currentSongIndex);  
-            savePlayerState(); 
-            audioPlayer.play();
-        }
-    });
-
-    function savePlayerState() {
-        const state = {
-            currentSongIndex,       
-            currentTime: audioPlayer.currentTime,
-            isPlaying,
-            isLooping,
-            timestamp: Date.now()
-        };
-        localStorage.setItem('playerState', JSON.stringify(state));
-    }
-
-    function clearExpiredPlayerState() {
-        const state = JSON.parse(localStorage.getItem('playerState'));
-    
-        if (state) {
-            const currentTime = Date.now();
-            const stateAge = currentTime - state.timestamp;  
-
-            const expirationTime = 60 * 60 * 1000;  
-
-            if (stateAge > expirationTime) {
-                localStorage.removeItem('playerState');  
-                console.log('播放状态已过期，已清除');
-            }
+            loopButton.textContent = "🔄 顺序";
+            audioPlayer.loop = false;
+            console.log('顺序播放');
+            showLogMessage('顺序播放');
+            speakMessage('顺序播放');
         }
     }
-
-    setInterval(clearExpiredPlayerState, 10 * 60 * 1000);
-
-    function restorePlayerState() {
-        const state = JSON.parse(localStorage.getItem('playerState'));
-        if (state) {
-            currentSongIndex = state.currentSongIndex || 0;
-            isLooping = state.isLooping || false; 
-            loadSong(currentSongIndex);
-            if (state.isPlaying) {
-                isPlaying = true;
-                audioPlayer.currentTime = state.currentTime || 0;
-                audioPlayer.play().catch(error => {
-                    console.error('恢复播放失败:', error);
-                });
-            }
-        }
-    }
-
-    document.addEventListener('dblclick', function () {
-        const lastShownTime = localStorage.getItem('lastModalShownTime'); 
-        const currentTime = new Date().getTime(); 
-
-        if (!lastShownTime || (currentTime - lastShownTime) > 4 * 60 * 60 * 1000) { 
-            if (!hasModalShown) {  
-                const modal = new bootstrap.Modal(document.getElementById('keyHelpModal'));
-                modal.show();
-                hasModalShown = true;
-
-                localStorage.setItem('lastModalShownTime', currentTime);
-            }
-        }
-    });
-
-    loadDefaultPlaylist();
-    startHourlyAlert();
-    restorePlayerState(); 
+});
 </script>
 
 <div class="modal fade" id="urlModal" tabindex="-1" aria-labelledby="urlModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="urlModalLabel">更新播放列表链接</h5>
@@ -1793,7 +2249,7 @@ window.addEventListener('load', function() {
 </script>
 
 <div class="modal fade" id="keyHelpModal" tabindex="-1" aria-labelledby="keyHelpModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="keyHelpModalLabel">键盘操作说明</h5>
@@ -1813,10 +2269,11 @@ window.addEventListener('load', function() {
                     <li><strong>Ctrl + F7键:</strong> 启动/停止方块灯光动画 </li>
                     <li><strong>Ctrl + F10键:</strong> 启动/停止方块动画 </li>
                     <li><strong>Ctrl + F11键:</strong> 启动/停止光点动画 </li>
+                    <li><strong>Ctrl + Shift + S键:</strong> 打开设置</li>
                     <li><strong>Ctrl + Shift + C键:</strong> 清空缓存数据</li>
                     <li><strong>Ctrl + Shift + V键:</strong> 定制播放列表</li>
                     <li><strong>Ctrl + Shift + X键:</strong> 设置城市</li>
-                    <li><strong>长按屏幕顶部</strong> 设置音频（视频模式下有效）</li>
+                    <li><strong>手机/平板长按上半屏:</strong> 打开设置</li>
                 </ul>
             </div>
             <div class="modal-footer">
@@ -1827,7 +2284,7 @@ window.addEventListener('load', function() {
 </div>
 
 <div class="modal fade" id="cityModal" tabindex="-1" aria-labelledby="cityModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="cityModalLabel">设置城市</h5>
@@ -1917,6 +2374,10 @@ window.addEventListener('load', function() {
         }
     });
 
+    document.getElementById('startCheckBtn').addEventListener('click', function() {
+        speakMessage('网站检测已开启，开始检测网站连通性...');
+        checkWebsiteAccess(websites);
+    });
 </script>
 
 <script>
@@ -2059,6 +2520,11 @@ function speakWeather(weather) {
         }
     });
 
+    document.getElementById('startWeatherBtn').addEventListener('click', function() {
+        speakMessage('正在获取天气信息...');
+        fetchWeather();
+    });
+
     document.getElementById('saveCityBtn').addEventListener('click', saveCity);
 
 </script>
@@ -2124,11 +2590,15 @@ function speakWeather(weather) {
                 createAnimatedBox();
             }, 1000);
             localStorage.setItem('animationActive', 'true');
+            isAnimationActive = true;
+            updateButtonText();
         }
 
         function stopAnimation() {
             clearInterval(intervalId);
             localStorage.setItem('animationActive', 'false');
+            isAnimationActive = false;
+            updateButtonText();
         }
 
         function showNotification(message) {
@@ -2149,6 +2619,10 @@ function speakWeather(weather) {
             }, 5000);
         }
 
+        function updateButtonText() {
+            document.getElementById('toggleAnimationBtn').innerText = isAnimationActive ? '⏸️ 停止方块动画' : '▶ 启动方块动画';
+        }
+
         window.addEventListener('keydown', function(event) {
             if (event.ctrlKey && event.key === 'F10') {
                 isAnimationActive = !isAnimationActive;
@@ -2164,10 +2638,29 @@ function speakWeather(weather) {
             }
         });
 
+        document.getElementById('toggleAnimationBtn').addEventListener('click', function() {
+            if (isAnimationActive) {
+                stopAnimation();
+                showNotification('⏸️ 方块动画已停止');
+                speakMessage('方块动画已停止');
+            } else {
+                startAnimation();
+                showNotification('▶ 方块动画已启动');
+                speakMessage('方块动画已启动');
+            }
+        });
+
         if (isAnimationActive) {
             startAnimation();
         }
+        updateButtonText();
     })();
+
+    function speakMessage(message) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'zh-CN';
+        speechSynthesis.speak(utterance);
+    }
 </script>
 
 <style>
@@ -2314,6 +2807,12 @@ function speakWeather(weather) {
         }, 5000);
     }
 
+    function speakMessage(message) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'zh-CN';
+        speechSynthesis.speak(utterance);
+    }
+
     function getSnowingState() {
         return localStorage.getItem('isSnowing') === 'true';
     }
@@ -2328,21 +2827,34 @@ function speakWeather(weather) {
         createSnowflakes();  
     }
 
+    function toggleSnowflakes() {
+        isSnowing = !isSnowing;
+        saveSnowingState(isSnowing);
+        if (isSnowing) {
+            createSnowflakes();
+            showNotification('雪花动画已启动');
+            speakMessage('雪花动画已启动');
+            document.getElementById('toggleSnowBtn').innerText = '⏸️ 停止雪花动画';
+        } else {
+            stopSnowflakes();
+            showNotification('雪花动画已停止');
+            speakMessage('雪花动画已停止');
+            document.getElementById('toggleSnowBtn').innerText = '▶ 启动雪花动画';
+        }
+    }
+
     window.addEventListener('keydown', function(event) {
         if (event.ctrlKey && event.key === 'F6') {
-            isSnowing = !isSnowing;
-            saveSnowingState(isSnowing);
-            if (isSnowing) {
-                createSnowflakes(); 
-                showNotification('雪花动画已启动');
-                speakMessage('雪花动画已启动');
-            } else {
-                stopSnowflakes(); 
-                showNotification('雪花动画已停止');
-                speakMessage('雪花动画已停止');
-            }
+            toggleSnowflakes();
         }
     });
+
+    document.getElementById('toggleSnowBtn').addEventListener('click', toggleSnowflakes);
+
+    if (isSnowing) {
+        document.getElementById('toggleSnowBtn').innerText = '⏸️ 停止雪花动画';
+    }
+
 </script>
 
 <style>
@@ -2426,6 +2938,7 @@ function speakWeather(weather) {
         intervalId = setInterval(createLightBox, 400); 
         localStorage.setItem('lightAnimationStatus', 'true');  
         if (showLog) showNotification('方块灯光动画已启动');
+        document.getElementById('toggleLightAnimationBtn').innerText = '⏸️ 停止灯光动画';
     }
 
     function stopLightAnimation(showLog = true) {
@@ -2434,6 +2947,7 @@ function speakWeather(weather) {
         allLights.forEach(light => light.remove()); 
         localStorage.setItem('lightAnimationStatus', 'false');  
         if (showLog) showNotification('方块灯光动画已停止');
+        document.getElementById('toggleLightAnimationBtn').innerText = '▶ 启动灯光动画';
     }
 
     function showNotification(message) {
@@ -2454,19 +2968,35 @@ function speakWeather(weather) {
         }, 5000);
     }
 
+    function speakMessage(message) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'zh-CN';
+        speechSynthesis.speak(utterance);
+    }
+
+    function toggleLightAnimation() {
+        isLightAnimationActive = !isLightAnimationActive;
+        if (isLightAnimationActive) {
+            startLightAnimation();
+            speakMessage('方块灯光动画已启动');
+        } else {
+            stopLightAnimation();
+            speakMessage('方块灯光动画已停止');
+        }
+    }
+
     window.addEventListener('keydown', function(event) {
         if (event.ctrlKey && event.key === 'F7') {
-            isLightAnimationActive = !isLightAnimationActive;
-            if (isLightAnimationActive) {
-                startLightAnimation(); 
-                speakMessage('方块灯光动画已启动');
-            } else {
-                stopLightAnimation();   
-                speakMessage('方块灯光动画已停止');
+                toggleLightAnimation();
             }
+        });
+
+        document.getElementById('toggleLightAnimationBtn').addEventListener('click', toggleLightAnimation);
+
+        if (isLightAnimationActive) {
+            document.getElementById('toggleLightAnimationBtn').innerText = '⏸️ 停止灯光动画';
         }
-    });
-})();
+    })();
 </script>
 
 <style>
@@ -2527,6 +3057,7 @@ function speakWeather(weather) {
         lightInterval = setInterval(createLightPoint, 200); 
         localStorage.setItem('lightEffectAnimation', 'true');
         if (showLog) showNotification('光点动画已开启');
+        document.getElementById('toggleLightEffectBtn').innerText = '⏸️ 停止光点动画';
     }
 
     function stopLightEffect(showLog = true) {
@@ -2534,6 +3065,7 @@ function speakWeather(weather) {
         document.querySelectorAll('.light-point').forEach((light) => light.remove());
         localStorage.setItem('lightEffectAnimation', 'false');
         if (showLog) showNotification('光点动画已关闭');
+        document.getElementById('toggleLightEffectBtn').innerText = '▶ 启动光点动画';
     }
 
     function showNotification(message) {
@@ -2554,23 +3086,36 @@ function speakWeather(weather) {
         }, 3000);
     }
 
+    function speakMessage(message) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'zh-CN';
+        speechSynthesis.speak(utterance);
+    }
+
+    function toggleLightEffect() {
+        isLightEffectActive = !isLightEffectActive;
+        if (isLightEffectActive) {
+            startLightEffect();
+            speakMessage('光点动画已启动');
+        } else {
+            stopLightEffect();
+            speakMessage('光点动画已关闭');
+        }
+    }
+
     window.addEventListener('keydown', function (event) {
         if (event.ctrlKey && event.key === 'F11') {
-            isLightEffectActive = !isLightEffectActive;
-            if (isLightEffectActive) {
-                startLightEffect();
-                speakMessage('光点动画已启动');
-            } else {
-                stopLightEffect();
-                speakMessage('光点动画已关闭');
-            }
-        }
-    });
+            toggleLightEffect();
+                }
+            });
 
-    if (isLightEffectActive) {
-        startLightEffect(false);
-    }
-})();
+            document.getElementById('toggleLightEffectBtn').addEventListener('click', toggleLightEffect);
+
+            if (isLightEffectActive) {
+                document.getElementById('toggleLightEffectBtn').innerText = '⏸️ 停止光点动画';
+                startLightEffect(false);
+            }
+        })();
 </script>
 
 <script>
@@ -2578,6 +3123,1275 @@ function speakWeather(weather) {
         feather.replace();
     });
 </script>
+
+<div class="modal fade" id="widthModal" tabindex="-1" aria-labelledby="widthModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="widthModalLabel">调整容器宽度</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label for="containerWidth" class="form-label">页面宽度</label>
+        <input type="range" class="form-range" name="containerWidth" id="containerWidth" min="800" max="2400" step="50" value="1800" style="width: 100%;">
+        <div id="widthValue" class="mt-2" style="color: #FF00FF;">当前宽度: 1800px</div>
+
+        <label for="modalMaxWidth" class="form-label mt-4">弹窗最大宽度</label>
+        <input type="range" class="form-range" name="modalMaxWidth" id="modalMaxWidth" min="1400" max="2400" step="50" value="1400" style="width: 100%;">
+        <div id="modalWidthValue" class="mt-2" style="color: #00FF00;">当前最大宽度: 1400px</div>
+
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="group1Background">
+            <label class="form-check-label" for="group1Background">
+                启用透明下拉选择框、表单选择和信息背景
+            </label>
+        </div>
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="bodyBackground">
+            <label class="form-check-label" for="bodyBackground">
+                启用透明主体背景
+            </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const slider = document.getElementById("containerWidth");
+const widthValue = document.getElementById("widthValue");
+const modalSlider = document.getElementById("modalMaxWidth");
+const modalWidthValue = document.getElementById("modalWidthValue");
+
+const group1Checkbox = document.getElementById("group1Background");
+const bodyBackgroundCheckbox = document.getElementById("bodyBackground");
+
+function updateSliderColor(value, slider, valueElement) {
+    let red = Math.min(Math.max((value - 800) / (2400 - 800) * 255, 0), 255);
+    let green = 255 - red;
+    
+    slider.style.background = `linear-gradient(to right, rgb(${red}, ${green}, 255), rgb(${255 - red}, ${green}, ${255 - red}))`;
+    slider.style.setProperty('--thumb-color', `rgb(${red}, ${green}, 255)`);
+    valueElement.textContent = `当前宽度: ${value}px`;
+    valueElement.style.color = `rgb(${red}, ${green}, 255)`;  
+}
+
+let savedWidth = localStorage.getItem('containerWidth');
+let savedModalWidth = localStorage.getItem('modalMaxWidth');
+
+if (savedWidth) {
+    slider.value = savedWidth;
+}
+if (savedModalWidth) {
+    modalSlider.value = savedModalWidth;
+}
+
+updateSliderColor(slider.value, slider, widthValue);
+updateSliderColor(modalSlider.value, modalSlider, modalWidthValue);
+
+slider.oninput = function() {
+    updateSliderColor(slider.value, slider, widthValue);
+    localStorage.setItem('containerWidth', slider.value);  
+
+    sendCSSUpdate();
+    showNotification(`页面宽度已更新! 当前宽度: ${slider.value}px`);
+};
+
+modalSlider.oninput = function() {
+    updateSliderColor(modalSlider.value, modalSlider, modalWidthValue);
+    localStorage.setItem('modalMaxWidth', modalSlider.value);  
+
+    sendCSSUpdate();
+    showNotification(`弹窗宽度已更新! 当前最大宽度: ${modalSlider.value}px`);
+};
+
+function sendCSSUpdate() {
+    const width = slider.value;
+    const modalWidth = modalSlider.value;
+    const group1 = group1Checkbox.checked ? 1 : 0;
+    const bodyBackground = bodyBackgroundCheckbox.checked ? 1 : 0;
+
+    fetch('update-css.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            width: width,
+            modalWidth: modalWidth,
+            group1: group1,
+            bodyBackground: bodyBackground
+        })
+    }).then(response => response.json())
+      .then(data => console.log('CSS 更新成功:', data))
+      .catch(error => console.error('Error updating CSS:', error));
+}
+
+group1Checkbox.onchange = function() {
+    sendCSSUpdate();
+    showNotification(group1Checkbox.checked ? "已启用透明下拉选择框、表单选择和信息背景" : "已禁用透明禁用、表单选择和信息背景");
+};
+
+bodyBackgroundCheckbox.onchange = function() {
+    sendCSSUpdate();
+    showNotification(bodyBackgroundCheckbox.checked ? "已启用透明主体背景" : "已禁用透明主体背景");
+};
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.top = '10px';
+    notification.style.right = '10px';
+    notification.style.padding = '10px';
+    notification.style.backgroundColor = '#4CAF50';
+    notification.style.color = '#fff';
+    notification.style.borderRadius = '5px';
+    notification.style.zIndex = 9999;
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+const toggleModalButton = document.getElementById("toggleModal");
+toggleModalButton.onclick = function() {
+    const modal = new bootstrap.Modal(document.getElementById('widthModal'));
+    modal.show();
+};
+</script>
+
+<div class="modal fade" id="colorModal" tabindex="-1" aria-labelledby="colorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="colorModalLabel">选择主题颜色</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="theme.php" id="themeForm" enctype="multipart/form-data">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="primaryColor" class="form-label">导航栏文本色</label>
+              <input type="color" class="form-control" name="primaryColor" id="primaryColor" value="#0ceda2">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="secondaryColor" class="form-label">导航栏悬停文本色</label>
+              <input type="color" class="form-control" name="secondaryColor" id="secondaryColor" value="#00ffff">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="bodyBgColor" class="form-label">主背景色</label>
+              <input type="color" class="form-control" name="bodyBgColor" id="bodyBgColor" value="#23407e">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="infoBgSubtle" class="form-label">信息背景色</label>
+              <input type="color" class="form-control" name="infoBgSubtle" id="infoBgSubtle" value="#23407e">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="backgroundColor" class="form-label">表格背景色</label>
+              <input type="color" class="form-control" name="backgroundColor" id="backgroundColor" value="#20cdd9">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="primaryBorderSubtle" class="form-label">表格文本色</label>
+              <input type="color" class="form-control" name="primaryBorderSubtle" id="primaryBorderSubtle" value="#1815d1">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="checkColor" class="form-label">主标题文本色 1</label>
+              <input type="color" class="form-control" name="checkColor" id="checkColor" value="#0eaf3e">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="labelColor" class="form-label">主标题文本色 2</label>
+              <input type="color" class="form-control" name="labelColor" id="labelColor" value="#0eaf3e">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="lineColor" class="form-label">行数文本色</label>
+              <input type="color" class="form-control" name="lineColor" id="lineColor" value="#f515f9">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="controlColor" class="form-label">输入框文本色 1</label>
+              <input type="color" class="form-control" name="controlColor" id="controlColor" value="#0eaf3e">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="placeholderColor" class="form-label">输入框文本色 2</label>
+              <input type="color" class="form-control" name="placeholderColor" id="placeholderColor" value="#f82af2">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="disabledColor" class="form-label">显示框背景色</label>
+              <input type="color" class="form-control" name="disabledColor" id="disabledColor" value="#23407e">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="logTextColor" class="form-label">日志文本色</label>
+              <input type="color" class="form-control" name="logTextColor" id="logTextColor" value="#f8f9fa">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="selectColor" class="form-label">主边框背景色</label>
+              <input type="color" class="form-control" name="selectColor" id="selectColor" value="#23407e">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="radiusColor" class="form-label">主边框文本色</label>
+              <input type="color" class="form-control" name="radiusColor" id="radiusColor" value="#24f086">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="bodyColor" class="form-label">表格文本色 1</label>
+              <input type="color" class="form-control" name="bodyColor" id="bodyColor" value="#04f153">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="tertiaryColor" class="form-label">表格文本色 2</label>
+              <input type="color" class="form-control" name="tertiaryColor" id="tertiaryColor" value="#46e1ec">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="tertiaryRgbColor" class="form-label">表格文本色 3</label>
+              <input type="color" class="form-control" name="tertiaryRgbColor" id="tertiaryRgbColor" value="#1e90ff">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="ipColor" class="form-label">IP 文本色</label>
+              <input type="color" class="form-control" name="ipColor" id="ipColor" value="#09B63F">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="ipipColor" class="form-label">运营商文本色</label>
+              <input type="color" class="form-control" name="ipipColor" id="ipipColor" value="#ff69b4">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="detailColor" class="form-label">IP详情文本色</label>
+              <input type="color" class="form-control" name="detailColor" id="detailColor" value="#FFFFFF">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="outlineColor" class="form-label">按键色（青色）</label>
+              <input type="color" class="form-control" name="outlineColor" id="outlineColor" value="#0dcaf0">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="successColor" class="form-label">按键色（绿色）</label>
+              <input type="color" class="form-control" name="successColor" id="successColor" value="#28a745">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="infoColor" class="form-label">按键色（蓝色）</label>
+              <input type="color" class="form-control" name="infoColor" id="infoColor" value="#0ca2ed">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="warningColor" class="form-label">按键色（黄色）</label>
+              <input type="color" class="form-control" name="warningColor" id="warningColor" value="#ffc107">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="pinkColor" class="form-label">按键色（粉红色）</label>
+              <input type="color" class="form-control" name="pinkColor" id="pinkColor" value="#f82af2">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="dangerColor" class="form-label">按键色（红色）</label>
+              <input type="color" class="form-control" name="dangerColor" id="dangerColor" value="#dc3545">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="heading1Color" class="form-label">标题色 1</label>
+              <input type="color" class="form-control" name="heading1Color" id="heading1Color" value="#21e4f2">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="heading2Color" class="form-label">标题色 2</label>
+              <input type="color" class="form-control" name="heading2Color" id="heading2Color" value="#65f1fb">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="heading3Color" class="form-label">标题色 3</label>
+              <input type="color" class="form-control" name="heading3Color" id="heading3Color" value="#ffcc00">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="heading4Color" class="form-label">标题色 4</label>
+              <input type="color" class="form-control" name="heading4Color" id="heading4Color" value="#00fbff">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="heading5Color" class="form-label">标题色 5</label>
+              <input type="color" class="form-control" name="heading5Color" id="heading5Color" value="#ba13f6">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="heading6Color" class="form-label">标题色 6</label>
+              <input type="color" class="form-control" name="heading6Color" id="heading6Color" value="#00ffff">
+            </div>
+          </div>
+          <div class="col-12 mb-3">
+            <label for="themeName" class="form-label">自定义主题名称</label>
+            <input type="text" class="form-control" name="themeName" id="themeName" value="transparent">
+          </div>
+      <div class="d-flex flex-wrap justify-content-center align-items-center mb-3 gap-2">
+          <button type="submit" class="btn btn-primary">保存主题</button>
+          <button type="button" class="btn btn-success" id="resetButton" onclick="clearCache()">恢复默认值</button>
+          <button type="button" class="btn btn-info" id="exportButton">立即备份</button>
+          <button type="button" class="btn btn-warning" id="restoreButton">恢复备份</button> 
+          <input type="file" id="importButton" class="form-control" accept="application/json" style="display: none;"> 
+          <button type="button" class="btn btn-pink" data-bs-dismiss="modal">取消</button>
+      </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+    input[type="range"] {
+        -webkit-appearance: none;  
+        appearance: none;
+        width: 100%;
+        height: 10px;  
+        border-radius: 5px;
+        background: linear-gradient(to right, #ff00ff, #00ffff); 
+        outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #ff00ff;  
+        border: none;
+        cursor: pointer;
+    }
+
+    input[type="range"]:focus {
+        outline: none; 
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #ff00ff;  
+        border: none;
+        cursor: pointer;
+    }
+
+    #widthValue {
+        color: #ff00ff;
+    }
+
+.file-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.btn-container .btn {
+    margin: 0 5px;
+}
+
+.delete-btn {
+    color: white !important; 
+}
+
+@media (max-width: 768px) {
+    .set-background-btn {
+        font-size: 12px;
+        padding: 5px 10px;
+        width: 100px; 
+        height: 42px; 
+    }
+}
+</style>
+
+<script>
+    document.getElementById('useBackgroundImage').addEventListener('change', function() {
+        const container = document.getElementById('backgroundImageContainer');
+        container.style.display = this.checked ? 'block' : 'none';
+    });
+</script>
+
+<script>
+    document.getElementById('restoreButton').addEventListener('click', () => {
+        document.getElementById('importButton').click();
+    });
+
+    document.getElementById('importButton').addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                try {
+                    const jsonData = JSON.parse(content); 
+                    console.log('恢复的备份数据:', jsonData);
+                    alert('备份已成功上传并解析！');
+                } catch (error) {
+                    alert('文件格式错误，请上传正确的 JSON 文件！');
+                }
+            };
+            reader.readAsText(file);
+        }
+    });
+</script>
+
+<script>
+    function clearCache() {
+        location.reload(true);        
+        localStorage.clear();   
+        sessionStorage.clear(); 
+        sessionStorage.setItem('cacheCleared', 'true'); 
+    }
+
+    window.addEventListener('load', function() {
+        if (sessionStorage.getItem('cacheCleared') === 'true') {
+            sessionStorage.removeItem('cacheCleared'); 
+        }
+    });
+</script>
+
+<div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filesModalLabel">上传并管理背景图片/视频/音频</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="button" class="btn btn-success mr-3" onclick="selectAll()"><i class="fas fa-check-square"></i> 全选</button>
+                        <button type="button" class="btn btn-warning mr-3" onclick="deselectAll()"><i class="fas fa-square"></i> 反选</button>
+                        <button type="button" class="btn btn-danger" onclick="batchDelete()"><i class="fas fa-trash-alt"></i> 批量删除</button>
+                        <span id="selectedCount" class="ms-2" style="display: none;">已选中 0 个文件，总计 0 MB</span>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-pink mr-3" onclick="sortFiles()"><i class="fas fa-sort"></i> 排序</button>
+                        <button type="button" class="btn btn-primary mr-3" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                            <i class="fas fa-cloud-upload-alt"></i> 上传文件
+                        </button>
+                        <button type="button" class="btn btn-danger delete-btn" onclick="setBackground('', '', 'remove')"><i class="fas fa-trash"></i> 删除背景</button>
+                    </div>
+                </div>
+                <table class="table table-bordered text-center">
+                    <tbody id="fileTableBody">
+                        <?php
+                        function isImage($file)
+                        {
+                            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+                            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                            return in_array($fileExtension, $imageExtensions);
+                        }
+
+                        function isVideo($file)
+                        {
+                            $videoExtensions = ['mp4', 'avi', 'mkv', 'mov', 'wmv'];
+                            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                            return in_array($fileExtension, $videoExtensions);
+                        }
+
+                        function isAudio($file)
+                        {
+                            $audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'webm', 'opus'];
+                            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                            return in_array($fileExtension, $audioExtensions);
+                        }
+
+                        function getFileNameWithoutPrefix($file)
+                        {
+                            $fileBaseName = pathinfo($file, PATHINFO_FILENAME);
+                            $hyphenPos = strpos($fileBaseName, '-');
+                            if ($hyphenPos !== false) {
+                                return substr($fileBaseName, $hyphenPos + 1) . '.' . pathinfo($file, PATHINFO_EXTENSION);
+                            } else {
+                                return $file;
+                            }
+                        }
+
+                        function formatFileSize($size)
+                        {
+                            if ($size >= 1073741824) {
+                                return number_format($size / 1073741824, 2) . ' GB';
+                            } elseif ($size >= 1048576) {
+                                return number_format($size / 1048576, 2) . ' MB';
+                            } elseif ($size >= 1024) {
+                                return number_format($size / 1024, 2) . ' KB';
+                            } else {
+                                return $size . ' bytes';
+                            }
+                        }
+
+                        $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+                        $backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt';
+                        $backgroundFiles = [];
+                        if (file_exists($backgroundHistoryFile)) {
+                            $backgroundFiles = array_filter(array_map('trim', file($backgroundHistoryFile)));
+                        }
+
+                        if (is_dir($picturesDir)) {
+                            $files = array_diff(scandir($picturesDir), array('..', '.'));
+                            usort($files, function ($a, $b) use ($backgroundFiles) {
+                                $indexA = array_search($a, $backgroundFiles);
+                                $indexB = array_search($b, $backgroundFiles);
+
+                                if ($indexA === false && $indexB === false) {
+                                    return 0; 
+                                } elseif ($indexA === false) {
+                                    return 1; 
+                                } elseif ($indexB === false) {
+                                    return -1; 
+                                } else {
+                                    return $indexA - $indexB; 
+                                 }
+                            });     
+
+                            $fileCount = 0;
+                            foreach ($files as $file) {
+                                $filePath = $picturesDir . $file;
+                                if (is_file($filePath)) {
+                                    $fileSize = filesize($filePath);
+                                    $formattedFileSize = formatFileSize($fileSize);
+                                    $fileUrl = '/nekobox/assets/Pictures/' . $file;
+                                    $fileNameWithoutPrefix = getFileNameWithoutPrefix($file);
+                                    $fileTitle = "名称: $fileNameWithoutPrefix\n大小: $formattedFileSize";
+
+                                    if ($fileCount % 5 == 0) {
+                                        echo "<tr>";
+                                    }
+
+                                    echo "<td class='align-middle' data-label='预览' style='vertical-align: middle;'>
+                                            <div class='file-preview mb-2' oncontextmenu='showRenameModal(event, \"" . htmlspecialchars($file, ENT_QUOTES) . "\")'>
+                                                <input type='checkbox' class='file-checkbox mb-2' value='" . htmlspecialchars($file, ENT_QUOTES) . "' data-size='$fileSize' onchange='updateSelectedCount()'>";
+
+                                    if (isVideo($file)) {
+                                        echo "<video width='200' controls title='$fileTitle'>
+                                                  <source src='$fileUrl' type='video/mp4'>
+                                                  Your browser does not support the video tag.
+                                              </video>";
+                                    } elseif (isImage($file)) {
+                                        echo "<img src='$fileUrl' alt='$file' style='width: 200px; height: auto;' title='$fileTitle'>";
+                                    } elseif (isAudio($file)) {
+                                        echo "<audio width='200' controls title='$fileTitle'>
+                                                  <source src='$fileUrl' type='audio/mp3'>
+                                                  Your browser does not support the audio tag.
+                                              </audio>";
+                                    } else {
+                                        echo "未知文件类型";
+                                    }
+
+                                    echo "<div class='btn-container mt-2'>
+                                              <a href='?delete=" . htmlspecialchars($file, ENT_QUOTES) . "' class='btn btn-danger me-2 delete-btn' onclick='return confirm(\"确定要删除吗?\")'>删除</a>";
+
+                                    if (isImage($file)) {
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'image')\" class='btn btn-primary ms-2 set-background-btn'>设置背景</button>";
+                                    } elseif (isVideo($file)) {
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'video')\" class='btn btn-primary ms-2 set-background-btn'>设置背景</button>";
+                                    } elseif (isAudio($file)) {
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'audio')\" class='btn btn-primary ms-2 set-background-btn'>背景音乐</button>";
+                                    }
+
+                                    echo "</div></div></td>";
+
+                                    if ($fileCount % 5 == 4) {
+                                        echo "</tr>";
+                                    }
+
+                                    $fileCount++;
+                                }
+                            }
+
+                            if ($fileCount % 5 != 0) {
+                                echo str_repeat("<td></td>", 5 - ($fileCount % 5)) . "</tr>";
+                            }
+                        }
+
+                        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['oldFileName']) && isset($_POST['newFileName'])) {
+                            $oldFileName = $_POST['oldFileName'];
+                            $newFileName = $_POST['newFileName'];
+
+                            $oldFilePath = $picturesDir . $oldFileName;
+                            $newFilePath = $picturesDir . $newFileName;
+
+                            if (file_exists($oldFilePath)) {
+                                if (rename($oldFilePath, $newFilePath)) {
+                                    echo "<script>alert('文件重命名成功');</script>";
+                                } else {
+                                    echo "<script>alert('文件重命名失败');</script>";
+                                }
+                            } else {
+                                echo "<script>alert('文件不存在');</script>";
+                            }
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <form id="renameForm" method="POST">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="renameModalLabel">重命名文件</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="oldFileName" id="oldFileName">
+                    <div class="form-group">
+                        <label for="newFileName">新文件名</label>
+                        <input type="text" class="form-control" id="newFileName" name="newFileName" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel"><i class="fas fa-cloud-upload-alt"></i> 上传文件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h2 class="mb-3">上传图片/视频</h2>
+                <form method="POST" action="download.php" enctype="multipart/form-data">
+                    <div id="dropArea" class="mb-3">
+                        <i id="uploadIcon" class="fas fa-cloud-upload-alt"></i>
+                        <p>拖拽文件到此区域，或点击图标选择文件。</p>
+                        <p>PHP上传文件会有大小限制，如遇上传失败可以手动上传文件到 /nekobox/assets/Pictures 目录</p>
+                    </div>
+                    <input type="file" class="form-control mb-3" name="imageFile[]" id="imageFile" multiple style="display: none;">                   
+                    <button type="submit" class="btn btn-success mt-3" id="submitBtnModal">
+                        上传图片/视频
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" id="updatePhpConfig">更新 PHP 上传限制</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function batchDelete() {
+    const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+    if (checkboxes.length === 0) {
+        alert("请选择要删除的文件。");
+        return;
+    }
+
+    if (!confirm("确定要删除选中的文件吗?")) {
+        return;
+    }
+
+    checkboxes.forEach(checkbox => {
+        const fileName = checkbox.value;
+        fetch(`?delete=${encodeURIComponent(fileName)}`)
+            .then(response => {
+                if (response.ok) {
+                    checkbox.closest('td').remove(); 
+                    updateSelectedCount();
+                } else {
+                    alert(`删除文件失败: ${fileName}`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
+}
+
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+    const selectedCount = checkboxes.length;
+    let totalSize = 0;
+
+    checkboxes.forEach(checkbox => {
+        totalSize += parseInt(checkbox.getAttribute('data-size'), 10);
+    });
+
+    const totalSizeMB = (totalSize / 1048576).toFixed(2); 
+    const selectedCountElement = document.getElementById('selectedCount');
+    if (selectedCount > 0) {
+        selectedCountElement.style.display = 'inline';
+        selectedCountElement.innerText = `已选中 ${selectedCount} 个图片/视频，总计 ${totalSizeMB} MB`;
+    } else {
+        selectedCountElement.style.display = 'none';
+    }
+}
+
+function sortFiles() {
+    const tableBody = document.getElementById('fileTableBody');
+    const rows = Array.from(tableBody.getElementsByTagName('tr'));
+    
+    rows.sort((a, b) => {
+        const aText = a.getElementsByTagName('td')[0].querySelector('.file-preview img, .file-preview video').title;
+        const bText = b.getElementsByTagName('td')[0].querySelector('.file-preview img, .file-preview video').title;
+        
+        return aText.localeCompare(bText);
+    });
+
+    rows.forEach(row => tableBody.appendChild(row));
+}
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.file-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+    updateSelectedCount();
+}
+
+function deselectAll() {
+    const checkboxes = document.querySelectorAll('.file-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+    updateSelectedCount();
+}
+
+function showRenameModal(event, fileName) {
+    event.preventDefault();
+    const modal = new bootstrap.Modal(document.getElementById('renameModal'));
+    document.getElementById('oldFileName').value = fileName;
+    document.getElementById('newFileName').value = fileName; 
+    modal.show();
+}
+</script>
+
+<script>
+document.getElementById("updatePhpConfig").addEventListener("click", function() {
+    if (confirm("确定要修改 PHP 上传限制吗？")) {
+        fetch("update_php_config.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(response => response.json())
+        .then(data => alert(data.message))
+        .catch(error => alert("请求失败：" + error.message));
+    }
+});
+</script>
+
+<script>
+    document.getElementById('uploadIcon').addEventListener('click', function() {
+        document.getElementById('imageFile').click(); 
+    });
+
+    document.getElementById('imageFile').addEventListener('change', function() {
+        if (this.files.length > 0) {
+            document.getElementById('submitBtnModal').style.display = 'inline-block';
+        } else {
+            document.getElementById('submitBtnModal').style.display = 'none';
+        }
+    });
+
+    const dropArea = document.getElementById('dropArea');
+    dropArea.addEventListener('dragover', function(event) {
+        event.preventDefault(); 
+        dropArea.classList.add('dragging'); 
+    });
+
+    dropArea.addEventListener('dragleave', function() {
+        dropArea.classList.remove('dragging'); 
+    });
+
+    dropArea.addEventListener('drop', function(event) {
+        event.preventDefault();
+        dropArea.classList.remove('dragging'); 
+
+        const files = event.dataTransfer.files;
+        document.getElementById('imageFile').files = files; 
+
+        if (files.length > 0) {
+            document.getElementById('submitBtnModal').style.display = 'inline-block'; 
+        }
+    });
+</script>
+
+<script>
+    const fileInput = document.getElementById('imageFile');
+    const dragDropArea = document.getElementById('dragDropArea');
+    const submitBtn = document.getElementById('submitBtn');
+
+    dragDropArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dragDropArea.classList.add('drag-over');
+    });
+
+    dragDropArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dragDropArea.classList.remove('drag-over');
+    });
+
+    dragDropArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dragDropArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;  
+        }
+    });
+
+    fileInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    });
+
+    function updateDragDropText() {
+        if (fileInput.files.length > 0) {
+            dragDropArea.querySelector('p').textContent = `${fileInput.files.length} 个文件已选择`;
+        } else {
+            dragDropArea.querySelector('p').textContent = '拖动文件到此区域，或点击选择文件';
+        }
+    }
+</script>
+
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $uploadedFilePath = '';
+
+    $allowedTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp',
+        'video/mp4', 'video/avi', 'video/mkv', 'video/mov', 'video/wmv', 'video/3gp',
+        'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/aac', 'audio/m4a', 'audio/webm', 'audio/opus'
+    ];
+
+    if (isset($_FILES['imageFile']) && $_FILES['imageFile']['error'] === UPLOAD_ERR_OK) {
+        $targetDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+        if (!file_exists($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+
+        $fileExtension = strtolower(pathinfo($_FILES['imageFile']['name'], PATHINFO_EXTENSION));
+
+        if (in_array($fileExtension, $allowedTypes)) {
+            $targetFile = $targetDir . basename($_FILES['imageFile']['name']);
+            if (move_uploaded_file($_FILES['imageFile']['tmp_name'], $targetFile)) {
+                $uploadedFilePath = '/nekobox/assets/Pictures/' . basename($_FILES['imageFile']['name']);
+            }
+        } else {
+            echo "<script>alert('不支持的文件类型！');</script>";
+        }
+    }
+}
+
+if (isset($_GET['delete'])) {
+    $fileToDelete = $_GET['delete'];
+    $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+    $filePath = $picturesDir . $fileToDelete;
+    if (file_exists($filePath)) {
+        unlink($filePath);
+        echo "<script>alert('文件已删除！'); location.reload();</script>";
+        exit;
+    }
+}
+?>
+
+<script>
+function setBackground(filename, type, action = 'set') {
+    const bodyData = 'filename=' + encodeURIComponent(filename) + '&type=' + type;
+
+    if (action === 'set') {
+        fetch('/nekobox/set_background.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=set&' + bodyData
+        })
+        .then(response => response.text())
+        .then(data => {
+            sessionStorage.setItem('notificationMessage', data);
+            sessionStorage.setItem('notificationType', 'success');
+                 location.reload(); 
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            sessionStorage.setItem('notificationMessage', "操作失败，请稍后再试");
+            sessionStorage.setItem('notificationType', 'error');
+                location.reload(); 
+        });
+    }
+
+    else if (action === 'remove') {
+        fetch('/nekobox/set_background.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=remove'
+        })
+        .then(response => response.text())
+        .then(data => {
+            sessionStorage.setItem('notificationMessage', data);
+            sessionStorage.setItem('notificationType', 'success');
+                location.reload(); 
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            sessionStorage.setItem('notificationMessage', "删除失败，请稍后再试");
+            sessionStorage.setItem('notificationType', 'error');
+                location.reload(); 
+        });
+    }
+}
+
+function showNotification(message, type = 'success') {
+    var notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.top = '10px';
+    notification.style.left = '30px'; 
+    notification.style.padding = '10px';
+    notification.style.borderRadius = '5px';
+    notification.style.zIndex = '9999';
+    notification.style.color = '#fff'; 
+    notification.innerText = message;
+
+    if (type === 'success') {
+        notification.style.backgroundColor = '#4CAF50'; 
+    } else if (type === 'error') {
+        notification.style.backgroundColor = '#F44336'; 
+    }
+
+    document.body.appendChild(notification);
+
+    setTimeout(function() {
+        notification.style.display = 'none';
+    }, 5000); 
+}
+
+window.addEventListener('load', function() {
+    var message = sessionStorage.getItem('notificationMessage');
+    var type = sessionStorage.getItem('notificationType');
+
+    if (message) {
+        showNotification(message, type); 
+        sessionStorage.removeItem('notificationMessage');
+        sessionStorage.removeItem('notificationType');
+    }
+});
+
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const colorInputs = document.querySelectorAll('input[type="color"]');
+    
+    colorInputs.forEach(input => {
+      if (localStorage.getItem(input.name)) {
+        input.value = localStorage.getItem(input.name);
+      }
+
+      input.addEventListener('input', function() {
+        localStorage.setItem(input.name, input.value);
+      });
+    });
+
+    const useBackgroundImageCheckbox = document.getElementById('useBackgroundImage');
+    const backgroundImageContainer = document.getElementById('backgroundImageContainer');
+
+    const savedBackgroundImageState = localStorage.getItem('useBackgroundImage');
+    if (savedBackgroundImageState === 'true') {
+      useBackgroundImageCheckbox.checked = true;
+      backgroundImageContainer.style.display = 'block';
+    } else {
+      useBackgroundImageCheckbox.checked = false;
+      backgroundImageContainer.style.display = 'none';
+    }
+
+    useBackgroundImageCheckbox.addEventListener('change', function() {
+      if (useBackgroundImageCheckbox.checked) {
+        backgroundImageContainer.style.display = 'block';
+      } else {
+        backgroundImageContainer.style.display = 'none';
+      }
+
+      localStorage.setItem('useBackgroundImage', useBackgroundImageCheckbox.checked);
+    });
+
+    document.getElementById('resetButton').addEventListener('click', function() {
+      document.getElementById('primaryColor').value = '#0ceda2';
+      document.getElementById('secondaryColor').value = '#00ffff';
+      document.getElementById('bodyBgColor').value = '#23407e';
+      document.getElementById('infoBgSubtle').value = '#23407e';
+      document.getElementById('backgroundColor').value = '#20cdd9';
+      document.getElementById('primaryBorderSubtle').value = '#1815d1';
+      document.getElementById('checkColor').value = '#0eaf3e';
+      document.getElementById('labelColor').value = '#0eaf3e';
+      document.getElementById('lineColor').value = '#f515f9';
+      document.getElementById('controlColor').value = '#0eaf3e';
+      document.getElementById('placeholderColor').value = '#f82af2';
+      document.getElementById('disabledColor').value = '#23407e';
+      document.getElementById('logTextColor').value = '#f8f9fa';
+      document.getElementById('selectColor').value = '#23407e';
+      document.getElementById('radiusColor').value = '#14b863';
+      document.getElementById('bodyColor').value = '#04f153';
+      document.getElementById('tertiaryColor').value = '#46e1ec';
+      document.getElementById('ipColor').value = '#09b63f';
+      document.getElementById('ipipColor').value = '#ff69b4';
+      document.getElementById('detailColor').value = '#FFFFFF';
+      document.getElementById('outlineColor').value = '#0dcaf0';
+      document.getElementById('successColor').value = '#28a745';
+      document.getElementById('infoColor').value = '#0ca2ed';
+      document.getElementById('warningColor').value = '#ffc107';
+      document.getElementById('pinkColor').value = '#f82af2';
+      document.getElementById('dangerColor').value = '#dc3545';
+      document.getElementById('tertiaryRgbColor').value = '#1e90ff';
+      document.getElementById('heading1Color').value = '#21e4f2';
+      document.getElementById('heading2Color').value = '#65f1fb';
+      document.getElementById('heading3Color').value = '#ffcc00';
+      document.getElementById('heading4Color').value = '#00fbff';
+      document.getElementById('heading5Color').value = '#ba13f6';
+      document.getElementById('heading6Color').value = '#00ffff';   
+      localStorage.clear();
+    });
+
+    document.getElementById('exportButton').addEventListener('click', function() {
+      const settings = {
+        primaryColor: document.getElementById('primaryColor').value,
+        secondaryColor: document.getElementById('secondaryColor').value,
+        bodyBgColor: document.getElementById('bodyBgColor').value,
+        infoBgSubtle: document.getElementById('infoBgSubtle').value,
+        backgroundColor: document.getElementById('backgroundColor').value,
+        primaryBorderSubtle: document.getElementById('primaryBorderSubtle').value,
+        checkColor: document.getElementById('checkColor').value,
+        labelColor: document.getElementById('labelColor').value,
+        lineColor: document.getElementById('lineColor').value,
+        controlColor: document.getElementById('controlColor').value,
+        placeholderColor: document.getElementById('placeholderColor').value,
+        disabledColor: document.getElementById('disabledColor').value,
+        logTextColor: document.getElementById('logTextColor').value,
+        selectColor: document.getElementById('selectColor').value,
+        radiusColor: document.getElementById('radiusColor').value,
+        bodyColor: document.getElementById('bodyColor').value,
+        tertiaryColor: document.getElementById('tertiaryColor').value,
+        tertiaryRgbColor: document.getElementById('tertiaryRgbColor').value,
+        ipColor: document.getElementById('ipColor').value,
+        ipipColor: document.getElementById('ipipColor').value,
+        detailColor: document.getElementById('detailColor').value,
+        outlineColor: document.getElementById('outlineColor').value,
+        successColor: document.getElementById('successColor').value,
+        infoColor: document.getElementById('infoColor').value,
+        warningColor: document.getElementById('warningColor').value,
+        pinkColor: document.getElementById('pinkColor').value,
+        dangerColor: document.getElementById('dangerColor').value,
+        heading1Color: document.getElementById('heading1Color').value,
+        heading2Color: document.getElementById('heading2Color').value,
+        heading3Color: document.getElementById('heading3Color').value,
+        heading4Color: document.getElementById('heading4Color').value,
+        heading5Color: document.getElementById('heading5Color').value,
+        heading6Color: document.getElementById('heading6Color').value,
+        useBackgroundImage: document.getElementById('useBackgroundImage').checked,
+        backgroundImage: document.getElementById('backgroundImage').value
+      };
+
+      const blob = new Blob([JSON.stringify(settings)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'theme-settings.json';
+      link.click();
+    });
+
+    document.getElementById('importButton').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file && file.type === 'application/json') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const settings = JSON.parse(e.target.result);
+
+          document.getElementById('primaryColor').value = settings.primaryColor;
+          document.getElementById('secondaryColor').value = settings.secondaryColor;
+          document.getElementById('bodyBgColor').value = settings.bodyBgColor;
+          document.getElementById('infoBgSubtle').value = settings.infoBgSubtle;
+          document.getElementById('backgroundColor').value = settings.backgroundColor;
+          document.getElementById('primaryBorderSubtle').value = settings.primaryBorderSubtle;
+          document.getElementById('checkColor').value = settings.checkColor;
+          document.getElementById('labelColor').value = settings.labelColor;
+          document.getElementById('lineColor').value = settings.lineColor;
+          document.getElementById('controlColor').value = settings.controlColor;
+          document.getElementById('placeholderColor').value = settings.placeholderColor;
+          document.getElementById('disabledColor').value = settings.disabledColor;
+          document.getElementById('logTextColor').value = settings.logTextColor;
+          document.getElementById('selectColor').value = settings.selectColor;
+          document.getElementById('radiusColor').value = settings.radiusColor;
+          document.getElementById('bodyColor').value = settings.bodyColor;
+          document.getElementById('tertiaryColor').value = settings.tertiaryColor;
+          document.getElementById('tertiaryRgbColor').value = settings.tertiaryRgbColor;
+          document.getElementById('ipColor').value = settings.ipColor;
+          document.getElementById('ipipColor').value = settings.ipipColor;
+          document.getElementById('detailColor').value = settings.detailColor;
+          document.getElementById('outlineColor').value = settings.outlineColor;
+          document.getElementById('successColor').value = settings.successColor;
+          document.getElementById('infoColor').value = settings.infoColor;
+          document.getElementById('warningColor').value = settings.warningColor;
+          document.getElementById('pinkColor').value = settings.pinkColor;
+          document.getElementById('dangerColor').value = settings.dangerColor;
+          document.getElementById('heading1Color').value = settings.heading1Color;
+          document.getElementById('heading2Color').value = settings.heading2Color;
+          document.getElementById('heading3Color').value = settings.heading3Color;
+          document.getElementById('heading4Color').value = settings.heading4Color;
+          document.getElementById('heading5Color').value = settings.heading5Color;
+          document.getElementById('heading6Color').value = settings.heading6Color;
+          document.getElementById('useBackgroundImage').checked = settings.useBackgroundImage;
+
+          const backgroundImageContainer = document.getElementById('backgroundImageContainer');
+          backgroundImageContainer.style.display = settings.useBackgroundImage ? 'block' : 'none';
+          document.getElementById('backgroundImage').value = settings.backgroundImage || '';
+
+          localStorage.setItem('primaryColor', settings.primaryColor);
+          localStorage.setItem('secondaryColor', settings.secondaryColor);
+          localStorage.setItem('bodyBgColor', settings.bodyBgColor);
+          localStorage.setItem('infoBgSubtle', settings.infoBgSubtle);
+          localStorage.setItem('backgroundColor', settings.backgroundColor);
+          localStorage.setItem('primaryBorderSubtle', settings.primaryBorderSubtle);
+          localStorage.setItem('checkColor', settings.checkColor);
+          localStorage.setItem('labelColor', settings.labelColor);
+          localStorage.setItem('lineColor', settings.lineColor);
+          localStorage.setItem('controlColor', settings.controlColor);
+          localStorage.setItem('placeholderColor', settings.placeholderColor);
+          localStorage.setItem('disabledColor', settings.disabledColor);
+          localStorage.setItem('logTextColor', settings.logTextColor);
+          localStorage.setItem('selectColor', settings.selectColor);
+          localStorage.setItem('radiusColor', settings.radiusColor);
+          localStorage.setItem('bodyColor', settings.bodyColor);
+          localStorage.setItem('tertiaryColor', settings.tertiaryColor);
+          localStorage.setItem('tertiaryRgbColor', settings.tertiaryRgbColor);
+          localStorage.setItem('ipColor', settings.ipColor);
+          localStorage.setItem('ipipColor', settings.ipipColor);
+          localStorage.setItem('detailColor', settings.detailColor);
+          localStorage.setItem('outlineColor', settings.outlineColor);
+          localStorage.setItem('successColor', settings.successColor);
+          localStorage.setItem('infoColor', settings.infoColor);
+          localStorage.setItem('warningColor', settings.warningColor);
+          localStorage.setItem('pinkColor', settings.pinkColor);
+          localStorage.setItem('dangerColor', settings.dangerColor);
+          localStorage.setItem('heading1Color', settings.heading1Color);
+          localStorage.setItem('heading2Color', settings.heading2Color);
+          localStorage.setItem('heading3Color', settings.heading3Color);
+          localStorage.setItem('heading4Color', settings.heading4Color);
+          localStorage.setItem('heading5Color', settings.heading5Color);
+          localStorage.setItem('heading6Color', settings.heading6Color);
+          localStorage.setItem('useBackgroundImage', settings.useBackgroundImage);
+          localStorage.setItem('backgroundImage', settings.backgroundImage);
+        };
+        reader.readAsText(file);
+      }
+    });
+  });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

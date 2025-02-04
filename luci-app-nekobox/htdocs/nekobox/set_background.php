@@ -4,9 +4,26 @@ $filename = $_POST['filename'] ?? '';
 $type = $_POST['type'] ?? '';
 
 $pingFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/ping.php';
+$currentBgFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/current_background.txt';
+$backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt'; 
+
 $pingContent = file_get_contents($pingFile);
+$audioElement = "";
+$backgroundStyle = "";
+
+if (!file_exists($backgroundHistoryFile)) {
+    file_put_contents($backgroundHistoryFile, "");
+}
+
+$backgroundFiles = file($backgroundHistoryFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+
+$filename = htmlspecialchars($filename, ENT_QUOTES, 'UTF-8');
 
 if ($action === 'set' && !empty($filename)) {
+    if ($type !== 'audio') {
+        $pingContent = preg_replace('/<!-- BG_START -->.*<!-- BG_END -->/s', '', $pingContent);
+    }
+
     if ($type === 'image') {
         $backgroundStyle = "\n<style>
             body {
@@ -37,91 +54,47 @@ if ($action === 'set' && !empty($filename)) {
                 z-index: -1;
             }
 
-            .control-toggle {
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                padding: 10px 20px;
-                background-color: #6f42c1;
-                color: white;
-                border: none;
-                cursor: pointer;
-                font-size: 16px;
-                border-radius: 8px;
-                transition: background 0.3s, transform 0.2s;
-            }
-
-            .control-toggle:hover {
-                background: rgba(255, 255, 255, 0.3);
-            }
-
-            .popup {
-                display: none;
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(255, 255, 255, 0.8);
-                backdrop-filter: blur(10px);
-                color: #333;
-                padding: 20px;
-                border-radius: 12px;
-                z-index: 1000;
-                text-align: center;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-                width: 280px;
-            }
-
-            .popup button {
-                display: block;
-                margin: 10px auto;
-                padding: 12px 20px;
-                font-size: 16px;
-                cursor: pointer;
-                border: none;
-                border-radius: 8px;
-                background-color: rgba(0, 0, 0, 0.1);
-                color: #333;
-                width: 100%;
-                transition: background 0.3s, transform 0.2s;
-            }
-
-            .popup button:hover {
-                background: rgba(0, 0, 0, 0.2);
-                transform: scale(1.05);
-            }
-
-            .popup button:active {
-                transform: scale(0.95);
-            }
         </style>
 
         <video class=\"video-background\" autoplay loop id=\"background-video\">
             <source src='/nekobox/assets/Pictures/$filename' type='video/mp4'>
             您的浏览器不支持视频标签。
-        </video>
-
-        <button class=\"control-toggle\" onclick=\"togglePopup()\">🎛 设置</button>
-        <div class=\"popup\" id=\"popup\">
-            <h3>🔧 控制面板</h3>
-            <button onclick=\"toggleAudio()\" id=\"audio-btn\">🔊 切换音频</button>
-            <button onclick=\"toggleObjectFit()\" id=\"object-fit-btn\">切换视频显示模式</button>
-            <button onclick=\"toggleFullScreen()\" id=\"fullscreen-btn\">⛶ 切换全屏</button>
-            <button onclick=\"togglePopup()\">❌ 关闭</button>
-        </div>\n";
+        </video>";
+    } elseif ($type === 'audio') {
+        $audioElement = "
+        <audio id=\"background-video\" autoplay loop>
+            <source src='/nekobox/assets/Pictures/$filename' type='audio/mp3'>
+            您的浏览器不支持音频播放。
+        </audio>";
     }
 
     if (strpos($pingContent, '<!-- BG_START -->') !== false && strpos($pingContent, '<!-- BG_END -->') !== false) {
-        $pingContent = preg_replace('/<!-- BG_START -->.*<!-- BG_END -->/s', "<!-- BG_START -->$backgroundStyle<!-- BG_END -->", $pingContent);
+        $pingContent = preg_replace('/<!-- BG_START -->.*<!-- BG_END -->/s', "<!-- BG_START -->$backgroundStyle$audioElement<!-- BG_END -->", $pingContent);
     } else {
-        $pingContent .= "\n<!-- BG_START -->$backgroundStyle<!-- BG_END -->\n";
+        $pingContent .= "\n<!-- BG_START -->$backgroundStyle$audioElement<!-- BG_END -->\n";
     }
 
     file_put_contents($pingFile, $pingContent); 
+    file_put_contents($currentBgFile, $filename); 
+
+    $backgroundFiles = array_filter(array_map('trim', file($backgroundHistoryFile)));
+
+    if (($key = array_search($filename, $backgroundFiles)) !== false) {
+        unset($backgroundFiles[$key]);
+    }
+
+    array_unshift($backgroundFiles, $filename);
+
+    $backgroundFiles = array_slice($backgroundFiles, 0, 20);
+
+    file_put_contents($backgroundHistoryFile, implode("\n", $backgroundFiles));
+
     echo "背景已成功设置！";
 } elseif ($action === 'remove') {
     $pingContent = preg_replace('/<!-- BG_START -->.*<!-- BG_END -->/s', '', $pingContent);
     file_put_contents($pingFile, $pingContent); 
+    file_put_contents($currentBgFile, '');  
+
     echo "背景已成功删除！";
 }
 ?>
