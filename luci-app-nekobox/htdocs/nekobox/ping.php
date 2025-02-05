@@ -670,6 +670,7 @@ $lang = $_GET['lang'] ?? 'en';
     }
 }
 </style>
+<script src="./assets/bootstrap/Sortable.min.js"></script>
 <link href="./assets/bootstrap/video-js.css" rel="stylesheet" />
 <script src="./assets/bootstrap/video.js"></script>
 <link rel="stylesheet" href="./assets/bootstrap/all.min.css">
@@ -1350,9 +1351,11 @@ setInterval(IP.getIpipnetIP, 180000);
     document.addEventListener("DOMContentLoaded", function () {
         var video = document.getElementById('background-video');
         var popup = document.getElementById('popup');
+        var controlPanel = document.getElementById('controlPanel');
 
         popup.style.display = "none";
-        
+        controlPanel.style.display = "none";
+    
         var savedMuteState = localStorage.getItem("videoMuted");
         if (savedMuteState !== null) {
             video.muted = savedMuteState === "true";
@@ -1366,6 +1369,87 @@ setInterval(IP.getIpipnetIP, 180000);
         }
 
         updateButtonStates();
+
+        var savedVolume = localStorage.getItem("videoVolume");
+        if (savedVolume !== null) {
+            video.volume = parseFloat(savedVolume);
+            document.getElementById('volumeControl').value = savedVolume;
+        }
+
+        document.getElementById('volumeControl').addEventListener('input', function () {
+            video.volume = this.value;
+            localStorage.setItem("videoVolume", this.value);
+        });
+
+        var savedCurrentTime = localStorage.getItem("videoCurrentTime");
+        if (savedCurrentTime !== null) {
+            video.currentTime = parseFloat(savedCurrentTime);
+        }
+
+        var progressControl = document.getElementById('progressControl');
+        progressControl.addEventListener('input', function () {
+            var duration = video.duration;
+            if (!isNaN(duration)) {
+                video.currentTime = (progressControl.value / 100) * duration;
+                localStorage.setItem("videoCurrentTime", video.currentTime);
+            }
+        });
+
+        video.addEventListener('timeupdate', function () {
+            var duration = video.duration;
+            var currentTime = video.currentTime;
+            if (!isNaN(duration)) {
+                progressControl.value = (currentTime / duration) * 100;
+                document.getElementById('progressTimeDisplay').textContent = formatTime(currentTime) + ' / ' + formatTime(duration);
+                localStorage.setItem("videoCurrentTime", currentTime);
+            }
+        });
+
+        var savedPlayState = localStorage.getItem("videoPaused");
+        if (savedPlayState === "true") {
+            video.pause();
+            document.getElementById('playPauseBtn').textContent = '▶️ 播放';
+        } else {
+            video.play();
+            document.getElementById('playPauseBtn').textContent = '⏸️ 暂停';
+        }
+
+        function formatTime(seconds) {
+            var minutes = Math.floor(seconds / 60);
+            var seconds = Math.floor(seconds % 60);
+            return (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var video = document.getElementById('background-video');
+        var playPauseBtn = document.getElementById('playPauseBtn');
+    
+        setInterval(() => {
+            localStorage.removeItem('videoCurrentTime');     
+            video.muted = false;
+            video.volume = 1;
+            video.currentTime = 0;
+            video.style.objectFit = 'cover';
+        
+            playPauseBtn.textContent = '▶️ 播放';
+        }, 60 * 60 * 1000); 
+
+        document.getElementById('clearSettingsBtn').addEventListener('click', function() {
+            localStorage.removeItem('videoMuted');
+            localStorage.removeItem('videoVolume');
+            localStorage.removeItem('videoCurrentTime');
+            localStorage.removeItem('videoObjectFit');
+            localStorage.removeItem('videoPaused');
+        
+            video.muted = false;
+            video.volume = 1;
+            video.currentTime = 0;
+            video.style.objectFit = 'cover';
+        
+            playPauseBtn.textContent = '▶️ 播放';
+        
+        });
     });
 
     var longPressTimer;
@@ -1397,6 +1481,29 @@ setInterval(IP.getIpipnetIP, 180000);
         video.muted = !video.muted;
         localStorage.setItem("videoMuted", video.muted);
         updateButtonStates();
+    }
+
+    function toggleControlPanel() {
+        var controlPanel = document.getElementById('controlPanel');
+        if (controlPanel.style.display === "none" || controlPanel.style.display === "") {
+            controlPanel.style.display = "block";
+        } else {
+            controlPanel.style.display = "none";
+        }
+    }
+
+    function togglePlayPause() {
+        var video = document.getElementById('background-video');
+        var playPauseBtn = document.getElementById('playPauseBtn');
+        if (video.paused) {
+            video.play();
+            playPauseBtn.textContent = '⏸️ 暂停';
+            localStorage.setItem("videoPaused", "false");
+        } else {
+            video.pause();
+            playPauseBtn.textContent = '▶️ 播放';
+            localStorage.setItem("videoPaused", "true");
+        }
     }
 
     function toggleFullScreen() {
@@ -1456,7 +1563,7 @@ setInterval(IP.getIpipnetIP, 180000);
     }
 
     document.addEventListener("keydown", function(event) {
-        if (event.ctrlKey && event.shiftKey && event.key === "S") {
+        if (event.ctrlKey && event.shiftKey && event.key === "Q") {
             togglePopup();
         }
     });
@@ -1467,11 +1574,11 @@ setInterval(IP.getIpipnetIP, 180000);
 <div class="popup" id="popup">
     <h3>🔧 控制面板</h3>
     <button onclick="toggleAudio()" id="audio-btn">🔊 切换音频</button>
+    <button onclick="toggleControlPanel()" id="control-btn">🎛️ 音量和进度控制</button>
     <button onclick="toggleObjectFit()" id="object-fit-btn">🔲 切换视频显示模式</button>
     <button onclick="toggleFullScreen()" id="fullscreen-btn">⛶ 切换全屏</button>
     <button id="clear-cache-btn">🗑️ 清除缓存</button>
     <button type="button" data-bs-toggle="modal" data-bs-target="#cityModal">🌆 设置城市</button>
-    <button type="button" data-bs-toggle="modal" data-bs-target="#urlModal">🔗 定制播放列表</button>
     <button type="button" data-bs-toggle="modal" data-bs-target="#keyHelpModal">⌨️ 键盘快捷键</button>
     <button type="button" data-bs-toggle="modal" data-bs-target="#singboxModal">🎤 Sing-box 启动提示</button>
     <button id="openPlayerButton"  data-bs-toggle="modal" data-bs-target="#audioPlayerModal">🎶 音乐播放器</button>
@@ -1485,6 +1592,21 @@ setInterval(IP.getIpipnetIP, 180000);
     <button type="button" data-bs-toggle="modal" data-bs-target="#colorModal"><i class="bi-palette"></i> 主题编辑器</button>                   
     <button type="button" data-bs-toggle="modal" data-bs-target="#filesModal"><i class="bi-camera-video"></i> 设置背景</button>
     <button onclick="togglePopup()">❌ 关闭</button>
+</div>
+<div id="controlPanel">
+    <h3>视频控制面板</h3>
+    <div>
+        <label for="volumeControl">音量控制</label>
+        <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="1">
+    </div>
+    <div>
+        <label for="progressControl">播放进度</label>
+        <input type="range" id="progressControl" min="0" max="100" step="0.1" value="0">
+        <span id="progressTimeDisplay">00:00 / 00:00</span>
+    </div>
+    <button id="clearSettingsBtn"><i class="fas fa-trash-alt"></i> 清除视频设置</button>
+    <button onclick="togglePlayPause()" id="playPauseBtn">⏸️ 暂停</button>
+    <button onclick="toggleControlPanel()">❌ 关闭</button>
 </div>
 
 <div class="modal fade" id="singboxModal" tabindex="-1" aria-labelledby="singboxModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -1560,11 +1682,59 @@ window.addEventListener('load', function() {
 </script>
 
 <style>
+#controlPanel {
+    width: 80%;
+    max-width: 625px;
+    display: none;
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+#controlPanel h3 {
+    margin-top: 0;
+    font-size: 1.5em;
+    color: #333;
+    text-align: center;
+}
+
+#controlPanel button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    font-size: 1em;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#controlPanel button:hover {
+    background-color: #0056b3;
+}
+
+#controlPanel input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+}
+
 #audioPlayerModal .modal-content {
-  background: #222;
-  color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    background: #222;
+    color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 #audioPlayerModal .modal-header {
@@ -1572,166 +1742,166 @@ window.addEventListener('load', function() {
 }
 
 #audioPlayerModal .modal-title {
-  font-size: 18px;
-  font-weight: bold;
+    font-size: 18px;
+    font-weight: bold;
 }
 
 #audioPlayerModal .close {
-  color: #fff;
-  opacity: 0.8;
+    color: #fff;
+    opacity: 0.8;
 }
 
 #audioPlayerModal .close:hover {
-  opacity: 1;
+    opacity: 1;
 }
 
 .audio-player-container {
-  padding: 20px;
+    padding: 20px;
 
 }
 
 .audio-player-container button {
-  margin: 8px;
-  padding: 10px 15px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  transition: all 0.3s ease-in-out;
-  cursor: pointer;
+    margin: 8px;
+    padding: 10px 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
 }
 
 .audio-player-container .btn-primary {
-  background: #ff5733; 
-  color: white;
+    background: #ff5733; 
+    color: white;
 }
 
 .audio-player-container .btn-primary {
-  background: #FF5722 !important; 
-  color: white !important;
+    background: #FF5722 !important; 
+    color: white !important;
 }
 
 .audio-player-container .btn-primary:hover {
-  background: #e64a19 !important; 
+    background: #e64a19 !important; 
 }
 
 .audio-player-container .btn-secondary {
-  background: #9C27B0 !important; 
-  color: white !important;
+    background: #9C27B0 !important; 
+    color: white !important;
 }
 
 .audio-player-container .btn-secondary:hover {
-  background: #8E24AA !important; 
+    background: #8E24AA !important; 
 }
 
 .audio-player-container .btn-info {
-  background: #00BCD4 !important; 
-  color: white !important;
+    background: #00BCD4 !important; 
+    color: white !important;
 }
 
 .audio-player-container .btn-info:hover {
-  background: #0097A7 !important; 
+    background: #0097A7 !important; 
 }
 
 .audio-player-container .btn-warning {
-  background: #FF9800 !important; 
-  color: black !important;
+    background: #FF9800 !important; 
+    color: black !important;
 }
 
 .audio-player-container .btn-warning:hover {
-  background: #FB8C00 !important; 
+    background: #FB8C00 !important; 
 }
 
 .audio-player-container .btn-dark {
-  background: #8BC34A !important; 
-  color: white !important;
+    background: #8BC34A !important; 
+    color: white !important;
 }
 
 .audio-player-container .btn-dark:hover {
-  background: #7CB342 !important; 
+    background: #7CB342 !important; 
 }
 
 #modalLoopButton {
-  color: white !important;
-  background-color: #f39c12 !important; 
+    color: white !important;
+    background-color: #f39c12 !important; 
 }
 
 #modalLoopButton:hover {
-  background-color: #f5b041 !important; 
-  color: white !important; 
+    background-color: #f5b041 !important; 
+    color: white !important; 
 }
 
 .track-name {
-  margin-top: 15px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #1db954;
-  text-align: center;
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #1db954;
+    text-align: center;
 }
 
 #tooltip {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 15px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  font-size: 14px;
-  border-radius: 8px;
-  white-space: nowrap;
-  text-align: center;
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-  z-index: 1050;
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 14px;
+    border-radius: 8px;
+    white-space: nowrap;
+    text-align: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 1050;
 }
 
 #tooltip.show {
-  visibility: visible;
-  opacity: 1;
+    visibility: visible;
+    opacity: 1;
 }
 
 .datetime-container {
-  text-align: center;
-  margin-bottom: 15px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #ffcc00;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffcc00;
 }
 
 #dateDisplay,
 #timeDisplay {
-  margin: 0 10px;
+    margin: 0 10px;
 }
 
 #timeDisplay {
-  font-style: italic;
+    font-style: italic;
 }
 
 #audioElement {
-  margin-top: 20px;
-  width: 100%;
-  max-width: 600px; /* Limit the audio player width */
-  display: block;
-  margin-left: auto;
-  margin-right: auto; /* Center the audio player */
+    margin-top: 20px;
+    width: 100%;
+    max-width: 600px; 
+    display: block;
+    margin-left: auto;
+    margin-right: auto; 
 }
 
 @media (max-width: 768px) {
-  .audio-player-container {
-    flex-direction: column;
-    align-items: center;
-  }
+    .audio-player-container {
+      flex-direction: column;
+      align-items: center;
+    }
 
-  .audio-player-container button {
-    width: 100%;
-    margin: 5px 0;
-  }
+    .audio-player-container button {
+      width: 100%;
+      margin: 5px 0;
+    }
 }
 
 #playlistCollapse {
-    max-height: 700px; 
+    max-height: 620px; 
     overflow-y: auto;  
     overflow-x: hidden; 
     background-color: rgba(0, 0, 0, 0.8); 
@@ -1824,6 +1994,8 @@ window.addEventListener('load', function() {
         <button class="btn btn-outline-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#playlistCollapse">
           📜 显示/隐藏播放列表
         </button>
+        <button class="btn btn-outline-primary mt-3 ms-2" type="button" data-bs-toggle="modal" data-bs-target="#urlModal">🔗 定制播放列表</button>
+        <button class="btn btn-outline-primary mt-3 ms-2"  id="clearStorageBtn"><i class="fas fa-trash-alt"></i> 清除播放设置</button>
         <div id="playlistCollapse" class="collapse mt-3">
           <h3>歌曲列表</h3>
           <ul id="trackList" class="list-group"></ul>
@@ -1900,6 +2072,10 @@ function loadDefaultPlaylist() {
                 throw new Error('播放列表中没有有效的歌曲');
             }
             console.log('播放列表已加载:', songs);
+            const savedOrder = JSON.parse(localStorage.getItem('songOrder'));
+            if (savedOrder) {
+                songs = savedOrder;
+            }
             updateTrackListUI(); 
             restorePlayerState();
             updateTrackName(); 
@@ -1918,6 +2094,7 @@ function updateTrackListUI() {
         trackItem.textContent = `${index + 1}. ${extractSongName(song)}`;
         trackItem.classList.add('list-group-item', 'track-item');
         trackItem.style.cursor = 'pointer';
+        trackItem.draggable = true; 
 
         trackItem.addEventListener('click', () => {
             currentSongIndex = index;
@@ -1927,10 +2104,62 @@ function updateTrackListUI() {
             highlightCurrentSong();
         });
 
+        trackItem.addEventListener('dragstart', handleDragStart);
+        trackItem.addEventListener('dragover', handleDragOver);
+        trackItem.addEventListener('drop', handleDrop);
+
+
         trackListContainer.appendChild(trackItem);
     });
 
     highlightCurrentSong(); 
+}
+
+
+
+function handleDragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.index);
+    e.target.classList.add('dragging');
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    const dragging = document.querySelector('.dragging');
+    const closest = getClosestElement(e.clientY);
+    if (closest) {
+        trackListContainer.insertBefore(dragging, closest);
+    } else {
+        trackListContainer.appendChild(dragging);
+    }
+}
+
+function handleDrop(e) {
+    const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    const targetIndex = Array.from(e.target.parentNode.children).indexOf(e.target);
+    if (draggedIndex !== targetIndex) {
+        const [draggedSong] = songs.splice(draggedIndex, 1);
+        songs.splice(targetIndex, 0, draggedSong);
+        saveSongOrder(); 
+        updateTrackListUI(); 
+    }
+    document.querySelector('.dragging').classList.remove('dragging');
+}
+
+function getClosestElement(y) {
+    const elements = [...document.querySelectorAll('.track-item:not(.dragging)')];
+    return elements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function saveSongOrder() {
+    localStorage.setItem('songOrder', JSON.stringify(songs));
 }
 
 function extractSongName(url) {
@@ -1944,6 +2173,9 @@ function updateTrackName() {
 function highlightCurrentSong() {
     document.querySelectorAll('.track-item').forEach((item, index) => {
         item.classList.toggle('active', index === currentSongIndex);
+        if (index === currentSongIndex) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     });
 }
 
@@ -1952,7 +2184,7 @@ function loadSong(index) {
         audioPlayer.src = songs[index];
         audioPlayer.addEventListener('loadedmetadata', () => {
             const savedState = JSON.parse(localStorage.getItem('playerState'));
-            if (savedState && savedState.currentSongIndex === index) {
+            if (savedState) {
                 audioPlayer.currentTime = savedState.currentTime || 0;
                 if (savedState.isPlaying) {
                     audioPlayer.play().catch(error => {
@@ -1997,7 +2229,8 @@ document.getElementById('modalPrevButton').addEventListener('click', () => {
         audioPlayer.play();
     }
     updateTrackName();
-    const songName = getSongName(songs[currentSongIndex]);
+    highlightCurrentSong(); 
+    const songName = extractSongName(songs[currentSongIndex]);
     showLogMessage(`上一首：${songName}`);
 });
 
@@ -2009,7 +2242,8 @@ document.getElementById('modalNextButton').addEventListener('click', () => {
         audioPlayer.play();
     }
     updateTrackName();
-    const songName = getSongName(songs[currentSongIndex]);
+    highlightCurrentSong(); 
+    const songName = extractSongName(songs[currentSongIndex]);
     showLogMessage(`下一首：${songName}`);
 });
 
@@ -2029,14 +2263,19 @@ function extractSongName(url) {
 }
 
 audioPlayer.addEventListener('ended', () => {
-    currentSongIndex = (currentSongIndex + 1) % songs.length;
-    loadSong(currentSongIndex);
+    if (isLooping) {
+        loadSong(currentSongIndex);
+    } else {
+        currentSongIndex = (currentSongIndex + 1) % songs.length;
+        loadSong(currentSongIndex);
+    }
     savePlayerState();
     if (isPlaying) {
         audioPlayer.play();
     }
     updateTrackName();
-    const songName = getSongName(songs[currentSongIndex]);
+    highlightCurrentSong(); 
+    const songName = extractSongName(songs[currentSongIndex]);
     showLogMessage(`自动切换到：${songName}`);
 });
 
@@ -2130,19 +2369,6 @@ function updateDateTime() {
 setInterval(updateDateTime, 1000);
 updateDateTime();
 
-audioPlayer.addEventListener('ended', function() {
-    if (isLooping) {
-        loadSong(currentSongIndex);
-        savePlayerState();
-        audioPlayer.play();
-    } else {
-        currentSongIndex = (currentSongIndex + 1) % songs.length;
-        loadSong(currentSongIndex);
-        savePlayerState();
-        audioPlayer.play();
-    }
-});
-
 function savePlayerState() {
     const state = {
         currentSongIndex,
@@ -2170,7 +2396,17 @@ function clearExpiredPlayerState() {
     }
 }
 
-setInterval(clearExpiredPlayerState, 10 * 60 * 1000);
+setInterval(() => {
+    localStorage.removeItem('playerState');
+}, 60 * 60 * 1000);
+
+document.getElementById('clearStorageBtn').addEventListener('click', function() {
+    localStorage.removeItem('playerState');
+    localStorage.removeItem('songOrder'); 
+    loadDefaultPlaylist(); 
+    document.getElementById('modalPlayPauseButton').textContent = '▶ 播放';
+    alert('Player state cleared!');
+});
 
 function restorePlayerState() {
     const state = JSON.parse(localStorage.getItem('playerState'));
@@ -2194,7 +2430,7 @@ document.addEventListener('dblclick', function() {
     const lastShownTime = localStorage.getItem('lastModalShownTime');
     const currentTime = new Date().getTime();
 
-    if (!lastShownTime || (currentTime - lastShownTime) > 4 * 60 * 60 * 1000) {
+    if (!lastShownTime || (currentTime - lastShownTime) > 24 * 60 * 60 * 1000) {
         if (!hasModalShown) {
             const modal = new bootstrap.Modal(document.getElementById('keyHelpModal'));
             modal.show();
@@ -2302,17 +2538,18 @@ window.addEventListener('keydown', function(event) {
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="urlModalLabel">更新播放列表链接</h5>
+                <h5 class="modal-title" id="urlModalLabel">更新播放列表</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST">
                     <div class="mb-3">
-                        <label for="new_url" class="form-label">自定义播放列表链接（Ctrl + Shift + C键 清空数据，必须使用下载链接才能正常播放）</label>
+                        <label for="new_url" class="form-label">自定义播放列表</label>
                         <input type="text" id="new_url" name="new_url" class="form-control" value="<?php echo htmlspecialchars($new_url); ?>" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">更新链接</button>
-                    <button type="button" id="resetButton" class="btn btn-secondary ms-2">恢复默认链接</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" id="resetButton" class="btn btn-secondary ms-2">恢复默认</button>
+                    <button type="button" class="btn btn-secondary ms-2" data-bs-dismiss="modal">取消</button>
                 </form>
             </div>
         </div>
@@ -2392,7 +2629,7 @@ window.addEventListener('keydown', function(event) {
                     <li><strong>Ctrl + F7键:</strong> 启动/停止方块灯光动画 </li>
                     <li><strong>Ctrl + F10键:</strong> 启动/停止方块动画 </li>
                     <li><strong>Ctrl + F11键:</strong> 启动/停止光点动画 </li>
-                    <li><strong>Ctrl + Shift + S键:</strong> 打开设置</li>
+                    <li><strong>Ctrl + Shift + Q键:</strong> 打开控制面板</li>
                     <li><strong>Ctrl + Shift + C键:</strong> 清空缓存数据</li>
                     <li><strong>Ctrl + Shift + V键:</strong> 定制播放列表</li>
                     <li><strong>Ctrl + Shift + X键:</strong> 设置城市</li>
@@ -3903,6 +4140,67 @@ toggleModalButton.onclick = function() {
         </div>
     </div>
 </div>
+
+<script>
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.position = 'fixed';
+        notification.style.top = '10px';
+        notification.style.right = '10px';
+        notification.style.padding = '10px';
+        notification.style.backgroundColor = '#4CAF50';
+        notification.style.color = '#fff';
+        notification.style.borderRadius = '5px';
+        notification.style.zIndex = 9999;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        var el = document.getElementById('fileTableBody');
+        var sortable = new Sortable(el, {
+            animation: 150,
+            onEnd: function (evt) {
+                var order = sortable.toArray();
+                $.ajax({
+                    type: 'POST',
+                    url: 'order_handler.php', 
+                    data: { order: order },
+                    success: function (response) {
+                        showNotification('排序已成功保存!');
+                    },
+                    error: function (xhr, status, error) {
+                        showNotification('保存排序时出错: ' + error);
+                    }
+                });
+            },
+        });
+
+        $.ajax({
+            type: 'GET',
+            url: 'order_handler.php', 
+            success: function (response) {
+                var savedOrder = JSON.parse(response);
+                var fileTableBody = document.getElementById('fileTableBody');
+                var rows = Array.from(fileTableBody.children);
+                rows.sort(function(a, b) {
+                    return savedOrder.indexOf(a.id) - savedOrder.indexOf(b.id);
+                });
+                rows.forEach(function(row) {
+                    fileTableBody.appendChild(row);
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error('加载排序时出错: ' + error);
+            }
+        });
+    });
+</script>
+
 <script>
 function batchDelete() {
     const checkboxes = document.querySelectorAll('.file-checkbox:checked');
@@ -4406,212 +4704,3 @@ window.addEventListener('load', function() {
     });
   });
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
