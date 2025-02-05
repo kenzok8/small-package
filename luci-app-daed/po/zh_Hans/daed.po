@@ -15,7 +15,7 @@ msgstr "dae 现代化控制面板。"
 #: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/config.js:66
 #: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/log.js:30
 msgid "Collecting data…"
-msgstr "收集数据中…"
+msgstr "正在收集数据中…"
 
 #: applications/luci-app-daed/htdocs/luci-static/resources/view/daed/config.js:72
 msgid "Enable"
