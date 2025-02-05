@@ -1964,6 +1964,61 @@ window.addEventListener('load', function() {
     overflow: hidden;
     white-space: nowrap;
 }
+
+.icon-button {
+    background: none;
+    border: none;
+    color: inherit;
+    position: relative;
+    cursor: pointer;
+    padding: 5px;
+    margin: 5px;
+}
+.btn-bordered {
+    border: 1px solid #ccc; 
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+.file-checkbox {
+    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+}
+.icon-button .tooltip {
+    visibility: hidden;
+    width: auto;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; 
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    font-size: 16px; 
+}
+.icon-button .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%; 
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+}
+.icon-button:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    width: auto;
+    max-width: 200px; 
+    word-wrap: break-word; 
+}
 </style>
 
 <div class="modal fade" id="audioPlayerModal" tabindex="-1" aria-labelledby="audioPlayerModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -3901,57 +3956,53 @@ toggleModalButton.onclick = function() {
     });
 </script>
 
-<div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filesModalLabel">上传并管理背景图片/视频/音频</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+<div class='modal fade' id='filesModal' tabindex='-1' aria-labelledby='filesModalLabel' aria-hidden='true' data-bs-backdrop='static' data-bs-keyboard='false'>
+    <div class='modal-dialog modal-xl'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h5 class='modal-title' id='filesModalLabel'>上传并管理背景图片/视频/音频</h5>
+                <button type='button' class='close' data-bs-dismiss='modal' aria-label='Close'>
+                    <span aria-hidden='true'>&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div class='modal-body'>
+                <div class='mb-4 d-flex justify-content-between align-items-center'>
                     <div>
-                        <button type="button" class="btn btn-success mr-3" onclick="selectAll()"><i class="fas fa-check-square"></i> 全选</button>
-                        <button type="button" class="btn btn-warning mr-3" onclick="deselectAll()"><i class="fas fa-square"></i> 反选</button>
-                        <button type="button" class="btn btn-danger" onclick="batchDelete()"><i class="fas fa-trash-alt"></i> 批量删除</button>
-                        <span id="selectedCount" class="ms-2" style="display: none;">已选中 0 个文件，总计 0 MB</span>
+                        <button type='button' class='btn btn-success mr-3' onclick='selectAll()'><i class='fas fa-check-square'></i> 全选</button>
+                        <button type='button' class='btn btn-warning mr-3' onclick='deselectAll()'><i class='fas fa-square'></i> 反选</button>
+                        <button type='button' class='btn btn-danger' onclick='batchDelete()'><i class='fas fa-trash-alt'></i> 批量删除</button>
+                        <span id='selectedCount' class='ms-2' style='display: none;'>已选中 0 个文件，总计 0 MB</span>
                     </div>
                     <div>
-                        <button type="button" class="btn btn-pink mr-3" onclick="sortFiles()"><i class="fas fa-sort"></i> 排序</button>
-                        <button type="button" class="btn btn-primary mr-3" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                            <i class="fas fa-cloud-upload-alt"></i> 上传文件
+                        <button type='button' class='btn btn-pink mr-3' onclick='sortFiles()'><i class='fas fa-sort'></i> 排序</button>
+                        <button type='button' class='btn btn-primary mr-3' data-bs-toggle='modal' data-bs-target='#uploadModal'>
+                            <i class='fas fa-cloud-upload-alt'></i> 上传文件
                         </button>
-                        <button type="button" class="btn btn-danger delete-btn" onclick="setBackground('', '', 'remove')"><i class="fas fa-trash"></i> 删除背景</button>
+                        <button type='button' class='btn btn-danger delete-btn' onclick='setBackground(\"\", \"\", \"remove\")'><i class='fas fa-trash'></i> 删除背景</button>
                     </div>
                 </div>
-                <table class="table table-bordered text-center">
-                    <tbody id="fileTableBody">
+                <table class='table table-bordered text-center'>
+                    <tbody id='fileTableBody'>
                         <?php
-                        function isImage($file)
-                        {
+                        function isImage($file) {
                             $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
                             $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                             return in_array($fileExtension, $imageExtensions);
                         }
 
-                        function isVideo($file)
-                        {
+                        function isVideo($file) {
                             $videoExtensions = ['mp4', 'avi', 'mkv', 'mov', 'wmv'];
                             $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                             return in_array($fileExtension, $videoExtensions);
                         }
 
-                        function isAudio($file)
-                        {
+                        function isAudio($file) {
                             $audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'webm', 'opus'];
                             $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                             return in_array($fileExtension, $audioExtensions);
                         }
 
-                        function getFileNameWithoutPrefix($file)
-                        {
+                        function getFileNameWithoutPrefix($file) {
                             $fileBaseName = pathinfo($file, PATHINFO_FILENAME);
                             $hyphenPos = strpos($fileBaseName, '-');
                             if ($hyphenPos !== false) {
@@ -3961,8 +4012,7 @@ toggleModalButton.onclick = function() {
                             }
                         }
 
-                        function formatFileSize($size)
-                        {
+                        function formatFileSize($size) {
                             if ($size >= 1073741824) {
                                 return number_format($size / 1073741824, 2) . ' GB';
                             } elseif ($size >= 1048576) {
@@ -3995,8 +4045,8 @@ toggleModalButton.onclick = function() {
                                     return -1; 
                                 } else {
                                     return $indexA - $indexB; 
-                                 }
-                            });     
+                                }
+                            });
 
                             $fileCount = 0;
                             foreach ($files as $file) {
@@ -4013,8 +4063,8 @@ toggleModalButton.onclick = function() {
                                     }
 
                                     echo "<td class='align-middle' data-label='预览' style='vertical-align: middle;'>
-                                            <div class='file-preview mb-2' oncontextmenu='showRenameModal(event, \"" . htmlspecialchars($file, ENT_QUOTES) . "\")'>
-                                                <input type='checkbox' class='file-checkbox mb-2' value='" . htmlspecialchars($file, ENT_QUOTES) . "' data-size='$fileSize' onchange='updateSelectedCount()'>";
+                                            <div class='file-preview mb-2 d-flex align-items-center'>
+                                                <input type='checkbox' class='file-checkbox mb-2 mr-2' value='" . htmlspecialchars($file, ENT_QUOTES) . "' data-size='$fileSize' onchange='updateSelectedCount()'>";
 
                                     if (isVideo($file)) {
                                         echo "<video width='200' controls title='$fileTitle'>
@@ -4032,15 +4082,29 @@ toggleModalButton.onclick = function() {
                                         echo "未知文件类型";
                                     }
 
-                                    echo "<div class='btn-container mt-2'>
-                                              <a href='?delete=" . htmlspecialchars($file, ENT_QUOTES) . "' class='btn btn-danger me-2 delete-btn' onclick='return confirm(\"确定要删除吗?\")'>删除</a>";
+                                    echo "<div class='btn-container mt-2 d-flex align-items-center'>
+                                            <a href='?delete=" . htmlspecialchars($file, ENT_QUOTES) . "' onclick='return confirm(\"确定要删除吗?\")' class='icon-button btn-bordered' style='margin-right: 10px;'>
+                                                <i class='fas fa-trash-alt'></i><span class='tooltip'>删除</span>
+                                            </a>
+                                            <button type='button' data-bs-toggle='modal' data-bs-target='#renameModal' onclick='document.getElementById(\"oldFileName\").value=\"" . htmlspecialchars($file, ENT_QUOTES) . "\"; document.getElementById(\"newFileName\").value=\"" . htmlspecialchars(getFileNameWithoutPrefix($file), ENT_QUOTES) . "\";' class='icon-button btn-bordered' style='margin-right: 10px;'>
+                                                <i class='fas fa-edit'></i><span class='tooltip'>重命名</span>
+                                            </button>
+                                            <a href='$fileUrl' download class='icon-button btn-bordered' style='margin-right: 10px;'>
+                                                <i class='fas fa-download'></i><span class='tooltip'>下载</span>
+                                            </a>";
 
                                     if (isImage($file)) {
-                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'image')\" class='btn btn-primary ms-2 set-background-btn'>设置背景</button>";
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'image')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                                <i class='fas fa-image'></i><span class='tooltip'>设置图片背景</span>
+                                              </button>";
                                     } elseif (isVideo($file)) {
-                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'video')\" class='btn btn-primary ms-2 set-background-btn'>设置背景</button>";
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'video')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                                <i class='fas fa-video'></i><span class='tooltip'>设置视频背景</span>
+                                              </button>";
                                     } elseif (isAudio($file)) {
-                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'audio')\" class='btn btn-primary ms-2 set-background-btn'>背景音乐</button>";
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'audio')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                                <i class='fas fa-music'></i><span class='tooltip'>设置背景音乐</span>
+                                              </button>";
                                     }
 
                                     echo "</div></div></td>";
