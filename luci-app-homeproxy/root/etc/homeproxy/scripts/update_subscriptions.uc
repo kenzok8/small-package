@@ -574,7 +574,7 @@ function main() {
 			if (main_node === 'urltest') {
 				main_urltest_nodes = filter(uci.get(uciconfig, ucimain, 'main_urltest_nodes'), (v) => {
 					if (!uci.get(uciconfig, v)) {
-						log(sprintf('Node %s is gone, removing from urltest list.', node));
+						log(sprintf('Node %s is gone, removing from urltest list.', v));
 						return false;
 					}
 					return true;
@@ -594,7 +594,7 @@ function main() {
 				if (main_udp_node === 'urltest') {
 					main_udp_urltest_nodes = filter(uci.get(uciconfig, ucimain, 'main_udp_urltest_nodes'), (v) => {
 						if (!uci.get(uciconfig, v)) {
-							log(sprintf('Node %s is gone, removing from urltest list.', node));
+							log(sprintf('Node %s is gone, removing from urltest list.', v));
 							return false;
 						}
 						return true;

@@ -215,7 +215,7 @@ return view.extend({
 
 				let ipv6_support = this.map.lookupOption('ipv6_support', section_id)[0].formvalue(section_id);
 				try {
-					let url = new URL(value);
+					let url = new URL(value.replace(/^.*:\/\//, 'http://'));
 					if (stubValidator.apply('hostname', url.hostname))
 						return true;
 					else if (stubValidator.apply('ip4addr', url.hostname))
@@ -249,7 +249,7 @@ return view.extend({
 					return _('Expecting: %s').format(_('non-empty value'));
 
 				try {
-					let url = new URL(value);
+					let url = new URL(value.replace(/^.*:\/\//, 'http://'));
 					if (stubValidator.apply('hostname', url.hostname))
 						return true;
 					else if (stubValidator.apply('ip4addr', url.hostname))
@@ -831,7 +831,7 @@ return view.extend({
 					return _('Expecting: %s').format(_('non-empty value'));
 
 				try {
-					let url = new URL(value);
+					let url = new URL(value.replace(/^.*:\/\//, 'http://'));
 					if (stubValidator.apply('hostname', url.hostname))
 						return true;
 					else if (stubValidator.apply('ip4addr', url.hostname))
