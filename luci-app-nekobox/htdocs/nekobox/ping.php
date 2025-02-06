@@ -1575,20 +1575,20 @@ setInterval(IP.getIpipnetIP, 180000);
     <h3>🔧 控制面板</h3>
     <button onclick="toggleAudio()" id="audio-btn">🔊 切换音频</button>
     <button onclick="toggleControlPanel()" id="control-btn">🎛️ 音量和进度控制</button>
+    <button id="openPlayerButton"  data-bs-toggle="modal" data-bs-target="#audioPlayerModal">🎶 音乐播放器</button>
+    <button type='button' onclick='openVideoPlayerModal()'><i class='fas fa-video'></i> 媒体播放器</button>
     <button onclick="toggleObjectFit()" id="object-fit-btn">🔲 切换视频显示模式</button>
     <button onclick="toggleFullScreen()" id="fullscreen-btn">⛶ 切换全屏</button>
     <button id="clear-cache-btn">🗑️ 清除缓存</button>
     <button type="button" data-bs-toggle="modal" data-bs-target="#cityModal">🌆 设置城市</button>
     <button type="button" data-bs-toggle="modal" data-bs-target="#keyHelpModal">⌨️ 键盘快捷键</button>
-    <button type="button" data-bs-toggle="modal" data-bs-target="#singboxModal">🎤 Sing-box 启动提示</button>
-    <button id="openPlayerButton"  data-bs-toggle="modal" data-bs-target="#audioPlayerModal">🎶 音乐播放器</button>
     <button id="startCheckBtn">🌐 启动网站检测</button>
     <button id="startWeatherBtn">🌦️ 启动天气播报</button>
-    <button id="toggleModal"><i class="fas fa-arrows-alt-h"></i> 修改页面宽度</button>
     <button id="toggleAnimationBtn">🖥️ 启动方块动画</button>
     <button id="toggleSnowBtn">❄️ 启动雪花动画</button>
     <button id="toggleLightAnimationBtn">💡 启动灯光动画</button>
     <button id="toggleLightEffectBtn">✨ 启动光点动画</button>
+    <button id="toggleModal"><i class="fas fa-arrows-alt-h"></i> 修改页面宽度</button>
     <button type="button" data-bs-toggle="modal" data-bs-target="#colorModal"><i class="bi-palette"></i> 主题编辑器</button>                   
     <button type="button" data-bs-toggle="modal" data-bs-target="#filesModal"><i class="bi-camera-video"></i> 设置背景</button>
     <button onclick="togglePopup()">❌ 关闭</button>
@@ -1607,26 +1607,6 @@ setInterval(IP.getIpipnetIP, 180000);
     <button id="clearSettingsBtn"><i class="fas fa-trash-alt"></i> 清除视频设置</button>
     <button onclick="togglePlayPause()" id="playPauseBtn">⏸️ 暂停</button>
     <button onclick="toggleControlPanel()">❌ 关闭</button>
-</div>
-
-<div class="modal fade" id="singboxModal" tabindex="-1" aria-labelledby="singboxModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="singboxModalLabel">Sing-box 启动提示</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-           <ul>
-                <li>如遇启动失败，请前往文件管理 ⇨ 更新数据库 ⇨ 下载 cache.db 缓存数据。</li>
-                <li>启动了无法联网，请前往防火墙设置 ⇨ 出站/入站/转发 ⇨ 接受  ⇨  保存应用</li>
-           </ul>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -2690,7 +2670,14 @@ window.addEventListener('keydown', function(event) {
                     <li><strong>Ctrl + Shift + X键:</strong> 设置城市</li>
                     <li><strong>手机/平板长按上半屏:</strong> 打开设置</li>
                 </ul>
+                <div class="sing-box-section mt-4">
+                    <h5>Sing-box启动提示</h5>
+                    <ul>
+                    <li>如遇启动失败，请前往文件管理 ⇨ 更新数据库 ⇨ 下载 cache.db 缓存数据。</li>
+                    <li>启动了无法联网，请前往防火墙设置 ⇨ 出站/入站/转发 ⇨ 接受  ⇨  保存应用</li>
+                </ul>
             </div>
+                </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
             </div>
@@ -3548,11 +3535,11 @@ function speakWeather(weather) {
       </div>
       <div class="modal-body">
         <label for="containerWidth" class="form-label">页面宽度</label>
-        <input type="range" class="form-range" name="containerWidth" id="containerWidth" min="800" max="2400" step="50" value="1800" style="width: 100%;">
+        <input type="range" class="form-range" name="containerWidth" id="containerWidth" min="800" max="5400" step="50" value="1800" style="width: 100%;">
         <div id="widthValue" class="mt-2" style="color: #FF00FF;">当前宽度: 1800px</div>
 
         <label for="modalMaxWidth" class="form-label mt-4">弹窗最大宽度</label>
-        <input type="range" class="form-range" name="modalMaxWidth" id="modalMaxWidth" min="1400" max="2400" step="50" value="1400" style="width: 100%;">
+        <input type="range" class="form-range" name="modalMaxWidth" id="modalMaxWidth" min="1400" max="5400" step="50" value="1400" style="width: 100%;">
         <div id="modalWidthValue" class="mt-2" style="color: #00FF00;">当前最大宽度: 1400px</div>
 
         <div class="form-check mt-3">
@@ -3841,43 +3828,35 @@ toggleModalButton.onclick = function() {
 </div>
 
 <style>
-    input[type="range"] {
-        -webkit-appearance: none;  
-        appearance: none;
-        width: 100%;
-        height: 10px;  
-        border-radius: 5px;
-        background: linear-gradient(to right, #ff00ff, #00ffff); 
-        outline: none;
-    }
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(to right, #ff00ff, #00ffff);
+    outline: none;
+}
 
-    input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #ff00ff;  
-        border: none;
-        cursor: pointer;
-    }
+input[type="range"]::-webkit-slider-thumb,
+input[type="range"]::-moz-range-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff00ff;
+    border: none;
+    cursor: pointer;
+}
 
-    input[type="range"]:focus {
-        outline: none; 
-    }
+input[type="range"]:focus {
+    outline: none;
+}
 
-    input[type="range"]::-moz-range-thumb {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #ff00ff;  
-        border: none;
-        cursor: pointer;
-    }
-
-    #widthValue {
-        color: #ff00ff;
-    }
+#widthValue {
+    color: #ff00ff;
+}
 
 .file-preview {
     display: flex;
@@ -3897,15 +3876,88 @@ toggleModalButton.onclick = function() {
 }
 
 .delete-btn {
-    color: white !important; 
+    color: white !important;
+}
+
+#videoPlayerModal .modal-body {
+    display: flex;
+    gap: 20px;
+    height: calc(90vh - 140px);
+}
+
+#videoPlayerModal .w-75 {
+    flex: 0 0 75%;
+    padding-right: 20px;
+    height: 100%;
+}
+
+#videoPlayerModal #videoPlayer {
+    border-radius: 10px;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+}
+
+#videoPlayerModal .w-25 {
+    flex: 0 0 25%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#videoPlayerModal #playlist {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+    overflow-y: auto;
+    max-height: 100%;
+    background-color: #000;
+    border-radius: 10px;
+    width: 100%;
+}
+
+#videoPlayerModal #playlist li {
+    font-size: 1rem;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #333;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+#videoPlayerModal #playlist li:hover {
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+#videoPlayerModal #playlist li.active {
+    background-color: #28a745;
+    color: white;
 }
 
 @media (max-width: 768px) {
+    #videoPlayerModal .modal-dialog {
+        max-width: 100%;
+        margin: 0;
+    }
+
+    #videoPlayerModal .modal-body {
+        flex-direction: column;
+    }
+
+    #videoPlayerModal .w-75,
+    #videoPlayerModal .w-25 {
+        width: 100%;
+    }
+
     .set-background-btn {
         font-size: 12px;
         padding: 5px 10px;
-        width: 100px; 
-        height: 42px; 
+        width: 100px;
+        height: 42px;
     }
 }
 </style>
@@ -3968,21 +4020,22 @@ toggleModalButton.onclick = function() {
             <div class='modal-body'>
                 <div class='mb-4 d-flex justify-content-between align-items-center'>
                     <div>
-                        <button type='button' class='btn btn-success mr-3' onclick='selectAll()'><i class='fas fa-check-square'></i> 全选</button>
-                        <button type='button' class='btn btn-warning mr-3' onclick='deselectAll()'><i class='fas fa-square'></i> 反选</button>
-                        <button type='button' class='btn btn-danger' onclick='batchDelete()'><i class='fas fa-trash-alt'></i> 批量删除</button>
-                        <span id='selectedCount' class='ms-2' style='display: none;'>已选中 0 个文件，总计 0 MB</span>
+                        <button type="button" class="btn btn-success mr-3" onclick="selectAll()"><i class="fas fa-check-square"></i> 全选</button>
+                        <button type="button" class="btn btn-warning mr-3" onclick="deselectAll()"><i class="fas fa-square"></i> 反选</button>
+                        <button type="button" class="btn btn-danger" onclick="batchDelete()"><i class="fas fa-trash-alt"></i> 批量删除</button>
+                        <span id="selectedCount" class="ms-2" style="display: none;">已选中 0 个文件，总计 0 MB</span>
                     </div>
                     <div>
-                        <button type='button' class='btn btn-pink mr-3' onclick='sortFiles()'><i class='fas fa-sort'></i> 排序</button>
-                        <button type='button' class='btn btn-primary mr-3' data-bs-toggle='modal' data-bs-target='#uploadModal'>
-                            <i class='fas fa-cloud-upload-alt'></i> 上传文件
+                        <button type='button' class='btn btn-primary mr-3' onclick='openVideoPlayerModal()'><i class='fas fa-play'></i> 播放视频</button>
+                        <button type="button" class="btn btn-pink mr-3" onclick="sortFiles()"><i class="fas fa-sort"></i> 排序</button>
+                        <button type="button" class="btn btn-primary mr-3" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                            <i class="fas fa-cloud-upload-alt"></i> 上传文件
                         </button>
-                        <button type='button' class='btn btn-danger delete-btn' onclick='setBackground(\"\", \"\", \"remove\")'><i class='fas fa-trash'></i> 删除背景</button>
+                        <button type="button" class="btn btn-danger delete-btn" onclick="setBackground('', '', 'remove')"><i class="fas fa-trash"></i> 删除背景</button>
                     </div>
                 </div>
-                <table class='table table-bordered text-center'>
-                    <tbody id='fileTableBody'>
+                <table class="table table-bordered text-center">
+                    <tbody id="fileTableBody">
                         <?php
                         function isImage($file) {
                             $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
@@ -4064,7 +4117,7 @@ toggleModalButton.onclick = function() {
 
                                     echo "<td class='align-middle' data-label='预览' style='vertical-align: middle;'>
                                             <div class='file-preview mb-2 d-flex align-items-center'>
-                                                <input type='checkbox' class='file-checkbox mb-2 mr-2' value='" . htmlspecialchars($file, ENT_QUOTES) . "' data-size='$fileSize' onchange='updateSelectedCount()'>";
+                                                <input type='checkbox' class='file-checkbox mb-2 mr-2' value='" . htmlspecialchars($file, ENT_QUOTES) . "' data-url='$fileUrl' data-title='$fileNameWithoutPrefix' data-size='$fileSize' onchange='updateSelectedCount()'>";
 
                                     if (isVideo($file)) {
                                         echo "<video width='200' controls title='$fileTitle'>
@@ -4150,6 +4203,31 @@ toggleModalButton.onclick = function() {
     </div>
 </div>
 
+<div class="modal fade" id="videoPlayerModal" tabindex="-1" aria-labelledby="videoPlayerModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="videoPlayerModalLabel">媒体播放器</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex">
+                <div class="w-75 pe-3">
+                    <video id="videoPlayer" controls preload="auto" width="100%" height="400px" style="display: none;"></video>
+                    <audio id="audioPlayer" controls preload="auto" style="width: 100%; display: none;"></audio>
+                    <img id="imageViewer" src="" style="width: 100%; height: 400px; object-fit: contain; display: none;">
+                </div>
+                <div class="w-25 d-flex flex-column">
+                    <h5>播放列表</h5>
+                    <ul id="playlist" class="list-group flex-grow-1 overflow-auto"></ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl">
         <form id="renameForm" method="POST">
@@ -4204,6 +4282,179 @@ toggleModalButton.onclick = function() {
         </div>
     </div>
 </div>
+
+<script>
+let playlist = [];
+let currentIndex = 0;
+
+document.addEventListener("DOMContentLoaded", function () {
+    updatePlaylistUI();
+});
+
+function addToPlaylist(mediaUrl, mediaTitle) {
+    if (!playlist.some(item => item.url === mediaUrl)) {
+        playlist.push({ url: mediaUrl, title: mediaTitle });
+        updatePlaylistUI();
+    }
+}
+
+function updatePlaylistUI() {
+    const playlistElement = document.getElementById('playlist');
+    playlistElement.innerHTML = ''; 
+
+    playlist.forEach((media, index) => {
+        const listItem = document.createElement('li');
+        listItem.className = 'list-group-item';
+        listItem.textContent = `${index + 1}. ${media.title}`;
+
+        const removeButton = document.createElement('button');
+        removeButton.textContent = 'X';
+        removeButton.classList.add('btn', 'btn-danger', 'btn-sm', 'float-right');
+        removeButton.style.display = 'none'; 
+        removeButton.onclick = () => removeFromPlaylist(index);
+
+        listItem.appendChild(removeButton);
+
+        listItem.setAttribute('draggable', 'true');
+        listItem.addEventListener('dragstart', (event) => {
+            event.dataTransfer.setData('text', index);
+        });
+        listItem.addEventListener('dragover', (event) => {
+            event.preventDefault();
+        });
+        listItem.addEventListener('drop', (event) => {
+            event.preventDefault();
+            const draggedIndex = event.dataTransfer.getData('text');
+            if (draggedIndex !== index) {
+                removeFromPlaylist(draggedIndex);
+                addToPlaylist(media.url, media.title);  
+            }
+        });
+
+        listItem.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            removeButton.style.display = 'block'; 
+        });
+
+        if (index === currentIndex) {
+            listItem.classList.add('active');
+        }
+
+        listItem.onclick = () => playMedia(index);
+        playlistElement.appendChild(listItem);
+    });
+
+    const activeItem = playlistElement.querySelector('.active');
+    if (activeItem) {
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function removeFromPlaylist(index) {
+    playlist.splice(index, 1);
+    if (currentIndex === index) {
+        if (playlist.length > 0) {
+            playMedia(Math.min(currentIndex, playlist.length - 1));
+        } else {
+            currentIndex = 0;  
+        }
+    }
+    updatePlaylistUI();
+}
+
+function playMedia(index) {
+    if (playlist.length === 0) return;
+
+    currentIndex = index;
+    const media = playlist[index];
+
+    const videoElement = document.getElementById('videoPlayer');
+    const audioElement = document.getElementById('audioPlayer');
+    const imageElement = document.getElementById('imageViewer');
+
+    videoElement.style.display = "none";
+    audioElement.style.display = "none";
+    imageElement.style.display = "none";
+
+    let mediaUrl = media.url;
+    if (!mediaUrl.startsWith('http://') && !mediaUrl.startsWith('https://')) {
+        mediaUrl = window.location.origin + mediaUrl;
+    }
+
+    if (/\.(mp4|avi|mkv|mov|wmv)$/i.test(mediaUrl)) {
+        if (!audioElement.paused) {
+            audioElement.pause();
+            audioElement.currentTime = 0;
+        }
+
+        videoElement.src = "";
+        videoElement.src = mediaUrl;
+        videoElement.style.display = "block";
+        videoElement.load();
+        videoElement.play().catch((err) => {
+            console.warn("自动播放被阻止:", err);
+        });
+
+        videoElement.onended = () => playNextVideo();
+    } 
+
+    else if (/\.(mp3|wav|ogg|flac|aac|m4a|webm|opus)$/i.test(mediaUrl)) {
+        if (!videoElement.paused) {
+            videoElement.pause();
+            videoElement.currentTime = 0;
+        }
+
+        audioElement.src = "";
+        audioElement.src = mediaUrl;
+        audioElement.style.display = "block";
+        audioElement.load();
+        audioElement.play().catch((err) => {
+            console.warn("自动播放被阻止:", err);
+        });
+
+        audioElement.onended = () => playNextAudio();
+    } 
+
+    else if (/\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(mediaUrl)) {
+        imageElement.src = mediaUrl;
+        imageElement.style.display = "block";
+    }
+
+    updatePlaylistUI();
+}
+
+function playNextVideo() {
+    let nextIndex = (currentIndex + 1) % playlist.length;
+
+    while (nextIndex !== currentIndex && !/\.(mp4|avi|mkv|mov|wmv)$/i.test(playlist[nextIndex].url)) {
+        nextIndex = (nextIndex + 1) % playlist.length;
+    }
+
+    playMedia(nextIndex);
+}
+
+function playNextAudio() {
+    let nextIndex = (currentIndex + 1) % playlist.length;
+
+    while (nextIndex !== currentIndex && !/\.(mp3|wav|ogg|flac|aac|m4a|webm|opus)$/i.test(playlist[nextIndex].url)) {
+        nextIndex = (nextIndex + 1) % playlist.length;
+    }
+
+    playMedia(nextIndex);
+}
+
+function openVideoPlayerModal() {
+    playlist = [];  
+    document.querySelectorAll('.file-checkbox:checked').forEach(checkbox => {
+        addToPlaylist(checkbox.getAttribute('data-url'), checkbox.getAttribute('data-title'));
+    });
+
+    if (playlist.length > 0) playMedia(0);  
+
+    const videoPlayerModal = new bootstrap.Modal(document.getElementById('videoPlayerModal'));
+    videoPlayerModal.show();
+}
+</script>
 
 <script>
     function showNotification(message) {
