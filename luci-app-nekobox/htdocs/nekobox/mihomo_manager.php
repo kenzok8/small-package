@@ -583,23 +583,25 @@ html {
     margin: 0 auto;
 }
 
-#dropZone {
-    height: 150px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+#dropZone i {
+    font-size: 50px;
+    color: #007bff;
+    animation: iconPulse 1.5s infinite; 
 }
 
-#dropZone.bg-light {
-    background-color: #e9ecef;
-}
-
-#dropZone:hover {
-    background-color: #f8f9fa;
-    border-color: #0d6efd;
-}
-
-.upload-icon {
-    font-size: 1.5rem; 
+@keyframes iconPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2); 
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 @media (max-width: 768px) {
@@ -697,7 +699,7 @@ function displayUpdateNotification() {
                 ?>
                     <tr>
                         <td class="align-middle" data-label="文件名">
-                            <a href="download.php?file=<?php echo urlencode($file); ?>"><?php echo htmlspecialchars($file); ?></a>
+                            <?php echo htmlspecialchars($file); ?>
                         </td>
                         <td class="align-middle" data-label="大小">
                             <?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : '文件不存在'; ?>
@@ -775,7 +777,7 @@ function displayUpdateNotification() {
             </div>
             <div class="modal-body">
                 <div id="dropZone" class="border border-primary rounded text-center py-4 position-relative">
-                    <i class="bi bi-cloud-upload-fill text-primary upload-icon"></i>
+                    <i  class="fas fa-cloud-upload-alt"></i>
                     <p class="mb-0 mt-3">拖动文件到此区域上传<br>或者点击下方选择文件按钮</p>
                 </div>
                 <input type="file" id="fileInputModal" class="form-control mt-3" hidden>

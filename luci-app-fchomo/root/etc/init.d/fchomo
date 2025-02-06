@@ -350,7 +350,6 @@ start_service() {
 	if [ "$client_enabled" = "1" ]; then
 		[ -z "$1" -o "$1" = "mihomo-c" ] && utpl -S "$HM_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fchomo_post.nft"
 	fi
-	fw4 reload >"/dev/null" 2>&1
 
 	log "$(mihomo -v | awk 'NR==1{print $1,$3}') started."
 }
@@ -364,7 +363,6 @@ stop_service() {
 	[ -z "$1" -o "$1" = "mihomo-s" ] && stop_server
 	# Setup firewall
 	echo 2>"/dev/null" > "$RUN_DIR/fchomo_pre.nft"
-	fw4 reload >"/dev/null" 2>&1
 	return 0
 }
 
@@ -423,7 +421,7 @@ service_stopped() {
 	[ -n "$(/etc/init.d/$CONF info | jsonfilter -q -e '@.'"$CONF"'.instances["mihomo-c"]')" ] || client_stopped
 	# Server
 
-	procd_set_config_changed firewall;
+	procd_set_config_changed firewall
 }
 
 client_stopped() {
