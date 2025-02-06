@@ -49,7 +49,7 @@ local function startUiInstances()
 			"instance",
 			function(s)
 				if s.enabled == "1" then
-					os.execute(string.format("%s daemon %s", appExec, s[".name"]))
+					os.execute(string.format("%s -a daemon -i %s", appExec, s[".name"]))
 				end
 			end
 		)
