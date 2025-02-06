@@ -4285,7 +4285,7 @@ input[type="range"]:focus {
 </div>
 
 <script>
-let playlist = [];
+let playlist = JSON.parse(localStorage.getItem('playlist')) || [];
 let currentIndex = 0;
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -4294,13 +4294,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function clearPlaylist() {
     playlist = [];  
-    updatePlaylistUI();  
+    updatePlaylistUI(); 
+    savePlaylistToLocalStorage(); 
 }
 
 function addToPlaylist(mediaUrl, mediaTitle) {
     if (!playlist.some(item => item.url === mediaUrl)) {
         playlist.push({ url: mediaUrl, title: mediaTitle });
         updatePlaylistUI();
+        savePlaylistToLocalStorage();  
     }
 }
 
@@ -4366,6 +4368,7 @@ function removeFromPlaylist(index) {
         }
     }
     updatePlaylistUI();
+    savePlaylistToLocalStorage(); 
 }
 
 function playMedia(index) {
@@ -4458,6 +4461,10 @@ function openVideoPlayerModal() {
 
     const videoPlayerModal = new bootstrap.Modal(document.getElementById('videoPlayerModal'));
     videoPlayerModal.show();
+}
+
+function savePlaylistToLocalStorage() {
+    localStorage.setItem('playlist', JSON.stringify(playlist));
 }
 </script>
 
