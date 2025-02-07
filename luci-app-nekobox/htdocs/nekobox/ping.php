@@ -672,7 +672,7 @@ $lang = $_GET['lang'] ?? 'en';
 
 @media (max-width: 768px) {
     .popup {
-        display: grid;
+        display: none;
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
         padding: 10px;
@@ -3966,11 +3966,6 @@ input[type="range"]:focus {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
-    }
-
-    .btn {
-        width: 48%;
-        margin-bottom: 10px;
     }
 
     .btn-group {

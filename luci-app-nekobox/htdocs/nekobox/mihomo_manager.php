@@ -589,6 +589,10 @@ html {
     animation: iconPulse 1.5s infinite; 
 }
 
+.popup {
+    display: none; 
+ }
+
 @keyframes iconPulse {
     0% {
         transform: scale(1);

@@ -1,0 +1,2 @@
+config main
+	option 'port' '3000'

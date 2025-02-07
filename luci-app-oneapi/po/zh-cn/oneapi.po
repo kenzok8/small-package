@@ -1,0 +1,44 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Official website:"
+msgstr "官方网站："
+
+msgid "OneAPI is LLM API Management & Distribution System, supporting OpenAI, Azure, Anthropic Claude, Google Gemini, and DeepSeek. login: root/123456"
+msgstr "OneAPI 是LLM API 管理 & 分发系统，支持 OpenAI、Azure、Anthropic Claude、Google Gemini、DeepSeek。登录：root/123456"
+
+msgid "Config path"
+msgstr "配置文件路径"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Service Status"
+msgstr "服务状态"
+
+msgid "OneAPI status:"
+msgstr "OneAPI 的状态信息如下："
+
+msgid "Setup"
+msgstr "安装配置"
+
+msgid "The following parameters will only take effect during installation or upgrade:"
+msgstr "以下参数只在安装或者升级时才会生效："
+
+msgid "Status"
+msgstr "状态"
+
+msgid "OneAPI is running"
+msgstr "OneAPI 运行中"
+
+msgid "OneAPI is not running"
+msgstr "OneAPI 未运行"
+
+msgid "Open OneAPI"
+msgstr "打开 OneAPI"
+
+msgid "The free space of Docker is less than 2GB, which may cause the installation to fail."
+msgstr "Docker 可用空间已不足2GB，可能导致安装失败。"
+
+msgid "Please make sure there has enough space"
+msgstr "请确保有足够空间"

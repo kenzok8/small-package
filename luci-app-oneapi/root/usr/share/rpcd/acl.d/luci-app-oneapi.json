@@ -1,0 +1,11 @@
+{
+	"luci-app-oneapi": {
+		"description": "Grant UCI access for luci-app-oneapi",
+		"read": {
+			"uci": [ "oneapi" ]
+		},
+		"write": {
+			"uci": [ "oneapi" ]
+		}
+	}
+}
