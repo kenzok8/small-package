@@ -669,6 +669,24 @@ $lang = $_GET['lang'] ?? 'en';
         display: none;
     }
 }
+
+@media (max-width: 768px) {
+    .popup {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 10px;
+        justify-content: center;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .popup button {
+        width: 100%; 
+        padding: 10px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+}
 </style>
 <script src="./assets/bootstrap/Sortable.min.js"></script>
 <link href="./assets/bootstrap/video-js.css" rel="stylesheet" />
@@ -989,7 +1007,7 @@ let IP = {
                 <span id="toggle-ip" style="cursor: pointer; position: relative; top: -3px;  text-indent: 1ch; padding-top: 2px;" title="点击隐藏/显示 IP">
                     <i class="fa ${isHidden ? 'bi-eye-slash' : 'bi-eye'}"></i>  
                 </span>
-                <span class="control-toggle" style="cursor: pointer; margin-left: 10px; display: inline-flex; align-items: center; position: relative; top: -1px;"" onclick="togglePopup()" title="打开控制面板">
+                <span class="control-toggle" style="cursor: pointer; margin-left: 10px; display: inline-flex; align-items: center; position: relative; top: -1px;" onclick="togglePopup()" title="打开控制面板">
                     <i class="bi bi-gear" style="font-size: 0.8rem; margin-right: 5px;"></i>  
                 </span>
             `;
@@ -1450,20 +1468,6 @@ setInterval(IP.getIpipnetIP, 180000);
             playPauseBtn.textContent = '▶️ 播放';
         
         });
-    });
-
-    var longPressTimer;
-    var touchStartTime = 0;
-
-    document.addEventListener('touchstart', function (event) {
-        var touch = event.touches[0];
-        touchStartTime = new Date().getTime();
-    
-        if (touch.clientY < window.innerHeight / 2) {
-            longPressTimer = setTimeout(function () {
-                togglePopup();
-            }, 1000); 
-        }
     });
 
     function togglePopup() {
@@ -2668,7 +2672,6 @@ window.addEventListener('keydown', function(event) {
                     <li><strong>Ctrl + Shift + C键:</strong> 清空缓存数据</li>
                     <li><strong>Ctrl + Shift + V键:</strong> 定制播放列表</li>
                     <li><strong>Ctrl + Shift + X键:</strong> 设置城市</li>
-                    <li><strong>手机/平板长按上半屏:</strong> 打开设置</li>
                 </ul>
                 <div class="sing-box-section mt-4">
                     <h5>Sing-box启动提示</h5>
@@ -3881,56 +3884,76 @@ input[type="range"]:focus {
 
 #videoPlayerModal .modal-body {
     display: flex;
-    gap: 20px;
+    gap: 0;
     height: calc(90vh - 140px);
+    overflow: hidden;
+    align-items: stretch;
 }
 
-#videoPlayerModal .w-75 {
-    flex: 0 0 75%;
-    padding-right: 20px;
-    height: 100%;
-}
-
-#videoPlayerModal #videoPlayer {
+#videoPlayerModal .media-container {
+    flex: 1;
+    display: flex;
+    background-color: #000;
     border-radius: 10px;
+    overflow: hidden;
+}
+
+#videoPlayerModal #videoPlayer,
+#videoPlayerModal #audioPlayer,
+#videoPlayerModal #imageViewer {
+    border-radius: 10px 0 0 10px;
     width: 100%;
     height: 100%;
     background-color: #000;
 }
 
-#videoPlayerModal .w-25 {
-    flex: 0 0 25%;
+#videoPlayerModal .playlist-container {
+    width: 350px;
     height: 100%;
     display: flex;
     flex-direction: column;
+    border-left: 2px solid #007bff;
+    background-color: #111;
+    border-radius: 0 10px 10px 0;
+    padding: 15px;
+    padding-bottom: -10px;
+    overflow-x: hidden;
 }
 
 #videoPlayerModal #playlist {
     list-style-type: none;
-    padding-left: 0;
+    padding: 0;
     margin: 0;
-    overflow-y: auto;
-    max-height: 100%;
+    flex-grow: 1;
     background-color: #000;
+    border: 2px solid #007bff;
     border-radius: 10px;
-    width: 100%;
+    overflow-y: auto;
+    height: 100%;
+    overflow-x: hidden;
+}
+
+#videoPlayerModal #playlist::-webkit-scrollbar {
+    width: 8px;
+}
+
+#videoPlayerModal #playlist::-webkit-scrollbar-thumb {
+    background-color: #007bff;
+    border-radius: 4px;
 }
 
 #videoPlayerModal #playlist li {
     font-size: 1rem;
     padding: 12px 20px;
     border-radius: 8px;
-    margin-bottom: 10px;
+    margin: 5px;
     background-color: #333;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     cursor: pointer;
-    transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 #videoPlayerModal #playlist li:hover {
     background-color: #007bff;
     color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 #videoPlayerModal #playlist li.active {
@@ -3939,27 +3962,48 @@ input[type="range"]:focus {
 }
 
 @media (max-width: 768px) {
-    #videoPlayerModal .modal-dialog {
-        max-width: 100%;
-        margin: 0;
+    .button-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
-    #videoPlayerModal .modal-body {
-        flex-direction: column;
+    .btn {
+        width: 48%;
+        margin-bottom: 10px;
     }
 
-    #videoPlayerModal .w-75,
-    #videoPlayerModal .w-25 {
+    .btn-group {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 768px) {
+    .playlist-container {
+        display: none;
+    }
+
+    .media-container {
+        display: block;
+    }
+
+    #videoPlayer, #audioPlayer, #imageViewer {
         width: 100%;
     }
 
-    .set-background-btn {
-        font-size: 12px;
-        padding: 5px 10px;
-        width: 100px;
-        height: 42px;
+    #toggleButton {
+        display: block;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .modal-body {
+        padding: 10px;
     }
 }
+
 </style>
 
 <script>
@@ -4210,15 +4254,15 @@ input[type="range"]:focus {
                 <h5 class="modal-title" id="videoPlayerModalLabel">媒体播放器</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body d-flex">
-                <div class="w-75 pe-3">
-                    <video id="videoPlayer" controls preload="auto" width="100%" height="400px" style="display: none;"></video>
-                    <audio id="audioPlayer" controls preload="auto" style="width: 100%; display: none;"></audio>
-                    <img id="imageViewer" src="" style="width: 100%; height: 400px; object-fit: contain; display: none;">
+            <div class="modal-body">
+                <div class="media-container">
+                    <video id="videoPlayer" controls preload="auto" style="display: none;"></video>
+                    <audio id="audioPlayer" controls preload="auto" style="display: none;"></audio>
+                    <img id="imageViewer" src="" style="display: none;">
                 </div>
-                <div class="w-25 d-flex flex-column">
+                <div class="playlist-container">
                     <h5>播放列表</h5>
-                    <ul id="playlist" class="list-group flex-grow-1 overflow-auto"></ul>
+                    <ul id="playlist"></ul>
                 </div>
             </div>
             <div class="modal-footer">
@@ -4466,6 +4510,20 @@ function openVideoPlayerModal() {
 function savePlaylistToLocalStorage() {
     localStorage.setItem('playlist', JSON.stringify(playlist));
 }
+
+function toggleView() {
+    const mediaContainer = document.querySelector('.media-container');
+    const playlistContainer = document.querySelector('.playlist-container');
+
+    if (mediaContainer.style.display === "none") {
+        mediaContainer.style.display = "block";
+        playlistContainer.style.display = "none";
+    } else {
+        mediaContainer.style.display = "none";
+        playlistContainer.style.display = "block";
+    }
+}
+
 </script>
 
 <script>
@@ -4489,6 +4547,11 @@ function savePlaylistToLocalStorage() {
 
     document.addEventListener('DOMContentLoaded', (event) => {
         var el = document.getElementById('fileTableBody');
+
+        if (window.innerWidth <= 768) {
+            return; 
+        }
+
         var sortable = new Sortable(el, {
             animation: 150,
             onEnd: function (evt) {
