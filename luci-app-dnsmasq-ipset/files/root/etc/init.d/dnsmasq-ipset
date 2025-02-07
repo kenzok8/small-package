@@ -41,10 +41,16 @@ gen_config_file() {
     else
         config_list_foreach "${section}" "managed_domain" handle_domain_ipt
     fi
+    link_config() {
+        local cfg="${1}"
+        [ -d "/tmp/dnsmasq.${cfg}.d" ] && cp -f "${config_file_name}" "/tmp/dnsmasq.${cfg}.d/ipset-${ipset_name}.conf"
+    }
+    config_load dhcp
+    config_foreach link_config dnsmasq
 }
 
 gen_config_files() {
-    rm -rf /tmp/dnsmasq.d/ipset-*.conf
+    rm -f /tmp/dnsmasq*.d/ipset-*.conf
     config_load dnsmasq-ipset
     config_foreach gen_config_file ipsets
 }
