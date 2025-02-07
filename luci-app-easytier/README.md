@@ -50,3 +50,17 @@ cd /opt/openwrt-sdk*/bin/packages/aarch64_generic/base
 #移动到/opt目录里
 mv *.ipk /opt/luci-app-easytier_all.ipk
 ```
+
+> 如果在 状态-系统日志里 出现下图日志内容可以使用以下命令解决
+
+```
+Fri Feb  7 11:13:30 2025 daemon.err uhttpd[3381]: luci.util.pcdata() has been replaced by luci.xml.pcdata() - Please update your code.
+Fri Feb  7 11:13:30 2025 daemon.err uhttpd[3381]: luci.util.pcdata() has been replaced by luci.xml.pcdata() - Please update your code.
+Fri Feb  7 11:13:30 2025 daemon.err uhttpd[3381]: luci.util.pcdata() has been replaced by luci.xml.pcdata() - Please update your code.
+Fri Feb  7 11:13:30 2025 daemon.err uhttpd[3381]: luci.util.pcdata() has been replaced by luci.xml.pcdata() - Please update your code.
+Fri Feb  7 11:13:30 2025 daemon.err uhttpd[3381]: luci.util.pcdata() has been replaced by luci.xml.pcdata() - Please update your code.
+```
+
+```
+sed -i 's/util/xml/g' /usr/lib/lua/luci/model/cbi/easytier.lua
+```

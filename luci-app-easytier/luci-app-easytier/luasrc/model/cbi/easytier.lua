@@ -2,7 +2,7 @@ local http = luci.http
 local nixio = require "nixio"
 
 m = Map("easytier")
-m.description = translate('一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 项目地址：<a href="https://github.com/EasyTier/EasyTier">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;<a href="http://easytier.rs">官网文档</a>&nbsp;&nbsp;<a href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262">QQ群</a>&nbsp;&nbsp;<a href="https://doc.oee.icu">菜鸟教程</a>')
+m.description = translate('一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 项目地址：<a href="https://github.com/EasyTier/EasyTier">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;<a href="http://easytier.cn">官网文档</a>&nbsp;&nbsp;<a href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262">QQ群</a>&nbsp;&nbsp;<a href="https://doc.oee.icu">菜鸟教程</a>')
 
 -- easytier
 m:section(SimpleSection).template  = "easytier/easytier_status"
@@ -118,11 +118,11 @@ proxy_network:depends("etcmd", "etcmd")
 
 mapped_listeners = s:taboption("privacy",DynamicList, "mapped_listeners", translate("指定监听器的公网地址"),
 	translate("手动指定本机的公网地址，其他节点可以使用该地址连接到本节点（不支持域名）。<br>例如：tcp://123.123.123.123:11223，可以指定多个。（--mapped-listeners 参数）"))
-mapped_listeners:depends("etcmd", "etcmd")
+mapped_listeners:depends("listenermode", "ON")
 
 rpc_portal = s:taboption("privacy", Value, "rpc_portal", translate("门户地址端口"),
 	translate("用于管理的 RPC 门户地址。0 表示随机端口，12345 表示监听本地主机的 12345 端口，0.0.0.0:12345 表示在所有接口上监听 12345 端口。默认值为 0，首选 15888 （-r 参数）"))
-rpc_portal.placeholder = "0"
+rpc_portal.placeholder = "15888"
 rpc_portal.datatype = "range(1,65535)"
 rpc_portal:depends("etcmd", "etcmd")
 
@@ -288,6 +288,7 @@ relay_all:depends("etcmd", "etcmd")
 bind_device = s:taboption("privacy",Flag, "bind_device", translate("仅使用物理网卡"),
 	translate("将连接器的套接字绑定到物理设备以避免路由问题。<br>比如子网代理网段与某节点的网段冲突，绑定物理设备后可以与该节点正常通信。（ --bind-device 参数）"))
 bind_device.rmempty = false
+bind_device.default = "1"
 bind_device:depends("etcmd", "etcmd")
 
 kcp_proxy = s:taboption("privacy",Flag, "kcp_proxy", translate("启用KCP代理"),
@@ -344,7 +345,7 @@ btn0.description = translate("点击按钮刷新，查看本机信息")
 btn0.inputstyle = "apply"
 btn0.write = function()
 if process_status ~= "" then
-   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli node >/tmp/easytier-cli_node")
+   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli node >/tmp/easytier-cli_node 2>&1")
 else
     luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_node")
 end
@@ -363,7 +364,7 @@ btn1.description = translate("点击按钮刷新，查看对端信息")
 btn1.inputstyle = "apply"
 btn1.write = function()
 if process_status ~= "" then
-   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli peer >/tmp/easytier-cli_peer")
+   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli peer >/tmp/easytier-cli_peer 2>&1")
 else
     luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_peer")
 end
@@ -382,7 +383,7 @@ btn2.description = translate("点击按钮刷新，查看connector信息")
 btn2.inputstyle = "apply"
 btn2.write = function()
 if process_status ~= "" then
-   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli connector >/tmp/easytier-cli_connector")
+   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli connector >/tmp/easytier-cli_connector 2>&1")
 else
     luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_connector")
 end
@@ -401,7 +402,7 @@ btn3.description = translate("点击按钮刷新，查看stun信息")
 btn3.inputstyle = "apply"
 btn3.write = function()
 if process_status ~= "" then
-   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli stun >/tmp/easytier-cli_stun")
+   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli stun >/tmp/easytier-cli_stun 2>&1")
 else
     luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_stun")
 end
@@ -421,7 +422,7 @@ btn4.description = translate("点击按钮刷新，查看route信息")
 btn4.inputstyle = "apply"
 btn4.write = function()
 if process_status ~= "" then
-   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli route >/tmp/easytier-cli_route")
+   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli route >/tmp/easytier-cli_route 2>&1")
 else
     luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_route")
 end
@@ -440,7 +441,7 @@ btn6.description = translate("点击按钮刷新，查看peer-center信息")
 btn6.inputstyle = "apply"
 btn6.write = function()
 if process_status ~= "" then
-   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli peer-center >/tmp/easytier-cli_peer-center")
+   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli peer-center >/tmp/easytier-cli_peer-center 2>&1")
 else
     luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_peer-center")
 end
@@ -459,7 +460,7 @@ btn7.description = translate("点击按钮刷新，查看vpn-portal信息")
 btn7.inputstyle = "apply"
 btn7.write = function()
 if process_status ~= "" then
-   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli vpn-portal >/tmp/easytier-cli_vpn-portal")
+   luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli vpn-portal >/tmp/easytier-cli_vpn-portal 2>&1")
 else
     luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_vpn-portal")
 end
@@ -493,7 +494,7 @@ end
 
 btnrm = s:taboption("infos", Button, "btnrm")
 btnrm.inputtitle = translate("检测更新")
-btnrm.description = translate("点击按钮开始检测更新，上方状态栏显示")
+btnrm.description = translate("点击按钮开始检测更新，刷新上方状态栏显示")
 btnrm.inputstyle = "apply"
 btnrm.write = function()
   os.execute("rm -rf /tmp/easytier*.tag /tmp/easytier*.newtag /tmp/easytier-core_*")
