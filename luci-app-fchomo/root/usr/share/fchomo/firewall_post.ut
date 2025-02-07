@@ -4,7 +4,7 @@
 {%-
 	import { readfile } from 'fs';
 	import { cursor } from 'uci';
-	import { isEmpty, yqRead } from '/etc/fchomo/scripts/fchomo.uc';
+	import { isEmpty, yqRead } from 'fchomo';
 
 	const fw4 = require('fw4');
 

@@ -4,6 +4,8 @@ import { mkstemp, popen } from 'fs';
 
 /* Global variables START */
 export const HM_DIR = '/etc/fchomo';
+export const EXE_DIR = '/usr/libexec/fchomo';
+export const SDL_DIR = '/usr/share/fchomo';
 export const RUN_DIR = '/var/run/fchomo';
 export const PRESET_OUTBOUND = [
 	'DIRECT',

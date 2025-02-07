@@ -245,7 +245,7 @@ return view.extend({
 							const stun = this.formvalue(this.section.section);
 							const l4proto = document.getElementById('_status_nattest_l4proto').value;
 
-							return fs.exec_direct('/etc/fchomo/scripts/natcheck.sh', [stun, l4proto, getRandom(32768, 61000)]).then((stdout) => {
+							return fs.exec_direct('/usr/libexec/fchomo/natcheck.sh', [stun, l4proto, getRandom(32768, 61000)]).then((stdout) => {
 								this.description = '<details><summary>' + _('Expand/Collapse result') + '</summary>' + stdout + '</details>';
 
 								return this.map.reset().then((res) => {
