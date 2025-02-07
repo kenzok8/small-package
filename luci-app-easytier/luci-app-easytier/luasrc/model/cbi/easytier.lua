@@ -116,6 +116,10 @@ proxy_network = s:taboption("general",DynamicList, "proxy_network", translate("�
 	translate("将本地网络导出到 VPN 中的其他对等点，可访问当前局域网内其他设备 （-n 参数）"))
 proxy_network:depends("etcmd", "etcmd")
 
+mapped_listeners = s:taboption("privacy",DynamicList, "mapped_listeners", translate("指定监听器的公网地址"),
+	translate("手动指定本机的公网地址，其他节点可以使用该地址连接到本节点（不支持域名）。<br>例如：tcp://123.123.123.123:11223，可以指定多个。（--mapped-listeners 参数）"))
+mapped_listeners:depends("etcmd", "etcmd")
+
 rpc_portal = s:taboption("privacy", Value, "rpc_portal", translate("门户地址端口"),
 	translate("用于管理的 RPC 门户地址。0 表示随机端口，12345 表示监听本地主机的 12345 端口，0.0.0.0:12345 表示在所有接口上监听 12345 端口。默认值为 0，首选 15888 （-r 参数）"))
 rpc_portal.placeholder = "0"
@@ -139,7 +143,6 @@ tcp_port = s:taboption("general",Value, "tcp_port", translate("tcp/udp端口"),
 tcp_port.datatype = "range(1,65535)"
 tcp_port.default = "11010"
 tcp_port:depends("listenermode", "ON")
-tcp_port:depends("etcmd", "etcmd")
 tcp_port:depends("etcmd", "web")
 
 ws_port = s:taboption("general",Value, "ws_port", translate("ws端口"),
@@ -147,7 +150,6 @@ ws_port = s:taboption("general",Value, "ws_port", translate("ws端口"),
 ws_port.datatype = "range(1,65535)"
 ws_port.default = "11011"
 ws_port:depends("listenermode", "ON")
-ws_port:depends("etcmd", "etcmd")
 ws_port:depends("etcmd", "web")
 
 wss_port = s:taboption("general",Value, "wss_port", translate("wss端口"),
@@ -155,7 +157,6 @@ wss_port = s:taboption("general",Value, "wss_port", translate("wss端口"),
 wss_port.datatype = "range(1,65535)"
 wss_port.default = "11012"
 wss_port:depends("listenermode", "ON")
-wss_port:depends("etcmd", "etcmd")
 wss_port:depends("etcmd", "web")
 
 wg_port = s:taboption("general",Value, "wg_port", translate("wg端口"),
@@ -163,7 +164,6 @@ wg_port = s:taboption("general",Value, "wg_port", translate("wg端口"),
 wg_port.datatype = "range(1,65535)"
 wg_port.placeholder = "11011"
 wg_port:depends("listenermode", "ON")
-wg_port:depends("etcmd", "etcmd")
 wg_port:depends("etcmd", "web")
 
 local model = nixio.fs.readfile("/proc/device-tree/model") or ""
@@ -205,7 +205,7 @@ default_protocol:depends("etcmd", "etcmd")
 
 tunname = s:taboption("privacy",Value, "tunname", translate("虚拟网卡名称"),
 	translate("自定义虚拟网卡TUN接口的名称（--dev-name 参数）<br>如果是WEB配置请填写和WEB配置一样的虚拟网卡名称用于防火墙放行"))
-tunname.placeholder = "easytier"
+tunname.placeholder = "tun0"
 tunname:depends("etcmd", "etcmd")
 tunname:depends("etcmd", "web")
 
@@ -240,7 +240,7 @@ exit_nodes = s:taboption("privacy",DynamicList, "exit_nodes", translate("出口�
 	translate("转发所有流量的出口节点，虚拟 IPv4 地址，优先级由列表顺序确定（--exit-nodes 参数）"))
 exit_nodes:depends("etcmd", "etcmd")
 
-smoltcp = s:taboption("privacy",Flag, "smoltcp", translate("启用smoltcp堆栈"),
+smoltcp = s:taboption("privacy",Flag, "smoltcp", translate("使用用户态协议栈"),
 	translate("为子网代理启用smoltcp堆栈（--use-smoltcp 参数）"))
 smoltcp.rmempty = false
 smoltcp:depends("etcmd", "etcmd")
@@ -263,7 +263,6 @@ relay_network:depends("etcmd", "etcmd")
 whitelist = s:taboption("privacy",DynamicList, "whitelist", translate("白名单网络"),
 	translate("仅转发白名单网络的流量，输入是通配符字符串，例如：'*'（所有网络），'def*'（以def为前缀的网络）<br>可以指定多个网络。如果参数为空，则禁用转发。（--relay-network-whitelist 参数）"))
 whitelist:depends("relay_network", "1")
-whitelist:depends("etcmd", "etcmd")
 
 socks_port = s:taboption("privacy",Value, "socks_port", translate("socks5端口"),
 	translate("启用 socks5 服务器，允许 socks5 客户端访问虚拟网络，留空则不开启（--socks5 参数）"))
@@ -282,9 +281,24 @@ disable_udp.rmempty = false
 disable_udp:depends("etcmd", "etcmd")
 
 relay_all = s:taboption("privacy",Flag, "relay_all", translate("允许转发"),
-	translate("转发所有对等节点的RPC数据包，即使对等节点不在转发网络白名单中。<br>这可以帮助白名单外网络中的对等节点建立P2P连接。"))
+	translate("转发所有对等节点的RPC数据包，即使对等节点不在转发网络白名单中。<br>这可以帮助白名单外网络中的对等节点建立P2P连接。（ -relay-all-peer-rpc 参数）"))
 relay_all.rmempty = false
 relay_all:depends("etcmd", "etcmd")
+
+bind_device = s:taboption("privacy",Flag, "bind_device", translate("仅使用物理网卡"),
+	translate("将连接器的套接字绑定到物理设备以避免路由问题。<br>比如子网代理网段与某节点的网段冲突，绑定物理设备后可以与该节点正常通信。（ --bind-device 参数）"))
+bind_device.rmempty = false
+bind_device:depends("etcmd", "etcmd")
+
+kcp_proxy = s:taboption("privacy",Flag, "kcp_proxy", translate("启用KCP代理"),
+	translate("将连接器的套接字绑定到物理设备以避免路由问题。<br>比如子网代理网段与某节点的网段冲突，绑定物理设备后可以与该节点正常通信。（ --enable-kcp-proxy 参数）"))
+kcp_proxy.rmempty = false
+kcp_proxy:depends("etcmd", "etcmd")
+
+kcp_input = s:taboption("privacy",Flag, "kcp_input", translate("禁用KCP输入"),
+	translate("不允许其他节点使用 KCP 代理 TCP 流到此节点。<br>开启 KCP 代理的节点访问此节点时，依然使用原始。（ --disable-kcp-input 参数）"))
+kcp_input.rmempty = false
+kcp_input:depends("etcmd", "etcmd")
 
 log = s:taboption("general",ListValue, "log", translate("程序日志"),
 	translate("运行日志在/tmp/easytier.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
