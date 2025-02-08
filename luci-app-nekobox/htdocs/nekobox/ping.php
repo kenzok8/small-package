@@ -4026,6 +4026,22 @@ input[type="range"]:focus {
     }
 }
 
+@media (max-width: 768px) {
+    .modal-body .d-flex {
+        align-items: stretch;  
+        gap: 10px; 
+    }
+    .modal-body .btn {
+        width: 100%; 
+        text-align: center;
+        margin-bottom: 8px; 
+        padding: 10px; 
+    }
+    .modal-body .btn:last-child {
+        margin-bottom: 0; 
+    }
+}
+
 </style>
 
 <script>
@@ -4084,20 +4100,16 @@ input[type="range"]:focus {
                 </button>
             </div>
             <div class='modal-body'>
-                <div class='mb-4 d-flex justify-content-between align-items-center'>
+                <div class='mb-4 d-flex flex-wrap gap-2 justify-content-start align-items-center'>
                     <div>
-                        <button type="button" class="btn btn-success mr-3" onclick="selectAll()"><i class="fas fa-check-square"></i> 全选</button>
-                        <button type="button" class="btn btn-warning mr-3" onclick="deselectAll()"><i class="fas fa-square"></i> 反选</button>
-                        <button type="button" class="btn btn-danger" onclick="batchDelete()"><i class="fas fa-trash-alt"></i> 批量删除</button>
-                        <span id="selectedCount" class="ms-2" style="display: none;">已选中 0 个文件，总计 0 MB</span>
-                    </div>
-                    <div>
-                        <button type='button' class='btn btn-primary mr-3' onclick='openVideoPlayerModal()' title="勾选添加到播放列表"><i class='fas fa-play'></i> 播放视频</button>
-                        <button type="button" class="btn btn-pink mr-3" onclick="sortFiles()"><i class="fas fa-sort"></i> 排序</button>
-                        <button type="button" class="btn btn-primary mr-3" data-bs-toggle="modal" data-bs-target="#newuploadModal">
+                        <button type="button" class="btn btn-success me-2" id="selectToggleBtn" onclick="toggleSelectAll()"><i class="fas fa-check-square"></i> 全选</button>
+                        <button type="button" class="btn btn-danger me-2" onclick="batchDelete()"><i class="fas fa-trash-alt"></i> 批量删除</button>
+                        <button type='button' class='btn btn-primary me-2' onclick='openVideoPlayerModal()' title="勾选添加到播放列表"><i class='fas fa-play'></i> 播放视频</button>
+                        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#newuploadModal">
                             <i class="fas fa-cloud-upload-alt"></i> 上传文件
                         </button>
-                        <button type="button" class="btn btn-danger delete-btn" onclick="setBackground('', '', 'remove')"><i class="fas fa-trash"></i> 删除背景</button>
+                        <button type="button" class="btn btn-danger me-2 delete-btn" onclick="setBackground('', '', 'remove')"><i class="fas fa-trash"></i> 删除背景</button>
+                        <span id="selectedCount" class="ms-2" style="display: none;">已选中 0 个文件，总计 0 MB</span>
                     </div>
                 </div>
                 <table class="table table-bordered text-center">
@@ -4785,22 +4797,35 @@ function batchDelete() {
     });
 }
 
+function toggleSelectAll() {
+    var checkboxes = document.querySelectorAll('.file-checkbox');
+    var selectToggleBtn = document.getElementById('selectToggleBtn');
+    var allSelected = Array.from(checkboxes).every(checkbox => checkbox.checked);
+
+    checkboxes.forEach(checkbox => checkbox.checked = !allSelected);
+    selectToggleBtn.innerHTML = allSelected ? '<i class="fas fa-check-square"></i> 全选' : '<i class="fas fa-square"></i> 反选';
+    updateSelectedCount();
+}
+
 function updateSelectedCount() {
-    const checkboxes = document.querySelectorAll('.file-checkbox:checked');
-    const selectedCount = checkboxes.length;
-    let totalSize = 0;
+    var checkboxes = document.querySelectorAll('.file-checkbox:checked');
+    var selectedCount = checkboxes.length;
+    var totalSize = Array.from(checkboxes).reduce((sum, checkbox) => sum + parseInt(checkbox.dataset.size), 0);
 
-    checkboxes.forEach(checkbox => {
-        totalSize += parseInt(checkbox.getAttribute('data-size'), 10);
-    });
+    var selectedCountElement = document.getElementById('selectedCount');
+    selectedCountElement.style.display = selectedCount > 0 ? 'inline' : 'none';
+    selectedCountElement.textContent = `已选中 ${selectedCount} 个文件，总计 ${formatFileSize(totalSize)}`;
+}
 
-    const totalSizeMB = (totalSize / 1048576).toFixed(2); 
-    const selectedCountElement = document.getElementById('selectedCount');
-    if (selectedCount > 0) {
-        selectedCountElement.style.display = 'inline';
-        selectedCountElement.innerText = `已选中 ${selectedCount} 个图片/视频，总计 ${totalSizeMB} MB`;
+function formatFileSize(size) {
+    if (size >= 1073741824) {
+        return (size / 1073741824).toFixed(2) + ' GB';
+    } else if (size >= 1048576) {
+        return (size / 1048576).toFixed(2) + ' MB';
+    } else if (size >= 1024) {
+        return (size / 1024).toFixed(2) + ' KB';
     } else {
-        selectedCountElement.style.display = 'none';
+        return size + ' bytes';
     }
 }
 

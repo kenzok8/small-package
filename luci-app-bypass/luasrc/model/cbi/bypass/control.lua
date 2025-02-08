@@ -1,3 +1,4 @@
+require "luci.sys"
 local fs = require "nixio.fs"
 local m,s,o
 
@@ -130,6 +131,13 @@ o.validate = function(self, value)
         end
     end
     return value
+end
+
+if luci.sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0 then
+	m.apply_on_parse = true
+	function m.on_apply(self)
+		luci.sys.call("/etc/init.d/bypass reload > /dev/null 2>&1 &")
+	end
 end
 
 return m
