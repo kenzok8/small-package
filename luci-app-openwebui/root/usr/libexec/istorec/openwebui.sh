@@ -28,7 +28,8 @@ do_install() {
   docker rm -f openwebui
 
   local cmd="docker run --restart=unless-stopped -d -h OpenWebUIServer \
-    -p $port:3000 \
+    -e OPENAI_API_KEY=your_secret_key \
+    -p $port:8080 \
     -v \"$config:/app/backend/data\" "
 
   cmd="$cmd\
@@ -44,7 +45,9 @@ do_install() {
 
   echo "$cmd"
   eval "$cmd"
-  sleep 3
+  echo "Initial..."
+  sleep 10
+  echo "Done
 }
 
 usage() {
