@@ -14,7 +14,7 @@ local dsp=require "luci.dispatcher"
 		return new Promise((res) =>{
 			const dom=doms[index];
 			const port=ports[index];
-			if (!dom) res()
+			if (!dom) res();
 			port.innerHTML='<font color="#0072c3"><%:connecting%></font>';
 			XHR.get('<%=dsp.build_url("admin/services/bypass/ping")%>',{
 				index,
@@ -28,7 +28,7 @@ local dsp=require "luci.dispatcher"
 					if (result.ping < 200) col='#ff7700';
 					if (result.ping < 100) col='#249400';
 				}
-				dom.innerHTML=`<font color="${col}">${(result.ping ? result.ping : "--") + " ms"}</font>`
+				dom.innerHTML=`<font color="${col}">${(result.ping ? result.ping : "--") + " ms"}</font>`;
 				if (result.socket){
 					port.innerHTML='<font color="#249400"><%:ok%></font>';
 				} else{
@@ -36,20 +36,20 @@ local dsp=require "luci.dispatcher"
 				}
 				res();
 			});
-		})
-	}
+		});
+	};
 	let task=-1;
 	const thread=() =>{
-		task=task + 1
+		task=task + 1;
 		if (doms[task]){
 			xhr(task).then(thread);
 		}
-	}
+	};
 
 			for (let i=0; i < 20; i++){
-				thread()
+				thread();
 			}
-	})
+	});
 
 	function cbi_row_drop(fromId,toId,store,isToBottom){
 		var fromNode=document.getElementById(fromId);
@@ -181,4 +181,5 @@ local dsp=require "luci.dispatcher"
 			console.error(err);
 		}
 	}
+	//]]>
 </script>
