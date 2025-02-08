@@ -47,7 +47,7 @@ do_install() {
   eval "$cmd"
   echo "Initial..."
   sleep 10
-  echo "Done
+  echo "Done"
 }
 
 usage() {
