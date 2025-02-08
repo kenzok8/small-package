@@ -1,16 +1,16 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $primaryColor = $_POST['primaryColor'] ?? '#0ceda2'; 
+    $primaryColor = $_POST['primaryColor'] ?? '#30e8dc'; 
     $secondaryColor = $_POST['secondaryColor'] ?? '#00ffff'; 
     $bodyBgColor = $_POST['bodyBgColor'] ?? '#23407e'; 
-    $bodyColor = $_POST['bodyColor'] ?? '#04f153'; 
+    $bodyColor = $_POST['bodyColor'] ?? '#4eedf9'; 
     $infoBgSubtle = $_POST['infoBgSubtle'] ?? '#23407e'; 
     $primaryBorderSubtle = $_POST['primaryBorderSubtle'] ?? '#1815d1'; 
     $tertiaryColor = $_POST['tertiaryColor'] ?? '#46e1ec'; 
-    $tertiaryRgbColor = $_POST['tertiaryRgbColor'] ?? '#1e90ff'; 
+    $tertiaryRgbColor = $_POST['tertiaryRgbColor'] ?? '#df38f5'; 
     $selectColor = $_POST['selectColor'] ?? '#23407e'; 
     $backgroundColor = $_POST['backgroundColor'] ?? '#20cdd9'; 
-    $placeholderColor = $_POST['placeholderColor'] ?? '#f82af2';
+    $placeholderColor = $_POST['placeholderColor'] ?? '#f8f9fa';
     $logTextColor = $_POST['logTextColor'] ?? '#f8f9fa'; 
     $heading1Color = $_POST['heading1Color'] ?? '#21e4f2'; 
     $heading2Color = $_POST['heading2Color'] ?? '#65f1fb'; 
@@ -24,18 +24,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $warningColor = $_POST['warningColor'] ?? '#ffc107'; 
     $pinkColor = $_POST['pinkColor'] ?? '#f82af2';
     $dangerColor = $_POST['dangerColor'] ?? '#dc3545';
-    $controlColor = $_POST['controlColor'] ?? '#0eaf3e';
-    $checkColor = $_POST['checkColor'] ?? '#0eaf3e';
-    $labelColor = $_POST['labelColor'] ?? '#0eaf3e';
+    $controlColor = $_POST['controlColor'] ?? '#f8f9fa';
+    $checkColor = $_POST['checkColor'] ?? '#f8f9fa';
+    $labelColor = $_POST['labelColor'] ?? '#248cf5';
     $lineColor = $_POST['lineColor'] ?? '#f515f9';
     $disabledColor = $_POST['disabledColor'] ?? '#23407e';
-    $radiusColor = $_POST['radiusColor'] ?? '#14b863';
+    $radiusColor = $_POST['radiusColor'] ?? '#28edf0';
     $ipColor = $_POST['ipColor'] ?? '#09B63F';
     $ipipColor = $_POST['ipipColor'] ?? '#ff69b4';
-    $detailColor = $_POST['detailColor'] ?? '#FFFFFF';
+    $detailColor = $_POST['detailColor'] ?? '#15d1bb';
     $themeName = isset($_POST['themeName']) ? $_POST['themeName'] : 'transparent';   
-    $containerWidth = $_POST['containerWidth'] ?? '1400';  
-
 
     $themeName = preg_replace('/[^a-zA-Z0-9_\-一-龯]/u', '', $themeName);
     if (empty($themeName)) {
@@ -85,7 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       --bs-ip-bg: $ipColor;
       --bs-ipip-bg: $ipipColor;
       --bs-detail-bg: $detailColor;
-      --container-width: {$containerWidth}px;
 
       --bs-primary-border-subtle: $primaryBorderSubtle; 
       --bs-tertiary: $tertiaryColor; 
@@ -172,12 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     #ipDetailModal h5:not([class]) {
         color: var(--bs-heading-5) !important;
-    }
-
-    .container-sm {
-        width: var(--container-width); 
-        max-width: 100%;
-        margin: 0 auto; 
     }
 
     .form-label {
