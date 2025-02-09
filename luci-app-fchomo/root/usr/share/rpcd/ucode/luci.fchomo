@@ -24,7 +24,7 @@ function wGET(url, header, filepath) {
 	if (!url || type(url) !== 'string')
 		return null;
 
-	let ua = 'Wget/1.21 (FullCombo Mihomo)';
+	let ua = 'Wget/1.21 (FullCombo Shark!)';
 
 	if (header) {
 		header = json(trim(header) || {});

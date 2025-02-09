@@ -9,7 +9,8 @@ OS=linux
 ARCH=amd64
 JQVERSION=1.7.1
 DOCNAME=Ruleset-URI-Scheme
-SHARKNAME=shark-taiko.gif
+SHARKIMG='img/shark-taiko.gif'
+SHARKAUDIO='audio/A!.mp3'
 
 mkdir -p "$PKG_BUILD_BIN"
 curl -L "https://github.com/jqlang/jq/releases/download/jq-${JQVERSION}/jq-${OS}-${ARCH}" -o "$PKG_BUILD_BIN"/jq
@@ -34,9 +35,13 @@ tail -n +$(( $p +1 )) $DOCNAME.html
 popd
 minify "$PKG_BUILD_DIR"/buildin.html | base64 | tr -d '\n' > "$PKG_BUILD_DIR"/base64
 sed -i "s|'cmxzdHBsYWNlaG9sZGVy'|'$(cat "$PKG_BUILD_DIR"/base64)'|" "$PKG_BUILD_DIR"/htdocs/luci-static/resources/fchomo.js
-# shaka
+# shaka audio
+sed -i "s|audio/x-wav|audio/mpeg|;
+		s|'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='|'$(base64 "$CURDIR/docs/$SHARKAUDIO" | tr -d '\n')'|" \
+"$PKG_BUILD_DIR"/htdocs/luci-static/resources/fchomo.js
+# shaka gif
 echo -n "'" > "$PKG_BUILD_DIR"/base64
-base64 "$CURDIR"/docs/img/$SHARKNAME | tr -d '\n' >> "$PKG_BUILD_DIR"/base64
+base64 "$CURDIR/docs/$SHARKIMG" | tr -d '\n' >> "$PKG_BUILD_DIR"/base64
 echo "'" >> "$PKG_BUILD_DIR"/base64
 p=$(sed -n "/'c2hhcmstdGFpa28uZ2lm'/=" "$PKG_BUILD_DIR"/htdocs/luci-static/resources/fchomo.js)
 {

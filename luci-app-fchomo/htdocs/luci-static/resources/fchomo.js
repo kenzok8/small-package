@@ -10,6 +10,11 @@
 /* Member */
 const rulesetdoc = 'data:text/html;base64,' + 'cmxzdHBsYWNlaG9sZGVy';
 
+const sharkaudio = function() {
+	return 'data:audio/x-wav;base64,' +
+'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='
+}()
+
 const sharktaikogif = function() {
 	return 'data:image/gif;base64,' +
 'c2hhcmstdGFpa28uZ2lm'
@@ -328,7 +333,7 @@ const UIDynamicList = ui.DynamicList.extend({
 					'type': 'hidden',
 					'name': this.options.name,
 					'value': value })]);
-	
+
 			const ai = dl.querySelector('.add-item');
 			ai.parentNode.insertBefore(new_item, ai);
 		}
@@ -1126,6 +1131,7 @@ function uploadInitialPack(ev, section_id) {
 return baseclass.extend({
 	/* Member */
 	rulesetdoc,
+	sharkaudio,
 	sharktaikogif,
 	less_24_10,
 	pr7558_merged,

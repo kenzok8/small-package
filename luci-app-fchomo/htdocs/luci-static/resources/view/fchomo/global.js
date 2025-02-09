@@ -7,6 +7,7 @@
 'require uci';
 'require ui';
 'require view';
+'require dom';
 
 'require fchomo as hm';
 'require tools.firewall as fwtool';
@@ -135,8 +136,24 @@ return view.extend({
 
 		let m, s, o, ss, so;
 
-		m = new form.Map('fchomo', _('FullCombo Mihomo'),
-			'<img src="' + hm.sharktaikogif + '" title="Ciallo～(∠・ω< )⌒☆" height="52"></img>');
+		m = new form.Map('fchomo', _('FullCombo Shark!'),
+			'<img src="' + hm.sharktaikogif + '" title="A!" alt="Ciallo～(∠・ω< )⌒☆" height="52"></img>' +
+			'<audio src="' + hm.sharkaudio + '" preload="auto" hidden=""></audio>');
+		m.renderContents = function(/* ... */) {
+			let node = form.Map.prototype.renderContents.apply(this, arguments);
+
+			return node.then((mapEl) => {
+				const playButton = mapEl.querySelector('.cbi-map-descr > img');
+				const audio = mapEl.querySelector('.cbi-map-descr > audio');
+
+				playButton.addEventListener('click', function() {
+					if (audio.paused)
+						audio.play();
+				});
+
+				return mapEl;
+			});
+		}
 
 		s = m.section(form.NamedSection, 'config', 'fchomo');
 

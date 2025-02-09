@@ -1,6 +1,6 @@
 {
 	"admin/services/fchomo": {
-		"title": "FullCombo Mihomo",
+		"title": "FullCombo Shark!",
 		"order": 12,
 		"action": {
 			"type": "firstchild"
