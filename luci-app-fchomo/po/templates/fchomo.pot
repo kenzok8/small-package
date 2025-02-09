@@ -830,7 +830,7 @@ msgstr ""
 #: htdocs/luci-static/resources/view/fchomo/log.js:97
 #: htdocs/luci-static/resources/view/fchomo/log.js:102
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:3
-msgid "FullCombo Mihomo"
+msgid "FullCombo Shark!"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:620
