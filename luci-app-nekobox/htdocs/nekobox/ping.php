@@ -1908,7 +1908,7 @@ window.addEventListener('load', function() {
 }
 
 #playlistCollapse {
-    max-height: 620px; 
+    max-height: 500px; 
     overflow-y: auto;  
     overflow-x: hidden; 
     background-color: rgba(0, 0, 0, 0.8); 
@@ -2025,6 +2025,40 @@ window.addEventListener('load', function() {
     width: auto;
     max-width: 200px; 
     word-wrap: break-word; 
+</style>
+
+<style>
+.lyrics-container {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 20px;
+    border: 1px solid #333;
+    padding: 10px;
+    background-color: #000; 
+    border-radius: 5px;
+    text-align: center;
+    color: #fff; 
+    font-family: 'SimSun', 'Songti SC', '宋体', serif; 
+}
+
+.lyrics-container .highlight {
+    color: #ff0; 
+    font-weight: bold;
+}
+
+.lyrics-container::-webkit-scrollbar {
+    width: 13.5px; 
+}
+
+.lyrics-container::-webkit-scrollbar-track {
+    background: #000; 
+}
+
+.lyrics-container::-webkit-scrollbar-thumb {
+    background-color: #007bff; 
+    border-radius: 10px; 
+    border: 3px solid #000; 
+}
 }
 </style>
 
@@ -2053,15 +2087,16 @@ window.addEventListener('load', function() {
           <button id="modalLoopButton" class="btn btn-warning">🔁 循环</button>
           <div class="track-name" id="trackName">没有歌曲</div>
         </div>
-        <button class="btn btn-outline-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#playlistCollapse">
+        <button class="btn btn-outline-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#playlistCollapse" aria-expanded="true">
           📜 显示/隐藏播放列表
         </button>
         <button class="btn btn-outline-primary mt-3 ms-2" type="button" data-bs-toggle="modal" data-bs-target="#urlModal">🔗 定制播放列表</button>
         <button class="btn btn-outline-primary mt-3 ms-2"  id="clearStorageBtn"><i class="fas fa-trash-alt"></i> 清除播放设置</button>
         <div id="playlistCollapse" class="collapse mt-3">
-          <h3>歌曲列表</h3>
+          <h3>播放列表</h3>
           <ul id="trackList" class="list-group"></ul>
         </div>
+        <div class="lyrics-container" id="lyricsContainer"></div>
         <div id="tooltip"></div>
       </div>
     </div>
@@ -2076,6 +2111,7 @@ let isPlaying = false;
 let isReportingTime = false;
 let isLooping = false;
 let hasModalShown = false;
+let lyrics = {};
 
 const logBox = document.createElement('div');
 logBox.style.position = 'fixed';
@@ -2164,20 +2200,19 @@ function updateTrackListUI() {
             if (isPlaying) audioPlayer.play();
             updateTrackName();
             highlightCurrentSong();
+            showLogMessage(`播放列表点击：索引 ${index}, 歌曲名称: ${trackItem.textContent.trim()}`);
+            savePlayerState();
         });
 
         trackItem.addEventListener('dragstart', handleDragStart);
         trackItem.addEventListener('dragover', handleDragOver);
         trackItem.addEventListener('drop', handleDrop);
 
-
         trackListContainer.appendChild(trackItem);
     });
 
     highlightCurrentSong(); 
 }
-
-
 
 function handleDragStart(e) {
     e.dataTransfer.setData('text/plain', e.target.dataset.index);
@@ -2225,7 +2260,8 @@ function saveSongOrder() {
 }
 
 function extractSongName(url) {
-    return decodeURIComponent(url.split('/').pop());
+    const parts = url.split('/');
+    return decodeURIComponent(parts[parts.length - 1]);
 }
 
 function updateTrackName() {
@@ -2246,7 +2282,7 @@ function loadSong(index) {
         audioPlayer.src = songs[index];
         audioPlayer.addEventListener('loadedmetadata', () => {
             const savedState = JSON.parse(localStorage.getItem('playerState'));
-            if (savedState) {
+            if (savedState && savedState.timestamp) {
                 audioPlayer.currentTime = savedState.currentTime || 0;
                 if (savedState.isPlaying) {
                     audioPlayer.play().catch(error => {
@@ -2255,6 +2291,7 @@ function loadSong(index) {
                 }
             }
         }, { once: true });
+        loadLyrics(songs[index]);
     }
     highlightCurrentSong(); 
 }
@@ -2317,11 +2354,6 @@ function updateTrackName() {
     } else {
         document.getElementById('trackName').textContent = '没有歌曲';
     }
-}
-
-function extractSongName(url) {
-    const parts = url.split('/');
-    return decodeURIComponent(parts[parts.length - 1]);
 }
 
 audioPlayer.addEventListener('ended', () => {
@@ -2437,6 +2469,8 @@ function savePlayerState() {
         currentTime: audioPlayer.currentTime,
         isPlaying,
         isLooping,
+        playlistCollapsed: document.getElementById('playlistCollapse').classList.contains('show'),
+        lastPlayedSong: extractSongName(songs[currentSongIndex]),
         timestamp: Date.now()
     };
     localStorage.setItem('playerState', JSON.stringify(state));
@@ -2475,17 +2509,81 @@ function restorePlayerState() {
     if (state) {
         currentSongIndex = state.currentSongIndex || 0;
         isLooping = state.isLooping || false;
+        if (state.playlistCollapsed) {
+            document.getElementById('playlistCollapse').classList.remove('show');
+        } else {
+            document.getElementById('playlistCollapse').classList.add('show');
+        }
         loadSong(currentSongIndex);
         if (state.isPlaying) {
             isPlaying = true;
-            playPauseButton.textContent = '暂停';
+            playPauseButton.textContent = '⏸️ 暂停';
             audioPlayer.currentTime = state.currentTime || 0;
             audioPlayer.play().catch(error => {
                 console.error('恢复播放失败:', error);
             });
-            playPauseButton.textContent = '⏸️ 暂停';
         }
+        console.log(`恢复播放: ${state.lastPlayedSong}，时间戳: ${new Date(state.timestamp).toLocaleString()}`);
     }
+}
+
+function loadLyrics(songUrl) {
+    const lyricsUrl = songUrl.replace(/\.\w+$/, '.lrc'); 
+    fetch(lyricsUrl)
+        .then(response => response.arrayBuffer())
+        .then(buffer => {
+            const decoder = new TextDecoder('utf-8');
+            const text = decoder.decode(buffer);
+            parseLyrics(text);
+            displayLyrics();
+        })
+        .catch(error => {
+            console.error('加载歌词失败:', error.message);
+        });
+}
+
+function parseLyrics(lyricsText) {
+    lyrics = {};
+    const regex = /\[(\d+):(\d+)\.(\d+)\](.+)/g;
+    let match;
+    while ((match = regex.exec(lyricsText)) !== null) {
+        const minutes = parseInt(match[1], 10);
+        const seconds = parseInt(match[2], 10);
+        const millis = parseInt(match[3], 10);
+        const time = minutes * 60 + seconds + millis / 1000;
+        lyrics[time] = match[4];
+    }
+}
+
+function displayLyrics() {
+    const lyricsContainer = document.getElementById('lyricsContainer');
+    lyricsContainer.innerHTML = '';
+
+    const times = Object.keys(lyrics).map(parseFloat).sort((a, b) => a - b);
+    times.forEach(time => {
+        const line = document.createElement('div');
+        line.className = 'lyric-line';
+        line.dataset.time = time;
+        line.textContent = lyrics[time];
+        lyricsContainer.appendChild(line);
+    });
+
+    audioPlayer.addEventListener('timeupdate', syncLyrics);
+}
+
+function syncLyrics() {
+    const currentTime = audioPlayer.currentTime;
+    const lyricsContainer = document.getElementById('lyricsContainer');
+    const lines = lyricsContainer.querySelectorAll('.lyric-line');
+
+    lines.forEach(line => {
+        const time = parseFloat(line.dataset.time);
+        if (currentTime >= time) {
+            lines.forEach(l => l.classList.remove('highlight'));
+            line.classList.add('highlight');
+            line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
 }
 
 document.addEventListener('dblclick', function() {
@@ -2501,6 +2599,13 @@ document.addEventListener('dblclick', function() {
             localStorage.setItem('lastModalShownTime', currentTime);
         }
     }
+});
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    const state = JSON.parse(localStorage.getItem('playerState'));
+    const playlistCollapse = new bootstrap.Collapse(document.getElementById('playlistCollapse'), {
+        toggle: state ? !state.playlistCollapsed : true
+    });
 });
 
 loadDefaultPlaylist();
