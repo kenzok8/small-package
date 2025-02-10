@@ -5097,68 +5097,35 @@ function togglePictureInPicture(videoElement) {
 </script>
 
 <script>
-    function showNotification(message) {
-        const notification = document.createElement('div');
-        notification.style.position = 'fixed';
-        notification.style.top = '10px';
-        notification.style.right = '10px';
-        notification.style.padding = '10px';
-        notification.style.backgroundColor = '#4CAF50';
-        notification.style.color = '#fff';
-        notification.style.borderRadius = '5px';
-        notification.style.zIndex = 9999;
-        notification.textContent = message;
+document.addEventListener('DOMContentLoaded', function () {
+    const isSmallScreen = window.innerWidth <= 768; 
 
-        document.body.appendChild(notification);
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
-
-    document.addEventListener('DOMContentLoaded', (event) => {
+    if (!isSmallScreen) {
         var el = document.getElementById('fileTableBody');
-
-        if (window.innerWidth <= 768) {
-            return; 
-        }
-
         var sortable = new Sortable(el, {
-            animation: 150,
+            handle: '.file-preview', 
+            animation: 150, 
             onEnd: function (evt) {
-                var order = sortable.toArray();
-                $.ajax({
-                    type: 'POST',
-                    url: 'order_handler.php', 
-                    data: { order: order },
-                    success: function (response) {
-                        showNotification('排序已成功保存!');
-                    },
-                    error: function (xhr, status, error) {
-                        showNotification('保存排序时出错: ' + error);
-                    }
-                });
-            },
-        });
-
-        $.ajax({
-            type: 'GET',
-            url: 'order_handler.php', 
-            success: function (response) {
-                var savedOrder = JSON.parse(response);
-                var fileTableBody = document.getElementById('fileTableBody');
-                var rows = Array.from(fileTableBody.children);
-                rows.sort(function(a, b) {
-                    return savedOrder.indexOf(a.id) - savedOrder.indexOf(b.id);
-                });
-                rows.forEach(function(row) {
-                    fileTableBody.appendChild(row);
-                });
-            },
-            error: function (xhr, status, error) {
-                console.error('加载排序时出错: ' + error);
+                updateFileOrder();
             }
         });
-    });
+    }
+
+    function updateFileOrder() {
+        const fileOrder = [];
+        
+        document.querySelectorAll('.file-preview').forEach(item => {
+            const fileName = item.querySelector('input').value; 
+            fileOrder.push(fileName);
+        });
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'order_handler.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.send('fileOrder=' + JSON.stringify(fileOrder));
+    }
+});
+
 </script>
 
 <script>
