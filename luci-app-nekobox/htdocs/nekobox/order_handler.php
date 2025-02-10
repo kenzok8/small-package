@@ -1,30 +1,24 @@
 <?php
-$backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt';
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['order'])) {
-    $order = $_POST['order'];
-
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['fileOrder'])) {
+    $fileOrder = json_decode($_POST['fileOrder'], true);
+    $backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt';
+    
+    $existingData = [];
     if (file_exists($backgroundHistoryFile)) {
-        $backgroundFiles = array_filter(array_map('trim', file($backgroundHistoryFile)));
+        $existingData = array_filter(array_map('trim', file($backgroundHistoryFile)));
+    }
 
-        $newOrder = [];
-        foreach ($order as $file) {
-            $newOrder[] = basename($file); 
+    $mergedData = array_merge($existingData, $fileOrder);
+
+    $uniqueData = [];
+    foreach ($fileOrder as $file) {
+        if (!in_array($file, $uniqueData)) {
+            $uniqueData[] = $file;  
         }
+    }
 
-        file_put_contents($backgroundHistoryFile, implode(PHP_EOL, $newOrder));
-        echo '排序已保存';
-    } else {
-        echo '背景历史文件不存在';
-    }
-} elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    if (file_exists($backgroundHistoryFile)) {
-        $backgroundFiles = array_filter(array_map('trim', file($backgroundHistoryFile)));
-        echo json_encode(array_values($backgroundFiles));
-    } else {
-        echo json_encode([]);
-    }
-} else {
-    echo '无效的请求';
+    file_put_contents($backgroundHistoryFile, implode("\n", $uniqueData) . "\n");
+
+    echo "文件顺序更新成功";
 }
 ?>
