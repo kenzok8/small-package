@@ -669,24 +669,6 @@ $lang = $_GET['lang'] ?? 'en';
     }
 }
 
-@media (max-width: 768px) {
-    .popup {
-        display: none;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        padding: 10px;
-        justify-content: center;
-        max-width: 100%;
-        box-sizing: border-box;
-    }
-    .popup button {
-        width: 100%; 
-        padding: 10px;
-        font-size: 14px;
-        box-sizing: border-box;
-    }
-}
-
 @media only screen and (max-width: 768px) {
   body, html {
     overflow-x: hidden;
@@ -715,6 +697,78 @@ $lang = $_GET['lang'] ?? 'en';
 @media (max-width: 768px) {
     #toggle-ip i {
         display: none; 
+    }
+}
+
+@media (max-width: 767.98px) {
+    .popup-backdrop {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 1040; 
+    }
+
+    .popup {
+        display: none; 
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 20px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 40px); 
+        z-index: 1050; 
+    }
+
+    .popup h3 {
+        grid-column: 1 / -1;
+        text-align: center;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    .popup button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 0.875rem;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .popup button:hover {
+        background-color: #0056b3;
+    }
+
+    .popup button i {
+        margin-right: 5px;
+    }
+
+    .popup button:last-child {
+        grid-column: 1 / -1;
+        background-color: #dc3545;
+        color: #fff; 
+    }
+
+    .popup button:last-child i {
+        color: #fff; 
+    }
+
+    .popup button:last-child:hover {
+        background-color: #c82333;
     }
 }
 
@@ -1613,7 +1667,7 @@ setInterval(IP.getIpipnetIP, 180000);
     <button onclick="toggleControlPanel()" id="control-btn">🎛️ 音量和进度控制</button>
     <button id="openPlayerButton"  data-bs-toggle="modal" data-bs-target="#audioPlayerModal">🎶 音乐播放器</button>
     <button type='button' onclick='openVideoPlayerModal()'><i class='fas fa-video'></i> 媒体播放器</button>
-    <button onclick="toggleObjectFit()" id="object-fit-btn">🔲 切换视频显示模式</button>
+    <button onclick="toggleObjectFit()" id="object-fit-btn">🔲 切换显示模式</button>
     <button onclick="toggleFullScreen()" id="fullscreen-btn">⛶ 切换全屏</button>
     <button id="clear-cache-btn">🗑️ 清除缓存</button>
     <button type="button" data-bs-toggle="modal" data-bs-target="#cityModal">🌆 设置城市</button>
@@ -4298,6 +4352,71 @@ input[type="range"]:focus {
     }
 }
 
+@media (max-width: 767.98px) {
+    .modal-xl {
+        max-width: 100%;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        max-height: 95vh;
+    }
+
+    .modal-content {
+        height: 100%;
+    }
+
+    .modal-header .modal-title {
+        font-size: 1.25rem;
+    }
+
+    .modal-header .btn-close {
+        padding: 0.5rem;
+    }
+
+    .toggle-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+
+    .toggle-container button {
+        flex: 1;
+        padding: 5px;
+        font-size: 0.875rem;
+    }
+
+    .media-container,
+    .playlist-container {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .media-container {
+        display: none;
+    }
+
+    .playlist-container {
+        display: none;
+    }
+
+    .modal-footer button {
+        font-size: 0.875rem;
+    }
+
+    #videoPlayer, #audioPlayer, #imageViewer {
+        width: 100%;
+        height: auto;
+    }
+}
+
+@media (min-width: 768px) {
+    .toggle-container {
+        display: none; 
+    }
+}
 </style>
 
 <script>
@@ -4544,11 +4663,15 @@ input[type="range"]:focus {
                 <h5 class="modal-title" id="videoPlayerModalLabel">媒体播放器</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <div class="toggle-container">
+                <button type="button" class="btn btn-outline-primary" onclick="showMediaContainer()">播放媒体</button>
+                <button type="button" class="btn btn-success" onclick="showPlaylistContainer()">播放列表</button>
+            </div>
             <div class="modal-body">
                 <div class="media-container">
-                    <video id="videoPlayer" controls preload="auto" style="display: none;"></video>
-                    <audio id="audioPlayer" controls preload="auto" style="display: none;"></audio>
-                    <img id="imageViewer" src="" style="display: none;">
+                    <video id="videoPlayer" controls preload="auto" style="width: 100%; height: auto;"></video>
+                    <audio id="audioPlayer" controls preload="auto" style="width: 100%; height: auto;"></audio>
+                    <img id="imageViewer" src="" style="width: 100%; height: auto;">
                 </div>
                 <div class="playlist-container">
                     <h5>播放列表</h5>
@@ -4563,6 +4686,18 @@ input[type="range"]:focus {
         </div>
     </div>
 </div>
+
+<script>
+function showMediaContainer() {
+    document.querySelector('.media-container').style.display = 'block';
+    document.querySelector('.playlist-container').style.display = 'none';
+}
+
+function showPlaylistContainer() {
+    document.querySelector('.media-container').style.display = 'none';
+    document.querySelector('.playlist-container').style.display = 'block';
+}
+</script>
 
 <div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl">

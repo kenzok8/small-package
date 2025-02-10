@@ -544,6 +544,7 @@ EOL;
         <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-shop d-none d-sm-inline"></i> <span style="white-space: nowrap;">模板 一</span></a>
         <a href="./subscription.php" class="col btn btn-lg"><i class="bi bi-bank d-none d-sm-inline"></i>  <span style="white-space: nowrap;">模板 二</span></a>
         <a href="./mihomo.php" class="col btn btn-lg"><i class="bi bi-building d-none d-sm-inline"></i> <span style="white-space: nowrap;">模板 三</span></a>
+        <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;">Sing-box 转换模板 二</h1>
 
         <div class="col-12 custom-padding">
             <div class="form-section">
