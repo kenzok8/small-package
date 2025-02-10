@@ -383,6 +383,7 @@ $lang = $_GET['lang'] ?? 'en';
  }
 }
 </style>
+
 <?php if (in_array($lang, ['zh-cn', 'en', 'auto'])): ?>
     <div id="status-bar-component" class="container-sm container-bg callout border border-3 rounded-4 col-11">
         <div class="row align-items-center">
@@ -710,6 +711,14 @@ $lang = $_GET['lang'] ?? 'en';
     margin-left:  5px !important;  
   }
 }
+
+@media (max-width: 768px) {
+    #toggle-ip i {
+        display: none; 
+    }
+}
+
+</style>
 </style>
 <script src="./assets/bootstrap/Sortable.min.js"></script>
 <link href="./assets/bootstrap/video-js.css" rel="stylesheet" />
@@ -1843,6 +1852,7 @@ window.addEventListener('load', function() {
     font-weight: bold;
     color: #1db954;
     text-align: center;
+    transition: color 0.5s ease-in-out;
 }
 
 #tooltip {
@@ -2083,6 +2093,27 @@ window.addEventListener('load', function() {
     white-space: nowrap; 
     z-index: 9999;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+    transition: color 0.5s ease-in-out;
+}
+
+@media (max-width: 768px) {
+    .floating-lyrics {
+        top: auto; 
+        bottom: 10px; 
+        max-width: 90%; 
+        font-size: 14px; 
+        padding: 8px 12px; 
+    }
+}
+
+@media (max-width: 768px) {
+    .container-sm .btn i {
+        margin-right: 0; 
+    }
+    
+    .container-sm .btn {
+        font-size: 9px;
+    }
 }
 </style>
 <div id="floatingLyrics" class="floating-lyrics"></div>
@@ -2138,6 +2169,8 @@ let isLooping = false;
 let hasModalShown = false;
 let lyrics = {};
 let isPinned = false; 
+let isSmallScreen = window.innerWidth <= 768;
+
 
 const logBox = document.createElement('div');
 logBox.style.position = 'fixed';
@@ -2613,7 +2646,9 @@ function syncLyrics() {
             lines.forEach(l => l.classList.remove('highlight'));
             line.classList.add('highlight');
             currentLine = line;
-            line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (!isSmallScreen) {  
+                line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     });
 
@@ -2623,6 +2658,10 @@ function syncLyrics() {
         floatingLyrics.style.display = 'block';  
     }
 }
+
+window.addEventListener('resize', function() {
+    isSmallScreen = window.innerWidth <= 768;
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     isPinned = localStorage.getItem('isPinned') === 'true';
@@ -2668,6 +2707,56 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const playlistCollapse = new bootstrap.Collapse(document.getElementById('playlistCollapse'), {
         toggle: state ? !state.playlistCollapsed : true
     });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const lyricsContainer = document.querySelector("#lyricsContainer");
+    const floatingLyrics = document.querySelector("#floatingLyrics");
+    const trackName = document.querySelector("#trackName");
+    const dateDisplay = document.getElementById("dateDisplay");
+    const timeDisplay = document.getElementById("timeDisplay");
+
+    const icons = document.querySelectorAll(".icon");
+
+    const colors = ["#ff69b4", "#ff4500", "#00ff00", "#00ffff", "#ff1493", "#007bff"];
+
+    let lyricsContainerIndex = 0;
+    let floatingLyricsIndex = 1;
+    let trackNameIndex = 2;
+    let dateDisplayIndex = 3;
+    let timeDisplayIndex = 4;
+    let iconIndex = 5;  
+
+    function changeColor() {
+        if (lyricsContainer) {
+            lyricsContainer.style.color = colors[lyricsContainerIndex];
+        }
+        if (floatingLyrics) {
+            floatingLyrics.style.color = colors[floatingLyricsIndex];
+        }
+        if (trackName) {
+            trackName.style.color = colors[trackNameIndex];
+        }
+        if (dateDisplay) {
+            dateDisplay.style.color = colors[dateDisplayIndex];
+        }
+        if (timeDisplay) {
+            timeDisplay.style.color = colors[timeDisplayIndex];
+        }
+
+        icons.forEach((icon) => {
+            icon.style.color = colors[iconIndex];
+        });
+
+        lyricsContainerIndex = (lyricsContainerIndex + 1) % colors.length;
+        floatingLyricsIndex = (floatingLyricsIndex + 1) % colors.length;
+        trackNameIndex = (trackNameIndex + 1) % colors.length;
+        dateDisplayIndex = (dateDisplayIndex + 1) % colors.length;
+        timeDisplayIndex = (timeDisplayIndex + 1) % colors.length;
+        iconIndex = (iconIndex + 1) % colors.length;  
+    }
+
+    setInterval(changeColor, 5000); 
 });
 
 loadDefaultPlaylist();

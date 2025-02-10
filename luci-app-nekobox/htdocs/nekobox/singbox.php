@@ -163,11 +163,11 @@ EOL;
 </style>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
-        <a href="./index.php" class="col btn btn-lg"><i class="bi bi-house-door"></i> 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg"><i class="bi bi-folder"></i> 文件管理</a>
-        <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-shop"></i> 模板 一</a>
-        <a href="./subscription.php" class="col btn btn-lg"><i class="bi bi-bank"></i>  模板 二</a>
-        <a href="./mihomo.php" class="col btn btn-lg"><i class="bi bi-building"></i> 模板 三</a>
+        <a href="./index.php" class="col btn btn-lg"><i class="bi bi-house-door d-none d-sm-inline"></i> 首页</a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg"><i class="bi bi-folder d-none d-sm-inline"></i> <span style="white-space: nowrap;">文件管理</span></a>
+        <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-shop d-none d-sm-inline"></i> <span style="white-space: nowrap;">模板 一</span></a>
+        <a href="./subscription.php" class="col btn btn-lg"><i class="bi bi-bank d-none d-sm-inline"></i>  <span style="white-space: nowrap;">模板 二</span></a>
+        <a href="./mihomo.php" class="col btn btn-lg"><i class="bi bi-building d-none d-sm-inline"></i> <span style="white-space: nowrap;">模板 三</span></a>
 <div class="outer-container">
     <div class="container-fluid">
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;">Sing-box 转换模板 一</h1>

@@ -79,7 +79,7 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
     </style>
   </head>
   <body>
-    <button id="fullscreenToggle" class="btn btn-primary mb-2">全屏</button>
+    <!-- <button id="fullscreenToggle" class="btn btn-primary mb-2">全屏</button> -->
 <head>
 <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
     <div class="row">
