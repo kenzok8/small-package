@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=easytier
-PKG_VERSION:=2.2.1
+PKG_VERSION:=2.2.2
 
 ifeq ($(ARCH),mipsel)
 	APP_ARCH:=mipsel
