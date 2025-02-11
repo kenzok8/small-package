@@ -68,6 +68,7 @@ const inbound_type = [
 	['mixed', _('Mixed')],
 	['shadowsocks', _('Shadowsocks')],
 	['vmess', _('VMess')],
+	['vless', _('VLESS')],
 	['tuic', _('TUIC')],
 	['hysteria2', _('Hysteria2')],
 	//['tunnel', _('Tunnel')]
@@ -243,6 +244,11 @@ const tls_client_fingerprints = [
 	['random']
 ];
 
+const vless_flow = [
+	['', _('None')],
+	['xtls-rprx-vision']
+];
+
 /* Prototype */
 const CBIDynamicList = form.DynamicList.extend({
 	__name__: 'CBI.DynamicList',
@@ -270,7 +276,7 @@ const CBIDynamicList = form.DynamicList.extend({
 const CBIGenValue = form.Value.extend({
 	__name__: 'CBI.GenValue',
 
-	renderWidget() {
+	renderWidget(/* ... */) {
 		let node = form.Value.prototype.renderWidget.apply(this, arguments);
 
 		if (!this.password)
@@ -279,7 +285,7 @@ const CBIGenValue = form.Value.extend({
 		(node.querySelector('.control-group') || node).appendChild(E('button', {
 			'class': 'cbi-button cbi-button-add',
 			'title': _('Generate'),
-			'click': ui.createHandlerFn(this, handleGenKey, this.option)
+			'click': ui.createHandlerFn(this, handleGenKey, this.hm_asymmetric || this.option)
 		}, [ _('Generate') ]));
 
 		return node;
@@ -750,35 +756,55 @@ function handleAdd(prefmt, ev, name) {
 function handleGenKey(option) {
 	const section_id = this.section.section;
 	const type = this.section.getOption('type').formvalue(section_id);
-	let widget = this.map.findElement('id', 'widget.cbid.fchomo.%s.%s'.format(section_id, option));
-	let password, required_method;
+	const widget = L.bind(function(option) {
+		return this.map.findElement('id', 'widget.' + this.cbid(section_id).replace(/\.[^\.]+$/, '.') + option);
+	}, this);
 
-	if (option === 'uuid' || option.match(/_uuid/))
-		required_method = 'uuid';
-	else if (type === 'shadowsocks')
-		required_method = this.section.getOption('shadowsocks_chipher')?.formvalue(section_id);
+	const callMihomoGenerator = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'mihomo_generator',
+		params: ['type'],
+		expect: { '': {} }
+	});
 
-	switch (required_method) {
-		/* NONE */
-		case 'none':
-			password = '';
-			break;
-		/* UUID */
-		case 'uuid':
-			password = generateRand('uuid');
-			break;
-		/* DEFAULT */
-		default:
-			password = generateRand('hex', 16);
-			break;
+	if (typeof option === 'object') {
+		return callMihomoGenerator(option.type).then((ret) => {
+			if (ret.result)
+				for (let key in option.result)
+					widget(option.result[key]).value = ret.result[key];
+			else
+				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, ret.error)));
+		});
+	} else {
+		let password, required_method;
+
+		if (option === 'uuid' || option.match(/_uuid/))
+			required_method = 'uuid';
+		else if (type === 'shadowsocks')
+			required_method = this.section.getOption('shadowsocks_chipher')?.formvalue(section_id);
+
+		switch (required_method) {
+			/* NONE */
+			case 'none':
+				password = '';
+				break;
+			/* UUID */
+			case 'uuid':
+				password = generateRand('uuid');
+				break;
+			/* DEFAULT */
+			default:
+				password = generateRand('hex', 16);
+				break;
+		}
+		/* AEAD */
+		(function(length) {
+			if (length && length > 0)
+				password = generateRand('base64', length);
+		}(shadowsocks_cipher_length[required_method]));
+
+		return widget(option).value = password;
 	}
-	/* AEAD */
-	(function(length) {
-		if (length && length > 0)
-			password = generateRand('base64', length);
-	}(shadowsocks_cipher_length[required_method]));
-
-	return widget.value = password;
 }
 
 function handleReload(instance, ev, section_id) {
@@ -1154,6 +1180,7 @@ return baseclass.extend({
 	shadowsocks_cipher_length,
 	stunserver,
 	tls_client_fingerprints,
+	vless_flow,
 
 	/* Prototype */
 	DynamicList: CBIDynamicList,

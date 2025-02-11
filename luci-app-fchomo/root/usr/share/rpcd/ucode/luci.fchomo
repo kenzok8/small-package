@@ -48,6 +48,37 @@ function wGET(url, header, filepath) {
 const RES_TYPE = ['certs', 'provider', 'ruleset', 'resources', 'templates'];
 
 const methods = {
+	mihomo_generator: {
+		args: { type: 'type' },
+		call: function(req) {
+			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair']))
+				return { result: false, error: 'illegal type' };
+
+			const type = req.args?.type;
+			let result = {};
+
+			const fd = popen('/usr/bin/mihomo generate ' + type);
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					if (type === 'uuid')
+						result.uuid = trim(line);
+					else if (type in ['reality-keypair', 'wg-keypair']) {
+						let priv = match(trim(line), /PrivateKey: (.*)/);
+						if (priv)
+							result.private_key = priv[1];
+						let pub = match(trim(line), /PublicKey: (.*)/);
+						if (pub)
+							result.public_key = pub[1];
+					}
+				}
+
+				fd.close();
+			}
+
+			return { result };
+		}
+	},
+
 	get_features: {
 		call: function() {
 			let features = {};
