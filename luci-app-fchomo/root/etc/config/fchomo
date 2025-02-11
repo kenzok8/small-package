@@ -50,7 +50,7 @@ config fchomo 'sniffer'
 	list skip_domain 'Mijia Cloud'
 
 config fchomo 'dns'
-	option port '7853'
+	option dns_port '7853'
 	option fallback_filter_geoip_code 'cn'
 
 config fchomo 'experimental'

@@ -68,7 +68,7 @@
 
 	const redir_port = uci.get(cfgname, 'inbound', 'redir_port') || '7891',
 	      tproxy_port = uci.get(cfgname, 'inbound', 'tproxy_port') || '7892',
-	      tunnel_port = uci.get(cfgname, 'inbound', 'tunnel_port') || '7893',
+	      tunnel_port = uci.get(cfgname, 'inbound', 'tunnel_port') || '7893', // Not required for v1.19.2+
 	      proxy_mode = uci.get(cfgname, 'inbound', 'proxy_mode') || 'redir_tproxy';
 
 	const global_ipv6 = uci.get(cfgname, 'global', 'ipv6') || '1',
@@ -450,7 +450,7 @@ table inet fchomo {
 	{{ render_acl_dport('redir_acl_dport', 'redir_gate', 'tcp') }}
 	chain redir_gate {
 		{#- DNS hijack #}
-		tcp dport 53 counter redirect to :{{ tunnel_port }} comment "!{{ cfgname }}: DNS hijack (router tcp)"
+		tcp dport 53 counter redirect to :{{ dns_port }} comment "!{{ cfgname }}: DNS hijack (router tcp)"
 
 		meta l4proto tcp counter redirect to :{{ redir_port }}
 	}
@@ -474,7 +474,7 @@ table inet fchomo {
 	{{ render_acl_dport('tproxy_acl_dport_reroute', 'tproxy_mark', 'udp') }}
 	chain tproxy_mark {
 		{#- DNS hijack (router udp) #}
-		{# tproxy_mark --> route_table_id --reroute-to--> lo --> prerouting #}
+		{# tproxy_mark --> route_table_id --reroute-to--> lo --> prerouting --> tproxy_port --> DST-PORT,53,dns-out #}
 
 		meta l4proto udp meta mark set {{ tproxy_mark }} counter accept
 	}

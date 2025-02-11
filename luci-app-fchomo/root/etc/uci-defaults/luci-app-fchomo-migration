@@ -8,7 +8,6 @@ if [ -n "$default_proxy" ]; then
 		set fchomo.autogened_final_host="rules"
 		set fchomo.autogened_final_host.label="Auto Generated Final"
 		set fchomo.autogened_final_host.entry="MATCH,$default_proxy"
-		commit fchomo
 	EOF
 fi
 
@@ -32,6 +31,14 @@ for option in routing_tcpport routing_udpport; do
 		EOF
 	fi
 done
+
+dns_port=$(uci -q get fchomo.dns.port)
+if [ -n "$dns_port" ]; then
+	uci -q batch <<-EOF >"/dev/null"
+		delete fchomo.dns.port
+		set fchomo.dns.dns_port="$dns_port"
+	EOF
+fi
 
 uci commit fchomo
 

@@ -71,15 +71,16 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		"authentication-timeout": durationToSecond(cfg.tuic_authentication_timeout),
 		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size),
 
-		/* HTTP / SOCKS / VMess / Tuic / Hysteria2 */
-		users: (cfg.type in ['http', 'socks', 'mixed', 'vmess']) ? [
+		/* HTTP / SOCKS / VMess / VLESS / Tuic / Hysteria2 */
+		users: (cfg.type in ['http', 'socks', 'mixed', 'vmess', 'vless']) ? [
 			{
 				/* HTTP / SOCKS */
 				username: cfg.username,
 				password: cfg.password,
 
-				/* VMess */
+				/* VMess / VLESS */
 				uuid: cfg.vmess_uuid,
+				flow: cfg.vless_flow,
 				alterId: strToInt(cfg.vmess_alterid)
 			}
 			/*{
@@ -95,8 +96,17 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		/* TLS */
 		...(cfg.tls === '1' ? {
 			alpn: cfg.tls_alpn,
-			certificate: cfg.tls_cert_path,
-			"private-key": cfg.tls_key_path
+			...(cfg.tls_reality === '1' ? {
+				"reality-config": {
+					dest: cfg.tls_reality_dest,
+					"private-key": cfg.tls_reality_private_key,
+					"short-id": cfg.tls_reality_short_id,
+					"server-names": cfg.tls_reality_server_names
+				}
+			} : {
+				certificate: cfg.tls_cert_path,
+				"private-key": cfg.tls_key_path
+			})
 		} : {})
 	});
 });
