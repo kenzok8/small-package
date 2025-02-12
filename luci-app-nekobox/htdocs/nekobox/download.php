@@ -1,8 +1,28 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $dfOutput = [];
+    exec('df /', $dfOutput);
+
+    $availableSpace = 0;
+    if (isset($dfOutput[1])) {
+        $dfData = preg_split('/\s+/', $dfOutput[1]);
+        $availableSpace = $dfData[3] * 1024;
+    }
+
+    $availableSpaceInMB = $availableSpace / 1024 / 1024;
+
+    $threshold = 50 * 1024 * 1024;
+
+    echo "<script>alert('OpenWRT 剩余空间: " . round($availableSpaceInMB, 2) . " MB');</script>";
+
+    if ($availableSpace < $threshold) {
+        echo "<script>alert('空间不足，上传操作已停止！');</script>";
+        exit;
+    }
+
     if (isset($_FILES['imageFile']) && is_array($_FILES['imageFile']['error'])) {
         $targetDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
-        
+
         if (!file_exists($targetDir)) {
             mkdir($targetDir, 0777, true);
         }
