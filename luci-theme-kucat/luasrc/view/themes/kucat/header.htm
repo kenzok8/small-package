@@ -1,5 +1,5 @@
  <%#
-    Copyright (C) 2019-2024 The Sirpdboy Team <herboy2008@gmail.com> 
+    Copyright (C) 2019-2025 The Sirpdboy Team <herboy2008@gmail.com> 
 	luci-theme-material: 
 	Copyright 2015 Lutty Yang <lutty@wcan.in>
 	luci-theme-bootstrap:
@@ -14,11 +14,11 @@
 -%>
 
 <%
-	local ver = require "luci.version"
 	local sys  = require "luci.sys"
 	local util = require "luci.util"
 	local http = require "luci.http"
 	local disp = require "luci.dispatcher"
+	local ver = require "luci.version"
 	local json 	= require "luci.jsonc"
 
 	local fs = require "nixio.fs"
@@ -45,8 +45,6 @@
 	end
 
 	http.prepare_content("text/html; charset=UTF-8")
-
-	local dark_css = fs.readfile('/www/luci-static/kucat/css/dark.css')
 	local bar='/cgi-bin/luci/admin/'
 	local bk_use='background: rgba(var(--primary-rgbbody),1)'
     local loginbk_use = 'background: linear-gradient(0deg, rgba(var(--primary-rgbm), 1) 0%, rgba(var(--primary-rgbbody), 1) 100%);display: block;'
@@ -68,6 +66,7 @@
 		bgqs,setbar,dayword = '1','1','0'
 	end
 	local ufilter = string.format("blur(%dpx)", tonumber(primary_opacity))
+	local bar_color = primary_rgbbody
 	if primary_opacity == '0' then
 	    ufilter = 'none'
 	end
@@ -76,6 +75,7 @@
 	    bgqs_image = 'none'
 	end
 	local bg_url = media..'/img/bg1.jpg'
+    local bg_lock = bg_url
 	if background == '0' then
 		math.randomseed(os.time())
 
@@ -90,7 +90,7 @@
 					attr = fs.stat(f)
 					if attr then
 						local ext = getExtension(fs.basename(f))
-						if ext == "jpg" or ext == "png" or ext == "gif"  then
+						if ext == "jfif" or ext == "pjp" or ext == "pjpeg" or ext == "jpeg" or ext == "jpg" or ext == "png" or ext == "gif"  then
 								local bg = {}
 								bg.type = ext
 								bg.url = theme_dir .. fs.basename(f)
@@ -109,7 +109,6 @@
 	if (picurl and picurl ~= '') then
 	 		  bg_url = picurl
 	end
-	local bg_lock = bg_url
 	if bklock == '0' then
 		math.randomseed(os.time())
 		local bk_dir = media .. "/bg/"
@@ -120,7 +119,7 @@
 					attr = fs.stat(f)
 					if attr then
 						local ext = getExtension(fs.basename(f))
-						if ext == "jpg" or ext == "png" or ext == "gif"  then
+						if ext == "jfif" or ext == "pjp" or ext == "pjpeg" or ext == "jpeg" or ext == "jpg" or ext == "png" or ext == "gif"  then
 								local bg = {}
 								bg.type = ext
 								bg.url = bk_dir .. fs.basename(f)
@@ -138,8 +137,17 @@
   	   showword = sys.exec("/usr/libexec/kucat/kucat_word")
 	end
 	if bkuse == '1'  then
-	   bk_use="background-image:url("..bg_lock..")"
- 	   loginbk_use = "background-image:url(" .. bg_url .. ")"
+		if bklock == '0' then
+	             bk_use = "background-image:url(" .. bg_lock .. ")"
+	             loginbk_use = "background-image:url(" .. bg_url .. ")"
+		else
+	             bk_use="background-image:url("..bg_url..")"
+	             loginbk_use = "background-image:url(" .. bg_url .. ")"
+		end
+	else
+		if bklock == '0' then
+	             loginbk_use = "background-image:url(" .. bg_url .. ")"
+	    end
 	end
 -%>
 
@@ -163,7 +171,6 @@
 	<link rel="icon" type="image/png" sizes="192x192" href="<%=media%>/logo.png">
 	<link rel="icon" href="<%=media%>/logo.svg" sizes="any">
 	<meta name="msapplication-TileColor" content="<%=bar_color%>">
-	<meta name="theme-color" content="<%=bar_color%>">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
 	<meta name="apple-touch-fullscreen" content="yes" /> 
@@ -171,13 +178,13 @@
 	<link rel="apple-touch-icon-precomposed" href="<%=media%>/img/apple-touch-icon.png" sizes="144x144">
 
 	<link rel="stylesheet" href="<%=media%>/css/style.css?v=<%= ver.luciversion %>">
-	<meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
-	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="black">
 	<link rel="shortcut icon" href="<%=media%>/favicon.ico">
+	<meta name="theme-color" content="<%=bar_color%>">
     <% if node and node.css then %>
         <link rel="stylesheet" href="<%=resource%>/<%=node.css%>">
     <% end -%>
 	<style title="text/css">
+
 	<% if css then %>
 		<%= css %>
 	<% end -%>
@@ -217,8 +224,8 @@
 
  </style>
 
-    <script src="<%=url('admin/translations', luci.i18n.context.lang)%><%# ?v=PKG_VERSION %>"></script>
-	<script src="<%=resource%>/cbi.js"></script>
+	<script src="<%=url('admin/translations', luci.i18n.context.lang)%>?v=<%=ver.luciversion%>"></script>
+	<script src="<%=resource%>/cbi.js?v=<%=ver.luciversion%>"></script>
 	<script src="<%=resource%>/luci.js?v=<%=ver.luciversion%>"></script>
 	<script src="<%=media%>/style.js"></script>
 
@@ -237,7 +244,11 @@
 		setTheme();
 		window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setTheme);
 	</script>	
-	<% end -%>
+    <% elseif mode == 'dark' then %>
+	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="dark">
+    <% elseif mode == 'light' then %>
+	<meta name="theme-color" media="(prefers-color-scheme: light)" content="light">
+    <% end -%>
 
     <header class="bar-primary">
 		<div id="header-bar-left" class="container-bar-left">
@@ -257,7 +268,7 @@
 	    </div>
         <div class="main-left">
             <div class="sidenav-header d-flex align-items-center">
-                <a class="brand" href="#"><%=boardinfo.hostname or "?"%></a> 
+                <a class="brand" href="/"><%=boardinfo.hostname or "?"%></a> 
             </div>
         	<div class="mainmenu" id="mainmenu" style="display:none"></div>
     	</div>
@@ -267,7 +278,7 @@
 	        	    <div class="container">
 						<div class="flex1">
 							<a class="showSide"  title="<%:Menu%>" ></a>
-							<a class="brand" href="#"><%=striptags(boardinfo.hostname or "OpenWrt")%></a>
+							<a class="brand" href="/"><%=striptags(boardinfo.hostname or "OpenWrt")%></a>
 						</div>
 						<% if dayword == '1' then %>
 						<a class="showWord" href="#"><%=showword%></a>
@@ -288,8 +299,12 @@
 				<%- if luci.sys.process.info("uid") == 0 and luci.sys.user.getuser("root") and not luci.sys.user.getpasswd("root") then -%>
 					<div class="alert-message warning">
 						<h4><%:No password set!%></h4>
-						<p><%:There is no password set on this router. Please configure a root password to protect the web interface.%></p>
-							<div class="right"><a class="btn" href="<%=url("admin/system/admin")%>"><%:Go to password configuration...%></a></div>
+						<p><%:There is no password set on this router. Please configure a root password to protect the web interface.%>
+						</p>
+						<% if disp.lookup("admin/system/admin") then %>
+						<div class="right"><a class="btn"
+								href="<%=url("admin/system/admin")%>"><%:Go to password configuration...%></a></div>
+						<% end %>
 					</div>
 				<%- end -%>
 				<noscript>
