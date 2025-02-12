@@ -5,11 +5,15 @@ $type = $_POST['type'] ?? '';
 
 $pingFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/ping.php';
 $currentBgFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/current_background.txt';
-$backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt'; 
+$backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt';
 
 $pingContent = file_get_contents($pingFile);
 $audioElement = "";
 $backgroundStyle = "";
+
+function isDriveFile($filename) {
+    return strpos($filename, '://') !== false;
+}
 
 if (!file_exists($backgroundHistoryFile)) {
     file_put_contents($backgroundHistoryFile, "");
@@ -24,10 +28,12 @@ if ($action === 'set' && !empty($filename)) {
         $pingContent = preg_replace('/<!-- BG_START -->.*<!-- BG_END -->/s', '', $pingContent);
     }
 
+    $filePath = isDriveFile($filename) ? $filename : "/nekobox/assets/Pictures/$filename";
+
     if ($type === 'image') {
         $backgroundStyle = "\n<style>
             body {
-                background-image: url('/nekobox/assets/Pictures/$filename');
+                background-image: url('$filePath');
                 background-repeat: no-repeat;
                 background-position: center center;
                 background-attachment: fixed;
@@ -57,13 +63,13 @@ if ($action === 'set' && !empty($filename)) {
         </style>
 
         <video class=\"video-background\" autoplay loop id=\"background-video\">
-            <source src='/nekobox/assets/Pictures/$filename' type='video/mp4'>
+            <source src='$filePath' type='video/mp4'>
             您的浏览器不支持视频标签。
         </video>";
     } elseif ($type === 'audio') {
         $audioElement = "
         <audio id=\"background-video\" autoplay loop>
-            <source src='/nekobox/assets/Pictures/$filename' type='audio/mp3'>
+            <source src='$filePath' type='audio/mp3'>
             您的浏览器不支持音频播放。
         </audio>";
     }
