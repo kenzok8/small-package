@@ -4198,6 +4198,14 @@ input[type="range"]:focus {
     color: #ff00ff;
 }
 
+ .file-section {
+    display: none;
+}
+
+.file-section.active {
+    display: block;
+}
+
 .file-preview {
     display: flex;
     flex-direction: column;
@@ -4470,9 +4478,7 @@ input[type="range"]:focus {
         <div class='modal-content'>
             <div class='modal-header'>
                 <h5 class='modal-title' id='filesModalLabel'>上传并管理背景图片/视频/音频</h5>
-                <button type='button' class='close' data-bs-dismiss='modal' aria-label='Close'>
-                    <span aria-hidden='true'>&times;</span>
-                </button>
+                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
             </div>
             <div class='modal-body'>
                 <div class='mb-4 d-flex flex-wrap gap-2 justify-content-start align-items-center'>
@@ -4483,86 +4489,217 @@ input[type="range"]:focus {
                         <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#newuploadModal">
                             <i class="fas fa-cloud-upload-alt"></i> 上传文件
                         </button>
+                        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addDriveFileModal">
+                            <i class="fas fa-link"></i> 添加网盘文件
+                        </button>
                         <button type="button" class="btn btn-danger me-2 delete-btn" onclick="setBackground('', '', 'remove')"><i class="fas fa-trash"></i> 删除背景</button>
                         <span id="selectedCount" class="ms-2" style="display: none;">已选中 0 个文件，总计 0 MB</span>
                     </div>
                 </div>
-                <table class="table table-bordered text-center">
-                    <tbody id="fileTableBody">
-                        <?php
-                        function isImage($file) {
-                            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-                            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                            return in_array($fileExtension, $imageExtensions);
-                        }
-
-                        function isVideo($file) {
-                            $videoExtensions = ['mp4', 'avi', 'mkv', 'mov', 'wmv'];
-                            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                            return in_array($fileExtension, $videoExtensions);
-                        }
-
-                        function isAudio($file) {
-                            $audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'webm', 'opus'];
-                            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                            return in_array($fileExtension, $audioExtensions);
-                        }
-
-                        function getFileNameWithoutPrefix($file) {
-                            $fileBaseName = pathinfo($file, PATHINFO_FILENAME);
-                            $hyphenPos = strpos($fileBaseName, '-');
-                            if ($hyphenPos !== false) {
-                                return substr($fileBaseName, $hyphenPos + 1) . '.' . pathinfo($file, PATHINFO_EXTENSION);
-                            } else {
-                                return $file;
-                            }
-                        }
-
-                        function formatFileSize($size) {
-                            if ($size >= 1073741824) {
-                                return number_format($size / 1073741824, 2) . ' GB';
-                            } elseif ($size >= 1048576) {
-                                return number_format($size / 1048576, 2) . ' MB';
-                            } elseif ($size >= 1024) {
-                                return number_format($size / 1024, 2) . ' KB';
-                            } else {
-                                return $size . ' bytes';
-                            }
-                        }
-
-                        $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
-                        $backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt';
-                        $backgroundFiles = [];
-                        if (file_exists($backgroundHistoryFile)) {
-                            $backgroundFiles = array_filter(array_map('trim', file($backgroundHistoryFile)));
-                        }
-
-                        if (is_dir($picturesDir)) {
-                            $files = array_diff(scandir($picturesDir), array('..', '.'));
-                            usort($files, function ($a, $b) use ($backgroundFiles) {
-                                $indexA = array_search($a, $backgroundFiles);
-                                $indexB = array_search($b, $backgroundFiles);
-
-                                if ($indexA === false && $indexB === false) {
-                                    return 0; 
-                                } elseif ($indexA === false) {
-                                    return 1; 
-                                } elseif ($indexB === false) {
-                                    return -1; 
-                                } else {
-                                    return $indexA - $indexB; 
+                <div class="btn-group mb-4" role="group" aria-label="File sections">
+                    <button type="button" class="btn btn-secondary" onclick="showSection('localFilesSection')">本地文件</button>
+                    <button type="button" class="btn btn-secondary" onclick="showSection('driveFilesSection')">网盘文件</button>
+                </div>
+                <div id="fileSections">
+                    <div id="localFilesSection" class="file-section active">
+                        <h5>本地文件</h5>
+                        <table class="table table-bordered text-center">
+                            <tbody id="fileTableBody">
+                                <?php
+                                function isImage($file) {
+                                    $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+                                    $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                    return in_array($fileExtension, $imageExtensions);
                                 }
-                            });
 
-                            $fileCount = 0;
-                            foreach ($files as $file) {
-                                $filePath = $picturesDir . $file;
-                                if (is_file($filePath)) {
-                                    $fileSize = filesize($filePath);
-                                    $formattedFileSize = formatFileSize($fileSize);
-                                    $fileUrl = '/nekobox/assets/Pictures/' . $file;
-                                    $fileNameWithoutPrefix = getFileNameWithoutPrefix($file);
-                                    $fileTitle = "名称: $fileNameWithoutPrefix\n大小: $formattedFileSize";
+                                function isVideo($file) {
+                                    $videoExtensions = ['mp4', 'avi', 'mkv', 'mov', 'wmv'];
+                                    $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                    return in_array($fileExtension, $videoExtensions);
+                                }
+
+                                function isAudio($file) {
+                                    $audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'webm', 'opus'];
+                                    $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                    return in_array($fileExtension, $audioExtensions);
+                                }
+
+                                function getFileNameWithoutPrefix($file) {
+                                    $fileBaseName = pathinfo($file, PATHINFO_FILENAME);
+                                    $hyphenPos = strpos($fileBaseName, '-');
+                                    if ($hyphenPos !== false) {
+                                        return substr($fileBaseName, $hyphenPos + 1) . '.' . pathinfo($file, PATHINFO_EXTENSION);
+                                    } else {
+                                        return $file;
+                                    }
+                                }
+
+                                function formatFileSize($size) {
+                                    if ($size >= 1073741824) {
+                                        return number_format($size / 1073741824, 2) . ' GB';
+                                    } elseif ($size >= 1048576) {
+                                        return number_format($size / 1048576, 2) . ' MB';
+                                    } elseif ($size >= 1024) {
+                                        return number_format($size / 1024, 2) . ' KB';
+                                    } else {
+                                        return $size . ' bytes';
+                                    }
+                                }
+
+                                $picturesDir = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/Pictures/';
+                                $backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt';
+                                $driveFilesFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/drive_files.txt';
+                                $backgroundFiles = [];
+                                $driveFiles = [];
+
+                                if (file_exists($backgroundHistoryFile)) {
+                                    $backgroundFiles = array_filter(array_map('trim', file($backgroundHistoryFile)));
+                                }
+
+                                if (file_exists($driveFilesFile)) {
+                                    $driveFiles = array_filter(array_map('trim', file($driveFilesFile)));
+                                }
+
+                                if (is_dir($picturesDir)) {
+                                    $files = array_diff(scandir($picturesDir), array('..', '.'));
+                                    usort($files, function ($a, $b) use ($backgroundFiles) {
+                                        $indexA = array_search($a, $backgroundFiles);
+                                        $indexB = array_search($b, $backgroundFiles);
+
+                                        if ($indexA === false && $indexB === false) {
+                                            return 0;
+                                        } elseif ($indexA === false) {
+                                            return 1;
+                                        } elseif ($indexB === false) {
+                                            return -1;
+                                        } else {
+                                            return $indexA - $indexB;
+                                        }
+                                    });
+
+                                    $fileCount = 0;
+                                    foreach ($files as $file) {
+                                        $filePath = $picturesDir . $file;
+                                        if (is_file($filePath)) {
+                                            $fileSize = filesize($filePath);
+                                            $formattedFileSize = formatFileSize($fileSize);
+                                            $fileUrl = '/nekobox/assets/Pictures/' . $file;
+                                            $fileNameWithoutPrefix = getFileNameWithoutPrefix($file);
+                                            $fileTitle = "名称: $fileNameWithoutPrefix\n大小: $formattedFileSize";
+
+                                            if ($fileCount % 5 == 0) {
+                                                echo "<tr>";
+                                            }
+
+                                            echo "<td class='align-middle' data-label='预览' style='vertical-align: middle;'>
+                                                    <div class='file-preview mb-2 d-flex align-items-center'>
+                                                        <input type='checkbox' class='file-checkbox mb-2 mr-2' value='" . htmlspecialchars($file, ENT_QUOTES) . "' data-url='$fileUrl' data-title='$fileNameWithoutPrefix' data-size='$fileSize' onchange='updateSelectedCount()'>";
+
+                                            if (isVideo($file)) {
+                                                echo "<video width='200' controls title='$fileTitle'>
+                                                          <source src='$fileUrl' type='video/mp4'>
+                                                          Your browser does not support the video tag.
+                                                      </video>";
+                                            } elseif (isImage($file)) {
+                                                echo "<img src='$fileUrl' alt='$file' style='width: 200px; height: auto;' title='$fileTitle'>";
+                                            } elseif (isAudio($file)) {
+                                                echo "<audio width='200' controls title='$fileTitle'>
+                                                          <source src='$fileUrl' type='audio/mp3'>
+                                                          Your browser does not support the audio tag.
+                                                      </audio>";
+                                            } else {
+                                                echo "未知文件类型";
+                                            }
+
+                                            echo "<div class='btn-container mt-2 d-flex align-items-center'>
+                                                    <a href='?delete=" . htmlspecialchars($file, ENT_QUOTES) . "' onclick='return confirm(\"确定要删除吗?\")' class='icon-button btn-bordered' style='margin-right: 10px;'>
+                                                        <i class='fas fa-trash-alt'></i><span class='tooltip'>删除</span>
+                                                    </a>
+                                                    <button type='button' data-bs-toggle='modal' data-bs-target='#renameModal' onclick='document.getElementById(\"oldFileName\").value=\"" . htmlspecialchars($file, ENT_QUOTES) . "\"; document.getElementById(\"newFileName\").value=\"" . htmlspecialchars(getFileNameWithoutPrefix($file), ENT_QUOTES) . "\";' class='icon-button btn-bordered' style='margin-right: 10px;'>
+                                                        <i class='fas fa-edit'></i><span class='tooltip'>重命名</span>
+                                                    </button>
+                                                    <a href='$fileUrl' download class='icon-button btn-bordered' style='margin-right: 10px;'>
+                                                        <i class='fas fa-download'></i><span class='tooltip'>下载</span>
+                                                    </a>";
+
+                                            if (isImage($file)) {
+                                                echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'image')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                                        <i class='fas fa-image'></i><span class='tooltip'>设置图片背景</span>
+                                                      </button>";
+                                            } elseif (isVideo($file)) {
+                                                echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'video')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                                        <i class='fas fa-video'></i><span class='tooltip'>设置视频背景</span>
+                                                      </button>";
+                                            } elseif (isAudio($file)) {
+                                                echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'audio')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                                        <i class='fas fa-music'></i><span class='tooltip'>设置背景音乐</span>
+                                                      </button>";
+                                            }
+
+                                            echo "</div></div></td>";
+
+                                            if ($fileCount % 5 == 4) {
+                                                echo "</tr>";
+                                            }
+
+                                            $fileCount++;
+                                        }
+                                    }
+
+                                    if ($fileCount % 5 != 0) {
+                                        echo str_repeat("<td></td>", 5 - ($fileCount % 5)) . "</tr>";
+                                    }
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="driveFilesSection" class="file-section">
+                        <h5>网盘文件</h5>
+                        <table class="table table-bordered text-center">
+                            <tbody id="driveFileTableBody">
+                                <?php
+                                $driveFilesFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/drive_files.txt';
+
+                                if (!file_exists($driveFilesFile)) {
+                                    touch($driveFilesFile);
+                                    chmod($driveFilesFile, 0666);
+                                }
+                                
+                                if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['driveFileUrl'])) {
+                                    $driveFileUrl = $_POST['driveFileUrl'];
+                                    $existingDriveFiles = file($driveFilesFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                                if (!in_array($driveFileUrl, $existingDriveFiles)) {
+                                    $driveFileEntry = "$driveFileUrl\n";
+                                    file_put_contents($driveFilesFile, $driveFileEntry, FILE_APPEND);
+                                    echo "<script>
+                                            alert('网盘文件添加成功');
+                                            document.getElementById('driveFilesSection').classList.add('active');
+                                          </script>";
+                                } else {
+                                    echo "<script>
+                                    alert('该网盘文件链接已存在！');
+                                   </script>";
+
+                                    } 
+                                } 
+
+                                if (isset($_GET['deleteDrive'])) {
+                                    $urlToDelete = urldecode($_GET['deleteDrive']);
+                                    $driveFiles = file($driveFilesFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                                    $updatedDriveFiles = array_filter($driveFiles, function($line) use ($urlToDelete) {
+                                        return trim($line) !== $urlToDelete;
+                                    });
+                                    file_put_contents($driveFilesFile, implode(PHP_EOL, $updatedDriveFiles));
+                                    echo "<script>window.location.href = window.location.pathname;</script>";
+                                    exit;
+                                }
+
+                                $fileCount = 0;
+                                foreach ($driveFiles as $driveFile) {
+                                    $fileUrl = trim($driveFile);
+                                    $fileName = basename($fileUrl);
+                                    $fileTitle = "名称: $fileName";
 
                                     if ($fileCount % 5 == 0) {
                                         echo "<tr>";
@@ -4570,16 +4707,16 @@ input[type="range"]:focus {
 
                                     echo "<td class='align-middle' data-label='预览' style='vertical-align: middle;'>
                                             <div class='file-preview mb-2 d-flex align-items-center'>
-                                                <input type='checkbox' class='file-checkbox mb-2 mr-2' value='" . htmlspecialchars($file, ENT_QUOTES) . "' data-url='$fileUrl' data-title='$fileNameWithoutPrefix' data-size='$fileSize' onchange='updateSelectedCount()'>";
+                                                <input type='checkbox' class='file-checkbox mb-2 mr-2' value='" . htmlspecialchars($fileName, ENT_QUOTES) . "' data-url='$fileUrl' data-title='$fileName' onchange='updateSelectedCount()'>";
 
-                                    if (isVideo($file)) {
+                                    if (isVideo($fileName)) {
                                         echo "<video width='200' controls title='$fileTitle'>
                                                   <source src='$fileUrl' type='video/mp4'>
                                                   Your browser does not support the video tag.
                                               </video>";
-                                    } elseif (isImage($file)) {
-                                        echo "<img src='$fileUrl' alt='$file' style='width: 200px; height: auto;' title='$fileTitle'>";
-                                    } elseif (isAudio($file)) {
+                                    } elseif (isImage($fileName)) {
+                                        echo "<img src='$fileUrl' alt='$fileName' style='width: 200px; height: auto;' title='$fileTitle'>";
+                                    } elseif (isAudio($fileName)) {
                                         echo "<audio width='200' controls title='$fileTitle'>
                                                   <source src='$fileUrl' type='audio/mp3'>
                                                   Your browser does not support the audio tag.
@@ -4589,26 +4726,20 @@ input[type="range"]:focus {
                                     }
 
                                     echo "<div class='btn-container mt-2 d-flex align-items-center'>
-                                            <a href='?delete=" . htmlspecialchars($file, ENT_QUOTES) . "' onclick='return confirm(\"确定要删除吗?\")' class='icon-button btn-bordered' style='margin-right: 10px;'>
+                                            <a href='?deleteDrive=" . urlencode($fileUrl) . "' onclick='return confirm(\"确定要删除吗?\")' class='icon-button btn-bordered' style='margin-right: 10px;'>
                                                 <i class='fas fa-trash-alt'></i><span class='tooltip'>删除</span>
-                                            </a>
-                                            <button type='button' data-bs-toggle='modal' data-bs-target='#renameModal' onclick='document.getElementById(\"oldFileName\").value=\"" . htmlspecialchars($file, ENT_QUOTES) . "\"; document.getElementById(\"newFileName\").value=\"" . htmlspecialchars(getFileNameWithoutPrefix($file), ENT_QUOTES) . "\";' class='icon-button btn-bordered' style='margin-right: 10px;'>
-                                                <i class='fas fa-edit'></i><span class='tooltip'>重命名</span>
-                                            </button>
-                                            <a href='$fileUrl' download class='icon-button btn-bordered' style='margin-right: 10px;'>
-                                                <i class='fas fa-download'></i><span class='tooltip'>下载</span>
                                             </a>";
 
-                                    if (isImage($file)) {
-                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'image')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                    if (isImage($fileName)) {
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($fileUrl, ENT_QUOTES) . "', 'image')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
                                                 <i class='fas fa-image'></i><span class='tooltip'>设置图片背景</span>
                                               </button>";
-                                    } elseif (isVideo($file)) {
-                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'video')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                    } elseif (isVideo($fileName)) {
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($fileUrl, ENT_QUOTES) . "', 'video')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
                                                 <i class='fas fa-video'></i><span class='tooltip'>设置视频背景</span>
                                               </button>";
-                                    } elseif (isAudio($file)) {
-                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($file, ENT_QUOTES) . "', 'audio')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
+                                    } elseif (isAudio($fileName)) {
+                                        echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($fileUrl, ENT_QUOTES) . "', 'audio')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
                                                 <i class='fas fa-music'></i><span class='tooltip'>设置背景音乐</span>
                                               </button>";
                                     }
@@ -4621,33 +4752,15 @@ input[type="range"]:focus {
 
                                     $fileCount++;
                                 }
-                            }
 
-                            if ($fileCount % 5 != 0) {
-                                echo str_repeat("<td></td>", 5 - ($fileCount % 5)) . "</tr>";
-                            }
-                        }
-
-                        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['oldFileName']) && isset($_POST['newFileName'])) {
-                            $oldFileName = $_POST['oldFileName'];
-                            $newFileName = $_POST['newFileName'];
-
-                            $oldFilePath = $picturesDir . $oldFileName;
-                            $newFilePath = $picturesDir . $newFileName;
-
-                            if (file_exists($oldFilePath)) {
-                                if (rename($oldFilePath, $newFilePath)) {
-                                    echo "<script>alert('文件重命名成功');</script>";
-                                } else {
-                                    echo "<script>alert('文件重命名失败');</script>";
+                                if ($fileCount % 5 != 0) {
+                                    echo str_repeat("<td></td>", 5 - ($fileCount % 5)) . "</tr>";
                                 }
-                            } else {
-                                echo "<script>alert('文件不存在');</script>";
-                            }
-                        }
-                        ?>
-                    </tbody>
-                </table>
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -4655,6 +4768,37 @@ input[type="range"]:focus {
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="addDriveFileModal" tabindex="-1" aria-labelledby="addDriveFileModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDriveFileModalLabel">添加网盘文件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post">
+                    <div class="form-group">
+                        <label for="driveFileUrl">网盘文件链接</label>
+                        <input type="text" class="form-control" id="driveFileUrl" name="driveFileUrl" required>
+                    </div>
+                    <div class="form-group mt-3">
+                        <button type="submit" class="btn btn-primary">添加</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showSection(sectionId) {
+        document.querySelectorAll('.file-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        document.getElementById(sectionId).classList.add('active');
+    }
+</script>
 
 <div class="modal fade" id="videoPlayerModal" tabindex="-1" aria-labelledby="videoPlayerModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl" id="modalDialog" style="max-height: 100vh;">
@@ -4669,9 +4813,9 @@ input[type="range"]:focus {
             </div>
             <div class="modal-body">
                 <div class="media-container">
-                    <video id="videoPlayer" controls preload="auto" style="width: 100%; height: auto;"></video>
-                    <audio id="audioPlayer" controls preload="auto" style="width: 100%; height: auto;"></audio>
-                    <img id="imageViewer" src="" style="width: 100%; height: auto;">
+                    <video id="videoPlayer" controls preload="auto" style="display: none;"></video>
+                    <audio id="audioPlayer" controls preload="auto" style="display: none;"></audio>
+                    <img id="imageViewer" src="" style="display: none;">
                 </div>
                 <div class="playlist-container">
                     <h5>播放列表</h5>
@@ -5020,7 +5164,7 @@ function setupHoverControls() {
     `;
     videoElement.parentElement.appendChild(hoverControls);
 
-    document.getElementById('prevButton').onclick = () => playNextVideo();
+    document.getElementById('prevButton').onclick = () => playPreviousVideo();
     document.getElementById('nextButton').onclick = () => playNextVideo(); 
     document.getElementById('pipButton').onclick = () => togglePictureInPicture(videoElement);
 
@@ -5082,6 +5226,26 @@ function setupHoverControls() {
     hoverControls.addEventListener('mouseenter', showHoverControls);
     hoverControls.addEventListener('mouseleave', () => {
         hoverControls.style.display = 'none';
+    });
+
+    let startY = 0;
+    let endY = 0;
+
+    videoElement.addEventListener('touchstart', (event) => {
+        startY = event.touches[0].clientY;
+    });
+
+    videoElement.addEventListener('touchmove', (event) => {
+        endY = event.touches[0].clientY;
+    });
+
+    videoElement.addEventListener('touchend', () => {
+        const swipeDistance = startY - endY;
+        if (swipeDistance > 50) {
+            playNextVideo(); 
+        } else if (swipeDistance < -50) {
+            playPreviousVideo(); 
+        }
     });
 }
 
