@@ -1,4 +1,22 @@
 <?php
+function getAvailableSpace() {
+    $dfOutput = [];
+    exec('df /', $dfOutput);
+
+    $availableSpace = 0;
+    if (isset($dfOutput[1])) {
+        $dfData = preg_split('/\s+/', $dfOutput[1]);
+        $availableSpace = $dfData[3] * 1024;
+    }
+
+    $availableSpaceInMB = $availableSpace / 1024 / 1024;
+    return round($availableSpaceInMB, 2);
+}
+
+$availableSpace = getAvailableSpace(); 
+?>
+
+<?php
 $default_url = 'https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/songs.txt';
 
 $message = '';  
@@ -4878,6 +4896,10 @@ function showPlaylistContainer() {
             </div>
             <div class="modal-body text-center">
                 <h2 class="mb-3">上传图片/视频/音频</h2>
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    OpenWRT 剩余空间: <?php echo $availableSpace; ?> MB
+                </div>
                 <form method="POST" action="download.php" enctype="multipart/form-data">
                     <div id="dropArea" class="mb-3">
                         <i id="uploadIcon" class="fas fa-cloud-upload-alt"></i>
