@@ -1,0 +1,60 @@
+{
+    "admin/services/nikki": {
+        "title": "Nikki",
+        "action": {
+            "type": "firstchild"
+        },
+        "depends": {
+            "acl": [ "luci-app-nikki" ],
+            "uci": { "nikki": true }
+        }
+    },
+    "admin/services/nikki/config": {
+        "title": "App Config",
+        "order": 10,
+        "action": {
+            "type": "view",
+            "path": "nikki/app"
+        }
+    },
+    "admin/services/nikki/profile": {
+        "title": "Profile",
+        "order": 20,
+        "action": {
+            "type": "view",
+            "path": "nikki/profile"
+        }
+    },
+    "admin/services/nikki/mixin": {
+        "title": "Mixin Config",
+        "order": 30,
+        "action": {
+            "type": "view",
+            "path": "nikki/mixin"
+        }
+    },
+    "admin/services/nikki/proxy": {
+        "title": "Proxy Config",
+        "order": 40,
+        "action": {
+            "type": "view",
+            "path": "nikki/proxy"
+        }
+    },
+    "admin/services/nikki/editor": {
+        "title": "Editor",
+        "order": 50,
+        "action": {
+            "type": "view",
+            "path": "nikki/editor"
+        }
+    },
+    "admin/services/nikki/log": {
+        "title": "Log",
+        "order": 60,
+        "action": {
+            "type": "view",
+            "path": "nikki/log"
+        }
+    }
+}
