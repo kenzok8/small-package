@@ -1,0 +1,38 @@
+{
+    "luci-app-nikki": {
+        "description": "Grant access to nikki procedures",
+        "read": {
+            "uci": [ "nikki" ],
+            "ubus": {
+                "service": [ "list" ]
+            },
+            "file": {
+                "/etc/passwd": ["read"],
+                "/etc/group": ["read"],
+                "/etc/nikki/profiles/*.yaml": ["read"],
+                "/etc/nikki/profiles/*.yml": ["read"],
+                "/etc/nikki/subscriptions/*.yaml": ["read"],
+                "/etc/nikki/subscriptions/*.yml": ["read"],
+                "/etc/nikki/mixin.yaml": ["read"],
+                "/etc/nikki/run/config.yaml": ["read"],
+                "/etc/nikki/nftables/reserved_ip.nft": ["read"],
+                "/etc/nikki/nftables/reserved_ip6.nft": ["read"],
+                "/var/log/nikki/*.log": ["read"],
+                "/usr/libexec/nikki-call": ["exec"]
+            }
+        },
+        "write": {
+            "uci": [ "nikki" ],
+            "file": {
+                "/etc/nikki/profiles/*.yaml": ["write"],
+                "/etc/nikki/profiles/*.yml": ["write"],
+                "/etc/nikki/subscriptions/*.yaml": ["write"],
+                "/etc/nikki/subscriptions/*.yml": ["write"],
+                "/etc/nikki/mixin.yaml": ["write"],
+                "/etc/nikki/run/config.yaml": ["write"],
+                "/etc/nikki/nftables/reserved_ip.nft": ["write"],
+                "/etc/nikki/nftables/reserved_ip6.nft": ["write"]
+            }
+        }
+    }
+}
