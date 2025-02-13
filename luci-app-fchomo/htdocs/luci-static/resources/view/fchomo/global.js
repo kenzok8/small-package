@@ -777,7 +777,9 @@ return view.extend({
 		so.value('routing_gfw', _('Routing GFW'));
 
 		so = ss.taboption('routing_control', form.Flag, 'routing_domain', _('Handle domain'),
-			_('Routing mode will be handle domain.'));
+			_('Routing mode will be handle domain.') + '</br>' +
+			_('Please ensure that the DNS query of the domains to be processed in the DNS policy</br>' +
+				'are send via DIRECT/Proxy Node in the same semantics as Routing mode.'));
 		so.default = so.disabled;
 		if (!features.hm_has_dnsmasq_full) {
 			so.description = _('To enable, you need to install <code>dnsmasq-full</code>.');

@@ -1549,6 +1549,13 @@ msgstr ""
 msgid "Plain text"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:781
+msgid ""
+"Please ensure that the DNS query of the domains to be processed in the DNS "
+"policy</br>are send via DIRECT/Proxy Node in the same semantics as Routing "
+"mode."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:124
 msgid ""
 "Please refer to <a href=\"%s\" target=\"_blank\">%s</a> for link format "
