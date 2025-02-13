@@ -1571,6 +1571,15 @@ msgstr "性能可能会略有下降，建议仅在需要时开启。"
 msgid "Plain text"
 msgstr "纯文本"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:781
+msgid ""
+"Please ensure that the DNS query of the domains to be processed in the DNS "
+"policy</br>are send via DIRECT/Proxy Node in the same semantics as Routing "
+"mode."
+msgstr ""
+"请在 DNS 策略 中确保要处理的域名的 DNS 查询</br>以与路由模式相同的语义通过 "
+"直连/代理节点 发送。"
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:124
 msgid ""
 "Please refer to <a href=\"%s\" target=\"_blank\">%s</a> for link format "
