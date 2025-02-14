@@ -351,7 +351,7 @@ return view.extend({
 		o = s.taboption('ftp', form.Flag, 'active_transfer_port_non_20', _('Enable non-20 port for active transfer'));
 		o.rmempty = false;
 
-		o = s.taboption('ftp', form.Value, 'idle_timeout', _('Client Idle Timeout (seconds)'));
+		o = s.taboption('ftp', form.Value, 'idle_timeout', _('Client idle timeout (seconds)'));
 		o.datatype = 'uinteger';
 		o.default = '900';
 		o.rmempty = false;
