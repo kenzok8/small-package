@@ -351,7 +351,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:138
 #: htdocs/luci-static/resources/fchomo.js:139
-msgid "Common ports only (bypass P2P traffic)"
+msgid "Common ports (bypass P2P traffic)"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:852
