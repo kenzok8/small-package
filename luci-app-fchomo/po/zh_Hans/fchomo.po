@@ -359,8 +359,8 @@ msgstr "收集数据中..."
 
 #: htdocs/luci-static/resources/fchomo.js:138
 #: htdocs/luci-static/resources/fchomo.js:139
-msgid "Common ports only (bypass P2P traffic)"
-msgstr "仅常用端口（绕过 P2P 流量）"
+msgid "Common ports (bypass P2P traffic)"
+msgstr "常用端口（绕过 P2P 流量）"
 
 #: htdocs/luci-static/resources/fchomo.js:852
 msgid "Complete"
