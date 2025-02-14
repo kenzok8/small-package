@@ -23,6 +23,9 @@ msgstr "设置"
 msgid "Basic Setting"
 msgstr "基本设置"
 
+msgid "Global Settings"
+msgstr "全局设置"
+
 msgid "Logs"
 msgstr "日志"
 
@@ -126,7 +129,13 @@ msgid "Max Connections"
 msgstr "最大并发连接数"
 
 msgid "0 is unlimited, It is recommend to set a low number of concurrency (10-20) for poor performance device"
-msgstr "默认0不限制，低性能设备建议设置较低的并发数（10-20）"
+msgstr "默认 0 不限制，低性能设备建议设置较低的并发数（10-20）"
+
+msgid "Max concurrency of local proxies"
+msgstr "本地代理最大并发数"
+
+msgid "0 is unlimited, Limit the maximum concurrency of local agents. The default value is 64"
+msgstr "限制本地代理最大并发数，值为 0 表示不限制，默认值 64"
 
 msgid "Site URL"
 msgstr "站点地址"
@@ -221,3 +230,38 @@ msgstr "对象存储"
 msgid "Enabled S3"
 msgstr "启用 S3"
 
+msgid "Enabled FTP"
+msgstr "启用 FTP"
+
+msgid "FTP Port"
+msgstr "FTP 端口"
+
+msgid "Max retries on port conflict during passive transfer"
+msgstr "被动传输端口冲突时重试最大次数"
+
+msgid "Enable non-20 port for active transfer"
+msgstr "启用非 20 端口进行主动传输"
+
+msgid "Client idle timeout (seconds)"
+msgstr "客户端空闲超时（秒）"
+
+msgid "Connection timeout (seconds)"
+msgstr "连接超时（秒）"
+
+msgid "Disable active transfer mode"
+msgstr "禁用主动传输模式"
+
+msgid "Binary mode transmission"
+msgstr "二进制模式传输"
+
+msgid "Client IP check in active transfer mode"
+msgstr "主动传输模式下客户端 IP 检查"
+
+msgid "Client IP check in passive transfer mode"
+msgstr "被动传输模式下客户端 IP 检查"
+
+msgid "Enabled SFTP"
+msgstr "启用 SFTP"
+
+msgid "SFTP Port"
+msgstr "SFTP 端口"
