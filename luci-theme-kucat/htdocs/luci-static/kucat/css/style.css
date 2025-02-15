@@ -31,7 +31,7 @@
     --primary-solid: #fd8c73;
     --primarytextcolor: #677087;
     --primary-title-color: #4d4d5d;
-    --menu-color: #f5f5f5f5;
+    --menu-color: #fff;
     --menu-hover-color: #fff;
     --menu-item-color: #5a636b;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm),0.22);
@@ -54,7 +54,7 @@
     --primary-solid: #fd8c73;
     --primarytextcolor: #bbb;
     --primary-title-color: #bbb;
-    --menu-color: #bbb;
+    --menu-color: #f5f5f5f5;
     --menu-hover-color: #e9eff3;
     --menu-item-color: #b4c9e3;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm),0.4);
@@ -204,7 +204,7 @@ html, body {
 }
 body {
 	letter-spacing: 0.050em;
-	font-size: var(--font-x);
+	font-size: var(--font-z);
 	color: var(--body-color);
 	background-position: top center;
 	-webkit-background-size: cover;
@@ -1760,7 +1760,6 @@ button:hover, .btn:hover, .cbi-button:hover ,.item:hover{
 	overflow-y: auto;
 	width: 100%;
 	margin: 0 !important;
-	padding: 0;
 	list-style: none;
 	outline: 0;
 }
@@ -1841,8 +1840,8 @@ button:hover, .btn:hover, .cbi-button:hover ,.item:hover{
   max-width: none;
   max-height: 200px ;
   box-shadow: 0 0 4px #918e8c;
-  border-top-left-radius: .25rem;
-  border-top-right-radius: .25rem;
+  /*border-top-left-radius: var(--radius2);
+  border-top-right-radius: var(--radius2); */
   border: 0px solid var(--inputborder-color);
   background: rgba(var(--primary-rgbbody), 1);
   color: var(--inputtext-color);
@@ -1862,7 +1861,7 @@ button:hover, .btn:hover, .cbi-button:hover ,.item:hover{
 	display: initial;
 }
 .cbi-dropdown.btn>ul:not(.dropdown), .cbi-dropdown.cbi-button>ul:not(.dropdown) {
-  margin: 0 0 0 .75rem !important;
+  margin: 0 0 0 .85rem !important;
 }
 
 .cbi-dropdown.btn.cbi-button>ul{
@@ -1912,9 +1911,8 @@ button:hover, .btn:hover, .cbi-button:hover ,.item:hover{
 }
 
 .cbi-dropdown[open]>ul.dropdown>li[selected] {
-    background: rgba(var(--primary-rgbm), 0.3);
+  background: rgba(var(--primary-rgbm), 0.22);
   color: var(--inputtext-color);
-    padding-left: 10px;
 }
 
 .cbi-dropdown[open]>ul.dropdown>li.focus {
@@ -1973,9 +1971,7 @@ select[multiple="multiple"] {
     padding: 0;
 }
 
-.cbi-button-apply>ul:first-child li {
-  color: var(--inputtext-color);
-}
+
 /* progressbar */
 .cbi-progressbar {
     position: relative;
@@ -2268,9 +2264,9 @@ body.modal-overlay-active #modal_overlay {
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
-    padding: 0.4rem 0.8rem;
+    padding: 0.3rem 0.8rem;
     box-shadow: inset 0 1px 0px rgba(255, 255, 255, .4), 0 1px 1px rgba(0, 0, 0, .2);
-    background-color: rgba(255, 255, 255, .1);
+    background-color: rgba(var(--primary-rgbm), .12);
     border-radius:  var(--radius2);
 }
 
@@ -3312,10 +3308,6 @@ pre.command-output {
     border-bottom-color: #dee2e6
 }
 
-[data-page^="admin-services-openclash"] .cbi-tabmenu>li {
-    border-right: none !important;
-    margin: 0 .4rem 0 0 !important
-}
 
 [data-page^="admin-services-openclash"] .cbi-tabmenu>li:last-child {
     margin-right: 0 !important
@@ -3336,16 +3328,7 @@ pre.command-output {
     padding: 1rem !important
 }
 
-[data-page^="admin-services-openclash"] #diag-rc-output>pre,
-[data-page^="admin-services-openclash"] #dns-rc-output>pre {
-    font-size: .875rem;
-    color: #8898aa;
-    border: 1px solid #dee2e6;
-    background-color: transparent;
-    border-radius: .25rem;
-    font-family: 'Google Sans' !important;
-    box-shadow: none
-}
+
 
 [data-page^="admin-services-openclash"] #debug-rc-output>textarea {
     font-family: 'Google Sans' !important
@@ -3353,13 +3336,14 @@ pre.command-output {
 
 [data-page^="admin-services-openclash"] .CodeMirror {
     font-size: inherit;
+    background-color: rgba(0,0,0,0.8)!important;
+    color: var(--body-color)!important;
     font-family: 'Google Sans' !important
 }
 
 [data-page^="admin-services-openclash"] .cbi-button-up,
 [data-page^="admin-services-openclash"] .cbi-button-down {
     padding: .8rem 1.5rem;
-    background-color: #f1f1f1;
     font-size: 0
 }
 
@@ -3368,39 +3352,30 @@ pre.command-output {
     width: auto
 }
 
-@media all and (-ms-high-contrast:none) {
-    .main>.main-left>.nav>.slide>.menu::before {
-        top: 30.25%
-    }
-
-    .main>.main-left>.nav>li:last-child::before {
-        top: 20%
-    }
-
-    .showSide::before {
-        top: -12px
-    }
-}
-
-#cbi-openclash .CodeMirror.cm-s-idea.CodeMirror-wrap {
-    background: rgba(0,0,0,0.1)!important;
-    color: var(--body-color)!important;
-}
-#cbi-openclash .cbi-section>div>ul>li {
+[data-page^="admin-services-openclash"] .cbi-section>div>ul>li {
     width: auto!important;
     padding: 0rem 0.5rem!important;
 
 }
 
-#cbi-openclash .CodeMirror-merge,#cbi-openclash .CodeMirror-merge-2pane {
+[data-page^="admin-services-openclash"] .CodeMirror-merge,#cbi-openclash .CodeMirror-merge-2pane {
     height: auto!important;
     border: none!important
 }
-#cbi-openclash .cm-s-idea span.cm-variable {
+[data-page^="admin-services-openclash"] .cm-s-idea span.cm-variable {
     color: #fd8c73!important;
 }
 
-#cbi-openclash .CodeMirror-scroll>.CodeMirror-gutters {
+[data-page^="admin-services-openclash"] .CodeMirror-merge-scrolllock-wrap>.CodeMirror-merge-scrolllock
+ {
+  color: var(--inputtext-color)!important;
+}
+
+[data-page^="admin-services-openclash"] .CodeMirror-merge>.CodeMirror-merge-gap {
+    background-color: rgba(255,255,255,0.12)!important;
+}
+
+[data-page^="admin-services-openclash"] .CodeMirror-scroll>.CodeMirror-gutters {
     background-color: rgba(255,255,255,0.1)!important;
     border-right: 1px solid #777!important;
 }
@@ -3439,6 +3414,7 @@ pre.command-output {
 }
 }
 
+
 /* IE hacks */
 @media all and (-ms-high-contrast: none) {
 .main > .main-left > .nav > .slide > .menu::before {
@@ -3450,12 +3426,6 @@ pre.command-output {
 .showSide::before {
 	top: -12px;
 }
-}
-
-@media screen and (max-width: 1600px) {
-  .btn:not(button), .label {
-    padding: .5rem .75rem;
-  }
 }
 
 @media screen and (max-width: 1280px) {
@@ -3643,7 +3613,7 @@ input[name="ping"], input[name="traceroute"], input[name="nslookup"] {
 	margin: 2.1px 3px;
 }
 .cbi-section > h3:first-child, .panel-title {
-	font-size: var(--font-z);
+	font-size: var(--font-d);
 	padding-bottom: 0.5rem;
 }
 .commandbox {
@@ -3788,7 +3758,7 @@ footer a {
 	display: none
 }
 select, input {
-	font-size: var(--font-x);
+	font-size: var(--font-z);
 	box-sizing: border-box;
 	min-width: unset
 }

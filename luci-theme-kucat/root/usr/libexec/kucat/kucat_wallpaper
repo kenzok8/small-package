@@ -13,6 +13,7 @@
 kucat='kucat'
 [ -s "/etc/config/advancedplus" ] &&kucat='advancedplus'
 background="$(uci -q get $kucat.@basic[0].background || echo '0')"
+KUCATTMP="/var/kucat_date_${background}.tmp"
 BGURL="/www/luci-static/kucat/img/down${background}.jpg"
 REBGURL="/luci-static/kucat/img/down${background}.jpg"
 DFBGURL="/luci-static/kucat/img/bg1.jpg"
@@ -77,19 +78,16 @@ bgurl_down() {
 }
 
 check_url() {
-    if [ -f "$BGURL" ]; then
-        local bgurltime=$(($(date '+%s') - $(date -r "$BGURL" '+%s' 2>/dev/null || echo '0')))
-        if [ -s "$BGURL" ]; then
-            if [ $bgurltime -le 43200 ]; then
-		echo -ne $REBGURL 
-                return
+	if [ -s $KUCATTMP ]; then
+		localtime=`cat $KUCATTMP | grep $(date +%Y%m%d) `
+		if [ $localtime ]; then
+		   if  [ -s $BGURL ] ; then
+	   	        echo -ne $REBGURL 
+                        return
             fi
-        else
-            if [ $bgurltime -le 120 ]; then
-                return
             fi
         fi
-    fi
+# local checknet=$(test_url "https://www.baidu.com")
 checknet=`ping -c 1 -W 1 223.5.5.5 > /dev/null 2>&1 &&echo 1 || echo 2`
 if [ "x$checknet" == "x1" ]; then 
 	bgurl_down
