@@ -722,7 +722,7 @@ function getSubscriptionUrlFromFile($file) {
                     </div>
 
                     <div class="mb-3">
-                        <label for="template" class="form-label">选择订阅转换模板</label>
+                        <label for="template" class="form-label" data-translate="subscription"></label>
                         <select class="form-select" id="template" name="template" required>
                         <optgroup label="通用" style="color: #28a745; font-size: 20px;">
                             <option value="1" <?php echo ($_POST['template'] ?? '') === '1' ? 'selected' : ''; ?>>默认</option>
