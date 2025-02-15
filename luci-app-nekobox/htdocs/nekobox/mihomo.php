@@ -651,41 +651,40 @@ function getSubscriptionUrlFromFile($file) {
 </style>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
-        <a href="./index.php" class="col btn btn-lg"><i class="bi bi-house-door d-none d-sm-inline"></i> 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg"><i class="bi bi-folder d-none d-sm-inline"></i> <span style="white-space: nowrap;">文件管理</span></a>
-        <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-shop d-none d-sm-inline"></i> <span style="white-space: nowrap;">模板 一</span></a>
-        <a href="./subscription.php" class="col btn btn-lg"><i class="bi bi-bank d-none d-sm-inline"></i>  <span style="white-space: nowrap;">模板 二</span></a>
-        <a href="./mihomo.php" class="col btn btn-lg"><i class="bi bi-building d-none d-sm-inline"></i> <span style="white-space: nowrap;">模板 三</span></a>
-        <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;">Mihomo 转换模板</h1>
+        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
+        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
+        <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
+        <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
+        <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;"><?php echo $translations['mihomo_conversion_template']; ?></h1>
 
         <div class="col-12 custom-padding">
             <div class="form-section">
                 <form method="post">
                     <div class="mb-3">
-                        <label for="subscription_url" class="form-label">输入订阅链接</label>
+                        <label for="subscription_url" class="form-label" data-translate="subscription_url_label"></label>
                         <input type="text" class="form-control" id="subscription_url" name="subscription_url"
-                               value="<?php echo htmlspecialchars($current_subscription_url); ?>" placeholder="支持各种订阅链接或单节点链接，多个链接用 | 分隔"  required>
+                               value="<?php echo htmlspecialchars($current_subscription_url); ?>" placeholder="" data-translate-placeholder="subscription_url_placeholder"  required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="filename" class="form-label">自定义文件名 (默认: config.yaml)</label>
+                        <label for="filename" class="form-label" data-translate="filename_label"></label>
                         <input type="text" class="form-control" id="filename" name="filename"
                                value="<?php echo htmlspecialchars(isset($_POST['filename']) ? $_POST['filename'] : ''); ?>"
-                               placeholder="config.yaml">
+                               placeholder="config.json">
                     </div>
 
                     <div class="mb-3">
-                        <label for="backend_url" class="form-label">选择后端地址</label>
+                        <label for="backend_url" class="form-label" data-translate="backend_url_label"></label>
                         <select class="form-select" id="backend_url" name="backend_url" required>
                             <option value="https://url.v1.mk/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://url.v1.mk/sub?' ? 'selected' : ''; ?>>
-                                肥羊增强型后端【vless reality+hy1+hy2】
+                                <?php echo $langData[$currentLang]['backend_url_option_1']; ?>
                             </option>
                             <option value="https://sub.d1.mk/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.d1.mk/sub?' ? 'selected' : ''; ?>>
-                                肥羊备用后端【vless reality+hy1+hy2】
+                                 <?php echo $langData[$currentLang]['backend_url_option_2']; ?>
                             </option>
                             <option value="https://sub.xeton.dev/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.xeton.dev/sub?' ? 'selected' : ''; ?>>
-                                subconverter作者提供
-                            </option>
+                                 <?php echo $langData[$currentLang]['backend_url_option_3']; ?>
                             </option>
                             <option value="https://www.tline.website/sub/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://www.tline.website/sub/sub?' ? 'selected' : ''; ?>>
                                 tline.website
@@ -694,7 +693,7 @@ function getSubscriptionUrlFromFile($file) {
                                 api.dler.io
                             </option>
                             <option value="https://v.id9.cc/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://v.id9.cc/sub?' ? 'selected' : ''; ?>>
-                                v.id9.cc(品云提供）
+                                 <?php echo $langData[$currentLang]['backend_url_option_6']; ?>
                             </option>
                             <option value="https://sub.id9.cc/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.id9.cc/sub?' ? 'selected' : ''; ?>>
                                 sub.id9.cc
@@ -706,19 +705,19 @@ function getSubscriptionUrlFromFile($file) {
                                 subcloud.xyz
                             </option>
                             <option value="https://sub.maoxiongnet.com/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.maoxiongnet.com/sub?' ? 'selected' : ''; ?>>
-                                sub.maoxiongnet.com(猫熊提供)
+                                 <?php echo $langData[$currentLang]['backend_url_option_10']; ?>
                             </option>
                             <option value="http://localhost:25500/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'http://localhost:25500/sub?' ? 'selected' : ''; ?>>
-                                localhost:25500 本地版
+                                 <?php echo $langData[$currentLang]['backend_url_option_11']; ?>
                             </option>
                             <option value="custom" <?php echo ($_POST['backend_url'] ?? '') === 'custom' ? 'selected' : ''; ?>>
-                                自定义后端地址
+                                 <?php echo $langData[$currentLang]['backend_url_option_custom']; ?>
                             </option>
                         </select>
                     </div>
 
                     <div class="mb-3" id="custom_backend_url_input" style="display: none;">
-                        <label for="custom_backend_url" class="form-label">请输入自定义后端地址</label>
+                        <label for="custom_backend_url" class="form-label" data-translate="custom_backend_url_label"></label>
                         <input type="text" class="form-control" id="custom_backend_url" name="custom_backend_url" value="<?php echo htmlspecialchars($_POST['custom_backend_url'] ?? '') . (empty($_POST['custom_backend_url']) ? '' : '?'); ?>" />
                     </div>
 
@@ -827,65 +826,65 @@ function getSubscriptionUrlFromFile($file) {
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">选择额外配置选项</label>
+                        <label class="form-label" data-translate="choose_additional_options"></label>
                         <div class="d-flex flex-wrap align-items-center">
                             <div class="form-check me-3">
                                 <input type="checkbox" class="form-check-input" id="emoji" name="emoji" value="true"
                                        <?php echo isset($_POST['emoji']) && $_POST['emoji'] == 'true' ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="emoji">启用 Emoji</label>
+                                <label class="form-check-label" for="emoji" data-translate="enable_emoji"></label>
                             </div>
                             <div class="form-check me-3">
                                 <input type="checkbox" class="form-check-input" id="udp" name="udp" value="true"
                                        <?php echo isset($_POST['udp']) && $_POST['udp'] == 'true' ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="udp">启用 UDP</label>
+                                <label class="form-check-label" for="udp" data-translate="enable_udp"></label>
                             </div>
                             <div class="form-check me-3">
                                 <input type="checkbox" class="form-check-input" id="xudp" name="xudp" value="true"
                                        <?php echo isset($_POST['xudp']) && $_POST['xudp'] == 'true' ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="xudp">启用 XUDP</label>
+                                <label class="form-check-label" for="xudp" data-translate="enable_xudp"></label>
                             </div>
                             <div class="form-check me-3">
                                 <input type="checkbox" class="form-check-input" id="fdn" name="fdn" value="true"
                                        <?php echo isset($_POST['fdn']) && $_POST['fdn'] == 'true' ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="tls13">启用 FDN</label>
+                                <label class="form-check-label" for="tls13" data-translate="enable_fdn"></label>
                             </div>
                             <div class="form-check me-3">
                                 <input type="checkbox" class="form-check-input" id="sort" name="sort" value="true"
                                        <?php echo isset($_POST['sort']) && $_POST['sort'] == 'true' ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="sort">启用 SORT</label>
+                                <label class="form-check-label" for="sort" data-translate="enable_sort"></label>
                             </div>
                             <div class="form-check me-3">
                                 <input type="checkbox" class="form-check-input" id="tls13" name="tls13" value="true"
                                        <?php echo isset($_POST['tls13']) && $_POST['tls13'] == 'true' ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="tls13">启用 TLS_1.3</label>
+                                <label class="form-check-label" for="tls13" data-translate="enable_tls13"></label>
                             </div>
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="tfo" name="tfo" value="true"
                                        <?php echo isset($_POST['tfo']) && $_POST['tfo'] == 'true' ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="tfo">启用 TFO</label>
+                                <label class="form-check-label" for="tfo" data-translate="enable_tfo"></label>
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="include" class="form-label">包含节点 (可选)</label>
+                        <label for="include" class="form-label" data-translate="include_nodes"></label>
                         <input type="text" class="form-control" id="include" name="include"
-                               value="<?php echo htmlspecialchars($_POST['include'] ?? ''); ?>" placeholder="要保留的节点，支持正则 | 分隔">
+                               value="<?php echo htmlspecialchars($_POST['include'] ?? ''); ?>" placeholder="要保留的节点，支持正则 | 分隔" data-translate-placeholder="include_placeholder">
                     </div>
 
                     <div class="mb-3">
-                        <label for="exclude" class="form-label">排除节点 (可选)</label>
+                        <label for="exclude" class="form-label" data-translate="exclude_nodes"></label>
                         <input type="text" class="form-control" id="exclude" name="exclude"
-                               value="<?php echo htmlspecialchars($_POST['exclude'] ?? ''); ?>" placeholder="要排除的节点，支持正则 | 分隔">
+                               value="<?php echo htmlspecialchars($_POST['exclude'] ?? ''); ?>" placeholder="要排除的节点，支持正则 | 分隔" data-translate-placeholder="exclude_placeholder">
                     </div>
 
                    <div class="mb-3">
-                        <label for="rename" class="form-label">节点命名</label>
+                        <label for="rename" class="form-label" data-translate="rename_nodes"></label>
                         <input type="text" class="form-control" id="rename" name="rename"
                                value="<?php echo htmlspecialchars(isset($_POST['rename']) ? $_POST['rename'] : ''); ?>"
-                               placeholder="输入重命名内容（举例：`a@b``1@2`，|符可用\转义）">
+                               placeholder="输入重命名内容（举例：`a@b``1@2`，|符可用\转义）" data-translate-placeholder="rename_placeholder">
                     </div>
-                    <button type="submit" class="btn btn-primary" name="action" value="generate_subscription"><i class="bi bi-file-earmark-text"></i> 生成配置文件</button>
+                    <button type="submit" class="btn btn-primary" name="action" value="generate_subscription"><i class="bi bi-file-earmark-text"></i> <span data-translate="generate_configuration_file"></span></button>
                 </form>
             </div>
         </div>
@@ -893,20 +892,20 @@ function getSubscriptionUrlFromFile($file) {
         <div class="form-section mt-4 custom-padding">
             <form method="post">
                 <div class="mb-3">
-                    <label for="cron_time" class="form-label">设置 Cron 时间 (例如: 0 3 * * *)</label>
+                    <label for="cron_time" class="form-label" data-translate="set_cron_time">设置 Cron 时间 (例如: 0 3 * * *)</label>
                     <input type="text" class="form-control" id="cron_time" name="cron_time"
                            value="<?php echo htmlspecialchars(isset($_POST['cron_time']) ? $_POST['cron_time'] : '0 3 * * *'); ?>"
                            placeholder="0 3 * * *">
                 </div>
-                <button type="submit" class="btn btn-primary" name="action" value="update_cron"><i class="bi bi-clock"></i> 设置定时任务</button>
+                <button type="submit" class="btn btn-primary" name="action" value="update_cron"><i class="bi bi-clock"></i> <span data-translate="set_scheduled_task"></span></button>
             </form>
         </div>
 
         <div class="help mt-4 custom-padding">
-            <p style="color: red;">注意：在线订阅转换存在隐私泄露风险</p>
-            <p>订阅转换由肥羊提供</p>
+            <p style="color: red;"><?php echo $translations['warning1']; ?></p>
+            <p><?php echo $translations['subscription_conversion']; ?></p>
             <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
-            <i data-feather="github"></i> 点击访问
+            <i data-feather="github"></i> <?php echo $translations['visit_link']; ?>
             </a>
         </div>
 

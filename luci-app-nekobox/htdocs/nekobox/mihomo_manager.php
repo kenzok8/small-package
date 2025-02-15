@@ -667,24 +667,24 @@ function displayUpdateNotification() {
 </script>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
     <div class="row">
-        <a href="./index.php" class="col btn btn-lg"><i class="bi bi-house-door d-none d-sm-inline"></i> 首页</a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg"><i class="bi bi-folder d-none d-sm-inline"></i> <span style="white-space: nowrap;">文件管理</span></a>
-        <a href="./singbox.php" class="col btn btn-lg"><i class="bi bi-shop d-none d-sm-inline"></i> <span style="white-space: nowrap;">模板 一</span></a>
-        <a href="./subscription.php" class="col btn btn-lg"><i class="bi bi-bank d-none d-sm-inline"></i>  <span style="white-space: nowrap;">模板 二</span></a>
-        <a href="./mihomo.php" class="col btn btn-lg"><i class="bi bi-building d-none d-sm-inline"></i> <span style="white-space: nowrap;">模板 三</span></a>
+        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
+        <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
+        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
+        <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
+        <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
     </div>
     <div class="text-center">
-        <h2 style="margin-top: 40px; margin-bottom: 20px;">文件管理</h2>
+        <h2 style="margin-top: 40px; margin-bottom: 20px;" data-translate="fileManagement"></h2>
 <div class="container-fluid">
     <div class="table-responsive">
         <table class="table table-striped table-bordered text-center">
             <thead class="thead-dark">
                 <tr>
-                    <th style="width: 20%;">文件名</th>
-                    <th style="width: 10%;">大小</th>
-                    <th style="width: 20%;">最后修改时间</th>
-                    <th style="width: 10%;">文件类型</th>
-                    <th style="width: 30%;">执行操作</th>
+                    <th style="width: 20%;" data-translate="fileName"></th>
+                    <th style="width: 10%;" data-translate="fileSize"></th>
+                    <th style="width: 20%;" data-translate="lastModified"></th>
+                    <th style="width: 10%;" data-translate="fileType"></th>
+                    <th style="width: 30%;" data-translate="actions"></th>
                 </tr>
             </thead>
             <tbody>
@@ -695,8 +695,8 @@ function displayUpdateNotification() {
                 }, $proxyFiles), array_map(function($file) use ($configDir) {
                     return $configDir . $file;
                 }, $configFiles));
-                $fileTypes = array_merge(array_fill(0, count($proxyFiles), '代理文件'), array_fill(0, count($configFiles), '配置文件'));
-                
+                $fileTypes = array_merge(array_fill(0, count($proxyFiles), 'Proxy File'), array_fill(0, count($configFiles), 'Config File'));
+
                 foreach ($allFiles as $index => $file) {
                     $filePath = $allFilePaths[$index];
                     $fileType = $fileTypes[$index];
@@ -716,51 +716,51 @@ function displayUpdateNotification() {
                         </td>
                         <td class="align-middle">
                             <div class="action-buttons">
-                                <?php if ($fileType == '代理文件'): ?>
+                              <?php if ($fileType == 'Proxy File'): ?>
                                     <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="deleteFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm" title="🗑️ 删除"  onclick="return confirm('确定要删除这个文件吗？');"><i class="bi bi-trash"></i></button>
+                                        <button type="submit" class="btn btn-danger btn-sm" title="🗑️ 删除"  onclick="return confirm('确定要删除这个文件吗？');" data-translate-title="delete"><i class="bi bi-trash"></i></button>
                                     </form>
                                     <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
                                         <input type="hidden" name="fileType" value="proxy">
-                                        <button type="button" class="btn btn-success btn-sm btn-rename" title="✏️ 重命名" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy"><i class="bi bi-pencil"></i></button>
+                                        <button type="button" class="btn btn-success btn-sm btn-rename" title="✏️ 重命名" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy" data-translate-title="rename"><i class="bi bi-pencil"></i></button>
                                     </form>
                                     <form action="" method="post" class="d-inline mb-1">
-                                        <button type="button" class="btn btn-warning btn-sm" title="📝 编辑" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'proxy')"><i class="bi bi-pen"></i></button>
+                                        <button type="button" class="btn btn-warning btn-sm" title="📝 编辑" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'proxy')" data-translate-title="edit"><i class="bi bi-pen"></i></button>
                                     </form>
                                     <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn mb-1">
                                         <input type="file" name="fileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                        <button type="button" class="btn btn-info btn-sm" title="📤 上传" onclick="openUploadModal('proxy')"><i class="bi bi-upload"></i></button>
+                                        <button type="button" class="btn btn-info btn-sm" title="📤 上传" onclick="openUploadModal('proxy')" data-translate-title="upload"><i class="bi bi-upload"></i></button>
                                     </form>
                                     <form action="" method="get" class="d-inline mb-1">
                                         <input type="hidden" name="downloadFile" value="<?php echo htmlspecialchars($file); ?>">
                                         <input type="hidden" name="fileType" value="proxy">
-                                        <button type="submit" class="btn btn-primary btn-sm" title="📥 下载" ><i class="bi bi-download"></i></button>
+                                        <button type="submit" class="btn btn-primary btn-sm" title="📥 下载" data-translate-title="download"><i class="bi bi-download"></i></button>
                                     </form>
                                 <?php else: ?>
                                     <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="deleteConfigFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm" title="🗑️ 删除" onclick="return confirm('确定要删除这个文件吗？');"><i class="bi bi-trash"></i></button>
+                                        <button type="submit" class="btn btn-danger btn-sm" title="🗑️ 删除" onclick="return confirm('确定要删除这个文件吗？');" data-translate-title="delete"><i class="bi bi-trash"></i></button>
                                     </form>
                                     <form action="" method="post" class="d-inline mb-1">
                                         <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
                                         <input type="hidden" name="fileType" value="config">
-                                        <button type="button" class="btn btn-success btn-sm btn-rename" title="✏️ 重命名" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config"><i class="bi bi-pencil"></i></button>
+                                        <button type="button" class="btn btn-success btn-sm btn-rename" title="✏️ 重命名" data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config" data-translate-title="rename"><i class="bi bi-pencil"></i></button>
                                     </form>
                                     <form action="" method="post" class="d-inline mb-1">
-                                        <button type="button" class="btn btn-warning btn-sm" title="📝 编辑" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'config')"><i class="bi bi-pen"></i></button>
+                                        <button type="button" class="btn btn-warning btn-sm" title="📝 编辑" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'config')" data-translate-title="edit"><i class="bi bi-pen"></i></button>
                                     </form>
                                     <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn mb-1">
                                         <input type="file" name="configFileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                        <button type="button" class="btn btn-info btn-sm" title="📤 上传" onclick="openUploadModal('config')"><i class="bi bi-upload"></i></button>
+                                        <button type="button" class="btn btn-info btn-sm" title="📤 上传" onclick="openUploadModal('config')" data-translate-title="upload"><i class="bi bi-upload"></i></button>
                                     </form>
                                     <form action="" method="get" class="d-inline mb-1">
                                         <input type="hidden" name="downloadFile" value="<?php echo htmlspecialchars($file); ?>">
                                         <input type="hidden" name="fileType" value="config">
-                                        <button type="submit" class="btn btn-primary btn-sm"  title="📥 下载" ><i class="bi bi-download"></i></button>
+                                        <button type="submit" class="btn btn-primary btn-sm"  title="📥 下载" data-translate-title="download"><i class="bi bi-download"></i></button>
                                     </form>
-                                <?php endif; ?>
+                                 <?php endif; ?>
                             </div>
                         </td>
                     </tr>
@@ -774,21 +774,21 @@ function displayUpdateNotification() {
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="uploadModalLabel">上传文件</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="关闭">
+                <h5 class="modal-title" id="uploadModalLabel" data-translate="uploadFile">上传文件</h5> 
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="close"> 
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <div id="dropZone" class="border border-primary rounded text-center py-4 position-relative">
-                    <i  class="fas fa-cloud-upload-alt"></i>
-                    <p class="mb-0 mt-3">拖动文件到此区域上传<br>或者点击下方选择文件按钮</p>
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p class="mb-0 mt-3" data-translate="dragOrClickToUpload">拖动文件到此区域上传<br>或者点击下方选择文件按钮</p> 
                 </div>
                 <input type="file" id="fileInputModal" class="form-control mt-3" hidden>
-                <button id="selectFileBtn" class="btn btn-primary btn-block mt-3 w-100">选择文件</button>
+                <button id="selectFileBtn" class="btn btn-primary btn-block mt-3 w-100" data-translate="selectFile">选择文件</button> 
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close">关闭</button> 
             </div>
         </div>
     </div>
@@ -831,7 +831,8 @@ function displayUpdateNotification() {
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">编辑文件: <span id="editingFileName"></span></h5>
+                <h5 class="modal-title" id="editModalLabel"><?php echo $langData[$currentLang]['editFile']; ?>: <span id="editingFileName"></span></h5>
+
                 <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -842,8 +843,8 @@ function displayUpdateNotification() {
                     <input type="hidden" name="fileName" id="hiddenFileName">
                     <input type="hidden" name="fileType" id="hiddenFileType">
                     <div class="mt-3 d-flex justify-content-start gap-2">
-                        <button type="submit" class="btn btn-primary">保存</button>
-                        <button type="button" class="btn btn-pink" onclick="openFullScreenEditor()">高级编辑</button>
+                        <button type="submit" class="btn btn-primary" data-translate="save">保存</button>
+                        <button type="button" class="btn btn-pink" onclick="openFullScreenEditor()" data-translate="advancedEdit">高级编辑</button>
                     </div>
                 </form>
             </div>
@@ -856,7 +857,7 @@ function displayUpdateNotification() {
         <div class="modal-content" style="border: none;">
             <div class="modal-header d-flex justify-content-between align-items-center" style="border-bottom: none;">
                 <div class="d-flex align-items-center">
-                    <h5 class="modal-title mr-3">高级编辑 - 全屏模式</h5>
+                    <h5 class="modal-title mr-3" data-translate="advancedEditorTitle"></h5>
                     <select id="fontSize" onchange="changeFontSize()" class="form-select mx-1" style="width: auto; font-size: 0.8rem;">
                         <option value="18px">18px</option>
                         <option value="20px" selected>20px</option>
@@ -903,14 +904,14 @@ function displayUpdateNotification() {
                         <option value="ace/theme/pastel_on_dark">Pastel on Dark</option>
                     </select>
 
-                    <button type="button" class="btn btn-success btn-sm mx-1" onclick="formatContent()">格式化缩进</button>
-                    <button type="button" class="btn btn-success btn-sm mx-1" id="yamlFormatBtn" onclick="formatYamlContent()" style="display: none;">格式化 YAML</button>
-                    <button type="button" class="btn btn-info btn-sm mx-1" id="jsonValidationBtn" onclick="validateJsonSyntax()">验证 JSON 语法</button>
-                    <button type="button" class="btn btn-info btn-sm mx-1" id="yamlValidationBtn" onclick="validateYamlSyntax()" style="display: none;">验证 YAML 语法</button>
-                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="saveFullScreenContent()">保存并关闭</button>
-                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="openSearch()">搜索</button>
-                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="closeFullScreenEditor()">取消</button>
-                    <button type="button" class="btn btn-warning btn-sm mx-1" id="toggleFullscreenBtn" onclick="toggleFullscreen()">全屏</button>
+                    <button type="button" class="btn btn-success btn-sm mx-1" onclick="formatContent()" data-translate="formatIndentation">格式化缩进</button>
+                    <button type="button" class="btn btn-success btn-sm mx-1" id="yamlFormatBtn" onclick="formatYamlContent()" style="display: none;" data-translate="formatYaml">格式化 YAML</button>
+                    <button type="button" class="btn btn-info btn-sm mx-1" id="jsonValidationBtn" onclick="validateJsonSyntax()" data-translate="validateJson">验证 JSON 语法</button>
+                    <button type="button" class="btn btn-info btn-sm mx-1" id="yamlValidationBtn" onclick="validateYamlSyntax()" style="display: none;" data-translate="validateYaml">验证 YAML 语法</button>
+                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="saveFullScreenContent()" data-translate="saveAndClose">保存并关闭</button>
+                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="openSearch()" data-translate="search">搜索</button>
+                    <button type="button" class="btn btn-primary btn-sm mx-1" onclick="closeFullScreenEditor()" data-translate="cancel">取消</button>
+                    <button type="button" class="btn btn-warning btn-sm mx-1" id="toggleFullscreenBtn" onclick="toggleFullscreen()" data-translate="toggleFullscreen">全屏</button>
                 </div>
 
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeFullScreenEditor()">
@@ -919,7 +920,7 @@ function displayUpdateNotification() {
             </div>
 
             <div class="d-flex justify-content-center align-items-center my-1" id="editorStatus" style="font-weight: bold; font-size: 0.9rem;">
-                    <span id="lineColumnDisplay" style="color: blue; font-size: 1.1rem;">行: 1, 列: 1</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="charCountDisplay" style="color: blue; font-size: 1.1rem;">字符数: 0</span>
+                    <span id="lineColumnDisplay" style="color: blue; font-size: 1.1rem;" data-translate="lineColumnDisplay">行: 1, 列: 1</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="charCountDisplay" style="color: blue; font-size: 1.1rem;" data-translate="charCountDisplay">字符数: 0</span>
                 </div>
                     <div class="modal-body" style="padding: 0; height: 100%;">
                 <div id="aceEditorContainer" style="height: 100%; width: 100%;"></div>
@@ -994,7 +995,7 @@ function initializeAceEditor() {
             let annotations = [];
         try {
             JSON.parse(content);
-            alert("JSON 语法正确");
+            alert(langData[currentLang]['validateJson'] + " " + langData[currentLang]['jsonSyntaxCorrect']); 
         } catch (e) {
             const line = e.lineNumber ? e.lineNumber - 1 : 0;
             annotations.push({
@@ -1004,7 +1005,7 @@ function initializeAceEditor() {
             type: "error"
         });
         aceEditorInstance.session.setAnnotations(annotations);
-        alert("JSON 语法错误: " + e.message);
+        alert(langData[currentLang]['validateJson'] + " " + langData[currentLang]['jsonSyntaxError'] + ": " + e.message); 
         }
     }
 
@@ -1013,7 +1014,7 @@ function initializeAceEditor() {
             let annotations = [];
         try {
             jsyaml.load(content); 
-            alert("YAML 语法正确");
+            alert(langData[currentLang]['validateYaml'] + " " + langData[currentLang]['yamlSyntaxCorrect']);
         } catch (e) {
             const line = e.mark ? e.mark.line : 0;
             annotations.push({
@@ -1023,7 +1024,7 @@ function initializeAceEditor() {
             type: "error"
         });
         aceEditorInstance.session.setAnnotations(annotations);
-        alert("YAML 语法错误: " + e.message);
+        alert(langData[currentLang]['validateYaml'] + " " + langData[currentLang]['yamlSyntaxError'] + ": " + e.message); 
         }
     }
 
@@ -1036,16 +1037,16 @@ function initializeAceEditor() {
             if (mode === "ace/mode/json") {
                 formattedContent = JSON.stringify(JSON.parse(content), null, 4);
                 aceEditorInstance.setValue(formattedContent, -1);
-                alert("JSON 格式化成功");
+                alert(langData[currentLang]['formatIndentation'] + " " + langData[currentLang]['jsonFormatSuccess']);
             } else if (mode === "ace/mode/javascript") {
                 formattedContent = js_beautify(content, { indent_size: 4 });
                 aceEditorInstance.setValue(formattedContent, -1);
-                alert("JavaScript 格式化成功");
+                alert(langData[currentLang]['formatIndentation'] + " " + langData[currentLang]['jsFormatSuccess']); 
             } else {
-                alert("当前模式不支持格式化缩进");
+                alert(langData[currentLang]['formatIndentation'] + " " + langData[currentLang]['unsupportedMode']);
             }
         } catch (e) {
-            alert("格式化错误: " + e.message);
+            alert(langData[currentLang]['formatIndentation'] + " " + langData[currentLang]['formatError'] + ": " + e.message); 
         }
     }
 
@@ -1057,9 +1058,9 @@ function initializeAceEditor() {
             const yamlObject = jsyaml.load(content); 
             const formattedYaml = jsyaml.dump(yamlObject, { indent: 4 }); 
             aceEditorInstance.setValue(formattedYaml, -1);
-            alert("YAML 格式化成功");
+            alert(langData[currentLang]['yamlFormatSuccess']);
         } catch (e) {
-            alert("YAML 格式化错误: " + e.message);
+            alert(langData[currentLang]['yamlSyntaxError'] + ": " + e.message);
         }
     }
 
@@ -1116,8 +1117,11 @@ function initializeAceEditor() {
         const column = cursor.column + 1;
         const charCount = aceEditorInstance.getValue().length;
 
-        document.getElementById('lineColumnDisplay').textContent = `行: ${line}, 列: ${column}`;
-        document.getElementById('charCountDisplay').textContent = `字符数: ${charCount}`;
+        const lineColumnText = langData[currentLang]['lineColumnDisplay'].replace("{line}", line).replace("{column}", column);
+        const charCountText = langData[currentLang]['charCountDisplay'].replace("{charCount}", charCount);
+
+        document.getElementById('lineColumnDisplay').textContent = lineColumnText;
+        document.getElementById('charCountDisplay').textContent = charCountText;
     }
 
     $(document).ready(function() {
@@ -1212,7 +1216,7 @@ function initializeAceEditor() {
     }
 
 </script>
-<h2 class="text-center mt-4 mb-4">Mihomo订阅管理</h2>
+<h2 class="text-center mt-4 mb-4"><?php echo $langData[$currentLang]['subscriptionManagement']; ?></h2>
 
 <?php if (isset($message) && $message): ?>
     <div class="alert alert-info">
@@ -1234,16 +1238,16 @@ function initializeAceEditor() {
                     <form method="post" class="card shadow-sm">
                         <div class="card-body">
                             <div class="form-group">
-                                <h5 for="subscription_url_<?php echo $displayIndex; ?>" class="mb-2">订阅链接 <?php echo $displayIndex; ?></h5>
-                                <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" placeholder="请输入订阅链接">
+                                <h5 for="subscription_url_<?php echo $displayIndex; ?>" class="mb-2"><?php echo $langData[$currentLang]['subscriptionLink']; ?> <?php echo $displayIndex; ?></h5>
+                                <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" placeholder="<?php echo $langData[$currentLang]['enterSubscriptionUrl']; ?>">
                             </div>
                             <div class="form-group">
-                                <label for="custom_file_name_<?php echo $displayIndex; ?>">自定义文件名</label>
+                                <label for="custom_file_name_<?php echo $displayIndex; ?>"><?php echo $langData[$currentLang]['customFileName']; ?></label>
                                 <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
                             </div>
                             <input type="hidden" name="index" value="<?php echo $i; ?>">
                             <div class="text-center mt-3"> 
-                                <button type="submit" name="update" class="btn btn-info btn-block"><i class="bi bi-arrow-repeat"></i> 更新订阅 <?php echo $displayIndex; ?></button>
+                                <button type="submit" name="update" class="btn btn-info btn-block"><i class="bi bi-arrow-repeat"></i> <?php echo $langData[$currentLang]['updateSubscription']; ?> <?php echo $displayIndex; ?></button>
                             </div>
                         </div>
                     </form>
@@ -1267,20 +1271,20 @@ function initializeAceEditor() {
 </head>
 <body>
     <div class="container">
-        <h2 class="mt-4 mb-4 text-center">自动更新</h2>
+        <h2 class="mt-4 mb-4 text-center" data-translate="auto_update_title"></h2>
         <form method="post" class="text-center">
         <div class="d-flex flex-wrap justify-content-center gap-2">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cronModal">
-                <i class="bi bi-clock"></i> 设置定时任务
+                <i class="bi bi-clock"></i> <span data-translate="set_cron_job"></span>
             </button>
             <button type="submit" name="createShellScript" value="true" class="btn btn-success">
-                <i class="bi bi-terminal"></i> 生成更新脚本
+                <i class="bi bi-terminal"></i> <span data-translate="generate_update_script"></span>
             </button>
             <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#downloadModal">
-                <i class="bi bi-download"></i> 更新数据库
+                <i class="bi bi-download"></i> <span data-translate="update_database"></span>
             </button>
             <a class="btn btn-pink btn-sm text-white" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
-                <i class="bi bi-file-earmark-text"></i> 打开文件助手
+                <i class="bi bi-file-earmark-text"></i> <span data-translate="open_file_helper"></span>
             </a>
         </div>
         </form>
@@ -1290,7 +1294,7 @@ function initializeAceEditor() {
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="downloadModalLabel">选择数据库下载</h5>
+                    <h5 class="modal-title" id="downloadModalLabel" data-translate="select_database_download"></h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -1298,7 +1302,7 @@ function initializeAceEditor() {
                 <div class="modal-body">
                     <form method="GET" action="">
                         <div class="mb-3">
-                            <label for="fileSelect" class="form-label">选择文件</label>
+                            <label for="fileSelect" class="form-label" data-translate="select_file"></label>
                             <select class="form-select" id="fileSelect" name="file">
                                 <option value="geoip">geoip.metadb</option>
                                 <option value="geosite">geosite.dat</option>
@@ -1306,8 +1310,8 @@ function initializeAceEditor() {
                             </select>
                         </div>
                         <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary me-2">下载</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary me-2" data-translate="download_button"></button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button"></button>
                         </div>
                     </form>
                 </div>
@@ -1321,27 +1325,27 @@ function initializeAceEditor() {
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="cronModalLabel">设置 Cron 计划任务</h5>
+                    <h5 class="modal-title" id="cronModalLabel" data-translate="cron_task_title">设置 Cron 计划任务</h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="cronExpression" class="form-label">Cron 表达式</label>
+                        <label for="cronExpression" class="form-label" data-translate="cron_expression_label">Cron 表达式</label>
                         <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
                     </div>
                     <div class="alert alert-info">
-                        <strong>提示:</strong> Cron 表达式格式：
+                        <strong data-translate="cron_hint">提示:</strong> <span data-translate="cron_expression_format">Cron 表达式格式：</span>
                         <ul>
                             <li><code>分钟 小时 日 月 星期</code></li>
-                            <li>示例: 每天凌晨 2 点: <code>0 2 * * *</code></li>
+                            <li><span data-translate="cron_example">示例: 每天凌晨 2 点: </span><code>0 2 * * *</code></li>
                         </ul>
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-end gap-3">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" name="createCronJob" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button">取消</button>
+                    <button type="submit" name="createCronJob" class="btn btn-primary" data-translate="save_button">保存</button>
                 </div>
             </div>
         </div>
