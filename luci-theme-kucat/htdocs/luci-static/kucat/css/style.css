@@ -31,7 +31,7 @@
     --primary-solid: #fd8c73;
     --primarytextcolor: #677087;
     --primary-title-color: #4d4d5d;
-    --menu-color: #fff;
+    --menu-color: #f5f5f5f5;
     --menu-hover-color: #fff;
     --menu-item-color: #5a636b;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm),0.22);
@@ -54,7 +54,7 @@
     --primary-solid: #fd8c73;
     --primarytextcolor: #bbb;
     --primary-title-color: #bbb;
-    --menu-color: #f5f5f5f5;
+    --menu-color: #bbb;
     --menu-hover-color: #e9eff3;
     --menu-item-color: #b4c9e3;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm),0.4);
@@ -199,8 +199,8 @@ html, body {
     font-family: var(--font-sans);
 
 	height: 100%;
-	margin: 0;
-	padding: 0;
+	margin: 0 !important;
+	padding: 0 !important;
 }
 body {
 	letter-spacing: 0.050em;
@@ -1209,7 +1209,6 @@ table>tbody>tr:first-child>td, table>tfoot>tr:first-child>td, table>thead>tr:fir
 .float-list, .btn, button, select, input, .cbi-dropdown {
 	height: 2.4rem;
 	outline: 0;
-	
 	padding: 0.5rem 0.75rem;
 	margin: 0.25rem 0.1rem;
 	background-color: var(--inputbg-color);
@@ -1225,10 +1224,10 @@ box-shadow: 0 0.3rem 0.8rem var(--input-boxcolor);
     -ms-user-select: none;
     user-select: none;
     text-transform: uppercase;
-        line-height: 1;
+    line-height: 1;
     display: inline-block;
-	padding: 0.5rem 0.75rem;
-	margin: 0.25rem 0.1rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0.25rem 0.1rem;
     -ms-touch-action: manipulation;
     touch-action: manipulation;
     vertical-align: middle;
@@ -1840,8 +1839,7 @@ button:hover, .btn:hover, .cbi-button:hover ,.item:hover{
   max-width: none;
   max-height: 200px ;
   box-shadow: 0 0 4px #918e8c;
-  /*border-top-left-radius: var(--radius2);
-  border-top-right-radius: var(--radius2); */
+  border-radius:  var(--radius2);
   border: 0px solid var(--inputborder-color);
   background: rgba(var(--primary-rgbbody), 1);
   color: var(--inputtext-color);

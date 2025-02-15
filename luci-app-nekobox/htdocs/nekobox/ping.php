@@ -600,6 +600,7 @@ $langData = [
         'config_file_updated' => 'Sing-box 配置文件已成功更新。保存路径: ',
         'replace_success' => '成功替换配置文件中的 Proxy 为 DIRECT。',
         'replace_fail' => '替换 Proxy 为 DIRECT 失败，请检查配置文件。',
+        'subscription' => '选择订阅转换模板', 
         'config_update_fail' => '配置文件更新失败，请检查 URL 或网络。'
     ],
     'en' => [
@@ -1233,9 +1234,10 @@ $langData = [
         'config_file_updated' => 'Sing-box configuration file updated successfully. Saved to: ',
         'replace_success' => 'Successfully replaced "Proxy" with "DIRECT" in the configuration file.',
         'replace_fail' => 'Failed to replace "Proxy" with "DIRECT". Please check the configuration file.',
+        'subscription' => 'Select Subscription Conversion Template',
         'config_update_fail' => 'Configuration file update failed. Please check the URL or network.'
     ],
-    'mo' => [
+    'hk' => [
         'home' => '首頁',
         'panel' => '面板',
         'document' => '訂閱',
@@ -1843,7 +1845,8 @@ $langData = [
         'config_file_updated' => 'Sing-box 配置文件已成功更新。保存路徑: ',
         'replace_success' => '成功替換配置文件中的 Proxy 為 DIRECT。',
         'replace_fail' => '替換 Proxy 為 DIRECT 失敗，請檢查配置文件。',
-           'config_update_fail' => '配置文件更新失败，请检查 URL 或网络。'
+        'subscription' => '選擇訂閱轉換模板',
+        'config_update_fail' => '配置文件更新失败，请检查 URL 或网络。'
     ],
     'kr' => [
         'home' => '홈페이지',
@@ -2445,6 +2448,7 @@ $langData = [
         'config_file_updated' => 'Sing-box 구성 파일이 성공적으로 업데이트되었습니다. 저장 경로: ',
         'replace_success' => '구성 파일에서 Proxy를 DIRECT로 교체했습니다.',
         'replace_fail' => '구성 파일에서 Proxy를 DIRECT로 교체하는 데 실패했습니다. 구성 파일을 확인하세요.',
+        'subscription' => '구독 변환 템플릿 선택',
         'config_update_fail' => '구성 파일 업데이트에 실패했습니다. URL이나 네트워크를 확인하세요.'
     ],
     'jp' => [
@@ -3032,6 +3036,7 @@ $langData = [
         'config_file_updated' => 'Sing-box設定ファイルが正常に更新されました。保存パス: ',
         'replace_success' => '設定ファイル内のProxyをDIRECTに正常に置き換えました。',
         'replace_fail' => '設定ファイル内のProxyをDIRECTに置き換えるのに失敗しました。設定ファイルを確認してください。',
+        'subscription' => 'サブスクリプション変換テンプレートを選択',
         'config_update_fail' => '設定ファイルの更新に失敗しました。URLまたはネットワークを確認してください。'
    ],
     'ru' => [
@@ -3618,6 +3623,7 @@ $langData = [
         'config_file_updated' => 'Конфигурационный файл Sing-box успешно обновлен. Путь сохранения: ',
         'replace_success' => 'Успешно заменили Proxy на DIRECT в конфигурационном файле.',
         'replace_fail' => 'Не удалось заменить Proxy на DIRECT, пожалуйста, проверьте конфигурационный файл.',
+        'subscription' => 'Выберите шаблон конверсии подписки',
         'config_update_fail' => 'Ошибка обновления конфигурационного файла, пожалуйста, проверьте URL или соединение с сетью.'
     ],
     'ar' => [
@@ -4216,6 +4222,7 @@ $langData = [
         'config_file_updated' => 'تم تحديث ملف التكوين Sing-box بنجاح. المسار المحفوظ: ',
         'replace_success' => 'تم استبدال بروكسي بالـ DIRECT بنجاح.',
         'replace_fail' => 'فشل في استبدال البروكسي بالـ DIRECT. يرجى التحقق من ملف التكوين.',
+        'subscription' => 'اختر قالب تحويل الاشتراك',
         'config_update_fail' => 'فشل في تحديث ملف التكوين، يرجى التحقق من الرابط أو الشبكة.'
     ],
     'es' => [
@@ -4818,6 +4825,7 @@ $langData = [
         'config_file_updated' => 'El archivo de configuración de Sing-box se ha actualizado correctamente. Ruta guardada: ',
         'replace_success' => 'Se reemplazó con éxito el Proxy por DIRECT en el archivo de configuración.',
         'replace_fail' => 'Error al reemplazar Proxy por DIRECT, por favor revisa el archivo de configuración.',
+        'subscription' => 'Seleccione la plantilla de conversión de suscripción', 
         'config_update_fail' => 'Error al actualizar el archivo de configuración, por favor revisa la URL o la conexión de red.'
     ],
     'vn' => [
@@ -5416,6 +5424,7 @@ $langData = [
         'config_file_updated' => 'Tệp cấu hình Sing-box đã được cập nhật thành công. Đường dẫn lưu: ',
         'replace_success' => 'Đã thay thế thành công Proxy trong tệp cấu hình thành DIRECT.',
         'replace_fail' => 'Thay thế Proxy thành DIRECT thất bại, vui lòng kiểm tra tệp cấu hình.',
+        'subscription' => 'Chọn mẫu chuyển đổi đăng ký',
         'config_update_fail' => 'Cập nhật tệp cấu hình thất bại, vui lòng kiểm tra URL hoặc mạng.'
     ]
 ];
@@ -5472,14 +5481,14 @@ $translations = $langData[$currentLang];
             <div class="modal-body">
                 <select id="langSelect" class="form-select" onchange="changeLanguage(this.value)">
                     <option value="zh" data-translate="simplified_chinese">Simplified Chinese</option>
-                    <option value="mo" data-translate="traditional_chinese">Traditional Chinese</option>
+                    <option value="hk" data-translate="traditional_chinese">Traditional Chinese</option>
                     <option value="en" data-translate="english">English</option>
-                            <option value="kr" data-translate="korean">Korean</option>
-                            <option value="vn" data-translate="vietnamese">Vietnamese</option>
+                    <option value="kr" data-translate="korean">Korean</option>
+                    <option value="vn" data-translate="vietnamese">Vietnamese</option>
                     <option value="jp" data-translate="japanese"></option>
                     <option value="ru" data-translate="russian"></option>
                     <option value="ar" data-translate="arabic"></option>
-                            <option value="es" data-translate="korean">spanish</option>
+                    <option value="es" data-translate="spanish">spanish</option>
                 </select>
             </div>
             <div class="modal-footer">
@@ -5537,7 +5546,7 @@ function updateFlagIcon(lang) {
 
     const flagMap = {
         'zh': './assets/neko/flags/cn.png', 
-        'mo': './assets/neko/flags/mo.png', 
+        'hk': './assets/neko/flags/hk.png', 
         'en': './assets/neko/flags/us.png',  
         'kr': './assets/neko/flags/kr.png',  
         'jp': './assets/neko/flags/jp.png', 
@@ -5969,7 +5978,7 @@ $lang = $_GET['lang'] ?? 'en';
 }
 </style>
 
-<?php if (in_array($currentLang, ['zh', 'en', 'mo', 'vn', 'jp', 'ru', 'ar', 'es', 'kr'])): ?>
+<?php if (in_array($currentLang, ['zh', 'en', 'hk', 'vn', 'jp', 'ru', 'ar', 'es', 'kr'])): ?>
     <div id="status-bar-component" class="container-sm container-bg callout border border-3 rounded-4 col-11">
         <div class="row align-items-center">
             <div class="col-auto">
@@ -11489,4 +11498,6 @@ window.addEventListener('load', function() {
     });
   });
 </script>
+
+
 
