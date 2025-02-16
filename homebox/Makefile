@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=homebox
-PKG_VERSION:=0.0.0-dev.2023102203
+PKG_VERSION:=0.0.0-dev.2024101306
 PKG_RELEASE:=3
 
 ifeq ($(ARCH),aarch64)
