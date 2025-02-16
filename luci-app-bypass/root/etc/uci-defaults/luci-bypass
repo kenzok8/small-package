@@ -1,8 +1,12 @@
 uci batch <<EOF
-	delete ucitrack.@bypass[-1]
-	add ucitrack bypass
-	set ucitrack.@bypass[-1].init=bypass
-	commit ucitrack
+[ ! -f "/usr/share/ucitrack/luci-app-bypass.json" ] && {
+    cat > /usr/share/ucitrack/luci-app-bypass.json << EEOF
+{
+    "config": "bypass",
+    "init": "bypass"
+}
+EEOF
+}
 	delete firewall.bypass
 	set firewall.bypass=include
 	set firewall.bypass.type=script
