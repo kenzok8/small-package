@@ -80,7 +80,7 @@ function Module:init(t)
 	end
 end
 
-function Module:run(currentStatus, lastStatus, timeDiff)
+function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 	if not self._enabled then
 		return
 	end
