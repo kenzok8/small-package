@@ -76,7 +76,7 @@ function Module:init(t)
 	end
 end
 
-function Module:run(currentStatus, lastStatus, timeDiff)
+function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 	if currentStatus == 1 then
 		if self.attempts == 0 or self._attemptsCounter < self.attempts then
 			if self._deadCounter >= self.deadPeriod then

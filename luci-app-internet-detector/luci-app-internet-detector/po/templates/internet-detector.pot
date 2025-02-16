@@ -101,6 +101,9 @@ msgstr ""
 msgid "Edit down-script"
 msgstr ""
 
+msgid "Edit regular-script"
+msgstr ""
+
 msgid "Edit public-ip-script"
 msgstr ""
 
@@ -289,6 +292,9 @@ msgid ""
 "Period of time without Internet access until the device is rebooted."
 msgstr ""
 
+msgid "Regular script"
+msgstr ""
+
 msgid "Polling interval"
 msgstr ""
 
@@ -314,6 +320,12 @@ msgid "Restart service"
 msgstr ""
 
 msgid "Restart timeout"
+msgstr ""
+
+msgid "Run interval"
+msgstr ""
+
+msgid "Run if Internet state is"
 msgstr ""
 
 msgid "Run service at startup"
@@ -364,7 +376,13 @@ msgstr ""
 msgid "Set the modem to be allowed to use any band."
 msgstr ""
 
+msgid "Shell commands that are run regularly."
+msgstr ""
+
 msgid "Shell commands that run when connected to the Internet."
+msgstr ""
+
+msgid "Shell commands that run regularly at a specified interval. Current state of the Internet is available as value of the <code>$INET_STATE</code> variable (<code>0</code> - connected, <code>1</code> - disconnected)."
 msgstr ""
 
 msgid "Shell commands that run when the public IP address changes. New IP is available as value of the <code>$PUBLIC_IP</code> variable (empty string if undefined)."
@@ -448,7 +466,16 @@ msgstr ""
 msgid "after disconnection"
 msgstr ""
 
-msgid "both"
+msgid "connected"
+msgstr ""
+
+msgid "connected or disconnected"
+msgstr ""
+
+msgid "days"
+msgstr ""
+
+msgid "disconnected"
 msgstr ""
 
 msgid "down-script"

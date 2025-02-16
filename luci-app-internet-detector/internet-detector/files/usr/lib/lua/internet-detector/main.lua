@@ -390,7 +390,7 @@ function InternetDetector:mainLoop()
 				mTimeDiff = 1
 			end
 			mLastTime = mTimeNow
-			e:run(currentStatus, lastStatus, mTimeDiff)
+			e:run(currentStatus, lastStatus, mTimeDiff, mTimeNow)
 		end
 
 		local modulesStatus = {}

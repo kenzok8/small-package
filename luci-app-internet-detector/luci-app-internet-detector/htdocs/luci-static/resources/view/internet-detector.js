@@ -68,7 +68,10 @@ var Timefield = ui.Textfield.extend({
 		let string = '0';
 		if(/^\d+$/.test(value)) {
 			value = Number(value);
-			if(value >= 3600 && (value % 3600) === 0) {
+			if(value >= 86400 && (value % 86400) === 0) {
+				string = String(value / 86400) + 'd';
+			}
+			else if(value >= 3600 && (value % 3600) === 0) {
 				string = String(value / 3600) + 'h';
 			}
 			else if(value >= 60 && (value % 60) === 0) {
@@ -101,9 +104,12 @@ var Timefield = ui.Textfield.extend({
 	getValue() {
 		let rawValue = this.node.querySelector('input').value,
 		    value    = 0,
-		    res      = rawValue.match(/^(\d+)([hms]?)$/);
+		    res      = rawValue.match(/^(\d+)([dhms]?)$/);
 		if(res) {
-			if(res[2] === 'h') {
+			if(res[2] === 'd') {
+				value = Number(res[1]) * 86400;
+			}
+			else if(res[2] === 'h') {
 				value = Number(res[1]) * 3600;
 			}
 			else if(res[2] === 'm') {
@@ -321,8 +327,8 @@ return view.extend({
 				placeholder: _('Type a time string'),
 				validate   : L.bind(
 					function(section, value) {
-						return (/^$|^\d+[hms]?$/.test(value)) ? true : _('Expecting:') +
-							` ${_('One of the following:')}\n - ${_('hours')}: 2h\n - ${_('minutes')}: 10m\n - ${_('seconds')}: 30s\n`;
+						return (/^$|^\d+[dhms]?$/.test(value)) ? true : _('Expecting:') +
+							` ${_('One of the following:')}\n - ${_('days')}: 1d\n - ${_('hours')}: 2h\n - ${_('minutes')}: 10m\n - ${_('seconds')}: 30s\n`;
 					},
 					this,
 					section_id
@@ -560,6 +566,7 @@ return view.extend({
 		/* Main settings */
 
 		// mode
+
 		let mode = s.option(form.ListValue, 'mode',
 			_('Internet detector mode'));
 		mode.value('0', _('Disabled'));
@@ -571,7 +578,6 @@ return view.extend({
 			_('Web UI only: detector works only when the Web UI is open (UI detector).')
 		);
 		mode.default = '0';
-
 
 		/* Service instances configuration */
 
@@ -736,6 +742,7 @@ return view.extend({
 				s.tab('email', _('Email notification'));
 			};
 			s.tab('user_scripts', _('User scripts'));
+			s.tab('regular_script', _('Regular script'));
 		};
 
 		s.addModalOptions = (s, section_id, ev) => {
@@ -1160,7 +1167,7 @@ return view.extend({
 				o.rmempty   = false;
 				o.modalonly = true;
 
-				// up_script edit dialog
+				// up_script edit
 				o = s.taboption('user_scripts', this.CBIBlockFileEdit, this,
 					'up_script',
 					this.configDir + '/up-script.' + s.section,
@@ -1178,7 +1185,7 @@ return view.extend({
 				o.rmempty   = false;
 				o.modalonly = true;
 
-				// down_script edit dialog
+				// down_script edit
 				o = s.taboption('user_scripts', this.CBIBlockFileEdit, this,
 					'down_script',
 					this.configDir + '/down-script.' + s.section,
@@ -1193,6 +1200,48 @@ return view.extend({
 					_('Period of time after disconnecting from Internet before "down-script" runs.')
 				);
 				o.default   = '0';
+				o.rmempty   = false;
+				o.modalonly = true;
+
+				// Regular script
+
+				o = s.taboption('regular_script', form.DummyValue, '_dummy');
+				o.rawhtml = true;
+				o.default = '<div class="cbi-section-descr">' +
+					_('Shell commands that are run regularly.') +
+					'</div>';
+				o.modalonly = true;
+
+				// enabled
+				o = s.taboption('regular_script', form.Flag, 'mod_regular_script_enabled',
+					_('Enabled'));
+				o.rmempty   = false;
+				o.modalonly = true;
+
+				// inet_state
+				o = s.taboption('regular_script', form.ListValue,
+					'mod_regular_script_inet_state', _('Run if Internet state is')
+				);
+				o.modalonly = true;
+				o.value(0, _('connected'));
+				o.value(1, _('disconnected'));
+				o.value(2, _('connected or disconnected'));
+				o.default = '2';
+
+				// regular_script edit
+				o = s.taboption('regular_script', this.CBIBlockFileEdit, this,
+					'regular_script',
+					this.configDir + '/regular-script.' + s.section,
+					_('Edit regular-script'),
+					_('Shell commands that run regularly at a specified interval. Current state of the Internet is available as value of the <code>$INET_STATE</code> variable (<code>0</code> - connected, <code>1</code> - disconnected).')
+				);
+				o.modalonly = true;
+
+				// interval
+				o = s.taboption('regular_script', this.CBITimeInput,
+					'mod_regular_script_interval', _('Run interval')
+				);
+				o.default   = '3600';
 				o.rmempty   = false;
 				o.modalonly = true;
 			};

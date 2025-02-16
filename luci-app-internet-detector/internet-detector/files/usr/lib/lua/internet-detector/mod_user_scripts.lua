@@ -40,7 +40,7 @@ function Module:init(t)
 	end
 end
 
-function Module:run(currentStatus, lastStatus, timeDiff)
+function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 	if currentStatus == 1 then
 		self._aliveCounter       = 0
 		self._downScriptExecuted = false

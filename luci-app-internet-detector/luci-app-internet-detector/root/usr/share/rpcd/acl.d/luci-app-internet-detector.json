@@ -6,7 +6,8 @@
 				"/sys/class/leds": [ "list" ],
 				"/etc/internet-detector/up-script*": [ "read" ],
 				"/etc/internet-detector/down-script*": [ "read" ],
-				"/etc/internet-detector/public-ip-script*": [ "read" ]
+				"/etc/internet-detector/public-ip-script*": [ "read" ],
+				"/etc/internet-detector/regular-script*": [ "read" ]
 			},
 			"uci": [ "internet-detector" ],
 			"ubus": {
@@ -18,7 +19,8 @@
 			"file": {
 				"/etc/internet-detector/up-script*": [ "write" ],
 				"/etc/internet-detector/down-script*": [ "write" ],
-				"/etc/internet-detector/public-ip-script*": [ "write" ]
+				"/etc/internet-detector/public-ip-script*": [ "write" ],
+				"/etc/internet-detector/regular-script*": [ "write" ]
 			},
 			"uci": [ "internet-detector" ]
 		}

@@ -113,6 +113,9 @@ msgstr "Изменить"
 msgid "Edit down-script"
 msgstr "Изменить down-script"
 
+msgid "Edit regular-script"
+msgstr "Изменить regular-script"
+
 msgid "Edit public-ip-script"
 msgstr "Изменить public-ip-script"
 
@@ -314,6 +317,9 @@ msgid ""
 msgstr ""
 "Период времени отсутствия доступа в Интренет перед перезагрузкой устройства."
 
+msgid "Regular script"
+msgstr "Регулярный скрипт"
+
 msgid "Polling interval"
 msgstr "Интервал опроса"
 
@@ -340,6 +346,12 @@ msgstr "Перезапуск службы"
 
 msgid "Restart timeout"
 msgstr "Таймаут перезапуска"
+
+msgid "Run interval"
+msgstr "Интервал запуска"
+
+msgid "Run if Internet state is"
+msgstr "Выполнять если статус Интернет"
 
 msgid "Run service at startup"
 msgstr "Запуск службы при старте"
@@ -389,8 +401,14 @@ msgstr "Экземпляры службы"
 msgid "Set the modem to be allowed to use any band."
 msgstr "Разрешить модему использование любой частоты."
 
+msgid "Shell commands that are run regularly."
+msgstr "Команды shell выполняемые регулярно."
+
 msgid "Shell commands that run when connected to the Internet."
 msgstr "Команды shell выполняемые при подключении к Интернет."
+
+msgid "Shell commands that run regularly at a specified interval. Current state of the Internet is available as value of the <code>$INET_STATE</code> variable (<code>0</code> - connected, <code>1</code> - disconnected)."
+msgstr "Команды shell выполняемые регулярно с заданным интервалом. Текущее состояние Интернет доступно как значение переменной <code>$INET_STATE</code> (<code>0</code> - подключен, <code>1</code> - отключен)."
 
 msgid "Shell commands that run when the public IP address changes. New IP is available as value of the <code>$PUBLIC_IP</code> variable (empty string if undefined)."
 msgstr "Команды shell выполняемые при изменении публичного IP адреса. Новый IP доступен как значение переменной <code>$PUBLIC_IP</code> (пустая строка если не определён)."
@@ -474,11 +492,23 @@ msgstr "Записывать сообщения в системный журна
 msgid "after connection"
 msgstr "после подключения"
 
+msgid "after connection or disconnection"
+msgstr "после подключения или отключения"
+
 msgid "after disconnection"
 msgstr "после отключения"
 
-msgid "after connection or disconnection"
-msgstr "после подключения или отключения"
+msgid "connected"
+msgstr "подключен"
+
+msgid "connected or disconnected"
+msgstr "подключен или отключен"
+
+msgid "days"
+msgstr "дни"
+
+msgid "disconnected"
+msgstr "отключен"
 
 msgid "down-script"
 msgstr "down-script"

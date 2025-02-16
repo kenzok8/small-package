@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=internet-detector
-PKG_VERSION:=1.3.3
+PKG_VERSION:=1.4.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/luci-app-internet-detector>
 
@@ -31,6 +31,7 @@ define Package/$(PKG_NAME)/conffiles
 /etc/internet-detector/down-script.internet
 /etc/internet-detector/up-script.internet
 /etc/internet-detector/public-ip-script.internet
+/etc/internet-detector/regular-script.internet
 endef
 
 define Build/Configure
@@ -46,6 +47,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/etc/internet-detector/down-script.internet $(1)/etc/internet-detector/down-script.internet
 	$(INSTALL_DATA) ./files/etc/internet-detector/up-script.internet $(1)/etc/internet-detector/up-script.internet
 	$(INSTALL_DATA) ./files/etc/internet-detector/public-ip-script.internet $(1)/etc/internet-detector/public-ip-script.internet
+	$(INSTALL_DATA) ./files/etc/internet-detector/regular-script.internet $(1)/etc/internet-detector/regular-script.internet
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/internet-detector $(1)/etc/init.d/internet-detector
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -57,6 +59,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_network_restart.lua $(1)/usr/lib/lua/internet-detector/mod_network_restart.lua
 	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_public_ip.lua $(1)/usr/lib/lua/internet-detector/mod_public_ip.lua
 	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_user_scripts.lua $(1)/usr/lib/lua/internet-detector/mod_user_scripts.lua
+	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_regular_script.lua $(1)/usr/lib/lua/internet-detector/mod_regular_script.lua
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
