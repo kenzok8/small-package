@@ -1,7 +1,6 @@
 <?php
 ob_start();
 include './cfg.php';
-date_default_timezone_set('Asia/Shanghai');
 $uploadDir = '/etc/neko/proxy_provider/';
 $configDir = '/etc/neko/config/';
 
@@ -489,15 +488,15 @@ function download_file($url, $destination) {
     <div id="updateNotification" class="alert alert-info alert-dismissible fade show shadow-lg" role="alert" style="display: none; min-width: 320px; max-width: 600px; opacity: 0.95;">
         <div class="d-flex align-items-center">
             <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-            <strong>🔔 更新通知</strong>
+            <strong data-translate="update_notification">🔔 更新通知</strong>
         </div>
         
         <div class="alert alert-info mt-2 p-2 small">
-            <strong>⚠️ 使用说明：</strong>
+            <strong data-translate="usage_instruction">⚠️ 使用说明</strong>
             <ul class="mb-0 pl-3">
-                <li>通用模板（mihomo.yaml）最多支持<strong>6个</strong>订阅链接</li>
-                <li>请勿更改默认文件名称</li>
-                <li>该模板支持所有格式订阅链接，无需额外转换</li>
+                <li data-translate="max_subscriptions">通用模板（mihomo.yaml）最多支持<strong>6个</strong>订阅链接</li>
+                <li data-translate="no_rename">请勿更改默认文件名称</li>
+                <li data-translate="supports_all_formats">该模板支持所有格式订阅链接，无需额外转换</li>
             </ul>
         </div>
 
@@ -774,7 +773,7 @@ function displayUpdateNotification() {
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="uploadModalLabel" data-translate="uploadFile">上传文件</h5> 
+                <h5 class="modal-title" id="uploadModalLabel" data-translate="uploadFile"></h5> 
                 <button type="button" class="close" data-bs-dismiss="modal" aria-label="close"> 
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -782,13 +781,13 @@ function displayUpdateNotification() {
             <div class="modal-body">
                 <div id="dropZone" class="border border-primary rounded text-center py-4 position-relative">
                     <i class="fas fa-cloud-upload-alt"></i>
-                    <p class="mb-0 mt-3" data-translate="dragOrClickToUpload">拖动文件到此区域上传<br>或者点击下方选择文件按钮</p> 
+                    <p class="mb-0 mt-3" data-translate="dragOrClickToUpload"></p> 
                 </div>
                 <input type="file" id="fileInputModal" class="form-control mt-3" hidden>
-                <button id="selectFileBtn" class="btn btn-primary btn-block mt-3 w-100" data-translate="selectFile">选择文件</button> 
+                <button id="selectFileBtn" class="btn btn-primary btn-block mt-3 w-100" data-translate="selectFile"></button> 
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close">关闭</button> 
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close"></button> 
             </div>
         </div>
     </div>
@@ -1216,7 +1215,7 @@ function initializeAceEditor() {
     }
 
 </script>
-<h2 class="text-center mt-4 mb-4"><?php echo $langData[$currentLang]['subscriptionManagement']; ?></h2>
+<h2 class="text-center mt-4 mb-4" data-translate="subscriptionManagement"></h2>
 
 <?php if (isset($message) && $message): ?>
     <div class="alert alert-info">
@@ -1238,16 +1237,16 @@ function initializeAceEditor() {
                     <form method="post" class="card shadow-sm">
                         <div class="card-body">
                             <div class="form-group">
-                                <h5 for="subscription_url_<?php echo $displayIndex; ?>" class="mb-2"><?php echo $langData[$currentLang]['subscriptionLink']; ?> <?php echo $displayIndex; ?></h5>
-                                <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" placeholder="<?php echo $langData[$currentLang]['enterSubscriptionUrl']; ?>">
+                                <h5 for="subscription_url_<?php echo $displayIndex; ?>" class="mb-2" data-translate="subscriptionLink"><?php echo $displayIndex; ?></h5>
+                                <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" data-translate-placeholder="enterSubscriptionUrl">
                             </div>
                             <div class="form-group">
-                                <label for="custom_file_name_<?php echo $displayIndex; ?>"><?php echo $langData[$currentLang]['customFileName']; ?></label>
+                                <label for="custom_file_name_<?php echo $displayIndex; ?>"data-translate="customFileName"></label>
                                 <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
                             </div>
                             <input type="hidden" name="index" value="<?php echo $i; ?>">
                             <div class="text-center mt-3"> 
-                                <button type="submit" name="update" class="btn btn-info btn-block"><i class="bi bi-arrow-repeat"></i> <?php echo $langData[$currentLang]['updateSubscription']; ?> <?php echo $displayIndex; ?></button>
+                                <button type="submit" name="update" class="btn btn-info btn-block"><i class="bi bi-arrow-repeat"></i> <span data-translate="updateSubscription">Settings</span> <?php echo $displayIndex; ?></button>
                             </div>
                         </div>
                     </form>

@@ -1,7 +1,6 @@
 <?php
 ob_start();
 include './cfg.php';
-date_default_timezone_set('Asia/Shanghai');
 
 $dataFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
 $lastSubscribeUrl = '';

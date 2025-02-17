@@ -339,7 +339,7 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">cancel</button>
-                <button type="button" class="btn btn-primary" onclick="confirmMihomoVersion()" data-translate="confirm_button">confirm</button>
+                <button type="button" class="btn btn-primary" onclick="confirmMihomoVersion()" data-translate="confirmButton">confirm</button>
             </div>
         </div>
     </div>
