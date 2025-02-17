@@ -8,6 +8,10 @@ uci batch <<EOF
 EEOF
 /etc/init.d/ucitrack reload
 }
+	delete ucitrack.@bypass[-1]
+	add ucitrack bypass
+	set ucitrack.@bypass[-1].init=bypass
+	commit ucitrack
 	delete firewall.bypass
 	set firewall.bypass=include
 	set firewall.bypass.type=script
