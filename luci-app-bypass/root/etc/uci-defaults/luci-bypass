@@ -6,6 +6,7 @@ uci batch <<EOF
     "init": "bypass"
 }
 EEOF
+/etc/init.d/ucitrack reload
 }
 	delete firewall.bypass
 	set firewall.bypass=include
