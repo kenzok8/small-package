@@ -1036,75 +1036,49 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function translateText(text, targetLang = null) {
+    if (!text || text.trim() === '') return text;
+
     if (!targetLang) {
-        targetLang = localStorage.getItem('language') || 'zh';  
+        targetLang = localStorage.getItem('language') || 'zh';
     }
 
-    if (targetLang === 'zh') {
-        targetLang = 'zh-CN';
-    }
-
-    if (targetLang === 'hk') {
-        targetLang = 'zh-HK';
-    }
-
-    if (targetLang === 'vn') {
-        targetLang = 'vi';
-    }
-
-    if (targetLang === 'jp') {
-        targetLang = 'ja';
-    }
-
-    if (targetLang === 'en') {
-        targetLang = 'en-GB'; 
-    }
-
-    if (targetLang === 'kr') {
-        targetLang = 'ko'; 
-    }
+    if (targetLang === 'zh') targetLang = 'zh-CN';
+    if (targetLang === 'hk') targetLang = 'zh-HK';
+    if (targetLang === 'vn') targetLang = 'vi';
+    if (targetLang === 'jp') targetLang = 'ja';
+    if (targetLang === 'en') targetLang = 'en-GB';
+    if (targetLang === 'kr') targetLang = 'ko';
+    if (targetLang === 'ru') targetLang = 'ru'; 
 
     const isTranslationEnabled = localStorage.getItem('translationEnabled') === 'true';
-    
-    if (!isTranslationEnabled) {
-        return text;
-    }
+    if (!isTranslationEnabled) return text;
 
     const cacheKey = `trans_${text}_${targetLang}`;
     const cachedTranslation = localStorage.getItem(cacheKey);
-    if (cachedTranslation) {
-        return cachedTranslation;
-    }
+    if (cachedTranslation) return cachedTranslation;
 
     const apis = [
         {
-            url: 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + targetLang,
+            url: `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`,
             method: 'GET',
-            parseResponse: (data) => data.responseData.translatedText
+            parseResponse: (data) => data.responseData?.translatedText || null
         },
         {
             url: 'https://libretranslate.com/translate',
             method: 'POST',
             body: JSON.stringify({
                 q: text,
-                source: 'sourceLang',
+                source: 'en', 
                 target: targetLang,
                 format: 'text'
             }),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            parseResponse: (data) => data.translatedText
+            headers: { 'Content-Type': 'application/json' },
+            parseResponse: (data) => data?.translatedText || null
         },
         {
             url: `https://lingva.ml/api/v1/en/${targetLang}/${encodeURIComponent(text)}`,
             method: 'GET',
-            parseResponse: (data) => data.translation
-        },
-        {
-            url: `https://simplytranslate.org/api/translate?engine=google&from=en&to=${targetLang}&text=${encodeURIComponent(text)}`,
-            method: 'GET',
-            parseResponse: (data) => data.translatedText
+            parseResponse: (data) => data?.translation || null
         }
     ];
 
