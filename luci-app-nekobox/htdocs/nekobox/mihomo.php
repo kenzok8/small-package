@@ -724,89 +724,89 @@ function getSubscriptionUrlFromFile($file) {
                     <div class="mb-3">
                         <label for="template" class="form-label" data-translate="subscription"></label>
                         <select class="form-select" id="template" name="template" required>
-                        <optgroup label="通用" style="color: #28a745; font-size: 20px;">
-                            <option value="1" <?php echo ($_POST['template'] ?? '') === '1' ? 'selected' : ''; ?>>默认</option>
-                            <option value="2" <?php echo ($_POST['template'] ?? '') === '2' ? 'selected' : ''; ?>>默认（自动测速）</option>
-                            <option value="3" <?php echo ($_POST['template'] ?? '') === '3' ? 'selected' : ''; ?>>默认（索尼电视专用）</option>
-                            <option value="4" <?php echo ($_POST['template'] ?? '') === '4' ? 'selected' : ''; ?>>默认（附带用于 Clash 的 AdGuard DNS）</option>
-                            <option value="5" <?php echo ($_POST['template'] ?? '') === '5' ? 'selected' : ''; ?>>ACL_全分组 Dream修改版</option>
-                            <option value="6" <?php echo ($_POST['template'] ?? '') === '6' ? 'selected' : ''; ?>>ACL_精简分组 Dream修改版</option>
-                            <option value="7" <?php echo ($_POST['template'] ?? '') === '7' ? 'selected' : ''; ?>>emby-TikTok-流媒体分组-去广告加强版</option>
-                            <option value="8" <?php echo ($_POST['template'] ?? '') === '8' ? 'selected' : ''; ?>>流媒体通用分组</option>
+                        <optgroup label="通用" style="color: #28a745; font-size: 20px;" data-translate="general">
+                            <option value="1" <?php echo ($_POST['template'] ?? '') === '1' ? 'selected' : ''; ?> data-translate="default">默认</option>
+                            <option value="2" <?php echo ($_POST['template'] ?? '') === '2' ? 'selected' : ''; ?> data-translate="auto_test">默认（自动测速）</option>
+                            <option value="3" <?php echo ($_POST['template'] ?? '') === '3' ? 'selected' : ''; ?> data-translate="sony_tv">默认（索尼电视专用）</option>
+                            <option value="4" <?php echo ($_POST['template'] ?? '') === '4' ? 'selected' : ''; ?> data-translate="clash_adguard">默认（附带用于 Clash 的 AdGuard DNS）</option>
+                            <option value="5" <?php echo ($_POST['template'] ?? '') === '5' ? 'selected' : ''; ?> data-translate="acl_full_dream">ACL_全分组 Dream修改版</option>
+                            <option value="6" <?php echo ($_POST['template'] ?? '') === '6' ? 'selected' : ''; ?> data-translate="acl_simplified_dream">ACL_精简分组 Dream修改版</option>
+                            <option value="7" <?php echo ($_POST['template'] ?? '') === '7' ? 'selected' : ''; ?> data-translate="emby_tiktok_stream">emby-TikTok-流媒体分组-去广告加强版</option>
+                            <option value="8" <?php echo ($_POST['template'] ?? '') === '8' ? 'selected' : ''; ?> data-translate="stream_general_group">流媒体通用分组</option>
                         </optgroup>
-                        <optgroup label="ACL规则" style="color: #fd7e14; font-size: 20px;">
-                            <option value="9" <?php echo ($_POST['template'] ?? '') === '9' ? 'selected' : ''; ?>>ACL_默认版</option>
-                            <option value="10" <?php echo ($_POST['template'] ?? '') === '10' ? 'selected' : ''; ?>>ACL_无测速版</option>
-                            <option value="11" <?php echo ($_POST['template'] ?? '') === '11' ? 'selected' : ''; ?>>ACL_去广告版</option>
-                            <option value="12" <?php echo ($_POST['template'] ?? '') === '12' ? 'selected' : ''; ?>>ACL_多国家版</option>
-                            <option value="13" <?php echo ($_POST['template'] ?? '') === '13' ? 'selected' : ''; ?>>ACL_无Reject版</option>
-                            <option value="14" <?php echo ($_POST['template'] ?? '') === '14' ? 'selected' : ''; ?>>ACL_无测速精简版</option>
-                            <option value="15" <?php echo ($_POST['template'] ?? '') === '15' ? 'selected' : ''; ?>>ACL_全分组版</option>
-                            <option value="16" <?php echo ($_POST['template'] ?? '') === '16' ? 'selected' : ''; ?>>ACL_全分组谷歌版</option>
-                            <option value="17" <?php echo ($_POST['template'] ?? '') === '17' ? 'selected' : ''; ?>>ACL_全分组多模式版</option>
-                            <option value="18" <?php echo ($_POST['template'] ?? '') === '18' ? 'selected' : ''; ?>>ACL_全分组奈飞版</option>
-                            <option value="19" <?php echo ($_POST['template'] ?? '') === '19' ? 'selected' : ''; ?>>ACL_精简版</option>
-                            <option value="20" <?php echo ($_POST['template'] ?? '') === '20' ? 'selected' : ''; ?>>ACL_去广告精简版</option>
-                            <option value="21" <?php echo ($_POST['template'] ?? '') === '21' ? 'selected' : ''; ?>>ACL_Fallback精简版</option>
-                            <option value="22" <?php echo ($_POST['template'] ?? '') === '22' ? 'selected' : ''; ?>>ACL_多国家精简版</option>
-                            <option value="23" <?php echo ($_POST['template'] ?? '') === '23' ? 'selected' : ''; ?>>ACL_多模式精简版</option>
+                        <optgroup label="ACL规则" style="color: #fd7e14; font-size: 20px;" data-translate="acl_rules">
+                            <option value="9" <?php echo ($_POST['template'] ?? '') === '9' ? 'selected' : ''; ?> data-translate="acl_default">ACL_默认版</option>
+                            <option value="10" <?php echo ($_POST['template'] ?? '') === '10' ? 'selected' : ''; ?> data-translate="acl_no_test">ACL_无测速版</option>
+                            <option value="11" <?php echo ($_POST['template'] ?? '') === '11' ? 'selected' : ''; ?> data-translate="acl_adfree">ACL_去广告版</option>
+                            <option value="12" <?php echo ($_POST['template'] ?? '') === '12' ? 'selected' : ''; ?> data-translate="acl_multicountry">ACL_多国家版</option>
+                            <option value="13" <?php echo ($_POST['template'] ?? '') === '13' ? 'selected' : ''; ?> data-translate="acl_no_reject">ACL_无Reject版</option>
+                            <option value="14" <?php echo ($_POST['template'] ?? '') === '14' ? 'selected' : ''; ?> data-translate="acl_no_speedtest_simplified">ACL_无测速精简版</option>
+                            <option value="15" <?php echo ($_POST['template'] ?? '') === '15' ? 'selected' : ''; ?> data-translate="acl_full_group">ACL_全分组版</option>
+                            <option value="16" <?php echo ($_POST['template'] ?? '') === '16' ? 'selected' : ''; ?> data-translate="acl_full_group_google">ACL_全分组谷歌版</option>
+                            <option value="17" <?php echo ($_POST['template'] ?? '') === '17' ? 'selected' : ''; ?> data-translate="acl_full_group_multi_mode">ACL_全分组多模式版</option>
+                            <option value="18" <?php echo ($_POST['template'] ?? '') === '18' ? 'selected' : ''; ?> data-translate="acl_full_group_nflx">ACL_全分组奈飞版</option>
+                            <option value="19" <?php echo ($_POST['template'] ?? '') === '19' ? 'selected' : ''; ?> data-translate="acl_simplified">ACL_精简版</option>
+                            <option value="20" <?php echo ($_POST['template'] ?? '') === '20' ? 'selected' : ''; ?> data-translate="acl_adfree_simplified">ACL_去广告精简版</option>
+                            <option value="21" <?php echo ($_POST['template'] ?? '') === '21' ? 'selected' : ''; ?> data-translate="acl_fallback_simplified">ACL_Fallback精简版</option>
+                            <option value="22" <?php echo ($_POST['template'] ?? '') === '22' ? 'selected' : ''; ?> data-translate="acl_multi_country_simplified">ACL_多国家精简版</option>
+                            <option value="23" <?php echo ($_POST['template'] ?? '') === '23' ? 'selected' : ''; ?> data-translate="acl_multi_mode_simplified">ACL_多模式精简版</option>
                         </optgroup>
-                        <optgroup label="全网搜集规则" style="color: #6f42c1; font-size: 20px;">
-                            <option value="24" <?php echo ($_POST['template'] ?? '') === '24' ? 'selected' : ''; ?>>常规规则</option>
-                            <option value="25" <?php echo ($_POST['template'] ?? '') === '25' ? 'selected' : ''; ?>>酷酷自用</option>
-                            <option value="26" <?php echo ($_POST['template'] ?? '') === '26' ? 'selected' : ''; ?>>PharosPro无测速</option>
-                            <option value="27" <?php echo ($_POST['template'] ?? '') === '27' ? 'selected' : ''; ?>>分区域故障转移</option>
-                            <option value="28" <?php echo ($_POST['template'] ?? '') === '28' ? 'selected' : ''; ?>>分区域自动测速</option>
-                            <option value="29" <?php echo ($_POST['template'] ?? '') === '29' ? 'selected' : ''; ?>>分区域无自动测速</option>
+                        <optgroup label="全网搜集规则" style="color: #6f42c1; font-size: 20px;" data-translate="global_collection_rules">
+                            <option value="24" <?php echo ($_POST['template'] ?? '') === '24' ? 'selected' : ''; ?> data-translate="general_rules">常规规则</option>
+                            <option value="25" <?php echo ($_POST['template'] ?? '') === '25' ? 'selected' : ''; ?> data-translate="cool_private">酷酷自用</option>
+                            <option value="26" <?php echo ($_POST['template'] ?? '') === '26' ? 'selected' : ''; ?> data-translate="pharos_no_test">PharosPro无测速</option>
+                            <option value="27" <?php echo ($_POST['template'] ?? '') === '27' ? 'selected' : ''; ?> data-translate="region_failover">分区域故障转移</option>
+                            <option value="28" <?php echo ($_POST['template'] ?? '') === '28' ? 'selected' : ''; ?> data-translate="regional_auto_test">分区域自动测速</option>
+                            <option value="29" <?php echo ($_POST['template'] ?? '') === '29' ? 'selected' : ''; ?> data-translate="regional_no_auto_test">分区域无自动测速</option>
                             <option value="30" <?php echo ($_POST['template'] ?? '') === '30' ? 'selected' : ''; ?>>OoHHHHHHH</option>
                             <option value="31" <?php echo ($_POST['template'] ?? '') === '31' ? 'selected' : ''; ?>>CFW-TAP</option>
-                            <option value="32" <?php echo ($_POST['template'] ?? '') === '32' ? 'selected' : ''; ?>>lhl77全分组（定期更新）</option>
-                            <option value="33" <?php echo ($_POST['template'] ?? '') === '33' ? 'selected' : ''; ?>>lhl77简易版（定期更新）</option>
-                            <option value="34" <?php echo ($_POST['template'] ?? '') === '34' ? 'selected' : ''; ?>>ConnersHua 神机规则 Outbound</option>
-                            <option value="35" <?php echo ($_POST['template'] ?? '') === '35' ? 'selected' : ''; ?>>ConnersHua 神机规则 Inbound 回国专用</option>
-                            <option value="36" <?php echo ($_POST['template'] ?? '') === '36' ? 'selected' : ''; ?>>lhie1 洞主规则（使用 Clash 分组规则）</option>
-                            <option value="37" <?php echo ($_POST['template'] ?? '') === '37' ? 'selected' : ''; ?>>lhie1 洞主规则完整版</option>
-                            <option value="38" <?php echo ($_POST['template'] ?? '') === '38' ? 'selected' : ''; ?>>eHpo1 规则</option>
-                            <option value="39" <?php echo ($_POST['template'] ?? '') === '39' ? 'selected' : ''; ?>>多策略组默认白名单模式</option>
-                            <option value="40" <?php echo ($_POST['template'] ?? '') === '40' ? 'selected' : ''; ?>>多策略组可以有效减少审计触发</option>
-                            <option value="41" <?php echo ($_POST['template'] ?? '') === '41' ? 'selected' : ''; ?>>精简策略默认白名单</option>
-                            <option value="42" <?php echo ($_POST['template'] ?? '') === '42' ? 'selected' : ''; ?>>多策略增加SMTP策略</option>
-                            <option value="43" <?php echo ($_POST['template'] ?? '') === '43' ? 'selected' : ''; ?>>无策略入门推荐</option>
-                            <option value="44" <?php echo ($_POST['template'] ?? '') === '44' ? 'selected' : ''; ?>>无策略入门推荐国家分组</option>
-                            <option value="45" <?php echo ($_POST['template'] ?? '') === '45' ? 'selected' : ''; ?>>无策略仅IPIP CN + Final</option>
-                            <option value="46" <?php echo ($_POST['template'] ?? '') === '46' ? 'selected' : ''; ?>>无策略魅影vip分组</option>
-                            <option value="47" <?php echo ($_POST['template'] ?? '') === '47' ? 'selected' : ''; ?>>品云专属配置（仅香港区域分组）</option>
-                            <option value="48" <?php echo ($_POST['template'] ?? '') === '48' ? 'selected' : ''; ?>>品云专属配置（全地域分组）</option>
-                            <option value="49" <?php echo ($_POST['template'] ?? '') === '49' ? 'selected' : ''; ?>>nzw9314 规则</option>
-                            <option value="50" <?php echo ($_POST['template'] ?? '') === '50' ? 'selected' : ''; ?>>maicoo-l 规则</option>
-                            <option value="51" <?php echo ($_POST['template'] ?? '') === '51' ? 'selected' : ''; ?>>DlerCloud Platinum 李哥定制规则</option>
-                            <option value="52" <?php echo ($_POST['template'] ?? '') === '52' ? 'selected' : ''; ?>>DlerCloud Gold 李哥定制规则</option>
-                            <option value="53" <?php echo ($_POST['template'] ?? '') === '53' ? 'selected' : ''; ?>>DlerCloud Silver 李哥定制规则</option>
-                            <option value="54" <?php echo ($_POST['template'] ?? '') === '54' ? 'selected' : ''; ?>>ProxyStorage自用</option>
-                            <option value="55" <?php echo ($_POST['template'] ?? '') === '55' ? 'selected' : ''; ?>>ShellClash修改版规则 (by UlinoyaPed)</option>
+                            <option value="32" <?php echo ($_POST['template'] ?? '') === '32' ? 'selected' : ''; ?> data-translate="lhl77_full_group">lhl77全分组（定期更新）</option>
+                            <option value="33" <?php echo ($_POST['template'] ?? '') === '33' ? 'selected' : ''; ?> data-translate="lhl77_simple">lhl77简易版（定期更新）</option>
+                            <option value="34" <?php echo ($_POST['template'] ?? '') === '34' ? 'selected' : ''; ?> data-translate="connershua_outbound">ConnersHua 神机规则 Outbound</option>
+                            <option value="35" <?php echo ($_POST['template'] ?? '') === '35' ? 'selected' : ''; ?> data-translate="connershua_inbound">ConnersHua 神机规则 Inbound 回国专用</option>
+                            <option value="36" <?php echo ($_POST['template'] ?? '') === '36' ? 'selected' : ''; ?> data-translate="lhie1_dongzhu">lhie1 洞主规则（使用 Clash 分组规则）</option>
+                            <option value="37" <?php echo ($_POST['template'] ?? '') === '37' ? 'selected' : ''; ?> data-translate="lhie1_dongzhu_full">lhie1 洞主规则完整版</option>
+                            <option value="38" <?php echo ($_POST['template'] ?? '') === '38' ? 'selected' : ''; ?> data-translate="epho1">eHpo1 规则</option>
+                            <option value="39" <?php echo ($_POST['template'] ?? '') === '39' ? 'selected' : ''; ?> data-translate="multi_strategy_default_whitelist">多策略组默认白名单模式</option>
+                            <option value="40" <?php echo ($_POST['template'] ?? '') === '40' ? 'selected' : ''; ?> data-translate="multi_strategy_reduced_audit">多策略组可以有效减少审计触发</option>
+                            <option value="41" <?php echo ($_POST['template'] ?? '') === '41' ? 'selected' : ''; ?> data-translate="simplified_strategy_default_whitelist">精简策略默认白名单</option>
+                            <option value="42" <?php echo ($_POST['template'] ?? '') === '42' ? 'selected' : ''; ?> data-translate="multi_strategy_smtp">多策略增加SMTP策略</option>
+                            <option value="43" <?php echo ($_POST['template'] ?? '') === '43' ? 'selected' : ''; ?> data-translate="no_strategy_recommended">无策略入门推荐</option>
+                            <option value="44" <?php echo ($_POST['template'] ?? '') === '44' ? 'selected' : ''; ?> data-translate="no_strategy_country_group">无策略入门推荐国家分组</option>
+                            <option value="45" <?php echo ($_POST['template'] ?? '') === '45' ? 'selected' : ''; ?> data-translate="no_strategy_advanced">无策略进阶版</option>
+                            <option value="46" <?php echo ($_POST['template'] ?? '') === '46' ? 'selected' : ''; ?> data-translate="no_strategy_shadow_vip">无策略魅影vip分组</option>
+                            <option value="47" <?php echo ($_POST['template'] ?? '') === '47' ? 'selected' : ''; ?> data-translate="pinyun_exclusive_hk">品云专属配置（仅香港区域分组）</option>
+                            <option value="48" <?php echo ($_POST['template'] ?? '') === '48' ? 'selected' : ''; ?> data-translate="pinyun_exclusive_all_regions">品云专属配置（全地域分组）</option>
+                            <option value="49" <?php echo ($_POST['template'] ?? '') === '49' ? 'selected' : ''; ?> data-translate="nzw9314_rules">nzw9314 规则</option>
+                            <option value="50" <?php echo ($_POST['template'] ?? '') === '50' ? 'selected' : ''; ?> data-translate="maicoo_l_rules">maicoo-l 规则</option>
+                            <option value="51" <?php echo ($_POST['template'] ?? '') === '51' ? 'selected' : ''; ?> data-translate="dlercloud_platinum">DlerCloud Platinum 李哥定制规则</option>
+                            <option value="52" <?php echo ($_POST['template'] ?? '') === '52' ? 'selected' : ''; ?> data-translate="dlercloud_gold">DlerCloud Gold 李哥定制规则</option>
+                            <option value="53" <?php echo ($_POST['template'] ?? '') === '53' ? 'selected' : ''; ?> data-translate="dlercloud_silver">DlerCloud Silver 李哥定制规则</option>
+                            <option value="54" <?php echo ($_POST['template'] ?? '') === '54' ? 'selected' : ''; ?> data-translate="proxystorage_personal">ProxyStorage自用</option>
+                            <option value="55" <?php echo ($_POST['template'] ?? '') === '55' ? 'selected' : ''; ?> data-translate="shellclash_modified">ShellClash修改版规则 (by UlinoyaPed)</option>
                         </optgroup>
-                        <optgroup label="各大机场规则" style="color: #007bff; font-size: 20px;">
+                        <optgroup label="各大机场规则" style="color: #007bff; font-size: 20px;" data-translate="airport_rules">
                             <option value="56" <?php echo ($_POST['template'] ?? '') === '56' ? 'selected' : ''; ?>>EXFLUX</option>
                             <option value="57" <?php echo ($_POST['template'] ?? '') === '57' ? 'selected' : ''; ?>>NaNoport</option>
                             <option value="58" <?php echo ($_POST['template'] ?? '') === '58' ? 'selected' : ''; ?>>CordCloud</option>
                             <option value="59" <?php echo ($_POST['template'] ?? '') === '59' ? 'selected' : ''; ?>>BigAirport</option>
-                            <option value="60" <?php echo ($_POST['template'] ?? '') === '60' ? 'selected' : ''; ?>>跑路云</option>
+                            <option value="60" <?php echo ($_POST['template'] ?? '') === '60' ? 'selected' : ''; ?> data-translate="runaway_cloud">跑路云</option>
                             <option value="61" <?php echo ($_POST['template'] ?? '') === '61' ? 'selected' : ''; ?>>WaveCloud</option>
-                            <option value="62" <?php echo ($_POST['template'] ?? '') === '62' ? 'selected' : ''; ?>>几鸡</option>
-                            <option value="63" <?php echo ($_POST['template'] ?? '') === '63' ? 'selected' : ''; ?>>四季加速</option>
+                            <option value="62" <?php echo ($_POST['template'] ?? '') === '62' ? 'selected' : ''; ?> data-translate="jiji">几鸡</option>
+                            <option value="63" <?php echo ($_POST['template'] ?? '') === '63' ? 'selected' : ''; ?> data-translate="four_seasons_acceleration">四季加速</option>
                             <option value="64" <?php echo ($_POST['template'] ?? '') === '64' ? 'selected' : ''; ?>>ImmTelecom</option>
                             <option value="65" <?php echo ($_POST['template'] ?? '') === '65' ? 'selected' : ''; ?>>AmyTelecom</option>
                             <option value="66" <?php echo ($_POST['template'] ?? '') === '66' ? 'selected' : ''; ?>>LinkCube</option>
                             <option value="67" <?php echo ($_POST['template'] ?? '') === '67' ? 'selected' : ''; ?>>Miaona</option>
                             <option value="68" <?php echo ($_POST['template'] ?? '') === '68' ? 'selected' : ''; ?>>Foo&Friends</option>
                             <option value="69" <?php echo ($_POST['template'] ?? '') === '69' ? 'selected' : ''; ?>>ABCloud</option>
-                            <option value="70" <?php echo ($_POST['template'] ?? '') === '70' ? 'selected' : ''; ?>>咸鱼</option>
-                            <option value="71" <?php echo ($_POST['template'] ?? '') === '71' ? 'selected' : ''; ?>>便利店</option>
+                            <option value="70" <?php echo ($_POST['template'] ?? '') === '70' ? 'selected' : ''; ?> data-translate="saltedfish">咸鱼</option>
+                            <option value="71" <?php echo ($_POST['template'] ?? '') === '71' ? 'selected' : ''; ?> data-translate="convenience_store">便利店</option>
                             <option value="72" <?php echo ($_POST['template'] ?? '') === '72' ? 'selected' : ''; ?>>CNIX</option>
                             <option value="73" <?php echo ($_POST['template'] ?? '') === '73' ? 'selected' : ''; ?>>Nirvana</option>
                             <option value="74" <?php echo ($_POST['template'] ?? '') === '74' ? 'selected' : ''; ?>>V2Pro</option>
-                            <option value="75" <?php echo ($_POST['template'] ?? '') === '75' ? 'selected' : ''; ?>>史迪仔-自动测速</option>
-                            <option value="76" <?php echo ($_POST['template'] ?? '') === '76' ? 'selected' : ''; ?>>史迪仔-负载均衡</option>
+                            <option value="75" <?php echo ($_POST['template'] ?? '') === '75' ? 'selected' : ''; ?> data-translate="stitch_auto_test">史迪仔-自动测速</option>
+                            <option value="76" <?php echo ($_POST['template'] ?? '') === '76' ? 'selected' : ''; ?> data-translate="stitch_load_balance">史迪仔-负载均衡</option>
                             <option value="77" <?php echo ($_POST['template'] ?? '') === '77' ? 'selected' : ''; ?>>Maying</option>
                             <option value="78" <?php echo ($_POST['template'] ?? '') === '78' ? 'selected' : ''; ?>>Ytoo</option>
                             <option value="79" <?php echo ($_POST['template'] ?? '') === '79' ? 'selected' : ''; ?>>w8ves</option>
@@ -818,7 +818,7 @@ function getSubscriptionUrlFromFile($file) {
                             <option value="85" <?php echo ($_POST['template'] ?? '') === '85' ? 'selected' : ''; ?>>Scholar</option>
                             <option value="86" <?php echo ($_POST['template'] ?? '') === '86' ? 'selected' : ''; ?>>Flowercloud</option>
                         </optgroup>
-                        <optgroup label="特殊" style="color: #ff0000; font-size: 20px;">
+                        <optgroup label="特殊" style="color: #ff0000; font-size: 20px;" data-translate="special">
                             <option value="87" <?php echo ($_POST['template'] ?? '') === '87' ? 'selected' : ''; ?>>NeteaseUnblock</option>
                             <option value="88" <?php echo ($_POST['template'] ?? '') === '88' ? 'selected' : ''; ?>>Basic</option>
                         </optgroup>

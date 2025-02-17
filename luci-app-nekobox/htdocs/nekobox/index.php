@@ -778,7 +778,6 @@ $(document).ready(function() {
             if (data.hasUpdate) {
                 $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/nekobox/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
             }
-
             console.log('Current Version:', data.currentVersion);
             console.log('Latest Version:', data.latestVersion);
             console.log('Has Update:', data.hasUpdate);
@@ -1164,16 +1163,16 @@ window.onload = function() {
     }
 
 </style>
-<h2 class="text-center"><?= $langData[$currentLang]['log'] ?></h2>
+<h2 class="text-center" data-translate="log"></h2>
 <ul class="nav nav-pills mb-3" id="logTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true"><?= $langData[$currentLang]['nekoBoxLog'] ?></a>
+        <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true"><span data-translate="nekoBoxLog"></span></a>
     </li>
     <li class="nav-item" role="presentation">
-        <a class="nav-link" id="mihomoLogTab" data-bs-toggle="pill" href="#mihomoLog" role="tab" aria-controls="mihomoLog" aria-selected="false"><?= $langData[$currentLang]['mihomoLog'] ?></a>
+        <a class="nav-link" id="mihomoLogTab" data-bs-toggle="pill" href="#mihomoLog" role="tab" aria-controls="mihomoLog" aria-selected="false"><span data-translate="mihomoLog"></span></a>
     </li>
     <li class="nav-item" role="presentation">
-        <a class="nav-link" id="singboxLogTab" data-bs-toggle="pill" href="#singboxLog" role="tab" aria-controls="singboxLog" aria-selected="false"><?= $langData[$currentLang]['singboxLog'] ?></a>
+        <a class="nav-link" id="singboxLogTab" data-bs-toggle="pill" href="#singboxLog" role="tab" aria-controls="singboxLog" aria-selected="false"><span data-translate="singboxLog"></span></a>
     </li>
 </ul>
 <div class="tab-content" id="logTabsContent">
@@ -1184,7 +1183,7 @@ window.onload = function() {
             </div>
             <div class="card-footer text-center">
                 <form action="index.php" method="post">
-                    <button type="submit" name="clear_plugin_log" class="btn btn-danger"><i class="bi bi-trash"></i> <?= $langData[$currentLang]['clearLog'] ?></button>
+                    <button type="submit" name="clear_plugin_log" class="btn btn-danger"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
                 </form>
             </div>
         </div>
@@ -1197,7 +1196,7 @@ window.onload = function() {
             </div>
             <div class="card-footer text-center">
                 <form action="index.php" method="post">
-                    <button type="submit" name="neko" value="clear" class="btn btn-danger"><i class="bi bi-trash"></i> <?= $langData[$currentLang]['clearLog'] ?></button>
+                    <button type="submit" name="neko" value="clear" class="btn btn-danger"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
                 </form>
             </div>
         </div>
@@ -1212,10 +1211,10 @@ window.onload = function() {
                 <form action="index.php" method="post" class="form-inline">
                     <div class="form-check form-check-inline mb-2">
                         <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
-                        <label class="form-check-label" for="autoRefresh"><?= $langData[$currentLang]['autoRefresh'] ?></label>
+                        <label class="form-check-label" for="autoRefresh"><span data-translate="autoRefresh"></span></label>
                     </div>
-                    <button type="submit" name="clear_singbox_log" class="btn btn-danger me-2"><i class="bi bi-trash"></i> <?= $langData[$currentLang]['clearLog'] ?></button>
-                    <button type="button" class="btn btn-primary me-2" data-toggle="modal" data-target="#cronModal"><i class="bi bi-clock"></i> <?= $langData[$currentLang]['scheduledRestart'] ?></button>
+                    <button type="submit" name="clear_singbox_log" class="btn btn-danger me-2"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
+                    <button type="button" class="btn btn-primary me-2" data-toggle="modal" data-target="#cronModal"><i class="bi bi-clock"></i> <span data-translate="scheduledRestart"></span></button>
                 </form>
             </div>
         </div>
@@ -1226,15 +1225,15 @@ window.onload = function() {
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="cronModalLabel"><?= $langData[$currentLang]['setCronTitle'] ?></h5>
+        <h5 class="modal-title" id="cronModalLabel" data-translate="setCronTitle"></h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
         <form id="cronForm" method="POST">
-          <div class="form-group">
-            <label for="cronTime"><?= $langData[$currentLang]['setRestartTime'] ?></label>
+          <div class="form-group ">
+            <label for="cronTime" data-translate="setRestartTime"></label>
             <input type="text" class="form-control mt-3" id="cronTime" name="cronTime" value="0 3 * * *" required>
           </div>
           <div class="alert alert-info mt-3">
@@ -1250,8 +1249,8 @@ window.onload = function() {
         <div id="resultMessage" class="mt-3"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal"><?= $langData[$currentLang]['cancel'] ?></button>
-        <button type="submit" class="btn btn-primary" form="cronForm"><?= $langData[$currentLang]['save'] ?></button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-translate="cancel"></button>
+        <button type="submit" class="btn btn-primary" form="cronForm" data-translate="save"></button>
       </div>
     </div>
   </div>
