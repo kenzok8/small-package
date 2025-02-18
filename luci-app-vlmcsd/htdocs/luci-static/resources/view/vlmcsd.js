@@ -13,7 +13,7 @@ const callServiceList = rpc.declare({
 });
 
 function getServiceStatus() {
-	return L.resolveDefault(callServiceList('vlmcsd'), {}).then(res => 
+	return L.resolveDefault(callServiceList('vlmcsd'), {}).then(res =>
 		res?.['vlmcsd']?.['instances']?.['vlmcsd']?.['running']
 	);
 }
@@ -57,7 +57,8 @@ return view.extend({
 			null,
 			_("This is the content of the file '/etc/vlmcsd.ini', you can edit it here, usually no modification is needed."));
 		o.rows = 20;
-		o.cfgvalue = () => fs.trimmed('/etc/vlmcsd.ini');
+		o.monospace = true;
+		o.load = () => fs.trimmed('/etc/vlmcsd.ini');
 		o.write = (_, value) => fs.write('/etc/vlmcsd.ini', value.trim().replace(/\r\n/g, '\n') + '\n');
 
 		return m.render();
