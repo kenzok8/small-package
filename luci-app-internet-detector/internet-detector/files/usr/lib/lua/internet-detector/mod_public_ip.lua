@@ -324,7 +324,7 @@ function Module:resolveIP()
 			res = table.concat(retTable, ", ")
 		end
 	else
-		self.syslog("err", string.format(
+		self.syslog("warning", string.format(
 			"%s: DNS error when requesting an IP address", self.name))
 	end
 

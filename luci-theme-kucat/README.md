@@ -8,7 +8,7 @@
 - 发布时间：2023年2月
 - 开源时间：2023年4月 
 - main 支持LEDE18.06和官方18.06分支  开源时间：2023年4月   版本：1.2.6
-- JS 支持官网19.07-23.05分支 开源时间：2023年9月   版本：2.0.12
+- JS 支持官网19.07-24.10分支 最新版本：2025年2月 版本：2.5.1 适配OPENWRT 24.10分支。
 
 # 目前最新版本，仅VIP固件中集成，开源升级时间在6个月以后。感谢大家支持与理解。
 
@@ -46,15 +46,18 @@
 
 ## 界面
 
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat1.jpg)
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat1.png)
 
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat2.jpg)
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat2.png)
 
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat3.jpg)
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat3.png)
 
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat4.jpg)
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat4.png)
 
 ![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat5.jpg)
+
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/kucat6.jpg)
+
 
 
 ## 使用与授权相关说明
