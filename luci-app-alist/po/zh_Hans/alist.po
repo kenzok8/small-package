@@ -237,7 +237,7 @@ msgid "FTP Port"
 msgstr "FTP 端口"
 
 msgid "Max retries on port conflict during passive transfer"
-msgstr "被动传输端口冲突时重试最大次数"
+msgstr "被动传输端口冲突时最大重试次数"
 
 msgid "Enable non-20 port for active transfer"
 msgstr "启用非 20 端口进行主动传输"
@@ -251,14 +251,14 @@ msgstr "连接超时（秒）"
 msgid "Disable active transfer mode"
 msgstr "禁用主动传输模式"
 
-msgid "Binary mode transmission"
-msgstr "二进制模式传输"
+msgid "Enable binary transfer mode"
+msgstr "启用二进制传输模式"
 
 msgid "Client IP check in active transfer mode"
-msgstr "主动传输模式下客户端 IP 检查"
+msgstr "主动传输模式下对客户端进行 IP 检查"
 
 msgid "Client IP check in passive transfer mode"
-msgstr "被动传输模式下客户端 IP 检查"
+msgstr "被动传输模式下对客户端进行 IP 检查"
 
 msgid "Enabled SFTP"
 msgstr "启用 SFTP"

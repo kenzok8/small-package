@@ -364,7 +364,7 @@ return view.extend({
 		o = s.taboption('ftp', form.Flag, 'disable_active_mode', _('Disable active transfer mode'));
 		o.rmempty = false;
 
-		o = s.taboption('ftp', form.Flag, 'default_transfer_binary', _('Binary mode transmission'));
+		o = s.taboption('ftp', form.Flag, 'default_transfer_binary', _('Enable binary transfer mode'));
 		o.rmempty = false;
 
 		o = s.taboption('ftp', form.Flag, 'enable_active_conn_ip_check', _('Client IP check in active transfer mode'));
