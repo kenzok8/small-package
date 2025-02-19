@@ -66,16 +66,6 @@ o:depends("run_mode","router")
 o.default=1
 end
 
-if luci.sys.call("test `grep MemTotal /proc/meminfo | awk '{print $2}'` -gt 233000") == 0 then
-o=s:option(Flag,"adguardhome",translate("Used with AdGuardHome"),
-translate("Luci-app-adguardhome require"))
-if luci.sys.call("test `which AdGuardHome` && test -r /etc/init.d/AdGuardHome") == 0 then
-o.default=1
-else
-o.default=0
-end
-end
-
 o=s:option(ListValue,"dports",translate("Proxy Ports"))
 o:value("1",translate("All Ports"))
 o:value("2",translate("Only Common Ports"))
