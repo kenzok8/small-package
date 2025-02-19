@@ -235,16 +235,16 @@ case "$1" in
 		mv -f "$RESOURCES_DIR/asn.mmdb" "$RESOURCES_DIR/../asn.mmdb"
 	;;
 "china_ip4")
-	check_list_update "$1" "muink/route-list" "release" "china_ipv4.txt"
+	check_list_update "$1" "fcshark-org/route-list" "release" "china_ipv4.txt"
 	;;
 "china_ip6")
-	check_list_update "$1" "muink/route-list" "release" "china_ipv6.txt"
+	check_list_update "$1" "fcshark-org/route-list" "release" "china_ipv6.txt"
 	;;
 "gfw_list")
-	check_list_update "$1" "muink/route-list" "release" "gfwlist.txt"
+	check_list_update "$1" "fcshark-org/route-list" "release" "gfwlist.txt"
 	;;
 "china_list")
-	check_list_update "$1" "muink/route-list" "release" "china_list2.txt"
+	check_list_update "$1" "fcshark-org/route-list" "release" "china_list2.txt"
 	;;
 *)
 	echo -e "Usage: $0 <ALL / dashboard / geoip / geosite / asn / china_ip4 / china_ip6 / gfw_list / china_list>"
