@@ -70,10 +70,6 @@
 	if primary_opacity == '0' then
 	    ufilter = 'none'
 	end
-	local bgqs_image = '-webkit-linear-gradient(135deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent)'
-	if bgqs == '1' then
-	    bgqs_image = 'none'
-	end
 	local bg_url = media..'/img/bg1.jpg'
     local bg_lock = bg_url
 	if background == '0' then
@@ -187,7 +183,8 @@
 
 	<% if css then %>
 		<%= css %>
-	<% end -%>
+	<% end
+	 if bgqs == '1' then -%> 
 	:root {
 		--primary-rgbbody:<%=primary_rgbbody%>;
 		--primary-rgbm: <%=primary_rgbm%>;
@@ -199,8 +196,36 @@
 		--font-x: <%=fontx%>;
 		--ufilter: <%=ufilter%>;
 		--bgqs-image: <%=bgqs_image%>;
+		--menu-bgcolor: rgba(var(--primary-rgbbody), var(--primary-rgbm-ts));
+		--menu-item-hover-bgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
+		<% if mode == 'dark'  then %>
+		--menu-fontcolor: #bbb;
+		<% else %>
+		--menu-fontcolor: #4d4d5d;
+		<% end -%>
+	}
+	<% else %>
+	:root {
+		--primary-rgbbody:<%=primary_rgbbody%>;
+		--primary-rgbm: <%=primary_rgbm%>;
+		--primary-rgbm-ts: <%=primary_rgbm_ts%>;
+		--primary-rgbs: <%=primary_rgbs%>;
+		--primary-rgbs-ts: <%=primary_rgbs_ts%>;
+		--font-d: <%=fontd%>;
+		--font-z: <%=fontz%>;
+		--font-x: <%=fontx%>;
+		--ufilter: <%=ufilter%>;
+		--bgqs-image: <%=bgqs_image%>;
+		--menu-bgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
+		--menu-item-hover-bgcolor: rgba(255,255,255, 0.3);
+		<% if mode == 'dark'  then %>
+		--menu-fontcolor: #bbb;
+		<% else %>
+		--menu-fontcolor: #f5f5f5f5;
+		<% end -%>
 	}
 
+	<% end -%>
 	<% if setbar == "1" then %>
 	header.bar-primary .container-bar-left {
  	   width: 300px;
