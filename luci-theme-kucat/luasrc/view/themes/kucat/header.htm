@@ -66,7 +66,7 @@
 		bgqs,setbar,dayword = '1','1','0'
 	end
 	local ufilter = string.format("blur(%dpx)", tonumber(primary_opacity))
-	local bar_color = primary_rgbbody
+	local bar_color = mode
 	if primary_opacity == '0' then
 	    ufilter = 'none'
 	end
