@@ -33,8 +33,8 @@
     --primary-title-color: #4d4d5d;
     --menu-color: #f5f5f5f5;
     --menu-hover-color: #fff;
-    --menu-item-color: #5a636b;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm),0.22);
+    --menu-item-hover-bgcolor: rgba(248,248,248, 0.2);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
     --body-text-color: #3c4655;
     --body-color: #65656b;
@@ -54,8 +54,8 @@
     --primary-title-color: #bbb;
     --menu-color: #bbb;
     --menu-hover-color: #e9eff3;
-    --menu-item-color: #b4c9e3;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm),0.4);
+    --menu-item-hover-bgcolor: rgba(255, 255, 255, 0.2);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
     --body-text-color: #8391a2;
     --body-color: #8b8e91;
@@ -201,7 +201,7 @@ html, body {
 	padding: 0 !important;
 }
 body {
-	letter-spacing: 0.05em;
+	letter-spacing: 0.050em;
 	font-size: var(--font-z);
 	color: var(--body-color);
 	background-position: top center;
@@ -448,11 +448,11 @@ small {
     border-radius:  var(--radius2);
     text-decoration:none
 }
+
 .container-bar-right .labelbar:hover::before, .container-bar-left .labelbar:hover::before {
-      color: var(--menu-hover-color);
+    color: var(--menu-hover-color);
 	text-decoration: none
 }
-
 .container-bar-right .labelbar::before,.container-bar-left .labelbar::before {
     color: var(--menu-color);
     font-size: 2rem !important;
@@ -500,7 +500,6 @@ small {
 }
 .main > .loading {
 	position: fixed;
-	display: none;
 	top: 0;
 	opacity: 1;
 	visibility: visible;
@@ -754,7 +753,8 @@ text-decoration: none!important;
 	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.16), 0 0 2px 0 rgba(0, 0, 0, 0.12)
 }
 .alert-message > * {
-	margin: .5rem 0;
+	margin: 0;
+	white-space: nowrap;
 }
 .alert-message > h4 {
     margin: 0.5rem;
@@ -773,6 +773,9 @@ text-decoration: none!important;
 }
 /*   menu */
 
+.main .main-left .nav {
+	margin-top: 0
+}
 .slide-menu {
 	overflow: hidden
 }
@@ -788,13 +791,12 @@ text-decoration: none!important;
     width: 100%;
     text-decoration: none;
     white-space: nowrap;
-    cursor: default;
+    cursor: pointer;
     transition: all .2s;
     position: relative;
 }
 .main .main-left .nav>li  {
 	padding: 0rem;
-	cursor: pointer
 }
 .main .main-left .nav .slide ul {
 	display: none;
@@ -1160,7 +1162,7 @@ table>tbody>tr:first-child>td, table>tfoot>tr:first-child>td, table>thead>tr:fir
 
 /* button style */
 
-.btn, button, .cbi-button, select, input, .cbi-dropdown {
+.btn, button, select, input, .cbi-dropdown {
 	height: 2.8rem;
 	line-height: 1;
 	outline: 0;
@@ -1981,7 +1983,7 @@ select, input {
 	max-width: 800px;
 	min-height: 32px;
 	margin: 5em auto;
-	padding: 0.2rem;
+	padding: 1em;
 	border-radius:  var(--radius2)!important;
 	background-color: rgba(var(--primary-rgbbody), 1);
     box-shadow: 0 2px 10px 0px rgba(255, 255, 255, .16), 0 0 10px 0 rgba(255, 255, 255, .12);
@@ -2016,12 +2018,6 @@ select, input {
 
 .modal > .button-row .btn{
   line-height: 1.8;
-}
-
-#modal_overlay .modal>div {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
 }
 
 .modal > pre, .modal > textarea {
@@ -2148,7 +2144,7 @@ body.modal-overlay-active #modal_overlay {
 .spinning {
     position: relative;
     font-size: var(--font-z);
-    padding: 2rem 0rem 2rem 3rem !important;
+    padding-left: 32px !important;
 }
 .spinning::before {
     position: absolute;
@@ -2175,7 +2171,7 @@ body.modal-overlay-active #modal_overlay {
 }
 .right .cbi-button {
 	line-height: 1;
-	margin: 0.2rem;
+	margin: 0;
 }
 .right, .right::before {
     text-align: right !important;
@@ -3094,7 +3090,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 .cbi-page-actions.control-group .cbi-dropdown.btn.cbi-button.cbi-button-apply.important > ul {
 overflow-y: hidden;
 }
-.cbi-dropdown.btn  {
+.cbi-dropdown.btn.cbi-button.cbi-button-action {
 	padding-right: 5px;
 }
 
@@ -3164,7 +3160,8 @@ background-color: rgba(255,255,255,0.12)!important;
 #chatlog .response {
     background-color: rgba(255,255,255,0.1)!important;
 }
-[data-page="admin-status-usage-details"] .cbi-value-title  {
+[data-page="admin-status-usage-details"] .cbi-value-title,
+.main #view .cbi-value-title  {
    width: 15rem;
 }
 
@@ -3369,15 +3366,16 @@ pre.command-output {
 .node-admin-status-routes #view,
 .node-admin-network-diagnostics #view,
 .node-admin-status-processes #view {
-
     min-width: inherit;
     overflow-x: auto;
     overflow-y: hidden;
 }
+
 [data-page="admin-system-reboot"]  #maincontent>.container>#view,
-[data-page="admin-system-poweroffdevice"]  #maincontent .container  {
+[data-page="admin-system-poweroffdevice"]  #maincontent .container {
   padding: 0 1rem 3rem 1rem;
 }
+
 .node-admin-network-diagnostics #view .table{
     margin-top: 2rem;
 }
