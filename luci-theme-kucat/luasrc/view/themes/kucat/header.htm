@@ -197,7 +197,8 @@
 		--ufilter: <%=ufilter%>;
 		--bgqs-image: <%=bgqs_image%>;
 		--menu-bgcolor: rgba(var(--primary-rgbbody), var(--primary-rgbm-ts));
-		--menu-item-hover-bgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
+		--menu-item-hover-bgcolor: rgba(var(--primary-rgbm), 0.8);
+		--menu-item-active-bgcolor:  rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
 		<% if mode == 'dark'  then %>
 		--menu-fontcolor: #bbb;
 		<% else %>
@@ -217,7 +218,8 @@
 		--ufilter: <%=ufilter%>;
 		--bgqs-image: <%=bgqs_image%>;
 		--menu-bgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
-		--menu-item-hover-bgcolor: rgba(255,255,255, 0.3);
+		--menu-item-hover-bgcolor: rgba(248,248,248, 0.22);
+		--menu-item-active-bgcolor: rgba(248,248,248, 0.3);
 		<% if mode == 'dark'  then %>
 		--menu-fontcolor: #bbb;
 		<% else %>

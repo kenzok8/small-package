@@ -26,15 +26,15 @@
     --radius0: 8px;
     --radius1: 0.375rem;
     --radius2: 0.25rem;
+    --primary-solid: #fd8c73;
+    --menu-hover-barbgcolor: rgba(255,255,255, 0.3);
  }
 [data-theme='light'] {
-    --primary-solid: #fd8c73;
     --primarytextcolor: #677087;
     --primary-title-color: #4d4d5d;
     --menu-color: #f5f5f5f5;
     --menu-hover-color: #fff;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm),0.22);
-    --menu-item-hover-bgcolor: rgba(248,248,248, 0.2);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
     --body-text-color: #3c4655;
     --body-color: #65656b;
@@ -49,13 +49,11 @@
     --font-sans: "Microsoft Yahei","Google Sans","WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB";
 }
 [data-theme="dark"] {
-    --primary-solid: #fd8c73;
     --primarytextcolor: #bbb;
     --primary-title-color: #bbb;
-    --menu-color: #bbb;
+    --menu-color: #ddd;
     --menu-hover-color: #e9eff3;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm),0.4);
-    --menu-item-hover-bgcolor: rgba(255, 255, 255, 0.2);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
     --body-text-color: #8391a2;
     --body-color: #8b8e91;
@@ -576,7 +574,7 @@ header .fill .container .flex1 .showSide {
 	display: none;
 }
 header .fill .container .flex1 .brand {
-    color: var(--menu-hover-color);
+    color: var(--menu-color);
     font-family: var(--font-sans);
     font-weight: bold;
     font-size: 1.5rem;
@@ -651,7 +649,8 @@ span[data-indicator="uci-changes"]:hover,
 span[data-indicator="poll-status"]:hover,
 .pdboy-qlogout:hover,
 .showSide:hover {
-	background-color: var(--menu-item-hover-bgcolor)!important;
+	background-color: var(--menu-hover-barbgcolor)!important;
+	color:  var(--menu-hover-color);
 	border-radius: var(--radius1);
 	text-decoration: none
 }
@@ -856,8 +855,13 @@ text-decoration: none!important;
 	-webkit-transform: rotate(180deg);
 	transform: rotate(180deg)
 }
+.main .main-left .nav>li>a.active {
+	cursor: pointer;
+	background-color: var(--menu-item-active-bgcolor);
+	color: var(--menu-hover-color)
+}
 
-.main .main-left .nav>li>a:hover, .main .main-left .nav>li>a.active {
+.main .main-left .nav>li>a:hover{
 	cursor: pointer;
 	background-color: var(--menu-item-hover-bgcolor);
 	color: var(--menu-hover-color)
@@ -942,7 +946,7 @@ text-decoration: none!important;
 }
 .main .main-left .nav .slide .slide-menu > li.active {
 	color: var(--menu-hover-color);
-	background-color: var(--menu-item-hover-bgcolor);
+	background-color: var(--menu-item-active-bgcolor);
 	border-left: 4px solid var(--primary-solid)
 }
 .main .main-left .nav .slide .slide-menu li:hover {
@@ -955,7 +959,7 @@ text-decoration: none!important;
 	color: var(--menu-hover-color);
 }
 .main .main-left .sidenav-header .brand {
-    color: var(--menu-hover-color);
+    color: var(--menu-color);
     font-family: var(--font-sans);
     font-weight: bold;
     font-size: 1.5rem;
@@ -1983,7 +1987,7 @@ select, input {
 	max-width: 800px;
 	min-height: 32px;
 	margin: 5em auto;
-	padding: 1em;
+	padding: 1rem;
 	border-radius:  var(--radius2)!important;
 	background-color: rgba(var(--primary-rgbbody), 1);
     box-shadow: 0 2px 10px 0px rgba(255, 255, 255, .16), 0 0 10px 0 rgba(255, 255, 255, .12);
