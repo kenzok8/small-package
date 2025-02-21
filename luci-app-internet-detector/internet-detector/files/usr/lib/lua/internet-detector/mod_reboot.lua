@@ -2,16 +2,18 @@
 local unistd = require("posix.unistd")
 
 local Module = {
-	name             = "mod_reboot",
-	runPrio          = 20,
-	config           = {},
-	syslog           = function(level, msg) return true end,
-	writeValue       = function(filePath, str) return false end,
-	readValue        = function(filePath) return nil end,
-	deadPeriod       = 3600,
-	forceRebootDelay = 300,
-	status           = nil,
-	_deadCounter     = 0,
+	name              = "mod_reboot",
+	runPrio           = 20,
+	config            = {},
+	syslog            = function(level, msg) return true end,
+	writeValue        = function(filePath, str) return false end,
+	readValue         = function(filePath) return nil end,
+	deadPeriod        = 3600,
+	forceRebootDelay  = 300,
+	antiBootloopDelay = 300,
+	status            = nil,
+	_deadCounter      = 0,
+	_rebooted         = true,
 }
 
 function Module:rebootDevice()
@@ -36,15 +38,17 @@ end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 	if currentStatus == 1 then
-		if self._deadCounter >= self.deadPeriod then
-			self:rebootDevice()
-			self._deadCounter = 0
-		else
-			self._deadCounter = self._deadCounter + timeDiff
+		if not self._rebooted then
+			if timeNow >= self.antiBootloopDelay and self._deadCounter >= self.deadPeriod then
+				self:rebootDevice()
+				self._rebooted = true
+			else
+				self._deadCounter = self._deadCounter + timeDiff
+			end
 		end
-
 	else
 		self._deadCounter = 0
+		self._rebooted    = false
 	end
 end
 

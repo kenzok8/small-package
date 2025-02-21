@@ -5,41 +5,43 @@
 local unistd = require("posix.unistd")
 
 local Module = {
-	name               = "mod_email",
-	runPrio            = 60,
-	config             = {
+	name                 = "mod_email",
+	runPrio              = 60,
+	config               = {
 		debug = false,
 	},
-	syslog             = function(level, msg) return true end,
-	writeValue         = function(filePath, str) return false end,
-	readValue          = function(filePath) return nil end,
-	deadPeriod         = 0,
-	alivePeriod        = 0,
-	mode               = 0,		-- 0: connected, 1: disconnected, 2: both
-	hostAlias          = "OpenWrt",
-	mta                = "/usr/bin/mailsend",
-	mtaConnectTimeout  = 5,		-- default = 5
-	mtaReadTimeout     = 5,		-- default = 5
-	mailRecipient      = nil,
-	mailSender         = nil,
-	mailUser           = nil,
-	mailPassword       = nil,
-	mailSmtp           = nil,
-	mailSmtpPort       = nil,
-	mailSecurity       = "tls",
-	msgTextPattern1    = "[%s]: %s: %s",	-- Connected (host, instance, message)
-	msgTextPattern2    = "[%s]: %s: %s",	-- Disconnected (host, instance, message)
-	msgSubPattern      = "%s notification", -- Subject (host)
-	status             = nil,
-	_enabled           = false,
-	_deadCounter       = 0,
-	_aliveCounter      = 0,
-	_msgSentDisconnect = true,
-	_msgSentConnect    = true,
-	_disconnected      = true,
-	_lastDisconnection = nil,
-	_lastConnection    = nil,
-	_message           = {},
+	syslog               = function(level, msg) return true end,
+	writeValue           = function(filePath, str) return false end,
+	readValue            = function(filePath) return nil end,
+	deadPeriod           = 0,
+	alivePeriod          = 0,
+	mode                 = 0,		-- 0: connected, 1: disconnected, 2: both
+	hostAlias            = "OpenWrt",
+	mta                  = "/usr/bin/mailsend",
+	mtaConnectTimeout    = 5,
+	mtaReadTimeout       = 5,
+	mailRecipient        = nil,
+	mailSender           = nil,
+	mailUser             = nil,
+	mailPassword         = nil,
+	mailSmtp             = nil,
+	mailSmtpPort         = nil,
+	mailSecurity         = "tls",
+	msgTextPattern       = "[%s] (%s) | %s",	-- Message (host, instance, message)
+	msgSubPattern        = "%s notification",	-- Subject (host)
+	msgConnectPattern    = "Internet connected: %s",
+	msgDisconnectPattern = "Internet disconnected: %s",
+	msgSeparator         = "; ",
+	msgMaxItems          = 50,
+	status               = nil,
+	_enabled             = false,
+	_deadCounter         = 0,
+	_aliveCounter        = 0,
+	_msgSentDisconnect   = true,
+	_disconnected        = true,
+	_msgSentConnect      = true,
+	_connected           = true,
+	_msgBuffer           = {},
 }
 
 function Module:init(t)
@@ -85,6 +87,17 @@ function Module:init(t)
 		self._enabled = false
 		self.syslog("warning", string.format(
 			"%s: Insufficient data to connect to the SMTP server", self.name))
+	end
+end
+
+function Module:appendNotice(str)
+	self._msgBuffer[#self._msgBuffer + 1] = str
+	if #self._msgBuffer > self.msgMaxItems then
+		local t = {}
+		for i = #self._msgBuffer - self.msgMaxItems + 1, #self._msgBuffer do
+			t[#t + 1] = self._msgBuffer[i]
+		end
+		self._msgBuffer = t
 	end
 end
 
@@ -136,37 +149,37 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 	if currentStatus == 1 then
 		self._aliveCounter   = 0
 		self._msgSentConnect = false
-		self._lastConnection = nil
+
 		if not self._disconnected then
 			self._disconnected = true
-			if not self._lastDisconnection then
-				self._lastDisconnection = os.date("%Y.%m.%d %H:%M:%S", os.time())
-			end
-			self._message[#self._message + 1] = string.format(
-				"Internet disconnected: %s", self._lastDisconnection)
+			self:appendNotice(string.format(
+				self.msgDisconnectPattern, os.date("%Y.%m.%d %H:%M:%S", os.time())))
 		end
+
 		if not self._msgSentDisconnect and (self.mode == 1 or self.mode == 2) then
 			if self._deadCounter >= self.deadPeriod then
-				self._lastDisconnection = nil
-				self:sendMessage(table.concat(self._message, "; "), self.msgTextPattern2)
-				self._message           = {}
+				self:sendMessage(table.concat(self._msgBuffer, self.msgSeparator), self.msgTextPattern)
+				self._msgBuffer         = {}
 				self._msgSentDisconnect = true
 			else
 				self._deadCounter = self._deadCounter + timeDiff
 			end
 		end
+		self._connected = false
 	else
 		self._deadCounter       = 0
 		self._msgSentDisconnect = false
+
+		if not self._connected then
+			self._connected = true
+			self:appendNotice(string.format(
+				self.msgConnectPattern, os.date("%Y.%m.%d %H:%M:%S", os.time())))
+		end
+
 		if not self._msgSentConnect and (self.mode == 0 or self.mode == 2) then
-			if not self._lastConnection then
-				self._lastConnection = os.date("%Y.%m.%d %H:%M:%S", os.time())
-			end
 			if self._aliveCounter >= self.alivePeriod then
-				self._message[#self._message + 1] = string.format(
-						"Internet connected: %s", self._lastConnection)
-				self:sendMessage(table.concat(self._message, "; "), self.msgTextPattern1)
-				self._message        = {}
+				self:sendMessage(table.concat(self._msgBuffer, self.msgSeparator), self.msgTextPattern)
+				self._msgBuffer      = {}
 				self._msgSentConnect = true
 			else
 				self._aliveCounter = self._aliveCounter + timeDiff

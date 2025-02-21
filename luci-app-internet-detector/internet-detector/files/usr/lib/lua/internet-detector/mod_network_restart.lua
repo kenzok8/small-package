@@ -2,19 +2,21 @@
 local unistd = require("posix.unistd")
 
 local Module = {
-	name             = "mod_network_restart",
-	runPrio          = 30,
-	config           = {},
-	syslog           = function(level, msg) return true end,
-	writeValue       = function(filePath, str) return false end,
-	readValue        = function(filePath) return nil end,
-	deadPeriod       = 900,
-	attempts         = 1,
-	iface            = nil,
-	restartTimeout   = 0,
-	status           = nil,
-	_attemptsCounter = 0,
-	_deadCounter     = 0,
+	name                 = "mod_network_restart",
+	runPrio              = 30,
+	config               = {},
+	syslog               = function(level, msg) return true end,
+	writeValue           = function(filePath, str) return false end,
+	readValue            = function(filePath) return nil end,
+	deadPeriod           = 900,
+	attempts             = 1,
+	iface                = nil,
+	restartTimeout       = 0,
+	status               = nil,
+	_attemptsCounter     = 0,
+	_deadCounter         = 0,
+	_ifaceRestarting     = false,
+	_ifaceRestartCounter = 0,
 }
 
 function Module:toggleFunc(flag)
@@ -74,32 +76,47 @@ function Module:init(t)
 	if t.restart_timeout ~= nil then
 		self.restartTimeout = tonumber(t.restart_timeout)
 	end
+	self._attemptsCounter = self.attempts
 end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
-	if currentStatus == 1 then
-		if self.attempts == 0 or self._attemptsCounter < self.attempts then
-			if self._deadCounter >= self.deadPeriod then
-				if self.iface then
-					self.syslog("info", string.format(
-						"%s: restarting network interface '%s'", self.name, self.iface))
-					self:ifaceDown()
-					unistd.sleep(self.restartTimeout)
-					self:ifaceUp()
-				else
-					self.syslog("info", string.format(
-						"%s: restarting network", self.name))
-					self:networkRestart()
-				end
-				self._deadCounter     = 0
-				self._attemptsCounter = self._attemptsCounter + 1
-			else
-				self._deadCounter = self._deadCounter + timeDiff
-			end
+	if self._ifaceRestarting then
+		if self._ifaceRestartCounter >= self.restartTimeout then
+			self:ifaceUp()
+			self._ifaceRestarting     = false
+			self._ifaceRestartCounter = 0
+		else
+			self._ifaceRestartCounter = self._ifaceRestartCounter + timeDiff
 		end
 	else
-		self._attemptsCounter = 0
-		self._deadCounter     = 0
+		if currentStatus == 1 then
+			if self._attemptsCounter < self.attempts then
+				if self._deadCounter >= self.deadPeriod then
+					if self.iface then
+						self.syslog("info", string.format(
+							"%s: restarting network interface '%s'", self.name, self.iface))
+						self:ifaceDown()
+						if self.restartTimeout < 1 then
+							self:ifaceUp()
+						else
+							self._ifaceRestarting = true
+						end
+					else
+						self.syslog("info", string.format(
+							"%s: restarting network", self.name))
+						self:networkRestart()
+					end
+					self._deadCounter     = 0
+					self._attemptsCounter = self._attemptsCounter + 1
+				else
+					self._deadCounter = self._deadCounter + timeDiff
+				end
+			end
+		else
+			self._attemptsCounter = 0
+			self._deadCounter     = 0
+		end
+		self._ifaceRestartCounter = 0
 	end
 end
 

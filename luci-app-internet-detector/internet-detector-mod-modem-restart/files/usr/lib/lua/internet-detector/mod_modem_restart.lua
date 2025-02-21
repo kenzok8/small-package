@@ -19,7 +19,7 @@ local Module = {
 	status       = nil,
 	_enabled     = false,
 	_deadCounter = 0,
-	_restarted   = false,
+	_restarted   = true,
 }
 
 function Module:toggleIface(flag)

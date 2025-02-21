@@ -309,8 +309,8 @@ msgstr "Период времени отсутствия доступа в Ин�
 msgid "Period of time without Internet access before modem restart."
 msgstr "Период времени отсутствия доступа в Интренет перед перезапуском модема."
 
-msgid "Period of time without Internet access before network restart."
-msgstr "Период времени отсутствия доступа в Интренет перед перезапуском сети."
+msgid "Period of time without Internet access before network restart or between restart attempts."
+msgstr "Период времени отсутствия доступа в Интренет перед перезапуском сети или между попытками перезапуска."
 
 msgid ""
 "Period of time without Internet access until the device is rebooted."
