@@ -15,8 +15,8 @@ local Module = {
 	status              = nil,
 	_deadCounter        = 0,
 	_aliveCounter       = 0,
-	_upScriptExecuted   = true,
 	_downScriptExecuted = true,
+	_upScriptExecuted   = true,
 }
 
 function Module:runExternalScript(scriptPath)
@@ -42,23 +42,23 @@ end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 	if currentStatus == 1 then
-		self._aliveCounter       = 0
-		self._downScriptExecuted = false
-		if not self._upScriptExecuted then
+		self._aliveCounter     = 0
+		self._upScriptExecuted = false
+		if not self._downScriptExecuted then
 			if self._deadCounter >= self.deadPeriod then
 				self:runExternalScript(self.downScript)
-				self._upScriptExecuted = true
+				self._downScriptExecuted = true
 			else
 				self._deadCounter = self._deadCounter + timeDiff
 			end
 		end
 	else
-		self._deadCounter      = 0
-		self._upScriptExecuted = false
-		if not self._downScriptExecuted then
+		self._deadCounter        = 0
+		self._downScriptExecuted = false
+		if not self._upScriptExecuted then
 			if self._aliveCounter >= self.alivePeriod then
 				self:runExternalScript(self.upScript)
-				self._downScriptExecuted = true
+				self._upScriptExecuted = true
 			else
 				self._aliveCounter = self._aliveCounter + timeDiff
 			end
