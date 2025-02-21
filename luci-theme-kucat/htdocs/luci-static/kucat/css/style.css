@@ -38,6 +38,7 @@
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
     --body-text-color: #3c4655;
     --body-color: #65656b;
+    --body-hover-bgcolor: rgba(50,50,50,0.05);
     --inputbg-color: rgba(248,248,248,0.15);
     --inputtext-color: #4d5256;
     --inputborder-color: rgba(0,0,0,0.2);
@@ -57,6 +58,7 @@
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
     --body-text-color: #8391a2;
     --body-color: #8b8e91;
+    --body-hover-bgcolor: rgba(255,255,255,0.05);
     --inputbg-color: rgba(255,255,255,0.11);
     --inputtext-color: #bbb;
     --inputborder-color: rgba(255,255,255,0.2);
@@ -1177,7 +1179,7 @@ table>tbody>tr:first-child>td, table>tfoot>tr:first-child>td, table>thead>tr:fir
 	border: 1px solid var(--inputborder-color);
 	border-radius:  var(--radius2);
 	transition: box-shadow .25s ease;
-	border-radius: 0.25rem;
+	border-radius: var(--radius2);
 	cursor: pointer;
 	box-shadow: 0 0.3rem 0.8rem var(--input-boxcolor);
 }
@@ -1201,9 +1203,11 @@ table>tbody>tr:first-child>td, table>tfoot>tr:first-child>td, table>thead>tr:fir
     box-shadow: 0 0.3rem 0.8rem var(--input-boxcolor);
     transform: translate(1) translate(0,0);
     transition: transform 225ms,box-shadow 225ms;
-    border-radius: 0.25rem;
+    border-radius: var(--radius2);
 }
-
+.cbi-tab-descr {
+    padding: 0 0 0.5rem 1.5rem;
+}
 
 .cbi-section-table-row:last-child {
     margin-bottom: 0;
@@ -1231,15 +1235,15 @@ table>tbody>tr:first-child>td, table>tfoot>tr:first-child>td, table>thead>tr:fir
 	background-color: rgba(var(--primary-rgbs), var(--primary-rgbs-ts));
 }
 .cbi-tabcontainer>.cbi-value:nth-of-type(4n+2):hover, .cbi-map>.cbi-section .cbi-value:nth-of-type(4n+2):hover, fieldset>table>tbody>tr:nth-of-type(4n+2):hover, table>tbody>tr:nth-of-type(4n+2):hover, div>.table>.tr:nth-of-type(4n+2):hover {
-    background-color: rgba(50,50,50,0.05);
+    background-color: var(--body-hover-bgcolor);
 	                  
 }
 .cbi-tabcontainer>.cbi-value:nth-of-type(4n):hover, .cbi-map>.cbi-section .cbi-value:nth-of-type(4n):hover, fieldset>table>tbody>tr:nth-of-type(4n):hover, table>tbody>tr:nth-of-type(4n):hover, div>.table>.tr:nth-of-type(4n):hover {
-    background-color: rgba(50,50,50,0.05);
+    background-color: var(--body-hover-bgcolor);
 }
 
 .cbi-tabcontainer>.cbi-value:nth-of-type(2n+1):hover,.cbi-map>.cbi-section .cbi-value:nth-of-type(2n+1):hover,fieldset>table>tbody>tr:nth-of-type(2n+1):hover,table>tbody>tr:nth-of-type(2n+1):hover,div>.table>.tr:nth-of-type(2n+1):hover {
-    background-color: rgba(50,50,50,0.05);
+    background-color: var(--body-hover-bgcolor);
 }
 
 /* fix multiple table */
@@ -1302,6 +1306,7 @@ background-image: url("data:image/svg+xml;base64,PCEtLSBHZW5lcmF0ZWQgYnkgSWNvTW9
 	text-decoration: none
 }
 .btn:focus, .cbi-button:focus, .item:hover::after, .item:focus::after {
+	color: var(--menu-hover-color);
 	box-shadow: 0 0.5rem 1rem var(--input-boxhovercolor);
 	-webkit-box-shadow: 0 0.5rem 1rem var(--input-boxhovercolor);
 	-moz-box-shadow: 0 0.5rem 1rem var(--input-boxhovercolor);
@@ -1347,7 +1352,7 @@ button:hover, .btn:hover, .cbi-button:hover ,.item:hover{
 .cbi-page-actions .cbi-button-apply, .cbi-section-actions .cbi-button-edit, .cbi-button-edit, .cbi-button-apply, .cbi-button-reload, .cbi-button-action, .cbi-button[value="Submit"], .cbi-button[value="Upload"], .cbi-button[value$="Apply"], .cbi-button[onclick="addKey(event)"] {
 	font-weight: normal;
 	border-color: rgba(var(--primary-rgbm), 1);
-	color: var(--menu-hover-color)!important;
+	color: var(--menu-color);
 	border: thin solid rgba(var(--primary-rgbm), 1);
 	background-color: rgba(var(--primary-rgbm), 0.9);
 }
@@ -1969,7 +1974,7 @@ select, input {
 #modal_overlay {
 	position: fixed;
 	z-index: 900;
-	top: 0px;
+	top: 0;
 	display: none;
 	bottom: 0;
 	overflow-y: scroll;
@@ -2284,18 +2289,20 @@ body.modal-overlay-active #modal_overlay {
 	transition: color 100ms ease, border-color 100ms ease, opacity 100ms ease;
 	-webkit-transition: color 100ms ease, border-color 100ms ease, opacity 100ms ease;
 	vertical-align: baseline;
-	border: none;
 	outline: none;
-	color: var(--body-text-color);
-	border-radius:  var(--radius2);
-	background-color: rgba(255,255,255,0.1);
-	border: 1px solid var(--inputborder-color)!important;
+	background-color: var(--inputbg-color);
+	color: var(--inputtext-color);
+	border: 1px solid var(--inputborder-color);
+	border-radius:  var(--radius2); 
 	word-wrap: break-word;
 	white-space: pre-wrap;
 	min-width: 18rem;
 	margin: 0rem
 }
 
+.cbi-input-textarea:focus , textarea:focus { 
+  border: 1px solid var(rgba(var(--primary-rgbm), 1));
+  }
 /* config changes */
 .uci-change-list {
     font-family: var(--font-apple);
