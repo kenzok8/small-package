@@ -5,11 +5,10 @@ NIKKI_USER="root"
 NIKKI_GROUP="nikki"
 
 # routing
-FW_TABLE="nikki"
-FW_MARK="0x80"
-FW_MARK_MASK="0xFF"
-TCP_RULE_PREF="1024"
-UDP_RULE_PREF="1025"
+TPROXY_FW_MARK="0x80"
+TUN_FW_MARK="0x81"
+TPROXY_RULE_PREF="1024"
+TUN_RULE_PREF="1025"
 TPROXY_ROUTE_TABLE="80"
 TUN_ROUTE_TABLE="81"
 
@@ -24,7 +23,6 @@ RUN_PROFILE_PATH="$RUN_DIR/config.yaml"
 PROVIDERS_DIR="$RUN_DIR/providers"
 RULE_PROVIDERS_DIR="$PROVIDERS_DIR/rule"
 PROXY_PROVIDERS_DIR="$PROVIDERS_DIR/proxy"
-RUN_UI_DIR="$RUN_DIR/ui"
 
 # log
 LOG_DIR="/var/log/nikki"
@@ -37,6 +35,12 @@ STARTED_FLAG="$FLAG_DIR/started.flag"
 BRIDGE_NF_CALL_IPTABLES_FLAG="$FLAG_DIR/bridge_nf_call_iptables.flag"
 BRIDGE_NF_CALL_IP6TABLES_FLAG="$FLAG_DIR/bridge_nf_call_ip6tables.flag"
 
+# ucode
+UCODE_DIR="$HOME_DIR/ucode"
+INCLUDE_UCODE="$UCODE_DIR/include.uc"
+MIXIN_UC="$UCODE_DIR/mixin.uc"
+HIJACK_UT="$UCODE_DIR/hijack.ut"
+
 # scripts
 SH_DIR="$HOME_DIR/scripts"
 INCLUDE_SH="$SH_DIR/include.sh"
@@ -44,7 +48,6 @@ FIREWALL_INCLUDE_SH="$SH_DIR/firewall_include.sh"
 
 # nftables
 NFT_DIR="$HOME_DIR/nftables"
-HIJACK_NFT="$NFT_DIR/hijack.nft"
 RESERVED_IP_NFT="$NFT_DIR/reserved_ip.nft"
 RESERVED_IP6_NFT="$NFT_DIR/reserved_ip6.nft"
 GEOIP_CN_NFT="$NFT_DIR/geoip_cn.nft"

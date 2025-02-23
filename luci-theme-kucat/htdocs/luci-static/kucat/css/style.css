@@ -599,7 +599,7 @@ small {
     width: calc(0% + 17rem);
     height: 100%;
     background-color: var(--menu-bgcolor);
-    box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.14), 0 -2px 3px 1px rgba(0, 0, 0, 0.32), 0 0px 5px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 .1rem .5rem .2rem var(--input-boxcolor);
     overflow-x: auto;
     position: fixed;
     z-index: 100
@@ -642,7 +642,7 @@ small {
 
 header.pd-primary {
     background-color: var(--menu-barbgcolor);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.35);
+    box-shadow: 0 .1rem .5rem .2rem var(--input-boxcolor);
     background-image: -webkit-linear-gradient(135deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 75%, transparent) !important
 }
 
@@ -864,7 +864,7 @@ span[data-indicator="poll-status"],
 
 .alert-message>* {
     margin: 0;
-    white-space: nowrap
+    white-space: normal
 }
 
 .alert-message>h4 {
@@ -4530,7 +4530,7 @@ div#add_link_div {
     .alert,
     .alert-message {
         line-height: 1.8rem;
-        white-space: none !important;
+        white-space: normal !important;
         margin: 0.1em auto
     }
 
