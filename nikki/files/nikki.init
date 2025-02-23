@@ -229,7 +229,7 @@ service_started() {
 		fi
 		if [ "$ipv6_proxy" == 1 ]; then
 			ip -6 route add local default dev lo table "$TPROXY_ROUTE_TABLE"
-			ip -4 rule add pref "$TPROXY_RULE_PREF" fwmark "$TPROXY_FW_MARK" table "$TPROXY_ROUTE_TABLE"
+			ip -6 rule add pref "$TPROXY_RULE_PREF" fwmark "$TPROXY_FW_MARK" table "$TPROXY_ROUTE_TABLE"
 		fi
 	fi
 	if [ "$tun_enable" == 1 ]; then
@@ -239,7 +239,7 @@ service_started() {
 		fi
 		if [ "$ipv6_proxy" == 1 ]; then
 			ip -6 route add unicast default dev "$tun_device" table "$TUN_ROUTE_TABLE"
-			ip -4 rule add pref "$TUN_RULE_PREF" fwmark "$TUN_FW_MARK" table "$TUN_ROUTE_TABLE"
+			ip -6 rule add pref "$TUN_RULE_PREF" fwmark "$TUN_FW_MARK" table "$TUN_ROUTE_TABLE"
 		fi
 		$FIREWALL_INCLUDE_SH
 	fi

@@ -86,7 +86,7 @@ return view.extend({
         o.password = true;
         o.rmempty = false;
 
-        o = s.taboption('external_control', form.Flag, 'selection_cache', _('Save Proxy Selection'));
+        o = s.taboption('external_control', form.Flag, 'selection_cache', '*' + ' ' + _('Save Proxy Selection'));
         o.rmempty = false;
 
         s.tab('inbound', _('Inbound Config'));

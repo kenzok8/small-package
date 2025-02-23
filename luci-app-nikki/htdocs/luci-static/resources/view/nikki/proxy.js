@@ -52,6 +52,9 @@ return view.extend({
         o = s.taboption('transparent_proxy', form.Flag, 'ipv6_proxy', _('IPv6 Proxy'));
         o.rmempty = false;
 
+        o = s.taboption('transparent_proxy', form.Flag, 'fake_ip_ping_hijack', _('Fake-IP Ping Hijack'));
+        o.rmempty = false;
+
         o = s.taboption('transparent_proxy', form.Flag, 'router_proxy', _('Router Proxy'));
         o.rmempty = false;
 
