@@ -174,6 +174,8 @@
 	<link rel="apple-touch-icon-precomposed" href="<%=media%>/img/apple-touch-icon.png" sizes="144x144">
 
 	<link rel="stylesheet" href="<%=media%>/css/style.css?v=<%= ver.luciversion %>">
+	<link rel="stylesheet" media="only screen and (max-device-width: 854px)" href="<%=media%>/css/mobile.css" type="text/css" />
+
 	<link rel="shortcut icon" href="<%=media%>/favicon.ico">
 	<meta name="theme-color" content="<%=bar_color%>">
     <% if node and node.css then %>
@@ -306,10 +308,11 @@
 						<div class="flex1">
 							<a class="showSide"  title="<%:Menu%>" ></a>
 							<a class="brand" href="/"><%=striptags(boardinfo.hostname or "OpenWrt")%></a>
+							<% if dayword == '1' then %>
+							<a class="showWord" href="#"><%=showword%></a>
+							<% end -%>
 						</div>
-						<% if dayword == '1' then %>
-						<a class="showWord" href="#"><%=showword%></a>
-						<% end -%>
+
 						<div class="status" id="indicators"></div>
 
                         <span > <a class="pdboy-qlogout" href="<%=url("admin/logout")%>" title="<%:Log_out%>" > </a></span>
@@ -326,11 +329,9 @@
 				<%- if luci.sys.process.info("uid") == 0 and luci.sys.user.getuser("root") and not luci.sys.user.getpasswd("root") then -%>
 					<div class="alert-message warning">
 						<h4><%:No password set!%></h4>
-						<p><%:There is no password set on this router. Please configure a root password to protect the web interface.%>
-						</p>
+						<p><%:There is no password set on this router. Please configure a root password to protect the web interface.%></p>
 						<% if disp.lookup("admin/system/admin") then %>
-						<div class="right"><a class="btn"
-								href="<%=url("admin/system/admin")%>"><%:Go to password configuration...%></a></div>
+					  <div class="right"><a class="btn" href="<%=url("admin/system/admin")%>"><%:Go to password configuration...%></a></div>
 						<% end %>
 					</div>
 				<%- end -%>
