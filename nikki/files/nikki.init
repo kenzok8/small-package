@@ -51,88 +51,7 @@ start_service() {
 	config_get_bool mixin "config" "mixin" 0
 	config_get_bool test_profile "config" "test_profile" 0
 	config_get_bool fast_reload "config" "fast_reload" 0
-	## proxy config
-	### transparent proxy
-	local tcp_transparent_proxy_mode udp_transparent_proxy_mode
-	config_get_bool transparent_proxy "proxy" "transparent_proxy" 0
-	config_get tcp_transparent_proxy_mode "proxy" "tcp_transparent_proxy_mode" "tproxy"
-	config_get udp_transparent_proxy_mode "proxy" "udp_transparent_proxy_mode" "tproxy"
 	## mixin config
-	### general
-	local mode match_process outbound_interface ipv6 unify_delay tcp_concurrent tcp_keep_alive_idle tcp_keep_alive_interval log_level
-	config_get mode "mixin" "mode" "rule"
-	config_get match_process "mixin" "match_process" "off"
-	config_get outbound_interface "mixin" "outbound_interface"
-	config_get_bool ipv6 "mixin" "ipv6" 0
-	config_get_bool unify_delay "mixin" "unify_delay" 0
-	config_get_bool tcp_concurrent "mixin" "tcp_concurrent" 0
-	config_get tcp_keep_alive_idle "mixin" "tcp_keep_alive_idle" 600
-	config_get tcp_keep_alive_interval "mixin" "tcp_keep_alive_interval" 15
-	config_get log_level "mixin" "log_level" "info"
-	### external control
-	local ui_name ui_url api_port api_secret selection_cache
-	config_get ui_name "mixin" "ui_name"
-	config_get ui_url "mixin" "ui_url"
-	config_get api_port "mixin" "api_port" "9090"
-	config_get api_secret "mixin" "api_secret" "666666"
-	config_get_bool selection_cache "mixin" "selection_cache" 0
-	### inbound
-	local allow_lan http_port socks_port mixed_port redir_port tproxy_port authentication
-	config_get_bool allow_lan "mixin" "allow_lan" 0
-	config_get http_port "mixin" "http_port" "8080"
-	config_get socks_port "mixin" "socks_port" "1080"
-	config_get mixed_port "mixin" "mixed_port" "7890"
-	config_get redir_port "mixin" "redir_port" "7891"
-	config_get tproxy_port "mixin" "tproxy_port" "7892"
-	config_get_bool authentication "mixin" "authentication" 0
-	### tun
-	local tun_device tun_stack tun_mtu tun_gso tun_gso_max_size tun_dns_hijack tun_endpoint_independent_nat
-	config_get tun_device "mixin" "tun_device" "nikki"
-	config_get tun_stack "mixin" "tun_stack" "system"
-	config_get tun_mtu "mixin" "tun_mtu" "9000"
-	config_get_bool tun_gso "mixin" "tun_gso" 0
-	config_get tun_gso_max_size "mixin" "tun_gso_max_size" "65536"
-	config_get_bool tun_dns_hijack "mixin" "tun_dns_hijack" 0
-	config_get_bool tun_endpoint_independent_nat "mixin" "tun_endpoint_independent_nat" 0
-	### dns
-	local dns_port dns_mode fake_ip_range fake_ip_filter fake_ip_filter_mode fake_ip_cache dns_respect_rules dns_doh_prefer_http3 dns_ipv6 dns_system_hosts dns_hosts hosts dns_nameserver dns_nameserver_policy
-	config_get dns_port "mixin" "dns_port" "1053"
-	config_get dns_mode "mixin" "dns_mode" "redir-host"
-	config_get fake_ip_range "mixin" "fake_ip_range" "198.18.0.1/16"
-	config_get_bool fake_ip_filter "mixin" "fake_ip_filter" 0
-	config_get fake_ip_filter_mode "mixin" "fake_ip_filter_mode" "blacklist"
-	config_get_bool fake_ip_cache "mixin" "fake_ip_cache" 0
-	config_get_bool dns_respect_rules "mixin" "dns_respect_rules" 0
-	config_get_bool dns_doh_prefer_http3 "mixin" "dns_doh_prefer_http3" 0
-	config_get_bool dns_ipv6 "mixin" "dns_ipv6" 0
-	config_get_bool dns_system_hosts "mixin" "dns_system_hosts" 0
-	config_get_bool dns_hosts "mixin" "dns_hosts" 0
-	config_get_bool hosts "mixin" "hosts" 0
-	config_get_bool dns_nameserver "mixin" "dns_nameserver" 0
-	config_get_bool dns_nameserver_policy "mixin" "dns_nameserver_policy" 0
-	### sniffer
-	local sniffer sniffer_sniff_dns_mapping sniffer_sniff_pure_ip sniffer_overwrite_destination sniffer_force_domain_name sniffer_ignore_domain_name sniffer_sniff
-	config_get_bool sniffer "mixin" sniffer 0
-	config_get_bool sniffer_sniff_dns_mapping "mixin" sniffer_sniff_dns_mapping 0
-	config_get_bool sniffer_sniff_pure_ip "mixin" sniffer_sniff_pure_ip 0
-	config_get_bool sniffer_overwrite_destination "mixin" sniffer_overwrite_destination 0
-	config_get_bool sniffer_force_domain_name "mixin" sniffer_force_domain_name 0
-	config_get_bool sniffer_ignore_domain_name "mixin" sniffer_ignore_domain_name 0
-	config_get_bool sniffer_sniff "mixin" sniffer_sniff 0
-	### rule
-	local rule rule_provider
-	config_get_bool rule "mixin" "rule" 0
-	config_get_bool rule_provider "mixin" "rule_provider" 0
-	### geox
-	local geoip_format geodata_loader geosite_url geoip_mmdb_url geoip_dat_url geoip_asn_url geox_auto_update geox_update_interval
-	config_get geoip_format "mixin" "geoip_format" "mmdb"
-	config_get geodata_loader "mixin" "geodata_loader" "memconservative"
-	config_get geosite_url "mixin" "geosite_url"
-	config_get geoip_mmdb_url "mixin" "geoip_mmdb_url"
-	config_get geoip_dat_url "mixin" "geoip_dat_url"
-	config_get geoip_asn_url "mixin" "geoip_asn_url"
-	config_get_bool geox_auto_update "mixin" "geox_auto_update" 0
-	config_get geox_update_interval "mixin" "geox_update_interval" "24"
 	### mixin file content
 	local mixin_file_content
 	config_get_bool mixin_file_content "mixin" "mixin_file_content" 0
@@ -142,15 +61,6 @@ start_service() {
 	config_get_bool disable_loopback_detector "env" "disable_loopback_detector" 0
 	config_get_bool disable_quic_go_gso "env" "disable_quic_go_gso" 0
 	config_get_bool disable_quic_go_ecn "env" "disable_quic_go_ecn" 0
-	# prepare
-	local tproxy_enable; tproxy_enable=0
-	if [[ "$tcp_transparent_proxy_mode" == "tproxy" || "$udp_transparent_proxy_mode" == "tproxy" ]]; then
-		tproxy_enable=1
-	fi
-	local tun_enable; tun_enable=0
-	if [[ "$tcp_transparent_proxy_mode" == "tun" || "$udp_transparent_proxy_mode" == "tun" ]]; then
-		tun_enable=1
-	fi
 	# get profile
 	if [[ "$profile" == "file:"* ]]; then
 		local profile_name; profile_name=$(basename "${profile/file:/}")
@@ -187,104 +97,16 @@ start_service() {
 	if [ "$mixin" == 0 ]; then
 		log "Mixin" "Disabled."
 		log "Mixin" "Mixin neccesary config."
-		# do mixin
-		log_level="$log_level" mode="$mode" match_process="$match_process" ipv6="$ipv6" \
-		ui_path="ui" ui_name="$ui_name" ui_url="$ui_url" api_listen="0.0.0.0:$api_port" api_secret="$api_secret" \
-		allow_lan="$allow_lan" http_port="$http_port" socks_port="$socks_port" mixed_port="$mixed_port" redir_port="$redir_port" tproxy_port="$tproxy_port" \
-		tun_enable="$tun_enable" tun_stack="$tun_stack" tun_device="$tun_device" tun_mtu="$tun_mtu" tun_gso="$tun_gso" tun_gso_max_size="$tun_gso_max_size" tun_endpoint_independent_nat="$tun_endpoint_independent_nat" \
-		dns_enable="true" dns_listen="0.0.0.0:$dns_port" dns_mode="$dns_mode" fake_ip_range="$fake_ip_range" \
-		yq -M -i '
-		.log-level = strenv(log_level) | .mode = strenv(mode) | .find-process-mode = strenv(match_process) | .ipv6 = env(ipv6) == 1 |
-		.external-ui = strenv(ui_path) | .external-ui-name = strenv(ui_name) | .external-ui-url = strenv(ui_url) | .external-controller = strenv(api_listen) | .secret = strenv(api_secret) |
-		.allow-lan = env(allow_lan) == 1 | .port = env(http_port) | .socks-port = env(socks_port) | .mixed-port = env(mixed_port) | .redir-port = env(redir_port) | .tproxy-port = env(tproxy_port) |
-		.tun.enable = env(tun_enable) == 1 | .tun.stack = strenv(tun_stack) | .tun.device = strenv(tun_device) | .tun.mtu = env(tun_mtu) | .tun.gso = env(tun_gso) == 1 | .tun.gso-max-size = env(tun_gso_max_size) | .tun.endpoint-independent-nat = env(tun_endpoint_independent_nat) == 1 |
-		.tun.auto-route = false | .tun.auto-redirect = false | .tun.auto-detect-interface = false |
-		.dns.enable = env(dns_enable) | .dns.listen = strenv(dns_listen) | .dns.enhanced-mode = strenv(dns_mode) | .dns.fake-ip-range = strenv(fake_ip_range)
-		' "$RUN_PROFILE_PATH"
 	else
 		log "Mixin" "Enabled."
 		log "Mixin" "Mixin all config."
-		# do mixin
-		log_level="$log_level" mode="$mode" match_process="$match_process" ipv6="$ipv6" unify_delay="$unify_delay" tcp_concurrent="$tcp_concurrent" tcp_keep_alive_idle="$tcp_keep_alive_idle" tcp_keep_alive_interval="$tcp_keep_alive_interval" \
-		ui_path="ui" ui_name="$ui_name" ui_url="$ui_url" api_listen="0.0.0.0:$api_port" api_secret="$api_secret" selection_cache="$selection_cache" \
-		allow_lan="$allow_lan" http_port="$http_port" socks_port="$socks_port" mixed_port="$mixed_port" redir_port="$redir_port" tproxy_port="$tproxy_port" \
-		tun_enable="$tun_enable" tun_stack="$tun_stack" tun_device="$tun_device" tun_mtu="$tun_mtu" tun_gso="$tun_gso" tun_gso_max_size="$tun_gso_max_size" tun_endpoint_independent_nat="$tun_endpoint_independent_nat" \
-		dns_enable="true" dns_listen="0.0.0.0:$dns_port" dns_mode="$dns_mode" fake_ip_range="$fake_ip_range" fake_ip_cache="$fake_ip_cache" \
-		dns_respect_rules="$dns_respect_rules" dns_doh_prefer_http3="$dns_doh_prefer_http3" dns_ipv6="$dns_ipv6" dns_system_hosts="$dns_system_hosts" dns_hosts="$dns_hosts" \
-		sniffer="$sniffer" sniffer_sniff_dns_mapping="$sniffer_sniff_dns_mapping" sniffer_sniff_pure_ip="$sniffer_sniff_pure_ip" sniffer_overwrite_destination="$sniffer_overwrite_destination" \
-		geoip_format="$geoip_format" geodata_loader="$geodata_loader" geosite_url="$geosite_url" geoip_mmdb_url="$geoip_mmdb_url" geoip_dat_url="$geoip_dat_url" geoip_asn_url="$geoip_asn_url" \
-		geox_auto_update="$geox_auto_update" geox_update_interval="$geox_update_interval" \
-		yq -M -i '
-		.log-level = strenv(log_level) | .mode = strenv(mode) | .find-process-mode = strenv(match_process) | .ipv6 = env(ipv6) == 1 | .unified-delay = env(unify_delay) == 1 | .tcp-concurrent = env(tcp_concurrent) == 1 | .keep-alive-idle = env(tcp_keep_alive_idle) | .keep-alive-interval = env(tcp_keep_alive_interval) |
-		.external-ui = strenv(ui_path) | .external-ui-name = strenv(ui_name) | .external-ui-url = strenv(ui_url) | .external-controller = strenv(api_listen) | .secret = strenv(api_secret) | .profile.store-selected = env(selection_cache) == 1 |
-		.allow-lan = env(allow_lan) == 1 | .port = env(http_port) | .socks-port = env(socks_port) | .mixed-port = env(mixed_port) | .redir-port = env(redir_port) | .tproxy-port = env(tproxy_port) |
-		.tun.enable = env(tun_enable) == 1 | .tun.stack = strenv(tun_stack) | .tun.device = strenv(tun_device) | .tun.mtu = env(tun_mtu) | .tun.gso = env(tun_gso) == 1 | .tun.gso-max-size = env(tun_gso_max_size) | .tun.endpoint-independent-nat = env(tun_endpoint_independent_nat) == 1 |
-		.tun.auto-route = false | .tun.auto-redirect = false | .tun.auto-detect-interface = false |
-		.dns.enable = env(dns_enable) | .dns.listen = strenv(dns_listen) | .dns.enhanced-mode = strenv(dns_mode) | .dns.fake-ip-range = strenv(fake_ip_range) | .profile.store-fake-ip = env(fake_ip_cache) == 1 |
-		.dns.respect-rules = env(dns_respect_rules) == 1 | .dns.prefer-h3 = env(dns_doh_prefer_http3) == 1 | .dns.ipv6 = env(dns_ipv6) == 1 | .dns.use-system-hosts = env(dns_system_hosts) == 1 | .dns.use-hosts = env(dns_hosts) == 1 |
-		.sniffer.enable = env(sniffer) == 1 | .sniffer.force-dns-mapping = env(sniffer_sniff_dns_mapping) == 1 | .sniffer.parse-pure-ip = env(sniffer_sniff_pure_ip) == 1 | .sniffer.override-destination = env(sniffer_overwrite_destination) == 1 |
-		.geodata-mode = strenv(geoip_format) == "dat" | .geodata-loader = strenv(geodata_loader) | .geox-url.geosite = strenv(geosite_url) | .geox-url.mmdb = strenv(geoip_mmdb_url) | .geox-url.geoip = strenv(geoip_dat_url) | .geox-url.asn = strenv(geoip_asn_url) |
-		.geo-auto-update = env(geox_auto_update) == 1 | .geo-update-interval = env(geox_update_interval)
-		' "$RUN_PROFILE_PATH"
-
-		if [ "$fake_ip_filter" == 1 ]; then
-			fake_ip_filter_mode="$fake_ip_filter_mode" \
-			yq -M -i 'del(.dns.fake-ip-filter) | .dns.fake-ip-filter-mode = strenv(fake_ip_filter_mode)' "$RUN_PROFILE_PATH"
-			config_list_foreach "mixin" "fake_ip_filters" mixin_fake_ip_filters
-		fi
-		if [ "$hosts" == 1 ]; then
-			yq -M -i 'del(.hosts)' "$RUN_PROFILE_PATH"
-			config_foreach mixin_hosts "hosts"
-		fi
-		if [ "$dns_nameserver" == 1 ]; then
-			yq -M -i 'del(.dns.default-nameserver) | del(.dns.proxy-server-nameserver) | del(.dns.direct-nameserver) | del(.dns.nameserver) | del(.dns.fallback)' "$RUN_PROFILE_PATH"
-			config_foreach mixin_nameservers "nameserver"
-		fi
-		if [ "$dns_nameserver_policy" == 1 ]; then
-			yq -M -i 'del(.dns.nameserver-policy)' "$RUN_PROFILE_PATH"
-			config_foreach mixin_nameserver_policies "nameserver_policy"
-		fi
-		if [ "$sniffer_force_domain_name" == 1 ]; then
-			yq -M -i 'del(.sniffer.force-domain)' "$RUN_PROFILE_PATH"
-			config_list_foreach "mixin" "sniffer_force_domain_names" mixin_sniffer_domain_names "force-domain"
-		fi
-		if [ "$sniffer_ignore_domain_name" == 1 ]; then
-			yq -M -i 'del(.sniffer.skip-domain)' "$RUN_PROFILE_PATH"
-			config_list_foreach "mixin" "sniffer_ignore_domain_names" mixin_sniffer_domain_names "skip-domain"
-		fi
-		if [ "$sniffer_sniff" == 1 ]; then
-			yq -M -i 'del(.sniffer.sniff)' "$RUN_PROFILE_PATH"
-			config_foreach mixin_sniffs "sniff"
-		fi
 	fi
-	yq -M -i 'del (.bind-address)' "$RUN_PROFILE_PATH"
-	if [ -n "$outbound_interface" ]; then
-		local outbound_device; network_get_device outbound_device "$outbound_interface"
-		if [ -n "$outbound_device" ]; then
-			outbound_device="$outbound_device" yq -M -i '.interface-name = strenv(outbound_device)' "$RUN_PROFILE_PATH"
-		fi
+	if [ "$mixin_file_content" == 0 ]; then
+		ucode -S "$MIXIN_UC" | yq -M -p json -o yaml | yq -M -i ea '. as $item ireduce ({}; . * $item ) | .rules = .nikki-rules + .rules | del(.nikki-rules)' "$RUN_PROFILE_PATH" -
+	elif [ "$mixin_file_content" == 1 ]; then
+		ucode -S "$MIXIN_UC" | yq -M -p json -o yaml | yq -M -i ea '. as $item ireduce ({}; . * $item ) | .rules = .nikki-rules + .rules | del(.nikki-rules)' "$RUN_PROFILE_PATH" "$MIXIN_FILE_PATH" -
 	fi
-	if [ "$authentication" == 1 ]; then
-		yq -M -i 'del(.authentication)' "$RUN_PROFILE_PATH"
-		config_foreach mixin_authentications "authentication"
-	fi
-	if [ "$tun_dns_hijack" == 1 ]; then
-		yq -M -i 'del(.tun.dns-hijack)' "$RUN_PROFILE_PATH"
-		config_list_foreach "mixin" "tun_dns_hijacks" mixin_tun_dns_hijacks
-	fi
-	if [ "$rule_provider" == 1 ]; then
-		config_foreach mixin_rule_providers "rule_provider"
-	fi
-	if [ "$rule" == 1 ]; then
-		yq -M -i 'del(.nikki-rules)' "$RUN_PROFILE_PATH"
-		config_foreach mixin_rules "rule"
-		yq -M -i '.rules = .nikki-rules + .rules | del(.nikki-rules)' "$RUN_PROFILE_PATH"
-	fi
-	if [ "$mixin_file_content" == 1 ]; then
-		if [ -s "$MIXIN_FILE_PATH" ]; then
-			yq -M -i ea '. as $item ireduce ({}; . * $item ) | ... comments=""' "$RUN_PROFILE_PATH" "$MIXIN_FILE_PATH"
-		fi
-	fi
+	yq -M -i '... comments=""' "$RUN_PROFILE_PATH"
 	# test profile
 	if [ "$test_profile" == 1 ]; then
 		log "Profile" "Testing..."
@@ -339,17 +161,7 @@ service_started() {
 		return
 	fi
 	# get config
-	### inbound
-	local http_port socks_port mixed_port redir_port tproxy_port
-	config_get http_port "mixin" "http_port" "8080"
-	config_get socks_port "mixin" "socks_port" "1080"
-	config_get mixed_port "mixin" "mixed_port" "7890"
-	config_get redir_port "mixin" "redir_port" "7891"
-	config_get tproxy_port "mixin" "tproxy_port" "7892"
-	### dns
-	local dns_port fake_ip_range
-	config_get dns_port "mixin" "dns_port" "1053"
-	config_get fake_ip_range "mixin" "fake_ip_range" "198.18.0.1/16"
+	## mixin
 	### tun
 	local tun_device
 	config_get tun_device "mixin" "tun_device" "nikki"
@@ -365,8 +177,12 @@ service_started() {
 	config_get_bool router_proxy "proxy" "router_proxy" 0
 	config_get_bool lan_proxy "proxy" "lan_proxy" 0
 	### access control
-	local access_control_mode bypass_china_mainland_ip proxy_tcp_dport proxy_udp_dport bypass_dscp
+	local access_control_mode 
 	config_get access_control_mode "proxy" "access_control_mode"
+	### bypass
+	local bypass_user bypass_group bypass_china_mainland_ip proxy_tcp_dport proxy_udp_dport bypass_dscp
+	config_get bypass_user "proxy" "bypass_user"
+	config_get bypass_group "proxy" "bypass_group"
 	config_get_bool bypass_china_mainland_ip "proxy" "bypass_china_mainland_ip" 0
 	config_get proxy_tcp_dport "proxy" "proxy_tcp_dport" "0-65535"
 	config_get proxy_udp_dport "proxy" "proxy_udp_dport" "0-65535"
@@ -409,72 +225,48 @@ service_started() {
 	if [ "$tproxy_enable" == 1 ]; then
 		if [ "$ipv4_proxy" == 1 ]; then
 			ip -4 route add local default dev lo table "$TPROXY_ROUTE_TABLE"
+			ip -4 rule add pref "$TPROXY_RULE_PREF" fwmark "$TPROXY_FW_MARK" table "$TPROXY_ROUTE_TABLE"
 		fi
 		if [ "$ipv6_proxy" == 1 ]; then
 			ip -6 route add local default dev lo table "$TPROXY_ROUTE_TABLE"
+			ip -4 rule add pref "$TPROXY_RULE_PREF" fwmark "$TPROXY_FW_MARK" table "$TPROXY_ROUTE_TABLE"
 		fi
 	fi
 	if [ "$tun_enable" == 1 ]; then
 		if [ "$ipv4_proxy" == 1 ]; then
 			ip -4 route add unicast default dev "$tun_device" table "$TUN_ROUTE_TABLE"
+			ip -4 rule add pref "$TUN_RULE_PREF" fwmark "$TUN_FW_MARK" table "$TUN_ROUTE_TABLE"
 		fi
 		if [ "$ipv6_proxy" == 1 ]; then
 			ip -6 route add unicast default dev "$tun_device" table "$TUN_ROUTE_TABLE"
+			ip -4 rule add pref "$TUN_RULE_PREF" fwmark "$TUN_FW_MARK" table "$TUN_ROUTE_TABLE"
 		fi
 		$FIREWALL_INCLUDE_SH
 	fi
-	local tcp_route_table
-	if [ "$tcp_transparent_proxy_mode" == "tproxy" ]; then
-		tcp_route_table="$TPROXY_ROUTE_TABLE"
-	elif [ "$tcp_transparent_proxy_mode" == "tun" ]; then
-		tcp_route_table="$TUN_ROUTE_TABLE"
-	fi
-	if [ -n "$tcp_route_table" ]; then
-		if [ "$ipv4_proxy" == 1 ]; then
-			ip -4 rule add pref "$TCP_RULE_PREF" fwmark "$FW_MARK/$FW_MARK_MASK" ipproto tcp table "$tcp_route_table"
-		fi
-		if [ "$ipv6_proxy" == 1 ]; then
-			ip -6 rule add pref "$TCP_RULE_PREF" fwmark "$FW_MARK/$FW_MARK_MASK" ipproto tcp table "$tcp_route_table"
-		fi
-	fi
-	local udp_route_table
-	if [ "$udp_transparent_proxy_mode" == "tproxy" ]; then
-		udp_route_table="$TPROXY_ROUTE_TABLE"
-	elif [ "$udp_transparent_proxy_mode" == "tun" ]; then
-		udp_route_table="$TUN_ROUTE_TABLE"
-	fi
-	if [ -n "$udp_route_table" ]; then
-		if [ "$ipv4_proxy" == 1 ]; then
-			ip -4 rule add pref "$UDP_RULE_PREF" fwmark "$FW_MARK/$FW_MARK_MASK" ipproto udp table "$udp_route_table"
-		fi
-		if [ "$ipv6_proxy" == 1 ]; then
-			ip -6 rule add pref "$UDP_RULE_PREF" fwmark "$FW_MARK/$FW_MARK_MASK" ipproto udp table "$udp_route_table"
-		fi
-	fi
-	nft -f "$HIJACK_NFT" -D NIKKI_GROUP="$NIKKI_GROUP" -D FW_MARK="$FW_MARK" -D FW_MARK_MASK="$FW_MARK_MASK" -D TUN_DEVICE="$tun_device" -D FAKE_IP="$fake_ip_range" -D DNS_PORT="$dns_port" -D REDIR_PORT="$redir_port" -D TPROXY_PORT="$tproxy_port"
+	utpl -D nikki_group="$NIKKI_GROUP" -D tproxy_fw_mark="$TPROXY_FW_MARK" -D tun_fw_mark="$TUN_FW_MARK" -S "$HIJACK_UT" | nft -f -
 	nft -f "$RESERVED_IP_NFT"
 	nft -f "$RESERVED_IP6_NFT"
 	# dns hijack
 	if [ "$ipv4_dns_hijack" == 1 ]; then
 		log "Transparent Proxy" "Hijack IPv4 dns request."
-		nft add element inet "$FW_TABLE" dns_hijack_nfproto \{ ipv4 \}
 	fi
 	if [ "$ipv6_dns_hijack" == 1 ]; then
 		log "Transparent Proxy" "Hijack IPv6 dns request."
-		nft add element inet "$FW_TABLE" dns_hijack_nfproto \{ ipv6 \}
 	fi
 	# proxy
 	if [ "$ipv4_proxy" == 1 ]; then
 		log "Transparent Proxy" "Proxy IPv4 traffic."
-		nft add element inet "$FW_TABLE" proxy_nfproto \{ ipv4 \}
 	fi
 	if [ "$ipv6_proxy" == 1 ]; then
 		log "Transparent Proxy" "Proxy IPv6 traffic."
-		nft add element inet "$FW_TABLE" proxy_nfproto \{ ipv6 \}
 	fi
 	# bypass
-	config_list_foreach "proxy" "bypass_user" add_bypass_user
-	config_list_foreach "proxy" "bypass_group" add_bypass_group
+	if [  -n "$bypass_user" ]; then
+		log "Transparent Proxy" "Bypass user: $bypass_user."
+	fi
+	if [  -n "$bypass_group" ]; then
+		log "Transparent Proxy" "Bypass group: $bypass_group."
+	fi
 	if [ "$bypass_china_mainland_ip" == 1 ]; then
 		log "Transparent Proxy" "Bypass china mainland ip."
 		if [ "$ipv4_proxy" == 1 ]; then
@@ -486,32 +278,12 @@ service_started() {
 	fi
 	log "Transparent Proxy" "Destination TCP Port to Proxy: $proxy_tcp_dport."
 	log "Transparent Proxy" "Destination UDP Port to Proxy: $proxy_udp_dport."
-	local proxy_dport
-	for proxy_dport in $proxy_tcp_dport; do
-		nft add element inet "$FW_TABLE" proxy_dport \{ "tcp" . "$proxy_dport" \}
-	done
-	for proxy_dport in $proxy_udp_dport; do
-		nft add element inet "$FW_TABLE" proxy_dport \{ "udp" . "$proxy_dport" \}
-	done
 	if [ -n "$bypass_dscp" ]; then
 		log "Transparent Proxy" "Bypass DSCP: $bypass_dscp."
-		local dscp
-		for dscp in $bypass_dscp; do
-			nft add element inet "$FW_TABLE" bypass_dscp \{ "$dscp" \}
-		done
 	fi
 	# router proxy
 	if [ "$router_proxy" == 1 ]; then
 		log "Transparent Proxy" "Set proxy for router."
-		if [ "$tcp_transparent_proxy_mode" == "redirect" ]; then
-			nft insert rule inet "$FW_TABLE" nat_output jump router_dns_hijack
-			nft add rule inet "$FW_TABLE" nat_output meta l4proto tcp jump "router_${tcp_transparent_proxy_mode}"
-		else
-			nft flush chain inet "$FW_TABLE" nat_output
-			nft add rule inet "$FW_TABLE" nat_output jump router_dns_hijack
-			nft add rule inet "$FW_TABLE" mangle_output meta l4proto tcp jump "router_${tcp_transparent_proxy_mode}"
-		fi
-		nft add rule inet "$FW_TABLE" mangle_output meta l4proto udp jump "router_${udp_transparent_proxy_mode}"
 	fi
 	# lan proxy
 	if [ "$lan_proxy" == 1 ]; then
@@ -524,19 +296,6 @@ service_started() {
 		elif [ "$access_control_mode" == "block" ]; then
 			log "Transparent Proxy" "Access Control is using block mode, set proxy for client which is not in acl."
 		fi
-		config_list_foreach "proxy" "acl_ip" add_acl_ip
-		config_list_foreach "proxy" "acl_ip6" add_acl_ip6
-		config_list_foreach "proxy" "acl_mac" add_acl_mac
-		config_list_foreach "proxy" "acl_interface" add_acl_interface
-		if [ "$tcp_transparent_proxy_mode" == "redirect" ]; then
-			nft insert rule inet "$FW_TABLE" dstnat jump "${access_control_mode}_dns_hijack"
-			nft add rule inet "$FW_TABLE" dstnat meta l4proto tcp jump "${access_control_mode}_${tcp_transparent_proxy_mode}"
-		else
-			nft flush chain inet "$FW_TABLE" dstnat
-			nft add rule inet "$FW_TABLE" dstnat jump "${access_control_mode}_dns_hijack"
-			nft add rule inet "$FW_TABLE" mangle_prerouting meta l4proto tcp jump "${access_control_mode}_${tcp_transparent_proxy_mode}"
-		fi
-		nft add rule inet "$FW_TABLE" mangle_prerouting meta l4proto udp jump "${access_control_mode}_${udp_transparent_proxy_mode}"
 	fi
 	# fix compatible between tproxy and dockerd (kmod-br-netfilter)
 	if [ "$tproxy_enable" == 1 ] && (lsmod | grep -q br_netfilter); then
@@ -574,21 +333,17 @@ cleanup() {
 	# clear log
 	clear_log
 	# delete routing policy
-	ip -4 rule del ipproto tcp table "$TPROXY_ROUTE_TABLE" > /dev/null 2>&1
-	ip -4 rule del ipproto udp table "$TPROXY_ROUTE_TABLE" > /dev/null 2>&1
-	ip -4 rule del ipproto tcp table "$TUN_ROUTE_TABLE" > /dev/null 2>&1
-	ip -4 rule del ipproto udp table "$TUN_ROUTE_TABLE" > /dev/null 2>&1
-	ip -6 rule del ipproto tcp table "$TPROXY_ROUTE_TABLE" > /dev/null 2>&1
-	ip -6 rule del ipproto udp table "$TPROXY_ROUTE_TABLE" > /dev/null 2>&1
-	ip -6 rule del ipproto tcp table "$TUN_ROUTE_TABLE" > /dev/null 2>&1
-	ip -6 rule del ipproto udp table "$TUN_ROUTE_TABLE" > /dev/null 2>&1
+	ip -4 rule del table "$TPROXY_ROUTE_TABLE" > /dev/null 2>&1
+	ip -4 rule del table "$TUN_ROUTE_TABLE" > /dev/null 2>&1
+	ip -6 rule del table "$TPROXY_ROUTE_TABLE" > /dev/null 2>&1
+	ip -6 rule del table "$TUN_ROUTE_TABLE" > /dev/null 2>&1
 	# delete routing table
 	ip -4 route flush table "$TPROXY_ROUTE_TABLE" > /dev/null 2>&1
 	ip -4 route flush table "$TUN_ROUTE_TABLE" > /dev/null 2>&1
 	ip -6 route flush table "$TPROXY_ROUTE_TABLE" > /dev/null 2>&1
 	ip -6 route flush table "$TUN_ROUTE_TABLE" > /dev/null 2>&1
 	# delete hijack
-	nft delete table inet "$FW_TABLE" > /dev/null 2>&1
+	nft delete table inet nikki > /dev/null 2>&1
 	local handles handle
 	handles=$(nft --json list table inet fw4 | yq -M '.nftables[] | select(has("rule")) | .rule | select(.chain == "input" and .comment == "nikki") | .handle')
 	for handle in $handles; do
@@ -612,201 +367,6 @@ cleanup() {
 	# delete cron
 	sed -i "/#nikki/d" "/etc/crontabs/root" > /dev/null 2>&1
 	/etc/init.d/cron restart
-}
-
-mixin_authentications() {
-	local section="$1"
-
-	local enabled username password
-	config_get_bool enabled "$section" "enabled" 0
-	config_get username "$section" "username"
-	config_get password "$section" "password"
-
-	if [ "$enabled" == 0 ]; then
-		return
-	fi
-
-	authentication="$username:$password" yq -M -i '.authentication += [strenv(authentication)]' "$RUN_PROFILE_PATH"
-}
-
-mixin_tun_dns_hijacks() {
-	dns_hijack="$1" yq -M -i '.tun.dns-hijack += [strenv(dns_hijack)]' "$RUN_PROFILE_PATH"
-}
-
-mixin_fake_ip_filters() {
-	domain_name="$1" yq -M -i '.dns.fake-ip-filter += [strenv(domain_name)]' "$RUN_PROFILE_PATH"
-}
-
-mixin_hosts() {
-	local section="$1"
-
-	local enabled domain_name
-	config_get_bool enabled "$section" "enabled" 0
-	config_get domain_name "$section" "domain_name"
-
-	if [ "$enabled" == 0 ]; then
-		return
-	fi
-
-	config_list_foreach "$section" "ip" mixin_host "$domain_name"
-}
-
-mixin_host() {
-	ip="$1" domain_name="$2" yq -M -i '.hosts.[strenv(domain_name)] += [strenv(ip)]' "$RUN_PROFILE_PATH"
-}
-
-mixin_nameservers() {
-	local section="$1"
-
-	local enabled type
-	config_get_bool enabled "$section" "enabled" 0
-	config_get type "$section" "type"
-
-	if [ "$enabled" == 0 ]; then
-		return
-	fi
-
-	config_list_foreach "$section" "nameserver" mixin_nameserver "$type"
-}
-
-mixin_nameserver() {
-	nameserver="$1" type="$2" yq -M -i '.dns.[strenv(type)] += [strenv(nameserver)]' "$RUN_PROFILE_PATH"
-}
-
-mixin_nameserver_policies() {
-	local section="$1"
-
-	local enabled matcher
-	config_get_bool enabled "$section" "enabled" 0
-	config_get matcher "$section" "matcher"
-
-	if [ "$enabled" == 0 ]; then
-		return
-	fi
-
-	config_list_foreach "$section" "nameserver" mixin_nameserver_policy "$matcher"
-}
-
-mixin_nameserver_policy() {
-	nameserver="$1" matcher="$2" yq -M -i '.dns.nameserver-policy.[strenv(matcher)] += [strenv(nameserver)]' "$RUN_PROFILE_PATH"
-}
-
-mixin_sniffer_domain_names() {
-	domain_name="$1" type="$2" yq -M -i '.sniffer.[strenv(type)] += [strenv(domain_name)]' "$RUN_PROFILE_PATH"
-}
-
-mixin_sniffs() {
-	local section="$1"
-	local enabled protocol overwrite_destination
-	config_get_bool enabled "$section" "enabled" 0
-	config_get protocol "$section" "protocol"
-	config_get_bool overwrite_destination "$section" "overwrite_destination" 0
-	if [ "$enabled" == 0 ]; then
-		return
-	fi
-	protocol="$protocol" overwrite_destination="$overwrite_destination" yq -M -i '.sniffer.sniff.[strenv(protocol)].override-destination = env(overwrite_destination) == 1' "$RUN_PROFILE_PATH"
-	config_list_foreach "$section" "port" mixin_sniff "$protocol"
-}
-
-mixin_sniff() {
-	port="$1" protocol="$2" yq -M -i '.sniffer.sniff.[strenv(protocol)].ports += [env(port)]' "$RUN_PROFILE_PATH"
-}
-
-mixin_rule_providers() {
-	local section="$1"
-	local enabled
-	config_get_bool enabled "$section" "enabled" 0
-	if [ "$enabled" == 0 ]; then
-		return
-	fi
-	local name type url node file_size_limit file_path file_format behavior update_interval
-	config_get name "$section" "name"
-	config_get type "$section" "type"
-	config_get url "$section" "url"
-	config_get node "$section" "node"
-	config_get file_size_limit "$section" "file_size_limit" 0
-	config_get file_path "$section" "file_path"
-	config_get file_format "$section" "file_format"
-	config_get behavior "$section" "behavior"
-	config_get update_interval "$section" "update_interval" 0
-	if [ "$type" == "http" ]; then
-		name="$name" type="$type" url="$url" node="$node" file_size_limit="$file_size_limit" file_format="$file_format" behavior="$behavior" update_interval="$update_interval" \
-		yq -M -i '
-		.rule-providers.[strenv(name)].type = strenv(type) |
-		.rule-providers.[strenv(name)].url = strenv(url) |
-		.rule-providers.[strenv(name)].proxy = strenv(node) |
-		.rule-providers.[strenv(name)].size_limit = env(file_size_limit) |
-		.rule-providers.[strenv(name)].format = strenv(file_format) |
-		.rule-providers.[strenv(name)].behavior = strenv(behavior) |
-		.rule-providers.[strenv(name)].interval = env(update_interval)
-		' "$RUN_PROFILE_PATH"
-	elif [ "$type" == "file" ]; then
-		name="$name" type="$type" file_path="$file_path" file_format="$file_format" behavior="$behavior" \
-		yq -M -i '
-		.rule-providers.[strenv(name)].type = strenv(type) |
-		.rule-providers.[strenv(name)].path = strenv(file_path) |
-		.rule-providers.[strenv(name)].format = strenv(file_format) |
-		.rule-providers.[strenv(name)].behavior = strenv(behavior)
-		' "$RUN_PROFILE_PATH"
-	fi
-}
-
-mixin_rules() {
-	local section="$1"
-	local enabled
-	config_get_bool enabled "$section" "enabled" 0
-	if [ "$enabled" == 0 ]; then
-		return
-	fi
-	local type match node no_resolve
-	config_get type "$section" "type"
-	config_get match "$section" "match"
-	config_get node "$section" "node"
-	config_get_bool no_resolve "$section" "no_resolve" 0
-	local rule
-	if [ -z "$type" ]; then
-		rule="$match,$node" 
-	else
-		rule="$type,$match,$node"
-	fi
-	if [ "$no_resolve" == 1 ]; then
-		rule="$rule,no-resolve"
-	fi
-	rule="$rule" yq -M -i '.nikki-rules += [strenv(rule)]' "$RUN_PROFILE_PATH"
-}
-
-add_bypass_user() {
-	local user; user="$1"
-	if [ "$user" != "root" ] && (cut -d ':' -f 1 < /etc/passwd | grep -q "$user"); then
-		nft add element inet "$FW_TABLE" bypass_user \{ "$user" \}
-	fi
-}
-
-add_bypass_group() {
-	local group; group="$1"
-	if [ "$group" != "root" ] && (cut -d ':' -f 1 < /etc/group | grep -q "$group"); then
-		nft add element inet "$FW_TABLE" bypass_group \{ "$group" \}
-	fi
-}
-
-add_acl_ip() {
-	nft add element inet "$FW_TABLE" acl_ip \{ "$1" \}
-}
-
-add_acl_ip6() {
-	nft add element inet "$FW_TABLE" acl_ip6 \{ "$1" \}
-}
-
-add_acl_mac() {
-	nft add element inet "$FW_TABLE" acl_mac \{ "$1" \}
-}
-
-add_acl_interface() {
-	local interface; interface="$1"
-	local device; network_get_device device "$interface"
-	if [ -n "$device" ]; then
-		nft add element inet "$FW_TABLE" acl_interface \{ "$device" \}
-	fi
 }
 
 update_subscription() {
