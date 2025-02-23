@@ -28,6 +28,7 @@
 	const ipv6_dns_hijack = uci.get('nikki', 'proxy', 'ipv6_dns_hijack');
 	const ipv4_proxy = uci.get('nikki', 'proxy', 'ipv4_proxy');
 	const ipv6_proxy = uci.get('nikki', 'proxy', 'ipv6_proxy');
+	const fake_ip_ping_hijack = uci.get('nikki', 'proxy', 'fake_ip_ping_hijack');
 	const router_proxy = uci.get('nikki', 'proxy', 'router_proxy');
 	const lan_proxy = uci.get('nikki', 'proxy', 'lan_proxy');
 
@@ -312,9 +313,12 @@ table inet nikki {
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport ip daddr != {{ fake_ip_range }} counter return
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
-		meta l4proto { tcp, udp } ip dscp == @bypass_dscp ip daddr != {{ fake_ip_range }} counter return
-		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip dscp @bypass_dscp ip daddr != {{ fake_ip_range }} counter return
+		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
 		meta nfproto @proxy_nfproto meta l4proto tcp counter redirect to :{{ redir_port }}
+		{% endif %}
+		{% if (fake_ip_ping_hijack == '1'): %}
+		ip protocol icmp ip daddr {{ fake_ip_range }} counter redirect
 		{% endif %}
 	}
 
@@ -330,8 +334,8 @@ table inet nikki {
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport ip daddr != {{ fake_ip_range }} counter return
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
-		meta l4proto { tcp, udp } ip dscp == @bypass_dscp ip daddr != {{ fake_ip_range }} counter return
-		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip dscp @bypass_dscp ip daddr != {{ fake_ip_range }} counter return
+		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 		{% if (tcp_transparent_proxy_mode == 'tproxy'): %}
 		meta nfproto @proxy_nfproto meta l4proto tcp meta mark set {{ tproxy_fw_mark }} counter
@@ -369,9 +373,12 @@ table inet nikki {
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport ip daddr != {{ fake_ip_range }} counter return
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
-		meta l4proto { tcp, udp } ip dscp == @bypass_dscp ip daddr != {{ fake_ip_range }} counter return
-		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip dscp @bypass_dscp ip daddr != {{ fake_ip_range }} counter return
+		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
 		meta nfproto @proxy_nfproto jump {{ access_control_mode }}_redirect
+		{% endif %}
+		{% if (fake_ip_ping_hijack == '1'): %}
+		ip protocol icmp ip daddr {{ fake_ip_range }} counter redirect
 		{% endif %}
 	}
 
@@ -385,8 +392,8 @@ table inet nikki {
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport ip daddr != {{ fake_ip_range }} counter return
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
-		meta l4proto { tcp, udp } ip dscp == @bypass_dscp ip daddr != {{ fake_ip_range }} counter return
-		meta l4proto { tcp, udp } ip6 dscp == @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip dscp @bypass_dscp ip daddr != {{ fake_ip_range }} counter return
+		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 		{% if (tcp_transparent_proxy_mode == 'tproxy'): %}
 		meta nfproto @proxy_nfproto meta l4proto tcp jump {{ access_control_mode }}_tproxy

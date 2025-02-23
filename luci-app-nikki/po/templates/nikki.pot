@@ -9,16 +9,16 @@ msgstr ""
 msgid "API Secret"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:61
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:64
 msgid "Access Control"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:64
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:67
 msgid "All Mode"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:136
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:141
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:139
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:144
 msgid "All Port"
 msgstr ""
 
@@ -27,7 +27,7 @@ msgid "Allow Lan"
 msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:203
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:65
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:68
 msgid "Allow Mode"
 msgstr ""
 
@@ -36,7 +36,7 @@ msgstr ""
 msgid "App Config"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:26
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:27
 msgid "App Log"
 msgstr ""
 
@@ -61,27 +61,27 @@ msgid "Behavior"
 msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:202
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:66
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:69
 msgid "Block Mode"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:115
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:118
 msgid "Bypass"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:131
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:134
 msgid "Bypass China Mainland IP"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:144
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:147
 msgid "Bypass DSCP"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:124
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:127
 msgid "Bypass Group"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:117
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:120
 msgid "Bypass User"
 msgstr ""
 
@@ -93,13 +93,13 @@ msgstr ""
 msgid "Choose Profile"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:30
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:63
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:31
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:64
 msgid "Clear Log"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:137
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:142
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:140
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:145
 msgid "Commonly Used Port"
 msgstr ""
 
@@ -107,7 +107,7 @@ msgstr ""
 msgid "Core Environment Variable Config"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:59
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:60
 msgid "Core Log"
 msgstr ""
 
@@ -135,7 +135,7 @@ msgstr ""
 msgid "DNS Port"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:92
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:93
 msgid "Debug Log"
 msgstr ""
 
@@ -151,11 +151,11 @@ msgstr ""
 msgid "Destination Port"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:134
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:137
 msgid "Destination TCP Port to Proxy"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:139
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:142
 msgid "Destination UDP Port to Proxy"
 msgstr ""
 
@@ -281,6 +281,10 @@ msgstr ""
 msgid "External Control Config"
 msgstr ""
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:55
+msgid "Fake-IP Ping Hijack"
+msgstr ""
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:206
 msgid "Fake-IP Cache"
 msgstr ""
@@ -342,7 +346,7 @@ msgstr ""
 msgid "General Config"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:96
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:97
 msgid "Generate & Download"
 msgstr ""
 
@@ -431,11 +435,11 @@ msgstr ""
 msgid "Inbound Config"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:108
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:111
 msgid "Interface"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:58
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:61
 msgid "Lan Proxy"
 msgstr ""
 
@@ -443,7 +447,7 @@ msgstr ""
 msgid "Local"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:24
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:25
 #: applications/luci-app-nikki/root/usr/share/luci/menu.d/luci-app-nikki.json:53
 msgid "Log"
 msgstr ""
@@ -487,7 +491,7 @@ msgid "Mixin Option"
 msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:37
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:63
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:66
 msgid "Mode"
 msgstr ""
 
@@ -633,7 +637,7 @@ msgstr ""
 msgid "Restart Service"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:55
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:58
 msgid "Router Proxy"
 msgstr ""
 
@@ -669,8 +673,8 @@ msgstr ""
 msgid "Scheduled Restart"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:53
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:86
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:54
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:87
 msgid "Scroll To Bottom"
 msgstr ""
 
