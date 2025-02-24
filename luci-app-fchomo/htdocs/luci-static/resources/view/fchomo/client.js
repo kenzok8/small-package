@@ -526,7 +526,8 @@ function renderRules(s, uciconfig) {
 	//o.depends('SUB-RULE', '');
 	o.editable = true;
 
-	o = s.option(form.Flag, 'src', _('src'));
+	o = s.option(form.Flag, 'src', _('src'),
+		_('Treat the <code>destination IP</code> as the <code>source IP</code>.'));
 	o.default = o.disabled;
 	o.load = function(section_id) {
 		return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getParam('src') ? true : false);
@@ -543,7 +544,9 @@ function renderRules(s, uciconfig) {
 	o.depends('SUB-RULE', '');
 	o.modalonly = true;
 
-	o = s.option(form.Flag, 'no-resolve', _('no-resolve'));
+	o = s.option(form.Flag, 'no-resolve', _('no-resolve'),
+		_('Do not resolve the domain connection to IP for this match.</br>' +
+		'Only works for pure domain inbound connections without DNS resolution. e.g., socks5h'));
 	o.default = o.disabled;
 	o.load = function(section_id) {
 		return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getParam('no-resolve') ? true : false);
