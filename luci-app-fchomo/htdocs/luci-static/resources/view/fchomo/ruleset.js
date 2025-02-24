@@ -206,10 +206,24 @@ return view.extend({
 		o.value('inline', _('Inline'));
 		o.default = 'http';
 
+		o = s.option(form.ListValue, 'behavior', _('Behavior'));
+		o.value('classical');
+		o.value('domain');
+		o.value('ipcidr');
+		o.default = 'classical';
+		o.validate = function(section_id, value) {
+			const format = this.section.getUIElement(section_id, 'format').getValue();
+
+			if (value === 'classical' && format === 'mrs')
+				return _('Expecting: %s').format(_('Binary format only supports domain / ipcidr'));
+
+			return true;
+		}
+
 		o = s.option(form.ListValue, 'format', _('Format'));
 		o.value('text', _('Plain text'));
 		o.value('yaml', _('Yaml text'));
-		o.value('mrs', _('Binary file'));
+		o.value('mrs', _('Binary mrs'));
 		o.default = 'yaml';
 		o.validate = function(section_id, value) {
 			const behavior = this.section.getUIElement(section_id, 'behavior').getValue();
@@ -228,20 +242,6 @@ return view.extend({
 			return inline() ? _('none') : cval;
 		};
 		o.depends({'type': 'inline', '!reverse': true});
-
-		o = s.option(form.ListValue, 'behavior', _('Behavior'));
-		o.value('classical');
-		o.value('domain');
-		o.value('ipcidr');
-		o.default = 'classical';
-		o.validate = function(section_id, value) {
-			const format = this.section.getUIElement(section_id, 'format').getValue();
-
-			if (value === 'classical' && format === 'mrs')
-				return _('Expecting: %s').format(_('Binary format only supports domain / ipcidr'));
-
-			return true;
-		}
 
 		o = s.option(form.DummyValue, '_value', _('Value'));
 		o.load = function(section_id) {

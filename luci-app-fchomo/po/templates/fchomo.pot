@@ -209,7 +209,7 @@ msgid "Behavior"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:212
-msgid "Binary file"
+msgid "Binary mrs"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:218
