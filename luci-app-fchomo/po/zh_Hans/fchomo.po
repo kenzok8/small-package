@@ -217,8 +217,8 @@ msgid "Behavior"
 msgstr "行为"
 
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:212
-msgid "Binary file"
-msgstr "二进制文件"
+msgid "Binary mrs"
+msgstr "二进制 mrs"
 
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:218
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:241
@@ -1569,7 +1569,7 @@ msgstr "性能可能会略有下降，建议仅在需要时开启。"
 
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:210
 msgid "Plain text"
-msgstr "纯文本"
+msgstr "纯文本 text"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:781
 msgid ""
