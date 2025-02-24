@@ -779,7 +779,6 @@ return view.extend({
 						// led_name
 						o = ss.taboption('led' + i + '_tab', form.ListValue, 'mod_led_control_led' + i + '_name',
 							_('<abbr title="Light Emitting Diode">LED</abbr> Name'));
-						o.depends({ mod_led_control_enabled: '1' });
 						o.modalonly = true;
 						if(i > 1) {
 							o.rmempty  = true;
