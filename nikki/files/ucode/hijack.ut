@@ -40,8 +40,8 @@
 
 	const bypass_user = filter(ensure_array(uci.get('nikki', 'proxy', 'bypass_user')), (x) => x != "root" && index(users, x) >= 0);
 	const bypass_group = filter(ensure_array(uci.get('nikki', 'proxy', 'bypass_group')), (x) => x != "root" && index(groups, x) >= 0);
-	const proxy_tcp_dport = ensure_array(uci.get('nikki', 'proxy', 'proxy_tcp_dport'));
-	const proxy_udp_dport = ensure_array(uci.get('nikki', 'proxy', 'proxy_udp_dport'));
+	const proxy_tcp_dport = split((uci.get('nikki', 'proxy', 'proxy_tcp_dport') ?? '0-65535'), ' ');
+	const proxy_udp_dport = split((uci.get('nikki', 'proxy', 'proxy_udp_dport') ?? '0-65535'), ' ');
 	const bypass_dscp = ensure_array(uci.get('nikki', 'proxy', 'bypass_dscp'));
 
 	const dns_hijack_nfproto = [];

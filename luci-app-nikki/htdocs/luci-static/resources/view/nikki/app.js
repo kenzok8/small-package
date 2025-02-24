@@ -28,8 +28,8 @@ return view.extend({
     },
     render: function (data) {
         const subscriptions = uci.sections('nikki', 'subscription');
-        const appVersion = data[1]?.app || '';
-        const coreVersion = data[1]?.core || '';
+        const appVersion = data[1].app ?? '';
+        const coreVersion = data[1].core ?? '';
         const running = data[2];
         const profiles = data[3];
 
