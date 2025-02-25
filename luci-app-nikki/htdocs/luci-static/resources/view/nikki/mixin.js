@@ -177,8 +177,10 @@ return view.extend({
         o.datatype = 'port';
         o.placeholder = '1053';
 
+        o = s.taboption('dns', form.Flag, 'dns_ipv6', '*' + ' ' + _('IPv6'));
+        o.rmempty = false;
+
         o = s.taboption('dns', form.ListValue, 'dns_mode', '*' + ' ' + _('DNS Mode'));
-        o.value('normal', 'Normal');
         o.value('fake-ip', 'Fake-IP');
         o.value('redir-host', 'Redir-Host');
 
@@ -203,7 +205,7 @@ return view.extend({
         o.value('whitelist', _('Allow Mode'));
         o.depends({ 'dns_mode': 'fake-ip', 'fake_ip_filter': '1' });
 
-        o = s.taboption('dns', form.Flag, 'fake_ip_cache', _('Fake-IP Cache'));
+        o = s.taboption('dns', form.Flag, 'fake_ip_cache', '*' + ' ' + _('Fake-IP Cache'));
         o.retain = true;
         o.rmempty = false;
         o.depends('dns_mode', 'fake-ip');
@@ -212,9 +214,6 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption('dns', form.Flag, 'dns_doh_prefer_http3', _('DoH Prefer HTTP/3'));
-        o.rmempty = false;
-
-        o = s.taboption('dns', form.Flag, 'dns_ipv6', _('IPv6'));
         o.rmempty = false;
 
         o = s.taboption('dns', form.Flag, 'dns_system_hosts', _('Use System Hosts'));

@@ -244,8 +244,6 @@ service_started() {
 		$FIREWALL_INCLUDE_SH
 	fi
 	utpl -D nikki_group="$NIKKI_GROUP" -D tproxy_fw_mark="$TPROXY_FW_MARK" -D tun_fw_mark="$TUN_FW_MARK" -S "$HIJACK_UT" | nft -f -
-	nft -f "$RESERVED_IP_NFT"
-	nft -f "$RESERVED_IP6_NFT"
 	# dns hijack
 	if [ "$ipv4_dns_hijack" == 1 ]; then
 		log "Transparent Proxy" "Hijack IPv4 dns request."
@@ -269,12 +267,6 @@ service_started() {
 	fi
 	if [ "$bypass_china_mainland_ip" == 1 ]; then
 		log "Transparent Proxy" "Bypass china mainland ip."
-		if [ "$ipv4_proxy" == 1 ]; then
-			nft -f "$GEOIP_CN_NFT"
-		fi
-		if [ "$ipv6_proxy" == 1 ]; then
-			nft -f "$GEOIP6_CN_NFT"
-		fi
 	fi
 	log "Transparent Proxy" "Destination TCP Port to Proxy: $proxy_tcp_dport."
 	log "Transparent Proxy" "Destination UDP Port to Proxy: $proxy_udp_dport."

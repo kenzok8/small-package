@@ -30,9 +30,6 @@ config['external-ui-name'] = uci.get('nikki', 'mixin', 'ui_name') ?? '';
 config['external-ui-url'] = uci.get('nikki', 'mixin', 'ui_url');
 config['external-controller'] = '0.0.0.0' + ':' + (uci.get('nikki', 'mixin', 'api_port') ?? '9090');
 config['secret'] = uci.get('nikki', 'mixin', 'api_secret') ?? '666666';
-config['profile'] = {};
-config['profile']['store-selected'] = uci_bool(uci.get('nikki', 'mixin', 'selection_cache'));
-config['profile']['store-fake-ip'] = uci_bool(uci.get('nikki', 'mixin', 'fake_ip_cache'));
 
 config['allow-lan'] = uci_bool(uci.get('nikki', 'mixin', 'allow_lan'));
 config['port'] = int(uci.get('nikki', 'mixin', 'http_port') ?? '8080');
@@ -73,6 +70,7 @@ if (uci.get('nikki', 'proxy', 'tcp_transparent_proxy_mode') == 'tun' || uci.get(
 config['dns'] = {};
 config['dns']['enable'] = true;
 config['dns']['listen'] = '0.0.0.0' + ':' + (uci.get('nikki', 'mixin', 'dns_port') ?? '1053');
+config['dns']['ipv6'] = uci_bool(uci.get('nikki', 'mixin', 'dns_ipv6'));
 config['dns']['enhanced-mode'] = uci.get('nikki', 'mixin', 'dns_mode') ?? 'redir-host';
 config['dns']['fake-ip-range'] = uci.get('nikki', 'mixin', 'fake_ip_range') ?? '198.18.0.1/16';
 if (uci_bool(uci.get('nikki', 'mixin', 'fake_ip_filter'))) {
@@ -82,7 +80,6 @@ if (uci_bool(uci.get('nikki', 'mixin', 'fake_ip_filter'))) {
 if (mixin) {
 	config['dns']['respect-rules'] = uci_bool(uci.get('nikki', 'mixin', 'dns_respect_rules'));
 	config['dns']['prefer-h3'] = uci_bool(uci.get('nikki', 'mixin', 'dns_doh_prefer_http3'));
-	config['dns']['ipv6'] = uci_bool(uci.get('nikki', 'mixin', 'dns_ipv6'));
 	config['dns']['use-system-hosts'] = uci_bool(uci.get('nikki', 'mixin', 'dns_system_hosts'));
 	config['dns']['use-hosts'] = uci_bool(uci.get('nikki', 'mixin', 'dns_hosts'));
 	if (uci_bool(uci.get('nikki', 'mixin', 'hosts'))) {
@@ -144,6 +141,10 @@ if (mixin) {
 		});
 	}
 }
+
+config['profile'] = {};
+config['profile']['store-selected'] = uci_bool(uci.get('nikki', 'mixin', 'selection_cache'));
+config['profile']['store-fake-ip'] = uci_bool(uci.get('nikki', 'mixin', 'fake_ip_cache'));
 
 if (uci_bool(uci.get('nikki', 'mixin', 'rule_provider'))) {
 	config['rule-providers'] = {};
