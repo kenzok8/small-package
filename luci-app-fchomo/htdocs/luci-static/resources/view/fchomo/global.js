@@ -521,6 +521,7 @@ return view.extend({
 		so.placeholder = '65536';
 
 		so = ss.option(form.Value, 'tun_udp_timeout', _('UDP NAT expiration time'),
+			_('Aging time of NAT map maintained by client.</br>') +
 			_('In seconds. <code>%s</code> will be used if empty.').format('300'));
 		so.placeholder = '300';
 		so.validate = L.bind(hm.validateTimeDuration, so);
