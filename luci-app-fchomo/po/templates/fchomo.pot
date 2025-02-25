@@ -134,9 +134,13 @@ msgstr ""
 msgid "Address"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:727
-#: htdocs/luci-static/resources/view/fchomo/global.js:775
-#: htdocs/luci-static/resources/view/fchomo/global.js:794
+#: htdocs/luci-static/resources/view/fchomo/global.js:524
+msgid "Aging time of NAT map maintained by client.</br>"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:728
+#: htdocs/luci-static/resources/view/fchomo/global.js:776
+#: htdocs/luci-static/resources/view/fchomo/global.js:795
 msgid "All allowed"
 msgstr ""
 
