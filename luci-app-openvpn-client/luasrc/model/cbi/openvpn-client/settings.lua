@@ -27,18 +27,20 @@ function s.getPID(section) -- Universal function which returns valid pid # or ni
 	end
 end
 
-local active = s:option( DummyValue, "_active", translate("Status") )
+local active = s:option(DummyValue, "_active", translate("Status"))
 function active.cfgvalue(self, section)
 	local pid = s.getPID(section)
 	if pid ~= nil then
-		return (sys.process.signal(pid, 0))
-			and translate("RUNNING") .. " (" .. pid .. ")"
-			or  translate("NOT RUNNING")
+		if sys.process.signal(pid, 0) then
+			active.rawhtml = true
+			local onclick = string.format("window.open('%s', '_blank')", d.build_url("admin", "vpn", "openvpn-client", "log") .. "?id=" .. section)
+			return translate("RUNNING") .. " (" .. pid .. ")" .. '&nbsp&nbsp<a href="#" onclick="' .. onclick .. '">' .. translate("Log") .. '</a>'
+		end
 	end
 	return translate("NOT RUNNING")
 end
 
-local updown = s:option( Button, "_updown", translate("Start/Stop") )
+local updown = s:option(Button, "_updown", translate("Start/Stop"))
 updown._state = false
 updown.redirect = d.build_url(
 	"admin", "vpn", "openvpn-client"
@@ -55,8 +57,10 @@ function updown.cfgvalue(self, section)
 end
 function updown.write(self, section, value)
 	if self.option == "stop" then
+		-- RUNNING
 		sys.call("/etc/init.d/luci-app-openvpn-client stop %s" % section)
 	else
+		-- NOT RUNNING
 		sys.call("/etc/init.d/luci-app-openvpn-client start %s" % section)
 	end
 	luci.http.redirect( self.redirect )
@@ -67,5 +71,10 @@ o = s:option(DummyValue, "server", translate("Server IP/Host"))
 o = s:option(DummyValue, "port", translate("Port"))
 
 o = s:option(DummyValue, "proto", translate("Protocol"))
+
+function s.remove(self, section)
+	sys.call("/etc/init.d/luci-app-openvpn-client stop %s" % section)
+	return TypedSection.remove(self, section)
+end
 
 return m
