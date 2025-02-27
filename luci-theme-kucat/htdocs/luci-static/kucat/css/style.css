@@ -53,13 +53,13 @@
 
 [data-theme="dark"] {
     --primarytextcolor: #bbb;
-    --primary-title-color: #bbb;
-    --menu-color: #ddd;
-    --menu-hover-color: #e9eff3;
+    --primary-title-color: #ddd;
+    --menu-color: #d3d3d3;
+    --menu-hover-color: #eee;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm), 0.4);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
-    --body-text-color: #8391a2;
-    --body-color: #8b8e91;
+    --body-text-color: #ccc;
+    --body-color: #bbb;
     --body-hover-bgcolor: rgba(255, 255, 255, 0.05);
     --inputbg-color: rgba(255, 255, 255, 0.11);
     --inputtext-color: #bbb;
@@ -525,6 +525,7 @@ small {
 .container-bar-right .labelbar:hover::before,
 .container-bar-left .labelbar:hover::before {
     color: var(--menu-hover-color);
+    color: #fff;
     text-decoration: none
 }
 
@@ -596,7 +597,7 @@ small {
 
 .main-left {
     float: left;
-    width: calc(0% + 17rem);
+    width: calc(0% + 15rem);
     height: 100%;
     background-color: var(--menu-bgcolor);
     box-shadow: 0 .1rem .5rem .2rem var(--input-boxcolor);
@@ -605,18 +606,8 @@ small {
     z-index: 100
 }
 
-.main .main-left .sidenav-header {
-    text-align: center;
-    height: 4.8rem;
-    margin: 0;
-    background-color: var(--menu-barbgcolor);
-    padding: 2rem;
-    background-clip: padding-box;
-    border-bottom: 1px solid #ddd
-}
-
 .main-right {
-    width: calc(100% - 17rem);
+    width: calc(100% - 15rem);
     float: right;
     height: 100vh
 }
@@ -840,7 +831,7 @@ span[data-indicator="poll-status"],
 }
 
 #log_textarea {
-    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.16), 0 0 1px 0 rgba(0, 0, 0, 0.12)
+    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.16), 0 0 1px 0 var(--input-boxcolor) 
 }
 
 .error {
@@ -859,7 +850,7 @@ span[data-indicator="poll-status"],
     overflow: unset;
     border-radius: var(--radius1);
     background-color: rgba(var(--primary-rgbbody), var(--primary-rgbm-ts));
-    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.16), 0 0 2px 0 rgba(0, 0, 0, 0.12)
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.16), 0 0 2px 0 var(--input-boxcolor) 
 }
 
 .alert-message>* {
@@ -893,12 +884,11 @@ span[data-indicator="poll-status"],
     overflow: hidden
 }
 
-.main .main-left .nav>li a,
 .main .main-left .nav>li>a:first-child {
     display: block;
     font-size: var(--font-d);
     color: var(--menu-fontcolor);
-    padding: .8rem 0rem .8rem 3rem;
+    padding: .7rem 0rem .7rem 3rem;
     margin-bottom: 1px;
     font-weight: 500;
     display: flex;
@@ -910,6 +900,29 @@ span[data-indicator="poll-status"],
     position: relative
 }
 
+.main .main-left .nav>li .slide-menu>li>a {
+    display: block;
+    padding: .5rem 1.4rem .5rem 3rem;
+    text-decoration: none;
+    white-space: nowrap;
+    margin-bottom: 1px;
+    font-weight: 500;
+    width: 100%;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative
+    font-size: var(--font-z)
+}
+
+.main .main-left .nav .slide .slide-menu>li {
+    border-left: 4px solid rgba(255, 255, 255, 0)
+}
+.main .main-left .nav .slide .slide-menu>li.active {
+    background-color: var(--menu-item-active-bgcolor);
+    border-left: 4px solid var(--primary-solid)
+}
 .main .main-left .nav>li {
     padding: 0rem
 }
@@ -1081,26 +1094,10 @@ span[data-indicator="poll-status"],
     display: none
 }
 
-.main .main-left .nav>li .slide-menu li a {
-    padding: .6rem 1.4rem .6rem 3rem;
-    text-decoration: none;
-    white-space: nowrap;
-    font-size: var(--font-z)
-}
 
 .main .main-left .nav .slide .slide-menu .active a {
     color: var(--menu-hover-color);
     font-size: var(--font-z)
-}
-
-.main .main-left .nav .slide .slide-menu>li {
-    border-left: 4px solid rgba(255, 255, 255, 0)
-}
-
-.main .main-left .nav .slide .slide-menu>li.active {
-    color: var(--menu-hover-color);
-    background-color: var(--menu-item-active-bgcolor);
-    border-left: 4px solid var(--primary-solid)
 }
 
 .main .main-left .nav .slide .slide-menu li:hover {
@@ -1115,19 +1112,28 @@ span[data-indicator="poll-status"],
     color: var(--menu-hover-color)
 }
 
+.main .main-left .sidenav-header {
+    text-align: center;
+    height: 4.8rem;
+    margin: 0rem 1rem;
+    padding: 2rem;
+    background-clip: padding-box;
+    border-bottom: 1px solid  var(--input-boxcolor);
+}
 .main .main-left .sidenav-header .brand {
-    color: var(--menu-color);
+    color: var(--menu-fontcolor);
     font-family: var(--font-sans);
-    font-weight: bold;
-    font-size: 1.5rem;
+    font-weight: 900;
+    font-size: 1.6rem;
     text-decoration: none;
-    letter-spacing: 3px;
-    font-weight: bolder;
+    letter-spacing: 2px;
     cursor: default;
     vertical-align: text-bottom;
     white-space: nowrap;
-    text-align: center
+    text-align: center;
+    margin: 1em auto;
 }
+
 
 ul {
     line-height: normal
@@ -1219,7 +1225,7 @@ h5 {
 .cbi-section {
     padding: 0;
     border: 0px solid rgba(0, 0, 0, 0);
-    box-shadow: 0px 1px 0px rgba(0, 0, 0, 0.12)
+    box-shadow: 0px 1px 0px var(--input-boxcolor);
 }
 
 .cbi-modal .cbi-section,
@@ -1334,15 +1340,11 @@ table>thead>tr>th,
 table .tr>.td.cbi-value-field,
 table .tr>.th.cbi-section-table-cell {
     font-size: var(--font-x);
-    padding: 0.3rem 0.8rem;
+    padding: 0.2rem 0.4rem;
     letter-spacing: 1px;
     display: table-cell !important;
     color: var(--body-color);
     white-space: nowrap
-}
-
-.cbi-section-table-row .td {
-    text-align: center
 }
 
 table .tr>.td.cbi-value-field>[id*="ifc-description"] {
@@ -1373,7 +1375,7 @@ table>thead>tr:first-child>td {
 .tr.table-titles>.th,
 .tr.cbi-section-table-titles>.th {
     border-top: 0 !important;
-    line-height: 1
+    line-height: 1.2
 }
 
 [data-page="admin-network-diagnostics"] .tr>.td {
@@ -1467,7 +1469,8 @@ textarea {
 .cbi-section-table-row>.cbi-value-field .cbi-input-select,
 .cbi-section-table-row>.cbi-value-field .cbi-input-text,
 .cbi-section-table-row>.cbi-value-field .cbi-input-password {
-    width: 8rem
+    min-width: 7rem;
+    max-width: 12rem
 }
 .cbi-section-table-row>.cbi-value-field [data-dynlist]>input,
 .cbi-section-table-row>.cbi-value-field input.cbi-input-password {
@@ -1572,8 +1575,8 @@ td>table>tbody>tr>td,
     align-items: center
 }
 
-.node-admin-network-network #view .td.cbi-section-actions>*,
-.node-admin-network-network #view .td.cbi-section-actions>*>* {
+[data-page="admin-network-network"] #view .td.cbi-section-actions>*,
+[data-page="admin-network-network"] #view .td.cbi-section-actions>*>* {
     display: unset
 }
 
@@ -1671,7 +1674,7 @@ button:active,
 .cbi-button[value="Scan"],
 .cbi-button[value^="Back"],
 .cbi-button-neutral[onclick="handleConfig(event)"] {
-    background-color: #39afd1
+    background-color: #2e869f
 }
 
 .cbi-page-actions .cbi-button-apply,
@@ -1686,7 +1689,7 @@ button:active,
 .cbi-button[onclick="addKey(event)"] {
     font-weight: normal;
     border-color: rgba(var(--primary-rgbm), 1);
-    color: var(--menu-color);
+    color: var(--menu-hover-color);
     border: thin solid rgba(var(--primary-rgbm), 1);
     background-color: rgba(var(--primary-rgbm), 0.9)
 }
@@ -1701,7 +1704,7 @@ button:active,
 .cbi-button[onclick="reboot(this)"],
 .cbi-button-neutral[value="Restart"] {
     font-weight: normal;
-    background-color: #d9534f
+    background-color: #ab3632
 }
 
 .btn[value="Dismiss"],
@@ -1847,13 +1850,15 @@ button:active,
 
 .cbi-value-field,
 .cbi-value-description {
-    line-height: 1.25;
     display: table-cell
+}
+[data-page="admin-network-network"] .cbi-value>.cbi-value-field{
+    line-height: 1.25;
 }
 
 .cbi-value-description {
     font-size: small;
-    padding: 0 0 1rem 0;
+    padding: 0 0 0.6rem 0;
     opacity: .7
 }
 
@@ -1870,7 +1875,7 @@ button:active,
     display: inline-block;
     width: 100%;
     padding: 0 0.8rem;
-    line-height: 2.8rem
+    line-height: 2rem
 }
 
 .cbi-value .cbi-filebrowser {
@@ -2146,12 +2151,6 @@ button:active,
 .cbi-dropdown>ul.preview {
     display: none
 }
-
-.cbi-dropdown>.open {
-    flex-basis: 0px;
-    font-size: 1.5rem
-}
-
 .cbi-dropdown>.open,
 .cbi-dropdown>.more {
     background-color: rgba(255, 255, 255, 0) !important;
@@ -2160,15 +2159,17 @@ button:active,
     flex-direction: column;
     justify-content: center;
     text-align: center;
-    margin-left: .5rem;
+    margin-left: .2rem;
     outline: 0
 }
 
 .cbi-dropdown>.open {
     padding: 0.2rem;
-    font-size: 1.5rem;
-    border-left: 0.1rem solid #ccc;
-    font-size: 1.5rem;
+
+    flex-basis: 0px;
+
+    border-left: 0.1rem solid var(--input-boxhovercolor);
+    font-size: 1.3rem;
     margin: 0
 }
 
@@ -2185,7 +2186,7 @@ button:active,
 }
 
 .cbi-dropdown>ul>li[display]:not([display="0"]) {
-    border-left: thin solid #ccc
+    border-left: thin solid var(--input-boxhovercolor);
 }
 
 .cbi-dropdown[empty]>ul {
@@ -2212,7 +2213,6 @@ button:active,
 .cbi-dropdown>ul>li input[type="text"] {
     height: 30px;
     border: 1px solid var(--inputborder-color);
-    background: rgba(var(--primary-rgbbody), 1);
     color: var(--inputtext-color)
 }
 
@@ -2269,37 +2269,24 @@ button:active,
     text-overflow: ellipsis
 }
 
-.cbi-dropdown[empty]>ul>li,
-.cbi-dropdown[optional][open]>ul.dropdown>li[placeholder],
-.cbi-dropdown[multiple][open]>ul.dropdown>li>form {
-    display: block
-}
-
-.cbi-dropdown[open]>ul.dropdown li {
-    color: var(--inputtext-color)
-}
-
 .cbi-dropdown[open]>ul.dropdown>li {
-    border-bottom: thin solid #ccc;
-    padding: .2rem .4rem;
-    color: var(--inputtext-color)
+    border-bottom: thin solid var(--input-boxhovercolor);
+    padding: 0.2em 0.5em;
+    margin: 0.1rem auto;
+    color: var(--inputtext-color);
 }
 
 .cbi-dropdown[open]>ul.dropdown>li>input.create-item-input:first-child:last-child {
     width: 100%
 }
 
-.cbi-dropdown[disabled] {
-    pointer-events: none;
-    opacity: .6
-}
 
 .cbi-dropdown .zonebadge {
     width: 100%
 }
 
 .cbi-dropdown[open] .zonebadge {
-    width: auto;
+    width: 100%;
     color: #3b3737
 }
 
@@ -2320,10 +2307,6 @@ button:active,
 
 .cbi-dropdown[open]>ul.dropdown>li[unselectable] {
     opacity: .7
-}
-
-.cbi-dropdown[open]>ul.dropdown>li>input.create-item-input:first-child:last-child {
-    width: 100%
 }
 
 .cbi-dropdown[disabled] {
@@ -2434,9 +2417,15 @@ input {
 .modal .cbi-section {
     overflow: visible
 }
+.modal>.right>.btn.primary {
+    min-width: 8rem;
+    width: 8rem;
+    line-height: 1.5;
+}
 
-.modal .right>.primary {
-    min-width: 8rem
+.modal>.right{
+    display: flex;
+    justify-content: flex-end;
 }
 
 .modal [data-tab-active="true"] {
@@ -2461,7 +2450,7 @@ input {
 }
 
 .modal>.button-row .btn {
-    line-height: 1.8
+    line-height: 1.3
 }
 
 .modal>pre,
@@ -2488,20 +2477,17 @@ input {
     list-style-type: square
 }
 
-.modal p {
-    padding-left: .25rem;
-    word-break: break-word
-}
-
 .notice {
     background-color: #b98413 !important;
     background-color: rgba(var(--primary-rgbm), 1) !important;
     color: #eee
 }
 
-#modal_overlay .modal>p,
+#modal_overlay,
 .modal>p {
-    font-size: var(--font-x)
+    font-size: var(--font-x);
+    padding-left: .25rem;
+    word-break: break-word
 }
 
 .modal .label {
@@ -2542,12 +2528,8 @@ input {
     font-weight: 600
 }
 
-[data-page="admin-system-flash"] .modal .btn {
-    white-space: normal !important
-}
-
 [data-page="admin-system-flash"] .modal label.btn {
-    background-color: rgba(var(--primary-rgbbody), 1)
+    background-color: rgba(255,255,255, 0)
 }
 
 .cbi-dropdown.cbi-button-apply,
@@ -2559,15 +2541,16 @@ input {
 .cbi-button:first-child {
     margin-left: 0 !important
 }
-
 [data-page="admin-system-flash"] .modal>p>.btn {
-    white-space: normal !important;
-    font-size: var(--font-x);
-    margin: 0;
-    line-height: 1;
-    color: var(--inputtext-color);
-    padding: 0.3rem 1rem;
-    text-align: left
+  white-space: normal !important;
+  font-size: var(--font-x);
+  margin: 0;
+  line-height: 1;
+  color: var(--inputtext-color);
+  padding: 0.3rem 1rem;
+  text-align: left;
+  border: none;
+  box-shadow: none;
 }
 
 [data-page="admin-system-flash"] .modal>.right,
@@ -2625,7 +2608,7 @@ body.modal-overlay-active #modal_overlay {
 
 .right .cbi-button {
     line-height: 1;
-    margin: 0
+    margin: 0.2rem
 }
 
 .right,
@@ -2898,9 +2881,10 @@ textarea:focus {
 }
 
 .zonebadge .ifacebadge {
-    margin: .1rem .2rem;
-    background-color: #ccc;
-    border: 1px solid #bbb
+  margin: .1rem .2rem;
+  background-color: #bbb;
+  color: var(--menu-color);
+  border: 1px solid var(--input-boxhovercolor);
 }
 
 .zonebadge>input[type="text"] {
@@ -2937,12 +2921,6 @@ textarea:focus {
     background: rgba(var(--primary-rgbbody), 1);
 }
 
-.cbi-section-table-row>.cbi-value-field .cbi-input-text,
-.cbi-section-table-row>.cbi-value-field .cbi-input-password,
-.cbi-section-table-row>.cbi-value-field .cbi-dropdown {
-    min-width: 7rem
-}
-
 .cbi-section-create>* {
     margin: .5rem
 }
@@ -2966,7 +2944,7 @@ td.cbi-value-field var,
 
 .cbi-optionals {
     padding: 1rem 1rem 0 1rem;
-    border-top: thin solid #ccc
+    border-top: thin solid  var(--input-boxhovercolor);
 }
 
 .cbi-dropdown-container {
@@ -3208,8 +3186,6 @@ body.lang_pl.node-main-login .cbi-value-title {
     margin: 0;
     padding: 1rem 1.25rem 3rem 1.25rem;
     border-radius: var(--radius0);
-    -webkit-backdrop-filter: blur(6px) !important;
-    backdrop-filter: blur(6px) !important;
     background-color: rgba(var(--primary-rgbbody), 0.5) !important;
     border: none;
     -webkit-box-shadow: 3px 7px 12px rgba(0, 0, 0, 0.22);
@@ -3223,6 +3199,11 @@ body.lang_pl.node-main-login .cbi-value-title {
     font-weight: bolder;
     overflow-x: hidden;
     overflow-y: hidden
+}
+
+.node-main-login>.main>.main-right #maincontent>.container>form {
+    -webkit-backdrop-filter: blur(6px) !important;
+    backdrop-filter: blur(6px) !important;
 }
 
 .node-main-login>.main .container:active {
@@ -3305,7 +3286,7 @@ body.lang_pl.node-main-login .cbi-value-title {
     -ms-flex-pack: center;
     justify-content: center;
     text-indent: 0rem;
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: var(--inputbg-color);
     width: 14rem;
     min-width: 100% !important;
     margin: 0
@@ -3466,9 +3447,8 @@ body.lang_pl.node-main-login .cbi-value-title {
 }
 
 [data-page="admin-system-opkg"] div.btn {
-    line-height: 3;
+    line-height: 1.6;
     display: inline;
-    padding: .3rem .6rem
 }
 
 [data-page^="admin-system-admin"]:not(.node-main-login) .cbi-map:not(#cbi-dropbear) {
@@ -3651,7 +3631,7 @@ body.lang_pl.node-main-login .cbi-value-title {
     margin: 0 1.5rem 1rem 1.5rem
 }
 
-.node-admin-status-routes #view h3 {
+[data-page="admin-status-routes"] #view h3 {
     font-size: var(--font-d);
     line-height: 1;
     display: block;
@@ -3665,8 +3645,8 @@ body.lang_pl.node-main-login .cbi-value-title {
     font-weight: bold
 }
 
-.node-admin-status-routes #view table,
-.node-admin-status-processes #view table,
+[data-page="admin-status-routes"] #view table,
+[data-page="admin-status-processes"] #view table,
 .node-admin-status-realtime-connections #view table[id*=connections] {
     padding: 10px;
     border: 1px;
@@ -3722,6 +3702,10 @@ body.lang_pl.node-main-login .cbi-value-title {
     color: unset !important
 }
 
+[data-page="admin-network-dhcp"] h3 {
+    margin: -2rem 1.5rem 0.2rem;
+}
+
 [data-page="admin-status-iptables"] .right {
     margin-bottom: 0rem !important
 }
@@ -3742,7 +3726,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 
 #syslog:focus {
     outline: 0;
-    box-shadow: 0 0 1px rgba(0, 0, 0, 0.12) !important
+    box-shadow: 0 0 1px var(--input-boxcolor)!important
 }
 
 #mwan_status_text>div {
@@ -3790,23 +3774,21 @@ body.lang_pl.node-main-login .cbi-value-title {
     background-color: rgba(255, 255, 255, 0.1) !important
 }
 
-[data-page="admin-status-usage-details"] .cbi-value-title,
-.main #view .cbi-value-title {
+[data-page="admin-status-usage-details"] .cbi-value-title {
     width: 16rem
 }
 
 [data-page="admin-status-processes"] #view td:nth-child(3)>span,
 .cbi-map>.cbi-section .cbi-value:nth-of-type(4) td:nth-child(2),
 .Interfaces>.main #view td:nth-child(3),
-.node-admin-network-network>.main #view td:nth-child(3),
-.Processes>.main #view td:nth-child(3),
-.node-admin-status-processes>.main #view td:nth-child(3),
-.node-admin-status-overview>.main #view td:nth-child(2) {
+[data-page="admin-network-network"]>.main #view td:nth-child(3),
+[data-page="admin-status-processes"]>.main #view td:nth-child(3),
+[data-page="admin-status-overview"] >.main #view td:nth-child(2) {
     white-space: normal !important;
     word-break: unset !important
 }
 
-.node-admin-status-overview #view .cbi-section>div>div {
+[data-page="admin-status-overview"]  #view .cbi-section>div>div {
     justify-items: center !important
 }
 
@@ -3818,66 +3800,65 @@ body.lang_pl.node-main-login .cbi-value-title {
     width: 4rem !important
 }
 
-.node-admin-nlbw-usage>.main .tr.table-totals,
-.node-admin-nlbw-usage>.main .cbi-progressbar {
-    background-color: rgba(255, 255, 255, 0.1) !important
+[data-page="admin-nlbw-usage"]>.main .tr.table-totals,
+[data-page="admin-nlbw-usage"]>.main .cbi-progressbar {
+    background-color: var(--inputbg-color) !important
 }
 
-.node-admin-services-vssr .ssr-button {
+[data-page="admin-services-vssr"] .ssr-button {
     margin-left: .3rem
 }
 
-.node-admin-services-vssr .block h4 {
-    color: #ccc !important;
-    color: var(--body-color)
-}
-
-.node-admin-services-vssr .status-bar {
+.pure-g .block h4,
+[data-page="admin-services-vssr"] .block h4 {
     color: var(--body-color);
-    box-shadow: 0 0 .5rem 0 rgba(0, 0, 0, 0.35);
-    background-color: var(--input-bgcolor) !important
+    background-image:none;
 }
 
-.node-admin-services-vssr .block,
-.node-admin-services-shadowsocksr>.block,
-.node-admin-services-ssrpro>.block,
+[data-page="admin-services-vssr"] .status-bar {
+    color: var(--body-color);
+    box-shadow: 0 0 .5rem 0 var(--inputbg-color);
+    background-color: var(--inputbg-color) !important;
+}
+
+.pure-g .block,
+[data-page="admin-services-vssr"] .block,
+[data-page="admin-services-shadowsocksr"]>.block,
 .block,
-.node-admin-services-bypass>.main .block,
-.node-admin-services-vssr>.main .block,
+[data-page="admin-services-bypass"]>.main .block,
+[data-page="admin-services-vssr"]>.main .block,
 .main .block {
     color: var(--body-color);
-    background-color: var(--input-bgcolor) !important;
-    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.32), 0 1px 5px 0 rgba(0, 0, 0, 0.2)
+    background-color: var(--inputbg-color) !important;
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.32), 0 1px 5px 0 var(--inputbg-color)
 }
 
-.node-admin-services-shadowsocksr>.block:active,
-.node-admin-services-ssrpro>.block:active,
+[data-page="admin-services-shadowsocksr"]>.block:active,
 .block:active,
-.node-admin-services-bypass>.main .block:active,
+[data-page="admin-services-bypass"]>.main .block:active,
 .main .block:active,
-.node-admin-services-shadowsocksr>.block:hover,
-.node-admin-services-ssrpro>.block:hover,
+[data-page="admin-services-shadowsocksr"]>.block:hover,
 .block:hover,
-.node-admin-services-bypass>.main .block:hover,
+[data-page="admin-services-bypass"]>.main .block:hover,
 .main .block:hover {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 6px rgba(0, 0, 0, 0.35);
-    background-color: rgba(250, 250, 250, 0.7)
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 6px var(--input-boxhovercolor);
+    background-color: var(--input-boxhovercolor) !important;
 }
 
-.node-admin-services-samba>.main .cbi-tabcontainer:nth-child(3) .cbi-value-title {
+[data-page="admin-services-samba"]>.main .cbi-tabcontainer:nth-child(3) .cbi-value-title {
     margin-bottom: 1rem;
     width: auto
 }
 
-.node-admin-services-samba>.main .cbi-tabcontainer:nth-child(3) .cbi-value-field {
+[data-page="admin-services-samba"]>.main .cbi-tabcontainer:nth-child(3) .cbi-value-field {
     display: list-item
 }
 
-.node-admin-services-samba>.main .cbi-tabcontainer:nth-child(3) .cbi-value-description {
+[data-page="admin-services-samba"]>.main .cbi-tabcontainer:nth-child(3) .cbi-value-description {
     padding-top: 1rem
 }
 
-.node-admin-services-adguardhome>.main .cbi-value-field {
+[data-page="admin-services-adguardhome"]>.main .cbi-value-field {
     width: 27% !important
 }
 
@@ -4014,45 +3995,39 @@ pre.command-output {
     border-right: 1px solid #777 !important
 }
 
-.node-admin-services-adguardhome>.main .cbi-value .cbi-input-textarea {
+[data-page="admin-services-adguardhome"]>.main .cbi-value .cbi-input-textarea {
     width: 100% !important;
-    box-shadow: 0 0 1px rgba(0, 0, 0, 0.12) !important
+    box-shadow: 0 0 1px var(--input-boxcolor) !important
 }
 
-.node-admin-system-packages>.main .cbi-page-actions {
+[data-page="admin-system-packages"]>.main .cbi-page-actions {
     padding: 1rem 0
 }
 
-.node-admin-system-leds .cbi-section em {
+[data-page="admin-system-leds"] .cbi-section em {
     display: block
 }
 
 .main>.main-left,
 .cbi-section,
-.cbi-section-error,
-#iptables,
-.Firewall form,
-#cbi-network>.cbi-section-node,
-#cbi-wireless>.cbi-section-node,
-#cbi-wireless>#wifi_assoclist_table,
 [data-tab-title],
 [data-page^="admin-system-admin"]:not(.node-main-login) .cbi-map:not(#cbi-dropbear),
-[data-page="admin-system-opkg"] #maincontent>.container,
+#maincontent>.container>form,
+#maincontent>.container>form>div,
 .tabs,
 .cbi-tabmenu,
 .cbi-tooltip,
-#syslog,
-header.pd-primary,
-#view div,
-#view table {
+#view>p,
+#view>div,
+#view>table {
     backdrop-filter: var(--ufilter);
     -webkit-backdrop-filter: var(--ufilter)
 }
 
 #maincontent>.container>#view,
-.node-admin-status-routes #view,
-.node-admin-network-diagnostics #view,
-.node-admin-status-processes #view {
+[data-page="admin-status-routes"] #view,
+[data-page="admin-network-diagnostics"] #view,
+[data-page="admin-status-processes"] #view {
     min-width: inherit;
     overflow-x: auto;
     overflow-y: hidden
@@ -4063,7 +4038,7 @@ header.pd-primary,
     padding: 0 1rem 3rem 1rem
 }
 
-.node-admin-network-diagnostics #view .table {
+[data-page="admin-network-diagnostics"] #view .table {
     margin-top: 2rem
 }
 label, button, input, select, option,.cbi-dropdown, textarea {
@@ -4160,11 +4135,11 @@ div#add_link_div {
     }
 
     .main-left {
-        width: calc(0% + 17rem)
+        width: calc(0% + 15rem)
     }
 
     .main-right {
-        width: calc(100% - 17rem)
+        width: calc(100% - 15rem)
     }
 
     [ data-page="admin-network-firewall-forwards"] .table:not(.cbi-section-table) {
@@ -4218,25 +4193,25 @@ div#add_link_div {
         width: 32% !important
     }
 
-    .node-admin-network-network .cbi-section-table tr,
-    .node-admin-network-network .cbi-section-table td {
+    [data-page="admin-network-network"] .cbi-section-table tr,
+    [data-page="admin-network-network"] .cbi-section-table td {
         font-size: var(--font-x) !important
     }
 
-    .node-admin-network-network .cbi-section-node table td:nth-of-type(1) {
+    [data-page="admin-network-network"] .cbi-section-node table td:nth-of-type(1) {
         padding: 5px !important
     }
 
-    .node-admin-network-network .cbi-section-node table td,
-    .node-admin-network-wireless fieldset .cbi-section-node table td {
+    [data-page="admin-network-network"] .cbi-section-node table td,
+    [data-page="admin-network-wireless"] fieldset .cbi-section-node table td {
         padding: 10px !important
     }
 
-    .node-admin-network-network .cbi-section-table br {
+    [data-page="admin-network-network"] .cbi-section-table br {
         display: initial
     }
 
-    .node-admin-status-overview .main #view td:nth-child(1) {
+    [data-page="admin-status-overview"]  .main #view td:nth-child(1) {
         width: 8rem;
         padding-right: 0.6rem
     }
@@ -4281,7 +4256,7 @@ div#add_link_div {
     }
 
     .main-left {
-        width: calc(0% + 17rem);
+        width: calc(0% + 15rem);
         box-shadow: rgba(0, 0, 0, 0.75) 0 0 20px -5px;
         -webkit-box-shadow: rgba(0, 0, 0, 0.75) 0 0 20px -5px;
         position: fixed;
@@ -4313,7 +4288,7 @@ div#add_link_div {
         display: none !important
     }
 
-    .node-admin-status-overview .main #view td:nth-child(1) {
+    [data-page="admin-status-overview"]  .main #view td:nth-child(1) {
         width: 6rem;
         padding-right: 0.6rem
     }
@@ -4332,7 +4307,7 @@ div#add_link_div {
         overflow-x: hidden
     }
 
-    .node-admin-status-overview .table[width="100%"]>.tr {
+    [data-page="admin-status-overview"]  .table[width="100%"]>.tr {
         flex-wrap: nowrap
     }
 
@@ -4347,7 +4322,7 @@ div#add_link_div {
         border-top: 0
     }
 
-    .node-admin-admin-status.Overview .tr {
+    .node-admin-status.Overview .tr {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap
@@ -4406,15 +4381,15 @@ div#add_link_div {
         padding: 1rem 0.5rem
     }
 
-    .node-admin-services-vssr .status-info {
+    [data-page="admin-services-vssr"] .status-info {
         font-size: var(--font-x)
     }
 
-    .node-admin-services-vssr .icon-con {
+    [data-page="admin-services-vssr"] .icon-con {
         margin-top: 0.4rem
     }
 
-    .node-admin-services-vssr .icon-con img {
+    [data-page="admin-services-vssr"] .icon-con img {
         width: 2.3rem !important;
         height: auto
     }
@@ -4465,11 +4440,7 @@ div#add_link_div {
 
 @media screen and (max-width:600px) {
     .main-left {
-        width: calc(0% + 17rem)
-    }
-
-    .table {
-        display: block
+        width: calc(0% + 15rem)
     }
 
     .cbi-section>div>table.table {
@@ -4499,8 +4470,10 @@ div#add_link_div {
     .cbi-value-title {
         padding-left: 0.3rem;
         padding-top: 0.8rem;
+        width: 100%;
         font-weight: 700;
     }
+
     .cbi-section {
         padding-bottom: 0.5rem
     }
@@ -4545,12 +4518,12 @@ div#add_link_div {
         display: none
     }
 
-    .node-admin-status-overview>.main #view td:nth-child(1),
+    [data-page="admin-status-overview"] >.main #view td:nth-child(1),
     .cbi-value-title {
         text-align: left
     }
 
-    .node-admin-status-overview .main #view td:nth-child(1) {
+    [data-page="admin-status-overview"]  .main #view td:nth-child(1) {
         width: 5rem;
         padding-right: 0.4rem
     }
@@ -4589,26 +4562,18 @@ div#add_link_div {
     }
 
     .cbi-value {
-        display: flex;
+        display: inline-table
         padding: 0 0.5rem;
-        line-height: 1;
-        flex-direction: column;
-        flex-wrap: nowrap
     }
 }
 
 @media screen and (max-width:480px) {
-    .node-admin-status-overview .main #view td:nth-child(1) {
+
+    [data-page="admin-status-overview"] .main #view td:nth-child(1) {
         width: 4rem;
         padding-right: 0.2rem
     }
 
-    .modal .cbi-value-title,
-    .cbi-value-title {
-        width: 18rem;
-        white-space: nowarp;
-        word-wrap: break-word
-    }
 
     .cbi-value-description {
         width: 100%;
