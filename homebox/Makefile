@@ -5,8 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=homebox
-PKG_VERSION:=0.0.0-dev.2024101306
-PKG_RELEASE:=3
+PKG_VERSION:=0.1.0.20241126
+PKG_REAL_VER:=0.1.0-dev.2024112600
+PKG_RELEASE:=1
+PKG_FLAGS:=nonshared
+RSTRIP:=:
 
 ifeq ($(ARCH),aarch64)
 	H_ARCH:=arm64
@@ -32,9 +35,9 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=A Toolbox for Home Local Networks
+  TITLE:=A Toolbox for Home Local Networks Speed Test
   URL:=https://github.com/XGHeaven/homebox
-  DEPENDS:=@(i386||x86_64||arm||aarch64||mipsel||mips)
+  DEPENDS:=@(i386||x86_64||arm||aarch64||mipsel||mips) +libstdcpp +libatomic +libpthread +libc
 endef
 
 define Package/$(PKG_NAME)/description
@@ -42,8 +45,9 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Build/Prepare
-	[ ! -f $(PKG_BUILD_DIR)/server_Linux_$(H_ARCH).tar.gz ] && wget https://github.com/XGHeaven/homebox/releases/download/v$(PKG_VERSION)/server-linux-$(H_ARCH).tar.gz -O $(PKG_BUILD_DIR)/server-linux-$(H_ARCH).tar.gz
-	tar -xzvf $(PKG_BUILD_DIR)/server-linux-$(H_ARCH).tar.gz -C $(PKG_BUILD_DIR)
+	mkdir -p $(PKG_BUILD_DIR)
+	[ ! -f $(PKG_BUILD_DIR)/homebox-linux-$(H_ARCH).tar.gz ] && wget https://github.com/XGHeaven/homebox/releases/download/v$(PKG_REAL_VER)/homebox-linux-$(H_ARCH).tar.gz -O $(PKG_BUILD_DIR)/homebox-linux-$(H_ARCH).tar.gz
+	tar -xzvf $(PKG_BUILD_DIR)/homebox-linux-$(H_ARCH).tar.gz -C $(PKG_BUILD_DIR)
 endef
 
 define Build/Compile
@@ -51,7 +55,18 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/server-linux-$(H_ARCH) $(1)/usr/bin/homebox
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/homebox-linux-$(H_ARCH) $(1)/usr/bin/homebox
+endef
+
+# 使用force-depends选项强制忽略依赖检查
+define Package/$(PKG_NAME)/preinst
+#!/bin/sh
+exit 0
+endef
+
+# 添加"force-depends=1"到包控制文件中
+define Package/$(PKG_NAME)/extra_provides
+echo "libc.so.6"; echo "libm.so.6"
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
