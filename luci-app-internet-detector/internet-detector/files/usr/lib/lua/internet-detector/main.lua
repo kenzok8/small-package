@@ -268,7 +268,6 @@ function InternetDetector:TCPConnectionToHost(host, port)
 						io.stdout:write(string.format(
 							"SOCKET ERROR: %s, %s\n", errMsg, errNum))
 					end
-
 					unistd.close(sock)
 					return retCode
 				end
@@ -349,10 +348,12 @@ function InternetDetector:mainLoop()
 	signal.signal(signal.SIGUSR1, function(signo) self:resetUiCounter(signo) end)
 
 	local lastStatus, currentStatus, mTimeNow, mTimeDiff, mLastTime, uiTimeNow, uiLastTime
-	local interval = self.serviceConfig.interval_up
-	local counter  = 0
-	local onStart  = true
-	_RUNNING       = true
+	local interval      = self.serviceConfig.interval_up
+	local modulesStatus = {}
+	local counter       = 0
+	local onStart       = true
+	local inetChecked   = false
+	_RUNNING            = true
 	while _RUNNING do
 		if counter == 0 or counter >= interval then
 			currentStatus = self:checkHosts()
@@ -377,11 +378,11 @@ function InternetDetector:mainLoop()
 					self:writeLogMessage("notice", "Disconnected")
 				end
 			end
-
 			counter = 0
 		end
 
-		mTimeDiff = 0
+		mTimeDiff   = 0
+		inetChecked = (counter == 0)
 		for _, e in ipairs(self.modules) do
 			mTimeNow = time.clock_gettime(time.CLOCK_MONOTONIC).tv_sec
 			if mLastTime then
@@ -390,16 +391,17 @@ function InternetDetector:mainLoop()
 				mTimeDiff = 1
 			end
 			mLastTime = mTimeNow
-			e:run(currentStatus, lastStatus, mTimeDiff, mTimeNow)
+			e:run(currentStatus, lastStatus, mTimeDiff, mTimeNow, inetChecked)
 		end
 
-		local modulesStatus = {}
+		local modStatusChanged = false
 		for k, v in ipairs(self.modules) do
-			if v.status ~= nil then
+			if modulesStatus[v.name] ~= v.status then
 				modulesStatus[v.name] = v.status
+				modStatusChanged      = true
 			end
 		end
-		if next(modulesStatus) then
+		if modStatusChanged and next(modulesStatus) then
 			self:writeValueToFile(self.statusFile, self:statusJson(
 				currentStatus, self.serviceConfig.instance, modulesStatus))
 		end

@@ -10,63 +10,68 @@ local Module = {
 	readValue            = function(filePath) return nil end,
 	deadPeriod           = 900,
 	attempts             = 1,
-	iface                = nil,
 	restartTimeout       = 0,
 	status               = nil,
 	_attemptsCounter     = 0,
 	_deadCounter         = 0,
+	_networkRestarted    = false,
 	_ifaceRestarting     = false,
 	_ifaceRestartCounter = 0,
+	_netIfaces           = {},
+	_netDevices          = {},
+	_netItemsNum         = 0,
 }
 
-function Module:toggleFunc(flag)
-	return
-end
-
-function Module:toggleDevice(flag)
-	if not self.iface then
+function Module:toggleDevices(flag)
+	if #self._netDevices == 0 then
 		return
 	end
 	local ip = "/sbin/ip"
 	if unistd.access(ip, "x") then
-		return os.execute(string.format(
-			"%s link set dev %s %s", ip, self.iface, (flag and "up" or "down"))
-		)
+		for _, v in ipairs(self._netDevices) do
+			os.execute(string.format("%s link set dev %s %s", ip, v, (flag and "up" or "down")))
+		end
 	end
 end
 
-function Module:toggleIface(flag)
-	if not self.iface then
+function Module:toggleIfaces(flag)
+	if #self._netIfaces == 0 then
 		return
 	end
-	return os.execute(
-		string.format("%s %s", (flag and "/sbin/ifup" or "/sbin/ifdown"), self.iface)
-	)
+	for _, v in ipairs(self._netIfaces) do
+		os.execute(string.format("%s %s", (flag and "/sbin/ifup" or "/sbin/ifdown"), v))
+	end
 end
 
-function Module:ifaceUp()
-	self:toggleFunc(true)
+function Module:netItemsUp()
+	self:toggleDevices(true)
+	self:toggleIfaces(true)
 end
 
-function Module:ifaceDown()
-	self:toggleFunc(false)
+function Module:netItemsDown()
+	self:toggleIfaces(false)
+	self:toggleDevices(false)
 end
 
-function Module:networkRestart()
+function Module:restartNetworkService()
 	return os.execute("/etc/init.d/network restart")
 end
 
 function Module:init(t)
-	local iface = t.iface
-	if iface then
-		self.iface = iface
-		if self.iface:match("^@") then
-			self.iface      = self.iface:gsub("^@", "")
-			self.toggleFunc = self.toggleIface
-		else
-			self.toggleFunc = self.toggleDevice
+	if t.ifaces ~= nil and type(t.ifaces) == "table" then
+		self._netIfaces   = {}
+		self._netDevices  = {}
+		self._netItemsNum = 0
+		for k, v in ipairs(t.ifaces) do
+			if v:match("^@") then
+				self._netIfaces[#self._netIfaces + 1] = v:gsub("^@", "")
+			else
+				self._netDevices[#self._netDevices + 1] = v
+			end
+			self._netItemsNum = self._netItemsNum + 1
 		end
 	end
+
 	if t.attempts ~= nil then
 		self.attempts = tonumber(t.attempts)
 	end
@@ -79,10 +84,34 @@ function Module:init(t)
 	self._attemptsCounter = self.attempts
 end
 
-function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
+function Module:networkRestartFunc()
+	if self._netItemsNum > 0 then
+		if #self._netIfaces > 0 then
+			self.syslog("info", string.format("%s: restarting interfaces: %s",
+				self.name, table.concat(self._netIfaces, ", ")))
+		end
+		if #self._netDevices > 0 then
+			self.syslog("info", string.format("%s: restarting devices: %s",
+				self.name, table.concat(self._netDevices, ", ")))
+		end
+		self:netItemsDown()
+		if self.restartTimeout < 1 then
+			self:netItemsUp()
+		else
+			self._ifaceRestarting = true
+		end
+	else
+		self.syslog("info", string.format(
+			"%s: restarting network", self.name))
+		self:restartNetworkService()
+	end
+	self._attemptsCounter = self._attemptsCounter + 1
+end
+
+function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	if self._ifaceRestarting then
 		if self._ifaceRestartCounter >= self.restartTimeout then
-			self:ifaceUp()
+			self:netItemsUp()
 			self._ifaceRestarting     = false
 			self._ifaceRestartCounter = 0
 		else
@@ -90,31 +119,23 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 		end
 	else
 		if currentStatus == 1 then
-			if self._attemptsCounter < self.attempts then
-				if self._deadCounter >= self.deadPeriod then
-					if self.iface then
-						self.syslog("info", string.format(
-							"%s: restarting network interface '%s'", self.name, self.iface))
-						self:ifaceDown()
-						if self.restartTimeout < 1 then
-							self:ifaceUp()
-						else
-							self._ifaceRestarting = true
-						end
+			if not self._networkRestarted then
+				if self._attemptsCounter < self.attempts then
+					if self._deadCounter >= self.deadPeriod then
+						self:networkRestartFunc()
+						self._networkRestarted = true
+						self._deadCounter      = 0
 					else
-						self.syslog("info", string.format(
-							"%s: restarting network", self.name))
-						self:networkRestart()
+						self._deadCounter = self._deadCounter + timeDiff
 					end
-					self._deadCounter     = 0
-					self._attemptsCounter = self._attemptsCounter + 1
-				else
-					self._deadCounter = self._deadCounter + timeDiff
 				end
+			elseif inetChecked and self._attemptsCounter < self.attempts then
+				self:networkRestartFunc()
 			end
 		else
-			self._attemptsCounter = 0
-			self._deadCounter     = 0
+			self._attemptsCounter  = 0
+			self._deadCounter      = 0
+			self._networkRestarted = false
 		end
 		self._ifaceRestartCounter = 0
 	end

@@ -1,6 +1,7 @@
 
 local stdlib = require("posix.stdlib")
 local unistd = require("posix.unistd")
+local time   = require("posix.time")
 
 local Module = {
 	name        = "mod_regular_script",
@@ -14,6 +15,7 @@ local Module = {
 	script      = "",
 	status      = nil,
 	_nextTime   = nil,
+	_firstRun   = true,
 }
 
 function Module:runExternalScript(scriptPath, currentStatus)
@@ -36,7 +38,7 @@ function Module:init(t)
 	end
 end
 
-function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
+function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	if not self._nextTime then
 		if timeNow < self.runInterval then
 			self._nextTime = self.runInterval
@@ -44,11 +46,16 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 			self._nextTime = timeNow - (timeNow % self.runInterval) + self.runInterval
 		end
 	end
+	if self._firstRun then
+		self.status = time.strftime ("%Y-%m-%d %H:%M:%S %z", time.localtime(time.time() + self._nextTime - timeNow))
+		self._firstRun = false
+	end
 	if timeNow >= self._nextTime then
+		self._nextTime = self._nextTime + self.runInterval
 		if self.inetState == 2 or (self.inetState == 0 and currentStatus == 0) or (self.inetState == 1 and currentStatus == 1) then
+			self.status = time.strftime ("%Y-%m-%d %H:%M:%S %z", time.localtime(time.time() + self._nextTime - timeNow))
 			self:runExternalScript(self.script, currentStatus)
 		end
-		self._nextTime = self._nextTime + self.runInterval
 	end
 end
 

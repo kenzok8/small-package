@@ -71,6 +71,9 @@ msgstr ""
 msgid "Default port value for TCP connections."
 msgstr ""
 
+msgid "Device"
+msgstr ""
+
 msgid "Device will be rebooted when the Internet is disconnected."
 msgstr ""
 
@@ -237,18 +240,24 @@ msgid ""
 msgstr ""
 
 msgid ""
-"Network interface for Internet access. If not specified, the default "
+"Network device for Internet access. If not specified, the default "
 "interface is used."
 msgstr ""
 
 msgid ""
-"Network interface to restart. If not specified, then the network service is restarted."
+"Network device or interface to restart. If not specified, then the network service is restarted."
 msgstr ""
 
 msgid "Network will be restarted when the Internet is disconnected."
 msgstr ""
 
+msgid "Next run"
+msgstr ""
+
 msgid "No <abbr title=\"Light Emitting Diode\">LED</abbr>s available..."
+msgstr ""
+
+msgid "Not scheduled"
 msgstr ""
 
 msgid "Off"
@@ -285,7 +294,7 @@ msgstr ""
 msgid "Period of time without Internet access before modem restart."
 msgstr ""
 
-msgid "Period of time without Internet access before network restart or between restart attempts."
+msgid "Period of time without Internet access before network restart."
 msgstr ""
 
 msgid ""
@@ -415,7 +424,7 @@ msgstr ""
 msgid "TLS: use STARTTLS if the server supports it."
 msgstr ""
 
-msgid "Timeout between stopping and starting the interface."
+msgid "Timeout between stopping and starting a network device."
 msgstr ""
 
 msgid "Type a time string"
