@@ -256,7 +256,6 @@ function Module:decodeMessage(message)
 
 	if numAnswers > 0 then
 		for answerCount = 1, numAnswers do
-
 			if answerSectionStarts < #message then
 				local ATYPE = tonumber(
 					message:sub(answerSectionStarts + 5, answerSectionStarts + 8), 16)
@@ -359,7 +358,7 @@ function Module:init(t)
 	self._enabled   = true
 end
 
-function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
+function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	if not self._enabled then
 		return
 	end
@@ -384,22 +383,16 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow)
 				if self._counter > 0 then
 					self:runIpScript()
 				end
-			else
-				self.status = nil
 			end
-
 			self._currentIp = ip
 			self._counter   = 0
-		else
-			self.status = nil
 		end
 	else
-		self.status     = nil
 		self._currentIp = nil
+		self.status     = self._currentIp
 		self._counter   = 0
 		self._interval  = self.runInterval
 	end
-
 	self._counter = self._counter + timeDiff
 end
 

@@ -134,24 +134,25 @@ var Timefield = ui.Textfield.extend({
 });
 
 return view.extend({
-	appName            : 'internet-detector',
-	configDir          : '/etc/internet-detector',
-	pollInterval       : L.env.pollinterval,
-	appStatus          : 'stoped',
-	initStatus         : null,
-	inetStatus         : null,
-	inetStatusArea     : E('div', { 'class': 'cbi-value-field', 'id': 'inetStatusArea' }),
-	serviceStatusLabel : E('em', { 'id': 'serviceStatusLabel' }),
-	initButton         : null,
-	currentAppMode     : '0',
-	defaultHosts       : [ '8.8.8.8', '1.1.1.1' ],
-	ledsPath           : '/sys/class/leds',
-	ledsPerInstance    : 3,
-	leds               : [],
-	mm                 : false,
-	mmInit             : false,
-	email              : false,
-	emailExec          : false,
+	appName                : 'internet-detector',
+	configDir              : '/etc/internet-detector',
+	pollInterval           : L.env.pollinterval,
+	appStatus              : 'stoped',
+	initStatus             : null,
+	inetStatus             : null,
+	inetStatusArea         : E('div', { 'class': 'cbi-value-field', 'id': 'inetStatusArea' }),
+	serviceStatusLabel     : E('em', { 'id': 'serviceStatusLabel' }),
+	initButton             : null,
+	currentAppMode         : '0',
+	defaultHosts           : [ '8.8.8.8', '1.1.1.1' ],
+	ledsPath               : '/sys/class/leds',
+	ledsPerInstance        : 3,
+	leds                   : [],
+	mm                     : false,
+	mmInit                 : false,
+	email                  : false,
+	emailExec              : false,
+	modRegularScriptNextRun: {},
 
 	callInitStatus: rpc.declare({
 		object: 'luci',
@@ -273,6 +274,18 @@ return view.extend({
 						i.instance + ': ', status, publicIp)
 					)
 				);
+
+				if(i.mod_regular_script) {
+					this.modRegularScriptNextRun[i.instance] = i.mod_regular_script;
+					let nextRunLabel = document.getElementById('id_next_run_' + i.instance);
+					if(nextRunLabel) {
+						if(this.appStatus === 'running') {
+							nextRunLabel.innerHTML = this.modRegularScriptNextRun[i.instance];
+						} else {
+							nextRunLabel.innerHTML = _('Not scheduled');
+						};
+					};
+				};
 			};
 		};
 
@@ -670,8 +683,8 @@ return view.extend({
 
 		// iface
 		o = s.taboption('main', widgets.DeviceSelect,
-			'iface', _('Interface'),
-			_('Network interface for Internet access. If not specified, the default interface is used.')
+			'iface', _('Device'),
+			_('Network device for Internet access. If not specified, the default device is used.')
 		);
 		o.noaliases  = true;
 
@@ -765,7 +778,7 @@ return view.extend({
 					// enabled
 					o = s.taboption('led_control', form.Flag, 'mod_led_control_enabled',
 						_('Enabled'));
-					o.rmempty = false;
+					o.rmempty   = false;
 					o.modalonly = true;
 
 					o = s.taboption('led_control', form.SectionValue, s.section, form.NamedSection,
@@ -827,7 +840,7 @@ return view.extend({
 				// enabled
 				o = s.taboption('reboot_device', form.Flag, 'mod_reboot_enabled',
 					_('Enabled'));
-				o.rmempty = false;
+				o.rmempty   = false;
 				o.modalonly = true;
 
 				// dead_period
@@ -866,13 +879,13 @@ return view.extend({
 				// enabled
 				o = s.taboption('restart_network', form.Flag, 'mod_network_restart_enabled',
 					_('Enabled'));
-				o.rmempty = false;
+				o.rmempty   = false;
 				o.modalonly = true;
 
 				// dead_period
 				o = s.taboption('restart_network', this.CBITimeInput,
 					'mod_network_restart_dead_period', _('Dead period'),
-					_('Period of time without Internet access before network restart or between restart attempts.')
+					_('Period of time without Internet access before network restart.')
 				);
 				o.default   = '900';
 				o.rmempty   = false;
@@ -891,17 +904,18 @@ return view.extend({
 				o.value(5);
 				o.default = '1';
 
-				// iface
-				o = s.taboption('restart_network', widgets.DeviceSelect, 'mod_network_restart_iface',
-					_('Interface'),
-					_('Network interface to restart. If not specified, then the network service is restarted.')
+				// ifaces
+				o = s.taboption('restart_network', widgets.DeviceSelect, 'mod_network_restart_ifaces',
+					_('Device'),
+					_('Network device or interface to restart. If not specified, then the network service is restarted.')
 				);
 				o.modalonly = true;
+				o.multiple  = true;
 
 				// restart_timeout
 				o = s.taboption('restart_network', form.ListValue,
 					'mod_network_restart_restart_timeout', _('Restart timeout'),
-					_('Timeout between stopping and starting the interface.')
+					_('Timeout between stopping and starting a network device.')
 				);
 				o.modalonly = true;
 				o.value(0,  '0 ' + _('sec'));
@@ -1065,7 +1079,7 @@ return view.extend({
 						// enabled
 						o = s.taboption('email', form.Flag, 'mod_email_enabled',
 							_('Enabled'));
-						o.rmempty = false;
+						o.rmempty   = false;
 						o.modalonly = true;
 
 						// mode
@@ -1083,7 +1097,7 @@ return view.extend({
 							'mod_email_alive_period', _('Alive period'),
 							_('Period of time after connecting to the Internet before sending a message.')
 						);
-						o.rmempty = false;
+						o.rmempty   = false;
 						o.modalonly = true;
 						o.depends({ 'mod_email_mode': '0' });
 						o.depends({ 'mod_email_mode': '2' });
@@ -1094,7 +1108,7 @@ return view.extend({
 							'mod_email_dead_period', _('Dead period'),
 							_('Period of time after disconnecting from Internet before sending a message.')
 						);
-						o.rmempty = false;
+						o.rmempty   = false;
 						o.modalonly = true;
 						o.depends({ 'mod_email_mode': '1' });
 						o.depends({ 'mod_email_mode': '2' });
@@ -1231,6 +1245,20 @@ return view.extend({
 				o.rmempty   = false;
 				o.modalonly = true;
 
+				// next run
+				o = s.taboption('regular_script', form.DummyValue, '_dummy', _('Next run'));
+				o.rawhtml   = true;
+				o.default   = '<span id="id_next_run_' + s.section + '">' + (this.modRegularScriptNextRun[s.section] || _('Not scheduled')) + '</span>';
+				o.modalonly = true;
+
+				// interval
+				o = s.taboption('regular_script', this.CBITimeInput,
+					'mod_regular_script_interval', _('Run interval')
+				);
+				o.default   = '3600';
+				o.rmempty   = false;
+				o.modalonly = true;
+
 				// inet_state
 				o = s.taboption('regular_script', form.ListValue,
 					'mod_regular_script_inet_state', _('Run if Internet state is')
@@ -1248,14 +1276,6 @@ return view.extend({
 					_('Edit regular-script'),
 					_('Shell commands that run regularly at a specified interval. Current state of the Internet is available as value of the <code>$INET_STATE</code> variable (<code>0</code> - connected, <code>1</code> - disconnected).')
 				);
-				o.modalonly = true;
-
-				// interval
-				o = s.taboption('regular_script', this.CBITimeInput,
-					'mod_regular_script_interval', _('Run interval')
-				);
-				o.default   = '3600';
-				o.rmempty   = false;
 				o.modalonly = true;
 			};
 
