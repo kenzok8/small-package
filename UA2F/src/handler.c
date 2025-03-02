@@ -214,6 +214,7 @@ int get_pkt_ip_version(const struct nf_packet *pkt) {
         case ETH_P_IPV6:
             return IPV6;
         default:
+            syslog(LOG_WARNING, "Received unknown ip packet %x.", pkt->hw_protocol);
             return IP_UNK;
     }
 }
@@ -240,8 +241,9 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     const int type = get_pkt_ip_version(pkt);
     if (type == IP_UNK) {
         // will this happen?
+        syslog(LOG_WARNING, "Received unknown ip packet type %x. You may set wrong firewall rules.", pkt->hw_protocol);
         send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
-        syslog(LOG_WARNING, "Received unknown ip packet %x. You may set wrong firewall rules.", pkt->hw_protocol);
+        goto end;
     }
 
     if (type == IPV4) {
@@ -250,10 +252,16 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     } else if (type == IPV6) {
         assert(ipv6_set_transport_header(pkt_buff));
         count_ipv6_packet();
+    } else {
+        __builtin_unreachable();
     }
 
     const __auto_type tcp_hdr = nfq_tcp_get_hdr(pkt_buff);
     if (tcp_hdr == NULL) {
+        if (pktb_transport_header(pkt_buff) == NULL) {
+            syslog(LOG_ERR, "Transport header was not set.");
+        }
+
         // This packet is not tcp, pass it
         send_verdict(queue, pkt, (struct mark_op){false, 0}, NULL);
         syslog(LOG_WARNING, "Received non-tcp packet. You may set wrong firewall rules.");
