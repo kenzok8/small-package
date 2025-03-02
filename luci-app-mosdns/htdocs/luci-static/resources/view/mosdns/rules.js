@@ -42,9 +42,6 @@ return view.extend({
 					return;
 				}
 				return fs.write('/etc/mosdns/rule/whitelist.txt', formvalue.trim().replace(/\r\n/g, '\n') + '\n')
-					.then(function (i) {
-						ui.addNotification(null, E('p', _('White Lists') + '&#160;' + _('Rules have been saved.')), 'info');
-					})
 					.catch(function (e) {
 						ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e.message)));
 					});
@@ -69,9 +66,6 @@ return view.extend({
 					return;
 				}
 				return fs.write('/etc/mosdns/rule/blocklist.txt', formvalue.trim().replace(/\r\n/g, '\n') + '\n')
-					.then(function (i) {
-						ui.addNotification(null, E('p', _('Block Lists') + '&#160;' + _('Rules have been saved.')), 'info');
-					})
 					.catch(function (e) {
 						ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e.message)));
 					});
@@ -96,9 +90,6 @@ return view.extend({
 					return;
 				}
 				return fs.write('/etc/mosdns/rule/greylist.txt', formvalue.trim().replace(/\r\n/g, '\n') + '\n')
-					.then(function (i) {
-						ui.addNotification(null, E('p', _('Grey Lists') + '&#160;' + _('Rules have been saved.')), 'info');
-					})
 					.catch(function (e) {
 						ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e.message)));
 					});
@@ -123,9 +114,6 @@ return view.extend({
 					return;
 				}
 				return fs.write('/etc/mosdns/rule/ddnslist.txt', formvalue.trim().replace(/\r\n/g, '\n') + '\n')
-					.then(function (i) {
-						ui.addNotification(null, E('p', _('DDNS Lists') + '&#160;' + _('Rules have been saved.')), 'info');
-					})
 					.catch(function (e) {
 						ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e.message)));
 					});
@@ -150,9 +138,6 @@ return view.extend({
 					return;
 				}
 				return fs.write('/etc/mosdns/rule/hosts.txt', formvalue.trim().replace(/\r\n/g, '\n') + '\n')
-					.then(function (i) {
-						ui.addNotification(null, E('p', _('Hosts') + '&#160;' + _('Rules have been saved.')), 'info');
-					})
 					.catch(function (e) {
 						ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e.message)));
 					});
@@ -177,9 +162,6 @@ return view.extend({
 					return;
 				}
 				return fs.write('/etc/mosdns/rule/redirect.txt', formvalue.trim().replace(/\r\n/g, '\n') + '\n')
-					.then(function (i) {
-						ui.addNotification(null, E('p', _('Redirect') + '&#160;' + _('Rules have been saved.')), 'info');
-					})
 					.catch(function (e) {
 						ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e.message)));
 					});
@@ -204,9 +186,6 @@ return view.extend({
 					return;
 				}
 				return fs.write('/etc/mosdns/rule/local-ptr.txt', formvalue.trim().replace(/\r\n/g, '\n') + '\n')
-					.then(function (i) {
-						ui.addNotification(null, E('p', _('Block PTR') + '&#160;' + _('Rules have been saved.')), 'info');
-					})
 					.catch(function (e) {
 						ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e.message)));
 					});
@@ -231,9 +210,6 @@ return view.extend({
 					return;
 				}
 				return fs.write('/etc/mosdns/rule/streaming.txt', formvalue.trim().replace(/\r\n/g, '\n') + '\n')
-					.then(function (i) {
-						ui.addNotification(null, E('p', _('Streaming Media') + '&#160;' + _('Rules have been saved.')), 'info');
-					})
 					.catch(function (e) {
 						ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e.message)));
 					});
@@ -246,7 +222,13 @@ return view.extend({
 	handleSaveApply: function (ev) {
 		var m = this.map;
 		onclick = L.bind(this.handleSave, this, m);
-		return fs.exec('/etc/init.d/mosdns', ['restart']);
+		return fs.exec('/etc/init.d/mosdns', ['restart'])
+			.then(function () {
+				window.location.reload();
+			})
+			.catch(function (e) {
+				ui.addNotification(null, E('p', _('Failed to restart mosdns: %s').format(e.message)));
+			});
 	},
 	handleReset: null
 });
