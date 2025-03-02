@@ -1534,23 +1534,25 @@ td>table>tbody>tr>td,
 .cbi-value-field>.table>.tbody>.tr>.td {
     border: 0
 }
-
+.cbi-button-down,
 .cbi-button-up {
-    font-size: 1.2rem;
+    font-size: 1rem;
     display: inline-block;
     cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: center;
     color: transparent !important;
-    background:  url("data:image/svg+xml;base64,PCEtLSBHZW5lcmF0ZWQgYnkgSWNvTW9vbi5pbyAtLT4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9Ijc2OCIgaGVpZ2h0PSI3NjgiIHZpZXdCb3g9IjAgMCA3NjggNzY4Ij4KPHRpdGxlPjwvdGl0bGU+CjxnIGlkPSJpY29tb29uLWlnbm9yZSI+CjwvZz4KPHBhdGggZD0iTTU5OC42MyA0NTcuMzc1bC0xOTItMTkyYy0xMi41MTItMTIuNTEyLTMyLjc2OC0xMi41MTItNDUuMjQ4IDBsLTE5MiAxOTJjLTEyLjUxMiAxMi41MTItMTIuNTEyIDMyLjc2OCAwIDQ1LjI0OHMzMi43NjggMTIuNTEyIDQ1LjI0OCAwbDE2OS4zNzYtMTY5LjM3NiAxNjkuMzc2IDE2OS4zNzZjMTIuNTEyIDEyLjUxMiAzMi43NjggMTIuNTEyIDQ1LjI0OCAwczEyLjUxMi0zMi43NjggMC00NS4yNDh6Ij48L3BhdGg+Cjwvc3ZnPgo=")no-repeat center;
+    -webkit-appearance: none;
+    -moz-appearance: none;
     background-size: 25px 30px
 }
 
+.cbi-button-up {
+background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzY4IiBoZWlnaHQ9Ijc2OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiPgogPHRpdGxlLz4KCiA8Zz4KICA8dGl0bGU+TGF5ZXIgMTwvdGl0bGU+CiAgPGcgaWQ9Imljb21vb24taWdub3JlIi8+CiAgPHBhdGggZmlsbD0iI2ZmZmZmZiIgaWQ9InN2Z18xIiBkPSJtNTk4LjYzLDQ1Ny4zNzVsLTE5MiwtMTkyYy0xMi41MTIsLTEyLjUxMiAtMzIuNzY4LC0xMi41MTIgLTQ1LjI0OCwwbC0xOTIsMTkyYy0xMi41MTIsMTIuNTEyIC0xMi41MTIsMzIuNzY4IDAsNDUuMjQ4czMyLjc2OCwxMi41MTIgNDUuMjQ4LDBsMTY5LjM3NiwtMTY5LjM3NmwxNjkuMzc2LDE2OS4zNzZjMTIuNTEyLDEyLjUxMiAzMi43NjgsMTIuNTEyIDQ1LjI0OCwwczEyLjUxMiwtMzIuNzY4IDAsLTQ1LjI0OHoiLz4KIDwvZz4KPC9zdmc+");
+}
+
 .cbi-button-down {
-    font-size: 1.2rem;
-    display: inline-block;
-    cursor: pointer;
-    color: transparent !important;
-    background: url("data:image/svg+xml;base64,PCEtLSBHZW5lcmF0ZWQgYnkgSWNvTW9vbi5pbyAtLT4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9Ijc2OCIgaGVpZ2h0PSI3NjgiIHZpZXdCb3g9IjAgMCA3NjggNzY4Ij4KPHRpdGxlPjwvdGl0bGU+CjxnIGlkPSJpY29tb29uLWlnbm9yZSI+CjwvZz4KPHBhdGggZD0iTTE2OS4zNyAzMTAuNjI0bDE5MiAxOTJjMTIuNTEyIDEyLjUxMiAzMi43NjggMTIuNTEyIDQ1LjI0OCAwbDE5Mi0xOTJjMTIuNTEyLTEyLjUxMiAxMi41MTItMzIuNzY4IDAtNDUuMjQ4cy0zMi43NjgtMTIuNTEyLTQ1LjI0OCAwbC0xNjkuMzc2IDE2OS4zNzYtMTY5LjM3Ni0xNjkuMzc2Yy0xMi41MTItMTIuNTEyLTMyLjc2OC0xMi41MTItNDUuMjQ4IDBzLTEyLjUxMiAzMi43NjggMCA0NS4yNDh6Ij48L3BhdGg+Cjwvc3ZnPgo=")no-repeat center;
-    background-size: 25px 30px
+background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzY4IiBoZWlnaHQ9Ijc2OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiPgogPHRpdGxlLz4KCiA8Zz4KICA8dGl0bGU+TGF5ZXIgMTwvdGl0bGU+CiAgPGcgaWQ9Imljb21vb24taWdub3JlIi8+CiAgPHBhdGggZmlsbD0iI2ZmZmZmZiIgaWQ9InN2Z18xIiBkPSJtMTY5LjM3LDMxMC42MjRsMTkyLDE5MmMxMi41MTIsMTIuNTEyIDMyLjc2OCwxMi41MTIgNDUuMjQ4LDBsMTkyLC0xOTJjMTIuNTEyLC0xMi41MTIgMTIuNTEyLC0zMi43NjggMCwtNDUuMjQ4cy0zMi43NjgsLTEyLjUxMiAtNDUuMjQ4LDBsLTE2OS4zNzYsMTY5LjM3NmwtMTY5LjM3NiwtMTY5LjM3NmMtMTIuNTEyLC0xMi41MTIgLTMyLjc2OCwtMTIuNTEyIC00NS4yNDgsMHMtMTIuNTEyLDMyLjc2OCAwLDQ1LjI0OHoiLz4KIDwvZz4KPC9zdmc+");
 }
 
 .cbi-button-up,
@@ -1607,9 +1609,7 @@ body:not(.Interfaces) .cbi-rowstyle-2:first-child {
 }
 
 .btn:focus,
-.cbi-button:focus,
-.item:hover::after,
-.item:focus::after {
+.cbi-button:focus {
     color: var(--menu-hover-color);
     box-shadow: 0 0.5rem 1rem var(--input-boxhovercolor);
     -webkit-box-shadow: 0 0.5rem 1rem var(--input-boxhovercolor);
@@ -1618,8 +1618,7 @@ body:not(.Interfaces) .cbi-rowstyle-2:first-child {
 
 button:hover,
 .btn:hover,
-.cbi-button:hover,
-.item:hover {
+.cbi-button:hover{
     transform: scale(1.05) translate(0, -0.15rem);
     box-shadow: 0 0.5rem 1rem var(--input-boxhovercolor);
     -webkit-box-shadow: 0 0.5rem 1rem var(--input-boxhovercolor);
@@ -1628,9 +1627,7 @@ button:hover,
 
 .btn:active,
 .cbi-button:active,
-button:active,
-.item:active ,
-.item:active::after {
+button:active{
     transform: scale(1) translate(0, 0.15rem);
     box-shadow: 0 0 6px var(--input-boxhovercolor);
     -webkit-box-shadow: 0 0 6px var(--input-boxhovercolor);
@@ -2020,7 +2017,7 @@ button:active,
     display: inline-flex;
     margin: 0
 }
-
+/* lists */
 .cbi-dynlist {
     line-height: 1.3;
     flex-direction: column;
@@ -2033,14 +2030,35 @@ button:active,
     flex-wrap: nowrap;
     position: relative;
     max-width: 25rem;
-    pointer-events: none;
-    outline: 0;
+    pointer-events: auto;
     margin-top: 0.2rem;
-    color: #666
+    color: var(--inputtext-color);
+    outline: 0;
+    cursor: move;
+    user-select: text;
 }
 
+.cbi-dynlist > .item.drag-over { 
+  border-top: 1px solid var(--inputborder-color);
+}
+
+.cbi-dynlist > .item.dragging {
+  opacity: 0.5;
+}
+
+.cbi-dynlist > .item > span {
+  pointer-events: none;
+}
+
+.cbi-dynlist > .add-item > .cbi-input-text.drag-over {
+  border-top: 1px solid var(--inputborder-color);
+}
+
+.cbi-dynlist > .add-item > .cbi-button-add.drag-over {
+  border-top: 1px solid var(--inputborder-color);
+}
 .cbi-dynlist[name="sshkeys"]>.item {
-    max-width: none
+  max-width: none;
 }
 
 .cbi-dynlist>.item::after {
@@ -2057,11 +2075,14 @@ button:active,
     line-height: 1;
     width: 2.5rem !important;
     padding: 5px !important;
-    color: #f8f8f8;
+  color: var(--inputtext-color);
     border: 0px solid var(--inputborder-color);
-    border-radius: var(--radius2);
+  border-right: 1px solid var(--inputborder-color);
+  border-top: 1px solid var(--inputborder-color);
+  border-bottom: 1px solid var(--inputborder-color);
+    border-radius:  0 var(--radius2) var(--radius2) 0;
     outline: 0;
-    background-color: #d9534f;
+    background-color: var(--inputbg-color);
     box-sizing: border-box
 }
 
@@ -2074,41 +2095,6 @@ button:active,
 /* Make item being dragged in UIDynamicList partially transparent*/
 .cbi-dynlist > .item.dragging {
 	opacity: 0.5;
-}
-
-/* prevent pointer changing when over the span element in UIDynamicList */
-.cbi-dynlist>.item>span {
-    display: block;
-    padding: 0.5rem 0.75rem;
-    min-width: 17.5rem;
-    width: 17.5rem;
-    transition: box-shadow .15s ease;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    word-break: break-word;
-    font-size: var(--font-x);
-    font-weight: normal;
-    line-height: 24px;
-    background-image: none;
-    color: var(--inputtext-color);
-    font-family: var(--font-sans);
-    border: 1px solid var(--inputborder-color);
-    background-color: var(--inputbg-color);
-    border-radius: var(--radius2) 0 0 var(--radius2);
-    outline: 0;
-    box-shadow: none;
-    box-sizing: border-box
-}
-
-.cbi-dynlist>.add-item {
-    display: inline-flex;
-    align-items: center;
-    width: 100%;
-    min-width: 16rem;
-    margin-top: 0.2rem;
-    gap: 0;
-    flex-wrap: nowrap
 }
 
 /* indication line for drag-and-drop in UIDynamicList*/
@@ -2130,6 +2116,41 @@ button:active,
 .cbi-dynlist > .add-item > .cbi-button-add.drag-over {
 	border-top: 1px solid var(--inputborder-color);
 }
+/* prevent pointer changing when over the span element in UIDynamicList */
+.cbi-dynlist>.item>span {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  min-width: 17.5rem;
+  width: 17.5rem;
+  transition: box-shadow .15s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: break-word;
+  line-height: 1;
+  background-image: none;
+  color: var(--inputtext-color);
+  font-family: var(--font-sans);
+  border-left: 1px solid var(--inputborder-color);
+  border-top: 1px solid var(--inputborder-color);
+  border-bottom: 1px solid var(--inputborder-color);
+  background-color: var(--inputbg-color);
+  border-radius: var(--radius2) 0 0 var(--radius2);
+
+  box-sizing: border-box;
+}
+
+
+.cbi-dynlist>.add-item {
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    min-width: 16rem;
+    margin-top: 0.2rem;
+    gap: 0;
+    flex-wrap: nowrap
+}
+
 
 .cbi-dynlist>.add-item input {
     min-width: 17.5rem;
@@ -2150,7 +2171,7 @@ button:active,
     white-space: nowrap;
     word-break: break-word;
     line-height: 1.5rem;
-    border-radius: var(--radius2) 0 0 var(--radius2);
+    border-radius: var(--radius2);
     border-right-width: 0;
     outline: 0
 }
@@ -2164,21 +2185,39 @@ button:active,
 	text-overflow: ellipsis;
 }
 
+.cbi-dynlist[name="sshkeys"]>.item {
+  max-width: none
+}
+
+.cbi-dynlist>.cbi-dynlist>.add-item[ondrop]>input {
+  min-width: 15rem
+}
 .cbi-dynlist>.add-item[ondrop]>input {
     min-width: 15rem;
 }
 
 .cbi-dynlist>.add-item .cbi-button-add {
-    width: 2.5rem !important;
-    padding: 5px !important;
-    font-weight: bold;
-    font-size: 1.5rem;
-    line-height: 1;
-    margin: 5px 5px 5px 0;
-    color: #fff;
-    background-color: rgba(var(--primary-rgbm), 0.9);
-    border: 1px solid rgba(var(--primary-rgbm), 1)
+  width: 2.5rem !important;
+  padding: 5px !important;
+  font-weight: bold;
+  font-size: 1.5rem;
+  line-height: 1;
+  margin: 5px 5px 5px 0;
+  color: var(--inputtext-color);
+  background-color: rgba(var(--primary-rgbm), 0.9);
+  border: 1px solid rgba(var(--primary-rgbm), 1);
+
 }
+
+[id^="cbid."][id$=".interface"].cbi-dropdown,
+[id^="cbid."][id$=".listen_interfaces"].cbi-dropdown {
+  max-height: 2.569rem;
+}
+
+[id^="cbid.natmap."][id$=".interface"].cbi-dropdown {
+  max-height: unset;
+}
+
 .cbi-dropdown[placeholder*="select"] {
     max-width: 25rem;
     height: auto;
@@ -2354,27 +2393,24 @@ button:active,
     margin: 0.1rem auto;
     color: var(--inputtext-color);
 }
-/*
-.cbi-dropdown.btn>ul:not(.dropdown),
-.cbi-dropdown.cbi-button>ul:not(.dropdown) {
-    margin: 0 .85rem 0 .85rem !important
+
+
+.cbi-dropdown[open]>ul.dropdown>li:hover {
+    background: rgba(var(--primary-rgbm), 0.5);
+    color: var(--menu-hover-color);
+    cursor: pointer;
+    outline: none
 }
-*/
+.cbi-dropdown[open]>ul.dropdown>li label {
+  margin-left: .5rem
+}
+
 
 .cbi-dropdown[open] > ul.dropdown > li[selected] {
     background: rgba(var(--primary-rgbm), 0.8);
     color: var(--menu-hover-color)
 }
 
-/*
-.cbi-dropdown[open] > ul.dropdown > li.focus, */
-
-.cbi-dropdown[open] > ul.dropdown > li:hover {
-    background: rgba(var(--primary-rgbm), 0.5);
-    color: var(--menu-hover-color);
-    cursor: pointer;
-    outline: none
-}
 
 .cbi-dropdown[open]>ul.dropdown>li:last-child {
     margin-bottom: 0;
@@ -3536,20 +3572,6 @@ body.lang_pl.node-main-login .cbi-value-title {
     gap: 0px
 }
 
-.control-group>input.cbi-input-password,
-.control-group>.cbi-button-neutral {
-    margin: 0.2rem 0 0.2rem 0
-}
-
-.control-group>.cbi-button.cbi-button-neutral {
-    border-bottom-left-radius: 0;
-    border-top-left-radius: 0
-}
-
-.control-group>input.cbi-input-password {
-    border-bottom-right-radius: 0;
-    border-top-right-radius: 0
-}
 
 .node-admin-system-opkg .control-group {
     display: block
@@ -3575,28 +3597,29 @@ body.lang_pl.node-main-login .cbi-value-title {
     margin-top: 0
 }
 
+/* wireless overview */
 #cbi-wireless>#wifi_assoclist_table>.tr {
-    box-shadow: inset 1px -1px 0 #ddd, inset -1px -1px 0 #ddd
+  box-shadow: inset 1px -1px 0 #ddd, inset -1px -1px 0 #ddd;
 }
 
 #cbi-wireless>#wifi_assoclist_table>.tr.placeholder>.td {
-    right: 33px;
-    bottom: 33px;
-    left: 33px;
-    border-top: thin solid #ddd !important
+  right: 33px;
+  bottom: 33px;
+  left: 33px;
+  border-top: thin solid var(--inputborder-color) !important;
 }
 
 #cbi-wireless>#wifi_assoclist_table>.tr.table-titles {
-    box-shadow: inset 1px 0 0 #ddd, inset -1px 0 0 #ddd
+  box-shadow: inset 1px 0 0 #ddd, inset -1px 0 0 #ddd;
 }
 
 #cbi-wireless>#wifi_assoclist_table>.tr.table-titles>.th {
-    border-bottom: thin solid #ddd;
-    box-shadow: 0 -1px 0 0 #ddd
+  border-bottom: thin solid var(--inputborder-color);
+  box-shadow: 0 -1px 0 0 #ddd;
 }
 
 #wifi_assoclist_table>.tr>.td[data-title="RX Rate / TX Rate"] {
-    width: 23rem
+  width: 23rem;
 }
 
 /* firewall */
@@ -4216,6 +4239,10 @@ div#add_link_div {
 	border-bottom: 1px solid rgba(var(--primary-rgbm), 0.1);
         min-width: unset
 }
+#mwan3-service-status>.alert-message>div>strong{
+  white-space: nowrap;
+  font-size: var(--font-x);
+}
 
 @keyframes anim-fade-in {
     100% {
@@ -4376,6 +4403,7 @@ div#add_link_div {
         box-shadow: rgba(0, 0, 0, 0.75) 0 0 20px -5px;
         -webkit-box-shadow: rgba(0, 0, 0, 0.75) 0 0 20px -5px;
         position: fixed;
+	background-color:rgba(var(--primary-rgbbody), 1);
         visibility: hidden;
         z-index: 100
     }
