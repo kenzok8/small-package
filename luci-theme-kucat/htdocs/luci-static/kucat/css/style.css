@@ -27,7 +27,7 @@
     --radius1: 0.375rem;
     --radius2: 0.25rem;
     --primary-solid: #fd8c73;
-    --menu-hover-barbgcolor: rgba(255, 255, 255, 0.3)
+    --menu-hover-barbgcolor: rgba(255, 255, 255, 0.3);
 }
 
 [data-theme='light'] {
@@ -37,6 +37,7 @@
     --menu-hover-color: #fff;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm), 0.22);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
+    --title-color: #65656b;
     --body-text-color: #3c4655;
     --body-color: #65656b;
     --body-hover-bgcolor: rgba(50, 50, 50, 0.05);
@@ -48,28 +49,29 @@
     --input-boxhovercolor: rgba(0, 0, 0, 0.22);
     --input-checkcolor: rgba(var(--primary-rgbm), 1);
     --font-apple: -apple-system, "Google Sans", "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif";
-    --font-sans: "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB"
+    --font-sans: "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB";
 }
 
 [data-theme="dark"] {
     --primarytextcolor: #bbb;
     --primary-title-color: #ddd;
-    --menu-color: #d3d3d3;
+    --menu-color: #ccc;
     --menu-hover-color: #eee;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm), 0.4);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
-    --body-text-color: #ccc;
+    --title-color: #f5f5f5;
+    --body-text-color: #bbb;
     --body-color: #bbb;
     --body-hover-bgcolor: rgba(255, 255, 255, 0.05);
     --inputbg-color: rgba(255, 255, 255, 0.11);
-    --inputtext-color: #bbb;
+    --inputtext-color: #ccc;
     --inputborder-color: rgba(255, 255, 255, 0.2);
     --input-bgcolor: rgba(50, 50, 50, 0.2);
     --input-boxcolor: rgba(255, 255, 255, 0.15);
     --input-boxhovercolor: rgba(255, 255, 255, 0.22);
     --input-checkcolor: rgba(255, 255, 255, 0.7);
     --font-apple: -apple-system, "Google Sans", "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif";
-    --font-sans: "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB"
+    --font-sans: "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB";
 }
 
 .tr {
@@ -840,7 +842,7 @@ span[data-indicator="poll-status"],
 .success {
     background-color: #1a8361 !important;
     color: #eee;
-    width: 12rem !important
+    width: 14rem !important
 }
 
 #log_textarea {
@@ -925,7 +927,7 @@ span[data-indicator="poll-status"],
     white-space: nowrap;
     cursor: pointer;
     transition: all .2s;
-    position: relative
+    position: relative;
     font-size: var(--font-z)
 }
 
@@ -2075,11 +2077,11 @@ button:active{
     line-height: 1;
     width: 2.5rem !important;
     padding: 5px !important;
-  color: var(--inputtext-color);
+    color:#E91E63;
     border: 0px solid var(--inputborder-color);
-  border-right: 1px solid var(--inputborder-color);
-  border-top: 1px solid var(--inputborder-color);
-  border-bottom: 1px solid var(--inputborder-color);
+    border-right: 1px solid var(--inputborder-color);
+    border-top: 1px solid var(--inputborder-color);
+    border-bottom: 1px solid var(--inputborder-color);
     border-radius:  0 var(--radius2) var(--radius2) 0;
     outline: 0;
     background-color: var(--inputbg-color);
@@ -2563,12 +2565,12 @@ input {
 
 .modal>pre,
 .modal>textarea {
-    font-size: var(--font-z);
-    font-size-adjust: .35;
+    font-size: var(--font-x);
     overflow: auto;
     margin-bottom: .5em;
     padding: 8.5px;
     cursor: auto;
+    white-space: pre-wrap;
     outline: 0;
 
 }
@@ -2813,7 +2815,7 @@ td > .ifacebadge,
 
 .cbi-section em {
     font-weight: 600;
-    color: var(--body-color);
+    color: var(--title-color);
     text-align: center
 }
 
@@ -2867,7 +2869,6 @@ textarea {
     border-radius: var(--radius2);
     word-wrap: break-word;
     white-space: pre-wrap;
-    margin: 0.5rem
 }
 
 .cbi-input-textarea:focus,
@@ -2905,6 +2906,7 @@ textarea:focus {
     display: block;
     padding: 2px;
     text-decoration: none;
+    color:#666;
     background-color: #cfc
 }
 
@@ -2922,8 +2924,9 @@ textarea:focus {
     font-style: normal;
     display: block;
     padding: 2px;
+    
+    background-color: rgba(255, 255, 255, 0.1) ;
     text-decoration: none;
-    background-color: #eee
 }
 
 .uci-change-list var ins,
@@ -2998,7 +3001,8 @@ textarea:focus {
     min-width: 7rem;
     background-color: rgba(var(--primary-rgbm), 0.2);
     transform: translate(-50, -50%);
-    color: var(--body-color) text-align:center !important
+    color: var(--title-color);
+    text-align:center !important
 }
 
 .ifacebox-head.active {
@@ -3017,19 +3021,15 @@ textarea:focus {
 .zonebadge {
     padding: .2rem !important;
     display: inline-block;
+ 
     min-width: 13rem
-}
-
-.zonebadge strong {
-    font-size: var(--font-x);
-    color: var(--body-color)
 }
 
 .zonebadge .ifacebadge {
   margin: .1rem .2rem;
-  color: var(--menu-color);
-/*  background-color: #bbb;
-  border: 1px solid var(--input-boxhovercolor); */
+  color: var(--title-color);
+   background-color: #bbb;
+  border: 1px solid var(--input-boxhovercolor);  
 }
 
 .zonebadge>input[type="text"] {
@@ -3040,10 +3040,17 @@ textarea:focus {
 	padding: .16rem 1rem;
 }
 
+.zonebadge>span,
 .zonebadge>em,
 .zonebadge>strong {
+    color: #777;
+    font-size: var(--font-x);
     display: inline-block;
     margin: 0 .2rem
+}
+
+.zonebadge-empty>strong {
+    color: var(--title-color) ;
 }
 
 .cbi-value-field .cbi-input-checkbox,
@@ -3968,8 +3975,9 @@ body.lang_pl.node-main-login .cbi-value-title {
 [data-page="admin-services-vssr"]>.main .block,
 .main .block {
     color: var(--body-color);
-    background-color: var(--inputbg-color) !important;
-    box-shadow: 0 0 4px var(--inputborder-color);
+    background-color: var(--input-bgcolor) !important;
+    box-shadow: 0 0 1px var(--inputborder-color);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.32), 0 1px 5px 0 rgba(0, 0, 0, 0.2)
 }
 
 [data-page="admin-services-shadowsocksr"]>.block:active,
@@ -3980,7 +3988,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 .block:hover,
 [data-page="admin-services-bypass"]>.main .block:hover,
 .main .block:hover {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 6px var(--input-boxhovercolor);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 6px rgba(0, 0, 0, 0.35);
     background-color: var(--input-boxhovercolor) !important;
 }
 
@@ -4147,6 +4155,21 @@ pre.command-output {
     display: block
 }
 
+[data-page="admin-store-pages"] .cbi-section>.tags-container>.tags-value,
+[data-page="admin-store-pages"] .cbi-section>.sort-container>.sort-value {
+        flex: none;
+}
+
+[data-page="admin-store-pages"]  .app-container .app-btns .app-btn {
+    padding: 0.5rem;
+    line-height: 1.4;
+}
+
+
+[data-page="admin-system-package-manager"]  .modal>textarea {
+white-space: nowrap;
+}
+
 .main>.main-left,
 .cbi-section,
 [data-tab-title],
@@ -4219,7 +4242,7 @@ div#service_status {
 div#add_link_div {
     position: fixed;
     transform: translate(-50%, -50%);
-    background-color: #fff;
+    background-color: rgba(var(--primary-rgbbody), 1);
     padding: 0px;
     box-shadow: darkgrey 1px 5px 20px 0px;
     border-radius: 9px
@@ -4370,7 +4393,7 @@ div#add_link_div {
 
 @media screen and (max-width:992px) {
     .main .main-left .nav .slide .slide-menu .active a {
-        font-size: var(--font-z)
+        font-size: var(--font-x)
     }
 
 
@@ -4395,7 +4418,7 @@ div#add_link_div {
     #diag-rc-output>pre,
     #command-rc-output>pre,
     [data-page="admin-services-wol"] .notice code {
-        font-size: var(--font-z)
+        font-size: var(--font-x)
     }
 
     .main-left {
@@ -4508,7 +4531,7 @@ div#add_link_div {
 
     .cbi-section>h3:first-child,
     .panel-title {
-        font-size: var(--font-d);
+        font-size: var(--font-z);
         padding-bottom: 0.5rem
     }
     
@@ -4637,7 +4660,8 @@ div#add_link_div {
         padding-left: 0.3rem;
         padding-top: 0.8rem;
         width: 100%;
-        font-weight: 700;
+	margin-bottom: 0.2rem;
+        font-weight: 600;
     }
 
     .cbi-section {
@@ -4661,7 +4685,7 @@ div#add_link_div {
 
     h3 {
         margin: 0;
-        font-size: var(--font-x);
+        font-size: var(--font-z);
         line-height: 1.2rem !important;
         letter-spacing: 0.02rem
     }
@@ -4683,30 +4707,38 @@ div#add_link_div {
     .hide-xs:not([data-title="MAC-Address"]) {
         display: none
     }
-
-    [data-page="admin-status-overview"] >.main #view td:nth-child(1),
-    .cbi-value-title {
-		display: block;
-		min-width: 0 !important;
-        text-align: left
+    
+    [data-page="admin-system-admin-password"] .control-group{
+        flex-wrap: nowrap;
     }
-
-	.cbi-value-title,
-	.cbi-value-description,
-	.cbi-value-field,
-	.cbi-value-field .cbi-dropdown,
-	.cbi-value-field .cbi-input-select,
-	.cbi-value input[type="text"] {
-		width: 100%;
-	}
+    .cbi-input-textarea,
+    textarea,
+    .cbi-value-description,
+    .cbi-value-field,
+    .cbi-value-field .cbi-dropdown,
+    .cbi-value-field .cbi-input-select,
+    .cbi-value input[type="text"],
+    .cbi-value input[type="password"] {
+		width:16rem;
+		text-align: left;
+		min-width: 8rem;
+		margin: 0;
+    }
+    
     [data-page="admin-status-overview"]  .main #view td:nth-child(1) {
         width: 5rem;
         padding-right: 0.4rem
     }
 
+
+    .cbi-value-title,
     .cbi-value-field {
-        padding: 0 !important;
-        line-height: 1
+        display: inline-block;
+        line-height: 1;
+        text-align: left;
+    }
+    .cbi-value-description {
+        display: none !important
     }
 
     .cbi-value-field>div {
@@ -4717,11 +4749,8 @@ div#add_link_div {
 	#diag-rc-output > pre,
 	#command-rc-output > pre,
 	[data-page="admin-services-wol"] .notice code {
-		font-size: .8rem !important;
+		font-size: var(--font-x) !important;
 	}
-    .cbi-value-description {
-        display: none !important
-    }
 
     .cbi-dynlist p {
         padding: 0.5rem 1rem
@@ -4756,12 +4785,6 @@ div#add_link_div {
         padding-right: 0.2rem
     }
 
-
-    .cbi-value-description {
-        width: 100%;
-        display: block
-    }
-
     .Diagnostics form .cbi-map .cbi-section div {
         width: 100% !important
     }
@@ -4776,7 +4799,7 @@ div#add_link_div {
 
     select,
     input {
-        font-size: var(--font-z);
+        font-size: var(--font-x);
         box-sizing: border-box;
         min-width: unset
     }
@@ -4868,4 +4891,39 @@ div#add_link_div {
     div#cbi-appfilter-time-days {
         margin-left: 16rem
     }
+}
+
+/* luci-mod-dashboard */
+.Dashboard .dashboard-bg {
+ 
+    background-color: rgba(var(--primary-rgbm), var(--primary-rgbs-ts));
+    background-color: rgba(var(--primary-rgbbody), 1)important;
+}
+
+.Dashboard h3 {
+  color: var(--primary-title-color)important;
+  border-radius: 0 0 16px 16px;
+}
+
+.Dashboard:not(.some-other-class) {
+  color: #666a88 !important;
+}
+
+.Dashboard .title {
+  background-color: rgba(var(--primary-rgbm), 0.1) !important;
+  border-radius: 16px;
+}
+
+.Dashboard span.label.label-success {
+  background-color: #55bb55;
+}
+
+.Dashboard .devices-list .devices-info, .Dashboard .router-status-wifi .wifi-info > hr:last-child {
+  margin-top: 0.575rem;
+}
+
+@media screen and (max-width: 600px) {
+  div#content-filemanager {
+    overflow-x: auto;
+  }
 }
