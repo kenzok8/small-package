@@ -531,7 +531,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			enabled: true,
 			method: cfg.trojan_ss_chipher,
 			password: cfg.trojan_ss_password
-		}: null,
+		} : null,
 
 		/* VMess / VLESS */
 		flow: cfg.vless_flow,
