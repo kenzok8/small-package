@@ -69,6 +69,7 @@ const inbound_type = [
 	['shadowsocks', _('Shadowsocks')],
 	['vmess', _('VMess')],
 	['vless', _('VLESS')],
+	['trojan', _('Trojan')],
 	['tuic', _('TUIC')],
 	['hysteria2', _('Hysteria2')],
 	//['tunnel', _('Tunnel')]
@@ -194,6 +195,12 @@ const rules_logical_payload_count = {
 	'NOT': { low: 1, high: 1 },
 	//'SUB-RULE': 0,
 };
+
+const trojan_cipher_methods = [
+	['aes-128-gcm', _('aes-128-gcm')],
+	['aes-256-gcm', _('aes-256-gcm')],
+	['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')]
+];
 
 const shadowsocks_cipher_methods = [
 	/* Stream */
@@ -1176,6 +1183,7 @@ return baseclass.extend({
 	rules_type,
 	rules_logical_type,
 	rules_logical_payload_count,
+	trojan_cipher_methods,
 	shadowsocks_cipher_methods,
 	shadowsocks_cipher_length,
 	stunserver,

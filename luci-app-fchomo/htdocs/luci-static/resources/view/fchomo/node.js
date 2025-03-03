@@ -269,9 +269,10 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'trojan_ss_chipher', _('Shadowsocks chipher'));
-		so.value('aes-128-gcm', _('aes-128-gcm'));
-		so.value('aes-256-gcm', _('aes-256-gcm'));
-		so.value('chacha20-ietf-poly1305', _('chacha20-ietf-poly1305'));
+		so.default = hm.trojan_cipher_methods[0][0];
+		hm.trojan_cipher_methods.forEach((res) => {
+			so.value.apply(so, res);
+		})
 		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
 		so.modalonly = true;
 

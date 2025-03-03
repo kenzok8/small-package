@@ -49,9 +49,8 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		type: cfg.type,
 
 		listen: cfg.listen || '::',
-		port: strToInt(cfg.port),
+		port: cfg.port,
 		proxy: 'DIRECT',
-		udp: strToBool(cfg.udp),
 
 		/* Hysteria2 */
 		up: strToInt(cfg.hysteria_up_mbps),
@@ -71,8 +70,15 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		"authentication-timeout": durationToSecond(cfg.tuic_authentication_timeout),
 		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size),
 
-		/* HTTP / SOCKS / VMess / VLESS / Tuic / Hysteria2 */
-		users: (cfg.type in ['http', 'socks', 'mixed', 'vmess', 'vless']) ? [
+		/* Trojan */
+		"ss-option": cfg.trojan_ss_enabled === '1' ? {
+			enabled: true,
+			method: cfg.trojan_ss_chipher,
+			password: cfg.trojan_ss_password
+		} : null,
+
+		/* HTTP / SOCKS / VMess / VLESS / Trojan / Tuic / Hysteria2 */
+		users: (cfg.type in ['http', 'socks', 'mixed', 'vmess', 'vless', 'trojan']) ? [
 			{
 				/* HTTP / SOCKS */
 				username: cfg.username,
@@ -93,7 +99,10 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 			...arrToObj([[cfg.uuid, cfg.password]])
 		} : null),
 
-		/* TLS */
+		/* Extra fields */
+		udp: strToBool(cfg.udp),
+
+		/* TLS fields */
 		...(cfg.tls === '1' ? {
 			alpn: cfg.tls_alpn,
 			...(cfg.tls_reality === '1' ? {
@@ -107,6 +116,12 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 				certificate: cfg.tls_cert_path,
 				"private-key": cfg.tls_key_path
 			})
+		} : {}),
+
+		/* Transport fields */
+		...(cfg.transport_enabled === '1' ? {
+			"grpc-service-name": cfg.transport_grpc_servicename,
+			"ws-path": cfg.transport_path
 		} : {})
 	});
 });
