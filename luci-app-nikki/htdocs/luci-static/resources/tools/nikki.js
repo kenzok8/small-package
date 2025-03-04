@@ -114,7 +114,7 @@ return baseclass.extend({
     openDashboard: async function () {
         const uiName = uci.get('nikki', 'mixin', 'ui_name');
         const apiListen = uci.get('nikki', 'mixin', 'api_listen');
-        const apiSecret = encodeURIComponent(uci.get('nikki', 'mixin', 'api_secret') ?? '');
+        const apiSecret = uci.get('nikki', 'mixin', 'api_secret') ?? '';
         const apiPort = apiListen.substring(apiListen.lastIndexOf(':') + 1);
         const params = {
             host: window.location.hostname,
