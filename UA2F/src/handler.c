@@ -220,14 +220,16 @@ int get_pkt_ip_version(const struct nf_packet *pkt) {
 }
 
 void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
-    if (use_conntrack) {
-        if (!cache_initialized && pkt->has_conntrack) {
+    bool ct_ok = use_conntrack && pkt->has_conntrack;
+
+    if (ct_ok) {
+        if (!cache_initialized) {
             init_not_http_cache(60);
             cache_initialized = true;
         }
     }
 
-    if (use_conntrack && pkt->has_conntrack && should_ignore(pkt)) {
+    if (ct_ok && should_ignore(pkt)) {
         send_verdict(queue, pkt, (struct mark_op){true, CONNMARK_NOT_HTTP}, NULL);
         goto end;
     }
@@ -247,13 +249,13 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     }
 
     if (type == IPV4) {
-        assert(ipv4_set_transport_header(pkt_buff));
+        assert(ipv4_set_transport_header(pkt_buff) && "Failed to set ipv4 transport header");
         count_ipv4_packet();
     } else if (type == IPV6) {
-        assert(ipv6_set_transport_header(pkt_buff));
+        assert(ipv6_set_transport_header(pkt_buff) && "Failed to set ipv6 transport header");
         count_ipv6_packet();
     } else {
-        __builtin_unreachable();
+        assert(false && "Unknown ip version");
     }
 
     const __auto_type tcp_hdr = nfq_tcp_get_hdr(pkt_buff);
@@ -332,9 +334,9 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
 
         // Looks it's impossible to mangle packet failed, so we just drop it
         if (type == IPV4) {
-            nfq_tcp_mangle_ipv4(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len);
+            assert(nfq_tcp_mangle_ipv4(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len) && "Failed to mangle ipv4 packet");
         } else {
-            nfq_tcp_mangle_ipv6(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len);
+            assert(nfq_tcp_mangle_ipv6(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len) && "Failed to mangle ipv6 packet");
         }
 
         search_length = tcp_payload_len - (ua_end - tcp_payload);
