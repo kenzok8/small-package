@@ -1339,7 +1339,6 @@ table,
 .cbi-tblsection table.cbi-section-table {
     overflow-y: visible
 }
-
 table>tbody>tr>td,
 table>tbody>tr>th,
 table>tfoot>tr>td,
@@ -4256,13 +4255,72 @@ div#add_link_div {
     padding: 4px
 }
 
+#content-filemanager>#file-list-container  #file-table tr>th .sort-button{
+  top: 10px;
+  transform: none;
+  padding: 0.5rem;
+}
+div#file-manager-container {
+  margin-left: 0.5rem;
+}
+
+div#content-filemanager>div#file-list-container {
+  margin-top: 10px !important;
+}
+
+div#file-manager-container #file-table tr>th {
+  background-color: rgba(var(--primary-rgbm), 1);
+    color: var(--menu-color);
+}
+
+div#file-manager-container #status-bar {
+  background-color: rgba(var(--primary-rgbm), 0.3);
+}
+
+div#file-manager-container #status-bar #status-info{
+  color:var(--title-color);
+}
+
+#file-list-container .table>#file-list>tr:hover {
+   background-color: rgba(var(--primary-rgbm), 0.4) !important;
+}
+
+.cbi-tabcontainer-content #editor-container {
+   width: 100%;
+  border: 1px solid var(--inputborder-color);
+}
+
+.editor-content>.line-numbers {
+   background-color: rgba(var(--primary-rgbm), 0.2);
+}
+
+.editor-content>#hexedit-container.hexedit {
+   background-color: rgba(var(--primary-rgbbody), 0.1);
+}
+
+.editor-content>.hexedit>.hexedit-search-container {
+   background-color: rgba(var(--primary-rgbbody), 0.1);
+  --clr-header:var(--title-color);
+}
+
+.editor-content>.hexedit>.hexedit-headers {
+  background-color: rgba(255, 255, 255, 0.8);
+   background-color: rgba(var(--primary-rgbm), 0.2);
+  --clr-header:var(--title-color);
+}
+
+#file-list-container table>tbody>tr>td {
+     padding: 0.2rem
+}
+
+
 .tr.cbi-section-table-row[id*="wolplus"],
 .tr.cbi-section-table-row[id*="firewall"] {
         flex-wrap: wrap;
 	border-bottom: 1px solid rgba(var(--primary-rgbm), 0.1);
         min-width: unset
 }
-#mwan3-service-status>.alert-message>div>strong{
+#mwan3-service-status .alert-message>div>strong{
   white-space: nowrap;
   font-size: var(--font-x);
 }
