@@ -189,7 +189,7 @@ EOFTEST
 
   # 检查日志
   echo "=== 检查UA2F日志 ==="
-  logread | grep UA2F | tail -n 20
+  logread | grep UA2F | tail -n 200
 
 else
   echo "=== 跳过功能测试 ==="
