@@ -533,6 +533,11 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			password: cfg.trojan_ss_password
 		} : null,
 
+		/* AnyTLS */
+		"idle-session-check-interval": durationToSecond(cfg.anytls_idle_session_check_interval),
+		"idle-session-timeout": durationToSecond(cfg.anytls_idle_session_timeout),
+		"min-idle-session": strToInt(cfg.anytls_min_idle_session),
+
 		/* VMess / VLESS */
 		flow: cfg.vless_flow,
 		alterId: strToInt(cfg.vmess_alterid),
@@ -568,7 +573,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"udp-over-tcp-version": cfg.uot_version,
 
 		/* TLS fields */
-		tls: (cfg.type in ['trojan', 'hysteria', 'hysteria2', 'tuic']) ? null : strToBool(cfg.tls),
+		tls: (cfg.type in ['trojan', 'anytls', 'hysteria', 'hysteria2', 'tuic']) ? null : strToBool(cfg.tls),
 		"disable-sni": strToBool(cfg.tls_disable_sni),
 		...arrToObj([[(cfg.type in ['vmess', 'vless']) ? 'servername' : 'sni', cfg.tls_sni]]),
 		fingerprint: cfg.tls_fingerprint,

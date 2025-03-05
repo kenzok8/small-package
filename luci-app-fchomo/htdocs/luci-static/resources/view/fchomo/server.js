@@ -106,15 +106,14 @@ return view.extend({
 		/* hm.validateAuth */
 		o = s.taboption('field_general', form.Value, 'username', _('Username'));
 		o.validate = L.bind(hm.validateAuthUsername, o);
-		o.depends({type: /^(http|socks|mixed|hysteria2)$/});
+		o.depends({type: /^(http|socks|mixed|trojan|anytls|hysteria2)$/});
 		o.modalonly = true;
 
 		o = s.taboption('field_general', hm.GenValue, 'password', _('Password'));
 		o.password = true;
 		o.validate = L.bind(hm.validateAuthPassword, o);
 		o.rmempty = false;
-		o.depends({type: /^(http|socks|mixed|hysteria2)$/, username: /.+/});
-		o.depends('type', 'trojan');
+		o.depends({type: /^(http|socks|mixed|trojan|anytls|hysteria2)$/, username: /.+/});
 		o.depends({type: /^(tuic)$/, uuid: /.+/});
 		o.modalonly = true;
 
@@ -234,6 +233,11 @@ return view.extend({
 		o.depends({type: 'trojan', trojan_ss_enabled: '1'});
 		o.modalonly = true;
 
+		/* AnyTLS fields */
+		o = s.taboption('field_general', form.TextValue, 'anytls_padding_scheme', _('Padding scheme'));
+		o.depends('type', 'anytls');
+		o.modalonly = true;
+
 		/* VMess / VLESS fields */
 		o = s.taboption('field_general', hm.GenValue, 'vmess_uuid', _('UUID'));
 		o.rmempty = false;
@@ -272,7 +276,7 @@ return view.extend({
 			let tls_reality = this.section.getUIElement(section_id, 'tls_reality').node.querySelector('input');
 
 			// Force enabled
-			if (['vless', 'trojan', 'tuic', 'hysteria2'].includes(type)) {
+			if (['vless', 'trojan', 'anytls', 'tuic', 'hysteria2'].includes(type)) {
 				tls.checked = true;
 				tls.disabled = true;
 				if (['tuic', 'hysteria2'].includes(type) && !`${tls_alpn.getValue()}`)
@@ -291,7 +295,7 @@ return view.extend({
 
 			return true;
 		}
-		o.depends({type: /^(http|socks|mixed|vmess|vless|trojan|tuic|hysteria2)$/});
+		o.depends({type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2)$/});
 		o.modalonly = true;
 
 		o = s.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),
