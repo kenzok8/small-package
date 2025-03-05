@@ -65,17 +65,16 @@ ifeq ($(CONFIG_UA2F_DEBUG_BUILD),y)
 endif
 
 define Package/ua2f/description
-  Change User-agent to Fwords to prevent being checked by Dr.Com.
+  Change User-agent to Fwords to prevent being detected.
 endef
 
 define Package/ua2f/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ua2f $(1)/usr/bin/
 
-	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d $(1)/etc/uci-defaults
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/ua2f.config $(1)/etc/config/ua2f
 	$(INSTALL_BIN) ./files/ua2f.init $(1)/etc/init.d/ua2f
-	$(INSTALL_BIN) ./files/ua2f.uci $(1)/etc/uci-defaults/80-ua2f
 endef
 
 define Package/ua2f/postinst
@@ -83,7 +82,18 @@ define Package/ua2f/postinst
 
 # check if we are on real system
 [ -n "$${IPKG_INSTROOT}" ] || {
-	(. /etc/uci-defaults/80-ua2f) && rm -f /etc/uci-defaults/80-ua2f
+	uci -q delete firewall.ua2f
+
+	if [ -z "$(command -v nft)" ]; then
+		uci -q batch <<-EOF >/dev/null
+			set firewall.ua2f=include
+			set firewall.ua2f.type=script
+			set firewall.ua2f.path=/var/etc/ua2f.include
+			set firewall.ua2f.reload=1
+		EOF
+	fi
+
+	uci -q commit firewall
 	exit 0
 }
 endef
