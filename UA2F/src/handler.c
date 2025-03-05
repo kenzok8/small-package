@@ -1,5 +1,5 @@
+#include "assert.h"
 #include "handler.h"
-#include <arpa/inet.h>
 #include "cache.h"
 #include "custom.h"
 #include "statistics.h"
@@ -9,12 +9,12 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <linux/if_ether.h>
+#include <arpa/inet.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv4.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv6.h>
 #include <libnetfilter_queue/libnetfilter_queue_tcp.h>
 #include <libnetfilter_queue/pktbuff.h>
+#include <linux/if_ether.h>
 
 #define MAX_USER_AGENT_LENGTH (0xffff + (MNL_SOCKET_BUFFER_SIZE / 2))
 static char *replacement_user_agent_string = NULL;
@@ -39,6 +39,7 @@ static bool cache_initialized = false;
 
 void init_handler() {
     replacement_user_agent_string = malloc(MAX_USER_AGENT_LENGTH);
+    assert(replacement_user_agent_string != NULL && "Failed to allocate user agent string");
 
     bool ua_set = false;
 
@@ -78,8 +79,12 @@ struct mark_op {
     uint32_t mark;
 };
 
-static void send_verdict(const struct nf_queue *queue, const struct nf_packet *pkt, const struct mark_op mark,
-                         struct pkt_buff *mangled_pkt_buff) {
+void send_verdict(const struct nf_queue *queue, const struct nf_packet *pkt, const struct mark_op mark,
+                  struct pkt_buff *mangled_pkt_buff) {
+    assert(queue != NULL && "Queue cannot be NULL");
+    assert(pkt != NULL && "Packet cannot be NULL");
+    assert(queue->nl_socket != NULL && "Netlink socket cannot be NULL");
+
     struct nlmsghdr *nlh = nfqueue_put_header(pkt->queue_num, NFQNL_MSG_VERDICT);
     if (nlh == NULL) {
         syslog(LOG_ERR, "failed to put nfqueue header");
@@ -101,6 +106,8 @@ static void send_verdict(const struct nf_queue *queue, const struct nf_packet *p
     }
 
     if (mangled_pkt_buff != NULL) {
+        assert(pktb_data(mangled_pkt_buff) != NULL && "Mangled packet data cannot be NULL");
+        assert(pktb_len(mangled_pkt_buff) > 0 && "Mangled packet length must be positive");
         nfq_nlmsg_verdict_put_pkt(nlh, pktb_data(mangled_pkt_buff), pktb_len(mangled_pkt_buff));
     }
 
@@ -115,7 +122,7 @@ end:
     }
 }
 
-static void add_to_cache(const struct nf_packet *pkt) {
+void add_to_cache(const struct nf_packet *pkt) {
     const struct addr_port target = {
         .addr = pkt->orig.dst,
         .port = pkt->orig.dst_port,
@@ -124,7 +131,7 @@ static void add_to_cache(const struct nf_packet *pkt) {
     cache_add(target);
 }
 
-static struct mark_op get_next_mark(const struct nf_packet *pkt, const bool has_ua) {
+struct mark_op get_next_mark(const struct nf_packet *pkt, const bool has_ua) {
     if (!use_conntrack || !pkt->has_conntrack) {
         return (struct mark_op){false, 0};
     }
@@ -177,26 +184,28 @@ enum {
     IP_UNK = 0,
 };
 
-static bool ipv4_set_transport_header(struct pkt_buff *pkt_buff) {
+bool ipv4_set_transport_header(struct pkt_buff *pkt_buff) {
     struct iphdr *ip_hdr = nfq_ip_get_hdr(pkt_buff);
     if (ip_hdr == NULL) {
+        syslog(LOG_ERR, "Failed to get ipv4 ip header");
         return false;
     }
 
-    if (nfq_ip_set_transport_header(pkt_buff, ip_hdr) < 0) {
+    if (nfq_ip_set_transport_header(pkt_buff, ip_hdr) == -1) {
         syslog(LOG_ERR, "Failed to set ipv4 transport header");
         return false;
     }
     return true;
 }
 
-static bool ipv6_set_transport_header(struct pkt_buff *pkt_buff) {
+bool ipv6_set_transport_header(struct pkt_buff *pkt_buff) {
     struct ip6_hdr *ip_hdr = nfq_ip6_get_hdr(pkt_buff);
     if (ip_hdr == NULL) {
+        syslog(LOG_ERR, "Failed to get ipv6 ip header");
         return false;
     }
 
-    if (nfq_ip6_set_transport_header(pkt_buff, ip_hdr, IPPROTO_TCP) < 0) {
+    if (nfq_ip6_set_transport_header(pkt_buff, ip_hdr, IPPROTO_TCP) == 0) {
         syslog(LOG_ERR, "Failed to set ipv6 transport header");
         return false;
     }
@@ -209,17 +218,22 @@ int get_pkt_ip_version(const struct nf_packet *pkt) {
     }
 
     switch (pkt->hw_protocol) {
-        case ETH_P_IP:
-            return IPV4;
-        case ETH_P_IPV6:
-            return IPV6;
-        default:
-            syslog(LOG_WARNING, "Received unknown ip packet %x.", pkt->hw_protocol);
-            return IP_UNK;
+    case ETH_P_IP:
+        return IPV4;
+    case ETH_P_IPV6:
+        return IPV6;
+    default:
+        syslog(LOG_WARNING, "Received unknown ip packet %x.", pkt->hw_protocol);
+        return IP_UNK;
     }
 }
 
 void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
+    assert(queue != NULL && "Queue cannot be NULL");
+    assert(pkt != NULL && "Packet cannot be NULL");
+    assert(pkt->payload != NULL && "Packet payload cannot be NULL");
+    assert(pkt->payload_len > 0 && "Packet payload length must be positive");
+
     bool ct_ok = use_conntrack && pkt->has_conntrack;
 
     if (ct_ok) {
@@ -228,6 +242,8 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
             cache_initialized = true;
         }
     }
+
+    assert((!ct_ok || cache_initialized) && "Cache must be initialized when using conntrack");
 
     if (ct_ok && should_ignore(pkt)) {
         send_verdict(queue, pkt, (struct mark_op){true, CONNMARK_NOT_HTTP}, NULL);
@@ -240,33 +256,47 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
         goto end;
     }
 
+    assert(pktb_data(pkt_buff) != NULL && "Packet buffer data cannot be NULL");
+    assert(pktb_len(pkt_buff) > 0 && "Packet buffer length must be positive");
+
     const int type = get_pkt_ip_version(pkt);
-    if (type == IP_UNK) {
-        // will this happen?
-        syslog(LOG_WARNING, "Received unknown ip packet type %x. You may set wrong firewall rules.", pkt->hw_protocol);
-        send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
+    assert((type == IPV4 || type == IPV6 || type == IP_UNK) && "Invalid IP version");
+
+    if (type == IPV4) {
+        if (!ipv4_set_transport_header(pkt_buff)) {
+            syslog(LOG_ERR, "Failed to set ipv4 transport header");
+            goto end;
+        }
+        count_ipv4_packet();
+    } else if (type == IPV6) {
+        if (!ipv6_set_transport_header(pkt_buff)) {
+            syslog(LOG_ERR, "Failed to set ipv6 transport header");
+            goto end;
+        }
+        count_ipv6_packet();
+    } else {
+        syslog(LOG_ERR, "Unknown ip version");
         goto end;
     }
 
-    if (type == IPV4) {
-        assert(ipv4_set_transport_header(pkt_buff) && "Failed to set ipv4 transport header");
-        count_ipv4_packet();
-    } else if (type == IPV6) {
-        assert(ipv6_set_transport_header(pkt_buff) && "Failed to set ipv6 transport header");
-        count_ipv6_packet();
-    } else {
-        assert(false && "Unknown ip version");
+    if (pktb_transport_header(pkt_buff) == NULL) {
+        char msg[300];
+        if (type == IPV4) {
+            syslog(LOG_WARNING, "Failed to set ipv4 transport header.");
+            nfq_ip_snprintf(msg, sizeof(msg), nfq_ip_get_hdr(pkt_buff));
+        } else {
+            syslog(LOG_WARNING, "Failed to set ipv6 transport header.");
+            nfq_ip6_snprintf(msg, sizeof(msg), nfq_ip6_get_hdr(pkt_buff));
+        }
+        syslog(LOG_WARNING, "Header: %s", msg);
+        goto end;
     }
 
     const __auto_type tcp_hdr = nfq_tcp_get_hdr(pkt_buff);
     if (tcp_hdr == NULL) {
-        if (pktb_transport_header(pkt_buff) == NULL) {
-            syslog(LOG_ERR, "Transport header was not set.");
-        }
-
         // This packet is not tcp, pass it
-        send_verdict(queue, pkt, (struct mark_op){false, 0}, NULL);
         syslog(LOG_WARNING, "Received non-tcp packet. You may set wrong firewall rules.");
+        send_verdict(queue, pkt, (struct mark_op){false, 0}, NULL);
         goto end;
     }
 
@@ -332,11 +362,16 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
         const unsigned int ua_len = ua_end - ua_start;
         const unsigned long ua_offset = ua_start - tcp_payload;
 
-        // Looks it's impossible to mangle packet failed, so we just drop it
         if (type == IPV4) {
-            assert(nfq_tcp_mangle_ipv4(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len) && "Failed to mangle ipv4 packet");
+            if (!nfq_tcp_mangle_ipv4(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len)) {
+                syslog(LOG_ERR, "Failed to mangle ipv4 packet");
+                goto end;
+            }
         } else {
-            assert(nfq_tcp_mangle_ipv6(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len) && "Failed to mangle ipv6 packet");
+            if (!nfq_tcp_mangle_ipv6(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len)) {
+                syslog(LOG_ERR, "Failed to mangle ipv6 packet");
+                goto end;
+            }
         }
 
         search_length = tcp_payload_len - (ua_end - tcp_payload);

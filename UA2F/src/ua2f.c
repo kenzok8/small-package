@@ -1,3 +1,4 @@
+#include "assert.h"
 #include "cli.h"
 #include "handler.h"
 #include "statistics.h"
@@ -7,7 +8,6 @@
 #endif
 #include "third/nfqueue-mnl.h"
 
-#include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
