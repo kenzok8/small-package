@@ -70,6 +70,7 @@ const inbound_type = [
 	['vmess', _('VMess')],
 	['vless', _('VLESS')],
 	['trojan', _('Trojan')],
+	['anytls', _('AnyTLS')],
 	['tuic', _('TUIC')],
 	['hysteria2', _('Hysteria2')],
 	//['tunnel', _('Tunnel')]
@@ -101,6 +102,7 @@ const outbound_type = [
 	['vmess', _('VMess')],
 	['vless', _('VLESS')],
 	['trojan', _('Trojan')],
+	['anytls', _('AnyTLS')],
 	//['hysteria', _('Hysteria')],
 	['hysteria2', _('Hysteria2')],
 	['tuic', _('TUIC')],

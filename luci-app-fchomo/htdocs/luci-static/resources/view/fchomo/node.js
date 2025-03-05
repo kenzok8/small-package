@@ -78,7 +78,7 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'password', _('Password'));
 		so.password = true;
 		so.validate = L.bind(hm.validateAuthPassword, so);
-		so.depends({type: /^(http|socks5|mieru|trojan|hysteria2|tuic|ssh)$/});
+		so.depends({type: /^(http|socks5|mieru|trojan|anytls|hysteria2|tuic|ssh)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', hm.TextValue, 'headers', _('HTTP header'));
@@ -285,6 +285,27 @@ return view.extend({
 		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
 		so.modalonly = true;
 
+		/* AnyTLS fields */
+		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_check_interval', _('Idle session check interval'),
+			_('In seconds.'));
+		so.placeholder = '30';
+		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.depends('type', 'anytls');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_timeout', _('Idle session timeout'),
+			_('In seconds.'));
+		so.placeholder = '30';
+		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.depends('type', 'anytls');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'anytls_min_idle_session', _('Min of idle sessions to keep'));
+		so.datatype = 'uinteger';
+		so.placeholder = '0';
+		so.depends('type', 'anytls');
+		so.modalonly = true;
+
 		/* VMess / VLESS fields */
 		so = ss.taboption('field_general', form.Value, 'vmess_uuid', _('UUID'));
 		so.rmempty = false;
@@ -453,7 +474,7 @@ return view.extend({
 		/* Extra fields */
 		so = ss.taboption('field_general', form.Flag, 'udp', _('UDP'));
 		so.default = so.disabled;
-		so.depends({type: /^(direct|socks5|ss|vmess|vless|trojan|wireguard)$/});
+		so.depends({type: /^(direct|socks5|ss|vmess|vless|trojan|anytls|wireguard)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'uot', _('UoT'),
@@ -478,7 +499,7 @@ return view.extend({
 			let tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
 
 			// Force enabled
-			if (['trojan', 'hysteria', 'hysteria2', 'tuic'].includes(type)) {
+			if (['trojan', 'anytls', 'hysteria', 'hysteria2', 'tuic'].includes(type)) {
 				tls.checked = true;
 				tls.disabled = true;
 			} else {
@@ -498,6 +519,7 @@ return view.extend({
 					case 'vmess':
 					case 'vless':
 					case 'trojan':
+					case 'anytls':
 						def_alpn = ['h2', 'http/1.1'];
 						break;
 					default:
@@ -509,7 +531,7 @@ return view.extend({
 
 			return true;
 		}
-		so.depends({type: /^(http|socks5|vmess|vless|trojan|hysteria|hysteria2|tuic)$/});
+		so.depends({type: /^(http|socks5|vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Flag, 'tls_disable_sni', _('Disable SNI'),
@@ -520,13 +542,13 @@ return view.extend({
 
 		so = ss.taboption('field_tls', form.Value, 'tls_sni', _('TLS SNI'),
 			_('Used to verify the hostname on the returned certificates.'));
-		so.depends({tls: '1', type: /^(http|vmess|vless|trojan|hysteria|hysteria2)$/});
+		so.depends({tls: '1', type: /^(http|vmess|vless|trojan|anytls|hysteria|hysteria2)$/});
 		so.depends({tls: '1', tls_disable_sni: '0', type: /^(tuic)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),
 			_('List of supported application level protocols, in order of preference.'));
-		so.depends({tls: '1', type: /^(vmess|vless|trojan|hysteria|hysteria2|tuic)$/});
+		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Value, 'tls_fingerprint', _('Cert fingerprint'),
@@ -547,7 +569,7 @@ return view.extend({
 			'<br/>' +
 			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 		so.default = so.disabled;
-		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|hysteria|hysteria2|tuic)$/});
+		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
 		so.modalonly = true;
 
 		// uTLS fields
@@ -556,7 +578,7 @@ return view.extend({
 		hm.tls_client_fingerprints.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.depends({tls: '1', type: /^(vmess|vless|trojan)$/});
+		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls)$/});
 		so.depends({type: 'ss', plugin: /^(shadow-tls|restls)$/});
 		so.modalonly = true;
 
