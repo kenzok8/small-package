@@ -3,7 +3,7 @@
 
 ### Screenshots
 
-![demo](example/demo.png "demo")  
+![demo](example/demo.png "demo")
 
 <details><summary>Real installation</summary>
 <img src="example/root.png"/>
@@ -26,19 +26,24 @@
 
 **If you need to change the upload limit for Tiny File Manager**
 
-Edit [config.js](htdocs/luci-static/resources/view/tinyfilemanager/config.js) before build  
-Edit `/www/luci-static/resources/view/tinyfilemanager/config.js` in router  
+Edit [config.js](htdocs/luci-static/resources/view/tinyfilemanager/config.js) before build\
+Edit `/www/luci-static/resources/view/tinyfilemanager/config.js` in router
+
 ```javascript
 o = s.option(form.Value, 'max_upload_size', _('Max upload size (MBytes)'));
 o.datatype = "and(uinteger,max(2048))";  //limit to 2048MB
 ```
-And edit [Makefile](Makefile) before build  
+
+And edit [Makefile](Makefile) before build
+
 ```makefile
 total_size_limit=??        #Total size of multiple files
 single_size_limit=??       #Max single file size
 otime_uploads_limit=??     #Max count of simultaneous uploads
 ```
-And edit `/etc/php.ini` in router 
+
+And edit `/etc/php.ini` in router
+
 ```ini
 post_max_size = ??          ;Total size of multiple files
 upload_max_filesize = ??    ;Max single file size
