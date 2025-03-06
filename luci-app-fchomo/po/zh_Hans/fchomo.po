@@ -2145,6 +2145,14 @@ msgstr "指定需要被代理的目标端口。多个端口必须用逗号隔开
 msgid "Stack"
 msgstr "堆栈"
 
+#: htdocs/luci-static/resources/fchomo.js:145
+msgid "Steam Client ports"
+msgstr "Steam 客户端 端口"
+
+#: htdocs/luci-static/resources/fchomo.js:146
+msgid "Steam P2P ports"
+msgstr "Steam P2P 端口"
+
 #: htdocs/luci-static/resources/view/fchomo/client.js:776
 #: htdocs/luci-static/resources/view/fchomo/client.js:778
 msgid "Strategy"

@@ -757,7 +757,7 @@ return view.extend({
 			_('Specify target ports to be proxied. Multiple ports must be separated by commas.'));
 		so.create = true;
 		hm.routing_port_type.forEach((res) => {
-			if (res[0] !== 'common_udpport')
+			if (!res[0].match(/_udpport$/))
 				so.value.apply(so, res);
 		})
 		so.validate = L.bind(hm.validateCommonPort, so);
@@ -766,7 +766,7 @@ return view.extend({
 			_('Specify target ports to be proxied. Multiple ports must be separated by commas.'));
 		so.create = true;
 		hm.routing_port_type.forEach((res) => {
-			if (res[0] !== 'common_tcpport')
+			if (!res[0].match(/_tcpport$/))
 				so.value.apply(so, res);
 		})
 		so.validate = L.bind(hm.validateCommonPort, so);
