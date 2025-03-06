@@ -37,7 +37,7 @@ validate_section() {
 		'date_format:or("d.m.o", "d-m-o", "d/m/o", "j.n.o", "j-n-o", "j/n/o", "o.m.d", "o-m-d", "o/m/d", "o.n.j", "o-n-j", "o/n/j"):d.m.o' \
 		'time_format:or("H\:i\:s", "G\:i\:s", "A h\:i\:s", "A g\:i\:s", "h\:i\:s A", "g\:i\:s A"):H\:i\:s' \
 		'show_second:bool:0' \
-		'favicon_path:file' \
+		'favicon_path:string' \
 		'exclude_items:list(string)' \
 		'online_viewer:or("0", "google", "microsoft"):0' \
 		'max_upload_size:and(uinteger,max(2048))'

@@ -103,11 +103,7 @@ return view.extend({
 		o.rmempty = false;
 
 		o = s.option(form.Value, 'favicon_path', _('Favicon path'));
-		o.datatype = 'file';
-		o.placeholder = '/etc/tinyfilemanager/favicon.png';
-		o.optional = true;
-		o.rmempty = false;
-		o.retain = true;
+		o.placeholder = '/tinyfilemanager/rootfs/etc/tinyfilemanager/favicon.png';
 
 		o = s.option(form.DynamicList, 'exclude_items', _('Exclude Files/Folders'));
 		o.datatype = "list(string)";

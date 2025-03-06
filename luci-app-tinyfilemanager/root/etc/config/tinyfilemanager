@@ -7,6 +7,6 @@ config main
 	option date_format 'd.m.o'
 	option time_format 'H:i:s'
 	option show_second '0'
-	option favicon_path '/etc/tinyfilemanager/favicon.png'
+	option favicon_path '/tinyfilemanager/rootfs/etc/tinyfilemanager/favicon.png'
 	option online_viewer '0'
 

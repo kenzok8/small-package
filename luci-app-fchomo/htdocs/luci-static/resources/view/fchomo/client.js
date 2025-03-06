@@ -799,6 +799,17 @@ return view.extend({
 			.format('https://wiki.metacubex.one/config/proxy-groups/#exclude-type'));
 		so.placeholder = 'Shadowsocks|Trojan';
 		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'hidden', _('Hidden'),
+			_('Returns hidden status in the API to hide the display of this proxy group.') + '</br>' +
+			_('requires front-end adaptation using the API.'));
+		so.default = so.disabled;
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'icon', _('Icon'),
+			_('Returns the string input for icon in the API to display in this proxy group.') + '</br>' +
+			_('requires front-end adaptation using the API.'));
+		so.modalonly = true;
 		/* Proxy Group END */
 
 		/* Routing rules START */

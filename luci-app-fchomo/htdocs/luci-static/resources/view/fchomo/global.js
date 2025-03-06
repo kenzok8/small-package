@@ -168,9 +168,9 @@ return view.extend({
 			return E('strong', [features.core_version || _('Unknown')]);
 		}
 
-		so = ss.option(form.DummyValue, '_luciapp_version', _('Application version'));
+		so = ss.option(form.DummyValue, '_app_version', _('Application version'));
 		so.cfgvalue = function() {
-			return E('strong', [features.luciapp_version || _('Unknown')]);
+			return E('strong', [features.app_version || _('Unknown')]);
 		}
 
 		so = ss.option(form.DummyValue, '_client_status', _('Client status'));
@@ -231,7 +231,7 @@ return view.extend({
 			so.value.apply(so, res);
 		})
 		so.rmempty = false;
-		if (!features.hm_has_stunclient) {
+		if (!features.has_stunclient) {
 			so.description = _('To check NAT Behavior you need to install <a href="%s"><b>stuntman-client</b></a> first')
 				.format('https://github.com/muink/openwrt-stuntman');
 			so.readonly = true;
@@ -475,9 +475,9 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'proxy_mode', _('Proxy mode'));
 		so.value('redir', _('Redirect TCP'));
-		if (features.hm_has_tproxy)
+		if (features.has_tproxy)
 			so.value('redir_tproxy', _('Redirect TCP + TProxy UDP'));
-		if (features.hm_has_ip_full && features.hm_has_tun) {
+		if (features.has_ip_full && features.has_tun) {
 			so.value('redir_tun', _('Redirect TCP + Tun UDP'));
 			so.value('tun', _('Tun TCP/UDP'));
 		} else
@@ -782,7 +782,7 @@ return view.extend({
 			_('Please ensure that the DNS query of the domains to be processed in the DNS policy</br>' +
 				'are send via DIRECT/Proxy Node in the same semantics as Routing mode.'));
 		so.default = so.disabled;
-		if (!features.hm_has_dnsmasq_full) {
+		if (!features.has_dnsmasq_full) {
 			so.description = _('To enable, you need to install <code>dnsmasq-full</code>.');
 			so.readonly = true;
 			uci.set(data[0], so.section.section, so.option, '');

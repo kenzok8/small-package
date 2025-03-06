@@ -666,9 +666,12 @@ uci.foreach(uciconf, ucipgrp, (cfg) => {
 		lazy: (cfg.lazy === '0') ? false : null,
 		"expected-status": cfg.url ? cfg.expected_status || '204' : null,
 		"max-failed-times": cfg.url ? strToInt(cfg.max_failed_times) ?? 5 : null,
+		// General fields
 		filter: parse_filter(cfg.filter),
 		"exclude-filter": parse_filter(cfg.exclude_filter),
-		"exclude-type": parse_filter(cfg.exclude_type)
+		"exclude-type": parse_filter(cfg.exclude_type),
+		hidden: strToBool(cfg.hidden),
+		icon: cfg.icon
 	});
 });
 /* Proxy Group END */
