@@ -119,10 +119,21 @@ target_link_libraries(ua2f mnl netfilter_queue pthread nfnetlink)
 if (UA2F_ENABLE_BACKTRACE)
     set(LIBBACKTRACE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/libbacktrace)
     
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -dumpmachine
+        OUTPUT_VARIABLE LIBBACKTRACE_HOST
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE DUMPMACHINE_RESULT
+    )
+    if(NOT DUMPMACHINE_RESULT EQUAL 0)
+        set(LIBBACKTRACE_HOST "")
+    endif()
+    message(STATUS "LIBBACKTRACE_HOST: ${LIBBACKTRACE_HOST}")
+    
     add_custom_target(libbacktrace
         COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/src/third/libbacktrace && 
                 autoreconf -i && 
-                ./configure --prefix=${LIBBACKTRACE_BUILD_DIR} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} AR=${CMAKE_AR} RANLIB=${CMAKE_RANLIB} STRIP=${CMAKE_STRIP} CFLAGS="${CMAKE_C_FLAGS}" CXXFLAGS="${CMAKE_CXX_FLAGS}" LDFLAGS="${CMAKE_EXE_LINKER_FLAGS}" CPPFLAGS="${CMAKE_C_FLAGS}" && 
+                ./configure --prefix=${LIBBACKTRACE_BUILD_DIR} --host=${LIBBACKTRACE_HOST} && 
                 make && 
                 make install
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/third/libbacktrace
