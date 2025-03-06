@@ -261,6 +261,12 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
 
     const int type = get_pkt_ip_version(pkt);
     assert((type == IPV4 || type == IPV6 || type == IP_UNK) && "Invalid IP version");
+    if (type == IP_UNK) {
+        // will this happen?
+        syslog(LOG_WARNING, "Received unknown ip packet type %x. You may set wrong firewall rules.", pkt->hw_protocol);
+        send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
+        goto end;
+    }
 
     if (type == IPV4) {
         if (!ipv4_set_transport_header(pkt_buff)) {
@@ -283,10 +289,22 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
         char msg[300];
         if (type == IPV4) {
             syslog(LOG_WARNING, "Failed to set ipv4 transport header.");
-            nfq_ip_snprintf(msg, sizeof(msg), nfq_ip_get_hdr(pkt_buff));
+            const __auto_type ip_hdr = nfq_ip_get_hdr(pkt_buff);
+            if (ip_hdr != NULL) {
+                nfq_ip_snprintf(msg, sizeof(msg), ip_hdr);
+            } else {
+                syslog(LOG_WARNING, "Failed to get ipv4 ip header");
+                goto end;
+            }
         } else {
             syslog(LOG_WARNING, "Failed to set ipv6 transport header.");
-            nfq_ip6_snprintf(msg, sizeof(msg), nfq_ip6_get_hdr(pkt_buff));
+            const __auto_type ip_hdr = nfq_ip6_get_hdr(pkt_buff);
+            if (ip_hdr != NULL) {
+                nfq_ip6_snprintf(msg, sizeof(msg), ip_hdr);
+            } else {
+                syslog(LOG_WARNING, "Failed to get ipv6 ip header");
+                goto end;
+            }
         }
         syslog(LOG_WARNING, "Header: %s", msg);
         goto end;
@@ -295,13 +313,14 @@ void handle_packet(const struct nf_queue *queue, const struct nf_packet *pkt) {
     const __auto_type tcp_hdr = nfq_tcp_get_hdr(pkt_buff);
     if (tcp_hdr == NULL) {
         // This packet is not tcp, pass it
-        syslog(LOG_WARNING, "Received non-tcp packet. You may set wrong firewall rules.");
+        syslog(LOG_WARNING, "No tcp header found");
         send_verdict(queue, pkt, (struct mark_op){false, 0}, NULL);
         goto end;
     }
 
     const __auto_type tcp_payload = nfq_tcp_get_payload(tcp_hdr, pkt_buff);
     if (tcp_payload == NULL) {
+        syslog(LOG_WARNING, "No tcp payload found");
         send_verdict(queue, pkt, get_next_mark(pkt, false), NULL);
         goto end;
     }

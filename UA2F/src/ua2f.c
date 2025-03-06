@@ -3,10 +3,11 @@
 #include "handler.h"
 #include "statistics.h"
 #include "util.h"
+#include "backtrace.h"
 #ifdef UA2F_ENABLE_UCI
 #include "config.h"
 #endif
-#include "third/nfqueue-mnl.h"
+#include "third/nfqueue-mnl/nfqueue-mnl.h"
 
 #include <signal.h>
 #include <stdlib.h>
@@ -18,11 +19,6 @@
 #pragma ide diagnostic ignored "EndlessLoop"
 
 volatile int should_exit = false;
-
-void signal_handler(const int signum) {
-    syslog(LOG_ERR, "Signal %s received, exiting...", strsignal(signum));
-    should_exit = true;
-}
 
 int parse_packet(const struct nf_queue *queue, struct nf_buffer *buf) {
     struct nf_packet packet[1] = {0};
@@ -96,9 +92,7 @@ int main(const int argc, char *argv[]) {
     init_statistics();
     init_handler();
 
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-    signal(SIGQUIT, signal_handler);
+    UA2F_INIT_BACKTRACE();
 
     struct nf_queue queue[1] = {0};
 

@@ -1,7 +1,7 @@
 #ifndef UA2F_HANDLER_H
 #define UA2F_HANDLER_H
 
-#include "third/nfqueue-mnl.h"
+#include "third/nfqueue-mnl/nfqueue-mnl.h"
 
 extern bool use_conntrack;
 

@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "third/uthash.h"
+#include "third/uthash/uthash.h"
 
 #include <pthread.h>
 #include <stdbool.h>

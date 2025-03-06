@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UA2F
-PKG_VERSION:=4.9.7
+PKG_VERSION:=4.10.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0-only
@@ -46,23 +46,24 @@ define Package/ua2f/config
     help
       Specify the custom User-Agent string to use when UA2F_CUSTOM_USER_AGENT is enabled.
 
-  config UA2F_DEBUG_BUILD
-    bool "Enable debug build"
+  config UA2F_ENABLE_LIBBACKTRACE
+    bool "Enable libbacktrace support"
     depends on PACKAGE_ua2f
-    default n
+    default y
     help
-      Enable this option to build UA2F with debug symbols and optimizations disabled.
+      Enable this option to use libbacktrace for better error reporting.
+      This will increase the binary size but provide more detailed error information.
+
 endef
 
 CMAKE_OPTIONS += \
 	-DUA2F_VERSION_STR="$(PKG_VERSION)" \
 	-DUA2F_CUSTOM_USER_AGENT=$(if $(CONFIG_UA2F_CUSTOM_USER_AGENT),ON,OFF) \
 	-DUA2F_USER_AGENT_STRING=$(CONFIG_UA2F_USER_AGENT_STRING) \
-	-DCMAKE_BUILD_TYPE=$(if $(CONFIG_UA2F_DEBUG_BUILD),Debug,Release)
+	-DUA2F_ENABLE_BACKTRACE=$(if $(CONFIG_UA2F_ENABLE_LIBBACKTRACE),ON,OFF) \
+	-DCMAKE_BUILD_TYPE=RelWithDebInfo
 
-ifeq ($(CONFIG_UA2F_DEBUG_BUILD),y)
-  STRIP:=true
-endif
+STRIP:=true
 
 define Package/ua2f/description
   Change User-agent to Fwords to prevent being detected.
