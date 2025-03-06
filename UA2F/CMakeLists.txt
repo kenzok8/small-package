@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 17)
 OPTION(UA2F_BUILD_TESTS "Build tests" OFF)
 OPTION(UA2F_ENABLE_UCI "Enable UCI support" ON)
 OPTION(UA2F_NO_CACHE "Disable cache" OFF)
+OPTION(UA2F_ENABLE_BACKTRACE "Enable libbacktrace support" ON)
 
 find_package(Git)
 if (GIT_FOUND)
@@ -111,9 +112,35 @@ add_executable(ua2f
         src/handler.c
         src/cli.c
         src/config.c
-        src/third/nfqueue-mnl.c)
+        src/third/nfqueue-mnl/nfqueue-mnl.c)
 
 target_link_libraries(ua2f mnl netfilter_queue pthread nfnetlink)
+
+if (UA2F_ENABLE_BACKTRACE)
+    set(LIBBACKTRACE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/libbacktrace)
+    
+    add_custom_target(libbacktrace
+        COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/src/third/libbacktrace && 
+                autoreconf -i && 
+                ./configure --prefix=${LIBBACKTRACE_BUILD_DIR} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} AR=${CMAKE_AR} RANLIB=${CMAKE_RANLIB} STRIP=${CMAKE_STRIP} CFLAGS="${CMAKE_C_FLAGS}" CXXFLAGS="${CMAKE_CXX_FLAGS}" LDFLAGS="${CMAKE_EXE_LINKER_FLAGS}" CPPFLAGS="${CMAKE_C_FLAGS}" && 
+                make && 
+                make install
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/third/libbacktrace
+    )
+    
+    target_include_directories(ua2f PRIVATE ${LIBBACKTRACE_BUILD_DIR}/include)
+    
+    target_link_directories(ua2f PRIVATE ${LIBBACKTRACE_BUILD_DIR}/lib)
+    
+    target_link_libraries(ua2f backtrace)
+    
+    add_dependencies(ua2f libbacktrace)
+    
+    add_compile_definitions(UA2F_ENABLE_BACKTRACE=1)
+    message(STATUS "libbacktrace support is enabled.")
+else()
+    message(STATUS "libbacktrace support is disabled.")
+endif()
 
 if (UA2F_ENABLE_UCI)
     add_compile_definitions(UA2F_ENABLE_UCI=1)

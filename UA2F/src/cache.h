@@ -5,8 +5,8 @@
 #include <time.h>
 #include <pthread.h>
 
-#include "third/nfqueue-mnl.h"
-#include "third/uthash.h"
+#include "third/nfqueue-mnl/nfqueue-mnl.h"
+#include "third/uthash/uthash.h"
 
 struct addr_port {
     ip_address_t addr;
