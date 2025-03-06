@@ -2,9 +2,9 @@
 
 ## Structure
 
-**remote:** `http[s]://[auth@]<host><path>?fmt=<format>&behav=<behavior>[&key=value][#label]`  
-**local:**　`file://[host]<path>?fmt=<format>&behav=<behavior>[&fill=<base64edStr>][#label]`  
-**inline:** `inline://<Base64edStr>?behav=<behavior>[#label]`  
+**remote:** `http[s]://[auth@]<host><path>?fmt=<format>&behav=<behavior>[&key=value][#label]`\
+**local:**　`file://[host]<path>?fmt=<format>&behav=<behavior>[&fill=<base64edStr>][#label]`\
+**inline:** `inline://<Base64edStr>?behav=<behavior>[#label]`
 
 ## Components
 
@@ -18,8 +18,8 @@ Add it only if required by the target host.
 
 ### Host
 
-The format is `hostname[:port]`.  
-`hostname` can be **Domain** or **IP Address**.  
+The format is `hostname[:port]`.\
+`hostname` can be **Domain** or **IP Address**.\
 `:port` is optional, add it only if required by the target host.
 
 ### Path
@@ -48,7 +48,7 @@ The update interval for the Rule set, in seconds or /^(\d+)(s|m|h|d)?$/.
 
 #### rawQuery
 
-This parameter is required if the original link contains a url query.  
+This parameter is required if the original link contains a url query.\
 Encrypt the part `key1=value1&key2=value2` after `?` in the original link with `encodeURIComponent` and use it as the payload of this parameter.
 
 #### filler
@@ -65,5 +65,5 @@ Generation steps:
 
 ### URIFragment
 
-Ruleset label. Empty strings are not recommended.  
+Ruleset label. Empty strings are not recommended.\
 Need encoded by `encodeURIComponent`.
