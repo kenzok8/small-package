@@ -142,6 +142,8 @@ const routing_port_type = [
 	['common_udpport', _('Common ports (bypass P2P traffic)'), uci.get('fchomo', 'routing', 'common_udpport') || '20-21,22,53,80,110,143,443,853,993,995,8080,8443,9418'],
 	['stun_port', _('STUN ports'), uci.get('fchomo', 'routing', 'stun_port') || '3478,19302'],
 	['turn_port', _('TURN ports'), uci.get('fchomo', 'routing', 'turn_port') || '5349'],
+	['steam_client_port', _('Steam Client ports'), uci.get('fchomo', 'routing', 'steam_client_port') || '27015-27050'],
+	['steam_p2p_udpport', _('Steam P2P ports'), uci.get('fchomo', 'routing', 'steam_p2p_udpport') || '3478,4379,4380,27000-27100'],
 ];
 
 const rules_type = [

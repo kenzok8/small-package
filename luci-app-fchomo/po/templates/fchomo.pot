@@ -2118,6 +2118,14 @@ msgstr ""
 msgid "Stack"
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:145
+msgid "Steam Client ports"
+msgstr ""
+
+#: htdocs/luci-static/resources/fchomo.js:146
+msgid "Steam P2P ports"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/client.js:776
 #: htdocs/luci-static/resources/view/fchomo/client.js:778
 msgid "Strategy"
