@@ -4,17 +4,9 @@
 
 import { access, lsdir, lstat, popen, readfile, writefile } from 'fs';
 import {
-	shellQuote, yqRead,
+	shellQuote, isBinary, yqReadFile,
 	HM_DIR, EXE_DIR, SDL_DIR, RUN_DIR
-} from '/usr/share/fchomo/fchomo.uc';
-
-function isBinary(str) {
-	for (let off = 0, byte = ord(str); off < length(str); byte = ord(str, ++off))
-		if (byte <= 8 || (byte >= 14 && byte <= 31))
-			return true;
-
-	return false;
-}
+} from 'fchomo';
 
 function hasKernelModule(kmod) {
 	return (system(sprintf('[ -e "/lib/modules/$(uname -r)"/%s ]', shellQuote(kmod))) === 0);
@@ -100,20 +92,15 @@ const methods = {
 				fd.close();
 			}
 
-			const fp = popen(`${use_apk ? 'apk list -I' : 'opkg list-installed'} luci-app-fchomo | ` +
-				`awk '{print $${use_apk ? '1' : 'NF'}}'`);
-			if (fp) {
-				features.luciapp_version = trim(fp.read('line')) || null;
+			features.app_version = trim(popen(`${use_apk ? 'apk list -I' : 'opkg list-installed'} luci-app-fchomo | ` +
+				`awk '{print $${use_apk ? '1' : 'NF'}}'`).read('all')) || null;
 
-				fp.close();
-			}
-
-			features.hm_has_dnsmasq_full = system(`[ -n "$(${use_apk ? 'apk list -qI' : 'opkg list-installed'} dnsmasq-full)" ]`) == 0 || null;
-			features.hm_has_ip_full = access('/usr/libexec/ip-full');
-			features.hm_has_stunclient = access('/usr/bin/stunclient');
-			features.hm_has_tcp_brutal = hasKernelModule('brutal.ko');
-			features.hm_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
-			features.hm_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
+			features.has_dnsmasq_full = system(`[ -n "$(${use_apk ? 'apk list -qI' : 'opkg list-installed'} dnsmasq-full)" ]`) == 0 || null;
+			features.has_ip_full = access('/usr/libexec/ip-full');
+			features.has_stunclient = access('/usr/bin/stunclient');
+			features.has_tcp_brutal = hasKernelModule('brutal.ko');
+			features.has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
+			features.has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
 
 			return features;
 		}
@@ -125,7 +112,7 @@ const methods = {
 			if (req.args?.instance) {
 				const instance = req.args?.instance;
 
-				let config = json(trim(yqRead('-oj', '.[] |= with(select(type == "!!map"); del(.)) |= with(select(type == "!!seq"); del(.))', `${RUN_DIR}/${instance}.yaml`)) || '{}');
+				let config = json(trim(yqReadFile('-oj', '.[] |= with(select(type == "!!map"); del(.)) |= with(select(type == "!!seq"); del(.))', `${RUN_DIR}/${instance}.yaml`)) || '{}');
 
 				return {
 					http: config['external-controller'],
@@ -144,13 +131,7 @@ const methods = {
 			if (!req.args?.url)
 				return { httpcode: null, error: 'illegal url' };
 
-			let httpcode = '-1';
-			const fd = popen("wget --spider -t1 -ST3 '" + req.args?.url + "' 2>&1 | awk '/^\\s*HTTP\\//{print $2}'");
-			if (fd) {
-				httpcode = trim(fd.read('line')) || httpcode;
-
-				fd.close();
-			}
+			const httpcode = trim(popen(`wget --spider -t1 -ST3 '${req.args?.url}' 2>&1 | awk '/^\\s*HTTP\\//{print $2}'`).read('all')) || '-1';
 
 			return { httpcode: httpcode };
 		}

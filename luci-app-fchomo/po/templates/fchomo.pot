@@ -1010,6 +1010,10 @@ msgstr ""
 msgid "Heartbeat interval"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/client.js:803
+msgid "Hidden"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:441
 msgid "Host that supports TLS 1.3"
 msgstr ""
@@ -1061,6 +1065,10 @@ msgstr ""
 #: htdocs/luci-static/resources/view/fchomo/client.js:902
 #: htdocs/luci-static/resources/view/fchomo/global.js:415
 msgid "IPv6 support"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:809
+msgid "Icon"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:289
@@ -1891,6 +1899,16 @@ msgstr ""
 msgid "Restls script"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/client.js:804
+msgid ""
+"Returns hidden status in the API to hide the display of this proxy group."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:810
+msgid ""
+"Returns the string input for icon in the API to display in this proxy group."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:754
 msgid "Routing Control"
 msgstr ""
@@ -2690,6 +2708,11 @@ msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:42
 msgid "razord-meta"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:805
+#: htdocs/luci-static/resources/view/fchomo/client.js:811
+msgid "requires front-end adaptation using the API."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:430

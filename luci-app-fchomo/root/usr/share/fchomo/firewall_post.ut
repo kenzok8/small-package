@@ -4,7 +4,7 @@
 {%-
 	import { readfile } from 'fs';
 	import { cursor } from 'uci';
-	import { isEmpty, yqRead } from 'fchomo';
+	import { isEmpty, yqReadFile } from 'fchomo';
 
 	const fw4 = require('fw4');
 
@@ -122,10 +122,10 @@
 	for (let i in control_options)
 		control_info[i] = uci.get(cfgname, 'routing', i);
 
-	control_info.wan_direct_ipv4_ips = json(trim(yqRead('-oj', '.IPCIDR',  resources_dir + '/direct_list.yaml')) || '[]');
-	control_info.wan_direct_ipv6_ips = json(trim(yqRead('-oj', '.IPCIDR6', resources_dir + '/direct_list.yaml')) || '[]');
-	control_info.wan_proxy_ipv4_ips  = json(trim(yqRead('-oj', '.IPCIDR',  resources_dir + '/proxy_list.yaml')) || '[]');
-	control_info.wan_proxy_ipv6_ips  = json(trim(yqRead('-oj', '.IPCIDR6', resources_dir + '/proxy_list.yaml')) || '[]');
+	control_info.wan_direct_ipv4_ips = json(trim(yqReadFile('-oj', '.IPCIDR',  resources_dir + '/direct_list.yaml')) || '[]');
+	control_info.wan_direct_ipv6_ips = json(trim(yqReadFile('-oj', '.IPCIDR6', resources_dir + '/direct_list.yaml')) || '[]');
+	control_info.wan_proxy_ipv4_ips  = json(trim(yqReadFile('-oj', '.IPCIDR',  resources_dir + '/proxy_list.yaml')) || '[]');
+	control_info.wan_proxy_ipv6_ips  = json(trim(yqReadFile('-oj', '.IPCIDR6', resources_dir + '/proxy_list.yaml')) || '[]');
 	/* UCI config end */
 -%}
 
