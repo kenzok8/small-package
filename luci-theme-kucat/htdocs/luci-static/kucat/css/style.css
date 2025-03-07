@@ -57,7 +57,7 @@
     --primary-title-color: #ddd;
     --menu-color: #ccc;
     --menu-hover-color: #eee;
-    --menu-item-titlebg-color: rgba(var(--primary-rgbm), 0.4);
+    --menu-item-titlebg-color: rgba(var(--primary-rgbm), 0.5);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
     --title-color: #f5f5f5;
     --body-text-color: #bbb;
@@ -1994,6 +1994,7 @@ button:active{
 .table-titles,
 .cbi-section-table-titles {
   background-color: var(--menu-item-titlebg-color);
+  color: var(--menu-fontcolor);
 }
 .cbi-section-table .cbi-section-table-titles .cbi-section-table-cell {
     width: auto !important
@@ -4209,17 +4210,42 @@ select, input, .cbi-dropdown,.btn, button, .cbi-button, .item::after {
         height:2.4rem;
 }
 
-div#cbid\.appfilter\.appfilter\.websiteapps,
-div#cbid\.appfilter\.appfilter\.downloadapps,
-div#cbid\.appfilter\.appfilter\.employeeapps,
-div#cbid\.appfilter\.appfilter\.musicapps,
-div#cbid\.appfilter\.appfilter\.shoppingapps,
-div#cbid\.appfilter\.appfilter\.videoapps,
-div#cbid\.appfilter\.appfilter\.gameapps,
-div#cbid\.appfilter\.appfilter\.chatapps {
-    display: flex;
-    flex-wrap: wrap
+/* appfilter3.0 */
+#cbi-appfilter>div>div {
+    background-color: rgba(var(--primary-rgbbody), 1) !important;
 }
+#cbi-appfilter>div>div>button {
+  background-color: rgba(var(--primary-rgbm), 0.9) !important;
+  color: var(--menu-hover-color) !important;
+  width: auto !important;
+  height: auto !important;
+}
+#cbi-appfilter>div>div>ul{
+     border-bottom: 0px solid #ccc !important;
+}
+
+#cbi-appfilter>div>div>ul>li{
+    background: var(--menu-item-titlebg-color) !important;
+    color: var(--primarytextcolor) !important
+}
+#cbi-appfilter>div>div>ul>li.active {
+    background-color: rgba(var(--primary-rgbm), 0.7) !important;
+    color: var(--menu-hover-color) !important;
+}
+#cbi-appfilter>div>div>ul>li:hover{
+    background-color: rgba(var(--primary-rgbm), 0.7) !important;
+    color: var(--menu-hover-color) !important;
+}
+#cbi-appfilter #detailsModal .tab-body{
+  background-color: rgba(248, 248, 248, 0.9) !important;
+}
+#cbi-appfilter>div>div span{
+       color: var(--body-color)!important;
+}
+#cbi-appfilter>div>div input{
+    background-color: rgba(248, 248, 248, 0.2) !important;
+}
+
 
 .CodeMirror.cm-s-dracula.CodeMirror-wrap {
     border-radius: 0.375rem
@@ -4247,13 +4273,16 @@ div#add_link_div {
     border-radius: 9px
 }
 
+/* filemanager */
 #file-manager-container button#go-button {
     cursor: pointer
 }
-
+#file-manager-container .file-manager-header {
+  white-space: nowrap;
+}
 #file-manager-container .file-manager-header input{
   max-width: none;
-  min-width: 20rem;
+  min-width: 10rem;
 }
 
 #content-filemanager>#file-list-container  #file-table tr>th .sort-button{
@@ -4485,7 +4514,7 @@ div#file-manager-container #status-bar #status-info{
         box-shadow: rgba(0, 0, 0, 0.75) 0 0 20px -5px;
         -webkit-box-shadow: rgba(0, 0, 0, 0.75) 0 0 20px -5px;
         position: fixed;
-	background-color:rgba(var(--primary-rgbbody), 1);
+	background-image: var(--bgqs-image);
         visibility: hidden;
         z-index: 100
     }
@@ -4835,6 +4864,9 @@ div#file-manager-container #status-bar #status-info{
         display: inline-table
         padding: 0 0.5rem;
     }
+    #file-manager-container .file-manager-header {
+      flex-wrap: wrap;
+    }
 }
 
 @media screen and (max-width:480px) {
@@ -4867,88 +4899,6 @@ div#file-manager-container #status-bar #status-info{
     .cbi-value input[data-update="change"]:nth-child(2) {
         width: 8rem;
         min-width: 8rem
-    }
-}
-
-@media screen and (max-width:600px) {
-    #cbi-appfilter-appfilter .cbi-checkbox {
-        display: inline-block;
-        margin-right: 0px;
-        flex-basis: 31%
-    }
-}
-
-@media screen and (min-width:601px) and (max-width:900px) {
-    #cbi-appfilter-appfilter .cbi-checkbox {
-        display: inline-block;
-        margin-right: 10px;
-        flex-basis: 28%
-    }
-}
-
-@media screen and (min-width:901px) and (max-width:1100px) {
-    #cbi-appfilter-appfilter .cbi-checkbox {
-        display: inline-block;
-        margin-right: 5px;
-        flex-basis: 20%
-    }
-}
-
-@media screen and (min-width:1101px) and (max-width:1200px) {
-    #cbi-appfilter-appfilter .cbi-checkbox {
-        display: inline-block;
-        margin-right: 5px;
-        flex-basis: 15%
-    }
-}
-
-@media screen and (min-width:1201px) and (max-width:1300px) {
-    #cbi-appfilter-appfilter .cbi-checkbox {
-        display: inline-block;
-        margin-right: 5px;
-        flex-basis: 14%
-    }
-}
-
-@media screen and (min-width:1301px) and (max-width:1400px) {
-    #cbi-appfilter-appfilter .cbi-checkbox {
-        display: inline-block;
-        margin-right: 5px;
-        flex-basis: 13%
-    }
-}
-
-@media screen and (min-width:1401px) and (max-width:1500px) {
-    #cbi-appfilter-appfilter .cbi-checkbox {
-        display: inline-block;
-        margin-right: 5px;
-        flex-basis: 12%
-    }
-}
-
-@media screen and (min-width:1501px) {
-    #cbi-appfilter-appfilter .cbi-checkbox {
-        display: inline-block;
-        margin-right: 5px;
-        flex-basis: 10%
-    }
-}
-
-@media screen and (min-width:900px) and (max-width:1280px) {
-    div#cbi-appfilter-time-days {
-        margin-left: 6.2rem
-    }
-}
-
-@media screen and (min-width:1281px) and (max-width:1600px) {
-    div#cbi-appfilter-time-days {
-        margin-left: 8.2rem
-    }
-}
-
-@media screen and (min-width:1601px) {
-    div#cbi-appfilter-time-days {
-        margin-left: 16rem
     }
 }
 
