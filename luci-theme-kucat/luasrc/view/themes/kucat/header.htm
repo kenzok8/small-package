@@ -208,6 +208,10 @@
 		--menu-fontcolor: #4d4d5d;
 		<% end -%>
 	}
+     @media screen and (max-width: 992px) {
+      .main .main-left {
+      	  background-color:rgba(var(--primary-rgbbody), 1);
+	}
 	<% else %>
 	:root {
 		--primary-rgbbody:<%=primary_rgbbody%>;
