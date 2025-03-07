@@ -1929,12 +1929,12 @@ msgstr "Restls 剧本"
 #: htdocs/luci-static/resources/view/fchomo/client.js:804
 msgid ""
 "Returns hidden status in the API to hide the display of this proxy group."
-msgstr "在 API 返回 hidden 状态，以隐藏该代理组显示"
+msgstr "在 API 返回 hidden 状态，以隐藏该代理组显示。"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:810
 msgid ""
 "Returns the string input for icon in the API to display in this proxy group."
-msgstr "在 API 返回 icon 所输入的字符串，以在该代理组显示"
+msgstr "在 API 返回 icon 所输入的字符串，以在该代理组显示。"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:754
 msgid "Routing Control"
@@ -2747,7 +2747,7 @@ msgstr "razord-meta"
 #: htdocs/luci-static/resources/view/fchomo/client.js:805
 #: htdocs/luci-static/resources/view/fchomo/client.js:811
 msgid "requires front-end adaptation using the API."
-msgstr "需要使用 API 的前端适配"
+msgstr "需要使用 API 的前端适配。"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:430
 msgid "restls"
