@@ -7,8 +7,6 @@ Subject: [PATCH] format logtime
  mlog/logger.go | 15 +++++++++++++--
  1 file changed, 13 insertions(+), 2 deletions(-)
 
-diff --git a/mlog/logger.go b/mlog/logger.go
-index c8b08a9..b44c88d 100644
 --- a/mlog/logger.go
 +++ b/mlog/logger.go
 @@ -1,17 +1,28 @@
@@ -42,6 +40,3 @@ index c8b08a9..b44c88d 100644
  func L() *zap.Logger {
  	return logger
  }
--- 
-2.34.8
-

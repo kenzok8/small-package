@@ -54,16 +54,14 @@ return view.extend({
 		o.default = o.disabled;
 
 		/* Server settings START */
-		s = m.section(form.GridSection, 'server', null);
-		var prefmt = { 'prefix': 'server_', 'suffix': '' };
+		s = m.section(hm.GridSection, 'server', null);
 		s.addremove = true;
 		s.rowcolors = true;
 		s.sortable = true;
 		s.nodescriptions = true;
-		s.modaltitle = L.bind(hm.loadModalTitle, s, _('Server'), _('Add a server'));
-		s.sectiontitle = L.bind(hm.loadDefaultLabel, s);
-		s.renderSectionAdd = L.bind(hm.renderSectionAdd, s, prefmt, false);
-		s.handleAdd = L.bind(hm.handleAdd, s, prefmt);
+		s.hm_modaltitle = [ _('Server'), _('Add a server') ];
+		s.hm_prefmt = { 'prefix': 'server_', 'suffix': '' };
+		s.hm_lowcase_only = false;
 
 		s.tab('field_general', _('General fields'));
 		s.tab('field_tls', _('TLS fields'));

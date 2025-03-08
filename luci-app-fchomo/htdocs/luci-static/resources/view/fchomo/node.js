@@ -25,17 +25,15 @@ return view.extend({
 		s.tab('node', _('Proxy Node'));
 
 		/* Proxy Node */
-		o = s.taboption('node', form.SectionValue, '_node', form.GridSection, 'node', null);
+		o = s.taboption('node', form.SectionValue, '_node', hm.GridSection, 'node', null);
 		ss = o.subsection;
-		var prefmt = { 'prefix': 'node_', 'suffix': '' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('Node'), _('Add a Node'));
-		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
-		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, true);
-		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
+		ss.hm_modaltitle = [ _('Node'), _('Add a Node') ];
+		ss.hm_prefmt = { 'prefix': 'node_', 'suffix': '' };
+		ss.hm_lowcase_only = true;
 
 		ss.tab('field_general', _('General fields'));
 		ss.tab('field_tls', _('TLS fields'));
@@ -807,18 +805,18 @@ return view.extend({
 		s.tab('provider', _('Provider'));
 
 		/* Provider */
-		o = s.taboption('provider', form.SectionValue, '_provider', form.GridSection, 'provider', null);
+		o = s.taboption('provider', form.SectionValue, '_provider', hm.GridSection, 'provider', null);
 		ss = o.subsection;
-		var prefmt = { 'prefix': 'sub_', 'suffix': '' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('Provider'), _('Add a provider'));
-		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
+		ss.hm_modaltitle = [ _('Provider'), _('Add a provider') ];
+		ss.hm_prefmt = { 'prefix': 'sub_', 'suffix': '' };
+		ss.hm_lowcase_only = false;
 		/* Remove idle files start */
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.renderSectionAdd.apply(this, [prefmt, false].concat(Array.prototype.slice.call(arguments)));
+			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
 			el.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
@@ -828,7 +826,6 @@ return view.extend({
 
 			return el;
 		}
-		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
 		/* Remove idle files end */
 
 		ss.tab('field_general', _('General fields'));
@@ -1075,17 +1072,15 @@ return view.extend({
 		s.tab('dialer_proxy', _('Proxy chain'));
 
 		/* Proxy chain */
-		o = s.taboption('dialer_proxy', form.SectionValue, '_dialer_proxy', form.GridSection, 'dialer_proxy', null);
+		o = s.taboption('dialer_proxy', form.SectionValue, '_dialer_proxy', hm.GridSection, 'dialer_proxy', null);
 		ss = o.subsection;
-		var prefmt = { 'prefix': 'chain_', 'suffix': '' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('Proxy chain'), _('Add a proxy chain'));
-		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
-		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, true);
-		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
+		ss.hm_modaltitle = [ _('Proxy chain'), _('Add a proxy chain') ];
+		ss.hm_prefmt = { 'prefix': 'chain_', 'suffix': '' };
+		ss.hm_lowcase_only = true;
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
