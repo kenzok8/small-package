@@ -103,76 +103,58 @@ return view.extend({
 
 		/* Rule set START */
 		/* Rule set settings */
-		var prefmt = { 'prefix': 'rule_', 'suffix': '' };
-		s = m.section(form.GridSection, 'ruleset');
+		s = m.section(hm.GridSection, 'ruleset');
 		s.addremove = true;
 		s.rowcolors = true;
 		s.sortable = true;
 		s.nodescriptions = true;
-		s.modaltitle = L.bind(hm.loadModalTitle, s, _('Rule set'), _('Add a rule set'));
-		s.sectiontitle = L.bind(hm.loadDefaultLabel, s);
+		s.hm_modaltitle = [ _('Rule set'), _('Add a rule set') ];
+		s.hm_prefmt = { 'prefix': 'rule_', 'suffix': '' };
+		s.hm_lowcase_only = false;
 		/* Import rule-set links and Remove idle files start */
 		s.handleLinkImport = function() {
-			let textarea = new ui.Textarea('', {
-				'placeholder': 'http(s)://github.com/ACL4SSR/ACL4SSR/raw/refs/heads/master/Clash/Providers/BanAD.yaml?fmt=yaml&behav=classical&rawq=good%3Djob#BanAD\n' +
-							   'file:///example.txt?fmt=text&behav=domain&fill=LmNuCg#CN%20TLD\n' +
-							   'inline://LSAnLmhrJwoK?behav=domain#HK%20TLD\n'
-			});
-			ui.showModal(_('Import rule-set links'), [
-				E('p', _('Supports rule-set links of type: <code>%s</code> and format: <code>%s</code>.</br>')
-						.format('file, http, inline', 'text, yaml, mrs') +
-							_('Please refer to <a href="%s" target="_blank">%s</a> for link format standards.')
-								.format(hm.rulesetdoc, _('Ruleset-URI-Scheme'))),
-				textarea.render(),
-				E('div', { class: 'right' }, [
-					E('button', {
-						class: 'btn',
-						click: ui.hideModal
-					}, [ _('Cancel') ]),
-					' ',
-					E('button', {
-						class: 'btn cbi-button-action',
-						click: ui.createHandlerFn(this, function() {
-							let input_links = textarea.getValue().trim().split('\n');
-							if (input_links && input_links[0]) {
-								/* Remove duplicate lines */
-								input_links = input_links.reduce((pre, cur) =>
-									(!pre.includes(cur) && pre.push(cur), pre), []);
+			const o = new hm.handleImport(this.map, this, _('Import rule-set links'),
+				_('Supports rule-set links of type: <code>%s</code> and format: <code>%s</code>.</br>')
+					.format('file, http, inline', 'text, yaml, mrs') +
+					_('Please refer to <a href="%s" target="_blank">%s</a> for link format standards.')
+						.format(hm.rulesetdoc, _('Ruleset-URI-Scheme')));
+			o.placeholder = 'http(s)://github.com/ACL4SSR/ACL4SSR/raw/refs/heads/master/Clash/Providers/BanAD.yaml?fmt=yaml&behav=classical&rawq=good%3Djob#BanAD\n' +
+							'file:///example.txt?fmt=text&behav=domain&fill=LmNuCg#CN%20TLD\n' +
+							'inline://LSAnLmhrJwoK?behav=domain#HK%20TLD\n';
+			o.handleFn = L.bind(function(textarea, save) {
+				let input_links = textarea.getValue().trim().split('\n');
+				let imported_count = 0;
+				if (input_links && input_links[0]) {
+					/* Remove duplicate lines */
+					input_links = input_links.reduce((pre, cur) =>
+						(!pre.includes(cur) && pre.push(cur), pre), []);
 
-								let imported_ruleset = 0;
-								input_links.forEach((l) => {
-									let config = parseRulesetLink(l);
-									if (config) {
-										let sid = uci.add(data[0], 'ruleset', config.id);
-										config.id = null;
-										Object.keys(config).forEach((k) => {
-											uci.set(data[0], sid, k, config[k] || '');
-										});
-										imported_ruleset++;
-									}
-								});
+					input_links.forEach((l) => {
+						let config = parseRulesetLink(l);
+						if (config) {
+							let sid = uci.add(data[0], 'ruleset', config.id);
+							config.id = null;
+							Object.keys(config).forEach((k) => {
+								uci.set(data[0], sid, k, config[k] || '');
+							});
+							imported_count++;
+						}
+					});
 
-								if (imported_ruleset === 0)
-									ui.addNotification(null, E('p', _('No valid rule-set link found.')));
-								else
-									ui.addNotification(null, E('p', _('Successfully imported %s rule-set of total %s.').format(
-										imported_ruleset, input_links.length)));
+					if (imported_count === 0)
+						ui.addNotification(null, E('p', _('No valid rule-set link found.')));
+					else
+						ui.addNotification(null, E('p', _('Successfully imported %s rule-set of total %s.').format(
+							imported_count, input_links.length)));
+				}
 
-								return uci.save()
-									.then(L.bind(this.map.load, this.map))
-									.then(L.bind(this.map.reset, this.map))
-									.then(L.ui.hideModal)
-									.catch(() => {});
-							} else {
-								return ui.hideModal();
-							}
-						})
-					}, [ _('Import') ])
-				])
-			])
+				return hm.handleImport.prototype.handleFn.call(this, textarea, imported_count);
+			}, this);
+
+			return o.render();
 		}
 		s.renderSectionAdd = function(/* ... */) {
-			let el = hm.renderSectionAdd.apply(this, [prefmt, false].concat(Array.prototype.slice.call(arguments)));
+			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
 			el.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
@@ -188,7 +170,6 @@ return view.extend({
 
 			return el;
 		}
-		s.handleAdd = L.bind(hm.handleAdd, s, prefmt);
 		/* Import rule-set links and Remove idle files end */
 
 		o = s.option(form.Value, 'label', _('Label'));

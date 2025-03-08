@@ -261,6 +261,102 @@ const vless_flow = [
 ];
 
 /* Prototype */
+const CBIGridSection = form.GridSection.extend({
+	modaltitle(/* ... */) {
+		return loadModalTitle.call(this, ...this.hm_modaltitle || [null,null], ...arguments)
+	},
+
+	sectiontitle(/* ... */) {
+		return loadDefaultLabel.call(this, ...arguments);
+	},
+
+	renderSectionAdd(extra_class) {
+		const prefmt = this.hm_prefmt;
+		const LC = this.hm_lowcase_only;
+
+		let el = form.GridSection.prototype.renderSectionAdd.call(this, extra_class),
+			nameEl = el.querySelector('.cbi-section-create-name');
+
+		ui.addValidator(nameEl, 'uciname', true, (v) => {
+			let button = el.querySelector('.cbi-section-create > .cbi-button-add');
+			const prefix = prefmt?.prefix ? prefmt.prefix : '';
+			const suffix = prefmt?.suffix ? prefmt.suffix : '';
+
+			if (!v) {
+				button.disabled = true;
+				return true;
+			} else if (LC && (v !== v.toLowerCase())) {
+				button.disabled = true;
+				return _('Expecting: %s').format(_('Lowercase only'));
+			} else if (uci.get(this.config, v)) {
+				button.disabled = true;
+				return _('Expecting: %s').format(_('unique UCI identifier'));
+			} else if (uci.get(this.config, prefix + v + suffix)) {
+				button.disabled = true;
+				return _('Expecting: %s').format(_('unique identifier'));
+			} else {
+				button.disabled = null;
+				return true;
+			}
+		}, 'blur', 'keyup');
+
+		return el;
+	},
+
+	handleAdd(ev, name) {
+		const prefmt = this.hm_prefmt;
+		const prefix = prefmt?.prefix ? prefmt.prefix : '';
+		const suffix = prefmt?.suffix ? prefmt.suffix : '';
+
+		return form.GridSection.prototype.handleAdd.call(this, ev, prefix + name + suffix);
+	}
+});
+
+const CBIhandleImport = baseclass.extend(/** @lends hm.handleImport.prototype */ {
+	__init__(map, section, title, description) {
+		this.map = map;
+		this.section = section;
+		this.title = title ?? '';
+		this.description = description ?? '';
+		this.placeholder = '';
+
+		this.handleFn = this.handleFn.bind(this.section);
+	},
+
+	handleFn(textarea, save) {
+		if (save) {
+			return uci.save()
+				.then(L.bind(this.map.load, this.map))
+				.then(L.bind(this.map.reset, this.map))
+				.then(L.ui.hideModal)
+				.catch(() => {});
+		} else
+			return ui.hideModal();
+	},
+
+	render() {
+		const textarea = new ui.Textarea('', {
+			placeholder: this.placeholder
+		});
+
+		ui.showModal(this.title, [
+			E('p', this.description),
+			textarea.render(),
+			E('div', { class: 'right' }, [
+				E('button', {
+					class: 'btn',
+					click: ui.hideModal
+				}, [ _('Cancel') ]),
+				' ',
+				E('button', {
+					class: 'btn cbi-button-action',
+					click: ui.createHandlerFn(this, 'handleFn', textarea)
+				}, [ _('Import') ])
+			])
+		]);
+	}
+});
+
 const CBIDynamicList = form.DynamicList.extend({
 	__name__: 'CBI.DynamicList',
 
@@ -294,9 +390,9 @@ const CBIGenValue = form.Value.extend({
 			node.classList.add('control-group');
 
 		(node.querySelector('.control-group') || node).appendChild(E('button', {
-			'class': 'cbi-button cbi-button-add',
-			'title': _('Generate'),
-			'click': ui.createHandlerFn(this, handleGenKey, this.hm_asymmetric || this.option)
+			class: 'cbi-button cbi-button-add',
+			title: _('Generate'),
+			click: ui.createHandlerFn(this, handleGenKey, this.hm_asymmetric || this.option)
 		}, [ _('Generate') ]));
 
 		return node;
@@ -344,12 +440,12 @@ const CBITextValue = form.TextValue.extend({
 const UIDynamicList = ui.DynamicList.extend({
 	addItem(dl, value, text, flash) {
 		if (this.options.allowduplicates) {
-			const new_item = E('div', { 'class': flash ? 'item flash' : 'item', 'tabindex': 0, 'draggable': !less_24_10 }, [
+			const new_item = E('div', { class: flash ? 'item flash' : 'item', tabindex: 0, draggable: !less_24_10 }, [
 				E('span', {}, [ text ?? value ]),
 				E('input', {
-					'type': 'hidden',
-					'name': this.options.name,
-					'value': value })]);
+					type: 'hidden',
+					name: this.options.name,
+					value: value })]);
 
 			const ai = dl.querySelector('.add-item');
 			ai.parentNode.insertBefore(new_item, ai);
@@ -660,15 +756,15 @@ function renderStatus(ElId, isRunning, instance, noGlobal) {
 
 	return E([
 		E('button', {
-			'class': 'cbi-button cbi-button-apply' + (noGlobal ? ' hidden' : ''),
-			'click': ui.createHandlerFn(this, handleReload, instance)
+			class: 'cbi-button cbi-button-apply' + (noGlobal ? ' hidden' : ''),
+			click: ui.createHandlerFn(this, handleReload, instance)
 		}, [ _('Reload') ]),
 		updateStatus(E('span', { id: ElId, style: 'border: unset; font-style: italic; font-weight: bold' }), isRunning ? true : false),
 		E('a', {
-			'class': 'cbi-button cbi-button-apply %s'.format(visible ? '' : 'hidden'),
-			'href': visible ? getDashURL(isRunning) : '',
-			'target': '_blank',
-			'rel': 'noreferrer noopener'
+			class: 'cbi-button cbi-button-apply %s'.format(visible ? '' : 'hidden'),
+			href: visible ? getDashURL(isRunning) : '',
+			target: '_blank',
+			rel: 'noreferrer noopener'
 		}, [ _('Open Dashboard') ])
 	]);
 }
@@ -726,42 +822,6 @@ function renderResDownload(section_id) {
 	]);
 
 	return El;
-}
-
-function renderSectionAdd(prefmt, LC, extra_class) {
-	let el = form.GridSection.prototype.renderSectionAdd.apply(this, [ extra_class ]),
-		nameEl = el.querySelector('.cbi-section-create-name');
-	ui.addValidator(nameEl, 'uciname', true, (v) => {
-		let button = el.querySelector('.cbi-section-create > .cbi-button-add');
-		const prefix = prefmt?.prefix ? prefmt.prefix : '';
-		const suffix = prefmt?.suffix ? prefmt.suffix : '';
-
-		if (!v) {
-			button.disabled = true;
-			return true;
-		} else if (LC && (v !== v.toLowerCase())) {
-			button.disabled = true;
-			return _('Expecting: %s').format(_('Lowercase only'));
-		} else if (uci.get(this.config, v)) {
-			button.disabled = true;
-			return _('Expecting: %s').format(_('unique UCI identifier'));
-		} else if (uci.get(this.config, prefix + v + suffix)) {
-			button.disabled = true;
-			return _('Expecting: %s').format(_('unique identifier'));
-		} else {
-			button.disabled = null;
-			return true;
-		}
-	}, 'blur', 'keyup');
-
-	return el;
-}
-
-function handleAdd(prefmt, ev, name) {
-	const prefix = prefmt?.prefix ? prefmt.prefix : '';
-	const suffix = prefmt?.suffix ? prefmt.suffix : '';
-
-	return form.GridSection.prototype.handleAdd.apply(this, [ ev, prefix + name + suffix ]);
 }
 
 function handleGenKey(option) {
@@ -1195,6 +1255,8 @@ return baseclass.extend({
 	vless_flow,
 
 	/* Prototype */
+	GridSection: CBIGridSection,
+	handleImport: CBIhandleImport,
 	DynamicList: CBIDynamicList,
 	GenValue: CBIGenValue,
 	ListValue: CBIListValue,
@@ -1222,8 +1284,6 @@ return baseclass.extend({
 	updateStatus,
 	getDashURL,
 	renderResDownload,
-	renderSectionAdd,
-	handleAdd,
 	handleGenKey,
 	handleReload,
 	handleRemoveIdles,

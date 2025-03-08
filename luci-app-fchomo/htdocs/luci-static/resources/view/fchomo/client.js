@@ -608,17 +608,15 @@ return view.extend({
 		o.default = o.disabled;
 
 		/* Proxy Group */
-		o = s.taboption('group', form.SectionValue, '_group', form.GridSection, 'proxy_group', null);
+		o = s.taboption('group', form.SectionValue, '_group', hm.GridSection, 'proxy_group', null);
 		ss = o.subsection;
-		var prefmt = { 'prefix': 'group_', 'suffix': '' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('Proxy Group'), _('Add a proxy group'));
-		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
-		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, true);
-		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
+		ss.hm_modaltitle = [ _('Proxy Group'), _('Add a proxy group') ];
+		ss.hm_prefmt = { 'prefix': 'group_', 'suffix': '' };
+		ss.hm_lowcase_only = true;
 
 		ss.tab('field_general', _('General fields'));
 		ss.tab('field_override', _('Override fields'));
@@ -816,17 +814,15 @@ return view.extend({
 		s.tab('rules', _('Routing rule'));
 
 		/* Routing rules */
-		o = s.taboption('rules', form.SectionValue, '_rules', form.GridSection, 'rules', null);
+		o = s.taboption('rules', form.SectionValue, '_rules', hm.GridSection, 'rules', null);
 		ss = o.subsection;
-		var prefmt = { 'prefix': '', 'suffix': '_host' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('Routing rule'), _('Add a routing rule'));
-		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
-		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, false);
-		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
+		ss.hm_modaltitle = [ _('Routing rule'), _('Add a routing rule') ];
+		ss.hm_prefmt = { 'prefix': '', 'suffix': '_host' };
+		ss.hm_lowcase_only = false;
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
@@ -868,17 +864,15 @@ return view.extend({
 		s.tab('subrules', _('Sub rule'));
 
 		/* Sub rules */
-		o = s.taboption('subrules', form.SectionValue, '_subrules', form.GridSection, 'subrules', null);
+		o = s.taboption('subrules', form.SectionValue, '_subrules', hm.GridSection, 'subrules', null);
 		ss = o.subsection;
-		var prefmt = { 'prefix': '', 'suffix': '_subhost' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('Sub rule'), _('Add a sub rule'));
-		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
-		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, false);
-		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
+		ss.hm_modaltitle = [ _('Sub rule'), _('Add a sub rule') ];
+		ss.hm_prefmt = { 'prefix': '', 'suffix': '_subhost' };
+		ss.hm_lowcase_only = false;
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
@@ -955,17 +949,15 @@ return view.extend({
 		s.tab('dns_server', _('DNS server'));
 
 		/* DNS server */
-		o = s.taboption('dns_server', form.SectionValue, '_dns_server', form.GridSection, 'dns_server', null);
+		o = s.taboption('dns_server', form.SectionValue, '_dns_server', hm.GridSection, 'dns_server', null);
 		ss = o.subsection;
-		var prefmt = { 'prefix': 'dns_', 'suffix': '' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('DNS server'), _('Add a DNS server'));
-		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
-		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, true);
-		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
+		ss.hm_modaltitle = [ _('DNS server'), _('Add a DNS server') ];
+		ss.hm_prefmt = { 'prefix': 'dns_', 'suffix': '' };
+		ss.hm_lowcase_only = true;
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
@@ -1096,17 +1088,15 @@ return view.extend({
 		s.tab('dns_policy', _('DNS policy'));
 
 		/* DNS policy */
-		o = s.taboption('dns_policy', form.SectionValue, '_dns_policy', form.GridSection, 'dns_policy', null);
+		o = s.taboption('dns_policy', form.SectionValue, '_dns_policy', hm.GridSection, 'dns_policy', null);
 		ss = o.subsection;
-		var prefmt = { 'prefix': '', 'suffix': '_domain' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.modaltitle = L.bind(hm.loadModalTitle, ss, _('DNS policy'), _('Add a DNS policy'));
-		ss.sectiontitle = L.bind(hm.loadDefaultLabel, ss);
-		ss.renderSectionAdd = L.bind(hm.renderSectionAdd, ss, prefmt, false);
-		ss.handleAdd = L.bind(hm.handleAdd, ss, prefmt);
+		ss.hm_modaltitle = [ _('DNS policy'), _('Add a DNS policy') ];
+		ss.hm_prefmt = { 'prefix': '', 'suffix': '_domain' };
+		ss.hm_lowcase_only = false;
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
