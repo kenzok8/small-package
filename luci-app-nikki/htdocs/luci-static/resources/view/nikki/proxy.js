@@ -11,14 +11,16 @@ return view.extend({
         return Promise.all([
             uci.load('nikki'),
             network.getHostHints(),
+            network.getNetworks(),
             nikki.getUsers(),
             nikki.getGroups()
         ]);
     },
     render: function (data) {
         const hosts = data[1].hosts;
-        const users = data[2];
-        const groups = data[3];
+        const networks = data[2];
+        const users = data[3];
+        const groups = data[4];
 
         let m, s, o;
 
@@ -108,12 +110,19 @@ return view.extend({
             o.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
         };
 
-        o = s.taboption('access_control', widgets.NetworkSelect, 'acl_interface', _('Interface'));
+        o = s.taboption('access_control', form.DynamicList, 'acl_interface', _('Interface'));
         o.multiple = true;
         o.optional = true;
         o.retain = true;
         o.depends('access_control_mode', 'allow');
         o.depends('access_control_mode', 'block');
+
+        for (const network of networks) {
+            if (network.getName() === 'loopback') {
+                continue;
+            }
+            o.value(network.getName());
+        }
 
         s.tab('bypass', _('Bypass'));
 
