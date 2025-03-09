@@ -6,19 +6,19 @@
 
 'require fchomo as hm';
 
-const map_of_rule_provider = {
-	//type: 'type',
-	//behavior: 'behavior',
-	//format: 'format',
-	//url: 'url',
-	"size-limit": 'size_limit',
-	//interval: 'interval',
-	//proxy: 'proxy',
-	path: 'id',
-	//payload: 'payload',
-};
-
 function parseRulesetYaml(field, id, obj) {
+	const map_of_rule_provider = {
+		//type: 'type',
+		//behavior: 'behavior',
+		//format: 'format',
+		//url: 'url',
+		"size-limit": 'size_limit',
+		//interval: 'interval',
+		//proxy: 'proxy',
+		path: 'id',
+		//payload: 'payload', // array: string
+	};
+
 	if (hm.isEmpty(obj))
 		return null;
 
