@@ -29,10 +29,10 @@ return view.extend({
         o = s.taboption('app_log', form.Button, 'clear_app_log');
         o.inputstyle = 'negative';
         o.inputtitle = _('Clear Log');
-        o.onclick = function () {
-            m.lookupOption('nikki.log._app_log')[0].getUIElement('log').setValue('');
+        o.onclick = L.bind(function (event, section_id) {
+            this.getUIElement(section_id, '_app_log').setValue('');
             return nikki.clearAppLog();
-        };
+        }, s);
 
         o = s.taboption('app_log', form.TextValue, '_app_log');
         o.rows = 25;
@@ -52,20 +52,20 @@ return view.extend({
 
         o = s.taboption('app_log', form.Button, 'scroll_app_log_to_bottom');
         o.inputtitle = _('Scroll To Bottom');
-        o.onclick = function () {
-            const element = m.lookupOption('nikki.log._app_log')[0].getUIElement('log').node.firstChild;
+        o.onclick = L.bind(function (event, section_id) {
+            const element = this.getUIElement(section_id, '_app_log').node.firstChild;
             element.scrollTop = element.scrollHeight;
-        };
+        }, s);
 
         s.tab('core_log', _('Core Log'));
 
         o = s.taboption('core_log', form.Button, 'clear_core_log');
         o.inputstyle = 'negative';
         o.inputtitle = _('Clear Log');
-        o.onclick = function () {
-            m.lookupOption('nikki.log._core_log')[0].getUIElement('log').setValue('');
+        o.onclick = L.bind(function (event, section_id) {
+            this.getUIElement(section_id, '_core_log').setValue('');
             return nikki.clearCoreLog();
-        };
+        }, s);
 
         o = s.taboption('core_log', form.TextValue, '_core_log');
         o.rows = 25;
@@ -85,10 +85,10 @@ return view.extend({
 
         o = s.taboption('core_log', form.Button, 'scroll_core_log_to_bottom');
         o.inputtitle = _('Scroll To Bottom');
-        o.onclick = function () {
-            const element = m.lookupOption('nikki.log._core_log')[0].getUIElement('log').node.firstChild;
+        o.onclick = L.bind(function (event, section_id) {
+            const element = this.getUIElement(section_id, '_core_log').node.firstChild;
             element.scrollTop = element.scrollHeight;
-        };
+        }, s);
 
         s.tab('debug_log', _('Debug Log'));
 
