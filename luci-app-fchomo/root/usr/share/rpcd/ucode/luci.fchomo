@@ -4,7 +4,7 @@
 
 import { access, lsdir, lstat, popen, readfile, writefile } from 'fs';
 import {
-	shellQuote, isBinary, yqReadFile,
+	shellQuote, isBinary, yqRead, yqReadFile,
 	HM_DIR, EXE_DIR, SDL_DIR, RUN_DIR
 } from 'fchomo';
 
@@ -191,6 +191,26 @@ const methods = {
 				return { status: exit_code };
 			} else
 				return { status: 255, error: 'illegal type' };
+		}
+	},
+
+	json2yaml: {
+		args: { content: 'content', command: 'command' },
+		call: function(req) {
+			if (!req.args?.content)
+				return { result: ''};
+
+			return { result: trim(yqRead('-oy', req.args?.command ? req.args?.command + ' | ... style=""' : '... style=""', req.args?.content)) || '' };
+		}
+	},
+
+	yaml2json: {
+		args: { content: 'content', command: 'command' },
+		call: function(req) {
+			if (!req.args?.content)
+				return { result: {}};
+
+			return { result: json(trim(yqRead('-oj', req.args?.command || '.', req.args?.content)) || '{}') };
 		}
 	},
 

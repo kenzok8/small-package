@@ -615,7 +615,7 @@ return view.extend({
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.hm_modaltitle = [ _('Proxy Group'), _('Add a proxy group') ];
-		ss.hm_prefmt = { 'prefix': 'group_', 'suffix': '' };
+		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_lowcase_only = true;
 
 		ss.tab('field_general', _('General fields'));
@@ -821,7 +821,7 @@ return view.extend({
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.hm_modaltitle = [ _('Routing rule'), _('Add a routing rule') ];
-		ss.hm_prefmt = { 'prefix': '', 'suffix': '_host' };
+		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_lowcase_only = false;
 
 		so = ss.option(form.Value, 'label', _('Label'));
@@ -871,7 +871,7 @@ return view.extend({
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.hm_modaltitle = [ _('Sub rule'), _('Add a sub rule') ];
-		ss.hm_prefmt = { 'prefix': '', 'suffix': '_subhost' };
+		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_lowcase_only = false;
 
 		so = ss.option(form.Value, 'label', _('Label'));
@@ -956,7 +956,7 @@ return view.extend({
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.hm_modaltitle = [ _('DNS server'), _('Add a DNS server') ];
-		ss.hm_prefmt = { 'prefix': 'dns_', 'suffix': '' };
+		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_lowcase_only = true;
 
 		so = ss.option(form.Value, 'label', _('Label'));
@@ -1095,7 +1095,7 @@ return view.extend({
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.hm_modaltitle = [ _('DNS policy'), _('Add a DNS policy') ];
-		ss.hm_prefmt = { 'prefix': '', 'suffix': '_domain' };
+		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_lowcase_only = false;
 
 		so = ss.option(form.Value, 'label', _('Label'));

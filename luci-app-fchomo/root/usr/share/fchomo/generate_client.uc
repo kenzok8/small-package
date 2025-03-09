@@ -686,54 +686,57 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 	/* General fields */
 	config["proxy-providers"][cfg['.name']] = {
 		type: cfg.type,
-		...(cfg.payload ? {
+		...(cfg.type === 'inline' ? {
+			"dialer-proxy": dialerproxy[cfg['.name']]?.detour,
 			payload: trim(cfg.payload)
 		} : {
-			path: HM_DIR + '/provider/' + cfg['.name']
-		}),
-		url: cfg.url,
-		"size-limit": bytesizeToByte(cfg.size_limit) || null,
-		interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) ?? 86400 : null,
-		proxy: get_proxygroup(cfg.proxy),
-		header: cfg.header ? json(cfg.header) : null,
-		"health-check": {},
-		override: {},
-		filter: parse_filter(cfg.filter),
-		"exclude-filter": parse_filter(cfg.exclude_filter),
-		"exclude-type": parse_filter(cfg.exclude_type)
+			path: HM_DIR + '/provider/' + cfg['.name'],
+			url: cfg.url,
+			"size-limit": bytesizeToByte(cfg.size_limit) || null,
+			interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) ?? 86400 : null,
+			proxy: get_proxygroup(cfg.proxy),
+			header: cfg.header ? json(cfg.header) : null,
+			"health-check": {},
+			override: {},
+			filter: parse_filter(cfg.filter),
+			"exclude-filter": parse_filter(cfg.exclude_filter),
+			"exclude-type": parse_filter(cfg.exclude_type)
+		})
 	};
 
-	/* Override fields */
-	config["proxy-providers"][cfg['.name']].override = {
-		"additional-prefix": cfg.override_prefix,
-		"additional-suffix": cfg.override_suffix,
-		"proxy-name": isEmpty(cfg.override_replace) ? null : map(cfg.override_replace, (obj) => json(obj)),
-		// Configuration Items
-		tfo: strToBool(cfg.override_tfo),
-		mptcp: strToBool(cfg.override_mptcp),
-		udp: (cfg.override_udp === '0') ? false : true,
-		"udp-over-tcp": strToBool(cfg.override_uot),
-		up: cfg.override_up ? cfg.override_up + ' Mbps' : null,
-		down: cfg.override_down ? cfg.override_down + ' Mbps' : null,
-		"skip-cert-verify": strToBool(cfg.override_skip_cert_verify) || false,
-		"dialer-proxy": dialerproxy[cfg['.name']]?.detour,
-		"interface-name": cfg.override_interface_name,
-		"routing-mark": strToInt(cfg.override_routing_mark) || null,
-		"ip-version": cfg.override_ip_version
-	};
-
-	/* Health fields */
-	if (cfg.health_enable === '0') {
-		config["proxy-providers"][cfg['.name']]["health-check"] = null;
-	} else {
-		config["proxy-providers"][cfg['.name']]["health-check"] = {
-			enable: true,
-			url: cfg.health_url,
-			interval: durationToSecond(cfg.health_interval) ?? 600,
-			timeout: strToInt(cfg.health_timeout) || 5000,
-			lazy: (cfg.health_lazy === '0') ? false : null,
-			"expected-status": cfg.health_expected_status || '204'
+	if (cfg.type !== 'inline') {
+		/* Override fields */
+		config["proxy-providers"][cfg['.name']].override = {
+			"additional-prefix": cfg.override_prefix,
+			"additional-suffix": cfg.override_suffix,
+			"proxy-name": isEmpty(cfg.override_replace) ? null : map(cfg.override_replace, (obj) => json(obj)),
+			// Configuration Items
+			tfo: strToBool(cfg.override_tfo),
+			mptcp: strToBool(cfg.override_mptcp),
+			udp: (cfg.override_udp === '0') ? false : true,
+			"udp-over-tcp": strToBool(cfg.override_uot),
+			up: cfg.override_up ? cfg.override_up + ' Mbps' : null,
+			down: cfg.override_down ? cfg.override_down + ' Mbps' : null,
+			"skip-cert-verify": strToBool(cfg.override_skip_cert_verify) || false,
+			"dialer-proxy": dialerproxy[cfg['.name']]?.detour,
+			"interface-name": cfg.override_interface_name,
+			"routing-mark": strToInt(cfg.override_routing_mark) || null,
+			"ip-version": cfg.override_ip_version
 		};
+
+		/* Health fields */
+		if (cfg.health_enable === '0') {
+			config["proxy-providers"][cfg['.name']]["health-check"] = null;
+		} else {
+			config["proxy-providers"][cfg['.name']]["health-check"] = {
+				enable: true,
+				url: cfg.health_url,
+				interval: durationToSecond(cfg.health_interval) ?? 600,
+				timeout: strToInt(cfg.health_timeout) || 5000,
+				lazy: (cfg.health_lazy === '0') ? false : null,
+				"expected-status": cfg.health_expected_status || '204'
+			};
+		}
 	}
 });
 /* Provider END */
@@ -788,8 +791,5 @@ uci.foreach(uciconf, ucisubro, (cfg) => {
 	push(config["sub-rules"][cfg.group], parse_entry(cfg.entry));
 });
 /* Sub rules END */
-
-/* Debug dialer-proxy */
-//config.dialerproxy = dialerproxy;
 
 printf('%.J\n', removeBlankAttrs(config));

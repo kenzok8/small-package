@@ -5,6 +5,14 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "%s log"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:196
+msgid "%s rule-set of type '%s' need to be filled in manually."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:34
+msgid "(Imported)"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/client.js:656
 #: htdocs/luci-static/resources/view/fchomo/client.js:657
 #: htdocs/luci-static/resources/view/fchomo/client.js:670
@@ -1099,6 +1107,11 @@ msgstr ""
 msgid "Import"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:152
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:257
+msgid "Import mihomo config"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:121
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:179
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:181
@@ -1450,6 +1463,10 @@ msgstr ""
 msgid "No testing is performed when this provider node is not in use."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:190
+msgid "No valid %s found."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:156
 msgid "No valid rule-set link found."
 msgstr ""
@@ -1619,6 +1636,10 @@ msgstr ""
 msgid ""
 "Please type <a target=\"_blank\" href=\"%s\" rel=\"noreferrer noopener\">%s</"
 "a>."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:153
+msgid "Please type <code>%s</code> fields of mihomo config.</br>"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:425
@@ -2158,8 +2179,9 @@ msgstr ""
 msgid "Sub rule group"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:158
-msgid "Successfully imported %s rule-set of total %s."
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:193
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:241
+msgid "Successfully imported %s %s of total %s."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:60
@@ -2650,6 +2672,10 @@ msgstr ""
 msgid "metacubexd"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:255
+msgid "mihomo config"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:776
 #: htdocs/luci-static/resources/view/fchomo/node.js:958
 msgid "mpTCP"
@@ -2717,6 +2743,11 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:430
 msgid "restls"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:194
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:242
+msgid "rule-set"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:429
