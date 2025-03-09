@@ -35,6 +35,23 @@ const monospacefonts = [
 	'monospace'
 ];
 
+const checkurls = [
+	['https://www.baidu.com', _('Baidu')],
+	['https://s1.music.126.net/style/favicon.ico', _('163Music')],
+	['https://www.google.com/generate_204', _('Google')],
+	['https://github.com', _('GitHub')],
+	['https://www.youtube.com', _('YouTube')]
+];
+
+const stunserver = [
+	['stun.fitauto.ru:3478'],
+	['stun.hot-chilli.net:3478'],
+	['stun.pure-ip.com:3478'],
+	['stun.voipgate.com:3478'],
+	['stun.voipia.net:3478'],
+	['stunserver2024.stunprotocol.org:3478']
+];
+
 const dashrepos = [
 	['zephyruso/zashboard', _('zashboard')],
 	['metacubex/metacubexd', _('metacubexd')],
@@ -49,13 +66,47 @@ const dashrepos_urlparams = {
 	'metacubex/razord-meta': '?host=%s&port=%s&secret=%s'
 };
 
-const checkurls = [
-	['https://www.baidu.com', _('Baidu')],
-	['https://s1.music.126.net/style/favicon.ico', _('163Music')],
-	['https://www.google.com/generate_204', _('Google')],
-	['https://github.com', _('GitHub')],
-	['https://www.youtube.com', _('YouTube')]
-];
+const glossary = {
+	proxy_group: {
+		prefmt: 'group_%s',
+		field: 'proxy-groups',
+	},
+	rules: {
+		prefmt: '%s_host',
+		field: 'rules',
+	},
+	subrules: {
+		prefmt: '%s_subhost',
+		field: 'sub-rules',
+	},
+	dns_server: {
+		prefmt: 'dns_%s',
+	},
+	dns_policy: {
+		prefmt: '%s_domain',
+		//field: 'nameserver-policy',
+	},
+	node: {
+		prefmt: 'node_%s',
+		field: 'proxies',
+	},
+	provider: {
+		prefmt: 'sub_%s',
+		field: 'proxy-providers',
+	},
+	dialer_proxy: {
+		prefmt: 'chain_%s',
+		//field: 'dialer-proxy',
+	},
+	ruleset: {
+		prefmt: 'rule_%s',
+		field: 'rule-providers',
+	},
+	server: {
+		prefmt: 'server_%s',
+		field: 'listeners',
+	},
+};
 
 const health_checkurls = [
 	['https://cp.cloudflare.com'],
@@ -200,12 +251,6 @@ const rules_logical_payload_count = {
 	//'SUB-RULE': 0,
 };
 
-const trojan_cipher_methods = [
-	['aes-128-gcm', _('aes-128-gcm')],
-	['aes-256-gcm', _('aes-256-gcm')],
-	['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')]
-];
-
 const shadowsocks_cipher_methods = [
 	/* Stream */
 	['none', _('none')],
@@ -234,13 +279,10 @@ const shadowsocks_cipher_length = {
 	'2022-blake3-chacha20-poly1305': 32
 };
 
-const stunserver = [
-	['stun.fitauto.ru:3478'],
-	['stun.hot-chilli.net:3478'],
-	['stun.pure-ip.com:3478'],
-	['stun.voipgate.com:3478'],
-	['stun.voipia.net:3478'],
-	['stunserver2024.stunprotocol.org:3478']
+const trojan_cipher_methods = [
+	['aes-128-gcm', _('aes-128-gcm')],
+	['aes-256-gcm', _('aes-256-gcm')],
+	['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')]
 ];
 
 const tls_client_fingerprints = [
@@ -271,7 +313,7 @@ const CBIGridSection = form.GridSection.extend({
 	},
 
 	renderSectionAdd(extra_class) {
-		const prefmt = this.hm_prefmt;
+		const prefmt = this.hm_prefmt || '%s';
 		const LC = this.hm_lowcase_only;
 
 		let el = form.GridSection.prototype.renderSectionAdd.call(this, extra_class),
@@ -279,8 +321,6 @@ const CBIGridSection = form.GridSection.extend({
 
 		ui.addValidator(nameEl, 'uciname', true, (v) => {
 			let button = el.querySelector('.cbi-section-create > .cbi-button-add');
-			const prefix = prefmt?.prefix ? prefmt.prefix : '';
-			const suffix = prefmt?.suffix ? prefmt.suffix : '';
 
 			if (!v) {
 				button.disabled = true;
@@ -291,7 +331,7 @@ const CBIGridSection = form.GridSection.extend({
 			} else if (uci.get(this.config, v)) {
 				button.disabled = true;
 				return _('Expecting: %s').format(_('unique UCI identifier'));
-			} else if (uci.get(this.config, prefix + v + suffix)) {
+			} else if (uci.get(this.config, prefmt.format(v))) {
 				button.disabled = true;
 				return _('Expecting: %s').format(_('unique identifier'));
 			} else {
@@ -304,11 +344,9 @@ const CBIGridSection = form.GridSection.extend({
 	},
 
 	handleAdd(ev, name) {
-		const prefmt = this.hm_prefmt;
-		const prefix = prefmt?.prefix ? prefmt.prefix : '';
-		const suffix = prefmt?.suffix ? prefmt.suffix : '';
+		const prefmt = this.hm_prefmt || '%s';
 
-		return form.GridSection.prototype.handleAdd.call(this, ev, prefix + name + suffix);
+		return form.GridSection.prototype.handleAdd.call(this, ev, prefmt.format(name));
 	}
 });
 
@@ -338,10 +376,12 @@ const CBIhandleImport = baseclass.extend(/** @lends hm.handleImport.prototype */
 		const textarea = new ui.Textarea('', {
 			placeholder: this.placeholder
 		});
+		const textareaEl = textarea.render();
+		textareaEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
 
 		ui.showModal(this.title, [
 			E('p', this.description),
-			textarea.render(),
+			textareaEl,
 			E('div', { class: 'right' }, [
 				E('button', {
 					class: 'btn',
@@ -584,6 +624,27 @@ function generateRand(type, length) {
 		default:
 			return null;
 	};
+}
+
+function json2yaml(object, command) {
+	const callJson2Yaml = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'json2yaml',
+		params: ['content', 'command'],
+		expect: { '': {} }
+	});
+
+	return callJson2Yaml(typeof object === 'string' ? object : JSON.stringify(object), command).then(res => res.result);
+}
+function yaml2json(content, command) {
+	const callYaml2Json = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'yaml2json',
+		params: ['content', 'command'],
+		expect: { '': {} }
+	});
+
+	return callYaml2Json(content, command).then(res => res.result);
 }
 
 function isEmpty(res) {
@@ -1233,9 +1294,11 @@ return baseclass.extend({
 	less_24_10,
 	pr7558_merged,
 	monospacefonts,
+	checkurls,
+	stunserver,
 	dashrepos,
 	dashrepos_urlparams,
-	checkurls,
+	glossary,
 	health_checkurls,
 	inbound_type,
 	ip_version,
@@ -1247,10 +1310,9 @@ return baseclass.extend({
 	rules_type,
 	rules_logical_type,
 	rules_logical_payload_count,
-	trojan_cipher_methods,
 	shadowsocks_cipher_methods,
 	shadowsocks_cipher_length,
-	stunserver,
+	trojan_cipher_methods,
 	tls_client_fingerprints,
 	vless_flow,
 
@@ -1268,6 +1330,8 @@ return baseclass.extend({
 	calcStringMD5,
 	decodeBase64Str,
 	generateRand,
+	json2yaml,
+	yaml2json,
 	isEmpty,
 	removeBlankAttrs,
 	getFeatures,

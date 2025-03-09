@@ -60,7 +60,7 @@ return view.extend({
 		s.sortable = true;
 		s.nodescriptions = true;
 		s.hm_modaltitle = [ _('Server'), _('Add a server') ];
-		s.hm_prefmt = { 'prefix': 'server_', 'suffix': '' };
+		s.hm_prefmt = hm.glossary[s.sectiontype].prefmt;
 		s.hm_lowcase_only = false;
 
 		s.tab('field_general', _('General fields'));

@@ -6,7 +6,41 @@
 
 'require fchomo as hm';
 
-function parseRulesetLink(uri) {
+const map_of_rule_provider = {
+	//type: 'type',
+	//behavior: 'behavior',
+	//format: 'format',
+	//url: 'url',
+	"size-limit": 'size_limit',
+	//interval: 'interval',
+	//proxy: 'proxy',
+	path: 'id',
+	//payload: 'payload',
+};
+
+function parseRulesetYaml(field, id, obj) {
+	if (hm.isEmpty(obj))
+		return null;
+
+	if (!obj.type)
+		return null;
+
+	// key mapping
+	let config = Object.fromEntries(Object.entries(obj).map(([key, value]) => [map_of_rule_provider[key] ?? key, value]));
+
+	// value rocessing
+	config = Object.assign(config, {
+		id: hm.calcStringMD5(String.format('%s:%s', field, id)),
+		label: '%s %s'.format(id, _('(Imported)')),
+		...(config.proxy ? {
+			proxy: hm.preset_outbound.full.map(([key, label]) => key).includes(config.proxy) ? config.proxy : hm.calcStringMD5(config.proxy)
+		} : {}),
+	});
+
+	return config;
+}
+
+function parseRulesetLink(section_type, uri) {
 	let config,
 		filefmt = new RegExp(/^(text|yaml|mrs)$/),
 		filebehav = new RegExp(/^(domain|ipcidr|classical)$/),
@@ -56,7 +90,7 @@ function parseRulesetLink(uri) {
 					behavior: behavior,
 					id: hm.calcStringMD5(String.format('file://%s%s', url.host, url.pathname))
 				};
-				hm.writeFile('ruleset', config.id, hm.decodeBase64Str(filler));
+				hm.writeFile(section_type, config.id, hm.decodeBase64Str(filler));
 			}
 
 			break;
@@ -109,10 +143,70 @@ return view.extend({
 		s.sortable = true;
 		s.nodescriptions = true;
 		s.hm_modaltitle = [ _('Rule set'), _('Add a rule set') ];
-		s.hm_prefmt = { 'prefix': 'rule_', 'suffix': '' };
+		s.hm_prefmt = hm.glossary[s.sectiontype].prefmt;
 		s.hm_lowcase_only = false;
-		/* Import rule-set links and Remove idle files start */
+		/* Import mihomo config and Import rule-set links and Remove idle files start */
+		s.handleYamlImport = function() {
+			const field = hm.glossary[s.sectiontype].field;
+			const section_type = this.sectiontype;
+			const o = new hm.handleImport(this.map, this, _('Import mihomo config'),
+				_('Please type <code>%s</code> fields of mihomo config.</br>')
+					.format(field));
+			o.placeholder = 'rule-providers:\n' +
+							'  google:\n' +
+							'    type: http\n' +
+							'    path: ./rule1.yaml\n' +
+							'    url: "https://raw.githubusercontent.com/../Google.yaml"\n' +
+							'    interval: 600\n' +
+							'    proxy: DIRECT\n' +
+							'    behavior: classical\n' +
+							'    format: yaml\n' +
+							'    size-limit: 0\n' +
+							'  ...'
+			o.handleFn = L.bind(function(textarea, save) {
+				const content = textarea.getValue().trim();
+				const command = `.["${field}"]`;
+				return hm.yaml2json(content.replace(/(\s*payload:)/g, "$1 |-") /* payload to text */, command).then((res) => {
+					//alert(JSON.stringify(res, null, 2));
+					let imported_count = 0;
+					let type_file_count = 0;
+					if (!hm.isEmpty(res)) {
+						for (let id in res) {
+							let config = parseRulesetYaml(field, id, res[id]);
+							//alert(JSON.stringify(config, null, 2));
+							if (config) {
+								let sid = uci.add(data[0], section_type, config.id);
+								delete config.id;
+								Object.keys(config).forEach((k) => {
+									uci.set(data[0], sid, k, config[k] ?? '');
+								});
+								imported_count++;
+								if (config.type === 'file')
+									type_file_count++;
+							}
+						}
+
+						if (imported_count === 0)
+							ui.addNotification(null, E('p', _('No valid %s found.').format(_('rule-set'))));
+						else {
+							ui.addNotification(null, E('p', [
+								_('Successfully imported %s %s of total %s.')
+									.format(imported_count, _('rule-set'), Object.keys(res).length),
+								E('br'),
+								type_file_count ? _("%s rule-set of type '%s' need to be filled in manually.")
+									.format(type_file_count, 'file') : ''
+							]));
+						}
+					}
+
+					return hm.handleImport.prototype.handleFn.call(this, textarea, imported_count);
+				});
+			}, this);
+
+			return o.render();
+		}
 		s.handleLinkImport = function() {
+			const section_type = this.sectiontype;
 			const o = new hm.handleImport(this.map, this, _('Import rule-set links'),
 				_('Supports rule-set links of type: <code>%s</code> and format: <code>%s</code>.</br>')
 					.format('file, http, inline', 'text, yaml, mrs') +
@@ -130,9 +224,9 @@ return view.extend({
 						(!pre.includes(cur) && pre.push(cur), pre), []);
 
 					input_links.forEach((l) => {
-						let config = parseRulesetLink(l);
+						let config = parseRulesetLink(section_type, l);
 						if (config) {
-							let sid = uci.add(data[0], 'ruleset', config.id);
+							let sid = uci.add(data[0], section_type, config.id);
 							config.id = null;
 							Object.keys(config).forEach((k) => {
 								uci.set(data[0], sid, k, config[k] || '');
@@ -144,8 +238,8 @@ return view.extend({
 					if (imported_count === 0)
 						ui.addNotification(null, E('p', _('No valid rule-set link found.')));
 					else
-						ui.addNotification(null, E('p', _('Successfully imported %s rule-set of total %s.').format(
-							imported_count, input_links.length)));
+						ui.addNotification(null, E('p', _('Successfully imported %s %s of total %s.')
+							.format(imported_count, _('rule-set'), input_links.length)));
 				}
 
 				return hm.handleImport.prototype.handleFn.call(this, textarea, imported_count);
@@ -155,6 +249,12 @@ return view.extend({
 		}
 		s.renderSectionAdd = function(/* ... */) {
 			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+
+			el.appendChild(E('button', {
+				'class': 'cbi-button cbi-button-add',
+				'title': _('mihomo config'),
+				'click': ui.createHandlerFn(this, 'handleYamlImport')
+			}, [ _('Import mihomo config') ]));
 
 			el.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
@@ -170,7 +270,7 @@ return view.extend({
 
 			return el;
 		}
-		/* Import rule-set links and Remove idle files end */
+		/* Import mihomo config and Import rule-set links and Remove idle files end */
 
 		o = s.option(form.Value, 'label', _('Label'));
 		o.load = L.bind(hm.loadDefaultLabel, o);
@@ -246,10 +346,10 @@ return view.extend({
 				.format('https://wiki.metacubex.one/config/rule-providers/content/', _('Contents')));
 		o.placeholder = _('Content will not be verified, Please make sure you enter it correctly.');
 		o.load = function(section_id) {
-			return L.resolveDefault(hm.readFile('ruleset', section_id), '');
+			return L.resolveDefault(hm.readFile(this.section.sectiontype, section_id), '');
 		}
-		o.write = L.bind(hm.writeFile, o, 'ruleset');
-		o.remove = L.bind(hm.writeFile, o, 'ruleset');
+		o.write = L.bind(hm.writeFile, o, o.section.sectiontype);
+		o.remove = L.bind(hm.writeFile, o, o.section.sectiontype);
 		o.rmempty = false;
 		o.retain = true;
 		o.depends({'type': 'file', 'format': /^(text|yaml)$/});

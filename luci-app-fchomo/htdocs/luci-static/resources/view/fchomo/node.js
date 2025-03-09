@@ -32,7 +32,7 @@ return view.extend({
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.hm_modaltitle = [ _('Node'), _('Add a Node') ];
-		ss.hm_prefmt = { 'prefix': 'node_', 'suffix': '' };
+		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_lowcase_only = true;
 
 		ss.tab('field_general', _('General fields'));
@@ -812,7 +812,7 @@ return view.extend({
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.hm_modaltitle = [ _('Provider'), _('Add a provider') ];
-		ss.hm_prefmt = { 'prefix': 'sub_', 'suffix': '' };
+		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_lowcase_only = false;
 		/* Remove idle files start */
 		ss.renderSectionAdd = function(/* ... */) {
@@ -870,10 +870,10 @@ return view.extend({
 				.format('https://wiki.metacubex.one/config/proxy-providers/content/', _('Contents')));
 		so.placeholder = _('Content will not be verified, Please make sure you enter it correctly.');
 		so.load = function(section_id) {
-			return L.resolveDefault(hm.readFile('provider', section_id), '');
+			return L.resolveDefault(hm.readFile(this.section.sectiontype, section_id), '');
 		}
-		so.write = L.bind(hm.writeFile, so, 'provider');
-		so.remove = L.bind(hm.writeFile, so, 'provider');
+		so.write = L.bind(hm.writeFile, so, so.section.sectiontype);
+		so.remove = L.bind(hm.writeFile, so, so.section.sectiontype);
 		so.rmempty = false;
 		so.retain = true;
 		so.depends('type', 'file');
@@ -927,9 +927,11 @@ return view.extend({
 		// https://github.com/muink/mihomo/blob/43f21c0b412b7a8701fe7a2ea6510c5b985a53d6/adapter/provider/parser.go#L30
 
 		so = ss.taboption('field_override', form.Value, 'override_prefix', _('Add prefix'));
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Value, 'override_suffix', _('Add suffix'));
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.DynamicList, 'override_replace', _('Replace name'),
@@ -938,6 +940,7 @@ return view.extend({
 				.format('https://wiki.metacubex.one/config/proxy-providers/#overrideproxy-name', _('override.proxy-name')));
 		so.placeholder = '{"pattern": "IPLC-(.*?)倍", "target": "iplc x $1"}';
 		so.validate = L.bind(hm.validateJson, so);
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.DummyValue, '_config_items', null);
@@ -946,33 +949,40 @@ return view.extend({
 				.format('https://wiki.metacubex.one/config/proxy-providers/#_2', _('Configuration Items'));
 		}
 		so.rawhtml = true;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Flag, 'override_tfo', _('TFO'));
 		so.default = so.disabled;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Flag, 'override_mptcp', _('mpTCP'));
 		so.default = so.disabled;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Flag, 'override_udp', _('UDP'));
 		so.default = so.enabled;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Flag, 'override_uot', _('UoT'),
 			_('Enable the SUoT protocol, requires server support. Conflict with Multiplex.'));
 		so.default = so.disabled;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Value, 'override_up', _('up'),
 			_('In Mbps.'));
 		so.datatype = 'uinteger';
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Value, 'override_down', _('down'),
 			_('In Mbps.'));
 		so.datatype = 'uinteger';
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Flag, 'override_skip_cert_verify', _('Skip cert verify'),
@@ -980,6 +990,7 @@ return view.extend({
 			'<br/>' +
 			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 		so.default = so.disabled;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		/* Features are implemented in proxy chain
@@ -993,11 +1004,13 @@ return view.extend({
 			_('Priority: Proxy Node > Global.'));
 		so.multiple = false;
 		so.noaliases = true;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.Value, 'override_routing_mark', _('Routing mark'),
 			_('Priority: Proxy Node > Global.'));
 		so.datatype = 'uinteger';
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_override', form.ListValue, 'override_ip_version', _('IP version'));
@@ -1005,11 +1018,13 @@ return view.extend({
 		hm.ip_version.forEach((res) => {
 			so.value.apply(so, res);
 		})
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		/* Health fields */
 		so = ss.taboption('field_health', form.Flag, 'health_enable', _('Enable'));
 		so.default = so.enabled;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_health', form.Value, 'health_url', _('Health check URL'));
@@ -1019,23 +1034,27 @@ return view.extend({
 		})
 		so.validate = L.bind(hm.validateUrl, so);
 		so.retain = true;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_health', form.Value, 'health_interval', _('Health check interval'),
 			_('In seconds. <code>%s</code> will be used if empty.').format('600'));
 		so.placeholder = '600';
 		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_health', form.Value, 'health_timeout', _('Health check timeout'),
 			_('In millisecond. <code>%s</code> will be used if empty.').format('5000'));
 		so.datatype = 'uinteger';
 		so.placeholder = '5000';
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_health', form.Flag, 'health_lazy', _('Lazy'),
 			_('No testing is performed when this provider node is not in use.'));
 		so.default = so.enabled;
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_health', form.Value, 'health_expected_status', _('Health check expected status'),
@@ -1043,23 +1062,27 @@ return view.extend({
 			_('For format see <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
 				.format('https://wiki.metacubex.one/config/proxy-groups/#expected-status', _('Expected status')));
 		so.placeholder = '200/302/400-503';
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		/* General fields */
 		so = ss.taboption('field_general', form.DynamicList, 'filter', _('Node filter'),
 			_('Filter nodes that meet keywords or regexps.'));
 		so.placeholder = '(?i)港|hk|hongkong|hong kong';
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.DynamicList, 'exclude_filter', _('Node exclude filter'),
 			_('Exclude nodes that meet keywords or regexps.'));
 		so.default = '重置|到期|过期|剩余|套餐 海外用户|回国'
 		so.placeholder = 'xxx';
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.DynamicList, 'exclude_type', _('Node exclude type'),
 			_('Exclude matched node types.'));
 		so.placeholder = 'ss|http';
+		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.option(form.DummyValue, '_update');
@@ -1079,7 +1102,7 @@ return view.extend({
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.hm_modaltitle = [ _('Proxy chain'), _('Add a proxy chain') ];
-		ss.hm_prefmt = { 'prefix': 'chain_', 'suffix': '' };
+		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_lowcase_only = true;
 
 		so = ss.option(form.Value, 'label', _('Label'));

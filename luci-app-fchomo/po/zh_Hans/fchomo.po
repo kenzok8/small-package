@@ -12,6 +12,14 @@ msgstr ""
 msgid "%s log"
 msgstr "%s 日志"
 
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:196
+msgid "%s rule-set of type '%s' need to be filled in manually."
+msgstr "%s 个类型为 “%s” 的规则集需要手动填写内容。"
+
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:34
+msgid "(Imported)"
+msgstr "(已导入)"
+
 #: htdocs/luci-static/resources/view/fchomo/client.js:656
 #: htdocs/luci-static/resources/view/fchomo/client.js:657
 #: htdocs/luci-static/resources/view/fchomo/client.js:670
@@ -1119,11 +1127,16 @@ msgstr "忽略客户端带宽"
 msgid "Import"
 msgstr "导入"
 
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:152
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:257
+msgid "Import mihomo config"
+msgstr "导入 mihomo 配置"
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:121
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:179
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:181
 msgid "Import rule-set links"
-msgstr "导入 rule-set 链接"
+msgstr "导入规则集链接"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:97
 #: htdocs/luci-static/resources/view/fchomo/node.js:103
@@ -1474,6 +1487,10 @@ msgstr "无附加参数"
 msgid "No testing is performed when this provider node is not in use."
 msgstr "当此供应商的节点未使用时，不执行任何测试。"
 
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:190
+msgid "No valid %s found."
+msgstr "未找到有效的%s。"
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:156
 msgid "No valid rule-set link found."
 msgstr "未找到有效的规则集链接。"
@@ -1647,6 +1664,10 @@ msgid ""
 "a>."
 msgstr ""
 "请输入 <a target=\"_blank\" href=\"%s\" rel=\"noreferrer noopener\">%s</a>。"
+
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:153
+msgid "Please type <code>%s</code> fields of mihomo config.</br>"
+msgstr "请输入 mihomo 配置的 <code>%s</code> 字段。</br>"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:425
 msgid "Plugin"
@@ -2186,8 +2207,8 @@ msgid "Sub rule group"
 msgstr "子规则组"
 
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:158
-msgid "Successfully imported %s rule-set of total %s."
-msgstr "已成功导入 %s 个规则集 (共 %s 个)。"
+msgid "Successfully imported %s %s of total %s."
+msgstr "已成功导入 %s 个%s (共 %s 个)。"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:60
 msgid "Successfully updated."
@@ -2684,6 +2705,10 @@ msgstr ""
 msgid "metacubexd"
 msgstr "metacubexd"
 
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:255
+msgid "mihomo config"
+msgstr "mihomo 配置"
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:776
 #: htdocs/luci-static/resources/view/fchomo/node.js:958
 msgid "mpTCP"
@@ -2752,6 +2777,11 @@ msgstr "需要使用 API 的前端适配。"
 #: htdocs/luci-static/resources/view/fchomo/node.js:430
 msgid "restls"
 msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:194
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:242
+msgid "rule-set"
+msgstr "规则集"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:429
 msgid "shadow-tls"

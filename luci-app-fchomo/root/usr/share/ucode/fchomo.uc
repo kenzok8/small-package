@@ -35,9 +35,12 @@ export function isBinary(str) {
 	return false;
 };
 
-export function executeCommand(...args) {
+export function executeCommand(infd, ...args) {
 	let outfd = mkstemp();
 	let errfd = mkstemp();
+
+	if (infd)
+		push(args, `<&${infd.fileno()}`);
 
 	const exitcode = system(`${join(' ', args)} >&${outfd.fileno()} 2>&${errfd.fileno()}`);
 
@@ -61,8 +64,26 @@ export function executeCommand(...args) {
 	};
 };
 
+export function yqRead(flags, command, content) {
+	let infd = mkstemp();
+
+	if (content) {
+		content = trim(content);
+		content = replace(content, /\r\n?/g, '\n');
+		if (!match(content, /\n$/))
+			content += '\n';
+	}
+	infd.write(content);
+
+	infd.seek();
+	const out = executeCommand(infd, 'yq', flags, shellQuote(command));
+	infd.close();
+
+	return out.stdout;
+};
+
 export function yqReadFile(flags, command, filepath) {
-	const out = executeCommand('yq', flags, shellQuote(command), filepath);
+	const out = executeCommand(null, 'yq', flags, shellQuote(command), filepath);
 
 	return out.stdout;
 };
