@@ -144,11 +144,12 @@ return view.extend({
 		s.nodescriptions = true;
 		s.hm_modaltitle = [ _('Rule set'), _('Add a rule set') ];
 		s.hm_prefmt = hm.glossary[s.sectiontype].prefmt;
+		s.hm_field  = hm.glossary[s.sectiontype].field;
 		s.hm_lowcase_only = false;
 		/* Import mihomo config and Import rule-set links and Remove idle files start */
 		s.handleYamlImport = function() {
-			const field = hm.glossary[s.sectiontype].field;
 			const section_type = this.sectiontype;
+			const field = this.hm_field;
 			const o = new hm.handleImport(this.map, this, _('Import mihomo config'),
 				_('Please type <code>%s</code> fields of mihomo config.</br>')
 					.format(field));

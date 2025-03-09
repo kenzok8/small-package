@@ -61,6 +61,7 @@ return view.extend({
 		s.nodescriptions = true;
 		s.hm_modaltitle = [ _('Server'), _('Add a server') ];
 		s.hm_prefmt = hm.glossary[s.sectiontype].prefmt;
+		s.hm_field  = hm.glossary[s.sectiontype].field;
 		s.hm_lowcase_only = false;
 
 		s.tab('field_general', _('General fields'));
