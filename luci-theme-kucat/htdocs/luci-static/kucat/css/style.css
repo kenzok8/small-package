@@ -3119,7 +3119,7 @@ span[data-tooltip] .label {
     pointer-events: none;
     opacity: 0;
     border-radius: var(--radius2);
-    background: #fff;
+    background: var(--menu-barbgcolor);
     box-shadow: 0 0 2px #444
 }
 
