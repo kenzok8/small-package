@@ -6,7 +6,18 @@
 
 'require fchomo as hm';
 
-function parseRulesetYaml(field, id, obj) {
+function parseRulesetYaml(field, name, cfg) {
+	function calcID(field, name) {
+		return hm.calcStringMD5(String.format('%s:%s', field, name));
+	}
+
+	if (hm.isEmpty(cfg))
+		return null;
+
+	if (!cfg.type)
+		return null;
+
+	// key mapping
 	const map_of_rule_provider = {
 		//type: 'type',
 		//behavior: 'behavior',
@@ -18,22 +29,14 @@ function parseRulesetYaml(field, id, obj) {
 		path: 'id',
 		//payload: 'payload', // array: string
 	};
-
-	if (hm.isEmpty(obj))
-		return null;
-
-	if (!obj.type)
-		return null;
-
-	// key mapping
-	let config = Object.fromEntries(Object.entries(obj).map(([key, value]) => [map_of_rule_provider[key] ?? key, value]));
+	let config = Object.fromEntries(Object.entries(cfg).map(([key, value]) => [map_of_rule_provider[key] ?? key, value]));
 
 	// value rocessing
 	config = Object.assign(config, {
-		id: hm.calcStringMD5(String.format('%s:%s', field, id)),
-		label: '%s %s'.format(id, _('(Imported)')),
+		id: calcID(field, name),
+		label: '%s %s'.format(name, _('(Imported)')),
 		...(config.proxy ? {
-			proxy: hm.preset_outbound.full.map(([key, label]) => key).includes(config.proxy) ? config.proxy : hm.calcStringMD5(config.proxy)
+			proxy: hm.preset_outbound.full.map(([key, label]) => key).includes(config.proxy) ? config.proxy : calcID(hm.glossary["proxy_group"].field, config.proxy)
 		} : {}),
 	});
 
@@ -163,6 +166,17 @@ return view.extend({
 							'    behavior: classical\n' +
 							'    format: yaml\n' +
 							'    size-limit: 0\n' +
+							'  alidns:\n' +
+							'    type: file\n' +
+							'    path: ./rule2.yaml\n' +
+							'    behavior: classical\n' +
+							'  rule4:\n' +
+							'    type: inline\n' +
+							'    behavior: domain\n' +
+							'    payload:\n' +
+							"      - '.blogger.com'\n" +
+							"      - '*.*.microsoft.com'\n" +
+							"      - 'books.itunes.apple.com'\n" +
 							'  ...'
 			o.handleFn = L.bind(function(textarea, save) {
 				const content = textarea.getValue().trim();
@@ -172,8 +186,8 @@ return view.extend({
 					let imported_count = 0;
 					let type_file_count = 0;
 					if (!hm.isEmpty(res)) {
-						for (let id in res) {
-							let config = parseRulesetYaml(field, id, res[id]);
+						for (let name in res) {
+							let config = parseRulesetYaml(field, name, res[name]);
 							//alert(JSON.stringify(config, null, 2));
 							if (config) {
 								let sid = uci.add(data[0], section_type, config.id);
