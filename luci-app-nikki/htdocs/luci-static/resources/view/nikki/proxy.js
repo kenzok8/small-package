@@ -34,11 +34,15 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption('transparent_proxy', form.ListValue, 'tcp_transparent_proxy_mode', _('TCP Proxy Mode'));
+        o.optional = true;
+        o.placeholder = _('Disable');
         o.value('redirect', _('Redirect Mode'));
         o.value('tproxy', _('TPROXY Mode'));
         o.value('tun', _('TUN Mode'));
 
         o = s.taboption('transparent_proxy', form.ListValue, 'udp_transparent_proxy_mode', _('UDP Proxy Mode'));
+        o.optional = true;
+        o.placeholder = _('Disable');
         o.value('tproxy', _('TPROXY Mode'));
         o.value('tun', _('TUN Mode'));
 

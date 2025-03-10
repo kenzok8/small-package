@@ -5,38 +5,6 @@
 'require fs';
 'require tools.nikki as nikki'
 
-function loadJS(url) {
-    return new Promise(function (resolve, reject) {
-        const script = document.createElement('script');
-        script.src = url;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.body.appendChild(script);
-    });
-}
-
-function loadCSS(url) {
-    return new Promise(function (resolve, reject) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = url;
-        link.onload = resolve;
-        link.onerror = reject;
-        document.head.appendChild(link);
-    });
-}
-
-async function loadCodeMirror() {
-    try{
-        await loadJS('https://unpkg.com/codemirror@5/lib/codemirror.js');
-        await loadJS('https://unpkg.com/codemirror@5/mode/yaml/yaml.js');
-        await loadCSS('https://unpkg.com/codemirror@5/lib/codemirror.css');
-        await loadCSS('https://unpkg.com/codemirror@5/theme/dracula.css');
-    } catch (e) {
-        
-    }
-}
-
 return view.extend({
     load: function () {
         return Promise.all([
@@ -44,7 +12,6 @@ return view.extend({
             nikki.listProfiles(),
             nikki.listRuleProviders(),
             nikki.listProxyProviders(),
-            loadCodeMirror(),
         ]);
     },
     render: function (data) {
@@ -86,51 +53,22 @@ return view.extend({
         o.write = function (section_id, formvalue) {
             return true;
         };
-        o.onchange = L.bind(function (event, section_id, value) {
-            const uiElement = this.getUIElement(section_id, '_file_content');
-            const editor = uiElement.node.firstChild.editor;
-            fs.read_direct(value).then(function (content) {
-                const mode = value.endsWith('.yml') || value.endsWith('.yaml') ? 'yaml' : null;
-                uiElement.setValue(content);
-                if (editor) {
-                    editor.setValue(content);
-                    editor.setOption('mode', mode);
-                    editor.getDoc().clearHistory();
-                }
-            }).catch(function (e) {
-                uiElement.setValue('');
-                if (editor) {
-                    editor.setValue('');
-                    editor.setOption('mode', null);
-                    editor.getDoc().clearHistory();
-                }
-            })
-        }, s);
+        o.onchange = function (event, section_id, value) {
+            return L.resolveDefault(fs.read_direct(value), '').then(function (content) {
+                m.lookupOption('nikki.editor._file_content')[0].getUIElement('editor').setValue(content);
+            });
+        };
 
         o = s.option(form.TextValue, '_file_content',);
         o.rows = 25;
         o.wrap = false;
-        o.write = L.bind(function (section_id, formvalue) {
-            const path = this.getOption('_file').formvalue(section_id);
+        o.write = function (section_id, formvalue) {
+            const path = m.lookupOption('nikki.editor._file')[0].formvalue('editor');
             return fs.write(path, formvalue);
-        }, s);
-        o.remove = L.bind(function (section_id) {
-            const path = this.getOption('_file').formvalue(section_id);
+        };
+        o.remove = function (section_id) {
+            const path = m.lookupOption('nikki.editor._file')[0].formvalue('editor');
             return fs.write(path);
-        }, s);
-        o.render = function () {
-            return this.super('render', arguments).then(function (widget) {
-                const textarea = widget.firstChild.firstChild;
-                if (CodeMirror) {
-                    const editor = CodeMirror.fromTextArea(textarea, { lineNumbers: true, theme: 'dracula' });
-                    editor.on('change', function () {
-                        editor.save();
-                    });
-                    editor.getWrapperElement().style.height = '420px';
-                    textarea.editor = editor;
-                }
-                return widget;
-            });
         };
 
         return m.render();
