@@ -18,8 +18,10 @@ config['interface-name'] = ubus.call('network.interface', 'status', {'interface'
 config['ipv6'] = uci_bool(uci.get('nikki', 'mixin', 'ipv6'));
 config['unified-delay'] = uci_bool(uci.get('nikki', 'mixin', 'unify_delay'));
 config['tcp-concurrent'] = uci_bool(uci.get('nikki', 'mixin', 'tcp_concurrent'));
+config['disable-keep-alive'] = uci_bool(uci.get('nikki', 'mixin', 'disable_tcp_keep_alive'));
 config['keep-alive-idle'] = uci_int(uci.get('nikki', 'mixin', 'tcp_keep_alive_idle'));
 config['keep-alive-interval'] = uci_int(uci.get('nikki', 'mixin', 'tcp_keep_alive_interval'));
+config['global-client-fingerprint'] = uci.get('nikki', 'mixin', 'global_client_fingerprint');
 
 config['external-ui'] = uci.get('nikki', 'mixin', 'ui_path');
 config['external-ui-name'] = uci.get('nikki', 'mixin', 'ui_name');

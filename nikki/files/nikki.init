@@ -160,8 +160,8 @@ service_started() {
 	## proxy config
 	### transparent proxy
 	local tcp_transparent_proxy_mode udp_transparent_proxy_mode ipv4_proxy ipv6_proxy
-	config_get tcp_transparent_proxy_mode "proxy" "tcp_transparent_proxy_mode" "redirect"
-	config_get udp_transparent_proxy_mode "proxy" "udp_transparent_proxy_mode" "tun"
+	config_get tcp_transparent_proxy_mode "proxy" "tcp_transparent_proxy_mode"
+	config_get udp_transparent_proxy_mode "proxy" "udp_transparent_proxy_mode"
 	config_get_bool ipv4_proxy "proxy" "ipv4_proxy" 0
 	config_get_bool ipv6_proxy "proxy" "ipv6_proxy" 0
 	# prepare
