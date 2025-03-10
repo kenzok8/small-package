@@ -350,53 +350,6 @@ const CBIGridSection = form.GridSection.extend({
 	}
 });
 
-const CBIhandleImport = baseclass.extend(/** @lends hm.handleImport.prototype */ {
-	__init__(map, section, title, description) {
-		this.map = map;
-		this.section = section;
-		this.title = title ?? '';
-		this.description = description ?? '';
-		this.placeholder = '';
-
-		this.handleFn = this.handleFn.bind(this.section);
-	},
-
-	handleFn(textarea, save) {
-		if (save) {
-			return uci.save()
-				.then(L.bind(this.map.load, this.map))
-				.then(L.bind(this.map.reset, this.map))
-				.then(L.ui.hideModal)
-				.catch(() => {});
-		} else
-			return ui.hideModal();
-	},
-
-	render() {
-		const textarea = new ui.Textarea('', {
-			placeholder: this.placeholder
-		});
-		const textareaEl = textarea.render();
-		textareaEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
-
-		ui.showModal(this.title, [
-			E('p', this.description),
-			textareaEl,
-			E('div', { class: 'right' }, [
-				E('button', {
-					class: 'btn',
-					click: ui.hideModal
-				}, [ _('Cancel') ]),
-				' ',
-				E('button', {
-					class: 'btn cbi-button-action',
-					click: ui.createHandlerFn(this, 'handleFn', textarea)
-				}, [ _('Import') ])
-			])
-		]);
-	}
-});
-
 const CBIDynamicList = form.DynamicList.extend({
 	__name__: 'CBI.DynamicList',
 
@@ -436,6 +389,55 @@ const CBIGenValue = form.Value.extend({
 		}, [ _('Generate') ]));
 
 		return node;
+	}
+});
+
+const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */ {
+	__init__(map, section, title, description) {
+		this.map = map;
+		this.section = section;
+		this.title = title ?? '';
+		this.description = description ?? '';
+		this.placeholder = '';
+	},
+
+	calcID(field, name) {
+		return calcStringMD5(String.format('%s:%s', field, name));
+	},
+
+	handleFn(textarea, save) {
+		if (save) {
+			return uci.save()
+				.then(L.bind(this.map.load, this.map))
+				.then(L.bind(this.map.reset, this.map))
+				.then(L.ui.hideModal)
+				.catch(() => {});
+		} else
+			return ui.hideModal();
+	},
+
+	render() {
+		const textarea = new ui.Textarea('', {
+			placeholder: this.placeholder
+		});
+		const textareaEl = textarea.render();
+		textareaEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
+
+		ui.showModal(this.title, [
+			E('p', this.description),
+			textareaEl,
+			E('div', { class: 'right' }, [
+				E('button', {
+					class: 'btn',
+					click: ui.hideModal
+				}, [ _('Cancel') ]),
+				' ',
+				E('button', {
+					class: 'btn cbi-button-action',
+					click: ui.createHandlerFn(this, 'handleFn', textarea)
+				}, [ _('Import') ])
+			])
+		]);
 	}
 });
 
@@ -505,6 +507,12 @@ const UIDynamicList = ui.DynamicList.extend({
 });
 
 /* Method */
+function bool2str(value) {
+	if (typeof value !== 'boolean')
+		return null;
+	return value ? '1' : '0';
+}
+
 // thanks to homeproxy
 function calcStringMD5(e) {
 	/* Thanks to https://stackoverflow.com/a/41602636 */
@@ -624,6 +632,10 @@ function generateRand(type, length) {
 		default:
 			return null;
 	};
+}
+
+function getValue(obj, path) {
+	return path.split('.').reduce((acc, cur) => acc && acc[cur], obj);
 }
 
 function json2yaml(object, command) {
@@ -1318,18 +1330,20 @@ return baseclass.extend({
 
 	/* Prototype */
 	GridSection: CBIGridSection,
-	handleImport: CBIhandleImport,
 	DynamicList: CBIDynamicList,
 	GenValue: CBIGenValue,
+	HandleImport: CBIHandleImport,
 	ListValue: CBIListValue,
 	RichMultiValue: CBIRichMultiValue,
 	StaticList: CBIStaticList,
 	TextValue: CBITextValue,
 
 	/* Method */
+	bool2str,
 	calcStringMD5,
 	decodeBase64Str,
 	generateRand,
+	getValue,
 	json2yaml,
 	yaml2json,
 	isEmpty,

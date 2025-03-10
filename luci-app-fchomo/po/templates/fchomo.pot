@@ -5,6 +5,10 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "%s log"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:863
+msgid "%s Provider of type '%s' need to be filled in manually."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:196
 msgid "%s rule-set of type '%s' need to be filled in manually."
 msgstr ""
