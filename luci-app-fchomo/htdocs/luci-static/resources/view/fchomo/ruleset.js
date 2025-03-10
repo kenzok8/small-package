@@ -7,10 +7,6 @@
 'require fchomo as hm';
 
 function parseRulesetYaml(field, name, cfg) {
-	function calcID(field, name) {
-		return hm.calcStringMD5(String.format('%s:%s', field, name));
-	}
-
 	if (hm.isEmpty(cfg))
 		return null;
 
@@ -33,10 +29,10 @@ function parseRulesetYaml(field, name, cfg) {
 
 	// value rocessing
 	config = Object.assign(config, {
-		id: calcID(field, name),
+		id: this.calcID(field, name),
 		label: '%s %s'.format(name, _('(Imported)')),
 		...(config.proxy ? {
-			proxy: hm.preset_outbound.full.map(([key, label]) => key).includes(config.proxy) ? config.proxy : calcID(hm.glossary["proxy_group"].field, config.proxy)
+			proxy: hm.preset_outbound.full.map(([key, label]) => key).includes(config.proxy) ? config.proxy : this.calcID(hm.glossary["proxy_group"].field, config.proxy)
 		} : {}),
 	});
 
@@ -153,7 +149,7 @@ return view.extend({
 		s.handleYamlImport = function() {
 			const section_type = this.sectiontype;
 			const field = this.hm_field;
-			const o = new hm.handleImport(this.map, this, _('Import mihomo config'),
+			const o = new hm.HandleImport(this.map, this, _('Import mihomo config'),
 				_('Please type <code>%s</code> fields of mihomo config.</br>')
 					.format(field));
 			o.placeholder = 'rule-providers:\n' +
@@ -187,7 +183,7 @@ return view.extend({
 					let type_file_count = 0;
 					if (!hm.isEmpty(res)) {
 						for (let name in res) {
-							let config = parseRulesetYaml(field, name, res[name]);
+							let config = parseRulesetYaml.call(this, field, name, res[name]);
 							//alert(JSON.stringify(config, null, 2));
 							if (config) {
 								let sid = uci.add(data[0], section_type, config.id);
@@ -214,15 +210,15 @@ return view.extend({
 						}
 					}
 
-					return hm.handleImport.prototype.handleFn.call(this, textarea, imported_count);
+					return hm.HandleImport.prototype.handleFn.call(this, textarea, imported_count);
 				});
-			}, this);
+			}, o);
 
 			return o.render();
 		}
 		s.handleLinkImport = function() {
 			const section_type = this.sectiontype;
-			const o = new hm.handleImport(this.map, this, _('Import rule-set links'),
+			const o = new hm.HandleImport(this.map, this, _('Import rule-set links'),
 				_('Supports rule-set links of type: <code>%s</code> and format: <code>%s</code>.</br>')
 					.format('file, http, inline', 'text, yaml, mrs') +
 					_('Please refer to <a href="%s" target="_blank">%s</a> for link format standards.')
@@ -257,8 +253,8 @@ return view.extend({
 							.format(imported_count, _('rule-set'), input_links.length)));
 				}
 
-				return hm.handleImport.prototype.handleFn.call(this, textarea, imported_count);
-			}, this);
+				return hm.HandleImport.prototype.handleFn.call(this, textarea, imported_count);
+			}, o);
 
 			return o.render();
 		}

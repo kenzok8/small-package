@@ -12,6 +12,10 @@ msgstr ""
 msgid "%s log"
 msgstr "%s 日志"
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:863
+msgid "%s Provider of type '%s' need to be filled in manually."
+msgstr "%s 个类型为 “%s” 的供应商需要手动填写内容。"
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:196
 msgid "%s rule-set of type '%s' need to be filled in manually."
 msgstr "%s 个类型为 “%s” 的规则集需要手动填写内容。"
