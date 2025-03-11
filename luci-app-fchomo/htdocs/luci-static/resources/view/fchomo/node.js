@@ -8,31 +8,31 @@
 'require tools.widgets as widgets';
 
 function parseProviderYaml(field, name, cfg) {
-	if (hm.isEmpty(cfg))
-		return null;
-
 	if (!cfg.type)
 		return null;
 
 	// key mapping
 	let config = hm.removeBlankAttrs({
+		id: cfg.hm_id,
+		label: cfg.hm_label,
 		type: cfg.type,
 		...(cfg.type === 'inline' ? {
 			//dialer_proxy: cfg["dialer-proxy"],
 			payload: cfg.payload, // string: array
 		} : {
-			id: cfg.path,
 			url: cfg.url,
 			size_limit: cfg["size-limit"],
 			interval: cfg.interval,
-			proxy: cfg.proxy,
+			proxy: cfg.proxy ? hm.preset_outbound.full.map(([key, label]) => key).includes(cfg.proxy) ? cfg.proxy : this.calcID(hm.glossary["proxy_group"].field, cfg.proxy) : null,
 			header: cfg.header ? JSON.stringify(cfg.header, null, 2) : null, // string: object
+			/* Health fields */
 			health_enable: hm.bool2str(hm.getValue(cfg, "health-check.enable")), // bool
 			health_url: hm.getValue(cfg, "health-check.url"),
 			health_interval: hm.getValue(cfg, "health-check.interval"),
 			health_timeout: hm.getValue(cfg, "health-check.timeout"),
 			health_lazy: hm.bool2str(hm.getValue(cfg, "health-check.lazy")), // bool
 			health_expected_status: hm.getValue(cfg, "health-check.expected-status"),
+			/* Override fields */
 			override_prefix: hm.getValue(cfg, "override.additional-prefix"),
 			override_suffix: hm.getValue(cfg, "override.additional-suffix"),
 			override_replace: (hm.getValue(cfg, "override.proxy-name") || []).map((obj) => JSON.stringify(obj)), // array.string: array.object
@@ -47,19 +47,11 @@ function parseProviderYaml(field, name, cfg) {
 			override_interface_name: hm.getValue(cfg, "override.interface-name"),
 			override_routing_mark: hm.getValue(cfg, "override.routing-mark"),
 			override_ip_version: hm.getValue(cfg, "override.ip-version"),
+			/* General fields */
 			filter: [cfg.filter], // array: string
 			exclude_filter: [cfg["exclude-filter"]], // array.string: string
 			exclude_type: [cfg["exclude-type"]] // array.string: string
 		})
-	});
-
-	// value rocessing
-	config = Object.assign(config, {
-		id: this.calcID(field, name),
-		label: '%s %s'.format(name, _('(Imported)')),
-		...(config.proxy ? {
-			proxy: hm.preset_outbound.full.map(([key, label]) => key).includes(config.proxy) ? config.proxy : this.calcID(hm.glossary["proxy_group"].field, config.proxy)
-		} : {}),
 	});
 
 	return config;
@@ -876,7 +868,6 @@ return view.extend({
 		ss.hm_lowcase_only = false;
 		/* Import mihomo config and Remove idle files start */
 		ss.handleYamlImport = function() {
-			const section_type = this.sectiontype;
 			const field = this.hm_field;
 			const o = new hm.HandleImport(this.map, this, _('Import mihomo config'),
 				_('Please type <code>%s</code> fields of mihomo config.</br>')
@@ -936,6 +927,11 @@ return view.extend({
 							'        port: 443\n' +
 							'        cipher: chacha20-ietf-poly1305\n' +
 							'        password: "password"\n' +
+							'  provider3:\n' +
+							'    type: http\n' +
+							'    url: "http://test.com"\n' +
+							'    path: ./proxy_providers/provider3.yaml\n' +
+							'    proxy: proxy\n' +
 							'  test:\n' +
 							'    type: file\n' +
 							'    path: /test.yaml\n' +
@@ -944,45 +940,11 @@ return view.extend({
 							'      interval: 36000\n' +
 							'      url: https://cp.cloudflare.com/generate_204\n' +
 							'  ...'
-			o.handleFn = L.bind(function(textarea, save) {
-				const content = textarea.getValue().trim();
-				const command = `.["${field}"]`;
-				return hm.yaml2json(content.replace(/(\s*payload:)/g, "$1 |-") /* payload to text */, command).then((res) => {
-					//alert(JSON.stringify(res, null, 2));
-					let imported_count = 0;
-					let type_file_count = 0;
-					if (!hm.isEmpty(res)) {
-						for (let name in res) {
-							let config = parseProviderYaml.call(this, field, name, res[name]);
-							//alert(JSON.stringify(config, null, 2));
-							if (config) {
-								let sid = uci.add(data[0], section_type, config.id);
-								delete config.id;
-								Object.keys(config).forEach((k) => {
-									uci.set(data[0], sid, k, config[k] ?? '');
-								});
-								imported_count++;
-								if (config.type === 'file')
-									type_file_count++;
-							}
-						}
+			o.parseYaml = function(field, name, cfg) {
+				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
 
-						if (imported_count === 0)
-							ui.addNotification(null, E('p', _('No valid %s found.').format(_('Provider'))));
-						else {
-							ui.addNotification(null, E('p', [
-								_('Successfully imported %s %s of total %s.')
-									.format(imported_count, _('Provider'), Object.keys(res).length),
-								E('br'),
-								type_file_count ? _("%s Provider of type '%s' need to be filled in manually.")
-									.format(type_file_count, 'file') : ''
-							]));
-						}
-					}
-
-					return hm.HandleImport.prototype.handleFn.call(this, textarea, imported_count);
-				});
-			}, o);
+				return config ? parseProviderYaml.call(this, field, name, config) : config;
+			};
 
 			return o.render();
 		}

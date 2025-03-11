@@ -1,8 +1,6 @@
-#!/usr/bin/utpl
+#!/usr/bin/utpl -S
 
 {%-
-'use strict';
-
 import { readfile } from 'fs';
 import { cursor } from 'uci';
 import { isEmpty } from '/etc/homeproxy/scripts/homeproxy.uc';

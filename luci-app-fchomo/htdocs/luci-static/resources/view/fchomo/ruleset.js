@@ -7,33 +7,24 @@
 'require fchomo as hm';
 
 function parseRulesetYaml(field, name, cfg) {
-	if (hm.isEmpty(cfg))
-		return null;
-
 	if (!cfg.type)
 		return null;
 
 	// key mapping
-	const map_of_rule_provider = {
-		//type: 'type',
-		//behavior: 'behavior',
-		//format: 'format',
-		//url: 'url',
-		"size-limit": 'size_limit',
-		//interval: 'interval',
-		//proxy: 'proxy',
-		path: 'id',
-		//payload: 'payload', // array: string
-	};
-	let config = Object.fromEntries(Object.entries(cfg).map(([key, value]) => [map_of_rule_provider[key] ?? key, value]));
-
-	// value rocessing
-	config = Object.assign(config, {
-		id: this.calcID(field, name),
-		label: '%s %s'.format(name, _('(Imported)')),
-		...(config.proxy ? {
-			proxy: hm.preset_outbound.full.map(([key, label]) => key).includes(config.proxy) ? config.proxy : this.calcID(hm.glossary["proxy_group"].field, config.proxy)
-		} : {}),
+	let config = hm.removeBlankAttrs({
+		id: cfg.hm_id,
+		label: cfg.hm_label,
+		type: cfg.type,
+		format: cfg.format,
+		behavior: cfg.behavior,
+		...(cfg.type === 'inline' ? {
+			payload: cfg.payload, // string: array
+		} : {
+			url: cfg.url,
+			size_limit: cfg["size-limit"],
+			interval: cfg.interval,
+			proxy: cfg.proxy ? hm.preset_outbound.full.map(([key, label]) => key).includes(cfg.proxy) ? cfg.proxy : this.calcID(hm.glossary["proxy_group"].field, cfg.proxy) : null,
+		})
 	});
 
 	return config;
@@ -147,7 +138,6 @@ return view.extend({
 		s.hm_lowcase_only = false;
 		/* Import mihomo config and Import rule-set links and Remove idle files start */
 		s.handleYamlImport = function() {
-			const section_type = this.sectiontype;
 			const field = this.hm_field;
 			const o = new hm.HandleImport(this.map, this, _('Import mihomo config'),
 				_('Please type <code>%s</code> fields of mihomo config.</br>')
@@ -166,6 +156,12 @@ return view.extend({
 							'    type: file\n' +
 							'    path: ./rule2.yaml\n' +
 							'    behavior: classical\n' +
+							'  google2:\n' +
+							'    type: http\n' +
+							'    path: ./rule3.yaml\n' +
+							'    url: "https://raw.githubusercontent.com/../Google.yaml"\n' +
+							'    proxy: proxy\n' +
+							'    behavior: classical\n' +
 							'  rule4:\n' +
 							'    type: inline\n' +
 							'    behavior: domain\n' +
@@ -174,45 +170,11 @@ return view.extend({
 							"      - '*.*.microsoft.com'\n" +
 							"      - 'books.itunes.apple.com'\n" +
 							'  ...'
-			o.handleFn = L.bind(function(textarea, save) {
-				const content = textarea.getValue().trim();
-				const command = `.["${field}"]`;
-				return hm.yaml2json(content.replace(/(\s*payload:)/g, "$1 |-") /* payload to text */, command).then((res) => {
-					//alert(JSON.stringify(res, null, 2));
-					let imported_count = 0;
-					let type_file_count = 0;
-					if (!hm.isEmpty(res)) {
-						for (let name in res) {
-							let config = parseRulesetYaml.call(this, field, name, res[name]);
-							//alert(JSON.stringify(config, null, 2));
-							if (config) {
-								let sid = uci.add(data[0], section_type, config.id);
-								delete config.id;
-								Object.keys(config).forEach((k) => {
-									uci.set(data[0], sid, k, config[k] ?? '');
-								});
-								imported_count++;
-								if (config.type === 'file')
-									type_file_count++;
-							}
-						}
+			o.parseYaml = function(field, name, cfg) {
+				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
 
-						if (imported_count === 0)
-							ui.addNotification(null, E('p', _('No valid %s found.').format(_('rule-set'))));
-						else {
-							ui.addNotification(null, E('p', [
-								_('Successfully imported %s %s of total %s.')
-									.format(imported_count, _('rule-set'), Object.keys(res).length),
-								E('br'),
-								type_file_count ? _("%s rule-set of type '%s' need to be filled in manually.")
-									.format(type_file_count, 'file') : ''
-							]));
-						}
-					}
-
-					return hm.HandleImport.prototype.handleFn.call(this, textarea, imported_count);
-				});
-			}, o);
+				return config ? parseRulesetYaml.call(this, field, name, config) : config;
+			};
 
 			return o.render();
 		}
@@ -226,9 +188,10 @@ return view.extend({
 			o.placeholder = 'http(s)://github.com/ACL4SSR/ACL4SSR/raw/refs/heads/master/Clash/Providers/BanAD.yaml?fmt=yaml&behav=classical&rawq=good%3Djob#BanAD\n' +
 							'file:///example.txt?fmt=text&behav=domain&fill=LmNuCg#CN%20TLD\n' +
 							'inline://LSAnLmhrJwoK?behav=domain#HK%20TLD\n';
-			o.handleFn = L.bind(function(textarea, save) {
+			o.handleFn = L.bind(function(textarea) {
 				let input_links = textarea.getValue().trim().split('\n');
 				let imported_count = 0;
+
 				if (input_links && input_links[0]) {
 					/* Remove duplicate lines */
 					input_links = input_links.reduce((pre, cur) =>
@@ -237,11 +200,7 @@ return view.extend({
 					input_links.forEach((l) => {
 						let config = parseRulesetLink(section_type, l);
 						if (config) {
-							let sid = uci.add(data[0], section_type, config.id);
-							config.id = null;
-							Object.keys(config).forEach((k) => {
-								uci.set(data[0], sid, k, config[k] || '');
-							});
+							this.write(config);
 							imported_count++;
 						}
 					});
@@ -253,7 +212,10 @@ return view.extend({
 							.format(imported_count, _('rule-set'), input_links.length)));
 				}
 
-				return hm.HandleImport.prototype.handleFn.call(this, textarea, imported_count);
+				if (imported_count)
+					return this.save();
+				else
+					return ui.hideModal();
 			}, o);
 
 			return o.render();
