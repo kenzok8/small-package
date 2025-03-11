@@ -232,8 +232,8 @@ return view.extend({
 		})
 		so.rmempty = false;
 		if (!features.has_stunclient) {
-			so.description = _('To check NAT Behavior you need to install <a href="%s"><b>stuntman-client</b></a> first')
-				.format('https://github.com/muink/openwrt-stuntman');
+			so.description = _('To check NAT Behavior you need to install <a href="%s"><b>%s</b></a> first')
+				.format(L.url('admin/system/package-manager') + '?query=stuntman-client', 'stuntman-client');
 			so.readonly = true;
 		} else {
 			so.renderWidget = function(section_id, option_index, cfgvalue) {

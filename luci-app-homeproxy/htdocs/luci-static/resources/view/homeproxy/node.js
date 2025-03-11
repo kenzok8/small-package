@@ -271,6 +271,10 @@ function parseShareLink(uri, features) {
 					config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
 				}
 				break;
+			case 'httpupgrade':
+				config.httpupgrade_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
+				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
+				break;
 			case 'ws':
 				config.ws_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
 				config.ws_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
@@ -288,7 +292,7 @@ function parseShareLink(uri, features) {
 			if (uri.includes('&'))
 				return null;
 
-			/* https://github.com/2dust/v2rayN/wiki/%E5%88%86%E4%BA%AB%E9%93%BE%E6%8E%A5%E6%A0%BC%E5%BC%8F%E8%AF%B4%E6%98%8E(ver-2) */
+			/* https://github.com/2dust/v2rayN/wiki/Description-of-VMess-share-link */
 			uri = JSON.parse(hp.decodeBase64Str(uri[1]));
 
 			if (uri.v != '2')
@@ -314,7 +318,8 @@ function parseShareLink(uri, features) {
 				transport: (uri.net !== 'tcp') ? uri.net : null,
 				tls: uri.tls === 'tls' ? '1' : '0',
 				tls_sni: uri.sni || uri.host,
-				tls_alpn: uri.alpn ? uri.alpn.split(',') : null
+				tls_alpn: uri.alpn ? uri.alpn.split(',') : null,
+				tls_utls: features.with_utls ? uri.fp : null
 			};
 			switch (uri.net) {
 			case 'grpc':
@@ -327,6 +332,10 @@ function parseShareLink(uri, features) {
 					config.http_host = uri.host ? uri.host.split(',') : null;
 					config.http_path = uri.path;
 				}
+				break;
+			case 'httpupgrade':
+				config.httpupgrade_host = uri.host;
+				config.http_path = uri.path;
 				break;
 			case 'ws':
 				config.ws_host = uri.host;
@@ -477,6 +486,20 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 
 	/* Hysteria (2) config start */
+	o = s.option(form.DynamicList, 'hysteria_hopping_port', _('Hopping port'));
+	o.depends('type', 'hysteria');
+	o.depends('type', 'hysteria2');
+	o.validate = hp.validatePortRange;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'hysteria_hop_interval', _('Hop interval'),
+		_('Port hopping interval in seconds.'));
+	o.datatype = 'uinteger';
+	o.placeholder = '30';
+	o.depends({'type': 'hysteria', 'hysteria_hopping_port': /[\s\S]/});
+	o.depends({'type': 'hysteria2', 'hysteria_hopping_port': /[\s\S]/});
+	o.modalonly = true;
+
 	o = s.option(form.ListValue, 'hysteria_protocol', _('Protocol'));
 	o.value('udp');
 	/* WeChat-Video / FakeTCP are unsupported by sing-box currently

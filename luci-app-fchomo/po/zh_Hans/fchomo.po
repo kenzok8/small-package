@@ -2344,10 +2344,9 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:235
 msgid ""
-"To check NAT Behavior you need to install <a href=\"%s\"><b>stuntman-client</"
-"b></a> first"
+"To check NAT Behavior you need to install <a href=\"%s\"><b>%s</b></a> first"
 msgstr ""
-"检测 NAT 行为需要先安装 <a href=\"%s\"><b>stuntman-client</b></a> first"
+"检测 NAT 行为需要先安装 <a href=\"%s\"><b>%s</b></a>"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:484
 msgid ""

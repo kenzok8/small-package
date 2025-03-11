@@ -164,6 +164,8 @@ function generate_outbound(node) {
 
 		server: node.address,
 		server_port: strToInt(node.port),
+		/* Hysteria(2) */
+		server_ports: node.hysteria_hopping_port,
 
 		username: (node.type !== 'ssh') ? node.username : null,
 		user: (node.type === 'ssh') ? node.username : null,
@@ -174,6 +176,7 @@ function generate_outbound(node) {
 		override_port: strToInt(node.override_port),
 		proxy_protocol: strToInt(node.proxy_protocol),
 		/* Hysteria (2) */
+		hop_interval: node.hysteria_hop_interval ? (node.hysteria_hop_interval + 's') : null,
 		up_mbps: strToInt(node.hysteria_up_mbps),
 		down_mbps: strToInt(node.hysteria_down_mbps),
 		obfs: node.hysteria_obfs_type ? {
@@ -550,7 +553,6 @@ if (match(proxy_mode, /tun/))
 		tag: 'tun-in',
 
 		interface_name: tun_name,
-		/* inet4_address and inet6_address are deprecated in sing-box 1.10.0 */
 		address: (ipv6_support === '1') ? [tun_addr4, tun_addr6] : [tun_addr4],
 		mtu: strToInt(tun_mtu),
 		gso: (tun_gso === '1'),
@@ -776,7 +778,6 @@ if (!isEmpty(main_node)) {
 			process_path_regex: cfg.process_path_regex,
 			user: cfg.user,
 			rule_set: get_ruleset(cfg.rule_set),
-			/* rule_set_ipcidr_match_source is deprecated in sing-box 1.10.0 */
 			rule_set_ip_cidr_match_source: (cfg.rule_set_ip_cidr_match_source  === '1') || null,
 			rule_set_ip_cidr_accept_empty: (cfg.rule_set_ip_cidr_accept_empty === '1') || null,
 			invert: (cfg.invert === '1') || null,

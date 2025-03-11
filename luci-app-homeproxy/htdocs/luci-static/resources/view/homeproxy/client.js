@@ -59,25 +59,6 @@ function renderStatus(isRunning, version) {
 	return renderHTML;
 }
 
-function validatePortRange(section_id, value) {
-	if (section_id && value) {
-		value = value.match(/^(\d+)?\:(\d+)?$/);
-		if (value && (value[1] || value[2])) {
-			if (!value[1])
-				value[1] = 0;
-			else if (!value[2])
-				value[2] = 65535;
-
-			if (value[1] < value[2] && value[2] <= 65535)
-				return true;
-		}
-
-		return _('Expecting: %s').format( _('valid port range (port1:port2)'));
-	}
-
-	return true;
-}
-
 let stubValidator = {
 	factory: validation,
 	apply(type, value, args) {
@@ -668,7 +649,7 @@ return view.extend({
 
 		so = ss.taboption('field_source_port', form.DynamicList, 'source_port_range', _('Source port range'),
 			_('Match source port range. Format as START:/:END/START:END.'));
-		so.validate = validatePortRange;
+		so.validate = hp.validatePortRange;
 		so.modalonly = true;
 
 		so = ss.taboption('field_port', form.DynamicList, 'port', _('Port'),
@@ -678,7 +659,7 @@ return view.extend({
 
 		so = ss.taboption('field_port', form.DynamicList, 'port_range', _('Port range'),
 			_('Match port range. Format as START:/:END/START:END.'));
-		so.validate = validatePortRange;
+		so.validate = hp.validatePortRange;
 		so.modalonly = true;
 
 		so = ss.taboption('field_other', form.DynamicList, 'process_name', _('Process name'),
@@ -712,7 +693,7 @@ return view.extend({
 		}
 		so.modalonly = true;
 
-		so = ss.taboption('field_other', form.Flag, 'rule_set_ip_cidr_match_source', _('Match source IP via rule set'),
+		so = ss.taboption('field_other', form.Flag, 'rule_set_ip_cidr_match_source', _('Rule set IP CIDR as source IP'),
 			_('Make IP CIDR in rule set used to match the source IP.'));
 		so.default = so.disabled;
 		so.modalonly = true;
@@ -1010,7 +991,7 @@ return view.extend({
 
 		so = ss.taboption('field_port', form.DynamicList, 'port_range', _('Port range'),
 			_('Match port range. Format as START:/:END/START:END.'));
-		so.validate = validatePortRange;
+		so.validate = hp.validatePortRange;
 		so.modalonly = true;
 
 		so = ss.taboption('field_source_ip', form.DynamicList, 'source_ip_cidr', _('Source IP CIDR'),
@@ -1040,7 +1021,7 @@ return view.extend({
 
 		so = ss.taboption('field_source_port', form.DynamicList, 'source_port_range', _('Source port range'),
 			_('Match source port range. Format as START:/:END/START:END.'));
-		so.validate = validatePortRange;
+		so.validate = hp.validatePortRange;
 		so.modalonly = true;
 
 		so = ss.taboption('field_other', form.DynamicList, 'process_name', _('Process name'),
