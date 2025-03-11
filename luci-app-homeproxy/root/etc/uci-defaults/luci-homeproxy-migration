@@ -1,26 +1,5 @@
 #!/bin/sh
 
-china_dns_server="$(uci -q get "homeproxy.config.china_dns_server")"
-if [ "$china_dns_server" = "wan_114" ]; then
-	uci -q delete "homeproxy.config.china_dns_server"
-	uci -q set "homeproxy.config.china_dns_server"="114.114.114.114"
-elif echo "$china_dns_server" | grep -q ","; then
-	uci -q delete "homeproxy.config.china_dns_server"
-	uci -q set "homeproxy.config.china_dns_server"="${china_dns_server%%,*}"
-elif echo "$china_dns_server" | grep -q " "; then
-	uci -q delete "homeproxy.config.china_dns_server"
-	uci -q set "homeproxy.config.china_dns_server"="${china_dns_server%% *}"
-fi
-
-if [ "$(uci -q get homeproxy.config.routing_port)" = "all" ]; then
-	uci -q delete "homeproxy.config.routing_port"
-fi
-
-[ -z "$(uci -q show homeproxy.experimental)" ] || uci -q delete "homeproxy.experimental"
-
-[ -z "$(uci -q changes "homeproxy")" ] || uci -q commit "homeproxy"
-
-sed -i "s/rule_set_ipcidr_match_source/rule_set_ip_cidr_match_source/g" "/etc/config/homeproxy"
-sed -i "/china_dns_port/d" "/etc/config/homeproxy"
+ucode "/etc/homeproxy/scripts/migrate_config.uc"
 
 exit 0

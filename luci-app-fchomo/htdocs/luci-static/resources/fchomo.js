@@ -405,15 +405,69 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 		return calcStringMD5(String.format('%s:%s', field, name));
 	},
 
-	handleFn(textarea, save) {
-		if (save) {
-			return uci.save()
-				.then(L.bind(this.map.load, this.map))
-				.then(L.bind(this.map.reset, this.map))
-				.then(L.ui.hideModal)
-				.catch(() => {});
-		} else
-			return ui.hideModal();
+	handleFn(textarea) {
+		const modaltitle = this.section.hm_modaltitle[0];
+		const field = this.section.hm_field;
+
+		let content = textarea.getValue().trim();
+		let command = `.["${field}"]`;
+		if (['proxy-providers', 'rule-providers'].includes(field))
+			content = content.replace(/(\s*payload:)/g, "$1 |-") /* payload to text */
+
+		return yaml2json(content, command).then((res) => {
+			let imported_count = 0;
+			//let type_file_count = 0;
+
+			//console.info(JSON.stringify(res, null, 2));
+			if (!isEmpty(res) && typeof res === 'object') {
+				if (Array.isArray(res))
+					res.forEach((cfg) => {
+						let config = this.parseYaml(field, null, cfg);
+						//console.info(JSON.stringify(config, null, 2));
+						if (config) {
+							this.write(config);
+							imported_count++;
+						}
+					})
+				else
+					for (let name in res) {
+						let config = this.parseYaml(field, name, res[name]);
+						//console.info(JSON.stringify(config, null, 2));
+						if (config) {
+							this.write(config);
+							imported_count++;
+							//if (config.type === 'file')
+							//	type_file_count++;
+						}
+					}
+
+				if (imported_count === 0)
+					ui.addNotification(null, E('p', _('No valid %s found.').format(modaltitle)));
+				else
+					ui.addNotification(null, E('p', [
+						_('Successfully imported %s %s of total %s.')
+							.format(imported_count, modaltitle, Object.keys(res).length),
+						E('br'),
+						//type_file_count ? _("%s rule-set of type '%s' need to be filled in manually.")
+						//	.format(type_file_count, 'file') : ''
+					]));
+			}
+
+			if (imported_count)
+				return this.save();
+			else
+				return ui.hideModal();
+		});
+	},
+
+	parseYaml(field, name, cfg) {
+		if (isEmpty(cfg))
+			return null;
+
+		cfg.hm_id = this.calcID(field, name ?? cfg.name);
+		cfg.hm_label = '%s %s'.format(name ?? cfg.name, _('(Imported)'));
+
+		return cfg;
 	},
 
 	render() {
@@ -438,6 +492,24 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 				}, [ _('Import') ])
 			])
 		]);
+	},
+
+	save() {
+		return uci.save()
+			.then(L.bind(this.map.load, this.map))
+			.then(L.bind(this.map.reset, this.map))
+			.then(L.ui.hideModal)
+			.catch(() => {});
+	},
+
+	write(config) {
+		const uciconfig = this.uciconfig || this.section.uciconfig || this.map.config;
+		const section_type = this.section.sectiontype;
+
+		let sid = uci.add(uciconfig, section_type, config.id);
+		delete config.id;
+		for (let k in config)
+			uci.set(uciconfig, sid, k, config[k] ?? '');
 	}
 });
 

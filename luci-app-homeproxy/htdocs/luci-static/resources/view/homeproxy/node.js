@@ -448,12 +448,12 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends({'type': 'socks', 'socks_version': '5'});
 	o.validate = function(section_id, value) {
 		if (section_id) {
-			let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
+			let type = this.section.formvalue(section_id, 'type');
 			let required_type = [ 'shadowsocks', 'shadowtls', 'trojan' ];
 
 			if (required_type.includes(type)) {
 				if (type === 'shadowsocks') {
-					let encmode = this.map.lookupOption('shadowsocks_encrypt_method', section_id)[0].formvalue(section_id);
+					let encmode = this.section.formvalue(section_id, 'shadowsocks_encrypt_method');
 					if (encmode === 'none')
 						return true;
 				}
@@ -467,16 +467,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 
 	/* Direct config */
-	o = s.option(form.Value, 'override_address', _('Override address'),
-		_('Override the connection destination address.'));
-	o.datatype = 'host';
-	o.depends('type', 'direct');
-
-	o = s.option(form.Value, 'override_port', _('Override port'),
-		_('Override the connection destination port.'));
-	o.datatype = 'port';
-	o.depends('type', 'direct');
-
 	o = s.option(form.ListValue, 'proxy_protocol', _('Proxy protocol'),
 		_('Write proxy protocol in the connection header.'));
 	o.value('', _('Disable'));
@@ -855,12 +845,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	/* Transport config end */
 
 	/* Wireguard config start */
-	o = s.option(form.Flag, 'wireguard_gso', _('Generic segmentation offload'));
-	o.default = o.disabled;
-	o.depends('type', 'wireguard');
-	o.rmempty = false;
-	o.modalonly = true;
-
 	o = s.option(form.DynamicList, 'wireguard_local_address', _('Local address'),
 		_('List of IP (v4 or v6) addresses prefixes to be assigned to the interface.'));
 	o.datatype = 'cidr';
@@ -898,6 +882,12 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o = s.option(form.Value, 'wireguard_mtu', _('MTU'));
 	o.datatype = 'range(0,9000)';
 	o.placeholder = '1408';
+	o.depends('type', 'wireguard');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'wireguard_persistent_keepalive_interval', _('Persistent keepalive interval'),
+		_('In seconds. Disabled by default.'));
+	o.datatype = 'uinteger';
 	o.depends('type', 'wireguard');
 	o.modalonly = true;
 	/* Wireguard config end */
@@ -1044,7 +1034,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('The path to the server certificate, in PEM format.'));
 	o.value('/etc/homeproxy/certs/client_ca.pem');
 	o.depends('tls_self_sign', '1');
-	o.validate = L.bind(hp.validateCertificatePath, this);
+	o.validate = hp.validateCertificatePath;
 	o.rmempty = false;
 	o.modalonly = true;
 
@@ -1060,11 +1050,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o = s.option(form.Flag, 'tls_ech', _('Enable ECH'),
 			_('ECH (Encrypted Client Hello) is a TLS extension that allows a client to encrypt the first part of its ClientHello message.'));
 		o.depends('tls', '1');
-		o.default = o.disabled;
-		o.modalonly = true;
-
-		o = s.option(form.Flag, 'tls_ech_tls_disable_drs', _('Disable dynamic record sizing'));
-		o.depends('tls_ech', '1');
 		o.default = o.disabled;
 		o.modalonly = true;
 
