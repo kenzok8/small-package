@@ -275,6 +275,25 @@ return baseclass.extend({
 		return true;
 	},
 
+	validatePortRange(section_id, value) {
+		if (section_id && value) {
+			value = value.match(/^(\d+)?\:(\d+)?$/);
+			if (value && (value[1] || value[2])) {
+				if (!value[1])
+					value[1] = 0;
+				else if (!value[2])
+					value[2] = 65535;
+
+				if (value[1] < value[2] && value[2] <= 65535)
+					return true;
+			}
+
+			return _('Expecting: %s').format( _('valid port range (port1:port2)'));
+		}
+
+		return true;
+	},
+
 	validateUniqueValue(uciconfig, ucisection, ucioption, section_id, value) {
 		if (section_id) {
 			if (!value)

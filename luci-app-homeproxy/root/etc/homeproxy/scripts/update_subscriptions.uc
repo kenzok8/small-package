@@ -342,6 +342,10 @@ function parse_uri(uri) {
 					config.http_path = params.path ? urldecode(params.path) : null;
 				}
 				break;
+			case 'httpupgrade':
+				config.httpupgrade_host = params.host ? urldecode(params.host) : null;
+				config.http_path = params.path ? urldecode(params.path) : null;
+				break;
 			case 'ws':
 				config.ws_host = params.host ? urldecode(params.host) : null;
 				config.ws_path = params.path ? urldecode(params.path) : null;
@@ -361,7 +365,7 @@ function parse_uri(uri) {
 				return null;
 			}
 
-			/* https://github.com/2dust/v2rayN/wiki/%E5%88%86%E4%BA%AB%E9%93%BE%E6%8E%A5%E6%A0%BC%E5%BC%8F%E8%AF%B4%E6%98%8E(ver-2) */
+			/* https://github.com/2dust/v2rayN/wiki/Description-of-VMess-share-link */
 			try {
 				uri = json(decodeBase64Str(uri[1])) || {};
 			} catch(e) {
@@ -403,7 +407,8 @@ function parse_uri(uri) {
 				transport: (uri.net !== 'tcp') ? uri.net : null,
 				tls: (uri.tls === 'tls') ? '1' : '0',
 				tls_sni: uri.sni || uri.host,
-				tls_alpn: uri.alpn ? split(uri.alpn, ',') : null
+				tls_alpn: uri.alpn ? split(uri.alpn, ',') : null,
+				tls_utls: sing_features.with_utls ? uri.fp : null
 			};
 			switch (uri.net) {
 			case 'grpc':
@@ -416,6 +421,10 @@ function parse_uri(uri) {
 					config.http_host = uri.host ? uri.host.split(',') : null;
 					config.http_path = uri.path;
 				}
+				break;
+			case 'httpupgrade':
+				config.httpupgrade_host = uri.host;
+				config.http_path = uri.path;
 				break;
 			case 'ws':
 				config.ws_host = uri.host;
