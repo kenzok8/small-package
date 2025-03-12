@@ -36,6 +36,7 @@ function parseProviderYaml(field, name, cfg) {
 			override_prefix: hm.getValue(cfg, "override.additional-prefix"),
 			override_suffix: hm.getValue(cfg, "override.additional-suffix"),
 			override_replace: (hm.getValue(cfg, "override.proxy-name") || []).map((obj) => JSON.stringify(obj)), // array.string: array.object
+			// Configuration Items
 			override_tfo: hm.bool2str(hm.getValue(cfg, "override.tfo")), // bool
 			override_mptcp: hm.bool2str(hm.getValue(cfg, "override.mptcp")), // bool
 			override_udp: hm.bool2str(hm.getValue(cfg, "override.udp")), // bool
@@ -48,7 +49,7 @@ function parseProviderYaml(field, name, cfg) {
 			override_routing_mark: hm.getValue(cfg, "override.routing-mark"),
 			override_ip_version: hm.getValue(cfg, "override.ip-version"),
 			/* General fields */
-			filter: [cfg.filter], // array: string
+			filter: [cfg.filter], // array.string: string
 			exclude_filter: [cfg["exclude-filter"]], // array.string: string
 			exclude_type: [cfg["exclude-type"]] // array.string: string
 		})
