@@ -10,6 +10,9 @@ msgstr "iStore增强插件可以有效的解决一些网络问题，让 iStore �
 msgid "Port"
 msgstr "端口"
 
+msgid "Admin Port"
+msgstr "管理端口"
+
 msgid "The iStoreEnhance service is running."
 msgstr "服务已启动"
 
