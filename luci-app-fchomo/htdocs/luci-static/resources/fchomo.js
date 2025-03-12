@@ -227,7 +227,7 @@ const rules_type = [
 	['PROCESS-PATH-REGEX'],
 	['PROCESS-NAME'],
 	['PROCESS-NAME-REGEX'],
-	//['UID'],
+	['UID'],
 
 	['NETWORK'],
 	['DSCP'],
