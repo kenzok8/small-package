@@ -35,24 +35,35 @@ do_install() {
 
   cd $config
   export COMPOSE_PROJECT_NAME=linkease-immich
+
+  docker pull redis:6.2-alpine@sha256:905c4ee67b8e0aa955331960d2aa745781e6bd89afc44a8584bfd13bc890f0ae
+  RET=$?
+  if [ ! "$RET" = "0" ]; then
+    echo "download failed, install istoreenhance to speedup"
+    exit 1
+  fi
+
   docker pull tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
   RET=$?
   if [ ! "$RET" = "0" ]; then
-    echo "download failed"
+    echo "download failed, install istoreenhance to speedup"
     exit 1
   fi
-  docker pull "immich-app/immich-machine-learning:$IMMICH_VERSION"
+
+  docker pull "linkease/immich-machine-learning:$IMMICH_VERSION"
   RET=$?
   if [ ! "$RET" = "0" ]; then
-    echo "download failed"
+    echo "download failed, install istoreenhance to speedup"
     exit 1
   fi
-  docker pull "immich-app/immich-server:$IMMICH_VERSION"
+
+  docker pull "linkease/immich-server:$IMMICH_VERSION"
   RET=$?
   if [ ! "$RET" = "0" ]; then
-    echo "download failed"
+    echo "download failed, install istoreenhance to speedup"
     exit 1
   fi
+
   docker-compose down || true
   docker-compose up -d
 }
@@ -82,10 +93,10 @@ case ${ACTION} in
     cd $config && docker-compose ${ACTION}
   ;;
   "status")
-    docker ps --all -f 'name=^/linkease-immich_frontend_1$' --format '{{.State}}'
+    docker ps --all -f 'name=^/immich_server$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=^/linkease-immich_frontend_1$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
+    docker ps --all -f 'name=^/immich_server$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*' | sed 's/0.0.0.0://'
   ;;
   *)
     usage

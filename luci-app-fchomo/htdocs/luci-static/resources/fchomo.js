@@ -167,7 +167,8 @@ const preset_outbound = {
 		['REJECT'],
 		['REJECT-DROP'],
 		['PASS'],
-		['COMPATIBLE']
+		['COMPATIBLE'],
+		['GLOBAL']
 	],
 	direct: [
 		['', _('null')],
@@ -464,8 +465,10 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 		if (isEmpty(cfg))
 			return null;
 
-		cfg.hm_id = this.calcID(field, name ?? cfg.name);
-		cfg.hm_label = '%s %s'.format(name ?? cfg.name, _('(Imported)'));
+		if (typeof cfg === 'object') {
+			cfg.hm_id = this.calcID(field, name ?? cfg.name);
+			cfg.hm_label = '%s %s'.format(name ?? cfg.name, _('(Imported)'));
+		}
 
 		return cfg;
 	},

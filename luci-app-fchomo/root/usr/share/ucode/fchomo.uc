@@ -12,7 +12,8 @@ export const PRESET_OUTBOUND = [
 	'REJECT',
 	'REJECT-DROP',
 	'PASS',
-	'COMPATIBLE'
+	'COMPATIBLE',
+	'GLOBAL'
 ];
 export const RULES_LOGICAL_TYPE = [
 	'AND',

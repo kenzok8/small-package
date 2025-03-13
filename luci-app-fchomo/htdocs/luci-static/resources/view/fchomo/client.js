@@ -221,6 +221,100 @@ class RulesEntry {
 	}
 }
 
+function parseRules(rule) {
+	// parse rules
+	// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/config/config.go#L1040-L1090
+	// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/rules/parser.go#L12
+	rule = rule.split(',');
+	let ruleName = rule[0].toUpperCase(),
+		logical_payload,
+		payload,
+		target,
+		params = [],
+		subrule;
+
+	let l = rule.length;
+
+	if (ruleName === 'SUB-RULE') {
+		subrule = rule.slice(1).join(',').match(/^\((.*)\)/); // SUB-RULE,(payload),subrule
+		if (subrule) {
+			[rule, subrule] = [subrule[1].split(',').concat('DIRECT'), rule.pop()];
+			ruleName = rule[0].toUpperCase();
+			l = rule.length;
+		} else
+			return null;
+	}
+
+	if (hm.rules_logical_type.map(o => o[0]).includes(ruleName)) {
+		target = rule.pop();
+		logical_payload = rule.slice(1).join(',').match(/^\(\((.*)\)\)$/); // LOGIC_TYPE,((payload1),(payload2))
+		if (logical_payload)
+			logical_payload = logical_payload[1].split('),(');
+		else
+			return null;
+	} else if (hm.rules_type.map(o => o[0]).includes(ruleName)) {
+		if (l < 2) return null; // error: format invalid
+		else if (ruleName === 'MATCH') l = 2;
+		else if (l >= 3) {
+			l = 3;
+			payload = rule[1];
+		}
+		target = rule[l-1];
+		params = rule.slice(l);
+	} else
+		return null;
+
+	// make entry
+	let entry = new RulesEntry();
+	entry.type = ruleName;
+	// parse payload
+	if (logical_payload)
+		for (let i=0; i < logical_payload.length; i++) {
+			let type, factor, deny;
+
+			// deny
+			deny = logical_payload[i].match(/^NOT,\(\((.*)\)\)$/);
+			if (deny)
+				[type, factor] = deny[1].split(',');
+			else
+				[type, factor] = logical_payload[i].split(',');
+
+			if (type === 'RULE-SET')
+				factor = this.calcID(hm.glossary["ruleset"].field, factor);
+
+			entry.setPayload(i, {type: type.toUpperCase(), factor: factor, deny: deny ? true : null});
+		}
+	else if (payload)
+		if (ruleName === 'RULE-SET')
+			entry.setPayload(0, {factor: this.calcID(hm.glossary["ruleset"].field, payload)});
+		else
+			entry.setPayload(0, {factor: payload});
+	params.forEach((param) => entry.setParam(param, true));
+	if (subrule)
+		entry.subrule = subrule;
+	else
+		entry.detour = hm.preset_outbound.full.map(([key, label]) => key).includes(target) ? target : this.calcID(hm.glossary["proxy_group"].field, target);
+
+	return entry.toString('json');
+}
+
+function parseRulesYaml(field, name, cfg) {
+	let id = this.calcID(field, cfg);
+	let entry = parseRules.call(this, cfg);
+
+	if (!entry)
+		return null;
+
+	// key mapping
+	let config = {
+		id: id,
+		label: '%s %s'.format(id.slice(0,7), _('(Imported)')),
+		entry: entry
+	};
+
+	return config;
+}
+
 function boolToFlag(boolean) {
 	if (typeof(boolean) !== 'boolean')
 		return null;
@@ -516,8 +610,8 @@ function renderRules(s, uciconfig) {
 	}
 	o.validate = function(section_id, value) {
 		// params only available for types other than
-		// https://github.com/muink/mihomo/blob/43f21c0b412b7a8701fe7a2ea6510c5b985a53d6/config/config.go#L1050
-		// https://github.com/muink/mihomo/blob/43f21c0b412b7a8701fe7a2ea6510c5b985a53d6/rules/parser.go#L12
+		// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/config/config.go#L1050
+		// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/rules/parser.go#L12
 		if (['GEOIP', 'IP-ASN', 'IP-CIDR', 'IP-CIDR6', 'IP-SUFFIX', 'RULE-SET'].includes(value)) {
 			['no-resolve', 'src'].forEach((opt) => {
 				let UIEl = this.section.getUIElement(section_id, opt);
@@ -938,6 +1032,56 @@ return view.extend({
 		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_field  = hm.glossary[ss.sectiontype].field;
 		ss.hm_lowcase_only = false;
+		/* Import mihomo config start */
+		ss.handleYamlImport = function() {
+			const field = this.hm_field;
+			const o = new hm.HandleImport(this.map, this, _('Import mihomo config'),
+				_('Please type <code>%s</code> fields of mihomo config.</br>')
+					.format(field));
+			o.placeholder = 'rules:\n' +
+							'- DOMAIN,ad.com,REJECT\n' +
+							'- DOMAIN-REGEX,^abc.*com,auto\n' +
+							'- GEOSITE,youtube,PROXY\n' +
+							'- IP-CIDR,127.0.0.0/8,DIRECT,no-resolve\n' +
+							'- IP-SUFFIX,8.8.8.8/24,auto\n' +
+							'- IP-ASN,13335,DIRECT\n' +
+							'- GEOIP,CN,DIRECT\n' +
+							'- PROCESS-PATH,/usr/bin/wget,auto\n' +
+							'- PROCESS-PATH-REGEX,.*bin/wget,auto\n' +
+							'- PROCESS-NAME,curl,auto\n' +
+							'- PROCESS-NAME-REGEX,curl$,auto\n' +
+							'- UID,1001,DIRECT\n' +
+							'- NETWORK,udp,DIRECT\n' +
+							'- DSCP,4,DIRECT\n' +
+							'- RULE-SET,google,GLOBAL,no-resolve\n' +
+							'- AND,((DST-PORT,443),(NETWORK,udp)),REJECT\n' +
+							'- OR,((NETWORK,UDP),(DOMAIN,baidu.com)),DIRECT\n' +
+							'- NOT,((DOMAIN,baidu.com)),auto\n' +
+							'- SUB-RULE,(NETWORK,tcp),sub-rule1\n' +
+							'- SUB-RULE,(OR,((NETWORK,udp),(DOMAIN,google.com))),sub-rule2\n' +
+							'- AND,((GEOIP,cn),(DSCP,12),(NETWORK,udp),(NOT,((IP-ASN,12345))),(DSCP,14),(NOT,((NETWORK,udp)))),DIRECT\n' +
+							'- MATCH,GLOBAL\n' +
+							'  ...'
+			o.parseYaml = function(field, name, cfg) {
+				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
+
+				return config ? parseRulesYaml.call(this, field, name, config) : config;
+			};
+
+			return o.render();
+		}
+		ss.renderSectionAdd = function(/* ... */) {
+			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+
+			el.appendChild(E('button', {
+				'class': 'cbi-button cbi-button-add',
+				'title': _('mihomo config'),
+				'click': ui.createHandlerFn(this, 'handleYamlImport')
+			}, [ _('Import mihomo config') ]));
+
+			return el;
+		}
+		/* Import mihomo config end */
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
