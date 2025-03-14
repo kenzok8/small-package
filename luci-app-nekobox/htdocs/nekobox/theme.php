@@ -645,11 +645,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $filePath = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/assets/theme/' . $themeFileName;
     file_put_contents($filePath, $cssContent);
     echo "<script>
-            alert('自定义主题已更新，名称为 $themeName.css ！');
+            alert('The custom theme has been updated, and the name is $themeName.css ！');
             window.location.href = 'settings.php';
           </script>";
 } else {
-    echo "<script>alert('没有接收到数据。');</script>";
+    echo "<script>alert('No data received');</script>";
 }
 
 if (isset($_GET['delete'])) {
@@ -666,7 +666,7 @@ if (isset($_GET['delete'])) {
         }
 
         echo "<script>
-                alert('图片已删除！');
+                alert('The image has been deleted');
                 window.location.href = 'settings.php';
               </script>";
         exit;

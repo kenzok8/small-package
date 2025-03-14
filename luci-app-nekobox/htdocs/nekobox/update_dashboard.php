@@ -30,36 +30,36 @@ if (!is_dir($install_path)) {
 $current_version = getUiVersion();
 
 if (isset($_GET['check_version'])) {
-    echo "最新版本: $fixed_version\n";
+    echo "Latest version: $fixed_version\n";
     exit;
 }
 
 exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
 if ($return_var !== 0) {
-    die("下载失败！");
+    die("Download failed");
 }
 
 if (!file_exists($temp_file)) {
-    die("下载的文件不存在！");
+    die("The downloaded file does not exist");
 }
 
-echo "开始解压文件...\n";
-exec("tar -xf '$temp_file' -C '$install_path' --overwrite", $output, $return_var);
+echo "Start extracting the file...\n";
+exec("tar -xf '$temp_file' -C '$install_path'", $output, $return_var);
 if ($return_var !== 0) {
-    echo "解压失败，错误信息: " . implode("\n", $output);
-    die("解压失败！");
+    echo "Decompression failed, error message: " . implode("\n", $output);
+    die("Decompression failed");
 }
-echo "解压成功！\n";
+echo "Extraction successful \n";
 
 exec("chown -R root:root '$install_path' 2>&1", $output, $return_var);
 if ($return_var !== 0) {
-    echo "更改文件拥有者失败，错误信息: " . implode("\n", $output) . "\n";
+    echo "Failed to change file owner, error message: " . implode("\n", $output) . "\n";
     die();
 }
-echo "文件拥有者已更改为 root。\n";
+echo "The file owner has been changed to root.\n";
 
 writeVersionToFile($fixed_version); 
-echo "更新完成！当前版本: $fixed_version\n";
+echo "Update complete! Current version: $fixed_version";
 
 unlink($temp_file);
 

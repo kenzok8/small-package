@@ -357,7 +357,7 @@
 
 /* START .container-sm */
 .container-sm {
-    width: 1700px !important; 
+    width: 1800px !important; 
     max-width: 100%;
     margin: 0 auto;
 }
@@ -365,7 +365,7 @@
 
 /* START .modal-xl */
 .modal-xl {
-    max-width: 1600px !important; 
+    max-width: 1850px !important; 
 }
 
 @media (max-width: 768px) {
@@ -374,6 +374,16 @@
     }
 }
 /* END .modal-xl */
+
+
+
+
+
+
+
+
+
+
 
     button, .btn-warning, .btn-info, .card, .modal-content { transition: transform 0.2s ease, box-shadow 0.2s ease; }
     button:active, .btn-warning:active, .btn-info:active, .card:active, .modal-content:active { transform: translateY(-6px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); }

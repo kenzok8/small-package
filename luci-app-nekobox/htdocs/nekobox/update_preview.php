@@ -10,15 +10,15 @@ $curl_command = "curl -H 'User-Agent: PHP' -s " . escapeshellarg($api_url) . " -
 exec($curl_command . " 2>&1", $output, $return_var);
 
 if ($return_var !== 0 || !file_exists($local_api_response)) {
-    echo "<script>appendLog('curl 获取版本信息失败，尝试使用 wget...');</script>";
+    echo "<script>appendLog('curl failed to fetch version information, attempting to use wget...');</script>";
     $wget_command = "wget -q --no-check-certificate " . escapeshellarg($api_url) . " -O " . escapeshellarg($local_api_response);
     exec($wget_command . " 2>&1", $output, $return_var);
 
     if ($return_var !== 0 || !file_exists($local_api_response)) {
-        die("无法访问GitHub API。请检查URL或网络连接。输出: " . implode("\n", $output));
+        die("Unable to access GitHub API. Please check the URL or network connection. Output: " . implode("\n", $output));
     }
 
-    echo "<script>appendLog('wget 获取版本信息完成。');</script>";
+    echo "<script>appendLog('wget has completed fetching version information');</script>";
 }
 
 $response = file_get_contents($local_api_response);
@@ -28,24 +28,24 @@ unlink($local_api_response);
 $new_version = $data['tag_name'] ?? '';
 
 if (empty($new_version)) {
-    die("未找到最新版本或版本信息为空。");
+    die("No latest version found or version information is empty");
 }
 
-$installed_lang = isset($_GET['lang']) ? $_GET['lang'] : 'cn'; 
+$installed_lang = isset($_GET['lang']) ? $_GET['lang'] : 'en'; 
 
 if ($installed_lang !== 'cn' && $installed_lang !== 'en') {
-    die("无效的语言选择。请选择 'cn' 或 'en'。");
+    die("Invalid language selection. Please choose 'cn' or 'en'");
 }
 
 if (isset($_GET['check_version'])) {
-    echo "最新版本: V" . $new_version . "-beta";
+    echo "Latest version: V" . $new_version . "-beta";
     exit;
 }
 
 $download_url = "https://github.com/$repo_owner/$repo_name/releases/download/$new_version/{$package_name}_{$new_version}-{$installed_lang}_all.ipk";
 
-echo "<pre>最新版本: $new_version</pre>";
-echo "<pre>下载URL: $download_url</pre>";
+echo "<pre>Latest version: $new_version</pre>";
+echo "<pre>Download URL: $download_url</pre>";
 echo "<pre id='logOutput'></pre>";
 
 echo "<script>
@@ -54,7 +54,7 @@ echo "<script>
         }
       </script>";
 
-echo "<script>appendLog('开始下载更新...');</script>";
+echo "<script>appendLog('Start downloading updates...');</script>";
 
 $local_file = "/tmp/{$package_name}_{$new_version}-{$installed_lang}_all.ipk";
 
@@ -62,29 +62,29 @@ $curl_command = "curl -sL " . escapeshellarg($download_url) . " -o " . escapeshe
 exec($curl_command . " 2>&1", $output, $return_var);
 
 if ($return_var !== 0 || !file_exists($local_file)) {
-    echo "<script>appendLog('curl 下载失败，尝试使用 wget...');</script>";
+    echo "<script>appendLog('curl download failed, trying to use wget...');</script>";
     $wget_command = "wget -q --show-progress --no-check-certificate " . escapeshellarg($download_url) . " -O " . escapeshellarg($local_file);
     exec($wget_command . " 2>&1", $output, $return_var);
 
     if ($return_var !== 0 || !file_exists($local_file)) {
-        echo "<pre>下载失败。命令输出: " . implode("\n", $output) . "</pre>";
-        die("下载失败。未找到下载的文件。");
+        echo "<pre>Download failed. Command output: " . implode("\n", $output) . "</pre>";
+        die("Download failed. The downloaded file was not found");
     }
 
-    echo "<script>appendLog('wget 下载完成。');</script>";
+    echo "<script>appendLog('wget download complete');</script>";
 } else {
-    echo "<script>appendLog('curl 下载完成。');</script>";
+    echo "<script>appendLog('curl download complete');</script>";
 }
 
-echo "<script>appendLog('更新软件包列表...');</script>";
+echo "<script>appendLog('Update the list of software packages...');</script>";
 $output = shell_exec("opkg update");
 echo "<pre>$output</pre>";
 
-echo "<script>appendLog('开始安装...');</script>";
+echo "<script>appendLog('Start installation...');</script>";
 
 $output = shell_exec("opkg install --force-reinstall " . escapeshellarg($local_file));
 echo "<pre>$output</pre>";
-echo "<script>appendLog('安装完成。');</script>";
+echo "<script>appendLog('Installation complete。');</script>";
 
 unlink($local_file);
 ?>

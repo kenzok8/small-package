@@ -55,15 +55,15 @@ function buildFinalUrl($subscription_url, $config_url, $include, $exclude, $back
 
 function saveSubscriptionUrlToFile($url, $file) {
     $success = file_put_contents($file, $url) !== false;
-    logMessage($success ? "订阅链接已保存到 $file" : "保存订阅链接失败到 $file");
+    logMessage($success ? "Subscription link has been saved to $file" : "Failed to save subscription link to $file");
     return $success;
 }
 
 function transformContent($content) {
     $parsedData = json_decode($content, true);
     if ($parsedData === null) {
-        logMessage("无法解析内容为 JSON 格式");
-        return "无法解析内容为 JSON 格式";
+        logMessage("Unable to parse content into JSON format");
+        return "Unable to parse content as JSON";
     }
 
     if (isset($parsedData['inbounds'])) {
@@ -152,14 +152,14 @@ function saveSubscriptionContentToYaml($url, $filename) {
     }
 
     if (strpbrk($filename, "!@#$%^&*()+=[]\\\';,/{}|\":<>?") !== false) {
-        $message = "文件名包含非法字符，请使用字母、数字、点、下划线或横杠。";
+        $message = "Filename contains illegal characters. Please use letters, numbers, dots, underscores, or hyphens.";
         logMessage($message);
         return $message;
     }
 
     if (!is_dir($download_path)) {
         if (!mkdir($download_path, 0755, true)) {
-            $message = "无法创建目录：$download_path";
+            $message = "Unable to create directory: $download_path";
             logMessage($message);
             return $message;
         }
@@ -169,7 +169,7 @@ function saveSubscriptionContentToYaml($url, $filename) {
     $command = "wget -q --no-check-certificate -O $output_file " . escapeshellarg($url);
     exec($command, $output, $return_var);
     if ($return_var !== 0) {
-        $message = "wget 错误，无法获取订阅内容。请检查链接是否正确。";
+        $message = "wget Error，Unable to retrieve subscription content. Please check if the link is correct.";
         logMessage($message);
     }
     $ch = curl_init();
@@ -183,14 +183,14 @@ function saveSubscriptionContentToYaml($url, $filename) {
     if (curl_errno($ch)) {
         $error_msg = curl_error($ch);
         curl_close($ch);
-        $message = "cURL 错误: $error_msg";
+        $message = "cURL Error: $error_msg";
         logMessage($message);
         return $message;
     }
     curl_close($ch);
 
     if (empty($subscription_data)) {
-        $message = "无法获取订阅内容。请检查链接是否正确。";
+        $message = "Unable to retrieve subscription content. Please check if the link is correct.";
         logMessage($message);
         return $message;
     }
@@ -199,7 +199,7 @@ function saveSubscriptionContentToYaml($url, $filename) {
 
     $file_path = $download_path . $filename;
     $success = file_put_contents($file_path, $transformed_data) !== false;
-    $message = $success ? "内容已成功保存到：$file_path" : "文件保存失败。";
+    $message = $success ? "Content successfully saved to: $file_path" : "File save failed.";  
     logMessage($message);
     return $message;
 }
@@ -326,12 +326,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (saveSubscriptionUrlToFile($final_url, $subscription_file)) {
             $result = saveSubscriptionContentToYaml($final_url, $filename);
         } else {
-            $result = "保存订阅链接到文件失败。";
+            $result = "Failed to save subscription link to file";
         }
     }
 
     if (isset($result)) {
-        echo nl2br(htmlspecialchars($result)); 
+        echo "<div id='log-message' class='alert alert-success'>" . nl2br(htmlspecialchars($result)) . "</div>";
     }
 
     $download_option = $_POST['download_option'] ?? 'none';
@@ -353,9 +353,9 @@ function downloadFileWithWget($url, $path) {
     exec($command, $output, $return_var);
     
     if ($return_var === 0) {
-        return "文件下载成功: $path<br>";
+        return "File downloaded successfully: $path<br>";
     } else {
-        return "文件下载失败: $path<br>";
+        return "File download failed: $path<br>";
     }
 }
 ?>
@@ -365,14 +365,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $cronExpression = trim($_POST['cronExpression']);
 
         if (empty($cronExpression)) {
-            echo "<div class='alert alert-warning'>Cron 表达式不能为空。</div>";
+            echo "<div class='alert alert-warning'>The cron expression cannot be empty</div>";
             exit;
         }
 
         $cronJob = "$cronExpression /etc/neko/core/update_singbox.sh > /dev/null 2>&1";
         exec("crontab -l | grep -v '/etc/neko/core/update_singbox.sh' | crontab -");
         exec("(crontab -l; echo '$cronJob') | crontab -");
-        echo "<div class='alert alert-success'>Cron 任务已成功添加或更新！</div>";
+        echo "<div class='alert alert-success'>The cron job has been successfully added or updated.</div>";
     }
 }
 ?>
@@ -395,30 +395,30 @@ log() {
   echo "[ \$(date +'%H:%M:%S') ] \$1" >> "\$LOG_FILE"
 }
 
-log "启动更新脚本..."
-log "尝试读取订阅链接文件：\$LINK_FILE"
+log "Starting the update script..."
+log "Attempting to read subscription link file: \$LINK_FILE"
 
 if [ ! -f "\$LINK_FILE" ]; then
-  log "错误：文件 \$LINK_FILE 不存在。"
+  log "Error: File \$LINK_FILE does not exist."
   exit 1
 fi
 
 SUBSCRIBE_URL=\$(awk 'NR==1 {print \$0}' "\$LINK_FILE" | tr -d '\\n\\r' | xargs)
 
 if [ -z "\$SUBSCRIBE_URL" ]; then
-  log "错误：订阅链接为空或提取失败。"
+  log "Error: Subscription link is empty or extraction failed."
   exit 1
 fi
 
-log "使用的订阅链接：\$SUBSCRIBE_URL"
-log "尝试下载并更新配置文件..."
+log "Using subscription link: \$SUBSCRIBE_URL"
+log "Attempting to download and update the configuration file..."
 
 wget -q -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >> "\$LOG_FILE" 2>&1
 
 if [ \$? -eq 0 ]; then
-  log "配置文件更新成功，保存路径：\$CONFIG_FILE"
+  log "Configuration file updated successfully. Saved to: \$CONFIG_FILE"
 else
-  log "配置文件更新失败，请检查链接或网络。"
+  log "Configuration file update failed. Please check the link or network."
   exit 1
 fi
 
@@ -478,9 +478,9 @@ jq '.experimental.clash_api = {
 }' "\$CONFIG_FILE" > /tmp/config_temp.json && mv /tmp/config_temp.json "\$CONFIG_FILE"
 
 if [ \$? -eq 0 ]; then
-  log "配置文件修改已成功完成。"
+  log "Configuration file modifications completed successfully."
 else
-  log "错误：配置文件修改失败。"
+  log "Error: Configuration file modification failed."
   exit 1
 fi
 
@@ -488,9 +488,9 @@ EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
             chmod($shellScriptPath, 0755); 
-            echo "<div class='alert alert-success'>Shell 脚本已成功创建！路径: $shellScriptPath</div>";
+            echo "<div class='alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
         } else {
-            echo "<div class='alert alert-danger'>无法创建 Shell 脚本，请检查权限。</div>";
+            echo "<div class='alert alert-danger' data-translate='shell_script_failed'></div>";
         }
     }
 }
@@ -565,24 +565,16 @@ EOL;
                     <div class="mb-3">
                         <label for="backend_url" class="form-label" data-translate="backend_url_label"></label>
                         <select class="form-select" id="backend_url" name="backend_url" required>
-                            <option value="https://url.v1.mk/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://url.v1.mk/sub?' ? 'selected' : ''; ?>>
-                                <?php echo $langData[$currentLang]['backend_url_option_1']; ?>
-                            </option>
-                            <option value="https://sub.d1.mk/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.d1.mk/sub?' ? 'selected' : ''; ?>>
-                                 <?php echo $langData[$currentLang]['backend_url_option_2']; ?>
-                            </option>
-                            <option value="https://sub.xeton.dev/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.xeton.dev/sub?' ? 'selected' : ''; ?>>
-                                 <?php echo $langData[$currentLang]['backend_url_option_3']; ?>
-                            </option>
+                            <option value="https://url.v1.mk/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://url.v1.mk/sub?' ? 'selected' : ''; ?> data-translate="backend_url_option_1"></option>
+                            <option value="https://sub.d1.mk/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.d1.mk/sub?' ? 'selected' : ''; ?> data-translate="backend_url_option_2"></option>
+                            <option value="https://sub.xeton.dev/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.xeton.dev/sub?' ? 'selected' : ''; ?> data-translate="backend_url_option_3"></option>
                             <option value="https://www.tline.website/sub/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://www.tline.website/sub/sub?' ? 'selected' : ''; ?>>
                                 tline.website
                             </option>
                             <option value="https://api.dler.io/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://api.dler.io/sub?' ? 'selected' : ''; ?>>
                                 api.dler.io
                             </option>
-                            <option value="https://v.id9.cc/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://v.id9.cc/sub?' ? 'selected' : ''; ?>>
-                                 <?php echo $langData[$currentLang]['backend_url_option_6']; ?>
-                            </option>
+                            <option value="https://v.id9.cc/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://v.id9.cc/sub?' ? 'selected' : ''; ?> data-translate="backend_url_option_6"></option>
                             <option value="https://sub.id9.cc/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.id9.cc/sub?' ? 'selected' : ''; ?>>
                                 sub.id9.cc
                             </option>
@@ -592,15 +584,9 @@ EOL;
                             <option value="https://yun-api.subcloud.xyz/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://yun-api.subcloud.xyz/sub?' ? 'selected' : ''; ?>>
                                 subcloud.xyz
                             </option>
-                            <option value="https://sub.maoxiongnet.com/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.maoxiongnet.com/sub?' ? 'selected' : ''; ?>>
-                                 <?php echo $langData[$currentLang]['backend_url_option_10']; ?>
-                            </option>
-                            <option value="http://localhost:25500/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'http://localhost:25500/sub?' ? 'selected' : ''; ?>>
-                                 <?php echo $langData[$currentLang]['backend_url_option_11']; ?>
-                            </option>
-                            <option value="custom" <?php echo ($_POST['backend_url'] ?? '') === 'custom' ? 'selected' : ''; ?>>
-                                 <?php echo $langData[$currentLang]['backend_url_option_custom']; ?>
-                            </option>
+                            <option value="https://sub.maoxiongnet.com/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'https://sub.maoxiongnet.com/sub?' ? 'selected' : ''; ?> data-translate="backend_url_option_10"></option>
+                            <option value="http://localhost:25500/sub?" <?php echo ($_POST['backend_url'] ?? '') === 'http://localhost:25500/sub?' ? 'selected' : ''; ?> data-translate="backend_url_option_11"></option>
+                            <option value="custom" <?php echo ($_POST['backend_url'] ?? '') === 'custom' ? 'selected' : ''; ?> data-translate="backend_url_option_custom"></option>
                         </select>
                     </div>
 
@@ -815,7 +801,7 @@ EOL;
                             <div class="alert alert-info">
                               <strong data-translate="cron_hint">提示:</strong> <span data-translate="cron_expression_format">Cron 表达式格式：</span>
                               <ul>
-                                <li><code>分钟 小时 日  月 星期</code></li>
+                                <li><span data-translate="cron_format_help"></span></li>
                                 <li><?= $langData[$currentLang]['example1'] ?>: <code>0 2 * * *</code></li>
                                 <li><?= $langData[$currentLang]['example2'] ?>: <code>0 3 * * 1</code></li>
                                 <li><?= $langData[$currentLang]['example3'] ?>: <code>0 9 * * 1-5</code></li>
@@ -832,11 +818,11 @@ EOL;
         </div>
     </div>
         <div class="help mt-4 custom-padding">
-             <strong>1. <?php echo $translations['first_time_singbox_user']; ?><p>
-            <p style="color: red;"><?php echo $translations['warning']; ?></p>
-            <p><?php echo $translations['subscription_conversion']; ?></p>
+            <p data-translate="first_time_singbox_user"><p>
+            <p style="color: red;" data-translate="warning"></p>
+            <p data-translate="subscription_conversion"></p>
             <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
-            <i data-feather="github"></i> <?php echo $translations['visit_link']; ?>
+            <i data-feather="github"></i> <span data-translate="visit_link"></span>
             </a>
         </div>
         <div class="result mt-4 custom-padding">

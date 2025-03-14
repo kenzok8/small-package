@@ -1,7 +1,6 @@
 <?php
 ini_set('memory_limit', '128M');
 ini_set('max_execution_time', 300);
-date_default_timezone_set('Asia/Shanghai');
 
 $logMessages = [];
 
@@ -34,17 +33,17 @@ function downloadFile($url, $destination, $retries = 3, $timeout = 30) {
             exec($command, $output, $return_var);
             
             if ($return_var !== 0) {
-                throw new Exception("wget 错误信息: " . implode("\n", $output));
+                throw new Exception("wget error message: " . implode("\n", $output));
             }
             
-            logMessage(basename($destination), "下载并保存成功");
+            logMessage(basename($destination), "Download and save successful");
             return true;
             
         } catch (Exception $e) {
-            logMessage(basename($destination), "第 $attempt 次尝试失败: " . $e->getMessage());
+            logMessage(basename($destination), "Attempt $attempt failed: " . $e->getMessage());
             
             if ($attempt === $retries) {
-                logMessage(basename($destination), "所有下载尝试均失败");
+                logMessage(basename($destination), "All download attempts failed");
                 return false;
             }
             
@@ -56,24 +55,24 @@ function downloadFile($url, $destination, $retries = 3, $timeout = 30) {
     return false;
 }
 
-echo "开始更新配置文件...\n";
+echo "Start updating configuration file...\n";
 
 $urls = [
-    "https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/nekobox/luci-app-nekobox/root/etc/neko/config/mihomo.yaml" => "/etc/neko/config/mihomo.yaml",
+    "https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/root/etc/neko/config/mihomo.yaml" => "/etc/neko/config/mihomo.yaml",
     "https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/nekobox/luci-app-nekobox/root/etc/neko/config/Puernya.json" => "/etc/neko/config/Puernya.json"
 ];
 
 foreach ($urls as $url => $destination) {
-    logMessage(basename($destination), "开始从 $url 下载");
+    logMessage(basename($destination), "Start downloading from $url");
     
     if (downloadFile($url, $destination)) {
-        logMessage(basename($destination), "文件更新成功");
+        logMessage(basename($destination), "File update successful");
     } else {
-        logMessage(basename($destination), "文件更新失败");
+        logMessage(basename($destination), "File update failed");
     }
 }
 
-echo "\n配置文件更新完成！\n\n";
+echo "\nConfiguration file update completed！\n\n";
 
 foreach ($logMessages as $message) {
     echo $message . "\n";

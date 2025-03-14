@@ -42,12 +42,12 @@ if ($width !== null && $modalWidth !== null) {
             $scrollableCssEnd = strpos($cssContent, '}', $position);
             $newCssContent = substr($cssContent, 0, $scrollableCssEnd + 1) . "\n" . $containerCss . substr($cssContent, $scrollableCssEnd + 1);
             file_put_contents($cssFilePath, $newCssContent);
-            echo json_encode(['status' => 'success', 'message' => 'CSS 更新成功']);
+            echo json_encode(['status' => 'success', 'message' => 'CSS updated successfully']);
         } else {
-            echo json_encode(['status' => 'error', 'message' => '未找到 .scrollable-container:hover 样式']);
+            echo json_encode(['status' => 'error', 'message' => 'Could not find .scrollable-container:hover style']);
         }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'CSS 文件未找到']);
+        echo json_encode(['status' => 'error', 'message' => 'CSS file not found']);
     }
 } 
 
@@ -69,11 +69,11 @@ if ($applyGroup1 || $applyBodyBackground) {
 
         file_put_contents($cssFilePath, $cssContent);
 
-        echo json_encode(['status' => 'success', 'message' => '透明背景已应用']);
+        echo json_encode(['status' => 'success', 'message' => 'Transparent background applied']);
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'CSS 文件未找到']);
+        echo json_encode(['status' => 'error', 'message' => 'CSS file not found']);
     }
 } else {
-    echo json_encode(['status' => 'error', 'message' => '未启用透明背景']);
+    echo json_encode(['status' => 'error', 'message' => 'Transparent background not enabled']);
 }
 ?>

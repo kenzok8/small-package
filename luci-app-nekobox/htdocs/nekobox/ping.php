@@ -16,6 +16,8 @@
                     <option value="vn" data-translate="vietnamese">Vietnamese</option>
                     <option value="jp" data-translate="japanese"></option>
                     <option value="ru" data-translate="russian"></option>
+                    <option value="de" data-translate="germany">Germany</option>
+                    <option value="fr" data-translate="france">France</option>
                     <option value="ar" data-translate="arabic"></option>
                     <option value="es" data-translate="spanish">spanish</option>
                 </select>
@@ -32,7 +34,7 @@ const currentLang = "<?php echo $currentLang; ?>";
 
 let translations = langData[currentLang] || langData['zh'];
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
     const userLang = localStorage.getItem('language') || currentLang;
 
     updateLanguage(userLang); 
@@ -44,37 +46,41 @@ function updateLanguage(lang) {
     localStorage.setItem('language', lang); 
     translations = langData[lang] || langData['zh'];  
 
-    document.querySelectorAll('[data-translate]').forEach((el) => {
+    const translateElement = (el, attribute, property) => {
+        const translationKey = el.getAttribute(attribute);
+        if (translations[translationKey]) {
+            el[property] = translations[translationKey];
+        }
+    };
+
+    document.querySelectorAll('[data-translate]').forEach(el => {
         const translationKey = el.getAttribute('data-translate');
-        const translationValue = translations[translationKey] || ''; 
+        const dynamicContent = el.getAttribute('data-dynamic-content') || '';
+
         if (translations[translationKey]) {
             if (el.tagName === 'OPTGROUP') {
-                el.setAttribute('label', translationValue);  
+                el.setAttribute('label', translations[translationKey]);
             } else {
-                el.innerText = translationValue;  
+                el.innerText = translations[translationKey] + dynamicContent; 
             }
         }
     });
 
-    document.querySelectorAll('[data-translate-title]').forEach((el) => {
-        const translationKey = el.getAttribute('data-translate-title');
-        const translationValue = translations[translationKey] || ''; 
-        if (translations[translationKey]) {
-            el.setAttribute('title', translations[translationKey]);
-        }
+    document.querySelectorAll('[data-translate-title]').forEach(el => {
+        translateElement(el, 'data-translate-title', 'title');
     });
 
-    document.querySelectorAll('[data-translate-placeholder]').forEach((el) => {
+    document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
         const translationKey = el.getAttribute('data-translate-placeholder');
-        const translationValue = translations[translationKey] || ''; 
         if (translations[translationKey]) {
             el.setAttribute('placeholder', translations[translationKey]);
+            el.setAttribute('aria-label', translations[translationKey]);  
+            el.setAttribute('title', translations[translationKey]); 
         }
     });
 
-    document.querySelectorAll('[data-translate]').forEach((el) => {
+    document.querySelectorAll('[data-translate]').forEach(el => {
         const translationKey = el.getAttribute('data-translate');
-        const translationValue = translations[translationKey] || ''; 
         if (translationKey && translations[translationKey]) {
             el.setAttribute('label', translations[translationKey]);  
         }
@@ -94,6 +100,8 @@ function updateFlagIcon(lang) {
         'ru': './assets/neko/flags/ru.png',  
         'ar': './assets/neko/flags/sa.png', 
         'es': './assets/neko/flags/es.png',  
+        'de': './assets/neko/flags/de.png', 
+        'fr': './assets/neko/flags/fr.png',  
         'vn': './assets/neko/flags/vn.png'      
     };
     flagImg.src = flagMap[lang] || flagMap['zh']; 
@@ -113,6 +121,19 @@ function changeLanguage(lang) {
           updateFlagIcon(lang);  
       });
 }
+</script>
+
+<script>
+const logMessages = document.querySelectorAll('#log-message');
+
+logMessages.forEach(message => {
+    setTimeout(() => {
+        message.style.opacity = '0'; 
+        setTimeout(() => {
+            message.remove(); 
+        }, 500); 
+    }, 4000); 
+});
 </script>
 
 <?php
@@ -519,7 +540,7 @@ $lang = $_GET['lang'] ?? 'en';
 }
 </style>
 
-<?php if (in_array($currentLang, ['zh', 'en', 'hk', 'vn', 'jp', 'ru', 'ar', 'es', 'kr'])): ?>
+<?php if (in_array($currentLang, ['zh', 'en', 'hk', 'vn', 'jp', 'ru', 'ar', 'es', 'kr', 'de', 'fr'])): ?>
     <div id="status-bar-component" class="container-sm container-bg callout border border-3 rounded-4 col-11">
         <div class="row align-items-center">
             <div class="col-auto">
@@ -660,7 +681,7 @@ $lang = $_GET['lang'] ?? 'en';
         background-color: #218838;
     }
 
-    .popup {
+    .settings-panel {
         display: none; 
         position: fixed;
         top: 50%;
@@ -675,18 +696,22 @@ $lang = $_GET['lang'] ?? 'en';
         text-align: center;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         width: 820px;
-        display: grid;
+
         grid-template-columns: repeat(3, 1fr);
         gap: 10px;
     }
 
-    .popup h3 {
+    .settings-panel.active {
+        display: grid; 
+    }
+
+    .settings-panel h3 {
         grid-column: span 3;
         text-align: center;
         margin-bottom: 10px;
     }
 
-    .popup button {
+    .settings-panel button {
         padding: 12px;
         font-size: 14px;
         cursor: pointer;
@@ -697,16 +722,16 @@ $lang = $_GET['lang'] ?? 'en';
         transition: background 0.3s, transform 0.2s;
     }
 
-    .popup button:hover {
+    .settings-panel button:hover {
         background: rgba(0, 0, 0, 0.2);
         transform: scale(1.05);
     }
 
-    .popup button:active {
+    .settings-panel button:active {
         transform: scale(0.95);
     }
 
-    .popup button:last-child {
+    .settings-panel button:last-child {
         grid-column: span 3;
         justify-self: center;
         width: 80%;
@@ -714,7 +739,7 @@ $lang = $_GET['lang'] ?? 'en';
         color: red;
     }
 
-    .popup button:last-child:hover {
+    .settings-panel button:last-child:hover {
         background: rgba(255, 0, 0, 0.4);
     }
 
@@ -728,6 +753,10 @@ $lang = $_GET['lang'] ?? 'en';
       padding: 2rem;
       margin-top: 2rem;
       margin-bottom: 2rem;
+    }
+
+    #log-message {
+        transition: opacity 0.5s ease; 
     }
 
 @media (max-width: 768px) {
@@ -829,14 +858,8 @@ $lang = $_GET['lang'] ?? 'en';
   }
 }
 
-@media (max-width: 768px) {
-    #toggle-ip i {
-        display: none; 
-    }
-}
-
 @media (max-width: 767.98px) {
-    .popup-backdrop {
+    .settings-panel-backdrop {
         content: '';
         position: fixed;
         top: 0;
@@ -848,7 +871,7 @@ $lang = $_GET['lang'] ?? 'en';
         z-index: 1040; 
     }
 
-    .popup {
+    .settings-panel {
         display: none; 
         grid-template-columns: 1fr 1fr;
         gap: 10px;
@@ -864,14 +887,14 @@ $lang = $_GET['lang'] ?? 'en';
         z-index: 1050; 
     }
 
-    .popup h3 {
+    .settings-panel h3 {
         grid-column: 1 / -1;
         text-align: center;
         font-size: 1.5rem;
         margin-bottom: 20px;
     }
 
-    .popup button {
+    .settings-panel button {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -884,25 +907,25 @@ $lang = $_GET['lang'] ?? 'en';
         transition: background-color 0.2s ease-in-out;
     }
 
-    .popup button:hover {
+    .settings-panel button:hover {
         background-color: #0056b3;
     }
 
-    .popup button i {
+    .settings-panel button i {
         margin-right: 5px;
     }
 
-    .popup button:last-child {
+    .settings-panel button:last-child {
         grid-column: 1 / -1;
         background-color: #dc3545;
         color: #fff; 
     }
 
-    .popup button:last-child i {
+    .settings-panel button:last-child i {
         color: #fff; 
     }
 
-    .popup button:last-child:hover {
+    .settings-panel button:last-child:hover {
         background-color: #c82333;
     }
 }
@@ -1036,79 +1059,112 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function translateText(text, targetLang = null) {
-    if (!text || text.trim() === '') return text;
+    if (!text?.trim()) return text;
 
-    if (!targetLang) {
-        targetLang = localStorage.getItem('language') || 'zh';
-    }
+    const countryToLang = {
+        'CN': 'zh-CN', 'HK': 'zh-HK', 'TW': 'zh-TW', 'JP': 'ja',
+        'KR': 'ko', 'VN': 'vi', 'TH': 'th', 'GB': 'en', 'FR': 'fr',
+        'DE': 'de', 'RU': 'ru', 'US': 'en', 'MX': 'es'
+    };
 
-    if (targetLang === 'zh') targetLang = 'zh-CN';
-    if (targetLang === 'hk') targetLang = 'zh-HK';
-    if (targetLang === 'vn') targetLang = 'vi';
-    if (targetLang === 'jp') targetLang = 'ja';
-    if (targetLang === 'en') targetLang = 'en-GB';
-    if (targetLang === 'kr') targetLang = 'ko';
-    if (targetLang === 'ru') targetLang = 'ru'; 
+    if (!targetLang) targetLang = localStorage.getItem('language') || 'CN';
+    targetLang = countryToLang[targetLang.toUpperCase()] || targetLang;
 
-    const isTranslationEnabled = localStorage.getItem('translationEnabled') === 'true';
-    if (!isTranslationEnabled) return text;
+    const apiLangMap = {
+        'zh-CN': 'zh-CN', 'zh-HK': 'zh-HK', 'zh-TW': 'zh-TW',
+        'ja': 'ja', 'ko': 'ko', 'vi': 'vi', 'en': 'en-GB', 'ru': 'ru'
+    };
+    const apiTargetLang = apiLangMap[targetLang] || targetLang;
 
-    const cacheKey = `trans_${text}_${targetLang}`;
-    const cachedTranslation = localStorage.getItem(cacheKey);
-    if (cachedTranslation) return cachedTranslation;
+    const detectJP = (text) => /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
+    const sourceLang = detectJP(text) ? 'ja' : 'en';
+
+    const isSameLang = () => sourceLang.split('-')[0] === apiTargetLang.split('-')[0];
+    if (isSameLang()) return text;
+
+    if (localStorage.getItem('translationEnabled') !== 'true') return text;
+
+    const cacheKey = `trans_${sourceLang}_${apiTargetLang}_${text}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) return cached;
 
     const apis = [
         {
-            url: `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`,
+            url: `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${apiTargetLang}&de=example@yourdomain.com`,
             method: 'GET',
-            parseResponse: (data) => data.responseData?.translatedText || null
+            parse: data => data.responseData?.translatedText
         },
         {
             url: 'https://libretranslate.com/translate',
             method: 'POST',
-            body: JSON.stringify({
-                q: text,
-                source: 'en', 
-                target: targetLang,
-                format: 'text'
-            }),
-            headers: { 'Content-Type': 'application/json' },
-            parseResponse: (data) => data?.translatedText || null
+            body: JSON.stringify({ q: text, source: sourceLang, target: apiTargetLang, format: 'text' }),
+            headers: { 'Content-Type': 'application/json' }
         },
         {
-            url: `https://lingva.ml/api/v1/en/${targetLang}/${encodeURIComponent(text)}`,
+            url: 'https://translate.argosopentech.com/translate',
+            method: 'POST',
+            body: JSON.stringify({ q: text, source: sourceLang, target: apiTargetLang }),
+            headers: { 'Content-Type': 'application/json' },
+            parse: data => data.translatedText
+        },
+        {
+            url: `https://lingva.ml/api/v1/${sourceLang}/${apiTargetLang}/${encodeURIComponent(text)}`,
             method: 'GET',
-            parseResponse: (data) => data?.translation || null
+            parse: data => data.translation
+        },
+        {
+            url: `https://lingva.pussthecat.org/api/v1/${sourceLang}/${apiTargetLang}/${encodeURIComponent(text)}`,
+            method: 'GET',
+            parse: data => data.translation
+        },
+        {
+            url: `https://api-proxy.com/baidu?q=${encodeURIComponent(text)}&from=${sourceLang}&to=${apiTargetLang}`,
+            method: 'GET',
+            parse: data => data.trans_result?.[0]?.dst
+        },
+        {
+            url: `https://translate.yandex.net/api/v1.5/tr.json/translate?key=freekey&text=${encodeURIComponent(text)}&lang=${apiTargetLang}`,
+            method: 'GET',
+            parse: data => data.text?.[0]
         }
     ];
 
-    for (const api of apis) {
-        try {
-            const response = await fetch(api.url, {
-                method: api.method,
-                headers: api.headers || {},
-                body: api.body || null
-            });
+    const controller = new AbortController();
+    try {
+        const promises = apis.map(async (api) => {
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject('timeout'), api.timeout || 3000)
+            );
 
-            if (response.ok) {
+            try {
+                const fetchPromise = fetch(api.url, {
+                    method: api.method,
+                    headers: api.headers || {},
+                    body: api.method === 'POST' ? api.body : undefined,
+                    signal: controller.signal
+                });
+                
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
                 const data = await response.json();
-                const translatedText = api.parseResponse(data);
-                
-                try {
-                    localStorage.setItem(cacheKey, translatedText);  
-                } catch (e) {
-                    clearOldCache();  
-                    localStorage.setItem(cacheKey, translatedText);
-                }
-                
-                return translatedText;
+                return api.parse ? api.parse(data) : data?.translatedText;
+            } catch (e) {
+                return null;
             }
-        } catch (error) {
-            continue;  
+        });
+
+        for (const promise of promises) {
+            const result = await promise;
+            if (result) {
+                localStorage.setItem(cacheKey, result);
+                clearOldCache();
+                return result;
+            }
         }
+    } finally {
+        controller.abort();
     }
 
-    return text; 
+    return text;
 }
 
 function clearOldCache() {
@@ -1237,7 +1293,14 @@ let IP = {
                 displayASN = '';  
             }
 
-            let locationInfo = `<span style="margin-left: 8px; position: relative; top: -4px;">${location} ${displayISP} ${data.asn || ''} ${displayASN}</span>`;
+            const isSmallScreen = window.innerWidth < 768; 
+
+            let locationInfo;
+            if (isSmallScreen) {
+                locationInfo = `<span style="margin-left: 8px; position: relative; top: -4px;">${location} ${data.asn || ''} ${displayASN}</span>`;
+            } else {
+                locationInfo = `<span style="margin-left: 8px; position: relative; top: -4px;">${location} ${displayISP} ${data.asn || ''} ${displayASN}</span>`;
+            }
 
             const isHidden = localStorage.getItem("ipHidden") === "true";
 
@@ -1245,7 +1308,7 @@ let IP = {
                 <div class="ip-main" style="cursor: pointer; position: relative; top: -4px;" onclick="IP.showDetailModal()" title="${translations['show_ip']}">
                     <div style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; ">
                         <div style="display: flex; align-items: center; gap: 5px;">
-                            <span id="ip-address">${isHidden ? '***.***.***.***.***' : cachedIP}</span> 
+                            <span id="ip-address">${isHidden ? '**.**.**.**.**' : cachedIP}</span> 
                             <span class="badge badge-primary" style="color: #333;">${country}</span>
 
                         </div>
@@ -1254,7 +1317,7 @@ let IP = {
                 <span id="toggle-ip" style="cursor: pointer; position: relative; top: -3px; text-indent: 0.3ch; padding-top: 2px;" title="${translations['hide_ip']}">
                     <i class="fa ${isHidden ? 'bi-eye-slash' : 'bi-eye'}" style="font-size: 1.4rem; vertical-align: middle;"></i>  
                 </span>
-                <span class="control-toggle" style="cursor: pointer; margin-left: 10px; display: inline-flex; align-items: center; position: relative; top: -1.7px;" onclick="togglePopup()" title="${translations['control_panel']}">
+                <span class="control-toggle" style="cursor: pointer; margin-left: 10px; display: inline-flex; align-items: center; position: relative; top: -1.7px;" onclick="toggleSettingsPanel()" title="${translations['control_panel']}">
                     <i class="bi bi-gear" style="font-size: 1.1rem; margin-right: 5px; vertical-align: middle;"></i>  
                 </span>
             `;
@@ -1599,10 +1662,8 @@ setInterval(IP.getIpipnetIP, 180000);
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var video = document.getElementById('background-video');
-        var popup = document.getElementById('popup');
         var controlPanel = document.getElementById('controlPanel');
 
-        popup.style.display = "none";
         controlPanel.style.display = "none";
     
         var savedMuteState = localStorage.getItem("videoMuted");
@@ -1701,15 +1762,6 @@ setInterval(IP.getIpipnetIP, 180000);
         });
     });
 
-    function togglePopup() {
-        var popup = document.getElementById('popup');
-    
-        if (popup.style.display === "none" || popup.style.display === "") {
-            popup.style.display = "grid"; 
-        } else {
-            popup.style.display = "none"; 
-        }
-    }
 
     function toggleAudio() {
         var video = document.getElementById('background-video');
@@ -1788,25 +1840,58 @@ setInterval(IP.getIpipnetIP, 180000);
         }
     }
 
-  function updateButtonStates() {
+    document.addEventListener('DOMContentLoaded', function() {
+        var video = document.getElementById('background-video');
+    
+        var savedMuted = localStorage.getItem('muted');
+        if (savedMuted !== null) {
+            video.muted = savedMuted === 'true';
+        }
+    
+        updateButtonStates(true);
+    });
+
+    function updateButtonStates(useSaved = false) {
         var video = document.getElementById('background-video');
         var audioBtn = document.getElementById('audio-btn');
         var fullscreenBtn = document.getElementById('fullscreen-btn');
 
         audioBtn.textContent = video.muted ? translations['mute'] : translations['unmute'];
-        fullscreenBtn.textContent = document.fullscreenElement ? translations['fullscreen_exit'] : translations['fullscreen_enter'];
+    
+        if (useSaved) {
+            var savedFullscreen = localStorage.getItem('isFullscreen') === 'true';
+            fullscreenBtn.textContent = savedFullscreen ? translations['fullscreen_exit'] : translations['fullscreen_enter'];
+        } else {
+            var isFullscreen = !!document.fullscreenElement;
+            localStorage.setItem('isFullscreen', isFullscreen);
+            fullscreenBtn.textContent = isFullscreen ? translations['fullscreen_exit'] : translations['fullscreen_enter'];
+        }
     }
 
-    document.addEventListener("keydown", function(event) {
-        if (event.ctrlKey && event.shiftKey && event.key === "Q") {
-            togglePopup();
+    function toggleFullscreen() {
+        var video = document.getElementById('background-video');
+        if (!document.fullscreenElement) {
+            video.requestFullscreen().then(() => {
+                updateButtonStates();
+            });
+        } else {
+            document.exitFullscreen().then(() => {
+                updateButtonStates();
+            });
         }
-    });
+    }
+
+    function toggleMute() {
+        var video = document.getElementById('background-video');
+        video.muted = !video.muted;
+        localStorage.setItem('muted', video.muted);
+        updateButtonStates();
+    }
 
     document.addEventListener("fullscreenchange", updateButtonStates);
 </script>
 
-<div class="popup" id="popup">
+<div class="settings-panel" id="settingsPanel">
     <h3 data-translate="control_panel_title">🔧 Control Panel</h3>
     <button onclick="toggleAudio()" id="audio-btn" data-translate="audio_toggle"></button>
     <button onclick="toggleControlPanel()" id="control-btn" data-translate="control_toggle">🎛️ Volume and Progress Control</button>
@@ -1824,9 +1909,9 @@ setInterval(IP.getIpipnetIP, 180000);
     <button type="button" data-bs-toggle="modal" data-bs-target="#colorModal" data-translate="theme_editor"><i class="bi-palette"></i> Theme Editor</button>                   
     <button type="button" data-bs-toggle="modal" data-bs-target="#filesModal" data-translate="set_background"><i class="bi-camera-video"></i> Set Background</button>
     <button data-bs-toggle="modal" data-bs-target="#langModal"><img id="flagIcon" src="./assets/neko/flags/cn.png" alt="Country Flag" style="width: 30px; height: auto; margin-right: 10px;"><span data-translate="set_language">Set Language</span></button>
-     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.open('./filekit.php', '_blank')"><i class="bi bi-file-earmark"></i> <span data-translate="fileHelper">文件助手</span></button>
-     <button type="button"  id="translationToggleBtn">🔤 启用翻译</button>
-    <button onclick="togglePopup()" data-translate="close_popup">❌ Close</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.open('./filekit.php', '_blank')"><i class="bi bi-file-earmark"></i> <span data-translate="fileHelper"></span></button>
+    <button type="button" id="translationToggleBtn" data-translate="enableTranslation"></button>
+    <button onclick="closeSettingsPanel()" data-translate="close_popup">❌ Close</button>
 </div>
 
 <div id="controlPanel">
@@ -1853,7 +1938,6 @@ setInterval(IP.getIpipnetIP, 180000);
         left: 50%;
         top: 10%;
         transform: translateX(-50%);
-        background-color: rgba(0, 0, 0, 0.5);
         justify-content: center;
         align-items: flex-start;
         width: 100%;
@@ -1904,22 +1988,41 @@ setInterval(IP.getIpipnetIP, 180000);
 </div>
 
 <script>
-    const modal = document.getElementById("animationModal");
-    const openModalBtn = document.getElementById("openModalBtn");
-
-    openModalBtn.addEventListener("click", () => {
-        modal.style.display = "flex";
-    });
-
-    function closeModal() {
-        modal.style.display = "none";
+document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.shiftKey && event.key === 'Q') {
+        event.preventDefault(); 
+        toggleSettingsPanel();
     }
+});
 
-    window.addEventListener("click", (event) => {
-        if (event.target === modal) {
-            closeModal();
-        }
-    });
+function toggleSettingsPanel() {
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.toggle('active');
+}
+
+function closeSettingsPanel() {
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.remove('active');
+}
+</script>
+
+<script>
+const modal = document.getElementById("animationModal");
+const openModalBtn = document.getElementById("openModalBtn");
+
+openModalBtn.addEventListener("click", () => {
+    modal.style.display = "flex";
+});
+
+function closeModal() {
+    modal.style.display = "none";
+}
+
+window.addEventListener("click", (event) => {
+    if (event.target === modal) {
+        closeModal();
+    }
+});
 </script>
 
 <script>
@@ -2026,104 +2129,33 @@ window.addEventListener('load', function() {
     margin: 10px 0;
 }
 
-#audioPlayerModal .modal-content {
-    background: #222;
-    color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-}
-
-#audioPlayerModal .modal-header {
-
-}
-
-#audioPlayerModal .modal-title {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-#audioPlayerModal .close {
-    color: #fff;
-    opacity: 0.8;
-}
-
-#audioPlayerModal .close:hover {
-    opacity: 1;
-}
-
-.audio-player-container {
-    padding: 20px;
-
-}
-
-.audio-player-container button {
-    margin: 8px;
-    padding: 10px 15px;
-    font-size: 16px;
-    border: none;
-    border-radius: 8px;
-    transition: all 0.3s ease-in-out;
-    cursor: pointer;
-}
-
-.audio-player-container .btn-primary {
-    background: #ff5733; 
-    color: white;
-}
-
-.audio-player-container .btn-primary {
-    background: #FF5722 !important; 
-    color: white !important;
-}
-
-.audio-player-container .btn-primary:hover {
-    background: #e64a19 !important; 
-}
-
-.audio-player-container .btn-secondary {
-    background: #9C27B0 !important; 
-    color: white !important;
-}
-
-.audio-player-container .btn-secondary:hover {
-    background: #8E24AA !important; 
-}
-
-.audio-player-container .btn-info {
-    background: #00BCD4 !important; 
-    color: white !important;
-}
-
-.audio-player-container .btn-info:hover {
-    background: #0097A7 !important; 
-}
-
-.audio-player-container .btn-warning {
-    background: #FF9800 !important; 
-    color: black !important;
-}
-
-.audio-player-container .btn-warning:hover {
-    background: #FB8C00 !important; 
-}
-
-.audio-player-container .btn-dark {
-    background: #8BC34A !important; 
-    color: white !important;
-}
-
-.audio-player-container .btn-dark:hover {
-    background: #7CB342 !important; 
-}
-
+.btn.btn-outline-primary,
+#modalRewindButton,
+#modalPrevButton,
+#modalPlayPauseButton,
+#modalNextButton,
+#modalFastForwardButton,
 #modalLoopButton {
-    color: white !important;
-    background-color: #f39c12 !important; 
+    background-color: #009688; 
+    border-color: #009688; 
+    color: white; 
+    border-radius: 8px; 
+    padding: 10px 15px; 
+    font-size: 16px; 
+    cursor: pointer; 
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out; 
 }
 
+.btn.btn-outline-primary:hover,
+#modalRewindButton:hover,
+#modalPrevButton:hover,
+#modalPlayPauseButton:hover,
+#modalNextButton:hover,
+#modalFastForwardButton:hover,
 #modalLoopButton:hover {
-    background-color: #f5b041 !important; 
-    color: white !important; 
+    background-color: #1db954; 
+    border-color: #1db954; 
+    color: white; 
 }
 
 .track-name {
@@ -2183,17 +2215,24 @@ window.addEventListener('load', function() {
     display: block;
     margin-left: auto;
     margin-right: auto; 
-}
+} 
 
 @media (max-width: 768px) {
     .audio-player-container {
-      flex-direction: column;
-      align-items: center;
+        flex-wrap: nowrap; 
+        gap: 5px; 
     }
 
     .audio-player-container button {
-      width: 100%;
-      margin: 5px 0;
+        padding: 0; 
+    }
+
+    .audio-player-container button:not(#modalPlayPauseButton, #modalLoopButton) span {
+        display: none; 
+    }
+
+    .audio-player-container button i {
+        font-size: 16px; 
     }
 }
 
@@ -2201,7 +2240,7 @@ window.addEventListener('load', function() {
     max-height: 500px; 
     overflow-y: auto;  
     overflow-x: hidden; 
-    background-color: rgba(0, 0, 0, 0.8); 
+    background-color: rgba(0, 31, 63, 0.9); 
     backdrop-filter: blur(10px); 
     border-radius: 8px; 
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); 
@@ -2229,15 +2268,15 @@ window.addEventListener('load', function() {
 }
 
 #trackList .list-group-item.active {
-    background-color: #007bff;
+    background-color: #0056b3; 
     color: white; 
     font-weight: bold; 
 }
 
 #trackList .list-group-item:hover {
-    background-color: #0056b3; 
+    background-color: rgba(0, 86, 179, 0.8); 
     color: white; 
-    transform: scale(1.05); 
+    transform: scale(1.01); 
 }
 
 #playlistCollapse::-webkit-scrollbar {
@@ -2256,7 +2295,7 @@ window.addEventListener('load', function() {
 #trackList .list-group-item .track-name {
     flex-grow: 1;
     font-size: 1rem;
-    color: #fff; 
+    color: #fff;
     text-overflow: ellipsis; 
     overflow: hidden;
     white-space: nowrap;
@@ -2271,16 +2310,19 @@ window.addEventListener('load', function() {
     padding: 5px;
     margin: 5px;
 }
+
 .btn-bordered {
     border: 1px solid #ccc; 
     border-radius: 5px;
     padding: 5px 10px;
 }
+
 .file-checkbox {
     margin-right: 10px;
     width: 20px;
     height: 20px;
 }
+
 .icon-button .tooltip {
     visibility: hidden;
     width: auto;
@@ -2318,42 +2360,153 @@ window.addEventListener('load', function() {
 </style>
 
 <style>
-.lyrics-container {
-    max-height: 220px;
+#lyricsContainer {
+    max-height: 320px;
     overflow-y: auto;
     margin-top: 20px;
     border: 1px solid #333;
     padding: 10px;
-    background-color: #000; 
+    background-color: #001f3f; 
+    border-radius: 10px; 
     border-radius: 5px;
     text-align: center;
-    color: #fff; 
     font-family: 'SimSun', 'Songti SC', '宋体', serif; 
     font-size: 1.1rem; 
+    background: rgba(0, 31, 63, 0.9) !important; 
+    white-space: pre-wrap; 
+    word-break: keep-all; 
 }
 
-.lyrics-container .highlight {
-    color: #ff0; 
-    font-weight: bold;
+.lyric-line {
+    opacity: 1 !important;
+    color: #cccccc !important; 
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    transition: color 0.3s; 
 }
 
-.lyrics-container::-webkit-scrollbar {
+.lyric-line .char {
+    display: inline-block;
+    white-space: nowrap;
+    margin-right: 0.1rem;  
+}
+
+.lyric-line .char.played {
+    background: linear-gradient(...);
+}
+
+.lyric-line.highlight {
+    color: #cccccc !important; 
+    font-size: 1.3rem;
+}
+
+.lyric-line.highlight .char {
+    transition: all 0.1s ease;  
+}
+
+.lyric-line.highlight .char.active {
+    transform: scale(1.2);
+    background: linear-gradient(
+        90deg,
+        #ff3366 0%, 
+        #ff9933 25%,
+        #ffcc00 50%, 
+        #66ff33 75%,
+        #33ccff 100%
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent !important;
+    animation: color-flow 1s linear infinite;
+    text-shadow: 
+        0 0 10px rgba(255,51,102,0.5),
+        0 0 15px rgba(102,255,51,0.5),
+        0 0 20px rgba(51,204,255,0.5);
+}
+
+#lyricsContainer::-webkit-scrollbar {
     width: 13.5px; 
 }
 
-.lyrics-container::-webkit-scrollbar-track {
-    background: #000; 
+#lyricsContainer::-webkit-scrollbar-track {
+    background: rgba(0, 31, 63, 0.9);
+    margin: 80px 0;
 }
 
-.lyrics-container::-webkit-scrollbar-thumb {
+#lyricsContainer::-webkit-scrollbar-thumb {
     background-color: #007bff; 
     border-radius: 10px; 
     border: 3px solid #000; 
 }
-}
-</style>
 
-<style>
+.lyric-line.enter-active {
+    animation: textPop 0.5s ease;
+}
+
+@keyframes textPop {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes color-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.char.space {
+    display: inline;
+    min-width: 0.5em; 
+}
+
+.visualizer {
+    display: flex;
+    justify-content: center; 
+    align-items: flex-end;
+    gap: 3px;  
+    width: 100%; 
+    height: 50px;
+    margin: 0 auto; 
+    padding: 0;
+}
+
+.bar {
+    width: 1px;
+    flex: 1;
+    max-width: 3px;
+    background: linear-gradient(to bottom, 
+        rgba(255,107,107,0.9) 0%,
+        rgba(123,237,159,0.7) 30%,
+        rgba(112,161,255,0.6) 70%,
+        rgba(255,159,243,0.5) 100%
+    );
+    transition: height 0.25s cubic-bezier(0.2, 0.6, 0.3, 1.1);
+    transform-origin: bottom;
+}
+
+@keyframes colorFlow {
+    0% {
+        background-position: 0% 0%;
+        opacity: 0.9;
+    }
+    50% {
+        background-position: 100% 0%;
+        opacity: 1;
+    }
+    100% {
+        background-position: 200% 0%;
+        opacity: 0.9;
+    }
+}
+
+.bar:nth-child(odd) {
+    height: 30%;
+}
+.bar:nth-child(even) {
+    height: 20%;  
+}
+
 .floating-lyrics {
     position: fixed;
     left: 50%; 
@@ -2365,7 +2518,6 @@ window.addEventListener('load', function() {
     padding: 10px 15px;
     border-radius: 10px;
     font-size: 16px;
-    display: none;
     display: inline-block; 
     min-width: 100px; 
     max-width: 80%; 
@@ -2373,7 +2525,33 @@ window.addEventListener('load', function() {
     white-space: nowrap; 
     z-index: 9999;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
-    transition: color 0.5s ease-in-out;
+    border: 1px solid rgba(255, 215, 0, 0.3); 
+    transition: font-size 0.3s ease;
+}
+
+.floating-lyrics .char {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.floating-lyrics:has(.char.active) {
+    font-size: 18px; 
+}
+
+.floating-lyrics .char.active {
+    transform: scale(1.35) translateY(-2px); 
+    color: #FFC125 !important;
+    display: inline-block;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@media (max-width: 768px) {
+    .floating-lyrics:has(.char.active) {
+        font-size: 15px; 
+    }
+    .floating-lyrics .char.active {
+        transform: scale(1.2); 
+    }
 }
 
 @media (max-width: 768px) {
@@ -2395,62 +2573,213 @@ window.addEventListener('load', function() {
         font-size: 9px;
     }
 }
+
+@media (max-width: 768px) {
+    .modal-body img {
+        display: none;
+    }
+    .datetime-container {
+        font-size: 17px !important; 
+    }
+}
 </style>
 <div id="floatingLyrics" class="floating-lyrics"></div>
 <div class="modal fade" id="audioPlayerModal" tabindex="-1" aria-labelledby="audioPlayerModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-xl" role="document">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header text-white">
         <h5 class="modal-title" id="audioPlayerModalLabel" data-translate="music_player">Music Player</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <div class="datetime-container">
+      <div class="modal-body position-relative d-flex flex-column align-items-center"> 
+        <img src="./assets/img/nekobox.png" 
+             alt="NekoBox Logo" 
+             class="position-absolute top-0 mt-4 me-2" 
+             style="width: 100px; height: auto; z-index: 1000; right: 40px;">
+        <div class="datetime-container" style="font-size: 24px">
           <span id="dateDisplay"></span> 
           <span id="timeDisplay"></span>
         </div>
-        <audio id="audioElement" controls>
+        <audio id="audioElement" controls class="w-100 mt-3">
           <source id="audioSource" type="audio/mp3" src="your-audio-file.mp3">
           Your browser does not support the audio element.
         </audio>
-        <div class="audio-player-container text-center">
-          <button id="modalPlayPauseButton" class="btn btn-primary"><span data-translate="play1"></span></button>
-          <button id="modalPrevButton" class="btn btn-secondary" data-translate="previous_song">⏪ Previous Song</button>
-          <button id="modalNextButton" class="btn btn-secondary" data-translate="next_song">⏩ Next Song</button>
-          <button id="modalRewindButton" class="btn btn-dark" data-translate="rewind">⏪ Rewind</button>
-          <button id="modalFastForwardButton" class="btn btn-info" data-translate="fast_forward">⏩ Fast Forward</button>
-          <button id="modalLoopButton" class="btn btn-warning" data-translate="loop">🔁 Loop</button>
-          <div class="track-name" id="trackName" data-translate="no_song">No Song</div>
+        <div class="audio-player-container text-center w-100 mt-3 d-flex justify-content-center align-items-center gap-3">
+          <button id="modalRewindButton" data-translate-title="rewind"><i class="fas fa-backward"></i></button>
+          <button id="modalPrevButton" data-translate-title="previous_song"><i class="fas fa-step-backward"></i></button>
+          <button id="modalPlayPauseButton"><i class="fas fa-play"></i></button>
+          <button id="modalNextButton" data-translate-title="next_song"><i class="fas fa-step-forward"></i></button>
+          <button id="modalFastForwardButton" data-translate-title="fast_forward"><i class="fas fa-forward"></i></button>
+          <button id="modalLoopButton" data-translate-title="loop"><i class="fas fa-sync-alt"></i></button>
         </div>
-        <button class="btn btn-outline-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#playlistCollapse" aria-expanded="true" data-translate="toggle_playlist">
-          📜 Show/Hide Playlist
-        </button>
-        <button class="btn btn-outline-primary mt-3 ms-2" type="button" data-bs-toggle="modal" data-bs-target="#urlModal" data-translate="customize_playlist">🔗 Customize Playlist</button>
-        <button class="btn btn-outline-primary mt-3 ms-2"  id="clearStorageBtn" data-translate="clear_playback_settings"><i class="fas fa-trash-alt"></i> Clear Playback Settings</button>
-        <button class="btn btn-outline-primary mt-3 ms-2"  id="pinLyricsButton" data-translate="pin_lyrics"><i class="fas fa-thumbtack"></i> Pin Lyrics</button>
-        <div id="playlistCollapse" class="collapse mt-3">
+        <div class="visualizer">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+        <div class="track-name text-center mt-3" id="trackName" style="font-size: 24px" data-translate="no_song">No Song</div>
+        <div class="lyrics-container mt-3 w-100" id="lyricsContainer"></div>
+        <div class="d-flex justify-content-center align-items-center gap-3 mt-3 w-100">
+          <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#playlistCollapse" aria-expanded="true" data-translate-title="toggle_playlist"><i class="fas fa-list"></i> </button>
+          <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#urlModal" data-translate-title="customize_playlist"><i class="fas fa-cogs"></i> </button>
+          <button class="btn btn-outline-primary" id="clearStorageBtn" data-translate-title="clear_playback_settings"><i class="fas fa-trash-alt"></i> </button>
+          <button class="btn btn-outline-primary" id="pinLyricsButton" data-translate-title="pin_lyrics"><i class="fas fa-thumbtack"></i> </button>
+        </div>
+        <div id="playlistCollapse" class="collapse mt-3 w-100">
           <h3 data-translate="playlist">Playlist</h3>
           <ul id="trackList" class="list-group"></ul>
         </div>
-        <div class="lyrics-container" id="lyricsContainer"></div>
-        <div id="tooltip"></div>
       </div>
     </div>
   </div>
 </div>
-
+<script>
+const bars = document.querySelectorAll('.bar');
+function synthWave() {
+  const time = Date.now() / 1000;
+  
+  bars.forEach((bar, i) => {
+    const frequency = 0.5 + i * 0.2; 
+    const amplitude = Math.sin(time * frequency) * 50 + 50; 
+    const height = amplitude * (0.8 + Math.random() * 0.2); 
+    
+    bar.style.height = `${Math.max(5, height)}%`;
+    bar.style.backgroundColor = `hsl(${(time * 50 + i * 30) % 360}, 80%, 60%)`;
+  });
+  
+  requestAnimationFrame(synthWave);
+}
+synthWave();
+</script> 
 <script>
 const audioPlayer = document.getElementById('audioElement');
 let songs = [];
-let currentSongIndex = 0;
+let lyricTimes = [];
+let currentChars = [];
 let isPlaying = false;
 let isReportingTime = false;
 let isLooping = false;
 let hasModalShown = false;
 let lyrics = {};
 let isPinned = false; 
+let isHovering = false;
+let isManualScroll = false;
 let isSmallScreen = window.innerWidth <= 768;
-
 
 const logBox = document.createElement('div');
 logBox.style.position = 'fixed';
@@ -2600,11 +2929,10 @@ function saveSongOrder() {
 
 function extractSongName(url) {
     const parts = url.split('/');
-    return decodeURIComponent(parts[parts.length - 1]);
-}
-
-function updateTrackName() {
-    document.getElementById('trackName').textContent = extractSongName(songs[currentSongIndex]);
+    const fileName = parts[parts.length - 1];
+    const decoded = decodeURIComponent(fileName);
+    const lastDotIndex = decoded.lastIndexOf('.');
+    return lastDotIndex === -1 ? decoded : decoded.substring(0, lastDotIndex);
 }
 
 function highlightCurrentSong() {
@@ -2619,10 +2947,12 @@ function highlightCurrentSong() {
 function loadSong(index) {
     if (index >= 0 && index < songs.length) {
         audioPlayer.src = songs[index];
+        audioPlayer.currentTime = 0; 
         audioPlayer.addEventListener('loadedmetadata', () => {
             const savedState = JSON.parse(localStorage.getItem('playerState'));
             if (savedState && savedState.timestamp) {
                 audioPlayer.currentTime = savedState.currentTime || 0;
+                updateTrackName(); 
                 if (savedState.isPlaying) {
                     audioPlayer.play().catch(error => {
                         console.error(translations['restore_play_error'], error); 
@@ -2643,8 +2973,10 @@ playPauseButton.addEventListener('click', function() {
             isPlaying = true;
             savePlayerState();
             console.log(translations['start_playing']); 
+            showLogMessage(translations['start_playing']); 
             speakMessage(translations['start_playing']); 
-            playPauseButton.textContent = '⏸️ ' + translations['pause']; 
+            playPauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+            playPauseButton.title = translations['pause']; 
             updateTrackName();
         }).catch(error => {
             console.log(translations['play_error'], error);
@@ -2654,14 +2986,17 @@ playPauseButton.addEventListener('click', function() {
         isPlaying = false;
         savePlayerState();
         console.log(translations['paused']); 
+        showLogMessage(translations['paused']); 
         speakMessage(translations['paused']); 
-        playPauseButton.textContent = '' + translations['play']; 
+        playPauseButton.innerHTML = '<i class="fas fa-play"></i>'; 
+        playPauseButton.title = translations['play']; 
     }
 });
 
 document.getElementById('modalPrevButton').addEventListener('click', () => {
     currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
     loadSong(currentSongIndex);
+    updateTrackName();
     savePlayerState();
     if (isPlaying) {
         audioPlayer.play();
@@ -2676,6 +3011,7 @@ document.getElementById('modalPrevButton').addEventListener('click', () => {
 document.getElementById('modalNextButton').addEventListener('click', () => {
     currentSongIndex = (currentSongIndex + 1) % songs.length;
     loadSong(currentSongIndex);
+    updateTrackName();
     savePlayerState();
     if (isPlaying) {
         audioPlayer.play();
@@ -2688,7 +3024,7 @@ document.getElementById('modalNextButton').addEventListener('click', () => {
 });
 
 function updateTrackName() {
-    if (songs.length > 0) {
+    if (songs.length > 0 && currentSongIndex >= 0 && currentSongIndex < songs.length) {
         const currentSongUrl = songs[currentSongIndex];
         const trackName = extractSongName(currentSongUrl);
         document.getElementById('trackName').textContent = trackName || translations['unknown_song'];
@@ -2733,18 +3069,21 @@ loopButton.addEventListener('click', () => {
     isLooping = !isLooping;
     
     if (isLooping) {
-        loopButton.textContent = "" + translations['loop']; 
+        loopButton.innerHTML = '<i class="fas fa-repeat"></i>';
+        loopButton.title = translations['loop'];
         console.log(translations['looping']); 
         showLogMessage(translations['looping']); 
         speakMessage(translations['looping']); 
         audioPlayer.loop = true;
     } else {
-        loopButton.textContent = "🔄" + translations['sequential']; 
+        loopButton.innerHTML = '<i class="fas fa-list-ol"></i>'; 
+        loopButton.title = translations['sequential']; 
         console.log(translations['sequential_playing']); 
         showLogMessage(translations['sequential_playing']); 
         speakMessage(translations['sequential_playing']); 
         audioPlayer.loop = false;
     }
+    savePlayerState(); 
 });
 
 function getSongName(url) {
@@ -2760,43 +3099,66 @@ function startHourlyAlert() {
         if (now.getMinutes() === 0 && !isReportingTime) {
             isReportingTime = true;
 
-            const timeAnnouncement = new SpeechSynthesisUtterance(`整点报时，现在是北京时间 ${hours} 点整`);
-            timeAnnouncement.lang = currentLang;
+            const hourlyAlertText = translations['hourlyAlert'];  
+            const hourlyAnnouncementTemplate = translations['hourlyAnnouncement'];
+
+            const timeAnnouncementText = hourlyAnnouncementTemplate.replace('%d', hours);
+
+            const timeAnnouncement = new SpeechSynthesisUtterance(hourlyAlertText + ' ' + timeAnnouncementText);
+            timeAnnouncement.lang = currentLang; 
             speechSynthesis.speak(timeAnnouncement);
 
-            console.log(`整点报时：现在是北京时间 ${hours} 点整`);
+            console.log(`${hourlyAlertText}：${timeAnnouncementText}`);
         }
 
         if (now.getMinutes() !== 0) {
             isReportingTime = false;
         }
-    }, 60000);
+    }, 60000);  
 }
 
 function updateDateTime() {
     const now = new Date();
-
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
     const day = now.getDate();
-    document.getElementById('dateDisplay').textContent = `${year}年${month}月${day}日`;
+    const monthLabel = translations['month'];  
+    const dayLabel = translations['day'];  
+    const weekdayLabel = translations['weekday'];  
+    const weekdays = translations['weekdays'];  
+    const weekDay = weekdays[now.getDay()]; 
+    const yearText = translations['year'] ? `${year}${translations['year']}` : `${year}-`;
+    const langsWithDash = ['en', 'vn', 'ru', 'ar', 'es', 'de', 'fr'];
 
-    const timeString = now.toLocaleTimeString('zh-CN', { hour12: false });
+    let dateDisplay;
+    if (currentLang === 'ko') {
+        dateDisplay = `${yearText} ${month}${monthLabel} ${day}${dayLabel} ${weekDay}${weekdayLabel}`;
+    } else if (currentLang === 'ja') {
+        dateDisplay = `${yearText}${month}${monthLabel}${day}${dayLabel} ${weekDay}`;
+    } else if (langsWithDash.includes(currentLang)) {
+        dateDisplay = `${yearText}${month}-${day} ${weekDay}`;
+    } else {
+        dateDisplay = `${yearText}${month}${monthLabel}${day}${dayLabel} ${weekdayLabel}${weekDay}`;
+    }
+
+    document.getElementById('dateDisplay').textContent = dateDisplay;
+
+    const timeString = now.toLocaleTimeString(currentLang === 'zh' ? 'zh-CN' : currentLang, { hour12: false });
 
     const hours = now.getHours();
     let ancientTime;
-    if (hours >= 23 || hours < 1) ancientTime = '子时';
-    else if (hours >= 1 && hours < 3) ancientTime = '丑时';
-    else if (hours >= 3 && hours < 5) ancientTime = '寅时';
-    else if (hours >= 5 && hours < 7) ancientTime = '卯时';
-    else if (hours >= 7 && hours < 9) ancientTime = '辰时';
-    else if (hours >= 9 && hours < 11) ancientTime = '巳时';
-    else if (hours >= 11 && hours < 13) ancientTime = '午时';
-    else if (hours >= 13 && hours < 15) ancientTime = '未时';
-    else if (hours >= 15 && hours < 17) ancientTime = '申时';
-    else if (hours >= 17 && hours < 19) ancientTime = '酉时';
-    else if (hours >= 19 && hours < 21) ancientTime = '戌时';
-    else ancientTime = '亥时';
+    if (hours >= 23 || hours < 1) ancientTime = '子時';
+    else if (hours >= 1 && hours < 3) ancientTime = '丑時';
+    else if (hours >= 3 && hours < 5) ancientTime = '寅時';
+    else if (hours >= 5 && hours < 7) ancientTime = '卯時';
+    else if (hours >= 7 && hours < 9) ancientTime = '辰時';
+    else if (hours >= 9 && hours < 11) ancientTime = '巳時';
+    else if (hours >= 11 && hours < 13) ancientTime = '午時';
+    else if (hours >= 13 && hours < 15) ancientTime = '未時';
+    else if (hours >= 15 && hours < 17) ancientTime = '申時';
+    else if (hours >= 17 && hours < 19) ancientTime = '酉時';
+    else if (hours >= 19 && hours < 21) ancientTime = '戌時';
+    else ancientTime = '亥時';
 
     document.getElementById('timeDisplay').textContent = `${timeString} (${ancientTime})`;
 }
@@ -2804,7 +3166,7 @@ function updateDateTime() {
 setInterval(updateDateTime, 1000);
 updateDateTime();
 
-function savePlayerState() {
+function savePlayerState(partial = false) {
     const state = {
         currentSongIndex,
         currentTime: audioPlayer.currentTime,
@@ -2814,35 +3176,24 @@ function savePlayerState() {
         lastPlayedSong: extractSongName(songs[currentSongIndex]),
         timestamp: Date.now()
     };
-    localStorage.setItem('playerState', JSON.stringify(state));
-}
 
-function clearExpiredPlayerState() {
-    const state = JSON.parse(localStorage.getItem('playerState'));
-
-    if (state) {
-        const currentTime = Date.now();
-        const stateAge = currentTime - state.timestamp;
-
-        const expirationTime = 60 * 60 * 1000;
-
-        if (stateAge > expirationTime) {
-            localStorage.removeItem('playerState');
-            console.log(translations['player_state_expired']); 
-        }
+    if (partial) {
+        const savedState = JSON.parse(localStorage.getItem('playerState') || '{}');
+        savedState.currentTime = state.currentTime;
+        localStorage.setItem('playerState', JSON.stringify(savedState));
+    } else {
+        localStorage.setItem('playerState', JSON.stringify(state));
     }
 }
 
-setInterval(() => {
-    localStorage.removeItem('playerState');
-}, 60 * 60 * 1000);
+//setInterval(() => savePlayerState(true), 1000);
 
 document.getElementById('clearStorageBtn').addEventListener('click', function() {
     localStorage.removeItem('playerState');
     localStorage.removeItem('songOrder'); 
     loadDefaultPlaylist(); 
-    document.getElementById('modalPlayPauseButton').textContent = '▶ ' + translations['play'];
-    alert('Player state cleared!');
+    document.getElementById('modalPlayPauseButton').innerHTML = '<i class="fas fa-play"></i>';
+    alert(translations["state_cleared"] || " Player state cleared.");  
 });
 
 function restorePlayerState() {
@@ -2850,21 +3201,40 @@ function restorePlayerState() {
     if (state) {
         currentSongIndex = state.currentSongIndex || 0;
         isLooping = state.isLooping || false;
-        if (state.playlistCollapsed) {
-            document.getElementById('playlistCollapse').classList.remove('show');
-        } else {
-            document.getElementById('playlistCollapse').classList.add('show');
-        }
+        audioPlayer.loop = isLooping; 
         loadSong(currentSongIndex);
+        updateTrackName();
+
+        if (isLooping) {
+            loopButton.innerHTML = '<i class="fas fa-repeat"></i>';
+            loopButton.title = translations['loop'];
+        } else {
+            loopButton.innerHTML = '<i class="fas fa-list-ol"></i>';
+            loopButton.title = translations['sequential'];
+        }
+
         if (state.isPlaying) {
             isPlaying = true;
-            playPauseButton.textContent = '⏸️ ' + translations['pause']; 
-            audioPlayer.currentTime = state.currentTime || 0;
-            audioPlayer.play().catch(error => {
-                console.error(translations['restore_play_error'], error);
-            });
+            playPauseButton.innerHTML = '<i class="fas fa-pause"></i>'; 
+            playPauseButton.title = translations['pause'];
+
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                audioPlayer.currentTime = state.currentTime || 0;
+
+                audioPlayer.play().catch(error => {
+                    console.error(translations['restore_play_error'], error);
+                });
+            }, { once: true }); 
         }
+
         console.log(`恢复播放: ${state.lastPlayedSong}，时间戳: ${new Date(state.timestamp).toLocaleString()}`);
+    } else {
+        currentSongIndex = 0;
+        loadSong(currentSongIndex);
+        updateTrackName();
+        playPauseButton.innerHTML = '<i class="fas fa-play"></i>'; 
+        playPauseButton.title = translations['play']; 
+        highlightCurrentSong();
     }
 }
 
@@ -2885,6 +3255,7 @@ function loadLyrics(songUrl) {
 
 function parseLyrics(lyricsText) {
     lyrics = {};
+    lyricTimes = []; 
     const regex = /\[(\d+):(\d+)\.(\d+)\](.+)/g;
     let match;
     while ((match = regex.exec(lyricsText)) !== null) {
@@ -2892,52 +3263,221 @@ function parseLyrics(lyricsText) {
         const seconds = parseInt(match[2], 10);
         const millis = parseInt(match[3], 10);
         const time = minutes * 60 + seconds + millis / 1000;
-        lyrics[time] = match[4];
+        const text = match[4].replace(/\[\d{2}:\d{2}\.\d{3}\]/g, '').trim();
+        lyrics[time] = text;
+        lyricTimes.push(time);
     }
+    lyricTimes.sort((a, b) => a - b); 
+}
+
+function tokenize(text) {
+    const tokens = [];
+    let currentWord = '';
+    
+    for (const char of text) {
+        if (/\s/.test(char)) {
+            if (currentWord) {
+                tokens.push(currentWord);
+                currentWord = '';
+            }
+            tokens.push({ type: 'space', value: char });
+            continue;
+        }
+
+        if (/[-–—]/.test(char)) {
+            if (currentWord) {
+                tokens.push(currentWord);
+                currentWord = '';
+            }
+            tokens.push({ type: 'punctuation', value: char });
+            continue;
+        }
+
+        if (/[a-zA-Z0-9]/.test(char)) {
+            currentWord += char;
+        } else {
+            if (currentWord) {
+                tokens.push(currentWord);
+                currentWord = '';
+            }
+            tokens.push({ type: 'char', value: char });
+        }
+    }
+
+    if (currentWord) tokens.push(currentWord);
+    return tokens;
+}
+
+function createCharSpans(text, startTime, endTime) {
+    const tokens = tokenize(text);
+    const totalDuration = endTime - startTime;
+    const charCount = text.replace(/\s/g, '').length; 
+    const durationPerChar = totalDuration / charCount;
+
+    let charIndex = 0;
+    const spans = [];
+
+    tokens.forEach(token => {
+        if (typeof token === 'string') { 
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'word';
+            const letters = token.split('');
+            
+            letters.forEach(letter => {
+                const span = document.createElement('span');
+                span.className = 'char';
+                span.textContent = letter;
+                span.dataset.start = startTime + charIndex * durationPerChar;
+                span.dataset.end = startTime + (charIndex + 1) * durationPerChar;
+                wordSpan.appendChild(span);
+                charIndex++;
+            });
+            
+            spans.push(wordSpan);
+        } else if (token.type === 'space') { 
+            const spaceSpan = document.createElement('span');
+            spaceSpan.className = 'char space';
+            spaceSpan.innerHTML = '&nbsp;';
+            spans.push(spaceSpan);
+        } else if (token.type === 'punctuation') { 
+            const punctSpan = document.createElement('span');
+            punctSpan.className = 'char punctuation';
+            punctSpan.textContent = token.value;
+            punctSpan.dataset.start = startTime + charIndex * durationPerChar;
+            punctSpan.dataset.end = startTime + (charIndex + 1) * durationPerChar;
+            spans.push(punctSpan);
+            charIndex++;
+        } else { 
+            const span = document.createElement('span');
+            span.className = 'char';
+            span.textContent = token.value;
+            span.dataset.start = startTime + charIndex * durationPerChar;
+            span.dataset.end = startTime + (charIndex + 1) * durationPerChar;
+            spans.push(span);
+            charIndex++;
+        }
+    });
+
+    return spans;
 }
 
 function displayLyrics() {
     const lyricsContainer = document.getElementById('lyricsContainer');
     lyricsContainer.innerHTML = '';
 
-    const times = Object.keys(lyrics).map(parseFloat).sort((a, b) => a - b);
-    times.forEach(time => {
+    lyricTimes.forEach((time, index) => {
         const line = document.createElement('div');
         line.className = 'lyric-line';
         line.dataset.time = time;
-
-        const lyricText = lyrics[time].replace(/\[\d{2}:\d{2}\.\d{3}\]/g, '').trim();
-
-        line.textContent = lyricText;
+        
+        const endTime = index < lyricTimes.length - 1 
+                      ? lyricTimes[index + 1] 
+                      : time + 3; 
+        
+        const chars = createCharSpans(lyrics[time], time, endTime);
+        chars.forEach(span => line.appendChild(span)); 
         lyricsContainer.appendChild(line);
     });
 
     audioPlayer.addEventListener('timeupdate', syncLyrics);
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+
+    const lyricsContainer = document.getElementById('lyricsContainer');
+    
+    lyricsContainer.addEventListener('mouseenter', () => {
+        isHovering = true;
+    });
+
+    lyricsContainer.addEventListener('mouseleave', () => {
+        isHovering = false;
+        isManualScroll = false;
+    });
+
+    lyricsContainer.addEventListener('scroll', () => {
+        if (isHovering) {
+            isManualScroll = true;
+            setTimeout(() => {
+                isManualScroll = false;
+            }, 3000); 
+        }
+    });
+});
+
 function syncLyrics() {
     const currentTime = audioPlayer.currentTime;
     const lyricsContainer = document.getElementById('lyricsContainer');
     const lines = lyricsContainer.querySelectorAll('.lyric-line');
-
     let currentLine = null;
+    let hasActiveLine = false;
 
-    lines.forEach(line => {
-        const time = parseFloat(line.dataset.time);
-        if (currentTime >= time) {
-            lines.forEach(l => l.classList.remove('highlight'));
+    lines.forEach(line => line.classList.remove('highlight', 'played'));
+
+    for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i];
+        const lineTime = parseFloat(line.dataset.time);
+        if (currentTime >= lineTime) {
             line.classList.add('highlight');
             currentLine = line;
-            if (!isSmallScreen) {  
-                line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            hasActiveLine = true;
+            break;
+        }
+    }
+
+    if (currentLine) {
+        const chars = currentLine.querySelectorAll('.char');
+        chars.forEach(char => {
+            const start = parseFloat(char.dataset.start);
+            const end = parseFloat(char.dataset.end);
+            if (currentTime >= start && currentTime <= end) {
+                char.classList.add('active');
+            } else if (currentTime > end) {
+                char.classList.add('played');
+            }
+        });
+
+        const floatingLyrics = document.getElementById('floatingLyrics');
+        if (!floatingLyrics.innerHTML || currentLine.dataset.time !== floatingLyrics.dataset.time) {
+            floatingLyrics.innerHTML = currentLine.innerHTML;
+            floatingLyrics.dataset.time = currentLine.dataset.time;
+            floatingLyrics.classList.add('enter-active');
+            setTimeout(() => floatingLyrics.classList.remove('enter-active'), 500);
+        }
+
+        const floatingChars = floatingLyrics.querySelectorAll('.char');
+        chars.forEach((char, index) => {
+            const floatingChar = floatingChars[index];
+            if (!floatingChar) return;
+
+            const start = parseFloat(char.dataset.start);
+            const end = parseFloat(char.dataset.end);
+            
+            if (currentTime >= start && currentTime <= end) {
+                floatingChar.classList.add('active');
+                const progress = (currentTime - start) / (end - start);
+                floatingChar.style.transform = `scale(${1 + progress * 0.2})`;
+            } else {
+                floatingChar.classList.remove('active');
+                floatingChar.style.transform = '';
+            }
+        });
+
+        if (!isSmallScreen && !isHovering && !isManualScroll) {
+            const lineRect = currentLine.getBoundingClientRect();
+            const containerRect = lyricsContainer.getBoundingClientRect();
+            const targetPosition = lineRect.top - containerRect.top + lyricsContainer.scrollTop - (lyricsContainer.clientHeight / 2) + (lineRect.height / 2);
+            
+            const buffer = 50;
+            if (lineRect.top < containerRect.top + buffer || 
+                lineRect.bottom > containerRect.bottom - buffer) {
+                lyricsContainer.scrollTo({ top: targetPosition, behavior: 'smooth' });
             }
         }
-    });
+    }
 
-    if (isPinned && currentLine) {
-        const floatingLyrics = document.getElementById('floatingLyrics');
-        floatingLyrics.textContent = currentLine.textContent;
-        floatingLyrics.style.display = 'block';  
+    if (!hasActiveLine && lyricsContainer.scrollTop !== 0) {
+        lyricsContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -2992,6 +3532,24 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+    const playlistCollapse = document.getElementById('playlistCollapse');
+    const toggleButton = document.querySelector('[data-bs-target="#playlistCollapse"]');
+
+    const savedCollapseState = localStorage.getItem('playlistCollapseState');
+    if (savedCollapseState === 'collapsed') {
+        new bootstrap.Collapse(playlistCollapse, { toggle: false });
+    } else {
+        new bootstrap.Collapse(playlistCollapse, { toggle: true });
+    }
+
+    playlistCollapse.addEventListener('hidden.bs.collapse', function () {
+        localStorage.setItem('playlistCollapseState', 'collapsed'); 
+    });
+
+    playlistCollapse.addEventListener('shown.bs.collapse', function () {
+        localStorage.setItem('playlistCollapseState', 'expanded'); 
+    });
+
     const lyricsContainer = document.querySelector("#lyricsContainer");
     const floatingLyrics = document.querySelector("#floatingLyrics");
     const trackName = document.querySelector("#trackName");
@@ -3000,7 +3558,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const icons = document.querySelectorAll(".icon");
 
-    const colors = ["#ff69b4", "#ff4500", "#00ff00", "#00ffff", "#ff1493", "#007bff"];
+    const colors = ["#ff69b4", "#ff4500", "#00ff00", "#00ffff", "#ff1493", "#00FF7F"];
 
     let lyricsContainerIndex = 0;
     let floatingLyricsIndex = 1;
@@ -3101,7 +3659,7 @@ window.addEventListener('keydown', function(event) {
             console.log(translations['pause_play']);
             showLogMessage(translations['pause_play']);
             speakMessage(translations['pause_play']);
-            playPauseButton.textContent = '▶ ' + translations['play']; 
+            playPauseButton.textContent = '' + translations['play']; 
         } else {
             audioPlayer.play().then(() => {
                 isPlaying = true;
@@ -3109,7 +3667,7 @@ window.addEventListener('keydown', function(event) {
                 console.log(translations['start_play']);
                 showLogMessage(translations['start_play']);
                 speakMessage(translations['start_play']);
-                playPauseButton.textContent = '⏸️ ' + translations['pause']; 
+                playPauseButton.textContent = '⏸' + translations['pause']; 
             }).catch(error => {
                 console.log('播放失败:', error);
             });
@@ -3118,13 +3676,13 @@ window.addEventListener('keydown', function(event) {
         isLooping = !isLooping;
         const loopButton = document.getElementById('modalLoopButton');
         if (isLooping) {
-            loopButton.textContent = "🔁 " + translations['loop']; 
+            loopButton.textContent = "" + translations['loop']; 
             audioPlayer.loop = true;
             console.log(translations['loop_play']);
             showLogMessage(translations['loop_play']);
             speakMessage(translations['loop_play']);
         } else {
-            loopButton.textContent = "🔄 " + translations['sequential']; 
+            loopButton.textContent = "" + translations['sequential']; 
             audioPlayer.loop = false;
             console.log(translations['sequential_play']);
             showLogMessage(translations['sequential_play']);
@@ -3216,11 +3774,6 @@ function showNotification(message) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-warning d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <strong data-translate="attention"></strong> 
-                    <span data-translate="functionIssueMessage"></span>
-                </div>
                 <ul>
                     <li><strong data-translate="f9Key">F9 Key:</strong></li>
                     <li><strong data-translate="arrowUpDown">Up/Down Arrow Keys:</strong></li>
@@ -3284,70 +3837,66 @@ function showNotification(message) {
         'https://www.github.com/'
     ];
 
-    function speakMessage(message) {
-        const utterance = new SpeechSynthesisUtterance(message);
-        utterance.lang = currentLang;  
-        speechSynthesis.speak(utterance);
-    }
+function speakMessage(message) {
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = currentLang;  
+    speechSynthesis.speak(utterance);
+}
 
-    function getWebsiteStatusMessage(url, status) {
-        const statusMessages = {
-            'https://www.baidu.com/': status ? 'Baidu 网站访问正常。' : '无法访问 Baidu 网站，请检查网络连接。',
-            'https://www.cloudflare.com/': status ? 'Cloudflare 网站访问正常。' : '无法访问 Cloudflare 网站，请检查网络连接。',
-            'https://openai.com/': status ? 'OpenAI 网站访问正常。' : '无法访问 OpenAI 网站，请检查网络连接。',
-            'https://www.youtube.com/': status ? 'YouTube 网站访问正常。' : '无法访问 YouTube 网站，请检查网络连接。',
-            'https://www.google.com/': status ? 'Google 网站访问正常。' : '无法访问 Google 网站，请检查网络连接。',
-            'https://www.facebook.com/': status ? 'Facebook 网站访问正常。' : '无法访问 Facebook 网站，请检查网络连接。',
-            'https://www.twitter.com/': status ? 'Twitter 网站访问正常。' : '无法访问 Twitter 网站，请检查网络连接。',
-            'https://www.github.com/': status ? 'GitHub 网站访问正常。' : '无法访问 GitHub 网站，请检查网络连接。',
-        };
+function getWebsiteStatusMessage(url, status) {
+    const statusMessages = translations['statusMessages'][url] || {};
+    
+    const message = status 
+        ? statusMessages['accessible'] || `${url} 网站访问正常。`
+        : statusMessages['notAccessible'] || `无法访问 ${url} 网站，请检查网络连接。`;
 
-        return statusMessages[url] || (status ? `${url} 网站访问正常。` : `无法访问 ${url} 网站，请检查网络连接。`);
-    }
+    return message;
+}
 
-    function checkWebsiteAccess(urls) {
-        const statusMessages = [];
-        let requestsCompleted = 0;
+function checkWebsiteAccess(urls) {
+    const statusMessages = [];
+    let requestsCompleted = 0;
 
-        urls.forEach(url => {
-            fetch(url, { mode: 'no-cors' })
-                .then(response => {
-                    const isAccessible = response.type === 'opaque';  
-                    statusMessages.push(getWebsiteStatusMessage(url, isAccessible));
-                })
-                .catch(() => {
-                    statusMessages.push(getWebsiteStatusMessage(url, false));
-                })
-                .finally(() => {
-                    requestsCompleted++;
-                    if (requestsCompleted === urls.length) {
-                        speakMessage(statusMessages.join(' '));  
-                        speakMessage('网站检查已完毕，感谢使用。'); 
-                    }
-                });
-        });
-    }
-
-    setInterval(() => {
-        speakMessage('开始检测网站连通性...');
-        checkWebsiteAccess(websites);  
-    }, 3600000);  
-
-    let isDetectionStarted = false;
-
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'F8' && !isDetectionStarted) {  
-            event.preventDefault();  
-            speakMessage('网站检测已开启，开始检测网站连通性...');
-            checkWebsiteAccess(websites);
-            isDetectionStarted = true;
-        }
+    urls.forEach(url => {
+        fetch(url, { mode: 'no-cors' })
+            .then(response => {
+                const isAccessible = response.type === 'opaque';  
+                statusMessages.push(getWebsiteStatusMessage(url, isAccessible));
+            })
+            .catch(() => {
+                statusMessages.push(getWebsiteStatusMessage(url, false));
+            })
+            .finally(() => {
+                requestsCompleted++;
+                if (requestsCompleted === urls.length) {
+                    speakMessage(statusMessages.join(' '));  
+                    speakMessage(translations['websiteChecked']); 
+                }
+            });
     });
+}
 
-    document.getElementById('startCheckBtn').addEventListener('click', function() {
-        speakMessage('网站检测已开启，开始检测网站连通性...');
+setInterval(() => {
+    speakMessage(translations['startCheck']);
+    checkWebsiteAccess(websites);  
+}, 3600000);  
+
+let isDetectionStarted = false;
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'F8' && !isDetectionStarted) {  
+        event.preventDefault();  
+        speakMessage(translations['checkStarted']);
         checkWebsiteAccess(websites);
-    });
+        isDetectionStarted = true;
+    }
+});
+
+document.getElementById('startCheckBtn').addEventListener('click', function() {
+    speakMessage(translations['checkStarted']);
+    checkWebsiteAccess(websites);
+});
+
 </script>
 
 <script>
@@ -3536,101 +4085,103 @@ function speakWeather(weather) {
 </style>
 
 <script>
-    (function() {
-        let isAnimationActive = localStorage.getItem('animationActive') === 'true';
-        let intervalId;
+(function() {
+    let isAnimationActive = localStorage.getItem('animationActive') === 'true';
+    let intervalId;
 
-        function createAnimatedBox() {
-            const box = document.createElement('div');
-            box.className = 'animated-box';
-            document.body.appendChild(box);
-            const randomX = Math.random() * window.innerWidth;
-            const randomY = Math.random() * window.innerHeight;
-            box.style.left = randomX + 'px';
-            box.style.top = randomY + 'px';
-            const randomDuration = Math.random() * 3 + 3;
-            box.style.animationDuration = randomDuration + 's';
-            setTimeout(() => {
-                box.remove();
-            }, randomDuration * 1000);
-        }
+    function createAnimatedBox() {
+        const box = document.createElement('div');
+        box.className = 'animated-box';
+        document.body.appendChild(box);
+        const randomX = Math.random() * window.innerWidth;
+        const randomY = Math.random() * window.innerHeight;
+        box.style.left = randomX + 'px';
+        box.style.top = randomY + 'px';
+        const randomDuration = Math.random() * 3 + 3;
+        box.style.animationDuration = randomDuration + 's';
+        setTimeout(() => {
+            box.remove();
+        }, randomDuration * 1000);
+    }
 
-        function startAnimation() {
-            intervalId = setInterval(() => {
-                createAnimatedBox();
-            }, 1000);
-            localStorage.setItem('animationActive', 'true');
-            isAnimationActive = true;
-            updateButtonText();
-        }
-
-        function stopAnimation() {
-            clearInterval(intervalId);
-            localStorage.setItem('animationActive', 'false');
-            isAnimationActive = false;
-            updateButtonText();
-        }
-
-        function showNotification(message) {
-            var notification = document.createElement('div');
-            notification.style.position = 'fixed';
-            notification.style.top = '10px';
-            notification.style.right = '30px';
-            notification.style.backgroundColor = '#4CAF50';
-            notification.style.color = '#fff';
-            notification.style.padding = '10px';
-            notification.style.borderRadius = '5px';
-            notification.style.zIndex = '9999';
-            notification.innerText = message;
-            document.body.appendChild(notification);
-
-            setTimeout(function() {
-                notification.style.display = 'none';
-            }, 5000);
-        }
-
-        function updateButtonText() {
-            document.getElementById('toggleAnimationBtn').innerText = isAnimationActive ? '⏸️ 停止方块动画' : '▶ 启动方块动画';
-        }
-
-        window.addEventListener('keydown', function(event) {
-            if (event.ctrlKey && event.key === 'F10') {
-                isAnimationActive = !isAnimationActive;
-                if (isAnimationActive) {
-                    startAnimation();
-                    showNotification('方块动画已启动');
-                    speakMessage('方块动画已启动');
-                } else {
-                    stopAnimation();
-                    showNotification('方块动画已停止');
-                    speakMessage('方块动画已停止');
-                }
-            }
-        });
-
-        document.getElementById('toggleAnimationBtn').addEventListener('click', function() {
-            if (isAnimationActive) {
-                stopAnimation();
-                showNotification('⏸️ 方块动画已停止');
-                speakMessage('方块动画已停止');
-            } else {
-                startAnimation();
-                showNotification('▶ 方块动画已启动');
-                speakMessage('方块动画已启动');
-            }
-        });
-
-        if (isAnimationActive) {
-            startAnimation();
-        }
+    function startAnimation() {
+        intervalId = setInterval(() => {
+            createAnimatedBox();
+        }, 1000);
+        localStorage.setItem('animationActive', 'true');
+        isAnimationActive = true;
         updateButtonText();
+    }
+
+    function stopAnimation() {
+        clearInterval(intervalId);
+        localStorage.setItem('animationActive', 'false');
+        isAnimationActive = false;
+        updateButtonText();
+    }
+
+    function showNotification(message) {
+        var notification = document.createElement('div');
+        notification.style.position = 'fixed';
+        notification.style.top = '10px';
+        notification.style.right = '30px';
+        notification.style.backgroundColor = '#4CAF50';
+        notification.style.color = '#fff';
+        notification.style.padding = '10px';
+        notification.style.borderRadius = '5px';
+        notification.style.zIndex = '9999';
+        notification.innerText = message;
+        document.body.appendChild(notification);
+
+        setTimeout(function() {
+            notification.style.display = 'none';
+        }, 5000);
+    }
+
+    function updateButtonText() {
+        document.getElementById('toggleAnimationBtn').innerText = isAnimationActive 
+            ? translations['toggleButton']['stop']
+            : translations['toggleButton']['start'];
+    }
+
+    window.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.key === 'F10') {
+            isAnimationActive = !isAnimationActive;
+            if (isAnimationActive) {
+                startAnimation();
+                showNotification(translations['startAnimation']);
+                speakMessage(translations['startAnimation']);
+            } else {
+                stopAnimation();
+                    showNotification(translations['stopAnimation']);
+                    speakMessage(translations['stopAnimation']);
+            }
+        }
+    });
+
+    document.getElementById('toggleAnimationBtn').addEventListener('click', function() {
+        if (isAnimationActive) {
+            stopAnimation();
+                showNotification(translations['stopAnimation']);
+                speakMessage(translations['stopAnimation']);
+        } else {
+            startAnimation();
+                showNotification(translations['startAnimation']);
+                speakMessage(translations['startAnimation']);
+        }
+    });
+
+    if (isAnimationActive) {
+        startAnimation();
+    }
+    updateButtonText();
     })();
 
-    function speakMessage(message) {
-        const utterance = new SpeechSynthesisUtterance(message);
-        utterance.lang = 'zh-CN';
-        speechSynthesis.speak(utterance);
-    }
+function speakMessage(message) {
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = currentLang;  
+    speechSynthesis.speak(utterance);
+}
 </script>
 
 <style>
@@ -3802,14 +4353,14 @@ function speakWeather(weather) {
         saveSnowingState(isSnowing);
         if (isSnowing) {
             createSnowflakes();
-            showNotification('雪花动画已启动');
-            speakMessage('雪花动画已启动');
-            document.getElementById('toggleSnowBtn').innerText = '⏸️ 停止雪花动画';
+            showNotification(translations['startSnowflakes']);
+            speakMessage(translations['startSnowflakes']);
+            document.getElementById('toggleSnowBtn').innerText = translations['toggleSnowButton']['stop'];
         } else {
             stopSnowflakes();
-            showNotification('雪花动画已停止');
-            speakMessage('雪花动画已停止');
-            document.getElementById('toggleSnowBtn').innerText = '▶ 启动雪花动画';
+            showNotification(translations['stopSnowflakes']);
+            speakMessage(translations['stopSnowflakes']);
+            document.getElementById('toggleSnowBtn').innerText = translations['toggleSnowButton']['start'];
         }
     }
 
@@ -3822,7 +4373,7 @@ function speakWeather(weather) {
     document.getElementById('toggleSnowBtn').addEventListener('click', toggleSnowflakes);
 
     if (isSnowing) {
-        document.getElementById('toggleSnowBtn').innerText = '⏸️ 停止雪花动画';
+        document.getElementById('toggleSnowBtn').innerText = translations['toggleSnowButton']['stop'];
     }
 
 </script>
@@ -3905,10 +4456,13 @@ function speakWeather(weather) {
     }
 
     function startLightAnimation(showLog = true) {
-        intervalId = setInterval(createLightBox, 400); 
+        intervalId = setInterval(createLightBox, 400);  
         localStorage.setItem('lightAnimationStatus', 'true');  
-        if (showLog) showNotification('方块灯光动画已启动');
-        document.getElementById('toggleLightAnimationBtn').innerText = '⏸️ 停止灯光动画';
+        if (showLog) {
+            showNotification(translations['startLightAnimation']);
+            speakMessage(translations['startLightAnimation']);
+        }
+        updateButtonText();
     }
 
     function stopLightAnimation(showLog = true) {
@@ -3916,8 +4470,11 @@ function speakWeather(weather) {
         const allLights = document.querySelectorAll('.floating-light');
         allLights.forEach(light => light.remove()); 
         localStorage.setItem('lightAnimationStatus', 'false');  
-        if (showLog) showNotification('方块灯光动画已停止');
-        document.getElementById('toggleLightAnimationBtn').innerText = '▶ 启动灯光动画';
+        if (showLog) {
+            showNotification(translations['stopLightAnimation']);
+            speakMessage(translations['stopLightAnimation']);
+        }
+        updateButtonText();
     }
 
     function showNotification(message) {
@@ -3938,20 +4495,12 @@ function speakWeather(weather) {
         }, 5000);
     }
 
-    function speakMessage(message) {
-        const utterance = new SpeechSynthesisUtterance(message);
-        utterance.lang = 'zh-CN';
-        speechSynthesis.speak(utterance);
-    }
-
     function toggleLightAnimation() {
         isLightAnimationActive = !isLightAnimationActive;
         if (isLightAnimationActive) {
             startLightAnimation();
-            speakMessage('方块灯光动画已启动');
         } else {
             stopLightAnimation();
-            speakMessage('方块灯光动画已停止');
         }
     }
 
@@ -3963,9 +4512,11 @@ function speakWeather(weather) {
 
         document.getElementById('toggleLightAnimationBtn').addEventListener('click', toggleLightAnimation);
 
-        if (isLightAnimationActive) {
-            document.getElementById('toggleLightAnimationBtn').innerText = '⏸️ 停止灯光动画';
-        }
+    if (isLightAnimationActive) {
+        document.getElementById('toggleLightAnimationBtn').innerText = translations['toggleLightButton']['stop'];
+    } else {
+        document.getElementById('toggleLightAnimationBtn').innerText = translations['toggleLightButton']['start'];
+    }
     })();
 </script>
 
@@ -4026,16 +4577,22 @@ function speakWeather(weather) {
         if (lightInterval) clearInterval(lightInterval);
         lightInterval = setInterval(createLightPoint, 200); 
         localStorage.setItem('lightEffectAnimation', 'true');
-        if (showLog) showNotification('光点动画已开启');
-        document.getElementById('toggleLightEffectBtn').innerText = '⏸️ 停止光点动画';
+        if (showLog) {
+            showNotification(translations['startLightEffect']);
+            speakMessage(translations['startLightEffect']);
+        }
+        updateButtonText();
     }
 
     function stopLightEffect(showLog = true) {
         clearInterval(lightInterval);
         document.querySelectorAll('.light-point').forEach((light) => light.remove());
         localStorage.setItem('lightEffectAnimation', 'false');
-        if (showLog) showNotification('光点动画已关闭');
-        document.getElementById('toggleLightEffectBtn').innerText = '▶ 启动光点动画';
+        if (showLog) {
+            showNotification(translations['stopLightEffect']);
+            speakMessage(translations['stopLightEffect']);
+        }
+        updateButtonText();
     }
 
     function showNotification(message) {
@@ -4066,10 +4623,8 @@ function speakWeather(weather) {
         isLightEffectActive = !isLightEffectActive;
         if (isLightEffectActive) {
             startLightEffect();
-            speakMessage('光点动画已启动');
         } else {
             stopLightEffect();
-            speakMessage('光点动画已关闭');
         }
     }
 
@@ -4082,8 +4637,9 @@ function speakWeather(weather) {
             document.getElementById('toggleLightEffectBtn').addEventListener('click', toggleLightEffect);
 
             if (isLightEffectActive) {
-                document.getElementById('toggleLightEffectBtn').innerText = '⏸️ 停止光点动画';
-                startLightEffect(false);
+                document.getElementById('toggleLightEffectBtn').innerText = translations['toggleLightEffectButton']['stop'];
+            } else {
+                document.getElementById('toggleLightEffectBtn').innerText = translations['toggleLightEffectButton']['start'];
             }
         })();
 </script>
@@ -4110,17 +4666,17 @@ function speakWeather(weather) {
         <input type="range" class="form-range" name="containerWidth" id="containerWidth" min="800" max="5400" step="50" value="1800" style="width: 100%;">
         <div id="widthValue" class="mt-2" style="color: #FF00FF;" data-translate="current_width">Current Width: 1800px</div>
 
-        <label for="modalMaxWidth" class="form-label mt-4" data-translate="modal_max_width">Modal Max Width</label>
+        <label for="modalMaxWidth" class="form-label mt-4" data-translate="settings.modal.maxWidth">Modal Max Width</label>
         <input type="range" class="form-range" name="modalMaxWidth" id="modalMaxWidth" min="1400" max="5400" step="50" value="1400" style="width: 100%;">
         <div id="modalWidthValue" class="mt-2" style="color: #00FF00;" data-translate="current_max_width">Current Max Width: 1400px</div>
 
         <div class="form-check mt-3">
             <input class="form-check-input" type="checkbox" id="group1Background">
-            <label class="form-check-label" for="group1Background" data-translate="enable_transparent_dropdown">Enable transparent dropdowns, form selections, and info backgrounds</label>
+            <label class="form-check-label" for="group1Background" data-translate="transparent_dropdown">Enable transparent dropdowns, form selections, and info backgrounds</label>
         </div>
         <div class="form-check mt-3">
             <input class="form-check-input" type="checkbox" id="bodyBackground">
-            <label class="form-check-label" for="bodyBackground" data-translate="enable_transparent_body">Enable transparent body background</label>
+            <label class="form-check-label" for="bodyBackground" data-translate="transparent_body">Enable transparent body background</label>
         </div>
       </div>
       <div class="modal-footer">
@@ -4239,7 +4795,7 @@ toggleModalButton.onclick = function() {
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="colorModalLabel" data-translate="adjust_container_width">Select Theme Color</h5>
+        <h5 class="modal-title" id="colorModalLabel" data-translate="chooseThemeColor">Choose Theme Color</h5>
         <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
@@ -4396,8 +4952,6 @@ toggleModalButton.onclick = function() {
   </div>
 </div>
 
-
-
 <style>
 input[type="range"] {
     -webkit-appearance: none;
@@ -4535,6 +5089,17 @@ input[type="range"]:focus {
 #videoPlayerModal #playlist li.active {
     background-color: #28a745;
     color: white;
+}
+
+.btn-group.mb-4 {
+    margin-bottom: 1.5rem !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    padding: 8px;
+    display: inline-flex;
+    gap: 6px;
 }
 
 @media (max-width: 768px) {
@@ -4728,8 +5293,8 @@ input[type="range"]:focus {
                     </div>
                 </div>
                 <div class="btn-group mb-4" role="group" aria-label="File sections">
-                    <button type="button" class="btn btn-secondary" onclick="showSection('localFilesSection')" data-translate="localFiles">Local Files</button>
-                    <button type="button" class="btn btn-secondary" onclick="showSection('driveFilesSection')" data-translate="driveFiles">Drive Files</button>
+                    <button type="button" class="btn btn-success me-2" onclick="showSection('localFilesSection')" data-translate="localFiles">Local Files</button>
+                    <button type="button" class="btn btn-primary" onclick="showSection('driveFilesSection')" data-translate="driveFiles">Drive Files</button>
                 </div>
                 <div id="fileSections">
                     <div id="localFilesSection" class="file-section active">
@@ -4846,8 +5411,10 @@ input[type="range"]:focus {
                                                     <a href='?delete=" . htmlspecialchars($file, ENT_QUOTES) . "' onclick='return confirm(\"确定要删除吗?\")' class='icon-button btn-bordered' style='margin-right: 10px;'>
                                                         <i class='fas fa-trash-alt'></i><span class='tooltip' data-translate='delete'>删除</span>
                                                     </a>
-                                                    <button type='button' data-bs-toggle='modal' data-bs-target='#renameModal' onclick='document.getElementById(\"oldFileName\").value=\"" . htmlspecialchars($file, ENT_QUOTES) . "\"; document.getElementById(\"newFileName\").value=\"" . htmlspecialchars(getFileNameWithoutPrefix($file), ENT_QUOTES) . "\";' class='icon-button btn-bordered' style='margin-right: 10px;'>
+
+                                                    <button type='button' data-bs-toggle='modal' data-bs-target='#fileUploadModal' onclick='document.getElementById(\"oldFile\").value=\"" . htmlspecialchars($file, ENT_QUOTES) . "\"; document.getElementById(\"newFile\").value=\"" . htmlspecialchars(getFileNameWithoutPrefix($file), ENT_QUOTES) . "\";' class='icon-button btn-bordered' style='margin-right: 10px;'>
                                                         <i class='fas fa-edit'></i><span class='tooltip' data-translate='rename'>重命名</span>
+                                                    </button>
                                                     </button>
                                                     <a href='$fileUrl' download class='icon-button btn-bordered' style='margin-right: 10px;'>
                                                         <i class='fas fa-download'></i><span class='tooltip' data-translate='download'>下载</span>
@@ -4881,12 +5448,30 @@ input[type="range"]:focus {
                                         echo str_repeat("<td></td>", 5 - ($fileCount % 5)) . "</tr>";
                                     }
                                 }
+
+                                if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['oldFile']) && isset($_POST['newFile'])) {
+                                $oldFileName = $_POST['oldFile'];
+                                $newFileName = $_POST['newFile'];
+
+                                $oldFilePath = $picturesDir . $oldFileName;
+                                $newFilePath = $picturesDir . $newFileName;
+
+                                if (file_exists($oldFilePath)) {
+                                    if (rename($oldFilePath, $newFilePath)) {
+                                        echo "<script>alert('文件重命名成功');</script>";
+                                    } else {
+                                        echo "<script>alert('文件重命名失败');</script>";
+                                    }
+                                } else {
+                                    echo "<script>alert('文件不存在');</script>";
+                                    }
+                                }
                                 ?>
                             </tbody>
                         </table>
                     </div>
                     <div id="driveFilesSection" class="file-section">
-                        <h5 data-translate="driveFilesTitle">网盘文件</h5>
+                        <h5 data-translate="driveFilesTitle"></h5>
                         <table class="table table-bordered text-center">
                             <tbody id="driveFileTableBody">
                                 <?php
@@ -4953,25 +5538,25 @@ input[type="range"]:focus {
                                                   Your browser does not support the audio tag.
                                               </audio>";
                                     } else {
-                                        echo "<span data-translate='unknownFileType'>未知文件类型</span>";
+                                        echo "<span data-translate='unknownFileType'></span>";
                                     }
 
                                     echo "<div class='btn-container mt-2 d-flex align-items-center'>
-                                            <a href='?deleteDrive=" . urlencode($fileUrl) . "' onclick='return confirm(\"确定要删除吗?\")' class='icon-button btn-bordered' style='margin-right: 10px;'>
-                                                <i class='fas fa-trash-alt'></i><span class='tooltip'>删除</span>
+                                            <a href='?deleteDrive=" . urlencode($fileUrl) . "' onclick='return confirm(\"Are you sure you want to delete this file?\")' class='icon-button btn-bordered' style='margin-right: 10px;'>
+                                                <i class='fas fa-trash-alt'></i><span class='tooltip'></span>
                                             </a>";
 
                                     if (isImage($fileName)) {
                                         echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($fileUrl, ENT_QUOTES) . "', 'image')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
-                                                <i class='fas fa-image'></i><span class='tooltip' data-translate='setBackgroundImage'>设置图片背景</span>
+                                                <i class='fas fa-image'></i><span class='tooltip' data-translate='setBackgroundImage'></span>
                                               </button>";
                                     } elseif (isVideo($fileName)) {
                                         echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($fileUrl, ENT_QUOTES) . "', 'video')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
-                                                <i class='fas fa-video'></i><span class='tooltip' data-translate='setBackgroundVideo'>设置视频背景</span>
+                                                <i class='fas fa-video'></i><span class='tooltip' data-translate='setBackgroundVideo'></span>
                                               </button>";
                                     } elseif (isAudio($fileName)) {
                                         echo "<button type='button' onclick=\"setBackground('" . htmlspecialchars($fileUrl, ENT_QUOTES) . "', 'audio')\" class='icon-button btn-bordered' style='margin-left: 10px;'>
-                                                <i class='fas fa-music'></i><span class='tooltip' data-translate='setBackgroundMusic'>设置背景音乐</span>
+                                                <i class='fas fa-music'></i><span class='tooltip' data-translate='setBackgroundMusic'></span>
                                               </button>";
                                     }
 
@@ -4994,7 +5579,7 @@ input[type="range"]:focus {
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">取消</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel"></button>
             </div>
         </div>
     </div>
@@ -5074,21 +5659,21 @@ function showPlaylistContainer() {
 }
 </script>
 
-<div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl">
         <form id="renameForm" method="POST">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="renameModalLabel" data-translate="rename_file">Rename File</h5>
+                    <h5 class="modal-title" id="fileUploadModalLabel" data-translate="rename_file">Rename File</h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="oldFileName" id="oldFileName">
+                    <input type="hidden" name="oldFile" id="oldFile"> 
                     <div class="form-group">
-                        <label for="newFileName" data-translate="new_file_name">New File Name</label>
-                        <input type="text" class="form-control" id="newFileName" name="newFileName" required>
+                        <label for="newFile" data-translate="new_file_name">New File Name</label>
+                        <input type="text" class="form-control" id="newFile" name="newFile" required> 
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -5111,7 +5696,7 @@ function showPlaylistContainer() {
                 <h2 class="mb-3" data-translate="upload_image_video_audio">Upload Image/Video/Audio</h2>
                 <div class="alert alert-warning d-flex align-items-center" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    OpenWRT Remaining Space: <?php echo $availableSpace; ?> MB
+                    <?php echo $langData[$currentLang]['remaining Space']; ?> <?php echo $availableSpace; ?> MB    
                 </div>
                 <form method="POST" action="download.php" enctype="multipart/form-data">
                     <div id="dropArea" class="mb-3">
@@ -5170,7 +5755,6 @@ function showPlaylistContainer() {
 
     document.addEventListener("fullscreenchange", adjustModalHeight);
 </script>
-
 
 <script>
 let playlist = JSON.parse(localStorage.getItem('playlist')) || [];
@@ -5341,6 +5925,34 @@ function playNextAudio() {
     playMedia(nextIndex);
 }
 
+function playPreviousVideo() {
+    let prevIndex = currentIndex - 1;
+    if (prevIndex < 0) prevIndex = playlist.length - 1; 
+
+    while (prevIndex !== currentIndex && !/\.(mp4|avi|mkv|mov|wmv)$/i.test(playlist[prevIndex].url)) {
+        prevIndex--;
+        if (prevIndex < 0) prevIndex = playlist.length - 1;
+    }
+
+    if (prevIndex !== currentIndex) {
+        playMedia(prevIndex);
+    }
+}
+
+function playPreviousAudio() {
+    let prevIndex = currentIndex - 1;
+    if (prevIndex < 0) prevIndex = playlist.length - 1; 
+
+    while (prevIndex !== currentIndex && !/\.(mp3|wav|ogg|flac|aac|m4a|webm|opus)$/i.test(playlist[prevIndex].url)) {
+        prevIndex--;
+        if (prevIndex < 0) prevIndex = playlist.length - 1;
+    }
+
+    if (prevIndex !== currentIndex) {
+        playMedia(prevIndex);
+    }
+}
+
 function openVideoPlayerModal() {
     document.querySelectorAll('.file-checkbox:checked').forEach(checkbox => {
         addToPlaylist(checkbox.getAttribute('data-url'), checkbox.getAttribute('data-title'));
@@ -5376,8 +5988,8 @@ function setupHoverControls() {
     hoverControls.style.display = 'none';
     hoverControls.style.position = 'absolute';
     hoverControls.style.bottom = '60px';
-    hoverControls.style.left = '36%';
-    hoverControls.style.transform = 'translateX(-36%)';
+    hoverControls.style.left = '38%';
+    hoverControls.style.transform = 'translateX(-38%)';
     hoverControls.style.padding = '10px';
     hoverControls.style.background = 'rgba(0, 0, 0, 0.5)';
     hoverControls.style.borderRadius = '5px';
@@ -5400,7 +6012,26 @@ function setupHoverControls() {
     `;
     videoElement.parentElement.appendChild(hoverControls);
 
-    document.getElementById('prevButton').onclick = () => playPreviousVideo();
+    function adjustControlsPosition() {
+        if (document.fullscreenElement) {
+            hoverControls.style.left = 'calc(38% + 120px)'; 
+        } else {
+            hoverControls.style.left = '38%';
+        }
+    }
+
+    document.addEventListener('fullscreenchange', adjustControlsPosition);
+
+    document.getElementById('prevButton').onclick = () => {
+        const videoElement = document.getElementById('videoPlayer');
+        const audioElement = document.getElementById('audioPlayer');
+    
+        if (videoElement.style.display !== 'none') {
+            playPreviousVideo();
+        } else if (audioElement.style.display !== 'none') {
+            playPreviousAudio();
+        }
+    };
     document.getElementById('nextButton').onclick = () => playNextVideo(); 
     document.getElementById('pipButton').onclick = () => togglePictureInPicture(videoElement);
 
@@ -5494,6 +6125,8 @@ function togglePictureInPicture(videoElement) {
         document.getElementById('pipButton').innerHTML = '<i class="fas fa-expand" style="color: white; font-size: 24px;"></i>';
     }
 }
+
+
 </script>
 
 <script>
@@ -5618,9 +6251,9 @@ function deselectAll() {
 
 function showRenameModal(event, fileName) {
     event.preventDefault();
-    const modal = new bootstrap.Modal(document.getElementById('renameModal'));
-    document.getElementById('oldFileName').value = fileName;
-    document.getElementById('newFileName').value = fileName; 
+    const modal = new bootstrap.Modal(document.getElementById('fileUploadModal')); 
+    document.getElementById('oldFile').value = fileName;  
+    document.getElementById('newFile').value = fileName; 
     modal.show();
 }
 </script>

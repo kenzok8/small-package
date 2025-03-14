@@ -23,11 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         shell_exec("/etc/init.d/uhttpd restart > /dev/null 2>&1 &");
         shell_exec("/etc/init.d/nginx restart > /dev/null 2>&1 &");
 
-        echo json_encode(["status" => "success", "message" => "PHP 配置已更新并重启"]);
+        echo json_encode(["status" => "success", "message" => "PHP configuration has been updated and restarted"]);
     } else {
-        echo json_encode(["status" => "error", "message" => "更新失败，检查权限！"]);
+        echo json_encode(["status" => "error", "message" => "Update failed, check permissions!"]);
     }
 } else {
-    echo json_encode(["status" => "error", "message" => "无效的请求"]);
+    echo json_encode(["status" => "error", "message" => "Invalid request"]);
 }
 ?>

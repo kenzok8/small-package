@@ -5,15 +5,11 @@ $type = $_POST['type'] ?? '';
 
 $pingFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/ping.php';
 $currentBgFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/current_background.txt';
-$backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt';
+$backgroundHistoryFile = $_SERVER['DOCUMENT_ROOT'] . '/nekobox/background_history.txt'; 
 
 $pingContent = file_get_contents($pingFile);
 $audioElement = "";
 $backgroundStyle = "";
-
-function isDriveFile($filename) {
-    return strpos($filename, '://') !== false;
-}
 
 if (!file_exists($backgroundHistoryFile)) {
     file_put_contents($backgroundHistoryFile, "");
@@ -28,12 +24,10 @@ if ($action === 'set' && !empty($filename)) {
         $pingContent = preg_replace('/<!-- BG_START -->.*<!-- BG_END -->/s', '', $pingContent);
     }
 
-    $filePath = isDriveFile($filename) ? $filename : "/nekobox/assets/Pictures/$filename";
-
     if ($type === 'image') {
         $backgroundStyle = "\n<style>
             body {
-                background-image: url('$filePath');
+                background-image: url('/nekobox/assets/Pictures/$filename');
                 background-repeat: no-repeat;
                 background-position: center center;
                 background-attachment: fixed;
@@ -63,14 +57,14 @@ if ($action === 'set' && !empty($filename)) {
         </style>
 
         <video class=\"video-background\" autoplay loop id=\"background-video\">
-            <source src='$filePath' type='video/mp4'>
-            您的浏览器不支持视频标签。
+            <source src='/nekobox/assets/Pictures/$filename' type='video/mp4'>
+            Your browser does not support the video tag.
         </video>";
     } elseif ($type === 'audio') {
         $audioElement = "
         <audio id=\"background-video\" autoplay loop>
-            <source src='$filePath' type='audio/mp3'>
-            您的浏览器不支持音频播放。
+            <source src='/nekobox/assets/Pictures/$filename' type='audio/mp3'>
+            Your browser does not support audio playback.
         </audio>";
     }
 
@@ -95,12 +89,12 @@ if ($action === 'set' && !empty($filename)) {
 
     file_put_contents($backgroundHistoryFile, implode("\n", $backgroundFiles));
 
-    echo "背景已成功设置！";
+    echo "Background has been successfully set!";
 } elseif ($action === 'remove') {
     $pingContent = preg_replace('/<!-- BG_START -->.*<!-- BG_END -->/s', '', $pingContent);
     file_put_contents($pingFile, $pingContent); 
     file_put_contents($currentBgFile, '');  
 
-    echo "背景已成功删除！";
+    echo "Background has been successfully removed!";
 }
 ?>

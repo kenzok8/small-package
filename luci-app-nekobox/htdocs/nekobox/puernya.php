@@ -26,8 +26,7 @@ if (file_exists($install_path)) {
 }
 
 if (isset($_GET['check_version'])) {
-    echo "当前版本: $current_version\n";
-    echo "最新版本: $latest_version\n";
+    echo "Latest version: $latest_version\n";
     exit;
 }
 
@@ -42,16 +41,16 @@ switch ($current_arch) {
         $download_url = "https://github.com/Thaolga/luci-app-nekoclash/releases/download/sing-box/sing-box-puernya-linux-amd64.tar.gz";
         break;
     default:
-        die("未找到适合架构的下载链接: $current_arch");
+        die("No suitable download link found for architecture: $current_arch");
 }
 
 if (trim($current_version) === trim($latest_version)) {
-    die("当前版本已是最新版本。");
+    die("You are already on the latest version.");
 }
 
 exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
 if ($return_var !== 0) {
-    die("下载失败！");
+    die("Download failed!");
 }
 
 if (!is_dir($temp_dir)) {
@@ -60,7 +59,7 @@ if (!is_dir($temp_dir)) {
 
 exec("tar -xzf '$temp_file' -C '$temp_dir'", $output, $return_var);
 if ($return_var !== 0) {
-    die("解压失败！");
+    die("Extraction failed!");
 }
 
 $extracted_file = glob("$temp_dir/CrashCore")[0] ?? '';
@@ -68,9 +67,9 @@ if ($extracted_file && file_exists($extracted_file)) {
     exec("cp -f '$extracted_file' '$install_path'");
     exec("chmod 0755 '$install_path'");
     writeVersionToFile($latest_version); 
-    echo "更新完成！最新版本: $latest_version\n";
+    echo "Update complete! Current version: $latest_version";
 } else {
-    die("解压后的文件 'CrashCore' 不存在。");
+    die("The extracted file 'CrashCore' does not exist.");
 }
 
 unlink($temp_file);

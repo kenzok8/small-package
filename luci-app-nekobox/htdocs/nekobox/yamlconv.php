@@ -244,8 +244,8 @@ shell_exec("rm -f $tmpdata");
             <div class="container text-center justify-content-md-center">
                 <div class="row justify-content-md-center">
                     <div class="col input-group mb-3 justify-content-md-center">
-                        <input type="text" class="form-control" name="url" placeholder="贴在这里">
-                        <input class="btn btn-info col-2" type="submit" value="选择">
+                        <input type="text" class="form-control" name="url" placeholder="Paste here">
+                        <input class="btn btn-info col-2" type="submit" value="Select">
                     </div>
                 </div>
             </div>
@@ -254,8 +254,8 @@ shell_exec("rm -f $tmpdata");
             <textarea name="dt" class="form-control" rows="16"><?php echo $strdata ?></textarea>
         </div>
         <div>
-            <a>支援 : </br>TROJAN(GFW, WS TLS/NTLS, GRPC)</br>HYSTERIA2(WS TLS/NTLS, HTTP, H2, GRPC)</br>VMESS(WS TLS/NTLS, HTTP, H2, GRPC)</br>VLESS(WS TLS/NTLS, XTLS, GRPC)</br>SS(DIRECT, OBFS, V2RAY/XRAY-PLUGIN)</a>
+            <a>Support: </br>TROJAN (GFW, WS TLS/NTLS, GRPC)</br>HYSTERIA2 (WS TLS/NTLS, HTTP, H2, GRPC)</br>VMESS (WS TLS/NTLS, HTTP, H2, GRPC)</br>VLESS (WS TLS/NTLS, XTLS, GRPC)</br>SS (DIRECT, OBFS, V2RAY/XRAY-PLUGIN)</a>
         </div>
     </div>
-  </body>
+</body>
 </html>
