@@ -944,7 +944,7 @@ return view.extend({
 			o.parseYaml = function(field, name, cfg) {
 				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
 
-				return config ? parseProviderYaml.call(this, field, name, config) : config;
+				return config ? parseProviderYaml.call(this, field, name, config) : null;
 			};
 
 			return o.render();

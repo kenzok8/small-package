@@ -400,6 +400,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 		this.title = title ?? '';
 		this.description = description ?? '';
 		this.placeholder = '';
+		this.appendcommand = '';
 	},
 
 	calcID(field, name) {
@@ -411,7 +412,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 		const field = this.section.hm_field;
 
 		let content = textarea.getValue().trim();
-		let command = `.["${field}"]`;
+		let command = `.["${field}"]` + this.appendcommand;
 		if (['proxy-providers', 'rule-providers'].includes(field))
 			content = content.replace(/(\s*payload:)/g, "$1 |-") /* payload to text */
 

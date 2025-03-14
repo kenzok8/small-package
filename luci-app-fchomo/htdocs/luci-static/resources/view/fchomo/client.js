@@ -314,6 +314,16 @@ function parseRulesYaml(field, name, cfg) {
 
 	return config;
 }
+function parseSubrulesYaml(field, name, cfg) {
+	cfg = cfg.match(/^([^:]+):(.+)$/);
+
+	if (!cfg)
+		return null;
+
+	let config = parseRulesYaml.call(this, field, name, cfg[2]);
+
+	return config ? Object.assign(config, {group: cfg[1]}) : null;
+}
 
 function boolToFlag(boolean) {
 	if (typeof(boolean) !== 'boolean')
@@ -808,7 +818,7 @@ return view.extend({
 			o.parseYaml = function(field, name, cfg) {
 				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
 
-				return config ? parseProxyGroupYaml.call(this, field, name, config) : config;
+				return config ? parseProxyGroupYaml.call(this, field, name, config) : null;
 			};
 
 			return o.render();
@@ -1065,7 +1075,7 @@ return view.extend({
 			o.parseYaml = function(field, name, cfg) {
 				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
 
-				return config ? parseRulesYaml.call(this, field, name, config) : config;
+				return config ? parseRulesYaml.call(this, field, name, config) : null;
 			};
 
 			return o.render();
@@ -1133,6 +1143,42 @@ return view.extend({
 		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_field  = hm.glossary[ss.sectiontype].field;
 		ss.hm_lowcase_only = false;
+		/* Import mihomo config start */
+		ss.handleYamlImport = function() {
+			const field = this.hm_field;
+			const o = new hm.HandleImport(this.map, this, _('Import mihomo config'),
+				_('Please type <code>%s</code> fields of mihomo config.</br>')
+					.format(field));
+			o.placeholder = 'sub-rules:\n' +
+							'  sub-rule1:\n' +
+							'    - DOMAIN-SUFFIX,baidu.com,DIRECT\n' +
+							'    - MATCH,GLOBAL\n' +
+							'  sub-rule2:\n' +
+							'    - IP-CIDR,1.1.1.1/32,REJECT\n' +
+							'    - IP-CIDR,8.8.8.8/32,auto\n' +
+							'    - DOMAIN,dns.alidns.com,REJECT\n' +
+							'  ...'
+			o.appendcommand = ' | with_entries(.key as $k | .value |= map("\\($k):" + .)) | [.[][]]'
+			o.parseYaml = function(field, name, cfg) {
+				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
+
+				return config ? parseSubrulesYaml.call(this, field, name, config) : null;
+			};
+
+			return o.render();
+		}
+		ss.renderSectionAdd = function(/* ... */) {
+			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+
+			el.appendChild(E('button', {
+				'class': 'cbi-button cbi-button-add',
+				'title': _('mihomo config'),
+				'click': ui.createHandlerFn(this, 'handleYamlImport')
+			}, [ _('Import mihomo config') ]));
+
+			return el;
+		}
+		/* Import mihomo config end */
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
