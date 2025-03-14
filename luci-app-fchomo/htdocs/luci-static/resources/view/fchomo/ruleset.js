@@ -173,7 +173,7 @@ return view.extend({
 			o.parseYaml = function(field, name, cfg) {
 				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
 
-				return config ? parseRulesetYaml.call(this, field, name, config) : config;
+				return config ? parseRulesetYaml.call(this, field, name, config) : null;
 			};
 
 			return o.render();
