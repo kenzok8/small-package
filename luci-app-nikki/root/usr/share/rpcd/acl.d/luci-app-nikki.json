@@ -8,8 +8,6 @@
                 "luci.nikki": [ "*" ]
             },
             "file": {
-                "/etc/passwd": ["read"],
-                "/etc/group": ["read"],
                 "/etc/nikki/profiles/*.yaml": ["read"],
                 "/etc/nikki/profiles/*.yml": ["read"],
                 "/etc/nikki/subscriptions/*.yaml": ["read"],

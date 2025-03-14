@@ -3,13 +3,13 @@
 {%-
 	'use strict';
 
-	import { readfile } from 'fs';
 	import { cursor } from 'uci';
 	import { connect } from 'ubus';
-	import { uci_bool, uci_array } from '/etc/nikki/ucode/include.uc';
+	import { uci_bool, uci_array, get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
 
-	const users = map(split(readfile('/etc/passwd'), '\n'), (x) => split(x, ':')[0]);
-	const groups = map(split(readfile('/etc/group'), '\n'), (x) => split(x, ':')[0]);
+	const users = get_users();
+	const groups = get_groups();
+	const cgroups = get_cgroups();
 
 	const uci = cursor();
 	const ubus = connect();
@@ -41,8 +41,9 @@
 	const acl_mac = uci_array(uci.get('nikki', 'proxy', 'acl_mac'));
 	const acl_interface = uci_array(uci.get('nikki', 'proxy', 'acl_interface'));
 
-	const bypass_user = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_user')), (x) => x != "root" && index(users, x) >= 0);
-	const bypass_group = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_group')), (x) => x != "root" && index(groups, x) >= 0);
+	const bypass_user = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_user')), (x) => x != 'root' && index(users, x) >= 0);
+	const bypass_group = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_group')), (x) => x != 'root' && index(groups, x) >= 0);
+	const bypass_cgroup = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_cgroup')), (x) => x != 'nikki' && index(cgroups, x) >= 0);
 	const bypass_dscp = uci_array(uci.get('nikki', 'proxy', 'bypass_dscp'));
 	const bypass_china_mainland_ip = uci_bool(uci.get('nikki', 'proxy', 'bypass_china_mainland_ip'));
 	const proxy_tcp_dport = split((uci.get('nikki', 'proxy', 'proxy_tcp_dport') ?? '0-65535'), ' ');
@@ -80,7 +81,7 @@
 		push(proxy_dport, `udp . ${port}`);
 	}
 
-	push(bypass_group, nikki_group);
+	push(bypass_cgroup, 'nikki');
 -%}
 
 table inet nikki {
@@ -129,6 +130,19 @@ table inet nikki {
 		elements = {
 			{% for (let x in bypass_group): %}
 			{{ x }},
+			{% endfor %}
+		}
+		{% endif %}
+	}
+
+	set bypass_cgroup {
+		type cgroupsv2
+		flags interval
+		auto-merge
+		{% if (length(bypass_cgroup) > 0): %}
+		elements = {
+			{% for (let x in bypass_cgroup): %}
+			services/{{ x }},
 			{% endfor %}
 		}
 		{% endif %}
@@ -305,6 +319,7 @@ table inet nikki {
 	{% if (router_proxy): %}
 	chain nat_output {
 		type nat hook output priority filter; policy accept;
+		socket cgroupv2 level 2 @bypass_cgroup counter return
 		meta skuid @bypass_user counter return
 		meta skgid @bypass_group counter return
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter redirect to :{{ dns_port }}
@@ -328,6 +343,7 @@ table inet nikki {
 
 	chain mangle_output {
 		type route hook output priority mangle; policy accept;
+		socket cgroupv2 level 2 @bypass_cgroup counter return
 		meta skuid @bypass_user counter return
 		meta skgid @bypass_group counter return
 		fib daddr type { local, multicast, broadcast, anycast } counter return

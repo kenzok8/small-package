@@ -38,6 +38,12 @@ const callNikkiUpdateSubscription = rpc.declare({
     expect: { '': {} }
 });
 
+const callNikkiGetIdentifiers = rpc.declare({
+    object: 'luci.nikki',
+    method: 'get_identifiers',
+    expect: { '': {} }
+});
+
 const callNikkiDebug = rpc.declare({
     object: 'luci.nikki',
     method: 'debug',
@@ -136,6 +142,10 @@ return baseclass.extend({
         return this.api('POST', '/upgrade/ui');
     },
 
+    getIdentifiers: function () {
+        return callNikkiGetIdentifiers();
+    },
+
     listProfiles: function () {
         return L.resolveDefault(fs.list(this.profilesDir), []);
     },
@@ -166,17 +176,5 @@ return baseclass.extend({
 
     debug: function () {
         return callNikkiDebug();
-    },
-
-    getUsers: function () {
-        return fs.lines('/etc/passwd').then(function (lines) {
-            return lines.map(function (line) { return line.split(/:/)[0] }).filter(function (user) { return user !== 'root' && user !== 'nikki' });
-        });
-    },
-
-    getGroups: function () {
-        return fs.lines('/etc/group').then(function (lines) {
-            return lines.map(function (line) { return line.split(/:/)[0] }).filter(function (group) { return group !== 'root' && group !== 'nikki' });
-        });
     },
 })

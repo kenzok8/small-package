@@ -122,8 +122,6 @@ start_service() {
 		procd_set_param reload_signal HUP
 	fi
 	procd_set_param respawn
-	procd_set_param user "$NIKKI_USER"
-	procd_set_param group "$NIKKI_GROUP"
 
 	procd_set_param limits core="unlimited" nofile="1048576 1048576"
 

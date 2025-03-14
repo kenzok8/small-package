@@ -17,8 +17,8 @@ msgstr ""
 msgid "All Mode"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:152
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:157
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:159
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:164
 msgid "All Port"
 msgstr ""
 
@@ -65,11 +65,11 @@ msgstr ""
 msgid "Bypass"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:147
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:154
 msgid "Bypass China Mainland IP"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:160
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:167
 msgid "Bypass DSCP"
 msgstr ""
 
@@ -79,6 +79,10 @@ msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:133
 msgid "Bypass User"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:147
+msgid "Bypass cgroup"
 msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/editor.js:29
@@ -94,8 +98,8 @@ msgstr ""
 msgid "Clear Log"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:153
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:158
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:160
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:165
 msgid "Commonly Used Port"
 msgstr ""
 
@@ -147,11 +151,11 @@ msgstr ""
 msgid "Destination Port"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:150
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:157
 msgid "Destination TCP Port to Proxy"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:155
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:162
 msgid "Destination UDP Port to Proxy"
 msgstr ""
 

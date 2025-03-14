@@ -1,9 +1,5 @@
 #!/bin/sh
 
-# permission
-NIKKI_USER="root"
-NIKKI_GROUP="nikki"
-
 # routing
 TPROXY_FW_MARK="0x80"
 TUN_FW_MARK="0x81"
