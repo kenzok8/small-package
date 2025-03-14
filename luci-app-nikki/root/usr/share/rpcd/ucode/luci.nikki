@@ -3,6 +3,7 @@
 'use strict';
 
 import { access, popen } from 'fs';
+import { get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
 
 const methods = {
 	version: {
@@ -54,6 +55,14 @@ const methods = {
 				success = system(['service', 'nikki', 'update_subscription', section_id]) == 0;
 			}
 			return { success: success };
+		}
+	},
+	get_identifiers: {
+		call: function() {
+			const users = filter(get_users(), (x) => x != '' && x != 'root');
+			const groups = filter(get_groups(), (x) => x != '' && x != 'root');
+			const cgroups = filter(get_cgroups(), (x) => x != '' && x != 'nikki');
+			return { users: users, groups: groups, cgroups: cgroups };
 		}
 	},
 	debug: {

@@ -24,8 +24,8 @@ msgstr "访问控制"
 msgid "All Mode"
 msgstr "全部模式"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:152
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:157
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:159
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:164
 msgid "All Port"
 msgstr "全部端口"
 
@@ -72,11 +72,11 @@ msgstr "黑名单模式"
 msgid "Bypass"
 msgstr "绕过"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:147
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:154
 msgid "Bypass China Mainland IP"
 msgstr "绕过中国大陆 IP"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:160
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:167
 msgid "Bypass DSCP"
 msgstr "绕过 DSCP"
 
@@ -87,6 +87,10 @@ msgstr "绕过用户组"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:133
 msgid "Bypass User"
 msgstr "绕过用户"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:147
+msgid "Bypass cgroup"
+msgstr "绕过资源控制组"
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/editor.js:29
 msgid "Choose File"
@@ -101,8 +105,8 @@ msgstr "选择配置文件"
 msgid "Clear Log"
 msgstr "清空日志"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:153
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:158
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:160
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:165
 msgid "Commonly Used Port"
 msgstr "常用端口"
 
@@ -154,11 +158,11 @@ msgstr "目标 IP（Geo）"
 msgid "Destination Port"
 msgstr "目标端口"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:150
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:157
 msgid "Destination TCP Port to Proxy"
 msgstr "要代理的 TCP 目标端口"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:155
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:162
 msgid "Destination UDP Port to Proxy"
 msgstr "要代理的 UDP 目标端口"
 

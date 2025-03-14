@@ -1,3 +1,5 @@
+import { readfile, lsdir, lstat } from 'fs';
+
 export function uci_bool(obj) {
 	return obj == null ? null : obj == '1';
 };
@@ -46,4 +48,16 @@ export function trim_all(obj) {
 		return obj;
 	}
 	return obj;
+};
+
+export function get_users() {
+	return map(split(readfile('/etc/passwd'), '\n'), (x) => split(x, ':')[0]);
+};
+
+export function get_groups() {
+	return map(split(readfile('/etc/group'), '\n'), (x) => split(x, ':')[0]);
+};
+
+export function get_cgroups() {
+	return filter(lsdir('/sys/fs/cgroup/services'), (x) => lstat(`/sys/fs/cgroup/services/${x}`).type == 'directory');
 };
