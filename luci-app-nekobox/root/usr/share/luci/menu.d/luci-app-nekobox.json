@@ -10,7 +10,7 @@
 	},
 
 	"admin/services/nekobox/nekobox": {
-		"title": "首页",
+		"title": "Home",
 		"order": 1,
 		"action": {
 			"type": "view",
@@ -37,7 +37,7 @@
 	},
 	
 	"admin/services/nekobox/configs": {
-		"title": "配置",
+		"title": "Configs",
 		"order": 4,
 		"action": {
 			"type": "view",
@@ -46,7 +46,7 @@
 	},
 
 	"admin/services/nekobox/filekit": {
-		"title": "文件助手",
+		"title": "Manager",
 		"order": 5,
 		"action": {
 			"type": "view",

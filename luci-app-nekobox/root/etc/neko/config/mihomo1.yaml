@@ -1,4 +1,4 @@
-# September 11, 2024 08:40  By:𝐓𝐮𝐚̂𝐧 𝐁𝐞́  UTC/GMT +8
+# 2024年09月13日 13:40  By:𝐓𝐮𝐚̂𝐧 𝐁𝐞́  UTC/GMT +8
 
 redir-port: 7892
 port: 7890
@@ -129,277 +129,276 @@ dns:
     - "https://1.0.0.1/dns-query"
     - "https://8.8.4.4/dns-query"
 
-###Start establishing anchor points
+###开始建立锚点
 
-# All nodes
-all: &all {type: select, use: [Subscription 1, Subscription 2, Subscription 3, Subscription 4, Subscription 5, Subscription 6, Subscription 7, Subscription 8]}
-filtered_lines: &filtered_lines  # Removing duplicate nodes
+# 所有节点
+all: &all {type: select, use: [订阅 1, 订阅 2, 订阅 3, 订阅 4, 订阅 5, 订阅 6, 订阅 7, 订阅 8]}
+filtered_lines: &filtered_lines  # 处理重复节点
   - *all
 final_lines: *filtered_lines
 
-# Backup emergency
-backup: &backup {type: select, url: "http://www.google.com/generate_204", interval: 300, tolerance: 50, lazy: true, use: [Subscription 1, Subscription 2, Subscription 3, Subscription 4, Subscription 5, Subscription 6, Subscription 7, Subscription 8],  exclude-filter: "(?i)港|🇭🇰|hk|hongkong|hong kong|台|🇹🇼|tw|taiwan|新|🇸🇬|sg|singapore|日本|🇯🇵|jp|japan|美|纽约|🇺🇲|UM|U.S. Outlying Islands|🇺🇳|UN|United Nations|洛杉矶|芝加哥|达拉斯|🇺🇸|US|United States|韩国|🇰🇷|KR|South Korea"} 
+# 其他地区
+backup: &backup {type: select, url: "http://www.google.com/generate_204", interval: 300, tolerance: 50, lazy: true, use: [订阅 1, 订阅 2, 订阅 3, 订阅 4, 订阅 5, 订阅 6, 订阅 7, 订阅 8],  exclude-filter: "(?i)港|🇭🇰|hk|hongkong|hong kong|台|🇹🇼|tw|taiwan|新|🇸🇬|sg|singapore|日本|🇯🇵|jp|japan|美|纽约|🇺🇲|UM|U.S. Outlying Islands|🇺🇳|UN|United Nations|洛杉矶|芝加哥|达拉斯|🇺🇸|US|United States|韩国|🇰🇷|KR|South Korea"} 
 
-# Automatically filter the fastest node.
-fly: &fly {type: url-test, url: "http://www.google.com/generate_204", interval: 300, tolerance: 50, lazy: true, use: [Subscription 1, Subscription 2, Subscription 3, Subscription 4, Subscription 5, Subscription 6, Subscription 7, Subscription 8],filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|新|sg|singapore|美|us|unitedstates|united states|韩国|🇰🇷|KR|South Korea"}  
-
-# Subscribe to updates and latency testing related.
+# 自动筛选最快节点
+fly: &fly {type: url-test, url: "http://www.google.com/generate_204", interval: 300, tolerance: 50, lazy: true, use: [订阅 1, 订阅 2, 订阅 3, 订阅 4, 订阅 5, 订阅 6, 订阅 7, 订阅 8],filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|新|sg|singapore|美|us|unitedstates|united states|韩国|🇰🇷|KR|South Korea"}  
+# 订阅更新和延迟测试相关
 p: &p {type: http, interval: 21600, health-check: {enable: true, url: "http://www.google.com/generate_204", interval: 1800, filter: "(?i)^(?!unavailable).*$"}}
 
-#  Subscription node keyword filtering
-exclude-filter-list: &exclude-filter "" 
+# 订阅节点关键字过滤
+exclude-filter-list: &exclude-filter "网站|地址|剩余|过期|时间|有效|套餐|到期|官网|tg|邀请" 
 
-### End anchor establishment
+###结束建立锚点
 
-proxy-providers:  # Meta supports universal airport subscriptions; simply replace the URL link at the end for use.
-  Subscription 1:
+proxy-providers:  # Meta支持机场通用订阅， 直接替换 url 后方链接使用
+  订阅 1:
     <<: *p
-    url: "url"
-    path: ./proxy_provider/subscription_0.yaml
-    exclude-filter: *exclude-filter
-  Subscription 2: 
-    <<: *p
-    url: "url"
+    url: "机场订阅"
     path: ./proxy_provider/subscription_1.yaml
     exclude-filter: *exclude-filter
-  Subscription 3: 
+  订阅 2: 
     <<: *p
-    url: "url"
+    url: "机场订阅"
     path: ./proxy_provider/subscription_2.yaml
     exclude-filter: *exclude-filter
-  Subscription 4: 
+  订阅 3: 
     <<: *p
-    url: "url"
+    url: "机场订阅"
     path: ./proxy_provider/subscription_3.yaml
     exclude-filter: *exclude-filter
-  Subscription 5: 
+  订阅 4: 
     <<: *p
-    url: "url"
+    url: "机场订阅"
     path: ./proxy_provider/subscription_4.yaml
     exclude-filter: *exclude-filter
-  Subscription 6: 
+  订阅 5: # 
     <<: *p
-    url: "url"
+    url: "机场订阅"
     path: ./proxy_provider/subscription_5.yaml
     exclude-filter: *exclude-filter
-  Subscription 7: 
+  订阅 6: 
     <<: *p
-    url: "url"
+    url: "机场订阅"
     path: ./proxy_provider/subscription_6.yaml
     exclude-filter: *exclude-filter
-  Subscription 8:  # Manually add nodes for use.
+  订阅 7: 
     <<: *p
-    url: "url"
-    path: ./proxy_provider/subscription_7.json
+    url: "机场订阅"
+    path: ./proxy_provider/subscription_7.yaml
+    exclude-filter: *exclude-filter
+  订阅 8:  # 手动添加节点使用
+    <<: *p
+    url: "机场订阅"
+    path: ./proxy_provider/subscription_8.json
     exclude-filter: *exclude-filter
 proxy-groups:
-- name: "✈️ International agency"
+- name: "✈️ 国际代理"
   type: select
   url: http://www.gstatic.com/generate_204
   interval: 300
   tolerance: 50
   proxies:
-  - ♻️ Auto-select
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 🚀 Other regions
-  - ⭕️ Direct Connection 
-- name: "🇭🇰 Hong Kong"
+  - ♻️ 自动选择
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+  - ⭕️ 直连 
+- name: "🇭🇰 香港节点"
   <<: *all
   filter: "(?i)港|🇭🇰|hk|hongkong|hong kong"  
-- name: "🇹🇼 Taiwan"
+- name: "🇹🇼 台湾节点"
   <<: *all
   filter: "(?i)台|🇹🇼|tw|taiwan"
-- name: "🇸🇬 Singapore"
+- name: "🇸🇬 新加坡节点"
   <<: *all
   filter: "(?i)新|🇸🇬|sg|singapore"
-- name: "🇯🇵 Japan"
+- name: "🇯🇵 日本节点"
   <<: *all
   filter: "(?i)日本|🇯🇵|jp|japan"  
-- name: "🇰🇷 South Korea"
+- name: "🇰🇷 韩国节点"
   <<: *all
   filter: "(?i)韩国|🇰🇷|KR|South Korea"
-- name: "🇺🇸 United States"
+- name: "🇺🇸 美国节点"
   <<: *all
   filter: "(?i)美|纽约|🇺🇲|UM|U.S. Outlying Islands|🇺🇳|UN|United Nations|洛杉矶|芝加哥|达拉斯|🇺🇸|US|United States"
-- name: "🚀 Other regions"
+- name: "🚀 其他地区"
   type: select
   <<: *backup
-- name: "🎵 TikTok"
+- name: "🎶 国际抖音"
   type: select
   proxies:
-  - ✈️ International agency
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 📌 All nodes
-  - 🚀 Other regions
-  - ⭕️ Direct Connection 
-- name: 📹 YouTube
+  - ✈️ 国际代理
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+  - ⭕️ 直连 
+- name: 📹 油管视频
   type: select
   proxies:
-  - ✈️ International agency
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 📌 All nodes
-  - 🚀 Other regions
-  - ⭕️ Direct Connection 
-- name: "🎥 Netflix"
+  - ✈️ 国际代理
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+  - ⭕️ 直连 
+- name: "📺 网飞视频"
   type: select
   proxies:
-  - ✈️ International agency
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 📌 All nodes
-  - 🚀 Other regions
-  - ⭕️ Direct Connection 
-- name: "🎬 Disney"
+  - ✈️ 国际代理
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+  - ⭕️ 直连 
+- name: "🎬 迪士尼+"
   type: select
   proxies:
-  - ✈️ International agency
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 📌 All nodes
-  - 🚀 Other regions
-  - ⭕️ Direct Connection 
+  - ✈️ 国际代理
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+  - ⭕️ 直连 
 - name: "🤖 OpenAI"
   type: select
   proxies:
-  - ✈️ International agency
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 📌 All nodes
-  - 🚀 Other regions
-  - ⭕️ Direct Connection 
-- name: "📡 Telegram"
+  - ✈️ 国际代理
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+  - ⭕️ 直连 
+- name: "📡 电报服务"
   type: select
   proxies:
-  - ✈️ International agency
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 📌 All nodes
-  - 🚀 Other regions
-  - ⭕️ Direct Connection 
-- name: "🍎 Apple"
+  - ✈️ 国际代理
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+  - ⭕️ 直连 
+- name: "🍎 苹果服务"
   type: select
   proxies:
-  - ⭕️ Direct Connection
-  - ✈️ International agency
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 📌 All nodes
-  - 🚀 Other regions
-- name: "🪟 Microsoft"
+  - ⭕️ 直连
+  - ✈️ 国际代理
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+- name: "Ⓜ️ 微软服务"
   type: select
   proxies:
-  - ⭕️ Direct Connection
-  - ✈️ International agency
-- name: "🎮 Game platform"
+  - ⭕️ 直连
+  - ✈️ 国际代理
+- name: "🎮 游戏平台"
   type: select
   proxies:
-  - ✈️ International agency
-  - ⭕️ Direct Connection
-- name: "🎧 Spotify"
+  - ✈️ 国际代理
+  - ⭕️ 直连
+- name: "🎧 声田音乐"
   type: select
   proxies:
-  - ✈️ International agency
-  - ⭕️ Direct Connection
-- name: "💳 PayPal"
+  - ✈️ 国际代理
+  - ⭕️ 直连
+- name: "💳 贝宝服务"
   type: select
   proxies:
-  - ✈️ International agency
-  - ⭕️ Direct Connection
-- name: "🎵 NetEase CloudMusic"
+  - ✈️ 国际代理
+  - ⭕️ 直连
+- name: "🎵 网易云音乐"
   type: select
   proxies:
-  - 📽 Chinese Media
-  - ⭕️ Direct Connection
-
-- name: "🌏 Chinese Network"
+  - 📽 国内媒体
+  - ⭕️ 直连
+- name: "🌏 大陆网络"
   type: select
   proxies:
-  - ⭕️ Direct Connection
-  - ✈️ International agency
-- name: "📽 Chinese Media"
+  - ⭕️ 直连
+  - ✈️ 国际代理
+- name: "📽 国内媒体"
   type: select
   proxies:
-  - 🌏 Chinese Network
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-- name: "🆎 Ad Blocking"
+  - 🌏 大陆网络
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+- name: "🆎 广告拦截"
   type: select
   proxies:
-  - ❌ Blocking
-  - ⭕️ Direct Connection
-- name: "⭕️ Direct Connection"
+  - ❌ 拦截
+  - ⭕️ 直连
+- name: "⭕️ 直连"
   type: select
   proxies:
   - DIRECT
-- name: "❌ Blocking"
+- name: "❌ 拦截"
   type: select
   proxies:
   - REJECT
-- name: "⏳ Abbreviation"
+- name: "⏳ 网速测试"
   type: select
   url:  http://www.google.com/generate_204
   interval: 300
   proxies:
   <<: *all
-- name: "📌 All nodes"
+- name: "📌 全部节点"
   type: select
   <<: *all
-- name: ♻️ Auto-select
+- name: ♻️ 自动选择
   <<: *fly
-- name: "🐟 missed opportunity"
+- name: "🐟 漏网之鱼"
   type: select
   proxies:
-  - ✈️ International agency
-  - 🇭🇰 Hong Kong
-  - 🇹🇼 Taiwan
-  - 🇸🇬 Singapore
-  - 🇯🇵 Japan
-  - 🇰🇷 South Korea
-  - 🇺🇸 United States
-  - 📌 All nodes
-  - 🚀 Other regions
-  - ⭕️ Direct Connection 
+  - ✈️ 国际代理
+  - 🇭🇰 香港节点
+  - 🇹🇼 台湾节点
+  - 🇸🇬 新加坡节点
+  - 🇯🇵 日本节点
+  - 🇰🇷 韩国节点
+  - 🇺🇸 美国节点
+  - 📌 全部节点
+  - 🚀 其他地区
+  - ⭕️ 直连 
 rule-providers:
-# Direct connection and ad blocking
+# 直连和广告拦截
   Special:
     type: http
     behavior: classical
@@ -430,7 +429,7 @@ rule-providers:
     type: http
     behavior: domain
     url: "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/Provider/EasyListChina.yaml"
-    path: ./rules/EasyListChina.yaml
+    path: ./rule_provider/EasyListChina.yaml
     interval: 86400
 
   EasyPrivacy:
@@ -446,7 +445,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/Provider/ProgramAD.yaml"
     path: ./rule_provider/ProgramAD.yaml
     interval: 86400
-# Media Groups in China
+# 国内媒体分组
   Bilibili:
     type: http
     behavior: classical
@@ -495,7 +494,7 @@ rule-providers:
     url: https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/Provider/Media/WeTV.yaml
     path: ./rule_provider/WeTV.yaml
     interval: 86400
-# International Media Groups
+# 国际媒体分组
   ABC:
     type: http
     behavior: classical
@@ -700,14 +699,14 @@ rule-providers:
     url: https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/Provider/Media/YouTube%20Music.yaml
     path: ./rule_provider/YouTube_Music.yaml
     interval: 86400
-# Apple Service Rules List
+# 苹果服务规则列表
   Apple:
     type: http
     behavior: classical
     url: https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/Provider/Apple.yaml
     path: ./rule_provider/Apple.yaml
     interval: 86400
-# Optional Rules List for Telegram, Microsoft, OpenAI, Steam, PayPal, and TikTok
+# 电报、微软、OpenAI、Steam、PayPal 及 TikTok 可选规则列表
   Telegram:
     type: http
     behavior: classical
@@ -744,7 +743,7 @@ rule-providers:
     url: https://raw.githubusercontent.com/Thaolga/ios_rule_script/master/rule/Clash/TikTok/TikTok.yaml
     path: ./rule_provider/TikTok.yaml
     interval: 86400   
-# Mandatory Rules List
+# 必须规则列表
   Speedtest:
     type: http
     behavior: classical
@@ -783,75 +782,75 @@ rules:
   - IP-CIDR6,fe80::/10,DIRECT
   - IP-CIDR6,fd00::/8,DIRECT
 
-  # Direct Connection and Ad Blocking
+  # 直连和广告拦截
   - RULE-SET,AD,REJECT
   - RULE-SET,EasyList,REJECT
   - RULE-SET,EasyListChina,REJECT
   - RULE-SET,EasyPrivacy,REJECT
   - RULE-SET,ProgramAD,REJECT
   - RULE-SET,Special,DIRECT
-  - RULE-SET,Reject,🆎 Ad Blocking
-  # Media Groups in China
-  - RULE-SET,Bilibili,📽 Chinese Media
-  - RULE-SET,IQ,📽 Chinese Media
-  - RULE-SET,IQIYI,📽 Chinese Media
-  - RULE-SET,Letv,📽 Chinese Media
-  - RULE-SET,Netease Music,🎵 NetEase CloudMusic
-  - RULE-SET,Tencent Video,📽 Chinese Media
-  - RULE-SET,Youku,📽 Chinese Media
-  - RULE-SET,WeTV,📽 Chinese Media
-  # International Media Groups
-  - RULE-SET,Netflix,✈️ International agency #🎥 Netflix
-  - RULE-SET,Disney Plus,✈️ International agency #🎬 Disney
-  - RULE-SET,Spotify,✈️ International agency #🎧 Spotify
-  - RULE-SET,YouTube Music,✈️ International agency
-  - RULE-SET,ABC,✈️ International agency
-  - RULE-SET,Abema TV,✈️ International agency
-  - RULE-SET,Amazon,✈️ International agency
-  - RULE-SET,Apple News,✈️ International agency
-  - RULE-SET,Apple TV,✈️ International agency
-  - RULE-SET,Bahamut,✈️ International agency
-  - RULE-SET,BBC iPlayer,✈️ International agency
-  - RULE-SET,DAZN,✈️ International agency
-  - RULE-SET,Discovery Plus,✈️ International agency
-  - RULE-SET,encoreTVB,✈️ International agency
-  - RULE-SET,F1 TV,✈️ International agency
-  - RULE-SET,Fox Now,✈️ International agency
-  - RULE-SET,Fox+,✈️ International agency
-  - RULE-SET,HBO Go,✈️ International agency
-  - RULE-SET,HBO Max,✈️ International agency
-  - RULE-SET,Hulu Japan,✈️ International agency
-  - RULE-SET,Hulu,✈️ International agency
-  - RULE-SET,Japonx,✈️ International agency
-  - RULE-SET,JOOX,✈️ International agency
-  - RULE-SET,KKBOX,✈️ International agency
-  - RULE-SET,KKTV,✈️ International agency
-  - RULE-SET,Line TV,✈️ International agency
-  - RULE-SET,myTV SUPER,✈️ International agency
-  - RULE-SET,Pandora,✈️ International agency
-  - RULE-SET,PBS,✈️ International agency
-  - RULE-SET,Pornhub,✈️ International agency
-  - RULE-SET,Soundcloud,✈️ International agency
-  - RULE-SET,ViuTV,✈️ International agency
+  - RULE-SET,Reject,🆎 广告拦截
+  # 国内媒体分组
+  - RULE-SET,Bilibili,📽 国内媒体
+  - RULE-SET,IQ,📽 国内媒体
+  - RULE-SET,IQIYI,📽 国内媒体
+  - RULE-SET,Letv,📽 国内媒体
+  - RULE-SET,Netease Music,📽 国内媒体 #🎵 网易云音乐
+  - RULE-SET,Tencent Video,📽 国内媒体
+  - RULE-SET,Youku,📽 国内媒体
+  - RULE-SET,WeTV,📽 国内媒体
+  # 国际媒体分组
+  - RULE-SET,Netflix,✈️ 国际代理 #📺 网飞视频
+  - RULE-SET,Disney Plus,✈️ 国际代理 #🎬 迪士尼+
+  - RULE-SET,Spotify,✈️ 国际代理 #🎧 声田音乐
+  - RULE-SET,YouTube Music,✈️ 国际代理
+  - RULE-SET,ABC,✈️ 国际代理
+  - RULE-SET,Abema TV,✈️ 国际代理
+  - RULE-SET,Amazon,✈️ 国际代理
+  - RULE-SET,Apple News,✈️ 国际代理
+  - RULE-SET,Apple TV,✈️ 国际代理
+  - RULE-SET,Bahamut,✈️ 国际代理
+  - RULE-SET,BBC iPlayer,✈️ 国际代理
+  - RULE-SET,DAZN,✈️ 国际代理
+  - RULE-SET,Discovery Plus,✈️ 国际代理
+  - RULE-SET,encoreTVB,✈️ 国际代理
+  - RULE-SET,F1 TV,✈️ 国际代理
+  - RULE-SET,Fox Now,✈️ 国际代理
+  - RULE-SET,Fox+,✈️ 国际代理
+  - RULE-SET,HBO Go,✈️ 国际代理
+  - RULE-SET,HBO Max,✈️ 国际代理
+  - RULE-SET,Hulu Japan,✈️ 国际代理
+  - RULE-SET,Hulu,✈️ 国际代理
+  - RULE-SET,Japonx,✈️ 国际代理
+  - RULE-SET,JOOX,✈️ 国际代理
+  - RULE-SET,KKBOX,✈️ 国际代理
+  - RULE-SET,KKTV,✈️ 国际代理
+  - RULE-SET,Line TV,✈️ 国际代理
+  - RULE-SET,myTV SUPER,✈️ 国际代理
+  - RULE-SET,Pandora,✈️ 国际代理
+  - RULE-SET,PBS,✈️ 国际代理
+  - RULE-SET,Pornhub,✈️ 国际代理
+  - RULE-SET,Soundcloud,✈️ 国际代理
+  - RULE-SET,ViuTV,✈️ 国际代理
   
-  # Apple Services
-  - RULE-SET,Apple,🍎 Apple
+  # 苹果服务
+  - RULE-SET,Apple,🍎 苹果服务
   
-  # Optional rules for Telegram, Microsoft, PayPal, and Steam. If you need to set a separate policy for a specific rule list, please modify the policy name to match the name of the above policy group.
-  - RULE-SET,Microsoft,🌏 Chinese Network #🪟 Microsoft
-  - RULE-SET,OpenAI,✈️ International agency # 🤖 OpenAI
-  - RULE-SET,YouTube,📹 YouTube
-  - RULE-SET,Telegram,📡 Telegram
-  - RULE-SET,PayPal,💳 PayPal
-  - RULE-SET,Steam,🎮 Game platform
-  - RULE-SET,TikTok,🎵 TikTok
+  # 电报、微软、贝宝及 Steam 可选规则，如需为某个规则列表单独设置策略，请直接修改策略名称与上方策略组名称保持一致
+  - RULE-SET,Microsoft,🌏 大陆网络 #Ⓜ️ 微软服务
+  - RULE-SET,OpenAI,✈️ 国际代理 #🤖 OpenAI
+  - RULE-SET,YouTube,📹 油管视频
+  - RULE-SET,Telegram,📡 电报服务
+  - RULE-SET,PayPal,✈️ 国际代理 #💳 贝宝服务
+  - RULE-SET,Steam,🎮 游戏平台
+  - RULE-SET,TikTok,🎶 国际抖音
 
-  # Must Rules
-  - RULE-SET,Speedtest,⏳ Abbreviation
-  - RULE-SET,Proxy,✈️ International agency
-  - RULE-SET,Domestic,🌏 Chinese Network
+  # 必须规则
+  - RULE-SET,Speedtest,⏳ 网速测试
+  - RULE-SET,Proxy,✈️ 国际代理
+  - RULE-SET,Domestic,🌏 大陆网络
   - RULE-SET,LAN,DIRECT
 
-  # Final Rule
-  - GEOIP,CN,🌏 Chinese Network
-  - MATCH,🐟 missed opportunity
+  # 最终规则
+  - GEOIP,CN,🌏 大陆网络
+  - MATCH,🐟 漏网之鱼

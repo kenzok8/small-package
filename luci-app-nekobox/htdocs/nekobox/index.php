@@ -769,27 +769,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
 </div>
 </div>
 <script>
-$(document).ready(function() {
+function checkForUpdate() {
     $.ajax({
         url: 'check_update.php',
         method: 'GET',
         dataType: 'json',
         success: function(data) {
             if (data.hasUpdate) {
-                $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/nekobox/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
+                $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
             }
             console.log('Current Version:', data.currentVersion);
             console.log('Latest Version:', data.latestVersion);
             console.log('Has Update:', data.hasUpdate);
+
+            localStorage.setItem('lastUpdateCheck', Date.now());
+            startUpdateTimer(); 
         },
         error: function(jqXHR, textStatus, errorThrown) {
-            //$('#version-info').text('Error fetching version information');
             console.error('AJAX Error:', textStatus, errorThrown);
         }
     });
+}
+
+function startUpdateTimer() {
+    const now = Date.now();
+    const lastCheck = localStorage.getItem('lastUpdateCheck');
+
+    let timeSinceLastCheck = lastCheck ? now - parseInt(lastCheck, 10) : Infinity;
+    let timeUntilNextCheck = Math.max(28800000 - timeSinceLastCheck, 0); 
+
+    console.log('Time until next check:', timeUntilNextCheck / 1000 / 60, 'minutes');
+
+    setTimeout(checkForUpdate, timeUntilNextCheck); 
+}
+
+startUpdateTimer(); 
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const titleElement = document.getElementById('neko-title');
+    const cachedTitle = localStorage.getItem('nekoTitle');
+
+    if (cachedTitle) {
+        titleElement.textContent = cachedTitle; 
+    }
+
+    function updateTitle(newTitle) {
+        titleElement.textContent = newTitle;
+        localStorage.setItem('nekoTitle', newTitle);
+    }
+
 });
 </script>
-<h2 class="royal-style">NekoBox</h2>
+<h2 id="neko-title" class="royal-style">NekoBox</h2>
 <style>
 
     .nav-pills .nav-link {
@@ -912,97 +944,145 @@ $(document).ready(function() {
 
 </style>
 <div class="section-container">
-   <table class="table table-borderless mb-2">
-       <tbody>
-           <tr>
-               <td style="width:150px" data-translate="status">Status</td>
-               <td class="d-grid">
-                   <div class="btn-group w-100" role="group" aria-label="ctrl">
-                       <?php
-                       if ($neko_status == 1) {
-                           echo "<button type=\"button\" class=\"btn btn-success\" data-translate=\"mihomoRunning\">Mihomo Running</button>\n";
-                       } else {
-                           echo "<button type=\"button\" class=\"btn btn-outline-danger\" data-translate=\"mihomoNotRunning\">Mihomo Not Running</button>\n";
-                       }
-                       echo "<button type=\"button\" class=\"btn btn-deepskyblue\">$str_cfg</button>\n";
-                       if ($singbox_status == 1) {
-                           echo "<button type=\"button\" class=\"btn btn-success\" data-translate=\"singboxRunning\">Sing-box Running</button>\n";
-                       } else {
-                           echo "<button type=\"button\" class=\"btn btn-outline-danger\" data-translate=\"singboxNotRunning\">Sing-box Not Running</button>\n";
-                       }
-                       ?>
-                   </div>
-               </td>
-           </tr>
-           <tr>
-               <td style="width:150px" data-translate="mihomoControl">Mihomo Control</td>
-               <td class="d-grid">
-                   <form action="index.php" method="post" style="display: inline-block; width: 100%; margin-bottom: 10px;">
-                       <div class="form-group">
-                           <select id="configSelect" class="form-select" name="selected_config" onchange="saveConfigToLocalStorage(); this.form.submit()">
-                               <option value="" data-translate="selectConfig">Please select a configuration file</option> 
-                               <?php
-                                   $config_dir = '/etc/neko/config';
-                                   $files = array_diff(scandir($config_dir), array('..', '.')); 
-                                   foreach ($files as $file) {
-                                       if (pathinfo($file, PATHINFO_EXTENSION) == 'yaml') {
-                                           $selected = (realpath($config_dir . '/' . $file) == realpath($current_config)) ? 'selected' : '';  
-                                           echo "<option value='$file' $selected>$file</option>";
-                                       }
-                                   }
-                               ?>
-                           </select>
-                       </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="mb-2"><i data-feather="activity"></i> <span data-translate="status">Status</span></h6>
+                <div class="btn-group w-100" role="group">
+                    <?php if ($neko_status == 1): ?>
+                        <button type="button" class="btn btn-success">
+                            <i class="bi bi-router"></i> 
+                            <span data-translate="mihomoRunning">Mihomo Running</span>
+                        </button>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline-danger">
+                            <i class="bi bi-router"></i> 
+                            <span data-translate="mihomoNotRunning">Mihomo Not Running</span>
+                        </button>
+                    <?php endif; ?>
+
+                    <button type="button" class="btn btn-deepskyblue">
+                        <i class="bi bi-file-earmark-text"></i> <?= $str_cfg ?>
+                    </button>
+
+                    <?php if ($singbox_status == 1): ?>
+                        <button type="button" class="btn btn-success">
+                            <i class="bi bi-hdd-stack"></i> 
+                            <span data-translate="singboxRunning">Sing-box Running</span>
+                        </button>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline-danger">
+                            <i class="bi bi-hdd-stack"></i> 
+                            <span data-translate="singboxNotRunning">Sing-box Not Running</span>
+                        </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="mb-2"><i class="fas fa-box custom-icon"></i> <span data-translate="mihomoControl">Mihomo Control</span></h6>
+                <div class="d-flex flex-column gap-2">
+                    <form action="index.php" method="post">
+                        <select id="configSelect" class="form-select mb-2" name="selected_config" 
+                                onchange="saveConfigToLocalStorage(); this.form.submit()">
+                            <option value="">
+                                <span data-translate="selectConfig">Please select a configuration file</span>
+                            </option>
+                            <?php
+                            $config_dir = '/etc/neko/config';
+                            $files = array_diff(scandir($config_dir), array('..', '.'));
+                            foreach ($files as $file):
+                                if (pathinfo($file, PATHINFO_EXTENSION) == 'yaml'):
+                                    $selected = (realpath($config_dir . '/' . $file) == realpath($current_config)) ? 'selected' : '';
+                                    ?>
+                                    <option value="<?= $file ?>" <?= $selected ?>>
+                                        <?= $file ?>
+                                    </option>
+                            <?php
+                                endif;
+                            endforeach;
+                            ?>
+                        </select>
+                        
+                        <div class="btn-group w-100">
+                            <button type="submit" name="neko" value="start" 
+                                    class="btn btn<?= ($neko_status == 1) ? "-outline" : "" ?>-success <?= ($neko_status == 1) ? "disabled" : "" ?>">
+                                <i class="bi bi-power"></i> 
+                                <span data-translate="enableMihomo">Enable Mihomo</span>
+                            </button>
+                            <button type="submit" name="neko" value="disable" 
+                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-danger <?= ($neko_status == 0) ? "disabled" : "" ?>">
+                                <i class="bi bi-x-octagon"></i> 
+                                <span data-translate="disableMihomo">Disable Mihomo</span>
+                            </button>
+                            <button type="submit" name="neko" value="restart" 
+                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-warning <?= ($neko_status == 0) ? "disabled" : "" ?>">
+                                <i class="bi bi-arrow-clockwise"></i> 
+                                <span data-translate="restartMihomo">Restart Mihomo</span>
+                            </button>
+                        </div>
                     </form>
-                   <form action="index.php" method="post" style="display: inline-block; width: 100%;">
-                       <div class="btn-group w-100">
-                           <button type="submit" name="neko" value="start" class="btn btn<?php if ($neko_status == 1) echo "-outline" ?>-success <?php if ($neko_status == 1) echo "disabled" ?>" data-translate="enableMihomo">Enable Mihomo</button>
-                           <button type="submit" name="neko" value="disable" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-danger <?php if ($neko_status == 0) echo "disabled" ?>" data-translate="disableMihomo">Disable Mihomo</button>
-                           <button type="submit" name="neko" value="restart" class="btn btn<?php if ($neko_status == 0) echo "-outline" ?>-warning <?php if ($neko_status == 0) echo "disabled" ?>" data-translate="restartMihomo">Restart Mihomo</button>
-                       </div>
-                   </form>
-               </td>
-           </tr>
-           <tr>
-               <td style="width:150px" data-translate="singboxControl">Singbox Control</td>
-               <td class="d-grid">
-                   <form action="index.php" method="post">
-                       <div class="input-group mb-2">
-                           <select name="config_file" id="config_file" class="form-select" onchange="saveConfigSelection()">
-                               <option value="" data-translate="selectConfig">Please select a configuration file</option> 
-                               <?php foreach ($availableConfigs as $config): ?>
-                                   <option value="<?= htmlspecialchars($config) ?>" <?= isset($_POST['config_file']) && $_POST['config_file'] === $config ? 'selected' : '' ?>>
-                                       <?= htmlspecialchars(basename($config)) ?>
-                                   </option>
-                               <?php endforeach; ?>
-                           </select>
-                       </div>
-                       <div class="btn-group w-100">
-                           <button type="submit" name="singbox" value="start" class="btn btn<?php echo ($singbox_status == 1) ? "-outline" : "" ?>-success <?php echo ($singbox_status == 1) ? "disabled" : "" ?>" data-translate="enableSingbox">Enable Sing-box</button>
-                           <button type="submit" name="singbox" value="disable" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-danger <?php echo ($singbox_status == 0) ? "disabled" : "" ?>" data-translate="disableSingbox">Disable Sing-box</button>
-                           <button type="submit" name="singbox" value="restart" class="btn btn<?php echo ($singbox_status == 0) ? "-outline" : "" ?>-warning <?php echo ($singbox_status == 0) ? "disabled" : "" ?>" data-translate="restartSingbox">Restart Sing-box</button>
-                       </div>
-                   </form>
-               </td>
-           </tr>
-           <tr>
-               <td style="width:150px" data-translate="runningMode">Running Mode</td>
-               <td class="d-grid">
-                   <?php
-                   $mode_placeholder = '';
-                   if ($neko_status == 1) {
-                       $mode_placeholder = $neko_cfg['echanced'] . " | " . $neko_cfg['mode'];
-                   } elseif ($singbox_status == 1) {
-                       $mode_placeholder = "Rule Mode";
-                   } else {
-                       $mode_placeholder = "Not Running";
-                   }
-                   ?>
-                   <input class="form-control text-center" name="mode" type="text" placeholder="<?php echo $mode_placeholder; ?>" disabled>
-               </td>
-           </tr>
-       </tbody>
-   </table>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="mb-2"><i data-feather="codesandbox"></i> <span data-translate="singboxControl">Singbox Control</span></h6>
+                <div class="d-flex flex-column gap-2">
+                    <form action="index.php" method="post">
+                        <select name="config_file" id="config_file" class="form-select mb-2" 
+                                onchange="saveConfigSelection()">
+                            <option value="">
+                                <span data-translate="selectConfig">Please select a configuration file</span>
+                            </option>
+                            <?php foreach ($availableConfigs as $config): ?>
+                                <option value="<?= htmlspecialchars($config) ?>" 
+                                    <?= (isset($_POST['config_file']) && $_POST['config_file'] === $config) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars(basename($config)) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        
+                        <div class="btn-group w-100">
+                            <button type="submit" name="singbox" value="start" 
+                                    class="btn btn<?= ($singbox_status == 1) ? "-outline" : "" ?>-success <?= ($singbox_status == 1) ? "disabled" : "" ?>">
+                                <i class="bi bi-power"></i> 
+                                <span data-translate="enableSingbox">Enable Sing-box</span>
+                            </button>
+                            <button type="submit" name="singbox" value="disable" 
+                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-danger <?= ($singbox_status == 0) ? "disabled" : "" ?>">
+                                <i class="bi bi-x-octagon"></i> 
+                                <span data-translate="disableSingbox">Disable Sing-box</span>
+                            </button>
+                            <button type="submit" name="singbox" value="restart" 
+                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-warning <?= ($singbox_status == 0) ? "disabled" : "" ?>">
+                                <i class="bi bi-arrow-clockwise"></i> 
+                                <span data-translate="restartSingbox">Restart Sing-box</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="mb-2"><i class="fas fa-cog custom-icon"></i> <span data-translate="runningMode">Running Mode</span></h6>
+                <div class="btn-group w-100">
+                    <?php
+                    $mode_placeholder = '';
+                    if ($neko_status == 1) {
+                        $mode_placeholder = $neko_cfg['echanced'] . " | " . $neko_cfg['mode'];
+                    } elseif ($singbox_status == 1) {
+                        $mode_placeholder = "Sing-box | Rule Mode";
+                    } else {
+                        $mode_placeholder = "Not Running";
+                    }
+                    ?>
+                    <input class="form-control text-center" name="mode" type="text" 
+                           placeholder="<?= $mode_placeholder ?>" disabled>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -1043,65 +1123,86 @@ window.onload = function() {
     }
 };
 </script>
-<div id="collapsibleHeader" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <i id="toggleIcon" class="triangle-icon"></i> 
-    <h2 id="systemTitle" class="text-center" style="display: none; margin-top: 0;" data-translate="systemInfo">System Status</h2>
-</div>
+<div class="section-container"> 
+  <div id="collapsibleHeader" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 20px;">
+      <i id="toggleIcon" class="triangle-icon"></i> 
+  </div>
+  <div class="card mt-4 py-3"> 
+      <div class="text-center" id="systemHeader" class="system-header">
+          <h3 class="mb-0"></h3>
+      </div>
+      <div id="collapsible" class="card-body collapsible-body">
+          <!-- System Info -->
+          <div class="mb-4">
+              <h6 class="mb-2"><i data-feather="cpu"></i> <span data-translate="systemInfo">System Info</span></h6>
+              <div class="btn-group w-100">
+                  <span id="systemInfo" class="form-control text-center"></span>
+              </div>
+          </div>
 
-<div id="collapsible" style="display: none; margin-top: 5px;"> 
-   <table class="table table-borderless rounded-4 mb-2">
-       <tbody>
-           <tr>
-               <td style="width:150px"><span data-translate="systemInfo">System Info</span></td>
-               <td id="systemInfo"></td>
-           </tr>
-           <tr>
-               <td style="width:150px"><span data-translate="systemMemory">System Memory</span></td>
-               <td id="ramUsage"></td>
-           </tr>
-           <tr>
-               <td style="width:150px"><span data-translate="avgLoad">Average Load</span></td>
-               <td id="cpuLoad"></td>
-           </tr>
-           <tr>
-               <td style="width:150px"><span data-translate="uptime">Uptime</span></td>
-               <td id="uptime"></td>
-           </tr>
-           <tr>
-               <td style="width:150px"><span data-translate="trafficStats">Traffic Stats</span></td>
-               <td>⬇️ <span id="downtotal"></span> | ⬆️ <span id="uptotal"></span></td>
-           </tr>
-       </tbody>
-   </table>
+          <div class="mb-4">
+              <h6 class="mb-2"><i data-feather="database"></i> <span data-translate="systemMemory">System Memory</span></h6>
+              <div class="btn-group w-100">
+                  <span id="ramUsage" class="form-control text-center"></span>
+              </div>
+          </div>
+
+          <div class="mb-4">
+              <h6 class="mb-2"><i data-feather="zap"></i> <span data-translate="avgLoad">Average Load</span></h6>
+              <div class="btn-group w-100">
+                  <span id="cpuLoad" class="form-control text-center"></span>
+              </div>
+          </div>
+
+          <div class="mb-4">
+              <h6 class="mb-2"><i data-feather="clock"></i> <span data-translate="uptime">Uptime</span></h6>
+              <div class="btn-group w-100">
+                  <span id="uptime" class="form-control text-center"></span>
+              </div>
+          </div>
+
+          <div class="mb-4">
+              <h6 class="mb-2"><i data-feather="bar-chart-2"></i> <span data-translate="trafficStats">Traffic Stats</span></h6>
+              <div class="btn-group w-100">
+                  <span class="form-control text-center">
+                      ⬇️ <span id="downtotal"></span> | ⬆️ <span id="uptotal"></span>
+                  </span>
+              </div>
+          </div>
+      </div>
+  </div>
 </div>
 
 <script>
     const collapsible = document.getElementById('collapsible');
     const collapsibleHeader = document.getElementById('collapsibleHeader');
     const toggleIcon = document.getElementById('toggleIcon');
-    const systemTitle = document.getElementById('systemTitle');
+    const systemHeader = document.getElementById('systemHeader');  
     
     let isCollapsed = true;
 
     if (localStorage.getItem('isCollapsed') === 'false') {
         isCollapsed = false;
-        collapsible.style.display = 'block';
-        systemTitle.style.display = 'block';
+        collapsible.style.display = 'block';  
+        systemHeader.style.display = 'block';  
         toggleIcon.classList.add('rotated'); 
+    } else {
+        collapsible.style.display = 'none';   
+        systemHeader.style.display = 'none';   
     }
 
     collapsibleHeader.addEventListener('click', () => {
         if (isCollapsed) {
-            collapsible.style.display = 'block'; 
-            systemTitle.style.display = 'block'; 
-            toggleIcon.classList.add('rotated'); 
+            collapsible.style.display = 'block';  
+            systemHeader.style.display = 'block';  
+            toggleIcon.classList.add('rotated');  
         } else {
             collapsible.style.display = 'none';   
-            systemTitle.style.display = 'none';  
+            systemHeader.style.display = 'none';   
             toggleIcon.classList.remove('rotated'); 
         }
         isCollapsed = !isCollapsed;  
-        localStorage.setItem('isCollapsed', isCollapsed); 
+        localStorage.setItem('isCollapsed', isCollapsed);  
     });
 
     function fetchSystemStatus() {
@@ -1121,7 +1222,6 @@ window.onload = function() {
     setInterval(fetchSystemStatus, 1000);
     fetchSystemStatus();  
 </script>
-
 <style>
     .triangle-icon {
         width: 0;
@@ -1163,7 +1263,7 @@ window.onload = function() {
     }
 
 </style>
-<h2 class="text-center" data-translate="log"></h2>
+<div class="section-container">
 <ul class="nav nav-pills mb-3" id="logTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true"><span data-translate="nekoBoxLog"></span></a>

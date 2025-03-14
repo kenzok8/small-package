@@ -15,9 +15,9 @@ if (isset($_GET['check_version'])) {
 
     if (isset($latest_version_info['tag_name'])) {
         $latest_version = $latest_version_info['tag_name'];
-        echo "最新版本: v$latest_version";
+        echo "Latest version: v$latest_version";
     } else {
-        echo "无法获取最新版本信息";
+        echo "Unable to retrieve the latest version information";
     }
     exit;
 }
@@ -34,13 +34,13 @@ if (strpos($arch, 'aarch64') !== false || strpos($arch, 'arm') !== false) {
     $arch = "mips";
     $download_url = "https://github.com/$repo_owner/$repo_name/releases/download/$new_version_cleaned/{$package_name}_{$new_version_cleaned}-1_mips.ipk";
 } else {
-    die("当前设备架构不受支持");
+    die("The current device architecture is not supported");
 }
 
 $local_file = "/tmp/{$package_name}_{$new_version_cleaned}_{$arch}.ipk";
 
-echo "<pre>最新版本: $new_version_cleaned</pre>";
-echo "<pre>下载URL: $download_url</pre>";
+echo "<pre>Latest version: $new_version_cleaned</pre>";
+echo "<pre>Download URL: $download_url</pre>";
 echo "<pre id='logOutput'></pre>";
 
 echo "<script>
@@ -48,25 +48,25 @@ echo "<script>
             document.getElementById('logOutput').innerHTML += message + '\\n';
         }
       </script>";
-echo "<script>appendLog('开始下载...');</script>";
+echo "<script>appendLog('Start downloading...');</script>";
 
 $curl_command = "curl -sL " . escapeshellarg($download_url) . " -o " . escapeshellarg($local_file);
 exec($curl_command . " 2>&1", $output, $return_var);
 
 if ($return_var !== 0 || !file_exists($local_file)) {
-    echo "<pre>下载失败。输出: " . implode("\n", $output) . "</pre>";
-    die("下载失败。未找到下载的文件。");
+    echo "<pre>Download failed. Output: " . implode("\n", $output) . "</pre>";
+    die("Download failed. File not found");
 }
-echo "<script>appendLog('下载完成。');</script>";
+echo "<script>appendLog('Download completed。');</script>";
 
-echo "<script>appendLog('更新软件包列表...');</script>";
+echo "<script>appendLog('Updating package list...');</script>";
 $output = shell_exec("opkg update");
 echo "<pre>$output</pre>";
 
-echo "<script>appendLog('开始安装...');</script>";
+echo "<script>appendLog('Starting installation...');</script>";
 $output = shell_exec("opkg install --force-reinstall " . escapeshellarg($local_file));
 echo "<pre>$output</pre>";
-echo "<script>appendLog('安装完成。');</script>";
+echo "<script>appendLog('Installation completed。');</script>";
 
 unlink($local_file);
 

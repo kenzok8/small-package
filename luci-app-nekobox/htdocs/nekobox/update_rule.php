@@ -1,7 +1,6 @@
 <?php
 ini_set('memory_limit', '128M');
 ini_set('max_execution_time', 300);
-date_default_timezone_set('Asia/Shanghai');
 
 $logMessages = [];
 
@@ -65,7 +64,7 @@ class MultiDownloader {
                 if (!is_dir($dir)) {
                     mkdir($dir, 0755, true);
                 }
-                logMessage(basename($download['destination']), "开始下载");
+                logMessage(basename($download['destination']), "Start downloadin");
                 $this->createHandle($download['url'], $download['destination']);
             }
             
@@ -87,9 +86,9 @@ class MultiDownloader {
                 
                 if ($httpCode === 200 && $content !== false) {
                     if (file_put_contents($info['destination'], $content) !== false) {
-                        logMessage(basename($info['destination']), "下载成功");
+                        logMessage(basename($info['destination']), "Download successful");
                     } else {
-                        logMessage(basename($info['destination']), "保存失败");
+                        logMessage(basename($info['destination']), "Save failed");
                         if (!isset($this->retries[$info['url']]) || $this->retries[$info['url']] < $this->maxRetries) {
                             $this->retries[$info['url']] = isset($this->retries[$info['url']]) ? $this->retries[$info['url']] + 1 : 1;
                             $this->urls[] = [
@@ -100,7 +99,7 @@ class MultiDownloader {
                         }
                     }
                 } else {
-                    logMessage(basename($info['destination']), "下载失败 (HTTP $httpCode)");
+                    logMessage(basename($info['destination']), "Download failed (HTTP $httpCode)");
                     if (!isset($this->retries[$info['url']]) || $this->retries[$info['url']] < $this->maxRetries) {
                         $this->retries[$info['url']] = isset($this->retries[$info['url']]) ? $this->retries[$info['url']] + 1 : 1;
                         $this->urls[] = [
@@ -124,7 +123,7 @@ class MultiDownloader {
     }
 }
 
-echo "开始更新规则集...\n";
+echo "Start updating the rule set...\n";
 $urls = [
     "https://raw.githubusercontent.com/Thaolga/neko/luci-app-neko/nekobox/rules/ads.srs" => "/etc/neko/rules/ads.srs",
     "https://raw.githubusercontent.com/Thaolga/neko/luci-app-neko/nekobox/rules/ai.srs" => "/etc/neko/rules/ai.srs",
@@ -157,7 +156,7 @@ foreach ($urls as $url => $destination) {
 
 $downloader->start();
 
-echo "\n规则集更新完成！\n\n";
+echo "\nRule set update completed！\n\n";
 
 foreach ($logMessages as $message) {
     echo $message . "\n";

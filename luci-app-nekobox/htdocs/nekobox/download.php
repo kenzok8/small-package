@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($fileError === UPLOAD_ERR_OK) {
                 if ($fileSize > $maxFileSize) {
-                    $fileErrors[] = "文件 '$fileName' 大小超出限制！";
+                    $fileErrors[] = "File '$fileName' exceeds the size limit!";
                     continue;
                 }
 
@@ -58,16 +58,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (move_uploaded_file($fileTmpName, $targetFile)) {
                     $uploadedFiles[] = $uploadedFilePath;
                 } else {
-                    $fileErrors[] = "文件 '$fileName' 上传失败！";
+                    $fileErrors[] = "Failed to upload file '$fileName'!";
                 }
             } else {
-                $fileErrors[] = "文件 '$fileName' 上传出错，错误代码: $fileError";
+                $fileErrors[] = "Error uploading file '$fileName', error code: $fileError";
             }
         }
 
         if (count($uploadedFiles) > 0) {
             echo "<script>
-                    alert('文件上传成功！');
+                    alert('File(s) uploaded successfully!');
                     window.location.href = 'settings.php'; 
                   </script>";
         } else {
@@ -76,14 +76,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     echo "<script>alert('$error');</script>";
                 }
             } else {
-                echo "<script>alert('没有文件上传或上传出错！');</script>";
+                echo "<script>alert('No files uploaded or an error occurred during upload!');</script>";
             }
         }
     } else {
-        echo "<script>alert('没有文件上传或上传出错！');</script>";
+        echo "<script>alert('No files uploaded or an error occurred during upload!');</script>";
     }
 } else {
-    echo "<script>alert('没有接收到数据。');</script>";
+    echo "<script>alert('No data received.');</script>";
 }
 ?>
 
@@ -134,5 +134,5 @@ if (isset($_GET['file'])) {
         exit;
     }
 
-    echo '文件不存在！';
+    echo 'File does not exist!';
 }

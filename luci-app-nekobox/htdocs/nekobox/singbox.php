@@ -7,12 +7,13 @@ $lastSubscribeUrl = '';
 
 if (file_exists($dataFilePath)) {
     $fileContent = file_get_contents($dataFilePath);
-    $lastPos = strrpos($fileContent, '订阅链接地址:');
+    $subscriptionLinkAddress = $translations['subscription_link_address'] ?? 'Subscription Link Address:';
+    $lastPos = strrpos($fileContent, $subscriptionLinkAddress);
     if ($lastPos !== false) {
         $urlSection = substr($fileContent, $lastPos);
         $httpPos = strpos($urlSection, 'http');
         if ($httpPos !== false) {
-            $endPos = strpos($urlSection, '自定义模板URL:', $httpPos);
+            $endPos = strpos($urlSection, 'Custom Template URL:', $httpPos);
             if ($endPos !== false) {
                 $lastSubscribeUrl = trim(substr($urlSection, $httpPos, $endPos - $httpPos));
             } else {
@@ -44,12 +45,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['setCron'])) {
         unlink($tempCronFile);
 
         $timestamp = date('[ H:i:s ]');
-        file_put_contents($logFile, "$timestamp 定时任务已设置成功，Sing-box 将在 $cronExpression 自动更新。\n", FILE_APPEND);
-        echo "<div class='alert alert-success'>定时任务已设置: $cronExpression</div>";
+        file_put_contents($logFile, "$timestamp Cron job successfully set. Sing-box will update at $cronExpression.\n", FILE_APPEND);
+        echo "<div id='log-message' class='alert alert-success' data-translate='cron_job_set' data-dynamic-content='$cronExpression'></div>";
     } else {
         $timestamp = date('[ H:i:s ]');
-        file_put_contents($logFile, "$timestamp 无效的 Cron 表达式: $cronExpression\n", FILE_APPEND);
-        echo "<div class='alert alert-danger'>无效的 Cron 表达式，请检查格式。</div>";
+        file_put_contents($logFile, "$timestamp Invalid Cron expression: $cronExpression\n", FILE_APPEND);
+        echo "<div id='log-message' class='alert alert-danger' data-translate='cron_job_added_failed'></div>";
+    }
+}
+?>
+
+<?php
+$subscriptionFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
+
+if (file_exists($subscriptionFilePath)) {
+    $fileContent = file_get_contents($subscriptionFilePath);
+    $fileContent = trim($fileContent); 
+} else {
+    $fileContent = ''; 
+}
+
+$latestLink = '';
+if (!empty($fileContent)) {
+    $lines = explode("\n", $fileContent);
+
+    $latestTimestamp = '';
+    $latestLink = '';
+
+    foreach ($lines as $line) {
+        if (preg_match('/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \| .*: (.*)$/', $line, $matches)) {
+            $timestamp = $matches[1]; 
+            $links = $matches[2]; 
+
+            if ($timestamp > $latestTimestamp) {
+                $latestTimestamp = $timestamp;
+                $latestLink = $links;
+            }
+        }
     }
 }
 ?>
@@ -63,11 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $SUBSCRIBE_URL = trim($_POST['subscribeUrl']);
         
         if (empty($SUBSCRIBE_URL)) {
-            echo "<div class='alert alert-warning'>订阅链接不能为空。</div>";
+            echo "<div class='alert alert-warning' data-translate='subscribe_url_empty'></div>";
             exit;
         }
         
-        echo "<div class='alert alert-success'>提交成功: 订阅链接已保存为 $SUBSCRIBE_URL</div>";
+        echo '<div id="log-message" class="alert alert-success" data-translate="subscribe_url_saved" data-dynamic-content="' . $SUBSCRIBE_URL . '"></div>';
     }
 
     if (isset($_POST['createShellScript'])) {
@@ -78,17 +110,17 @@ LOG_FILE="$LOG_FILE"
 SUBSCRIBE_URL=\$(cat /etc/neko/proxy_provider/subscription.txt | tr -d '\\n\\r')
 
 if [ -z "\$SUBSCRIBE_URL" ]; then
-  echo "\$(date '+[ %H:%M:%S ]') 订阅链接地址为空或提取失败。" >> "\$LOG_FILE"
+  echo "\$(date '+[ %H:%M:%S ]') Subscription URL is empty or extraction failed." >> "\$LOG_FILE"
   exit 1
 fi
 
-echo "\$(date '+[ %H:%M:%S ]') 使用的订阅链接: \$SUBSCRIBE_URL" >> "\$LOG_FILE"
+echo "\$(date '+[ %H:%M:%S ]') Using subscription URL: \$SUBSCRIBE_URL" >> "\$LOG_FILE"
 
 CONFIG_DIR="/etc/neko/config"
 if [ ! -d "\$CONFIG_DIR" ]; then
   mkdir -p "\$CONFIG_DIR"
   if [ \$? -ne 0 ]; then
-    echo "\$(date '+[ %H:%M:%S ]') 无法创建配置目录: \$CONFIG_DIR" >> "\$LOG_FILE"
+    echo "\$(date '+[ %H:%M:%S ]') Failed to create config directory: \$CONFIG_DIR" >> "\$LOG_FILE"
     exit 1
   fi
 fi
@@ -97,27 +129,27 @@ CONFIG_FILE="\$CONFIG_DIR/sing-box.json"
 wget -q -O "\$CONFIG_FILE" "\$SUBSCRIBE_URL" >/dev/null 2>&1
 
 if [ \$? -eq 0 ]; then
-  echo "\$(date '+[ %H:%M:%S ]') Sing-box 配置文件更新成功，保存路径: \$CONFIG_FILE" >> "\$LOG_FILE"
+  echo "\$(date '+[ %H:%M:%S ]') Sing-box configuration file updated successfully. Saved to: \$CONFIG_FILE" >> "\$LOG_FILE"
 
   sed -i 's/"Proxy"/"DIRECT"/g' "\$CONFIG_FILE"
 
   if [ \$? -eq 0 ]; then
-    echo "\$(date '+[ %H:%M:%S ]') 配置文件中的 Proxy 已成功替换为 DIRECT。" >> "\$LOG_FILE"
+    echo "\$(date '+[ %H:%M:%S ]') Successfully replaced 'Proxy' with 'DIRECT' in the configuration file." >> "\$LOG_FILE"
   else
-    echo "\$(date '+[ %H:%M:%S ]') 替换 Proxy 为 DIRECT 失败，请检查配置文件。" >> "\$LOG_FILE"
+    echo "\$(date '+[ %H:%M:%S ]') Failed to replace 'Proxy' with 'DIRECT'. Please check the configuration file." >> "\$LOG_FILE"
     exit 1
   fi
 else
-  echo "\$(date '+[ %H:%M:%S ]') 配置文件更新失败，请检查链接或网络。" >> "\$LOG_FILE"
+  echo "\$(date '+[ %H:%M:%S ]') Configuration file update failed. Please check the URL or network." >> "\$LOG_FILE"
   exit 1
 fi
 EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
             chmod($shellScriptPath, 0755);
-            echo "<div class='alert alert-success'>Shell 脚本已创建成功！路径: $shellScriptPath</div>";
+            echo "<div id='log-message' class='alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
         } else {
-            echo "<div class='alert alert-danger'>无法创建 Shell 脚本，请检查权限。</div>";
+            echo "<div id='log-message' class='alert alert-danger' data-translate='shell_script_failed'></div>";
         }
     }
 }
@@ -182,7 +214,7 @@ EOL;
         <form method="post" action="">
             <div class="mb-3">
                 <label for="subscribeUrl" class="form-label" data-translate="subscribeUrlLabel">Subscription URL</label>         
-                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($lastSubscribeUrl); ?>" placeholder="Enter subscription URL, multiple URLs separated by |" required>
+                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($links); ?>" placeholder="Enter subscription URL, multiple URLs separated by |"  data-translate-placeholder="subscribeUrlPlaceholder" required>
             </div>
             <div class="mb-3">
                 <label for="customFileName" class="form-label" data-translate="customFileNameLabel">Custom Filename (Default: sing-box.json)</label>
@@ -256,10 +288,10 @@ EOL;
                                 <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
                             </div>
                             <div class="alert alert-info">
-                                <strong data-translate="cron_hint">提示:</strong> <span data-translate="cron_expression_format">Cron 表达式格式：</span>
+                                <strong data-translate="cron_hint"></strong> <span data-translate="cron_expression_format"></span>
                                 <ul>
-                                    <li><code>分钟 小时 日 月 星期</code></li>
-                                    <li><span data-translate="cron_example">示例: 每天凌晨 2 点: </span><code>0 2 * * *</code></li>
+                                    <li><span data-translate="cron_format_help"></span></li>
+                                    <li><span data-translate="cron_example"></span><code>0 2 * * *</code></li>
                                 </ul>
                             </div>
                         </div>
@@ -297,7 +329,13 @@ EOL;
             $customTemplateUrl = trim($_POST['customTemplateUrl']);
             $templateOption = $_POST['templateOption'] ?? 'default';
             $currentTime = date('Y-m-d H:i:s');
-            $dataContent = $currentTime . " | 订阅链接地址: " . $subscribeUrl . "\n";            
+
+            $lang = $_GET['lang'] ?? 'en'; 
+            $lang = isset($translations[$lang]) ? $lang : 'en'; 
+            $subscribeLinkText = $langData[$currentLang]['subscriptionLink'] ?? 'Subscription Link Address';
+    
+            $dataContent = $currentTime . " | " . $subscribeLinkText . ": " . $subscribeUrl . "\n";     
+    
             $customFileName = trim($_POST['customFileName']);
             if (empty($customFileName)) {
                $customFileName = 'sing-box';  
@@ -353,14 +391,14 @@ EOL;
                 exec($command, $output, $returnVar);
 
             if ($returnVar !== 0) {
-                $logMessages[] = "无法下载内容: " . htmlspecialchars($completeSubscribeUrl);
+                $logMessages[] = "Unable to download content: " . htmlspecialchars($completeSubscribeUrl);
                 }
             }
 
             if ($returnVar === 0) {
                 $downloadedContent = file_get_contents($tempFilePath);
                 if ($downloadedContent === false) {
-                    $logMessages[] = "无法读取下载的文件内容";
+                    $logMessages[] = "Unable to read the downloaded file content";
                 } else {
                     $downloadedContent = preg_replace_callback(
                         '/\{\s*"tag":\s*"(.*?)",\s*"type":\s*"selector",\s*"outbounds":\s*\[\s*"Proxy"\s*\]\s*\}/s',
@@ -449,6 +487,7 @@ EOL;
             echo "<h2 class='card-title'>" . $translations['data_saved'] . "</h2>";
             echo "<pre>" . htmlspecialchars($savedData) . "</pre>";
             echo "<form method='post' action=''>";
+            echo '<input type="hidden" name="lang" value="' . $currentLang . '">'; 
             echo '<button class="btn btn-danger" type="submit" name="clearData"><i class="bi bi-trash"></i> ' . $translations['clear_data'] . '</button>';
             echo "</form>";
             echo "</div>";
@@ -465,7 +504,7 @@ EOL;
         const copyText = document.getElementById("configContent");
         copyText.select();
         document.execCommand("copy");
-        alert("已复制到剪贴板");
+        alert("Copied to clipboard");
     }
 </script>
 

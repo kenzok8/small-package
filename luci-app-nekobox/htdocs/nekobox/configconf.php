@@ -36,12 +36,12 @@ $strconfig = file_get_contents($selected_config);
                     </div>
                     <div class="row justify-content-md-center">
                         <div class="col input-group mb-3 justify-content-md-center">
-                            <input class="btn btn-info" type="submit" value="💾 保存配置">
+                            <input class="btn btn-info" type="submit" value="💾 Save Configuration">
                         </div>
                     </div>
                     <div class="row justify-content-md-center">
                         <div class="col input-group mb-3 justify-content-md-center">
-                            <?php if (!empty($strNewconfig)) echo "<h5>配置已成功保存</h5>"; ?>
+                            <?php if (!empty($strNewconfig)) echo "<h5>Configuration Successfully Saved</h5>"; ?>
                         </div>
                     </div>
                 </div>

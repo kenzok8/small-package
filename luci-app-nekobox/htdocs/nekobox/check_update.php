@@ -18,13 +18,13 @@ function getCurrentVersion() {
 
 function getLatestVersion() {
     $url = "https://github.com/Thaolga/openwrt-nekobox/releases";
-    $output = shell_exec("wget -qO- $url");
+    $html = shell_exec("curl -m 10 -s $url");
 
-    if ($output === null || empty($output)) {
+    if ($html === null || empty($html)) {
         return "Error";
     }
 
-    preg_match('/\/releases\/tag\/([\d\.]+)/', $output, $matches);
+    preg_match('/\/releases\/tag\/([\d\.]+)/', $html, $matches);
     if (isset($matches[1])) {
         return cleanVersion($matches[1]);
     }
@@ -33,8 +33,8 @@ function getLatestVersion() {
 }
 
 function cleanVersion($version) {
-    $version = explode('-', $version)[0];  
-    return preg_replace('/[^0-9\.]/', '', $version);  
+    $version = explode('-', $version)[0];
+    return preg_replace('/[^0-9\.]/', '', $version);
 }
 
 $currentVersion = getCurrentVersion();
