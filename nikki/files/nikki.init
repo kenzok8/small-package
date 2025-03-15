@@ -217,7 +217,7 @@ service_started() {
 		$FIREWALL_INCLUDE_SH
 	fi
 	# hijack
-	utpl -D nikki_group="$NIKKI_GROUP" -D tproxy_fw_mark="$TPROXY_FW_MARK" -D tun_fw_mark="$TUN_FW_MARK" -S "$HIJACK_UT" | nft -f -
+	utpl -D tproxy_fw_mark="$TPROXY_FW_MARK" -D tun_fw_mark="$TUN_FW_MARK" -S "$HIJACK_UT" | nft -f -
 	# check hijack
 	if (nft list tables | grep -q nikki); then
 		log "Transparent Proxy" "Hijack successful."
