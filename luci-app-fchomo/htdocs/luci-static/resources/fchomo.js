@@ -81,10 +81,11 @@ const glossary = {
 	},
 	dns_server: {
 		prefmt: 'dns_%s',
+		field: 'nameserver',
 	},
 	dns_policy: {
 		prefmt: '%s_domain',
-		//field: 'nameserver-policy',
+		field: 'nameserver-policy',
 	},
 	node: {
 		prefmt: 'node_%s',
