@@ -82,30 +82,31 @@ table inet singbox {
     }
   }
 
-  chain singbox-tproxy {
+  chain common-exclude {
     fib daddr type { unspec, local, anycast, multicast } return
-    ip daddr @local_ipv4 return
-    ip6 daddr @local_ipv6 return
+    meta nfproto ipv4 ip daddr @local_ipv4 return
+    meta nfproto ipv6 ip6 daddr @local_ipv6 return
     udp dport { 123 } return
+  }
+
+  chain singbox-tproxy {
+    goto common-exclude
     meta l4proto { tcp, udp } meta mark set 1 tproxy to :9888 accept
   }
 
   chain singbox-mark {
-    fib daddr type { unspec, local, anycast, multicast } return
-    ip daddr @local_ipv4 return
-    ip6 daddr @local_ipv6 return
-    udp dport { 123 } return
-    meta mark set 1
+    goto common-exclude
+    meta l4proto { tcp, udp } meta mark set 1
   }
 
   chain mangle-output {
     type route hook output priority mangle; policy accept;
-    meta l4proto { tcp, udp } skgid != 1 ct direction original goto singbox-mark
+    meta l4proto { tcp, udp } ct state new skgid != 1 goto singbox-mark
   }
 
   chain mangle-prerouting {
     type filter hook prerouting priority mangle; policy accept;
-    iifname { lo, eth0 } meta l4proto { tcp, udp } ct direction original goto singbox-tproxy
+    iifname eth0 meta l4proto { tcp, udp } ct state new goto singbox-tproxy
   }
 }
 NFTABLES

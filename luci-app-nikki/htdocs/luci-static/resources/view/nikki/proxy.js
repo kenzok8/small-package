@@ -131,21 +131,18 @@ return view.extend({
         s.tab('bypass', _('Bypass'));
 
         o = s.taboption('bypass', form.DynamicList, 'bypass_user', _('Bypass User'));
-        o.create = true;
 
         for (const user of users) {
             o.value(user);
         };
 
         o = s.taboption('bypass', form.DynamicList, 'bypass_group', _('Bypass Group'));
-        o.create = true;
 
         for (const group of groups) {
             o.value(group);
         };
 
         o = s.taboption('bypass', form.DynamicList, 'bypass_cgroup', _('Bypass cgroup'));
-        o.create = true;
 
         for (const cgroup of cgroups) {
             o.value(cgroup);

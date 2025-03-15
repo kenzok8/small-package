@@ -221,6 +221,59 @@ class RulesEntry {
 	}
 }
 
+function parseDNSYaml(field, name, cfg) {
+	let addr = new DNSAddress(cfg);
+
+	if (!addr.toString())
+		return null;
+
+	let detour = addr.parseParam('detour');
+	if (detour)
+		addr.setParam('detour', hm.preset_outbound.full.map(([key, label]) => key).includes(detour) ? detour : this.calcID(hm.glossary["proxy_group"].field, detour))
+
+	// key mapping
+	let config = {
+		id: this.calcID(field, cfg),
+		label: '%s %s'.format(cfg, _('(Imported)')),
+		address: addr.toString()
+	};
+
+	return config;
+}
+
+function parseDNSPolicyYaml(field, name, cfg) {
+	//console.info([name, cfg]);
+
+	let type = name.match(/^([^:]+):(.*)$/),
+		rules;
+	switch (type?.[1]) {
+		case 'geosite':
+			rules = type[2].split(',');
+			type = 'geosite';
+			break;
+		case 'rule-set':
+			rules = type[2].split(',').map((rule) => this.calcID(hm.glossary["ruleset"].field, rule));
+			type = 'rule_set';
+			break;
+		default:
+			rules = name.split(',');
+			type = 'domain';
+			break;
+	}
+
+	// key mapping
+	let config = {
+		id: this.calcID(field, name),
+		label: '%s %s'.format(name, _('(Imported)')),
+		type: type,
+		...Object.fromEntries([[type, rules]]),
+		server: (Array.isArray(cfg) ? cfg : [cfg]).map((dns) => this.calcID(hm.glossary["dns_server"].field, dns)),
+		//proxy: null
+	};
+
+	return config;
+}
+
 function parseRules(rule) {
 	// parse rules
 	// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/config/config.go#L1040-L1090
@@ -297,7 +350,6 @@ function parseRules(rule) {
 
 	return entry.toString('json');
 }
-
 function parseRulesYaml(field, name, cfg) {
 	let id = this.calcID(field, cfg);
 	let entry = parseRules.call(this, cfg);
@@ -1265,6 +1317,38 @@ return view.extend({
 		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_field  = hm.glossary[ss.sectiontype].field;
 		ss.hm_lowcase_only = true;
+		/* Import mihomo config start */
+		ss.handleYamlImport = function() {
+			const field = this.hm_field;
+			const o = new hm.HandleImport(this.map, this, _('Import mihomo config'),
+				_('Please type <code>%s</code> fields of mihomo config.</br>')
+					.format(field));
+			o.placeholder = 'nameserver:\n' +
+							'- 223.5.5.5\n' +
+							'- tls://8.8.4.4:853\n' +
+							'- https://doh.pub/dns-query#DIRECT\n' +
+							'- https://dns.alidns.com/dns-query#auto&h3=true&ecs=1.1.1.1/24\n' +
+							'  ...'
+			o.parseYaml = function(field, name, cfg) {
+				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
+
+				return config ? parseDNSYaml.call(this, field, name, config) : null;
+			};
+
+			return o.render();
+		}
+		ss.renderSectionAdd = function(/* ... */) {
+			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+
+			el.appendChild(E('button', {
+				'class': 'cbi-button cbi-button-add',
+				'title': _('mihomo config'),
+				'click': ui.createHandlerFn(this, 'handleYamlImport')
+			}, [ _('Import mihomo config') ]));
+
+			return el;
+		}
+		/* Import mihomo config end */
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
@@ -1405,6 +1489,39 @@ return view.extend({
 		ss.hm_prefmt = hm.glossary[ss.sectiontype].prefmt;
 		ss.hm_field  = hm.glossary[ss.sectiontype].field;
 		ss.hm_lowcase_only = false;
+		/* Import mihomo config start */
+		ss.handleYamlImport = function() {
+			const field = this.hm_field;
+			const o = new hm.HandleImport(this.map, this, _('Import mihomo config'),
+				_('Please type <code>%s</code> fields of mihomo config.</br>')
+					.format(field));
+			o.placeholder = 'nameserver-policy:\n' +
+							"  'www.baidu.com,.baidu.com': '223.5.5.5'\n" +
+							"  '+.internal.crop.com': 'tls://8.8.4.4:853'\n" +
+							'  "geosite:cn,private":\n' +
+							'    - https://doh.pub/dns-query#DIRECT\n' +
+							'  "rule-set:google": tls://8.8.4.4:853\n' +
+							'  ...'
+			o.parseYaml = function(field, name, cfg) {
+				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
+
+				return config ? parseDNSPolicyYaml.call(this, field, name, config) : null;
+			};
+
+			return o.render();
+		}
+		ss.renderSectionAdd = function(/* ... */) {
+			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+
+			el.appendChild(E('button', {
+				'class': 'cbi-button cbi-button-add',
+				'title': _('mihomo config'),
+				'click': ui.createHandlerFn(this, 'handleYamlImport')
+			}, [ _('Import mihomo config') ]));
+
+			return el;
+		}
+		/* Import mihomo config end */
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hm.loadDefaultLabel, so);
