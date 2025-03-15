@@ -5,11 +5,10 @@
 
 	import { cursor } from 'uci';
 	import { connect } from 'ubus';
-	import { uci_bool, uci_array, get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
+	import { uci_bool, uci_array, get_users, get_groups } from '/etc/nikki/ucode/include.uc';
 
 	const users = get_users();
 	const groups = get_groups();
-	const cgroups = get_cgroups();
 
 	const uci = cursor();
 	const ubus = connect();
@@ -43,7 +42,7 @@
 
 	const bypass_user = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_user')), (x) => x != 'root' && index(users, x) >= 0);
 	const bypass_group = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_group')), (x) => x != 'root' && index(groups, x) >= 0);
-	const bypass_cgroup = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_cgroup')), (x) => x != 'nikki' && index(cgroups, x) >= 0);
+	const bypass_cgroup = uci_array(uci.get('nikki', 'proxy', 'bypass_cgroup'));
 	const bypass_dscp = uci_array(uci.get('nikki', 'proxy', 'bypass_dscp'));
 	const bypass_china_mainland_ip = uci_bool(uci.get('nikki', 'proxy', 'bypass_china_mainland_ip'));
 	const proxy_tcp_dport = split((uci.get('nikki', 'proxy', 'proxy_tcp_dport') ?? '0-65535'), ' ');

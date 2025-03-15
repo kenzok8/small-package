@@ -112,7 +112,8 @@ return view.extend({
 
         o = s.taboption('external_control', form.Value, 'ui_url', _('UI Url'));
         o.placeholder = _('Unmodified');
-        o.value('https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip', 'Zashboard');
+        o.value('https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip', 'Zashboard (CDN Fonts)');
+        o.value('https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip', 'Zashboard');
         o.value('https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip', 'MetaCubeXD');
         o.value('https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip', 'YACD');
         o.value('https://github.com/MetaCubeX/Razord-meta/archive/refs/heads/gh-pages.zip', 'Razord');
@@ -124,7 +125,7 @@ return view.extend({
 
         o = s.taboption('external_control', form.Value, 'api_secret', _('API Secret'));
         o.password = true;
-        o.placeholder = _('Unmodified');
+        o.rmempty = false;
 
         o = s.taboption('external_control', form.ListValue, 'selection_cache', _('Save Proxy Selection'));
         o.optional = true;
