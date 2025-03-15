@@ -217,7 +217,7 @@ chain {{ inchain }} {
 {%- function render_acl_dport(inchain, outchain, l4proto): %}
 chain {{ inchain }} {
 		{#- DNS hijack #}
-		meta l4proto { tcp, udp } th dport 53 counter goto {{ outchain }} comment "!{{ cfgname }}: DNS hijack"
+		meta l4proto { tcp, udp } th dport 53 counter goto {{ outchain }} comment "!{{ cfgname }}: DNS hijack (router)"
 
 		{% if ((l4proto === 'tcp' || !l4proto) && routing_tcpport): %}
 		tcp dport != @tcp_routing_port counter return
