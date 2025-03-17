@@ -70,10 +70,8 @@ proxy_bypass_cgroup=$(uci -q get nikki.proxy.bypass_cgroup); [ -z "$proxy_bypass
 	uci add_list nikki.proxy.bypass_cgroup=aria2
 	uci add_list nikki.proxy.bypass_cgroup=dnsmasq
 	uci add_list nikki.proxy.bypass_cgroup=netbird
-	uci add_list nikki.proxy.bypass_cgroup=nginx
 	uci add_list nikki.proxy.bypass_cgroup=qbittorrent
 	uci add_list nikki.proxy.bypass_cgroup=tailscale
-	uci add_list nikki.proxy.bypass_cgroup=uhttpd
 	uci add_list nikki.proxy.bypass_cgroup=zerotier
 }
 
