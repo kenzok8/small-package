@@ -134,8 +134,15 @@
     width: 100%
 }
 
+.center {
+    width: 100%;
+    transform: translate(-50, -50%);
+    text-align: center
+}
+
 .col-1 {
     flex: 1 1 30px !important;
+    width: auto;
     -webkit-flex: 1 1 30px !important
 }
 
@@ -347,12 +354,6 @@ select option {
     background-color: rgba(var(--primary-rgbbody), 1);
     width: 100% !important;
     overflow: hidden
-}
-
-.center {
-    width: 100%;
-    transform: translate(-50, -50%);
-    text-align: center
 }
 
 input[type="checkbox"] {
@@ -1872,7 +1873,7 @@ button:active{
     display: table-cell;
     float: left;
     width: 23rem;
-    padding-right: 2rem;
+    padding: 0.5rem 2rem 0 0;
     text-align: right;
     word-wrap: break-word
 }
@@ -1881,7 +1882,7 @@ button:active{
     display: inline-block;
     width: 100%;
     padding: 0 0.8rem;
-    line-height: 2rem
+    line-height: 1
 }
 
 .cbi-value .cbi-filebrowser {
@@ -2999,9 +3000,9 @@ textarea:focus {
 .ifacebox-head {
     padding: 1rem;
     min-width: 7rem;
-    background-color: rgba(var(--primary-rgbm), 0.2);
+    background-color: rgba(var(--primary-rgbm), 0.3);
     transform: translate(-50, -50%);
-    color: var(--title-color);
+    color: var(--menu-fontcolor);
     text-align:center !important
 }
 
@@ -4548,10 +4549,6 @@ div#file-manager-container #status-bar #status-info{
         padding-right: 0.6rem
     }
 
-    .cbi-value {
-        line-height: 2
-    }
-
     .modal .cbi-value-title,
     .cbi-value-title {
         width: 12rem;
@@ -4745,10 +4742,8 @@ div#file-manager-container #status-bar #status-info{
 
     .modal .cbi-value-title,
     .cbi-value-title {
-        padding-left: 0.3rem;
-        padding-top: 0.8rem;
+        padding: 0.5rem 0 0.2rem 0.3rem;
         width: 100%;
-	margin-bottom: 0.2rem;
         font-weight: 600;
     }
 
@@ -4848,12 +4843,8 @@ div#file-manager-container #status-bar #status-info{
         padding: 1rem 0 1rem 1rem
     }
 
-    [data-page="admin-system-flash"] .cbi-section-descr {
-        padding: 1rem 0 1rem 1rem
-    }
-
     [data-page="admin-system-flash"] .cbi-value {
-        padding: 0 1rem
+        padding: 0  0 0 1rem
     }
 
     [data-page="admin-network-dhcp"] [data-tab-active="true"] {
