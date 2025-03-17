@@ -105,8 +105,9 @@ return baseclass.extend({
     },
 
     api: async function (method, path, query, body) {
-        const apiListen = uci.get('nikki', 'mixin', 'api_listen');
-        const apiSecret = uci.get('nikki', 'mixin', 'api_secret') ?? '';
+        const profile = await callNikkiProfile();
+        const apiListen = profile['external-controller'];
+        const apiSecret = profile['secret'] ?? '';
         const apiPort = apiListen.substring(apiListen.lastIndexOf(':') + 1);
         const url = `http://${window.location.hostname}:${apiPort}${path}`;
         return request.request(url, {
@@ -118,9 +119,10 @@ return baseclass.extend({
     },
 
     openDashboard: async function () {
-        const uiName = uci.get('nikki', 'mixin', 'ui_name');
-        const apiListen = uci.get('nikki', 'mixin', 'api_listen');
-        const apiSecret = uci.get('nikki', 'mixin', 'api_secret') ?? '';
+        const profile = await callNikkiProfile();
+        const uiName = profile['external-ui-name'];
+        const apiListen = profile['external-controller'];
+        const apiSecret = profile['secret'] ?? '';
         const apiPort = apiListen.substring(apiListen.lastIndexOf(':') + 1);
         const params = {
             host: window.location.hostname,

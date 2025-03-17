@@ -125,7 +125,7 @@ return view.extend({
 
         o = s.taboption('external_control', form.Value, 'api_secret', _('API Secret'));
         o.password = true;
-        o.rmempty = false;
+        o.placeholder = _('Unmodified');
 
         o = s.taboption('external_control', form.ListValue, 'selection_cache', _('Save Proxy Selection'));
         o.optional = true;
