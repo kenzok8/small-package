@@ -51,7 +51,7 @@ if (!wan_dns)
 
 const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
-let main_node, main_udp_node, dedicated_udp_node, default_outbound, domain_strategy, sniff_override = '1',
+let main_node, main_udp_node, dedicated_udp_node, default_outbound, domain_strategy, sniff_override,
     dns_server, china_dns_server, dns_default_strategy, dns_default_server, dns_disable_cache,
     dns_disable_cache_expire, dns_independent_cache, dns_client_subnet, cache_file_store_rdrc,
     cache_file_rdrc_timeout, direct_domain_list, proxy_domain_list;
@@ -78,6 +78,8 @@ if (routing_mode !== 'custom') {
 	proxy_domain_list = trim(readfile(HP_DIR + '/resources/proxy_list.txt'));
 	if (proxy_domain_list)
 		proxy_domain_list = split(proxy_domain_list, /[\r\n]/);
+
+	sniff_override = uci.get(uciconfig, uciinfra, 'sniff_override') || '1';
 } else {
 	/* DNS settings */
 	dns_default_strategy = uci.get(uciconfig, ucidnssetting, 'default_strategy');
