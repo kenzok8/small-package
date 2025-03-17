@@ -11,7 +11,7 @@ PKG_NAME:=luci-theme-$(THEME_NAME)
 LUCI_TITLE:=Kucat Theme by sirpdboy
 LUCI_DEPENDS:=
 PKG_VERSION:=2.5.6
-PKG_RELEASE:=20250308
+PKG_RELEASE:=20250317
 
 define Package/luci-theme-$(THEME_NAME)/postinst
 #!/bin/sh

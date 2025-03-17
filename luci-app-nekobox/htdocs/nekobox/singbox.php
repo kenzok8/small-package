@@ -181,6 +181,16 @@ EOL;
     margin: 0 auto;
 }
 
+.section-container {
+   padding-left: 32px;  
+   padding-right: 32px;
+}
+
+.container {
+   padding-left: 40px;  
+   padding-right: 40px;
+}
+
 @media (max-width: 767px) {
     .row a {
         font-size: 9px; 
@@ -199,7 +209,7 @@ EOL;
         <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
         <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
         <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
-<div class="outer-container">
+<div class="outer-container section-container">
     <div class="container-fluid">
         <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;" data-translate="title">Sing-box Conversion Template One</h1>
         <div class="alert alert-info">
@@ -482,6 +492,7 @@ EOL;
 
         if (file_exists($dataFilePath)) {
             $savedData = file_get_contents($dataFilePath);
+            echo "<div class='container'>";
             echo "<div class='card'>";
             echo "<div class='card-body'>";
             echo "<h2 class='card-title'>" . $translations['data_saved'] . "</h2>";

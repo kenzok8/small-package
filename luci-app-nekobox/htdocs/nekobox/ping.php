@@ -32,7 +32,7 @@
 const langData = <?php echo json_encode($langData); ?>;  
 const currentLang = "<?php echo $currentLang; ?>"; 
 
-let translations = langData[currentLang] || langData['zh'];
+let translations = langData[currentLang] || langData['en'];
 
 document.addEventListener("DOMContentLoaded", () => {
     const userLang = localStorage.getItem('language') || currentLang;
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function updateLanguage(lang) {
     localStorage.setItem('language', lang); 
-    translations = langData[lang] || langData['zh'];  
+    translations = langData[lang] || langData['en'];  
 
     const translateElement = (el, attribute, property) => {
         const translationKey = el.getAttribute(attribute);
@@ -104,7 +104,7 @@ function updateFlagIcon(lang) {
         'fr': './assets/neko/flags/fr.png',  
         'vn': './assets/neko/flags/vn.png'      
     };
-    flagImg.src = flagMap[lang] || flagMap['zh']; 
+    flagImg.src = flagMap[lang] || flagMap['en']; 
 }
 
 function changeLanguage(lang) {
