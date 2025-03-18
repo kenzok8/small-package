@@ -6,7 +6,7 @@
 	--bs-secondary: #00ffff;
 	--bs-body-bg: #23407e;
 	--bs-body-color: #4eedf9;
-	--bs-info-bg-subtle: #23407e;
+	--bs-info-bg-subtle: transparent;
 	--placeholder-color: #f8f9fa;
 	--bs-btn-outline-bg: #0dcaf0;
 	--bs-btn-success-bg: #28a745;
@@ -18,7 +18,7 @@
 	--bs-check-bg: #f8f9fa;
 	--bs-label-bg: #248cf5;
 	--bs-line-bg: #f515f9;
-	--bs-disabled-bg: #23407e;
+	--bs-disabled-bg: transparent;
 	--bs-radius-bg: #28edf0;
 	--bs-ip-bg: #09b63f;
 	--bs-ipip-bg: #ff69b4;
@@ -28,7 +28,7 @@
 	--bs-tertiary-rgb: #df38f5;
 	--bs-tertiary-color: #1815d1;
 	--bs-tertiary-color-rgb: #20cdd9;
-	--bs-form-select: #23407e;
+	--bs-form-select: transparent;
 	--log-text-color: #f8f9fa;
 	--bs-heading-1: #21e4f2;
 	--bs-heading-2: #65f1fb;
@@ -165,16 +165,6 @@ form .form-control {
 	color: var(--log-text-color) !important;
 }
 
-.close {
-	color: var(--log-text-color) !important;
-}
-
-.close:hover,
-    .close:focus {
-	color: var(--log-text-color) !important;
-	text-decoration: none;
-}
-
 .alert-info {
 	color: #FF00FF;
 }
@@ -185,10 +175,6 @@ form .form-control {
 
 .detail-value {
 	color: #00ff00 !important;
-}
-
-.fullscreen-btn {
-	background-color: #00ff00 !important;
 }
 
 .form-select {
@@ -252,6 +238,52 @@ table.table tbody td:nth-child(2) a {
 
 .btn-outline-secondary i {
 	color: white;
+}
+
+.btn-close {
+	width: 15px !important;
+	height: 15px !important;
+	background-color: rgba(0, 0, 0, 0.08) !important;
+	border-radius: 6px !important;
+	border: none !important;
+	position: relative !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	cursor: pointer !important;
+	transition: background-color 0.2s ease, transform 0.2s ease !important;
+}
+
+.btn-close::before, 
+.btn-close::after {
+	content: "" !important;
+	position: absolute !important;
+	width: 12px !important;
+	height: 2px !important;
+	background-color: #ff4d4f !important;
+	border-radius: 2px !important;
+	transition: background-color 0.2s ease !important;
+}
+
+.btn-close::before {
+	transform: rotate(45deg) !important;
+}
+
+.btn-close::after {
+	transform: rotate(-45deg) !important;
+}
+
+.btn-close:hover {
+	background-color: #30e8dc !important;
+}
+
+.btn-close:hover::before, 
+.btn-close:hover::after {
+	background-color: #d9363e !important;
+}
+
+.btn-close:active {
+	transform: scale(0.9) !important;
 }
 
 button {
@@ -337,20 +369,6 @@ button {
 	margin-bottom: 2rem;
 }
 
-.modal-header .close {
-	color: black !important;
-	opacity: 1 !important;
-	font-size: 1.5rem !important;
-	background: none !important;
-	border: none !important;
-}
-
-.modal-header .close:hover,
-    .modal-header .close:focus {
-	color: black !important;
-	background-color: transparent !important;
-	border: none !important;
-}
 
 ::-webkit-scrollbar {
 	width: 8px;
@@ -399,32 +417,6 @@ button {
     }
 }
 /* END .modal-xl */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 button, .btn-warning, .btn-info, .card, .modal-content {
 	transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -494,13 +486,6 @@ button:disabled {
 	color: #fff;
 }
 
-button.btn-close {
-	color: #000 !important;
-}
-
-button.btn-close:hover {
-	color: #333 !important;
-}
 
 .form-group button {
 	box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);

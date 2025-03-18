@@ -786,7 +786,7 @@ function displayUpdateNotification() {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="uploadModalLabel" data-translate="uploadFile"></h5> 
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="close"> 
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="close"> 
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -810,7 +810,7 @@ function displayUpdateNotification() {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="renameModalLabel" data-translate="rename_file"></h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -840,7 +840,7 @@ function displayUpdateNotification() {
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel"><?php echo $langData[$currentLang]['editFile']; ?>: <span id="editingFileName"></span></h5>
 
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -921,7 +921,7 @@ function displayUpdateNotification() {
                     <button type="button" class="btn btn-warning btn-sm mx-1" id="toggleFullscreenBtn" onclick="toggleFullscreen()" data-translate="toggleFullscreen"></button>
                 </div>
 
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeFullScreenEditor()">
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close" onclick="closeFullScreenEditor()">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -1305,7 +1305,7 @@ function initializeAceEditor() {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="downloadModalLabel" data-translate="select_database_download"></h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 </div>
@@ -1336,7 +1336,7 @@ function initializeAceEditor() {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="cronModalLabel" data-translate="cron_task_title"></h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 </div>
