@@ -234,16 +234,6 @@ form .form-control {
 	color: var(--log-text-color) !important;
 }
 
-.close {
-	color: var(--log-text-color) !important;
-}
-
-.close:hover,
-    .close:focus {
-	color: var(--log-text-color) !important;
-	text-decoration: none;
-}
-
 .alert-info {
 	color: #FF00FF;
 }
@@ -254,10 +244,6 @@ form .form-control {
 
 .detail-value {
 	color: #00ff00 !important;
-}
-
-.fullscreen-btn {
-	background-color: #00ff00 !important;
 }
 
 .form-select {
@@ -321,6 +307,52 @@ table.table tbody td:nth-child(2) a {
 
 .btn-outline-secondary i {
 	color: white;
+}
+
+.btn-close {
+	width: 15px !important;
+	height: 15px !important;
+	background-color: rgba(0, 0, 0, 0.08) !important;
+	border-radius: 6px !important;
+	border: none !important;
+	position: relative !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	cursor: pointer !important;
+	transition: background-color 0.2s ease, transform 0.2s ease !important;
+}
+
+.btn-close::before, 
+.btn-close::after {
+	content: "" !important;
+	position: absolute !important;
+	width: 12px !important;
+	height: 2px !important;
+	background-color: #ff4d4f !important;
+	border-radius: 2px !important;
+	transition: background-color 0.2s ease !important;
+}
+
+.btn-close::before {
+	transform: rotate(45deg) !important;
+}
+
+.btn-close::after {
+	transform: rotate(-45deg) !important;
+}
+
+.btn-close:hover {
+	background-color: #30e8dc !important;
+}
+
+.btn-close:hover::before, 
+.btn-close:hover::after {
+	background-color: #d9363e !important;
+}
+
+.btn-close:active {
+	transform: scale(0.9) !important;
 }
 
 button {
@@ -406,20 +438,6 @@ button {
 	margin-bottom: 2rem;
 }
 
-.modal-header .close {
-	color: black !important;
-	opacity: 1 !important;
-	font-size: 1.5rem !important;
-	background: none !important;
-	border: none !important;
-}
-
-.modal-header .close:hover,
-    .modal-header .close:focus {
-	color: black !important;
-	background-color: transparent !important;
-	border: none !important;
-}
 
 ::-webkit-scrollbar {
 	width: 8px;
@@ -537,13 +555,6 @@ button:disabled {
 	color: #fff;
 }
 
-button.btn-close {
-	color: #000 !important;
-}
-
-button.btn-close:hover {
-	color: #333 !important;
-}
 
 .form-group button {
 	box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);

@@ -332,7 +332,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateVersionModalLabel" data-translate="stable">Select the updated version of the language</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -357,7 +357,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="mihomoVersionSelectionModalLabel" data-translate="mihomo_version_modal_title">Select Mihomo Kernel Version</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -380,7 +380,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="optionsModalLabel" data-translate="options_modal_title">Select Operation</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -404,7 +404,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="operationModalLabel" data-translate="operation_modal_title">Select operation</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -428,7 +428,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="versionSelectionModalLabel" data-translate="versionSelectionModalTitle">Select Singbox core version</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -461,7 +461,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="singboxVersionModalLabel" data-translate="singboxVersionModalTitle">Select Singbox core version (Channel 2)</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -485,7 +485,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="panelSelectionModalLabel" data-translate="panelSelectionModalTitle">Selection Panel</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -512,7 +512,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="versionModalLabel" data-translate="versionModalLabel">Version check results</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -533,7 +533,7 @@ function deleteDirectory($dir) {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateModalLabel" data-translate="updateModalLabel">Update status</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
