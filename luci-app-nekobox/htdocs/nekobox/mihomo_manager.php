@@ -467,6 +467,9 @@ function download_file($url, $destination) {
     <link href="./assets/css/custom.css" rel="stylesheet">
     <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
     <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" crossorigin="anonymous"></script>
+    <script src="./assets/bootstrap/beautify.min.js"></script> 
+    <script src="./assets/bootstrap/js-yaml.min.js"></script>
     <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./assets/js/feather.min.js"></script>
     <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
@@ -830,10 +833,6 @@ function displayUpdateNotification() {
         </div>
     </div>
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify.min.js"></script> 
-<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl" role="document">
