@@ -28,6 +28,52 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  interact('.modal-dialog.draggable').draggable({
+    allowFrom: '.modal-header',
+    modifiers: [
+      interact.modifiers.restrictRect({
+        restriction: 'parent',
+        endOnly: true
+      })
+    ],
+    listeners: {
+      start: function(event) {
+        event.target.style.transition = 'none';
+        event.target.classList.add('dragging');
+      },
+      move: function(event) {
+        const target = event.target;
+        const x = (parseFloat(target.style.left) || 0) + event.dx;
+        const y = (parseFloat(target.style.top) || 0) + event.dy;
+        
+        target.style.left = `${x}px`;
+        target.style.top = `${y}px`;
+      },
+      end: function(event) {
+        event.target.style.transition = '';
+        event.target.classList.remove('dragging');
+      }
+    }
+  });
+
+  document.querySelectorAll('.modal').forEach(modal => {
+    const dialog = modal.querySelector('.modal-dialog');
+    dialog.classList.add('draggable');
+
+    const originalWidth = dialog.style.width;
+    const originalMaxWidth = dialog.style.maxWidth;
+    
+    modal.addEventListener('show.bs.modal', () => {
+      dialog.style.width = originalWidth;
+      dialog.style.maxWidth = originalMaxWidth;
+    });
+  });
+});
+</script>
+
 <script>
 const langData = <?php echo json_encode($langData); ?>;  
 const currentLang = "<?php echo $currentLang; ?>"; 
@@ -932,6 +978,8 @@ $lang = $_GET['lang'] ?? 'en';
 
 </style>
 </style>
+<script src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="./assets/bootstrap/interact.min.js"></script>
 <script src="./assets/bootstrap/Sortable.min.js"></script>
 <link href="./assets/bootstrap/video-js.css" rel="stylesheet" />
 <script src="./assets/bootstrap/video.js"></script>
