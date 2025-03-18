@@ -27,13 +27,15 @@
     --radius1: 0.375rem;
     --radius2: 0.25rem;
     --primary-solid: #fd8c73;
+    --white: #f5f5f5f5;
+    --black: #4d4d5d;
     --menu-hover-barbgcolor: rgba(255, 255, 255, 0.3);
 }
 
 [data-theme='light'] {
     --primarytextcolor: #677087;
     --primary-title-color: #4d4d5d;
-    --menu-color: #f5f5f5f5;
+    --menu-color: #ddd;
     --menu-hover-color: #fff;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm), 0.22);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
@@ -54,12 +56,12 @@
 
 [data-theme="dark"] {
     --primarytextcolor: #bbb;
-    --primary-title-color: #ddd;
+    --primary-title-color: #ccc;
     --menu-color: #ccc;
-    --menu-hover-color: #eee;
+    --menu-hover-color: #f5f5f5f5;
     --menu-item-titlebg-color: rgba(var(--primary-rgbm), 0.5);
     --menu-barbgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
-    --title-color: #f5f5f5;
+    --title-color: #ddd;
     --body-text-color: #bbb;
     --body-color: #bbb;
     --body-hover-bgcolor: rgba(255, 255, 255, 0.05);
@@ -267,7 +269,7 @@ body {
 }
 
 a {
-    color: var(--primary-title-color);
+    color: var(--primarytextcolor);
     font-size: var(--font-z);
     background-color: transparent;
     text-decoration: none
@@ -458,7 +460,7 @@ hr {
 footer {
     text-align: right;
     padding: 3rem 0rem 2rem 0;
-    color: var(--primary-title-color);
+    color: var(--primarytextcolor);
     font-size: var(--font-x)
 }
 
@@ -1995,7 +1997,7 @@ button:active{
 .table-titles,
 .cbi-section-table-titles {
   background-color: var(--menu-item-titlebg-color);
-  color: var(--menu-fontcolor);
+  color: var(--title-color);
 }
 .cbi-section-table .cbi-section-table-titles .cbi-section-table-cell {
     width: auto !important
@@ -2466,8 +2468,8 @@ input {
     height: 26px;
     margin: 2px 0;
     border-radius: var(--radius2) !important;
-    border-color: rgba(0, 0, 0, 0.4) !important;
-    background-color: rgba(0, 0, 0, 0.3) !important;
+    border-color: rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
     color: var(--menu-color)
 }
 
@@ -3215,6 +3217,12 @@ label[data-index][data-depends] {
 [data-page="admin-network-diagnostics"] .table {
     box-shadow: none
 }
+
+
+[data-page="admin-network-network"]  .ifacebox .ifacebox-head {
+    color: var(--title-color);
+}
+
 
 input[name="ping"],
 input[name="traceroute"],
@@ -4376,7 +4384,7 @@ div#file-manager-container #status-bar #status-info{
     }
 }
 
-@media screen and (max-width:1280px) {
+@media screen and (max-width:1366px) {
 
     .main>.main-left>.nav>li,
     .main>.main-left>.nav>li>a,
@@ -4480,7 +4488,7 @@ div#file-manager-container #status-bar #status-info{
 
 }
 
-@media screen and (max-width:992px) {
+@media screen and (max-width:1152px) {
     .main .main-left .nav .slide .slide-menu .active a {
         font-size: var(--font-x)
     }
@@ -4920,10 +4928,4 @@ div#file-manager-container #status-bar #status-info{
 
 .Dashboard .devices-list .devices-info, .Dashboard .router-status-wifi .wifi-info > hr:last-child {
   margin-top: 0.575rem;
-}
-
-@media screen and (max-width: 600px) {
-  div#content-filemanager {
-    overflow-x: auto;
-  }
 }
