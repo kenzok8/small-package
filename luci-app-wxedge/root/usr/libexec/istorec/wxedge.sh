@@ -15,6 +15,11 @@ do_install() {
   [ -z "$image_name" ] && image_name="onething1/wxedge"
   echo "docker pull ${image_name}"
   docker pull ${image_name}
+  RET=$?
+  if [ ! "$RET" = "0" ]; then
+    echo "download failed, install istoreenhance to speedup, \"https://doc.linkease.com/zh/guide/istore/software/istoreenhance.html\""
+    exit 1
+  fi
   docker rm -f wxedge
 
   local cmd="docker run --restart=unless-stopped -d \

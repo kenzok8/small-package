@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.1.4-20241208
+PKG_VERSION:=1.1.5-20250319
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for wxedge
