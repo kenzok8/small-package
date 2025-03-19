@@ -608,6 +608,48 @@ $singbox_log_content = readLogFile($singbox_log);
 ?>
 
 <?php
+$confDirectory = '/etc/neko/config';  
+$storageFile = '/www/nekobox/lib/singbox.txt';
+
+$storageDir = dirname($storageFile);
+if (!is_dir($storageDir)) {
+    mkdir($storageDir, 0755, true);
+}
+
+$currentConfigPath = '';
+if (file_exists($storageFile)) {
+    $rawPath = trim(file_get_contents($storageFile));
+    $currentConfigPath = realpath($rawPath) ?: $rawPath; 
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['config_file'])) {
+    $submittedPath = trim($_POST['config_file']);
+    $normalizedPath = realpath($submittedPath); 
+    
+    if ($normalizedPath && 
+        strpos($normalizedPath, realpath($confDirectory)) === 0 && 
+        file_exists($normalizedPath)
+    ) {
+        if (file_put_contents($storageFile, $normalizedPath) !== false) {
+            $currentConfigPath = $normalizedPath;
+        } else {
+            error_log("Write failed: $storageFile");
+        }
+    } else {
+        error_log("Invalid path: $submittedPath");
+    }
+}
+
+function fetchConfigFiles() {
+    global $confDirectory;
+    $baseDir = rtrim($confDirectory, '/') . '/'; 
+    return glob($baseDir . '*.json') ?: [];
+}
+
+$foundConfigs = fetchConfigFiles();
+?>
+
+<?php
 $isNginx = false;
 if (isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'nginx') !== false) {
     $isNginx = true;
@@ -980,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4" id="mihomoControl" class="control-box">
                 <h6 class="mb-2"><i class="fas fa-box custom-icon"></i> <span data-translate="mihomoControl">Mihomo Control</span></h6>
                 <div class="d-flex flex-column gap-2">
                     <form action="index.php" method="post">
@@ -1026,19 +1068,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4" id="singboxControl" class="control-box">
                 <h6 class="mb-2"><i data-feather="codesandbox"></i> <span data-translate="singboxControl">Singbox Control</span></h6>
                 <div class="d-flex flex-column gap-2">
                     <form action="index.php" method="post">
-                        <select name="config_file" id="config_file" class="form-select mb-2" 
-                                onchange="saveConfigSelection()">
+                        <select name="config_file" class="form-select mb-2" onchange="this.form.submit()">
                             <option value="">
                                 <span data-translate="selectConfig">Please select a configuration file</span>
                             </option>
-                            <?php foreach ($availableConfigs as $config): ?>
-                                <option value="<?= htmlspecialchars($config) ?>" 
-                                    <?= (isset($_POST['config_file']) && $_POST['config_file'] === $config) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars(basename($config)) ?>
+                            <?php foreach ($foundConfigs as $configPath): ?>
+                                <?php 
+                                $cleanPath = str_replace('//', '/', $configPath); 
+                                $displayName = basename($cleanPath);
+                                ?>
+                                <option value="<?= htmlspecialchars($cleanPath) ?>"
+                                    <?= ($currentConfigPath === realpath($cleanPath)) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($displayName) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -1084,18 +1129,28 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </div>
-
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const savedConfig = localStorage.getItem("configSelection");
-        if (savedConfig) {
-            document.getElementById("config_file").value = savedConfig;
-        }
-    });
-    function saveConfigSelection() {
-        const selectedConfig = document.getElementById("config_file").value;
-        localStorage.setItem("configSelection", selectedConfig);
+document.addEventListener('DOMContentLoaded', () => {
+    const mihomoControl = document.getElementById('mihomoControl');
+    const singboxControl = document.getElementById('singboxControl');
+
+    const mihomoStatus = <?php echo $neko_status; ?>; 
+    const singboxStatus = <?php echo $singbox_status; ?>; 
+
+    if (mihomoStatus === 1 && singboxStatus === 1) {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'block';
+    } else if (mihomoStatus === 1) {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'none';
+    } else if (singboxStatus === 1) {
+        mihomoControl.style.display = 'none';
+        singboxControl.style.display = 'block';
+    } else {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'block';
     }
+});
 </script>
 
 <script>
@@ -1462,3 +1517,4 @@ window.onload = function() {
     </footer>
 </body>
 </html>
+
