@@ -4,36 +4,47 @@ ACTION=${1}
 shift 1
 
 
-# 1. 判断是否安装 iStoreEnhance
-# 2. docker info获取Registry Mirrors:下的第一个服务器地址，并且地址包含registry.linkease.net
+# 1. 判断iStoreEnhance是否运行
+# 2. 使用 docker info 获取包含 registry.linkease.net 的镜像服务器地址
 # 3. 如果1和2都满足，则直接 docker pull registry.linkease.net:5443/onething1/wxedge
 # 4. 反之运行docker pull
 istoreenhance_pull() {
   local image_name="$1"
+  local isInstall=$(command -v iStoreEnhance)
+  local isRun=$(pgrep iStoreEnhance)
 
-  # 判断是否安装 iStoreEnhance
-  if command -v istoreenhance &> /dev/null; then
-    # 使用 docker info 获取镜像服务器列表
-    local registry_mirror=$(docker info 2>/dev/null | awk -F': ' '/Registry Mirrors:/ {getline; print $1}' | tr -d ' ' | awk -F',' '{print $1}')
-    if [[ -n "$registry_mirror" && "$registry_mirror" == *"registry.linkease.net"* ]]; then
+  # 判断iStoreEnhance是否运行
+  if [ -n "$isRun" ]; then
+    # 使用 docker info 获取包含 registry.linkease.net 的镜像服务器地址
+    local registry_mirror=$(docker info 2>/dev/null | awk -F': ' '/Registry Mirrors:/ {found=1; next} found && NF {if ($0 ~ /registry.linkease.net/) {print; exit}}')
+
+    if [[ -n "$registry_mirror" ]]; then
       # 提取主机和端口部分
-      local registry_host=$(echo "$registry_mirror" | sed -E 's|^https?://([^/]+).*|\1|')
+      local registry_host=$(echo ${registry_mirror} | sed -E 's|^https?://([^/]+).*|\1|')
       # 拼接完整的镜像地址
       local full_image_name="$registry_host/$image_name"
+      echo "istoreenhance_pull ${full_image_name}"
       # 直接拉取镜像
       docker pull "$full_image_name"
-      if [ $? -eq 0 ]; then
-        return 0
+    else
+      echo "not found registry.linkease.net"
+      echo "docker pull ${image_name}"
+      docker pull "$image_name"
+    fi
+  else
+    # 否则运行 docker pull
+    echo "docker pull ${image_name}"
+    docker pull "$image_name"
+    if [ $? -ne 0 ]; then
+    # 判断是否安装 iStoreEnhance
+      if [ -z "$isInstall" ]; then
+      echo "download failed, install istoreenhance to speedup, \"https://doc.linkease.com/zh/guide/istore/software/istoreenhance.html\""
+      else
+        echo "download failed, enable istoreenhance to speedup"
       fi
+      exit 1
     fi
   fi
-
-  # 否则运行 docker pull
-  docker pull "$image_name"
-  if [ $? -ne 0 ]; then
-    return 1
-  fi
-  return 0
 }
 
 do_install() {
@@ -46,12 +57,7 @@ do_install() {
   fi
 
   [ -z "$image_name" ] && image_name="onething1/wxedge"
-  echo "docker pull ${image_name}"
   istoreenhance_pull "$image_name"
-  if [ $? -ne 0 ]; then
-    echo "download failed, install istoreenhance to speedup, \"https://doc.linkease.com/zh/guide/istore/software/istoreenhance.html\""
-    exit 1
-  fi
   docker rm -f wxedge
 
   local cmd="docker run --restart=unless-stopped -d \
