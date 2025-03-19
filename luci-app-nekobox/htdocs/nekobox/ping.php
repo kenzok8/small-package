@@ -1,6 +1,6 @@
 <?php include './language.php'; ?>
 <html lang="<?php echo $currentLang; ?>">
-<div class="modal fade" id="langModal" tabindex="-1" aria-labelledby="langModalLabel" aria-hidden="true">
+<div class="modal fade" id="langModal" tabindex="-1" aria-labelledby="langModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -30,45 +30,63 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   interact('.modal-dialog.draggable').draggable({
     allowFrom: '.modal-header',
-    modifiers: [
-      interact.modifiers.restrictRect({
-        restriction: 'parent',
-        endOnly: true
-      })
-    ],
-    listeners: {
-      start: function(event) {
-        event.target.style.transition = 'none';
-        event.target.classList.add('dragging');
-      },
-      move: function(event) {
-        const target = event.target;
-        const x = (parseFloat(target.style.left) || 0) + event.dx;
-        const y = (parseFloat(target.style.top) || 0) + event.dy;
-        
-        target.style.left = `${x}px`;
-        target.style.top = `${y}px`;
-      },
-      end: function(event) {
-        event.target.style.transition = '';
-        event.target.classList.remove('dragging');
+      modifiers: [
+        interact.modifiers.restrictRect({
+          restriction: 'parent', 
+          endOnly: true
+        })
+      ],
+      listeners: {
+        start(event) {
+          event.target.style.transition = 'none';
+          event.target.classList.add('dragging');
+        },
+        move(event) {
+          const target = event.target;
+          const x = (parseFloat(target.style.left) || 0) + event.dx;
+          const y = (parseFloat(target.style.top) || 0) + event.dy;
+
+          target.style.position = 'absolute';
+          target.style.left = `${x}px`;
+          target.style.top = `${y}px`;
+        },
+        end(event) {
+          event.target.style.transition = '';
+          event.target.classList.remove('dragging');
+        }
       }
-    }
-  });
+    })
+    .resizable({
+      edges: { right: true, bottom: true, left: true }, 
+      listeners: {
+        move(event) {
+          let { x, y } = event.target.dataset;
+          x = (parseFloat(x) || 0) + event.deltaRect.left;
+          y = (parseFloat(y) || 0) + event.deltaRect.top;
+
+          Object.assign(event.target.style, {
+            width: `${event.rect.width}px`,
+            height: `${event.rect.height}px`, 
+            transform: `translate(${x}px, ${y}px)`
+          });
+
+          Object.assign(event.target.dataset, { x, y });
+        }
+      }
+    });
 
   document.querySelectorAll('.modal').forEach(modal => {
     const dialog = modal.querySelector('.modal-dialog');
     dialog.classList.add('draggable');
 
-    const originalWidth = dialog.style.width;
-    const originalMaxWidth = dialog.style.maxWidth;
-    
     modal.addEventListener('show.bs.modal', () => {
-      dialog.style.width = originalWidth;
-      dialog.style.maxWidth = originalMaxWidth;
+      dialog.style.width = '';
+      dialog.style.maxWidth = '';
+      dialog.style.left = ''; 
+      dialog.style.top = ''; 
     });
   });
 });
@@ -633,6 +651,16 @@ $lang = $_GET['lang'] ?? 'en';
     </div>
 <?php endif; ?>
 <style>
+    .modal-dialog.draggable {
+      resize: both;
+      overflow: hidden;
+    }
+
+    .modal-content {
+      min-height: 0 !important; 
+      height: 100%; 
+    }
+
     #leafletMap {
         width: 100%;
         height: 400px;
@@ -1469,7 +1497,7 @@ let IP = {
 
         const modalHTML = `
             <div class="modal fade custom-modal" id="ipDetailModal" tabindex="-1" role="dialog" aria-labelledby="ipDetailModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-                <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+                <div class="modal-dialog modal-xl draggable" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="ipDetailModalLabel">${translations['ip_info']}</h5>
