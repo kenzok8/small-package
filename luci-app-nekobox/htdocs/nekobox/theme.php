@@ -254,6 +254,7 @@ form .form-control {
 }
 
 .form-select option {
+        background-color: oklch(45% .24 277.023) !important;
 	background-color: var(--bs-form-select);
 	color: var(--bs-radius-bg) !important;
 }
@@ -598,12 +599,13 @@ button:disabled {
 }
 
 .royal-style {
-	font-family: 'Cinzel Decorative', cursive;
-	font-weight: 900;
-	font-size: 80px;
-	letter-spacing: 4px;
-	text-align: center;
-	margin-top: 20px;
+	font-family: 'Cinzel Decorative', cursive !important;
+	font-weight: 900 !important;
+	font-size: 80px !important;
+	letter-spacing: 4px !important;
+	text-align: center !important;
+	margin-top: 20px !important;
+	transition: all var(--   bs-transition-speed);
 }
 
 .royal-style:hover {
@@ -679,12 +681,12 @@ h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
 }
 
 .royal-style {
-	font-family: 'Cinzel Decorative', cursive;
-	font-weight: 900;
-	font-size: 80px;
-	letter-spacing: 4px;
-	text-align: center;
-	margin-top: 20px;
+	font-family: 'Cinzel Decorative', cursive !important;
+	font-weight: 900 !important;
+	font-size: 80px !important;
+	letter-spacing: 4px !important;
+	text-align: center !important;
+	margin-top: 20px !important;
 	transition: all var(--   bs-transition-speed);
 }
 

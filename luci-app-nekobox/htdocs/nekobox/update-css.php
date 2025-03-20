@@ -5,6 +5,7 @@ $width = isset($data['width']) ? $data['width'] : null;
 $modalWidth = isset($data['modalWidth']) ? $data['modalWidth'] : null;
 $applyGroup1 = isset($data['group1']) && $data['group1'] == 1;
 $applyBodyBackground = isset($data['bodyBackground']) && $data['bodyBackground'] == 1;
+$applyOpenWrtTheme = isset($data['openwrtTheme']) && $data['openwrtTheme'] == 1;
 
 if ($width !== null && $modalWidth !== null) {
     $cssFilePath = 'assets/theme/transparent.css';
@@ -75,5 +76,33 @@ if ($applyGroup1 || $applyBodyBackground) {
     }
 } else {
     echo json_encode(['status' => 'error', 'message' => 'Transparent background not enabled']);
+}
+
+$pingFilePath = 'ping.php';
+if (file_exists($pingFilePath)) {
+    $pingContent = file_get_contents($pingFilePath);
+
+    if ($applyOpenWrtTheme) {
+        $additionalContent = '
+            <!-- START OpenWRT Theme -->
+            <link rel="stylesheet" href="/luci-static/spectra/css/dark.css">
+            <script src="/luci-static/spectra/js/custom.js"></script>
+            <!-- END OpenWRT Theme -->
+        ';
+        
+        if (strpos($pingContent, '<!-- START OpenWRT Theme -->') === false) {
+            $pingContent .= $additionalContent; 
+            file_put_contents($pingFilePath, $pingContent);
+            echo json_encode(['status' => 'success', 'message' => 'OpenWRT theme enabled']);
+        } else {
+            echo json_encode(['status' => 'info', 'message' => 'OpenWRT theme already enabled']);
+        }
+    } else {
+        $pingContent = preg_replace('/<!-- START OpenWRT Theme -->.*?<!-- END OpenWRT Theme -->/s', '', $pingContent);
+        file_put_contents($pingFilePath, $pingContent);
+        echo json_encode(['status' => 'success', 'message' => 'OpenWRT theme disabled']);
+    }
+} else {
+    echo json_encode(['status' => 'error', 'message' => 'ping.php not found']);
 }
 ?>
