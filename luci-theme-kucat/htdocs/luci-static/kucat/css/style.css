@@ -51,7 +51,7 @@
     --input-boxhovercolor: rgba(0, 0, 0, 0.22);
     --input-checkcolor: rgba(var(--primary-rgbm), 1);
     --font-apple: -apple-system, "Google Sans", "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif";
-    --font-sans: "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB";
+    --font-sans: "Google Sans","Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB";
 }
 
 [data-theme="dark"] {
@@ -73,7 +73,7 @@
     --input-boxhovercolor: rgba(255, 255, 255, 0.22);
     --input-checkcolor: rgba(255, 255, 255, 0.7);
     --font-apple: -apple-system, "Google Sans", "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif";
-    --font-sans: "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB";
+    --font-sans: "Google Sans","Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB";
 }
 
 .tr {
@@ -2823,10 +2823,9 @@ td > .ifacebadge,
 }
 
 .network-status-table .ifacebox {
-    flex-grow: 1;
+  flex-grow: 1;
     margin: .5em
 }
-
 .network-status-table .ifacebox-body {
     display: flex;
     flex-direction: column;
@@ -3014,6 +3013,7 @@ textarea:focus {
 }
 
 .ifacebox-body {
+    line-height: 1.4;
     padding: 0.5em
 }
 
@@ -3022,10 +3022,8 @@ textarea:focus {
 }
 
 .zonebadge {
-    padding: .2rem !important;
-    display: inline-block;
- 
-    min-width: 13rem
+  display: inline-block;
+  padding: .2rem .5rem;
 }
 
 .zonebadge .ifacebadge {
