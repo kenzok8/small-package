@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.0.0-20250313
+PKG_VERSION:=1.0.1-20250320
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for Immich
