@@ -786,15 +786,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     <script>
-    setTimeout(function() {
-        var warningAlert = document.getElementById('nginxWarning');
-        if (warningAlert) {
-            warningAlert.classList.remove('show');
-            setTimeout(function() {
-                warningAlert.remove();
-            }, 300);
+    document.addEventListener("DOMContentLoaded", function () {
+        let lastWarningTime = localStorage.getItem('nginxWarningTime');
+        let currentTime = new Date().getTime();
+        let warningInterval = 12 * 60 * 60 * 1000; 
+
+        if (!lastWarningTime || currentTime - lastWarningTime > warningInterval) {
+            localStorage.setItem('nginxWarningTime', currentTime); 
+            let warningAlert = document.getElementById('nginxWarning');
+        
+            if (warningAlert) {
+                warningAlert.style.display = 'block';
+
+                setTimeout(function() {
+                    warningAlert.classList.remove('show');
+                    setTimeout(function() {
+                        warningAlert.remove();
+                    }, 300);
+                }, 5000);
+            }
         }
-    }, 5000);
+    });
     </script>
     <?php endif; ?>
 <div class="container-sm container-bg callout border border-3 rounded-4 col-11">
