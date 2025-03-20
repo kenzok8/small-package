@@ -4787,6 +4787,10 @@ function speakMessage(message) {
             <input class="form-check-input" type="checkbox" id="bodyBackground">
             <label class="form-check-label" for="bodyBackground" data-translate="transparent_body">Enable transparent body background</label>
         </div>
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="openwrtTheme" />
+            <label class="form-check-label" for="openwrtTheme" data-translate="enable_openwrt_theme">Enable OpenWRT Theme Compatibility</label>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close">Close</button>
@@ -4803,9 +4807,10 @@ const modalWidthValue = document.getElementById("modalWidthValue");
 
 const group1Checkbox = document.getElementById("group1Background");
 const bodyBackgroundCheckbox = document.getElementById("bodyBackground");
+const openwrtThemeCheckbox = document.getElementById("openwrtTheme");
 
 function updateSliderColor(value, slider, valueElement) {
-    let red = Math.min(Math.max((value - 800) / (2400 - 800) * 255, 0), 255);
+    let red = Math.min(Math.max((value - 800) / (5400 - 800) * 255, 0), 255);
     let green = 255 - red;
     
     slider.style.background = `linear-gradient(to right, rgb(${red}, ${green}, 255), rgb(${255 - red}, ${green}, ${255 - red}))`;
@@ -4843,6 +4848,11 @@ modalSlider.oninput = function() {
     showNotification(translations['modal_width_updated'].replace('%s', modalSlider.value));
 };
 
+openwrtThemeCheckbox.onchange = function () {
+    sendCSSUpdate(); 
+    showNotification(openwrtThemeCheckbox.checked ? 'OpenWRT theme enabled' : 'OpenWRT theme disabled');
+};
+
 function sendCSSUpdate() {
     const width = slider.value;
     const modalWidth = modalSlider.value;
@@ -4858,7 +4868,8 @@ function sendCSSUpdate() {
             width: width,
             modalWidth: modalWidth,
             group1: group1,
-            bodyBackground: bodyBackground
+            bodyBackground: bodyBackground,
+            openwrtTheme: openwrtThemeCheckbox.checked ? 1 : 0 
         })
     }).then(response => response.json())
       .then(data => console.log('CSS 更新成功:', data))

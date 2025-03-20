@@ -26,10 +26,17 @@ istoreenhance_pull() {
       echo "istoreenhance_pull ${full_image_name}"
       # 直接拉取镜像
       docker pull "$full_image_name"
+      if [ $? -ne 0 ]; then
+        echo "istoreenhance_pull failed"
+      exit 1
+      fi
     else
-      echo "not found registry.linkease.net"
-      echo "docker pull ${image_name}"
+      echo "istoreenhance_pull ${image_name}"
       docker pull "$image_name"
+      if [ $? -ne 0 ]; then
+        echo "download failed, not found registry.linkease.net"
+      exit 1
+      fi
     fi
   else
     # 否则运行 docker pull
@@ -38,7 +45,7 @@ istoreenhance_pull() {
     if [ $? -ne 0 ]; then
     # 判断是否安装 iStoreEnhance
       if [ -z "$isInstall" ]; then
-      echo "download failed, install istoreenhance to speedup, \"https://doc.linkease.com/zh/guide/istore/software/istoreenhance.html\""
+        echo "download failed, install istoreenhance to speedup, \"https://doc.linkease.com/zh/guide/istore/software/istoreenhance.html\""
       else
         echo "download failed, enable istoreenhance to speedup"
       fi
