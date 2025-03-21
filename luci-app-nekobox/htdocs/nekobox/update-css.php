@@ -8,7 +8,7 @@ $applyBodyBackground = isset($data['bodyBackground']) && $data['bodyBackground']
 $applyOpenWrtTheme = isset($data['openwrtTheme']) && $data['openwrtTheme'] == 1;
 
 if ($width !== null && $modalWidth !== null) {
-    $cssFilePath = 'assets/theme/transparent.css';
+    $cssFilePath = 'ping.php';
 
     if (file_exists($cssFilePath)) {
         $cssContent = file_get_contents($cssFilePath);

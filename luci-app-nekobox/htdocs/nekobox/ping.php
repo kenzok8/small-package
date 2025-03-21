@@ -6800,3 +6800,56 @@ window.addEventListener('load', function() {
     });
   });
 </script>
+<style>
+@font-face {
+	font-family: 'Cinzel Decorative';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./assets/webfonts/cinzel-decorative-v17-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Cinzel Decorative';
+  font-style: normal;
+  font-weight: 900;
+  src: url('./assets/webfonts/cinzel-decorative-v17-latin-900.woff2') format('woff2');
+}
+
+.btn-primary,
+.btn-success,
+.btn-info,
+.btn-warning,
+.btn btn-danger,
+.btn-pink {
+        color: white !important;
+}
+
+.container-bg {
+	border-radius: 12px !important;
+	margin-top: 1rem !important;
+}
+
+.scrollable-container:hover {
+	overflow: auto;
+}
+
+/* START .container-sm */
+.container-sm {
+    width: 1650px !important; 
+    max-width: 100%;
+    margin: 0 auto;
+}
+/* END .container-sm */
+
+/* START .modal-xl */
+.modal-xl {
+    max-width: 1600px !important; 
+}
+
+@media (max-width: 768px) {
+    .modal-xl {
+        max-width: 100%;
+    }
+}
+/* END .modal-xl */
+</style>
