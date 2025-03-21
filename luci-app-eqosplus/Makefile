@@ -21,6 +21,14 @@ PKG_VERSION:=1.2.5
 PKG_RELEASE:=20231205
 PKG_MAINTAINER:=sirpdboy <herboy2008@gmail.com>
 
+define Build/Compile
+endef
+
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+rm -f /tmp/luci-*
+endef
+
 define Package/$(PKG_NAME)/conffiles
 /etc/config/eqosplus
 endef
