@@ -312,7 +312,7 @@ table.table tbody td:nth-child(2) a {
 
 .btn-close::before, 
 .btn-close::after {
-	content: "" !important;
+	content: '' !important;
 	position: absolute !important;
 	width: 12px !important;
 	height: 2px !important;
