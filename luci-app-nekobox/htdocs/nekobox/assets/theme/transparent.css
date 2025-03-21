@@ -47,20 +47,6 @@
 	--bs-body-font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
 }
 
-@font-face {
-	font-family: 'Cinzel Decorative';
-  font-style: normal;
-  font-weight: 700;
-  src: url('../webfonts/cinzel-decorative-v17-latin-700.woff2') format('woff2');
-}
-
-@font-face {
-	font-family: 'Cinzel Decorative';
-  font-style: normal;
-  font-weight: 900;
-  src: url('../webfonts/cinzel-decorative-v17-latin-900.woff2') format('woff2');
-}
-
 body {
 	background-color: var(--bs-body-bg);
 	color: var(--bs-body-color);
@@ -397,26 +383,6 @@ button {
 .scrollable-container:hover {
 	overflow: auto;
 }
-
-/* START .container-sm */
-.container-sm {
-    width: 1650px !important; 
-    max-width: 100%;
-    margin: 0 auto;
-}
-/* END .container-sm */
-
-/* START .modal-xl */
-.modal-xl {
-    max-width: 1600px !important; 
-}
-
-@media (max-width: 768px) {
-    .modal-xl {
-        max-width: 100%;
-    }
-}
-/* END .modal-xl */
 
 button, .btn-warning, .btn-info, .card, .modal-content {
 	transition: transform 0.2s ease, box-shadow 0.2s ease;
