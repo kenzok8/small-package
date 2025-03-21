@@ -4,9 +4,9 @@ local nixio = require "nixio"
 m = Map("easytier")
 m.description = translate('一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 项目地址：<a href="https://github.com/EasyTier/EasyTier">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;<a href="http://easytier.cn">官网文档</a>&nbsp;&nbsp;<a href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262">QQ群</a>&nbsp;&nbsp;<a href="https://doc.oee.icu">菜鸟教程</a>')
 
--- easytier
 m:section(SimpleSection).template  = "easytier/easytier_status"
 
+-- easytier-core
 s=m:section(TypedSection, "easytier", translate("EasyTier配置"))
 s.addremove=false
 s.anonymous=true
@@ -28,14 +28,14 @@ btncq.write = function()
 end
 
 etcmd = s:taboption("general",ListValue, "etcmd", translate("启动方式"),
-	translate("默认使用命令行方式启动，也可以使用配置文件启动或<a href='https://easytier.cn/web'>WEB网页配置</a><br>切换启动方式后将以指定的方式启动，请谨慎选择"))
+	translate("官方Web控制台：<a href='https://easytier.cn/web'>easytier.cn/web</a><br>官方配置文件生成器：<a href='https://easytier.cn/web/index.html#/config_generator'>easytier.cn/web/index.html#/config_generator</a><br>注意配置RPC端口为15888"))
 etcmd.default = "etcmd"
 etcmd:value("etcmd",translate("命令行"))
 etcmd:value("config",translate("配置文件"))
-etcmd:value("web",translate("WEB配置"))
+etcmd:value("web",translate("Web配置"))
 
 et_config = s:taboption("general",TextValue, "et_config", translate("配置文件"),
-	translate("配置文件在/etc/easytier/config.toml<br>命令行的启动参数和此配置文件的参数并不同步，请自行修改<br>配置文件介绍：<a href='https://easytier.rs/guide/network/config-file.html'>点此查看</a>"))
+	translate("配置文件在/etc/easytier/config.toml<br>命令行的启动参数和此配置文件的参数不会同步<br>注意填写tun网卡名和端口用以自动防火墙放行"))
 et_config.rows = 18
 et_config.wrap = "off"
 et_config:depends("etcmd", "config")
@@ -53,8 +53,8 @@ et_config.write = function(self, section, value)
     nixio.fs.writefile(file, value:gsub("\r\n", "\n"))
 end
 
-web_config = s:taboption("general", Value, "web_config", translate("WEB服务器地址"),
-	translate("WEB配置服务器地址。（-w 参数）<br>自建WEB服务器 输入格式：udp://服务器地址:22020/账户名<br>官方WEB服务器 输入格式：账户名 <br>官方WEB服务器配置：<a href='https://easytier.cn/web'>点此</a>"))
+web_config = s:taboption("general", Value, "web_config", translate("Web服务器地址"),
+	translate("Web配置服务器地址。（-w 参数）<br>自建Web服务器 输入格式：udp://服务器地址:22020/账户名<br>官方Web服务器 输入格式：账户名 <br>官方Web控制台：<a href='https://easytier.cn/web'>easytier.cn/web</a>"))
 web_config.placeholder = "admin"
 web_config:depends("etcmd", "web")
 
@@ -63,9 +63,10 @@ network_name = s:taboption("general", Value, "network_name", translate("网络�
 network_name.password = true
 network_name.placeholder = "test"
 network_name:depends("etcmd", "etcmd")
+network_name:depends("etcmd", "web")
 
 network_secret = s:taboption("general", Value, "network_secret", translate("网络密钥"),
-	translate("用于验证此节点是否属于 VPN 网络的网络密钥（--network-secret 参数）"))
+	translate("网络密钥，用于验证此节点是否属于 VPN 网络（--network-secret 参数）"))
 network_secret.password = true
 network_secret.placeholder = "test"
 network_secret:depends("etcmd", "etcmd")
@@ -83,10 +84,9 @@ ipaddr:depends("etcmd", "etcmd")
 peeradd = s:taboption("general",DynamicList, "peeradd", translate("对等节点"),
 	translate("初始连接的对等节点，和下方参数作用一样 （-p 参数）<br>公共服务器可用状态查询：<a href='https://easytier.gd.nkbpal.cn/status/easytier' target='_blank'>点此查询</a>"))
 peeradd.placeholder = "tcp://public.easytier.top:11010"
-peeradd:value("tcp://public.easytier.top:11010", translate("官方公共服务器-广东河源-tcp://public.easytier.top:11010"))
-peeradd:value("tcp://43.136.45.249:11010", translate("广州V4-tcp://43.136.45.249:11010"))
+peeradd:value("tcp://public.easytier.top:11010", translate("官方服务器-广东河源-tcp://public.easytier.top:11010"))
+peeradd:value("tcp://turn.hb.629957.xyz:11010", translate("湖北十堰电信V4-tcp://turn.hb.629957.xyz:11010"))
 peeradd:value("tcp://et.ie12vps.xyz:11010", translate("南京V4/V6-tcp://et.ie12vps.xyz:11010"))
-peeradd:value("tcp://minebg.top:11010", translate("广州V4-tcp://minebg.top:11010"))
 peeradd:value("tcp://ah.nkbpal.cn:11010", translate("安徽电信V4-tcp://ah.nkbpal.cn:11010"))
 peeradd:value("udp://ah.nkbpal.cn:11010", translate("安徽电信V4-udp://ah.nkbpal.cn:11010"))
 peeradd:value("wss://ah.nkbpal.cn:11012", translate("安徽电信V4-wss://ah.nkbpal.cn:11012"))
@@ -109,7 +109,7 @@ external_node = s:taboption("general", Value, "external_node", translate("共享
 	translate("使用公共共享节点来发现对等节点，和上方参数作用一样 （-e 参数）"))
 external_node.default = ""
 external_node.placeholder = "tcp://public.easytier.top:11010"
-external_node:value("tcp://public.easytier.top:11010", translate("官方公共服务器-广东河源-tcp://public.easytier.top:11010"))
+external_node:value("tcp://public.easytier.top:11010", translate("官方服务器-广东河源-tcp://public.easytier.top:11010"))
 external_node:depends("etcmd", "etcmd")
 
 proxy_network = s:taboption("general",DynamicList, "proxy_network", translate("子网代理"),
@@ -121,8 +121,9 @@ mapped_listeners = s:taboption("privacy",DynamicList, "mapped_listeners", transl
 mapped_listeners:depends("listenermode", "ON")
 
 rpc_portal = s:taboption("privacy", Value, "rpc_portal", translate("门户地址端口"),
-	translate("用于管理的 RPC 门户地址。0 表示随机端口，12345 表示监听本地主机的 12345 端口，0.0.0.0:12345 表示在所有接口上监听 12345 端口。默认值为 0，首选 15888 （-r 参数）"))
+	translate("用于管理的 RPC 门户地址。0 表示随机端口，12345 表示监听本地主机的 12345 端口，0.0.0.0:12345 表示在所有接口上监听 12345 端口。<br>默认值为 0，建议选 15888 防止无法获取状态信息 （-r 参数）"))
 rpc_portal.placeholder = "15888"
+rpc_portal.default = "15888"
 rpc_portal.datatype = "range(1,65535)"
 rpc_portal:depends("etcmd", "etcmd")
 
@@ -134,33 +135,33 @@ listenermode.default = "OFF"
 listenermode:depends("etcmd", "etcmd")
 
 listener6 = s:taboption("general",Flag, "listener6", translate("同时监听IPV6"),
-	translate("默认只监听IPV4，对等节点只能使用IPV4连接，启用后将同时监听IPV6，例如 -l tcp://[::]:11010"))
+	translate("默认只监听IPV4，对等节点只能使用IPV4连接，启用后将同时监听IPV6端口"))
 listener6:depends("listenermode", "ON")
 listener6:depends("etcmd", "etcmd")
 
 tcp_port = s:taboption("general",Value, "tcp_port", translate("tcp/udp端口"),
-	translate("tcp/udp协议，端口号：11010，表示 tcp/udp 将在 11010 上监听 <br>如果是WEB配置请填写和WEB配置一样的监听端口用于防火墙放行"))
+	translate("tcp/udp协议，端口号：11010，表示 tcp/udp 将在 11010 上监听 <br>如果是配置文件Web配置请填写一样的监听端口用于防火墙放行"))
 tcp_port.datatype = "range(1,65535)"
 tcp_port.default = "11010"
 tcp_port:depends("listenermode", "ON")
 tcp_port:depends("etcmd", "web")
 
 ws_port = s:taboption("general",Value, "ws_port", translate("ws端口"),
-	translate("ws协议，端口号：11011，表示 ws 将在 11011 上监听 <br>如果是WEB配置请填写和WEB配置一样的监听端口用于防火墙放行"))
+	translate("ws协议，端口号：11011，表示 ws 将在 11011 上监听 <br>如果是配置文件Web配置请填写一样的监听端口用于防火墙放行"))
 ws_port.datatype = "range(1,65535)"
 ws_port.default = "11011"
 ws_port:depends("listenermode", "ON")
 ws_port:depends("etcmd", "web")
 
 wss_port = s:taboption("general",Value, "wss_port", translate("wss端口"),
-	translate("wss协议，端口号：11012，表示 wss 将在 11012 上监听 <br>如果是WEB配置请填写和WEB配置一样的监听端口用于防火墙放行"))
+	translate("wss协议，端口号：11012，表示 wss 将在 11012 上监听 <br>如果是配置文件Web配置请填写一样的监听端口用于防火墙放行"))
 wss_port.datatype = "range(1,65535)"
 wss_port.default = "11012"
 wss_port:depends("listenermode", "ON")
 wss_port:depends("etcmd", "web")
 
 wg_port = s:taboption("general",Value, "wg_port", translate("wg端口"),
-	translate("wireguard协议，端口号：11011，表示 wg 将在 11011 上监听 <br>如果是WEB配置请填写和WEB配置一样的监听端口用于防火墙放行"))
+	translate("wireguard协议，端口号：11011，表示 wg 将在 11011 上监听 <br>如果是配置文件Web配置请填写一样的监听端口用于防火墙放行"))
 wg_port.datatype = "range(1,65535)"
 wg_port.placeholder = "11011"
 wg_port:depends("listenermode", "ON")
@@ -179,9 +180,10 @@ desvice_name.default = device_name
 desvice_name:depends("etcmd", "etcmd")
 
 instance_name = s:taboption("privacy",Value, "instance_name", translate("实例名称"),
-	translate("用于在同一台机器中标识此 VPN 节点的实例名称 （--instance-name 参数）"))
+	translate("用于在同一台机器中标识此 VPN 节点的实例名称，启用日志需要填写，web配置时填一样的instance_name名称 （-m 参数）"))
 instance_name.placeholder = "default"
 instance_name:depends("etcmd", "etcmd")
+instance_name:depends("etcmd", "web")
 
 vpn_portal = s:taboption("privacy",Value, "vpn_portal", translate("VPN门户URL"),
 	translate("定义 VPN 门户的 URL，允许其他 VPN 客户端连接。<br> 示例：wg://0.0.0.0:11011/10.14.14.0/24，表示 VPN 门户是一个在 vpn.example.com:11010 上监听的 WireGuard 服务器，并且 VPN 客户端位于 10.14.14.0/24 网络中（--vpn-portal 参数）"))
@@ -242,13 +244,15 @@ exit_nodes:depends("etcmd", "etcmd")
 
 smoltcp = s:taboption("privacy",Flag, "smoltcp", translate("使用用户态协议栈"),
 	translate("为子网代理启用smoltcp堆栈（--use-smoltcp 参数）"))
-smoltcp.rmempty = false
 smoltcp:depends("etcmd", "etcmd")
 
 no_tun = s:taboption("privacy",Flag, "no_tun", translate("无tun模式"),
 	translate("不创建TUN设备，可以使用子网代理访问节点（ --no-tun 参数）"))
-no_tun.rmempty = false
 no_tun:depends("etcmd", "etcmd")
+
+proxy_forward = s:taboption("privacy",Flag, "proxy_forward", translate("禁用内置NAT"),
+	translate("通过系统内核转发子网代理数据包，禁用内置NAT（ --proxy-forward-by-system 参数）"))
+proxy_forward:depends("etcmd", "etcmd")
 
 manual_routes = s:taboption("privacy",DynamicList, "manual_routes", translate("路由CIDR"),
 	translate("手动分配路由CIDR，将禁用子网代理和从对等节点传播的wireguard路由。（--manual-routes 参数）"))
@@ -257,7 +261,6 @@ manual_routes:depends("etcmd", "etcmd")
 
 relay_network = s:taboption("privacy",Flag, "relay_network", translate("转发白名单网络的流量"),
 	translate("仅转发白名单网络的流量，默认允许所有网络"))
-relay_network.rmempty = false
 relay_network:depends("etcmd", "etcmd")
 
 whitelist = s:taboption("privacy",DynamicList, "whitelist", translate("白名单网络"),
@@ -272,45 +275,37 @@ socks_port:depends("etcmd", "etcmd")
 
 disable_p2p = s:taboption("privacy",Flag, "disable_p2p", translate("禁用P2P"),
 	translate("禁用P2P通信，只通过-p指定的节点转发数据包 （ --disable-p2p 参数）"))
-disable_p2p.rmempty = false
 disable_p2p:depends("etcmd", "etcmd")
 
 disable_udp = s:taboption("privacy",Flag, "disable_udp", translate("禁用UDP"),
 	translate("禁用UDP打洞功能（ --disable-udp-hole-punching 参数）"))
-disable_udp.rmempty = false
 disable_udp:depends("etcmd", "etcmd")
 
 relay_all = s:taboption("privacy",Flag, "relay_all", translate("允许转发"),
 	translate("转发所有对等节点的RPC数据包，即使对等节点不在转发网络白名单中。<br>这可以帮助白名单外网络中的对等节点建立P2P连接。（ -relay-all-peer-rpc 参数）"))
-relay_all.rmempty = false
 relay_all:depends("etcmd", "etcmd")
 
 bind_device = s:taboption("privacy",Flag, "bind_device", translate("仅使用物理网卡"),
 	translate("将连接器的套接字绑定到物理设备以避免路由问题。<br>比如子网代理网段与某节点的网段冲突，绑定物理设备后可以与该节点正常通信。（ --bind-device 参数）"))
-bind_device.rmempty = false
-bind_device.default = "1"
+bind_device.default = "0"
 bind_device:depends("etcmd", "etcmd")
 
 kcp_proxy = s:taboption("privacy",Flag, "kcp_proxy", translate("启用KCP代理"),
 	translate("将TCP流量转为 KCP 流量，降低传输延迟，提升传输速度。<br>KCP 代理功能需要虚拟网内所有节点的 EasyTier 版本在 v2.2.0 以上。（ --enable-kcp-proxy 参数）"))
-kcp_proxy.rmempty = false
 kcp_proxy:depends("etcmd", "etcmd")
 
 kcp_input = s:taboption("privacy",Flag, "kcp_input", translate("禁用KCP输入"),
 	translate("不允许其他节点使用 KCP 代理 TCP 流到此节点。<br>开启 KCP 代理的节点访问此节点时，依然使用原始。（ --disable-kcp-input 参数）"))
-kcp_input.rmempty = false
 kcp_input:depends("etcmd", "etcmd")
 
 log = s:taboption("general",ListValue, "log", translate("程序日志"),
 	translate("运行日志在/tmp/easytier.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
-log.default = "info"
+log.default = "off"
 log:value("off",translate("关闭"))
 log:value("warn",translate("警告"))
 log:value("info",translate("信息"))
 log:value("debug",translate("调试"))
 log:value("trace",translate("跟踪"))
-log:depends("etcmd", "etcmd")
-log:depends("etcmd", "config")
 
 et_forward = s:taboption("privacy",MultiValue, "et_forward", translate("访问控制"),
 	translate("设置不同网络区域之间的流量允许规则"))
@@ -513,7 +508,7 @@ end
 
 btnrm = s:taboption("infos", Button, "btnrm")
 btnrm.inputtitle = translate("检测更新")
-btnrm.description = translate("点击按钮开始检测更新，刷新上方状态栏显示")
+btnrm.description = translate("点击按钮开始检测更新，刷新上方状态栏版本显示")
 btnrm.inputstyle = "apply"
 btnrm.write = function()
   os.execute("rm -rf /tmp/easytier*.tag /tmp/easytier*.newtag /tmp/easytier-core_*")
@@ -523,6 +518,12 @@ end
 easytierbin = s:taboption("upload", Value, "easytierbin", translate("easytier-core程序路径"),
 	translate("自定义easytier-core的存放路径，确保填写完整的路径及名称,若指定的路径可用空间不足将会自动移至/tmp/easytier-core"))
 easytierbin.placeholder = "/usr/bin/easytier-core"
+easytierbin.default = "/usr/bin/easytier-core"
+
+webbin = s:taboption("upload", Value, "webbin", translate("easytier-web程序路径"),
+	translate("自定义easytier-web的存放路径，确保填写完整的路径及名称，然后上传安装程序"))
+webbin.placeholder = "/usr/bin/easytier-web"
+webbin.default = "/usr/bin/easytier-web"
 
 local upload = s:taboption("upload", FileUpload, "upload_file")
 upload.optional = true
@@ -561,11 +562,15 @@ http.setfilehandler(
                 local extracted_dir = "/tmp/easytier-linux-*/"
                 os.execute("mv " .. extracted_dir .. "easytier-cli /tmp/easytier-cli")
                 os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-core")
+		os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-web")
                if nixio.fs.access("/tmp/easytier-cli") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-cli上传成功，重启一次插件才生效")
                 end
                if nixio.fs.access("/tmp/easytier-core") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-core上传成功，重启一次插件才生效")
+                end
+		if nixio.fs.access("/tmp/easytier-web") then
+                    um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-web上传成功，重启一次插件才生效")
                 end
                end
 	    if string.sub(meta.file, -7) == ".tar.gz" then
@@ -574,20 +579,78 @@ http.setfilehandler(
 		local extracted_dir = "/tmp/easytier-linux-*/"
                 os.execute("mv " .. extracted_dir .. "easytier-cli /tmp/easytier-cli")
                 os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-core")
+		os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-web")
                if nixio.fs.access("/tmp/easytier-cli") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-cli上传成功，重启一次插件才生效")
                 end
                if nixio.fs.access("/tmp/easytier-core") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-core上传成功，重启一次插件才生效")
                 end
+		if nixio.fs.access("/tmp/easytier-web") then
+                    um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-web上传成功，重启一次插件才生效")
+                end
                end
                 os.execute("chmod +x /tmp/easytier-core")
-                os.execute("chmod +x /tmp/easytier-cli")                
+                os.execute("chmod +x /tmp/easytier-cli") 
+		os.execute("chmod +x /tmp/easytier-web")
         end
     end
 )
 if luci.http.formvalue("upload") then
     local f = luci.http.formvalue("ulfile")
 end
+
+-- easytier-web
+s=m:section(TypedSection, "easytierweb", translate("自建Web服务器"))
+s.addremove=false
+s.anonymous=true
+
+switch = s:option(Flag, "enabled", translate("Enable"))
+switch.rmempty = false
+
+btncq = s:option(Button, "btncq", translate("重启"))
+btncq.inputtitle = translate("重启")
+btncq.description = translate("在没有修改参数的情况下快速重新启动一次")
+btncq.inputstyle = "apply"
+btncq:depends("enabled", "1")
+btncq.write = function()
+  luci.sys.call("/etc/init.d/easytier restart >/dev/null 2>&1 &")  -- 执行重启命令
+end
+
+db_path = s:option(Value, "db_path", translate("数据库文件路径"),
+	translate(" sqlite3 数据库文件路径, 用于保存所有数据。（ -d 参数）"))
+db_path.default = "/etc/easytier/et.db"
+db_path:depends("enabled", "1")
+
+web_protocol = s:option(ListValue, "web_protocol", translate("监听协议"),
+	translate("配置服务器的监听协议，用于被 easytier-core 连接。（ -p 参数）"))
+web_protocol.default = "udp"
+web_protocol:value("udp",translate("UDP"))
+web_protocol:value("tcp",translate("TCP"))
+web_protocol:depends("enabled", "1")
+
+web_port = s:option(Value, "web_port", translate("服务端口"),
+	translate("配置服务器的监听端口，用于被 easytier-core 连接。（ -c 参数）"))
+web_port.datatype = "range(1,65535)"
+web_port.placeholder = "22020"
+web_port.default = "22020"
+web_port:depends("enabled", "1")
+
+api_port = s:option(Value, "api_port", translate("API端口"),
+	translate("restful 服务器的监听端口，作为 ApiHost 并被 web 前端使用。（ -a 参数）"))
+api_port.datatype = "range(1,65535)"
+api_port.placeholder = "11211"
+api_port.default = "11211"
+api_port:depends("enabled", "1")
+
+weblog = s:option(ListValue, "weblog", translate("程序日志"),
+	translate("运行日志在/tmp/easytierweb.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
+weblog.default = "off"
+weblog:value("off",translate("关闭"))
+weblog:value("warn",translate("警告"))
+weblog:value("info",translate("信息"))
+weblog:value("debug",translate("调试"))
+weblog:value("trace",translate("跟踪"))
+weblog:depends("enabled", "1")
 
 return m
