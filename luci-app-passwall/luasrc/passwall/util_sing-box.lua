@@ -19,7 +19,7 @@ local function convert_geofile()
 	local geosite_path = geo_dir .. "/geosite.dat"
 	local geoip_path = geo_dir .. "/geoip.dat"
 	if not api.is_finded("geoview") then
-		api.log("* 注意：缺少 geoview 组件，Sing-Box 分流将无法启用！")
+		api.log("* 注意：缺少 geoview 组件，Sing-Box 分流无法启用！")
 		return
 	end
 	if not fs.access(srss_path) then
@@ -33,13 +33,13 @@ local function convert_geofile()
 					local cmd = string.format("geoview -type %s -action convert -input %s -list '%s' -output %s -lowmem=true",
 						prefix, file_path, k, srs_file)
 					sys.exec(cmd)
-					local status = fs.access(srs_file) and "成功。" or "失败！"
-					api.log(string.format("  - 转换 %s:%s ... %s", prefix, k, status))
+					--local status = fs.access(srs_file) and "成功。" or "失败！"
+					--api.log(string.format("  - 转换 %s:%s ... %s", prefix, k, status))
 				end
 			end
 		end
 	end
-	api.log("Sing-Box 规则集转换：")
+	--api.log("Sing-Box 规则集转换：")
 	convert(geosite_path, "geosite", geosite_all_tag)
 	convert(geoip_path, "geoip", geoip_all_tag)
 end
