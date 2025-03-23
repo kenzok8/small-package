@@ -1,0 +1,185 @@
+#!/bin/sh /etc/rc.common
+#copyright by sirpdboy
+
+START=95
+STOP=10
+TMP=/etc/taskplan
+LOG=$TMP/taskplan.log
+TT=/etc/init.d/taskplanrun
+CR=/etc/crontabs/root
+[ ! -d $TMP ] && mkdir -p $TMP 2>/dev/null
+[ -s $LOG ] && echo -e ' ' > $LOG
+run_taskplan()
+{
+[  `uci -q get taskplan.@global[0].customscript  |  wc -l ` > 0 ] && uci -q get taskplan.@global[0].customscript > /etc/taskplan/taskplancustomscript
+[  `uci -q get taskplan.@global[0].customscript2  |  wc -l ` > 0 ] && uci -q get taskplan.@global[0].customscript2 > /etc/taskplan/taskplancustomscript2
+ssum=$(grep -c stime /etc/config/taskplan)
+lsum=$(grep -c ltime /etc/config/taskplan)
+for i in $(seq 0 $((ssum-1)))
+do
+	enable=$(uci -q get taskplan.@stime[$i].enable )
+	if [ "x$enable" = "x1" ]; then
+		month=$(uci -q get taskplan.@stime[$i].month ) || month="*"
+		stype=$(uci -q get taskplan.@stime[$i].stype )
+		week=$(uci -q get taskplan.@stime[$i].week ) || week="*"
+		minute=$(uci -q get taskplan.@stime[$i].minute ) || minute="00"
+		hour=$(uci -q get taskplan.@stime[$i].hour )  || hour="*"
+		[ "x$hour" = "x0" ] && hour="00"
+		[ "x$minute" = "x0" ] && minute="00"
+		case "$stype" in
+			1)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler reboot Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			2)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler poweroff Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			3)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler network Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			4)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler restartsamba Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			5)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler restartwan Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			6)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler closewan Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			7)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler clearmem Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			8)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler sysfree Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			9)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler disreconn Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			10)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler disrereboot Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			11)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler restartmwan3 Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			12)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler customscript Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			13)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler upwifi Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			14)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler downwifi Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			15)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler customscript2 Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+			16)
+				local cmd="$minute $hour * $month $week /usr/bin/taskplanhandler restartlan Scheduled_task" 
+				echo "$cmd" >> $CR
+				;;
+		esac
+    fi
+ done
+
+for i in $(seq 0 $((lsum-1)))
+do
+	enable=$(uci -q get taskplan.@ltime[$i].enable )
+	if [ "x$enable" = "x1" ]; then
+		stype=$(uci -q get taskplan.@ltime[$i].stype )
+		delay=$(uci -q get taskplan.@ltime[$i].delay )  || delay=10
+		case "$stype" in
+			1)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler reboot Startup_task" >>$TT
+				;;
+			2)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler poweroff  Startup_task" >>$TT
+				;;
+			3)
+				 echo  "sleep $delay &&  /usr/bin/taskplanhandler network  Startup_task" >>$TT
+				;;
+			4)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler restartsamba  Startup_task" >>$TT
+				;;
+			5)
+				 echo  "sleep $delay &&  /usr/bin/taskplanhandler restartwan  Startup_task" >>$TT
+				;;
+			6)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler closewan  Startup_task" >>$TT
+				;;
+			7)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler clearmem  Startup_task" >>$TT
+				;;
+			8)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler reboot  Startup_task" >>$TT
+				;;
+			9)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler disreconn  Startup_task" >>$TT
+				;;
+			10)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler disrereboot  Startup_task" >>$TT
+				;;
+			11) 
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler restartmwan3  Startup_task" >>$TT
+				;;
+			12)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler customscript  Startup_task" >>$TT
+				;;
+			13)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler upwifi  Startup_task" >>$TT
+				;;
+			14)
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler downwifi Startup_task" >>$TT
+				;;
+			15) 
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler customscript2  Startup_task" >>$TT
+				;;
+			16) 
+				echo  "sleep $delay &&  /usr/bin/taskplanhandler restartlan  Startup_task" >>$TT
+				;;
+		esac
+    fi
+ done
+
+}
+
+start()
+{
+	del_cru
+	[ -n "`tail -c1 $CR`" ] && echo >> $CR
+	run_taskplan
+	echo '}'  >>$TT
+	/etc/init.d/cron reload
+}
+
+stop()
+{
+    del_cru
+    echo '}'  >>$TT
+    /etc/init.d/cron reload
+}
+
+restart()
+{
+	start
+}
+
+del_cru()
+{   
+    echo -e '#!/bin/sh \n\nSTART=99\nstart(){\necho "Service taskplanrun started! " >> $LOG\n' > $TT
+    sed -i '/taskplanhandler/d' $CR >/dev/null 2>&1
+}
+

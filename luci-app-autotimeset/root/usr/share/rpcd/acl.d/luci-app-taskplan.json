@@ -1,0 +1,11 @@
+{
+	"luci-app-taskplan": {
+		"description": "Grant UCI access for luci-app-taskplan",
+		"read": {
+			"uci": [ "taskplan" ]
+		},
+		"write": {
+			"uci": [ "taskplan" ]
+		}
+	}
+}
