@@ -5,7 +5,9 @@
 
 	import { cursor } from 'uci';
 	import { connect } from 'ubus';
-	import { uci_bool, uci_array, get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
+	import { uci_bool, uci_array, get_cgroups_version, get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
+
+	const cgroups_version = get_cgroups_version();
 
 	const users = get_users();
 	const groups = get_groups();
@@ -43,7 +45,15 @@
 
 	const bypass_user = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_user')), (x) => x != 'root' && index(users, x) >= 0);
 	const bypass_group = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_group')), (x) => x != 'root' && index(groups, x) >= 0);
-	const bypass_cgroup = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_cgroup')), (x) => x != 'nikki' && index(cgroups, x) >= 0);
+
+	let bypass_cgroup = [];
+	if (cgroups_version == 1) {
+		push(bypass_cgroup, cgroup_id);
+	} else if (cgroups_version == 2) {
+		bypass_cgroup = filter(uci_array(uci.get('nikki', 'proxy', 'bypass_cgroup')), (x) => x != 'nikki' && index(cgroups, x) >= 0);
+		push(bypass_cgroup, cgroup_name);
+	}
+
 	const bypass_dscp = uci_array(uci.get('nikki', 'proxy', 'bypass_dscp'));
 	const bypass_china_mainland_ip = uci_bool(uci.get('nikki', 'proxy', 'bypass_china_mainland_ip'));
 	const proxy_tcp_dport = split((uci.get('nikki', 'proxy', 'proxy_tcp_dport') ?? '0-65535'), ' ');
@@ -80,8 +90,6 @@
 	for (let port in proxy_udp_dport) {
 		push(proxy_dport, `udp . ${port}`);
 	}
-
-	push(bypass_cgroup, 'nikki');
 -%}
 
 table inet nikki {
@@ -135,6 +143,20 @@ table inet nikki {
 		{% endif %}
 	}
 
+	{% if (cgroups_version == 1): %}
+	set bypass_cgroup {
+		typeof meta cgroup
+		flags interval
+		auto-merge
+		{% if (length(bypass_cgroup) > 0): %}
+		elements = {
+			{% for (let x in bypass_cgroup): %}
+			{{ x }},
+			{% endfor %}
+		}
+		{% endif %}
+	}
+	{% elif (cgroups_version == 2): %}
 	set bypass_cgroup {
 		type cgroupsv2
 		flags interval
@@ -147,6 +169,7 @@ table inet nikki {
 		}
 		{% endif %}
 	}
+	{% endif %}
 
 	set reserved_ip {
 		type ipv4_addr
@@ -319,7 +342,11 @@ table inet nikki {
 	{% if (router_proxy): %}
 	chain nat_output {
 		type nat hook output priority filter; policy accept;
+		{% if (cgroups_version == 1): %}
+		meta cgroup @bypass_cgroup counter return
+		{% elif (cgroups_version == 2): %}
 		socket cgroupv2 level 2 @bypass_cgroup counter return
+		{% endif %}
 		meta skuid @bypass_user counter return
 		meta skgid @bypass_group counter return
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter redirect to :{{ dns_port }}
@@ -343,7 +370,11 @@ table inet nikki {
 
 	chain mangle_output {
 		type route hook output priority mangle; policy accept;
+		{% if (cgroups_version == 1): %}
+		meta cgroup @bypass_cgroup counter return
+		{% elif (cgroups_version == 2): %}
 		socket cgroupv2 level 2 @bypass_cgroup counter return
+		{% endif %}
 		meta skuid @bypass_user counter return
 		meta skgid @bypass_group counter return
 		fib daddr type { local, multicast, broadcast, anycast } counter return

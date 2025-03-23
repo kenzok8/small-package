@@ -62,7 +62,7 @@ start_service() {
 	config_get_bool disable_quic_go_ecn "env" "disable_quic_go_ecn" 0
 	# get profile
 	if [[ "$profile" == "file:"* ]]; then
-		local profile_name; profile_name=$(basename "${profile/file:/}")
+		local profile_name; profile_name="${profile/file:/}"
 		local profile_file; profile_file="$PROFILES_DIR/$profile_name"
 		log "Profile" "Use file: $profile_name."
 		if [ ! -f "$profile_file" ]; then
@@ -121,8 +121,8 @@ start_service() {
 	if [ "$fast_reload" == 1 ]; then
 		procd_set_param reload_signal HUP
 	fi
+	procd_set_param pidfile "$PID_FILE_PATH"
 	procd_set_param respawn
-
 	procd_set_param limits core="unlimited" nofile="1048576 1048576"
 
 	procd_close_instance
@@ -133,12 +133,12 @@ start_service() {
 		/etc/init.d/cron restart
 	fi
 	# set started flag
-	touch "$STARTED_FLAG"
+	touch "$STARTED_FLAG_PATH"
 }
 
 service_started() {
 	# check if started
-	if [ ! -f "$STARTED_FLAG" ]; then
+	if [ ! -f "$STARTED_FLAG_PATH" ]; then
 		return
 	fi
 	# load config
@@ -162,7 +162,7 @@ service_started() {
 	config_get udp_transparent_proxy_mode "proxy" "udp_transparent_proxy_mode"
 	config_get_bool ipv4_proxy "proxy" "ipv4_proxy" 0
 	config_get_bool ipv6_proxy "proxy" "ipv6_proxy" 0
-	# prepare
+	# prepare config
 	local tproxy_enable; tproxy_enable=0
 	if [[ "$tcp_transparent_proxy_mode" == "tproxy" || "$udp_transparent_proxy_mode" == "tproxy" ]]; then
 		tproxy_enable=1
@@ -170,6 +170,40 @@ service_started() {
 	local tun_enable; tun_enable=0
 	if [[ "$tcp_transparent_proxy_mode" == "tun" || "$udp_transparent_proxy_mode" == "tun" ]]; then
 		tun_enable=1
+	fi
+	# fix compatible with dockerd
+	## cgroupfs-mount
+	### when cgroupfs-mount is installed, cgroupv1 will mounted instead of cgroupv2, we need to create cgroup manually
+	if (mount | grep -q -w "^cgroup"); then
+		local cgroup_v1_path; cgroup_v1_path="/sys/fs/cgroup/net_cls/$CGROUP_NAME"
+		mkdir -p "$cgroup_v1_path"
+		echo "$CGROUP_ID" > "$cgroup_v1_path/net_cls.classid"
+		cat "$PID_FILE_PATH" > "$cgroup_v1_path/cgroup.procs"
+		# local bypass_cgroup; config_get bypass_cgroup "proxy" "bypass_cgroup"
+		# if [ -n "$bypass_cgroup" ]; then
+		# 	local cgroup
+		# 	for cgroup in $bypass_cgroup; do
+		# 		ubus call service list "{\"name\": \"$cgroup\"}" | jsonfilter -e "$.$cgroup.instances.*.pid" >> "$cgroup_v1_path/cgroup.procs"
+		# 	done
+		# fi
+	fi
+	## kmod-br-netfilter
+	### when kmod-br-netfilter is loaded, bridge-nf-call-iptables and bridge-nf-call-ip6tables are set to 1, we need to set them to 0 if tproxy is enabled
+	if [ "$tproxy_enable" == 1 ] && (lsmod | grep -q br_netfilter); then
+		if [ "$ipv4_proxy" == 1 ]; then
+			local bridge_nf_call_iptables; bridge_nf_call_iptables=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
+			if [ "$bridge_nf_call_iptables" == 1 ]; then
+				touch "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH"
+				sysctl -q -w net.bridge.bridge-nf-call-iptables=0
+			fi
+		fi
+		if [ "$ipv6_proxy" == 1 ]; then
+			local bridge_nf_call_ip6tables; bridge_nf_call_ip6tables=$(sysctl -e -n net.bridge.bridge-nf-call-ip6tables)
+			if [ "$bridge_nf_call_ip6tables" == 1 ]; then
+				touch "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH"
+				sysctl -q -w net.bridge.bridge-nf-call-ip6tables=0
+			fi
+		fi
 	fi
 	# transparent proxy
 	log "Transparent Proxy" "Enabled."
@@ -194,7 +228,7 @@ service_started() {
 			return
 		fi
 	fi
-	# prepare
+	# ip route and rule
 	if [ "$tproxy_enable" == 1 ]; then
 		if [ "$ipv4_proxy" == 1 ]; then
 			ip -4 route add local default dev lo table "$TPROXY_ROUTE_TABLE"
@@ -217,30 +251,13 @@ service_started() {
 		$FIREWALL_INCLUDE_SH
 	fi
 	# hijack
-	utpl -D tproxy_fw_mark="$TPROXY_FW_MARK" -D tun_fw_mark="$TUN_FW_MARK" -S "$HIJACK_UT" | nft -f -
+	utpl -D cgroup_name="$CGROUP_NAME" -D cgroup_id="$CGROUP_ID" -D tproxy_fw_mark="$TPROXY_FW_MARK" -D tun_fw_mark="$TUN_FW_MARK" -S "$HIJACK_UT" | nft -f -
 	# check hijack
 	if (nft list tables | grep -q nikki); then
 		log "Transparent Proxy" "Hijack successful."
 	else
 		log "Transparent Proxy" "Hijack failed."
 		log "App" "Exit."
-	fi
-	# fix compatible between tproxy and dockerd (kmod-br-netfilter)
-	if [ "$tproxy_enable" == 1 ] && (lsmod | grep -q br_netfilter); then
-		if [ "$ipv4_proxy" == 1 ]; then
-			local bridge_nf_call_iptables; bridge_nf_call_iptables=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
-			if [ "$bridge_nf_call_iptables" == 1 ]; then
-				touch "$BRIDGE_NF_CALL_IPTABLES_FLAG"
-				sysctl -q -w net.bridge.bridge-nf-call-iptables=0
-			fi
-		fi
-		if [ "$ipv6_proxy" == 1 ]; then
-			local bridge_nf_call_ip6tables; bridge_nf_call_ip6tables=$(sysctl -e -n net.bridge.bridge-nf-call-ip6tables)
-			if [ "$bridge_nf_call_ip6tables" == 1 ]; then
-				touch "$BRIDGE_NF_CALL_IP6TABLES_FLAG"
-				sysctl -q -w net.bridge.bridge-nf-call-ip6tables=0
-			fi
-		fi
 	fi
 }
 
@@ -282,14 +299,14 @@ cleanup() {
 		nft delete rule inet fw4 forward handle "$handle"
 	done
 	# delete started flag
-	rm -f "$STARTED_FLAG"
+	rm -f "$STARTED_FLAG_PATH"
 	# revert fix compatible between tproxy and dockerd (kmod-br-netfilter)
-	if [ -f "$BRIDGE_NF_CALL_IPTABLES_FLAG" ]; then
-		rm -f "$BRIDGE_NF_CALL_IPTABLES_FLAG"
+	if [ -f "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH" ]; then
+		rm -f "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH"
 		sysctl -q -w net.bridge.bridge-nf-call-iptables=1
 	fi
-	if [ -f "$BRIDGE_NF_CALL_IP6TABLES_FLAG" ]; then
-		rm -f "$BRIDGE_NF_CALL_IP6TABLES_FLAG"
+	if [ -f "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH" ]; then
+		rm -f "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH"
 		sysctl -q -w net.bridge.bridge-nf-call-ip6tables=1
 	fi
 	# delete cron
@@ -320,8 +337,8 @@ update_subscription() {
 	uci_remove "nikki" "$subscription_section" "success"
 	# update subscription
 	log "Profile" "Update subscription: $subscription_name."
-	local subscription_header_tmpfile; subscription_header_tmpfile="/tmp/$subscription_section.header"
-	local subscription_tmpfile; subscription_tmpfile="/tmp/$subscription_section.yaml"
+	local subscription_header_tmpfile; subscription_header_tmpfile="$TEMP_DIR/$subscription_section.header"
+	local subscription_tmpfile; subscription_tmpfile="$TEMP_DIR/$subscription_section.yaml"
 	local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.yaml"
 	if (curl -s -f --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"); then
 		log "Profile" "Subscription update successful."

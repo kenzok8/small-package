@@ -418,7 +418,7 @@ function parse_uri(uri) {
 			case 'tcp':
 				if (uri.net === 'h2' || uri.type === 'http') {
 					config.transport = 'http';
-					config.http_host = uri.host ? uri.host.split(',') : null;
+					config.http_host = uri.host ? split(uri.host, ',') : null;
 					config.http_path = uri.path;
 				}
 				break;
