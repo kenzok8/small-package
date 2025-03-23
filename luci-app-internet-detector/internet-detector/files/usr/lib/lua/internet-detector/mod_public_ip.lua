@@ -4,23 +4,25 @@ local stdlib = require("posix.stdlib")
 local unistd = require("posix.unistd")
 
 local Module = {
-	name              = "mod_public_ip",
-	runPrio           = 50,
-	config            = {
-		noModules = false,
-		debug     = false,
+	name                 = "mod_public_ip",
+	runPrio              = 50,
+	config               = {
+		noModules     = false,
+		debug         = false,
 		serviceConfig = {
 			iface = nil,
 		},
 	},
-	syslog            = function(level, msg) return true end,
-	writeValue        = function(filePath, str) return false end,
-	readValue         = function(filePath) return nil end,
-	port              = 53,
-	runInterval       = 600,
-	runIntervalFailed = 60,
-	timeout           = 3,
-	providers         = {
+	syslog               = function(level, msg) return true end,
+	writeValue           = function(filePath, str) return false end,
+	readValue            = function(filePath) return nil end,
+	port                 = 53,
+	runInterval          = 600,
+	runIntervalFailed    = 60,
+	runIntervalDNSFailed = 1,
+	requestAttempts      = 2,
+	timeout              = 3,
+	providers            = {
 		opendns1 = {
 			name = "opendns1", host = "myip.opendns.com",
 			server = "208.67.222.222", server6 = "2620:119:35::35",
@@ -52,16 +54,18 @@ local Module = {
 			port = 53, queryType = "TXT", queryType6 = "TXT",
 		},
 	},
-	ipScript          = "",
-	enableIpScript    = false,
-	status            = nil,
-	_provider         = nil,
-	_qtype            = false,
-	_currentIp        = nil,
-	_enabled          = false,
-	_counter          = 0,
-	_interval         = 600,
-	_DNSPacket        = nil,
+	ipScript             = "",
+	enableIpScript       = false,
+	status               = nil,
+	_provider            = nil,
+	_qtype               = false,
+	_currentIp           = nil,
+	_lastResolvedIp      = nil,
+	_enabled             = false,
+	_counter             = 0,
+	_DNSFalseCounter     = 0,
+	_interval            = 600,
+	_DNSPacket           = nil,
 }
 
 function Module:runIpScript()
@@ -306,7 +310,7 @@ function Module:decodeMessage(message)
 	return retTable
 end
 
-function Module:resolveIP()
+function Module:requestIP()
 	local res
 	local qtype  = self._qtype and self._provider.queryType6 or self._provider.queryType
 	local server = self._qtype and self._provider.server6 or self._provider.server
@@ -324,7 +328,7 @@ function Module:resolveIP()
 		end
 	else
 		self.syslog("warning", string.format(
-			"%s: DNS error when requesting an IP address", self.name))
+			"%s: UDP error when requesting an IP address", self.name))
 	end
 
 	return res
@@ -333,6 +337,12 @@ end
 function Module:init(t)
 	if t.interval ~= nil then
 		self.runInterval = tonumber(t.interval)
+	end
+	if t.interval_failed ~= nil then
+		self.runIntervalFailed = tonumber(t.interval_failed)
+	end
+	if t.request_attempts ~= nil then
+		self.requestAttempts = tonumber(t.request_attempts)
 	end
 	if t.timeout ~= nil then
 		self.timeout = tonumber(t.timeout)
@@ -352,10 +362,12 @@ function Module:init(t)
 	if t.qtype ~= nil then
 		self._qtype = (tonumber(t.qtype) ~= 0)
 	end
-	self._currentIp = nil
-	self._DNSPacket = nil
-	self._interval  = self.runInterval
-	self._enabled   = true
+	self._currentIp       = nil
+	self._lastResolvedIp  = nil
+	self._DNSPacket       = nil
+	self._interval        = self.runInterval
+	self._DNSFalseCounter = 0
+	self._enabled         = true
 end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
@@ -365,33 +377,44 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	if currentStatus == 0 then
 		if self._counter == 0 or self._counter >= self._interval or currentStatus ~= lastStatus then
 
-			local ip = self:resolveIP()
+			local ip = self:requestIP()
 
 			if not ip then
-				ip = ""
-				self._interval = self.runIntervalFailed
+				ip                    = ""
+				self._DNSFalseCounter = self._DNSFalseCounter + 1
+				if self._DNSFalseCounter >= self.requestAttempts then
+					self._interval        = self.runIntervalFailed
+					self._DNSFalseCounter = 0
+				else
+					self._interval        = self.runIntervalDNSFailed
+				end
 			else
-				self._interval = self.runInterval
+				self._interval        = self.runInterval
+				self._DNSFalseCounter = 0
 			end
 
 			if ip ~= self._currentIp then
 				self.status = ip
-				self.syslog(
-					"notice",
-					string.format("%s: public IP address %s", self.name, (ip == "") and "Undefined" or ip)
-				)
-				if self._counter > 0 then
-					self:runIpScript()
+				if ip ~= "" then
+					if self._counter > 0 and ip ~= self._lastResolvedIp then
+						self.syslog(
+							"notice",
+							string.format("%s: public IP address changed to %s", self.name, ip)
+						)
+						self:runIpScript()
+					end
+					self._lastResolvedIp = ip
 				end
 			end
 			self._currentIp = ip
 			self._counter   = 0
 		end
 	else
-		self._currentIp = nil
-		self.status     = self._currentIp
-		self._counter   = 0
-		self._interval  = self.runInterval
+		self._currentIp       = nil
+		self.status           = self._currentIp
+		self._DNSFalseCounter = 0
+		self._counter         = 0
+		self._interval        = self.runInterval
 	end
 	self._counter = self._counter + timeDiff
 end

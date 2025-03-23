@@ -44,6 +44,9 @@ msgstr "Сообщение будет отправлено при подключ
 msgid "An error has occurred"
 msgstr "Произошла ошибка"
 
+msgid "Attempts"
+msgstr "Попытки"
+
 msgid "Big: 248 bytes"
 msgstr "Большой: 248 байт"
 
@@ -149,11 +152,8 @@ msgstr "Включен"
 msgid "Expecting:"
 msgstr "Ожидается:"
 
-msgid "Public IP"
-msgstr "Публичный IP"
-
-msgid "Public IP address"
-msgstr "Публичный IP адрес"
+msgid "Failed interval"
+msgstr "Интервал при неудаче"
 
 msgid "Failed to get %s init status: %s"
 msgstr "Не удалось получить статус инициализации %s: %s"
@@ -215,6 +215,9 @@ msgstr "Статус Интернет"
 
 msgid "Interval between IP address requests."
 msgstr "Интервал между запросами IP адреса."
+
+msgid "Interval between IP address requests if the IP address is not defined."
+msgstr "Интервал между запросами IP адреса, если IP адрес не определён."
 
 msgid "Jumbo: 9000 bytes"
 msgstr "Гигантский: 9000 байт"
@@ -282,6 +285,9 @@ msgstr "Нет доступных <abbr title=\"Светодиод\">LED</abbr>.
 msgid "Not scheduled"
 msgstr "Не запланирован"
 
+msgid "Number of attempts to request an IP address."
+msgstr "Количество попыток запроса IP адреса"
+
 msgid "Off"
 msgstr "Выключить"
 
@@ -331,6 +337,12 @@ msgstr "Регулярный скрипт"
 
 msgid "Polling interval"
 msgstr "Интервал опроса"
+
+msgid "Public IP"
+msgstr "Публичный IP"
+
+msgid "Public IP address"
+msgstr "Публичный IP адрес"
 
 msgid "Reboot device"
 msgstr "Перезагрузка устройства"

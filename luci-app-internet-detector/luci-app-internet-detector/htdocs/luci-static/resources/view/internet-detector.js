@@ -1038,6 +1038,30 @@ return view.extend({
 			o.value(3600,  '1' + ' ' + _('hour'));
 			o.value(10800, '3' + ' ' + _('hour'));
 
+			// interval_failed
+			o = s.taboption('public_ip', form.ListValue,
+				'mod_public_ip_interval_failed', _('Failed interval'),
+				_('Interval between IP address requests if the IP address is not defined.')
+			);
+			o.default   = '60';
+			o.modalonly = true;
+			o.value(30,    '30' + ' ' + _('sec'));
+			o.value(60,    '1' + ' ' + _('min'));
+			o.value(180,   '3' + ' ' + _('min'));
+			o.value(300,   '5' + ' ' + _('min'));
+			o.value(600,   '10' + ' ' + _('min'));
+
+			// request_attempts
+			o = s.taboption('public_ip', form.ListValue,
+				'mod_public_ip_request_attempts', _('Attempts'),
+				_('Number of attempts to request an IP address.')
+			);
+			o.default   = '2'
+			o.modalonly = true;
+			for(let i = 1; i <= 3; i++) {
+				o.value(i);
+			};
+
 			// timeout
 			o = s.taboption('public_ip', form.ListValue,
 				'mod_public_ip_timeout', _('Server response timeout')
