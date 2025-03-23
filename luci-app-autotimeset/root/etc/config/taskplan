@@ -1,0 +1,78 @@
+
+config global
+	option enabled '0'
+	option customscript '# Sh script rules'
+	option customscript2 '# Sh script rules'
+
+config stime
+	option hour '*/4'
+	option stype '7'
+	option week '*'
+	option minute '0'
+	option month '*'
+	option enable '0'
+	option ttype '0'
+	option delay '10'
+	option remarks '每月每天每过4小时执行一次'
+
+config stime
+	option minute '0'
+	option month '*'
+	option enable '0'
+	option delay '10'
+	option stype '1'
+	option ttype '0'
+	option hour '1'
+	option remarks '每月星期日1:00执行'
+	option week '0'
+
+config stime
+	option week '*'
+	option month '*'
+	option enable '0'
+	option ttype '0'
+	option delay '10'
+	option stype '10'
+	option minute '*/5'
+	option hour '*'
+	option remarks '每月每天每过5分钟执行'
+
+config stime
+	option week '*'
+	option stype '2'
+	option month '*'
+	option enable '0'
+	option ttype '0'
+	option delay '10'
+	option remarks '每天22:30执行'
+	option hour '22'
+	option minute '30'
+
+config stime
+	option minute '0'
+	option enable '0'
+	option ttype '0'
+	option delay '10'
+	option stype '6'
+	option remarks '7月星期一到星期五22:00执行'
+	option month '7'
+	option week '1-5'
+	option hour '22'
+
+config stime
+	option week '*'
+	option month '*'
+	option stype '11'
+	option ttype '1'
+	option delay '20'
+	option enable '0'
+	option hour '*'
+	option remarks '每月每天每过4分钟执行'
+	option minute '*/4'
+
+config ltime
+	option remarks '开机启动延时30秒执行'
+	option stype '11'
+	option delay '30'
+	option enable '0'
+
