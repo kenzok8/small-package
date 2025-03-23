@@ -76,11 +76,11 @@ function Module:init(t)
 	end
 end
 
-function Module:SetTriggerTimer(t)
+function Module:setTriggerTimer(t)
 	self.writeValue(t.ledTriggerFile, "timer")
 end
 
-function Module:SetTriggerNone(t)
+function Module:setTriggerNone(t)
 	self.writeValue(t.ledTriggerFile, "none")
 end
 
@@ -92,12 +92,12 @@ function Module:getCurrentTrigger(t)
 end
 
 function Module:on(t)
-	self:SetTriggerNone(t)
+	self:setTriggerNone(t)
 	self.writeValue(t.ledBrightnessFile, t.ledMaxBrightness)
 end
 
 function Module:off(t)
-	self:SetTriggerNone(t)
+	self:setTriggerNone(t)
 	self.writeValue(t.ledBrightnessFile, 0)
 end
 
@@ -120,7 +120,7 @@ function Module:ledRunFunc(t, currentStatus)
 			end
 		elseif t.ledAction1 == 3 then
 			if not self:getCurrentTrigger(t) then
-				self:SetTriggerTimer(t)
+				self:setTriggerTimer(t)
 			end
 		end
 	else
@@ -134,7 +134,7 @@ function Module:ledRunFunc(t, currentStatus)
 			end
 		elseif t.ledAction2 == 3 then
 			if not self:getCurrentTrigger(t) then
-				self:SetTriggerTimer(t)
+				self:setTriggerTimer(t)
 			end
 		end
 	end

@@ -32,6 +32,9 @@ msgstr ""
 msgid "An error has occurred"
 msgstr ""
 
+msgid "Attempts"
+msgstr ""
+
 msgid "Big: 248 bytes"
 msgstr ""
 
@@ -137,10 +140,7 @@ msgstr ""
 msgid "Expecting:"
 msgstr ""
 
-msgid "Public IP"
-msgstr ""
-
-msgid "Public IP address"
+msgid "Failed interval"
 msgstr ""
 
 msgid "Failed to get %s init status: %s"
@@ -202,6 +202,9 @@ msgstr ""
 msgid "Interval between IP address requests."
 msgstr ""
 
+msgid "Interval between IP address requests if the IP address is not defined."
+msgstr ""
+
 msgid "Jumbo: 9000 bytes"
 msgstr ""
 
@@ -260,6 +263,9 @@ msgstr ""
 msgid "Not scheduled"
 msgstr ""
 
+msgid "Number of attempts to request an IP address."
+msgstr ""
+
 msgid "Off"
 msgstr ""
 
@@ -305,6 +311,12 @@ msgid "Regular script"
 msgstr ""
 
 msgid "Polling interval"
+msgstr ""
+
+msgid "Public IP"
+msgstr ""
+
+msgid "Public IP address"
 msgstr ""
 
 msgid "Reboot device"
