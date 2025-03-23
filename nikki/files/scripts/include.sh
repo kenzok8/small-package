@@ -7,6 +7,8 @@ TPROXY_RULE_PREF="1024"
 TUN_RULE_PREF="1025"
 TPROXY_ROUTE_TABLE="80"
 TUN_ROUTE_TABLE="81"
+CGROUP_ID="0x12061206"
+CGROUP_NAME="nikki"
 
 # paths
 PROG="/usr/bin/mihomo"
@@ -26,10 +28,11 @@ APP_LOG_PATH="$LOG_DIR/app.log"
 CORE_LOG_PATH="$LOG_DIR/core.log"
 
 # flag
-FLAG_DIR="/var/run/nikki"
-STARTED_FLAG="$FLAG_DIR/started.flag"
-BRIDGE_NF_CALL_IPTABLES_FLAG="$FLAG_DIR/bridge_nf_call_iptables.flag"
-BRIDGE_NF_CALL_IP6TABLES_FLAG="$FLAG_DIR/bridge_nf_call_ip6tables.flag"
+TEMP_DIR="/var/run/nikki"
+PID_FILE_PATH="$TEMP_DIR/nikki.pid"
+STARTED_FLAG_PATH="$TEMP_DIR/started.flag"
+BRIDGE_NF_CALL_IPTABLES_FLAG_PATH="$TEMP_DIR/bridge_nf_call_iptables.flag"
+BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH="$TEMP_DIR/bridge_nf_call_ip6tables.flag"
 
 # ucode
 UCODE_DIR="$HOME_DIR/ucode"
@@ -84,8 +87,8 @@ prepare_files() {
 	if [ ! -f "$CORE_LOG_PATH" ]; then
 		touch "$CORE_LOG_PATH"
 	fi
-	if [ ! -d "$FLAG_DIR" ]; then
-		mkdir -p "$FLAG_DIR"
+	if [ ! -d "$TEMP_DIR" ]; then
+		mkdir -p "$TEMP_DIR"
 	fi
 }
 

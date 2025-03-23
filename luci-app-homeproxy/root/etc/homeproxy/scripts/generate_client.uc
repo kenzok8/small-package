@@ -792,21 +792,21 @@ if (!isEmpty(main_node)) {
 			type: 'remote',
 			tag: 'geoip-cn',
 			format: 'binary',
-			url: 'https://github.com/1715173329/IPCIDR-CHINA/raw/rule-set/cn.srs',
+			url: 'https://fastly.jsdelivr.net/gh/1715173329/IPCIDR-CHINA@rule-set/cn.srs',
 			download_detour: 'main-out'
 		});
 		push(config.route.rule_set, {
 			type: 'remote',
 			tag: 'geosite-cn',
 			format: 'binary',
-			url: 'https://github.com/1715173329/sing-geosite/raw/rule-set-unstable/geosite-geolocation-cn.srs',
+			url: 'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-cn.srs',
 			download_detour: 'main-out'
 		});
 		push(config.route.rule_set, {
 			type: 'remote',
 			tag: 'geosite-noncn',
 			format: 'binary',
-			url: 'https://github.com/1715173329/sing-geosite/raw/rule-set-unstable/geosite-geolocation-!cn.srs',
+			url: 'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-!cn.srs',
 			download_detour: 'main-out'
 		});
 	}

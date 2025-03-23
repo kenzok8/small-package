@@ -97,13 +97,13 @@ return view.extend({
         o.inputtitle = _('Generate & Download');
         o.onclick = function () {
             return nikki.debug().then(function () {
-                fs.read_direct('/var/run/nikki/debug.md', 'blob').then(function (data) {
+                fs.read_direct(nikki.debugLogPath, 'blob').then(function (data) {
                     // create url
                     const url = window.URL.createObjectURL(data, { type: 'text/markdown' });
                     // create link
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = 'debug.md';
+                    link.download = 'debug.log';
                     // append to body
                     document.body.appendChild(link);
                     // download
