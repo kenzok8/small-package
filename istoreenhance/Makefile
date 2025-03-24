@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_ISTOREENHANCE:=$(ARCH)
 
 PKG_NAME:=istoreenhance
-PKG_VERSION:=0.2.5
+PKG_VERSION:=0.2.6
 PKG_RELEASE:=$(PKG_ARCH_ISTOREENHANCE)-1
 PKG_SOURCE:=iStoreEnhance-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://fw.koolcenter.com/binary/iStoreEnhance/
-PKG_HASH:=94763e7550f14d9a30e0c5fdbdd71ab3285988e9928e72b92f20f24b34249077
+PKG_HASH:=fb51a9a5eda67b98d52fd39ec6011daf4443adaae6e3c39da2e4b462ca64ec80
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/iStoreEnhance-binary-$(PKG_VERSION)
 
