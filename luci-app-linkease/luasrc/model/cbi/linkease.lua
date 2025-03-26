@@ -15,6 +15,8 @@ s:option(Flag, "enabled", translate("Enable")).rmempty=false
 
 s:option(Value, "port", translate("Port")).rmempty=false
 
+s:option(Flag, "allowPublic", translate("AllowPublic"), translate("Allowing access via public IP addresses can lead to insufficient security.")).rmempty=false
+
 return m
 
 

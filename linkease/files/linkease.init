@@ -6,6 +6,7 @@ USE_PROCD=1
 get_config() {
 	config_get_bool enabled $1 enabled 1
 	config_get_bool logger $1 logger
+  config_get_bool allowPublic $1 allowPublic
 	config_get port $1 port 8897
 }
 
@@ -18,6 +19,7 @@ start_service() {
 	procd_set_param limits nofile="65535 65535"
 	procd_set_param command /usr/sbin/linkease
 	[ -n "$port" ] && procd_append_param command --deviceAddr ":$port" --localApi /var/run/linkease.sock
+  [ "$allowPublic" == 1 ] && procd_append_param command --allowPublic
 	[ "$logger" == 1 ] && procd_set_param stderr 1
 	procd_set_param respawn
 	procd_close_instance
