@@ -1404,7 +1404,7 @@ let IP = {
                 <div class="ip-main" style="cursor: pointer; position: relative; top: -4px;" onclick="IP.showDetailModal()" title="${translations['show_ip']}">
                     <div style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; ">
                         <div style="display: flex; align-items: center; gap: 5px;">
-                            <span id="ip-address">${isHidden ? '**.**.**.**.**' : cachedIP}</span> 
+                            <span id="ip-address" style="margin-left: 0ch">${isHidden ? '**.**.**.**.**' : cachedIP}</span> 
                             <span class="badge badge-primary" style="color: #333;">${country}</span>
 
                         </div>
@@ -2607,7 +2607,7 @@ window.addEventListener('load', function() {
     position: fixed;
     left: 50%; 
     transform: translateX(-50%);
-    top: 53px; 
+    top: 36px; 
     background: rgba(0, 0, 0, 0.1);  
     backdrop-filter: blur(10px);  
     color: #FFD700; 
