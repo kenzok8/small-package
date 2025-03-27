@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_VERSION:=2.2.4
-PKG_RELEASE:=
+PKG_RELEASE:=1
 
 LUCI_TITLE:=LuCI support for EasyTier
 LUCI_DEPENDS:=+kmod-tun
@@ -23,9 +23,9 @@ if [ -f /etc/config/easytier ] ; then
   mv -f /etc/config/easytier /tmp/easytier_backup
 fi
 if [ -f /etc/easytier/config.toml ] ; then
-  echo "备份easytier配置文件/etc/easytier/config.toml到/tmp/config_backup.toml"
+  echo "备份easytier配置文件/etc/easytier/config.toml到/tmp/et_config_backup.toml"
   echo "不重启设备之前再次安装luci-app-easytier 配置不丢失,不用重新配置"
-  mv -f /etc/easytier/config.toml /tmp/config_backup.toml 
+  mv -f /etc/easytier/config.toml /tmp/et_config_backup.toml 
 fi
 if [ -f /etc/easytier/et.db ] ; then
   echo "备份easytier数据库/etc/easytier/et.db到/tmp/et_backup.db"
@@ -47,9 +47,9 @@ if [ -f /tmp/easytier_backup ] ; then
   mv -f /tmp/easytier_backup /etc/config/easytier
   echo "请前往 VPN - EasyTier 界面进行重启插件"
 fi
-if [ -f /tmp/config_backup.toml ] ; then
-  echo "发现easytier备份配置文件/tmp/config_backup.toml，开始恢复到/etc/easytier/config.toml"
-  mv -f /tmp/config_backup.toml /etc/easytier/config.toml
+if [ -f /tmp/et_config_backup.toml ] ; then
+  echo "发现easytier备份配置文件/tmp/et_config_backup.toml，开始恢复到/etc/easytier/config.toml"
+  mv -f /tmp/et_config_backup.toml /etc/easytier/config.toml
   echo "请前往 VPN - EasyTier 界面进行重启插件"
 fi
 if [ -f /tmp/et_backup.db ] ; then

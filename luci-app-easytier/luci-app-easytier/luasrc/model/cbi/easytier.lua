@@ -63,7 +63,11 @@ network_name = s:taboption("general", Value, "network_name", translate("网络�
 network_name.password = true
 network_name.placeholder = "test"
 network_name:depends("etcmd", "etcmd")
-network_name:depends("etcmd", "web")
+network_name:depends("log", "error")
+network_name:depends("log", "warn")
+network_name:depends("log", "info")
+network_name:depends("log", "debug")
+network_name:depends("log", "trace")
 
 network_secret = s:taboption("general", Value, "network_secret", translate("网络密钥"),
 	translate("网络密钥，用于验证此节点是否属于 VPN 网络（--network-secret 参数）"))
@@ -302,6 +306,7 @@ log = s:taboption("general",ListValue, "log", translate("程序日志"),
 	translate("运行日志在/tmp/easytier.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
 log.default = "off"
 log:value("off",translate("关闭"))
+log:value("error",translate("错误"))
 log:value("warn",translate("警告"))
 log:value("info",translate("信息"))
 log:value("debug",translate("调试"))
@@ -647,6 +652,7 @@ weblog = s:option(ListValue, "weblog", translate("程序日志"),
 	translate("运行日志在/tmp/easytierweb.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
 weblog.default = "off"
 weblog:value("off",translate("关闭"))
+weblog:value("error",translate("错误"))
 weblog:value("warn",translate("警告"))
 weblog:value("info",translate("信息"))
 weblog:value("debug",translate("调试"))
