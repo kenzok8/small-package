@@ -2347,7 +2347,7 @@ button:active{
   box-shadow: 0 0 4px var(--inputborder-color);
   border-radius: var(--radius2);
   border: 0px solid var(--inputborder-color);
-  background: rgba(var(--primary-rgbbody), 1);
+  background-color: rgba(var(--primary-rgbbody), 1);
   color: var(--inputtext-color);
     cursor: pointer;
   margin-left: 0 !important;
@@ -2455,9 +2455,8 @@ input {
     position: relative;
     height: 26px;
     margin: 2px 0;
-    border-radius: var(--radius2) !important;
-    border-color: rgba(0, 0, 0, 0.3) !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(0, 0, 0, 0.5) !important;
+    background-color: rgba(0, 0, 0, 0.35) !important;
     color: var(--menu-color)
 }
 
@@ -2465,16 +2464,15 @@ input {
     width: 0;
     height: 100%;
     transition: width .25s ease-in;
-    border-radius: var(--radius2) !important;
-    background-color: rgba(var(--primary-rgbm), 0.7)
+    background-color: rgba(var(--primary-rgbm), 0.8)
 }
 
 .cbi-progressbar::after {
     font-size: var(--font-x);
-
+/*
     font-family: monospace;
-    font-size-adjust: .5;
-    line-height: normal;
+    font-size-adjust: .5; */
+    line-height: 1.5;
     position: absolute;
     top: 4px;
     right: 0;
@@ -3103,13 +3101,13 @@ span[data-tooltip] .label {
     position: absolute;
     z-index: 1000;
     left: -1000px;
-    padding: 2px 5px;
+    padding: 0.4rem 0.8rem;
     transition: opacity .25s ease-out;
     white-space: pre;
     pointer-events: none;
     opacity: 0;
     border-radius: var(--radius2);
-    background: var(--menu-barbgcolor);
+    background-color: rgba(var(--primary-rgbbody), 1);
     box-shadow: 0 0 2px #444
 }
 
@@ -4542,7 +4540,6 @@ div#file-manager-container #status-bar #status-info{
 
     [data-page="admin-status-overview"]  .main #view td:nth-child(1) {
         width: 6rem;
-        padding-right: 0.6rem
     }
 
     .modal .cbi-value-title,
@@ -4856,7 +4853,6 @@ div#file-manager-container #status-bar #status-info{
 @media only screen and (max-width: 480px) {
 
     [data-page="admin-status-overview"] .main #view td:nth-child(1) {
-    padding-right: 0.2rem;
     max-width: 8rem;
     white-space: normal !important;
     }

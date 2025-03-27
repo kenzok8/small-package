@@ -30,7 +30,7 @@
 	local boardinfo = util.ubus("system", "board") or { }
 
 	local node = disp.context.dispatched
-	local path = table.concat(disp.context.path, "-")
+	local path = table.concat(disp.context.requestpath, "-")
 	
 	function glob(...)
 		local iter, code, msg = fs.glob(...)
