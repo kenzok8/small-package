@@ -30,7 +30,7 @@
 	local boardinfo = util.ubus("system", "board") or { }
 
 	local node = disp.context.dispatched
-	local path = table.concat(disp.context.requestpath, "-")
+	local path = table.concat(disp.context.path, "-")
 	
 	function glob(...)
 		local iter, code, msg = fs.glob(...)
@@ -339,6 +339,7 @@
 					  <div class="right"><a class="btn" href="<%=url("admin/system/admin")%>"><%:Go to password configuration...%></a></div>
 						<% end %>
 					</div>
+				
 				<%- end -%>
 				<noscript>
 					<div class="alert-message warning">
