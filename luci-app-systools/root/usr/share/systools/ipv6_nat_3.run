@@ -1,12 +1,12 @@
 #!/bin/sh
 
 ipv6_enable_nat() {
-  uci -q delete firewall.nat6
-  uci -q set firewall.nat6="include"
-  uci -q set firewall.nat6.path="/usr/share/systools/firewall.nat6"
-  uci -q set firewall.nat6.reload="1"
-  uci -q set firewall.@zone[1].masq6="1"
-  uci -q set firewall.@zone[1].masq6_privacy="0"
+	uci -q delete firewall.nat6
+	uci -q set firewall.nat6="include"
+	uci -q set firewall.nat6.path="/usr/share/systools/firewall.nat6"
+	uci -q set firewall.nat6.reload="1"
+	uci -q set firewall.@zone[1].masq6="1"
+	uci -q set firewall.@zone[1].masq6_privacy="0"
 }
 
 ipv6_disable_lan_server() {
@@ -42,6 +42,8 @@ ipv6_pppoe_mode
 
 uci set network.globals.ula_prefix="$(uci get network.globals.ula_prefix | sed 's/^./d/')"
 
+uci -q delete network.lan.ip6class
+
 uci -q set network.wan6.reqaddress='try'
 uci -q set network.wan6.reqprefix='auto'
 uci -q set network.wan6.sourcefilter='0'
@@ -52,14 +54,14 @@ uci -q add_list dhcp.lan.ra_flags='other-config'
 uci -q set dhcp.lan.dhcpv6='server'
 
 uci -q batch <<-EOF >/dev/null
-  commit firewall
+	commit firewall
 	commit dhcp
 	commit network
 EOF
 
 /etc/init.d/odhcpd reload
 /etc/init.d/dnsmasq reload
+/etc/init.d/firewall reload
 /etc/init.d/network reload
-/etc/init.d/firewall restart
 
 echo "Done"

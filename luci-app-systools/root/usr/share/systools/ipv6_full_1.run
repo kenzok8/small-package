@@ -1,13 +1,13 @@
 #!/bin/sh
 
 ipv6_disable_nat() {
-  NAT6=`uci -q get firewall.nat6.reload`
-  if [ "$NAT6" = "1" ]; then
-    uci -q delete network.wan6.sourcefilter
-    uci -q delete firewall.nat6
-    uci commit firewall
-    /etc/init.d/firewall restart
-  fi
+	NAT6=`uci -q get firewall.nat6.reload`
+	if [ "$NAT6" = "1" ]; then
+		uci -q delete network.wan6.sourcefilter
+		uci -q delete firewall.nat6
+		uci commit firewall
+		/etc/init.d/firewall reload
+	fi
 }
 
 ipv6_disable_lan_server() {
@@ -27,6 +27,7 @@ ipv6_dns_on() {
 ipv6_relay_mode() {
 	uci -q batch <<-EOF >/dev/null
 		del network.wan6.auto
+		add_list network.lan.ip6class='wan6'
 
 		set dhcp.wan6=dhcp
 		set dhcp.wan6.interface='wan6'
@@ -63,6 +64,8 @@ is_wan_pppoe() {
 
 # disable ipv6 nat
 ipv6_disable_nat
+
+uci -q delete network.lan.ip6class
 
 if is_lan_gateway; then
 	echo "Single-Port Router (LAN Gateway) mode"
