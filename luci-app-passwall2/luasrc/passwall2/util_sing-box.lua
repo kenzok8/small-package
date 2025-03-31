@@ -8,7 +8,7 @@ local fs = api.fs
 local CACHE_PATH = api.CACHE_PATH
 local split = api.split
 
-local local_version = api.get_app_version("singbox")
+local local_version = api.get_app_version("sing-box")
 local version_ge_1_11_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.11.0")
 
 local new_port
@@ -349,7 +349,17 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		if node.protocol == "hysteria2" then
+			local server_ports = {}
+			if node.hysteria2_ports then
+				for range in node.hysteria2_ports:gmatch("([^,]+)") do
+					if range:match("^%d+:%d+$") then
+						table.insert(server_ports, range)
+					end
+				end
+			end
 			protocol_table = {
+				server_ports = next(server_ports) and server_ports or nil,
+				hop_interval = next(server_ports) and "30s" or nil,
 				up_mbps = (node.hysteria2_up_mbps and tonumber(node.hysteria2_up_mbps)) and tonumber(node.hysteria2_up_mbps) or nil,
 				down_mbps = (node.hysteria2_down_mbps and tonumber(node.hysteria2_down_mbps)) and tonumber(node.hysteria2_down_mbps) or nil,
 				obfs = {
