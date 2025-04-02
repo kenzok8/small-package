@@ -476,6 +476,7 @@ return view.extend({
 		so.value('', _('none'));
 		so.value('obfs', _('obfs-simple'));
 		//so.value('v2ray-plugin', _('v2ray-plugin'));
+		//so.value('gost-plugin', _('gost-plugin'));
 		so.value('shadow-tls', _('shadow-tls'));
 		so.value('restls', _('restls'));
 		so.depends('type', 'ss');
@@ -524,7 +525,7 @@ return view.extend({
 		/* Extra fields */
 		so = ss.taboption('field_general', form.Flag, 'udp', _('UDP'));
 		so.default = so.disabled;
-		so.depends({type: /^(direct|socks5|ss|vmess|vless|trojan|anytls|wireguard)$/});
+		so.depends({type: /^(direct|socks5|ss|mieru|vmess|vless|trojan|anytls|wireguard)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'uot', _('UoT'),
