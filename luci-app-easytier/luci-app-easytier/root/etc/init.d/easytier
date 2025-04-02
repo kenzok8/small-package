@@ -511,6 +511,8 @@ start_et() {
 				[ -f /etc/easytier/et_machine_id ] || touch /etc/easytier/et_machine_id
 				idpath=$(dirname "$easytierbin")
 				[ -f "${idpath}/et_machine_id" ] || ln -sf /etc/easytier/et_machine_id ${idpath}/et_machine_id
+				mkdir -p /var/lib/dbus
+				ln -sf /etc/easytier/et_machine_id /var/lib/dbus/machine-id
 				[ -z "$web_config" ] || procd_append_param command -w "$web_config"
 				[ "$log" = "off" ] || procd_append_param command --file-log-level "$log" 
 				[ "$log" = "off" ] || procd_append_param command --file-log-dir "/tmp"
