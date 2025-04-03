@@ -47,6 +47,7 @@
 2017.hk
 2021hkcharter.com
 2047.name
+2047.one
 2049bbs.xyz
 21andy.com
 21sextury.com
@@ -323,6 +324,7 @@ aofriend.com
 aofriend.com.au
 aojiao.org
 aolchannels.aol.com
+aomedia.org
 aomiwang.com
 apartmentratings.com
 apartments.com
@@ -535,6 +537,7 @@ bcex.ca
 bcmorning.com
 bdsmvideos.net
 beaconevents.com
+bearteach.com
 bebo.com
 beeg.com
 beepool.com
@@ -868,6 +871,8 @@ c2cx.com
 c3pool.com
 cableav.tv
 cablegatesearch.net
+cachefly.com
+cachefly.net
 cachinese.com
 cacnw.com
 cactusvpn.com
@@ -1207,6 +1212,7 @@ cofacts.tw
 coin2co.in
 coinbase.com
 coinbene.com
+coincarp.com
 coinegg.com
 coinex.com
 coingecko.com
@@ -1298,6 +1304,7 @@ cumlouder.com
 curvefish.com
 cusp.hk
 cusu.hk
+cutout.pro
 cutscenes.net
 cw.com.tw
 cyberghost.natado.com
@@ -1643,7 +1650,6 @@ empfil.com
 emule-ed2k.com
 emulefans.com
 emuparadise.me
-en.favotter.net
 en.hao123.com
 enanyang.my
 encrypt.me
@@ -1761,6 +1767,7 @@ facebookquotes4u.com
 faceless.me
 facesofnyfw.com
 facesoftibetanselfimmolators.info
+factchecklab.org
 factpedia.org
 fail.hk
 faith100.org
@@ -1798,6 +1805,7 @@ fan-qiang.com
 fanbox.cc
 fangbinxing.com
 fangeming.com
+fangeming.comffvpn.com
 fangeqiang.com
 fanglizhi.info
 fangmincn.org
@@ -1820,14 +1828,11 @@ faproxy.com
 faqserv.com
 fartit.com
 farwestchina.com
-fast.wistia.com
 fastestvpn.com
-fastgpt.run
 fastpic.ru
 fastssh.com
 faststone.org
 fatbtc.com
-favstar.fm
 fawanghuihui.org
 faydao.com
 faz.net
@@ -1838,17 +1843,12 @@ fbaddins.com
 fbcdn.net
 fbsbx.com
 fbworkmail.com
-fc2.com
-fc2blog.net
-fc2china.com
 fc2cn.com
 fda.gov.tw
 fdc64.de
 fdc64.org
-fdc89.jp
 feedburner.com
 feeder.co
-feedly.comfastgpt.run
 feeds.fileforum.com
 feedx.net
 feelssh.com
@@ -1862,8 +1862,6 @@ fengzhenghu.com
 fengzhenghu.net
 fevernet.com
 ff.im
-fffff.at
-fflick.com
 ffvpn.com
 fgmtv.net
 fgmtv.org
@@ -2037,6 +2035,7 @@ frootvpn.com
 froth.zone
 fscked.org
 fsurf.com
+ft.com
 ftchinese.com
 ftp1.biz
 ftpserver.biz
@@ -2122,6 +2121,7 @@ gclubs.com
 gcmasia.com
 gcpnews.com
 gcr.io
+gdaily.org
 gdbt.net
 gdzf.org
 geek-art.net
@@ -2129,6 +2129,7 @@ geekerhome.com
 geekheart.info
 gekikame.com
 gelbooru.com
+gemini.com
 generated.photos
 genius.com
 geocities.co.jp
@@ -2153,6 +2154,7 @@ getlantern.org
 getmalus.com
 getmdl.io
 getoutline.org
+getsession.org
 getsocialscope.com
 getsync.com
 gettr.com
@@ -3825,6 +3827,7 @@ netcolony.com
 netflav.com
 netflix.com
 netflix.net
+netlify.app
 netme.cc
 netsarang.com
 netsneak.com
@@ -4056,6 +4059,7 @@ omny.fm
 on.cc
 on2.com
 onapp.com
+one.one.one.one
 onedrive.com
 onedrive.live.com
 onedumb.com
@@ -4343,7 +4347,7 @@ powercx.com
 powerphoto.org
 ppy.sh
 prayforchina.net
-premeforwindows7.com
+prcleader.org
 premproxy.com
 presentation.new
 presentationzen.com
@@ -4910,6 +4914,7 @@ soumo.info
 soundcloud.com
 soundofhope.kr
 soundofhope.org
+soundon.fm
 soup.io
 soupofmedia.com
 sourceforge.net
@@ -5202,6 +5207,7 @@ textnow.me
 tfc-taiwan.org.tw
 tfhub.dev
 tfiflve.com
+tg-me.com
 th.hao123.com
 thaicn.com
 thb.gov.tw
@@ -5230,7 +5236,6 @@ theguardian.com
 thehindu.com
 thehun.net
 theinitium.com
-themoviedb.org
 thenewslens.com
 thepiratebay.org
 theporndude.com
@@ -5798,7 +5803,6 @@ video.aol.ca
 video.aol.co.uk
 video.aol.com
 video.ap.org
-video.fdbox.com
 video.foxbusiness.com
 videobam.com
 videodetective.com
@@ -6184,6 +6188,7 @@ wzyboy.im
 x-art.com
 x-berry.com
 x-wall.org
+x.ai
 x.co
 x.com
 x.company

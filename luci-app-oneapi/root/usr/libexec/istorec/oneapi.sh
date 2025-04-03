@@ -15,7 +15,7 @@ do_install() {
   fi
 
   [ -z "$port" ] && port=3005
-  [ -z "$image_name" ] && image_name="justsong/one-api"
+  [ -z "$image_name" ] && image_name="justsong/one-api:v0.6.10"
   echo "docker pull ${image_name}"
   docker pull ${image_name}
   RET=$?
