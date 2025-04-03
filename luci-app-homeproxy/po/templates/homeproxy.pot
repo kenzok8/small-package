@@ -817,6 +817,10 @@ msgstr ""
 msgid "Generic segmentation offload"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js:213
+msgid "GitHub token"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:256
 msgid "Global"
 msgstr ""
@@ -889,7 +893,7 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:55
 #: htdocs/luci-static/resources/view/homeproxy/client.js:57
 #: htdocs/luci-static/resources/view/homeproxy/client.js:101
-#: htdocs/luci-static/resources/view/homeproxy/status.js:217
+#: htdocs/luci-static/resources/view/homeproxy/status.js:234
 #: root/usr/share/luci/menu.d/luci-app-homeproxy.json:3
 msgid "HomeProxy"
 msgstr ""
@@ -1881,6 +1885,11 @@ msgstr ""
 msgid "Same as main node"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js:220
+#: htdocs/luci-static/resources/view/homeproxy/status.js:225
+msgid "Save"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1366
 msgid "Save current settings"
 msgstr ""
@@ -2660,11 +2669,11 @@ msgstr ""
 msgid "quic-go / uquic chrome"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:220
+#: htdocs/luci-static/resources/view/homeproxy/status.js:237
 msgid "sing-box client"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:223
+#: htdocs/luci-static/resources/view/homeproxy/status.js:240
 msgid "sing-box server"
 msgstr ""
 

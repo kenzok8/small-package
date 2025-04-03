@@ -39,8 +39,9 @@ o:depends("hostnet", 0)
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
-o:value("justsong/one-api", "justsong/one-api")
-o.default = "justsong/one-api"
+o:value("justsong/one-api:latest", "justsong/one-api:latest")
+o:value("justsong/one-api:v0.6.10", "justsong/one-api:v0.6.10")
+o.default = "justsong/one-api:v0.6.10"
 
 local blocks = oneapi_model.blocks()
 local home = oneapi_model.home()

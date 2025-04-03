@@ -210,6 +210,23 @@ return view.extend({
 		o.cfgvalue = function() { return getResVersion(this, 'gfw_list') };
 		o.rawhtml = true;
 
+		o = s.option(form.Value, 'github_token', _('GitHub token'));
+		o.password = true;
+		o.renderWidget = function() {
+			let node = form.Value.prototype.renderWidget.apply(this, arguments);
+
+			(node.querySelector('.control-group') || node).appendChild(E('button', {
+				'class': 'cbi-button cbi-button-apply',
+				'title': _('Save'),
+				'click': ui.createHandlerFn(this, function() {
+					ui.changes.apply(true);
+					return this.map.save(null, true);
+				}, this.option)
+			}, [ _('Save') ]));
+
+			return node;
+		}
+
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
 		s.anonymous = true;
 
