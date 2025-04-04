@@ -28,6 +28,8 @@ ipv6_relay_mode() {
 	uci -q batch <<-EOF >/dev/null
 		del network.wan6.auto
 		add_list network.lan.ip6class='wan6'
+		add_list network.lan.ip6class='wan_6'
+		add_list network.lan.ip6class='wan'
 
 		set dhcp.wan6=dhcp
 		set dhcp.wan6.interface='wan6'
