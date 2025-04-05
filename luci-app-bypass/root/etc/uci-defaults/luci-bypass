@@ -6,7 +6,6 @@ uci batch <<EOF
     "init": "bypass"
 }
 EEOF
-/etc/init.d/ucitrack reload
 }
 	delete ucitrack.@bypass[-1]
 	add ucitrack bypass
