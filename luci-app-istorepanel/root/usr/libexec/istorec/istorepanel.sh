@@ -18,6 +18,13 @@ do_install() {
     echo "config path is empty!"
     exit 1
   fi
+  if [[ "$config" == "/mnt/*" ]]; then
+    echo "The config path is $config, check ok"
+  else
+    echo "The config path does not start with /mnt, not supported"
+    sleep 5
+    exit 2
+  fi
 
   [ -z "$port" ] && port=10086
   [ -z "$ver" ] && ver='v1.10.10-lts'

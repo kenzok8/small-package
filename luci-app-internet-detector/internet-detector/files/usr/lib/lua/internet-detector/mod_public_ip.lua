@@ -419,4 +419,8 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	self._counter = self._counter + timeDiff
 end
 
+function Module:onExit()
+	return true
+end
+
 return Module

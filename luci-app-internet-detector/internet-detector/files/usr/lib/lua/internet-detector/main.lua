@@ -593,6 +593,10 @@ function InternetDetector:run()
 
 	self:mainLoop()
 
+	for _, e in ipairs(self.modules) do
+		e:onExit()
+	end
+
 	self:removeProcessFiles()
 	if self.enableLogger then
 		self:writeLogMessage("info", "stoped")
