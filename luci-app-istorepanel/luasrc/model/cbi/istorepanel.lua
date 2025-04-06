@@ -49,7 +49,8 @@ o = s:option(Value, "ver", "version")
 o.datatype = "string"
 o:value("v1.10.10-lts", "v1.10.10-lts")
 o:value("v1.10.11-lts", "v1.10.11-lts")
-o.default = 'v1.10.11-lts'
+o:value("v1.10.28-lts", "v1.10.28-lts")
+o.default = 'v1.10.28-lts'
 
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
