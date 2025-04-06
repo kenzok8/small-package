@@ -39,6 +39,13 @@ function Module:setLedAttrs(t)
 	t.ledBrightnessFile    = string.format("%s/brightness", t.ledDir)
 	t.ledMaxBrightness     = self.readValue(t.ledMaxBrightnessFile) or 1
 	t.ledTriggerFile       = string.format("%s/trigger", t.ledDir)
+	t.ledPrevState         = {
+		brightness = self.readValue(t.ledBrightnessFile),
+		trigger    = self.readValue(t.ledTriggerFile),
+	}
+	if t.ledPrevState.trigger then
+		t.ledPrevState.trigger = t.ledPrevState.trigger:match("%[%w+%]"):gsub("[%]%[]", "")
+	end
 end
 
 function Module:checkLed(t)
@@ -53,8 +60,6 @@ function Module:init(t)
 	end
 	if t.led1_name then
 		self._enabled = true
-		-- Reset all LEDs
-		--self:resetLeds()
 	else
 		return
 	end
@@ -153,6 +158,19 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 		self._counter = 0
 	end
 	self._counter = self._counter + timeDiff
+end
+
+function Module:onExit()
+	for _, l in ipairs(self._leds) do
+		if l.ledPrevState then
+			if l.ledPrevState.brightness then
+				self.writeValue(l.ledBrightnessFile, l.ledPrevState.brightness)
+			end
+			if l.ledPrevState.trigger then
+				self.writeValue(l.ledTriggerFile, l.ledPrevState.trigger)
+			end
+		end
+	end
 end
 
 return Module

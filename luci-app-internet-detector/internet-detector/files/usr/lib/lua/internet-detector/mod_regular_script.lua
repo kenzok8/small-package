@@ -59,4 +59,8 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	end
 end
 
+function Module:onExit()
+	return true
+end
+
 return Module
