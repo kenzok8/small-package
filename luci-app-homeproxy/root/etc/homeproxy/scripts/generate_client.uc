@@ -654,7 +654,7 @@ if (!isEmpty(main_node)) {
 		urltest_nodes = [...urltest_nodes, ...filter(main_udp_urltest_nodes, (l) => !~index(urltest_nodes, l))];
 	} else if (dedicated_udp_node) {
 		const main_udp_node_cfg = uci.get_all(uciconfig, main_udp_node) || {};
-		if (main_node_cfg.type === 'wireguard') {
+		if (main_udp_node_cfg.type === 'wireguard') {
 			push(config.endpoints, generate_endpoint(main_udp_node_cfg));
 			config.endpoints[length(config.endpoints)-1].tag = 'main-udp-out';
 		} else {
