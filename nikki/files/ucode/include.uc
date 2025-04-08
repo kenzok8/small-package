@@ -52,7 +52,7 @@ export function trim_all(obj) {
 };
 
 export function get_cgroups_version() {
-	return system('mount | grep -q -w -e "^cgroup"') == 0 ? 1 : 2;
+	return system('mount | grep -q -w "^cgroup"') == 0 ? 1 : 2;
 };
 
 export function get_users() {

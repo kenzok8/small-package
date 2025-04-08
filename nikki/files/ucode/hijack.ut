@@ -364,7 +364,7 @@ table inet nikki {
 		meta nfproto @proxy_nfproto meta l4proto tcp counter redirect to :{{ redir_port }}
 		{% endif %}
 		{% if (fake_ip_ping_hijack): %}
-		ip protocol icmp ip daddr {{ fake_ip_range }} counter redirect
+		ip protocol icmp icmp type echo-request ip daddr {{ fake_ip_range }} counter redirect
 		{% endif %}
 	}
 
@@ -429,7 +429,7 @@ table inet nikki {
 		meta nfproto @proxy_nfproto jump lan_redirect
 		{% endif %}
 		{% if (fake_ip_ping_hijack): %}
-		ip protocol icmp ip daddr {{ fake_ip_range }} counter redirect
+		ip protocol icmp icmp type echo-request ip daddr {{ fake_ip_range }} counter redirect
 		{% endif %}
 	}
 

@@ -27,7 +27,7 @@ LOG_DIR="/var/log/nikki"
 APP_LOG_PATH="$LOG_DIR/app.log"
 CORE_LOG_PATH="$LOG_DIR/core.log"
 
-# flag
+# temp
 TEMP_DIR="/var/run/nikki"
 PID_FILE_PATH="$TEMP_DIR/nikki.pid"
 STARTED_FLAG_PATH="$TEMP_DIR/started.flag"
