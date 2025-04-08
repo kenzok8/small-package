@@ -175,17 +175,9 @@ service_started() {
 	## cgroupfs-mount
 	### when cgroupfs-mount is installed, cgroupv1 will mounted instead of cgroupv2, we need to create cgroup manually
 	if (mount | grep -q -w "^cgroup"); then
-		local cgroup_v1_path; cgroup_v1_path="/sys/fs/cgroup/net_cls/$CGROUP_NAME"
-		mkdir -p "$cgroup_v1_path"
-		echo "$CGROUP_ID" > "$cgroup_v1_path/net_cls.classid"
-		cat "$PID_FILE_PATH" > "$cgroup_v1_path/cgroup.procs"
-		# local bypass_cgroup; config_get bypass_cgroup "proxy" "bypass_cgroup"
-		# if [ -n "$bypass_cgroup" ]; then
-		# 	local cgroup
-		# 	for cgroup in $bypass_cgroup; do
-		# 		ubus call service list "{\"name\": \"$cgroup\"}" | jsonfilter -e "$.$cgroup.instances.*.pid" >> "$cgroup_v1_path/cgroup.procs"
-		# 	done
-		# fi
+		mkdir -p "/sys/fs/cgroup/net_cls/$CGROUP_NAME"
+		echo "$CGROUP_ID" > "/sys/fs/cgroup/net_cls/$CGROUP_NAME/net_cls.classid"
+		cat "$PID_FILE_PATH" > "/sys/fs/cgroup/net_cls/$CGROUP_NAME/cgroup.procs"
 	fi
 	## kmod-br-netfilter
 	### when kmod-br-netfilter is loaded, bridge-nf-call-iptables and bridge-nf-call-ip6tables are set to 1, we need to set them to 0 if tproxy is enabled
@@ -299,14 +291,13 @@ cleanup() {
 		nft delete rule inet fw4 forward handle "$handle"
 	done
 	# delete started flag
-	rm -f "$STARTED_FLAG_PATH"
-	# revert fix compatible between tproxy and dockerd (kmod-br-netfilter)
-	if [ -f "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH" ]; then
-		rm -f "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH"
+	rm "$STARTED_FLAG_PATH" > /dev/null 2>&1
+	# revert fix compatible with dockerd
+	## kmod-br-netfilter
+	if (rm "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH" > /dev/null 2>&1); then
 		sysctl -q -w net.bridge.bridge-nf-call-iptables=1
 	fi
-	if [ -f "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH" ]; then
-		rm -f "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH"
+	if (rm "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH" > /dev/null 2>&1); then
 		sysctl -q -w net.bridge.bridge-nf-call-ip6tables=1
 	fi
 	# delete cron
