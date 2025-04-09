@@ -1,14 +1,15 @@
 #!/bin/sh /etc/rc.common
 #copyright by sirpdboy
 
-START=95
+START=99
 STOP=10
 TMP=/etc/taskplan
 LOG=$TMP/taskplan.log
-TT=/etc/init.d/taskplanrun
+TT=/etc/rc.local
 CR=/etc/crontabs/root
 [ ! -d $TMP ] && mkdir -p $TMP 2>/dev/null
-[ -s $LOG ] && echo -e ' ' > $LOG
+[ -s $LOG ] && echo > $LOG
+
 run_taskplan()
 {
 [  `uci -q get taskplan.@global[0].customscript  |  wc -l ` > 0 ] && uci -q get taskplan.@global[0].customscript > /etc/taskplan/taskplancustomscript
@@ -103,52 +104,52 @@ do
 		delay=$(uci -q get taskplan.@ltime[$i].delay )  || delay=10
 		case "$stype" in
 			1)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler reboot Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler reboot Startup_task)&" >>$TT
 				;;
 			2)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler poweroff  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler poweroff  Startup_task)&" >>$TT
 				;;
 			3)
-				 echo  "sleep $delay &&  /usr/bin/taskplanhandler network  Startup_task" >>$TT
+				 echo  "(sleep $delay &&  /usr/bin/taskplanhandler network  Startup_task)&" >>$TT
 				;;
 			4)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler restartsamba  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler restartsamba  Startup_task)&" >>$TT
 				;;
 			5)
-				 echo  "sleep $delay &&  /usr/bin/taskplanhandler restartwan  Startup_task" >>$TT
+				 echo  "(sleep $delay &&  /usr/bin/taskplanhandler restartwan  Startup_task)&" >>$TT
 				;;
 			6)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler closewan  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler closewan  Startup_task)&" >>$TT
 				;;
 			7)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler clearmem  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler clearmem  Startup_task)&" >>$TT
 				;;
 			8)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler reboot  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler reboot  Startup_task)&" >>$TT
 				;;
 			9)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler disreconn  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler disreconn  Startup_task)&" >>$TT
 				;;
 			10)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler disrereboot  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler disrereboot  Startup_task)&" >>$TT
 				;;
 			11) 
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler restartmwan3  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler restartmwan3  Startup_task)&" >>$TT
 				;;
 			12)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler customscript  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler customscript  Startup_task)&" >>$TT
 				;;
 			13)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler upwifi  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler upwifi  Startup_task)&" >>$TT
 				;;
 			14)
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler downwifi Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler downwifi Startup_task)&" >>$TT
 				;;
 			15) 
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler customscript2  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler customscript2  Startup_task)&" >>$TT
 				;;
 			16) 
-				echo  "sleep $delay &&  /usr/bin/taskplanhandler restartlan  Startup_task" >>$TT
+				echo  "(sleep $delay &&  /usr/bin/taskplanhandler restartlan  Startup_task)&" >>$TT
 				;;
 		esac
     fi
@@ -160,15 +161,15 @@ start()
 {
 	del_cru
 	[ -n "`tail -c1 $CR`" ] && echo >> $CR
+	sed -i '/exit/d' $TT >/dev/null 2>&1  || true
 	run_taskplan
-	echo '}'  >>$TT
+	echo 'exit 0'  >>$TT
 	/etc/init.d/cron reload
 }
 
 stop()
 {
     del_cru
-    echo '}'  >>$TT
     /etc/init.d/cron reload
 }
 
@@ -179,7 +180,7 @@ restart()
 
 del_cru()
 {   
-    echo -e '#!/bin/sh \n\nSTART=99\nstart(){\necho "Service taskplanrun started! " >> $LOG\n' > $TT
-    sed -i '/taskplanhandler/d' $CR >/dev/null 2>&1
+    sed -i '/taskplanhandler/d' $CR >/dev/null 2>&1  || true
+    sed -i '/taskplanhandler/d' $TT >/dev/null 2>&1  || true
 }
 
