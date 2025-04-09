@@ -1,6 +1,6 @@
 [![若部分图片无法正常显示，请挂上机场浏览或点这里到末尾看修复教程](https://visitor-badge-deno.deno.dev/sirpdboy.sirpdboy.svg)](#解决-github-网页上图片显示失败的问题) [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
 
-[autotimeset  定时设置插件](https://github.com/sirpdboy/luci-app-autotimeset)
+[ taskplan 定时设置插件](https://github.com/sirpdboy/luci-app-taskplan)
 
 ![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明1.jpg)
 
@@ -37,41 +37,41 @@
 
 ## 编译使用方法 [![](https://img.shields.io/badge/-编译使用方法-F5F5F5.svg)](#编译使用方法-)
 
-将luci-app-autotimeset添加至 LEDE/OpenWRT 源码的方法。
+将luci-app-taskplan添加至 LEDE/OpenWRT 源码的方法。
 
 ### 下载源码方法一：
 编辑源码文件夹根目录feeds.conf.default并加入如下内容:
 
 ```Brach
     # feeds获取源码：
-    src-git autotimeset  https://github.com/sirpdboy/luci-app-autotimeset
+    src-git taskplan  https://github.com/sirpdboy/luci-app-taskplan
  ``` 
   ```Brach
    # 更新feeds，并安装主题：
-    scripts/feeds update autotimeset
-	scripts/feeds install luci-app-autotimeset
+    scripts/feeds update taskplan
+	scripts/feeds install luci-app-taskplan
  ``` 	
 
 ### 下载源码方法二：
  ```Brach
     # 下载源码
-    git clone https://github.com/sirpdboy/luci-app-autotimeset package/luci-app-autotimeset
+    git clone https://github.com/sirpdboy/luci-app-taskplan package/luci-app-taskplan
     make menuconfig
  ``` 
 ### 配置菜单
  ```Brach
     make menuconfig
-	# 找到 LuCI -> Applications, 选择 luci-app-autotimeset, 保存后退出。
+	# 找到 LuCI -> Applications, 选择 luci-app-taskplan, 保存后退出。
  ``` 
 ### 编译
  ```Brach 
     # 编译固件
-    make package/luci-app-autotimeset/compile V=s
+    make package/luci-app-taskplan/compile V=s
  ```
 
 ## 说明 [![](https://img.shields.io/badge/-说明-F5F5F5.svg)](#说明-)
 
-源码来源：https://github.com/sirpdboy/luci-app-autotimeset
+源码来源：https://github.com/sirpdboy/luci-app-taskplan
 
 
 
@@ -84,7 +84,7 @@
 
 - 网络速度测试 ：https://github.com/sirpdboy/NetSpeedTest
 
-- 任务设置（定时和开机二合一）插件 : https://github.com/sirpdboy/luci-app-autotimeset
+- 任务设置（定时和开机二合一）插件 : https://github.com/sirpdboy/luci-app-taskplan
 
 - 关机功能插件 : https://github.com/sirpdboy/luci-app-poweroffdevice
 
