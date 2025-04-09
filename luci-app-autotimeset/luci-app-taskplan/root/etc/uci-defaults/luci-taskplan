@@ -5,10 +5,6 @@ uci -q batch <<-EOF >/dev/null
 	add ucitrack taskplan 
 	set ucitrack.@taskplan[-1].init="taskplan"
 	commit ucitrack
-	delete ucitrack.@taskplanrun[-1]
-	add ucitrack taskplanrun
-	set ucitrack.@taskplanrun[-1].init="taskplanrun"
-	commit ucitrack
 EOF
 rm -rf /tmp/luci-modulecache /tmp/luci-indexcache*
 exit 0
