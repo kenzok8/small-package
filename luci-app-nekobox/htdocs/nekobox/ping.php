@@ -33,63 +33,45 @@
 document.addEventListener('DOMContentLoaded', function () {
   interact('.modal-dialog.draggable').draggable({
     allowFrom: '.modal-header',
-      modifiers: [
-        interact.modifiers.restrictRect({
-          restriction: 'parent', 
-          endOnly: true
-        })
-      ],
-      listeners: {
-        start(event) {
-          event.target.style.transition = 'none';
-          event.target.classList.add('dragging');
-        },
-        move(event) {
-          const target = event.target;
-          const x = (parseFloat(target.style.left) || 0) + event.dx;
-          const y = (parseFloat(target.style.top) || 0) + event.dy;
+    modifiers: [
+      interact.modifiers.restrictRect({
+        restriction: 'parent', 
+        endOnly: true
+      })
+    ],
+    listeners: {
+      start(event) {
+        event.target.style.transition = 'none';
+        event.target.classList.add('dragging');
+      },
+      move(event) {
+        const target = event.target;
+        const x = (parseFloat(target.dataset.x) || 0) + event.dx;
+        const y = (parseFloat(target.dataset.y) || 0) + event.dy;
 
-          target.style.position = 'absolute';
-          target.style.left = `${x}px`;
-          target.style.top = `${y}px`;
-        },
-        end(event) {
-          event.target.style.transition = '';
-          event.target.classList.remove('dragging');
-        }
+        target.style.transform = `translate(${x}px, ${y}px)`;
+        target.dataset.x = x;
+        target.dataset.y = y;
+      },
+      end(event) {
+        event.target.style.transition = '';
+        event.target.classList.remove('dragging');
       }
-    })
-    .resizable({
-      edges: { right: true, bottom: true, left: true }, 
-      listeners: {
-        move(event) {
-          let { x, y } = event.target.dataset;
-          x = (parseFloat(x) || 0) + event.deltaRect.left;
-          y = (parseFloat(y) || 0) + event.deltaRect.top;
-
-          Object.assign(event.target.style, {
-            width: `${event.rect.width}px`,
-            height: `${event.rect.height}px`, 
-            transform: `translate(${x}px, ${y}px)`
-          });
-
-          Object.assign(event.target.dataset, { x, y });
-        }
-      }
-    });
+    }
+  });
 
   document.querySelectorAll('.modal').forEach(modal => {
     const dialog = modal.querySelector('.modal-dialog');
     dialog.classList.add('draggable');
 
     modal.addEventListener('show.bs.modal', () => {
-      dialog.style.width = '';
-      dialog.style.maxWidth = '';
-      dialog.style.left = ''; 
-      dialog.style.top = ''; 
+      dialog.style.transform = ''; 
+      dialog.dataset.x = 0;
+      dialog.dataset.y = 0;
     });
   });
 });
+
 </script>
 
 <script>
@@ -651,16 +633,6 @@ $lang = $_GET['lang'] ?? 'en';
     </div>
 <?php endif; ?>
 <style>
-    .modal-dialog.draggable {
-      resize: both;
-      overflow: hidden;
-    }
-
-    .modal-content {
-      min-height: 0 !important; 
-      height: 100%; 
-    }
-
     #leafletMap {
         width: 100%;
         height: 400px;
@@ -4793,6 +4765,7 @@ function speakMessage(message) {
         </div>
       </div>
       <div class="modal-footer">
+           <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#colorSettingsModal" data-translate="color-settings-title"><i class="bi bi-palette"></i> </button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close">Close</button>
       </div>
     </div>
@@ -6800,6 +6773,111 @@ window.addEventListener('load', function() {
     });
   });
 </script>
+
+<div class="modal fade" id="colorSettingsModal" tabindex="-1" aria-labelledby="colorSettingsLabel"data-bs-theme="auto">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="colorSettingsLabel" data-translate="color-settings-title"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" data-translate="component-bg-color-label"></label>
+          <input type="color" class="form-control form-control-color" id="componentBgColorPicker" >
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox"  id="enableColorChange" checked>
+          <label class="form-check-label" for="enableColorChange" data-translate="enable-color-change"></label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal-content {
+  background: var(--bg-container, #2a2a4e); 
+  border: 2px solid var(--border-color, #000); 
+}
+
+.modal-body {
+  color: var(--text-primary, #fff); 
+}
+
+.modal-footer {
+  border-top-color: var(--border-color, #000); 
+}
+
+.form-control-color {
+  width: 100% !important;
+  height: 50px !important;
+  cursor: pointer;
+}
+</style>
+
+<script>
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { r, g, b };
+}
+
+function getContrastYIQ(hexColor) {
+  const { r, g, b } = hexToRgb(hexColor);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return yiq >= 128 ? '#000' : '#fff';  
+}
+
+function updateColorSettings(hexColor) {
+  const isChecked = document.getElementById('enableColorChange').checked;
+  
+  if (isChecked) {
+    document.documentElement.style.setProperty('--bg-container', hexColor);
+    
+    const textColor = getContrastYIQ(hexColor);
+    document.documentElement.style.setProperty('--text-primary', textColor); 
+    
+    localStorage.setItem('bg-container', hexColor);
+    localStorage.setItem('text-primary', textColor);
+  }
+}
+
+function initializeColors() {
+  const savedColor = localStorage.getItem('bg-container');
+  const isColorChangeEnabled = localStorage.getItem('color-change-enabled') === 'true';
+
+  if (savedColor && isColorChangeEnabled) {
+    document.documentElement.style.setProperty('--bg-container', savedColor);
+    const textColor = localStorage.getItem('text-primary');
+    document.documentElement.style.setProperty('--text-primary', textColor);
+    document.getElementById('componentBgColorPicker').value = savedColor;
+  }
+
+  document.getElementById('enableColorChange').checked = isColorChangeEnabled;
+}
+
+document.getElementById('componentBgColorPicker').addEventListener('input', e => {
+  updateColorSettings(e.target.value);
+});
+
+document.getElementById('enableColorChange').addEventListener('change', e => {
+  const isChecked = e.target.checked;
+  localStorage.setItem('color-change-enabled', isChecked);
+
+  if (!isChecked) {
+    document.documentElement.style.removeProperty('--bg-container');
+    document.documentElement.style.removeProperty('--text-primary');
+  }
+});
+
+window.addEventListener('DOMContentLoaded', initializeColors);
+</script>
+
 <style>
 @font-face {
 	font-family: 'Cinzel Decorative';
