@@ -3,6 +3,8 @@ project(UA2F LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 17)
 
+cmake_policy(SET CMP0135 NEW)
+
 OPTION(UA2F_BUILD_TESTS "Build tests" OFF)
 OPTION(UA2F_ENABLE_UCI "Enable UCI support" ON)
 OPTION(UA2F_NO_CACHE "Disable cache" OFF)
@@ -76,6 +78,8 @@ add_compile_definitions(UA2F_GIT_BRANCH="${GIT_BRANCH}")
 add_compile_definitions(UA2F_GIT_TAG="${GIT_TAG}")
 add_compile_definitions(UA2F_GIT_DIRTY="${GIT_DIRTY}")
 add_compile_definitions(UA2F_VERSION="${UA2F_VERSION_STR}")
+
+add_compile_options(-fno-omit-frame-pointer -fno-strict-aliasing)
 
 if (DEFINED ENV{UA2F_ENABLE_ASAN})
     set(UA2F_ENABLE_ASAN $ENV{UA2F_ENABLE_ASAN})

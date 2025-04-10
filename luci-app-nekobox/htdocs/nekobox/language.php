@@ -739,6 +739,9 @@
         'tmp_neko_not_exist' => 'Das Verzeichnis /tmp/neko existiert nicht. Keine Maßnahmen wurden ergriffen.',
         'enable_openwrt_theme' => 'OpenWRT-Design-Kompatibilitätsmodus aktivieren (Erfordert das luci-theme-spectra Design)',
         'subscribeUrlPlaceholder' => 'Bitte geben Sie den Abonnement-Link ein, trennen Sie mehrere Links mit |',
+        'color-settings-title' => 'Farbeinstellungen',
+        'component-bg-color-label' => 'Komponenten-Hintergrundfarbe',
+        'enable-color-change' => 'Farbänderung aktivieren',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'Die Website von Baidu ist erreichbar.', 'notAccessible' => 'Die Website von Baidu ist nicht erreichbar, bitte überprüfen Sie die Netzwerkverbindung.'],
             'https://www.cloudflare.com/' => ['accessible' => 'Die Website von Cloudflare ist erreichbar.', 'notAccessible' => 'Die Website von Cloudflare ist nicht erreichbar, bitte überprüfen Sie die Netzwerkverbindung.'],
@@ -1523,6 +1526,9 @@
         'enable_openwrt_theme' => 'Activer le mode de compatibilité du thème OpenWRT (Requiert le thème luci-theme-spectra installé)',
         'tmp_neko_not_exist' => 'Le répertoire /tmp/neko n\'existe pas. Aucune action n\'a été entreprise.',
         'subscribeUrlPlaceholder' => 'Veuillez entrer le lien d\'abonnement, séparez plusieurs liens par |',
+        'color-settings-title' => 'Paramètres de couleur',
+        'component-bg-color-label' => 'Couleur de fond du composant',
+        'enable-color-change' => 'Activer le changement de couleur',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'Le site Baidu est accessible.', 'notAccessible' => 'Impossible d\'accéder au site Baidu, veuillez vérifier la connexion réseau.'],
             'https://www.cloudflare.com/' => ['accessible' => 'Le site Cloudflare est accessible.', 'notAccessible' => 'Impossible d\'accéder au site Cloudflare, veuillez vérifier la connexion réseau.'],
@@ -2341,6 +2347,9 @@
         'startCheck' => '开始检测网站连通性...',
         'websiteChecked' => '网站检查已完毕，感谢使用。',
         'checkStarted' => '网站检测已开启，开始检测网站连通性...',
+        'color-settings-title' => '颜色设置',
+        'component-bg-color-label' => '组件背景色',
+        'enable-color-change' => '启用颜色更改',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'Baidu 网站访问正常。', 'notAccessible' => '无法访问 Baidu 网站，请检查网络连接。'],
             'https://www.cloudflare.com/' => ['accessible' => 'Cloudflare 网站访问正常。', 'notAccessible' => '无法访问 Cloudflare 网站，请检查网络连接。'],
@@ -3207,6 +3216,9 @@
         'tmp_neko_cleared' => 'The /tmp/neko directory has been successfully cleared.',
         'tmp_neko_not_exist' => 'The /tmp/neko directory does not exist. No action taken.',
         'subscribeUrlPlaceholder' => 'Please enter the subscription link, separate multiple links with |',
+        'color-settings-title' => 'Color Settings',
+        'component-bg-color-label' => 'Component Background Color',
+        'enable-color-change' => 'Enable Color Change',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'Baidu website is accessible.', 'notAccessible' => 'Cannot access Baidu website, please check the network connection.'],
             'https://www.cloudflare.com/' => ['accessible' => 'Cloudflare website is accessible.', 'notAccessible' => 'Cannot access Cloudflare website, please check the network connection.'],
@@ -4001,6 +4013,9 @@
         'tmp_neko_cleared' => '已成功清理 /tmp/neko 目錄。',
         'tmp_neko_not_exist' => '/tmp/neko 目錄不存在。未採取任何行動。',
         'subscribeUrlPlaceholder' => '請輸入訂閱鏈接，多個鏈接用 | 分隔',
+        'color-settings-title' => '顏色設置',
+        'component-bg-color-label' => '組件背景色',
+        'enable-color-change' => '啟用顏色更改',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => '百度網站訪問正常。', 'notAccessible' => '無法訪問百度網站，請檢查網絡連接。'],
             'https://www.cloudflare.com/' => ['accessible' => 'Cloudflare網站訪問正常。', 'notAccessible' => '無法訪問Cloudflare網站，請檢查網絡連接。'],
@@ -4786,6 +4801,9 @@
         'tmp_neko_cleared' => '/tmp/neko 디렉토리가 성공적으로 지워졌습니다.',
         'tmp_neko_not_exist' => '/tmp/neko 디렉토리가 존재하지 않습니다. 조치가 취해지지 않았습니다.',
         'subscribeUrlPlaceholder' => '구독 링크를 입력하십시오. 여러 링크는 | 로 구분하십시오.',
+        'color-settings-title' => '색상 설정',
+        'component-bg-color-label' => '컴포넌트 배경 색상',
+        'enable-color-change' => '색상 변경 활성화',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'Baidu 웹사이트에 접속 가능합니다.', 'notAccessible' => 'Baidu 웹사이트에 접속할 수 없습니다, 네트워크 연결을 확인해주세요.'],
             'https://www.cloudflare.com/' => ['accessible' => 'Cloudflare 웹사이트에 접속 가능합니다.', 'notAccessible' => 'Cloudflare 웹사이트에 접속할 수 없습니다, 네트워크 연결을 확인해주세요.'],
@@ -5559,6 +5577,9 @@
         'tmp_neko_cleared' => '/tmp/neko ディレクトリが正常にクリアされました。',
         'tmp_neko_not_exist' => '/tmp/neko ディレクトリは存在しません。行動は取られませんでした。',
         'subscribeUrlPlaceholder' => '購読リンクを入力してください。複数のリンクは | で区切ります。',
+        'color-settings-title' => 'カラー設定',
+        'component-bg-color-label' => 'コンポーネント背景色',
+        'enable-color-change' => 'カラー変更を有効にする',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'Baidu サイトに正常に接続できます。', 'notAccessible' => 'Baidu サイトに接続できません。ネットワーク接続を確認してください。'],
             'https://www.cloudflare.com/' => ['accessible' => 'Cloudflare サイトに正常に接続できます。', 'notAccessible' => 'Cloudflare サイトに接続できません。ネットワーク接続を確認してください。'],
@@ -6332,6 +6353,9 @@
         'tmp_neko_cleared' => 'Каталог /tmp/neko успешно очищен.',
         'tmp_neko_not_exist' => 'Каталог /tmp/neko не существует. Действия не предпринимались.',
         'subscribeUrlPlaceholder' => 'Пожалуйста, введите ссылку на подписку, разделяйте несколько ссылок с помощью |',
+        'color-settings-title' => 'Настройки цвета',
+        'component-bg-color-label' => 'Цвет фона компонента',
+        'enable-color-change' => 'Включить изменение цвета',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'Сайт Baidu доступен.', 'notAccessible' => 'Не удалось подключиться к сайту Baidu, проверьте подключение к сети.'],
             'https://www.cloudflare.com/' => ['accessible' => 'Сайт Cloudflare доступен.', 'notAccessible' => 'Не удалось подключиться к сайту Cloudflare, проверьте подключение к сети.'],
@@ -7116,6 +7140,9 @@
         'tmp_neko_cleared' => 'تم مسح دليل /tmp/neko بنجاح.',
         'tmp_neko_not_exist' => 'دليل /tmp/neko غير موجود. لم يتم اتخاذ أي إجراء.',
         'subscribeUrlPlaceholder' => 'يرجى إدخال رابط الاشتراك، ويفصل بين الروابط المتعددة بواسطة |',
+        'color-settings-title' => 'إعدادات اللون',
+        'component-bg-color-label' => 'لون خلفية العنصر',
+        'enable-color-change' => 'تمكين تغيير اللون',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'موقع Baidu متاح.', 'notAccessible' => 'تعذر الوصول إلى موقع Baidu، يرجى التحقق من الاتصال بالشبكة.'],
             'https://www.cloudflare.com/' => ['accessible' => 'موقع Cloudflare متاح.', 'notAccessible' => 'تعذر الوصول إلى موقع Cloudflare، يرجى التحقق من الاتصال بالشبكة.'],
@@ -7903,6 +7930,9 @@
         'tmp_neko_cleared' => 'El directorio /tmp/neko ha sido borrado con éxito.',
         'tmp_neko_not_exist' => 'El directorio /tmp/neko no existe. No se ha tomado ninguna acción.',
         'subscribeUrlPlaceholder' => 'Por favor ingrese el enlace de suscripción, separe varios enlaces con |',
+        'color-settings-title' => 'Configuración de color',
+        'component-bg-color-label' => 'Color de fondo del componente',
+        'enable-color-change' => 'Habilitar cambio de color',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'El sitio web de Baidu es accesible.', 'notAccessible' => 'No se puede acceder al sitio web de Baidu, por favor verifique la conexión de red.'],
             'https://www.cloudflare.com/' => ['accessible' => 'El sitio web de Cloudflare es accesible.', 'notAccessible' => 'No se puede acceder al sitio web de Cloudflare, por favor verifique la conexión de red.'],
@@ -8686,6 +8716,9 @@
         'tmp_neko_cleared' => 'Thư mục /tmp/neko đã được xóa thành công.',
         'tmp_neko_not_exist' => 'Thư mục /tmp/neko không tồn tại. Không có hành động nào được thực hiện.',
         'subscribeUrlPlaceholder' => 'Vui lòng nhập liên kết đăng ký, phân tách các liên kết bằng |',
+        'color-settings-title' => 'Cài đặt màu',
+        'component-bg-color-label' => 'Màu nền của thành phần',
+        'enable-color-change' => 'Bật thay đổi màu',
         'statusMessages' => [
             'https://www.baidu.com/' => ['accessible' => 'Trang web Baidu có thể truy cập.', 'notAccessible' => 'Không thể truy cập trang web Baidu, vui lòng kiểm tra kết nối mạng của bạn.'],
             'https://www.cloudflare.com/' => ['accessible' => 'Trang web Cloudflare có thể truy cập.', 'notAccessible' => 'Không thể truy cập trang web Cloudflare, vui lòng kiểm tra kết nối mạng của bạn.'],
