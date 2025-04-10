@@ -7,24 +7,6 @@
  *
  *  Licensed to the public under the Apache License 2.0
  */
-    // const isDark = localStorage.getItem("isDark");
-    // if (isDark == 1) {
-    //   const element = document.querySelector("body");
-    //   element.classList.add("dark");
-    // }
-    // const themetoggler = document.querySelector(".themetoggler");
-    // themetoggler.addEventListener(
-    //   "click",
-    //   function (e) {
-    //     e.preventDefault();
-    //     const element = document.querySelector("body");
-    //     element.classList.toggle("dark");
-  
-    //     const isDark = localStorage.getItem("isDark");
-    //     localStorage.setItem("isDark", isDark == 1 ? 0 : 1);
-    //   },
-    //   false
-    // );
 
 function pdopenbar() {
     document.getElementById("header-bar-left").style.width = "300px";
@@ -39,3 +21,31 @@ function pdclosebar() {
     document.getElementById("header-bar-right").style.display = "block";
     document.getElementById("header-bar-right").style.width = "50px"
 }
+
+function initScrollContainers() {
+    document.querySelectorAll('.cbi-section, .mainmenu').forEach(section => {
+        const content = section.querySelector('.content');
+        if (!content) return;
+
+        const checkOverflow = () => {
+            section.classList.toggle(
+                'auto-scroll-container',
+                content.scrollHeight > section.clientHeight
+            );
+        };
+
+        checkOverflow();
+        new MutationObserver(checkOverflow).observe(content, { childList: true, subtree: true });
+
+        section.addEventListener('touchstart', () => {
+            section.classList.add('touch-active');
+        }, { passive: true });
+
+        section.addEventListener('touchend', () => {
+            setTimeout(() => section.classList.remove('touch-active'), 1000);
+        }, { passive: true });
+    });
+}
+
+
+document.addEventListener('DOMContentLoaded', initScrollContainers);
