@@ -265,11 +265,8 @@ msgstr "添加节点"
 msgid "Add the node via the link"
 msgstr "通过链接添加节点"
 
-msgid "Share Link"
-msgstr "分享链接"
-
-msgid "Not a subscription link!!!"
-msgstr "不是订阅链接！！！"
+msgid "Enter share links, one per line. Subscription links are not supported!"
+msgstr "输入分享链接，支持多个节点，每行一个。请勿输入订阅链接！"
 
 msgid "Please enter the correct link."
 msgstr "请输入正确的链接。"
@@ -1492,9 +1489,6 @@ msgstr "空闲超时 "
 msgid "Hop Interval"
 msgstr "端口跳跃时间 "
 
-msgid "Additional ports for hysteria hop"
-msgstr "端口跳跃额外端口"
-
 msgid "HeartbeatPeriod(second)"
 msgstr "心跳周期（单位：秒）"
 
@@ -1690,5 +1684,5 @@ msgstr "当选择的出站发生变化时中断现有连接。"
 msgid "Port hopping range"
 msgstr "端口跳跃范围"
 
-msgid "Format as 1000:2000 Multiple groups are separated by commas (,)."
-msgstr "格式为：1000:2000 多组时用逗号(,)隔开。"
+msgid "Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,)."
+msgstr "格式为：1000:2000 或 1000-2000 多组时用逗号(,)隔开。"

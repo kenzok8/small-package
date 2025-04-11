@@ -1222,19 +1222,19 @@ local function processData(szType, content, add_mode, add_from)
 			result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 		end
 		result.hysteria2_tls_pinSHA256 = params.pinSHA256
+		result.hysteria2_hop = params.mport
 
-		if has_hysteria2 then
-			result.type = "Hysteria2"
-			if params["obfs-password"] then
-				result.hysteria2_obfs = params["obfs-password"]
-			end
-		end
 		if hysteria2_type_default == "sing-box" and has_singbox then
 			result.type = 'sing-box'
 			result.protocol = "hysteria2"
 			if params["obfs-password"] then
 				result.hysteria2_obfs_type = "salamander"
 				result.hysteria2_obfs_password = params["obfs-password"]
+			end
+		elseif has_hysteria2 then
+			result.type = "Hysteria2"
+			if params["obfs-password"] then
+				result.hysteria2_obfs = params["obfs-password"]
 			end
 		end
 	elseif szType == 'tuic' then
@@ -1593,7 +1593,7 @@ local function parse_link(raw, add_mode, add_from, cfgid)
 		end
 
 		for _, v in ipairs(nodes) do
-			if v then
+			if v and not string.match(v, "^%s*$") then
 				xpcall(function ()
 					local result
 					if szType == 'ssd' then
@@ -1771,12 +1771,9 @@ if arg[1] then
 		log('订阅完毕...')
 	elseif arg[1] == "add" then
 		local f = assert(io.open("/tmp/links.conf", 'r'))
-		local content = f:read('*all')
+		local raw = f:read('*all')
 		f:close()
-		local nodes = split(content:gsub(" ", "\n"), "\n")
-		for _, raw in ipairs(nodes) do
-			parse_link(raw, "1", "导入")
-		end
+		parse_link(raw, "1", "导入")
 		update_node(1)
 		luci.sys.call("rm -f /tmp/links.conf")
 	elseif arg[1] == "truncate" then
