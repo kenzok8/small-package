@@ -49,6 +49,18 @@ EOF
     fi
 }
 
+get_tz() {
+	SET_TZ=""
+	[ -e "/etc/localtime" ] && return
+	for tzfile in /etc/TZ /var/etc/TZ
+	do
+		[ -e "$tzfile" ] || continue
+		tz="$(cat $tzfile 2>/dev/null)"
+	done
+	[ -z "$tz" ] && return
+	SET_TZ=$tz
+}
+
 check_bin() {
 		path=$(dirname "$easytierbin")
 		size="$(df -k | awk '/\/overlay$/ {sub(/K$/, "", $4); print $4}')"
@@ -150,7 +162,7 @@ check_config() {
 		      uci set firewall.easytier_udp.name="easytier_udp"
 		      uci set firewall.easytier_udp.target="ACCEPT"
 		      uci set firewall.easytier_udp.src="wan"
-		      uci set firewall.easytier_udp.proto="all"
+		      uci set firewall.easytier_udp.proto="udp"
 		      uci set firewall.easytier_udp.dest_port="$udp_port"
 		      uci set firewall.easytier_udp.enabled="1"
 	           fi
@@ -279,7 +291,7 @@ set_firewall() {
 		    uci set firewall.easytier_tcp_udp.name="easytier_tcp_udp"
 		    uci set firewall.easytier_tcp_udp.target="ACCEPT"
 		    uci set firewall.easytier_tcp_udp.src="wan"
-		    uci set firewall.easytier_tcp_udp.proto="all"
+		    uci set firewall.easytier_tcp_udp.proto="tcp udp"
 		    uci set firewall.easytier_tcp_udp.dest_port="$tcp_port"
 		    uci set firewall.easytier_tcp_udp.enabled="1"
 		 fi
@@ -290,7 +302,7 @@ set_firewall() {
 		    uci set firewall.easytier_wss.name="easytier_wss"
 		    uci set firewall.easytier_wss.target="ACCEPT"
 		    uci set firewall.easytier_wss.src="wan"
-		    uci set firewall.easytier_wss.proto="all"
+		    uci set firewall.easytier_wss.proto="tcp"
 		    uci set firewall.easytier_wss.dest_port="$wss_port"
 		    uci set firewall.easytier_wss.enabled="1"
 		 fi
@@ -301,7 +313,7 @@ set_firewall() {
 		    uci set firewall.easytier_ws.name="easytier_ws"
 		    uci set firewall.easytier_ws.target="ACCEPT"
 		    uci set firewall.easytier_ws.src="wan"
-		    uci set firewall.easytier_ws.proto="all"
+		    uci set firewall.easytier_ws.proto="tcp"
 		    uci set firewall.easytier_ws.dest_port="$ws_port"
 		    uci set firewall.easytier_ws.enabled="1"
 		   fi
@@ -312,7 +324,7 @@ set_firewall() {
 		    uci set firewall.easytier_wg.name="easytier_wg"
 		    uci set firewall.easytier_wg.target="ACCEPT"
 		    uci set firewall.easytier_wg.src="wan"
-		    uci set firewall.easytier_wg.proto="all"
+		    uci set firewall.easytier_wg.proto="udp"
 		    uci set firewall.easytier_wg.dest_port="$wg_port"
 		    uci set firewall.easytier_wg.enabled="1"
 		   fi
@@ -398,6 +410,8 @@ start_et() {
          	else
 			get_etconfig
 			procd_open_instance "easytier_core"
+			get_tz
+			[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
 			procd_set_param command "$easytierbin"
 			if [ "$etcmd" = "etcmd" ] ; then
 				[ -z "$network_name" ] || procd_append_param command --network-name "$network_name"
@@ -535,7 +549,7 @@ start_et() {
 		    uci set firewall.easytier_socks5.name="easytier_socks5"
 		    uci set firewall.easytier_socks5.target="ACCEPT"
 		    uci set firewall.easytier_socks5.src="wan"
-		    uci set firewall.easytier_socks5.proto="all"
+		    uci set firewall.easytier_socks5.proto="tcp"
 		    uci set firewall.easytier_socks5.dest_port="$socks_port"
 		    uci set firewall.easytier_socks5.enabled="1"
                 fi
@@ -603,6 +617,8 @@ start_web() {
 	api_port="$(uci -q get easytier.@easytierweb[0].api_port)"
 	weblog="$(uci -q get easytier.@easytierweb[0].weblog)"
 	procd_open_instance "easytier_web"
+	get_tz
+	[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
 	procd_set_param command "$webbin"
 	[ -z "$db_path" ] || procd_append_param command -d "$db_path"
 	[ -z "$web_protocol" ] || procd_append_param command -p "$web_protocol"
@@ -623,7 +639,7 @@ start_web() {
 		      uci set firewall.easytier_webserver.name="easytier_webserver"
 		      uci set firewall.easytier_webserver.target="ACCEPT"
 		      uci set firewall.easytier_webserver.src="wan"
-		      uci set firewall.easytier_webserver.proto="all"
+		      uci set firewall.easytier_webserver.proto="tcp"
 		      uci set firewall.easytier_webserver.dest_port="$web_port"
 		      uci set firewall.easytier_webserver.enabled="1"
 	fi
@@ -634,7 +650,7 @@ start_web() {
 		      uci set firewall.easytier_webapi.name="easytier_webapi"
 		      uci set firewall.easytier_webapi.target="ACCEPT"
 		      uci set firewall.easytier_webapi.src="wan"
-		      uci set firewall.easytier_webapi.proto="all"
+		      uci set firewall.easytier_webapi.proto="tcp"
 		      uci set firewall.easytier_webapi.dest_port="$api_port"
 		      uci set firewall.easytier_webapi.enabled="1"
 	fi

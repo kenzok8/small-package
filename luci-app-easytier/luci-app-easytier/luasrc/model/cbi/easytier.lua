@@ -625,28 +625,24 @@ end
 db_path = s:option(Value, "db_path", translate("数据库文件路径"),
 	translate(" sqlite3 数据库文件路径, 用于保存所有数据。（ -d 参数）"))
 db_path.default = "/etc/easytier/et.db"
-db_path:depends("enabled", "1")
 
 web_protocol = s:option(ListValue, "web_protocol", translate("监听协议"),
 	translate("配置服务器的监听协议，用于被 easytier-core 连接。（ -p 参数）"))
 web_protocol.default = "udp"
 web_protocol:value("udp",translate("UDP"))
 web_protocol:value("tcp",translate("TCP"))
-web_protocol:depends("enabled", "1")
 
 web_port = s:option(Value, "web_port", translate("服务端口"),
 	translate("配置服务器的监听端口，用于被 easytier-core 连接。（ -c 参数）"))
 web_port.datatype = "range(1,65535)"
 web_port.placeholder = "22020"
 web_port.default = "22020"
-web_port:depends("enabled", "1")
 
 api_port = s:option(Value, "api_port", translate("API端口"),
 	translate("restful 服务器的监听端口，作为 ApiHost 并被 web 前端使用。（ -a 参数）"))
 api_port.datatype = "range(1,65535)"
 api_port.placeholder = "11211"
 api_port.default = "11211"
-api_port:depends("enabled", "1")
 
 weblog = s:option(ListValue, "weblog", translate("程序日志"),
 	translate("运行日志在/tmp/easytierweb.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
@@ -657,6 +653,5 @@ weblog:value("warn",translate("警告"))
 weblog:value("info",translate("信息"))
 weblog:value("debug",translate("调试"))
 weblog:value("trace",translate("跟踪"))
-weblog:depends("enabled", "1")
 
 return m
