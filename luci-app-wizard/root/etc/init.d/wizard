@@ -110,7 +110,7 @@ add_wizard() {
 	uci -q get wireless.${radio} >/dev/null 2>&1 && {
 		if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
 			uci -q set wireless.default_${radio}.ssid="${wifi_ssid}_5G"
-		else
+		elif [ "$(uci -q get wireless.${radio}.band)" = "2g" ]; then
 			uci -q set wireless.default_${radio}.ssid="${wifi_ssid}_2.4G"
 		fi
 			uci -q set wireless.default_${radio}.device="${radio}"
@@ -134,6 +134,8 @@ add_wizard() {
 			wifi_setup_radio ${radio}
 		done
 		uci commit wireless
+		uci -q set wizard.default.old_wifi_ssid="${wifi_ssid}"
+		uci -q set wizard.default.old_wifi_key="${wifi_key}"
 	}
 	fi
 
