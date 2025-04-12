@@ -29,8 +29,8 @@ return view.extend({
         o = s.taboption('app_log', form.Button, 'clear_app_log');
         o.inputstyle = 'negative';
         o.inputtitle = _('Clear Log');
-        o.onclick = function () {
-            m.lookupOption('nikki.log._app_log')[0].getUIElement('log').setValue('');
+        o.onclick = function (_, section_id) {
+            m.lookupOption('_app_log', section_id)[0].getUIElement(section_id).setValue('');
             return nikki.clearAppLog();
         };
 
@@ -52,8 +52,8 @@ return view.extend({
 
         o = s.taboption('app_log', form.Button, 'scroll_app_log_to_bottom');
         o.inputtitle = _('Scroll To Bottom');
-        o.onclick = function () {
-            const element = m.lookupOption('nikki.log._app_log')[0].getUIElement('log').node.firstChild;
+        o.onclick = function (_, section_id) {
+            const element = m.lookupOption('_app_log', section_id)[0].getUIElement(section_id).node.firstChild;
             element.scrollTop = element.scrollHeight;
         };
 
@@ -62,8 +62,8 @@ return view.extend({
         o = s.taboption('core_log', form.Button, 'clear_core_log');
         o.inputstyle = 'negative';
         o.inputtitle = _('Clear Log');
-        o.onclick = function () {
-            m.lookupOption('nikki.log._core_log')[0].getUIElement('log').setValue('');
+        o.onclick = function (_, section_id) {
+            m.lookupOption('_core_log', section_id)[0].getUIElement(section_id).setValue('');
             return nikki.clearCoreLog();
         };
 
@@ -85,8 +85,8 @@ return view.extend({
 
         o = s.taboption('core_log', form.Button, 'scroll_core_log_to_bottom');
         o.inputtitle = _('Scroll To Bottom');
-        o.onclick = function () {
-            const element = m.lookupOption('nikki.log._core_log')[0].getUIElement('log').node.firstChild;
+        o.onclick = function (_, section_id) {
+            const element = m.lookupOption('_core_log', section_id)[0].getUIElement(section_id).node.firstChild;
             element.scrollTop = element.scrollHeight;
         };
 

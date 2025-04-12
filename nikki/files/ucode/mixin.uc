@@ -47,7 +47,7 @@ if (uci_bool(uci.get('nikki', 'mixin', 'authentication'))) {
 }
 
 config['tun'] = {};
-if (uci.get('nikki', 'proxy', 'tcp_transparent_proxy_mode') == 'tun' || uci.get('nikki', 'proxy', 'udp_transparent_proxy_mode') == 'tun') {
+if (uci.get('nikki', 'proxy', 'tcp_mode') == 'tun' || uci.get('nikki', 'proxy', 'udp_mode') == 'tun') {
 	config['tun']['enable'] = true;
 	config['tun']['auto-route'] = false;
 	config['tun']['auto-redirect'] = false;

@@ -22,104 +22,87 @@ return view.extend({
         const groups = data[3]?.groups ?? [];
         const cgroups = data[3]?.cgroups ?? [];
 
-        let m, s, o;
+        let m, s, o, so;
 
         m = new form.Map('nikki');
 
         s = m.section(form.NamedSection, 'proxy', 'proxy', _('Proxy Config'));
 
-        s.tab('transparent_proxy', _('Transparent Proxy'));
+        s.tab('proxy', _('Proxy Config'));
 
-        o = s.taboption('transparent_proxy', form.Flag, 'transparent_proxy', _('Enable'));
+        o = s.taboption('proxy', form.Flag, 'enabled', _('Enable'));
         o.rmempty = false;
 
-        o = s.taboption('transparent_proxy', form.ListValue, 'tcp_transparent_proxy_mode', _('TCP Proxy Mode'));
+        o = s.taboption('proxy', form.ListValue, 'tcp_mode', _('TCP Mode'));
         o.optional = true;
         o.placeholder = _('Disable');
         o.value('redirect', _('Redirect Mode'));
         o.value('tproxy', _('TPROXY Mode'));
         o.value('tun', _('TUN Mode'));
 
-        o = s.taboption('transparent_proxy', form.ListValue, 'udp_transparent_proxy_mode', _('UDP Proxy Mode'));
+        o = s.taboption('proxy', form.ListValue, 'udp_mode', _('UDP Mode'));
         o.optional = true;
         o.placeholder = _('Disable');
         o.value('tproxy', _('TPROXY Mode'));
         o.value('tun', _('TUN Mode'));
 
-        o = s.taboption('transparent_proxy', form.Flag, 'ipv4_dns_hijack', _('IPv4 DNS Hijack'));
+        o = s.taboption('proxy', form.Flag, 'ipv4_dns_hijack', _('IPv4 DNS Hijack'));
         o.rmempty = false;
 
-        o = s.taboption('transparent_proxy', form.Flag, 'ipv6_dns_hijack', _('IPv6 DNS Hijack'));
+        o = s.taboption('proxy', form.Flag, 'ipv6_dns_hijack', _('IPv6 DNS Hijack'));
         o.rmempty = false;
 
-        o = s.taboption('transparent_proxy', form.Flag, 'ipv4_proxy', _('IPv4 Proxy'));
+        o = s.taboption('proxy', form.Flag, 'ipv4_proxy', _('IPv4 Proxy'));
         o.rmempty = false;
 
-        o = s.taboption('transparent_proxy', form.Flag, 'ipv6_proxy', _('IPv6 Proxy'));
+        o = s.taboption('proxy', form.Flag, 'ipv6_proxy', _('IPv6 Proxy'));
         o.rmempty = false;
 
-        o = s.taboption('transparent_proxy', form.Flag, 'fake_ip_ping_hijack', _('Fake-IP Ping Hijack'));
+        o = s.taboption('proxy', form.Flag, 'fake_ip_ping_hijack', _('Fake-IP Ping Hijack'));
         o.rmempty = false;
 
-        o = s.taboption('transparent_proxy', form.Flag, 'router_proxy', _('Router Proxy'));
+        s.tab('router', _('Router Proxy'));
+
+        o = s.taboption('router', form.Flag, 'router_proxy', _('Enable'));
         o.rmempty = false;
 
-        o = s.taboption('transparent_proxy', form.Flag, 'lan_proxy', _('Lan Proxy'));
-        o.rmempty = false;
+        o = s.taboption('router', form.SectionValue, '_router_access_control', form.TableSection, 'router_access_control', _('Access Control'));
 
-        s.tab('access_control', _('Access Control'));
+        o.subsection.addremove = true;
+        o.subsection.anonymous = true;
+        o.subsection.sortable = true;
 
-        o = s.taboption('access_control', form.ListValue, 'access_control_mode', _('Mode'));
-        o.value('all', _('All Mode'));
-        o.value('allow', _('Allow Mode'));
-        o.value('block', _('Block Mode'));
+        so = o.subsection.option(form.Flag, 'enabled', _('Enable'));
+        so.default = '1';
+        so.rmempty = false;
 
-        o = s.taboption('access_control', form.DynamicList, 'acl_ip', 'IP');
-        o.datatype = 'ipmask4';
-        o.retain = true;
-        o.depends('access_control_mode', 'allow');
-        o.depends('access_control_mode', 'block');
+        so = o.subsection.option(form.DynamicList, 'user', _('User'));
 
-        for (const mac in hosts) {
-            const host = hosts[mac];
-            for (const ip of host.ipaddrs) {
-                const hint = host.name ?? mac;
-                o.value(ip, hint ? '%s (%s)'.format(ip, hint) : ip);
-            };
+        for (const user of users) {
+            so.value(user);
         };
 
-        o = s.taboption('access_control', form.DynamicList, 'acl_ip6', 'IP6');
-        o.datatype = 'ipmask6';
-        o.retain = true;
-        o.depends('access_control_mode', 'allow');
-        o.depends('access_control_mode', 'block');
+        so = o.subsection.option(form.DynamicList, 'group', _('Group'));
 
-        for (const mac in hosts) {
-            const host = hosts[mac];
-            for (const ip of host.ip6addrs) {
-                const hint = host.name ?? mac;
-                o.value(ip, hint ? '%s (%s)'.format(ip, hint) : ip);
-            };
+        for (const group of groups) {
+            so.value(group);
         };
 
-        o = s.taboption('access_control', form.DynamicList, 'acl_mac', 'MAC');
-        o.datatype = 'macaddr';
-        o.retain = true;
-        o.depends('access_control_mode', 'allow');
-        o.depends('access_control_mode', 'block');
+        so = o.subsection.option(form.DynamicList, 'cgroup', _('CGroup'));
 
-        for (const mac in hosts) {
-            const host = hosts[mac];
-            const hint = host.name ?? host.ipaddrs[0];
-            o.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
+        for (const cgroup of cgroups) {
+            so.value(cgroup);
         };
 
-        o = s.taboption('access_control', form.DynamicList, 'acl_interface', _('Interface'));
-        o.multiple = true;
-        o.optional = true;
-        o.retain = true;
-        o.depends('access_control_mode', 'allow');
-        o.depends('access_control_mode', 'block');
+        so = o.subsection.option(form.Flag, 'proxy', _('Proxy'));
+        so.rmempty = false;
+
+        s.tab('lan', _('LAN Proxy'));
+
+        o = s.taboption('lan', form.Flag, 'lan_proxy', _('Enable'));
+
+        o = s.taboption('lan', form.DynamicList, 'lan_inbound_interface', _('Inbound Interface'));
+        o.rmempty = false;
 
         for (const network of networks) {
             if (network.getName() === 'loopback') {
@@ -128,25 +111,48 @@ return view.extend({
             o.value(network.getName());
         }
 
+        o = s.taboption('lan', form.SectionValue, '_lan_access_control', form.TableSection, 'lan_access_control', _('Access Control'));
+
+        o.subsection.addremove = true;
+        o.subsection.anonymous = true;
+        o.subsection.sortable = true;
+
+        so = o.subsection.option(form.Flag, 'enabled', _('Enable'));
+        so.default = '1';
+        so.rmempty = false;
+
+        so = o.subsection.option(form.DynamicList, 'ip', 'IP');
+
+        for (const mac in hosts) {
+            const host = hosts[mac];
+            for (const ip of host.ipaddrs) {
+                const hint = host.name ?? mac;
+                so.value(ip, hint ? '%s (%s)'.format(ip, hint) : ip);
+            };
+        };
+
+        so = o.subsection.option(form.DynamicList, 'ip6', 'IP6');
+
+        for (const mac in hosts) {
+            const host = hosts[mac];
+            for (const ip of host.ip6addrs) {
+                const hint = host.name ?? mac;
+                so.value(ip, hint ? '%s (%s)'.format(ip, hint) : ip);
+            };
+        };
+
+        so = o.subsection.option(form.DynamicList, 'mac', 'MAC');
+
+        for (const mac in hosts) {
+            const host = hosts[mac];
+            const hint = host.name ?? host.ipaddrs[0];
+            so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
+        };
+
+        so = o.subsection.option(form.Flag, 'proxy', _('Proxy'));
+        so.rmempty = false;
+
         s.tab('bypass', _('Bypass'));
-
-        o = s.taboption('bypass', form.DynamicList, 'bypass_user', _('Bypass User'));
-
-        for (const user of users) {
-            o.value(user);
-        };
-
-        o = s.taboption('bypass', form.DynamicList, 'bypass_group', _('Bypass Group'));
-
-        for (const group of groups) {
-            o.value(group);
-        };
-
-        o = s.taboption('bypass', form.DynamicList, 'bypass_cgroup', _('Bypass cgroup'));
-
-        for (const cgroup of cgroups) {
-            o.value(cgroup);
-        };
 
         o = s.taboption('bypass', form.Flag, 'bypass_china_mainland_ip', _('Bypass China Mainland IP'));
         o.rmempty = false;
