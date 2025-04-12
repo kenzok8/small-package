@@ -305,7 +305,7 @@ table inet nikki {
 		{% for (let access_control in lan_access_control): %}
 		{% if (access_control['enabled']): %}
 		{% if (length(access_control['ip']) == 0 && length(access_control['ip6']) == 0 && length(access_control['mac']) == 0): %}
-		meta l4proto tcp tcp counter {% if (access_control.proxy == '1'): %} redirect to :{{ redir_port }} {% else %} counter return {% endif %}
+		meta l4proto tcp counter {% if (access_control.proxy == '1'): %} redirect to :{{ redir_port }} {% else %} counter return {% endif %}
 
 		{% else %}
 		{% if (length(access_control['ip']) > 0): %}
