@@ -59,8 +59,8 @@ const methods = {
 	},
 	get_identifiers: {
 		call: function() {
-			const users = filter(get_users(), (x) => x != '' && x != 'root');
-			const groups = filter(get_groups(), (x) => x != '' && x != 'root');
+			const users = filter(get_users(), (x) => x != '');
+			const groups = filter(get_groups(), (x) => x != '');
 			const cgroups = filter(get_cgroups(), (x) => x != '' && x != 'nikki');
 			return { users: users, groups: groups, cgroups: cgroups };
 		}

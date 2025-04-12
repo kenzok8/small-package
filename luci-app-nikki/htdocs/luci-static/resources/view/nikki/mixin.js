@@ -61,7 +61,7 @@ return view.extend({
             o.value(network.getName());
         }
 
-        o = s.taboption('general', form.ListValue, 'ipv6', _('IPv6'));
+        o = s.taboption('general', form.ListValue, 'ipv6', 'IPv6');
         o.optional = true;
         o.placeholder = _('Unmodified');
         o.value('0', _('Disable'));
@@ -233,7 +233,7 @@ return view.extend({
         o.placeholder = _('Unmodified');
         o.rmempty = false;
 
-        o = s.taboption('dns', form.ListValue, 'dns_ipv6', _('IPv6'));
+        o = s.taboption('dns', form.ListValue, 'dns_ipv6', 'IPv6');
         o.optional = true;
         o.placeholder = _('Unmodified');
         o.value('0', _('Disable'));
@@ -309,7 +309,7 @@ return view.extend({
         so = o.subsection.option(form.Value, 'domain_name', _('Domain Name'));
         so.rmempty = false;
 
-        so = o.subsection.option(form.DynamicList, 'ip', _('IP'));
+        so = o.subsection.option(form.DynamicList, 'ip', 'IP');
 
         o = s.taboption('dns', form.Flag, 'dns_nameserver', _('Overwrite Nameserver'));
         o.rmempty = false;

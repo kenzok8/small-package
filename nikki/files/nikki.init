@@ -143,11 +143,11 @@ service_started() {
 	fi
 	# load config
 	config_load nikki
-	# check if transparent proxy enabled
-	local transparent_proxy
-	config_get_bool transparent_proxy "proxy" "transparent_proxy" 0
-	if [ "$transparent_proxy" == 0 ]; then
-		log "Transparent Proxy" "Disabled."
+	# check if proxy enabled
+	local enabled
+	config_get_bool enabled "proxy" "enabled" 0
+	if [ "$enabled" == 0 ]; then
+		log "Proxy" "Disabled."
 		return
 	fi
 	# get config
@@ -156,19 +156,19 @@ service_started() {
 	local tun_device
 	config_get tun_device "mixin" "tun_device" "nikki"
 	## proxy config
-	### transparent proxy
-	local tcp_transparent_proxy_mode udp_transparent_proxy_mode ipv4_proxy ipv6_proxy
-	config_get tcp_transparent_proxy_mode "proxy" "tcp_transparent_proxy_mode"
-	config_get udp_transparent_proxy_mode "proxy" "udp_transparent_proxy_mode"
+	### general
+	local tcp_mode udp_mode ipv4_proxy ipv6_proxy
+	config_get tcp_mode "proxy" "tcp_mode"
+	config_get udp_mode "proxy" "udp_mode"
 	config_get_bool ipv4_proxy "proxy" "ipv4_proxy" 0
 	config_get_bool ipv6_proxy "proxy" "ipv6_proxy" 0
 	# prepare config
 	local tproxy_enable; tproxy_enable=0
-	if [[ "$tcp_transparent_proxy_mode" == "tproxy" || "$udp_transparent_proxy_mode" == "tproxy" ]]; then
+	if [[ "$tcp_mode" == "tproxy" || "$udp_mode" == "tproxy" ]]; then
 		tproxy_enable=1
 	fi
 	local tun_enable; tun_enable=0
-	if [[ "$tcp_transparent_proxy_mode" == "tun" || "$udp_transparent_proxy_mode" == "tun" ]]; then
+	if [[ "$tcp_mode" == "tun" || "$udp_mode" == "tun" ]]; then
 		tun_enable=1
 	fi
 	# fix compatible with dockerd
@@ -197,17 +197,17 @@ service_started() {
 			fi
 		fi
 	fi
-	# transparent proxy
-	log "Transparent Proxy" "Enabled."
+	# proxy
+	log "Proxy" "Enabled."
 	# wait for tun device online
 	if [ "$tun_enable" == 1 ]; then
-		log "Transparent Proxy" "Waiting for tun device online..."
+		log "Proxy" "Waiting for tun device online..."
 		local tun_timeout; tun_timeout=15
 		local tun_interval; tun_interval=1
 		while [ "$tun_timeout" -gt 0 ]; do
 			if (ip link show dev "$tun_device" > /dev/null 2>&1); then
 				if [ $(ip -json addr show dev "$tun_device" | tun_device="$tun_device" yq -M '.[] | select(.ifname = strenv(tun_device)) | .addr_info | length') -gt 0 ]; then
-					log "Transparent Proxy" "Tun device is online."
+					log "Proxy" "Tun device is online."
 					break
 				fi
 			fi
@@ -215,7 +215,7 @@ service_started() {
 			sleep "$tun_interval"
 		done
 		if [ "$tun_timeout" -le 0 ]; then
-			log "Transparent Proxy" "Waiting timeout, tun device is not online."
+			log "Proxy" "Waiting timeout, tun device is not online."
 			log "App" "Exit."
 			return
 		fi
@@ -246,9 +246,9 @@ service_started() {
 	utpl -D cgroup_name="$CGROUP_NAME" -D cgroup_id="$CGROUP_ID" -D tproxy_fw_mark="$TPROXY_FW_MARK" -D tun_fw_mark="$TUN_FW_MARK" -S "$HIJACK_UT" | nft -f -
 	# check hijack
 	if (nft list tables | grep -q nikki); then
-		log "Transparent Proxy" "Hijack successful."
+		log "Proxy" "Hijack successful."
 	else
-		log "Transparent Proxy" "Hijack failed."
+		log "Proxy" "Hijack failed."
 		log "App" "Exit."
 	fi
 }
