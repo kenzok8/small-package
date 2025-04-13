@@ -5,7 +5,12 @@
 			"uci": [ "poweroffdevice" ]
 		},
 		"write": {
-			"uci": [ "poweroffdevice" ]
+			"ubus": {
+				"system": ["poweroff"]
+			},
+			"file": {
+				"/sbin/poweroff": ["exec"]
+			}
 		}
 	}
 }

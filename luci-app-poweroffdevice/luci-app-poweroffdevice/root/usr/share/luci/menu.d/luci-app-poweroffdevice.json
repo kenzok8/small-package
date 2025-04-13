@@ -1,0 +1,14 @@
+{
+	"admin/system/poweroff": {
+		"title": "PowerOff",
+		"order": 99,
+		"action": {
+			"type": "view",
+			"path": "system/poweroffdevice" ,
+			"nocfg": true
+		},
+		"depends": {
+			"acl": ["luci-app-poweroffdevice"]
+		}
+	}
+}
