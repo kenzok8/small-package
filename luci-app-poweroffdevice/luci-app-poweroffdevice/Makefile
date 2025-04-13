@@ -1,6 +1,6 @@
 #
 # provides Web UI to shut down (power off) your device. 
-# Copyright (C) 2022-2023 sirpdboy <herboy2008@gmail.com>
+# Copyright (C) 2022-2025 sirpdboy <herboy2008@gmail.com>
 # This is free software, licensed under the GNU General Public License v3.
 
 include $(TOPDIR)/rules.mk
@@ -12,7 +12,7 @@ LUCI_DESCRIPTION:=provides Web UI to shut down (power off) your device.
 
 LUCI_PKGARCH:=all
 PKG_VERSION:=1
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
