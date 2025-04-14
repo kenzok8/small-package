@@ -67,7 +67,7 @@ const methods = {
 	},
 	debug: {
 		call: function() {
-			const success = system('/etc/nikki/scripts/debug.sh > /var/log/nikki/debug.log') == 0;
+			const success = system('/etc/nikki/scripts/debug.sh > /var/log/nikki/debug.log 2>&1') == 0;
 			return { success: success };
 		}
 	}
