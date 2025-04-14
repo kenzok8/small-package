@@ -11,8 +11,8 @@ LUCI_TITLE:=LuCI support for poweroffdevice Router
 LUCI_DESCRIPTION:=provides Web UI to shut down (power off) your device. 
 
 LUCI_PKGARCH:=all
-PKG_VERSION:=1
-PKG_RELEASE:=5
+PKG_VERSION:=2
+PKG_RELEASE:=6
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

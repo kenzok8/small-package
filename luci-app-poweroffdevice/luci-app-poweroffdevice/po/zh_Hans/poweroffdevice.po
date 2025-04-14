@@ -18,7 +18,7 @@ msgstr "关闭您正在使用的设备的电源"
 msgid "WARNING: Power off might result in a reboot on a device which not support power off."
 msgstr "警告：对于不支持关机的设备，关机可能会导致重新启动." 
 
-msgid "PowerOffing…"
+msgid "PowerOffing..."
 msgstr "正在关机..."
 
 msgid "Device shutdown complete!"
@@ -28,9 +28,11 @@ msgid "PowerOff failed"
 msgstr "关机失败"
 
 msgid "The device is shutting down..."
-msgstr "设备正在关闭。。。"
+msgstr "设备正在关闭..."
 
 msgid "The device may have powered off. If not, check manually."
-msgstr "设备可能已断电。如果没有，请手动检查。"
+msgstr "设备已断电。如果没有，请手动操作。"
 
+msgid "Confirm"
+msgstr "确认"
 
