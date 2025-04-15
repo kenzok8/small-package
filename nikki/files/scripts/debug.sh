@@ -40,25 +40,34 @@ fi
 ## config
 \`\`\`json
 `
-ubus call uci get '{"config": "nikki"}' | yq -M -P -p json -o json '
-.values | to_entries | group_by(.value[".type"]) | map({"key": .[0].value[".type"], "value": [.[].value]}) | from_entries |
-. |= (
-	del(.status) |
-	del(.editor) |
-	del(.log)
-) |
-.*[] |= (
-	del(.[".type"]) |
-	del(.[".name"]) |
-	del(.[".index"]) |
-	del(.[".anonymous"])
-) |
-.subscription[] |= .url = "*" |
-.lan_access_control[] |= (
-	select(has("ip")) |= .ip[] |= "*" |
-	select(has("ip6")) |= .ip6[] |= "*" |
-	select(has("mac")) |= .mac[] |= "*"
-)
+ucode -S -e '
+import { connect } from "ubus";
+const ubus = connect();
+const config = ubus.call("uci", "get", { "config": "nikki" });
+const result = {};
+for (let section_id in config.values) {
+    const section = config.values[section_id];
+    const section_type = section[".type"];
+	if (result[section_type] == null) {
+		result[section_type] = [];
+	}
+	push(result[section_type], section);
+}
+for (let section_type in result) {
+	for (let section in result[section_type]) {
+		delete section[".anonymous"];
+		delete section[".type"];
+		delete section[".name"];
+		delete section[".index"];
+	}
+}
+for (let x in result["subscription"]) {
+	x["url"] = "*";
+}
+delete result["status"];
+delete result["editor"];
+delete result["log"];
+print(result);
 '
 `
 \`\`\`
