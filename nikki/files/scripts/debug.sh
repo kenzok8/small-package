@@ -64,6 +64,11 @@ for (let section_type in result) {
 for (let x in result["subscription"]) {
 	x["url"] = "*";
 }
+for (let x in result["lan_access_control"]) {
+	x["ip"] = "*";
+	x["ip6"] = "*";
+	x["mac"] = "*";
+}
 delete result["status"];
 delete result["editor"];
 delete result["log"];
