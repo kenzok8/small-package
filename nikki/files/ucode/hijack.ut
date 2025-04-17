@@ -181,6 +181,7 @@ table inet nikki {
 		{% endif %}
 	}
 
+	{% if (router_proxy): %}
 	chain router_dns_hijack {
 		{% for (let access_control in router_access_control): %}
 		{% if (access_control['enabled']): %}
@@ -276,7 +277,9 @@ table inet nikki {
 		{% endif %}
 		{% endfor %}
 	}
+	{% endif %}
 
+	{% if (lan_proxy): %}
 	chain lan_dns_hijack {
 		{% for (let access_control in lan_access_control): %}
 		{% if (access_control['enabled']): %}
@@ -372,6 +375,7 @@ table inet nikki {
 		{% endif %}
 		{% endfor %}
 	}
+	{% endif %}
 
 	{% if (router_proxy): %}
 	chain nat_output {
