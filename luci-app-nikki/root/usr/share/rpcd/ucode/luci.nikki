@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { access, popen } from 'fs';
+import { access, popen, writefile } from 'fs';
 import { get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
 
 const methods = {
@@ -33,13 +33,18 @@ const methods = {
 		}
 	},
 	profile: {
-		call: function() {
+		args: { defaults: {} },
+		call: function(req) {
 			let profile = {};
+			const defaults = req.args?.defaults ?? {};
 			const filepath = '/etc/nikki/run/config.yaml';
+			const tmpFilepath = '/var/run/nikki/profile.json';
 			if (access(filepath, 'r')) {
-				const process = popen(`yq -p yaml -o json < ${filepath}`);
+				writefile(tmpFilepath, defaults);
+				const command = `yq -p yaml -o json eval-all 'select(fi == 0) *? select(fi == 1)' ${tmpFilepath} ${filepath}`;
+				const process = popen(command);
 				if (process) {
-					profile = json(trim(process.read('all')));
+					profile = json(process);
 					process.close();
 				}
 			}
@@ -67,7 +72,7 @@ const methods = {
 	},
 	debug: {
 		call: function() {
-			const success = system('/etc/nikki/scripts/debug.sh > /var/log/nikki/debug.log 2>&1') == 0;
+			const success = system('/etc/nikki/scripts/debug.sh > /var/log/nikki/debug.log') == 0;
 			return { success: success };
 		}
 	}
