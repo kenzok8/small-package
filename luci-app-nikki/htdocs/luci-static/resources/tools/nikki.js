@@ -28,6 +28,7 @@ const callNikkiVersion = rpc.declare({
 const callNikkiProfile = rpc.declare({
     object: 'luci.nikki',
     method: 'profile',
+    params: [ 'defaults' ],
     expect: { '': {} }
 });
 
@@ -98,8 +99,8 @@ return baseclass.extend({
         return callNikkiVersion();
     },
 
-    profile: function () {
-        return callNikkiProfile();
+    profile: function (defaults) {
+        return callNikkiProfile(defaults);
     },
 
     updateSubscription: function (section_id) {
@@ -107,7 +108,7 @@ return baseclass.extend({
     },
 
     api: async function (method, path, query, body) {
-        const profile = await callNikkiProfile();
+        const profile = await callNikkiProfile({ 'external-controller': null, 'secret': null });
         const apiListen = profile['external-controller'];
         const apiSecret = profile['secret'] ?? '';
         const apiPort = apiListen.substring(apiListen.lastIndexOf(':') + 1);
@@ -121,7 +122,7 @@ return baseclass.extend({
     },
 
     openDashboard: async function () {
-        const profile = await callNikkiProfile();
+        const profile = await callNikkiProfile({ 'external-ui-name': null, 'external-controller': null, 'secret': null });
         const uiName = profile['external-ui-name'];
         const apiListen = profile['external-controller'];
         const apiSecret = profile['secret'] ?? '';

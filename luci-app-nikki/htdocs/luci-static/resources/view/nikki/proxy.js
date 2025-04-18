@@ -67,6 +67,8 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption('router', form.SectionValue, '_router_access_control', form.TableSection, 'router_access_control', _('Access Control'));
+        o.retain = true;
+        o.depends('router_proxy', '1');
 
         o.subsection.addremove = true;
         o.subsection.anonymous = true;
@@ -102,7 +104,9 @@ return view.extend({
         o = s.taboption('lan', form.Flag, 'lan_proxy', _('Enable'));
 
         o = s.taboption('lan', form.DynamicList, 'lan_inbound_interface', _('Inbound Interface'));
+        o.retain = true;
         o.rmempty = false;
+        o.depends('lan_proxy', '1');
 
         for (const network of networks) {
             if (network.getName() === 'loopback') {
@@ -112,6 +116,8 @@ return view.extend({
         }
 
         o = s.taboption('lan', form.SectionValue, '_lan_access_control', form.TableSection, 'lan_access_control', _('Access Control'));
+        o.retain = true;
+        o.depends('lan_proxy', '1');
 
         o.subsection.addremove = true;
         o.subsection.anonymous = true;
