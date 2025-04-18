@@ -7,12 +7,12 @@
 			{
 				if (st.running)
 				{
-					tb.innerHTML = '<br/><em style=\"color:green\"><%:The iStoreEnhance service is running.%></em>'
-						+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open iStoreEnhance%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
+					tb.innerHTML = '<br/><em style=\"color:green\"><%:The KSpeeder service is running.%></em>'
+						+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open KSpeeder%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
 				}
 				else
 				{
-					tb.innerHTML = '<br/><em style=\"color:red\"><%:The iStoreEnhance service is not running.%></em>';
+					tb.innerHTML = '<br/><em style=\"color:red\"><%:The KSpeeder service is not running.%></em>';
 				}
 			}
 		}
@@ -20,7 +20,7 @@
 //]]></script>
 
 <fieldset class="cbi-section">
-	<legend><%:iStoreEnhance Status%></legend>
+	<legend><%:KSpeeder Status%></legend>
 	<p id="istoreenhance_status">
 		<em><%:Collecting data...%></em>
 	</p>

@@ -1,11 +1,11 @@
-msgid "iStoreEnhance"
-msgstr "iStore增强"
+msgid "KSpeeder
+msgstr "KSpeeder"
 
 msgid "Running state"
 msgstr "运行状态"
 
-msgid "iStoreEnhance is a tool to fix network issues for iStore."
-msgstr "iStore增强插件可以有效的解决一些网络问题，让 iStore 更好用。当然不安装也不会影响 iStore 基本功能。"
+msgid "KSpeeder is a tool to fix network issues for iStore."
+msgstr "KSpeeder插件可以有效的解决一些网络问题，让 iStore 更好用。当然不安装也不会影响 iStore 基本功能。"
 
 msgid "Port"
 msgstr "端口"
@@ -13,13 +13,13 @@ msgstr "端口"
 msgid "Admin Port"
 msgstr "管理端口"
 
-msgid "The iStoreEnhance service is running."
+msgid "The KSpeeder service is running."
 msgstr "服务已启动"
 
-msgid "The iStoreEnhance service is not running."
+msgid "The KSpeeder service is not running."
 msgstr "服务未启动"
 
-msgid "iStoreEnhance Status"
+msgid "KSpeeder Status"
 msgstr "服务状态"
 
 msgid "Collecting data..."

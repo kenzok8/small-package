@@ -5,7 +5,7 @@ function index()
 		return
 	end
 
-	entry({"admin", "services", "istoreenhance"}, cbi("istoreenhance"), _("iStoreEnhance"), 20).dependent = true
+	entry({"admin", "services", "istoreenhance"}, cbi("istoreenhance"), _("KSpeeder"), 20).dependent = true
 
 	entry({"admin", "services", "istoreenhance_status"}, call("istoreenhance_status"))
 end

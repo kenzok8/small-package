@@ -2,7 +2,7 @@ local m, s
 
 local istoreenhance_model = require "luci.model.istoreenhance"
 
-m = Map("istoreenhance", translate("iStoreEnhance"), translate("iStoreEnhance is a tool to fix network issues for iStore."))
+m = Map("istoreenhance", translate("KSpeeder"), translate("KSpeeder is a tool to fix network issues for iStore."))
 
 m:section(SimpleSection).template  = "istoreenhance_status"
 
