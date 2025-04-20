@@ -645,7 +645,7 @@ api_port.placeholder = "11211"
 api_port.default = "11211"
 
 html_port = s:option(Value, "html_port", translate("web界面端口"),
-	translate("web dashboard 服务器的前端监听端口，留空不启用"))
+	translate("web dashboard 服务器的前端监听端口，留空不启用。（ -l 参数）"))
 html_port.datatype = "range(1,65535)"
 html_port.placeholder = "11210"
 
