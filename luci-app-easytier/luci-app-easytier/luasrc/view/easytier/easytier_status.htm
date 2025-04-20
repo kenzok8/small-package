@@ -20,7 +20,10 @@ XHR.poll(3, '<%=url([[admin]], [[vpn]], [[easytier]], [[status]])%>', null,
             var etwebramContent = data.wrunning ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;&nbsp;内存占用：" + "<span style='color:#0000CD;'>" + data.etwebram + "</span>" : "";
             var etwtagContent = data.wrunning ? "<br>" + "&nbsp;&nbsp;当前版本：" + "<span style='color:#CD853F;'>" + data.ettag + "</span>" : ""; 
             var etwnewtagContent = data.wrunning ? "&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;最新版本：" + "<span style='color:#FFA500;'>" + data.etnewtag + "</span>" : ""; 
-            var etwebContent = "&nbsp;&nbsp;&nbsp;" + "<input class=\"cbi-button cbi-button-reload mar-10\" type=\"button\" value=\" <%:Web 控制台%> \" onclick=\"window.open('<%=protocol%>" + window.location.hostname + "/" + "et.html" + "')\"/>";
+            var etwebContent = "";
+            if (data.port !== 0 && data.wrunning) {
+            	etwebContent = "&nbsp;&nbsp;&nbsp;" + "<input class=\"cbi-button cbi-button-reload mar-10\" type=\"button\" value=\" <%:Web 控制台%> \" onclick=\"window.open('<%=protocol%>" + window.location.hostname + ":" + data.port + "')\"/>";
+            }
             st.innerHTML = "<em><b>easytier-core " + clientStatus + etstaContent + etcpuContent + etramContent + ettagContent + etnewtagContent + "</b></em><br><br><em><b>easytier-web " + webStatus + etwebstaContent + etwebcpuContent + etwebramContent + etwtagContent + etwnewtagContent + etwebContent + "</b></em>";         
         }
     }

@@ -110,11 +110,13 @@ check_bin() {
 		for proxy in $proxys ; do
 	           curl -L -k -o /tmp/easytier.zip --connect-timeout 10 --retry 3 "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip" || wget --no-check-certificate --timeout=10 --tries=3 -O /tmp/easytier.zip "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip"
 	           if [ "$?" = 0 ] ; then
-			unzip -q -o /tmp/easytier.zip -d /tmp
-	         	chmod +x /tmp/easytier-linux-${cpucore}/easytier-*
-	         	mv -f /tmp/easytier-linux-${cpucore}/easytier-* ${path}/
+			unzip -j -q -o /tmp/easytier.zip -d /tmp
+	         	chmod +x /tmp/easytier-core /tmp/easytier-cli /tmp/easytier-web /tmp/easytier-web-embed || true
+	         	mv -f /tmp/easytier-core ${path}/
+	         	mv -f /tmp/easytier-cli ${path}/
+	         	mv -f /tmp/easytier-web-embed ${path}/easytier-web || true
                  	chmod +x "$easytierbin"
-                	 rm -rf /tmp/easytier.zip "/tmp/easytier-linux-${cpucore}"
+                	 rm -rf /tmp/easytier.zip 
 			break
                  	if [ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]; then
                    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin} 下载成功" >>/tmp/easytier.log
@@ -603,6 +605,10 @@ fi
 
 start_web() {
 	webbin="$(uci -q get easytier.@easytier[0].webbin)"
+	if [ -f /tmp/easytier-web-embed ] ; then
+		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 找到上传的easytier-web程序，替换${webbin} " >>/tmp/easytierweb.log
+		mv -f /tmp/easytier-web-embed "$webbin"
+	fi
 	if [ -f "$webbin" ] ; then
 		[ ! -x "$webbin" ] && chmod +x "$webbin"
 	fi
@@ -615,6 +621,7 @@ start_web() {
 	web_protocol="$(uci -q get easytier.@easytierweb[0].web_protocol)"
 	web_port="$(uci -q get easytier.@easytierweb[0].web_port)"
 	api_port="$(uci -q get easytier.@easytierweb[0].api_port)"
+	html_port="$(uci -q get easytier.@easytierweb[0].html_port)"
 	weblog="$(uci -q get easytier.@easytierweb[0].weblog)"
 	procd_open_instance "easytier_web"
 	get_tz
@@ -624,6 +631,11 @@ start_web() {
 	[ -z "$web_protocol" ] || procd_append_param command -p "$web_protocol"
 	[ -z "$web_port" ] || procd_append_param command -c "$web_port"
 	[ -z "$api_port" ] || procd_append_param command -a "$api_port"
+	if [ -z "$html_port" ] ; then
+		procd_append_param command --no-web
+	else
+		procd_append_param command -l "$html_port"
+	fi
 	if [ "$weblog" != "off" ] ; then
 		procd_append_param command --file-log-dir /tmp
 		procd_append_param command --file-log-level "$weblog"
@@ -653,6 +665,17 @@ start_web() {
 		      uci set firewall.easytier_webapi.proto="tcp"
 		      uci set firewall.easytier_webapi.dest_port="$api_port"
 		      uci set firewall.easytier_webapi.enabled="1"
+	fi
+	if [ ! -z "$html_port" ] ; then
+		      echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_web 放行html端口 ${html_port} " >>/tmp/easytier.log
+                      uci -q delete firewall.easytier_webhtml
+		      uci set firewall.easytier_webhtml=rule
+		      uci set firewall.easytier_webhtml.name="easytier_webhtml"
+		      uci set firewall.easytier_webhtml.target="ACCEPT"
+		      uci set firewall.easytier_webhtml.src="wan"
+		      uci set firewall.easytier_webhtml.proto="tcp"
+		      uci set firewall.easytier_webhtml.dest_port="$html_port"
+		      uci set firewall.easytier_webhtml.enabled="1"
 	fi
 	echo `date +%s` > /tmp/easytierweb_time
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 启动完成，若启动失败，请前往 状态 - 系统日志 找到easytier相关的字眼查看启动失败的原因 " >>/tmp/easytierweb.log
@@ -689,7 +712,7 @@ start_service() {
         echo "" >/tmp/easytier.log
 	echo "" >/tmp/easytierweb.log
         #test -z "`opkg list-installed|grep curl`" && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少curl插件" >/tmp/easytier.log
-        [ ! -s /usr/lib/opkg/info/unzip.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少unzip插件" >/tmp/easytier.log
+        #[ ! -s /usr/lib/opkg/info/unzip.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少unzip插件" >/tmp/easytier.log
 	[ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ] && start_et easytier 
 	if [ -z "$(uci -q get easytier.@easytierweb[0].enabled)" ] ; then
 		echo "config easytierweb" >>/etc/config/easytier
@@ -697,12 +720,7 @@ start_service() {
 	fi
 	[ "$(uci -q get easytier.@easytierweb[0].enabled)" = "1" ] && start_web 
 	start_log
-	if curl -Lks -o /tmp/easytier_web.html https://easytier.cn/web || \
-   	curl -Lk -o /tmp/easytier_web.html https://easytier.cn/web/index.html || \
-   	wget --no-check-certificate -q -O /tmp/easytier_web.html https://easytier.cn/web || \
-   	wget --no-check-certificate -q -O /tmp/easytier_web.html https://easytier.cn/web/index.html; then
-    		[ ! -L /www/et.html ] && ln -sf /tmp/easytier_web.html /www/et.html
-	fi
+	
 }
 
 stop_service() {
@@ -741,6 +759,7 @@ stop_service() {
                 	ps | grep 'easytier-web' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 			uci -q delete firewall.easytier_webserver
 			uci -q delete firewall.easytier_webapi
+			uci -q delete firewall.easytier_webhtml
 		fi
 		if  [ "$(uci -q get easytier.@easytier[0].enabled)" = "0" ] && [ "$(uci -q get easytier.@easytierweb[0].enabled)" = "0" ] ; then	
 			pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
