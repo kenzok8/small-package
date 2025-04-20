@@ -567,14 +567,14 @@ http.setfilehandler(
                 local extracted_dir = "/tmp/easytier-linux-*/"
                 os.execute("mv " .. extracted_dir .. "easytier-cli /tmp/easytier-cli")
                 os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-core")
-		os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-web")
+		os.execute("mv " .. extracted_dir .. "easytier-web-embed /tmp/easytier-web-embed")
                if nixio.fs.access("/tmp/easytier-cli") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-cli上传成功，重启一次插件才生效")
                 end
                if nixio.fs.access("/tmp/easytier-core") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-core上传成功，重启一次插件才生效")
                 end
-		if nixio.fs.access("/tmp/easytier-web") then
+		if nixio.fs.access("/tmp/easytier-web-embed") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-web上传成功，重启一次插件才生效")
                 end
                end
@@ -584,20 +584,20 @@ http.setfilehandler(
 		local extracted_dir = "/tmp/easytier-linux-*/"
                 os.execute("mv " .. extracted_dir .. "easytier-cli /tmp/easytier-cli")
                 os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-core")
-		os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-web")
+		os.execute("mv " .. extracted_dir .. "easytier-web-embed /tmp/easytier-web-embed")
                if nixio.fs.access("/tmp/easytier-cli") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-cli上传成功，重启一次插件才生效")
                 end
                if nixio.fs.access("/tmp/easytier-core") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-core上传成功，重启一次插件才生效")
                 end
-		if nixio.fs.access("/tmp/easytier-web") then
+		if nixio.fs.access("/tmp/easytier-web-embed") then
                     um.value = um.value .. "\n" .. translate("-程序/tmp/easytier-web上传成功，重启一次插件才生效")
                 end
                end
                 os.execute("chmod +x /tmp/easytier-core")
                 os.execute("chmod +x /tmp/easytier-cli") 
-		os.execute("chmod +x /tmp/easytier-web")
+		os.execute("chmod +x /tmp/easytier-web-embed")
         end
     end
 )
@@ -643,6 +643,11 @@ api_port = s:option(Value, "api_port", translate("API端口"),
 api_port.datatype = "range(1,65535)"
 api_port.placeholder = "11211"
 api_port.default = "11211"
+
+html_port = s:option(Value, "html_port", translate("web界面端口"),
+	translate("web dashboard 服务器的前端监听端口，留空不启用"))
+html_port.datatype = "range(1,65535)"
+html_port.placeholder = "11210"
 
 weblog = s:option(ListValue, "weblog", translate("程序日志"),
 	translate("运行日志在/tmp/easytierweb.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))

@@ -20,8 +20,10 @@ end
 function act_status()
 	local e = {}
 	local sys  = require "luci.sys"
+	local port = tonumber(uci:get_first("easytier", "easytierweb", "html_port"))
 	e.crunning = luci.sys.call("pgrep easytier-core >/dev/null") == 0
 	e.wrunning = luci.sys.call("pgrep easytier-web >/dev/null") == 0
+	e.port = (port or 0)
 	
 	local tagfile = io.open("/tmp/easytier_time", "r")
         if tagfile then
