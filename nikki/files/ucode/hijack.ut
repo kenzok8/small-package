@@ -139,7 +139,7 @@ table inet nikki {
 		{% if (length(lan_inbound_device) > 0): %}
 		elements = {
 			{% for (let device in lan_inbound_device): %}
-			{{ device }},
+			"{{ device }}",
 			{% endfor %}
 		}
 		{% endif %}
@@ -440,7 +440,7 @@ table inet nikki {
 		iifname lo meta l4proto { tcp, udp } meta mark {{ tproxy_fw_mark }} tproxy to :{{ tproxy_port }} counter accept
 		{% endif %}
 		{% if (tcp_mode == 'tun' || udp_mode == 'tun'): %}
-		iifname {{ tun_device }} meta l4proto { icmp, tcp, udp } counter accept
+		iifname "{{ tun_device }}" meta l4proto { icmp, tcp, udp } counter accept
 		{% endif %}
 	}
 	{% endif %}
