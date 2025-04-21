@@ -204,6 +204,10 @@ agent_lost_ac()
 		nft_add_brmeshfilters $brif
 	done
 
+	#dhcp no push router for lan, no push dns for lan
+	uci add_list dhcp.lan.dhcp_option='option:router'
+	uci add_list dhcp.lan.dhcp_option='6'
+
 	/etc/init.d/network reload
 	/etc/init.d/dnsmasq reload
 	sleep 5
