@@ -34,5 +34,5 @@ if [ "$need_reload" = "1" ] || [ "$(cat /tmp/hosts/fakemesh.idx | wc -l)" != "$(
 	done | sort | while read h ip; do
 		echo "$ip $((idx++)).ap.fakemesh # $h" >>/tmp/hosts/fakemesh.idx
 	done
-	#/etc/init.d/dnsmasq reload &
+	/etc/init.d/dnsmasq reload &
 fi
