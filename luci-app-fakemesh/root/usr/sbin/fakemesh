@@ -19,7 +19,7 @@ band_steer_helper_switch()
 			/etc/init.d/usteer enabled || /etc/init.d/usteer enable
 			/etc/init.d/usteer running || /etc/init.d/usteer start
 		}
-	else
+	elif [ "$band_steer_helper" = "dawn" ]; then
 		test -x /etc/init.d/usteer && {
 			/etc/init.d/usteer enabled && /etc/init.d/usteer disable
 			/etc/init.d/usteer running && /etc/init.d/usteer stop
@@ -27,6 +27,15 @@ band_steer_helper_switch()
 		test -x /etc/init.d/dawn && {
 			/etc/init.d/dawn enabled || /etc/init.d/dawn enable
 			/etc/init.d/dawn running || /etc/init.d/dawn start
+		}
+	else
+		test -x /etc/init.d/dawn && {
+			/etc/init.d/dawn enabled && /etc/init.d/dawn disable
+			/etc/init.d/dawn running && /etc/init.d/dawn stop
+		}
+		test -x /etc/init.d/usteer && {
+			/etc/init.d/usteer enabled && /etc/init.d/usteer disable
+			/etc/init.d/usteer running && /etc/init.d/usteer stop
 		}
 	fi
 }
@@ -322,8 +331,8 @@ agent_sync_config()
 
 		test $lost_ac -gt 0 && logger -t fakemesh "agent_sync_config($pid): fetch config ok!"
 
-		oldbsh=$(uci get fakemesh.default.band_steer_helper || echo usteer)
-		newbsh=$(uci get fakemeshac.default.band_steer_helper || echo usteer)
+		oldbsh=$(uci get fakemesh.default.band_steer_helper || echo none)
+		newbsh=$(uci get fakemeshac.default.band_steer_helper || echo none)
 		[ "${oldbsh}" = "${newbsh}" ] || {
 			uci set fakemesh.default.band_steer_helper="${newbsh}"
 			uci commit fakemesh
