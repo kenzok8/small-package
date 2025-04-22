@@ -62,9 +62,10 @@ return view.extend({
 		o.default = o.enabled;
 
 		o = s.option(form.ListValue, 'band_steer_helper', _('Band Steer Helper'));
+		o.value('none', _('None'));
 		o.value('usteer', _('usteer'));
 		o.value('dawn', _('DAWN'));
-		o.default = 'usteer';
+		o.default = 'none';
 
 		o = s.option(form.Flag, 'fronthaul_disabled', _('Fronthaul Disabled'), _('Disable fronthaul Wi-Fi signal on this node.'));
 		o.enabled = '1';
