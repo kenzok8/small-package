@@ -1,88 +1,89 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:224
-msgid "-- Please choose --"
-msgstr ""
-
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:214
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:188
 msgid "Accept DNS"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:214
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:188
 msgid "Accept DNS configuration from the Tailscale admin console."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:206
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:180
 msgid "Accept Routes"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:206
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:180
 msgid "Accept subnet routes that other nodes advertise."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:263
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:237
 msgid "Access Control"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:273
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:247
 msgid "Additional Flags"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:204
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:178
 msgid "Advanced Settings"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:155
-msgid "Are you sure you want to logout and unbind the current device?"
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:129
+msgid "Are you sure you want to log out and unbind the current device?"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:285
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:259
 msgid "Auth Key"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:273
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:247
 msgid "Available flags"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:169
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:143
 msgid "Basic Settings"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:164
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:178
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:138
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:152
 msgid "Collecting data ..."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:278
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:252
 msgid "Custom Server Settings"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:210
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:184
 msgid "Device Name"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:171
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:145
 msgid "Enable"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:218
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:47
+msgid "Error parsing interface info: %s."
+msgstr ""
+
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:192
 msgid "Exit Node"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:236
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:210
 msgid "Expose Subnets"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:236
-msgid "Expose physical network routes into Tailscale, e.g. <code>10.0.0.0/24</code>."
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:210
+msgid ""
+"Expose physical network routes into Tailscale, e.g. <code>10.0.0.0/24</code>."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:271
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:245
 msgid "Extra Settings"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:190
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:164
 msgid "Firewall Mode"
 msgstr ""
 
@@ -94,11 +95,11 @@ msgstr ""
 msgid "Grant access to Tailscale configuration"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:93
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:75
 msgid "IPv4 Address"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:97
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:79
 msgid "IPv6 Address"
 msgstr ""
 
@@ -106,84 +107,88 @@ msgstr ""
 msgid "Interface Info"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:89
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:71
 msgid "Interface Name"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:266
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:240
 msgid "LAN access Tailscale"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:210
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:184
 msgid "Leave blank to use the device's hostname."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:273
-msgid "List of extra flags. Format: --flags=value, e.g. <code>--exit-node=10.0.0.1</code>. <br> %s for enabling settings upon the initiation of Tailscale."
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:247
+msgid ""
+"List of extra flags. Format: --flags=value, e.g. <code>--exit-node=10.0.0.1</"
+"code>. <br> %s for enabling settings upon the initiation of Tailscale."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:196
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:91
+msgid "Log out and Unbind"
+msgstr ""
+
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:170
 msgid "Logging program activities."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:200
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:174
 msgid "Logging program errors and exceptions."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:175
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:149
 msgid "Login Status"
-msgstr ""
-
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:117
-msgid "Logout and Unbind"
 msgstr ""
 
 #: luci-app-tailscale/root/usr/share/luci/menu.d/luci-app-tailscale.json:30
 msgid "Logs"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:101
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:83
 msgid "MTU"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:104
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:119
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:78
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:93
 msgid "NOT RUNNING"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:114
-msgid "Needs Login"
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:88
+msgid "Need to log in"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:87
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:66
 msgid "Network Interface Information"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:229
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:203
 msgid "No Available Exit Nodes"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:256
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:230
 msgid "No Available Subnet Routes"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:83
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:63
 msgid "No interface online."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:218
-msgid "Offer to be an exit node for outbound internet traffic from the Tailscale network."
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:192
+msgid ""
+"Offer to be an exit node for outbound internet traffic from the Tailscale "
+"network."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:222
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:196
 msgid "Online Exit Nodes"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:181
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:155
 msgid "Port"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:102
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:76
 msgid "RUNNING"
 msgstr ""
 
@@ -197,73 +202,70 @@ msgctxt "scroll to bottom (the tail) of the log file"
 msgid "Scroll to tail"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:222
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:196
 msgid "Select an online machine name to use as an exit node."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:250
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:224
 msgid "Select subnet routes advertised by other nodes in Tailscale network."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:281
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:255
 msgid "Server Address"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:181
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:155
 msgid "Set the Tailscale port number."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:245
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:219
 msgid "Site To Site"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:200
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:174
 msgid "StdErr Log"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:196
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:170
 msgid "StdOut Log"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:250
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:224
 msgid "Subnet Routes"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:120
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:102
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:104
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:141
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:102
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:76
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:78
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:115
 #: luci-app-tailscale/root/usr/share/luci/menu.d/luci-app-tailscale.json:3
 msgid "Tailscale"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:264
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:238
 msgid "Tailscale access LAN"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:265
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:239
 msgid "Tailscale access WAN"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:121
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:141
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:103
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:115
 msgid "Tailscale is a cross-platform and easy to use virtual LAN."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:186
-msgid "The working directory contains config files, audit logs, and runtime info."
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:160
+msgid ""
+"The working directory contains config files, audit logs, and runtime info."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:105
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:87
 msgid "Total Download"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:109
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:91
 msgid "Total Upload"
-msgstr ""
-
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:33
-msgid "Unable to get interface %s info: %s."
 msgstr ""
 
 #: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/interface.js:18
@@ -274,18 +276,20 @@ msgstr ""
 msgid "Unable to load log data:"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:279
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:253
 msgid "Use %s to deploy a private server."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:245
-msgid "Use site-to-site layer 3 networking to connect subnets on the Tailscale network."
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:219
+msgid ""
+"Use site-to-site layer 3 networking to connect subnets on the Tailscale "
+"network."
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:267
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:241
 msgid "WAN access Tailscale"
 msgstr ""
 
-#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:186
+#: luci-app-tailscale/htdocs/luci-static/resources/view/tailscale/setting.js:160
 msgid "Workdir"
 msgstr ""

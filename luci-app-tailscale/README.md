@@ -30,13 +30,19 @@ Tailscale is a zero config VPN for building secure networks.
 
 ## How to install prebuilt packages
 
-- Upload the prebuilt ipk package to the /tmp directory of OpenWrt
-
+- Upload the prebuilt ipk or apk package to the /tmp directory of OpenWrt
 - Login OpenWrt terminal (SSH)
 
+### opkg package manager 
   ```shell
   opkg update
   opkg install --force-overwrite /tmp/luci-*-tailscale*.ipk
+  ```
+
+### apk package manager 
+  ```shell
+  apk update
+  apk add —allow-untrusted /tmp/luci-*-tailscale*.apk
   ```
 
 --------------
