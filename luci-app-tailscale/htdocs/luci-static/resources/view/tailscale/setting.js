@@ -6,6 +6,7 @@
 'use strict';
 'require form';
 'require fs';
+'require network';
 'require poll';
 'require rpc';
 'require uci';
@@ -18,49 +19,22 @@ var callServiceList = rpc.declare({
 	expect: { '': {} }
 });
 
-function callInterfaceStatus(interfaceName) {
-	return rpc.declare({
-		object: `network.interface.${interfaceName}`,
-		method: 'status',
-		params: ['name'],
-		expect: { '': {} }
-	});
-}
-
 function getInterfaceSubnets(interfaces = ['lan', 'wan']) {
-	const calculateSubnetAndCIDR = (ip, cidr) => {
-		const cidrInt = parseInt(cidr, 10);
-		const maskBinary = '1'.repeat(cidrInt).padEnd(32, '0');
-		const ipBinary = (ip) => 
-			ip.split('.').map(octet => parseInt(octet, 10).toString(2).padStart(8, '0'))
-			.join('');
-		const subnetBinary = ipBinary(ip).split('').map((bit, index) => 
-			(bit === '1' && maskBinary[index] === '1') ? '1' : '0'
-		).join('');
-		const subnet = [
-			parseInt(subnetBinary.slice(0, 8), 2),
-			parseInt(subnetBinary.slice(8, 16), 2),
-			parseInt(subnetBinary.slice(16, 24), 2),
-			parseInt(subnetBinary.slice(24, 32), 2)
-		].join('.');
-		return `${subnet}/${cidrInt}`;
-	};
-
-	const rpcCalls = interfaces.map(interfaceName => {
-		const callStatus = callInterfaceStatus(interfaceName);
-		return callStatus('ipv4-address').catch(() => ({ 'ipv4-address': [] }));
-	});
-
-	return Promise.all(rpcCalls)
-		.then(res => {
-			const interfaceSubnets = res.flatMap(status => 
-				(status['ipv4-address'] || []).map(addr => {
-					return calculateSubnetAndCIDR(addr.address, addr.mask)
-				})
-			);
-			return [...new Set(interfaceSubnets)];
-		})
-		.catch(() => []);
+    return network.getNetworks().then(networks => {
+        return [...new Set(
+            networks
+               .filter(ifc => interfaces.includes(ifc.getName()))
+               .flatMap(ifc => ifc.getIPAddrs())
+               .filter(addr => addr.includes('/'))
+               .map(addr => {
+                    const [ip, cidr] = addr.split('/');
+                    const ipParts = ip.split('.').map(Number);
+                    const mask = ~((1 << (32 - parseInt(cidr))) - 1);
+                    const subnetParts = ipParts.map((part, i) => (part & (mask >> (24 - i * 8))) & 255);
+                    return `${subnetParts.join('.')}/${cidr}`;
+                })
+        )];
+    });
 }
 
 function getStatus() {
@@ -111,10 +85,10 @@ function renderLogin(loginStatus, authURL, displayName) {
 	var spanTemp = '<span style="color:%s">%s</span>';
 	var renderHTML;
 	if (loginStatus == "NeedsLogin") {
-		renderHTML = String.format('<a href="%s" target="_blank">%s</a>', authURL, _('Needs Login'));
+		renderHTML = String.format('<a href="%s" target="_blank">%s</a>', authURL, _('Need to log in'));
 	} else if (loginStatus == "Running") {
 		renderHTML = String.format('<a href="%s" target="_blank">%s</a>', 'https://login.tailscale.com/admin/machines', displayName);
-		renderHTML += String.format('<br><a style="color:green" id="logout_button">%s</a>', _('Logout and Unbind'));
+		renderHTML += String.format('<br><a style="color:green" id="logout_button">%s</a>', _('Log out and Unbind'));
 	} else {
 		renderHTML = String.format(spanTemp, 'orange', _('NOT RUNNING'));
 	}
@@ -152,7 +126,7 @@ return view.extend({
 					var logoutButton = document.getElementById('logout_button');
 					if (logoutButton) {
 						logoutButton.onclick = function() {
-							if (confirm(_('Are you sure you want to logout and unbind the current device?'))) {
+							if (confirm(_('Are you sure you want to log out and unbind the current device?'))) {
 								fs.exec("/usr/sbin/tailscale", ["logout"]);
 							}
 						}
@@ -221,7 +195,7 @@ return view.extend({
 
 		o = s.taboption('advance', form.ListValue, 'exitNode', _('Online Exit Nodes'), _('Select an online machine name to use as an exit node.'));
 		if (onlineExitNodes.length > 0) {
-			o.value('', _('-- Please choose --'));
+			o.optional = false;
 			onlineExitNodes.forEach(function(node) {
 				o.value(node, node);
 			});
