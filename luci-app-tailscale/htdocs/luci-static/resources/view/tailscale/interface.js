@@ -11,15 +11,6 @@
 'require ui';
 'require view';
 
-function formatBytes(bytes, decimals = 2) {
-	if (bytes === 0) return '0 Bytes';
-	const k = 1024;
-	const dm = decimals < 0 ? 0 : decimals;
-	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
 return view.extend({
 	load: function() {
 		return fs.exec('/sbin/ip', ['-s', '-j', 'ad']).then(function(res) {
@@ -47,8 +38,8 @@ return view.extend({
 					});
 
 					parsedInfo.mtu = iface.mtu;
-					parsedInfo.rxBytes = formatBytes(iface.stats64.rx.bytes);
-					parsedInfo.txBytes = formatBytes(iface.stats64.tx.bytes);
+					parsedInfo.rxBytes = '%1024mB'.format(iface.stats64.rx.bytes);
+					parsedInfo.txBytes = '%1024mB'.format(iface.stats64.tx.bytes);
 
 					return parsedInfo;
 				});

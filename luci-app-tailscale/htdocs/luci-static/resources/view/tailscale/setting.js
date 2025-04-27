@@ -195,7 +195,7 @@ return view.extend({
 
 		o = s.taboption('advance', form.ListValue, 'exitNode', _('Online Exit Nodes'), _('Select an online machine name to use as an exit node.'));
 		if (onlineExitNodes.length > 0) {
-			o.optional = false;
+			o.optional = true;
 			onlineExitNodes.forEach(function(node) {
 				o.value(node, node);
 			});
