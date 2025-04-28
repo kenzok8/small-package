@@ -32,7 +32,7 @@ reset_pkg() {
             done
             rm -f /overlay/upper/usr/lib/opkg/info/${pkgname}.list /ext_overlay/upper/usr/lib/opkg/info/${pkgname}.list
         fi
-        deps=`grep '^Depends: ' /rom/usr/lib/opkg/info/${pkgname}.control | dd bs=1 skip=8 2>/dev/null | sed -e 's/ ([^)]*)//g' -e 's/,/ /g'`
+        deps=`grep '^Depends: ' /rom/usr/lib/opkg/info/${pkgname}.control | sed -e 's/^Depends: //' -e 's/ ([^)]*)//g' -e 's/,/ /g'`
         # avoid loop deps
         rm -f /overlay/upper/usr/lib/opkg/info/${pkgname}.control /ext_overlay/upper/usr/lib/opkg/info/${pkgname}.control
         for dep in $deps ; do
