@@ -21,22 +21,24 @@ reset_pkg() {
 ^libgcc1$
 ^libatomic1$
 ^busybox$' && return
-    if [ -f /rom/usr/lib/opkg/info/${pkgname}.control -a -e /overlay/upper/usr/lib/opkg/info/${pkgname}.control ]; then
+    if [ -f /rom/usr/lib/opkg/info/${pkgname}.control -a \
+            \( -e /overlay/upper/usr/lib/opkg/info/${pkgname}.control -o \
+             -e /ext_overlay/upper/usr/lib/opkg/info/${pkgname}.control \) ]; then
         echo "reset ${pkgname}"
         if [ -f /rom/usr/lib/opkg/info/${pkgname}.list ]; then
             nonconf_files_of_pkg "${pkgname}" | while read; do
 		        line="$REPLY"
-                rm -f "/overlay/upper/${line}"
+                rm -f "/overlay/upper/${line}" "/ext_overlay/upper/${line}"
             done
-            rm -f /overlay/upper/usr/lib/opkg/info/${pkgname}.list
+            rm -f /overlay/upper/usr/lib/opkg/info/${pkgname}.list /ext_overlay/upper/usr/lib/opkg/info/${pkgname}.list
         fi
-        deps=`grep '^Depends: ' /rom/usr/lib/opkg/info/${pkgname}.control | dd bs=1 skip=8 2>/dev/null | sed 's/,/ /g'`
+        deps=`grep '^Depends: ' /rom/usr/lib/opkg/info/${pkgname}.control | dd bs=1 skip=8 2>/dev/null | sed -e 's/ ([^)]*)//g' -e 's/,/ /g'`
         # avoid loop deps
-        rm -f /overlay/upper/usr/lib/opkg/info/${pkgname}.control
+        rm -f /overlay/upper/usr/lib/opkg/info/${pkgname}.control /ext_overlay/upper/usr/lib/opkg/info/${pkgname}.control
         for dep in $deps ; do
             reset_pkg "$dep"
         done
-        rm -f /overlay/upper/usr/lib/opkg/info/${pkgname}.*
+        rm -f /overlay/upper/usr/lib/opkg/info/${pkgname}.* /ext_overlay/upper/usr/lib/opkg/info/${pkgname}.*
     fi
 }
 
