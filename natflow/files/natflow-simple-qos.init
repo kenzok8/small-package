@@ -73,8 +73,9 @@ qos_simple_watch()
 		fi
 		test -z "${ip//*:*}" && {
 			mac=$(echo $line | cut -d, -f2)
-			iface=$(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}')
-			test -n "$iface" && ip -6 neigh replace $ip lladdr $mac dev $iface nud reachable
+			for iface in $(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}'); do
+				[ "$(fw3 -q device $iface 2>/dev/null)" = "lan" ] && ip -6 neigh replace $ip lladdr $mac dev $iface nud reachable
+			done
 		}
 	done
 }
@@ -103,8 +104,9 @@ start() {
 		fi
 		test -z "${ip//*:*}" && {
 			mac=$(echo $line | cut -d, -f2)
-			iface=$(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}')
-			test -n "$iface" && ip -6 neigh replace $ip lladdr $mac dev $iface nud reachable
+			for iface in $(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}'); do
+				[ "$(fw3 -q device $iface 2>/dev/null)" = "lan" ] && ip -6 neigh replace $ip lladdr $mac dev $iface nud reachable
+			done
 		}
 	done
 
