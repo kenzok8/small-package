@@ -1,0 +1,21 @@
+--- a/src/process_group.c
++++ b/src/process_group.c
+@@ -24,17 +24,10 @@
+ #include <limits.h>
+ #include <sys/time.h>
+ #include <signal.h>
+-
+-#if defined(__APPLE__) || defined(__FREEBSD__)
+-    #include <libgen.h>
+-#endif
++#include <libgen.h>
+ 
+ #include <assert.h>
+ 
+-#ifdef __sun__
+-    #include <libgen.h>
+-#endif
+-
+ #include "process_iterator.h"
+ #include "process_group.h"
+ #include "list.h"
