@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cpulimit
 PKG_VERSION:=0.3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/denji/cpulimit/tar.gz/$(PKG_VERSION)?
@@ -26,6 +26,8 @@ define Package/cpulimit/description
   Cpulimit is a tool which limits the CPU usage of a process
   (expressed in percentage, not in CPU time).
 endef
+
+TARGET_CFLAGS += -D_GNU_SOURCE
 
 define Package/cpulimit/install
 	$(INSTALL_DIR) $(1)/usr/bin/
