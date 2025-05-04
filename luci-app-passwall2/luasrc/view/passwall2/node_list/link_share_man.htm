@@ -543,6 +543,41 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				params = params.substring(1);
 			}
 			url += params;
+		} else if (v_type === "sing-box" && opt.get(dom_prefix + "protocol").value === "anytls") {
+			protocol = "anytls";
+			var v_password = opt.get(dom_prefix + "password");
+			var v_port = opt.get(dom_prefix + "port");
+			url = encodeURIComponent(v_password.value) +
+				"@" + _address +
+				":" + v_port.value + "?";
+
+			var params = "";
+			if (opt.get(dom_prefix + "tls").checked) {
+				var v_security = "tls";
+				if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+					let v_fp = opt.get(dom_prefix + "fingerprint").value;
+					params += "&fp=" + v_fp;
+				}
+				if (opt.get(dom_prefix + "reality") && opt.get(dom_prefix + "reality").checked) {
+					v_security = "reality";
+					if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
+						let v_fp = opt.get(dom_prefix + "fingerprint").value;
+						params += "&fp=" + v_fp;
+					}
+					params += opt.query("pbk", dom_prefix + "reality_publicKey");
+					params += opt.query("sid", dom_prefix + "reality_shortId");
+				}
+				params += "&security=" + v_security;
+				params += opt.query("alpn", dom_prefix + "alpn");
+				params += opt.query("sni", dom_prefix + "tls_serverName");
+				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+			}
+
+			params += "#" + encodeURI(v_alias.value);
+			if (params[0] == "&") {
+				params = params.substring(1);
+			}
+			url += params;
 		}
 		if (url) {
 			url = protocol.toLowerCase() + "://" + url;
@@ -639,10 +674,28 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					}
 					try {
 						obj.dispatchEvent(event);
-					} catch (err) {
-					}
+					} catch (err) {}
 				} else {
 					//alert('<%:Faltal on set option, please help in debug: %>' + opt + ' = ' + val);
+					// 处理 DynamicList
+					var fullName = this.base + '.' + opt;
+					var lists = document.querySelectorAll('.cbi-dynlist');
+					for (var i = 0; i < lists.length; i++) {
+						var parent = lists[i].closest('.cbi-value');
+						if (!parent) continue;
+						// 尝试从 label 的 for 属性中提取 fullName
+						var label = parent.querySelector('label.cbi-value-title');
+						var labelFor = label?.getAttribute('for');
+						if (labelFor === fullName) {
+							var input = lists[i].querySelector('input[type="text"]');
+							var addBtn = lists[i].querySelector('.cbi-button-add');
+							if (input && addBtn) {
+								input.value = val;
+								addBtn.click();
+							}
+							break;
+						}
+					}
 				}
 			},
 			setlist: function (opt, vlist) {
@@ -764,6 +817,9 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					dom_prefix = "xray_"
 					opt.set('type', "Xray");
 					opt.set(dom_prefix + 'protocol', "shadowsocks");
+				} else if (ss_type == "shadowsocks-rust") {
+					dom_prefix = "ssrust_"
+					opt.set('type', "SS-Rust");
 				} else {
 					if (["2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"].includes(method)) {
 						dom_prefix = "ssrust_"
@@ -782,10 +838,27 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				opt.set(dom_prefix + 'password', password || "");
 				opt.set(dom_prefix + 'method', method || "");
 				opt.set(dom_prefix + 'ss_method', method || "");
-				opt.set(dom_prefix + 'plugin', plugin || "none");
 				if (plugin && plugin != "none") {
-					opt.set(dom_prefix + 'plugin_opts', pluginOpts || "");
+					plugin = (plugin === "simple-obfs") ? "obfs-local" : plugin;
 					opt.set(dom_prefix + 'plugin_enabled', true);
+					opt.set(dom_prefix + 'plugin', plugin || "none");
+					opt.set(dom_prefix + 'plugin_opts', pluginOpts || "");
+					//obfs-local插件转换成xray支持的格式
+					if (plugin == "obfs-local" && dom_prefix == "xray_") {
+						var obfs = pluginOpts.match(/obfs=([^;]+)/);
+						var obfs_host = pluginOpts.match(/obfs-host=([^;]+)/);
+						obfs = obfs ? obfs[1] : "";
+						obfs_host = obfs_host ? obfs_host[1] : "";
+						if (obfs === "http") {
+							opt.set(dom_prefix + 'transport', "raw");
+							opt.set(dom_prefix + 'tcp_guise', "http");
+							opt.set(dom_prefix + 'tcp_guise_http_host', obfs_host || '');
+						} else if (obfs === "tls") {
+							opt.set(dom_prefix + 'tls', true);
+							opt.set(dom_prefix + 'tls_serverName', obfs_host || '');
+							opt.set(dom_prefix + 'tls_allowInsecure', true);
+						}
+					}
 				}
 				if (param !== undefined) {
 					opt.set('remarks', decodeURIComponent(param));
@@ -800,7 +873,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 							opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 							opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 							opt.set(dom_prefix + 'tls_allowInsecure', true);
-							if (queryParam.allowinsecure === '0') {
+							if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
 								opt.set(dom_prefix + 'tls_allowInsecure', false);
 							}
 							if (queryParam.fp && queryParam.fp.trim() != "") {
@@ -1032,8 +1105,9 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				tls_serverName = tls_serverName || "";
 				opt.set(dom_prefix + 'tls_serverName', tls_serverName);
 			}
-			if (queryParam.allowinsecure === '1') {
-				opt.set(dom_prefix + 'tls_allowInsecure', true);
+			opt.set(dom_prefix + 'tls_allowInsecure', true);
+			if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
+				opt.set(dom_prefix + 'tls_allowInsecure', false);
 			}
 
 			opt.set(dom_prefix + 'mux', queryParam.mux === '1');
@@ -1170,7 +1244,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
 					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 					opt.set(dom_prefix + 'tls_allowInsecure', true);
-					if (queryParam.allowinsecure === '0') {
+					if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
 						opt.set(dom_prefix + 'tls_allowInsecure', false);
 					}
 					if (queryParam.fp && queryParam.fp.trim() != "") {
@@ -1357,11 +1431,71 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			opt.set(dom_prefix + 'tuic_alpn', queryParam.alpn || 'default');
 			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 			opt.set(dom_prefix + 'tls_allowInsecure', true);
-			if (queryParam.allowinsecure === '0') {
+			if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
 				opt.set(dom_prefix + 'tls_allowInsecure', false);
 			}
 			if (hash) {
 				opt.set('remarks', decodeURIComponent(hash.substr(1)));
+			}
+		}
+		if (ssu[0] === "anytls") {
+			if (has_singbox) {
+				dom_prefix = "singbox_"
+				opt.set('type', "sing-box");
+			}
+			opt.set(dom_prefix + 'protocol', "anytls");
+			var m = parseNodeUrl(ssrurl);
+			var password = m.passwd;
+			if (password === "") {
+				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
+				return false;
+			}
+			opt.set(dom_prefix + 'password', password);
+			opt.set(dom_prefix + 'address', m.hostname);
+			opt.set(dom_prefix + 'port', m.port || "443");
+			var queryParam = {};
+			if (m.search.length > 1) {
+				var query = m.search.replace('/?', '?').split('?')
+				var queryParams = query[1];
+				var queryArray = queryParams.split('&');
+				var params;
+				for (i = 0; i < queryArray.length; i++) {
+					params = queryArray[i].split('=');
+					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
+				}
+			}
+			if (queryParam.security) {
+				if (queryParam.security == "tls") {
+					opt.set(dom_prefix + 'tls', true);
+					opt.set(dom_prefix + 'reality', false);
+					opt.set(dom_prefix + 'flow', queryParam.flow || '');
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
+					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
+					opt.set(dom_prefix + 'tls_allowInsecure', true);
+					if (queryParam.allowinsecure === '0' || queryParam.insecure === '0') {
+						opt.set(dom_prefix + 'tls_allowInsecure', false);
+					}
+					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set(dom_prefix + 'utls', true);
+						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
+					}
+				}
+				if (queryParam.security == "reality") {
+					opt.set(dom_prefix + 'tls', true);
+					opt.set(dom_prefix + 'reality', true);
+					opt.set(dom_prefix + 'flow', queryParam.flow || '');
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
+					opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
+					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set(dom_prefix + 'utls', true);
+						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
+					}
+					opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
+					opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
+				}
+			}
+			if (m.hash) {
+				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
 		if (dom_prefix && dom_prefix != null) {
