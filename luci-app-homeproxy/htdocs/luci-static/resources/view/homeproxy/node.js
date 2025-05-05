@@ -63,7 +63,7 @@ function parseShareLink(uri, features) {
 				tls: '1',
 				tls_sni: params.get('peer'),
 				tls_alpn: params.get('alpn'),
-				tls_insecure: params.get('insecure') ? '1' : '0'
+				tls_insecure: (params.get('insecure') === '1') ? '1' : '0'
 			};
 
 			break;

@@ -2,10 +2,20 @@
 
 uci -q batch <<-EOF >"/dev/null"
 	delete firewall.homeproxy_pre
-	set firewall.homeproxy_pre=include
-	set firewall.homeproxy_pre.type=nftables
-	set firewall.homeproxy_pre.path="/var/run/homeproxy/fw4_pre.nft"
-	set firewall.homeproxy_pre.position="table-pre"
+
+	delete firewall.homeproxy_forward
+	set firewall.homeproxy_forward=include
+	set firewall.homeproxy_forward.type=nftables
+	set firewall.homeproxy_forward.path="/var/run/homeproxy/fw4_forward.nft"
+	set firewall.homeproxy_forward.position="chain-pre"
+	set firewall.homeproxy_forward.chain="forward"
+
+	delete firewall.homeproxy_input
+	set firewall.homeproxy_input=include
+	set firewall.homeproxy_input.type=nftables
+	set firewall.homeproxy_input.path="/var/run/homeproxy/fw4_input.nft"
+	set firewall.homeproxy_input.position="chain-pre"
+	set firewall.homeproxy_input.chain="input"
 
 	delete firewall.homeproxy_post
 	set firewall.homeproxy_post=include
