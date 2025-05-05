@@ -238,7 +238,7 @@ start_service() {
 	chown -R sing-box:sing-box "$RUN_DIR"
 
 	# Setup firewall
-	utpl -S "$HP_DIR/scripts/firewall_pre.ut" > "$RUN_DIR/fw4_pre.nft"
+	ucode "$HP_DIR/scripts/firewall_pre.uc"
 	[ "$outbound_node" = "nil" ] || utpl -S "$HP_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fw4_post.nft"
 	fw4 reload >"/dev/null" 2>&1
 
@@ -291,7 +291,8 @@ stop_service() {
 		nft flush set inet fw4 "$i"
 		nft delete set inet fw4 "$i"
 	done 2>"/dev/null"
-	echo 2>"/dev/null" > "$RUN_DIR/fw4_pre.nft"
+	echo 2>"/dev/null" > "$RUN_DIR/fw4_forward.nft"
+	echo 2>"/dev/null" > "$RUN_DIR/fw4_input.nft"
 	echo 2>"/dev/null" > "$RUN_DIR/fw4_post.nft"
 	fw4 reload >"/dev/null" 2>&1
 

@@ -170,7 +170,7 @@ function parse_uri(uri) {
 				hysteria_obfs_type: params.obfs,
 				hysteria_obfs_password: params['obfs-password'],
 				tls: '1',
-				tls_insecure: params.insecure ? '1' : '0',
+				tls_insecure: (params.insecure === '1') ? '1' : '0',
 				tls_sni: params.sni
 			};
 
