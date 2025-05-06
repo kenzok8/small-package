@@ -12,54 +12,52 @@
 'require view';
 
 return view.extend({
-	load: function() {
-		return fs.exec('/sbin/ip', ['-s', '-j', 'ad']).then(function(res) {
-			if (res.code !== 0 || !res.stdout || res.stdout.trim() === '') {
-				ui.addNotification(null, E('p', {}, _('Unable to get interface info: %s.').format(res.message)));
-				return [];
-			}
+	async load() {
+		const res = await fs.exec('/sbin/ip', ['-s', '-j', 'ad']);
+		if (res.code !== 0 || !res.stdout || res.stdout.trim() === '') {
+			ui.addNotification(null, E('p', {}, _('Unable to get interface info: %s.').format(res.message)));
+			return [];
+		}
 
-			try {
-				const interfaces = JSON.parse(res.stdout);
-				const tailscaleInterfaces = interfaces.filter(iface => iface.ifname.match(/tailscale[0-9]+/));
+		try {
+			const interfaces = JSON.parse(res.stdout);
+			const tailscaleInterfaces = interfaces.filter(iface => iface.ifname.match(/tailscale[0-9]+/));
 
-				return tailscaleInterfaces.map(iface => {
-					const parsedInfo = {
-						name: iface.ifname
-					};
+			return tailscaleInterfaces.map(iface => {
+				const parsedInfo = {
+					name: iface.ifname
+				};
 
-					const addr_info = iface.addr_info || [];
-					addr_info.forEach(addr => {
-						if (addr.family === 'inet') {
-							parsedInfo.ipv4 = addr.local;
-						} else if (addr.family === 'inet6') {
-							parsedInfo.ipv6 = addr.local;
-						}
-					});
-
-					parsedInfo.mtu = iface.mtu;
-					parsedInfo.rxBytes = '%1024mB'.format(iface.stats64.rx.bytes);
-					parsedInfo.txBytes = '%1024mB'.format(iface.stats64.tx.bytes);
-
-					return parsedInfo;
+				const addr_info = iface.addr_info || [];
+				addr_info.forEach(addr => {
+					if (addr.family === 'inet') {
+						parsedInfo.ipv4 = addr.local;
+					} else if (addr.family === 'inet6') {
+						parsedInfo.ipv6 = addr.local;
+					}
 				});
-			} catch (e) {
-				ui.addNotification(null, E('p', {}, _('Error parsing interface info: %s.').format(e.message)));
-				return [];
-			}
+
+				parsedInfo.mtu = iface.mtu;
+				parsedInfo.rxBytes = '%1024mB'.format(iface.stats64.rx.bytes);
+				parsedInfo.txBytes = '%1024mB'.format(iface.stats64.tx.bytes);
+
+				return parsedInfo;
+			});
+		} catch (e) {
+			ui.addNotification(null, E('p', {}, _('Error parsing interface info: %s.').format(e.message)));
+			return [];
+		}
+	},
+
+	pollData(container) {
+		poll.add(async () => {
+			const data = await this.load();
+			dom.content(container, this.renderContent(data));
 		});
 	},
 
-	pollData: function (container) {
-		poll.add(L.bind(function () {
-			return this.load().then(L.bind(function (data) {
-				dom.content(container, this.renderContent(data));
-			}, this));
-		}, this));
-	},
-
-	renderContent: function (data) {
-		if (!Array.isArray(data)) {
+	renderContent(data) {
+		if (!Array.isArray(data) || data.length === 0) {
 			return E('div', {}, _('No interface online.'));
 		}
 		const rows = [
@@ -97,7 +95,7 @@ return view.extend({
 		return E('table', { 'class': 'table' }, rows);
 	},
 
-	render: function(data) {
+	render(data) {
 		const content = E([], [
 			E('h2', { class: 'content' }, _('Tailscale')),
 			E('div', { class: 'cbi-map-descr' }, _('Tailscale is a cross-platform and easy to use virtual LAN.')),

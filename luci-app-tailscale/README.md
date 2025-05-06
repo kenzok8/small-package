@@ -50,3 +50,9 @@ Tailscale is a zero config VPN for building secure networks.
 ## Thanks
 - [Carseason/openwrt-tailscale](https://github.com/Carseason/openwrt-tailscale)
 - [immortalwrt/luci-app-zerotier](https://github.com/immortalwrt/luci/blob/master/applications/luci-app-zerotier)
+
+## Screenshot
+<img width="573" alt="Basic" src="https://github.com/user-attachments/assets/bfca389a-bcec-42de-b5dd-b9588fd5db23" />
+<img width="577" alt="Advanced" src="https://github.com/user-attachments/assets/d60ce19e-b3f3-43a7-98fc-7df6e2231898" />
+<img width="575" alt="Extra" src="https://github.com/user-attachments/assets/6de5eaa7-6c18-48b8-a44a-0eaa311b0b79" />
+

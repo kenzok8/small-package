@@ -4,7 +4,7 @@ START=90
 
 USE_PROCD=1
 
-PROG=/usr/sbin/tailscale
+PROG=/usr/sbin/tailscale_helper
 PROGD=/usr/sbin/tailscaled
 CONFIG_PATH=/var/lib/tailscale
 
@@ -18,166 +18,60 @@ section_enabled() {
 	[ $enabled -gt 0 ]
 }
 
-custom_instance() {
+tailscale_helper() {
 	local cfg="$1"
-	local acceptRoutes hostname acceptDNS advertiseExitNode exitNode advertiseRoutes s2s subnetRoutes flags loginServer authkey std_out std_err
-	local ARGS=" up --reset"
+	local accept_routes hostname accept_dns advertise_exit_node exit_node advertise_routes disable_snat_subnet_routes subnet_routes access flags login_server authkey std_out std_err
 
-	if ! section_enabled "$cfg"; then
-		echo "disabled in config"
-		return 1
-	fi
-
-	config_get_bool acceptRoutes $cfg 'acceptRoutes'
+	config_get_bool accept_routes $cfg 'accept_routes'
 	config_get hostname $cfg 'hostname'
-	config_get_bool acceptDNS $cfg 'acceptDNS'
-	config_get_bool advertiseExitNode $cfg 'advertiseExitNode'
-	config_get exitNode $cfg 'exitNode'
-	config_get advertiseRoutes $cfg 'advertiseRoutes'
-	config_get_bool s2s $cfg 's2s'
+	config_get_bool accept_dns $cfg 'accept_dns'
+	config_get_bool advertise_exit_node $cfg 'advertise_exit_node'
+	config_get exit_node $cfg 'exit_node'
+	config_get advertise_routes $cfg 'advertise_routes'
+	config_get_bool disable_snat_subnet_routes $cfg 'disable_snat_subnet_routes'
+	config_get subnet_routes $cfg 'subnet_routes'
+	config_get access $cfg 'access'
 	config_get flags $cfg 'flags'
-	config_get loginServer $cfg 'loginServer'
+	config_get login_server $cfg 'login_server'
 	config_get authkey $cfg 'authkey'
 	config_get_bool std_out $cfg 'log_stdout'
 	config_get_bool std_err $cfg 'log_stderr'
 
-	[ "$acceptRoutes" = "1" ] && ARGS="$ARGS --accept-routes=true"
-	[ -n "$hostname" ] && ARGS="$ARGS --hostname=$hostname"
-	[ "$acceptDNS" = "0" ] && ARGS="$ARGS --accept-dns=false"
-	[ "$advertiseExitNode" = "1" ] && ARGS="$ARGS --advertise-exit-node"
-	[ -n "$exitNode" ] && ARGS="$ARGS --exit-node=$exitNode --exit-node-allow-lan-access=true"
-	[ -n "$advertiseRoutes" ] && ARGS="$ARGS --advertise-routes=$(echo $advertiseRoutes | tr ' ' ',')"
-	[ "$s2s" = "1" ] && ARGS="$ARGS --snat-subnet-routes=false"
-	[ -n "$flags" ] && ARGS="$ARGS $flags"
-	[ -n "$loginServer" ] && ARGS="$ARGS --login-server=$loginServer"
-	[ -n "$authkey" ] && ARGS="$ARGS --authkey=$authkey"
-
 	procd_open_instance
-	procd_set_param command $PROG $ARGS
+	procd_set_param command $PROG
+
+	[ "$accept_routes" = "1" ] && procd_append_param command --accept-routes=true
+	[ -n "$hostname" ] && procd_append_param command --hostname="$hostname"
+	[ "$accept_dns" = "0" ] && procd_append_param command --accept-dns=false
+	[ "$advertise_exit_node" = "1" ] && procd_append_param command --advertise-exit-node
+	[ -n "$exit_node" ] && {
+		procd_append_param command --exit-node="$exit_node"
+		procd_append_param command --exit-node-allow-lan-access=true
+	}
+	[ -n "$advertise_routes" ] && procd_append_param command --advertise-routes="$(echo $advertise_routes | tr ' ' ',')"
+	[ "$disable_snat_subnet_routes" = "1" ] && procd_append_param command --snat-subnet-routes=false
+	[ -n "$flags" ] && procd_append_param command $flags
+	[ -n "$login_server" ] && procd_append_param command --login-server="$login_server"
+	[ -n "$authkey" ] && procd_append_param command --authkey="$authkey"
+
+	procd_set_param env \
+		ACCEPT_DNS="$accept_dns" \
+		EXIT_NODE="$exit_node" \
+		SUBNET_ROUTES="$subnet_routes" \
+		ACCESS="$access"
+
+	procd_set_param respawn
 	procd_set_param stdout "$std_out"
 	procd_set_param stderr "$std_err"
 	procd_close_instance
-	(
-		[ -f "/var/run/tailscale.wait.pid" ] && return
-		touch /var/run/tailscale.wait.pid
-		count=0
-		while [ -z "$(ifconfig | grep 'tailscale' | awk '{print $1}')" ] || [ -z "$(tailscale ip -4)" ]
-		do
-			sleep 2
-			let count++
-			[ "${count}" -ge 5 ] && { rm /var/run/tailscale.wait.pid; exit 19; }
-		done
-
-		if [ "$acceptDNS" = "1" ]; then
-			MagicDNSSuffix=$(tailscale status --json | awk -F'"' '/"MagicDNSSuffix"/ {last=$(NF-1)} END {print last}')
-			sed -i '/100.100.100.100/d' /etc/dnsmasq.conf
-			echo "server=/$MagicDNSSuffix/100.100.100.100" >> /etc/dnsmasq.conf
-			/etc/init.d/dnsmasq reload
-		fi
-
-		ts0=$(ifconfig | grep 'tailscale' | awk '{print $1}')
-		if [ -z "$(uci -q get network.tailscale)" ];  then				
-			uci set network.tailscale='interface'
-			if [ "$ts0" = *$'\n'* ]; then
-				uci set network.ts_lan='device'
-				uci set network.ts_lan.type='bridge'
-				uci set network.ts_lan.name='ts-lan'
-				for port in "${ts0}"; do
-					uci add_list network.ts_lan.ports=$port
-				done
-				uci set network.tailscale.proto='none'
-				uci set network.tailscale.device='ts-lan'
-			else
-				ts_ip=$(tailscale ip -4)
-				uci set network.tailscale.proto='static'
-				uci set network.tailscale.ipaddr=$ts_ip
-				uci set network.tailscale.netmask='255.0.0.0'
-				uci set network.tailscale.device=$ts0
-			fi
-		fi
-
-		lan2wan=$(uci show firewall | grep "firewall.@forwarding\[[0-9]\+\]\.src='lan'" -B 1 -A 1 | grep "firewall.@forwarding\[[0-9]\+\]\.dest='wan'" | grep -o '[0-9]\+')
-		if [ -n "$exitNode" ];  then
-			uci set firewall.@defaults[0].forward='REJECT'
-			[ -n $lan2wan ] && uci set firewall.@forwarding[$lan2wan].enabled='0'
-		else
-			uci -q delete firewall.@forwarding[$lan2wan].enabled
-		fi
-
-		config_get subnetRoutes $cfg 'subnetRoutes'
-		if [ -n "$subnetRoutes" ];  then
-			i=1
-			ts_ip=$(tailscale ip -4)
-			for route in $subnetRoutes; do
-				uci set network.ts_subnet$i='route'
-				uci set network.ts_subnet$i.interface='tailscale'
-				uci set network.ts_subnet$i.target=$route
-				uci set network.ts_subnet$i.gateway=$ts_ip
-				let i++
-			done
-		else
-			for route in $(uci show network | grep 'network.ts_subnet[0-9]\+=route' | grep -o 'network.ts_subnet[0-9]\+'); do
-				uci -q delete $route
-			done
-		fi
-
-		config_get access $cfg 'access'
-		if [ -n "$access" ];  then
-			if [ -z "$(uci -q get firewall.tszone)" ];  then
-				uci set firewall.tszone='zone'
-				uci set firewall.tszone.input='ACCEPT'
-				uci set firewall.tszone.output='ACCEPT'
-				uci set firewall.tszone.forward='ACCEPT'
-				uci set firewall.tszone.masq='1'
-				uci set firewall.tszone.mtu_fix='1'
-				uci set firewall.tszone.name='tailscale'
-				uci set firewall.tszone.network='tailscale'
-			fi
-		else
-			uci -q delete firewall.tszone
-		fi
-		if [ "${access//tsfwlan/}" != "$access" ]; then
-			uci set firewall.tsfwlan=forwarding
-			uci set firewall.tsfwlan.dest='lan'
-			uci set firewall.tsfwlan.src='tailscale'
-		else
-			uci -q delete firewall.tsfwlan
-		fi
-		if [ "${access//tsfwwan/}" != "$access" ]; then
-			uci set firewall.tsfwwan=forwarding
-			uci set firewall.tsfwwan.dest='wan'
-			uci set firewall.tsfwwan.src='tailscale'
-		else
-			uci -q delete firewall.tsfwwan
-		fi
-		if [ "${access//lanfwts/}" != "$access" ]; then
-			uci set firewall.lanfwts=forwarding
-			uci set firewall.lanfwts.dest='tailscale'
-			uci set firewall.lanfwts.src='lan'
-		else
-			uci -q delete firewall.lanfwts
-		fi
-		if [ "${access//wanfwts/}" != "$access" ]; then
-			uci set firewall.wanfwts=forwarding
-			uci set firewall.wanfwts.dest='tailscale'
-			uci set firewall.wanfwts.src='wan'
-		else
-			uci -q delete firewall.wanfwts
-		fi
-
-		[ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload
-		[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload
-		rm /var/run/tailscale.wait.pid
-	) &
 }
 
 start_instance() {
 	local cfg="$1"
 	local port config_path fw_mode std_out std_err state_file
-	local ARGS=""
 
 	if ! section_enabled "$cfg"; then
-		echo "disabled in config"
+		echo "disabled in /etc/config/tailscale"
 		return 1
 	fi
 
@@ -189,38 +83,40 @@ start_instance() {
 
 	[ -d $config_path ] || mkdir -p $config_path
 	[ -d $CONFIG_PATH ] || mkdir -p $CONFIG_PATH
-	state_file=$config_path/tailscaled.state
+	state_file="$config_path/tailscaled.state"
 	
 	/usr/sbin/tailscaled --cleanup
 
-	[ -n "$port" ] && ARGS="$ARGS --port $port"
-	[ -n "$state_file" ] && ARGS="$ARGS --state $state_file"
-
 	procd_open_instance
-	procd_set_param command $PROGD $ARGS
+	procd_set_param command $PROGD
+
+	[ -n "$port" ] && procd_append_param command --port "$port"
+	[ -n "$state_file" ] && procd_append_param command --state "$state_file"
 
 	procd_set_param env TS_DEBUG_FIREWALL_MODE="$fw_mode"
- 	
+	
 	procd_set_param respawn
 	procd_set_param stdout "$std_out"
 	procd_set_param stderr "$std_err"
 	procd_close_instance
+
+	tailscale_helper "$cfg"
 }
 
 start_service() {
 	config_load 'tailscale'
 	config_foreach start_instance 'tailscale'
-	config_foreach custom_instance 'tailscale'
 }
 
 stop_instance() {
 	local cfg="$1"
-	/usr/sbin/tailscaled --cleanup
 
 	# Remove dnsmasq settings
-	sed -i '/100.100.100.100/d' /etc/dnsmasq.conf
-	/etc/init.d/dnsmasq reload
-	
+	MagicDNSSuffix=$(tailscale status --json | awk -F'"' '/"MagicDNSSuffix"/ {last=$(NF-1)} END {print last}')
+	for suffix in $(uci show dhcp | grep -E "address=.*/${MagicDNSSuffix}/" | sed "s/'//g"); do
+		uci -q del_list $suffix
+	done
+ 
 	# Remove network settings
 	uci -q delete network.tailscale
 	uci -q delete network.ts_lan
@@ -229,18 +125,23 @@ stop_instance() {
 	done
 	
 	# Remove firewall settings
-	lan2wan=$(uci show firewall | grep "firewall.@forwarding\[[0-9]\+\]\.src='lan'" -B 1 -A 1 | grep "firewall.@forwarding\[[0-9]\+\]\.dest='wan'" | grep -o '[0-9]\+')
-	uci -q delete firewall.@forwarding[$lan2wan].enabled
+	index=$(uci show firewall | grep "firewall.@forwarding\[[0-9]\+\]\.src='lan'" -B 1 -A 1 | grep "firewall.@forwarding\[[0-9]\+\]\.dest='wan'" | grep -o '[0-9]\+')
+	uci -q delete firewall.@forwarding[$index].enabled
 	uci -q delete firewall.tszone
-	uci -q delete firewall.tsfwlan
-	uci -q delete firewall.tsfwwan
-	uci -q delete firewall.lanfwts
-	uci -q delete firewall.wanfwts
+	uci -q delete firewall.ts_ac_lan
+	uci -q delete firewall.ts_ac_wan
+	uci -q delete firewall.lan_ac_ts
+	uci -q delete firewall.wan_ac_ts
+	
+	# Commit configuration changes and reload service
+	[ -n "$(uci changes dhcp)" ] && uci commit dhcp && /etc/init.d/dnsmasq reload
 	[ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload
 	[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload
 
+	/usr/sbin/tailscaled --cleanup
+
 	# Remove existing link or folder
-	rm -rf $CONFIG_PATH
+	rm -rf "$CONFIG_PATH"
 }
 
 stop_service() {
