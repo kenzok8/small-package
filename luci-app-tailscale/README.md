@@ -42,7 +42,7 @@ Tailscale is a zero config VPN for building secure networks.
 ### apk package manager 
   ```shell
   apk update
-  apk add —allow-untrusted /tmp/luci-*-tailscale*.apk
+  apk add --allow-untrusted --force-overwrite /tmp/luci-*-tailscale*.apk
   ```
 
 --------------
@@ -50,6 +50,8 @@ Tailscale is a zero config VPN for building secure networks.
 ## Thanks
 - [Carseason/openwrt-tailscale](https://github.com/Carseason/openwrt-tailscale)
 - [immortalwrt/luci-app-zerotier](https://github.com/immortalwrt/luci/blob/master/applications/luci-app-zerotier)
+
+--------------
 
 ## Screenshot
 <img width="573" alt="Basic" src="https://github.com/user-attachments/assets/bfca389a-bcec-42de-b5dd-b9588fd5db23" />
