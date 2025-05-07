@@ -424,6 +424,9 @@ msgstr "导出分享URL"
 msgid "Generate QRCode"
 msgstr "生成二维码"
 
+msgid "Export Config File"
+msgstr "导出配置文件"
+
 msgid "Import Finished"
 msgstr "导入完成："
 
@@ -1692,3 +1695,12 @@ msgstr "端口跳跃范围"
 
 msgid "Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,)."
 msgstr "格式为：1000:2000 或 1000-2000 多组时用逗号(,)隔开。"
+
+msgid "Use Custom Config"
+msgstr "使用自定义配置"
+
+msgid "Custom Config"
+msgstr "自定义配置"
+
+msgid "Must be JSON text!"
+msgstr "必须是 JSON 文本内容！"
