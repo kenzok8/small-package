@@ -1,4 +1,4 @@
--- Copyright (C) 2023  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/chatgpt-web.git
+-- Copyright (C) 2023-2025  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/luci-app-chatgpt-web
 -- Licensed to the public under the Apache License 2.0.
 
 module("luci.controller.chatgpt-web", package.seeall)
