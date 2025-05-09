@@ -539,13 +539,7 @@ local sysrole = uci:get_first('chatgpt-web', 'basic', 'systemrole')
                         <div data-id="recOption" data-i18n-key="stt"></div>
                     </div>
                     <div id="convOption">
-                        <div>
-                            <div data-i18n-key="avatar"></div>
-                            <div class="avatarDetail">
-                                <img id="setAvatarPre" src="" />
-                                <input class="inputTextClass" autocomplete="off" type="text" id="setAvatar" />
-                            </div>
-                        </div>
+
                         <div>
                             <div class="justSetLine presetSelect">
                                 <div data-i18n-key="systemRole"></div>
@@ -5168,21 +5162,11 @@ local sysrole = uci:get_first('chatgpt-web', 'basic', 'systemrole')
                 }
             }
 
-            const updateAvatar = () => {
-			
-                userAvatar = "<%=userpic%>" || "/luci-static/chatgpt-web/user/girl.jpg"; // 用户头像
-                setAvatarPre.src = userAvatar;
-                chatlog.querySelectorAll(".request>.chatAvatar").forEach(ele => {
-                    ele.children[0].src = userAvatar;
-                })
-            }
-            let localAvatar = localStorage.getItem("userAvatar");
-            setAvatar.onchange = () => {
-                userAvatar = "<%=userpic%>" || "/luci-static/chatgpt-web/user/girl.jpg"; // 用户头像
-                localStorage.setItem("userAvatar", userAvatar);
-                updateAvatar();
-            }
-            setAvatar.dispatchEvent(new Event("change"));
+
+            userAvatar = "<%=userpic%>" || "/luci-static/chatgpt-web/user/girl.jpg"; // 用户头像
+
+            localStorage.setItem("userAvatar", userAvatar);
+
             let localSystem = localStorage.getItem("system");
             systemEle.onchange = () => {
                 systemRole = systemEle.value;

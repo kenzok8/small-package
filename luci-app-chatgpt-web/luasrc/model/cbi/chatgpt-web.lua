@@ -28,5 +28,9 @@ o.rmempty = true
 o.default="girl.jpg"
 
 
+o=s:option(TextValue, "systemrole" ,translate("Default Role Settings"))
+o.rows = 5
+o.rmempty=false
+
 
 return m
