@@ -566,7 +566,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			mode: cfg.plugin_opts_obfsmode,
 			host: cfg.plugin_opts_host,
 			password: cfg.plugin_opts_thetlspassword,
-			version: cfg.plugin_opts_shadowtls_version,
+			version: strToInt(cfg.plugin_opts_shadowtls_version),
 			"version-hint": cfg.plugin_opts_restls_versionhint,
 			"restls-script": cfg.plugin_opts_restls_script
 		} : null,

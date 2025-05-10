@@ -1013,6 +1013,10 @@ msgstr ""
 msgid "Handle domain"
 msgstr "處理網域"
 
+#: htdocs/luci-static/resources/view/fchomo/server.js:269
+msgid "Handshake target that supports TLS 1.3"
+msgstr "握手目標 (支援 TLS 1.3)"
+
 #: htdocs/luci-static/resources/view/fchomo/client.js:723
 #: htdocs/luci-static/resources/view/fchomo/node.js:1018
 msgid "Health check URL"

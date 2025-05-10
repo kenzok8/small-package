@@ -490,6 +490,7 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'plugin_opts_host', _('Plugin: ') + _('Host that supports TLS 1.3'));
+		so.datatype = 'hostname';
 		so.placeholder = 'cloud.tencent.com';
 		so.rmempty = false;
 		so.depends({plugin: /^(obfs|v2ray-plugin|shadow-tls|restls)$/});
@@ -547,7 +548,6 @@ return view.extend({
 		so.validate = function(section_id, value) {
 			const type = this.section.getOption('type').formvalue(section_id);
 			let tls = this.section.getUIElement(section_id, 'tls').node.querySelector('input');
-			let tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
 
 			// Force enabled
 			if (['trojan', 'anytls', 'hysteria', 'hysteria2', 'tuic'].includes(type)) {
@@ -555,29 +555,6 @@ return view.extend({
 				tls.disabled = true;
 			} else {
 				tls.disabled = null;
-			}
-
-			// Default alpn
-			if (!`${tls_alpn.getValue()}`) {
-				let def_alpn;
-
-				switch (type) {
-					case 'hysteria':
-					case 'hysteria2':
-					case 'tuic':
-						def_alpn = ['h3'];
-						break;
-					case 'vmess':
-					case 'vless':
-					case 'trojan':
-					case 'anytls':
-						def_alpn = ['h2', 'http/1.1'];
-						break;
-					default:
-						def_alpn = [];
-				}
-
-				tls_alpn.setValue(def_alpn);
 			}
 
 			return true;
@@ -599,7 +576,41 @@ return view.extend({
 
 		so = ss.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),
 			_('List of supported application level protocols, in order of preference.'));
+		so.validate = function(section_id, value) {
+			const type = this.section.getOption('type').formvalue(section_id);
+			//const plugin = this.section.getOption('plugin').formvalue(section_id);
+			let tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
+
+			// Default alpn
+			if (!`${tls_alpn.getValue()}`) {
+				let def_alpn;
+
+				switch (type) {
+					case 'ss':
+						def_alpn = ['h2', 'http/1.1']; // when plugin === 'shadow-tls'
+						break;
+					case 'hysteria':
+					case 'hysteria2':
+					case 'tuic':
+						def_alpn = ['h3'];
+						break;
+					case 'vmess':
+					case 'vless':
+					case 'trojan':
+					case 'anytls':
+						def_alpn = ['h2', 'http/1.1'];
+						break;
+					default:
+						def_alpn = [];
+				}
+
+				tls_alpn.setValue(def_alpn);
+			}
+
+			return true;
+		}
 		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
+		so.depends({type: 'ss', plugin: 'shadow-tls'});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Value, 'tls_fingerprint', _('Cert fingerprint'),

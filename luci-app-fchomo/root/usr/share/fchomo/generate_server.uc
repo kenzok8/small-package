@@ -102,6 +102,26 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		/* AnyTLS */
 		"padding-scheme": cfg.anytls_padding_scheme,
 
+		/* Plugin fields */
+		...(cfg.plugin ? {
+			// shadow-tls
+			"shadow-tls": cfg.plugin === 'shadow-tls' ? {
+				enable: true,
+				version: strToInt(cfg.plugin_opts_shadowtls_version),
+				...(strToInt(cfg.plugin_opts_shadowtls_version) >= 3 ? {
+					users: [
+						{
+							name: 1,
+							password: cfg.plugin_opts_thetlspassword
+						}
+					],
+				} : { password: cfg.plugin_opts_thetlspassword }),
+				handshake: {
+					dest: cfg.plugin_opts_handshake_dest
+				},
+			} : null
+		} : {}),
+
 		/* Extra fields */
 		udp: strToBool(cfg.udp),
 
