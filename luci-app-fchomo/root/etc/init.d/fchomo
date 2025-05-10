@@ -248,6 +248,7 @@ start_service() {
 
 		procd_set_param command /bin/sh
 		procd_append_param command -c "'$PROG' -d '$HM_DIR' -f '$RUN_DIR/mihomo-c.yaml' >> '$RUN_DIR/mihomo-c.log' 2>&1"
+		procd_set_param env SAFE_PATHS="$RUN_DIR/" # The syntax of this environment variable is the same as the PATH environment variable parsing rules of this operating system (i.e., semicolon-separated under Windows and colon-separated under other systems)
 
 		# Only supports `Global`` and does not support `Proxy Group` and `Proxy Node`
 		local bind_ifname
