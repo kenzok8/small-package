@@ -1001,8 +1001,10 @@ function handleGenKey(option) {
 
 		if (option === 'uuid' || option.match(/_uuid/))
 			required_method = 'uuid';
-		else if (type === 'shadowsocks')
+		else if (type === 'shadowsocks' && option === 'shadowsocks_password')
 			required_method = this.section.getOption('shadowsocks_chipher')?.formvalue(section_id);
+		else if (type === 'trojan' && option === 'trojan_ss_password')
+			required_method = this.section.getOption('trojan_ss_chipher')?.formvalue(section_id);
 
 		switch (required_method) {
 			/* NONE */

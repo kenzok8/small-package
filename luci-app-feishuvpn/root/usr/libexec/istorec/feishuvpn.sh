@@ -13,18 +13,18 @@ do_install() {
     exit 1
   fi
 
-  [ -z "$image_name" ] && image_name="registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:v2.2"
+  [ -z "$image_name" ] && image_name="registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:latest"
   echo "docker pull ${image_name}"
   docker pull ${image_name}
   docker rm -f feishuvpn
 
-  local cmd="docker run --restart=unless-stopped -d -h FeiShuVpnServer -v \"$config:/data/conf\" "
+  local cmd="docker run --restart=unless-stopped -d -h FeiShuVpnServer -v \"$config:/app/data\" "
 
   cmd="$cmd\
   --cap-add=ALL \
   --privileged=true \
   --device=/dev/net/tun \
-  --dns=127.0.0.1 \
+  --dns=223.5.5.5 \
   --network=host "
 
  # local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
