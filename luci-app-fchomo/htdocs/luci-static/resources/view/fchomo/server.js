@@ -273,7 +273,7 @@ return view.extend({
 		o.depends({plugin: 'shadow-tls'});
 		o.modalonly = true;
 
-		o = s.taboption('field_general', form.Value, 'plugin_opts_thetlspassword', _('Plugin: ') + _('Password'));
+		o = s.taboption('field_general', hm.GenValue, 'plugin_opts_thetlspassword', _('Plugin: ') + _('Password'));
 		o.password = true;
 		o.rmempty = false;
 		o.depends({plugin: 'shadow-tls'});
