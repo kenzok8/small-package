@@ -41,5 +41,13 @@
       "type": "view",
       "path": "netspeedtest/openspeedtest"
     }
+  },
+  "admin/network/netspeedtest/logs": {
+    "title": "Log",
+    "order": 6,
+    "action": {
+      "type": "view",
+      "path": "netspeedtest/logs"
+    }
   }
 }

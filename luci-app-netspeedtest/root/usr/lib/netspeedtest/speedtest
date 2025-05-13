@@ -3,35 +3,54 @@ mkdir -p /etc/speedtest
 export HOME='/etc/speedtest'
 SPEEDTEST_CLI='/usr/bin/speedtest'
 SPEEDTEST_RESULT='/tmp/speedtest_result'
+LOG='/tmp/netspeedtest.log'
+
+# 记录开始时间
+echo "=== Speedtest started at $(date) ===" >> "$LOG"
 
 [ -n "$(pgrep -f "$SPEEDTEST_CLI")" ] && exit 1
 
-echo "Start Testing" > "$SPEEDTEST_RESULT"
 LOCAL_IP=$(curl -s -4 --connect-timeout 3 http://ip.3322.net)
+echo "Local IP: $LOCAL_IP" >> "$LOG"
 
 BAIDU_SK="LHHGlmhcb4ENvIXpR9QQ2tBYa6ooUowX hYCENCEx1nXO0Nt46ldexfG9oI49xBGh 0kKZnWWhXEPfzIkklmzAa3dZ"
 if [ -n "$LOCAL_IP" ]; then
-	for SK in $BAIDU_SK
-	do
-		INFO=$(curl -sk --connect-timeout 3 "https://api.map.baidu.com/location/ip?ip="$LOCAL_IP"&coor=bd09ll&ak=$SK")
-		if [ "$(echo $INFO | jsonfilter -e "@['status']")" = 0 ]; then
-			status=0
-			break
-		fi
-	done
-	if [ "$status" = 0 ]; then
-		lon=$(echo $INFO | jsonfilter -e "@['content']['point']['x']")
-		lat=$(echo $INFO | jsonfilter -e "@['content']['point']['y']")
-		server_id=$(curl -sk --connect-timeout 3 "https://www.speedtest.net/api/ios-config.php?lon=$lon&lat=$lat" | grep "server url" | head -n1 | sed 's/.*id="//;s/".*//')
-		[ -n "$server_id" ] && ARG="-s $server_id"
-	fi
+    for SK in $BAIDU_SK
+    do
+        INFO=$(curl -sk --connect-timeout 3 "https://api.map.baidu.com/location/ip?ip="$LOCAL_IP"&coor=bd09ll&ak=$SK")
+        if [ "$(echo $INFO | jsonfilter -e "@['status']")" = 0 ]; then
+            status=0
+            break
+        fi
+    done
+    if [ "$status" = 0 ]; then
+        lon=$(echo $INFO | jsonfilter -e "@['content']['point']['x']")
+        lat=$(echo $INFO | jsonfilter -e "@['content']['point']['y']")
+        server_id=$(curl -sk --connect-timeout 3 "https://www.speedtest.net/api/ios-config.php?lon=$lon&lat=$lat" | grep "server url" | head -n1 | sed 's/.*id="//;s/".*//')
+        [ -n "$server_id" ] && ARG="-s $server_id"
+        echo "Selected server ID: $server_id" >> "$LOG"
+    fi
 fi
 
+echo "Testing" > "$SPEEDTEST_RESULT"
 RUNTEST=$($SPEEDTEST_CLI --accept-gdpr --accept-license --progress=no $ARG 2>&1)
 if [ $(echo $RUNTEST | grep -c "No servers defined") -ge 1 ] || [ $(echo $RUNTEST | grep -c "error") -ge 1 ]; then
-	RUNTEST=$($SPEEDTEST_CLI --accept-gdpr --accept-license --progress=no 2>&1)
+    echo "Fallback to default server selection" >> "$LOG"
+    RUNTEST=$($SPEEDTEST_CLI --accept-gdpr --accept-license --progress=no 2>&1)
 fi
+
+# 将完整测试结果记录到日志
+echo "$RUNTEST" >> "$LOG"
 
 RESULT=$(echo "$RUNTEST" | grep "Result URL" | awk '{print $NF}')
 
-[ -n "$RESULT" ] && echo "$RESULT" > "$SPEEDTEST_RESULT" || echo "Test failed" > "$SPEEDTEST_RESULT"
+if [ -n "$RESULT" ]; then
+    echo "$RESULT" > "$SPEEDTEST_RESULT"
+else
+    echo "Test failed" > "$SPEEDTEST_RESULT"
+    echo "Test failed" >> "$LOG"
+fi
+
+# 记录结束时间
+echo "=== Speedtest completed at $(date) ===" >> "$LOG"
+echo "" >> "$LOG"  # 添加空行分隔不同测试记录

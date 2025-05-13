@@ -30,7 +30,7 @@ return view.extend({
         
         var iframe = E('iframe', {
             src: window.location.origin + ':' + state.port,
-            style: 'width: 100%; min-height: 80vh; border: none; border-radius: 3px;'
+            style: 'border:none;width: 100%; min-height: 80vh; border: none; border-radius: 3px;overflow:hidden !important;'
         });
 
         function checkProcess() {
@@ -42,7 +42,7 @@ return view.extend({
 
         function controlService(action) {
             var command = action === 'start' 
-                ? 'nohup /usr/bin/homebox > /tmp/homebox.log 2>&1 &' 
+                ? 'nohup /usr/bin/homebox > /tmp/netspeedtest.log 2>&1 &' 
                 : '/usr/bin/killall homebox';
             return fs.exec('/bin/sh', ['-c', command]);
         }

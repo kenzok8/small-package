@@ -6,67 +6,72 @@
 START=99
 USE_PROCD=1
 
-EXTRA_COMMANDS="download_ookla ookla_verify"
+EXTRA_COMMANDS="download verify"
 EXTRA_HELP=\
-"	download_ookla	Download Ookla Speedtest-CLI
-	ookla_verify	Verify Ookla Speedtest-CLI integrity"
+"	download	Download Ookla Speedtest-CLI
+	verify	Verify Ookla Speedtest-CLI integrity"
 
-#
 OOKLA_SPEEDTEST='/usr/bin/speedtest'
-# uci
 CONFIG='netspeedtest'
-NAMEDDSECTION='config'
+log='/tmp/netspeedtest.log'
 
-get_config() {
-	config_load netspeedtest
-	config_get "proxy_enabled" "config" "proxy_enabled" "0"
+download() {
+    . /etc/openwrt_release
+    local url arch=$1
+    local proxy=$2 
+    [ -z "$arch" ] && arch=$DISTRIB_ARCH
+    [ -z "$proxy" ] && proxy='0'
+
+    [ "$proxy" == "1" ] && export ALL_PROXY="http://192.168.10.8:1080"
+
+    UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
+    url=$( \
+        curl --connect-timeout 10 --retry 3 -sSL 'https://www.speedtest.net/apps/cli' \
+        --user-agent "$UA" \
+        | grep "Download for Linux" \
+        | sed 's|<|\n<|g' \
+        | sed -n '/Download for Linux/,/<\/div>/p' \
+        | sed -En "s|.*<a href=\"([^\"]+)\">${arch}|\1|p" \
+    )
+    [ -z "$url" ] && { echo "Failed to get download URL" >> "$log"; return 1; }
+
+    # Backup existing file
+    [ -f "$OOKLA_SPEEDTEST" ] && mv "$OOKLA_SPEEDTEST" "${OOKLA_SPEEDTEST}.bak"
+
+    if curl -sSL "$url" --user-agent "$UA" | tar -xvz -C /tmp; then
+        mkdir -p "${OOKLA_SPEEDTEST%/*}" 2>/dev/null
+        cp -f /tmp/speedtest "$OOKLA_SPEEDTEST"
+        rm -rf /tmp/speedtest
+        chmod 755 "$OOKLA_SPEEDTEST"
+        
+        if verify; then
+            echo "Download successful: $($OOKLA_SPEEDTEST --version | awk '/Speedtest/{print $1" ver:"$4}')" >> "$log"
+        else
+            echo "Download failed: binary verification failed" >> "$log"
+            [ -f "${OOKLA_SPEEDTEST}.bak" ] && mv "${OOKLA_SPEEDTEST}.bak" "$OOKLA_SPEEDTEST"
+            return 1
+        fi
+    else
+        echo "Download failed: could not retrieve package" >> "$log"
+        [ -f "${OOKLA_SPEEDTEST}.bak" ] && mv "${OOKLA_SPEEDTEST}.bak" "$OOKLA_SPEEDTEST"
+        return 1
+    fi
+    
+    unset ALL_PROXY
 }
 
-
-download_ookla() {
-	local url arch=$1
-	[ -z "$arch" ] && return 1
-
-	[ "$(uci -q get $CONFIG.$NAMEDDSECTION.proxy_enabled)" == "1" ] && \
-	export ALL_PROXY=$(uci -q get $CONFIG.$NAMEDDSECTION.proxy_protocol)://$(uci -q get $CONFIG.$NAMEDDSECTION.proxy_server)
-
-	UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
-	url=$( \
-		curl --connect-timeout 10 --retry 3 -sSL 'https://www.speedtest.net/apps/cli' \
-		--user-agent "$UA" \
-		| grep "Download for Linux" \
-		| sed 's|<|\n<|g' \
-		| sed -n '/Download for Linux/,/<\/div>/p' \
-		| sed -En "s|.*<a href=\"([^\"]+)\">${arch}|\1|p" \
-	)
-	[ -z "$url" ] && return 1
-
-	[ -n "$url" ] && curl -sSL $url --user-agent "$UA" | tar -xvz -C /tmp
-	mkdir -p ${OOKLA_SPEEDTEST%/*} 2>/dev/null
-	cp -f /tmp/speedtest $OOKLA_SPEEDTEST
-	chmod 755 $OOKLA_SPEEDTEST
-	ookla_verify || rm -f $OOKLA_SPEEDTEST
-	unset ALL_PROXY
+verify() {
+    [ -x "$OOKLA_SPEEDTEST" ] && "$OOKLA_SPEEDTEST" --version >/dev/null 2>&1
 }
 
-ookla_verify() {
-	if [ -x "$OOKLA_SPEEDTEST" ]; then
-		return 0
-	else
-		return 1
-	fi
+start() {
+    if ! verify; then
+        download || {
+            echo "Critical: Failed to install Speedtest CLI" >> "$log"
+            exit 1
+        }
+    fi
 }
-
-start_service() {
-	ookla_verify
-
-}
-service_triggers() {
-	procd_add_reload_trigger "netspeedtest"
-}
-
-reload_service() {
-	stop
-	sleep 1
-	start
+restart() {
+    start
 }

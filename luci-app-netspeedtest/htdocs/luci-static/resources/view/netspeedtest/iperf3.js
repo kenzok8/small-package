@@ -12,7 +12,7 @@ var state = {
     port: null
 };
 
-const logPath = '/var/log/iperf3.log';
+const logPath = '/tmp/netspeedtest.log';
 
 function checkProcess() {
     return fs.exec('/bin/pidof', ['iperf3']).then(res => ({
@@ -172,7 +172,7 @@ const statusSection = E('div', { 'class': 'cbi-section' }, [
             return E('div', [
                 statusSection,
                 E('div', { 'class': 'cbi-section' }, [
-                    E('h3', {}, _('Iperf3 Run Log')),
+                    E('h3', {}, _('Run Log')),
                     logTextarea,
                     E('div', { 'style': 'text-align: right; font-size: small;  margin-top: 5px;' },
                         _('Refresh every 5 seconds.')

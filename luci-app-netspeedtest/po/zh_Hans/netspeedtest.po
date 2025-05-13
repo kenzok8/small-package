@@ -17,7 +17,7 @@ msgid "NetSpeedtest"
 msgstr "网速测试"
 
 msgid "A tool for testing network speed in multiple aspects"
-msgstr "一个用于从多方面测试本地和宽带网络速度的工具"
+msgstr "一个用于从多方面测试本地和宽带网络速度的测速工具"
 
 msgid "Lan Speedtest Iperf3"
 msgstr "本地iperf3吞吐测速"
@@ -26,7 +26,7 @@ msgid "Lan Speedtest Homebox"
 msgstr "本地homebox网页测速"
 
 msgid "Wan Ookla SpeedTest"
-msgstr "宽带Ookla网速测速"
+msgstr "宽带Ookla网速测试"
 
 msgid "Wan OpenSpeedTest"
 msgstr "宽带OpenSpeedTest测速"
@@ -79,8 +79,8 @@ msgstr "开启日志显示"
 msgid "Download iperf3 client"
 msgstr "下载iperf3客户端"
 
-msgid "Iperf3 Run Log"
-msgstr "Iperf3运行日志"
+msgid "Run Log"
+msgstr "运行日志"
 
 msgid "Refresh Log"
 msgstr "刷新日志"
@@ -109,8 +109,8 @@ msgstr "开始宽带测速"
 msgid "Click to execute"
 msgstr "点击执行"
 
-msgid "Testing in progress..."
-msgstr "测试正在进行中..."
+msgid "SpeedTesting in progress..."
+msgstr "测速中,请稍候..."
 
 msgid "Test failed."
 msgstr "测速失败"
