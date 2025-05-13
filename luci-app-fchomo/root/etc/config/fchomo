@@ -46,7 +46,6 @@ config fchomo 'tls'
 
 config fchomo 'api'
 	option external_controller_port '9090'
-	option external_controller_tls_port '9443'
 
 config fchomo 'sniffer'
 	list skip_domain 'Mijia Cloud'
