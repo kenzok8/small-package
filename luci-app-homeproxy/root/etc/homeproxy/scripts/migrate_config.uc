@@ -53,15 +53,6 @@ if (uci.get(uciconfig, ucimain, 'routing_port') === 'all')
 if (uci.get(uciconfig, 'experimental'))
 	uci.delete(uciconfig, 'experimental');
 
-/* block-dns was removed from built-in dns servers */
-if (uci.get(uciconfig, ucidns, 'default_server') === 'block-dns')
-	uci.set(uciconfig, ucidns, 'default_server', 'default-dns');
-
-/* block-out was removed from built-in outbounds */
-if (uci.get(uciconfig, ucirouting, 'default_outbound') === 'block-out')
-	uci.set(uciconfig, ucirouting, 'default_outbound', 'nil');
-
-
 /* DNS rules options */
 uci.foreach(uciconfig, ucidnsrule, (cfg) => {
 	/* rule_set_ipcidr_match_source was renamed in sb 1.10 */

@@ -327,7 +327,6 @@ function get_outbound(cfg) {
 	} else {
 		switch (cfg) {
 		case 'block-out':
-			return null;
 		case 'direct-out':
 			return cfg;
 		default:
@@ -348,7 +347,6 @@ function get_resolver(cfg) {
 
 	switch (cfg) {
 	case 'block-dns':
-		return null;
 	case 'default-dns':
 	case 'system-dns':
 		return cfg;
@@ -391,6 +389,10 @@ config.dns = {
 			tag: 'system-dns',
 			address: 'local',
 			detour: 'direct-out'
+		},
+		{
+			tag: 'block-dns',
+			address: 'rcode://name_error'
 		}
 	],
 	rules: [],
@@ -605,6 +607,10 @@ config.outbounds = [
 		type: 'direct',
 		tag: 'direct-out',
 		routing_mark: strToInt(self_mark)
+	},
+	{
+		type: 'block',
+		tag: 'block-out'
 	}
 ];
 
