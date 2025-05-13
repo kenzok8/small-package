@@ -113,6 +113,9 @@ start_service() {
 	# Client
 	if [ "$client_enabled" = "1" ]; then
 	if [ -z "$1" -o "$1" = "mihomo-c" ]; then
+		# Env variables
+		export SAFE_PATHS="$RUN_DIR/"
+
 		# Generate/Validate client config
 		ucode -S "$SDL_DIR/generate_client.uc" 2>>"$LOG_PATH" | yq -Poy | yq \
 			'.sniffer["force-domain"][] style="double"

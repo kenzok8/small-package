@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 sirpdboy  herboy2008@gmail.com  https://github.com/sirpdboy/netspeedtest
+# Copyright (C) 2021-2025 sirpdboy  herboy2008@gmail.com  https://github.com/sirpdboy/luci-app-netspeedtest
 # This is free software, licensed under the GNU General Public License v3.
 #
 msgid ""
@@ -14,109 +14,109 @@ msgstr ""
 "X-Generator: Pootle 2.0.6\n"
 
 msgid "NetSpeedtest"
-msgstr "网速测试"
+msgstr ""
 
 msgid "A tool for testing network speed in multiple aspects"
-msgstr "一个用于从多方面测试本地和宽带网络速度的工具"
+msgstr ""
 
 msgid "Lan Speedtest Iperf3"
-msgstr "本地iperf3吞吐测速"
+msgstr ""
 
 msgid "Lan Speedtest Homebox"
-msgstr "本地homebox网页测速"
+msgstr ""
 
 msgid "Wan Ookla SpeedTest"
-msgstr "宽带Ookla网速测速"
+msgstr ""
 
 msgid "Wan OpenSpeedTest"
-msgstr "宽带OpenSpeedTest测速"
+msgstr ""
 
 msgid "Log"
-msgstr "日志"
+msgstr ""
 
 msgid "Start Server"
-msgstr "启动服务"
+msgstr ""
 
 msgid "Stop Server"
-msgstr "停止服务"
+msgstr ""
 
 msgid "Loading..."
-msgstr "装载中..."
+msgstr ""
 
 msgid "RUNNING"
-msgstr "运行中"
+msgstr ""
 
 msgid "NOT RUNNING"
-msgstr "未运行"
+msgstr ""
 
 msgid "Iperf3 Server"
-msgstr "Iperf3服务端"
+msgstr ""
 
 msgid "Command failed"
-msgstr "命令无效"
+msgstr ""
 
 msgid "Failed to read log file"
-msgstr "读取日志失败"
+msgstr ""
 
 msgid "No log content available"
-msgstr "没有日志记录"
+msgstr ""
 
 msgid "Error: "
-msgstr "错误: "
+msgstr ""
 
 msgid "Iperf3 service control"
-msgstr "Iperf3 服务控制"
+msgstr ""
 
 msgid "Listen Port"
-msgstr "监听端口"
+msgstr ""
 
 msgid "Invalid format. Use [::]:port or ip:port"
-msgstr "格式错误.如 [::]:端口 或 ip:端口"
+msgstr ""
 
 msgid "Enable Log View"
-msgstr "开启日志显示"
+msgstr ""
 
 msgid "Download iperf3 client"
-msgstr "下载iperf3客户端"
+msgstr ""
 
 msgid "Iperf3 Run Log"
-msgstr "Iperf3运行日志"
+msgstr ""
 
 msgid "Refresh Log"
-msgstr "刷新日志"
+msgstr ""
 
 msgid "Official Website"
-msgstr "官方网站"
+msgstr ""
 
 msgid "Please enable the Homebox service"
-msgstr "请将homebox服务启用"
+msgstr ""
 
 msgid "Homebox service control"
-msgstr "Homebox服务控制"
+msgstr ""
 
 msgid "Homebox Server"
-msgstr "Homebox服务端"
+msgstr ""
 
 msgid "Homebox Service Not Running"
-msgstr "Homebox服务端未运行"
+msgstr ""
 
 msgid "Ookla® SpeedTest-CLI"
 msgstr ""
 
 msgid "Start Ookla SpeedTest"
-msgstr "开始宽带测速"
+msgstr ""
 
 msgid "Click to execute"
-msgstr "点击执行"
+msgstr ""
 
 msgid "Testing in progress..."
-msgstr "测试正在进行中..."
+msgstr ""
 
 msgid "Test failed."
-msgstr "测速失败"
+msgstr ""
 
 msgid "No test results yet."
-msgstr "还没有测试结果"
+msgstr ""
 
 msgid "Test Script"
-msgstr "测速脚本"
+msgstr ""

@@ -1,0 +1,45 @@
+{
+  "admin/network/netspeedtest": {
+    "title": "NetSpeedtest",
+    "order": 90,
+    "action": {
+      "type": "firstchild"
+    },
+    "depends": {
+      "acl": [ "luci-app-netspeedtest" ],
+      "uci": { "netspeedtest": true }
+    }
+  },
+  "admin/network/netspeedtest/iperf3": {
+    "title": "Lan Speedtest Iperf3",
+    "order": 1,
+    "action": {
+      "type": "view",
+      "path": "netspeedtest/iperf3"
+    }
+  },
+  "admin/network/netspeedtest/homebox": {
+    "title": "Lan Speedtest Homebox",
+    "order": 2,
+    "action": {
+      "type": "view",
+      "path": "netspeedtest/homebox"
+    }
+  },
+  "admin/network/netspeedtest/speedtest": {
+    "title": "Wan Ookla SpeedTest",
+    "order": 4,
+    "action": {
+      "type": "view",
+      "path": "netspeedtest/speedtest"
+    }
+  },
+  "admin/network/netspeedtest/openspeedtest": {
+    "title": "Wan OpenSpeedTest",
+    "order": 5,
+    "action": {
+      "type": "view",
+      "path": "netspeedtest/openspeedtest"
+    }
+  }
+}

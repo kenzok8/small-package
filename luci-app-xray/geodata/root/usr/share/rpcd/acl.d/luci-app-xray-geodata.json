@@ -1,0 +1,10 @@
+{
+    "luci-app-xray-geodata": {
+        "description": "Grant access to xray configurations",
+        "read": {
+            "uci": [
+                "xray_core"
+            ]
+        }
+    }
+}
