@@ -1,0 +1,17 @@
+{
+    "admin/services/xray_geodata": {
+        "title": "Xray (geodata)",
+        "action": {
+            "type": "view",
+            "path": "xray/geodata"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-xray-geodata"
+            ],
+            "uci": {
+                "xray_core": true
+            }
+        }
+    }
+}

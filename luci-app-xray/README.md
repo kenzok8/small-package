@@ -49,6 +49,10 @@ Some features are deprecated / unstable so they are placed in preview app. To en
 * Reboot your router
 * There will be a new menu option `Xray (preview)` in `Services`
 
+## Changelog since 3.6.0
+
+* 2025-05-13 feat: geodata reader
+
 ## Changelog since 3.5.0
 
 * 2024-11-26 chore: bump status version
