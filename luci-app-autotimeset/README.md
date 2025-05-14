@@ -1,4 +1,6 @@
 [![若部分图片无法正常显示，请挂上机场浏览或点这里到末尾看修复教程](https://visitor-badge-deno.deno.dev/sirpdboy.sirpdboy.svg)](#解决-github-网页上图片显示失败的问题) [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
+## 访问数：![hello](https://views.whatilearened.today/views/github/sirpdboy/deplives.svg)[![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
+### 访问数：[![](https://visitor-badge.glitch.me/badge?page_id=sirpdboy-visitor-badge)] [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
 
 [ taskplan 定时设置插件](https://github.com/sirpdboy/luci-app-taskplan)
 
@@ -69,6 +71,15 @@
     make package/luci-app-taskplan/compile V=s
  ```
 
+## 界面
+
+![screenshots](./doc/taskplan1.png)
+
+![screenshots](./doc/taskplan2.png)
+
+![screenshots](./doc/taskplan3.png)
+
+
 ## 说明 [![](https://img.shields.io/badge/-说明-F5F5F5.svg)](#说明-)
 
 源码来源：https://github.com/sirpdboy/luci-app-taskplan
@@ -82,28 +93,21 @@
 
 # My other project
 
-- 网络速度测试 ：https://github.com/sirpdboy/NetSpeedTest
-
-- 任务设置（定时和开机二合一）插件 : https://github.com/sirpdboy/luci-app-taskplan
-
+- 路由安全看门狗 ：https://github.com/sirpdboy/luci-app-watchdog
+- 网络速度测试 ：https://github.com/sirpdboy/luci-app-netspeedtest
+- 计划任务插件（原定时设置） : https://github.com/sirpdboy/luci-app-taskplan
 - 关机功能插件 : https://github.com/sirpdboy/luci-app-poweroffdevice
-
 - opentopd主题 : https://github.com/sirpdboy/luci-theme-opentopd
-
-- kucat 主题: https://github.com/sirpdboy/luci-theme-kucat
-
+- kucat酷猫主题: https://github.com/sirpdboy/luci-theme-kucat
+- kucat酷猫主题设置工具: https://github.com/sirpdboy/luci-app-kucat-config
+- NFT版上网时间控制插件: https://github.com/sirpdboy/luci-app-timecontrol
 - 家长控制: https://github.com/sirpdboy/luci-theme-parentcontrol
-
+- 定时限速: https://github.com/sirpdboy/luci-app-eqosplus
 - 系统高级设置 : https://github.com/sirpdboy/luci-app-advanced
-
 - ddns-go动态域名: https://github.com/sirpdboy/luci-app-ddns-go
-
 - 进阶设置（系统高级设置+主题设置kucat/agron/opentopd）: https://github.com/sirpdboy/luci-app-advancedplus
-
-- 设置向导: https://github.com/sirpdboy/luci-app-wizard
-
-- 分区扩容: https://github.com/sirpdboy/luci-app-partexp
-
+- 网络设置向导: https://github.com/sirpdboy/luci-app-netwizard
+- 一键分区扩容: https://github.com/sirpdboy/luci-app-partexp
 - lukcy大吉: https://github.com/sirpdboy/luci-app-lukcy
 
 ## 捐助
