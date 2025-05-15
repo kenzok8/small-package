@@ -14,16 +14,34 @@ var state = {
 
 const logPath = '/tmp/netspeedtest.log';
 
-function checkProcess() {
-    return fs.exec('/bin/pidof', ['iperf3']).then(res => ({
-        running: res.code === 0,
-        pid: res.code === 0 ? res.stdout.trim() : null
-    }));
+async function checkProcess() {
+    try {
+        // 尝试使用pgrep 
+        const res = await fs.exec('/usr/bin/pgrep', ['iperf3']);
+        return {
+            running: res.code === 0,
+            pid: res.stdout.trim() || null
+        };
+    } catch (err) {
+        // 回退到ps方法
+        try {
+            const psRes = await fs.exec('/bin/ps', ['-w', '-C', 'iperf3', '-o', 'pid=']);
+            const pid = psRes.stdout.trim();
+            return {
+                running: pid !== '',
+                pid: pid || null
+            };
+        } catch (err) {
+            return { running: false, pid: null };
+        }
+    }
 }
-
 function pollLog(textarea) {
-    return fs.read(logPath).then(res => {
-        const cleanedLog = res ? res.trim()
+    return fs.exec('/bin/cat', [logPath])
+    .then(res => {
+        if (res.code !== 0) throw new Error(res.stderr);
+        
+        const cleanedLog = res.stdout ? res.stdout.trim()
             .replace(/\u001b\[[0-9;]*m/g, '')
             .split('\n')
             .slice(-50)
@@ -40,17 +58,23 @@ function pollLog(textarea) {
     });
 }
 
+
 function controlService(action) {
     const commands = {
-        start: `/usr/bin/iperf3 -s -D -p 5201 --logfile ${logPath}`,
-        stop: '/usr/bin/killall iperf3'
+        start: `/usr/bin/iperf3 -s -D -p 5201 --logfile ${logPath} 2>&1`,
+        stop: '/usr/bin/killall -q iperf3'
     };
 
     return (action === 'start' 
-        ? fs.exec('/bin/sh', ['-c', `touch ${logPath} && chmod 644 ${logPath}`])
+        ? fs.exec('/bin/sh', ['-c', `mkdir -p /tmp/netspeedtest && touch ${logPath} && chmod 644 ${logPath}`])
         : Promise.resolve()
-    ).then(() => fs.exec('/bin/sh', ['-c', commands[action]]));
+    ).then(() => fs.exec('/bin/sh', ['-c', commands[action]]))
+    .catch(err => {
+        console.error('Service control error:', err);
+        throw err;
+    });
 }
+
 
 return view.extend({
 //	handleSaveApply: null,

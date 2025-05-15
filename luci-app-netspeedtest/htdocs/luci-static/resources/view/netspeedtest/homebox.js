@@ -6,7 +6,6 @@
 'require uci';
 'require form';
 'require poll';
-
 return view.extend({
     render: function() {
         var state = { 
@@ -33,12 +32,28 @@ return view.extend({
             style: 'border:none;width: 100%; min-height: 80vh; border: none; border-radius: 3px;overflow:hidden !important;'
         });
 
-        function checkProcess() {
-            return fs.exec('/bin/pidof', ['homebox']).then(res => ({
-                running: res.code === 0,
-                pid: res.code === 0 ? res.stdout.trim() : null
-            }));
+async function checkProcess() {
+    try {
+        // 尝试使用pgrep 
+        const res = await fs.exec('/usr/bin/pgrep', ['homebox']);
+        return {
+            running: res.code === 0,
+            pid: res.stdout.trim() || null
+        };
+    } catch (err) {
+        // 回退到ps方法
+        try {
+            const psRes = await fs.exec('/bin/ps', ['-w', '-C', 'homebox', '-o', 'pid=']);
+            const pid = psRes.stdout.trim();
+            return {
+                running: pid !== '',
+                pid: pid || null
+            };
+        } catch (err) {
+            return { running: false, pid: null };
         }
+    }
+}
 
         function controlService(action) {
             var command = action === 'start' 
