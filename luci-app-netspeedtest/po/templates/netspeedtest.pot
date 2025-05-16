@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 sirpdboy  herboy2008@gmail.com  https://github.com/sirpdboy/luci-app-netspeedtest
+# Copyright (C) 2021-2025 sirpdboy  herboy2008@gmail.com  https://github.com/sirpdboy/netspeedtest
 # This is free software, licensed under the GNU General Public License v3.
 #
 msgid ""
@@ -28,7 +28,7 @@ msgstr ""
 msgid "Wan Ookla SpeedTest"
 msgstr ""
 
-msgid "Wan OpenSpeedTest"
+msgid "Wan OpenSpeedTest SpeedTest"
 msgstr ""
 
 msgid "Log"
@@ -79,7 +79,7 @@ msgstr ""
 msgid "Download iperf3 client"
 msgstr ""
 
-msgid "Iperf3 Run Log"
+msgid "Run Log"
 msgstr ""
 
 msgid "Refresh Log"
@@ -109,7 +109,7 @@ msgstr ""
 msgid "Click to execute"
 msgstr ""
 
-msgid "Testing in progress..."
+msgid "SpeedTesting in progress..."
 msgstr ""
 
 msgid "Test failed."

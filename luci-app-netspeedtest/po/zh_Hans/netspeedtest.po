@@ -20,15 +20,15 @@ msgid "A tool for testing network speed in multiple aspects"
 msgstr "一个用于从多方面测试本地和宽带网络速度的测速工具"
 
 msgid "Lan Speedtest Iperf3"
-msgstr "本地iperf3吞吐测速"
+msgstr "本地iperf3测速"
 
 msgid "Lan Speedtest Homebox"
-msgstr "本地homebox网页测速"
+msgstr "本地homebox测速"
 
 msgid "Wan Ookla SpeedTest"
-msgstr "宽带Ookla网速测试"
+msgstr "宽带Ookla测速"
 
-msgid "Wan OpenSpeedTest"
+msgid "Wan OpenSpeedTest SpeedTest"
 msgstr "宽带OpenSpeedTest测速"
 
 msgid "Log"
