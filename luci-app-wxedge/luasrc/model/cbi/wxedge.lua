@@ -21,8 +21,8 @@ o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("onething1/wxedge", "onething1/wxedge")
-o:value("registry.hub.docker.com/onething1/wxedge", "registry.hub.docker.com/onething1/wxedge")
-o.default = "onething1/wxedge"
+o:value("images-cluster.xycloud.com/wxedge/wxedge:latest", "images-cluster.xycloud.com/wxedge/wxedge:latest")
+o.default = "images-cluster.xycloud.com/wxedge/wxedge:latest"
 
 local blks = wxedge_model.blocks()
 local dir
