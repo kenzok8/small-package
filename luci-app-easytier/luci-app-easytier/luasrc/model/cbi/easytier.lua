@@ -30,7 +30,7 @@ end
 etcmd = s:taboption("general",ListValue, "etcmd", translate("启动方式"),
 	translate("官方Web控制台：<a href='https://easytier.cn/web'>easytier.cn/web</a><br>官方配置文件生成器：<a href='https://easytier.cn/web/index.html#/config_generator'>easytier.cn/web/index.html#/config_generator</a><br>注意配置RPC端口为15888"))
 etcmd.default = "etcmd"
-etcmd:value("etcmd",translate("命令行"))
+etcmd:value("etcmd",translate("默认"))
 etcmd:value("config",translate("配置文件"))
 etcmd:value("web",translate("Web配置"))
 
@@ -88,32 +88,14 @@ ipaddr:depends("etcmd", "etcmd")
 peeradd = s:taboption("general",DynamicList, "peeradd", translate("对等节点"),
 	translate("初始连接的对等节点，和下方参数作用一样 （-p 参数）<br>公共服务器可用状态查询：<a href='https://easytier.gd.nkbpal.cn/status/easytier' target='_blank'>点此查询</a>"))
 peeradd.placeholder = "tcp://public.easytier.top:11010"
-peeradd:value("tcp://public.easytier.top:11010", translate("官方服务器-广东河源-tcp://public.easytier.top:11010"))
-peeradd:value("tcp://turn.hb.629957.xyz:11010", translate("湖北十堰电信V4-tcp://turn.hb.629957.xyz:11010"))
-peeradd:value("tcp://et.ie12vps.xyz:11010", translate("南京V4/V6-tcp://et.ie12vps.xyz:11010"))
-peeradd:value("tcp://ah.nkbpal.cn:11010", translate("安徽电信V4-tcp://ah.nkbpal.cn:11010"))
-peeradd:value("udp://ah.nkbpal.cn:11010", translate("安徽电信V4-udp://ah.nkbpal.cn:11010"))
-peeradd:value("wss://ah.nkbpal.cn:11012", translate("安徽电信V4-wss://ah.nkbpal.cn:11012"))
-peeradd:value("tcp://222.186.59.80:11113", translate("江苏镇江V4-tcp://222.186.59.80:11113"))
-peeradd:value("wss://222.186.59.80:11115", translate("江苏镇江V4-wss://222.186.59.80:11115"))
-peeradd:value("tcp://hw.gz.9z1.me:58443", translate("广州V4-tcp://hw.gz.9z1.me:58443"))
-peeradd:value("tcp://c.oee.icu:60006", translate("香港V4/V6-tcp://c.oee.icu:60006"))
-peeradd:value("udp://c.oee.icu:60006", translate("香港V4/V6-udp://c.oee.icu:60006"))
-peeradd:value("wss://c.oee.icu:60007", translate("香港V4/V6-wss://c.oee.icu:60007"))
-peeradd:value("tcp://etvm.oee.icu:31572", translate("日本V4-tcp://etvm.oee.icu:31572"))
-peeradd:value("wss://etvm.oee.icu:30845", translate("日本V4-wss://etvm.oee.icu:30845"))
-peeradd:value("tcp://et.pub.moe.gift:11010", translate("美国科罗拉多V4-tcp://et.pub.moe.gift:11010"))
-peeradd:value("wss://et.pub.moe.gift:11012", translate("美国科罗拉多V4-tcp://et.pub.moe.gift:11012"))
-peeradd:value("tcp://et.323888.xyz:11010", translate("湖北十堰V4-tcp://et.323888.xyz:11010"))
-peeradd:value("udp://et.323888.xyz:11010", translate("湖北十堰V4-udp://et.323888.xyz:11010"))
-peeradd:value("wss://et.323888.xyz:11012", translate("湖北十堰V4-wss://et.323888.xyz:11012"))
+peeradd:value("tcp://public.easytier.top:11010", translate("官方服务器-tcp://public.easytier.top:11010"))
 peeradd:depends("etcmd", "etcmd")
 
 external_node = s:taboption("general", Value, "external_node", translate("共享节点地址"),
 	translate("使用公共共享节点来发现对等节点，和上方参数作用一样 （-e 参数）"))
 external_node.default = ""
 external_node.placeholder = "tcp://public.easytier.top:11010"
-external_node:value("tcp://public.easytier.top:11010", translate("官方服务器-广东河源-tcp://public.easytier.top:11010"))
+external_node:value("tcp://public.easytier.top:11010", translate("官方服务器-tcp://public.easytier.top:11010"))
 external_node:depends("etcmd", "etcmd")
 
 proxy_network = s:taboption("general",DynamicList, "proxy_network", translate("子网代理"),
@@ -301,6 +283,10 @@ kcp_proxy:depends("etcmd", "etcmd")
 kcp_input = s:taboption("privacy",Flag, "kcp_input", translate("禁用KCP输入"),
 	translate("不允许其他节点使用 KCP 代理 TCP 流到此节点。<br>开启 KCP 代理的节点访问此节点时，依然使用原始。（ --disable-kcp-input 参数）"))
 kcp_input:depends("etcmd", "etcmd")
+
+accept_dns = s:taboption("privacy",Flag, "accept_dns", translate("启用魔法DNS"),
+	translate("使用魔法DNS，您可以使用域名访问其他节点，例如：<hostname>.et.net。魔法DNS将修改您的系统DNS设置，请谨慎启用。（--accept-dns 参数）"))
+accept_dns:depends("etcmd", "etcmd")
 
 log = s:taboption("general",ListValue, "log", translate("程序日志"),
 	translate("运行日志在/tmp/easytier.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
