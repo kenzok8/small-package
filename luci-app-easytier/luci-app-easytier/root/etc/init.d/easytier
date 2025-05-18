@@ -89,7 +89,7 @@ check_bin() {
                     sed -i "/easytierbin/c option easytierbin '/tmp/easytier-core' " /etc/config/easytier 
                     easytierbin=/tmp/easytier-core
                 fi
-		if [ "$($easytierbin -h 2>&1 | wc -l)" -lt 3 ] || [ ! -f "$easytierbin" ] ; then
+		if [ "$($easytierbin -h 2>&1 | wc -l)" -lt 3 ] || [ ! -f "$easytierbin" ] || [ ! -f "$webbin" ] ; then
 		 curltest=`which curl`
 		 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 		 #github加速地址，一行一个 你可以自建改为你自己的
@@ -153,10 +153,23 @@ check_config() {
                    v6wg_port=$(cat $config_file |grep 'wg://\[::\]:' | sed -n 's/.*:\([0-9]*\).*/\1/p')
                               
                    procd_open_instance
+                   get_tz
+		   [ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
 	           procd_set_param command "$easytierbin"
                    procd_append_param command -c "$config_file"
 		   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} -c ${config_file}" >>/tmp/easytier.log
-			
+		   
+		   if [ ! -z "$tcp_port" ] ; then
+		      echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_tcp 放行TCP端口 ${tcp_port} " >>/tmp/easytier.log
+                      uci -q delete firewall.easytier_tcp
+		      uci set firewall.easytier_tcp=rule
+		      uci set firewall.easytier_tcp.name="easytier_tcp"
+		      uci set firewall.easytier_tcp.target="ACCEPT"
+		      uci set firewall.easytier_tcp.src="wan"
+		      uci set firewall.easytier_tcp.proto="tcp"
+		      uci set firewall.easytier_tcp.dest_port="$tcp_port"
+		      uci set firewall.easytier_tcp.enabled="1"
+	           fi
                    if [ ! -z "$udp_port" ] ; then
 		      echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_udp 放行UDP端口 ${udp_port} " >>/tmp/easytier.log
                       uci -q delete firewall.easytier_udp
@@ -244,7 +257,7 @@ get_etconfig() {
 		ipaddr="$(uci -q get easytier.@easytier[0].ipaddr)"
 		external_node="$(uci -q get easytier.@easytier[0].external_node)"
 		proxy_network="$(uci -q get easytier.@easytier[0].proxy_network)"
-		rpc_portal="$(uci -q get easytier.@easytier[0].rpc_portal)"
+		rpc_portal="$(uci -q get easytier.@easytier[0].rpc_portal || echo 15888)"
 		listenermode="$(uci -q get easytier.@easytier[0].listenermode)"
 		tunname="$(uci -q get easytier.@easytier[0].tunname)"
 		relay_network="$(uci -q get easytier.@easytier[0].relay_network || echo 0)"
@@ -282,6 +295,7 @@ get_etconfig() {
 		kcp_proxy="$(uci -q get easytier.@easytier[0].kcp_proxy || echo 0)"
 		kcp_input="$(uci -q get easytier.@easytier[0].kcp_input || echo 0)"
 		proxy_forward="$(uci -q get easytier.@easytier[0].proxy_forward || echo 0)"
+		accept_dns="$(uci -q get easytier.@easytier[0].accept_dns || echo 0)"
 }
 
 set_firewall() {
@@ -397,7 +411,7 @@ start_et() {
 		[ -z "$easytierbin" ] && easytierbin="/usr/bin/easytier-core" && uci -q set easytier.@easytier[0].easytierbin=/usr/bin/easytier-core
                 etcmd="$(uci -q get easytier.@easytier[0].etcmd)"
                 echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core_${cpucore}开始启动" >>/tmp/easytier.log
-                [ ! -s /usr/lib/opkg/info/kmod-tun.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少kmod-tun插件" >>/tmp/easytier.log
+                #[ ! -s /usr/lib/opkg/info/kmod-tun.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少kmod-tun插件" >>/tmp/easytier.log
                 check_bin
                 chmod +x "$easytierbin" 
                 chmod +x ${path}/easytier-cli
@@ -521,6 +535,7 @@ start_et() {
 				[ "$kcp_proxy" = "0" ] || procd_append_param command --enable-kcp-proxy
 				[ "$kcp_input" = "0" ] || procd_append_param command --disable-kcp-input
 				[ "$proxy_forward" = "0" ] || procd_append_param command --proxy-forward-by-system
+				[ "$accept_dns" = "0" ] || procd_append_param command --accept-dns
 	     		fi
 			if [ "$etcmd" = "web" ] ; then
 				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} -w ${web_config}" >>/tmp/easytier.log
@@ -562,12 +577,12 @@ start_et() {
                     		 wss_port="11012"
                     		 wg_port="11011"
                   	fi
-               		 set_firewall  
 		fi
+		set_firewall 
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 重载防火墙和网络配置...会出现短暂断网现象... " >>/tmp/easytier.log
                 [ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
 		[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1
-		[ -z "$proxy_network" ] || sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
+		sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
                 [ ! -z "$checkip" ] && check
                 echo `date +%s` > /tmp/easytier_time
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 启动完成，若启动失败，请前往 状态 - 系统日志 找到easytier相关的字眼查看启动失败的原因 " >>/tmp/easytier.log
@@ -605,6 +620,7 @@ fi
 
 start_web() {
 	webbin="$(uci -q get easytier.@easytier[0].webbin)"
+	check_bin
 	if [ -f /tmp/easytier-web-embed ] ; then
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 找到上传的easytier-web程序，替换${webbin} " >>/tmp/easytierweb.log
 		mv -f /tmp/easytier-web-embed "$webbin"
@@ -735,6 +751,7 @@ stop_service() {
 	        	uci -q delete firewall.easytierfwwan >/dev/null 2>&1
 	        	uci -q delete firewall.lanfweasytier >/dev/null 2>&1
 	        	uci -q delete firewall.wanfweasytier >/dev/null 2>&1
+	        	uci -q delete firewall.easytier_tcp >/dev/null 2>&1
                 	uci -q delete firewall.easytier_udp >/dev/null 2>&1
                 	uci -q delete firewall.easytier_tcp_udp >/dev/null 2>&1
                 	uci -q delete firewall.easytier_wss >/dev/null 2>&1
@@ -774,5 +791,6 @@ reload_service() {
 
 service_triggers() {
 	procd_add_reload_trigger "easytier"
+	#如果任意网络接口上线则触发重新启动easytier
         procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytier reload
 }
