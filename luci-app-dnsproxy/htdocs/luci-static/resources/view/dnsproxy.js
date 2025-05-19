@@ -89,7 +89,7 @@ return view.extend({
 		o.value('::1');
 
 		let ipaddrs = {}, ip6addrs = {};
-		Object.keys(hosts).forEach((mac) => {
+		for (let mac in hosts) {
 			let addrs = L.toArray(hosts[mac].ipaddrs || hosts[mac].ipv4);
 			let addrs6 = L.toArray(hosts[mac].ip6addrs || hosts[mac].ipv6);
 
@@ -97,7 +97,7 @@ return view.extend({
 				ipaddrs[addrs[i]] = hosts[mac].name || mac;
 			for (let i = 0; i < addrs6.length; i++)
 				ip6addrs[addrs6[i]] = hosts[mac].name || mac;
-		});
+		};
 		L.sortedKeys(ipaddrs, null, 'addr').forEach((ipv4) => {
 			o.value(ipv4, ipaddrs[ipv4] ? '%s (%s)'.format(ipv4, ipaddrs[ipv4]) : ipv4);
 		});
