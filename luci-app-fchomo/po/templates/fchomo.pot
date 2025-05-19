@@ -265,11 +265,11 @@ msgid "Block DNS queries"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:905
-msgid "Boot DNS server"
+msgid "Bootstrap DNS server"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:912
-msgid "Boot DNS server (Node)"
+msgid "Bootstrap DNS server (Node)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:777

@@ -273,12 +273,12 @@ msgid "Block DNS queries"
 msgstr "封鎖 DNS 請求"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:905
-msgid "Boot DNS server"
-msgstr "啟動 DNS 伺服器"
+msgid "Bootstrap DNS server"
+msgstr "引導 DNS 伺服器"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:912
-msgid "Boot DNS server (Node)"
-msgstr "啟動 DNS 伺服器 (節點)"
+msgid "Bootstrap DNS server (Node)"
+msgstr "引導 DNS 伺服器 (節點)"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:777
 msgid "Bypass CN"

@@ -1247,14 +1247,14 @@ return view.extend({
 		so = ss.option(form.Flag, 'ipv6', _('IPv6 support'));
 		so.default = so.enabled;
 
-		so = ss.option(form.MultiValue, 'boot_server', _('Boot DNS server'),
+		so = ss.option(form.MultiValue, 'boot_server', _('Bootstrap DNS server'),
 			_('Used to resolve the domain of the DNS server. Must be IP.'));
 		so.default = 'default-dns';
 		so.load = L.bind(loadDNSServerLabel, so);
 		so.validate = L.bind(validateNameserver, so);
 		so.rmempty = false;
 
-		so = ss.option(form.MultiValue, 'bootnode_server', _('Boot DNS server (Node)'),
+		so = ss.option(form.MultiValue, 'bootnode_server', _('Bootstrap DNS server (Node)'),
 			_('Used to resolve the domain of the Proxy node.'));
 		so.default = 'default-dns';
 		so.load = L.bind(loadDNSServerLabel, so);
