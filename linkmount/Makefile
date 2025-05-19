@@ -1,7 +1,4 @@
 #
-# Copyright (C) 2017-2020 Ian Leonard <antonlacon@gmail.com>
-# Copyright (C) 2018 Ted Hess <thess@kitschensync.net>
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -11,7 +8,8 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_LINKEASE:=$(ARCH)
 
 PKG_NAME:=linkmount
-BIN_VERSION:=1.0.3
+# use PKG_SOURCE_DATE instead of PKG_VERSION for compitable
+PKG_SOURCE_DATE:=1.0.3
 PKG_RELEASE:=3
 ARCH_HEXCODE:=
 ifeq ($(ARCH),x86_64)
@@ -23,13 +21,12 @@ ARCH_HEXCODE=aa32
 else ifeq ($(ARCH),mipsel)
 ARCH_HEXCODE=1b0c
 endif
-PKG_VERSION:=$(BIN_VERSION)~$(ARCH_HEXCODE)
-
-PKG_SOURCE:=$(PKG_NAME)-binary-$(BIN_VERSION).tar.gz
+PKG_SOURCE_VERSION:=$(ARCH_HEXCODE)
+PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://fw0.koolcenter.com/binary/LinkEase/AutoUpgrade/linkmount/
 PKG_HASH:=b8a5b99751cdd3dd84ac75c94e3cff5b898f910c86f12b4c7ec74dc8b3c510cb
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(BIN_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_SOURCE_DATE)
 
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
