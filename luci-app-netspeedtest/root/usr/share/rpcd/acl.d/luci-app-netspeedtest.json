@@ -5,6 +5,14 @@
       "file": {
         "/etc/init.d/netspeedtest": [ "exec" ],
         "/usr/lib/netspeedtest/speedtest": [ "exec" ],
+        "/usr/bin/pgrep": [ "exec" ],
+        "/bin/ps": [ "exec" ],
+        "/usr/bin/homebox": [ "exec" ],
+        "/usr/bin/killall": [ "exec" ],
+        "/bin/sh": [ "exec" ],
+        "/bin/cat": [ "exec" ],
+        "/usr/bin/iperf3": [ "exec" ],
+        "/usr/bin/speedtest": [ "exec" ],
         "/tmp/speedtest_result": [ "read" ],
         "/tmp/netspeedtest.log": [ "read" ]
       },
