@@ -535,7 +535,7 @@ start_et() {
 				[ "$kcp_proxy" = "0" ] || procd_append_param command --enable-kcp-proxy
 				[ "$kcp_input" = "0" ] || procd_append_param command --disable-kcp-input
 				[ "$proxy_forward" = "0" ] || procd_append_param command --proxy-forward-by-system
-				[ "$accept_dns" = "0" ] || procd_append_param command --accept-dns
+				[ "$accept_dns" = "0" ] || procd_append_param command --accept-dns true
 	     		fi
 			if [ "$etcmd" = "web" ] ; then
 				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} -w ${web_config}" >>/tmp/easytier.log
