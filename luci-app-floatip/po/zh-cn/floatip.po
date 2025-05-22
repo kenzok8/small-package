@@ -22,16 +22,16 @@ msgstr "收集数据..."
 msgid "Node Role"
 msgstr "节点角色"
 
-msgid "Preempt Node"
+msgid "FG Preempt Node"
 msgstr "旁路由"
 
-msgid "Fallback Node"
+msgid "FG Fallback Node"
 msgstr "主路由"
 
 msgid "Floating Gateway IP"
 msgstr "浮动网关 IP"
 
-msgid "Preempt Node IP"
+msgid "FG Preempt Node IP"
 msgstr "旁路由 IP"
 
 msgid "Check URL"
@@ -45,3 +45,12 @@ msgstr "检查 URL 超时（秒）"
 
 msgid "Default is 5 seconds if not set"
 msgstr "默认5秒"
+
+msgid "Before using the FloatingGateway, ensure that the LAN interface is static address."
+msgstr "使用浮动网关前需确保 LAN 接口是静态地址。"
+
+msgid "Note that this service is actually a floating IP implementation. It only configures the IP address and does not modify the gateway advertised by the DHCP service, because the DHCP service is not necessarily provided by the local machine. It is named floating gateway because this is the most common usage scenario."
+msgstr "注意此服务实际是浮动 IP 的实现，仅配置 IP 地址，不会修改 DHCP 服务通告的网关，因为 DHCP 服务不一定由本机提供。取名浮动网关只是因为这是最常见的使用场景。"
+
+msgid "This IP must be within any subnet of the LAN interface"
+msgstr "此 IP 必须在 LAN 接口的任意一个子网范围内"

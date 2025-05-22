@@ -1,6 +1,8 @@
 local m, s, o
 
-m = Map("floatip", translate("FloatingGateway"), translate("FloatingGateway allows two gateway within one lan which can switch between each other in case of a failure."))
+m = Map("floatip", translate("FloatingGateway"), translate("FloatingGateway allows two gateway within one lan which can switch between each other in case of a failure.")
+	.. "<br>" .. translate("Before using the FloatingGateway, ensure that the LAN interface is static address.")
+	.. "<br>" .. translate("Note that this service is actually a floating IP implementation. It only configures the IP address and does not modify the gateway advertised by the DHCP service, because the DHCP service is not necessarily provided by the local machine. It is named floating gateway because this is the most common usage scenario."))
 
 m:section(SimpleSection).template  = "floatip_status"
 
@@ -13,14 +15,14 @@ o.rmempty = false
 o = s:option(ListValue, "role", translate("Node Role"))
 o.rmempty = false
 o.widget = "select"
-o:value("main", translate("Preempt Node"))
-o:value("fallback", translate("Fallback Node"))
+o:value("main", translate("FG Preempt Node"))
+o:value("fallback", translate("FG Fallback Node"))
 
-o = s:option(Value, "set_ip", translate("Floating Gateway IP"))
+o = s:option(Value, "set_ip", translate("Floating Gateway IP"), translate("This IP must be within any subnet of the LAN interface"))
 o.rmempty = false
 o.datatype = "or(ip4addr,cidr4)"
 
-o = s:option(Value, "check_ip", translate("Preempt Node IP"))
+o = s:option(Value, "check_ip", translate("FG Preempt Node IP"))
 o.datatype = "ip4addr"
 o:depends("role", "fallback")
 
