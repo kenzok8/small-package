@@ -255,7 +255,8 @@ config["geo-auto-update"] = false;
 config["global-client-fingerprint"] = uci.get(uciconf, ucitls, 'global_client_fingerprint');
 config.tls = {
 	"certificate": uci.get(uciconf, ucitls, 'tls_cert_path'),
-	"private-key": uci.get(uciconf, ucitls, 'tls_key_path')
+	"private-key": uci.get(uciconf, ucitls, 'tls_key_path'),
+	"ech-key": uci.get(uciconf, ucitls, 'tls_ech_key')
 };
 /* TLS END */
 
@@ -584,9 +585,14 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		alpn: cfg.tls_alpn, // Array
 		"skip-cert-verify": strToBool(cfg.tls_skip_cert_verify),
 		"client-fingerprint": cfg.tls_client_fingerprint,
+		"ech-opts": cfg.tls_ech === '1' ? {
+			enable: true,
+			config: cfg.tls_ech_config
+		} : null,
 		"reality-opts": cfg.tls_reality === '1' ? {
 			"public-key": cfg.tls_reality_public_key,
-			"short-id": cfg.tls_reality_short_id
+			"short-id": cfg.tls_reality_short_id,
+			"support-x25519mlkem768": strToBool(cfg.tls_reality_support_x25519mlkem768)
 		} : null,
 
 		/* Transport fields */
