@@ -138,7 +138,8 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 			} : {
 				certificate: cfg.tls_cert_path,
 				"private-key": cfg.tls_key_path
-			})
+			}),
+			"ech-key": cfg.tls_ech_key,
 		} : {}),
 
 		/* Transport fields */

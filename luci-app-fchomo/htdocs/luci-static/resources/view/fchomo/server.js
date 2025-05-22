@@ -360,6 +360,28 @@ return view.extend({
 		o.onclick = L.bind(hm.uploadCertificate, o, _('private key'), 'server_privatekey');
 		o.modalonly = true;
 
+		o = s.taboption('field_tls', hm.GenText, 'tls_ech_key', _('ECH key'));
+		const tls_ech_config = 'tls_ech_config';
+		o.placeholder = '-----BEGIN ECH KEYS-----\nACATwY30o/RKgD6hgeQxwrSiApLaCgU+HKh7B6SUrAHaDwBD/g0APwAAIAAgHjzK\nmadSJjYQIf9o1N5GXjkW4DEEeb17qMxHdwMdNnwADAABAAEAAQACAAEAAwAIdGVz\ndC5jb20AAA==\n-----END ECH KEYS-----';
+		o.cols = 30
+		o.rows = 5;
+		o.hm_options = {
+			type: 'ech-keypair',
+			params: '',
+			result: {
+				ech_key: o.option,
+				ech_cfg: tls_ech_config
+			}
+		}
+		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
+		o.modalonly = true;
+
+		o = s.taboption('field_tls', form.Value, 'tls_ech_config', _('ECH config'),
+			_('This ECH parameter needs to be added to the SVCB/HTTPS record of the domain.'));
+		o.placeholder = 'AEn+DQBFKwAgACABWIHUGj4u+PIggYXcR5JF0gYk3dCRioBW8uJq9H4mKAAIAAEAAQABAANAEnB1YmxpYy50bHMtZWNoLmRldgAA';
+		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
+		o.modalonly = true;
+
 		// uTLS fields
 		o = s.taboption('field_tls', form.Flag, 'tls_reality', _('REALITY'));
 		o.default = o.disabled;
@@ -375,7 +397,7 @@ return view.extend({
 
 		o = s.taboption('field_tls', hm.GenValue, 'tls_reality_private_key', _('REALITY private key'));
 		const tls_reality_public_key = 'tls_reality_public_key';
-		o.hm_asymmetric = {
+		o.hm_options = {
 			type: 'reality-keypair',
 			result: {
 				private_key: o.option,

@@ -41,15 +41,15 @@ const RES_TYPE = ['certs', 'provider', 'ruleset', 'resources', 'templates'];
 
 const methods = {
 	mihomo_generator: {
-		args: { type: 'type' },
+		args: { type: 'type', params: 'params' },
 		call: function(req) {
-			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair']))
+			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair', 'ech-keypair']))
 				return { result: false, error: 'illegal type' };
 
 			const type = req.args?.type;
 			let result = {};
 
-			const fd = popen('/usr/bin/mihomo generate ' + type);
+			const fd = popen('/usr/bin/mihomo generate ' + type + ` ${req.args?.params || ''}`);
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (type === 'uuid')
@@ -61,6 +61,14 @@ const methods = {
 						let pub = match(trim(line), /PublicKey: (.*)/);
 						if (pub)
 							result.public_key = pub[1];
+					} else if (type in ['ech-keypair']) {
+						result.ech_key = result.ech_key ? result.ech_key + '\n' + trim(line) : '';
+						let cfg = match(trim(line), /Config: (.*)/);
+						if (cfg)
+							result.ech_cfg = cfg[1];
+						let key = match(trim(line), /Key: (.*)/);
+						if (key)
+							result.ech_key = key[1];
 					}
 				}
 

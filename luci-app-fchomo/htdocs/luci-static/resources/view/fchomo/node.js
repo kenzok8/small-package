@@ -634,6 +634,18 @@ return view.extend({
 		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
 		so.modalonly = true;
 
+		so = ss.taboption('field_tls', form.Flag, 'tls_ech', _('Enable ECH'));
+		so.default = so.disabled;
+		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
+		so.depends({type: 'ss', plugin: /^(shadow-tls|restls)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Value, 'tls_ech_config', _('ECH config'),
+			_('The ECH parameter of SVCB/HTTPS record. Leave empty to resolve via DNS.'));
+		so.placeholder = 'AEn+DQBFKwAgACABWIHUGj4u+PIggYXcR5JF0gYk3dCRioBW8uJq9H4mKAAIAAEAAQABAANAEnB1YmxpYy50bHMtZWNoLmRldgAA';
+		so.depends('tls_ech', '1');
+		so.modalonly = true;
+
 		// uTLS fields
 		so = ss.taboption('field_tls', form.ListValue, 'tls_client_fingerprint', _('Client fingerprint'));
 		so.default = hm.tls_client_fingerprints[0][0];
@@ -656,6 +668,12 @@ return view.extend({
 
 		so = ss.taboption('field_tls', form.Value, 'tls_reality_short_id', _('REALITY short ID'));
 		so.rmempty = false;
+		so.depends('tls_reality', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Flag, 'tls_reality_support_x25519mlkem768', _('REALITY X25519MLKEM768 PQC support'),
+			_('Requires server support.'));
+		so.default = so.disabled;
 		so.depends('tls_reality', '1');
 		so.modalonly = true;
 

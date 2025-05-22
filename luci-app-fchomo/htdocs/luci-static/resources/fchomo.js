@@ -375,6 +375,44 @@ const CBIDynamicList = form.DynamicList.extend({
 	}
 });
 
+const CBIListValue = form.ListValue.extend({
+	renderWidget(/* ... */) {
+		let frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
+
+		frameEl.querySelector('select').style["min-width"] = '10em';
+
+		return frameEl;
+	}
+});
+
+const CBIRichMultiValue = form.MultiValue.extend({
+	__name__: 'CBI.RichMultiValue',
+
+	value: (form.RichListValue || form.MultiValue).prototype.value // less_24_10
+});
+
+const CBIStaticList = form.DynamicList.extend({
+	__name__: 'CBI.StaticList',
+
+	renderWidget(/* ... */) {
+		let El = ((less_24_10 || !pr7558_merged) ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments);
+
+		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
+
+		return El;
+	}
+});
+
+const CBITextValue = form.TextValue.extend({
+	renderWidget(/* ... */) {
+		let frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
+
+		frameEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
+
+		return frameEl;
+	}
+});
+
 const CBIGenValue = form.Value.extend({
 	__name__: 'CBI.GenValue',
 
@@ -387,8 +425,38 @@ const CBIGenValue = form.Value.extend({
 		(node.querySelector('.control-group') || node).appendChild(E('button', {
 			class: 'cbi-button cbi-button-add',
 			title: _('Generate'),
-			click: ui.createHandlerFn(this, handleGenKey, this.hm_asymmetric || this.option)
+			click: ui.createHandlerFn(this, handleGenKey, this.hm_options || this.option)
 		}, [ _('Generate') ]));
+
+		return node;
+	}
+});
+
+const CBIGenText= CBITextValue.extend({
+	__name__: 'CBI.GenText',
+
+	renderWidget(/* ... */) {
+		let node = CBITextValue.prototype.renderWidget.apply(this, arguments);
+
+		let resEl = E('div',  { 'class': 'control-group' }, [
+			E('input', {
+				'id': '_tls_ech_host',
+				'class': 'cbi-input-text',
+				'style': 'width: 10em',
+				'placeholder': 'my.clash.api'
+			}),
+			E('button', {
+				'class': 'cbi-button cbi-button-apply',
+				'click': ui.createHandlerFn(this, function() {
+					const sni = document.getElementById('_tls_ech_host').value;
+
+					this.hm_options.params = sni;
+
+					return handleGenKey.call(this, this.hm_options);
+				})
+			}, [ _('Generate') ])
+		]);
+		node.appendChild(resEl);
 
 		return node;
 	}
@@ -515,44 +583,6 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 		delete config.id;
 		for (let k in config)
 			uci.set(uciconfig, sid, k, config[k] ?? '');
-	}
-});
-
-const CBIListValue = form.ListValue.extend({
-	renderWidget(/* ... */) {
-		let frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
-
-		frameEl.querySelector('select').style["min-width"] = '10em';
-
-		return frameEl;
-	}
-});
-
-const CBIRichMultiValue = form.MultiValue.extend({
-	__name__: 'CBI.RichMultiValue',
-
-	value: (form.RichListValue || form.MultiValue).prototype.value // less_24_10
-});
-
-const CBIStaticList = form.DynamicList.extend({
-	__name__: 'CBI.StaticList',
-
-	renderWidget(/* ... */) {
-		let El = ((less_24_10 || !pr7558_merged) ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments);
-
-		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
-
-		return El;
-	}
-});
-
-const CBITextValue = form.TextValue.extend({
-	renderWidget(/* ... */) {
-		let frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
-
-		frameEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
-
-		return frameEl;
 	}
 });
 
@@ -976,7 +1006,7 @@ function renderResDownload(section_id) {
 
 function handleGenKey(option) {
 	const section_id = this.section.section;
-	const type = this.section.getOption('type').formvalue(section_id);
+	const type = this.section.getOption('type')?.formvalue(section_id);
 	const widget = L.bind(function(option) {
 		return this.map.findElement('id', 'widget.' + this.cbid(section_id).replace(/\.[^\.]+$/, '.') + option);
 	}, this);
@@ -984,15 +1014,15 @@ function handleGenKey(option) {
 	const callMihomoGenerator = rpc.declare({
 		object: 'luci.fchomo',
 		method: 'mihomo_generator',
-		params: ['type'],
+		params: ['type', 'params'],
 		expect: { '': {} }
 	});
 
 	if (typeof option === 'object') {
-		return callMihomoGenerator(option.type).then((ret) => {
+		return callMihomoGenerator(option.type, option.params).then((ret) => {
 			if (ret.result)
 				for (let key in option.result)
-					widget(option.result[key]).value = ret.result[key];
+					widget(option.result[key]).value = ret.result[key] || '';
 			else
 				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, ret.error)));
 		});
@@ -1410,12 +1440,13 @@ return baseclass.extend({
 	/* Prototype */
 	GridSection: CBIGridSection,
 	DynamicList: CBIDynamicList,
-	GenValue: CBIGenValue,
-	HandleImport: CBIHandleImport,
 	ListValue: CBIListValue,
 	RichMultiValue: CBIRichMultiValue,
 	StaticList: CBIStaticList,
 	TextValue: CBITextValue,
+	GenValue: CBIGenValue,
+	GenText: CBIGenText,
+	HandleImport: CBIHandleImport,
 
 	/* Method */
 	bool2str,

@@ -33,7 +33,7 @@ clean_unishare() {
     fi
 }
 
-clean_unishare_users() {
+reset_unishare_smb_users() {
     local users=`grep -s '^unishare:' /etc/group | cut -d: -f4 | sed 's/,/ /g'`
     local username
     [ -z "$users" ] && return 0
@@ -43,18 +43,28 @@ clean_unishare_users() {
     lock /var/lock/group
     sed -i -E 's/^unishare:x:(\d+):.+/unishare:x:\1:/' /etc/group
     lock -u /var/lock/group
-    users=`grep -s ':unishare:' /etc/passwd | cut -d: -f1`
-    [ -z "$users" ] && return 0
-    lock /var/lock/passwd
-    for username in $users; do
-        sed -i "/^$username:/d" /etc/shadow
-    done
-    sed -i -E '/^[^:]+:x:\d+:\d+:unishare:.*/d' /etc/passwd
-    lock -u /var/lock/passwd
+}
+
+clean_unused_smb_users() {
+    local users username
+    grep -s "^unishare:.*[^:]$" /etc/group | cut -d: -f4 | sed 's/,/\n/g' | sed 's/^\(.*\)$/^\1$/g' > /var/run/unishare.users
+    if [ -s /var/run/unishare.users ]; then
+        users=`grep -s ':unishare:' /etc/passwd | cut -d: -f1 | grep -v -f /var/run/unishare.users`
+    else
+        users=`grep -s ':unishare:' /etc/passwd | cut -d: -f1`
+    fi
+    rm -f /var/run/unishare.users
+    if [ -n "$users" ]; then
+        lock /var/lock/passwd
+        for username in $users; do
+            sed -i "/^$username:/d" /etc/shadow /etc/passwd
+        done
+        lock -u /var/lock/passwd
+    fi
 }
 
 clean_samba() {
-    clean_unishare_users
+    reset_unishare_smb_users
     config_load samba4
 	config_foreach clean_unishare sambashare samba4
 }
@@ -265,10 +275,12 @@ start_service() {
     [ "$UNISHARE_G_ENABLED" = "1" ] || {
         uci commit samba4
         [ "$ONBOOT" = "1" ] || /etc/init.d/samba4 reload
+        clean_unused_smb_users
         return 0
     }
     [ -z "$UNISHARE_G_DAVPORT" ] && UNISHARE_G_DAVPORT=8080
     reconfig_samba || return 1
+    clean_unused_smb_users
     [ "$ONBOOT" = "1" ] || /etc/init.d/samba4 reload
     config_webdav || return 1
 
@@ -281,7 +293,14 @@ start_service() {
     procd_close_instance
 }
 
+shutdown() {
+    export -n ONSHUTDOWN=1
+    stop
+}
+
 service_stopped() {
+    [ "$ONSHUTDOWN" = "1" ] && return 0
+
     clean_samba
     [ `uci changes samba4 | wc -l` -gt 0 ] && {
         uci commit samba4
