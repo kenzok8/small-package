@@ -194,6 +194,11 @@ msgstr "已在更新中。"
 msgid "Alter ID"
 msgstr "额外 ID"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:572
+#: htdocs/luci-static/resources/view/fchomo/server.js:382
+msgid "And need to add an A/AAAA record for \"public-sni.my.server\"."
+msgstr "并且需要为 \"public-sni.my.server\" 添加 A/AAAA 记录。"
+
 #: htdocs/luci-static/resources/fchomo.js:125
 #: htdocs/luci-static/resources/fchomo.js:157
 msgid "AnyTLS"
@@ -2349,8 +2354,10 @@ msgid "The %s address used by local machine in the Wireguard network."
 msgstr "WireGuard 网络中使用的本机 %s 地址。"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:644
-msgid "The ECH parameter of SVCB/HTTPS record. Leave empty to resolve via DNS."
-msgstr "SVCB/HTTPS 记录的 ECH 参数。留空则通过 DNS 解析。"
+msgid ""
+"The ECH parameter of the SVCB/HTTPS record for the domain. Leave empty to "
+"resolve via DNS."
+msgstr "域名的 SVCB/HTTPS 记录的 ECH 参数。留空则通过 DNS 解析。"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:322
 msgid "The default value is 2:00 every day."

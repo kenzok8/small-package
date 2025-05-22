@@ -443,7 +443,7 @@ const CBIGenText= CBITextValue.extend({
 				'id': '_tls_ech_host',
 				'class': 'cbi-input-text',
 				'style': 'width: 10em',
-				'placeholder': 'my.clash.api'
+				'placeholder': this.hm_placeholder
 			}),
 			E('button', {
 				'class': 'cbi-button cbi-button-apply',

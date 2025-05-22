@@ -186,6 +186,11 @@ msgstr ""
 msgid "Alter ID"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:572
+#: htdocs/luci-static/resources/view/fchomo/server.js:382
+msgid "And need to add an A/AAAA record for \"public-sni.my.server\"."
+msgstr ""
+
 #: htdocs/luci-static/resources/fchomo.js:125
 #: htdocs/luci-static/resources/fchomo.js:157
 msgid "AnyTLS"
@@ -2320,7 +2325,9 @@ msgid "The %s address used by local machine in the Wireguard network."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:644
-msgid "The ECH parameter of SVCB/HTTPS record. Leave empty to resolve via DNS."
+msgid ""
+"The ECH parameter of the SVCB/HTTPS record for the domain. Leave empty to "
+"resolve via DNS."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:322
