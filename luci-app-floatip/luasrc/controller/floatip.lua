@@ -15,7 +15,7 @@ function floatip_status()
 	local uci  = require "luci.model.uci".cursor()
 
 	local status = {
-		running = (sys.call("pidof floatip.sh >/dev/null") == 0),
+		running = not (sys.call("flock -sn /var/lock/floatip_loop.lock -c true >/dev/null") == 0),
 	}
 
 	luci.http.prepare_content("application/json")
