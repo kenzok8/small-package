@@ -1,5 +1,7 @@
 #!/bin/sh
 
+LOCK_FILE="/var/lock/floatip_loop.lock"
+
 DEFAULT_PREFIX=24
 
 # random number 0-255
@@ -215,6 +217,19 @@ main() {
 		fallback_loop
 	fi
 }
+
+try_lock() {
+	exec 200>"$LOCK_FILE"
+	flock -x 200 && return 0
+	return 1
+}
+
+echo "locking $LOCK_FILE" >&2
+try_lock || {
+	echo "lock $LOCK_FILE failed, already running?" >&2
+	exit 1
+}
+echo "lock $LOCK_FILE success" >&2 
 
 if [[ -n "$1" ]]; then
 	[[ "$1" -ge 0 && "$1" -lt 32 ]] && DEFAULT_PREFIX=$1
