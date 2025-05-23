@@ -598,7 +598,7 @@ return view.extend({
 
 		so = ss.option(form.DynamicList, 'external_controller_cors_allow_origins', _('CORS Allow origins'),
 			_('CORS allowed origins, <code>*</code> will be used if empty.'));
-		so.placeholder = 'https://yacd.metacubex.one';
+		so.placeholder = 'https://board.zash.run.place';
 
 		so = ss.option(form.Flag, 'external_controller_cors_allow_private_network', _('CORS Allow private network'),
 			_('Allow access from private network.</br>' +
@@ -679,6 +679,9 @@ return view.extend({
 		/* Experimental settings */
 		o = s.taboption('experimental', form.SectionValue, '_experimental', form.NamedSection, 'experimental', 'fchomo', null);
 		ss = o.subsection;
+
+		so = ss.option(form.Flag, 'skip_safe_path_check', _('Disable safe path check'));
+		so.default = so.disabled;
 
 		so = ss.option(form.Flag, 'quic_go_disable_gso', _('Disable GSO of quic-go'));
 		so.default = so.disabled;

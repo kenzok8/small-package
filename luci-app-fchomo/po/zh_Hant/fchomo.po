@@ -547,6 +547,10 @@ msgstr "停用 SNI"
 msgid "Disable UDP"
 msgstr "停用 UDP"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:683
+msgid "Disable safe path check"
+msgstr "禁用安全路徑檢查"
+
 #: htdocs/luci-static/resources/view/fchomo/client.js:750
 msgid ""
 "Do not resolve the domain connection to IP for this match.</br>Only works "
