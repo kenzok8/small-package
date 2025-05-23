@@ -110,11 +110,13 @@ start_service() {
 
 	mkdir -p "$RUN_DIR"
 
+	# Global ENV variables
+	config_get_bool SKIP_SAFE_PATH_CHECK "experimental" "skip_safe_path_check" "0"
+	export SKIP_SAFE_PATH_CHECK=$([ "$SKIP_SAFE_PATH_CHECK" = "1" ] && echo true || echo false)
+
 	# Client
 	if [ "$client_enabled" = "1" ]; then
 	if [ -z "$1" -o "$1" = "mihomo-c" ]; then
-		# Env variables
-		export SAFE_PATHS="$RUN_DIR/"
 
 		# Generate/Validate client config
 		ucode -S "$SDL_DIR/generate_client.uc" 2>>"$LOG_PATH" | yq -Poy | yq \
@@ -131,9 +133,20 @@ start_service() {
 		if [ ! -e "$RUN_DIR/mihomo-c.yaml" ]; then
 			log "Error: failed to generate client configuration."
 			return 1
-		elif ! "$PROG" -t -d "$HM_DIR" -f "$RUN_DIR/mihomo-c.yaml" >/dev/null 2>>"$LOG_PATH"; then
-			log "Error: wrong client configuration detected."
-			return 1
+		else
+			# Set ENV variables for Client
+			export SAFE_PATHS="$RUN_DIR$(
+				yq 'with(.tls; .[] |= sub("(/[^/]+$)", ""))
+					| [.external-ui, .tls.certificate, .tls.private-key] | unique
+					| .[] | sub("(^)", ":")' \
+				"$RUN_DIR/mihomo-c.yaml" | tr -d '\n'
+			)"
+
+			if ! "$PROG" -t -d "$HM_DIR" -f "$RUN_DIR/mihomo-c.yaml" >/dev/null; then
+				log "Error: wrong client configuration detected."
+				"$PROG" -t -d "$HM_DIR" -f "$RUN_DIR/mihomo-c.yaml" >>"$LOG_PATH"
+				return 1
+			fi
 		fi
 		echo > "$RUN_DIR/mihomo-c.log"
 
@@ -251,7 +264,7 @@ start_service() {
 
 		procd_set_param command /bin/sh
 		procd_append_param command -c "'$PROG' -d '$HM_DIR' -f '$RUN_DIR/mihomo-c.yaml' >> '$RUN_DIR/mihomo-c.log' 2>&1"
-		procd_set_param env SAFE_PATHS="$RUN_DIR:/etc/ssl" SKIP_SAFE_PATH_CHECK=true # The syntax of this environment variable is the same as the PATH environment variable parsing rules of this operating system (i.e., semicolon-separated under Windows and colon-separated under other systems)
+		procd_set_param env SAFE_PATHS="$SAFE_PATHS" SKIP_SAFE_PATH_CHECK="$SKIP_SAFE_PATH_CHECK" # The syntax of this environment variable is the same as the PATH environment variable parsing rules of this operating system (i.e., semicolon-separated under Windows and colon-separated under other systems)
 
 		# Only supports `Global`` and does not support `Proxy Group` and `Proxy Node`
 		local bind_ifname
@@ -288,9 +301,20 @@ start_service() {
 		if [ ! -e "$RUN_DIR/mihomo-s.yaml" ]; then
 			log "Error: failed to generate server configuration."
 			return 1
-		elif ! "$PROG" -t -d "$HM_DIR" -f "$RUN_DIR/mihomo-s.yaml" >/dev/null 2>>"$LOG_PATH"; then
-			log "Error: wrong server configuration detected."
-			return 1
+		else
+			# Set ENV variables for Server
+			export SAFE_PATHS="$RUN_DIR$(
+				yq '[.listeners[] | select(.certificate // .private-key) | [.certificate, .private-key][]]
+					| .[] |= sub("(/[^/]+$)", "") | unique
+					| .[] | sub("(^)", ":")' \
+				"$RUN_DIR/mihomo-s.yaml" | tr -d '\n'
+			)"
+
+			if ! "$PROG" -t -d "$HM_DIR" -f "$RUN_DIR/mihomo-s.yaml" >/dev/null; then
+				log "Error: wrong server configuration detected."
+				"$PROG" -t -d "$HM_DIR" -f "$RUN_DIR/mihomo-s.yaml" >>"$LOG_PATH"
+				return 1
+			fi
 		fi
 		echo > "$RUN_DIR/mihomo-s.log"
 
@@ -299,6 +323,7 @@ start_service() {
 
 		procd_set_param command /bin/sh
 		procd_append_param command -c "'$PROG' -d '$HM_DIR' -f '$RUN_DIR/mihomo-s.yaml' >> '$RUN_DIR/mihomo-s.log' 2>&1"
+		procd_set_param env SAFE_PATHS="$SAFE_PATHS" SKIP_SAFE_PATH_CHECK="$SKIP_SAFE_PATH_CHECK" # The syntax of this environment variable is the same as the PATH environment variable parsing rules of this operating system (i.e., semicolon-separated under Windows and colon-separated under other systems)
 
 		#procd_set_param capabilities "/etc/capabilities/fchomo.json"
 		#procd_set_param user mihomo
