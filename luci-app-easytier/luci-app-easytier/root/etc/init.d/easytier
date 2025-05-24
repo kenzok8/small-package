@@ -62,75 +62,51 @@ get_tz() {
 }
 
 check_bin() {
-		path=$(dirname "$easytierbin")
-		size="$(df -k | awk '/\/overlay$/ {sub(/K$/, "", $4); print $4}')"
-		[ -z "$size" ] && size="$(df -k /usr/bin | awk 'NR==2 {print $(NF-2) }')"
-                if [[ -f /tmp/easytier-core || -f /tmp/easytier-cli ]] && [[ "${path:0:4}" != "/tmp" ]]; then
-                   chmod +x /tmp/easytier-core 2>/dev/null
-                   chmod +x /tmp/easytier-cli 2>/dev/null
-		   mkdir -p "$path"
-                   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 找到上传的程序/tmp/easytier-core，替换为$easytierbin " >>/tmp/easytier.log
-                   upsize="$(du -k /tmp/easytier-core | cut -f1)"
-                   result=$(expr $size - $upsize)
-                   [ -z "$size"] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 获取可用空间失败，请使用ssh手动上传至 ${easytierbin} ${path}/easytier-cli" >>/tmp/easytier.log
-                   if [ "$(($(/tmp/easytier-core -h 2>&1 | wc -l)))" -gt 3 ] && [ "$result" -gt 1000 ] ; then
-                     mv -f /tmp/easytier-core "$easytierbin" 2>/dev/null
-                     mv -f /tmp/easytier-cli "${path}/easytier-cli" 2>/dev/null
-                     else
-		     if [ -z "$size" ] && [ "$(($(/tmp/easytier-core -h 2>&1 | wc -l)))" -gt 3 ] ; then
-			mv -f /tmp/easytier-core "$easytierbin" 2>/dev/null
-                     	mv -f /tmp/easytier-cli "${path}/easytier-cli" 2>/dev/null
-		     fi
-                     echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 无法替换，上传的程序不完整或自定义路径的可用空间不足，当前空间剩余${size}kb" >>/tmp/easytier.log
-                   fi
-                fi
-                if [ ! -f "$easytierbin" ] && [ "$size" -lt 5000 ] && [ ! -z "$size" ] ; then
-                    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 自定义程序路径的可用空间不足，当前可用空间剩余${size}kb,自动切换为内存/tmp/easytier-core" >>/tmp/easytier.log
-                    sed -i "/easytierbin/c option easytierbin '/tmp/easytier-core' " /etc/config/easytier 
-                    easytierbin=/tmp/easytier-core
-                fi
-		if [ "$($easytierbin -h 2>&1 | wc -l)" -lt 3 ] || [ ! -f "$easytierbin" ] || [ ! -f "$webbin" ] ; then
-		 curltest=`which curl`
-		 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-		 #github加速地址，一行一个 你可以自建改为你自己的
-		 proxys="https://github.moeyy.xyz/
-			https://gh.llkk.cc/
-			https://mirror.ghproxy.com/
-			https://ghproxy.net/"
-		 if [ -z "$curltest" ] || [ ! -s "`which curl`" ] ; then
-       			tag="$( wget --no-check-certificate -T 5 -t 3 --user-agent "$user_agent" --max-redirect=0 --output-document=-  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
-       			[ -z "$tag" ] && tag="$( wget --no-check-certificate -T 5 -t 3 --user-agent "$user_agent" --quiet --output-document=-  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
-   		 else
-       			tag="$( curl -k --connect-timeout 3 --user-agent "$user_agent"  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
-       			[ -z "$tag" ] && tag="$( curl -Lk --connect-timeout 3 --user-agent "$user_agent" -s  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
-   		 fi
-		 [ -z "$tag"] && tag=v2.2.4
-		 echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 未找到程序 $easytierbin 开始在线下载${tag}，下载较慢耐心等候" >>/tmp/easytier.log
-                 mkdir -p "$path"
-		for proxy in $proxys ; do
-	           curl -L -k -o /tmp/easytier.zip --connect-timeout 10 --retry 3 "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip" || wget --no-check-certificate --timeout=10 --tries=3 -O /tmp/easytier.zip "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip"
-	           if [ "$?" = 0 ] ; then
+	curltest=`which curl`
+	user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+	#github加速地址，一行一个 你可以自建改为你自己的
+	proxys="https://github.moeyy.xyz/
+	https://gh.llkk.cc/
+	https://mirror.ghproxy.com/
+	https://ghproxy.net/"
+	if [ -z "$curltest" ] || [ ! -s "`which curl`" ] ; then
+       		tag="$( wget --no-check-certificate -T 5 -t 3 --user-agent "$user_agent" --max-redirect=0 --output-document=-  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
+       		[ -z "$tag" ] && tag="$( wget --no-check-certificate -T 5 -t 3 --user-agent "$user_agent" --quiet --output-document=-  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
+   	 else
+       		tag="$( curl -k --connect-timeout 3 --user-agent "$user_agent"  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
+       		[ -z "$tag" ] && tag="$( curl -Lk --connect-timeout 3 --user-agent "$user_agent" -s  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
+   	fi
+	[ -z "$tag"] && tag=v2.2.4
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 未找到程序 $easytierbin 开始在线下载${tag}，下载较慢耐心等候" >>/tmp/easytier.log
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 未找到程序 $webbin 开始在线下载${tag}，下载较慢耐心等候" >>/tmp/easytierweb.log
+        mkdir -p "$path"
+	for proxy in $proxys ; do
+	        if curl -L -k -o /tmp/easytier.zip --connect-timeout 10 --retry 3 "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip" || \
+		wget --no-check-certificate --timeout=10 --tries=3 -O /tmp/easytier.zip "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip" ; then
 			unzip -j -q -o /tmp/easytier.zip -d /tmp
 	         	chmod +x /tmp/easytier-core /tmp/easytier-cli /tmp/easytier-web /tmp/easytier-web-embed || true
 	         	mv -f /tmp/easytier-core ${path}/
 	         	mv -f /tmp/easytier-cli ${path}/
-	         	mv -f /tmp/easytier-web-embed ${path}/easytier-web || true
+	         	mv -f /tmp/easytier-web-embed ${webbin} || true
                  	chmod +x "$easytierbin"
-                	 rm -rf /tmp/easytier.zip 
+                 	chmod +x "$webbin"
+                	rm -rf /tmp/easytier.zip 
 			break
                  	if [ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]; then
                    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin} 下载成功" >>/tmp/easytier.log
                  	else
-                   	 	uci -q set easytier.@easytier[0].enabled=0
-                    		uci commit easytier
-                    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载失败，请手动下载上传程序,程序退出" >>/tmp/easytier.log
-                    		return 1
+                    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytier.log
                  	fi
- 		     else
-			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载失败，请手动下载上传程序,程序退出" >>/tmp/easytier.log
-		     fi
-		done
-                fi
+			if [ "$($webbin -h 2>&1 | wc -l)" -gt 3 ]; then
+				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${webbin} 下载成功" >>/tmp/easytierweb.log
+                 	else
+				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytierweb.log
+                 	fi
+ 		 else
+			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载失败，请手动下载上传程序" >>/tmp/easytier.log
+			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载失败，请手动下载上传程序" >>/tmp/easytierweb.log
+		fi
+	done
 }
 
 check_config() {
@@ -300,63 +276,63 @@ get_etconfig() {
 
 set_firewall() {
 		if [ "$listenermode" = "ON" ] || [ "$etcmd" = "web" ] ; then
-		if [ ! -z "$tcp_port" ] ; then
-		   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_tcp_udp 放行端口 ${tcp_port} " >>/tmp/easytier.log
-                    uci -q delete firewall.easytier_tcp_udp
-		    uci set firewall.easytier_tcp_udp=rule
-		    uci set firewall.easytier_tcp_udp.name="easytier_tcp_udp"
-		    uci set firewall.easytier_tcp_udp.target="ACCEPT"
-		    uci set firewall.easytier_tcp_udp.src="wan"
-		    uci set firewall.easytier_tcp_udp.proto="tcp udp"
-		    uci set firewall.easytier_tcp_udp.dest_port="$tcp_port"
-		    uci set firewall.easytier_tcp_udp.enabled="1"
-		 fi
-                 if [ ! -z "$wss_port" ] ; then
-		   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_wss 放行端口 ${wss_port} " >>/tmp/easytier.log
-		    uci -q delete firewall.easytier_wss
-		    uci set firewall.easytier_wss=rule
-		    uci set firewall.easytier_wss.name="easytier_wss"
-		    uci set firewall.easytier_wss.target="ACCEPT"
-		    uci set firewall.easytier_wss.src="wan"
-		    uci set firewall.easytier_wss.proto="tcp"
-		    uci set firewall.easytier_wss.dest_port="$wss_port"
-		    uci set firewall.easytier_wss.enabled="1"
-		 fi
-                   if [ ! -z "$ws_port" ] ; then
-		    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_ws 放行端口 ${ws_port} " >>/tmp/easytier.log
-		    uci -q delete firewall.easytier_ws
-		    uci set firewall.easytier_ws=rule
-		    uci set firewall.easytier_ws.name="easytier_ws"
-		    uci set firewall.easytier_ws.target="ACCEPT"
-		    uci set firewall.easytier_ws.src="wan"
-		    uci set firewall.easytier_ws.proto="tcp"
-		    uci set firewall.easytier_ws.dest_port="$ws_port"
-		    uci set firewall.easytier_ws.enabled="1"
-		   fi
-                   if [ ! -z "$wg_port" ] ; then
-		    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_wg 放行端口 ${wg_port} " >>/tmp/easytier.log
-		    uci -q delete firewall.easytier_wg
-		    uci set firewall.easytier_wg=rule
-		    uci set firewall.easytier_wg.name="easytier_wg"
-		    uci set firewall.easytier_wg.target="ACCEPT"
-		    uci set firewall.easytier_wg.src="wan"
-		    uci set firewall.easytier_wg.proto="udp"
-		    uci set firewall.easytier_wg.dest_port="$wg_port"
-		    uci set firewall.easytier_wg.enabled="1"
-		   fi
+			if [ ! -z "$tcp_port" ] ; then
+		    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_tcp_udp 放行端口 ${tcp_port} " >>/tmp/easytier.log
+                    		uci -q delete firewall.easytier_tcp_udp
+		    		uci set firewall.easytier_tcp_udp=rule
+		    		uci set firewall.easytier_tcp_udp.name="easytier_tcp_udp"
+		    		uci set firewall.easytier_tcp_udp.target="ACCEPT"
+		    		uci set firewall.easytier_tcp_udp.src="wan"
+		    		uci set firewall.easytier_tcp_udp.proto="tcp udp"
+		    		uci set firewall.easytier_tcp_udp.dest_port="$tcp_port"
+		    		uci set firewall.easytier_tcp_udp.enabled="1"
+		 	fi
+                 	if [ ! -z "$wss_port" ] ; then
+		   		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_wss 放行端口 ${wss_port} " >>/tmp/easytier.log
+		    		uci -q delete firewall.easytier_wss
+		    		uci set firewall.easytier_wss=rule
+		    		uci set firewall.easytier_wss.name="easytier_wss"
+		    		uci set firewall.easytier_wss.target="ACCEPT"
+		    		uci set firewall.easytier_wss.src="wan"
+		    		uci set firewall.easytier_wss.proto="tcp"
+		    		uci set firewall.easytier_wss.dest_port="$wss_port"
+		    		uci set firewall.easytier_wss.enabled="1"
+		 	fi
+                   	if [ ! -z "$ws_port" ] ; then
+		    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_ws 放行端口 ${ws_port} " >>/tmp/easytier.log
+		    		uci -q delete firewall.easytier_ws
+		    		uci set firewall.easytier_ws=rule
+		    		uci set firewall.easytier_ws.name="easytier_ws"
+		   		uci set firewall.easytier_ws.target="ACCEPT"
+		    		uci set firewall.easytier_ws.src="wan"
+		    		uci set firewall.easytier_ws.proto="tcp"
+		    		uci set firewall.easytier_ws.dest_port="$ws_port"
+		    		uci set firewall.easytier_ws.enabled="1"
+		   	fi
+                   	if [ ! -z "$wg_port" ] ; then
+		    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_wg 放行端口 ${wg_port} " >>/tmp/easytier.log
+		    		uci -q delete firewall.easytier_wg
+		    		uci set firewall.easytier_wg=rule
+		    		uci set firewall.easytier_wg.name="easytier_wg"
+		    		uci set firewall.easytier_wg.target="ACCEPT"
+		    		uci set firewall.easytier_wg.src="wan"
+		    		uci set firewall.easytier_wg.proto="udp"
+		    		uci set firewall.easytier_wg.dest_port="$wg_port"
+		    		uci set firewall.easytier_wg.enabled="1"
+		   	fi
                 fi
 		[ -z "$tunname" ] && tunname="tun0"
                 uci -q delete network.EasyTier >/dev/null 2>&1
 	        if [ -z "$(uci -q get network.EasyTier)" ];  then				
-			uci set network.EasyTier='interface'
+		       uci set network.EasyTier='interface'
                        if [ -z "$ipaddr" ]; then
 				uci set network.EasyTier.proto='none'
 			else
 				uci set network.EasyTier.proto='static'
 				uci set network.EasyTier.ipaddr=$ipaddr
 				uci set network.EasyTier.netmask='255.0.0.0'
-			fi
-			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加网络接口 EasyTier 绑定虚拟接口 ${tunname}" >>/tmp/easytier.log
+		       fi
+		       echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加网络接口 EasyTier 绑定虚拟接口 ${tunname}" >>/tmp/easytier.log
                        uci set network.EasyTier.device="$tunname"
                        uci set network.EasyTier.ifname="$tunname"
 		fi
@@ -411,8 +387,34 @@ start_et() {
 		[ -z "$easytierbin" ] && easytierbin="/usr/bin/easytier-core" && uci -q set easytier.@easytier[0].easytierbin=/usr/bin/easytier-core
                 etcmd="$(uci -q get easytier.@easytier[0].etcmd)"
                 echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core_${cpucore}开始启动" >>/tmp/easytier.log
-                #[ ! -s /usr/lib/opkg/info/kmod-tun.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少kmod-tun插件" >>/tmp/easytier.log
-                check_bin
+                path=$(dirname "$easytierbin")
+                if [[ -f /tmp/easytier-core || -f /tmp/easytier-cli ]] && [[ "${path:0:4}" != "/tmp" ]]; then
+                   chmod +x /tmp/easytier-core 2>/dev/null
+                   chmod +x /tmp/easytier-cli 2>/dev/null
+		   mkdir -p "$path"
+                   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 找到上传的程序/tmp/easytier-core，替换为$easytierbin " >>/tmp/easytier.log
+                   upsize="$(du -k /tmp/easytier-core | cut -f1)"
+                   result=$(expr $size - $upsize)
+                   [ -z "$size"] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 获取可用空间失败，请使用ssh手动上传至 ${easytierbin} ${path}/easytier-cli" >>/tmp/easytier.log
+                   if [ "$(($(/tmp/easytier-core -h 2>&1 | wc -l)))" -gt 3 ] && [ "$result" -gt 1000 ] ; then
+                     	mv -f /tmp/easytier-core "$easytierbin" 2>/dev/null
+                     	mv -f /tmp/easytier-cli "${path}/easytier-cli" 2>/dev/null
+                    else
+		     	if [ -z "$size" ] && [ "$(($(/tmp/easytier-core -h 2>&1 | wc -l)))" -gt 3 ] ; then
+				mv -f /tmp/easytier-core "$easytierbin" 2>/dev/null
+                     		mv -f /tmp/easytier-cli "${path}/easytier-cli" 2>/dev/null
+		     	fi
+                        echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 无法替换，上传的程序不完整或自定义路径的可用空间不足，当前空间剩余${size}kb" >>/tmp/easytier.log
+                   fi
+                fi
+                if [ ! -f "$easytierbin" ] && [ "$size" -lt 5000 ] && [ ! -z "$size" ] ; then
+                    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 自定义程序路径的可用空间不足，当前可用空间剩余${size}kb,自动切换为内存/tmp/easytier-core" >>/tmp/easytier.log
+                    sed -i "/easytierbin/c option easytierbin '/tmp/easytier-core' " /etc/config/easytier 
+                    easytierbin=/tmp/easytier-core
+                fi
+		if [ ! -f "$easytierbin" ] || [ "$(($($easytierbin -h 2>&1 | wc -l)))" -lt 3 ] ; then
+                	check_bin
+		fi
                 chmod +x "$easytierbin" 
                 chmod +x ${path}/easytier-cli
                 ver="$($easytierbin -V | awk {'print $2'} | tr -d '~')"
@@ -422,6 +424,7 @@ start_et() {
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
           	if [ "$etcmd" = "config" ] ; then 
+			#配置文件启动方式
                 	check_config  
          	else
 			get_etconfig
@@ -430,6 +433,7 @@ start_et() {
 			[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
 			procd_set_param command "$easytierbin"
 			if [ "$etcmd" = "etcmd" ] ; then
+				#默认方式启动
 				[ -z "$network_name" ] || procd_append_param command --network-name "$network_name"
 				[ -z "$network_secret" ] || procd_append_param command --network-secret "$network_secret"
 				[ -z "$ipaddr" ] || procd_append_param command -i "$ipaddr"
@@ -538,6 +542,7 @@ start_et() {
 				[ "$accept_dns" = "0" ] || procd_append_param command --accept-dns true
 	     		fi
 			if [ "$etcmd" = "web" ] ; then
+				#WEB控制台启动
 				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} -w ${web_config}" >>/tmp/easytier.log
 				[ -f /etc/easytier/et_machine_id ] || touch /etc/easytier/et_machine_id
 				idpath=$(dirname "$easytierbin")
@@ -620,10 +625,12 @@ fi
 
 start_web() {
 	webbin="$(uci -q get easytier.@easytier[0].webbin)"
-	check_bin
 	if [ -f /tmp/easytier-web-embed ] ; then
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 找到上传的easytier-web程序，替换${webbin} " >>/tmp/easytierweb.log
 		mv -f /tmp/easytier-web-embed "$webbin"
+	fi
+	if [ ! -f "$webbin" ] || [ "$(($($webbin -h 2>&1 | wc -l)))" -lt 3 ] ; then
+        	check_bin
 	fi
 	if [ -f "$webbin" ] ; then
 		[ ! -x "$webbin" ] && chmod +x "$webbin"
@@ -727,8 +734,8 @@ start_service() {
         fi
         echo "" >/tmp/easytier.log
 	echo "" >/tmp/easytierweb.log
-        #test -z "`opkg list-installed|grep curl`" && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少curl插件" >/tmp/easytier.log
-        #[ ! -s /usr/lib/opkg/info/unzip.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少unzip插件" >/tmp/easytier.log
+        size="$(df -k | awk '/\/overlay$/ {sub(/K$/, "", $4); print $4}')"
+	[ -z "$size" ] && size="$(df -k /usr/bin | awk 'NR==2 {print $(NF-2) }')"
 	[ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ] && start_et easytier 
 	if [ -z "$(uci -q get easytier.@easytierweb[0].enabled)" ] ; then
 		echo "config easytierweb" >>/etc/config/easytier
@@ -794,3 +801,4 @@ service_triggers() {
 	#如果任意网络接口上线则触发重新启动easytier
         procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytier reload
 }
+
