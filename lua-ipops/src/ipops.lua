@@ -122,7 +122,7 @@ end
 -- netString: ipaddr, a.b.c.d-e.f.g.h, a.b.c.d/m1.m2.m3.m4
 -- return: range: [n1, n2] where n1 <= n2
 local function netString2range(netString)
-	ip = get_parts_as_number(netString)
+	local ip = get_parts_as_number(netString)
 	if #ip == 4 then
 		local i = (((ip[1] * 256 + ip[2]) * 256 + ip[3]) * 256 + ip[4])
 		return {i, i}
