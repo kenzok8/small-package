@@ -196,8 +196,8 @@ msgstr "额外 ID"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:572
 #: htdocs/luci-static/resources/view/fchomo/server.js:382
-msgid "And need to add an A/AAAA record for \"public-sni.my.server\"."
-msgstr "并且需要为 \"public-sni.my.server\" 添加 A/AAAA 记录。"
+msgid "And need to add an A/AAAA record for \"outer-sni.my.server\"."
+msgstr "并且需要为 \"outer-sni.my.server\" 添加 A/AAAA 记录。"
 
 #: htdocs/luci-static/resources/fchomo.js:125
 #: htdocs/luci-static/resources/fchomo.js:157
