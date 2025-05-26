@@ -555,7 +555,7 @@ return view.extend({
 		so = ss.option(hm.GenText, 'tls_ech_key', _('API ECH key'));
 		const tls_ech_cfg = 'tls_ech_cfg';
 		so.placeholder = '-----BEGIN ECH KEYS-----\nACATwY30o/RKgD6hgeQxwrSiApLaCgU+HKh7B6SUrAHaDwBD/g0APwAAIAAgHjzK\nmadSJjYQIf9o1N5GXjkW4DEEeb17qMxHdwMdNnwADAABAAEAAQACAAEAAwAIdGVz\ndC5jb20AAA==\n-----END ECH KEYS-----';
-		so.hm_placeholder = 'public-sni.my.server';
+		so.hm_placeholder = 'outer-sni.my.server';
 		so.cols = 30
 		so.rows = 2;
 		so.hm_options = {
@@ -569,7 +569,7 @@ return view.extend({
 
 		so = ss.option(form.Value, 'tls_ech_cfg', _('API ECH config'),
 			_('This ECH parameter needs to be added to the SVCB/HTTPS record of the domain.') + '</br/>' +
-			_('And need to add an A/AAAA record for "public-sni.my.server".'));
+			_('And need to add an A/AAAA record for "outer-sni.my.server".'));
 		so.placeholder = 'AEn+DQBFKwAgACABWIHUGj4u+PIggYXcR5JF0gYk3dCRioBW8uJq9H4mKAAIAAEAAQABAANAEnB1YmxpYy50bHMtZWNoLmRldgAA';
 		/* TLS END */
 
