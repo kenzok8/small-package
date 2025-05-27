@@ -321,7 +321,7 @@ function Module:requestIP()
 	end
 
 	local retCode, response = self:sendUDPMessage(self._DNSPacket, server, port)
-	if retCode == 0 then
+	if retCode == 0 and response then
 		local retTable = self:decodeMessage(response)
 		if #retTable > 0 then
 			res = table.concat(retTable, ", ")
