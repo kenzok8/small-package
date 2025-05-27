@@ -356,7 +356,16 @@ function InternetDetector:mainLoop()
 	_RUNNING            = true
 	while _RUNNING do
 		if counter == 0 or counter >= interval then
-			currentStatus = self:checkHosts()
+			if self.debug then
+				currentStatus = self:checkHosts()
+			else
+				local ret, status = pcall(self.checkHosts, self, currentStatus)
+				if ret then
+					currentStatus = status
+				else
+					self:writeLogMessage("err", "Unknown error while checking host!")
+				end
+			end
 			if onStart or not stat.stat(self.statusFile) then
 				self:writeValueToFile(self.statusFile, self:statusJson(
 					currentStatus, self.serviceConfig.instance))
@@ -391,7 +400,14 @@ function InternetDetector:mainLoop()
 				mTimeDiff = 1
 			end
 			mLastTime = mTimeNow
-			e:run(currentStatus, lastStatus, mTimeDiff, mTimeNow, inetChecked)
+			if self.debug then
+				e:run(currentStatus, lastStatus, mTimeDiff, mTimeNow, inetChecked)
+			else
+				local ret = pcall(e.run, e, currentStatus, lastStatus, mTimeDiff, mTimeNow, inetChecked)
+				if not ret then
+					self:writeLogMessage("err", string.format("%s: Unknown error!", e.name))
+				end
+			end
 		end
 
 		local modStatusChanged = false
