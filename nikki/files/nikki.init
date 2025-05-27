@@ -244,7 +244,7 @@ service_started() {
 		local tun_interval; tun_interval=1
 		while [ "$tun_timeout" -gt 0 ]; do
 			if (ip link show dev "$tun_device" > /dev/null 2>&1); then
-				if [ $(ip -json addr show dev "$tun_device" | tun_device="$tun_device" yq -M '.[] | select(.ifname = strenv(tun_device)) | .addr_info | length') -gt 0 ]; then
+				if [ "$(ip -json addr show dev "$tun_device" | tun_device="$tun_device" yq -M '.[] | select(.ifname = strenv(tun_device)) | .addr_info | length')" -gt 0 ]; then
 					log "Proxy" "Tun device is online."
 					break
 				fi
@@ -394,27 +394,27 @@ update_subscription() {
 		if [[ -n "$subscription_upload" && -n "$subscription_download" ]]; then
 			subscription_used=$((subscription_upload + subscription_download))
 			if [ -n "$subscription_total" ]; then
-				subscription_avaliable=$((subscription_total - subscription_upload - subscription_download))
+				subscription_avaliable=$((subscription_total - subscription_used))
 			fi
 		fi
 		# update subscription info
 		if [ -n "$subscription_expire" ]; then
-			uci_set "nikki" "$subscription_section" "expire" "$(date "+%Y-%m-%d %H:%M:%S" -d @$subscription_expire)"
+			uci_set "nikki" "$subscription_section" "expire" "$(date "+%Y-%m-%d %H:%M:%S" -d "@$subscription_expire")"
 		fi
 		if [ -n "$subscription_upload" ]; then
-			uci_set "nikki" "$subscription_section" "upload" "$(format_filesize $subscription_upload)"
+			uci_set "nikki" "$subscription_section" "upload" "$(format_filesize "$subscription_upload")"
 		fi
 		if [ -n "$subscription_download" ]; then
-			uci_set "nikki" "$subscription_section" "download" "$(format_filesize $subscription_download)"
+			uci_set "nikki" "$subscription_section" "download" "$(format_filesize "$subscription_download")"
 		fi
 		if [ -n "$subscription_total" ]; then
-			uci_set "nikki" "$subscription_section" "total" "$(format_filesize $subscription_total)"
+			uci_set "nikki" "$subscription_section" "total" "$(format_filesize "$subscription_total")"
 		fi
 		if [ -n "$subscription_used" ]; then
-			uci_set "nikki" "$subscription_section" "used" "$(format_filesize $subscription_used)"
+			uci_set "nikki" "$subscription_section" "used" "$(format_filesize "$subscription_used")"
 		fi
 		if [ -n "$subscription_avaliable" ]; then
-			uci_set "nikki" "$subscription_section" "avaliable" "$(format_filesize $subscription_avaliable)"
+			uci_set "nikki" "$subscription_section" "avaliable" "$(format_filesize "$subscription_avaliable")"
 		fi
 		uci_set "nikki" "$subscription_section" "update" "$(date "+%Y-%m-%d %H:%M:%S")"
 		uci_set "nikki" "$subscription_section" "success" "1"
