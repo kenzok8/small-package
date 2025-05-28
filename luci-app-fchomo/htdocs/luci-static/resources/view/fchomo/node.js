@@ -641,7 +641,7 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Value, 'tls_ech_config', _('ECH config'),
-			_('The ECH parameter of the SVCB/HTTPS record for the domain. Leave empty to resolve via DNS.'));
+			_('The ECH parameter of the HTTPS record for the domain. Leave empty to resolve via DNS.'));
 		so.placeholder = 'AEn+DQBFKwAgACABWIHUGj4u+PIggYXcR5JF0gYk3dCRioBW8uJq9H4mKAAIAAEAAQABAANAEnB1YmxpYy50bHMtZWNoLmRldgAA';
 		so.depends('tls_ech', '1');
 		so.modalonly = true;

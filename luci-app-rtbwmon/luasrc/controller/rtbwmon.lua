@@ -8,10 +8,10 @@ end
 
 function data()
 	luci.http.prepare_content("text/csv")
-	luci.http.write(luci.sys.exec("/usr/libexec/rtbwmon.sh update"))
+	luci.http.write(luci.sys.exec("/usr/libexec/rtbwmon.sh update 2>/dev/null"))
 end
 
 function ifaces()
 	luci.http.prepare_content("text/csv")
-	luci.http.write(luci.sys.exec("/usr/libexec/rtbwmon.sh ifaces"))
+	luci.http.write(luci.sys.exec("/usr/libexec/rtbwmon.sh ifaces 2>/dev/null"))
 end

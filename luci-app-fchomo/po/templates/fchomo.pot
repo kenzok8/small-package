@@ -2325,7 +2325,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:644
 msgid ""
-"The ECH parameter of the SVCB/HTTPS record for the domain. Leave empty to "
+"The ECH parameter of the HTTPS record for the domain. Leave empty to "
 "resolve via DNS."
 msgstr ""
 
@@ -2354,7 +2354,7 @@ msgstr ""
 #: htdocs/luci-static/resources/view/fchomo/global.js:570
 #: htdocs/luci-static/resources/view/fchomo/server.js:380
 msgid ""
-"This ECH parameter needs to be added to the SVCB/HTTPS record of the domain."
+"This ECH parameter needs to be added to the HTTPS record of the domain."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:632

@@ -568,7 +568,7 @@ return view.extend({
 		}
 
 		so = ss.option(form.Value, 'tls_ech_cfg', _('API ECH config'),
-			_('This ECH parameter needs to be added to the SVCB/HTTPS record of the domain.'));
+			_('This ECH parameter needs to be added to the HTTPS record of the domain.'));
 		so.placeholder = 'AEn+DQBFKwAgACABWIHUGj4u+PIggYXcR5JF0gYk3dCRioBW8uJq9H4mKAAIAAEAAQABAANAEnB1YmxpYy50bHMtZWNoLmRldgAA';
 		/* TLS END */
 
