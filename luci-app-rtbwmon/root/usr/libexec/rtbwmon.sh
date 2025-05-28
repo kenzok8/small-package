@@ -1,4 +1,5 @@
 #!/bin/sh
+NFTABLES=false
 
 lookup() {
     local MAC=$1
@@ -47,8 +48,8 @@ merge() {
     local arpfile="$1"
     local countfile="$2"
     local outfile="$3"
-    local pkts bytes src dest ip mac iface up down
-    while read pkts bytes src dest; do
+    local pkts bytes src dest ip mac iface up down ignored
+    while read pkts bytes src dest ignored; do
         if [[ "$dest" = '0.0.0.0/0' ]]; then
             eval "local up_${src//[.:]/_}=\"$pkts,$bytes\""
         else
@@ -63,6 +64,9 @@ merge() {
 }
 
 do_clean() {
+    if $NFTABLES; then
+        nft delete table rtbwmon 2>/dev/null
+    fi
     iptables -t mangle -D FORWARD -j RTBWMON_IFACE 2>/dev/null
     iptables -t mangle -F RTBWMON_IFACE 2>/dev/null
     iptables -t mangle -F RTBWMON_IP 2>/dev/null
@@ -72,50 +76,105 @@ do_clean() {
 }
 
 do_update() {
-    local ip
+    local ip handler
     local INTERFACE="$1"
 
     find /var/run/rtbwmon.csv -mmin +30 2>/dev/null | grep -q . && do_clean
 
-    # init iptable
-    iptables -t mangle -C FORWARD -j RTBWMON_IFACE 2>/dev/null || {
-        iptables -t mangle -N RTBWMON_IFACE 2>/dev/null
-        iptables -t mangle -N RTBWMON_IP 2>/dev/null
-        iptables -t mangle -I FORWARD -j RTBWMON_IFACE
-        # iptables -t mangle -I FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j RTBWMON_IFACE
+    if $NFTABLES; then
+        nft -f- <<-EOF
+table ip rtbwmon {
+    chain FORWARD {
+        type filter hook forward priority mangle; policy accept;
     }
 
-    # if interface changed, clean chain
-    iptables -t mangle -C RTBWMON_IFACE -o "$INTERFACE" -j RTBWMON_IP 2>/dev/null || {
-        iptables -t mangle -F RTBWMON_IP
-        iptables -t mangle -F RTBWMON_IFACE
-        # iptables -t mangle -A RTBWMON_IFACE -m addrtype --dst-type LOCAL -j RETURN
-        iptables -t mangle -A RTBWMON_IFACE -i "$INTERFACE" -j RTBWMON_IP
-        iptables -t mangle -A RTBWMON_IFACE -o "$INTERFACE" -j RTBWMON_IP
+    chain RTBWMON_IFACE {
     }
+
+    chain RTBWMON_IP {
+    }
+}
+flush chain rtbwmon FORWARD
+flush chain rtbwmon RTBWMON_IFACE
+table ip rtbwmon {
+    chain FORWARD {
+        jump RTBWMON_IFACE
+    }
+
+    chain RTBWMON_IFACE {
+        iifname "$INTERFACE" jump RTBWMON_IP
+        oifname "$INTERFACE" jump RTBWMON_IP
+    }
+}
+EOF
+    else
+        # init iptable
+        iptables -t mangle -C FORWARD -j RTBWMON_IFACE 2>/dev/null || {
+            iptables -t mangle -N RTBWMON_IFACE 2>/dev/null
+            iptables -t mangle -N RTBWMON_IP 2>/dev/null
+            iptables -t mangle -I FORWARD -j RTBWMON_IFACE
+            # iptables -t mangle -I FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j RTBWMON_IFACE
+        }
+
+        # if interface changed, clean chain
+        iptables -t mangle -C RTBWMON_IFACE -o "$INTERFACE" -j RTBWMON_IP 2>/dev/null || {
+            iptables -t mangle -F RTBWMON_IP
+            iptables -t mangle -F RTBWMON_IFACE
+            # iptables -t mangle -A RTBWMON_IFACE -m addrtype --dst-type LOCAL -j RETURN
+            iptables -t mangle -A RTBWMON_IFACE -i "$INTERFACE" -j RTBWMON_IP
+            iptables -t mangle -A RTBWMON_IFACE -o "$INTERFACE" -j RTBWMON_IP
+        }
+    fi
 
     # schedule cleaning task
     /etc/init.d/rtbwmon start
 
     # save system state
-    iptables -t mangle -nvxL RTBWMON_IP | tail -n +3 | grep -Fv 'Zeroing chain' | sed -e 's/ \+/\t/g' | cut -f2,3,9,10 >/var/run/rtbwmon.tmp.count
+    if $NFTABLES; then
+        nft -at list chain rtbwmon RTBWMON_IP | tail -n +3 | grep 'ip ' | sed -n \
+            -e 's@^\t\+ip saddr \([0-9.]\+\) counter packets \([0-9]\+\) bytes \([0-9]\+\) return # handle \([0-9]\+\)$@\2 \3 \1 0.0.0.0/0 \4@' \
+            -e 's@^\t\+ip daddr \([0-9.]\+\) counter packets \([0-9]\+\) bytes \([0-9]\+\) return # handle \([0-9]\+\)$@\2 \3 0.0.0.0/0 \1 \4@' \
+            -e 's/ \+/\t/gp' >/var/run/rtbwmon.tmp.count
+    else
+        iptables -t mangle -nvxL RTBWMON_IP | tail -n +3 | grep -Fv 'Zeroing chain' | sed -e 's/ \+/\t/g' | cut -f2,3,9,10 >/var/run/rtbwmon.tmp.count
+    fi
     get_arp_excluded "$(enforce_wan_iface "$INTERFACE")" >/var/run/rtbwmon.tmp.arp
 
     # get ip
-    cut -f3 /var/run/rtbwmon.tmp.count | grep -Fv '0.0.0.0/0' >/var/run/rtbwmon.tmp.oips
+    cut -f3 /var/run/rtbwmon.tmp.count | grep -Fwv '0.0.0.0/0' >/var/run/rtbwmon.tmp.oips
     cut -f1 /var/run/rtbwmon.tmp.arp >/var/run/rtbwmon.tmp.nips
 
     # delete offline ip
-    grep -Fvf /var/run/rtbwmon.tmp.nips /var/run/rtbwmon.tmp.oips | while read ip; do
-        iptables -t mangle -D RTBWMON_IP -s "$ip" -j RETURN
-        iptables -t mangle -D RTBWMON_IP -d "$ip" -j RETURN
-    done
+    if $NFTABLES; then
+        { cut -f3,5 /var/run/rtbwmon.tmp.count ; cut -f4,5 /var/run/rtbwmon.tmp.count; } | grep -Fwv '0.0.0.0/0' >/var/run/rtbwmon.tmp.oips-nft
+        grep -Fwvf /var/run/rtbwmon.tmp.nips /var/run/rtbwmon.tmp.oips-nft | cut -f2 | while read handler; do
+            nft delete rule rtbwmon RTBWMON_IP handle $handler
+        done
+    else
+        grep -Fwvf /var/run/rtbwmon.tmp.nips /var/run/rtbwmon.tmp.oips | while read ip; do
+            iptables -t mangle -D RTBWMON_IP -s "$ip" -j RETURN
+            iptables -t mangle -D RTBWMON_IP -d "$ip" -j RETURN
+        done
+    fi
 
     # add new ip
-    grep -Fvf /var/run/rtbwmon.tmp.oips /var/run/rtbwmon.tmp.nips | while read ip; do
-        iptables -t mangle -A RTBWMON_IP -s "$ip" -j RETURN
-        iptables -t mangle -A RTBWMON_IP -d "$ip" -j RETURN
-    done
+    if $NFTABLES; then
+        {
+            echo "table ip rtbwmon {"
+            echo "    chain RTBWMON_IP {"
+            grep -Fwvf /var/run/rtbwmon.tmp.oips /var/run/rtbwmon.tmp.nips | while read ip; do
+                echo "        ip saddr $ip counter return"
+                echo "        ip daddr $ip counter return"
+            done
+            echo "    }"
+            echo "}"
+        } | nft -f-
+    else
+        grep -Fwvf /var/run/rtbwmon.tmp.oips /var/run/rtbwmon.tmp.nips | while read ip; do
+            iptables -t mangle -A RTBWMON_IP -s "$ip" -j RETURN
+            iptables -t mangle -A RTBWMON_IP -d "$ip" -j RETURN
+        done
+    fi
 
     merge /var/run/rtbwmon.tmp.arp /var/run/rtbwmon.tmp.count /var/run/rtbwmon.csv
 
@@ -138,7 +197,7 @@ update() {
     if [ -z "$WAN_INTERFACE" ]; then
         do_clean
     else
-        do_update "$WAN_INTERFACE" 2>/dev/null
+        do_update "$WAN_INTERFACE"
         cat /var/run/rtbwmon.csv
     fi
     flock -u 1000 2>/dev/null
@@ -188,6 +247,8 @@ prerm() {
     do_clean
     flock -u 1000
 }
+
+[ -x /sbin/fw4 ] && NFTABLES=true
 
 case $1 in
 "clean")
