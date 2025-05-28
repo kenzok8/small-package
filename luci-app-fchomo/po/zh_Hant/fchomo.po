@@ -194,11 +194,6 @@ msgstr "已在更新中。"
 msgid "Alter ID"
 msgstr "額外 ID"
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:572
-#: htdocs/luci-static/resources/view/fchomo/server.js:382
-msgid "And need to add an A/AAAA record for \"outer-sni.my.server\"."
-msgstr "並且需要為 \"outer-sni.my.server\" 添加 A/AAAA 記錄。"
-
 #: htdocs/luci-static/resources/fchomo.js:125
 #: htdocs/luci-static/resources/fchomo.js:157
 msgid "AnyTLS"

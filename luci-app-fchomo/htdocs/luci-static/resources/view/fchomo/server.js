@@ -363,7 +363,7 @@ return view.extend({
 		o = s.taboption('field_tls', hm.GenText, 'tls_ech_key', _('ECH key'));
 		const tls_ech_config = 'tls_ech_config';
 		o.placeholder = '-----BEGIN ECH KEYS-----\nACATwY30o/RKgD6hgeQxwrSiApLaCgU+HKh7B6SUrAHaDwBD/g0APwAAIAAgHjzK\nmadSJjYQIf9o1N5GXjkW4DEEeb17qMxHdwMdNnwADAABAAEAAQACAAEAAwAIdGVz\ndC5jb20AAA==\n-----END ECH KEYS-----';
-		o.hm_placeholder = 'outer-sni.my.server';
+		o.hm_placeholder = 'outer-sni.any.domain';
 		o.cols = 30
 		o.rows = 2;
 		o.hm_options = {
@@ -378,8 +378,7 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.taboption('field_tls', form.Value, 'tls_ech_config', _('ECH config'),
-			_('This ECH parameter needs to be added to the SVCB/HTTPS record of the domain.') + '</br/>' +
-			_('And need to add an A/AAAA record for "outer-sni.my.server".'));
+			_('This ECH parameter needs to be added to the SVCB/HTTPS record of the domain.'));
 		o.placeholder = 'AEn+DQBFKwAgACABWIHUGj4u+PIggYXcR5JF0gYk3dCRioBW8uJq9H4mKAAIAAEAAQABAANAEnB1YmxpYy50bHMtZWNoLmRldgAA';
 		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
 		o.modalonly = true;
