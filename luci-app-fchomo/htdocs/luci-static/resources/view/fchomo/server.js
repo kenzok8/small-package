@@ -361,7 +361,6 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.taboption('field_tls', hm.GenText, 'tls_ech_key', _('ECH key'));
-		const tls_ech_config = 'tls_ech_config';
 		o.placeholder = '-----BEGIN ECH KEYS-----\nACATwY30o/RKgD6hgeQxwrSiApLaCgU+HKh7B6SUrAHaDwBD/g0APwAAIAAgHjzK\nmadSJjYQIf9o1N5GXjkW4DEEeb17qMxHdwMdNnwADAABAAEAAQACAAEAAwAIdGVz\ndC5jb20AAA==\n-----END ECH KEYS-----';
 		o.hm_placeholder = 'outer-sni.any.domain';
 		o.cols = 30
@@ -371,8 +370,31 @@ return view.extend({
 			params: '',
 			result: {
 				ech_key: o.option,
-				ech_cfg: tls_ech_config
+				ech_cfg: 'tls_ech_config'
 			}
+		}
+		o.renderWidget = function(section_id, option_index, cfgvalue) {
+			let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
+			const cbid = this.cbid(section_id) + '._outer_sni';
+
+			node.appendChild(E('div',  { 'class': 'control-group' }, [
+				E('input', {
+					id: cbid,
+					class: 'cbi-input-text',
+					style: 'width: 10em',
+					placeholder: this.hm_placeholder
+				}),
+				E('button', {
+					class: 'cbi-button cbi-button-add',
+					click: ui.createHandlerFn(this, function() {
+						this.hm_options.params = document.getElementById(cbid).value;
+
+						return hm.handleGenKey.call(this, this.hm_options);
+					})
+				}, [ _('Generate') ])
+			]));
+
+			return node;
 		}
 		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
 		o.modalonly = true;

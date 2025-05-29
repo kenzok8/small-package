@@ -432,31 +432,17 @@ const CBIGenValue = form.Value.extend({
 	}
 });
 
-const CBIGenText= CBITextValue.extend({
+const CBIGenText = CBITextValue.extend({
 	__name__: 'CBI.GenText',
 
 	renderWidget(/* ... */) {
 		let node = CBITextValue.prototype.renderWidget.apply(this, arguments);
 
-		let resEl = E('div',  { 'class': 'control-group' }, [
-			E('input', {
-				'id': '_tls_ech_host',
-				'class': 'cbi-input-text',
-				'style': 'width: 10em',
-				'placeholder': this.hm_placeholder
-			}),
-			E('button', {
-				'class': 'cbi-button cbi-button-apply',
-				'click': ui.createHandlerFn(this, function() {
-					const sni = document.getElementById('_tls_ech_host').value;
-
-					this.hm_options.params = sni;
-
-					return handleGenKey.call(this, this.hm_options);
-				})
-			}, [ _('Generate') ])
-		]);
-		node.appendChild(resEl);
+		node.appendChild(E('button', {
+			class: 'cbi-button cbi-button-add',
+			title: _('Generate'),
+			click: ui.createHandlerFn(this, handleGenKey, this.hm_options || this.option)
+		}, [ _('Generate') ]));
 
 		return node;
 	}
