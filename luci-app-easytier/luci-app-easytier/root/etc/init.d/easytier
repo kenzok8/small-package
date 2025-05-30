@@ -76,32 +76,37 @@ check_bin() {
        		tag="$( curl -k --connect-timeout 3 --user-agent "$user_agent"  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
        		[ -z "$tag" ] && tag="$( curl -Lk --connect-timeout 3 --user-agent "$user_agent" -s  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
    	fi
-	[ -z "$tag"] && tag=v2.2.4
-	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 未找到程序 $easytierbin 开始在线下载${tag}，下载较慢耐心等候" >>/tmp/easytier.log
-	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 未找到程序 $webbin 开始在线下载${tag}，下载较慢耐心等候" >>/tmp/easytierweb.log
+	[ -z "$tag"] && tag=v2.3.0
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytier.log
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytierweb.log
         mkdir -p "$path"
 	for proxy in $proxys ; do
 	        if curl -L -k -o /tmp/easytier.zip --connect-timeout 10 --retry 3 "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip" || \
 		wget --no-check-certificate --timeout=10 --tries=3 -O /tmp/easytier.zip "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip" ; then
 			unzip -j -q -o /tmp/easytier.zip -d /tmp
 	         	chmod +x /tmp/easytier-core /tmp/easytier-cli /tmp/easytier-web /tmp/easytier-web-embed || true
-	         	mv -f /tmp/easytier-core ${path}/
-	         	mv -f /tmp/easytier-cli ${path}/
-	         	mv -f /tmp/easytier-web-embed ${webbin} || true
-                 	chmod +x "$easytierbin"
-                 	chmod +x "$webbin"
+	         	if [ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ] ; then
+	         		mv -f /tmp/easytier-core ${path}/
+	         		mv -f /tmp/easytier-cli ${path}/
+	         		chmod +x "$easytierbin"
+	         		if [ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]; then
+                   			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin} 下载成功" >>/tmp/easytier.log
+                 		else
+                    			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytier.log
+                 		fi
+	         	fi
+	         	if [ "$(uci -q get easytier.@easytierweb[0].enabled)" = "1" ] ; then
+	         		mv -f /tmp/easytier-web-embed ${webbin} || true
+	         		chmod +x "$webbin"
+	         		if [ "$($webbin -h 2>&1 | wc -l)" -gt 3 ]; then
+					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${webbin} 下载成功" >>/tmp/easytierweb.log
+                 		else
+					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytierweb.log
+                 		fi
+	         	fi
+                 	
                 	rm -rf /tmp/easytier.zip 
 			break
-                 	if [ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]; then
-                   		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin} 下载成功" >>/tmp/easytier.log
-                 	else
-                    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytier.log
-                 	fi
-			if [ "$($webbin -h 2>&1 | wc -l)" -gt 3 ]; then
-				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${webbin} 下载成功" >>/tmp/easytierweb.log
-                 	else
-				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytierweb.log
-                 	fi
  		 else
 			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载失败，请手动下载上传程序" >>/tmp/easytier.log
 			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载失败，请手动下载上传程序" >>/tmp/easytierweb.log
@@ -413,6 +418,7 @@ start_et() {
                     easytierbin=/tmp/easytier-core
                 fi
 		if [ ! -f "$easytierbin" ] || [ "$(($($easytierbin -h 2>&1 | wc -l)))" -lt 3 ] ; then
+			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : $easytierbin 不存在或程序不完整，开始在线下载..." >>/tmp/easytier.log
                 	check_bin
 		fi
                 chmod +x "$easytierbin" 
