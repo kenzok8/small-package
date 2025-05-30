@@ -44,7 +44,7 @@ function Module:setLedAttrs(t)
 		trigger    = self.readValue(t.ledTriggerFile),
 	}
 	if t.ledPrevState.trigger then
-		t.ledPrevState.trigger = t.ledPrevState.trigger:match("%[%w+%]"):gsub("[%]%[]", "")
+		t.ledPrevState.trigger = t.ledPrevState.trigger:match("%[[%w%-_]+%]"):gsub("[%]%[]", "")
 	end
 end
 
