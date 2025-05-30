@@ -17,9 +17,9 @@ Internet-detector is an application for checking the availability of the Interne
 ## Installation notes:
 
     opkg update
-    wget --no-check-certificate -O /tmp/internet-detector_1.4.6-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector_1.4.6-r1_all.ipk
-    opkg install /tmp/internet-detector_1.4.6-r1_all.ipk
-    rm /tmp/internet-detector_1.4.6-r1_all.ipk
+    wget --no-check-certificate -O /tmp/internet-detector_1.4.6-r2_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector_1.4.6-r2_all.ipk
+    opkg install /tmp/internet-detector_1.4.6-r2_all.ipk
+    rm /tmp/internet-detector_1.4.6-r2_all.ipk
     service internet-detector start
     service internet-detector enable
 
