@@ -2,7 +2,7 @@ local http = luci.http
 local nixio = require "nixio"
 
 m = Map("easytier")
-m.description = translate('一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 项目地址：<a href="https://github.com/EasyTier/EasyTier">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;<a href="http://easytier.cn">官网文档</a>&nbsp;&nbsp;<a href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262">QQ群</a>&nbsp;&nbsp;<a href="https://doc.oee.icu">菜鸟教程</a>')
+m.description = translate('一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 项目地址：<a href="https://github.com/EasyTier/EasyTier" target="_blank">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;<a href="http://easytier.cn" target="_blank">官网文档</a>&nbsp;&nbsp;<a href="http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262" target="_blank">QQ群</a>&nbsp;&nbsp;<a href="https://doc.oee.icu">菜鸟教程</a>')
 
 m:section(SimpleSection).template  = "easytier/easytier_status"
 
@@ -28,7 +28,7 @@ btncq.write = function()
 end
 
 etcmd = s:taboption("general",ListValue, "etcmd", translate("启动方式"),
-	translate("官方Web控制台：<a href='https://easytier.cn/web'>easytier.cn/web</a><br>官方配置文件生成器：<a href='https://easytier.cn/web/index.html#/config_generator'>easytier.cn/web/index.html#/config_generator</a><br>注意配置RPC端口为15888"))
+	translate("官方Web控制台：<a href='https://easytier.cn/web' target='_blank'>https://easytier.cn/web</a><br>官方配置文件生成器：<a href='https://easytier.cn/web/index.html#/config_generator' target='_blank'>https://easytier.cn/web/index.html#/config_generator</a><br>注意配置RPC端口为15888"))
 etcmd.default = "etcmd"
 etcmd:value("etcmd",translate("默认"))
 etcmd:value("config",translate("配置文件"))
@@ -54,7 +54,7 @@ et_config.write = function(self, section, value)
 end
 
 web_config = s:taboption("general", Value, "web_config", translate("Web服务器地址"),
-	translate("Web配置服务器地址。（-w 参数）<br>自建Web服务器 输入格式：udp://服务器地址:22020/账户名<br>官方Web服务器 输入格式：账户名 <br>官方Web控制台：<a href='https://easytier.cn/web'>easytier.cn/web</a>"))
+	translate("Web配置服务器地址。（-w 参数）<br>自建Web服务器 输入格式：udp://服务器地址:22020/账户名<br>官方Web服务器 输入格式：账户名 <br>官方Web控制台：<a href='https://easytier.cn/web' target='_blank'>https://easytier.cn/web</a>"))
 web_config.placeholder = "admin"
 web_config:depends("etcmd", "web")
 
