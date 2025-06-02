@@ -272,7 +272,7 @@ get_etconfig() {
 		socks_port="$(uci -q get easytier.@easytier[0].socks_port)"
 		comp="$(uci -q get easytier.@easytier[0].comp || echo none)"
 		mapped_listeners="$(uci -q get easytier.@easytier[0].mapped_listeners)"
-		bind_device="$(uci -q get easytier.@easytier[0].bind_device || echo 1)"
+		bind_device="$(uci -q get easytier.@easytier[0].bind_device || echo 0)"
 		kcp_proxy="$(uci -q get easytier.@easytier[0].kcp_proxy || echo 0)"
 		kcp_input="$(uci -q get easytier.@easytier[0].kcp_input || echo 0)"
 		proxy_forward="$(uci -q get easytier.@easytier[0].proxy_forward || echo 0)"
@@ -636,6 +636,7 @@ start_web() {
 		mv -f /tmp/easytier-web-embed "$webbin"
 	fi
 	if [ ! -f "$webbin" ] || [ "$(($($webbin -h 2>&1 | wc -l)))" -lt 3 ] ; then
+		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : $webbin 不存在或程序不完整，开始在线下载..." >>/tmp/easytierweb.log
         	check_bin
 	fi
 	if [ -f "$webbin" ] ; then
