@@ -164,6 +164,19 @@ desvice_name = s:taboption("general", Value, "desvice_name", translate("主机�
 desvice_name.placeholder = device_name
 desvice_name.default = device_name
 desvice_name:depends("etcmd", "etcmd")
+desvice_name:depends("etcmd", "web")
+
+uuid = s:taboption("general", Value, "uuid", translate("uuid"),
+    translate("连接web控制台时识别此设备的唯一标识，用于下发配置文件"))
+uuid.rows = 1
+uuid.wrap = "off"
+uuid:depends("etcmd", "web")
+uuid.cfgvalue = function(self, section)
+    return nixio.fs.readfile("/etc/easytier/et_machine_id") or ""
+end
+uuid.write = function(self, section, value)
+    nixio.fs.writefile("/etc/easytier/et_machine_id", value:gsub("\r\n", "\n"))
+end
 
 instance_name = s:taboption("privacy",Value, "instance_name", translate("实例名称"),
 	translate("用于在同一台机器中标识此 VPN 节点的实例名称，启用日志需要填写，web配置时填一样的instance_name名称 （-m 参数）"))

@@ -560,6 +560,7 @@ start_et() {
 				mkdir -p /var/lib/dbus
 				ln -sf /etc/easytier/et_machine_id /var/lib/dbus/machine-id
 				[ -z "$web_config" ] || procd_append_param command -w "$web_config"
+				[ -z "$desvice_name" ] || procd_append_param command --hostname "$desvice_name"
 				[ "$log" = "off" ] || procd_append_param command --file-log-level "$log" 
 				[ "$log" = "off" ] || procd_append_param command --file-log-dir "/tmp"
 			fi
