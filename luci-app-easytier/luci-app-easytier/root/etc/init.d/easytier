@@ -551,6 +551,10 @@ start_et() {
 				#WEB控制台启动
 				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} -w ${web_config}" >>/tmp/easytier.log
 				[ -f /etc/easytier/et_machine_id ] || touch /etc/easytier/et_machine_id
+				if [ ! -s /etc/easytier/et_machine_id ]; then
+					cat /proc/sys/kernel/random/uuid > /etc/easytier/et_machine_id
+					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 生成新的 UUID 到 /etc/easytier/et_machine_id" >>/tmp/easytier.log
+				fi
 				idpath=$(dirname "$easytierbin")
 				[ -f "${idpath}/et_machine_id" ] || ln -sf /etc/easytier/et_machine_id ${idpath}/et_machine_id
 				mkdir -p /var/lib/dbus
