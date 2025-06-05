@@ -201,6 +201,9 @@ msgstr "Размер данных ICMP-пакета"
 msgid "Interface"
 msgstr "Интерфейс"
 
+msgid "Interface timeout"
+msgstr "Таймаут интерфейса"
+
 msgid "Internet"
 msgstr "Интернет"
 
@@ -242,6 +245,17 @@ msgid ""
 "available."
 msgstr ""
 "Максимальное количество попыток перезапуска сети до появления доступа в "
+"Интренет."
+
+msgid ""
+"Maximum number of up-script run attempts when connected to the Internet."
+msgstr ""
+"Максимальное количество попыток запуска up-script при подключении к Интренет."
+
+msgid ""
+"Maximum number of down-script run attempts before Internet access is available."
+msgstr ""
+"Максимальное количество попыток запуска down-script до появления доступа в "
 "Интренет."
 
 msgid "Maximum timeout for waiting for a response from the host."
@@ -294,6 +308,9 @@ msgstr "Выключить"
 msgid "On"
 msgstr "Включить"
 
+msgid "On startup"
+msgstr "При запуске"
+
 msgid "One of the following:"
 msgstr "Одно из следующих значений:"
 
@@ -304,18 +321,18 @@ msgid "Password for SMTP authentication."
 msgstr "Пароль для SMTP-аутентификации."
 
 msgid ""
-"Period of time after connecting to Internet before \"up-script\" runs."
+"Period of time after connecting to Internet before up-script runs."
 msgstr ""
-"Период времени после подключения к Интернет перед запуском \"up-script\"."
+"Период времени после подключения к Интернет перед запуском up-script."
 
 msgid ""
 "Period of time after connecting to the Internet before sending a message."
 msgstr "Период времени после подключения к Интернет перед отправкой сообщения."
 
 msgid ""
-"Period of time after disconnecting from Internet before \"down-script\" runs."
+"Period of time after disconnecting from Internet before down-script runs."
 msgstr ""
-"Период времени после отключения от Интернет перед запуском \"down-script\"."
+"Период времени после отключения от Интернет перед запуском down-script."
 
 msgid ""
 "Period of time after disconnecting from Internet before sending a message."
@@ -347,6 +364,9 @@ msgstr "Публичный IP адрес"
 msgid "Reboot device"
 msgstr "Перезагрузка устройства"
 
+msgid "Reboot device if the Internet is disconnected at service startup."
+msgstr "Перезагрузка устройства если Интренет отключен при запуске службы."
+
 msgid "Recipient"
 msgstr "Получатель"
 
@@ -359,8 +379,14 @@ msgstr "Попытки перезапуска"
 msgid "Restart modem"
 msgstr "Перезапуск модема"
 
+msgid "Restart modem if the Internet is disconnected at service startup."
+msgstr "Перезапуск модема если Интренет отключен при запуске службы."
+
 msgid "Restart network"
 msgstr "Перезапуск сети"
+
+msgid "Restart network if the Internet is disconnected at service startup."
+msgstr "Перезапуск сети если Интренет отключен при запуске службы."
 
 msgid "Restart service"
 msgstr "Перезапуск службы"
@@ -376,6 +402,12 @@ msgstr "Выполнять если статус Интернет"
 
 msgid "Run service at startup"
 msgstr "Запуск службы при старте"
+
+msgid "Run down-script if the Internet is disconnected at service startup."
+msgstr "Выполнить down-script если Интренет отключен при запуске службы."
+
+msgid "Run up-script if the Internet is connected at service startup."
+msgstr "Выполнить up-script если Интренет подключен при запуске службы."
 
 msgid "Running"
 msgstr "Выполняется"
@@ -394,6 +426,9 @@ msgstr "Сохранить"
 
 msgid "Security"
 msgstr "Безопасность"
+
+msgid "Send message on service startup."
+msgstr "Отправлять сообщение при запуске службы."
 
 msgid "Sender"
 msgstr "Отправитель"
@@ -463,6 +498,9 @@ msgstr "TLS: использовать STARTTLS если сервер подде�
 
 msgid "Timeout between stopping and starting a network device."
 msgstr "Таймаут между остановкой и запуском сетевого устройства."
+
+msgid "Timeout between stopping and starting a ModemManger interface."
+msgstr "Таймаут между остановкой и запуском интерфейса ModemManger."
 
 msgid "Type a time string"
 msgstr "Введите строку времени"
@@ -537,6 +575,9 @@ msgstr "down-script"
 msgid "hour"
 msgstr "час"
 
+msgid "infinitely"
+msgstr "бесконечно"
+
 msgid "hours"
 msgstr "часы"
 
@@ -554,3 +595,9 @@ msgstr "секунды"
 
 msgid "up-script"
 msgstr "up-script"
+
+msgid "down-script attempts"
+msgstr "Попытки down-script"
+
+msgid "up-script attempts"
+msgstr "Попытки up-script"

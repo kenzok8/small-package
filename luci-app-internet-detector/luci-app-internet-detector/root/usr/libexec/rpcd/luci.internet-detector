@@ -16,7 +16,7 @@ end
 
 local function init()
 	local lines = {}
-	if prequire(appName .. ".mod_modem_restart") then
+	if prequire(appName .. ".modules.mod_modem_restart") then
 		lines[#lines + 1] = '"mm_mod":true'
 		if (unistd.access(modemManagerInit, "x") and
 			os.execute(modemManagerInit .. " enabled") == 0) then
@@ -27,7 +27,7 @@ local function init()
 	else
 		lines[#lines + 1] = '"mm_mod":false'
 	end
-	if prequire(appName .. ".mod_email") then
+	if prequire(appName .. ".modules.mod_email") then
 		lines[#lines + 1] = '"email_mod":true'
 		if unistd.access(mailsendExec, "x") then
 			lines[#lines + 1] = '"email_exec":true'

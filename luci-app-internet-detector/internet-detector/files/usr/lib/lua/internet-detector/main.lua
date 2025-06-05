@@ -45,7 +45,7 @@ local InternetDetector = {
 }
 InternetDetector.configDir  = string.format("/etc/%s", InternetDetector.appName)
 InternetDetector.modulesDir = string.format(
-	"%s/%s", InternetDetector.libDir, InternetDetector.appName)
+	"%s/%s/modules", InternetDetector.libDir, InternetDetector.appName)
 
 -- Loading settings from UCI
 
@@ -175,9 +175,9 @@ function InternetDetector:loadModules()
 					if modConfig.enabled == 1 then
 						local m
 						if self.debug then
-							m = require(string.format("%s.%s", self.appName, modName))
+							m = require(string.format("%s.modules.%s", self.appName, modName))
 						else
-							m = self:prequire(string.format("%s.%s", self.appName, modName))
+							m = self:prequire(string.format("%s.modules.%s", self.appName, modName))
 						end
 						if m then
 							m.config     = self
@@ -244,6 +244,7 @@ function InternetDetector:TCPConnectionToHost(host, port)
 		end
 	else
 		local family = saTable[1].family
+
 		if family then
 			local sock, errMsg, errNum = socket.socket(family, socket.SOCK_STREAM, 0)
 
@@ -351,7 +352,6 @@ function InternetDetector:mainLoop()
 	local interval      = self.serviceConfig.interval_up
 	local modulesStatus = {}
 	local counter       = 0
-	local onStart       = true
 	local inetChecked   = false
 	_RUNNING            = true
 	while _RUNNING do
@@ -366,27 +366,27 @@ function InternetDetector:mainLoop()
 					self:writeLogMessage("err", "Unknown error while checking host!")
 				end
 			end
-			if onStart or not stat.stat(self.statusFile) then
+			if not stat.stat(self.statusFile) then
 				self:writeValueToFile(self.statusFile, self:statusJson(
 					currentStatus, self.serviceConfig.instance))
-				onStart = false
 			end
 
 			if currentStatus == 0 then
 				interval = self.serviceConfig.interval_up
-				if lastStatus ~= nil and currentStatus ~= lastStatus then
+				if currentStatus ~= lastStatus then
 					self:writeValueToFile(self.statusFile, self:statusJson(
 						currentStatus, self.serviceConfig.instance))
 					self:writeLogMessage("notice", "Connected")
 				end
 			else
 				interval = self.serviceConfig.interval_down
-				if lastStatus ~= nil and currentStatus ~= lastStatus then
+				if currentStatus ~= lastStatus then
 					self:writeValueToFile(self.statusFile, self:statusJson(
 						currentStatus, self.serviceConfig.instance))
 					self:writeLogMessage("notice", "Disconnected")
 				end
 			end
+
 			counter = 0
 		end
 
@@ -423,6 +423,7 @@ function InternetDetector:mainLoop()
 		end
 
 		lastStatus = currentStatus
+
 		unistd.sleep(1)
 		counter = counter + 1
 

@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=internet-detector-mod-modem-restart
-PKG_VERSION:=1.4.6
+PKG_VERSION:=1.5.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/luci-app-internet-detector>
 
@@ -34,8 +34,8 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/internet-detector
-	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/mod_modem_restart.lua $(1)/usr/lib/lua/internet-detector/mod_modem_restart.lua
+	$(INSTALL_DIR) $(1)/usr/lib/lua/internet-detector/modules
+	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/modules/mod_modem_restart.lua $(1)/usr/lib/lua/internet-detector/modules/mod_modem_restart.lua
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
