@@ -34,6 +34,9 @@ function Module:init(t)
 	if t.force_reboot_delay ~= nil then
 		self.forceRebootDelay = tonumber(t.force_reboot_delay)
 	end
+	if tonumber(t.disconnected_at_startup) == 1 then
+		self._rebooted = false
+	end
 end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)

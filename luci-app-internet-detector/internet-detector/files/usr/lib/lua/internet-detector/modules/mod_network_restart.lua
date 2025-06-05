@@ -2,24 +2,25 @@
 local unistd = require("posix.unistd")
 
 local Module = {
-	name                 = "mod_network_restart",
-	runPrio              = 30,
-	config               = {},
-	syslog               = function(level, msg) return true end,
-	writeValue           = function(filePath, str) return false end,
-	readValue            = function(filePath) return nil end,
-	deadPeriod           = 900,
-	attempts             = 1,
-	restartTimeout       = 0,
-	status               = nil,
-	_attemptsCounter     = 0,
-	_deadCounter         = 0,
-	_networkRestarted    = false,
-	_ifaceRestarting     = false,
-	_ifaceRestartCounter = 0,
-	_netIfaces           = {},
-	_netDevices          = {},
-	_netItemsNum         = 0,
+	name                   = "mod_network_restart",
+	runPrio                = 30,
+	config                 = {},
+	syslog                 = function(level, msg) return true end,
+	writeValue             = function(filePath, str) return false end,
+	readValue              = function(filePath) return nil end,
+	deadPeriod             = 900,
+	attempts               = 1,
+	restartTimeout         = 0,
+	status                 = nil,
+	_attemptsCounter       = 0,
+	_deadCounter           = 0,
+	_networkRestarted      = false,
+	_ifaceRestarting       = false,
+	_ifaceRestartCounter   = 0,
+	_netIfaces             = {},
+	_netDevices            = {},
+	_netItemsNum           = 0,
+	_disconnectedAtStartup = false,
 }
 
 function Module:toggleDevices(flag)
@@ -81,7 +82,9 @@ function Module:init(t)
 	if t.restart_timeout ~= nil then
 		self.restartTimeout = tonumber(t.restart_timeout)
 	end
-	self._attemptsCounter = self.attempts
+	if tonumber(t.disconnected_at_startup) == 1 then
+		self._disconnectedAtStartup = true
+	end
 end
 
 function Module:networkRestartFunc()
@@ -105,7 +108,9 @@ function Module:networkRestartFunc()
 			"%s: restarting network", self.name))
 		self:restartNetworkService()
 	end
-	self._attemptsCounter = self._attemptsCounter + 1
+	if self.attempts > 0 then
+		self._attemptsCounter = self._attemptsCounter + 1
+	end
 end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
@@ -120,7 +125,7 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	else
 		if currentStatus == 1 then
 			if not self._networkRestarted then
-				if self._attemptsCounter < self.attempts then
+				if self._disconnectedAtStartup and (self.attempts == 0 or self._attemptsCounter < self.attempts) then
 					if self._deadCounter >= self.deadPeriod then
 						self:networkRestartFunc()
 						self._networkRestarted = true
@@ -129,13 +134,14 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 						self._deadCounter = self._deadCounter + timeDiff
 					end
 				end
-			elseif inetChecked and self._attemptsCounter < self.attempts then
+			elseif inetChecked and (self.attempts == 0 or self._attemptsCounter < self.attempts) then
 				self:networkRestartFunc()
 			end
 		else
-			self._attemptsCounter  = 0
-			self._deadCounter      = 0
-			self._networkRestarted = false
+			self._attemptsCounter       = 0
+			self._deadCounter           = 0
+			self._disconnectedAtStartup = true
+			self._networkRestarted      = false
 		end
 		self._ifaceRestartCounter = 0
 	end
