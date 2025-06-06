@@ -276,7 +276,9 @@ get_etconfig() {
 		kcp_proxy="$(uci -q get easytier.@easytier[0].kcp_proxy || echo 0)"
 		kcp_input="$(uci -q get easytier.@easytier[0].kcp_input || echo 0)"
 		proxy_forward="$(uci -q get easytier.@easytier[0].proxy_forward || echo 0)"
+		port_forward="$(uci -q get easytier.@easytier[0].port_forward)"
 		accept_dns="$(uci -q get easytier.@easytier[0].accept_dns || echo 0)"
+		private_mode="$(uci -q get easytier.@easytier[0].private_mode || echo 0)"
 }
 
 set_firewall() {
@@ -493,8 +495,17 @@ start_et() {
                   			if [[ "$(grep "list mapped_listeners" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
                     				procd_append_param command --mapped-listeners "$mapped_listeners"
                   			else
-                    				for mapped_listener in $(cat /etc/config/easytier | grep 'list mapped_listeners'  | awk -F 'list whitelist' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
+                    				for mapped_listener in $(cat /etc/config/easytier | grep 'list mapped_listeners'  | awk -F 'list mapped_listeners' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
                     					procd_append_param command --mapped-listeners "$mapped_listener"
+                   				done
+                   			fi
+                		fi
+                		if [ ! -z "$port_forward" ] ; then
+                  			if [[ "$(grep "list port_forward" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
+                    				procd_append_param command --port-forward "$port_forward"
+                  			else
+                    				for port_forwards in $(cat /etc/config/easytier | grep 'list port_forward'  | awk -F 'list port_forward' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
+                    					procd_append_param command --port-forward "$port_forwards"
                    				done
                    			fi
                 		fi
@@ -546,6 +557,7 @@ start_et() {
 				[ "$kcp_input" = "0" ] || procd_append_param command --disable-kcp-input
 				[ "$proxy_forward" = "0" ] || procd_append_param command --proxy-forward-by-system
 				[ "$accept_dns" = "0" ] || procd_append_param command --accept-dns true
+				[ "$private_mode" = "0" ] || procd_append_param command --private-mode true
 	     		fi
 			if [ "$etcmd" = "web" ] ; then
 				#WEB控制台启动
@@ -658,6 +670,7 @@ start_web() {
 	api_port="$(uci -q get easytier.@easytierweb[0].api_port)"
 	html_port="$(uci -q get easytier.@easytierweb[0].html_port)"
 	weblog="$(uci -q get easytier.@easytierweb[0].weblog)"
+	api_host="$(uci -q get easytier.@easytierweb[0].api_host)"
 	procd_open_instance "easytier_web"
 	get_tz
 	[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
@@ -666,6 +679,7 @@ start_web() {
 	[ -z "$web_protocol" ] || procd_append_param command -p "$web_protocol"
 	[ -z "$web_port" ] || procd_append_param command -c "$web_port"
 	[ -z "$api_port" ] || procd_append_param command -a "$api_port"
+	[ -z "$api_host" ] || procd_append_param command --api-host "$api_host"
 	if [ -z "$html_port" ] ; then
 		procd_append_param command --no-web
 	else
@@ -686,7 +700,7 @@ start_web() {
 		      uci set firewall.easytier_webserver.name="easytier_webserver"
 		      uci set firewall.easytier_webserver.target="ACCEPT"
 		      uci set firewall.easytier_webserver.src="wan"
-		      uci set firewall.easytier_webserver.proto="tcp"
+		      uci set firewall.easytier_webserver.proto="tcp udp"
 		      uci set firewall.easytier_webserver.dest_port="$web_port"
 		      uci set firewall.easytier_webserver.enabled="1"
 	fi

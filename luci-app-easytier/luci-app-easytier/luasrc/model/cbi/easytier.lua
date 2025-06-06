@@ -297,9 +297,17 @@ kcp_input = s:taboption("privacy",Flag, "kcp_input", translate("禁用KCP输入"
 	translate("不允许其他节点使用 KCP 代理 TCP 流到此节点。<br>开启 KCP 代理的节点访问此节点时，依然使用原始。（ --disable-kcp-input 参数）"))
 kcp_input:depends("etcmd", "etcmd")
 
+port_forward = s:taboption("privacy",DynamicList, "port_forward", translate("端口转发"),
+	translate("将本地端口转发到虚拟网络中的远程端口。<br>例如：udp://0.0.0.0:12345/10.126.126.1:23456，表示将本地UDP端口12345转发到虚拟网络中的10.126.126.1:23456。<br>可以指定多个。 （--port-forward 参数）"))
+port_forward:depends("etcmd", "etcmd")
+
 accept_dns = s:taboption("privacy",Flag, "accept_dns", translate("启用魔法DNS"),
 	translate("使用魔法DNS，您可以使用域名访问其他节点，例如：<hostname>.et.net。魔法DNS将修改您的系统DNS设置，请谨慎启用。（--accept-dns 参数）"))
 accept_dns:depends("etcmd", "etcmd")
+
+private_mode = s:taboption("privacy",Flag, "private_mode", translate("启用私密模式"),
+	translate("启用后则不允许使用了与本网络不相同的网络名称和密码的节点通过本节点进行握手或中转。（--private-mode 参数）"))
+private_mode:depends("etcmd", "etcmd")
 
 log = s:taboption("general",ListValue, "log", translate("程序日志"),
 	translate("运行日志在/tmp/easytier.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
@@ -647,6 +655,10 @@ html_port = s:option(Value, "html_port", translate("web界面端口"),
 	translate("web dashboard 服务器的前端监听端口，留空不启用。（ -l 参数）"))
 html_port.datatype = "range(1,65535)"
 html_port.placeholder = "11210"
+
+api_host = s:option(Value, "api_host", translate("默认API服务器URL"),
+	translate("API 服务器的 URL，用于 web 前端连接。（ --api-host 参数）"))
+api_host.placeholder = "https://config-server.easytier.cn"
 
 weblog = s:option(ListValue, "weblog", translate("程序日志"),
 	translate("运行日志在/tmp/easytierweb.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
