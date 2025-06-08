@@ -51,14 +51,15 @@ document.head.append(E('style', {'type': 'text/css'},
 	-moz-border-radius: 4px;
 	border-radius: 4px;
 	font-weight: bold;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 `));
 
 return baseclass.extend({
-	title               : _('Internet'),
-	appName             : 'internet-detector',
-	currentAppMode      : null,
-	inetStatus          : null,
+	title          : _('Internet'),
+	appName        : 'internet-detector',
+	currentAppMode : null,
+	inetStatus     : null,
 
 	callUIPoll: rpc.declare({
 		object: 'luci.internet-detector',

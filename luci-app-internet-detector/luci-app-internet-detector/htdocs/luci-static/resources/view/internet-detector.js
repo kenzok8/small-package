@@ -56,6 +56,7 @@ document.head.append(E('style', {'type': 'text/css'},
 	-moz-border-radius: 4px;
 	border-radius: 4px;
 	font-weight: bold;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 `));
 
@@ -593,7 +594,7 @@ return view.extend({
 		mode.default = '0';
 
 
-		/* Service instances configuration */
+		/* Instances configuration */
 
 		if(this.currentAppMode !== '2') {
 
@@ -608,7 +609,7 @@ return view.extend({
 
 		s = m.section(form.GridSection, 'instance');
 
-		s.title          = _('Service instances');
+		s.title          = _('Instances');
 		s.addremove      = true;
 		s.sortable       = true;
 		s.nodescriptions = true;
@@ -830,11 +831,11 @@ return view.extend({
 
 				// Reboot device
 
-				o = s.taboption('reboot_device', form.DummyValue, '_dummy');
-					o.rawhtml = true;
-					o.default = '<div class="cbi-section-descr">' +
-						_('Device will be rebooted when the Internet is disconnected.') +
-						'</div>';
+				o         = s.taboption('reboot_device', form.DummyValue, '_dummy');
+				o.rawhtml = true;
+				o.default = '<div class="cbi-section-descr">' +
+					_('Device will be rebooted when the Internet is disconnected.') +
+					'</div>';
 				o.modalonly = true;
 
 				// enabled
@@ -921,10 +922,19 @@ return view.extend({
 				o.value(0, _('infinitely'));
 				o.default = '1';
 
-				// restart_timeout
+				// attempt_interval
+				o = s.taboption('restart_network', this.CBITimeInput,
+					'mod_network_restart_attempt_interval', _('Attempt interval'),
+					_('Interval between network restarts.')
+				);
+				o.default   = '15';
+				o.rmempty   = false;
+				o.modalonly = true;
+
+				// device_timeout
 				o = s.taboption('restart_network', form.ListValue,
-					'mod_network_restart_restart_timeout', _('Restart timeout'),
-					_('Timeout between stopping and starting a network device.')
+					'mod_network_restart_device_timeout', _('Device timeout'),
+					_('Timeout between stopping and starting a network device when restarting.')
 				);
 				o.modalonly = true;
 				o.value(0,  '0 ' + _('sec'));
@@ -998,6 +1008,15 @@ return view.extend({
 						o.value(0, _('infinitely'));
 						o.default = '1';
 
+						// attempt_interval
+						o = s.taboption('restart_modem', this.CBITimeInput,
+							'mod_modem_restart_attempt_interval', _('Attempt interval'),
+							_('Interval between modem restarts.')
+						);
+						o.default   = '15';
+						o.rmempty   = false;
+						o.modalonly = true;
+
 						// iface
 						o = s.taboption('restart_modem', widgets.NetworkSelect, 'mod_modem_restart_iface',
 							_('Interface'),
@@ -1010,7 +1029,7 @@ return view.extend({
 						// iface_timeout
 						o = s.taboption('restart_modem', form.ListValue,
 							'mod_modem_restart_iface_timeout', _('Interface timeout'),
-							_('Timeout between stopping and starting a ModemManger interface.')
+							_('Timeout between stopping and starting a ModemManger interface when restarting.')
 						);
 						o.modalonly = true;
 						o.value(0,  '0 ' + _('sec'));
@@ -1152,11 +1171,11 @@ return view.extend({
 
 				if(this.email) {
 					if(this.emailExec) {
-						o = s.taboption('email', form.DummyValue, '_dummy');
-							o.rawhtml = true;
-							o.default = '<div class="cbi-section-descr">' +
-								_('An email will be sent when connected or disconnected from the Internet.') +
-								'</div>';
+						o         = s.taboption('email', form.DummyValue, '_dummy');
+						o.rawhtml = true;
+						o.default = '<div class="cbi-section-descr">' +
+							_('An email will be sent when connected or disconnected from the Internet.') +
+							'</div>';
 						o.modalonly = true;
 
 						// enabled
@@ -1272,11 +1291,11 @@ return view.extend({
 
 				// User scripts
 
-				o = s.taboption('user_scripts', form.DummyValue, '_dummy');
-					o.rawhtml = true;
-					o.default = '<div class="cbi-section-descr">' +
-						_('Shell commands to run when connected or disconnected from the Internet.') +
-						'</div>';
+				o         = s.taboption('user_scripts', form.DummyValue, '_dummy');
+				o.rawhtml = true;
+				o.default = '<div class="cbi-section-descr">' +
+					_('Shell commands to run when connected or disconnected from the Internet.') +
+					'</div>';
 				o.modalonly = true;
 
 				// enabled
@@ -1318,6 +1337,15 @@ return view.extend({
 				o.value(0, _('infinitely'));
 				o.default = '1';
 
+				// up_script_attempt_interval
+				o = s.taboption('user_scripts', this.CBITimeInput,
+					'mod_user_scripts_up_script_attempt_interval', _('up_script attempt interval'),
+					_('Interval between up-script runs.')
+				);
+				o.default   = '15';
+				o.rmempty   = false;
+				o.modalonly = true;
+
 				// connected_at_startup
 				o = s.taboption('user_scripts', form.Flag, 'mod_user_scripts_connected_at_startup',
 					_('On startup'),
@@ -1358,6 +1386,15 @@ return view.extend({
 				o.value(10);
 				o.value(0, _('infinitely'));
 				o.default = '1';
+
+				// down_script_attempt_interval
+				o = s.taboption('user_scripts', this.CBITimeInput,
+					'mod_user_scripts_down_script_attempt_interval', _('down-script attempt interval'),
+					_('Interval between down-script runs.')
+				);
+				o.default   = '15';
+				o.rmempty   = false;
+				o.modalonly = true;
 
 				// disconnected_at_startup
 				o = s.taboption('user_scripts', form.Flag, 'mod_user_scripts_disconnected_at_startup',

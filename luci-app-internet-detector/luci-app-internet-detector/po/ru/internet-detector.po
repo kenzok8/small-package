@@ -44,6 +44,9 @@ msgstr "Сообщение будет отправлено при подключ
 msgid "An error has occurred"
 msgstr "Произошла ошибка"
 
+msgid "Attempt interval"
+msgstr "Интервал попыток"
+
 msgid "Attempts"
 msgstr "Попытки"
 
@@ -198,6 +201,9 @@ msgstr "Запрос ICMP-echo (ping)"
 msgid "ICMP packet data size"
 msgstr "Размер данных ICMP-пакета"
 
+msgid "Instances"
+msgstr "Экземпляры"
+
 msgid "Interface"
 msgstr "Интерфейс"
 
@@ -221,6 +227,18 @@ msgstr "Интервал между запросами IP адреса."
 
 msgid "Interval between IP address requests if the IP address is not defined."
 msgstr "Интервал между запросами IP адреса, если IP адрес не определён."
+
+msgid "Interval between modem restarts."
+msgstr "Интервал между перезапусками модема."
+
+msgid "Interval between network restarts."
+msgstr "Интервал между перезапусками сети."
+
+msgid "Interval between down-script runs."
+msgstr "Интервал между запусками down-script."
+
+msgid "Interval between up-script runs."
+msgstr "Интервал между запусками up-script."
 
 msgid "Jumbo: 9000 bytes"
 msgstr "Гигантский: 9000 байт"
@@ -391,8 +409,8 @@ msgstr "Перезапуск сети если Интренет отключен
 msgid "Restart service"
 msgstr "Перезапуск службы"
 
-msgid "Restart timeout"
-msgstr "Таймаут перезапуска"
+msgid "Device timeout"
+msgstr "Таймаут устройства"
 
 msgid "Run interval"
 msgstr "Интервал запуска"
@@ -451,9 +469,6 @@ msgstr "Сервис для определения публичного IP ад�
 msgid "Service: detector always runs as a system service."
 msgstr "Служба: детектор работает постоянно, как системная служба."
 
-msgid "Service instances"
-msgstr "Экземпляры службы"
-
 msgid "Set the modem to be allowed to use any band."
 msgstr "Разрешить модему использование любой частоты."
 
@@ -496,11 +511,11 @@ msgstr "Тип записи запрашиваемой в DNS-запросе (е
 msgid "TLS: use STARTTLS if the server supports it."
 msgstr "TLS: использовать STARTTLS если сервер поддерживает."
 
-msgid "Timeout between stopping and starting a network device."
-msgstr "Таймаут между остановкой и запуском сетевого устройства."
+msgid "Timeout between stopping and starting a network device when restarting."
+msgstr "Таймаут между остановкой и запуском сетевого устройства при перезапуске."
 
-msgid "Timeout between stopping and starting a ModemManger interface."
-msgstr "Таймаут между остановкой и запуском интерфейса ModemManger."
+msgid "Timeout between stopping and starting a ModemManger interface when restarting."
+msgstr "Таймаут между остановкой и запуском интерфейса ModemManger при перезапуске."
 
 msgid "Type a time string"
 msgstr "Введите строку времени"
@@ -599,5 +614,11 @@ msgstr "up-script"
 msgid "down-script attempts"
 msgstr "Попытки down-script"
 
+msgid "down-script attempt interval"
+msgstr "Интервал попыток down-script"
+
 msgid "up-script attempts"
 msgstr "Попытки up-script"
+
+msgid "up_script attempt interval"
+msgstr "Интервал попыток up_script"
