@@ -5,27 +5,29 @@
 local unistd = require("posix.unistd")
 
 local Module = {
-	name                   = "mod_modem_restart",
-	runPrio                = 40,
-	config                 = {},
-	syslog                 = function(level, msg) return true end,
-	writeValue             = function(filePath, str) return false end,
-	readValue              = function(filePath) return nil end,
-	mmcli                  = "/usr/bin/mmcli",
-	mmInit                 = "/etc/init.d/modemmanager",
-	deadPeriod             = 600,
-	attempts               = 1,
-	ifaceTimeout           = 0,
-	iface                  = nil,
-	anyBand                = false,
-	status                 = nil,
-	_enabled               = false,
-	_attemptsCounter       = 0,
-	_deadCounter           = 0,
-	_modemRestarted        = false,
-	_ifaceRestarting       = false,
-	_ifaceRestartCounter   = 0,
-	_disconnectedAtStartup = false,
+	name                    = "mod_modem_restart",
+	runPrio                 = 40,
+	config                  = {},
+	syslog                  = function(level, msg) return true end,
+	writeValue              = function(filePath, str) return false end,
+	readValue               = function(filePath) return nil end,
+	mmcli                   = "/usr/bin/mmcli",
+	mmInit                  = "/etc/init.d/modemmanager",
+	deadPeriod              = 600,
+	attempts                = 1,
+	attemptInterval         = 15,
+	ifaceTimeout            = 0,
+	iface                   = nil,
+	anyBand                 = false,
+	status                  = nil,
+	_enabled                = false,
+	_attemptsCounter        = 0,
+	_attemptIntervalCounter = 0,
+	_deadCounter            = 0,
+	_firstAttempt           = true,
+	_ifaceRestarting        = false,
+	_ifaceRestartCounter    = 0,
+	_disconnectedAtStartup  = false,
 }
 
 function Module:toggleIface(flag)
@@ -38,11 +40,14 @@ function Module:toggleIface(flag)
 end
 
 function Module:init(t)
+	if t.dead_period ~= nil then
+		self.deadPeriod = tonumber(t.dead_period)
+	end
 	if t.attempts ~= nil then
 		self.attempts = tonumber(t.attempts)
 	end
-	if t.dead_period ~= nil then
-		self.deadPeriod = tonumber(t.dead_period)
+	if t.attempt_interval ~= nil then
+		self.attemptInterval = tonumber(t.attempt_interval)
 	end
 	if t.iface ~= nil then
 		self.iface = t.iface
@@ -115,24 +120,25 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 		end
 	else
 		if currentStatus == 1 then
-			if not self._modemRestarted then
-				if self._disconnectedAtStartup and (self.attempts == 0 or self._attemptsCounter < self.attempts) then
-					if self._deadCounter >= self.deadPeriod then
+			if self._disconnectedAtStartup and self._deadCounter >= self.deadPeriod then
+				if self.attempts == 0 or self._attemptsCounter < self.attempts then
+					if self._firstAttempt or self._attemptIntervalCounter >= self.attemptInterval then
 						self:restartMM()
-						self._modemRestarted = true
-						self._deadCounter    = 0
+						self._attemptIntervalCounter = 0
+						self._firstAttempt           = false
 					else
-						self._deadCounter = self._deadCounter + timeDiff
+						self._attemptIntervalCounter = self._attemptIntervalCounter + timeDiff
 					end
 				end
-			elseif inetChecked and (self.attempts == 0 or self._attemptsCounter < self.attempts) then
-				self:restartMM()
+			else
+				self._deadCounter = self._deadCounter + timeDiff
 			end
 		else
-			self._attemptsCounter       = 0
-			self._deadCounter           = 0
-			self._disconnectedAtStartup = true
-			self._modemRestarted        = false
+			self._attemptsCounter        = 0
+			self._attemptIntervalCounter = 0
+			self._deadCounter            = 0
+			self._disconnectedAtStartup  = true
+			self._firstAttempt           = true
 		end
 		self._ifaceRestartCounter = 0
 	end

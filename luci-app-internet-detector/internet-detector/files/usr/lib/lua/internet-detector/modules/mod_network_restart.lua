@@ -2,25 +2,27 @@
 local unistd = require("posix.unistd")
 
 local Module = {
-	name                   = "mod_network_restart",
-	runPrio                = 30,
-	config                 = {},
-	syslog                 = function(level, msg) return true end,
-	writeValue             = function(filePath, str) return false end,
-	readValue              = function(filePath) return nil end,
-	deadPeriod             = 900,
-	attempts               = 1,
-	restartTimeout         = 0,
-	status                 = nil,
-	_attemptsCounter       = 0,
-	_deadCounter           = 0,
-	_networkRestarted      = false,
-	_ifaceRestarting       = false,
-	_ifaceRestartCounter   = 0,
-	_netIfaces             = {},
-	_netDevices            = {},
-	_netItemsNum           = 0,
-	_disconnectedAtStartup = false,
+	name                    = "mod_network_restart",
+	runPrio                 = 30,
+	config                  = {},
+	syslog                  = function(level, msg) return true end,
+	writeValue              = function(filePath, str) return false end,
+	readValue               = function(filePath) return nil end,
+	deadPeriod              = 900,
+	attempts                = 1,
+	attemptInterval         = 15,
+	deviceTimeout           = 0,
+	status                  = nil,
+	_attemptsCounter        = 0,
+	_attemptIntervalCounter = 0,
+	_deadCounter            = 0,
+	_firstAttempt           = true,
+	_ifaceRestarting        = false,
+	_ifaceRestartCounter    = 0,
+	_netIfaces              = {},
+	_netDevices             = {},
+	_netItemsNum            = 0,
+	_disconnectedAtStartup  = false,
 }
 
 function Module:toggleDevices(flag)
@@ -72,15 +74,17 @@ function Module:init(t)
 			self._netItemsNum = self._netItemsNum + 1
 		end
 	end
-
-	if t.attempts ~= nil then
-		self.attempts = tonumber(t.attempts)
-	end
 	if t.dead_period ~= nil then
 		self.deadPeriod = tonumber(t.dead_period)
 	end
-	if t.restart_timeout ~= nil then
-		self.restartTimeout = tonumber(t.restart_timeout)
+	if t.attempts ~= nil then
+		self.attempts = tonumber(t.attempts)
+	end
+	if t.attempt_interval ~= nil then
+		self.attemptInterval = tonumber(t.attempt_interval)
+	end
+	if t.device_timeout ~= nil then
+		self.deviceTimeout = tonumber(t.device_timeout)
 	end
 	if tonumber(t.disconnected_at_startup) == 1 then
 		self._disconnectedAtStartup = true
@@ -98,7 +102,7 @@ function Module:networkRestartFunc()
 				self.name, table.concat(self._netDevices, ", ")))
 		end
 		self:netItemsDown()
-		if self.restartTimeout < 1 then
+		if self.deviceTimeout < 1 then
 			self:netItemsUp()
 		else
 			self._ifaceRestarting = true
@@ -115,7 +119,7 @@ end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	if self._ifaceRestarting then
-		if self._ifaceRestartCounter >= self.restartTimeout then
+		if self._ifaceRestartCounter >= self.deviceTimeout then
 			self:netItemsUp()
 			self._ifaceRestarting     = false
 			self._ifaceRestartCounter = 0
@@ -124,24 +128,25 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 		end
 	else
 		if currentStatus == 1 then
-			if not self._networkRestarted then
-				if self._disconnectedAtStartup and (self.attempts == 0 or self._attemptsCounter < self.attempts) then
-					if self._deadCounter >= self.deadPeriod then
+			if self._disconnectedAtStartup and self._deadCounter >= self.deadPeriod then
+				if self.attempts == 0 or self._attemptsCounter < self.attempts then
+					if self._firstAttempt or self._attemptIntervalCounter >= self.attemptInterval then
 						self:networkRestartFunc()
-						self._networkRestarted = true
-						self._deadCounter      = 0
+						self._attemptIntervalCounter = 0
+						self._firstAttempt           = false
 					else
-						self._deadCounter = self._deadCounter + timeDiff
+						self._attemptIntervalCounter = self._attemptIntervalCounter + timeDiff
 					end
 				end
-			elseif inetChecked and (self.attempts == 0 or self._attemptsCounter < self.attempts) then
-				self:networkRestartFunc()
+			else
+				self._deadCounter = self._deadCounter + timeDiff
 			end
 		else
-			self._attemptsCounter       = 0
-			self._deadCounter           = 0
-			self._disconnectedAtStartup = true
-			self._networkRestarted      = false
+			self._attemptsCounter        = 0
+			self._attemptIntervalCounter = 0
+			self._deadCounter            = 0
+			self._disconnectedAtStartup  = true
+			self._firstAttempt           = true
 		end
 		self._ifaceRestartCounter = 0
 	end
