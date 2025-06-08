@@ -18,12 +18,12 @@ fi
 
 while true; do
     if [ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ]; then
-        ping -c 3 223.5.5.5 -w 5 >/dev/null 2>&1
+        /bin/ping -c 3 223.5.5.5 -w 5 >/dev/null 2>&1
         if [ "$?" == "0" ]; then
             if [ ! -z "$(uci -q get easytier.@easytier[0].checkip)" ]; then
                 online=""
                 for ip in $(uci -q get easytier.@easytier[0].checkip); do
-                    ms=`echo $(ping -4 $ip -c 2 -w 4 -q) | awk -F '/' '{print $4}'`
+                    ms=`echo $(/bin/ping -4 $ip -c 2 -w 4 -q) | awk -F '/' '{print $4}'`
                     [ ! -z "$ms" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：${ip} 延迟：${ms}ms " >>/tmp/easytier.log && online=1
                     [ -z "$ms" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：${ip} 网络中断 " >>/tmp/easytier.log
                 done
@@ -76,7 +76,7 @@ check_bin() {
        		tag="$( curl -k --connect-timeout 3 --user-agent "$user_agent"  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
        		[ -z "$tag" ] && tag="$( curl -Lk --connect-timeout 3 --user-agent "$user_agent" -s  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
    	fi
-	[ -z "$tag"] && tag=v2.3.0
+	[ -z "$tag"] && tag=v2.3.1
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytier.log
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytierweb.log
         mkdir -p "$path"
@@ -607,9 +607,6 @@ start_et() {
                   	fi
 		fi
 		set_firewall 
-		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 重载防火墙和网络配置...会出现短暂断网现象... " >>/tmp/easytier.log
-                [ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
-		[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1
 		sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
                 [ ! -z "$checkip" ] && check
                 echo `date +%s` > /tmp/easytier_time
@@ -762,12 +759,16 @@ start_service() {
 	echo "" >/tmp/easytierweb.log
         size="$(df -k | awk '/\/overlay$/ {sub(/K$/, "", $4); print $4}')"
 	[ -z "$size" ] && size="$(df -k /usr/bin | awk 'NR==2 {print $(NF-2) }')"
-	[ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ] && start_et easytier 
 	if [ -z "$(uci -q get easytier.@easytierweb[0].enabled)" ] ; then
 		echo "config easytierweb" >>/etc/config/easytier
 		echo "	option enabled '0'" >>/etc/config/easytier
 	fi
 	[ "$(uci -q get easytier.@easytierweb[0].enabled)" = "1" ] && start_web 
+	[ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ] && start_et easytier
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 重载防火墙和网络配置...会出现短暂断网现象... " >>/tmp/easytier.log
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 重载防火墙和网络配置...会出现短暂断网现象... " >>/tmp/easytierweb.log
+        [ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
+	[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1
 	start_log
 	
 }
