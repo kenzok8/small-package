@@ -656,9 +656,26 @@ html_port = s:option(Value, "html_port", translate("web界面端口"),
 html_port.datatype = "range(1,65535)"
 html_port.placeholder = "11210"
 
+local router_ip = luci.sys.exec("uci -q get network.lan.ipaddr"):gsub("\n", "") 
+local default_api_port = api_port.default or "11211"
 api_host = s:option(Value, "api_host", translate("默认API服务器URL"),
-	translate("API 服务器的 URL，用于 web 前端连接。（ --api-host 参数）"))
-api_host.placeholder = "https://config-server.easytier.cn"
+	translate("API 服务器的 URL，用于 web 前端连接。（ --api-host 参数）<br>填写示例 http://当前设备IP或解析的域名:API端口"))
+api_host.placeholder = "http://" .. router_ip .. ":" .. default_api_port
+api_host.default = "http://" .. router_ip .. ":" .. default_api_port
+api_host.validate = function(self, value, section)
+    local port_val = api_port:formvalue(section) or default_api_port 
+    if not port_val or port_val == "" then
+        port_val = default_api_port
+    end
+    local port_in_api_host = string.match(value, ":(%d+)$")
+    if port_in_api_host ~= port_val then
+        local new_value = string.gsub(value, ":%d+$", "")
+        new_value = new_value .. ":" .. port_val
+        return new_value
+    end
+    return value
+end
+
 
 weblog = s:option(ListValue, "weblog", translate("程序日志"),
 	translate("运行日志在/tmp/easytierweb.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>详细程度：警告<信息<调试<跟踪"))
