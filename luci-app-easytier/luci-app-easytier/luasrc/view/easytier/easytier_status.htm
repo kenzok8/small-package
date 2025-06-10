@@ -22,7 +22,7 @@ XHR.poll(3, '<%=url([[admin]], [[vpn]], [[easytier]], [[status]])%>', null,
             var etwnewtagContent = data.wrunning ? "&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;最新版本：" + "<span style='color:#FFA500;'>" + data.etnewtag + "</span>" : ""; 
             var etwebContent = "";
             if (data.port !== 0 && data.wrunning) {
-            	etwebContent = "&nbsp;&nbsp;&nbsp;" + "<input class=\"cbi-button cbi-button-reload mar-10\" type=\"button\" value=\" <%:Web 控制台%> \" onclick=\"window.open('<%=protocol%>" + window.location.hostname + ":" + data.port + "')\"/>";
+            	etwebContent = "&nbsp;&nbsp;&nbsp;" + "<input class=\"cbi-button cbi-button-reload mar-10\" type=\"button\" value=\" <%:Web Console%> \" onclick=\"window.open('<%=protocol%>" + window.location.hostname + ":" + data.port + "')\"/>";
             }
             st.innerHTML = "<em><b>easytier-core " + clientStatus + etstaContent + etcpuContent + etramContent + ettagContent + etnewtagContent + "</b></em><br><br><em><b>easytier-web " + webStatus + etwebstaContent + etwebcpuContent + etwebramContent + etwtagContent + etwnewtagContent + etwebContent + "</b></em>";         
         }
