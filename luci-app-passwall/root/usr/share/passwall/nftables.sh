@@ -1177,7 +1177,6 @@ add_firewall_rule() {
 		if [ -n "$TCP_NODE" ]; then
 			_proxy_tcp_access() {
 				[ -n "${2}" ] || return 0
-				[ "$(is_local_ip "${2}")" = "0" ] && return 0
 				if echo "${2}" | grep -q -v ':'; then
 					nft "get element $NFTABLE_NAME $NFTSET_LAN {${2}}" &>/dev/null
 					[ $? -eq 0 ] && {
@@ -1263,7 +1262,6 @@ add_firewall_rule() {
 		if [ -n "$UDP_NODE" -o "$TCP_UDP" = "1" ]; then
 			_proxy_udp_access() {
 				[ -n "${2}" ] || return 0
-				[ "$(is_local_ip "${2}")" = "0" ] && return 0
 				if echo "${2}" | grep -q -v ':'; then
 					nft "get element $NFTABLE_NAME $NFTSET_LAN {${2}}" &>/dev/null
 					[ $? == 0 ] && {

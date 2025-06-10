@@ -208,31 +208,6 @@ get_new_port() {
 	fi
 }
 
-is_local_ip() {
-	local ip="$1"
-	# 判断 IPv4
-	case "$ip" in
-		127.0.0.* | \
-		192.168.* | \
-		10.* | \
-		172.1[6-9].* | \
-		172.2[0-9].* | \
-		172.3[0-1].*)
-			echo 0
-			return
-		;;
-	esac
-	# 判断 IPv6
-	[ "$ip" = "::1" ] && { echo 0; return; }
-	case "$ip" in
-		fe8[0-9a-fA-F]* | fe9[0-9a-fA-F]* | fea[0-9a-fA-F]* | feb[0-9a-fA-F]* )
-			echo 0
-			return
-		;;
-	esac
-	echo 1
-}
-
 check_depends() {
 	local depends
 	local tables=${1}
