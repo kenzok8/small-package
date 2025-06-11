@@ -89,7 +89,7 @@ check_bin() {
 	         		mv -f /tmp/easytier-core ${path}/
 	         		mv -f /tmp/easytier-cli ${path}/
 	         		chmod +x "$easytierbin"
-	         		if [ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]; then
+	         		if [[ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]] ; then
                    			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin} 下载成功" >>/tmp/easytier.log
                  		else
                     			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytier.log
@@ -98,7 +98,7 @@ check_bin() {
 	         	if [ "$(uci -q get easytier.@easytierweb[0].enabled)" = "1" ] ; then
 	         		mv -f /tmp/easytier-web-embed ${webbin} || true
 	         		chmod +x "$webbin"
-	         		if [ "$($webbin -h 2>&1 | wc -l)" -gt 3 ]; then
+	         		if [[ "$($webbin -h 2>&1 | wc -l)" -gt 3 ]] ; then
 					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${webbin} 下载成功" >>/tmp/easytierweb.log
                  		else
 					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytierweb.log
@@ -419,7 +419,7 @@ start_et() {
                     sed -i "/easytierbin/c option easytierbin '/tmp/easytier-core' " /etc/config/easytier 
                     easytierbin=/tmp/easytier-core
                 fi
-		if [ ! -f "$easytierbin" ] || [ "$(($($easytierbin -h 2>&1 | wc -l)))" -lt 3 ] ; then
+		if [ ! -f "$easytierbin" ] || [[ "$($easytierbin -h 2>&1 | wc -l)" -lt 3 ]] ; then
 			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : $easytierbin 不存在或程序不完整，开始在线下载..." >>/tmp/easytier.log
                 	check_bin
 		fi
@@ -656,7 +656,7 @@ start_web() {
 	if [ -f "$webbin" ] ; then
 		[ ! -x "$webbin" ] && chmod +x "$webbin"
 	fi
-	if [ ! -f "$webbin" ] || [ "$($webbin -h 2>&1 | wc -l)" -lt 3 ] ; then
+	if [ ! -f "$webbin" ] || [[ "$($webbin -h 2>&1 | wc -l)" -lt 3 ]] ; then
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 未找到${webbin}程序或程序不适配当前架构，请上传安装后再启动！ " >>/tmp/easytierweb.log
 		return 1
 	fi

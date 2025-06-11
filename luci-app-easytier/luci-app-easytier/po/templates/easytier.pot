@@ -36,7 +36,7 @@ msgid ""
 "\">Beginner Tutorial</a>"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:708
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:709
 msgid "API Port"
 msgstr ""
 
@@ -172,7 +172,7 @@ msgstr ""
 msgid "Configuration File"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:703
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:704
 msgid ""
 "Configure the server's listening port for easytier-core to connect. (-c "
 "parameter)"
@@ -232,7 +232,7 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:721
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:722
 msgid "Default API Server URL"
 msgstr ""
 
@@ -421,7 +421,7 @@ msgid ""
 "entries can be specified. (--port-forward parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:715
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:716
 msgid ""
 "Frontend listening port for the web dashboard server. Leave empty to "
 "disable. (-l parameter)"
@@ -499,7 +499,7 @@ msgstr ""
 msgid "Listening Protocol"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:709
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:710
 msgid ""
 "Listening port of the RESTful server, used as ApiHost by the web frontend. (-"
 "a parameter)"
@@ -627,7 +627,7 @@ msgid "Portal Address Port"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:358
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:740
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:741
 msgid "Program Log"
 msgstr ""
 
@@ -670,7 +670,7 @@ msgid ""
 "level: Warning < Info < Debug < Trace"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:741
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:742
 msgid ""
 "Runtime log located at /tmp/easytierweb.log, viewable in the log section "
 "above.<br>If startup fails, check the System Log under Status for detailed "
@@ -689,7 +689,7 @@ msgstr ""
 msgid "Self-hosted Web Server"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:702
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:703
 msgid "Server Port"
 msgstr ""
 
@@ -734,7 +734,7 @@ msgid ""
 "forward packets and will not create a TUN device. (-i parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:722
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:723
 msgid ""
 "The URL of the API server, used for connecting the web frontend. (--api-host "
 "parameter)<br>Example: http://[current device IP or resolved domain name]:"
@@ -869,7 +869,7 @@ msgstr ""
 msgid "Web Console"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:714
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:715
 msgid "Web Interface Port"
 msgstr ""
 

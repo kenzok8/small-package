@@ -698,6 +698,7 @@ web_protocol = s:option(ListValue, "web_protocol", translate("Listening Protocol
 web_protocol.default = "udp"
 web_protocol:value("udp",translate("UDP"))
 web_protocol:value("tcp",translate("TCP"))
+web_protocol:value("ws",translate("WS"))
 
 web_port = s:option(Value, "web_port", translate("Server Port"),
         translate("Configure the server's listening port for easytier-core to connect. (-c parameter)"))
