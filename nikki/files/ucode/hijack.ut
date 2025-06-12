@@ -70,6 +70,11 @@
 	const proxy_tcp_dport = split((uci.get('nikki', 'proxy', 'proxy_tcp_dport') ?? '0-65535'), ' ');
 	const proxy_udp_dport = split((uci.get('nikki', 'proxy', 'proxy_udp_dport') ?? '0-65535'), ' ');
 
+	const cgroup_id = uci.get('nikki', 'routing', 'cgroup_id');
+	const cgroup_name = uci.get('nikki', 'routing', 'cgroup_name');
+	const tproxy_fw_mark = uci.get('nikki', 'routing', 'tproxy_fw_mark');
+	const tun_fw_mark = uci.get('nikki', 'routing', 'tun_fw_mark');
+
 	const dns_hijack_nfproto = [];
 	if (ipv4_dns_hijack) {
 		push(dns_hijack_nfproto, 'ipv4');
