@@ -57,7 +57,7 @@ async function checkProcess() {
 
         function controlService(action) {
             var command = action === 'start' 
-                ? 'nohup /usr/bin/homebox > /tmp/netspeedtest.log 2>&1 &' 
+                ? 'nohup /usr/bin/homebox >> /tmp/netspeedtest.log 2>&1 &' 
                 : '/usr/bin/killall homebox';
             return fs.exec('/bin/sh', ['-c', command]);
         }

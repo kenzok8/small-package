@@ -16,46 +16,22 @@ const logPath = '/tmp/netspeedtest.log';
 
 async function checkProcess() {
     try {
-        // 尝试使用pgrep 
         const res = await fs.exec('/usr/bin/pgrep', ['iperf3']);
+        if (res.code === 0 && res.stdout.trim()) {
+            return { running: true, pid: res.stdout.trim() };
+        }
+        
+        // 回退检查
+        const psRes = await fs.exec('/bin/ps', ['-w', '-C', 'iperf3', '-o', 'pid=']);
+        const pid = psRes.stdout.trim();
         return {
-            running: res.code === 0,
-            pid: res.stdout.trim() || null
+            running: !!pid,
+            pid: pid || null
         };
     } catch (err) {
-        // 回退到ps方法
-        try {
-            const psRes = await fs.exec('/bin/ps', ['-w', '-C', 'iperf3', '-o', 'pid=']);
-            const pid = psRes.stdout.trim();
-            return {
-                running: pid !== '',
-                pid: pid || null
-            };
-        } catch (err) {
-            return { running: false, pid: null };
-        }
+        console.error('Process check error:', err);
+        return { running: false, pid: null };
     }
-}
-function pollLog(textarea) {
-    return fs.exec('/bin/cat', [logPath])
-    .then(res => {
-        if (res.code !== 0) throw new Error(res.stderr);
-        
-        const cleanedLog = res.stdout ? res.stdout.trim()
-            .replace(/\u001b\[[0-9;]*m/g, '')
-            .split('\n')
-            .slice(-50)
-            .join('\n') : _('Log file is empty');
-        
-        if (textarea) {
-            textarea.value = cleanedLog;
-            textarea.scrollTop = textarea.scrollHeight;
-        }
-        return cleanedLog;
-    }).catch(err => {
-        console.error('Error reading log:', err);
-        return _('Failed to read log: ') + err.message;
-    });
 }
 
 
@@ -95,17 +71,21 @@ return view.extend({
         const toggleBtn = E('button', {
             'class': 'btn cbi-button',
             'click': ui.createHandlerFn(this, function() {
-                const action = state.running ? 'stop' : 'start';
-                return controlService(action)
-                    .then(() => checkProcess())
-                    .then(res => {
-                        state.running = res.running;
-                        updateStatus();
-                        if (logTextarea) {
-                            pollLog(logTextarea);
-                        }
-                    })
-                    .catch(err => ui.addNotification(null, E('p', _('Error: ') + err.message), 'error'));
+            const action = state.running ? 'stop' : 'start';
+            toggleBtn.disabled = true; // 禁用按钮
+            
+            return controlService(action)
+                .then(() => checkProcess())
+                .then(res => {
+                    state.running = res.running;
+                    updateStatus();
+                    toggleBtn.disabled = false; // 恢复按钮
+                })
+                .catch(err => {
+                    ui.addNotification(null, E('p', _('Error: ') + err.message), 'error');
+                    toggleBtn.disabled = false; // 出错时也要恢复按钮
+                });
+
             })
         });
 
@@ -126,15 +106,7 @@ return view.extend({
         toggleBtn.textContent = _('Loading...');
         toggleBtn.disabled = true;
 
-        // 创建日志区域
-        let logTextarea;
 
-            logTextarea = E('textarea', {
-                'class': 'cbi-input-textarea',
-                'wrap': 'off',
-                'readonly': 'readonly',
-		 'style': 'width: calc(100% - 20px);height: 535px;margin: 10px;overflow-y: scroll;',
-            });
 // 构建UI
 const statusSection = E('div', { 'class': 'cbi-section' }, [
     E('div', { 'style': 'margin: 15px' }, [
@@ -189,22 +161,8 @@ const statusSection = E('div', { 'class': 'cbi-section' }, [
             }, 5);
         });
 
-        // 如果有日志，启动日志轮询
-            poll.add(() => pollLog(logTextarea), 5);
-            pollLog(logTextarea);
-            
-            return E('div', [
-                statusSection,
-                E('div', { 'class': 'cbi-section' }, [
-                    E('h3', {}, _('Run Log')),
-                    logTextarea,
-                    E('div', { 'style': 'text-align: right; font-size: small;  margin-top: 5px;' },
-                        _('Refresh every 5 seconds.')
-                    )
-                ])
-            ]);
  
-        return render();
+        return statusSection;
 	}
 
 });
