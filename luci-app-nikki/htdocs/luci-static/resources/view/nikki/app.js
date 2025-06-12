@@ -125,6 +125,9 @@ return view.extend({
         o = s.option(form.Flag, 'fast_reload', _('Fast Reload'));
         o.rmempty = false;
 
+        o = s.option(form.Flag, 'core_only', _('Core Only'));
+        o.rmempty = false;
+
         s = m.section(form.NamedSection, 'env', 'env', _('Core Environment Variable Config'));
 
         o = s.option(form.Flag, 'disable_safe_path_check', _('Disable Safe Path Check'));

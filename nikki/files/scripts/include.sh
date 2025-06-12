@@ -1,15 +1,5 @@
 #!/bin/sh
 
-# routing
-TPROXY_FW_MARK="0x80"
-TUN_FW_MARK="0x81"
-TPROXY_RULE_PREF="1024"
-TUN_RULE_PREF="1025"
-TPROXY_ROUTE_TABLE="80"
-TUN_ROUTE_TABLE="81"
-CGROUP_ID="0x12061206"
-CGROUP_NAME="nikki"
-
 # paths
 PROG="/usr/bin/mihomo"
 HOME_DIR="/etc/nikki"
