@@ -27,12 +27,14 @@ local Module = {
 	mailSmtp             = nil,
 	mailSmtpPort         = nil,
 	mailSecurity         = "tls",
-	msgTextPattern       = "[%s] (%s) | %s",	-- Message (host, instance, message)
+	msgTextPattern       = "[%s] (%s) @ %s",	-- Message (host, instance, message)
 	msgSubPattern        = "%s notification",	-- Subject (host)
-	msgConnectPattern    = "Internet connected: %s",
-	msgDisconnectPattern = "Internet disconnected: %s",
-	msgSeparator         = "; ",
+	msgConnectPattern    = "Connected: %s",
+	msgDisconnectPattern = "Disconnected: %s",
+	msgSeparator         = " | ",
 	msgMaxItems          = 50,
+	msgSendAttempts      = 3,
+	msgSendTimeout       = 5,
 	status               = nil,
 	_enabled             = false,
 	_deadCounter         = 0,
@@ -42,6 +44,8 @@ local Module = {
 	_msgSentConnect      = true,
 	_connected           = true,
 	_msgBuffer           = {},
+	_msgSendCounter      = 3,
+	_msgTimeoutCounter   = 5,
 }
 
 function Module:init(t)
@@ -94,6 +98,8 @@ function Module:init(t)
 		self.syslog("warning", string.format(
 			"%s: Insufficient data to connect to the SMTP server", self.name))
 	end
+
+	self._msgSendCounter = self.msgSendAttempts
 end
 
 function Module:appendNotice(str)
@@ -108,6 +114,7 @@ function Module:appendNotice(str)
 end
 
 function Module:sendMessage(msg, textPattern)
+	local retVal     = 1
 	local verboseArg = ""
 	local emailMsg   = string.format(
 		textPattern, self.hostAlias, self.config.serviceConfig.instance, msg)
@@ -139,13 +146,17 @@ function Module:sendMessage(msg, textPattern)
 		self.syslog("debug", string.format("%s: %s", self.name, mtaCmd))
 	end
 
-	if os.execute(mtaCmd) ~= 0 then
-		self.syslog("err", string.format(
-			"%s: An error occured while sending message", self.name))
-	else
+	retVal = os.execute(mtaCmd)
+	if retVal == 0 then
 		self.syslog("info", string.format(
 			"%s: Message sent to %s", self.name, self.mailRecipient))
+		self._msgBuffer = {}
+	else
+		self.syslog("err", string.format(
+			"%s: An error occured while sending message", self.name))
 	end
+
+	return retVal
 end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
@@ -164,8 +175,7 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 
 		if not self._msgSentDisconnect and (self.mode == 1 or self.mode == 2) then
 			if self._deadCounter >= self.deadPeriod then
-				self:sendMessage(table.concat(self._msgBuffer, self.msgSeparator), self.msgTextPattern)
-				self._msgBuffer         = {}
+				self._msgSendCounter    = 0
 				self._msgSentDisconnect = true
 			else
 				self._deadCounter = self._deadCounter + timeDiff
@@ -184,14 +194,30 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 
 		if not self._msgSentConnect and (self.mode == 0 or self.mode == 2) then
 			if self._aliveCounter >= self.alivePeriod then
-				self:sendMessage(table.concat(self._msgBuffer, self.msgSeparator), self.msgTextPattern)
-				self._msgBuffer      = {}
+				self._msgSendCounter = 0
 				self._msgSentConnect = true
 			else
 				self._aliveCounter = self._aliveCounter + timeDiff
 			end
 		end
 		self._disconnected = false
+	end
+
+	if self._msgSendCounter < self.msgSendAttempts then
+		if self._msgTimeoutCounter >= self.msgSendTimeout then
+			if #self._msgBuffer > 0 then
+				if self:sendMessage(table.concat(self._msgBuffer, self.msgSeparator), self.msgTextPattern) == 0 then
+					self._msgSendCounter = self.msgSendAttempts
+				else
+					self._msgSendCounter = self._msgSendCounter + 1
+				end
+			end
+			self._msgTimeoutCounter = 0
+		else
+			self._msgTimeoutCounter = self._msgTimeoutCounter + timeDiff
+		end
+	else
+		self._msgTimeoutCounter = self.msgSendTimeout
 	end
 end
 
