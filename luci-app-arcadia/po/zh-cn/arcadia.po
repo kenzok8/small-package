@@ -7,11 +7,11 @@ msgstr "官方网站："
 msgid "Arcadia one-stop code operation and maintenance platform."
 msgstr "Arcadia 一站式代码运维平台。"
 
-msgid "Arcadia is mainly aimed at scripting language programming and is suitable for development and operation environments of small and medium-sized teams and individuals."
-msgstr "Arcadia 主要面向于脚本语言编程，适用于中小型团队与个人的开发与运维环境。"
+msgid "Arcadia is mainly aimed at scripting language programming and operation and maintenance, supports scheduled task scheduling, has a complete file system and underlying CLI command design, and is suitable for the development and operation and maintenance environment of small and medium-sized teams and individuals."
+msgstr "Arcadia 主要面向于脚本语言编程与运维，支持定时任务调度，有着完善的文件系统和底层CLI命令设计，适用于中小型团队与个人的开发与运维环境。"
 
-msgid "In addition to code maintenance, Arcadia is also a powerful scheduled task maintenance platform with a comprehensive file system and underlying CLI command design."
-msgstr "除了代码运维外 Arcadia 还是一个强大的定时任务运维平台，并且有着完善的文件系统和底层CLI命令设计。"
+msgid "The project is based on TypeScript full-stack development and adopts many cutting-edge technologies. Vue + Vite is used on the front end, and Node.js + Express + Prisma ORM is used on the back end."
+msgstr "项目基于 TypeScript 全栈开发，采用了众多前沿技术，前端使用 Vue + Vite，后端使用 Node.js + Express + Prisma ORM。"
 
 msgid "The initial username and password are 'useradmin' and 'passwd' respectively."
 msgstr "初始的用户名和密码分别是'useradmin'和'passwd'。"
