@@ -38,7 +38,7 @@ return view.extend({
 		o.value('4', _('Every Thursday'));
 		o.value('5', _('Every Friday'));
 		o.value('6', _('Every Saturday'));
-		o.value('7', _('Every Sunday'));
+		o.value('0', _('Every Sunday'));
 		o.default = 3;
 
 		o = s.option(form.ListValue, 'geo_update_day_time', _('Update Time'));
