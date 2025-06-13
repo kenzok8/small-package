@@ -171,14 +171,14 @@ chain {{ inchain }} {
 		fib daddr type { local } counter return
 		ct direction reply counter return
 
-		ip daddr @inet4_local_addr counter return
-		{% if (global_ipv6 === '1'): %}
-		ip6 daddr @inet6_local_addr counter return
-		{% endif %}
-
 		ip daddr @inet4_wan_proxy_addr counter goto {{ outchain }}
 		{% if (global_ipv6 === '1'): %}
 		ip6 daddr @inet6_wan_proxy_addr counter goto {{ outchain }}
+		{% endif %}
+
+		ip daddr @inet4_local_addr counter return
+		{% if (global_ipv6 === '1'): %}
+		ip6 daddr @inet6_local_addr counter return
 		{% endif %}
 
 		ip daddr @inet4_wan_direct_addr counter return
