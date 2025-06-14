@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Routing netspeedtest for OpenWrt 
-	DEPENDS:=+curl +bash
+	DEPENDS:=+curl +bash +coreutils-nohup
 endef
 
 define Package/$(PKG_NAME)/description
