@@ -10,7 +10,7 @@ local m, s, o
 m = taskd.docker_map("feishuvpn", "feishuvpn", "/usr/libexec/istorec/feishuvpn.sh",
 	translate("FeiShuVpn"),
 	translate("FeiShuVpn is p2p vpn client.")
-		.. translate("Official website:") .. ' <a href=\"https://wiki.feishuwg.com/\" target=\"_blank\">https://wiki.feishuwg.com/</a>')
+		.. translate("Official website:") .. ' <a href=\"https://wiki.feishunet.com/\" target=\"_blank\">https://wiki.feishunet.com/</a>')
 
 local dk = docker.new({socket_path="/var/run/docker.sock"})
 local dockerd_running = dk:_ping().code == 200
@@ -38,8 +38,8 @@ o.datatype = "port"
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
-o.default = "registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:v2.2"
-o:value("registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:v2.2", "registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:v2.2")
+o.default = "registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:latest"
+o:value("registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:latest", "registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:latest")
 
 local blocks = feishuvpn_model.blocks()
 local home = feishuvpn_model.home()
