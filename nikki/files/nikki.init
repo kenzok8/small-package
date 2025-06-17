@@ -210,14 +210,14 @@ service_started() {
 	config_get tun_interval "proxy" "tun_interval" 1
 	## routing config
 	local tproxy_fw_mark tun_fw_mark tproxy_rule_pref tun_rule_pref tproxy_route_table tun_route_table cgroup_id cgroup_name
-	config_get tproxy_fw_mark "routing" "tproxy_fw_mark"
-	config_get tun_fw_mark "routing" "tun_fw_mark"
-	config_get tproxy_rule_pref "routing" "tproxy_rule_pref"
-	config_get tun_rule_pref "routing" "tun_rule_pref"
-	config_get tproxy_route_table "routing" "tproxy_route_table"
-	config_get tun_route_table "routing" "tun_route_table"
-	config_get cgroup_id "routing" "cgroup_id"
-	config_get cgroup_name "routing" "cgroup_name"
+	config_get tproxy_fw_mark "routing" "tproxy_fw_mark" "0x80"
+	config_get tun_fw_mark "routing" "tun_fw_mark" "0x81"
+	config_get tproxy_rule_pref "routing" "tproxy_rule_pref" "1024"
+	config_get tun_rule_pref "routing" "tun_rule_pref" "1025"
+	config_get tproxy_route_table "routing" "tproxy_route_table" "80"
+	config_get tun_route_table "routing" "tun_route_table" "81"
+	config_get cgroup_id "routing" "cgroup_id" "0x12061206"
+	config_get cgroup_name "routing" "cgroup_name" "nikki"
 	# prepare config
 	local tproxy_enable; tproxy_enable=0
 	if [[ "$tcp_mode" == "tproxy" || "$udp_mode" == "tproxy" ]]; then
@@ -330,8 +330,8 @@ cleanup() {
 	# get config
 	## routing config
 	local tproxy_route_table tun_route_table
-	config_get tproxy_route_table "routing" "tproxy_route_table"
-	config_get tun_route_table "routing" "tun_route_table"
+	config_get tproxy_route_table "routing" "tproxy_route_table" "80"
+	config_get tun_route_table "routing" "tun_route_table" "81"
 	# delete routing policy
 	ip -4 rule del table "$tproxy_route_table" > /dev/null 2>&1
 	ip -4 rule del table "$tun_route_table" > /dev/null 2>&1

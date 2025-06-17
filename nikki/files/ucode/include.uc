@@ -1,5 +1,4 @@
-import { readfile, lsdir, lstat } from 'fs';
-import { connect } from 'ubus';
+import { readfile, popen } from 'fs';
 
 export function uci_bool(obj) {
 	return obj == null ? null : obj == '1';
@@ -64,12 +63,14 @@ export function get_groups() {
 };
 
 export function get_cgroups() {
-	const ubus = connect();
-	const services = ubus.call('service', 'list');
 	const result = [];
-	for (let name in services) {
-		if (length(services[name]['instances']) > 0) {
-			push(result, name);
+	if (get_cgroups_version() == 2) {
+		const cgroup_path = '/sys/fs/cgroup/';
+		const process = popen(`find ${cgroup_path} -type d -mindepth 1`);
+		if (process) {
+			for (let line = process.read('line'); length(line); line = process.read('line')) {
+				push(result, substr(trim(line), length(cgroup_path)));
+			}
 		}
 	}
 	return result;
