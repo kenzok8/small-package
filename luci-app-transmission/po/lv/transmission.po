@@ -1,182 +1,183 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2025-06-15 17:45+0000\n"
-"Last-Translator: தமிழ்நேரம் <anishprabu.t@gmail.com>\n"
-"Language-Team: Tamil <https://hosted.weblate.org/projects/openwrt/"
-"luciapplicationstransmission/ta/>\n"
-"Language: ta\n"
+"PO-Revision-Date: 2025-06-12 22:12+0000\n"
+"Last-Translator: \"ℂ𝕠𝕠𝕠𝕝 (𝕘𝕚𝕥𝕙𝕦𝕓.𝕔𝕠𝕞/ℂ𝕠𝕠𝕠𝕝)\" <coool@mail.lv>\n"
+"Language-Team: Latvian <https://hosted.weblate.org/projects/openwrt/"
+"luciapplicationstransmission/lv/>\n"
+"Language: lv\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Plural-Forms: nplurals=3; plural=(n % 10 == 0 || n % 100 >= 11 && n % 100 <= "
+"19) ? 0 : ((n % 10 == 1 && n % 100 != 11) ? 1 : 2);\n"
 "X-Generator: Weblate 5.12-dev\n"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:65
 msgid "Alternative download speed"
-msgstr "மாற்று பதிவிறக்க விரைவு"
+msgstr "Alternatīvais lejupielādes ātrums"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:59
 msgid "Alternative speed enabled"
-msgstr "மாற்று விரைவு இயக்கப்பட்டது"
+msgstr "Alternatīvais ātrums iespējots"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:277
 msgid "Alternative speed time begin"
-msgstr "மாற்று வேக நேரம் தொடங்குகிறது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:283
 msgid "Alternative speed time day"
-msgstr "மாற்று வேக நேர நாள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:280
 msgid "Alternative speed time end"
-msgstr "மாற்று வேக நேர முடிவு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:274
 msgid "Alternative speed timing enabled"
-msgstr "மாற்று வேக நேரம் இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:62
 msgid "Alternative upload speed"
-msgstr "மாற்று பதிவேற்ற விரைவு"
+msgstr "Alternatīvais augšupielādes ātrums"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:113
 msgid "Automatically start added torrents"
-msgstr "தானாகவே சேர்க்கப்பட்ட டோரண்டுகளைத் தொடங்குங்கள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:56
 msgid "Bandwidth settings"
-msgstr "அலைவரிசை அமைப்புகள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:174
 msgid "Binding address IPv4"
-msgstr "பிணைப்பு முகவரி IPv4"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:176
 msgid "Binding address IPv6"
-msgstr "பிணைப்பு முகவரி IPv6"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:86
 msgid "Block list enabled"
-msgstr "தொகுதி பட்டியல் இயக்கப்பட்டது"
+msgstr "Bloķēšanas saraksts iespējots"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:89
 msgid "Blocklist URL"
-msgstr "பிளாக்லிச்ட் முகவரி"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:83
 msgid "Blocklists"
-msgstr "பிளாக்லிச்ட்கள்"
+msgstr "Bloķēšanas saraksti"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:131
 msgid "Cache size in MB"
-msgstr "MB இல் கேச் அளவு"
+msgstr "Kešatmiņas lielums, MB"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:50
 msgid "Config file directory"
-msgstr "கட்டமைப்பு கோப்பு அடைவு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:53
 msgid "Custom Web UI directory"
-msgstr "தனிப்பயன் வலை இடைமுகம் அடைவு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:133
 msgid "DHT enabled"
-msgstr "DHT இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:151
 msgid "Debug"
-msgstr "பிழைத்திருத்தம்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:97
 msgid "Download directory"
-msgstr "கோப்பகத்தைப் பதிவிறக்கவும்"
+msgstr "Lejupielādes mape"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:211
 msgid "Download queue enabled"
-msgstr "வரிசை இயக்கப்பட்ட பதிவிறக்க"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:217
 msgid "Download queue size"
-msgstr "வரிசை அளவு பதிவிறக்கவும்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:121
 msgid "Enable watch directory"
-msgstr "வாட்ச் கோப்பகத்தை இயக்கவும்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:47
 msgid "Enabled"
-msgstr "இயக்கப்பட்டது"
+msgstr "Iespējots"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:136
 msgid "Encryption"
-msgstr "குறியாக்கம்"
+msgstr "Šifrēšana"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:149
 msgid "Error"
-msgstr "பிழை"
+msgstr "Kļūda"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:107
 msgid "Fast"
-msgstr "வேகமாக"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:94
 msgid "Files and Locations"
-msgstr "கோப்புகள் மற்றும் இருப்பிடங்கள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:108
 msgid "Full"
-msgstr "முழு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:183
 msgid "Global peer limit"
-msgstr "உலகளாவிய தம வரம்பு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:44
 msgid "Global settings"
-msgstr "உலகளாவிய அமைப்புகள்"
+msgstr "Globālie iestatījumi"
 
 #: applications/luci-app-transmission/root/usr/share/rpcd/acl.d/luci-app-transmission.json:3
 msgid "Grant UCI access for luci-app-transmission"
-msgstr "லூசி-ஆப்-டிரான்ச்மிசனுக்கான யுசிஐ அணுகலை வழங்கவும்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:289
 msgid "Idle seeding limit"
-msgstr "செயலற்ற விதைப்பு வரம்பு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:286
 msgid "Idle seeding limit enabled"
-msgstr "செயலற்ற விதைப்பு வரம்பு இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:102
 msgid "Incomplete directory"
-msgstr "முழுமையற்ற அடைவு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:99
 msgid "Incomplete directory enabled"
-msgstr "முழுமையற்ற அடைவு இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:150
 msgid "Info"
-msgstr "தகவல்"
+msgstr "Informācija"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:144
 msgid "LPD enabled"
-msgstr "எல்பிடி இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:141
 msgid "Lazy bitfield enabled"
-msgstr "சோம்பேறி பிட்ஃபீல்ட் இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:147
 msgid "Message level"
-msgstr "செய்தி நிலை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:128
 msgid "Miscellaneous"
-msgstr "மற்றவை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:148
 msgid "None"
-msgstr "எதுவுமில்லை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:283
 msgid ""
@@ -184,205 +185,202 @@ msgid ""
 "enabled, add a value. For Sunday - 1, Monday - 2, Tuesday - 4, Wednesday - "
 "8, Thursday - 16, Friday - 32, Saturday - 64"
 msgstr ""
-"எண்/பிட்ஃபீல்ட். 0 உடன் தொடங்குங்கள், பின்னர் ஒவ்வொரு நாளும் நீங்கள் திட்டமிடல் இயக்கப்பட "
-"வேண்டும், ஒரு மதிப்பைச் சேர்க்கவும். ஞாயிற்றுக்கிழமை - 1, திங்கள் - 2, செவ்வாய் - 4, "
-"அறிவன் - 8, வியாழன் - 16, வெள்ளி - 32, காரிக்கிழமை - 64 க்கு"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:106
 msgid "Off"
-msgstr "அணை"
+msgstr "Izslēgts"
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:38
 msgid "Open Web Interface"
-msgstr "வலை இடைமுகத்தைத் திறக்கவும்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:153
 msgid "PEX enabled"
-msgstr "PEX இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:190
 msgid "Peer Port settings"
-msgstr "பியர் துறைமுகம் அமைப்புகள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:178
 msgid "Peer congestion algorithm"
-msgstr "தம நெரிசல் வழிமுறை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:185
 msgid "Peer limit per torrent"
-msgstr "ஒரு டொரண்டிற்கு தம வரம்பு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:193
 msgid "Peer port"
-msgstr "பியர் துறைமுகம்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:198
 msgid "Peer port random high"
-msgstr "பியர் துறைமுகம் சீரற்ற உயர்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:201
 msgid "Peer port random low"
-msgstr "பியர் துறைமுகம் சீரற்ற குறைந்த"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:195
 msgid "Peer port random on start"
-msgstr "தொடக்கத்தில் பியர் துறைமுகம் சீரற்ற"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:171
 msgid "Peer settings"
-msgstr "தம அமைப்புகள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:187
 msgid "Peer socket <abbr title=\"Type of Service\">TOS</abbr>"
-msgstr "பியர் சாக்கெட்<abbr title=\"Type of Service\">டோச் </abbr>"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:204
 msgid "Port forwarding enabled"
-msgstr "துறைமுகம் பகிர்தல் இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:105
 msgid "Preallocation"
-msgstr "முன்கூட்டியே"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:138
 msgid "Prefer encrypted"
-msgstr "மறைகுறியாக்கத்தை விரும்புங்கள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:137
 msgid "Prefer unencrypted"
-msgstr "மறைகுறியாக்கத்தை விரும்புங்கள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:156
 msgid "Prefetch enabled"
-msgstr "முன்னொட்டு இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:214
 msgid "Queue stalled enabled"
-msgstr "வரிசை நிறுத்தப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:223
 msgid "Queue stalled minutes"
-msgstr "வரிசை நிறுத்தப்பட்ட நிமிடங்கள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:208
 msgid "Queueing"
-msgstr "வரிசை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:242
 msgid "RPC URL"
-msgstr "RPC முகவரி"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:259
 msgid "RPC authentication required"
-msgstr "RPC ஏற்பு தேவை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:236
 msgid "RPC bind address"
-msgstr "RPC பிணைப்பு முகவரி"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:233
 msgid "RPC enabled"
-msgstr "RPC இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:249
 msgid "RPC host whitelist"
-msgstr "ஆர்.பி.சி புரவலன் அனுமதிப்பட்டியலாளர்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:245
 msgid "RPC host whitelist enabled"
-msgstr "ஆர்.பி.சி புரவலன் அனுமதிப்பட்டியலாளர் இயக்கப்பட்டார்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:266
 msgid "RPC password"
-msgstr "RPC கடவுச்சொல்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:239
 msgid "RPC port"
-msgstr "ஆர்.பி.சி துறைமுகம்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:230
 msgid "RPC settings"
-msgstr "ஆர்.பி.சி அமைப்புகள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:263
 msgid "RPC username"
-msgstr "RPC பயனர்பெயர்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:256
 msgid "RPC whitelist"
-msgstr "ஆர்.பி.சி அனுமதிப்பட்டியலாளர்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:252
 msgid "RPC whitelist enabled"
-msgstr "ஆர்.பி.சி அனுமதிப்பட்டியலாளர் இயக்கப்பட்டார்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:295
 msgid "Ratio limit"
-msgstr "விகித வரம்பு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:292
 msgid "Ratio limit enabled"
-msgstr "விகித வரம்பு இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:181
 msgid "Recycle peer id after"
-msgstr "பின்னர் பியர் ஐடியை மறுசுழற்சி செய்யுங்கள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:110
 msgid "Rename partial files"
-msgstr "பகுதி கோப்புகளை மறுபெயரிடுங்கள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:139
 msgid "Require encrypted"
-msgstr "குறியாக்கம் தேவை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:52
 msgid "Run daemon as group"
-msgstr "டீமனை குழுவாக இயக்கவும்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:51
 msgid "Run daemon as user"
-msgstr "டீமனை பயனராக இயக்கவும்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:271
 msgid "Scheduling"
-msgstr "திட்டமிடல்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:158
 msgid "Scrape paused torrents enabled"
-msgstr "ச்க்ராப் இடைநிறுத்தப்பட்ட டோரண்ட்ச் இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:161
 msgid "Script torrent done enabled"
-msgstr "ச்கிரிப்ட் டொரண்ட் இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:164
 msgid "Script torrent done filename"
-msgstr "ச்கிரிப்ட் டொரண்ட் முடிந்தது கோப்பு பெயர்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:220
 msgid "Seed queue enabled"
-msgstr "விதை வரிசை இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:226
 msgid "Seed queue size"
-msgstr "விதை வரிசை அளவு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:71
 msgid "Speed limit down"
-msgstr "வேக வரம்பு கீழே"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:68
 msgid "Speed limit down enabled"
-msgstr "வேக வரம்பு கீழே இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:77
 msgid "Speed limit up"
-msgstr "வேக வரம்பு"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:74
 msgid "Speed limit up enabled"
-msgstr "வேக வரம்பு இயக்கப்பட்டது"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:179
 msgid ""
@@ -390,47 +388,42 @@ msgid ""
 "tcp-congestion-control.html\" target=\"_blank\" rel=\"noreferrer "
 "noopener\">tcp-congestion-control</a>."
 msgstr ""
-"இது <a href="
-"\"https://www.irif.fr/~jch/software/bittorrent/tcp-congestion-control.html\" "
-"target=\"_blank\" rel=\"noreferrer noopener\">tcp-congestion- இல் "
-"ஆவணப்படுத்தப்பட்டுள்ளது. கட்டுப்பாடு </a>."
 
 #: applications/luci-app-transmission/root/usr/share/luci/menu.d/luci-app-transmission.json:3
 msgid "Transmission"
-msgstr "பரவும் முறை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:42
 msgid ""
 "Transmission daemon is a simple bittorrent client, here you can configure "
 "the settings."
 msgstr ""
-"டிரான்ச்மிசன் டீமான் ஒரு எளிய பிட்டோரண்ட் வாங்கி, இங்கே நீங்கள் அமைப்புகளை உள்ளமைக்கலாம்."
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:116
 msgid "Trash original torrent files"
-msgstr "அசல் டோரண்ட் கோப்புகளை குப்பை"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:80
 msgid "Upload slots per torrent"
-msgstr "ஒரு டொரண்டிற்கு இடங்களைப் பதிவேற்றவும்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:124
 msgid "Watch directory"
-msgstr "கோப்பகத்தைப் பாருங்கள்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:274
 msgid "When enabled, this will toggle the <b>alt-speed-enabled</b> setting"
-msgstr "இயக்கப்பட்டால், இது <b> alt-speed- இயக்கப்பட்ட </b> அமைப்பை மாற்றும்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:181
 msgid "hours"
-msgstr "மணி"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:277
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:280
 msgid "in minutes from midnight"
-msgstr "நள்ளிரவில் இருந்து நிமிடங்களில்"
+msgstr ""
 
 #: applications/luci-app-transmission/htdocs/luci-static/resources/view/transmission.js:167
 msgid "uTP enabled"
-msgstr "UTP இயக்கப்பட்டது"
+msgstr ""
