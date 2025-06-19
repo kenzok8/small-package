@@ -66,7 +66,7 @@ const methods = {
 		call: function() {
 			const users = filter(get_users(), (x) => x != '');
 			const groups = filter(get_groups(), (x) => x != '');
-			const cgroups = filter(get_cgroups(), (x) => x != '' && x != 'nikki');
+			const cgroups = filter(get_cgroups(), (x) => x != '' && index(x, 'services/nikki') < 0);
 			return { users: users, groups: groups, cgroups: cgroups };
 		}
 	},
