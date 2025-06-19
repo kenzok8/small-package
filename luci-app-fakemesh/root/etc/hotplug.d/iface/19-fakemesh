@@ -22,7 +22,7 @@ if [ "$enabled" = "1" ]; then
 		/etc/init.d/umdns running && /etc/init.d/umdns restart
 	}
 fi
-band_steer_helper=$(uci get fakemesh.default.band_steer_helper || echo usteer)
+band_steer_helper=$(uci get fakemesh.default.band_steer_helper || echo none)
 band_steer_helper="$band_steer_helper" /usr/sbin/fakemesh band_steer_helper_switch
 
 /etc/init.d/umdns enabled && {

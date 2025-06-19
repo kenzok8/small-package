@@ -3,7 +3,7 @@
 . /lib/functions.sh
 . /lib/functions/network.sh
 
-band_steer_helper=${band_steer_helper:-usteer}
+band_steer_helper=${band_steer_helper:-none}
 
 band_steer_helper_switch()
 {
@@ -42,6 +42,10 @@ band_steer_helper_switch()
 
 [ "x$1" = "xband_steer_helper_switch" ] && {
 	band_steer_helper_switch
+	exit 0
+}
+
+[ "x$1" = "xsetup" ] && {
 	exit 0
 }
 
