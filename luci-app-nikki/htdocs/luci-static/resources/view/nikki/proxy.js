@@ -102,6 +102,7 @@ return view.extend({
         s.tab('lan', _('LAN Proxy'));
 
         o = s.taboption('lan', form.Flag, 'lan_proxy', _('Enable'));
+        o.rmempty = false;
 
         o = s.taboption('lan', form.DynamicList, 'lan_inbound_interface', _('Inbound Interface'));
         o.retain = true;
