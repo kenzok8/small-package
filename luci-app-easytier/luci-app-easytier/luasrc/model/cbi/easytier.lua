@@ -339,6 +339,17 @@ kcp_input = s:taboption("privacy", Flag, "kcp_input", translate("Disable KCP Inp
                 .. "KCP proxy-enabled nodes accessing this node will still use the original method. (--disable-kcp-input parameter)"))
 kcp_input:depends("etcmd", "etcmd")
 
+quic_proxy = s:taboption("privacy", Flag, "quic_proxy", translate("Enable QUIC Proxy"),
+        translate("Proxy tcp streams with QUIC, improving the latency and throughput on the network with udp packet loss.<br>"
+                .. "All nodes in the virtual network must be using EasyTier version v2.3.2 or higher for this feature. "
+                .. "(--enable-quic-proxy parameter)"))
+quic_proxy:depends("etcmd", "etcmd")
+
+quic_input = s:taboption("privacy", Flag, "quic_input", translate("Disable QUIC Input"),
+        translate("Do not allow other nodes to use QUIC to proxy tcp streams to this node. When a node with QUIC proxy enabled  accesses this node, the original tcp connection is preserved.<br>"
+                .. "QUIC proxy-enabled nodes accessing this node will still use the original method. (--disable-quic-input parameter)"))
+quic_input:depends("etcmd", "etcmd")
+
 port_forward = s:taboption("privacy", DynamicList, "port_forward", translate("Port Forwarding"),
         translate("Forward a local port to a remote port within the virtual network.<br>"
                 .. "Example: udp://0.0.0.0:12345/10.126.126.1:23456 means forwarding local UDP port 12345 to 10.126.126.1:23456 "
