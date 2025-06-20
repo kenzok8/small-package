@@ -89,7 +89,7 @@ check_bin() {
 	         		mv -f /tmp/easytier-core ${path}/
 	         		mv -f /tmp/easytier-cli ${path}/
 	         		chmod +x "$easytierbin"
-	         		if [[ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]] ; then
+	         		if [ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ] ; then
                    			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin} 下载成功" >>/tmp/easytier.log
                  		else
                     			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytier.log
@@ -98,7 +98,7 @@ check_bin() {
 	         	if [ "$(uci -q get easytier.@easytierweb[0].enabled)" = "1" ] ; then
 	         		mv -f /tmp/easytier-web-embed ${webbin} || true
 	         		chmod +x "$webbin"
-	         		if [[ "$($webbin -h 2>&1 | wc -l)" -gt 3 ]] ; then
+	         		if [ "$($webbin -h 2>&1 | wc -l)" -gt 3 ] ; then
 					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${webbin} 下载成功" >>/tmp/easytierweb.log
                  		else
 					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip 下载不完整，请手动下载上传程序" >>/tmp/easytierweb.log
@@ -279,6 +279,8 @@ get_etconfig() {
 		port_forward="$(uci -q get easytier.@easytier[0].port_forward)"
 		accept_dns="$(uci -q get easytier.@easytier[0].accept_dns || echo 0)"
 		private_mode="$(uci -q get easytier.@easytier[0].private_mode || echo 0)"
+		quic_proxy="$(uci -q get easytier.@easytier[0].quic_proxy || echo 0)"
+		quic_input="$(uci -q get easytier.@easytier[0].quic_input || echo 0)"
 }
 
 set_firewall() {
@@ -419,12 +421,17 @@ start_et() {
                     sed -i "/easytierbin/c option easytierbin '/tmp/easytier-core' " /etc/config/easytier 
                     easytierbin=/tmp/easytier-core
                 fi
-		if [ ! -f "$easytierbin" ] || [[ "$($easytierbin -h 2>&1 | wc -l)" -lt 3 ]] ; then
+                if [ -f "$easytierbin" ] ; then
+			if [ ! -x "$easytierbin" ] ; then
+				chmod +x "$easytierbin" 
+                		chmod +x ${path}/easytier-cli
+			fi
+		fi
+		if [ ! -f "$easytierbin" ] || [ "$(($($easytierbin -h 2>&1 | wc -l)))" -lt 3 ] ; then
 			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : $easytierbin 不存在或程序不完整，开始在线下载..." >>/tmp/easytier.log
                 	check_bin
 		fi
-                chmod +x "$easytierbin" 
-                chmod +x ${path}/easytier-cli
+                
                 ver="$($easytierbin -V | awk {'print $2'} | tr -d '~')"
                 [ ! -z "$ver" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin}当前版本号-${ver} " >>/tmp/easytier.log
                 pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
@@ -482,14 +489,18 @@ start_et() {
                    				done
                    			fi
                 		fi
-                		if [ ! -z "$whitelist" ] ; then
-                  			if [[ "$(grep "list whitelist" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
-                    				procd_append_param command --relay-network-whitelist "$whitelist"
-                  			else
-                    				for whitelists in $(cat /etc/config/easytier | grep 'list whitelist'  | awk -F 'list whitelist' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
-                    					procd_append_param command --relay-network-whitelist "$whitelists"
-                   				done
-                   			fi
+                		if [ "$relay_network" = "1" ] ; then
+                			if [ ! -z "$whitelist" ] ; then
+                  				if [[ "$(grep "list whitelist" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
+                    					procd_append_param command --relay-network-whitelist "$whitelist"
+                  				else
+                    					for whitelists in $(cat /etc/config/easytier | grep 'list whitelist'  | awk -F 'list whitelist' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
+                    						procd_append_param command --relay-network-whitelist "$whitelists"
+                   					done
+                   				fi
+                   			else
+                   				procd_append_param command --relay-network-whitelist
+                			fi
                 		fi
 				if [ ! -z "$mapped_listeners" ] ; then
                   			if [[ "$(grep "list mapped_listeners" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
@@ -558,6 +569,8 @@ start_et() {
 				[ "$proxy_forward" = "0" ] || procd_append_param command --proxy-forward-by-system
 				[ "$accept_dns" = "0" ] || procd_append_param command --accept-dns true
 				[ "$private_mode" = "0" ] || procd_append_param command --private-mode true
+				[ "$quic_proxy" = "0" ] || procd_append_param command --enable-quic-proxy
+				[ "$quic_input" = "0" ] || procd_append_param command --disable-quic-input
 	     		fi
 			if [ "$etcmd" = "web" ] ; then
 				#WEB控制台启动
@@ -567,10 +580,12 @@ start_et() {
 					cat /proc/sys/kernel/random/uuid > /etc/easytier/et_machine_id
 					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 生成新的 UUID 到 /etc/easytier/et_machine_id" >>/tmp/easytier.log
 				fi
-				idpath=$(dirname "$easytierbin")
-				[ -f "${idpath}/et_machine_id" ] || ln -sf /etc/easytier/et_machine_id ${idpath}/et_machine_id
-				mkdir -p /var/lib/dbus
-				ln -sf /etc/easytier/et_machine_id /var/lib/dbus/machine-id
+				et_uuid="$(cat /etc/easytier/et_machine_id | tr -d ' \n')"
+				#idpath=$(dirname "$easytierbin")
+				#[ -f "${idpath}/et_machine_id" ] || ln -sf /etc/easytier/et_machine_id ${idpath}/et_machine_id
+				#mkdir -p /var/lib/dbus
+				#ln -sf /etc/easytier/et_machine_id /var/lib/dbus/machine-id
+				[ -z "$et_uuid" ] || procd_append_param command --machine-id "$et_uuid"
 				[ -z "$web_config" ] || procd_append_param command -w "$web_config"
 				[ -z "$desvice_name" ] || procd_append_param command --hostname "$desvice_name"
 				[ "$log" = "off" ] || procd_append_param command --file-log-level "$log" 
@@ -656,7 +671,7 @@ start_web() {
 	if [ -f "$webbin" ] ; then
 		[ ! -x "$webbin" ] && chmod +x "$webbin"
 	fi
-	if [ ! -f "$webbin" ] || [[ "$($webbin -h 2>&1 | wc -l)" -lt 3 ]] ; then
+	if [ ! -f "$webbin" ] || [ "$($webbin -h 2>&1 | wc -l)" -lt 3 ] ; then
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 未找到${webbin}程序或程序不适配当前架构，请上传安装后再启动！ " >>/tmp/easytierweb.log
 		return 1
 	fi

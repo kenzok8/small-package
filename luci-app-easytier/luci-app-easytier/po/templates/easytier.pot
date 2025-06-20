@@ -1,22 +1,22 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:637
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:655
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:648
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:666
 msgid ""
 "- Program /tmp/easytier-cli uploaded successfully, restart the plugin to "
 "take effect"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:640
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:658
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:651
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:669
 msgid ""
 "- Program /tmp/easytier-core uploaded successfully, restart the plugin to "
 "take effect"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:643
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:661
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:654
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:672
 msgid ""
 "- Program /tmp/easytier-web uploaded successfully, restart the plugin to "
 "take effect"
@@ -36,11 +36,11 @@ msgid ""
 "\">Beginner Tutorial</a>"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:709
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:720
 msgid "API Port"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:370
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:381
 msgid "Access Control"
 msgstr ""
 
@@ -56,19 +56,19 @@ msgstr ""
 msgid "Allow this node to act as an exit node (--enable-exit-node parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:372
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:383
 msgid "Allow traffic from EasyTier virtual network to LAN"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:373
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:384
 msgid "Allow traffic from EasyTier virtual network to WAN"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:374
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:385
 msgid "Allow traffic from LAN to EasyTier virtual network"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:375
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:386
 msgid "Allow traffic from WAN to EasyTier virtual network"
 msgstr ""
 
@@ -95,11 +95,11 @@ msgid ""
 "IPv4. Enabling this will listen on IPv6 ports as well."
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:383
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:394
 msgid "Check IPs"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:572
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:583
 msgid "Check for Updates"
 msgstr ""
 
@@ -108,44 +108,44 @@ msgstr ""
 msgid "Clear Logs"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:458
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:469
 msgid "Click the button to refresh and view STUN information"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:535
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:546
 msgid "Click the button to refresh and view TCP/KCP proxy information"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:439
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:450
 msgid "Click the button to refresh and view connector information"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:401
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:412
 msgid "Click the button to refresh and view local node information"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:420
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:431
 msgid "Click the button to refresh and view peer information"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:497
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:508
 msgid "Click the button to refresh and view peer-center information"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:478
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:489
 msgid "Click the button to refresh and view route information"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:554
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:565
 msgid ""
 "Click the button to refresh and view the complete local startup parameters"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:516
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:527
 msgid "Click the button to refresh and view vpn-portal information"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:573
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:584
 msgid ""
 "Click the button to start checking for updates and refresh the version "
 "display in the status bar above"
@@ -172,13 +172,18 @@ msgstr ""
 msgid "Configuration File"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:704
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:721
+msgid ""
+"Listening port of the RESTful server, used as ApiHost by the web frontend. (-a parameter)"
+msgstr ""
+
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:715
 msgid ""
 "Configure the server's listening port for easytier-core to connect. (-c "
 "parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:697
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:708
 msgid ""
 "Configure the server's listening protocol for easytier-core to connect. (-p "
 "parameter)"
@@ -188,11 +193,11 @@ msgstr ""
 msgid "Connection Info"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:379
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:390
 msgid "Connectivity Check"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:438
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:449
 msgid "Connector Info"
 msgstr ""
 
@@ -201,6 +206,13 @@ msgid ""
 "Convert TCP traffic to KCP traffic to reduce latency and improve speed."
 "<br>All nodes in the virtual network must be using EasyTier version v2.2.0 "
 "or higher for this feature. (--enable-kcp-proxy parameter)"
+msgstr ""
+
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:343
+msgid ""
+"Proxy tcp streams with QUIC, improving the latency and throughput on the network with udp packet loss."
+"<br>All nodes in the virtual network must be using EasyTier version v2.3.2 or higher for this feature. "
+"(--enable-quic-proxy parameter)"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:236
@@ -223,7 +235,7 @@ msgid ""
 "path and filename, then upload the installer"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:692
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:703
 msgid "Database File Path"
 msgstr ""
 
@@ -232,7 +244,7 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:722
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:733
 msgid "Default API Server URL"
 msgstr ""
 
@@ -262,6 +274,10 @@ msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:337
 msgid "Disable KCP Input"
+msgstr ""
+
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:348
+msgid "Disable QUIC Input"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:311
@@ -295,6 +311,12 @@ msgid ""
 "(--disable-kcp-input parameter)"
 msgstr ""
 
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:349
+msgid ""
+"Do not allow other nodes to use QUIC to proxy tcp streams to this node. When a node with QUIC proxy enabled  accesses this node, the original tcp connection is preserved.<br>"
+"QUIC proxy-enabled nodes accessing this node will still use the original method. (--disable-quic-input parameter)"
+msgstr ""
+
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:139
 msgid "Do Not Listen"
 msgstr ""
@@ -319,7 +341,7 @@ msgid "EasyTier Configuration"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:22
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:680
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:691
 msgid "Enable"
 msgstr ""
 
@@ -335,11 +357,15 @@ msgstr ""
 msgid "Enable KCP Proxy"
 msgstr ""
 
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:342
+msgid "Enable QUIC Proxy"
+msgstr ""
+
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:255
 msgid "Enable Latency First"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:348
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:359
 msgid "Enable Magic DNS"
 msgstr ""
 
@@ -347,7 +373,7 @@ msgstr ""
 msgid "Enable Multithreading"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:353
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:364
 msgid "Enable Private Mode"
 msgstr ""
 
@@ -357,7 +383,7 @@ msgid ""
 "network. Leave blank to disable (--socks5 parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:380
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:391
 msgid ""
 "Enable connectivity check to specify remote device IPs; if all specified IPs "
 "fail to ping, the EasyTier program will restart."
@@ -378,7 +404,7 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:615
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:626
 msgid "Error: Upload failed!"
 msgstr ""
 
@@ -398,7 +424,7 @@ msgid ""
 "devices in the current LAN (-n parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:627
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:638
 msgid "File has been uploaded to"
 msgstr ""
 
@@ -413,7 +439,7 @@ msgstr ""
 msgid "Forward Whitelisted Network Traffic"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:343
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:354
 msgid ""
 "Forward a local port to a remote port within the virtual network."
 "<br>Example: udp://0.0.0.0:12345/10.126.126.1:23456 means forwarding local "
@@ -421,7 +447,7 @@ msgid ""
 "entries can be specified. (--port-forward parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:716
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:727
 msgid ""
 "Frontend listening port for the web dashboard server. Leave empty to "
 "disable. (-l parameter)"
@@ -467,11 +493,11 @@ msgstr ""
 msgid "Interface IP Address"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:390
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:401
 msgid "Interval Time (minutes)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:391
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:402
 msgid ""
 "Interval time for checking connectivity; how often the specified IPs are "
 "pinged."
@@ -495,7 +521,7 @@ msgstr ""
 msgid "Listener Port"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:696
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:707
 msgid "Listening Protocol"
 msgstr ""
 
@@ -505,7 +531,7 @@ msgid ""
 "a parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:553
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:564
 msgid "Local Startup Parameters"
 msgstr ""
 
@@ -519,7 +545,7 @@ msgid ""
 "encrypted"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:384
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:395
 msgid ""
 "Make sure the remote device IPs entered here are correct and reachable; "
 "incorrect entries may cause ping failures and repeated program restarts."
@@ -557,7 +583,7 @@ msgstr ""
 msgid "No TUN Mode"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:400
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:411
 msgid "Node Info"
 msgstr ""
 
@@ -601,12 +627,12 @@ msgid ""
 "whitelist parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:693
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:704
 msgid ""
 "Path to the sqlite3 database file used to store all data. (-d parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:419
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:430
 msgid "Peer Info"
 msgstr ""
 
@@ -614,11 +640,11 @@ msgstr ""
 msgid "Peer Nodes"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:496
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:507
 msgid "Peer-Center Info"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:342
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:353
 msgid "Port Forwarding"
 msgstr ""
 
@@ -626,8 +652,8 @@ msgstr ""
 msgid "Portal Address Port"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:358
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:741
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:369
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:752
 msgid "Program Log"
 msgstr ""
 
@@ -636,7 +662,7 @@ msgid "Public Addresses of Specified Listeners"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:27
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:685
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:696
 msgid "Quickly restart once without modifying any parameters"
 msgstr ""
 
@@ -650,8 +676,8 @@ msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:25
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:26
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:683
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:684
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:694
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:695
 msgid "Restart"
 msgstr ""
 
@@ -659,18 +685,18 @@ msgstr ""
 msgid "Route CIDR"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:477
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:488
 msgid "Route Info"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:359
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:370
 msgid ""
 "Runtime log is located at /tmp/easytier.log. View it in the log section "
 "above.<br>If startup fails, check 'Status - System Log' for details.<br>Log "
 "level: Warning < Info < Debug < Trace"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:742
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:753
 msgid ""
 "Runtime log located at /tmp/easytierweb.log, viewable in the log section "
 "above.<br>If startup fails, check the System Log under Status for detailed "
@@ -681,15 +707,15 @@ msgstr ""
 msgid "SOCKS5 Port"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:457
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:468
 msgid "STUN Info"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:676
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:687
 msgid "Self-hosted Web Server"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:703
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:714
 msgid "Server Port"
 msgstr ""
 
@@ -713,7 +739,7 @@ msgstr ""
 msgid "TCP"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:534
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:545
 msgid "TCP/KCP Proxy Info"
 msgstr ""
 
@@ -734,7 +760,7 @@ msgid ""
 "forward packets and will not create a TUN device. (-i parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:723
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:734
 msgid ""
 "The URL of the API server, used for connecting the web frontend. (--api-host "
 "parameter)<br>Example: http://[current device IP or resolved domain name]:"
@@ -822,7 +848,7 @@ msgstr ""
 msgid "VPN Portal URL"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:515
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:526
 msgid "VPN-Portal Info"
 msgstr ""
 
@@ -869,7 +895,7 @@ msgstr ""
 msgid "Web Console"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:715
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:726
 msgid "Web Interface Port"
 msgstr ""
 
@@ -885,7 +911,7 @@ msgid ""
 "href='https://easytier.cn/web'>easytier.cn/web</a>"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:354
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:365
 msgid ""
 "When enabled, nodes with a different network name and password are not "
 "allowed to handshake or relay via this node. (--private-mode parameter)"
@@ -902,14 +928,14 @@ msgid ""
 "same listening port for firewall allowance."
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:349
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:360
 msgid ""
 "With Magic DNS, you can access other nodes using domain names, e.g., "
 "<hostname>.et.net. Magic DNS will modify your system DNS settings, please "
 "enable with caution. (--accept-dns parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:596
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:607
 msgid ""
 "You can directly upload the binary programs easytier-core and easytier-cli, "
 "or a compressed .zip archive. Uploading a new version will automatically "
@@ -929,11 +955,11 @@ msgstr ""
 msgid "default"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:580
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:591
 msgid "easytier-core Binary Path"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:586
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:597
 msgid "easytier-web Binary Path"
 msgstr ""
 

@@ -1,5 +1,5 @@
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:637
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:655
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:648
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:666
 msgid ""
 "- Program /tmp/easytier-cli uploaded successfully, restart the plugin to "
 "take effect"
@@ -12,8 +12,8 @@ msgid ""
 "take effect"
 msgstr "- 程序/tmp/easytier-core上传成功，重启一次插件才生效"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:643
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:661
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:654
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:672
 msgid ""
 "- Program /tmp/easytier-web uploaded successfully, restart the plugin to "
 "take effect"
@@ -37,11 +37,11 @@ msgstr ""
 "<a href=\"http://easytier.cn\" target=\"_blank\">官网文档</a>&nbsp;&nbsp;"
 "<a href=\"http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" target=\"_blank\">QQ群</a>&nbsp;&nbsp;"
 "<a href=\"https://doc.oee.icu\">菜鸟教程</a>"
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:709
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:720
 msgid "API Port"
 msgstr "API端口"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:370
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:381
 msgid "Access Control"
 msgstr "访问控制"
 
@@ -57,19 +57,19 @@ msgstr "允许转发"
 msgid "Allow this node to act as an exit node (--enable-exit-node parameter)"
 msgstr "允许此节点成为出口节点 （--enable-exit-node 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:372
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:383
 msgid "Allow traffic from EasyTier virtual network to LAN"
 msgstr "允许从虚拟网络 EasyTier 到局域网 lan 的流量"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:373
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:384
 msgid "Allow traffic from EasyTier virtual network to WAN"
 msgstr "允许从虚拟网络 EasyTier 到广域网 wan 的流量"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:374
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:385
 msgid "Allow traffic from LAN to EasyTier virtual network"
 msgstr "允许从局域网 lan 到虚拟网络 EasyTier 的流量"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:375
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:386
 msgid "Allow traffic from WAN to EasyTier virtual network"
 msgstr "允许从广域网 wan 到虚拟网络 EasyTier 的流量"
 
@@ -98,11 +98,11 @@ msgid ""
 "IPv4. Enabling this will listen on IPv6 ports as well."
 msgstr "默认只监听IPV4，对等节点只能使用IPV4连接，启用后将同时监听IPV6端口"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:383
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:394
 msgid "Check IPs"
 msgstr "检测IP"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:572
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:583
 msgid "Check for Updates"
 msgstr "检测更新"
 
@@ -111,44 +111,44 @@ msgstr "检测更新"
 msgid "Clear Logs"
 msgstr "清除日志"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:458
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:469
 msgid "Click the button to refresh and view STUN information"
 msgstr "点击按钮刷新，查看stun信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:535
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:546
 msgid "Click the button to refresh and view TCP/KCP proxy information"
 msgstr "点击按钮刷新，查看tcp/kcp代理信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:439
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:450
 msgid "Click the button to refresh and view connector information"
 msgstr "点击按钮刷新，查看connector信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:401
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:412
 msgid "Click the button to refresh and view local node information"
 msgstr "点击按钮刷新，查看本机信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:420
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:431
 msgid "Click the button to refresh and view peer information"
 msgstr "点击按钮刷新，查看对端信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:497
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:508
 msgid "Click the button to refresh and view peer-center information"
 msgstr "点击按钮刷新，查看peer-center信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:478
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:489
 msgid "Click the button to refresh and view route information"
 msgstr "点击按钮刷新，查看route信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:554
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:565
 msgid ""
 "Click the button to refresh and view the complete local startup parameters"
 msgstr "点击按钮刷新，查看本机完整启动参数"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:516
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:527
 msgid "Click the button to refresh and view vpn-portal information"
 msgstr "点击按钮刷新，查看vpn-portal信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:573
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:584
 msgid ""
 "Click the button to start checking for updates and refresh the version "
 "display in the status bar above"
@@ -175,27 +175,32 @@ msgstr "使用的压缩算法 （--compression 参数）"
 msgid "Configuration File"
 msgstr "配置文件"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:704
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:715
 msgid ""
 "Configure the server's listening port for easytier-core to connect. (-c "
 "parameter)"
-msgstr ""
+msgstr "配置服务器的监听端口，用于被 easytier-core 连接。（ -c 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:697
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:721
+msgid ""
+"Listening port of the RESTful server, used as ApiHost by the web frontend. (-a parameter)"
+msgstr "restful 服务器的监听端口，作为 ApiHost 并被 web 前端使用。（ -a 参数） "
+
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:708
 msgid ""
 "Configure the server's listening protocol for easytier-core to connect. (-p "
 "parameter)"
-msgstr "配置服务器的监听端口，用于被 easytier-core 连接。（ -c 参数）"
+msgstr "配置服务器的监听协议，用于被 easytier-core 连接。（ -p 参数）"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:19
 msgid "Connection Info"
 msgstr "连接信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:379
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:390
 msgid "Connectivity Check"
 msgstr "通断检测"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:438
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:449
 msgid "Connector Info"
 msgstr "connector信息"
 
@@ -205,6 +210,13 @@ msgid ""
 "<br>All nodes in the virtual network must be using EasyTier version v2.2.0 "
 "or higher for this feature. (--enable-kcp-proxy parameter)"
 msgstr "将TCP流量转为 KCP 流量，降低传输延迟，提升传输速度。<br>KCP 代理功能需要虚拟网内所有节点的 EasyTier 版本在 v2.2.0 以上。（ --enable-kcp-proxy 参数）"
+
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:343
+msgid ""
+"Proxy tcp streams with QUIC, improving the latency and throughput on the network with udp packet loss."
+"<br>All nodes in the virtual network must be using EasyTier version v2.3.2 or higher for this feature. "
+"(--enable-quic-proxy parameter)"
+msgstr "使用 QUIC 代理 TCP 流，提高在 UDP 丢包网络上的延迟和吞吐量。<br>QUIC 代理功能需要虚拟网内所有节点的 EasyTier 版本在 v2.3.2 以上。（ --enable-quic-proxy 参数）"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:236
 msgid ""
@@ -226,7 +238,7 @@ msgid ""
 "path and filename, then upload the installer"
 msgstr "自定义easytier-web的存放路径，确保填写完整的路径及名称，然后上传安装程序"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:692
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:703
 msgid "Database File Path"
 msgstr "数据库文件路径"
 
@@ -235,7 +247,7 @@ msgstr "数据库文件路径"
 msgid "Debug"
 msgstr "调试"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:722
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:733
 msgid "Default API Server URL"
 msgstr "默认API服务器URL"
 
@@ -269,6 +281,10 @@ msgstr "禁用ipv6"
 msgid "Disable KCP Input"
 msgstr "禁用KCP输入"
 
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:348
+msgid "Disable QUIC Input"
+msgstr "禁用QUIC输入"
+
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:311
 msgid "Disable P2P"
 msgstr "禁用P2P"
@@ -300,6 +316,12 @@ msgid ""
 "(--disable-kcp-input parameter)"
 msgstr "不允许其他节点使用 KCP 代理 TCP 流到此节点。<br>开启 KCP 代理的节点访问此节点时，依然使用原始。（ --disable-kcp-input 参数）"
 
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:349
+msgid ""
+"Do not allow other nodes to use QUIC to proxy tcp streams to this node. When a node with QUIC proxy enabled  accesses this node, the original tcp connection is preserved.<br>"
+"QUIC proxy-enabled nodes accessing this node will still use the original method. (--disable-quic-input parameter)"
+msgstr "不允许其他节点使用 QUIC 代理 TCP 流到此节点。<br>开启 QUIC 代理的节点访问此节点时，依然使用原始 TCP 连接。（ --disable-kcp-input 参数）"
+
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:139
 msgid "Do Not Listen"
 msgstr "不监听"
@@ -324,7 +346,7 @@ msgid "EasyTier Configuration"
 msgstr "EasyTier配置"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:22
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:680
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:691
 msgid "Enable"
 msgstr "启用"
 
@@ -340,11 +362,15 @@ msgstr "启用出口节点"
 msgid "Enable KCP Proxy"
 msgstr "启用KCP代理"
 
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:342
+msgid "Enable QUIC Proxy"
+msgstr "启用QUIC代理"
+
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:255
 msgid "Enable Latency First"
 msgstr "启用延迟优先"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:348
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:359
 msgid "Enable Magic DNS"
 msgstr "启用魔法DNS"
 
@@ -352,9 +378,9 @@ msgstr "启用魔法DNS"
 msgid "Enable Multithreading"
 msgstr "启用多线程"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:353
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:364
 msgid "Enable Private Mode"
-msgstr "启用私密模式"
+msgstr "启用私有模式"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:305
 msgid ""
@@ -362,7 +388,7 @@ msgid ""
 "network. Leave blank to disable (--socks5 parameter)"
 msgstr "启用 socks5 服务器，允许 socks5 客户端访问虚拟网络，留空则不开启（--socks5 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:380
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:391
 msgid ""
 "Enable connectivity check to specify remote device IPs; if all specified IPs "
 "fail to ping, the EasyTier program will restart."
@@ -383,7 +409,7 @@ msgstr "为子网代理启用smoltcp堆栈（--use-smoltcp 参数）"
 msgid "Error"
 msgstr "错误"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:615
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:626
 msgid "Error: Upload failed!"
 msgstr "错误：上传失败！"
 
@@ -403,7 +429,7 @@ msgid ""
 "devices in the current LAN (-n parameter)"
 msgstr "将本地网络导出到 VPN 中的其他对等点，可访问当前局域网内其他设备 （-n 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:627
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:638
 msgid "File has been uploaded to"
 msgstr "文件已上传至"
 
@@ -420,7 +446,7 @@ msgstr ""
 msgid "Forward Whitelisted Network Traffic"
 msgstr "转发白名单网络的流量"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:343
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:354
 msgid ""
 "Forward a local port to a remote port within the virtual network."
 "<br>Example: udp://0.0.0.0:12345/10.126.126.1:23456 means forwarding local "
@@ -430,7 +456,7 @@ msgstr ""
 "将本地端口转发到虚拟网络中的远程端口。<br>例如：udp://0.0.0.0:12345/10.126.126.1:23456，"
 "表示将本地UDP端口12345转发到虚拟网络中的10.126.126.1:23456。<br>可以指定多个。 （--port-forward 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:716
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:727
 msgid ""
 "Frontend listening port for the web dashboard server. Leave empty to "
 "disable. (-l parameter)"
@@ -478,11 +504,11 @@ msgstr "实例名称"
 msgid "Interface IP Address"
 msgstr "接口IP地址"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:390
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:401
 msgid "Interval Time (minutes)"
 msgstr "间隔时间 (分钟)"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:391
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:402
 msgid ""
 "Interval time for checking connectivity; how often the specified IPs are "
 "pinged."
@@ -506,7 +532,7 @@ msgstr "同时监听IPV6"
 msgid "Listener Port"
 msgstr "监听端口"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:696
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:707
 msgid "Listening Protocol"
 msgstr "监听协议"
 
@@ -516,7 +542,7 @@ msgid ""
 "a parameter)"
 msgstr "restful 服务器的监听端口，作为 ApiHost 并被 web 前端使用。（ -a 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:553
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:564
 msgid "Local Startup Parameters"
 msgstr "本机启动参数"
 
@@ -530,7 +556,7 @@ msgid ""
 "encrypted"
 msgstr "TUN 设备的 MTU，默认值为非加密时的 1380，加密时为 1360"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:384
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:395
 msgid ""
 "Make sure the remote device IPs entered here are correct and reachable; "
 "incorrect entries may cause ping failures and repeated program restarts."
@@ -570,7 +596,7 @@ msgstr "网络密钥，用于验证此节点是否属于 VPN 网络（--network-
 msgid "No TUN Mode"
 msgstr "无TUN模式"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:400
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:411
 msgid "Node Info"
 msgstr "node信息"
 
@@ -620,12 +646,12 @@ msgstr ""
 "仅转发白名单网络的流量，输入是通配符字符串，例如：'*'（所有网络），'def*'（以def为前缀的网络）<br>"
 "可以指定多个网络。如果参数为空，则禁用转发。（--relay-network-whitelist 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:693
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:704
 msgid ""
 "Path to the sqlite3 database file used to store all data. (-d parameter)"
 msgstr " sqlite3 数据库文件路径, 用于保存所有数据。（ -d 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:419
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:430
 msgid "Peer Info"
 msgstr "Peer 信息"
 
@@ -633,11 +659,11 @@ msgstr "Peer 信息"
 msgid "Peer Nodes"
 msgstr "对等节点"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:496
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:507
 msgid "Peer-Center Info"
 msgstr "peer-center信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:342
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:353
 msgid "Port Forwarding"
 msgstr "端口转发"
 
@@ -645,8 +671,8 @@ msgstr "端口转发"
 msgid "Portal Address Port"
 msgstr "门户地址端口"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:358
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:741
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:369
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:752
 msgid "Program Log"
 msgstr "程序日志"
 
@@ -655,7 +681,7 @@ msgid "Public Addresses of Specified Listeners"
 msgstr "指定监听器的公网地址"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:27
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:685
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:696
 msgid "Quickly restart once without modifying any parameters"
 msgstr "在没有修改参数的情况下快速重新启动一次"
 
@@ -671,8 +697,8 @@ msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:25
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:26
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:683
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:684
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:694
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:695
 msgid "Restart"
 msgstr "重启"
 
@@ -680,11 +706,11 @@ msgstr "重启"
 msgid "Route CIDR"
 msgstr "路由CIDR"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:477
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:488
 msgid "Route Info"
 msgstr "Route信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:359
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:370
 msgid ""
 "Runtime log is located at /tmp/easytier.log. View it in the log section "
 "above.<br>If startup fails, check 'Status - System Log' for details.<br>Log "
@@ -693,7 +719,7 @@ msgstr ""
 "运行日志在/tmp/easytier.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>"
 "详细程度：警告<信息<调试<跟踪"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:742
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:753
 msgid ""
 "Runtime log located at /tmp/easytierweb.log, viewable in the log section "
 "above.<br>If startup fails, check the System Log under Status for detailed "
@@ -706,15 +732,15 @@ msgstr ""
 msgid "SOCKS5 Port"
 msgstr "SOCKS5端口"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:457
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:468
 msgid "STUN Info"
 msgstr "STUN信息"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:676
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:687
 msgid "Self-hosted Web Server"
 msgstr "自建Web服务器"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:703
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:714
 msgid "Server Port"
 msgstr "服务端口"
 
@@ -738,7 +764,7 @@ msgstr "子网代理"
 msgid "TCP"
 msgstr "TCP"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:534
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:545
 msgid "TCP/KCP Proxy Info"
 msgstr "TCP/KCP代理信息"
 
@@ -793,7 +819,7 @@ msgstr "跟踪"
 msgid "UDP"
 msgstr "UDP"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:723
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:734
 msgid ""
 "The URL of the API server, used for connecting the web frontend. (--api-host "
 "parameter)<br>Example: http://[current device IP or resolved domain name]:"
@@ -849,7 +875,7 @@ msgstr "用于在同一台机器中标识此 VPN 节点的实例名称，启用�
 msgid "VPN Portal URL"
 msgstr "VPN门户URL"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:515
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:526
 msgid "VPN-Portal Info"
 msgstr "VPN-Portal信息"
 
@@ -896,7 +922,7 @@ msgstr "Web配置"
 msgid "Web Console"
 msgstr "Web 控制台"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:715
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:726
 msgid "Web Interface Port"
 msgstr "web界面端口"
 
@@ -914,7 +940,7 @@ msgstr ""
 "Web配置服务器地址。（-w 参数）<br>自建Web服务器 输入格式：udp://服务器地址:22020/账户名<br>官方Web服务器 输入格式：账户名 <br>"
 "官方Web控制台：<a href='https://easytier.cn/web' target='_blank'>https://easytier.cn/web</a>"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:354
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:365
 msgid ""
 "When enabled, nodes with a different network name and password are not "
 "allowed to handshake or relay via this node. (--private-mode parameter)"
@@ -931,14 +957,14 @@ msgid ""
 "same listening port for firewall allowance."
 msgstr "WireGuard协议，端口号：11011，表示 wg 将在 11011 上监听 <br>如果是配置文件Web配置请填写一样的监听端口用于防火墙放行"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:349
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:360
 msgid ""
 "With Magic DNS, you can access other nodes using domain names, e.g., "
 "<hostname>.et.net. Magic DNS will modify your system DNS settings, please "
 "enable with caution. (--accept-dns parameter)"
 msgstr "使用魔法DNS，您可以使用域名访问其他节点，例如：<hostname>.et.net。魔法DNS将修改您的系统DNS设置，请谨慎启用。（--accept-dns 参数）"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:596
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:607
 msgid ""
 "You can directly upload the binary programs easytier-core and easytier-cli, "
 "or a compressed .zip archive. Uploading a new version will automatically "
@@ -961,11 +987,11 @@ msgstr "核心日志"
 msgid "default"
 msgstr "默认"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:580
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:591
 msgid "easytier-core Binary Path"
 msgstr "easytier-core程序路径"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:586
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:597
 msgid "easytier-web Binary Path"
 msgstr "easytier-web程序路径"
 
