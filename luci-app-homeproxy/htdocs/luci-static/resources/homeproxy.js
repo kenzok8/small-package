@@ -21,6 +21,19 @@ return baseclass.extend({
 		'ipv6_only': _('IPv6 only')
 	},
 
+	shadowsocks_encrypt_length: {
+		/* AEAD */
+		'aes-128-gcm': 0,
+		'aes-192-gcm': 0,
+		'aes-256-gcm': 0,
+		'chacha20-ietf-poly1305': 0,
+		'xchacha20-ietf-poly1305': 0,
+		/* AEAD 2022 */
+		'2022-blake3-aes-128-gcm': 16,
+		'2022-blake3-aes-256-gcm': 32,
+		'2022-blake3-chacha20-poly1305': 32
+	},
+
 	shadowsocks_encrypt_methods: [
 		/* Stream */
 		'none',

@@ -154,6 +154,55 @@ const methods = {
 		}
 	},
 
+	singbox_generator: {
+		args: { type: 'type', params: 'params' },
+		call: function(req) {
+			if (!(req.args?.type in ['ech-keypair', 'uuid', 'reality-keypair', 'vapid-keypair', 'wg-keypair']))
+				return { result: false, error: 'illegal type' };
+
+			const type = req.args?.type;
+			let result = {};
+
+			const fd = popen('/usr/bin/sing-box generate ' + type + ` ${req.args?.params || ''}`);
+			if (fd) {
+				let ech_cfg_set = false;
+				let ech_key_set = false;
+
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					if (type === 'uuid')
+						result.uuid = trim(line);
+					else if (type in ['reality-keypair', 'vapid-keypair', 'wg-keypair']) {
+						let priv = match(trim(line), /PrivateKey: (.*)/);
+						if (priv)
+							result.private_key = priv[1];
+						let pub = match(trim(line), /PublicKey: (.*)/);
+						if (pub)
+							result.public_key = pub[1];
+					} else if (type in ['ech-keypair']) {
+						if (trim(line) === '-----BEGIN ECH CONFIGS-----')
+							ech_cfg_set = true;
+						else if (trim(line) === '-----BEGIN ECH KEYS-----')
+							ech_key_set = true;
+
+						if (ech_cfg_set)
+							result.ech_cfg = result.ech_cfg ? result.ech_cfg + '\n' + trim(line) : trim(line) ;
+						if (ech_key_set)
+							result.ech_key = result.ech_key ? result.ech_key + '\n' + trim(line) : trim(line) ;
+
+						if (trim(line) === '-----END ECH CONFIGS-----')
+							ech_cfg_set = false;
+						else if (trim(line) === '-----END ECH KEYS-----')
+							ech_key_set = false;
+					}
+				}
+
+				fd.close();
+			}
+
+			return { result };
+		}
+	},
+
 	singbox_get_features: {
 		call: function() {
 			let features = {};
