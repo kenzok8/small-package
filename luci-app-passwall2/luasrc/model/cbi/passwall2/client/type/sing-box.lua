@@ -481,36 +481,34 @@ o:depends({ [_n("protocol")] = "tuic" })
 o:depends({ [_n("protocol")] = "hysteria2" })
 o:depends({ [_n("protocol")] = "shadowsocks" })
 
-if singbox_tags:find("with_ech") then
-	o = s:option(Flag, _n("ech"), translate("ECH"))
-	o.default = "0"
-	o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
-	o:depends({ [_n("protocol")] = "tuic" })
-	o:depends({ [_n("protocol")] = "hysteria" })
-	o:depends({ [_n("protocol")] = "hysteria2" })
+o = s:option(Flag, _n("ech"), translate("ECH"))
+o.default = "0"
+o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
+o:depends({ [_n("protocol")] = "tuic" })
+o:depends({ [_n("protocol")] = "hysteria" })
+o:depends({ [_n("protocol")] = "hysteria2" })
 
-	o = s:option(TextValue, _n("ech_config"), translate("ECH Config"))
-	o.default = ""
-	o.rows = 5
-	o.wrap = "off"
-	o:depends({ [_n("ech")] = true })
-	o.validate = function(self, value)
-		value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
-		value = value:gsub("^%s*\n", "")
-		if value:sub(-1) == "\n" then  
-			value = value:sub(1, -2)  
-		end
-		return value
+o = s:option(TextValue, _n("ech_config"), translate("ECH Config"))
+o.default = ""
+o.rows = 5
+o.wrap = "off"
+o:depends({ [_n("ech")] = true })
+o.validate = function(self, value)
+	value = value:gsub("^%s+", ""):gsub("%s+$","\n"):gsub("\r\n","\n"):gsub("[ \t]*\n[ \t]*", "\n")
+	value = value:gsub("^%s*\n", "")
+	if value:sub(-1) == "\n" then  
+		value = value:sub(1, -2)  
 	end
-
-	o = s:option(Flag, _n("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
-	o.default = "0"
-	o:depends({ [_n("ech")] = true })
-
-	o = s:option(Flag, _n("dynamic_record_sizing_disabled"), translate("Disable adaptive sizing of TLS records"))
-	o.default = "0"
-	o:depends({ [_n("ech")] = true })
+	return value
 end
+
+o = s:option(Flag, _n("pq_signature_schemes_enabled"), translate("PQ signature schemes"))
+o.default = "0"
+o:depends({ [_n("ech")] = true })
+
+o = s:option(Flag, _n("dynamic_record_sizing_disabled"), translate("Disable adaptive sizing of TLS records"))
+o.default = "0"
+o:depends({ [_n("ech")] = true })
 
 if singbox_tags:find("with_utls") then
 	o = s:option(Flag, _n("utls"), translate("uTLS"))
@@ -594,8 +592,21 @@ if singbox_tags:find("with_wireguard") then
 	o:depends({ [_n("protocol")] = "wireguard" })
 end
 
+-- [[ TCP部分（模拟） ]]--
+o = s:option(ListValue, _n("tcp_guise"), translate("Camouflage Type"))
+o:value("none", "none")
+o:value("http", "http")
+o:depends({ [_n("transport")] = "tcp" })
+
+o = s:option(DynamicList, _n("tcp_guise_http_host"), translate("HTTP Host"))
+o:depends({ [_n("tcp_guise")] = "http" })
+
+o = s:option(DynamicList, _n("tcp_guise_http_path"), translate("HTTP Path"))
+o.placeholder = "/"
+o:depends({ [_n("tcp_guise")] = "http" })
+
 -- [[ HTTP部分 ]]--
-o = s:option(Value, _n("http_host"), translate("HTTP Host"))
+o = s:option(DynamicList, _n("http_host"), translate("HTTP Host"))
 o:depends({ [_n("transport")] = "http" })
 
 o = s:option(Value, _n("http_path"), translate("HTTP Path"))
