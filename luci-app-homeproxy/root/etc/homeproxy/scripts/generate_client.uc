@@ -51,6 +51,8 @@ if (!wan_dns)
 
 const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
+const ntp_server = uci.get(uciconfig, uciinfra, 'ntp_server') || 'time.apple.com';
+
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, domain_strategy, sniff_override,
     dns_server, china_dns_server, dns_default_strategy, dns_default_server, dns_disable_cache,
     dns_disable_cache_expire, dns_independent_cache, dns_client_subnet, cache_file_store_rdrc,
@@ -376,6 +378,15 @@ config.log = {
 	timestamp: true
 };
 
+/* NTP */
+config.ntp = {
+	enabled: true,
+	server: ntp_server,
+	detour: 'direct-out',
+	/* TODO: disable this until we have sing-box 1.12 */
+	/* domain_resolver: 'default-dns', */
+};
+
 /* DNS start */
 /* Default settings */
 config.dns = {
@@ -395,7 +406,15 @@ config.dns = {
 			address: 'rcode://name_error'
 		}
 	],
-	rules: [],
+	rules: [
+	        /* TODO: remove this once we have sing-box 1.12 */
+	        /* NTP domain must be resolved by default DNS */
+		{
+			domain: ntp_server,
+			action: 'route',
+			server: 'default-dns'
+		}
+	],
 	strategy: dns_default_strategy,
 	disable_cache: (dns_disable_cache === '1'),
 	disable_expire: (dns_disable_cache_expire === '1'),

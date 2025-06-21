@@ -44,42 +44,53 @@ function renderStatus(isRunning, version) {
 
 function handleGenKey(option) {
 	let section_id = this.section.section;
-	let type = this.section.getOption('type').formvalue(section_id);
-	let widget = this.map.findElement('id', 'widget.cbid.homeproxy.%s.%s'.format(section_id, option));
-	let password, required_method;
+	let type = this.section.getOption('type')?.formvalue(section_id);
+	let widget = L.bind(function(option) {
+		return this.map.findElement('id', 'widget.' + this.cbid(section_id).replace(/\.[^\.]+$/, '.') + option);
+	}, this);
 
-	if (option === 'uuid')
-		required_method = 'uuid';
-	else if (type === 'shadowsocks')
-		required_method = this.section.getOption('shadowsocks_encrypt_method')?.formvalue(section_id);
+	const callSingBoxGenerator = rpc.declare({
+		object: 'luci.homeproxy',
+		method: 'singbox_generator',
+		params: ['type', 'params'],
+		expect: { '': {} }
+	});
 
-	switch (required_method) {
-		case 'aes-128-gcm':
-		case '2022-blake3-aes-128-gcm':
-			password = hp.generateRand('base64', 16);
-			break;
-		case 'aes-192-gcm':
-			password = hp.generateRand('base64', 24);
-			break;
-		case 'aes-256-gcm':
-		case 'chacha20-ietf-poly1305':
-		case 'xchacha20-ietf-poly1305':
-		case '2022-blake3-aes-256-gcm':
-		case '2022-blake3-chacha20-poly1305':
-			password = hp.generateRand('base64', 32);
-			break;
-		case 'none':
-			password = '';
-			break;
-		case 'uuid':
-			password = hp.generateRand('uuid');
-			break;
-		default:
-			password = hp.generateRand('hex', 16);
-			break;
+	if (typeof option === 'object') {
+		return callSingBoxGenerator(option.type, option.params).then((ret) => {
+			if (ret.result)
+				for (let key in option.result)
+					widget(option.result[key]).value = ret.result[key] || '';
+			else
+				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, ret.error)));
+		});
+	} else {
+		let password, required_method;
+
+		if (option === 'uuid')
+			required_method = 'uuid';
+		else if (type === 'shadowsocks')
+			required_method = this.section.getOption('shadowsocks_encrypt_method')?.formvalue(section_id);
+
+		switch (required_method) {
+			case 'none':
+				password = '';
+				break;
+			case 'uuid':
+				password = hp.generateRand('uuid');
+				break;
+			default:
+				password = hp.generateRand('hex', 16);
+				break;
+		}
+		/* AEAD */
+		(function(length) {
+			if (length && length > 0)
+				password = hp.generateRand('base64', length);
+		}(hp.shadowsocks_encrypt_length[required_method]));
+
+		return widget(option).value = password;
 	}
-
-	return widget.value = password;
 }
 
 return view.extend({
@@ -774,6 +785,53 @@ return view.extend({
 		o.inputtitle = _('Upload...');
 		o.depends({'tls': '1', 'tls_key_path': '/etc/homeproxy/certs/server_privatekey.pem'});
 		o.onclick = L.bind(hp.uploadCertificate, this, _('private key'), 'server_privatekey');
+		o.modalonly = true;
+
+		o = s.option(form.TextValue, 'tls_ech_key', _('ECH key'));
+		o.placeholder = '-----BEGIN ECH KEYS-----\nACBE2+piYBLrOywCbRYU+ZpEkk8keeBlUXbKqLRmQ/68FwBL/g0ARwAAIAAgn8HI\n93RfdV/LaDk+LC9H4h+4WhVBFmWKdhiT3vvpGi8ACAABAAEAAQADABRvdXRlci1z\nbmkuYW55LmRvbWFpbgAA\n-----END ECH KEYS-----';
+		o.monospace = true;
+		o.cols = 30
+		o.rows = 3;
+		o.hp_options = {
+			type: 'ech-keypair',
+			params: '',
+			result: {
+				ech_key: o.option,
+				ech_cfg: 'tls_ech_config'
+			}
+		}
+		o.renderWidget = function(section_id, option_index, cfgvalue) {
+			let node = form.TextValue.prototype.renderWidget.apply(this, arguments);
+			const cbid = this.cbid(section_id) + '._outer_sni';
+
+			node.appendChild(E('div',  { 'class': 'control-group' }, [
+				E('input', {
+					id: cbid,
+					class: 'cbi-input-text',
+					style: 'width: 10em',
+					placeholder: 'outer-sni.any.domain'
+				}),
+				E('button', {
+					class: 'cbi-button cbi-button-add',
+					click: ui.createHandlerFn(this, function() {
+						this.hp_options.params = document.getElementById(cbid).value;
+
+						return handleGenKey.call(this, this.hp_options);
+					})
+				}, [ _('Generate') ])
+			]));
+
+			return node;
+		}
+		o.depends('tls', '1');
+		o.modalonly = true;
+
+		o = s.option(form.TextValue, 'tls_ech_config', _('ECH config'));
+		o.placeholder = '-----BEGIN ECH CONFIGS-----\nAEv+DQBHAAAgACCfwcj3dF91X8toOT4sL0fiH7haFUEWZYp2GJPe++kaLwAIAAEA\nAQABAAMAFG91dGVyLXNuaS5hbnkuZG9tYWluAAA=\n-----END ECH CONFIGS-----';
+		o.monospace = true;
+		o.cols = 30
+		o.rows = 3;
+		o.depends('tls', '1');
 		o.modalonly = true;
 		/* TLS config end */
 
