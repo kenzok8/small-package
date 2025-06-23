@@ -1,0 +1,227 @@
+#!/bin/sh
+# Copyright (C) 2025 iStoreOS, jjm2473@gmail.com
+
+LEVEL_PD=pd
+LEVEL_RELAY=relay
+LEVEL_NAT=nat
+LEVEL_HALF=half
+LEVEL_OFF=off
+
+MODE_SERVER=server
+MODE_RELAY=relay
+MODE_CLIENT=client
+MODE_DISABLE=disable
+
+FROM_PD=pd
+FROM_ULA=ula
+FROM_NONE=none
+
+ipv6_enable_nat() {
+	uci -q delete firewall.nat6
+	uci -q set firewall.nat6="include"
+	uci -q set firewall.nat6.path="/usr/share/systools/firewall.nat6"
+	uci -q set firewall.nat6.reload="1"
+	uci -q set firewall.nat6.fw4_compatible="0"
+	uci -q set firewall.@zone[1].masq6="1"
+	uci -q set firewall.@zone[1].masq6_privacy="0"
+	uci commit firewall
+	/etc/init.d/firewall reload
+}
+
+ipv6_disable_nat() {
+	NAT6=`uci -q get firewall.nat6.reload`
+	if [ "$NAT6" = "1" ]; then
+		uci -q delete network.wan6.sourcefilter
+		uci -q delete firewall.@zone[1].masq6
+		uci -q delete firewall.nat6
+		uci commit firewall
+		/etc/init.d/firewall reload
+	fi
+}
+
+ipv6_set_lan_addr() {
+	local addr=$1
+	uci -q batch <<-EOF >/dev/null
+		del network.lan.delegate
+		del network.lan.ip6class
+	EOF
+	case "$addr" in
+	$FROM_PD)
+		uci -q batch <<-EOF >/dev/null
+			set network.lan.ip6assign='60'
+			add_list network.lan.ip6class='wan6'
+			add_list network.lan.ip6class='wan_6'
+			add_list network.lan.ip6class='wan'
+		EOF
+	;;
+	$FROM_ULA)
+		uci -q batch <<-EOF >/dev/null
+			set network.lan.ip6assign='60'
+			add_list network.lan.ip6class='local'
+		EOF
+	;;
+	$FROM_NONE)
+		uci -q del network.lan.ip6assign
+	;;
+	esac
+}
+
+ipv6_set_lan_mode() {
+	local mode=$1
+	if [ "$MODE_CLIENT" = "$mode" ]; then
+		uci -q batch <<-EOF >/dev/null
+			set network.lan6='interface'
+			del network.lan6.auto
+			set network.lan6.proto='dhcpv6'
+			set network.lan6.device='@lan'
+		EOF
+	else
+		uci -q set network.lan6.auto='0'
+	fi
+
+	case "$mode" in
+	$MODE_SERVER)
+		uci -q batch <<-EOF >/dev/null
+			set dhcp.lan.dhcpv6='server'
+			set dhcp.lan.ra='server'
+			set dhcp.lan.ra_slaac='1'
+			del dhcp.lan.ra_flags
+			add_list dhcp.lan.ra_flags='managed-config'
+			add_list dhcp.lan.ra_flags='other-config'
+			del dhcp.lan.ndp
+		EOF
+		;;
+	$MODE_RELAY)
+		uci -q batch <<-EOF >/dev/null
+			set dhcp.lan.ra='relay'
+			del dhcp.lan.ra_slaac
+			del dhcp.lan.ra_flags
+			set dhcp.lan.dhcpv6='relay'
+			set dhcp.lan.ndp='relay'
+		EOF
+		;;
+	*)
+		uci -q batch <<-EOF >/dev/null
+			del dhcp.lan.ra
+			del dhcp.lan.ra_slaac
+			del dhcp.lan.ra_flags
+			del dhcp.lan.dhcpv6
+			del dhcp.lan.ndp
+		EOF
+		;;
+	esac
+}
+
+ipv6_set_wan_relay() {
+	local relay_src=$1
+	local iface
+	for iface in wan wan6; do
+		if [ $iface = "$relay_src" ]; then
+			uci -q batch <<-EOF >/dev/null
+				set dhcp.$iface=dhcp
+				set dhcp.$iface.interface='$iface'
+				set dhcp.$iface.ignore='1'
+				set dhcp.$iface.master='1'
+				set dhcp.$iface.ra='relay'
+				set dhcp.$iface.dhcpv6='relay'
+				set dhcp.$iface.ndp='relay'
+			EOF
+		else
+			uci -q batch <<-EOF >/dev/null
+				del dhcp.$iface.master
+				del dhcp.$iface.ra
+				del dhcp.$iface.dhcpv6
+				del dhcp.$iface.ndp
+			EOF
+		fi
+	done
+}
+
+is_lan_gateway() {
+	[ "$(uci -q get network.lan.defaultroute)" = "0" ] && return 1
+	[ "$(uci -q get network.lan.proto)" = "dhcp" ] && return 0
+	[ "$(uci -q get network.lan.proto)" = "static" ] || return 1
+	[ -n "$(uci -q get network.lan.gateway)" ]
+}
+
+is_wan_pppoe() {
+	[ "$(uci -q get network.wan.proto)" = "pppoe" ]
+}
+
+level=$1
+[ -n "$level" ] || level=$LEVEL_PD
+
+echo "Try Level $level"
+
+# nat
+if [ "$level" = $LEVEL_NAT ]; then
+	if opkg status kmod-ipt-nat6 | grep '^Status: ' | grep -Fwq installed ; then
+		echo "kmod-ipt-nat6 found"
+	else
+		echo "kmod-ipt-nat6 not found, installing"
+		opkg update
+		opkg install kmod-ipt-nat6 || exit 1
+	fi
+	ipv6_enable_nat
+else
+	# disable ipv6 nat
+	ipv6_disable_nat
+fi
+
+# dns
+if [ "$level" = $LEVEL_OFF ]; then
+	uci -q set 'dhcp.@dnsmasq[0].filter_aaaa=1'
+else
+	uci -q del 'dhcp.@dnsmasq[0].filter_aaaa'
+fi
+
+# address service
+if [ "$level" = $LEVEL_OFF ]; then
+	ipv6_set_lan_mode $MODE_DISABLE
+	ipv6_set_lan_addr $FROM_NONE
+	ipv6_set_wan_relay none
+	uci -q set network.wan.ipv6=0
+	uci -q set network.wan6.auto=0
+else
+	if is_lan_gateway; then
+		echo "Single-Port Router (LAN Gateway) mode"
+		ipv6_set_lan_mode $MODE_CLIENT
+		ipv6_set_lan_addr $FROM_NONE
+	else
+		if is_wan_pppoe; then
+			echo "PPPoE mode"
+			uci -q del network.wan.ipv6
+			ipv6_set_wan_relay wan
+		else
+			echo "DHCP-Client mode"
+			uci -q del network.wan6.auto
+			ipv6_set_wan_relay wan6
+		fi
+		if [ "$level" = $LEVEL_PD -o "$level" = $LEVEL_NAT ]; then
+			ipv6_set_lan_mode $MODE_SERVER
+		elif [ "$level" = $LEVEL_RELAY ]; then
+			ipv6_set_lan_mode $MODE_RELAY
+		else
+			ipv6_set_lan_mode $MODE_DISABLE
+		fi
+		if [ "$level" = $LEVEL_PD ]; then
+			ipv6_set_lan_addr $FROM_PD
+		elif [ "$level" = $LEVEL_NAT ]; then
+			uci set network.globals.ula_prefix="$(uci get network.globals.ula_prefix | sed 's/^./d/')"
+			ipv6_set_lan_addr $FROM_ULA
+		else
+			ipv6_set_lan_addr $FROM_NONE
+		fi
+	fi
+fi
+
+uci -q batch <<-EOF >/dev/null
+	commit dhcp
+	commit network
+EOF
+
+/etc/init.d/odhcpd reload
+/etc/init.d/dnsmasq reload
+/etc/init.d/network reload
+
+echo "Done"
