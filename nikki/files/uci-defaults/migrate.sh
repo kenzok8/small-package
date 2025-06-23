@@ -137,6 +137,11 @@ while read router_access_control; do
 	done
 done < <(uci show nikki | grep -o -E 'nikki.@router_access_control\[[[:digit:]]+\]=router_access_control' | cut -d '=' -f 1)
 
+# since v1.23.2
+env_disable_safe_path_check=$(uci -q get nikki.env.disable_safe_path_check); [ -n "$env_disable_safe_path_check" ] && uci del nikki.env.disable_safe_path_check
+
+env_skip_system_ipv6_check=$(uci -q get nikki.env.skip_system_ipv6_check); [ -z "$env_skip_system_ipv6_check" ] && uci set nikki.env.skip_system_ipv6_check=0
+
 # commit
 uci commit nikki
 

@@ -67,11 +67,12 @@ start_service() {
 	local mixin_file_content
 	config_get_bool mixin_file_content "mixin" "mixin_file_content" 0
 	## environment variable
-	local disable_safe_path_check disable_loopback_detector disable_quic_go_gso disable_quic_go_ecn
-	config_get_bool disable_safe_path_check "env" "disable_safe_path_check" 0
+	local safe_paths disable_loopback_detector disable_quic_go_gso disable_quic_go_ecn skip_system_ipv6_check
+	config_get safe_paths "env" "safe_paths" 
 	config_get_bool disable_loopback_detector "env" "disable_loopback_detector" 0
 	config_get_bool disable_quic_go_gso "env" "disable_quic_go_gso" 0
 	config_get_bool disable_quic_go_ecn "env" "disable_quic_go_ecn" 0
+	config_get_bool skip_system_ipv6_check "env" "skip_system_ipv6_check" 0
 	# get profile
 	if [[ "$profile" == "file:"* ]]; then
 		local profile_name; profile_name="${profile/file:/}"
@@ -158,13 +159,18 @@ start_service() {
 
 	procd_set_param command /bin/sh -c "$PROG -d $RUN_DIR >> $CORE_LOG_PATH 2>&1"
 	procd_set_param file "$RUN_PROFILE_PATH"
-	procd_set_param env SKIP_SAFE_PATH_CHECK="$disable_safe_path_check" DISABLE_LOOPBACK_DETECTOR="$disable_loopback_detector" QUIC_GO_DISABLE_GSO="$disable_quic_go_gso" QUIC_GO_DISABLE_ECN="$disable_quic_go_ecn"
+	procd_append_param env SAFE_PATHS="$safe_paths"
+	procd_append_param env DISABLE_LOOPBACK_DETECTOR="$disable_loopback_detector"
+	procd_append_param env QUIC_GO_DISABLE_GSO="$disable_quic_go_gso"
+	procd_append_param env QUIC_GO_DISABLE_ECN="$disable_quic_go_ecn"
+	procd_append_param env SKIP_SYSTEM_IPV6_CHECK="$skip_system_ipv6_check"
 	if [ "$fast_reload" == 1 ]; then
 		procd_set_param reload_signal HUP
 	fi
 	procd_set_param pidfile "$PID_FILE_PATH"
 	procd_set_param respawn
-	procd_set_param limits core="unlimited" nofile="1048576 1048576"
+	procd_append_param limits core="unlimited"
+	procd_append_param limits nofile="1048576 1048576"
 
 	procd_close_instance
 	# cron
