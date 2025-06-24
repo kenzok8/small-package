@@ -9,6 +9,7 @@ local Module = {
 	runPrio                 = 40,
 	config                  = {},
 	syslog                  = function(level, msg) return true end,
+	debugOutput             = function(msg) return true end,
 	writeValue              = function(filePath, str) return false end,
 	readValue               = function(filePath) return nil end,
 	mmcli                   = "/usr/bin/mmcli",
