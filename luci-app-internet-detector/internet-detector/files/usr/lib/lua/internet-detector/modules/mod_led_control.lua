@@ -7,6 +7,7 @@ local Module = {
 	runPrio           = 10,
 	config            = {},
 	syslog            = function(level, msg) return true end,
+	debugOutput       = function(msg) return true end,
 	writeValue        = function(filePath, str) return false end,
 	readValue         = function(filePath) return nil end,
 	runInterval       = 5,

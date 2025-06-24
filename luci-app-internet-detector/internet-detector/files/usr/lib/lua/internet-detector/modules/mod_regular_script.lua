@@ -8,6 +8,7 @@ local Module = {
 	runPrio     = 90,
 	config      = {},
 	syslog      = function(level, msg) return true end,
+	debugOutput = function(msg) return true end,
 	writeValue  = function(filePath, str) return false end,
 	readValue   = function(filePath) return nil end,
 	inetState   = 2,		-- 0: connected, 1: disconnected, 2: both

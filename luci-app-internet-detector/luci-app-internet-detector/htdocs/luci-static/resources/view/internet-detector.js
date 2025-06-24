@@ -919,6 +919,7 @@ return view.extend({
 				o.value(3);
 				o.value(4);
 				o.value(5);
+				o.value(10);
 				o.value(0, _('infinitely'));
 				o.default = '1';
 

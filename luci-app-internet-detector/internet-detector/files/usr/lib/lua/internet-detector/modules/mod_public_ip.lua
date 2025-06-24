@@ -14,6 +14,7 @@ local Module = {
 		},
 	},
 	syslog               = function(level, msg) return true end,
+	debugOutput          = function(msg) return true end,
 	writeValue           = function(filePath, str) return false end,
 	readValue            = function(filePath) return nil end,
 	port                 = 53,
@@ -136,29 +137,21 @@ function Module:sendUDPMessage(message, server, port)
 	local retCode = 1
 	local data
 
-	if self.config.debug then
-		io.stdout:write(string.format("--- %s ---\n", self.name))
-		io.stdout:flush()
-	end
+	self.debugOutput(string.format("--- %s ---", self.name))
 
 	local saTable, errMsg, errNum = socket.getaddrinfo(server, port)
 
 	if not saTable then
-		if self.config.debug then
-			io.stdout:write(string.format(
-				"GETADDRINFO ERROR: %s, %s\n", errMsg, errNum))
-		end
+		self.debugOutput(string.format(
+			"GETADDRINFO ERROR: %s, %s", errMsg, errNum))
 	else
 		local family = saTable[1].family
-
 		if family then
 			local sock, errMsg, errNum = socket.socket(family, socket.SOCK_DGRAM, 0)
 
 			if not sock then
-				if self.config.debug then
-					io.stdout:write(string.format(
-						"SOCKET ERROR: %s, %s\n", errMsg, errNum))
-				end
+				self.debugOutput(string.format(
+					"SOCKET ERROR: %s, %s", errMsg, errNum))
 				return retCode
 			end
 
@@ -171,10 +164,8 @@ function Module:sendUDPMessage(message, server, port)
 				local ok, errMsg, errNum = socket.setsockopt(sock, socket.SOL_SOCKET,
 					socket.SO_BINDTODEVICE, self.config.serviceConfig.iface)
 				if not ok then
-					if self.config.debug then
-						io.stdout:write(string.format(
-							"SOCKET ERROR: %s, %s\n", errMsg, errNum))
-					end
+					self.debugOutput(string.format(
+						"SOCKET ERROR: %s, %s", errMsg, errNum))
 					unistd.close(sock)
 					return retCode
 				end
@@ -189,17 +180,17 @@ function Module:sendUDPMessage(message, server, port)
 					success  = true
 					response = resp
 				elseif self.config.debug then
-					io.stdout:write(string.format(
-						"SOCKET RECV ERROR: %s, %s\n", tostring(resp), tostring(errNum)))
+					self.debugOutput(string.format(
+						"SOCKET RECV ERROR: %s, %s", tostring(resp), tostring(errNum)))
 				end
 			elseif self.config.debug then
-				io.stdout:write(string.format(
-					"SOCKET SEND ERROR: %s, %s\n", tostring(errMsg), tostring(errNum)))
+				self.debugOutput(string.format(
+					"SOCKET SEND ERROR: %s, %s", tostring(errMsg), tostring(errNum)))
 			end
 
 			if self.config.debug then
-				io.stdout:write(string.format(
-					"--- UDP ---\ntime = %s\nconnection_timeout = %s\niface = %s\nserver = %s:%s\nsockname = %s:%s\nsuccess = %s\n",
+				self.debugOutput(string.format(
+					"--- UDP ---\ntime = %s\nconnection_timeout = %s\niface = %s\nserver = %s:%s\nsockname = %s:%s\nsuccess = %s",
 					os.time(),
 					self.timeout,
 					tostring(self.config.serviceConfig.iface),
@@ -209,7 +200,6 @@ function Module:sendUDPMessage(message, server, port)
 					tostring(response.port),
 					tostring(success))
 				)
-				io.stdout:flush()
 			end
 
 			unistd.close(sock)
@@ -239,7 +229,7 @@ end
 
 function Module:decodeMessage(message)
 	local retTable = {}
-	local t = {}
+	local t        = {}
 	for i = 1, #message do
 		t[#t + 1] = string.format("%.2x", string.byte(message, i))
 	end

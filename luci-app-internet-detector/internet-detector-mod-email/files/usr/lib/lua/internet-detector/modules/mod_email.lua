@@ -11,6 +11,7 @@ local Module = {
 		debug = false,
 	},
 	syslog               = function(level, msg) return true end,
+	debugOutput          = function(msg) return true end,
 	writeValue           = function(filePath, str) return false end,
 	readValue            = function(filePath) return nil end,
 	deadPeriod           = 0,
@@ -122,8 +123,7 @@ function Module:sendMessage(msg, textPattern)
 	-- Debug
 	if self.config.debug then
 		verboseArg = " -v"
-		io.stdout:write(string.format("--- %s ---\n", self.name))
-		io.stdout:flush()
+		self.debugOutput(string.format("--- %s ---", self.name))
 	end
 
 	local securityArgs = "-starttls -auth-login"
@@ -141,8 +141,7 @@ function Module:sendMessage(msg, textPattern)
 
 	-- Debug
 	if self.config.debug then
-		io.stdout:write(string.format("%s: %s\n", self.name, mtaCmd))
-		io.stdout:flush()
+		self.debugOutput(string.format("%s: %s", self.name, mtaCmd))
 		self.syslog("debug", string.format("%s: %s", self.name, mtaCmd))
 	end
 
