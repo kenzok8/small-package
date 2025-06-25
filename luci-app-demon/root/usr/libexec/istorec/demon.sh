@@ -17,10 +17,23 @@ do_install() {
       port=18888
   fi
 
-  [ -z "$image_name" ] && image_name="images-cluster.xycloud.com/wxedge/amd64-wxedge:3.5.1-CTWXKS1748570956"
+  if [ -z ${image_name} ]; then
+    local arch=`uname -m`
+    if [ "$arch" = "x86_64" ]; then
+      image_name="images-cluster.xycloud.com/wxedge/amd64-wxedge:3.5.1-CTWXKS1748570956"
+    else
+      echo "Arm64 is not supported now"
+      sleep 5
+      exit 2
+    fi
+  fi
+
   docker pull "$image_name"
   docker rm -f onethingdemon
-  docker rm -f wxedge
+  if [ "$(docker inspect -f '{{.State.Running}}' wxedge 2>/dev/null)" = "true" ]; then
+    echo "Stop wxedge due to incompatibility"
+    docker stop wxedge
+  fi
 
   local cmd="docker run --restart=unless-stopped -d \
     --privileged \
@@ -43,6 +56,7 @@ do_install() {
   eval "$cmd"
 
   if [ "$?" = "0" ]; then
+    echo "Started OK"
     if [ "`uci -q get firewall.demon.enabled`" = 0 ]; then
       uci -q batch <<-EOF >/dev/null
         set firewall.demon.enabled="1"
