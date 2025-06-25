@@ -1,0 +1,3 @@
+config demon
+#	option 'cache_path' ''
+#	option 'image_name' ''
