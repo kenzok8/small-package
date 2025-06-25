@@ -28,7 +28,7 @@ define Package/luci-app-fakemesh
 endef
 
 define Package/luci-app-fakemesh/description
-	LuCI Support for fakemsh.
+	LuCI Support for fakemesh.
 endef
 
 define Build/Prepare
