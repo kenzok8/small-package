@@ -8,7 +8,7 @@ local m, s, o
 
 m = taskd.docker_map("demon", "demon", "/usr/libexec/istorec/demon.sh",
 	translate("Onething Demon"),
-	"【魔王现世】为 iStoreOS 特制，收益更高。每月至高可赚「千元」，现在上线秒领「30天20%收益加成」，挂机托管自动赚米，拿到手软！点击查看 <a href=\"https://help.onethingcloud.com/caa9/a0fe/48b5\" target=\"_blank\">「教程」</a>")
+	"【魔王现世】为 iStoreOS 特制，收益更高。每月至高可赚「千元」，现在上线秒领「30天20%收益加成」，挂机托管自动赚米，拿到手软！注意跟「容器魔方」不兼容，点击“升级/应用”会停止已存在的「容器魔方」，点击查看 <a href=\"https://help.onethingcloud.com/caa9/a0fe/48b5\" target=\"_blank\">「教程」</a>")
 
 s = m:section(SimpleSection, translate("Service Status"), translate("Onething Demon status:"), "注意容器魔王会以超级权限运行！")
 s:append(Template("demon/status"))
