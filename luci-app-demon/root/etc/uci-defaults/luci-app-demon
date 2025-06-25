@@ -1,0 +1,14 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+    delete firewall.demon
+    set firewall.demon=rule
+    set firewall.demon.name="demon"
+    set firewall.demon.target="ACCEPT"
+    set firewall.demon.src="wan"
+    set firewall.demon.dest_port="1024-65535"
+    set firewall.demon.enabled="0"
+    commit firewall
+EOF
+
+exit 0
