@@ -4,7 +4,7 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=FullCombo Shark! supplies maximum customization of mihomo on OpenWrt.
+LUCI_TITLE:=FullCombo Shark! supplies flexible customization of mihomo on OpenWrt.
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:= \
 	+mihomo \
