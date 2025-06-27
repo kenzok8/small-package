@@ -130,8 +130,9 @@ proxy_tun_interval=$(uci -q get nikki.proxy.tun_interval); [ -z "$proxy_tun_inte
 # since v1.23.1
 while read router_access_control; do
 	for cgroup in $(uci -q get "$router_access_control.cgroup"); do
-		uci del_list "$router_access_control.cgroup=$cgroup"
-		[ ! -d "/sys/fs/cgroup/$cgroup" ] && [ -d "/sys/fs/cgroup/services/$cgroup" ] && {
+		[ -d "/sys/fs/cgroup/$cgroup" ] && continue
+		[ -d "/sys/fs/cgroup/services/$cgroup" ] && {
+			uci del_list "$router_access_control.cgroup=$cgroup"
 			uci add_list "$router_access_control.cgroup=services/$cgroup"
 		}
 	done
