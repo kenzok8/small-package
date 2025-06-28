@@ -84,7 +84,7 @@ ipv6_set_lan_mode() {
 		uci -q batch <<-EOF >/dev/null
 			set dhcp.lan.dhcpv6='server'
 			set dhcp.lan.ra='server'
-			set dhcp.lan.ra_slaac='1'
+			del dhcp.lan.ra_slaac
 			del dhcp.lan.ra_flags
 			add_list dhcp.lan.ra_flags='managed-config'
 			add_list dhcp.lan.ra_flags='other-config'
@@ -211,6 +211,11 @@ else
 			ipv6_set_lan_addr $FROM_ULA
 		else
 			ipv6_set_lan_addr $FROM_NONE
+		fi
+		if [ "$level" = $LEVEL_NAT ]; then
+			uci set dhcp.lan.ra_default='2'
+		else
+			uci -q del dhcp.lan.ra_default
 		fi
 	fi
 fi
