@@ -1,6 +1,6 @@
-From d5d61b6027b2fe4c75887d33d8a5f98a3ec0795f Mon Sep 17 00:00:00 2001
+From d5f31a032bae130c83bb50b8679776cf1b33f05d Mon Sep 17 00:00:00 2001
 From: sbwml <admin@cooluc.com>
-Date: Sat, 8 Mar 2025 20:26:40 +0800
+Date: Mon, 30 Jun 2025 15:08:51 +0800
 Subject: [PATCH] v2dat: update dependencies
 
 Signed-off-by: sbwml <admin@cooluc.com>
@@ -15,7 +15,7 @@ Signed-off-by: sbwml <admin@cooluc.com>
  module github.com/urlesistiana/v2dat
  
 -go 1.19
-+go 1.21
++go 1.22
  
  require (
 -	github.com/spf13/cobra v1.6.1
@@ -23,7 +23,7 @@ Signed-off-by: sbwml <admin@cooluc.com>
 -	google.golang.org/protobuf v1.28.1
 +	github.com/spf13/cobra v1.9.1
 +	go.uber.org/zap v1.27.0
-+	google.golang.org/protobuf v1.36.5
++	google.golang.org/protobuf v1.36.6
  )
  
  require (
@@ -88,8 +88,8 @@ Signed-off-by: sbwml <admin@cooluc.com>
 +go.uber.org/multierr v1.11.0/go.mod h1:20+QtiLqy0Nd6FdQB9TLXag12DsQkrbs3htMFfDN80Y=
 +go.uber.org/zap v1.27.0 h1:aJMhYGrd5QSmlpLMr2MftRKl7t8J8PTZPA732ud/XR8=
 +go.uber.org/zap v1.27.0/go.mod h1:GB2qFLM7cTU87MWRP2mPIjqfIDnGu+VIO4V/SdhGo2E=
-+google.golang.org/protobuf v1.36.5 h1:tPhr+woSbjfYvY6/GPufUoYizxw1cF/yFoxJ2fmpwlM=
-+google.golang.org/protobuf v1.36.5/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
++google.golang.org/protobuf v1.36.6 h1:z1NpPI8ku2WgiWnf+t9wTPsn6eP1L7ksHUlkfLvd9xY=
++google.golang.org/protobuf v1.36.6/go.mod h1:jduwjTPXsFjZGTmRluh+L6NjiWu7pchiJ2/5YcXBHnY=
  gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 -gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
  gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
