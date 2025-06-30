@@ -162,6 +162,17 @@ return view.extend({
 		o = s.taboption('basic', form.Flag, 'redirect', _('DNS Forward'), _('Forward Dnsmasq Domain Name resolution requests to MosDNS'));
 		o.default = false;
 
+		if (L.hasSystemFeature('firewall4')) {
+			o = s.taboption('basic', form.Flag, 'local_dns_redirect', _('DNS redirect'), _('Force redirect all local DNS queries to MosDNS, a.k.a. DNS Hijacking'));
+			o.default = false;
+			o.depends('redirect', '1');
+		}
+
+		o = s.taboption('basic', form.Flag, 'prefer_ipv4_cn', _('China DNS prefer IPv4'),
+			_('IPv4 is preferred for China DNS resolution of dual-stack addresses, and is not affected when the destination is IPv6 only'));
+		o.depends('configfile', '/var/etc/mosdns.json');
+		o.default = false;
+
 		o = s.taboption('basic', form.Flag, 'prefer_ipv4', _('Remote DNS prefer IPv4'),
 			_('IPv4 is preferred for Remote / Streaming Media DNS resolution of dual-stack addresses, and is not affected when the destination is IPv6 only'));
 		o.depends('configfile', '/var/etc/mosdns.json');
