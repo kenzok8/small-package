@@ -726,7 +726,7 @@ api_port.default = "11211"
 html_port = s:option(Value, "html_port", translate("Web Interface Port"),
         translate("Frontend listening port for the web dashboard server. Leave empty to disable. (-l parameter)"))
 html_port.datatype = "range(1,65535)"
-html_port.placeholder = "11210"
+html_port.default = "11211"
 
 local router_ip = luci.sys.exec("uci -q get network.lan.ipaddr"):gsub("\n", "")
 local default_api_port = api_port.default or "11211"
