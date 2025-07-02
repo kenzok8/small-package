@@ -72,7 +72,7 @@ msgstr ""
 msgid "Add a rule set"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:140
+#: htdocs/luci-static/resources/view/homeproxy/server.js:136
 msgid "Add a server"
 msgstr ""
 
@@ -100,6 +100,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:266
 msgid "All ports"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/server.js:152
+msgid "Allow access from the Internet."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:994
@@ -191,10 +195,6 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/node.js:504
 #: htdocs/luci-static/resources/view/homeproxy/server.js:258
 msgid "Authentication type"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/server.js:131
-msgid "Auto configure firewall"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1301
@@ -646,7 +646,7 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:921
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1137
 #: htdocs/luci-static/resources/view/homeproxy/server.js:127
-#: htdocs/luci-static/resources/view/homeproxy/server.js:150
+#: htdocs/luci-static/resources/view/homeproxy/server.js:146
 msgid "Enable"
 msgstr ""
 
@@ -780,6 +780,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:592
 msgid "Firefox / uquic firefox"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/server.js:151
+msgid "Firewall"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:686
@@ -1102,7 +1106,7 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:916
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1132
 #: htdocs/luci-static/resources/view/homeproxy/node.js:397
-#: htdocs/luci-static/resources/view/homeproxy/server.js:144
+#: htdocs/luci-static/resources/view/homeproxy/server.js:140
 msgid "Label"
 msgstr ""
 
@@ -1911,7 +1915,7 @@ msgid "Save subscriptions settings"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1014
-#: htdocs/luci-static/resources/view/homeproxy/server.js:140
+#: htdocs/luci-static/resources/view/homeproxy/server.js:136
 msgid "Server"
 msgstr ""
 
@@ -1925,7 +1929,7 @@ msgid ""
 "ServerName field is empty."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:135
+#: htdocs/luci-static/resources/view/homeproxy/server.js:131
 msgid "Server settings"
 msgstr ""
 

@@ -436,7 +436,7 @@
   flex: 10 10 300px !important;
   -webkit-flex: 10 10 300px !important;
   min-width: 5rem;
-  white-space: inherit
+  white-space: normal;
 }
 
 .h1,.h2,.h3,.h4,.h5,.h6,h1,h2,h3,h4,h5,h6 {
@@ -2851,20 +2851,13 @@ td>.ifacebadge,.td>.ifacebadge {
 }
 
 #syslog {
-  font-size: small;
-  overflow-y: hidden;
-  font-family: monospace;
-  width: 100%;
-  min-height: 15rem;
   padding: 10px;
   resize: none;
   margin: 0rem border-radius:var(--radius2);
   word-wrap: break-word;
   white-space: pre-wrap;
-  background-color: var(--inputbg-color);
-  color: var(--inputtext-color);
-  border: 1px solid var(--inputborder-color)
 }
+
 
 #syslog:focus {
   outline: 0
@@ -4277,10 +4270,6 @@ div#file-manager-container #status-bar #status-info {
   display: initial
 }
 
-[data-page="admin-status-overview"] .tr.table-titles>.th:nth-child(1),[data-page="admin-status-overview"] .main #view td:nth-child(1) {
-  text-align: right !important
-}
-
 .Dashboard .dashboard-bg {
   background-color: rgba(var(--primary-rgbm),var(--primary-rgbs-ts));
   background-color: rgba(var(--primary-rgbbody),1)important
@@ -4688,7 +4677,7 @@ div#file-manager-container #status-bar #status-info {
     line-height: 1
   }
 
-  #syslog,#diag-rc-output>pre,#command-rc-output>pre,[data-page="admin-services-wol"] .notice code {
+  #diag-rc-output>pre,#command-rc-output>pre,[data-page="admin-services-wol"] .notice code {
     font-size: var(--font-x) !important
   }
 

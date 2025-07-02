@@ -41,7 +41,7 @@ else if (match(china_dns_server, / /))
 /* github_token option has been moved to config section */
 const github_token = uci.get(uciconfig, uciinfra, 'github_token');
 if (github_token) {
-	uci.set(uciconfig, uciconfig, 'github_token', github_token);
+	uci.set(uciconfig, ucimain, 'github_token', github_token);
 	uci.delete(uciconfig, uciinfra, 'github_token')
 }
 
@@ -57,36 +57,45 @@ if (uci.get(uciconfig, 'experimental'))
 uci.foreach(uciconfig, ucidnsrule, (cfg) => {
 	/* rule_set_ipcidr_match_source was renamed in sb 1.10 */
 	if (cfg.rule_set_ipcidr_match_source === '1')
-		uci.rename(uciconfig, cfg, 'rule_set_ipcidr_match_source', 'rule_set_ip_cidr_match_source');
+		uci.rename(uciconfig, cfg['.name'], 'rule_set_ipcidr_match_source', 'rule_set_ip_cidr_match_source');
 });
 
 /* nodes options */
 uci.foreach(uciconfig, ucinode, (cfg) => {
 	/* tls_ech_tls_disable_drs is useless and deprecated in sb 1.12 */
 	if (!isEmpty(cfg.tls_ech_tls_disable_drs))
-		uci.delete(uciconfig, cfg, 'tls_ech_tls_disable_drs');
+		uci.delete(uciconfig, cfg['.name'], 'tls_ech_tls_disable_drs');
 
 	/* wireguard_gso was deprecated in sb 1.11 */
 	if (!isEmpty(cfg.wireguard_gso))
-		uci.delete(uciconfig, cfg, 'wireguard_gso');
+		uci.delete(uciconfig, cfg['.name'], 'wireguard_gso');
 });
 
 /* routing rules options */
 uci.foreach(uciconfig, uciroutingrule, (cfg) => {
 	/* rule_set_ipcidr_match_source was renamed in sb 1.10 */
 	if (cfg.rule_set_ipcidr_match_source === '1')
-		uci.rename(uciconfig, cfg, 'rule_set_ipcidr_match_source', 'rule_set_ip_cidr_match_source');
+		uci.rename(uciconfig, cfg['.name'], 'rule_set_ipcidr_match_source', 'rule_set_ip_cidr_match_source');
 });
 
 /* server options */
+/* auto_firewall was moved into server options */
+const auto_firewall = uci.get(uciconfig, uciserver, 'auto_firewall');
+if (auto_firewall || auto_firewall === '0')
+	uci.delete(uciconfig, uciserver, 'auto_firewall');
+
 uci.foreach(uciconfig, uciserver, (cfg) => {
+	/* auto_firewall was moved into server options */
+	if (auto_firewall === '1')
+		uci.set(uciconfig, cfg['.name'], 'firewall' , '1');
+
 	/* sniff_override was deprecated in sb 1.11 */
 	if (!isEmpty(cfg.sniff_override))
-		uci.delete(uciconfig, cfg, 'sniff_override');
+		uci.delete(uciconfig, cfg['.name'], 'sniff_override');
 
 	/* domain_strategy is now pointless without sniff override */
 	if (!isEmpty(cfg.domain_strategy))
-		uci.delete(uciconfig, cfg, 'domain_strategy');
+		uci.delete(uciconfig, cfg['.name'], 'domain_strategy');
 });
 
 if (!isEmpty(uci.changes(uciconfig)))

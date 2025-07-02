@@ -128,10 +128,6 @@ return view.extend({
 		o.default = o.disabled;
 		o.rmempty = false;
 
-		o = s.option(form.Flag, 'auto_firewall', _('Auto configure firewall'));
-		o.default = o.disabled;
-		o.rmempty = false;
-
 		s = m.section(form.GridSection, 'server', _('Server settings'));
 		s.addremove = true;
 		s.rowcolors = true;
@@ -150,6 +146,10 @@ return view.extend({
 		o = s.option(form.Flag, 'enabled', _('Enable'));
 		o.default = o.enabled;
 		o.rmempty = false;
+		o.editable = true;
+
+		o = s.option(form.Flag, 'firewall', _('Firewall'),
+			_('Allow access from the Internet.'));
 		o.editable = true;
 
 		o = s.option(form.ListValue, 'type', _('Type'));
