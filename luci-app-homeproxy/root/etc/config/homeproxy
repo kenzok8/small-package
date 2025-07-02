@@ -68,7 +68,6 @@ config homeproxy 'subscription'
 
 config homeproxy 'server'
 	option enabled '0'
-	option auto_firewall '0'
 
 config dns_rule 'nodes_domain'
 	option label 'NodesDomain'

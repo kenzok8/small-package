@@ -79,7 +79,7 @@ msgstr "新增路由规则"
 msgid "Add a rule set"
 msgstr "新增规则集"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:140
+#: htdocs/luci-static/resources/view/homeproxy/server.js:136
 msgid "Add a server"
 msgstr "新增服务器"
 
@@ -108,6 +108,10 @@ msgstr "阿里云公共 DNS（223.5.5.5）"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:266
 msgid "All ports"
 msgstr "所有端口"
+
+#: htdocs/luci-static/resources/view/homeproxy/server.js:152
+msgid "Allow access from the Internet."
+msgstr "允许来自互联网的访问。"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:994
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1350
@@ -201,10 +205,6 @@ msgstr "认证载荷"
 #: htdocs/luci-static/resources/view/homeproxy/server.js:258
 msgid "Authentication type"
 msgstr "认证类型"
-
-#: htdocs/luci-static/resources/view/homeproxy/server.js:131
-msgid "Auto configure firewall"
-msgstr "自动配置防火墙"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1301
 msgid "Auto update"
@@ -665,7 +665,7 @@ msgstr "Email"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:921
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1137
 #: htdocs/luci-static/resources/view/homeproxy/server.js:127
-#: htdocs/luci-static/resources/view/homeproxy/server.js:150
+#: htdocs/luci-static/resources/view/homeproxy/server.js:146
 msgid "Enable"
 msgstr "启用"
 
@@ -802,6 +802,10 @@ msgstr "过滤节点"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:592
 msgid "Firefox / uquic firefox"
 msgstr "Firefox / uquic firefox"
+
+#: htdocs/luci-static/resources/view/homeproxy/server.js:151
+msgid "Firewall"
+msgstr "防火墙"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:686
 #: htdocs/luci-static/resources/view/homeproxy/server.js:390
@@ -1125,7 +1129,7 @@ msgstr "LAN IP 策略"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:916
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1132
 #: htdocs/luci-static/resources/view/homeproxy/node.js:397
-#: htdocs/luci-static/resources/view/homeproxy/server.js:144
+#: htdocs/luci-static/resources/view/homeproxy/server.js:140
 msgid "Label"
 msgstr "标签"
 
@@ -1938,7 +1942,7 @@ msgid "Save subscriptions settings"
 msgstr "保存订阅设置"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1014
-#: htdocs/luci-static/resources/view/homeproxy/server.js:140
+#: htdocs/luci-static/resources/view/homeproxy/server.js:136
 msgid "Server"
 msgstr "服务器"
 
@@ -1952,7 +1956,7 @@ msgid ""
 "ServerName field is empty."
 msgstr "当 ClientHello 的 ServerName 字段为空时，选择证书所使用的服务器名称。"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:135
+#: htdocs/luci-static/resources/view/homeproxy/server.js:131
 msgid "Server settings"
 msgstr "服务器设置"
 

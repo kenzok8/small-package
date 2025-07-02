@@ -25,9 +25,6 @@ if (match(proxy_mode, /tun/)) {
 }
 
 const server_enabled = uci.get(cfgname, 'server', 'enabled');
-let auto_firewall = '0';
-if (server_enabled === '1')
-	auto_firewall = uci.get(cfgname, 'server', 'auto_firewall') || '0';
 
 let forward = [],
     input = [];
@@ -37,9 +34,9 @@ if (tun_name) {
 	push(input ,`iifname ${tun_name} counter accept comment "!${cfgname}: accept tun input"`);
 }
 
-if (auto_firewall === '1') {
+if (server_enabled === '1') {
 	uci.foreach(cfgname, 'server', (s) => {
-		if (s.enabled !== '1')
+		if (s.enabled !== '1' || s.firewall !== '1')
 			return;
 
 		let proto = s.network || '{ tcp, udp }';
