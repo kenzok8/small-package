@@ -119,19 +119,14 @@ check_config() {
                    instance_name=$(cat $config_file | grep "instance_name =" | awk '{print $3}'| tr -d '" ')
                    socks_port=$(cat $config_file | grep "socks5_proxy" | awk -F ":" '{print $3}'| tr -d '" ')
                    [ -z "$(grep -F 'listeners = []' $config_file)" ] && listenermode="ON"
-                   tcp_port=$(cat $config_file | grep "tcp://0.0.0.0" | awk -F ":" '{print $3}'| tr -d '", ')
-                   udp_port=$(cat $config_file | grep "udp://0.0.0.0" | awk -F ":" '{print $3}'| tr -d '", ')
-                   ws_port=$(cat $config_file | grep "ws://0.0.0.0" | awk -F ":" '{print $3}'| tr -d '"/, ')
-                   wss_port=$(cat $config_file | grep "wss://0.0.0.0" | awk -F ":" '{print $3}'| tr -d '"/, ')
-                   wg_port=$(cat $config_file | grep "wg://0.0.0.0" | awk -F ":" '{print $3}'| tr -d '", ')
+                   tcp_port=$(grep -oE '"tcp://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
+                   udp_port=$(grep -oE '"udp://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
+                   ws_port=$(grep -oE '"ws://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
+                   wss_port=$(grep -oE '"wss://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
+                   wg_port=$(grep -oE '"wg://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
                    tunname=$(cat $config_file | grep "dev_name =" | awk '{print $3}'| tr -d '", ')
                    proxy_network=$(grep -F '[[proxy_network]]' $config_file)
                    wireguard_port=$(cat $config_file | grep "wireguard_listen = " | awk -F ":" '{print $2}'| tr -d '/", ')
-                   v6ws_port=$(cat $config_file | grep 'ws://\[::\]:' | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
-                   v6wss_port=$(cat $config_file | grep 'wss://\[::\]:' | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
-                   v6tcp_port=$(cat $config_file |grep 'tcp://\[::\]:' | sed -n 's/.*:\([0-9]*\).*/\1/p')
-                   v6udp_port=$(cat $config_file |grep 'udp://\[::\]:' | sed -n 's/.*:\([0-9]*\).*/\1/p')
-                   v6wg_port=$(cat $config_file |grep 'wg://\[::\]:' | sed -n 's/.*:\([0-9]*\).*/\1/p')
                               
                    procd_open_instance
                    get_tz
@@ -172,61 +167,6 @@ check_config() {
 		       uci set firewall.easytier_wireguard.proto="udp"
 		       uci set firewall.easytier_wireguard.dest_port="$wireguard_port"
 		       uci set firewall.easytier_wireguard.enabled="1"
-	           fi
-                   if [ ! -z "$v6tcp_port" ] ; then
-		     echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_v6tcp 放行TCP端口 ${v6tcp_port} " >>/tmp/easytier.log
-                      uci -q delete firewall.easytier_v6tcp
-		      uci set firewall.easytier_v6tcp=rule
-		      uci set firewall.easytier_v6tcp.name="easytier_v6tcp"
-		      uci set firewall.easytier_v6tcp.target="ACCEPT"
-		      uci set firewall.easytier_v6tcp.src="wan"
-		      uci set firewall.easytier_v6tcp.proto="tcp"
-		      uci set firewall.easytier_v6tcp.dest_port="$v6tcp_port"
-		      uci set firewall.easytier_v6tcp.enabled="1"
-	           fi
-                   if [ ! -z "$v6udp_port" ] ; then
-		       echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_v6udp 放行UDP端口 ${v6udp_port} " >>/tmp/easytier.log
-                       uci -q delete firewall.easytier_v6udp
-		       uci set firewall.easytier_v6udp=rule
-		       uci set firewall.easytier_v6udp.name="easytier_v6udp"
-		       uci set firewall.easytier_v6udp.target="ACCEPT"
-		       uci set firewall.easytier_v6udp.src="wan"
-		       uci set firewall.easytier_v6udp.proto="udp"
-		       uci set firewall.easytier_v6udp.dest_port="$v6udp_port"
-		       uci set firewall.easytier_v6udp.enabled="1"
-	           fi
-                   if [ ! -z "$v6ws_port" ] ; then
-		      echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_v6ws 放行TCP端口 ${v6ws_port} " >>/tmp/easytier.log
-                      uci -q delete firewall.easytier_v6ws
-		      uci set firewall.easytier_v6ws=rule
-		      uci set firewall.easytier_v6ws.name="easytier_v6ws"
-		      uci set firewall.easytier_v6ws.target="ACCEPT"
-		      uci set firewall.easytier_v6ws.src="wan"
-		      uci set firewall.easytier_v6ws.proto="tcp"
-		      uci set firewall.easytier_v6ws.dest_port="$v6ws_port"
-		      uci set firewall.easytier_v6ws.enabled="1"
-	           fi
-                   if [ ! -z "$v6wss_port" ] ; then
-		       echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_v6wss 放行TCP端口 ${v6wss_port} " >>/tmp/easytier.log
-                       uci -q delete firewall.easytier_v6wss
-		       uci set firewall.easytier_v6wss=rule
-		       uci set firewall.easytier_v6wss.name="easytier_v6wss"
-		       uci set firewall.easytier_v6wss.target="ACCEPT"
-		       uci set firewall.easytier_v6wss.src="wan"
-		       uci set firewall.easytier_v6wss.proto="tcp"
-		       uci set firewall.easytier_v6wss.dest_port="$v6wss_port"
-		       uci set firewall.easytier_v6wss.enabled="1"
-	           fi
-                   if [ ! -z "$v6wg_port" ] ; then
-		      echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_v6wg 放行UDP端口 ${v6wg_port} " >>/tmp/easytier.log
-                      uci -q delete firewall.easytier_v6wg
-		      uci set firewall.easytier_v6wg=rule
-		      uci set firewall.easytier_v6wg.name="easytier_v6wg"
-		      uci set firewall.easytier_v6wg.target="ACCEPT"
-		      uci set firewall.easytier_v6wg.src="wan"
-		      uci set firewall.easytier_v6wg.proto="udp"
-		      uci set firewall.easytier_v6wg.dest_port="$v6wg_port"
-		      uci set firewall.easytier_v6wg.enabled="1"
 	           fi
 }
 
