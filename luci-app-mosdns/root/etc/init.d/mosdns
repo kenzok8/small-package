@@ -586,6 +586,9 @@ generate_config() {
 		json_close_array
 		json_add_string "exec" "\$lazy_cache"
 		json_close_object
+		json_add_object
+		json_add_string "exec" "jump has_resp_sequence"
+		json_close_object
 	}
 	json_add_object
 	json_add_string "exec" "\$redirect"
