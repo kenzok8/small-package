@@ -272,7 +272,7 @@ btnis.write = function(self, section)
 		-- If opkg is not found, check for apk
 		elseif luci.sys.call("command -v apk >/dev/null") == 0 then
 			-- NOTE: --allow-untrusted is required for local packages
-			install_cmd = string.format('apk add --force --allow-untrusted %s', full_path)
+			install_cmd = string.format('apk add --force-overwrite --allow-untrusted %s', full_path)
 			r = luci.sys.exec(install_cmd)
 		-- If neither is found
 		else

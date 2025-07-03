@@ -109,7 +109,6 @@ else
 fi
 
 # Compare the version and download the latest version
-# Compare the version and download the latest version
 if [[ "${current_plugin_v}" == "${latest_version}" ]]; then
     tolog "02.02 Already the latest version, no need to update." "1"
 else
