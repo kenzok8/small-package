@@ -179,7 +179,7 @@ function start_amlogic_plugin()
 		install_status = luci.sys.call(install_cmd)
 	elseif luci.sys.call("command -v apk >/dev/null") == 0 then
 		luci.sys.call("echo 'System uses apk. Attempting to install .apk package...' >> " .. log_file)
-		local install_cmd = string.format("apk add --force --allow-untrusted /tmp/amlogic/*.apk >> %s 2>&1", log_file)
+		local install_cmd = string.format("apk add --force-overwrite --allow-untrusted /tmp/amlogic/*.apk >> %s 2>&1", log_file)
 		install_status = luci.sys.call(install_cmd)
 	else
 		luci.sys.call("echo 'Error: Neither opkg nor apk found. Aborting.' >> " .. log_file)
