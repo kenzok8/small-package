@@ -13,6 +13,12 @@ msgstr "禁用 LAN 口保活"
 msgid "Reset rom pkgs"
 msgstr "修复系统软件"
 
+msgid "Reinstall incompatible kernel modules"
+msgstr "重装不兼容的内核模块"
+
+msgid "Reinstall iStore"
+msgstr "重装 iStore"
+
 msgid "Turn off IPv6"
 msgstr "关闭 IPv6"
 

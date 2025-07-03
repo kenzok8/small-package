@@ -1,0 +1,23 @@
+#!/bin/sh
+# Copyright (C) 2025 jjm2473@gmail.com
+
+(
+	cd /usr/lib/opkg/info
+	grep -lm1 '^Version: 0.0.0-r1$' kmod-*.control 2>/dev/null | sed 's/.control$//'
+) > /tmp/incompat_kmods.txt
+
+if [ -s /tmp/incompat_kmods.txt ]; then
+	echo "The following incompatible kernel modules were found:"
+	cat /tmp/incompat_kmods.txt
+	echo "=====END====="
+	echo "Try installing from opkg"
+	opkg update
+	opkg install $(cat /tmp/incompat_kmods.txt)
+	rm -f /tmp/incompat_kmods.txt
+	echo "If you encounter network problems, please try again"
+	echo "If it says some packages are unknown, it may be because they have been removed. Just ignore it."
+else
+	echo "No incompatible kernel modules found"
+fi
+
+echo "Done"
