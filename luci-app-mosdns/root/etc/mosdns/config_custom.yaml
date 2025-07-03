@@ -121,6 +121,7 @@ plugins:
     type: sequence
     args:
       - exec: $lazy_cache
+      - exec: jump has_resp_sequence
       - exec: $query_is_local_domain
       - exec: jump has_resp_sequence
       - exec: $query_is_no_local_domain
