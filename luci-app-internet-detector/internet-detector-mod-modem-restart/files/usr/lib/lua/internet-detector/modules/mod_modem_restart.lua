@@ -72,7 +72,7 @@ function Module:init(t)
 		self._enabled = true
 	else
 		self._enabled = false
-		self.syslog("warning", string.format(
+		self.syslog("err", string.format(
 			"%s: modemmanager service is not available", self.name))
 	end
 end

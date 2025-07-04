@@ -1,15 +1,13 @@
 --[[
 	Dependences:
-		mailsend
+		curl
 --]]
+
 local unistd = require("posix.unistd")
 
 local Module = {
-	name                 = "mod_email",
-	runPrio              = 60,
-	config               = {
-		debug = false,
-	},
+	name                 = "mod_telegram",
+	runPrio              = 70,
 	syslog               = function(level, msg) return true end,
 	debugOutput          = function(msg) return true end,
 	writeValue           = function(filePath, str) return false end,
@@ -18,24 +16,19 @@ local Module = {
 	alivePeriod          = 0,
 	mode                 = 0,		-- 0: connected, 1: disconnected, 2: both
 	hostAlias            = "OpenWrt",
-	mta                  = "/usr/bin/mailsend",
-	mtaConnectTimeout    = 5,
-	mtaReadTimeout       = 5,
-	mailRecipient        = nil,
-	mailSender           = nil,
-	mailUser             = nil,
-	mailPassword         = nil,
-	mailSmtp             = nil,
-	mailSmtpPort         = nil,
-	mailSecurity         = "tls",
-	msgTextPattern       = "[%s] (%s) @ %s",	-- Message (host, instance, message)
-	msgSubPattern        = "%s notification",	-- Subject (host)
+	connectTimeout       = 5,
+	tgAPIToken           = nil,
+	tgChatId             = nil,
+	tgMsgURLpattern      = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&parse_mode=html&text=%s",
+	msgTextPattern       = "<strong>[%s] (%s)</strong> @ %s",	-- Message (host, instance, message)
 	msgConnectPattern    = "Connected: %s",
 	msgDisconnectPattern = "Disconnected: %s",
 	msgSeparator         = " | ",
 	msgMaxItems          = 50,
 	msgSendAttempts      = 3,
 	msgSendTimeout       = 5,
+	curlExec             = "/usr/bin/curl",
+	curlParams           = "-s",
 	status               = nil,
 	_enabled             = false,
 	_deadCounter         = 0,
@@ -49,7 +42,13 @@ local Module = {
 	_msgTimeoutCounter   = 5,
 }
 
+local function prequire(package)
+	local retVal, pkg = pcall(require, package)
+	return retVal and pkg
+end
+
 function Module:init(t)
+	self._enabled = true
 	if t.mode ~= nil then
 		self.mode = tonumber(t.mode)
 	end
@@ -64,16 +63,11 @@ function Module:init(t)
 	else
 		self.hostAlias = self.config.hostname
 	end
-
-	self.mailRecipient = t.mail_recipient
-	self.mailSender    = t.mail_sender
-	self.mailUser      = t.mail_user
-	self.mailPassword  = t.mail_password
-	self.mailSmtp      = t.mail_smtp
-	self.mailSmtpPort  = t.mail_smtp_port
-
-	if t.mail_security ~= nil then
-		self.mailSecurity = t.mail_security
+	if t.api_token ~= nil then
+		self.tgAPIToken = t.api_token
+	end
+	if t.chat_id ~= nil then
+		self.tgChatId = t.chat_id
 	end
 	if tonumber(t.message_at_startup) == 1 then
 		self._msgSentDisconnect = false
@@ -82,25 +76,34 @@ function Module:init(t)
 		self._connected         = false
 	end
 
-	if unistd.access(self.mta, "x") then
+	if unistd.access(self.curlExec, "x") then
 		self._enabled = true
 	else
 		self._enabled = false
-		self.syslog("err", string.format("%s: %s is not available", self.name, self.mta))
+		self.syslog("err", string.format("%s: %s is not available", self.name, self.curlExec))
 	end
-
-	if (not self.mailRecipient or
-	    not self.mailSender or
-	    not self.mailUser or
-	    not self.mailPassword or
-	    not self.mailSmtp or
-	    not self.mailSmtpPort) then
+	if not self.tgAPIToken then
 		self._enabled = false
-		self.syslog("warning", string.format(
-			"%s: Insufficient data to connect to the SMTP server", self.name))
+		self.syslog("err", string.format("%s: Telegram bot API token not specified.", self.name))
+	end
+	if not self.tgChatId then
+		self._enabled = false
+		self.syslog("err", string.format("%s: Telegram chat ID not specified.", self.name))
 	end
 
 	self._msgSendCounter = self.msgSendAttempts
+end
+
+function Module:escape(str)
+	local t = {}
+	for i in str:gmatch(".") do
+		if i:match("[^%w_]") then
+			t[#t + 1] = "%" .. string.format("%x", string.byte(i))
+		else
+			t[#t + 1] = i
+		end
+	end
+	return table.concat(t)
 end
 
 function Module:appendNotice(str)
@@ -114,47 +117,81 @@ function Module:appendNotice(str)
 	end
 end
 
-function Module:sendMessage(msg, textPattern)
-	local retVal     = 1
-	local verboseArg = ""
-	local emailMsg   = string.format(
+function Module:httpRequest(url)
+	local retCode = 1, data
+	local fh      = io.popen(string.format(
+		'%s --connect-timeout %s %s "%s"; printf "\n$?";', self.curlExec, self.connectTimeout, self.curlParams, url), "r")
+	if fh then
+		data       = fh:read("*a")
+		fh:close()
+		local s, e = data:find("[0-9]+\n?$")
+		retCode    = tonumber(data:sub(s))
+		data       = data:sub(0, s - 2)
+		if not data or data == "" then
+			data = nil
+		end
+	else
+		retCode = 1
+	end
+	return retCode, data
+end
+
+function Module:parseResponse(str)
+    local ok, errCode, desc
+    ok = str:match('"ok":(%w+)')
+    if ok == "false" then
+        errCode = tonumber(str:match('"error_code":(%d+)'))
+        if errCode then
+            desc = str:match('"description":"([%w%s%p_]+)"')
+        end
+    end
+    return ok, errCode, desc
+end
+
+function Module:messageRequest(msg, textPattern)
+	local retVal = 1
+	local tgMsg  = string.format(
 		textPattern, self.hostAlias, self.config.serviceConfig.instance, msg)
+	local url    = string.format(
+		self.tgMsgURLpattern, self.tgAPIToken, self.tgChatId, self:escape(tgMsg))
 
-	-- Debug
-	if self.config.debug then
-		verboseArg = " -v"
-		self.debugOutput(string.format("--- %s ---", self.name))
+	local ok, errCode, desc
+	local retCode, data = self:httpRequest(url)
+	if data then
+		ok, errCode, desc = self:parseResponse(data)
 	end
-
-	local securityArgs = "-starttls -auth-login"
-	if self.mailSecurity == "ssl" then
-		securityArgs = "-ssl -auth"
-	end
-
-	local mtaCmd = string.format(
-		'%s%s %s -smtp "%s" -port %s -ct %s -read-timeout %s -cs utf-8 -user "%s" -pass "%s" -f "%s" -t "%s" -sub "%s" -M "%s"',
-		self.mta, verboseArg, securityArgs, self.mailSmtp, self.mailSmtpPort,
-		self.mtaConnectTimeout, self.mtaReadTimeout,
-		self.mailUser, self.mailPassword, self.mailSender, self.mailRecipient,
-		string.format(self.msgSubPattern, self.hostAlias),
-		emailMsg)
-
-	-- Debug
-	if self.config.debug then
-		self.debugOutput(string.format("%s: %s", self.name, mtaCmd))
-		self.syslog("debug", string.format("%s: %s", self.name, mtaCmd))
-	end
-
-	retVal = os.execute(mtaCmd)
-	if retVal == 0 then
+	if retCode == 0 and ok == "true" then
+		retVal = 0
 		self.syslog("info", string.format(
-			"%s: Message sent to %s", self.name, self.mailRecipient))
+			"%s: Message sent to chat %s", self.name, self.tgChatId))
+	else
+		if errCode == 400 or errCode == 406 then
+			retVal = 2
+		elseif (errCode == 401 or
+		        errCode == 403 or
+		        errCode == 404 or
+		        errCode == 420) then
+			retVal = 3
+		end
+		if errCode and desc then
+			self.syslog("warning", string.format(
+				"%s: %s %s", self.name, tostring(errCode), tostring(desc)))
+		end
+	end
+	return retVal
+end
+
+function Module:sendMessage(msg, textPattern)
+	local retVal = self:messageRequest(msg, textPattern)
+	if retVal == 0 then
 		self._msgBuffer = {}
+	elseif retVal == 2 then
+		self.syslog("err", string.format(
+			"%s: Server error (invalid API token or chat ID)", self.name))
 	else
 		self.syslog("err", string.format(
 			"%s: An error occured while sending message", self.name))
 	end
-
 	return retVal
 end
 
@@ -172,7 +209,6 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 			self:appendNotice(string.format(
 				self.msgDisconnectPattern, os.date("%Y.%m.%d %H:%M:%S", os.time())))
 		end
-
 		if not self._msgSentDisconnect and (self.mode == 1 or self.mode == 2) then
 			if self._deadCounter >= self.deadPeriod then
 				self._msgSendCounter    = 0
@@ -191,7 +227,6 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 			self:appendNotice(string.format(
 				self.msgConnectPattern, os.date("%Y.%m.%d %H:%M:%S", os.time())))
 		end
-
 		if not self._msgSentConnect and (self.mode == 0 or self.mode == 2) then
 			if self._aliveCounter >= self.alivePeriod then
 				self._msgSendCounter = 0
@@ -206,10 +241,11 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	if self._msgSendCounter < self.msgSendAttempts then
 		if self._msgTimeoutCounter >= self.msgSendTimeout then
 			if #self._msgBuffer > 0 then
-				if self:sendMessage(table.concat(self._msgBuffer, self.msgSeparator), self.msgTextPattern) == 0 then
-					self._msgSendCounter = self.msgSendAttempts
-				else
+				local retVal = self:sendMessage(table.concat(self._msgBuffer, self.msgSeparator), self.msgTextPattern)
+				if retVal == 1 then
 					self._msgSendCounter = self._msgSendCounter + 1
+				else
+					self._msgSendCounter = self.msgSendAttempts
 				end
 			end
 			self._msgTimeoutCounter = 0
