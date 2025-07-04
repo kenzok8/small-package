@@ -20,39 +20,69 @@ local Module = {
 	port                 = 53,
 	runInterval          = 600,
 	runIntervalFailed    = 60,
-	runIntervalDNSFailed = 1,
+	runIntervalIPFailed  = 1,
 	requestAttempts      = 2,
 	timeout              = 3,
+	curlExec             = "/usr/bin/curl",
+	curlParams           = "-s",
 	providers            = {
 		opendns1 = {
-			name = "opendns1", host = "myip.opendns.com",
+			name    = "opendns1", type = "dns", host = "myip.opendns.com",
 			server = "208.67.222.222", server6 = "2620:119:35::35",
 			port = 53, queryType = "A", queryType6 = "AAAA",
 		},
-		opendns2 = {
-			name = "opendns2", host = "myip.opendns.com",
+		opendns2    = {
+			name = "opendns2", type = "dns", host = "myip.opendns.com",
 			server = "208.67.220.220", server6 = "2620:119:35::35",
 			port = 53, queryType = "A", queryType6 = "AAAA",
 		},
-		opendns3 = {
-			name = "opendns3", host = "myip.opendns.com",
+		opendns3    = {
+			name = "opendns3", type = "dns", host = "myip.opendns.com",
 			server = "208.67.222.220", server6 = "2620:119:35::35",
 			port = 53, queryType = "A", queryType6 = "AAAA",
 		},
-		opendns4 = {
-			name = "opendns4", host = "myip.opendns.com",
+		opendns4    = {
+			name = "opendns4", type = "dns", host = "myip.opendns.com",
 			server = "208.67.220.222", server6 = "2620:119:35::35",
 			port = 53, queryType = "A", queryType6 = "AAAA",
 		},
-		akamai   = {
-			name = "akamai", host = "whoami.akamai.net",
+		google      = {
+			name = "google", type = "dns", host = "o-o.myaddr.l.google.com",
+			server = "ns1.google.com", server6 = "ns1.google.com",
+			port = 53, queryType = "TXT", queryType6 = "TXT",
+		},
+		akamai      = {
+			name = "akamai", type = "dns", host = "whoami.akamai.net",
 			server = "ns1-1.akamaitech.net", server6 = "ns1-1.akamaitech.net",
 			port = 53, queryType = "A", queryType6 = "AAAA",
 		},
-		google   = {
-			name = "google", host = "o-o.myaddr.l.google.com",
-			server = "ns1.google.com", server6 = "ns1.google.com",
-			port = 53, queryType = "TXT", queryType6 = "TXT",
+		akamai_http = {
+			name = "akamai_http", type = "http", url = "http://whatismyip.akamai.com/",
+			parseResponseFunc = nil,
+		},
+		amazonaws= {
+			name = "amazonaws", type = "http", url = "http://checkip.amazonaws.com/",
+			parseResponseFunc = nil,
+		},
+		wgetip= {
+			name = "wgetip", type = "http", url = "http://wgetip.com/",
+			parseResponseFunc = nil,
+		},
+		ifconfig= {
+			name = "ifconfig", type = "http", url = "http://ifconfig.me/",
+			parseResponseFunc = nil,
+		},
+		ipecho= {
+			name = "ipecho", type = "http", url = "http://ipecho.net/plain",
+			parseResponseFunc = nil,
+		},
+		canhazip= {
+			name = "canhazip", type = "http", url = "http://canhazip.com/",
+			parseResponseFunc = nil,
+		},
+		icanhazip = {
+			name = "icanhazip", type = "http", url = "http://icanhazip.com/",
+			parseResponseFunc = nil,
 		},
 	},
 	ipScript             = "",
@@ -64,9 +94,10 @@ local Module = {
 	_lastResolvedIp      = nil,
 	_enabled             = false,
 	_counter             = 0,
-	_DNSFalseCounter     = 0,
+	_IPFalseCounter      = 0,
 	_interval            = 600,
 	_DNSPacket           = nil,
+	_requestIP           = nil,
 }
 
 function Module:runIpScript()
@@ -172,6 +203,7 @@ function Module:sendUDPMessage(message, server, port)
 			end
 
 			local ok, errMsg, errNum = socket.sendto(sock, message, saTable[1])
+
 			local response = {}
 			if ok then
 				local ret, resp, errNum = socket.recvfrom(sock, 1024)
@@ -212,13 +244,10 @@ end
 function Module:parseParts(message, start, parts)
 	local partStart = start + 2
 	local partLen   = message:sub(start, start + 1)
-
 	if #partLen == 0 then
 		return parts
 	end
-
 	local partEnd     = partStart + (tonumber(partLen, 16) * 2)
-
 	parts[#parts + 1] = message:sub(partStart, partEnd - 1)
 	if message:sub(partEnd, partEnd + 1) == "00" or partEnd > #message then
 		return parts
@@ -240,6 +269,7 @@ function Module:decodeMessage(message)
 	local ARCOUNT = message:sub(21, 24)
 
 	local questionSectionStarts = 25
+
 	local questionParts = self:parseParts(message, questionSectionStarts, {})
 	local qtypeStarts   = questionSectionStarts + (#table.concat(questionParts)) + (#questionParts * 2) + 1
 	local qclassStarts  = qtypeStarts + 4
@@ -251,11 +281,11 @@ function Module:decodeMessage(message)
 	if numAnswers > 0 then
 		for answerCount = 1, numAnswers do
 			if answerSectionStarts < #message then
-				local ATYPE = tonumber(
+				local ATYPE          = tonumber(
 					message:sub(answerSectionStarts + 5, answerSectionStarts + 8), 16)
-				local RDLENGTH = tonumber(
+				local RDLENGTH       = tonumber(
 					message:sub(answerSectionStarts + 21, answerSectionStarts + 24), 16)
-				local RDDATA = message:sub(
+				local RDDATA         = message:sub(
 					answerSectionStarts + 25, answerSectionStarts + 24 + (RDLENGTH * 2))
 				local RDDATA_decoded = ""
 
@@ -290,26 +320,23 @@ function Module:decodeMessage(message)
 				end
 				answerSectionStarts = answerSectionStarts + 24 + (RDLENGTH * 2)
 
-				if RDDATA_decoded:match("^[a-f0-9.:]+$") then
+				if RDDATA_decoded:match("^[a-fA-F0-9.:]+$") then
 					retTable[#retTable + 1] = RDDATA_decoded
 				end
 			end
 		end
 	end
-
 	return retTable
 end
 
-function Module:requestIP()
+function Module:requestIPDNS()
 	local res
 	local qtype  = self._qtype and self._provider.queryType6 or self._provider.queryType
 	local server = self._qtype and self._provider.server6 or self._provider.server
 	local port   = self._provider.port or self.port
-
 	if not self._DNSPacket then
 		self._DNSPacket = self:buildMessage(self._provider.host, qtype)
 	end
-
 	local retCode, response = self:sendUDPMessage(self._DNSPacket, server, port)
 	if retCode == 0 and response then
 		local retTable = self:decodeMessage(response)
@@ -320,7 +347,57 @@ function Module:requestIP()
 		self.syslog("warning", string.format(
 			"%s: UDP error when requesting an IP address", self.name))
 	end
+	return res
+end
 
+function Module:httpRequest(url)
+	local retCode = 1, data
+	local iface   = ""
+	if self.config.serviceConfig.iface then
+		iface = " --interface " .. self.config.serviceConfig.iface
+	end
+	local fh = io.popen(string.format(
+		'%s%s --connect-timeout %s %s "%s"; printf "\n$?";', self.curlExec, iface, self.timeout, self.curlParams, url), "r")
+	if fh then
+		data       = fh:read("*a")
+		fh:close()
+		local s, e = data:find("[0-9]+\n?$")
+		retCode    = tonumber(data:sub(s))
+		data       = data:sub(0, s - 2)
+		if not data or data == "" then
+			data = nil
+		end
+	else
+		retCode = 1
+	end
+	return retCode, data
+end
+
+function Module:parseHTTPResponse(data)
+	data = data:gsub("^[%s%c]+", ""):gsub("[%s%c]+$", "")
+	if data:match("^[a-fA-F0-9.:]+$") then
+		return data
+	end
+	return
+end
+
+function Module:requestIPHTTP()
+	local res
+	local url               = self._provider.url
+	local parseResponseFunc = self._provider.parseResponseFunc
+	if url then
+		local retCode, data = self:httpRequest(url)
+		if retCode == 0 and data then
+			if type(parseResponseFunc) == "function" then
+				res = parseResponseFunc(data)
+			else
+				res = self:parseHTTPResponse(data)
+			end
+		else
+			self.syslog("warning", string.format(
+				"%s: HTTP error when requesting an IP address", self.name))
+		end
+	end
 	return res
 end
 
@@ -352,12 +429,28 @@ function Module:init(t)
 	if t.qtype ~= nil then
 		self._qtype = (tonumber(t.qtype) ~= 0)
 	end
-	self._currentIp       = nil
-	self._lastResolvedIp  = nil
-	self._DNSPacket       = nil
-	self._interval        = self.runInterval
-	self._DNSFalseCounter = 0
-	self._enabled         = true
+	self._currentIp      = nil
+	self._lastResolvedIp = nil
+	self._DNSPacket      = nil
+	self._interval       = self.runInterval
+	self._IPFalseCounter = 0
+	self._enabled        = true
+	if not self._provider then
+		self._enabled = false
+	else
+		if self._provider.url and not unistd.access(self.curlExec, "x") then
+			self._enabled = false
+			self.syslog("err", string.format(
+				"%s: %s is not available. You need to install curl.", self.name, self.curlExec))
+		end
+		if self._provider.type == "dns" then
+			self._requestIP = self.requestIPDNS
+		elseif self._provider.type == "http" then
+			self._requestIP = self.requestIPHTTP
+		else
+			self._enabled = false
+		end
+	end
 end
 
 function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
@@ -366,23 +459,20 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 	end
 	if currentStatus == 0 then
 		if self._counter == 0 or self._counter >= self._interval or currentStatus ~= lastStatus then
-
-			local ip = self:requestIP()
-
+			local ip = self:_requestIP()
 			if not ip then
-				ip                    = ""
-				self._DNSFalseCounter = self._DNSFalseCounter + 1
-				if self._DNSFalseCounter >= self.requestAttempts then
+				ip                   = ""
+				self._IPFalseCounter = self._IPFalseCounter + 1
+				if self._IPFalseCounter >= self.requestAttempts then
 					self._interval        = self.runIntervalFailed
-					self._DNSFalseCounter = 0
+					self._IPFalseCounter = 0
 				else
-					self._interval        = self.runIntervalDNSFailed
+					self._interval = self.runIntervalIPFailed
 				end
 			else
-				self._interval        = self.runInterval
-				self._DNSFalseCounter = 0
+				self._interval       = self.runInterval
+				self._IPFalseCounter = 0
 			end
-
 			if ip ~= self._currentIp then
 				self.status = ip
 				if ip ~= "" then
@@ -400,11 +490,11 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 			self._counter   = 0
 		end
 	else
-		self._currentIp       = nil
-		self.status           = self._currentIp
-		self._DNSFalseCounter = 0
-		self._counter         = 0
-		self._interval        = self.runInterval
+		self._currentIp      = nil
+		self.status          = self._currentIp
+		self._IPFalseCounter = 0
+		self._counter        = 0
+		self._interval       = self.runInterval
 	end
 	self._counter = self._counter + timeDiff
 end

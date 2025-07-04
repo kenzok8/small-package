@@ -4,6 +4,7 @@ local appName          = "internet-detector"
 local appExec          = "/usr/bin/internet-detector"
 local mailsendExec     = "/usr/bin/mailsend"
 local modemManagerInit = "/etc/init.d/modemmanager"
+local curlExec         = "/usr/bin/curl"
 
 local InternetDetector = require(appName .. ".main")
 local uci              = require("uci")
@@ -36,6 +37,16 @@ local function init()
 		end
 	else
 		lines[#lines + 1] = '"email_mod":false'
+	end
+	if prequire(appName .. ".modules.mod_telegram") then
+		lines[#lines + 1] = '"telegram":true'
+	else
+		lines[#lines + 1] = '"telegram":false'
+	end
+	if unistd.access(curlExec, "x") then
+		lines[#lines + 1] = '"curl_exec":true'
+	else
+		lines[#lines + 1] = '"curl_exec":false'
 	end
 	return string.format("{%s}", table.concat(lines, ","))
 end

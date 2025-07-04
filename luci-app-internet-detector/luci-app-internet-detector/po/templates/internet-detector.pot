@@ -44,6 +44,15 @@ msgstr ""
 msgid "Blink"
 msgstr ""
 
+msgid "Bot API token is missing!"
+msgstr ""
+
+msgid "Bot token"
+msgstr ""
+
+msgid "Chat ID"
+msgstr ""
+
 msgid "Check type"
 msgstr ""
 
@@ -66,6 +75,9 @@ msgid "Connection timeout"
 msgstr ""
 
 msgid "Contents have been saved."
+msgstr ""
+
+msgid "Curl is not available..."
 msgstr ""
 
 msgid "Dead interval"
@@ -99,9 +111,6 @@ msgid "Dismiss"
 msgstr ""
 
 msgid "DNS query type"
-msgstr ""
-
-msgid "DNS provider"
 msgstr ""
 
 msgid "Edit"
@@ -138,6 +147,9 @@ msgid "Enable public-ip-script"
 msgstr ""
 
 msgid "Enabled"
+msgstr ""
+
+msgid "Error"
 msgstr ""
 
 msgid "Expecting:"
@@ -181,10 +193,16 @@ msgstr ""
 msgid "Huge: 1492 bytes"
 msgstr ""
 
+msgid "ID of the Telegram chat to which messages will be sent."
+msgstr ""
+
 msgid "ICMP-echo request (ping)"
 msgstr ""
 
 msgid "ICMP packet data size"
+msgstr ""
+
+msgid "Incorrect bot token?"
 msgstr ""
 
 msgid "Instances"
@@ -289,6 +307,9 @@ msgstr ""
 msgid "No <abbr title=\"Light Emitting Diode\">LED</abbr>s available..."
 msgstr ""
 
+msgid "No messages available. Write something to the bot and try again."
+msgstr ""
+
 msgid "Not scheduled"
 msgstr ""
 
@@ -345,6 +366,9 @@ msgstr ""
 msgid "Polling interval"
 msgstr ""
 
+msgid "Provider"
+msgstr ""
+
 msgid "Public IP"
 msgstr ""
 
@@ -358,6 +382,9 @@ msgid "Reboot device if the Internet is disconnected at service startup."
 msgstr ""
 
 msgid "Recipient"
+msgstr ""
+
+msgid "Request chat ID from bot API"
 msgstr ""
 
 msgid "Restart"
@@ -435,7 +462,7 @@ msgstr ""
 msgid "Service configuration"
 msgstr ""
 
-msgid "Service for determining the public IP address through DNS."
+msgid "Service for determining the public IP address."
 msgstr ""
 
 msgid "Service: detector always runs as a system service."
@@ -477,6 +504,12 @@ msgstr ""
 msgid "TCP port connection"
 msgstr ""
 
+msgid "Telegram bot API token."
+msgstr ""
+
+msgid "Telegram message will be sent when connected or disconnected from the Internet."
+msgstr ""
+
 msgid "The type of record requested in the DNS query (if the service supports it)."
 msgstr ""
 
@@ -487,6 +520,9 @@ msgid "Timeout between stopping and starting a network device when restarting."
 msgstr ""
 
 msgid "Timeout between stopping and starting a ModemManger interface when restarting."
+msgstr ""
+
+msgid "To support HTTP services you need to install curl."
 msgstr ""
 
 msgid "Type a time string"
@@ -525,10 +561,17 @@ msgstr ""
 msgid "When email will be sent"
 msgstr ""
 
+msgid "When message will be sent"
+msgstr ""
+
 msgid "Windows: 32 bytes"
 msgstr ""
 
 msgid "Write messages to the system log."
+msgstr ""
+
+msgid ""
+"You need to register a new %sTelegram bot%s. Then get the bot's API token and paste it into the <code>Bot token</code> field. After that, open a chat with the bot, write something (in the Telegram app) and you will be able to get the chat ID using the <code>ID</code> button."
 msgstr ""
 
 msgid "after connection"

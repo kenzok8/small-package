@@ -134,6 +134,33 @@ var Timefield = ui.Textfield.extend({
 	},
 });
 
+var TextfieldButton = ui.Textfield.extend({
+	render() {
+		let frameEl = E('div', { 'id': this.options.id }),
+		    inputEl = E('input', {
+			'id'         : this.options.id ? 'widget.' + this.options.id : null,
+			'name'       : this.options.name,
+			'type'       : 'text',
+			'class'      : 'cbi-input-text',
+			'readonly'   : this.options.readonly ? '' : null,
+			'disabled'   : this.options.disabled ? '' : null,
+			'maxlength'  : this.options.maxlength,
+			'placeholder': this.options.placeholder,
+			'value'      : this.value,
+		});
+		frameEl.appendChild(E('div', { 'class': 'control-group' }, [
+			inputEl,
+			E('button', {
+				'class'     : `cbi-button cbi-button-${this.options.btnstyle || 'neutral'}`,
+				'title'     : this.options.btntitle,
+				'aria-label': this.options.btntitle,
+				'click'     : this.options.onclick,
+			}, this.options.btntext,)
+		]));
+		return this.bind(frameEl);
+	},
+});
+
 return view.extend({
 	appName                : 'internet-detector',
 	configDir              : '/etc/internet-detector',
@@ -149,10 +176,13 @@ return view.extend({
 	ledsPath               : '/sys/class/leds',
 	ledsPerInstance        : 3,
 	leds                   : [],
+	tgUpdatesURLPattern    : 'https://api.telegram.org/bot%s/getUpdates',
 	mm                     : false,
 	mmInit                 : false,
 	email                  : false,
 	emailExec              : false,
+	telegram               : false,
+	curlExec               : false,
 	modRegularScriptNextRun: {},
 
 	callInitStatus: rpc.declare({
@@ -330,6 +360,61 @@ return view.extend({
 		});
 	},
 
+	getTgChatIdHandler(ev, instance) {
+		ev.preventDefault();
+		let botToken;
+		let botTokenInput = document.getElementById(
+			'widget.cbid.%s.%s.mod_telegram_api_token'.format(this.appName, instance));
+		if(botTokenInput) {
+			botToken = botTokenInput.value;
+		};
+		if(!botTokenInput || !botToken) {
+			alert(_('Bot API token is missing!'));
+			return;
+		};
+		let apiURL = this.tgUpdatesURLPattern.format(botToken);
+
+		console.log(`Requesting chat ID: ${apiURL}`);
+
+		return fetch(apiURL).then(r => {
+			if(r.ok) {
+				r.json().then(j => {
+					let chats = [];
+					if(j.ok && j.result) {
+						j.result.forEach(i => {
+							if(i.message && i.message.chat && i.message.chat.id) {
+								if(!chats.includes(i.message.chat.id)) {
+									chats.push(i.message.chat.id);
+								};
+							};
+						});
+					};
+					let tgChatIdInput = document.getElementById(
+						'widget.cbid.%s.%s.mod_telegram_chat_id'.format(this.appName, instance));
+					if(tgChatIdInput) {
+						if(chats.length == 0) {
+							alert(_('No messages available. Write something to the bot and try again.'));
+						} else {
+							tgChatIdInput.value = chats[chats.length - 1];
+							tgChatIdInput.focus();
+							tgChatIdInput.blur();
+						};
+					};
+				});
+			} else {
+				let status      = r.status;
+				let errorString = `${_('Error')} ${r.status}.`;
+				if(status == 404) {
+					errorString += ` ${_('Incorrect bot token?')}`;
+				};
+				alert(errorString);
+			};
+		}).catch(e => {
+			alert(e.message);
+			throw e;
+		});
+	},
+
 	CBITimeInput: form.Value.extend({
 		__name__ : 'CBI.TimeInput',
 
@@ -349,6 +434,27 @@ return view.extend({
 					section_id
 				),
 				disabled   : (this.readonly != null) ? this.readonly : this.map.readonly,
+			});
+			return widget.render();
+		},
+	}),
+
+	CBITextfieldButtonInput: form.Value.extend({
+		__name__ : 'CBI.TextfieldButtonInput',
+
+		renderWidget(section_id, option_index, cfgvalue) {
+			let value  = (cfgvalue != null) ? cfgvalue : this.default,
+				widget = new TextfieldButton(value, {
+				id         : this.cbid(section_id),
+				optional   : this.optional || this.rmempty,
+				datatype   : this.datatype,
+				placeholder: this.placeholder,
+				validate   : L.bind(this.validate, this, section_id),
+				disabled   : (this.readonly != null) ? this.readonly : this.map.readonly,
+				btntext    : this.btntext,
+				btntitle   : this.btntitle,
+				btnstyle   : this.btnstyle,
+				onclick    : this.onclick,
 			});
 			return widget.render();
 		},
@@ -541,6 +647,12 @@ return view.extend({
 			};
 			if(data[3].email_exec) {
 				this.emailExec = true;
+			};
+			if(data[3].telegram) {
+				this.telegram = true;
+			};
+			if(data[3].curl_exec) {
+				this.curlExec = true;
 			};
 		};
 		this.currentAppMode = uci.get(this.appName, 'config', 'mode');
@@ -755,6 +867,9 @@ return view.extend({
 		if(this.currentAppMode !== '2') {
 			if(this.email) {
 				s.tab('email', _('Email notification'));
+			};
+			if(this.telegram) {
+				s.tab('telegram', _('Telegram notification'));
 			};
 			s.tab('user_scripts', _('User scripts'));
 			s.tab('regular_script', _('Regular script'));
@@ -1081,16 +1196,27 @@ return view.extend({
 
 			// provider
 			o = s.taboption('public_ip', form.ListValue,
-				'mod_public_ip_provider', _('DNS provider'),
-				_('Service for determining the public IP address through DNS.')
+				'mod_public_ip_provider', _('Provider'),
+				_('Service for determining the public IP address.') + '<br />' +
+				((this.curlExec) ? '' :
+					_('To support HTTP services you need to install curl.'))
 			);
 			o.modalonly = true;
-			o.value('opendns1');
-			o.value('opendns2');
-			o.value('opendns3');
-			o.value('opendns4');
-			o.value('akamai');
-			o.value('google');
+			o.value('opendns1', 'opendns1 (DNS)');
+			o.value('opendns2', 'opendns2 (DNS)');
+			o.value('opendns3', 'opendns3 (DNS)');
+			o.value('opendns4', 'opendns4 (DNS)');
+			o.value('google',   'google (DNS)');
+			o.value('akamai',   'akamai (DNS)');
+			if(this.curlExec) {
+				o.value('akamai_http', "akamai (HTTP)");
+				o.value('amazonaws',   "amazonaws (HTTP)");
+				o.value('wgetip',      "wgetip.com (HTTP)");
+				o.value('ifconfig',    "ifconfig.me (HTTP)");
+				o.value('ipecho',      "ipecho.net (HTTP)");
+				o.value('canhazip',    "canhazip.com (HTTP)");
+				o.value('icanhazip',   "icanhazip.com (HTTP)");
+			};
 			o.default = 'opendns1';
 
 			// ipv6
@@ -1102,6 +1228,12 @@ return view.extend({
 			o.value('0', 'A (IPv4)');
 			o.value('1', 'AAAA (IPv6)');
 			o.default = '0';
+			o.depends({ 'mod_public_ip_provider': 'opendns1' });
+			o.depends({ 'mod_public_ip_provider': 'opendns2' });
+			o.depends({ 'mod_public_ip_provider': 'opendns3' });
+			o.depends({ 'mod_public_ip_provider': 'opendns4' });
+			o.depends({ 'mod_public_ip_provider': 'google' });
+			o.depends({ 'mod_public_ip_provider': 'akamai' });
 
 			// interval
 			o = s.taboption('public_ip', form.ListValue,
@@ -1285,6 +1417,103 @@ return view.extend({
 						o.rawhtml = true;
 						o.default = '<label class="cbi-value-title"></label><div class="cbi-value-field"><em>' +
 							_('Mailsend is not available...') +
+							'</em></div>';
+						o.modalonly = true;
+					};
+				};
+
+				// Telegram notification
+
+				if(this.telegram) {
+					if(this.curlExec) {
+						o = s.taboption('telegram', form.DummyValue, '_dummy');
+						o.rawhtml = true;
+						o.default = '<div class="cbi-section-descr">' +
+							_('Telegram message will be sent when connected or disconnected from the Internet.') +
+							'<br />' +
+							_("You need to register a new %sTelegram bot%s. Then get the bot's API token and paste it into the <code>Bot token</code> field. After that, open a chat with the bot, write something (in the Telegram app) and you will be able to get the chat ID using the <code>ID</code> button.").format("<a href='https://core.telegram.org/bots#how-do-i-create-a-bot' target='_blank'>", '</a>') +
+							'</div>';
+
+						o.modalonly = true;
+
+						// enabled
+						o = s.taboption('telegram', form.Flag, 'mod_telegram_enabled',
+							_('Enable'));
+						o.rmempty   = false;
+						o.modalonly = true;
+
+						// mode
+						o = s.taboption('telegram', form.ListValue,
+							'mod_telegram_mode', _('When message will be sent')
+						);
+						o.modalonly = true;
+						o.value(0, _('after connection'));
+						o.value(1, _('after disconnection'));
+						o.value(2, _('after connection or disconnection'));
+						o.default = '0';
+
+						// alive_period
+						o = s.taboption('telegram', this.CBITimeInput,
+							'mod_telegram_alive_period', _('Alive period'),
+							_('Period of time after connecting to the Internet before sending a message.')
+						);
+						o.rmempty   = false;
+						o.modalonly = true;
+						o.depends({ 'mod_telegram_mode': '0' });
+						o.depends({ 'mod_telegram_mode': '2' });
+						o.default = '0';
+
+						// dead_period
+						o = s.taboption('telegram', this.CBITimeInput,
+							'mod_telegram_dead_period', _('Dead period'),
+							_('Period of time after disconnecting from Internet before sending a message.')
+						);
+						o.rmempty   = false;
+						o.modalonly = true;
+						o.depends({ 'mod_telegram_mode': '1' });
+						o.depends({ 'mod_telegram_mode': '2' });
+						o.default = '0';
+
+						// host_alias
+						o = s.taboption('telegram', form.Value, 'mod_telegram_host_alias',
+							_('Host alias'),
+							_('Host identifier in messages. If not specified, hostname will be used.'));
+						o.modalonly = true;
+
+						// tg_api_token
+						o = s.taboption('telegram', form.Value,
+							'mod_telegram_api_token', _('Bot token'),
+							_('Telegram bot API token.'));
+						o.password  = true;
+						o.modalonly = true;
+
+						// tg_chat_id
+						o = s.taboption('telegram', this.CBITextfieldButtonInput,
+							'mod_telegram_chat_id', _('Chat ID'),
+							_('ID of the Telegram chat to which messages will be sent.')
+						);
+						o.btntext   = _('ID'),
+						o.btntitle  = _('Request chat ID from bot API'),
+						o.btnstyle  = 'action',
+						o.onclick   = ui.createHandlerFn(this,
+							(ev) => this.getTgChatIdHandler(ev, s.section));
+						o.modalonly = true;
+						o.optional  = false;
+						o.rmempty   = false;
+						o.depends({ 'mod_telegram_api_token': /.+/ });
+
+						// message_at_startup
+						o = s.taboption('telegram', form.Flag, 'mod_telegram_message_at_startup',
+							_('On startup'),
+							_('Send message on service startup.')
+						);
+						o.rmempty   = false;
+						o.modalonly = true;
+					} else {
+						o         = s.taboption('telegram', form.DummyValue, '_dummy');
+						o.rawhtml = true;
+						o.default = '<label class="cbi-value-title"></label><div class="cbi-value-field"><em>' +
+							_('Curl is not available...') +
 							'</em></div>';
 						o.modalonly = true;
 					};

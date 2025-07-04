@@ -39,7 +39,7 @@ msgid "Alive period"
 msgstr "Период после подключения"
 
 msgid "An email will be sent when connected or disconnected from the Internet."
-msgstr "Сообщение будет отправлено при подключении или отключении от Интернет."
+msgstr "Сообщение будет отправлено на email при подключении или отключении от Интернет."
 
 msgid "An error has occurred"
 msgstr "Произошла ошибка"
@@ -55,6 +55,15 @@ msgstr "Большой: 248 байт"
 
 msgid "Blink"
 msgstr "Мигание"
+
+msgid "Bot API token is missing!"
+msgstr "Отсутствует API токен бота!"
+
+msgid "Bot token"
+msgstr "Токен бота"
+
+msgid "ID чата"
+msgstr ""
 
 msgid "Check type"
 msgstr "Тип проверки"
@@ -79,6 +88,9 @@ msgstr "Таймаут соединения"
 
 msgid "Contents have been saved."
 msgstr "Содержимое сохранено."
+
+msgid "Curl is not available..."
+msgstr "Curl недоступен..."
 
 msgid "Dead interval"
 msgstr "Интервал при отключении"
@@ -112,9 +124,6 @@ msgstr "Закрыть"
 
 msgid "DNS query type"
 msgstr "Тип DNS-запроса"
-
-msgid "DNS provider"
-msgstr "DNS провайдер"
 
 msgid "Edit"
 msgstr "Изменить"
@@ -152,6 +161,9 @@ msgstr "Включить public-ip-script"
 msgid "Enabled"
 msgstr "Включен"
 
+msgid "Error"
+msgstr "Ошибка"
+
 msgid "Expecting:"
 msgstr "Ожидается:"
 
@@ -180,7 +192,7 @@ msgid "Hosts"
 msgstr "Хосты"
 
 msgid "Hosts polling interval when the Internet is down."
-msgstr "Интервал опроса хостов если Интернет не доступен."
+msgstr "Интервал опроса хостов если Интернет недоступен."
 
 msgid "Hosts polling interval when the Internet is up."
 msgstr "Интервал опроса хостов если Интернет доступен."
@@ -195,11 +207,17 @@ msgstr ""
 msgid "Huge: 1492 bytes"
 msgstr "Огромный: 1492 байта"
 
+msgid "ID of the Telegram chat to which messages will be sent."
+msgstr "ID чата Telegram в который будут отправлены сообщения."
+
 msgid "ICMP-echo request (ping)"
 msgstr "Запрос ICMP-echo (ping)"
 
 msgid "ICMP packet data size"
 msgstr "Размер данных ICMP-пакета"
+
+msgid "Incorrect bot token?"
+msgstr "Неправильный токен бота?"
 
 msgid "Instances"
 msgstr "Экземпляры"
@@ -250,7 +268,7 @@ msgid "Loading"
 msgstr "Загрузка"
 
 msgid "Mailsend is not available..."
-msgstr "Mailsend не доступен..."
+msgstr "Mailsend недоступен..."
 
 msgid "Main settings"
 msgstr "Основные настройки"
@@ -280,7 +298,7 @@ msgid "Maximum timeout for waiting for a response from the host."
 msgstr "Максимальный таймаут ожидания ответа от хоста."
 
 msgid "ModemManager is not available..."
-msgstr "ModemManager не доступен..."
+msgstr "ModemManager недоступен..."
 
 msgid "Modem will be restarted when the Internet is disconnected."
 msgstr "Модем будет перезапущен при отключении Интернет."
@@ -313,6 +331,9 @@ msgstr "Следующий запуск"
 
 msgid "No <abbr title=\"Light Emitting Diode\">LED</abbr>s available..."
 msgstr "Нет доступных <abbr title=\"Светодиод\">LED</abbr>..."
+
+msgid "No messages available. Write something to the bot and try again."
+msgstr "Нет доступных сообщений. Напишите что-нибудь боту и попробуйте ещё раз."
 
 msgid "Not scheduled"
 msgstr "Не запланирован"
@@ -373,6 +394,9 @@ msgstr "Регулярный скрипт"
 msgid "Polling interval"
 msgstr "Интервал опроса"
 
+msgid "Provider"
+msgstr "Провайдер"
+
 msgid "Public IP"
 msgstr "Публичный IP"
 
@@ -387,6 +411,9 @@ msgstr "Перезагрузка устройства если Интренет 
 
 msgid "Recipient"
 msgstr "Получатель"
+
+msgid "Request chat ID from bot API"
+msgstr "Запросить ID чата через API бота"
 
 msgid "Restart"
 msgstr "Перезапуск"
@@ -463,8 +490,8 @@ msgstr "Не удалось выполнить действие службы \"%
 msgid "Service configuration"
 msgstr "Конфигурация службы"
 
-msgid "Service for determining the public IP address through DNS."
-msgstr "Сервис для определения публичного IP адреса через DNS."
+msgid "Service for determining the public IP address."
+msgstr "Сервис для определения публичного IP адреса."
 
 msgid "Service: detector always runs as a system service."
 msgstr "Служба: детектор работает постоянно, как системная служба."
@@ -505,6 +532,12 @@ msgstr "TCP-порт"
 msgid "TCP port connection"
 msgstr "Подключение к TCP-порту"
 
+msgid "Telegram bot API token."
+msgstr "API токен Telegram бота."
+
+msgid "Telegram message will be sent when connected or disconnected from the Internet."
+msgstr "Сообщение в Telegram будет отправлено при подключении или отключении от Интернет."
+
 msgid "The type of record requested in the DNS query (if the service supports it)."
 msgstr "Тип записи запрашиваемой в DNS-запросе (если сервис поддерживает)."
 
@@ -516,6 +549,9 @@ msgstr "Таймаут между остановкой и запуском се�
 
 msgid "Timeout between stopping and starting a ModemManger interface when restarting."
 msgstr "Таймаут между остановкой и запуском интерфейса ModemManger при перезапуске."
+
+msgid "To support HTTP services you need to install curl."
+msgstr "Для поддержки HTTP сервисов необходимо установить curl."
 
 msgid "Type a time string"
 msgstr "Введите строку времени"
@@ -557,11 +593,19 @@ msgstr ""
 msgid "When email will be sent"
 msgstr "Когда будет отправлено сообщение"
 
+msgid "When message will be sent"
+msgstr "Когда будет отправлено сообщение"
+
 msgid "Windows: 32 bytes"
 msgstr "Windows: 32 байта"
 
 msgid "Write messages to the system log."
 msgstr "Записывать сообщения в системный журнал."
+
+msgid ""
+"You need to register a new %sTelegram bot%s. Then get the bot's API token and paste it into the <code>Bot token</code> field. After that, open a chat with the bot, write something (in the Telegram app) and you will be able to get the chat ID using the <code>ID</code> button."
+msgstr ""
+"Необходимо зарегистрировать новый %sTelegram бот%s. Затем получить API токен бота и вставить его в поле <code>Токен бота</code>. После этого, откройте чат с ботом, напишите что-нибудь (в приложении Telegram) и можно будет получить ID чата с помощью кнопки <code>ID</code>."
 
 msgid "after connection"
 msgstr "после подключения"
