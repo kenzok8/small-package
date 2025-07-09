@@ -1,5 +1,8 @@
 #!/bin/sh
 
+[ -f "/www/luci-static/resources/icons/loading.gif" ] && \
+	sed -i "s,/loading.svg,/loading.gif,g" "/www/luci-static/resources/view/homeproxy/status.js"
+
 uci -q batch <<-EOF >"/dev/null"
 	delete firewall.homeproxy_pre
 
