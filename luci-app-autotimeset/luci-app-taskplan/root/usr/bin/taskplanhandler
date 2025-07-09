@@ -119,13 +119,21 @@ trigger() {
 		;;
 	customscript)
 	         script=`cat /etc/taskplan/taskplancustomscript | wc -l`
-	         [[ $script > 0 ]] && source /etc/taskplan/taskplancustomscript
-		 log  "CustomScript succeeded!"
+	         if [[ $script > 0 ]] ;then
+		    bash /etc/taskplan/taskplancustomscript
+		    log  "CustomScript succeeded!"
+		 else
+		    log  "CustomScript run Error!"
+		 fi
 		;;
 	customscript2)
 	         script=`cat /etc/taskplan/taskplancustomscript2 | wc -l`
-	         [[ $script > 0 ]] && source /etc/taskplan/taskplancustomscript2
-		 log  "CustomScript succeeded!"
+	         if [[ $script > 0 ]] ;then
+		    bash /etc/taskplan/taskplancustomscript2
+		    log  "CustomScript2 succeeded!"
+		 else
+		    log  "CustomScript2 run Error!"
+		 fi
 		;;
 	upwifi)
 		ifconfig wlan0 up
