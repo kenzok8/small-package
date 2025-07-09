@@ -5,15 +5,15 @@ START=99
 STOP=10
 TMP=/etc/taskplan
 LOG=$TMP/taskplan.log
-TT=/etc/rc.local
+TT=/etc/taskplan/taskplanrun
 CR=/etc/crontabs/root
 [ ! -d $TMP ] && mkdir -p $TMP 2>/dev/null
-[ -s $LOG ] && echo > $LOG
+[ -s $LOG ] && echo '' > $LOG
 
 run_taskplan()
 {
-[  `uci -q get taskplan.@global[0].customscript  |  wc -l ` > 0 ] && uci -q get taskplan.@global[0].customscript > /etc/taskplan/taskplancustomscript
-[  `uci -q get taskplan.@global[0].customscript2  |  wc -l ` > 0 ] && uci -q get taskplan.@global[0].customscript2 > /etc/taskplan/taskplancustomscript2
+[  `uci -q get taskplan.@global[0].customscript  |  wc -l ` > 0 ] && uci -q get taskplan.@global[0].customscript > /etc/taskplan/taskplancustomscript && sed -i 's/\r$//' /etc/taskplan/taskplancustomscript
+[  `uci -q get taskplan.@global[0].customscript2  |  wc -l ` > 0 ] && uci -q get taskplan.@global[0].customscript2 > /etc/taskplan/taskplancustomscript2 && sed -i 's/\r$//' /etc/taskplan/taskplancustomscript2
 ssum=$(grep -c stime /etc/config/taskplan)
 lsum=$(grep -c ltime /etc/config/taskplan)
 for i in $(seq 0 $((ssum-1)))
@@ -159,12 +159,21 @@ do
 
 start()
 {
+
+   if [ "x$XBOOT" = "x1" ] ;then
+       bash /etc/taskplan/taskplanrun
+   fi
 	del_cru
+
 	[ -n "`tail -c1 $CR`" ] && echo >> $CR
-	sed -i '/exit/d' $TT >/dev/null 2>&1  || true
+	sed -i '/exit/d' $TT 2>/dev/null   || true
 	run_taskplan
 	echo 'exit 0'  >>$TT
 	/etc/init.d/cron reload
+}
+
+boot() {
+	XBOOT=1 start
 }
 
 stop()
