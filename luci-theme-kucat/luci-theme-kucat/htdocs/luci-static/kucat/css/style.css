@@ -3974,6 +3974,39 @@ pre.command-output {
   margin-right: 0 !important
 }
 
+[data-page^="admin-services-openclash-client"] .oc,
+[data-page^="admin-services-openclash-client"] .oc .main-cards-container   {
+   background-color: rgba(255,255,255,0) !important;
+}
+[data-page^="admin-services-openclash-client"] .oc .myip-ip-item, .oc .myip-check-item {
+   background-color: rgba(255,255,255,0.1) !important;
+   border: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-page^="admin-services-openclash-client"] .oc .developer-container,
+[data-page^="admin-services-openclash-client"] .oc .myip-main-card,
+[data-page^="admin-services-openclash-client"] .oc .sub-card  {
+  background-color: rgba(255,255,255,0.1) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+[data-page^="admin-services-openclash-client"] .oc .main-card {
+  background-color: rgba(255,255,255,0) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+}
+[data-page^="admin-services-openclash-client"] .oc .sub-card{
+  border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+[data-page^="admin-services-openclash-client"] .oc .ip-result,.oc .ip-geo,
+[data-page^="admin-services-openclash-client"] .oc .ip-title, .oc .ip-state_title,
+[data-page^="admin-services-openclash-client"] .oc .myip-section-title,
+[data-page^="admin-services-openclash-client"] .oc .card-title
+{
+  color: #ddd !important;
+  color: var(--menu-fontcolor)!important;
+  
+}
 [data-page^="admin-services-openclash"] #tab-content .dom {
   padding: 0 1rem 1rem 1rem
 }
