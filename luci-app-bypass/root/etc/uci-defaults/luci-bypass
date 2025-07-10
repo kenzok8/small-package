@@ -1,4 +1,3 @@
-uci batch <<EOF
 [ ! -f "/usr/share/ucitrack/luci-app-bypass.json" ] && {
     cat > /usr/share/ucitrack/luci-app-bypass.json << EEOF
 {
@@ -7,6 +6,7 @@ uci batch <<EOF
 }
 EEOF
 }
+uci batch <<EOF
 	delete ucitrack.@bypass[-1]
 	add ucitrack bypass
 	set ucitrack.@bypass[-1].init=bypass
