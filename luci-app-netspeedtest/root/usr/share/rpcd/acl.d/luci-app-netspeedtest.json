@@ -12,6 +12,7 @@
         "/bin/sh": [ "exec" ],
         "/bin/cat": [ "exec" ],
         "/usr/bin/iperf3": [ "exec" ],
+	"/usr/bin/nohup": [ "exec" ],
         "/usr/bin/speedtest": [ "exec" ],
         "/tmp/speedtest_result": [ "read" ],
         "/tmp/netspeedtest.log": [ "read" ]

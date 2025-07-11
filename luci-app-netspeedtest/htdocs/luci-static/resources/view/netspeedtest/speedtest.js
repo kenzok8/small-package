@@ -77,7 +77,7 @@ return view.extend({
         if (result_content.length) {
             if (result_content[0] == 'Testing') {
                 result_stat.innerHTML = "<span style='color:green;font-weight:bold'>" +
-                    "<img src='/luci-static/resources/icons/loading.gif' height='17' style='vertical-align:middle ;margin-left:20px'/> " +
+                    "<img src='/luci-static/resources/icons/loading.svg' height='17' style='vertical-align:middle ;margin-left:20px'/> " +
                     _('SpeedTesting in progress...') +
                     "</span>";
             } else if (result_content[0].match(/https?:\S+/)) {
