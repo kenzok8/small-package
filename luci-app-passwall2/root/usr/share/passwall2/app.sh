@@ -1240,7 +1240,7 @@ start() {
 		#echolog "程序已启动，先停止再重新启动!"
 		stop
 	}
-	mkdir -p /tmp/etc $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_PATH2
+	mkdir -p /tmp/etc /tmp/log $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_PATH2
 	get_config
 	export V2RAY_LOCATION_ASSET=$(config_t_get global_rules v2ray_location_asset "/usr/share/v2ray/")
 	export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
@@ -1312,7 +1312,7 @@ stop() {
 	eval_cache_var
 	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh stop
 	delete_ip2route
-	kill_all v2ray-plugin obfs-local
+	kill_all xray-plugin v2ray-plugin obfs-local shadow-tls
 	pgrep -f "sleep.*(6s|9s|58s)" | xargs kill -9 >/dev/null 2>&1
 	pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua|tasks\.sh|ujail/{print $1}' | xargs kill -9 >/dev/null 2>&1
 	unset V2RAY_LOCATION_ASSET
