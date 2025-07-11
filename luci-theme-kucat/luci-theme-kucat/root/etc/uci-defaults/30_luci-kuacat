@@ -8,8 +8,7 @@ uci batch <<-EOF
 EOF
 fi
 chmod +x /usr/libexec/kucat/kucat*
-if [ ! -s "/etc/config/advancedplus" ];then
-[ ! -s "/etc/config/kucat" ] && {
+
 cat <<-EOF >/etc/config/kucat
 config basic
 	option gouser 'admin'
@@ -39,7 +38,5 @@ config basic
 	option dhcp_domain '1'
 
 EOF
-}
-fi
 rm -rf /tmp/luci-*
 exit 0
