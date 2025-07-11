@@ -2685,7 +2685,7 @@ body.modal-overlay-active #modal_overlay {
   left: .2em;
   width: 32px;
   content: "";
-  background: url(../../resources/icons/loading.gif) no-repeat center;
+  background: url(../../resources/icons/loading.svg) no-repeat center;
   background-size: 20px;
   text-align: center;
   -webkit-box-align: center;
@@ -2796,6 +2796,9 @@ td>.ifacebadge,.td>.ifacebadge {
   text-align: center
 }
 
+.network-status-table {
+  display: flex;
+}
 .network-status-table .ifacebox {
   flex-grow: 1;
   margin: .5em
@@ -2950,7 +2953,7 @@ td>.ifacebadge,.td>.ifacebadge {
 
 .ifacebox-head {
   padding: 1rem;
-  min-width: 7rem;
+  min-width: 10rem;
   background-color: rgba(var(--primary-rgbm),0.3);
   transform: translate(-50,-50%);
   color: var(--menu-fontcolor);
@@ -3313,7 +3316,7 @@ body.lang_pl.node-main-login .cbi-value-title {
   margin: 1rem 1rem 3rem 1rem;
   text-indent: -500px;
   overflow: hidden;
-  background-image: url(../logo.png);
+  background-image: url(../logo.svg);
   background-color: rgba(250,250,250,0);
   background-repeat: no-repeat;
   background-position: 0;
@@ -3448,7 +3451,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 }
 
 .node-main-login .alert-message.warning {
-  display: none !important
+  margin-top: 1rem;
 }
 
 .node-main-login .errorbox {
@@ -3973,29 +3976,42 @@ pre.command-output {
 [data-page^="admin-services-openclash"] .cbi-tabmenu>li:last-child {
   margin-right: 0 !important
 }
-
+[data-page^="admin-services-openclash-client"] .select-popup-header,
 [data-page^="admin-services-openclash-client"] .oc,
 [data-page^="admin-services-openclash-client"] .oc .main-cards-container   {
    background-color: rgba(255,255,255,0) !important;
 }
+
+[data-page^="admin-services-openclash-client"] .select-popup {
+   background-color: rgba(255,255,255,1) !important;
+}
+
+[data-page^="admin-services-openclash-client"] .select-class {
+   background-color: rgba(255,255,255,0) !important;
+   padding: 0 20px 0 10px!important;
+}
+
 [data-page^="admin-services-openclash-client"] .oc .myip-ip-item, .oc .myip-check-item {
    background-color: rgba(255,255,255,0.1) !important;
-   border: rgba(255, 255, 255, 0.15) !important;
+   background-color: rgba(var(--primary-rgbbody),0.1) !important;
+   border: 1px solid rgba(255, 255, 255, 0.15) !important;
+   border: 1px solid rgba(var(--primary-rgbm),0.1) !important;
 }
 
 [data-page^="admin-services-openclash-client"] .oc .developer-container,
 [data-page^="admin-services-openclash-client"] .oc .myip-main-card,
 [data-page^="admin-services-openclash-client"] .oc .sub-card  {
   background-color: rgba(255,255,255,0.1) !important;
+  background-color: rgba(var(--primary-rgbm),0.1) !important;
   border: 1px solid rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(var(--primary-rgbm),0.2) !important;
+  
 }
 
 [data-page^="admin-services-openclash-client"] .oc .main-card {
   background-color: rgba(255,255,255,0) !important;
   border: 1px solid rgba(255,255,255,0.15) !important;
-}
-[data-page^="admin-services-openclash-client"] .oc .sub-card{
-  border: 1px solid rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(var(--primary-rgbm),0.1) !important;
 }
 
 [data-page^="admin-services-openclash-client"] .oc .ip-result,.oc .ip-geo,
@@ -4005,8 +4021,8 @@ pre.command-output {
 {
   color: #ddd !important;
   color: var(--menu-fontcolor)!important;
-  
 }
+
 [data-page^="admin-services-openclash"] #tab-content .dom {
   padding: 0 1rem 1rem 1rem
 }
