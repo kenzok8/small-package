@@ -400,18 +400,16 @@ do
 	end
 end
 
--- urlencode
--- local function get_urlencode(c) return sformat("%%%02X", sbyte(c)) end
+local function UrlEncode(szText)
+	return szText:gsub("([^%w%-_%.%~])", function(c)
+		return string.format("%%%02X", string.byte(c))
+	end)
+end
 
--- local function urlEncode(szText)
--- 	local str = szText:gsub("([^0-9a-zA-Z ])", get_urlencode)
--- 	str = str:gsub(" ", "+")
--- 	return str
--- end
-
-local function get_urldecode(h) return schar(tonumber(h, 16)) end
 local function UrlDecode(szText)
-	return (szText and szText:gsub("+", " "):gsub("%%(%x%x)", get_urldecode)) or nil
+	return szText and szText:gsub("+", " "):gsub("%%(%x%x)", function(h)
+		return string.char(tonumber(h, 16))
+	end) or nil
 end
 
 -- trim
@@ -611,10 +609,9 @@ local function processData(szType, content, add_mode, add_from)
 		--ss://2022-blake3-aes-256-gcm:YctPZ6U7xPPcU%2Bgp3u%2B0tx%2FtRizJN9K8y%2BuKlW2qjlI%3D@192.168.100.1:8888/?plugin=v2ray-plugin%3Bserver#Example3
 		--ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0ZXN0@xxxxxx.com:443?type=ws&path=%2Ftestpath&host=xxxxxx.com&security=tls&fp=&alpn=h3%2Ch2%2Chttp%2F1.1&sni=xxxxxx.com#test-1%40ss
 
-		local idx_sp = 0
+		local idx_sp = content:find("#") or 0
 		local alias = ""
-		if content:find("#") then
-			idx_sp = content:find("#")
+		if idx_sp > 0 then
 			alias = content:sub(idx_sp + 1, -1)
 		end
 		result.remarks = UrlDecode(alias)
@@ -625,7 +622,7 @@ local function processData(szType, content, add_mode, add_from)
 			local query = split(info, "%?")
 			for _, v in pairs(split(query[2], '&')) do
 				local t = split(v, '=')
-				params[t[1]] = UrlDecode(t[2])
+				if #t >= 2 then params[t[1]] = UrlDecode(t[2]) end
 			end
 			if params.plugin then
 				local plugin_info = params.plugin
@@ -671,9 +668,22 @@ local function processData(szType, content, add_mode, add_from)
 			else
 				userinfo = base64Decode(hostInfo[1])
 			end
-
 			local method = userinfo:sub(1, userinfo:find(":") - 1)
 			local password = userinfo:sub(userinfo:find(":") + 1, #userinfo)
+
+			-- 判断密码是否经过url编码
+			local function isURLEncodedPassword(pwd)
+				if not pwd:find("%%[0-9A-Fa-f][0-9A-Fa-f]") then
+					return false
+				end
+				local ok, decoded = pcall(UrlDecode, pwd)
+				return ok and UrlEncode(decoded) == pwd
+			end
+
+			local decoded = UrlDecode(password)
+			if isURLEncodedPassword(password) and decoded then
+				password = decoded
+			end
 			result.method = method
 			result.password = password
 
@@ -833,6 +843,48 @@ local function processData(szType, content, add_mode, add_from)
 					end
 				else
 					result.error_msg = "请更换Xray或Sing-Box来支持SS更多的传输方式."
+				end
+			end
+
+			if params["shadow-tls"] then
+				if result.type ~= "sing-box" and result.type ~= "SS-Rust" then
+					result.error_msg =  ss_type_default .. " 不支持 shadow-tls 插件."
+				else
+					-- 解析SS Shadow-TLS 插件参数
+					local function parseShadowTLSParams(b64str, out)
+						local ok, data = pcall(jsonParse, base64Decode(b64str))
+						if not ok or type(data) ~= "table" then return "" end
+						if type(out) == "table" then
+							for k, v in pairs(data) do out[k] = v end
+						end
+						local t = {}
+						if data.version then t[#t+1] = "v" .. data.version .. "=1" end
+						if data.password then t[#t+1] = "passwd=" .. data.password end
+						for k, v in pairs(data) do
+							if k ~= "version" and k ~= "password" then
+								t[#t+1] = k .. "=" .. tostring(v)
+							end
+						end
+						return table.concat(t, ";")
+					end
+
+					if result.type == "SS-Rust" then
+						result.plugin = "shadow-tls"
+						result.plugin_opts = parseShadowTLSParams(params["shadow-tls"])
+					elseif result.type == "sing-box" then
+						local shadowtlsOpt = {}
+						parseShadowTLSParams(params["shadow-tls"], shadowtlsOpt)
+						if next(shadowtlsOpt) then
+							result.shadowtls = "1"
+							result.shadowtls_version = shadowtlsOpt.version or "1"
+							result.shadowtls_password = shadowtlsOpt.password
+							result.shadowtls_serverName = shadowtlsOpt.host
+							if shadowtlsOpt.fingerprint then
+								result.shadowtls_utls = "1"
+								result.shadowtls_fingerprint = shadowtlsOpt.fingerprint or "chrome"
+							end
+						end
+					end
 				end
 			end
 		end
@@ -1275,14 +1327,14 @@ local function processData(szType, content, add_mode, add_from)
 		if hysteria2_type_default == "sing-box" and has_singbox then
 			result.type = 'sing-box'
 			result.protocol = "hysteria2"
-			if params["obfs-password"] then
+			if params["obfs-password"] or params["obfs_password"] then
 				result.hysteria2_obfs_type = "salamander"
-				result.hysteria2_obfs_password = params["obfs-password"]
+				result.hysteria2_obfs_password = params["obfs-password"] or params["obfs_password"]
 			end
 		elseif has_hysteria2 then
 			result.type = "Hysteria2"
-			if params["obfs-password"] then
-				result.hysteria2_obfs = params["obfs-password"]
+			if params["obfs-password"] or params["obfs_password"] then
+				result.hysteria2_obfs = params["obfs-password"] or params["obfs_password"]
 			end
 		end
 	elseif szType == 'tuic' then

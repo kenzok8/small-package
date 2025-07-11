@@ -46,6 +46,9 @@ msgstr "规则列表"
 msgid "Access control"
 msgstr "访问控制"
 
+msgid "Watch Logs"
+msgstr "查看日志"
+
 msgid "Node Config"
 msgstr "节点配置"
 
@@ -355,8 +358,14 @@ msgstr "用于检测连接状态的网址。"
 msgid "Probe Interval"
 msgstr "探测间隔"
 
-msgid "The interval between initiating probes. The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>ns</code>, <code>us</code>, <code>ms</code>, <code>s</code>, <code>m</code>, <code>h</code>, which correspond to nanoseconds, microseconds, milliseconds, seconds, minutes, and hours, respectively."
-msgstr "发起探测的间隔。时间格式为数字+单位，比如<code>&quot;10s&quot;</code>, <code>&quot;2h45m&quot;</code>，支持的时间单位有 <code>ns</code>，<code>us</code>，<code>ms</code>，<code>s</code>，<code>m</code>，<code>h</code>，分别对应纳秒、微秒、毫秒、秒、分、时。"
+msgid "The interval between initiating probes."
+msgstr "发起探测的间隔。"
+
+msgid "The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>s</code>, <code>m</code>, <code>h</code>, which correspond to seconds, minutes, and hours, respectively."
+msgstr "时间格式为数字+单位，比如<code>&quot;10s&quot;</code>, <code>&quot;2h45m&quot;</code>，支持的时间单位有 <code>s</code>，<code>m</code>，<code>h</code>，分别对应秒、分、时。"
+
+msgid "When the unit is not filled in, it defaults to seconds."
+msgstr "未填写单位时，默认为秒。"
 
 msgid "Preferred Node Count"
 msgstr "优选节点数量"
@@ -1615,8 +1624,8 @@ msgstr "仅 IPv4"
 msgid "IPv6 Only"
 msgstr "仅 IPv6"
 
-msgid "Log Maint"
-msgstr "日志维护"
+msgid "Maintain"
+msgstr "维护"
 
 msgid "Backup and Restore"
 msgstr "备份还原"
@@ -1651,6 +1660,15 @@ msgstr "恢复默认配置"
 msgid "Do Reset"
 msgstr "执行重置"
 
+msgid "Please select a file first."
+msgstr "请先选择一个文件。"
+
+msgid "Invalid file type. Please upload a .tar.gz file."
+msgstr "文件类型无效，请上传一个 .tar.gz 文件。"
+
+msgid "File size exceeds 10MB limit."
+msgstr "文件大小超过 10MB 限制。"
+
 msgid "Do you want to restore the client to default settings?"
 msgstr "是否要恢复客户端默认配置？"
 
@@ -1669,9 +1687,6 @@ msgstr "要测试的节点列表，<a target='_blank' href='https://sing-box.sag
 msgid "Test interval"
 msgstr "测试间隔"
 
-msgid "The test interval in seconds."
-msgstr "测试间隔时间（单位：秒）。"
-
 msgid "Test interval must be less or equal than idle timeout."
 msgstr "测试间隔时间必须小于或等于空闲超时时间。"
 
@@ -1684,8 +1699,8 @@ msgstr "测试容差时间（单位：毫秒）。"
 msgid "Idle timeout"
 msgstr "空闲超时"
 
-msgid "The idle timeout in seconds."
-msgstr "空闲超时时间（单位：秒）。"
+msgid "The idle timeout."
+msgstr "空闲超时时间。"
 
 msgid "Interrupt existing connections"
 msgstr "中断现有连接"
@@ -1707,3 +1722,42 @@ msgstr "自定义配置"
 
 msgid "Must be JSON text!"
 msgstr "必须是 JSON 文本内容！"
+
+msgid "Geo View"
+msgstr "Geo 查询"
+
+msgid "Query"
+msgstr "查询"
+
+msgid "Querying"
+msgstr "查询中"
+
+msgid "Please enter query content!"
+msgstr "请输入查询内容！"
+
+msgid "No results were found!"
+msgstr "未找到任何结果！"
+
+msgid "Domain/IP Query"
+msgstr "域名/IP 查询"
+
+msgid "GeoIP/Geosite Query"
+msgstr "GeoIP/Geosite 查询"
+
+msgid "Enter a domain or IP to query the Geo rule list they belong to."
+msgstr "输入域名/IP，查询它们所在的 Geo 规则列表。"
+
+msgid "Enter a GeoIP or Geosite to extract the domains/IPs they contain. Format: geoip:cn or geosite:gfw"
+msgstr "输入 GeoIP/Geosite，提取它们所包含的域名/IP。格式：geoip:cn 或 geosite:gfw"
+
+msgid "Tips:"
+msgstr "小贴士："
+
+msgid "By entering a domain or IP, you can query the Geo rule list they belong to."
+msgstr "可以通过输入域名/IP，查询它们所在的 Geo 规则列表。"
+
+msgid "By entering a GeoIP or Geosite, you can extract the domains/IPs they contain."
+msgstr "可以通过输入 GeoIP/Geosite，提取它们所包含的域名/IP。"
+
+msgid "Use the GeoIP/Geosite query function to verify if the entered Geo rules are correct."
+msgstr "利用 GeoIP/Geosite 查询功能，可以验证输入的 Geo 规则是否正确。"
