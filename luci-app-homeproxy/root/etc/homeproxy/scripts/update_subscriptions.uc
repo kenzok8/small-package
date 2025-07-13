@@ -216,16 +216,16 @@ function parse_uri(uri) {
 				ss_userinfo = [url.username, urldecode(url.password)];
 			else if (url.username)
 				/* User info encoded with base64 */
-				ss_userinfo = split(decodeBase64Str(urldecode(url.username)), ':');
+				ss_userinfo = split(decodeBase64Str(urldecode(url.username)), ':', 2);
 
 			let ss_plugin, ss_plugin_opts;
 			if (url.search && url.searchParams.plugin) {
-				const ss_plugin_info = split(url.searchParams.plugin, ';');
+				const ss_plugin_info = split(url.searchParams.plugin, ';', 2);
 				ss_plugin = ss_plugin_info[0];
 				if (ss_plugin === 'simple-obfs')
 					/* Fix non-standard plugin name */
 					ss_plugin = 'obfs-local';
-				ss_plugin_opts = slice(ss_plugin_info, 1) ? join(';', slice(ss_plugin_info, 1)) : null;
+				ss_plugin_opts = ss_plugin_info[1];
 			}
 
 			config = {
