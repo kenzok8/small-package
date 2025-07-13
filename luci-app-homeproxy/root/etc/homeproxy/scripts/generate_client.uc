@@ -182,6 +182,9 @@ function generate_endpoint(node) {
 			}
 		] : null,
 		system: (node.type === 'wireguard') ? false : null,
+		tcp_fast_open: strToBool(node.tcp_fast_open),
+		tcp_multi_path: strToBool(node.tcp_multi_path),
+		udp_fragment: strToBool(node.udp_fragment)
 	};
 
 	return endpoint;
@@ -681,6 +684,7 @@ if (!isEmpty(main_node)) {
 		const main_udp_node_cfg = uci.get_all(uciconfig, main_udp_node) || {};
 		if (main_udp_node_cfg.type === 'wireguard') {
 			push(config.endpoints, generate_endpoint(main_udp_node_cfg));
+			config.endpoints[length(config.endpoints)-1].domain_strategy = (ipv6_support !== '1') ? 'prefer_ipv4' : null;
 			config.endpoints[length(config.endpoints)-1].tag = 'main-udp-out';
 		} else {
 			push(config.outbounds, generate_outbound(main_udp_node_cfg));
@@ -693,6 +697,7 @@ if (!isEmpty(main_node)) {
 		const urltest_node = uci.get_all(uciconfig, i) || {};
 		if (urltest_node.type === 'wireguard') {
 			push(config.endpoints, generate_endpoint(urltest_node));
+			config.endpoints[length(config.endpoints)-1].domain_strategy = (ipv6_support !== '1') ? 'prefer_ipv4' : null;
 			config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + i + '-out';
 		} else {
 			push(config.outbounds, generate_outbound(urltest_node));
@@ -724,6 +729,9 @@ if (!isEmpty(main_node)) {
 			const outbound = uci.get_all(uciconfig, cfg.node) || {};
 			if (outbound.type === 'wireguard') {
 				push(config.endpoints, generate_endpoint(outbound));
+				config.endpoints[length(config.endpoints)-1].domain_strategy = cfg.domain_strategy;
+				config.endpoints[length(config.endpoints)-1].bind_interface = cfg.bind_interface;
+				config.endpoints[length(config.endpoints)-1].detour = get_outbound(cfg.outbound);
 			} else {
 				push(config.outbounds, generate_outbound(outbound));
 				config.outbounds[length(config.outbounds)-1].domain_strategy = cfg.domain_strategy;
