@@ -3,6 +3,7 @@
 	//<![CDATA[
 	document.addEventListener("DOMContentLoaded", function () {
 		let monitorStartTime = Date.now();
+		const defaultPort = "1181"; // 与 Lua 中的默认值保持一致
 
 		const monitorInterval = setInterval(function () {
 			if (Date.now() - monitorStartTime > 3000) {
@@ -37,7 +38,7 @@
 			const lastVal = lastInput.value.trim();
 			const secondLastVal = secondLastInput.value.trim();
 
-			if (lastVal !== secondLastVal && secondLastVal !== "" && secondLastVal !== "0") {
+			if (lastVal === defaultPort && secondLastVal !== "" && secondLastVal !== "0" && secondLastVal !== defaultPort) {
 				lastInput.value = secondLastVal;
 			}
 		}, 300);
