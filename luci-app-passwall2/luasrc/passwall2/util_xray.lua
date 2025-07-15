@@ -38,7 +38,7 @@ local function get_domain_excluded()
 	if not content then return nil end
 	local hosts = {}
 	string.gsub(content, '[^' .. "\n" .. ']+', function(w)
-		local s = w:gsub("^%s*(.-)%s*$", "%1") -- Trim
+		local s = api.trim(w)
 		if s == "" then return end
 		if s:find("#") and s:find("#") == 1 then return end
 		if not s:find("#") or s:find("#") ~= 1 then table.insert(hosts, s) end
@@ -183,7 +183,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 					readBufferSize = tonumber(node.mkcp_readBufferSize),
 					writeBufferSize = tonumber(node.mkcp_writeBufferSize),
 					seed = (node.mkcp_seed and node.mkcp_seed ~= "") and node.mkcp_seed or nil,
-					header = {type = node.mkcp_guise}
+					header = {
+						type = node.mkcp_guise,
+						domain = node.mkcp_domain
+					}
 				} or nil,
 				wsSettings = (node.transport == "ws") and {
 					path = node.ws_path or "/",
@@ -479,7 +482,10 @@ function gen_config_server(node)
 						readBufferSize = tonumber(node.mkcp_readBufferSize),
 						writeBufferSize = tonumber(node.mkcp_writeBufferSize),
 						seed = (node.mkcp_seed and node.mkcp_seed ~= "") and node.mkcp_seed or nil,
-						header = {type = node.mkcp_guise}
+						header = {
+							type = node.mkcp_guise,
+							domain = node.mkcp_domain
+						}
 					} or nil,
 					wsSettings = (node.transport == "ws") and {
 						host = node.ws_host or nil,
@@ -1374,8 +1380,13 @@ function gen_config(var)
 					default_dns_server = api.clone(value)
 					default_dns_server.server.tag = default_dns_tag
 					if value.server.tag == remote_dns_tag then
-						default_dns_server.outboundTag = value.outboundTag or COMMON.default_outbound_tag
-						default_dns_server.balancerTag = COMMON.default_balancer_tag
+						if remote_dns_fake then
+							default_dns_server.server = api.clone(_remote_fakedns)
+							default_dns_server.server.tag = default_dns_tag
+						else
+							default_dns_server.outboundTag = value.outboundTag or COMMON.default_outbound_tag
+							default_dns_server.balancerTag = COMMON.default_balancer_tag
+						end
 					end
 					table.insert(dns_servers, 1, default_dns_server)
 					break
