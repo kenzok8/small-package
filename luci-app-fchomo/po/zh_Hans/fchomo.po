@@ -363,6 +363,14 @@ msgstr "加密方法"
 msgid "Clean log"
 msgstr "清空日志"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:303
+msgid ""
+"Click <a target=\"_blank\" href=\"%s\" rel=\"noreferrer noopener\">here</a> "
+"to download the latest initial package."
+msgstr ""
+"点击<a target=\"_blank\" href=\"%s\" rel=\"noreferrer noopener\">此处</a>下载"
+"最新的初始包。"
+
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:22
 msgid "Client"
 msgstr "客户端"

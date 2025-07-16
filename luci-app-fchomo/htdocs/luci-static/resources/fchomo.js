@@ -203,6 +203,7 @@ const rules_type = [
 	['DOMAIN'],
 	['DOMAIN-SUFFIX'],
 	['DOMAIN-KEYWORD'],
+	['DOMAIN-WILDCARD'],
 	['DOMAIN-REGEX'],
 	['GEOSITE'],
 
