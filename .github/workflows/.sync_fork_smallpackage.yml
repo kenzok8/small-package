@@ -1,0 +1,26 @@
+name: Sync Fork with Upstream
+on:
+  #schedule:
+   # - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Forked Repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Add Upstream Remote
+        run: git remote add upstream https://github.com/kenzok8/small-package.git
+
+      - name: Fetch Upstream Changes
+        run: git fetch upstream
+
+      - name: Merge Changes and Push
+        run: |
+          git checkout main
+          git merge upstream/main
+          git push origin main
