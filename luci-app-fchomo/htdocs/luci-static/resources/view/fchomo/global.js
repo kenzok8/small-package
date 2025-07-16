@@ -299,7 +299,9 @@ return view.extend({
 		ss = o.subsection;
 
 		if (!res_ver_geoip || !res_ver_geosite) {
-			so = ss.option(form.Button, '_upload_initia', _('Upload initial package'));
+			so = ss.option(form.Button, '_upload_initia', _('Upload initial package'),
+				_('Click <a target="_blank" href="%s" rel="noreferrer noopener">here</a> to download the latest initial package.')
+					.format('https://raw.githubusercontent.com/fcshark-org/openwrt-fchomo/refs/heads/initialpack/initial.tgz'));
 			so.inputstyle = 'action';
 			so.inputtitle = _('Upload...');
 			so.onclick = L.bind(hm.uploadInitialPack, so);
