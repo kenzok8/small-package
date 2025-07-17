@@ -44,6 +44,9 @@
         }
     }
     window.addEventListener('resize', debounce(handleResize, 200));
+	
+    document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') || 'light');
+
 </script>
 <script type="text/javascript">L.require('menu-kucat')</script>
 </body>

@@ -1,5 +1,5 @@
  <%#
-    Copyright (C) 2019-2025 The Sirpdboy Team <herboy2008@gmail.com> 
+    Copyright (C) 2019-2025The Sirpdboy Team <herboy2008@gmail.com>
 	luci-theme-material: 
 	Copyright 2015 Lutty Yang <lutty@wcan.in>
 	luci-theme-bootstrap:
@@ -8,65 +8,104 @@
 	Copyright 2012 David Menting <david@nut-bolt.nl>
 
 	MUI:
-	https://github.com/muicss/mui
+	https://github.com/muicss/mui 
 
 	Licensed to the public under the Apache License 2.0
 -%>
 
 <%
-	local sys  = require "luci.sys"
-	local util = require "luci.util"
-	local http = require "luci.http"
-	local disp = require "luci.dispatcher"
-	local ver = require "luci.version"
-	local json 	= require "luci.jsonc"
+local sys = require "luci.sys"
+local util = require "luci.util"
+local http = require "luci.http"
+local disp = require "luci.dispatcher"
+local ver = require "luci.version"
+local json = require "luci.jsonc"
+local fs = require "nixio.fs"
+local nutil = require "nixio.util"
+local uci = require 'luci.model.uci'.cursor()
+local urlencode = luci.http.protocol and luci.http.protocol.urlencode or luci.util.urlencode
 
-	local fs = require "nixio.fs"
-	local nutil = require "nixio.util"
-	local uci = require 'luci.model.uci'.cursor()
-	
-	local urlencode = luci.http.protocol and luci.http.protocol.urlencode or luci.util.urlencode
+local boardinfo = util.ubus("system", "board") or {}
+local node = disp.context.dispatched
+local path = table.concat(disp.context.path, "-")
+local bar = '/cgi-bin/luci/admin/'
+local config_exists = false
+local kucat = ''
 
-	local boardinfo = util.ubus("system", "board") or { }
+function glob(...)
+    local iter, code, msg = fs.glob(...)
+    if iter then
+        return nutil.consume(iter)
+    end
+    return nil, code, msg
+end
 
-	local node = disp.context.dispatched
-	local path = table.concat(disp.context.path, "-")
-	
-	function glob(...)
-		local iter, code, msg = fs.glob(...)
-		if iter then
-			return nutil.consume(iter)
-		else
-			return nil, code, msg
-		end
-	end
-    function getExtension(str)
-		return urlencode(str:match(".+%.(%w+)$"))
-	end
+function getExtension(str)
+    return urlencode(str:match(".+%.(%w+)$") or "")
+end
 
-	http.prepare_content("text/html; charset=UTF-8")
-	local bar='/cgi-bin/luci/admin/'
-	local bk_use='background: rgba(var(--primary-rgbbody),1)'
-    local loginbk_use = 'background: linear-gradient(0deg, rgba(var(--primary-rgbm), 1) 0%, rgba(var(--primary-rgbbody), 1) 100%);display: block;'
-    if fs.access('/etc/config/advancedplus') then
-      kucat = 'advancedplus'
-	elseif fs.access('/etc/config/kucat') then
-	    kucat = 'kucat'
-	end
-	if (kucat and kucat ~= '') then
-	    local config = uci:get_all(kucat, "@basic[0]")
-		primary_rgbbody,primary_rgbm,primary_rgbm_ts,primary_opacity,primary_rgbs,primary_rgbs_ts,mode = config.primary_rgbbody,config.primary_rgbm,config.primary_rgbm_ts,config.primary_opacity,config.primary_rgbs,config.primary_rgbs_ts,config.mode
-		gohome,gouser,gossr = bar .. "status/" .. config.gohome,bar .. "system/" .. config.gouser,bar .. "services/" .. config.gossr
-		background,bkuse,bklock,fontd,fontz,fontx = config.background,config.bkuse,config.bklock,config.font_d,config.font_z,config.font_x
-		bgqs,setbar,dayword = config.bgqs,config.setbar,config.dayword
-	else
-		primary_rgbbody,primary_rgbm,primary_rgbm_ts,primary_opacity,primary_rgbs,primary_rgbs_ts,mode = '248,248,248','45,102,147','0.8','0','132,188,218','0.1','light'
-		gohome,gouser,gossr = bar .. "status/" ,bar .. "system/" ,bar .. "services/"
-		background,bkuse,bklock,fontd,fontz,fontx = '0','0','1','1.2rem' ,'0.92rem' ,'0.875rem'
-		bgqs,setbar,dayword = '1','1','0'
-	end
+http.prepare_content("text/html; charset=UTF-8")
+
+if fs.access("/etc/config/advancedplus") then
+    kucat = "advancedplus"
+    config_exists = true
+elseif fs.access("/etc/config/kucat") then
+    kucat = "kucat"
+    config_exists = true
+end
+
+local config = {}
+local primary_rgbbody, primary_rgbm, primary_rgbm_ts, primary_opacity, primary_rgbs, primary_rgbs_ts, mode
+local gohome, gouser, gossr, bgqs, setbar, dayword
+local background, bkuse, bklock, fontd, fontz, fontx
+
+if config_exists then
+    config = uci:get_all(kucat, "@basic[0]") or {}
+    primary_rgbbody = config.primary_rgbbody or '248,248,248'
+    primary_rgbm = config.primary_rgbm or '45,102,147'
+    primary_rgbm_ts = config.primary_rgbm_ts or '0.8'
+    primary_opacity = config.primary_opacity or '0'
+    primary_rgbs = config.primary_rgbs or '132,188,218'
+    primary_rgbs_ts = config.primary_rgbs_ts or '0.1'
+    mode = config.mode or 'light'
+    gohome = bar .. "status/" .. (config.gohome or "")
+    gouser = bar .. "system/" .. (config.gouser or "")
+    gossr = bar .. "services/" .. (config.gossr or "")
+    bgqs = config.bgqs or '0'
+    setbar = config.setbar or '1'
+    dayword = config.dayword or '0'
+    background = config.background or '0'
+    bkuse = config.bkuse or '0'
+    bklock = config.bklock or '1'
+    fontd = config.font_d or '1.2rem'
+    fontz = config.font_z or '0.92rem'
+    fontx = config.font_x or '0.875rem'
+else
+    primary_rgbbody = '248,248,248'
+    primary_rgbm = '45,102,147'
+    primary_rgbm_ts = '0.8'
+    primary_opacity = '0'
+    primary_rgbs = '132,188,218'
+    primary_rgbs_ts = '0.1'
+    mode = 'light'
+    gohome = bar .. "status/"
+    gouser = bar .. "system/"
+    gossr = bar .. "services/"
+    bgqs = '1'
+    setbar = '1'
+    dayword = '0'
+    background = '0'
+    bkuse = '0'
+    bklock = '1'
+    fontd = '1.2rem'
+    fontz = '0.92rem'
+    fontx = '0.875rem'
+end
+
+local bk_use = 'background: rgba(var(--primary-rgbbody),1)'
+local loginbk_use = 'background: linear-gradient(0deg, rgba(var(--primary-rgbm), 1) 0%, rgba(var(--primary-rgbbody), 1) 100%);display: block;'
+
 	local ufilter = string.format("blur(%dpx)", tonumber(primary_opacity))
-	local bar_color = mode
 	if primary_opacity == '0' then
 	    ufilter = 'none'
 	end
@@ -151,33 +190,49 @@
 <!DOCTYPE html>
 <html lang="<%=luci.i18n.context.lang%>">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0,viewport-fit=cover" />
-    <link rel="manifest" href="<%=media%>/manifest.json">
-	<title>	<%=striptags( (boardinfo.hostname or "?") .. ( (node and node.title) and ' - ' .. translate(node.title) or '')) %>	- LuCI</title>
-	<meta name="format-detection" content="telephone=no, email=no" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1.5, viewport-fit=cover">
+
+    <meta name="theme-color" content="<%=(mode == 'dark' and '#1a1a1a' or '#ffffff')%>" media="(prefers-color-scheme: <%= mode %>)">
+    <meta name="theme-color" content="<%=(mode == 'dark' and '#1a1a1a' or '#1a1a1a')%>" media="(prefers-color-scheme: <%= mode %>)">
+    <meta name="color-scheme" content="light dark">
+    <meta name="msapplication-TileColor" content="<%=(mode == 'dark' and '#1a1a1a' or '#ffffff')%>">
+
+    <link rel="preload" href="<%=media%>/css/style.css?v=<%= ver.luciversion %>" as="style">
+    <link rel="preload" href="<%=media%>/css/theme.css?v=<%= ver.luciversion %>" as="style">
+
     <meta name="x5-fullscreen" content="true">
     <meta name="full-screen" content="yes">
-    <meta name="x5-page-mode" content="app">
-    <meta name="browsermode" content="application">
-    <meta name="msapplication-tap-highlight" content="no">
-	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-	<meta name="application-name" content="<%=striptags( (boardinfo.hostname or "OpenWrt") ) %> - LuCI">
-	<meta name="apple-mobile-web-app-title" content="<%=striptags( (boardinfo.hostname or "OpenWrt") ) %> - LuCI">
-	<meta name="msapplication-TileImage" content="<%=media%>/logo.png"/>
-	<link rel="icon" type="image/png" sizes="192x192" href="<%=media%>/logo.png">
-	<link rel="icon" href="<%=media%>/logo.svg" sizes="any">
-	<meta name="msapplication-TileColor" content="<%=bar_color%>">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-	<meta name="apple-touch-fullscreen" content="yes" /> 
-    <link rel="apple-touch-icon" sizes="144x144" href="<%=media%>/img/apple-touch-icon.png">
-	<link rel="apple-touch-icon-precomposed" href="<%=media%>/img/apple-touch-icon.png" sizes="144x144">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no, email=no, address=no">
+    
+    <link rel="manifest" href="<%=media%>/manifest.json" crossorigin="use-credentials">
+    <link rel="shortcut icon" href="<%=media%>/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<%=media%>/logo.png" type="image/png">
+    <link rel="mask-icon" href="<%=media%>/logo.png" color="#ffffff">
+    
+    <link rel="apple-touch-icon" href="<%=media%>/img/logo180.png">
+    <link rel="apple-touch-icon" sizes="150x150" href="<%=media%>/img/logo150.png">
+    <meta name="apple-touch-fullscreen" content="yes">
+    
+    <meta name="msapplication-config" content="<%=media%>/browserconfig.xml">
+    <meta name="msapplication-TileImage" content="<%=media%>/logo.png">
+    
+    <title><%=striptags( (boardinfo.hostname or "?") .. ( (node and node.title) and ' - ' .. translate(node.title) or '')) %> - LuCI</title>
+    
+    <link rel="stylesheet" href="<%=media%>/css/style.css?v=<%= ver.luciversion %>">
+    <link rel="stylesheet" href="<%=media%>/css/theme.css?v=<%= ver.luciversion %>">
+    
+    <noscript>
+        <link rel="stylesheet" href="<%=media%>/css/style.css?v=<%= ver.luciversion %>">
+        <link rel="stylesheet" href="<%=media%>/css/theme.css?v=<%= ver.luciversion %>">
+    </noscript>
 
-	<link rel="stylesheet" href="<%=media%>/css/style.css?v=<%= ver.luciversion %>">
+</head>
 
-	<link rel="shortcut icon" href="<%=media%>/favicon.ico">
-	<meta name="theme-color" content="<%=bar_color%>">
     <% if node and node.css then %>
         <link rel="stylesheet" href="<%=resource%>/<%=node.css%>">
     <% end -%>
@@ -185,8 +240,7 @@
 
 	<% if css then %>
 		<%= css %>
-	<% end
-	 if bgqs == '1' then -%> 
+	<% end %> 
 	:root {
 		--primary-rgbbody:<%=primary_rgbbody%>;
 		--primary-rgbm: <%=primary_rgbm%>;
@@ -197,32 +251,7 @@
 		--font-z: <%=fontz%>;
 		--font-x: <%=fontx%>;
 		--ufilter: <%=ufilter%>;
-		--bgqs-image: none;
-		--menu-bgcolor: rgba(var(--primary-rgbbody), var(--primary-rgbm-ts));
-		--menu-item-hover-bgcolor: rgba(var(--primary-rgbm), 0.8);
-		--menu-item-active-bgcolor:  rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
-		<% if mode == 'dark'  then %>
-		--menu-fontcolor: #ddd;
-		<% else %>
-		--menu-fontcolor: #4d4d5d;
-		<% end -%>
-	}
-     @media screen and (max-width: 992px) {
-      .main .main-left {
-      	  background-color:rgba(var(--primary-rgbbody), 1);
-	}
-	}
-	<% else %>
-	:root {
-		--primary-rgbbody:<%=primary_rgbbody%>;
-		--primary-rgbm: <%=primary_rgbm%>;
-		--primary-rgbm-ts: <%=primary_rgbm_ts%>;
-		--primary-rgbs: <%=primary_rgbs%>;
-		--primary-rgbs-ts: <%=primary_rgbs_ts%>;
-		--font-d: <%=fontd%>;
-		--font-z: <%=fontz%>;
-		--font-x: <%=fontx%>;
-		--ufilter: <%=ufilter%>;
+	<%if bgqs == '0' then %> 
 		--bgqs-image: -webkit-linear-gradient(135deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent);
 		--menu-bgcolor: rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
 		--menu-item-hover-bgcolor: rgba(248,248,248, 0.22);
@@ -230,9 +259,27 @@
 		<% if mode == 'dark'  then %>
 		--menu-fontcolor: #ddd;
 		<% else %>
-		--menu-fontcolor: #f5f5f5f5;
+		--menu-fontcolor: #4d4d5d;
+		<% end -%>
+
+	<% else %>
+		--bgqs-image: none;
+		--menu-bgcolor: rgba(var(--primary-rgbbody), var(--primary-rgbm-ts));
+		--menu-item-hover-bgcolor: rgba(var(--primary-rgbm), 0.8);
+		--menu-item-active-bgcolor:  rgba(var(--primary-rgbm), var(--primary-rgbm-ts));
+
+		<% if mode == 'dark'  then %>
+		--menu-fontcolor: #ddd;
+		<% else %>
+		--menu-fontcolor: #4d4d5d;
 		<% end -%>
 	}
+     @media screen and (max-width: 1152px) {
+      	.main .main-left {
+      	  background-color:rgba(var(--primary-rgbbody), 1);
+		}
+	}
+
 
 	<% end -%>
 	<% if setbar == "1" then %>
@@ -261,29 +308,18 @@
 	<script src="<%=url('admin/translations', luci.i18n.context.lang)%>?v=<%=ver.luciversion%>"></script>
 	<script src="<%=resource%>/cbi.js?v=<%=ver.luciversion%>"></script>
 	<script src="<%=resource%>/luci.js?v=<%=ver.luciversion%>"></script>
-	<script src="<%=media%>/style.js"></script>
+	<script src="<%=media%>/js/style.js"></script>
 
 </head>
+
+
 <body class="lang_<%=luci.i18n.context.lang%> <% if luci.dispatcher.context.authsession then %>logged-in<% end %> <% if not (path == "") then %>node-<%= path %><% else %>node-main-login<% end %>" data-page="<%= pcdata(path) %>" style="<%=bk_use%>; "
 	<% if mode ~= 'auto' then %>
 	data-theme = "<%= mode %>"
 	<% end -%>
 >
-	<% if mode == 'auto' then %>
-	<script>
-		function setTheme() {
-			let color_scheme = window.matchMedia('(prefers-color-scheme: dark)');
-			document.body.setAttribute('data-theme', color_scheme.matches? 'dark': 'light');
-		}
-		setTheme();
-		window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setTheme);
-	</script>	
-    <% elseif mode == 'dark' then %>
-	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="dark">
-    <% elseif mode == 'light' then %>
-	<meta name="theme-color" media="(prefers-color-scheme: light)" content="light">
-    <% end -%>
 
+<script src="<%=media%>/js/initMode.js"></script>
     <header class="bar-primary">
 		<div id="header-bar-left" class="container-bar-left">
 			<a class="labelbar pdboy-closebar" href="javascript:void(0)" onclick="pdclosebar()" title="Close" ></a>
@@ -302,7 +338,7 @@
 	    </div>
         <div class="main-left">
             <div class="sidenav-header d-flex align-items-center">
-                <a class="brand" href="/"><%=boardinfo.hostname or "?"%></a> 
+                <a class="brand" href="/"><%=boardinfo.hostname or "?"%></a>
             </div>
         	<div class="mainmenu" id="mainmenu" style="display:none"></div>
     	</div>
@@ -317,9 +353,12 @@
 							<a class="showWord" href="#"><%=showword%></a>
 							<% end -%>
 						</div>
-
 						<div class="status" id="indicators"></div>
-
+						<div class="theme-switcher" id="themeToggle" data-theme="<%= mode %>">
+ 						   <span class="pdboy-light active"></span>
+ 						   <span class="pdboy-dark"></span>
+						</div>
+						<script src="<%=media%>/js/switcher.js"></script>
                         <span > <a class="pdboy-qlogout" href="<%=url("admin/logout")%>" title="<%:Log_out%>" > </a></span>
                 	</div>
                </div>

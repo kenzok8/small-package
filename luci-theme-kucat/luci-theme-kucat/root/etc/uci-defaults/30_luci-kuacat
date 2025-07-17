@@ -9,34 +9,5 @@ EOF
 fi
 chmod +x /usr/libexec/kucat/kucat*
 
-cat <<-EOF >/etc/config/kucat
-config basic
-	option gouser 'admin'
-	option gohome 'overview'
-	option setbar '1'
-	option wizard '0'
-	option bgqs '1'
-	option gossr 'passwall'
-	option dayword '0'
-	option background '0'
-	option bklock '1'
-	option mode 'dark'
-	option bkuse '1'
-	option primary_rgbs_ts '0'
-	option primary_rgbbody '33,45,60'
-	option primary_opacity '0'
-	option primary_rgbs '76,157,69'
-	option primary_rgbm_ts '0.9'
-	option primary_rgbm '26,131,97'
-	option fontmode '0'
-	option font_d '1.1rem'
-	option font_z '0.92rem'
-	option font_x '0.875rem'
-	option tsoset '1'
-	option set_login '0'
-	option set_firewall_wan '1'
-	option dhcp_domain '1'
-
-EOF
 rm -rf /tmp/luci-*
 exit 0
