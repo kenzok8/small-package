@@ -29,6 +29,11 @@ local api = require "luci.passwall.api"
 			//添加"日志"按钮
 			new_div += '<input class="btn cbi-button cbi-button-add" type="button" value="<%:Log%>" onclick="window.open(\'' + '<%=api.url("server_user_log")%>' + '?id=' + id + '\', \'_blank\')"/>&nbsp;&nbsp;';
 			td.innerHTML = new_div + td.innerHTML;
+			//修正上移、下移按钮名称
+			var up = td.querySelector(".cbi-button-up");
+			var down = td.querySelector(".cbi-button-down");
+			if (up) up.value = "<%:Move up%>";
+			if (down) down.value = "<%:Move down%>";
 		}
 		catch(err) {
 			console.error(err);
