@@ -38,18 +38,6 @@ local geosite_update = api.uci_get_type("@global_rules[0]", "geosite_update", "1
 			}
 		);
 	}
-
-	//修正上移、下移按钮名称
-	window.onload = function() {
-		var ups = document.querySelectorAll("input.btn.cbi-button.cbi-button-up");
-		var downs = document.querySelectorAll("input.btn.cbi-button.cbi-button-down");
-		for (var i = 0; i < ups.length; i++) {
-			ups[i].value = "<%:Move up%>";
-		}
-		for (var i = 0; i < downs.length; i++) {
-			downs[i].value = "<%:Move down%>";
-		}
-	}
 	//]]>
 </script>
 <div class="cbi-value" id="_rule_div">

@@ -47,7 +47,7 @@
     }();
     const fakedns = map(filter(keys(config), k => config[k][".type"] == "fakedns") || [], k => config[k]);
     const manual_tproxy = filter(keys(config), k => config[k][".type"] == "manual_tproxy") || [];
-    const manual_tproxy_source_ips = map(manual_tproxy, k => config[k]["source_addr"]) || [];
+    const manual_tproxy_source_ips = filter(map(manual_tproxy, k => config[k]["source_addr"]) || [], v => index(v, ":") == -1);
 
     const tp_spec_sm4_tp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v4 == "tproxy"), k => config[k].macaddr) || []);
     const tp_spec_sm6_tp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v6 == "tproxy"), k => config[k].macaddr) || []);

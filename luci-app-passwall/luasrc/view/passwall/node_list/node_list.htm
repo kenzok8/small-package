@@ -421,12 +421,6 @@ table td, .table .td {
 				obj.port = port_dom.value;
 			}
 
-			//修正上移、下移按钮名称
-			var up = td.querySelector(".cbi-button-up");
-			var down = td.querySelector(".cbi-button-down");
-			if (up) up.value = "<%:Move up%>";
-			if (down) down.value = "<%:Move down%>";
-
 			node_count++;
 			var add_from = document.getElementById("cbid.passwall." + id + ".add_from").value;
 			if (node_list[add_from])

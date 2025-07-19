@@ -107,7 +107,7 @@ function get_outbound_uci_description(config, key) {
             return `${uci_item["inbound_type"]}://${uci_item["inbound_addr"]}:${uci_item["inbound_port"]}`;
         }
         case "manual_tproxy": {
-            return `${uci_item["source_addr"]}:${uci_item["source_port"]} -> ${uci_item["dest_addr"] || "{sniffing}"}:${uci_item["dest_port"]}`;
+            return `${uci_item["source_addr"]}${uci_item["source_port"] ? ':' + uci_item["source_port"] : ""} -> ${uci_item["dest_addr"] || "</strong><i>original</i><strong>"}${uci_item["dest_port"] !== "0" ? ':' + uci_item["dest_port"] : ""}`;
         }
         case "fakedns": {
             return `${uci_item["fake_dns_domain_names"].length} ${_("domains")}\n${uci_item["fake_dns_domain_names"].join("\n")}`;

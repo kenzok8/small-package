@@ -251,6 +251,4 @@ if has_singbox then
 	o.description = translate("Override the connection destination address with the sniffed domain.<br />When enabled, traffic will match only by domain, ignoring IP rules.<br />If using shunt nodes, configure the domain shunt rules correctly.")
 end
 
-m:append(Template(appname .. "/other/js"))
-
 return m
