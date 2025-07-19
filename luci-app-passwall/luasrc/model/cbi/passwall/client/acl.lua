@@ -101,6 +101,4 @@ o:value("1:65535", translate("All"))
 o:value("53", "53")
 ]]--
 
-m:append(Template(appname .. "/acl/js"))
-
 return m

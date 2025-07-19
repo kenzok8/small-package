@@ -228,7 +228,9 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
     for (let v in manual_tproxy) {
         if (v.domain_names != null) {
             for (let d in v.domain_names) {
-                hosts[d] = [v.source_addr];
+                if (index(v.source_addr, ":") == -1) {
+                    hosts[d] = [v.source_addr];
+                }
             }
         }
     }
