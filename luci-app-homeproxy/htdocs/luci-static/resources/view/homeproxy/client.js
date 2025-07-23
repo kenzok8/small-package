@@ -304,11 +304,6 @@ return view.extend({
 		o.depends('routing_mode', 'custom');
 
 		ss = o.subsection;
-		so = ss.option(form.Flag, 'tun_gso', _('Generic segmentation offload'));
-		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');
-		so.depends('homeproxy.config.proxy_mode', 'tun');
-		so.rmempty = false;
-
 		so = ss.option(form.ListValue, 'tcpip_stack', _('TCP/IP stack'),
 			_('TCP/IP stack.'));
 		if (features.with_gvisor) {

@@ -80,7 +80,7 @@ return baseclass.extend({
 		__name__: 'CBI.StaticList',
 
 		renderWidget: function(/* ... */) {
-			var dl = form.DynamicList.prototype.renderWidget.apply(this, arguments);
+			let dl = form.DynamicList.prototype.renderWidget.apply(this, arguments);
 			dl.querySelector('.add-item ul > li[data-value="-"]')?.remove();
 			return dl;
 		}
@@ -88,52 +88,44 @@ return baseclass.extend({
 
 	calcStringMD5(e) {
 		/* Thanks to https://stackoverflow.com/a/41602636 */
-		function h(a, b) {
-			var c, d, e, f, g;
-			e = a & 2147483648;
-			f = b & 2147483648;
-			c = a & 1073741824;
-			d = b & 1073741824;
+		let h = (a, b) => {
+			let c, d, e, f, g;
+			c = a & 2147483648;
+			d = b & 2147483648;
+			e = a & 1073741824;
+			f = b & 1073741824;
 			g = (a & 1073741823) + (b & 1073741823);
-			return c & d ? g ^ 2147483648 ^ e ^ f : c | d ? g & 1073741824 ? g ^ 3221225472 ^ e ^ f : g ^ 1073741824 ^ e ^ f : g ^ e ^ f;
-		}
-		function k(a, b, c, d, e, f, g) { a = h(a, h(h(b & c | ~b & d, e), g)); return h(a << f | a >>> 32 - f, b); }
-		function l(a, b, c, d, e, f, g) { a = h(a, h(h(b & d | c & ~d, e), g)); return h(a << f | a >>> 32 - f, b); }
-		function m(a, b, d, c, e, f, g) { a = h(a, h(h(b ^ d ^ c, e), g)); return h(a << f | a >>> 32 - f, b); }
-		function n(a, b, d, c, e, f, g) { a = h(a, h(h(d ^ (b | ~c), e), g)); return h(a << f | a >>> 32 - f, b); }
-		function p(a) {
-			var b = '', d = '';
-			for (var c = 0; 3 >= c; c++) d = a >>> 8 * c & 255, d = '0' + d.toString(16), b += d.substr(d.length - 2, 2);
-			return b;
-		}
+			return e & f ? g ^ 2147483648 ^ c ^ d : e | f ? g & 1073741824 ? g ^ 3221225472 ^ c ^ d : g ^ 1073741824 ^ c ^ d : g ^ c ^ d;
+		}, k = (a, b, c, d, e, f, g) => h((a = h(a, h(h(b & c | ~b & d, e), g))) << f | a >>> 32 - f, b),
+		l = (a, b, c, d, e, f, g) => h((a = h(a, h(h(b & d | c & ~d, e), g))) << f | a >>> 32 - f, b),
+		m = (a, b, c, d, e, f, g) => h((a = h(a, h(h(b ^ c ^ d, e), g))) << f | a >>> 32 - f, b),
+		n = (a, b, c, d, e, f, g) => h((a = h(a, h(h(c ^ (b | ~d), e), g))) << f | a >>> 32 - f, b),
+		p = a => { let b = '', d = ''; for (let c = 0; c <= 3; c++) d = a >>> 8 * c & 255, d = '0' + d.toString(16), b += d.substr(d.length - 2, 2); return b; };
 
-		var f = [], q, r, s, t, a, b, c, d;
-		e = function(a) {
-			a = a.replace(/\r\n/g, '\n');
-			for (var b = '', d = 0; d < a.length; d++) {
-				var c = a.charCodeAt(d);
-				128 > c ? b += String.fromCharCode(c) : (127 < c && 2048 > c ? b += String.fromCharCode(c >> 6 | 192) :
-					(b += String.fromCharCode(c >> 12 | 224), b += String.fromCharCode(c >> 6 & 63 | 128)),
-						b += String.fromCharCode(c & 63 | 128))
+		let f = [], q, r, s, t, a, b, c, d;
+		e = (() => {
+			e = e.replace(/\r\n/g, '\n');
+			let b = '';
+			for (let d = 0; d < e.length; d++) {
+				let c = e.charCodeAt(d);
+				b += c < 128 ? String.fromCharCode(c) : c < 2048 ? String.fromCharCode(c >> 6 | 192) + String.fromCharCode(c & 63 | 128) :
+					String.fromCharCode(c >> 12 | 224) + String.fromCharCode(c >> 6 & 63 | 128) + String.fromCharCode(c & 63 | 128);
 			}
 			return b;
-		}(e);
-		f = function(b) {
-			var c = b.length, a = c + 8;
-			for (var d = 16 * ((a - a % 64) / 64 + 1), e = Array(d - 1), f = 0, g = 0; g < c;)
-				a = (g - g % 4) / 4, f = g % 4 * 8, e[a] |= b.charCodeAt(g) << f, g++;
-			a = (g - g % 4) / 4; e[a] |= 128 << g % 4 * 8; e[d - 2] = c << 3; e[d - 1] = c >>> 29;
-			return e;
-		}(e);
-		a = 1732584193;
-		b = 4023233417;
-		c = 2562383102;
-		d = 271733878;
+		})();
+		f = (() => {
+			let c = e.length, a = c + 8, d = 16 * ((a - a % 64) / 64 + 1), b = Array(d - 1), f = 0, g = 0;
+			for (; g < c;) a = (g - g % 4) / 4, f = g % 4 * 8, b[a] |= e.charCodeAt(g) << f, g++;
+			a = (g - g % 4) / 4, b[a] |= 128 << g % 4 * 8, b[d - 2] = c << 3, b[d - 1] = c >>> 29;
+			return b;
+		})();
 
-		for (e = 0; e < f.length; e += 16) q = a, r = b, s = c, t = d,
+		a = 1732584193, b = 4023233417, c = 2562383102, d = 271733878;
+		for (e = 0; e < f.length; e += 16) {
+			q = a, r = b, s = c, t = d;
 			a = k(a, b, c, d, f[e +  0],  7, 3614090360), d = k(d, a, b, c, f[e +  1], 12, 3905402710),
 			c = k(c, d, a, b, f[e +  2], 17,  606105819), b = k(b, c, d, a, f[e +  3], 22, 3250441966),
-			a = k(a, b, c, d, f[e +  4], 7,  4118548399), d = k(d, a, b, c, f[e +  5], 12, 1200080426),
+			a = k(a, b, c, d, f[e +  4],  7, 4118548399), d = k(d, a, b, c, f[e +  5], 12, 1200080426),
 			c = k(c, d, a, b, f[e +  6], 17, 2821735955), b = k(b, c, d, a, f[e +  7], 22, 4249261313),
 			a = k(a, b, c, d, f[e +  8],  7, 1770035416), d = k(d, a, b, c, f[e +  9], 12, 2336552879),
 			c = k(c, d, a, b, f[e + 10], 17, 4294925233), b = k(b, c, d, a, f[e + 11], 22, 2304563134),
@@ -164,6 +156,7 @@ return baseclass.extend({
 			a = n(a, b, c, d, f[e +  4],  6, 4149444226), d = n(d, a, b, c, f[e + 11], 10, 3174756917),
 			c = n(c, d, a, b, f[e +  2], 15,  718787259), b = n(b, c, d, a, f[e +  9], 21, 3951481745),
 			a = h(a, q), b = h(b, r), c = h(c, s), d = h(d, t);
+		}
 		return (p(a) + p(b) + p(c) + p(d)).toLowerCase();
 	},
 
@@ -173,7 +166,7 @@ return baseclass.extend({
 
 		/* Thanks to luci-app-ssr-plus */
 		str = str.replace(/-/g, '+').replace(/_/g, '/');
-		var padding = (4 - str.length % 4) % 4;
+		let padding = (4 - str.length % 4) % 4;
 		if (padding)
 			str = str + Array(padding + 1).join('=');
 
@@ -193,7 +186,7 @@ return baseclass.extend({
 	},
 
 	generateRand(type, length) {
-		var byteArr;
+		let byteArr;
 		if (['base64', 'hex'].includes(type))
 			byteArr = crypto.getRandomValues(new Uint8Array(length));
 		switch (type) {
@@ -215,7 +208,7 @@ return baseclass.extend({
 	},
 
 	loadDefaultLabel(uciconfig, ucisection) {
-		var label = uci.get(uciconfig, ucisection, 'label');
+		let label = uci.get(uciconfig, ucisection, 'label');
 		if (label) {
 			return label;
 		} else {
@@ -225,16 +218,16 @@ return baseclass.extend({
 	},
 
 	loadModalTitle(title, addtitle, uciconfig, ucisection) {
-		var label = uci.get(uciconfig, ucisection, 'label');
+		let label = uci.get(uciconfig, ucisection, 'label');
 		return label ? title + ' » ' + label : addtitle;
 	},
 
 	renderSectionAdd(section, extra_class) {
-		var el = form.GridSection.prototype.renderSectionAdd.apply(section, [ extra_class ]),
+		let el = form.GridSection.prototype.renderSectionAdd.apply(section, [ extra_class ]),
 			nameEl = el.querySelector('.cbi-section-create-name');
 		ui.addValidator(nameEl, 'uciname', true, (v) => {
-			var button = el.querySelector('.cbi-section-create > .cbi-button-add');
-			var uciconfig = section.uciconfig || section.map.config;
+			let button = el.querySelector('.cbi-section-create > .cbi-button-add');
+			let uciconfig = section.uciconfig || section.map.config;
 
 			if (!v) {
 				button.disabled = true;
@@ -314,7 +307,7 @@ return baseclass.extend({
 			if (ucioption === 'node' && value === 'urltest')
 				return true;
 
-			var duplicate = false;
+			let duplicate = false;
 			uci.sections(uciconfig, ucisection, (res) => {
 				if (res['.name'] !== section_id)
 					if (res[ucioption] === value)

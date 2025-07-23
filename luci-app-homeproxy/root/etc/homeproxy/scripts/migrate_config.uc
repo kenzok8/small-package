@@ -45,6 +45,11 @@ if (github_token) {
 	uci.delete(uciconfig, uciinfra, 'github_token')
 }
 
+/* tun_gso was deprecated in sb 1.11 */
+const tun_gso = uci.get(uciconfig, uciinfra, 'tun_gso');
+if (tun_gso || tun_gso === '0')
+	uci.delete(uciconfig, uciinfra, 'tun_gso');
+
 /* empty value defaults to all ports now */
 if (uci.get(uciconfig, ucimain, 'routing_port') === 'all')
 	uci.delete(uciconfig, ucimain, 'routing_port');

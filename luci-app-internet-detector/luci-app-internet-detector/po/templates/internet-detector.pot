@@ -618,15 +618,3 @@ msgstr ""
 
 msgid "up-script"
 msgstr ""
-
-msgid "down-script attempts"
-msgstr ""
-
-msgid "down-script attempt interval"
-msgstr ""
-
-msgid "up-script attempts"
-msgstr ""
-
-msgid "up_script attempt interval"
-msgstr ""
