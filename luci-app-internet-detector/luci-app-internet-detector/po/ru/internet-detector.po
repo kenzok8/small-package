@@ -654,15 +654,3 @@ msgstr "секунды"
 
 msgid "up-script"
 msgstr "up-script"
-
-msgid "down-script attempts"
-msgstr "Попытки down-script"
-
-msgid "down-script attempt interval"
-msgstr "Интервал попыток down-script"
-
-msgid "up-script attempts"
-msgstr "Попытки up-script"
-
-msgid "up_script attempt interval"
-msgstr "Интервал попыток up_script"
