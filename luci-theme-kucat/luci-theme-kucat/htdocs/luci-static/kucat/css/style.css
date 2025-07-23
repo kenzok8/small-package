@@ -1614,7 +1614,7 @@ table>tbody>tr:first-child>td,table>tfoot>tr:first-child>td,table>thead>tr:first
   margin: 0.25rem 0.1rem;
   background-color: var(--inputbg-color);
   color: var(--inputtext-color);
-  border: 1px solid var(--inputborder-color);
+  border: 1px solid var(--inputborder-color)!important;
   transition: box-shadow .25s ease;
   border-radius: var(--radius2);
   cursor: pointer;
@@ -2076,6 +2076,7 @@ button:hover,.btn:hover,.cbi-button:hover {
   flex-wrap: nowrap;
   position: relative;
   box-shadow: 0 0.3rem 0.8rem var(--input-boxcolor);
+  width: 100%;
   pointer-events: auto;
   margin-top: 0.2rem;
   color: var(--inputtext-color);
@@ -2232,7 +2233,7 @@ button:hover,.btn:hover,.cbi-button:hover {
 
 .cbi-dynlist>.add-item .cbi-button-add {
   width: 2.5rem !important;
-  padding: 5px !important;
+  padding: 3px !important;
   font-weight: bold;
   font-size: 1.5rem;
   line-height: 1;
@@ -3234,7 +3235,7 @@ body.lang_pl.node-main-login .cbi-value-title {
   transition: all 0.1s;
   background-position: top center;
   -webkit-background-size: cover;
-  background: fixed;
+  /* background: fixed; */
   -moz-background-size: cover;
   -o-background-size: cover;
   background-size: cover;
@@ -4007,9 +4008,8 @@ pre.command-output {
 [data-page^="admin-services-openclash"] .oc .version-display,
 [data-page^="admin-services-openclash"] .oc .value-indicator,
 [data-page^="admin-services-openclash"] .oc .cbi-button-group{
-  background-color: rgba(255,255,255,0.9) !important;
-  border: 0px solid rgba(255,255,255,0.3) !important;
-  
+border: 0px solid rgba(255,255,255,0.3) !important;
+ /* background-color: var(--input-bgcolor) !important; */
 }
 [data-page^="admin-services-openclash"]  .oc .myip-ip-item, .oc .myip-check-item {
    background-color: rgba(255,255,255,0.1) !important;
@@ -4025,7 +4025,6 @@ pre.command-output {
   background-color: rgba(var(--primary-rgbm),0.2) !important;
   border: 1px solid rgba(255,255,255,0.15) !important;
   border: 1px solid rgba(var(--primary-rgbm),0.1) !important;
-  
 }
 
 [data-page^="admin-services-openclash"]  .oc .main-card {
@@ -4107,7 +4106,28 @@ pre.command-output {
   background-color: rgba(255,255,255,0.1) !important;
   border-right: 1px solid #777 !important
 }
-
+#cbi-nikki  .cbi-value-field,
+#cbi-nikki .cbi-section-table-row>.cbi-value-field .cbi-dropdown,
+#cbi-nikki .cbi-value-field .cbi-dropdown,
+#cbi-nikki .cbi-dynlist
+{
+  min-width: 12.5rem;
+  max-width: 16.5rem;
+  width: auto;
+}
+#cbi-nikki .cbi-dynlist>.add-item {
+  min-width: 10rem;
+  width: auto;
+}
+#cbi-nikki .cbi-dynlist>.add-item:not([ondrop])>input, 
+#cbi-nikki .cbi-dynlist>.add-item input, 
+#cbi-nikki .cbi-dynlist>.item>span
+{
+  min-width: 10rem;
+  max-width: 14rem;
+    width: 10rem;
+}
+    
 [data-page="admin-services-adguardhome"]>.main .cbi-value .cbi-input-textarea {
   width: 100% !important;
   box-shadow: 0 0 1px var(--input-boxcolor) !important
@@ -4341,6 +4361,10 @@ div#file-manager-container #status-bar #status-info {
 [data-page="admin-network-network"] .cbi-section-table br {
   display: initial
 }
+[data-page="admin-network-network"] .cbi-section-table tr, [data-page="admin-network-network"] .cbi-section-table td,
+[data-page="admin-network-network"] .cbi-network-interface .tr.cbi-section-table-row>.cbi-value-field {
+  width: auto;
+}
 
 .Dashboard .dashboard-bg {
   background-color: rgba(var(--primary-rgbm),var(--primary-rgbs-ts));
@@ -4370,7 +4394,7 @@ div#file-manager-container #status-bar #status-info {
 }
 
 .cbi-dynlist>.add-item:not([ondrop])>input,.cbi-dynlist>.item>span,.cbi-dynlist>.add-item input {
-  min-width: 16rem;
+  min-width: 8rem;
   width: 30rem;
 }
 
