@@ -502,6 +502,7 @@ return view.extend({
         so.value('RULE-SET', _('Rule Set'));
         so.value('DOMAIN', _('Domain Name'));
         so.value('DOMAIN-SUFFIX', _('Domain Name Suffix'));
+        so.value('DOMAIN-WILDCARD', _('Domain Name Wildcard'));
         so.value('DOMAIN-KEYWORD', _('Domain Name Keyword'));
         so.value('DOMAIN-REGEX', _('Domain Name Regex'));
         so.value('IP-CIDR', _('Destination IP'));
