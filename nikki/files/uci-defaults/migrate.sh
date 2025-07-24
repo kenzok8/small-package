@@ -40,18 +40,18 @@ proxy_transparent_proxy=$(uci -q get nikki.proxy.transparent_proxy); [ -n "$prox
 	uci add nikki router_access_control
 	uci set nikki.@router_access_control[-1].enabled=1
 	proxy_bypass_user=$(uci -q get nikki.proxy.bypass_user); [ -n "$proxy_bypass_user" ] && {
-		for user in $proxy_bypass_user; do
-			uci add_list nikki.@router_access_control[-1].user="$user"
+		for router_access_control_user in $proxy_bypass_user; do
+			uci add_list nikki.@router_access_control[-1].user="$router_access_control_user"
 		done
 	}
 	proxy_bypass_group=$(uci -q get nikki.proxy.bypass_group); [ -n "$proxy_bypass_group" ] && {
-		for group in $proxy_bypass_group; do
-			uci add_list nikki.@router_access_control[-1].group="$group"
+		for router_access_control_group in $proxy_bypass_group; do
+			uci add_list nikki.@router_access_control[-1].group="$router_access_control_group"
 		done
 	}
 	proxy_bypass_cgroup=$(uci -q get nikki.proxy.bypass_cgroup); [ -n "$proxy_bypass_cgroup" ] && {
-		for cgroup in $proxy_bypass_cgroup; do
-			uci add_list nikki.@router_access_control[-1].cgroup="$cgroup"
+		for router_access_control_cgroup in $proxy_bypass_cgroup; do
+			uci add_list nikki.@router_access_control[-1].cgroup="$router_access_control_cgroup"
 		done
 	}
 	uci set nikki.@router_access_control[-1].proxy=0
@@ -129,11 +129,11 @@ proxy_tun_interval=$(uci -q get nikki.proxy.tun_interval); [ -z "$proxy_tun_inte
 
 # since v1.23.1
 uci show nikki | grep -o -E 'nikki.@router_access_control\[[[:digit:]]+\]=router_access_control' | cut -d '=' -f 1 | while read -r router_access_control; do
-	for cgroup in $(uci -q get "$router_access_control.cgroup"); do
-		[ -d "/sys/fs/cgroup/$cgroup" ] && continue
-		[ -d "/sys/fs/cgroup/services/$cgroup" ] && {
-			uci del_list "$router_access_control.cgroup=$cgroup"
-			uci add_list "$router_access_control.cgroup=services/$cgroup"
+	for router_access_control_cgroup in $(uci -q get "$router_access_control.cgroup"); do
+		[ -d "/sys/fs/cgroup/$router_access_control_cgroup" ] && continue
+		[ -d "/sys/fs/cgroup/services/$router_access_control_cgroup" ] && {
+			uci del_list "$router_access_control.cgroup=$router_access_control_cgroup"
+			uci add_list "$router_access_control.cgroup=services/$router_access_control_cgroup"
 		}
 	done
 done
@@ -142,6 +142,19 @@ done
 env_disable_safe_path_check=$(uci -q get nikki.env.disable_safe_path_check); [ -n "$env_disable_safe_path_check" ] && uci del nikki.env.disable_safe_path_check
 
 env_skip_system_ipv6_check=$(uci -q get nikki.env.skip_system_ipv6_check); [ -z "$env_skip_system_ipv6_check" ] && uci set nikki.env.skip_system_ipv6_check=0
+
+# since v1.23.3
+uci show nikki | grep -o -E 'nikki.@router_access_control\[[[:digit:]]+\]=router_access_control' | cut -d '=' -f 1 | while read -r router_access_control; do
+	router_access_control_proxy=$(uci -q get "$router_access_control.proxy")
+	router_access_control_dns=$(uci -q get "$router_access_control.dns")
+	[ -z "$router_access_control_dns" ] && uci set "$router_access_control.dns=$router_access_control_proxy"
+done
+
+uci show nikki | grep -o -E 'nikki.@lan_access_control\[[[:digit:]]+\]=lan_access_control' | cut -d '=' -f 1 | while read -r lan_access_control; do
+	lan_access_control_proxy=$(uci -q get "$lan_access_control.proxy")
+	lan_access_control_dns=$(uci -q get "$lan_access_control.dns")
+	[ -z "$lan_access_control_dns" ] && uci set "$lan_access_control.dns=$lan_access_control_proxy"
+done
 
 # commit
 uci commit nikki

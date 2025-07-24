@@ -3482,13 +3482,16 @@ body.lang_pl.node-main-login .cbi-value-title {
 }
 
 .node-main-login footer {
-  text-align: center;
-  margin-top: 4rem;
-  color: #eee;
-  text-shadow: 0 0 2px #222;
-  font-size: var(--font-x);
-  background-color: rgba(255,255,255,0)
+    position: absolute;
+    bottom: 0;
+    margin-bottom: 3rem;
+    color: #eee;
+    text-align: center;
+    text-shadow: 0 0 2px #222;
+    font-size: var(--font-x);
+    background-color: rgba(255,255,255,0);
 }
+
 
 .node-main-login footer a {
   color: #eee;

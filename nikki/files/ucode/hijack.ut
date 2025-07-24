@@ -43,6 +43,7 @@
 		access_control['group'] = filter(uci_array(access_control['group']), (x) => index(groups, x) >= 0);
 		access_control['cgroup'] = filter(uci_array(access_control['cgroup']), (x) => index(cgroups, x) >= 0);
 		access_control['proxy'] = uci_bool(access_control['proxy']);
+		access_control['dns'] = uci_bool(access_control['dns']);
 		push(router_access_control, access_control);
 	});
 
@@ -63,6 +64,7 @@
 		access_control['ip6'] = uci_array(access_control['ip6']);
 		access_control['mac'] = uci_array(access_control['mac']);
 		access_control['proxy'] = uci_bool(access_control['proxy']);
+		access_control['dns'] = uci_bool(access_control['dns']);
 		push(lan_access_control, access_control);
 	});
 
@@ -182,20 +184,20 @@ table inet nikki {
 		{% for (let access_control in router_access_control): %}
 		{% if (access_control['enabled']): %}
 		{% if (length(access_control['user']) == 0 && length(access_control['group']) == 0 && length(access_control['cgroup']) == 0): %}
-		meta l4proto { tcp, udp } th dport 53 counter {% if (access_control.proxy == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
+		meta l4proto { tcp, udp } th dport 53 counter {% if (access_control.dns == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
 
 		{% else %}
 		{% if (length(access_control['user']) > 0): %}
-		meta l4proto { tcp, udp } meta skuid { {{ join(', ', access_control['user']) }} } th dport 53 counter {% if (access_control.proxy == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
+		meta l4proto { tcp, udp } meta skuid { {{ join(', ', access_control['user']) }} } th dport 53 counter {% if (access_control.dns == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['group']) > 0): %}
-		meta l4proto { tcp, udp } meta skgid { {{ join(', ', access_control['group']) }} } th dport 53 counter {% if (access_control.proxy == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
+		meta l4proto { tcp, udp } meta skgid { {{ join(', ', access_control['group']) }} } th dport 53 counter {% if (access_control.dns == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
 
 		{% endif %}
 		{% if (cgroups_version == 2 && length(access_control['cgroup']) > 0): %}
 		{% for (let cgroup in access_control['cgroup']): %}
-		meta l4proto { tcp, udp } socket cgroupv2 level {{ length(split(cgroup, '/')) }} "{{ cgroup }}" th dport 53 counter {% if (access_control.proxy == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
+		meta l4proto { tcp, udp } socket cgroupv2 level {{ length(split(cgroup, '/')) }} "{{ cgroup }}" th dport 53 counter {% if (access_control.dns == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
 		
 		{% endfor %}
 		{% endif %}
@@ -288,19 +290,19 @@ table inet nikki {
 		{% for (let access_control in lan_access_control): %}
 		{% if (access_control['enabled']): %}
 		{% if (length(access_control['ip']) == 0 && length(access_control['ip6']) == 0 && length(access_control['mac']) == 0): %}
-		meta l4proto { tcp, udp } th dport 53 counter {% if (access_control.proxy == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
+		meta l4proto { tcp, udp } th dport 53 counter {% if (access_control.dns == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
 
 		{% else %}
 		{% if (length(access_control['ip']) > 0): %}
-		meta l4proto { tcp, udp } ip saddr { {{ join(', ', access_control['ip']) }} } th dport 53 counter {% if (access_control.proxy == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
+		meta l4proto { tcp, udp } ip saddr { {{ join(', ', access_control['ip']) }} } th dport 53 counter {% if (access_control.dns == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['ip6']) > 0): %}
-		meta l4proto { tcp, udp } ip6 saddr { {{ join(', ', access_control['ip6']) }} } th dport 53 counter {% if (access_control.proxy == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
+		meta l4proto { tcp, udp } ip6 saddr { {{ join(', ', access_control['ip6']) }} } th dport 53 counter {% if (access_control.dns == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['mac']) > 0): %}
-		meta l4proto { tcp, udp } ether saddr { {{ join(', ', access_control['mac']) }} } th dport 53 counter {% if (access_control.proxy == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
+		meta l4proto { tcp, udp } ether saddr { {{ join(', ', access_control['mac']) }} } th dport 53 counter {% if (access_control.dns == '1'): %} redirect to :{{ dns_port }} {% else %} return {% endif %}
 
 		{% endif %}
 		{% endif %}
