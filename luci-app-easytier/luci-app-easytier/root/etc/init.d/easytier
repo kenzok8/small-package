@@ -124,50 +124,32 @@ check_config() {
                    ws_port=$(grep -oE '"ws://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
                    wss_port=$(grep -oE '"wss://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
                    wg_port=$(grep -oE '"wg://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
+                   quic_port=$(grep -oE '"quic://(\[::\]|0\.0\.0\.0):[0-9]+"' "$config_file" | head -n1 | sed -E 's/.*:([0-9]+)"/\1/')
                    tunname=$(cat $config_file | grep "dev_name =" | awk '{print $3}'| tr -d '", ')
                    proxy_network=$(grep -F '[[proxy_network]]' $config_file)
                    wireguard_port=$(cat $config_file | grep "wireguard_listen = " | awk -F ":" '{print $2}'| tr -d '/", ')
-                              
+                   log="$(uci -q get easytier.@easytier[0].log || echo off)"          
                    procd_open_instance
                    get_tz
 		   [ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
-	           procd_set_param command "$easytierbin"
-                   procd_append_param command -c "$config_file"
+		   procd_set_param command /bin/sh -c "
+			${easytierbin} -c ${config_file} --console-log-level ${log} >> /tmp/easytier.log 2>&1 &
+			ET_CORE_PID=\$!
+			{
+			while true; do
+				LOG_SIZE=\$(ls -l /tmp/easytier.log | awk '{print int(\$5/1024)}')
+				if [ \$LOG_SIZE -gt 100 ]; then
+					tail -n 100 /tmp/easytier.log > /tmp/easytier.log.tmp
+					mv /tmp/easytier.log.tmp /tmp/easytier.log
+				fi
+				sleep 3600
+			done
+			} &
+			LOG_MANAGEMENT_PID=\$!
+			trap \"kill -TERM \$ET_CORE_PID; kill -TERM \$LOG_MANAGEMENT_PID; exit\" SIGINT SIGTERM EXIT
+			wait \$ET_CORE_PID
+		   "
 		   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} -c ${config_file}" >>/tmp/easytier.log
-		   
-		   if [ ! -z "$tcp_port" ] ; then
-		      echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_tcp 放行TCP端口 ${tcp_port} " >>/tmp/easytier.log
-                      uci -q delete firewall.easytier_tcp
-		      uci set firewall.easytier_tcp=rule
-		      uci set firewall.easytier_tcp.name="easytier_tcp"
-		      uci set firewall.easytier_tcp.target="ACCEPT"
-		      uci set firewall.easytier_tcp.src="wan"
-		      uci set firewall.easytier_tcp.proto="tcp"
-		      uci set firewall.easytier_tcp.dest_port="$tcp_port"
-		      uci set firewall.easytier_tcp.enabled="1"
-	           fi
-                   if [ ! -z "$udp_port" ] ; then
-		      echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_udp 放行UDP端口 ${udp_port} " >>/tmp/easytier.log
-                      uci -q delete firewall.easytier_udp
-		      uci set firewall.easytier_udp=rule
-		      uci set firewall.easytier_udp.name="easytier_udp"
-		      uci set firewall.easytier_udp.target="ACCEPT"
-		      uci set firewall.easytier_udp.src="wan"
-		      uci set firewall.easytier_udp.proto="udp"
-		      uci set firewall.easytier_udp.dest_port="$udp_port"
-		      uci set firewall.easytier_udp.enabled="1"
-	           fi
-                   if [ ! -z "$wireguard_port" ] ; then
-		       echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_wireguard 放行UDP端口 ${wireguard_port} " >>/tmp/easytier.log
-                       uci -q delete firewall.easytier_wireguard
-		       uci set firewall.easytier_wireguard=rule
-		       uci set firewall.easytier_wireguard.name="easytier_wireguard"
-		       uci set firewall.easytier_wireguard.target="ACCEPT"
-		       uci set firewall.easytier_wireguard.src="wan"
-		       uci set firewall.easytier_wireguard.proto="udp"
-		       uci set firewall.easytier_wireguard.dest_port="$wireguard_port"
-		       uci set firewall.easytier_wireguard.enabled="1"
-	           fi
 }
 
 get_etconfig() {
@@ -176,9 +158,11 @@ get_etconfig() {
 		network_secret="$(uci -q get easytier.@easytier[0].network_secret)"
 		ip_dhcp="$(uci -q get easytier.@easytier[0].ip_dhcp || echo 0)"
 		ipaddr="$(uci -q get easytier.@easytier[0].ipaddr)"
+		ip6addr="$(uci -q get easytier.@easytier[0].ip6addr)"
 		external_node="$(uci -q get easytier.@easytier[0].external_node)"
 		proxy_network="$(uci -q get easytier.@easytier[0].proxy_network)"
 		rpc_portal="$(uci -q get easytier.@easytier[0].rpc_portal || echo 15888)"
+		rpc_portal_whitelist="$(uci -q get easytier.@easytier[0].rpc_portal_whitelist)"
 		listenermode="$(uci -q get easytier.@easytier[0].listenermode)"
 		tunname="$(uci -q get easytier.@easytier[0].tunname)"
 		relay_network="$(uci -q get easytier.@easytier[0].relay_network || echo 0)"
@@ -186,7 +170,7 @@ get_etconfig() {
 		ws_port="$(uci -q get easytier.@easytier[0].ws_port)"
 		wss_port="$(uci -q get easytier.@easytier[0].wss_port)"
 		wg_port="$(uci -q get easytier.@easytier[0].wg_port)"
-		listener6="$(uci -q get easytier.@easytier[0].listener6 || echo 0)"
+		quic_port="$(uci -q get easytier.@easytier[0].quic_port)"
 		peeradd="$(uci -q get easytier.@easytier[0].peeradd)"
 		desvice_name="$(uci -q get easytier.@easytier[0].desvice_name)"
 		instance_name="$(uci -q get easytier.@easytier[0].instance_name)"
@@ -196,6 +180,7 @@ get_etconfig() {
 		disable_encryption="$(uci -q get easytier.@easytier[0].disable_encryption || echo 0)"
 		whitelist="$(uci -q get easytier.@easytier[0].whitelist)"
 		multi_thread="$(uci -q get easytier.@easytier[0].multi_thread || echo 0)"
+		multi_thread_count="$(uci -q get easytier.@easytier[0].multi_thread_count)"
 		disable_ipv6="$(uci -q get easytier.@easytier[0].disable_ipv6 || echo 0)"
 		latency_first="$(uci -q get easytier.@easytier[0].latency_first || echo 0)"
 		exit_node="$(uci -q get easytier.@easytier[0].exit_node || echo 0)"
@@ -221,10 +206,12 @@ get_etconfig() {
 		private_mode="$(uci -q get easytier.@easytier[0].private_mode || echo 0)"
 		quic_proxy="$(uci -q get easytier.@easytier[0].quic_proxy || echo 0)"
 		quic_input="$(uci -q get easytier.@easytier[0].quic_input || echo 0)"
+		foreign_relay_bps_limit="$(uci -q get easytier.@easytier[0].foreign_relay_bps_limit)"
+		extra_args="$(uci -q get easytier.@easytier[0].extra_args)"
 }
 
 set_firewall() {
-		if [ "$listenermode" = "ON" ] || [ "$etcmd" = "web" ] ; then
+		
 			if [ ! -z "$tcp_port" ] ; then
 		    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_tcp_udp 放行端口 ${tcp_port} " >>/tmp/easytier.log
                     		uci -q delete firewall.easytier_tcp_udp
@@ -236,6 +223,17 @@ set_firewall() {
 		    		uci set firewall.easytier_tcp_udp.dest_port="$tcp_port"
 		    		uci set firewall.easytier_tcp_udp.enabled="1"
 		 	fi
+		 	if [ ! -z "$udp_port" ] ; then
+		      		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_udp 放行UDP端口 ${udp_port} " >>/tmp/easytier.log
+                      		uci -q delete firewall.easytier_udp
+		      		uci set firewall.easytier_udp=rule
+		      		uci set firewall.easytier_udp.name="easytier_udp"
+		      		uci set firewall.easytier_udp.target="ACCEPT"
+		      		uci set firewall.easytier_udp.src="wan"
+		      		uci set firewall.easytier_udp.proto="udp"
+		      		uci set firewall.easytier_udp.dest_port="$udp_port"
+		      		uci set firewall.easytier_udp.enabled="1"
+	           	fi
                  	if [ ! -z "$wss_port" ] ; then
 		   		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_wss 放行端口 ${wss_port} " >>/tmp/easytier.log
 		    		uci -q delete firewall.easytier_wss
@@ -269,7 +267,18 @@ set_firewall() {
 		    		uci set firewall.easytier_wg.dest_port="$wg_port"
 		    		uci set firewall.easytier_wg.enabled="1"
 		   	fi
-                fi
+		   	if [ ! -z "$quic_port" ] ; then
+		    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_quic 放行端口 ${quic_port} " >>/tmp/easytier.log
+		    		uci -q delete firewall.easytier_quic
+		    		uci set firewall.easytier_quic=rule
+		    		uci set firewall.easytier_quic.name="easytier_quic"
+		    		uci set firewall.easytier_quic.target="ACCEPT"
+		    		uci set firewall.easytier_quic.src="wan"
+		    		uci set firewall.easytier_quic.proto="tcp udp"
+		    		uci set firewall.easytier_quic.dest_port="$quic_port"
+		    		uci set firewall.easytier_quic.enabled="1"
+		   	fi
+                
 		[ -z "$tunname" ] && tunname="tun0"
                 uci -q delete network.EasyTier >/dev/null 2>&1
 	        if [ -z "$(uci -q get network.EasyTier)" ];  then				
@@ -386,131 +395,121 @@ start_et() {
 			procd_open_instance "easytier_core"
 			get_tz
 			[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
-			procd_set_param command "$easytierbin"
+			core_cmd=""
 			if [ "$etcmd" = "etcmd" ] ; then
 				#默认方式启动
-				[ -z "$network_name" ] || procd_append_param command --network-name "$network_name"
-				[ -z "$network_secret" ] || procd_append_param command --network-secret "$network_secret"
-				[ -z "$ipaddr" ] || procd_append_param command -i "$ipaddr"
-				[ "$ip_dhcp" = "0" ] || procd_append_param command -d
+				[ -z "$network_name" ] || core_cmd="${core_cmd} --network-name $network_name"
+				[ -z "$network_secret" ] || core_cmd="${core_cmd} --network-secret $network_secret"
+				[ -z "$ipaddr" ] || core_cmd="${core_cmd} -i $ipaddr"
+				[ -z "$ip6addr" ] || core_cmd="${core_cmd} --ipv6 $ip6addr"
+				[ "$ip_dhcp" = "0" ] || core_cmd="${core_cmd} -d"
 				if [ ! -z "$peeradd" ] ; then
                   			if [[ "$(grep "list peeradd" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
-                    				procd_append_param command -p "$peeradd"
+                    				core_cmd="${core_cmd} -p $peeradd"
                   			else
                     				for peeraddr in $(cat /etc/config/easytier | grep 'list peeradd'  | awk -F 'list peeradd' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
-                    					procd_append_param command -p "$peeraddr"
+                    					core_cmd="${core_cmd} -p $peeraddr"
                    				done
                    			fi
                 		fi
                 		if [ ! -z "$proxy_network" ] ; then
                   			if [[ "$(grep "list proxy_network" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
-                    				procd_append_param command -n "$proxy_network"
+                    				core_cmd="${core_cmd} -n $proxy_network"
                   			else
                     				for proxy_networks in $(cat /etc/config/easytier | grep 'list proxy_network'  | awk -F 'list proxy_network' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
-                    					procd_append_param command -n "$proxy_networks"
+                    					core_cmd="${core_cmd} -n $proxy_networks"
                    				done
                    			fi
                 		fi
                 		if [ ! -z "$exit_nodes" ] ; then
                   			if [[ "$(grep "list exit_nodes" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
-                    				procd_append_param command --exit-nodes "$exit_nodes"
+                    				core_cmd="${core_cmd} --exit-nodes $exit_nodes"
                   			else
                     				for exit_nodeadds in $(cat /etc/config/easytier | grep 'list exit_nodes'  | awk -F 'list exit_nodes' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
-                    					procd_append_param command --exit-nodes "$exit_nodeadds"
+                    					core_cmd="${core_cmd} --exit-nodes $exit_nodeadds"
                    				done
                    			fi
                 		fi
                 		if [ ! -z "$manual_routes" ] ; then
                   			if [[ "$(grep "list manual_routes" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
-                    				procd_append_param command --manual-routes "$manual_routes"
+                    				core_cmd="${core_cmd} --manual-routes $manual_routes"
                   			else
                     				for manual_routeadds in $(cat /etc/config/easytier | grep 'list manual_routes'  | awk -F 'list manual_routes' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
-                    					procd_append_param command --manual-routes "$manual_routeadds"
+                    					core_cmd="${core_cmd} --manual-routes $manual_routeadds"
                    				done
                    			fi
                 		fi
                 		if [ "$relay_network" = "1" ] ; then
                 			if [ ! -z "$whitelist" ] ; then
                   				if [[ "$(grep "list whitelist" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
-                    					procd_append_param command --relay-network-whitelist "$whitelist"
+                    					core_cmd="${core_cmd} --relay-network-whitelist $whitelist"
                   				else
                     					for whitelists in $(cat /etc/config/easytier | grep 'list whitelist'  | awk -F 'list whitelist' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
-                    						procd_append_param command --relay-network-whitelist "$whitelists"
+                    						core_cmd="${core_cmd} --relay-network-whitelist $whitelists"
                    					done
                    				fi
                    			else
-                   				procd_append_param command --relay-network-whitelist
+                   				core_cmd="${core_cmd} --relay-network-whitelist"
                 			fi
                 		fi
 				if [ ! -z "$mapped_listeners" ] ; then
                   			if [[ "$(grep "list mapped_listeners" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
-                    				procd_append_param command --mapped-listeners "$mapped_listeners"
+                    				core_cmd="${core_cmd} --mapped-listeners $mapped_listeners"
                   			else
                     				for mapped_listener in $(cat /etc/config/easytier | grep 'list mapped_listeners'  | awk -F 'list mapped_listeners' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
-                    					procd_append_param command --mapped-listeners "$mapped_listener"
+                    					core_cmd="${core_cmd} --mapped-listeners $mapped_listener"
                    				done
                    			fi
                 		fi
                 		if [ ! -z "$port_forward" ] ; then
                   			if [[ "$(grep "list port_forward" /etc/config/easytier | awk '{print $3}' | wc -l ) " -eq 1 ]]; then
-                    				procd_append_param command --port-forward "$port_forward"
+                    				core_cmd="${core_cmd} --port-forward $port_forward"
                   			else
                     				for port_forwards in $(cat /etc/config/easytier | grep 'list port_forward'  | awk -F 'list port_forward' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
-                    					procd_append_param command --port-forward "$port_forwards"
+                    					core_cmd="${core_cmd} --port-forward $port_forwards"
                    				done
                    			fi
                 		fi
-				[ -z "$rpc_portal" ] || procd_append_param command -r "$rpc_portal"
-				[ -z "$tcp_port" ] || procd_append_param command -l "tcp:$tcp_port"
-				[ -z "$tcp_port" ] || procd_append_param command -l "udp:$tcp_port"
-				[ -z "$ws_port" ] || procd_append_param command -l "ws:$ws_port"
-				[ -z "$wss_port" ] || procd_append_param command -l "wss:$wss_port"
-				[ -z "$wg_port" ] || procd_append_param command -l "wg:$wg_port"
-				if [ "$listener6" = "1" ] ; then
-                 			if [ -z "$tcp_port" ] && [ -z "$ws_port" ] && [ -z "$wss_port" ] && [ -z "$wg_port" ] ; then
-                     				tcp_port="11010"
-                     				ws_port="11011"
-                     				wss_port="11012"
-                     				wg_port="11011"
-                  			fi
-                     			[ -z "$tcp_port" ] || procd_append_param command -l "tcp://[::]:$tcp_port"
-		     			[ -z "$tcp_port" ] || procd_append_param command -l "udp://[::]:$tcp_port"
-		     			[ -z "$ws_port" ] || procd_append_param command -l "ws://[::]:$ws_port"
-		     			[ -z "$wss_port" ] || procd_append_param command -l "wss://[::]:$wss_port"
-		     			[ -z "$wg_port" ] || procd_append_param command -l "wg://[::]:$wg_port"
-                		fi
-                		[ -z "$external_node" ] || procd_append_param command -e "$external_node"
-				[ "$listenermode" = "ON" ] || procd_append_param command --no-listener
-				[ -z "$desvice_name" ] || procd_append_param command --hostname "$desvice_name"
-				[ -z "$instance_name" ] || procd_append_param command -m "$instance_name"
-				[ -z "$vpn_portal" ] || procd_append_param command --vpn-portal "$vpn_portal"
-				[ -z "$mtu" ] || procd_append_param command --mtu "$mtu"
-				[ "$default_protocol" = "-" ] || procd_append_param command --default-protocol "$default_protocol"
-				[ -z "$tunname" ] || procd_append_param command --dev-name "$tunname"
-				[ "$disable_encryption" = "0" ] || procd_append_param command -u
-				[ "$multi_thread" = "0" ] || procd_append_param command --multi-thread
-				[ "$no_tun" = "0" ] || procd_append_param command --no-tun
-				[ "$smoltcp" = "0" ] || procd_append_param command --use-smoltcp
-				[ "$disable_ipv6" = "0" ] || procd_append_param command --disable-ipv6
-				[ "$latency_first" = "0" ] || procd_append_param command --latency-first
-				[ "$exit_node" = "0" ] || procd_append_param command --enable-exit-node
-				[ "$log" = "off" ] || procd_append_param command --file-log-level "$log" 
-				[ "$log" = "off" ] || procd_append_param command --file-log-dir "/tmp"
-				[ "$log" = "off" ] && procd_append_param command --file-log-level "off"
-              	  		[ "$disable_p2p" = "0" ] || procd_append_param command --disable-p2p
-                		[ "$disable_udp" = "0" ] || procd_append_param command --disable-udp-hole-punching
-                		[ "$relay_all" = "0" ] || procd_append_param command --relay-all-peer-rpc
-                		[ -z "$socks_port" ] || procd_append_param command --socks5 "$socks_port"
-				[ "$comp" = "none" ] || procd_append_param command --compression "$comp"
-				[ "$bind_device" = "0" ] || procd_append_param command --bind-device true
-				[ "$bind_device" = "1" ] || procd_append_param command --bind-device false
-				[ "$kcp_proxy" = "0" ] || procd_append_param command --enable-kcp-proxy
-				[ "$kcp_input" = "0" ] || procd_append_param command --disable-kcp-input
-				[ "$proxy_forward" = "0" ] || procd_append_param command --proxy-forward-by-system
-				[ "$accept_dns" = "0" ] || procd_append_param command --accept-dns true
-				[ "$private_mode" = "0" ] || procd_append_param command --private-mode true
-				[ "$quic_proxy" = "0" ] || procd_append_param command --enable-quic-proxy
-				[ "$quic_input" = "0" ] || procd_append_param command --disable-quic-input
+				[ -z "$rpc_portal" ] || core_cmd="${core_cmd} -r $rpc_portal"
+				[ -z "$rpc_portal_whitelist" ] || core_cmd="${core_cmd} --rpc-portal-whitelist $rpc_portal_whitelist"
+				[ -z "$tcp_port" ] || core_cmd="${core_cmd} -l tcp:$tcp_port"
+				[ -z "$tcp_port" ] || core_cmd="${core_cmd} -l udp:$tcp_port"
+				[ -z "$ws_port" ] || core_cmd="${core_cmd} -l ws:$ws_port"
+				[ -z "$wss_port" ] || core_cmd="${core_cmd} -l wss:$wss_port"
+				[ -z "$wg_port" ] || core_cmd="${core_cmd} -l wg:$wg_port"
+				[ -z "$quic_port" ] || core_cmd="${core_cmd} -l quic:$quic_port"
+                		[ -z "$external_node" ] || core_cmd="${core_cmd} -e $external_node"
+				[ "$listenermode" = "ON" ] || core_cmd="${core_cmd} --no-listener"
+				[ -z "$desvice_name" ] || core_cmd="${core_cmd} --hostname $desvice_name"
+				[ -z "$instance_name" ] || core_cmd="${core_cmd} -m $instance_name"
+				[ -z "$vpn_portal" ] || core_cmd="${core_cmd} --vpn-portal $vpn_portal"
+				[ -z "$mtu" ] || core_cmd="${core_cmd} --mtu $mtu"
+				[ "$default_protocol" = "-" ] || core_cmd="${core_cmd} --default-protocol $default_protocol"
+				[ -z "$tunname" ] || core_cmd="${core_cmd} --dev-name $tunname"
+				[ "$disable_encryption" = "0" ] || core_cmd="${core_cmd} -u"
+				[ "$multi_thread" = "0" ] || core_cmd="${core_cmd} --multi-thread"
+				[ -z "$multi_thread_count" ] || core_cmd="${core_cmd} --multi-thread-count $multi_thread_count"
+				[ "$no_tun" = "0" ] || core_cmd="${core_cmd} --no-tun"
+				[ "$smoltcp" = "0" ] || core_cmd="${core_cmd} --use-smoltcp"
+				[ "$disable_ipv6" = "0" ] || core_cmd="${core_cmd} --disable-ipv6"
+				[ "$latency_first" = "0" ] || core_cmd="${core_cmd} --latency-first"
+				[ "$exit_node" = "0" ] || core_cmd="${core_cmd} --enable-exit-node"
+              	  		[ "$disable_p2p" = "0" ] || core_cmd="${core_cmd} --disable-p2p"
+                		[ "$disable_udp" = "0" ] || core_cmd="${core_cmd} --disable-udp-hole-punching"
+                		[ "$relay_all" = "0" ] || core_cmd="${core_cmd} --relay-all-peer-rpc"
+                		[ -z "$socks_port" ] || core_cmd="${core_cmd} --socks5 $socks_port"
+				[ "$comp" = "none" ] || core_cmd="${core_cmd} --compression $comp"
+				[ "$bind_device" = "0" ] || core_cmd="${core_cmd} --bind-device true"
+				[ "$bind_device" = "1" ] || core_cmd="${core_cmd} --bind-device false"
+				[ "$kcp_proxy" = "0" ] || core_cmd="${core_cmd} --enable-kcp-proxy"
+				[ "$kcp_input" = "0" ] || core_cmd="${core_cmd} --disable-kcp-input"
+				[ "$proxy_forward" = "0" ] || core_cmd="${core_cmd} --proxy-forward-by-system"
+				[ "$accept_dns" = "0" ] || core_cmd="${core_cmd} --accept-dns true"
+				[ "$private_mode" = "0" ] || core_cmd="${core_cmd} --private-mode true"
+				[ "$quic_proxy" = "0" ] || core_cmd="${core_cmd} --enable-quic-proxy"
+				[ "$quic_input" = "0" ] || core_cmd="${core_cmd} --disable-quic-input"
+				[ -z "$foreign_relay_bps_limit" ] || core_cmd="${core_cmd} --foreign-relay-bps-limit $foreign_relay_bps_limit"
+				[ -z "$extra_args" ] || core_cmd="${core_cmd} $extra_args"
 	     		fi
 			if [ "$etcmd" = "web" ] ; then
 				#WEB控制台启动
@@ -521,19 +520,28 @@ start_et() {
 					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 生成新的 UUID 到 /etc/easytier/et_machine_id" >>/tmp/easytier.log
 				fi
 				et_uuid="$(cat /etc/easytier/et_machine_id | tr -d ' \n')"
-				#idpath=$(dirname "$easytierbin")
-				#[ -f "${idpath}/et_machine_id" ] || ln -sf /etc/easytier/et_machine_id ${idpath}/et_machine_id
-				#mkdir -p /var/lib/dbus
-				#ln -sf /etc/easytier/et_machine_id /var/lib/dbus/machine-id
-				[ -z "$et_uuid" ] || procd_append_param command --machine-id "$et_uuid"
-				[ -z "$web_config" ] || procd_append_param command -w "$web_config"
-				[ -z "$desvice_name" ] || procd_append_param command --hostname "$desvice_name"
-				[ "$log" = "off" ] || procd_append_param command --file-log-level "$log" 
-				[ "$log" = "off" ] || procd_append_param command --file-log-dir "/tmp"
+				[ -z "$et_uuid" ] || core_cmd="${core_cmd} --machine-id $et_uuid"
+				[ -z "$web_config" ] || core_cmd="${core_cmd} -w $web_config"
+				[ -z "$desvice_name" ] || core_cmd="${core_cmd} --hostname $desvice_name"
 			fi
-	     
+	     		procd_set_param command /bin/sh -c "
+			${easytierbin} ${core_cmd} --console-log-level ${log} >> /tmp/easytier.log 2>&1 &
+			ET_CORE_PID=\$!
+			{
+			while true; do
+				LOG_SIZE=\$(ls -l /tmp/easytier.log | awk '{print int(\$5/1024)}')
+				if [ \$LOG_SIZE -gt 100 ]; then
+					tail -n 100 /tmp/easytier.log > /tmp/easytier.log.tmp
+					mv /tmp/easytier.log.tmp /tmp/easytier.log
+				fi
+				sleep 3600
+			done
+			} &
+			LOG_MANAGEMENT_PID=\$!
+			trap \"kill -TERM \$ET_CORE_PID; kill -TERM \$LOG_MANAGEMENT_PID; exit\" SIGINT SIGTERM EXIT
+			wait \$ET_CORE_PID
+		   	"
         	fi
-		[ ! -z "$instance_name" ] && ln -sf /tmp/easytier-${instance_name}.${date_time}.log /tmp/easytier.log
 		
 		procd_set_param limits core="unlimited"
 		procd_set_param limits nofile="1000000 1000000"
@@ -565,37 +573,7 @@ start_et() {
 		sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
                 [ ! -z "$checkip" ] && check
                 echo `date +%s` > /tmp/easytier_time
-		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 启动完成，若启动失败，请前往 状态 - 系统日志 找到easytier相关的字眼查看启动失败的原因 " >>/tmp/easytier.log
-}
-
-start_log() {
-	if [ "$(uci -q get easytier.@easytierweb[0].enabled)" = "1" ] || [ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ] ; then
-		pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
-		echo "" >/tmp/easytier_checklog
-
-  cat > /tmp/easytier_checklog<<'EOF'
-#!/bin/sh
-
-while true; do
- 
-sleep 120 
-if [ "$(find /tmp -type f -name "easytier-*.*.log" -size +2000k -exec sh -c 'echo -n > {}; echo found' \;)" = "found" ]; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : core日志文件超过2M 清空... " >/tmp/easytier.log
-fi
-if [ "$(find /tmp -type f -name "easytier.*.log" -size +2000k -exec sh -c 'echo -n > {}; echo found' \;)" = "found" ]; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : web日志文件超过2M 清空... " >/tmp/easytierweb.log
-fi
-done
-EOF
-  chmod +x /tmp/easytier_checklog
-  procd_open_instance
-  procd_set_param respawn
-  procd_set_param command /tmp/easytier_checklog
-  procd_close_instance
-else
-	return 1
-fi
-
+		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 启动完成!" >>/tmp/easytier.log
 }
 
 start_web() {
@@ -623,24 +601,42 @@ start_web() {
 	html_port="$(uci -q get easytier.@easytierweb[0].html_port)"
 	weblog="$(uci -q get easytier.@easytierweb[0].weblog)"
 	api_host="$(uci -q get easytier.@easytierweb[0].api_host)"
+	geoip_db="$(uci -q get easytier.@easytierweb[0].geoip_db)"
 	procd_open_instance "easytier_web"
 	get_tz
 	[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
-	procd_set_param command "$webbin"
-	[ -z "$db_path" ] || procd_append_param command -d "$db_path"
-	[ -z "$web_protocol" ] || procd_append_param command -p "$web_protocol"
-	[ -z "$web_port" ] || procd_append_param command -c "$web_port"
-	[ -z "$api_port" ] || procd_append_param command -a "$api_port"
-	[ -z "$api_host" ] || procd_append_param command --api-host "$api_host"
+	web_cmd=""
+	[ -z "$db_path" ] || web_cmd="${web_cmd} $db_path"
+	[ -z "$web_protocol" ] || web_cmd="${web_cmd} -p $web_protocol"
+	[ -z "$web_port" ] || web_cmd="${web_cmd} -c $web_port"
+	[ -z "$api_port" ] || web_cmd="${web_cmd} -a $api_port"
+	[ -z "$api_host" ] || web_cmd="${web_cmd} --api-host $api_host"
+	[ -z "$geoip_db" ] || web_cmd="${web_cmd} --geoip-db $geoip_db"
 	if [ -z "$html_port" ] ; then
-		procd_append_param command --no-web
+		web_cmd="${web_cmd} --no-web"
 	else
-		procd_append_param command -l "$html_port"
+		web_cmd="${web_cmd} -l $html_port"
 	fi
 	if [ "$weblog" != "off" ] ; then
-		procd_append_param command --file-log-dir /tmp
-		procd_append_param command --file-log-level "$weblog"
+		web_cmd="${web_cmd} --console-log-level $weblog"	
 	fi
+	procd_set_param command /bin/sh -c "
+		${webbin} ${web_cmd} >> /tmp/easytierweb.log 2>&1 &
+		ET_WEB_PID=\$!
+		{
+			while true; do
+				LOG_SIZE=\$(ls -l /tmp/easytierweb.log | awk '{print int(\$5/1024)}')
+				if [ \$LOG_SIZE -gt 100 ]; then
+					tail -n 100 /tmp/easytierweb.log > /tmp/easytierweb.log.tmp
+					mv /tmp/easytierweb.log.tmp /tmp/easytierweb.log
+				fi
+				sleep 3600
+			done
+		} &
+		LOG_MANAGEMENT_PID=\$!
+		trap \"kill -TERM \$ET_WEB_PID; kill -TERM \$LOG_MANAGEMENT_PID; exit\" SIGINT SIGTERM EXIT
+		wait \$ET_WEB_PID
+	"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param respawn
@@ -679,27 +675,11 @@ start_web() {
 		      uci set firewall.easytier_webhtml.enabled="1"
 	fi
 	echo `date +%s` > /tmp/easytierweb_time
-	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 启动完成，若启动失败，请前往 状态 - 系统日志 找到easytier相关的字眼查看启动失败的原因 " >>/tmp/easytierweb.log
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 启动完成！ " >>/tmp/easytierweb.log
 }
 
 start_service() {
 	echo "start.."
-	date_time=$(TZ='Asia/Shanghai' date +'%Y-%m-%d')
-	ecmd=$(uci -q get easytier.@easytier[0].etcmd)
-	if [ "$ecmd" = "etcmd" ] || [ "$ecmd" = "web" ] ; then
-                    ins_name=$(uci -q get easytier.@easytier[0].instance_name)
-        else
-                    ins_name=$(cat /etc/easytier/config.toml | grep "instance_name =" | awk '{print $3}'| tr -d '" ')
-        fi
-	if [ ! -z "$ins_name" ] ; then
-	  touch /tmp/easytier-${ins_name}.${date_time}.log
-	  ln -sf /tmp/easytier-${ins_name}.${date_time}.log /tmp/easytier.log
-	else
-	  touch /tmp/easytier-default.${date_time}.log
-          ln -sf /tmp/easytier-default.${date_time}.log /tmp/easytier.log
-        fi
-	touch /tmp/easytier.${date_time}.log
-        ln -sf /tmp/easytier.${date_time}.log /tmp/easytierweb.log
 	cputype=$(uname -ms | tr ' ' '_' | tr '[A-Z]' '[a-z]')
         [ -n "$(echo $cputype | grep -E "linux.*armv.*")" ] && cpucore="arm" 
         [ -n "$(echo $cputype | grep -E "linux.*armv7.*")" ] && [ -n "$(cat /proc/cpuinfo | grep vfp)" ] && cpucore="armv7" 
@@ -724,8 +704,7 @@ start_service() {
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 重载防火墙和网络配置...会出现短暂断网现象... " >>/tmp/easytierweb.log
         [ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
 	[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1
-	start_log
-	
+
 }
 
 stop_service() {
@@ -746,16 +725,12 @@ stop_service() {
                 	uci -q delete firewall.easytier_wss >/dev/null 2>&1
                 	uci -q delete firewall.easytier_ws >/dev/null 2>&1
                 	uci -q delete firewall.easytier_wg >/dev/null 2>&1
+                	uci -q delete firewall.easytier_quic >/dev/null 2>&1
                 	uci -q delete firewall.easytier_wireguard >/dev/null 2>&1
                 	uci -q delete firewall.easytier_socks5 >/dev/null 2>&1
-                	uci -q delete firewall.easytier_v6tcp >/dev/null 2>&1
-                	uci -q delete firewall.easytier_v6udp >/dev/null 2>&1
-                	uci -q delete firewall.easytier_v6ws >/dev/null 2>&1
-                	uci -q delete firewall.easytier_v6wss >/dev/null 2>&1
-                	uci -q delete firewall.easytier_v6wg >/dev/null 2>&1
                 	[ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
 	        	[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1 
-                	rm -rf /tmp/easytier-cli_peer /tmp/easytier-cli_connector /tmp/easytier-cli_stun /tmp/easytier-cli_route >/dev/null 2>&1
+                	rm -rf /tmp/easytier-cli_peer /tmp/easytier-cli_connector /tmp/easytier-cli_stun /tmp/easytier-cli_route /tmp/easytier-cli_acl >/dev/null 2>&1
                 	rm -rf /tmp/easytier-cli_peer-center /tmp/easytier-cli_vpn-portal /tmp/easytier_cmd /tmp/easytier-cli_node >/dev/null 2>&1
                 	rm -rf /tmp/easytier-*.* /tmp/easytier.log >/dev/null 2>&1
                 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core 停止运行" >>/tmp/easytier.log
@@ -767,10 +742,6 @@ stop_service() {
 			uci -q delete firewall.easytier_webapi
 			uci -q delete firewall.easytier_webhtml
 		fi
-		if  [ "$(uci -q get easytier.@easytier[0].enabled)" = "0" ] && [ "$(uci -q get easytier.@easytierweb[0].enabled)" = "0" ] ; then	
-			pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
-                	rm -rf /tmp/easytiernew.tag /tmp/easytier.tag >/dev/null 2>&1
-		fi
 }
 
 reload_service() {
@@ -781,6 +752,6 @@ reload_service() {
 service_triggers() {
 	procd_add_reload_trigger "easytier"
 	#如果任意网络接口上线则触发重新启动easytier
-        #procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytier reload
+        procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytier reload
 }
 

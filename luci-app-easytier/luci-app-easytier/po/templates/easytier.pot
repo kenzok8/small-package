@@ -1,6 +1,3 @@
-msgid ""
-msgstr "Content-Type: text/plain; charset=UTF-8"
-
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:648
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:666
 msgid ""
@@ -8,8 +5,8 @@ msgid ""
 "take effect"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:651
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:669
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:640
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:658
 msgid ""
 "- Program /tmp/easytier-core uploaded successfully, restart the plugin to "
 "take effect"
@@ -33,7 +30,7 @@ msgid ""
 "_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx"
 "%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" "
 "target=\"_blank\">QQ Group</a>&nbsp;&nbsp;<a href=\"https://doc.oee.icu"
-"\">Beginner Tutorial</a>"
+"\" target=\"_blank\">Beginner Tutorial</a>"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:720
@@ -87,12 +84,6 @@ msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:324
 msgid "Bind to Physical NIC Only"
-msgstr ""
-
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:144
-msgid ""
-"By default, only IPv4 is listened to, and peer nodes can only connect via "
-"IPv4. Enabling this will listen on IPv6 ports as well."
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:394
@@ -156,7 +147,7 @@ msgid "Collecting data..."
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:39
-msgid "Command Line"
+msgid "Default"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:260
@@ -172,15 +163,15 @@ msgstr ""
 msgid "Configuration File"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:721
-msgid ""
-"Listening port of the RESTful server, used as ApiHost by the web frontend. (-a parameter)"
-msgstr ""
-
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:715
 msgid ""
 "Configure the server's listening port for easytier-core to connect. (-c "
 "parameter)"
+msgstr ""
+
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:721
+msgid ""
+"Listening port of the RESTful server, used as ApiHost by the web frontend. (-a parameter)"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:708
@@ -240,7 +231,7 @@ msgid "Database File Path"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:367
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:749
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:732
 msgid "Debug"
 msgstr ""
 
@@ -259,6 +250,7 @@ msgid ""
 "WireGuard server listening on vpn.example.com:11010, and the VPN clients are "
 "in the 10.14.14.0/24 network (--vpn-portal parameter)"
 msgstr ""
+
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:284
 msgid "Disable Built-in NAT"
@@ -312,9 +304,13 @@ msgid ""
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:349
-msgid ""
-"Do not allow other nodes to use QUIC to proxy tcp streams to this node. When a node with QUIC proxy enabled  accesses this node, the original tcp connection is preserved.<br>"
-"QUIC proxy-enabled nodes accessing this node will still use the original method. (--disable-quic-input parameter)"
+msgid "Do not allow other nodes to use QUIC to proxy tcp streams to this node."
+msgstr ""
+
+msgid "When a node with QUIC proxy enabled accesses this node, the original tcp connection is preserved."
+msgstr ""
+
+msgid "<br>QUIC proxy-enabled nodes accessing this node will still use the original method. (--disable-quic-input parameter)"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:139
@@ -400,7 +396,7 @@ msgid "Enable smoltcp stack for subnet proxying (--use-smoltcp parameter)"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:364
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:746
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:729
 msgid "Error"
 msgstr ""
 
@@ -474,7 +470,7 @@ msgid ""
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:366
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:748
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:731
 msgid "Info"
 msgstr ""
 
@@ -511,10 +507,6 @@ msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:138
 msgid "Listen"
-msgstr ""
-
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:143
-msgid "Listen on IPv6 as well"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:135
@@ -595,7 +587,7 @@ msgid ""
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:363
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:745
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:728
 msgid "Off"
 msgstr ""
 
@@ -692,16 +684,15 @@ msgstr ""
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:370
 msgid ""
 "Runtime log is located at /tmp/easytier.log. View it in the log section "
-"above.<br>If startup fails, check 'Status - System Log' for details.<br>Log "
-"level: Warning < Info < Debug < Trace"
+"above.<br>Levels: Error < Warning < Info < Debug < Trace"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:753
 msgid ""
 "Runtime log located at /tmp/easytierweb.log, viewable in the log section "
-"above.<br>If startup fails, check the System Log under Status for detailed "
-"failure logs.<br>Levels: Error < Warning < Info < Debug < Trace"
+"above.<br>Levels: Error < Warning < Info < Debug < Trace"
 msgstr ""
+
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:304
 msgid "SOCKS5 Port"
@@ -760,13 +751,6 @@ msgid ""
 "forward packets and will not create a TUN device. (-i parameter)"
 msgstr ""
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:734
-msgid ""
-"The URL of the API server, used for connecting the web frontend. (--api-host "
-"parameter)<br>Example: http://[current device IP or resolved domain name]:"
-"[API port]"
-msgstr ""
-
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:44
 msgid ""
 "The configuration file is located at /etc/easytier/config.toml<br>The "
@@ -791,12 +775,19 @@ msgid ""
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:368
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:750
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:733
 msgid "Trace"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:699
 msgid "UDP"
+msgstr ""
+
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:734
+msgid ""
+"The URL of the API server, used for connecting the web frontend. (--api-host "
+"parameter)<br>Example: http://[current device IP or resolved domain name]:"
+"[API port]"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:194
@@ -838,10 +829,7 @@ msgid ""
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:207
-msgid ""
-"Used to identify the VPN node instance on the same machine. Required if "
-"logging is enabled. When using web configuration, enter the same "
-"instance_name (-m parameter)"
+msgid "Used to identify the VPN node instance on the same machine. (-m parameter)"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:213
@@ -883,7 +871,7 @@ msgid ""
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:365
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:747
+#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:730
 msgid "Warning"
 msgstr ""
 
@@ -970,3 +958,59 @@ msgstr ""
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:264
 msgid "zstd"
 msgstr ""
+
+msgid "GEOIP_DB Path"
+msgstr ""
+
+msgid ""
+"GeoIP2 database file path used to locate the client. Defaults to an embedded file (country-level information only)."
+"<br>Recommended: https://github.com/P3TERX/GeoLite.mmdb (--geoip-db parameter)"
+msgstr ""
+
+msgid "Interface IPV6 Address"
+msgstr ""
+
+msgid ""
+"ipv6 address of this vpn node, can be used together with ipv4 for dual-stack operation"
+"(--ipv6 parameter)"
+msgstr ""
+
+msgid "RPC Access Whitelist"
+msgstr ""
+
+msgid "rpc portal whitelist, only allow these addresses to access rpc portal (--rpc-portal-whitelist parameter)"
+msgstr ""
+
+msgid "QUIC Port"
+msgstr ""
+
+msgid "If this is the Web configuration in the config file, please fill in the same listening port for firewall allowance."
+msgstr ""
+
+msgid "Number of Threads"
+msgstr ""
+
+msgid "the number of threads to use, default is 2, only effective when multi-thread is enabled, must be greater than 2 (--multi-thread-count parameter)"
+msgstr ""
+
+msgid "Forwarding Rate"
+msgstr ""
+
+msgid ""
+"the maximum bps limit for foreign network relay, default is no limit. unit: BPS (bytes per second). "
+"(--foreign-relay-bps-limit parameter)"
+msgstr ""
+
+msgid "Extra Parameters"
+msgstr ""
+
+msgid "Additional command-line arguments passed to the backend process"
+msgstr ""
+
+msgid "ACL rules"
+msgstr ""
+
+msgid "Click the button to refresh and view ACL rules information"
+msgstr ""
+
+
