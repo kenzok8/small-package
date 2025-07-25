@@ -12,7 +12,4 @@ network_secret = "mysecret"
 [[peer]]
 uri = "tcp://public.easytier.top:11010"
 
-[file_logger]
-level = "info"
-file = "easytier-default"
-dir = "/tmp"
+

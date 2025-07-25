@@ -30,13 +30,13 @@ msgid ""
 "_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx"
 "%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" "
 "target=\"_blank\">QQ Group</a>&nbsp;&nbsp;<a href=\"https://doc.oee.icu"
-"\">Beginner Tutorial</a>"
+"\" target=\"_blank\">Beginner Tutorial</a>"
 msgstr ""
 "一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 "
 "项目地址：<a href=\"https://github.com/EasyTier/EasyTier\" target=\"_blank\">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;"
 "<a href=\"http://easytier.cn\" target=\"_blank\">官网文档</a>&nbsp;&nbsp;"
 "<a href=\"http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" target=\"_blank\">QQ群</a>&nbsp;&nbsp;"
-"<a href=\"https://doc.oee.icu\">菜鸟教程</a>"
+"<a href=\"https://doc.oee.icu\" target=\"_blank\">菜鸟教程</a>"
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:720
 msgid "API Port"
 msgstr "API端口"
@@ -91,12 +91,6 @@ msgstr ""
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:324
 msgid "Bind to Physical NIC Only"
 msgstr "仅使用物理网卡"
-
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:144
-msgid ""
-"By default, only IPv4 is listened to, and peer nodes can only connect via "
-"IPv4. Enabling this will listen on IPv6 ports as well."
-msgstr "默认只监听IPV4，对等节点只能使用IPV4连接，启用后将同时监听IPV6端口"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:394
 msgid "Check IPs"
@@ -159,8 +153,8 @@ msgid "Collecting data..."
 msgstr "收集数据..."
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:39
-msgid "Command Line"
-msgstr "命令行"
+msgid "Default"
+msgstr "默认"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:260
 msgid "Compression Algorithm"
@@ -317,10 +311,14 @@ msgid ""
 msgstr "不允许其他节点使用 KCP 代理 TCP 流到此节点。<br>开启 KCP 代理的节点访问此节点时，依然使用原始。（ --disable-kcp-input 参数）"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:349
-msgid ""
-"Do not allow other nodes to use QUIC to proxy tcp streams to this node. When a node with QUIC proxy enabled  accesses this node, the original tcp connection is preserved.<br>"
-"QUIC proxy-enabled nodes accessing this node will still use the original method. (--disable-quic-input parameter)"
-msgstr "不允许其他节点使用 QUIC 代理 TCP 流到此节点。<br>开启 QUIC 代理的节点访问此节点时，依然使用原始 TCP 连接。（ --disable-kcp-input 参数）"
+msgid "Do not allow other nodes to use QUIC to proxy tcp streams to this node."
+msgstr "不允许其他节点使用 QUIC 代理 TCP 流到此节点。"
+
+msgid "When a node with QUIC proxy enabled accesses this node, the original tcp connection is preserved."
+msgstr "开启 QUIC 代理的节点访问此节点时，依然使用原始 TCP 连接。"
+
+msgid "<br>QUIC proxy-enabled nodes accessing this node will still use the original method. (--disable-quic-input parameter)"
+msgstr "<br>启用 QUIC 代理的节点仍然会使用原始方式进行访问。（--disable-quic-input 参数）"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:139
 msgid "Do Not Listen"
@@ -502,7 +500,7 @@ msgstr "实例名称"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:94
 msgid "Interface IP Address"
-msgstr "接口IP地址"
+msgstr "接口IPV4地址"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:401
 msgid "Interval Time (minutes)"
@@ -523,10 +521,6 @@ msgstr "延迟优先模式，将尝试使用最低延迟路径转发流量，默
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:138
 msgid "Listen"
 msgstr "监听"
-
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:143
-msgid "Listen on IPv6 as well"
-msgstr "同时监听IPV6"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:135
 msgid "Listener Port"
@@ -713,20 +707,18 @@ msgstr "Route信息"
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:370
 msgid ""
 "Runtime log is located at /tmp/easytier.log. View it in the log section "
-"above.<br>If startup fails, check 'Status - System Log' for details.<br>Log "
-"level: Warning < Info < Debug < Trace"
+"above.<br>Levels: Error < Warning < Info < Debug < Trace"
 msgstr ""
-"运行日志在/tmp/easytier.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>"
-"详细程度：警告<信息<调试<跟踪"
+"运行日志在/tmp/easytier.log,可在上方日志查看<br>"
+"详细程度：错误<警告<信息<调试<跟踪"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:753
 msgid ""
 "Runtime log located at /tmp/easytierweb.log, viewable in the log section "
-"above.<br>If startup fails, check the System Log under Status for detailed "
-"failure logs.<br>Levels: Error < Warning < Info < Debug < Trace"
+"above.<br>Levels: Error < Warning < Info < Debug < Trace"
 msgstr ""
-"运行日志在/tmp/easytierweb.log,可在上方日志查看<br>若启动失败，请前往 状态- 系统日志 查看具体启动失败日志<br>"
-"详细程度：警告<信息<调试<跟踪"
+"运行日志在/tmp/easytierweb.log,可在上方日志查看<br>"
+"详细程度：错误<警告<信息<调试<跟踪"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:304
 msgid "SOCKS5 Port"
@@ -738,7 +730,7 @@ msgstr "STUN信息"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:687
 msgid "Self-hosted Web Server"
-msgstr "自建Web服务器"
+msgstr "自建Web控制台"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:714
 msgid "Server Port"
@@ -865,11 +857,8 @@ msgid ""
 msgstr "通过系统内核转发子网代理数据包，禁用内置NAT（ --proxy-forward-by-system 参数）"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:207
-msgid ""
-"Used to identify the VPN node instance on the same machine. Required if "
-"logging is enabled. When using web configuration, enter the same "
-"instance_name (-m parameter)"
-msgstr "用于在同一台机器中标识此 VPN 节点的实例名称，启用日志需要填写，web配置时填一样的instance_name名称 （-m 参数）"
+msgid "Used to identify the VPN node instance on the same machine. (-m parameter)"
+msgstr "用于在同一台机器中标识此 VPN 节点的实例名称（-m 参数）"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:213
 msgid "VPN Portal URL"
@@ -1002,3 +991,65 @@ msgstr "web日志"
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:264
 msgid "zstd"
 msgstr "zstd"
+
+msgid "GEOIP_DB Path"
+msgstr "GEOIP_DB IP数据库路径"
+
+msgid ""
+"GeoIP2 database file path used to locate the client. Defaults to an embedded file (country-level information only)."
+"<br>Recommended: https://github.com/P3TERX/GeoLite.mmdb (--geoip-db parameter)"
+msgstr ""
+"数据库文件路径，用于查找客户端的位置，默认为嵌入文件（仅国家信息），"
+"<br>推荐 https://github.com/P3TERX/GeoLite.mmdb (--geoip-db 参数)"
+
+msgid "Interface IPV6 Address"
+msgstr "接口IPV6地址"
+
+msgid ""
+"ipv6 address of this vpn node, can be used together with ipv4 for dual-stack operation"
+"(--ipv6 parameter)"
+msgstr ""
+"虚拟网卡的IPv6地址，可与IPv4一起使用以进行双栈操作，"
+"(--ipv6 参数)"
+
+msgid "RPC Access Whitelist"
+msgstr "RPC门户白名单"
+
+msgid "rpc portal whitelist, only allow these addresses to access rpc portal (--rpc-portal-whitelist parameter)"
+msgstr "RPC门户白名单，仅允许这些地址访问RPC门户，例如：127.0.0.1/32,127.0.0.0/8,::1/128 (--rpc-portal-whitelist 参数)"
+
+msgid "QUIC Port"
+msgstr "QUIC 端口"
+
+msgid "If this is the Web configuration in the config file, please fill in the same listening port for firewall allowance."
+msgstr "如果是配置文件Web配置请填写一样的监听端口用于防火墙放行"
+
+msgid "Number of Threads"
+msgstr "线程数"
+
+msgid "the number of threads to use, default is 2, only effective when multi-thread is enabled, must be greater than 2 (--multi-thread-count parameter)"
+msgstr "使用的线程数，默认为2，仅在多线程模式下有效。取值必须大于2 (--multi-thread-count 参数)"
+
+msgid "Forwarding Rate"
+msgstr "转发速率"
+
+msgid ""
+"the maximum bps limit for foreign network relay, default is no limit. unit: BPS (bytes per second). "
+"(--foreign-relay-bps-limit parameter)"
+msgstr ""
+"作为共享节点时，限制非本地网络的流量转发速率，默认无限制，单位 BPS （字节每秒）"
+"(--foreign-relay-bps-limit 参数)"
+
+msgid "Extra Parameters"
+msgstr "额外参数"
+
+msgid "Additional command-line arguments passed to the backend process"
+msgstr "传递给后端进程的额外命令行参数"
+
+msgid "ACL rules"
+msgstr "ACL 规则"
+
+msgid "Click the button to refresh and view ACL rules information"
+msgstr "点击按钮刷新，查看ACL规则"
+
+
