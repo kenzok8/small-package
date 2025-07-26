@@ -606,7 +606,7 @@ start_web() {
 	get_tz
 	[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
 	web_cmd=""
-	[ -z "$db_path" ] || web_cmd="${web_cmd} $db_path"
+	[ -z "$db_path" ] || web_cmd="${web_cmd} -d $db_path"
 	[ -z "$web_protocol" ] || web_cmd="${web_cmd} -p $web_protocol"
 	[ -z "$web_port" ] || web_cmd="${web_cmd} -c $web_port"
 	[ -z "$api_port" ] || web_cmd="${web_cmd} -a $api_port"
