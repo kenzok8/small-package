@@ -385,6 +385,7 @@ foreign_relay_bps_limit:depends("etcmd", "etcmd")
 extra_args = s:taboption("privacy", Value, "extra_args", translate("Extra Parameters"),
     translate("Additional command-line arguments passed to the backend process"))
 extra_args.placeholder = "--tcp-whitelist 80 --udp-whitelist 53"
+extra_args:depends("etcmd", "etcmd")
 
 log = s:taboption("general", ListValue, "log", translate("Program Log"),
         translate("Runtime log is located at /tmp/easytier.log. View it in the log section above.<br>"
@@ -585,7 +586,7 @@ btn9.description = translate("Click the button to refresh and view ACL rules inf
 btn9.inputstyle = "apply"
 btn9.write = function()
     if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli acl >/tmp/easytier-cli_acl 2>&1")
+        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli acl stats >/tmp/easytier-cli_acl 2>&1")
     else
         luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_acl")
     end
@@ -595,6 +596,25 @@ btn9info = s:taboption("infos", DummyValue, "btn9info")
 btn9info.rawhtml = true
 btn9info.cfgvalue = function(self, section)
     local content = nixio.fs.readfile("/tmp/easytier-cli_acl") or ""
+    return string.format("<pre>%s</pre>", luci.util.pcdata(content))
+end
+
+btn10 = s:taboption("infos", Button, "btn10")
+btn10.inputtitle = translate("Mapped listener")
+btn10.description = translate("Click the button to refresh and view manage mapped listeners")
+btn10.inputstyle = "apply"
+btn10.write = function()
+    if process_status ~= "" then
+        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli mapped-listener >/tmp/easytier-cli_mapped_listener 2>&1")
+    else
+        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_mapped_listener")
+    end
+end
+
+btn10info = s:taboption("infos", DummyValue, "btn10info")
+btn10info.rawhtml = true
+btn10info.cfgvalue = function(self, section)
+    local content = nixio.fs.readfile("/tmp/easytier-cli_mapped_listener") or ""
     return string.format("<pre>%s</pre>", luci.util.pcdata(content))
 end
 
