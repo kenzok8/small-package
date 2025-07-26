@@ -142,10 +142,10 @@ export function dns_server_outbounds(proxy) {
         }
     ];
     if (proxy.dns_tcp_hijack) {
-        push(result, direct_outbound("dns_tcp_hijack_outbound", proxy.dns_tcp_hijack));
+        push(result, direct_outbound("dns_tcp_hijack_outbound", proxy.dns_tcp_hijack, false));
     }
     if (proxy.dns_udp_hijack) {
-        push(result, direct_outbound("dns_udp_hijack_outbound", proxy.dns_udp_hijack));
+        push(result, direct_outbound("dns_udp_hijack_outbound", proxy.dns_udp_hijack, false));
     }
     return result;
 };

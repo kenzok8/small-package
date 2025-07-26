@@ -81,7 +81,7 @@ return view.extend({
 
         let dynamic_direct_timeout = s.taboption('dynamic_direct', form.Value, 'dynamic_direct_timeout', _('Dynamic Direct Timeout'), _("Larger value consumes more memory and performs generally better. Unit in seconds."));
         dynamic_direct_timeout.datatype = 'uinteger';
-        dynamic_direct_timeout.placeholder = 300;
+        dynamic_direct_timeout.placeholder = 2233;
 
         s.tab('deprecated', _('Deprecated Features'));
 

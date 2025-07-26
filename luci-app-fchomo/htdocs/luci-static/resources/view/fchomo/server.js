@@ -50,9 +50,6 @@ return view.extend({
 		o = s.option(form.Flag, 'server_enabled', _('Enable'));
 		o.default = o.disabled;
 
-		o = s.option(form.Flag, 'server_auto_firewall', _('Auto configure firewall'));
-		o.default = o.disabled;
-
 		/* Server settings START */
 		s = m.section(hm.GridSection, 'server', null);
 		s.addremove = true;
@@ -77,6 +74,11 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.taboption('field_general', form.Flag, 'enabled', _('Enable'));
+		o.default = o.enabled;
+		o.editable = true;
+
+		o = s.taboption('field_general', form.Flag, 'auto_firewall', _('Firewall'),
+			_('Auto configure firewall'));
 		o.default = o.enabled;
 		o.editable = true;
 

@@ -54,6 +54,7 @@ Some features are deprecated / unstable so they are placed in preview app. To en
 * 2025-05-13 feat: geodata reader
 * 2025-07-20 feat: geoip in manual transparent proxy
 * 2025-07-24 fix: geosite browser search
+* 2025-07-27 fix: dynamic direct: only cover global servers; increase default timeout
 
 ## Changelog since 3.5.0
 

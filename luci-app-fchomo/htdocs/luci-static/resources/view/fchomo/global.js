@@ -502,7 +502,7 @@ return view.extend({
 		so.rmempty = false;
 		if (hm.less_24_10)
 			so.onchange = function(ev, section_id, value) {
-				var desc = ev.target.nextSibling;
+				let desc = ev.target.nextSibling;
 				if (value === 'mixed')
 					desc.innerHTML = _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.');
 				else if (value === 'gvisor')

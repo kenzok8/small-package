@@ -66,7 +66,7 @@ function server_outbound_recursive(t, server, tag, config) {
     return result;
 }
 
-export function direct_outbound(tag, redirect) {
+export function direct_outbound(tag, redirect, enable_dynamic_direct) {
     return {
         protocol: "freedom",
         tag: tag,
@@ -76,7 +76,7 @@ export function direct_outbound(tag, redirect) {
         },
         streamSettings: {
             sockopt: {
-                mark: direct_mark,
+                mark: enable_dynamic_direct ? direct_mark : outbound_mark,
             }
         }
     };
@@ -91,7 +91,7 @@ export function blackhole_outbound() {
 
 export function server_outbound(server, tag, config) {
     if (server == null) {
-        return [direct_outbound(tag, null)];
+        return [direct_outbound(tag, null, false)];
     }
     return server_outbound_recursive([], server, tag, config);
 };
