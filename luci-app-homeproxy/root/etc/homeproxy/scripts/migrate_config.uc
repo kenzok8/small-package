@@ -16,6 +16,7 @@ const uciconfig = 'homeproxy';
 uci.load(uciconfig);
 
 const uciinfra = 'infra',
+      ucimigration = 'migration',
       ucimain = 'config',
       ucinode = 'node',
       ucidns = 'dns',
@@ -31,12 +32,14 @@ if (uci.get(uciconfig, uciinfra, 'china_dns_port'))
 
 /* chinadns server now only accepts single server */
 const china_dns_server = uci.get(uciconfig, ucimain, 'china_dns_server');
-if (china_dns_server === 'wan_114')
-	uci.set(uciconfig, ucimain, 'china_dns_server', '114.114.114.114');
-else if (match(china_dns_server, /,/))
-	uci.set(uciconfig, ucimain, 'china_dns_server', split(china_dns_server, ',')[0]);
-else if (match(china_dns_server, / /))
-	uci.set(uciconfig, ucimain, 'china_dns_server', split(china_dns_server, ' ')[0]);
+if (type(china_dns_server) === 'array') {
+	uci.set(uciconfig, ucimain, 'china_dns_server', china_dns_server[0]);
+} else {
+	if (china_dns_server === 'wan_114')
+		uci.set(uciconfig, ucimain, 'china_dns_server', '114.114.114.114');
+	else if (match(china_dns_server, /,/))
+		uci.set(uciconfig, ucimain, 'china_dns_server', split(china_dns_server, ',')[0]);
+}
 
 /* github_token option has been moved to config section */
 const github_token = uci.get(uciconfig, uciinfra, 'github_token');
@@ -49,6 +52,17 @@ if (github_token) {
 const tun_gso = uci.get(uciconfig, uciinfra, 'tun_gso');
 if (tun_gso || tun_gso === '0')
 	uci.delete(uciconfig, uciinfra, 'tun_gso');
+
+/* create migration section */
+if (!uci.get(uciconfig, ucimigration))
+	uci.set(uciconfig, ucimigration, uciconfig);
+
+/* delete old crontab command */
+const migration_crontab = uci.get(uciconfig, ucimigration, 'crontab');
+if (!migration_crontab) {
+	system('sed -i "/update_crond.sh/d" "/etc/crontabs/root" 2>"/dev/null"');
+	uci.set(uciconfig, ucimigration, 'crontab', '1');
+}
 
 /* empty value defaults to all ports now */
 if (uci.get(uciconfig, ucimain, 'routing_port') === 'all')
