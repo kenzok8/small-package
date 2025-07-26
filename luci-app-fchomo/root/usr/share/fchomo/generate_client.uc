@@ -146,7 +146,7 @@ function get_nameserver(cfg, detour) {
 
 	if ('block-dns' in cfg)
 		//https://github.com/MetaCubeX/mihomo/blob/0128a0bb1fce17d39158c745a912d7b2b87cf975/config/config.go#L1131
-		return 'rcode://name_error';
+		return 'rcode://refused';
 
 	let servers = [];
 	for (let k in cfg) {

@@ -99,10 +99,9 @@ log() {
 }
 
 start_service() {
-	local client_enabled server_enabled server_auto_firewall
+	local client_enabled server_enabled
 	config_get client_enabled "routing" "client_enabled" "0"
 	config_get_bool server_enabled "routing" "server_enabled" "0"
-	config_get_bool server_auto_firewall "routing" "server_auto_firewall" "0"
 
 	if [ "$client_enabled" = "0" -a "$server_enabled" = "0" ]; then
 		return 1
@@ -334,36 +333,38 @@ start_service() {
 		procd_set_param stderr 1
 		procd_set_param respawn
 
-		if [ "$server_auto_firewall" = "1" ]; then
-			add_firewall() {
-				local enabled listen port
-				config_get_bool enabled "$1" "enabled" "1"
-				config_get listen "$1" "listen" "::"
-				config_get port "$1" "port"
+		# add_firewall
+		add_firewall() {
+			local enabled auto_firewall listen port
+			config_get_bool enabled "$1" "enabled" "1"
+			config_get_bool auto_firewall "$1" "auto_firewall" "1"
+			config_get listen "$1" "listen" "::"
+			config_get port "$1" "port"
 
-				[ "$enabled" = "0" ] && return 0
+			[ "$enabled" = "0" ] && return 0
+			[ "$auto_firewall" = "0" ] && return 0
 
-				json_add_object ''
-				json_add_string type rule
-				json_add_string target ACCEPT
-				json_add_string name "$1"
-				#json_add_string family '' # '' = IPv4 and IPv6
-				json_add_string proto 'tcp udp'
-				json_add_string src "*"
-				#json_add_string dest '' # '' = input
-				json_add_string dest_ip "$(echo "$listen" | grep -vE '^(0\.\d+\.\d+\.\d+|::)$')"
-				json_add_string dest_port "$port"
-				json_close_object
-			}
-
-			procd_open_data
-			# configure firewall
-			json_add_array firewall
-				# meta l4proto %s th dport %s counter accept comment "!%s: accept server instance [%s]"
-				config_foreach add_firewall "server"
-			json_close_array
-			procd_close_data
-		fi
+			json_add_object ''
+			json_add_string type rule
+			json_add_string target ACCEPT
+			json_add_string name "$1"
+			#json_add_string family '' # '' = IPv4 and IPv6
+			json_add_string proto 'tcp udp'
+			json_add_string direction in
+			json_add_string src "*"
+			#json_add_string dest '' # '' = input
+			json_add_string dest_ip "$(echo "$listen" | grep -vE '^(0\.\d+\.\d+\.\d+|::)$')"
+			json_add_string dest_port "$port"
+			json_close_object
+		}
+		#
+		procd_open_data
+		# configure firewall
+		json_add_array firewall
+			# meta l4proto %s th dport %s counter accept comment "!%s: accept server instance [%s]"
+			config_foreach add_firewall "server"
+		json_close_array
+		procd_close_data
 
 		procd_close_instance
 	fi
