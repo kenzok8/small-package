@@ -107,15 +107,15 @@ msgstr "清除日志"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:469
 msgid "Click the button to refresh and view STUN information"
-msgstr "点击按钮刷新，查看stun信息"
+msgstr "点击按钮刷新，执行 STUN 测试"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:546
 msgid "Click the button to refresh and view TCP/KCP proxy information"
-msgstr "点击按钮刷新，查看tcp/kcp代理信息"
+msgstr "点击按钮刷新，查看 TCP/KCP 代理状态"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:450
 msgid "Click the button to refresh and view connector information"
-msgstr "点击按钮刷新，查看connector信息"
+msgstr "点击按钮刷新，查看管理连接器"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:412
 msgid "Click the button to refresh and view local node information"
@@ -123,15 +123,15 @@ msgstr "点击按钮刷新，查看本机信息"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:431
 msgid "Click the button to refresh and view peer information"
-msgstr "点击按钮刷新，查看对端信息"
+msgstr "点击按钮刷新，查看对等节点信息"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:508
 msgid "Click the button to refresh and view peer-center information"
-msgstr "点击按钮刷新，查看peer-center信息"
+msgstr "点击按钮刷新，查看全局对等节点信息"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:489
 msgid "Click the button to refresh and view route information"
-msgstr "点击按钮刷新，查看route信息"
+msgstr "点击按钮刷新，查看路由信息"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:565
 msgid ""
@@ -140,7 +140,7 @@ msgstr "点击按钮刷新，查看本机完整启动参数"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:527
 msgid "Click the button to refresh and view vpn-portal information"
-msgstr "点击按钮刷新，查看vpn-portal信息"
+msgstr "点击按钮刷新，查看VPN 门户（WireGuard）信息"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:584
 msgid ""
@@ -1050,6 +1050,12 @@ msgid "ACL rules"
 msgstr "ACL 规则"
 
 msgid "Click the button to refresh and view ACL rules information"
-msgstr "点击按钮刷新，查看ACL规则"
+msgstr "点击按钮刷新，查看 ACL 规则统计信息"
+
+msgid "Mapped listener"
+msgstr "Mapped listener信息"
+
+msgid "Click the button to refresh and view manage mapped listeners"
+msgstr "点击按钮刷新，查看管理映射的监听器"
 
 

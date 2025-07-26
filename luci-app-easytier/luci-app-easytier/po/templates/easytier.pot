@@ -1,3 +1,6 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:648
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:666
 msgid ""
@@ -1011,6 +1014,12 @@ msgid "ACL rules"
 msgstr ""
 
 msgid "Click the button to refresh and view ACL rules information"
+msgstr ""
+
+msgid "Mapped listener"
+msgstr ""
+
+msgid "Click the button to refresh and view manage mapped listeners"
 msgstr ""
 
 

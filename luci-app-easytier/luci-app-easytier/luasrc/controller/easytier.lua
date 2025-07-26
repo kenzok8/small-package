@@ -87,7 +87,7 @@ function get_log()
     local files = {"/tmp/easytier.log"}
     for i, file in ipairs(files) do
         if luci.sys.call("[ -f '" .. file .. "' ]") == 0 then
-            log = log .. luci.sys.exec("cat " .. file)
+            log = log .. luci.sys.exec("sed 's/\\x1b\\[[0-9;]*m//g' " .. file)
         end
     end
     luci.http.write(log)
@@ -102,7 +102,7 @@ function get_wlog()
     local files = {"/tmp/easytierweb.log"}
     for i, file in ipairs(files) do
         if luci.sys.call("[ -f '" .. file .. "' ]") == 0 then
-            log = log .. luci.sys.exec("cat " .. file)
+            log = log .. luci.sys.exec("sed 's/\\x1b\\[[0-9;]*m//g' " .. file)
         end
     end
     luci.http.write(log)
