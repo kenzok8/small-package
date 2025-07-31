@@ -1,4 +1,6 @@
 #!/bin/sh
+# Migration script for fchomo rules & sub-rules
+# Used to migrate LuCI application routing rules and sub-rules from `mihomo` format to `json` format.
 
 . /lib/functions.sh
 . /usr/share/libubox/jshn.sh
