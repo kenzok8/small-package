@@ -9,4 +9,9 @@ uci changes uhttpd|grep . >/dev/null && uci commit uhttpd
 # nginx
 [ -n "$(command -v nginx)" ] && /etc/init.d/nginx reload
 
+if ! uci -q get tinyfilemanager.@main[0].defconf >/dev/null; then
+	uci set tinyfilemanager.@main[0].defconf='{"lang":"en"}'
+	uci commit tinyfilemanager
+fi
+
 exit 0
