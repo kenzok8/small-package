@@ -235,7 +235,7 @@ local function fetch_rule(rule_name,rule_type,url,exclude_domain)
 			end
 			out:close()
 		end
-		sys.call("cat " ..unsort_file_tmp.. " | sort -u > "..file_tmp)
+		sys.call("LC_ALL=C sort -u " .. unsort_file_tmp .. " > " .. file_tmp)
 		os.remove(unsort_file_tmp)
 
 		local old_md5 = sys.exec("echo -n $(md5sum " .. rule_path .. "/" ..rule_name.. " | awk '{print $1}')"):gsub("\n", "")
