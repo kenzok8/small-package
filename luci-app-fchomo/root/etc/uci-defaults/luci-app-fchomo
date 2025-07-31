@@ -1,14 +1,17 @@
 #!/bin/sh
 
+# Initialize necessary directories
 for d in certs provider ruleset resources templates; do
 	mkdir -p "/etc/fchomo/$d/" 2>/dev/null
 done
 
+# Initialize default mixed port authentication
 if ! uci -q get fchomo.global.authentication >/dev/null; then
 	uci add_list fchomo.global.authentication="fchomodef:$(cat /proc/sys/kernel/random/uuid)"
 	uci commit fchomo
 fi
 
+# Initialize the default direct list
 if [ ! -s "/etc/fchomo/resources/direct_list.yaml" ]; then
 	cat <<- EOF > "/etc/fchomo/resources/direct_list.yaml"
 	FQDN:
@@ -19,6 +22,7 @@ if [ ! -s "/etc/fchomo/resources/direct_list.yaml" ]; then
 	EOF
 fi
 
+# Initialize the default proxy list
 if [ ! -s "/etc/fchomo/resources/proxy_list.yaml" ]; then
 	cat <<- EOF > "/etc/fchomo/resources/proxy_list.yaml"
 	FQDN:
@@ -43,6 +47,7 @@ if [ ! -s "/etc/fchomo/resources/proxy_list.yaml" ]; then
 	EOF
 fi
 
+# Initialize the default hosts
 if [ ! -s "/etc/fchomo/templates/hosts.yaml" ]; then
 	cat <<- EOF > "/etc/fchomo/templates/hosts.yaml"
 	hosts:
@@ -55,6 +60,7 @@ if [ ! -s "/etc/fchomo/templates/hosts.yaml" ]; then
 	EOF
 fi
 
+# Initialize default firewall table
 uci -q batch <<-EOF >"/dev/null"
 	delete firewall.fchomo_pre
 	set firewall.fchomo_pre=include
@@ -69,5 +75,11 @@ uci -q batch <<-EOF >"/dev/null"
 	set firewall.fchomo_post.position="ruleset-post"
 	commit firewall
 EOF
+
+# fix dnsmasq
+if ! uci -q get dhcp.@dnsmasq[0].cache_rr|grep -q '\bANY\b'; then
+	uci add_list dhcp.@dnsmasq[0].cache_rr="ANY"
+	uci commit dhcp
+fi
 
 exit 0
