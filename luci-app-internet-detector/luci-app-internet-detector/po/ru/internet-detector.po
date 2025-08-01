@@ -98,6 +98,9 @@ msgstr "Интервал при отключении"
 msgid "Dead period"
 msgstr "Период после отключения"
 
+msgid "Debug"
+msgstr "Отладка"
+
 msgid "Default port value for TCP connections."
 msgstr "Стандартное значение порта для TCP-подключений."
 
@@ -151,9 +154,6 @@ msgstr "Email-адрес отправителя."
 
 msgid "Enable"
 msgstr "Включить"
-
-msgid "Enable logging"
-msgstr "Запись событий в лог"
 
 msgid "Enable public-ip-script"
 msgstr "Включить public-ip-script"
@@ -219,6 +219,9 @@ msgstr "Размер данных ICMP-пакета"
 msgid "Incorrect bot token?"
 msgstr "Неправильный токен бота?"
 
+msgid "Info"
+msgstr "Информация"
+
 msgid "Instances"
 msgstr "Экземпляры"
 
@@ -266,6 +269,12 @@ msgstr "Управление LED"
 
 msgid "Loading"
 msgstr "Загрузка"
+
+msgid "Log event level."
+msgstr "Уровень событий лога."
+
+msgid "Logging"
+msgstr "Запись событий в лог"
 
 msgid "Mailsend is not available..."
 msgstr "Mailsend недоступен..."
@@ -337,6 +346,9 @@ msgstr "Нет доступных сообщений. Напишите что-н
 
 msgid "Not scheduled"
 msgstr "Не запланирован"
+
+msgid "Notice"
+msgstr "Сообщение"
 
 msgid "Number of attempts to request an IP address."
 msgstr "Количество попыток запроса IP адреса"
@@ -582,6 +594,9 @@ msgstr ""
 "Ожидание завершения перезагрузки перед выполнением принудительной "
 "перезагрузки."
 
+msgid "Warning"
+msgstr "Внимание"
+
 msgid "Web UI only (UI detector)"
 msgstr "Только web-интерфейс (UI детектор)"
 
@@ -598,9 +613,6 @@ msgstr "Когда будет отправлено сообщение"
 
 msgid "Windows: 32 bytes"
 msgstr "Windows: 32 байта"
-
-msgid "Write messages to the system log."
-msgstr "Записывать сообщения в системный журнал."
 
 msgid ""
 "You need to register a new %sTelegram bot%s. Then get the bot's API token and paste it into the <code>Bot token</code> field. After that, open a chat with the bot, write something (in the Telegram app) and you will be able to get the chat ID using the <code>ID</code> button."

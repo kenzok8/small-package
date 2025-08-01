@@ -123,8 +123,8 @@ function Module:sendMessage(msg, textPattern)
 	-- Debug
 	if self.config.debug then
 		verboseArg = " -v"
-		self.debugOutput(string.format("--- %s ---", self.name))
 	end
+	self.debugOutput(string.format("--- %s ---", self.name))
 
 	local securityArgs = "-starttls -auth-login"
 	if self.mailSecurity == "ssl" then
@@ -140,10 +140,8 @@ function Module:sendMessage(msg, textPattern)
 		emailMsg)
 
 	-- Debug
-	if self.config.debug then
-		self.debugOutput(string.format("%s: %s", self.name, mtaCmd))
-		self.syslog("debug", string.format("%s: %s", self.name, mtaCmd))
-	end
+	self.debugOutput(string.format("%s: %s", self.name, mtaCmd))
+	self.syslog("debug", string.format("%s: %s", self.name, mtaCmd))
 
 	retVal = os.execute(mtaCmd)
 	if retVal == 0 then

@@ -211,28 +211,26 @@ function Module:sendUDPMessage(message, server, port)
 				if data then
 					success  = true
 					response = resp
-				elseif self.config.debug then
+				else
 					self.debugOutput(string.format(
 						"SOCKET RECV ERROR: %s, %s", tostring(resp), tostring(errNum)))
 				end
-			elseif self.config.debug then
+			else
 				self.debugOutput(string.format(
 					"SOCKET SEND ERROR: %s, %s", tostring(errMsg), tostring(errNum)))
 			end
 
-			if self.config.debug then
-				self.debugOutput(string.format(
-					"--- UDP ---\ntime = %s\nconnection_timeout = %s\niface = %s\nserver = %s:%s\nsockname = %s:%s\nsuccess = %s",
-					os.time(),
-					self.timeout,
-					tostring(self.config.serviceConfig.iface),
-					server,
-					tostring(port),
-					tostring(response.addr),
-					tostring(response.port),
-					tostring(success))
-				)
-			end
+			self.debugOutput(string.format(
+				"--- UDP ---\ntime = %s\nconnection_timeout = %s\niface = %s\nserver = %s:%s\nsockname = %s:%s\nsuccess = %s",
+				os.time(),
+				self.timeout,
+				tostring(self.config.serviceConfig.iface),
+				server,
+				tostring(port),
+				tostring(response.addr),
+				tostring(response.port),
+				tostring(success))
+			)
 
 			unistd.close(sock)
 			retCode = success and 0 or 1

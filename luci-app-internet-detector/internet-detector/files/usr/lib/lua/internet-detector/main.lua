@@ -13,7 +13,7 @@ local uci    = require("uci")
 
 local InternetDetector = {
 	mode           = 0,		-- 0: disabled, 1: Service, 2: UI detector
-	enableLogger   = true,
+	loggingLevel   = 6,
 	hostname       = "OpenWrt",
 	appName        = "internet-detector",
 	commonDir      = "/tmp/run",
@@ -39,6 +39,16 @@ local InternetDetector = {
 		iface               = nil,
 		instance            = nil,
 	},
+	logLevels = {
+		emerg   = { level = syslog.LOG_EMERG,   num = 0 },
+		alert   = { level = syslog.LOG_ALERT,   num = 1 },
+		crit    = { level = syslog.LOG_CRIT,    num = 2 },
+		err     = { level = syslog.LOG_ERR,     num = 3 },
+		warning = { level = syslog.LOG_WARNING, num = 4 },
+		notice  = { level = syslog.LOG_NOTICE,  num = 5 },
+		info    = { level = syslog.LOG_INFO,    num = 6 },
+		debug   = { level = syslog.LOG_DEBUG,   num = 7 },
+	},
 	modules       = {},
 	parsedHosts   = {},
 	uiCounter     = 0,
@@ -56,9 +66,9 @@ if mode ~= nil then
 elseif err then
 	io.stderr:write(string.format("Error: %s\n", err))
 end
-local enableLogger, err = uciCursor:get(InternetDetector.appName, "config", "enable_logger")
-if enableLogger ~= nil then
-	InternetDetector.enableLogger = (tonumber(enableLogger) ~= 0)
+local loggingLevel, err = uciCursor:get(InternetDetector.appName, "config", "logging_level")
+if loggingLevel ~= nil then
+	InternetDetector.loggingLevel = tonumber(loggingLevel)
 elseif err then
 	io.stderr:write(string.format("Error: %s\n", err))
 end
@@ -141,19 +151,12 @@ function InternetDetector:statusJson(inet, instance, t)
 end
 
 function InternetDetector:writeLogMessage(level, msg)
-	if self.enableLogger then
-		local levels = {
-			emerg   = syslog.LOG_EMERG,
-			alert   = syslog.LOG_ALERT,
-			crit    = syslog.LOG_CRIT,
-			err     = syslog.LOG_ERR,
-			warning = syslog.LOG_WARNING,
-			notice  = syslog.LOG_NOTICE,
-			info    = syslog.LOG_INFO,
-			debug   = syslog.LOG_DEBUG,
-		}
-		syslog.syslog(levels[level] or syslog.LOG_INFO, string.format(
-			"%s: %s", self.serviceConfig.instance or "", msg))
+	local levelItem  = self.logLevels[level]
+	local levelValue = (levelItem and levelItem.level) or self.logLevels["info"].level
+	local num        = (levelItem and levelItem.num) or self.logLevels["info"].num
+	if num <= self.loggingLevel then
+		syslog.syslog(levelValue, string.format(
+				"%s: %s", self.serviceConfig.instance or "", msg))
 	end
 end
 
@@ -246,6 +249,7 @@ function InternetDetector:TCPConnectionToHost(host, port)
 			"GETADDRINFO ERROR: %s, %s", errMsg, errNum))
 	else
 		local family = saTable[1].family
+
 		if family then
 			local sock, errMsg, errNum = socket.socket(family, socket.SOCK_STREAM, 0)
 
@@ -431,7 +435,6 @@ function InternetDetector:mainLoop()
 				self.uiCounter = self.uiCounter + 1
 			end
 			uiLastTime = uiTimeNow
-
 			if self.uiCounter >= self.uiRunTime then
 				self:breakMainLoop(signal.SIGTERM)
 			end
@@ -562,7 +565,7 @@ end
 function InternetDetector:run()
 	local pidValue = unistd.getpid()
 	self:writeValueToFile(self.pidFile, pidValue)
-	if self.enableLogger then
+	if self.loggingLevel > 0 then
 		syslog.openlog(self.appName, syslog.LOG_PID, syslog.LOG_DAEMON)
 	end
 	self:writeLogMessage("info", "started")
@@ -610,7 +613,7 @@ function InternetDetector:run()
 	end
 
 	self:removeProcessFiles()
-	if self.enableLogger then
+	if self.loggingLevel > 0 then
 		self:writeLogMessage("info", "stoped")
 		syslog.closelog()
 	end
@@ -651,7 +654,7 @@ function InternetDetector:setServiceConfig(instance)
 	if self:loadUCIConfig("instance", instance) then
 		self:parseHosts()
 		if self.mode == 2 then
-			self.enableLogger = false
+			self.loggingLevel = 0
 			self.noModules    = true
 		end
 		return true

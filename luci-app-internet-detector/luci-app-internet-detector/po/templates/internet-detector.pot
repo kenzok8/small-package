@@ -86,6 +86,9 @@ msgstr ""
 msgid "Dead period"
 msgstr ""
 
+msgid "Debug"
+msgstr ""
+
 msgid "Default port value for TCP connections."
 msgstr ""
 
@@ -138,9 +141,6 @@ msgid "Email address of the sender."
 msgstr ""
 
 msgid "Enable"
-msgstr ""
-
-msgid "Enable logging"
 msgstr ""
 
 msgid "Enable public-ip-script"
@@ -205,6 +205,9 @@ msgstr ""
 msgid "Incorrect bot token?"
 msgstr ""
 
+msgid "Info"
+msgstr ""
+
 msgid "Instances"
 msgstr ""
 
@@ -251,6 +254,12 @@ msgid "LED control"
 msgstr ""
 
 msgid "Loading"
+msgstr ""
+
+msgid "Log event level."
+msgstr ""
+
+msgid "Logging"
 msgstr ""
 
 msgid "Mailsend is not available..."
@@ -311,6 +320,9 @@ msgid "No messages available. Write something to the bot and try again."
 msgstr ""
 
 msgid "Not scheduled"
+msgstr ""
+
+msgid "Notice"
 msgstr ""
 
 msgid "Number of attempts to request an IP address."
@@ -552,6 +564,9 @@ msgstr ""
 msgid "Waiting for a reboot to complete before performing a forced reboot."
 msgstr ""
 
+msgid "Warning"
+msgstr ""
+
 msgid "Web UI only (UI detector)"
 msgstr ""
 
@@ -565,9 +580,6 @@ msgid "When message will be sent"
 msgstr ""
 
 msgid "Windows: 32 bytes"
-msgstr ""
-
-msgid "Write messages to the system log."
 msgstr ""
 
 msgid ""
