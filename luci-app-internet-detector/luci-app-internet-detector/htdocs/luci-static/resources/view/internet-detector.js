@@ -1049,7 +1049,7 @@ return view.extend({
 					'mod_network_restart_attempt_interval', _('Attempt interval'),
 					_('Interval between network restarts.')
 				);
-				o.default   = '15';
+				o.default   = '60';
 				o.rmempty   = false;
 				o.modalonly = true;
 
@@ -1135,7 +1135,7 @@ return view.extend({
 							'mod_modem_restart_attempt_interval', _('Attempt interval'),
 							_('Interval between modem restarts.')
 						);
-						o.default   = '15';
+						o.default   = '60';
 						o.rmempty   = false;
 						o.modalonly = true;
 
@@ -1591,7 +1591,7 @@ return view.extend({
 					'mod_user_scripts_up_script_attempt_interval', _('Attempt interval'),
 					_('Interval between up-script runs.')
 				);
-				o.default   = '15';
+				o.default   = '60';
 				o.rmempty   = false;
 				o.modalonly = true;
 
@@ -1650,7 +1650,7 @@ return view.extend({
 					'mod_user_scripts_down_script_attempt_interval', _('Attempt interval'),
 					_('Interval between down-script runs.')
 				);
-				o.default   = '15';
+				o.default   = '60';
 				o.rmempty   = false;
 				o.modalonly = true;
 
