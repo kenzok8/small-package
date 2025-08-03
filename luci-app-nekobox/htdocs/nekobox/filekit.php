@@ -349,18 +349,15 @@ function searchFiles($dir, $term) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NeKobox文件助手</title>
     <link rel="icon" href="./assets/img/nekobox.png">
-    <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="./assets/css/custom.css" rel="stylesheet">
-    <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
-    <script src="./assets/js/feather.min.js"></script>
-    <script src="./assets/js/jquery-2.1.3.min.js"></script>
-    <script src="./assets/js/neko.js"></script>
+    <link rel="stylesheet" href="./assets/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="./assets/bootstrap/all.min.css">
+    <link rel="stylesheet" href="./assets/bootstrap/bootstrap-icons.css">
+    <link rel="stylesheet" href="./assets/bootstrap/custom.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/mode-json.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/mode-yaml.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"></script>
+    <script src="./assets/bootstrap/jquery.min.js"></script>
+    <script src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
@@ -1156,7 +1153,7 @@ function searchFiles($dir, $term) {
 
 <div class="row">
     <div class="col-12">  
-        <div class="container container-bg border border-3 rounded-4 p-3">
+        <div class="container container-bg border border-2 rounded-4 p-3">
             <div class="row align-items-center mb-3">
                 <div class="col-md-3 text-center text-md-start">
                     <img src="./assets/img/nekobox.png" alt="Neko Box" class="img-fluid" style="max-height: 100px;">
