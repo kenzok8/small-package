@@ -46,11 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['setCron'])) {
 
         $timestamp = date('[ H:i:s ]');
         file_put_contents($logFile, "$timestamp Cron job successfully set. Sing-box will update at $cronExpression.\n", FILE_APPEND);
-        echo "<div id='log-message' class='alert alert-success' data-translate='cron_job_set' data-dynamic-content='$cronExpression'></div>";
+        echo "<div class='log-message alert alert-success' data-translate='cron_job_set' data-dynamic-content='$cronExpression'></div>";
     } else {
         $timestamp = date('[ H:i:s ]');
         file_put_contents($logFile, "$timestamp Invalid Cron expression: $cronExpression\n", FILE_APPEND);
-        echo "<div id='log-message' class='alert alert-danger' data-translate='cron_job_added_failed'></div>";
+        echo "<div class='log-message alert alert-danger' data-translate='cron_job_added_failed'></div>";
     }
 }
 ?>
@@ -58,28 +58,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['setCron'])) {
 <?php
 $subscriptionFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
 
-if (file_exists($subscriptionFilePath)) {
-    $fileContent = file_get_contents($subscriptionFilePath);
-    $fileContent = trim($fileContent); 
-} else {
-    $fileContent = ''; 
-}
-
 $latestLink = '';
-if (!empty($fileContent)) {
-    $lines = explode("\n", $fileContent);
+if (file_exists($subscriptionFilePath)) {
+    $fileContent = trim(file_get_contents($subscriptionFilePath));
 
-    $latestTimestamp = '';
-    $latestLink = '';
+    if (!empty($fileContent)) {
+        $lines = explode("\n", $fileContent);
+        $latestTimestamp = '';
 
-    foreach ($lines as $line) {
-        if (preg_match('/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \| .*: (.*)$/', $line, $matches)) {
-            $timestamp = $matches[1]; 
-            $links = $matches[2]; 
-
-            if ($timestamp > $latestTimestamp) {
-                $latestTimestamp = $timestamp;
-                $latestLink = $links;
+        foreach ($lines as $line) {
+            if (preg_match('/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \| .*: (.*)$/', $line, $matches)) {
+                $timestamp = $matches[1]; 
+                $linkCandidate = $matches[2]; 
+                if ($timestamp > $latestTimestamp) {
+                    $latestTimestamp = $timestamp;
+                    $latestLink = $linkCandidate;
+                }
             }
         }
     }
@@ -95,11 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $SUBSCRIBE_URL = trim($_POST['subscribeUrl']);
         
         if (empty($SUBSCRIBE_URL)) {
-            echo "<div class='alert alert-warning' data-translate='subscribe_url_empty'></div>";
+            echo "<div class='log-message alert alert-warning' data-translate='subscribe_url_empty'></div>";
             exit;
         }
         
-        echo '<div id="log-message" class="alert alert-success" data-translate="subscribe_url_saved" data-dynamic-content="' . $SUBSCRIBE_URL . '"></div>';
+        echo '<div class="log-message alert alert-success" data-translate="subscribe_url_saved" data-dynamic-content="' . $SUBSCRIBE_URL . '"></div>';
     }
 
     if (isset($_POST['createShellScript'])) {
@@ -147,33 +141,20 @@ EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
             chmod($shellScriptPath, 0755);
-            echo "<div id='log-message' class='alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
+            echo "<div class='log-message alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
         } else {
-            echo "<div id='log-message' class='alert alert-danger' data-translate='shell_script_failed'></div>";
+            echo "<div class='log-message alert alert-danger' data-translate='shell_script_failed'></div>";
         }
     }
 }
 ?>
 
-<!doctype html>
-<html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>singbox - Nekobox</title>
-    <link rel="icon" href="./assets/img/nekobox.png">
-    <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="./assets/css/custom.css" rel="stylesheet">
-    <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
-    <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="./assets/js/feather.min.js"></script>
-    <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="./assets/js/neko.js"></script>
-    <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
-    <?php include './ping.php'; ?>
-</head>
-<body>
+<meta charset="utf-8">
+<title>singbox - Nekobox</title>
+<link rel="icon" href="./assets/img/nekobox.png">
+<script src="./assets/bootstrap/jquery.min.js"></script>
+<?php include './ping.php'; ?>
+
 <style>
 .container-fluid {
     max-width: 2400px;
@@ -186,6 +167,7 @@ EOL;
    padding-right: 32px;
 }
 
+.result-container,
 .container {
    padding-left: 40px;  
    padding-right: 40px;
@@ -202,7 +184,7 @@ EOL;
 }
 
 </style>
-<div class="container-sm container-bg callout border border-3 rounded-4 col-11">
+<div class="container-sm container-bg mt-4">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
         <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
@@ -211,7 +193,7 @@ EOL;
         <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
 <div class="outer-container section-container">
     <div class="container-fluid">
-        <h1 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;" data-translate="title">Sing-box Conversion Template One</h1>
+        <h2 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;" data-translate="title">Sing-box Conversion Template One</h2>
         <div class="alert alert-info">
             <h4 class="alert-heading" data-translate="helpInfoHeading">Help Information</h4>
             <ul>
@@ -224,7 +206,7 @@ EOL;
         <form method="post" action="">
             <div class="mb-3">
                 <label for="subscribeUrl" class="form-label" data-translate="subscribeUrlLabel">Subscription URL</label>         
-                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($links); ?>" placeholder="Enter subscription URL, multiple URLs separated by |"  data-translate-placeholder="subscribeUrlPlaceholder" required>
+                <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($latestLink); ?>" placeholder="Enter subscription URL, multiple URLs separated by |"  data-translate-placeholder="subscribeUrlPlaceholder" required>
             </div>
             <div class="mb-3">
                 <label for="customFileName" class="form-label" data-translate="customFileNameLabel">Custom Filename (Default: sing-box.json)</label>
@@ -234,7 +216,7 @@ EOL;
                 <legend class="form-label" data-translate="chooseTemplateLabel">Choose Template</legend>
                 <div class="row">
                     <div class="col">
-                        <input type="radio" class="form-check-input" id="useDefaultTemplate0" name="defaultTemplate" value="0" checked>
+                        <input type="radio" class="form-check-input" id="useDefaultTemplate0" name="defaultTemplate" value="0">
                         <label class="form-check-label" for="useDefaultTemplate0" data-translate="defaultTemplateLabel">Default Template</label>
                     </div>
                     <div class="col">
@@ -246,7 +228,7 @@ EOL;
                         <label class="form-check-label" for="useDefaultTemplate2" data-translate="template2Label">Template 2</label>
                     </div>
                     <div class="col">
-                        <input type="radio" class="form-check-input" id="useDefaultTemplate3" name="defaultTemplate" value="3">
+                        <input type="radio" class="form-check-input" id="useDefaultTemplate3" name="defaultTemplate" value="3" checked>
                         <label class="form-check-label" for="useDefaultTemplate3" data-translate="template3Label">Template 3</label>
                     </div>
                     <div class="col">
@@ -281,7 +263,6 @@ EOL;
                     </form>
                 </div>
             </div>
-        </form>
         <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -495,21 +476,20 @@ EOL;
             echo "<div class='container'>";
             echo "<div class='card'>";
             echo "<div class='card-body'>";
-            echo "<h2 class='card-title'>" . $translations['data_saved'] . "</h2>";
+            echo "<h3 class='card-title'>" . $translations['data_saved'] . "</h3>";
             echo "<pre>" . htmlspecialchars($savedData) . "</pre>";
             echo "<form method='post' action=''>";
-            echo '<input type="hidden" name="lang" value="' . $currentLang . '">'; 
+
             echo '<button class="btn btn-danger" type="submit" name="clearData"><i class="bi bi-trash"></i> ' . $translations['clear_data'] . '</button>';
             echo "</form>";
             echo "</div>";
             echo "</div>";
         }
         ?>
-    </div>
-</div>
-    </div>
-</form>
-<script src="./assets/bootstrap/jquery.min.js"></script>
+      <footer class="text-center">
+    <p><?php echo $footer ?></p>
+</footer>
+
 <script>
     function copyToClipboard() {
         const copyText = document.getElementById("configContent");
@@ -517,6 +497,28 @@ EOL;
         document.execCommand("copy");
         alert("Copied to clipboard");
     }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const customTemplateRadio = document.getElementById('useCustomTemplate');
+    const customTemplateInput = document.getElementById('customTemplateUrl');
+    const allTemplateRadios = document.querySelectorAll('input[name="templateOption"]');
+
+    function toggleCustomInput() {
+        if (customTemplateRadio.checked) {
+            customTemplateInput.style.display = 'block';
+        } else {
+            customTemplateInput.style.display = 'none';
+        }
+    }
+
+    toggleCustomInput();
+
+    allTemplateRadios.forEach(radio => {
+        radio.addEventListener('change', toggleCustomInput);
+    });
+});
 </script>
 
 <script>
@@ -537,11 +539,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const savedTemplate = localStorage.getItem("selectedTemplate");
     const customTemplateUrl = localStorage.getItem("customTemplateUrl");
 
-    if (savedTemplate) {
-        const templateInput = document.querySelector(`input[name="defaultTemplate"][value="${savedTemplate}"]`);
-        if (templateInput) {
-            templateInput.checked = true;
-        }
+    const defaultTemplate = savedTemplate ?? "3";
+    const templateInput = document.querySelector(`input[name="defaultTemplate"][value="${defaultTemplate}"]`);
+    if (templateInput) {
+        templateInput.checked = true;
     }
 
     if (customTemplateUrl) {
@@ -566,9 +567,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
-</div>
-      <footer class="text-center">
-    <p><?php echo $footer ?></p>
-</footer>
-</body>
-</html>
+
+
+

@@ -3961,11 +3961,14 @@ aceEditor.getSession().on("change", function(delta) {
     }
 });
 
-aceEditor.on("copy", function() {
-    var selectedText = aceEditor.getSelectedText();
-    if (selectedText) {
-        var formattedText = formatAllText(aceEditor.getValue());
-        navigator.clipboard.writeText(formattedText);
+aceEditor.commands.addCommand({
+    name: "customCopy",
+    bindKey: {win: "Ctrl-C", mac: "Command-C"},
+    exec: function(editor) {
+        const selectedText = editor.getSelectedText();
+        if (selectedText) {
+            navigator.clipboard.writeText(selectedText);
+        }
     }
 });
 
