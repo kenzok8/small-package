@@ -608,25 +608,12 @@ function getSubscriptionUrlFromFile($file) {
 
 ?>
 
-<!doctype html>
-<html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mihomo - Nekobox</title>
-    <link rel="icon" href="./assets/img/nekobox.png">
-    <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="./assets/css/custom.css" rel="stylesheet">
-    <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
-    <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
-    <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="./assets/js/feather.min.js"></script>
-    <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="./assets/js/neko.js"></script>
-    <?php include './ping.php'; ?>
-</head>
-<body>
+<meta charset="utf-8">
+<title>Mihomo - Nekobox</title>
+<link rel="icon" href="./assets/img/nekobox.png">
+<script src="./assets/bootstrap/jquery.min.js"></script>
+<?php include './ping.php'; ?>
+
 <style>
 .custom-padding {
     padding-left: 5ch;  
@@ -649,14 +636,14 @@ function getSubscriptionUrlFromFile($file) {
     width: 100%;
 }
 </style>
-<div class="container-sm container-bg callout border border-3 rounded-4 col-11">
+<div class="container-sm container-bg mt-4">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
         <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
         <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
         <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
         <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
-        <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;"><?php echo $translations['mihomo_conversion_template']; ?></h1>
+        <h2 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;" data-translate="mihomo_conversion_template"></h2>
 
         <div class="col-12 custom-padding">
             <div class="form-section">
@@ -870,7 +857,7 @@ function getSubscriptionUrlFromFile($file) {
                                value="<?php echo htmlspecialchars(isset($_POST['rename']) ? $_POST['rename'] : ''); ?>"
                                placeholder="输入重命名内容（举例：`a@b``1@2`，|符可用\转义）" data-translate-placeholder="rename_placeholder">
                     </div>
-                    <button type="submit" class="btn btn-primary" name="action" value="generate_subscription"><i class="bi bi-file-earmark-text"></i> <span data-translate="generate_configuration_file"></span></button>
+                    <button type="submit" class="btn btn-success" name="action" value="generate_subscription"><i class="bi bi-file-earmark-text"></i> <span data-translate="generate_configuration_file"></span></button>
                 </form>
             </div>
         </div>
@@ -883,14 +870,14 @@ function getSubscriptionUrlFromFile($file) {
                            value="<?php echo htmlspecialchars(isset($_POST['cron_time']) ? $_POST['cron_time'] : '0 3 * * *'); ?>"
                            placeholder="0 3 * * *">
                 </div>
-                <button type="submit" class="btn btn-primary" name="action" value="update_cron"><i class="bi bi-clock"></i> <span data-translate="set_scheduled_task"></span></button>
+                <button type="submit" class="btn btn-info" name="action" value="update_cron"><i class="bi bi-clock"></i> <span data-translate="set_scheduled_task"></span></button>
             </form>
         </div>
 
         <div class="help mt-4 custom-padding">
-            <p style="color: red;" data-translate="warning1"></p>
+            <p  style="color: red;" data-translate="warning1"></p>
             <p data-translate="subscription_conversion"></p>
-            <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: white;">
+            <a href="https://github.com/youshandefeiyang/sub-web-modify" target="_blank" class="btn btn-primary" style="color: #fff !important;">
             <i data-feather="github"></i> <span data-translate="visit_link"></span>
             </a>
         </div>
@@ -900,10 +887,12 @@ function getSubscriptionUrlFromFile($file) {
         </div>
         <div class="result mt-2 custom-padding">
             <?php echo nl2br(htmlspecialchars($cron_result)); ?>
+                <footer class="text-center">
+                    <p><?php echo $footer ?></p>
+                </footer>
+            </div>
         </div>
     </div>
-</div>
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const formInputs = [
@@ -973,6 +962,3 @@ function toggleCustomBackendInput() {
     }
 }
 </script>
-      <footer class="text-center">
-    <p><?php echo $footer ?></p>
-</footer>

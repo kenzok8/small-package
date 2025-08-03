@@ -1,1 +1,1 @@
-/etc/neko/config/mihomo.yaml
+/etc/neko/config/mihomo1.yaml

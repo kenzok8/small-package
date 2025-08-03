@@ -72,12 +72,12 @@ check_interface_changes() {
             if [ ! -e "/tmp/iface_$service_name/$iface" ]; then
                 echo $uptime > "/tmp/iface_$service_name/$iface"
                 need_reload=1
-                echo "[ `date +%T` ] - $service_name: New interface $iface detected" >> $log
+                echo "[ `date +%T` ]  $service_name: New interface $iface detected" >> $log
             else
                 last_uptime=`cat "/tmp/iface_$service_name/$iface"`
                 if (( $uptime < $last_uptime )) || [ -z $last_uptime ]; then
                     need_reload=1
-                    echo "[ `date +%T` ] - $service_name: Interface $iface changed" >> $log
+                    echo "[ `date +%T` ] $service_name: Interface $iface changed" >> $log
                 fi
                 echo $uptime > "/tmp/iface_$service_name/$iface"
             fi
@@ -86,7 +86,7 @@ check_interface_changes() {
     done
 
     if [ $need_reload -eq 1 ]; then
-        echo "[ `date +%T` ] - $service_name: Reloading firewall due to interface changes" >> $log
+        echo "[ `date +%T` ] $service_name: Reloading firewall due to interface changes" >> $log
         $firewall restart
         sleep 1
         $tun_bin -ks
@@ -95,13 +95,13 @@ check_interface_changes() {
             uptime_now=`cat /proc/uptime | cut -d. -f1`
             if [ "$uptime_now" -lt 60 ]; then
                 service neko restart
-                echo "[ `date +%T` ] - NekoBox service restarted" >> $log
+                echo "[ `date +%T` ] Mihomo service restarted" >> $log
             fi
         elif [ "$service_name" == "singbox" ] && ! check_neko_running; then
             uptime_now=`cat /proc/uptime | cut -d. -f1`
             if [ "$uptime_now" -lt 60 ]; then
                 kill -HUP $(cat $singbox_pid)
-                echo "[ `date +%T` ] - Sing-box service restarted" >> $log
+                echo "[ `date +%T` ] Sing-box service restarted" >> $log
             fi
         fi
     fi
@@ -110,19 +110,19 @@ check_interface_changes() {
 if [ "$neko_new_interface" == 1 ]; then
     if [ "$neko_status" == 1 ]; then
         if check_singbox_running; then
-            echo "[ `date +%T` ] - NekoBox Auto Restart : DISABLED (Sing-box is running) " >> $log
+            echo "[ `date +%T` ] Mihomo Auto Restart : DISABLED (Mihomo is running) " >> $log
             exit 0
         else
-            echo "[ `date +%T` ] - NekoBox Auto Restart : ON " >> $log
+            echo "[ `date +%T` ] Mihomo Auto Restart : ON " >> $log
         fi
     fi
     
     if [ "$singbox_status" == 1 ]; then
         if check_neko_running; then
-            echo "[ `date +%T` ] - Sing-box Auto Restart : DISABLED (NekoBox is running) " >> $log
+            echo "[ `date +%T` ] Sing-box Auto Restart : DISABLED (Sing-box is running) " >> $log
             exit 0
         else
-            echo "[ `date +%T` ] - Sing-box Auto Restart : ON " >> $log
+            echo "[ `date +%T` ] Sing-box Auto Restart : ON " >> $log
         fi
     fi
     
@@ -146,6 +146,6 @@ if [ "$neko_new_interface" == 1 ]; then
         fi
     done
 else
-    echo "[ `date +%T` ] - Auto Restart : OFF " >> $log
+    echo "[ `date +%T` ] Mihomo Auto Restart : OFF " >> $log
     sleep 20 && neko_checknewver "log"
 fi

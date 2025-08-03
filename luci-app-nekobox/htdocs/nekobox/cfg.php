@@ -1,10 +1,7 @@
 <?php
-
-// NEKO CONFIGURATION
 $neko_dir="/etc/neko";
 $neko_www="/www/nekobox";
 $neko_bin="/usr/bin/mihomo";
-$neko_theme= exec("cat $neko_www/lib/theme.txt");
 $neko_status=exec("uci -q get neko.cfg.enabled");
 
 $selected_config= exec("cat $neko_www/lib/selected_config.txt");
@@ -19,5 +16,38 @@ $neko_cfg['echanced']=strtoupper(exec("cat $selected_config | grep enhanced-mode
 $neko_cfg['secret'] = trim(exec("grep '^secret:' $selected_config | awk -F': ' '{print $2}'"));
 $neko_cfg['ext_controller']=shell_exec("cat $selected_config | grep external-ui | awk '{print $2}'");
 
-$footer = '<span style="color: red;">©2025 <b>Thaolga</b></span>';
+$singbox_path_file = "$neko_www/lib/singbox.txt";
+$singbox_config_path = trim(exec("cat $singbox_path_file"));
+
+$http_port = "Not obtained";
+$mixed_port = "Not obtained";
+
+if (file_exists($singbox_config_path)) {
+    $json_content = file_get_contents($singbox_config_path);
+    $config = json_decode($json_content, true);
+
+    if (is_array($config) && isset($config['inbounds'])) {
+        foreach ($config['inbounds'] as $inbound) {
+            if (
+                isset($inbound['type']) && $inbound['type'] === 'mixed' &&
+                isset($inbound['tag']) && $inbound['tag'] === 'mixed' &&
+                isset($inbound['listen_port'])
+            ) {
+                $mixed_port = $inbound['listen_port'];
+            }
+
+            if (
+                isset($inbound['type']) && $inbound['type'] === 'http' &&
+                isset($inbound['listen_port'])
+            ) {
+                $http_port = $inbound['listen_port'];
+            }
+        }
+    }
+} else {
+    $http_port = "Config file not found";
+    $mixed_port = "Config file not found";
+}
+
+$footer = '<span class="footer-text">©2025 <b>Thaolga</b></span>';
 ?>

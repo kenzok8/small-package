@@ -331,7 +331,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($result)) {
-        echo "<div id='log-message' class='alert alert-success'>" . nl2br(htmlspecialchars($result)) . "</div>";
+        echo "<div class='log-message alert alert-success'>" . nl2br(htmlspecialchars($result)) . "</div>";
     }
 
     $download_option = $_POST['download_option'] ?? 'none';
@@ -372,7 +372,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $cronJob = "$cronExpression /etc/neko/core/update_singbox.sh > /dev/null 2>&1";
         exec("crontab -l | grep -v '/etc/neko/core/update_singbox.sh' | crontab -");
         exec("(crontab -l; echo '$cronJob') | crontab -");
-        echo "<div class='alert alert-success'>The cron job has been successfully added or updated.</div>";
+        echo "<div class='log-message alert alert-success'>The cron job has been successfully added or updated.</div>";
     }
 }
 ?>
@@ -488,33 +488,20 @@ EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
             chmod($shellScriptPath, 0755); 
-            echo "<div class='alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
+            echo "<div class='log-message alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
         } else {
-            echo "<div class='alert alert-danger' data-translate='shell_script_failed'></div>";
+            echo "<div class='log-message alert alert-danger' data-translate='shell_script_failed'></div>";
         }
     }
 }
 ?>
 
-<!doctype html>
-<html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>singbox - Nekobox</title>
-    <link rel="icon" href="./assets/img/nekobox.png">
-    <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="./assets/css/custom.css" rel="stylesheet">
-    <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
-    <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
-    <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="./assets/js/feather.min.js"></script>
-    <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="./assets/js/neko.js"></script>
-    <?php include './ping.php'; ?>
-</head>
-<body>
+<meta charset="utf-8">
+<title>singbox - Nekobox</title>
+<script src="./assets/bootstrap/jquery.min.js"></script>
+<link rel="icon" href="./assets/img/nekobox.png">
+<?php include './ping.php'; ?>
+
 <style>
 .custom-padding {
     padding-left: 5ch;  
@@ -537,14 +524,14 @@ EOL;
     width: 100%;
 }
 </style>
-<div class="container-sm container-bg callout border border-3 rounded-4 col-11">
+<div class="container-sm container-bg mt-4">
     <div class="row">
         <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
         <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
         <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
         <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
         <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
-        <h1 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;" data-translate="form_title"></h1>
+        <h2 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;" data-translate="form_title"></h2>
 
         <div class="col-12 custom-padding">
             <div class="form-section">
@@ -780,7 +767,7 @@ EOL;
         <form method="post">
             <h5 style="margin-top: 20px;" data-translate="scheduled_tasks"></h5>
             <button type="button" class="btn btn-primary mx-2" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> <span data-translate="set_scheduled_task"></span></button>
-            <button type="submit" name="createShellScript" value="true" class="btn btn-success"><i class="bi bi-terminal"></i> <span data-translate="generate_update_script"></span></button>
+            <button type="submit" name="createShellScript" value="true" class="btn btn-info"><i class="bi bi-terminal"></i> <span data-translate="generate_update_script"></span></button>
         </form>
     </div>
         <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -827,7 +814,10 @@ EOL;
         </div>
         <div class="result mt-4 custom-padding">
             <?php echo nl2br(htmlspecialchars($result)); ?>
-        </div>
+                <footer class="text-center">
+                    <p><?php echo $footer ?></p>
+                </footer>
+            </div>
         </div>
     </div>
 </div>
@@ -902,6 +892,3 @@ function toggleCustomBackendInput() {
     }
 }
 </script>
-      <footer class="text-center">
-    <p><?php echo $footer ?></p>
-</footer>

@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_MAINTAINER:=Thaolga <https://github.com/Thaolga/luci-app-nekobox>
 PKG_NAME:=luci-app-nekobox
-PKG_VERSION:=1.8.8
+PKG_VERSION:=1.9.8
 PKG_RELEASE:=cn
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
@@ -28,6 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(CP) $(CURDIR)/root $(PKG_BUILD_DIR)
+	$(CP) $(CURDIR)/luasrc $(PKG_BUILD_DIR)
 	$(CP) $(CURDIR)/htdocs $(PKG_BUILD_DIR)
 	chmod 0755 $(PKG_BUILD_DIR)/root/usr/bin/nekobox
 	chmod 0755 $(PKG_BUILD_DIR)/root/etc/init.d/neko
@@ -88,8 +89,10 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/neko
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
 	$(INSTALL_DIR) $(1)/www
 	$(CP) $(PKG_BUILD_DIR)/root/* $(1)/
+	$(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)/usr/lib/lua/luci/
 	$(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)/www/
 endef
 

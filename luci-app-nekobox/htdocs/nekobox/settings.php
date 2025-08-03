@@ -1,26 +1,4 @@
-<?php
 
-include './cfg.php';
-
-$themeDir = "$neko_www/assets/theme";
-$tmpPath = "$neko_www/lib/selected_config.txt";
-$arrFiles = array();
-$arrFiles = glob("$themeDir/*.css");
-
-for($x=0;$x<count($arrFiles);$x++) $arrFiles[$x] = substr($arrFiles[$x], strlen($themeDir)+1);
-
-if(isset($_POST['themechange'])){
-    $dt = $_POST['themechange'];
-    shell_exec("echo $dt > $neko_www/lib/theme.txt");
-    $neko_theme = $dt;
-}
-if(isset($_POST['fw'])){
-    $dt = $_POST['fw'];
-    if ($dt == 'enable') shell_exec("uci set neko.cfg.new_interface='1' && uci commit neko");
-    if ($dt == 'disable') shell_exec("uci set neko.cfg.new_interface='0' && uci commit neko");
-}
-$fwstatus=shell_exec("uci get neko.cfg.new_interface");
-?>
 <?php
 function getSingboxVersion() {
     $singBoxPath = '/usr/bin/sing-box'; 
@@ -184,151 +162,226 @@ function deleteDirectory($dir) {
     return rmdir($dir);
 }
 ?>
-<!doctype html>
-<html lang="en" data-bs-theme="<?php echo substr($neko_theme,0,-4) ?>">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Settings - Nekobox</title>
-    <link rel="icon" href="./assets/img/nekobox.png">
-    <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
-    <link href="./assets/css/custom.css" rel="stylesheet">
-    <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=<?php echo time(); ?>" />
-    <script src="script.js?v=<?php echo time(); ?>"></script>
-    <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="./assets/js/feather.min.js"></script>
-    <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="./assets/js/neko.js"></script>
-    <?php include './ping.php'; ?>
-  </head>
+<title>Settings - Nekobox</title>
+<?php include './ping.php'; ?>
+
 <style>
-    .form-select {
-        margin-left: 10px;
-        margin-right: 16px;
-    }
-
-    @media (max-width: 576px) {
-        .btn-custom {
-            width: 30%; 
-            margin: 0 auto; 
-            display: block; 
-    }
-
-        .btn-fw {
-            width: 100%; 
-            margin-right: 0; 
-            margin-bottom: 10px; 
-        }
-
-        .container .form-select {
-            margin-right: 6ch;
-            width: calc(100% - 1.8ch); 
-        }
-    }
-
+  #portModal table tbody td {
+    color: var(--text-primary) !important;
+  }
 </style>
-  <body>
-    <div class="container-sm container-bg text-center callout border border-3 rounded-4 col-11">
-        <div class="row">
-        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
-        <a href="./dashboard.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bar-chart"></i> <span data-translate="panel">Panel</span></a>
-        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-box"></i> <span data-translate="document">Document</span></a> 
-        <a href="./settings.php" class="col btn btn-lg text-nowrap"><i class="bi bi-gear"></i> <span data-translate="settings">Settings</span></a>
-<div class="container px-4">
-    <h2 class="text-center p-2 mb-4" data-translate="theme_settings">Theme Settings</h2>
-    <form action="settings.php" method="post">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-6 mb-3">
-                <select class="form-select" name="themechange" aria-label="themex">
-                    <option selected>Change Theme (<?php echo $neko_theme ?>)</option>
-                    <?php foreach ($arrFiles as $file) echo "<option value=\"".$file.'">'.$file."</option>" ?>
-                </select>
-            </div>
-            <div class="col-12 col-md-6 mb-3" style="padding-right: 1.3rem;" >
-                <div class="d-flex justify-content-between gap-2">
-                    <button class="btn btn-info btn-custom" type="submit">
-                        <i class="bi bi-paint-bucket"></i> <span data-translate="change_theme_button">Change Theme</span>
-                    </button>
 
-                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#colorModal" data-translate="theme_editor">
-                        <i class="bi-palette"></i> Theme Editor
-                    </button>
-                    
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filesModal" data-translate="set_background">
-                        <i class="bi-camera-video"></i> Set as Background
-                    </button>
-                </div>
-            </div>
+<div class="container-sm container-bg mt-4">
+  <div class="row">
+    <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
+    <a href="./dashboard.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bar-chart"></i> <span data-translate="panel">Panel</span></a>
+    <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-box"></i> <span data-translate="document">Document</span></a> 
+    <a href="./settings.php" class="col btn btn-lg text-nowrap"><i class="bi bi-gear"></i> <span data-translate="settings">Settings</span></a>
+<div class="container px-4 theme-settings-container text-center">
+  <h2 class="text-center p-2 mb-2" data-translate="component_update">Component Update</h2>
+  <button type="button" class="btn btn-success mb-3 me-3" onclick="toggleControlPanel()"><i class="bi bi-eyedropper"> </i><span data-translate="control_panel">Control_Panel</span></button>
+  <button type="button" id="toggleIpStatusBtn" class="btn btn-warning mb-3 me-3" onclick="toggleIpStatusBar()"><i class="bi bi-eye-slash"> </i><span data-translate="hide_ip_info">Hide IP Information</span></button>
+  <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#portModal"><i class="bi bi-plug"></i> <span data-translate="viewPortInfoButton">View Port Information</span></button>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title" data-translate="client_version_title">Client Version</h5>
+          <p id="cliver" class="card-text" style="font-family: monospace;"></p>
+          <div class="d-flex justify-content-center gap-2 mt-3">
+            <button class="btn btn-pink" id="checkCliverButton">
+              <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
+            </button>
+            <button class="btn btn-info" id="updateButton" title="Update to Latest Version" onclick="showUpdateVersionModal()">
+              <i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span>
+            </button>
+          </div>
         </div>
-    </form>
+      </div>
+    </div>
 
-<table class="table table-borderless mb-3">
-    <tbody>
-        <tr>
-            <td colspan="2">
-                <div class="table-container">
-                    <h2 class="text-center mb-3" data-translate="software_information_title">Software Information</h2>
-                    <form action="settings.php" method="post">
-                        <div class="btn-group d-flex justify-content-center">
-                            <button type="submit" name="fw" value="enable" class="btn btn-success <?php if($fwstatus==1) echo "disabled" ?>" data-translate="enable_button">Enable</button>
-                            <button type="submit" name="fw" value="disable" class="btn btn-danger <?php if($fwstatus==0) echo "disabled" ?>" data-translate="disable_button">Disable</button>
-                        </div>
-                    </form>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="table-container">
-                    <h2 data-translate="client_version_title">Client Version</h2>
-                    <p id="cliver" class="text-center" style="font-family: monospace;"></p>
-                    <div class="text-center">
-                        <button class="btn btn-pink me-1" id="checkCliverButton"><i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span></button>
-                        <button class="btn btn-info" id="updateButton" title="Update to Latest Version" onclick="showUpdateVersionModal()"><i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span></button>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="table-container">
-                    <h2 data-translate="ui_panel_title">Ui Panel</h2>
-                    <p class="text-center"><?php echo htmlspecialchars($uiVersion); ?></p>
-                    <div class="text-center">
-                        <button class="btn btn-pink me-1" id="checkUiButton"><i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span></button>
-                        <button class="btn btn-info" id="updateUiButton" title="Update Panel" onclick="showPanelSelector()"><i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span></button>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="table-container">
-                    <h2 data-translate="singbox_core_version_title">Sing-box Core Version</h2>
-                    <p id="singBoxCorever" class="text-center"><?php echo htmlspecialchars($singBoxVersion); ?></p>
-                    <div class="text-center">
-                        <button class="btn btn-pink me-1" id="checkSingboxButton"><i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span></button>
-                        <button class="btn btn-info" id="singboxOptionsButton" title="Singbox Related Operations"><i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span></button>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="table-container">
-                    <h2 data-translate="mihomo_core_version_title">Mihomo Core Version</h2>
-                    <p class="text-center"><?php echo htmlspecialchars($mihomoVersion); ?></p>
-                    <div class="text-center">
-                        <button class="btn btn-pink me-1" id="checkMihomoButton"><i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span></button>
-                        <button class="btn btn-info" id="updateCoreButton" title="Update Mihomo Core" onclick="showMihomoVersionSelector()"><i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span></button>
-                    </div>
-                </div>
-            </td>
-        </tr>
-    </tbody>
-</table>
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title" data-translate="ui_panel_title">Ui Panel</h5>
+          <p class="card-text"><?php echo htmlspecialchars($uiVersion); ?></p>
+          <div class="d-flex justify-content-center gap-2 mt-3">
+            <button class="btn btn-pink" id="checkUiButton">
+              <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
+            </button>
+            <button class="btn btn-info" id="updateUiButton" title="Update Panel" onclick="showPanelSelector()">
+              <i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title" data-translate="singbox_core_version_title">Sing-box Core Version</h5>
+          <p id="singBoxCorever" class="card-text"><?php echo htmlspecialchars($singBoxVersion); ?></p>
+          <div class="d-flex justify-content-center gap-2 mt-3">
+            <button class="btn btn-pink" id="checkSingboxButton">
+              <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
+            </button>
+            <button class="btn btn-info" id="singboxOptionsButton" title="Singbox Related Operations">
+              <i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title" data-translate="mihomo_core_version_title">Mihomo Core Version</h5>
+          <p class="card-text"><?php echo htmlspecialchars($mihomoVersion); ?></p>
+          <div class="d-flex justify-content-center gap-2 mt-3">
+            <button class="btn btn-pink" id="checkMihomoButton">
+              <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
+            </button>
+            <button class="btn btn-info" id="updateCoreButton" title="Update Mihomo Core" onclick="showMihomoVersionSelector()">
+              <i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container px-4 theme-settings-container">
+  <h2 class="text-center mb-4 mt-4" data-translate="aboutTitle"></h2>
+  <div class="card mb-5 shadow-sm">
+    <div class="card-body text-center feature-box">
+      <h5 data-translate="nekoBoxTitle"></h5>
+      <p data-translate="nekoBoxDescription"></p>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <div class="col-md-4 d-flex">
+      <div class="card flex-fill shadow-sm">
+        <div class="card-body text-center">
+          <h6 data-translate="simplifiedConfiguration"></h6>
+          <p data-translate="simplifiedConfigurationDescription"></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-flex">
+      <div class="card flex-fill shadow-sm">
+        <div class="card-body text-center">
+          <h6 data-translate="optimizedPerformance"></h6>
+          <p data-translate="optimizedPerformanceDescription"></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-flex">
+      <div class="card flex-fill shadow-sm">
+        <div class="card-body text-center">
+          <h6 data-translate="seamlessExperience"></h6>
+          <p data-translate="seamlessExperienceDescription"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <div class="col-md-6 d-flex flex-column">
+      <div class="card shadow-sm flex-fill">
+        <div class="card-body">
+          <h5 class="mb-4 text-center">
+            <i data-feather="tool"></i> <span data-translate="toolInfo"></span>
+          </h5>
+          <div class="card shadow-sm">
+            <div class="card-body p-3">
+              <div class="table-responsive">
+                <table class="table table-borderless text-center mb-0">
+                  <tbody>
+                    <tr>
+                      <td>SagerNet</td>
+                      <td>MetaCubeX</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a href="https://github.com/SagerNet/sing-box" target="_blank" class="d-inline-flex align-items-center gap-2 link-primary">
+                          <i data-feather="codesandbox"></i> Sing-box
+                        </a>
+                      </td>
+                      <td>
+                        <a href="https://github.com/MetaCubeX/mihomo" target="_blank" class="d-inline-flex align-items-center gap-2 link-primary">
+                          <i data-feather="box"></i> Mihomo
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 d-flex flex-column">
+      <div class="card shadow-sm flex-fill">
+        <div class="card-body">
+          <h5 class="mb-4 text-center">
+            <i data-feather="paperclip"></i> <span data-translate="externalLinks"></span>
+          </h5>
+          <div class="card shadow-sm">
+            <div class="card-body p-3">
+              <div class="table-responsive">
+                <table class="table table-borderless text-center mb-0">
+                  <tbody>
+                    <tr>
+                      <td>Github</td>
+                      <td>Thaolga</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a href="https://github.com/Thaolga/openwrt-nekobox/issues" target="_blank" class="d-inline-flex align-items-center gap-2 link-primary">
+                          <i data-feather="github"></i> Issues
+                        </a>
+                      </td>
+                      <td>
+                        <a href="https://github.com/Thaolga/openwrt-nekobox" target="_blank" class="d-inline-flex align-items-center gap-2 link-primary">
+                          <i data-feather="github"></i> NEKOBOX
+                        </a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Telegram</td>
+                      <td>Zephyruso</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a href="https://t.me/+J55MUupktxFmMDgx" target="_blank" class="d-inline-flex align-items-center gap-2 link-primary">
+                          <i data-feather="send"></i> Telegram
+                        </a>
+                      </td>
+                      <td>
+                        <a href="https://github.com/Zephyruso/zashboard" target="_blank" class="d-inline-flex align-items-center gap-2 link-primary">
+                          <i data-feather="package"></i> ZASHBOARD
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="updateVersionModal" tabindex="-1" aria-labelledby="updateVersionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateVersionModalLabel" data-translate="stable">Select the updated version of the language</h5>
@@ -353,7 +406,7 @@ function deleteDirectory($dir) {
 </div>
 
 <div class="modal fade" id="mihomoVersionSelectionModal" tabindex="-1" aria-labelledby="mihomoVersionSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="mihomoVersionSelectionModalLabel" data-translate="mihomo_version_modal_title">Select Mihomo Kernel Version</h5>
@@ -376,23 +429,34 @@ function deleteDirectory($dir) {
 </div>
 
 <div class="modal fade" id="optionsModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="optionsModalLabel" data-translate="options_modal_title">Select Operation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="text-warning" data-translate="options_modal_note">
-                    <strong>Note：</strong> Please prioritize selecting the Channel 1 version for updates to ensure compatibility. The system will first check and dynamically generate the latest version number for download. If the Channel 1 update is unavailable, you can try the Channel 2 version.
-                </p>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-info" onclick="showSingboxVersionSelector()" data-translate="singbox_channel_one">Update Singbox Core (Channel One)</button>
-                    <button class="btn btn-success" onclick="showSingboxVersionSelectorForChannelTwo()" data-translate="singbox_channel_two">Update Singbox Core (Channel Two)</button>
-                    <button type="button" class="btn btn-warning" id="operationOptionsButton" data-translate="other_operations">Other operations</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">Close</button>
+                <div class="alert alert-warning text-start" role="alert">
+                    <strong data-translate="note_label"></strong>
+                    <span data-translate="options_modal_note">
+                        Please prioritize selecting the Channel 1 version for updates to ensure compatibility. The system will first check and dynamically generate the latest version number for download. If the Channel 1 update is unavailable, you can try the Channel 2 version.
+                    </span>
+                </div>
+                <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                    <button class="btn btn-info btn-lg flex-fill" style="max-width: 240px;" onclick="showSingboxVersionSelector()" data-translate="singbox_channel_one">
+                        Update Singbox Core (Channel One)
+                    </button>
+                    <button class="btn btn-success btn-lg flex-fill" style="max-width: 240px;" onclick="showSingboxVersionSelectorForChannelTwo()" data-translate="singbox_channel_two">
+                        Update Singbox Core (Channel Two)
+                    </button>
+                    <button type="button" class="btn btn-warning btn-lg flex-fill" style="max-width: 240px;" id="operationOptionsButton" data-translate="other_operations">
+                        Other operations
+                    </button>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
@@ -400,23 +464,34 @@ function deleteDirectory($dir) {
 </div>
 
 <div class="modal fade" id="operationModal" tabindex="-1" aria-labelledby="operationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="operationModalLabel" data-translate="operation_modal_title">Select operation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="text-warning" data-translate="operation_modal_note">
-                    <strong>Note：</strong> Please select an operation based on your requirements
-                </p>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-success" onclick="selectOperation('puernya')" data-translate="switch_to_puernya">Switch to Puernya kernel</button>
-                    <button class="btn btn-primary" onclick="selectOperation('rule')" data-translate="update_pcore_rule">Update P-core rule set</button>
-                    <button class="btn btn-primary" onclick="selectOperation('config')" data-translate="update_config_backup">Update config file (backup)</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">Close</button>
+                <div class="alert alert-warning text-start" role="alert">
+                    <strong data-translate="note_label">Note:</strong>
+                    <span data-translate="operation_modal_note">
+                        Please select an operation based on your requirements
+                    </span>
+                </div>
+                <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                    <button class="btn btn-success btn-lg flex-fill" style="max-width: 240px;" onclick="selectOperation('puernya')" data-translate="switch_to_puernya">
+                        Switch to Puernya kernel
+                    </button>
+                    <button class="btn btn-primary btn-lg flex-fill" style="max-width: 240px;" onclick="selectOperation('rule')" data-translate="update_pcore_rule">
+                        Update P-core rule set
+                    </button>
+                    <button class="btn btn-primary btn-lg flex-fill" style="max-width: 240px;" onclick="selectOperation('config')" data-translate="update_config_backup">
+                        Update config file (backup)
+                    </button>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
@@ -424,7 +499,7 @@ function deleteDirectory($dir) {
 </div>
 
 <div class="modal fade" id="versionSelectionModal" tabindex="-1" aria-labelledby="versionSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="versionSelectionModalLabel" data-translate="versionSelectionModalTitle">Select Singbox core version</h5>
@@ -444,8 +519,9 @@ function deleteDirectory($dir) {
                     <option value="v1.11.0-beta.10">v1.11.0-beta.10</option>
                     <option value="v1.11.0-beta.15">v1.11.0-beta.15</option>
                     <option value="v1.11.0-beta.20">v1.11.0-beta.20</option>
+                    <option value="v1.12.0-rc.3">v1.12.0-rc.3</option>
                 </select>
-                <input type="text" id="manualVersionInput" class="form-control mt-2" placeholder="For example: v1.11.0-beta.10">
+                <input type="text" id="manualVersionInput" class="form-control mt-2" placeholder="For example: v1.12.0-rc.3">
                 <button type="button" class="btn btn-secondary mt-2" onclick="addManualVersion()" data-translate="addVersionButton">Add Version</button>
             </div>
             <div class="modal-footer">
@@ -457,7 +533,7 @@ function deleteDirectory($dir) {
 </div>
 
 <div class="modal fade" id="singboxVersionModal" tabindex="-1" aria-labelledby="singboxVersionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="singboxVersionModalLabel" data-translate="singboxVersionModalTitle">Select Singbox core version (Channel 2)</h5>
@@ -467,8 +543,8 @@ function deleteDirectory($dir) {
                 <div class="form-group">
                     <label for="singboxVersionSelectForChannelTwo" data-translate="singboxVersionModalTitle">Select version</label>
                     <select id="singboxVersionSelectForChannelTwo" class="form-select">
-                        <option value="preview" selected>Preview</option>  
-                        <option value="stable">Stable</option>
+                        <option value="stable" data-translate="stable">Stable</option>
+                        <option value="preview" data-translate="preview">Preview</option>  
                     </select>
                 </div>
             </div>
@@ -481,7 +557,7 @@ function deleteDirectory($dir) {
 </div>
 
 <div id="panelSelectionModal" class="modal fade" tabindex="-1" aria-labelledby="panelSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="panelSelectionModalLabel" data-translate="panelSelectionModalTitle">Selection Panel</h5>
@@ -508,7 +584,7 @@ function deleteDirectory($dir) {
 </div>
 
 <div class="modal fade" id="versionModal" tabindex="-1" aria-labelledby="versionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="versionModalLabel" data-translate="versionModalLabel">Version check results</h5>
@@ -529,7 +605,7 @@ function deleteDirectory($dir) {
 </div>
 
 <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateModalLabel" data-translate="updateModalLabel">Update status</h5>
@@ -543,6 +619,58 @@ function deleteDirectory($dir) {
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <form id="portForm" method="POST" action="./save_ports.php">
+        <div class="modal-header">
+          <h5 class="modal-title" id="portModalLabel" data-translate="portInfoTitle">Port Information</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <table class="table table-bordered table-striped text-center align-middle w-100 mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th style="width: 20%;" data-translate="componentName">Component Name</th>
+                <th style="width: 20%;">socks-port</th>
+                <th style="width: 20%;">mixed-port</th>
+                <th style="width: 13%;">redir-port</th>
+                <th style="width: 13%;">port</th>
+                <th style="width: 14%;">tproxy-port</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Mihomo</td>
+                <td><input type="number" class="form-control text-center" name="mihomo_socks" value="<?= htmlspecialchars($neko_cfg['socks']) ?>"></td>
+                <td><input type="number" class="form-control text-center" name="mihomo_mixed" value="<?= htmlspecialchars($neko_cfg['mixed']) ?>"></td>
+                <td><input type="number" class="form-control text-center" name="mihomo_redir" value="<?= htmlspecialchars($neko_cfg['redir']) ?>"></td>
+                <td><input type="number" class="form-control text-center" name="mihomo_port" value="<?= htmlspecialchars($neko_cfg['port']) ?>"></td>
+                <td><input type="number" class="form-control text-center" name="mihomo_tproxy" value="<?= htmlspecialchars($neko_cfg['tproxy']) ?>"></td>
+              </tr>
+              <tr>
+                <td>Sing-box</td>
+                <td><input type="number" class="form-control text-center" name="singbox_http" value="<?= htmlspecialchars($http_port) ?>"></td>
+                <td><input type="number" class="form-control text-center" name="singbox_mixed" value="<?= htmlspecialchars($mixed_port) ?>"></td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="text-danger text-center fw-bold mt-3 mb-1" data-translate="portChangeNotice">
+            Port changes will take effect after restarting the service.
+          </div>
+        </div>
+      </form>
+      <div class="modal-footer justify-content-end">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="closeButton">Close</button>
+        <button type="submit" form="portForm" class="btn btn-primary" data-translate="save">Save</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -573,21 +701,7 @@ function deleteDirectory($dir) {
     }
 </script>
 
-<style>
-    @media (max-width: 767px) {
-        .table td {
-            display: block;
-            width: 100%;
-        }
-        .form-control {
-            display: flex;
-            flex-direction: column;
-        }
-        .btn-group {
-            flex-direction: column;
-        }
-    }
-</style>
+
 <script>
 let selectedSingboxVersion = 'v1.11.0-alpha.10';  
 let selectedMihomoVersion = 'stable';  
@@ -831,58 +945,19 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-    .custom-table {
-        width: 100%;
-        border-collapse: collapse; 
-    }
-
-    .custom-table th, .custom-table td {
-        padding: 10px;
-        text-align: center;
-        border: 1px solid #ccc; 
-    }
-
-@media (max-width: 767px) {
-    .custom-table {
-        display: block;
-        width: 100%;
-    }
-
-    .custom-table thead {
-        display: none;
-    }
-
-    .custom-table tbody {
-        display: block;
-    }
-
-    .custom-table tr {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 1rem;
-        border: none;
-    }
-
-    .custom-table td {
-        display: block;
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-    }
-
-    .custom-table td:first-child {
-        font-weight: bold;
-    }
-}
-</style>
-
 <script>
 function checkVersion(outputId, updateFiles, currentVersions) {
     const modalContent = document.getElementById('modalContent');
     const versionModal = new bootstrap.Modal(document.getElementById('versionModal'));
-    modalContent.innerHTML = `<p>${translations['checkingVersion'] || '正在检查新版本...'}</p>`;
-    let results = [];
+
+    modalContent.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-info mb-3" role="status"></div>
+            <div>${translations['checkingVersion'] || '正在检查新版本...'}</div>
+        </div>
+    `;
+
+    let rows = [];
 
     const requests = updateFiles.map((file) => {
         return fetch(file.url + '?check_version=true')
@@ -896,18 +971,17 @@ function checkVersion(outputId, updateFiles, currentVersions) {
                 const versionMatch = responseText.trim().match(/Latest version:\s*([^\s]+)/);
                 if (versionMatch && versionMatch[1]) {
                     const newVersion = versionMatch[1];
-                    results.push(`
-                        <tr class="table-success">
-                            <td>${file.name}</td>
-                            <td>${currentVersions[file.name] || '未知'}</td>
-                            <td>${newVersion}</td>
+                    rows.push(`
+                        <tr>
+                            <td class="text-center align-middle">${file.name}</td>
+                            <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || '未知'}</td>
+                            <td class="text-center align-middle">${newVersion}</td>
                         </tr>
                     `);
 
                     if (file.url === 'update_singbox_core.php') {
                         const select = document.getElementById('singboxVersionSelect');
                         let versionExists = Array.from(select.options).some(option => option.value === newVersion);
-
                         if (!versionExists) {
                             const newOption = document.createElement('option');
                             newOption.value = newVersion;
@@ -916,21 +990,21 @@ function checkVersion(outputId, updateFiles, currentVersions) {
                         }
                     }
                 } else {
-                    results.push(`
-                        <tr class="table-warning">
-                            <td>${file.name}</td>
-                            <td>${currentVersions[file.name] || translations['unknown']}</td>
-                            <td>${translations['cannotParseVersion'] || '无法解析版本信息'}</td>
+                    rows.push(`
+                        <tr>
+                            <td class="text-center align-middle">${file.name}</td>
+                            <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || '未知'}</td>
+                            <td class="text-center align-middle text-warning">${translations['cannotParseVersion'] || '无法解析版本信息'}</td>
                         </tr>
                     `);
                 }
             })
-            .catch(error => {
-                results.push(`
-                    <tr class="table-danger">
-                        <td>${file.name}</td>
-                        <td>${currentVersions[file.name] || translations['unknown']}</td>
-                        <td>${translations['networkError'] || '网络错误'}</td>
+            .catch(() => {
+                rows.push(`
+                    <tr>
+                        <td class="text-center align-middle">${file.name}</td>
+                        <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || '未知'}</td>
+                        <td class="text-center align-middle text-danger">${translations['networkError'] || '网络错误'}</td>
                     </tr>
                 `);
             });
@@ -938,23 +1012,26 @@ function checkVersion(outputId, updateFiles, currentVersions) {
 
     Promise.all(requests).then(() => {
         modalContent.innerHTML = `
-            <table class="table custom-table">
-                <thead>
-                    <tr>
-                        <th class="text-center">${translations['componentName'] || '组件名称'}</th>
-                        <th class="text-center">${translations['currentVersion'] || '当前版本'}</th>
-                        <th class="text-center">${translations['latestVersion'] || '最新版本'}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${results.join('')}
-                </tbody>
-            </table>
+            <div class="card shadow-sm">
+                <div class="card-body p-3">
+                    <table class="table table-borderless mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-center">${translations['componentName'] || '组件名称'}</th>
+                                <th class="text-center">${translations['currentVersion'] || '当前版本'}</th>
+                                <th class="text-center">${translations['latestVersion'] || '最新版本'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows.join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         `;
         versionModal.show();
     });
 }
-
 document.getElementById('checkSingboxButton').addEventListener('click', function () {
     const singBoxVersion = "<?php echo htmlspecialchars(trim($singBoxVersion)); ?>";
     const singBoxType = "<?php echo htmlspecialchars($singBoxType); ?>";
@@ -1080,27 +1157,38 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
     function checkSingboxVersion() {
         var currentVersion = '<?php echo $singBoxVersion; ?>'; 
         var minVersion = '1.10.0'; 
-        
-        if (currentVersion === translations['notInstalled']) {
-            alert(translations['notInstalledMessage']);
-            return;
-        }
+        var modalTitle = '';
+        var modalBody = '';
 
-        if (compareVersions(currentVersion, minVersion) >= 0) {
+        if (currentVersion === translations['notInstalled']) {
+            modalTitle = translations['versionWarning'];
+            modalBody = `
+                <p>${translations['notInstalledMessage']}</p>
+                <p>${translations['upgradeSuggestion']}</p>
+            `;
+        } else if (compareVersions(currentVersion, minVersion) < 0) {
+            modalTitle = translations['versionWarning'];
+            modalBody = `
+                <p>${translations['versionTooLowMessage']} (${currentVersion}) ${translations['recommendedMinVersion']} (v${minVersion}).</p>
+                <p>${translations['upgradeSuggestion']}</p>
+            `;
+        } else {
             return;
         }
 
         var modalHtml = `
             <div class="modal fade" id="versionWarningModal" tabindex="-1" aria-labelledby="versionWarningModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="versionWarningModalLabel">${translations['versionWarning']}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title" id="versionWarningModalLabel">${modalTitle}</h5>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <p>${translations['versionTooLowMessage']} (${currentVersion}) ${translations['recommendedMinVersion']} (v1.10.0).</p>
-                            <p>${translations['upgradeSuggestion']}</p>
+                            ${modalBody}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${translations['close_button']}</button>
                         </div>
                     </div>
                 </div>
@@ -1113,7 +1201,7 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
 
         var modal = new bootstrap.Modal(document.getElementById('versionWarningModal'));
         modal.show();
-        
+
         setTimeout(function() {
             modal.hide();
         }, 5000);
@@ -1121,179 +1209,7 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
 
     document.addEventListener('DOMContentLoaded', checkSingboxVersion);
 </script>
-
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NekoBox</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        .container-fluid {
-            max-width: 2400px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        .feature-box {
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #000000;
-            border-radius: 8px;
-        }
-        .feature-box h6 {
-            margin-bottom: 15px;
-        }
-        .table-container {
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #000000;
-            border-radius: 8px;
-        }
-        .table {
-            table-layout: fixed;
-            width: 100%;
-        }
-        .table td, .table th {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .table thead th {
-            background-color: transparent;
-            color: #000000;
-        }
-        .btn-outline-secondary {
-            border-color: transparent;
-            color: #000000;
-        }
-        .btn-outline-secondary:hover {
-            background-color: transparent;
-            color: #000000;
-        }
-        .footer {
-            padding: 15px 0;
-            background-color: transparent;
-            color: #000000;
-        }
-        .footer p {
-            margin: 0;
-        }
-        .link-box {
-            border: 1px solid #000000;
-            border-radius: 8px;
-            padding: 10px;
-            display: block;
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box; 
-            transition: background-color 0.3s ease; 
-        }
-        .link-box a {
-            display: block;
-            padding: 10px;
-            text-decoration: none;
-            color: #000000;
-        }
-    </style>
-</head>
-<body>
 <div class="container-fluid mt-4">
-    <h2 class="text-center mb-4" data-translate="aboutTitle"></h2>
-    <div class="feature-box text-center">
-        <h5 data-translate="nekoBoxTitle"></h5>
-        <p data-translate="nekoBoxDescription"></p>
-    </div>
-
-    <h5 class="text-center mb-4"><i data-feather="cpu"></i><span data-translate="coreFeatures"></span></h5>
-    <div class="row">
-        <div class="col-md-4 mb-4 d-flex">
-            <div class="feature-box text-center flex-fill">
-                <h6 data-translate="simplifiedConfiguration"></h6>
-                <p data-translate="simplifiedConfigurationDescription"></p>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4 d-flex">
-            <div class="feature-box text-center flex-fill">
-                <h6 data-translate="optimizedPerformance"></h6>
-                <p data-translate="optimizedPerformanceDescription"></p>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4 d-flex">
-            <div class="feature-box text-center flex-fill">
-                <h6 data-translate="seamlessExperience"></h6>
-                <p data-translate="seamlessExperienceDescription"></p>
-            </div>
-        </div>
-    </div>
-
-<h5 class="text-center mb-4"><i data-feather="tool"></i> <span data-translate="toolInfo"></span></h5>
-<div class="d-flex justify-content-center">
-    <div class="table-container">
-        <table class="table table-borderless mb-5">
-            <tbody>
-                <tr class="text-center">
-                    <td>SagerNet</td>
-                    <td>MetaCubeX</td>
-                </tr>
-                <tr class="text-center">
-                    <td>
-                        <div class="link-box">
-                            <a href="https://github.com/SagerNet/sing-box" target="_blank"><i data-feather="codesandbox"></i>   Sing-box</a>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="link-box">
-                            <a href="https://github.com/MetaCubeX/mihomo" target="_blank"><i data-feather="box"></i>   Mihomo</a>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-<h5 class="text-center mb-4"><i data-feather="paperclip"></i> <span data-translate="externalLinks"></span></h5>
-        <div class="table-container">
-            <table class="table table-borderless mb-5">
-                <tbody>
-                    <tr class="text-center">
-                        <td>Github</td>
-                        <td>Thaolga</td>
-                    </tr>
-                    <tr class="text-center">
-                        <td>
-                            <div class="link-box">
-                                <a href="https://github.com/Thaolga/openwrt-nekobox/issues" target="_blank"><i data-feather="github"></i>   Issues</a>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="link-box">
-                                <a href="https://github.com/Thaolga/openwrt-nekobox" target="_blank"><i data-feather="github"></i>   NEKOBOX</a>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="text-center">
-                        <td>Telegram</td>
-                        <td>Zephyruso</td>
-                    </tr>
-                    <tr class="text-center">
-                        <td>
-                            <div class="link-box">
-                                <a href="https://t.me/+J55MUupktxFmMDgx" target="_blank"><i data-feather="send"></i> Telegram</a>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="link-box">
-                                <a href="https://github.com/Zephyruso/zashboard" target="_blank"><i data-feather="package"></i>    ZASHBOARD</a>
-                            </div>
-                        </td>
-                    </tr>
                 </tbody>
             </table>
         </div>
@@ -1302,7 +1218,7 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
 </footer>
     </div>
 </body>
-</html>
+
 
 
 

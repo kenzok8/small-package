@@ -1,75 +1,134 @@
 #!/bin/bash
 
-# mkdir -p /dev/net
-# [ ! -L /dev/net/tun ] && ln -s /dev/tun /dev/net/tun
-
-ulimit -SHn 1000000
-
 id="200"
 tun_device="Meta"
 iptables=`command -v iptables`
 nft=`command -v nft`
 fw4=`command -v fw4`
 
-intranet=(0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.0.0.0/24 192.0.2.0/24 192.88.99.0/24 192.168.0.0/16 198.51.100.0/24 203.0.113.0/24 224.0.0.0/4 233.252.0.0/24 240.0.0.0/4 255.255.255.255/32)
+intranet=(
+    0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 
+    127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 
+    192.0.0.0/24 192.0.2.0/24 192.88.99.0/24 
+    192.168.0.0/16 198.51.100.0/24 203.0.113.0/24 
+    224.0.0.0/4 233.252.0.0/24 240.0.0.0/4 
+    255.255.255.255/32
+)
+
+PORT_REDIRECT=7892
+PORT_TPROXY=7893
+PORT_DNS=1053
 
 start_tun() {
-    echo "[ `date +%T` ] - Starting iptables"
+    echo "[ $(date +%T) ] Starting iptables rules"
+    
     ip rule add fwmark ${id} table ${id}
     ip route add default dev ${tun_device} table ${id}
-
+    
     ${iptables} -I FORWARD -o ${tun_device} -j ACCEPT
     ${iptables} -I FORWARD -i ${tun_device} -j ACCEPT
+    
     ${iptables} -t mangle -N NEKO_EXTERNAL
-
-    for subnet in ${intranet[@]} ; do
+    for subnet in ${intranet[@]}; do
         ${iptables} -t mangle -A NEKO_EXTERNAL -d ${subnet} -j RETURN
     done
-
     ${iptables} -t mangle -A NEKO_EXTERNAL -j MARK --set-xmark ${id}
     ${iptables} -t mangle -I PREROUTING -j NEKO_EXTERNAL
+    
     ${iptables} -t mangle -N NEKO_LOCAL
-
-    for subnet in ${intranet[@]} ; do
+    for subnet in ${intranet[@]}; do
         ${iptables} -t mangle -A NEKO_LOCAL -d ${subnet} -j RETURN
     done
-
     ${iptables} -t mangle -A NEKO_LOCAL -j MARK --set-xmark ${id}
     ${iptables} -t mangle -I OUTPUT -j NEKO_LOCAL
+    
+    ${iptables} -t nat -N PROXY_REDIRECT 2>/dev/null || ${iptables} -t nat -F PROXY_REDIRECT
+    for subnet in ${intranet[@]}; do
+        ${iptables} -t nat -A PROXY_REDIRECT -d ${subnet} -j RETURN
+    done
+    ${iptables} -t nat -A PROXY_REDIRECT -p tcp -j REDIRECT --to-ports ${PORT_REDIRECT}
+    ${iptables} -t nat -A PREROUTING -j PROXY_REDIRECT
+    ${iptables} -t nat -A OUTPUT -j PROXY_REDIRECT
+    
+    ${iptables} -t nat -N PROXY_DNS 2>/dev/null || ${iptables} -t nat -F PROXY_DNS
+    for subnet in ${intranet[@]}; do
+        ${iptables} -t nat -A PROXY_DNS -d ${subnet} -j RETURN
+    done
+    ${iptables} -t nat -A PROXY_DNS -p udp --dport 53 -j REDIRECT --to-ports ${PORT_DNS}
+    ${iptables} -t nat -A PROXY_DNS -p tcp --dport 53 -j REDIRECT --to-ports ${PORT_DNS}
+    ${iptables} -t nat -A PREROUTING -j PROXY_DNS
+    ${iptables} -t nat -A OUTPUT -j PROXY_DNS
+    
+    echo "[ $(date +%T) ] iptables rules applied successfully"
 }
 
 stop_tun() {
-    echo "[ `date +%T` ] - Cleaning iptables Route"
-    ip rule del fwmark ${id} table ${id}
-    ip route del default dev ${tun_device} table ${id}
+    echo "[ $(date +%T) ] Cleaning iptables rules"
     
-    ${iptables} -F FORWARD
-    ${iptables} -X FORWARD
-
-    ${iptables} -t mangle -D OUTPUT -j NEKO_LOCAL
-    ${iptables} -t mangle -D PREROUTING -j NEKO_EXTERNAL
-
-    ${iptables} -t mangle -F NEKO_EXTERNAL
-    ${iptables} -t mangle -X NEKO_EXTERNAL
-
-    ${iptables} -t mangle -F NEKO_LOCAL
-    ${iptables} -t mangle -X NEKO_LOCAL
+    ip rule del fwmark ${id} table ${id} 2>/dev/null
+    ip route del default dev ${tun_device} table ${id} 2>/dev/null
+    
+    ${iptables} -D FORWARD -o ${tun_device} -j ACCEPT 2>/dev/null
+    ${iptables} -D FORWARD -i ${tun_device} -j ACCEPT 2>/dev/null
+    
+    ${iptables} -t mangle -D OUTPUT -j NEKO_LOCAL 2>/dev/null
+    ${iptables} -t mangle -D PREROUTING -j NEKO_EXTERNAL 2>/dev/null
+    ${iptables} -t mangle -F NEKO_EXTERNAL 2>/dev/null
+    ${iptables} -t mangle -X NEKO_EXTERNAL 2>/dev/null
+    ${iptables} -t mangle -F NEKO_LOCAL 2>/dev/null
+    ${iptables} -t mangle -X NEKO_LOCAL 2>/dev/null
+    
+    ${iptables} -t nat -D PREROUTING -j PROXY_REDIRECT 2>/dev/null
+    ${iptables} -t nat -D OUTPUT -j PROXY_REDIRECT 2>/dev/null
+    ${iptables} -t nat -F PROXY_REDIRECT 2>/dev/null
+    ${iptables} -t nat -X PROXY_REDIRECT 2>/dev/null
+    
+    ${iptables} -t nat -D PREROUTING -j PROXY_DNS 2>/dev/null
+    ${iptables} -t nat -D OUTPUT -j PROXY_DNS 2>/dev/null
+    ${iptables} -t nat -F PROXY_DNS 2>/dev/null
+    ${iptables} -t nat -X PROXY_DNS 2>/dev/null
+    
+    echo "[ $(date +%T) ] iptables rules cleaned successfully"
 }
+
 start_tun_fw4() {
-    echo "[ `date +%T` ] - Starting nftables"
-    handles=`nft -a list chain inet fw4 forward |grep -E "oifname.*${tun_device}" |awk -F '# handle ' '{print$2}'`
-    for handle in $handles; do
-        $nft delete rule inet fw4 forward handle ${handle}
-    done
-    # $nft insert rule inet fw4 forward position 0 meta l4proto { tcp, udp } oifname ${tun_device} counter accept
+    echo "[ $(date +%T) ] Starting nftables rules"
+    
     $nft insert rule inet fw4 forward position 0 meta l4proto { tcp, udp } oifname ${tun_device} counter accept comment \"Neko TUN Forward\"
     $nft insert rule inet fw4 forward position 0 meta l4proto { tcp, udp } iifname ${tun_device} counter accept comment \"Neko TUN Forward\"
     $nft insert rule inet fw4 input position 0 meta l4proto { tcp, udp } iifname ${tun_device} counter accept comment \"Neko TUN Input\"
     $nft insert rule inet fw4 srcnat position 0 meta nfproto { ipv4 } oifname ${tun_device} counter return comment \"Neko TUN Postrouting\"
+    
+    ip rule add fwmark ${id} table ${id}
+    ip route add default dev ${tun_device} table ${id}
+    
+    $nft add table inet proxy 2>/dev/null
+    $nft flush table inet proxy 2>/dev/null
+    
+    $nft add chain inet proxy prerouting { type filter hook prerouting priority -150 \; }
+    $nft add chain inet proxy output { type filter hook output priority -150 \; }
+    
+    for subnet in ${intranet[@]}; do
+        $nft add rule inet proxy prerouting ip daddr ${subnet} return
+        $nft add rule inet proxy output ip daddr ${subnet} return
+    done
+    
+    $nft add rule inet proxy prerouter meta l4proto tcp mark set ${id}
+    $nft add rule inet proxy prerouter meta l4proto udp mark set ${id}
+    $nft add rule inet proxy output meta l4proto tcp mark set ${id}
+    $nft add rule inet proxy output meta l4proto udp mark set ${id}
+    
+    $nft add rule inet proxy prerouting meta l4proto { tcp, udp } th dport 53 redirect to :${PORT_DNS}
+    
+    echo "[ $(date +%T) ] nftables rules applied successfully"
 }
-stop_tun_fw4() {
-    echo "[ `date +%T` ] - Cleaning nftables Route"
 
+stop_tun_fw4() {
+    echo "[ $(date +%T) ] Cleaning nftables rules"
+    
+    ip rule del fwmark ${id} table ${id} 2>/dev/null
+    ip route del default dev ${tun_device} table ${id} 2>/dev/null
+    
     nft_list=(forward input srcnat)
     for nft_now in ${nft_list[@]}; do
         handles=`nft -a list chain inet fw4 $nft_now |grep -E "Neko" |awk -F '# handle ' '{print$2}'`
@@ -77,26 +136,36 @@ stop_tun_fw4() {
             $nft delete rule inet fw4 ${nft_now} handle ${handle}
         done
     done
+    
+    $nft delete table inet proxy 2>/dev/null
+    
+    echo "[ $(date +%T) ] nftables rules cleaned successfully"
 }
-while getopts ":sk" signal ; do
+
+while getopts ":sk" signal; do
     case ${signal} in
         s)
-            if [[ -n $fw4 ]] ; then
-                echo "[ `date +%T` ] - FW4 Detected"
+            if [[ -n $fw4 ]]; then
+                echo "[ $(date +%T) ] FW4 Detected"
                 start_tun_fw4
             else 
-                echo "[ `date +%T` ] - FW3 Detected"
+                echo "[ $(date +%T) ] FW3 Detected"
                 start_tun
             fi
             ;;
         k)
-            if [[ -n $fw4 ]] ; then
-                echo "[ `date +%T` ] - FW4 Detected"
+            if [[ -n $fw4 ]]; then
+                echo "[ $(date +%T) ] FW4 Detected"
                 stop_tun_fw4
             else 
-                echo "[ `date +%T` ] - FW3 Detected"
+                echo "[ $(date +%T) ] FW3 Detected"
                 stop_tun
             fi
             ;;
     esac
 done
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+echo 1 > /proc/sys/net/ipv6/conf/all/forwarding 2>/dev/null
+
+echo "[ $(date +%T) ] Script executed successfully"
