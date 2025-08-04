@@ -720,30 +720,47 @@ $(document).ready(function() {
           $resetDaysLeft = '';
           $expireDateText = '';
 
-          $hasInfo = false;
-
           foreach ($lines as $line) {
-              if (preg_match('/#(.*)$/', $line, $matches)) {
+              $line = trim($line);
+              if (empty($line)) continue;
+
+              if (preg_match('/訂閱資訊[:：]\s*([\d.]+)\s*(T|TB|G|GB|M|MB|K|KB)?(?:\s*\/\s*剩餘\s*(\d+)?\s*天)?(?:\s*\/\s*到期\s*(\d{4}-\d{2}-\d{2}))?/iu', $line, $matches)) {
+                  if (!empty($matches[1])) {
+                     $flowLeft = $matches[1] . strtoupper($matches[2] ?? 'MB');
+                  }
+                  if (isset($matches[3])) {
+                      $resetDaysLeft = $matches[3] !== '' ? $matches[3] : '0';
+                  }
+                  if (!empty($matches[4])) {
+                      $expireDateText = $matches[4];
+                  }
+              } elseif (preg_match('/#(.*)$/', $line, $matches)) {
                   $hashComment = urldecode(trim($matches[1]));
 
-                  if (preg_match('/剩余流量[:：]\s*([\d.]+)\s*GB/u', $hashComment, $flowMatch)) {
-                      $flowLeft = $flowMatch[1] . 'GB';
-                      $hasInfo = true;
+                  if (preg_match('/剩余流量[:：]\s*([\d.]+)\s*(T|TB|G|GB|M|MB|K|KB)?(?:\s|$)/iu', $hashComment, $flowMatch)) {
+                      $flowLeft = $flowMatch[1] . strtoupper($flowMatch[2] ?? 'MB');
                   }
-
                   if (preg_match('/距离下次重置剩余[:：]\s*(\d+)\s*天/u', $hashComment, $resetMatch)) {
                       $resetDaysLeft = $resetMatch[1];
-                      $hasInfo = true;
                   }
-
                   if (preg_match('/套餐到期[:：]\s*(\d{4}-\d{2}-\d{2})/u', $hashComment, $dateMatch)) {
                       $expireDateText = $dateMatch[1];
-                      $hasInfo = true;
                   }
               }
           }
 
-          if ($hasInfo) {
+          if (empty($flowLeft)) {
+              $flowLeft = '0MB';
+          }
+          if ($resetDaysLeft === '') {
+              $resetDaysLeft = '0';
+          }
+
+          $hasFlow = ($flowLeft !== '0MB');
+          $hasResetDays = ($resetDaysLeft !== '0');
+          $hasExpireDate = !empty($expireDateText);
+
+          if ($hasFlow || $hasResetDays || $hasExpireDate) {
               $infoParts = [];
 
               if ($flowLeft) {
@@ -758,16 +775,21 @@ $(document).ready(function() {
               }
 
               if ($expireDateText) {
-                  $infoParts[] = 
-                      ($translations['expireDateLabel'] ?? 'Expires') . ' ' 
-                      . $expireDateText;
+                  $currentDate = date('Y-m-d');
+                  $isExpired = strtotime($expireDateText) < strtotime($currentDate);
+                  $expireText = ($translations['expireDateLabel'] ?? 'Expires') . ' ' . $expireDateText;
+                  if ($isExpired) {
+                      $infoParts[] = '<span style="color: red;">' . $expireText . '</span>';
+                  } else {
+                      $infoParts[] = $expireText;
+                  }
               }
 
               $infoText = implode(' / ', $infoParts);
 
               echo '<p class="card-text mb-2"><strong data-translate="subscriptionInfo">'
-                  . ($translations['subscriptionInfo'] ?? 'Subscription Info') 
-                  . '</strong>: ' . htmlspecialchars($infoText) . '</p>';
+                  . ($translations['subscriptionInfo'] ?? 'Subscription Info')
+                  . '</strong>: ' . $infoText . '</p>';
           }
           ?>
           <div class="icon-btn-group mt-2" style="gap:0.4rem; display:flex; flex-wrap: wrap;">
