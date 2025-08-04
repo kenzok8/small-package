@@ -482,7 +482,7 @@ function main() {
 				map(nodes, (_, i) => nodes[i].nodetype = 'sip008');
 		} catch(e) {
 			nodes = decodeBase64Str(res);
-			nodes = nodes ? split(trim(replace(nodes, / /g, '_')), '\n') : {};
+			nodes = nodes ? split(trim(replace(nodes, / /g, '_')), '\n') : [];
 		}
 
 		let count = 0;

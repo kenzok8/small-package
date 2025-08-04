@@ -87,7 +87,8 @@ start_service() {
 			EOF
 			;;
 		"gfwlist")
-			[ "$ipv6_support" -eq "0" ] || local gfw_nftset_v6=",6#inet#fw4#homeproxy_gfw_list_v6"
+			local gfw_nftset_v6
+			[ "$ipv6_support" -eq "0" ] || gfw_nftset_v6=",6#inet#fw4#homeproxy_gfw_list_v6"
 			sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_gfw_list_v4$gfw_nftset_v6/g" \
 				"$HP_DIR/resources/gfw_list.txt" > "$DNSMASQ_DIR/gfw_list.conf"
 			;;
@@ -98,7 +99,8 @@ start_service() {
 		esac
 
 		if [ "$routing_mode" != "custom" ] && [ -s "$HP_DIR/resources/proxy_list.txt" ]; then
-			[ "$ipv6_support" -eq "0" ] || local wan_nftset_v6=",6#inet#fw4#homeproxy_wan_proxy_addr_v6"
+			local wan_nftset_v6
+			[ "$ipv6_support" -eq "0" ] || wan_nftset_v6=",6#inet#fw4#homeproxy_wan_proxy_addr_v6"
 			sed -r -e '/^\s*$/d' -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_wan_proxy_addr_v4$wan_nftset_v6/g" \
 				"$HP_DIR/resources/proxy_list.txt" > "$DNSMASQ_DIR/proxy_list.conf"
 		fi
