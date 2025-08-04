@@ -70,7 +70,7 @@ apply_config() {
 
 	local exclude_items=$(echo "$exclude_items"|sed -E "s/('[^']+'|[^' ]+)/'\1'/g; s|''|'|g; s|' '|',\\\n    '|g; s|^|   |")
 
-sed -Ei "s|^\\\$CONFIG\s*=.*|\$CONFIG = '$defconf'\;|" "$_conf"
+[ -n "$defconf" ] && sed -Ei "s|^\\\$CONFIG\s*=.*|\$CONFIG = '$defconf'\;|" "$_conf"
 [ "$use_auth" -eq "1" ] && sed -Ei "s|(^\\\$use_auth =)(.+)|\1 true;|" "$_conf" || sed -Ei "s|(^\\\$use_auth =)(.+)|\1 false;|" "$_conf"
 [ "$global_readonly" -eq "1" ] && sed -Ei "s|(^\\\$global_readonly =)(.+)|\1 true;|" "$_conf" || sed -Ei "s|(^\\\$global_readonly =)(.+)|\1 false;|" "$_conf"
 sed -Ei "/^\\\$auth_users /,/\);/{/^ /d}" "$_conf" && sed -Ei "/^\\\$auth_users /a\ $auth_users" "$_conf"
