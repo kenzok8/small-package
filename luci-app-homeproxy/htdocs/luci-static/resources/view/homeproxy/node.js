@@ -624,7 +624,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends('type', 'ssh');
 	o.modalonly = true;
 
-	o = s.option(form.Value, 'ssh_priv_key', _('Private key'));
+	o = s.option(form.DynamicList, 'ssh_priv_key', _('Private key'));
 	o.password = true;
 	o.depends('type', 'ssh');
 	o.modalonly = true;
