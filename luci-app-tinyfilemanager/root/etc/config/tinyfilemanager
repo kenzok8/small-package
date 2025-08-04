@@ -9,4 +9,4 @@ config main
 	option show_second '0'
 	option favicon_path '/tinyfilemanager/rootfs/etc/tinyfilemanager/favicon.png'
 	option online_viewer '0'
-	option defconf '{"lang":"en"}'
+
