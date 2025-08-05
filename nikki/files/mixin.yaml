@@ -1,28 +1,25 @@
 # Mixin File
 # You can set any mihomo profile's config at here, it will mixin to the profile.
+# Mixin file have lower priority than the LuCI mixin options.
+#
+# Mihomo's Wiki: https://wiki.metacubex.one
 #
 # For example:
 #
-# global-client-fingerprint: chrome # set fingerprint for TLS transport
 # experimental: # experimental config
-#   quic-go-disable-gso: false # disable quic-go GSO support
-#   quic-go-disable-ecn: false # disable quic-go ECN support
 #   dialer-ip4p-convert: false # IP4P support
-# proxies: # overwrite proxies
+# listeners: # overwrite listeners
+#   - name: shadowsocks
+#     type: shadowsocks
+#     listen: "::"
+#     port: 12060
+# nikki-proxies: # prepend proxies
 #   - name: "PROXY"
 #     type: ss
 #     server: proxy.example.com
 #     port: 443
 #     cipher: chacha20-ietf-poly1305
 #     password: "password"
-# rules: # overwrite rules
-#   - DOMAIN,google.com,PROXY
-#   - DOMAIN-SUFFIX,google.com,PROXY
-#   - DOMAIN-KEYWORD,google,PROXY
-#   - DOMAIN-REGEX,^google.*com,PROXY
-#   - GEOSITE,google,PROXY
-#   - GEOSITE,cn,DIRECT
-#   - IP-CIDR,8.8.8.8/32,DIRECT,no-resolve
-#   - GEOIP,telegram,DIRECT
-#   - GEOIP,cn,DIRECT
-#   - Match,PROXY
+# nikki-rules: # prepend rules
+#   - DOMAIN,direct.example.com,DIRECT
+#   - DOMAIN-SUFFIX,proxy.example.com,PROXY
