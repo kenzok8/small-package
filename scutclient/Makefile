@@ -11,10 +11,9 @@ PKG_NAME:=scutclient
 PKG_VERSION:=3.1.3
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/scutclient/scutclient.git
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=3b98fb51956c0de8c25432c22c56477b245c5949be2b5ec7574ad10c83274668
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/scutclient/scutclient/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=5423d3444b950bf5a049d1bb9365b3dc90f4a75fe9bc5aef9239ea08c0b0030a
 
 PKG_MAINTAINER:=Scutclient Project
 PKG_LICENSE:=AGPL-3.0
