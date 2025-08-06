@@ -7,9 +7,9 @@
 'require view';
 
 return view.extend({
-	render: function() {
+	render() {
 		/* Thanks to luci-app-aria2 */
-		var css = '					\
+		let css = '					\
 			#log_textarea {				\
 				text-align: left;		\
 			}					\
@@ -22,7 +22,7 @@ return view.extend({
 				background-color: #33ccff;	\
 			}';
 
-		var log_textarea = E('div', { 'id': 'log_textarea' },
+		let log_textarea = E('div', { 'id': 'log_textarea' },
 			E('img', {
 				'src': L.resource('icons/loading.svg'),
 				'alt': _('Loading...'),
@@ -33,13 +33,13 @@ return view.extend({
 		poll.add(L.bind(function() {
 			return fs.read_direct('/var/log/daed/daed.log', 'text')
 			.then(function(content) {
-				var log = E('pre', { 'wrap': 'pre' }, [
+				let log = E('pre', { 'wrap': 'pre' }, [
 					content.trim() || _('Log is empty.')
 				]);
 
 				dom.content(log_textarea, log);
 			}).catch(function(e) {
-				var log;
+				let log;
 
 				if (e.toString().includes('NotFoundError'))
 					log = E('pre', { 'wrap': 'pre' }, [
@@ -54,21 +54,21 @@ return view.extend({
 			});
 		}));
 
-		var scrollDownButton = E('button', {
+		const scrollDownButton = E('button', {
 				'id': 'scrollDownButton',
 				'class': 'cbi-button cbi-button-neutral',
 			}, _('Scroll to tail', 'scroll to bottom (the tail) of the log file')
 		);
-		scrollDownButton.addEventListener('click', function() {
+		scrollDownButton.addEventListener('click', () => {
 			scrollUpButton.focus();
 		});
 
-		var scrollUpButton = E('button', {
+		const scrollUpButton = E('button', {
 				'id' : 'scrollUpButton',
 				'class': 'cbi-button cbi-button-neutral',
 			}, _('Scroll to head', 'scroll to top (the head) of the log file')
 		);
-		scrollUpButton.addEventListener('click', function() {
+		scrollUpButton.addEventListener('click', () => {
 			scrollDownButton.focus();
 		});
 
