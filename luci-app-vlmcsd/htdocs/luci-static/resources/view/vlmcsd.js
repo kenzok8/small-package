@@ -26,7 +26,7 @@ function renderStatus(status) {
 }
 
 return view.extend({
-	render: function () {
+	render() {
 		const m = new form.Map('vlmcsd', _('Vlmcsd KMS Server'));
 
 		let s = m.section(form.TypedSection);
