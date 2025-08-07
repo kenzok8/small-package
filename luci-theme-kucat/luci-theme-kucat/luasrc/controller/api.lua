@@ -1,4 +1,5 @@
 module("luci.controller.api", package.seeall)
+
 http = require "luci.http"
 fs = require "nixio.fs"
 uci = require "luci.model.uci".cursor()
@@ -45,21 +46,35 @@ end
 
 function set_theme()
     local kucat
+    local themes = http.formvalue("theme")
     if fs.access("/etc/config/advancedplus") then
-       kucat = "advancedplus"
+       kucat = 'advancedplus'
        config_exists = true
     elseif fs.access("/etc/config/kucat") then
-       kucat = "kucat"
+       kucat = 'kucat'
        config_exists = true
     end
+    print("theme value:", themes)
+    
+
     
     if (config_exists) then
-       uci:set(kucat, "@basic[0]", "mode", http.formvalue("theme"))
+           local esc_kucat = "'" .. kucat:gsub("'", "'\\''") .. "'"
+    local esc_theme = "'" .. themes:gsub("'", "'\\''") .. "'"
+    
+    os.execute(string.format(
+        "uci set %s.@basic[0].mode=%s && uci commit %s",
+        kucat, esc_theme, kucat
+    ))
+    print(  "uci set :",    esc_theme)
+        uci:set(kucat, "@basic[0]", "mode", http.formvalue("theme"))
+
+       os.execute("uci commit " .. kucat)
        uci:commit(kucat)
        http.prepare_content("application/json")
        http.write_json({ success = true })
     else
        http.prepare_content("application/json")
-       http.write_json({ success = flase })
+       http.write_json({ success = false })
     end
 end

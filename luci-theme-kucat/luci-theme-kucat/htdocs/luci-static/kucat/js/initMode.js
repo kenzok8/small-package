@@ -82,7 +82,6 @@ async function updateTheme(theme) {
         } 
             applyTheme(autoTheme);
             await updateTheme(autoTheme);
-
     })();
 })();
 /* ]]> */
