@@ -2698,7 +2698,9 @@ body.modal-overlay-active #modal_overlay {
   width: 32px;
   color: var(--body-color);
   content: "";
-  background: url(../../resources/icons/loading.svg) no-repeat center;
+  
+  background: url(../../resources/icons/loading.svg) no-repeat center,
+              url(../../resources/icons/loading.gif) no-repeat center;
   background-size: 20px;
   text-align: center;
   -webkit-box-align: center;
@@ -3283,8 +3285,7 @@ body.lang_pl.node-main-login .cbi-value-title {
     -ms-user-select: none;
     user-select: none;
     font-weight: bolder;
-    overflow-x: hidden;
-    overflow-y: hidden;
+    overflow: visible;
 }
 
 .node-main-login>.main>.main-right #maincontent .container .alert-message>h4,
@@ -3483,6 +3484,7 @@ body.lang_pl.node-main-login .cbi-value-title {
 
 .node-main-login footer {
     position: absolute;
+    display: none;
     bottom: 0;
     margin-bottom: 3rem;
     color: #eee;

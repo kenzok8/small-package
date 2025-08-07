@@ -16,13 +16,13 @@ async function syncgetUci() {
         if (!response.ok) throw new Error("Network error");
         return await response.json();
     } catch (error) {
-        console.error("Failed to fetch theme config:", error);
+        console.error("Fetch config failed, using default:", error);
         return {
             success: false,
             bgqs: "0",
             primaryrgbm: "45,102,147",
             primaryrgbmts: "0",
-            mode: "light" // Default to light for safety
+            mode: "light"
         };
     }
 }
@@ -58,6 +58,7 @@ async function updateThemeVariables(theme) {
         Object.entries(vars).forEach(([key, value]) => {
         root.style.setProperty(key, value);
       });
+        
         if (window.LuciForm) {
             LuciForm.refreshVisibility();
         }
@@ -86,9 +87,9 @@ document.getElementById('themeToggle').addEventListener('click', function() {
 window.addEventListener('DOMContentLoaded', async function() {
 
         const config = await syncgetUci();
-        const themeToApply = config.mode === 'auto' 
-            ? getTimeBasedTheme() 
-            : (config.mode || 'light');
+        isDark = config.mode === 'dark';
+        const themeToApply = isDark ? 'dark' : 'light';
+
     const switcher = document.getElementById('themeToggle');
     switcher.dataset.theme = themeToApply;
     document.body.setAttribute('data-theme', themeToApply);
