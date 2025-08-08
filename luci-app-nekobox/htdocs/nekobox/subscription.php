@@ -503,17 +503,6 @@ EOL;
 <?php include './ping.php'; ?>
 
 <style>
-.custom-padding {
-    padding-left: 5ch;  
-    padding-right: 5ch;  
-}
-
-@media (max-width: 767px) {
-.custom-padding {
-    padding-left: 3ch;  
-    padding-right: 3ch;  
-}
-
 @media (max-width: 767px) {
     .row a {
         font-size: 9px; 
@@ -525,15 +514,51 @@ EOL;
 }
 </style>
 <div class="container-sm container-bg mt-4">
-    <div class="row">
-        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
-        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
-        <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
-        <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
-        <h2 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;" data-translate="form_title"></h2>
-
-        <div class="col-12 custom-padding">
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container-sm container">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <i class="bi bi-palette-fill me-2" style="color: var(--accent-color); font-size: 1.8rem;"></i>
+            <span style="color: var(--accent-color); letter-spacing: 1px;"><?= htmlspecialchars($title) ?></span>
+        </a>
+        <button class="navbar-toggler" type="button" style="position: relative; z-index: 1;" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <i class="bi bi-list" style="color: var(--accent-color); font-size: 1.8rem;"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="font-size: 18px;">
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'index.php' ? 'active' : '' ?>" href="./index.php"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'mihomo_manager.php' ? 'active' : '' ?>" href="./mihomo_manager.php"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'singbox.php' ? 'active' : '' ?>" href="./singbox.php"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'subscription.php' ? 'active' : '' ?>" href="./subscription.php"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'mihomo.php' ? 'active' : '' ?>" href="./mihomo.php"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'filekit.php' ? 'active' : '' ?>" href="./filekit.php"><i class="bi bi-bank"></i> <span data-translate="pageTitle">File Assistant</span></a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <div class="me-3 d-block">
+                    <button type="button" class="btn btn-primary icon-btn me-2" onclick="toggleControlPanel()" data-translate-title="control_panel"><i class="bi bi-gear"> </i></button>
+                    <button type="button" class="btn btn-danger icon-btn me-2" data-bs-toggle="modal" data-bs-target="#langModal"  data-translate-title="set_language"><i class="bi bi-translate"></i></button>
+                    <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-translate-title="music_player"><i class="bi bi-music-note-beamed"></i></button>
+                    <button type="button" id="toggleIpStatusBtn" class="btn btn-warning icon-btn me-2" onclick="toggleIpStatusBar()" data-translate-title="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
+                    <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-translate-title="viewPortInfoButton"><i class="bi bi-plug"></i></button>
+                    <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-translate-title="component_bg_color"><i class="bi bi-palette"></i></button>
+                    <input type="color" id="colorPicker" value="#0f3460" style="display: none;">
+            </div>
+        </div>
+    </div>
+</nav>
+<h2 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;" data-translate="form_title"></h2>
+        <div class="col-12 px-4">
             <div class="form-section">
                 <form method="post">
                     <div class="mb-3">
@@ -763,48 +788,14 @@ EOL;
                 </form>
             </div>
         </div>
-    <div class="container custom-padding">
+    <div class="col-12 px-4">
         <form method="post">
             <h5 style="margin-top: 20px;" data-translate="scheduled_tasks"></h5>
             <button type="button" class="btn btn-primary mx-2" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> <span data-translate="set_scheduled_task"></span></button>
             <button type="submit" name="createShellScript" value="true" class="btn btn-info"><i class="bi bi-terminal"></i> <span data-translate="generate_update_script"></span></button>
         </form>
     </div>
-        <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="cronModalLabel" data-translate="cron_task_title"></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label for="cronExpression" class="form-label" data-translate="cron_expression_label"></label>
-                                <input type="text" class="form-control" id="cronExpression" name="cronExpression"  value="0 2 * * *" required>
-                            </div>
-                            <div class="alert alert-info">
-                              <strong data-translate="cron_hint">提示:</strong> <span data-translate="cron_expression_format">Cron 表达式格式：</span>
-                              <ul>
-                                <li><span data-translate="cron_format_help"></span></li>
-                                <li><?= $langData[$currentLang]['example1'] ?>: <code>0 2 * * *</code></li>
-                                <li><?= $langData[$currentLang]['example2'] ?>: <code>0 3 * * 1</code></li>
-                                <li><?= $langData[$currentLang]['example3'] ?>: <code>0 9 * * 1-5</code></li>
-                              </ul>
-                            </div>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button"></button>
-                            <button type="submit" name="createCronJob" class="btn btn-primary" data-translate="save_button"></button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-        <div class="help mt-4 custom-padding">
+        <div class="help mt-4 px-4">
             <p data-translate="first_time_singbox_user"><p>
             <p style="color: red;" data-translate="warning"></p>
             <p data-translate="subscription_conversion"></p>
@@ -812,11 +803,52 @@ EOL;
             <i data-feather="github"></i> <span data-translate="visit_link"></span>
             </a>
         </div>
-        <div class="result mt-4 custom-padding">
+        <div class="result mt-4 px-4">
             <?php echo nl2br(htmlspecialchars($result)); ?>
                 <footer class="text-center">
                     <p><?php echo $footer ?></p>
                 </footer>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="cronModalLabel" data-translate="cron_task_title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="cronExpression" class="form-label" data-translate="cron_expression_label"></label>
+                        <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong data-translate="cron_hint">提示:</strong>
+                        <span data-translate="cron_expression_format">Cron 表达式格式：</span>
+                        <ul>
+                            <li><span data-translate="cron_format_help"></span></li>
+                            <li><?= $langData[$currentLang]['example1'] ?>: <code>0 2 * * *</code></li>
+                            <li><?= $langData[$currentLang]['example2'] ?>: <code>0 3 * * 1</code></li>
+                            <li><?= $langData[$currentLang]['example3'] ?>: <code>0 9 * * 1-5</code></li>
+                        </ul>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button"></button>
+                        <button type="submit" name="createCronJob" class="btn btn-primary" data-translate="save_button"></button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

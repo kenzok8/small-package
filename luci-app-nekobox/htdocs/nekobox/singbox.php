@@ -155,43 +155,51 @@ EOL;
 <script src="./assets/bootstrap/jquery.min.js"></script>
 <?php include './ping.php'; ?>
 
-<style>
-.container-fluid {
-    max-width: 2400px;
-    width: 100%;
-    margin: 0 auto;
-}
-
-.section-container {
-   padding-left: 32px;  
-   padding-right: 32px;
-}
-
-.result-container,
-.container {
-   padding-left: 40px;  
-   padding-right: 40px;
-}
-
-@media (max-width: 767px) {
-    .row a {
-        font-size: 9px; 
-    }
-}
-
-.table-responsive {
-    width: 100%;
-}
-
-</style>
 <div class="container-sm container-bg mt-4">
-    <div class="row">
-        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
-        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
-        <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
-        <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
-<div class="outer-container section-container">
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container-sm container">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <i class="bi bi-palette-fill me-2" style="color: var(--accent-color); font-size: 1.8rem;"></i>
+            <span style="color: var(--accent-color); letter-spacing: 1px;"><?= htmlspecialchars($title) ?></span>
+        </a>
+        <button class="navbar-toggler" type="button" style="position: relative; z-index: 1;" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <i class="bi bi-list" style="color: var(--accent-color); font-size: 1.8rem;"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="font-size: 18px;">
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'index.php' ? 'active' : '' ?>" href="./index.php"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'mihomo_manager.php' ? 'active' : '' ?>" href="./mihomo_manager.php"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'singbox.php' ? 'active' : '' ?>" href="./singbox.php"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'subscription.php' ? 'active' : '' ?>" href="./subscription.php"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'mihomo.php' ? 'active' : '' ?>" href="./mihomo.php"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'filekit.php' ? 'active' : '' ?>" href="./filekit.php"><i class="bi bi-bank"></i> <span data-translate="pageTitle">File Assistant</span></a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <div class="me-3 d-block">
+                    <button type="button" class="btn btn-primary icon-btn me-2" onclick="toggleControlPanel()" data-translate-title="control_panel"><i class="bi bi-gear"> </i></button>
+                    <button type="button" class="btn btn-danger icon-btn me-2" data-bs-toggle="modal" data-bs-target="#langModal"  data-translate-title="set_language"><i class="bi bi-translate"></i></button>
+                    <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-translate-title="music_player"><i class="bi bi-music-note-beamed"></i></button>
+                    <button type="button" id="toggleIpStatusBtn" class="btn btn-warning icon-btn me-2" onclick="toggleIpStatusBar()" data-translate-title="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
+                    <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-translate-title="viewPortInfoButton"><i class="bi bi-plug"></i></button>
+                    <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-translate-title="component_bg_color"><i class="bi bi-palette"></i></button>
+                    <input type="color" id="colorPicker" value="#0f3460" style="display: none;">
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="outer-container px-3">
     <div class="container-fluid">
         <h2 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;" data-translate="title">Sing-box Conversion Template One</h2>
         <div class="alert alert-info">
@@ -296,7 +304,34 @@ EOL;
         </div>
     </div>
 </div>
+<?php
+function displayLogData($dataFilePath, $translations) {
+    if (file_exists($dataFilePath)) {
+        $savedData = file_get_contents($dataFilePath);
+        ?>
+        <div class='container-sm mt-4 px-4 mb-4'>
+            <div class='card'>
+                <div class='card-body'>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class='card-title mb-0'><?= htmlspecialchars($translations['data_saved']) ?></h3>
+                        <form method='post' action=''>
+                            <button class="btn btn-sm btn-danger" type="submit" name="clearData">
+                                <i class="bi bi-trash"></i> <?= htmlspecialchars($translations['clear_data']) ?>
+                            </button>
+                        </form>
+                    </div>                   
+                    <div class="log-container border p-3 rounded">
+                        <pre class="mb-0 alert-heading"><?= htmlspecialchars($savedData) ?></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+}
 
+displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
+?>
 <script>
     document.querySelectorAll('input[name="defaultTemplate"]').forEach((elem) => {
         elem.addEventListener('change', function () {
@@ -436,7 +471,7 @@ EOL;
 
             echo "<div class='result-container'>";
             echo "<form method='post' action=''>";
-            echo "<div class='mb-3'>";
+            echo "<div class='mb-3 px-4'>";
             echo "<textarea id='configContent' name='configContent' class='form-control' style='height: 300px;'>" . htmlspecialchars($downloadedContent) . "</textarea>";
             echo "</div>";
             echo "<div class='text-center' mb-3>";
@@ -446,6 +481,7 @@ EOL;
             echo "</div>";
             echo "</form>";
             echo "</div>";
+            echo "<div class='px-4'>";
             echo "<div class='alert alert-info mt-3' style='word-wrap: break-word; overflow-wrap: break-word;'>";
             foreach ($logMessages as $message) {
             echo $message . "<br>";
@@ -469,21 +505,6 @@ EOL;
                 file_put_contents($dataFilePath, '');
                 echo "<div class='alert alert-success'>" . $translations['save_data_cleared'] . "</div>";
             }
-        }
-
-        if (file_exists($dataFilePath)) {
-            $savedData = file_get_contents($dataFilePath);
-            echo "<div class='container'>";
-            echo "<div class='card'>";
-            echo "<div class='card-body'>";
-            echo "<h3 class='card-title'>" . $translations['data_saved'] . "</h3>";
-            echo "<pre>" . htmlspecialchars($savedData) . "</pre>";
-            echo "<form method='post' action=''>";
-
-            echo '<button class="btn btn-danger" type="submit" name="clearData"><i class="bi bi-trash"></i> ' . $translations['clear_data'] . '</button>';
-            echo "</form>";
-            echo "</div>";
-            echo "</div>";
         }
         ?>
       <footer class="text-center">

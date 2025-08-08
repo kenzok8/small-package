@@ -48,12 +48,7 @@ footer {
 }
 </style>
 <div  id="mainNavbar" class="container-sm container-bg text-center mt-4">
-    <div class="row">
-        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
-        <a href="./dashboard.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bar-chart"></i> <span data-translate="panel">Panel</span></a>
-        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-box"></i> <span data-translate="document">Document</span></a> 
-        <a href="./settings.php" class="col btn btn-lg text-nowrap"><i class="bi bi-gear"></i> <span data-translate="settings">Settings</span></a>
-    </div>
+<?php include 'navbar.php'; ?>
 <main class="container-fluid text-left p-3">
     <iframe id="iframeMeta" class="w-100" src="http://<?=$zash_link?>" title="zash" allowfullscreen style="border-radius: 10px;"></iframe>
     <div class="mt-3 mb-0">
@@ -78,9 +73,9 @@ footer {
                     </select>
                 </div>
                 <div class="d-flex justify-content-around flex-wrap gap-2">
-                    <a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?=$yacd_link?>"  data-translate="yacd_panel">YACD</a>
-                    <a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?=$dash_link?>"  data-translate="dash_panel">Dash</a>
-                    <a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?=$meta_link?>" data-translate="metacubexd_panel">MetaCubeXD</a>
+                    <a class="btn btn-primary btn-sm text-white" target="_blank" href="http://<?=$yacd_link?>"  data-translate="yacd_panel">YACD</a>
+                    <a class="btn btn-success btn-sm text-white" target="_blank" href="http://<?=$dash_link?>"  data-translate="dash_panel">Dash</a>
+                    <a class="btn btn-warning btn-sm text-white" target="_blank" href="http://<?=$meta_link?>" data-translate="metacubexd_panel">MetaCubeXD</a>
                     <a class="btn btn-info btn-sm text-white" target="_blank" href="http://<?=$zash_link?>"  data-translate="zash_panel">Zash</a>
                 </div>
             </div>

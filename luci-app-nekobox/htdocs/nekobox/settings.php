@@ -1,5 +1,6 @@
 
 <?php
+include './cfg.php';
 function getSingboxVersion() {
     $singBoxPath = '/usr/bin/sing-box'; 
     $command = "$singBoxPath version 2>&1";
@@ -116,72 +117,14 @@ $metaVersion = getMetaVersion();
 $razordVersion = getRazordVersion();
 
 ?>
-<?php
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'clearNekoTmpDir') {
-    $nekoDir = '/tmp/neko';
-    $response = [
-        'success' => false,
-        'message' => ''
-    ];
 
-    if (is_dir($nekoDir)) {
-        if (deleteDirectory($nekoDir)) {
-            $response['success'] = true;
-            $response['message'] = 'Directory cleared successfully.';
-        } else {
-            $response['message'] = 'Failed to delete the directory.';
-        }
-    } else {
-        $response['message'] = 'The directory does not exist.';
-    }
-
-    header('Content-Type: application/json');
-    echo json_encode($response);
-    exit;
-}
-
-function deleteDirectory($dir) {
-    if (!file_exists($dir)) {
-        return true;
-    }
-
-    if (!is_dir($dir)) {
-        return unlink($dir);
-    }
-
-    foreach (scandir($dir) as $item) {
-        if ($item == '.' || $item == '..') {
-            continue;
-        }
-
-        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
-            return false;
-        }
-    }
-
-    return rmdir($dir);
-}
-?>
 <title>Settings - Nekobox</title>
 <?php include './ping.php'; ?>
 
-<style>
-  #portModal table tbody td {
-    color: var(--text-primary) !important;
-  }
-</style>
-
 <div class="container-sm container-bg mt-4">
-  <div class="row">
-    <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
-    <a href="./dashboard.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bar-chart"></i> <span data-translate="panel">Panel</span></a>
-    <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-box"></i> <span data-translate="document">Document</span></a> 
-    <a href="./settings.php" class="col btn btn-lg text-nowrap"><i class="bi bi-gear"></i> <span data-translate="settings">Settings</span></a>
-<div class="container px-4 theme-settings-container text-center">
+<?php include 'navbar.php'; ?>
+<div class="container-sm container px-4 theme-settings-container text-center">
   <h2 class="text-center p-2 mb-2" data-translate="component_update">Component Update</h2>
-  <button type="button" class="btn btn-success mb-3 me-3" onclick="toggleControlPanel()"><i class="bi bi-eyedropper"> </i><span data-translate="control_panel">Control_Panel</span></button>
-  <button type="button" id="toggleIpStatusBtn" class="btn btn-warning mb-3 me-3" onclick="toggleIpStatusBar()"><i class="bi bi-eye-slash"> </i><span data-translate="hide_ip_info">Hide IP Information</span></button>
-  <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#portModal"><i class="bi bi-plug"></i> <span data-translate="viewPortInfoButton">View Port Information</span></button>
   <div class="row g-4">
     <div class="col-md-6">
       <div class="card shadow-sm">
@@ -253,7 +196,7 @@ function deleteDirectory($dir) {
   </div>
 </div>
 
-<div class="container px-4 theme-settings-container">
+<div class="container-sm container px-4 theme-settings-container">
   <h2 class="text-center mb-4 mt-4" data-translate="aboutTitle"></h2>
   <div class="card mb-5 shadow-sm">
     <div class="card-body text-center feature-box">
@@ -620,87 +563,6 @@ function deleteDirectory($dir) {
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-xl">
-    <div class="modal-content">
-      <form id="portForm" method="POST" action="./save_ports.php">
-        <div class="modal-header">
-          <h5 class="modal-title" id="portModalLabel" data-translate="portInfoTitle">Port Information</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <table class="table table-bordered table-striped text-center align-middle w-100 mb-0">
-            <thead class="table-dark">
-              <tr>
-                <th style="width: 20%;" data-translate="componentName">Component Name</th>
-                <th style="width: 20%;">socks-port</th>
-                <th style="width: 20%;">mixed-port</th>
-                <th style="width: 13%;">redir-port</th>
-                <th style="width: 13%;">port</th>
-                <th style="width: 14%;">tproxy-port</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Mihomo</td>
-                <td><input type="number" class="form-control text-center" name="mihomo_socks" value="<?= htmlspecialchars($neko_cfg['socks']) ?>"></td>
-                <td><input type="number" class="form-control text-center" name="mihomo_mixed" value="<?= htmlspecialchars($neko_cfg['mixed']) ?>"></td>
-                <td><input type="number" class="form-control text-center" name="mihomo_redir" value="<?= htmlspecialchars($neko_cfg['redir']) ?>"></td>
-                <td><input type="number" class="form-control text-center" name="mihomo_port" value="<?= htmlspecialchars($neko_cfg['port']) ?>"></td>
-                <td><input type="number" class="form-control text-center" name="mihomo_tproxy" value="<?= htmlspecialchars($neko_cfg['tproxy']) ?>"></td>
-              </tr>
-              <tr>
-                <td>Sing-box</td>
-                <td><input type="number" class="form-control text-center" name="singbox_http" value="<?= htmlspecialchars($http_port) ?>"></td>
-                <td><input type="number" class="form-control text-center" name="singbox_mixed" value="<?= htmlspecialchars($mixed_port) ?>"></td>
-                <td>—</td>
-                <td>—</td>
-                <td>—</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="text-danger text-center fw-bold mt-3 mb-1" data-translate="portChangeNotice">
-            Port changes will take effect after restarting the service.
-          </div>
-        </div>
-      </form>
-      <div class="modal-footer justify-content-end">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="closeButton">Close</button>
-        <button type="submit" form="portForm" class="btn btn-primary" data-translate="save">Save</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-    function clearNekoTmpDir() {
-        fetch('', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'action=clearNekoTmpDir'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(translations["tmp_neko_cleared"] || "The /tmp/neko directory has been cleared successfully.");
-            } else {
-                if (data.message === 'The directory does not exist.') {
-                    alert(translations["tmp_neko_not_exist"] || "The /tmp/neko directory does not exist. No action was taken.");
-                } else {
-                    alert('Failed to clear the /tmp/neko directory: ' + data.message);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while trying to clear the /tmp/neko directory.');
-        });
-    }
-</script>
-
 
 <script>
 let selectedSingboxVersion = 'v1.11.0-alpha.10';  
@@ -1209,16 +1071,7 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
 
     document.addEventListener('DOMContentLoaded', checkSingboxVersion);
 </script>
-<div class="container-fluid mt-4">
-                </tbody>
-            </table>
-        </div>
-      <footer class="text-center">
-    <p><?php echo $footer ?></p>
-</footer>
-    </div>
-</body>
-
+<footer class="text-center"><p><?php echo $footer ?></p></footer>
 
 
 

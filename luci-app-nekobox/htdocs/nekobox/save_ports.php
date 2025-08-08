@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    header('Location: settings.php?port_updated=1');
+    header('Location: index.php?port_updated=1');
     exit;
 }
 ?>
