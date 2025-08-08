@@ -187,6 +187,19 @@ o:value("h2")
 o:value("http/1.1")
 o:depends({ [_n("tls")] = true })
 
+o = s:option(Flag, _n("use_mldsa65Seed"), translate("ML-DSA-65"))
+o.default = "0"
+o:depends({ [_n("reality")] = true })
+
+o = s:option(TextValue, _n("reality_mldsa65Seed"), "ML-DSA-65 " .. translate("Private Key"))
+o.default = ""
+o.rows = 5
+o.wrap = "soft"
+o:depends({ [_n("use_mldsa65Seed")] = true })
+o.validate = function(self, value)
+	return api.trim(value:gsub("[\r\n]", ""))
+end
+
 -- o = s:option(Value, _n("minversion"), translate("minversion"))
 -- o.default = "1.3"
 -- o:value("1.3")
@@ -221,6 +234,19 @@ o.validate = function(self, value, t)
 		end
 	end
 	return nil
+end
+
+o = s:option(Flag, _n("ech"), translate("ECH"))
+o.default = "0"
+o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
+
+o = s:option(TextValue, _n("ech_key"), translate("ECH Key"))
+o.default = ""
+o.rows = 5
+o.wrap = "soft"
+o:depends({ [_n("ech")] = true })
+o.validate = function(self, value)
+	return api.trim(value:gsub("[\r\n]", ""))
 end
 
 o = s:option(ListValue, _n("transport"), translate("Transport"))

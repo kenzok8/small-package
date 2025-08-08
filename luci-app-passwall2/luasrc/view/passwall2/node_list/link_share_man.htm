@@ -282,6 +282,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						params += opt.query("pbk", dom_prefix + "reality_publicKey");
 						params += opt.query("sid", dom_prefix + "reality_shortId");
 						params += opt.query("spx", dom_prefix + "reality_spiderX");
+						params += opt.query("pqv", dom_prefix + "reality_mldsa65Verify");
 					}
 					if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
 						let v_flow = opt.get(dom_prefix + "flow").value;
@@ -290,6 +291,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += "&security=" + v_security;
 					params += opt.query("alpn", dom_prefix + "alpn");
 					params += opt.query("sni", dom_prefix + "tls_serverName");
+					params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+					params += opt.query("ech", dom_prefix + "ech_config");
 				}
 
 				if (opt.get(dom_prefix + "shadowtls")?.checked) {
@@ -404,7 +407,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				params += opt.query("path", dom_prefix + "ws_path");
 				if (v_type == "sing-box" && opt.get(dom_prefix + "ws_enableEarlyData").checked) {
 					var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
-					params += "?ed=" + ws_maxEarlyData;
+					params += encodeURIComponent("?ed=" + ws_maxEarlyData);
 				}
 			} else if (v_transport === "h2") {
 				v_transport = "http";
@@ -440,7 +443,11 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 			}
 			params += "&type=" + v_transport;
 
-			params += opt.query("encryption", dom_prefix + "encryption");
+			if (v_type === "sing-box") {
+				params += "&encryption=none";
+			} else {
+				params += opt.query("encryption", dom_prefix + "encryption");
+			}
 
 			if (opt.get(dom_prefix + "tls").checked) {
 				var v_security = "tls";
@@ -453,6 +460,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += opt.query("pbk", dom_prefix + "reality_publicKey");
 					params += opt.query("sid", dom_prefix + "reality_shortId");
 					params += opt.query("spx", dom_prefix + "reality_spiderX");
+					params += opt.query("pqv", dom_prefix + "reality_mldsa65Verify");
 				}
 				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
 					let v_flow = opt.get(dom_prefix + "flow").value;
@@ -461,6 +469,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				params += "&security=" + v_security;
 				params += opt.query("alpn", dom_prefix + "alpn");
 				params += opt.query("sni", dom_prefix + "tls_serverName");
+				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+				params += opt.query("ech", dom_prefix + "ech_config");
 			}
 
 			params += "#" + encodeURI(v_alias.value);
@@ -520,6 +530,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params += opt.query("pbk", dom_prefix + "reality_publicKey");
 					params += opt.query("sid", dom_prefix + "reality_shortId");
 					params += opt.query("spx", dom_prefix + "reality_spiderX");
+					params += opt.query("pqv", dom_prefix + "reality_mldsa65Verify");
 				}
 				if (opt.get(dom_prefix + "flow") && opt.get(dom_prefix + "flow").value) {
 					let v_flow = opt.get(dom_prefix + "flow").value;
@@ -528,6 +539,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 				params += "&security=" + v_security;
 				params += opt.query("alpn", dom_prefix + "alpn");
 				params += opt.query("sni", dom_prefix + "tls_serverName");
+				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+				params += opt.query("ech", dom_prefix + "ech_config");
 			}
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
@@ -958,6 +971,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 							opt.set(dom_prefix + 'utls', true);
 							opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 						}
+						opt.set(dom_prefix + 'ech', !!queryParam.ech);
+						opt.set(dom_prefix + 'ech_config', queryParam.ech || '');
 					}
 
 					if (queryParam.security == "reality") {
@@ -973,6 +988,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
 						opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
 						opt.set(dom_prefix + 'reality_spiderX', queryParam.spx || '');
+						opt.set(dom_prefix + 'use_mldsa65Verify', !!queryParam.pqv);
+						opt.set(dom_prefix + 'reality_mldsa65Verify', queryParam.pqv || '');
 					}
 				}
 
@@ -1061,6 +1078,7 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						}
 					}
 					if (dom_prefix === "ssrust_") {
+						opt.set(dom_prefix + 'plugin_enabled', true);
 						opt.set(dom_prefix + 'plugin', "shadow-tls");
 						let shadowtlsOpt = parseShadowTLSParams(queryParam["shadow-tls"]);
 						opt.set(dom_prefix + 'plugin_opts', shadowtlsOpt || "");
@@ -1335,6 +1353,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 						opt.set(dom_prefix + 'utls', true);
 						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
 					}
+					opt.set(dom_prefix + 'ech', !!queryParam.ech);
+					opt.set(dom_prefix + 'ech_config', queryParam.ech || '');
 				}
 
 				if (queryParam.security == "reality") {
@@ -1350,6 +1370,8 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
 					opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
 					opt.set(dom_prefix + 'reality_spiderX', queryParam.spx || '');
+					opt.set(dom_prefix + 'use_mldsa65Verify', !!queryParam.pqv);
+					opt.set(dom_prefix + 'reality_mldsa65Verify', queryParam.pqv || '');
 				}
 
 			}
@@ -1549,6 +1571,9 @@ local hysteria2_type = map:get("@global_subscribe[0]", "hysteria2_type") or "sin
 					params = queryArray[i].split('=');
 					queryParam[decodeURIComponent(params[0])] = decodeURIComponent(params[1] || '');
 				}
+			}
+			if ((!queryParam.security || queryParam.security == "") && queryParam.sni && queryParam.sni != "") {
+				queryParam.security = "tls";
 			}
 			if (queryParam.security) {
 				if (queryParam.security == "tls") {
