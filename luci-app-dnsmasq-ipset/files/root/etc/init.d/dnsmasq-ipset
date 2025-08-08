@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 # Author Qier LU <lvqier@gmail.com>
 
-START=18
+START=19
 
 gen_config_file() {
     local section="${1}"
