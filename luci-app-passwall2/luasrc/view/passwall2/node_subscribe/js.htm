@@ -3,6 +3,8 @@ local api = require "luci.passwall2.api"
 -%>
 <script type="text/javascript">
 	//<![CDATA[
+	var appname = "<%= api.appname %>"
+
 	function confirmDeleteNode(remark) {
 		if (!confirm("<%:Delete the subscribed node%>: " + remark + " ?"))
 			return false;
@@ -33,6 +35,77 @@ local api = require "luci.passwall2.api"
 			}
 		});
 		return false;
+	}
+
+	function ManualSubscribe(sectionId) {
+		var urlInput = document.querySelector("input[name='cbid." + appname + "." + sectionId + ".url']");
+		var currentUrl = urlInput ? urlInput.value.trim() : "";
+		if (!currentUrl) {
+			alert("<%:Subscribe URL cannot be empty.%>");
+			return;
+		}
+
+		fetch('<%= api.url("subscribe_manual") %>?section='
+			+ encodeURIComponent(sectionId)
+			+ '&url='
+			+ encodeURIComponent(currentUrl))
+		.then(response => response.json())
+		.then(data => {
+			if (!data.success) {
+				alert(data.msg || "Operation failed");
+			} else {
+				window.location.href = '<%= api.url("log") %>'
+			}
+		});
+	}
+
+	function ManualSubscribeAll() {
+		var sectionIds = [];
+		var urls = [];
+
+		var table = document.getElementById("cbi-" + appname + "-subscribe_list");
+		var editBtns = table ? table.getElementsByClassName("cbi-button cbi-button-edit") : [];
+
+		for (var i = 0; i < editBtns.length; i++) {
+			var btn = editBtns[i];
+			var onclickStr = btn.getAttribute("onclick");
+			if (!onclickStr) continue;
+
+			var id = onclickStr.substring(onclickStr.lastIndexOf('/') + 1, onclickStr.length - 1);
+			if (!id) continue;
+
+			var urlInput = document.querySelector("input[name='cbid." + appname + "." + id + ".url']");
+			var currentUrl = urlInput ? urlInput.value.trim() : "";
+			if (!currentUrl) {
+				alert("<%:Subscribe URL cannot be empty.%>");
+				return;
+			}
+
+			sectionIds.push(id);
+			urls.push(currentUrl);
+		}
+
+		if (sectionIds.length === 0) {
+			//alert("No subscriptions found.");
+			return;
+		}
+
+		var params = new URLSearchParams();
+		params.append("sections", sectionIds.join(","));
+		params.append("urls", urls.join(","));
+
+		fetch('<%= api.url("subscribe_manual_all") %>', {
+			method: 'POST',
+			body: params
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (!data.success) {
+				alert(data.msg || "Operation failed");
+			} else {
+				window.location.href = '<%= api.url("log") %>'
+			}
+		});
 	}
 	//]]>
 </script>

@@ -64,9 +64,12 @@ test_node() {
 		/usr/share/${CONFIG}/app.sh run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=test_node_${node_id}.json
 		local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		sleep 1s
+		# 结束 SS 插件进程
+		local pid_file="/tmp/etc/${CONFIG}/test_node_${node_id}_plugin.pid"
+		[ -s "$pid_file" ] && kill -9 "$(head -n 1 "$pid_file")" >/dev/null 2>&1
 		_proxy_status=$(test_url "${probe_url}" ${retry_num} ${connect_timeout} "-x $curlx")
 		pgrep -af "test_node_${node_id}" | awk '! /socks_auto_switch\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
-		rm -rf "/tmp/etc/${CONFIG}/test_node_${node_id}.json"
+		rm -rf /tmp/etc/${CONFIG}/test_node_${node_id}*.*
 		if [ "${_proxy_status}" -eq 200 ]; then
 			return 0
 		fi
@@ -165,6 +168,11 @@ start() {
 	backup_node=$(config_n_get $id autoswitch_backup_node)
 	while [ -n "$backup_node" ]; do
 		[ -f "$LOCK_FILE" ] && {
+			sleep 6s
+			continue
+		}
+		pgrep -af "${CONFIG}/" | awk '/app\.sh.*(start|stop)/ || /nftables\.sh/ || /iptables\.sh/ { found = 1 } END { exit !found }' && {
+			# 特定任务执行中不检测
 			sleep 6s
 			continue
 		}

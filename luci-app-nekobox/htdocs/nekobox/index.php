@@ -9,6 +9,12 @@ $singbox_config_dir = '/etc/neko/config';
 $log = '/etc/neko/tmp/log.txt';
 $start_script_path = '/etc/neko/core/start.sh';
 
+$neko_enabled = exec("uci -q get neko.cfg.enabled");
+$singbox_enabled = exec("uci -q get neko.cfg.singbox_enabled");
+
+$neko_status = ($neko_enabled == '1') ? '1' : '0';
+$singbox_status = ($singbox_enabled == '1') ? '1' : '0';
+
 $log_dir = dirname($log);
 if (!file_exists($log_dir)) {
     mkdir($log_dir, 0755, true);
@@ -891,7 +897,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="mb-4">
                 <h6 class="mb-2"><i data-feather="activity"></i> <span data-translate="status">Status</span></h6>
                 <div class="btn-group w-100" role="group">
-                    <?php if ($neko_status == 1): ?>
+                    <?php if ($neko_status == '1'): ?>
                         <button type="button" class="btn btn-success">
                             <i class="bi bi-router"></i> 
                             <span data-translate="mihomoRunning">Mihomo Running</span>
@@ -907,7 +913,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <i class="bi bi-file-earmark-text"></i> <?= $str_cfg ?>
                     </button>
 
-                    <?php if ($singbox_status == 1): ?>
+                    <?php if ($singbox_status == '1'): ?>
                         <button type="button" class="btn btn-success">
                             <i class="bi bi-hdd-stack"></i> 
                             <span data-translate="singboxRunning">Sing-box Running</span>
@@ -948,17 +954,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         
                         <div class="btn-group w-100">
                             <button type="submit" name="neko" value="start" 
-                                    class="btn btn<?= ($neko_status == 1) ? "-outline" : "" ?>-success <?= ($neko_status == 1) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($neko_status == 1) ? "-outline" : "" ?>-success">
                                 <i class="bi bi-power"></i> 
                                 <span data-translate="enableMihomo">Enable Mihomo</span>
                             </button>
                             <button type="submit" name="neko" value="disable" 
-                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-danger <?= ($neko_status == 0) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-danger">
                                 <i class="bi bi-x-octagon"></i> 
                                 <span data-translate="disableMihomo">Disable Mihomo</span>
                             </button>
                             <button type="submit" name="neko" value="restart" 
-                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-warning <?= ($neko_status == 0) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-warning">
                                 <i class="bi bi-arrow-clockwise"></i> 
                                 <span data-translate="restartMihomo">Restart Mihomo</span>
                             </button>
@@ -989,17 +995,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         
                         <div class="btn-group w-100">
                             <button type="submit" name="singbox" value="start" 
-                                    class="btn btn<?= ($singbox_status == 1) ? "-outline" : "" ?>-success <?= ($singbox_status == 1) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($singbox_status == 1) ? "-outline" : "" ?>-success">
                                 <i class="bi bi-power"></i> 
                                 <span data-translate="enableSingbox">Enable Sing-box</span>
                             </button>
                             <button type="submit" name="singbox" value="disable" 
-                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-danger <?= ($singbox_status == 0) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-danger">
                                 <i class="bi bi-x-octagon"></i> 
                                 <span data-translate="disableSingbox">Disable Sing-box</span>
                             </button>
                             <button type="submit" name="singbox" value="restart" 
-                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-warning <?= ($singbox_status == 0) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-warning">
                                 <i class="bi bi-arrow-clockwise"></i> 
                                 <span data-translate="restartSingbox">Restart Sing-box</span>
                             </button>
@@ -1013,9 +1019,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="btn-group w-100">
                     <?php
                     $mode_placeholder = '';
-                    if ($neko_status == 1) {
+                    if ($neko_status == '1') {
                         $mode_placeholder = $neko_cfg['echanced'] . " | " . $neko_cfg['mode'];
-                    } elseif ($singbox_status == 1) {
+                    } elseif ($singbox_status == '1') {
                         $mode_placeholder = "Sing-box | Rule Mode";
                     } else {
                         $mode_placeholder = "Not Running";
@@ -1028,6 +1034,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const mihomoControl = document.getElementById('mihomoControl');
