@@ -359,17 +359,7 @@ function searchFiles($dir, $term) {
 <title>Filekit - Nekobox</title>
 <?php include './ping.php'; ?>
 <link rel="icon" href="./assets/img/nekobox.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.js"></script>
 <script src="./assets/js/js-yaml.min.js"></script>
-<script src="./assets/js/ext-language_tools.js"></script>
-<script src="./assets/js/mode-json.min.js"></script>
-<script src="./assets/js/mode-yaml.min.js"></script>
-<script src="./assets/js/beautify.min.js"></script>
-<script src="./assets/js/beautify-css.min.js"></script>
-<script src="./assets/js/beautify-html.min.js"></script>
-<script src="./assets/js/beautify.min.js"></script>
-<script src="./assets/js/ext-beautify.min.js"></script>
-<script src="./assets/js/ext-spellcheck.min.js"></script>
 
 <style>
 .folder-icon::before{content:"📁";}.file-icon::before{content:"📄";}.file-icon.file-pdf::before{content:"📕";}.file-icon.file-doc::before,.file-icon.file-docx::before{content:"📘";}.file-icon.file-xls::before,.file-icon.file-xlsx::before{content:"📗";}.file-icon.file-ppt::before,.file-icon.file-pptx::before{content:"📙";}.file-icon.file-zip::before,.file-icon.file-rar::before,.file-icon.file-7z::before{content:"🗜️";}.file-icon.file-mp3::before,.file-icon.file-wav::before,.file-icon.file-ogg::before,.file-icon.file-flac::before{content:"🎵";}.file-icon.file-mp4::before,.file-icon.file-avi::before,.file-icon.file-mov::before,.file-icon.file-wmv::before,.file-icon.file-flv::before{content:"🎞️";}.file-icon.file-jpg::before,.file-icon.file-jpeg::before,.file-icon.file-png::before,.file-icon.file-gif::before,.file-icon.file-bmp::before,.file-icon.file-tiff::before{content:"🖼️";}.file-icon.file-txt::before{content:"📝";}.file-icon.file-rtf::before{content:"📄";}.file-icon.file-md::before,.file-icon.file-markdown::before{content:"📑";}.file-icon.file-exe::before,.file-icon.file-msi::before{content:"⚙️";}.file-icon.file-bat::before,.file-icon.file-sh::before,.file-icon.file-command::before{content:"📜";}.file-icon.file-iso::before,.file-icon.file-img::before{content:"💿";}.file-icon.file-sql::before,.file-icon.file-db::before,.file-icon.file-dbf::before{content:"🗃️";}.file-icon.file-font::before,.file-icon.file-ttf::before,.file-icon.file-otf::before,.file-icon.file-woff::before,.file-icon.file-woff2::before{content:"🔤";}.file-icon.file-cfg::before,.file-icon.file-conf::before,.file-icon.file-ini::before{content:"🔧";}.file-icon.file-psd::before,.file-icon.file-ai::before,.file-icon.file-eps::before,.file-icon.file-svg::before{content:"🎨";}.file-icon.file-dll::before,.file-icon.file-so::before{content:"🧩";}.file-icon.file-css::before{content:"🎨";}.file-icon.file-js::before{content:"🟨";}.file-icon.file-php::before{content:"🐘";}.file-icon.file-json::before{content:"📊";}.file-icon.file-html::before,.file-icon.file-htm::before{content:"🌐";}.file-icon.file-bin::before{content:"👾";}
@@ -498,21 +488,32 @@ button.editor-btn:hover {
 }
 
 @media (max-width: 768px) {
-	#fontSize,
-        #editorTheme {
-		display: none !important;
+	#aceEditorContainer {
+		width: 98%;
+		margin-top: 40px;
+		margin-bottom: 0;
+	}
+
+	#editorControls {
+		width: 100%;
+		padding: 6px 10px;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+	}
+
+	#editorControls select,
+        #editorControls button {
+		height: 28px;
+		font-size: 12px;
+		padding: 4px 8px;
+		margin-right: 8px;
+		min-width: 55px;
 	}
 
 	#statusInfo {
-		position: fixed !important;
-		bottom: 10% !important;
-		left: 0;
-		width: 100%;
-		background-color: var(--header-bg);
-		border-top: 1px solid #ddd;
-		padding: 5px 10px;
-		text-align: center;
-		z-index: 1050;
+		gap: 8px;
+		font-size: 11px;
+		flex-shrink: 0;
 	}
 }
 
@@ -638,175 +639,6 @@ table.table tbody tr:nth-child(odd) td {
 	color: #007bff;
 }
 
-.ace_search {
-	background: var(--bg-container) !important;
-	border: 1px solid var(--border-color) !important;
-	border-radius: var(--radius);
-	box-shadow: var(--item-hover-shadow);
-	padding: 8px 12px !important;
-	color: var(--text-primary);
-	backdrop-filter: var(--glass-blur);
-	transition: var(--transition);
-}
-
-.ace_search_form, .ace_replace_form {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin-bottom: 8px;
-}
-
-.ace_search_field {
-	background: var(--card-bg) !important;
-	border: 1px solid var(--border-color) !important;
-	color: var(--text-primary) !important;
-	padding: 6px 12px !important;
-	border-radius: calc(var(--radius) - 4px) !important;
-	font-size: 14px !important;
-	min-width: 200px;
-	transition: var(--transition);
-}
-
-.ace_search_field:focus {
-	border-color: var(--accent-color) !important;
-	outline: none;
-	box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent-color), transparent 70%);
-}
-
-.ace_searchbtn {
-	background: var(--btn-primary-bg) !important;
-	color: white !important;
-	border: none !important;
-	border-radius: calc(var(--radius) - 4px) !important;
-	background-image: none !important;
-	padding: 6px 12px !important;
-	font-size: 13px !important;
-	cursor: pointer;
-	transition: var(--transition);
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 60px;
-	filter: contrast(1.2) brightness(1.1);
-}
-
-.ace_searchbtn:hover {
-	background: var(--btn-primary-hover) !important;
-	color: white !important;
-}
-
-.ace_searchbtn.prev,
-.ace_searchbtn.next {
-	position: relative;
-}
-
-.ace_searchbtn.prev::before,
-.ace_searchbtn.next::before {
-	content: "";
-	font-size: 14px;
-	color: white !important;
-	filter: contrast(1.3);
-	display: inline-block;
-	line-height: 1;
-}
-
-.ace_searchbtn.prev::before {
-	content: "↑";
-}
-
-.ace_searchbtn.next::before {
-	content: "↓";
-}
-
-.ace_searchbtn .ace_icon,
-.ace_searchbtn::after {
-	display: none !important;
-	opacity: 0 !important;
-}
-
-.ace_searchbtn_close {
-	background: transparent !important;
-	color: var(--text-secondary) !important;
-	position: absolute;
-	right: 12px;
-	top: 12px;
-	cursor: pointer;
-	font-size: 16px;
-	transition: var(--transition);
-	width: 20px;
-	height: 20px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 3px;
-}
-
-.ace_searchbtn_close:hover {
-	color: white !important;
-	background: var(--btn-primary-bg) !important;
-}
-
-.ace_searchbtn_close::before {
-	content: "×";
-}
-
-.ace_search_options {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin-top: 8px;
-}
-
-.ace_button {
-	background: var(--btn-primary-bg) !important;
-	color: white !important;
-	border: none !important;
-	border-radius: calc(var(--radius) - 4px) !important;
-	padding: 4px 8px !important;
-	font-size: 12px !important;
-	cursor: pointer;
-	transition: var(--transition);
-	filter: contrast(1.2);
-}
-
-.ace_button:hover {
-	background: var(--btn-primary-hover) !important;
-	color: white !important;
-}
-
-.ace_search_counter {
-	color: var(--text-secondary);
-	font-size: 12px;
-	margin-right: auto;
-}
-
-[action="toggleRegexpMode"] {
-	background: var(--btn-info-bg) !important;
-	color: white !important;
-}
-[action="toggleCaseSensitive"] {
-	background: var(--btn-warning-bg) !important;
-	color: white !important;
-}
-[action="toggleWholeWords"] {
-	background: var(--btn-success-bg) !important;
-	color: white !important;
-}
-[action="searchInSelection"] {
-	background: var(--ocean-bg) !important;
-	color: white !important;
-}
-[action="toggleReplace"] {
-	background: var(--lavender-bg) !important;
-	color: white !important;
-}
-
-.ace_searchbtn,
-.ace_button,
-.ace_searchbtn_close:hover {
-	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
-}
-
 #statusInfo {
 	display: flex;
 	align-items: center;
@@ -845,6 +677,7 @@ table.table tbody tr td.file-icon {
         margin-top: -25px;
 }
 </style>
+
 <div class="container-sm container-bg mt-4">
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-sm container">
@@ -873,7 +706,7 @@ table.table tbody tr td.file-icon {
                     <a class="nav-link <?= $current == 'mihomo.php' ? 'active' : '' ?>" href="./mihomo.php"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= $current == 'filekit.php' ? 'active' : '' ?>" href="./filekit.php"><i class="bi bi-bank"></i> <span data-translate="pageTitle">File Assistant</span></a>
+                    <a class="nav-link <?= $current == 'monaco.php' ? 'active' : '' ?>" href="./monaco.php"><i class="bi bi-bank"></i> <span data-translate="pageTitle">File Assistant</span></a>
                 </li>
             </ul>
             <div class="d-flex align-items-center">
@@ -1264,53 +1097,30 @@ table.table tbody tr td.file-icon {
 
 <div id="aceEditor">
     <div id="editorControls">
-    <div id="leftControls">
-        <select id="fontSize" onchange="changeFontSize()">
-            <option value="18px">18px</option>
-            <option value="20px" selected>20px</option>
-            <option value="22px">22px</option>
-            <option value="24px">24px</option>
-            <option value="26px">26px</option>
-            <option value="28px">28px</option>
-            <option value="30px">30px</option>
-            <option value="32px">32px</option>
-            <option value="34px">34px</option>
-            <option value="36px">36px</option>
-            <option value="38px">38px</option>
-            <option value="40px">40px</option>
-        </select>
+        <div id="leftControls">
+            <select id="fontSize" onchange="changeFontSize()">
+                <option value="18px">18px</option>
+                <option value="20px">20px</option>
+                <option value="22px">22px</option>
+                <option value="24px">24px</option>
+                <option value="26px">26px</option>
+                <option value="28px">28px</option>
+                <option value="30px">30px</option>
+                <option value="32px">32px</option>
+                <option value="34px">34px</option>
+                <option value="36px">36px</option>
+                <option value="38px">38px</option>
+                <option value="40px">40px</option>
+            </select>
 
-        <select id="editorTheme" onchange="changeEditorTheme()">
-            <option value="ace/theme/vibrant_ink">Vibrant Ink</option>
-            <option value="ace/theme/monokai">Monokai</option>
-            <option value="ace/theme/github">GitHub</option>
-            <option value="ace/theme/tomorrow">Tomorrow</option>
-            <option value="ace/theme/twilight">Twilight</option>
-            <option value="ace/theme/solarized_dark">Solarized Dark</option>
-            <option value="ace/theme/solarized_light">Solarized Light</option>
-            <option value="ace/theme/textmate">TextMate</option>
-            <option value="ace/theme/terminal">Terminal</option>
-            <option value="ace/theme/chrome">Chrome</option>
-            <option value="ace/theme/eclipse">Eclipse</option>
-            <option value="ace/theme/dreamweaver">Dreamweaver</option>
-            <option value="ace/theme/xcode">Xcode</option>
-            <option value="ace/theme/kuroir">Kuroir</option>
-            <option value="ace/theme/katzenmilch">KatzenMilch</option>
-            <option value="ace/theme/sqlserver">SQL Server</option>
-            <option value="ace/theme/ambiance">Ambiance</option>
-            <option value="ace/theme/chaos">Chaos</option>
-            <option value="ace/theme/clouds_midnight">Clouds Midnight</option>
-            <option value="ace/theme/cobalt">Cobalt</option>
-            <option value="ace/theme/gruvbox">Gruvbox</option>
-            <option value="ace/theme/idle_fingers">Idle Fingers</option>
-            <option value="ace/theme/kr_theme">krTheme</option>
-            <option value="ace/theme/merbivore">Merbivore</option>
-            <option value="ace/theme/mono_industrial">Mono Industrial</option>
-            <option value="ace/theme/pastel_on_dark">Pastel on Dark</option>
-        </select>
+            <select id="editorTheme" onchange="changeEditorTheme()">
+                <option value="vs-dark">VS Dark</option>
+                <option value="vs">VS Light</option>
+                <option value="hc-black">High Contrast Black</option>
+                <option value="my-custom-theme">My Custom Theme</option>
+            </select>
 
-            <button type="button" class="btn btn-sm editor-btn" onclick="openSearch()" data-translate="search"></button>
-            <button type="button" class="btn btn-sm editor-btn d-none d-sm-inline" id="toggleFullscreenBtn" onclick="toggleFullscreen()" data-translate="toggleFullscreen"></button>
+            <button type="button" class="btn btn-sm editor-btn" id="toggleFullscreenBtn" onclick="toggleFullscreen()" data-translate="toggleFullscreen">Fullscreen</button>
             <button type="button" class="btn btn-sm editor-btn" onclick="formatContent()" data-translate="format">Format</button>
             <button type="button" class="btn btn-sm editor-btn" id="jsonValidationBtn" onclick="validateJsonSyntax()" style="display:none;" data-translate="validateJson">Validate JSON</button>
             <button type="button" class="btn btn-sm editor-btn" id="yamlValidationBtn" onclick="validateYamlSyntax()" style="display:none;" data-translate="validateYaml">Validate YAML</button>
@@ -1324,7 +1134,7 @@ table.table tbody tr td.file-icon {
         </div>
     </div>
 </div>
-             
+       
 <div class="modal fade" id="chmodModal" tabindex="-1" aria-labelledby="chmodModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <form method="post" onsubmit="return validateChmod()" class="modal-content no-loader">
@@ -1381,10 +1191,9 @@ table.table tbody tr td.file-icon {
 
 <script>
 let selectedFiles = [];
-let editor = null;
-let currentFilePath = '';
-let currentFileContent = '';
 let selectedFilesSize = 0;
+let monacoEditorInstance = null;
+let currentEncoding = 'UTF-8';
 
 document.addEventListener('DOMContentLoaded', function() {
     initFileSelection();
@@ -1821,6 +1630,14 @@ function saveEdit() {
     return false;
 }
 
+const monacoScript = document.createElement('script');
+monacoScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js';
+document.head.appendChild(monacoScript);
+
+monacoScript.onload = function() {
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } });
+};
+
 function openAceEditor() {
     const editModal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
     if (editModal) {
@@ -1840,38 +1657,69 @@ function openAceEditor() {
     document.getElementById('aceEditor').style.display = 'flex';
     document.getElementById('aceEditor').appendChild(editorContainer);
     
-    aceEditorInstance = ace.edit('aceEditorContainer');
-    aceEditorInstance.setTheme("ace/theme/vibrant_ink");
-    aceEditorInstance.session.setMode("ace/mode/yaml"); 
-    aceEditorInstance.session.setMode("ace/mode/text");
-    aceEditorInstance.setValue(content, -1);
-    aceEditorInstance.setOptions({
-        fontSize: "20px",
-        wrap: true,
-        enableBasicAutocompletion: true,
-        enableLiveAutocompletion: true
-    });
-    
-    const ext = path.split('.').pop().toLowerCase();
-    setEditorMode(ext);
-    
-    updateEditorStatus();
-    
-    aceEditorInstance.getSession().on('change', function() {
-        document.getElementById('editContent').value = aceEditorInstance.getValue();
+    require(['vs/editor/editor.main'], function() {
+        const defaultFontSize = '20px';
+        const defaultTheme = 'vs-dark';
+
+        let savedFontSize = localStorage.getItem('editorFontSize') || defaultFontSize;
+        let savedTheme = localStorage.getItem('editorTheme') || defaultTheme;
+
+        const fontSizeSelect = document.getElementById('fontSize');
+        const themeSelect = document.getElementById('editorTheme');
+
+        if (fontSizeSelect) {
+            fontSizeSelect.value = savedFontSize;
+            if (!fontSizeSelect.value || fontSizeSelect.value !== savedFontSize) {
+                savedFontSize = defaultFontSize;
+                fontSizeSelect.value = defaultFontSize;
+                localStorage.setItem('editorFontSize', defaultFontSize);
+            }
+        } else {
+            console.error('Font size select element not found!');
+        }
+
+        if (themeSelect) {
+            themeSelect.value = savedTheme;
+            if (!themeSelect.value || themeSelect.value !== savedTheme) {
+                savedTheme = defaultTheme;
+                themeSelect.value = defaultTheme;
+                localStorage.setItem('editorTheme', defaultTheme);
+            }
+        } else {
+            console.error('Theme select element not found!');
+        }
+
+        console.log('Loaded Font Size:', savedFontSize, 'Select Value:', fontSizeSelect ? fontSizeSelect.value : 'N/A');
+        console.log('Loaded Theme:', savedTheme, 'Select Value:', themeSelect ? themeSelect.value : 'N/A');
+
+        monacoEditorInstance = monaco.editor.create(document.getElementById('aceEditorContainer'), {
+            value: content,
+            language: 'text',
+            theme: savedTheme,
+            fontSize: parseInt(savedFontSize.replace('px', '')),
+            wordWrap: 'on',
+            automaticLayout: true
+        });
+
+        const ext = path.split('.').pop().toLowerCase();
+        setEditorMode(ext);
+        
         updateEditorStatus();
+        
+        monacoEditorInstance.onDidChangeModelContent(function() {
+            document.getElementById('editContent').value = monacoEditorInstance.getValue();
+            updateEditorStatus();
+            detectContentFormat();
+        });
+
+        monacoEditorInstance.onDidChangeCursorPosition(updateEditorStatus);
+        
         detectContentFormat();
-        aceEditorInstance.resize();
-        aceEditorInstance.getSession().bgTokenizer.start(0);
+        
+        setTimeout(() => {
+            monacoEditorInstance.focus();
+        }, 100);
     });
-    
-    aceEditorInstance.selection.on('changeCursor', updateEditorStatus);
-    
-    detectContentFormat();
-    
-    setTimeout(() => {
-        aceEditorInstance.focus();
-    }, 100);
     
     document.getElementById('aceEditor').onclick = function(e) {
         if (e.target === this) {
@@ -1879,6 +1727,25 @@ function openAceEditor() {
         }
     };
 }
+
+require(['vs/editor/editor.main'], function() {
+    monaco.editor.defineTheme('my-custom-theme', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [
+            { token: 'comment', foreground: 'ffa500', fontStyle: 'italic' },
+            { token: 'keyword', foreground: 'ff79c6' },
+            { token: 'string', foreground: '8be9fd' }
+        ],
+        colors: {
+            'editor.foreground': '#f8f8f2',
+            'editor.background': '#282a36',
+            'editorCursor.foreground': '#f8f8f0',
+            'editor.lineHighlightBackground': '#44475a',
+            'editorLineNumber.foreground': '#6272a4'
+        }
+    });
+});
 
 function setEditorMode(ext) {
     const modes = {
@@ -1891,46 +1758,40 @@ function setEditorMode(ext) {
         'yaml': 'yaml',
         'yml': 'yaml',
         'xml': 'xml',
-        'sh': 'sh',
+        'sh': 'shell',
         'py': 'python'
     };
-    
-    if (modes[ext]) {
-        aceEditorInstance.session.setMode(`ace/mode/${modes[ext]}`);
-    } else {
-        aceEditorInstance.session.setMode('ace/mode/text');
+    const language = modes[ext] || 'text';
+    if (monacoEditorInstance) {
+        monaco.editor.setModelLanguage(monacoEditorInstance.getModel(), language);
     }
 }
 
 function closeAceEditor() {
-    if (aceEditorInstance) {
-
-        document.getElementById('editContent').value = aceEditorInstance.getValue();
-        aceEditorInstance.destroy();
-        aceEditorInstance = null;
+    if (monacoEditorInstance) {
+        document.getElementById('editContent').value = monacoEditorInstance.getValue();
+        monacoEditorInstance.dispose();
+        monacoEditorInstance = null;
     }
     document.getElementById('aceEditor').style.display = 'none';
     const container = document.getElementById('aceEditorContainer');
     if (container) {
         container.remove();
     }
-
-    // const editModal = new bootstrap.Modal(document.getElementById('editModal'));
-    // editModal.show();
 }
 
 function saveFullScreenContent() {
-    if (aceEditorInstance) {
-        document.getElementById('editContent').value = aceEditorInstance.getValue();
+    if (monacoEditorInstance) {
+        document.getElementById('editContent').value = monacoEditorInstance.getValue();
         closeAceEditor();
         document.getElementById('editForm').submit();
     }
 }
 
 function detectContentFormat() {
-    if (!aceEditorInstance) return;
+    if (!monacoEditorInstance) return;
     
-    const content = aceEditorInstance.getValue().trim();
+    const content = monacoEditorInstance.getValue().trim();
     const jsonBtn = document.getElementById('jsonValidationBtn');
     const yamlBtn = document.getElementById('yamlValidationBtn');
     const yamlFormatBtn = document.getElementById('yamlFormatBtn');
@@ -1955,10 +1816,11 @@ function detectContentFormat() {
 }
 
 function updateEditorStatus() {
-    const cursor = aceEditorInstance.getCursorPosition();
-    const line = cursor.row + 1;
-    const column = cursor.column + 1;
-    const charCount = aceEditorInstance.getValue().length;
+    if (!monacoEditorInstance) return;
+    const position = monacoEditorInstance.getPosition();
+    const line = position.lineNumber;
+    const column = position.column;
+    const charCount = monacoEditorInstance.getValue().length;
 
     const lineColumnText = langData[currentLang]['lineColumnDisplay'].replace("{line}", line).replace("{column}", column);
     const charCountText = langData[currentLang]['charCountDisplay'].replace("{charCount}", charCount);
@@ -1966,150 +1828,111 @@ function updateEditorStatus() {
     document.getElementById('lineColumnDisplay').textContent = lineColumnText;
     document.getElementById('charCountDisplay').textContent = charCountText;
 }
-$(document).ready(function() {
-    initializeAceEditor();
-});
 
 function formatContent() {
-    if (!aceEditorInstance) return;
+    if (!monacoEditorInstance) return;
     
-    const content = aceEditorInstance.getValue();
-    const mode = aceEditorInstance.session.getMode().$id;
+    const content = monacoEditorInstance.getValue();
+    const language = monacoEditorInstance.getModel().getLanguageId();
     
     try {
-        if (mode === 'ace/mode/json') {
+        if (language === 'json') {
             const formatted = JSON.stringify(JSON.parse(content), null, 4);
-            aceEditorInstance.setValue(formatted, -1);
+            monacoEditorInstance.setValue(formatted);
             alert(translations['json_format_success'] || 'JSON formatted successfully');
-        } else if (mode === 'ace/mode/javascript') {
-            const formatted = js_beautify(content);
-            aceEditorInstance.setValue(formatted, -1);
+        } else if (language === 'javascript') {
+            monacoEditorInstance.getAction('editor.action.formatDocument').run();
             alert(translations['js_format_success'] || 'JavaScript formatted successfully');
         } else {
-            alert(translations['format_not_supported'] || 'Current mode does not support formatting');
+            alert(translations['unsupported_format'] || 'Current mode does not support formatting');
         }
     } catch (e) {
-        alert((translations['format_error'] || 'Formatting error: ') + e.message);
+        let errorMessage = translations['format_error'] || 'Formatting error: {message}';
+        errorMessage = errorMessage.replace('{message}', e.message);
+        alert(errorMessage);
     }
 }
 
 function validateJsonSyntax() {
-    if (!aceEditorInstance) return;
+    if (!monacoEditorInstance) return;
     
-    const content = aceEditorInstance.getValue();
+    const content = monacoEditorInstance.getValue();
     
     try {
         JSON.parse(content);
         alert(translations['json_syntax_valid'] || 'JSON syntax is valid');
     } catch (e) {
-        alert((translations['json_syntax_error'] || 'JSON syntax error: ') + e.message);
+        let errorMessage = translations['json_syntax_error'] || 'JSON syntax error: {message}';
+        errorMessage = errorMessage.replace('{message}', e.message);
+        alert(errorMessage);
     }
 }
 
 function validateYamlSyntax() {
-    if (!aceEditorInstance) return;
+    if (!monacoEditorInstance) return;
     
-    const content = aceEditorInstance.getValue();
+    const content = monacoEditorInstance.getValue();
     
     try {
         jsyaml.load(content);
         alert(translations['yaml_syntax_valid'] || 'YAML syntax is valid');
     } catch (e) {
-        alert((translations['yaml_syntax_error'] || 'YAML syntax error: ') + e.message);
+        let errorMessage = translations['yaml_syntax_error'] || 'YAML syntax error: {message}';
+        errorMessage = errorMessage.replace('{message}', e.message);
+        alert(errorMessage);
     }
 }
 
 function formatYamlContent() {
-    if (!aceEditorInstance) return;
+    if (!monacoEditorInstance) return;
     
-    const content = aceEditorInstance.getValue();
+    const content = monacoEditorInstance.getValue();
     
     try {
         const obj = jsyaml.load(content);
-        const formatted = jsyaml.dump(obj, {indent: 4});
-        aceEditorInstance.setValue(formatted, -1);
+        const formatted = jsyaml.dump(obj, { indent: 4 });
+        monacoEditorInstance.setValue(formatted);
         alert(translations['yaml_format_success'] || 'YAML formatted successfully');
     } catch (e) {
-        alert((translations['yaml_format_error'] || 'YAML formatting error: ') + e.message);
+        let errorMessage = translations['yaml_format_error'] || 'YAML formatting error: {message}';
+        errorMessage = errorMessage.replace('{message}', e.message);
+        alert(errorMessage);
     }
 }
 
+
 function changeFontSize() {
-    if (!aceEditorInstance) return;
-    const size = document.getElementById('fontSize').value;
-    aceEditorInstance.setFontSize(size);
+    if (!monacoEditorInstance) return;
+    const fontSizeSelect = document.getElementById('fontSize');
+    if (fontSizeSelect) {
+        const size = fontSizeSelect.value;
+        console.log('Changing Font Size to:', size);
+        monacoEditorInstance.updateOptions({ fontSize: parseInt(size.replace('px', '')) });
+        localStorage.setItem('editorFontSize', size);
+    } else {
+        console.error('Font size select element not found during change!');
+    }
 }
 
 function changeEditorTheme() {
-    if (!aceEditorInstance) return;
-    const theme = document.getElementById('editorTheme').value;
-    aceEditorInstance.setTheme(theme);
+    if (!monacoEditorInstance) return;
+    const themeSelect = document.getElementById('editorTheme');
+    if (themeSelect) {
+        const theme = themeSelect.value;
+        console.log('Changing Theme to:', theme);
+        monaco.editor.setTheme(theme);
+        localStorage.setItem('editorTheme', theme);
+    } else {
+        console.error('Theme select element not found during change!');
+    }
 }
 
+
 function openSearch() {
-    if (aceEditorInstance) {
-        aceEditorInstance.execCommand("find");
-        setTimeout(function() {
-            const searchBox = document.querySelector(".ace_search");
-            if (searchBox) {
-                const searchInput = searchBox.querySelector(".ace_search_form .ace_search_field");
-                if (searchInput) {
-                    searchInput.placeholder = translations['search_placeholder'] || 'Search...';
-                }
-
-                const replaceInput = searchBox.querySelector(".ace_replace_form .ace_search_field");
-                if (replaceInput) {
-                    replaceInput.placeholder = translations['replace_placeholder'] || 'Replace with...';
-                }
-
-                const buttons = searchBox.querySelectorAll(".ace_searchbtn");
-                buttons.forEach(button => {
-                    const action = button.getAttribute("action");
-                    if (action === "findPrev") {
-                        button.textContent = "";
-                        button.onclick = function() {
-                            aceEditorInstance.execCommand("findprevious");
-                            aceEditorInstance.scrollToLine(aceEditorInstance.getCursorPosition().row, true, true);
-                        };
-                    } else if (action === "findNext") {
-                        button.textContent = "";
-                        button.onclick = function() {
-                            aceEditorInstance.execCommand("findnext");
-                            aceEditorInstance.scrollToLine(aceEditorInstance.getCursorPosition().row, true, true);
-                        };
-                    } else if (action === "findAll") {
-                        button.textContent = translations['find_all'] || 'All';
-                    } else if (action === "replaceAndFindNext") {
-                        button.textContent = translations['replace'] || 'Replace';
-                    } else if (action === "replaceAll") {
-                        button.textContent = translations['replace_all'] || 'Replace All';
-                    }
-                });
-
-                const optionButtons = searchBox.querySelectorAll(".ace_button");
-                optionButtons.forEach(button => {
-                    const action = button.getAttribute("action");
-                    if (action === "toggleReplace") {
-                        button.title = translations['toggle_replace_mode'] || 'Toggle Replace Mode';
-                    } else if (action === "toggleRegexpMode") {
-                        button.title = translations['toggle_regexp_mode'] || 'Regular Expression Search';
-                    } else if (action === "toggleCaseSensitive") {
-                        button.title = translations['toggle_case_sensitive'] || 'Case-Sensitive Search';
-                    } else if (action === "toggleWholeWords") {
-                        button.title = translations['toggle_whole_words'] || 'Whole Word Search';
-                    } else if (action === "searchInSelection") {
-                        button.title = translations['search_in_selection'] || 'Search in Selection';
-                    }
-                });
-
-                const counter = searchBox.querySelector(".ace_search_counter");
-                if (counter && counter.textContent.includes("of")) {
-                    counter.textContent = counter.textContent.replace("of", translations['search_counter_of'] || 'of');
-                }
-            }
-        }, 100);
+    if (monacoEditorInstance) {
+        monacoEditorInstance.trigger('keyboard', 'editor.action.startFind');
     } else {
-        console.error("Ace Editor instance not initialized.");
+        console.error("Monaco Editor instance not initialized.");
     }
 }
 
@@ -2151,8 +1974,5 @@ function uniqueConfirmDelete(event, name) {
     });
     return false;
 }
+
 </script>
-
-
-
-

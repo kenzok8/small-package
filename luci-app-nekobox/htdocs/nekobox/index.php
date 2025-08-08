@@ -1,6 +1,6 @@
 <?php
 include './cfg.php';
-
+$needRefresh = false;  
 $str_cfg = substr($selected_config, strlen("$neko_dir/config") + 1);
 $_IMG = '/luci-static/ssr/';
 $singbox_bin = '/usr/bin/sing-box';
@@ -387,6 +387,7 @@ if (isset($_POST['singbox'])) {
                 $pid = getSingboxPID();
                 if ($pid) {
                     writeToLog("Sing-box started successfully. PID: $pid");
+                    $needRefresh = true;
                 } else {
                     writeToLog("Failed to start Sing-box");
                 }
@@ -416,6 +417,7 @@ if (isset($_POST['singbox'])) {
                 writeToLog("Cleared firewall rules and restarted firewall");
                 if (!isSingboxRunning()) {
                     writeToLog("Sing-box stopped successfully");
+                    $needRefresh = true;
                 }
             } else {
                 writeToLog("Sing-box is not running");
@@ -445,6 +447,7 @@ if (isset($_POST['singbox'])) {
                 $new_pid = getSingboxPID();
                 if ($new_pid) {
                     writeToLog("Sing-box restarted successfully. New PID: $new_pid");
+                    $needRefresh = true;
                 } else {
                     writeToLog("Failed to restart Sing-box");
                 }
@@ -602,7 +605,19 @@ function readLogFile($filePath) {
 
 $neko_log_content = readLogFile("$neko_dir/tmp/neko_log.txt");
 $singbox_log_content = readLogFile($singbox_log);
+if ($needRefresh):
 ?>
+<script>
+window.addEventListener('load', function() {
+    if (!sessionStorage.getItem('refreshed')) {
+        sessionStorage.setItem('refreshed', 'true');
+        window.location.reload();
+    } else {
+        sessionStorage.removeItem('refreshed');
+    }
+});
+</script>
+<?php endif; ?>
 
 <?php
 $confDirectory = '/etc/neko/config';  
@@ -757,38 +772,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
 }
 ?>
 
-<!doctype html>
-<html lang="en" data-bs-theme="<?php echo substr($neko_theme,0,-4) ?>">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Home - Nekobox</title>
-    <link rel="icon" href="./assets/img/nekobox.png">
-    <?php include './ping.php'; ?>
-  </head>
-<body>
-    <?php if ($isNginx): ?>
-    <div id="nginxWarning" class="alert alert-warning alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1050;">
+<meta charset="utf-8">
+<title>Home - Nekobox</title>
+<link rel="icon" href="./assets/img/nekobox.png">
+<?php include './ping.php'; ?>
+
+<?php if ($isNginx): ?>
+    <div id="nginxWarning"
+         class="alert alert-warning alert-dismissible fade show"
+         role="alert"
+         style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1050;">
         <strong data-translate="nginxWarningStrong"></strong> 
         <span data-translate="nginxWarning"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+
     <script>
     document.addEventListener("DOMContentLoaded", function () {
-        let lastWarningTime = localStorage.getItem('nginxWarningTime');
-        let currentTime = new Date().getTime();
-        let warningInterval = 12 * 60 * 60 * 1000; 
+        const lastWarningTime = localStorage.getItem('nginxWarningTime');
+        const currentTime = new Date().getTime();
+        const warningInterval = 12 * 60 * 60 * 1000;
 
         if (!lastWarningTime || currentTime - lastWarningTime > warningInterval) {
-            localStorage.setItem('nginxWarningTime', currentTime); 
-            let warningAlert = document.getElementById('nginxWarning');
-        
+            localStorage.setItem('nginxWarningTime', currentTime);
+
+            const warningAlert = document.getElementById('nginxWarning');
             if (warningAlert) {
                 warningAlert.style.display = 'block';
 
-                setTimeout(function() {
+                setTimeout(function () {
                     warningAlert.classList.remove('show');
-                    setTimeout(function() {
+                    setTimeout(function () {
                         warningAlert.remove();
                     }, 300);
                 }, 5000);
@@ -796,21 +810,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
         }
     });
     </script>
-    <?php endif; ?>
+<?php endif; ?>
+
 <div class="container-sm container-bg mt-4">
-    <div class="row">
-        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
-        <a href="./dashboard.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bar-chart"></i> <span data-translate="panel">Panel</span></a>
-        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-box"></i> <span data-translate="document">Document</span></a> 
-        <a href="./settings.php" class="col btn btn-lg text-nowrap"><i class="bi bi-gear"></i> <span data-translate="settings">Settings</span></a>
-<div class="container-sm text-center col-8">
-  <img src="./assets/img/nekobox.png" alt="Icon" class="centered-img">
-<div id="version-info">
-    <a id="version-link" href="https://github.com/Thaolga/openwrt-nekobox/releases" target="_blank">
-        <img id="current-version" src="./assets/img/curent.svg" alt="Current Version" style="max-width: 100%; height: auto;" />
-    </a>
-</div>
-</div>
+    <?php include 'navbar.php'; ?>
+    <div class="container-sm text-center col-8">
+        <img src="./assets/img/nekobox.png" alt="Icon" class="centered-img">
+        <div id="version-info">
+            <a id="version-link"
+               href="https://github.com/Thaolga/openwrt-nekobox/releases"
+               target="_blank">
+                <img id="current-version"
+                     src="./assets/img/curent.svg"
+                     alt="Current Version"
+                     style="max-width: 100%; height: auto;" />
+            </a>
+        </div>
+    </div>
 <script>
 function checkForUpdate() {
     $.ajax({
@@ -868,148 +884,8 @@ document.addEventListener('DOMContentLoaded', function () {
     NekoBox
     <span id="control-panel-text" class="ms-2 text-success d-none" data-translate="control_panel">Control_Panel</span>
 </h2>
-<style>
-.centered-img {
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
-	width: 12%;
-	height: auto;
-	min-width: 40px;
-	max-width: 100%;
-}
 
-@media (max-width: 576px) {
-	.centered-img {
-		width: 30%;
-	}
-}
-
-.nav-pills .nav-link {
-	background-color: transparent !important;
-	color: inherit;
-	font-size: 1.25rem;
-}
-
-.nav-pills .nav-link.active {
-	background-color: transparent !important;
-	font-size: 1.25rem;
-}
-
-.section-container {
-	padding-left: 42px;
-	padding-right: 42px;
-}
-
-.btn-group .btn {
-	width: 120%;
-}
-
-.log-container {
-	height: 270px;
-	overflow-y: auto;
-	overflow-x: hidden;
-	white-space: pre-wrap;
-	word-wrap: break-word;
-}
-
-.log-card {
-	margin-bottom: 20px;
-}
-
-.custom-icon {
-	width: 20px !important;
-	height: 20px !important;
-	vertical-align: middle !important;
-	margin-right: 5px !important;
-	stroke: #FF00FF !important;
-	fill: none !important;
-}
-
-@media (max-width: 768px) {
-	.section-container {
-		padding-left: 15px;
-		padding-right: 15px;
-	}
-}
-
-@media (max-width: 768px) {
-	tr {
-		margin-bottom: 15px;
-		display: block;
-	}
-}
-
-@media (max-width: 767px) {
-	.section-container .table {
-		display: block;
-		width: 100%;
-	}
-
-	.section-container .table tbody,
-        .section-container .table thead,
-        .section-container .table tr {
-		display: block;
-	}
-
-	.section-container .table td {
-		display: block;
-		width: 100%;
-		padding: 10px;
-		border: 1px solid #ddd;
-		margin-bottom: 10px;
-	}
-
-	.section-container .table td:first-child {
-		font-weight: bold;
-		background-color: #f8f9fa;
-	}
-
-	.section-container .btn-group {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.section-container .form-select,
-        .section-container .form-control,
-        .section-container .input-group {
-		width: 100%;
-	}
-
-	.section-container .btn {
-		width: 100%;
-	}
-}
-
-@media (max-width: 767px) {
-	.section-container .table td {
-		background-color: #fff;
-		border-radius: 5px;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	}
-
-	.section-container .table td:first-child {
-		background-color: #f0f0f0;
-		font-size: 1.1em;
-	}
-
-	.section-container .btn {
-		border-radius: 5px;
-	}
-
-	.section-container .btn-group {
-		gap: 15px;
-	}
-}
-
-@media (max-width: 768px) {
-	#neko-title.neko-title-style {
-		font-size: 2.5rem !important;
-	}
-}
-</style>
-<div class="section-container">
+<div class="px-4 control-box">
     <div class="card">
         <div class="card-body">
             <div class="mb-4">
@@ -1045,7 +921,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
 
-            <div class="mb-4" id="mihomoControl" class="control-box">
+            <div class="mb-4 control-box" id="mihomoControl">
                 <h6 class="mb-2"><i class="fas fa-box custom-icon"></i> <span data-translate="mihomoControl">Mihomo Control</span></h6>
                 <div class="d-flex flex-column gap-2">
                     <form action="index.php" method="post">
@@ -1091,7 +967,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
 
-            <div class="mb-4" id="singboxControl" class="control-box">
+            <div class="mb-4 control-box" id="singboxControl">
                 <h6 class="mb-2"><i data-feather="codesandbox"></i> <span data-translate="singboxControl">Singbox Control</span></h6>
                 <div class="d-flex flex-column gap-2">
                     <form action="index.php" method="post">
@@ -1202,7 +1078,144 @@ window.onload = function() {
     }
 };
 </script>
-<div class="section-container"> 
+
+<style>
+.centered-img {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	width: 12%;
+	height: auto;
+	min-width: 40px;
+	max-width: 100%;
+}
+
+@media (max-width: 576px) {
+	.centered-img {
+		width: 30%;
+	}
+}
+
+.btn-group .btn {
+	width: 120%;
+}
+
+.custom-icon {
+	width: 20px !important;
+	height: 20px !important;
+	vertical-align: middle !important;
+	margin-right: 5px !important;
+	stroke: #FF00FF !important;
+	fill: none !important;
+}
+
+@media (max-width: 767px) {
+	.control-box .table {
+		display: block;
+		width: 100%;
+	}
+
+	.control-box .table tbody,
+        .control-box .table thead,
+        .control-box .table tr {
+		display: block;
+	}
+
+	.control-box .table td {
+		display: block;
+		width: 100%;
+		padding: 10px;
+		border: 1px solid #ddd;
+		margin-bottom: 10px;
+	}
+
+	.control-box .table td:first-child {
+		font-weight: bold;
+		background-color: #f8f9fa;
+	}
+
+	.control-box .btn-group {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.control-box .form-select,
+        .control-box .form-control,
+        .control-box .input-group {
+		width: 100%;
+		font-size: 14px;
+	}
+
+	#mihomoControl .btn,
+        #singboxControl .btn,
+        .control-box .btn-group .btn {
+		border-radius: 0.5rem !important;
+	}
+
+	.control-box .btn {
+		width: 100%;
+		font-size: 14px;
+	}
+}
+
+@media (max-width: 768px) {
+	#neko-title.neko-title-style {
+		font-size: 2.7rem !important;
+	}
+}
+
+.triangle-icon {
+	width: 0;
+	height: 0;
+	border-left: 12px solid transparent;
+	border-right: 12px solid transparent;
+	border-top: 12px solid blue;
+	display: inline-block;
+	transition: transform 0.3s ease-in-out;
+}
+
+.rotated {
+	transform: rotate(180deg);
+}
+
+.form-inline {
+	display: inline-block;
+}
+
+@media (max-width: 767px) {
+	#logTabs .nav-item {
+		display: block;
+		width: 100%;
+	}
+}
+
+#logTabs {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+	font-size: 1.3rem;
+	color: var(--text-primary);
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+#logTabs .nav-link {
+	all: unset;
+	display: inline-block;
+	cursor: pointer;
+	padding: 0;
+	color: inherit !important;
+	font-weight: inherit !important;
+	text-decoration: none !important;
+}
+
+#logTabs .nav-link.active {
+	font-weight: 700 !important;
+	color: var(--accent-color) !important;
+}
+</style>
+<div class="px-4"> 
   <div id="collapsibleHeader" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 20px;">
       <i id="toggleIcon" class="triangle-icon"></i> 
   </div>
@@ -1244,7 +1257,7 @@ window.onload = function() {
               <h6 class="mb-2"><i data-feather="bar-chart-2"></i> <span data-translate="trafficStats">Traffic Stats</span></h6>
               <div class="btn-group w-100">
                   <span class="form-control text-center">
-                      ⬇️ <span id="downtotal"></span> | ⬆️ <span id="uptotal"></span>
+                      <i class="fa fa-download"></i> <span id="downtotal"></span> | <i class="fa fa-upload"></i> <span id="uptotal"></span>
                   </span>
               </div>
           </div>
@@ -1291,7 +1304,18 @@ window.onload = function() {
                 document.getElementById('systemInfo').innerText = data.systemInfo;
                 document.getElementById('ramUsage').innerText = data.ramUsage;
                 document.getElementById('cpuLoad').innerText = data.cpuLoad;
-                document.getElementById('uptime').innerText = data.uptime;
+
+                let uptimeText = data.uptime;
+                if (typeof uptimeText === 'string') {
+                    uptimeText = uptimeText.replace(/days/, translations['days'] || 'days')
+                                           .replace(/hours/, translations['hours'] || 'hours')
+                                           .replace(/minutes/, translations['minutes'] || 'minutes')
+                                           .replace(/seconds/, translations['seconds'] || 'seconds');
+                    document.getElementById('uptime').innerText = uptimeText;
+                } else {
+                    document.getElementById('uptime').innerText = data.uptime;
+                }
+
                 document.getElementById('cpuLoadAvg1Min').innerText = data.cpuLoadAvg1Min;
                 document.getElementById('ramUsageOnly').innerText = data.ramUsageOnly + ' / ' + data.ramTotal + ' MB';
             })
@@ -1301,49 +1325,9 @@ window.onload = function() {
     setInterval(fetchSystemStatus, 1000);
     fetchSystemStatus();  
 </script>
-<style>
-    .triangle-icon {
-        width: 0;
-        height: 0;
-        border-left: 12px solid transparent;
-        border-right: 12px solid transparent;
-        border-top: 12px solid blue; 
-        display: inline-block;
-        transition: transform 0.3s ease-in-out;
-    }
 
-    .rotated {
-        transform: rotate(180deg); 
-    }
-
-
-    .form-inline {
-        display: inline-block;  
-    }
-
-    @media (max-width: 767px) {
-        .form-inline {
-            display: flex;         
-            flex-wrap: nowrap;     
-            justify-content: center; 
-            gap: 5px;         
-        }
-
-        .form-check-inline, .btn {
-            font-size: 10px;      
-        }
-    }
-
-    @media (max-width: 767px) {
-        #logTabs .nav-item {
-            display: block;  
-            width: 100%;     
-        }
-    }
-
-</style>
-<div class="section-container">
-<ul class="nav nav-pills mb-3" id="logTabs" role="tablist">
+<div class="px-4">
+<ul class="nav nav-pills mb-3 justify-content-center text-center" id="logTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true"><span data-translate="nekoBoxLog"></span></a>
     </li>
@@ -1354,15 +1338,16 @@ window.onload = function() {
         <a class="nav-link" id="singboxLogTab" data-bs-toggle="pill" href="#singboxLog" role="tab" aria-controls="singboxLog" aria-selected="false"><span data-translate="singboxLog"></span></a>
     </li>
 </ul>
+
 <div class="tab-content" id="logTabsContent">
     <div class="tab-pane fade" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
         <div class="card log-card">
             <div class="card-body">
-                <pre id="plugin_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" contenteditable="true"></pre>
+                <pre id="plugin_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 320px; white-space: pre-wrap;" spellcheck="false"></pre>
             </div>
-            <div class="card-footer text-center">
+            <div class="card-footer d-flex align-items-center justify-content-center pt-3" style="padding-top:0.1rem; padding-bottom:0.1rem; line-height: 1;">
                 <form action="index.php" method="post">
-                    <button type="submit" name="clear_plugin_log" class="btn btn-danger"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
+                    <button type="submit" name="clear_plugin_log" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
                 </form>
             </div>
         </div>
@@ -1371,11 +1356,11 @@ window.onload = function() {
     <div class="tab-pane fade" id="mihomoLog" role="tabpanel" aria-labelledby="mihomoLogTab">
         <div class="card log-card">
             <div class="card-body">
-                <pre id="bin_logs" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" spellcheck="false"></pre>
+                <pre id="bin_logs" class="log-container form-control" style="resize: vertical; overflow: auto; height: 320px; white-space: pre-wrap;" spellcheck="false"></pre>
             </div>
-            <div class="card-footer text-center">
+            <div class="card-footer d-flex align-items-center justify-content-center pt-3" style="padding-top:0.1rem; padding-bottom:0.1rem; line-height: 1;">
                 <form action="index.php" method="post">
-                    <button type="submit" name="neko" value="clear" class="btn btn-danger"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
+                    <button type="submit" name="neko" value="clear" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
                 </form>
             </div>
         </div>
@@ -1384,16 +1369,16 @@ window.onload = function() {
     <div class="tab-pane fade" id="singboxLog" role="tabpanel" aria-labelledby="singboxLogTab">
         <div class="card log-card">
             <div class="card-body">
-                <pre id="singbox_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" contenteditable="true"></pre>
+                <pre id="singbox_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 320px; white-space: pre-wrap;" spellcheck="false"></pre>
             </div>
-            <div class="card-footer text-center">
+            <div class="card-footer d-flex align-items-center justify-content-center pt-3" style="padding-top:0.1rem; padding-bottom:0.1rem; line-height: 1;">
                 <form action="index.php" method="post" class="form-inline">
                     <div class="form-check form-check-inline mb-2">
                         <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
                         <label class="form-check-label" for="autoRefresh"><span data-translate="autoRefresh"></span></label>
                     </div>
-                    <button type="submit" name="clear_singbox_log" class="btn btn-danger me-2"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
-                    <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> <span data-translate="scheduledRestart"></span></button>
+                    <button type="submit" name="clear_singbox_log" class="btn btn-danger btn-sm me-2"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
+                    <button type="button" class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> <span data-translate="scheduledRestart"></span></button>
                 </form>
             </div>
         </div>

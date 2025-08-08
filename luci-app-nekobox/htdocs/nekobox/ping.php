@@ -1,3 +1,48 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'clearNekoTmpDir') {
+    $nekoDir = '/tmp/neko';
+    $response = [
+        'success' => false,
+        'message' => ''
+    ];
+
+    if (is_dir($nekoDir)) {
+        if (deleteNekoTmpDirectory($nekoDir)) {
+            $response['success'] = true;
+            $response['message'] = 'Directory cleared successfully.';
+        } else {
+            $response['message'] = 'Failed to delete the directory.';
+        }
+    } else {
+        $response['message'] = 'The directory does not exist.';
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+}
+
+function deleteNekoTmpDirectory($dir) {
+    if (!file_exists($dir)) {
+        return true;
+    }
+    if (!is_dir($dir)) {
+        return unlink($dir);
+    }
+
+    foreach (scandir($dir) as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+
+        if (!deleteNekoTmpDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+            return false;
+        }
+    }
+
+    return rmdir($dir);
+}
+?>
 <style>
 .modal {
         opacity: 0;
@@ -114,6 +159,91 @@
 		transform: scale(1.1) translateY(-10px);
 	}
 }
+
+.navbar {
+	background-color: transparent;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+	border: none;
+	padding: 0.8rem 1.2rem;
+	border-radius: 0;
+	box-shadow: none;
+	color: var(--text-primary);
+	transition: var(--transition);
+}
+
+.navbar-brand {
+	font-size: 1.5rem !important;
+	font-weight: 900 !important;
+	color: var(--accent-color) !important;
+	text-decoration: none;
+	transition: var(--transition);
+}
+
+.navbar-brand:hover {
+	color: var(--accent-color) !important;
+}
+
+.navbar .nav-link {
+	color: var(--text-primary) !important;
+	padding: 0.5rem 1rem;
+	border-radius: var(--radius);
+	transition: var(--transition);
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 500;
+}
+
+.navbar .nav-link:hover {
+	background-color: var(--item-hover-bg);
+	box-shadow: var(--item-hover-shadow);
+	color: var(--accent-color) !important;
+}
+
+.navbar .nav-link.active {
+	color: var(--accent-color) !important;
+	font-weight: 600;
+}
+
+.navbar-toggler {
+	color: var(--accent-color) !important;
+	border: none;
+	background: transparent;
+	outline: none;
+}
+
+.navbar-toggler i {
+	color: var(--accent-color) !important;
+	font-size: 1.8rem;
+	transition: var(--transition);
+}
+
+.icon-btn-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.7rem !important;
+	justify-content: flex-start;
+}
+
+.icon-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 2rem !important;
+	height: 2rem !important;
+	padding: 0 !important;
+	border-radius: 1rem !important;
+	font-size: 1rem !important;
+	line-height: 1 !important;
+	flex-shrink: 0;
+}
+
+.white-text-table,
+.white-text-table td,
+.white-text-table input {
+	color: var(--text-primary) !important;
+}
 </style>
 
 <div id="theme-loader" style="display: none;">
@@ -128,7 +258,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const loader = document.getElementById("theme-loader");
 
   document.querySelectorAll("form").forEach(form => {
-    form.addEventListener("submit", () => {
+    form.addEventListener("submit", (e) => {
+      if (e.submitter && e.submitter.classList.contains('cancel-btn')) {
+        return;
+      }
+
+      if (form.classList.contains('no-loader')) {
+        return;
+      }
+      
       if (loader) {
         loader.style.display = "flex";
       }
@@ -137,10 +275,60 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<?php include './language.php'; include './cfg.php'; ?>
+<div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <form id="portForm" method="POST" action="./save_ports.php" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="portModalLabel" data-translate="portInfoTitle">Port Information</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered table-striped text-center align-middle w-100 mb-0 white-text-table">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 20%;" data-translate="componentName">Component Name</th>
+              <th style="width: 20%;">socks-port</th>
+              <th style="width: 20%;">mixed-port</th>
+              <th style="width: 13%;">redir-port</th>
+              <th style="width: 13%;">port</th>
+              <th style="width: 14%;">tproxy-port</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mihomo</td>
+              <td><input type="number" class="form-control text-center" name="mihomo_socks" value="<?= htmlspecialchars($neko_cfg['socks']) ?>"></td>
+              <td><input type="number" class="form-control text-center" name="mihomo_mixed" value="<?= htmlspecialchars($neko_cfg['mixed']) ?>"></td>
+              <td><input type="number" class="form-control text-center" name="mihomo_redir" value="<?= htmlspecialchars($neko_cfg['redir']) ?>"></td>
+              <td><input type="number" class="form-control text-center" name="mihomo_port" value="<?= htmlspecialchars($neko_cfg['port']) ?>"></td>
+              <td><input type="number" class="form-control text-center" name="mihomo_tproxy" value="<?= htmlspecialchars($neko_cfg['tproxy']) ?>"></td>
+            </tr>
+            <tr>
+              <td>Sing-box</td>
+              <td><input type="number" class="form-control text-center" name="singbox_http" value="<?= htmlspecialchars($http_port) ?>"></td>
+              <td><input type="number" class="form-control text-center" name="singbox_mixed" value="<?= htmlspecialchars($mixed_port) ?>"></td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="text-danger text-center fw-bold mt-3 mb-1" data-translate="portChangeNotice">
+          Port changes will take effect after restarting the service.
+        </div>
+      </div>
+      <div class="modal-footer justify-content-end">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="closeButton">Close</button>
+        <button type="submit" class="btn btn-primary" data-translate="save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<?php include './language.php'; include './cfg.php'; $current = basename($_SERVER['PHP_SELF']); ?>
 <html lang="<?php echo $currentLang; ?>">
 <div class="modal fade" id="langModal" tabindex="-1" aria-labelledby="langModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="langModalLabel" data-translate="select_language">Select Language</h5>
@@ -170,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <?php
 $default_url = 'https://raw.githubusercontent.com/Thaolga/Rules/main/music/songs.txt';
-$file_path = __DIR__ . '/url_config.txt'; 
+$file_path = __DIR__ . '/lib/url_config.txt'; 
 $message = '';
 
 if (!file_exists($file_path)) {
@@ -436,7 +624,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <img id="flagIcon" src="https://flagcdn.com/w20/cn.png" class="flag-icon" alt="Country Flag">
                 </div>
             </button>
-            <button class="panel-btn" onclick="window.open('./filekit.php', '_blank')">
+            <button class="panel-btn" onclick="window.open('./monaco.php', '_blank')">
                 <div class="btn-icon">
                     <i class="bi bi-file-earmark"></i>
                 </div>
@@ -599,7 +787,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<div class="modal fade" id="confirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal fade" id="confirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index: 9999;">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -616,6 +804,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const navbar = document.getElementById('navbarContent');
+    const isMobile = window.innerWidth < 992;
+
+    if (!isMobile) return;
+
+    const bsCollapse = new bootstrap.Collapse(navbar, {
+        toggle: false
+    });
+
+    const savedState = localStorage.getItem('navbar-expanded');
+    if (savedState === 'true') {
+        bsCollapse.show();
+    }
+
+    navbar.addEventListener('show.bs.collapse', function () {
+        localStorage.setItem('navbar-expanded', 'true');
+    });
+
+    navbar.addEventListener('hide.bs.collapse', function () {
+        localStorage.setItem('navbar-expanded', 'false');
+    });
+});
+</script>
+
+<script>
+function clearNekoTmpDir() {
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=clearNekoTmpDir'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(translations["tmp_neko_cleared"] || "The /tmp/neko directory has been cleared successfully.");
+        } else {
+            if (data.message === 'The directory does not exist.') {
+                alert(translations["tmp_neko_not_exist"] || "The /tmp/neko directory does not exist. No action was taken.");
+            } else {
+                alert('Failed to clear the /tmp/neko directory: ' + data.message);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while trying to clear the /tmp/neko directory.');
+    });
+}
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -688,15 +930,12 @@ const currentLang = "<?php echo $currentLang; ?>";
 let translations = langData[currentLang] || langData['en'];
 
 document.addEventListener("DOMContentLoaded", () => {
-    const userLang = localStorage.getItem('language') || currentLang;
-
-    updateLanguage(userLang); 
-    updateFlagIcon(userLang);  
-    document.getElementById("langSelect").value = userLang; 
+    updateLanguage(currentLang); 
+    updateFlagIcon(currentLang);  
+    document.getElementById("langSelect").value = currentLang; 
 });
 
 function updateLanguage(lang) {
-    localStorage.setItem('language', lang); 
     translations = langData[lang] || langData['en'];  
 
     const translateElement = (el, attribute, property) => {
@@ -1488,10 +1727,6 @@ let IP = {
 
                     <span id="toggle-ip" style="cursor: pointer; text-indent: 0.3ch; padding-top: 2px;" title="${translations['hide_ip']}">
                         <i class="bi ${isHidden ? 'bi-eye-slash' : 'bi-eye'}" style="font-size: 1.4rem; vertical-align: middle;"></i>  
-                    </span>
-
-                    <span class="control-toggle" style="cursor: pointer; display: inline-flex; align-items: center;" onclick="toggleControlPanel()" title="${translations['control_panel']}">
-                        <i class="bi bi-gear" style="font-size: 1.1rem; margin-left: 5px; vertical-align: middle;"></i>  
                     </span>
             `;
 
@@ -4831,7 +5066,6 @@ body {
 	background-attachment: fixed;
 }
 
-
 #playerModal.active {
 	display: flex;
 	animation: slideIn 0.3s ease forwards;
@@ -5986,6 +6220,7 @@ h2#neko-title.neko-title-style {
 .card {
 	background: var(--card-bg);
 	border: 1px solid var(--border-color);
+        border-radius: var(--radius);
 }
 
 .card-header {
@@ -6274,6 +6509,7 @@ thead.table-light th:not(:last-child)::after {
 	}
 }
 
+.alert,
 .alert.alert-info ul,
 .alert.alert-info ul li {
 	color: var(--text-primary) !important;
@@ -6297,7 +6533,6 @@ input.btn:focus {
 #logTabs .nav-link:hover {
 	color: var(--ocean-bg) !important;
 }
-
 
 svg.feather {
         width: 20px !important;
@@ -6323,26 +6558,32 @@ svg.feather:hover,
 
 * {
 	scrollbar-width: thin;
-	scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+	scrollbar-color: var(--accent-color) var(--header-bg);
 }
 
 *::-webkit-scrollbar {
 	width: 6px;
 	height: 6px;
-}
 
-*::-webkit-scrollbar-track {
 	background: transparent;
 }
 
+*::-webkit-scrollbar-track {
+	background: var(--header-bg);
+	border-radius: 3px;
+	margin: 4px 0;
+}
+
 *::-webkit-scrollbar-thumb {
-	background: var(--accent-color) !important;
-	border-radius: 4px;
+	background: var(--accent-color);
+	border-radius: 3px;
 	transition: background 0.3s ease;
+	min-height: 40px;
+	min-width: 40px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-	background: var(--accent-color) !important;
+	background: color-mix(in oklch, var(--accent-color), white 20%);
 }
 
 body {
@@ -6590,6 +6831,169 @@ input[type=range]::-ms-thumb {
 .btn-lg {
 	padding: 0.5rem 1rem;
 	font-size: 1.25rem;
+}
+
+.ace_search {
+	background: var(--bg-container) !important;
+	border: 1px solid var(--border-color) !important;
+	border-radius: var(--radius);
+	box-shadow: var(--item-hover-shadow);
+	padding: 8px 12px !important;
+	color: var(--text-primary);
+	backdrop-filter: var(--glass-blur);
+	transition: var(--transition);
+}
+
+.ace_search_form, .ace_replace_form {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.ace_search_field {
+	background: var(--card-bg) !important;
+	border: 1px solid var(--border-color) !important;
+	color: var(--text-primary) !important;
+	padding: 6px 12px !important;
+	border-radius: calc(var(--radius) - 4px) !important;
+	font-size: 14px !important;
+	min-width: 200px;
+	transition: var(--transition);
+}
+
+.ace_search_field:focus {
+	border-color: var(--accent-color) !important;
+	outline: none;
+	box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent-color), transparent 70%);
+}
+
+.ace_searchbtn {
+	background: var(--btn-primary-bg) !important;
+	color: white !important;
+	border: none !important;
+	border-radius: calc(var(--radius) - 4px) !important;
+	background-image: none !important;
+	padding: 6px 12px !important;
+	font-size: 13px !important;
+	cursor: pointer;
+	transition: var(--transition);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 60px;
+	filter: contrast(1.2) brightness(1.1);
+}
+
+.ace_searchbtn:hover {
+	background: var(--btn-primary-hover) !important;
+	color: white !important;
+}
+
+.ace_searchbtn.prev,
+.ace_searchbtn.next {
+	position: relative;
+}
+
+.ace_searchbtn.prev::before,
+.ace_searchbtn.next::before {
+	content: "";
+	font-size: 14px;
+	color: white !important;
+	filter: contrast(1.3);
+	display: inline-block;
+	line-height: 1;
+}
+
+.ace_searchbtn.prev::before {
+	content: "↑";
+}
+
+.ace_searchbtn.next::before {
+	content: "↓";
+}
+
+.ace_searchbtn .ace_icon,
+.ace_searchbtn::after {
+	display: none !important;
+	opacity: 0 !important;
+}
+
+.ace_searchbtn_close {
+	background: transparent !important;
+	color: var(--text-secondary) !important;
+	position: absolute;
+	right: 12px;
+	top: 12px;
+	cursor: pointer;
+	font-size: 16px;
+	transition: var(--transition);
+	width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 3px;
+}
+
+.ace_searchbtn_close:hover {
+	color: white !important;
+	background: var(--btn-primary-bg) !important;
+}
+
+.ace_searchbtn_close::before {
+	content: "×";
+}
+
+.ace_search_options {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.ace_button {
+	background: var(--btn-primary-bg) !important;
+	color: white !important;
+	border: none !important;
+	border-radius: calc(var(--radius) - 4px) !important;
+	padding: 4px 8px !important;
+	font-size: 12px !important;
+	cursor: pointer;
+	transition: var(--transition);
+	filter: contrast(1.2);
+}
+
+.ace_button:hover {
+	background: var(--btn-primary-hover) !important;
+	color: white !important;
+}
+
+.ace_search_counter {
+	color: var(--text-secondary);
+	font-size: 12px;
+	margin-right: auto;
+}
+
+[action="toggleRegexpMode"] {
+	background: var(--btn-info-bg) !important;
+	color: white !important;
+}
+[action="toggleCaseSensitive"] {
+	background: var(--btn-warning-bg) !important;
+	color: white !important;
+}
+[action="toggleWholeWords"] {
+	background: var(--btn-success-bg) !important;
+	color: white !important;
+}
+[action="searchInSelection"] {
+	background: var(--ocean-bg) !important;
+	color: white !important;
+}
+[action="toggleReplace"] {
+	background: var(--lavender-bg) !important;
+	color: white !important;
 }
 
 #editorStatus {
