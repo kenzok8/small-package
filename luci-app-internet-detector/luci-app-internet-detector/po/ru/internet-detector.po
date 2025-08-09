@@ -23,14 +23,22 @@ msgid ""
 "<abbr title=\"Light Emitting Diode\">LED</abbr> indicates the Internet status."
 msgstr "<abbr title=\"Светодиод\">LED</abbr> отображает статус Интернет."
 
-msgid "Action when connected"
-msgstr "Действие при подключении"
+msgid "<abbr title=\"Light Emitting Diode\">LED</abbr> mode"
+msgstr "Режим <abbr title=\"Светодиод\">LED</abbr>"
 
-msgid "Action when disconnected"
-msgstr "Действие при отключении"
+msgid ""
+"<abbr title=\"Light Emitting Diode\">LED</abbr> will display the link activity of this network device."
+msgstr ""
+"<abbr title=\"Светодиод\">LED</abbr> будет отображать активность линка этого сетевого устройства."
 
 msgid "Add instance"
 msgstr "Добавить экземпляр"
+
+msgid "After connection"
+msgstr "После подключения"
+
+msgid "After disconnection"
+msgstr "После отключения"
 
 msgid "Alive interval"
 msgstr "Интервал при подключении"
@@ -53,8 +61,8 @@ msgstr "Попытки"
 msgid "Big: 248 bytes"
 msgstr "Большой: 248 байт"
 
-msgid "Blink"
-msgstr "Мигание"
+msgid "Blinking (kernel: timer)"
+msgstr "Мигание (kernel: timer)"
 
 msgid "Bot API token is missing!"
 msgstr "Отсутствует API токен бота!"
@@ -267,6 +275,9 @@ msgstr "Гигантский: 9000 байт"
 msgid "LED control"
 msgstr "Управление LED"
 
+msgid "Link On"
+msgstr "Подключение"
+
 msgid "Loading"
 msgstr "Загрузка"
 
@@ -326,6 +337,9 @@ msgstr ""
 "Сетевое устройство для доступа в Интернет. Если не указано, используется "
 "устройство по умолчанию."
 
+msgid "Network device activity (kernel: netdev)"
+msgstr "Активность сетевого устройства (kernel: netdev)"
+
 msgid ""
 "Network device or interface to restart. If not specified, then the network service is restarted."
 msgstr ""
@@ -356,11 +370,23 @@ msgstr "Количество попыток запроса IP адреса"
 msgid "Off"
 msgstr "Выключить"
 
+msgid "Off-state delay"
+msgstr "Задержка выключенного состояния"
+
+msgid "Off-state delay for blinking option."
+msgstr "Задержка выключенного состояния для опции мигания."
+
 msgid "On"
 msgstr "Включить"
 
 msgid "On startup"
 msgstr "При запуске"
+
+msgid "On-state delay"
+msgstr "Задержка включённого состояния"
+
+msgid "On-state delay for blinking option."
+msgstr "Задержка включённого состояния для опции мигания."
 
 msgid "One of the following:"
 msgstr "Одно из следующих значений:"
@@ -420,6 +446,9 @@ msgstr "Перезагрузка устройства"
 
 msgid "Reboot device if the Internet is disconnected at service startup."
 msgstr "Перезагрузка устройства если Интренет отключен при запуске службы."
+
+msgid "Receive"
+msgstr "Приём"
 
 msgid "Recipient"
 msgstr "Получатель"
@@ -565,6 +594,9 @@ msgstr "Таймаут между остановкой и запуском ин�
 msgid "To support HTTP services you need to install curl."
 msgstr "Для поддержки HTTP сервисов необходимо установить curl."
 
+msgid "Tramsmit"
+msgstr "Передача"
+
 msgid "Type a time string"
 msgstr "Введите строку времени"
 
@@ -657,6 +689,9 @@ msgstr "мин"
 
 msgid "minutes"
 msgstr "минуты"
+
+msgid "msec"
+msgstr "мсек"
 
 msgid "sec"
 msgstr "сек"

@@ -350,12 +350,15 @@ end
 
 function Module:httpRequest(url)
 	local retCode = 1, data
-	local iface   = ""
-	if self.config.serviceConfig.iface then
-		iface = " --interface " .. self.config.serviceConfig.iface
-	end
-	local fh = io.popen(string.format(
-		'%s%s --connect-timeout %s %s "%s"; printf "\n$?";', self.curlExec, iface, self.timeout, self.curlParams, url), "r")
+	local curl = string.format(
+		'%s%s --connect-timeout %s %s "%s"; printf "\n$?";',
+		self.curlExec,
+		self.config.serviceConfig.iface and (" --interface " .. self.config.serviceConfig.iface) or "",
+		self.timeout,
+		self.curlParams,
+		url
+	)
+	local fh = io.popen(curl, "r")
 	if fh then
 		data       = fh:read("*a")
 		fh:close()
