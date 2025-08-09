@@ -624,7 +624,8 @@ return view.extend({
 			this.getInit(),
 			uci.load(this.appName),
 		]).catch(e => {
-			ui.addNotification(null, E('p', _('An error has occurred') + ': %s'.format(e.message)));
+			ui.addNotification(
+				null, E('p', _('An error has occurred') + ': %s'.format(e.message)));
 		});
 	},
 
@@ -747,6 +748,18 @@ return view.extend({
 			list.value(120, '2 '  + _('min'));
 			list.value(300, '5 '  + _('min'));
 			list.value(600, '10 ' + _('min'));
+		}
+
+		function makeTimerDelayOptions(list) {
+			list.value(25,   '25 '  + _('msec'));
+			list.value(50,   '50 '  + _('msec'));
+			list.value(100,  '100 ' + _('msec'));
+			list.value(250,  '250 ' + _('msec'));
+			list.value(500,  '500 ' + _('msec'));
+			list.value(750,  '750 ' + _('msec'));
+			list.value(1000, '1 '   + _('sec'));
+			list.value(1500, '1.5 ' + _('sec'));
+			list.value(2000, '2 '   + _('sec'));
 		}
 
 		// enabled
@@ -898,13 +911,14 @@ return view.extend({
 					this.leds.sort((a, b) => a.name > b.name);
 
 					// enabled
-					o = s.taboption('led_control', form.Flag, 'mod_led_control_enabled',
+					o = s.taboption('led_control', form.Flag,
+						'mod_led_control_enabled',
 						_('Enabled'));
 					o.rmempty   = false;
 					o.modalonly = true;
 
-					o = s.taboption('led_control', form.SectionValue, s.section, form.NamedSection,
-						s.section);
+					o = s.taboption('led_control', form.SectionValue,
+						s.section, form.NamedSection, s.section);
 					o.depends({ mod_led_control_enabled: '1' });
 					ss = o.subsection;
 
@@ -912,7 +926,8 @@ return view.extend({
 						ss.tab('led' + i + '_tab', _('LED') + ' ' + i);
 
 						// led_name
-						o = ss.taboption('led' + i + '_tab', form.ListValue, 'mod_led_control_led' + i + '_name',
+						o = ss.taboption('led' + i + '_tab', form.ListValue,
+							'mod_led_control_led' + i + '_name',
 							_('<abbr title="Light Emitting Diode">LED</abbr> Name'));
 						o.modalonly = true;
 						if(i > 1) {
@@ -922,24 +937,117 @@ return view.extend({
 						this.leds.forEach(e => o.value(e.name));
 
 						// led_action_1
-						o = ss.taboption('led' + i + '_tab', form.ListValue, 'mod_led_control_led' + i + '_action_1',
-							_('Action when connected'));
+						o = ss.taboption('led' + i + '_tab', form.ListValue,
+							'mod_led_control_led' + i + '_action_1',
+							_('After connection'));
 						o.depends({ ['mod_led_control_led' + i + '_name']: /.+/ });
 						o.modalonly = true;
 						o.value(1, _('Off'));
 						o.value(2, _('On'));
-						o.value(3, _('Blink'));
+						o.value(3, _('Blinking (kernel: timer)'));
+						o.value(4, _('Network device activity (kernel: netdev)'));
 						o.default = '2';
 
+						// blink_on_delay_1
+						o = ss.taboption('led' + i + '_tab', form.ListValue,
+							'mod_led_control_led' + i + '_blink_on_delay_1',
+							_('On-state delay'),
+							_('On-state delay for blinking option.'));
+						makeTimerDelayOptions(o);
+						o.depends({ ['mod_led_control_led' + i + '_action_1']: '3' });
+						o.modalonly = true;
+						o.default   = '500';
+
+						// blink_off_delay_1
+						o = ss.taboption('led' + i + '_tab', form.ListValue,
+							'mod_led_control_led' + i + '_blink_off_delay_1',
+							_('Off-state delay'),
+							_('Off-state delay for blinking option.'));
+						makeTimerDelayOptions(o);
+						o.depends({ ['mod_led_control_led' + i + '_action_1']: '3' });
+						o.modalonly = true;
+						o.default   = '500';
+
+						// netdev_device_1
+						o = ss.taboption('led' + i + '_tab', widgets.DeviceSelect,
+							'mod_led_control_led' + i + '_netdev_device_1',
+							_('Device'),
+							_('<abbr title="Light Emitting Diode">LED</abbr> will display the link activity of this network device.')
+						);
+						o.depends({ ['mod_led_control_led' + i + '_action_1']: '4' });
+						o.modalonly = true;
+						o.rmempty   = false;
+						o.noaliases = true;
+
+						// netdev_mode_1
+						o = ss.taboption('led' + i + '_tab', form.MultiValue,
+							'mod_led_control_led' + i + '_netdev_mode_1',
+							_('<abbr title="Light Emitting Diode">LED</abbr> mode')
+						);
+						o.depends({ ['mod_led_control_led' + i + '_action_1']: '4' });
+						o.modalonly = true;
+						o.value('link', _('Link On'));
+						o.value('tx', _('Tramsmit'));
+						o.value('rx', _('Receive'));
+						o.default = 'link';
+						o.rmempty = false;
+
 						// led_action_2
-						o = ss.taboption('led' + i + '_tab', form.ListValue, 'mod_led_control_led' + i + '_action_2',
-							_('Action when disconnected'));
+						o = ss.taboption('led' + i + '_tab', form.ListValue,
+							'mod_led_control_led' + i + '_action_2',
+							_('After disconnection'));
 						o.depends({ ['mod_led_control_led' + i + '_name']: /.+/ });
 						o.modalonly = true;
 						o.value(1, _('Off'));
 						o.value(2, _('On'));
-						o.value(3, _('Blink'));
+						o.value(3, _('Blinking (kernel: timer)'));
+						o.value(4, _('Network device activity (kernel: netdev)'));
 						o.default = '1';
+
+						// blink_on_delay_2
+						o = ss.taboption('led' + i + '_tab', form.ListValue,
+							'mod_led_control_led' + i + '_blink_on_delay_2',
+							_('On-state delay'),
+							_('On-state delay for blinking option.'));
+						makeTimerDelayOptions(o);
+						o.depends({ ['mod_led_control_led' + i + '_action_2']: '3' });
+						o.modalonly = true;
+						o.default   = '500';
+
+						// blink_off_delay_2
+						o = ss.taboption('led' + i + '_tab', form.ListValue,
+							'mod_led_control_led' + i + '_blink_off_delay_2',
+							_('Off-state delay'),
+							_('Off-state delay for blinking option.'));
+						makeTimerDelayOptions(o);
+						o.depends({ ['mod_led_control_led' + i + '_action_2']: '3' });
+						o.modalonly = true;
+						o.default   = '500';
+
+						// netdev_device_2
+						o = ss.taboption('led' + i + '_tab', widgets.DeviceSelect,
+							'mod_led_control_led' + i + '_netdev_device_2',
+							_('Device'),
+							_('<abbr title="Light Emitting Diode">LED</abbr> will display the link activity of this network device.')
+						);
+						o.depends({ ['mod_led_control_led' + i + '_action_2']: '4' });
+						o.modalonly  = true;
+						o.rmempty    = false;
+						o.noaliases  = true;
+
+						// netdev_mode_2
+						o = ss.taboption('led' + i + '_tab', form.MultiValue,
+							'mod_led_control_led' + i + '_netdev_mode_2',
+							_('<abbr title="Light Emitting Diode">LED</abbr> mode')
+						);
+						o.depends({ ['mod_led_control_led' + i + '_action_2']: '4' });
+						o.modalonly = true;
+						o.value('link', _('Link On'));
+						o.value('tx', _('Tramsmit'));
+						o.value('rx', _('Receive'));
+						o.default = 'link';
+						o.rmempty = false;
+
 					};
 				} else {
 					o = s.taboption('led_control', form.DummyValue, '_dummy');
@@ -990,7 +1098,8 @@ return view.extend({
 				o.default = '300';
 
 				// disconnected_at_startup
-				o = s.taboption('reboot_device', form.Flag, 'mod_reboot_disconnected_at_startup',
+				o = s.taboption('reboot_device', form.Flag,
+					'mod_reboot_disconnected_at_startup',
 					_('On startup'),
 					_('Reboot device if the Internet is disconnected at service startup.')
 				);
@@ -1007,7 +1116,8 @@ return view.extend({
 				o.modalonly = true;
 
 				// enabled
-				o = s.taboption('restart_network', form.Flag, 'mod_network_restart_enabled',
+				o = s.taboption('restart_network', form.Flag,
+					'mod_network_restart_enabled',
 					_('Enabled'));
 				o.rmempty   = false;
 				o.modalonly = true;
@@ -1022,7 +1132,8 @@ return view.extend({
 				o.modalonly = true;
 
 				// ifaces
-				o = s.taboption('restart_network', widgets.DeviceSelect, 'mod_network_restart_ifaces',
+				o = s.taboption('restart_network', widgets.DeviceSelect,
+					'mod_network_restart_ifaces',
 					_('Device'),
 					_('Network device or interface to restart. If not specified, then the network service is restarted.')
 				);
@@ -1073,7 +1184,8 @@ return view.extend({
 				o.default = '0';
 
 				// disconnected_at_startup
-				o = s.taboption('restart_network', form.Flag, 'mod_network_restart_disconnected_at_startup',
+				o = s.taboption('restart_network', form.Flag,
+					'mod_network_restart_disconnected_at_startup',
 					_('On startup'),
 					_('Restart network if the Internet is disconnected at service startup.')
 				);
@@ -1092,7 +1204,8 @@ return view.extend({
 						o.modalonly = true;
 
 						// enabled
-						o = s.taboption('restart_modem', form.Flag, 'mod_modem_restart_enabled',
+						o = s.taboption('restart_modem', form.Flag,
+							'mod_modem_restart_enabled',
 							_('Enabled'),
 						);
 						o.rmempty   = false;
@@ -1140,7 +1253,8 @@ return view.extend({
 						o.modalonly = true;
 
 						// iface
-						o = s.taboption('restart_modem', widgets.NetworkSelect, 'mod_modem_restart_iface',
+						o = s.taboption('restart_modem', widgets.NetworkSelect,
+							'mod_modem_restart_iface',
 							_('Interface'),
 							_('ModemManger interface. If specified, it will be restarted after restarting ModemManager.')
 						);
@@ -1168,7 +1282,8 @@ return view.extend({
 						o.default = '0';
 
 						// disconnected_at_startup
-						o = s.taboption('restart_modem', form.Flag, 'mod_modem_restart_disconnected_at_startup',
+						o = s.taboption('restart_modem', form.Flag,
+							'mod_modem_restart_disconnected_at_startup',
 							_('On startup'),
 							_('Restart modem if the Internet is disconnected at service startup.')
 						);
@@ -1292,7 +1407,8 @@ return view.extend({
 			if(this.currentAppMode !== '2') {
 
 				// enable_ip_script
-				o = s.taboption('public_ip', form.Flag, 'mod_public_ip_enable_ip_script',
+				o = s.taboption('public_ip', form.Flag,
+					'mod_public_ip_enable_ip_script',
 					_('Enable public-ip-script'));
 				o.rmempty   = false;
 				o.modalonly = true;
@@ -1356,7 +1472,8 @@ return view.extend({
 						o.default = '0';
 
 						// host_alias
-						o = s.taboption('email', form.Value, 'mod_email_host_alias',
+						o = s.taboption('email', form.Value,
+							'mod_email_host_alias',
 							_('Host alias'),
 							_('Host identifier in messages. If not specified, hostname will be used.'));
 						o.modalonly = true;
@@ -1412,7 +1529,8 @@ return view.extend({
 						o.modalonly = true;
 
 						// message_at_startup
-						o = s.taboption('email', form.Flag, 'mod_email_message_at_startup',
+						o = s.taboption('email', form.Flag,
+							'mod_email_message_at_startup',
 							_('On startup'),
 							_('Send message on service startup.')
 						);
@@ -1443,7 +1561,8 @@ return view.extend({
 						o.modalonly = true;
 
 						// enabled
-						o = s.taboption('telegram', form.Flag, 'mod_telegram_enabled',
+						o = s.taboption('telegram', form.Flag,
+							'mod_telegram_enabled',
 							_('Enable'));
 						o.rmempty   = false;
 						o.modalonly = true;
@@ -1481,7 +1600,8 @@ return view.extend({
 						o.default = '0';
 
 						// host_alias
-						o = s.taboption('telegram', form.Value, 'mod_telegram_host_alias',
+						o = s.taboption('telegram', form.Value,
+							'mod_telegram_host_alias',
 							_('Host alias'),
 							_('Host identifier in messages. If not specified, hostname will be used.'));
 						o.modalonly = true;
@@ -1509,7 +1629,8 @@ return view.extend({
 						o.depends({ 'mod_telegram_api_token': /.+/ });
 
 						// message_at_startup
-						o = s.taboption('telegram', form.Flag, 'mod_telegram_message_at_startup',
+						o = s.taboption('telegram', form.Flag,
+							'mod_telegram_message_at_startup',
 							_('On startup'),
 							_('Send message on service startup.')
 						);
@@ -1540,8 +1661,8 @@ return view.extend({
 				o.rmempty   = false;
 				o.modalonly = true;
 
-				o = s.taboption('user_scripts', form.SectionValue, 'user_scripts_section', form.NamedSection,
-					s.section);
+				o = s.taboption('user_scripts', form.SectionValue,
+					'user_scripts_section', form.NamedSection, s.section);
 				ss = o.subsection;
 
 				// up-script tab
@@ -1588,7 +1709,8 @@ return view.extend({
 
 				// up_script_attempt_interval
 				o = ss.taboption('user_scripts_up_script', this.CBITimeInput,
-					'mod_user_scripts_up_script_attempt_interval', _('Attempt interval'),
+					'mod_user_scripts_up_script_attempt_interval',
+					_('Attempt interval'),
 					_('Interval between up-script runs.')
 				);
 				o.default   = '60';
@@ -1596,7 +1718,8 @@ return view.extend({
 				o.modalonly = true;
 
 				// connected_at_startup
-				o = ss.taboption('user_scripts_up_script', form.Flag, 'mod_user_scripts_connected_at_startup',
+				o = ss.taboption('user_scripts_up_script', form.Flag,
+					'mod_user_scripts_connected_at_startup',
 					_('On startup'),
 					_('Run up-script if the Internet is connected at service startup.')
 				);
@@ -1647,7 +1770,8 @@ return view.extend({
 
 				// down_script_attempt_interval
 				o = ss.taboption('user_scripts_down_script', this.CBITimeInput,
-					'mod_user_scripts_down_script_attempt_interval', _('Attempt interval'),
+					'mod_user_scripts_down_script_attempt_interval',
+					_('Attempt interval'),
 					_('Interval between down-script runs.')
 				);
 				o.default   = '60';
@@ -1655,7 +1779,8 @@ return view.extend({
 				o.modalonly = true;
 
 				// disconnected_at_startup
-				o = ss.taboption('user_scripts_down_script', form.Flag, 'mod_user_scripts_disconnected_at_startup',
+				o = ss.taboption('user_scripts_down_script', form.Flag,
+					'mod_user_scripts_disconnected_at_startup',
 					_('On startup'),
 					_('Run down-script if the Internet is disconnected at service startup.')
 				);
@@ -1672,13 +1797,15 @@ return view.extend({
 				o.modalonly = true;
 
 				// enabled
-				o = s.taboption('regular_script', form.Flag, 'mod_regular_script_enabled',
+				o = s.taboption('regular_script', form.Flag,
+					'mod_regular_script_enabled',
 					_('Enabled'));
 				o.rmempty   = false;
 				o.modalonly = true;
 
 				// next run
-				o = s.taboption('regular_script', form.DummyValue, '_dummy', _('Next run'));
+				o = s.taboption('regular_script', form.DummyValue,
+					'_dummy', _('Next run'));
 				o.rawhtml   = true;
 				o.default   = '<span id="id_next_run_' + s.section + '">' + (this.modRegularScriptNextRun[s.section] || _('Not scheduled')) + '</span>';
 				o.modalonly = true;

@@ -11,13 +11,20 @@ msgid ""
 "<abbr title=\"Light Emitting Diode\">LED</abbr> indicates the Internet status."
 msgstr ""
 
-msgid "Action when connected"
+msgid "<abbr title=\"Light Emitting Diode\">LED</abbr> mode"
 msgstr ""
 
-msgid "Action when disconnected"
+msgid ""
+"<abbr title=\"Light Emitting Diode\">LED</abbr> will display the link activity of this network device."
 msgstr ""
 
 msgid "Add instance"
+msgstr ""
+
+msgid "After connection"
+msgstr ""
+
+msgid "After disconnection"
 msgstr ""
 
 msgid "Alive interval"
@@ -41,7 +48,7 @@ msgstr ""
 msgid "Big: 248 bytes"
 msgstr ""
 
-msgid "Blink"
+msgid "Blinking (kernel: timer)"
 msgstr ""
 
 msgid "Bot API token is missing!"
@@ -253,6 +260,9 @@ msgstr ""
 msgid "LED control"
 msgstr ""
 
+msgid "Link On"
+msgstr ""
+
 msgid "Loading"
 msgstr ""
 
@@ -303,6 +313,9 @@ msgid ""
 "interface is used."
 msgstr ""
 
+msgid "Network device activity (kernel: netdev)"
+msgstr ""
+
 msgid ""
 "Network device or interface to restart. If not specified, then the network service is restarted."
 msgstr ""
@@ -331,10 +344,22 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
+msgid "Off-state delay"
+msgstr ""
+
+msgid "Off-state delay for blinking option."
+msgstr ""
+
 msgid "On"
 msgstr ""
 
 msgid "On startup"
+msgstr ""
+
+msgid "On-state delay"
+msgstr ""
+
+msgid "On-state delay for blinking option."
 msgstr ""
 
 msgid "One of the following:"
@@ -391,6 +416,9 @@ msgid "Reboot device"
 msgstr ""
 
 msgid "Reboot device if the Internet is disconnected at service startup."
+msgstr ""
+
+msgid "Receive"
 msgstr ""
 
 msgid "Recipient"
@@ -537,6 +565,9 @@ msgstr ""
 msgid "To support HTTP services you need to install curl."
 msgstr ""
 
+msgid "Tramsmit"
+msgstr ""
+
 msgid "Type a time string"
 msgstr ""
 
@@ -620,6 +651,9 @@ msgid "min"
 msgstr ""
 
 msgid "minutes"
+msgstr ""
+
+msgid "msec"
 msgstr ""
 
 msgid "sec"
