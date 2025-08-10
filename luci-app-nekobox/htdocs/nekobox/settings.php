@@ -463,6 +463,7 @@ $razordVersion = getRazordVersion();
                     <option value="v1.11.0-beta.15">v1.11.0-beta.15</option>
                     <option value="v1.11.0-beta.20">v1.11.0-beta.20</option>
                     <option value="v1.12.0-rc.3">v1.12.0-rc.3</option>
+                    <option value="v1.12.0-rc.4">v1.12.0-rc.4</option>
                 </select>
                 <input type="text" id="manualVersionInput" class="form-control mt-2" placeholder="For example: v1.12.0-rc.3">
                 <button type="button" class="btn btn-secondary mt-2" onclick="addManualVersion()" data-translate="addVersionButton">Add Version</button>
@@ -768,7 +769,7 @@ function initiateUpdate(url, logMessage, description) {
     document.getElementById('logOutput').textContent = logMessage;
     xhr.onload = function() {
         if (xhr.status === 200) {
-            document.getElementById('logOutput').textContent += '\n' + (translations['updateCompleted'] || '更新完成！');
+            document.getElementById('logOutput').textContent += '\n' + (translations['updateCompleted'] || 'Update completed!');
             document.getElementById('logOutput').textContent += '\n' + xhr.responseText;
             setTimeout(function() {
                 $('#updateModal').modal('hide');
@@ -777,12 +778,12 @@ function initiateUpdate(url, logMessage, description) {
                 }, 500);
             }, 10000);
         } else {
-            document.getElementById('logOutput').textContent += '\n' + (translations['errorOccurred'] || '发生错误：') + xhr.statusText;
+            document.getElementById('logOutput').textContent += '\n' + (translations['errorOccurred'] || 'Error occurred: ') + xhr.statusText;
         } 
     };
 
     xhr.onerror = function() {
-        document.getElementById('logOutput').textContent += '\n' + (translations['networkError'] || '网络错误，请稍后再试。');
+        document.getElementById('logOutput').textContent += '\n' + (translations['networkError'] || 'Network error');
     };
 
     xhr.send();
@@ -815,7 +816,7 @@ function checkVersion(outputId, updateFiles, currentVersions) {
     modalContent.innerHTML = `
         <div class="text-center py-4">
             <div class="spinner-border text-info mb-3" role="status"></div>
-            <div>${translations['checkingVersion'] || '正在检查新版本...'}</div>
+            <div>${translations['checkingVersion'] || 'Checking for new version...'}</div>
         </div>
     `;
 
@@ -825,7 +826,7 @@ function checkVersion(outputId, updateFiles, currentVersions) {
         return fetch(file.url + '?check_version=true')
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`${translations['requestFailed'] || '请求失败'}: ${file.name}`);
+                    throw new Error(`${translations['requestFailed'] || 'Request failed'}: ${file.name}`);
                 }
                 return response.text();
             })
@@ -836,7 +837,7 @@ function checkVersion(outputId, updateFiles, currentVersions) {
                     rows.push(`
                         <tr>
                             <td class="text-center align-middle">${file.name}</td>
-                            <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || '未知'}</td>
+                            <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || 'Unknown'}</td>
                             <td class="text-center align-middle">${newVersion}</td>
                         </tr>
                     `);
@@ -855,8 +856,8 @@ function checkVersion(outputId, updateFiles, currentVersions) {
                     rows.push(`
                         <tr>
                             <td class="text-center align-middle">${file.name}</td>
-                            <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || '未知'}</td>
-                            <td class="text-center align-middle text-warning">${translations['cannotParseVersion'] || '无法解析版本信息'}</td>
+                            <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || 'Unknown'}</td>
+                            <td class="text-center align-middle text-warning">${translations['cannotParseVersion'] || 'Unable to parse version information'}</td>
                         </tr>
                     `);
                 }
@@ -865,8 +866,8 @@ function checkVersion(outputId, updateFiles, currentVersions) {
                 rows.push(`
                     <tr>
                         <td class="text-center align-middle">${file.name}</td>
-                        <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || '未知'}</td>
-                        <td class="text-center align-middle text-danger">${translations['networkError'] || '网络错误'}</td>
+                        <td class="text-center align-middle">${currentVersions[file.name] || translations['unknown'] || 'Unknown'}</td>
+                        <td class="text-center align-middle text-danger">${translations['networkError'] || 'Network error'}</td>
                     </tr>
                 `);
             });
@@ -879,9 +880,9 @@ function checkVersion(outputId, updateFiles, currentVersions) {
                     <table class="table table-borderless mb-0">
                         <thead>
                             <tr>
-                                <th class="text-center">${translations['componentName'] || '组件名称'}</th>
-                                <th class="text-center">${translations['currentVersion'] || '当前版本'}</th>
-                                <th class="text-center">${translations['latestVersion'] || '最新版本'}</th>
+                                <th class="text-center">${translations['componentName'] || 'Component name'}</th>
+                                <th class="text-center">${translations['currentVersion'] || 'Current version'}</th>
+                                <th class="text-center">${translations['latestVersion'] || 'Latest version'}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1038,6 +1039,16 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
             return;
         }
 
+        const storageKey = 'singboxVersionWarning';
+        let lastData = localStorage.getItem(storageKey);
+        let lastInfo = lastData ? JSON.parse(lastData) : null;
+        const now = Date.now();
+        const DAY_24 = 24 * 60 * 60 * 1000;
+
+        if (lastInfo && lastInfo.version === currentVersion && (now - lastInfo.timestamp < DAY_24)) {
+            return;
+        }
+
         var modalHtml = `
             <div class="modal fade" id="versionWarningModal" tabindex="-1" aria-labelledby="versionWarningModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
@@ -1064,6 +1075,11 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
         var modal = new bootstrap.Modal(document.getElementById('versionWarningModal'));
         modal.show();
 
+        localStorage.setItem(storageKey, JSON.stringify({
+            version: currentVersion,
+            timestamp: now
+        }));
+
         setTimeout(function() {
             modal.hide();
         }, 5000);
@@ -1072,9 +1088,3 @@ document.getElementById('checkCliverButton').addEventListener('click', function 
     document.addEventListener('DOMContentLoaded', checkSingboxVersion);
 </script>
 <footer class="text-center"><p><?php echo $footer ?></p></footer>
-
-
-
-
-
-
