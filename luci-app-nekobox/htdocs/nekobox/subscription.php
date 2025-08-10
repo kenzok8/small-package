@@ -551,6 +551,7 @@ EOL;
                     <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-translate-title="music_player"><i class="bi bi-music-note-beamed"></i></button>
                     <button type="button" id="toggleIpStatusBtn" class="btn btn-warning icon-btn me-2" onclick="toggleIpStatusBar()" data-translate-title="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
                     <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-translate-title="viewPortInfoButton"><i class="bi bi-plug"></i></button>
+                    <button type="button" class="btn-refresh-page btn btn-orange icon-btn me-2 d-none d-sm-inline"><i class="fas fa-sync-alt"></i></button>
                     <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-translate-title="component_bg_color"><i class="bi bi-palette"></i></button>
                     <input type="color" id="colorPicker" value="#0f3460" style="display: none;">
             </div>
@@ -815,42 +816,32 @@ EOL;
 
 <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <!-- Header -->
+        <form method="POST" class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="cronModalLabel" data-translate="cron_task_title"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-
-            <!-- Body -->
             <div class="modal-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="cronExpression" class="form-label" data-translate="cron_expression_label"></label>
-                        <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
-                    </div>
-
-                    <div class="alert alert-info">
-                        <strong data-translate="cron_hint">提示:</strong>
-                        <span data-translate="cron_expression_format">Cron 表达式格式：</span>
-                        <ul>
-                            <li><span data-translate="cron_format_help"></span></li>
-                            <li><?= $langData[$currentLang]['example1'] ?>: <code>0 2 * * *</code></li>
-                            <li><?= $langData[$currentLang]['example2'] ?>: <code>0 3 * * 1</code></li>
-                            <li><?= $langData[$currentLang]['example3'] ?>: <code>0 9 * * 1-5</code></li>
-                        </ul>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button"></button>
-                        <button type="submit" name="createCronJob" class="btn btn-primary" data-translate="save_button"></button>
-                    </div>
-                </form>
+                <div class="mb-3">
+                    <label for="cronExpression" class="form-label" data-translate="cron_expression_label"></label>
+                    <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
+                </div>
+                <div class="alert alert-info mb-0">
+                    <div class="fw-bold" data-translate="cron_hint"></div>
+                    <div data-translate="cron_expression_format"></div>
+                    <ul class="mt-2 mb-0">
+                        <li><span data-translate="cron_format_help"></span></li>
+                        <li><?= $langData[$currentLang]['example1'] ?>: <code>0 2 * * *</code></li>
+                        <li><?= $langData[$currentLang]['example2'] ?>: <code>0 3 * * 1</code></li>
+                        <li><?= $langData[$currentLang]['example3'] ?>: <code>0 9 * * 1-5</code></li>
+                    </ul>
+                </div>
             </div>
-        </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button"></button>
+                <button type="submit" name="createCronJob" class="btn btn-primary" data-translate="save_button"></button>
+            </div>
+        </form>
     </div>
 </div>
 

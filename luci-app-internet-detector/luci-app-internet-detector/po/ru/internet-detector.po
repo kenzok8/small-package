@@ -594,7 +594,7 @@ msgstr "Таймаут между остановкой и запуском ин�
 msgid "To support HTTP services you need to install curl."
 msgstr "Для поддержки HTTP сервисов необходимо установить curl."
 
-msgid "Tramsmit"
+msgid "Transmit"
 msgstr "Передача"
 
 msgid "Type a time string"

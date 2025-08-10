@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (file_exists($fileToDelete) && unlink($fileToDelete)) {
             echo '<div class="log-message alert alert-success" role="alert" data-translate="file_delete_success" data-dynamic-content="' . htmlspecialchars(basename($_POST['deleteFile'])) . '"></div>';
         } else {
-            echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_delete_failed"></div>';
+            //echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_delete_failed"></div>';
         }
     }
 
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (file_exists($fileToDelete) && unlink($fileToDelete)) {
             echo '<div class="log-message alert alert-success" role="alert" data-translate="config_delete_success" data-dynamic-content="' . htmlspecialchars(basename($_POST['deleteConfigFile'])) . '"></div>';
         } else {
-            echo '<div class="log-message alert alert-danger" role="alert" data-translate="config_delete_failed"></div>';
+           // echo '<div class="log-message alert alert-danger" role="alert" data-translate="config_delete_failed"></div>';
         }
     }
 
@@ -368,9 +368,9 @@ EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
             chmod($shellScriptPath, 0755); 
-            echo "<div class='log-message alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
+            echo "<div class='log-message alert alert-success'><span data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></span></div>";
         } else {
-            echo "<div class='log-message alert alert-danger' data-translate='shell_script_failed'></div>";
+            echo "<div class='log-message alert alert-danger'><span data-translate='shell_script_failed'></span></div>";
         }
     }
 }
@@ -623,6 +623,7 @@ $(document).ready(function() {
                     <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-translate-title="music_player"><i class="bi bi-music-note-beamed"></i></button>
                     <button type="button" id="toggleIpStatusBtn" class="btn btn-warning icon-btn me-2" onclick="toggleIpStatusBar()" data-translate-title="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
                     <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-translate-title="viewPortInfoButton"><i class="bi bi-plug"></i></button>
+                    <button type="button" class="btn-refresh-page btn btn-orange icon-btn me-2 d-none d-sm-inline"><i class="fas fa-sync-alt"></i></button>
                     <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-translate-title="component_bg_color"><i class="bi bi-palette"></i></button>
                     <input type="color" id="colorPicker" value="#0f3460" style="display: none;">
             </div>
@@ -812,12 +813,12 @@ $(document).ready(function() {
             <?php if ($isProxy): ?>
               <form method="post" class="d-inline m-0 p-0">
                 <input type="hidden" name="deleteFile" value="<?= htmlspecialchars($file) ?>">
-                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete()" data-translate-title="delete"><i class="bi bi-trash"></i></button>
+                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete('<?= htmlspecialchars($file) ?>', event)" data-translate-title="delete"><i class="bi bi-trash"></i></button>
               </form>
               <button type="button" class="btn btn-success icon-btn" data-bs-toggle="modal" data-bs-target="#renameModal" data-filename="<?= htmlspecialchars($file) ?>" data-filetype="proxy" data-translate-title="rename"><i class="bi bi-pencil"></i></button>
               <button type="button" class="btn btn-warning icon-btn" onclick="openEditModal('<?= htmlspecialchars($file) ?>','proxy')" data-translate-title="edit"><i class="bi bi-pen"></i></button>
               <button type="button" class="btn btn-info icon-btn" onclick="openUploadModal('proxy')" data-translate-title="upload"><i class="bi bi-upload"></i></button>
-              <form method="get" class="d-inline m-0 p-0">
+              <form method="get" class="d-inline m-0 p-0 no-loader">
                 <input type="hidden" name="downloadFile" value="<?= htmlspecialchars($file) ?>">
                 <input type="hidden" name="fileType" value="proxy">
                 <button type="submit" class="btn btn-primary icon-btn" data-translate-title="download"><i class="bi bi-download"></i></button>
@@ -825,12 +826,12 @@ $(document).ready(function() {
             <?php else: ?>
               <form method="post" class="d-inline m-0 p-0">
                 <input type="hidden" name="deleteConfigFile" value="<?= htmlspecialchars($file) ?>">
-                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete()" data-translate-title="delete"><i class="bi bi-trash"></i></button>
+                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete('<?= htmlspecialchars($file) ?>', event)" data-translate-title="delete"><i class="bi bi-trash"></i></button>
               </form>
               <button type="button" class="btn btn-success icon-btn" data-bs-toggle="modal" data-bs-target="#renameModal" data-filename="<?= htmlspecialchars($file) ?>" data-filetype="config" data-translate-title="rename"><i class="bi bi-pencil"></i></button>
               <button type="button" class="btn btn-warning icon-btn" onclick="openEditModal('<?= htmlspecialchars($file) ?>','config')" data-translate-title="edit"><i class="bi bi-pen"></i></button>
               <button type="button" class="btn btn-info icon-btn" onclick="openUploadModal('config')" data-translate-title="upload"><i class="bi bi-upload"></i></button>
-              <form method="get" class="d-inline m-0 p-0">
+              <form method="get" class="d-inline m-0 p-0 no-loader">
                 <input type="hidden" name="downloadFile" value="<?= htmlspecialchars($file) ?>">
                 <input type="hidden" name="fileType" value="config">
                 <button type="submit" class="btn btn-primary icon-btn" data-translate-title="download"><i class="bi bi-download"></i></button>
@@ -1421,8 +1422,17 @@ function handleFileUpload(file) {
         });
 }
 
-function confirmDelete() {
-    return confirm(langData[currentLang]['confirmDelete']);
+function confirmDelete(name, event) {
+    let confirmMessage = translations['delete_confirm'] 
+        || '⚠️ Are you sure you want to delete "{name}"? This action cannot be undone!';
+    
+    confirmMessage = confirmMessage.replace('{name}', name);
+
+    showConfirmation(encodeURIComponent(confirmMessage), () => {
+        event.target.closest('form').submit();
+    });
+
+    return false;
 }
 </script>
     <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">

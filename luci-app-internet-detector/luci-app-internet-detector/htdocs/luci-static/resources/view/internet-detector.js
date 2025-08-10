@@ -987,7 +987,7 @@ return view.extend({
 						o.depends({ ['mod_led_control_led' + i + '_action_1']: '4' });
 						o.modalonly = true;
 						o.value('link', _('Link On'));
-						o.value('tx', _('Tramsmit'));
+						o.value('tx', _('Transmit'));
 						o.value('rx', _('Receive'));
 						o.default = 'link';
 						o.rmempty = false;
@@ -1043,7 +1043,7 @@ return view.extend({
 						o.depends({ ['mod_led_control_led' + i + '_action_2']: '4' });
 						o.modalonly = true;
 						o.value('link', _('Link On'));
-						o.value('tx', _('Tramsmit'));
+						o.value('tx', _('Transmit'));
 						o.value('rx', _('Receive'));
 						o.default = 'link';
 						o.rmempty = false;

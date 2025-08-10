@@ -89,11 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $SUBSCRIBE_URL = trim($_POST['subscribeUrl']);
         
         if (empty($SUBSCRIBE_URL)) {
-            echo "<div class='log-message alert alert-warning' data-translate='subscribe_url_empty'></div>";
+            echo "<div class='log-message alert alert-warning'><span data-translate='subscribe_url_empty'></span></div>";
             exit;
         }
         
-        echo '<div class="log-message alert alert-success" data-translate="subscribe_url_saved" data-dynamic-content="' . $SUBSCRIBE_URL . '"></div>';
+        //echo '<div class="log-message alert alert-success" data-translate="subscribe_url_saved" data-dynamic-content="' . $SUBSCRIBE_URL . '"></div>';
     }
 
     if (isset($_POST['createShellScript'])) {
@@ -141,9 +141,9 @@ EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
             chmod($shellScriptPath, 0755);
-            echo "<div class='log-message alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
+            echo "<div class='log-message alert alert-success'><span data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></span></div>";
         } else {
-            echo "<div class='log-message alert alert-danger' data-translate='shell_script_failed'></div>";
+            echo "<div class='log-message alert alert-danger'><span data-translate='shell_script_failed'></span></div>";
         }
     }
 }
@@ -193,6 +193,7 @@ EOL;
                     <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-translate-title="music_player"><i class="bi bi-music-note-beamed"></i></button>
                     <button type="button" id="toggleIpStatusBtn" class="btn btn-warning icon-btn me-2" onclick="toggleIpStatusBar()" data-translate-title="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
                     <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-translate-title="viewPortInfoButton"><i class="bi bi-plug"></i></button>
+                    <button type="button" class="btn-refresh-page btn btn-orange icon-btn me-2 d-none d-sm-inline"><i class="fas fa-sync-alt"></i></button>
                     <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-translate-title="component_bg_color"><i class="bi bi-palette"></i></button>
                     <input type="color" id="colorPicker" value="#0f3460" style="display: none;">
             </div>
@@ -223,31 +224,31 @@ EOL;
             <fieldset class="mb-3">
                 <legend class="form-label" data-translate="chooseTemplateLabel">Choose Template</legend>
                 <div class="row">
-                    <div class="col">
+                    <div class="col d-flex align-items-center">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate0" name="defaultTemplate" value="0">
-                        <label class="form-check-label" for="useDefaultTemplate0" data-translate="defaultTemplateLabel">Default Template</label>
+                        <label class="form-check-label ms-2" for="useDefaultTemplate0" data-translate="defaultTemplateLabel">Default Template</label>
                     </div>
-                    <div class="col">
+                    <div class="col d-flex align-items-center">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate1" name="defaultTemplate" value="1">
-                        <label class="form-check-label" for="useDefaultTemplate1" data-translate="template1Label">Template 1</label>
+                        <label class="form-check-label ms-2" for="useDefaultTemplate1" data-translate="template1Label">Template 1</label>
                     </div>
-                    <div class="col">
+                    <div class="col d-flex align-items-center">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate2" name="defaultTemplate" value="2">
-                        <label class="form-check-label" for="useDefaultTemplate2" data-translate="template2Label">Template 2</label>
+                        <label class="form-check-label ms-2" for="useDefaultTemplate2" data-translate="template2Label">Template 2</label>
                     </div>
-                    <div class="col">
+                    <div class="col d-flex align-items-center">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate3" name="defaultTemplate" value="3" checked>
-                        <label class="form-check-label" for="useDefaultTemplate3" data-translate="template3Label">Template 3</label>
+                        <label class="form-check-label ms-2" for="useDefaultTemplate3" data-translate="template3Label">Template 3</label>
                     </div>
-                    <div class="col">
+                    <div class="col d-flex align-items-center">
                         <input type="radio" class="form-check-input" id="useDefaultTemplate4" name="defaultTemplate" value="4">
-                        <label class="form-check-label" for="useDefaultTemplate4" data-translate="template4Label">Template 4</label>
+                        <label class="form-check-label ms-2" for="useDefaultTemplate4" data-translate="template4Label">Template 4</label>
                     </div>
                 </div>
-                <div class="mt-3">
+                <div class="mt-3 d-flex align-items-center">
                     <input type="radio" class="form-check-input" id="useCustomTemplate" name="templateOption" value="custom">
-                    <label class="form-check-label mb-3" for="useCustomTemplate" data-translate="useCustomTemplateLabel">Use Custom Template URL</label>
-                    <input type="text" class="form-control" id="customTemplateUrl" name="customTemplateUrl" placeholder="Enter custom template URL" data-translate-placeholder="customTemplateUrlPlaceholder">
+                    <label class="form-check-label ms-2 mb-0" for="useCustomTemplate" data-translate="useCustomTemplateLabel">Use Custom Template URL</label>
+                    <input type="text" class="form-control ms-3" id="customTemplateUrl" name="customTemplateUrl" placeholder="Enter custom template URL" data-translate-placeholder="customTemplateUrlPlaceholder">
                 </div>
             </fieldset>
             <div class="d-flex flex-wrap gap-2 mb-4">
@@ -268,40 +269,41 @@ EOL;
                         <button type="submit" name="createShellScript" class="btn btn-primary">
                             <i class="bi bi-terminal"></i> <span data-translate="generateShellLabel">Generate Update Script</span>
                         </button>
-                    </form>
-                </div>
-            </div>
-        <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="cronModalLabel" data-translate="setCronModalTitle">Set Cron Job</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                   </form>
+             </div>
+         </div>
+    </div>
+<div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <form method="post" action="">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cronModalLabel" data-translate="setCronModalTitle">Set Cron Job</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>              
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="cronExpression" class="form-label" data-translate="cronExpressionLabel">Cron Expression</label>
+                        <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
                     </div>
-                    <form method="post" action="">
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="cronExpression" class="form-label" data-translate="cronExpressionLabel">Cron Expression</label>
-                                <input type="text" class="form-control" id="cronExpression" name="cronExpression" value="0 2 * * *" required>
-                            </div>
-                            <div class="alert alert-info">
-                                <strong data-translate="cron_hint"></strong> <span data-translate="cron_expression_format"></span>
-                                <ul>
-                                    <li><span data-translate="cron_format_help"></span></li>
-                                    <li><span data-translate="cron_example"></span><code>0 2 * * *</code></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancelButton">Cancel</button>
-                            <button type="submit" name="setCron" class="btn btn-primary" data-translate="saveButton">Save</button>
-                        </div>
-                    </form>
+                    <div class="alert alert-info mb-0">
+                        <div class="fw-bold" data-translate="cron_hint"></div>
+                        <div class="mt-2" data-translate="cron_expression_format"></div>
+                        <ul class="mt-2 mb-0">
+                            <li><span data-translate="cron_format_help"></span></li>
+                            <li>
+                                <span data-translate="cron_example"></span>
+                                <code>0 2 * * *</code>
+                            </li>
+                        </ul>
+                    </div>
+                </div>             
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancelButton">Cancel</button>
+                    <button type="submit" name="setCron" class="btn btn-primary" data-translate="saveButton">Save</button>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 <?php
@@ -309,19 +311,19 @@ function displayLogData($dataFilePath, $translations) {
     if (file_exists($dataFilePath)) {
         $savedData = file_get_contents($dataFilePath);
         ?>
-        <div class='container-sm mt-4 px-4 mb-4'>
+        <div class='container-sm mt-4  mb-4'>
             <div class='card'>
                 <div class='card-body'>
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3 class='card-title mb-0'><?= htmlspecialchars($translations['data_saved']) ?></h3>
                         <form method='post' action=''>
-                            <button class="btn btn-sm btn-danger" type="submit" name="clearData">
+                            <button class="btn btn-sm btn-danger mt-3" type="submit" name="clearData">
                                 <i class="bi bi-trash"></i> <?= htmlspecialchars($translations['clear_data']) ?>
                             </button>
                         </form>
                     </div>                   
-                    <div class="log-container border p-3 rounded">
-                        <pre class="mb-0 alert-heading"><?= htmlspecialchars($savedData) ?></pre>
+                    <div class="log-content-container overflow-auto" style="height: 320px;">
+                        <pre class="mb-0 alert-heading" style="margin-top: 15px; margin-left: 15px;"><?= htmlspecialchars($savedData) ?></pre>
                     </div>
                 </div>
             </div>
@@ -332,6 +334,7 @@ function displayLogData($dataFilePath, $translations) {
 
 displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
 ?>
+
 <script>
     document.querySelectorAll('input[name="defaultTemplate"]').forEach((elem) => {
         elem.addEventListener('change', function () {
@@ -377,7 +380,7 @@ displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
                 $logEntries[] = trim($dataContent);
             }
 
-            while (count($logEntries) > 10) {
+            while (count($logEntries) > 100) {
                 array_shift($logEntries);
             }
 
@@ -471,7 +474,7 @@ displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
 
             echo "<div class='result-container'>";
             echo "<form method='post' action=''>";
-            echo "<div class='mb-3 px-4'>";
+            echo "<div class='mb-3 px-2'>";
             echo "<textarea id='configContent' name='configContent' class='form-control' style='height: 300px;'>" . htmlspecialchars($downloadedContent) . "</textarea>";
             echo "</div>";
             echo "<div class='text-center' mb-3>";
@@ -481,8 +484,7 @@ displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
             echo "</div>";
             echo "</form>";
             echo "</div>";
-            echo "<div class='px-4'>";
-            echo "<div class='alert alert-info mt-3' style='word-wrap: break-word; overflow-wrap: break-word;'>";
+            echo "<div class='log-message alert alert-info mt-3' style='word-wrap: break-word; overflow-wrap: break-word;'>";
             foreach ($logMessages as $message) {
             echo $message . "<br>";
             }
@@ -493,9 +495,9 @@ displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
             if (isset($_POST['configContent'])) {
                 $editedContent = trim($_POST['configContent']);
                 if (file_put_contents($configFilePath, $editedContent) === false) {
-                    echo "<div class='alert alert-danger'>" . $translations['error_save_content'] . htmlspecialchars($configFilePath) . "</div>";
+                    echo "<div class='log-message alert alert-danger'>" . $translations['error_save_content'] . htmlspecialchars($configFilePath) . "</div>";
                 } else {
-                    echo "<div class='alert alert-success'>" . $translations['success_save_content'] . htmlspecialchars($configFilePath) . "</div>";
+                    echo "<div class='log-message alert alert-success'>" . $translations['success_save_content'] . htmlspecialchars($configFilePath) . "</div>";
                 }
             }
         }
@@ -503,7 +505,7 @@ displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['clearData'])) {
             if (file_exists($dataFilePath)) {
                 file_put_contents($dataFilePath, '');
-                echo "<div class='alert alert-success'>" . $translations['save_data_cleared'] . "</div>";
+                echo "<div class='log-message alert alert-success'>" . $translations['save_data_cleared'] . "</div>";
             }
         }
         ?>
@@ -512,82 +514,60 @@ displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
 </footer>
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
     function copyToClipboard() {
         const copyText = document.getElementById("configContent");
         copyText.select();
         document.execCommand("copy");
-        alert("Copied to clipboard");
+        alert("<?php echo $translations['copyToClipboardAlert']; ?>");
     }
-</script>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
     const customTemplateRadio = document.getElementById('useCustomTemplate');
     const customTemplateInput = document.getElementById('customTemplateUrl');
-    const allTemplateRadios = document.querySelectorAll('input[name="templateOption"]');
+    const allTemplateRadios = document.querySelectorAll('input[name="templateOption"], input[name="defaultTemplate"]');
 
     function toggleCustomInput() {
-        if (customTemplateRadio.checked) {
-            customTemplateInput.style.display = 'block';
-        } else {
-            customTemplateInput.style.display = 'none';
-        }
+        customTemplateInput.style.display = customTemplateRadio.checked ? 'block' : 'none';
     }
 
-    toggleCustomInput();
-
-    allTemplateRadios.forEach(radio => {
-        radio.addEventListener('change', toggleCustomInput);
-    });
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', (event) => {
+    const fileNameInput = document.getElementById('customFileName');
     const savedFileName = localStorage.getItem('customFileName');
-
+    
     if (savedFileName) {
-        document.getElementById('customFileName').value = savedFileName;
-        }
+        fileNameInput.value = savedFileName;
+    }
+
+    fileNameInput.addEventListener('input', function() {
+        localStorage.setItem('customFileName', this.value.trim());
     });
 
-document.getElementById('customFileName').addEventListener('input', function() {
-    const customFileName = this.value.trim();
-    localStorage.setItem('customFileName', customFileName);
-    });
-
-document.addEventListener("DOMContentLoaded", function () {
     const savedTemplate = localStorage.getItem("selectedTemplate");
     const customTemplateUrl = localStorage.getItem("customTemplateUrl");
 
-    const defaultTemplate = savedTemplate ?? "3";
-    const templateInput = document.querySelector(`input[name="defaultTemplate"][value="${defaultTemplate}"]`);
-    if (templateInput) {
-        templateInput.checked = true;
-    }
-
-    if (customTemplateUrl) {
-        document.getElementById("customTemplateUrl").value = customTemplateUrl;
+    if (savedTemplate === "custom" && customTemplateUrl) {
         document.getElementById("useCustomTemplate").checked = true;
+        document.getElementById("customTemplateUrl").value = customTemplateUrl;
+    } else if (savedTemplate) {
+        const templateInput = document.querySelector(`input[name="defaultTemplate"][value="${savedTemplate}"]`);
+        if (templateInput) templateInput.checked = true;
     }
 
-    document.querySelectorAll('input[name="defaultTemplate"]').forEach(input => {
-        input.addEventListener("change", function () {
-            localStorage.setItem("selectedTemplate", this.value);
-            localStorage.removeItem("customTemplateUrl"); 
+    allTemplateRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this === customTemplateRadio) {
+                localStorage.setItem("selectedTemplate", "custom");
+            } else if (this.name === "defaultTemplate") {
+                localStorage.setItem("selectedTemplate", this.value);
+                localStorage.removeItem("customTemplateUrl");
+            }
+            toggleCustomInput();
         });
     });
 
-    document.getElementById("customTemplateUrl").addEventListener("input", function () {
+    customTemplateInput.addEventListener('input', function() {
         localStorage.setItem("customTemplateUrl", this.value);
-        localStorage.setItem("selectedTemplate", "custom"); 
     });
 
-    document.getElementById("useCustomTemplate").addEventListener("change", function () {
-        localStorage.setItem("selectedTemplate", "custom");
-    });
+    toggleCustomInput();
 });
 </script>
-
-
-
