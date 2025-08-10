@@ -906,7 +906,7 @@ table.table tbody tr td.file-icon {
 
                         <td>
                             <div class="btn-group" role="group" aria-label="Actions">
-                                <div class="action-grid">
+                                <div class="action-grid mt-3">
                                     <button type="button"
                                             class="btn btn-outline-primary btn-sm action-btn"
                                             data-bs-toggle="modal"
