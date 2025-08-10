@@ -10,6 +10,9 @@
 
 ## 功能说明：
 
+### 任务设置2.2.4版（taskplan）
+#### 2025.8.7 任务设置2.2.4版：修复新版自定义脚本有时候无效问题。
+
 ### 任务设置2.2.2版（taskplan）
 #### 2025.4.9 任务设置2.2.2版：修复新版导致开机启动任务无效问题。
 
@@ -114,7 +117,7 @@
 
 ![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明3.jpg)
 
-|     <img src="https://img.shields.io/badge/-支付宝-F5F5F5.svg" href="#赞助支持本项目-" height="25" alt="图飞了😂"/>  |  <img src="https://img.shields.io/badge/-微信-F5F5F5.svg" height="25" alt="图飞了😂" href="#赞助支持本项目-"/>  | 
+|     <img src="https://img.shields.io/badge/-支付宝-F5F5F5.svg" href="#赞助支持本项目-" height="25" alt="图飞了"/>  |  <img src="https://img.shields.io/badge/-微信-F5F5F5.svg" height="25" alt="图飞了" href="#赞助支持本项目-"/>  | 
 | :-----------------: | :-------------: |
 |![xm1](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/支付宝.png) | ![xm1](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/微信.png) |
 
