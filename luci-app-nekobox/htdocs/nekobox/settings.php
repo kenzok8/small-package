@@ -415,7 +415,7 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning text-start" role="alert">
-                    <strong data-translate="note_label">Note:</strong>
+                    <strong data-translate="note_label"></strong>
                     <span data-translate="operation_modal_note">
                         Please select an operation based on your requirements
                     </span>
@@ -431,7 +431,8 @@ $razordVersion = getRazordVersion();
                         Update config file (backup)
                     </button>
                 </div>
-                <div class="d-flex justify-content-end mt-3">
+            </div>
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">
                         Close
                     </button>
@@ -439,7 +440,6 @@ $razordVersion = getRazordVersion();
             </div>
         </div>
     </div>
-</div>
 
 <div class="modal fade" id="versionSelectionModal" tabindex="-1" aria-labelledby="versionSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">

@@ -565,7 +565,7 @@ msgstr ""
 msgid "To support HTTP services you need to install curl."
 msgstr ""
 
-msgid "Tramsmit"
+msgid "Transmit"
 msgstr ""
 
 msgid "Type a time string"

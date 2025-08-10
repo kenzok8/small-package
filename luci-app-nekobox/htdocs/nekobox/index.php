@@ -254,7 +254,15 @@ check_and_clear_log() {
     local file="\$1"
     local name="\$2"
     if [ -f "\$file" ]; then
-        size=\$(stat -c %s "\$file")
+        if [ ! -r "\$file" ]; then
+            echo "\$(timestamp) \$name log file (\$file) exists but is not readable. Check permissions." >> \$LOG_PATH
+            return 1
+        fi
+        size=\$(ls -l "\$file" 2>/dev/null | awk '{print \$5}')
+        if [ -z "\$size" ] || ! echo "\$size" | grep -q '^[0-9]\+$'; then
+            echo "\$(timestamp) \$name log file (\$file) size could not be determined. ls command failed or output invalid." >> \$LOG_PATH
+            return 1
+        fi
         if [ \$size -gt \$MAX_SIZE ]; then
             echo "\$(timestamp) \$name log file (\$file) exceeded \$MAX_SIZE bytes (\$size). Clearing log..." >> \$LOG_PATH
             > "\$file"
@@ -833,63 +841,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
             </a>
         </div>
     </div>
-<script>
-function checkForUpdate() {
-    $.ajax({
-        url: 'check_update.php',
-        method: 'GET',
-        dataType: 'json',
-        success: function(data) {
-            if (data.hasUpdate) {
-                $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
-            }
-            console.log('Current Version:', data.currentVersion);
-            console.log('Latest Version:', data.latestVersion);
-            console.log('Has Update:', data.hasUpdate);
-
-            localStorage.setItem('lastUpdateCheck', Date.now());
-            startUpdateTimer(); 
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.error('AJAX Error:', textStatus, errorThrown);
-        }
-    });
-}
-
-function startUpdateTimer() {
-    const now = Date.now();
-    const lastCheck = localStorage.getItem('lastUpdateCheck');
-
-    let timeSinceLastCheck = lastCheck ? now - parseInt(lastCheck, 10) : Infinity;
-    let timeUntilNextCheck = Math.max(14400000 - timeSinceLastCheck, 0); 
-
-    console.log('Time until next check:', timeUntilNextCheck / 1000 / 60, 'minutes');
-
-    setTimeout(checkForUpdate, timeUntilNextCheck); 
-}
-
-startUpdateTimer(); 
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const titleElement = document.getElementById('neko-title');
-    const cachedTitle = localStorage.getItem('nekoTitle');
-
-    if (cachedTitle) {
-        titleElement.textContent = cachedTitle; 
-    }
-
-    function updateTitle(newTitle) {
-        titleElement.textContent = newTitle;
-        localStorage.setItem('nekoTitle', newTitle);
-    }
-
-});
-</script>
-<h2 id="neko-title" class="neko-title-style" style="cursor: pointer;" onclick="toggleControlPanel()">
-    NekoBox
-    <span id="control-panel-text" class="ms-2 text-success d-none" data-translate="control_panel">Control_Panel</span>
-</h2>
+<h2 id="neko-title" class="neko-title-style" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#systemInfoModal">NekoBox</h2>
 
 <div class="px-4 control-box">
     <div class="card">
@@ -1035,57 +987,6 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const mihomoControl = document.getElementById('mihomoControl');
-    const singboxControl = document.getElementById('singboxControl');
-
-    const mihomoStatus = <?php echo $neko_status; ?>; 
-    const singboxStatus = <?php echo $singbox_status; ?>; 
-
-    if (mihomoStatus === 1 && singboxStatus === 1) {
-        mihomoControl.style.display = 'block';
-        singboxControl.style.display = 'block';
-    } else if (mihomoStatus === 1) {
-        mihomoControl.style.display = 'block';
-        singboxControl.style.display = 'none';
-    } else if (singboxStatus === 1) {
-        mihomoControl.style.display = 'none';
-        singboxControl.style.display = 'block';
-    } else {
-        mihomoControl.style.display = 'block';
-        singboxControl.style.display = 'block';
-    }
-});
-</script>
-
-<script>
-    const lastShownTime = localStorage.getItem('lastCronMessageShownTime');
-    const currentTime = new Date().getTime(); 
-
-    if (!lastShownTime || (currentTime - lastShownTime) > 12 * 60 * 60 * 1000) {
-        document.getElementById('cron-success-message').style.display = 'block';
-        localStorage.setItem('lastCronMessageShownTime', currentTime);
-    }
-</script>
-
-<script>
-function saveConfigToLocalStorage() {
-    const selectedConfig = document.getElementById('configSelect').value;
-    if (selectedConfig) {
-        localStorage.setItem('selected_config', selectedConfig);
-    }
-}
-
-window.onload = function() {
-    const savedConfig = localStorage.getItem('selected_config');
-    if (savedConfig) {
-        const configSelect = document.getElementById('configSelect');
-        configSelect.value = savedConfig; 
-    }
-};
-</script>
-
 <style>
 .centered-img {
 	display: block;
@@ -1172,20 +1073,6 @@ window.onload = function() {
 	}
 }
 
-.triangle-icon {
-	width: 0;
-	height: 0;
-	border-left: 12px solid transparent;
-	border-right: 12px solid transparent;
-	border-top: 12px solid blue;
-	display: inline-block;
-	transition: transform 0.3s ease-in-out;
-}
-
-.rotated {
-	transform: rotate(180deg);
-}
-
 .form-inline {
 	display: inline-block;
 }
@@ -1222,88 +1109,67 @@ window.onload = function() {
 	color: var(--accent-color) !important;
 }
 </style>
-<div class="px-4"> 
-  <div id="collapsibleHeader" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 20px;">
-      <i id="toggleIcon" class="triangle-icon"></i> 
-  </div>
-  <div class="card mt-4 py-3"> 
-      <div class="text-center" id="systemHeader" class="system-header">
-          <h3 class="mb-0"></h3>
+  <div class="modal fade" id="systemInfoModal" tabindex="-1" aria-labelledby="systemInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title d-flex align-items-center" id="systemInfoModalLabel">
+            <span style="width: 320px;" data-translate="systemInfo">System Information</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="cpu" class="me-2"></i><span data-translate="systemInfo">System Info</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="systemInfo" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="database" class="me-2"></i><span data-translate="systemMemory">System Memory</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="ramUsage" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-item-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="zap" class="me-2"></i><span data-translate="avgLoad">Average Load</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="cpuLoad" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="clock" class="me-2"></i><span data-translate="uptime">Uptime</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="uptime" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="bar-chart-2" class="me-2"></i><span data-translate="trafficStats">Traffic Stats</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span class="form-control text-start ps-3">
+                <i class="fa fa-download me-1"></i><span id="downtotal"></span> | 
+                <i class="fa fa-upload me-1"></i><span id="uptotal"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close">Close</button>
+        </div>
       </div>
-      <div id="collapsible" class="card-body collapsible-body">
-          <!-- System Info -->
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="cpu"></i> <span data-translate="systemInfo">System Info</span></h6>
-              <div class="btn-group w-100">
-                  <span id="systemInfo" class="form-control text-center"></span>
-              </div>
-          </div>
-
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="database"></i> <span data-translate="systemMemory">System Memory</span></h6>
-              <div class="btn-group w-100">
-                  <span id="ramUsage" class="form-control text-center"></span>
-              </div>
-          </div>
-
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="zap"></i> <span data-translate="avgLoad">Average Load</span></h6>
-              <div class="btn-group w-100">
-                  <span id="cpuLoad" class="form-control text-center"></span>
-              </div>
-          </div>
-
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="clock"></i> <span data-translate="uptime">Uptime</span></h6>
-              <div class="btn-group w-100">
-                  <span id="uptime" class="form-control text-center"></span>
-              </div>
-          </div>
-
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="bar-chart-2"></i> <span data-translate="trafficStats">Traffic Stats</span></h6>
-              <div class="btn-group w-100">
-                  <span class="form-control text-center">
-                      <i class="fa fa-download"></i> <span id="downtotal"></span> | <i class="fa fa-upload"></i> <span id="uptotal"></span>
-                  </span>
-              </div>
-          </div>
-      </div>
+    </div>
   </div>
-</div>
-
 <script>
-    const collapsible = document.getElementById('collapsible');
-    const collapsibleHeader = document.getElementById('collapsibleHeader');
-    const toggleIcon = document.getElementById('toggleIcon');
-    const systemHeader = document.getElementById('systemHeader');  
-    
-    let isCollapsed = true;
-
-    if (localStorage.getItem('isCollapsed') === 'false') {
-        isCollapsed = false;
-        collapsible.style.display = 'block';  
-        systemHeader.style.display = 'block';  
-        toggleIcon.classList.add('rotated'); 
-    } else {
-        collapsible.style.display = 'none';   
-        systemHeader.style.display = 'none';   
-    }
-
-    collapsibleHeader.addEventListener('click', () => {
-        if (isCollapsed) {
-            collapsible.style.display = 'block';  
-            systemHeader.style.display = 'block';  
-            toggleIcon.classList.add('rotated');  
-        } else {
-            collapsible.style.display = 'none';   
-            systemHeader.style.display = 'none';   
-            toggleIcon.classList.remove('rotated'); 
-        }
-        isCollapsed = !isCollapsed;  
-        localStorage.setItem('isCollapsed', isCollapsed);  
-    });
-
     function fetchSystemStatus() {
         fetch('?ajax=1')
             .then(response => response.json())
@@ -1333,64 +1199,83 @@ window.onload = function() {
     fetchSystemStatus();  
 </script>
 
-<div class="px-4">
-<ul class="nav nav-pills mb-3 justify-content-center text-center" id="logTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true"><span data-translate="nekoBoxLog"></span></a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" id="mihomoLogTab" data-bs-toggle="pill" href="#mihomoLog" role="tab" aria-controls="mihomoLog" aria-selected="false"><span data-translate="mihomoLog"></span></a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" id="singboxLogTab" data-bs-toggle="pill" href="#singboxLog" role="tab" aria-controls="singboxLog" aria-selected="false"><span data-translate="singboxLog"></span></a>
-    </li>
-</ul>
+<div class="px-4 mt-4">
+    <div class="card border-1">
+        <ul class="nav nav-tabs mb-0 border-bottom-0 text-center" id="logTabs" role="tablist">
+            <li class="nav-item mb-2 me-1" role="presentation">
+                <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true">
+                    <span data-translate="nekoBoxLog"></span>
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="mihomoLogTab" data-bs-toggle="pill" href="#mihomoLog" role="tab" aria-controls="mihomoLog" aria-selected="false">
+                    <span data-translate="mihomoLog"></span>
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="singboxLogTab" data-bs-toggle="pill" href="#singboxLog" role="tab" aria-controls="singboxLog" aria-selected="false">
+                    <span data-translate="singboxLog"></span>
+                </a>
+            </li>
+        </ul>
 
-<div class="tab-content" id="logTabsContent">
-    <div class="tab-pane fade" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
-        <div class="card log-card">
-            <div class="card-body">
-                <pre id="plugin_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 320px; white-space: pre-wrap;" spellcheck="false"></pre>
+        <div class="tab-content px-3 py-1" id="logTabsContent">
+            <div class="tab-pane fade" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
+                <div class="log-content-container mb-1">
+                    <pre id="plugin_log" class="log-content-area" spellcheck="false"></pre>
+                </div>
+                <div class="log-actions mt-1">
+                    <form action="index.php" method="post">
+                        <button type="submit" name="clear_plugin_log" class="btn btn-clear-log">
+                            <i class="bi bi-trash"></i> <span data-translate="clearLog"></span>
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="card-footer d-flex align-items-center justify-content-center pt-3" style="padding-top:0.1rem; padding-bottom:0.1rem; line-height: 1;">
-                <form action="index.php" method="post">
-                    <button type="submit" name="clear_plugin_log" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <div class="tab-pane fade" id="mihomoLog" role="tabpanel" aria-labelledby="mihomoLogTab">
-        <div class="card log-card">
-            <div class="card-body">
-                <pre id="bin_logs" class="log-container form-control" style="resize: vertical; overflow: auto; height: 320px; white-space: pre-wrap;" spellcheck="false"></pre>
+            <div class="tab-pane fade" id="mihomoLog" role="tabpanel" aria-labelledby="mihomoLogTab">
+                <div class="log-content-container mb-1">
+                    <pre id="bin_logs" class="log-content-area" spellcheck="false"></pre>
+                </div>
+                <div class="log-actions mt-1">
+                    <form action="index.php" method="post">
+                        <button type="submit" name="neko" value="clear" class="btn btn-clear-log">
+                            <i class="bi bi-trash"></i> <span data-translate="clearLog"></span>
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="card-footer d-flex align-items-center justify-content-center pt-3" style="padding-top:0.1rem; padding-bottom:0.1rem; line-height: 1;">
-                <form action="index.php" method="post">
-                    <button type="submit" name="neko" value="clear" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <div class="tab-pane fade" id="singboxLog" role="tabpanel" aria-labelledby="singboxLogTab">
-        <div class="card log-card">
-            <div class="card-body">
-                <pre id="singbox_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 320px; white-space: pre-wrap;" spellcheck="false"></pre>
-            </div>
-            <div class="card-footer d-flex align-items-center justify-content-center pt-3" style="padding-top:0.1rem; padding-bottom:0.1rem; line-height: 1;">
-                <form action="index.php" method="post" class="form-inline">
-                    <div class="form-check form-check-inline mb-2">
-                        <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
-                        <label class="form-check-label" for="autoRefresh"><span data-translate="autoRefresh"></span></label>
-                    </div>
-                    <button type="submit" name="clear_singbox_log" class="btn btn-danger btn-sm me-2"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
-                    <button type="button" class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#cronModal"><i class="bi bi-clock"></i> <span data-translate="scheduledRestart"></span></button>
-                </form>
+            <div class="tab-pane fade" id="singboxLog" role="tabpanel" aria-labelledby="singboxLogTab">
+                <div class="log-content-container mb-1">
+                    <pre id="singbox_log" class="log-content-area" spellcheck="false"></pre>
+                </div>
+                <div class="log-actions multiple-actions mt-1">
+                    <form action="index.php" method="post">
+                        <div class="log-action-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                                <label class="form-check-label" for="autoRefresh">
+                                    <span data-translate="autoRefresh"></span>
+                                </label>
+                            </div>
+                            <button type="submit" name="clear_singbox_log" class="btn btn-clear-log">
+                                <i class="bi bi-trash"></i> <span data-translate="clearLog"></span>
+                            </button>
+                            <button type="button" class="btn btn-schedule" data-bs-toggle="modal" data-bs-target="#cronModal">
+                                <i class="bi bi-clock"></i> <span data-translate="scheduledRestart"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<footer class="text-center mt-1">
+    <p><?php echo $footer ?></p>
+</footer>
 
 <div class="modal fade" id="cronModal" tabindex="-1" role="dialog" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -1400,7 +1285,7 @@ window.onload = function() {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form id="cronForm" method="POST">
+        <form id="cronForm" method="POST" class="no-loader">
           <div class="form-group ">
             <label for="cronTime" data-translate="setRestartTime"></label>
             <input type="text" class="form-control mt-3" id="cronTime" name="cronTime" value="0 3 * * *" required>
@@ -1408,7 +1293,7 @@ window.onload = function() {
           <div class="alert alert-info mt-3">
             <strong><?= $langData[$currentLang]['tip'] ?>:</strong> <?= $langData[$currentLang]['cronFormat'] ?>:
             <ul>
-              <li><code>分钟 小时 日 月 星期</code></li>
+              <li><span data-translate="cron_format_help"></span></li>
               <li><?= $langData[$currentLang]['example1'] ?>: <code>0 2 * * *</code></li>
               <li><?= $langData[$currentLang]['example2'] ?>: <code>0 3 * * 1</code></li>
               <li><?= $langData[$currentLang]['example3'] ?>: <code>0 9 * * 1-5</code></li>
@@ -1426,6 +1311,7 @@ window.onload = function() {
 </div>
 
 <script>
+$(document).ready(function() {
     $('#cronForm').submit(function(event) {
         event.preventDefault(); 
         var cronTime = $('#cronTime').val(); 
@@ -1443,20 +1329,88 @@ window.onload = function() {
                 }
             },
             error: function() {
-                $('#resultMessage').html('<div class="alert alert-danger">设置 Cron 任务失败，请重试！</div>');
+                $('#resultMessage').html('<div class="alert alert-danger">Failed to set up Cron job, please try again!</div>');
             }
         });
     });
-</script>
 
-<script>
+    const mihomoControl = document.getElementById('mihomoControl');
+    const singboxControl = document.getElementById('singboxControl');
+    const mihomoStatus = <?php echo $neko_status; ?>; 
+    const singboxStatus = <?php echo $singbox_status; ?>; 
+
+    if (mihomoStatus === 1 && singboxStatus === 1) {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'block';
+    } else if (mihomoStatus === 1) {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'none';
+    } else if (singboxStatus === 1) {
+        mihomoControl.style.display = 'none';
+        singboxControl.style.display = 'block';
+    } else {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'block';
+    }
+
+    function checkForUpdate() {
+        $.ajax({
+            url: 'check_update.php',
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (data.hasUpdate) {
+                    $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
+                }
+                console.log('Current Version:', data.currentVersion);
+                console.log('Latest Version:', data.latestVersion);
+                console.log('Has Update:', data.hasUpdate);
+
+                localStorage.setItem('lastUpdateCheck', Date.now());
+                startUpdateTimer(); 
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('AJAX Error:', textStatus, errorThrown);
+            }
+        });
+    }
+
+    function startUpdateTimer() {
+        const now = Date.now();
+        const lastCheck = localStorage.getItem('lastUpdateCheck');
+        let timeSinceLastCheck = lastCheck ? now - parseInt(lastCheck, 10) : Infinity;
+        let timeUntilNextCheck = Math.max(14400000 - timeSinceLastCheck, 0); 
+
+        console.log('Time until next check:', timeUntilNextCheck / 1000 / 60, 'minutes');
+        setTimeout(checkForUpdate, timeUntilNextCheck); 
+    }
+
+    const tabElms = document.querySelectorAll('#logTabs .nav-link');
+    const savedTabId = localStorage.getItem('activeTab') || 'pluginLogTab';
+    const savedTab = document.getElementById(savedTabId);
+    if (savedTab) {
+        const tab = new bootstrap.Tab(savedTab);
+        tab.show();
+    }
+    tabElms.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(event) {
+            localStorage.setItem('activeTab', event.target.id);
+        });
+    });
+
+    const autoRefreshCheckbox = document.getElementById('autoRefresh');
+    let refreshInterval;
+    
+    const autoRefreshSetting = localStorage.getItem('autoRefresh');
+    autoRefreshCheckbox.checked = autoRefreshSetting === null || autoRefreshSetting === 'true';
+    
     function scrollToBottom(id) {
         const el = document.getElementById(id);
-        el.scrollTop = el.scrollHeight;
+        if (el) el.scrollTop = el.scrollHeight;
     }
 
     function handleAutoScroll() {
-        if (document.getElementById('autoRefresh').checked) {
+        if (autoRefreshCheckbox.checked) {
             scrollToBottom('plugin_log');
             scrollToBottom('singbox_log');
             scrollToBottom('bin_logs');
@@ -1472,56 +1426,28 @@ window.onload = function() {
         .then(([pluginData, singboxData]) => {
             document.getElementById('plugin_log').textContent = pluginData;
             document.getElementById('singbox_log').textContent = singboxData;
+            handleAutoScroll();
         })
         .catch(err => console.error('Error fetching logs:', err));
     }
 
+    function setupRefreshInterval() {
+        if (autoRefreshCheckbox.checked) {
+            refreshInterval = setInterval(fetchLogs, 5000);
+        }
+    }
+    
+    autoRefreshCheckbox.addEventListener('change', function() {
+        localStorage.setItem('autoRefresh', this.checked);
+        clearInterval(refreshInterval);
+        if (this.checked) {
+            setupRefreshInterval();
+        }
+    });
+
     fetchLogs();
     handleAutoScroll();
-
-    setInterval(fetchLogs, 5000);
-    setInterval(handleAutoScroll, 5000);
+    setupRefreshInterval();
+    startUpdateTimer();
+});
 </script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const autoRefreshCheckbox = document.getElementById('autoRefresh');
-        const autoRefreshSetting = localStorage.getItem('autoRefresh');
-        const isChecked = autoRefreshSetting === null || autoRefreshSetting === 'true';
-        autoRefreshCheckbox.checked = isChecked;
-
-        if (isChecked) {
-            intervalId = setInterval(fetchLogs, 5000);
-        }
-    });
-
-    document.getElementById('autoRefresh').addEventListener('change', function() {
-        localStorage.setItem('autoRefresh', this.checked);
-        if (this.checked) {
-            intervalId = setInterval(fetchLogs, 5000);
-        } else {
-            clearInterval(intervalId);
-        }
-    });
-</script>
-
-<script>
-    window.addEventListener('load', function() {
-        const activeTab = localStorage.getItem('activeTab') || 'pluginLogTab'; 
-        const activeTabLink = document.getElementById(activeTab);
-        const activeTabPane = document.getElementById(activeTab.replace('Tab', ''));      
-        activeTabLink.classList.add('active');  
-        activeTabPane.classList.add('show', 'active');  
-    });
-
-    document.querySelectorAll('.nav-link').forEach(tab => {
-        tab.addEventListener('click', function() {
-            const selectedTab = this.id;
-            localStorage.setItem('activeTab', selectedTab); 
-        });
-    });
-</script>
-<footer class="text-center">
-   <p><?php echo isset($message) ? $message : ''; ?></p>
-   <p><?php echo $footer; ?></p>
-</footer>
