@@ -1,6 +1,4 @@
-[![若部分图片无法正常显示，请挂上机场浏览或点这里到末尾看修复教程](https://visitor-badge-deno.deno.dev/sirpdboy.sirpdboy.svg)](#解决-github-网页上图片显示失败的问题) [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
 ## 访问数：![hello](https://views.whatilearened.today/views/github/sirpdboy/deplives.svg)[![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
-### 访问数：[![](https://visitor-badge.glitch.me/badge?page_id=sirpdboy-visitor-badge)] [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
 
 <h1 align="center">
   <br>任务设置（taskplan）<br>
@@ -9,7 +7,7 @@
   <p align="center">
 
   <a target="_blank" href="https://github.com/sirpdboy/luci-app-taskplan/releases">
-    <img src="https://img.shields.io/github/release/sirpdboy/luci-app-taskplan.svg?style=flat-square&label=ShellCrash&colorB=green">
+    <img src="https://img.shields.io/github/release/sirpdboy/luci-app-taskplan.svg?style=flat-square&label=Taskplan&colorB=green">
   </a>
 </p>
 
@@ -136,3 +134,5 @@
 <a href="#readme">
     <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="图飞了" title="返回顶部" align="right"/>
 </a>
+
+## 访问数：[![](https://visitor-badge-deno.deno.dev/sirpdboy.sirpdboy.svg)][![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
