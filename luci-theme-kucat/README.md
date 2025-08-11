@@ -13,6 +13,8 @@
 
 [中文](README_CN.md) | [English]
 
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明1.jpg)
+
 
 # [luci-theme-kucat](https://github.com/sirpdboy/luci-theme-kucat)
 - Development time: December 2021
