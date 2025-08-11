@@ -119,7 +119,6 @@ function deleteNekoTmpDirectory($dir) {
 }
 
 .navbar {
-	background-color: transparent;
 	backdrop-filter: none;
 	-webkit-backdrop-filter: none;
 	border: none;
@@ -138,6 +137,22 @@ function deleteNekoTmpDirectory($dir) {
 	transition: var(--transition);
 }
 
+.nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 2px;
+        background: var(--accent-color);
+        transition: width var(--transition-speed) ease;
+}
+
+.nav-link:hover::after {
+        width: 70%;
+}
+
 .navbar-brand:hover {
 	color: var(--accent-color) !important;
 }
@@ -151,13 +166,12 @@ function deleteNekoTmpDirectory($dir) {
 	align-items: center;
 	gap: 0.4rem;
 	font-weight: 500;
+        position: relative;
 }
 
 .navbar .nav-link.active:hover,
 .navbar .nav-link:hover {
-	background-color: var(--item-hover-bg);
-	box-shadow: var(--item-hover-shadow);
-	color: #fff !important;
+	color: var(--ocean-bg)  !important;
 }
 
 .navbar .nav-link.active {
@@ -5029,6 +5043,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	--c: 0.18;
 	--glass-blur: blur(20px);
 	--radius: 20px;
+        --glass-opacity: 0.85;
+        --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+        --shadow-intensity: 0.25;
+        --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        --transition-speed: 0.3s;
+        --highlight-intensity: 0.8;
 
 	--bg-body: oklch(40% var(--base-chroma) var(--base-hue) / 90%);
 	--bg-container: oklch(30% var(--base-chroma) var(--base-hue));
@@ -5384,19 +5404,31 @@ body {
 	font-weight: bold;
 }
 
+:root {
+	--glow-color: color-mix(in oklch, var(--accent-color), transparent 30%);
+	--glow-intensity: 0.8;
+	--glow-size: 8px;
+	--glow-animation-speed: 4s;
+}
+
 #floatingLyrics {
 	position: fixed;
 	top: 1%;
-        left: 4.5%;
+	left: 4.5%;
 	background: var(--bg-body);
 	padding: 15px 10px;
 	border-radius: 20px;
 	backdrop-filter: var(--glass-blur);
+	border: 1px solid color-mix(in oklch, var(--border-color), transparent 70%);
 	display: none;
 	opacity: 0;
+	transition: opacity 0.3s ease,
+        box-shadow 0.3s ease,
+        transform 0.2s ease-out;
+	z-index: 9999;
 	pointer-events: none;
-	cursor: default;
-	transition: opacity 0.3s ease;
+	cursor: grab;
+	user-select: none;
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
 	line-height: 2;
@@ -5406,7 +5438,28 @@ body {
 	width: 200px;
 	resize: none;
 	overflow: auto;
-	user-select: none;
+}
+
+#floatingLyrics.dragging {
+	cursor: grabbing;
+	transition: none;
+	filter: brightness(1.1);
+}
+
+[data-theme="dark"] #floatingLyrics {
+	--glow-base: color-mix(in oklch, var(--accent-color), transparent 70%);
+	--glow-trail: color-mix(in oklch, var(--ocean-bg), transparent 90%);
+	background: color-mix(in oklch, var(--bg-body), transparent 50%);
+	box-shadow: 0 0 10px var(--glow-base),
+        0 0 20px color-mix(in oklch, var(--glow-base), transparent 50%),
+        inset 0 0 15px color-mix(in oklch, white, transparent 80%);
+	border: 1px solid color-mix(in oklch, var(--accent-color), transparent 50%);
+}
+
+#floatingLyrics.show {
+	display: block;
+	opacity: 1;
+	animation: floatGlow 6s ease-in-out infinite alternate;
 }
 
 #floatingLyrics.visible {
@@ -6343,116 +6396,112 @@ h2#neko-title.neko-title-style {
 }
 
 .card {
-	--card-padding: 1.25rem;
-	--card-border-width: 1px;
 	position: relative;
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-	background: var(--bg-container) !important;
-	border: var(--card-border-width) solid var(--border-color);
-	border-radius: var(--radius);
-	box-shadow: 0 2px 8px color-mix(in oklch, var(--border-color), transparent 70%);
-	transform: translateY(-2px);
-	transition: var(--transition);
 	overflow: hidden;
-}
-
-.card-body:hover,
-.card:hover {
-	transform: translateY(-2px);
-	z-index: 10;
-	box-shadow: 0 1px 1px oklch(0% 0 0 / 0.05),
-        0 4px 8px oklch(0% 0 0 / 0.1),
-        0 8px 16px oklch(0% 0 0 / 0.1);
-}
-
-.card-header {
-	padding: calc(var(--card-padding) * 0.8) var(--card-padding);
-	background: var(--header-bg);
-	border-bottom: var(--card-border-width) solid var(--border-color);
-	font-weight: 600;
-	color: var(--text-primary);
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-}
-
-.card-body {
-	padding: var(--card-padding);
-	flex: 1 1 auto;
-	color: var(--text-primary);
-	background: var(--bg-container);
-}
-
-.card-footer {
-	padding: calc(var(--card-padding) * 0.8) var(--card-padding);
-	background: var(--header-bg);
-	border-top: var(--card-border-width) solid var(--border-color);
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-}
-
-.card-glass {
-	background: color-mix(in oklch, var(--card-bg), transparent 15%);
+	border-radius: var(--radius);
+	background: color-mix(in oklch, var(--card-bg), transparent calc(100% - var(--glass-opacity) * 100%));
+	border: var(--glass-border);
 	backdrop-filter: var(--glass-blur);
-	border-color: color-mix(in oklch, var(--border-color), white 30%);
-}
-
-.card-elevated {
-	--card-shadow-color: color-mix(in oklch, var(--border-color), black 30%);
-	box-shadow: 0 3px 6px var(--card-shadow-color),
-        0 8px 24px color-mix(in oklch, var(--card-shadow-color), transparent 70%);
-}
-
-.card-floating {
-	position: relative;
-	top: 0;
-	transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.card-floating:hover {
-	top: -4px;
-	box-shadow: 0 12px 28px color-mix(in oklch, var(--border-color), transparent 60%),
-        0 0 0 1px var(--accent-color);
-}
-
-.card-badge {
-	position: absolute;
-	top: -0.5rem;
-	right: 1rem;
-	background: var(--btn-danger-bg);
-	color: var(--text-primary);
-	padding: 0.25rem 0.75rem;
-	border-radius: calc(var(--radius) * 2);
-	font-size: 0.75rem;
-	font-weight: bold;
-	box-shadow: 0 2px 4px oklch(0% 0 0 / 0.2);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, calc(0.15 * var(--shadow-intensity))),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+	color: var(--text-primary) !important;
+	transition: all var(--transition-speed) ease;
 	z-index: 1;
+	transform-style: preserve-3d;
+	will-change: transform, box-shadow, opacity;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
+        0 1px 0 rgba(255, 255, 255, 0.1) inset;
+	transform: translateY(-3px);
 }
 
-@media (max-width: 768px) {
-	.card {
-		--card-padding: 1rem;
-		border-radius: calc(var(--radius) * 0.8);
+.card::before,
+.card::after {
+	content: '';
+	position: absolute;
+	border-radius: var(--radius);
+	pointer-events: none;
+	transition: all var(--transition-speed) ease;
+}
+
+.card::before {
+	top: -20%;
+	left: -20%;
+	width: 140%;
+	height: 140%;
+	background: linear-gradient(
+        var(--card-gradient-angle, 135deg),
+        color-mix(in oklch, var(--accent-color), transparent 70%) 0%,
+        color-mix(in oklch, var(--bg-container), transparent 70%) 50%,
+        color-mix(in oklch, var(--card-bg), transparent 70%) 100%
+  );
+	background-size: 300% 300%;
+	background-position: 0% 50%;
+	opacity: 0.7;
+	filter: blur(var(--card-blur-intensity, 15px));
+	z-index: -1;
+	animation: gradientMove var(--card-animation-duration, 15s) linear infinite;
+	backface-visibility: hidden;
+}
+
+.card::after {
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	box-shadow: inset 0 0 30px color-mix(in oklch, white, transparent 80%);
+	opacity: 0.1;
+}
+
+.card:hover {
+	transform: translateY(-2px) scale(1.01);
+	box-shadow: 0 16px 48px rgba(0, 123, 255, 0.4),
+    0 0 16px 2px rgba(0, 123, 255, 0.3);
+	transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.5), box-shadow 0.3s ease;
+}
+
+.card:hover::before {
+	opacity: var(--highlight-intensity, 0.9);
+	animation-duration: var(--card-hover-animation-duration, 7.5s);
+	filter: blur(var(--card-hover-blur-intensity, 20px));
+}
+
+.card:hover::after {
+	opacity: 0.3;
+}
+
+@keyframes gradientMove {
+	0%, 100% {
+		background-position: 0% 50%;
+		transform: translateZ(0);
 	}
 
-	.card-elevated {
-		box-shadow: 0 2px 4px color-mix(in oklch, var(--border-color), transparent 70%),
-            0 4px 12px color-mix(in oklch, var(--border-color), transparent 80%);
+	50% {
+		background-position: 100% 50%;
 	}
 }
 
-@media (prefers-color-scheme: dark) {
-	.card {
-		--card-shadow-color: oklch(0% 0 0 / 0.4);
-	}
+[data-theme="dark"] .card {
+	box-shadow: 0 0 20px 4px color-mix(in oklch, var(--accent-color), transparent 50%),
+    0 8px 32px rgba(0, 0, 0, calc(0.5 * var(--shadow-intensity)));
+}
 
-	.card-glass {
-		background: color-mix(in oklch, var(--card-bg), transparent 20%);
-		border-color: color-mix(in oklch, var(--border-color), black 30%);
-	}
+[data-theme="dark"] .card::after {
+	box-shadow: inset 0 0 40px color-mix(in oklch, var(--accent-color), transparent 70%);
+}
+
+[data-theme="dark"] .card:hover {
+	box-shadow: 0 0 40px 8px color-mix(in oklch, var(--accent-color), transparent 80%),
+    0 20px 60px rgba(0, 0, 0, 0.8);
+} 
+
+.footer-text {
+	color: var(--accent-color) !important;
+	font-weight: 700;
+}
+
+.footer-text b {
+	font-weight: 800;
+	letter-spacing: 0.5px;
 }
 
 .log-content-container {
@@ -6466,14 +6515,18 @@ h2#neko-title.neko-title-style {
 
 .log-actions {
 	padding: 0.5rem 0;
-	background: var(--bg-container);
-	border-radius: 0 0 var(--radius) var(--radius);
+	background: none !important;
+	border-radius: 0 !important;
+	border: none !important;
 	display: flex;
 	justify-content: center;
 }
 
 .log-actions.multiple-actions {
 	padding: 0.5rem;
+	background: none !important;
+	border-radius: 0 !important;
+	border: none !important;
 	justify-content: center;
 }
 
@@ -6483,6 +6536,9 @@ h2#neko-title.neko-title-style {
 	gap: 0.5rem;
 	flex-wrap: wrap;
 	width: auto;
+	background: none !important;
+	border-radius: 0 !important;
+	border: none !important;
 }
 
 .log-content-container:hover {

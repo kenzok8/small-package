@@ -904,7 +904,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
                             ?>
                         </select>
                         
-                        <div class="btn-group w-100">
+                        <div class="btn-group w-100  position-relative" style="top: 25px;">
                             <button type="submit" name="neko" value="start" 
                                     class="btn btn<?= ($neko_status == 1) ? "-outline" : "" ?>-success">
                                 <i class="bi bi-power"></i> 
@@ -945,7 +945,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
                             <?php endforeach; ?>
                         </select>
                         
-                        <div class="btn-group w-100">
+                        <div class="btn-group w-100 position-relative" style="top: 25px;">
                             <button type="submit" name="singbox" value="start" 
                                     class="btn btn<?= ($singbox_status == 1) ? "-outline" : "" ?>-success">
                                 <i class="bi bi-power"></i> 
