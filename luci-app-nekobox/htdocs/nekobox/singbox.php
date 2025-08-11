@@ -159,7 +159,7 @@ EOL;
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-sm container">
         <a class="navbar-brand d-flex align-items-center" href="#">
-            <i class="bi bi-palette-fill me-2" style="color: var(--accent-color); font-size: 1.8rem;"></i>
+            <?= $iconHtml ?>
             <span style="color: var(--accent-color); letter-spacing: 1px;"><?= htmlspecialchars($title) ?></span>
         </a>
         <button class="navbar-toggler" type="button" style="position: relative; z-index: 1;" data-bs-toggle="collapse" data-bs-target="#navbarContent">
@@ -311,207 +311,228 @@ function displayLogData($dataFilePath, $translations) {
     if (file_exists($dataFilePath)) {
         $savedData = file_get_contents($dataFilePath);
         ?>
-        <div class='container-sm mt-4  mb-4'>
+        <div class='container-sm py-2'>
             <div class='card'>
-                <div class='card-body'>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h3 class='card-title mb-0'><?= htmlspecialchars($translations['data_saved']) ?></h3>
-                        <form method='post' action=''>
-                            <button class="btn btn-sm btn-danger mt-3" type="submit" name="clearData">
-                                <i class="bi bi-trash"></i> <?= htmlspecialchars($translations['clear_data']) ?>
-                            </button>
-                        </form>
-                    </div>                   
-                    <div class="log-content-container overflow-auto" style="height: 320px;">
-                        <pre class="mb-0 alert-heading" style="margin-top: 15px; margin-left: 15px;"><?= htmlspecialchars($savedData) ?></pre>
+                <div class='card-body p-2'>
+                    <div class="d-flex justify-content-between align-items-center mb-2 mt-2">
+                        <h5 class='card-title mb-0'><?= htmlspecialchars($translations['data_saved']) ?></h5>
+                        <button class="btn btn-sm btn-danger" type="submit" name="clearData">
+                            <i class="bi bi-trash"></i> <?= htmlspecialchars($translations['clear_data']) ?>
+                        </button>
+                    </div>
+                    <div class="overflow-auto" style="height: 300px; border: 1px solid #ccc; border-radius: 4px; padding: 5px;">
+                        <pre class="p-1 m-0 ms-2"><?= htmlspecialchars($savedData) ?></pre>
                     </div>
                 </div>
             </div>
         </div>
         <?php
+
     }
 }
 
 displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
 ?>
 
-<script>
-    document.querySelectorAll('input[name="defaultTemplate"]').forEach((elem) => {
-        elem.addEventListener('change', function () {
-            const customTemplateDiv = document.getElementById('customTemplateUrlDiv');
-            if (this.value === 'custom') {
-                customTemplateDiv.style.display = 'block';
+<?php
+$dataFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
+$configFilePath = '/etc/neko/config/sing-box.json';
+$downloadedContent = '';
+$fixedFileName = 'subscription.txt';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
+    $subscribeUrl = trim($_POST['subscribeUrl'] ?? '');
+    $customTemplateUrl = trim($_POST['customTemplateUrl'] ?? '');
+    $templateOption = $_POST['templateOption'] ?? 'default';
+    $currentTime = date('Y-m-d H:i:s');
+
+    $lang = $_GET['lang'] ?? 'en';
+    $lang = isset($translations[$lang]) ? $lang : 'en';
+    $subscribeLinkText = $langData[$currentLang]['subscriptionLink'] ?? 'Subscription Link Address';
+
+    $dataContent = $currentTime . " | " . $subscribeLinkText . ": " . $subscribeUrl . "\n";
+
+    $customFileName = basename(trim($_POST['customFileName'] ?? ''));
+    if (empty($customFileName)) {
+        $customFileName = 'sing-box';
+    }
+    if (substr($customFileName, -5) !== '.json') {
+        $customFileName .= '.json';
+    }
+
+    $currentData = file_exists($dataFilePath) ? file_get_contents($dataFilePath) : '';
+    $logEntries = array_filter(explode("\n\n", trim($currentData)));
+    if (!in_array(trim($dataContent), $logEntries)) {
+        $logEntries[] = trim($dataContent);
+    }
+    while (count($logEntries) > 100) {
+        array_shift($logEntries);
+    }
+    file_put_contents($dataFilePath, implode("\n\n", $logEntries) . "\n\n");
+
+    $subscribeUrlEncoded = urlencode($subscribeUrl);
+
+    if (isset($_POST['defaultTemplate']) && $_POST['defaultTemplate'] == '0') {
+        $templateUrlEncoded = '';
+    } elseif ($templateOption === 'custom' && !empty($customTemplateUrl)) {
+        $templateUrlEncoded = urlencode($customTemplateUrl);
+    } else {
+        $defaultTemplates = [
+            '1' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_7.json",
+            '2' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_6.json",
+            '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json",
+            '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_12.json",
+            '5' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_2.json"
+        ];
+        $templateUrlEncoded = urlencode($defaultTemplates[$_POST['defaultTemplate']] ?? '');
+    }
+
+    if (empty($templateUrlEncoded)) {
+        $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}";
+    } else {
+        $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}&file={$templateUrlEncoded}";
+    }
+
+    $tempFilePath = '/etc/neko/' . $customFileName;
+    $logMessages = [];
+    $command = "wget -O " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
+    exec($command, $output, $returnVar);
+
+    if ($returnVar !== 0) {
+        $command = "curl -s -L -o " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
+        exec($command, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            $logMessages[] = "Unable to download content: " . htmlspecialchars($completeSubscribeUrl);
+        }
+    }
+
+    if ($returnVar === 0) {
+        $downloadedContent = file_get_contents($tempFilePath);
+        if ($downloadedContent === false) {
+            $logMessages[] = "Unable to read the downloaded file content";
+        } else {
+            $data = json_decode($downloadedContent, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $logMessages[] = "Invalid JSON format in downloaded file: " . json_last_error_msg();
             } else {
-                customTemplateDiv.style.display = 'none';
-            }
-        });
-    });
-</script>
-        <?php
-        $dataFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
-        $configFilePath = '/etc/neko/config/sing-box.json';
-        $downloadedContent = ''; 
-        $fixedFileName = 'subscription.txt'; 
+                $removedTags = [];
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
-            $subscribeUrl = trim($_POST['subscribeUrl']);
-            $customTemplateUrl = trim($_POST['customTemplateUrl']);
-            $templateOption = $_POST['templateOption'] ?? 'default';
-            $currentTime = date('Y-m-d H:i:s');
-
-            $lang = $_GET['lang'] ?? 'en'; 
-            $lang = isset($translations[$lang]) ? $lang : 'en'; 
-            $subscribeLinkText = $langData[$currentLang]['subscriptionLink'] ?? 'Subscription Link Address';
-    
-            $dataContent = $currentTime . " | " . $subscribeLinkText . ": " . $subscribeUrl . "\n";     
-    
-            $customFileName = trim($_POST['customFileName']);
-            if (empty($customFileName)) {
-               $customFileName = 'sing-box';  
-            }
-
-            if (substr($customFileName, -5) !== '.json') {
-                $customFileName .= '.json';
-            }
-
-            $currentData = file_exists($dataFilePath) ? file_get_contents($dataFilePath) : '';
-            $logEntries = array_filter(explode("\n\n", trim($currentData)));
-            if (!in_array(trim($dataContent), $logEntries)) {
-                $logEntries[] = trim($dataContent);
-            }
-
-            while (count($logEntries) > 100) {
-                array_shift($logEntries);
-            }
-
-            file_put_contents($dataFilePath, implode("\n\n", $logEntries) . "\n\n");
-
-            $subscribeUrlEncoded = urlencode($subscribeUrl);
-
-            if (isset($_POST['defaultTemplate']) && $_POST['defaultTemplate'] == '0') {
-                $templateUrlEncoded = '';  
-            } elseif ($templateOption === 'custom' && !empty($customTemplateUrl)) {
-                $templateUrlEncoded = urlencode($customTemplateUrl);
-            } else {
-                $defaultTemplates = [
-                    '1' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_7.json",
-                    '2' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_6.json",
-                    '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json",
-                    '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_12.json",
-                    '5' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_2.json"
-                ];
-
-                $templateUrlEncoded = urlencode($defaultTemplates[$_POST['defaultTemplate']] ?? '');
-            }
-
-            if (empty($templateUrlEncoded)) {
-                $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}";
-            } else {
-                $completeSubscribeUrl = "https://sing-box-subscribe-doraemon.vercel.app/config/{$subscribeUrlEncoded}&file={$templateUrlEncoded}";
-            }
-
-            $tempFilePath = '/etc/neko/' . $customFileName;
-            $logMessages = [];
-            $command = "wget -O " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
-            exec($command, $output, $returnVar);
-
-            if ($returnVar !== 0) {
-                $command = "curl -s -L -o " . escapeshellarg($tempFilePath) . " " . escapeshellarg($completeSubscribeUrl);
-                exec($command, $output, $returnVar);
-
-            if ($returnVar !== 0) {
-                $logMessages[] = "Unable to download content: " . htmlspecialchars($completeSubscribeUrl);
+                if (isset($data['outbounds']) && is_array($data['outbounds'])) {
+                    $data['outbounds'] = array_values(array_filter($data['outbounds'], function ($node) use (&$removedTags) {
+                        if (
+                            (isset($node['method']) && stripos($node['method'], 'chacha20') !== false) ||
+                            (isset($node['plugin']) && stripos($node['plugin'], 'v2ray-plugin') !== false)
+                        ) {
+                            if (isset($node['tag'])) {
+                                $removedTags[] = $node['tag'];
+                            }
+                            return false;
+                        }
+                        return true;
+                    }));
                 }
-            }
 
-            if ($returnVar === 0) {
-                $downloadedContent = file_get_contents($tempFilePath);
+                if (isset($data['outbounds']) && is_array($data['outbounds'])) {
+                    foreach ($data['outbounds'] as &$node) {
+                        if (
+                            isset($node['type']) && in_array($node['type'], ['selector', 'urltest'], true) &&
+                            isset($node['outbounds']) && is_array($node['outbounds'])
+                        ) {
+                            $filteredOutbounds = array_filter($node['outbounds'], function ($tag) use ($removedTags) {
+                                return !in_array($tag, $removedTags, true);
+                            });
+
+                            $filteredOutbounds = array_map(function ($tag) {
+                                return $tag === 'Proxy' ? 'DIRECT' : $tag;
+                            }, $filteredOutbounds);
+
+                            if (empty($filteredOutbounds)) {
+                                $filteredOutbounds = ['DIRECT'];
+                            }
+
+                            $node['outbounds'] = array_values($filteredOutbounds);
+                        }
+                    }
+                    unset($node);
+                }
+
+                if (isset($_POST['defaultTemplate']) && $_POST['defaultTemplate'] == '0') {
+                    $data['clash_api'] = [
+                        'external_ui' => '/etc/neko/ui/',
+                        'external_controller' => '0.0.0.0:9090',
+                        'secret' => 'Akun',
+                        'external_ui_download_url' => ''
+                    ];
+                }
+
+                $downloadedContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                 if ($downloadedContent === false) {
-                    $logMessages[] = "Unable to read the downloaded file content";
+                    $logMessages[] = "Failed to encode JSON: " . json_last_error_msg();
                 } else {
-                    $downloadedContent = preg_replace_callback(
-                        '/\{\s*"tag":\s*"(.*?)",\s*"type":\s*"selector",\s*"outbounds":\s*\[\s*"Proxy"\s*\]\s*\}/s',
-                        function ($matches) {
-                            return str_replace('"Proxy"', '"DIRECT"', $matches[0]);
-                        },
-                        $downloadedContent
-                    );
-
-                    if (isset($_POST['defaultTemplate']) && $_POST['defaultTemplate'] == '0') {
-                $replacement = '
-  "clash_api": {
-      "external_ui": "/etc/neko/ui/",
-      "external_controller": "0.0.0.0:9090",
-      "secret": "Akun",
-      "external_ui_download_url": ""
-    },';  
-
-                $downloadedContent = preg_replace('/"clash_api":\s*\{.*?\},/s', $replacement, $downloadedContent);
-            }
-
-                    $tmpFileSavePath = '/etc/neko/proxy_provider/' . $fixedFileName;  
+                    $tmpFileSavePath = '/etc/neko/proxy_provider/' . $fixedFileName;
                     if (file_put_contents($tmpFileSavePath, $completeSubscribeUrl) === false) {
                         $logMessages[] = $translations['save_subscribe_url_failed'] . $tmpFileSavePath;
                     } else {
                         $logMessages[] = $translations['subscribe_url_saved'] . $tmpFileSavePath;
                     }
 
-                    $configFilePath = '/etc/neko/config/' . $customFileName; 
+                    $configFilePath = '/etc/neko/config/' . $customFileName;
                     if (file_put_contents($configFilePath, $downloadedContent) === false) {
                         $logMessages[] = $translations['save_config_failed'] . $configFilePath;
                     } else {
                         $logMessages[] = $translations['config_saved'] . $configFilePath;
                     }
-
-                    if (file_exists($tempFilePath)) {
-                        unlink($tempFilePath); 
-                        $logMessages[] = $translations['temp_file_cleaned'] . $tempFilePath;
-                    } else {
-                        $logMessages[] = $translations['temp_file_not_found'] . $tempFilePath;
-                    }
                 }
-            }
 
-            echo "<div class='result-container'>";
-            echo "<form method='post' action=''>";
-            echo "<div class='mb-3 px-2'>";
-            echo "<textarea id='configContent' name='configContent' class='form-control' style='height: 300px;'>" . htmlspecialchars($downloadedContent) . "</textarea>";
-            echo "</div>";
-            echo "<div class='text-center' mb-3>";
-            echo "<button class='btn btn-info me-3' type='button' onclick='copyToClipboard()'><i class='bi bi-clipboard'></i> " . $translations['copy_to_clipboard'] . "</button>";
-            echo "<input type='hidden' name='saveContent' value='1'>";
-            echo "<button class='btn btn-success' type='submit'><i class='bi bi-save'></i> " . $translations['save_changes'] . "</button>";
-            echo "</div>";
-            echo "</form>";
-            echo "</div>";
-            echo "<div class='log-message alert alert-info mt-3' style='word-wrap: break-word; overflow-wrap: break-word;'>";
-            foreach ($logMessages as $message) {
-            echo $message . "<br>";
-            }
-            echo "</div>";
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['saveContent'])) {
-            if (isset($_POST['configContent'])) {
-                $editedContent = trim($_POST['configContent']);
-                if (file_put_contents($configFilePath, $editedContent) === false) {
-                    echo "<div class='log-message alert alert-danger'>" . $translations['error_save_content'] . htmlspecialchars($configFilePath) . "</div>";
+                if (file_exists($tempFilePath)) {
+                    unlink($tempFilePath);
+                    $logMessages[] = $translations['temp_file_cleaned'] . $tempFilePath;
                 } else {
-                    echo "<div class='log-message alert alert-success'>" . $translations['success_save_content'] . htmlspecialchars($configFilePath) . "</div>";
+                    $logMessages[] = $translations['temp_file_not_found'] . $tempFilePath;
                 }
             }
         }
+    }
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['clearData'])) {
-            if (file_exists($dataFilePath)) {
-                file_put_contents($dataFilePath, '');
-                echo "<div class='log-message alert alert-success'>" . $translations['save_data_cleared'] . "</div>";
-            }
+    echo "<div class='result-container'>";
+    echo "<form method='post' action=''>";
+    echo "<div class='mb-3 px-2'>";
+    echo "<textarea id='configContent' name='configContent' class='form-control' style='height: 300px;'>" . htmlspecialchars($downloadedContent) . "</textarea>";
+    echo "</div>";
+    echo "<div class='text-center' mb-3>";
+    echo "<button class='btn btn-info me-3' type='button' onclick='copyToClipboard()'><i class='bi bi-clipboard'></i> " . $translations['copy_to_clipboard'] . "</button>";
+    echo "<input type='hidden' name='saveContent' value='1'>";
+    echo "<button class='btn btn-success' type='submit'><i class='bi bi-save'></i> " . $translations['save_changes'] . "</button>";
+    echo "</div>";
+    echo "</form>";
+    echo "</div>";
+    echo "<div class='log-message alert alert-success mt-3' style='word-wrap: break-word; overflow-wrap: break-word;'>";
+    foreach ($logMessages as $message) {
+        echo $message . "<br>";
+    }
+    echo "</div>";
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['saveContent'])) {
+    if (isset($_POST['configContent'])) {
+        $editedContent = trim($_POST['configContent']);
+        if (file_put_contents($configFilePath, $editedContent) === false) {
+            echo "<div class='log-message alert alert-danger'>" . $translations['error_save_content'] . htmlspecialchars($configFilePath) . "</div>";
+        } else {
+            echo "<div class='log-message alert alert-success'>" . $translations['success_save_content'] . htmlspecialchars($configFilePath) . "</div>";
         }
-        ?>
-      <footer class="text-center">
-    <p><?php echo $footer ?></p>
-</footer>
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['clearData'])) {
+    if (file_exists($dataFilePath)) {
+        file_put_contents($dataFilePath, '');
+        echo "<div class='log-message alert alert-info'>" . $translations['save_data_cleared'] . "</div>";
+    }
+}
+?>
+ <footer class="text-center"><p><?php echo $footer ?></p></footer>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -569,5 +590,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     toggleCustomInput();
+
+    document.querySelectorAll('input[name="defaultTemplate"]').forEach((elem) => {
+        elem.addEventListener('change', function () {
+            const customTemplateDiv = document.getElementById('customTemplateUrlDiv');
+            if (this.value === 'custom') {
+                customTemplateDiv.style.display = 'block';
+            } else {
+                customTemplateDiv.style.display = 'none';
+            }
+        });
+    });
 });
 </script>

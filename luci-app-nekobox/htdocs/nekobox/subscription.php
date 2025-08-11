@@ -517,7 +517,7 @@ EOL;
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-sm container">
         <a class="navbar-brand d-flex align-items-center" href="#">
-            <i class="bi bi-palette-fill me-2" style="color: var(--accent-color); font-size: 1.8rem;"></i>
+            <?= $iconHtml ?>
             <span style="color: var(--accent-color); letter-spacing: 1px;"><?= htmlspecialchars($title) ?></span>
         </a>
         <button class="navbar-toggler" type="button" style="position: relative; z-index: 1;" data-bs-toggle="collapse" data-bs-target="#navbarContent">

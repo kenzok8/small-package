@@ -54,6 +54,7 @@ $title = "Nekobox";
 $configFile = '/etc/config/neko';
 $enabled = null;
 $singbox_enabled = null;
+$iconHtml = '';
 
 if (file_exists($configFile)) {
     $lines = file($configFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -71,12 +72,14 @@ if (file_exists($configFile)) {
     }
 }
 
-if ($enabled === 1) {
-    $title .= " - Mihomo";
-}
-
 if ($singbox_enabled === 1) {
     $title .= " - Singbox";
+    $iconHtml = '<img src="./assets/img/singbox.svg" alt="Singbox" class="me-2" style="width: 1.8rem; height: 1.8rem;">';
+} elseif ($enabled === 1) {
+    $title .= " - Mihomo";
+    $iconHtml = '<img src="./assets/img/mihomo.png" alt="Mihomo" class="me-1" style="width: 2.8rem; height: 2.8rem;">';
+} else {
+    $iconHtml = '<i class="bi bi-palette-fill me-2" style="color: var(--accent-color); font-size: 1.8rem;"></i>';
 }
 $footer = '<span class="footer-text">©2025 <b>Thaolga</b></span>';
 ?>
