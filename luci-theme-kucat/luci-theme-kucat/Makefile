@@ -10,13 +10,12 @@ THEME_TITLE:=Kucat Theme
 PKG_NAME:=luci-theme-$(THEME_NAME)
 LUCI_TITLE:=Kucat Theme by sirpdboy
 LUCI_DEPENDS:=
-PKG_VERSION:=2.6.12
-PKG_RELEASE:=20250802
+PKG_VERSION:=2.6.13
+PKG_RELEASE:=20250810
 
 define Package/luci-theme-$(THEME_NAME)/conffiles
 /www/luci-static/resources/background/
 /www/luci-static/kucat/img/
-/etc/config/kucat
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
