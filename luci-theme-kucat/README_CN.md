@@ -1,13 +1,13 @@
 ![hello](https://views.whatilearened.today/views/github/sirpdboy/deplives.svg) [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
 
 <h1 align="center">
-  <br>luci-theme-kucat <br>
+  <br>luci-theme-kucat<br>
 </h1>
 
   <p align="center">
 
-  <a target="_blank" href="https://github.com/sirpdboy/luci-theme-kucat /releases">
-    <img src="https://img.shields.io/github/release/sirpdboy/luci-theme-kucat .svg?style=flat-square&label=luci-theme-kucat &colorB=green">
+  <a target="_blank" href="https://github.com/sirpdboy/luci-theme-kucat/releases">
+    <img src="https://img.shields.io/github/release/sirpdboy/luci-theme-kucat.svg?style=flat-square&label=luci-theme-kucat&colorB=green">
   </a>
 </p>
 
