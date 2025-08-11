@@ -1644,6 +1644,7 @@ table>tbody>tr:first-child>td,table>tfoot>tr:first-child>td,table>thead>tr:first
 }
 
 .cbi-tab-descr {
+  line-height: 1.3;
   padding: 0 0 0.5rem 1.5rem
 }
 
@@ -1903,7 +1904,7 @@ button:hover,.btn:hover,.cbi-button:hover {
   height: 0;
   opacity: 0;
   margin: 0;
-  padding: 0rem 0rem !important
+  padding: 0 !important
 }
 
 [data-tab-active="true"] {
@@ -1945,7 +1946,8 @@ button:hover,.btn:hover,.cbi-button:hover {
 .cbi-value {
   display: inline-block;
   width: 100%;
-  line-height: 2.4rem
+  padding: 0 0.3rem;
+  line-height: 2.3rem
 }
 
 .cbi-value .cbi-filebrowser {
@@ -2382,6 +2384,7 @@ button:hover,.btn:hover,.cbi-button:hover {
   cursor: pointer;
 }
 
+
 .cbi-dropdown>ul>li[display],.cbi-dropdown[open]>ul.preview,.cbi-dropdown[open]>ul.dropdown>li,.cbi-dropdown[multiple]>ul>li>label,.cbi-dropdown[multiple][open]>ul.dropdown>li,.cbi-dropdown[multiple][more]>.more,.cbi-dropdown[multiple][empty]>.more {
   display: flex;
   align-items: center;
@@ -2804,6 +2807,11 @@ td>.ifacebadge,.td>.ifacebadge {
   box-shadow: none;
   height: 20px !important;
   background-color: rgba(255,255,255,0)
+}
+.nft-rules tr > td, .nft-rules tr > th {
+  padding: .25em !important;
+  padding: 0 0.3rem!important;
+  text-align: left!important;
 }
 
 .cbi-section em {
@@ -3483,15 +3491,12 @@ body.lang_pl.node-main-login .cbi-value-title {
 }
 
 .node-main-login footer {
-    position: absolute;
     display: none;
-    bottom: 0;
     margin-bottom: 3rem;
     color: #eee;
-    text-align: center;
     text-shadow: 0 0 2px #222;
     font-size: var(--font-x);
-    background-color: rgba(255,255,255,0);
+  background-color: rgba(255,255,255,0)
 }
 
 
@@ -4111,22 +4116,22 @@ border: 0px solid rgba(255,255,255,0.3) !important;
   background-color: rgba(255,255,255,0.1) !important;
   border-right: 1px solid #777 !important
 }
-#cbi-nikki  .cbi-value-field,
-#cbi-nikki .cbi-section-table-row>.cbi-value-field .cbi-dropdown,
-#cbi-nikki .cbi-value-field .cbi-dropdown,
-#cbi-nikki .cbi-dynlist
+#cbi-nikki-proxy  .cbi-value-field,
+#cbi-nikki-proxy .cbi-section-table-row>.cbi-value-field .cbi-dropdown,
+#cbi-nikki-proxy .cbi-value-field .cbi-dropdown,
+#cbi-nikki-proxy .cbi-dynlist
 {
   min-width: 12.5rem;
   max-width: 16.5rem;
   width: auto;
 }
-#cbi-nikki .cbi-dynlist>.add-item {
+#cbi-nikki-proxy .cbi-dynlist>.add-item {
   min-width: 10rem;
   width: auto;
 }
-#cbi-nikki .cbi-dynlist>.add-item:not([ondrop])>input, 
-#cbi-nikki .cbi-dynlist>.add-item input, 
-#cbi-nikki .cbi-dynlist>.item>span
+#cbi-nikki-proxy .cbi-dynlist>.add-item:not([ondrop])>input, 
+#cbi-nikki-proxy .cbi-dynlist>.add-item input, 
+#cbi-nikki-proxy .cbi-dynlist>.item>span
 {
   min-width: 10rem;
   max-width: 14rem;
@@ -4189,6 +4194,7 @@ select,input,.cbi-dropdown,.btn,button,.cbi-button,.item::after {
 }
 
 #cbi-appfilter>div>div {
+  overflow: auto;
   background-color: rgba(var(--primary-rgbbody),1) !important
 }
 
@@ -4218,6 +4224,7 @@ select,input,.cbi-dropdown,.btn,button,.cbi-button,.item::after {
 }
 
 #cbi-appfilter #detailsModal .tab-body {
+  overflow: auto;
   background-color: rgba(248,248,248,0.9) !important
 }
 
@@ -4598,18 +4605,16 @@ div#file-manager-container #status-bar #status-info {
     text-align: center
   }
 
-  .td.cbi-section-actions {
-    vertical-align: bottom
-  }
-
   .tr[data-title]::before,.tr.cbi-section-table-titles.named::before {
     flex: 1 1 100%
   }
 
-  .td[data-title],[data-page^="admin-status-realtime"] .td[id] {
+  [data-page^="admin-status-realtime"] .td[id] {
     text-align: left
   }
-
+  .cbi-tab-descr {
+    padding: 0 0.3rem;
+  }
   .td.cbi-section-actions>*>*,.td.cbi-section-actions>*>form>* {
     margin: 0 2px
   }
@@ -4776,11 +4781,15 @@ div#file-manager-container #status-bar #status-info {
     width: 100%;
   }
   
-.cbi-dropdown[open]>ul.dropdown {
+  .cbi-dropdown[open]>ul.dropdown {
   overflow: auto;
   max-width: 100%;
   margin: auto;
+  max-height: 8rem !important;
   padding: 0 !important;
+  }
+  table>tbody>tr>td, table>tfoot>tr>td, table>thead>tr>td {
+    padding: 0;
   }
 
   .cbi-input-textarea,textarea {
@@ -4799,6 +4808,7 @@ div#file-manager-container #status-bar #status-info {
   }
   .cbi-value-title,.cbi-value-field {
     display: inline-block;
+    padding: 0 0.3rem;
     text-align: left
   }
 
@@ -4827,12 +4837,18 @@ div#file-manager-container #status-bar #status-info {
   }
 
   [data-page="admin-network-dhcp"] [data-tab-active="true"] {
-    padding: 1rem 1rem !important
+    padding: 0 !important
   }
 
 
   #file-manager-container .file-manager-header {
     flex-wrap: wrap
+  }
+}
+
+@media (max-width: 600px) {
+  .app-item {
+    width: 50%!important
   }
 }
 

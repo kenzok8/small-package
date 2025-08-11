@@ -13,7 +13,7 @@ end
 function get_theme()
     local kucat = nil
     local config_exists = false
-    local bgqs = "0"
+    local bgqs = "1"
     local primaryrgbm = "45,102,147"
     local primaryrgbmts = "0"
     local mode = "auto"
@@ -45,8 +45,9 @@ function get_theme()
 end
 
 function set_theme()
-    local kucat
-    local themes = http.formvalue("theme")
+    local kucat = nil
+    local config_exists = false
+    local theme = http.formvalue("theme")
     if fs.access("/etc/config/advancedplus") then
        kucat = 'advancedplus'
        config_exists = true
@@ -54,22 +55,15 @@ function set_theme()
        kucat = 'kucat'
        config_exists = true
     end
-    print("theme value:", themes)
-    
-
-    
     if (config_exists) then
            local esc_kucat = "'" .. kucat:gsub("'", "'\\''") .. "'"
-    local esc_theme = "'" .. themes:gsub("'", "'\\''") .. "'"
+    local esc_theme = "'" .. theme:gsub("'", "'\\''") .. "'"
     
     os.execute(string.format(
         "uci set %s.@basic[0].mode=%s && uci commit %s",
         kucat, esc_theme, kucat
     ))
-    print(  "uci set :",    esc_theme)
-        uci:set(kucat, "@basic[0]", "mode", http.formvalue("theme"))
-
-       os.execute("uci commit " .. kucat)
+       uci:set(kucat, "@basic[0]", "mode", theme)
        uci:commit(kucat)
        http.prepare_content("application/json")
        http.write_json({ success = true })
