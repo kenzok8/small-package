@@ -679,7 +679,7 @@ $(document).ready(function() {
     <?php endif; ?>
 </div>
 
-<div class="text-center mt-1 mb-1">
+<div class="text-center mt-4 mb-1">
     <form method="post">
         <button type="button" class="btn btn-primary mx-1 mb-2" data-bs-toggle="modal" data-bs-target="#cronModal">
             <i class="bi bi-clock"></i> <span data-translate="set_cron_job"></span>
