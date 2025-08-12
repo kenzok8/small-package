@@ -417,12 +417,12 @@ document.addEventListener('click', e => {
         <table class="table table-light table-striped text-center align-middle w-100 mb-0 white-text-table">
           <thead class="table-light">
             <tr>
-              <th style="width: 20%;" data-translate="componentName">Component Name</th>
-              <th style="width: 20%;">socks-port</th>
-              <th style="width: 20%;">mixed-port</th>
-              <th style="width: 13%;">redir-port</th>
-              <th style="width: 13%;">port</th>
-              <th style="width: 14%;">tproxy-port</th>
+              <th style="width: 20%;" class="text-center" data-translate="componentName">Component Name</th>
+              <th style="width: 16%;" class="text-center">socks-port</th>
+              <th style="width: 16%;" class="text-center">mixed-port</th>
+              <th style="width: 16%;" class="text-center">redir-port</th>
+              <th style="width: 16%;" class="text-center">port</th>
+              <th style="width: 16%;" class="text-center">tproxy-port</th>
             </tr>
           </thead>
           <tbody>
@@ -7072,16 +7072,7 @@ h1 {
 	font-weight: 900;
 }
 
-
-h3, h4 {
-	color: oklch(
-        calc(var(--l) - 10%) 
-        calc(var(--c) * 0.7) 
-        calc(var(--base-hue) + 60)
-      ) !important;
-}
-
-h2 ,h5, h6 {
+h2 ,h3, h4 ,h5, h6 {
         color: var(--accent-color) !important;
         font-weight: bold;
 }

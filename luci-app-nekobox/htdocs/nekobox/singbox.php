@@ -206,7 +206,7 @@ EOL;
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title" data-translate="helpInfoHeading">Help Information</h4>
-                <ul class="list-unstyled">
+                <ul class="list-unstyled ps-3">
                     <li data-translate="template1"><strong>Template 1</strong>: No Region, No Groups.</li>
                     <li data-translate="template2"><strong>Template 2</strong>: No Region, With Routing Rules.</li>
                     <li data-translate="template3"><strong>Template 3</strong>: Hong Kong, Taiwan, Singapore, Japan, USA, South Korea, With Routing Rules.</li>
@@ -325,13 +325,13 @@ function displayLogData($dataFilePath, $translations) {
         <div class="container-sm py-2">
             <div class="card">
                 <div class="card-body p-2">
-                    <div class="d-flex justify-content-between align-items-center my-2">
-                        <h5 class="card-title mb-0"><?= htmlspecialchars($translations['data_saved']) ?></h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2 mt-2">
+                        <h4 class="py-2 ps-3"><?= htmlspecialchars($translations['data_saved']) ?></h4>
                     </div>
-                    <div class="overflow-auto border rounded p-2" style="height: 300px;">
-                        <pre class="p-1 m-0 ms-2"><?= htmlspecialchars($savedData) ?></pre>
+                    <div class="overflow-auto mx-3 rounded-3 p-2 border" style="height: 300px;">
+                        <pre class="p-1 m-0 ms-2 log-content-area"><?= htmlspecialchars($savedData) ?></pre>
                     </div>
-                    <div class="text-center mt-2">
+                    <div class="text-center mt-3">
                         <form method="post" action="">
                             <button class="btn btn-sm btn-danger" type="submit" name="clearData">
                                 <i class="bi bi-trash"></i> <?= htmlspecialchars($translations['clear_data']) ?>

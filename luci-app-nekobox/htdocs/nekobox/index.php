@@ -1144,7 +1144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
               <span id="ramUsage" class="form-control text-start ps-3"></span>
             </div>
           </div>
-          <div class="mb-3 d-flex align-item-center">
+          <div class="mb-3 d-flex align-items-center">
             <h6 class="mb-0" style="width: 320px;">
               <i data-feather="zap" class="me-2"></i><span data-translate="avgLoad">Average Load</span>
             </h6>
