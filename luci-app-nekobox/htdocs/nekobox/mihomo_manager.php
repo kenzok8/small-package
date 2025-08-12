@@ -618,63 +618,66 @@ $(document).ready(function() {
             </ul>
             <div class="d-flex align-items-center">
                 <div class="me-3 d-block">
-                    <button type="button" class="btn btn-primary icon-btn me-2" onclick="toggleControlPanel()" data-translate-title="control_panel"><i class="bi bi-gear"> </i></button>
-                    <button type="button" class="btn btn-danger icon-btn me-2" data-bs-toggle="modal" data-bs-target="#langModal"  data-translate-title="set_language"><i class="bi bi-translate"></i></button>
-                    <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-translate-title="music_player"><i class="bi bi-music-note-beamed"></i></button>
-                    <button type="button" id="toggleIpStatusBtn" class="btn btn-warning icon-btn me-2" onclick="toggleIpStatusBar()" data-translate-title="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
-                    <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-translate-title="viewPortInfoButton"><i class="bi bi-plug"></i></button>
+                    <button type="button" class="btn btn-primary icon-btn me-2" onclick="toggleControlPanel()" data-tooltip="control_panel"><i class="bi bi-gear"> </i></button>
+                    <button type="button" class="btn btn-danger icon-btn me-2" data-bs-toggle="modal" data-bs-target="#langModal" data-tooltip="set_language"><i class="bi bi-translate"></i></button>
+                    <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-tooltip="music_player"><i class="bi bi-music-note-beamed"></i></button>
+                    <button type="button" id="toggleIpStatusBtn" class="btn btn-warning icon-btn me-2" onclick="toggleIpStatusBar()" data-tooltip="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
+                    <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-tooltip="viewPortInfoButton"><i class="bi bi-plug"></i></button>
                     <button type="button" class="btn-refresh-page btn btn-orange icon-btn me-2 d-none d-sm-inline"><i class="fas fa-sync-alt"></i></button>
-                    <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-translate-title="component_bg_color"><i class="bi bi-palette"></i></button>
+                    <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-tooltip="component_bg_color"><i class="bi bi-palette"></i></button>
                     <input type="color" id="colorPicker" value="#0f3460" style="display: none;">
             </div>
         </div>
     </div>
 </nav>
 <h2 class="container-fluid text-center mt-4 mb-4" data-translate="subscriptionManagement"></h2>
-<div class="container-sm text-center px-md-3">
-<?php if (isset($message) && $message): ?>
-    <div class="alert alert-info">
-        <?php echo nl2br(htmlspecialchars($message)); ?>
-    </div>
-<?php endif; ?>
-<?php if (isset($subscriptions) && is_array($subscriptions)): ?>
-    <div class="container-fluid px-4">
-        <?php 
-        $maxSubscriptions = 6;
-        for ($i = 0; $i < $maxSubscriptions; $i++):
-            $displayIndex = $i + 1;
-            $url = $subscriptions[$i]['url'] ?? '';
-            $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . $displayIndex . ".yaml";
-            
-            if ($i % 3 == 0) echo '<div class="row">';
-        ?>
-            <div class="col-md-4 mb-3 px-1">
-                <form method="post" class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="form-group">
-                            <h5 class="mb-2" data-translate="subscriptionLink"><?php echo $displayIndex; ?></h5>
-                            <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" data-translate-placeholder="enterSubscriptionUrl">
-                        </div>
-                        <div class="form-group">
-                            <label for="custom_file_name_<?php echo $displayIndex; ?>" data-translate="customFileName"></label>
-                            <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
-                        </div>
-                        <input type="hidden" name="index" value="<?php echo $i; ?>">
-                        <div class="text-center mt-3">
-                            <button type="submit" name="update" class="btn btn-info btn-block">
-                                <i class="bi bi-arrow-repeat"></i> <span data-translate="updateSubscription">Settings</span> <?php echo $displayIndex; ?>
-                            </button>
-                        </div>
+<div class="container-sm text-center px-2 px-md-3">
+    <?php if (isset($message) && $message): ?>
+        <div class="alert alert-info">
+            <?php echo nl2br(htmlspecialchars($message)); ?>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($subscriptions) && is_array($subscriptions)): ?>
+        <div class="container-fluid px-3">
+            <?php 
+            $maxSubscriptions = 6;
+            for ($i = 0; $i < $maxSubscriptions; $i++):
+                $displayIndex = $i + 1;
+                $url = $subscriptions[$i]['url'] ?? '';
+                $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . $displayIndex . ".yaml";
+                
+                if ($i % 3 == 0) echo '<div class="row">';
+            ?>
+                <div class="col-md-4 mb-3 px-1">
+                    <div class="card">
+                        <form method="post">
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <h5 class="mb-2" data-translate="subscriptionLink"><?php echo $displayIndex; ?></h5>
+                                    <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" data-translate-placeholder="enterSubscriptionUrl">
+                                </div>
+                                <div class="form-group">
+                                    <label for="custom_file_name_<?php echo $displayIndex; ?>" data-translate="customFileName"></label>
+                                    <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
+                                </div>
+                                <input type="hidden" name="index" value="<?php echo $i; ?>">
+                                <div class="text-center mt-3">
+                                    <button type="submit" name="update" class="btn btn-info btn-block">
+                                        <i class="bi bi-arrow-repeat"></i> <span data-translate="updateSubscription">Settings</span> <?php echo $displayIndex; ?>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-                </form>
-            </div>
-        <?php 
-            if ($i % 3 == 2 || $i == $maxSubscriptions - 1) echo '</div>';
-        endfor;
-        ?>
-    </div>
-<?php else: ?>
-<?php endif; ?>
+                </div>
+            <?php 
+                if ($i % 3 == 2 || $i == $maxSubscriptions - 1) echo '</div>';
+            endfor;
+            ?>
+        </div>
+    <?php else: ?>
+    <?php endif; ?>
+</div>
 
 <div class="text-center mt-1 mb-1">
     <form method="post">
@@ -694,7 +697,7 @@ $(document).ready(function() {
 
 <h2 class="text-center mt-4 mb-3" data-translate="fileManagement">File Management</h2>
 
-<div class="container-sm px-2 px-md-3">
+<div class="container-sm px-3 px-md-4">
   <div class="row g-3">
     <?php
     $proxyFiles = $proxyFiles ?? [];
@@ -723,14 +726,13 @@ $(document).ready(function() {
       $modified = file_exists($filePath) ? date('Y-m-d H:i:s', filemtime($filePath)) : '-';
     ?>
     <div class="col-12 col-md-6 col-lg-3">
-      <div class="card shadow-sm h-100 text-start">
+      <div class="card h-100 text-start">
         <div class="card-body d-flex flex-column justify-content-between">
-          <h5 class="card-title mb-2" data-translate-title="fileName"><?= htmlspecialchars($file) ?></h5>
+          <h5 class="card-title mb-2" data-tooltip="fileName"><?= htmlspecialchars($file) ?></h5>
           <p class="card-text mb-1"><strong data-translate="fileSize">Size</strong>: <?= $size ?></p>
           <p class="card-text mb-1"><strong data-translate="lastModified">Last Modified</strong>: <?= $modified ?></p>
           <p class="card-text mb-2"><strong data-translate="fileType">Type</strong>: <span class="badge <?= $isProxy ? 'bg-primary' : 'bg-success' ?>"><?= htmlspecialchars($fileTypes[$index]) ?></span></p>
           <?php
-
           $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
           $flowLeft = '';
@@ -813,28 +815,28 @@ $(document).ready(function() {
             <?php if ($isProxy): ?>
               <form method="post" class="d-inline m-0 p-0">
                 <input type="hidden" name="deleteFile" value="<?= htmlspecialchars($file) ?>">
-                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete('<?= htmlspecialchars($file) ?>', event)" data-translate-title="delete"><i class="bi bi-trash"></i></button>
+                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete('<?= htmlspecialchars($file) ?>', event)" data-tooltip="delete"><i class="bi bi-trash"></i></button>
               </form>
-              <button type="button" class="btn btn-success icon-btn" data-bs-toggle="modal" data-bs-target="#renameModal" data-filename="<?= htmlspecialchars($file) ?>" data-filetype="proxy" data-translate-title="rename"><i class="bi bi-pencil"></i></button>
-              <button type="button" class="btn btn-warning icon-btn" onclick="openEditModal('<?= htmlspecialchars($file) ?>','proxy')" data-translate-title="edit"><i class="bi bi-pen"></i></button>
-              <button type="button" class="btn btn-info icon-btn" onclick="openUploadModal('proxy')" data-translate-title="upload"><i class="bi bi-upload"></i></button>
+              <button type="button" class="btn btn-success icon-btn" data-bs-toggle="modal" data-bs-target="#renameModal" data-filename="<?= htmlspecialchars($file) ?>" data-filetype="proxy" data-tooltip="rename"><i class="bi bi-pencil"></i></button>
+              <button type="button" class="btn btn-warning icon-btn" onclick="openEditModal('<?= htmlspecialchars($file) ?>','proxy')" data-tooltip="edit"><i class="bi bi-pen"></i></button>
+              <button type="button" class="btn btn-info icon-btn" onclick="openUploadModal('proxy')" data-tooltip="upload"><i class="bi bi-upload"></i></button>
               <form method="get" class="d-inline m-0 p-0 no-loader">
                 <input type="hidden" name="downloadFile" value="<?= htmlspecialchars($file) ?>">
                 <input type="hidden" name="fileType" value="proxy">
-                <button type="submit" class="btn btn-primary icon-btn" data-translate-title="download"><i class="bi bi-download"></i></button>
+                <button type="submit" class="btn btn-primary icon-btn" data-tooltip="download"><i class="bi bi-download"></i></button>
               </form>
             <?php else: ?>
               <form method="post" class="d-inline m-0 p-0">
                 <input type="hidden" name="deleteConfigFile" value="<?= htmlspecialchars($file) ?>">
-                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete('<?= htmlspecialchars($file) ?>', event)" data-translate-title="delete"><i class="bi bi-trash"></i></button>
+                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete('<?= htmlspecialchars($file) ?>', event)" data-tooltip="delete"><i class="bi bi-trash"></i></button>
               </form>
-              <button type="button" class="btn btn-success icon-btn" data-bs-toggle="modal" data-bs-target="#renameModal" data-filename="<?= htmlspecialchars($file) ?>" data-filetype="config" data-translate-title="rename"><i class="bi bi-pencil"></i></button>
-              <button type="button" class="btn btn-warning icon-btn" onclick="openEditModal('<?= htmlspecialchars($file) ?>','config')" data-translate-title="edit"><i class="bi bi-pen"></i></button>
-              <button type="button" class="btn btn-info icon-btn" onclick="openUploadModal('config')" data-translate-title="upload"><i class="bi bi-upload"></i></button>
+              <button type="button" class="btn btn-success icon-btn" data-bs-toggle="modal" data-bs-target="#renameModal" data-filename="<?= htmlspecialchars($file) ?>" data-filetype="config" data-tooltip="rename"><i class="bi bi-pencil"></i></button>
+              <button type="button" class="btn btn-warning icon-btn" onclick="openEditModal('<?= htmlspecialchars($file) ?>','config')" data-tooltip="edit"><i class="bi bi-pen"></i></button>
+              <button type="button" class="btn btn-info icon-btn" onclick="openUploadModal('config')" data-tooltip="upload"><i class="bi bi-upload"></i></button>
               <form method="get" class="d-inline m-0 p-0 no-loader">
                 <input type="hidden" name="downloadFile" value="<?= htmlspecialchars($file) ?>">
                 <input type="hidden" name="fileType" value="config">
-                <button type="submit" class="btn btn-primary icon-btn" data-translate-title="download"><i class="bi bi-download"></i></button>
+                <button type="submit" class="btn btn-primary icon-btn" data-tooltip="download"><i class="bi bi-download"></i></button>
               </form>
             <?php endif; ?>
           </div>

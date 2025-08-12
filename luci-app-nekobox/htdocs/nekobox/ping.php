@@ -1,4 +1,10 @@
 <?php
+$timezone = trim(shell_exec("uci get system.@system[0].zonename 2>/dev/null"));
+
+date_default_timezone_set($timezone ?: 'UTC');
+?>
+
+<?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'clearNekoTmpDir') {
     $nekoDir = '/tmp/neko';
     $response = [
@@ -171,7 +177,7 @@ function deleteNekoTmpDirectory($dir) {
 
 .navbar .nav-link.active:hover,
 .navbar .nav-link:hover {
-	color: var(--ocean-bg)  !important;
+	color: var(--accent-color)  !important;
 }
 
 .navbar .nav-link.active {
@@ -263,6 +269,63 @@ function deleteNekoTmpDirectory($dir) {
 .white-text-table input {
 	color: var(--text-primary) !important;
 }
+
+.custom-tooltip {
+	position: fixed;
+	background: var(--accent-color);
+	color: #fff;
+	padding: 8px 12px;
+	border-radius: var(--radius);
+	font-size: 0.85rem;
+	pointer-events: none;
+	z-index: 10000;
+	white-space: nowrap;
+	max-width: 300px;
+	line-height: 1.4;
+	backdrop-filter: var(--glass-blur);
+	border: var(--glass-border);
+	box-shadow: 0 4px 20px color-mix(in oklch, var(--bg-container), black 85%),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+	opacity: 0;
+	transform: translateY(10px);
+	transition: opacity 0.2s ease-out,
+        transform 0.2s ease-out;
+}
+
+.custom-tooltip.show {
+	opacity: var(--glass-opacity);
+	transform: translateY(0);
+}
+
+.custom-tooltip::after {
+	content: '';
+	position: absolute;
+	top: -5px;
+	left: 50%;
+	transform: translateX(-50%) rotate(45deg);
+	width: 10px;
+	height: 10px;
+	background: inherit;
+	border-top: var(--glass-border);
+	border-left: var(--glass-border);
+	z-index: -1;
+}
+
+.custom-tooltip[data-position="top"]::after {
+	top: auto;
+	bottom: -5px;
+	border: none;
+	border-right: var(--glass-border);
+	border-bottom: var(--glass-border);
+}
+
+@media (max-width: 768px) {
+	.custom-tooltip {
+		max-width: 200px;
+		white-space: normal;
+		font-size: 0.8rem;
+	}
+}
 </style>
 
 <div id="theme-loader" style="display: none;">
@@ -296,13 +359,53 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
 <script>
-document.addEventListener('click', (e) => {
+document.addEventListener('DOMContentLoaded', () => {
+  const tooltip = document.createElement('div');
+  tooltip.className = 'custom-tooltip';
+  document.body.appendChild(tooltip);
+
+  document.querySelectorAll('[data-tooltip]').forEach(el => {
+    el.addEventListener('mouseenter', e => {
+      tooltip.textContent = el.getAttribute('data-tooltip');
+      tooltip.classList.add('show');
+
+      requestAnimationFrame(() => {
+        positionTooltip(e);
+      });
+    });
+
+    el.addEventListener('mousemove', e => {
+      positionTooltip(e);
+    });
+
+    el.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('show');
+    });
+  });
+
+  function positionTooltip(e) {
+    const spacing = 20;
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const targetRect = e.target.getBoundingClientRect();
+
+    const top = targetRect.bottom + spacing;
+    const left = targetRect.left + (targetRect.width - tooltipRect.width) / 2;
+
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+    tooltip.dataset.position = 'bottom';
+  }
+});
+
+document.addEventListener('click', e => {
   if (e.target.closest('.btn-refresh-page')) {
     location.reload();
   }
 });
 </script>
+
 <div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <form id="portForm" method="POST" action="./save_ports.php" class="modal-content">
@@ -311,8 +414,8 @@ document.addEventListener('click', (e) => {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <table class="table table-bordered table-striped text-center align-middle w-100 mb-0 white-text-table">
-          <thead class="table-dark">
+        <table class="table table-light table-striped text-center align-middle w-100 mb-0 white-text-table">
+          <thead class="table-light">
             <tr>
               <th style="width: 20%;" data-translate="componentName">Component Name</th>
               <th style="width: 20%;">socks-port</th>
@@ -335,9 +438,9 @@ document.addEventListener('click', (e) => {
               <td>Sing-box</td>
               <td><input type="number" class="form-control text-center" name="singbox_http" value="<?= htmlspecialchars($http_port) ?>"></td>
               <td><input type="number" class="form-control text-center" name="singbox_mixed" value="<?= htmlspecialchars($mixed_port) ?>"></td>
-              <td>—</td>
-              <td>—</td>
-              <td>—</td>
+              <td><input type="text" class="form-control text-center" name="singbox_mixed" value="—" disabled></td>
+              <td><input type="text" class="form-control text-center" name="singbox_mixed" value="—" disabled></td>
+              <td><input type="text" class="form-control text-center" name="singbox_mixed" value="—" disabled></td>
             </tr>
           </tbody>
         </table>
@@ -549,7 +652,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="color" id="color-selector"
                    class="form-control form-control-color p-0"
                    value=" "
-                   data-translate-title="choose_color"
+                   data-tooltip="choose_color"
                    style="width: 36px; height: 36px; cursor: pointer;">
           </div>
           <div id="current-color-block"
@@ -580,12 +683,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="control-panel">
         <div class="panel-header">
             <h3><i class="bi bi-gear"></i> <span data-translate="control_panel_title">Control Panel</span></h3>
-            <button class="close-icon" onclick="toggleControlPanel()" data-translate-title="close">
+            <button class="close-icon" onclick="toggleControlPanel()" data-tooltip="close">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
         <div class="buttons-grid">
-            <button class="panel-btn" data-bs-toggle="modal" data-bs-target="#musicModal" data-translate-title="music_player">
+            <button class="panel-btn" data-bs-toggle="modal" data-bs-target="#musicModal" data-tooltip="music_player">
                 <div class="btn-icon">
                     <i class="bi bi-music-note-beamed"></i>
                 </div>
@@ -603,7 +706,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <small class="opacity-75" data-translate="color_desc">Customize interface colors</small>
                 </div>
             </button>
-            <button class="panel-btn" id="advancedColorBtn" data-translate-title="advanced_color_settings">
+            <button class="panel-btn" id="advancedColorBtn" data-tooltip="advanced_color_settings">
                 <div class="btn-icon">
                     <i class="bi bi-palette2"></i>
                 </div>
@@ -612,7 +715,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <small class="opacity-75" data-translate="advanced_color_desc">Professional color adjustments</small>
                 </div>
             </button>
-            <button class="panel-btn" id="clear-cache-btn" data-translate-title="clear_cache">
+            <button class="panel-btn" id="clear-cache-btn" data-tooltip="clear_cache">
                 <div class="btn-icon">
                     <i class="bi bi-trash"></i>
                 </div>
@@ -621,7 +724,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <small class="opacity-75" data-translate="cache_desc">Free up system resources</small>
                 </div>
             </button>
-            <button class="panel-btn" id="startCheckBtn" data-translate-title="start_check">
+            <button class="panel-btn" id="startCheckBtn" data-tooltip="start_check">
                 <div class="btn-icon">
                     <i class="bi bi-globe2"></i>
                 </div>
@@ -631,7 +734,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                </div>
                     <i class="bi bi-toggle-off" id="autoCheckIcon"  style="cursor: pointer; margin-left: 10px;"></i>
             </button>
-            <button class="panel-btn" id="openModalBtn" data-translate-title="open_animation">
+            <button class="panel-btn" id="openModalBtn" data-tooltip="open_animation">
                 <div class="btn-icon">
                     <i class="bi bi-sliders"></i>
                 </div>
@@ -661,7 +764,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <small class="opacity-75" data-translate="file_desc">Manage your files</small>
                 </div>
             </button>
-            <button class="panel-btn" id="translationToggleBtn" data-translate-title="enable">
+            <button class="panel-btn" id="translationToggleBtn" data-tooltip="enable">
                 <div class="btn-icon" id="translationToggleIcon">
                     <i class="bi bi-toggle-off"></i>
                 </div>
@@ -673,7 +776,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="action-row">
             <div class="color-picker">
-                <button class="btn btn-info ms-2" id="fontSwitchBtn" data-translate-title="toggle_font">
+                <button class="btn btn-info ms-2" id="fontSwitchBtn" data-tooltip="toggle_font">
                     <i id="fontSwitchIcon" class="fa-solid fa-font" style="color: white;"></i>
                 </button>
                 <label for="colorPicker" data-translate="component_bg_color">Component Background</label>
@@ -694,29 +797,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div id="floatingLyrics" style="display: none;">
     <div class="floating-controls">
-        <button class="ctrl-btn" onclick="changeTrack(-1, true)" data-translate-title="previous_track">
+        <button class="ctrl-btn" onclick="changeTrack(-1, true)" data-tooltip="previous_track">
             <i class="fas fa-backward"></i>
         </button>
-        <button class="ctrl-btn" id="floatingPlayBtn" onclick="togglePlay()" data-translate-title="play_pause">
+        <button class="ctrl-btn" id="floatingPlayBtn" onclick="togglePlay()" data-tooltip="play_pause">
             <i class="bi bi-play-fill"></i>
         </button>
-        <button class="ctrl-btn" onclick="changeTrack(1, true)" data-translate-title="next_track">
+        <button class="ctrl-btn" onclick="changeTrack(1, true)" data-tooltip="next_track">
             <i class="fas fa-forward"></i>
         </button>
         <button class="ctrl-btn" id="floatingRepeatBtn" onclick="toggleRepeat()">
             <i class="bi bi-arrow-repeat"></i>
         </button>
-        <button class="ctrl-btn" id="speedToggle" data-translate-title="playback_speed">
+        <button class="ctrl-btn" id="speedToggle" data-tooltip="playback_speed">
             <span id="speedLabel">1×</span>
         </button>
-        <button class="ctrl-btn" id="muteToggle" data-translate-title="volume">
+        <button class="ctrl-btn" id="muteToggle" data-tooltip="volume">
             <i class="bi bi-volume-up-fill"></i>
         </button>
         <button class="ctrl-btn" id="updatePlaylistBtn" onclick="updatePlaylist()" 
-                data-translate-title="update_playlist">
+                data-tooltip="update_playlist">
             <i class="fa fa-sync-alt"></i>
         </button>
-        <button id="toggleFloatingLyricsBtn" class="ctrl-btn toggleFloatingLyricsBtn" data-translate-title="toggle_floating_lyrics">
+        <button id="toggleFloatingLyricsBtn" class="ctrl-btn toggleFloatingLyricsBtn" data-tooltip="toggle_floating_lyrics">
             <i class="bi bi-display floatingIcon"></i>
         </button>
     </div>
@@ -748,25 +851,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <span id="duration">0:00</span>
                 </div>          
                 <div class="controls d-flex justify-content-center gap-3 mt-4">
-                    <button class="control-btn toggleFloatingLyricsBtn" data-translate-title="toggle_floating_lyrics">
+                    <button class="control-btn toggleFloatingLyricsBtn" data-tooltip="toggle_floating_lyrics">
                         <i class="bi bi-display floatingIcon"></i>
                     </button>
                     <button class="control-btn" id="repeatBtn" onclick="toggleRepeat()">
                         <i class="bi bi-arrow-repeat"></i>
                     </button>
-                    <button class="control-btn" onclick="changeTrack(-1, true)" data-translate-title="previous_track">
+                    <button class="control-btn" onclick="changeTrack(-1, true)" data-tooltip="previous_track">
                         <i class="bi bi-caret-left-fill"></i>
                     </button>
-                    <button class="control-btn" id="playPauseBtn" onclick="togglePlay()" data-translate-title="play_pause">
+                    <button class="control-btn" id="playPauseBtn" onclick="togglePlay()" data-tooltip="play_pause">
                         <i class="bi bi-play-fill"></i>
                     </button>
-                    <button class="control-btn" onclick="changeTrack(1, true)" data-translate-title="next_track">
+                    <button class="control-btn" onclick="changeTrack(1, true)" data-tooltip="next_track">
                         <i class="bi bi-caret-right-fill"></i>
                     </button>
-                    <button class="control-btn" type="button" data-bs-toggle="modal" data-bs-target="#urlModal" data-translate-title="custom_playlist">
+                    <button class="control-btn" type="button" data-bs-toggle="modal" data-bs-target="#urlModal" data-tooltip="custom_playlist">
                         <i class="bi bi-music-note-list"></i>
                     </button>
-                    <button class="btn btn-volume position-relative" id="volumeToggle" data-translate-title="volume">
+                    <button class="btn btn-volume position-relative" id="volumeToggle" data-tooltip="volume">
                         <i class="bi bi-volume-up-fill"></i>
                         <div class="volume-slider-container position-absolute bottom-100 start-50 translate-middle-x mb-1 p-2" id="volumePanel" style="display: none; width: 120px;">
                             <input type="range" class="form-range volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="1">
@@ -987,8 +1090,22 @@ function updateLanguage(lang) {
     });
 
     document.querySelectorAll('[data-translate-title]').forEach(el => {
-        translateElement(el, 'data-translate-title', 'title');
+        const translationKey = el.getAttribute('data-translate-title');
+        if (translations[translationKey]) {
+            el.title = translations[translationKey];
+            el.setAttribute('data-tooltip', translations[translationKey]);
+        } else {
+            el.removeAttribute('title');
+            el.removeAttribute('data-tooltip');
+        }
     });
+
+    document.querySelectorAll('[data-tooltip]').forEach(el => {
+      const key = el.getAttribute('data-tooltip');
+      if (translations[key]) {
+        el.setAttribute('data-tooltip', translations[key]);
+      }
+   });
 
     document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
         const translationKey = el.getAttribute('data-translate-placeholder');
@@ -4793,86 +4910,92 @@ window.showConfirmation = function(message, onConfirm) {
 </script>
 
 <script>
-const currentSong = document.querySelector('#currentSong');
-const floatingCurrentSong = document.getElementById('floatingCurrentSong');
+document.addEventListener('DOMContentLoaded', () => {
+    const currentSong = document.querySelector('#currentSong');
+    const floatingCurrentSong = document.getElementById('floatingCurrentSong');
+    const dynamicTitle = document.getElementById('dynamicTitle');
 
-let usedColors = [];
-let usedLogBoxColors = [];
+    let usedColors = [];
+    let usedLogBoxColors = [];
 
-function getColorListFromTheme() {
-    const styles = getComputedStyle(document.documentElement);
-    const lightness = styles.getPropertyValue('--l').trim();
-    const chroma = styles.getPropertyValue('--c').trim();
+    function getColorListFromTheme() {
+        const styles = getComputedStyle(document.documentElement);
+        const lightness = styles.getPropertyValue('--l').trim();
+        const chroma = styles.getPropertyValue('--c').trim();
 
-    const colors = [];
-    for (let i = 1; i <= 7; i++) {
-        const hue = styles.getPropertyValue(`--base-hue-${i}`).trim();
-        const color = `oklch(${lightness} ${chroma} ${hue})`;
-        colors.push(color);
+        const colors = [];
+        for (let i = 1; i <= 7; i++) {
+            const hue = styles.getPropertyValue(`--base-hue-${i}`).trim();
+            const color = `oklch(${lightness} ${chroma} ${hue})`;
+            colors.push(color);
+        }
+        return colors;
     }
-    return colors;
-}
 
-function getNextColor(colorList) {
-    if (usedColors.length === colorList.length) {
-        usedColors = [];
+    function getNextColor(colorList) {
+        if (usedColors.length === colorList.length) {
+            usedColors = [];
+        }
+        const remaining = colorList.filter(c => !usedColors.includes(c));
+        const next = remaining[Math.floor(Math.random() * remaining.length)];
+        usedColors.push(next);
+        return next;
     }
-    const remaining = colorList.filter(c => !usedColors.includes(c));
-    const next = remaining[Math.floor(Math.random() * remaining.length)];
-    usedColors.push(next);
-    return next;
-}
 
-function rotateColors() {
-    const colorList = getColorListFromTheme();
+    function rotateColors() {
+        const colorList = getColorListFromTheme();
 
-    if (currentSong) {
-        currentSong.style.color = getNextColor(colorList);
+        if (currentSong) {
+            currentSong.style.color = getNextColor(colorList);
+        }
+        if (floatingCurrentSong) {
+            floatingCurrentSong.style.color = getNextColor(colorList);
+        }
+        if (dynamicTitle) {
+            dynamicTitle.style.color = getNextColor(colorList);
+        }
     }
-    if (floatingCurrentSong) {
-        floatingCurrentSong.style.color = getNextColor(colorList);
+
+    function getLogBoxColorListFromTheme() {
+        const styles = getComputedStyle(document.documentElement);
+        const lightness = '35%';
+        const chroma = styles.getPropertyValue('--c').trim();
+
+        const colors = new Set();
+        for (let i = 1; i <= 7; i++) {
+            let hue = styles.getPropertyValue(`--base-hue-${i}`).trim();
+            if (!hue) continue;
+            let color = `oklch(${lightness} ${chroma} ${hue})`;
+            colors.add(color);
+        }
+        return Array.from(colors);
     }
-}
 
-function getLogBoxColorListFromTheme() {
-    const styles = getComputedStyle(document.documentElement);
-    const lightness = '35%';
-    const chroma = styles.getPropertyValue('--c').trim();
-
-    const colors = new Set();
-    for (let i = 1; i <= 7; i++) {
-        let hue = styles.getPropertyValue(`--base-hue-${i}`).trim();
-        if (!hue) continue;
-        let color = `oklch(${lightness} ${chroma} ${hue})`;
-        colors.add(color);
+    function getNextLogBoxColor(colorList) {
+        if (usedLogBoxColors.length >= colorList.length) {
+            usedLogBoxColors = [];
+        }
+        const remaining = colorList.filter(c => !usedLogBoxColors.includes(c));
+        const next = remaining[Math.floor(Math.random() * remaining.length)];
+        usedLogBoxColors.push(next);
+        return next;
     }
-    return Array.from(colors);
-}
 
-function getNextLogBoxColor(colorList) {
-    if (usedLogBoxColors.length >= colorList.length) {
-        usedLogBoxColors = [];
+    function rotateLogBoxColors() {
+        const colorList = getLogBoxColorListFromTheme();
+        if (colorList.length === 0) return;
+
+        document.querySelectorAll('.log-box[data-dynamic-bg="true"]').forEach(box => {
+            const color = getNextLogBoxColor(colorList);
+            box.style.background = color;
+        });
     }
-    const remaining = colorList.filter(c => !usedLogBoxColors.includes(c));
-    const next = remaining[Math.floor(Math.random() * remaining.length)];
-    usedLogBoxColors.push(next);
-    return next;
-}
 
-function rotateLogBoxColors() {
-    const colorList = getLogBoxColorListFromTheme();
-    if (colorList.length === 0) return;
-
-    document.querySelectorAll('.log-box[data-dynamic-bg="true"]').forEach(box => {
-        const color = getNextLogBoxColor(colorList);
-        box.style.background = color;
-    });
-}
-
-rotateColors();
-rotateLogBoxColors();
-setInterval(rotateColors, 4000);
-setInterval(rotateLogBoxColors, 4000);
+    rotateColors();
+    rotateLogBoxColors();
+    setInterval(rotateColors, 4000);
+    setInterval(rotateLogBoxColors, 4000);
+});
 </script>
 
 <style>
@@ -5404,13 +5527,6 @@ body {
 	font-weight: bold;
 }
 
-:root {
-	--glow-color: color-mix(in oklch, var(--accent-color), transparent 30%);
-	--glow-intensity: 0.8;
-	--glow-size: 8px;
-	--glow-animation-speed: 4s;
-}
-
 #floatingLyrics {
 	position: fixed;
 	top: 1%;
@@ -5419,16 +5535,11 @@ body {
 	padding: 15px 10px;
 	border-radius: 20px;
 	backdrop-filter: var(--glass-blur);
-	border: 1px solid color-mix(in oklch, var(--border-color), transparent 70%);
 	display: none;
 	opacity: 0;
-	transition: opacity 0.3s ease,
-        box-shadow 0.3s ease,
-        transform 0.2s ease-out;
-	z-index: 9999;
 	pointer-events: none;
 	cursor: grab;
-	user-select: none;
+	transition: opacity 0.3s ease;
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
 	line-height: 2;
@@ -5438,28 +5549,46 @@ body {
 	width: 200px;
 	resize: none;
 	overflow: auto;
+	user-select: none;
+	--glow-base: var(--base-hue);
+	--glow-primary: oklch(88% 0.35 var(--glow-base));
+	--glow-secondary: oklch(85% 0.3 calc(var(--glow-base) + 15));
+	border: 1px solid color-mix(in oklch, var(--glow-primary), transparent 10%);
+	box-shadow: 0 0 12px 2px color-mix(in oklch, var(--glow-primary), transparent 40%),
+        inset 0 -12px 24px color-mix(in oklch, var(--glow-primary), transparent 60%);
+	animation: float 3s ease-in-out infinite alternate,
+        breath 4s ease-in-out infinite;
 }
 
-#floatingLyrics.dragging {
-	cursor: grabbing;
-	transition: none;
-	filter: brightness(1.1);
+@keyframes float {
+	from {
+		transform: translateY(0);
+	}
+
+	to {
+		transform: translateY(-10px);
+	}
 }
 
-[data-theme="dark"] #floatingLyrics {
-	--glow-base: color-mix(in oklch, var(--accent-color), transparent 70%);
-	--glow-trail: color-mix(in oklch, var(--ocean-bg), transparent 90%);
-	background: color-mix(in oklch, var(--bg-body), transparent 50%);
-	box-shadow: 0 0 10px var(--glow-base),
-        0 0 20px color-mix(in oklch, var(--glow-base), transparent 50%),
-        inset 0 0 15px color-mix(in oklch, white, transparent 80%);
-	border: 1px solid color-mix(in oklch, var(--accent-color), transparent 50%);
+@keyframes breath {
+	0%, 100% {
+		--glow-primary: oklch(85% 0.32 var(--glow-base));
+		box-shadow: 0 0 10px 2px color-mix(in oklch, var(--glow-primary), transparent 50%),
+            inset 0 -10px 20px color-mix(in oklch, var(--glow-primary), transparent 70%);
+	}
+
+	50% {
+		--glow-primary: oklch(92% 0.38 var(--glow-base));
+		box-shadow: 0 0 20px 4px color-mix(in oklch, var(--glow-primary), transparent 30%),
+            inset 0 -15px 30px color-mix(in oklch, var(--glow-primary), transparent 50%);
+	}
 }
 
-#floatingLyrics.show {
-	display: block;
-	opacity: 1;
-	animation: floatGlow 6s ease-in-out infinite alternate;
+#floatingLyrics:hover {
+	animation-play-state: paused;
+	--glow-primary: oklch(92% 0.38 var(--glow-base));
+	box-shadow: 0 0 20px 4px color-mix(in oklch, var(--glow-primary), transparent 30%),
+        inset 0 -15px 30px color-mix(in oklch, var(--glow-primary), transparent 50%);
 }
 
 #floatingLyrics.visible {
@@ -6337,7 +6466,6 @@ h2#neko-title.neko-title-style {
 	color: var(--accent-color) !important;
 }
 
-
 .table.custom-table thead th {
 	color: var(--purple-text) !important;
 }
@@ -6396,103 +6524,201 @@ h2#neko-title.neko-title-style {
 }
 
 .card {
+	--card-padding: 1.25rem;
+	--card-border-width: 1px;
 	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	background: var(--bg-container) !important;
+	border: var(--card-border-width) solid var(--border-color);
+	border-radius: var(--radius);
+	box-shadow: 0 2px 8px color-mix(in oklch, var(--border-color), transparent 70%);
+	transform: translateY(-2px);
+	transition: var(--transition);
 	overflow: hidden;
-	border-radius: var(--radius);
-	background: color-mix(in oklch, var(--card-bg), transparent calc(100% - var(--glass-opacity) * 100%));
-	border: var(--glass-border);
-	backdrop-filter: var(--glass-blur);
-	box-shadow: 0 4px 16px rgba(0, 0, 0, calc(0.15 * var(--shadow-intensity))),
-        0 0 0 1px rgba(255, 255, 255, 0.05);
-	color: var(--text-primary) !important;
-	transition: all var(--transition-speed) ease;
-	z-index: 1;
-	transform-style: preserve-3d;
-	will-change: transform, box-shadow, opacity;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
-        0 1px 0 rgba(255, 255, 255, 0.1) inset;
-	transform: translateY(-3px);
-}
-
-.card::before,
-.card::after {
-	content: '';
-	position: absolute;
-	border-radius: var(--radius);
-	pointer-events: none;
-	transition: all var(--transition-speed) ease;
-}
-
-.card::before {
-	top: -20%;
-	left: -20%;
-	width: 140%;
-	height: 140%;
-	background: linear-gradient(
-        var(--card-gradient-angle, 135deg),
-        color-mix(in oklch, var(--accent-color), transparent 70%) 0%,
-        color-mix(in oklch, var(--bg-container), transparent 70%) 50%,
-        color-mix(in oklch, var(--card-bg), transparent 70%) 100%
-  );
-	background-size: 300% 300%;
-	background-position: 0% 50%;
-	opacity: 0.7;
-	filter: blur(var(--card-blur-intensity, 15px));
-	z-index: -1;
-	animation: gradientMove var(--card-animation-duration, 15s) linear infinite;
-	backface-visibility: hidden;
-}
-
-.card::after {
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	box-shadow: inset 0 0 30px color-mix(in oklch, white, transparent 80%);
-	opacity: 0.1;
 }
 
 .card:hover {
-	transform: translateY(-2px) scale(1.01);
-	box-shadow: 0 16px 48px rgba(0, 123, 255, 0.4),
-    0 0 16px 2px rgba(0, 123, 255, 0.3);
-	transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.5), box-shadow 0.3s ease;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px color-mix(in oklch, var(--border-color), transparent 60%),
+        0 0 0 1px var(--accent-color);
 }
 
-.card:hover::before {
-	opacity: var(--highlight-intensity, 0.9);
-	animation-duration: var(--card-hover-animation-duration, 7.5s);
-	filter: blur(var(--card-hover-blur-intensity, 20px));
+.card-header {
+	padding: calc(var(--card-padding) * 0.8) var(--card-padding);
+	background: var(--header-bg);
+	border-bottom: var(--card-border-width) solid var(--border-color);
+	font-weight: 600;
+	color: var(--text-primary);
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
 }
 
-.card:hover::after {
-	opacity: 0.3;
+.card-body {
+	padding: var(--card-padding);
+	flex: 1 1 auto;
+	color: var(--text-primary);
+	background: var(--bg-container);
 }
 
-@keyframes gradientMove {
+.card-footer {
+	padding: calc(var(--card-padding) * 0.8) var(--card-padding);
+	background: var(--header-bg);
+	border-top: var(--card-border-width) solid var(--border-color);
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.card-glass {
+	background: color-mix(in oklch, var(--card-bg), transparent 15%);
+	backdrop-filter: var(--glass-blur);
+	border-color: color-mix(in oklch, var(--border-color), white 30%);
+}
+
+.card-elevated {
+	--card-shadow-color: color-mix(in oklch, var(--border-color), black 30%);
+	box-shadow: 0 3px 6px var(--card-shadow-color),
+        0 8px 24px color-mix(in oklch, var(--card-shadow-color), transparent 70%);
+}
+
+.card-floating {
+	position: relative;
+	top: 0;
+	transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.card-floating:hover {
+	top: -4px;
+	box-shadow: 0 12px 28px color-mix(in oklch, var(--border-color), transparent 60%),
+        0 0 0 1px var(--accent-color);
+}
+
+.card-badge {
+	position: absolute;
+	top: -0.5rem;
+	right: 1rem;
+	background: var(--btn-danger-bg);
+	color: var(--text-primary);
+	padding: 0.25rem 0.75rem;
+	border-radius: calc(var(--radius) * 2);
+	font-size: 0.75rem;
+	font-weight: bold;
+	box-shadow: 0 2px 4px oklch(0% 0 0 / 0.2);
+	z-index: 1;
+}
+
+@media (max-width: 768px) {
+	.card {
+		--card-padding: 1rem;
+		border-radius: calc(var(--radius) * 0.8);
+	}
+
+	.card-elevated {
+		box-shadow: 0 2px 4px color-mix(in oklch, var(--border-color), transparent 70%),
+                0 4px 12px color-mix(in oklch, var(--border-color), transparent 80%);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	.card {
+		--card-shadow-color: oklch(0% 0 0 / 0.4);
+	}
+
+	.card-glass {
+		background: color-mix(in oklch, var(--card-bg), transparent 20%);
+		border-color: color-mix(in oklch, var(--border-color), black 30%);
+	}
+}
+
+[data-theme="dark"] .container-sm .card {
+	--glow-base: var(--base-hue);
+	--glow-primary: oklch(82% 0.32 var(--glow-base));
+	--glow-secondary: oklch(78% 0.28 calc(var(--glow-base) + 10));
+	border: 1px solid color-mix(in oklch, var(--glow-primary), transparent 20%);
+	box-shadow: 0 2px 8px 1px color-mix(in oklch, var(--glow-primary), transparent 40%),
+        0 4px 24px 2px color-mix(in oklch, var(--glow-secondary), transparent 60%),
+        inset 0 0 12px color-mix(in oklch, var(--glow-primary), transparent 70%);
+	transform: translateY(-2px) !important;
+	transition: all 0.25s ease-out;
+	animation: breath 3s ease-in-out infinite;
+}
+
+[data-theme="dark"] .container-sm .card:hover {
+	--glow-primary: oklch(88% 0.35 var(--glow-base));
+	--glow-secondary: oklch(85% 0.3 calc(var(--glow-base) + 15));
+	box-shadow: 0 4px 16px 2px color-mix(in oklch, var(--glow-primary), transparent 30%),
+        0 8px 32px 4px color-mix(in oklch, var(--glow-secondary), transparent 50%),
+        inset 0 0 24px color-mix(in oklch, var(--glow-primary), transparent 60%);
+	transform: translateY(-4px) !important;
+	animation-play-state: paused;
+}
+
+@keyframes breath {
 	0%, 100% {
-		background-position: 0% 50%;
-		transform: translateZ(0);
+		--glow-primary: oklch(82% 0.32 var(--glow-base));
+		--glow-secondary: oklch(78% 0.28 calc(var(--glow-base) + 10));
+		box-shadow: 0 2px 8px 1px color-mix(in oklch, var(--glow-primary), transparent 40%),
+                0 4px 24px 2px color-mix(in oklch, var(--glow-secondary), transparent 60%),
+                inset 0 0 12px color-mix(in oklch, var(--glow-primary), transparent 70%);
 	}
 
 	50% {
-		background-position: 100% 50%;
+		--glow-primary: oklch(88% 0.35 var(--glow-base));
+		--glow-secondary: oklch(85% 0.3 calc(var(--glow-base) + 15));
+		box-shadow: 0 4px 16px 2px color-mix(in oklch, var(--glow-primary), transparent 30%),
+                0 8px 32px 4px color-mix(in oklch, var(--glow-secondary), transparent 50%),
+                inset 0 0 24px color-mix(in oklch, var(--glow-primary), transparent 60%);
 	}
 }
 
-[data-theme="dark"] .card {
-	box-shadow: 0 0 20px 4px color-mix(in oklch, var(--accent-color), transparent 50%),
-    0 8px 32px rgba(0, 0, 0, calc(0.5 * var(--shadow-intensity)));
+[data-theme="dark"] .neko-title-style {
+	--glow-base: var(--base-hue);
+	--glow-primary: oklch(92% 0.35 var(--glow-base));
+	--glow-secondary: oklch(88% 0.3 calc(var(--glow-base) + 10));
+	animation: nekoBreath 3s ease-in-out infinite;
+	text-shadow: 1px 1px 0 color-mix(in oklch, var(--glow-primary), #999 50%),
+        2px 2px 0 color-mix(in oklch, var(--glow-primary), #888 50%),
+        3px 3px 0 color-mix(in oklch, var(--glow-primary), #777 50%),
+        4px 4px 0 color-mix(in oklch, var(--glow-primary), #666 50%),
+        0 0 10px color-mix(in oklch, var(--glow-primary), transparent 60%),
+        0 0 20px color-mix(in oklch, var(--glow-secondary), transparent 70%) !important;
 }
 
-[data-theme="dark"] .card::after {
-	box-shadow: inset 0 0 40px color-mix(in oklch, var(--accent-color), transparent 70%);
+[data-theme="dark"] .neko-title-style:hover {
+	--glow-primary: oklch(96% 0.38 var(--glow-base));
+	--glow-secondary: oklch(92% 0.32 calc(var(--glow-base) + 15));
+	text-shadow: 1px 1px 1px color-mix(in oklch, var(--glow-primary), #999 50%),
+        2px 2px 1px color-mix(in oklch, var(--glow-primary), #888 50%),
+        3px 3px 2px color-mix(in oklch, var(--glow-primary), #777 50%),
+        4px 4px 2px color-mix(in oklch, var(--glow-primary), #666 50%),
+        0 0 15px color-mix(in oklch, var(--glow-primary), transparent 50%),
+        0 0 30px color-mix(in oklch, var(--glow-secondary), transparent 60%) !important;
 }
 
-[data-theme="dark"] .card:hover {
-	box-shadow: 0 0 40px 8px color-mix(in oklch, var(--accent-color), transparent 80%),
-    0 20px 60px rgba(0, 0, 0, 0.8);
-} 
+@keyframes nekoBreath {
+	0%, 100% {
+		--glow-primary: oklch(88% 0.32 var(--glow-base));
+		text-shadow: 1px 1px 0 color-mix(in oklch, var(--glow-primary), #999 50%),
+                2px 2px 0 color-mix(in oklch, var(--glow-primary), #888 50%),
+                3px 3px 0 color-mix(in oklch, var(--glow-primary), #777 50%),
+                4px 4px 0 color-mix(in oklch, var(--glow-primary), #666 50%),
+                0 0 8px color-mix(in oklch, var(--glow-primary), transparent 70%),
+                0 0 15px color-mix(in oklch, var(--glow-secondary), transparent 80%);
+	}
+
+	50% {
+		--glow-primary: oklch(96% 0.38 var(--glow-base));
+		text-shadow: 1px 1px 0 color-mix(in oklch, var(--glow-primary), #999 50%),
+                2px 2px 0 color-mix(in oklch, var(--glow-primary), #888 50%),
+                3px 3px 0 color-mix(in oklch, var(--glow-primary), #777 50%),
+                4px 4px 0 color-mix(in oklch, var(--glow-primary), #666 50%),
+                0 0 15px color-mix(in oklch, var(--glow-primary), transparent 50%),
+                0 0 30px color-mix(in oklch, var(--glow-secondary), transparent 60%);
+	}
+}
 
 .footer-text {
 	color: var(--accent-color) !important;
@@ -6894,17 +7120,22 @@ a.link-primary:hover svg path {
 table {
 	border-collapse: separate;
 	border-spacing: 0;
+	width: 100%;
 }
 
-thead.table-light {
-	background: var(--card-bg) !important;
-	border-radius: var(--radius) var(--radius) var(--radius) var(--radius);
-	overflow: hidden;
+thead.table-light th {
+	font-weight: 600;
+	padding: 0.85rem 1.25rem;
+	border: none !important;
+	background: var(--accent-color) !important;
+	color: #fff !important;
+	text-align: left;
+	font-size: 0.925rem;
+	transition: all 0.2s ease;
 }
 
 thead.table-light th:hover {
-	background: var(--card-bg) !important;
-	color: var(--accent-color) !important;
+	background: color-mix(in oklch, var(--accent-color), black 10%) !important;
 }
 
 thead.table-light tr:first-child th:first-child {
@@ -6915,21 +7146,8 @@ thead.table-light tr:first-child th:last-child {
 	border-top-right-radius: var(--radius) !important;
 }
 
-thead.table-light th {
-	font-weight: 600;
-	padding: 0.75rem 1rem;
-	border: none !important;
-	position: relative;
-}
-
 thead.table-light th:not(:last-child)::after {
-	content: "";
-	position: absolute;
-	right: 0;
-	top: 25%;
-	height: 50%;
-	width: 1px;
-	background: var(--border-color);
+	content: none;
 }
 
 .btn-primary,

@@ -2,7 +2,7 @@
     <div class="container-sm container">
         <a class="navbar-brand d-flex align-items-center" href="#">
             <?= $iconHtml ?>
-            <span style="color: var(--accent-color); letter-spacing: 1px;"><?= htmlspecialchars($title) ?></span>
+            <span id="dynamicTitle" style="color: var(--accent-color); letter-spacing: 1px;"><?= htmlspecialchars($title) ?></span>
         </a>
         <button class="navbar-toggler" type="button" style="position: relative; z-index: 1;" data-bs-toggle="collapse" data-bs-target="#navbarContent">
             <i class="bi bi-list" style="color: var(--accent-color); font-size: 1.8rem;"></i>
@@ -36,15 +36,15 @@
             </ul>
             <div class="d-flex align-items-center">
                 <div class="me-3 d-block">
-                    <button type="button" class="btn btn-primary icon-btn me-2" onclick="toggleControlPanel()" data-translate-title="control_panel"><i class="bi bi-gear"> </i></button>
-                    <button type="button" class="btn btn-danger icon-btn me-2" data-bs-toggle="modal" data-bs-target="#langModal"  data-translate-title="set_language"><i class="bi bi-translate"></i></button>
-                    <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-translate-title="music_player"><i class="bi bi-music-note-beamed"></i></button>
-                    <button type="button" class="btn btn-warning icon-btn me-2" id="toggleIpStatusBtn"  onclick="toggleIpStatusBar()" data-translate-title="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
-                    <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-translate-title="viewPortInfoButton"><i class="bi bi-plug"></i></button>
-                    <button type="button" class="btn btn-success icon-btn me-2" id="updatePhpConfig" data-translate-title="unlock_php_upload_limit"><i class="bi bi-unlock"></i></button>
+                    <button type="button" class="btn btn-primary icon-btn me-2" onclick="toggleControlPanel()" data-tooltip="control_panel"><i class="bi bi-gear"> </i></button>
+                    <button type="button" class="btn btn-danger icon-btn me-2" data-bs-toggle="modal" data-bs-target="#langModal" data-tooltip="set_language"><i class="bi bi-translate"></i></button>
+                    <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-tooltip="music_player"><i class="bi bi-music-note-beamed"></i></button>
+                    <button type="button" class="btn btn-warning icon-btn me-2" id="toggleIpStatusBtn"  onclick="toggleIpStatusBar()" data-tooltip="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
+                    <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-tooltip="viewPortInfoButton"><i class="bi bi-plug"></i></button>
+                    <button type="button" class="btn btn-success icon-btn me-2" id="updatePhpConfig" data-tooltip="unlock_php_upload_limit"><i class="bi bi-unlock"></i></button>
                     <button type="button" class="btn-refresh-page btn btn-orange icon-btn me-2 d-none d-sm-inline"><i class="fas fa-sync-alt"></i></button>
-                    <button type="button" class="btn btn-fuchsia icon-btn me-2 d-none d-sm-inline" onclick="handleIPClick()" data-translate-title="show_ip"><i class="fas fa-globe"></i></button>
-                    <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-translate-title="component_bg_color"><i class="bi bi-palette"></i></button>
+                    <button type="button" class="btn btn-fuchsia icon-btn me-2 d-none d-sm-inline" onclick="handleIPClick()" data-tooltip="show_ip"><i class="fas fa-globe"></i></button>
+                    <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-tooltip="component_bg_color"><i class="bi bi-palette"></i></button>
                     <input type="color" id="colorPicker" value="#0f3460" style="display: none;">
             </div>
         </div>

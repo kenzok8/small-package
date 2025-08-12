@@ -202,18 +202,21 @@ EOL;
 </nav>
 <div class="outer-container px-3">
     <div class="container-fluid">
-        <h2 class="title text-center" style="margin-top: 3rem; margin-bottom: 2rem;" data-translate="title">Sing-box Conversion Template One</h2>
-        <div class="alert alert-info">
-            <h4 class="alert-heading" data-translate="helpInfoHeading">Help Information</h4>
-            <ul>
-                <li data-translate="template1"><strong>Template 1</strong>: No Region, No Groups.</li>
-                <li data-translate="template2"><strong>Template 2</strong>: No Region, With Routing Rules.</li>
-                <li data-translate="template3"><strong>Template 3</strong>: Hong Kong, Taiwan, Singapore, Japan, USA, South Korea, With Routing Rules.</li>
-                <li data-translate="template4"><strong>Template 4</strong>: Same As Above, Multiple Rules.</li>
-            </ul>
+        <h2 class="title text-center" style="margin-top: 3rem; margin-bottom: 1rem;" data-translate="title">Sing-box Conversion Template One</h2>
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title" data-translate="helpInfoHeading">Help Information</h4>
+                <ul class="list-unstyled">
+                    <li data-translate="template1"><strong>Template 1</strong>: No Region, No Groups.</li>
+                    <li data-translate="template2"><strong>Template 2</strong>: No Region, With Routing Rules.</li>
+                    <li data-translate="template3"><strong>Template 3</strong>: Hong Kong, Taiwan, Singapore, Japan, USA, South Korea, With Routing Rules.</li>
+                    <li data-translate="template4"><strong>Template 4</strong>: Same As Above, Multiple Rules.</li>
+                </ul>
+            </div>
         </div>
+
         <form method="post" action="">
-            <div class="mb-3">
+            <div class="mb-3 mt-3">
                 <label for="subscribeUrl" class="form-label" data-translate="subscribeUrlLabel">Subscription URL</label>         
                 <input type="text" class="form-control" id="subscribeUrl" name="subscribeUrl" value="<?php echo htmlspecialchars($latestLink); ?>" placeholder="Enter subscription URL, multiple URLs separated by |"  data-translate-placeholder="subscribeUrlPlaceholder" required>
             </div>
@@ -308,29 +311,39 @@ EOL;
 </div>
 <?php
 function displayLogData($dataFilePath, $translations) {
+    if (isset($_POST['clearData'])) {
+        if (file_exists($dataFilePath)) {
+            file_put_contents($dataFilePath, '');
+        }
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
+
     if (file_exists($dataFilePath)) {
         $savedData = file_get_contents($dataFilePath);
         ?>
-        <div class='container-sm py-2'>
-            <div class='card'>
-                <div class='card-body p-2'>
-                    <div class="d-flex justify-content-between align-items-center mb-2 mt-2">
-                        <h5 class='card-title mb-0'><?= htmlspecialchars($translations['data_saved']) ?></h5>
-                        <button class="btn btn-sm btn-danger" type="submit" name="clearData">
-                            <i class="bi bi-trash"></i> <?= htmlspecialchars($translations['clear_data']) ?>
-                        </button>
+        <div class="container-sm py-2">
+            <div class="card">
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-center my-2">
+                        <h5 class="card-title mb-0"><?= htmlspecialchars($translations['data_saved']) ?></h5>
                     </div>
-                    <div class="overflow-auto" style="height: 300px; border: 1px solid #ccc; border-radius: 4px; padding: 5px;">
+                    <div class="overflow-auto border rounded p-2" style="height: 300px;">
                         <pre class="p-1 m-0 ms-2"><?= htmlspecialchars($savedData) ?></pre>
+                    </div>
+                    <div class="text-center mt-2">
+                        <form method="post" action="">
+                            <button class="btn btn-sm btn-danger" type="submit" name="clearData">
+                                <i class="bi bi-trash"></i> <?= htmlspecialchars($translations['clear_data']) ?>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
         <?php
-
     }
 }
-
 displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
 ?>
 
