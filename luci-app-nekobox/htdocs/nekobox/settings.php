@@ -127,7 +127,7 @@ $razordVersion = getRazordVersion();
   <h2 class="text-center p-2 mb-2" data-translate="component_update">Component Update</h2>
   <div class="row g-4">
     <div class="col-md-6">
-      <div class="card shadow-sm">
+      <div class="card">
         <div class="card-body text-center">
           <h5 class="card-title" data-translate="client_version_title">Client Version</h5>
           <p id="cliver" class="card-text" style="font-family: monospace;"></p>
@@ -144,7 +144,7 @@ $razordVersion = getRazordVersion();
     </div>
 
     <div class="col-md-6">
-      <div class="card shadow-sm">
+      <div class="card">
         <div class="card-body text-center">
           <h5 class="card-title" data-translate="ui_panel_title">Ui Panel</h5>
           <p class="card-text"><?php echo htmlspecialchars($uiVersion); ?></p>
@@ -161,7 +161,7 @@ $razordVersion = getRazordVersion();
     </div>
 
     <div class="col-md-6">
-      <div class="card shadow-sm">
+      <div class="card">
         <div class="card-body text-center">
           <h5 class="card-title" data-translate="singbox_core_version_title">Sing-box Core Version</h5>
           <p id="singBoxCorever" class="card-text"><?php echo htmlspecialchars($singBoxVersion); ?></p>
@@ -178,7 +178,7 @@ $razordVersion = getRazordVersion();
     </div>
 
     <div class="col-md-6">
-      <div class="card shadow-sm">
+      <div class="card">
         <div class="card-body text-center">
           <h5 class="card-title" data-translate="mihomo_core_version_title">Mihomo Core Version</h5>
           <p class="card-text"><?php echo htmlspecialchars($mihomoVersion); ?></p>
@@ -198,7 +198,7 @@ $razordVersion = getRazordVersion();
 
 <div class="container-sm container px-4 theme-settings-container">
   <h2 class="text-center mb-4 mt-4" data-translate="aboutTitle"></h2>
-  <div class="card mb-5 shadow-sm">
+  <div class="card mb-5">
     <div class="card-body text-center feature-box">
       <h5 data-translate="nekoBoxTitle"></h5>
       <p data-translate="nekoBoxDescription"></p>
@@ -207,7 +207,7 @@ $razordVersion = getRazordVersion();
 
   <div class="row g-4 mb-5">
     <div class="col-md-4 d-flex">
-      <div class="card flex-fill shadow-sm">
+      <div class="card flex-fill">
         <div class="card-body text-center">
           <h6 data-translate="simplifiedConfiguration"></h6>
           <p data-translate="simplifiedConfigurationDescription"></p>
@@ -215,7 +215,7 @@ $razordVersion = getRazordVersion();
       </div>
     </div>
     <div class="col-md-4 d-flex">
-      <div class="card flex-fill shadow-sm">
+      <div class="card flex-fill">
         <div class="card-body text-center">
           <h6 data-translate="optimizedPerformance"></h6>
           <p data-translate="optimizedPerformanceDescription"></p>
@@ -223,7 +223,7 @@ $razordVersion = getRazordVersion();
       </div>
     </div>
     <div class="col-md-4 d-flex">
-      <div class="card flex-fill shadow-sm">
+      <div class="card flex-fill">
         <div class="card-body text-center">
           <h6 data-translate="seamlessExperience"></h6>
           <p data-translate="seamlessExperienceDescription"></p>
@@ -234,12 +234,12 @@ $razordVersion = getRazordVersion();
 
   <div class="row g-4 mb-5">
     <div class="col-md-6 d-flex flex-column">
-      <div class="card shadow-sm flex-fill">
+      <div class="card flex-fill">
         <div class="card-body">
           <h5 class="mb-4 text-center">
             <i data-feather="tool"></i> <span data-translate="toolInfo"></span>
           </h5>
-          <div class="card shadow-sm">
+          <div class="card">
             <div class="card-body p-3">
               <div class="table-responsive">
                 <table class="table table-borderless text-center mb-0">
@@ -270,12 +270,12 @@ $razordVersion = getRazordVersion();
     </div>
 
     <div class="col-md-6 d-flex flex-column">
-      <div class="card shadow-sm flex-fill">
+      <div class="card flex-fill">
         <div class="card-body">
           <h5 class="mb-4 text-center">
             <i data-feather="paperclip"></i> <span data-translate="externalLinks"></span>
           </h5>
-          <div class="card shadow-sm">
+          <div class="card">
             <div class="card-body p-3">
               <div class="table-responsive">
                 <table class="table table-borderless text-center mb-0">
@@ -340,7 +340,7 @@ $razordVersion = getRazordVersion();
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" onclick="clearNekoTmpDir()" data-translate-title="delete_old_config"><i class="bi bi-trash"></i> <span data-translate="clear_config">Clear Config</span></button>
+                <button type="button" class="btn btn-danger" onclick="clearNekoTmpDir()" data-tooltip="delete_old_config"><i class="bi bi-trash"></i> <span data-translate="clear_config">Clear Config</span></button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">cancel</button>
                 <button type="button" class="btn btn-primary" onclick="confirmUpdateVersion()" data-translate="confirmButton">confirm</button>
             </div>
@@ -875,10 +875,10 @@ function checkVersion(outputId, updateFiles, currentVersions) {
 
     Promise.all(requests).then(() => {
         modalContent.innerHTML = `
-            <div class="card shadow-sm">
+            <div class="card">
                 <div class="card-body p-3">
-                    <table class="table table-borderless mb-0">
-                        <thead>
+                    <table class="table table-light mb-0">
+                        <thead class="table-light">
                             <tr>
                                 <th class="text-center">${translations['componentName'] || 'Component name'}</th>
                                 <th class="text-center">${translations['currentVersion'] || 'Current version'}</th>
