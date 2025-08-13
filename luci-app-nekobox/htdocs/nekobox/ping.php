@@ -4309,73 +4309,58 @@ function speakMessage(message) {
 </style>
 
 <script>
-function isValidColor(str) {
-    const s = new Option().style;
-    s.color = str;
-    return s.color !== '';
-}
-
-function applyCustomBackgroundColor(color) {
-    document.body.style.background = color;
-    localStorage.setItem('themeBackgroundColor', color);
-}
-
-function resetCustomBackgroundColor() {
-    document.body.style.background = '';
-    localStorage.removeItem('themeBackgroundColor');
-}
-
-function generateColorPresets() {
-    const presets = [
-        '#0f3460', '#0f172a', '#1e293b', '#1e3a8a', '#1d4ed8', '#2563eb',
-        '#3b82f6', '#1e40af', '#3730a3', '#4c1d95', '#5b21b6', '#6d28d9',
-        '#7c3aed', '#0369a1', '#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc',
-        '#bae6fd', '#1d4ed8', '#60a5fa', '#93c5fd', '#bfdbfe',
-        '#064e3b', '#047857', '#059669', '#10b981', '#34d399', '#6ee7b7',
-        '#a7f3d0', '#d1fae5', '#166534', '#22c55e',
-        '#854d0e', '#a16207', '#ca8a04', '#eab308', '#facc15', '#fde047',
-        '#fef08a', '#fef9c3', '#ea580c', '#f97316', '#fb923c', '#fdba74',      
-        '#7f1d1d', '#b91c1c', '#dc2626', '#ef4444', '#f87171', '#fca5a5',
-        '#fecaca', '#fee2e2', '#9d174d', '#be185d', '#db2777', '#ec4899',        
-        '#581c87', '#6b21a8', '#7e22ce', '#9333ea', '#a855f7', '#c084fc',
-        '#d8b4fe', '#e9d5ff', '#5b21b6', '#7c3aed',        
-        '#111827', '#1f2937', '#374151', '#4b5563', '#6b7280', '#9ca3af',
-        '#d1d5db', '#e5e7eb', '#f3f4f6', '#f9fafb', '#ffffff',       
-        '#134e4a', '#0d9488', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4',
-        '#ccfbf1', '#ecfdf5', '#0891b2', '#06b6d4',       
-        '#4338ca', '#4f46e5', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
-        '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#eab308'
-    ];
-
-    const container = document.getElementById('preset-colors');
-    container.innerHTML = '';
-    container.style.gridTemplateColumns = window.innerWidth < 768 ? 'repeat(10, 1fr)' : 'repeat(15, 1fr)';
-
-    presets.forEach(color => {
-        const div = document.createElement('div');
-        div.className = 'color-preset rounded';
-        div.style.background = color;
-        div.style.height = '30px';
-        div.style.cursor = 'pointer';
-        div.title = color;
-        div.style.border = '2px solid transparent';
-        div.addEventListener('click', () => {
-            document.getElementById('color-preview').style.background = color;
-            document.getElementById('color-selector').value = color;
-            document.getElementById('color-input').value = color;
-            document.getElementById('current-color-block').style.background = color;
-            applyCustomBackgroundColor(color);
-            const msgTemplate = translations['apply_color_success'] || 'Background color %s has been applied successfully.';
-            const msg = msgTemplate.replace('%s', color);
-            if (typeof showLogMessage === 'function') showLogMessage(msg);
-            if (typeof speakMessage === 'function') speakMessage(msg);
-        });
-        container.appendChild(div);
-    });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    const savedColor = localStorage.getItem('themeBackgroundColor') || ' ';
+    function initializeStyles() {
+        const containerWidth = localStorage.getItem('containerWidth') || 1600;
+        const modalMaxWidth = localStorage.getItem('modalMaxWidth') || 1100;
+        document.documentElement.style.setProperty('--container-width', `${containerWidth}px`);
+        document.documentElement.style.setProperty('--modal-max-width', `${modalMaxWidth}px`);
+    }
+
+    initializeStyles();
+
+    const slider = document.getElementById("containerWidth");
+    const widthValue = document.getElementById("widthValue");
+    const modalSlider = document.getElementById("modalMaxWidth");
+    const modalWidthValue = document.getElementById("modalWidthValue");
+
+    slider.value = localStorage.getItem('containerWidth') || 1600;
+    modalSlider.value = localStorage.getItem('modalMaxWidth') || 1100;
+
+    function updateSliderColor(value, slider, valueElement) {
+        let red = Math.min(Math.max((value - 800) / (5400 - 800) * 255, 0), 255);
+        let green = 255 - red;
+        slider.style.background = `linear-gradient(to right, rgb(${red}, ${green}, 255), rgb(${255 - red}, ${green}, ${255 - red}))`;
+        slider.style.setProperty('--thumb-color', `rgb(${red}, ${green}, 255)`);
+        const currentWidthText = translations && translations['current_width'] 
+            ? translations['current_width'] 
+            : 'Current Width';
+        valueElement.textContent = `${currentWidthText}: ${value}px`;
+        valueElement.style.color = `rgb(${red}, ${green}, 255)`;
+    }
+
+    updateSliderColor(slider.value, slider, widthValue);
+    updateSliderColor(modalSlider.value, modalSlider, modalWidthValue);
+
+    slider.oninput = function () {
+        updateSliderColor(slider.value, slider, widthValue);
+        localStorage.setItem('containerWidth', slider.value);
+        document.documentElement.style.setProperty('--container-width', `${slider.value}px`);
+        const msg = translations['page_width_updated'].replace('%s', slider.value);
+        showLogMessage(msg);
+        if (typeof speakMessage === 'function') speakMessage(msg);
+    };
+
+    modalSlider.oninput = function () {
+        updateSliderColor(modalSlider.value, modalSlider, modalWidthValue);
+        localStorage.setItem('modalMaxWidth', modalSlider.value);
+        document.documentElement.style.setProperty('--modal-max-width', `${modalSlider.value}px`);
+        const msg = translations['modal_width_updated'].replace('%s', modalSlider.value);
+        showLogMessage(msg);
+        if (typeof speakMessage === 'function') speakMessage(msg);
+    };
+
+    const savedColor = localStorage.getItem('themeBackgroundColor') || '';
     const preview = document.getElementById('color-preview');
     const selector = document.getElementById('color-selector');
     const input = document.getElementById('color-input');
@@ -4440,65 +4425,76 @@ document.addEventListener('DOMContentLoaded', () => {
     generateColorPresets();
     window.addEventListener('resize', generateColorPresets);
 
-    const slider = document.getElementById("containerWidth");
-    const widthValue = document.getElementById("widthValue");
-    const modalSlider = document.getElementById("modalMaxWidth");
-    const modalWidthValue = document.getElementById("modalWidthValue");
-
-    function updateSliderColor(value, slider, valueElement) {
-        let red = Math.min(Math.max((value - 800) / (5400 - 800) * 255, 0), 255);
-        let green = 255 - red;
-        slider.style.background = `linear-gradient(to right, rgb(${red}, ${green}, 255), rgb(${255 - red}, ${green}, ${255 - red}))`;
-        slider.style.setProperty('--thumb-color', `rgb(${red}, ${green}, 255)`);
-        valueElement.textContent = translations['current_width'].replace('%s', value);
-        valueElement.style.color = `rgb(${red}, ${green}, 255)`;
-    }
-
-    let savedWidth = localStorage.getItem('containerWidth');
-    let savedModalWidth = localStorage.getItem('modalMaxWidth');
-
-    if (savedWidth) slider.value = savedWidth;
-    if (savedModalWidth) modalSlider.value = savedModalWidth;
-
-    updateSliderColor(slider.value, slider, widthValue);
-    updateSliderColor(modalSlider.value, modalSlider, modalWidthValue);
-
-    slider.oninput = function() {
-        updateSliderColor(slider.value, slider, widthValue);
-        localStorage.setItem('containerWidth', slider.value);
-        sendCSSUpdate();
-        const msg = translations['page_width_updated'].replace('%s', slider.value);
-        showLogMessage(msg);
-        if (typeof speakMessage === 'function') speakMessage(msg);
-        setTimeout(() => location.reload(), 3500);
-    };
-
-    modalSlider.oninput = function() {
-        updateSliderColor(modalSlider.value, modalSlider, modalWidthValue);
-        localStorage.setItem('modalMaxWidth', modalSlider.value);
-        sendCSSUpdate();
-        const msg = translations['modal_width_updated'].replace('%s', modalSlider.value);
-        showLogMessage(msg);
-        if (typeof speakMessage === 'function') speakMessage(msg);
-        setTimeout(() => location.reload(), 3500);
-    };
-
-    function sendCSSUpdate() {
-        const width = slider.value;
-        const modalWidth = modalSlider.value;
-        fetch('update-css.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                width: width,
-                modalWidth: modalWidth
-            })
-        })
-        .then(response => response.json())
-        .then(data => console.log('CSS 更新成功:', data))
-        .catch(error => console.error('Error updating CSS:', error));
-    }
+    document.querySelectorAll('input[type=range]').forEach(range => {
+        updateRangeBackground(range);
+        range.addEventListener('input', () => updateRangeBackground(range));
+    });
 });
+
+function isValidColor(str) {
+    const s = new Option().style;
+    s.color = str;
+    return s.color !== '';
+}
+
+function applyCustomBackgroundColor(color) {
+    document.body.style.background = color;
+    localStorage.setItem('themeBackgroundColor', color);
+}
+
+function resetCustomBackgroundColor() {
+    document.body.style.background = '';
+    localStorage.removeItem('themeBackgroundColor');
+}
+
+function generateColorPresets() {
+    const presets = [
+        '#0f3460', '#0f172a', '#1e293b', '#1e3a8a', '#1d4ed8', '#2563eb',
+        '#3b82f6', '#1e40af', '#3730a3', '#4c1d95', '#5b21b6', '#6d28d9',
+        '#7c3aed', '#0369a1', '#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc',
+        '#bae6fd', '#1d4ed8', '#60a5fa', '#93c5fd', '#bfdbfe',
+        '#064e3b', '#047857', '#059669', '#10b981', '#34d399', '#6ee7b7',
+        '#a7f3d0', '#d1fae5', '#166534', '#22c55e',
+        '#854d0e', '#a16207', '#ca8a04', '#eab308', '#facc15', '#fde047',
+        '#fef08a', '#fef9c3', '#ea580c', '#f97316', '#fb923c', '#fdba74',
+        '#7f1d1d', '#b91c1c', '#dc2626', '#ef4444', '#f87171', '#fca5a5',
+        '#fecaca', '#fee2e2', '#9d174d', '#be185d', '#db2777', '#ec4899',
+        '#581c87', '#6b21a8', '#7e22ce', '#9333ea', '#a855f7', '#c084fc',
+        '#d8b4fe', '#e9d5ff', '#5b21b6', '#7c3aed',
+        '#111827', '#1f2937', '#374151', '#4b5563', '#6b7280', '#9ca3af',
+        '#d1d5db', '#e5e7eb', '#f3f4f6', '#f9fafb', '#ffffff',
+        '#134e4a', '#0d9488', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4',
+        '#ccfbf1', '#ecfdf5', '#0891b2', '#06b6d4',
+        '#4338ca', '#4f46e5', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
+        '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#eab308'
+    ];
+
+    const container = document.getElementById('preset-colors');
+    container.innerHTML = '';
+    container.style.gridTemplateColumns = window.innerWidth < 768 ? 'repeat(10, 1fr)' : 'repeat(15, 1fr)';
+
+    presets.forEach(color => {
+        const div = document.createElement('div');
+        div.className = 'color-preset rounded';
+        div.style.background = color;
+        div.style.height = '30px';
+        div.style.cursor = 'pointer';
+        div.title = color;
+        div.style.border = '2px solid transparent';
+        div.addEventListener('click', () => {
+            document.getElementById('color-preview').style.background = color;
+            document.getElementById('color-selector').value = color;
+            document.getElementById('color-input').value = color;
+            document.getElementById('current-color-block').style.background = color;
+            applyCustomBackgroundColor(color);
+            const msgTemplate = translations['apply_color_success'] || 'Background color %s has been applied successfully.';
+            const msg = msgTemplate.replace('%s', color);
+            if (typeof showLogMessage === 'function') showLogMessage(msg);
+            if (typeof speakMessage === 'function') speakMessage(msg);
+        });
+        container.appendChild(div);
+    });
+}
 
 function updateRangeBackground(range) {
     const val = range.value;
@@ -4507,11 +4503,6 @@ function updateRangeBackground(range) {
     const percent = (val - min) / (max - min) * 100;
     range.style.background = `linear-gradient(to right, #00ff00 0%, #00ff00 ${percent}%, #ffffff ${percent}%, #ffffff 100%)`;
 }
-
-document.querySelectorAll('input[type=range]').forEach(range => {
-    updateRangeBackground(range);
-    range.addEventListener('input', () => updateRangeBackground(range));
-});
 </script>
 
 <script>
@@ -5550,14 +5541,6 @@ body {
 	resize: none;
 	overflow: auto;
 	user-select: none;
-	--glow-base: var(--base-hue);
-	--glow-primary: oklch(88% 0.35 var(--glow-base));
-	--glow-secondary: oklch(85% 0.3 calc(var(--glow-base) + 15));
-	border: 1px solid color-mix(in oklch, var(--glow-primary), transparent 10%);
-	box-shadow: 0 0 12px 2px color-mix(in oklch, var(--glow-primary), transparent 40%),
-        inset 0 -12px 24px color-mix(in oklch, var(--glow-primary), transparent 60%);
-	animation: float 3s ease-in-out infinite alternate,
-        breath 4s ease-in-out infinite;
 }
 
 @keyframes float {
@@ -5584,7 +5567,18 @@ body {
 	}
 }
 
-#floatingLyrics:hover {
+[data-theme="dark"] #floatingLyrics {
+	--glow-base: var(--base-hue);
+	--glow-primary: oklch(88% 0.35 var(--glow-base));
+	--glow-secondary: oklch(85% 0.3 calc(var(--glow-base) + 15));
+	border: 1px solid color-mix(in oklch, var(--glow-primary), transparent 10%);
+	box-shadow: 0 0 12px 2px color-mix(in oklch, var(--glow-primary), transparent 40%),
+        inset 0 -12px 24px color-mix(in oklch, var(--glow-primary), transparent 60%);
+	animation: float 3s ease-in-out infinite alternate,
+        breath 4s ease-in-out infinite;
+}
+
+[data-theme="dark"] #floatingLyrics:hover {
 	animation-play-state: paused;
 	--glow-primary: oklch(92% 0.38 var(--glow-base));
 	box-shadow: 0 0 20px 4px color-mix(in oklch, var(--glow-primary), transparent 30%),
@@ -7740,23 +7734,83 @@ input[type=range]::-ms-thumb {
 	overflow: auto;
 }
 
-/* START .container-sm */
-.container-sm {
-    width: 1600px !important; 
-    max-width: 100%;
-    margin: 0 auto;
+:root {
+	--container-width: 1600px;
+	--modal-max-width: 1100px;
 }
-/* END .container-sm */
 
-/* START .modal-xl */
+.container-sm {
+	width: var(--container-width) !important;
+	max-width: 100%;
+	margin: 0 auto;
+}
+
 .modal-xl {
-    max-width: 1100px !important; 
+	max-width: var(--modal-max-width) !important;
+	margin: 0 auto;
 }
 
 @media (max-width: 768px) {
-    .modal-xl {
-        max-width: 100%;
-    }
+	.modal-xl {
+		max-width: 100%;
+	}
 }
-/* END .modal-xl */
+
+[data-theme="dark"] {
+	--glow-base: var(--base-hue);
+	--glow-primary: oklch(88% 0.35 var(--glow-base));
+	--glow-secondary: oklch(85% 0.3 calc(var(--glow-base) + 15));
+}
+
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-control:disabled,
+[data-theme="dark"] input[type="text"] {
+	border: 1px solid color-mix(in oklch, var(--glow-primary), transparent 30%);
+	box-shadow: 0 0 8px 1px color-mix(in oklch, var(--glow-primary), transparent 60%),
+              inset 0 -4px 12px color-mix(in oklch, var(--glow-primary), transparent 80%);
+	transition: box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .form-select:hover,
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] input[type="text"]:hover,
+[data-theme="dark"] input[type="text"]:focus {
+	box-shadow: 0 0 12px 2px color-mix(in oklch, var(--glow-primary), transparent 40%),
+              inset 0 -6px 16px color-mix(in oklch, var(--glow-primary), transparent 70%);
+}
+
+[data-theme="dark"] .form-control:disabled {
+	opacity: 0.7;
+	box-shadow: 0 0 4px 0 color-mix(in oklch, var(--glow-primary), transparent 70%),
+              inset 0 -2px 8px color-mix(in oklch, var(--glow-primary), transparent 90%);
+}
+
+[data-theme="dark"] table a svg {
+	filter: drop-shadow(0 0 2px color-mix(in oklch, var(--glow-primary), transparent 30%));
+	transition: filter 0.3s ease;
+}
+
+[data-theme="dark"] table a:hover svg {
+	filter: drop-shadow(0 0 6px var(--glow-primary));
+}
+
+[data-theme="dark"] #dynamicTitle,h2,h3,h4,h5,h6 {
+	position: relative;
+	color: color-mix(in oklch, var(--glow-primary), white 20%);
+	text-shadow: 0 0 5px color-mix(in oklch, var(--glow-primary), transparent 40%),
+    0 0 15px color-mix(in oklch, var(--glow-primary), transparent 70%);
+	animation: text-glow-pulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes text-glow-pulse {
+	0% {
+		text-shadow: 0 0 5px color-mix(in oklch, var(--glow-primary), transparent 40%),
+      0 0 15px color-mix(in oklch, var(--glow-primary), transparent 70%);
+	}
+
+	100% {
+		text-shadow: 0 0 10px color-mix(in oklch, var(--glow-primary), transparent 30%),
+      0 0 25px color-mix(in oklch, var(--glow-primary), transparent 60%);
+	}
+}
 </style>
