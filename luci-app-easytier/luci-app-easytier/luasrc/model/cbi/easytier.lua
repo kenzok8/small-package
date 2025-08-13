@@ -249,6 +249,18 @@ disable_encryption = s:taboption("privacy", Flag, "disable_encryption", translat
                 .. "If encryption is disabled, all other nodes must also have encryption disabled (-u parameter)"))
 disable_encryption:depends("etcmd", "etcmd")
 
+encryption_algorithm = s:taboption("privacy", ListValue, "encryption_algorithm", translate("Encryption Algorithm"),
+        translate("encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-gcm-256, openssl-aes128-gcm, openssl-aes256-gcm, openssl-chacha20. default (aes-gcm) (--encryption-algorithm parameter)"))
+encryption_algorithm.default = "aes-gcm"
+encryption_algorithm:value("xor",translate("xor"))
+encryption_algorithm:value("chacha20",translate("chacha20"))
+encryption_algorithm:value("aes-gcm",translate("aes-gcm"))
+encryption_algorithm:value("aes-gcm-256",translate("aes-gcm-256"))
+encryption_algorithm:value("openssl-aes128-gcm",translate("openssl-aes128-gcm"))
+encryption_algorithm:value("openssl-aes256-gcm",translate("openssl-aes256-gcm"))
+encryption_algorithm:value("openssl-chacha20",translate("openssl-chacha20"))
+encryption_algorithm:depends("etcmd", "etcmd")
+
 multi_thread = s:taboption("privacy", Flag, "multi_thread", translate("Enable Multithreading"),
         translate("Enable multithreaded operation; single-threaded by default (--multi-thread parameter)"))
 multi_thread:depends("etcmd", "etcmd")
@@ -785,27 +797,6 @@ html_port = s:option(Value, "html_port", translate("Web Interface Port"),
         translate("Frontend listening port for the web dashboard server. Leave empty to disable. (-l parameter)"))
 html_port.datatype = "range(1,65535)"
 html_port.default = "11211"
-
-local router_ip = luci.sys.exec("uci -q get network.lan.ipaddr"):gsub("\n", "")
-local default_api_port = api_port.default or "11211"
-api_host = s:option(Value, "api_host", translate("Default API Server URL"),
-        translate("The URL of the API server, used for connecting the web frontend. (--api-host parameter)<br>"
-                .. "Example: http://[current device IP or resolved domain name]:[API port]"))
-api_host.placeholder = "http://" .. router_ip .. ":" .. default_api_port
-api_host.default = "http://" .. router_ip .. ":" .. default_api_port
-api_host.validate = function(self, value, section)
-    local port_val = api_port:formvalue(section) or default_api_port
-    if not port_val or port_val == "" then
-        port_val = default_api_port
-    end
-    local port_in_api_host = string.match(value, ":(%d+)$")
-    if port_in_api_host ~= port_val then
-        local new_value = string.gsub(value, ":%d+$", "")
-        new_value = new_value .. ":" .. port_val
-        return new_value
-    end
-    return value
-end
 
 geoip_db = s:option(Value, "geoip_db", translate("GEOIP_DB Path"),
         translate("GeoIP2 database file path used to locate the client. Defaults to an embedded file (country-level information only)."
