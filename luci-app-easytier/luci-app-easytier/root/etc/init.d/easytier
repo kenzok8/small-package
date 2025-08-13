@@ -76,7 +76,7 @@ check_bin() {
        		tag="$( curl -k --connect-timeout 3 --user-agent "$user_agent"  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
        		[ -z "$tag" ] && tag="$( curl -Lk --connect-timeout 3 --user-agent "$user_agent" -s  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
    	fi
-	[ -z "$tag"] && tag=v2.3.2
+	[ -z "$tag"] && tag=v2.4.2
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytier.log
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytierweb.log
         mkdir -p "$path"
@@ -138,11 +138,11 @@ check_config() {
 			{
 			while true; do
 				LOG_SIZE=\$(ls -l /tmp/easytier.log | awk '{print int(\$5/1024)}')
-				if [ \$LOG_SIZE -gt 100 ]; then
-					tail -n 100 /tmp/easytier.log > /tmp/easytier.log.tmp
+				if [ \$LOG_SIZE -gt 5120 ]; then
+					tail -n 500 /tmp/easytier.log > /tmp/easytier.log.tmp
 					mv /tmp/easytier.log.tmp /tmp/easytier.log
 				fi
-				sleep 3600
+				sleep 300
 			done
 			} &
 			LOG_MANAGEMENT_PID=\$!
@@ -208,6 +208,7 @@ get_etconfig() {
 		quic_input="$(uci -q get easytier.@easytier[0].quic_input || echo 0)"
 		foreign_relay_bps_limit="$(uci -q get easytier.@easytier[0].foreign_relay_bps_limit)"
 		extra_args="$(uci -q get easytier.@easytier[0].extra_args)"
+		encryption_algorithm="$(uci -q get easytier.@easytier[0].encryption_algorithm)"
 }
 
 set_firewall() {
@@ -509,6 +510,9 @@ start_et() {
 				[ "$quic_proxy" = "0" ] || core_cmd="${core_cmd} --enable-quic-proxy"
 				[ "$quic_input" = "0" ] || core_cmd="${core_cmd} --disable-quic-input"
 				[ -z "$foreign_relay_bps_limit" ] || core_cmd="${core_cmd} --foreign-relay-bps-limit $foreign_relay_bps_limit"
+				if [ -n "$encryption_algorithm" ] && [ "$encryption_algorithm" != "aes-gcm" ]; then
+					core_cmd="${core_cmd} --encryption-algorithm ${encryption_algorithm}"
+				fi
 				[ -z "$extra_args" ] || core_cmd="${core_cmd} $extra_args"
 	     		fi
 			if [ "$etcmd" = "web" ] ; then
@@ -530,11 +534,11 @@ start_et() {
 			{
 			while true; do
 				LOG_SIZE=\$(ls -l /tmp/easytier.log | awk '{print int(\$5/1024)}')
-				if [ \$LOG_SIZE -gt 100 ]; then
-					tail -n 100 /tmp/easytier.log > /tmp/easytier.log.tmp
+				if [ \$LOG_SIZE -gt 5120 ]; then
+					tail -n 500 /tmp/easytier.log > /tmp/easytier.log.tmp
 					mv /tmp/easytier.log.tmp /tmp/easytier.log
 				fi
-				sleep 3600
+				sleep 300
 			done
 			} &
 			LOG_MANAGEMENT_PID=\$!
@@ -626,11 +630,11 @@ start_web() {
 		{
 			while true; do
 				LOG_SIZE=\$(ls -l /tmp/easytierweb.log | awk '{print int(\$5/1024)}')
-				if [ \$LOG_SIZE -gt 100 ]; then
-					tail -n 100 /tmp/easytierweb.log > /tmp/easytierweb.log.tmp
+				if [ \$LOG_SIZE -gt 5120 ]; then
+					tail -n 500 /tmp/easytierweb.log > /tmp/easytierweb.log.tmp
 					mv /tmp/easytierweb.log.tmp /tmp/easytierweb.log
 				fi
-				sleep 3600
+				sleep 300
 			done
 		} &
 		LOG_MANAGEMENT_PID=\$!

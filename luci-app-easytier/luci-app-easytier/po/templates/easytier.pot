@@ -102,6 +102,9 @@ msgstr ""
 msgid "Clear Logs"
 msgstr ""
 
+msgid "Download Log"
+msgstr ""
+
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:469
 msgid "Click the button to refresh and view STUN information"
 msgstr ""
@@ -1022,4 +1025,9 @@ msgstr ""
 msgid "Click the button to refresh and view manage mapped listeners"
 msgstr ""
 
+msgid "Encryption Algorithm"
+msgstr ""
+
+msgid "encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-gcm-256, openssl-aes128-gcm, openssl-aes256-gcm, openssl-chacha20. default (aes-gcm) (--encryption-algorithm parameter)"
+msgstr "使用的加密算法，支持：xor、chacha20、aes-gcm、aes-gcm-256、openssl-aes128-gcm、openssl-aes256-gcm、openssl-chacha20。默认（aes-gcm）(--encryption-algorithm 参数)"
 
