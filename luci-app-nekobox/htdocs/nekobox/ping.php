@@ -7785,6 +7785,43 @@ input[type=range]::-ms-thumb {
               inset 0 -2px 8px color-mix(in oklch, var(--glow-primary), transparent 90%);
 }
 
+[data-theme="dark"] .form-check-input[type="checkbox"] {
+	border: 1px solid color-mix(in oklch, var(--glow-primary), transparent 50%);
+	background-color: color-mix(in oklch, var(--bg-body), transparent 20%);
+	box-shadow: 0 0 6px color-mix(in oklch, var(--glow-primary), transparent 70%);
+	transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .form-check-input:checked[type="checkbox"] {
+	background-color: var(--glow-primary);
+	border-color: var(--glow-primary);
+	box-shadow: 0 0 8px var(--glow-primary),
+        inset 0 0 4px white;
+}
+
+[data-theme="dark"] .form-check-input[type="radio"] {
+	border: 1px solid color-mix(in oklch, var(--glow-primary), transparent 50%);
+	background-color: color-mix(in oklch, var(--bg-body), transparent 20%);
+	box-shadow: 0 0 6px color-mix(in oklch, var(--glow-primary), transparent 70%);
+	transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .form-check-input:checked[type="radio"] {
+	background-color: var(--glow-primary);
+	border-color: var(--glow-primary);
+	box-shadow: 0 0 8px var(--glow-primary),
+        inset 0 0 6px color-mix(in oklch, white, transparent 60%);
+}
+
+[data-theme="dark"] .form-check-input:hover {
+	box-shadow: 0 0 10px color-mix(in oklch, var(--glow-primary), transparent 50%);
+}
+
+[data-theme="dark"] .form-check-input:disabled {
+	opacity: 0.5;
+	box-shadow: 0 0 4px color-mix(in oklch, var(--glow-primary), transparent 80%);
+}
+
 [data-theme="dark"] table a svg {
 	filter: drop-shadow(0 0 2px color-mix(in oklch, var(--glow-primary), transparent 30%));
 	transition: filter 0.3s ease;
@@ -7798,7 +7835,7 @@ input[type=range]::-ms-thumb {
 	position: relative;
 	color: color-mix(in oklch, var(--glow-primary), white 20%);
 	text-shadow: 0 0 5px color-mix(in oklch, var(--glow-primary), transparent 40%),
-    0 0 15px color-mix(in oklch, var(--glow-primary), transparent 70%);
+        0 0 15px color-mix(in oklch, var(--glow-primary), transparent 70%);
 	animation: text-glow-pulse 3s ease-in-out infinite alternate;
 }
 
