@@ -1,0 +1,52 @@
+{
+    "admin/services/momo": {
+        "title": "Momo",
+        "action": {
+            "type": "firstchild"
+        },
+        "depends": {
+            "acl": [ "luci-app-momo" ],
+            "uci": { "momo": true }
+        }
+    },
+    "admin/services/momo/config": {
+        "title": "App Config",
+        "order": 10,
+        "action": {
+            "type": "view",
+            "path": "momo/app"
+        }
+    },
+    "admin/services/momo/profile": {
+        "title": "Profile",
+        "order": 20,
+        "action": {
+            "type": "view",
+            "path": "momo/profile"
+        }
+    },
+    "admin/services/momo/proxy": {
+        "title": "Proxy Config",
+        "order": 30,
+        "action": {
+            "type": "view",
+            "path": "momo/proxy"
+        }
+    },
+    "admin/services/momo/editor": {
+        "title": "Editor",
+        "order": 40,
+        "action": {
+            "type": "view",
+            "path": "momo/editor"
+        }
+    },
+    "admin/services/momo/log": {
+        "title": "Log",
+        "order": 50,
+        "action": {
+            "type": "view",
+            "path": "momo/log"
+        }
+    }
+}

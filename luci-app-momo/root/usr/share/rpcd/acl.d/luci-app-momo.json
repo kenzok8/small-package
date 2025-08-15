@@ -1,0 +1,27 @@
+{
+    "luci-app-momo": {
+        "description": "Grant access to momo procedures",
+        "read": {
+            "uci": [ "momo" ],
+            "ubus": {
+                "rc": [ "*" ],
+                "luci.momo": [ "*" ]
+            },
+            "file": {
+                "/etc/momo/profiles/*.json": ["read"],
+                "/etc/momo/subscriptions/*.json": ["read"],
+                "/etc/momo/run/config.json": ["read"],
+                "/var/log/momo/*.log": ["read"]
+            }
+        },
+        "write": {
+            "uci": [ "momo" ],
+            "file": {
+                "/etc/momo/profiles/*.json": ["write"],
+                "/etc/momo/subscriptions/*.json": ["write"],
+                "/etc/momo/run/config.json": ["write"],
+                "/var/log/momo/*.log": ["write"]
+            }
+        }
+    }
+}
