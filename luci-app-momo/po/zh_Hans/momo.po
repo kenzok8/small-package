@@ -1,0 +1,345 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: PACKAGE VERSION\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:69
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:122
+msgid "Access Control"
+msgstr "访问控制"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:175
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:180
+msgid "All Port"
+msgstr "全部端口"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:94
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:13
+msgid "App Config"
+msgstr "插件配置"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:29
+msgid "App Log"
+msgstr "插件日志"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:43
+msgid "App Version"
+msgstr "插件版本"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:168
+msgid "Bypass"
+msgstr "绕过"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:170
+msgid "Bypass China Mainland IP"
+msgstr "绕过中国大陆 IP"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:183
+msgid "Bypass DSCP"
+msgstr "绕过 DSCP"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:93
+msgid "CGroup"
+msgstr "控制组"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:27
+msgid "Choose File"
+msgstr "选择文件"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:99
+msgid "Choose Profile"
+msgstr "选择配置文件"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:33
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:66
+msgid "Clear Log"
+msgstr "清空日志"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:176
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:181
+msgid "Commonly Used Port"
+msgstr "常用端口"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:62
+msgid "Core Log"
+msgstr "核心日志"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:128
+msgid "Core Only"
+msgstr "仅核心"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:57
+msgid "Core Status"
+msgstr "核心状态"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:50
+msgid "Core Version"
+msgstr "核心版本"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:117
+msgid "Cron Expression"
+msgstr "Cron 表达式"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:99
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:162
+msgid "DNS"
+msgstr "DNS"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:95
+msgid "Debug Log"
+msgstr "调试日志"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:173
+msgid "Destination TCP Port to Proxy"
+msgstr "要代理的 TCP 目标端口"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:178
+msgid "Destination UDP Port to Proxy"
+msgstr "要代理的 UDP 目标端口"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:38
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:45
+msgid "Disable"
+msgstr "禁用"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:35
+msgid "Edit Subscription"
+msgstr "编辑订阅"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:25
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:37
+msgid "Editor"
+msgstr "编辑器"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:96
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:33
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:66
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:77
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:107
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:130
+msgid "Enable"
+msgstr "启用"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:50
+msgid "Expire At"
+msgstr "到期时间"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:61
+msgid "Fake-IP Ping Hijack"
+msgstr "Fake-IP Ping 劫持"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:125
+msgid "Fast Reload"
+msgstr "快速重载"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:103
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:31
+msgid "File:"
+msgstr "文件："
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:99
+msgid "Generate & Download"
+msgstr "生成并下载"
+
+#: applications/luci-app-momo/root/usr/share/rpcd/acl.d/luci-app-momo.json:3
+msgid "Grant access to momo procedures"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:87
+msgid "Group"
+msgstr "用户组"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:38
+msgid "How To Use"
+msgstr "使用说明"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:49
+msgid "IPv4 DNS Hijack"
+msgstr "IPv4 DNS 劫持"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:55
+msgid "IPv4 Proxy"
+msgstr "IPv4 代理"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:52
+msgid "IPv6 DNS Hijack"
+msgstr "IPv6 DNS 劫持"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:58
+msgid "IPv6 Proxy"
+msgstr "IPv6 代理"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:110
+msgid "Inbound Interface"
+msgstr "入站接口"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:105
+msgid "LAN Proxy"
+msgstr "局域网代理"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:83
+msgid "Local"
+msgstr "本地"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:27
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:45
+msgid "Log"
+msgstr "日志"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:38
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:3
+msgid "Momo"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:15
+msgid "Not Running"
+msgstr "未在运行"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:89
+msgid "Open Dashboard"
+msgstr "打开面板"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:79
+msgid "Prefer"
+msgstr "优先"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:21
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:21
+msgid "Profile"
+msgstr "配置文件"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:38
+msgid "Profile for Startup"
+msgstr "用于启动的配置文件"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:102
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:165
+msgid "Proxy"
+msgstr "代理"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:29
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:31
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:29
+msgid "Proxy Config"
+msgstr "代理配置"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:39
+msgid "Redirect Mode"
+msgstr "Redirect 模式"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:69
+msgid "Reload Service"
+msgstr "重载服务"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:82
+msgid "Remote"
+msgstr "远程"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:76
+msgid "Restart Service"
+msgstr "重启服务"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:64
+msgid "Router Proxy"
+msgstr "路由器代理"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:15
+msgid "Running"
+msgstr "运行中"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:114
+msgid "Scheduled Restart"
+msgstr "定时重启"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:56
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:89
+msgid "Scroll To Bottom"
+msgstr "滚动到底部"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:110
+msgid "Start Delay"
+msgstr "启动延迟"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:40
+msgid "Status"
+msgstr "状态"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:31
+msgid "Subscription"
+msgstr "订阅"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:37
+msgid "Subscription Name"
+msgstr "订阅名称"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:69
+msgid "Subscription Url"
+msgstr "订阅链接"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:107
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:35
+msgid "Subscription:"
+msgstr "订阅："
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:36
+msgid "TCP Mode"
+msgstr "TCP 模式"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:40
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:46
+msgid "TPROXY Mode"
+msgstr "TPROXY 模式"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:41
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:47
+msgid "TUN Mode"
+msgstr "TUN 模式"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:122
+msgid "Test Profile"
+msgstr "检查配置文件"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:45
+msgid "Total"
+msgstr "总量"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:38
+msgid "Transparent Proxy with sing-box on OpenWrt."
+msgstr "在 OpenWrt 上使用 sing-box 进行透明代理"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:43
+msgid "UDP Mode"
+msgstr "UDP 模式"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:63
+msgid "Update"
+msgstr "更新"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:55
+msgid "Update At"
+msgstr "更新时间"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:83
+msgid "Update Dashboard"
+msgstr "更新面板"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:23
+msgid "Upload Profile"
+msgstr "上传配置文件"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:40
+msgid "Used"
+msgstr "已使用"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:81
+msgid "User"
+msgstr "用户"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:73
+msgid "User Agent"
+msgstr "用户代理（UA）"
