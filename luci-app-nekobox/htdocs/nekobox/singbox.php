@@ -328,7 +328,7 @@ function displayLogData($dataFilePath, $translations) {
                     <div class="d-flex justify-content-between align-items-center mb-2 mt-2">
                         <h4 class="py-2 ps-3"><?= htmlspecialchars($translations['data_saved']) ?></h4>
                     </div>
-                    <div class="overflow-auto mx-3 rounded-3 p-2 border" style="height: 300px;">
+                    <div class="rounded-3 p-2 border mx-3" style="height: 300px; overflow-y: auto; overflow-x: hidden;">
                         <pre class="p-1 m-0 ms-2 log-content-area"><?= htmlspecialchars($savedData) ?></pre>
                     </div>
                     <div class="text-center mt-3">
