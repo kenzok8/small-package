@@ -59,12 +59,12 @@ start_service() {
 	config_get tun_inbound_tag "core" "tun_inbound_tag"
 	config_get dns_inbound_tag "core" "dns_inbound_tag"
 	config_get fake_ip_dns_server_tag "core" "fake_ip_dns_server_tag"
-    ## proxy config
-	local tcp_mode udp_mode ipv4_dns_hijack ipv6_dns_hijack
-	config_get tcp_mode "proxy" "tcp_mode"
-	config_get udp_mode "proxy" "udp_mode"
+	## proxy config
+	local ipv4_dns_hijack ipv6_dns_hijack tcp_mode udp_mode
 	config_get ipv4_dns_hijack "proxy" "ipv4_dns_hijack"
 	config_get ipv6_dns_hijack "proxy" "ipv6_dns_hijack"
+	config_get tcp_mode "proxy" "tcp_mode"
+	config_get udp_mode "proxy" "udp_mode"
 	# get profile
 	local profile_type; profile_type=$(echo "$profile" | cut -d ':' -f 1)
 	local profile_id; profile_id=$(echo "$profile" | cut -d ':' -f 2)
@@ -99,39 +99,43 @@ start_service() {
 		log "App" "Exit."
 		return
 	fi
-    # check profile
-    if [ "$core_only" = 0 ]; then
+	# check profile
+	if [ "$core_only" = 0 ]; then
 		log "Profile" "Checking..."
-        if [ "$tcp_mode" = "redirect" ]; then
-            if (! jq --arg redirect_inbound_tag "$redirect_inbound_tag" -e '.inbounds | any(.tag == $redirect_inbound_tag and .type == "redirect")' "$RUN_PROFILE_PATH"); then
-                log "Profile" "Redirect inbound not found."
-                log "App" "Exit."
-                return
-            fi
-        fi
-        if [ "$tcp_mode" = "tproxy" ] || [ "$udp_mode" = "tproxy" ]; then
-            if (! jq --arg tproxy_inbound_tag "$tproxy_inbound_tag" -e '.inbounds | any(.tag == $tproxy_inbound_tag and .type == "tproxy")' "$RUN_PROFILE_PATH"); then
-                log "Profile" "TPROXY inbound not found."
-                log "App" "Exit."
-                return
-            fi
-        fi
-        if [ "$tcp_mode" = "tun" ] || [ "$udp_mode" = "tun" ]; then
-            if (! jq --arg tun_inbound_tag "$tun_inbound_tag" -e '.inbounds | any(.tag == $tun_inbound_tag and .type == "tun" and has("interface_name"))' "$RUN_PROFILE_PATH"); then
-                log "Profile" "TUN inbound not found or interface_name is not defined."
-                log "App" "Exit."
-                return
-            fi
-        fi
-        if [ "$ipv4_dns_hijack" = 1 ] || [ "$ipv6_dns_hijack" = 1 ]; then
-			if (! jq --arg dns_inbound_tag "$dns_inbound_tag" -e '.inbounds | any(.tag == $dns_inbound_tag and .type == "direct")' "$RUN_PROFILE_PATH"); then
-				log "Profile" "DNS inbound not found."
+		if [ "$ipv4_dns_hijack" = 1 ] || [ "$ipv6_dns_hijack" = 1 ]; then
+			local dns_port; dns_port=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$dns_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='direct']" | jsonfilter -q -e "@['listen_port']")
+			if [ -z "$dns_port" ]; then
+				log "Profile" "DNS inbound not found, should be tagged with $dns_inbound_tag and define listen_port."
+				log "App" "Exit."
+				return
+			fi
+		fi
+		if [ "$tcp_mode" = "redirect" ]; then
+			local redirect_port; redirect_port=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$redirect_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='redirect']" | jsonfilter -q -e "@['listen_port']")
+			if [ -z "$redirect_port" ]; then
+				log "Profile" "Redirect inbound not found, should be tagged with $redirect_inbound_tag and define listen_port."
+				log "App" "Exit."
+				return
+			fi
+		fi
+		if [ "$tcp_mode" = "tproxy" ] || [ "$udp_mode" = "tproxy" ]; then
+			local tproxy_port; tproxy_port=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$tproxy_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='tproxy']" | jsonfilter -q -e "@['listen_port']")
+			if [ -z "$tproxy_port" ]; then
+				log "Profile" "TPROXY inbound not found, should be tagged with $tproxy_inbound_tag and define listen_port."
+				log "App" "Exit."
+				return
+			fi
+		fi
+		if [ "$tcp_mode" = "tun" ] || [ "$udp_mode" = "tun" ]; then
+			local tun_device; tun_device=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$tun_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='tun']" | jsonfilter -q -e "@['interface_name']")
+			if [ -z "$tun_device" ]; then
+				log "Profile" "TUN inbound not found, should be tagged with $tun_inbound_tag and define interface_name."
 				log "App" "Exit."
 				return
 			fi
 		fi
 		log "Profile" "Check passed."
-    fi
+	fi
 	# test profile
 	if [ "$test_profile" = 1 ]; then
 		log "Profile" "Testing..."
@@ -192,11 +196,11 @@ service_started() {
 	config_get tun_inbound_tag "core" "tun_inbound_tag"
 	## proxy config
 	### general
-	local tcp_mode udp_mode ipv4_proxy ipv6_proxy tun_timeout tun_interval
-	config_get tcp_mode "proxy" "tcp_mode"
-	config_get udp_mode "proxy" "udp_mode"
+	local ipv4_proxy ipv6_proxy tcp_mode udp_mode tun_timeout tun_interval
 	config_get_bool ipv4_proxy "proxy" "ipv4_proxy" 0
 	config_get_bool ipv6_proxy "proxy" "ipv6_proxy" 0
+	config_get tcp_mode "proxy" "tcp_mode"
+	config_get udp_mode "proxy" "udp_mode"
 	config_get tun_timeout "proxy" "tun_timeout" 30
 	config_get tun_interval "proxy" "tun_interval" 1
 	## routing config
@@ -218,7 +222,7 @@ service_started() {
 	if [ "$tcp_mode" = "tun" ] || [ "$udp_mode" = "tun" ]; then
 		tun_enable=1
 	fi
-    local tun_device; tun_device=$(jq --arg tun_inbound_tag "$tun_inbound_tag" -r '.inbounds[] | select(.tag == $tun_inbound_tag) | .interface_name' "$RUN_PROFILE_PATH")
+	local tun_device; tun_device=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$tun_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='tun']" | jsonfilter -q -e "@['interface_name']")
 	if [ "$core_only" = 0 ]; then
 		# proxy
 		log "Proxy" "Enabled."
@@ -226,11 +230,9 @@ service_started() {
 		if [ "$tun_enable" = 1 ]; then
 			log "Proxy" "Waiting for tun device online within $tun_timeout seconds..."
 			while [ "$tun_timeout" -gt 0 ]; do
-				if (ip link show dev "$tun_device" > /dev/null 2>&1); then
-					if [ "$(ip -json addr show dev "$tun_device" | jq --arg tun_device "$tun_device" '.[] | select(.ifname == $tun_device) | .addr_info | length')" -gt 0 ]; then
-						log "Proxy" "TUN device is online."
-						break
-					fi
+				if (ip -j link show dev "$tun_device" | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1); then
+					log "Proxy" "TUN device is online."
+					break
 				fi
 				tun_timeout=$((tun_timeout - tun_interval))
 				sleep "$tun_interval"
@@ -337,11 +339,11 @@ cleanup() {
 	# delete hijack
 	nft delete table inet momo > /dev/null 2>&1
 	local handles handle
-	handles=$(nft --json list table inet fw4 | jq '.nftables[] | select(has("rule")) | .rule | select(.chain == "input" and .comment == "momo") | .handle')
+	handles=$(nft --json list table inet fw4 | jsonfilter -q -e "@['nftables'][*]['rule']" | jsonfilter -q -a -e "@[@['chain']='input']" | jsonfilter -q -a -e "@[@['comment']='momo']" | jsonfilter -q -a -e "@[*]['handle']")
 	for handle in $handles; do
 		nft delete rule inet fw4 input handle "$handle"
 	done
-	handles=$(nft --json list table inet fw4 | jq '.nftables[] | select(has("rule")) | .rule | select(.chain == "forward" and .comment == "momo") | .handle')
+	handles=$(nft --json list table inet fw4 | jsonfilter -q -e "@['nftables'][*]['rule']" | jsonfilter -q -a -e "@[@['chain']='forward']" | jsonfilter -q -a -e "@[@['comment']='momo']" | jsonfilter -q -a -e "@[*]['handle']")
 	for handle in $handles; do
 		nft delete rule inet fw4 forward handle "$handle"
 	done
@@ -389,7 +391,7 @@ update_subscription() {
 	local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.json"
 	if (curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"); then
 		log "Profile" "Subscription download successful."
-        success=1
+		success=1
 	else
 		log "Profile" "Subscription download failed."
 		success=0

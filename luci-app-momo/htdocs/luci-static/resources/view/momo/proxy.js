@@ -33,19 +33,6 @@ return view.extend({
         o = s.taboption('proxy', form.Flag, 'enabled', _('Enable'));
         o.rmempty = false;
 
-        o = s.taboption('proxy', form.ListValue, 'tcp_mode', _('TCP Mode'));
-        o.optional = true;
-        o.placeholder = _('Disable');
-        o.value('redirect', _('Redirect Mode'));
-        o.value('tproxy', _('TPROXY Mode'));
-        o.value('tun', _('TUN Mode'));
-
-        o = s.taboption('proxy', form.ListValue, 'udp_mode', _('UDP Mode'));
-        o.optional = true;
-        o.placeholder = _('Disable');
-        o.value('tproxy', _('TPROXY Mode'));
-        o.value('tun', _('TUN Mode'));
-
         o = s.taboption('proxy', form.Flag, 'ipv4_dns_hijack', _('IPv4 DNS Hijack'));
         o.rmempty = false;
 
@@ -60,6 +47,19 @@ return view.extend({
 
         o = s.taboption('proxy', form.Flag, 'fake_ip_ping_hijack', _('Fake-IP Ping Hijack'));
         o.rmempty = false;
+
+        o = s.taboption('proxy', form.ListValue, 'tcp_mode', _('TCP Mode'));
+        o.optional = true;
+        o.placeholder = _('Disable');
+        o.value('redirect', _('Redirect Mode'));
+        o.value('tproxy', _('TPROXY Mode'));
+        o.value('tun', _('TUN Mode'));
+
+        o = s.taboption('proxy', form.ListValue, 'udp_mode', _('UDP Mode'));
+        o.optional = true;
+        o.placeholder = _('Disable');
+        o.value('tproxy', _('TPROXY Mode'));
+        o.value('tun', _('TUN Mode'));
 
         s.tab('router', _('Router Proxy'));
 
@@ -132,6 +132,7 @@ return view.extend({
         so.rmempty = false;
 
         so = o.subsection.option(form.DynamicList, 'ip', 'IP');
+        so.datatype = 'ip4addr';
 
         for (const mac in hosts) {
             const host = hosts[mac];
@@ -142,6 +143,7 @@ return view.extend({
         };
 
         so = o.subsection.option(form.DynamicList, 'ip6', 'IP6');
+        so.datatype = 'ip6addr';
 
         for (const mac in hosts) {
             const host = hosts[mac];
@@ -152,6 +154,7 @@ return view.extend({
         };
 
         so = o.subsection.option(form.DynamicList, 'mac', 'MAC');
+        so.datatype = 'macaddr';
 
         for (const mac in hosts) {
             const host = hosts[mac];
