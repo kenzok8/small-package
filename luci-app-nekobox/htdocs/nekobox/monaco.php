@@ -2258,63 +2258,73 @@ function localizeSearchWidget() {
 
     const buttons = document.querySelectorAll('.find-actions .button, .monaco-custom-toggle, .replace-actions .button');
     buttons.forEach(button => {
-        const title = button.getAttribute('title');
-        const ariaLabel = button.getAttribute('aria-label');
+        let title = button.getAttribute('title');
+        let ariaLabel = button.getAttribute('aria-label');
+        let textToCheck = title || ariaLabel || '';
 
-        if (title) {
-            if (title.includes('Previous Match')) {
-                button.setAttribute('title', translations['search.previousMatch'] || 'Previous Match (Shift+Enter)');
-                button.setAttribute('aria-label', translations['search.previousMatch'] || 'Previous Match (Shift+Enter)');
-            } else if (title.includes('Next Match')) {
-                button.setAttribute('title', translations['search.nextMatch'] || 'Next Match (Enter)');
-                button.setAttribute('aria-label', translations['search.nextMatch'] || 'Next Match (Enter)');
-            } else if (title.includes('Match Case')) {
-                button.setAttribute('title', translations['search.matchCase'] || 'Match Case (Alt+C)');
-                button.setAttribute('aria-label', translations['search.matchCase'] || 'Match Case (Alt+C)');
-            } else if (title.includes('Match Whole Word')) {
-                button.setAttribute('title', translations['search.matchWholeWord'] || 'Match Whole Word (Alt+W)');
-                button.setAttribute('aria-label', translations['search.matchWholeWord'] || 'Match Whole Word (Alt+W)');
-            } else if (title.includes('Use Regular Expression')) {
-                button.setAttribute('title', translations['search.useRegex'] || 'Use Regular Expression (Alt+R)');
-                button.setAttribute('aria-label', translations['search.useRegex'] || 'Use Regular Expression (Alt+R)');
-            } else if (title.includes('Find in Selection')) {
-                button.setAttribute('title', translations['search.findInSelection'] || 'Find in Selection (Alt+L)');
-                button.setAttribute('aria-label', translations['search.findInSelection'] || 'Find in Selection (Alt+L)');
-            } else if (title.includes('Close')) {
-                button.setAttribute('title', translations['search.close'] || 'Close (Escape)');
-                button.setAttribute('aria-label', translations['search.close'] || 'Close (Escape)');
-            } else if (title.includes('Toggle Replace')) {
-                button.setAttribute('title', translations['search.toggleReplace'] || 'Toggle Replace');
-                button.setAttribute('aria-label', translations['search.toggleReplace'] || 'Toggle Replace');
-            } else if (title.includes('Preserve Case')) {
-                button.setAttribute('title', translations['search.preserveCase'] || 'Preserve Case (Alt+P)');
-                button.setAttribute('aria-label', translations['search.preserveCase'] || 'Preserve Case (Alt+P)');
-            } else if (title.includes('Replace All')) {
-                button.setAttribute('title', translations['search.replaceAll'] || 'Replace All (Ctrl+Alt+Enter)');
-                button.setAttribute('aria-label', translations['search.replaceAll'] || 'Replace All (Ctrl+Alt+Enter)');
-            } else if (title.includes('Replace')) {
-                button.setAttribute('title', translations['search.replace'] || 'Replace (Enter)');
-                button.setAttribute('aria-label', translations['search.replace'] || 'Replace (Enter)');
-            }
+        let clean = textToCheck.replace(/\(.*?\)/g, '').trim();
+
+        if (clean.includes('Previous Match')) {
+            let v = translations['search.previousMatch'] || 'Previous Match (Shift+Enter)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Next Match')) {
+            let v = translations['search.nextMatch'] || 'Next Match (Enter)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Match Case')) {
+            let v = translations['search.matchCase'] || 'Match Case (Alt+C)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Match Whole Word')) {
+            let v = translations['search.matchWholeWord'] || 'Match Whole Word (Alt+W)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Use Regular Expression')) {
+            let v = translations['search.useRegex'] || 'Use Regular Expression (Alt+R)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Find in Selection')) {
+            let v = translations['search.findInSelection'] || 'Find in Selection (Alt+L)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Close')) {
+            let v = translations['search.close'] || 'Close (Escape)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Toggle Replace')) {
+            let v = translations['search.toggleReplace'] || 'Toggle Replace';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Preserve Case')) {
+            let v = translations['search.preserveCase'] || 'Preserve Case (Alt+P)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Replace All')) {
+            let v = translations['search.replaceAll'] || 'Replace All (Ctrl+Alt+Enter)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
+        } else if (clean.includes('Replace')) {
+            let v = translations['search.replace'] || 'Replace (Enter)';
+            button.setAttribute('title', v);
+            button.setAttribute('aria-label', v);
         }
     });
 
     const findInput = document.querySelector('.find-part .monaco-inputbox textarea');
     if (findInput) {
-        if (findInput.getAttribute('placeholder') === 'Find') {
-            findInput.setAttribute('placeholder', translations['search.find'] || 'Find');
-            findInput.setAttribute('title', translations['search.find'] || 'Find');
-            findInput.setAttribute('aria-label', translations['search.find'] || 'Find');
-        }
+        const v = translations['search.find'] || 'Find';
+        findInput.setAttribute('placeholder', v);
+        findInput.setAttribute('title', v);
+        findInput.setAttribute('aria-label', v);
     }
 
     const replaceInput = document.querySelector('.replace-part .monaco-inputbox textarea');
     if (replaceInput) {
-        if (replaceInput.getAttribute('placeholder') === 'Replace') {
-            replaceInput.setAttribute('placeholder', translations['search.replace'] || 'Replace');
-            replaceInput.setAttribute('title', translations['search.replace'] || 'Replace');
-            replaceInput.setAttribute('aria-label', translations['search.replace'] || 'Replace');
-        }
+        const v = translations['search.replace'] || 'Replace';
+        replaceInput.setAttribute('placeholder', v);
+        replaceInput.setAttribute('title', v);
+        replaceInput.setAttribute('aria-label', v);
     }
 }
 

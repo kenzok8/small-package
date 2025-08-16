@@ -29,8 +29,8 @@ export function uci_array(obj) {
 };
 
 export function merge(target, ...sources) {
-    for (let source in sources) {
-        for (let key in keys(source)) {
+	for (let source in sources) {
+		for (let key in keys(source)) {
 			const target_value = target[key];
 			const target_value_type = type(target_value);
 			const source_value = source[key];
@@ -40,14 +40,14 @@ export function merge(target, ...sources) {
 			} else {
 				target[key] = source[key];
 			}
-        }
-    }
-    return target;
+		}
+	}
+	return target;
 };
 
 export function merge_exists(target, ...sources) {
-    for (let source in sources) {
-        for (let key in keys(source)) {
+	for (let source in sources) {
+		for (let key in keys(source)) {
 			if (exists(target, key)) {
 				const target_value = target[key];
 				const target_value_type = type(target_value);
@@ -56,12 +56,12 @@ export function merge_exists(target, ...sources) {
 				if (target_value_type === 'object' && source_value_type === 'object') {
 					target[key] = merge_exists(target_value, source_value);
 				} else {
-            		target[key] = source[key];
+					target[key] = source[key];
 				}
 			}
-        }
-    }
-    return target;
+		}
+	}
+	return target;
 };
 
 export function trim_all(obj) {
