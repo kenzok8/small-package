@@ -998,6 +998,10 @@
         'format_unsupported' => 'Formatierung wird nicht unterstützt',
         'format_error' => 'Formatierungsfehler: {message}',
         'unsupported_format' => 'Der aktuelle Modus unterstützt keine Formatierung',
+        'toggleComment' => 'Kommentar umschalten',
+        'compare' => 'Vergleichen',
+        'enterModifiedContent' => 'Geben Sie den zu vergleichenden Inhalt ein:',
+        'closeDiff' => 'Differenzansicht schließen',
         'save_file_error' => 'Fehler beim Speichern der Datei: {message}'
     ],
     'fr' => [
@@ -2002,6 +2006,10 @@
         'format_unsupported' => 'Formatage non pris en charge',
         'format_error' => 'Erreur de formatage : {message}',
         'unsupported_format' => 'Le mode actuel ne prend pas en charge le formatage',
+        'toggleComment' => 'Basculer le commentaire',
+        'compare' => 'Comparer',
+        'enterModifiedContent' => 'Entrez le contenu modifié pour la comparaison :',
+        'closeDiff' => 'Fermer la vue des différences',
         'save_file_error' => 'Erreur de sauvegarde : {message}'
     ],
     'zh' => [
@@ -2897,6 +2905,10 @@
         'format_unsupported' => '暂不支持格式化',
         'format_error' => '格式化错误：{message}',
         'unsupported_format' => '当前模式不支持格式化',
+        'toggleComment' => '切换注释',
+        'compare' => '比较',
+        'enterModifiedContent' => '请输入用于比较的修改内容：',
+        'closeDiff' => '关闭差异视图',
         'save_file_error' => '保存文件出错：{message}'
     ],
     'en' => [
@@ -3976,6 +3988,10 @@
         'format_unsupported' => 'Formatting is not supported',
         'format_error' => 'Formatting error: {message}',
         'unsupported_format' => 'Current mode does not support formatting',
+        'toggleComment' => 'Toggle Comment',
+        'compare' => 'Compare',
+        'enterModifiedContent' => 'Enter modified content for comparison:',
+        'closeDiff' => 'Close Diff View',
         'save_file_error' => 'Save error: {message}'
     ],
     'hk' => [
@@ -4955,6 +4971,10 @@
         'format_unsupported' => '暫不支援格式化',
         'format_error' => '格式化錯誤：{message}',
         'unsupported_format' => '目前模式不支援格式化',
+        'toggleComment' => '切換註解',
+        'compare' => '比較',
+        'enterModifiedContent' => '請輸入用於比較的修改內容：',
+        'closeDiff' => '關閉差異視圖',
         'save_file_error' => '儲存檔案時發生錯誤：{message}'
     ],
     'ko' => [
@@ -5972,6 +5992,10 @@
         'format_unsupported' => '형식을 지원하지 않습니다',
         'format_error' => '형식 지정 오류: {message}',
         'unsupported_format' => '현재 모드는 형식을 지원하지 않습니다',
+        'toggleComment' => '주석 토글',
+        'compare' => '비교',
+        'enterModifiedContent' => '비교할 수정된 내용을 입력하세요:',
+        'closeDiff' => '차이 보기 닫기',
         'save_file_error' => '파일 저장 오류: {message}'
     ],
     'ja' => [
@@ -6976,6 +7000,10 @@
         'format_unsupported' => 'フォーマットはサポートされていません',
         'format_error' => 'フォーマットエラー：{message}',
         'unsupported_format' => '現在のモードではフォーマットできません',
+        'toggleComment' => 'コメント切り替え',
+        'compare' => '比較',
+        'enterModifiedContent' => '比較用の修正内容を入力してください：',
+        'closeDiff' => '差分ビューを閉じる',
         'save_file_error' => 'ファイルの保存中にエラーが発生しました：{message}'
    ],
     'ru' => [
@@ -8003,6 +8031,10 @@
         'format_unsupported' => 'Форматирование не поддерживается',
         'format_error' => 'Ошибка форматирования: {message}',
         'unsupported_format' => 'Текущий режим не поддерживает форматирование',
+        'toggleComment' => 'Переключить комментарий',
+        'compare' => 'Сравнить',
+        'enterModifiedContent' => 'Введите измененный контент для сравнения:',
+        'closeDiff' => 'Закрыть просмотр различий',
         'save_file_error' => 'Ошибка сохранения файла: {message}'
     ],
     'ar' => [
@@ -9003,6 +9035,10 @@
         'format_unsupported' => 'التنسيق غير مدعوم',
         'format_error' => 'خطأ في التنسيق: {message}',
         'unsupported_format' => 'الوضع الحالي لا يدعم التنسيق',
+        'toggleComment' => 'تبديل التعليق',
+        'compare' => 'مقارنة',
+        'enterModifiedContent' => 'أدخل المحتوى المعدل للمقارنة:',
+        'closeDiff' => 'إغلاق عرض الاختلاف',
         'save_file_error' => 'خطأ في حفظ الملف: {message}'
     ],
     'es' => [
@@ -10044,6 +10080,10 @@
         'format_unsupported' => 'El formato no es compatible',
         'format_error' => 'Error de formato: {message}',
         'unsupported_format' => 'El modo actual no admite formato',
+        'toggleComment' => 'Alternar comentario',
+        'compare' => 'Comparar',
+        'enterModifiedContent' => 'Introduzca el contenido modificado para la comparación:',
+        'closeDiff' => 'Cerrar vista de diferencias',
         'save_file_error' => 'Error al guardar: {message}'
     ],
     'vi' => [
@@ -11081,6 +11121,10 @@
         'format_unsupported' => 'Không hỗ trợ định dạng',
         'format_error' => 'Lỗi định dạng: {message}',
         'unsupported_format' => 'Chế độ hiện tại không hỗ trợ định dạng',
+        'toggleComment' => 'Chuyển chú thích',
+        'compare' => 'So sánh',
+        'enterModifiedContent' => 'Nhập nội dung đã sửa để so sánh:',
+        'closeDiff' => 'Đóng chế độ so sánh',
         'save_file_error' => 'Lỗi khi lưu: {message}'
     ]
 ];

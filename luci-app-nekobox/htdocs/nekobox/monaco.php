@@ -1198,6 +1198,8 @@ table.table tbody tr td.file-icon {
                 <option value="my-custom-theme">My Custom Theme</option>
             </select>
             <button type="button" class="btn btn-sm btn-primary" onclick="openSearch()" data-translate="search"></button>
+            <button type="button" class="btn btn-sm btn-rose-gold" onclick="toggleComment()" data-translate="toggleComment">Toggle Comment</button>
+            <button type="button" class="btn btn-sm btn-teal" onclick="openDiffEditorPrompt()" data-translate="compare">Compare</button>
             <button type="button" class="btn btn-sm btn-danger" id="toggleFullscreenBtn" onclick="toggleFullscreen()" data-translate="toggleFullscreen">Fullscreen</button>
             <button type="button" class="btn btn-sm btn-info" onclick="formatContent()" data-translate="format">Format</button>
             <button type="button" class="btn btn-sm btn-fuchsia" id="jsonValidationBtn" onclick="validateJsonSyntax()" style="display:none;" data-translate="validateJson">Validate JSON</button>
@@ -1271,6 +1273,7 @@ table.table tbody tr td.file-icon {
 let selectedFiles = [];
 let selectedFilesSize = 0;
 let monacoEditorInstance = null;
+let diffEditorInstance = null; 
 let currentEncoding = 'UTF-8';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1709,11 +1712,11 @@ function saveEdit() {
 }
 
 const monacoScript = document.createElement('script');
-monacoScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js';
+monacoScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js';
 document.head.appendChild(monacoScript);
 
 monacoScript.onload = function() {
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } });
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs' } });
 };
 
 function openMonacoEditor() {
@@ -1828,7 +1831,13 @@ function openMonacoEditor() {
             theme: savedTheme,
             fontSize: parseInt(savedFontSize.replace('px', '')),
             wordWrap: 'on',
-            automaticLayout: true
+            automaticLayout: true,
+            folding: true,
+            foldingStrategy: 'indentation',
+            multiCursorModifier: 'alt',
+            minimap: {
+                enabled: true
+            }
         });
 
         const ext = path.split('.').pop().toLowerCase();
@@ -1846,6 +1855,8 @@ function openMonacoEditor() {
         
         detectContentFormat();
         
+        registerCompletionProviders();
+        
         setTimeout(() => {
             monacoEditorInstance.focus();
         }, 100);
@@ -1856,6 +1867,58 @@ function openMonacoEditor() {
             closeMonacoEditor();
         }
     };
+}
+
+function registerCompletionProviders() {
+    monaco.languages.registerCompletionItemProvider('php', {
+        provideCompletionItems: function(model, position) {
+            return {
+                suggestions: [
+                    {
+                        label: 'echo',
+                        kind: monaco.languages.CompletionItemKind.Keyword,
+                        insertText: 'echo "${1}";',
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                    },
+                    {
+                        label: 'function',
+                        kind: monaco.languages.CompletionItemKind.Keyword,
+                        insertText: 'function ${1:name}() {\n\t${2}\n}',
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                    },
+                    {
+                        label: 'foreach',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText: 'foreach ($${1:array} as $${2:key} => $${3:value}) {\n\t${4}\n}',
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        documentation: 'Inserts a foreach loop in PHP'
+                    }
+                ]
+            };
+        }
+    });
+
+    monaco.languages.registerCompletionItemProvider('javascript', {
+        provideCompletionItems: function(model, position) {
+            return {
+                suggestions: [
+                    {
+                        label: 'console.log',
+                        kind: monaco.languages.CompletionItemKind.Function,
+                        insertText: 'console.log(${1});',
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                    },
+                    {
+                        label: 'for',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText: 'for (let ${1:i} = 0; ${1:i} < ${2:length}; ${1:i}++) {\n\t${3}\n}',
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        documentation: 'Inserts a for loop in JavaScript'
+                    }
+                ]
+            };
+        }
+    });
 }
 
 function setEditorMode(ext) {
@@ -1909,6 +1972,14 @@ function closeMonacoEditor() {
         monacoEditorInstance.dispose();
         monacoEditorInstance = null;
     }
+    if (diffEditorInstance) {
+        diffEditorInstance.dispose();
+        diffEditorInstance = null;
+        const diffContainer = document.getElementById('diffEditorContainer');
+        if (diffContainer) {
+            diffContainer.remove();
+        }
+    }
     document.getElementById('monacoEditor').style.display = 'none';
     const container = document.getElementById('monacoEditorContainer');
     if (container) {
@@ -1922,6 +1993,76 @@ function saveFullScreenContent() {
         closeMonacoEditor();
         document.getElementById('editForm').submit();
         showLogMessage(translations['save_success'] || 'Saved successfully');
+    }
+}
+
+function toggleComment() {
+    if (monacoEditorInstance) {
+        monacoEditorInstance.getAction('editor.action.commentLine').run();
+    }
+}
+
+function openDiffEditorPrompt() {
+    if (!monacoEditorInstance) return;
+    const originalContent = monacoEditorInstance.getValue();
+    const modifiedContent = prompt(translations['enterModifiedContent'] || 'Enter modified content for comparison:', originalContent);
+    if (modifiedContent !== null) {
+        openDiffEditor(originalContent, modifiedContent);
+    }
+}
+
+function openDiffEditor(originalContent, modifiedContent) {
+    const editorContainer = document.getElementById('monacoEditorContainer');
+    if (editorContainer) {
+        editorContainer.style.display = 'none';
+    }
+
+    const diffContainer = document.createElement('div');
+    diffContainer.id = 'diffEditorContainer';
+    diffContainer.style.width = '100%';
+    diffContainer.style.height = 'calc(100% - 40px)';
+    document.getElementById('monacoEditor').appendChild(diffContainer);
+
+    diffEditorInstance = monaco.editor.createDiffEditor(diffContainer, {
+        theme: localStorage.getItem('editorTheme') || 'vs-dark',
+        automaticLayout: true
+    });
+
+    diffEditorInstance.setModel({
+        original: monaco.editor.createModel(originalContent, 'text'),
+        modified: monaco.editor.createModel(modifiedContent, 'text')
+    });
+
+    const existingCloseDiffBtn = document.querySelector('#leftControls button[data-role="closeDiff"]');
+    if (existingCloseDiffBtn) {
+        existingCloseDiffBtn.remove();
+    }
+
+    const closeDiffBtn = document.createElement('button');
+    closeDiffBtn.type = 'button';
+    closeDiffBtn.className = 'btn btn-sm btn-secondary';
+    closeDiffBtn.textContent = translations['closeDiff'] || 'Close Diff View';
+    closeDiffBtn.setAttribute('data-role', 'closeDiff');
+    closeDiffBtn.onclick = closeDiffEditor;
+    document.getElementById('leftControls').appendChild(closeDiffBtn);
+}
+
+function closeDiffEditor() {
+    if (diffEditorInstance) {
+        diffEditorInstance.dispose();
+        diffEditorInstance = null;
+        const diffContainer = document.getElementById('diffEditorContainer');
+        if (diffContainer) {
+            diffContainer.remove();
+        }
+        const closeDiffBtn = document.querySelector('#leftControls button[data-role="closeDiff"]');
+        if (closeDiffBtn) {
+            closeDiffBtn.remove();
+        }
+        const editorContainer = document.getElementById('monacoEditorContainer');
+        if (editorContainer) {
+            editorContainer.style.display = 'block';
+        }
     }
 }
 
