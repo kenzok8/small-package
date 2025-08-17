@@ -1969,6 +1969,7 @@ function openDiffEditor(originalContent, modifiedContent) {
     diffContainer.id = 'diffEditorContainer';
     diffContainer.style.width = '100%';
     diffContainer.style.height = 'calc(100% - 40px)';
+    diffContainer.style.marginTop = '50px';  
     document.getElementById('monacoEditor').appendChild(diffContainer);
 
     diffEditorInstance = monaco.editor.createDiffEditor(diffContainer, {
@@ -1976,10 +1977,16 @@ function openDiffEditor(originalContent, modifiedContent) {
         automaticLayout: true
     });
 
+    const originalModel = monaco.editor.createModel(modifiedContent, 'text');
+    const modifiedModel = monaco.editor.createModel(originalContent, 'text');
+
     diffEditorInstance.setModel({
-        original: monaco.editor.createModel(originalContent, 'text'),
-        modified: monaco.editor.createModel(modifiedContent, 'text')
+        original: originalModel,
+        modified: modifiedModel
     });
+
+    originalModel.updateOptions({ readOnly: true });
+    modifiedModel.updateOptions({ readOnly: false });
 
     const existingCloseDiffBtn = document.querySelector('#leftControls button[data-role="closeDiff"]');
     if (existingCloseDiffBtn) {
