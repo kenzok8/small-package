@@ -248,10 +248,12 @@ EOL;
                         <label class="form-check-label ms-2" for="useDefaultTemplate4" data-translate="template4Label">Template 4</label>
                     </div>
                 </div>
-                <div class="mt-3 d-flex align-items-center">
-                    <input type="radio" class="form-check-input" id="useCustomTemplate" name="templateOption" value="custom">
-                    <label class="form-check-label ms-2 mb-0" for="useCustomTemplate" data-translate="useCustomTemplateLabel">Use Custom Template URL</label>
-                    <input type="text" class="form-control ms-3" id="customTemplateUrl" name="customTemplateUrl" placeholder="Enter custom template URL" data-translate-placeholder="customTemplateUrlPlaceholder">
+                <div class="mt-3">
+                    <div class="d-flex align-items-center">
+                        <input type="radio" class="form-check-input" id="useCustomTemplate" name="templateOption" value="custom">
+                        <label class="form-check-label ms-2 mb-0" for="useCustomTemplate" data-translate="useCustomTemplateLabel">Use Custom Template URL</label>
+                    </div>
+                    <input type="text" class="form-control mt-2" id="customTemplateUrl" name="customTemplateUrl" placeholder="Enter custom template URL" data-translate-placeholder="customTemplateUrlPlaceholder">
                 </div>
             </fieldset>
             <div class="d-flex flex-wrap gap-2 mb-4">
@@ -548,54 +550,73 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['clearData'])) {
  <footer class="text-center"><p><?php echo $footer ?></p></footer>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    function copyToClipboard() {
-        const copyText = document.getElementById("configContent");
-        copyText.select();
-        document.execCommand("copy");
-        alert("<?php echo $translations['copyToClipboardAlert']; ?>");
-    }
+function copyToClipboard() {
+    const copyText = document.getElementById("configContent");
+    copyText.select();
+    document.execCommand("copy");
+    alert("<?php echo $translations['copyToClipboardAlert']; ?>");
+}
 
+document.addEventListener('DOMContentLoaded', () => {
     const customTemplateRadio = document.getElementById('useCustomTemplate');
     const customTemplateInput = document.getElementById('customTemplateUrl');
-    const allTemplateRadios = document.querySelectorAll('input[name="templateOption"], input[name="defaultTemplate"]');
+    const defaultTemplateRadios = document.querySelectorAll('input[name="defaultTemplate"]');
 
     function toggleCustomInput() {
         customTemplateInput.style.display = customTemplateRadio.checked ? 'block' : 'none';
     }
 
+    function updateTemplateState() {
+        if (customTemplateRadio.checked) {
+            defaultTemplateRadios.forEach(radio => {
+                radio.checked = false;
+            });
+        }
+        const isDefaultSelected = Array.from(defaultTemplateRadios).some(radio => radio.checked);
+        if (isDefaultSelected) {
+            customTemplateRadio.checked = false;
+        }
+        toggleCustomInput();
+    }
+
     const fileNameInput = document.getElementById('customFileName');
     const savedFileName = localStorage.getItem('customFileName');
-    
     if (savedFileName) {
         fileNameInput.value = savedFileName;
     }
-
     fileNameInput.addEventListener('input', function() {
         localStorage.setItem('customFileName', this.value.trim());
     });
 
     const savedTemplate = localStorage.getItem("selectedTemplate");
     const customTemplateUrl = localStorage.getItem("customTemplateUrl");
-
     if (savedTemplate === "custom" && customTemplateUrl) {
-        document.getElementById("useCustomTemplate").checked = true;
-        document.getElementById("customTemplateUrl").value = customTemplateUrl;
+        customTemplateRadio.checked = true;
+        customTemplateInput.value = customTemplateUrl;
     } else if (savedTemplate) {
         const templateInput = document.querySelector(`input[name="defaultTemplate"][value="${savedTemplate}"]`);
         if (templateInput) templateInput.checked = true;
     }
 
-    allTemplateRadios.forEach(radio => {
+    defaultTemplateRadios.forEach(radio => {
         radio.addEventListener('change', function() {
-            if (this === customTemplateRadio) {
-                localStorage.setItem("selectedTemplate", "custom");
-            } else if (this.name === "defaultTemplate") {
+            if (this.checked) {
                 localStorage.setItem("selectedTemplate", this.value);
                 localStorage.removeItem("customTemplateUrl");
+                customTemplateRadio.checked = false;
+                toggleCustomInput();
             }
-            toggleCustomInput();
         });
+    });
+
+    customTemplateRadio.addEventListener('change', function() {
+        if (this.checked) {
+            localStorage.setItem("selectedTemplate", "custom");
+            defaultTemplateRadios.forEach(radio => {
+                radio.checked = false;
+            });
+        }
+        toggleCustomInput();
     });
 
     customTemplateInput.addEventListener('input', function() {
@@ -603,16 +624,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     toggleCustomInput();
-
-    document.querySelectorAll('input[name="defaultTemplate"]').forEach((elem) => {
-        elem.addEventListener('change', function () {
-            const customTemplateDiv = document.getElementById('customTemplateUrlDiv');
-            if (this.value === 'custom') {
-                customTemplateDiv.style.display = 'block';
-            } else {
-                customTemplateDiv.style.display = 'none';
-            }
-        });
-    });
 });
 </script>
