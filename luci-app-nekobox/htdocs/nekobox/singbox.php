@@ -329,7 +329,7 @@ function displayLogData($dataFilePath, $translations) {
                         <h4 class="py-2 ps-3"><?= htmlspecialchars($translations['data_saved']) ?></h4>
                     </div>
                     <div class="rounded-3 p-2 border mx-3" style="height: 300px; overflow-y: auto; overflow-x: hidden;">
-                        <pre class="p-1 m-0 ms-2 log-content-area"><?= htmlspecialchars($savedData) ?></pre>
+                        <pre class="p-1 m-0 ms-2" style="white-space: pre-wrap; word-wrap: break-word; overflow: hidden;"><?= htmlspecialchars($savedData) ?></pre>
                     </div>
                     <div class="text-center mt-3">
                         <form method="post" action="">
