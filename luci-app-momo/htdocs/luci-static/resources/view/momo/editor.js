@@ -32,7 +32,7 @@ return view.extend({
         };
 
         for (const subscription of subscriptions) {
-            o.value(paths.subscriptions_dir + '/' + subscription['.name'] + '.yaml', _('Subscription:') + subscription.name);
+            o.value(paths.subscriptions_dir + '/' + subscription['.name'] + '.json', _('Subscription:') + subscription.name);
         };
 
         o.value(paths.run_profile_path, _('Profile for Startup'));

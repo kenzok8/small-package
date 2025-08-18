@@ -252,6 +252,7 @@ table inet momo {
 	}
 	{% endif %}
 
+	{% if (tcp_mode == 'redirect'): %}
 	chain router_redirect {
 		{% for (let access_control in router_access_control): %}
 		{% if (access_control['enabled']): %}
@@ -277,7 +278,9 @@ table inet momo {
 		{% endif %}
 		{% endfor %}
 	}
+	{% endif %}
 
+	{% if (tcp_mode == 'tproxy' || udp_mode == 'tproxy'): %}
 	chain router_tproxy {
 		{% for (let access_control in router_access_control): %}
 		{% if (access_control['enabled']): %}
@@ -303,7 +306,9 @@ table inet momo {
 		{% endif %}
 		{% endfor %}
 	}
+	{% endif %}
 
+	{% if (tcp_mode == 'tun' || udp_mode == 'tun'): %}
 	chain router_tun {
 		{% for (let access_control in router_access_control): %}
 		{% if (access_control['enabled']): %}
@@ -329,6 +334,7 @@ table inet momo {
 		{% endif %}
 		{% endfor %}
 	}
+	{% endif %}
 	{% endif %}
 
 	{% if (lan_proxy): %}
@@ -358,6 +364,7 @@ table inet momo {
 	}
 	{% endif %}
 
+	{% if (tcp_mode == 'redirect'): %}
 	chain lan_redirect {
 		{% for (let access_control in lan_access_control): %}
 		{% if (access_control['enabled']): %}
@@ -381,7 +388,9 @@ table inet momo {
 		{% endif %}
 		{% endfor %}
 	}
+	{% endif %}
 
+	{% if (tcp_mode == 'tproxy' || udp_mode == 'tproxy'): %}
 	chain lan_tproxy {
 		{% for (let access_control in lan_access_control): %}
 		{% if (access_control['enabled']): %}
@@ -405,7 +414,9 @@ table inet momo {
 		{% endif %}
 		{% endfor %}
 	}
+	{% endif %}
 
+	{% if (tcp_mode == 'tun' || udp_mode == 'tun'): %}
 	chain lan_tun {
 		{% for (let access_control in lan_access_control): %}
 		{% if (access_control['enabled']): %}
@@ -429,6 +440,7 @@ table inet momo {
 		{% endif %}
 		{% endfor %}
 	}
+	{% endif %}
 	{% endif %}
 
 	{% if (router_proxy): %}

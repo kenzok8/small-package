@@ -14,15 +14,42 @@ if (strpos(realpath($current_path), realpath($root_dir)) !== 0) {
 }
 
 if (isset($_GET['preview']) && isset($_GET['path'])) {
-    $preview_path = realpath($root_dir . '/' . $_GET['path']);
+    $path = preg_replace('/\/+/', '/', $_GET['path']);
+    $preview_path = realpath($root_dir . '/' . $path);
     if ($preview_path && strpos($preview_path, realpath($root_dir)) === 0) {
-        $mime_type = mime_content_type($preview_path);
+        if (!file_exists($preview_path)) {
+            header('HTTP/1.0 404 Not Found');
+            echo "File not found.";
+            exit;
+        }
+        $ext = strtolower(pathinfo($preview_path, PATHINFO_EXTENSION));
+        $mime_types = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'svg' => 'image/svg+xml',
+            'bmp' => 'image/bmp',
+            'webp' => 'image/webp',
+            'mp3' => 'audio/mpeg',
+            'wav' => 'audio/wav',
+            'ogg' => 'audio/ogg',
+            'flac' => 'audio/flac',
+            'mp4' => 'video/mp4',
+            'webm' => 'video/webm',
+            'avi' => 'video/x-msvideo',
+            'mkv' => 'video/x-matroska'
+        ];
+        $mime_type = isset($mime_types[$ext]) ? $mime_types[$ext] : 'application/octet-stream';
         header('Content-Type: ' . $mime_type);
+        header('Content-Length: ' . filesize($preview_path));
         readfile($preview_path);
         exit;
+    } else {
+        header('HTTP/1.0 404 Not Found');
+        echo "Invalid path.";
+        exit;
     }
-    header('HTTP/1.0 404 Not Found');
-    exit;
 }
 
 if (isset($_GET['action']) && $_GET['action'] === 'refresh') {
@@ -205,37 +232,32 @@ function uploadFile($destination) {
         @mkdir($destination, 0755, true);
     }
     
-    foreach ($_FILES["upload"]["error"] as $key => $error) {
-        if ($error == UPLOAD_ERR_OK) {
-            $tmp_name = $_FILES["upload"]["tmp_name"][$key];
-            $name = basename($_FILES["upload"]["name"][$key]);
-            $target_file = rtrim($destination, '/') . '/' . $name;
-            
-            if (file_exists($target_file)) {
-                $errors[] = "The file $name already exists.";
-                continue;
-            }
-            
-            if (move_uploaded_file($tmp_name, $target_file)) {
-                $uploaded_files[] = $name;
-                chmod($target_file, 0644);
+    if (!empty($_FILES["upload"])) {
+        foreach ($_FILES["upload"]["error"] as $key => $error) {
+            if ($error == UPLOAD_ERR_OK) {
+                $tmp_name = $_FILES["upload"]["tmp_name"][$key];
+                $name = basename($_FILES["upload"]["name"][$key]);
+                $target_file = rtrim($destination, '/') . '/' . $name;
+                
+                if (move_uploaded_file($tmp_name, $target_file)) {
+                    $uploaded_files[] = $name;
+                    chmod($target_file, 0644);
+                } else {
+                    $errors[] = "Failed to upload $name.";
+                }
             } else {
-                $errors[] = "Failed to upload $name.";
+                $errors[] = "Upload error for file $key: " . getUploadError($error);
             }
-        } else {
-            $errors[] = "Upload error for file $key: " . getUploadError($error);
         }
     }
     
-    $result = [];
     if (!empty($errors)) {
-        $result['error'] = implode("\n", $errors);
+        return ['error' => implode("\n", $errors)];
     }
     if (!empty($uploaded_files)) {
-        $result['success'] = implode(", ", $uploaded_files);
+        return ['success' => implode(", ", $uploaded_files)];
     }
-    
-    return $result;
+    return ['error' => 'No files were uploaded'];
 }
 
 if (!function_exists('deleteDirectory')) {
@@ -356,14 +378,12 @@ function searchFiles($dir, $term) {
 }
 ?>
 
-<title>Filekit - Nekobox</title>
+<title>Monaco - Nekobox</title>
 <?php include './ping.php'; ?>
 <link rel="icon" href="./assets/img/nekobox.png">
 <script src="./assets/js/js-yaml.min.js"></script>
 
 <style>
-.folder-icon::before{content:"📁";}.file-icon::before{content:"📄";}.file-icon.file-pdf::before{content:"📕";}.file-icon.file-doc::before,.file-icon.file-docx::before{content:"📘";}.file-icon.file-xls::before,.file-icon.file-xlsx::before{content:"📗";}.file-icon.file-ppt::before,.file-icon.file-pptx::before{content:"📙";}.file-icon.file-zip::before,.file-icon.file-rar::before,.file-icon.file-7z::before{content:"🗜️";}.file-icon.file-mp3::before,.file-icon.file-wav::before,.file-icon.file-ogg::before,.file-icon.file-flac::before{content:"🎵";}.file-icon.file-mp4::before,.file-icon.file-avi::before,.file-icon.file-mov::before,.file-icon.file-wmv::before,.file-icon.file-flv::before{content:"🎞️";}.file-icon.file-jpg::before,.file-icon.file-jpeg::before,.file-icon.file-png::before,.file-icon.file-gif::before,.file-icon.file-bmp::before,.file-icon.file-tiff::before{content:"🖼️";}.file-icon.file-txt::before{content:"📝";}.file-icon.file-rtf::before{content:"📄";}.file-icon.file-md::before,.file-icon.file-markdown::before{content:"📑";}.file-icon.file-exe::before,.file-icon.file-msi::before{content:"⚙️";}.file-icon.file-bat::before,.file-icon.file-sh::before,.file-icon.file-command::before{content:"📜";}.file-icon.file-iso::before,.file-icon.file-img::before{content:"💿";}.file-icon.file-sql::before,.file-icon.file-db::before,.file-icon.file-dbf::before{content:"🗃️";}.file-icon.file-font::before,.file-icon.file-ttf::before,.file-icon.file-otf::before,.file-icon.file-woff::before,.file-icon.file-woff2::before{content:"🔤";}.file-icon.file-cfg::before,.file-icon.file-conf::before,.file-icon.file-ini::before{content:"🔧";}.file-icon.file-psd::before,.file-icon.file-ai::before,.file-icon.file-eps::before,.file-icon.file-svg::before{content:"🎨";}.file-icon.file-dll::before,.file-icon.file-so::before{content:"🧩";}.file-icon.file-css::before{content:"🎨";}.file-icon.file-js::before{content:"🟨";}.file-icon.file-php::before{content:"🐘";}.file-icon.file-json::before{content:"📊";}.file-icon.file-html::before,.file-icon.file-htm::before{content:"🌐";}.file-icon.file-bin::before{content:"👾";}
-
 #monacoEditor {
 	position: fixed;
 	top: 0;
@@ -633,28 +653,31 @@ function searchFiles($dir, $term) {
 }
 
 .upload-drop-zone {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: stretch;
 	border: 2px dashed #ccc !important;
 	border-radius: 8px;
 	padding: 25px;
-	text-align: center;
 	background: #f8f9fa;
 	transition: all 0.3s ease;
 	cursor: pointer;
 	min-height: 150px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	text-align: center;
+}
+
+.upload-drop-zone .upload-icon {
+	align-self: center;
+	margin-bottom: 1rem;
+	font-size: 50px;
+	color: #6c757d;
+	transition: all 0.3s ease;
 }
 
 .upload-drop-zone.drag-over {
 	background: #e9ecef;
 	border-color: #0d6efd;
-}
-
-.upload-icon {
-	font-size: 50px;
-	color: #6c757d;
-	transition: all 0.3s ease;
 }
 
 .upload-drop-zone:hover .upload-icon {
@@ -752,6 +775,193 @@ table.table tbody tr td.file-icon {
         height: auto;
         margin-top: -25px;
 }
+
+#previewModal .modal-content {
+	padding: 0;
+	border: none;
+	overflow: hidden;
+}
+
+#previewModal .modal-header {
+	border: none;
+}
+
+#previewModal .modal-footer {
+	border: none;
+	padding: 0.75rem 1rem;
+	margin: 0;
+}
+
+#previewModal .modal-body {
+	background-color: #000;
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	display: block;
+	min-height: 0;
+}
+
+#previewModal .modal-body img {
+	max-width: 100%;
+	max-height: 80vh;
+	display: block;
+	margin: 0 auto;
+}
+
+#previewModal .modal-body video {
+	width: 100%;
+	height: auto;
+	max-height: 80vh;
+	margin: 0;
+	padding: 0;
+	border: none;
+	display: block;
+	background-color: #000;
+}
+
+#previewModal .modal-body audio {
+	width: 100%;
+	max-width: 600px;
+	display: block;
+	margin: 0 auto;
+	margin-top: 40px;
+	margin-bottom: 40px;
+}
+
+#previewModal .modal-body p {
+	text-align: center;
+	margin: 0;
+}
+
+#fileConfirmation .alert {
+	border: 2px dashed #ccc !important;
+	padding: 1rem;
+	border-radius: 0.5rem;
+	box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+	background-color: #f8f9fa;
+	text-align: left;
+}
+
+#fileConfirmation #fileList {
+	max-height: 180px;
+	overflow-y: auto;
+}
+
+#fileConfirmation #fileList span.text-truncate {
+	width: auto;
+	overflow: visible;
+	text-overflow: unset;
+	white-space: nowrap;
+	font-weight: 500;
+	margin-right: 1rem;
+}
+
+#fileConfirmation #fileList small.text-muted {
+	margin-left: auto;
+	margin-right: 0.5rem;
+	width: 60px;
+	text-align: center;
+	flex-shrink: 0;
+}
+
+#fileConfirmation #fileList > div {
+	display: flex;
+	align-items: center;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid #e9ecef;
+}
+
+#fileConfirmation #fileList i {
+	margin-right: 0.5rem;
+	animation: pulse 1s infinite alternate;
+}
+
+#fileConfirmation #fileList button {
+	border: none;
+	background: transparent;
+	color: #dc3545;
+	padding: 0.2rem 0.4rem;
+	cursor: pointer;
+}
+
+#confirmUploadBtn {
+	width: auto;
+	padding: 0.375rem 0.75rem;
+	margin-top: 1rem;
+	display: inline-block;
+}
+
+#fileConfirmation #fileList i {
+	animation: icon-pulse 1s infinite alternate;
+}
+
+@keyframes icon-pulse {
+	0% {
+		transform: scale(1);
+	}
+
+	50% {
+		transform: scale(1.2);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+#fileConfirmation #fileList button i {
+	animation: x-pulse 1s infinite alternate;
+}
+
+@keyframes x-pulse {
+	0% {
+		transform: scale(1);
+	}
+
+	50% {
+		transform: scale(1.2);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+.table td i.folder-icon {
+        color: #FFA726;
+        font-size: 1.1em;
+}
+
+.table td i.file-icon {
+        color: #4285F4;
+        font-size: 1.1em;
+}
+
+.table td i.file-icon:hover,
+.table td i.folder-icon:hover {
+        opacity: 0.8;
+        transform: scale(1.1);
+        transition: all 0.3s;
+}
+
+.table td i.file-icon.fa-file-pdf { color: #FF4136; }
+.table td i.file-icon.fa-file-word { color: #2B579A; }
+.table td i.file-icon.fa-file-excel { color: #217346; }
+.table td i.file-icon.fa-file-powerpoint { color: #D24726; }
+.table td i.file-icon.fa-file-archive { color: #795548; }
+.table td i.file-icon.fa-file-image { color: #9C27B0; }
+.table td i.file-icon.fa-music { color: #673AB7; }
+.table td i.file-icon.fa-file-video { color: #E91E63; }
+.table td i.file-icon.fa-file-code { color: #607D8B; }
+.table td i.file-icon.fa-file-alt { color: #757575; }
+.table td i.file-icon.fa-cog { color: #555; }
+.table td i.file-icon.fa-file-csv { color: #4CAF50; }
+.table td i.file-icon.fa-html5 { color: #E44D26; }
+.table td i.file-icon.fa-js { color: #E0A800; }
+.table td i.file-icon.fa-terminal { color: #28a745; }
+.table td i.file-icon.fa-list-alt { color: #007bff; }
+.table td i.file-icon.fa-apple { color: #343a40; }
+.table td i.file-icon.fa-android { color: #28a745; }
 </style>
 
 <div class="container-sm container-bg mt-4">
@@ -863,15 +1073,23 @@ table.table tbody tr td.file-icon {
         <p class="upload-instructions mb-0">
           <span data-translate="dragHint">Drag files here or click to select files to upload</span>
         </p>
-        <button type="button" class="btn btn-secondary btn-sm ms-2" onclick="hideUploadArea()" data-translate="cancel">Cancel</button>
+        <button type="button" class="btn btn-secondary btn-sm ms-2" onclick="event.stopPropagation(); hideUploadArea()" data-translate="cancel">Cancel</button>
       </div>
-
-      <form action="" method="post" enctype="multipart/form-data" id="uploadForm">
-        <input type="file" name="upload[]" id="fileInput" style="display: none;" multiple required>
-        <div class="upload-drop-zone p-4 border rounded bg-light" id="dropZone">
-          <i class="fas fa-cloud-upload-alt upload-icon"></i>
+      <input type="file" name="upload[]" id="fileInput" style="display: none;" multiple>
+      <div class="upload-drop-zone p-4 border rounded bg-light" id="dropZone">
+        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+        <div id="fileConfirmation" class="mt-3" style="display: none;">
+          <div class="alert alert-light border text-center">
+            <div id="fileList" style="max-height: 120px; overflow-y: auto;"></div>
+            <button id="confirmUploadBtn"
+                    class="btn btn-primary mt-2"
+                    onclick="event.stopPropagation();">
+              <i class="fas fa-upload me-1"></i>
+              <span data-translate="uploadBtn">Confirm Upload</span>
+            </button>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 </div>
@@ -941,24 +1159,129 @@ table.table tbody tr td.file-icon {
                         </td>
 
                         <?php
-                            $icon_class = $item['is_dir'] ? 'folder-icon' : 'file-icon';
-                            if (!$item['is_dir']) {
+                            if ($item['is_dir']) {
+                                $icon_class = 'fas fa-folder';
+                            } else {
                                 $ext = strtolower(pathinfo($item['name'], PATHINFO_EXTENSION));
-                                $icon_class .= ' file-' . $ext;
+                                switch ($ext) {
+                                    case 'pdf': $icon_class = 'fas fa-file-pdf'; break;
+                                    case 'doc':
+                                    case 'docx': $icon_class = 'fas fa-file-word'; break;
+                                    case 'xls':
+                                    case 'xlsx': $icon_class = 'fas fa-file-excel'; break;
+                                    case 'ppt':
+                                    case 'pptx': $icon_class = 'fas fa-file-powerpoint'; break;
+                                    case 'txt': $icon_class = 'fas fa-file-alt'; break;
+                                    case 'rtf': $icon_class = 'fas fa-file-word'; break;
+                                    case 'md':
+                                    case 'markdown': $icon_class = 'fas fa-file-code'; break;
+
+                                    case 'zip':
+                                    case 'rar':
+                                    case '7z':
+                                    case 'tar':
+                                    case 'gz': $icon_class = 'fas fa-file-archive'; break;
+
+                                    case 'mp3':
+                                    case 'wav':
+                                    case 'ogg':
+                                    case 'flac':
+                                    case 'aac': $icon_class = 'fas fa-music'; break;
+
+                                    case 'mp4':
+                                    case 'avi':
+                                    case 'mov':
+                                    case 'wmv':
+                                    case 'flv':
+                                    case 'mkv':
+                                    case 'webm': $icon_class = 'fas fa-file-video'; break;
+
+                                    case 'jpg':
+                                    case 'jpeg':
+                                    case 'png':
+                                    case 'gif':
+                                    case 'bmp':
+                                    case 'tiff':
+                                    case 'webp':
+                                    case 'svg':
+                                    case 'ico': $icon_class = 'fas fa-file-image'; break;
+
+                                    case 'exe':
+                                    case 'msi': $icon_class = 'fas fa-cogs'; break;
+                                    case 'sh':
+                                    case 'bash':
+                                    case 'zsh': $icon_class = 'fas fa-terminal'; break;
+
+                                    case 'bat':
+                                    case 'cmd': $icon_class = 'fas fa-list-alt'; break;
+
+                                    case 'ps1': $icon_class = 'fab fa-microsoft'; break;
+                                    case 'dll':
+                                    case 'so': $icon_class = 'fas fa-cube'; break;
+                                    case 'apk': $icon_class = 'fab fa-android'; break;
+                                    case 'ipa': $icon_class = 'fab fa-apple'; break;
+
+                                    case 'iso':
+                                    case 'img':
+                                    case 'dmg': $icon_class = 'fas fa-compact-disc'; break;
+
+                                    case 'sql':
+                                    case 'db':
+                                    case 'dbf':
+                                    case 'sqlite': $icon_class = 'fas fa-database'; break;
+
+                                    case 'ttf':
+                                    case 'otf':
+                                    case 'woff':
+                                    case 'woff2': $icon_class = 'fas fa-font'; break;
+
+                                    case 'cfg':
+                                    case 'conf':
+                                    case 'ini':
+                                    case 'yaml':
+                                    case 'yml': $icon_class = 'fas fa-cog'; break;
+
+                                    case 'psd':
+                                    case 'ai':
+                                    case 'eps': $icon_class = 'fas fa-paint-brush'; break;
+                                    case 'css': $icon_class = 'fab fa-css3-alt'; break;
+                                    case 'js': $icon_class = 'fab fa-js'; break;
+                                    case 'php': $icon_class = 'fab fa-php'; break;
+                                    case 'html':
+                                    case 'htm': $icon_class = 'fab fa-html5'; break;
+                                    case 'json': $icon_class = 'fas fa-file-code'; break;
+                                    case 'xml': $icon_class = 'fas fa-file-code'; break;
+                                    case 'py': $icon_class = 'fab fa-python'; break;
+                                    case 'java': $icon_class = 'fab fa-java'; break;
+                                    case 'c':
+                                    case 'cpp':
+                                    case 'h': $icon_class = 'fas fa-file-code'; break;
+
+                                    case 'bin': $icon_class = 'fas fa-microchip'; break;
+                                    case 'log': $icon_class = 'fas fa-scroll'; break;
+                                    case 'csv': $icon_class = 'fas fa-file-csv'; break;
+                                    case 'torrent': $icon_class = 'fas fa-magnet'; break;
+                                    case 'bak': $icon_class = 'fas fa-history'; break;
+
+                                    default: $icon_class = 'fas fa-file'; break;
+                                }
                             }
+
                         ?>
 
-                        <td class="<?php echo $icon_class; ?>">
+                        <td>
                             <?php if ($item['is_dir']): ?>
+                                <i class="<?php echo $icon_class; ?> folder-icon me-2"></i>
                                 <a href="?dir=<?php echo urlencode($current_dir . $item['path']); ?>">
                                     <?php echo htmlspecialchars($item['name']); ?>
                                 </a>
                             <?php else: ?>
                                 <?php
                                     $ext = strtolower(pathinfo($item['name'], PATHINFO_EXTENSION));
-                                    if (in_array($ext, ['jpg','jpeg','png','gif','svg','mp3','mp4'])):
-                                        $clean_path = ltrim(str_replace('//', '/', $item['path']), '/');
+                                    $clean_path = ltrim(str_replace('//', '/', $item['path']), '/');
                                 ?>
+                                <i class="<?php echo $icon_class; ?> file-icon me-2"></i>
+                                <?php if (in_array($ext, ['jpg','jpeg','png','gif','svg','bmp','webp','mp3','wav','ogg','flac','mp4','webm','avi','mkv'])): ?>
                                     <a href="#"
                                        onclick="previewFile('<?php echo htmlspecialchars($clean_path); ?>', '<?php echo $ext; ?>')">
                                         <?php echo htmlspecialchars($item['name']); ?>
@@ -1265,12 +1588,16 @@ table.table tbody tr td.file-icon {
       </div>
       <div class="modal-body" id="previewContainer">
       </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
 let selectedFiles = [];
+let pendingFiles = [];
 let selectedFilesSize = 0;
 let monacoEditorInstance = null;
 let diffEditorInstance = null; 
@@ -1291,7 +1618,7 @@ function initDragAndDrop() {
     
     fileInput.addEventListener('change', function(e) {
         if (this.files.length > 0) {
-            handleFiles(this.files);
+            processFiles(this.files);
         }
     });
     
@@ -1320,13 +1647,106 @@ function initDragAndDrop() {
         dropZone.classList.remove('drag-over');
     }
     
-    dropZone.addEventListener('drop', handleDrop, false);
-    
-    function handleDrop(e) {
+    dropZone.addEventListener('drop', function(e) {
         const dt = e.dataTransfer;
-        const files = dt.files;
-        handleFiles(files);
+        processFiles(dt.files);
+    });
+
+    document.getElementById('confirmUploadBtn').addEventListener('click', function() {
+        if (pendingFiles.length === 0) return;
+        uploadPendingFiles();
+    });
+}
+
+function processFiles(files) {
+    pendingFiles = Array.from(files);
+    updateFileList();
+    document.getElementById('fileConfirmation').style.display = 'block';
+}
+
+function updateFileList() {
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = '';
+    
+    pendingFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'd-flex justify-content-between align-items-center py-1';
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        let iconClass = 'fas fa-file';
+        if(['jpg','jpeg','png','gif','bmp','webp'].includes(ext)) iconClass = 'fas fa-file-image';
+        else if(['mp4','webm','avi','mkv','mov'].includes(ext)) iconClass = 'fas fa-file-video';
+        else if(['mp3','wav','flac','aac'].includes(ext)) iconClass = 'fas fa-file-audio';
+        else if(['zip','rar','7z','tar','gz'].includes(ext)) iconClass = 'fas fa-file-archive';
+        else if(ext === 'pdf') iconClass = 'fas fa-file-pdf';
+        else if(['doc','docx','txt','md','rtf'].includes(ext)) iconClass = 'fas fa-file-alt';
+
+        fileItem.innerHTML = `
+            <span class="text-truncate" style="max-width: 60%;">
+                <i class="${iconClass} me-2 text-secondary"></i>
+                ${file.name}
+            </span>
+            <small class="text-muted me-2">${formatSize(file.size)}</small>
+            <button class="btn btn-sm btn-link text-danger p-0"
+                    onclick="event.stopPropagation(); removeFile(${index})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        fileList.appendChild(fileItem);
+    });
+}
+
+function removeFile(index) {
+    pendingFiles.splice(index, 1);
+    if (pendingFiles.length === 0) {
+        document.getElementById('fileConfirmation').style.display = 'none';
+    } else {
+        updateFileList();
     }
+}
+
+function uploadPendingFiles() {
+    const formData = new FormData();    
+    formData.append('dir', '<?php echo $current_dir; ?>');
+    
+    pendingFiles.forEach(file => {
+        formData.append('upload[]', file);
+    });
+    
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'upload-progress-container mt-3';
+    document.getElementById('uploadArea').appendChild(progressContainer);
+    
+    const progressBar = document.createElement('div');
+    progressBar.className = 'progress';
+    progressBar.innerHTML = `
+        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+             role="progressbar" 
+             style="width: 0%">
+            <span class="upload-progress-text">0%</span>
+        </div>
+    `;
+    progressContainer.appendChild(progressBar);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.text();
+        }
+        throw new Error('Upload failed');
+    })
+    .then(() => {
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error uploading files: ' + error.message);
+    })
+    .finally(() => {
+        progressContainer.remove();
+    });
 }
 
 function handleFiles(files) {
@@ -2296,19 +2716,44 @@ function toggleFullscreen() {
 }
 
 function previewFile(path, type) {
+    const currentDir = decodeURIComponent(new URLSearchParams(window.location.search).get('dir') || '');
+    const fullPath = currentDir + (currentDir.endsWith('/') ? '' : '/') + path;
+
     const previewContainer = document.getElementById('previewContainer');
     previewContainer.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
     
     const modal = new bootstrap.Modal(document.getElementById('previewModal'));
     modal.show();
     
-    if (type === 'mp3') {
-        previewContainer.innerHTML = `<audio controls style="width: 100%"><source src="?preview=1&path=${encodeURIComponent(path)}" type="audio/mpeg">Your browser does not support audio playback.</audio>`;
-    } else if (type === 'mp4') {
-        previewContainer.innerHTML = `<video controls style="width: 100%"><source src="?preview=1&path=${encodeURIComponent(path)}" type="video/mp4">Your browser does not support video playback.</video>`;
+    if (type === 'mp3' || type === 'wav' || type === 'ogg' || type === 'flac') {
+        previewContainer.innerHTML = `<audio controls><source src="?preview=1&path=${encodeURIComponent(fullPath)}" type="${getAudioMimeType(type)}">Your browser does not support audio playback.</audio>`;
+    } else if (type === 'mp4' || type === 'webm' || type === 'avi' || type === 'mkv') {
+        previewContainer.innerHTML = `<video controls><source src="?preview=1&path=${encodeURIComponent(fullPath)}" type="${getVideoMimeType(type)}">Your browser does not support video playback.</video>`;
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(type)) {
+        previewContainer.innerHTML = `<img src="?preview=1&path=${encodeURIComponent(fullPath)}" onerror="this.alt='Failed to load image.'">`;
     } else {
-        previewContainer.innerHTML = `<img src="?preview=1&path=${encodeURIComponent(path)}" style="max-width: 100%; max-height: 80vh;" class="img-fluid">`;
+        previewContainer.innerHTML = `<p>Preview not supported for this file type (${type}). <a href="?preview=1&path=${encodeURIComponent(fullPath)}" download="${path.split('/').pop()}">Click here to download</a>.</p>`;
     }
+}
+
+function getAudioMimeType(type) {
+    const mimeTypes = {
+        'mp3': 'audio/mpeg',
+        'wav': 'audio/wav',
+        'ogg': 'audio/ogg',
+        'flac': 'audio/flac'
+    };
+    return mimeTypes[type] || 'audio/mpeg';
+}
+
+function getVideoMimeType(type) {
+    const mimeTypes = {
+        'mp4': 'video/mp4',
+        'webm': 'video/webm',
+        'avi': 'video/x-msvideo',
+        'mkv': 'video/x-matroska'
+    };
+    return mimeTypes[type] || 'video/mp4';
 }
 
 function uniqueConfirmDelete(event, name) {
