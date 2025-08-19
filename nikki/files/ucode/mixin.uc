@@ -182,7 +182,7 @@ if (uci_bool(uci.get('nikki', 'mixin', 'rule'))) {
 }
 
 const geoip_format = uci.get('nikki', 'mixin', 'geoip_format');
-config['geodata-mode'] =  geoip_format == null ? null : geoip_format == 'dat';
+config['geodata-mode'] = geoip_format == null ? null : geoip_format == 'dat';
 config['geodata-loader'] = uci.get('nikki', 'mixin', 'geodata_loader');
 config['geox-url'] = {};
 config['geox-url']['geosite'] = uci.get('nikki', 'mixin', 'geosite_url');

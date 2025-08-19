@@ -49,8 +49,8 @@ const config = uci.get_all("nikki");
 const result = {};
 
 for (let section_id in config) {
-    const section = config[section_id];
-    const section_type = section[".type"];
+	const section = config[section_id];
+	const section_type = section[".type"];
 	if (result[section_type] == null) {
 		result[section_type] = [];
 	}
