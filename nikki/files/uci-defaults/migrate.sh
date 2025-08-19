@@ -156,6 +156,35 @@ uci show nikki | grep -o -E 'nikki.@lan_access_control\[[[:digit:]]+\]=lan_acces
 	[ -z "$lan_access_control_dns" ] && uci set "$lan_access_control.dns=$lan_access_control_proxy"
 done
 
+# since v1.24.0
+proxy_reserved_ip=$(uci -q get nikki.proxy.reserved_ip); [ -z "$proxy_reserved_ip" ] && {
+	uci add_list nikki.proxy.reserved_ip=0.0.0.0/8
+	uci add_list nikki.proxy.reserved_ip=10.0.0.0/8
+	uci add_list nikki.proxy.reserved_ip=127.0.0.0/8
+	uci add_list nikki.proxy.reserved_ip=100.64.0.0/10
+	uci add_list nikki.proxy.reserved_ip=169.254.0.0/16
+	uci add_list nikki.proxy.reserved_ip=172.16.0.0/12
+	uci add_list nikki.proxy.reserved_ip=192.168.0.0/16
+	uci add_list nikki.proxy.reserved_ip=224.0.0.0/4
+	uci add_list nikki.proxy.reserved_ip=240.0.0.0/4
+}
+
+proxy_reserved_ip6=$(uci -q get nikki.proxy.reserved_ip6); [ -z "$proxy_reserved_ip6" ] && {
+	uci add_list nikki.proxy.reserved_ip6=::/128
+	uci add_list nikki.proxy.reserved_ip6=::1/128
+	uci add_list nikki.proxy.reserved_ip6=::ffff:0:0/96
+	uci add_list nikki.proxy.reserved_ip6=100::/64
+	uci add_list nikki.proxy.reserved_ip6=64:ff9b::/96
+	uci add_list nikki.proxy.reserved_ip6=2001::/32
+	uci add_list nikki.proxy.reserved_ip6=2001:10::/28
+	uci add_list nikki.proxy.reserved_ip6=2001:20::/28
+	uci add_list nikki.proxy.reserved_ip6=2001:db8::/32
+	uci add_list nikki.proxy.reserved_ip6=2002::/16
+	uci add_list nikki.proxy.reserved_ip6=fc00::/7
+	uci add_list nikki.proxy.reserved_ip6=fe80::/10
+	uci add_list nikki.proxy.reserved_ip6=ff00::/8
+}
+
 # commit
 uci commit nikki
 

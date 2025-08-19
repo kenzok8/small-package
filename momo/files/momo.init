@@ -60,9 +60,10 @@ start_service() {
 	config_get dns_inbound_tag "core" "dns_inbound_tag"
 	config_get fake_ip_dns_server_tag "core" "fake_ip_dns_server_tag"
 	## proxy config
-	local ipv4_dns_hijack ipv6_dns_hijack tcp_mode udp_mode
-	config_get ipv4_dns_hijack "proxy" "ipv4_dns_hijack"
-	config_get ipv6_dns_hijack "proxy" "ipv6_dns_hijack"
+	local proxy_enabled ipv4_dns_hijack ipv6_dns_hijack tcp_mode udp_mode
+	config_get_bool proxy_enabled "proxy" "enabled" 0
+	config_get_bool ipv4_dns_hijack "proxy" "ipv4_dns_hijack" 0
+	config_get_bool ipv6_dns_hijack "proxy" "ipv6_dns_hijack" 0
 	config_get tcp_mode "proxy" "tcp_mode"
 	config_get udp_mode "proxy" "udp_mode"
 	# get profile
@@ -100,11 +101,12 @@ start_service() {
 		return
 	fi
 	# check profile
-	if [ "$core_only" = 0 ]; then
+	if [ "$core_only" = 0 ] && [ "$proxy_enabled" = 1 ]; then
 		log "Profile" "Checking..."
 		if [ "$ipv4_dns_hijack" = 1 ] || [ "$ipv6_dns_hijack" = 1 ]; then
 			local dns_port; dns_port=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$dns_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='direct']" | jsonfilter -q -e "@['listen_port']")
 			if [ -z "$dns_port" ]; then
+				log "Profile" "Check failed."
 				log "Profile" "DNS inbound not found, should be tagged with $dns_inbound_tag and define listen_port."
 				log "App" "Exit."
 				return
@@ -113,6 +115,7 @@ start_service() {
 		if [ "$tcp_mode" = "redirect" ]; then
 			local redirect_port; redirect_port=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$redirect_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='redirect']" | jsonfilter -q -e "@['listen_port']")
 			if [ -z "$redirect_port" ]; then
+				log "Profile" "Check failed."
 				log "Profile" "Redirect inbound not found, should be tagged with $redirect_inbound_tag and define listen_port."
 				log "App" "Exit."
 				return
@@ -121,6 +124,7 @@ start_service() {
 		if [ "$tcp_mode" = "tproxy" ] || [ "$udp_mode" = "tproxy" ]; then
 			local tproxy_port; tproxy_port=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$tproxy_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='tproxy']" | jsonfilter -q -e "@['listen_port']")
 			if [ -z "$tproxy_port" ]; then
+				log "Profile" "Check failed."
 				log "Profile" "TPROXY inbound not found, should be tagged with $tproxy_inbound_tag and define listen_port."
 				log "App" "Exit."
 				return
@@ -129,6 +133,7 @@ start_service() {
 		if [ "$tcp_mode" = "tun" ] || [ "$udp_mode" = "tun" ]; then
 			local tun_device; tun_device=$(jsonfilter -q -i "$RUN_PROFILE_PATH" -e "@['inbounds'][*]" | jsonfilter -q -a -e "@[@['tag']='$tun_inbound_tag']" | jsonfilter -q -a -e "@[@['type']='tun']" | jsonfilter -q -e "@['interface_name']")
 			if [ -z "$tun_device" ]; then
+				log "Profile" "Check failed."
 				log "Profile" "TUN inbound not found, should be tagged with $tun_inbound_tag and define interface_name."
 				log "App" "Exit."
 				return

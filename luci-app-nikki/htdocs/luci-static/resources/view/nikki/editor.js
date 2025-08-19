@@ -47,8 +47,6 @@ return view.extend({
 
         o.value(nikki.mixinFilePath, _('File for Mixin'));
         o.value(nikki.runProfilePath, _('Profile for Startup'));
-        o.value(nikki.reservedIPNFT, _('File for Reserved IP'));
-        o.value(nikki.reservedIP6NFT, _('File for Reserved IP6'));
 
         o.write = function (section_id, formvalue) {
             return true;

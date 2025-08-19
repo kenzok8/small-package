@@ -27,8 +27,6 @@ DEBUG_SH="$SH_DIR/debug.sh"
 
 ## firewall
 NFT_DIR="$HOME_DIR/firewall"
-RESERVED_IP_NFT="$NFT_DIR/reserved_ip.nft"
-RESERVED_IP6_NFT="$NFT_DIR/reserved_ip6.nft"
 GEOIP_CN_NFT="$NFT_DIR/geoip_cn.nft"
 GEOIP6_CN_NFT="$NFT_DIR/geoip6_cn.nft"
 
@@ -66,8 +64,6 @@ get_paths() {
 	json_add_string debug_sh "$DEBUG_SH"
 
 	json_add_string nft_dir "$NFT_DIR"
-	json_add_string reserved_ip_nft "$RESERVED_IP_NFT"
-	json_add_string reserved_ip6_nft "$RESERVED_IP6_NFT"
 	json_add_string geoip_cn_nft "$GEOIP_CN_NFT"
 	json_add_string geoip6_cn_nft "$GEOIP6_CN_NFT"
 

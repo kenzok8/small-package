@@ -51,26 +51,24 @@ if (uci_bool(uci.get('nikki', 'mixin', 'authentication'))) {
 }
 
 config['tun'] = {};
-if (uci.get('nikki', 'proxy', 'tcp_mode') == 'tun' || uci.get('nikki', 'proxy', 'udp_mode') == 'tun') {
-	config['tun']['enable'] = true;
+config['tun']['enable'] = uci_bool(uci.get('nikki', 'mixin', 'tun_enabled'));
+config['tun']['device'] = uci.get('nikki', 'mixin', 'tun_device');
+config['tun']['stack'] = uci.get('nikki', 'mixin', 'tun_stack');
+config['tun']['mtu'] = uci_int(uci.get('nikki', 'mixin', 'tun_mtu'));
+config['tun']['gso'] = uci_bool(uci.get('nikki', 'mixin', 'tun_gso'));
+config['tun']['gso-max-size'] = uci_int(uci.get('nikki', 'mixin', 'tun_gso_max_size'));
+config['tun']['endpoint-independent-nat'] = uci_bool(uci.get('nikki', 'mixin', 'tun_endpoint_independent_nat'));
+if (uci_bool(uci.get('nikki', 'mixin', 'tun_dns_hijack'))) {
+	config['tun']['dns-hijack'] = uci_array(uci.get('nikki', 'mixin', 'tun_dns_hijacks'));
+}
+if (uci_bool(uci.get('nikki', 'proxy', 'enabled'))) {
 	config['tun']['auto-route'] = false;
 	config['tun']['auto-redirect'] = false;
 	config['tun']['auto-detect-interface'] = false;
-	config['tun']['device'] = uci.get('nikki', 'mixin', 'tun_device');
-	config['tun']['stack'] = uci.get('nikki', 'mixin', 'tun_stack');
-	config['tun']['mtu'] = uci_int(uci.get('nikki', 'mixin', 'tun_mtu'));
-	config['tun']['gso'] = uci_bool(uci.get('nikki', 'mixin', 'tun_gso'));
-	config['tun']['gso-max-size'] = uci_int(uci.get('nikki', 'mixin', 'tun_gso_max_size'));
-	config['tun']['endpoint-independent-nat'] = uci_bool(uci.get('nikki', 'mixin', 'tun_endpoint_independent_nat'));
-	if (uci_bool(uci.get('nikki', 'mixin', 'tun_dns_hijack'))) {
-		config['tun']['dns-hijack'] = uci_array(uci.get('nikki', 'mixin', 'tun_dns_hijacks'));
-	}
-} else {
-	config['tun']['enable'] = false;
 }
 
 config['dns'] = {};
-config['dns']['enable'] = true;
+config['dns']['enable'] = uci_bool(uci.get('nikki', 'mixin', 'dns_enabled'));
 config['dns']['listen'] = uci.get('nikki', 'mixin', 'dns_listen');
 config['dns']['ipv6'] = uci_bool(uci.get('nikki', 'mixin', 'dns_ipv6'));
 config['dns']['enhanced-mode'] = uci.get('nikki', 'mixin', 'dns_mode');
