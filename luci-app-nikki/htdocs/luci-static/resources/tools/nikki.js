@@ -65,8 +65,6 @@ const appLogPath = `${logDir}/app.log`;
 const coreLogPath = `${logDir}/core.log`;
 const debugLogPath = `${logDir}/debug.log`;
 const nftDir = `${homeDir}/nftables`;
-const reservedIPNFT = `${nftDir}/reserved_ip.nft`;
-const reservedIP6NFT = `${nftDir}/reserved_ip6.nft`;
 
 return baseclass.extend({
     homeDir: homeDir,
@@ -80,8 +78,6 @@ return baseclass.extend({
     appLogPath: appLogPath,
     coreLogPath: coreLogPath,
     debugLogPath: debugLogPath,
-    reservedIPNFT: reservedIPNFT,
-    reservedIP6NFT: reservedIP6NFT,
 
     status: async function () {
         return (await callRCList('nikki'))?.nikki?.running;

@@ -132,6 +132,7 @@ return view.extend({
         so.rmempty = false;
 
         so = o.subsection.option(form.DynamicList, 'ip', 'IP');
+        so.datatype = 'ip4addr';
 
         for (const mac in hosts) {
             const host = hosts[mac];
@@ -142,6 +143,7 @@ return view.extend({
         };
 
         so = o.subsection.option(form.DynamicList, 'ip6', 'IP6');
+        so.datatype = 'ip6addr';
 
         for (const mac in hosts) {
             const host = hosts[mac];
@@ -152,6 +154,7 @@ return view.extend({
         };
 
         so = o.subsection.option(form.DynamicList, 'mac', 'MAC');
+        so.datatype = 'macaddr';
 
         for (const mac in hosts) {
             const host = hosts[mac];

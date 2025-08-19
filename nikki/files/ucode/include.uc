@@ -75,3 +75,13 @@ export function get_cgroups() {
 	}
 	return result;
 };
+
+export function load_profile() {
+	let result = {};
+	const process = popen('yq -M -p yaml -o json /etc/nikki/run/config.yaml');
+	if (process) {
+		result = json(process);
+		process.close();
+	}
+	return result;
+};
