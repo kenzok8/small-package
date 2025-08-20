@@ -126,12 +126,15 @@ function parseShareLink(uri, features) {
 				url = new URL('http://' + uri[1]);
 
 				let userinfo;
-				if (url.username && url.password)
+				if (url.username && url.password) {
 					/* User info encoded with URIComponent */
 					userinfo = [url.username, decodeURIComponent(url.password)];
-				else if (url.username)
+				} else if (url.username) {
 					/* User info encoded with base64 */
 					userinfo = hp.decodeBase64Str(decodeURIComponent(url.username)).split(':');
+					if (userinfo.length > 1)
+						userinfo = [userinfo[0], userinfo.slice(1).join(':')]
+				}
 
 				if (!hp.shadowsocks_encrypt_methods.includes(userinfo[0]))
 					return null;
@@ -140,7 +143,7 @@ function parseShareLink(uri, features) {
 				if (url.search && url.searchParams.get('plugin')) {
 					let plugin_info = url.searchParams.get('plugin').split(';');
 					plugin = plugin_info[0];
-					plugin_opts = plugin_info.slice(1) ? plugin_info.slice(1).join(';') : null;
+					plugin_opts = (plugin_info.length > 1) ? plugin_info.slice(1).join(';') : null;
 				}
 
 				config = {
