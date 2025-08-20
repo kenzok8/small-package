@@ -108,15 +108,15 @@
 -%}
 
 table inet nikki {
+	{% if (length(dns_hijack_nfproto) > 0): %}
 	set dns_hijack_nfproto {
 		type nf_proto
 		flags interval
-		{% if (length(dns_hijack_nfproto) > 0): %}
 		elements = {
 			{{ join(', ', dns_hijack_nfproto) }}
 		}
-		{% endif %}
 	}
+	{% endif %}
 
 	set proxy_nfproto {
 		type nf_proto
@@ -421,7 +421,9 @@ table inet nikki {
 		{% elif (cgroups_version == 2): %}
 		socket cgroupv2 level 2 "services/{{ cgroup_name }}" counter return
 		{% endif %}
+		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto jump router_dns_hijack
+		{% endif %}
 		{% if (tcp_mode == 'redirect'): %}
 		fib daddr type { local, broadcast, anycast, multicast } counter return
 		ct direction reply counter return
@@ -459,7 +461,9 @@ table inet nikki {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
+		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
+		{% endif %}
 		{% if (tcp_mode == 'tproxy'): %}
 		meta nfproto @proxy_nfproto meta l4proto tcp jump router_tproxy
 		{% elif (tcp_mode == 'tun'): %}
@@ -486,7 +490,9 @@ table inet nikki {
 	{% if (lan_proxy): %}
 	chain dstnat {
 		type nat hook prerouting priority dstnat + 1; policy accept;
+		{% if (length(dns_hijack_nfproto) > 0): %}
 		iifname @lan_inbound_device meta nfproto @dns_hijack_nfproto jump lan_dns_hijack
+		{% endif %}
 		{% if (tcp_mode == 'redirect'): %}
 		fib daddr type { local, broadcast, anycast, multicast } counter return
 		ct direction reply counter return
@@ -519,7 +525,9 @@ table inet nikki {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
+		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
+		{% endif %}
 		{% if (tcp_mode == 'tproxy'): %}
 		iifname @lan_inbound_device meta nfproto @proxy_nfproto meta l4proto tcp jump lan_tproxy
 		{% elif (tcp_mode == 'tun'): %}
