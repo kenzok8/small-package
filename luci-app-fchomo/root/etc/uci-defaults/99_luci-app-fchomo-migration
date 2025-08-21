@@ -1,5 +1,8 @@
 #!/bin/sh
 
+sed -i 's|^FQDN:$|DOMAIN:|' "/etc/fchomo/resources/direct_list.yaml"
+sed -i 's|^FQDN:$|DOMAIN:|' "/etc/fchomo/resources/proxy_list.yaml"
+
 default_proxy=$(uci -q get fchomo.routing.default_proxy)
 if [ -n "$default_proxy" ]; then
 	uci -q batch <<-EOF >"/dev/null"

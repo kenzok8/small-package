@@ -861,8 +861,8 @@ return view.extend({
 
 		so = ss.taboption('direct_list', hm.TextValue, 'direct_list.yaml', null);
 		so.rows = 20;
-		so.default = 'FQDN:\nIPCIDR:\nIPCIDR6:\n';
-		so.placeholder = "FQDN:\n- mask.icloud.com\n- mask-h2.icloud.com\n- mask.apple-dns.net\nIPCIDR:\n- '223.0.0.0/12'\nIPCIDR6:\n- '2400:3200::/32'\n";
+		so.default = 'DOMAIN:\nIPCIDR:\nIPCIDR6:\n';
+		so.placeholder = "DOMAIN:\n- mask.icloud.com\n- mask-h2.icloud.com\n- mask.apple-dns.net\nIPCIDR:\n- '223.0.0.0/12'\nIPCIDR6:\n- '2400:3200::/32'\n";
 		so.load = function(section_id) {
 			return L.resolveDefault(hm.readFile('resources', this.option), '');
 		}
@@ -879,8 +879,8 @@ return view.extend({
 
 		so = ss.taboption('proxy_list', hm.TextValue, 'proxy_list.yaml', null);
 		so.rows = 20;
-		so.default = 'FQDN:\nIPCIDR:\nIPCIDR6:\n';
-		so.placeholder = "FQDN:\n- www.google.com\nIPCIDR:\n- '91.105.192.0/23'\nIPCIDR6:\n- '2001:67c:4e8::/48'\n";
+		so.default = 'DOMAIN:\nIPCIDR:\nIPCIDR6:\n';
+		so.placeholder = "DOMAIN:\n- www.google.com\n- '.googlevideo.com'\n- google.com\nIPCIDR:\n- '91.105.192.0/23'\nIPCIDR6:\n- '2001:67c:4e8::/48'\n";
 		so.load = function(section_id) {
 			return L.resolveDefault(hm.readFile('resources', this.option), '');
 		}

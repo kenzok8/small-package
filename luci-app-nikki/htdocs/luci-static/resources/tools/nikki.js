@@ -107,6 +107,9 @@ return baseclass.extend({
         const profile = await callNikkiProfile({ 'external-controller': null, 'secret': null });
         const apiListen = profile['external-controller'];
         const apiSecret = profile['secret'] ?? '';
+        if (!apiListen) {
+            return Promise.reject('API has not been configured');
+        }
         const apiPort = apiListen.substring(apiListen.lastIndexOf(':') + 1);
         const url = `http://${window.location.hostname}:${apiPort}${path}`;
         return request.request(url, {
@@ -114,7 +117,7 @@ return baseclass.extend({
             headers: { 'Authorization': `Bearer ${apiSecret}` },
             query: query,
             content: body
-        })
+        });
     },
 
     openDashboard: async function () {
@@ -122,6 +125,9 @@ return baseclass.extend({
         const uiName = profile['external-ui-name'];
         const apiListen = profile['external-controller'];
         const apiSecret = profile['secret'] ?? '';
+        if (!apiListen) {
+            return Promise.reject('API has not been configured');
+        }
         const apiPort = apiListen.substring(apiListen.lastIndexOf(':') + 1);
         const params = {
             host: window.location.hostname,
@@ -137,6 +143,7 @@ return baseclass.extend({
             url = `http://${window.location.hostname}:${apiPort}/ui/?${query}`;
         }
         setTimeout(function () { window.open(url, '_blank') }, 0);
+        return Promise.resolve();
     },
 
     updateDashboard: function () {
