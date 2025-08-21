@@ -14,7 +14,7 @@ fi
 # Initialize the default direct list
 if [ ! -s "/etc/fchomo/resources/direct_list.yaml" ]; then
 	cat <<- EOF > "/etc/fchomo/resources/direct_list.yaml"
-	FQDN:
+	DOMAIN:
 	IPCIDR:
 	- '223.0.0.0/12'
 	IPCIDR6:
@@ -25,8 +25,10 @@ fi
 # Initialize the default proxy list
 if [ ! -s "/etc/fchomo/resources/proxy_list.yaml" ]; then
 	cat <<- EOF > "/etc/fchomo/resources/proxy_list.yaml"
-	FQDN:
+	DOMAIN:
 	- www.google.com
+	- '.googlevideo.com'
+	- google.com
 	IPCIDR:
 	- '91.105.192.0/23'
 	- '91.108.4.0/22'

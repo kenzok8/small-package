@@ -186,7 +186,7 @@ start_service() {
 			local yaml="$5"
 
 			if [ -n "$yaml" ]; then
-				yq '.[] |= with(select(. == null); . = []) | .FQDN[]' "$src" | \
+				yq '.[] |= with(select(. == null); . = []) | .DOMAIN[]' "$src" | \
 				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" > "$dst"
 			else
 				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" "$src" > "$dst"
