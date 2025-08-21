@@ -2521,7 +2521,7 @@ select,input {
   margin: 5em auto;
   padding: 1rem;
   border-radius: var(--radius2) !important;
-  background-color: rgba(var(--primary-rgbbody),1);
+  background-color: rgba(var(--primary-rgbbody),1)!important;
   box-shadow: 0 2px 10px 0px rgba(255,255,255,.16),0 0 10px 0 rgba(255,255,255,.12)
 }
 
@@ -4137,7 +4137,91 @@ border: 0px solid rgba(255,255,255,0.3) !important;
   max-width: 14rem;
     width: 10rem;
 }
-    
+
+/* bandix */
+.bandix-container {
+   padding: 5px!important; 
+   background-color: rgba(255,255,255,0) !important;
+   color: var(--primary-title-color)!important;
+}
+
+.bandix-container .history-tooltip>div,
+.bandix-container .history-tooltip>div>span,
+.bandix-container .form-label ,
+.bandix-container .bandix-card-title,
+.bandix-container .bandix-card>div,
+.bandix-container .stats-title,
+.bandix-container .bandix-title  {
+  color: var(--primary-title-color)!important;
+}
+.bandix-container .history-tooltip
+{
+  background-color: rgba(var(--primary-rgbbody),1) !important;
+  color: var(--body-color) !important;
+}
+
+.bandix-container .bandix-card ,
+.bandix-container .stats-card
+{
+  background-color: rgba(var(--primary-rgbm), 0.1) !important;
+}
+
+.device-summary,
+.bandix-container .bandix-card .bandix-card-header.history-header,
+.bandix-container .bandix-card .history-controls
+{
+  border-bottom: 1px solid #ccc!important;
+  background-color: rgba(255, 255, 255, 0) !important;
+}
+
+.form-label,
+.modal-title,
+.device-summary>div,
+.bandix-container .device-name,
+.bandix-container .legend-item,
+.stats-card>div>div>span,
+.bandix-container .bandix-container .stats-card>div>div>span  {
+  color: var(--primary-title-color)!important;
+}
+
+.bandix-container {
+  background-color: rgba(var(--primary-rgbm), 0.1);
+  color: var(--primary-title-color)!important;
+}
+
+.form-input
+ {
+  background-color: var(--inputbg-color)!important;
+  color: var(--body-color) !important;
+  padding: 0 20px 0 10px!important;
+}
+
+.form-select
+{
+  background-color: var(--inputbg-color)!important;
+  color: var(--body-color) !important;
+  padding: 0 20px 0 10px!important;
+}
+
+.bandix-table>tbody>tr>td, .bandix-table>tbody>tr>th,
+.bandix-table>thead>tr>td, .bandix-table>thead>tr>th
+{
+
+  background-color: rgba(255, 255, 255, 0) !important;
+  color: var(--body-color) !important;
+}
+
+.bandix-table tbody tr:nth-child(odd) 
+{
+  background-color: rgba(var(--primary-rgbs), var(--primary-rgbs-ts)) !important;
+}
+
+.bandix-table tbody tr:nth-child(even)
+{
+  background-color: rgba(var(--primary-rgbm), var(--primary-rgbs-ts)) !important;
+}
+
+
 [data-page="admin-services-adguardhome"]>.main .cbi-value .cbi-input-textarea {
   width: 100% !important;
   box-shadow: 0 0 1px var(--input-boxcolor) !important
