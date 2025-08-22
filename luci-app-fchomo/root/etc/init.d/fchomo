@@ -219,8 +219,6 @@ start_service() {
 			fi
 		fi
 
-		/etc/init.d/dnsmasq reload >/dev/null 2>&1
-
 		# Setup routing table
 		local proxy_mode table_id rule_pref
 		config_get proxy_mode "inbound" "proxy_mode" "redir_tproxy"
@@ -386,7 +384,10 @@ start_service() {
 	log "$(mihomo -v | awk 'NR==1{print $1,$3}') started."
 }
 
-service_started() { procd_set_config_changed firewall; }
+service_started() {
+	procd_set_config_changed dnsmasq
+	procd_set_config_changed firewall
+}
 
 stop_service() {
 	# Client
@@ -429,7 +430,6 @@ stop_client() {
 
 	# Remove DNSMasq servers
 	rm -rf "$DNSMASQ_DIR/../dnsmasq-fchomo.conf" "$DNSMASQ_DIR"
-	/etc/init.d/dnsmasq reload >/dev/null 2>&1
 
 	# Remove Clash API Dashboard
 	rm -rf "$RUN_DIR/ui"
@@ -453,6 +453,7 @@ service_stopped() {
 	[ -n "$(/etc/init.d/$CONF info | jsonfilter -q -e '@.'"$CONF"'.instances["mihomo-c"]')" ] || client_stopped
 	# Server
 
+	procd_set_config_changed dnsmasq
 	procd_set_config_changed firewall
 }
 
