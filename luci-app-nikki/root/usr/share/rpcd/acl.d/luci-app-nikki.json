@@ -16,8 +16,6 @@
                 "/etc/nikki/run/config.yaml": ["read"],
                 "/etc/nikki/run/providers/rule/*": ["read"],
                 "/etc/nikki/run/providers/proxy/*": ["read"],
-                "/etc/nikki/nftables/reserved_ip.nft": ["read"],
-                "/etc/nikki/nftables/reserved_ip6.nft": ["read"],
                 "/var/log/nikki/*.log": ["read"]
             }
         },
@@ -32,8 +30,6 @@
                 "/etc/nikki/run/config.yaml": ["write"],
                 "/etc/nikki/run/providers/rule/*": ["write"],
                 "/etc/nikki/run/providers/proxy/*": ["write"],
-                "/etc/nikki/nftables/reserved_ip.nft": ["write"],
-                "/etc/nikki/nftables/reserved_ip6.nft": ["write"],
                 "/var/log/nikki/*.log": ["write"]
             }
         }
