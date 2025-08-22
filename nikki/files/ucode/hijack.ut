@@ -70,8 +70,8 @@
 		push(lan_access_control, access_control);
 	});
 
-	const reserved_ip = uci_array(uci.get('momo', 'proxy', 'reserved_ip'));
-	const reserved_ip6 = uci_array(uci.get('momo', 'proxy', 'reserved_ip6'));
+	const reserved_ip = uci_array(uci.get('nikki', 'proxy', 'reserved_ip'));
+	const reserved_ip6 = uci_array(uci.get('nikki', 'proxy', 'reserved_ip6'));
 	const bypass_dscp = uci_array(uci.get('nikki', 'proxy', 'bypass_dscp'));
 	const bypass_china_mainland_ip = uci_bool(uci.get('nikki', 'proxy', 'bypass_china_mainland_ip'));
 	const proxy_tcp_dport = split((uci.get('nikki', 'proxy', 'proxy_tcp_dport') ?? '0-65535'), ' ');

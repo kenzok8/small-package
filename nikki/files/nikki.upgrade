@@ -3,5 +3,3 @@
 /etc/nikki/mixin.yaml
 /etc/nikki/run/providers/rule/
 /etc/nikki/run/providers/proxy/
-/etc/nikki/nftables/reserved_ip.nft
-/etc/nikki/nftables/reserved_ip6.nft
