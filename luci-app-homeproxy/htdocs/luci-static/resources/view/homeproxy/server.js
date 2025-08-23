@@ -13,6 +13,7 @@
 'require view';
 
 'require homeproxy as hp';
+'require tools.widgets as widgets';
 
 const callServiceList = rpc.declare({
 	object: 'service',
@@ -125,7 +126,6 @@ return view.extend({
 		s = m.section(form.NamedSection, 'server', 'homeproxy', _('Global settings'));
 
 		o = s.option(form.Flag, 'enabled', _('Enable'));
-		o.default = o.disabled;
 		o.rmempty = false;
 
 		s = m.section(form.GridSection, 'server', _('Server settings'));
@@ -153,6 +153,7 @@ return view.extend({
 		o.editable = true;
 
 		o = s.option(form.ListValue, 'type', _('Type'));
+		o.value('anytls', _('AnyTLS'));
 		o.value('http', _('HTTP'));
 		if (features.with_quic) {
 			o.value('hysteria', _('Hysteria'));
@@ -188,6 +189,7 @@ return view.extend({
 
 		o = s.option(form.Value, 'password', _('Password'));
 		o.password = true;
+		o.depends('type', 'anytls');
 		o.depends({'type': /^(http|mixed|naive|socks)$/, 'username': /[\s\S]/});
 		o.depends('type', 'hysteria2');
 		o.depends('type', 'shadowsocks');
@@ -207,7 +209,7 @@ return view.extend({
 		o.validate = function(section_id, value) {
 			if (section_id) {
 				let type = this.section.formvalue(section_id, 'type');
-				let required_type = [ 'http', 'mixed', 'naive', 'socks', 'shadowsocks' ];
+				let required_type = [ 'anytls', 'http', 'mixed', 'naive', 'socks', 'shadowsocks', 'trojan' ];
 
 				if (required_type.includes(type)) {
 					if (type === 'shadowsocks') {
@@ -227,6 +229,12 @@ return view.extend({
 
 			return true;
 		}
+		o.modalonly = true;
+
+		/* AnyTLS config */
+		o = s.option(form.DynamicList, 'anytls_padding_scheme', _('Padding scheme'),
+			_('AnyTLS padding scheme in array.'));
+		o.depends('type', 'anytls');
 		o.modalonly = true;
 
 		/* Hysteria (2) config start */
@@ -312,13 +320,11 @@ return view.extend({
 
 		o = s.option(form.Flag, 'hysteria_disable_mtu_discovery', _('Disable Path MTU discovery'),
 			_('Disables Path MTU Discovery (RFC 8899). Packets will then be at most 1252 (IPv4) / 1232 (IPv6) bytes in size.'));
-		o.default = o.disabled;
 		o.depends('type', 'hysteria');
 		o.modalonly = true;
 
 		o = s.option(form.Flag, 'hysteria_ignore_client_bandwidth', _('Ignore client bandwidth'),
 			_('Tell the client to use the BBR flow control algorithm instead of Hysteria CC.'));
-		o.default = o.disabled;
 		o.depends({'type': 'hysteria2', 'hysteria_down_mbps': '', 'hysteria_up_mbps': ''});
 		o.modalonly = true;
 
@@ -374,7 +380,6 @@ return view.extend({
 		o = s.option(form.Flag, 'tuic_enable_zero_rtt', _('Enable 0-RTT handshake'),
 			_('Enable 0-RTT QUIC connection handshake on the client side. This is not impacting much on the performance, as the protocol is fully multiplexed.<br/>' +
 				'Disabling this is highly recommended, as it is vulnerable to replay attacks.'));
-		o.default = o.disabled;
 		o.depends('type', 'tuic');
 		o.modalonly = true;
 
@@ -503,7 +508,6 @@ return view.extend({
 
 		/* Mux config start */
 		o = s.option(form.Flag, 'multiplex', _('Multiplex'));
-		o.default = o.disabled;
 		o.depends('type', 'shadowsocks');
 		o.depends('type', 'trojan');
 		o.depends('type', 'vless');
@@ -511,14 +515,12 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.option(form.Flag, 'multiplex_padding', _('Enable padding'));
-		o.default = o.disabled;
 		o.depends('multiplex', '1');
 		o.modalonly = true;
 
 		if (features.hp_has_tcp_brutal) {
 			o = s.option(form.Flag, 'multiplex_brutal', _('Enable TCP Brutal'),
 				_('Enable TCP Brutal congestion control algorithm'));
-			o.default = o.disabled;
 			o.depends('multiplex', '1');
 			o.modalonly = true;
 
@@ -538,7 +540,7 @@ return view.extend({
 
 		/* TLS config start */
 		o = s.option(form.Flag, 'tls', _('TLS'));
-		o.default = o.disabled;
+		o.depends('type', 'anytls');
 		o.depends('type', 'http');
 		o.depends('type', 'hysteria');
 		o.depends('type', 'hysteria2');
@@ -602,7 +604,6 @@ return view.extend({
 		if (features.with_acme) {
 			o = s.option(form.Flag, 'tls_acme', _('Enable ACME'),
 				_('Use ACME TLS certificate issuer.'));
-			o.default = o.disabled;
 			o.depends('tls', '1');
 			o.modalonly = true;
 
@@ -642,7 +643,6 @@ return view.extend({
 			o.modalonly = true;
 
 			o = s.option(form.Flag, 'tls_dns01_challenge', _('DNS01 challenge'))
-			o.default = o.disabled;
 			o.depends('tls_acme', '1');
 			o.modalonly = true;
 
@@ -675,12 +675,10 @@ return view.extend({
 			o.modalonly = true;
 
 			o = s.option(form.Flag, 'tls_acme_dhc', _('Disable HTTP challenge'));
-			o.default = o.disabled;
 			o.depends('tls_dns01_challenge', '0');
 			o.modalonly = true;
 
 			o = s.option(form.Flag, 'tls_acme_dtac', _('Disable TLS ALPN challenge'));
-			o.default = o.disabled;
 			o.depends('tls_dns01_challenge', '0');
 			o.modalonly = true;
 
@@ -699,7 +697,6 @@ return view.extend({
 			o = s.option(form.Flag, 'tls_acme_external_account', _('External Account Binding'),
 				_('EAB (External Account Binding) contains information necessary to bind or map an ACME account to some other account known by the CA.' +
 				'<br/>External account bindings are "used to associate an ACME account with an existing account in a non-ACME system, such as a CA customer database.'));
-			o.default = o.disabled;
 			o.depends('tls_acme', '1');
 			o.modalonly = true;
 
@@ -716,7 +713,6 @@ return view.extend({
 
 		if (features.with_reality_server) {
 			o = s.option(form.Flag, 'tls_reality', _('REALITY'));
-			o.default = o.disabled;
 			o.depends({'tls': '1', 'tls_acme': '0', 'type': 'vless'});
 			o.depends({'tls': '1', 'tls_acme': null, 'type': 'vless'});
 			o.modalonly = true;
@@ -838,18 +834,15 @@ return view.extend({
 		/* Extra settings start */
 		o = s.option(form.Flag, 'tcp_fast_open', _('TCP fast open'),
 			_('Enable tcp fast open for listener.'));
-		o.default = o.disabled;
 		o.depends({'network': 'udp', '!reverse': true});
 		o.modalonly = true;
 
 		o = s.option(form.Flag, 'tcp_multi_path', _('MultiPath TCP'));
-		o.default = o.disabled;
 		o.depends({'network': 'udp', '!reverse': true});
 		o.modalonly = true;
 
 		o = s.option(form.Flag, 'udp_fragment', _('UDP Fragment'),
 			_('Enable UDP fragmentation.'));
-		o.default = o.disabled;
 		o.depends({'network': 'tcp', '!reverse': true});
 		o.modalonly = true;
 
@@ -866,6 +859,16 @@ return view.extend({
 		o.value('', _('Both'));
 		o.depends('type', 'naive');
 		o.depends('type', 'shadowsocks');
+		o.modalonly = true;
+
+		o = s.option(widgets.DeviceSelect, 'bind_interface', _('Bind interface'),
+			_('The network interface to bind to.'));
+		o.multiple = false;
+		o.noaliases = true;
+		o.modalonly = true;
+
+		o = s.option(form.Flag, 'reuse_addr', _('Reuse address'),
+			_('Reuse listener address.'));
 		o.modalonly = true;
 		/* Extra settings end */
 

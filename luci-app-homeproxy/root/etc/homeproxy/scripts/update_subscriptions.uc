@@ -7,6 +7,7 @@
 
 'use strict';
 
+import { md5 } from 'digest';
 import { open } from 'fs';
 import { connect } from 'ubus';
 import { cursor } from 'uci';
@@ -15,9 +16,8 @@ import { urldecode, urlencode } from 'luci.http';
 import { init_action } from 'luci.sys';
 
 import {
-	calcStringMD5, wGET, decodeBase64Str,
-	getTime, isEmpty, parseURL, validation,
-	HP_DIR, RUN_DIR
+	wGET, decodeBase64Str, getTime, isEmpty, parseURL,
+	validation, HP_DIR, RUN_DIR
 } from 'homeproxy';
 
 /* UCI config start */
@@ -101,6 +101,23 @@ function parse_uri(uri) {
 		uri = split(trim(uri), '://');
 
 		switch (uri[0]) {
+		case 'anytls':
+			/* https://github.com/anytls/anytls-go/blob/v0.0.8/docs/uri_scheme.md */
+			url = parseURL('http://' + uri[1]) || {};
+			params = url.searchParams || {};
+
+			config = {
+				label: url.hash ? urldecode(url.hash) : null,
+				type: 'anytls',
+				address: url.hostname,
+				port: url.port,
+				password: urldecode(url.username),
+				tls: '1',
+				tls_sni: params.sni,
+				tls_insecure: (params.insecure === '1') ? '1' : '0'
+			};
+
+			break;
 		case 'http':
 		case 'https':
 			url = parseURL('http://' + uri[1]) || {};
@@ -464,7 +481,7 @@ function main() {
 
 	for (let url in subscription_urls) {
 		url = replace(url, /#.*$/, '');
-		const groupHash = calcStringMD5(url);
+		const groupHash = md5(url);
 		node_cache[groupHash] = {};
 
 		const res = wGET(url, user_agent);
@@ -495,8 +512,8 @@ function main() {
 
 			const label = config.label;
 			config.label = null;
-			const confHash = calcStringMD5(sprintf('%J', config)),
-			      nameHash = calcStringMD5(label);
+			const confHash = md5(sprintf('%J', config)),
+			      nameHash = md5(label);
 			config.label = label;
 
 			if (filter_check(config.label))
@@ -566,7 +583,7 @@ function main() {
 			if (node.isExisting)
 				return null;
 
-			const nameHash = calcStringMD5(node.label);
+			const nameHash = md5(node.label);
 			uci.set(uciconfig, nameHash, 'node');
 			map(keys(node), (v) => uci.set(uciconfig, nameHash, v, node[v]));
 

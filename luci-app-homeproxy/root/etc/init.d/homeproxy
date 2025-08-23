@@ -250,7 +250,7 @@ start_service() {
 	[ "$outbound_node" = "nil" ] || utpl -S "$HP_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fw4_post.nft"
 	fw4 reload >"/dev/null" 2>&1
 
-	log "$(sing-box version | awk 'NR==1{print $1,$3}') started."
+	log "sing-box $(sing-box version -n) started."
 }
 
 stop_service() {
