@@ -54617,7 +54617,6 @@ itiankong.com
 itiankong.net
 itianliao.com
 itiexue.net
-itiger.com
 itigergrowth.com
 itigergrowtha.com
 itigerup.com
@@ -61793,7 +61792,6 @@ kovemoto.com
 kowa-dental.com
 kowa103.com
 kowloonhospital.com
-kox.moe
 koyuki.cc
 kpblw.com
 kpbyd.com
@@ -70630,7 +70628,6 @@ mowan123.com
 moweather.com
 mowgz.com
 mowowo.com
-mox.moe
 moxfive.xyz
 moxiai.com
 moxian.com
@@ -71461,8 +71458,6 @@ mypharma.com
 mypian.com
 mypiao.com
 mypiaojia.com
-mypikpak.com
-mypikpak.net
 mypitaya.com
 mypity.com
 mypiwik.com
@@ -71729,7 +71724,6 @@ naitta.com
 naiveadmin.com
 naiveblue.com
 naiwch.com
-naixi.net
 naixuecha.com
 naiyouxuexi.com
 najingtech.com
@@ -97561,7 +97555,6 @@ ustarl.com
 ustbtc.com
 ustc.edu
 ustcers.com
-ustclug.org
 ustui.com
 usuredata.com
 usuuu.com
@@ -98607,7 +98600,6 @@ voidking.com
 voip366.com
 vojs.tv
 vokop.com
-vol.moe
 volc-dns.com
 volc-dns.net
 volc-dns.pub
@@ -104816,7 +104808,6 @@ xiaomei.cc
 xiaomeiti.com
 xiaomeng1235.com
 xiaomi.com
-xiaomi.eu
 xiaomi.hk
 xiaomi.net
 xiaomi.org
@@ -106602,6 +106593,7 @@ xn--4xup5j.com
 xn--54q23ckxiyx0e.com
 xn--54q249denfzw9a.net
 xn--54q40czz0g7xp.com
+xn--55qw42g
 xn--55qw7biqf7g3d004h8yuw1ctrt04sep1cjfb.com
 xn--55qwa79fh6ku8czve.com
 xn--55qx2ag79c1iq.com

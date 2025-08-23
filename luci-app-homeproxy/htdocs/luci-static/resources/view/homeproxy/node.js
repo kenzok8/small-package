@@ -25,6 +25,27 @@ function parseShareLink(uri, features) {
 	uri = uri.split('://');
 	if (uri[0] && uri[1]) {
 		switch (uri[0]) {
+		case 'anytls':
+			/* https://github.com/anytls/anytls-go/blob/v0.0.8/docs/uri_scheme.md */
+			url = new URL('http://' + uri[1]);
+			params = url.searchParams;
+
+			/* Check if password exists */
+			if (!url.username)
+				return null;
+
+			config = {
+				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
+				type: 'anytls',
+				address: url.hostname,
+				port: url.port || '80',
+				password: url.username ? decodeURIComponent(url.username) : null,
+				tls: '1',
+				tls_sni: params.get('sni'),
+				tls_insecure: (params.get('insecure') === '1') ? '1' : '0'
+			};
+
+			break;
 		case 'http':
 		case 'https':
 			url = new URL('http://' + uri[1]);
@@ -404,6 +425,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.ListValue, 'type', _('Type'));
 	o.value('direct', _('Direct'));
+	o.value('anytls', _('AnyTLS'));
 	o.value('http', _('HTTP'));
 	if (features.with_quic) {
 		o.value('hysteria', _('Hysteria'));
@@ -440,6 +462,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Value, 'password', _('Password'));
 	o.password = true;
+	o.depends('type', 'anytls');
 	o.depends('type', 'http');
 	o.depends('type', 'hysteria2');
 	o.depends('type', 'shadowsocks');
@@ -452,7 +475,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.validate = function(section_id, value) {
 		if (section_id) {
 			let type = this.section.formvalue(section_id, 'type');
-			let required_type = [ 'shadowsocks', 'shadowtls', 'trojan' ];
+			let required_type = [ 'anytls', 'shadowsocks', 'shadowtls', 'trojan' ];
 
 			if (required_type.includes(type)) {
 				if (type === 'shadowsocks') {
@@ -477,6 +500,29 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.value('2', _('v2'));
 	o.depends('type', 'direct');
 	o.modalonly = true;
+
+	/* AnyTLS config start */
+	o = s.option(form.Value, 'anytls_idle_session_check_interval', _('Idle session check interval'),
+		_('Interval checking for idle sessions, in seconds.'));
+	o.datatype = 'uinteger';
+	o.placeholder = '30';
+	o.depends('type', 'anytls');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'anytls_idle_session_timeout', _('Idle session check timeout'),
+		_('In the check, close sessions that have been idle for longer than this, in seconds.'));
+	o.datatype = 'uinteger';
+	o.placeholder = '30';
+	o.depends('type', 'anytls');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'anytls_min_idle_session', _('Minimum idle sessions'),
+		_('In the check, at least the first <code>n</code> idle sessions are kept open.'));
+	o.datatype = 'uinteger';
+	o.placeholder = '0';
+	o.depends('type', 'anytls');
+	o.modalonly = true;
+	/* AnyTLS config end */
 
 	/* Hysteria (2) config start */
 	o = s.option(form.DynamicList, 'hysteria_hopping_port', _('Hopping port'));
@@ -555,7 +601,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Flag, 'hysteria_disable_mtu_discovery', _('Disable Path MTU discovery'),
 		_('Disables Path MTU Discovery (RFC 8899). Packets will then be at most 1252 (IPv4) / 1232 (IPv6) bytes in size.'));
-	o.default = o.disabled;
 	o.depends('type', 'hysteria');
 	o.modalonly = true;
 	/* Hysteria (2) config end */
@@ -666,14 +711,12 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Flag, 'tuic_udp_over_stream', _('UDP over stream'),
 		_('This is the TUIC port of the UDP over TCP protocol, designed to provide a QUIC stream based UDP relay mode that TUIC does not provide.'));
-	o.default = o.disabled;
 	o.depends({'type': 'tuic','tuic_udp_relay_mode': ''});
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'tuic_enable_zero_rtt', _('Enable 0-RTT handshake'),
 		_('Enable 0-RTT QUIC connection handshake on the client side. This is not impacting much on the performance, as the protocol is fully multiplexed.<br/>' +
 			'Disabling this is highly recommended, as it is vulnerable to replay attacks.'));
-	o.default = o.disabled;
 	o.depends('type', 'tuic');
 	o.modalonly = true;
 
@@ -718,7 +761,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Flag, 'vmess_authenticated_length', _('Authenticated length'),
 		_('Protocol parameter. Enable length block encryption.'));
-	o.default = o.disabled;
 	o.depends('type', 'vmess');
 	o.modalonly = true;
 	/* VMess config end */
@@ -771,7 +813,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	if (features.with_grpc) {
 		o = s.option(form.Flag, 'grpc_permit_without_stream', _('gRPC permit without stream'),
 			_('If enabled, the client transport sends keepalive pings even with no active connections.'));
-		o.default = o.disabled;
 		o.depends('transport', 'grpc');
 		o.modalonly = true;
 	}
@@ -897,7 +938,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	/* Mux config start */
 	o = s.option(form.Flag, 'multiplex', _('Multiplex'));
-	o.default = o.disabled;
 	o.depends('type', 'shadowsocks');
 	o.depends('type', 'trojan');
 	o.depends('type', 'vless');
@@ -927,19 +967,18 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Value, 'multiplex_max_streams', _('Maximum streams'),
 		_('Maximum multiplexed streams in a connection before opening a new connection.<br/>' +
-			'Conflict with <code>Maximum connections</code> and <code>Minimum streams</code>.'));
+			'Conflict with <code>%s</code> and <code>%s</code>.').format(
+				_('Maximum connections'), _('Minimum streams')));
 	o.datatype = 'uinteger';
 	o.depends({'multiplex': '1', 'multiplex_max_connections': '', 'multiplex_min_streams': ''});
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'multiplex_padding', _('Enable padding'));
-	o.default = o.disabled;
 	o.depends('multiplex', '1');
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'multiplex_brutal', _('Enable TCP Brutal'),
 		_('Enable TCP Brutal congestion control algorithm'));
-	o.default = o.disabled;
 	o.depends('multiplex', '1');
 	o.modalonly = true;
 
@@ -958,7 +997,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	/* TLS config start */
 	o = s.option(form.Flag, 'tls', _('TLS'));
-	o.default = o.disabled;
+	o.depends('type', 'anytls');
 	o.depends('type', 'http');
 	o.depends('type', 'hysteria');
 	o.depends('type', 'hysteria2');
@@ -972,7 +1011,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 			let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
 			let tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 
-			if (['hysteria', 'hysteria2', 'shadowtls', 'tuic'].includes(type)) {
+			if (['anytls', 'hysteria', 'hysteria2', 'shadowtls', 'tuic'].includes(type)) {
 				tls.checked = true;
 				tls.disabled = true;
 			} else {
@@ -998,7 +1037,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('Allow insecure connection at TLS client.') +
 		'<br/>' +
 		_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
-	o.default = o.disabled;
 	o.depends('tls', '1');
 	o.onchange = allowInsecureConfirm;
 	o.modalonly = true;
@@ -1029,7 +1067,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Flag, 'tls_self_sign', _('Append self-signed certificate'),
 		_('If you have the root certificate, use this option instead of allowing insecure.'));
-	o.default = o.disabled;
 	o.depends('tls_insecure', '0');
 	o.modalonly = true;
 
@@ -1049,32 +1086,28 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.onclick = L.bind(hp.uploadCertificate, this, _('certificate'), 'client_ca');
 	o.modalonly = true;
 
-	if (features.with_ech) {
-		o = s.option(form.Flag, 'tls_ech', _('Enable ECH'),
-			_('ECH (Encrypted Client Hello) is a TLS extension that allows a client to encrypt the first part of its ClientHello message.'));
-		o.depends('tls', '1');
-		o.default = o.disabled;
-		o.modalonly = true;
+	o = s.option(form.Flag, 'tls_ech', _('Enable ECH'),
+		_('ECH (Encrypted Client Hello) is a TLS extension that allows a client to encrypt the first part of its ClientHello message.'));
+	o.depends('tls', '1');
+	o.modalonly = true;
 
-		o = s.option(form.Flag, 'tls_ech_enable_pqss', _('Enable PQ signature schemes'));
-		o.depends('tls_ech', '1');
-		o.default = o.disabled;
-		o.modalonly = true;
+	o = s.option(form.Flag, 'tls_ech_enable_pqss', _('Enable PQ signature schemes'));
+	o.depends('tls_ech', '1');
+	o.modalonly = true;
 
-		o = s.option(form.Value, 'tls_ech_config_path', _('ECH config path'),
-			_('The path to the ECH config, in PEM format. If empty, load from DNS will be attempted.'));
-		o.value('/etc/homeproxy/certs/client_ech_conf.pem');
-		o.depends('tls_ech', '1');
-		o.modalonly = true;
+	o = s.option(form.Value, 'tls_ech_config_path', _('ECH config path'),
+		_('The path to the ECH config, in PEM format. If empty, load from DNS will be attempted.'));
+	o.value('/etc/homeproxy/certs/client_ech_conf.pem');
+	o.depends('tls_ech', '1');
+	o.modalonly = true;
 
-		o = s.option(form.Button, '_upload_ech_config', _('Upload ECH config'),
-			_('<strong>Save your configuration before uploading files!</strong>'));
-		o.inputstyle = 'action';
-		o.inputtitle = _('Upload...');
-		o.depends({'tls_ech': '1', 'tls_ech_config_path': '/etc/homeproxy/certs/client_ech_conf.pem'});
-		o.onclick = L.bind(hp.uploadCertificate, this, _('ECH config'), 'client_ech_conf');
-		o.modalonly = true;
-	}
+	o = s.option(form.Button, '_upload_ech_config', _('Upload ECH config'),
+		_('<strong>Save your configuration before uploading files!</strong>'));
+	o.inputstyle = 'action';
+	o.inputtitle = _('Upload...');
+	o.depends({'tls_ech': '1', 'tls_ech_config_path': '/etc/homeproxy/certs/client_ech_conf.pem'});
+	o.onclick = L.bind(hp.uploadCertificate, this, _('ECH config'), 'client_ech_conf');
+	o.modalonly = true;
 
 	if (features.with_utls) {
 		o = s.option(form.ListValue, 'tls_utls', _('uTLS fingerprint'),
@@ -1107,7 +1140,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.modalonly = true;
 
 		o = s.option(form.Flag, 'tls_reality', _('REALITY'));
-		o.default = o.disabled;
 		o.depends({'tls': '1', 'type': 'vless'});
 		o.modalonly = true;
 
@@ -1124,21 +1156,17 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	/* Extra settings start */
 	o = s.option(form.Flag, 'tcp_fast_open', _('TCP fast open'));
-	o.default = o.disabled;
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'tcp_multi_path', _('MultiPath TCP'));
-	o.default = o.disabled;
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'udp_fragment', _('UDP Fragment'),
 		_('Enable UDP fragmentation.'));
-	o.default = o.disabled;
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'udp_over_tcp', _('UDP over TCP'),
 		_('Enable the SUoT protocol, requires server support. Conflict with multiplex.'));
-	o.default = o.disabled;
 	o.depends('type', 'socks');
 	o.depends({'type': 'shadowsocks', 'multiplex': '0'});
 	o.modalonly = true;
@@ -1303,7 +1331,6 @@ return view.extend({
 
 		o = s.taboption('subscription', form.Flag, 'auto_update', _('Auto update'),
 			_('Auto update subscriptions and geodata.'));
-		o.default = o.disabled;
 		o.rmempty = false;
 
 		o = s.taboption('subscription', form.ListValue, 'auto_update_time', _('Update time'));
@@ -1314,7 +1341,6 @@ return view.extend({
 
 		o = s.taboption('subscription', form.Flag, 'update_via_proxy', _('Update via proxy'),
 			_('Update subscriptions via proxy.'));
-		o.default = o.disabled;
 		o.rmempty = false;
 
 		o = s.taboption('subscription', form.DynamicList, 'subscription_url', _('Subscription URL-s'),
@@ -1354,7 +1380,6 @@ return view.extend({
 			_('Allow insecure connection by default when add nodes from subscriptions.') +
 			'<br/>' +
 			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
-		o.default = o.disabled;
 		o.rmempty = false;
 		o.onchange = allowInsecureConfirm;
 
