@@ -1119,7 +1119,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.value('random');
 		o.value('randomized');
 		o.value('safari');
-		o.depends({'tls': '1', 'type': /^((?!hysteria2?$).)+$/});
+		o.depends({'tls': '1', 'type': /^((?!hysteria2?|tuic$).)+$/});
 		o.validate = function(section_id, value) {
 			if (section_id) {
 				let tls_reality = this.map.findElement('id', 'cbid.homeproxy.%s.tls_reality'.format(section_id)).firstElementChild;
