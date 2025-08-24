@@ -301,7 +301,6 @@ function generate_outbound(node) {
 			certificate_path: node.tls_cert_path,
 			ech: (node.tls_ech === '1') ? {
 				enabled: true,
-				pq_signature_schemes_enabled: strToBool(node.tls_ech_enable_pqss),
 				config: node.tls_ech_config,
 				config_path: node.tls_ech_config_path
 			} : null,

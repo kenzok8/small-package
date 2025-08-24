@@ -326,6 +326,10 @@ function deleteNekoTmpDirectory($dir) {
 		font-size: 0.8rem;
 	}
 }
+
+.modal-body .alert.alert-warning .note-text {
+        color: #ff0000 !important;
+}
 </style>
 
 <div id="theme-loader" style="display: none;">
@@ -1254,7 +1258,7 @@ new MutationObserver(manageNotifications).observe(document.body, {
 <style>
 .img-con {
 	width: 65px;
-	height: 55px;
+	height: 45px;
 	display: flex;
 	justify-content: center;
 	overflow: visible;
@@ -1264,27 +1268,27 @@ new MutationObserver(manageNotifications).observe(document.body, {
 	width: auto;
 	height: auto;
 	max-width: 65px;
-	max-height: 55px;
+	max-height: 45px;
 	object-fit: contain;
 }
 
 .status-icon {
-	width: 58px;
-	height: 58px;
+	width: 48px;
+	height: 48px;
 	object-fit: contain;
 	display: block;
 }
 
 .status-icons {
 	display: flex;
-	height: 55px;
+	height: 45px;
 	margin-left: auto;
 }
 
 .site-icon {
 	display: flex;
 	justify-content: center;
-	height: 55px;
+	height: 45px;
 	margin: 0 6px;
 }
 
@@ -1293,26 +1297,26 @@ new MutationObserver(manageNotifications).observe(document.body, {
 }
 
 .site-icon[onclick*="github"] .status-icon {
-	width: 61px;
-	height: 59px;
+	width: 51px;
+	height: 49px;
 }
 
 .site-icon[onclick*="github"] {
-	width: 60px;
-	height: 57px;
+	width: 50px;
+	height: 47px;
 	display: flex;
 	justify-content: center;
 }
 
 .site-icon[onclick*="openai"] .status-icon {
-	width: 62px;
-	height: 64px;
+	width: 52px;
+	height: 54px;
 	margin-top: -2px;
 }
 
 .site-icon[onclick*="openai"] {
-	width: 62px;
-	height: 64px;
+	width: 52px;
+	height: 54px;
 	display: flex;
 	justify-content: center;
 }
@@ -1327,12 +1331,12 @@ new MutationObserver(manageNotifications).observe(document.body, {
 	width: 100%;
 	margin: 0;
 	display: flex;
-	gap: 15px;
-	height: 55px;
+	gap: 12px;
+	height: 45px;
 }
 
 .col-3 {
-	height: 55px;
+	height: 45px;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -1363,7 +1367,7 @@ new MutationObserver(manageNotifications).observe(document.body, {
 }
 
 #d-ip > .ip-main {
-	font-size: 15px !important;
+	font-size: 14px !important;
 }
 
 #d-ip .badge-primary {
@@ -1525,7 +1529,7 @@ $lang = $_GET['lang'] ?? 'en';
         </div>
     </div>
 <?php endif; ?>
-</style>
+
 <script type="text/javascript">
 const _IMG = './assets/neko/';
 const translate = <?php echo json_encode($translate, JSON_UNESCAPED_UNICODE); ?>;
@@ -1654,7 +1658,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ? (langData[currentLang]?.translation_enabled || 'Translation Enabled')
             : (langData[currentLang]?.translation_disabled || 'Translation Disabled');
         speakMessage(spokenMessage);
-showLogMessage(spokenMessage);
+        showLogMessage(spokenMessage);
         translationBtn.style.transform = "scale(0.95)";
         setTimeout(() => {
             translationBtn.style.transform = "scale(1)";
@@ -1665,25 +1669,40 @@ showLogMessage(spokenMessage);
 async function translateText(text, targetLang = null) {
     if (!text?.trim()) return text;
 
-    const countryToLang = {
-        'CN': 'zh-CN', 'HK': 'zh-HK', 'TW': 'zh-TW', 'JP': 'ja',
-        'KR': 'ko', 'VN': 'vi', 'TH': 'th', 'GB': 'en', 'FR': 'fr',
-        'DE': 'de', 'RU': 'ru', 'US': 'en', 'MX': 'es'
-    };
-
-    if (!targetLang) targetLang = localStorage.getItem('language') || 'CN';
-    targetLang = countryToLang[targetLang.toUpperCase()] || targetLang;
-
+    if (!targetLang) {
+        try {
+            const response = await fetch('./lib/language.txt?t=' + new Date().getTime());
+            if (response.ok) {
+                const lang = await response.text();
+                targetLang = lang.trim().toLowerCase() || 'zh';
+            } else {
+                targetLang = 'zh';
+            }
+        } catch (error) {
+            targetLang = 'zh';
+        }
+    }
+    
     const apiLangMap = {
-        'zh-CN': 'zh-CN', 'zh-HK': 'zh-HK', 'zh-TW': 'zh-TW',
-        'ja': 'ja', 'ko': 'ko', 'vi': 'vi', 'en': 'en-GB', 'ru': 'ru'
+        'zh':'zh-CN','zh-tw':'zh-TW','zh-CN':'zh-CN','hk':'zh-TW', 'zh-mo': 'zh-TW',
+        'en':'en','ja':'ja','ko':'ko','fr':'fr','de':'de','es':'es',
+        'it':'it','pt':'pt','ru':'ru','ar':'ar','hi':'hi','bn':'bn',
+        'ms':'ms','id':'id','vi':'vi','th':'th','nl':'nl','pl':'pl',
+        'tr':'tr','sv':'sv','no':'no','fi':'fi','da':'da','cs':'cs',
+        'he':'he','el':'el','hu':'hu','ro':'ro','sk':'sk','bg':'bg','uk':'uk'
     };
-    const apiTargetLang = apiLangMap[targetLang] || targetLang;
+    
+    const apiTargetLang = apiLangMap[targetLang.toLowerCase()] || 'zh-CN';
 
     const detectJP = (text) => /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
     const sourceLang = detectJP(text) ? 'ja' : 'en';
 
-    const isSameLang = () => sourceLang.split('-')[0] === apiTargetLang.split('-')[0];
+    const isSameLang = () => {
+        const sourceBase = sourceLang.split('-')[0];
+        const targetBase = apiTargetLang.split('-')[0];
+        return sourceBase === targetBase;
+    };
+    
     if (isSameLang()) return text;
 
     if (localStorage.getItem('translationEnabled') !== 'true') return text;
@@ -1703,33 +1722,6 @@ async function translateText(text, targetLang = null) {
             method: 'POST',
             body: JSON.stringify({ q: text, source: sourceLang, target: apiTargetLang, format: 'text' }),
             headers: { 'Content-Type': 'application/json' }
-        },
-        {
-            url: 'https://translate.argosopentech.com/translate',
-            method: 'POST',
-            body: JSON.stringify({ q: text, source: sourceLang, target: apiTargetLang }),
-            headers: { 'Content-Type': 'application/json' },
-            parse: data => data.translatedText
-        },
-        {
-            url: `https://lingva.ml/api/v1/${sourceLang}/${apiTargetLang}/${encodeURIComponent(text)}`,
-            method: 'GET',
-            parse: data => data.translation
-        },
-        {
-            url: `https://lingva.pussthecat.org/api/v1/${sourceLang}/${apiTargetLang}/${encodeURIComponent(text)}`,
-            method: 'GET',
-            parse: data => data.translation
-        },
-        {
-            url: `https://api-proxy.com/baidu?q=${encodeURIComponent(text)}&from=${sourceLang}&to=${apiTargetLang}`,
-            method: 'GET',
-            parse: data => data.trans_result?.[0]?.dst
-        },
-        {
-            url: `https://translate.yandex.net/api/v1.5/tr.json/translate?key=freekey&text=${encodeURIComponent(text)}&lang=${apiTargetLang}`,
-            method: 'GET',
-            parse: data => data.text?.[0]
         }
     ];
 
@@ -1749,6 +1741,7 @@ async function translateText(text, targetLang = null) {
                 });
                 
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
+                if (!response.ok) throw new Error('API response not OK');
                 const data = await response.json();
                 return api.parse ? api.parse(data) : data?.translatedText;
             } catch (e) {
@@ -1912,7 +1905,7 @@ let IP = {
                 <div class="ip-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;">
                     <div class="ip-main" style="cursor: pointer;" onclick="handleIPClick()" title="${translations['show_ip']}">
                         <div style="display: flex; align-items: center; gap: 5px;">
-                            <span id="ip-address" style="margin-left: 0ch">${isHidden ? '**.**.**.**.**' : cachedIP}</span> 
+                            <span id="ip-address" style="margin-left: 0.3ch">${isHidden ? '**.**.**.**.**' : cachedIP}</span> 
                             <span class="badge badge-primary" style="color: #333;">${country}</span>
                         </div>
                     </div>
@@ -1928,6 +1921,22 @@ let IP = {
             const countryCode = data.country_code || 'unknown';
             const flagSrc = (countryCode !== 'unknown') ? _IMG + "flags/" + countryCode.toLowerCase() + ".png"  : './assets/neko/flags/cn.png';
             $("#flag").attr("src", flagSrc);
+
+            const ipContainer = document.querySelector('.ip-row');
+            const toggleIcon = document.getElementById('toggle-ip');
+        
+            if (ipContainer && toggleIcon) {
+
+                toggleIcon.style.opacity = '0';
+
+                ipContainer.addEventListener('mouseenter', function() {
+                    toggleIcon.style.opacity = '1';
+                });
+            
+                ipContainer.addEventListener('mouseleave', function() {
+                    toggleIcon.style.opacity = '0';
+                });
+            }
 
             document.getElementById('toggle-ip').addEventListener('click', () => {
                 const ipElement = document.getElementById('ip-address');
@@ -2124,7 +2133,7 @@ let IP = {
 const style = document.createElement('style');
 style.textContent = `
 .ip-main {
-	font-size: 14px;
+	font-size: 15px;
 	padding: 5px;
 	transition: all 0.3s;
 	display: inline-flex;
