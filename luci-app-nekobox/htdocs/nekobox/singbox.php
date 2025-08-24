@@ -393,11 +393,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
         $templateUrlEncoded = urlencode($customTemplateUrl);
     } else {
         $defaultTemplates = [
-            '1' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_7.json",
-            '2' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_6.json",
-            '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_8.json",
-            '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_12.json",
-            '5' => "https://raw.githubusercontent.com/Thaolga/Rules/main/Clash/json/config_2.json"
+            '1' => "https://raw.githubusercontent.com/Thaolga/Rules/main/sing-box/config_1.json",
+            '2' => "https://raw.githubusercontent.com/Thaolga/Rules/main/sing-box/config_2.json",
+            '3' => "https://raw.githubusercontent.com/Thaolga/Rules/main/sing-box/config_3.json",
+            '4' => "https://raw.githubusercontent.com/Thaolga/Rules/main/sing-box/config_4.json"
         ];
         $templateUrlEncoded = urlencode($defaultTemplates[$_POST['defaultTemplate']] ?? '');
     }

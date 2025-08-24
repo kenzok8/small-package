@@ -381,7 +381,7 @@ $razordVersion = getRazordVersion();
             <div class="modal-body">
                 <div class="alert alert-warning text-start" role="alert">
                     <strong data-translate="note_label"></strong>
-                    <span data-translate="options_modal_note">
+                    <span data-translate="options_modal_note" class="note-text">
                         Please prioritize selecting the Channel 1 version for updates to ensure compatibility. The system will first check and dynamically generate the latest version number for download. If the Channel 1 update is unavailable, you can try the Channel 2 version.
                     </span>
                 </div>
@@ -464,6 +464,7 @@ $razordVersion = getRazordVersion();
                     <option value="v1.11.0-beta.20">v1.11.0-beta.20</option>
                     <option value="v1.12.0-rc.3">v1.12.0-rc.3</option>
                     <option value="v1.12.0-rc.4">v1.12.0-rc.4</option>
+                    <option value="v1.13.0-alpha.1">v1.13.0-alpha.1</option>
                 </select>
                 <input type="text" id="manualVersionInput" class="form-control mt-2" placeholder="For example: v1.12.0-rc.3">
                 <button type="button" class="btn btn-secondary mt-2" onclick="addManualVersion()" data-translate="addVersionButton">Add Version</button>

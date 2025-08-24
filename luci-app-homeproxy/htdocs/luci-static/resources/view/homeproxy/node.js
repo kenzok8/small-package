@@ -1091,10 +1091,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends('tls', '1');
 	o.modalonly = true;
 
-	o = s.option(form.Flag, 'tls_ech_enable_pqss', _('Enable PQ signature schemes'));
-	o.depends('tls_ech', '1');
-	o.modalonly = true;
-
 	o = s.option(form.Value, 'tls_ech_config_path', _('ECH config path'),
 		_('The path to the ECH config, in PEM format. If empty, load from DNS will be attempted.'));
 	o.value('/etc/homeproxy/certs/client_ech_conf.pem');
