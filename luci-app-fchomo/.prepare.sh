@@ -7,7 +7,7 @@ export PATH="$PATH:$PKG_BUILD_BIN"
 
 OS=linux
 ARCH=amd64
-JQVERSION=1.7.1
+JQVERSION=1.8.1
 DOCNAME=Ruleset-URI-Scheme
 SHARKIMG='img/shark-taiko.gif'
 SHARKAUDIO='audio/A!.mp3'
