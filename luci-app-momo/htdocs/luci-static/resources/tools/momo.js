@@ -45,6 +45,13 @@ const callMomoUpdateSubscription = rpc.declare({
     expect: { '': {} }
 });
 
+const callMomoAPI = rpc.declare({
+    object: 'luci.momo',
+    method: 'api',
+    params: ['method', 'path', 'query', 'body'],
+    expect: { '': {} }
+});
+
 const callMomoGetIdentifiers = rpc.declare({
     object: 'luci.momo',
     method: 'get_identifiers',
@@ -86,21 +93,8 @@ return baseclass.extend({
         return callMomoUpdateSubscription(section_id);
     },
 
-    api: async function (method, path, query, body) {
-        const profile = await callMomoProfile({ 'experimental': { 'clash_api': { 'external_controller': null, 'secret': null } } });
-        const apiListen = profile?.['experimental']?.['clash_api']?.['external_controller'];
-        const apiSecret = profile?.['experimental']?.['clash_api']?.['secret'] ?? '';
-        if (!apiListen) {
-            return Promise.reject('Clash API has not been configured');
-        }
-        const apiPort = apiListen.substring(apiListen.lastIndexOf(':') + 1);
-        const url = `http://${window.location.hostname}:${apiPort}${path}`;
-        return request.request(url, {
-            method: method,
-            headers: { 'Authorization': `Bearer ${apiSecret}` },
-            query: query,
-            content: body
-        })
+    updateDashboard: function () {
+        return callMomoAPI('POST', '/upgrade/ui');
     },
 
     openDashboard: async function () {
@@ -121,10 +115,6 @@ return baseclass.extend({
         const url = `http://${window.location.hostname}:${apiPort}/ui/?${query}`;
         setTimeout(function () { window.open(url, '_blank') }, 0);
         return Promise.resolve();
-    },
-
-    updateDashboard: function () {
-        return this.api('POST', '/upgrade/ui');
     },
 
     getIdentifiers: function () {

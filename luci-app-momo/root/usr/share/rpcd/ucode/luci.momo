@@ -57,6 +57,36 @@ const methods = {
 			return { success: success };
 		}
 	},
+	api: {
+		args: { method: 'method', path: 'path', query: 'query', body: 'body' },
+		call: function(req) {
+			let result = {};
+
+			const method = req.args?.method;
+			const path = req.args?.path;
+			const query = req.args?.query;
+			const body = req.args?.body;
+
+			const paths = get_paths();
+			const profile = json(readfile(paths.run_profile_path));
+			const api_listen = profile['experimental']['clash_api']['external_controller'];
+			const api_secret = profile['experimental']['clash_api']['secret'];
+
+			if (!api_listen) {
+				return result;
+			}
+
+			const url = api_listen + path;
+
+			const process = popen(`curl --request '${method}' --oauth2-bearer '${api_secret}' --url-query '${query}' --data '${body}' '${url}'`);
+			if (process) {
+				result = json(process);
+				process.close();
+			}
+
+			return result;
+		}
+	},
 	get_identifiers: {
 		call: function() {
 			const users = filter(get_users(), (x) => x != '');
