@@ -84,6 +84,16 @@ function s.remove(e, t)
 			m:del(s[".name"], "fallback_node")
 		end
 	end)
+	m.uci:foreach(appname, "subscribe_list", function(s)
+		if s["preproxy_node"] == t then
+			m:del(s[".name"], "preproxy_node")
+			m:del(s[".name"], "chain_proxy")
+		end
+		if s["to_node"] == t then
+			m:del(s[".name"], "to_node")
+			m:del(s[".name"], "chain_proxy")
+		end
+	end)
 	if (m:get(t, "add_mode") or "0") == "2" then
 		local add_from = m:get(t, "add_from") or ""
 		if add_from ~= "" then
@@ -157,6 +167,8 @@ o.cfgvalue = function(t, n)
 			protocol = "HY2"
 		elseif protocol == "anytls" then
 			protocol = "AnyTLS"
+		elseif protocol == "ssh" then
+			protocol = "SSH"
 		else
 			protocol = protocol:gsub("^%l",string.upper)
 		end
