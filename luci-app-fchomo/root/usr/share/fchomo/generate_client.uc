@@ -313,7 +313,7 @@ uci.foreach(uciconf, ucisniff, (cfg) => {
 		return null;
 
 	config.sniffer.sniff[cfg.protocol] = {
-		ports: map(cfg.ports, ports => strToInt(ports) || null), // DEBUG ERROR data type *utils.IntRanges[uint16]
+		ports: map(cfg.ports, ports => strToInt(ports) || null), // @DEBUG ERROR data type *utils.IntRanges[uint16]
 		"override-destination": (cfg.override_destination === '0') ? false : true
 	};
 });
@@ -352,7 +352,7 @@ push(config.listeners, {
 	listen: '::',
 	network: ['tcp', 'udp'],
 	target: '1.1.1.1:53'
-}); // Not required for v1.19.2+
+}); // @Not required for v1.19.2+
 /* Tun settings */
 if (match(proxy_mode, /tun/))
 	push(config.listeners, {
@@ -765,7 +765,7 @@ uci.foreach(uciconf, ucirule, (cfg) => {
 /* Routing rules START */
 /* Routing rules */
 config.rules = [
-	"IN-NAME,dns-in,dns-out", // Not required for v1.19.2+
+	"IN-NAME,dns-in,dns-out", // @Not required for v1.19.2+
 	"DST-PORT,53,dns-out"
 ];
 uci.foreach(uciconf, ucirout, (cfg) => {

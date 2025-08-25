@@ -469,7 +469,7 @@ return view.extend({
 		so.placeholder = '7892';
 		so.rmempty = false;
 
-		// Not required for v1.19.2+
+		// @Not required for v1.19.2+
 		so = ss.option(form.Value, 'tunnel_port', _('DNS port'));
 		so.datatype = 'port';
 		so.placeholder = '7893';
@@ -491,7 +491,7 @@ return view.extend({
 		o = s.taboption('inbound', form.SectionValue, '_inbound', form.NamedSection, 'inbound', 'fchomo', _('Tun settings'));
 		ss = o.subsection;
 
-		so = ss.option(form.RichListValue || form.ListValue, 'tun_stack', _('Stack'), // less_24_10
+		so = ss.option(form.RichListValue || form.ListValue, 'tun_stack', _('Stack'), // @less_24_10
 			_('Tun stack.'));
 		so.value('system', _('System'), _('Less compatibility and sometimes better performance.'));
 		if (features.with_gvisor) {
