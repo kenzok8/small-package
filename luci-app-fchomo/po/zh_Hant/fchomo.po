@@ -1157,15 +1157,15 @@ msgstr "圖標"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:339
 msgid "Idle session check interval"
-msgstr "空閒會話檢查間隔"
+msgstr "閒置會話檢查間隔"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:346
 msgid "Idle session timeout"
-msgstr "空閒會話逾時"
+msgstr "閒置會話逾時"
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:200
 msgid "Idle timeout"
-msgstr "空閒逾時"
+msgstr "閒置逾時"
 
 #: htdocs/luci-static/resources/fchomo.js:1150
 msgid "If All ports is selected, uncheck others"
@@ -1486,7 +1486,7 @@ msgstr "Mihomo 服務端"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:353
 msgid "Min of idle sessions to keep"
-msgstr "要保留的最少空閒會話數"
+msgstr "要保留的最少閒置會話數"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:801
 msgid ""
