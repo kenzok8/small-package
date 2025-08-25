@@ -164,7 +164,7 @@ start_service() {
 		config_get_bool dns_ipv6 "dns" "ipv6" "1"
 		local dns_port tunnel_port
 		config_get dns_port "dns" "dns_port" "7853"
-		config_get tunnel_port "inbound" "tunnel_port" "7893" # Not required for v1.19.2+
+		config_get tunnel_port "inbound" "tunnel_port" "7893" # @Not required for v1.19.2+
 		local routing_mode routing_domain
 		config_get routing_mode "routing" "routing_mode" ""
 		config_get_bool routing_domain "routing" "routing_domain" "0"
