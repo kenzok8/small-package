@@ -39,6 +39,13 @@ const callNikkiUpdateSubscription = rpc.declare({
     expect: { '': {} }
 });
 
+const callNikkiAPI = rpc.declare({
+    object: 'luci.nikki',
+    method: 'api',
+    params: ['method', 'path', 'query', 'body'],
+    expect: { '': {} }
+});
+
 const callNikkiGetIdentifiers = rpc.declare({
     object: 'luci.nikki',
     method: 'get_identifiers',
@@ -103,21 +110,8 @@ return baseclass.extend({
         return callNikkiUpdateSubscription(section_id);
     },
 
-    api: async function (method, path, query, body) {
-        const profile = await callNikkiProfile({ 'external-controller': null, 'secret': null });
-        const apiListen = profile['external-controller'];
-        const apiSecret = profile['secret'] ?? '';
-        if (!apiListen) {
-            return Promise.reject('API has not been configured');
-        }
-        const apiPort = apiListen.substring(apiListen.lastIndexOf(':') + 1);
-        const url = `http://${window.location.hostname}:${apiPort}${path}`;
-        return request.request(url, {
-            method: method,
-            headers: { 'Authorization': `Bearer ${apiSecret}` },
-            query: query,
-            content: body
-        });
+    updateDashboard: function () {
+        return callNikkiAPI('POST', '/upgrade/ui');
     },
 
     openDashboard: async function () {
@@ -144,10 +138,6 @@ return baseclass.extend({
         }
         setTimeout(function () { window.open(url, '_blank') }, 0);
         return Promise.resolve();
-    },
-
-    updateDashboard: function () {
-        return this.api('POST', '/upgrade/ui');
     },
 
     getIdentifiers: function () {

@@ -3,7 +3,7 @@
 'use strict';
 
 import { access, popen, writefile } from 'fs';
-import { get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
+import { load_profile, get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
 
 const methods = {
 	version: {
@@ -60,6 +60,35 @@ const methods = {
 				success = system(['service', 'nikki', 'update_subscription', section_id]) == 0;
 			}
 			return { success: success };
+		}
+	},
+	api: {
+		args: { method: 'method', path: 'path', query: 'query', body: 'body' },
+		call: function(req) {
+			let result = {};
+
+			const method = req.args?.method;
+			const path = req.args?.path;
+			const query = req.args?.query;
+			const body = req.args?.body;
+
+			const profile = load_profile();
+			const api_listen = profile['external-controller'];
+			const api_secret = profile['secret'];
+
+			if (!api_listen) {
+				return result;
+			}
+
+			const url = api_listen + path;
+
+			const process = popen(`curl --request '${method}' --oauth2-bearer '${api_secret}' --url-query '${query}' --data '${body}' '${url}'`);
+			if (process) {
+				result = json(process);
+				process.close();
+			}
+
+			return result;
 		}
 	},
 	get_identifiers: {
