@@ -16,7 +16,6 @@ local InternetDetector = {
 	loggingLevel   = 6,
 	hostname       = "OpenWrt",
 	appName        = "internet-detector",
-	commonDir      = "/tmp/run",
 	libDir         = "/usr/lib/lua",
 	pingCmd        = "/bin/ping",
 	pingParams     = "-c 1",
@@ -56,6 +55,7 @@ local InternetDetector = {
 InternetDetector.configDir  = string.format("/etc/%s", InternetDetector.appName)
 InternetDetector.modulesDir = string.format(
 	"%s/%s/modules", InternetDetector.libDir, InternetDetector.appName)
+InternetDetector.commonDir  = string.format("/tmp/run/%s", InternetDetector.appName)
 
 -- Loading settings from UCI
 
@@ -386,7 +386,6 @@ function InternetDetector:mainLoop()
 					self:writeLogMessage("notice", "Disconnected")
 				end
 			end
-
 			counter = 0
 		end
 
@@ -400,7 +399,6 @@ function InternetDetector:mainLoop()
 				mTimeDiff = 1
 			end
 			mLastTime = mTimeNow
-
 			if self.debug then
 				e:run(currentStatus, lastStatus, mTimeDiff, mTimeNow, inetChecked)
 			else
@@ -552,6 +550,14 @@ function InternetDetector:preRun()
 	if self.mode ~= 1 and self.mode ~= 2 then
 		io.stderr:write(string.format('Start failed, mode != (1 or 2)\n', self.appName))
 		os.exit(0)
+	end
+	local s = stat.stat(self.commonDir)
+	if not s or not (stat.S_ISDIR(s.st_mode) ~= 0) then
+		if not stat.mkdir(self.commonDir) then
+			io.stderr:write(
+				string.format('Error occurred while creating %s. Exit.\n', self.commonDir))
+			os.exit(1)
+		end
 	end
 	if stat.stat(self.pidFile) then
 		io.stderr:write(
