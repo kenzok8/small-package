@@ -311,6 +311,12 @@ return view.extend({
 		so.depends('type', 'tuic');
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.Value, 'tuic_max_open_streams', _('Max open streams'));
+		so.datatype = 'uinteger';
+		so.placeholder = '100';
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
 		/* Trojan fields */
 		so = ss.taboption('field_general', form.Flag, 'trojan_ss_enabled', _('Shadowsocks encrypt'));
 		so.default = so.disabled;

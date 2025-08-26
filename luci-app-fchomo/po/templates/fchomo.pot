@@ -1422,6 +1422,10 @@ msgstr ""
 msgid "Max download speed"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:314
+msgid "Max open streams"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:146
 #: htdocs/luci-static/resources/view/fchomo/server.js:122
 msgid "Max upload speed"

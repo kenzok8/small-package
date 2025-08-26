@@ -529,8 +529,8 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"reduce-rtt": strToBool(cfg.tuic_reduce_rtt),
 		"heartbeat-interval": strToInt(cfg.tuic_heartbeat) || null,
 		"request-timeout": strToInt(cfg.tuic_request_timeout) || null,
-		// fast-open: true
-		// max-open-streams: 20
+		// @"fast-open": true,
+		"max-open-streams": strToInt(cfg.tuic_max_open_streams) || null,
 
 		/* Trojan */
 		"ss-opts": cfg.trojan_ss_enabled === '1' ? {

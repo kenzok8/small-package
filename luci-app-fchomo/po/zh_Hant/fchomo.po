@@ -1446,6 +1446,10 @@ msgstr "最大失敗次數"
 msgid "Max download speed"
 msgstr "最大下載速度"
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:314
+msgid "Max open streams"
+msgstr "限制打開流的數量"
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:146
 #: htdocs/luci-static/resources/view/fchomo/server.js:122
 msgid "Max upload speed"
