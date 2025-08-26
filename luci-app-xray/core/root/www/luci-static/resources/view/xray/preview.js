@@ -18,7 +18,7 @@ return view.extend({
 
         s.tab("dns_hijack", _("DNS Hijacking"));
 
-        let dnsmasq_integration_mode = s.taboption('dns_hijack', form.ListValue, 'dnsmasq_integration_mode', _('Dnsmasq Integration Mode'), _('Global mode may not work on OpenWrt 24.10 or later; per instance mode is NOT supported on OpenWrt 23.05 or earlier.'));
+        let dnsmasq_integration_mode = s.taboption('dns_hijack', form.ListValue, 'dnsmasq_integration_mode', _('Dnsmasq Integration Mode'), _('Per Instance mode requires OpenWrt 24.10 or later versions.'));
         dnsmasq_integration_mode.value("global", _("Global"));
         dnsmasq_integration_mode.value("per_instance", _("Per Instance"));
         dnsmasq_integration_mode.default = "global";

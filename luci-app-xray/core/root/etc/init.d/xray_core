@@ -101,18 +101,21 @@ gen_config_file() {
 }
 
 setup_dnsmasq_instance() {
-    mkdir -p $1
-    utpl /usr/share/xray/dnsmasq_include.ut > $1/xray.conf
-    logger -st xray[$$] -p4 $(cat $1/xray.conf)
+    local instance_dir="/tmp/dnsmasq.${1:+"${1}."}d"
+    mkdir -p ${instance_dir}
+    utpl /usr/share/xray/dnsmasq_include.ut > ${instance_dir}/xray.conf
+    logger -st xray[$$] -p4 $(cat ${instance_dir}/xray.conf)
 }
 
 setup_dnsmasq() {
     if [ "$(uci_get_by_type general dnsmasq_integration_mode)" == "per_instance" ]; then
         for instance in $(uci_get_by_type general dnsmasq_instances); do
-            setup_dnsmasq_instance /tmp/dnsmasq.${instance}.d
+            setup_dnsmasq_instance ${instance}
         done
     else
-        setup_dnsmasq_instance /tmp/dnsmasq.d
+        config_load dhcp
+        setup_dnsmasq_instance
+        config_foreach setup_dnsmasq_instance dnsmasq
     fi
     /etc/init.d/dnsmasq restart > /dev/null 2>&1
 }
