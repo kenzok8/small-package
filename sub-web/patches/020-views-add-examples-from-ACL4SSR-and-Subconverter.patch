@@ -10,7 +10,7 @@ Signed-off-by: CN_SZTL <cnsztl@project-openwrt.eu.org>
 
 --- a/src/views/Subconverter.vue
 +++ b/src/views/Subconverter.vue
-@@ -299,6 +299,110 @@ export default {
+@@ -235,6 +235,110 @@ export default {
          backendOptions: [{ value: "http://127.0.0.1:25500/sub?" }],
          remoteConfig: [
            {

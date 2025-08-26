@@ -7,16 +7,16 @@ local appname = "passwall"
 local fs = api.fs
 local split = api.split
 
-local local_version = api.get_app_version("sing-box")
-local version_ge_1_11_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.11.0")
-local version_ge_1_12_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.12.0")
+local local_version = api.get_app_version("sing-box"):match("[^v]+")
+local version_ge_1_11_0 = api.compare_versions(local_version, ">=", "1.11.0")
+local version_ge_1_12_0 = api.compare_versions(local_version, ">=", "1.12.0")
 
 local geosite_all_tag = {}
 local geoip_all_tag = {}
 local srss_path = "/tmp/etc/" .. appname .."_tmp/srss/"
 
 local function convert_geofile()
-	if api.compare_versions(local_version:match("[^v]+"), "<", "1.8.0") then
+	if api.compare_versions(local_version, "<", "1.8.0") then
 		api.log("！！！注意：Sing-Box 版本低，Sing-Box 分流无法启用！请在[组件更新]中更新。")
 		return
 	end
@@ -81,9 +81,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		local proxy_tag = nil
+		local fragment = nil
+		local record_fragment = nil
 		local run_socks_instance = true
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
+			fragment = proxy_table.fragment or nil
+			record_fragment = proxy_table.record_fragment or nil
 			run_socks_instance = proxy_table.run_socks_instance
 		end
 
@@ -157,11 +161,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 				alpn = alpn, --支持的应用层协议协商列表，按优先顺序排列。如果两个对等点都支持 ALPN，则选择的协议将是此列表中的一个，如果没有相互支持的协议则连接将失败。
 				--min_version = "1.2",
 				--max_version = "1.3",
+				fragment = fragment,
+				record_fragment = record_fragment,
 				ech = {
 					enabled = (node.ech == "1") and true or false,
-					config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {},
-					pq_signature_schemes_enabled = node.pq_signature_schemes_enabled and true or false,
-					dynamic_record_sizing_disabled = node.dynamic_record_sizing_disabled and true or false
+					config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {}
 				},
 				utls = {
 					enabled = (node.utls == "1" or node.reality == "1") and true or false,
@@ -289,17 +293,6 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
-		if node.protocol == "shadowsocksr" then
-			protocol_table = {
-				method = node.method or nil,
-				password = node.password or "",
-				obfs = node.ssr_obfs,
-				obfs_param = node.ssr_obfs_param,
-				protocol = node.ssr_protocol,
-				protocol_param = node.ssr_protocol_param,
-			}
-		end
-
 		if node.protocol == "trojan" then
 			protocol_table = {
 				password = node.password,
@@ -373,7 +366,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 			protocol_table = {
 				server_ports = next(server_ports) and server_ports or nil,
-				hop_interval = next(server_ports) and "30s" or nil,
+				hop_interval = (function()
+							if not next(server_ports) then return nil end
+							local v = tonumber((node.hysteria_hop_interval or "30s"):match("^%d+"))
+							return (v and v >= 5) and (v .. "s") or "30s"
+						end)(),
 				up_mbps = tonumber(node.hysteria_up_mbps),
 				down_mbps = tonumber(node.hysteria_down_mbps),
 				obfs = node.hysteria_obfs,
@@ -386,14 +383,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					alpn = (node.hysteria_alpn and node.hysteria_alpn ~= "") and {
 						node.hysteria_alpn
 					} or nil,
 					ech = {
 						enabled = (node.ech == "1") and true or false,
-						config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {},
-						pq_signature_schemes_enabled = node.pq_signature_schemes_enabled and true or false,
-						dynamic_record_sizing_disabled = node.dynamic_record_sizing_disabled and true or false
+						config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {}
 					}
 				}
 			}
@@ -420,14 +417,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
 						node.tuic_alpn
 					} or nil,
 					ech = {
 						enabled = (node.ech == "1") and true or false,
-						config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {},
-						pq_signature_schemes_enabled = node.pq_signature_schemes_enabled and true or false,
-						dynamic_record_sizing_disabled = node.dynamic_record_sizing_disabled and true or false
+						config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {}
 					}
 				}
 			}
@@ -445,7 +442,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 			protocol_table = {
 				server_ports = next(server_ports) and server_ports or nil,
-				hop_interval = next(server_ports) and "30s" or nil,
+				hop_interval = (function()
+							if not next(server_ports) then return nil end
+							local v = tonumber((node.hysteria2_hop_interval or "30s"):match("^%d+"))
+							return (v and v >= 5) and (v .. "s") or "30s"
+						end)(),
 				up_mbps = (node.hysteria2_up_mbps and tonumber(node.hysteria2_up_mbps)) and tonumber(node.hysteria2_up_mbps) or nil,
 				down_mbps = (node.hysteria2_down_mbps and tonumber(node.hysteria2_down_mbps)) and tonumber(node.hysteria2_down_mbps) or nil,
 				obfs = {
@@ -457,11 +458,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					ech = {
 						enabled = (node.ech == "1") and true or false,
-						config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {},
-						pq_signature_schemes_enabled = node.pq_signature_schemes_enabled and true or false,
-						dynamic_record_sizing_disabled = node.dynamic_record_sizing_disabled and true or false
+						config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {}
 					}
 				}
 			}
@@ -474,6 +475,18 @@ function gen_outbound(flag, node, tag, proxy_table)
 				idle_session_timeout = "30s",
 				min_idle_session = 5,
 				tls = tls
+			}
+		end
+
+		if node.protocol == "ssh" then
+			protocol_table = {
+				user = (node.username and node.username ~= "") and node.username or "root",
+				password = (node.password and node.password ~= "") and node.password or "",
+				private_key = node.ssh_priv_key,
+				private_key_passphrase = node.ssh_priv_key_pp,
+				host_key = node.ssh_host_key,
+				host_key_algorithms = node.ssh_host_key_algo,
+				client_version = node.ssh_client_version
 			}
 		end
 
@@ -518,9 +531,7 @@ function gen_config_server(node)
 	if node.tls == "1" and node.ech == "1" then
 		tls.ech = {
 			enabled = true,
-			key = node.ech_key and split(node.ech_key:gsub("\\n", "\n"), "\n") or {},
-			pq_signature_schemes_enabled = (node.pq_signature_schemes_enabled == "1") and true or false,
-			dynamic_record_sizing_disabled = (node.dynamic_record_sizing_disabled == "1") and true or false,
+			key = node.ech_key and split(node.ech_key:gsub("\\n", "\n"), "\n") or {}
 		}
 	end
 
@@ -1037,7 +1048,7 @@ function gen_config(var)
 				end
 				if is_new_ut_node then
 					local ut_node = uci:get_all(appname, ut_node_id)
-					local outbound = gen_outbound(flag, ut_node, ut_node_tag, { run_socks_instance = not no_run })
+					local outbound = gen_outbound(flag, ut_node, ut_node_tag, { fragment = singbox_settings.fragment == "1" or nil, record_fragment = singbox_settings.record_fragment == "1" or nil, run_socks_instance = not no_run })
 					if outbound then
 						outbound.tag = outbound.tag .. ":" .. ut_node.remarks
 						table.insert(outbounds, outbound)
@@ -1203,8 +1214,19 @@ function gen_config(var)
 									})
 								end
 							end
-							
-							local _outbound = gen_outbound(flag, _node, rule_name, { tag = use_proxy and preproxy_tag or nil, run_socks_instance = not no_run })
+							local proxy_table = {
+								tag = use_proxy and preproxy_tag or nil,
+								run_socks_instance = not no_run
+							}
+							if not proxy_table.tag then
+								if singbox_settings.fragment == "1" then
+									proxy_table.fragment = true
+								end
+								if singbox_settings.record_fragment == "1" then
+									proxy_table.record_fragment = true
+								end
+							end
+							local _outbound = gen_outbound(flag, _node, rule_name, proxy_table)
 							if _outbound then
 								_outbound.tag = _outbound.tag .. ":" .. _node.remarks
 								rule_outboundTag, last_insert_outbound = set_outbound_detour(_node, _outbound, outbounds, rule_name)
@@ -1453,7 +1475,7 @@ function gen_config(var)
 				sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 			end
 		else
-			local outbound = gen_outbound(flag, node, nil, { run_socks_instance = not no_run })
+			local outbound = gen_outbound(flag, node, nil, { fragment = singbox_settings.fragment == "1" or nil, record_fragment = singbox_settings.record_fragment == "1" or nil, run_socks_instance = not no_run })
 			if outbound then
 				outbound.tag = outbound.tag .. ":" .. node.remarks
 				COMMON.default_outbound_tag, last_insert_outbound = set_outbound_detour(node, outbound, outbounds)

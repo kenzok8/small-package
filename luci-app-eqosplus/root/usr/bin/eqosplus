@@ -1,7 +1,7 @@
-#!/bin/bash 
+#!/bin/bash
 
 # Copyright (C) 2006 OpenWrt.org
-# Copyright 2022-2023 sirpdboy <herboy2008@gmail.com>
+# Copyright 2022-2025 sirpdboy <herboy2008@gmail.com>
 
 crrun=$1
 crid=$2
@@ -9,43 +9,65 @@ NAME=eqosplus
 IDLIST="/var/$NAME.idlist"
 LOCK="/var/lock/$NAME.lock"
 TMPID="/var/$NAME.tmpid"
-if [ x$(uci get $NAME.@$NAME[0].ifname) = 'x1' ] ;then
-     # dev=`ifconfig | grep "Point-to-Point" | cut -d " " -f1`
-     ifname=$(uci -q get network.lan.ifname ) 
-     [ "x$ifname" = "x" ] && ifname="device" || ifname="ifname" 
-     [ ! ${dev} ] && dev=` uci -q get network.wan.$ifname ` 
-     [ ! ${dev} ] && dev=br-lan
-     dev=br-lan
-     #ALL_DEVICES=$(echo $(ifconfig | grep 'Point-to-Point' | cut -d ' ' -f1) $(uci -q get network.wan.$ifname) $(ports_for_device $(uci -q get network.wan.device)) | tr ' ' '\n' | sort -u)
+
+# 获取网络接口配置
+if [ x$(uci get $NAME.@$NAME[0].ifname) = 'x1' ]; then
+    ifname=$(uci -q get network.lan.ifname)
+    [ "x$ifname" = "x" ] && ifname="device" || ifname="ifname"
+    dev=$(uci -q get network.wan.$ifname)
+    [ ! "$dev" ] && dev=br-lan
 else
-     dev=`uci -q get $NAME.@$NAME[0].ifname `
+    dev=$(uci -q get $NAME.@$NAME[0].ifname)
 fi
-# [ x$(uci get eqosplus.@eqosplus[0].forced) = 'x1' ] && forced="default $id" || forced='default 999'
+
+# 工具路径
+bin_nft=$(which nft)
 bin_iptables=$(which iptables)   
 bin_ip6tables=$(which ip6tables)
 bin_tc=$(which tc)
 bin_ip=$(which ip)
-# Uncomment this to debug commands
-DEBUG=0
-## End
+DEBUG=1
+
+# 检测nftables类型
+nft_type() {
+    if command -v nft >/dev/null; then
+        nftables_ver="true"
+    fi
+}
+
+# 检测iptables类型
+ipt_type() {
+    if command -v iptables >/dev/null; then
+        iptables_ver="true"
+    fi
+} 
+
 # Debug functions - echo + run
 dbg_iptables() {
-	[ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: iptables $*"
-	$bin_iptables "$*" 
+    [ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: iptables $*"
+    $bin_iptables "$*" 
 }
+
 dbg_ip6tables() {
-	[ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: ip6tables $*"
-	$bin_ip6tables "$*" 
+    [ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: ip6tables $*"
+    $bin_ip6tables "$*" 
+}
+
+dbg_nft() {
+    [ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: nft $*"
+    $bin_nft "$@"
 }
 
 dbg_tc() {
-	[ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: tc $*"
-	$bin_tc $*
+    [ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: tc $*"
+    $bin_tc "$@"
 }
+
 dbg_ip() {
-	[ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: ip $*"
-	$bin_ip $*
+    [ "${DEBUG:-0}" -eq 0 ] || echo "DEBUG: ip $*"
+    $bin_ip "$@"
 }
+
 is_macaddr() {
     ret=1
     if echo "$1" | grep -qE '^([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}$'; then
@@ -59,206 +81,324 @@ iptables="dbg_iptables"
 ip6tables="dbg_ip6tables"
 tc="dbg_tc"
 ip="dbg_ip"
-ipt=$iptables
-ipt6=$ip6tables
+ipt="dbg_iptables"
+ipt6="dbg_ip6tables"
+nft="dbg_nft"
+
+# 检测防火墙类型
+nft_type
+ipt_type
+
 ipt(){
-	$iptables $*
-	$ip6tables $*
+    $iptables $*
+    $ip6tables $*
 }
 
-
 iptm(){
-	$iptables "-t mangle $*"
-	$ip6tables "-t mangle $*"
+    $iptables "-t mangle $*"
+    $ip6tables "-t mangle $*"
 }
 
 stop_qos() {
- 
+    # 清理所有HTB队列
+    for face in $(tc qdisc show | grep htb | awk '{print $5}'); do
+        $tc qdisc del dev $face root 2>/dev/null
+    done
 
-	 for face in $( tc qdisc show | grep htb | awk '{print $5}');do
-		    $tc qdisc del dev $face root
-	 done
+    # 清理特定设备的队列
+    $tc qdisc del dev ${dev} root 2>/dev/null
+    $tc qdisc del dev ${dev}_ifb root 2>/dev/null
+    $tc qdisc del dev ${dev} ingress 2>/dev/null
+    $ip link del dev ${dev}_ifb 2>/dev/null 2>&1
+    
+    # 清理nftables规则
+    if [ -n "$nftables_ver" ]; then
+        $nft flush table inet ${NAME} 2>/dev/null
+        $nft delete table inet ${NAME} 2>/dev/null
+    fi
+    
+    # 清理iptables标记规则
+    if [ -n "$iptables_ver" ]; then
+        $iptables -t mangle -F ${NAME}_mark 2>/dev/null
+        $iptables -t mangle -X ${NAME}_mark 2>/dev/null
+        $ip6tables -t mangle -F ${NAME}_mark 2>/dev/null
+        $ip6tables -t mangle -X ${NAME}_mark 2>/dev/null
+    fi
 
-	$tc qdisc del dev ${dev} root 2>/dev/null
-	$tc qdisc del dev ${dev}_ifb root 2>/dev/null
-	$tc qdisc del dev ${dev} ingress 2>/dev/null
-	$ip link del dev ${dev}_ifb 2>/dev/null
-
+    echo "" > "$IDLIST"
 }
 
 init_qosplus() {
-	insmod sch_htb 2> /dev/null
-	$ip link add dev ${dev}_ifb name ${dev}_ifb type ifb
-	$ip link set dev ${dev}_ifb up
-	$tc qdisc add dev ${dev} root handle 1:0 htb default 1
-	$tc class add dev ${dev} parent 1:0 classid 1:1 htb rate 80gbit prio 0 quantum 1500
-	
-	$tc qdisc add dev ${dev}_ifb root handle 1:0 htb default 1
-	$tc class add dev ${dev}_ifb parent 1:0 classid 1:1 htb rate 80gbit prio 0 quantum 1500
-	
-	lanipaddr=$(uci -q get network.lan.ipaddr 2>/dev/null | awk -F '.' '{print $1"."$2"."$3".0/24"}')
-	$tc filter add dev $dev parent 1:0 protocol ipv4 prio 1 u32 match ip src "$lanipaddr" match ip dst "$lanipaddr" flowid 1:1
-	$tc filter add dev ${dev}_ifb parent 1:0 protocol ipv4 prio 1 u32 match ip src "$lanipaddr" match ip dst "$lanipaddr" flowid 1:1
+    # 加载内核模块
+    insmod sch_htb 2>/dev/null
+    insmod act_mirred 2>/dev/null
+    insmod ifb 2>/dev/null
 
-	$tc qdisc add dev ${dev} ingress
-	$tc filter add dev ${dev} parent ffff: protocol all prio 2 u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ${dev}_ifb
+    # 创建IFB虚拟接口用于上传限速
+    $ip link add dev ${dev}_ifb name ${dev}_ifb type ifb 2>/dev/null
+    $ip link set dev ${dev}_ifb up 2>/dev/null
+
+    # 下载限速设置（原始接口）
+    $tc qdisc add dev ${dev} root handle 1:0 htb default 1
+    $tc class add dev ${dev} parent 1:0 classid 1:1 htb rate 80gbit prio 0 quantum 1500
+    
+    # 上传限速设置（IFB接口）
+    $tc qdisc add dev ${dev}_ifb root handle 1:0 htb default 1
+    $tc class add dev ${dev}_ifb parent 1:0 classid 1:1 htb rate 80gbit prio 0 quantum 1500
+    
+    # 排除本地网络流量
+    lanipaddr=$(uci -q get network.lan.ipaddr 2>/dev/null | awk -F '.' '{print $1"."$2"."$3".0/24"}')
+    $tc filter add dev $dev parent 1:0 protocol ip prio 1 u32 match ip src "$lanipaddr" match ip dst "$lanipaddr" flowid 1:1
+    $tc filter add dev ${dev}_ifb parent 1:0 protocol ip prio 1 u32 match ip src "$lanipaddr" match ip dst "$lanipaddr" flowid 1:1
+
+    # 设置入口流量重定向到IFB
+    $tc qdisc add dev ${dev} ingress
+    $tc filter add dev ${dev} parent ffff: protocol all prio 2 u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ${dev}_ifb
+    
+    # 初始化nftables表
+    if [ -n "$nftables_ver" ]; then
+        $nft add table inet ${NAME} 2>/dev/null
+        $nft add chain inet ${NAME} mark_traffic { type filter hook postrouting priority -150 \; }
+    fi
+
+    # 添加iptables标记规则（用于更精确的上传控制）
+    if [ -n "$iptables_ver" ]; then
+        $iptables -t mangle -N ${NAME}_mark 2>/dev/null
+        $iptables -t mangle -F ${NAME}_mark
+        $iptables -t mangle -A POSTROUTING -j ${NAME}_mark
+        $ip6tables -t mangle -N ${NAME}_mark 2>/dev/null
+        $ip6tables -t mangle -F ${NAME}_mark
+        $ip6tables -t mangle -A POSTROUTING -j ${NAME}_mark
+    fi
 }
+
 del_id() {
-	id=`expr $1 + 11 `
-	[ "${DEBUG:-0}" -eq 0 ] || echo "D: del_id $@" "--$id --$mac"
-	$tc qd del dev ${dev} parent 1:$id  2>/dev/null
-	$tc qd del dev ${dev}_ifb parent 1:$id 2>/dev/null
-
-	$tc class del dev ${dev} parent 1:1 classid 1:$id 2>/dev/null
-	$tc class del dev ${dev}_ifb parent 1:1 classid 1:$id 2>/dev/null
-	
-	 $tc filter del dev ${dev}_ifb pref $id 2>/dev/null
-	 $tc filter del dev ${dev} pref $id 2>/dev/null
-	 
-	 $tc filter del dev ${dev}_ifb pref 6 2>/dev/null
-	 $tc filter del dev ${dev} pref 6 2>/dev/null
-	 $tc filter del dev ${dev}_ifb pref 5 2>/dev/null
-	 $tc filter del dev ${dev} pref 5 2>/dev/null
-
+    id=$((id + 10))
+    [ "${DEBUG:-0}" -eq 0 ] || echo "D: del_id $@ --$id --$mac"
+    
+    # 删除下载限速规则
+    $tc qdisc del dev ${dev} parent 1:$id 2>/dev/null
+    $tc class del dev ${dev} parent 1:1 classid 1:$id 2>/dev/null
+    $tc filter del dev ${dev} pref $id 2>/dev/null
+    
+    # 删除上传限速规则
+    $tc qdisc del dev ${dev}_ifb parent 1:$id 2>/dev/null
+    $tc class del dev ${dev}_ifb parent 1:1 classid 1:$id 2>/dev/null
+    $tc filter del dev ${dev}_ifb pref $id 2>/dev/null
+    
+    # 删除nftables/iptables标记规则
+    mac=$(uci -q get $NAME.@device[$1].mac)
+    if is_macaddr "$mac"; then
+    
+        [ -n "$nftables_ver" ] && $nft delete rule inet ${NAME} mark_traffic ether saddr $mac counter 2>/dev/null
+	[ -n "$iptables_ver" ] &&  $iptables -t mangle -D ${NAME}_mark -m mac --mac-source $mac -j MARK --set-mark $id 2>/dev/null
+    else
+        [ -n "$nftables_ver" ] && $nft delete rule inet ${NAME} mark_traffic ip saddr $mac counter 2>/dev/null
+	[ -n "$iptables_ver" ] && $iptables -t mangle -D ${NAME}_mark -s $mac -j MARK --set-mark $id 2>/dev/null
+    fi
 }
-### https://openwrt.org/docs/guide-user/network/traffic-shaping/packet.scheduler.example5
-filter_mac() {
-  M=`echo $mac | awk -F '[-:]' '{print $1$2}'`
-  M0=$(echo $1 | cut -d : -f 1)$(echo $1 | cut -d : -f 2)
-  M1=$(echo $1 | cut -d : -f 3)$(echo $1 | cut -d : -f 4)
-  M2=$(echo $1 | cut -d : -f 5)$(echo $1 | cut -d : -f 6)
-  TCF="${tc} filter add dev $3 parent 1: protocol ip prio 5 u32 match u16 0x0800 0xFFFF at -2"
-  $TCF match u16 0x${M2} 0xFFFF at -4 match u32 0x${M0}${M1} 0xFFFFFFFF at -8 flowid $2
-  $TCF match u32 0x${M1}${M2} 0xFFFFFFFF at -12 match u16 0x${M0} 0xFFFF at -14 flowid $2
-}
+
 add_mac() {
-	id=`expr $1 + 11 `
-	M0=$(echo $mac | cut -d : -f 1)$(echo $mac | cut -d : -f 2)
-	M1=$(echo $mac | cut -d : -f 3)$(echo $mac | cut -d : -f 4)
-	M2=$(echo $mac | cut -d : -f 5)$(echo $mac | cut -d : -f 6)
-	[ "${DEBUG:-0}" -eq 0 ] || echo "D: add_mac $@ --id:$id --mac:$mac M012--$M0-$M1-$M2"
-	if [ "$UL" -gt 0 ]; then
-		$tc class add dev ${dev}_ifb parent 1:1 classid 1:$id htb rate "$UL"kbit ceil "$UL"kbit prio $id quantum 1500
-		$tc qdisc add dev ${dev}_ifb parent 1:"$id" handle "$id": sfq perturb 1
-		$tc filter add dev ${dev}_ifb parent 1: protocol ip prio $id u32 match u16 0x0800 0xFFFF at -2 match u16 0x"${M2}" 0xFFFF at -4 match u32 0x"${M0}${M1}" 0xFFFFFFFF at -8 flowid 1:$id
-		# filter_mac $mac 1:$id ${dev}_ifb
-	elif [ "$UL" == 0 ]; then
-		$tc filter add dev ${dev}_ifb parent 1: protocol ip prio 5 u32 match u16 0x0800 0xFFFF at -2 match u16 0x"${M2}" 0xFFFF at -4 match u32 0x"${M0}${M1}" 0xFFFFFFFF at -8 flowid 1:1
-	fi
-	if [ "$DL" -gt 0 ]; then
-		$tc class add dev ${dev} parent 1:1 classid 1:$id htb rate "$DL"kbit ceil "$DL"kbit prio $id quantum 1500
-		$tc qdisc add dev ${dev} parent 1:"$id" handle "$id": sfq perturb 1
-		# filter_mac $mac 1:$id ${dev}
-		$tc filter add dev ${dev} parent 1: protocol ip prio $id u32 match u16 0x0800 0xFFFF at -2 match u32 0x${M1}${M2} 0xFFFFFFFF at -12 match u16 0x${M0} 0xFFFF at -14 flowid 1:$id
-	elif [ "$DL" == 0 ]; then
-		$tc filter add dev ${dev} parent 1: protocol ip prio 5 u32 match u16 0x0800 0xFFFF at -2 match u32 0x"${M1}${M2}" 0xFFFFFFFF at -12 match u16 0x"${M0}" 0xFFFF at -14 flowid 1:1
-	fi
+    id=$((id + 10))
+    M0=$(echo $mac | cut -d : -f 1)$(echo $mac | cut -d : -f 2)
+    M1=$(echo $mac | cut -d : -f 3)$(echo $mac | cut -d : -f 4)
+    M2=$(echo $mac | cut -d : -f 5)$(echo $mac | cut -d : -f 6)
+    [ "${DEBUG:-0}" -eq 0 ] || echo "D: add_mac $@ --id:$id --mac:$mac M012--$M0-$M1-$M2"
+    
+    # 添加上传限速规则（使用IFB接口）
+    if [ "$UL" -gt 0 ]; then
+        # 添加nftables标记规则
+        [ -n "$nftables_ver" ] && $nft add rule inet ${NAME} mark_traffic ether saddr $mac counter meta mark set $id
+        [ -n "$iptables_ver" ] && $iptables -t mangle -A ${NAME}_mark -m mac --mac-source $mac -j MARK --set-mark $id
+        # 添加TC限速规则
+        $tc class add dev ${dev}_ifb parent 1:1 classid 1:$id htb rate "${UL}kbit" ceil "${UL}kbit" prio $id quantum 1500
+        $tc qdisc add dev ${dev}_ifb parent 1:$id handle $id: sfq perturb 1
+        $tc filter add dev ${dev}_ifb parent 1: protocol ip prio $id handle $id fw flowid 1:$id
+        
+        # 原始MAC过滤
+        $tc filter add dev ${dev}_ifb parent 1: protocol ip prio $(expr $id + 100) u32 \
+            match u16 0x0800 0xFFFF at -2 \
+            match u16 0x${M2} 0xFFFF at -4 \
+            match u32 0x${M0}${M1} 0xFFFFFFFF at -8 \
+            flowid 1:$id
+    elif [ "$UL" -eq 0 ]; then
+        $tc filter add dev ${dev}_ifb parent 1: protocol ip prio 5 u32 \
+            match u16 0x0800 0xFFFF at -2 \
+            match u16 0x${M2} 0xFFFF at -4 \
+            match u32 0x${M0}${M1} 0xFFFFFFFF at -8 \
+            flowid 1:1
+    fi
+    
+    # 添加下载限速规则
+    if [ "$DL" -gt 0 ]; then
+        $tc class add dev ${dev} parent 1:1 classid 1:$id htb rate "${DL}kbit" ceil "${DL}kbit" prio $id quantum 1500
+        $tc qdisc add dev ${dev} parent 1:$id handle $id: sfq perturb 1
+        $tc filter add dev ${dev} parent 1: protocol ip prio $id u32 \
+            match u16 0x0800 0xFFFF at -2 \
+            match u32 0x${M1}${M2} 0xFFFFFFFF at -12 \
+            match u16 0x${M0} 0xFFFF at -14 \
+            flowid 1:$id
+    elif [ "$DL" -eq 0 ]; then
+        $tc filter add dev ${dev} parent 1: protocol ip prio 5 u32 \
+            match u16 0x0800 0xFFFF at -2 \
+            match u32 0x${M1}${M2} 0xFFFFFFFF at -12 \
+            match u16 0x${M0} 0xFFFF at -14 \
+            flowid 1:1
+    fi
 }
+
 add_ip() {
-	id=`expr $1 + 11 `
-	#   id=printf "%x\n" "$1"
-	[ "${DEBUG:-0}" -eq 0 ] || echo "D: add_ip $@ --$id --$mac"
-	Z=`echo $mac |awk -F '[/]' '{print $2}' `
-	[ -n "$Z" ] && mac=`echo $mac |awk -F '[/]' '{print $1}' `|| Z=32
-	if [ "$UL" -gt 0 ]; then
-		$tc class add dev ${dev}_ifb parent 1:1 classid 1:$id htb rate "$UL"kbit ceil "$UL"kbit prio $id quantum 1500
-		$tc qdisc add dev ${dev}_ifb parent 1:"$id" handle "$id": sfq perturb 1
-		$tc filter add dev ${dev}_ifb parent 1:0 prio $id protocol ip u32 match ip src "$mac"/"$Z" classid 1:$id
-	elif [ "$UL" == 0 ]; then
-		$tc filter add dev ${dev}_ifb parent 1:0 prio 6 protocol ip u32 match ip src "$mac"/"$Z" classid 1:1
-	fi
-	if [ "$DL" -gt 0 ]; then
-		$tc class add dev ${dev} parent 1:1 classid 1:$id htb rate "$DL"kbit ceil "$DL"kbit prio $id quantum 1500
-		$tc qdisc add dev ${dev} parent 1:"$id" handle "$id": sfq perturb 1
-		$tc filter add dev ${dev} parent 1:0 prio $id protocol ip u32 match ip dst "$mac"/"$Z" classid 1:$id
-	elif [ "$DL" == 0 ]; then
-		$tc filter add dev ${dev} parent 1:0 prio 6 protocol ip u32 match ip dst "$mac"/"$Z" classid 1:1
-	fi
+    id=$((id + 10))
+    [ "${DEBUG:-0}" -eq 0 ] || echo "D: add_ip $@ --$id --$mac"
+    
+    Z=$(echo $mac | awk -F '[/]' '{print $2}')
+    [ -n "$Z" ] && mac=$(echo $mac | awk -F '[/]' '{print $1}') || Z=32
+    
+    # 添加上传限速规则（使用IFB接口）
+    if [ "$UL" -gt 0 ]; then
+        # 添加nftables/iptables标记规则
+        if [ -n "$nftables_ver" ]; then
+            $nft add rule inet ${NAME} mark_traffic ip saddr $mac/$Z counter meta mark set $id
+        fi
+        if [ -n "$iptables_ver" ]; then
+            $iptables -t mangle -A ${NAME}_mark -s $mac/$Z -j MARK --set-mark $id
+        fi
+        
+        # 添加TC限速规则
+        $tc class add dev ${dev}_ifb parent 1:1 classid 1:$id htb rate "${UL}kbit" ceil "${UL}kbit" prio $id quantum 1500
+        $tc qdisc add dev ${dev}_ifb parent 1:$id handle $id: sfq perturb 1
+        $tc filter add dev ${dev}_ifb parent 1: protocol ip prio $id handle $id fw flowid 1:$id
+        
+        # 原始IP过滤
+        $tc filter add dev ${dev}_ifb parent 1:0 prio $(expr $id + 100) protocol ip u32 \
+            match ip src "$mac"/"$Z" \
+            classid 1:$id
+    elif [ "$UL" -eq 0 ]; then
+        $tc filter add dev ${dev}_ifb parent 1:0 prio 6 protocol ip u32 \
+            match ip src "$mac"/"$Z" \
+            classid 1:1
+    fi
+    
+    # 添加下载限速规则
+    if [ "$DL" -gt 0 ]; then
+        $tc class add dev ${dev} parent 1:1 classid 1:$id htb rate "${DL}kbit" ceil "${DL}kbit" prio $id quantum 1500
+        $tc qdisc add dev ${dev} parent 1:$id handle $id: sfq perturb 1
+        $tc filter add dev ${dev} parent 1:0 prio $id protocol ip u32 \
+            match ip dst "$mac"/"$Z" \
+            classid 1:$id
+    elif [ "$DL" -eq 0 ]; then
+        $tc filter add dev ${dev} parent 1:0 prio 6 protocol ip u32 \
+            match ip dst "$mac"/"$Z" \
+            classid 1:1
+    fi
+}
 
-
+check_time() {
+    local start=$1
+    local end=$2
+    local current=$(date +%H%M)
+    local start_min=$((10#${start:0:2}*60 + 10#${start:3:2}))
+    local end_min=$((10#${end:0:2}*60 + 10#${end:3:2}))
+    local current_min=$((10#${current:0:2}*60 + 10#${current:2:2}))
+    
+    if [[ $start_min -lt $end_min ]]; then
+        [[ $current_min -ge $start_min && $current_min -lt $end_min ]]
+    else
+        [[ $current_min -ge $start_min || $current_min -lt $end_min ]]
+    fi
 }
 
 check_list() {
-        i=$1
-	checki='0'
-	start_time=$(uci -q get $NAME.@device[$i].timestart 2>/dev/null)
-	end_time=$(uci -q get $NAME.@device[$i].timeend 2>/dev/null)
-	wweek=`uci -q get $NAME.@device[$i].week `
-	current_time=$(date +%H:%M)
-	current_weekday=$(date +%u)
-	[ "$start_time" = "$end_time" ] || { 
-	[[ "$start_time" < "$end_time" ]] && { [[ "$current_time" > "$start_time" ]] && [[ "$current_time" < "$end_time" ]] || return ; }
-	[[ "$start_time" > "$end_time" ]] && { [[ "$current_time" < "$start_time" ]] && [[ "$current_time" > "$end_time" ]] || return ; }
-	}
-	for ww in `echo $wweek | sed 's/,/ /g' `; do 
-		if [ $current_weekday = $ww ] || [ "x0" = "x$ww" ] ; then 
-		      checki='1'
-		fi
-	done
-	return
+    local i=$1
+    local start_time=$(uci -q get $NAME.@device[$i].timestart 2>/dev/null)
+    local end_time=$(uci -q get $NAME.@device[$i].timeend 2>/dev/null)
+    local wweek=$(uci -q get $NAME.@device[$i].week 2>/dev/null)
+    local current_weekday=$(date +%u)
+    [ -z "$start_time" ] && [ -z "$end_time" ] && [ -z "$wweek" ] && return 0
+    
+    if [ -n "$wweek" ] && [ "$wweek" != "0" ]; then
+        local day_match=0
+        for day in $(echo $wweek | tr ',' ' '); do
+            [ "$day" -eq "$current_weekday" ] && day_match=1 && break
+        done
+        [ "$day_match" -eq 0 ] && return 1
+    fi
+    
+    if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+        check_time "$start_time" "$end_time" || return 1
+    fi
+    
+    return 0
 }
 
 case "$crrun" in
-	"stop")
-		stop_qos
-		touch $IDLIST
-	;;
-	"start")
-		idlist=`uci show $NAME | grep "enable='1'" | grep "device" | grep -oE '\[.*?\]' | grep -o '[0-9]' | sed -e 's/^/!/g' -e 's/$/!/g' > $IDLIST ;cat $IDLIST | sed -e 's/!//g' `
-		# [ $idlist ] || /etc/init.d/eqosplus stop
-		init_qosplus
-		checki='0'
-		for list in `echo $idlist | sed -e 's/!//g' ` ;do
-			check_list $list
-			if [ $checki == '1' ] ; then
-				mac=$(uci -q get $NAME.@device[$list].mac )
-				DL=$(uci -q get $NAME.@device[$list].download 2>/dev/null | awk '{print $1*8*10^3}')
-				UL=$(uci -q get $NAME.@device[$list].upload   2>/dev/null | awk '{print $1*8*10^3}')
-				if is_macaddr $mac; then
-				    add_mac $list
-				else
-				    add_ip $list
-				fi
-			else
-				 [ `cat $IDLIST  2>/dev/null | grep "!${list}!" | wc -l ` -gt 0 ] && {
-				 del_id $list
-				 sed -i "/!$list!/d" $IDLIST >/dev/null 2>&1
-				 }
-			fi
-		done
-	;;
-	"add")
-		for list in `echo $crid | sed -e 's/!//g' | sed 's/,/ /g' ` ;do
-				mac=$(uci -q get $NAME.@device[$list].mac )
-				DL=$(uci -q get $NAME.@device[$list].download 2>/dev/null | awk '{print $1*8*10^3}')
-				UL=$(uci -q get $NAME.@device[$list].upload   2>/dev/null | awk '{print $1*8*10^3}')
-				if is_macaddr $mac; then
-				    add_mac $list
-				else
-				    add_ip $list
-				fi
-		done
-	;;
-	"del")
-		for list in `echo $crid | sed -e 's/!//g' | sed 's/,/ /g' ` ;do del_id $list; done
-	;;
-	"status")
-	echo "### Statistics  $dev ###"
-	echo "# qdiscs #"
-	tc -s qdisc show dev $dev
-	echo "# class #"
-	tc -s class show dev $dev
- 	echo "# filter #"
-	tc -s filter show dev $dev root
-	tc -s filter show dev $dev parent 1:
-	echo "### Statistics  ${dev}_ifb ###"
-	echo "# qdiscs #"
-	tc -s qdisc show dev ${dev}_ifb
-	echo "# class #"
-	tc -s class show dev ${dev}_ifb
- 	echo "# filter #"
-	tc -s filter show dev ${dev}_ifb root
-	tc -s filter show dev ${dev}_ifb parent 1:
-	;;
+    "stop")
+        stop_qos
+    ;;
+    "start")
+        init_qosplus
+        idlist=$(uci show $NAME | grep "enable='1'" | grep "device" | grep -oE '\[.*?\]' | grep -o '[0-9]' | sed -e 's/^/!/g' -e 's/$/!/g' > $IDLIST; cat $IDLIST | sed -e 's/!//g')
+        if [ ! -s "$IDLIST" ]; then
+                stop_qos
+                return 1
+        fi
 
+        for list in $(echo $idlist | sed -e 's/!//g'); do
+            if check_list $list; then
+                mac=$(uci -q get $NAME.@device[$list].mac)
+                DL=$(uci -q get $NAME.@device[$list].download 2>/dev/null | awk '{print $1*1000/8}')
+                UL=$(uci -q get $NAME.@device[$list].upload   2>/dev/null | awk '{print $1*1000/8}')
+                if is_macaddr $mac; then
+                    add_mac $list
+                else
+                    add_ip $list
+                fi
+            else
+                [ $(cat $IDLIST 2>/dev/null | grep "!${list}!" | wc -l) -gt 0 ] && {
+                    del_id $list
+                    sed -i "/!$list!/d" $IDLIST >/dev/null 2>&1
+                }
+            fi
+        done
+    ;;
+    "add")
+        for list in $(echo $crid | sed -e 's/!//g' | sed 's/,/ /g'); do
+            mac=$(uci -q get $NAME.@device[$list].mac)
+            DL=$(uci -q get $NAME.@device[$list].download 2>/dev/null | awk '{print $1*1000/8}')
+            UL=$(uci -q get $NAME.@device[$list].upload   2>/dev/null | awk '{print $1*1000/8}')
+            if is_macaddr $mac; then
+                add_mac $list
+            else
+                add_ip $list
+            fi
+        done
+    ;;
+    "del")
+        for list in $(echo $crid | sed -e 's/!//g' | sed 's/,/ /g'); do 
+            del_id $list
+        done
+    ;;
+    "status")
+        echo "### Statistics  $dev ###"
+        echo "# qdiscs #"
+        tc -s qdisc show dev $dev
+        echo "# class #"
+        tc -s class show dev $dev
+        echo "# filter #"
+        tc -s filter show dev $dev root
+        tc -s filter show dev $dev parent 1:
+        echo "### Statistics  ${dev}_ifb ###"
+        echo "# qdiscs #"
+        tc -s qdisc show dev ${dev}_ifb
+        echo "# class #"
+        tc -s class show dev ${dev}_ifb
+        echo "# filter #"
+        tc -s filter show dev ${dev}_ifb root
+        tc -s filter show dev ${dev}_ifb parent 1:
+        echo "### NFTables Rules ###"
+        nft list table inet ${NAME} 2>/dev/null
+        echo "### IPTables Rules ###"
+        iptables -t mangle -L ${NAME}_mark -n 2>/dev/null
+        ip6tables -t mangle -L ${NAME}_mark -n 2>/dev/null
+    ;;
 esac

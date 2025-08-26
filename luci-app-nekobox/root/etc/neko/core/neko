@@ -39,7 +39,7 @@ logs() {
 
 check_depedency() {
     opw_version=`cat /etc/os-release | grep VERSION_ID | cut -d\" -f 2`
-    logs "- Check Depedencies : $opw_version"
+    logs "Check Depedencies : $opw_version"
     if [[ $opw_version == 18.* ]]; then
         req=(curl php7 php7-cgi iptables kmod-tun)
         list=`opkg list-installed | grep -E "curl|php7|iptables|kmod-tun" | awk '{ print $1 }'`
@@ -127,28 +127,28 @@ check_depedency() {
 
 neko_start(){
     neko_ver
-    logs "Starting Neko v.$neko_version" 2
+    logs "Starting Nekobox v.$neko_version" 2
     if [ -f "/tmp/neko/neko.bak" ]; then
         rm -r /tmp/neko/neko.bak
         rm -r $neko_tmp_dir/first_install.txt
     elif [ -f "$neko_tmp_dir/first_install.txt" ]; then
         logs "- First Install Detected."
         rm -r $neko_tmp_dir/first_install.txt
-        logs "Neko Not Running" 3
+        logs "Mihomo Not Running" 3
     else
-        logs "- Checking Package..."
+        logs "Checking Package..."
         check_depedency
         files_check
-        logs "- Checking Package Done."
+        logs "Checking Package Done."
     fi
     if [ -f $neko_pid_path ] ; then
-        logs "- Neko is Running. Killing Neko PID : `cat $neko_pid_path`"
+        logs "Mihomo is Running. Killing Mihomo PID : `cat $neko_pid_path`"
         $tun_bin -k >> $log
         kill `cat $neko_pid_path`
         uci set neko.cfg.enabled='0'
         uci commit neko
         rm $neko_pid_path
-        logs "- Retry Starting Neko..."
+        logs "Retry Starting Mihomo..."
     fi
     if [ -f $neko_bin ] ; then
         rpid=`pgrep "mihomo|reload"`
@@ -156,7 +156,7 @@ neko_start(){
             kill $rpid 
         fi
         rm $neko_log
-        logs "- Restarting Firewall"
+        logs "Restarting Firewall"
         $firewall restart
         $neko_bin -f $neko_config -d $neko_dir >> $neko_log &
 
@@ -169,22 +169,22 @@ neko_start(){
                     chmod +x "$file"
                 fi
             done
-            logs "- Retry Starting Neko"
+            logs "Retry Starting Mihomo"
             $neko_bin -f $neko_config -d $neko_dir >> $neko_log &
             sleep 1
             neko_pid=`pgrep mihomo`
         fi
-        logs "- Neko Started. PID : $neko_pid"
-        logs "- Configs : $neko_config"
+        logs "Mihomo Started. PID : $neko_pid"
+        logs "Configs : $neko_config"
         echo $neko_pid > $neko_pid_path
         $tun_bin -s >> $log
         uci set neko.cfg.enabled='1'
         uci commit neko
         $reload_bin "$neko_version" > /dev/null 2>&1 &
     else
-        logs "- Core not Detected!!!"
+        logs "Core not Detected!!!"
     fi
-    logs "Done"
+    #logs "Done"
 }
 
 php_start(){
@@ -206,11 +206,11 @@ php_start(){
 }
 
 neko_stop(){
-    logs "Disable Neko" 2
+    logs "Disable Mihomo" 2
     $tun_bin -k >> $log
     if [ -f $neko_pid_path ] ; then
-        logs "- Killing Neko PID : `cat $neko_pid_path`"
-        logs "- Restarting Firewall"
+        logs "Killing Mihomo PID : `cat $neko_pid_path`"
+        logs "Restarting Firewall"
         $firewall restart
         kill `cat $neko_pid_path`
         rm $neko_pid_path
@@ -218,18 +218,18 @@ neko_stop(){
         if [[ -n $rpid ]] ; then
             kill $rpid 
         fi
-        logs "Neko has Disabled"
+        logs "Mihomo has Disabled"
     else
-        logs "Neko is not Running"
+        logs "Mihomo is not Running"
     fi
     uci set neko.cfg.enabled='0'
     uci commit neko
 }
 
 neko_restart(){
-    logs "Restarting Neko" 2
+    logs "Restarting Mihomo" 2
     neko_start
-    logs "Restarting Neko - Done"
+    logs "Restarting Mihomo - Done"
 }
 
 php_stop(){

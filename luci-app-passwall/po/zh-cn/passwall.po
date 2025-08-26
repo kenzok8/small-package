@@ -100,6 +100,9 @@ msgstr "Socks 配置"
 msgid "Socks Node"
 msgstr "Socks 节点"
 
+msgid "Current Node"
+msgstr "当前节点"
+
 msgid "Listen Port"
 msgstr "监听端口"
 
@@ -445,7 +448,7 @@ msgstr "负载均衡策略"
 msgid "Fallback Node"
 msgstr "后备节点"
 
-msgid "Use Custome Probe URL"
+msgid "Use Custom Probe URL"
 msgstr "使用自定义探测网址"
 
 msgid "By default the built-in probe URL will be used, enable this option to use a custom probe URL."
@@ -982,6 +985,12 @@ msgstr "Geo 规则文件目录"
 msgid "This variable specifies a directory where geoip.dat and geosite.dat files are."
 msgstr "此变量指定 geoip.dat 和 geosite.dat 文件所在的目录。"
 
+msgid "Generate Rule List from Geo"
+msgstr "从 Geo 文件生成规则"
+
+msgid "Generate rule lists such as GFW, China domains, and China IP ranges based on Geo files."
+msgstr "根据 Geo 文件生成规则列表，包括 GFW、中国域名和中国 IP 段等。"
+
 msgid "Enable Geo Data Parsing"
 msgstr "开启 Geo 数据解析"
 
@@ -1072,8 +1081,14 @@ msgstr "订阅网址"
 msgid "Subscribe URL Access Method"
 msgstr "订阅网址访问方式"
 
-msgid "Please input the subscription url first, save and submit before manual subscription."
-msgstr "请输入订阅网址保存应用后再手动订阅。"
+msgid "When adding a new subscription, please save and apply before manually subscribing. If you only change the subscription URL, you can subscribe manually, and the system will save it automatically."
+msgstr "新增订阅请先保存并应用后再手动订阅；如仅修改订阅地址，可直接手动订阅，系统将自动保存。"
+
+msgid "Please save and apply before manually subscribing."
+msgstr "请先保存并应用后再手动订阅。"
+
+msgid "Subscribe URL cannot be empty."
+msgstr "订阅网址不能为空。"
 
 msgid "Subscribe via proxy"
 msgstr "通过代理订阅"
@@ -1706,16 +1721,16 @@ msgid "Protocol parameter. Enable length block encryption."
 msgstr "协议参数。启用长度块加密。"
 
 msgid "ECH Config"
-msgstr "ECH 密钥"
-
-msgid "ECH Key"
 msgstr "ECH 配置"
 
-msgid "PQ signature schemes"
-msgstr "后量子对等证书签名方案"
+msgid "ECH Key"
+msgstr "ECH 密钥"
 
-msgid "Disable adaptive sizing of TLS records"
-msgstr "禁用 TLS 记录的自适应大小调整"
+msgid "ECH Query Policy"
+msgstr "ECH 查询策略"
+
+msgid "Controls the policy used when performing DNS queries for ECH configuration."
+msgstr "控制使用 DNS 查询 ECH 配置时的策略。"
 
 msgid "Enable Multipath TCP, need to be enabled in both server and client configuration."
 msgstr "启用 Multipath TCP，需在服务端和客户端配置中同时启用。"
@@ -1743,6 +1758,12 @@ msgstr "分片间隔"
 
 msgid "Fragmentation interval (ms)"
 msgstr "分片间隔（ms）"
+
+msgid "Split handshake data into multiple TLS records for better censorship evasion. Low overhead. Recommended to enable first."
+msgstr "将握手数据拆分为多个 TLS 记录，提升抗封锁能力，几乎不增加延迟，建议优先启用。"
+
+msgid "Split handshake into multiple TCP segments. Enhances obfuscation. May increase delay. Use only if needed."
+msgstr "将 TLS 握手数据分为多个 TCP 包发送，提高伪装性，可能增加延迟，仅在封锁严重时使用。"
 
 msgid "Noise"
 msgstr "噪声"
@@ -1773,6 +1794,15 @@ msgstr "落地节点"
 
 msgid "Only support a layer of proxy."
 msgstr "仅支持一层代理。"
+
+msgid ""
+"Chained proxy works only with Xray or Sing-box nodes.<br>"
+"The chained node must be the same type as your subscription node (Xray with Xray, Sing-box with Sing-box).<br>"
+"You can only use manual or imported nodes as chained nodes."
+msgstr ""
+"链式代理仅支持 Xray 与 Sing-box 节点。<br>"
+"链式节点需与订阅节点类型一致（Xray 对应 Xray，Sing-box 对应 Sing-box）。<br>"
+"仅支持手动添加或导入的节点用作链式节点。"
 
 msgid "Only work with using the %s node."
 msgstr "与使用 %s 节点时生效。"
@@ -1926,3 +1956,21 @@ msgstr "可以通过输入 GeoIP/Geosite，提取它们所包含的域名/IP。"
 
 msgid "Use the GeoIP/Geosite query function to verify if the entered Geo rules are correct."
 msgstr "利用 GeoIP/Geosite 查询功能，可以验证输入的 Geo 规则是否正确。"
+
+msgid "Private Key Passphrase"
+msgstr "私钥指纹"
+
+msgid "Host Key"
+msgstr "主机密钥"
+
+msgid "Accept any if empty."
+msgstr "留空则不校验。"
+
+msgid "Host Key Algorithms"
+msgstr "主机密钥算法"
+
+msgid "Client Version"
+msgstr "客户端版本"
+
+msgid "Random version will be used if empty."
+msgstr "如留空，则使用随机版本。"

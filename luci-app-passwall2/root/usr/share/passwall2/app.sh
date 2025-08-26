@@ -297,11 +297,11 @@ get_singbox_geoip() {
 	local geoip_code="$1"
 	local geoip_path=$(config_t_get global_singbox geoip_path)
 	[ -e "$geoip_path" ] || { echo ""; return; }
-	local has_geoip_tools=$($(first_type $(config_t_get global_app singbox_file) sing-box) geoip | grep "GeoIP tools")
+	local has_geoip_tools=$($(first_type $(config_t_get global_app sing_box_file) sing-box) geoip | grep "GeoIP tools")
 	if [ -n "${has_geoip_tools}" ]; then
 		[ -f "${geoip_path}" ] && local geoip_md5=$(md5sum ${geoip_path} | awk '{print $1}')
 		local output_file="${TMP_PATH2}/geoip-${geoip_md5}-${geoip_code}.json"
-		[ ! -f ${output_file} ] && $(first_type $(config_t_get global_app singbox_file) sing-box) geoip -f "${geoip_path}" export "${geoip_code}" -o "${output_file}"
+		[ ! -f ${output_file} ] && $(first_type $(config_t_get global_app sing_box_file) sing-box) geoip -f "${geoip_path}" export "${geoip_code}" -o "${output_file}"
 		case "$2" in
 			ipv4)
 				cat ${output_file} | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | awk -F '"' '{print $2}' | sed -e "/^$/d"
@@ -334,6 +334,15 @@ get_cache_var() {
 
 eval_cache_var() {
 	[ -s "$TMP_PATH/var" ] && eval $(cat "$TMP_PATH/var")
+}
+
+has_1_65535() {
+	local val="$1"
+	val=${val//:/-}
+	case ",$val," in
+		*,1-65535,*) return 0 ;;
+		*) return 1 ;;
+	esac
 }
 
 run_xray() {
@@ -468,7 +477,7 @@ run_singbox() {
 	[ "$loglevel" = "warning" ] && loglevel="warn"
 	_extra_param="${_extra_param} -loglevel $loglevel"
 	
-	_extra_param="${_extra_param} -tags $($(first_type $(config_t_get global_app singbox_file) sing-box) version | grep 'Tags:' | awk '{print $2}')"
+	_extra_param="${_extra_param} -tags $($(first_type $(config_t_get global_app sing_box_file) sing-box) version | grep 'Tags:' | awk '{print $2}')"
 	
 	[ -n "$flag" ] && pgrep -af "$TMP_BIN_PATH" | awk -v P1="${flag}" 'BEGIN{IGNORECASE=1}$0~P1{print $1}' | xargs kill -9 >/dev/null 2>&1
 	[ -n "$flag" ] && _extra_param="${_extra_param} -flag $flag"
@@ -552,7 +561,7 @@ run_singbox() {
 	}
 
 	lua $UTIL_SINGBOX gen_config -node $node ${_extra_param} > $config_file
-	ln_run "$(first_type $(config_t_get global_app singbox_file) sing-box)" "sing-box" "${log_file}" run -c "$config_file"
+	ln_run "$(first_type $(config_t_get global_app sing_box_file) sing-box)" "sing-box" "${log_file}" run -c "$config_file"
 }
 
 run_socks() {
@@ -604,7 +613,7 @@ run_socks() {
 	sing-box)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
 			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		[ -n "$relay_port" ] && _extra_param="${_extra_param} -server_host $server_host -server_port $server_port"
@@ -615,12 +624,12 @@ run_socks() {
 		}
 		[ -n "$no_run" ] && _extra_param="${_extra_param} -no_run 1"
 		lua $UTIL_SINGBOX gen_config -flag SOCKS_$flag -node $node -local_socks_address $bind -local_socks_port $socks_port ${_extra_param} > $config_file
-		[ -n "$no_run" ] || ln_run "$(first_type $(config_t_get global_app singbox_file) sing-box)" "sing-box" /dev/null run -c "$config_file"
+		[ -n "$no_run" ] || ln_run "$(first_type $(config_t_get global_app sing_box_file) sing-box)" "sing-box" /dev/null run -c "$config_file"
 	;;
 	xray)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
 			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		[ -n "$relay_port" ] && _extra_param="${_extra_param} -server_host $server_host -server_port $server_port"
@@ -637,14 +646,23 @@ run_socks() {
 		[ -n "$no_run" ] || ln_run "$(first_type ssr-local)" "ssr-local" $log_file -c "$config_file" -v -u
 	;;
 	ss)
-		lua $UTIL_SS gen_config -node $node -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $server_port -mode tcp_and_udp > $config_file
+		[ -n "$no_run" ] || {
+			local plugin_sh="${config_file%.json}_plugin.sh"
+			local _extra_param="-plugin_sh $plugin_sh"
+		}
+		lua $UTIL_SS gen_config -node $node -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $server_port -mode tcp_and_udp ${_extra_param} > $config_file
 		[ -n "$no_run" ] || ln_run "$(first_type ss-local)" "ss-local" $log_file -c "$config_file" -v
 	;;
 	ss-rust)
+		local _extra_param
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _extra_param="-local_http_address $bind -local_http_port $http_port"
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
+			_extra_param="-local_http_address $bind -local_http_port $http_port"
+		}
+		[ -n "$no_run" ] || {
+			local plugin_sh="${config_file%.json}_plugin.sh"
+			_extra_param="${_extra_param:+$_extra_param }-plugin_sh $plugin_sh"
 		}
 		lua $UTIL_SS gen_config -node $node -local_socks_address $bind -local_socks_port $socks_port -server_host $server_host -server_port $server_port ${_extra_param} > $config_file
 		[ -n "$no_run" ] || ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
@@ -652,7 +670,7 @@ run_socks() {
 	hysteria2)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
+			config_file="${config_file//SOCKS/HTTP_SOCKS}"
 			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		lua $UTIL_HYSTERIA2 gen_config -node $node -local_socks_address $bind -local_socks_port $socks_port -server_host $server_host -server_port $server_port ${_extra_param} > $config_file
@@ -666,7 +684,7 @@ run_socks() {
 
 	# http to socks
 	[ -z "$http_flag" ] && [ "$http_port" != "0" ] && [ -n "$http_config_file" ] && [ "$type" != "sing-box" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && {
-		local bin=$(first_type $(config_t_get global_app singbox_file) sing-box)
+		local bin=$(first_type $(config_t_get global_app sing_box_file) sing-box)
 		if [ -n "$bin" ]; then
 			type="sing-box"
 			lua $UTIL_SINGBOX gen_proto_config -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
@@ -688,9 +706,17 @@ socks_node_switch() {
 	local flag new_node
 	eval_set_val $@
 	[ -n "$flag" ] && [ -n "$new_node" ] && {
+		local prefix pf filename
+		# 结束 SS 插件进程
+		for prefix in "" "HTTP_"; do
+			pf="$TMP_PATH/${prefix}SOCKS_${flag}_plugin.pid"
+			[ -s "$pf" ] && kill -9 "$(head -n1 "$pf")" >/dev/null 2>&1
+		done
+
 		pgrep -af "$TMP_BIN_PATH" | awk -v P1="${flag}" 'BEGIN{IGNORECASE=1}$0~P1 && !/acl\/|acl_/{print $1}' | xargs kill -9 >/dev/null 2>&1
-		rm -rf $TMP_PATH/SOCKS_${flag}*
-		rm -rf $TMP_PATH/HTTP2SOCKS_${flag}*
+		for prefix in "" "HTTP_" "HTTP2"; do
+			rm -rf "$TMP_PATH/${prefix}SOCKS_${flag}"*
+		done
 
 		for filename in $(ls ${TMP_SCRIPT_FUNC_PATH}); do
 			cmd=$(cat ${TMP_SCRIPT_FUNC_PATH}/${filename})
@@ -1129,10 +1155,9 @@ acl_app() {
 			index=$(expr $index + 1)
 			local enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports node direct_dns_query_strategy write_ipset_direct remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy
 			local _ip _mac _iprange _ipset _ip_or_mac source_list config_file
-			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
+			local sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
+			[ "$(config_n_get $sid enabled)" = "1" ] || continue
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
-
-			[ "$enabled" = "1" ] || continue
 
 			if [ -n "${sources}" ]; then
 				for s in $sources; do
@@ -1166,7 +1191,9 @@ acl_app() {
 			udp_no_redir_ports=${udp_no_redir_ports:-default}
 			[ "$tcp_no_redir_ports" = "default" ] && tcp_no_redir_ports=$TCP_NO_REDIR_PORTS
 			[ "$udp_no_redir_ports" = "default" ] && udp_no_redir_ports=$UDP_NO_REDIR_PORTS
-			[ "$tcp_no_redir_ports" == "1:65535" ] && [ "$udp_no_redir_ports" == "1:65535" ] && unset node
+			if has_1_65535 "$tcp_no_redir_ports" && has_1_65535 "$udp_no_redir_ports"; then
+				unset node
+			fi
 
 			[ -n "$node" ] && {
 				tcp_proxy_mode="global"
@@ -1312,7 +1339,15 @@ stop() {
 	eval_cache_var
 	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh stop
 	delete_ip2route
-	kill_all xray-plugin v2ray-plugin obfs-local shadow-tls
+	# 结束 SS 插件进程
+	# kill_all xray-plugin v2ray-plugin obfs-local shadow-tls
+	local pid_file pid
+	find "$TMP_PATH" -type f -name '*_plugin.pid' | while read -r pid_file; do
+		read -r pid < "$pid_file"
+		if [ -n "$pid" ]; then
+			kill -9 "$pid" >/dev/null 2>&1
+		fi
+	done
 	pgrep -f "sleep.*(6s|9s|58s)" | xargs kill -9 >/dev/null 2>&1
 	pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua|tasks\.sh|ujail/{print $1}' | xargs kill -9 >/dev/null 2>&1
 	unset V2RAY_LOCATION_ASSET
@@ -1402,7 +1437,7 @@ get_config() {
 	set_cache_var GLOBAL_DNSMASQ_CONF_PATH ${GLOBAL_ACL_PATH}/dnsmasq.d
 
 	XRAY_BIN=$(first_type $(config_t_get global_app xray_file) xray)
-	SINGBOX_BIN=$(first_type $(config_t_get global_app singbox_file) sing-box)
+	SINGBOX_BIN=$(first_type $(config_t_get global_app sing_box_file) sing-box)
 }
 
 arg1=$1

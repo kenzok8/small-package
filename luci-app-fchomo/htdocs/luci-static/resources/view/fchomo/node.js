@@ -268,7 +268,6 @@ return view.extend({
 
 		so = ss.taboption('field_general', form.ListValue, 'tuic_udp_relay_mode', _('UDP relay mode'),
 			_('UDP packet relay mode.'));
-		so.value('', _('Default'));
 		so.value('native', _('Native'));
 		so.value('quic', _('QUIC'));
 		so.depends({type: 'tuic', tuic_udp_over_stream: '0'});
@@ -309,6 +308,12 @@ return view.extend({
 			_('In millisecond.'));
 		so.datatype = 'uinteger';
 		so.placeholder = '8000';
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'tuic_max_open_streams', _('Max open streams'));
+		so.datatype = 'uinteger';
+		so.placeholder = '100';
 		so.depends('type', 'tuic');
 		so.modalonly = true;
 

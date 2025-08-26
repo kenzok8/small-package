@@ -47,7 +47,7 @@
     }();
     const fakedns = map(filter(keys(config), k => config[k][".type"] == "fakedns") || [], k => config[k]);
     const manual_tproxy = filter(keys(config), k => config[k][".type"] == "manual_tproxy") || [];
-    const manual_tproxy_source_ips = map(manual_tproxy, k => config[k]["source_addr"]) || [];
+    const manual_tproxy_source_ips = filter(map(manual_tproxy, k => config[k]["source_addr"]) || [], v => index(v, ":") == -1);
 
     const tp_spec_sm4_tp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v4 == "tproxy"), k => config[k].macaddr) || []);
     const tp_spec_sm6_tp = uniq(map(filter(keys(config), k => config[k][".type"] == "lan_hosts" && config[k].access_control_strategy_v6 == "tproxy"), k => config[k].macaddr) || []);
@@ -103,27 +103,40 @@
     const ttl_override = int(general.ttl_override);
     const hop_limit_override = int(general.hop_limit_override);
     const ttl_hop_limit_match = int(general.ttl_hop_limit_match);
+    const dynamic_direct_timeout = general.dynamic_direct_timeout || 2233;
     const dynamic_direct_tcp4 = function () {
         if (general.dynamic_direct_tcp4 == "1") {
-            return `update @tp_spec_dv4_dt { ip daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
+            return `update @tp_spec_dv4_dd { ip daddr timeout ${dynamic_direct_timeout}s } update @tp_spec_dv4_dd { ip saddr timeout ${dynamic_direct_timeout}s }`;
         }
         return "";
     }();
     const dynamic_direct_tcp6 = function () {
         if (general.dynamic_direct_tcp6 == "1") {
-            return `update @tp_spec_dv6_dt { ip6 daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
+            return `update @tp_spec_dv6_dd { ip6 daddr timeout ${dynamic_direct_timeout}s } update @tp_spec_dv6_dd { ip6 saddr timeout ${dynamic_direct_timeout}s }`;
         }
         return "";
     }();
     const dynamic_direct_udp4 = function () {
         if (general.dynamic_direct_udp4 == "1") {
-            return `update @tp_spec_dv4_du { ip daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
+            return `update @tp_spec_dv4_dd { ip daddr timeout ${dynamic_direct_timeout}s } update @tp_spec_dv4_dd { ip saddr timeout ${dynamic_direct_timeout}s }`;
         }
         return "";
     }();
     const dynamic_direct_udp6 = function () {
         if (general.dynamic_direct_udp6 == "1") {
-            return `update @tp_spec_dv6_du { ip6 daddr timeout ${general.dynamic_direct_timeout || 300}s }`;
+            return `update @tp_spec_dv6_dd { ip6 daddr timeout ${dynamic_direct_timeout}s } update @tp_spec_dv6_dd { ip6 saddr timeout ${dynamic_direct_timeout}s }`;
+        }
+        return "";
+    }();
+    const dynamic_direct_conntrack_tcp = function () {
+        if (general.dynamic_direct_tcp4 == "1" || general.dynamic_direct_tcp6 == "1") {
+            return "update @tp_spec_ctt_dd { meta nfproto . tcp sport timeout 30s }";
+        }
+        return "";
+    }();
+    const dynamic_direct_conntrack_udp = function () {
+        if (general.dynamic_direct_udp4 == "1" || general.dynamic_direct_udp6 == "1") {
+            return "update @tp_spec_ctu_dd { meta nfproto . udp sport timeout 30s }";
         }
         return "";
     }();
@@ -281,33 +294,33 @@
         flags interval
     }
 
-{% if (general.dynamic_direct_tcp4 == "1"): %}
-    set tp_spec_dv4_dt {
+{% if (general.dynamic_direct_tcp4 == "1" || general.dynamic_direct_udp4 == "1"): %}
+    set tp_spec_dv4_dd {
         type ipv4_addr
         size 65536
         flags timeout
     }
 {% endif %}
 
-{% if (general.dynamic_direct_tcp6 == "1"): %}
-    set tp_spec_dv6_dt {
+{% if (general.dynamic_direct_tcp6 == "1" || general.dynamic_direct_udp6 == "1"): %}
+    set tp_spec_dv6_dd {
         type ipv6_addr
         size 65536
         flags timeout
     }
 {% endif %}
 
-{% if (general.dynamic_direct_udp4 == "1"): %}
-    set tp_spec_dv4_du {
-        type ipv4_addr
+{% if (dynamic_direct_conntrack_tcp != ""): %}
+    set tp_spec_ctt_dd {
+        typeof meta nfproto . tcp sport
         size 65536
         flags timeout
     }
 {% endif %}
 
-{% if (general.dynamic_direct_udp6 == "1"): %}
-    set tp_spec_dv6_du {
-        type ipv6_addr
+{% if (dynamic_direct_conntrack_udp != ""): %}
+    set tp_spec_ctu_dd {
+        typeof meta nfproto . udp sport
         size 65536
         flags timeout
     }
@@ -372,8 +385,8 @@
     chain xray_prerouting {
         type filter hook prerouting priority mangle {{ firewall_priority }}; policy accept;
 {% if (length(general.ttl_override_bypass_ports) > 0): %}
-        tcp dport { {{ join(', ', general.ttl_override_bypass_ports) }} } {{ counter }} accept
-        udp dport { {{ join(', ', general.ttl_override_bypass_ports) }} } {{ counter }} accept
+        tcp dport { {{ join(', ', general.ttl_override_bypass_ports) }} } {{ counter }} meta l4proto tcp accept
+        udp dport { {{ join(', ', general.ttl_override_bypass_ports) }} } {{ counter }} meta l4proto udp accept
 {% endif %}
 {% if (ttl_override > 0): %}
         ip ttl {{ ttl_hop_limit_match }} {{ counter }} ip ttl set {{ ttl_override }}
@@ -381,18 +394,17 @@
 {% if (hop_limit_override > 0): %}
         ip6 hoplimit {{ ttl_hop_limit_match }} {{ counter }} ip6 hoplimit set {{ hop_limit_override }}
 {% endif %}
-        {{ counter }} mark set ct mark
 {% if (general.dynamic_direct_tcp4 == "1"): %}
-        ip protocol tcp meta mark 0x000000fa {{ counter }} accept comment "Xray dynamic direct TCP4"
+        ip protocol tcp ct mark 0x000000fa {{ counter }} {{ dynamic_direct_tcp4 }} accept comment "Xray dynamic direct TCP4"
 {% endif %}
 {% if (general.dynamic_direct_udp4 == "1"): %}
-        ip protocol udp meta mark 0x000000fa {{ counter }} accept comment "Xray dynamic direct UDP4"
+        ip protocol udp ct mark 0x000000fa {{ counter }} {{ dynamic_direct_udp4 }} accept comment "Xray dynamic direct UDP4"
 {% endif %}
 {% if (general.dynamic_direct_tcp6 == "1"): %}
-        ip6 nexthdr tcp meta mark 0x000000fa {{ counter }} accept comment "Xray dynamic direct TCP6"
+        ip6 nexthdr tcp ct mark 0x000000fa {{ counter }} {{ dynamic_direct_tcp6 }} accept comment "Xray dynamic direct TCP6"
 {% endif %}
 {% if (general.dynamic_direct_udp6 == "1"): %}
-        ip6 nexthdr udp meta mark 0x000000fa {{ counter }} accept comment "Xray dynamic direct UDP6"
+        ip6 nexthdr udp ct mark 0x000000fa {{ counter }} {{ dynamic_direct_udp6 }} accept comment "Xray dynamic direct UDP6"
 {% endif %}
         mark 0x000000fb {{ counter }} accept comment "Xray remarked from output"
         {{ counter }} jump tp_spec_lan_mf comment "Xray FakeDNS / manual transparent proxy"
@@ -525,17 +537,17 @@
     chain tp_spec_lan_re {
 {% if (transparent_default_port_policy == "bypassed"): %}
     {% if (length(wan_fw_tcp_ports) > 0): %}
-        tcp dport { {{ join(", ", wan_fw_tcp_ports) }} } {{ counter }} goto tp_spec_lan_fw
+        tcp dport { {{ join(", ", wan_fw_tcp_ports) }} } {{ counter }} meta l4proto tcp goto tp_spec_lan_fw
     {% endif %}
     {% if (length(wan_fw_udp_ports) > 0): %}
-        udp dport { {{ join(", ", wan_fw_udp_ports) }} } {{ counter }} goto tp_spec_lan_fw
+        udp dport { {{ join(", ", wan_fw_udp_ports) }} } {{ counter }} meta l4proto udp goto tp_spec_lan_fw
     {% endif %}
 {% else %}
     {% if (length(wan_bp_tcp_ports) > 0): %}
-        tcp dport { {{ join(", ", wan_bp_tcp_ports) }} } {{ counter }} accept
+        tcp dport { {{ join(", ", wan_bp_tcp_ports) }} } {{ counter }} meta l4proto tcp accept
     {% endif %}
     {% if (length(wan_bp_udp_ports) > 0): %}
-        udp dport { {{ join(", ", wan_bp_udp_ports) }} } {{ counter }} accept
+        udp dport { {{ join(", ", wan_bp_udp_ports) }} } {{ counter }} meta l4proto udp accept
     {% endif %}
         meta l4proto tcp {{ counter }} goto tp_spec_lan_dd
         meta l4proto udp {{ counter }} goto tp_spec_lan_dd
@@ -545,24 +557,34 @@
 
     chain tp_spec_lan_dd {
 {% if (general.dynamic_direct_tcp4 == "1"): %}
-        ip protocol tcp ip daddr @tp_spec_dv4_dt {{ counter }} mark set 0x000000fa goto tp_spec_lan_ct comment "Xray dynamic direct TCP4"
+        ip protocol tcp ip daddr @tp_spec_dv4_dd {{ counter }} goto tp_spec_lan_ct comment "Xray dynamic direct TCP4"
 {% endif %}
 {% if (general.dynamic_direct_udp4 == "1"): %}
-        ip protocol udp ip daddr @tp_spec_dv4_du {{ counter }} mark set 0x000000fa goto tp_spec_lan_ct comment "Xray dynamic direct UDP4"
+        ip protocol udp ip daddr @tp_spec_dv4_dd {{ counter }} goto tp_spec_lan_ct comment "Xray dynamic direct UDP4"
 {% endif %}
 {% if (general.dynamic_direct_tcp6 == "1"): %}
-        ip6 nexthdr tcp ip6 daddr @tp_spec_dv6_dt {{ counter }} mark set 0x000000fa goto tp_spec_lan_ct comment "Xray dynamic direct TCP6"
+        ip6 nexthdr tcp ip6 daddr @tp_spec_dv6_dd {{ counter }} goto tp_spec_lan_ct comment "Xray dynamic direct TCP6"
 {% endif %}
 {% if (general.dynamic_direct_udp6 == "1"): %}
-        ip6 nexthdr udp ip6 daddr @tp_spec_dv6_du {{ counter }} mark set 0x000000fa goto tp_spec_lan_ct comment "Xray dynamic direct UDP6"
+        ip6 nexthdr udp ip6 daddr @tp_spec_dv6_dd {{ counter }} goto tp_spec_lan_ct comment "Xray dynamic direct UDP6"
 {% endif %}
-        {{ counter }} goto tp_spec_lan_fw
+        meta l4proto tcp {{ counter }} {{ dynamic_direct_conntrack_tcp }} goto tp_spec_lan_fw
+        meta l4proto udp {{ counter }} {{ dynamic_direct_conntrack_udp }} goto tp_spec_lan_fw
+        {{ counter }} accept
     }
+
+{% if (dynamic_direct_conntrack_tcp != "" || dynamic_direct_conntrack_udp != ""): %}
+    chain tp_spec_lan_ct {
+{% if (dynamic_direct_conntrack_tcp != ""): %}
+        meta nfproto . tcp sport @tp_spec_ctt_dd {{ counter }} meta l4proto tcp goto tp_spec_lan_fw
+{% endif %}
+{% if (dynamic_direct_conntrack_udp != ""): %}
+        meta nfproto . udp sport @tp_spec_ctu_dd {{ counter }} meta l4proto udp goto tp_spec_lan_fw
+{% endif %}
+        {{ counter }} ct mark set 0x000000fa accept comment "Xray dynamic direct successful registration"
+    }
+{% endif %}
 
     chain tp_spec_lan_fw {
-        {{ counter }} mark set 0x000000fb goto tp_spec_lan_ct
-    }
-
-    chain tp_spec_lan_ct {
-        {{ counter }} ct mark set mark accept
+        {{ counter }} mark set 0x000000fb accept
     }

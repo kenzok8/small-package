@@ -1,0 +1,87 @@
+#!/bin/sh
+
+# Initialize necessary directories
+for d in certs provider ruleset resources templates; do
+	mkdir -p "/etc/fchomo/$d/" 2>/dev/null
+done
+
+# Initialize default mixed port authentication
+if ! uci -q get fchomo.global.authentication >/dev/null; then
+	uci add_list fchomo.global.authentication="fchomodef:$(cat /proc/sys/kernel/random/uuid)"
+	uci commit fchomo
+fi
+
+# Initialize the default direct list
+if [ ! -s "/etc/fchomo/resources/direct_list.yaml" ]; then
+	cat <<- EOF > "/etc/fchomo/resources/direct_list.yaml"
+	DOMAIN:
+	IPCIDR:
+	- '223.0.0.0/12'
+	IPCIDR6:
+	- '2400:3200::/32'
+	EOF
+fi
+
+# Initialize the default proxy list
+if [ ! -s "/etc/fchomo/resources/proxy_list.yaml" ]; then
+	cat <<- EOF > "/etc/fchomo/resources/proxy_list.yaml"
+	DOMAIN:
+	- www.google.com
+	- '.googlevideo.com'
+	- google.com
+	IPCIDR:
+	- '91.105.192.0/23'
+	- '91.108.4.0/22'
+	- '91.108.8.0/22'
+	- '91.108.16.0/22'
+	- '91.108.12.0/22'
+	- '91.108.20.0/22'
+	- '91.108.56.0/22'
+	- '149.154.160.0/20'
+	- '185.76.151.0/24'
+	- '203.208.50.66/32'
+	IPCIDR6:
+	- '2001:67c:4e8::/48'
+	- '2001:b28:f23c::/48'
+	- '2001:b28:f23d::/48'
+	- '2001:b28:f23f::/48'
+	- '2a0a:f280::/32'
+	EOF
+fi
+
+# Initialize the default hosts
+if [ ! -s "/etc/fchomo/templates/hosts.yaml" ]; then
+	cat <<- EOF > "/etc/fchomo/templates/hosts.yaml"
+	hosts:
+	  # '*.clash.dev': 127.0.0.1
+	  # 'alpha.clash.dev': '::1'
+	  # test.com: [1.1.1.1, 2.2.2.2]
+	  # baidu.com: google.com
+	  dns.alidns.com: [223.6.6.6, '2400:3200:baba::1', 223.5.5.5, '2400:3200::1']
+	  dns.google: [8.8.8.8, '2001:4860:4860::8888', 8.8.4.4, '2001:4860:4860::8844']
+	EOF
+fi
+
+# Initialize default firewall table
+uci -q batch <<-EOF >"/dev/null"
+	delete firewall.fchomo_pre
+	set firewall.fchomo_pre=include
+	set firewall.fchomo_pre.type=nftables
+	set firewall.fchomo_pre.path="/var/run/fchomo/fchomo_pre.nft"
+	set firewall.fchomo_pre.position="table-pre"
+
+	delete firewall.fchomo_post
+	set firewall.fchomo_post=include
+	set firewall.fchomo_post.type=nftables
+	set firewall.fchomo_post.path="/var/run/fchomo/fchomo_post.nft"
+	set firewall.fchomo_post.position="ruleset-post"
+	commit firewall
+EOF
+
+# fix dnsmasq
+if ! uci -q get dhcp.@dnsmasq[0].cache_rr|grep -q '\bANY\b'; then
+	uci add_list dhcp.@dnsmasq[0].cache_rr="ANY"
+	uci commit dhcp
+fi
+
+exit 0

@@ -21,12 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($file['error'] === UPLOAD_ERR_OK) {
             if (move_uploaded_file($file['tmp_name'], $uploadFilePath)) {
-                echo '<div id="log-message" class="alert alert-success" role="alert" data-translate="file_upload_success" data-dynamic-content="' . htmlspecialchars(basename($file['name'])) . '"></div>';
+                echo '<div class="log-message alert alert-success" role="alert" data-translate="file_upload_success" data-dynamic-content="' . htmlspecialchars(basename($file['name'])) . '"></div>';
             } else {
-                echo '<div id="log-message" class="alert alert-danger" role="alert" data-translate="file_upload_failed"></div>';
+                echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_upload_failed"></div>';
             }
         } else {
-            echo '<div id="log-message" class="alert alert-danger" role="alert" data-translate="file_upload_error" data-dynamic-content="' . $file['error'] . '"></div>';
+            echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_upload_error" data-dynamic-content="' . $file['error'] . '"></div>';
         }
     }
 
@@ -36,30 +36,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($file['error'] === UPLOAD_ERR_OK) {
             if (move_uploaded_file($file['tmp_name'], $uploadFilePath)) {
-                echo '<div id="log-message" class="alert alert-success" role="alert" data-translate="config_upload_success" data-dynamic-content="' . htmlspecialchars(basename($file['name'])) . '"></div>';
+                echo '<div class="log-message alert alert-success" role="alert" data-translate="config_upload_success" data-dynamic-content="' . htmlspecialchars(basename($file['name'])) . '"></div>';
             } else {
-                echo '<div id="log-message" class="alert alert-danger" role="alert" data-translate="config_upload_failed"></div>';
+                echo '<div class="log-message alert alert-danger" role="alert" data-translate="config_upload_failed"></div>';
             }
         } else {
-            echo '<div id="log-message" class="alert alert-danger" role="alert" data-translate="file_upload_error" data-dynamic-content="' . $file['error'] . '"></div>';
+            echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_upload_error" data-dynamic-content="' . $file['error'] . '"></div>';
         }
     }
 
     if (isset($_POST['deleteFile'])) {
         $fileToDelete = $uploadDir . basename($_POST['deleteFile']);
         if (file_exists($fileToDelete) && unlink($fileToDelete)) {
-            echo '<div id="log-message" class="alert alert-success" role="alert" data-translate="file_delete_success" data-dynamic-content="' . htmlspecialchars(basename($_POST['deleteFile'])) . '"></div>';
+            echo '<div class="log-message alert alert-success" role="alert" data-translate="file_delete_success" data-dynamic-content="' . htmlspecialchars(basename($_POST['deleteFile'])) . '"></div>';
         } else {
-            echo '<div id="log-message" class="alert alert-danger" role="alert" data-translate="file_delete_failed"></div>';
+            //echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_delete_failed"></div>';
         }
     }
 
     if (isset($_POST['deleteConfigFile'])) {
         $fileToDelete = $configDir . basename($_POST['deleteConfigFile']);
         if (file_exists($fileToDelete) && unlink($fileToDelete)) {
-            echo '<div id="log-message" class="alert alert-success" role="alert" data-translate="config_delete_success" data-dynamic-content="' . htmlspecialchars(basename($_POST['deleteConfigFile'])) . '"></div>';
+            echo '<div class="log-message alert alert-success" role="alert" data-translate="config_delete_success" data-dynamic-content="' . htmlspecialchars(basename($_POST['deleteConfigFile'])) . '"></div>';
         } else {
-            echo '<div id="log-message" class="alert alert-danger" role="alert" data-translate="config_delete_failed"></div>';
+           // echo '<div class="log-message alert alert-danger" role="alert" data-translate="config_delete_failed"></div>';
         }
     }
 
@@ -75,18 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $oldFilePath = $configDir . $oldFileName;
             $newFilePath = $configDir . $newFileName;
         } else {
-            echo '<div id="log-message" class="alert alert-danger" role="alert" data-translate="file_not_found"></div>';
+            echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_not_found"></div>';
             exit;
         }
 
         if (file_exists($oldFilePath) && !file_exists($newFilePath)) {
             if (rename($oldFilePath, $newFilePath)) {
-                echo '<div id="log-message" class="alert alert-success" role="alert" data-translate="file_rename_success" data-dynamic-content="' . htmlspecialchars($oldFileName) . ' -> ' . htmlspecialchars($newFileName) . '"></div>';
+                echo '<div class="log-message alert alert-success" role="alert" data-translate="file_rename_success" data-dynamic-content="' . htmlspecialchars($oldFileName) . ' -> ' . htmlspecialchars($newFileName) . '"></div>';
             } else {
-                echo '<div id="log-message"  class="alert alert-danger" role="alert" data-translate="file_rename_failed"></div>';
+                echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_rename_failed"></div>';
             }
         } else {
-            echo '<div id="log-message"  class="alert alert-danger" role="alert" data-translate="file_rename_exists"></div>';
+            echo '<div class="log-message alert alert-danger" role="alert" data-translate="file_rename_exists"></div>';
         }
     }
 
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fileToSave = ($_POST['fileType'] === 'proxy') ? $uploadDir . basename($_POST['fileName']) : $configDir . basename($_POST['fileName']);
         $contentToSave = $_POST['saveContent'];
         file_put_contents($fileToSave, $contentToSave);
-        echo '<div id="log-message" class="alert alert-info" role="alert" data-translate="file_save_success" data-dynamic-content="' . htmlspecialchars(basename($fileToSave)) . '"></div>';
+        echo '<div class="log-message alert alert-info" role="alert" data-translate="file_save_success" data-dynamic-content="' . htmlspecialchars(basename($fileToSave)) . '"></div>';
     }
 }
 
@@ -224,7 +224,7 @@ if (isset($_POST['update'])) {
         if ($return_var === 0) {
             $_SESSION['update_logs'] = [];
             storeUpdateLog('<span data-translate="subscription_downloaded" data-dynamic-content="' . htmlspecialchars($url) . '"></span> <span data-translate="saved_to_temp_file" data-dynamic-content="' . htmlspecialchars($tempPath) . '"></span>');
-            echo '<div id="log-message"  class="alert alert-info"><span data-translate="subscription_downloaded" data-dynamic-content="' . htmlspecialchars($url) . '"></span> <span data-translate="saved_to_temp_file" data-dynamic-content="' . htmlspecialchars($tempPath) . '"></span></div>';
+            //echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_downloaded" data-dynamic-content="' . htmlspecialchars($url) . '"></span> <span data-translate="saved_to_temp_file" data-dynamic-content="' . htmlspecialchars($tempPath) . '"></span></div>';
             $fileContent = file_get_contents($tempPath);
 
             if (base64_encode(base64_decode($fileContent, true)) === $fileContent) {
@@ -232,13 +232,13 @@ if (isset($_POST['update'])) {
                 if ($decodedContent !== false && strlen($decodedContent) > 0) {
                     file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decodedContent);
                     storeUpdateLog('<span data-translate="base64_decode_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span>');
-                    echo '<div id="log-message" class="alert alert-info"><span data-translate="base64_decode_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
+                    echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="base64_decode_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
                     unlink($tempPath); 
                     $notificationMessage = '<span data-translate="update_success"></span>';
                     $updateCompleted = true;
                 } else {
                     storeUpdateLog('<span data-translate="base64_decode_failed"></span>');
-                    echo '<div id="log-message" class="alert alert-info"><span data-translate="base64_decode_failed"></span></div>';
+                    echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="base64_decode_failed"></span></div>';
                     unlink($tempPath); 
                     $notificationMessage = '<span data-translate="update_failed"></span>';
                 }
@@ -248,13 +248,13 @@ if (isset($_POST['update'])) {
                 if ($decompressedContent !== false) {
                     file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decompressedContent);
                     storeUpdateLog('<span data-translate="gzip_decompress_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span>');
-                    echo '<div id="log-message" class="alert alert-info"><span data-translate="gzip_decompress_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
+                    echo '<div  class="log-message alert alert-warning custom-alert-success"><span data-translate="gzip_decompress_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
                     unlink($tempPath); 
                     $notificationMessage = '<span data-translate="update_success"></span>';
                     $updateCompleted = true;
                 } else {
                     storeUpdateLog('<span data-translate="gzip_decompress_failed"></span>');
-                    echo '<div id="log-message" class="alert alert-info"><span data-translate="gzip_decompress_failed"></span></div>';
+                    echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="gzip_decompress_failed"></span></div>';
                     unlink($tempPath); 
                     $notificationMessage = '<span data-translate="update_failed"></span>';
                 }
@@ -262,13 +262,13 @@ if (isset($_POST['update'])) {
             else {
                 rename($tempPath, $finalPath); 
                 storeUpdateLog('<span data-translate="subscription_downloaded_no_decode"></span>');
-                echo '<div id="log-message" class="alert alert-info"><span data-translate="subscription_downloaded_no_decode"></span></div>';
+                echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_downloaded_no_decode"></span></div>';
                 $notificationMessage = '<span data-translate="update_success"></span>';
                 $updateCompleted = true;
             }
         } else {
             storeUpdateLog('<span data-translate="subscription_update_failed" data-dynamic-content="' . htmlspecialchars(implode("\n", $output)) . '"></span>');
-            echo '<div id="log-message" class="alert alert-info"><span data-translate="subscription_update_failed" data-dynamic-content="' . htmlspecialchars(implode("\n", $output)) . '"></span></div>';
+            echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_update_failed" data-dynamic-content="' . htmlspecialchars(implode("\n", $output)) . '"></span></div>';
             unlink($tempPath); 
             $notificationMessage = '<span data-translate="update_failed"></span>';
         }
@@ -368,9 +368,9 @@ EOL;
 
         if (file_put_contents($shellScriptPath, $shellScriptContent) !== false) {
             chmod($shellScriptPath, 0755); 
-            echo "<div id='log-message' class='alert alert-success' data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></div>";
+            echo "<div class='log-message alert alert-success'><span data-translate='shell_script_created' data-dynamic-content='$shellScriptPath'></span></div>";
         } else {
-            echo "<div id='log-message' class='alert alert-danger' data-translate='shell_script_failed'></div>";
+            echo "<div class='log-message alert alert-danger'><span data-translate='shell_script_failed'></span></div>";
         }
     }
 }
@@ -385,7 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (empty($cronExpression)) {
             file_put_contents($CRON_LOG_FILE, date('[ H:i:s ] ') . "Error: Cron expression cannot be empty.\n", FILE_APPEND);
-            echo "<div id='log-message' class='alert alert-warning' data-translate='cron_expression_empty'></div>";
+            echo "<div class='log-message alert alert-warning' data-translate='cron_expression_empty'></div>";
             exit;
         }
 
@@ -401,10 +401,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exec("(crontab -l; echo '$cronJob') | crontab -", $output, $returnVarAdd);
         if ($returnVarAdd === 0) {
             file_put_contents($CRON_LOG_FILE, date('[ H:i:s ] ') . "Successfully added new Cron job: $cronJob\n", FILE_APPEND);
-            echo "<div id='log-message' class='alert alert-success' data-translate='cron_job_added_success'></div>";
+            echo "<div class='log-message alert alert-success' data-translate='cron_job_added_success'></div>";
         } else {
             file_put_contents($CRON_LOG_FILE, date('[ H:i:s ] ') . "Failed to add new Cron job.\n", FILE_APPEND);
-            echo "<div id='log-message' class='alert alert-danger' data-translate='cron_job_added_failed'></div>";
+            echo "<div class='log-message alert alert-danger' data-translate='cron_job_added_failed'></div>";
         }
     }
 }
@@ -432,12 +432,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['file'])) {
         $destination_path = $destination_directory . basename($file_url);
 
         if (download_file($file_url, $destination_path)) {
-            echo "<div id='log-message' class='alert alert-success' data-translate='file_download_success' data-dynamic-content='$destination_path'></div>";
+            echo "<div class='log-message alert alert-success' data-translate='file_download_success' data-dynamic-content='$destination_path'></div>";
         } else {
-            echo "<div id='log-message' class='alert alert-danger' data-translate='file_download_failed'></div>";
+            echo "<div class='log-message alert alert-danger' data-translate='file_download_failed'></div>";
         }
     } else {
-        echo "<div id='log-message' class='alert alert-warning' data-translate='invalid_file_request'></div>";
+        echo "<div class='log-message alert alert-warning' data-translate='invalid_file_request'></div>";
     }
 }
 
@@ -456,27 +456,68 @@ function download_file($url, $destination) {
     return $result !== false;
 }
 ?>
-<!doctype html>
-<html lang="en" data-bs-theme="<?php echo substr($neko_theme, 0, -4) ?>">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Mihomo - NekoBox</title>
     <link rel="icon" href="./assets/img/nekobox.png">
-    <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="./assets/css/custom.css" rel="stylesheet">
-    <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
-    <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" crossorigin="anonymous"></script>
     <script src="./assets/bootstrap/beautify.min.js"></script> 
     <script src="./assets/bootstrap/js-yaml.min.js"></script>
-    <script type="text/javascript" src="./assets/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="./assets/js/feather.min.js"></script>
-    <script type="text/javascript" src="./assets/bootstrap/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="./assets/js/neko.js"></script>
+    <script src="./assets/bootstrap/jquery.min.js"></script>
     <?php include './ping.php'; ?>
 </head>
+<style>
+.custom-alert-success {
+    background-color: #d4edda !important;
+    border-color: #c3e6cb !important;
+    color: #155724 !important;
+}
+
+#updateNotification {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    position: relative;
+}
+
+#updateNotification .alert-info {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: none;
+}
+
+#updateNotification .spinner-border {
+    filter: invert(1);
+}
+
+#dropZone i {
+    font-size: 50px;
+    color: #007bff;
+    animation: iconPulse 1.5s infinite; 
+}
+
+@keyframes iconPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2); 
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.table-hover tbody tr:hover td {
+    color: #cc0fa9;
+}
+</style>
 <?php if ($updateCompleted): ?>
     <script>
         if (!sessionStorage.getItem('refreshed')) {
@@ -506,142 +547,8 @@ function download_file($url, $destination) {
 
         <div id="updateLogContainer" class="small mt-2"></div>
 
-        <button type="button" class="btn-close custom-btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 </div>
-
-<style>
-.alert-success {
-    background-color: #4CAF50 !important; 
-    border: 1px solid rgba(255, 255, 255, 0.3) !important; 
-    border-radius: 8px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important; 
-    padding: 16px 20px !important;
-    position: relative;
-    color: #fff !important; 
-    backdrop-filter: blur(8px); 
-    margin-top: 15px !important;
-}
-
-.alert .close,
-.alert .btn-close {
-    position: absolute !important;
-    right: 10px !important;
-    top: 10px !important;
-    background-color: #dc3545 !important; 
-    opacity: 1 !important;
-    width: 24px !important;
-    height: 24px !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 16px !important; 
-    color: #fff !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    transition: all 0.2s ease !important;
-    cursor: pointer !important;
-}
-
-.alert .close:hover,
-.alert .btn-close:hover {
-    background-color: #bd2130 !important;
-    transform: rotate(90deg); 
-}
-
-#updateMessages {
-    margin-top: 12px;
-    padding-right: 20px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: rgba(255, 255, 255, 0.9); 
-}
-
-#updateMessages .alert-warning {
-    background-color: rgba(255, 193, 7, 0.1) !important; 
-    border-radius: 6px;
-    padding: 12px 15px;
-    border: 1px solid rgba(255, 193, 7, 0.2);
-}
-
-#updateMessages ul {
-    margin-bottom: 0;
-    padding-left: 20px;
-}
-
-#updateMessages li {
-    margin-bottom: 6px;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-html {
-    font-size: 16px;  
-}
-
-.container-fluid {
-    max-width: 2400px;
-    width: 100%;
-    margin: 0 auto;
-}
-
-.section-container {
-   padding-left: 32px;  
-   padding-right: 32px;
-}
-
-#dropZone i {
-    font-size: 50px;
-    color: #007bff;
-    animation: iconPulse 1.5s infinite; 
-}
-
-@keyframes iconPulse {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.2); 
-        opacity: 0.7;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@media (max-width: 768px) {
-    .table thead {
-        display: none; 
-    }
-
-    .table tbody, 
-    .table tr, 
-    .table td {
-        display: block;
-        width: 100%;
-    }
-
-    .table td::before {
-        content: attr(data-label); 
-        font-weight: bold;
-        display: block;
-        text-transform: uppercase;
-        color: #23407E; 
-    }
-
-    .table tr {
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        padding: 10px;
-        border-radius: 5px;
-        background-color: #f9f9f9;
-    }
-}
-
-</style>
 
 <script>
 function displayUpdateNotification() {
@@ -663,123 +570,286 @@ function displayUpdateNotification() {
     }, 5000);
 }
 
-<?php if (!empty($notificationMessage)): ?>
-    $(document).ready(function() {
-        displayUpdateNotification();
-    });
-<?php endif; ?>
+$(document).ready(function() {
+    const notificationMessageExists = <?php echo json_encode(!empty($notificationMessage)); ?>;
+
+    if (notificationMessageExists) {
+        const lastNotificationTime = localStorage.getItem('lastUpdateNotificationTime');
+        const now = Date.now();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+
+        if (!lastNotificationTime || now - parseInt(lastNotificationTime, 10) > twentyFourHours) {
+            displayUpdateNotification();
+            localStorage.setItem('lastUpdateNotificationTime', now.toString());
+        }
+    }
+});
 </script>
-<div class="container-sm container-bg callout border border-3 rounded-4 col-11">
-    <div class="row">
-        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
-        <a href="./mihomo_manager.php" class="col btn btn-lg text-nowrap"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
-        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
-        <a href="./subscription.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
-        <a href="./mihomo.php" class="col btn btn-lg text-nowrap"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
+<div class="container-sm container-bg mt-4">
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container-sm container">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <?= $iconHtml ?>
+            <span style="color: var(--accent-color); letter-spacing: 1px;"><?= htmlspecialchars($title) ?></span>
+        </a>
+        <button class="navbar-toggler" type="button" style="position: relative; z-index: 1;" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <i class="bi bi-list" style="color: var(--accent-color); font-size: 1.8rem;"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="font-size: 18px;">
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'index.php' ? 'active' : '' ?>" href="./index.php"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'mihomo_manager.php' ? 'active' : '' ?>" href="./mihomo_manager.php"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'singbox.php' ? 'active' : '' ?>" href="./singbox.php"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'subscription.php' ? 'active' : '' ?>" href="./subscription.php"><i class="bi bi-bank"></i> <span data-translate="template_ii">Template II</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'mihomo.php' ? 'active' : '' ?>" href="./mihomo.php"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'monaco.php' ? 'active' : '' ?>" href="./monaco.php"><i class="bi bi-bank"></i> <span data-translate="pageTitle">File Assistant</span></a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <div class="me-3 d-block">
+                    <button type="button" class="btn btn-primary icon-btn me-2" onclick="toggleControlPanel()" data-tooltip="control_panel"><i class="bi bi-gear"> </i></button>
+                    <button type="button" class="btn btn-danger icon-btn me-2" data-bs-toggle="modal" data-bs-target="#langModal" data-tooltip="set_language"><i class="bi bi-translate"></i></button>
+                    <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-tooltip="music_player"><i class="bi bi-music-note-beamed"></i></button>
+                    <button type="button" id="toggleIpStatusBtn" class="btn btn-warning icon-btn me-2" onclick="toggleIpStatusBar()" data-tooltip="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>
+                    <button type="button" class="btn btn-pink icon-btn me-2" data-bs-toggle="modal" data-bs-target="#portModal" data-tooltip="viewPortInfoButton"><i class="bi bi-plug"></i></button>
+                    <button type="button" class="btn-refresh-page btn btn-orange icon-btn me-2 d-none d-sm-inline"><i class="fas fa-sync-alt"></i></button>
+                    <button type="button" class="btn btn-info icon-btn me-2" onclick="document.getElementById('colorPicker').click()" data-tooltip="component_bg_color"><i class="bi bi-palette"></i></button>
+                    <input type="color" id="colorPicker" value="#0f3460" style="display: none;">
+            </div>
+        </div>
     </div>
-    <div class="text-center">
-        <h2 style="margin-top: 40px; margin-bottom: 20px;" data-translate="fileManagement"></h2>
-<div class="container-fluid section-container">
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table text-center">
-                <thead class="custom-card-body">
-                    <tr>
-                    <th style="width: 20%;" data-translate="fileName"></th>
-                    <th style="width: 10%;" data-translate="fileSize"></th>
-                    <th style="width: 20%;" data-translate="lastModified"></th>
-                    <th style="width: 10%;" data-translate="fileType"></th>
-                    <th style="width: 30%;" data-translate="actions"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                $allFiles = array_merge($proxyFiles, $configFiles);
-                $allFilePaths = array_merge(
-                    array_map(function($file) use ($uploadDir) { return $uploadDir . $file; }, $proxyFiles),
-                    array_map(function($file) use ($configDir) { return $configDir . $file; }, $configFiles)
-                );
-
-               $lang = $_GET['lang'] ?? 'en'; 
-               $lang = isset($translations[$lang]) ? $lang : 'en'; 
-
-               $fileTypes = array_merge(
-                    array_fill(0, count($proxyFiles), $langData[$currentLang]['file_type_proxy']),
-                    array_fill(0, count($configFiles), $langData[$currentLang]['file_type_config'])
-                );
-
-                foreach ($allFiles as $index => $file):
-                    $filePath = $allFilePaths[$index];
-                    $isProxy = ($index < count($proxyFiles));  
-                ?>
-                    <tr>
-                        <td class="align-middle" data-label="fileName">
-                            <?php echo htmlspecialchars($file); ?>
-                        </td>
-                        <td class="align-middle" data-label="fileSize">
-                            <?php echo file_exists($filePath) ? formatSize(filesize($filePath)) : 'The file does not exist'; ?>
-                        </td>
-                        <td class="align-middle" data-label="lastModified">
-                            <?php echo htmlspecialchars(date('Y-m-d H:i:s', filemtime($filePath))); ?>
-                        </td>
-                        <td class="align-middle" data-label="fileType">
-                            <span class="badge <?= $isProxy ? 'bg-primary' : 'bg-success' ?>"><?= htmlspecialchars($fileTypes[$index]) ?></span>
-                        </td>
-                        <td class="align-middle">
-                            <div class="action-buttons">
-                              <?php if ($index < count($proxyFiles)): ?>
-                                    <form action="" method="post" class="d-inline mb-1">
-                                        <input type="hidden" name="deleteFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm"  onclick="return confirmDelete()"  data-translate-title="delete"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                    <form action="" method="post" class="d-inline mb-1">
-                                        <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
-                                        <input type="hidden" name="fileType" value="proxy">
-                                        <button type="button" class="btn btn-success btn-sm btn-rename"  data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="proxy" data-translate-title="rename"><i class="bi bi-pencil"></i></button>
-                                    </form>
-                                    <form action="" method="post" class="d-inline mb-1">
-                                        <button type="button" class="btn btn-warning btn-sm" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'proxy')" data-translate-title="edit"><i class="bi bi-pen"></i></button>
-                                    </form>
-                                    <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn mb-1">
-                                        <input type="file" name="fileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                        <button type="button" class="btn btn-info btn-sm"  onclick="openUploadModal('proxy')" data-translate-title="upload"><i class="bi bi-upload"></i></button>
-                                    </form>
-                                    <form action="" method="get" class="d-inline mb-1">
-                                        <input type="hidden" name="downloadFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <input type="hidden" name="fileType" value="proxy">
-                                        <button type="submit" class="btn btn-primary btn-sm"  data-translate-title="download"><i class="bi bi-download"></i></button>
-                                    </form>
-                                <?php else: ?>
-                                    <form action="" method="post" class="d-inline mb-1">
-                                        <input type="hidden" name="deleteConfigFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm"  onclick="return confirmDelete()"  data-translate-title="delete"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                    <form action="" method="post" class="d-inline mb-1">
-                                        <input type="hidden" name="oldFileName" value="<?php echo htmlspecialchars($file); ?>">
-                                        <input type="hidden" name="fileType" value="config">
-                                        <button type="button" class="btn btn-success btn-sm btn-rename"  data-toggle="modal" data-target="#renameModal" data-filename="<?php echo htmlspecialchars($file); ?>" data-filetype="config" data-translate-title="rename"><i class="bi bi-pencil"></i></button>
-                                    </form>
-                                    <form action="" method="post" class="d-inline mb-1">
-                                        <button type="button" class="btn btn-warning btn-sm" onclick="openEditModal('<?php echo htmlspecialchars($file); ?>', 'config')" data-translate-title="edit"><i class="bi bi-pen"></i></button>
-                                    </form>
-                                    <form action="" method="post" enctype="multipart/form-data" class="d-inline upload-btn mb-1">
-                                        <input type="file" name="configFileInput" class="form-control-file" required id="fileInput-<?php echo htmlspecialchars($file); ?>" style="display: none;" onchange="this.form.submit()">
-                                        <button type="button" class="btn btn-info btn-sm" onclick="openUploadModal('config')" data-translate-title="upload"><i class="bi bi-upload"></i></button>
-                                    </form>
-                                    <form action="" method="get" class="d-inline mb-1">
-                                        <input type="hidden" name="downloadFile" value="<?php echo htmlspecialchars($file); ?>">
-                                        <input type="hidden" name="fileType" value="config">
-                                        <button type="submit" class="btn btn-primary btn-sm"  data-translate-title="download"><i class="bi bi-download"></i></button>
-                                    </form>
-                                 <?php endif; ?>
+</nav>
+<h2 class="container-fluid text-center mt-4 mb-4" data-translate="subscriptionManagement"></h2>
+<div class="container-sm text-center px-2 px-md-3">
+    <?php if (isset($message) && $message): ?>
+        <div class="alert alert-info">
+            <?php echo nl2br(htmlspecialchars($message)); ?>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($subscriptions) && is_array($subscriptions)): ?>
+        <div class="container-fluid px-3">
+            <?php 
+            $maxSubscriptions = 6;
+            for ($i = 0; $i < $maxSubscriptions; $i++):
+                $displayIndex = $i + 1;
+                $url = $subscriptions[$i]['url'] ?? '';
+                $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . $displayIndex . ".yaml";
+                
+                if ($i % 3 == 0) echo '<div class="row">';
+            ?>
+                <div class="col-md-4 mb-3 px-1">
+                    <div class="card">
+                        <form method="post">
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <h5 class="mb-2" data-translate="subscriptionLink"><?php echo $displayIndex; ?></h5>
+                                    <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" data-translate-placeholder="enterSubscriptionUrl">
+                                </div>
+                                <div class="form-group">
+                                    <label for="custom_file_name_<?php echo $displayIndex; ?>" data-translate="customFileName"></label>
+                                    <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
+                                </div>
+                                <input type="hidden" name="index" value="<?php echo $i; ?>">
+                                <div class="text-center mt-3">
+                                    <button type="submit" name="update" class="btn btn-info btn-block">
+                                        <i class="bi bi-arrow-repeat"></i> <span data-translate="updateSubscription">Settings</span> <?php echo $displayIndex; ?>
+                                    </button>
+                                </div>
                             </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
+                        </form>
+                    </div>
+                </div>
+            <?php 
+                if ($i % 3 == 2 || $i == $maxSubscriptions - 1) echo '</div>';
+            endfor;
+            ?>
+        </div>
+    <?php else: ?>
+    <?php endif; ?>
 </div>
+
+<div class="text-center mt-4 mb-1">
+    <form method="post">
+        <button type="button" class="btn btn-primary mx-1 mb-2" data-bs-toggle="modal" data-bs-target="#cronModal">
+            <i class="bi bi-clock"></i> <span data-translate="set_cron_job"></span>
+        </button>
+        
+        <button type="submit" name="createShellScript" value="true" class="btn btn-success mx-1 mb-2">
+            <i class="bi bi-terminal"></i> <span data-translate="generate_update_script"></span>
+        </button>
+        
+        <button type="button" class="btn btn-info mx-1 mb-2" data-bs-toggle="modal" data-bs-target="#downloadModal">
+            <i class="bi bi-download"></i> <span data-translate="update_database"></span>
+        </button>
+    </form>
+</div>
+
+<h2 class="text-center mt-4 mb-3" data-translate="fileManagement">File Management</h2>
+
+<div class="container-sm px-3 px-md-4">
+  <div class="row g-3">
+    <?php
+    $proxyFiles = $proxyFiles ?? [];
+    $configFiles = $configFiles ?? [];
+    $uploadDir = $uploadDir ?? '';
+    $configDir = $configDir ?? '';
+    $langData = $langData ?? [];
+    $currentLang = $currentLang ?? 'en';
+    $translations = $translations ?? [];
+
+    $allFiles = array_merge($proxyFiles, $configFiles);
+    $allFilePaths = array_merge(
+      array_map(fn($file) => $uploadDir . $file, $proxyFiles),
+      array_map(fn($file) => $configDir . $file, $configFiles)
+    );
+
+    $fileTypes = array_merge(
+      array_fill(0, count($proxyFiles), $langData[$currentLang]['file_type_proxy'] ?? 'Proxy'),
+      array_fill(0, count($configFiles), $langData[$currentLang]['file_type_config'] ?? 'Config')
+    );
+
+    foreach ($allFiles as $index => $file):
+      $filePath = $allFilePaths[$index];
+      $isProxy = ($index < count($proxyFiles));
+      $size = file_exists($filePath) ? formatSize(filesize($filePath)) : ($translations['fileNotExist'] ?? 'Not Exist');
+      $modified = file_exists($filePath) ? date('Y-m-d H:i:s', filemtime($filePath)) : '-';
+    ?>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card h-100 text-start">
+        <div class="card-body d-flex flex-column justify-content-between">
+          <h5 class="card-title mb-2" data-tooltip="fileName"><?= htmlspecialchars($file) ?></h5>
+          <p class="card-text mb-1"><strong data-translate="fileSize">Size</strong>: <?= $size ?></p>
+          <p class="card-text mb-1"><strong data-translate="lastModified">Last Modified</strong>: <?= $modified ?></p>
+          <p class="card-text mb-2"><strong data-translate="fileType">Type</strong>: <span class="badge <?= $isProxy ? 'bg-primary' : 'bg-success' ?>"><?= htmlspecialchars($fileTypes[$index]) ?></span></p>
+          <?php
+          $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+          $flowLeft = '';
+          $resetDaysLeft = '';
+          $expireDateText = '';
+
+          foreach ($lines as $line) {
+              $line = trim($line);
+              if (empty($line)) continue;
+
+              if (preg_match('/訂閱資訊[:：]\s*([\d.]+)\s*(T|TB|G|GB|M|MB|K|KB)?(?:\s*\/\s*剩餘\s*(\d+)?\s*天)?(?:\s*\/\s*到期\s*(\d{4}-\d{2}-\d{2}))?/iu', $line, $matches)) {
+                  if (!empty($matches[1])) {
+                     $flowLeft = $matches[1] . strtoupper($matches[2] ?? 'MB');
+                  }
+                  if (isset($matches[3])) {
+                      $resetDaysLeft = $matches[3] !== '' ? $matches[3] : '0';
+                  }
+                  if (!empty($matches[4])) {
+                      $expireDateText = $matches[4];
+                  }
+              } elseif (preg_match('/#(.*)$/', $line, $matches)) {
+                  $hashComment = urldecode(trim($matches[1]));
+
+                  if (preg_match('/剩余流量[:：]\s*([\d.]+)\s*(T|TB|G|GB|M|MB|K|KB)?(?:\s|$)/iu', $hashComment, $flowMatch)) {
+                      $flowLeft = $flowMatch[1] . strtoupper($flowMatch[2] ?? 'MB');
+                  }
+                  if (preg_match('/距离下次重置剩余[:：]\s*(\d+)\s*天/u', $hashComment, $resetMatch)) {
+                      $resetDaysLeft = $resetMatch[1];
+                  }
+                  if (preg_match('/套餐到期[:：]\s*(\d{4}-\d{2}-\d{2})/u', $hashComment, $dateMatch)) {
+                      $expireDateText = $dateMatch[1];
+                  }
+              }
+          }
+
+          if (empty($flowLeft)) {
+              $flowLeft = '0MB';
+          }
+          if ($resetDaysLeft === '') {
+              $resetDaysLeft = '0';
+          }
+
+          $hasFlow = ($flowLeft !== '0MB');
+          $hasResetDays = ($resetDaysLeft !== '0');
+          $hasExpireDate = !empty($expireDateText);
+
+          if ($hasFlow || $hasResetDays || $hasExpireDate) {
+              $infoParts = [];
+
+              if ($flowLeft) {
+                  $infoParts[] = $flowLeft;
+              }
+
+              if ($resetDaysLeft !== '') {
+                  $infoParts[] = 
+                      ($translations['resetDaysLeftLabel'] ?? 'Remaining') . ' ' 
+                      . $resetDaysLeft . ' ' 
+                      . ($translations['daysUnit'] ?? 'days');
+              }
+
+              if ($expireDateText) {
+                  $currentDate = date('Y-m-d');
+                  $isExpired = strtotime($expireDateText) < strtotime($currentDate);
+                  $expireText = ($translations['expireDateLabel'] ?? 'Expires') . ' ' . $expireDateText;
+                  if ($isExpired) {
+                      $infoParts[] = '<span style="color: red;">' . $expireText . '</span>';
+                  } else {
+                      $infoParts[] = $expireText;
+                  }
+              }
+
+              $infoText = implode(' / ', $infoParts);
+
+              echo '<p class="card-text mb-2"><strong data-translate="subscriptionInfo">'
+                  . ($translations['subscriptionInfo'] ?? 'Subscription Info')
+                  . '</strong>: ' . $infoText . '</p>';
+          }
+          ?>
+          <div class="icon-btn-group mt-2" style="gap:0.4rem; display:flex; flex-wrap: wrap;">
+            <?php if ($isProxy): ?>
+              <form method="post" class="d-inline m-0 p-0">
+                <input type="hidden" name="deleteFile" value="<?= htmlspecialchars($file) ?>">
+                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete('<?= htmlspecialchars($file) ?>', event)" data-tooltip="delete"><i class="bi bi-trash"></i></button>
+              </form>
+              <button type="button" class="btn btn-success icon-btn" data-bs-toggle="modal" data-bs-target="#renameModal" data-filename="<?= htmlspecialchars($file) ?>" data-filetype="proxy" data-tooltip="rename"><i class="bi bi-pencil"></i></button>
+              <button type="button" class="btn btn-warning icon-btn" onclick="openEditModal('<?= htmlspecialchars($file) ?>','proxy')" data-tooltip="edit"><i class="bi bi-pen"></i></button>
+              <button type="button" class="btn btn-info icon-btn" onclick="openUploadModal('proxy')" data-tooltip="upload"><i class="bi bi-upload"></i></button>
+              <form method="get" class="d-inline m-0 p-0 no-loader">
+                <input type="hidden" name="downloadFile" value="<?= htmlspecialchars($file) ?>">
+                <input type="hidden" name="fileType" value="proxy">
+                <button type="submit" class="btn btn-primary icon-btn" data-tooltip="download"><i class="bi bi-download"></i></button>
+              </form>
+            <?php else: ?>
+              <form method="post" class="d-inline m-0 p-0">
+                <input type="hidden" name="deleteConfigFile" value="<?= htmlspecialchars($file) ?>">
+                <button type="submit" class="btn btn-danger icon-btn" onclick="return confirmDelete('<?= htmlspecialchars($file) ?>', event)" data-tooltip="delete"><i class="bi bi-trash"></i></button>
+              </form>
+              <button type="button" class="btn btn-success icon-btn" data-bs-toggle="modal" data-bs-target="#renameModal" data-filename="<?= htmlspecialchars($file) ?>" data-filetype="config" data-tooltip="rename"><i class="bi bi-pencil"></i></button>
+              <button type="button" class="btn btn-warning icon-btn" onclick="openEditModal('<?= htmlspecialchars($file) ?>','config')" data-tooltip="edit"><i class="bi bi-pen"></i></button>
+              <button type="button" class="btn btn-info icon-btn" onclick="openUploadModal('config')" data-tooltip="upload"><i class="bi bi-upload"></i></button>
+              <form method="get" class="d-inline m-0 p-0 no-loader">
+                <input type="hidden" name="downloadFile" value="<?= htmlspecialchars($file) ?>">
+                <input type="hidden" name="fileType" value="config">
+                <button type="submit" class="btn btn-primary icon-btn" data-tooltip="download"><i class="bi bi-download"></i></button>
+              </form>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+</div>
+
+<footer class="text-center">
+    <p><?php echo $footer ?></p>
+</footer>
 
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
@@ -810,9 +880,7 @@ function displayUpdateNotification() {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="renameModalLabel" data-translate="rename_file"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="renameForm" action="" method="post">
@@ -823,12 +891,11 @@ function displayUpdateNotification() {
                         <label for="newFileName" class="form-label" data-translate="new_file_name"></label>
                         <input type="text" class="form-control" id="newFileName" name="newFileName" required>
                     </div>
-
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel"></button>
-                        <button type="submit" class="btn btn-primary" data-translate="save"></button>
-                    </div>
                 </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel"></button>
+                <button type="submit" form="renameForm" class="btn btn-primary" data-translate="save"></button>
             </div>
         </div>
     </div>
@@ -839,21 +906,20 @@ function displayUpdateNotification() {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel"><?php echo $langData[$currentLang]['editFile']; ?>: <span id="editingFileName"></span></h5>
-
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="editForm" action="" method="post" onsubmit="syncEditorContent()">
                     <textarea name="saveContent" id="fileContent" class="form-control" style="height: 500px;"></textarea>
                     <input type="hidden" name="fileName" id="hiddenFileName">
                     <input type="hidden" name="fileType" id="hiddenFileType">
-                    <div class="mt-3 d-flex justify-content-start gap-2">
-                        <button type="submit" class="btn btn-primary" data-translate="save"></button>
-                        <button type="button" class="btn btn-pink" onclick="openFullScreenEditor()" data-translate="advancedEdit"></button>
-                    </div>
                 </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-pink" onclick="openFullScreenEditor()" data-translate="advancedEdit"></button>
+                <button id="aceScriptToggleBtn" class="btn btn-secondary" onclick="toggleAceScript()"><i id="aceIcon" class="bi bi-code-slash"></i> <span id="aceLabel"></span></button>
+                <button type="submit" form="editForm" class="btn btn-primary" data-translate="save"></button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close"></button>
             </div>
         </div>
     </div>
@@ -937,369 +1003,440 @@ function displayUpdateNotification() {
 </div>
 
 <script>
-let isJsonDetected = false;
+let aceEnabled = null;
 
+function checkAceScript() {
+    fetch('ace_loader.php?action=check')
+        .then(response => response.text())
+        .then(result => {
+            aceEnabled = (result.trim() === '1');
+            updateAceButton();
+        });
+}
+
+function toggleAceScript() {
+    const action = aceEnabled ? 'remove' : 'add';
+    fetch('ace_loader.php?action=' + action)
+        .then(response => response.text())
+        .then(result => {
+            aceEnabled = !aceEnabled;
+            updateAceButton();
+            document.getElementById('aceScriptStatus').innerText = result;
+        })
+        .catch(error => {
+            document.getElementById('aceScriptStatus').innerText = '请求失败: ' + error;
+        });
+}
+
+function updateAceButton() {
+    const btn = document.getElementById('aceScriptToggleBtn');
+    const icon = document.getElementById('aceIcon');
+    const label = document.getElementById('aceLabel');
+
+    if (aceEnabled) {
+        btn.className = 'btn btn-danger';
+        icon.className = 'bi bi-x-circle';
+        label.textContent = langData[currentLang]?.remove_ace || 'Remove Ace Component';
+    } else {
+        btn.className = 'btn btn-success';
+        icon.className = 'bi bi-plus-circle';
+        label.textContent = langData[currentLang]?.add_ace || 'Add Ace Component';
+    }
+}
+
+checkAceScript();
+</script>
+
+<script>
+let isJsonDetected = false;
 let aceEditorInstance;
 
 function initializeAceEditor() {
     aceEditorInstance = ace.edit("aceEditorContainer");
     const savedTheme = localStorage.getItem("editorTheme") || "ace/theme/vibrant_ink";
     aceEditorInstance.setTheme(savedTheme);
-    aceEditorInstance.session.setMode("ace/mode/javascript"); 
+    aceEditorInstance.session.setMode("ace/mode/javascript");
     aceEditorInstance.setOptions({
         fontSize: "20px",
         wrap: true
     });
 
     document.getElementById("editorTheme").value = savedTheme;
+
     aceEditorInstance.getSession().on('change', () => {
         updateEditorStatus();
         detectContentFormat();
     });
+
     aceEditorInstance.selection.on('changeCursor', updateEditorStatus);
-    detectContentFormat(); 
+    detectContentFormat();
+}
+
+function openFullScreenEditor() {
+    aceEditorInstance.setValue(document.getElementById('fileContent').value, -1);
+    $('#fullScreenEditorModal').modal('show');
+    updateEditorStatus();
+}
+
+function saveFullScreenContent() {
+    document.getElementById('fileContent').value = aceEditorInstance.getValue();
+    $('#fullScreenEditorModal').modal('hide');
+    $('#editModal').modal('hide');
+    document.getElementById('editForm').submit();
+}
+
+function closeFullScreenEditor() {
+    $('#fullScreenEditorModal').modal('hide');
+}
+
+function changeFontSize() {
+    const fontSize = document.getElementById("fontSize").value;
+    aceEditorInstance.setFontSize(fontSize);
+}
+
+function changeEditorTheme() {
+    const theme = document.getElementById("editorTheme").value;
+    aceEditorInstance.setTheme(theme);
+    localStorage.setItem("editorTheme", theme);
+}
+
+function openSearch() {
+    if (!aceEditorInstance) {
+        console.error("Ace Editor instance not initialized.");
+        return;
     }
 
-    function openFullScreenEditor() {
-        aceEditorInstance.setValue(document.getElementById('fileContent').value, -1); 
-        $('#fullScreenEditorModal').modal('show'); 
-        updateEditorStatus(); 
-    }
+    aceEditorInstance.execCommand("find");
 
-    function saveFullScreenContent() {
-        document.getElementById('fileContent').value = aceEditorInstance.getValue();
-        $('#fullScreenEditorModal').modal('hide'); 
-        $('#editModal').modal('hide'); 
-        document.getElementById('editForm').submit(); 
-    }
+    setTimeout(() => {
+        const searchBox = document.querySelector(".ace_search");
+        if (!searchBox) return;
 
-    function closeFullScreenEditor() {
-        $('#fullScreenEditorModal').modal('hide');
-    }
+        const searchInput = searchBox.querySelector(".ace_search_form .ace_search_field");
+        if (searchInput) {
+            searchInput.placeholder = translations['search_placeholder'] || 'Search...';
+        }
 
-    function changeFontSize() {
-        const fontSize = document.getElementById("fontSize").value;
-        aceEditorInstance.setFontSize(fontSize);
-    }
+        const replaceInput = searchBox.querySelector(".ace_replace_form .ace_search_field");
+        if (replaceInput) {
+            replaceInput.placeholder = translations['replace_placeholder'] || 'Replace with...';
+        }
 
-    function changeEditorTheme() {
-        const theme = document.getElementById("editorTheme").value;
-        aceEditorInstance.setTheme(theme);
-        localStorage.setItem("editorTheme", theme); 
-    }
+        const buttons = searchBox.querySelectorAll(".ace_searchbtn");
+        buttons.forEach(button => {
+            const action = button.getAttribute("action");
+            switch (action) {
+                case "findPrev":
+                    button.textContent = "";
+                    button.onclick = () => {
+                        aceEditorInstance.execCommand("findprevious");
+                        aceEditorInstance.scrollToLine(
+                            aceEditorInstance.getCursorPosition().row,
+                            true,
+                            true
+                        );
+                    };
+                    break;
+                case "findNext":
+                    button.textContent = "";
+                    button.onclick = () => {
+                        aceEditorInstance.execCommand("findnext");
+                        aceEditorInstance.scrollToLine(
+                            aceEditorInstance.getCursorPosition().row,
+                            true,
+                            true
+                        );
+                    };
+                    break;
+                case "findAll":
+                    button.textContent = translations['find_all'] || 'All';
+                    break;
+                case "replaceAndFindNext":
+                    button.textContent = translations['replace'] || 'Replace';
+                    break;
+                case "replaceAll":
+                    button.textContent = translations['replace_all'] || 'Replace All';
+                    break;
+            }
+        });
 
-    function openSearch() {
-        aceEditorInstance.execCommand("find");
-    }
+        const optionButtons = searchBox.querySelectorAll(".ace_button");
+        optionButtons.forEach(button => {
+            const action = button.getAttribute("action");
+            switch (action) {
+                case "toggleReplace":
+                    button.title = translations['toggle_replace_mode'] || 'Toggle Replace Mode';
+                    break;
+                case "toggleRegexpMode":
+                    button.title = translations['toggle_regexp_mode'] || 'Regular Expression Search';
+                    break;
+                case "toggleCaseSensitive":
+                    button.title = translations['toggle_case_sensitive'] || 'Case-Sensitive Search';
+                    break;
+                case "toggleWholeWords":
+                    button.title = translations['toggle_whole_words'] || 'Whole Word Search';
+                    break;
+                case "searchInSelection":
+                    button.title = translations['search_in_selection'] || 'Search in Selection';
+                    break;
+            }
+        });
 
-    function isYamlFormat(content) {
-            const yamlPattern = /^(---|\w+:\s)/m;
-            return yamlPattern.test(content);
-    }
+        const counter = searchBox.querySelector(".ace_search_counter");
+        if (counter && counter.textContent.includes("of")) {
+            counter.textContent = counter.textContent.replace(
+                "of",
+                translations['search_counter_of'] || 'of'
+            );
+        }
+    }, 100);
+}
 
-    function validateJsonSyntax() {
-            const content = aceEditorInstance.getValue();
-            let annotations = [];
-        try {
-            JSON.parse(content);
-            alert(langData[currentLang]['validateJson'] + " " + langData[currentLang]['jsonSyntaxCorrect']); 
-        } catch (e) {
-            const line = e.lineNumber ? e.lineNumber - 1 : 0;
-            annotations.push({
+function isYamlFormat(content) {
+    const yamlPattern = /^(---|\w+:\s)/m;
+    return yamlPattern.test(content);
+}
+
+function validateJsonSyntax() {
+    const content = aceEditorInstance.getValue();
+    const annotations = [];
+    try {
+        JSON.parse(content);
+        alert(`${langData[currentLang]['validateJson']} ${langData[currentLang]['jsonSyntaxCorrect']}`);
+    } catch (e) {
+        const line = e.lineNumber ? e.lineNumber - 1 : 0;
+        annotations.push({
             row: line,
             column: 0,
             text: e.message,
             type: "error"
         });
         aceEditorInstance.session.setAnnotations(annotations);
-        alert(langData[currentLang]['validateJson'] + " " + langData[currentLang]['jsonSyntaxError'] + ": " + e.message); 
-        }
+        alert(
+            `${langData[currentLang]['validateJson']} ${langData[currentLang]['jsonSyntaxError']}: ${e.message}`
+        );
     }
+}
 
-    function validateYamlSyntax() {
-            const content = aceEditorInstance.getValue();
-            let annotations = [];
-        try {
-            jsyaml.load(content); 
-            alert(langData[currentLang]['validateYaml'] + " " + langData[currentLang]['yamlSyntaxCorrect']);
-        } catch (e) {
-            const line = e.mark ? e.mark.line : 0;
-            annotations.push({
+function validateYamlSyntax() {
+    const content = aceEditorInstance.getValue();
+    const annotations = [];
+    try {
+        jsyaml.load(content);
+        alert(`${langData[currentLang]['validateYaml']} ${langData[currentLang]['yamlSyntaxCorrect']}`);
+    } catch (e) {
+        const line = e.mark ? e.mark.line : 0;
+        annotations.push({
             row: line,
             column: 0,
             text: e.message,
             type: "error"
         });
         aceEditorInstance.session.setAnnotations(annotations);
-        alert(langData[currentLang]['validateYaml'] + " " + langData[currentLang]['yamlSyntaxError'] + ": " + e.message); 
-        }
+        alert(
+            `${langData[currentLang]['validateYaml']} ${langData[currentLang]['yamlSyntaxError']}: ${e.message}`
+        );
     }
+}
 
-    function formatContent() {
-        const content = aceEditorInstance.getValue();
-        const mode = aceEditorInstance.session.$modeId;
-        let formattedContent;
+function formatContent() {
+    const content = aceEditorInstance.getValue();
+    const mode = aceEditorInstance.session.$modeId;
+    let formattedContent;
 
-        try {
-            if (mode === "ace/mode/json") {
-                formattedContent = JSON.stringify(JSON.parse(content), null, 4);
-                aceEditorInstance.setValue(formattedContent, -1);
-                alert(langData[currentLang]['formatIndentation'] + " " + langData[currentLang]['jsonFormatSuccess']);
-            } else if (mode === "ace/mode/javascript") {
-                formattedContent = js_beautify(content, { indent_size: 4 });
-                aceEditorInstance.setValue(formattedContent, -1);
-                alert(langData[currentLang]['formatIndentation'] + " " + langData[currentLang]['jsFormatSuccess']); 
-            } else {
-                alert(langData[currentLang]['formatIndentation'] + " " + langData[currentLang]['unsupportedMode']);
-            }
-        } catch (e) {
-            alert(langData[currentLang]['formatIndentation'] + " " + langData[currentLang]['formatError'] + ": " + e.message); 
-        }
-    }
-
-
-    function formatYamlContent() {
-        const content = aceEditorInstance.getValue();
-        
-        try {
-            const yamlObject = jsyaml.load(content); 
-            const formattedYaml = jsyaml.dump(yamlObject, { indent: 4 }); 
-            aceEditorInstance.setValue(formattedYaml, -1);
-            alert(langData[currentLang]['yamlFormatSuccess']);
-        } catch (e) {
-            alert(langData[currentLang]['yamlSyntaxError'] + ": " + e.message);
-        }
-    }
-
-    function detectContentFormat() {
-        const content = aceEditorInstance.getValue().trim();
-
-        if (isJsonDetected) {
-            document.getElementById("jsonValidationBtn").style.display = "inline-block";
-            document.getElementById("yamlValidationBtn").style.display = "none";
-            document.getElementById("yamlFormatBtn").style.display = "none"; 
-            return;
-        }
-
-        try {
-            JSON.parse(content);
-            document.getElementById("jsonValidationBtn").style.display = "inline-block";
-            document.getElementById("yamlValidationBtn").style.display = "none";
-            document.getElementById("yamlFormatBtn").style.display = "none"; 
-            isJsonDetected = true; 
-        } catch {
-            if (isYamlFormat(content)) {
-                document.getElementById("jsonValidationBtn").style.display = "none";
-                document.getElementById("yamlValidationBtn").style.display = "inline-block";
-                document.getElementById("yamlFormatBtn").style.display = "inline-block"; 
-            } else {
-                document.getElementById("jsonValidationBtn").style.display = "none";
-                document.getElementById("yamlValidationBtn").style.display = "none";
-                document.getElementById("yamlFormatBtn").style.display = "none"; 
-            }
-        }
-    }
-
-    function openEditModal(fileName, fileType) {
-        document.getElementById('editingFileName').textContent = fileName;
-        document.getElementById('hiddenFileName').value = fileName;
-        document.getElementById('hiddenFileType').value = fileType;
-
-        fetch(`?editFile=${encodeURIComponent(fileName)}&fileType=${fileType}`)
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('fileContent').value = data; 
-                $('#editModal').modal('show');
-            })
-            .catch(error => console.error('Failed to retrieve file content:', error));
-    }
-
-    function syncEditorContent() {
-        document.getElementById('fileContent').value = document.getElementById('fileContent').value;
-    }
-
-    function updateEditorStatus() {
-        const cursor = aceEditorInstance.getCursorPosition();
-        const line = cursor.row + 1;
-        const column = cursor.column + 1;
-        const charCount = aceEditorInstance.getValue().length;
-
-        const lineColumnText = langData[currentLang]['lineColumnDisplay'].replace("{line}", line).replace("{column}", column);
-        const charCountText = langData[currentLang]['charCountDisplay'].replace("{charCount}", charCount);
-
-        document.getElementById('lineColumnDisplay').textContent = lineColumnText;
-        document.getElementById('charCountDisplay').textContent = charCountText;
-    }
-
-    $(document).ready(function() {
-        initializeAceEditor();
-    });
-
-    document.addEventListener("DOMContentLoaded", function() {
-        const renameButtons = document.querySelectorAll(".btn-rename");
-        renameButtons.forEach(button => {
-            button.addEventListener("click", function() {
-                const oldFileName = this.getAttribute("data-filename");
-                const fileType = this.getAttribute("data-filetype");
-                document.getElementById("oldFileName").value = oldFileName;
-                document.getElementById("fileType").value = fileType;
-                document.getElementById("newFileName").value = oldFileName;
-                $('#renameModal').modal('show');
-            });
-        });
-    });
-
-    function toggleFullscreen() {
-        const modal = document.getElementById('fullScreenEditorModal');
-    
-        if (!document.fullscreenElement) {
-            modal.requestFullscreen()
-                .then(() => {
-                    document.getElementById('toggleFullscreenBtn').textContent = 'Exit Fullscreen';
-                })
-                .catch((err) => console.error(`Error attempting to enable full-screen mode: ${err.message}`));
+    try {
+        if (mode === "ace/mode/json") {
+            formattedContent = JSON.stringify(JSON.parse(content), null, 4);
+            aceEditorInstance.setValue(formattedContent, -1);
+            alert(`${langData[currentLang]['formatIndentation']} ${langData[currentLang]['jsonFormatSuccess']}`);
+        } else if (mode === "ace/mode/javascript") {
+            formattedContent = js_beautify(content, { indent_size: 4 });
+            aceEditorInstance.setValue(formattedContent, -1);
+            alert(`${langData[currentLang]['formatIndentation']} ${langData[currentLang]['jsFormatSuccess']}`);
         } else {
-            document.exitFullscreen()
-                .then(() => {
-                    document.getElementById('toggleFullscreenBtn').textContent = 'Fullscreen';
-                })
-                .catch((err) => console.error(`Error attempting to exit full-screen mode: ${err.message}`));
-            }
-       }
+            alert(`${langData[currentLang]['formatIndentation']} ${langData[currentLang]['unsupportedMode']}`);
+        }
+    } catch (e) {
+        alert(`${langData[currentLang]['formatIndentation']} ${langData[currentLang]['formatError']}: ${e.message}`);
+    }
+}
 
-    let fileType = ''; 
-    function openUploadModal(type) {
-        fileType = type;
-        const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
-        modal.show();
+function formatYamlContent() {
+    const content = aceEditorInstance.getValue();
+    try {
+        const yamlObject = jsyaml.load(content);
+        const formattedYaml = jsyaml.dump(yamlObject, { indent: 4 });
+        aceEditorInstance.setValue(formattedYaml, -1);
+        alert(langData[currentLang]['yamlFormatSuccess']);
+    } catch (e) {
+        alert(`${langData[currentLang]['yamlSyntaxError']}: ${e.message}`);
+    }
+}
+
+function detectContentFormat() {
+    const content = aceEditorInstance.getValue().trim();
+
+    if (isJsonDetected) {
+        document.getElementById("jsonValidationBtn").style.display = "inline-block";
+        document.getElementById("yamlValidationBtn").style.display = "none";
+        document.getElementById("yamlFormatBtn").style.display = "none";
+        return;
     }
 
-    const dropZone = document.getElementById('dropZone');
-    dropZone.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        dropZone.classList.add('bg-light');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('bg-light');
-    });
-
-    dropZone.addEventListener('drop', (event) => {
-        event.preventDefault();
-        dropZone.classList.remove('bg-light');
-        const files = event.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileUpload(files[0]);
+    try {
+        JSON.parse(content);
+        document.getElementById("jsonValidationBtn").style.display = "inline-block";
+        document.getElementById("yamlValidationBtn").style.display = "none";
+        document.getElementById("yamlFormatBtn").style.display = "none";
+        isJsonDetected = true;
+    } catch {
+        if (isYamlFormat(content)) {
+            document.getElementById("jsonValidationBtn").style.display = "none";
+            document.getElementById("yamlValidationBtn").style.display = "inline-block";
+            document.getElementById("yamlFormatBtn").style.display = "inline-block";
+        } else {
+            document.getElementById("jsonValidationBtn").style.display = "none";
+            document.getElementById("yamlValidationBtn").style.display = "none";
+            document.getElementById("yamlFormatBtn").style.display = "none";
         }
-    });
+    }
+}
 
-    document.getElementById('selectFileBtn').addEventListener('click', () => {
-        document.getElementById('fileInputModal').click();
-    });
+function openEditModal(fileName, fileType) {
+    document.getElementById('editingFileName').textContent = fileName;
+    document.getElementById('hiddenFileName').value = fileName;
+    document.getElementById('hiddenFileType').value = fileType;
 
-    document.getElementById('fileInputModal').addEventListener('change', (event) => {
-        const files = event.target.files;
-        if (files.length > 0) {
-            handleFileUpload(files[0]);
-        }
-    });
-
-    function handleFileUpload(file) {
-        const formData = new FormData();
-        formData.append(fileType === 'proxy' ? 'fileInput' : 'configFileInput', file);
-
-        fetch('', {
-            method: 'POST',
-            body: formData,
+    fetch(`?editFile=${encodeURIComponent(fileName)}&fileType=${fileType}`)
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById('fileContent').value = data;
+            $('#editModal').modal('show');
         })
-            .then((response) => response.text())
-            .then((result) => {
-                alert(result);
-                location.reload(); 
+        .catch(err => console.error('Failed to retrieve file content:', err));
+}
+
+function syncEditorContent() {
+    document.getElementById('fileContent').value = document.getElementById('fileContent').value;
+}
+
+function updateEditorStatus() {
+    const cursor = aceEditorInstance.getCursorPosition();
+    const line = cursor.row + 1;
+    const column = cursor.column + 1;
+    const charCount = aceEditorInstance.getValue().length;
+
+    const lineColumnText = langData[currentLang]['lineColumnDisplay']
+        .replace("{line}", line)
+        .replace("{column}", column);
+    const charCountText = langData[currentLang]['charCountDisplay']
+        .replace("{charCount}", charCount);
+
+    document.getElementById('lineColumnDisplay').textContent = lineColumnText;
+    document.getElementById('charCountDisplay').textContent = charCountText;
+}
+
+$(document).ready(() => {
+    initializeAceEditor();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const renameModal = document.getElementById('renameModal');
+    renameModal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        const oldFileName = button.getAttribute('data-filename');
+        const fileType = button.getAttribute('data-filetype');
+
+        document.getElementById("oldFileName").value = oldFileName;
+        document.getElementById("fileType").value = fileType;
+        document.getElementById("newFileName").value = oldFileName;
+    });
+});
+
+function toggleFullscreen() {
+    const modal = document.getElementById('fullScreenEditorModal');
+
+    if (!document.fullscreenElement) {
+        modal.requestFullscreen()
+            .then(() => {
+                document.getElementById('toggleFullscreenBtn').textContent = 'Exit Fullscreen';
+            })
+            .catch(err => console.error(`Error attempting to enable full-screen mode: ${err.message}`));
+    } else {
+        document.exitFullscreen()
+            .then(() => {
+                document.getElementById('toggleFullscreenBtn').textContent = 'Fullscreen';
+            })
+            .catch(err => console.error(`Error attempting to exit full-screen mode: ${err.message}`));
+    }
+}
+
+let fileType = '';
+
+function openUploadModal(type) {
+    fileType = type;
+    const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+    modal.show();
+}
+
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('bg-light');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('bg-light');
+});
+
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('bg-light');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) handleFileUpload(files[0]);
+});
+
+document.getElementById('selectFileBtn').addEventListener('click', () => {
+    document.getElementById('fileInputModal').click();
+});
+
+document.getElementById('fileInputModal').addEventListener('change', e => {
+    const files = e.target.files;
+    if (files.length > 0) handleFileUpload(files[0]);
+});
+
+function handleFileUpload(file) {
+    const formData = new FormData();
+    formData.append(fileType === 'proxy' ? 'fileInput' : 'configFileInput', file);
+
+    fetch('', {
+        method: 'POST',
+        body: formData
+    })
+        .then(res => res.text())
+        .then(result => {
+            alert(result);
+            location.reload();
         })
-            .catch((error) => {
-                alert('上传失败：' + error.message);
+        .catch(error => {
+            alert('上传失败：' + error.message);
         });
-    }
+}
 
-    function confirmDelete() {
-        return confirm(langData[currentLang]['confirmDelete']);
-    }
+function confirmDelete(name, event) {
+    let confirmMessage = translations['delete_confirm'] 
+        || '⚠️ Are you sure you want to delete "{name}"? This action cannot be undone!';
+    
+    confirmMessage = confirmMessage.replace('{name}', name);
+
+    showConfirmation(encodeURIComponent(confirmMessage), () => {
+        event.target.closest('form').submit();
+    });
+
+    return false;
+}
 </script>
-<h2 class="text-center mt-4 mb-4" data-translate="subscriptionManagement"></h2>
-
-<?php if (isset($message) && $message): ?>
-    <div class="alert alert-info">
-        <?php echo nl2br(htmlspecialchars($message)); ?>
-    </div>
-<?php endif; ?>
-
-<?php if (isset($subscriptions) && is_array($subscriptions)): ?>
-    <div class="container-fluid section-settings">
-        <div class="row">
-            <?php 
-            $maxSubscriptions = 6; 
-            for ($i = 0; $i < $maxSubscriptions; $i++): 
-                $displayIndex = $i + 1; 
-                $url = $subscriptions[$i]['url'] ?? '';
-                $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . ($displayIndex) . ".yaml"; 
-            ?>
-                <div class="col-md-4 mb-3 px-1">
-                    <form method="post" class="card shadow-sm">
-                        <div class="card-body">
-                            <div class="form-group">
-                                <h5 for="subscription_url_<?php echo $displayIndex; ?>" class="mb-2" data-translate="subscriptionLink"><?php echo $displayIndex; ?></h5>
-                                <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" data-translate-placeholder="enterSubscriptionUrl">
-                            </div>
-                            <div class="form-group">
-                                <label for="custom_file_name_<?php echo $displayIndex; ?>"data-translate="customFileName"></label>
-                                <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
-                            </div>
-                            <input type="hidden" name="index" value="<?php echo $i; ?>">
-                            <div class="text-center mt-3"> 
-                                <button type="submit" name="update" class="btn btn-info btn-block"><i class="bi bi-arrow-repeat"></i> <span data-translate="updateSubscription">Settings</span> <?php echo $displayIndex; ?></button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <?php if (($displayIndex) % 3 == 0 && $displayIndex < $maxSubscriptions): ?>
-                    </div><div class="row">
-                <?php endif; ?>
-
-            <?php endfor; ?>
-        </div>
-    </div>
-<?php else: ?>
-    <p>未找到订阅信息。</p>
-<?php endif; ?>
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-    <div class="container">
-        <h2 class="mt-4 mb-4 text-center" data-translate="auto_update_title"></h2>
-        <form method="post" class="text-center">
-        <div class="d-flex flex-wrap justify-content-center gap-2">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cronModal">
-                <i class="bi bi-clock"></i> <span data-translate="set_cron_job"></span>
-            </button>
-            <button type="submit" name="createShellScript" value="true" class="btn btn-success">
-                <i class="bi bi-terminal"></i> <span data-translate="generate_update_script"></span>
-            </button>
-            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#downloadModal">
-                <i class="bi bi-download"></i> <span data-translate="update_database"></span>
-            </button>
-            <a class="btn btn-pink btn-sm text-white" target="_blank" href="./filekit.php" style="font-size: 14px; font-weight: bold;">
-                <i class="bi bi-file-earmark-text"></i> <span data-translate="open_file_helper"></span>
-            </a>
-        </div>
-        </form>
-    </div>
-
     <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -1319,7 +1456,8 @@ function initializeAceEditor() {
                                 <option value="cache">cache.db</option>
                             </select>
                         </div>
-                        <div class="d-flex justify-content-end">
+                    </div>
+                        <div class="modal-footer d-flex justify-content-end gap-3">
                             <button type="submit" class="btn btn-primary me-2" data-translate="download_button"></button>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button"></button>
                         </div>
@@ -1328,8 +1466,6 @@ function initializeAceEditor() {
             </div>
         </div>
     </div>
-</div>
-
 <form method="POST">
     <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-lg" role="document">
@@ -1361,45 +1497,5 @@ function initializeAceEditor() {
         </div>
     </div>
 </form>
-    </div>
-<script>
-    document.getElementById('pasteButton').onclick = function() {
-        window.open('https://paste.gg', '_blank');
-    }
-    document.getElementById('base64Button').onclick = function() {
-        window.open('https://base64.us', '_blank');
-    }
-</script>
-
-<style>
-    .btn-group {
-        display: flex;
-        gap: 10px; 
-        justify-content: center; 
-    }
-    .btn {
-        margin: 0; 
-    }
-
-    .table-dark {
-        background-color: #6f42c1; 
-        color: white; 
-    }
-    .table-dark th, .table-dark td {
-        background-color: #5a32a3; 
-    }
-
-    #cronModal .alert {
-        text-align: left; 
-    }
-
-    #cronModal code {
-        white-space: pre-wrap; 
-    }
-
-</style>
-
 </div>
-      <footer class="text-center">
-    <p><?php echo $footer ?></p>
-</footer>
+

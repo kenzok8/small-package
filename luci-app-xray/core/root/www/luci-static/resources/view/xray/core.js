@@ -586,19 +586,25 @@ return view.extend({
         ss.sortable = false;
         ss.anonymous = true;
         ss.addremove = true;
+        ss.nodescriptions = true;
 
-        o = ss.option(form.Value, "source_addr", _("Source Address"));
-        o.datatype = "ipaddr";
+        o = ss.option(form.Value, "source_addr", _("Source Address"), _("Fill an IP address or a rule like <code>geoip:cn</code> or <code>ext:/geoip/cloudflare.dat:cloudflare</code>."));
+        o.validate = shared.validate_ip_or_geoip;
+        o.rmempty = false;
 
-        o = ss.option(form.Value, "source_port", _("Source Port"));
+        o = ss.option(form.Value, "source_port", _("Source Port"), _("Leave empty to forward all ports."));
+        o.textvalue = s => uci.get(config_data, s)?.source_port || _("<i>any</i>");
+        o.validate = shared.validate_port_expression;
 
-        o = ss.option(form.Value, "dest_addr", _("Destination Address"));
+        o = ss.option(form.Value, "dest_addr", _("Destination Address"), _("Leave empty to keep original address unchanged."));
+        o.textvalue = s => uci.get(config_data, s)?.dest_addr || _("<i>original</i>");
         o.datatype = "host";
 
-        o = ss.option(form.Value, "dest_port", _("Destination Port"));
+        o = ss.option(form.Value, "dest_port", _("Destination Port"), _("Fill <code>0</code> to keep original port unchanged."));
         o.datatype = "port";
+        o.rmempty = false;
 
-        o = ss.option(form.DynamicList, "domain_names", _("Domain names to associate"));
+        o = ss.option(form.DynamicList, "domain_names", _("Domain names to associate"), _("Resolve these domains to Source Address above. Only possible when an IP address is used."));
         o.textvalue = list_folded_format(config_data, "domain_names", "domains", 20);
 
         o = ss.option(form.Flag, 'rebind_domain_ok', _('Exempt rebind protection'), _('Avoid dnsmasq filtering RFC1918 IP addresses (and some TESTNET addresses as well) from result.<br/>Must be enabled for TESTNET addresses (<code>192.0.2.0/24</code>, <code>198.51.100.0/24</code>, <code>203.0.113.0/24</code>). Addresses like <a href="https://www.as112.net/">AS112 Project</a> (<code>192.31.196.0/24</code>, <code>192.175.48.0/24</code>) or <a href="https://www.nyiix.net/technical/rtbh/">NYIIX RTBH</a> (<code>198.32.160.7</code>) can avoid that.'));

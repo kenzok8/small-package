@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nikki
-PKG_VERSION:=2025.06.25
-PKG_RELEASE:=1
+PKG_VERSION:=2025.07.27
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/MetaCubeX/mihomo.git
-PKG_SOURCE_VERSION:=v1.19.11
-PKG_MIRROR_HASH:=93b70bba67852d2a2eb6549b8d0b3d441aabfe68e9c9c72998f95c82fa27d8ac
+PKG_SOURCE_VERSION:=v1.19.12
+PKG_MIRROR_HASH:=9ca38753d1b76268892cbf22e7d0f1348f58c0c6cff7305e87e41ea8193aba55
 
 PKG_LICENSE:=GPL3.0+
 PKG_MAINTAINER:=Joseph Mory <morytyann@gmail.com>
@@ -43,8 +43,6 @@ endef
 define Package/nikki/conffiles
 /etc/config/nikki
 /etc/nikki/mixin.yaml
-/etc/nikki/nftables/reserved_ip.nft
-/etc/nikki/nftables/reserved_ip6.nft
 endef
 
 define Package/nikki/install
@@ -71,8 +69,6 @@ define Package/nikki/install
 	$(INSTALL_BIN) $(CURDIR)/files/scripts/firewall_include.sh $(1)/etc/nikki/scripts/firewall_include.sh
 	$(INSTALL_BIN) $(CURDIR)/files/scripts/debug.sh $(1)/etc/nikki/scripts/debug.sh
 
-	$(INSTALL_BIN) $(CURDIR)/files/nftables/reserved_ip.nft $(1)/etc/nikki/nftables/reserved_ip.nft
-	$(INSTALL_BIN) $(CURDIR)/files/nftables/reserved_ip6.nft $(1)/etc/nikki/nftables/reserved_ip6.nft
 	$(INSTALL_BIN) $(CURDIR)/files/nftables/geoip_cn.nft $(1)/etc/nikki/nftables/geoip_cn.nft
 	$(INSTALL_BIN) $(CURDIR)/files/nftables/geoip6_cn.nft $(1)/etc/nikki/nftables/geoip6_cn.nft
 

@@ -1,7 +1,6 @@
 #!/bin/sh
 
 # paths
-PROG="/usr/bin/mihomo"
 HOME_DIR="/etc/nikki"
 PROFILES_DIR="$HOME_DIR/profiles"
 SUBSCRIPTIONS_DIR="$HOME_DIR/subscriptions"
@@ -26,7 +25,7 @@ BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH="$TEMP_DIR/bridge_nf_call_ip6tables.flag"
 
 # ucode
 UCODE_DIR="$HOME_DIR/ucode"
-INCLUDE_UCODE="$UCODE_DIR/include.uc"
+INCLUDE_UC="$UCODE_DIR/include.uc"
 MIXIN_UC="$UCODE_DIR/mixin.uc"
 HIJACK_UT="$UCODE_DIR/hijack.ut"
 
@@ -37,33 +36,32 @@ FIREWALL_INCLUDE_SH="$SH_DIR/firewall_include.sh"
 
 # nftables
 NFT_DIR="$HOME_DIR/nftables"
-RESERVED_IP_NFT="$NFT_DIR/reserved_ip.nft"
-RESERVED_IP6_NFT="$NFT_DIR/reserved_ip6.nft"
 GEOIP_CN_NFT="$NFT_DIR/geoip_cn.nft"
 GEOIP6_CN_NFT="$NFT_DIR/geoip6_cn.nft"
 
 # functions
 format_filesize() {
-	local kb; kb=1024
+	local b; b=1
+	local kb; kb=$((b * 1024))
 	local mb; mb=$((kb * 1024))
 	local gb; gb=$((mb * 1024))
 	local tb; tb=$((gb * 1024))
 	local pb; pb=$((tb * 1024))
 	local size; size="$1"
-	if [ -z "$size" ]; then
-		echo ""
-	elif [ "$size" -lt "$kb" ]; then
-		echo "$size B"
-	elif [ "$size" -lt "$mb" ]; then
-		echo "$(awk "BEGIN {print $size / $kb}") KB"
-	elif [ "$size" -lt "$gb" ]; then
-		echo "$(awk "BEGIN {print $size / $mb}") MB"
-	elif [ "$size" -lt "$tb" ]; then
-		echo "$(awk "BEGIN {print $size / $gb}") GB"
-	elif [ "$size" -lt "$pb" ]; then
-		echo "$(awk "BEGIN {print $size / $tb}") TB"
-	else
-		echo "$(awk "BEGIN {print $size / $pb}") PB"
+	if [ -n "$size" ]; then
+		if [ "$size" -lt "$kb" ]; then
+			echo "$(awk "BEGIN {print $size / $b}") B"
+		elif [ "$size" -lt "$mb" ]; then
+			echo "$(awk "BEGIN {print $size / $kb}") KB"
+		elif [ "$size" -lt "$gb" ]; then
+			echo "$(awk "BEGIN {print $size / $mb}") MB"
+		elif [ "$size" -lt "$tb" ]; then
+			echo "$(awk "BEGIN {print $size / $gb}") GB"
+		elif [ "$size" -lt "$pb" ]; then
+			echo "$(awk "BEGIN {print $size / $tb}") TB"
+		else
+			echo "$(awk "BEGIN {print $size / $pb}") PB"
+		fi
 	fi
 }
 

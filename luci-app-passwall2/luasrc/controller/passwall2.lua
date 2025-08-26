@@ -81,6 +81,8 @@ function index()
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_node"}, call("subscribe_del_node")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_all"}, call("subscribe_del_all")).leaf = true
+	entry({"admin", "services", appname, "subscribe_manual"}, call("subscribe_manual")).leaf = true
+	entry({"admin", "services", appname, "subscribe_manual_all"}, call("subscribe_manual_all")).leaf = true
 
 	--[[Components update]]
 	entry({"admin", "services", appname, "check_passwall2"}, call("app_check")).leaf = true
@@ -374,6 +376,9 @@ function clear_all_nodes()
 	end)
 	uci:foreach(appname, "subscribe_list", function(t)
 		uci:delete(appname, t[".name"], "md5")
+		uci:delete(appname, t[".name"], "chain_proxy")
+		uci:delete(appname, t[".name"], "preproxy_node")
+		uci:delete(appname, t[".name"], "to_node")
 	end)
 
 	api.uci_save(uci, appname, true, true)
@@ -408,6 +413,37 @@ function delete_select_nodes()
 			end
 		end)
 		uci:foreach(appname, "nodes", function(t)
+			if t["preproxy_node"] == w then
+				uci:delete(appname, t[".name"], "preproxy_node")
+				uci:delete(appname, t[".name"], "chain_proxy")
+			end
+			if t["to_node"] == w then
+				uci:delete(appname, t[".name"], "to_node")
+				uci:delete(appname, t[".name"], "chain_proxy")
+			end
+			local list_name = t["urltest_node"] and "urltest_node" or (t["balancing_node"] and "balancing_node")
+			if list_name then
+				local nodes = uci:get_list(appname, t[".name"], list_name)
+				if nodes then
+					local changed = false
+					local new_nodes = {}
+					for _, node in ipairs(nodes) do
+						if node ~= w then
+							table.insert(new_nodes, node)
+						else
+							changed = true
+						end
+					end
+					if changed then
+						uci:set_list(appname, t[".name"], list_name, new_nodes)
+					end
+				end
+			end
+			if t["fallback_node"] == w then
+				uci:delete(appname, t[".name"], "fallback_node")
+			end
+		end)
+		uci:foreach(appname, "subscribe_list", function(t)
 			if t["preproxy_node"] == w then
 				uci:delete(appname, t[".name"], "preproxy_node")
 				uci:delete(appname, t[".name"], "chain_proxy")
@@ -508,20 +544,29 @@ function create_backup()
 end
 
 function restore_backup()
+	local result = { status = "error", message = "unknown error" }
 	local ok, err = pcall(function()
 		local filename = http.formvalue("filename")
 		local chunk = http.formvalue("chunk")
 		local chunk_index = tonumber(http.formvalue("chunk_index") or "-1")
 		local total_chunks = tonumber(http.formvalue("total_chunks") or "-1")
-		if not filename or not chunk then
-			http_write_json({ status = "error", message = "Missing filename or chunk" })
+		if not filename then
+			result = { status = "error", message = "Missing filename" }
+			return
+		end
+		if not chunk then
+			result = { status = "error", message = "Missing chunk data" }
 			return
 		end
 		local file_path = "/tmp/" .. filename
 		local decoded = nixio.bin.b64decode(chunk)
+		if not decoded then
+			result = { status = "error", message = "Base64 decode failed" }
+			return
+		end
 		local fp = io.open(file_path, "a+")
 		if not fp then
-			http_write_json({ status = "error", message = "Failed to open file for writing: " .. file_path })
+			result = { status = "error", message = "Failed to open file: " .. file_path }
 			return
 		end
 		fp:write(decoded)
@@ -529,7 +574,7 @@ function restore_backup()
 		if chunk_index + 1 == total_chunks then
 			api.sys.call("echo '' > /tmp/log/passwall2.log")
 			api.log(" * PassWall2 配置文件上传成功…")
-			local temp_dir = '/tmp/passwall_bak'
+			local temp_dir = '/tmp/passwall2_bak'
 			api.sys.call("mkdir -p " .. temp_dir)
 			if api.sys.call("tar -xzf " .. file_path .. " -C " .. temp_dir) == 0 then
 				for _, backup_file in ipairs(backup_files) do
@@ -540,21 +585,23 @@ function restore_backup()
 				end
 				api.log(" * PassWall2 配置还原成功…")
 				api.log(" * 重启 PassWall2 服务中…\n")
-				api.sys.call('/etc/init.d/passwall2 restart > /dev/null 2>&1 &')
-				api.sys.call('/etc/init.d/passwall2_server restart > /dev/null 2>&1 &')
+				luci.sys.call('/etc/init.d/passwall2 restart > /dev/null 2>&1 &')
+				luci.sys.call('/etc/init.d/passwall2_server restart > /dev/null 2>&1 &')
+				result = { status = "success", message = "Upload completed", path = file_path }
 			else
 				api.log(" * PassWall2 配置文件解压失败，请重试！")
+				result = { status = "error", message = "Decompression failed" }
 			end
 			api.sys.call("rm -rf " .. temp_dir)
 			fs.remove(file_path)
-			http_write_json({ status = "success", message = "Upload completed", path = file_path })
 		else
-			http_write_json({ status = "success", message = "Chunk received" })
+			result = { status = "success", message = "Chunk received" }
 		end
 	end)
 	if not ok then
-		http_write_json({ status = "error", message = tostring(err) })
+		result = { status = "error", message = tostring(err) }
 	end
+	http_write_json(result)
 end
 
 function geo_view()
@@ -618,4 +665,52 @@ end
 function subscribe_del_all()
 	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua truncate > /dev/null 2>&1")
 	http.status(200, "OK")
+end
+
+function subscribe_manual()
+	local section = http.formvalue("section") or ""
+	local current_url = http.formvalue("url") or ""
+	if section == "" or current_url == "" then
+		http_write_json({ success = false, msg = "Missing section or URL, skip." })
+		return
+	end
+	local uci_url = api.sh_uci_get(appname, section, "url")
+	if not uci_url or uci_url == "" then
+		http_write_json({ success = false, msg = i18n.translate("Please save and apply before manually subscribing.") })
+		return
+	end
+	if uci_url ~= current_url then
+		api.sh_uci_set(appname, section, "url", current_url, true)
+	end
+	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua start " .. section .. " manual >/dev/null 2>&1 &")
+	http_write_json({ success = true, msg = "Subscribe triggered." })
+end
+
+function subscribe_manual_all()
+	local sections = http.formvalue("sections") or ""
+	local urls = http.formvalue("urls") or ""
+	if sections == "" or urls == "" then
+		http_write_json({ success = false, msg = "Missing section or URL, skip." })
+		return
+	end
+	local section_list = util.split(sections, ",")
+	local url_list = util.split(urls, ",")
+	-- 检查是否存在未保存配置
+	for i, section in ipairs(section_list) do
+		local uci_url = api.sh_uci_get(appname, section, "url")
+		if not uci_url or uci_url == "" then
+			http_write_json({ success = false, msg = i18n.translate("Please save and apply before manually subscribing.") })
+			return
+		end
+	end
+	-- 保存有变动的url
+	for i, section in ipairs(section_list) do
+		local current_url = url_list[i] or ""
+		local uci_url = api.sh_uci_get(appname, section, "url")
+		if current_url ~= "" and uci_url ~= current_url then
+			api.sh_uci_set(appname, section, "url", current_url, true)
+		end
+	end
+	luci.sys.call("lua /usr/share/" .. appname .. "/subscribe.lua start all manual >/dev/null 2>&1 &")
+	http_write_json({ success = true, msg = "Subscribe triggered." })
 end

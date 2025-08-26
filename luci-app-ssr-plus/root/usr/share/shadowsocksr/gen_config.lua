@@ -17,6 +17,9 @@ local xray_fragment = ucursor:get_all("shadowsocksr", "@global_xray_fragment[0]"
 local xray_noise = ucursor:get_all("shadowsocksr", "@xray_noise_packets[0]") or {}
 local outbound_settings = nil
 
+local node_id = server_section
+local remarks = server.alias or ""
+
 function vmess_vless()
 	outbound_settings = {
 		vnext = {
@@ -209,7 +212,19 @@ end
 				security = (server.xtls == '1') and "xtls" or (server.tls == '1') and "tls" or (server.reality == '1') and "reality" or nil,
 				tlsSettings = (server.tls == '1') and {
 					-- tls
-					alpn = (server.transport == "xhttp" and server.xhttp_alpn ~= "") and server.xhttp_alpn or server.tls_alpn,
+					alpn = (server.transport == "xhttp") and (function()
+						local alpn = {}
+						if server.xhttp_alpn and server.xhttp_alpn ~= "" then
+							string.gsub(server.xhttp_alpn, '[^,]+', function(w)
+								table.insert(alpn, w)
+							end)
+						end
+						if #alpn > 0 then
+							return alpn
+						else
+							return nil
+						end
+					end)() or nil,
 					fingerprint = server.fingerprint,
 					allowInsecure = (server.insecure == "1"),
 					serverName = server.tls_host,
@@ -217,6 +232,8 @@ end
 						usage = "verify",
 						certificateFile = server.certpath
 					} or nil,
+					echConfigList = (server.enable_ech == "1") and server.ech_config or nil,
+					echForceQuery = (server.enable_ech == "1") and (server.ech_ForceQuery or "none") or nil
 				} or nil,
 				xtlsSettings = (server.xtls == '1') and server.tls_host and {
 					-- xtls
@@ -230,12 +247,13 @@ end
 					shortId = server.reality_shortid,
 					spiderX = server.reality_spiderx,
 					fingerprint = server.fingerprint,
+					mldsa65Verify = (server.enable_mldsa65verify == '1') and server.reality_mldsa65verify or nil,
 					serverName = server.tls_host
 				} or nil,
 				rawSettings = (server.transport == "raw" or server.transport == "tcp") and {
 					-- tcp
 					header = {
-						type = server.tcp_guise or "none",
+						type = server.tcp_guise,
 						request = (server.tcp_guise == "http") and {
 							-- request
 							path = {server.http_path} or {"/"},
@@ -314,7 +332,8 @@ end
 					tcpMptcp = (server.mptcp == "1") and true or nil, -- MPTCP
 					Penetrate = (server.mptcp == "1") and true or nil, -- Penetrate MPTCP
 					tcpcongestion = server.custom_tcpcongestion, -- 连接服务器节点的 TCP 拥塞控制算法
-					dialerProxy = (xray_fragment.fragment == "1" or xray_fragment.noise == "1") and "dialerproxy" or nil
+					dialerProxy = (xray_fragment.fragment == "1" or xray_fragment.noise == "1") and
+					              ((remarks ~= nil and remarks ~= "") and (node_id .. "." .. remarks) or node_id) or nil
 				}
 			} or nil,
 			mux = (server.v2ray_protocol ~= "wireguard") and {
@@ -331,19 +350,21 @@ end
 if xray_fragment.fragment ~= "0" or (xray_fragment.noise ~= "0" and xray_noise.enabled ~= "0") then
 	table.insert(Xray.outbounds, {
 		protocol = "freedom",
-		tag = "dialerproxy",
+		tag = (remarks ~= nil and remarks ~= "") and (node_id .. "." .. remarks) or node_id,
 		settings = {
 			domainStrategy = (xray_fragment.noise == "1" and xray_noise.enabled == "1") and xray_noise.domainStrategy,
 			fragment = (xray_fragment.fragment == "1") and {
 				packets = (xray_fragment.fragment_packets ~= "") and xray_fragment.fragment_packets or nil,
 				length = (xray_fragment.fragment_length ~= "") and xray_fragment.fragment_length or nil,
-				interval = (xray_fragment.fragment_interval ~= "") and xray_fragment.fragment_interval or nil
+				interval = (xray_fragment.fragment_interval ~= "") and xray_fragment.fragment_interval or nil,
+				maxSplit = (xray_fragment.fragment_maxsplit ~= "") and xray_fragment.fragment_maxsplit or nil
 			} or nil,
 			noises = (xray_fragment.noise == "1" and xray_noise.enabled == "1") and {
 				{
 					type = xray_noise.type,
 					packet = xray_noise.packet,
-					delay = xray_noise.delay:find("-") and xray_noise.delay or tonumber(xray_noise.delay)
+					delay = xray_noise.delay:find("-") and xray_noise.delay or tonumber(xray_noise.delay),
+					applyTo = xray_noise.applyto
 				}
 			} or nil
 		},
@@ -571,7 +592,19 @@ local tuic = {
 			timeout = server.timeout and server.timeout .. "s" or nil,
 			gc_interval = server.gc_interval and server.gc_interval .. "s" or nil,
 			gc_lifetime = server.gc_lifetime and server.gc_lifetime .. "s" or nil,
-			alpn = server.tls_alpn,
+			alpn = (server.type == "tuic") and (function()
+				local alpn = {}
+				if server.tls_alpn and server.tls_alpn ~= "" then
+					string.gsub(server.tls_alpn, '[^,]+', function(w)
+						table.insert(alpn, w)
+					end)
+				end
+				if #alpn > 0 then
+					return alpn
+				else
+					return nil
+				end
+			end)() or nil,
 			disable_sni = (server.disable_sni == "1") and true or false,
 			zero_rtt_handshake = (server.zero_rtt_handshake == "1") and true or false,
 			send_window = tonumber(server.send_window),

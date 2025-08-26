@@ -1,6 +1,6 @@
 <?php
 include './cfg.php';
-
+$needRefresh = false;  
 $str_cfg = substr($selected_config, strlen("$neko_dir/config") + 1);
 $_IMG = '/luci-static/ssr/';
 $singbox_bin = '/usr/bin/sing-box';
@@ -9,6 +9,12 @@ $singbox_config_dir = '/etc/neko/config';
 $log = '/etc/neko/tmp/log.txt';
 $start_script_path = '/etc/neko/core/start.sh';
 
+$neko_enabled = exec("uci -q get neko.cfg.enabled");
+$singbox_enabled = exec("uci -q get neko.cfg.singbox_enabled");
+
+$neko_status = ($neko_enabled == '1') ? '1' : '0';
+$singbox_status = ($singbox_enabled == '1') ? '1' : '0';
+
 $log_dir = dirname($log);
 if (!file_exists($log_dir)) {
     mkdir($log_dir, 0755, true);
@@ -16,8 +22,6 @@ if (!file_exists($log_dir)) {
 
 $start_script_template = <<<'EOF'
 #!/bin/bash
-
-export ENABLE_DEPRECATED_TUN_ADDRESS_X=true 
 
 SINGBOX_LOG="%s"
 CONFIG_FILE="%s"
@@ -106,7 +110,7 @@ table inet singbox {
 
   chain mangle-prerouting {
     type filter hook prerouting priority mangle; policy accept;
-    iifname eth0 meta l4proto { tcp, udp } ct state new goto singbox-tproxy
+    iifname { eth0, wlan0 } meta l4proto { tcp, udp } ct state new goto singbox-tproxy
   }
 }
 NFTABLES
@@ -116,6 +120,9 @@ elif command -v fw3 > /dev/null; then
 
     iptables -t mangle -F
     iptables -t mangle -X
+    ip6tables -t mangle -F
+    ip6tables -t mangle -X
+
     iptables -t mangle -N singbox-mark
     iptables -t mangle -A singbox-mark -m addrtype --dst-type UNSPEC,LOCAL,ANYCAST,MULTICAST -j RETURN
     iptables -t mangle -A singbox-mark -d 10.0.0.0/8 -j RETURN
@@ -141,10 +148,10 @@ elif command -v fw3 > /dev/null; then
 
     iptables -t mangle -A OUTPUT -p tcp -m cgroup ! --cgroup 1 -j singbox-mark
     iptables -t mangle -A OUTPUT -p udp -m cgroup ! --cgroup 1 -j singbox-mark
-    iptables -t mangle -A PREROUTING -i lo -p tcp -j singbox-tproxy
-    iptables -t mangle -A PREROUTING -i lo -p udp -j singbox-tproxy
     iptables -t mangle -A PREROUTING -i eth0 -p tcp -j singbox-tproxy
     iptables -t mangle -A PREROUTING -i eth0 -p udp -j singbox-tproxy
+    iptables -t mangle -A PREROUTING -i wlan0 -p tcp -j singbox-tproxy
+    iptables -t mangle -A PREROUTING -i wlan0 -p udp -j singbox-tproxy
 
     ip6tables -t mangle -N singbox-mark
     ip6tables -t mangle -A singbox-mark -m addrtype --dst-type UNSPEC,LOCAL,ANYCAST,MULTICAST -j RETURN
@@ -191,7 +198,7 @@ fi
 
 log "Firewall rules applied successfully"
 log "Starting sing-box with config: $CONFIG_FILE"
-exec "$SINGBOX_BIN" run -c "$CONFIG_FILE"
+ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS=true "$SINGBOX_BIN" run -c "$CONFIG_FILE"
 EOF;
 
 function createStartScript($configFile) {
@@ -224,64 +231,67 @@ function writeToLog($message) {
 
 function createCronScript() {
     $log_file = '/var/log/singbox_log.txt';
-    $tmp_log_file = '/etc/neko/tmp/neko_log.txt'; 
-    $additional_log_file = '/etc/neko/tmp/log.txt'; 
-    $max_size = 1048576;  
-    $cron_schedule = "0 */4 * * * /bin/bash /etc/neko/core/set_cron.sh"; 
+    $tmp_log_file = '/etc/neko/tmp/neko_log.txt';
+    $additional_log_file = '/etc/neko/tmp/log.txt';
+    $max_size = 1048576;
+    $cron_schedule = "0 */4 * * * /bin/bash /etc/neko/core/set_cron.sh";
+
     $cronScriptContent = <<<EOL
 #!/bin/bash
 
-LOG_FILE="$log_file"
-TMP_LOG_FILE="$tmp_log_file"  
-ADDITIONAL_LOG_FILE="$additional_log_file"
+LOG_FILES=("$log_file" "$tmp_log_file" "$additional_log_file")
+LOG_NAMES=("Sing-box" "Mihomo" "NeKoBox")
 MAX_SIZE=$max_size
-LOG_PATH="/etc/neko/tmp/log.txt" 
-
-crontab -l | grep -v "/etc/neko/core/set_cron.sh" | crontab - 
-(crontab -l 2>/dev/null; echo "$cron_schedule") | crontab -
+LOG_PATH="/etc/neko/tmp/log.txt"
 
 timestamp() {
     date "+[ %H:%M:%S ]"
 }
 
-if [ -f "\$LOG_FILE" ] && [ \$(stat -c %s "\$LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "\$(timestamp) Sing-box log file (\$LOG_FILE) exceeded \$MAX_SIZE bytes. Clearing log..." >> \$LOG_PATH 2>&1
-    > "\$LOG_FILE"  
-    echo "\$(timestamp) Sing-box log file (\$LOG_FILE) has been cleared." >> \$LOG_PATH 2>&1
-else
-    echo "\$(timestamp) Sing-box log file (\$LOG_FILE) is within the size limit. No action needed." >> \$LOG_PATH 2>&1
-fi
+check_and_clear_log() {
+    local file="\$1"
+    local name="\$2"
+    if [ -f "\$file" ]; then
+        if [ ! -r "\$file" ]; then
+            echo "\$(timestamp) \$name log file (\$file) exists but is not readable. Check permissions." >> \$LOG_PATH
+            return 1
+        fi
+        size=\$(ls -l "\$file" 2>/dev/null | awk '{print \$5}')
+        if [ -z "\$size" ] || ! echo "\$size" | grep -q '^[0-9]\+$'; then
+            echo "\$(timestamp) \$name log file (\$file) size could not be determined. ls command failed or output invalid." >> \$LOG_PATH
+            return 1
+        fi
+        if [ \$size -gt \$MAX_SIZE ]; then
+            echo "\$(timestamp) \$name log file (\$file) exceeded \$MAX_SIZE bytes (\$size). Clearing log..." >> \$LOG_PATH
+            > "\$file"
+            echo "\$(timestamp) \$name log file (\$file) has been cleared." >> \$LOG_PATH
+        else
+            echo "\$(timestamp) \$name log file (\$file) is within the size limit (\$size bytes). No action needed." >> \$LOG_PATH
+        fi
+    else
+        echo "\$(timestamp) \$name log file (\$file) not found." >> \$LOG_PATH
+    fi
+}
 
-if [ -f "\$TMP_LOG_FILE" ] && [ \$(stat -c %s "\$TMP_LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "\$(timestamp) Mihomo log file (\$TMP_LOG_FILE) exceeded \$MAX_SIZE bytes. Clearing log..." >> \$LOG_PATH 2>&1
-    > "\$TMP_LOG_FILE"  
-    echo "\$(timestamp) Mihomo log file (\$TMP_LOG_FILE) has been cleared." >> \$LOG_PATH 2>&1
-else
-    echo "\$(timestamp) Mihomo log file (\$TMP_LOG_FILE) is within the size limit. No action needed." >> \$LOG_PATH 2>&1
-fi
+for i in \${!LOG_FILES[@]}; do
+    check_and_clear_log "\${LOG_FILES[\$i]}" "\${LOG_NAMES[\$i]}"
+done
 
-if [ -f "\$ADDITIONAL_LOG_FILE" ] && [ \$(stat -c %s "\$ADDITIONAL_LOG_FILE") -gt \$MAX_SIZE ]; then
-    echo "\$(timestamp) NeKoBox log file (\$ADDITIONAL_LOG_FILE) exceeded \$MAX_SIZE bytes. Clearing log..." >> \$LOG_PATH 2>&1
-    > "\$ADDITIONAL_LOG_FILE"
-    echo "\$(timestamp) NeKoBox log file (\$ADDITIONAL_LOG_FILE) has been cleared." >> \$LOG_PATH 2>&1
-else
-    echo "\$(timestamp) NeKoBox log file (\$ADDITIONAL_LOG_FILE) is within the size limit. No action needed." >> \$LOG_PATH 2>&1
-fi
+echo "\$(timestamp) Log rotation completed." >> \$LOG_PATH
 
-echo "\$(timestamp) Log rotation completed." >> \$LOG_PATH 2>&1
+(crontab -l 2>/dev/null | grep -v '/etc/neko/core/set_cron.sh'; echo "$cron_schedule") | sort -u | crontab -
 EOL;
 
     $cronScriptPath = '/etc/neko/core/set_cron.sh';
     file_put_contents($cronScriptPath, $cronScriptContent);
     chmod($cronScriptPath, 0755);
-    shell_exec("sh $cronScriptPath");
+    shell_exec("bash $cronScriptPath");
 }
 
 function rotateLogs($logFile, $maxSize = 1048576) {
     if (file_exists($logFile) && filesize($logFile) > $maxSize) {
         file_put_contents($logFile, '');
-        chmod($logFile, 0644);      
-        //echo "Log file cleared successfully.\n";
+        chmod($logFile, 0644);
     }
 }
 
@@ -332,7 +342,7 @@ $availableConfigs = getAvailableConfigFiles();
 
 if(isset($_POST['neko'])){
    $dt = $_POST['neko'];
-   writeToLog("Received neko action: $dt");
+   writeToLog("Received Mihomo action: $dt");
    if ($dt == 'start') {
        if (isSingboxRunning()) {
            writeToLog("Cannot start NekoBox: Sing-box is running");
@@ -357,109 +367,111 @@ if(isset($_POST['neko'])){
        shell_exec("echo \"Logs has been cleared...\" > $neko_dir/tmp/neko_log.txt");
        writeToLog("Mihomo logs cleared");
    }
-   writeToLog("Neko action completed: $dt");
+   writeToLog("Mihomo action completed: $dt");
 }
 
 if (isset($_POST['singbox'])) {
-   $action = $_POST['singbox'];
-   $config_file = isset($_POST['config_file']) ? $_POST['config_file'] : '';
-   
-   writeToLog("Received singbox action: $action");
-   //writeToLog("Config file: $config_file");
-   
-   switch ($action) {
-       case 'start':
-           if (isNekoBoxRunning()) {
-               writeToLog("Cannot start Sing-box: NekoBox is running");
-           } else {
-               writeToLog("Starting Sing-box");
-
-               $singbox_version = trim(shell_exec("$singbox_bin version"));
-               writeToLog("Sing-box version: $singbox_version");
-               
-               shell_exec("mkdir -p " . dirname($singbox_log));
-               shell_exec("touch $singbox_log && chmod 644 $singbox_log");
-               rotateLogs($singbox_log);
-               
-               createStartScript($config_file);
-               createCronScript();
-               $output = shell_exec("sh $start_script_path >> $singbox_log 2>&1 &");
-               //writeToLog("Shell output: " . ($output ?: "No output"));
-               
-               sleep(3);
-               $pid = getSingboxPID();
-               if ($pid) {
-                   writeToLog("Sing-box Started successfully. PID: $pid");
-               } else {
-                   writeToLog("Failed to start Sing-box");
-               }
-           }
-           break;
-           
-    case 'disable':
-        writeToLog("Stopping Sing-box");
-        $pid = getSingboxPID();
-        if ($pid) {
-            writeToLog("Killing Sing-box PID: $pid");
-            shell_exec("kill $pid");
-            if (file_exists('/usr/sbin/fw4')) {
-                shell_exec("nft flush ruleset");
+    $action = $_POST['singbox'];
+    $config_file = isset($_POST['config_file']) ? $_POST['config_file'] : '';
+    
+    writeToLog("Received singbox action: $action with config: $config_file");
+    
+    switch ($action) {
+        case 'start':
+            if (isNekoBoxRunning()) {
+                writeToLog("Cannot start Sing-box: Sing-box is running");
+            } elseif (!file_exists($config_file)) {
+                writeToLog("Config file not found: $config_file");
             } else {
-                shell_exec("iptables -t mangle -F");
-                shell_exec("iptables -t mangle -X");
-        }
-            shell_exec("/etc/init.d/firewall restart");
-            writeToLog("Cleared firewall rules and restarted firewall");
-            sleep(1);
-            if (!isSingboxRunning()) {
-                writeToLog("Sing-box has been stopped successfully");
-            } else {
-                writeToLog("Force killing Sing-box");
-                shell_exec("kill -9 $pid");
-                writeToLog("Sing-box has been force stopped");
+                writeToLog("Starting Sing-box");
+                $singbox_version = trim(shell_exec("$singbox_bin version"));
+                writeToLog("Sing-box version: $singbox_version");
+                
+                shell_exec("mkdir -p " . dirname($singbox_log));
+                shell_exec("touch $singbox_log && chmod 644 $singbox_log");
+                rotateLogs($singbox_log);
+                
+                createStartScript($config_file);
+                createCronScript();
+                shell_exec("sh $start_script_path >> $singbox_log 2>&1 &");
+                
+                sleep(3);
+                $pid = getSingboxPID();
+                if ($pid) {
+                    writeToLog("Sing-box started successfully. PID: $pid");
+                    $needRefresh = true;
+                } else {
+                    writeToLog("Failed to start Sing-box");
+                }
             }
-        } else {
-            writeToLog("Sing-box is not running");
-        }
-        break;
+            break;
            
-       case 'restart':
-           if (isNekoBoxRunning()) {
-               writeToLog("Cannot restart Sing-box: NekoBox is running");
-           } else {
-               writeToLog("Restarting Sing-box");
-               
-               $pid = getSingboxPID();
-               if ($pid) {
-                   writeToLog("Killing Sing-box PID: $pid");
-                   shell_exec("kill $pid");
-                   sleep(1);
-               }
-               
-               shell_exec("mkdir -p " . dirname($singbox_log));
-               shell_exec("touch $singbox_log && chmod 644 $singbox_log");
-               rotateLogs($singbox_log);
-               
-               createStartScript($config_file);
-               shell_exec("sh $start_script_path >> $singbox_log 2>&1 &");
-               
-               sleep(3);
-               $new_pid = getSingboxPID();
-               if ($new_pid) {
-                   writeToLog("Sing-box Restarted successfully. New PID: $new_pid");
-               } else {
-                   writeToLog("Failed to restart Sing-box");
-               }
-           }
-           break;
-   }
-   
-   sleep(2);
-   
-   $singbox_status = isSingboxRunning() ? '1' : '0';
-   exec("uci set neko.cfg.singbox_enabled='$singbox_status'");
-   exec("uci commit neko");
-   //writeToLog("Singbox status set to: $singbox_status");
+        case 'disable':
+            writeToLog("Stopping Sing-box");
+            $pid = getSingboxPID();
+            if ($pid) {
+                writeToLog("Killing Sing-box PID: $pid");
+                shell_exec("kill $pid");
+                sleep(1);
+                if (isSingboxRunning()) {
+                    writeToLog("Force killing Sing-box");
+                    shell_exec("kill -9 $pid");
+                }
+                if (file_exists('/usr/sbin/fw4')) {
+                    shell_exec("nft flush ruleset");
+                } else {
+                    shell_exec("iptables -t mangle -F");
+                    shell_exec("iptables -t mangle -X");
+                    shell_exec("ip6tables -t mangle -F");
+                    shell_exec("ip6tables -t mangle -X");
+                }
+                shell_exec("/etc/init.d/firewall restart");
+                writeToLog("Cleared firewall rules and restarted firewall");
+                if (!isSingboxRunning()) {
+                    writeToLog("Sing-box stopped successfully");
+                    $needRefresh = true;
+                }
+            } else {
+                writeToLog("Sing-box is not running");
+            }
+            break;
+           
+        case 'restart':
+            if (isNekoBoxRunning()) {
+                writeToLog("Cannot restart Sing-box: Sing-box is running");
+            } elseif (!file_exists($config_file)) {
+                writeToLog("Config file not found: $config_file");
+            } else {
+                writeToLog("Restarting Sing-box");
+                $pid = getSingboxPID();
+                if ($pid) {
+                    shell_exec("kill $pid");
+                    sleep(1);
+                }
+                shell_exec("mkdir -p " . dirname($singbox_log));
+                shell_exec("touch $singbox_log && chmod 644 $singbox_log");
+                rotateLogs($singbox_log);
+                
+                createStartScript($config_file);
+                shell_exec("sh $start_script_path >> $singbox_log 2>&1 &");
+                
+                sleep(3);
+                $new_pid = getSingboxPID();
+                if ($new_pid) {
+                    writeToLog("Sing-box restarted successfully. New PID: $new_pid");
+                    $needRefresh = true;
+                } else {
+                    writeToLog("Failed to restart Sing-box");
+                }
+            }
+            break;
+    }  
+    
+    sleep(2);
+    $singbox_status = isSingboxRunning() ? '1' : '0';
+    shell_exec("uci set neko.cfg.singbox_enabled='$singbox_status'");
+    shell_exec("uci commit neko");
+    //writeToLog("Singbox status set to: $singbox_status");
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cronTime'])) {
@@ -605,7 +617,19 @@ function readLogFile($filePath) {
 
 $neko_log_content = readLogFile("$neko_dir/tmp/neko_log.txt");
 $singbox_log_content = readLogFile($singbox_log);
+if ($needRefresh):
 ?>
+<script>
+window.addEventListener('load', function() {
+    if (!sessionStorage.getItem('refreshed')) {
+        sessionStorage.setItem('refreshed', 'true');
+        window.location.reload();
+    } else {
+        sessionStorage.removeItem('refreshed');
+    }
+});
+</script>
+<?php endif; ?>
 
 <?php
 $confDirectory = '/etc/neko/config';  
@@ -691,6 +715,13 @@ if (isset($_GET['ajax'])) {
     $cpuLoadAvg5Min = round($cpuLoad[1], 2);
     $cpuLoadAvg15Min = round($cpuLoad[2], 2);
 
+    $timezone = trim(shell_exec("uci get system.@system[0].zonename 2>/dev/null"));
+    if (!$timezone) {
+        $timezone = 'UTC';
+    }
+    date_default_timezone_set($timezone);
+    $currentTime = date("Y-m-d H:i:s");
+
     echo json_encode([
         'systemInfo' => "$devices - $fullOSInfo",
         'ramUsage' => "$ramUsage/$ramTotal MB",
@@ -699,6 +730,8 @@ if (isset($_GET['ajax'])) {
         'cpuLoadAvg1Min' => $cpuLoadAvg1Min,
         'ramTotal' => $ramTotal,
         'ramUsageOnly' => $ramUsage,
+        'timezone' => $timezone,
+        'currentTime' => $currentTime,
     ]);
     exit;
 }
@@ -760,47 +793,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
 }
 ?>
 
-<!doctype html>
-<html lang="en" data-bs-theme="<?php echo substr($neko_theme,0,-4) ?>">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Home - Nekobox</title>
-    <link rel="icon" href="./assets/img/nekobox.png">
-    <link href="./assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="./assets/css/custom.css" rel="stylesheet">
-    <link href="./assets/theme/<?php echo $neko_theme ?>" rel="stylesheet">
-    <link href="./assets/bootstrap/bootstrap-icons.css" rel="stylesheet">
-    <script type="text/javascript" src="./assets/js/feather.min.js"></script>
-    <script type="text/javascript" src="./assets/js/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="./assets/js/neko.js"></script>
-    <script type="text/javascript" src="./assets/bootstrap/bootstrap.min.js"></script>
-    <script src="./assets/js/bootstrap.bundle.min.js"></script>
-    <?php include './ping.php'; ?>
-  </head>
-<body>
-    <?php if ($isNginx): ?>
-    <div id="nginxWarning" class="alert alert-warning alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1050;">
+<meta charset="utf-8">
+<title>Home - Nekobox</title>
+<link rel="icon" href="./assets/img/nekobox.png">
+<?php include './ping.php'; ?>
+
+<?php if ($isNginx): ?>
+    <div id="nginxWarning"
+         class="alert alert-warning alert-dismissible fade show"
+         role="alert"
+         style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1050;">
         <strong data-translate="nginxWarningStrong"></strong> 
         <span data-translate="nginxWarning"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+
     <script>
     document.addEventListener("DOMContentLoaded", function () {
-        let lastWarningTime = localStorage.getItem('nginxWarningTime');
-        let currentTime = new Date().getTime();
-        let warningInterval = 12 * 60 * 60 * 1000; 
+        const lastWarningTime = localStorage.getItem('nginxWarningTime');
+        const currentTime = new Date().getTime();
+        const warningInterval = 12 * 60 * 60 * 1000;
 
         if (!lastWarningTime || currentTime - lastWarningTime > warningInterval) {
-            localStorage.setItem('nginxWarningTime', currentTime); 
-            let warningAlert = document.getElementById('nginxWarning');
-        
+            localStorage.setItem('nginxWarningTime', currentTime);
+
+            const warningAlert = document.getElementById('nginxWarning');
             if (warningAlert) {
                 warningAlert.style.display = 'block';
 
-                setTimeout(function() {
+                setTimeout(function () {
                     warningAlert.classList.remove('show');
-                    setTimeout(function() {
+                    setTimeout(function () {
                         warningAlert.remove();
                     }, 300);
                 }, 5000);
@@ -808,203 +831,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
         }
     });
     </script>
-    <?php endif; ?>
-<div class="container-sm container-bg callout border border-3 rounded-4 col-11">
-    <div class="row">
-        <a href="./index.php" class="col btn btn-lg text-nowrap"><i class="bi bi-house-door"></i> <span data-translate="home">Home</span></a>
-        <a href="./dashboard.php" class="col btn btn-lg text-nowrap"><i class="bi bi-bar-chart"></i> <span data-translate="panel">Panel</span></a>
-        <a href="./singbox.php" class="col btn btn-lg text-nowrap"><i class="bi bi-box"></i> <span data-translate="document">Document</span></a> 
-        <a href="./settings.php" class="col btn btn-lg text-nowrap"><i class="bi bi-gear"></i> <span data-translate="settings">Settings</span></a>
+<?php endif; ?>
+
+<div class="container-sm container-bg mt-0">
+    <?php include 'navbar.php'; ?>
     <div class="container-sm text-center col-8">
-  <img src="./assets/img/nekobox.png">
-<div id="version-info">
-    <a id="version-link" href="https://github.com/Thaolga/openwrt-nekobox/releases" target="_blank">
-        <img id="current-version" src="./assets/img/curent.svg" alt="Current Version" style="max-width: 100%; height: auto;" />
-    </a>
-</div>
-</div>
-<script>
-function checkForUpdate() {
-    $.ajax({
-        url: 'check_update.php',
-        method: 'GET',
-        dataType: 'json',
-        success: function(data) {
-            if (data.hasUpdate) {
-                $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
-            }
-            console.log('Current Version:', data.currentVersion);
-            console.log('Latest Version:', data.latestVersion);
-            console.log('Has Update:', data.hasUpdate);
+        <img src="./assets/img/nekobox.png" alt="Icon" class="centered-img">
+        <div id="version-info">
+            <a id="version-link"
+               href="https://github.com/Thaolga/openwrt-nekobox/releases"
+               target="_blank">
+                <img id="current-version"
+                     src="./assets/img/curent.svg"
+                     alt="Current Version"
+                     style="max-width: 100%; height: auto;" />
+            </a>
+        </div>
+    </div>
+<h2 id="neko-title" class="neko-title-style" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#systemInfoModal">NekoBox</h2>
 
-            localStorage.setItem('lastUpdateCheck', Date.now());
-            startUpdateTimer(); 
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.error('AJAX Error:', textStatus, errorThrown);
-        }
-    });
-}
-
-function startUpdateTimer() {
-    const now = Date.now();
-    const lastCheck = localStorage.getItem('lastUpdateCheck');
-
-    let timeSinceLastCheck = lastCheck ? now - parseInt(lastCheck, 10) : Infinity;
-    let timeUntilNextCheck = Math.max(28800000 - timeSinceLastCheck, 0); 
-
-    console.log('Time until next check:', timeUntilNextCheck / 1000 / 60, 'minutes');
-
-    setTimeout(checkForUpdate, timeUntilNextCheck); 
-}
-
-startUpdateTimer(); 
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const titleElement = document.getElementById('neko-title');
-    const cachedTitle = localStorage.getItem('nekoTitle');
-
-    if (cachedTitle) {
-        titleElement.textContent = cachedTitle; 
-    }
-
-    function updateTitle(newTitle) {
-        titleElement.textContent = newTitle;
-        localStorage.setItem('nekoTitle', newTitle);
-    }
-
-});
-</script>
-<h2 id="neko-title" class="royal-style">NekoBox</h2>
-<style>
-
-    .nav-pills .nav-link {
-        background-color: transparent !important;
-        color: inherit;
-        font-size: 1.25rem; 
-    }
-
-    .nav-pills .nav-link.active {
-        background-color: transparent !important; 
-        font-size: 1.25rem; 
-    }
-
-   .section-container {
-       padding-left: 42px;  
-       padding-right: 42px;
-   }
-
-   .btn-group .btn {
-       width: 120%;
-   }
-
-   .log-container {
-       height: 270px; 
-       overflow-y: auto;
-       overflow-x: hidden;
-       white-space: pre-wrap;
-       word-wrap: break-word;
-   }
-
-   .log-card {
-       margin-bottom: 20px;
-   }
-
-    .custom-icon {
-        width: 20px !important;
-        height: 20px !important;
-        vertical-align: middle !important;
-        margin-right: 5px !important;
-        stroke: #FF00FF !important; 
-        fill: none !important;
-        }
-
-   @media (max-width: 768px) {
-      .section-container {
-         padding-left: 15px;
-         padding-right: 15px;
-      }
-   }
-
-   @media (max-width: 768px) {
-      tr {
-          margin-bottom: 15px;
-          display: block;
-      }
-   }
-
-@media (max-width: 767px) {
-    .section-container .table {
-        display: block;
-        width: 100%;
-    }
-
-    .section-container .table tbody,
-    .section-container .table thead,
-    .section-container .table tr {
-        display: block;
-    }
-
-    .section-container .table td {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        margin-bottom: 10px;
-    }
-
-    .section-container .table td:first-child {
-        font-weight: bold;
-        background-color: #f8f9fa;
-    }
-
-    .section-container .btn-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .section-container .form-select,
-    .section-container .form-control,
-    .section-container .input-group {
-        width: 100%;
-    }
-
-    .section-container .btn {
-        width: 100%;
-    }
-}
-
-@media (max-width: 767px) {
-    .section-container .table td {
-        background-color: #fff;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .section-container .table td:first-child {
-        background-color: #f0f0f0;
-        font-size: 1.1em;
-    }
-
-    .section-container .btn {
-        border-radius: 5px;
-    }
-
-    .section-container .btn-group {
-        gap: 15px;
-    }
-}
-
-</style>
-<div class="section-container">
+<div class="px-4 mt-4 control-box">
     <div class="card">
         <div class="card-body">
             <div class="mb-4">
                 <h6 class="mb-2"><i data-feather="activity"></i> <span data-translate="status">Status</span></h6>
                 <div class="btn-group w-100" role="group">
-                    <?php if ($neko_status == 1): ?>
+                    <?php if ($neko_status == '1'): ?>
                         <button type="button" class="btn btn-success">
                             <i class="bi bi-router"></i> 
                             <span data-translate="mihomoRunning">Mihomo Running</span>
@@ -1020,7 +872,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <i class="bi bi-file-earmark-text"></i> <?= $str_cfg ?>
                     </button>
 
-                    <?php if ($singbox_status == 1): ?>
+                    <?php if ($singbox_status == '1'): ?>
                         <button type="button" class="btn btn-success">
                             <i class="bi bi-hdd-stack"></i> 
                             <span data-translate="singboxRunning">Sing-box Running</span>
@@ -1034,7 +886,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
 
-            <div class="mb-4" id="mihomoControl" class="control-box">
+            <div class="mb-4 control-box" id="mihomoControl">
                 <h6 class="mb-2"><i class="fas fa-box custom-icon"></i> <span data-translate="mihomoControl">Mihomo Control</span></h6>
                 <div class="d-flex flex-column gap-2">
                     <form action="index.php" method="post">
@@ -1059,19 +911,19 @@ document.addEventListener('DOMContentLoaded', function () {
                             ?>
                         </select>
                         
-                        <div class="btn-group w-100">
+                        <div class="btn-group w-100  position-relative" style="top: 25px;">
                             <button type="submit" name="neko" value="start" 
-                                    class="btn btn<?= ($neko_status == 1) ? "-outline" : "" ?>-success <?= ($neko_status == 1) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($neko_status == 1) ? "-outline" : "" ?>-success">
                                 <i class="bi bi-power"></i> 
                                 <span data-translate="enableMihomo">Enable Mihomo</span>
                             </button>
                             <button type="submit" name="neko" value="disable" 
-                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-danger <?= ($neko_status == 0) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-danger">
                                 <i class="bi bi-x-octagon"></i> 
                                 <span data-translate="disableMihomo">Disable Mihomo</span>
                             </button>
                             <button type="submit" name="neko" value="restart" 
-                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-warning <?= ($neko_status == 0) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($neko_status == 0) ? "-outline" : "" ?>-warning">
                                 <i class="bi bi-arrow-clockwise"></i> 
                                 <span data-translate="restartMihomo">Restart Mihomo</span>
                             </button>
@@ -1080,7 +932,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
 
-            <div class="mb-4" id="singboxControl" class="control-box">
+            <div class="mb-4 control-box" id="singboxControl">
                 <h6 class="mb-2"><i data-feather="codesandbox"></i> <span data-translate="singboxControl">Singbox Control</span></h6>
                 <div class="d-flex flex-column gap-2">
                     <form action="index.php" method="post">
@@ -1100,19 +952,19 @@ document.addEventListener('DOMContentLoaded', function () {
                             <?php endforeach; ?>
                         </select>
                         
-                        <div class="btn-group w-100">
+                        <div class="btn-group w-100 position-relative" style="top: 25px;">
                             <button type="submit" name="singbox" value="start" 
-                                    class="btn btn<?= ($singbox_status == 1) ? "-outline" : "" ?>-success <?= ($singbox_status == 1) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($singbox_status == 1) ? "-outline" : "" ?>-success">
                                 <i class="bi bi-power"></i> 
                                 <span data-translate="enableSingbox">Enable Sing-box</span>
                             </button>
                             <button type="submit" name="singbox" value="disable" 
-                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-danger <?= ($singbox_status == 0) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-danger">
                                 <i class="bi bi-x-octagon"></i> 
                                 <span data-translate="disableSingbox">Disable Sing-box</span>
                             </button>
                             <button type="submit" name="singbox" value="restart" 
-                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-warning <?= ($singbox_status == 0) ? "disabled" : "" ?>">
+                                    class="btn btn<?= ($singbox_status == 0) ? "-outline" : "" ?>-warning">
                                 <i class="bi bi-arrow-clockwise"></i> 
                                 <span data-translate="restartSingbox">Restart Sing-box</span>
                             </button>
@@ -1122,13 +974,13 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
 
             <div class="mb-4">
-                <h6 class="mb-2"><i class="fas fa-cog custom-icon"></i> <span data-translate="runningMode">Running Mode</span></h6>
+                <h6 class="mb-2"><i class="bi bi-gear-fill custom-icon"></i> <span data-translate="runningMode">Running Mode</span></h6>
                 <div class="btn-group w-100">
                     <?php
                     $mode_placeholder = '';
-                    if ($neko_status == 1) {
+                    if ($neko_status == '1') {
                         $mode_placeholder = $neko_cfg['echanced'] . " | " . $neko_cfg['mode'];
-                    } elseif ($singbox_status == 1) {
+                    } elseif ($singbox_status == '1') {
                         $mode_placeholder = "Sing-box | Rule Mode";
                     } else {
                         $mode_placeholder = "Not Running";
@@ -1141,265 +993,341 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const mihomoControl = document.getElementById('mihomoControl');
-    const singboxControl = document.getElementById('singboxControl');
 
-    const mihomoStatus = <?php echo $neko_status; ?>; 
-    const singboxStatus = <?php echo $singbox_status; ?>; 
-
-    if (mihomoStatus === 1 && singboxStatus === 1) {
-        mihomoControl.style.display = 'block';
-        singboxControl.style.display = 'block';
-    } else if (mihomoStatus === 1) {
-        mihomoControl.style.display = 'block';
-        singboxControl.style.display = 'none';
-    } else if (singboxStatus === 1) {
-        mihomoControl.style.display = 'none';
-        singboxControl.style.display = 'block';
-    } else {
-        mihomoControl.style.display = 'block';
-        singboxControl.style.display = 'block';
-    }
-});
-</script>
-
-<script>
-    const lastShownTime = localStorage.getItem('lastCronMessageShownTime');
-    const currentTime = new Date().getTime(); 
-
-    if (!lastShownTime || (currentTime - lastShownTime) > 12 * 60 * 60 * 1000) {
-        document.getElementById('cron-success-message').style.display = 'block';
-        localStorage.setItem('lastCronMessageShownTime', currentTime);
-    }
-</script>
-
-<script>
-function saveConfigToLocalStorage() {
-    const selectedConfig = document.getElementById('configSelect').value;
-    if (selectedConfig) {
-        localStorage.setItem('selected_config', selectedConfig);
-    }
+<style>
+.centered-img {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	width: 12%;
+	height: auto;
+	min-width: 40px;
+	max-width: 100%;
 }
 
-window.onload = function() {
-    const savedConfig = localStorage.getItem('selected_config');
-    if (savedConfig) {
-        const configSelect = document.getElementById('configSelect');
-        configSelect.value = savedConfig; 
-    }
-};
-</script>
-<div class="section-container"> 
-  <div id="collapsibleHeader" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 20px;">
-      <i id="toggleIcon" class="triangle-icon"></i> 
-  </div>
-  <div class="card mt-4 py-3"> 
-      <div class="text-center" id="systemHeader" class="system-header">
-          <h3 class="mb-0"></h3>
+@media (max-width: 576px) {
+	.centered-img {
+		width: 30%;
+	}
+}
+
+.btn-group .btn {
+	width: 120%;
+}
+
+.custom-icon {
+	width: 20px !important;
+	height: 20px !important;
+	vertical-align: middle !important;
+	margin-right: 5px !important;
+	stroke: #FF00FF !important;
+	fill: none !important;
+}
+
+@media (max-width: 767px) {
+	.control-box .table {
+		display: block;
+		width: 100%;
+	}
+
+	.control-box .table tbody,
+        .control-box .table thead,
+        .control-box .table tr {
+		display: block;
+	}
+
+	.control-box .table td {
+		display: block;
+		width: 100%;
+		padding: 10px;
+		border: 1px solid #ddd;
+		margin-bottom: 10px;
+	}
+
+	.control-box .table td:first-child {
+		font-weight: bold;
+		background-color: #f8f9fa;
+	}
+
+	.control-box .btn-group {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.control-box .form-select,
+        .control-box .form-control,
+        .control-box .input-group {
+		width: 100%;
+		font-size: 14px;
+	}
+
+	#mihomoControl .btn,
+        #singboxControl .btn,
+        .control-box .btn-group .btn {
+		border-radius: 0.5rem !important;
+	}
+
+	.control-box .btn {
+		width: 100%;
+		font-size: 14px;
+	}
+}
+
+@media (max-width: 768px) {
+	#neko-title.neko-title-style {
+		font-size: 2.7rem !important;
+	}
+}
+
+.form-inline {
+	display: inline-block;
+}
+
+@media (max-width: 767px) {
+	#logTabs .nav-item {
+		display: block;
+		width: 100%;
+	}
+}
+
+#logTabs {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+	font-size: 1.3rem;
+	color: var(--text-primary);
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+#logTabs .nav-link {
+	all: unset;
+	display: inline-block;
+	cursor: pointer;
+	padding: 0;
+	color: inherit !important;
+	font-weight: inherit !important;
+	text-decoration: none !important;
+}
+
+#logTabs .nav-link.active {
+	font-weight: 700 !important;
+	color: var(--accent-color) !important;
+}
+</style>
+  <div class="modal fade" id="systemInfoModal" tabindex="-1" aria-labelledby="systemInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title d-flex align-items-center" id="systemInfoModalLabel">
+            <span style="width: 320px;" data-translate="systemInfo">System Information</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="cpu" class="me-2"></i><span data-translate="systemInfo">System Info</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="systemInfo" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="database" class="me-2"></i><span data-translate="systemMemory">System Memory</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="ramUsage" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="zap" class="me-2"></i><span data-translate="avgLoad">Average Load</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="cpuLoad" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="globe" class="me-2"></i><span data-translate="systemTimezone">System Timezone</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="systemTimezone" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="clock" class="me-2"></i><span data-translate="currentTime">Current Time</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="systemCurrentTime" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="clock" class="me-2"></i><span data-translate="uptime">Uptime</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span id="uptime" class="form-control text-start ps-3"></span>
+            </div>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <h6 class="mb-0" style="width: 320px;">
+              <i data-feather="bar-chart-2" class="me-2"></i><span data-translate="trafficStats">Traffic Stats</span>
+            </h6>
+            <div class="flex-grow-1">
+              <span class="form-control text-start ps-3">
+                <i class="fa fa-download me-1"></i><span id="downtotal"></span> | 
+                <i class="fa fa-upload me-1"></i><span id="uptotal"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close">Close</button>
+        </div>
       </div>
-      <div id="collapsible" class="card-body collapsible-body">
-          <!-- System Info -->
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="cpu"></i> <span data-translate="systemInfo">System Info</span></h6>
-              <div class="btn-group w-100">
-                  <span id="systemInfo" class="form-control text-center"></span>
-              </div>
-          </div>
-
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="database"></i> <span data-translate="systemMemory">System Memory</span></h6>
-              <div class="btn-group w-100">
-                  <span id="ramUsage" class="form-control text-center"></span>
-              </div>
-          </div>
-
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="zap"></i> <span data-translate="avgLoad">Average Load</span></h6>
-              <div class="btn-group w-100">
-                  <span id="cpuLoad" class="form-control text-center"></span>
-              </div>
-          </div>
-
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="clock"></i> <span data-translate="uptime">Uptime</span></h6>
-              <div class="btn-group w-100">
-                  <span id="uptime" class="form-control text-center"></span>
-              </div>
-          </div>
-
-          <div class="mb-4">
-              <h6 class="mb-2"><i data-feather="bar-chart-2"></i> <span data-translate="trafficStats">Traffic Stats</span></h6>
-              <div class="btn-group w-100">
-                  <span class="form-control text-center">
-                      ⬇️ <span id="downtotal"></span> | ⬆️ <span id="uptotal"></span>
-                  </span>
-              </div>
-          </div>
-      </div>
+    </div>
   </div>
-</div>
-
 <script>
-    const collapsible = document.getElementById('collapsible');
-    const collapsibleHeader = document.getElementById('collapsibleHeader');
-    const toggleIcon = document.getElementById('toggleIcon');
-    const systemHeader = document.getElementById('systemHeader');  
-    
-    let isCollapsed = true;
-
-    if (localStorage.getItem('isCollapsed') === 'false') {
-        isCollapsed = false;
-        collapsible.style.display = 'block';  
-        systemHeader.style.display = 'block';  
-        toggleIcon.classList.add('rotated'); 
-    } else {
-        collapsible.style.display = 'none';   
-        systemHeader.style.display = 'none';   
-    }
-
-    collapsibleHeader.addEventListener('click', () => {
-        if (isCollapsed) {
-            collapsible.style.display = 'block';  
-            systemHeader.style.display = 'block';  
-            toggleIcon.classList.add('rotated');  
-        } else {
-            collapsible.style.display = 'none';   
-            systemHeader.style.display = 'none';   
-            toggleIcon.classList.remove('rotated'); 
-        }
-        isCollapsed = !isCollapsed;  
-        localStorage.setItem('isCollapsed', isCollapsed);  
-    });
-
+document.addEventListener('DOMContentLoaded', function() {
     function fetchSystemStatus() {
         fetch('?ajax=1')
             .then(response => response.json())
             .then(data => {
-                document.getElementById('systemInfo').innerText = data.systemInfo;
-                document.getElementById('ramUsage').innerText = data.ramUsage;
-                document.getElementById('cpuLoad').innerText = data.cpuLoad;
-                document.getElementById('uptime').innerText = data.uptime;
-                document.getElementById('cpuLoadAvg1Min').innerText = data.cpuLoadAvg1Min;
-                document.getElementById('ramUsageOnly').innerText = data.ramUsageOnly + ' / ' + data.ramTotal + ' MB';
+                const systemInfoEl = document.getElementById('systemInfo');
+                if (systemInfoEl) systemInfoEl.innerText = data.systemInfo;
+
+                const ramUsageEl = document.getElementById('ramUsage');
+                if (ramUsageEl) ramUsageEl.innerText = data.ramUsage;
+
+                const cpuLoadEl = document.getElementById('cpuLoad');
+                if (cpuLoadEl) cpuLoadEl.innerText = data.cpuLoad;
+
+                const timezoneEl = document.getElementById('systemTimezone');
+                if (timezoneEl) timezoneEl.innerText = data.timezone;
+
+                const currentTimeEl = document.getElementById('systemCurrentTime');
+                if (currentTimeEl) currentTimeEl.innerText = data.currentTime;
+
+                const uptimeEl = document.getElementById('uptime');
+                if (uptimeEl) {
+                    let uptimeText = data.uptime;
+                    if (typeof uptimeText === 'string') {
+                        uptimeText = uptimeText.replace(/days/, translations['days'] || 'days')
+                                               .replace(/hours/, translations['hours'] || 'hours')
+                                               .replace(/minutes/, translations['minutes'] || 'minutes')
+                                               .replace(/seconds/, translations['seconds'] || 'seconds');
+                        uptimeEl.innerText = uptimeText;
+                    } else {
+                        uptimeEl.innerText = data.uptime;
+                    }
+                }
+
+                const cpuLoadAvg1MinEl = document.getElementById('cpuLoadAvg1Min');
+                if (cpuLoadAvg1MinEl) cpuLoadAvg1MinEl.innerText = data.cpuLoadAvg1Min;
+
+                const ramUsageOnlyEl = document.getElementById('ramUsageOnly');
+                if (ramUsageOnlyEl) ramUsageOnlyEl.innerText = data.ramUsageOnly + ' / ' + data.ramTotal + ' MB';
             })
             .catch(error => console.error('Error fetching data:', error));
     }
 
     setInterval(fetchSystemStatus, 1000);
-    fetchSystemStatus();  
+    fetchSystemStatus();
+});
 </script>
-<style>
-    .triangle-icon {
-        width: 0;
-        height: 0;
-        border-left: 12px solid transparent;
-        border-right: 12px solid transparent;
-        border-top: 12px solid blue; 
-        display: inline-block;
-        transition: transform 0.3s ease-in-out;
-    }
 
-    .rotated {
-        transform: rotate(180deg); 
-    }
+<div class="px-4 mt-4">
+    <div class="card border-1">
+        <ul class="nav nav-tabs mb-0 border-bottom-0 text-center" id="logTabs" role="tablist">
+            <li class="nav-item mb-2 me-1" role="presentation">
+                <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true">
+                    <span data-translate="nekoBoxLog"></span>
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="mihomoLogTab" data-bs-toggle="pill" href="#mihomoLog" role="tab" aria-controls="mihomoLog" aria-selected="false">
+                    <span data-translate="mihomoLog"></span>
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="singboxLogTab" data-bs-toggle="pill" href="#singboxLog" role="tab" aria-controls="singboxLog" aria-selected="false">
+                    <span data-translate="singboxLog"></span>
+                </a>
+            </li>
+        </ul>
 
-
-    .form-inline {
-        display: inline-block;  
-    }
-
-    @media (max-width: 767px) {
-        .form-inline {
-            display: flex;         
-            flex-wrap: nowrap;     
-            justify-content: center; 
-            gap: 5px;         
-        }
-
-        .form-check-inline, .btn {
-            font-size: 10px;      
-        }
-    }
-
-    @media (max-width: 767px) {
-        #logTabs .nav-item {
-            display: block;  
-            width: 100%;     
-        }
-    }
-
-</style>
-<div class="section-container">
-<ul class="nav nav-pills mb-3" id="logTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" id="pluginLogTab" data-bs-toggle="pill" href="#pluginLog" role="tab" aria-controls="pluginLog" aria-selected="true"><span data-translate="nekoBoxLog"></span></a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" id="mihomoLogTab" data-bs-toggle="pill" href="#mihomoLog" role="tab" aria-controls="mihomoLog" aria-selected="false"><span data-translate="mihomoLog"></span></a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" id="singboxLogTab" data-bs-toggle="pill" href="#singboxLog" role="tab" aria-controls="singboxLog" aria-selected="false"><span data-translate="singboxLog"></span></a>
-    </li>
-</ul>
-<div class="tab-content" id="logTabsContent">
-    <div class="tab-pane fade" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
-        <div class="card log-card">
-            <div class="card-body">
-                <pre id="plugin_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" contenteditable="true"></pre>
+        <div class="tab-content px-3 py-1" id="logTabsContent">
+            <div class="tab-pane fade" id="pluginLog" role="tabpanel" aria-labelledby="pluginLogTab">
+                <div class="log-content-container mb-1">
+                    <pre id="plugin_log" class="log-content-area" spellcheck="false"></pre>
+                </div>
+                <div class="log-actions mt-1">
+                    <form action="index.php" method="post">
+                        <button type="submit" name="clear_plugin_log" class="btn btn-clear-log">
+                            <i class="bi bi-trash"></i> <span data-translate="clearLog"></span>
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="card-footer text-center">
-                <form action="index.php" method="post">
-                    <button type="submit" name="clear_plugin_log" class="btn btn-danger"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <div class="tab-pane fade" id="mihomoLog" role="tabpanel" aria-labelledby="mihomoLogTab">
-        <div class="card log-card">
-            <div class="card-body">
-                <pre id="bin_logs" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" contenteditable="true"></pre>
+            <div class="tab-pane fade" id="mihomoLog" role="tabpanel" aria-labelledby="mihomoLogTab">
+                <div class="log-content-container mb-1">
+                    <pre id="bin_logs" class="log-content-area" spellcheck="false"></pre>
+                </div>
+                <div class="log-actions mt-1">
+                    <form action="index.php" method="post">
+                        <button type="submit" name="neko" value="clear" class="btn btn-clear-log">
+                            <i class="bi bi-trash"></i> <span data-translate="clearLog"></span>
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="card-footer text-center">
-                <form action="index.php" method="post">
-                    <button type="submit" name="neko" value="clear" class="btn btn-danger"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <div class="tab-pane fade" id="singboxLog" role="tabpanel" aria-labelledby="singboxLogTab">
-        <div class="card log-card">
-            <div class="card-body">
-                <pre id="singbox_log" class="log-container form-control" style="resize: vertical; overflow: auto; height: 370px; white-space: pre-wrap;" contenteditable="true"></pre>
-            </div>
-            <div class="card-footer text-center">
-                <form action="index.php" method="post" class="form-inline">
-                    <div class="form-check form-check-inline mb-2">
-                        <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
-                        <label class="form-check-label" for="autoRefresh"><span data-translate="autoRefresh"></span></label>
-                    </div>
-                    <button type="submit" name="clear_singbox_log" class="btn btn-danger me-2"><i class="bi bi-trash"></i> <span data-translate="clearLog"></span></button>
-                    <button type="button" class="btn btn-primary me-2" data-toggle="modal" data-target="#cronModal"><i class="bi bi-clock"></i> <span data-translate="scheduledRestart"></span></button>
-                </form>
+            <div class="tab-pane fade" id="singboxLog" role="tabpanel" aria-labelledby="singboxLogTab">
+                <div class="log-content-container mb-1">
+                    <pre id="singbox_log" class="log-content-area" spellcheck="false"></pre>
+                </div>
+                <div class="log-actions multiple-actions mt-1">
+                    <form action="index.php" method="post">
+                        <div class="log-action-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                                <label class="form-check-label" for="autoRefresh">
+                                    <span data-translate="autoRefresh"></span>
+                                </label>
+                            </div>
+                            <button type="submit" name="clear_singbox_log" class="btn btn-clear-log">
+                                <i class="bi bi-trash"></i> <span data-translate="clearLog"></span>
+                            </button>
+                            <button type="button" class="btn btn-schedule" data-bs-toggle="modal" data-bs-target="#cronModal">
+                                <i class="bi bi-clock"></i> <span data-translate="scheduledRestart"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="cronModal" tabindex="-1" role="dialog" aria-labelledby="cronModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<footer class="text-center mt-1">
+    <p><?php echo $footer ?></p>
+</footer>
+
+<div class="modal fade" id="cronModal" tabindex="-1" role="dialog" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="cronModalLabel" data-translate="setCronTitle"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form id="cronForm" method="POST">
+        <form id="cronForm" method="POST" class="no-loader">
           <div class="form-group ">
             <label for="cronTime" data-translate="setRestartTime"></label>
             <input type="text" class="form-control mt-3" id="cronTime" name="cronTime" value="0 3 * * *" required>
@@ -1407,7 +1335,7 @@ window.onload = function() {
           <div class="alert alert-info mt-3">
             <strong><?= $langData[$currentLang]['tip'] ?>:</strong> <?= $langData[$currentLang]['cronFormat'] ?>:
             <ul>
-              <li><code>分钟 小时 日 月 星期</code></li>
+              <li><span data-translate="cron_format_help"></span></li>
               <li><?= $langData[$currentLang]['example1'] ?>: <code>0 2 * * *</code></li>
               <li><?= $langData[$currentLang]['example2'] ?>: <code>0 3 * * 1</code></li>
               <li><?= $langData[$currentLang]['example3'] ?>: <code>0 9 * * 1-5</code></li>
@@ -1417,7 +1345,7 @@ window.onload = function() {
         <div id="resultMessage" class="mt-3"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-translate="cancel"></button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel"></button>
         <button type="submit" class="btn btn-primary" form="cronForm" data-translate="save"></button>
       </div>
     </div>
@@ -1425,6 +1353,7 @@ window.onload = function() {
 </div>
 
 <script>
+$(document).ready(function() {
     $('#cronForm').submit(function(event) {
         event.preventDefault(); 
         var cronTime = $('#cronTime').val(); 
@@ -1442,91 +1371,126 @@ window.onload = function() {
                 }
             },
             error: function() {
-                $('#resultMessage').html('<div class="alert alert-danger">设置 Cron 任务失败，请重试！</div>');
+                $('#resultMessage').html('<div class="alert alert-danger">Failed to set up Cron job, please try again!</div>');
             }
         });
     });
-</script>
 
-<script>
-    function scrollToBottom(elementId) {
-        var logElement = document.getElementById(elementId);
-        logElement.scrollTop = logElement.scrollHeight;
+    const mihomoControl = document.getElementById('mihomoControl');
+    const singboxControl = document.getElementById('singboxControl');
+    const mihomoStatus = <?php echo $neko_status; ?>; 
+    const singboxStatus = <?php echo $singbox_status; ?>; 
+
+    if (mihomoStatus === 1 && singboxStatus === 1) {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'block';
+    } else if (mihomoStatus === 1) {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'none';
+    } else if (singboxStatus === 1) {
+        mihomoControl.style.display = 'none';
+        singboxControl.style.display = 'block';
+    } else {
+        mihomoControl.style.display = 'block';
+        singboxControl.style.display = 'block';
     }
-    function fetchLogs() {
-        if (!document.getElementById('autoRefresh').checked) {
-            return;
+
+    function checkForUpdate() {
+        $.ajax({
+            url: 'check_update.php',
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (data.hasUpdate) {
+                    $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
+                }
+                console.log('Current Version:', data.currentVersion);
+                console.log('Latest Version:', data.latestVersion);
+                console.log('Has Update:', data.hasUpdate);
+
+                localStorage.setItem('lastUpdateCheck', Date.now());
+                startUpdateTimer(); 
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('AJAX Error:', textStatus, errorThrown);
+            }
+        });
+    }
+
+    function startUpdateTimer() {
+        const now = Date.now();
+        const lastCheck = localStorage.getItem('lastUpdateCheck');
+        let timeSinceLastCheck = lastCheck ? now - parseInt(lastCheck, 10) : Infinity;
+        let timeUntilNextCheck = Math.max(14400000 - timeSinceLastCheck, 0); 
+
+        console.log('Time until next check:', timeUntilNextCheck / 1000 / 60, 'minutes');
+        setTimeout(checkForUpdate, timeUntilNextCheck); 
+    }
+
+    const tabElms = document.querySelectorAll('#logTabs .nav-link');
+    const savedTabId = localStorage.getItem('activeTab') || 'pluginLogTab';
+    const savedTab = document.getElementById(savedTabId);
+    if (savedTab) {
+        const tab = new bootstrap.Tab(savedTab);
+        tab.show();
+    }
+    tabElms.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(event) {
+            localStorage.setItem('activeTab', event.target.id);
+        });
+    });
+
+    const autoRefreshCheckbox = document.getElementById('autoRefresh');
+    let refreshInterval;
+    
+    const autoRefreshSetting = localStorage.getItem('autoRefresh');
+    autoRefreshCheckbox.checked = autoRefreshSetting === null || autoRefreshSetting === 'true';
+    
+    function scrollToBottom(id) {
+        const el = document.getElementById(id);
+        if (el) el.scrollTop = el.scrollHeight;
+    }
+
+    function handleAutoScroll() {
+        if (autoRefreshCheckbox.checked) {
+            scrollToBottom('plugin_log');
+            scrollToBottom('singbox_log');
+            scrollToBottom('bin_logs');
         }
+    }
+
+    function fetchLogs() {
         Promise.all([
             fetch('fetch_logs.php?file=plugin_log'),
-            fetch('fetch_logs.php?file=mihomo_log'),
             fetch('fetch_logs.php?file=singbox_log')
         ])
         .then(responses => Promise.all(responses.map(res => res.text())))
-        .then(data => {
-            document.getElementById('plugin_log').textContent = data[0];
-            document.getElementById('bin_logs').textContent = data[1];
-            document.getElementById('singbox_log').textContent = data[2];
-            scrollToBottom('plugin_log');
-            scrollToBottom('bin_logs');
-            scrollToBottom('singbox_log');
+        .then(([pluginData, singboxData]) => {
+            document.getElementById('plugin_log').textContent = pluginData;
+            document.getElementById('singbox_log').textContent = singboxData;
+            handleAutoScroll();
         })
         .catch(err => console.error('Error fetching logs:', err));
     }
-    fetchLogs();
-    let intervalId = setInterval(fetchLogs, 5000);
-    document.getElementById('autoRefresh').addEventListener('change', function() {
-        if (this.checked) {
-            intervalId = setInterval(fetchLogs, 5000);
-        } else {
-            clearInterval(intervalId);
+
+    function setupRefreshInterval() {
+        if (autoRefreshCheckbox.checked) {
+            refreshInterval = setInterval(fetchLogs, 5000);
         }
-    });
-</script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const autoRefreshCheckbox = document.getElementById('autoRefresh');
-        const isChecked = localStorage.getItem('autoRefresh') === 'true';
-        autoRefreshCheckbox.checked = isChecked;
-
-        if (isChecked) {
-            intervalId = setInterval(fetchLogs, 5000);
-        }
-    });
-
-    document.getElementById('autoRefresh').addEventListener('change', function() {
+    }
+    
+    autoRefreshCheckbox.addEventListener('change', function() {
         localStorage.setItem('autoRefresh', this.checked);
+        clearInterval(refreshInterval);
         if (this.checked) {
-            intervalId = setInterval(fetchLogs, 5000);
-        } else {
-            clearInterval(intervalId);
+            setupRefreshInterval();
         }
     });
-</script>
 
-<script>
-    window.addEventListener('load', function() {
-        const activeTab = localStorage.getItem('activeTab') || 'pluginLogTab'; 
-        const activeTabLink = document.getElementById(activeTab);
-        const activeTabPane = document.getElementById(activeTab.replace('Tab', ''));      
-        activeTabLink.classList.add('active');  
-        activeTabPane.classList.add('show', 'active');  
-    });
-
-    document.querySelectorAll('.nav-link').forEach(tab => {
-        tab.addEventListener('click', function() {
-            const selectedTab = this.id;
-            localStorage.setItem('activeTab', selectedTab); 
-        });
-    });
+    fetchLogs();
+    handleAutoScroll();
+    setupRefreshInterval();
+    startUpdateTimer();
+});
 </script>
-</body>
-</html>
-    <footer class="text-center">
-        <p><?php echo isset($message) ? $message : ''; ?></p>
-        <p><?php echo $footer; ?></p>
-    </footer>
-</body>
-</html>
 

@@ -148,6 +148,7 @@ git clone --depth 1 https://github.com/sirpdboy/luci-theme-kucat -b js --depth 1
 git clone --depth 1 https://github.com/blueberry-pie-11/luci-app-natmap
 git clone --depth 1 https://github.com/QiuSimons/luci-app-daed-next daed1 && mvdir daed1
 #git clone --depth 1 https://github.com/morytyann/OpenWrt-mihomo OpenWrt-mihomo && mv -n OpenWrt-mihomo/*mihomo ./ ; rm -rf OpenWrt-mihomo
+git clone --depth 1 https://github.com/nikkinikki-org/OpenWrt-momo OpenWrt-momo && mv -n OpenWrt-momo/*momo ./ ; rm -rf OpenWrt-momo
 git clone --depth 1 https://github.com/nikkinikki-org/OpenWrt-nikki OpenWrt-nikki && mv -n OpenWrt-nikki/*nikki ./ ; rm -rf OpenWrt-nikki
 git clone --depth 1 https://github.com/muink/openwrt-fchomo openwrt-fchomo && mv -n openwrt-fchomo/*homo ./ ; rm -rf openwrt-fchomo
 git clone --depth 1 https://github.com/lucikap/luci-app-brukamen && mv -n luci-app-brukamen/{luci*,mentohust,iii/*} ./;rm -rf luci-app-brukamen luci-app-autoshell_*.ipk

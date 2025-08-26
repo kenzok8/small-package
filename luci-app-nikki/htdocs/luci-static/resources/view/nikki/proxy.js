@@ -96,6 +96,9 @@ return view.extend({
             so.value(cgroup);
         };
 
+        so = o.subsection.option(form.Flag, 'dns', _('DNS'));
+        so.rmempty = false;
+
         so = o.subsection.option(form.Flag, 'proxy', _('Proxy'));
         so.rmempty = false;
 
@@ -129,6 +132,7 @@ return view.extend({
         so.rmempty = false;
 
         so = o.subsection.option(form.DynamicList, 'ip', 'IP');
+        so.datatype = 'ip4addr';
 
         for (const mac in hosts) {
             const host = hosts[mac];
@@ -139,6 +143,7 @@ return view.extend({
         };
 
         so = o.subsection.option(form.DynamicList, 'ip6', 'IP6');
+        so.datatype = 'ip6addr';
 
         for (const mac in hosts) {
             const host = hosts[mac];
@@ -149,12 +154,16 @@ return view.extend({
         };
 
         so = o.subsection.option(form.DynamicList, 'mac', 'MAC');
+        so.datatype = 'macaddr';
 
         for (const mac in hosts) {
             const host = hosts[mac];
             const hint = host.name ?? host.ipaddrs[0];
             so.value(mac, hint ? '%s (%s)'.format(mac, hint) : mac);
         };
+
+        so = o.subsection.option(form.Flag, 'dns', _('DNS'));
+        so.rmempty = false;
 
         so = o.subsection.option(form.Flag, 'proxy', _('Proxy'));
         so.rmempty = false;

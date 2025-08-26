@@ -61,7 +61,8 @@ function inbounds(proxy, config, extra_inbound) {
 function outbounds(proxy, config, manual_tproxy, bridge, extra_inbound, fakedns) {
     let result = [
         blackhole_outbound(),
-        direct_outbound("direct", null),
+        direct_outbound("direct", null, false),
+        direct_outbound("dynamic_direct", null, true),
         ...dns_server_outbounds(proxy),
         ...manual_tproxy_outbounds(config, manual_tproxy),
         ...bridge_outbounds(config, bridge)
@@ -129,7 +130,7 @@ function rules(proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
                     push(direct_rules, {
                         type: "field",
                         inboundTag: [...built_in_tcp_inbounds, ...built_in_udp_inbounds],
-                        outboundTag: "direct",
+                        outboundTag: "dynamic_direct",
                         ip: geoip_direct_code_list
                     });
                 }
@@ -138,7 +139,7 @@ function rules(proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
                     push(direct_rules, {
                         type: "field",
                         inboundTag: [...tproxy_tcp_inbound_v6_tags, ...tproxy_udp_inbound_v6_tags],
-                        outboundTag: "direct",
+                        outboundTag: "dynamic_direct",
                         ip: geoip_direct_code_list_v6
                     });
                 }

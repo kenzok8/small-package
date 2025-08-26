@@ -61,7 +61,8 @@ for k, e in ipairs(api.get_valid_nodes()) do
 		nodes_table[#nodes_table + 1] = {
 			id = e[".name"],
 			remark = e["remark"],
-			type = e["type"]
+			type = e["type"],
+			chain_proxy = e["chain_proxy"]
 		}
 	end
 	if e.protocol == "_balancing" then
@@ -135,7 +136,7 @@ if api.compare_versions(xray_version, ">=", "1.8.10") then
 end
 
 -- 探测地址
-local ucpu = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custome Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
+local ucpu = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custom Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
 ucpu:depends({ [_n("balancingStrategy")] = "leastPing" })
 ucpu:depends({ [_n("balancingStrategy")] = "leastLoad" })
 
@@ -337,6 +338,7 @@ o.default = ""
 o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
 o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true, [_n("transport")] = "raw" })
+o:depends({ [_n("protocol")] = "trojan", [_n("tls")] = true, [_n("transport")] = "raw" })
 
 o = s:option(Flag, _n("tls"), translate("TLS"))
 o.default = 0
@@ -379,6 +381,26 @@ o = s:option(Flag, _n("tls_allowInsecure"), translate("allowInsecure"), translat
 o.default = "0"
 o:depends({ [_n("tls")] = true, [_n("reality")] = false })
 
+o = s:option(Flag, _n("ech"), translate("ECH"))
+o.default = "0"
+o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
+
+o = s:option(TextValue, _n("ech_config"), translate("ECH Config"))
+o.default = ""
+o.rows = 5
+o.wrap = "soft"
+o:depends({ [_n("ech")] = true })
+o.validate = function(self, value)
+	return api.trim(value:gsub("[\r\n]", ""))
+end
+
+o = s:option(ListValue, _n("ech_ForceQuery"), translate("ECH Query Policy"), translate("Controls the policy used when performing DNS queries for ECH configuration."))
+o.default = "none"
+o:value("none")
+o:value("half")
+o:value("full")
+o:depends({ [_n("ech")] = true })
+
 -- [[ REALITY部分 ]] --
 o = s:option(Value, _n("reality_publicKey"), translate("Public Key"))
 o:depends({ [_n("tls")] = true, [_n("reality")] = true })
@@ -408,6 +430,19 @@ o:value("randomized")
 o.default = "chrome"
 o:depends({ [_n("tls")] = true, [_n("utls")] = true })
 o:depends({ [_n("tls")] = true, [_n("reality")] = true })
+
+o = s:option(Flag, _n("use_mldsa65Verify"), translate("ML-DSA-65"))
+o.default = "0"
+o:depends({ [_n("tls")] = true, [_n("reality")] = true })
+
+o = s:option(TextValue, _n("reality_mldsa65Verify"), "ML-DSA-65 " .. translate("Public key"))
+o.default = ""
+o.rows = 5
+o.wrap = "soft"
+o:depends({ [_n("use_mldsa65Verify")] = true })
+o.validate = function(self, value)
+	return api.trim(value:gsub("[\r\n]", ""))
+end
 
 o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("raw", "RAW (TCP)")
@@ -670,7 +705,7 @@ o = s:option(ListValue, _n("to_node"), translate("Landing Node"), translate("Onl
 o:depends({ [_n("chain_proxy")] = "2" })
 
 for k, v in pairs(nodes_table) do
-	if v.type == "Xray" and v.id ~= arg[1] then
+	if v.type == "Xray" and v.id ~= arg[1] and (not v.chain_proxy or v.chain_proxy == "") then
 		s.fields[_n("preproxy_node")]:value(v.id, v.remark)
 		s.fields[_n("to_node")]:value(v.id, v.remark)
 	end

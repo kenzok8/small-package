@@ -11,13 +11,20 @@ msgid ""
 "<abbr title=\"Light Emitting Diode\">LED</abbr> indicates the Internet status."
 msgstr ""
 
-msgid "Action when connected"
+msgid "<abbr title=\"Light Emitting Diode\">LED</abbr> mode"
 msgstr ""
 
-msgid "Action when disconnected"
+msgid ""
+"<abbr title=\"Light Emitting Diode\">LED</abbr> will display the link activity of this network device."
 msgstr ""
 
 msgid "Add instance"
+msgstr ""
+
+msgid "After connection"
+msgstr ""
+
+msgid "After disconnection"
 msgstr ""
 
 msgid "Alive interval"
@@ -41,7 +48,7 @@ msgstr ""
 msgid "Big: 248 bytes"
 msgstr ""
 
-msgid "Blink"
+msgid "Blinking (kernel: timer)"
 msgstr ""
 
 msgid "Bot API token is missing!"
@@ -84,6 +91,9 @@ msgid "Dead interval"
 msgstr ""
 
 msgid "Dead period"
+msgstr ""
+
+msgid "Debug"
 msgstr ""
 
 msgid "Default port value for TCP connections."
@@ -138,9 +148,6 @@ msgid "Email address of the sender."
 msgstr ""
 
 msgid "Enable"
-msgstr ""
-
-msgid "Enable logging"
 msgstr ""
 
 msgid "Enable public-ip-script"
@@ -205,6 +212,9 @@ msgstr ""
 msgid "Incorrect bot token?"
 msgstr ""
 
+msgid "Info"
+msgstr ""
+
 msgid "Instances"
 msgstr ""
 
@@ -250,7 +260,16 @@ msgstr ""
 msgid "LED control"
 msgstr ""
 
+msgid "Link On"
+msgstr ""
+
 msgid "Loading"
+msgstr ""
+
+msgid "Log event level."
+msgstr ""
+
+msgid "Logging"
 msgstr ""
 
 msgid "Mailsend is not available..."
@@ -294,6 +313,9 @@ msgid ""
 "interface is used."
 msgstr ""
 
+msgid "Network device activity (kernel: netdev)"
+msgstr ""
+
 msgid ""
 "Network device or interface to restart. If not specified, then the network service is restarted."
 msgstr ""
@@ -313,16 +335,31 @@ msgstr ""
 msgid "Not scheduled"
 msgstr ""
 
+msgid "Notice"
+msgstr ""
+
 msgid "Number of attempts to request an IP address."
 msgstr ""
 
 msgid "Off"
 msgstr ""
 
+msgid "Off-state delay"
+msgstr ""
+
+msgid "Off-state delay for blinking option."
+msgstr ""
+
 msgid "On"
 msgstr ""
 
 msgid "On startup"
+msgstr ""
+
+msgid "On-state delay"
+msgstr ""
+
+msgid "On-state delay for blinking option."
 msgstr ""
 
 msgid "One of the following:"
@@ -379,6 +416,9 @@ msgid "Reboot device"
 msgstr ""
 
 msgid "Reboot device if the Internet is disconnected at service startup."
+msgstr ""
+
+msgid "Receive"
 msgstr ""
 
 msgid "Recipient"
@@ -525,6 +565,9 @@ msgstr ""
 msgid "To support HTTP services you need to install curl."
 msgstr ""
 
+msgid "Transmit"
+msgstr ""
+
 msgid "Type a time string"
 msgstr ""
 
@@ -552,6 +595,9 @@ msgstr ""
 msgid "Waiting for a reboot to complete before performing a forced reboot."
 msgstr ""
 
+msgid "Warning"
+msgstr ""
+
 msgid "Web UI only (UI detector)"
 msgstr ""
 
@@ -565,9 +611,6 @@ msgid "When message will be sent"
 msgstr ""
 
 msgid "Windows: 32 bytes"
-msgstr ""
-
-msgid "Write messages to the system log."
 msgstr ""
 
 msgid ""
@@ -610,6 +653,9 @@ msgstr ""
 msgid "minutes"
 msgstr ""
 
+msgid "msec"
+msgstr ""
+
 msgid "sec"
 msgstr ""
 
@@ -617,16 +663,4 @@ msgid "seconds"
 msgstr ""
 
 msgid "up-script"
-msgstr ""
-
-msgid "down-script attempts"
-msgstr ""
-
-msgid "down-script attempt interval"
-msgstr ""
-
-msgid "up-script attempts"
-msgstr ""
-
-msgid "up_script attempt interval"
 msgstr ""

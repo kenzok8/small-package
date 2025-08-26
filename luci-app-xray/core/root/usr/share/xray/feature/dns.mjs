@@ -142,10 +142,10 @@ export function dns_server_outbounds(proxy) {
         }
     ];
     if (proxy.dns_tcp_hijack) {
-        push(result, direct_outbound("dns_tcp_hijack_outbound", proxy.dns_tcp_hijack));
+        push(result, direct_outbound("dns_tcp_hijack_outbound", proxy.dns_tcp_hijack, false));
     }
     if (proxy.dns_udp_hijack) {
-        push(result, direct_outbound("dns_udp_hijack_outbound", proxy.dns_udp_hijack));
+        push(result, direct_outbound("dns_udp_hijack_outbound", proxy.dns_udp_hijack, false));
     }
     return result;
 };
@@ -228,7 +228,9 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
     for (let v in manual_tproxy) {
         if (v.domain_names != null) {
             for (let d in v.domain_names) {
-                hosts[d] = [v.source_addr];
+                if (index(v.source_addr, ":") == -1) {
+                    hosts[d] = [v.source_addr];
+                }
             }
         }
     }

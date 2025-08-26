@@ -15,6 +15,21 @@ local dsp = require "luci.dispatcher"
 			}
 		);
 	}
+	function downloadLog() {
+		var log_textarea = document.getElementById('log_textarea');
+		var logContent = log_textarea.value || log_textarea.innerText || log_textarea.innerHTML;
+		var blob = new Blob([logContent], {type: 'text/plain;charset=utf-8'});
+		var url = window.URL.createObjectURL(blob);
+		var a = document.createElement('a');
+		a.href = url;
+		a.download = 'easytier-web_log.txt';  
+		document.body.appendChild(a);
+		a.click();
+		setTimeout(function() {
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(url);
+		}, 0);
+	}
 	XHR.poll(2, '<%=dsp.build_url("admin/vpn/easytier/get_wlog")%>', null,
 		function(x, data) {
 			if(x && x.status == 200 && document.getElementById("checkbox1").checked == true) {
@@ -29,5 +44,6 @@ local dsp = require "luci.dispatcher"
 <fieldset class="cbi-section" id="_log_fieldset">
 	<input type="checkbox" id="checkbox1" style="vertical-align:middle;height: auto;"checked><%:Auto Refresh%></input>
 	<input class="cbi-button cbi-input-remove" type="button" onclick="clearlog()" value="<%:Clear Logs%>" />
+	<input class="cbi-button cbi-input-apply" type="button" onclick="downloadLog()" value="<%:Download Log%>" />
 	<textarea id="log_textarea" class="cbi-input-textarea" style="width: 100%;margin-top: 10px;" data-update="change" rows="30" wrap="off" readonly="readonly"></textarea>
 </fieldset>

@@ -48,6 +48,10 @@ function set_apply_on_parse(map)
 			showMsg_Redirect(self.redirect, 3000)
 		end
 	end
+	map.render = function(self, ...)
+		getmetatable(self).__index.render(self, ...) -- 保持原渲染流程
+		optimize_cbi_ui()
+	end
 end
 
 function showMsg_Redirect(redirectUrl, delay)
@@ -122,7 +126,8 @@ function uci_save(cursor, config, commit, apply)
 end
 
 function sh_uci_get(config, section, option)
-	exec_call(string.format("uci -q get %s.%s.%s", config, section, option))
+	local _, val = exec_call(string.format("uci -q get %s.%s.%s", config, section, option))
+	return val
 end
 
 function sh_uci_set(config, section, option, val, commit)
@@ -535,6 +540,8 @@ function get_valid_nodes()
 							protocol = "HY2"
 						elseif protocol == "anytls" then
 							protocol = "AnyTLS"
+						elseif protocol == "ssh" then
+							protocol = "SSH"
 						else
 							protocol = protocol:gsub("^%l",string.upper)
 						end
@@ -581,6 +588,8 @@ function get_node_remarks(n)
 					protocol = "HY2"
 				elseif protocol == "anytls" then
 					protocol = "AnyTLS"
+				elseif protocol == "ssh" then
+					protocol = "SSH"
 				else
 					protocol = protocol:gsub("^%l",string.upper)
 				end
@@ -1351,4 +1360,28 @@ function format_go_time(input)
 	if m > 0 then result = result .. m .. "m" end
 	if s > 0 or result == "" then result = result .. s .. "s" end
 	return result
+end
+
+function optimize_cbi_ui()
+	luci.http.write([[
+		<script type="text/javascript">
+			//修正上移、下移按钮名称
+			document.querySelectorAll("input.btn.cbi-button.cbi-button-up").forEach(function(btn) {
+				btn.value = "]] .. i18n.translate("Move up") .. [[";
+			});
+			document.querySelectorAll("input.btn.cbi-button.cbi-button-down").forEach(function(btn) {
+				btn.value = "]] .. i18n.translate("Move down") .. [[";
+			});
+			//删除控件和说明之间的多余换行
+			document.querySelectorAll("div.cbi-value-description").forEach(function(descDiv) {
+				var prev = descDiv.previousSibling;
+				while (prev && prev.nodeType === Node.TEXT_NODE && prev.textContent.trim() === "") {
+					prev = prev.previousSibling;
+				}
+				if (prev && prev.nodeType === Node.ELEMENT_NODE && prev.tagName === "BR") {
+					prev.remove();
+				}
+			});
+		</script>
+	]])
 end

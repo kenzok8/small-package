@@ -31,5 +31,30 @@ return baseclass.extend({
             return e;
         }
     },
+    validate_ip_or_geoip: function (id, a) {
+        if (a == "") {
+            return true;
+        }
+        if (a.startsWith("geoip:") || a.startsWith("ext:")) {
+            return true;
+        }
+        return this.validation.parseIPv4(a) !== null || this.validation.parseIPv6(a) !== null || "Invalid IP address or rule: " + a;
+    },
+    validate_port_expression: function (id, a) {
+        if (a == "") {
+            return true;
+        }
+        const values = a.split(",");
+        for (let v of values) {
+            const parts = v.split("-").map(part => part === "" ? NaN : Number(part.trim()));
+            if (parts.length > 2 || parts.some(part => isNaN(part) || part < 0 || part > 65535)) {
+                return "Invalid expression: " + v;
+            }
+            if (parts.length === 2 && parts[0] > parts[1]) {
+                return "Invalid port range: " + v;
+            }
+        }
+        return true;
+    },
     variant: variant
 });

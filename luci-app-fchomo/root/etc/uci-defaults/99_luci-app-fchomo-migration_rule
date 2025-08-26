@@ -1,0 +1,91 @@
+#!/bin/sh
+# Migration script for fchomo rules & sub-rules
+# Used to migrate LuCI application routing rules and sub-rules from `mihomo` format to `json` format.
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
+CONF=fchomo
+
+config_load "$CONF"
+
+toOrigin() {
+	local content="$1" type subrule detour payload params
+	type="${content%%,*}"; [ "${content%%,*}" = "$content" ] && content='' || content="${content#*,}"
+	if [ "$type" = "SUB-RULE" ]; then
+		subrule="${content##*,}"
+		content="$(echo "$content" | sed -n 's|^(\(.*\)).*|\1|p')"
+		type="${content%%,*}"; [ "${content%%,*}" = "$content" ] && content='' || content="${content#*,}"
+	fi
+	local logical_payload rawfactor
+	logical_payload="$(echo "$content" | grep '^(.*)')"
+	if [ -n "$logical_payload" ]; then
+		rawfactor="$(echo "$content" | sed -n 's|^\((.*)\).*|\1|p')"
+		content="$(echo "$content" | sed 's|^(.*),*||')"
+	else
+		rawfactor="${content%%,*}"; [ "${content%%,*}" = "$content" ] && content='' || content="${content#*,}"
+	fi
+	detour="${content%%,*}"; [ "${content%%,*}" = "$content" ] && content='' || content="${content#*,}"
+	if [ "$type" = "MATCH" ]; then
+		detour="$rawfactor"
+		rawfactor=''
+	fi
+
+	payload=''
+	if [ -n "$logical_payload" ]; then
+		json_init
+		json_add_array payload
+		if echo "$rawfactor" | grep -q '^(.*)$'; then # LOGICAL_TPYE,()
+			local val='' obj='' arr="$(ucode -e 'print(replace('"'${rawfactor: 1:-1}'"', "ꓹ", "\n"))')" # U+A4F9
+			for i in $(seq 1 $(echo "$arr" | sed -n '$=')); do
+				obj="$(echo "$arr" | sed -n "${i}p")"
+				if echo "$obj" | grep -q '^(.*)$'; then # (payload)
+					val="$(ucode -e 'print(replace('"'${obj: 1:-1}'"', "‚", "\n"))')" # U+201A
+					json_add_object
+					json_add_string type "$(echo "$val" | sed -n '1p')"
+					json_add_string factor "$(echo "$val" | sed -n '2p')"
+					json_close_object
+				fi
+			done
+		fi
+		json_close_array
+		payload="$(jsonfilter -qs "$(json_dump)" -e '$.payload')"
+	else
+		payload='[{"type":"'"$type"'","factor":"'"$rawfactor"'"}]'
+	fi
+
+	params=''
+	if [ -n "$content" ]; then
+		json_init
+		for k in ${content//,/ }; do
+			json_add_boolean "$k" "1"
+		done
+		params="$(json_dump)"
+	fi
+
+	echo "{
+		\"type\": \"$type\",
+		\"payload\": $payload,
+		$([ -n "$detour" ] && echo "\"detour\": \"$detour\",")
+		$([ -n "$params" ] && echo "\"params\": $params,")
+		$([ -n "$subrule" ] && echo "\"subrule\": \"$subrule\",")
+	}" | jsonfilter -e '$'
+}
+
+migrate() {
+	config_get oldentry "$1" entry ""
+	if ! [ -z "$oldentry" -o -n "$(echo "$oldentry" | grep '^{.*}$')" ]; then
+		[ "$oldentry" = "$(uci_get "$CONF" "$1" entry "")" ] || oldentry="$(uci_get "$CONF" "$1" entry "")"
+
+        # keep the old entry if it includes REGEX or PATH
+		echo "$oldentry" | grep -qE "\b(REGEX|PATH)\b" && uci_set "$CONF" "$1" oldentry "$(ucode -e 'print(replace('"'$oldentry'"', /ꓹ|‚/g, ","))')"
+		uci_set "$CONF" "$1" entry "$(toOrigin "$oldentry")"
+	fi
+}
+
+config_foreach migrate rules
+config_foreach migrate subrules
+
+uci_commit "$CONF"
+
+exit 0

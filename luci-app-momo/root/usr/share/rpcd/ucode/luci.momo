@@ -1,0 +1,107 @@
+#!/usr/bin/ucode
+
+'use strict';
+
+import { access, popen, readfile, writefile } from 'fs';
+import { get_paths, merge_exists, get_users, get_groups, get_cgroups } from '/etc/momo/ucode/include.uc';
+
+const methods = {
+	get_paths: {
+		call: function() {
+			return get_paths();
+		}
+	},
+	version: {
+		call: function() {
+			let process;
+			let app = '';
+			if (system('command -v opkg') == 0) {
+				process = popen(`opkg list-installed luci-app-momo | cut -d ' ' -f 3`);
+				if (process) {
+					app = trim(process.read('all'));
+					process.close();
+				}
+			} else if (system('command -v apk') == 0) {
+				process = popen(`apk list -I luci-app-momo | cut -d ' ' -f 1 | cut -d '-' -f 4`);
+				if (process) {
+					app = trim(process.read('all'));
+					process.close();
+				}
+			}
+			let core = '';
+			process = popen(`sing-box version | grep sing-box | cut -d ' ' -f 3`);
+			if (process) {
+				core = trim(process.read('all'));
+				process.close();
+			}
+			return { app: app, core: core };
+		}
+	},
+	profile: {
+		args: { defaults: {} },
+		call: function(req) {
+			const paths = get_paths();
+			const defaults = req.args?.defaults ?? {};
+			const profile = json(readfile(paths.run_profile_path));
+			return merge_exists(defaults, profile);
+		}
+	},
+	update_subscription: {
+		args: { section_id: 'section_id' },
+		call: function(req) {
+			let success = false;
+			const section_id = req.args?.section_id;
+			if (section_id) {
+				success = system(['service', 'momo', 'update_subscription', section_id]) == 0;
+			}
+			return { success: success };
+		}
+	},
+	api: {
+		args: { method: 'method', path: 'path', query: 'query', body: 'body' },
+		call: function(req) {
+			let result = {};
+
+			const method = req.args?.method;
+			const path = req.args?.path;
+			const query = req.args?.query;
+			const body = req.args?.body;
+
+			const paths = get_paths();
+			const profile = json(readfile(paths.run_profile_path));
+			const api_listen = profile['experimental']['clash_api']['external_controller'];
+			const api_secret = profile['experimental']['clash_api']['secret'];
+
+			if (!api_listen) {
+				return result;
+			}
+
+			const url = api_listen + path;
+
+			const process = popen(`curl --request '${method}' --oauth2-bearer '${api_secret}' --url-query '${query}' --data '${body}' '${url}'`);
+			if (process) {
+				result = json(process);
+				process.close();
+			}
+
+			return result;
+		}
+	},
+	get_identifiers: {
+		call: function() {
+			const users = filter(get_users(), (x) => x != '');
+			const groups = filter(get_groups(), (x) => x != '');
+			const cgroups = filter(get_cgroups(), (x) => x != '' && index(x, 'services/momo') < 0);
+			return { users: users, groups: groups, cgroups: cgroups };
+		}
+	},
+	debug: {
+		call: function() {
+			const paths = get_paths();
+			const success = system(`${paths.debug_sh} > ${paths.debug_log_path}`) == 0;
+			return { success: success };
+		}
+	}
+};
+
+return { 'luci.momo': methods };

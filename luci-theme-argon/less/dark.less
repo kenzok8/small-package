@@ -3,7 +3,7 @@
  *  Argon is a clean HTML5 theme for LuCI. It is based on luci-theme-material and Argon Template
  *
  *  luci-theme-argon
- *      Copyright 2023 Jerryk <jerrykuku@gmail.com>
+ *      Copyright 2025 Jerryk <jerrykuku@gmail.com>
  *
  *  Have a bug? Please create an issue here on GitHub!
  *      https://github.com/jerrykuku/luci-theme-argon/issues
@@ -1016,7 +1016,7 @@ input,
 
             tr {
                 border-top: thin solid #4d4d4d;
-    
+
                 &:last-child {
                     border-bottom: thin solid #4d4d4d;
                 }
@@ -1048,6 +1048,19 @@ input,
 }
 
 [data-page^="admin-services-openclash"] {
+    .oc {
+        --bg-light: #1e1e1e !important;
+        --bg-gray: #1e1e1e !important;
+
+        .developer-container {
+            background: transparent !important;
+        }
+    }
+
+    .config-upload-content{
+        background: #1e1e1e !important;
+    }
+
     .cbi-tabmenu::-webkit-scrollbar-thumb {
         background-color: #5b5b5b;
     }

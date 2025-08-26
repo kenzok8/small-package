@@ -22,6 +22,11 @@ if api.is_js_luci() then
 	end
 end
 
+m.render = function(self, ...)
+	Map.render(self, ...)
+	api.optimize_cbi_ui()
+end
+
 local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
 local has_trojan_plus = api.is_finded("trojan-plus")
@@ -63,6 +68,18 @@ end
 if has_hysteria2 then
 	local s = "hysteria2"
 	table.insert(hysteria2_type, s)
+end
+local nodes_table = {}
+for k, e in ipairs(api.get_valid_nodes()) do
+	if e.node_type == "normal" then
+		nodes_table[#nodes_table + 1] = {
+			id = e[".name"],
+			remark = e["remark"],
+			type = e["type"],
+			add_mode = e["add_mode"],
+			chain_proxy = e["chain_proxy"]
+		}
+	end
 end
 
 s = m:section(NamedSection, arg[1])
@@ -207,11 +224,36 @@ o:value("direct", translate("Direct Connection"))
 o:value("proxy", translate("Proxy"))
 
 o = s:option(Value, "user_agent", translate("User-Agent"))
-o.default = "v2rayN/9.99"
+o.default = "passwall"
+o:value("passwall", "PassWall")
+o:value("v2rayN/9.99", "v2rayN")
 o:value("curl", "Curl")
 o:value("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Linux")
 o:value("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Windows")
-o:value("Passwall/OpenWrt", "PassWall")
-o:value("v2rayN/9.99", "v2rayN")
+
+o = s:option(ListValue, "chain_proxy", translate("Chain Proxy"))
+o:value("", translate("Close(Not use)"))
+o:value("1", translate("Preproxy Node"))
+o:value("2", translate("Landing Node"))
+
+local descrStr = "Chained proxy works only with Xray or Sing-box nodes.<br>"
+descrStr = descrStr .. "The chained node must be the same type as your subscription node (Xray with Xray, Sing-box with Sing-box).<br>"
+descrStr = descrStr .. "You can only use manual or imported nodes as chained nodes."
+descrStr = translate(descrStr) .. "<br>" .. translate("Only support a layer of proxy.")
+
+o = s:option(ListValue, "preproxy_node", translate("Preproxy Node"))
+o:depends({ ["chain_proxy"] = "1" })
+o.description = descrStr
+
+o = s:option(ListValue, "to_node", translate("Landing Node"))
+o:depends({ ["chain_proxy"] = "2" })
+o.description = descrStr
+
+for k, v in pairs(nodes_table) do
+	if (v.type == "Xray" or v.type == "sing-box") and (not v.chain_proxy or v.chain_proxy == "") and v.add_mode ~= "2" then
+		s.fields["preproxy_node"]:value(v.id, v.remark)
+		s.fields["to_node"]:value(v.id, v.remark)
+	end
+end
 
 return m

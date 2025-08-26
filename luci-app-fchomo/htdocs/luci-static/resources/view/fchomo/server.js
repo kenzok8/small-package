@@ -50,9 +50,6 @@ return view.extend({
 		o = s.option(form.Flag, 'server_enabled', _('Enable'));
 		o.default = o.disabled;
 
-		o = s.option(form.Flag, 'server_auto_firewall', _('Auto configure firewall'));
-		o.default = o.disabled;
-
 		/* Server settings START */
 		s = m.section(hm.GridSection, 'server', null);
 		s.addremove = true;
@@ -80,6 +77,11 @@ return view.extend({
 		o.default = o.enabled;
 		o.editable = true;
 
+		o = s.taboption('field_general', form.Flag, 'auto_firewall', _('Firewall'),
+			_('Auto configure firewall'));
+		o.default = o.enabled;
+		o.editable = true;
+
 		o = s.taboption('field_general', form.ListValue, 'type', _('Type'));
 		o.default = hm.inbound_type[0][0];
 		hm.inbound_type.forEach((res) => {
@@ -93,13 +95,13 @@ return view.extend({
 
 		o = s.taboption('field_general', form.Value, 'port', _('Listen port') + ' / ' + _('Ports pool'));
 		o.datatype = 'or(port, portrange)';
-		//o.placeholder = '1080,2079-2080,3080'; // Incompatible with firewall
+		//o.placeholder = '1080,2079-2080,3080'; // @fw4 does not support port lists with commas
 		o.rmempty = false;
-		//o.validate = L.bind(hm.validateCommonPort, o); // Incompatible with firewall
+		//o.validate = L.bind(hm.validateCommonPort, o); // @fw4 does not support port lists with commas
 
-		// dev: Features under development
-		// rule
-		// proxy
+		// @dev: Features under development
+		// @rule
+		// @proxy
 
 		/* HTTP / SOCKS fields */
 		/* hm.validateAuth */

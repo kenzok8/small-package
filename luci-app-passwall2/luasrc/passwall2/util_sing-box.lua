@@ -8,8 +8,9 @@ local fs = api.fs
 local CACHE_PATH = api.CACHE_PATH
 local split = api.split
 
-local local_version = api.get_app_version("sing-box")
-local version_ge_1_11_0 = api.compare_versions(local_version:match("[^v]+"), ">=", "1.11.0")
+local local_version = api.get_app_version("sing-box"):match("[^v]+")
+local version_ge_1_11_0 = api.compare_versions(local_version, ">=", "1.11.0")
+local version_ge_1_12_0 = api.compare_versions(local_version, ">=", "1.12.0")
 
 local new_port
 
@@ -31,9 +32,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		local proxy_tag = nil
+		local fragment = nil
+		local record_fragment = nil
 		local run_socks_instance = true
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
+			fragment = proxy_table.fragment or nil
+			record_fragment = proxy_table.record_fragment or nil
 			run_socks_instance = proxy_table.run_socks_instance
 		end
 
@@ -98,6 +103,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 				alpn = alpn, --支持的应用层协议协商列表，按优先顺序排列。如果两个对等点都支持 ALPN，则选择的协议将是此列表中的一个，如果没有相互支持的协议则连接将失败。
 				--min_version = "1.2",
 				--max_version = "1.3",
+				fragment = fragment,
+				record_fragment = record_fragment,
 				ech = {
 					enabled = (node.ech == "1") and true or false,
 					config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {},
@@ -314,7 +321,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 			protocol_table = {
 				server_ports = next(server_ports) and server_ports or nil,
-				hop_interval = next(server_ports) and "30s" or nil,
+				hop_interval = (function()
+							if not next(server_ports) then return nil end
+							local v = tonumber((node.hysteria_hop_interval or "30s"):match("^%d+"))
+							return (v and v >= 5) and (v .. "s") or "30s"
+						end)(),
 				up_mbps = tonumber(node.hysteria_up_mbps),
 				down_mbps = tonumber(node.hysteria_down_mbps),
 				obfs = node.hysteria_obfs,
@@ -327,6 +338,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					alpn = (node.hysteria_alpn and node.hysteria_alpn ~= "") and {
 						node.hysteria_alpn
 					} or nil,
@@ -361,6 +374,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					alpn = (node.tuic_alpn and node.tuic_alpn ~= "") and {
 						node.tuic_alpn
 					} or nil,
@@ -386,7 +401,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 			protocol_table = {
 				server_ports = next(server_ports) and server_ports or nil,
-				hop_interval = next(server_ports) and "30s" or nil,
+				hop_interval = (function()
+							if not next(server_ports) then return nil end
+							local v = tonumber((node.hysteria2_hop_interval or "30s"):match("^%d+"))
+							return (v and v >= 5) and (v .. "s") or "30s"
+						end)(),
 				up_mbps = (node.hysteria2_up_mbps and tonumber(node.hysteria2_up_mbps)) and tonumber(node.hysteria2_up_mbps) or nil,
 				down_mbps = (node.hysteria2_down_mbps and tonumber(node.hysteria2_down_mbps)) and tonumber(node.hysteria2_down_mbps) or nil,
 				obfs = {
@@ -398,6 +417,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					enabled = true,
 					server_name = node.tls_serverName,
 					insecure = (node.tls_allowInsecure == "1") and true or false,
+					fragment = fragment,
+					record_fragment = record_fragment,
 					ech = {
 						enabled = (node.ech == "1") and true or false,
 						config = node.ech_config and split(node.ech_config:gsub("\\n", "\n"), "\n") or {},
@@ -415,6 +436,18 @@ function gen_outbound(flag, node, tag, proxy_table)
 				idle_session_timeout = "30s",
 				min_idle_session = 5,
 				tls = tls
+			}
+		end
+
+		if node.protocol == "ssh" then
+			protocol_table = {
+				user = (node.username and node.username ~= "") and node.username or "root",
+				password = (node.password and node.password ~= "") and node.password or "",
+				private_key = node.ssh_priv_key,
+				private_key_passphrase = node.ssh_priv_key_pp,
+				host_key = node.ssh_host_key,
+				host_key_algorithms = node.ssh_host_key_algo,
+				client_version = node.ssh_client_version
 			}
 		end
 
@@ -856,6 +889,7 @@ function gen_config(var)
 	local dns = nil
 	local inbounds = {}
 	local outbounds = {}
+	local rule_set_table = {}
 	local COMMON = {}
 
 	local CACHE_TEXT_FILE = CACHE_PATH .. "/cache_" .. flag .. ".txt"
@@ -877,6 +911,45 @@ function gen_config(var)
 	}
 
 	local experimental = nil
+
+	function rule_set_add(w)
+		local result = nil
+		if w and #w > 0 then
+			if w:find("local:") == 1 or w:find("remote:") == 1 then
+				local _type = w:sub(1, w:find(":") - 1)
+				w = w:sub(w:find(":") + 1, #w)
+				local format = nil
+				local filename = w:sub(-w:reverse():find("/") + 1)
+				local suffix = ""
+				local find_doc = filename:reverse():find("%.")
+				if find_doc then
+					suffix = filename:sub(-find_doc + 1)
+				end
+				if suffix == "srs" then
+					format = "binary"
+				elseif suffix == "json" then
+					format = "source"
+				end
+				if format then
+					local rule_set_tag = filename:sub(1, filename:find("%.") - 1)
+					if not rule_set_table[rule_set_tag] then
+						local t = {
+							type = _type,
+							tag = rule_set_tag,
+							format = format,
+							path = format == "source" and w or nil,
+							url = format == "binary" and w or nil,
+							--download_detour = format == "binary" and "",
+							--update_interval = format == "binary" and "",
+						}
+						rule_set_table[rule_set_tag] = t
+						result = t
+					end
+				end
+			end
+		end
+		return result
+	end
 
 	local node = nil
 	if node_id then
@@ -978,7 +1051,7 @@ function gen_config(var)
 				end
 				if is_new_ut_node then
 					local ut_node = uci:get_all(appname, ut_node_id)
-					local outbound = gen_outbound(flag, ut_node, ut_node_tag, { run_socks_instance = not no_run })
+					local outbound = gen_outbound(flag, ut_node, ut_node_tag, { fragment = singbox_settings.fragment == "1" or nil, record_fragment = singbox_settings.record_fragment == "1" or nil, run_socks_instance = not no_run })
 					if outbound then
 						outbound.tag = outbound.tag .. ":" .. ut_node.remarks
 						table.insert(outbounds, outbound)
@@ -1144,8 +1217,19 @@ function gen_config(var)
 									})
 								end
 							end
-							
-							local _outbound = gen_outbound(flag, _node, rule_name, { tag = use_proxy and preproxy_tag or nil, run_socks_instance = not no_run})
+							local proxy_table = {
+								tag = use_proxy and preproxy_tag or nil,
+								run_socks_instance = not no_run
+							}
+							if not proxy_table.tag then
+								if singbox_settings.fragment == "1" then
+									proxy_table.fragment = true
+								end
+								if singbox_settings.record_fragment == "1" then
+									proxy_table.record_fragment = true
+								end
+							end
+							local _outbound = gen_outbound(flag, _node, rule_name, proxy_table)
 							if _outbound then
 								_outbound.tag = _outbound.tag .. ":" .. _node.remarks
 								rule_outboundTag, last_insert_outbound = set_outbound_detour(_node, _outbound, outbounds, rule_name)
@@ -1274,6 +1358,8 @@ function gen_config(var)
 						rule.port_range = #port_range > 0 and port_range or nil
 					end
 
+					local rule_set = {}
+
 					if e.domain_list then
 						local domain_table = {
 							outboundTag = outboundTag,
@@ -1282,6 +1368,7 @@ function gen_config(var)
 							domain_keyword = {},
 							domain_regex = {},
 							geosite = {},
+							rule_set = {},
 						}
 						string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
 							if w:find("#") == 1 then return end
@@ -1293,6 +1380,13 @@ function gen_config(var)
 								table.insert(domain_table.domain, w:sub(1 + #"full:"))
 							elseif w:find("domain:") == 1 then
 								table.insert(domain_table.domain_suffix, w:sub(1 + #"domain:"))
+							elseif w:find("rule-set:", 1, true) == 1 or w:find("rs:") == 1 then
+								w = w:sub(w:find(":") + 1, #w)
+								local t = rule_set_add(w)
+								if t then
+									table.insert(rule_set, t.tag)
+									table.insert(domain_table.rule_set, t.tag)
+								end
 							else
 								table.insert(domain_table.domain_keyword, w)
 							end
@@ -1302,6 +1396,7 @@ function gen_config(var)
 						rule.domain_keyword = #domain_table.domain_keyword > 0 and domain_table.domain_keyword or nil
 						rule.domain_regex = #domain_table.domain_regex > 0 and domain_table.domain_regex or nil
 						rule.geosite = #domain_table.geosite > 0 and domain_table.geosite or nil
+						rule.rule_set = #domain_table.rule_set > 0 and domain_table.rule_set or nil
 
 						if outboundTag then
 							table.insert(dns_domain_rules, api.clone(domain_table))
@@ -1315,6 +1410,12 @@ function gen_config(var)
 							if w:find("#") == 1 then return end
 							if w:find("geoip:") == 1 then
 								table.insert(geoip, w:sub(1 + #"geoip:"))
+							elseif w:find("rule-set:", 1, true) == 1 or w:find("rs:") == 1 then
+								w = w:sub(w:find(":") + 1, #w)
+								local t = rule_set_add(w)
+								if t then
+									table.insert(rule_set, t.tag)
+								end
 							else
 								table.insert(ip_cidr, w)
 							end
@@ -1323,6 +1424,7 @@ function gen_config(var)
 						rule.ip_cidr = #ip_cidr > 0 and ip_cidr or nil
 						rule.geoip = #geoip > 0 and geoip or nil
 					end
+					rule.rule_set = #rule_set > 0 and rule_set or nil
 
 					table.insert(rules, rule)
 				end
@@ -1348,7 +1450,7 @@ function gen_config(var)
 				sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 			end
 		else
-			local outbound = gen_outbound(flag, node, nil, { run_socks_instance = not no_run })
+			local outbound = gen_outbound(flag, node, nil, { fragment = singbox_settings.fragment == "1" or nil, record_fragment = singbox_settings.record_fragment == "1" or nil, run_socks_instance = not no_run })
 			if outbound then
 				outbound.tag = outbound.tag .. ":" .. node.remarks
 				COMMON.default_outbound_tag, last_insert_outbound = set_outbound_detour(node, outbound, outbounds)
@@ -1488,7 +1590,7 @@ function gen_config(var)
 		--按分流顺序DNS
 		if dns_domain_rules and #dns_domain_rules > 0 then
 			for index, value in ipairs(dns_domain_rules) do
-				if value.outboundTag and (value.domain or value.domain_suffix or value.domain_keyword or value.domain_regex or value.geosite) then
+				if value.outboundTag and (value.domain or value.domain_suffix or value.domain_keyword or value.domain_regex or value.geosite or value.rule_set) then
 					local dns_rule = {
 						server = value.outboundTag,
 						domain = (value.domain and #value.domain > 0) and value.domain or nil,
@@ -1496,6 +1598,7 @@ function gen_config(var)
 						domain_keyword = (value.domain_keyword and #value.domain_keyword > 0) and value.domain_keyword or nil,
 						domain_regex = (value.domain_regex and #value.domain_regex > 0) and value.domain_regex or nil,
 						geosite = (value.geosite and #value.geosite > 0) and value.geosite or nil,
+						rule_set = (value.rule_set and #value.rule_set > 0) and value.rule_set or nil,
 						disable_cache = false,
 					}
 					if value.outboundTag ~= "block" and value.outboundTag ~= "direct" then
@@ -1587,6 +1690,13 @@ function gen_config(var)
 					sys.call(string.format("nft flush set %s %s %s 2>/dev/null", family, table_name, w))
 				end)
 			end
+		end
+	end
+
+	if next(rule_set_table) then
+		route.rule_set = {}
+		for k, v in pairs(rule_set_table) do
+			table.insert(route.rule_set, v)
 		end
 	end
 	
@@ -1711,6 +1821,24 @@ function gen_config(var)
 				table.insert(config.route.rules, {
 					action = "reject"
 				})
+			end
+		end
+		if version_ge_1_12_0 then
+			-- removed geo in version 1.12
+			config.route.geoip = nil
+			config.route.geosite = nil
+			if config.route and config.route.rules then
+				for i = #config.route.rules, 1, -1 do
+					local value = config.route.rules[i]
+					value.geoip = nil
+					value.geosite = nil
+				end
+			end
+			if config.dns and config.dns.rules then
+				for i = #config.dns.rules, 1, -1 do
+					local value = config.dns.rules[i]
+					value.geosite = nil
+				end
 			end
 		end
 		return jsonc.stringify(config, 1)

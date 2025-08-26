@@ -67,8 +67,8 @@ start_service() {
 		config_get_bool auto_update "subscription" "auto_update" "0"
 		if [ "$auto_update" = "1" ]; then
 			config_get auto_update_time "subscription" "auto_update_time" "2"
-			sed -i "/update_crond.sh/d" "/etc/crontabs/root" 2>"/dev/null"
-			echo -e "0 $auto_update_time * * * $HP_DIR/scripts/update_crond.sh" >> "/etc/crontabs/root"
+			sed -i "/#${CONF}_autosetup/d" "/etc/crontabs/root" 2>"/dev/null"
+			echo -e "0 $auto_update_time * * * $HP_DIR/scripts/update_crond.sh #${CONF}_autosetup" >> "/etc/crontabs/root"
 			/etc/init.d/cron restart
 		fi
 
@@ -87,7 +87,8 @@ start_service() {
 			EOF
 			;;
 		"gfwlist")
-			[ "$ipv6_support" -eq "0" ] || local gfw_nftset_v6=",6#inet#fw4#homeproxy_gfw_list_v6"
+			local gfw_nftset_v6
+			[ "$ipv6_support" -eq "0" ] || gfw_nftset_v6=",6#inet#fw4#homeproxy_gfw_list_v6"
 			sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_gfw_list_v4$gfw_nftset_v6/g" \
 				"$HP_DIR/resources/gfw_list.txt" > "$DNSMASQ_DIR/gfw_list.conf"
 			;;
@@ -98,7 +99,8 @@ start_service() {
 		esac
 
 		if [ "$routing_mode" != "custom" ] && [ -s "$HP_DIR/resources/proxy_list.txt" ]; then
-			[ "$ipv6_support" -eq "0" ] || local wan_nftset_v6=",6#inet#fw4#homeproxy_wan_proxy_addr_v6"
+			local wan_nftset_v6
+			[ "$ipv6_support" -eq "0" ] || wan_nftset_v6=",6#inet#fw4#homeproxy_wan_proxy_addr_v6"
 			sed -r -e '/^\s*$/d' -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_wan_proxy_addr_v4$wan_nftset_v6/g" \
 				"$HP_DIR/resources/proxy_list.txt" > "$DNSMASQ_DIR/proxy_list.conf"
 		fi
@@ -147,6 +149,9 @@ start_service() {
 		procd_set_param command "$PROG"
 		procd_append_param command run --config "$RUN_DIR/sing-box-c.json"
 
+		# QUIC-GO GSO is broken on kernel 6.6 currently
+		uname -r | grep -Eq "^6\.6" && procd_set_param env "QUIC_GO_DISABLE_GSO"="true"
+
 		if [ -x "/sbin/ujail" ] && [ "$routing_mode" != "custom" ] && ! grep -Eq '"type": "(wireguard|tun)"' "$RUN_DIR/sing-box-c.json"; then
 			procd_add_jail "sing-box-c" log procfs
 			procd_add_jail_mount "$RUN_DIR/sing-box-c.json"
@@ -187,6 +192,9 @@ start_service() {
 
 		procd_set_param command "$PROG"
 		procd_append_param command run --config "$RUN_DIR/sing-box-s.json"
+
+		# QUIC-GO GSO is broken on kernel 6.6 currently
+		uname -r | grep -Eq "^6\.6" && procd_set_param env "QUIC_GO_DISABLE_GSO"="true"
 
 		if [ -x "/sbin/ujail" ]; then
 			procd_add_jail "sing-box-s" log procfs
@@ -242,11 +250,11 @@ start_service() {
 	[ "$outbound_node" = "nil" ] || utpl -S "$HP_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fw4_post.nft"
 	fw4 reload >"/dev/null" 2>&1
 
-	log "$(sing-box version | awk 'NR==1{print $1,$3}') started."
+	log "sing-box $(sing-box version -n) started."
 }
 
 stop_service() {
-	sed -i "/update_crond.sh/d" "/etc/crontabs/root" 2>"/dev/null"
+	sed -i "/#${CONF}_autosetup/d" "/etc/crontabs/root" 2>"/dev/null"
 	/etc/init.d/cron restart >"/dev/null" 2>&1
 
 	# Setup firewall

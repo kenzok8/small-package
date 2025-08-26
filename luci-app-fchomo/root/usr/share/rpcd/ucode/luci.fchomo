@@ -313,7 +313,7 @@ const methods = {
 		}
 	},
 
-	// thanks to homeproxy
+	/* thanks to homeproxy */
 	certificate_write: {
 		args: { filename: 'filename' },
 		call: function(req) {

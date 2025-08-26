@@ -1,0 +1,338 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:69
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:122
+msgid "Access Control"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:175
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:180
+msgid "All Port"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:94
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:13
+msgid "App Config"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:29
+msgid "App Log"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:43
+msgid "App Version"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:168
+msgid "Bypass"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:170
+msgid "Bypass China Mainland IP"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:183
+msgid "Bypass DSCP"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:93
+msgid "CGroup"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:27
+msgid "Choose File"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:99
+msgid "Choose Profile"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:33
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:66
+msgid "Clear Log"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:176
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:181
+msgid "Commonly Used Port"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:62
+msgid "Core Log"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:128
+msgid "Core Only"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:57
+msgid "Core Status"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:50
+msgid "Core Version"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:117
+msgid "Cron Expression"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:99
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:162
+msgid "DNS"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:95
+msgid "Debug Log"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:173
+msgid "Destination TCP Port to Proxy"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:178
+msgid "Destination UDP Port to Proxy"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:38
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:45
+msgid "Disable"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:35
+msgid "Edit Subscription"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:25
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:37
+msgid "Editor"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:96
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:33
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:66
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:77
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:107
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:130
+msgid "Enable"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:50
+msgid "Expire At"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:61
+msgid "Fake-IP Ping Hijack"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:125
+msgid "Fast Reload"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:103
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:31
+msgid "File:"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:99
+msgid "Generate & Download"
+msgstr ""
+
+#: applications/luci-app-momo/root/usr/share/rpcd/acl.d/luci-app-momo.json:3
+msgid "Grant access to momo procedures"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:87
+msgid "Group"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:38
+msgid "How To Use"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:49
+msgid "IPv4 DNS Hijack"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:55
+msgid "IPv4 Proxy"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:52
+msgid "IPv6 DNS Hijack"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:58
+msgid "IPv6 Proxy"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:110
+msgid "Inbound Interface"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:105
+msgid "LAN Proxy"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:83
+msgid "Local"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:27
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:45
+msgid "Log"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:38
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:3
+msgid "Momo"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:15
+msgid "Not Running"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:89
+msgid "Open Dashboard"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:79
+msgid "Prefer"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:21
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:21
+msgid "Profile"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:38
+msgid "Profile for Startup"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:102
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:165
+msgid "Proxy"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:29
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:31
+#: applications/luci-app-momo/root/usr/share/luci/menu.d/luci-app-momo.json:29
+msgid "Proxy Config"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:39
+msgid "Redirect Mode"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:69
+msgid "Reload Service"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:82
+msgid "Remote"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:76
+msgid "Restart Service"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:64
+msgid "Router Proxy"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:15
+msgid "Running"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:114
+msgid "Scheduled Restart"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:56
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:89
+msgid "Scroll To Bottom"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:110
+msgid "Start Delay"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:40
+msgid "Status"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:31
+msgid "Subscription"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:37
+msgid "Subscription Name"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:69
+msgid "Subscription Url"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:107
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/editor.js:35
+msgid "Subscription:"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:36
+msgid "TCP Mode"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:40
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:46
+msgid "TPROXY Mode"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:41
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:47
+msgid "TUN Mode"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:122
+msgid "Test Profile"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:45
+msgid "Total"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:38
+msgid "Transparent Proxy with sing-box on OpenWrt."
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:43
+msgid "UDP Mode"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:63
+msgid "Update"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:55
+msgid "Update At"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:83
+msgid "Update Dashboard"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:23
+msgid "Upload Profile"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:40
+msgid "Used"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/proxy.js:81
+msgid "User"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:73
+msgid "User Agent"
+msgstr ""
