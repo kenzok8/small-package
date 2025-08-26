@@ -155,7 +155,7 @@ start_service() {
 	if [ "$core_only" = 0 ] && [ "$proxy_enabled" = 1 ]; then
 		log "Profile" "Checking..."
 		if [ "$ipv4_dns_hijack" = 1 ] || [ "$ipv6_dns_hijack" = 1 ]; then
-			if (! yq -M -e 'has("dns") and (.dns | .enable) and (.dns | has("listen"))' "$RUN_PROFILE_PATH"); then
+			if yq -M -e '(has("dns") and (.dns | .enable) and (.dns | has("listen"))) | not' "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
 				log "Profile" "Check failed."
 				log "Profile" "DNS should be enabled and listen should be defined."
 				log "App" "Exit."
@@ -163,7 +163,7 @@ start_service() {
 			fi
 		fi
 		if [ "$tcp_mode" = "redirect" ]; then
-			if (! yq -M -e 'has("redir-port")' "$RUN_PROFILE_PATH"); then
+			if yq -M -e '(has("redir-port")) | not' "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
 				log "Profile" "Check failed."
 				log "Profile" "Redirect Port should be defined."
 				log "App" "Exit."
@@ -171,7 +171,7 @@ start_service() {
 			fi
 		fi
 		if [ "$tcp_mode" = "tproxy" ] || [ "$udp_mode" = "tproxy" ]; then
-			if (! yq -M -e 'has("tproxy-port")' "$RUN_PROFILE_PATH"); then
+			if yq -M -e '(has("tproxy-port")) | not' "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
 				log "Profile" "Check failed."
 				log "Profile" "TPROXY Port should be defined."
 				log "App" "Exit."
@@ -179,7 +179,7 @@ start_service() {
 			fi
 		fi
 		if [ "$tcp_mode" = "tun" ] || [ "$udp_mode" = "tun" ]; then
-			if (! yq -M -e 'has("tun") and (.tun | .enable) and (.tun | has("device"))' "$RUN_PROFILE_PATH"); then
+			if yq -M -e '(has("tun") and (.tun | .enable) and (.tun | has("device"))) | not' "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
 				log "Profile" "Check failed."
 				log "Profile" "TUN should be enabled and device should be defined."
 				log "App" "Exit."
@@ -191,7 +191,7 @@ start_service() {
 	# test profile
 	if [ "$test_profile" = 1 ]; then
 		log "Profile" "Testing..."
-		if ($PROG -d "$RUN_DIR" -t >> "$CORE_LOG_PATH" 2>&1); then
+		if $PROG -d "$RUN_DIR" -t >> "$CORE_LOG_PATH" 2>&1; then
 			log "Profile" "Test passed."
 		else
 			log "Profile" "Test failed."
@@ -284,7 +284,7 @@ service_started() {
 		if [ "$tun_enable" = 1 ]; then
 			log "Proxy" "Waiting for tun device online within $tun_timeout seconds..."
 			while [ "$tun_timeout" -gt 0 ]; do
-				if (ip -j link show dev "$tun_device" | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1); then
+				if ip -j link show dev "$tun_device" | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1; then
 					log "Proxy" "TUN device is online."
 					break
 				fi
@@ -300,7 +300,7 @@ service_started() {
 		# fix compatible with dockerd
 		## cgroupfs-mount
 		### when cgroupfs-mount is installed, cgroupv1 will mounted instead of cgroupv2, we need to create cgroup manually
-		if (mount | grep -q -w "^cgroup"); then
+		if mount | grep -q -w "^cgroup"; then
 			mkdir -p "/sys/fs/cgroup/net_cls/$cgroup_name"
 			echo "$cgroup_id" > "/sys/fs/cgroup/net_cls/$cgroup_name/net_cls.classid"
 			cat "$PID_FILE_PATH" > "/sys/fs/cgroup/net_cls/$cgroup_name/cgroup.procs"
@@ -348,7 +348,7 @@ service_started() {
 		# hijack
 		utpl -S "$HIJACK_UT" | nft -f -
 		# check hijack
-		if (nft list tables | grep -q nikki); then
+		if nft list tables | grep -q nikki; then
 			log "Proxy" "Hijack successful."
 		else
 			log "Proxy" "Hijack failed."
@@ -405,10 +405,10 @@ cleanup() {
 	rm "$STARTED_FLAG_PATH" > /dev/null 2>&1
 	# revert fix compatible with dockerd
 	## kmod-br-netfilter
-	if (rm "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH" > /dev/null 2>&1); then
+	if rm "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH" > /dev/null 2>&1; then
 		sysctl -q -w net.bridge.bridge-nf-call-iptables=1
 	fi
-	if (rm "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH" > /dev/null 2>&1); then
+	if rm "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH" > /dev/null 2>&1; then
 		sysctl -q -w net.bridge.bridge-nf-call-ip6tables=1
 	fi
 	# delete cron
@@ -443,9 +443,9 @@ update_subscription() {
 	local subscription_header_tmpfile; subscription_header_tmpfile="$TEMP_DIR/$subscription_section.header"
 	local subscription_tmpfile; subscription_tmpfile="$TEMP_DIR/$subscription_section.yaml"
 	local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.yaml"
-	if (curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"); then
+	if curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"; then
 		log "Profile" "Subscription download successful."
-		if (yq -p yaml -o yaml -e 'has("proxies") or has("proxy-providers")' "$subscription_tmpfile" > /dev/null 2>&1); then
+		if yq -p yaml -o yaml -e 'has("proxies") or has("proxy-providers")' "$subscription_tmpfile" > /dev/null 2>&1; then
 			log "Profile" "Subscription is valid."
 			success=1
 		else
