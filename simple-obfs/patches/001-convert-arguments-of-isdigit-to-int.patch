@@ -1,0 +1,22 @@
+From bc8014cd6637798ee96b9394c716eff46115c002 Mon Sep 17 00:00:00 2001
+From: DDoSolitary <DDoSolitary@gmail.com>
+Date: Thu, 12 Mar 2020 12:15:37 +0800
+Subject: [PATCH] Convert arguments of isdigit to int.
+
+---
+ src/utils.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/utils.c b/src/utils.c
+index 67cc250..514a001 100644
+--- a/src/utils.c
++++ b/src/utils.c
+@@ -92,7 +92,7 @@ int
+ ss_isnumeric(const char *s) {
+     if (!s || !*s)
+         return 0;
+-    while (isdigit(*s))
++    while (isdigit((int)*s))
+         ++s;
+     return *s == '\0';
+ }
