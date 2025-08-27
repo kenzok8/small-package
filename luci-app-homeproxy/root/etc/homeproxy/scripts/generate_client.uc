@@ -522,10 +522,10 @@ if (!isEmpty(main_node)) {
 				enabled: true,
 				server_name: cfg.tls_sni
 			} : null,
-			domain_resolver: {
-				server: get_resolver(cfg.address_resolver),
+			domain_resolver: (cfg.address_resolver || cfg.address_strategy) ? {
+				server: get_resolver(cfg.address_resolver || dns_default_server),
 				strategy: cfg.address_strategy
-			},
+			} : null,
 			detour: get_outbound(cfg.outbound)
 		});
 	});

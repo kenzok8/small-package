@@ -144,7 +144,7 @@ start_service() {
 	# test profile
 	if [ "$test_profile" = 1 ]; then
 		log "Profile" "Testing..."
-		if ($PROG -D "$RUN_DIR" check >> "$CORE_LOG_PATH" 2>&1); then
+		if $PROG -D "$RUN_DIR" check >> "$CORE_LOG_PATH" 2>&1; then
 			log "Profile" "Test passed."
 		else
 			log "Profile" "Test failed."
@@ -235,7 +235,7 @@ service_started() {
 		if [ "$tun_enable" = 1 ]; then
 			log "Proxy" "Waiting for tun device online within $tun_timeout seconds..."
 			while [ "$tun_timeout" -gt 0 ]; do
-				if (ip -j link show dev "$tun_device" | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1); then
+				if ip -j link show dev "$tun_device" | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1; then
 					log "Proxy" "TUN device is online."
 					break
 				fi
@@ -251,7 +251,7 @@ service_started() {
 		# fix compatible with dockerd
 		## cgroupfs-mount
 		### when cgroupfs-mount is installed, cgroupv1 will mounted instead of cgroupv2, we need to create cgroup manually
-		if (mount | grep -q -w "^cgroup"); then
+		if mount | grep -q -w "^cgroup"; then
 			mkdir -p "/sys/fs/cgroup/net_cls/$cgroup_name"
 			echo "$cgroup_id" > "/sys/fs/cgroup/net_cls/$cgroup_name/net_cls.classid"
 			cat "$PID_FILE_PATH" > "/sys/fs/cgroup/net_cls/$cgroup_name/cgroup.procs"
@@ -299,7 +299,7 @@ service_started() {
 		# hijack
 		utpl -S "$HIJACK_UT" | nft -f -
 		# check hijack
-		if (nft list tables | grep -q momo); then
+		if nft list tables | grep -q momo; then
 			log "Proxy" "Hijack successful."
 		else
 			log "Proxy" "Hijack failed."
@@ -356,10 +356,10 @@ cleanup() {
 	rm "$STARTED_FLAG_PATH" > /dev/null 2>&1
 	# revert fix compatible with dockerd
 	## kmod-br-netfilter
-	if (rm "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH" > /dev/null 2>&1); then
+	if rm "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH" > /dev/null 2>&1; then
 		sysctl -q -w net.bridge.bridge-nf-call-iptables=1
 	fi
-	if (rm "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH" > /dev/null 2>&1); then
+	if rm "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH" > /dev/null 2>&1; then
 		sysctl -q -w net.bridge.bridge-nf-call-ip6tables=1
 	fi
 	# delete cron
@@ -394,7 +394,7 @@ update_subscription() {
 	local subscription_header_tmpfile; subscription_header_tmpfile="$TEMP_DIR/$subscription_section.header"
 	local subscription_tmpfile; subscription_tmpfile="$TEMP_DIR/$subscription_section.json"
 	local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.json"
-	if (curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"); then
+	if curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"; then
 		log "Profile" "Subscription download successful."
 		success=1
 	else

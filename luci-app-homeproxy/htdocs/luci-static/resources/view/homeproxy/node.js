@@ -1136,6 +1136,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.modalonly = true;
 
 		o = s.option(form.Flag, 'tls_reality', _('REALITY'));
+		o.depends({'tls': '1', 'type': 'anytls'});
 		o.depends({'tls': '1', 'type': 'vless'});
 		o.modalonly = true;
 
