@@ -1039,6 +1039,10 @@ msgstr ""
 msgid "Handle domain"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:231
+msgid "Handshake mode"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/server.js:271
 msgid "Handshake target that supports TLS 1.3"
 msgstr ""
