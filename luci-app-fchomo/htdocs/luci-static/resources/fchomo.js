@@ -354,7 +354,7 @@ const CBIGridSection = form.GridSection.extend({
 	}
 });
 
-const CBIDynamicList = form.DynamicList.extend({
+const CBIDynamicList = form.DynamicList.extend({ // @pr7558_merged
 	__name__: 'CBI.DynamicList',
 
 	renderWidget(section_id, option_index, cfgvalue) {
@@ -397,7 +397,7 @@ const CBIStaticList = form.DynamicList.extend({
 	__name__: 'CBI.StaticList',
 
 	renderWidget(/* ... */) {
-		let El = ((less_24_10 || !pr7558_merged) ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments);
+		let El = ((less_24_10 || !pr7558_merged) ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @pr7558_merged
 
 		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
 
@@ -574,7 +574,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 	}
 });
 
-const UIDynamicList = ui.DynamicList.extend({
+const UIDynamicList = ui.DynamicList.extend({ // @pr7558_merged
 	addItem(dl, value, text, flash) {
 		if (this.options.allowduplicates) {
 			const new_item = E('div', { class: flash ? 'item flash' : 'item', tabindex: 0, draggable: !less_24_10 }, [
