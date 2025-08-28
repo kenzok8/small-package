@@ -1001,7 +1001,7 @@ function handleGenKey(option) {
 		return callMihomoGenerator(option.type, option.params).then((ret) => {
 			if (ret.result)
 				for (let key in option.result)
-					widget(option.result[key]).value = ret.result[key] || '';
+					widget(option.result[key]).value = ret.result[key] ?? '';
 			else
 				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, ret.error)));
 		});
