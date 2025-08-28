@@ -2,13 +2,14 @@
 
 依赖`kmod-tun`需要先在系统软件包里安装好
 ### 快速开始
-```bash
-右上角Fork克隆本项目，去actions手动触发自动编译流程，2分钟后就能获取最新ipk压缩包`luci-app-easytier.zip`解压上传到Openwrt软路由安装即可
 
-```
-> 其中`SNAPSHOT`后缀的是apk安装包，`openwrt-22.03`的是ipk安装包
- 
-![actions界面](https://github.com/user-attachments/assets/7e5e843b-eb01-48f1-81ab-226a1418ca0f)
+1. 右上角Fork克隆本项目
+2. 修改 `.github/workflows/build.yml`，在 `jobs.build.strategy` 修改 arch 和 sdk
+  - 建议 arch 只保留需要的选项，加速编译
+  - sdk 可根据需要填写，其中`SNAPSHOT`后缀的是apk安装包，`openwrt-22.03`的是ipk安装包（也可以根据自己的路由 OpenWRT 版本修改）
+3. 到 actions 手动触发自动编译流程，注意需要填写 release，否则只编译不发布，参考下图：
+ <img width="2727" height="866" alt="image" src="https://github.com/user-attachments/assets/24a55d1c-7937-4cef-87f8-cd8778b5f009" />
+
 ### 安装方法
 ```bash
 #先上传到openwrt的/tmp/tmp目录里安装
