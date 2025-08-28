@@ -220,11 +220,11 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'mieru_multiplexing', _('Multiplexing'));
+		so.default = 'MULTIPLEXING_LOW';
 		so.value('MULTIPLEXING_OFF');
 		so.value('MULTIPLEXING_LOW');
 		so.value('MULTIPLEXING_MIDDLE');
 		so.value('MULTIPLEXING_HIGH');
-		so.default = 'MULTIPLEXING_LOW';
 		so.depends('type', 'mieru');
 		so.modalonly = true;
 
@@ -268,6 +268,7 @@ return view.extend({
 
 		so = ss.taboption('field_general', form.ListValue, 'tuic_udp_relay_mode', _('UDP relay mode'),
 			_('UDP packet relay mode.'));
+		so.default = 'native';
 		so.value('native', _('Native'));
 		so.value('quic', _('QUIC'));
 		so.depends({type: 'tuic', tuic_udp_over_stream: '0'});
