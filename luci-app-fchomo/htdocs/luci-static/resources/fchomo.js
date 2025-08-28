@@ -20,8 +20,6 @@ const sharktaikogif = function() {
 'c2hhcmstdGFpa28uZ2lm'
 }()
 
-const less_24_10 = !form.RichListValue;
-
 const pr7558_merged = form.DynamicList.prototype.renderWidget.toString().match('this\.allowduplicates');
 
 const monospacefonts = [
@@ -390,14 +388,14 @@ const CBIListValue = form.ListValue.extend({
 const CBIRichMultiValue = form.MultiValue.extend({
 	__name__: 'CBI.RichMultiValue',
 
-	value: (form.RichListValue || form.MultiValue).prototype.value // @less_24_10
+	value: form.RichListValue.prototype.value
 });
 
 const CBIStaticList = form.DynamicList.extend({
 	__name__: 'CBI.StaticList',
 
 	renderWidget(/* ... */) {
-		let El = ((less_24_10 || !pr7558_merged) ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @pr7558_merged
+		let El = (!pr7558_merged ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @pr7558_merged
 
 		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
 
@@ -577,7 +575,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 const UIDynamicList = ui.DynamicList.extend({ // @pr7558_merged
 	addItem(dl, value, text, flash) {
 		if (this.options.allowduplicates) {
-			const new_item = E('div', { class: flash ? 'item flash' : 'item', tabindex: 0, draggable: !less_24_10 }, [
+			const new_item = E('div', { class: flash ? 'item flash' : 'item', tabindex: 0, draggable: true }, [
 				E('span', {}, [ text ?? value ]),
 				E('input', {
 					type: 'hidden',
@@ -1393,7 +1391,6 @@ return baseclass.extend({
 	rulesetdoc,
 	sharkaudio,
 	sharktaikogif,
-	less_24_10,
 	pr7558_merged,
 	monospacefonts,
 	checkurls,
