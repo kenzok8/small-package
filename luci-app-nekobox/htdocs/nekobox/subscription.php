@@ -558,7 +558,7 @@ EOL;
         </div>
     </div>
 </nav>
-<h2 class="text-center p-2" style="margin-top: 2rem; margin-bottom: 1rem;" data-translate="form_title"></h2>
+<h2 class="text-center p-2 mt-3 mb-2" data-translate="form_title"></h2>
         <div class="col-12 px-4">
             <div class="form-section">
                 <form method="post">

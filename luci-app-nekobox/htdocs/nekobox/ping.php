@@ -330,6 +330,46 @@ function deleteNekoTmpDirectory($dir) {
 .modal-body .alert.alert-warning .note-text {
         color: #ff0000 !important;
 }
+
+@media (max-width: 600px) {
+	.navbar-brand {
+		flex-shrink: 1;
+		min-width: 0;
+		white-space: nowrap;
+	}
+
+	#dynamicTitle {
+		white-space: nowrap;
+	}
+
+	.navbar-toggler i {
+		font-size: 1.2rem !important;
+	}
+
+	.navbar-toggler {
+		padding: 0.15rem 0.35rem;
+	}
+}
+
+@media (max-width: 768px) {
+	.row > .col {
+		flex: 0 0 50%;
+		max-width: 50%;
+	}
+
+	.row > .col:nth-child(n+3) {
+		flex: 0 0 33.3333%;
+		max-width: 33.3333%;
+	}
+
+	.row {
+		row-gap: 13px;
+	}
+
+	.d-flex.flex-wrap.mb-4 {
+		flex-wrap: nowrap !important;
+	}
+}
 </style>
 
 <div id="theme-loader" style="display: none;">
@@ -407,6 +447,104 @@ document.addEventListener('click', e => {
   if (e.target.closest('.btn-refresh-page')) {
     location.reload();
   }
+});
+</script>
+
+<script>
+class PageSwipeNavigation {
+    constructor() {
+        this.pages = [
+            { url: './index.php', name: 'home' },
+            { url: './panel.php', name: 'panel' }, 
+            { url: './settings.php', name: 'settings' }, 
+            { url: './singbox.php', name: 'document' },
+            { url: './mihomo_manager.php', name: 'manager' }
+        ];
+        this.currentPageIndex = this.getCurrentPageIndex();
+        this.touchStartX = 0;
+        this.touchEndX = 0;
+        this.minSwipeDistance = 100;
+        this.isAnimating = false;
+        
+        this.init();
+    }
+
+    getCurrentPageIndex() {
+        const currentPath = window.location.pathname;
+        const currentFile = currentPath.split('/').pop();
+        
+        for (let i = 0; i < this.pages.length; i++) {
+            if (this.pages[i].url.includes(currentFile)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    init() {
+        if (window.innerWidth <= 768) {
+            this.setupTouchEvents();
+        }
+        
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 768) {
+                this.setupTouchEvents();
+            }
+        });
+    }
+
+    setupTouchEvents() {
+        document.addEventListener('touchstart', (e) => {
+            this.touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            this.touchEndX = e.changedTouches[0].screenX;
+            this.handleSwipe();
+        }, { passive: true });
+    }
+
+    handleSwipe() {
+        if (this.isAnimating) return;
+
+        const swipeDistance = this.touchEndX - this.touchStartX;
+        
+        if (Math.abs(swipeDistance) > this.minSwipeDistance) {
+            if (swipeDistance > 0) {
+                this.previousPage();
+            } else {
+                this.nextPage();
+            }
+        }
+    }
+
+    previousPage() {
+        const prevIndex = this.currentPageIndex > 0 
+            ? this.currentPageIndex - 1 
+            : this.pages.length - 1;
+        this.navigateToPage(prevIndex);
+    }
+
+    nextPage() {
+        const nextIndex = this.currentPageIndex < this.pages.length - 1 
+            ? this.currentPageIndex + 1 
+            : 0;
+        this.navigateToPage(nextIndex);
+    }
+
+    navigateToPage(index) {
+        if (this.isAnimating || index === this.currentPageIndex) {
+            return;
+        }
+        
+        this.isAnimating = true;
+        
+        window.location.href = this.pages[index].url;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new PageSwipeNavigation();
 });
 </script>
 
@@ -943,25 +1081,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const navbar = document.getElementById('navbarContent');
-    const isMobile = window.innerWidth < 992;
+    const toggler = document.querySelector('.navbar-toggler');
 
-    if (!isMobile) return;
+    if (!navbar || !toggler) return;
 
-    const bsCollapse = new bootstrap.Collapse(navbar, {
-        toggle: false
-    });
-
-    const savedState = localStorage.getItem('navbar-expanded');
-    if (savedState === 'true') {
-        bsCollapse.show();
+    function isMobile() {
+        return window.innerWidth < 992;
     }
 
-    navbar.addEventListener('show.bs.collapse', function () {
-        localStorage.setItem('navbar-expanded', 'true');
+    navbar.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (isMobile() && navbar.classList.contains('show')) {
+                toggler.click();
+            }
+        });
     });
 
-    navbar.addEventListener('hide.bs.collapse', function () {
-        localStorage.setItem('navbar-expanded', 'false');
+    document.addEventListener('click', (e) => {
+        const isInside = navbar.contains(e.target) || toggler.contains(e.target);
+        if (!isInside && navbar.classList.contains('show') && isMobile()) {
+            toggler.click();
+        }
     });
 });
 </script>
@@ -6981,7 +7121,6 @@ label {
 
 .form-select {
 	background-color: var(--card-bg) !important;
-	background-image: none;
 }
 
 .form-control {

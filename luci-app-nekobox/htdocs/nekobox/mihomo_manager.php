@@ -917,7 +917,6 @@ $(document).ready(function() {
             </div>
             <div class="modal-footer justify-content-end">
                 <button type="button" class="btn btn-pink" onclick="openFullScreenEditor()" data-translate="advancedEdit"></button>
-                <button id="aceScriptToggleBtn" class="btn btn-secondary" onclick="toggleAceScript()"><i id="aceIcon" class="bi bi-code-slash"></i> <span id="aceLabel"></span></button>
                 <button type="submit" form="editForm" class="btn btn-primary" data-translate="save"></button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close"></button>
             </div>
@@ -1003,55 +1002,43 @@ $(document).ready(function() {
 </div>
 
 <script>
-let aceEnabled = null;
-
-function checkAceScript() {
-    fetch('ace_loader.php?action=check')
-        .then(response => response.text())
-        .then(result => {
-            aceEnabled = (result.trim() === '1');
-            updateAceButton();
-        });
-}
-
-function toggleAceScript() {
-    const action = aceEnabled ? 'remove' : 'add';
-    fetch('ace_loader.php?action=' + action)
-        .then(response => response.text())
-        .then(result => {
-            aceEnabled = !aceEnabled;
-            updateAceButton();
-            document.getElementById('aceScriptStatus').innerText = result;
-        })
-        .catch(error => {
-            document.getElementById('aceScriptStatus').innerText = '请求失败: ' + error;
-        });
-}
-
-function updateAceButton() {
-    const btn = document.getElementById('aceScriptToggleBtn');
-    const icon = document.getElementById('aceIcon');
-    const label = document.getElementById('aceLabel');
-
-    if (aceEnabled) {
-        btn.className = 'btn btn-danger';
-        icon.className = 'bi bi-x-circle';
-        label.textContent = langData[currentLang]?.remove_ace || 'Remove Ace Component';
-    } else {
-        btn.className = 'btn btn-success';
-        icon.className = 'bi bi-plus-circle';
-        label.textContent = langData[currentLang]?.add_ace || 'Add Ace Component';
-    }
-}
-
-checkAceScript();
-</script>
-
-<script>
 let isJsonDetected = false;
 let aceEditorInstance;
+let aceLoaded = false;
 
-function initializeAceEditor() {
+function loadAceEditor() {
+    return new Promise((resolve, reject) => {
+        if (aceLoaded && window.ace) {
+            resolve();
+            return;
+        }
+
+        const aceScript = document.createElement('script');
+        aceScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js';
+        
+        aceScript.onload = () => {
+            aceLoaded = true;
+            resolve();
+        };
+
+        aceScript.onerror = () => {
+            reject(new Error('Failed to load ACE Editor'));
+        };
+
+        document.head.appendChild(aceScript);
+    });
+}
+
+async function initializeAceEditor() {
+    if (!aceLoaded) {
+        try {
+            await loadAceEditor();
+        } catch (error) {
+            console.error('Failed to load ACE Editor:', error);
+            return;
+        }
+    }
+
     aceEditorInstance = ace.edit("aceEditorContainer");
     const savedTheme = localStorage.getItem("editorTheme") || "ace/theme/vibrant_ink";
     aceEditorInstance.setTheme(savedTheme);
@@ -1072,7 +1059,11 @@ function initializeAceEditor() {
     detectContentFormat();
 }
 
-function openFullScreenEditor() {
+async function openFullScreenEditor() {
+    if (!aceEditorInstance) {
+        await initializeAceEditor();
+    }
+    
     aceEditorInstance.setValue(document.getElementById('fileContent').value, -1);
     $('#fullScreenEditorModal').modal('show');
     updateEditorStatus();
@@ -1337,7 +1328,6 @@ function updateEditorStatus() {
 }
 
 $(document).ready(() => {
-    initializeAceEditor();
 });
 
 document.addEventListener('DOMContentLoaded', () => {

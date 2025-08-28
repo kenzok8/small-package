@@ -202,7 +202,7 @@ EOL;
 </nav>
 <div class="outer-container px-3">
     <div class="container-fluid">
-        <h2 class="title text-center" style="margin-top: 3rem; margin-bottom: 1rem;" data-translate="title">Sing-box Conversion Template One</h2>
+        <h2 class="title text-center mt-3 mb-3" data-translate="title">Sing-box Conversion Template One</h2>
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title" data-translate="helpInfoHeading">Help Information</h4>

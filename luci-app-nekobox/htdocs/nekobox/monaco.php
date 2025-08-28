@@ -962,6 +962,20 @@ table.table tbody tr td.file-icon {
 .table td i.file-icon.fa-list-alt { color: #007bff; }
 .table td i.file-icon.fa-apple { color: #343a40; }
 .table td i.file-icon.fa-android { color: #28a745; }
+@media (max-width: 768px) {
+	#siteLogo {
+		display: none;
+	}
+
+	.row.mb-3.px-2.mt-5 {
+		margin-top: 1.5rem !important;
+	}
+
+	.btn i.fas,
+    .btn i.bi {
+		font-size: 1.2rem;
+	}
+}
 </style>
 
 <div class="container-sm container-bg mt-4">

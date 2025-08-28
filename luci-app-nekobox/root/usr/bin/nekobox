@@ -3,6 +3,7 @@
 CLCyan="\033[36m"
 CLWhite="\033[37m"
 CLYellow="\033[33m"
+CLGreen="\033[32m" 
 GREEN="\033[32m"
 RED="\033[31m"
 NC="\033[0m"
@@ -116,9 +117,10 @@ install_ipk() {
 
     download_url="https://github.com/$repo_owner/$repo_name/releases/download/$new_version/${package_name}_${new_version}-${language_choice}_all.ipk"
 
-   echo -e "${CYAN}Download URL: $download_url${NC}"
+    echo -e "${CYAN}Downloading ONLY: $package_name ($new_version)${NC}"
+    echo -e "${CYAN}URL: $download_url${NC}"
 
-    local_file="/tmp/$package_name.ipk"
+    local_file="/tmp/${package_name}.ipk"
     curl -L -f -o "$local_file" "$download_url"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Download failed!${NC}"
@@ -142,6 +144,22 @@ install_ipk() {
     fi
 
     rm -f "$local_file"
+}
+
+install_theme() {
+    echo -e "${CYAN}Installing luci-theme-spectra...${NC}"Add commentMore actions
+    opkg update && opkg install wget grep sed
+
+    LATEST_FILE=$(wget -qO- https://github.com/Thaolga/openwrt-nekobox/releases/expanded_assets/1.8.8 | grep -o 'luci-theme-spectra_[0-9A-Za-z.\-_]*_all.ipk' | head -n1)
+    wget -O /tmp/"$LATEST_FILE" "https://github.com/Thaolga/openwrt-nekobox/releases/download/1.8.8/$LATEST_FILE"
+    
+    if opkg install --force-reinstall /tmp/"$LATEST_FILE"; then
+        echo -e "${GREEN}luci-theme-spectra installed successfully.${NC}"
+    else
+        echo -e "${RED}Failed to install luci-theme-spectra.${NC}"
+    fi
+    
+    rm -f /tmp/"$LATEST_FILE"
 }
 
 install_core() {
@@ -213,6 +231,8 @@ install_core() {
 }
 
 install_singbox() {
+    local type=$1
+
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m'
@@ -221,9 +241,14 @@ install_singbox() {
     local temp_dir='/tmp/singbox_temp'
     local temp_file='/tmp/sing-box.tar.gz'
 
-    latest_version=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases | grep '"tag_name":' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+    if [ "$type" = "stable" ]; then
+        latest_version=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    else
+        latest_version=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases | grep '"tag_name":' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+    fi
+
     if [ -z "$latest_version" ]; then
-        echo -e "${RED}Unable to fetch the latest version number. Please check your network connection.${NC}"
+        echo -e "${RED}Unable to fetch the latest ${type:-prerelease} version. Please check your network connection.${NC}"
         exit 1
     fi
 
@@ -332,6 +357,30 @@ install_puernya() {
     echo "Puernya core installation completed successfully."
 }
 
+download_ruleset() {
+    local ruleset_url="https://github.com/Thaolga/openwrt-nekobox/releases/download/1.5.0/nekobox.zip"
+    local temp_file="/tmp/nekobox.zip"
+    local extract_dir="/www/nekobox"
+
+    echo "正在下载 Sing-box 规则集..."
+    wget -O "$temp_file" "$ruleset_url"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}下载失败！${NC}"
+        exit 1
+    fi
+
+    echo "正在解压规则集到 $extract_dir..."
+    mkdir -p "$extract_dir"
+    unzip -o "$temp_file" -d "$extract_dir"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}解压失败！${NC}"
+        exit 1
+    fi
+
+    echo "规则集下载和解压完成！"
+    rm -f "$temp_file"
+}
+
 install_ui() {
     GREEN='\033[0;32m'
     RED='\033[0;31m'
@@ -402,10 +451,16 @@ install_php() {
         PHP_CGI_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-cgi_8.3.10-1_aarch64_generic.ipk"
         PHP_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8_8.3.10-1_aarch64_generic.ipk"
         PHP_MOD_CURL_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-mod-curl_8.3.10-1_aarch64_generic.ipk"
+        PHP_MOD_ZIP_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-mod-zip_8.2.21-1_aarch64_generic.ipk"
+        JQ_URL="https://github.com/Thaolga/neko/releases/download/core_neko/jq_1.6-2_aarch64_generic.ipk"
+        PHP_CLI_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-cli_8.3.12-r1_aarch64_generic.ipk"
     elif [ "$ARCH" == "x86_64" ]; then
         PHP_CGI_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-cgi_8.3.10-1_x86_64.ipk"
         PHP_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8_8.3.10-1_x86_64.ipk"
         PHP_MOD_CURL_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-mod-curl_8.3.10-1_x86_64.ipk"
+        PHP_MOD_ZIP_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-mod-zip_8.2.21-1_x86_64.ipk"
+        JQ_URL="https://github.com/Thaolga/neko/releases/download/core_neko/jq_1.6-2_x86_64.ipk"
+        PHP_CLI_URL="https://github.com/Thaolga/neko/releases/download/core_neko/php8-cli_8.3.12-r1_x86_64.ipk"
     else
         echo -e "${RED}Unsupported architecture: $ARCH${RESET}"
         exit 1
@@ -435,7 +490,31 @@ install_php() {
         echo -e "${RED}PHP curl module installation failed.${RESET}"
     fi
 
-    rm -f /tmp/php8-cgi.ipk /tmp/php8.ipk /tmp/php8-mod-curl.ipk
+    echo -e "${GREEN}Downloading and installing PHP zip module...${RESET}"
+    wget "$PHP_MOD_ZIP_URL" -O /tmp/php8-mod-zip.ipk
+    if opkg install --force-reinstall --force-overwrite /tmp/php8-mod-zip.ipk; then
+        echo -e "${GREEN}PHP zip module installed successfully.${RESET}"
+    else
+        echo -e "${RED}PHP zip module installation failed.${RESET}"
+    fi
+
+    echo -e "${GREEN}Downloading and installing jq...${RESET}"
+    wget "$JQ_URL" -O /tmp/jq.ipk
+    if opkg install --force-reinstall --force-overwrite /tmp/jq.ipk; then
+        echo -e "${GREEN}jq installed successfully.${RESET}"
+    else
+        echo -e "${RED}jq installation failed.${RESET}"
+    fi
+    
+    echo -e "${GREEN}Downloading and installing PHP CLI...${RESET}"
+    wget "$PHP_CLI_URL" -O /tmp/php8-cli.ipk
+    if opkg install --force-reinstall --force-overwrite /tmp/php8-cli.ipk; then
+        echo -e "${GREEN}PHP CLI installed successfully.${RESET}"
+    else
+        echo -e "${RED}PHP CLI installation failed.${RESET}"
+    fi
+
+    rm -f /tmp/php8-cgi.ipk /tmp/php8.ipk /tmp/php8-mod-curl.ipk /tmp/php8-mod-zip.ipk /tmp/php8-cli.ipk
 
     echo -e "${GREEN}Installation complete.${RESET}"
     echo -e "${YELLOW}Please restart the server to apply changes.${RESET}"
@@ -449,28 +528,81 @@ reboot_router() {
 install_core_menu() {
     local language=$1
     while true; do
-        echo -e "${CLCyan}╔════════════════════════════════════════════════════════╗"
+        echo -e "${CLCyan}╔════════════════════════════════════════════════════════╗${NC}"
         if [ "$language" = "cn" ]; then
-            printf "${CLCyan}  %-54s ${NC}\n" "1. 安装 Sing-box 核心"
-            printf "${CLCyan}  %-54s ${NC}\n" "2. 安装 puernya 核心"
-            printf "${CLCyan}  %-54s ${NC}\n" "3. 返回主菜单"
-            echo -e "${CLCyan}╚════════════════════════════════════════════════════════╝"
+            echo -e "${CLCyan}║                  Sing-box / Puernya 核心安装菜单                 ║${NC}"
+            echo -e "${CLCyan}╠════════════════════════════════════════════════════════╣${NC}"
+            echo -e "${CLCyan}║  1. 安装 Sing-box 核心                                  ║${NC}"
+            echo -e "${CLCyan}║  2. 安装 puernya 核心                                   ║${NC}"
+            echo -e "${CLCyan}║  4. 返回主菜单                                         ║${NC}"
+        else
+            echo -e "${CLCyan}║                  Sing-box / Puernya Core Install Menu         ║${NC}"
+            echo -e "${CLCyan}╠════════════════════════════════════════════════════════╣${NC}"
+            echo -e "${CLCyan}║  1. Install Sing-box Core                              ║${NC}"
+            echo -e "${CLCyan}║  2. Install puernya Core                               ║${NC}"
+            echo -e "${CLCyan}║  4. Return to Main Menu                                ║${NC}"
+        fi
+        echo -e "${CLCyan}╚════════════════════════════════════════════════════════╝${NC}"
+
+        if [ "$language" = "cn" ]; then
             read -p "请选择要安装的核心: " core_choice
         else
-            printf "${CLCyan}  %-54s ${NC}\n" "1. Install Sing-box Core"
-            printf "${CLCyan}  %-54s ${NC}\n" "2. Install puernya Core"
-            printf "${CLCyan}  %-54s ${NC}\n" "3. Return to Main Menu"
-            echo -e "${CLCyan}╚════════════════════════════════════════════════════════╝"
             read -p "Please select a core to install: " core_choice
         fi
+
         case $core_choice in
             1)
-                install_singbox
+                while true; do
+                    echo -e "${CLCyan}╔════════════════════════════════════════════════════════╗${NC}"
+                    if [ "$language" = "cn" ]; then
+                        echo -e "${CLCyan}║              请选择要安装的 Sing-box 版本                 ║${NC}"
+                        echo -e "${CLCyan}╠════════════════════════════════════════════════════════╣${NC}"
+                        echo -e "${CLCyan}║  1. 安装正式版                                        ║${NC}"
+                        echo -e "${CLCyan}║  2. 安装预览版                                        ║${NC}"
+                        echo -e "${CLCyan}║  3. 返回上级菜单                                      ║${NC}"
+                    else
+                        echo -e "${CLCyan}║              Please select the Sing-box version         ║${NC}"
+                        echo -e "${CLCyan}╠════════════════════════════════════════════════════════╣${NC}"
+                        echo -e "${CLCyan}║  1. Install Stable Version                            ║${NC}"
+                        echo -e "${CLCyan}║  2. Install Pre-release Version                       ║${NC}"
+                        echo -e "${CLCyan}║  3. Return to Previous Menu                           ║${NC}"
+                    fi
+                    echo -e "${CLCyan}╚════════════════════════════════════════════════════════╝${NC}"
+
+                    if [ "$language" = "cn" ]; then
+                        read -p "请输入选择: " sub_choice
+                    else
+                        read -p "Enter your choice: " sub_choice
+                    fi
+
+                    case $sub_choice in
+                        1)
+                            install_singbox stable
+                            ;;
+                        2)
+                            install_singbox
+                            ;;
+                        3)
+                            break
+                            ;;
+                        *)
+                            if [ "$language" = "cn" ]; then
+                                echo -e "${RED}无效选项，请重试。${NC}"
+                            else
+                                echo -e "${RED}Invalid option, please try again.${NC}"
+                            fi
+                            ;;
+                    esac
+                    echo ""
+                done
                 ;;
             2)
                 install_puernya
                 ;;
             3)
+                download_ruleset
+                ;;
+            4)
                 return
                 ;;
             *)
@@ -481,6 +613,7 @@ install_core_menu() {
                 fi
                 ;;
         esac
+        echo ""
     done
 }
 
@@ -523,8 +656,8 @@ show_menu() {
     done
     echo -e "${CLCyan}╠════════════════════════════════════════════════════════╣"
     if [ "$language" = "cn" ]; then
-        printf "${CLCyan}  %-54s ${NC}\n" "1. 安装 NeKoBox (中文)"
-        printf "${CLCyan}  %-54s ${NC}\n" "2. 安装 NeKoBox (英文)"
+        printf "${CLCyan}  %-54s ${NC}\n" "1. 安装 NeKoBox"
+        printf "${CLCyan}  %-54s ${NC}\n" "2. 安装 luci-theme-spectra"
         printf "${CLCyan}  %-54s ${NC}\n" "3. 安装 Mihomo 核心"
         printf "${CLCyan}  %-54s ${NC}\n" "4. 安装 Sing-box 核心"
         printf "${CLCyan}  %-54s ${NC}\n" "5. 安装 UI 控制面板"
@@ -533,8 +666,8 @@ show_menu() {
         printf "${CLCyan}  %-54s ${NC}\n" "8. 切换到英文界面"
         printf "${CLCyan}  %-54s ${NC}\n" "0. 退出"
     else
-        printf "${CLCyan}  %-54s ${NC}\n" "1. Install NeKoBox (Chinese)"
-        printf "${CLCyan}  %-54s ${NC}\n" "2. Install NeKoBox (English)"
+        printf "${CLCyan}  %-54s ${NC}\n" "1. Install NeKoBox"
+        printf "${CLCyan}  %-54s ${NC}\n" "2. Install luci-theme-spectra"
         printf "${CLCyan}  %-54s ${NC}\n" "3. Install Mihomo Core"
         printf "${CLCyan}  %-54s ${NC}\n" "4. Install Sing-box Core"
         printf "${CLCyan}  %-54s ${NC}\n" "5. Install UI Control Panel"
@@ -558,7 +691,7 @@ main_menu() {
         fi
 
         echo -e "${CLCyan}╠════════════════════════════════════════════════════════╣"
-
+        
         if [ "$language" = "cn" ]; then
             read -p "请输入选项并按回车: " choice
         else
@@ -570,8 +703,7 @@ main_menu() {
                 install_ipk
                 ;;
             2)
-                language_choice="en"
-                install_ipk
+                install_theme
                 ;;
             3)
                 install_core
