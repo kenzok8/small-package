@@ -491,7 +491,7 @@ return view.extend({
 		o = s.taboption('inbound', form.SectionValue, '_inbound', form.NamedSection, 'inbound', 'fchomo', _('Tun settings'));
 		ss = o.subsection;
 
-		so = ss.option(form.RichListValue || form.ListValue, 'tun_stack', _('Stack'), // @less_24_10
+		so = ss.option(form.RichListValue, 'tun_stack', _('Stack'),
 			_('Tun stack.'));
 		so.value('system', _('System'), _('Less compatibility and sometimes better performance.'));
 		if (features.with_gvisor) {
@@ -500,16 +500,6 @@ return view.extend({
 		}
 		so.default = 'system';
 		so.rmempty = false;
-		if (hm.less_24_10)
-			so.onchange = function(ev, section_id, value) {
-				let desc = ev.target.nextSibling;
-				if (value === 'mixed')
-					desc.innerHTML = _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.');
-				else if (value === 'gvisor')
-					desc.innerHTML = _('Based on google/gvisor.');
-				else if (value === 'system')
-					desc.innerHTML = _('Less compatibility and sometimes better performance.');
-			}
 
 		so = ss.option(form.Value, 'tun_mtu', _('MTU'));
 		so.datatype = 'uinteger';
