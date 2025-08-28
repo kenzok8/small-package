@@ -844,6 +844,21 @@ table.table tbody tr td.file-icon {
         height: auto;
         margin-top: -25px;
 }
+
+@media (max-width: 768px) {
+	#siteLogo {
+		display: none;
+	}
+
+	.row.mb-3.px-2.mt-5 {
+		margin-top: 1.5rem !important;
+	}
+
+	.btn i.fas,
+        .btn i.bi {
+		font-size: 1.2rem;
+	}
+}
 </style>
 <div class="container-sm container-bg mt-4">
 <nav class="navbar navbar-expand-lg sticky-top">
