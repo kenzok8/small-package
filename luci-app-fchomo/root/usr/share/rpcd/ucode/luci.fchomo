@@ -43,7 +43,7 @@ const methods = {
 	mihomo_generator: {
 		args: { type: 'type', params: 'params' },
 		call: function(req) {
-			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair', 'ech-keypair']))
+			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair', 'vless-x25519', 'vless-mlkem768', 'ech-keypair']))
 				return { result: false, error: 'illegal type' };
 
 			const type = req.args?.type;
@@ -61,6 +61,22 @@ const methods = {
 						let pub = match(trim(line), /PublicKey: (.*)/);
 						if (pub)
 							result.public_key = pub[1];
+					} else if (type in ['vless-x25519', 'vless-mlkem768']) {
+						let priv = match(trim(line), /PrivateKey: (.*)/);
+						if (priv)
+							result.private_key = priv[1];
+						let pass = match(trim(line), /Password: (.*)/);
+						if (pass)
+							result.password = pass[1];
+						let seed = match(trim(line), /Seed: (.*)/);
+						if (seed)
+							result.seed = seed[1];
+						let client = match(trim(line), /Client: (.*)/);
+						if (client)
+							result.client = client[1];
+						let hash = match(trim(line), /Hash32: (.*)/);
+						if (hash)
+							result.hash32 = hash[1];
 					} else if (type in ['ech-keypair']) {
 						result.ech_key = result.ech_key ? result.ech_key + '\n' + trim(line) : '';
 						let cfg = match(trim(line), /Config: (.*)/);

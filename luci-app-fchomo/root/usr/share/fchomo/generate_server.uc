@@ -102,6 +102,9 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		/* AnyTLS */
 		"padding-scheme": cfg.anytls_padding_scheme,
 
+		/* VMess / VLESS */
+		decryption: cfg.vless_decryption,
+
 		/* Plugin fields */
 		...(cfg.plugin ? {
 			// shadow-tls

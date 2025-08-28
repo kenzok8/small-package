@@ -57,7 +57,6 @@ config['tun']['stack'] = uci.get('nikki', 'mixin', 'tun_stack');
 config['tun']['mtu'] = uci_int(uci.get('nikki', 'mixin', 'tun_mtu'));
 config['tun']['gso'] = uci_bool(uci.get('nikki', 'mixin', 'tun_gso'));
 config['tun']['gso-max-size'] = uci_int(uci.get('nikki', 'mixin', 'tun_gso_max_size'));
-config['tun']['endpoint-independent-nat'] = uci_bool(uci.get('nikki', 'mixin', 'tun_endpoint_independent_nat'));
 if (uci_bool(uci.get('nikki', 'mixin', 'tun_dns_hijack'))) {
 	config['tun']['dns-hijack'] = uci_array(uci.get('nikki', 'mixin', 'tun_dns_hijacks'));
 }

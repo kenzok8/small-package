@@ -21,11 +21,22 @@
 	const redir_port = profile['redir-port'];
 	const tproxy_port = profile['tproxy-port'];
 
-	const dns_listen = profile['dns']['listen'];
-	const dns_port = substr(dns_listen, rindex(dns_listen, ':') + 1);
-	const fake_ip_range = profile['dns']['fake-ip-range'];
+	let dns_listen;
+	let dns_port;
+	let fake_ip_range;
+	if (profile['dns']) {
+		dns_listen = profile['dns']['listen'];
+		const dns_listen_rindex = rindex(dns_listen, ':');
+		if (dns_listen_rindex >= 0 && dns_listen_rindex + 1 < length(dns_listen)) {
+			dns_port = substr(dns_listen, dns_listen_rindex + 1);
+		}
+		fake_ip_range = profile['dns']['fake-ip-range'];
+	}
 
-	const tun_device = profile['tun']['device'];
+	let tun_device;
+	if (profile['tun']) {
+		tun_device = profile['tun']['device'];
+	}
 
 	uci.load('nikki');
 

@@ -228,6 +228,13 @@ return view.extend({
 		so.depends('type', 'mieru');
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.ListValue, 'mieru_handshake_mode', _('Handshake mode'));
+		so.default = 'HANDSHAKE_STANDARD';
+		so.value('HANDSHAKE_STANDARD');
+		so.value('HANDSHAKE_NO_WAIT');
+		so.depends('type', 'mieru');
+		so.modalonly = true;
+
 		/* Snell fields */
 		so = ss.taboption('field_general', form.Value, 'snell_psk', _('Pre-shared key'));
 		so.password = true;
@@ -410,6 +417,10 @@ return view.extend({
 		so.value('packetaddr', _('packet addr (v2ray-core v5+)'));
 		so.value('xudp', _('Xudp (Xray-core)'));
 		so.depends({type: /^(vmess|vless)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'vless_encryption', _('encryption'));
+		so.depends('type', 'vless');
 		so.modalonly = true;
 
 		/* WireGuard fields */

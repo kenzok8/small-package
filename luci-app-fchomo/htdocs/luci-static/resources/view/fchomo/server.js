@@ -261,6 +261,10 @@ return view.extend({
 		o.depends('type', 'vmess');
 		o.modalonly = true;
 
+		o = s.taboption('field_general', form.Value, 'vless_decryption', _('decryption'));
+		o.depends('type', 'vless');
+		o.modalonly = true;
+
 		/* Plugin fields */
 		o = s.taboption('field_general', form.ListValue, 'plugin', _('Plugin'));
 		o.value('', _('none'));
