@@ -482,9 +482,8 @@ msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:102
 msgid ""
-"Initial connected peer nodes, same function as the parameter below (-p "
-"parameter)<br>Public server status check: <a href='https://easytier.gd."
-"nkbpal.cn/status/easytier' target='_blank'>Click here to check</a>"
+"Initial connected peer nodes (-p "
+"parameter)<br>Public server status check: <a href='https://uptime.easytier.cn' target='_blank'>Click here to check</a>"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:206
@@ -1029,5 +1028,23 @@ msgid "Encryption Algorithm"
 msgstr ""
 
 msgid "encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-gcm-256, openssl-aes128-gcm, openssl-aes256-gcm, openssl-chacha20. default (aes-gcm) (--encryption-algorithm parameter)"
-msgstr "使用的加密算法，支持：xor、chacha20、aes-gcm、aes-gcm-256、openssl-aes128-gcm、openssl-aes256-gcm、openssl-chacha20。默认（aes-gcm）(--encryption-algorithm 参数)"
+msgstr ""
+
+msgid "Stats"
+msgstr ""
+
+msgid "Click the button to refresh and view statistics information"
+msgstr ""
+
+msgid "WAN access to WEB"
+msgstr ""
+
+msgid "Automatically add firewall rules to allow WAN access to this WEB console"
+msgstr ""
+
+msgid "WAN access to API"
+msgstr ""
+
+msgid "Automatically add firewall rules to allow WAN access to the API control page"
+msgstr ""
 

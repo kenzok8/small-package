@@ -101,19 +101,21 @@ ip6addr.placeholder = "2001:db8::1"
 ip6addr:depends("etcmd", "etcmd")
 
 peeradd = s:taboption("general", DynamicList, "peeradd", translate("Peer Nodes"),
-        translate("Initial connected peer nodes, same function as the parameter below (-p parameter)<br>"
-                .. "Public server status check: <a href='https://easytier.gd.nkbpal.cn/status/easytier' target='_blank'>"
+        translate("Initial connected peer nodes (-p parameter)<br>"
+                .. "Public server status check: <a href='https://uptime.easytier.cn' target='_blank'>"
                 .. "Click here to check</a>"))
 peeradd.placeholder = "tcp://public.easytier.top:11010"
 peeradd:value("tcp://public.easytier.top:11010", translate("Official Server - tcp://public.easytier.top:11010"))
 peeradd:depends("etcmd", "etcmd")
 
+--[=[
 external_node = s:taboption("general", Value, "external_node", translate("Shared Node Address"),
         translate("Use a public shared node to discover peer nodes, same function as the parameter above (-e parameter)"))
 external_node.default = ""
 external_node.placeholder = "tcp://public.easytier.top:11010"
 external_node:value("tcp://public.easytier.top:11010", translate("Official Server - tcp://public.easytier.top:11010"))
 external_node:depends("etcmd", "etcmd")
+]=]
 
 proxy_network = s:taboption("general", DynamicList, "proxy_network", translate("Subnet Proxy"),
         translate("Export the local network to other peers in the VPN, allowing access to other devices in the current LAN (-n parameter)"))
@@ -630,6 +632,25 @@ btn10info.cfgvalue = function(self, section)
     return string.format("<pre>%s</pre>", luci.util.pcdata(content))
 end
 
+btn11 = s:taboption("infos", Button, "btn11")
+btn11.inputtitle = translate("Stats")
+btn11.description = translate("Click the button to refresh and view statistics information")
+btn11.inputstyle = "apply"
+btn11.write = function()
+    if process_status ~= "" then
+        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli stats >/tmp/easytier-cli_stats 2>&1")
+    else
+        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_stats")
+    end
+end
+
+btn11info = s:taboption("infos", DummyValue, "btn11info")
+btn11info.rawhtml = true
+btn11info.cfgvalue = function(self, section)
+    local content = nixio.fs.readfile("/tmp/easytier-cli_stats") or ""
+    return string.format("<pre>%s</pre>", luci.util.pcdata(content))
+end
+
 btn5 = s:taboption("infos", Button, "btn5")
 btn5.inputtitle = translate("Local Startup Parameters")
 btn5.description = translate("Click the button to refresh and view the complete local startup parameters")
@@ -787,6 +808,9 @@ web_port.datatype = "range(1,65535)"
 web_port.placeholder = "22020"
 web_port.default = "22020"
 
+fw_web = s:option(Flag, "fw_web", translate("WAN access to WEB"),
+        translate("Automatically add firewall rules to allow WAN access to this WEB console"))
+        
 api_port = s:option(Value, "api_port", translate("API Port"),
         translate("Listening port of the RESTful server, used as ApiHost by the web frontend. (-a parameter)"))
 api_port.datatype = "range(1,65535)"
@@ -797,6 +821,13 @@ html_port = s:option(Value, "html_port", translate("Web Interface Port"),
         translate("Frontend listening port for the web dashboard server. Leave empty to disable. (-l parameter)"))
 html_port.datatype = "range(1,65535)"
 html_port.default = "11211"
+
+fw_api = s:option(Flag, "fw_api", translate("WAN access to API"),
+        translate("Automatically add firewall rules to allow WAN access to the API control page"))
+        
+api_host = s:option(Value, "api_host", translate("Default API Server URL"),
+        translate("The URL of the API server, used for connecting the web frontend. (--api-host parameter)<br>"
+                .. "Example: http://[current device IP or resolved domain name]:[API port]"))
 
 geoip_db = s:option(Value, "geoip_db", translate("GEOIP_DB Path"),
         translate("GeoIP2 database file path used to locate the client. Defaults to an embedded file (country-level information only)."
