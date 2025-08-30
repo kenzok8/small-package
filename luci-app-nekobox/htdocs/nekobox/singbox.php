@@ -435,7 +435,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
                 if (isset($data['outbounds']) && is_array($data['outbounds'])) {
                     $data['outbounds'] = array_values(array_filter($data['outbounds'], function ($node) use (&$removedTags) {
                         if (
-                            (isset($node['method']) && stripos($node['method'], 'chacha20') !== false) ||
+                            (isset($node['method']) && strtolower($node['method']) === 'chacha20') ||
                             (isset($node['plugin']) && stripos($node['plugin'], 'v2ray-plugin') !== false)
                         ) {
                             if (isset($node['tag'])) {
