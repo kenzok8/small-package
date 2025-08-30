@@ -10,7 +10,7 @@ PROG="/usr/bin/sing-box"
 
 extra_command 'update_subscription' 'Update subscription by section id'
 
-boot() {
+boot_func() {
 	# prepare files
 	prepare_files
 	# load config
@@ -25,6 +25,10 @@ boot() {
 	fi
 	# start
 	start
+}
+
+boot() {
+	boot_func &
 }
 
 start_service() {
