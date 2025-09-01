@@ -14,12 +14,17 @@
 #     listen: "::"
 #     port: 12060
 # nikki-proxies: # prepend proxies
-#   - name: "PROXY"
+#   - name: PROXY
 #     type: ss
 #     server: proxy.example.com
 #     port: 443
 #     cipher: chacha20-ietf-poly1305
-#     password: "password"
+#     password: password
+# nikki-proxy-groups: # prepend proxy groups
+#   - name: PROXY_GROUP
+#     type: select
+#     proxies:
+#       - PROXY
 # nikki-rules: # prepend rules
 #   - DOMAIN,direct.example.com,DIRECT
 #   - DOMAIN-SUFFIX,proxy.example.com,PROXY
