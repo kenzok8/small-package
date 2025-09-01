@@ -3,7 +3,7 @@
 'require view';
 'require uci';
 'require fs';
-'require tools.nikki as nikki'
+'require tools.nikki as nikki';
 
 return view.extend({
     load: function () {

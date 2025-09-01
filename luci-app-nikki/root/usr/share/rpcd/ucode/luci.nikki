@@ -3,7 +3,7 @@
 'use strict';
 
 import { access, popen, writefile } from 'fs';
-import { load_profile, get_users, get_groups, get_cgroups } from '/etc/nikki/ucode/include.uc';
+import { get_users, get_groups, get_cgroups, load_profile } from '/etc/nikki/ucode/include.uc';
 
 const methods = {
 	version: {

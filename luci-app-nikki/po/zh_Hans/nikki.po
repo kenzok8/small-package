@@ -319,7 +319,7 @@ msgstr "编辑器"
 msgid "Enable"
 msgstr "启用"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:47
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:44
 msgid "Expire At"
 msgstr "到期时间"
 
@@ -766,11 +766,11 @@ msgstr "状态"
 msgid "Subscription"
 msgstr "订阅"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:34
-msgid "Subscription Name"
-msgstr "订阅名称"
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:67
+msgid "Subscription Info Url"
+msgstr "订阅信息链接"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:66
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:63
 msgid "Subscription Url"
 msgstr "订阅链接"
 
@@ -817,7 +817,7 @@ msgstr "TUN 模式"
 msgid "Test Profile"
 msgstr "检查配置文件"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:42
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:39
 msgid "Total"
 msgstr "总量"
 
@@ -905,11 +905,11 @@ msgstr "统一延迟"
 msgid "Unmodified"
 msgstr "不修改"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:60
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:57
 msgid "Update"
 msgstr "更新"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:52
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:49
 msgid "Update At"
 msgstr "更新时间"
 
@@ -937,7 +937,7 @@ msgstr "使用 Hosts"
 msgid "Use System Hosts"
 msgstr "使用系统的 Hosts"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:37
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:34
 msgid "Used"
 msgstr "已使用"
 
@@ -952,6 +952,9 @@ msgstr "用户代理（UA）"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:176
 msgid "Username"
 msgstr "用户名"
+
+#~ msgid "Subscription Name"
+#~ msgstr "订阅名称"
 
 #~ msgid "Endpoint Independent NAT"
 #~ msgstr "独立于端点的 NAT"

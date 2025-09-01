@@ -319,7 +319,7 @@ msgstr "編輯器"
 msgid "Enable"
 msgstr "啟用"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:47
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:44
 msgid "Expire At"
 msgstr "到期時間"
 
@@ -766,11 +766,11 @@ msgstr "狀態"
 msgid "Subscription"
 msgstr "訂閱"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:34
-msgid "Subscription Name"
-msgstr "訂閱名稱"
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:67
+msgid "Subscription Info Url"
+msgstr "訂閱信息連結"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:66
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:63
 msgid "Subscription Url"
 msgstr "訂閱連結"
 
@@ -817,7 +817,7 @@ msgstr "TUN 模式"
 msgid "Test Profile"
 msgstr "檢查設定檔"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:42
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:39
 msgid "Total"
 msgstr "總計"
 
@@ -905,11 +905,11 @@ msgstr "統一延遲"
 msgid "Unmodified"
 msgstr "不修改"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:60
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:57
 msgid "Update"
 msgstr "更新"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:52
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:49
 msgid "Update At"
 msgstr "更新時間"
 
@@ -937,7 +937,7 @@ msgstr "使用 Hosts"
 msgid "Use System Hosts"
 msgstr "使用系統的 Hosts"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:37
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:34
 msgid "Used"
 msgstr "已使用"
 
@@ -952,6 +952,9 @@ msgstr "使用者代理（UA）"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:176
 msgid "Username"
 msgstr "使用者名稱"
+
+#~ msgid "Subscription Name"
+#~ msgstr "訂閱名稱"
 
 #~ msgid "Endpoint Independent NAT"
 #~ msgstr "端點獨立 NAT"
