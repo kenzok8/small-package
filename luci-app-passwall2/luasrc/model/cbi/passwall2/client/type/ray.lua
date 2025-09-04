@@ -309,7 +309,7 @@ o = s:option(ListValue, _n("security"), translate("Encrypt Method"))
 for a, t in ipairs(security_list) do o:value(t) end
 o:depends({ [_n("protocol")] = "vmess" })
 
-o = s:option(Value, _n("encryption"), translate("Encrypt Method"))
+o = s:option(Value, _n("encryption"), translate("Encrypt Method") .. " (encryption)")
 o.default = "none"
 o:value("none")
 o:depends({ [_n("protocol")] = "vless" })
@@ -338,7 +338,7 @@ o.default = ""
 o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
 o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true, [_n("transport")] = "raw" })
-o:depends({ [_n("protocol")] = "trojan", [_n("tls")] = true, [_n("transport")] = "raw" })
+o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true, [_n("transport")] = "xhttp" })
 
 o = s:option(Flag, _n("tls"), translate("TLS"))
 o.default = 0
