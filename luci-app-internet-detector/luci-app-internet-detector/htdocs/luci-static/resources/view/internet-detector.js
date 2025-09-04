@@ -762,14 +762,11 @@ return view.extend({
 			list.value(2000, '2 '   + _('sec'));
 		}
 
-		// enabled
-		o = s.taboption('main', form.Flag, 'enabled',
-			_('Enabled'),
-		);
-		o.rmempty   = false;
-		o.default   = '1';
-		o.editable  = true;
-		o.modalonly = false;
+		// description
+		o = s.taboption('main', form.Value, 'description',
+			_("Description"));
+		o.datatype  = 'maxlength(30)';
+		o.modalonly = null;
 
 		// hosts
 		o = s.taboption('main', form.DynamicList,
@@ -868,6 +865,15 @@ return view.extend({
 		o.value(9,  '9 ' + _('sec'));
 		o.value(10, '10 ' + _('sec'));
 		o.default = '2';
+
+		// enabled
+		o = s.taboption('main', form.Flag, 'enabled',
+			_('Enabled'),
+		);
+		o.rmempty   = false;
+		o.default   = '1';
+		o.editable  = true;
+		o.modalonly = false;
 
 
 		/* Modules */

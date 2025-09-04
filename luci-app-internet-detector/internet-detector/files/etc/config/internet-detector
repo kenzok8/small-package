@@ -5,6 +5,7 @@ config main 'config'
 
 config instance 'internet'
 	option enabled '1'
+	option description 'Default instance'
 	list hosts '8.8.8.8'
 	list hosts '1.1.1.1'
 	option check_type '0'

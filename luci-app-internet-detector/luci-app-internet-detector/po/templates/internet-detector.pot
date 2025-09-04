@@ -99,6 +99,9 @@ msgstr ""
 msgid "Default port value for TCP connections."
 msgstr ""
 
+msgid "Description"
+msgstr ""
+
 msgid "Device"
 msgstr ""
 
