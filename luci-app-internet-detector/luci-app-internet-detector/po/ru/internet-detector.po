@@ -112,6 +112,9 @@ msgstr "Отладка"
 msgid "Default port value for TCP connections."
 msgstr "Стандартное значение порта для TCP-подключений."
 
+msgid "Description"
+msgstr "Описание"
+
 msgid "Device"
 msgstr "Устройство"
 
