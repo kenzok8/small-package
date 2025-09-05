@@ -355,6 +355,28 @@ $configFilePath = '/etc/neko/config/sing-box.json';
 $downloadedContent = '';
 $fixedFileName = 'subscription.txt';
 
+function url_decode_fields(&$node) {
+    $fields_to_decode = ['password', 'uuid', 'public_key', 'psk', 'id', 'alterId', 'short_id'];
+    
+    foreach ($fields_to_decode as $field) {
+        if (isset($node[$field]) && is_string($node[$field])) {
+            $node[$field] = urldecode($node[$field]);
+            
+            if (in_array($field, ['password', 'public_key', 'psk'])) {
+                $node[$field] = trim($node[$field]);
+            }
+        }
+    }
+    
+    if (isset($node['tls']['reality'])) {
+        url_decode_fields($node['tls']['reality']);
+    }
+    
+    if (isset($node['transport']['path']) && is_string($node['transport']['path'])) {
+        $node['transport']['path'] = urldecode($node['transport']['path']);
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
     $subscribeUrl = trim($_POST['subscribeUrl'] ?? '');
     $customTemplateUrl = trim($_POST['customTemplateUrl'] ?? '');
@@ -433,6 +455,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
                 $removedTags = [];
 
                 if (isset($data['outbounds']) && is_array($data['outbounds'])) {
+                    foreach ($data['outbounds'] as &$node) {
+                        url_decode_fields($node);
+                    }
+                    unset($node);
+                }
+
+                if (isset($data['outbounds']) && is_array($data['outbounds'])) {
                     $data['outbounds'] = array_values(array_filter($data['outbounds'], function ($node) use (&$removedTags) {
                         if (
                             (isset($node['method']) && strtolower($node['method']) === 'chacha20') ||
@@ -478,6 +507,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
                         'secret' => 'Akun',
                         'external_ui_download_url' => ''
                     ];
+                }
+
+                if (isset($data['outbounds']) && is_array($data['outbounds'])) {
+                    foreach ($data['outbounds'] as &$node) {
+                        url_decode_fields($node);
+                    }
+                    unset($node);
                 }
 
                 $downloadedContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
