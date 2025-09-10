@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 17)
 cmake_policy(SET CMP0135 NEW)
 
 OPTION(UA2F_BUILD_TESTS "Build tests" OFF)
+OPTION(UA2F_ENABLE_COVERAGE "Enable code coverage" OFF)
 OPTION(UA2F_ENABLE_UCI "Enable UCI support" ON)
 OPTION(UA2F_NO_CACHE "Disable cache" OFF)
 OPTION(UA2F_ENABLE_BACKTRACE "Enable libbacktrace support" ON)
@@ -80,6 +81,19 @@ add_compile_definitions(UA2F_GIT_DIRTY="${GIT_DIRTY}")
 add_compile_definitions(UA2F_VERSION="${UA2F_VERSION_STR}")
 
 add_compile_options(-fno-omit-frame-pointer -fno-strict-aliasing)
+
+# Coverage configuration
+if (UA2F_ENABLE_COVERAGE)
+    if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        add_compile_options(--coverage -O0 -g)
+        add_link_options(--coverage)
+        message(STATUS "Code coverage is enabled.")
+    else()
+        message(WARNING "Code coverage is only supported with GCC or Clang.")
+    endif()
+else()
+    message(STATUS "Code coverage is disabled.")
+endif()
 
 if (DEFINED ENV{UA2F_ENABLE_ASAN})
     set(UA2F_ENABLE_ASAN $ENV{UA2F_ENABLE_ASAN})
@@ -199,6 +213,72 @@ if (UA2F_BUILD_TESTS)
             GTest::gtest_main
     )
     target_include_directories(ua2f_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+    # Add coverage target
+    if (UA2F_ENABLE_COVERAGE)
+        find_program(LCOV_PATH lcov)
+        find_program(GENHTML_PATH genhtml)
+        
+        if(LCOV_PATH AND GENHTML_PATH)
+            add_custom_target(coverage
+                COMMAND ${LCOV_PATH} --directory . --zerocounters
+                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_test
+                COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info --ignore-errors mismatch
+                COMMAND ${LCOV_PATH} --remove coverage.info '/usr/*' '${CMAKE_CURRENT_BINARY_DIR}/_deps/*' '*/test/*' --output-file coverage_filtered.info --ignore-errors mismatch
+                COMMAND ${GENHTML_PATH} coverage_filtered.info --output-directory coverage_html --ignore-errors mismatch
+                COMMAND echo "Coverage report generated in coverage_html/index.html"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Generating code coverage report"
+                DEPENDS ua2f_test
+            )
+            
+            add_custom_target(coverage-integration
+                COMMAND ${LCOV_PATH} --directory . --zerocounters
+                COMMAND echo "Run integration tests manually, then use 'make coverage-collect'"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Preparing for integration test coverage"
+            )
+            
+            add_custom_target(coverage-collect
+                COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage_integration.info --ignore-errors mismatch
+                COMMAND ${LCOV_PATH} --remove coverage_integration.info '/usr/*' '*/test/*' --output-file coverage_integration_filtered.info --ignore-errors mismatch,unused
+                COMMAND ${GENHTML_PATH} coverage_integration_filtered.info --output-directory coverage_integration_html --ignore-errors mismatch
+                COMMAND echo "Integration test coverage report generated in coverage_integration_html/index.html"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Collecting integration test coverage data"
+            )
+            
+            add_custom_target(coverage-combined
+                COMMAND ${LCOV_PATH} --directory . --zerocounters
+                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_test
+                COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage_unit.info --ignore-errors mismatch
+                COMMAND echo "Unit tests coverage collected. Run integration tests now..."
+                COMMAND echo "After integration tests, coverage data will be merged automatically"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Generating combined coverage report (unit + integration)"
+                DEPENDS ua2f_test
+            )
+            
+            add_custom_target(coverage-merge
+                COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage_after_integration.info --ignore-errors mismatch
+                COMMAND ${LCOV_PATH} --add-tracefile coverage_unit.info --add-tracefile coverage_after_integration.info --output-file coverage_combined.info --ignore-errors mismatch || ${LCOV_PATH} --directory . --capture --output-file coverage_combined.info --ignore-errors mismatch
+                COMMAND ${LCOV_PATH} --remove coverage_combined.info '/usr/*' '*/test/*' --output-file coverage_combined_filtered.info --ignore-errors mismatch,unused
+                COMMAND ${GENHTML_PATH} coverage_combined_filtered.info --output-directory coverage_combined_html --ignore-errors mismatch
+                COMMAND echo "Combined coverage report generated in coverage_combined_html/index.html"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Merging unit and integration test coverage"
+            )
+            
+            add_custom_target(coverage-clean
+                COMMAND ${LCOV_PATH} --directory . --zerocounters
+                COMMAND find . -name "*.gcda" -delete
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Cleaning coverage data"
+            )
+        else()
+            message(WARNING "lcov and genhtml are required for coverage reports")
+        endif()
+    endif()
 
     include(GoogleTest)
     gtest_discover_tests(ua2f_test)
