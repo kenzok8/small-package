@@ -6,7 +6,14 @@ set(CMAKE_C_STANDARD 17)
 cmake_policy(SET CMP0135 NEW)
 
 OPTION(UA2F_BUILD_TESTS "Build tests" OFF)
-OPTION(UA2F_ENABLE_COVERAGE "Enable code coverage" OFF)
+
+if(DEFINED ENV{CI} AND UA2F_BUILD_TESTS AND NOT DEFINED UA2F_ENABLE_COVERAGE)
+    set(UA2F_ENABLE_COVERAGE ON CACHE BOOL "Enable code coverage (auto-enabled in CI)" FORCE)
+    message(STATUS "Auto-enabling coverage in CI environment")
+else()
+    OPTION(UA2F_ENABLE_COVERAGE "Enable code coverage" OFF)
+endif()
+
 OPTION(UA2F_ENABLE_UCI "Enable UCI support" ON)
 OPTION(UA2F_NO_CACHE "Disable cache" OFF)
 OPTION(UA2F_ENABLE_BACKTRACE "Enable libbacktrace support" ON)
