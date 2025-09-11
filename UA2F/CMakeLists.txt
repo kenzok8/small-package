@@ -231,6 +231,18 @@ if (UA2F_BUILD_TESTS)
             DEPENDS ua2f_test
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
+        
+        # Add lcov target for preprocessed coverage data
+        add_custom_target(coverage-lcov
+            COMMAND echo "Running unit tests and generating lcov report"
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_test
+            COMMAND lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch --branch-coverage
+            COMMAND lcov --remove coverage.info '*/test/*' '*/build*/_deps/*' '/usr/*' '*/googletest/*' '*_deps/*' --output-file coverage.info --ignore-errors unused --branch-coverage
+            COMMAND lcov --list coverage.info --branch-coverage
+            COMMENT "Generating lcov coverage report"
+            DEPENDS ua2f_test
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
     endif()
 
     include(GoogleTest)
@@ -241,9 +253,17 @@ endif ()
 
 # Coverage targets for integration testing (independent of unit tests)
 if (UA2F_ENABLE_COVERAGE)
-    add_custom_target(coverage-integration
+    add_custom_target(coverage-integration-reset
         COMMAND find . -name "*.gcda" -delete
         COMMENT "Reset coverage counters for integration tests"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    
+    add_custom_target(coverage-integration-process
+        COMMAND lcov --capture --directory . --output-file coverage-integration.info --ignore-errors mismatch --branch-coverage
+        COMMAND lcov --remove coverage-integration.info '*/test/*' '*/build*/_deps/*' '/usr/*' '*/googletest/*' '*_deps/*' --output-file coverage-integration.info --ignore-errors unused --branch-coverage
+        COMMAND lcov --list coverage-integration.info --branch-coverage
+        COMMENT "Process integration test coverage data with lcov"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     
