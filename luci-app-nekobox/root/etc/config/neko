@@ -5,4 +5,5 @@ config neko 'cfg'
 	option new_interface '1'
 	option delay '2'
 	option singbox_enabled '0'
+	option singbox_autostart '0'
 
