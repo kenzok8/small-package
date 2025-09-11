@@ -1,0 +1,37 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 30%
+        informational: true
+    patch:
+      default:
+        target: auto
+        threshold: 30%
+        informational: true
+
+flags:
+  unittests:
+    paths:
+      - src/
+  unittests-standalone:
+    paths:
+      - src/
+  integration:
+    paths:
+      - src/
+
+flag_management:
+  default_rules:
+    carryforward: true
+    statuses:
+      - type: project
+        target: auto
+      - type: patch
+        target: auto
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: false
