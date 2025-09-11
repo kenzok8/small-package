@@ -1002,6 +1002,11 @@
         'compare' => 'Vergleichen',
         'enterModifiedContent' => 'Geben Sie den zu vergleichenden Inhalt ein:',
         'closeDiff' => 'Differenzansicht schließen',
+        'settingSaved' => 'Einstellungen gespeichert!',
+        'singboxAutostartTitle' => 'Sing-box Autostart',
+        'enableAutostart' => 'Autostart aktivieren',
+        'autostartTip' => 'Wenn aktiviert, startet Sing-box beim Router-Neustart automatisch (falls Mihomo nicht läuft)',
+        'autostartTooltip' => 'Autostart-Einstellungen',
         'save_file_error' => 'Fehler beim Speichern der Datei: {message}'
     ],
     'fr' => [
@@ -2010,6 +2015,11 @@
         'compare' => 'Comparer',
         'enterModifiedContent' => 'Entrez le contenu modifié pour la comparaison :',
         'closeDiff' => 'Fermer la vue des différences',
+        'settingSaved' => 'Paramètres enregistrés !',
+        'singboxAutostartTitle' => 'Démarrage automatique de Sing-box',
+        'enableAutostart' => 'Activer le démarrage automatique',
+        'autostartTip' => 'Si coché, Sing-box démarrera automatiquement au redémarrage du routeur (si Mihomo n’est pas en cours d’exécution)',
+        'autostartTooltip' => 'Paramètres de démarrage automatique',
         'save_file_error' => 'Erreur de sauvegarde : {message}'
     ],
     'zh' => [
@@ -2909,6 +2919,11 @@
         'compare' => '比较',
         'enterModifiedContent' => '请输入用于比较的修改内容：',
         'closeDiff' => '关闭差异视图',
+        'settingSaved' => '设置已保存！',
+        'singboxAutostartTitle' => 'Sing-box 开机自动启动',
+        'enableAutostart' => '启用开机自动启动',
+        'autostartTip' => '勾选后，路由器重启时会自动启动 Sing-box（前提是Mihomo没有运行）',
+        'autostartTooltip' => '自动启动设置',
         'save_file_error' => '保存文件出错：{message}'
     ],
     'en' => [
@@ -3992,6 +4007,11 @@
         'compare' => 'Compare',
         'enterModifiedContent' => 'Enter modified content for comparison:',
         'closeDiff' => 'Close Diff View',
+        'settingSaved' => 'Settings saved!',
+        'singboxAutostartTitle' => 'Sing-box Auto Start',
+        'enableAutostart' => 'Enable Auto Start',
+        'autostartTip' => 'When checked, Sing-box will start automatically on router reboot (if Mihomo is not running)',
+        'autostartTooltip' => 'Auto Start Settings',
         'save_file_error' => 'Save error: {message}'
     ],
     'hk' => [
@@ -4975,6 +4995,11 @@
         'compare' => '比較',
         'enterModifiedContent' => '請輸入用於比較的修改內容：',
         'closeDiff' => '關閉差異視圖',
+        'settingSaved' => '設定已保存！',
+        'singboxAutostartTitle' => 'Sing-box 開機自動啟動',
+        'enableAutostart' => '啟用開機自動啟動',
+        'autostartTip' => '勾選後，路由器重啟時會自動啟動 Sing-box（前提是Mihomo沒有運行）',
+        'autostartTooltip' => '自動啟動設定',
         'save_file_error' => '儲存檔案時發生錯誤：{message}'
     ],
     'ko' => [
@@ -5996,6 +6021,11 @@
         'compare' => '비교',
         'enterModifiedContent' => '비교할 수정된 내용을 입력하세요:',
         'closeDiff' => '차이 보기 닫기',
+        'settingSaved' => '설정이 저장되었습니다!',
+        'singboxAutostartTitle' => 'Sing-box 자동 시작',
+        'enableAutostart' => '자동 시작 활성화',
+        'autostartTip' => '체크하면 라우터 재부팅 시 Sing-box가 자동으로 시작됩니다(Mihomo가 실행 중이지 않은 경우)',
+        'autostartTooltip' => '자동 시작 설정',
         'save_file_error' => '파일 저장 오류: {message}'
     ],
     'ja' => [
@@ -7004,6 +7034,11 @@
         'compare' => '比較',
         'enterModifiedContent' => '比較用の修正内容を入力してください：',
         'closeDiff' => '差分ビューを閉じる',
+        'settingSaved' => '設定が保存されました！',
+        'singboxAutostartTitle' => 'Sing-box 自動起動',
+        'enableAutostart' => '自動起動を有効にする',
+        'autostartTip' => 'チェックすると、ルーター再起動時に Sing-box が自動で起動します（Mihomo が動作していない場合）',
+        'autostartTooltip' => '自動起動設定',
         'save_file_error' => 'ファイルの保存中にエラーが発生しました：{message}'
    ],
     'ru' => [
@@ -8035,6 +8070,11 @@
         'compare' => 'Сравнить',
         'enterModifiedContent' => 'Введите измененный контент для сравнения:',
         'closeDiff' => 'Закрыть просмотр различий',
+        'settingSaved' => 'Настройки сохранены!',
+        'singboxAutostartTitle' => 'Автозапуск Sing-box',
+        'enableAutostart' => 'Включить автозапуск',
+        'autostartTip' => 'Если выбрано, Sing-box будет автоматически запускаться при перезагрузке роутера (если Mihomo не запущен)',
+        'autostartTooltip' => 'Настройки автозапуска',
         'save_file_error' => 'Ошибка сохранения файла: {message}'
     ],
     'ar' => [
@@ -9039,6 +9079,11 @@
         'compare' => 'مقارنة',
         'enterModifiedContent' => 'أدخل المحتوى المعدل للمقارنة:',
         'closeDiff' => 'إغلاق عرض الاختلاف',
+        'settingSaved' => 'تم حفظ الإعدادات!',
+        'singboxAutostartTitle' => 'تشغيل Sing-box تلقائياً عند التشغيل',
+        'enableAutostart' => 'تمكين التشغيل التلقائي',
+        'autostartTip' => 'عند التحديد، سيبدأ Sing-box تلقائيًا عند إعادة تشغيل الراوتر (إذا لم يكن Mihomo قيد التشغيل)',
+        'autostartTooltip' => 'إعدادات التشغيل التلقائي',
         'save_file_error' => 'خطأ في حفظ الملف: {message}'
     ],
     'es' => [
@@ -10084,6 +10129,11 @@
         'compare' => 'Comparar',
         'enterModifiedContent' => 'Introduzca el contenido modificado para la comparación:',
         'closeDiff' => 'Cerrar vista de diferencias',
+        'settingSaved' => '¡Configuración guardada!',
+        'singboxAutostartTitle' => 'Inicio automático de Sing-box',
+        'enableAutostart' => 'Habilitar inicio automático',
+        'autostartTip' => 'Si está marcado, Sing-box se iniciará automáticamente al reiniciar el router (si Mihomo no está en ejecución)',
+        'autostartTooltip' => 'Configuración de inicio automático',
         'save_file_error' => 'Error al guardar: {message}'
     ],
     'vi' => [
@@ -11125,6 +11175,11 @@
         'compare' => 'So sánh',
         'enterModifiedContent' => 'Nhập nội dung đã sửa để so sánh:',
         'closeDiff' => 'Đóng chế độ so sánh',
+        'settingSaved' => 'Cài đặt đã được lưu!',
+        'singboxAutostartTitle' => 'Sing-box tự khởi động',
+        'enableAutostart' => 'Bật khởi động tự động',
+        'autostartTip' => 'Khi chọn, Sing-box sẽ tự động khởi động khi router khởi động lại (nếu Mihomo không chạy)',
+        'autostartTooltip' => 'Cài đặt tự khởi động',
         'save_file_error' => 'Lỗi khi lưu: {message}'
     ]
 ];

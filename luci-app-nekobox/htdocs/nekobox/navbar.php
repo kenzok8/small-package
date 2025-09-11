@@ -37,6 +37,7 @@
             <div class="d-flex align-items-center">
                 <div class="me-0 d-block">
                     <button type="button" class="btn btn-primary icon-btn me-2" onclick="toggleControlPanel()" data-tooltip="control_panel"><i class="bi bi-gear"> </i></button>
+                    <button type="button" class="btn btn-deepskyblue icon-btn me-2" data-bs-toggle="modal" data-bs-target="#autostartModal" data-tooltip="autostartTooltip"><i class="fas fa-power-off"></i></button>
                     <button type="button" class="btn btn-danger icon-btn me-2" data-bs-toggle="modal" data-bs-target="#langModal" data-tooltip="set_language"><i class="bi bi-translate"></i></button>
                     <button type="button" class="btn btn-success icon-btn me-2" data-bs-toggle="modal" data-bs-target="#musicModal" data-tooltip="music_player"><i class="bi bi-music-note-beamed"></i></button>
                     <button type="button" class="btn btn-warning icon-btn me-2" id="toggleIpStatusBtn"  onclick="toggleIpStatusBar()" data-tooltip="hide_ip_info"><i class="bi bi-eye-slash"> </i></button>

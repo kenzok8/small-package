@@ -516,7 +516,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
                     unset($node);
                 }
 
-                $downloadedContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                $downloadedContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 if ($downloadedContent === false) {
                     $logMessages[] = "Failed to encode JSON: " . json_last_error_msg();
                 } else {

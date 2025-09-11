@@ -1,32 +1,50 @@
 #!/bin/sh /etc/rc.common
 
 START=99
-
 BIN="/etc/neko/core/neko"
+LOG_PATH="/etc/neko/tmp/log.txt"
+
+timestamp() {
+    date "+%Y-%m-%d %H:%M:%S"
+}
+
+start_singbox() {
+    sh /etc/neko/core/start.sh
+    sleep 2
+    if pgrep -x "singbox" > /dev/null; then
+        echo "$(timestamp) Sing-box auto-started on router boot!" >> $LOG_PATH
+    else
+        echo "$(timestamp) Sing-box auto-start failed on router boot!" >> $LOG_PATH
+    fi
+}
 
 start() {
-	# sleep 1 && $BIN -s
-	#if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
-	#	$BIN -p
-	#fi
+    # sleep 1 && $BIN -s
+    #if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
+    #    $BIN -p
+    #fi
+
+    if [ "$(uci -q get neko.cfg.singbox_autostart)" = "1" ]; then
+        start_singbox
+    fi
 }
 
 restart() {
-	$BIN -r
+    $BIN -r
 }
 
 stop_service() {
-	if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
-		$BIN -c
-	else
-		$BIN -k
-	fi
+    if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
+        $BIN -c
+    else
+        $BIN -k
+    fi
 }
 
 stop() {
-	if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
-		$BIN -c
-	else
-		$BIN -k
-	fi
+    if [ "$(uci -q get neko.cfg.php_server)" = "1" ]; then
+        $BIN -c
+    else
+        $BIN -k
+    fi
 }
