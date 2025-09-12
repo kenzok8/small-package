@@ -85,3 +85,73 @@ TEST(HttpProtocolTest, RealWorldRequests) {
     // Check that these cases return false
     EXPECT_FALSE(is_http_protocol(invalidPayload, strlen(invalidPayload))) << "Invalid method passed";
 }
+
+TEST(HttpProtocolTest, AllHttpMethods) {
+    // Test all supported HTTP methods
+    EXPECT_TRUE(is_http_protocol("GET /", 5));
+    EXPECT_TRUE(is_http_protocol("POST /", 6));
+    EXPECT_TRUE(is_http_protocol("OPTIONS /", 9));
+    EXPECT_TRUE(is_http_protocol("HEAD /", 6));
+    EXPECT_TRUE(is_http_protocol("PUT /", 5));
+    EXPECT_TRUE(is_http_protocol("DELETE /", 8));
+    EXPECT_TRUE(is_http_protocol("TRACE /", 7));
+    EXPECT_TRUE(is_http_protocol("CONNECT /", 9));
+}
+
+TEST(HttpProtocolTest, EdgeCases) {
+    // Empty payload
+    EXPECT_FALSE(is_http_protocol("", 0));
+    
+    // Too short for any method
+    EXPECT_FALSE(is_http_protocol("G", 1));
+    EXPECT_FALSE(is_http_protocol("GE", 2));
+    
+    // Incomplete methods
+    EXPECT_FALSE(is_http_protocol("GE", 2));
+    EXPECT_FALSE(is_http_protocol("POS", 3));
+    
+    // Case sensitivity
+    EXPECT_FALSE(is_http_protocol("get /", 5));
+    EXPECT_FALSE(is_http_protocol("Post /", 6));
+    
+    // Non-HTTP protocols
+    EXPECT_FALSE(is_http_protocol("FTP /", 5));
+    EXPECT_FALSE(is_http_protocol("SSH /", 5));
+    EXPECT_FALSE(is_http_protocol("HTTPS /", 7));
+}
+
+TEST(MemNCaseMemTest, CaseInsensitiveSearch) {
+    const char *l = "HELLO WORLD";
+    size_t l_len = 11;
+    
+    // Test case insensitive matching
+    EXPECT_EQ(memncasemem(l, l_len, "hello", 5), (void *)l);
+    EXPECT_EQ(memncasemem(l, l_len, "HELLO", 5), (void *)l);
+    EXPECT_EQ(memncasemem(l, l_len, "HeLLo", 5), (void *)l);
+    EXPECT_EQ(memncasemem(l, l_len, "world", 5), (void *)(l + 6));
+    EXPECT_EQ(memncasemem(l, l_len, "WORLD", 5), (void *)(l + 6));
+    EXPECT_EQ(memncasemem(l, l_len, "WoRLd", 5), (void *)(l + 6));
+}
+
+TEST(MemNCaseMemTest, NotFoundCases) {
+    const char *l = "Hello World";
+    size_t l_len = 11;
+    
+    // Search for non-existent strings
+    EXPECT_EQ(memncasemem(l, l_len, "xyz", 3), nullptr);
+    EXPECT_EQ(memncasemem(l, l_len, "foo", 3), nullptr);
+    EXPECT_EQ(memncasemem(l, l_len, "hello world!", 12), nullptr);  // Longer than haystack
+}
+
+TEST(MemNCaseMemTest, MultipleOccurrences) {
+    const char *l = "hello hello hello";
+    size_t l_len = 17;
+    
+    // Should find the first occurrence
+    void *result = memncasemem(l, l_len, "hello", 5);
+    EXPECT_EQ(result, (void *)l);
+    
+    // Search from different starting positions
+    void *result2 = memncasemem(l + 6, l_len - 6, "hello", 5);
+    EXPECT_EQ(result2, (void *)(l + 6));
+}
