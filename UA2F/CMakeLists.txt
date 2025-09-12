@@ -213,8 +213,12 @@ if (UA2F_BUILD_TESTS)
             ua2f_test
             test/util_test.cc
             test/cache_test.cc
+            test/statistics_test.cc
+            test/cli_test.cc
             src/util.c
             src/cache.c
+            src/statistics.c
+            src/cli.c
     )
     target_link_libraries(
             ua2f_test
