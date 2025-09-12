@@ -113,7 +113,53 @@ function getResVersion(o, type) {
 	});
 }
 
-function getRuntimeLog(name, filename) {
+function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
+	const filename = o.option.split('_')[1];
+
+	let section, log_level_el;
+	switch (filename) {
+	case 'homeproxy':
+		section = null;
+		break;
+	case 'sing-box-c':
+		section = 'config';
+		break;
+	case 'sing-box-s':
+		section = 'server';
+		break;
+	}
+
+	if (section) {
+		const selected = uci.get('homeproxy', section, 'log_level') || 'warn';
+		const choices = {
+			trace: _('Trace'),
+			debug: _('Debug'),
+			info: _('Info'),
+			warn: _('Warn'),
+			error: _('Error'),
+			fatal: _('Fatal'),
+			panic: _('Panic')
+		};
+
+		log_level_el = E('select', {
+			'id': o.cbid(section_id),
+			'class': 'cbi-input-select',
+			'style': 'margin-left: 4px; width: 6em;',
+			'change': ui.createHandlerFn(this, function(ev) {
+				uci.set('homeproxy', section, 'log_level', ev.target.value);
+				ui.changes.apply(true);
+				return o.map.save(null, true);
+			})
+		});
+
+		Object.keys(choices).forEach((v) => {
+			log_level_el.appendChild(E('option', {
+				'value': v,
+				'selected': (v === selected) ? '' : null
+			}, [ choices[v] ]));
+		});
+	}
+
 	const callLogClean = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'log_clean',
@@ -121,7 +167,7 @@ function getRuntimeLog(name, filename) {
 		expect: { '': {} }
 	});
 
-	let log_textarea = E('div', { 'id': 'log_textarea' },
+	const log_textarea = E('div', { 'id': 'log_textarea' },
 		E('img', {
 			'src': L.resource('icons/loading.svg'),
 			'alt': _('Loading'),
@@ -155,11 +201,12 @@ function getRuntimeLog(name, filename) {
 	return E([
 		E('style', [ css ]),
 		E('div', {'class': 'cbi-map'}, [
-			E('h3', {'name': 'content'}, [
+			E('h3', {'name': 'content', 'style': 'align-items: center; display: flex;'}, [
 				_('%s log').format(name),
-				' ',
+				log_level_el || '',
 				E('button', {
 					'class': 'btn cbi-button cbi-button-action',
+					'style': 'margin-left: 4px;',
 					'click': ui.createHandlerFn(this, function() {
 						return L.resolveDefault(callLogClean(filename), {});
 					})
@@ -230,13 +277,13 @@ return view.extend({
 		s.anonymous = true;
 
 		o = s.option(form.DummyValue, '_homeproxy_logview');
-		o.render = L.bind(getRuntimeLog, this, _('HomeProxy'), 'homeproxy');
+		o.render = L.bind(getRuntimeLog, this, o, _('HomeProxy'));
 
 		o = s.option(form.DummyValue, '_sing-box-c_logview');
-		o.render = L.bind(getRuntimeLog, this, _('sing-box client'), 'sing-box-c');
+		o.render = L.bind(getRuntimeLog, this, o, _('sing-box client'));
 
 		o = s.option(form.DummyValue, '_sing-box-s_logview');
-		o.render = L.bind(getRuntimeLog, this, _('sing-box server'), 'sing-box-s');
+		o.render = L.bind(getRuntimeLog, this, o, _('sing-box server'));
 
 		return m.render();
 	},

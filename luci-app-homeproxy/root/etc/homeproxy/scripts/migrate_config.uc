@@ -50,8 +50,7 @@ if (github_token) {
 }
 
 /* tun_gso was deprecated in sb 1.11 */
-const tun_gso = uci.get(uciconfig, uciinfra, 'tun_gso');
-if (tun_gso || tun_gso === '0')
+if (!isEmpty(uci.get(uciconfig, uciinfra, 'tun_gso')))
 	uci.delete(uciconfig, uciinfra, 'tun_gso');
 
 /* create migration section */
@@ -64,6 +63,13 @@ if (!migration_crontab) {
 	system('sed -i "/update_crond.sh/d" "/etc/crontabs/root" 2>"/dev/null"');
 	uci.set(uciconfig, ucimigration, 'crontab', '1');
 }
+
+/* log_level was introduced */
+if (isEmpty(uci.get(uciconfig, ucimain, 'log_level'))
+	uci.set(uciconfig, ucimain, 'log_level', 'warn');
+
+if (isEmpty(uci.get(uciconfig, uciserver, 'log_level'))
+	uci.set(uciconfig, uciserver, 'log_level', 'warn');
 
 /* empty value defaults to all ports now */
 if (uci.get(uciconfig, ucimain, 'routing_port') === 'all')
