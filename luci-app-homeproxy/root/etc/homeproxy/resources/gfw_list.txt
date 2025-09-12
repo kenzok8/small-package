@@ -735,6 +735,8 @@ brutaltgp.com
 bsky.app
 bsky.network
 bsky.social
+bt4g.org
+bt4gprx.com
 bt95.com
 btaia.com
 btbit.net
@@ -1131,6 +1133,7 @@ costco.com
 cotweet.com
 counter.social
 coursehero.com
+covenantswatch.org.tw
 coze.com
 cpj.org
 cpu-monkey.com
@@ -1679,6 +1682,7 @@ fdc64.org
 fdc89.jp
 feedburner.com
 feeder.co
+feedly.com
 feeds.fileforum.com
 feedx.net
 feelssh.com
@@ -1851,6 +1855,8 @@ ftvnews.com.tw
 ftx.com
 fucd.com
 fuchsia.dev
+fuckccp.com
+fuckccp.xyz
 fuckgfw.org
 fulione.com
 fullerconsideration.com
@@ -2702,6 +2708,7 @@ iphone4hongkong.com
 iphonetaiwan.org
 iphonix.fr
 ipicture.ru
+ipify.org
 ipjetable.net
 ipobar.com
 ipoock.com
@@ -3307,6 +3314,7 @@ mofos.com
 mog.com
 mohu.club
 mohu.rocks
+moj.gov.tw
 mojim.com
 mol.gov.tw
 molihua.org
@@ -4676,6 +4684,7 @@ talkcc.com
 talkonly.net
 tanc.org
 tangren.us
+tanks.gg
 taoism.net
 tapanwap.com
 tapatalk.com

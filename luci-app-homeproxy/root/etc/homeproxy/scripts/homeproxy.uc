@@ -92,7 +92,7 @@ export function strToInt(str) {
 };
 
 export function strToTime(str) {
-	return str ? (str + 's') : null;
+	return !isEmpty(str) ? (str + 's') : null;
 };
 
 export function removeBlankAttrs(res) {

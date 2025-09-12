@@ -204,6 +204,10 @@ uci.foreach(uciconfig, ucinode, (cfg) => {
 	if (!isEmpty(cfg.tls_ech_tls_disable_drs))
 		uci.delete(uciconfig, cfg['.name'], 'tls_ech_tls_disable_drs');
 
+	/* tls_ech_enable_pqss is useless and deprecated in sb 1.12 */
+	if (!isEmpty(cfg.tls_ech_enable_pqss))
+		uci.delete(uciconfig, cfg['.name'], 'tls_ech_enable_pqss');
+
 	/* wireguard_gso was deprecated in sb 1.11 */
 	if (!isEmpty(cfg.wireguard_gso))
 		uci.delete(uciconfig, cfg['.name'], 'wireguard_gso');
@@ -228,7 +232,7 @@ uci.foreach(uciconfig, uciroutingrule, (cfg) => {
 /* server options */
 /* auto_firewall was moved into server options */
 const auto_firewall = uci.get(uciconfig, uciserver, 'auto_firewall');
-if (auto_firewall || auto_firewall === '0')
+if (!isEmpty(auto_firewall))
 	uci.delete(uciconfig, uciserver, 'auto_firewall');
 
 uci.foreach(uciconfig, uciserver, (cfg) => {
