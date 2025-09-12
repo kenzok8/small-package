@@ -2,6 +2,7 @@
 
 [![CodeQL](https://github.com/Zxilly/UA2F/actions/workflows/codeql.yml/badge.svg)](https://github.com/Zxilly/UA2F/actions/workflows/codeql.yml)
 [![Build OpenWRT Package](https://github.com/Zxilly/UA2F/actions/workflows/ci.yml/badge.svg)](https://github.com/Zxilly/UA2F/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Zxilly/UA2F/graph/badge.svg?token=6PBFSZCDWP)](https://codecov.io/gh/Zxilly/UA2F)
 
 参照 [博客文章](https://learningman.top/archives/304) 完成操作
 
