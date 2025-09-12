@@ -23,12 +23,15 @@ uci.load(uciconfig);
 
 const uciserver = 'server';
 
+const log_level = uci.get(uciconfig, uciserver, 'log_level') || 'warn';
+/* UCI config end */
+
 const config = {};
 
 /* Log */
 config.log = {
 	disabled: false,
-	level: 'warn',
+	level: log_level,
 	output: RUN_DIR + '/sing-box-s.log',
 	timestamp: true
 };

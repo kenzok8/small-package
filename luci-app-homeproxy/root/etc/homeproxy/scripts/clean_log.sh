@@ -5,7 +5,7 @@
 
 NAME="homeproxy"
 
-log_max_size="10" #KB
+log_max_size="50" #KB
 main_log_file="/var/run/$NAME/$NAME.log"
 singc_log_file="/var/run/$NAME/sing-box-c.log"
 sings_log_file="/var/run/$NAME/sing-box-s.log"
