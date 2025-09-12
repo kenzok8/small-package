@@ -53,6 +53,7 @@ config homeproxy 'control'
 config homeproxy 'routing'
 	option sniff_override '1'
 	option default_outbound 'direct-out'
+	option default_outbound_dns 'default-dns'
 
 config homeproxy 'dns'
 	option dns_strategy 'prefer_ipv4'
@@ -71,11 +72,4 @@ config homeproxy 'subscription'
 
 config homeproxy 'server'
 	option enabled '0'
-
-config dns_rule 'nodes_domain'
-	option label 'NodesDomain'
-	option enabled '1'
-	option mode 'default'
-	list outbound 'any-out'
-	option server 'default-dns'
 
