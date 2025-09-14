@@ -103,6 +103,7 @@ if ! uci -q get fchomo.fchomo_proxy_list_domain >/dev/null; then
 		set fchomo.fchomo_proxy_list_domain.type='rule_set'
 		add_list fchomo.fchomo_proxy_list_domain.server='default-dns'
 		add_list fchomo.fchomo_proxy_list_domain.rule_set='rule_fchomo_proxy_list'
+		set fchomo.fchomo_proxy_list_domain.proxy='GLOBAL'
 	EOF
 	uci commit fchomo
 fi
