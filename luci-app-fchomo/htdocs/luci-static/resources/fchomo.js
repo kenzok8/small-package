@@ -1100,8 +1100,9 @@ function textvalue2Value(section_id) {
 	return this.vallist[i];
 }
 
-function validateCustomListIDs(hm_prefmt, disoption_list, section_id) {
+function validateCustomListIDs(disoption_list, section_id) {
 	let node;
+	let hm_prefmt = glossary[this.section.sectiontype].prefmt;
 	let custom_dp_list_ids = [
 		'fchomo_direct_list',
 		'fchomo_proxy_list'
@@ -1110,7 +1111,7 @@ function validateCustomListIDs(hm_prefmt, disoption_list, section_id) {
 	if (custom_dp_list_ids.map((v) => hm_prefmt.format(v)).includes(section_id)) {
 		disoption_list.forEach(([typ, opt]) => {
 			node = this.section.getUIElement(section_id, opt)?.node;
-			(typ ? node?.querySelector(typ) : node)?.setAttribute('disabled', '');
+			(typ ? node?.querySelector(typ) : node)?.setAttribute(typ === 'textarea' ? 'readOnly' : 'disabled', '');
 		});
 
 		this.map.findElement('id', 'cbi-fchomo-' + section_id)?.lastChild.querySelector('.cbi-button-remove')?.remove();

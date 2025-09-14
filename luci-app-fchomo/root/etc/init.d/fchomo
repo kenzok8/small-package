@@ -193,12 +193,27 @@ start_service() {
 			local yaml="$5"
 
 			if [ -n "$yaml" ]; then
-				yq '.[] |= with(select(. == null); . = []) | .DOMAIN[] | sub("(^\+\.)", "") | sub("(^.+\*)", "")' "$src" | \
+				yq '.[] |= with(select(. == null); . = []) | .DOMAIN[]' "$src" | \
 				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" > "$dst"
 			else
 				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" "$src" > "$dst"
 			fi
 		}
+		# <src> <dst>
+		write_runtime_customlist_file() {
+			local src="$1"
+			local dst="$2"
+
+			yq '.[] |= with(select(. == null); . = [])
+				| with(.DOMAIN[]; . = "DOMAIN-SUFFIX,\(.)")
+				| with(.IPCIDR[]; . = "IP-CIDR,\(.)")
+				| with(.IPCIDR6[]; . = "IP-CIDR6,\(.)")
+			| {"payload": [.DOMAIN[], .IPCIDR[], .IPCIDR6[]]}' "$src" > "$dst"
+		}
+
+		# runtiming custom direct/proxy list ruleset
+		write_runtime_customlist_file "$HM_DIR/resources/direct_list.yaml" "$RUN_DIR/direct_list.yaml"
+		write_runtime_customlist_file "$HM_DIR/resources/proxy_list.yaml" "$RUN_DIR/proxy_list.yaml"
 
 		# IP-sets
 		if [ -n "$(opmc list-installed dnsmasq-full)" ]; then
@@ -434,6 +449,10 @@ stop_client() {
 	nft flush  table inet fchomo 2>"/dev/null"
 	nft delete table inet fchomo 2>"/dev/null"
 	echo 2>"/dev/null" > "$RUN_DIR/fchomo_post.nft"
+
+	# Remove runtime ruleset
+	echo 2>"/dev/null" > "$RUN_DIR/direct_list.yaml"
+	echo 2>"/dev/null" > "$RUN_DIR/proxy_list.yaml"
 
 	# Remove DNSMasq servers
 	rm -rf "$DNSMASQ_DIR/../dnsmasq-fchomo.conf" "$DNSMASQ_DIR/../00-dnsmasq-fchomo.conf" "$DNSMASQ_DIR" # no bash, no {,00-}dnsmasq-fchomo.conf
