@@ -309,21 +309,21 @@ return view.extend({
 			let tls_reality = this.section.getUIElement(section_id, 'tls_reality').node.querySelector('input');
 
 			// Force enabled
-			if (['vless', 'trojan', 'anytls', 'tuic', 'hysteria2'].includes(type)) {
+			if (['trojan', 'anytls', 'tuic', 'hysteria2'].includes(type)) {
 				tls.checked = true;
 				tls.disabled = true;
 				if (['tuic', 'hysteria2'].includes(type) && !`${tls_alpn.getValue()}`)
 					tls_alpn.setValue('h3');
 			} else {
-				tls.disabled = null;
+				tls.removeAttribute('disabled');
 			}
 
 			// Force disabled
 			if (!['vmess', 'vless', 'trojan'].includes(type)) {
-				tls_reality.checked = null;
+				tls_reality.checked = false;
 				tls_reality.disabled = true;
 			} else {
-				tls_reality.disabled = null;
+				tls_reality.removeAttribute('disabled');
 			}
 
 			return true;
