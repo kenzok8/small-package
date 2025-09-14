@@ -203,6 +203,15 @@ msgstr ""
 msgid "Application version"
 msgstr "應用版本"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:789
+msgid "As the TOP upstream of dnsmasq"
+msgstr "作為 dnsmasq 的最優先上游"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:790
+#: htdocs/luci-static/resources/view/fchomo/global.js:797
+msgid "As the TOP upstream of dnsmasq."
+msgstr "作為 dnsmasq 的最優先上游。"
+
 #: htdocs/luci-static/resources/view/fchomo/server.js:207
 msgid "Auth timeout"
 msgstr "認證超時"
@@ -2774,6 +2783,10 @@ msgstr ""
 #: htdocs/luci-static/resources/view/fchomo/server.js:188
 msgid "cubic"
 msgstr "cubic"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:799
+msgid "dnsmasq selects upstream on its own. (may affect CDN accuracy)"
+msgstr "dnsmasq 自行選擇上游服務器。 (可能影響 CDN 準確性)"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1152
 msgid "down"

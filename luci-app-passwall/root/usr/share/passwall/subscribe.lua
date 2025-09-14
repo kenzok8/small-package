@@ -705,9 +705,8 @@ local function processData(szType, content, add_mode, add_from)
 			result.password = password
 
 			if result.type ~= "Xray" then
-				local m = (method or "none"):lower()
-				result.method = (m == "chacha20-poly1305" and "chacha20-ietf-poly1305") or
-						(m == "xchacha20-poly1305" and "xchacha20-ietf-poly1305") or method
+				result.method = (method:lower() == "chacha20-poly1305" and "chacha20-ietf-poly1305") or
+						(method:lower() == "xchacha20-poly1305" and "xchacha20-ietf-poly1305") or method
 			end
 
 			if result.plugin then

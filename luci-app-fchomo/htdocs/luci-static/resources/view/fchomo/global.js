@@ -786,6 +786,21 @@ return view.extend({
 		so = ss.taboption('access_control', form.Flag, 'proxy_router', _('Proxy routerself'));
 		so.default = so.enabled;
 
+		so = ss.taboption('access_control', form.Flag, 'top_upstream', _('As the TOP upstream of dnsmasq'),
+			_('As the TOP upstream of dnsmasq.'));
+		so.default = so.disabled;
+		so.validate = function(section_id, value) {
+			let desc = this.getUIElement(section_id).node.nextSibling;
+			value = this.formvalue(section_id);
+
+			if (value == 1)
+				desc.innerHTML = _('As the TOP upstream of dnsmasq.');
+			else
+				desc.innerHTML = _('dnsmasq selects upstream on its own. (may affect CDN accuracy)');
+
+			return true;
+		}
+
 		/* Routing control */
 		ss.tab('routing_control', _('Routing Control'));
 
