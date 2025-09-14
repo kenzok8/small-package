@@ -254,13 +254,12 @@ return view.extend({
 		o.default = o.enabled;
 		o.editable = true;
 		o.validate = function(section_id, value) {
-			let hm_prefmt = hm.glossary[this.section.sectiontype].prefmt;
-
-			return hm.validateCustomListIDs.call(this, hm_prefmt, [
+			return hm.validateCustomListIDs.call(this, [
 				['input', this.option],
 				['select', 'type'],
 				['select', 'behavior'],
-				['select', 'format']
+				['select', 'format'],
+				['textarea', '_editer']
 			], ...arguments);
 		}
 

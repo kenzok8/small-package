@@ -22,7 +22,7 @@ if [ ! -s "/etc/fchomo/resources/direct_list.yaml" ]; then
 	EOF
 fi
 # ruleset symlink
-ln -sf /etc/fchomo/resources/direct_list.yaml /etc/fchomo/ruleset/rule_fchomo_direct_list
+ln -sf /var/run/fchomo/direct_list.yaml /etc/fchomo/ruleset/rule_fchomo_direct_list
 # ruleset config
 if ! uci -q get fchomo.rule_fchomo_direct_list >/dev/null; then
 	uci -q batch <<-EOF >/dev/null
@@ -47,14 +47,14 @@ if ! uci -q get fchomo.fchomo_direct_list_domain >/dev/null; then
 	uci commit fchomo
 fi
 # rules config
-if ! uci -q get fchomo.fchomo_direct_list_host >/dev/null; then
-	uci -q batch <<-EOF >/dev/null
-		set fchomo.fchomo_direct_list_host=rules
-		set fchomo.fchomo_direct_list_host.label='Custom Direct List (Preset)'
-		set fchomo.fchomo_direct_list_host.entry='{"type":"RULE-SET","payload":[{"type":"RULE-SET","factor":"rule_fchomo_direct_list"}],"detour":"DIRECT"}'
-	EOF
-	uci commit fchomo
-fi
+#if ! uci -q get fchomo.fchomo_direct_list_host >/dev/null; then
+#	uci -q batch <<-EOF >/dev/null
+#		set fchomo.fchomo_direct_list_host=rules
+#		set fchomo.fchomo_direct_list_host.label='Custom Direct List (Debug)'
+#		set fchomo.fchomo_direct_list_host.entry='{"type":"RULE-SET","payload":[{"type":"RULE-SET","factor":"rule_fchomo_direct_list"}],"detour":"DIRECT"}'
+#	EOF
+#	uci commit fchomo
+#fi
 
 # Initialize the default proxy list
 if [ ! -s "/etc/fchomo/resources/proxy_list.yaml" ]; then
@@ -83,7 +83,7 @@ if [ ! -s "/etc/fchomo/resources/proxy_list.yaml" ]; then
 	EOF
 fi
 # ruleset symlink
-ln -sf /etc/fchomo/resources/proxy_list.yaml /etc/fchomo/ruleset/rule_fchomo_proxy_list
+ln -sf /var/run/fchomo/proxy_list.yaml /etc/fchomo/ruleset/rule_fchomo_proxy_list
 # ruleset config
 if ! uci -q get fchomo.rule_fchomo_proxy_list >/dev/null; then
 	uci -q batch <<-EOF >/dev/null

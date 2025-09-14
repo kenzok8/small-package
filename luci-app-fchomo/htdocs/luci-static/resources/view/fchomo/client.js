@@ -1136,10 +1136,9 @@ return view.extend({
 		so.default = so.enabled;
 		so.editable = true;
 		so.validate = function(section_id, value) {
-			let hm_prefmt = hm.glossary[this.section.sectiontype].prefmt;
 			let n = 0;
 
-			return hm.validateCustomListIDs.call(this, hm_prefmt, [
+			return hm.validateCustomListIDs.call(this, [
 				['input', this.option],
 				['select', 'type'],
 				['select', `payload${n}_` + 'rule_set']
@@ -1590,9 +1589,7 @@ return view.extend({
 		so.default = so.enabled;
 		so.editable = true;
 		so.validate = function(section_id, value) {
-			let hm_prefmt = hm.glossary[this.section.sectiontype].prefmt;
-
-			return hm.validateCustomListIDs.call(this, hm_prefmt, [
+			return hm.validateCustomListIDs.call(this, [
 				['input', this.option],
 				['select', 'type'],
 				['', 'rule_set']
