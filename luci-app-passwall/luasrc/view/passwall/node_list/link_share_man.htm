@@ -928,14 +928,14 @@ local hysteria2_type = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{
 				}
 			}
 			if (ss_type !== "xray") {
-				method = (method?.toLowerCase() === "chacha20-poly1305") ? "chacha20-ietf-poly1305" : method;
-				method = (method?.toLowerCase() === "xchacha20-poly1305") ? "xchacha20-ietf-poly1305" : method;
+				method = method.toLowerCase() === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : method;
+				method = method.toLowerCase() === "xchacha20-poly1305" ? "xchacha20-ietf-poly1305" : method;
 			}
 			opt.set(dom_prefix + 'address', server);
 			opt.set(dom_prefix + 'port', port);
 			opt.set(dom_prefix + 'password', password || "");
-			opt.set(dom_prefix + 'method', method || "none");
-			opt.set(dom_prefix + 'ss_method', method || "none");
+			opt.set(dom_prefix + 'method', method || "");
+			opt.set(dom_prefix + 'ss_method', method || "");
 			if (plugin && plugin != "none") {
 				plugin = (plugin === "simple-obfs") ? "obfs-local" : plugin;
 				opt.set(dom_prefix + 'plugin_enabled', true);

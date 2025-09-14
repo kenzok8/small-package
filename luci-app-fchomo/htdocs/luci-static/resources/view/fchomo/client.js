@@ -1135,6 +1135,16 @@ return view.extend({
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;
 		so.editable = true;
+		so.validate = function(section_id, value) {
+			let hm_prefmt = hm.glossary[this.section.sectiontype].prefmt;
+			let n = 0;
+
+			return hm.validateCustomListIDs.call(this, hm_prefmt, [
+				['input', this.option],
+				['select', 'type'],
+				['select', `payload${n}_` + 'rule_set']
+			], ...arguments);
+		}
 
 		renderRules(ss, data[0]);
 
@@ -1578,6 +1588,15 @@ return view.extend({
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;
 		so.editable = true;
+		so.validate = function(section_id, value) {
+			let hm_prefmt = hm.glossary[this.section.sectiontype].prefmt;
+
+			return hm.validateCustomListIDs.call(this, hm_prefmt, [
+				['input', this.option],
+				['select', 'type'],
+				['', 'rule_set']
+			], ...arguments);
+		}
 
 		so = ss.option(form.ListValue, 'type', _('Type'));
 		so.value('domain', _('Domain'));

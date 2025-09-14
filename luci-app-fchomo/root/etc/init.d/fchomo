@@ -165,17 +165,24 @@ start_service() {
 		local dns_port tunnel_port
 		config_get dns_port "dns" "dns_port" "7853"
 		config_get tunnel_port "inbound" "tunnel_port" "7893" # @Not required for v1.19.2+
-		local routing_mode routing_domain
+		local top_upstream routing_mode routing_domain
+		config_get_bool top_upstream "routing" "top_upstream" "0"
 		config_get routing_mode "routing" "routing_mode" ""
 		config_get_bool routing_domain "routing" "routing_domain" "0"
 
 		mkdir -p "$DNSMASQ_DIR"
-		echo -e "conf-dir=$DNSMASQ_DIR" > "$DNSMASQ_DIR/../dnsmasq-fchomo.conf"
+		echo -e "conf-dir=$DNSMASQ_DIR" > "$DNSMASQ_DIR/../$([ "$top_upstream" = "1" ] && echo '00-')dnsmasq-fchomo.conf"
 		cat <<-EOF > "$DNSMASQ_DIR/forward-dns.conf"
 			no-poll
 			no-resolv
 			server=127.0.0.1#$dns_port
 		EOF
+
+		# fix dnsmasq
+		if [ "$top_upstream" = "1" -a "$(uci -q get dhcp.@dnsmasq[0].strictorder)" != "1" ]; then
+			uci set dhcp.@dnsmasq[0].strictorder="1"
+			uci commit dhcp
+		fi
 
 		# <family> <set_name> <src> <dst> [yaml]
 		write_ipset_file() {
@@ -186,7 +193,7 @@ start_service() {
 			local yaml="$5"
 
 			if [ -n "$yaml" ]; then
-				yq '.[] |= with(select(. == null); . = []) | .DOMAIN[]' "$src" | \
+				yq '.[] |= with(select(. == null); . = []) | .DOMAIN[] | sub("(^\+\.)", "") | sub("(^.+\*)", "")' "$src" | \
 				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" > "$dst"
 			else
 				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" "$src" > "$dst"
@@ -429,7 +436,7 @@ stop_client() {
 	echo 2>"/dev/null" > "$RUN_DIR/fchomo_post.nft"
 
 	# Remove DNSMasq servers
-	rm -rf "$DNSMASQ_DIR/../dnsmasq-fchomo.conf" "$DNSMASQ_DIR"
+	rm -rf "$DNSMASQ_DIR/../dnsmasq-fchomo.conf" "$DNSMASQ_DIR/../00-dnsmasq-fchomo.conf" "$DNSMASQ_DIR" # no bash, no {,00-}dnsmasq-fchomo.conf
 
 	# Remove Clash API Dashboard
 	rm -rf "$RUN_DIR/ui"
