@@ -571,7 +571,7 @@ return view.extend({
 				tls.checked = true;
 				tls.disabled = true;
 			} else {
-				tls.disabled = null;
+				tls.removeAttribute('disabled');
 			}
 
 			return true;

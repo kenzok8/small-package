@@ -337,7 +337,7 @@ const CBIGridSection = form.GridSection.extend({
 				button.disabled = true;
 				return _('Expecting: %s').format(_('unique identifier'));
 			} else {
-				button.disabled = null;
+				button.removeAttribute('disabled');
 				return true;
 			}
 		}, 'blur', 'keyup');
