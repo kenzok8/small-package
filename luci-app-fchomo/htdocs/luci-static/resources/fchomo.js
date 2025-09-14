@@ -171,11 +171,13 @@ const preset_outbound = {
 	],
 	direct: [
 		['', _('null')],
-		['DIRECT']
+		['DIRECT'],
+		['GLOBAL']
 	],
 	dns: [
 		['', 'RULES'],
-		['DIRECT']
+		['DIRECT'],
+		['GLOBAL']
 	]
 };
 
