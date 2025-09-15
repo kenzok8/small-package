@@ -341,7 +341,7 @@
 .td,.th {
   line-height: normal;
   display: table-cell;
-  padding: .5em;
+  padding: .75rem;
   text-align: center;
   vertical-align: middle;
   white-space: nowrap
@@ -494,10 +494,14 @@
 html,body {
   font-family: var(--font-sans);
   height: 100%;
-  margin: 0 !important;
-  padding: 0 !important
+  margin: 0 ;
+  padding: 0 
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
 body {
   letter-spacing: 0.050em;
   font-size: var(--font-z);
@@ -509,7 +513,6 @@ body {
   background-size: cover;
   background-repeat: no-repeat
 }
-
 a {
   color: var(--primarytextcolor);
   font-size: var(--font-z);
@@ -694,7 +697,6 @@ footer>a {
 }
 
 .footend {
-  position: relative;
   bottom: 0;
   left: 0;
   background-color: rgba(255, 255, 255, 0);
@@ -711,6 +713,8 @@ small {
   top: 0;
   bottom: 0;
   height: 100vh;
+  overflow-y: auto;
+  flex-direction: row;
   width: 100%
 }
 
@@ -1627,10 +1631,12 @@ table>tbody>tr:first-child>td,table>tfoot>tr:first-child>td,table>thead>tr:first
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  display: inline-block;
   text-transform: uppercase;
   cursor: pointer;
   -ms-touch-action: manipulation;
   touch-action: manipulation;
+  width: auto !important;
   vertical-align: middle;
   text-align: center;
   white-space: nowrap;
@@ -1638,7 +1644,6 @@ table>tbody>tr:first-child>td,table>tfoot>tr:first-child>td,table>thead>tr:first
   color: var(--menu-hover-color);
   background-color: #008b89;
   box-shadow: 0 0.3rem 0.8rem var(--input-boxcolor);
-
   border-radius: var(--radius2);
   background-image: var(--bgqs-image)
 }
@@ -1919,8 +1924,12 @@ button:hover,.btn:hover,.cbi-button:hover {
   padding: 0;
   border-top: 0
 }
+.cbi-section-node {
+  display: flex;
+  flex-direction: column;
+}
 
-.cbi-value-field,.cbi-value-description {
+.cbi-value-field {
   display: table-cell
 }
 
@@ -2261,7 +2270,7 @@ button:hover,.btn:hover,.cbi-button:hover {
 .cbi-dropdown>ul {
   display: flex;
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
   width: 100%;
   list-style: none;
   outline: 0
@@ -2373,14 +2382,18 @@ button:hover,.btn:hover,.cbi-button:hover {
   position: absolute;
   z-index: 1100;
   display: block;
-  width: 100%;
+  width: auto;
   min-width: 100%;
-  max-width: 30rem;
+  max-width: none;
+  max-height: 200px !important;
   box-shadow: 0 0 4px var(--inputborder-color);
   border-radius: var(--radius2);
   border: 0px solid var(--inputborder-color);
   background-color: rgba(var(--primary-rgbbody), 1);
   color: var(--inputtext-color);
+  margin-left: 0 !important;
+  margin-top: 0.25rem;
+  left: 0;
   cursor: pointer;
 }
 
@@ -2404,7 +2417,7 @@ button:hover,.btn:hover,.cbi-button:hover {
 }
 
 .cbi-dropdown[open]>ul.dropdown>li {
-  padding: 0.2em 0.5em;
+  padding: 0.5rem 0.75rem;
   margin: 0.1rem auto;
   color: var(--inputtext-color)
 }
@@ -2496,18 +2509,17 @@ select,input {
   white-space: pre;
   text-overflow: ellipsis
 }
-
 #modal_overlay {
   position: fixed;
   z-index: 900;
   top: 0;
-  display: none;
   bottom: 0;
+  left: -10000px;
   overflow-y: scroll;
-  transition: opacity .1s ease-in;
+  transition: opacity 0.125s ease-in;
   opacity: 0;
-  background: rgba(0,0,0,.7);
-  -webkit-overflow-scrolling: touch
+  background: rgba(0, 0, 0, 0.7);
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal {
@@ -2593,13 +2605,16 @@ select,input {
   padding: 2rem 1rem;
   color: #eee
 }
-
-#modal_overlay,.modal>p {
+.modal>p {
   font-size: var(--font-x);
   padding-left: .25rem;
   word-break: break-word
 }
-
+.cbi-map {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 .modal .label {
   font-size: var(--font-x);
   font-weight: normal;
@@ -2684,7 +2699,6 @@ body.modal-overlay-active #modal_overlay {
   right: 0;
   left: 0;
   opacity: 1;
-  display: inline-block
 }
 
 .spinning {
@@ -2970,7 +2984,6 @@ td>.ifacebadge,.td>.ifacebadge {
   flex-direction: column;
   color: var(--body-color);
   font-size: var(--font-x);
-  overflow: hidden;
   border: 1px solid var(--inputborder-color);
   background-color: var(--inputbg-color);
   align-items: center
@@ -4542,7 +4555,6 @@ div#file-manager-container #status-bar #status-info {
   width: 30rem;
 }
 .cbi-dropdown[open]>ul.dropdown {
-  overflow: auto;
   max-width: 100%;
   width: 30rem;
 }
@@ -4850,7 +4862,7 @@ div#file-manager-container #status-bar #status-info {
   }
 
   .td,.th {
-    padding: 2px;
+    padding: 10px;
     margin: 0;
     line-height: 1
   }
@@ -4900,7 +4912,6 @@ div#file-manager-container #status-bar #status-info {
   }
   
   .cbi-dropdown[open]>ul.dropdown {
-  overflow: auto;
   max-width: 100%;
   margin: auto;
   max-height: 8rem !important;
@@ -4919,11 +4930,19 @@ div#file-manager-container #status-bar #status-info {
   width: 100%;
   }
   
-  .modal {
-    padding: 0.5rem;
-    overflow-x: auto;
-    overflow-y: hidden;
+  .modal.cbi-modal {
+    max-width: 100%;
+    max-height: none;
   }
+  
+  .modal {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 0.5rem;
+  }
+
   .cbi-value-title,.cbi-value-field {
     display: inline-block;
     padding: 0 0.3rem;
