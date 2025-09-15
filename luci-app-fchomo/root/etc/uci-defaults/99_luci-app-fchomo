@@ -119,7 +119,7 @@ fi
 
 # Initialize the default china list
 # ruleset symlink
-ln -sf /var/run/fchomo/china_list.txt /etc/fchomo/ruleset/rule_fchomo_china_list
+ln -sf /var/run/fchomo/china_list.mrs /etc/fchomo/ruleset/rule_fchomo_china_list
 # ruleset config
 if ! uci -q get fchomo.rule_fchomo_china_list >/dev/null; then
 	uci -q batch <<-EOF >/dev/null
@@ -127,7 +127,7 @@ if ! uci -q get fchomo.rule_fchomo_china_list >/dev/null; then
 		set fchomo.rule_fchomo_china_list.label='China List (Preset)'
 		set fchomo.rule_fchomo_china_list.type='file'
 		set fchomo.rule_fchomo_china_list.behavior='domain'
-		set fchomo.rule_fchomo_china_list.format='text'
+		set fchomo.rule_fchomo_china_list.format='mrs'
 	EOF
 	uci commit fchomo
 fi
@@ -155,7 +155,7 @@ fi
 
 # Initialize the default gfw list
 # ruleset symlink
-ln -sf /var/run/fchomo/gfw_list.txt /etc/fchomo/ruleset/rule_fchomo_gfw_list
+ln -sf /var/run/fchomo/gfw_list.mrs /etc/fchomo/ruleset/rule_fchomo_gfw_list
 # ruleset config
 if ! uci -q get fchomo.rule_fchomo_gfw_list >/dev/null; then
 	uci -q batch <<-EOF >/dev/null
@@ -163,7 +163,7 @@ if ! uci -q get fchomo.rule_fchomo_gfw_list >/dev/null; then
 		set fchomo.rule_fchomo_gfw_list.label='GFW List (Preset)'
 		set fchomo.rule_fchomo_gfw_list.type='file'
 		set fchomo.rule_fchomo_gfw_list.behavior='domain'
-		set fchomo.rule_fchomo_gfw_list.format='text'
+		set fchomo.rule_fchomo_gfw_list.format='mrs'
 	EOF
 	uci commit fchomo
 fi

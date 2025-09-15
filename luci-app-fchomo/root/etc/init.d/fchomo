@@ -179,15 +179,17 @@ start_service() {
 					| {"payload": [.DOMAIN[], .IPCIDR[], .IPCIDR6[]]}' "$src" > "$dst"
 				fi
 			elif [ "$format" = "domain" ]; then
-				sed -E 's|^([^\.])|+.\1|' "$src" > "$dst"
+				sed -E 's|^([^\.])|+.\1|' "$src" > "$dst.tmp"
+				mihomo convert-ruleset domain text "$dst.tmp" "$dst"
+				rm -f "$dst.tmp"
 			fi
 		}
 
 		# runtime ruleset
 		write_runtime_ruleset_file fchmclist "$HM_DIR/resources/direct_list.yaml" "$RUN_DIR/direct_list.yaml" domainOnlay
 		write_runtime_ruleset_file fchmclist "$HM_DIR/resources/proxy_list.yaml" "$RUN_DIR/proxy_list.yaml"
-		write_runtime_ruleset_file domain "$HM_DIR/resources/china_list.txt" "$RUN_DIR/china_list.txt"
-		write_runtime_ruleset_file domain "$HM_DIR/resources/gfw_list.txt" "$RUN_DIR/gfw_list.txt"
+		write_runtime_ruleset_file domain "$HM_DIR/resources/china_list.txt" "$RUN_DIR/china_list.mrs"
+		write_runtime_ruleset_file domain "$HM_DIR/resources/gfw_list.txt" "$RUN_DIR/gfw_list.mrs"
 
 		# Setup DNSMasq servers and IP-sets
 		local global_ipv6 dns_ipv6
@@ -469,8 +471,7 @@ stop_client() {
 	# Remove runtime ruleset
 	echo 2>"/dev/null" > "$RUN_DIR/direct_list.yaml"
 	echo 2>"/dev/null" > "$RUN_DIR/proxy_list.yaml"
-	echo 2>"/dev/null" > "$RUN_DIR/china_list.txt"
-	echo 2>"/dev/null" > "$RUN_DIR/gfw_list.txt"
+	rm -rf "$RUN_DIR/china_list.mrs" "$RUN_DIR/gfw_list.mrs"
 
 	# Remove DNSMasq servers
 	rm -rf "$DNSMASQ_DIR/../dnsmasq-fchomo.conf" "$DNSMASQ_DIR/../00-dnsmasq-fchomo.conf" "$DNSMASQ_DIR" # no bash, no {,00-}dnsmasq-fchomo.conf
