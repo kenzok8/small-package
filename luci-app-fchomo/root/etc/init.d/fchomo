@@ -158,6 +158,37 @@ start_service() {
 			mv "$RUN_DIR/"*-gh-pages/ "$RUN_DIR/ui/"
 		fi
 
+		# Generate runtime ruleset
+		# <format> <src> <dst> [domainOnlay]
+		write_runtime_ruleset_file() {
+			local format="$1"
+			local src="$2"
+			local dst="$3"
+			local domainOnlay="$4"
+
+			if [ "$format" = "fchmclist" ]; then
+				if [ -n "$domainOnlay" ]; then
+					yq '.[] |= with(select(. == null); . = [])
+						| with(.DOMAIN[]; . = "DOMAIN-SUFFIX,\(.)")
+					| {"payload": .DOMAIN}' "$src" > "$dst"
+				else
+					yq '.[] |= with(select(. == null); . = [])
+						| with(.DOMAIN[]; . = "DOMAIN-SUFFIX,\(.)")
+						| with(.IPCIDR[]; . = "IP-CIDR,\(.)")
+						| with(.IPCIDR6[]; . = "IP-CIDR6,\(.)")
+					| {"payload": [.DOMAIN[], .IPCIDR[], .IPCIDR6[]]}' "$src" > "$dst"
+				fi
+			elif [ "$format" = "domain" ]; then
+				sed -E 's|^([^\.])|+.\1|' "$src" > "$dst"
+			fi
+		}
+
+		# runtime ruleset
+		write_runtime_ruleset_file fchmclist "$HM_DIR/resources/direct_list.yaml" "$RUN_DIR/direct_list.yaml" domainOnlay
+		write_runtime_ruleset_file fchmclist "$HM_DIR/resources/proxy_list.yaml" "$RUN_DIR/proxy_list.yaml"
+		write_runtime_ruleset_file domain "$HM_DIR/resources/china_list.txt" "$RUN_DIR/china_list.txt"
+		write_runtime_ruleset_file domain "$HM_DIR/resources/gfw_list.txt" "$RUN_DIR/gfw_list.txt"
+
 		# Setup DNSMasq servers and IP-sets
 		local global_ipv6 dns_ipv6
 		config_get_bool global_ipv6 "global" "ipv6" "1"
@@ -199,21 +230,6 @@ start_service() {
 				sed "s|^|nftset=/|;s|$|/${family}#inet#fchomo#${set_name}|" "$src" > "$dst"
 			fi
 		}
-		# <src> <dst>
-		write_runtime_customlist_file() {
-			local src="$1"
-			local dst="$2"
-
-			yq '.[] |= with(select(. == null); . = [])
-				| with(.DOMAIN[]; . = "DOMAIN-SUFFIX,\(.)")
-				| with(.IPCIDR[]; . = "IP-CIDR,\(.)")
-				| with(.IPCIDR6[]; . = "IP-CIDR6,\(.)")
-			| {"payload": [.DOMAIN[], .IPCIDR[], .IPCIDR6[]]}' "$src" > "$dst"
-		}
-
-		# runtiming custom direct/proxy list ruleset
-		write_runtime_customlist_file "$HM_DIR/resources/direct_list.yaml" "$RUN_DIR/direct_list.yaml"
-		write_runtime_customlist_file "$HM_DIR/resources/proxy_list.yaml" "$RUN_DIR/proxy_list.yaml"
 
 		# IP-sets
 		if [ -n "$(opmc list-installed dnsmasq-full)" ]; then
@@ -453,6 +469,8 @@ stop_client() {
 	# Remove runtime ruleset
 	echo 2>"/dev/null" > "$RUN_DIR/direct_list.yaml"
 	echo 2>"/dev/null" > "$RUN_DIR/proxy_list.yaml"
+	echo 2>"/dev/null" > "$RUN_DIR/china_list.txt"
+	echo 2>"/dev/null" > "$RUN_DIR/gfw_list.txt"
 
 	# Remove DNSMasq servers
 	rm -rf "$DNSMASQ_DIR/../dnsmasq-fchomo.conf" "$DNSMASQ_DIR/../00-dnsmasq-fchomo.conf" "$DNSMASQ_DIR" # no bash, no {,00-}dnsmasq-fchomo.conf

@@ -254,8 +254,7 @@ return view.extend({
 		o.default = o.enabled;
 		o.editable = true;
 		o.validate = function(section_id, value) {
-			return hm.validateCustomListIDs.call(this, [
-				['input', this.option],
+			return hm.validatePresetIDs.call(this, [
 				['select', 'type'],
 				['select', 'behavior'],
 				['select', 'format'],
