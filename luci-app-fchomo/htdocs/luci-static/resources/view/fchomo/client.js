@@ -1138,8 +1138,7 @@ return view.extend({
 		so.validate = function(section_id, value) {
 			let n = 0;
 
-			return hm.validateCustomListIDs.call(this, [
-				['input', this.option],
+			return hm.validatePresetIDs.call(this, [
 				['select', 'type'],
 				['select', `payload${n}_` + 'rule_set']
 			], ...arguments);
@@ -1589,8 +1588,7 @@ return view.extend({
 		so.default = so.enabled;
 		so.editable = true;
 		so.validate = function(section_id, value) {
-			return hm.validateCustomListIDs.call(this, [
-				['input', this.option],
+			return hm.validatePresetIDs.call(this, [
 				['select', 'type'],
 				['', 'rule_set']
 			], ...arguments);

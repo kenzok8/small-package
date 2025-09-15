@@ -1102,15 +1102,17 @@ function textvalue2Value(section_id) {
 	return this.vallist[i];
 }
 
-function validateCustomListIDs(disoption_list, section_id) {
+function validatePresetIDs(disoption_list, section_id) {
 	let node;
 	let hm_prefmt = glossary[this.section.sectiontype].prefmt;
-	let custom_dp_list_ids = [
+	let preset_ids = [
 		'fchomo_direct_list',
-		'fchomo_proxy_list'
+		'fchomo_proxy_list',
+		'fchomo_china_list',
+		'fchomo_gfw_list'
 	];
 
-	if (custom_dp_list_ids.map((v) => hm_prefmt.format(v)).includes(section_id)) {
+	if (preset_ids.map((v) => hm_prefmt.format(v)).includes(section_id)) {
 		disoption_list.forEach(([typ, opt]) => {
 			node = this.section.getUIElement(section_id, opt)?.node;
 			(typ ? node?.querySelector(typ) : node)?.setAttribute(typ === 'textarea' ? 'readOnly' : 'disabled', '');
@@ -1477,7 +1479,7 @@ return baseclass.extend({
 	handleReload,
 	handleRemoveIdles,
 	textvalue2Value,
-	validateCustomListIDs,
+	validatePresetIDs,
 	validateAuth,
 	validateAuthUsername,
 	validateAuthPassword,
