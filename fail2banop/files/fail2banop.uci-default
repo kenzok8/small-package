@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@fail2banop[-1]
+	add ucitrack fail2banop
+	set ucitrack.@fail2banop[-1].init=fail2banop
+	commit ucitrack
+EOF
+
+/etc/init.d/fail2banop enable
+
+exit 0
+

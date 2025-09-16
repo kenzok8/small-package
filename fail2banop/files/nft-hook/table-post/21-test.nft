@@ -1,0 +1,1 @@
+set fail2banop { type ipv4_addr; }
