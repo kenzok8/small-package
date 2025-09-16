@@ -1,0 +1,2 @@
+set fail2banop4 { type ipv4_addr; }
+set fail2banop6 { type ipv6_addr; }
