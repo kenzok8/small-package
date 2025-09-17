@@ -319,7 +319,7 @@ msgstr "编辑器"
 msgid "Enable"
 msgstr "启用"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:44
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:47
 msgid "Expire At"
 msgstr "到期时间"
 
@@ -480,7 +480,7 @@ msgstr "入站接口"
 msgid "LAN Proxy"
 msgstr "局域网代理"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:82
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:85
 msgid "Local"
 msgstr "本地"
 
@@ -617,7 +617,7 @@ msgstr "请前往编辑器标签编辑用于混入的文件"
 msgid "Port"
 msgstr "端口"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:78
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:81
 msgid "Prefer"
 msgstr "优先"
 
@@ -669,7 +669,7 @@ msgstr "Redirect 端口"
 msgid "Reload Service"
 msgstr "重载服务"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:81
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:84
 msgid "Remote"
 msgstr "远程"
 
@@ -766,11 +766,15 @@ msgstr "状态"
 msgid "Subscription"
 msgstr "订阅"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:67
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:66
 msgid "Subscription Info Url"
 msgstr "订阅信息链接"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:63
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:34
+msgid "Subscription Name"
+msgstr "订阅名称"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:69
 msgid "Subscription Url"
 msgstr "订阅链接"
 
@@ -817,7 +821,7 @@ msgstr "TUN 模式"
 msgid "Test Profile"
 msgstr "检查配置文件"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:39
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:42
 msgid "Total"
 msgstr "总量"
 
@@ -905,11 +909,11 @@ msgstr "统一延迟"
 msgid "Unmodified"
 msgstr "不修改"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:57
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:60
 msgid "Update"
 msgstr "更新"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:49
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:52
 msgid "Update At"
 msgstr "更新时间"
 
@@ -937,7 +941,7 @@ msgstr "使用 Hosts"
 msgid "Use System Hosts"
 msgstr "使用系统的 Hosts"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:34
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:37
 msgid "Used"
 msgstr "已使用"
 
@@ -945,22 +949,10 @@ msgstr "已使用"
 msgid "User"
 msgstr "用户"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:70
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:73
 msgid "User Agent"
 msgstr "用户代理（UA）"
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:176
 msgid "Username"
 msgstr "用户名"
-
-#~ msgid "Subscription Name"
-#~ msgstr "订阅名称"
-
-#~ msgid "Endpoint Independent NAT"
-#~ msgstr "独立于端点的 NAT"
-
-#~ msgid "File for Reserved IP"
-#~ msgstr "IPv4 保留地址"
-
-#~ msgid "File for Reserved IP6"
-#~ msgstr "IPv6 保留地址"
