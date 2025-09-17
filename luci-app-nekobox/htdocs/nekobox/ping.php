@@ -384,6 +384,12 @@ if (isset($_POST['save_autostart'])) {
 		flex-wrap: nowrap !important;
 	}
 }
+
+.centered-img {
+        transition: transform 0.6s ease-in-out;
+        transform-style: preserve-3d;
+        transform: rotateY(0deg);
+}
 </style>
 
 <div id="theme-loader" style="display: none;">
@@ -394,6 +400,21 @@ if (isset($_POST['save_autostart'])) {
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const img = document.querySelector('.centered-img');
+    let currentRotation = 0;
+
+    img.addEventListener('mouseenter', function() {
+        currentRotation += 180;
+        img.style.transform = `rotateY(${currentRotation}deg)`;
+    });
+
+    img.addEventListener('mouseleave', function() {
+        img.style.transform = 'rotateY(0deg)';
+        currentRotation = 0;
+    });
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   const loader = document.getElementById("theme-loader");
   const MAX_WAIT_TIME = 15000;
@@ -1007,6 +1028,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button class="ctrl-btn" id="updatePlaylistBtn" onclick="updatePlaylist()" 
                 data-tooltip="update_playlist">
             <i class="fa fa-sync-alt"></i>
+        </button>
+        <button class="ctrl-btn" id="goFirstBtn">
+            <i class="fas fa-circle-left"></i>
         </button>
         <button id="toggleFloatingLyricsBtn" class="ctrl-btn toggleFloatingLyricsBtn" data-tooltip="toggle_floating_lyrics">
             <i class="bi bi-display floatingIcon"></i>
@@ -3719,6 +3743,16 @@ document.addEventListener('keydown', function (event) {
             break;
     }
 });
+
+document.getElementById('goFirstBtn')?.addEventListener('click', function() {
+    if (currentTrackIndex !== 0) {
+        currentTrackIndex = 0;
+        loadTrack(songs[0]);
+    }
+    const message = translations['back_to_first'] || 'Returned to the first song in the playlist';
+    showLogMessage(message);
+    speakMessage(message);
+});
 </script>
 
 <script>
@@ -5718,7 +5752,7 @@ body {
 	position: fixed;
 	top: 1%;
 	left: 4.5%;
-	background: var(--bg-body);
+	background: var(--bg-container);
 	padding: 15px 10px;
 	border-radius: 20px;
 	backdrop-filter: var(--glass-blur);
@@ -5737,6 +5771,7 @@ body {
 	resize: none;
 	overflow: auto;
 	user-select: none;
+        border: 1px solid var(--border-color, #999);
 }
 
 @keyframes float {
@@ -5791,10 +5826,10 @@ body {
 #floatingLyrics #floatingCurrentSong.vertical-title {
 	font-size: 1.8rem;
 	font-weight: 700;
-	color: var(--accent-color);
 	writing-mode: vertical-rl;
 	padding-right: 0.5em;
-	margin-right: 0.5em;
+	margin-left: auto;
+	margin-right: auto;
 	text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3), 
                  0px -1px 2px rgba(255, 255, 255, 0.4);
 }
@@ -5822,14 +5857,14 @@ body {
 
 .ctrl-btn {
 	background: var(--bg-body);
-	border: 1px solid rgba(255, 255, 255, 0.3);
+	border: 1px solid var(--border-color);
+	color: var(--text-primary) !important;
 	border-radius: 50%;
 	width: 36px;
 	height: 36px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #fff;
 	transition: all 0.3s ease;
 	backdrop-filter: blur(5px);
 }
