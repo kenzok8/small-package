@@ -402,16 +402,14 @@ if (isset($_POST['save_autostart'])) {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const img = document.querySelector('.centered-img');
-    let currentRotation = 0;
+
+    const savedRotation = parseInt(localStorage.getItem('rotation')) || 0;
+    img.style.transform = `rotateY(${savedRotation}deg)`;
 
     img.addEventListener('mouseenter', function() {
-        currentRotation += 180;
-        img.style.transform = `rotateY(${currentRotation}deg)`;
-    });
-
-    img.addEventListener('mouseleave', function() {
-        img.style.transform = 'rotateY(0deg)';
-        currentRotation = 0;
+        const newRotation = savedRotation + 180;
+        img.style.transform = `rotateY(${newRotation}deg)`;
+        localStorage.setItem('rotation', newRotation);
     });
 });
 

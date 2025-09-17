@@ -5571,7 +5571,10 @@ th:hover .resizer {
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden
-        font-size: 0.85rem;
+    }
+
+    .flex.items-center.overflow-hidden > span.truncate:nth-child(2) {
+      font-size: 0.85rem;
     }
 
     .overflow-auto {
