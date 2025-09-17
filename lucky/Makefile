@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lucky
-PKG_VERSION:=2.18.6
+PKG_VERSION:=2.19.4
 PKG_RELEASE:=1
 PKGARCH:=all 
 
@@ -45,7 +45,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=GDY666 <gdy666@foxmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_HASH:=d1b17ef8adfbb5df5e56a20ff5cb1af45fed7aa258fdea2d83d7ca755eb8b2f0
+PKG_HASH:=1aae164f4a15ec39f8f13b34497d86e4ff18cd8f1d3afcd087d997568fd5c17a
 
 include $(INCLUDE_DIR)/package.mk
 
