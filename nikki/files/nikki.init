@@ -460,6 +460,7 @@ update_subscription() {
 		fi
 	fi
 	# download subscription
+	log "Profile" "Download subscription."
 	if curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url" > /dev/null 2>&1; then
 		log "Profile" "Subscription download successful."
 		if [ ! -f "$subscription_info_file" ] && grep -q -i "subscription-userinfo:" "$subscription_header_tmpfile"; then
@@ -510,9 +511,9 @@ update_subscription() {
 			if [ -n "$subscription_avaliable" ]; then
 				uci_set "nikki" "$subscription_section" "avaliable" "$(format_filesize "$subscription_avaliable")"
 			fi
-			uci_set "nikki" "$subscription_section" "update" "$(date "+%Y-%m-%d %H:%M:%S")"
-			uci_set "nikki" "$subscription_section" "success" "1"
 		fi
+		uci_set "nikki" "$subscription_section" "update" "$(date "+%Y-%m-%d %H:%M:%S")"
+		uci_set "nikki" "$subscription_section" "success" "1"
 		# update subscription file
 		rm -f "$subscription_info_header_tmpfile"
 		rm -f "$subscription_header_tmpfile"
