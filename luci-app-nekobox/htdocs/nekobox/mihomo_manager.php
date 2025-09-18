@@ -517,6 +517,19 @@ function download_file($url, $destination) {
 .table-hover tbody tr:hover td {
     color: #cc0fa9;
 }
+
+.node-count-badge {
+    position: absolute;
+    top: 1.4rem;
+    right: 0.9rem;
+    background-color: var(--accent-color);
+    color: #fff;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    z-index: 10;
+}
 </style>
 <?php if ($updateCompleted): ?>
     <script>
@@ -662,7 +675,7 @@ $(document).ready(function() {
                                 </div>
                                 <input type="hidden" name="index" value="<?php echo $i; ?>">
                                 <div class="text-center mt-3">
-                                    <button type="submit" name="update" class="btn btn-info btn-block">
+                                    <button type="submit" name="update" class="btn btn-primary btn-block">
                                         <i class="bi bi-arrow-repeat"></i> <span data-translate="updateSubscription">Settings</span> <?php echo $displayIndex; ?>
                                     </button>
                                 </div>
@@ -695,7 +708,7 @@ $(document).ready(function() {
     </form>
 </div>
 
-<h2 class="text-center mt-4 mb-3" data-translate="fileManagement">File Management</h2>
+<h2 class="text-center mt-3 mb-4" data-translate="fileManagement">File Management</h2>
 
 <div class="container-sm px-3 px-md-4">
   <div class="row g-3">
@@ -724,9 +737,102 @@ $(document).ready(function() {
       $isProxy = ($index < count($proxyFiles));
       $size = file_exists($filePath) ? formatSize(filesize($filePath)) : ($translations['fileNotExist'] ?? 'Not Exist');
       $modified = file_exists($filePath) ? date('Y-m-d H:i:s', filemtime($filePath)) : '-';
+
+      $validProtocols = '/^(ss|shadowsocks|vmess|vless|trojan|hysteria2|socks5|http)$/i';
+      $nodeCount = 0;
+
+      if (file_exists($filePath)) {
+          $content = file_get_contents($filePath);
+
+          $json = json_decode($content, true);
+          if (json_last_error() === JSON_ERROR_NONE && isset($json['outbounds']) && is_array($json['outbounds'])) {
+              foreach ($json['outbounds'] as $outbound) {
+                  if (!empty($outbound['type']) && preg_match($validProtocols, $outbound['type'])) {
+                      $nodeCount++;
+                  }
+              }
+          } else {
+              if (preg_match('/^\s*proxies\s*:/im', $content, $matches, PREG_OFFSET_CAPTURE)) {
+                  $start = $matches[0][1] + strlen($matches[0][0]);
+                  $rest = substr($content, $start);
+                  $lines = preg_split("/\r?\n/", $rest);
+            
+                  $hasRealProxies = false;
+                  foreach ($lines as $line) {
+                      $line = trim($line);
+                      if ($line === '' || str_starts_with($line, '#')) continue;
+                
+                      if (preg_match('/^\-\s*(\{|.*type.*:)/', $line)) {
+                          $hasRealProxies = true;
+                          break;
+                      }
+                  }
+            
+                  if (!$hasRealProxies) {
+                      $nodeCount = 0;
+                  } else {
+                      foreach ($lines as $line) {
+                          $line = trim($line);
+                          if ($line === '' || str_starts_with($line, '#')) continue;
+                    
+                          if (preg_match('/^\-\s*\{.*\}$/', $line)) {
+                              if (preg_match('/^\-\s*\{(.*)\}\s*$/', $line, $match)) {
+                                  $objContent = $match[1];
+                            
+                                  $pairs = preg_split('/\s*,\s*/', $objContent);
+                                  $typeFound = false;
+                            
+                                  foreach ($pairs as $pair) {
+                                      if (preg_match('/^\s*(\w+)\s*:\s*(.+?)\s*$/', $pair, $kvMatch)) {
+                                          $key = $kvMatch[1];
+                                          $value = trim($kvMatch[2], " '\"");
+                                     
+                                          if ($key === 'type' && preg_match($validProtocols, $value)) {
+                                              $nodeCount++;
+                                              $typeFound = true;
+                                              break;
+                                          }
+                                      }
+                                  }
+                            
+                                  if (!$typeFound) {
+                                      $objStr = '{' . $objContent . '}';
+                                      $objStrClean = preg_replace("/(['\"])?([a-zA-Z0-9_]+)(['\"])?\s*:/", '"$2":', $objStr);
+                                      $objStrClean = str_replace("'", '"', $objStrClean);
+                                      $obj = json_decode($objStrClean, true);
+                                      if (json_last_error() === JSON_ERROR_NONE && isset($obj['type']) && preg_match($validProtocols, $obj['type'])) {
+                                          $nodeCount++;
+                                      }
+                                  }
+                              }
+                          } 
+                          elseif (preg_match('/type\s*:\s*["\']?(\w+)["\']?/i', $line, $match)) {
+                              if (preg_match($validProtocols, $match[1])) {
+                                   $nodeCount++;
+                              }
+                          }
+                      }
+                  }
+              }
+              elseif (preg_match('/^(ss|vmess|vless|trojan|hysteria2|socks5|http):\/\//im', $content)) {
+                  $lines = preg_split("/\r?\n/", $content);
+                  foreach ($lines as $line) {
+                      $line = trim($line);
+                      if ($line === '' || str_starts_with($line, '#')) continue;
+                      if (preg_match('/^(ss|vmess|vless|trojan|hysteria2|socks5|http):\/\//i', $line)) {
+                          $nodeCount++;
+                      }
+                  }
+              }
+              else {
+                  $nodeCount = 0;
+              }
+          }
+      }
     ?>
     <div class="col-12 col-md-6 col-lg-3">
       <div class="card h-100 text-start">
+        <span class="node-count-badge"><span class="node-number"><?= $nodeCount ?></span> <span data-translate="nodesLabel">Nodes</span></span>
         <div class="card-body d-flex flex-column justify-content-between">
           <h5 class="card-title mb-2" data-tooltip="fileName"><?= htmlspecialchars($file) ?></h5>
           <p class="card-text mb-1"><strong data-translate="fileSize">Size</strong>: <?= $size ?></p>
