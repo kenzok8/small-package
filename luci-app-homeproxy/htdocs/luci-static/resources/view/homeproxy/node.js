@@ -412,9 +412,10 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		}
 		o.onclick = function(ev, section_id) {
 			uci.set(data[0], 'config', 'main_node', section_id);
-			ui.changes.apply(true);
 
-			return this.map.save(null, true);
+			return this.map.save(null, true).then(() => {
+				ui.changes.apply(true);
+			});
 		}
 	}
 
@@ -1390,8 +1391,9 @@ return view.extend({
 		o.inputstyle = 'apply';
 		o.inputtitle = _('Save current settings');
 		o.onclick = function() {
-			ui.changes.apply(true);
-			return this.map.save(null, true);
+			return this.map.save(null, true).then(() => {
+				ui.changes.apply(true);
+			});
 		}
 
 		o = s.taboption('subscription', form.Button, '_update_subscriptions', _('Update nodes from subscriptions'));
