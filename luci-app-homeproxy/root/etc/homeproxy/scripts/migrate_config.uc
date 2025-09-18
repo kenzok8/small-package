@@ -65,10 +65,10 @@ if (!migration_crontab) {
 }
 
 /* log_level was introduced */
-if (isEmpty(uci.get(uciconfig, ucimain, 'log_level'))
+if (isEmpty(uci.get(uciconfig, ucimain, 'log_level')))
 	uci.set(uciconfig, ucimain, 'log_level', 'warn');
 
-if (isEmpty(uci.get(uciconfig, uciserver, 'log_level'))
+if (isEmpty(uci.get(uciconfig, uciserver, 'log_level')))
 	uci.set(uciconfig, uciserver, 'log_level', 'warn');
 
 /* empty value defaults to all ports now */

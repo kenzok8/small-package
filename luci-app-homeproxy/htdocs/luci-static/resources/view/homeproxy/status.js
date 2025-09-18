@@ -42,7 +42,7 @@ function getConnStat(o, site) {
 	o.default = E('div', { 'style': 'cbi-value-field' }, [
 		E('button', {
 			'class': 'btn cbi-button cbi-button-action',
-			'click': ui.createHandlerFn(this, function() {
+			'click': ui.createHandlerFn(this, () => {
 				return L.resolveDefault(callConnStat(site), {}).then((ret) => {
                                         let ele = o.default.firstElementChild.nextElementSibling;
 					if (ret.result) {
@@ -79,7 +79,7 @@ function getResVersion(o, type) {
 		let spanTemp = E('div', { 'style': 'cbi-value-field' }, [
 			E('button', {
 				'class': 'btn cbi-button cbi-button-action',
-				'click': ui.createHandlerFn(this, function() {
+				'click': ui.createHandlerFn(this, () => {
 					return L.resolveDefault(callResUpdate(type), {}).then((res) => {
 						switch (res.status) {
 						case 0:
@@ -145,10 +145,11 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 			'id': o.cbid(section_id),
 			'class': 'cbi-input-select',
 			'style': 'margin-left: 4px; width: 6em;',
-			'change': ui.createHandlerFn(this, function(ev) {
+			'change': ui.createHandlerFn(this, (ev) => {
 				uci.set('homeproxy', section, 'log_level', ev.target.value);
-				ui.changes.apply(true);
-				return o.map.save(null, true);
+				return o.map.save(null, true).then(() => {
+					ui.changes.apply(true);
+				});
 			})
 		});
 
@@ -176,15 +177,15 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 	);
 
 	let log;
-	poll.add(L.bind(function() {
+	poll.add(L.bind(() => {
 		return fs.read_direct(String.format('%s/%s.log', hp_dir, filename), 'text')
-		.then(function(res) {
+		.then((res) => {
 			log = E('pre', { 'wrap': 'pre' }, [
 				res.trim() || _('Log is empty.')
 			]);
 
 			dom.content(log_textarea, log);
-		}).catch(function(err) {
+		}).catch((err) => {
 			if (err.toString().includes('NotFoundError'))
 				log = E('pre', { 'wrap': 'pre' }, [
 					_('Log file does not exist.')
@@ -207,7 +208,7 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 				E('button', {
 					'class': 'btn cbi-button cbi-button-action',
 					'style': 'margin-left: 4px;',
-					'click': ui.createHandlerFn(this, function() {
+					'click': ui.createHandlerFn(this, () => {
 						return L.resolveDefault(callLogClean(filename), {});
 					})
 				}, [ _('Clean log') ])
@@ -264,9 +265,10 @@ return view.extend({
 			(node.querySelector('.control-group') || node).appendChild(E('button', {
 				'class': 'cbi-button cbi-button-apply',
 				'title': _('Save'),
-				'click': ui.createHandlerFn(this, function() {
-					ui.changes.apply(true);
-					return this.map.save(null, true);
+				'click': ui.createHandlerFn(this, () => {
+					return this.map.save(null, true).then(() => {
+						ui.changes.apply(true);
+					});
 				}, this.option)
 			}, [ _('Save') ]));
 
