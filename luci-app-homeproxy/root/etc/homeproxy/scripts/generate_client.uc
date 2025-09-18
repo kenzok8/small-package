@@ -513,7 +513,7 @@ if (!isEmpty(main_node)) {
 		if (cfg.enabled !== '1')
 			return;
 
-		let outboud = get_outbound(cfg.outbound);
+		let outbound = get_outbound(cfg.outbound);
 		if (outbound === 'direct-out' && isEmpty(self_mark))
 			outbound = null;
 
