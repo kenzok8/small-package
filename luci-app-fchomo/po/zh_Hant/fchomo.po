@@ -1648,8 +1648,8 @@ msgid "Operation mode"
 msgstr "運作模式"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1459
-msgid "Override ECS in original request."
-msgstr "覆蓋原始請求中的 ECS。"
+msgid "Override the existing ECS in original request."
+msgstr "覆蓋原始請求中已有的 ECS。"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:656
 #: htdocs/luci-static/resources/view/fchomo/global.js:694

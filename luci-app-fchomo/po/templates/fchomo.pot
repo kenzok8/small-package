@@ -1622,7 +1622,7 @@ msgid "Operation mode"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1459
-msgid "Override ECS in original request."
+msgid "Override the existing ECS in original request."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:656
