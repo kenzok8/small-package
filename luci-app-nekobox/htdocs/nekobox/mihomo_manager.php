@@ -757,7 +757,7 @@ $(document).ready(function() {
               } elseif (preg_match('/#(.*)$/', $line, $matches)) {
                   $hashComment = urldecode(trim($matches[1]));
 
-                  if (preg_match('/(?:剩余流量|剩余|流量)[:：]\s*([\d.]+)\s*(T|TB|G|GB|M|MB|K|KB)?(?:\s|$)/iu', $hashComment, $flowMatch)) {
+                  if (preg_match('/(?:剩余流量|流量)[:：]\s*([\d.]+)\s*(T|TB|G|GB|M|MB|K|KB)?(?:\s|$)/iu', $hashComment, $flowMatch)) {
                       $flowLeft = $flowMatch[1] . strtoupper($flowMatch[2] ?? 'MB');
                   }
 
