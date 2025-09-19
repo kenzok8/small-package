@@ -601,7 +601,7 @@ local function processData(szType, content, add_mode, add_from)
 			result.tls = "0"
 		end
 
-		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "splithttp") then
+		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 			log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 			return nil
 		end
@@ -1044,7 +1044,7 @@ local function processData(szType, content, add_mode, add_from)
 				if params.serviceName then result.grpc_serviceName = params.serviceName end
 				result.grpc_mode = params.mode or "gun"
 			end
-			if params.type == 'xhttp' or params.type == 'splithttp' then
+			if params.type == 'xhttp' then
 				result.xhttp_host = params.host
 				result.xhttp_path = params.path
 			end
@@ -1053,11 +1053,9 @@ local function processData(szType, content, add_mode, add_from)
 				result.httpupgrade_path = params.path
 			end
 
-			result.encryption = params.encryption or "none"
-			result.flow = params.flow and params.flow:gsub("-udp443", "") or nil
 			result.alpn = params.alpn
 
-			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "splithttp") then
+			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 				return nil
 			end
@@ -1194,7 +1192,7 @@ local function processData(szType, content, add_mode, add_from)
 				if success and Data then
 					local address = (Data.extra and Data.extra.downloadSettings and Data.extra.downloadSettings.address)
 							or (Data.downloadSettings and Data.downloadSettings.address)
-					result.download_address = address and address ~= "" and address or nil
+					result.download_address = (address and address ~= "") and address:gsub("^%[", ""):gsub("%]$", "") or nil
 				else
 					result.download_address = nil
 				end
@@ -1240,7 +1238,7 @@ local function processData(szType, content, add_mode, add_from)
 				result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 			end
 
-			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp" or result.transport == "splithttp") then
+			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
 				return nil
 			end
@@ -1828,10 +1826,11 @@ local function parse_link(raw, add_mode, add_from, cfgid)
 						local node = api.trim(v)
 						local dat = split(node, "://")
 						if dat and dat[1] and dat[2] then
-							if dat[1] == 'ss' or dat[1] == 'trojan' then
-								result = processData(dat[1], dat[2], add_mode, add_from)
+							if dat[1] == 'vmess' or dat[1] == 'ssr' then
+								local link = api.trim(dat[2]:gsub("#.*$", ""))
+								result = processData(dat[1], base64Decode(link), add_mode, add_from)
 							else
-								result = processData(dat[1], base64Decode(dat[2]), add_mode, add_from)
+								result = processData(dat[1], dat[2], add_mode, add_from)
 							end
 						end
 					else
