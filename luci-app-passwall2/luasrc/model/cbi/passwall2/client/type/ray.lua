@@ -43,7 +43,9 @@ o:value("socks", translate("Socks"))
 o:value("shadowsocks", translate("Shadowsocks"))
 o:value("trojan", translate("Trojan"))
 o:value("wireguard", translate("WireGuard"))
-o:value("_balancing", translate("Balancing"))
+if api.compare_versions(xray_version, ">=", "1.8.12") then
+	o:value("_balancing", translate("Balancing"))
+end
 o:value("_shunt", translate("Shunt"))
 o:value("_iface", translate("Custom Interface"))
 
@@ -99,80 +101,86 @@ m.uci:foreach(appname, "socks", function(s)
 end)
 
 -- 负载均衡列表
-local o = s:option(DynamicList, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
+o = s:option(DynamicList, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
 o:depends({ [_n("protocol")] = "_balancing" })
-for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
+local valid_ids = {}
+for k, v in pairs(nodes_table) do
+	o:value(v.id, v.remark)
+	valid_ids[v.id] = true
+end
+-- 去重并禁止自定义非法输入
+function o.custom_write(self, section, value)
+	local result = {}
+	if type(value) == "table" then
+		local seen = {}
+		for _, v in ipairs(value) do
+			if v and not seen[v] and valid_ids[v] then
+				table.insert(result, v)
+				seen[v] = true
+			end
+		end
+	else
+		result = { value }
+	end
+	api.uci:set_list(appname, section, "balancing_node", result)
+end
 
-local o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
+o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
 o:depends({ [_n("protocol")] = "_balancing" })
 o:value("random")
 o:value("roundRobin")
 o:value("leastPing")
 o:value("leastLoad")
-o.default = "leastLoad"
+o.default = "random"
 
 -- Fallback Node
-if api.compare_versions(xray_version, ">=", "1.8.10") then
-	local o = s:option(ListValue, _n("fallback_node"), translate("Fallback Node"))
-	if api.compare_versions(xray_version, ">=", "1.8.12") then
-		o:depends({ [_n("protocol")] = "_balancing" })
-	else
-		o:depends({ [_n("balancingStrategy")] = "leastPing" })
-	end
-	local function check_fallback_chain(fb)
-		for k, v in pairs(fallback_table) do
-			if v.fallback == fb then
-				fallback_table[k] = nil
-				check_fallback_chain(v.id)
-			end
+o = s:option(ListValue, _n("fallback_node"), translate("Fallback Node"))
+o:value("", translate("Close(Not use)"))
+o:depends({ [_n("protocol")] = "_balancing" })
+local function check_fallback_chain(fb)
+	for k, v in pairs(fallback_table) do
+		if v.fallback == fb then
+			fallback_table[k] = nil
+			check_fallback_chain(v.id)
 		end
 	end
-	-- 检查fallback链，去掉会形成闭环的balancer节点
-	if is_balancer then
-		check_fallback_chain(arg[1])
-	end
-	for k, v in pairs(fallback_table) do o:value(v.id, v.remark) end
-	for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 end
+-- 检查fallback链，去掉会形成闭环的balancer节点
+if is_balancer then
+	check_fallback_chain(arg[1])
+end
+for k, v in pairs(fallback_table) do o:value(v.id, v.remark) end
+for k, v in pairs(nodes_table) do o:value(v.id, v.remark) end
 
 -- 探测地址
-local ucpu = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custom Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
-ucpu:depends({ [_n("balancingStrategy")] = "leastPing" })
-ucpu:depends({ [_n("balancingStrategy")] = "leastLoad" })
+o = s:option(Flag, _n("useCustomProbeUrl"), translate("Use Custom Probe URL"), translate("By default the built-in probe URL will be used, enable this option to use a custom probe URL."))
+o:depends({ [_n("protocol")] = "_balancing" })
 
-local pu = s:option(Value, _n("probeUrl"), translate("Probe URL"))
-pu:depends({ [_n("useCustomProbeUrl")] = true })
-pu:value("https://cp.cloudflare.com/", "Cloudflare")
-pu:value("https://www.gstatic.com/generate_204", "Gstatic")
-pu:value("https://www.google.com/generate_204", "Google")
-pu:value("https://www.youtube.com/generate_204", "YouTube")
-pu:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
-pu:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
-pu.default = "https://www.google.com/generate_204"
-pu.description = translate("The URL used to detect the connection status.")
+o = s:option(Value, _n("probeUrl"), translate("Probe URL"))
+o:depends({ [_n("useCustomProbeUrl")] = true })
+o:value("https://cp.cloudflare.com/", "Cloudflare")
+o:value("https://www.gstatic.com/generate_204", "Gstatic")
+o:value("https://www.google.com/generate_204", "Google")
+o:value("https://www.youtube.com/generate_204", "YouTube")
+o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
+o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
+o.default = "https://www.google.com/generate_204"
+o.description = translate("The URL used to detect the connection status.")
 
 -- 探测间隔
-local pi = s:option(Value, _n("probeInterval"), translate("Probe Interval"))
-pi:depends({ [_n("balancingStrategy")] = "leastPing" })
-pi:depends({ [_n("balancingStrategy")] = "leastLoad" })
-pi.default = "1m"
-pi.placeholder = "1m"
-pi.description = translate("The interval between initiating probes.") .. "<br>" ..
+o = s:option(Value, _n("probeInterval"), translate("Probe Interval"))
+o:depends({ [_n("protocol")] = "_balancing" })
+o.default = "1m"
+o.placeholder = "1m"
+o.description = translate("The interval between initiating probes.") .. "<br>" ..
 		translate("The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>s</code>, <code>m</code>, <code>h</code>, which correspond to seconds, minutes, and hours, respectively.") .. "<br>" ..
 		translate("When the unit is not filled in, it defaults to seconds.")
-
-if api.compare_versions(xray_version, ">=", "1.8.12") then
-	ucpu:depends({ [_n("protocol")] = "_balancing" })
-	pi:depends({ [_n("protocol")] = "_balancing" })
-else
-	ucpu:depends({ [_n("balancingStrategy")] = "leastPing" })
-	pi:depends({ [_n("balancingStrategy")] = "leastPing" })
-end
 
 o = s:option(Value, _n("expected"), translate("Preferred Node Count"))
 o:depends({ [_n("balancingStrategy")] = "leastLoad" })
 o.datatype = "uinteger"
 o.default = "2"
+o.placeholder = "2"
 o.description = translate("The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them.")
 
 
@@ -311,7 +319,7 @@ o:depends({ [_n("protocol")] = "vmess" })
 
 o = s:option(Value, _n("encryption"), translate("Encrypt Method") .. " (encryption)")
 o.default = "none"
-o:value("none")
+o.placeholder = "none"
 o:depends({ [_n("protocol")] = "vless" })
 
 o = s:option(ListValue, _n("ss_method"), translate("Encrypt Method"))
@@ -353,7 +361,6 @@ o = s:option(Flag, _n("reality"), translate("REALITY"))
 o.default = 0
 o:depends({ [_n("tls")] = true, [_n("transport")] = "raw" })
 o:depends({ [_n("tls")] = true, [_n("transport")] = "ws" })
-o:depends({ [_n("tls")] = true, [_n("transport")] = "quic" })
 o:depends({ [_n("tls")] = true, [_n("transport")] = "grpc" })
 o:depends({ [_n("tls")] = true, [_n("transport")] = "httpupgrade" })
 o:depends({ [_n("tls")] = true, [_n("transport")] = "xhttp" })
@@ -367,7 +374,7 @@ o:value("h3,h2")
 o:value("http/1.1")
 o:value("h2,http/1.1")
 o:value("h3,h2,http/1.1")
-o:depends({ [_n("tls")] = true })
+o:depends({ [_n("tls")] = true, [_n("reality")] = false })
 
 -- o = s:option(Value, _n("minversion"), translate("minversion"))
 -- o.default = "1.3"
@@ -448,11 +455,9 @@ o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("raw", "RAW (TCP)")
 o:value("mkcp", "mKCP")
 o:value("ws", "WebSocket")
-o:value("ds", "DomainSocket")
-o:value("quic", "QUIC")
 o:value("grpc", "gRPC")
 o:value("httpupgrade", "HttpUpgrade")
-o:value("xhttp", "XHTTP (SplitHTTP)")
+o:value("xhttp", "XHTTP")
 o:depends({ [_n("protocol")] = "vmess" })
 o:depends({ [_n("protocol")] = "vless" })
 o:depends({ [_n("protocol")] = "socks" })
@@ -552,24 +557,6 @@ o = s:option(Value, _n("ws_heartbeatPeriod"), translate("HeartbeatPeriod(second)
 o.datatype = "integer"
 o:depends({ [_n("transport")] = "ws" })
 
--- [[ DomainSocket部分 ]]--
-o = s:option(Value, _n("ds_path"), "Path", translate("A legal file path. This file must not exist before running."))
-o:depends({ [_n("transport")] = "ds" })
-
--- [[ QUIC部分 ]]--
-o = s:option(ListValue, _n("quic_security"), translate("Encrypt Method"))
-o:value("none")
-o:value("aes-128-gcm")
-o:value("chacha20-poly1305")
-o:depends({ [_n("transport")] = "quic" })
-
-o = s:option(Value, _n("quic_key"), translate("Encrypt Method") .. translate("Key"))
-o:depends({ [_n("transport")] = "quic" })
-
-o = s:option(ListValue, _n("quic_guise"), translate("Camouflage Type"))
-for a, t in ipairs(header_type_list) do o:value(t) end
-o:depends({ [_n("transport")] = "quic" })
-
 -- [[ gRPC部分 ]]--
 o = s:option(Value, _n("grpc_serviceName"), "ServiceName")
 o:depends({ [_n("transport")] = "grpc" })
@@ -637,6 +624,7 @@ o.custom_write = function(self, section, value)
 		local address = (data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
 			or (data.downloadSettings and data.downloadSettings.address)
 		if address and address ~= "" then
+			address = address:gsub("^%[", ""):gsub("%]$", "")
 			m:set(section, "download_address", address)
 		else
 			m:del(section, "download_address")
@@ -660,32 +648,25 @@ end
 -- [[ Mux.Cool ]]--
 o = s:option(Flag, _n("mux"), "Mux", translate("Enable Mux.Cool"))
 o:depends({ [_n("protocol")] = "vmess" })
-o:depends({ [_n("protocol")] = "vless", [_n("flow")] = "" })
+o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "raw" })
+o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "ws" })
+o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "grpc" })
+o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "httpupgrade" })
 o:depends({ [_n("protocol")] = "http" })
 o:depends({ [_n("protocol")] = "socks" })
 o:depends({ [_n("protocol")] = "shadowsocks" })
 o:depends({ [_n("protocol")] = "trojan" })
 
 o = s:option(Value, _n("mux_concurrency"), translate("Mux concurrency"))
-o.default = 8
+o.default = -1
 o:depends({ [_n("mux")] = true })
-
--- [[ XUDP Mux ]]--
-o = s:option(Flag, _n("xmux"), "XUDP Mux")
-o.default = 1
-o:depends({ [_n("protocol")] = "vless", [_n("flow")] = "xtls-rprx-vision" })
-o:depends({ [_n("protocol")] = "vless", [_n("flow")] = "xtls-rprx-vision-udp443" })
-o:depends({ [_n("protocol")] = "shadowsocks" })
 
 o = s:option(Value, _n("xudp_concurrency"), translate("XUDP Mux concurrency"))
 o.default = 8
-o:depends({ [_n("xmux")] = true })
+o:depends({ [_n("mux")] = true })
 
 --[[tcpMptcp]]
 o = s:option(Flag, _n("tcpMptcp"), "tcpMptcp", translate("Enable Multipath TCP, need to be enabled in both server and client configuration."))
-o.default = 0
-
-o = s:option(Flag, _n("tcpNoDelay"), "tcpNoDelay")
 o.default = 0
 
 o = s:option(ListValue, _n("chain_proxy"), translate("Chain Proxy"))
@@ -714,7 +695,6 @@ end
 for i, v in ipairs(s.fields[_n("protocol")].keylist) do
 	if not v:find("_") then
 		s.fields[_n("tcpMptcp")]:depends({ [_n("protocol")] = v })
-		s.fields[_n("tcpNoDelay")]:depends({ [_n("protocol")] = v })
 		s.fields[_n("chain_proxy")]:depends({ [_n("protocol")] = v })
 	end
 end
