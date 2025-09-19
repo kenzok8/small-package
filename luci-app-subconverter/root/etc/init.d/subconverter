@@ -1,0 +1,39 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+PROG=/usr/bin/subconverter
+CONF=/etc/subconverter/pref.example.ini
+LOG_FILE="/tmp/log/subconverter.log"
+
+get_config() {
+    config_get_bool enabled $1 enabled 0
+    config_get port $1 port 25500
+    config_get host $1 host 0.0.0.0
+}
+
+start_service() {
+    config_load subconverter
+    config_foreach get_config subconverter
+    
+    [ "$enabled" -eq 0 ] && return 1
+	
+	if [ -f "$CONF" ]; then
+		sed -i "s/^port=.*/port=$port/" "$CONF"
+		sed -i "s/^listen=.*/listen=$host/" "$CONF"
+	fi
+    
+    procd_open_instance
+    procd_set_param command $PROG
+	procd_append_param command -f "$CONF"
+	procd_append_param command -l "$LOG_FILE"
+    procd_set_param stderr 1
+    procd_set_param stdout 1
+    procd_set_param respawn
+    procd_close_instance
+}
+
+service_triggers() {
+    procd_add_reload_trigger "subconverter"
+}

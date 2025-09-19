@@ -1,0 +1,36 @@
+<%#
+ Copyright 2016 Chen RuiWei <crwbak@gmail.com>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<% include("cbi/map") %>
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "control", "timewol", "status")%>', null,
+		function(x, result)
+		{
+			var status = document.getElementsByClassName('timewol_status')[0];
+			status.setAttribute("style","font-weight:bold;");
+			status.setAttribute("color",result.status ? "green":"red");
+			status.innerHTML = result.status?'<%=translate("RUNNING")%>':'<%=translate("NOT RUNNING")%>';
+		}
+	)
+	function _id2section(id) {
+		var x = id.split(".");
+		return x[2];
+	}
+	function onclick_awake(id) {
+		var section = _id2section(id);
+		var btnXHR = new XHR();
+		btnXHR.post('<%=url([[admin]], [[control]], [[timewol]], [[awake]])%>/' + section, { token: '<%=token%>' },
+			function(x, data) {
+				if (x.responseText == "_uncommitted_") {
+					txt="<%:Please [Save & Apply] your changes first%>";
+					alert( txt.replace(new RegExp("<%:&%>", "g"), "&") );
+				} else {
+					alert( JSON.parse(x.response).data );
+				}
+			}
+		);
+	}
+//]]>
+</script>

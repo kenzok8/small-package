@@ -1,0 +1,10 @@
+services:
+  sdk:
+    image: openwrt/sdk:x86-64
+    volumes:
+      - .:/builder/local-build/natmap
+      - ./bin:/builder/bin
+      - ./build.sh:/builder/build.sh
+      - ./key-build:/builder/key-build
+    command: /builder/build.sh
+      

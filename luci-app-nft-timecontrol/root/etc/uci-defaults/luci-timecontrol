@@ -1,0 +1,37 @@
+#!/bin/sh
+chmod +x  /etc/init.d/timecontrol /usr/bin/timecontrol*
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@timecontrol[-1]
+	add ucitrack timecontrol
+	set ucitrack.@timecontrol[-1].init=timecontrol
+	commit ucitrack
+EOF
+
+[ -s /etc/config/timecontrol ] || {
+cat <<-EOF > /etc/config/timecontrol
+
+config timecontrol
+	option enabled '0'
+	option list_type 'blacklist'
+	
+config device
+	option timestart '00:00'
+	option week '0'
+	option timeend '23:55'
+	option mac ''
+	option enable '0'
+
+config device
+	option mac '192.168.10.10/24'
+	option timestart '00:00'
+	option timeend '00:00'
+	option week '0'
+	option enable '0'
+
+
+EOF
+
+}
+
+rm -f /tmp/luci-indexcache
+exit 0

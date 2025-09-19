@@ -1,0 +1,30 @@
+{
+    "luci-app-my-dnshelper": {
+        "description": "Grant UCI access for luci-app-my-dnshelper",
+        "read": {
+            "file": {
+                "/etc/init.d/my-dnshelper": ["exec"],
+                "/usr/share/my-dnshelper/*": ["exec"],
+                "/usr/bin/my-dnshelper": ["exec"],
+                "/bin/*": ["exec"],
+                "/etc/my-dnshelper/*": ["read"],
+                "/tmp/my-dnshelper.log": ["read"],
+                "/tmp/my-dnshelper.d/*": ["read"],
+                "/var/log/dnsmasq.log": ["read"]
+            },
+            "ubus": {
+                "service": ["list"]
+            },
+            "uci": ["my-dnshelper", "dhcp", "https-dns-proxy"]
+        },
+        "write": {
+            "file": {
+                "/etc/my-dnshelper/*": ["write"],
+                "/tmp/my-dnshelper.d/*": ["write"],
+                "/tmp/my-dnshelper.log": ["write"],
+                "/var/log/dnsmasq.log": ["write"]
+            },
+            "uci": ["my-dnshelper", "dhcp", "https-dns-proxy"]
+        }
+    }
+}

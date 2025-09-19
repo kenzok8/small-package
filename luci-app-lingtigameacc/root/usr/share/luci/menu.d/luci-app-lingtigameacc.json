@@ -1,0 +1,14 @@
+{
+	"admin/services/lingtigameacc": {
+		"title": "LingTi Game Acc",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "lingtigameacc/lingtigameacc"
+		},
+		"depends": {
+			"acl": [ "luci-app-lingtigameacc" ],
+			"uci": { "lingtigameacc": true }
+		}
+	}
+}

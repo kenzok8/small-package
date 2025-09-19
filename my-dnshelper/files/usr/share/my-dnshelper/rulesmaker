@@ -1,0 +1,1036 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+P1=${1}
+Job=9
+#0N1F-1I
+uprule=0
+upusrrule=0
+upip=0
+updns=0
+dht=0
+iport=0
+
+Helpthis() {
+DATE_HMS=`date +%H:%M:%S`
+DATE_Y=`date +%Y`
+DATE="$DATE_Ymd $DATE_HMS"
+echo "
+Hi Master, I'm your dnshelper. You can use me in the following ways.
+
+usage: rulesmaker [OPTION]
+    -h,--help       display this help and exit.
+    -f,--force      force update
+    -u,--update     This only update dns rules.
+    -i,--ip         This only update ip rule.
+    -d,--dns        This only update your dns profile.
+    -s,--stop       stop and clear.
+
+It is juest a part of me. You still need a luci application.
+Thank you for coming to look at me. I'm very happy.
+By MY-Dnshelper on $DATE
+
+[K] $DATE_Y
+You can contact my Founder via this link: https://github.com/kongfl888
+"
+exit 0
+}
+
+case $P1 in
+	"-h"|"--help"|"-H")
+	Helpthis
+	;;
+	"-s"|"--stop"|"-S")
+	Job=0
+	;;
+	"-f"|"--force"|"-F")
+	Job=1
+	uprule=1
+	upip=1
+	updns=1
+	upusrrule=1
+	;;
+	"-u"|"--update"|"-U")
+	Job=2
+	uprule=1
+	upusrrule=1
+	upip=0
+	updns=0
+	;;
+	"-i"|"--ip"|"-I")
+	Job=3
+	uprule=-1
+	upip=1
+	updns=0
+	upusrrule=0
+	;;
+	"-d"|"--dns"|"-D")
+	Job=4
+	uprule=-1
+	upip=0
+	updns=1
+	upusrrule=0
+	;;
+	"--usr")
+	Job=5
+	uprule=-1
+	upip=0
+	updns=0
+	upusrrule=1
+	;;
+	*)
+	Job=9
+	uprule=0
+	upip=1
+	updns=1
+	upusrrule=1
+	;;
+esac
+
+source /usr/share/my-dnshelper/comm
+sSname="$(basename $0)"
+
+if [ $(pgrep -f ${sSname}|wc -l) -gt 2 ];then
+	sleep 15s
+	if [ $(pgrep -f ${sSname}|wc -l) -gt 2 ];then
+		echo_log "An instance is running!"
+		exit 1
+	fi
+fi
+which dnsmasq >/dev/null || (uci -q set my-dnshelper.@my-dnshelper[0].enable='1' && uci commit my-dnshelper && /etc/init.d/my-dnshelper stop && exit 1)
+[ -f $DPath ] && rm -f $DPath
+[ ! -d $DPath ] && mkdir -p $DPath
+
+which https-dns-proxy >/dev/null 2>&1 && dht=1
+
+clean_rules(){
+	[ -s ${1} ] || return
+	local fu_new=${1}
+	sed -i -e '/127\.0\.0\.1 #/d' -e '/127\.0\.0\.1 !/d' -e 's:#.*::' -e 's:!.*::' -e 's/\$important//g' -e 's/[ \t]*$//g' -e 's/^[ \t]*//g' -e '/\*/d' -e '/^$/d' $fu_new
+	sed -i -r -e 's/^::[1-9]?/0\.0\.0\.0/' -e '/:/d' $fu_new
+	sed -i "s/\r//g" $fu_new
+	sed -i -r -e "s/\t/ /g" -e "s/  / /g" $fu_new
+}
+
+clean_hosts(){
+	[ -s ${1} ] || return
+	sed -i -e '/\sip6-localhost/d' -e '/\sip6-loopback/d' -e '/\sip6-allnodes/d'  -e '/\sip6-allrouters/d' -e '/ 0\.0\.0\.0/d' -e '/255\.255\.255\.255/d' -e '/ local/d' ${1}
+}
+
+get_domain_b()
+{
+	[ -s ${1} ] || return
+	cat ${1} | grep -E "^\|\|.*\^\s*$" | grep -oE "[a-zA-Z0-9][a-zA-Z0-9\-]{0,62}(\.[a-zA-Z0-9][a-zA-Z0-9\-]{0,62})+" >> ${2}
+}
+
+get_domain_w()
+{
+	[ -s ${1} ] || return
+	cat ${1} | grep -E "^\@\@\|\|.*\^\s*$" | grep -oE "[0-9a-zA-Z][0-9a-zA-Z\-]*\.\S*[0-9a-zA-Z]+" >> ${2}
+}
+
+get_domain_h()
+{
+	[ -s ${1} ] || return
+	cat ${1} | grep -E "^[0-9]+(\.[0-9]+){3}\s+" | grep -oE "[0-9a-zA-Z][0-9a-zA-Z\-]*\.\S*[0-9a-zA-Z]+" >> ${2}
+}
+
+get_domain(){
+	[ -s ${1} ] || return
+	cat ${1} | grep -oE "^[0-9a-zA-Z][0-9a-zA-Z\-]*(\.[0-9a-zA-Z\-]+)+$" >> ${2}
+}
+
+get_hosts(){
+	[ -s ${1} ] || return
+	cat ${1} | grep -E "^[0-9]+(\.[0-9]+){3}\s+[a-zA-Z0-9][a-zA-Z0-9\-]{0,62}(\.[a-zA-Z0-9][a-zA-Z0-9\-]{0,62})+\s*$" >> ${2}
+}
+
+get_server(){
+	[ -s ${1} ] || return
+	cat ${1} | grep -oE "^server=\/.*\/[0-9]+(\.[0-9]+){3}(#[0-9]+)?\s*" >> ${2}
+}
+
+get_ipset(){
+	[ -s ${1} ] || return
+	cat ${1} | grep -oE "^ipset=\/.*\/[0-9a-zA-Z]+\s*" >> ${2}
+}
+
+get_ip4s(){
+	[ -s ${1} ] || return
+	grep -E "^[0-9]+(\.[0-9]+){3}(#[0-9]+)?\s*$" ${1} >> ${2}
+}
+
+get_ip46s(){
+	[ -s ${1} ] || return
+	grep -E "^[0-9a-fA-F:]+[0-9\.]*(#[0-9]+)?\s*$" ${1} >> ${2}
+}
+
+get_https(){
+	[ -s ${1} ] || return
+	grep -E "^https:\/\/.*" ${1} >> ${2} 2>/dev/null
+}
+
+conv_domainc(){
+	[ -s ${1} ] || return
+	local ptwo=${2}
+	local c=0
+	if [ -z "${2}" -o "${1}" = "${2}" ]; then
+		ptwo="/tmp/helpercdd.txt"
+		[ -f $ptwo ] && rm -f $ptwo
+		c=1
+		touch $ptwo
+	fi
+	cat ${1} | sed -e 's:^:address=/:' -e 's:$:/:' >> $ptwo
+	#[ $? -ne 0 ] && echo "${1} | ${2}"
+	if [ $c -eq 1 ];then
+		cat $ptwo > ${1}
+		rm -f $ptwo
+	fi
+}
+
+conv_hostsc(){
+	[ -s "${1}" ] || return
+	local pone=${1}
+	local ptwo=${2}
+	local c=0
+	if [ -z "$ptwo" -o "$pone" = "$ptwo" ]; then
+		ptwo="/tmp/helpercdd.txt"
+		[ -f "$ptwo" ] && rm -f $ptwo
+		c=1
+		touch $ptwo
+	fi
+
+	awk '/^[0-9]/ {printf "address=/%s/%s\n",$2,$1};/^#/;/^$/' $pone | grep "address=" | sed -e '/\/\//d' -e '/=\/$/d' >> $ptwo
+	#[ $? -ne 0 ] && echo "${1} | ${2}" && cp -f $pone  /tmp/dt_helper.txt
+	if [ $c -eq 1 ];then
+		cat $ptwo > ${1}
+		rm -f $ptwo
+	fi
+}
+
+conv_ipservc(){
+	[ -s ${1} ] || return
+	local ptwo=${2}
+	local c=0
+	if [ -z "${2}" -o "${1}" = "${2}" ]; then
+		ptwo="/tmp/helpercdd.txt"
+		[ -f $ptwo ] && rm -f $ptwo
+		c=1
+		touch $ptwo
+	fi
+	sed -i "s/ //g" ${1}
+	cat ${1} | sed -e 's:^:server=:'  >> $ptwo
+	#[ $? -ne 0 ] && echo "${1} | ${2}"
+	if [ $c -eq 1 ];then
+		cat $ptwo > ${1}
+		rm -f $ptwo
+	fi
+}
+
+conv_ipdnsc(){
+	[ -s ${1} ] || return
+	local ptwo=${2}
+	local c=0
+	if [ -z "${2}" -o "${1}" = "${2}" ]; then
+		ptwo="/tmp/helpercdd.txt"
+		[ -f $ptwo ] && rm -f $ptwo
+		c=1
+		touch $ptwo
+	fi
+	cat ${1} | sed -e 's:^:nameserver :'  >> $ptwo
+	#[ $? -ne 0 ] && echo "${1} | ${2}"
+	if [ $c -eq 1 ];then
+		cat $ptwo > ${1}
+		rm -f $ptwo
+	fi
+}
+
+# ip 4or6
+str_bootstrap(){
+	local a=""
+	local c=0
+	for i in $(cat $1);do
+		if [ "$2" == "4" ];then
+			echo $i | grep -q ":" && continue
+		fi
+		if [ "$2" == "6" ];then
+			echo $i|grep -qE "^[0-9]+\." && continue
+		fi
+		if [ $(ping_1p $i) -eq 0 ];then
+			[ -n "$i" ] || continue
+			let c++
+			if [ -z "$a" ]; then
+				a="$i"
+			else
+				a="$a,$i"
+			fi
+		fi
+		[ $c -eq 4 ] && break
+	done
+	echo "$a"
+}
+
+int_port(){
+	local p=$1
+	local i=0
+	[ -z "$p" ] && p="5053"
+	while [ $i -lt 20 ]; do
+		let i++
+		if [ $(netstat -nutlp 2>/dev/null | grep ":$p\s" -c) -eq 0 ]; then
+			break
+		else
+			let p++
+		fi
+	done
+	echo $p
+}
+
+lite_file(){
+	# 1d 2c
+	[ -s ${1} ] || return
+	[ -s ${2} ] || return
+	rm -f /tmp/sfile2.txt
+	conv_domainc ${1} "/tmp/sfile2.txt"
+	awk 'NR==FNR{a[$0]++;next}!($0 in a){print}' /tmp/sfile2.txt ${2} > /tmp/lfile1.txt || echo ""
+	sort_file /tmp/lfile1.txt
+	cp -f /tmp/lfile1.txt ${2}
+	rm -f /tmp/lfile1.txt /tmp/sfile2.txt
+}
+
+fu_ios(){
+	[ -s ${1} ] || return
+	[ "$bio" = "1" ] || return
+
+	cat <<-EOF >> ${1}
+address=/mesu.apple.com/
+EOF
+
+}
+
+fu_ga(){
+	[ -s ${1} ] || return
+	[ "$bga" = "1" ] || return
+
+	cat <<-EOF >> ${1}
+address=/17173.com/
+address=/4399.com/
+address=/9game.cn/
+address=/duowan.com/
+address=/game.163.com/
+address=/game.oppomobile.com/
+address=/game.qq.com/
+address=/game.vivo.com.cn/
+address=/game.xiaomi.com/
+address=/game.yy.com/
+address=/gamex.mobile.youku.com/
+address=/igame.qq.com/
+address=/ingame.qq.com/
+address=/mkey.163.com/
+address=/pcgames.com.cn/
+address=/play.163.com/
+address=/pvp.qq.com/
+address=/pwesports.cn/
+address=/steamchina.con/
+address=/steampowered.com/
+address=/update.netease.com/
+address=/wan.baidu.com/
+address=/wan.yy.com/
+address=/wmpvp.com/
+address=/wmsjsteam.com/
+address=/xyx.hao123.com/
+address=/youxi.baidu.com/
+EOF
+
+}
+
+fu_short(){
+	[ -s ${1} ] || return
+	[ "$bsh" = "1" ] || return
+
+	cat <<-EOF >> ${1}
+address=/amemv.com/
+address=/alllook.tv/
+address=/baijiahao.baidu.com/
+address=/bytedance.com/
+address=/bytednsdoc.com/
+address=/byteimg.com/
+address=/danuoyi.alicdn.com/
+address=/doupai.cc/
+address=/douyin.com/
+address=/douyinpic.com/
+address=/douyinvod.com/
+address=/ergengtv.com/
+address=/gifshow.com/
+address=/gdatacube.net/
+address=/huoshan.com/
+address=/iesdouyin.com/
+address=/ixigua.com/
+address=/ixiguavideo.com/
+address=/ksapisrv.com/
+address=/ksyun.com/
+address=/kuaishou.com/
+address=/kuaishoupay.com/
+address=/live.xycdn.com/
+address=/meipai.com/
+address=/miaopai.com/
+address=/pearvideo.com/
+address=/pstatp.com/
+address=/qupai.me/
+address=/snssdk.com/
+address=/tiktok.com/
+address=/tiktokv.com/
+address=/vimg.9game.cn/
+address=/v.kandian.qq.com/
+address=/v.weishi.qq.com/
+address=/xiongzhang.baidu.com/
+address=/youliao.xunlei.com/
+address=/yximgs.com/
+address=/yy.com/
+address=/zijieapi.com/
+address=/awemeughun.com/
+address=/bytegecko.com/
+address=/bytedns1.com/
+address=/bytefcdn.com/
+address=/huoshanlive.com/
+address=/ihuoshanlive.com/
+address=/volcfcdndvs.com/
+address=/volcsiriusbd.com/
+address=/onethingpcs.com/
+address=/douyinstatic.com/
+address=/v.bsgslb.com/
+address=/ndcpp.com/
+address=/ndcpp.com.bsgslb.com/
+address=/kuiniuca.com/
+address=/d2-toutiao-ipv6-ml.gslb.ksyuncdn.com/
+address=/xycdn.com/
+address=/cdngslb.com/
+address=/whoami.akamai.net/
+address=/dm-hl.toutiao.com/
+address=/zlink.toutiao.com/
+address=/monsetting.toutiao.com/
+EOF
+
+}
+
+fu_google(){
+	[ -s ${1} ] || return
+	[ "$bgg" = "1" ] || return
+
+	cat <<-EOF >> ${1}
+address=/google.cn/
+address=/google.com/
+address=/google.com.hk/
+address=/google.com.tw/
+address=/google.co.jp/
+address=/google.co.uk/
+address=/googleapis.com/
+address=/googleadservices.com/
+address=/googlesyndication.com/
+address=/gstatic.com/
+address=/googlebot.com/
+address=/googlechinawebmaster.com/
+address=/googleplay.com/
+address=/googleapps.com/
+address=/googleapis.cn/
+address=/agoogleaday.com/
+address=/googlegroups.com/
+address=/googleplus.com/
+address=/googlevideo.com/
+address=/google-analytics.com/
+address=/igoogle.com/
+address=/ieonline.microsoft.com/
+EOF
+
+}
+
+downurl(){
+	local fu_new="$TPath/fu_new.conf"
+	rm -rf $TPath
+	[ -f $SPath ] && rm -f $SPath
+	mkdir -p $SPath $TPath
+	rm -f $SPath/url
+	touch $TPath/url
+	for i in $UF;do
+		[ -n "$i" ] || continue
+		$downloader $fu_new $i
+		if [ -s $fu_new ]; then
+			echo_log "Rules download successfully - $i"
+		else
+			echo_log "Failed to download - $i"
+			continue
+		fi
+		clean_rules $fu_new
+		if grep -q "^address=" $fu_new;then
+			cat $fu_new >> $TPath/rules.conf
+		elif grep -q -e "^0\.0\.0\.0 " -e "^127\.0\.0\.1 " $fu_new;then
+			cat $fu_new >> $TPath/host
+		elif ! grep -q -e "|" -e "@" $fu_new;then
+			conv_domainc $fu_new $TPath/rules.conf
+		else
+			cat $fu_new | grep ^\|\|[^\*]*\^$ | grep -Ev "^\|\|[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}*" | sed -e 's:||:address=/:' -e 's:\^.*:/:' >> $TPath/rules.conf
+		fi
+		echo $i >> $TPath/url
+		rm -f $fu_new
+	done
+	if [ -s $TPath/host ];then
+		clean_hosts $TPath/host
+		conv_hostsc $TPath/host $TPath/rules.conf
+		sed -i -e 's/127\.0\.0\.1//g' -e 's/0\.0\.0\.0//g' $TPath/rules.conf
+	fi
+	[ -s $TPath/rules.conf ] && sed -i -e 's:/127\.0\.0\.1$:/:' -e 's:/0\.0\.0\.0$:/:' $TPath/rules.conf && sort_file $TPath/rules.conf
+	[ -s $TPath/url ] && sort_file $TPath/url
+	if [ -s $TPath/rules.conf ];then
+		echo_log "Filter rules get successfully."
+		check_addrtopmain $TPath/rules.conf || echo_log "Found top domain in the Filter rules."
+		rm -f $TPath/host $SPath/failed
+		[ ! -d $SPath ] && mkdir -p $SPath
+		ifc=$(get_count $TPath/rules.conf)
+		cp -a -f $TPath/* $SPath
+	else
+		echo_log "Filter rules get failed."
+		echo "failed" > $RPath/failed
+	fi
+	rm -rf $TPath
+}
+
+downallow(){
+	local fu_new="$TPath/fu_newa.conf"
+	rm -rf $TPath
+	[ -f $SPath ] && rm -f $SPath
+	mkdir -p $SPath $TPath
+	rm -f $SPath/aurl
+	touch $TPath/aurl
+	for i in $UA;do
+		[ -n "$i" ] || continue
+		$downloader $fu_new $i
+		if [ -s $fu_new ]; then
+			echo_log "Allow list download successfully - $i"
+		else
+			echo_log "Failed to download - $i"
+			continue
+		fi
+		clean_rules $fu_new
+		get_domain_w "$fu_new" "$TPath/white.txt"
+		get_domain_h "$fu_new" "$TPath/white.txt"
+		get_domain "$fu_new" "$TPath/white.txt"
+		echo $i >> $TPath/aurl
+		rm -f $fu_new
+	done
+	if [ -s $TPath/white.txt ]; then
+		sed -i -r '/^([0-9]+\.){3}[0-9+]/d' $TPath/white.txt
+		sort_file $TPath/white.txt
+	fi
+	[ -s $TPath/aurl ] && sort_file $TPath/aurl
+	if [ -s $TPath/white.txt ];then
+		echo_log "Allow list get successfully."	
+		[ ! -d $SPath ] && mkdir -p $SPath
+		iac=$(get_count $TPath/white.txt)
+		cp -a -f $TPath/* $SPath
+	else
+		[ -s $TPath/aurl ] && echo_log "Allow list get failed."
+	fi
+	rm -rf $TPath
+}
+
+downhosts(){
+	local fu_new="$TPath/fu_newh.conf"
+	rm -rf $TPath
+	[ -f $SPath ] && rm -f $SPath
+	mkdir -p $SPath $TPath
+	rm -f $SPath/hurl
+	touch $TPath/hurl
+	for i in $UH;do
+		[ -n "$i" ] || continue
+		$downloader $fu_new $i
+		if [ -s $fu_new ]; then
+			echo_log "Hosts list download successfully - $i"
+		else
+			echo_log "Failed to download - $i"
+			continue
+		fi
+		clean_rules $fu_new
+		get_hosts "$fu_new" "$TPath/myhosts"
+		echo $i >> $TPath/hurl
+		rm -f $fu_new
+	done
+	if [ -s $TPath/myhosts ]; then
+		conv_hostsc $TPath/myhosts $TPath/hosts.conf
+		sort_file $TPath/hosts.conf
+	fi
+	[ -s $TPath/hurl ] && sort_file $TPath/hurl
+	if [ -s $TPath/hosts.conf ];then
+		echo_log "Hosts list get successfully."
+		check_addrtopmain $TPath/hosts.conf || echo_log "Found top domain in the Hosts."
+		ihc=$(get_count $TPath/myhosts)
+		rm -f "$TPath/myhosts"
+		[ ! -d $SPath ] && mkdir -p $SPath
+		cp -a -f $TPath/* $SPath
+	else
+		[ -s $TPath/hurl ] && echo_log "Hosts list get failed."
+	fi
+
+	rm -rf $TPath
+}
+
+user_rules(){
+	local u_cr="$EPath/user.mdhp"
+	local fu_new="$TPath/user_newu"
+	rm -rf $TPath
+	[ -f $SPath ] && rm -f $SPath
+	mkdir -p $SPath $TPath
+	cp -f $u_cr $fu_new
+	[ -s $u_cr ] || return
+	clean_rules $fu_new
+	get_domain_b $fu_new $TPath/user.conf
+	get_domain $fu_new $TPath/user.conf
+	get_domain_w $fu_new $TPath/uwhite.txt
+	get_hosts $fu_new $TPath/uhosts.conf
+	[ -s $TPath/uhosts.conf ] && grep -E "^127\.0\.0\.1|^0\.0\.0\.0" $TPath/uhosts.conf > $TPath/uhosts
+	if [ -s $TPath/uhosts.conf ]; then
+		sed -i -e '/127\.0\.0\.1/d' -e '/0\.0\.0\.0/d' $TPath/uhosts.conf
+		get_domain_h $TPath/uhosts.conf $TPath/uwhite.txt
+		conv_hostsc $TPath/uhosts.conf
+	fi
+	if [ -s $TPath/uwhite.txt ];then
+		sed -i -r '/^([0-9]+\.){3}[0-9+]/d' $TPath/uwhite.txt
+		sort_file $TPath/uwhite.txt
+	fi
+	if [ -s $TPath/user.conf ];then
+		conv_domainc $TPath/user.conf
+		sort_file $TPath/user.conf
+		lite_file $TPath/uwhite.txt $TPath/user.conf
+	fi
+	fu_ga $TPath/user.conf
+	fu_short $TPath/user.conf
+	fu_ios $TPath/user.conf
+	fu_google $TPath/user.conf
+	get_server $fu_new $TPath/uhosts.conf
+	get_ipset $fu_new $TPath/uhosts.conf
+	[ -s $TPath/user.conf ] && sort_file $TPath/user.conf
+	[ -s $TPath/uhosts.conf ] && sort_file $TPath/uhosts.conf
+	[ -s $TPath/uhosts ] && sort_file $TPath/uhosts
+	[ -s $fu_new ] && echo_log "User profile read completed."
+	[ ! -d $SPath ] && mkdir -p $SPath
+	rm -f $fu_new
+	cp -a -f $TPath/* $SPath
+	rm -rf $TPath
+}
+
+user_do53(){
+	local u_cr="$EPath/dns.mdhp"
+	local fu_new="$TPath/user_dns"
+	rm -rf $TPath
+	[ -f $SPath ] && rm -f $SPath
+	mkdir -p $SPath $TPath
+	[ -s $u_cr ] || return
+	get_ip46s $u_cr $fu_new
+	[ -s $fu_new ] || return
+	if [ $( grep "#" $fu_new 2>/dev/null |wc -l ) -gt 0 ]; then
+		conv_ipservc $fu_new $hpsvconf
+		rm -f $resolvconf
+		iport=1
+	else
+		iport=0
+		conv_ipdnsc $fu_new $resolvconf
+		sed -i -r '/^\s*$/d' $resolvconf
+	fi
+	if [ -s $fu_new ]; then
+		echo_log "Custom DNS is set."
+		[ "$(check_masq53)" == "1" ] && echo_log "But dnsmasq does not work on port 53. Please check page DHCP/DNS."
+		[ "$(check_masq53)" == "-1" ] && echo_log "[Error]But dnsmasq start up failed. Please check again."
+	else
+		echo_log "Please check DNS Setting."
+	fi
+	rm -f $fu_new
+}
+
+user_doh(){
+	local e=0
+	local u_cr="$EPath/dns.mdhp"
+	local b_cr="$EPath/bootstrap.mdhp"
+	local fu_new="$TPath/user_doh"
+	local str_4b=""
+	local str_6b=""
+	local dohon=0
+	rm -rf $TPath
+	[ -f $SPath ] && rm -f $SPath
+	mkdir -p $SPath $TPath
+	[ -s $u_cr ] || return
+	get_https $u_cr $fu_new
+	[ -s $fu_new ] || return
+	if [ ! -f $httpsdpcfg ]; then
+		echo_log "Failed. https-dns-proxy config is not found." 
+		return
+	fi
+	str_4b=$(str_bootstrap "$b_cr" "4")
+	str_6b=$(str_bootstrap "$b_cr" "6")
+	[ -z $str_4b ] && str_4b="119.29.29.29,223.5.5.5"
+	[ -z $str_6b ] && str_6b="2400:3200::1,2400:3200:baba::1"
+	(/etc/init.d/https-dns-proxy enabled && /etc/init.d/https-dns-proxy disable >/dev/null 2>&1) &
+	stop_httpsdp
+	clear_doh
+	uci -q set https-dns-proxy.config.dnsmasq_config_update='-'
+	uci -q set https-dns-proxy.config.procd_trigger_wan6='0'
+	uci -q set https-dns-proxy.config.canary_domains_icloud='0'
+	uci -q set https-dns-proxy.config.canary_domains_mozilla='0'
+	uci -q delete https-dns-proxy.config.force_dns_port
+	if [ "$forcedoh" == "1" ]; then
+		uci -q set https-dns-proxy.config.force_dns='1'
+		uci -q add_list https-dns-proxy.config.force_dns_port="853"
+	else
+		uci -q set https-dns-proxy.config.force_dns='0'
+	fi
+	uci commit https-dns-proxy >/dev/null
+	for i in $(cat $fu_new); do
+		[ -z "$i" ] && continue
+		hport=$(int_port $hport)
+		if [ "$forceip46" != "2" ];then
+		uci -q add https-dns-proxy https-dns-proxy >/dev/null 2>&1
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].resolver_url="$i"
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].bootstrap_dns="$str_4b"
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].listen_port="$hport"
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].listen_addr="127.0.0.1"
+		[ "$dohhttp" == "1" ] && uci -q set https-dns-proxy.@https-dns-proxy[-1].use_http1="1"
+		fi
+		if [ "$forceip46" != "1" ]; then
+		uci -q add https-dns-proxy https-dns-proxy >/dev/null 2>&1
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].resolver_url="$i"
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].bootstrap_dns="$str_6b"
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].listen_port="$hport"
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].listen_addr='::1'
+		[ "$dohhttp" == "1" ] && uci -q set https-dns-proxy.@https-dns-proxy[-1].use_http1="1"
+		uci -q set https-dns-proxy.@https-dns-proxy[-1].use_ipv6_resolvers_only="1"
+		fi
+		let hport++
+	done
+
+	uci commit https-dns-proxy >/dev/null
+
+	/etc/init.d/https-dns-proxy start >/dev/null 2>&1
+
+	get_nserver_cfg | sed "s/^/server=/" >> $dohconf
+	grep -q "server=" $dohconf 2>/dev/null && dohon=1
+	if [ -s $dohconf -a $dohon -eq 1 ]; then
+		echo_log "DNS Over Https is on."
+		[ "$forcedoh" == "1" ] && echo_log "Force to DoH is set."
+		[ "$dohhttp" == "1" ] && echo_log "But DoH will work on http1.1/tcp"
+		[ "$forceip46" == "1" ] && echo_log "DoH force to IPv4 is set."
+		[ "$forceip46" == "2" ] && echo_log "DoH force to IPv6 is set."
+	else
+		echo_log "DoH is not set."
+	fi
+	rm -rf $TPath
+}
+
+dns_conf(){
+	local u_cr="$EPath/dns.mdhp"
+	local f_new="$TPath/user_doh"
+	local dhcpe=0
+	rm -f $f_new
+	[ -f $TPath ] && rm -f $TPath
+	mkdir -p $TPath $SPath
+	rm -f $dohconf
+	rm -f $resolvconf
+	rm -f $hpsvconf
+	clear_doh
+	[ "$forcedoh" == "1" -a "$UDH" == "1" ] || user_do53
+	[ -s $resolvconf ] && uci -q delete dhcp.@dnsmasq[0].noresolv
+	mkdir -p $TPath
+	get_https $u_cr $f_new
+	[ -s $f_new ] || dht=0
+	if [ "$UDH" == "1" -a $dht -eq 1 ]; then
+		user_doh
+		[ "$forcedoh" == "1" -a -s $dohconf ] && rm -f $hpsvconf
+		if [ -s $dohconf ];then
+			cp -f $dohconf /tmp/mydptmp.txt
+			echo "" >> /tmp/mydptmp.txt
+			[ -s $hpsvconf ] && cat $hpsvconf >> /tmp/mydptmp.txt
+			cp -f /tmp/mydptmp.txt $hpsvconf
+			sed -i '/^$/d' $hpsvconf
+			rm -f /tmp/mydptmp.txt
+		fi
+		if [ "$forcedoh" == "1" ]; then
+			uci -q set dhcp.@dnsmasq[0].noresolv='1'
+			uci -q delete dhcp.@dnsmasq[0].doh_backup_server
+			uci -q delete dhcp.@dnsmasq[0].doh_backup_noresolv
+		else
+			[ $iport -eq 0 ] && uci -q delete dhcp.@dnsmasq[0].noresolv
+		fi
+		dhcpe=1
+	fi
+
+	[ $iport -eq 1 ] && uci -q set dhcp.@dnsmasq[0].noresolv='1' && dhcpe=1
+
+	if [ -n "$dcache" ]; then
+		uci set dhcp.@dnsmasq[0].cachesize=$dcache
+		grep -q "ednspacket_max" /etc/config/dhcp || uci -q set dhcp.@dnsmasq[0].ednspacket_max='1232'
+		dhcpe=1
+	fi
+	if [ "$usemul" == "1" ];then
+		uci -q set dhcp.@dnsmasq[0].allservers='1'
+		dhcpe=1
+	else
+		uci -q delete dhcp.@dnsmasq[0].allservers
+		dhcpe=1
+	fi
+	if [ "$usestrict" == "1" ];then
+		uci -q set dhcp.@dnsmasq[0].strictorder='1'
+		dhcpe=1
+	else
+		uci -q delete dhcp.@dnsmasq[0].strictorder
+		dhcpe=1
+	fi
+	if [ "$dnssec" == "1" ];then
+		[ "$(uci -q get dhcp.@dnsmasq[0].cachesize 2>/dev/null)" == "0" ] && uci -q set dhcp.@dnsmasq[0].cachesize='150'
+		uci -q set dhcp.@dnsmasq[0].dnssec='1'
+		uci -q set dhcp.@dnsmasq[0].dnsseccheckunsigned='0'
+		dhcpe=1
+	else
+		uci -q delete dhcp.@dnsmasq[0].dnssec
+		dhcpe=1
+	fi
+	[ $dhcpe -eq 1 ] && uci commit dhcp >/dev/null
+}
+
+ip_conf(){
+	clear_iprule
+	add_iprule
+}
+
+lnk_conf(){
+	mkdir -p $LPath
+	rm -rf $LPath/*
+	[ -s $SPath/rules.conf ] && ln -sf $SPath/rules.conf $LPath/rules.conf
+	[ -s $SPath/hosts.conf ] && ln -sf $SPath/hosts.conf $LPath/hosts.conf
+	[ -s $SPath/user.conf ] && ln -sf $SPath/user.conf $LPath/user.conf
+	[ -s $SPath/uhosts.conf ] && ln -sf $SPath/uhosts.conf $LPath/uhosts.conf
+	[ -s $hpsvconf ] && ln -sf $hpsvconf $LPath/01.hpsv.conf
+	[ -s $bgsconf ] && ln -sf $bgsconf $LPath/02.bgs.conf
+}
+
+creat_hpconf(){
+	local mincset=0
+	local qv="0"
+	set_DPath
+	rm -f $helperconf
+	echo "conf-dir=$LPath" >> $helperconf
+	if [ -s $SPath/uhosts ]; then
+		echo "addn-hosts=$SPath/uhosts" >> $helperconf
+	fi
+	if [ -s $resolvconf ]; then
+		if [ $dht -eq 1 -a "$forcedoh" == "1" -a "$UDH" == "1" ];then
+			sed -i "/resolv-file=/d" $helperconf
+			uci -q delete dhcp.@dnsmasq[0].resolvfile
+			uci commit dhcp
+		else
+			echo "resolv-file=$resolvconf" >> $helperconf
+			[ -h /tmp/resolv.conf ] && cp -f $resolvconf /tmp/resolv.conf 2>/dev/null
+			grep -q "resolv-file=" /etc/dnsmasq.conf && sed -i "/resolv-file=/d" /etc/dnsmasq.conf
+			uci -q set dhcp.@dnsmasq[0].resolvfile="$resolvconf"
+			uci commit dhcp
+		fi
+	elif [ "$(get_rautoc)" == "$resolvconf" ];then
+		uci -q delete dhcp.@dnsmasq[0].resolvfile
+		uci commit dhcp
+	fi
+	if [ -s $hpsvconf -a $(grep "server=" $hpsvconf 2>/dev/null |wc -l) -gt 0 ]; then
+		echo "servers-file=$hpsvconf" >> $helperconf
+		if [ ! -s $resolvconf ]; then
+			uci -q set dhcp.@dnsmasq[0].noresolv='1'
+			uci commit dhcp
+		fi
+	fi
+	if [ "$dnslogon" == "1" ]; then
+		echo "log-facility=$dnsmasqlog" >> $helperconf
+		[ "$dnsmasqlog" == "/var/log/dnsmasq.log" ] || ln -sf $dnsmasqlog "/var/log/dnsmasq.log" 2>/dev/null
+		if [ "$dnslog" == "1" ];then
+			uci -q delete dhcp.@dnsmasq[0].logqueries
+			uci commit dhcp
+			echo "log-queries=extra" >> $helperconf
+			echo "log-async=10" >> $helperconf
+		fi
+		grep -q "log-" /etc/dnsmasq.conf && sed -i "/log-/d" /etc/dnsmasq.conf
+	else
+		[ -h /var/log/dnsmasq.log ] && rm -f /var/log/dnsmasq.log
+	fi
+	if [ "$filteraaaa" == "1" ];then
+		qv=`dnsmasq --version |grep -oE "[0-9]+\.[0-9]+" |head -n 1 2>/dev/null`
+		if [ "$qv" \< "2.87" ];then
+			sed -i -r "/^filter-/d" $helperconf
+		else
+			echo "filter-AAAA" >> $helperconf
+			echo_log "Filter AAAA is set. If your dnsmasq version is pre-2.87, it may get failed."
+		fi
+	fi
+	if [ -n "$dcache" ];then
+		if [ $dcache -gt 1000 ];then
+			grep -q "min-cache-ttl" "$(get_dnsmasqcfg)" 2>/dev/null && mincset=1
+			if [ $dcache -gt 2000 ];then
+				[ $mincset -eq 0 ] && echo "min-cache-ttl=3600" >> $helperconf
+			else
+				[ $mincset -eq 0 ] && echo "min-cache-ttl=1800" >> $helperconf
+			fi
+		fi
+	fi
+}
+
+usr_mergerule(){
+	if [ -s $SPath/uwhite.txt -a -s $SPath/rules.conf ];then
+		if [ $(sed -r '/^$/d' $SPath/uwhite.txt 2>/dev/null | wc -l) -gt 600 ]; then
+			lite_file $SPath/uwhite.txt $SPath/rules.conf
+		else
+			for i in `cat $SPath/uwhite.txt`; do
+				j=`echo $i | sed -e 's/address=\///' -e 's/\/.*//'`
+				sed -i -e "/\/$j\//d" -e "/\.$j\//d" $SPath/rules.conf
+			done
+		fi
+	fi
+}
+
+update_rules(){
+	local j
+	local du=0
+	local da=0
+	local dh=0
+	echo_log "Rules reloading."
+	[ -d $RPath ] || mkdir -p $RPath >/dev/null 2>&1
+	read_count
+	if [ $uprule -eq 1 -o ! -s $SPath/rules.conf -o "$(echo $UF | sed 's/ /\n/g' | sort -u)" != "$(cat $SPath/url 2>/dev/null)" ]; then
+		downurl
+		du=1
+	fi
+	if [ $uprule -eq 1 -o ! -s $SPath/white.txt -o "$(echo $UA | sed 's/ /\n/g' | sort -u)" != "$(cat $SPath/aurl 2>/dev/null)" ]; then
+		downallow
+		da=1
+	fi
+	if [ $uprule -eq 1 -o ! -s $SPath/hosts.conf -o "$(echo $UH | sed 's/ /\n/g' | sort -u)" != "$(cat $SPath/hurl 2>/dev/null)" ]; then
+		downhosts
+		dh=1
+	fi
+
+	sh /usr/share/my-dnshelper/ghosts
+	if [ -s $EPath/github.mdhp ];then
+		touch $SPath/hosts.conf 2>/dev/null
+		cat $EPath/github.mdhp >> $SPath/hosts.conf
+		clean_rules $SPath/hosts.conf
+		sort_file $SPath/hosts.conf
+	fi
+
+	if [ -s $SPath/white.txt -a -s $SPath/rules.conf ];then
+		[ $da -eq 1 -o $du -eq 1 ] && lite_file $SPath/white.txt $SPath/rules.conf
+	fi
+	if [ -s $SPath/hosts.conf -a -s $SPath/rules.conf ];then
+		get_domain_h $SPath/hosts.conf $SPath/hwhite.txt 
+		[ $dh -eq 1 -o $du -eq 1 ] && lite_file $SPath/hwhite.txt $SPath/rules.conf
+		rm -f $SPath/hwhite.txt
+	fi
+
+	usr_mergerule
+
+	[ -s $SPath/rules.conf ] && sort_file $SPath/rules.conf
+	for i in `ls $SPath/*.conf 2>/dev/null`;do
+		sh /usr/share/my-dnshelper/checkconf $i
+	done
+	echo "$ifc,$iac,$ihc" > $countf
+	if [ $du -eq 1 -o $da -eq 1 -o $dh -eq 1 ];then
+		echo "`eval $D`" > $updatelog
+	fi
+	echo_log "Rules reload done."
+}
+
+update_usrrule(){
+	user_rules
+	if [ $uprule -eq -1 ];then
+		usr_mergerule
+		for i in `ls $SPath/*.conf 2>/dev/null`;do
+			sh /usr/share/my-dnshelper/checkconf $i
+		done
+	fi
+}
+
+maker_conf(){
+	if [ $(ping_1p "baidu.com") -eq 0 -o $(ping_1p "qq.com") -eq 0 ];then
+		check_wgetcurl
+	else
+		uprule=-1
+		echo_log "Waiting network..."
+	fi
+	[ $updns -eq 1 ] && dns_conf  && write_afcode "dns" && write_afcode "bstrap"
+	[ $upip -eq 1 ] && ip_conf && write_afcode "ip"
+	[ $upusrrule -eq 1 ] && update_usrrule  && write_afcode "user"
+	[ -n "$(get_ports_cfg)" ] || dht=0
+	echo_log "Helper Reload."
+	if [ $uprule -ne -1 ];then
+		lnk_conf
+		creat_hpconf
+		[ $Job -eq 2 ] || dnsmasq_rs
+		[ "$UDH" == "1" -a $dht -eq 1 ] && (/etc/init.d/https-dns-proxy start >/dev/null 2>&1 &)
+		update_rules
+	fi
+	#clean_wfiles
+	lnk_conf
+	creat_hpconf
+	chmod_files
+	write_afcode "config"
+}
+
+stopthis(){
+	local rtf=$(get_rautoc)
+	local cdhcp=0
+	clean_wfiles
+	clear_iprule
+	[ -f $dohconf ] && clear_doh
+	if [ "$UDH" == "1" -a "$forcedoh" == "1" ];then
+		uci -q delete dhcp.@dnsmasq[0].noresolv >/dev/null 2>&1
+		cdhcp=1
+	fi
+	if [ $iport -eq 1 ]; then
+		uci -q delete dhcp.@dnsmasq[0].noresolv >/dev/null 2>&1
+		cdhcp=1
+	fi
+	if [ "$rtf" == "$resolvconf" ];then
+		uci -q delete dhcp.@dnsmasq[0].resolvfile >/dev/null 2>&1
+		uci -q delete dhcp.@dnsmasq[0].noresolv >/dev/null 2>&1
+		cdhcp=1
+	fi
+	[ $cdhcp -eq 1 ] && uci commit dhcp
+}
+
+if [ -f /etc/init.d/https-dns-proxy ];then
+	(/etc/init.d/https-dns-proxy enabled && /etc/init.d/https-dns-proxy disable >/dev/null 2>&1) &
+	if [ "$UDH" == "1" -a -s /usr/share/my-dnshelper/https-dns-proxy.init ]; then
+		httpsdpfcode=$(file_idcode "/etc/init.d/https-dns-proxy")
+		myhpsdpfcode=$(file_idcode "/usr/share/my-dnshelper/https-dns-proxy.init")
+		[ "$httpsdpfcode" == "$myhpsdpfcode" ] || (cp -f /usr/share/my-dnshelper/https-dns-proxy.init /etc/init.d/https-dns-proxy && chmod 0774 /etc/init.d/https-dns-proxy)
+	fi
+fi
+
+if [ $Job -eq 0 ];then
+	stopthis
+else
+	maker_conf
+fi
+
+if [ $Job -eq 4 -o $Job -eq 5 ]; then
+	dnsmasq_rs 1
+elif [ $Job -eq 2 ];then
+	echo_log "Rules done"
+else
+	dnsmasq_rs
+fi
+
+[ $Job -eq 0 ] && stop_httpsdp
+[ $Job -eq 0 ] && exit 0
+
+if [ "$UDH" == "1" -a $dht -eq 1 ];then
+	sleep 6s
+	/etc/init.d/https-dns-proxy restart >/dev/null 2>&1 &
+elif [ -s $dohconf -a "$EA" == "0" ];then
+	stop_httpsdp
+elif [ "$EA" == "1" -a "$UDH" != "1" ];then
+	stop_httpsdp
+fi
+
+exit 0

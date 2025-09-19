@@ -1,0 +1,3 @@
+https://ip.rss.ink/v1/qqwry?ip=${ip} | jq -r '.data.area'
+ip.plus/${ip} | sed -n 's/.*来自: //p'
+http://ip-api.com/json/${ip}?lang=zh-CN | jq -r '"\(.country) \(.regionName) \(.city)"'

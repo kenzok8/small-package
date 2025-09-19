@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@lcdsimple[-1]
+	add ucitrack lcdsimple
+	set ucitrack.@lcdsimple[-1].init=lcdsimple
+	commit ucitrack
+EOF
+
+/etc/init.d/lcdsimple enable
+/etc/init.d/lcdsimple start
+
+exit 0

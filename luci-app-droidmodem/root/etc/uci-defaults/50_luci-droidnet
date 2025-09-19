@@ -1,0 +1,9 @@
+#!/bin/sh
+uci -q batch <<-EOF >/dev/null
+		delete ucitrack.@droidnet[-1]
+		add ucitrack droidnet
+		set ucitrack.@droidnet[-1].init=droidnet
+		commit ucitrack
+EOF
+rm -rf /tmp/luci*
+exit 0

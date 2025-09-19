@@ -1,0 +1,5 @@
+#!/bin/sh
+
+sed -i "s/initTabs();$/initTabs();loadDashboard();/" /usr/share/netdata/web/index.html
+
+exit 0

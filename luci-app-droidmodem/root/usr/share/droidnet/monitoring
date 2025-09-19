@@ -1,0 +1,300 @@
+#!/bin/sh
+
+# This is free software, licensed under the Apache License, Version 2.0
+#
+# Copyright (C) 2024 Hilman Maulana <hilman0.0maulana@gmail.com>, Anas Fanani <anas@anasfanani.com>
+
+# Environment
+COUNT_FAILURE=0
+COUNT_SUCCESS=0
+DEVICES_FOUND=0
+COMMAND_FOUND=0
+DEVICES_ROOT=0
+FAILURE_LIMIT=$(uci get droidnet.monitoring.failure_limit)
+SUCCESS_LIMIT=$(uci get droidnet.monitoring.success_limit)
+DEVICES_ID=$(uci get droidnet.device.id)
+WAIT_TIME=$(uci get droidnet.monitoring.wait_time)
+HOST=$(uci get droidnet.monitoring.host)
+PORT=$(uci get droidnet.monitoring.ping)
+INTERFACE_NAME=$(uci get droidnet.monitoring.interface)
+RESTART_TUNNEL=$(uci get droidnet.monitoring.restart)
+TOOL_TUNNELING=$(uci get droidnet.monitoring.tunnel_service)
+PING_SUCCESS="Ping to '$HOST' using '$PORT' succeeded."
+PING_BACKGROUND="Ping to '$HOST' using '$PORT' successfuly, starting continuous ping in the background."
+
+# Functions
+log() {
+	echo "$(date +"%a, %b %d, %I:%M:%S %p") - Monitoring service: $1" >> /var/log/droidnet.log
+}
+
+check_devices() {
+	log "Checking devices."
+	for DEVICE in $(adb devices -l | awk 'NR>1 && /device/ {print $1}'); do
+		if [ $DEVICE = $DEVICES_ID ]; then
+			DEVICES_FOUND=1
+			log "Device found in the list of connected devices."
+			break
+		fi
+	done
+	if [ $DEVICES_FOUND -eq 1 ]; then
+		log "Checking root status on device."
+		if adb -s $DEVICES_ID shell su -v 2>&1 | grep -q "/system/bin/sh: su: not found"; then
+			INFO_ROOT="Non-root"
+			log "Device not rooted."
+		else
+			INFO_ROOT="Rooted"
+			DEVICES_ROOT=1
+			log "Device is rooted."
+		fi
+		log "Checking availability of airplane mode command on device."
+		INFO_ANDROID=$(adb -s $DEVICES_ID shell getprop ro.build.version.release)
+		INFO_VERSION=${INFO_ANDROID%%.*}
+		if [ $INFO_VERSION -lt 10 ]; then
+			if [ $DEVICES_ROOT -eq 1 ]; then
+				COMMAND_FOUND=1
+				log "Airplane mode can be turned on."
+			else
+				log "Airplane mode can't be turned on."
+			fi
+		else
+			COMMAND_FOUND=1
+			log "Airplane mode can be turned on."
+		fi
+		log "Device information"
+		GET_INFO=$(adb devices -l | grep $DEVICES_ID)
+		INFO_USB=$(echo $GET_INFO | awk '{for(i=1;i<=NF;i++) if($i ~ /^usb:/) print $i}')
+		INFO_MODEL=$(echo $GET_INFO | awk '{for(i=1;i<=NF;i++) if($i ~ /^model:/) {split($i, a, ":"); print a[2]}}')
+		log "ID: $DEVICES_ID, Model: $INFO_MODEL, Android: $INFO_ANDROID, Status: $INFO_ROOT, Connection: $INFO_USB"
+	else
+		log "Device not found in the list of connected devices."
+	fi
+}
+
+enable_airplane_mode() {
+	log "Turning on Airplane mode."
+	if [ $DEVICES_ROOT -eq 1 ] && [ $INFO_VERSION -lt 10 ]; then
+		adb -s $DEVICES_ID shell su -c 'settings put global airplane_mode_on 1'
+		adb -s $DEVICES_ID shell su -c 'am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true'
+	else
+		adb -s $DEVICES_ID shell cmd connectivity airplane-mode enable
+	fi
+}
+
+disable_airplane_mode() {
+	log "Turning off Airplane mode."
+	if [ $DEVICES_ROOT -eq 1 ] && [ $INFO_VERSION -lt 10 ]; then
+		adb -s $DEVICES_ID shell su -c 'settings put global airplane_mode_on 0'
+		adb -s $DEVICES_ID shell su -c 'am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false'
+	else
+		adb -s $DEVICES_ID shell cmd connectivity airplane-mode disable
+	fi
+}
+
+restart_interface() {
+	log "Restarting interface $INTERFACE_NAME."
+	ifup $INTERFACE_NAME
+}
+
+disable_neko() {
+	log "Disabling Neko."
+	/etc/init.d/neko stop
+}
+
+enable_neko() {
+	log "Enabling Neko."
+	/etc/init.d/neko start
+}
+
+disable_openclash() {
+	log "Disabling OpenClash."
+	/etc/init.d/openclash stop
+}
+
+enable_openclash() {
+	log "Enabling OpenClash."
+	/etc/init.d/openclash start
+}
+
+disable_passwall() {
+	log "Disabling PassWall."
+	/etc/init.d/passwall stop
+}
+
+enable_passwall() {
+	log "Enabling PassWall."
+	/etc/init.d/passwall start
+}
+
+disable_v2ray() {
+	log "Disabling V2Ray."
+	start-stop-daemon -K -p /var/run/v2raya.pid
+}
+
+enable_v2ray() {
+	log "Enabling V2Ray."
+	start-stop-daemon -b -S -m -p /var/run/v2raya.pid -x /usr/bin/enable_v2rayA
+}
+
+reconnection() {
+	log "Starting connection update service on the device."
+	if [ $RESTART_TUNNEL = 1 ]; then
+		log "Disabling tunneling tool."
+		if [ $TOOL_TUNNELING = "neko" ]; then
+			disable_neko
+		elif [ $TOOL_TUNNELING = "openclash" ]; then
+			disable_openclash
+		elif [ $TOOL_TUNNELING = "passwall" ]; then
+			disable_passwall
+		elif [ $TOOL_TUNNELING = "v2ray" ]; then
+			disable_v2ray
+		else
+			log "Tunneling tool '$TOOL_TUNNELING' not found, please install it first."
+		fi
+	elif [ $RESTART_TUNNEL = 0 ]; then
+		log "Skipping disabling tunneling tool."
+	fi
+	enable_airplane_mode
+	sleep $WAIT_TIME
+	disable_airplane_mode
+	sleep $WAIT_TIME
+	restart_interface
+	if [ $RESTART_TUNNEL = 1 ]; then
+		log "Enabling tunneling tool."
+		if [ $TOOL_TUNNELING = "neko" ]; then
+			enable_neko
+		elif [ $TOOL_TUNNELING = "openclash" ]; then
+			enable_openclash
+		elif [ $TOOL_TUNNELING = "passwall" ]; then
+			enable_passwall
+		elif [ $TOOL_TUNNELING = "v2ray" ]; then
+			enable_v2ray
+		else
+			log "Tunneling tool '$TOOL_TUNNELING' not found, please install it first."
+		fi
+	elif [ $RESTART_TUNNEL = 0 ]; then
+		log "Skipping enabling tunneling tool."
+	fi
+	log "Connection update service on the device has completed."
+	COUNT_FAILURE=0
+}
+
+ping_else() {
+	log "Ping to '$HOST' using '$PORT' failed."
+	COUNT_FAILURE=$((COUNT_FAILURE + 1))
+	COUNT_SUCCESS=0
+	if [ $COUNT_FAILURE -ge $FAILURE_LIMIT ]; then
+		log "Failed ping to '$HOST' using '$PORT' $FAILURE_LIMIT times."
+		reconnection
+	fi
+}
+
+ping_http() {
+	if curl -Is "http://$HOST:80" > /dev/null; then
+		COUNT_SUCCESS=$((COUNT_SUCCESS + 1))
+		if [ $SUCCESS_LIMIT = "unlimited" ] || [ $COUNT_SUCCESS -le $SUCCESS_LIMIT ]; then
+			log $PING_SUCCESS
+		fi
+		COUNT_FAILURE=0
+		if [ $COUNT_SUCCESS -eq $SUCCESS_LIMIT ]; then
+			log $PING_BACKGROUND
+		fi
+	else
+		ping_else
+	fi
+}
+
+ping_https() {
+	if curl -Is "https://$HOST:443" > /dev/null; then
+		COUNT_SUCCESS=$((COUNT_SUCCESS + 1))
+		if [ $SUCCESS_LIMIT = "unlimited" ] || [ $COUNT_SUCCESS -le $SUCCESS_LIMIT ]; then
+			log $PING_SUCCESS
+		fi
+		COUNT_FAILURE=0
+		if [ $COUNT_SUCCESS -eq $SUCCESS_LIMIT ]; then
+			log $PING_BACKGROUND
+		fi
+	else
+		ping_else
+	fi
+}
+
+ping_icmp() {
+	ping -q -c 3 -W 3 -p 0 $HOST > /dev/null
+	if [ $? -eq 0 ]; then
+		COUNT_SUCCESS=$((COUNT_SUCCESS + 1))
+		if [ $SUCCESS_LIMIT = "unlimited" ] || [ $COUNT_SUCCESS -le $SUCCESS_LIMIT ]; then
+			log $PING_SUCCESS
+		fi
+		COUNT_FAILURE=0
+		if [ $COUNT_SUCCESS -eq $SUCCESS_LIMIT ]; then
+			log $PING_BACKGROUND
+		fi
+	else
+		ping_else
+	fi
+}
+
+ping_tcp() {
+	if nc -zvw 1 $HOST 80 2>&1 | grep -q succeeded; then
+		COUNT_SUCCESS=$((COUNT_SUCCESS + 1))
+		if [ $SUCCESS_LIMIT = "unlimited" ] || [ $COUNT_SUCCESS -le $SUCCESS_LIMIT ]; then
+			log $PING_SUCCESS
+		fi
+		COUNT_FAILURE=0
+		if [ $COUNT_SUCCESS -eq $SUCCESS_LIMIT ]; then
+			log $PING_BACKGROUND
+		fi
+	else
+		ping_else
+	fi
+}
+
+start_service() {
+	log "Starting service."
+	check_devices
+	if [ $DEVICES_FOUND -eq 1 ] && [ $COMMAND_FOUND -eq 1 ]; then
+		log "Starting ping to '$HOST' using '$PORT'."
+		while true; do
+			if [ $PORT = "http" ]; then
+				ping_http
+			elif [ $PORT = "https" ]; then
+				ping_https
+			elif [ $PORT = "icmp" ]; then
+				ping_icmp
+			elif [ $PORT = "tcp" ]; then
+				ping_tcp
+			fi
+			sleep 5
+		done
+	else
+		log "Failed to start service."
+		exit 1
+	fi
+}
+
+stop_service() {
+	log "Stopping service."
+	SERVICE_PID=$(pgrep -f /usr/share/droidnet/monitoring)
+	kill $SERVICE_PID
+}
+
+restart_service() {
+	log "Restarting service."
+	SERVICE_PID=$(pgrep -f /usr/share/droidnet/monitoring | head -n 1)
+	start_service
+}
+
+# Main script
+if [ "$1" = "start" ]; then
+	start_service
+elif [ "$1" = "stop" ]; then
+	stop_service
+elif [ "$1" = "restart" ]; then
+	restart_service
+else
+	echo "Syntax: Monitoring service [DroidNet]"
+	echo "Available commands:"
+	echo "	start		Start the service"
+	echo "	stop		Stop the service"
+	echo "	restart 	Restart the service"
+fi

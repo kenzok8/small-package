@@ -1,0 +1,21 @@
+
+config timecontrol
+	option enabled '0'
+	option control_mode 'blacklist'
+	option list_type 'blacklist'
+	option chain 'input'
+	
+config device
+	option timestart '00:00'
+	option week '0'
+	option timeend '23:55'
+	option mac ''
+	option enable '0'
+
+config device
+	option mac '192.168.10.10/24'
+	option timestart '00:00'
+	option timeend '00:00'
+	option week '0'
+	option enable '0'
+

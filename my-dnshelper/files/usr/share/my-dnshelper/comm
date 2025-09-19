@@ -1,0 +1,567 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+get_cfg_value(){
+    v=`uci -q get my-dnshelper.@my-dnshelper[0].$1 2>/dev/null`
+
+    if [ -z "$v" ]; then
+		v=""
+		[ -z "$2" ] || v=$2
+    fi
+	echo "$v"
+}
+
+DEBUG=0
+[ -f /usr/share/my-dnshelper/debug ] && DEBUG=1
+LOCK="/var/lock/my-dnshelper.lock"
+SF=$(cd "$(dirname "$0")";pwd)
+EA=`get_cfg_value "enable" "0"`
+UF=`get_cfg_value "url"`
+UA=`get_cfg_value "allowurl"`
+UH=`get_cfg_value "hostsurl"`
+GH=`get_cfg_value "my_github"`
+S=`get_cfg_value "flash"`
+AUD=`get_cfg_value "autoupdate"`
+UPD=`get_cfg_value "time_update" "12"`
+bio=`get_cfg_value "block_ios"`
+bga=`get_cfg_value "block_games"`
+bsh=`get_cfg_value "block_short"`
+bgg=`get_cfg_value "block_google"`
+UDH=`get_cfg_value "use_doh" "0"`
+dcache=`get_cfg_value "dns_cache"`
+hport=`get_cfg_value "doh_port"`
+dnssec=`get_cfg_value "use_sec"`
+usemul=`get_cfg_value "use_mul"`
+usestrict=`get_cfg_value "use_strict"`
+forcedoh=`get_cfg_value "force_doh"`
+dohhttp=`get_cfg_value "doh_http"`
+forceip46=`get_cfg_value "force_ip46" "1"`
+filteraaaa=`get_cfg_value "filter_aaaa"`
+dnslogon=`get_cfg_value "dnsmasq_log"`
+dnslog=`get_cfg_value "dns_log"`
+dnslogsize=`get_cfg_value "dnslog_size"`
+dnslogpath=`get_cfg_value "dnslog_path"`
+revlog=`get_cfg_value "rev_log"`
+dnsdetect=`get_cfg_value "dns_detect"`
+dnscheck=`get_cfg_value "dns_check"`
+app_check=`get_cfg_value "app_check"`
+FWI=$(uci -q get firewall.my_dnshelper.path 2>/dev/null)
+DDOMAIN=$(uci -q get dhcp.@dnsmasq[0].domain)
+localuse=$(uci -q get dhcp.@dnsmasq[0].localuse)
+sharedir="/usr/share/my-dnshelper"
+Logfile="/tmp/my-dnshelper.log"
+D="date +'%Y-%m-%d %H:%M:%S'"
+RPath="/tmp/my-dnshelper.d"
+DEFAULT_DNSMASQ_CFGID="$(uci -q show "dhcp.@dnsmasq[0]" | awk 'NR==1 {split($0, conf, /[.=]/); print conf[2]}')"
+if [ -f "/tmp/etc/dnsmasq.conf.$DEFAULT_DNSMASQ_CFGID" ]; then
+	DNSMASQ_CONF_DIR="$(awk -F '=' '/^conf-dir=/ {print $2}' "/tmp/etc/dnsmasq.conf.$DEFAULT_DNSMASQ_CFGID")"
+	if [ -n "$DNSMASQ_CONF_DIR" ]; then
+		DPath=${DNSMASQ_CONF_DIR%*/}
+	else
+		DPath="/tmp/dnsmasq.d"
+	fi
+fi
+EPath="/etc/my-dnshelper"
+LPath="/var/etc/dnsmasq-my-dnshelper.d"
+TPath="/tmp/dns_tmp"
+helperconf="$DPath/dnsmasq-my-dnshelper.conf"
+countf="$RPath/count.txt"
+updatelog="$RPath/my-dnshelper.updated"
+dnsmasqlog="/var/log/dnsmasq.log"
+downloader="curl -kLfso"
+TAG="_MY_DNSHELPER_RULE_"
+confcode=""
+ipfcode=""
+usrcode=""
+dnscode=""
+bstrapcode=""
+dhcpcode=""
+hpcfcode=""
+rulescf=""
+rhostscf=""
+usrcf=""
+uhostscf=""
+bgscf=""
+SPath=$RPath
+ifc=0
+iac=0
+ihc=0
+
+[ "$S" == "1" ] && SPath=$EPath/Rules
+[ -z "$FWI" ] && FWI="/var/etc/my-dnshelper.include"
+[ -z "$DDOMAIN" ] && DDOMAIN="lan"
+
+if [ -n "$dnslogpath" ]; then
+	if [ "$dnsmasqlog" != "$dnslogpath" ];then
+		dnsmasqlog="$dnslogpath"
+		[ -d $RPath ] || mkdir -p $RPath >/dev/null 2>&1
+		ln -sf $dnsmasqlog /var/log/dnsmasq.log >/dev/null 2>&1
+	fi
+fi
+if [ -z "$dnslogsize" ];then
+	dnslogsize="5242880"
+else
+	echo "$dnslogsize"|grep -q -E "^[0-9]+$" || dnslogsize="5242880"
+fi
+[ -z "$UPD" ] && UPD="12"
+
+dohconf="$SPath/dohcfg"
+hpsvconf="$SPath/01.hpsv.conf"
+bgsconf="$SPath/02.bgs.conf"
+fcodeslist="/$SPath/fcodes.list"
+httpsdpcfg="/etc/config/https-dns-proxy"
+resolvconf="$EPath/resolv.dnsmasq.conf"
+
+check_lock(){
+	local hy=0
+	local hp=0
+	ls $LOCK > /dev/null 2>&1 && hy=1
+	pgrep -f "rulesmaker" && hp=1
+
+	if [ $hy -eq 1 -a $hp -eq 0 ];then
+		rm -f $LOCK
+	fi
+}
+
+echo_log(){
+	echo "`eval $D` $*"
+}
+
+push_log(){
+	echo_log "$*" >> $Logfile
+}
+
+sort_file(){
+	[ -s ${1} ] || return
+	echo "`sort -u ${1} 2>/dev/null`" > ${1}
+}
+
+read_count(){
+	if [ -s $countf ];then
+		ifc=`cat $countf 2>/dev/null | cut -d ',' -f 1`
+		iac=`cat $countf 2>/dev/null | cut -d ',' -f 2`
+		ihc=`cat $countf 2>/dev/null | cut -d ',' -f 3`
+		[ -z "$ifc" ] && ifc=0
+		[ -z "$iac" ] && iac=0
+		[ -z "$ihc" ] && ihc=0
+	fi
+}
+
+get_count(){
+	if [ -s ${1} ]; then
+		local hv=0
+		hv=`sed -r "/^$/d" ${1} | grep -c -E ".*" 2>/dev/null`
+		[ -n "$hv" ] && echo "$hv" || echo "0"
+	else
+		echo "0"
+	fi
+}
+
+clean_wfiles(){
+	#clear $LPath but do not delete the dir,it's useful even if stop.
+	[ -d $LPath ] && rm -rf $LPath/*
+	[ -f $helperconf ] && rm -f $helperconf
+}
+
+clear_iprule(){
+	if [ -n "$(command -v nft)" ]; then
+		fw4 reload
+		nft flush set inet fw4 myipdrop 2>/dev/null
+		nft delete set inet fw4 myipdrop 2>/dev/null
+	else
+		iptables -w 2 -D FORWARD -m set --match-set myipdrop dst -m comment --comment "$TAG" -j DROP 2>/dev/null
+		iptables -w 2 -D OUTPUT -m set --match-set myipdrop dst -m comment --comment "$TAG" -j DROP 2>/dev/null
+		which ipset >/dev/null && ipset destroy myipdrop 2>/dev/null
+	fi
+}
+
+add_iprule(){
+	local i=""
+	[ -d $SPath ] || mkdir -p $SPath
+	if [ -n "$(command -v nft)" ]; then
+		nft add set inet fw4 myipdrop { type ipv4_addr \; flags interval \; }
+		for i in $(cat $EPath/ip.mdhp | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}");do
+			[ -n "$i" ] && nft add element inet fw4 myipdrop { $i };
+		done
+		nft add rule inet fw4 output ip saddr @myipdrop drop
+		nft add rule inet fw4 forward ip saddr @myipdrop drop
+	else
+		if [ -n "$(command -v ipset)" ]; then
+			ipset create myipdrop hash:net 2>/dev/null
+			for i in $(cat $EPath/ip.mdhp | tr -s '\n' | grep -v "^#" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}");do
+				[ -n "$i" ] && ipset -! add myipdrop $i;
+			done
+			iptables -w -I FORWARD -m set --match-set myipdrop dst -m comment --comment "$TAG" -j DROP
+			iptables -w -I OUTPUT -m set --match-set myipdrop dst -m comment --comment "$TAG" -j DROP
+		fi
+	fi
+}
+
+ping_1p(){
+	local ok=1
+	ping -c 1 $1 >/dev/null 2>&1 && ok=0
+	echo $ok
+	return $ok
+}
+
+check_ipv4doh(){
+	echo `grep "listen_addr" $httpsdpcfg |grep "."|wc -l`
+}
+
+check_ipv6doh(){
+	echo `grep "listen_addr" $httpsdpcfg |grep ":"|wc -l`
+}
+
+get_ports_cfg(){
+	echo `grep "listen_port" $httpsdpcfg |grep -oE "\d+" |sort -u`
+}
+
+get_ports_ps(){
+	ps w 2>/dev/null | grep "https-dns-proxy" | grep -oE "\-p\s+\d+"|grep -oE "\d+"|sort -u
+}
+
+get_ports(){
+	local pt=$(get_ports_ps)
+	[ -z "$pt" ] && pt=$(get_ports_cfg)
+	echo "$pt"
+}
+
+get_nserver_cfg(){
+	local c=0
+	local nr=""
+	local nr1=""
+	local num=$(grep -c "config https-dns-proxy" $httpsdpcfg 2>/dev/null)
+	[ -z "$num" ] && num=0
+	while [ $c -lt $num ];
+	do
+		nr1="$(uci -q get https-dns-proxy.@https-dns-proxy[$c].listen_addr)"
+		nr="$nr1#`uci -q get https-dns-proxy.@https-dns-proxy[$c].listen_port`"
+		let c++
+		[ -n "$nr1" ] && echo "$nr"
+	done
+}
+
+get_dnsmasqcfg(){
+	local sr="/tmp/etc/dnsmasq.conf.cfg01411c"
+	[ -d "/var/etc" ] || return
+	for file in /var/etc/*; do
+		if [ -f $file ]; then
+			if [ `echo $file | grep 'dnsmasq.conf.cfg' -c` -gt 0 ]; then
+				sr="$file"
+			fi
+		fi
+	done
+	echo "$sr"
+}
+
+get_rautoc(){
+	local sr="$(uci -q get dhcp.@dnsmasq[0].resolvfile)"
+	if [ -z $sr ]; then
+		for s in `cat $(get_dnsmasqcfg)`;do
+			sr=`echo $s | grep -oE "^resolv-file=\S+" | cut -d "=" -f2`
+			[ -n "$sr" ] && break
+		done
+	fi
+	if [ -f "$sr" ]; then
+		echo "$sr"
+	else
+		if [ -f "/tmp/resolv.conf.d/resolv.conf.auto" ];then
+			echo "/tmp/resolv.conf.d/resolv.conf.auto"
+		else
+			echo ""
+		fi
+	fi
+}
+
+get_dhcpleasef(){
+	local sr="$(uci -q get dhcp.@dnsmasq[0].leasefile)"
+	if [ -z $sr ]; then
+		for s in `cat $(get_dnsmasqcfg)`;do
+			sr=`echo $s | grep -oE "^dhcp-leasefile=\S+" | cut -d "=" -f2`
+			[ -n "$sr" ] && break
+		done
+	fi
+	if [ -f "$sr" ]; then
+		echo "$sr"
+	else
+		if [ -f "/tmp/dhcp.leases" ];then
+			echo "/tmp/dhcp.leases"
+		else
+			echo ""
+		fi
+	fi
+}
+
+set_DPath(){
+	local dc=0
+	[ ! -d $DPath ] || mkdir -p $DPath
+	for s in `cat $(get_dnsmasqcfg)`;do
+		dc=`echo $s | grep "^conf-dir=$DPath" -c`
+		[ $dc -gt 0 ] && return 0
+	done
+
+	sed -i -r "/^conf-dir=/d" /etc/dnsmasq.conf
+	echo "conf-dir=$DPath" >> /etc/dnsmasq.conf
+	return 1
+}
+
+clear_doh(){
+	[ -f $httpsdpcfg ] || return 0
+	sed -i "/doh_backup_/d"  /etc/config/dhcp
+	local num=$(grep -c "config https-dns-proxy" $httpsdpcfg 2>/dev/null)
+	[ -z "$num" ] && num=0
+	local c=0
+	while [ $c -lt $num ];
+	do
+		let c++
+		uci -q delete https-dns-proxy.@https-dns-proxy[-1] 2>/dev/null
+		[ $? -ne 0 ] && break
+	done
+	uci -q set https-dns-proxy.config.force_dns='0'
+	uci commit https-dns-proxy
+}
+
+chmod_files(){
+	local rautoc=$(get_rautoc)
+	[ -d $SPath ] && chmod 0774 $SPath/* >/dev/null 2>&1
+	[ -d $LPath ] && chmod 0777 $LPath/* >/dev/null 2>&1
+	[ -f $helperconf ] && chmod 0664 $helperconf >/dev/null 2>&1
+	[ -f $resolvconf ] && chmod 0664 $resolvconf >/dev/null 2>&1
+	[ -f $rautoc ] && chmod 0664 $rautoc >/dev/null 2>&1
+	[ -d /tmp/hosts ] && chmod +r /tmp/hosts/* >/dev/null 2>&1
+	[ -f $(get_dnsmasqcfg) ] && chmod +r $(get_dnsmasqcfg) >/dev/null 2>&1
+	[ -f $(get_dhcpleasef) ] && chmod +r $(get_dhcpleasef) >/dev/null 2>&1
+	[ -f /tmp/resolv.conf ] && chmod +r /tmp/resolv.conf >/dev/null 2>&1
+}
+
+check_masq53(){
+	local a=`netstat -nutlp 2>/dev/null | grep "dnsmasq"| grep "udp"| grep ":53\s" -c`
+	if [ "$a" == "0" -o -z "$a" ];then
+		  pgrep -f "dnsmasq" >/dev/null 2>&1 && echo "1" || echo "-1"
+	else
+		echo "0"
+	fi
+}
+
+check_ln(){
+	local n=0
+	[ -s $SPath/rules.conf -a ! -s $LPath/rules.conf ] && n=1
+	[ -s $SPath/hosts.conf -a ! -s $LPath/hosts.conf ] && n=1
+	[ -s $SPath/user.conf -a ! -s $LPath/user.conf ] && n=1
+	[ -s $SPath/uhosts.conf -a ! -s $LPath/uhosts.conf ] && n=1
+	[ -s $hpsvconf -a ! -s $LPath/01.hpsv.conf ] && n=1
+	[ -s $bgsconf -a ! -s $LPath/02.bgs.conf ] && n=1
+	echo $n
+}
+
+file_idcode(){
+	local m5=0
+	local f1="$1"
+	if [ ! -f $1 ];then
+		echo ""
+		return
+	fi
+	which md5sum >/dev/null && m5=1
+	if [ $m5 -eq 1 ];then
+		echo "`md5sum $f1 2>/dev/null | awk '{print $1}'`"
+	else
+		echo "`date +%s -r $f1 2>/dev/null`"
+	fi
+}
+
+now_fcode(){
+	case $1 in
+	"config")
+	confcode=$(file_idcode "/etc/config/my-dnshelper")
+	echo "$confcode"
+	;;
+	"ip")
+	ipfcode=$(file_idcode "$EPath/ip.mdhp")
+	echo "$ipfcode"
+	;;
+	"user")
+	usrcode=$(file_idcode "$EPath/user.mdhp")
+	echo "$usrcode"
+	;;
+	"dns")
+	dnscode=$(file_idcode "$EPath/dns.mdhp")
+	echo "$dnscode"
+	;;
+	"bstrap")
+	bstrapcode=$(file_idcode "$EPath/bootstrap.mdhp")
+	echo "$bstrapcode"
+	;;
+	"dhcp")
+	dhcpcode=$(file_idcode "/etc/config/dhcp")
+	echo "$dhcpcode"
+	;;
+	"hpcf")
+	hpcfcode=$(file_idcode "$helperconf")
+	echo "$hpcfcode"
+	;;
+	"rulescf")
+	rcfcode=$(file_idcode "$SPath/rules.conf")
+	echo "$rcfcode"
+	;;
+	"rhostscf")
+	hcfcode=$(file_idcode "$SPath/hosts.conf")
+	echo "$hcfcode"
+	;;
+	"usrcf")
+	ucfcode=$(file_idcode "$SPath/user.conf")
+	echo "$ucfcode"
+	;;
+	"uhostscf")
+	uhcfcode=$(file_idcode "$SPath/uhosts.conf")
+	echo "$uhcfcode"
+	;;
+	"bgscf")
+	bgsfcode=$(file_idcode "$bgsconf")
+	echo "$bgsfcode"
+	;;
+	*)
+	echo ""
+	;;
+	esac
+}
+
+write_afcode(){
+	case $1 in
+		"config"|"ip"|"user"|"dns"|"bstrap"|"dhcp"|"hpcf"|"rulescf"|"rhostscf"|"usrcf"|"uhostscf"|"bgscf")
+			mkdir -p $SPath
+			sed -i "/$1/d" $fcodeslist 2>/dev/null
+			echo "$1|$(now_fcode $1)" >> $fcodeslist
+			return 0
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+write_cafcode(){
+	write_afcode "rulescf"
+	write_afcode "rhostscf"
+	write_afcode "usrcf"
+	write_afcode "uhostscf"
+	write_afcode "bgscf"
+}
+
+write_fcodes(){
+	echo -n > $fcodeslist
+	write_afcode "config"
+	write_afcode "ip"
+	write_afcode "user"
+	write_afcode "dns"
+	write_afcode "bstrap"
+	write_afcode "dhcp"
+	write_afcode "hpcf"
+	write_cafcode
+}
+
+get_fcode(){
+	[ -f $fcodeslist ] || (echo "" && return 0)
+	grep "$1" $fcodeslist 2>/dev/null | cut -d '|' -f2
+}
+
+test_fcode(){
+	local nowfc=$(now_fcode $1)
+	local recfc=$(get_fcode $1)
+	if [ "$recfc" == "$nowfc" ];then
+		echo "0"
+		return 0
+	else
+		echo "1"
+		return 1
+	fi
+}
+
+test_spcnf(){
+	local tsc=0
+	test_fcode "rulescf" >/dev/null && test_fcode "rhostscf" >/dev/null && test_fcode "usrcf" >/dev/null || tsc=1
+	test_fcode "uhostscf" >/dev/null && test_fcode "bgscf" >/dev/null && [ $tsc -eq 0 ] || tsc=1
+	echo $tsc
+	return $tsc
+}
+
+stop_httpsdp(){
+	if [ $(ps|grep "bin/https-dns-proxy"|grep -v "grep" |wc -l) -gt 0 ]; then
+		/etc/init.d/https-dns-proxy stop >/dev/null 2>&1
+		sleep 2s
+	fi
+}
+
+dnsmasq_rs(){
+	sleep 2s
+	[ "$localuse" == "1" ] || uci -q set dhcp.@dnsmasq[0].localuse="1" && uci commit dhcp
+	sleep 1s
+	if [ "$1" == "1" ];then
+		echo_log "Dnsmasq restart"
+		/etc/init.d/dnsmasq restart >/dev/null 2>&1
+		return
+	fi
+
+	if [ $(test_fcode "hpcf") -eq 1 ];then
+		echo_log "Dnsmasq restart."
+		/etc/init.d/dnsmasq restart >/dev/null 2>&1
+		write_afcode "hpcf"
+	elif [ $(test_spcnf) -eq 1 ];then
+		echo_log "Dnsmasq restart.."
+		/etc/init.d/dnsmasq restart >/dev/null 2>&1
+		write_cafcode
+	elif [ -d $LPath ];then
+		echo_log "Dnsmasq Reload."
+		/etc/init.d/dnsmasq reload >/dev/null 2>&1
+	else
+		echo_log "Dnsmasq restart..."
+		/etc/init.d/dnsmasq restart >/dev/null 2>&1
+	fi
+}
+
+rsc_dnsmasq(){
+	local svyes=0
+	dnsmasq_rs
+}
+
+check_dnsmasq(){
+	local dtest=0
+	local psget=0
+	local dg127=0
+	dtest=`dnsmasq --test 2>&1|grep -E "[Oo][kK]"|wc -l`
+	pgrep dnsmasq >/dev/null && psget=1
+	dg127=`netstat -nutlp | grep "dnsmasq"|grep "127.0.0.1"|wc -l`
+	if [ $dtest -gt 0 -a $psget -gt 0 -a $dg127 -gt 0 ];then
+		echo 0
+		return 0
+	else
+		echo 1
+		return 1
+	fi
+}
+
+check_addrtopmain(){
+	[ -n "$1" ] || return
+	[ -s $1 ] || return
+	local hr=0
+	grep -E "^\.[a-zA-Z]{2,6}\s*$" $1 && hr=1
+	grep -E "^(127|0)\.0\.0\.(0|1)\s+\.[a-zA-Z]{2,6}\s*$" $1 && hr=1
+	grep -E "^address=\/\.[a-zA-Z]{2,6}\/" $1 && hr=1
+
+	return $hr
+}
+
+check_wgetcurl(){
+	which curl >/dev/null && downloader="curl --retry 3 --connect-timeout 20 -m 80 -kLfso" && return
+	which wget-ssl >/dev/null && downloader="wget-ssl --no-check-certificate -t 3 -T 20 -q -O" && return
+	[ -z "$1" ] && opkg update || (echo error opkg && exit 1)
+	[ -z "$1" ] && (opkg remove wget wget-nossl --force-depends &&  opkg install wget-ssl ; check_wgetcurl 1 ; return)
+	[ "$1" == "1" ] && (opkg install curl ; check_wgetcurl 2 ; return)
+	echo error curl and wget && exit 1
+}
+
+debug_log(){
+	[ -n "$1" ] || return
+	[ $DEBUG -eq 1 ] && push_log "[D]$1"
+}

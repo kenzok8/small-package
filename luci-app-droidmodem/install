@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# This is free software, licensed under the Apache License, Version 2.0
+#
+# Copyright (C) 2024 Hilman Maulana <hilman0.0maulana@gmail.com>
+
+apk_name="luci-app-droidnet"
+version="1.1"
+
+echo -e "\033[34m🔄 Updating OPKG \033[0m"
+if ! opkg update > /dev/null; then
+    echo -e "\033[31m❌ Failed to update OPKG \033[0m"
+    exit 1
+fi
+
+echo -e "\033[34m📥 Downloading packages \033[0m"
+if ! curl -s -o "/tmp/${apk_name}_${version}_all.ipk" -LO "https://github.com/animegasan/$apk_name/releases/download/$version/${apk_name}_${version}_all.ipk"; then
+    echo -e "\033[31m❌ Failed to download packages \033[0m"
+    exit 1
+fi
+
+echo -e "\033[34m📦 Installing $apk_name \033[0m"
+if ! opkg install "/tmp/${apk_name}_${version}_all.ipk" > /dev/null; then
+    echo -e "\033[31m❌ Failed to install $apk_name \033[0m"
+    exit 1
+fi
+
+echo -e "\033[32m✅ Process completed. $apk_name ver $version has been installed. \033[0m"

@@ -1,0 +1,87 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2015 OpenWrt-dist
+# Copyright (C) 2016 fw867 <ffkykzs@gmail.com>
+# Copyright (C) 2024 iv7777 <hongba@rocketmail.com>
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
+
+START=99
+CONFIG=timewol
+CRONTAB_FILE="/etc/crontabs/root"
+ETHERWAKE_CMD="/usr/bin/etherwake"
+
+# Function to get UCI configuration values with defaults
+uci_get_by_type() {
+    local type=$1
+    local option=$2
+    local default=$3
+    local index=${4:-0}  # Use 0 if $4 is not provided
+
+    local value
+    value=$(uci get "$CONFIG.@$type[$index].$option" 2>/dev/null) || value=$default
+    echo "$value"
+}
+
+# Function to check if a value represents a true boolean
+is_true() {
+    case "$1" in
+        1|on|true|yes|enabled) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Function to load configuration and check if enabled
+load_config() {
+    local enabled
+    enabled=$(uci_get_by_type basic enable "0")
+    is_true "$enabled"
+}
+
+# Function to add WoL rules to the crontab
+add_rule() {
+    # Remove existing etherwake entries
+    sed -i '/etherwake/d' "$CRONTAB_FILE"
+
+    for i in $(seq 0 100); do
+        local macaddr
+        local maceth
+        local minute
+        local hour
+        local day
+        local month
+        local weeks
+
+        macaddr=$(uci_get_by_type macclient macaddr "" "$i")
+        maceth=$(uci_get_by_type macclient maceth "" "$i")
+
+        # Stop if no more macaddr entries
+        [ -z "$macaddr" ] && break
+        [ -z "$maceth" ] && break
+
+        minute=$(uci_get_by_type macclient minute "0" "$i")
+        hour=$(uci_get_by_type macclient hour "*" "$i")
+        day=$(uci_get_by_type macclient day "*" "$i")
+        month=$(uci_get_by_type macclient month "*" "$i")
+        weeks=$(uci_get_by_type macclient weeks "*" "$i")
+
+        echo "$minute $hour $day $month $weeks $ETHERWAKE_CMD -D -i $maceth $macaddr" >> "$CRONTAB_FILE"
+    done
+}
+
+# Function to start the service
+start() {
+    if load_config; then
+        add_rule
+    else
+        exit 0
+    fi
+}
+
+# Function to stop the service
+stop() {
+    # Remove etherwake entries from crontab
+    sed -i '/etherwake/d' "$CRONTAB_FILE"
+}

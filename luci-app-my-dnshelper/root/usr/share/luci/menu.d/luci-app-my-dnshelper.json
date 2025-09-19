@@ -1,0 +1,86 @@
+{
+    "admin/network/my-dnshelper": {
+        "title": "DNS Helper",
+        "order": 31,
+        "action": {
+            "type": "alias",
+            "path": "admin/network/my-dnshelper/settings"
+        },
+        "depends": {
+            "acl": [ "luci-app-my-dnshelper" ],
+            "uci": { "my-dnshelper": true }
+        }
+    },
+    
+    "admin/network/my-dnshelper/settings": {
+        "title": "General Settings",
+        "order": 1,
+        "action": {
+            "type": "view",
+            "path": "my-dnshelper/settings"
+        }
+    },
+    
+    "admin/network/my-dnshelper/dns": {
+        "title": "DNS Settings",
+        "order": 2,
+        "action": {
+            "type": "view",
+            "path": "my-dnshelper/dns"
+        }
+    },
+    
+    "admin/network/my-dnshelper/filters": {
+        "title": "Filters",
+        "order": 3,
+        "action": {
+            "type": "view",
+            "path": "my-dnshelper/filters"
+        }
+    },
+    
+    "admin/network/my-dnshelper/allowlists": {
+        "title": "Allow List",
+        "order": 4,
+        "action": {
+            "type": "view",
+            "path": "my-dnshelper/allowlists"
+        }
+    },
+    
+    "admin/network/my-dnshelper/ip": {
+        "title": "IP List",
+        "order": 5,
+        "action": {
+            "type": "view",
+            "path": "my-dnshelper/ip"
+        }
+    },
+    
+    "admin/network/my-dnshelper/custom": {
+        "title": "User Rules",
+        "order": 6,
+        "action": {
+            "type": "view",
+            "path": "my-dnshelper/custom"
+        }
+    },
+    
+    "admin/network/my-dnshelper/logs": {
+        "title": "Helper Log",
+        "order": 7,
+        "action": {
+            "type": "view",
+            "path": "my-dnshelper/logs"
+        }
+    },
+
+    "admin/network/my-dnshelper/dnslogs": {
+        "title": "DNS Log",
+        "order": 8,
+        "action": {
+            "type": "view",
+            "path": "my-dnshelper/dnslogs"
+        }
+    }
+}

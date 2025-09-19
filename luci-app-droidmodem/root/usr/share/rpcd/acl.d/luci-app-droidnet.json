@@ -1,0 +1,20 @@
+{
+	"luci-app-droidnet": {
+		"description": "Grant access to luci-app-droidnet",
+		"read": {
+			"file": {
+				"/var/log/droidnet.log": [ "read" ],
+				"/usr/bin/adb": [ "exec" ],
+				"/usr/bin/pgrep": [ "exec" ]
+			},
+			"uci": [ "droidnet" ]
+		},
+		"write": {
+			"file": {
+				"/var/log/droidnet.log": [ "write" ],
+				"/tmp/upload.apk": [ "write" ]
+			},
+			"uci": [ "droidnet" ]
+		}
+	}
+}

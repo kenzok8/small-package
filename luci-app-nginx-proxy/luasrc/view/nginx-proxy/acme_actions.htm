@@ -1,0 +1,145 @@
+<%+header%>
+<div class="cbi-page-actions">
+    <!-- 安全增强：添加CSRF令牌 -->
+    <form class="inline" action="<%=url('admin/services/nginx-proxy/acme/issue')%>" method="post">
+        <input type="hidden" name="token" value="<%=token%>">
+        <button type="submit" class="cbi-button cbi-button-apply" 
+                data-tooltip="<%:Request new certificate%>">
+            <span class="icon icon-certificate"></span>
+            <%:Issue Certificate%>
+        </button>
+    </form>
+
+    <!-- 状态反馈增强 -->
+    <form class="inline" action="<%=url('admin/services/nginx-proxy/acme/renew')%>" method="post" 
+          id="renew-form" 
+          onsubmit="return confirm('<%:Force renewal may trigger rate limits. Continue?%>')">
+        <input type="hidden" name="token" value="<%=token%>">
+        <button type="submit" class="cbi-button cbi-button-action" 
+                data-tooltip="<%:Force immediate renewal%>">
+            <span class="icon icon-refresh"></span>
+            <%:Force Renew%>
+        </button>
+    </form>
+
+    <!-- 异步日志查看 -->
+    <div class="inline">
+        <button class="cbi-button cbi-button-download" 
+                onclick="showLogs()"
+                data-tooltip="<%:View recent ACME logs%>">
+            <span class="icon icon-file-text"></span>
+            <%:View Logs%>
+        </button>
+    </div>
+
+    <!-- 新增吊销功能 -->
+    <form class="inline" action="<%=url('admin/services/nginx-proxy/acme/revoke')%>" method="post"
+          style="margin-left: auto">
+        <input type="hidden" name="token" value="<%=token%>">
+        <button type="submit" class="cbi-button cbi-button-remove"
+                data-tooltip="<%:Revoke current certificate%>"
+                <%=cert_exists and '' or 'disabled'%>>
+            <span class="icon icon-trash"></span>
+            <%:Revoke%>
+        </button>
+    </form>
+</div>
+
+<!-- 加载状态提示 -->
+<div id="loading" style="display: none; margin-top: 15px">
+    <div class="spinner"></div>
+    <span class="text-muted"><%:Processing request...%></span>
+</div>
+
+<!-- 日志查看容器 -->
+<div id="log-container" style="display: none; margin-top: 20px">
+    <pre class="log-content" style="max-height: 400px; overflow: auto"></pre>
+</div>
+
+<script>
+// 异步操作处理
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        document.getElementById('loading').style.display = 'block';
+        
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new URLSearchParams(new FormData(form))
+            });
+            
+            const result = await response.text();
+            if (response.ok) {
+                location.reload(); // 成功后刷新状态
+            } else {
+                alert('<%:Operation failed:%> ' + result);
+            }
+        } catch (error) {
+            alert('<%:Network error:%> ' + error.message);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    });
+});
+
+// 日志查看功能
+function showLogs() {
+    const container = document.getElementById('log-container');
+    if (container.style.display === 'none') {
+        fetch('<%=url("admin/services/nginx-proxy/acme/logs")%>')
+            .then(res => res.text())
+            .then(logs => {
+                container.querySelector('.log-content').textContent = logs;
+                container.style.display = 'block';
+            });
+    } else {
+        container.style.display = 'none';
+    }
+}
+</script>
+
+<style>
+/* 样式优化 */
+.cbi-page-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.icon {
+    margin-right: 6px;
+    font-family: 'LuCI';
+}
+
+.icon-certificate:before { content: "\f0a3"; }
+.icon-refresh:before { content: "\f021"; }
+.icon-file-text:before { content: "\f0f6"; }
+.icon-trash:before { content: "\f1f8"; }
+
+.log-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+</style>
+<%+footer%>

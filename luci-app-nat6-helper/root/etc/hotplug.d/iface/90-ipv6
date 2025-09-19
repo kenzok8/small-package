@@ -1,0 +1,21 @@
+#!/bin/sh
+#nat6更新脚本，在接口变动时会执行相应的命令
+
+#获取nat6-helper插件的启用状态
+enable=$(uci get nat6-helper.@nat6-helper[0].enabled)
+interface_public=$(uci get nat6-helper.@nat6-helper[0].name)
+
+#若nat6-helper插件没有启用则什么都不做
+[ $enable = "0" ] && exit 0
+#若变动网卡不是插件内设置的网卡则什么都不做
+[ "$INTERFACE" = "$interface_public" ] || exit 0
+
+#网络变化时候的动作
+if [ "$ACTION" = ifup -o "$ACTION" = ifupdate ];then
+    /etc/init.d/nat6-helper restart
+    
+#接口断开时候的动作
+elif [ "$ACTION" = ifdown ]; then
+    /etc/init.d/nat6-helper stop
+fi
+

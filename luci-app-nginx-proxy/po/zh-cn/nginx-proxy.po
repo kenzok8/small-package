@@ -1,0 +1,266 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenWrt LuCI Nginx Proxy\n"
+"POT-Creation-Date: 2023-10-15 16:00+0800\n"
+"PO-Revision-Date: 2023-10-15 16:30+0800\n"
+"Last-Translator: Your Name <vison.v@gmail.com>\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: applications/luci-app-nginx-proxy/luasrc/controller/nginx-proxy.lua:10
+msgid "Nginx Proxy"
+msgstr "Nginx 反向代理"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:7
+msgid "Proxy Settings"
+msgstr "代理设置"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/ssl.lua:7
+msgid "SSL Settings"
+msgstr "SSL 设置"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:7
+msgid "ACME Settings"
+msgstr "ACME 设置"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:7
+msgid "Logs"
+msgstr "日志管理"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:15
+msgid "Domain Name"
+msgstr "域名"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:16
+msgid "Enter full domain (e.g. example.com or sub.example.com)"
+msgstr "输入完整域名 (例如：example.com 或 sub.example.com)"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:23
+msgid "Backend Server"
+msgstr "后端服务器"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:24
+msgid "Format: http://192.168.1.100:8080 or https://internal-server"
+msgstr "格式：http://192.168.1.100:8080 或 https://内部服务器"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:31
+msgid "Listen Port"
+msgstr "监听端口"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:32
+msgid "Standard ports: 80 (HTTP) or 443 (HTTPS)"
+msgstr "标准端口：80 (HTTP) 或 443 (HTTPS)"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:38
+msgid "Enable IPv4"
+msgstr "启用 IPv4"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:43
+msgid "Enable IPv6"
+msgstr "启用 IPv6"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:80
+msgid "Port %s conflict between %s and %s"
+msgstr "端口 %s 在 %s 和 %s 之间存在冲突"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/ssl.lua:11
+msgid "Enable SSL"
+msgstr "启用 SSL"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/ssl.lua:12
+msgid "Requires valid certificate and private key"
+msgstr "需要有效的证书和私钥"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/ssl.lua:17
+msgid "Certificate Path"
+msgstr "证书路径"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/ssl.lua:18
+msgid "Path to SSL certificate file (PEM format)"
+msgstr "SSL 证书文件路径 (PEM 格式)"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/ssl.lua:27
+msgid "Private Key Path"
+msgstr "私钥路径"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/ssl.lua:28
+msgid "Path to private key file (PEM format)"
+msgstr "私钥文件路径 (PEM 格式)"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:11
+msgid "Enable ACME"
+msgstr "启用 ACME"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:12
+msgid "Automatically obtain and renew SSL certificates"
+msgstr "自动获取和续期 SSL 证书"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:17
+msgid "Account Email"
+msgstr "账户邮箱"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:18
+msgid "Important for certificate recovery and expiry notices"
+msgstr "用于证书恢复和到期通知的重要信息"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:23
+msgid "Certificate Domains"
+msgstr "证书域名"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:24
+msgid "Separate multiple domains with spaces, supports wildcards (*.example.com)"
+msgstr "用空格分隔多个域名，支持通配符 (*.example.com)"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:11
+msgid "Log File Path"
+msgstr "日志文件路径"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:12
+msgid "Absolute path to the log file"
+msgstr "日志文件的绝对路径"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:19
+msgid "Log Content"
+msgstr "日志内容"
+
+#: applications/luci-app-nginx-proxy/luasrc/controller/nginx-proxy.lua:35
+msgid "Certificate renewal failed"
+msgstr "证书续期失败"
+
+#: applications/luci-app-nginx-proxy/luasrc/controller/nginx-proxy.lua:52
+msgid "Failed to clear logs"
+msgstr "清除日志失败"
+
+#: applications/luci-app-nginx-proxy/luasrc/controller/nginx-proxy.lua:54
+msgid "Log file not found"
+msgstr "未找到日志文件"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:20
+msgid "Invalid domain format (e.g. example.com)"
+msgstr "无效的域名格式 (例如：example.com)"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/proxy.lua:21
+msgid "Wildcard domains must be in format *.example.com"
+msgstr "通配符域名必须为 *.example.com 格式"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:29
+msgid "ACME Server"
+msgstr "ACME 服务器"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:30
+msgid "Let's Encrypt Production"
+msgstr "Let's Encrypt 生产环境"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:31
+msgid "Let's Encrypt Staging"
+msgstr "Let's Encrypt 测试环境"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:35
+msgid "Validation Method"
+msgstr "验证方式"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:36
+msgid "HTTP-01 (Webroot)"
+msgstr "HTTP-01 (网站根目录验证)"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:37
+msgid "DNS-01 (DNS TXT Record)"
+msgstr "DNS-01 (DNS TXT记录验证)"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:55
+msgid "Certificate successfully issued"
+msgstr "证书签发成功"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/acme.lua:57
+msgid "Certificate issuance failed"
+msgstr "证书签发失败"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:25
+msgid "Log Rotation"
+msgstr "日志轮转"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:26
+msgid "Daily"
+msgstr "每天"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:27
+msgid "Weekly"
+msgstr "每周"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:28
+msgid "Monthly"
+msgstr "每月"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:31
+msgid "Retention Days"
+msgstr "保留天数"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:32
+msgid "Number of days to keep archived logs"
+msgstr "保留归档日志的天数"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:40
+msgid "Log path must be absolute"
+msgstr "日志路径必须是绝对路径"
+
+#: applications/luci-app-nginx-proxy/luasrc/model/cbi/nginx-proxy/logs.lua:42
+msgid "Path too long (max 256 characters)"
+msgstr "路径过长 (最长256字符)"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/acme_actions.htm:5
+msgid "Issue Certificate"
+msgstr "签发证书"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/acme_actions.htm:8
+msgid "Force Renew"
+msgstr "强制续期"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/acme_actions.htm:11
+msgid "View Logs"
+msgstr "查看日志"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/log_actions.htm:5
+msgid "Clear Logs"
+msgstr "清空日志"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/log_actions.htm:10
+msgid "Refresh Logs"
+msgstr "刷新日志"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/log_actions.htm:14
+msgid "Download Logs"
+msgstr "下载日志"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/log_actions.htm:5
+msgid "Are you sure to clear all logs?"
+msgstr "确定要清空所有日志吗？"
+
+msgid "Schedules"
+msgstr "计划任务"
+
+msgid "Manage cron jobs for automatic certificate renewal and log rotation"
+msgstr "管理自动证书续期和日志轮转的定时任务"
+
+msgid "Cron Jobs"
+msgstr "定时任务"
+
+msgid "Format: minute hour day month week"
+msgstr "格式: 分 时 日 月 周"
+
+msgid "Renew Certificates"
+msgstr "续期证书"
+
+msgid "Rotate Logs"
+msgstr "轮转日志"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/ssl_adv_options.htm:5
+msgid "Advanced SSL Options"
+msgstr "高级SSL选项"
+
+#: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/acme_status.htm:15
+msgid "Certificate Details"
+msgstr "证书详情"

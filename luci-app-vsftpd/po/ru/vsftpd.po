@@ -1,0 +1,349 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: luci-app-vsftpd\n"
+"POT-Creation-Date: 2020-10-22 23:07+0300\n"
+"PO-Revision-Date: 2020-04-23 15:09+0300\n"
+"Last-Translator: Anton Kikin <a.kikin@tano-systems.com>\n"
+"Language-Team: Tano Systems LLC\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru\n"
+"X-Generator: Poedit 2.2\n"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:247
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:253
+msgid "0 means no limitation"
+msgstr "0 &mdash; без ограничений"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:160
+msgid "A message will be displayed when entering a directory"
+msgstr "Сообщение отображается при входе в каталог"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:220
+msgid "ASCII mode"
+msgstr "Режим ASCII"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:337
+msgid "Add New Virtual User"
+msgstr "Добавление нового виртуального пользователя"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:141
+msgid "Allow directory recursely list"
+msgstr "Разрешить рекурсивный просмотр каталогов"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:386
+msgid "An actual local user to handle anonymous user"
+msgstr ""
+"Имя локального пользователя, от имени которого обеспечивается анонимный "
+"доступ"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:322
+msgid "An actual local user to handle virtual users"
+msgstr ""
+"Имя локального пользователя, от имени которого обеспечивается доступ "
+"виртуальным пользователям"
+
+# msgid "Anonymous Settings"
+# msgstr "Настройки анонимного доступа"
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:468
+msgid "Anonymous User"
+msgstr "Анонимный доступ"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:224
+msgid "Both download and upload"
+msgstr "Для скачивания и загрузки"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:259
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:279
+msgid "Bytes/s, 0 means no limitation"
+msgstr "Байт/с, 0 &mdash; без ограничений"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:265
+msgid "Can not be zero, default is 3"
+msgstr "Не может быть 0, по умолчанию 3"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:464
+msgid "Connection Settings"
+msgstr "Настройки подключения"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:234
+msgid "Connection timeout"
+msgstr "Таймаут подключения"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:100
+msgid "Data Port"
+msgstr "Порт для данных"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:240
+msgid "Data connection timeout"
+msgstr "Таймаут подключения для данных"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:163
+msgid "Directory message filename"
+msgstr "Имя файла сообщения директории"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:221
+msgid "Disabled"
+msgstr "Отключить"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:222
+msgid "Download only"
+msgstr "Только для скачивания (download)"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:54
+msgid "Enable FTP server"
+msgstr "Включить FTP-сервер"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:79
+msgid "Enable IPv4"
+msgstr "Включить IPv4"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:88
+msgid "Enable IPv6"
+msgstr "Включить IPv6"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:206
+msgid "Enable PASV mode"
+msgstr "Включить режим PASV"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:205
+msgid "Enable PORT mode"
+msgstr "Включить режим PORT"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:379
+msgid "Enable anonymous user"
+msgstr "Включить анонимного пользователя"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:134
+msgid "Enable directory list"
+msgstr "Разрешить просмотр списка директорий"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:159
+msgid "Enable directory message"
+msgstr "Включить сообщения при входе в каталоги"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:127
+msgid "Enable download"
+msgstr "Разрешить скачивание (download)"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:182
+msgid "Enable local users"
+msgstr "Включить локальных пользователей"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:411
+msgid "Enable logging"
+msgstr "Включить журналирование"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:296
+msgid "Enable other rights"
+msgstr "Разрешить прочие действия"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:290
+msgid "Enable upload"
+msgstr "Разрешить загрузку (upload)"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:318
+msgid "Enable virtual users"
+msgstr "Включить виртуальных пользователей"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:120
+msgid "Enable write"
+msgstr "Разрешить запись"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:284
+msgid "Enable write/mkdir"
+msgstr "Разрешить запись и создание директорий"
+
+#: root/usr/share/luci/menu.d/luci-app-vsftpd.json:3
+msgid "FTP"
+msgstr "FTP"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:455
+msgid "FTP Server Settings"
+msgstr "Настройки FTP-сервера"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:156
+msgid "FTP banner"
+msgstr "Сообщение сервера (FTP баннер)"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:151
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:273
+msgid "File mode umask"
+msgstr "Режим создания файлов (umask)"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:465
+msgid "Global Settings"
+msgstr "Глобальные настройки"
+
+#: root/usr/share/rpcd/acl.d/luci-app-vsftpd.json:3
+msgid "Grant access to FTP server configuration"
+msgstr "Предоставить доступ к конфигурации FTP-сервера"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:353
+msgid "Home directory"
+msgstr "Домашний каталог"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:358
+msgid "Home directroy cannot be empty"
+msgstr "Домашний каталог не может быть пустым"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:83
+msgid "IPv4 Address"
+msgstr "IPv4 адрес"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:91
+msgid "IPv6 Address"
+msgstr "IPv6 адрес"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:228
+msgid "Idle session timeout"
+msgstr "Таймаут неактивной сессии"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:145
+msgid ""
+"If activated, files and directories starting with '.' will be shown in "
+"directory listings even if the 'a' flag was not used by the client. This "
+"override excludes the '.' and '..' entries"
+msgstr ""
+"Если опция установлена, файлы начинающиеся с «.» будут показываться в "
+"листинге директории, даже если флаг «a» не используется клиентом. Эта опция "
+"исключает директории «.» и «..»"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:229
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:235
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:241
+msgid "In seconds"
+msgstr "В секундах"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:297
+msgid "Include rename, deletion, ..."
+msgstr "Включая переименование, удаление, ..."
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:187
+msgid "Leave empty will use user's home directory"
+msgstr "Если не задано, будут использоваться домашние папки пользователей"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:96
+msgid "Listen Port"
+msgstr "Порт для входящих соединений"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:466
+msgid "Local Users"
+msgstr "Локальные пользователи"
+
+# msgid "General Settings"
+# msgstr "Общие настройки"
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:469
+msgid "Log Settings"
+msgstr "Настройки журналирования"
+
+# msgid "Log Settings"
+# msgstr "Настройки журналирования"
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:446
+msgid "Log file"
+msgstr "Файл журнала"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:246
+msgid "Max clients"
+msgstr "Максимальное количество клиентов"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:252
+msgid "Max clients per IP"
+msgstr "Максимальное количество клиентов для одного IP-адреса"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:264
+msgid "Max login fail count"
+msgstr "Максимальное количество ошибок авторизации"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:258
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:278
+msgid "Max transmit rate"
+msgstr "Максимальная скорость передачи"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:456
+msgid "On this page you may configure FTP server settings"
+msgstr "На этой странице можно настроить параметры FTP-сервера"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:348
+msgid "Password"
+msgstr "Пароль"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:186
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:390
+msgid "Root directory"
+msgstr "Корневая папка"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:55
+msgid "Run FTP server on system's startup"
+msgstr "Запускать FTP-сервер при запуске системы"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:463
+msgid "Service Settings"
+msgstr "Настройки службы"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:144
+msgid "Show dot files"
+msgstr "Показывать скрытые файлы (dot files)"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:215
+msgid "The maximum port to allocate for PASV style data connections"
+msgstr "Номер порта, до которого размещаются порты для PASV режима"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:209
+msgid "The minimum port to allocate for PASV style data connections"
+msgstr "Номер порта, начиная с которого размещаются порты для PASV режима"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:223
+msgid "Upload only"
+msgstr "Только для загрузки (upload)"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:152
+msgid ""
+"Uploaded file mode will be 666&thinsp;&minus;&thinsp;umask, directory mode "
+"will be 777&thinsp;&minus;&thinsp;umask"
+msgstr ""
+"Права загружаемых файлов устанавливаются в значение 666&thinsp;&minus;"
+"&thinsp;umask, каталогов &mdash; 777&thinsp;&minus;&thinsp;umask"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:321
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:340
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:385
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:344
+msgid "Username cannot be empty"
+msgstr "Имя пользователя не может быть пустым"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:335
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:467
+msgid "Virtual Users"
+msgstr "Виртуальные пользователи"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:128
+msgid "When disabled, all download request will give permission denied"
+msgstr ""
+"Если отключено, все запросы на скачивание будут вызывать ошибку доступа"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:121
+msgid "When disabled, all write request will give permission denied"
+msgstr "Если отключено, все запросы на запись будут вызывать ошибку доступа"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:135
+msgid "When disabled, list commands will give permission denied"
+msgstr ""
+"Если отключено, все запросы на просмотр списка каталога будут вызывать "
+"ошибку доступа"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:413
+msgid "disable"
+msgstr "отключить"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:414
+msgid "to file"
+msgstr "в файл"
+
+#: htdocs/luci-static/resources/view/vsftpd/vsftpd.js:415
+msgid "to syslog"
+msgstr "в syslog"

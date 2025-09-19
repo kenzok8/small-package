@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+source /usr/share/my-dnshelper/comm
+fwok=1
+ubus call luci getInitList '{"name":"firewall"}' && fwok=1 || fwok=0
+
+if [ $fwok -eq 0 ]; then
+	echo_log "Starting to check firewall."
+	echo_log "Firewall initd script may have some problem."
+	echo_log "Helper doesn't have firewall function installed yet. You need to check it by yourself."
+fi

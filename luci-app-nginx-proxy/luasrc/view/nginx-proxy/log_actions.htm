@@ -1,0 +1,19 @@
+<%+header%>
+<div class="cbi-page-actions">
+    <form class="inline" action="<%=url('admin/services/nginx-proxy/clearlogs')%>" method="post">
+        <input type="submit" class="cbi-button cbi-button-reset" 
+            value="<%:Clear Logs%>" 
+            onclick="return confirm('<%:Are you sure to clear all logs?%>')">
+    </form>
+    
+    <form class="inline" action="<%=url('admin/services/nginx-proxy/refreshlogs')%>" method="post">
+        <input type="submit" class="cbi-button cbi-button-reload" 
+            value="<%:Refresh Logs%>">
+    </form>
+    
+    <a href="<%=url('admin/services/nginx-proxy/downloadlogs')%>" 
+        class="cbi-button cbi-button-download">
+        <%:Download Logs%>
+    </a>
+</div>
+<%+footer%>

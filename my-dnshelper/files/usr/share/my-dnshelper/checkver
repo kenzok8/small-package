@@ -1,0 +1,82 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+pram=$1
+
+source /usr/share/my-dnshelper/comm
+
+lucimake="https://cdn.jsdelivr.net/gh/kongfl888/openwrt-my-dnshelper/luci-app-my-dnshelper/Makefile"
+apmake="https://cdn.jsdelivr.net/gh/kongfl888/openwrt-my-dnshelper/my-dnshelper/Makefile"
+mvertmpf="/tmp/makevertmp.txt"
+newluciv=""
+newappv=""
+nowapv=""
+nowluciv=""
+outstr=""
+appvtxt=$RPath/appver.txt
+dateday=`date +%d`
+appupv=0
+needc=0
+
+nowapv=`opkg list-installed my-dnshelper|grep -oE "\d+(\.\d+)*(-\d+)*"`
+nowluciv=`opkg list-installed luci-app-my-dnshelper |grep -oE "\d+(\.\d+)*(-\d+)*"`
+
+get_ver(){
+	[ -n "$1" ] || return
+	local v=""
+	local v1=""
+	local v2=""
+	if [ -s $1 ];then
+		v1=`cat $1 | grep "PKG_VERSION"|cut -d '=' -f2 | head -n 1`
+		v2=`cat $1 | grep "PKG_RELEASE"|cut -d '=' -f2 | head -n 1`
+	fi
+	[ -n "$v1" ] && v="${v1}-${v2}"
+	[ -z "$v2" -o "$v2" == "0" ] && v="${v1}"
+	echo "$v"
+}
+
+che_appver(){
+	[ $(ping_1p "baidu.com") -ne 0 ] && [ $(ping_1p "qq.com") -ne 0 ] && return 0
+	check_wgetcurl
+
+	echo -n > $mvertmpf
+	$downloader $mvertmpf $lucimake
+	newluciv=$(get_ver $mvertmpf)
+
+	echo -n > $mvertmpf
+	$downloader $mvertmpf $apmake
+	newappv=$(get_ver $mvertmpf)
+
+	[ "$nowapv" == "$newappv" ] || outstr="my-dnshelper v${nowapv}(v${newappv} NEW)"
+	[ -n "${outstr}" ] && outstr="${outstr} |"
+	[ "$nowluciv" == "$newluciv" ] || outstr="${outstr} luci-app v${nowluciv}(v${newluciv} NEW)"
+
+	[ -d $RPath ] || mkdir -p $RPath
+
+	if [ -n "$outstr" ];then
+		echo "${outstr}#$dateday" > $appvtxt
+	else
+		echo "#$dateday" > $appvtxt
+	fi
+	appupv=1
+	rm -f $mvertmpf
+}
+
+[ "$pram" == "-f" ] && rm -f $appvtxt
+
+if [ -f $appvtxt ]; then
+	#txtapv=`cat $appvtxt | grep -oE "my-dnshelper v\d+(\.\d+)*(-\d+)*"|grep -oE "\d+(\.\d+)*(-\d+)*"`
+	#txtluciv=`cat $appvtxt | grep -oE "luci-app v\d+(\.\d+)*(-\d+)*"|grep -oE "\d+(\.\d+)*(-\d+)*"`
+	#[ -n "$txtapv" -a "$txtapv" != "nowapv" ] && needc=1
+	#[ -n "$txtluciv" -a "$txtluciv" != "nowluciv" ] && needc=1
+
+	oldday=`cat $appvtxt | cut -d '#' -f2`
+	[ "$dateday" == "$oldday" ] || needc=1
+	[ $needc -eq 1 ] && rm -f $appvtxt
+fi
+
+[ -f $appvtxt ] || che_appver
+
+cat $appvtxt | cut -d '#' -f1

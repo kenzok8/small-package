@@ -1,0 +1,332 @@
+#!/bin/bash
+
+# Copyright (C) 2006 OpenWrt.org
+# Copyright 2022-2025 sirpdboy <herboy2008@gmail.com>
+
+crrun=$1
+crid=$2
+NAME=timecontrol
+DEBUG=0
+
+config_get_type() {
+    local ret=$(uci -q get "${NAME}.${1}")
+    echo "${ret:=$2}"
+}
+
+config_n_get() {
+    local ret=$(uci -q get "${NAME}.${1}.${2}")
+    echo "${ret:=$3}"
+}
+
+config_t_get() {
+    local index=${3:-0}
+    local default=$4
+    local ret=$(uci -q get "${NAME}.@${1}[${index}].${2}")
+    echo "${ret:-$default}"
+}
+
+config_t_set() {
+    local index=${3:-0}
+    local ret=$(uci -q set "${NAME}.@${1}[${index}].${2}=${3}")
+}
+
+IDLIST="/var/$NAME.idlist"
+TMPID="/var/$NAME.tmpid"
+LOG_FILE="/var/log/$NAME.log"
+list_type=$(config_t_get $NAME list_type 0 )
+CHAIN=$(config_t_get $NAME chain 0 )
+bin_nft=$(which nft 2>/dev/null)
+bin_iptables=$(which iptables 2>/dev/null)
+bin_ip6tables=$(which ip6tables 2>/dev/null)
+
+dbg() {
+    local d="$(date "+%Y-%m-%d %H:%M:%S")"
+    [ "$DEBUG" -eq 1 ] && echo -e "\nDEBUG: $@ \n"
+}
+
+# Check if nftables/iptables is available
+if [ -x "$bin_nft" ]; then
+    nftables_ver="true"
+    dbg "nft found: $bin_nft"
+elif [ -x "$bin_iptables" ] || [ -x "$bin_ip6tables" ]; then
+    iptables_ver="true"
+    dbg "iptables found: $bin_iptables"
+else
+    dbg "No firewall tool found!"
+    exit 1
+fi
+
+nft() {
+    dbg "nft $*"
+    $bin_nft "$@" 2>/dev/null
+}
+
+iptables() {
+    dbg "iptables $*"
+    $bin_iptables "$@" 2>/dev/null
+}
+
+ip6tables() {
+    dbg "ip6tables $*"
+    $bin_ip6tables "$@" 2>/dev/null
+}
+
+get_target_info() {
+    local target=$1
+
+    if echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        local octets=(${target//./ })
+        for octet in "${octets[@]}"; do
+            [ "$octet" -le 255 ] || return 1
+        done
+        table="ip"
+        addr_type="ipv4_addr"
+    elif echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}-([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        local start_ip=${target%-*}
+        local end_ip=${target#*-}
+        table="ip"
+        addr_type="ipv4_addr"
+        target="{ $target }"
+    elif echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
+        local ip=${target%/*}
+        local mask=${target#*/}
+        [ "$mask" -le 32 ] || return 1
+        table="ip"
+        addr_type="ipv4_addr"
+    elif echo "$target" | grep -qE '^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$'; then
+        table="bridge"
+        addr_type="ether_addr"
+    elif echo "$target" | grep -qE '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'; then
+        table="ip6"
+        addr_type="ipv6_addr"
+    else
+        return 1
+    fi
+
+    echo "$table $addr_type $target"
+}
+
+nft_table_exists() {
+    local table=$1
+    nft list tables | grep -q "$table"
+}
+
+nft_set_exists() {
+    local table=$1
+    local set=$2
+    nft list sets | grep -q "$table $set"
+}
+
+stop_timecontrol() {
+    if [ -n "$nftables_ver" ]; then
+        for chain in "ip" "bridge" "ip6"; do
+            if nft_table_exists "$chain filter"; then
+                if nft_set_exists "$chain filter" "${list_type}_list"; then
+                    nft delete set "$chain" filter "${list_type}_list"
+                fi
+                nft delete table "$chain" filter
+            fi
+        done
+        dbg "All nftables rules have been cleared."
+    else
+        iptables -D INPUT -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null
+        ip6tables -D INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null
+        ipset flush timecontrol_blacklist 2>/dev/null
+        ipset flush timecontrol_blacklistv6 2>/dev/null
+        ipset destroy timecontrol_blacklist 2>/dev/null
+        ipset destroy timecontrol_blacklistv6 2>/dev/null
+        dbg "Deleted iptables rules and ipsets"
+    fi
+
+    echo "" > "$IDLIST"
+    dbg "All Firewall rules have been cleared."
+}
+
+init_timecontrol() {
+    if [ -n "$nftables_ver" ]; then
+        for chain in "ip" "bridge" "ip6"; do
+            case $chain in
+                ip)
+                    addr_type="ipv4_addr"
+                    ;;
+                ip6)
+                    addr_type="ipv6_addr"
+                    ;;
+                bridge)
+                    addr_type="ether_addr"
+                    ;;
+            esac
+            
+            if ! nft_table_exists "$chain filter"; then
+                nft add table "$chain" filter
+            fi
+            
+            if ! nft_set_exists "$chain filter" "${list_type}_list"; then
+                nft add set "$chain" filter "${list_type}_list" "{ type $addr_type; }"
+            fi
+        done
+    elif [ -n "$iptables_ver" ]; then
+        ipset create timecontrol_blacklist hash:net 2>/dev/null || ipset flush timecontrol_blacklist
+        ipset create timecontrol_blacklistv6 hash:net family inet6 2>/dev/null || ipset flush timecontrol_blacklistv6
+        
+        iptables -C INPUT -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null || \
+        iptables -I INPUT -m set --match-set timecontrol_blacklist src -j DROP
+        
+        ip6tables -C INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null || \
+        ip6tables -I INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP
+    fi
+}
+
+timeadd() {
+    local id=$1
+    local target=$(config_t_get device mac "$id")
+    [ -z "$target" ] && return
+    
+    local target_info=$(get_target_info "$target")
+    [ $? -ne 0 ] && return
+    
+    read -r table addr_type target <<< "$target_info"
+    
+    case $table in
+        ip)
+            saddr="ip saddr"
+            daddr="ip daddr"
+            ipset_name="timecontrol_blacklist"
+            ;;
+        ip6)
+            saddr="ip6 saddr"
+            daddr="ip6 daddr"
+            ipset_name="timecontrol_blacklistv6"
+            ;;
+        bridge)
+            saddr="ether saddr"
+            daddr="ether daddr"
+            ipset_name="timecontrol_blacklistbridge"
+            ;;
+        *) return ;;
+    esac
+    
+    if [ -n "$nftables_ver" ]; then
+        nft add element "$table" filter "${list_type}_list" "{ $target }"
+        
+        if [ "$list_type" = "blacklist" ]; then
+            if ! nft list chain "$table" filter "$CHAIN" 2>/dev/null; then
+                nft add chain "$table" filter "$CHAIN" "{ type filter hook input priority -100; }"
+            fi
+            nft add rule "$table" filter "$CHAIN" "$daddr" @"${list_type}_list" drop
+            nft add rule "$table" filter "$CHAIN" "$saddr" @"${list_type}_list" drop
+        elif [ "$list_type" = "whitelist" ]; then
+            if ! nft list chain "$table" filter "$CHAIN" 2>/dev/null; then
+                nft add chain "$table" filter "$CHAIN" "{ type filter hook input priority -100; policy drop; }"
+            fi
+            nft add rule "$table" filter "$CHAIN" "$daddr" @"${list_type}_list" accept
+            nft add rule "$table" filter "$CHAIN" "$saddr" @"${list_type}_list" accept
+        fi
+    else
+        if ! ipset test "$ipset_name" "$target" 2>/dev/null; then
+            ipset add "$ipset_name" "$target"
+        fi
+    fi
+}
+
+timedel() {
+    local id=$1
+    local target=$(config_t_get device mac "$id")
+    [ -z "$target" ] && return
+    
+    local target_info=$(get_target_info "$target")
+    [ $? -ne 0 ] && return
+    
+    read -r table addr_type target <<< "$target_info"
+    
+    case $table in
+        ip) ipset_name="timecontrol_blacklist" ;;
+        ip6) ipset_name="timecontrol_blacklistv6" ;;
+        bridge) ipset_name="timecontrol_blacklistbridge" ;;
+        *) return ;;
+    esac
+    
+    if [ -n "$nftables_ver" ]; then
+        nft delete element "$table" filter "${list_type}_list" "{ $target }"
+    else
+        ipset del "$ipset_name" "$target" 2>/dev/null
+    fi
+}
+
+check_time() {
+    local start=$1
+    local end=$2
+    local current=$(date +%H%M)
+    local start_min=$((10#${start:0:2}*60 + 10#${start:3:2}))
+    local end_min=$((10#${end:0:2}*60 + 10#${end:3:2}))
+    local current_min=$((10#${current:0:2}*60 + 10#${current:2:2}))
+    
+    if [[ $start_min -lt $end_min ]]; then
+        [[ $current_min -ge $start_min && $current_min -lt $end_min ]]
+    else
+        [[ $current_min -ge $start_min || $current_min -lt $end_min ]]
+    fi
+}
+
+check_list() {
+    local i=$1
+    local start_time=$(config_t_get device timestart "$i")
+    local end_time=$(config_t_get device timeend "$i")
+    local wweek=$(config_t_get device week "$i")
+    local current_weekday=$(date +%u)
+    
+    check_time "$start_time" "$end_time" || return 1
+    
+    if [ "$wweek" != "0" ]; then
+        echo "$wweek" | grep -qw "$current_weekday" || return 1
+    fi
+    
+    return 0
+}
+
+case "$crrun" in
+    "stop")
+        stop_timecontrol
+        ;;
+    "start")
+        idlist=$(uci show $NAME | grep "enable='1'" | grep "device" | grep -oE '\[.*?\]' | grep -o '[0-9]' | sed -e 's/^/!/g' -e 's/$/!/g' > "$IDLIST"; cat "$IDLIST" | sed -e 's/!//g')
+        stop_timecontrol
+        init_timecontrol
+        for list in $(echo "$idlist" | sed -e 's/!//g'); do
+            if check_list "$list"; then
+                timeadd "$list"
+            else
+                if grep -q "!${list}!" "$IDLIST"; then
+                    timedel "$list"
+                    sed -i "/!$list!/d" "$IDLIST"
+                fi
+            fi
+        done
+        dbg "Time control started with $(wc -l < "$IDLIST") devices"
+        ;;
+    "add")
+        for list in $(echo "$crid" | sed -e 's/!//g' | sed 's/,/ /g'); do
+            if check_list "$list"; then
+                timeadd "$list"
+                if ! grep -q "!$list!" "$IDLIST"; then
+                    echo "!$list!" >> "$IDLIST"
+                fi
+            else
+                if grep -q "!${list}!" "$IDLIST"; then
+                    timedel "$list"
+                    sed -i "/!$list!/d" "$IDLIST"
+                fi
+            fi
+        done
+        ;;
+    "del")
+        for list in $(echo "$crid" | sed -e 's/!//g' | sed 's/,/ /g'); do
+            timedel "$list"
+            sed -i "/!$list!/d" "$IDLIST"
+        done
+        ;;
+    *)
+        dbg "Invalid command: $crrun"
+        exit 1
+        ;;
+esac

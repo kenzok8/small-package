@@ -1,0 +1,25 @@
+
+config my-dnshelper
+	option enable '0'
+	option autoupdate '1'
+	option flash '0'
+	option use_doh '0'
+	option block_ios '0'
+	option block_games '0'
+	option block_short '0'
+	option block_google '0'
+	option dns_detect '1'
+	option dns_cache '600'
+	option dns_check '0'
+	option filter_aaaa '0'
+	option use_mul '0'
+	option use_sec '0'
+	option dnsmasq_log '0'
+	option dnslog_path '/var/log/dnsmasq.log'
+	option dns_log '0'
+	option rev_log '0'
+	option my_github '0'
+	option time_update '24'
+	list url 'https://fastly.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/adblock-for-dnsmasq.conf'
+
+

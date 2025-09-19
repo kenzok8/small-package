@@ -1,0 +1,18 @@
+{
+	"admin/services/ftp": {
+		"title": "FTP",
+		"order": 99,
+		"action": {
+			"type": "view",
+			"path": "vsftpd/vsftpd"
+		},
+		"depends": {
+			"acl": [
+				"luci-app-vsftpd-config"
+			],
+			"uci": {
+				"vsftpd": true
+			}
+		}
+	}
+}

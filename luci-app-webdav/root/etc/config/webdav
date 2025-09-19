@@ -1,0 +1,8 @@
+
+config webdav 'config'
+	option allow_wan '0'
+	option enable '0'
+	option listen_port '5005'
+	option root_dir '/mnt'
+	option ssl '0'
+

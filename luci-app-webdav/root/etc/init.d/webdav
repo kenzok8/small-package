@@ -1,0 +1,113 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+
+NGINX="/usr/sbin/nginx"
+NGINX_CONF="/etc/nginx/uci.conf"
+NGINX_DAV_CONF="/etc/nginx/conf.d/webdav.conf"
+NGINX_DAV_PASSWORD="/etc/nginx/webdav.password"
+
+get_config() {
+	config_load webdav
+	config_get "enable" "config" "enable" "0"
+	config_get "listen_port" "config" "listen_port" "5005"
+	config_get "username" "config" "username"
+	config_get "password" "config" "password"
+	config_get "root_dir" "config" "root_dir" "/mnt"
+	config_get "read_only" "config" "read_only" "0"
+	config_get "firewall_accept" "config" "firewall_accept" "0"
+	config_get "ssl" "config" "ssl" "0"
+	config_get "cert_cer" "config" "cert_cer" ""
+	config_get "cert_key" "config" "cert_key" ""
+}
+
+set_firewall() {
+	if [ "$external_access" = "allow" ]; then
+		uci -q delete firewall.webdav
+		uci set firewall.webdav=rule
+		uci set firewall.webdav.name="webdav"
+		uci set firewall.webdav.target="ACCEPT"
+		uci set firewall.webdav.src="wan"
+		uci set firewall.webdav.proto="tcp"
+		uci set firewall.webdav.dest_port="$listen_port"
+		uci set firewall.webdav.enabled="1"
+		uci commit firewall
+		/etc/init.d/firewall reload >/dev/null 2>&1
+	elif [ "$external_access" = "deny" ]; then
+		uci -q delete firewall.webdav
+		uci commit firewall
+		/etc/init.d/firewall reload >/dev/null 2>&1
+	fi
+}
+
+start() {
+	get_config
+	[ "$enable" -ne "1" ] && return 1
+	[ ! -d "$root_dir" ] && mkdir -p "${root_dir}/.webdav_temp"
+	[ "$firewall_accept" -eq "1" ] && external_access="allow" || external_access="deny"
+	set_firewall
+	{
+		printf "server {"
+		if [ "$ssl" -eq "1" ]; then
+			printf "\n\tlisten ${listen_port} ssl;"
+			printf "\n\tlisten [::]:${listen_port} ssl;"
+			printf "\n\thttp2 on;"
+		else
+			printf "\n\tlisten ${listen_port};"
+			printf "\n\tlisten [::]:${listen_port};"
+		fi
+		printf "\n\tserver_name _;"
+		printf "\n\tcharset utf-8,gbk;"
+		printf "\n\troot ${root_dir};"
+		printf "\n\taccess_log off;"
+		printf "\n\terror_log off;"
+		printf "\n\tclient_body_temp_path ${root_dir}/.webdav_temp;"
+		if [ "$ssl" -eq "1" ]; then
+			printf "\n\tssl_certificate ${cert_cer};"
+			printf "\n\tssl_certificate_key ${cert_key};"
+			printf "\n\tssl_session_timeout 1d;"
+			printf "\n\tssl_session_tickets on;"
+			printf "\n\tssl_session_cache shared:SSL:10m;"
+			printf "\n\tssl_protocols TLSv1.2 TLSv1.3;"
+			printf "\n\tssl_prefer_server_ciphers off;"
+			printf "\n\tssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;"
+		fi
+		printf "\n\tlocation / {"
+		printf "\n\t\tautoindex on;"
+		printf "\n\t\tautoindex_exact_size off;"
+		printf "\n\t\tautoindex_localtime on;"
+		if [ -n "$username" ] && [ -n "$password" ]; then
+			printf "$username:$(openssl passwd -apr1 $password)" > "$NGINX_DAV_PASSWORD"
+			printf "\n\t\tauth_basic "Restricted";"
+			printf "\n\t\tauth_basic_user_file ${NGINX_DAV_PASSWORD};"
+		fi
+		printf "\n\t\tclient_max_body_size 0;"
+		printf "\n\t\tcreate_full_put_path on;"
+		printf "\n\t\tdav_access user:rw group:rw all:r;"
+		printf "\n\t\tdav_ext_methods PROPFIND OPTIONS;"
+		[ "$read_only" -eq "1" ] && printf "\n\t\tdav_methods off;" || printf "\n\t\tdav_methods PUT DELETE MKCOL COPY MOVE;"
+		printf "\n\t}"
+		printf "\n}\n"
+	} > "${NGINX_DAV_CONF}"
+	local message
+	message="$(${NGINX} -t -c "${NGINX_CONF}" 2>&1)" ||
+	{
+		echo -e "${message}" | logger -t "nginx_dav" -p "daemon.err"
+		logger -s -t "nginx_dav" -p "daemon.err" "configuration file ${NGINX_CONF} test failed!"
+		echo "show config to be used by: nginx -T -c '${NGINX_CONF}'" >&2
+		exit 1
+	}
+	/etc/init.d/nginx reload
+}
+
+stop() {
+	rm -rf "${NGINX_DAV_CONF}" "${NGINX_DAV_PASSWORD}" ${root_dir}/.webdav_temp
+	/etc/init.d/nginx reload
+	external_access="deny"
+	set_firewall
+}
+
+restart() {
+	stop
+	start
+}

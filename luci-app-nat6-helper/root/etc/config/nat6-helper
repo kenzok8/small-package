@@ -1,0 +1,3 @@
+config nat6-helper
+	option enabled '0'
+	option name 'wan6'

@@ -1,0 +1,96 @@
+#!/bin/sh
+
+logfile="/tmp/wechatpush/wechatpush.log"
+dir="/tmp/wechatpush" && mkdir -p "${dir}"
+oui_base="${dir}/oui_base.txt"
+oui_data=$(uci get wechatpush.config.oui_data 2>/dev/null)
+oui_url="https://standards-oui.ieee.org/oui/oui.txt"
+lang=$(uci get luci.main.lang 2>/dev/null)
+if [ -z "$lang" ] || [[ "$lang" == "auto" ]]; then
+	lang=$(echo "${LANG:-${LANGUAGE:-${LC_ALL:-${LC_MESSAGES:-zh_cn}}}}" | awk -F'[ .@]' '{print tolower($1)}' | sed 's/-/_/' 2>/dev/null)
+fi
+
+translate() {
+	# 处理特殊字符
+	local lua_script=$(cat <<LUA
+	require "luci.i18n".setlanguage("$lang")
+	print(require "luci.i18n".translate([==[$1]==]))
+LUA
+	)
+
+	lua -e "$lua_script"
+}
+
+# 获取文件最后修改时间和行数
+file_date() {
+	local file_dir="$1"
+	local filerow=$(grep -c "" "${file_dir}" 2>/dev/null || echo "0")
+	local datetime=$(date -r "${file_dir}" +%s 2>/dev/null || echo "0")
+	expr $(date +%s) - ${datetime}
+}
+
+# 下载
+download_file() {
+	url=$1
+	output_file=$2
+	retries=2
+	retval=1
+
+	# 尝试使用 curl 下载
+	i=0
+	while [ $i -lt $retries ]; do
+		curl -fsSL --connect-timeout 15 --max-time 30 -o "${output_file}" "${url}" >/dev/null 2>&1
+		retval=$?
+		if [ $retval -eq 0 ]; then
+			return 0
+		fi
+		i=$((i + 1))
+		sleep 1  # 等待1秒后重试
+	done
+
+	# 如果 curl 失败，尝试使用 wget 下载
+	i=0
+	while [ $i -lt $retries ]; do
+		wget --no-check-certificate -T 15 -O "${output_file}" "${url}" >/dev/null 2>&1
+		retval=$?
+		if [ $retval -eq 0 ]; then
+			return 0
+		fi
+		i=$((i + 1))
+		sleep 1  # 等待1秒后重试
+	done
+
+	return $retval
+}
+
+# 更新 MAC 信息文件
+down_oui() {
+	if [ -n "${oui_data}" ] && [ "${oui_data}" -ne "3" ]; then
+		echo "$(date "+%Y-%m-%d %H:%M:%S") [INFO] $(translate "Starting background update of MAC information file")" >>"${logfile}"
+		download_file "${oui_url}" "${dir}/oui.txt"
+		local RETVAL=$?
+		[ ${RETVAL} -ne 0 ] && echo "$(date "+%Y-%m-%d %H:%M:%S") [ERROR] $(translate "Failed to download MAC information file, return code: ${RETVAL}")" >>"${logfile}" && return 1
+		echo "$(date "+%Y-%m-%d %H:%M:%S") [INFO] $(translate "MAC information file downloaded successfully, processing...")" >>"${logfile}"
+		if [ "${oui_data}" -eq "1" ]; then
+			grep -i -E ".*(base 16).*(apple|aruba|asus|autelan|belkin|bhu|buffalo|cctf|cisco|comba|datang|dell|dlink|dowell|ericsson|fast|feixun|fiberhome|fujitsu|grentech|h3c|hisense|hiwifi|honghai|honghao|hp|htc|huawei|intel|jinli|jse|lenovo|lg|liteon|malata|meizu|mercury|meru|moto|netcore|netgear|nokia|omron|oneplus|oppo|philips|router_unkown|samsung|shanzhai|sony|start_net|sunyuanda|tcl|tenda|texas|tianyu|tp-link|ubq|undefine|VMware|utstarcom|volans|xerox|xiaomi|zdc|zhongxing|smartisan).*" "${dir}/oui.txt" | sed -E 's/( Electronic| Technology| Intelligence| TECHNOLOGIES| Device| Systems| TELECOMMUNICATIONS| Instruments| Electronics| Corporation| Telecommunication| Communications| Electrical| Technology| Corporate| Intelligent| Interactive| MOBILE| Solutions| Mobility| Meraki| ELECTRO| VISUAL| Limited| International| Information| LLC|Co$|Co\.|Ltd\.$|Inc\.|B\.V\.$|AB$|,).*$/ /I; s/[[:space:]]*$//; s/ +$//' >"${oui_base}"
+		elif [ "${oui_data}" -eq "2" ]; then
+			grep -i "(base 16)" "${dir}/oui.txt" | sed -E 's/( Electronic| Technology| Intelligence| TECHNOLOGIES| Device| Systems| TELECOMMUNICATIONS| Instruments| Electronics| Corporation| Telecommunication| Communications| Electrical| Technology| Corporate| Intelligent| Interactive| MOBILE| Solutions| Mobility| Meraki| ELECTRO| VISUAL| Limited| International| Information| LLC|Co$|Co\.|Ltd\.$|Inc\.|B\.V\.$|AB$|,).*$/ /I; s/[[:space:]]*$//; s/ +$//' >"${oui_base}"
+		fi
+		rm -f "${dir}/oui.txt" >/dev/null 2>&1
+		echo "$(date "+%Y-%m-%d %H:%M:%S") [INFO] $(translate "MAC information file processing completed")" >>"${logfile}"
+	fi
+}
+
+if [ "$1" == "clear_log" ]; then
+	# 清空日志
+	>"${logfile}"
+elif [ "$1" == "down_oui" ]; then
+	# 更新 MAC 信息列表
+	[ $(file_date "$oui_base") -lt 604800 ] && echo "$(date "+%Y-%m-%d %H:%M:%S") [INFO] $(translate "MAC information file does not need updating")" >>"${logfile}" && exit 2
+	down_oui >/dev/null 2>&1 &
+elif [ "$1" == "child" ]; then
+	shift
+	command_name=$1
+	shift
+	"$command_name" "$@"
+fi
