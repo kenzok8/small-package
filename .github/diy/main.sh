@@ -44,7 +44,7 @@ git clone --depth 1 https://github.com/KyleRicardo/MentoHUST-OpenWrt-ipk
 git clone --depth 1 https://github.com/NateLol/luci-app-beardropper
 git clone --depth 1 https://github.com/yaof2/luci-app-ikoolproxy
 git clone --depth 1 https://github.com/project-lede/luci-app-godproxy
-git clone --depth 1 -b openwrt-18.06 https://github.com/tty228/luci-app-wechatpush
+git clone --depth 1 https://github.com/tty228/luci-app-wechatpush
 git clone --depth 1 https://github.com/4IceG/luci-app-sms-tool smstool && mvdir smstool
 git clone --depth 1 https://github.com/silime/luci-app-xunlei
 git clone --depth 1 https://github.com/BCYDTZ/luci-app-UUGameAcc
@@ -159,6 +159,30 @@ git clone --depth 1 https://github.com/Carseason/openwrt-app-actions Carseason &
 git clone --depth 1 https://github.com/Akimio521/luci-app-gecoosac
 git clone --depth 1 https://github.com/EasyTier/luci-app-easytier
 git clone --depth 1 https://github.com/asvow/luci-app-tailscale
+git clone --depth 1 https://github.com/kiddin9/openwrt-netdata netdata
+git clone --depth 1 https://github.com/kiddin9/openwrt-my-dnshelper && mvdir openwrt-my-dnshelper
+git clone --depth 1 https://github.com/kiddin9/openwrt-lingtigameacc && mvdir openwrt-lingtigameacc
+git clone --depth 1 https://github.com/kiddin9/luci-app-timewol
+git clone --depth 1 https://github.com/kiddin9/luci-app-vsftpd
+git clone --depth 1 https://github.com/kiddin9/openwrt-subconverter && mvdir openwrt-subconverter
+git clone --depth 1 https://github.com/kiddin9/luci-app-syncdial
+git clone --depth 1 https://github.com/sbwml/luci-app-webdav
+git clone --depth 1 https://github.com/sirpdboy/luci-app-taskplan taskplan && mvdir taskplan
+git clone --depth 1 https://github.com/sirpdboy/luci-app-watchdog watchdog1 && mvdir watchdog1
+git clone --depth 1 https://github.com/sirpdboy/luci-app-timecontrol timecontrol && mvdir timecontrol
+git clone --depth 1 https://github.com/sirpdboy/luci-theme-kucat kucat && mvdir kucat
+git clone --depth 1 https://github.com/muink/openwrt-fastfetch
+git clone --depth 1 https://github.com/linkease/lcdsimple lcdsimple1 && mvdir lcdsimple1
+git clone --depth 1 https://github.com/Wulnut/luci-app-suselogin
+git clone https://github.com/Ausaci/luci-app-nat6-helper -b main-dev
+git clone --depth 1 https://github.com/animegasan/luci-app-droidmodem
+git clone --depth 1 https://github.com/kenzok78/luci-app-guest-wifi
+git clone --depth 1 https://github.com/EkkoG/openwrt-natmap
+git clone --depth 1 https://github.com/EkkoG/luci-app-natmap
+git clone --depth 1 https://github.com/EasyTier/luci-app-easytier luci-app-easytier1 && mvdir luci-app-easytier1
+git clone --depth 1 https://github.com/sbwml/luci-app-openlist2 oplist && mvdir oplist
+git clone --depth 1 https://github.com/AngelaCooljx/luci-theme-material3
+git clone --depth 1 https://github.com/vison-v/luci-app-nginx-proxy
 
 svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-ipkg
 svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
