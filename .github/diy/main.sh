@@ -144,7 +144,7 @@ git clone --depth 1 https://github.com/vinewx/NanoHatOLED; mv NanoHatOLED/nanoha
 git clone --depth 1 https://github.com/zerolabnet/luci-app-torbp
 git clone --depth 1 https://github.com/muink/luci-app-tinyfilemanager
 git clone --depth 1 https://github.com/sbwml/luci-app-airconnect airconnect1 && mv airconnect1/* ./ && rm -rf airconnect1
-git clone --depth 1 https://github.com/sirpdboy/luci-theme-kucat -b js --depth 1
+#git clone --depth 1 https://github.com/sirpdboy/luci-theme-kucat -b js --depth 1
 git clone --depth 1 https://github.com/blueberry-pie-11/luci-app-natmap
 git clone --depth 1 https://github.com/QiuSimons/luci-app-daed-next daed1 && mvdir daed1
 #git clone --depth 1 https://github.com/morytyann/OpenWrt-mihomo OpenWrt-mihomo && mv -n OpenWrt-mihomo/*mihomo ./ ; rm -rf OpenWrt-mihomo
@@ -170,7 +170,7 @@ git clone --depth 1 https://github.com/sbwml/luci-app-webdav
 git clone --depth 1 https://github.com/sirpdboy/luci-app-taskplan taskplan && mvdir taskplan
 git clone --depth 1 https://github.com/sirpdboy/luci-app-watchdog watchdog1 && mvdir watchdog1
 git clone --depth 1 https://github.com/sirpdboy/luci-app-timecontrol timecontrol && mvdir timecontrol
-git clone --depth 1 https://github.com/sirpdboy/luci-theme-kucat kucat && mvdir kucat
+git clone --depth 1 https://github.com/sirpdboy/luci-theme-kucat openwrt-kucat && mv -n openwrt-kucat/luci-theme-kucat ./ ; rm -rf openwrt-kucat
 git clone --depth 1 https://github.com/muink/openwrt-fastfetch
 git clone --depth 1 https://github.com/linkease/lcdsimple lcdsimple1 && mvdir lcdsimple1
 git clone --depth 1 https://github.com/Wulnut/luci-app-suselogin
