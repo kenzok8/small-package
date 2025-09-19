@@ -1,0 +1,179 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+source /usr/share/my-dnshelper/comm
+
+Helpthis() {
+DATE_HMS=`date +%H:%M:%S`
+DATE_Y=`date +%Y`
+DATE="$DATE_Ymd $DATE_HMS"
+echo "
+Hi Master, I'm your dnshelper. This one of my waiters for you.
+
+usage: waiter [OPTION]
+
+...
+
+I am sorry.
+
+He's a little shy and not ready.
+
+...
+
+It is juest a part of me. You still need a luci application.
+Thank you for coming to look at me. I'm very happy.
+By MY-Dnshelper on $DATE
+
+[K] $DATE_Y
+You can contact my Founder via this link: https://github.com/kongfl888
+"
+exit 0
+}
+
+Pa=${1}
+
+crules=$SPath/rules.conf
+cwhite=$SPath/white.txt
+chosts=$SPath/hosts.conf
+ifc=0
+iac=0
+ihc=0
+
+check_bin(){
+	[ -f "/usr/bin/my-dnshelper" ] || return
+	local p=`ps|grep "/usr/bin/my-dnshelper"|sed "/grep/d"`
+	[ -n "$p" -a "$EA" != "1" ] && /etc/init.d/my-dnshelper stop
+	[ -z "$p" -a "$EA" == "1" ] && /etc/init.d/my-dnshelper start
+}
+
+clear_rule(){
+	[ -d $RPath ] || mkdir -p $RPath >/dev/null 2>&1
+	read_count
+	if [ "$1" == "1" ];then
+		echo -n > $crules
+		ifc=0
+	elif [ "$1" == "2" ];then
+		echo -n > $cwhite
+		iac=0
+	elif [ "$1" == "3" ];then
+		echo -n > $chosts
+		if [ "$GH" == "1" -a -s $EPath/github.mdhp ];then
+			touch $SPath/hosts.conf
+			cat $EPath/github.mdhp >> $SPath/hosts.conf
+			sort_file $SPath/hosts.conf
+		fi
+		ihc=0
+	fi
+	echo "$ifc,$iac,$ihc" > $countf
+	if [ "$(cat $updatelog 2>/dev/null)" == "0" ]; then
+		rm -f $updatelog
+	fi
+	if [ "$EA" == "1" ];then
+		push_log "Rules have changed."
+		push_log "Dnsmasq reload."
+		/etc/init.d/dnsmasq reload 2>/dev/null
+		echo "$?"
+	else
+		push_log "Rules have been cleared."
+		echo "0"
+	fi
+}
+
+get_log(){
+	if [ "$revlog" == "1" ];then
+		tail -800 $dnsmasqlog |sed '1!G;h;$!d' 2>/dev/null
+	else
+		tail -800 $dnsmasqlog 2>/dev/null
+	fi
+}
+
+get_dnsonline(){
+	local rc=0
+	if [ "$dnsdetect" == "1" ]; then
+		which curl >/dev/null 2>&1 || rc=1
+		if [ $rc -eq 1 ];then
+			echo ""
+		else
+			local rurl=`curl --connect-timeout 5 -m 10 -kLfs http://nstool.netease.com | grep -oE "http.*[a-zA-Z]\/"`
+			local txt=`curl --connect-timeout 5 -m 10 -kLfs  $rurl | grep -oE "[Ii][pP].*[DNSdns]+.*\.\d+.*<br>"`
+			if [ -z "$txt" ];then
+				echo ""
+			else
+				local ip=`echo $txt|grep -oE "[0-9]+(\.[0-9]+){3}" |head -n 1`
+				local ds=`echo $txt|grep -oE "[0-9]+(\.[0-9]+){3}" |sed -n "2p"`
+				echo '<p>Detect DNS：IP - '$ip'| DNS - '$ds'</p>'
+			fi
+		fi
+	else
+		echo ""
+	fi
+}
+
+get_ports_ip(){
+	local a=`echo $(get_ports) |sed 's/ /,/g'`
+	[ $(check_ipv4doh) -gt 0 ] && a="$a IPv4"
+	[ $(check_ipv6doh) -gt 0 ] && a="$a IPv6"
+	echo $a
+}
+
+get_appver(){
+	local dmqver="Dnsmasq `dnsmasq --version | grep -oE 'v.*\d+(\.\d+)+'| grep -oE '\d+(\.\d+)*'`"
+	local appvr=""
+	[ "$app_check" == "1" ] && appvr=`sh /usr/share/my-dnshelper/checkver`
+	if [ -z "$appvr" ];then
+		echo $dmqver
+	else
+		echo "$dmqver | $appvr"
+	fi
+}
+
+case $Pa in
+	"--help")
+	Helpthis
+	;;
+	"-m"|"--dnsmasq")
+	get_appver
+	;;
+	"-d"|"--doh")
+	hv=`opkg list-installed https-dns-proxy 2>/dev/null`
+	[ -n "$hv" ] && echo "`echo $hv | sed -e 's/https-dns-proxy/core/' -e 's/ -/ version: /'`" || echo "https-dns-proxy is not installed"
+	;;
+	"-f"|"--filter")
+	get_count $crules
+	;;
+	"-a"|"--allow")
+	get_count $cwhite
+	;;
+	"-h"|"--hosts")
+	get_count $chosts
+	;;
+	"-u"|"--update")
+	sh /usr/share/my-dnshelper/uprules &
+	echo "0"
+	;;
+	"--port")
+	get_ports_ip
+	;;
+	"--xf")
+	clear_rule 1
+	;;
+	"--xw")
+	clear_rule 2
+	;;
+	"--xh")
+	clear_rule 3
+	;;
+	"--dns")
+	get_dnsonline
+	;;
+	"--dnslog")
+	get_log
+	;;
+	*)
+	Helpthis
+	;;
+esac
+check_bin
+exit 0

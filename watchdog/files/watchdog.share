@@ -1,0 +1,625 @@
+#!/bin/bash
+#
+# Copyright (C) 2025 sirpdboy herboy2008@gmail.com https://github.com/sirpdboy/luci-app-watchdog
+# 
+
+APP=watchdog
+
+# 检测防火墙类型
+detect_firewall_type() {
+    if command -v nft >/dev/null && [ -x /sbin/fw4 ]; then
+        echo "nft"
+    elif command -v iptables >/dev/null; then
+        echo "iptables"
+    else
+        echo "unknown"
+    fi
+}
+
+# 读取设置文件
+get_config() {
+	while [[ "$*" != "" ]]; do
+		[[ "$1" == "lang" ]] && {
+			lang=$(uci get luci.main.lang 2>/dev/null)
+			if [ -z "$lang" ] || [[ "$lang" == "auto" ]]; then
+				lang=$(echo "${LANG:-${LANGUAGE:-${LC_ALL:-${LC_MESSAGES:-zh_cn}}}}" | awk -F'[ .@]' '{print tolower($1)}' | sed 's/-/_/' 2>/dev/null)
+			fi
+		} || {
+			eval "${1}='$(uci get $APP.config.$1 2>/dev/null)'"
+		}
+		shift
+	done
+}
+
+
+
+# 初始化设置信息
+read_config() {
+	get_config \
+		"enable" "sleeptime" "lang" \
+		"login_control" "login_max_num" \
+		"login_web_black" "login_ip_black_timeout" "port_release_enable" "login_port_white" "login_port_forward_list" "login_ip_white_timeout" 
+
+	(echo "$login_control" | grep -q "web_logged") && web_logged="true"
+	(echo "$login_control" | grep -q "ssh_logged") && ssh_logged="true"
+	(echo "$login_control" | grep -q "web_login_failed") && web_login_failed="true"
+	(echo "$login_control" | grep -q "ssh_login_failed") && ssh_login_failed="true"
+
+	(opkg list-installed | grep -w -q "^firewall4") && nftables_version="true"
+	ip_blacklist_path="/usr/share/$APP/api/ip_blacklist"
+	login_port_forward_list=$(echo "$login_port_forward_list" | sed 's/ /\n/g') 2>/dev/null
+
+	ipv4_urllist=$(cat /usr/share/$APP/api/ipv4.list) 2>/dev/null
+	ipv6_urllist=$(cat /usr/share/$APP/api/ipv6.list) 2>/dev/null
+	[ -z "$sleeptime" ] && sleeptime="60"
+	[ -z "$login_ip_black_timeout" ] && login_ip_black_timeout="86400"
+	[ -z "$login_ip_white_timeout" ] && login_ip_white_timeout="600"
+	[ "$iw_version" ] && wlan_interface=$(iw dev 2>/dev/null | grep Interface | awk '{print $2}') >/dev/null 2>&1
+	[ -z "$server_port" ] && server_port="22"
+
+	deltemp
+}
+
+# 初始化
+init() {
+	# 检测程序开关
+	enable_test
+	[ -f "$logfile" ] && local logrow=$(grep -c "" "$logfile") || local logrow="0"
+	[ "$logrow" -ne 0 ] && echo "----------------------------------" >>${logfile}
+	log "[INFO] $(translate "Start running")"
+	if [ -f "/usr/share/$APP/errlog" ]; then
+		cat /usr/share/$APP/errlog >${logfile}
+		log "[ERROR] $(translate "Loaded logs from previous restart")"
+	fi
+
+	# 文件清理
+	rm -f  "/usr/share/$APP/errlog"  >/dev/null 2>&1
+	LockFile unlock
+
+	# 防火墙初始化
+	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] && init_ip_black "ipv4"
+	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] && init_ip_black "ipv6"
+	[ -n "$port_release_enable" ] && [ "$port_release_enable" -eq "1" ] && init_ip_white "ipv4"
+	[ -n "$port_release_enable" ] && [ "$port_release_enable" -eq "1" ] && init_ip_white "ipv6"
+	set_ip_black
+
+	return 0
+}
+
+# 主程序
+main() {
+	# 限制并发进程
+	dir="/tmp/$APP"
+	logfile="${dir}/$APP.log"
+	mkdir -p "$(dirname "$logfile")"
+	get_config "thread_num"
+	[ -z "$thread_num" ] || [ "$thread_num" -eq "0" ] && thread_num=5
+	[ "$1" ] && [ $1 == "t1" ] && thread_num=1
+	max_thread_num="$thread_num"
+
+	FIFO_PATH="${dir}/fifo.$$"
+	mkfifo "$FIFO_PATH"
+	exec 5<>"$FIFO_PATH"
+	rm "$FIFO_PATH" >/dev/null 2>&1
+
+	for i in $(seq 1 "$max_thread_num"); do
+		echo >&5
+	done
+	unset i
+
+	# 定义锁文件
+	lock_file="${dir}/$APP.lock"
+	touch "$lock_file"
+
+	# 设置信号处理
+	trap cleanup SIGINT SIGTERM EXIT
+	MAIN_PID=$$
+	PROCESS_TAG="{watchdog}_${MAIN_PID}"
+
+	# 初始化
+	if [ "$1" ]; then
+
+		silent_run read_config
+	else
+		silent_run read_config
+	fi
+
+	# 载入在线设备
+	init
+	[ $? -eq 1 ] && log "[ERROR] $(translate "Failed to read settings, please check configuration.")" && exit
+	if [ -n "$web_logged" ] || [ -n "$ssh_logged" ] || [ -n "$web_login_failed" ] || [ -n "$ssh_login_failed" ]; then
+		# 声明关联数组
+		declare -A web_login_counts
+		declare -A ssh_login_counts
+		declare -A web_failed_counts
+		declare -A ssh_failed_counts
+	fi
+
+	>"${dir}/send_enable.lock"  && deltemp
+	log "[INFO] $(translate "Initialization completed")"
+	while [ "$enable" -eq "1" ]; do
+		deltemp
+
+
+		silent_run run_logins
+		set_ip_black
+		sleep $sleeptime
+	done
+}
+
+# 隐藏输出
+# 不能直接包裹 var=$(echo $ssh_command) 等命令，待完善
+silent_run() {
+	"$@" >/dev/null 2>&1
+}
+
+
+# 计算字符串显示宽度
+length_str() {
+	[ -z "$1" ] && return
+
+	local result
+	# 调试模式不要输出信息
+	{
+		local str="$1"
+		local length=0
+
+		while IFS= read -r -n1 char; do
+			local char_width
+			char_width=$(printf "%s" "$char" | awk '{
+				if (match($0, /[一-龥]/)) print 2;
+				else print 1;
+			}')
+
+			length=$((length + char_width))
+		done <<< "$str"
+
+		result="$length"
+	} > /dev/null 2>&1
+
+	echo "$result"
+}
+
+# 字符串显示宽度处理
+cut_str() {
+	[ -z "$1" ] && return
+		[ -z "$2" ] && return
+	local result
+	# 调试模式不要输出信息
+	{
+		local str="$1"
+		local max_width="$2"
+		local current_width=0
+
+		# 遍历字符串的每个字符
+		for ((i = 0; i < ${#str}; i++)); do
+			local char="${str:$i:1}"
+			local char_width=$(length_str "$char")
+
+			# 如果当前宽度加上当前字符的宽度超过最大宽度，则停止
+			if [ $((current_width + char_width)) -gt "$max_width" ]; then
+				break
+			fi
+
+			result="${result}${char}"
+			current_width=$((current_width + char_width))
+		done
+
+		# 如果裁剪了字符串，则添加 ".."
+		if [ "$current_width" -lt $(length_str "$str") ]; then
+			result=$(echo "$result" | sed 's/ *$//')
+			result="${result}.."
+		fi
+	} > /dev/null 2>&1
+
+	echo "$result"
+}
+
+# 翻译
+translate() {
+	local template="$1"
+	shift  # 移出第一个参数，剩余参数作为变量
+	
+	# 获取基础翻译
+	
+	local lua_script=$(cat <<LUA
+	require "luci.i18n".setlanguage("$lang")
+	print(require "luci.i18n".translate([==[$template]==]))
+LUA
+	)
+	local translated=$(lua -e "$lua_script")
+	
+	# 如果有额外参数则进行格式化
+	if [ $# -gt 0 ]; then
+		printf "$translated" "$@"
+	else
+		echo "$translated"
+	fi
+}
+
+# 随机数
+rand() {
+	local min=$1
+	local max=$(($2 - $min + 1))
+	local num=$(date +%s%N)
+	echo $(($num % $max + $min))
+}
+# 初始化日志
+log() {
+    echo "$(date "+%Y-%m-%d %H:%M:%S") - $1" >> "$logfile"
+}
+
+
+
+# 文件锁
+LockFile() {
+	local fd=200
+
+	if [ "$1" = "lock" ]; then
+		eval "exec $fd>$lock_file"
+		flock -n $fd
+		if [ $? -ne 0 ]; then
+			while ! flock -n $fd; do
+				sleep 1
+			done
+		fi
+	elif [ "$1" = "unlock" ]; then
+		eval "exec $fd>&-"
+	fi
+}
+
+# 检测退出信号
+cleanup() {
+	local pids=$(ps | grep -E "\{watchdog\}_${MAIN_PID}|\{watchdog-call\}" | grep -v grep | awk '{print $1}')
+	[ -n "$pids" ] && echo "$pids" | xargs kill 2>/dev/null
+	LockFile unlock
+	$EXIT_FLAG && exit 0
+}
+
+# 子进程调用
+run_with_tag() {
+	[ -z "$1" ] && return
+	local command_name=$1  # 第一个参数是命令名称
+	shift # 移除第一个参数，剩下的参数传递给命令
+	local command_path=$(readlink -f "$(which "$command_name")") # 检查命令路径
+	
+	# 如果是 BusyBox 的 applet，调用 watchdog-call
+	if [[ "$command_path" == *"busybox"* ]]; then
+		/usr/libexec/watchdog-call child "$command_name" "$@"
+	else
+		bash -c 'exec -a "$0" "$@"' "${PROCESS_TAG} ${command_name}" "$command_name" "$@"
+	fi
+}
+
+
+# 清理临时文件
+deltemp() {
+	rm -f "${dir}/send_enable.lock"   >/dev/null 2>&1
+	[ -f "$logfile" ] && local logrow=$(grep -c "" "$logfile") || local logrow="0"
+	[ "$logrow" -gt 500 ] && tail -n 300 "$logfile" >"${logfile}.tmp" && mv "${logfile}.tmp" "$logfile" && log "[DEBUG] $(translate "Log exceeded limit, keeping last 300 entries")"
+}
+
+# ------------------------------------
+# 信息获取类
+
+
+# 查询 IP 归属地
+get_ip_attribution() {
+	ip="$1"
+	jq -e --arg ip "$ip" '.devices[] | select(.ip == $ip)' "$devices_json" >/dev/null 2>&1 && echo "本地局域网" && return
+	local ip_attribution_urls=$(cat /usr/share/watchdog/api/ip_attribution.list)
+	local sorted_attribution_urls=$(echo "$ip_attribution_urls" | awk 'BEGIN {srand()} {print rand() "\t" $0}' | sort -k1,1n | cut -f2-)
+	local ip_attribution_url
+	while IFS= read -r ip_attribution_url; do
+		local login_ip_attribution=$(eval curl --connect-timeout 2 -m 2 -k -s "$ip_attribution_url" 2>/dev/null)
+		[ -n "$login_ip_attribution" ] && echo "$login_ip_attribution" && break
+	done <<<"$sorted_attribution_urls"
+}
+
+
+# 检测程序开关
+enable_test() {
+	[ -z "$1" ] && local time_n=1
+	for i in $(seq 1 $time_n); do
+		get_config enable
+		[ -z "$enable" ] || [ "$enable" -eq "0" ] && exit || sleep 1
+	done
+	unset i
+}
+
+
+# 自动封禁相关
+# 添加白名单
+add_ip_white() {
+	[ -n "$port_release_enable" ] && [ "$port_release_enable" -eq "1" ] || return
+	[ -z "$2" ] && timeout=$login_ip_white_timeout || timeout=$2
+	# 检查 IP 版本
+	unset ipset_name
+	(echo "$1" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$') && local ipset_name="$APP_whitelist"
+	(echo "$1" | grep -Eq '^([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}$') && local ipset_name="$APP_whitelistv6"
+	[ -z "$ipset_name" ] && log "[ERROR] $(translate "Whitelist add failed, IP format error")" && return
+
+	[ -n "$nftables_version" ] && {
+		nft delete element inet fw4 $ipset_name { $1 } >/dev/null 2>&1
+		nft add element inet fw4 $ipset_name { $1 expires ${timeout}s } #没找到刷新时间的命令，删除再添加
+	} || {
+		ipset -exist add $ipset_name $1 timeout $timeout
+	}
+}
+
+# 初始化白名单
+init_ip_white() {
+	[ -n "$port_release_enable" ] && [ "$port_release_enable" -eq "1" ] || return
+	# 设置 IP 版本变量
+	if [ $1 == "ipv4" ]; then
+		ipset_name="$APP_whitelist"
+		ip_version="ip"
+	elif [ $1 == "ipv6" ]; then
+		ipset_name="$APP_whitelistv6"
+		ip_version="ip6"
+		nat_table_cmd="family inet6"
+	fi
+
+	if [ -n "$nftables_version" ]; then
+		! nft list set inet fw4 $ipset_name >/dev/null 2>&1 && nft add set inet fw4 $ipset_name { type ${1}_addr\; flags timeout\; timeout ${login_ip_white_timeout}s\; }
+		nft -- add chain inet fw4 $APP_dstnat { type nat hook prerouting priority -100 \; }
+		nft add chain inet fw4 $APP_srcnat { type nat hook postrouting priority 100 \; }
+	else
+		! ipset list $ipset_name >/dev/null 2>&1 && ipset create $ipset_name hash:ip timeout $login_ip_white_timeout $nat_table_cmd >/dev/null 2>&1
+	fi
+
+	# 端口放行
+	if [ -n "$login_port_white" ]; then
+		local login_port_white=$(echo "$login_port_white" | sed 's/ //g' | sed 's/,/, /g') 2>/dev/null
+		if [ -n "$nftables_version" ]; then
+			local count_accept_rules=$(nft list ruleset | grep -c "tcp dport.* ${login_port_white}.* $ip_version saddr @${ipset_name} counter packets .* accept comment \"\!watchdog Accept rule\"")
+			if [ $count_accept_rules -eq 0 ]; then
+				nft insert rule inet fw4 input tcp dport { $login_port_white } $ip_version saddr @$ipset_name counter accept comment \"\!watchdog Accept rule\" >/dev/null 2>&1
+			elif [ $count_accept_rules -ne 1 ]; then
+				local i=0
+				local handles=$(nft --handle list ruleset | grep "\!watchdog Accept rule" | grep -v "tcp dport.* ${login_port_white}.* $ip_version saddr @${ipset_name} counter packets .* accept comment \"\!watchdog Accept rule\"" | awk '{print $NF}')
+				for handle in $handles; do
+					[ $i -eq 0 ] && i=1 && continue
+					nft delete rule $handle
+				done
+			fi
+		else
+			${ip_version}tables -C INPUT -m set --match-set $ipset_name src -p tcp -m multiport --dport $login_port_white -j ACCEPT >/dev/null 2>&1 || ${ip_version}tables -I INPUT -m set --match-set $ipset_name src -p tcp -m multiport --dport $login_port_white -j ACCEPT >/dev/null 2>&1
+		fi
+	fi
+	unset handle
+	# 端口转发
+	while IFS= read -r port_forward; do
+		port_forward=$(echo "$port_forward" | sed 's/,/ /g') 2>/dev/null
+		[ $(echo $port_forward | awk -F" " '{print NF}') -ne "4" ] && continue
+		local src_ip=$(echo ${port_forward} | awk '{print $1}')
+		local src_port=$(echo ${port_forward} | awk '{print $2}')
+		local dst_ip=$(echo ${port_forward} | awk '{print $3}')
+		local dst_port=$(echo ${port_forward} | awk '{print $4}')
+		if [ -n "$nftables_version" ]; then
+			! nft list ruleset | grep "$ip_version saddr @${ipset_name} tcp dport $src_port counter .* dnat $ip_version to $dst_ip:$dst_port comment \"\!watchdog DNAT rule\"" >/dev/null 2>&1 && nft insert rule inet fw4 watchdog_dstnat meta nfproto $1 $ip_version saddr @${ipset_name} tcp dport $src_port counter dnat to "$dst_ip:$dst_port" comment \"\!watchdog DNAT rule\" >/dev/null 2>&1
+			! nft list ruleset | grep "$ip_version daddr $dst_ip tcp dport $dst_port counter .* snat $ip_version to $src_ip comment \"\!watchdog SNAT rule\"" >/dev/null 2>&1 && nft insert rule inet fw4 watchdog_srcnat $ip_version daddr $dst_ip tcp dport $dst_port counter snat to $src_ip comment \"\!watchdog SNAT rule\" >/dev/null 2>&1
+		else
+			${ip_version}tables -t nat -C PREROUTING -m set --match-set $ipset_name src -p tcp --dport $src_port -j DNAT --to-destination "$dst_ip:$dst_port" >/dev/null 2>&1 || ${ip_version}tables -t nat -I PREROUTING -m set --match-set $ipset_name src -p tcp --dport $src_port -j DNAT --to-destination "$dst_ip:$dst_port" >/dev/null 2>&1
+			${ip_version}tables -t nat -C POSTROUTING -m set --match-set $ipset_name src -p tcp -d $dst_ip --dport $dst_port -j SNAT --to-source $src_ip >/dev/null 2>&1 || ${ip_version}tables -t nat -I POSTROUTING -m set --match-set $ipset_name src -p tcp -d $dst_ip --dport $dst_port -j SNAT --to-source $src_ip >/dev/null 2>&1
+		fi
+	done <<<"$login_port_forward_list"
+	unset port_forward
+}
+
+# 初始化黑名单规则
+init_ip_black() {
+	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] || return
+	# 设置 IP 版本变量
+	if [ $1 == "ipv4" ]; then
+		ipset_name="watchdog_blacklist"
+		ip_version="ip"
+	elif [ $1 == "ipv6" ]; then
+		ipset_name="watchdog_blacklistv6"
+		ip_version="ip6"
+		nat_table_cmd="family inet6"
+	fi
+
+	[ -n "$nftables_version" ] && {
+		! nft list set inet fw4 ${ipset_name} >/dev/null 2>&1 && nft add set inet fw4 ${ipset_name} { type ${1}_addr\; flags timeout\; timeout ${login_ip_black_timeout}s\; }
+		! nft list ruleset | grep "$ip_version saddr @${ipset_name} counter .* comment \"\!watchdog Drop rule\"" >/dev/null 2>&1 && nft insert rule inet fw4 input $ip_version saddr @${ipset_name} counter drop comment \"\!watchdog Drop rule\" >/dev/null 2>&1
+	} || {
+		ipset list $ipset_name >/dev/null 2>&1 || ipset create ${ipset_name} hash:ip timeout ${login_ip_black_timeout} ${nat_table_cmd} >/dev/null 2>&1
+		${ip_version}tables -C INPUT -m set --match-set ${ipset_name} src -j DROP >/dev/null 2>&1 || ${ip_version}tables -I INPUT -m set --match-set ${ipset_name} src -j DROP >/dev/null 2>&1
+	}
+}
+
+# 添加黑名单
+add_ip_black() {
+	local login_ip=$1
+	[ -z "$login_ip" ] && return 0
+	# 检查 IP 版本
+	unset ipset_name
+	(echo "$login_ip" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$') && ipset_name="watchdog_blacklist"
+	(echo "$login_ip" | grep -Eq '^([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}$') && ipset_name="watchdog_blacklistv6"
+	[ -z "$ipset_name" ] && sed -i "/^$login_ip /d" "$ip_blacklist_path" && log "[WARN] $(translate "Failed to add to blacklist, invalid IP format: %s (removed from list)" "$login_ip")" && return 1
+
+	! cat "$ip_blacklist_path" | grep -q -w -i $login_ip && echo "$login_ip timeout $login_ip_black_timeout" >>"$ip_blacklist_path"
+	[ -n "$nftables_version" ] && {
+		nft list set inet fw4 ${ipset_name} | grep -qw "${login_ip}" && return 1 # IP 已存在
+		nft add element inet fw4 $ipset_name { $login_ip expires ${login_ip_black_timeout}s } >/dev/null 2>&1
+	} || {
+		ipset -exist add $ipset_name $login_ip timeout ${login_ip_black_timeout} >/dev/null 2>&1
+	}
+}
+
+# 移出黑名单
+del_ip_black() {
+	[ -z "$1" ] && return
+	sed -i "/^${1}/d" ${ip_blacklist_path}
+
+	# 检查 IP 版本
+	unset ipset_name
+	(echo "$1" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$') && ipset_name="watchdog_blacklist"
+	(echo "$1" | grep -Eq '^([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}$') && ipset_name="watchdog_blacklistv6"
+	[ -z "$ipset_name" ] && return
+
+	[ -n "$nftables_version" ] && {
+		nft delete element inet fw4 ${ipset_name} { $1 } >/dev/null 2>&1
+	} || {
+		ipset list ${ipset_name} >/dev/null 2>&1 && ipset -! del ${ipset_name} ${1}
+	}
+}
+
+# 设置防火墙列表
+set_ip_black() {
+	# 检查换行，避免出错
+	[ $(tail -n1 "${ip_blacklist_path}" | wc -l) -eq "0" ] && echo -e >>${ip_blacklist_path}
+
+	# 从 ip_blacklist 文件逐行添加黑名单，add_ip_black() 处验证是否重复，此处不在验证
+	for ip_black in $(cat ${ip_blacklist_path} | awk '{print $1}'); do
+		add_ip_black "$ip_black"
+	done
+	# 当 ip_blacklist 文件清除 IP 时，从集合中清除 IP
+	[ -n "$nftables_version" ] && fw_info_blacklist=$(nft list set inet fw4 watchdog_blacklist | tr -d '\n' | grep -oE 'elements = \{[^}]*\}' | grep -oE '[^{}]+ expires [^,}]+[,\}]' | tr ',}' '\n' | tr -s ' ' | sed -e 's/^[[:space:]]*//')
+	[ -n "$nftables_version" ] && fw_info_blacklistv6=$(nft list set inet fw4 watchdog_blacklistv6 | tr -d '\n' | grep -oE 'elements = \{[^}]*\}' | grep -oE '[^{}]+ expires [^,}]+[,\}]' | tr ',}' '\n' | tr -s ' ' | sed -e 's/^[[:space:]]*//')
+	[ -z "$nftables_version" ] && fw_info_blacklist=$(ipset list watchdog_blacklist | grep "timeout" 2>/dev/null)
+	[ -z "$nftables_version" ] && fw_info_blacklistv6=$(ipset list watchdog_blacklistv6 | grep "timeout" 2>/dev/null)
+
+	[ -n "$fw_info_blacklist" ] && [ -n "$fw_info_blacklistv6" ] && combined_fw_info_blacklist="${fw_info_blacklist}\n${fw_info_blacklistv6}"
+	[ -z "$fw_info_blacklist" ] && combined_fw_info_blacklist="${fw_info_blacklistv6}" || combined_fw_info_blacklist="${fw_info_blacklist}"
+
+	while IFS= read -r ip_black_info; do
+		ip_black=$(echo "$ip_black_info" | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
+		[ -z "$ip_black" ] && ip_black=$(echo "$ip_black_info" | grep -Eo "([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}")
+		[ -z "$ip_black" ] && continue
+		cat ${ip_blacklist_path} | grep -q -w -i ${ip_black} && sed -i "/^${ip_black}/d" ${ip_blacklist_path} && echo ${ip_black_info} >>${ip_blacklist_path} || {
+		    del_ip_black ${ip_black}
+		    log "$(translate "[Ban information]Cancel the ban IP:%s" "$ip_black")"
+		}
+	done <<<"$combined_fw_info_blacklist"
+}
+
+# 监听登录事件
+run_logins() {
+	if [ -n "$web_logged" ] || [ -n "$ssh_logged" ] || [ -n "$web_login_failed" ] || [ -n "$ssh_login_failed" ]; then
+			# 监听系统日志，-f 表示跟随实时日志，-p 表示日志级别为 notice
+			run_with_tag logread -f -p notice | while IFS= read -r line; do
+				[ -n "$web_logged" ] && {
+					web_login_ip=$(echo "$line" | grep -i "accepted login" | awk '{print $NF}')
+					[ -n "$web_login_ip" ] && process_login "$web_login_ip" $(echo "$line" | awk '{print $4}') web_login_counts
+				}
+
+				[ -n "$ssh_logged" ] && {
+					ssh_login_ip=$(echo "$line" | grep -i "Password auth succeeded\|Pubkey auth succeeded" | awk '{print $NF}' | sed -nr 's#^(.*):.[0-9]{1,5}#\1#gp' | sed -e 's/%.*//')
+					[ -n "$ssh_login_ip" ] && process_login "$ssh_login_ip" $(echo "$line" | awk '{print $4}') ssh_login_counts
+				}
+
+				[ -n "$web_login_failed" ] && {
+					web_failed_ip=$(echo "$line" | grep -i "failed login" | awk '{print $NF}')
+					[ -n "$web_failed_ip" ] && process_login "$web_failed_ip" $(echo "$line" | awk '{print $4}') web_failed_counts
+				}
+
+				[ -n "$ssh_login_failed" ] && {
+					# 匹配特定的 SSH 登录失败情况并提取 IP 地址和时间
+					ssh_failed_ip=$(echo "$line" | grep -iE "Bad password attempt|Login attempt for nonexistent user|Max auth tries reached" | awk '{print $NF}' | sed -nr 's#^(.*):[0-9]{1,5}#\1#gp' | sed -e 's/%.*//')
+
+					# 如果未能提取到 IP，从日志标识符提取失败用户的 ID，并再次提取 IP
+					if [ -z "$ssh_failed_ip" ]; then
+						ssh_failed_num=$(echo "$line" | sed -n 's/.*authpriv\.warn dropbear\[\([0-9]\+\)\]: Login attempt for nonexistent user/\1/p')
+						[ -n "$ssh_failed_num" ] && ssh_failed_ip=$(logread notice | grep "authpriv\.info dropbear\[${ssh_failed_num}\].*Child connection from" | awk '{print $NF}' | sed -nr 's#^(.*):[0-9]{1,5}#\1#gp' | sed -e 's/%.*//' | tail -n 1)
+					fi
+
+					# 如果成功提取到 IP 地址，调用 process_login 处理
+					[ -n "$ssh_failed_ip" ] && process_login "$ssh_failed_ip" $(echo "$line" | awk '{print $4}') ssh_failed_counts
+				}
+
+			done
+		sleep 1
+	fi
+}
+
+
+# 处理登录事件
+# 参数:
+#   $1: IP
+#   $2: 日志时间 - 从日志中读取而不是使用当前时间，避免秒对应不上
+#   $3: 数组名 - 记录 IP 和登录次数的关联数组名
+process_login() {
+	local login_ip=$1
+	local login_time=$2
+	local -n login_counts=$3
+
+	# 如果数组中不存在此 IP，初始化为 0
+	if [ -z "${login_counts["$login_ip"]}" ]; then
+		login_counts["$login_ip"]=0
+	fi
+	# +1
+	login_counts["$login_ip"]=$((login_counts["$login_ip"] + 1))
+	local count=${login_counts["$login_ip"]}
+
+	# 封禁
+	if [[ ("$3" == "web_failed_counts" || "$3" == "ssh_failed_counts") ]]; then
+	    if [[ $count -ge $login_max_num ]] ;then
+		add_ip_black ${login_ip} && {
+			unset login_counts["$login_ip"]
+			login_send "$login_ip" "$login_time" "$3"
+			log "$(translate "[Block Information]Add to blacklist IP: %s Attempts:%s Time:%s" "$login_ip" "$count" "$login_time" )"
+		}
+	    else
+	     	login_send "$login_ip" "$login_time" "$3"
+	    fi
+	    
+	fi
+
+	# 正常登录
+	if [[ "$3" == "web_login_counts" || "$3" == "ssh_login_counts" ]]; then
+		add_ip_white ${login_ip}
+		del_ip_black ${login_ip} # 白名单已经优先于黑名单，但白名单集合有超时限制，防止下次修改代码忘记，上保险
+		unset web_failed_counts["$login_ip"]
+		unset ssh_failed_counts["$login_ip"]
+		unset login_counts["$login_ip"]
+		login_send "$login_ip" "$login_time" "$3"
+	fi
+	[ "${#login_counts[@]}" -gt "100" ] && login_counts=("${login_counts[@]: -100}")
+}
+
+# 登录提醒
+login_send() {
+	local login_ip=$1
+	local login_time=$2
+	local log_type=$3
+
+	local login_title
+	local login_content
+
+	>"${dir}/send_enable.lock"
+
+	[ -z "$login_ip" ] && return
+
+	[[ "$log_type" == "web"* ]] && local log_type_short="Web" || local log_type_short="SSH"
+	[ -f "$logfile" ] && login_log=$(grep -w "$login_ip" "$logfile" | grep -v "\[info\]" | tail -n 1)
+	[ -n "$login_log" ] && log_timestamp=$(date -d "$(echo "$login_log" | awk '{print $1, $2}')" +%s) || log_timestamp=0
+
+	# 查询 IP 归属地
+	local login_ip_attribution=$(get_ip_attribution "${login_ip}")
+	# 登录方式
+	if [[ "$log_type" == "web"* ]]; then
+		# Web 登录、非法登录
+		local login_mode=$(logread notice | grep -E ".* $login_time.*$login_ip.*" | awk '{print $13}' | tail -n 1)
+		[ "$login_mode" = "/" ] && login_mode="$(translate "/ (Homepage login)")"
+	elif [[ "$log_type" == "ssh_login"* ]]; then
+		# SSH 登录
+		local login_mode=$(logread notice | grep -E ".* $login_time.*$login_ip.*" | awk '{print $8}' | tail -n 1)
+	else
+		local login_mode=$(logread notice | grep -E ".* $login_time.*$login_ip.*" | awk '{for(i=8;i<NF;i++) if($i=="from") break; else printf $i " "}' | tail -n 1)
+	fi
+		if [[ "$log_type" == *"failed"* ]]; then
+			local login_title=$(translate "%s frequent %s login attempts" "$login_ip" "$log_type_short")
+			local login_content_info="${str_splitline}${str_title_start}$(translate "Block Information")${str_title_end}"
+			log "$(translate "Device %s (%s) frequently attempted %s %s login" "$login_ip" "$login_ip_attribution" "$log_type_short" "$login_mode")"
+		else
+			local login_title=$(translate "%s logged into router via %s" "$login_ip" "$log_type_short")
+			local login_content_info="${str_splitline}${str_title_start}$(translate "Login Information")${str_title_end}"
+			log "$(translate "Device %s (%s) logged into router via %s %s" "$login_ip" "$login_ip_attribution" "$log_type_short" "$login_mode")"
+		fi
+}
+
+
+
+main "$@"

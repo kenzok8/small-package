@@ -1,0 +1,40 @@
+{
+	"admin/services/subconverter": {
+		"title": "subconverter",
+		"order": 30,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [ "luci-app-subconverter" ],
+			"uci": { "subconverter": true }
+		}
+	},
+
+	"admin/services/subconverter/config": {
+		"title": "Configuration",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "subconverter/config"
+		}
+	},
+
+	"admin/services/subconverter/file": {
+		"title": "Edit Configuration File",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "subconverter/file"
+		}
+	},
+
+	"admin/services/subconverter/log": {
+		"title": "Log",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "subconverter/log"
+		}
+	}
+}

@@ -1,0 +1,50 @@
+msgid "WebDAV"
+msgstr "WebDAV"
+
+msgid "A lightweight, simple, and fast WebDAV server based on NGINX."
+msgstr "基于 NGINX 实现的一个轻巧、简单、快速的 WebDAV 服务端。"
+
+msgid "Open Web Interface"
+msgstr "打开 Web 界面"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Listen Port"
+msgstr "监听端口"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Leave blank to disable auth."
+msgstr "留空以禁用身份验证。"
+
+msgid "WebDAV Directory"
+msgstr "WebDAV 目录"
+
+msgid "Read-Only Mode"
+msgstr "只读模式"
+
+msgid "Open firewall port"
+msgstr "打开防火墙端口"
+
+msgid "Enable SSL"
+msgstr "启用 SSL"
+
+msgid "SSL certificate file path."
+msgstr "SSL 证书文件路径。"
+
+msgid "SSL key file path."
+msgstr "SSL 密钥文件路径。"
+
+msgid "Download Reg File"
+msgstr "下载注册表文件"
+
+msgid "Click Download"
+msgstr "点击下载"
+
+msgid "Windows doesn't allow HTTP auth by default, you need to import this reg key to enable it (Reboot needed)."
+msgstr "Windows 系统默认不允许 HTTP 鉴权，您需要手动导入注册表文件以开启此功能（需重启）。"

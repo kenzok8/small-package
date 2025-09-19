@@ -1,0 +1,107 @@
+#!/bin/sh
+
+# Copyright (C) 2006 OpenWrt.org
+# Copyright 2022-2025 sirpdboy <herboy2008@gmail.com>
+NAME=timecontrol
+IDLIST="/var/$NAME.idlist"
+TMPID="/var/$NAME.tmpid"
+
+idlist=$(uci show $NAME | grep "enable='1'" | grep "device" | grep -oE '\[.*?\]' | grep -o '[0-9]')
+
+config_get_type() {
+	local ret=$(uci -q get "${NAME}.${1}")
+	echo "${ret:=$2}"
+}
+
+config_n_get() {
+	local ret=$(uci -q get "${NAME}.${1}.${2}")
+	echo "${ret:=$3}"
+}
+
+config_t_get() {
+	local index=${3:-0}
+	local ret=$(uci -q get "${NAME}.@${1}[${index}].${2}")
+	echo "${ret:=${4}}"
+}
+
+config_t_set() {
+	local index=${4:-0}
+	local ret=$(uci -q set "${NAME}.@${1}[${index}].${2}=${3}")
+}
+
+is_time_in_range() {
+    local start_time=$1
+    local end_time=$2
+    local current_time=$(date +%H:%M)
+
+    if [ "$start_time" = "$end_time" ]; then
+        return 0 
+    elif [ "$start_time" \< "$end_time" ]; then
+        [ "$current_time" \> "$start_time" ] && [ "$current_time" \< "$end_time" ] && return 0
+    else
+        [ "$current_time" \> "$start_time" ] || [ "$current_time" \< "$end_time" ] && return 0
+    fi
+    return 1
+}
+
+is_weekday_in_range() {
+    local configured_weekdays=$1
+    local current_weekday=$(date +%u)
+
+    for ww in $(echo $configured_weekdays | sed 's/,/ /g'); do
+        if [ "$current_weekday" = "$ww" ] || [ "$ww" = "0" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+check_device() {
+    local id=$1
+    local start_time=$(config_t_get device timestart $id )
+    local end_time=$(config_t_get device timeend $id )
+    local weekdays=$(config_t_get device week $id )
+
+    if is_weekday_in_range "$weekdays" && is_time_in_range "$start_time" "$end_time"; then
+        return 0  
+    else
+        return 1 
+    fi
+}
+
+update_device_status() {
+    local id=$1
+    local action=$2
+
+    if [ "$action" = "add" ]; then
+        timecontrol add $id
+        echo "!${id}!" >> $IDLIST
+    elif [ "$action" = "del" ]; then
+        timecontrol del $id
+        sed -i "/!$id!/d" $IDLIST >/dev/null 2>&1
+    fi
+}
+
+process_devices() {
+    [ -s $IDLIST ] || touch $IDLIST
+
+    for id in $idlist; do
+        if check_device $id; then
+            if ! grep -q "!${id}!" $IDLIST; then
+                update_device_status $id "add"
+            fi
+        else
+            if grep -q "!${id}!" $IDLIST; then
+                update_device_status $id "del"
+            fi
+        fi
+    done
+
+    cat $IDLIST | sort | uniq > $TMPID
+    mv $TMPID $IDLIST
+}
+
+while :; do
+    process_devices
+    sleep 60
+done

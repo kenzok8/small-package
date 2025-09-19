@@ -1,0 +1,21 @@
+{
+	"admin/nas": {
+		"title": "NAS",
+		"order": 44,
+		"action": {
+			"type": "firstchild"
+		}
+	},
+	"admin/nas/webdav": {
+		"title": "WebDAV",
+		"order": 90,
+		"action": {
+			"type": "view",
+			"path": "webdav"
+		},
+		"depends": {
+			"acl": [ "luci-app-webdav" ],
+			"uci": { "webdav": true }
+		}
+	}
+}

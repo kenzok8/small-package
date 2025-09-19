@@ -1,0 +1,25 @@
+{
+	"luci-app-watchdog": {
+		"description": "Grant UCI access for luci-app-watchdog",
+		"read": {
+			"file": {
+				"/etc/init.d/watchdog": [ "exec" ],
+				"/usr/share/watchdog/watchdog": [ "exec" ],
+				"/tmp/watchdog/*": [ "read" ],
+				"/usr/libexec/watchdog-call": [ "exec" ],
+				"/bin/pidof": [ "exec" ]
+			},
+			"ubus": {
+				"control": [ "list" ]
+			},
+			"uci": [ "watchdog" ]
+		},
+		"write": {
+			"file": {
+				"/tmp/watchdog/*": [ "write" ],
+				"/usr/share/watchdog/api/*": [ "write" ]
+			},
+			"uci": [ "watchdog" ]
+		}
+	}
+}

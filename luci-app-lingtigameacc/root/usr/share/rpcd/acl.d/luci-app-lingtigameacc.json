@@ -1,0 +1,14 @@
+{
+    "luci-app-lingtigameacc": {
+        "description": "Grant UCI access for luci-app-lingtigameacc",
+        "read": {
+            "ubus": {
+            	"service": [ "list" ],
+			},
+            "uci": [ "lingtigameacc" ]
+        },
+        "write": {
+            "uci": [ "lingtigameacc" ]
+            }
+        }
+}

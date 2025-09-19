@@ -1,0 +1,332 @@
+msgid ""
+msgstr ""
+
+msgid "General settings"
+msgstr "常规设置"
+
+msgid "DNS Helper"
+msgstr "DNS助手"
+
+msgid "DNS Status"
+msgstr "DNS状态"
+
+msgid "A helper for DNS. It can help you configure dnsmasq and support filtering and DNS service settings. DoH is supported."
+msgstr "轻量级。通过dnsmasq的方式实现DNS过滤和DNS网络净化。它能帮助你更好地配置本机的DNS服务。支持加密的DoH。"
+
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "CONFIGURED"
+msgstr "已配置"
+
+msgid "NOT CONFIGURED"
+msgstr "未配置"
+
+msgid "CHECK OK"
+msgstr "测试正常"
+
+msgid "NOT CHECKED"
+msgstr "未检查"
+
+msgid "ERROR DETECTED"
+msgstr "发现错误"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Block iOS OTA update"
+msgstr "阻止iOS的OTA更新"
+
+msgid "Block Games APP"
+msgstr "阻止某些游戏App"
+
+msgid "Make children's games time be controlled"
+msgstr "让小孩的游戏时间得到控制"
+
+msgid "Block Short video APP"
+msgstr "阻止短视频APP"
+
+msgid "Protect children's physical and mental health"
+msgstr "保护儿童的身心健康"
+
+msgid "Block Google Website and API"
+msgstr "阻止谷歌和谷歌API"
+
+msgid "Leave the network for a period of time"
+msgstr "破产公司影响网页打开，偏偏国内的还有人喜欢用它们的API！"
+
+msgid "Easy to Visit GitHub Website"
+msgstr "国内加速访问GitHub"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Enable automatic update rules"
+msgstr "启用规则自动更新"
+
+msgid "Check After Update"
+msgstr "更新后自检"
+
+msgid "Help to Network Check"
+msgstr "网络自检"
+
+msgid "Keep rules to route"
+msgstr "保留规则到本机"
+
+msgid "Avoid downloading again after restart, but the reading speed will be affected when the number is large"
+msgstr "可避免重启后的重新下载，但这在规则数较多时可能会影响读取速率。默认不勾选。空间需求。"
+
+msgid "Update interval"
+msgstr "更新间隔"
+
+msgid "Halfhour"
+msgstr "半小时"
+
+msgid "hour"
+msgstr "小时"
+
+msgid "Please wait for the background update to complete."
+msgstr "请等待后台更新完成。"
+
+msgid "Rules Data"
+msgstr "规则数据库"
+
+msgid "Check app version"
+msgstr "版本检测"
+
+msgid "Show dns detect"
+msgstr "显示DNS探测"
+
+msgid "show on this page."
+msgstr "在本页面显示"
+
+msgid "DNS Filter"
+msgstr "DNS过滤"
+
+msgid "[Not updated]"
+msgstr "[未更新]"
+
+msgid "Updating..."
+msgstr "更新中..."
+
+msgid "Records"
+msgstr "条记录"
+
+msgid "Refresh..."
+msgstr "正在更新，请稍候.."
+
+msgid "No new data!"
+msgstr "你已经是最新数据，无需更新！"
+
+msgid "Refresh Error!"
+msgstr "更新失败！"
+
+msgid "Refresh OK!"
+msgstr "更新成功！"
+
+msgid "Total Records:"
+msgstr "新的总纪录数："
+
+msgid "Refresh Data"
+msgstr "更新数据库"
+
+msgid "Last Update Checked"
+msgstr "上一次检查规则更新"
+
+msgid "Subscribe Rules Data"
+msgstr "订阅规则"
+
+msgid "Support for AdGuardHome / Host / DNSMASQ / Domain rules auto-convert"
+msgstr "支持 AdGuardHome / Host / DNSMASQ / Domain 规则并自动去重"
+
+msgid "Delete Filter Rules"
+msgstr "清理过滤规则"
+
+msgid "Delete All"
+msgstr "全部删除"
+
+msgid "Filter Rules Subscription URL"
+msgstr "过滤规则订阅链接"
+
+msgid "anti-AD (Privacy-Protect|Preferred)"
+msgstr "anti-AD （隐私保护|首选）"
+
+msgid "Set your DNS"
+msgstr "设置你的DNS"
+
+msgid "You can set your dns service here. It supports DNS over HTTPS."
+msgstr "你可以在这里配置你的DNS服务器。可支持DNS over HTTPS，也就是DoH。"
+
+msgid "It supports Do53 as 10.1.1.1, and DoH as https://dns.xub"
+msgstr "支持使用传统的DNS地址（over 53），比如10.1.1.1；以及DoH，比如https://dns.xub"
+
+msgid "It only supports dns 53. eg: 10.1.1.1. This is used by DoH."
+msgstr "只可以使用Do53地址，比如：10.1.1.1。在DoH打开时，这里的地址才起作用。"
+
+msgid "DNS Server Settings"
+msgstr "DNS服务器配置"
+
+msgid "DNS Cache"
+msgstr "DNS缓存"
+
+msgid "DNS Cache Now:"
+msgstr "当前DNS缓存："
+
+msgid "Use DoH"
+msgstr "使用DoH"
+
+msgid "Force to DoH"
+msgstr "强制DoH"
+
+msgid "Use HTTP/1.1 for DoH"
+msgstr "让DoH改用HTTP/1.1协议"
+
+msgid "If your libcurl is not good or hang up frequently, it's will very useful for you."
+msgstr "如果你本机的libcurl不好，或者经常挂起，那这将会对你很有用。"
+
+msgid "Force IPv4/6 for DoH"
+msgstr "让DoH强制使用IPv4或IPv6"
+
+msgid "Force to IPv4"
+msgstr "强制IPv4"
+
+msgid "Force to IPv6"
+msgstr "强制IPv6"
+
+msgid "IPv4 best! It will make your network be easy to play. Default."
+msgstr "IPv4最棒！它能让你的网络配置起来更简单。默认。"
+
+msgid "IPv6 first! But your ipv6 and dns address must to be ok."
+msgstr "IPv6优先！但这需要你本机以及将要配置的DNS地址的支持。"
+
+msgid "DoH port"
+msgstr "DoH端口"
+
+msgid "Increase automatically from this number"
+msgstr "自动以这个数字来递增并采用还未被使用端口号"
+
+msgid "Filter AAAA"
+msgstr "过滤掉AAAA"
+
+msgid "Do not resolve IPV6 addresses. Need dnsmasq 2.87"
+msgstr "不去解析IPv6的地址。需要dnsmasq2.87以上的版本"
+
+msgid "Multithreaded Query"
+msgstr "多线程查询"
+
+msgid "Query in order"
+msgstr "顺序查询"
+
+msgid "Open DNS Log"
+msgstr "打开DNS日志"
+
+msgid "Open this, you can let helper manage the dnsmasq log. It can separate logs from syslog."
+msgstr "打开该项，将会让DNS助手来管理dnsmasq的日志，还能把DNS日志从系统日志里分离出来并保存。"
+
+msgid "Set Patch of Dnsmasq Log"
+msgstr "配置dnsmasq日志的路径"
+
+msgid "Open DNS Query Log"
+msgstr "打开DNS查询日志"
+
+msgid "Close by default. Help youself. Warning, it is a large file."
+msgstr "默认关闭。自助分析。注意了，这会让日志变得很大很大。"
+
+msgid "Size of Query Log(MB)"
+msgstr "设置日志的大小（MB）"
+
+msgid "Reverse text"
+msgstr "内容倒序显示"
+
+msgid "Useful for page dns query log."
+msgstr "作用于DNS查询日志页的内容显示。"
+
+msgid "Allowed list"
+msgstr "允许列表"
+
+msgid "Here you can set the allowed list and the accessible hosts"
+msgstr "你可以在这里配置被允许的域名列表和可用于访问的HOSTS"
+
+msgid "Allow Rules"
+msgstr "允许规则"
+
+msgid "Allowed Rules"
+msgstr "被允许的规则"
+
+msgid "Allowed Rules Subscription URL"
+msgstr "允许规则订阅链接"
+
+msgid "Hosts Rules"
+msgstr "Hosts规则"
+
+msgid "Hosts Subscription URL"
+msgstr "Hosts订阅链接"
+
+msgid "Hosts Data"
+msgstr "Hosts库"
+
+msgid "Subscription Update"
+msgstr "规则更新"
+
+msgid "Unable to load the customized user file: "
+msgstr "无法加载自定义规则文件："
+
+msgid "User Rules"
+msgstr "自定义规则"
+
+msgid "Block example.mal and all its subdomains."
+msgstr "阻止example.mal和它的所有子域名。"
+
+msgid "Do not block example.hao and its subdomains."
+msgstr "不要阻止example.hao和它的所有子域名。"
+
+msgid "Responds hostname.ex with 127.0.0.1,but excluding its subdomains."
+msgstr "以127.0.0.1来回应hostname.ex的DNS请求，但不包括它的子域名。"
+
+msgid "Search dns for dns.ex from 1.1.1.1"
+msgstr "特别指定dns.ex的DNS服务器为1.1.1.1"
+
+msgid "# a one line comment."
+msgstr "#这是一条注释。"
+
+msgid "Unable to load the customized ip file: "
+msgstr "无法加载自定义屏蔽IP的文件："
+
+msgid "Block IP List"
+msgstr "阻止IP列表"
+
+msgid "Will Always block IP/IPs of here. Can use 10.1.1.0/24"
+msgstr "拦截黑名单内的 IP 地址，支持网段如 10.1.1.0/24"
+
+msgid "DNS Query Log"
+msgstr "DNS查询日志"
+
+msgid "Display the latest query log here."
+msgstr "在这里加载最新那部分的查询日志。"
+
+msgid "General Settings"
+msgstr "常规设置"
+
+msgid "DNS Settings"
+msgstr "DNS设置"
+
+msgid "Filters"
+msgstr "过滤器"
+
+msgid "Allow List"
+msgstr "允许列表"
+
+msgid "IP List"
+msgstr "IP列表"
+
+msgid "Helper Log"
+msgstr "助手日志"
+
+msgid "DNS Log"
+msgstr "DNS日志"
+
+msgid "Clear"
+msgstr "清除"

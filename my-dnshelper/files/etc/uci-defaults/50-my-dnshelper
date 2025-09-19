@@ -1,0 +1,22 @@
+#!/bin/sh
+uci -q batch <<-EOF >/dev/null 2>&1
+	delete ucitrack.@my-dnshelper[-1]
+	add ucitrack my-dnshelper
+	set ucitrack.@my-dnshelper[-1].init=my-dnshelper
+	commit ucitrack
+	delete firewall.my_dnshelper
+	set firewall.my_dnshelper=include
+	set firewall.my_dnshelper.type=script
+	set firewall.my_dnshelper.path=/var/etc/my-dnshelper.include
+	set firewall.my_dnshelper.reload=1
+	commit firewall
+EOF
+
+chmod 0774 /usr/bin/my-dnshelper  >/dev/null 2>&1
+chmod 0774 /etc/init.d/my-dnshelper >/dev/null 2>&1
+chmod 0774 /usr/share/my-dnshelper/* >/dev/null 2>&1
+chmod 0664 /etc/my-dnshelper/* >/dev/null 2>&1
+chmod 0664 /etc/config/my-dnshelper >/dev/null 2>&1
+/etc/init.d/my-dnshelper enable  >/dev/null 2>&1
+rm -f /tmp/my-dnshelper.d/appver.txt
+exit 0

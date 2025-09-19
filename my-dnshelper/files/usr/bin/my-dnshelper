@@ -1,0 +1,216 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+P1=${1}
+
+Lovely(){
+	local str=""
+	local DATE_S=`date +%S`
+	local t=`expr $DATE_S % 5`
+	if [ "$t" == "1" ];then
+		str="Hi Master, I'm your dnshelper. I'm very happy that you can come to see me."
+	elif [ "$t" == "2" ];then
+		str="Ha, what a good day today. Master."
+	elif [ "$t" == "3" ];then
+		str="ZZzz...Master?"
+	elif [ "$t" == "4" ];then
+		str="Oh, Master, nice to see you again."
+	else
+		str="Once upon a time,
+there were a master and its helper who lived together under the sky.
+And...The story is over. Thank you for watching.
+Oh, that's a great story, isn't it? Master."
+	fi
+	echo ""
+	echo "$str"
+	echo ""
+	exit 0
+}
+
+Helpthis() {
+DATE_HMS=`date +%H:%M:%S`
+DATE_Y=`date +%Y`
+DATE="$DATE_Ymd $DATE_HMS"
+echo "
+Hi Master, I'm your dnshelper. You can use me in the following ways.
+
+usage: my-dnshelper [OPTION]
+    -h,--help       display this help and exit.
+
+It is juest a part of me. You still need a luci application.
+Thank you for coming to look at me. I'm very happy.
+By MY-Dnshelper on $DATE
+
+[K] $DATE_Y
+You can contact my Founder via this link: https://github.com/kongfl888
+"
+exit 0
+}
+readonly delay=10
+source "/usr/share/my-dnshelper/comm"
+c=0
+rmaker="$sharedir/rulesmaker"
+upruler="$sharedir/uprules"
+guard=0
+bootn=1
+errnet=0
+lnfix=0
+
+[ "$S" = "1" ] && SPath=$EPath/Rules
+
+case $P1 in
+	"-h"|"--help"|"-H")
+	Helpthis
+	;;
+	"-g"|"-G")
+	guard=1
+	;;
+	*)
+	Lovely
+	;;
+esac
+
+clear_log(){
+	local ss=5
+	[ -n "$1" ] || return
+	[ -s $1 ] || return
+	[ -z "$2" ] || ss=$2
+	local dlogsize=0
+	local ssize=1048576
+	local sss=$ss
+	local sst=1
+	echo ${sss} | grep -q "\." && sst=10 && ss=`echo ${sss}|cut -d '.' -f2|grep -oE '\d'|head -n1`
+	ssize=$(($ss * 1048576 / $sst))
+	[ -s $1 ] && dlogsize=`ls -l $1 | awk '{ print $5 }'`
+	if [ $dlogsize -gt $ssize ]; then
+			echo_log "Initialize log. Log size is set to ${ss} MB." > $1
+	fi
+}
+
+boot_fix(){
+	local bmin=0
+	local bday=0
+	[ $bootn -eq 0 ] && return
+	[ -f $updatelog ] && bootn=0 && return
+	bday=`uptime | grep -co "day"`
+	[ $bday -gt 0 ] && bootn=0 && return
+	if [ $(uptime | grep -oE "[0-9]+\s*min" 2>/dev/null|wc -l) -eq 1 ];then
+		bmin=`uptime | grep -oE "[0-9]+\s*min"|grep -oE "[0-9]+"`
+		[ -n "$bmin" ] || bmin=0
+		if [ $bmin -gt 8 ];then
+			bootn=0
+		else
+			bootn=1
+			debug_log "boot waiting."
+			[ $(ping_1p "baidu.com") -eq 0 ] && $upruler
+		fi
+	fi
+}
+
+GuardA(){
+	if [ "$EA" != "1" ]; then
+		[ -f /etc/init.d/my-dnshelper ] && /etc/init.d/my-dnshelper stop &
+		return
+	fi
+	[ -f /usr/bin/my-dnshelper ] || return
+	[ -f /etc/config/my-dnshelper ] || return
+	[ -f $rmaker ] || return
+	if [ ! -f "$helperconf" ];then
+		sleep 3s
+		[ -f "$helperconf" ] || $rmaker >> $Logfile
+	fi
+	if [ "$UDH" == "1" ];then
+		[ -n "$(get_ports_ps)" -a ! -s "$dohconf" ] &&  $rmaker -d >> $Logfile && sleep 1s && debug_log "start because doh config is none."
+		[ -z "$(get_ports_ps)" ] && sleep 3s
+		[ -z "$(get_ports_ps)" -a -n "$(get_ports_cfg)" -a -s "$dohconf" ] &&  $rmaker -d >> $Logfile && sleep 1s && debug_log "start because ps doh is none."
+	fi
+	[ -f $resolvconf ] || touch $resolvconf
+	[ -s $resolvconf -a "$UDH" == "0" -a "$(get_rautoc)" != "$resolvconf" ] && $rmaker -d >> $Logfile && sleep 1s && debug_log "start because resolv not be set."
+	if [ -h /tmp/resolv.conf ];then
+		debug_log "Helper - dnsmasq may failed."
+		[ $lnfix -eq 0 ] && sleep 3s && dnsmasq_rs 1 >> $Logfile
+		sleep 2s
+		if [ -h /tmp/resolv.conf ];then
+			if [ $(check_dnsmasq) -eq 0 ];then
+				rm -f /tmp/resolv.conf
+				echo "search $DDOMAIN" > /tmp/resolv.conf
+				echo "nameserver 127.0.0.1" >> /tmp/resolv.conf
+				if [ -s $resolvconf ];then
+					grep -q ":" $resolvconf && echo echo "nameserver ::1" >> /tmp/resolv.conf
+				elif [ "$forceip46" != "1"  ];then
+					echo echo "nameserver ::1" >> /tmp/resolv.conf
+				fi
+			fi
+			let lnfix++
+		else
+			lnfix=0
+		fi
+		[ $lnfix -gt 60 ] && lnfix=0
+	fi
+	if [ "$dnscheck" == "1" -a $(ping_1p "114.114.114.114") -eq 0 -a $(ping_1p "baidu.com") -ne 0 ];then
+		push_log "Helper - checking network."
+		push_log "[Error]DNS may have some problems. Something were wrong."
+		push_log "Please restart my-dnshelper, or check other app, or check your network."
+		let errnet++
+		[ "$UDH" == "1" -a $errnet -eq 10 ] && $rmaker -d >> $Logfile && sleep 1s && debug_log "start to fix dns."
+	else
+		errnet=0
+	fi
+	[ "$(check_ln)" == "1" ] && $rmaker >> $Logfile && sleep 1s && debug_log "start because LNs missed."
+	boot_fix
+	if [ "$AUD" == "1" -a $bootn -eq 0 ]; then
+		oldt=$(date -d "`cat $updatelog 2>/dev/null`" +%s 2>/dev/null)
+		nowt=$(date +%s)
+		[ -z "$oldt" ] && oldt=$nowt
+		ctime=`expr $nowt - $oldt`
+		utime=`expr $UPD \* 3600`
+		[ "$UPD" == "0" ] && utime=1800
+		[ $ctime -gt $utime ] && $upruler && sleep 1s
+	fi
+	if [ $(test_fcode "config") -eq 1 ];then
+		debug_log "config changed"
+		$rmaker >> $Logfile && sleep 1s
+		write_fcodes
+	fi
+	if [ $(test_fcode "ip") -eq 1 ];then
+		debug_log "ip rules changed"
+		$rmaker -i >> $Logfile && sleep 1s
+	fi
+	if [ $(test_fcode "user") -eq 1 ];then
+		debug_log "user rules changed"
+		$rmaker "--usr" >> $Logfile && sleep 1s
+	fi
+	if [ $(test_fcode "dns") -eq 1 ];then
+		debug_log "dns changed"
+		$rmaker -d >> $Logfile && sleep 1s
+	fi
+	if [ $(test_fcode "bstrap") -eq 1 ];then
+		debug_log "bstrap changed"
+		$rmaker -d >> $Logfile && sleep 1s
+	fi
+}
+
+if [ "$S" != "1" ]; then
+	mkdir -p $RPath
+	[ -d $EPath/Rules ] && cp -rf $EPath/Rules/* $RPath && rm -rf $EPath/Rules
+fi
+
+[ -d $LPath ] || sleep ${delay}s
+debug_log "first start"
+$rmaker >> $Logfile
+
+write_fcodes
+
+if [ "$S" != "1" ]; then
+	[ -e $EPath/Rules ] && rm -rf $EPath/Rules
+fi
+sleep 2s
+
+while true; do
+	sleep 30s
+	GuardA
+	clear_log "$dnsmasqlog" "$dnslogsize"
+	clear_log "$Logfile" "0.5"
+done

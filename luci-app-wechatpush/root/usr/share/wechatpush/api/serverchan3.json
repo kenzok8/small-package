@@ -1,0 +1,20 @@
+{
+  "_api": "这是 serverchan3 api 文件",
+  "_api": "【serverchan3】",
+  
+  "url": "\"https://${sc3uid}.push.ft07.com/send/${sc3key}.send\"",
+  "data": "@${tempjsonpath}",
+  "content_type": "Content-Type: application/json",
+  "str_title_start": "##### ",
+  "str_title_end": "",
+  "str_linefeed": "  \\n",
+  "str_splitline": "\\n----\\n",
+  "str_space": " ",
+  "str_tab": "    ",
+  "type":
+  {
+    "title": "\"${1}\"",
+    "desp": "\"${nowtime}${str_linefeed}${2}\"",
+    "tags": "\"${sc3tags}\""
+  }
+}

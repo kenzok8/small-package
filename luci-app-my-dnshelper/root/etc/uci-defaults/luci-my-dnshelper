@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ -f /usr/bin/my-dnshelper ];then
+chmod 0774 /usr/bin/my-dnshelper  >/dev/null 2>&1
+else
+echo "`date -R` /usr/bin/my-dnshelper not found!" >> /tmp/my-dnshelper.log
+fi
+/etc/init.d/my-dnshelper enable  >/dev/null 2>&1
+/etc/init.d/rpcd reload >/dev/null 2>&1
+rm -f /tmp/my-dnshelper.d/appver.txt
+rm -rf /tmp/luci-*
+exit 0

@@ -1,0 +1,85 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+source /usr/share/my-dnshelper/comm
+
+LOCK=/var/lock/my-dnshelperg.lock
+[ -f $LOCK ] && exit 1
+touch $LOCK
+
+#EA=1
+#GH=1
+
+if [ "$EA" = "0" ]; then
+	rm -f $LOCK
+	exit 0
+fi
+
+gi=0
+gl="http"
+GL1=/tmp/e-g-1.txt
+GL2=/tmp/e-g-2.txt
+EG=/etc/my-dnshelper/github.mdhp
+RAW="ping -c 2 raw.githubusercontents.com"
+lf=""
+
+downloader="curl --retry 3 --connect-timeout 20 -m 80 -kLfso"
+which curl >/dev/null || downloader="wget-ssl --no-check-certificate -t 3 -T 20 -q -O"
+which wget-ssl >/dev/null || exit 1
+
+rm -f ${GL1} ${GL2}
+if [ "$GH" != "1" ]; then
+	rm -f $LOCK
+	exit 9
+fi
+
+if [ $(ping_1p "baidu.com") -ne 0 ];then
+	sleep 5s
+	[ $(ping_1p "qq.com") -eq 0 ] || exit 1
+fi
+
+if [ `ping -c 2 raw.githubusercontents.com | grep "64" -c` -gt 0 ]; then
+	RAW="raw.githubusercontents.com"
+elif [ `ping -c 2 ghproxy.com | grep "64" -c` -gt 0 ]; then
+	RAW="ghproxy.com/https://raw.githubusercontent.com"
+else
+	RAW="raw.githubusercontent.com"
+fi
+
+$downloader $GL1 "https://$RAW/kongfl888/ad-rules/master/easy_github"
+if [ ! -f ${GL1} ]; then
+	echo_log "Failed to Update EASY GITHUB Rule."
+	rm -f $LOCK
+	exit 1
+fi
+gi=`sed -n '1p' $GL1`
+gl=`sed -n '2p' $GL1`
+[ "$gi" = "2" ] && $downloader $GL1 $gl
+if [ ! -f ${GL1} ]; then
+	echo_log "Failed to Update EASY GITHUB Rule."
+	rm -f $LOCK
+	exit 1
+fi
+gl=`grep "http" $GL1 | tail -n3`
+for p in $gl; do
+	$downloader $GL2 $p
+	if [ "$?" = "0" -o -s "$GL2" ];then
+		lf=`echo $p|sed -r 's/.*(\.[0-9A-Za-z\-]+)+\///'|cut -d '/' -f 1,2 2>/dev/null`
+		break
+	fi
+done
+if [ -f ${GL2} ]; then
+	echo_log "Update EASY GITHUB Rule Successfully."
+else
+	echo_log "Failed to Update EASY GITHUB Rule!"
+	exit 2
+fi
+awk '/^[0-9]/ {printf "address=/%s/%s\n",$2,$1};/^#/;/^$/' $GL2 | grep "address=" > $EG
+sh /usr/share/my-dnshelper/checkconf $EG
+sed -i "1i#$lf" $EG
+rm -f ${GL1} ${GL2}
+
+rm -f $LOCK
+

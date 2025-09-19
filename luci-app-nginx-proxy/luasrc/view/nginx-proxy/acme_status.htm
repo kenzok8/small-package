@@ -1,0 +1,206 @@
+<%+header%>
+<div class="cbi-value cert-status-container">
+    <label class="cbi-value-title"><%:Certificate Status%></label>
+    <div class="cbi-value-field">
+        <% if cert_status and cert_status.valid then %>
+            <div class="cert-details">
+                <!-- 状态概览 -->
+                <div class="status-overview">
+                    <span class="cert-icon valid"><%=inline_svg("check-circle")%></span>
+                    <div class="cert-summary">
+                        <h3 class="cert-domain"><%=cert_status.common_name%></h3>
+                        <div class="cert-issuer">
+                            <span class="label"><%:Issued by%>:</span>
+                            <span class="value"><%=cert_status.issuer%></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 详细状态 -->
+                <div class="status-grid">
+                    <div class="status-item critical">
+                        <span class="label"><%:Expiration%></span>
+                        <div class="value-group">
+                            <span class="value"><%=cert_status.expire_date%></span>
+                            <span class="countdown" data-expiry="<%=cert_status.expire_ts%>">
+                                (<span class="days"></span> <%:days%>)
+                            </span>
+                        </div>
+                        <div class="expiry-progress">
+                            <div class="progress-bar" style="width: <%=cert_status.expire_percent%>%"></div>
+                        </div>
+                    </div>
+
+                    <div class="status-item">
+                        <span class="label"><%:Last Renewal%></span>
+                        <span class="value"><%=cert_status.renew_date%></span>
+                    </div>
+
+                    <div class="status-item">
+                        <span class="label"><%:Next Check%></span>
+                        <span class="value"><%=cert_status.next_check%></span>
+                    </div>
+
+                    <div class="status-item technical">
+                        <span class="label"><%:Key Details%></span>
+                        <span class="value">
+                            <%=cert_status.key_type%> 
+                            <span class="key-length"><%=cert_status.key_length%> bit</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 扩展信息 -->
+                <div class="advanced-info">
+                    <details>
+                        <summary><%:Advanced Details%></summary>
+                        <dl class="cert-meta">
+                            <dt><%:SAN Domains%>:</dt>
+                            <dd><%=cert_status.san_domains%></dd>
+                            
+                            <dt><%:Fingerprint%>:</dt>
+                            <dd class="monospace"><%=cert_status.fingerprint%></dd>
+                            
+                            <dt><%:OCSP Status%>:</dt>
+                            <dd><%=cert_status.ocsp_status%></dd>
+                        </dl>
+                    </details>
+                </div>
+            </div>
+        <% else %>
+            <div class="cert-missing">
+                <span class="cert-icon invalid"><%=inline_svg("x-circle")%></span>
+                <div class="warning-message">
+                    <h3><%:No Valid Certificate%></h3>
+                    <p><%:Click the "Issue Certificate" button to get started%></p>
+                </div>
+            </div>
+        <% end %>
+    </div>
+</div>
+
+<style>
+/* 状态容器样式 */
+.cert-status-container {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+/* 状态概览 */
+.status-overview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.cert-icon {
+    width: 48px;
+    height: 48px;
+}
+.cert-icon.valid { color: #28a745; }
+.cert-icon.invalid { color: #dc3545; }
+
+.cert-summary h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #2c3e50;
+}
+.cert-issuer {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+/* 状态网格布局 */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.status-item {
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.status-item.critical { border-left: 4px solid #ffc107; }
+
+.label {
+    display: block;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.value {
+    font-family: monospace;
+    color: #2c3e50;
+}
+.countdown { color: #6c757d; font-size: 0.9em; }
+
+/* 过期进度条 */
+.expiry-progress {
+    height: 4px;
+    background: #e9ecef;
+    margin-top: 0.8rem;
+    border-radius: 2px;
+}
+.progress-bar {
+    height: 100%;
+    background: #17a2b8;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+/* 高级信息 */
+details summary {
+    cursor: pointer;
+    color: #007bff;
+    font-weight: 500;
+    margin: 1rem 0;
+}
+.cert-meta dt { font-weight: 500; margin-top: 0.5rem; }
+.cert-meta dd { margin-left: 1rem; color: #6c757d; }
+
+/* 证书缺失状态 */
+.cert-missing {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #fff3cd;
+    border-radius: 6px;
+}
+.warning-message h3 { color: #856404; margin: 0; }
+</style>
+
+<script>
+// 自动更新过期倒计时
+function updateCountdowns() {
+    document.querySelectorAll('.countdown').forEach(el => {
+        const expiry = parseInt(el.dataset.expiry) * 1000
+        const now = Date.now()
+        const diff = expiry - now
+        
+        if (diff > 0) {
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+            el.querySelector('.days').textContent = days
+            el.style.color = days < 30 ? '#dc3545' : '#28a745'
+        } else {
+            el.textContent = '<%:Expired%>'
+            el.style.color = '#dc3545'
+        }
+    })
+}
+
+// 每5分钟更新状态
+setInterval(updateCountdowns, 1000 * 60 * 5)
+updateCountdowns() // 初始加载
+</script>
+
+<%+footer%>

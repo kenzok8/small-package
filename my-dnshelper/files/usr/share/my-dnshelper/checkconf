@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+[ -s $1 ] || exit 
+[ -f /tmp/ad_check.txt ] && rm -f /tmp/ad_check.txt
+grep -oE "^address=\/\S*\.\S*[0-9a-zA-Z]\/((([0-9]+\.){3}[0-9]+(#[0-9]+)?)|#)?" $1 > /tmp/ad_check.txt
+R=$?
+grep -oE "^server=(\/.*\/)?[0-9a-zA-Z:\.]+(#[0-9]+)?\s*" $1 >> /tmp/ad_check.txt
+S=$?
+grep -oE "^ipset=\/.*\/[0-9a-zA-Z_\-]+\s*" $1 >> /tmp/ad_check.txt
+T=$?
+grep -oE "^nameserver\s+[0-9a-fA-F:\.]+\s*" $1 >> /tmp/ad_check.txt
+N=$?
+grep -oE "^bogus-nxdomain=[0-9a-fA-F:\.]+\s*" $1 >> /tmp/ad_check.txt
+B=$?
+
+if [ "$N" = "0" -o "$R" = "0" -o "$S" = "0" -o "$T" = "0" -o "$B" = "0" ];then
+	echo "`sort -u /tmp/ad_check.txt`" > /tmp/ad_check.txt
+	cp -f /tmp/ad_check.txt $1
+fi
+
+if [ $(grep -E "\S+" $1 2>/dev/null |wc -l) -eq 0 ]; then
+	sed -i '/^$/d' $1
+fi
+
+rm -f /tmp/ad_check.txt

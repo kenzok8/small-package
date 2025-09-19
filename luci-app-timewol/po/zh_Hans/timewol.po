@@ -1,0 +1,57 @@
+msgid "Control"
+msgstr "管控"
+
+msgid "Timed WOL"
+msgstr "定时网络唤醒"
+
+msgid "Timed Wake on LAN"
+msgstr "定时网络唤醒"
+
+msgid "Wake up your local area network devices on schedule"
+msgstr "定时唤醒你的局域网设备"
+
+msgid "Timed WOL"
+msgstr "定时网络唤醒"
+
+msgid "Running Status"
+msgstr "运行状态"
+
+msgid "Current Status"
+msgstr "当前状态"
+
+msgid "Basic Settings"
+msgstr "基本设置"
+
+msgid "Enable"
+msgstr "开启"
+
+msgid "Client Settings"
+msgstr "客户端设置"
+
+msgid "Client MAC"
+msgstr "客户端MAC"
+
+msgid "Network Interface"
+msgstr "网络接口"
+
+msgid "Awake"
+msgstr "立即唤醒"
+
+msgid "Minute"
+msgstr "分钟"
+
+msgid "Hour"
+msgstr "小时"
+
+msgid "Day"
+msgstr "日"
+
+msgid "Month"
+msgstr "月"
+
+msgid "Week"
+msgstr "星期"
+
+msgid "Invalid value for %s: %s. Must be between %d and %d or '*'"
+msgstr "%s: %s 的值无效. 必须在 %d 和 %d 之间，或为 '*'"
+

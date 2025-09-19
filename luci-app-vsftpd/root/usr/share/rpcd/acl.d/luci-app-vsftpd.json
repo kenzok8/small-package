@@ -1,0 +1,21 @@
+{
+	"luci-app-vsftpd-config": {
+		"description": "Grant access to FTP server configuration",
+		"read": {
+			"uci": [ "vsftpd" ],
+			"ubus": {
+				"luci": [
+					"getInitList"
+				]
+			}
+		},
+		"write": {
+			"uci": [ "vsftpd" ],
+			"ubus": {
+				"luci": [
+					"setInitAction"
+				]
+			}
+		}
+	}
+}

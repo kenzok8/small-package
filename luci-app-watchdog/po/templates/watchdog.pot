@@ -1,0 +1,267 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2024-2025\n"
+"Last-Translator: https://github.com/sirpdboy/luci-app-watchdog \n"
+"Language-Team: \n"
+"Language: zh_Hans\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Weblate 4.18-dev\n"
+
+msgid "watchdog"
+msgstr ""
+
+msgid "Watch Dog"
+msgstr ""
+
+msgid "Basic Settings"
+msgstr ""
+
+msgid "Advance Setting"
+msgstr ""
+
+msgid "Checking status..."
+msgstr ""
+
+msgid "Log"
+msgstr ""
+
+msgid "This is the security watchdog plugin for OpenWRT, which monitors and guards web login, SSH connections, and other situations.<br /><br />If you encounter any issues while using it, please submit them here:"
+msgstr ""
+
+msgid "GitHub Project Address"
+msgstr ""
+
+msgid "Login control"
+msgstr ""
+
+msgid "Black list"
+msgstr ""
+
+msgid "White list"
+msgstr ""
+
+msgid "You may need to save the configuration before sending."
+msgstr ""
+
+msgid "Unknown error: %s."
+msgstr ""
+
+msgid "Check Interval (s)"
+msgstr ""
+
+msgid "Shorter intervals provide quicker response but consume more system resources."
+msgstr ""
+
+
+msgid "Web Login"
+msgstr ""
+
+msgid "SSH Login"
+msgstr ""
+
+msgid "Frequent Web Login Errors"
+msgstr ""
+
+msgid "Frequent SSH Login Errors"
+msgstr ""
+
+msgid "Login failure count"
+msgstr ""
+
+msgid "Reminder and optional automatic IP ban after exceeding the number of times"
+msgstr ""
+
+
+
+msgid "Please select device MAC"
+msgstr ""
+
+msgid "Auto-ban unauthorized login devices"
+msgstr ""
+
+msgid "Blacklisting time (s)"
+msgstr ""
+
+msgid "\"0\" in ipset means permanent blacklist, use with caution. If misconfigured, change the device IP and clear rules in LUCI."
+msgstr ""
+
+msgid "Release port"
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
+msgid "Open port after successful login<br/>example£º\"22\"¡¢\"21:25\"¡¢\"21:25,135:139\""
+msgstr ""
+
+msgid "If you have disabled LAN port inbound and forwarding in Firewall - Zone Settings, it won't work."
+msgstr ""
+
+msgid "Example: Forward port 13389 of this device (IPv4:10.0.0.1 / IPv6:fe80::10:0:0:2) to port 3389 of (IPv4:10.0.0.2 / IPv6:fe80::10:0:0:8)<br/>\"10.0.0.1,13389,10.0.0.2,3389\"<br/>\"fe80::10:0:0:1,13389,fe80::10:0:0:2,3389\""
+msgstr ""
+
+msgid "Release time (s)"
+msgstr ""
+
+msgid "\"0\" in ipset means permanent release, use with caution"
+msgstr ""
+
+msgid "IP blacklist"
+msgstr ""
+
+msgid "Automatic ban blacklist list, with the ban time following the IP address"
+msgstr ""
+
+
+msgid "MAC Filtering Mode"
+msgstr ""
+
+msgid "Ignore devices in the list"
+msgstr ""
+
+msgid "Ignored devices will not logged"
+msgstr ""
+
+msgid "Notify only devices in the list"
+msgstr ""
+
+msgid "Notify only devices using this interface"
+msgstr ""
+
+msgid "Multiple choice is not currently supported"
+msgstr ""
+
+msgid "Ignored device list"
+msgstr ""
+
+msgid "Followed device list"
+msgstr ""
+
+msgid "Notify only devices using this interface"
+msgstr ""
+
+
+msgid "Login (Auto-Ban) Whitelist"
+msgstr ""
+
+msgid "Add the IP addresses in the list to the whitelist for the blocking function (if available), Only record in the log. Mask notation is currently not supported."
+msgstr ""
+
+msgid "If you are not familiar with the meanings of these options, please do not modify them.<br/><br/>"
+msgstr ""
+
+msgid "Advanced Settings"
+msgstr ""
+
+msgid "Device online detection timeout (s)"
+msgstr ""
+
+msgid "Device offline detection timeout (s)"
+msgstr ""
+
+msgid "Offline detection count"
+msgstr ""
+
+msgid "If the device has good signal strength and no Wi-Fi sleep issues, you can reduce the above values.<br/>Due to the mysterious nature of Wi-Fi sleep during the night, if you encounter frequent disconnections, please adjust the parameters accordingly.<br/>..¨r(¨s_¨t£©¨q.."
+msgstr ""
+
+
+msgid "Devices"
+msgstr ""
+
+msgid "Disable active detection"
+msgstr ""
+
+msgid "Maximum concurrent processes"
+msgstr ""
+
+msgid "Do not change the setting value for low-performance devices, or reduce the parameters as appropriate."
+msgstr ""
+
+
+msgid "Online time"
+msgstr ""
+
+msgid "Clear Logs..."
+msgstr ""
+
+msgid "Logs cleared successfully!"
+msgstr ""
+
+msgid "Clear Logs"
+msgstr ""
+
+msgid "Refresh every 5 seconds."
+msgstr ""
+
+msgid "Content 1"
+msgstr ""
+
+msgid "Content 2"
+msgstr ""
+
+msgid "Device 1"
+msgstr ""
+
+msgid "Device 2"
+msgstr ""
+
+msgid "Device 3"
+msgstr ""
+
+msgid "Device 4"
+msgstr ""
+
+
+msgid "Device %s logged into router via %s"
+msgstr ""
+
+msgid "/ (Homepage login)"
+msgstr ""
+
+msgid "%s frequent %s login attempts"
+msgstr ""
+
+msgid "Block Information"
+msgstr ""
+
+msgid "Device %s (%s) frequently attempted %s %s login"
+msgstr ""
+
+msgid "%s logged into router via %s"
+msgstr ""
+
+msgid "Login Information"
+msgstr ""
+
+msgid "Device %s (%s) logged into router via %s %s"
+msgstr ""
+
+msgid "Time:"
+msgstr ""
+
+msgid "Device IP:"
+msgstr ""
+
+msgid "Login Method:"
+msgstr ""
+
+
+msgid "Initialization completed"
+msgstr ""
+
+msgid "Start running..."
+msgstr ""
+
+
+msgid "[Ban information]Cancel the ban IP:%s"
+msgstr ""
+
+msgid "[Block Information]Add to blacklist IP: %s Attempts:%s Time:%s"
+msgstr ""
+
+
+msgid "Failed to add to blacklist, invalid IP format: %s (removed from list)"
+msgstr ""
+

@@ -1,0 +1,21 @@
+{
+	"_api": "这是 msmtp api 文件",
+	"_api": "【msmtp】",
+
+	"url": "msmtp --host=${smtp_host} --port=${smtp_port} ${smtp_tls:+--tls=on} ${smtp_tls:---tls=off} ${smtp_starttls:+--tls-starttls=on} ${smtp_starttls:---tls-starttls=off} ${smtp_user:+--auth=on --user=$smtp_user} ${smtp_passwordeval:+--passwordeval=\\\"$smtp_passwordeval\\\"} ${smtp_from:+--from=$smtp_from} ${smtp_from_full_name:+-F\\\"$smtp_from_full_name\\\"} ${recipient_email}",
+	"data": "${tempjsonpath}",
+	"content_type": "",
+	"command": "'\"To: \\(.to)\\nSubject: \\(.subject)\\nContent-Type: text/html\\n\\n\\(.body)\"'",
+	"str_title_start": "<h3>",
+	"str_title_end": "</h3>",
+	"str_linefeed": "<br>",
+	"str_splitline": "<br>----<br>",
+	"str_space": " ",
+	"str_tab": "    ",
+	"type":
+	  {
+		"to":"\"${recipient_email}\"",
+		"subject":"\"${1}\"",
+		"body":"\"${nowtime}${2}\""
+	  }
+}

@@ -1,0 +1,77 @@
+#!/bin/sh
+
+# [K]2022
+# https://github.com/kongfl888
+
+source /usr/share/my-dnshelper/comm
+
+nonet=0
+errc=0
+#debug
+EA=1
+
+[ "$EA" = "1" ] || exit 0
+[ $(ping_1p "baidu.com") -ne 0 ] && [ $(ping_1p "qq.com") -ne 0 ] && nonet=1
+
+if [ $nonet -eq 1 ];then
+	touch /tmp/hpruleupfail.log
+	errc=`grep -oE "\d+" /tmp/hpruleupfail.log | head -n 1 2>/dev/null`
+	[ -z "$errc" ] && errc=0
+	let errc++
+	echo $errc > /tmp/hpruleupfail.log
+	if [ $errc -gt 10 ];then
+		[ -d $RPath ] || mkdir -p $RPath
+		rm -f $updatelog
+		echo "`eval $D`" > $updatelog
+		push_log "FAILED to check update of rules."
+	fi
+	exit 1
+else
+	errc=0
+	[ -f /tmp/hpruleupfail.log ] && rm -f /tmp/hpruleupfail.log
+fi
+
+sSname="$(basename $0)"
+
+if [ $(pgrep -f ${sSname}|wc -l) -gt 2 ];then
+	sleep 5s
+	if [ $(pgrep -f ${sSname}|wc -l) -gt 2 ];then
+		exit 1
+	fi
+fi
+
+[ "$S" = "1" ] && SPath=$EPath/Rules
+chmod 0744 $updatelog >/dev/null 2>&1
+udt1=`cat $updatelog 2>/dev/null`
+
+[ $(ls -l /usr/share/my-dnshelper/rulesmaker | grep -c "rwx" 2>/dev/null) -eq 0 ] && chmod 0774 /usr/share/my-dnshelper/*
+
+push_log "Check Subscribe Rules Update"
+echo "0" > $updatelog
+
+#check_lock
+
+sh /usr/share/my-dnshelper/rulesmaker -u >> $Logfile 2>/dev/null
+
+sh /usr/share/my-dnshelper/checkver -f 2>/dev/null
+
+udt2=`cat $updatelog 2>/dev/null`
+
+udx1=`date -d "$udt1" +%s 2>/dev/null`
+udx2=`date -d "$udt2" +%s 2>/dev/null`
+[ -z "$udx1" ] && udx1=0
+[ -z "$udx2" ] && udx2=0
+
+if [ -z "$udt2" -o "$udt2" == "0" ];then
+	echo $udt1 > $updatelog
+	exit 1
+elif [ $udx2 -lt $udx1 ];then
+	echo $udt1 > $updatelog
+	exit 1
+fi
+
+push_log "Reload Rules"
+
+rsc_dnsmasq | grep -vE "^(0|1)$" >> $Logfile
+
+exit 0
