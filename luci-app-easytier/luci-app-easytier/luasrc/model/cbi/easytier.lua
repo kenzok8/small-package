@@ -458,7 +458,10 @@ btn0info = s:taboption("infos", DummyValue, "btn0info")
 btn0info.rawhtml = true
 btn0info.cfgvalue = function(self, section)
     local content = nixio.fs.readfile("/tmp/easytier-cli_node") or ""
+    content = luci.util.trim(content or "")
+
     local html = {}
+    local parsed = false 
 
     table.insert(html, [[
         <div style="overflow:auto; max-width:100%;">
@@ -467,24 +470,36 @@ btn0info.cfgvalue = function(self, section)
 
     local rowIndex = 0
     for line in content:gmatch("[^\r\n]+") do
-        if not line:match("^|%s*%-") then
-            local first_col, rest = line:match("^|%s*(.-)%s*|%s*(.-)%s*|?$")
-            if first_col and rest then
-                local tr = {}
+        if not line:match("^|%s*-") then
+            local key, value = line:match("^|%s*(.-)%s*|%s*(.-)%s*|?$")
+            if key and value then
+                parsed = true
 
-                rest = rest:gsub("|%s*$", "")
+                -- Key 中文化
+                key = key:gsub("^Virtual IP$", "虚拟IP")
+                key = key:gsub("^Hostname$", "主机名")
+                key = key:gsub("^Proxy CIDRs$", "代理CIDR")
+                key = key:gsub("^Peer ID$", "节点ID")
+                key = key:gsub("^Public IPv4$", "公网IPv4")
+                key = key:gsub("^UDP Stun Type$", "UDP穿透类型")
+                key = key:gsub("^Interface IPv4$", "IPv4地址")
+                key = key:gsub("^Interface IPv6$", "IPv6地址")
+                key = key:gsub("^Listener%s*(%d+)$", "监听器 %1") 
 
-                local style1 = "padding:6px;text-align:left;white-space:nowrap;border:1px solid #ccc;background:#f7f7f7;"
-                local style2 = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
+                -- Value 中文化
+                value = value:gsub("PortRestricted", "端口受限")
 
+                local style_key = "padding:6px;text-align:left;white-space:nowrap;border:1px solid #ccc;background:#f7f7f7;"
+                local style_value = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
                 if rowIndex % 2 == 1 then
-                    style2 = style2 .. "background:#fafafa;"
+                    style_value = style_value .. "background:#fafafa;"
                 else
-                    style2 = style2 .. "background:#ffffff;"
+                    style_value = style_value .. "background:#ffffff;"
                 end
 
-                table.insert(tr, string.format("<th style='%s'>%s</th>", style1, luci.util.pcdata(first_col)))
-                table.insert(tr, string.format("<td style='%s'>%s</td>", style2, luci.util.pcdata(rest)))
+                local tr = {}
+                table.insert(tr, string.format("<th style='%s'>%s</th>", style_key, luci.util.pcdata(key)))
+                table.insert(tr, string.format("<td style='%s'>%s</td>", style_value, luci.util.pcdata(value)))
 
                 table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
                 rowIndex = rowIndex + 1
@@ -493,7 +508,15 @@ btn0info.cfgvalue = function(self, section)
     end
 
     table.insert(html, "</table></div>")
-    return table.concat(html, "\n")
+
+    if parsed then
+        return table.concat(html, "\n")
+    else
+        return string.format(
+            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
+            luci.util.pcdata(content)
+        )
+    end
 end
 
 btn1 = s:taboption("infos", Button, "btn1")
@@ -512,7 +535,10 @@ btn1info = s:taboption("infos", DummyValue, "btn1info")
 btn1info.rawhtml = true
 btn1info.cfgvalue = function(self, section)
     local content = nixio.fs.readfile("/tmp/easytier-cli_peer") or ""
+    content = luci.util.trim(content or "")
+
     local html = {}
+    local parsed = false 
 
     table.insert(html, [[
         <div style="overflow:auto; max-width:100%;">
@@ -528,41 +554,64 @@ btn1info.cfgvalue = function(self, section)
             local start = 1
             while true do
                 local s, e = string.find(trimmed, "|", start, true)
+                local cell
                 if s then
-                    local cell = trimmed:sub(start, s - 1)
-                    cell = cell:gsub("^%s*(.-)%s*$", "%1")
-                    cell = cell:gsub("&#124;", "|")
-                    table.insert(row, cell)
+                    cell = trimmed:sub(start, s - 1)
                     start = e + 1
                 else
-                    local cell = trimmed:sub(start)
-                    cell = cell:gsub("^%s*(.-)%s*$", "%1")
-                    cell = cell:gsub("&#124;", "|")
-                    table.insert(row, cell)
-                    break
+                    cell = trimmed:sub(start)
                 end
+
+                cell = luci.util.trim(cell)
+                cell = cell:gsub("&#124;", "|")
+
+                -- 表头替换中文
+                if rowIndex == 0 then
+                    if cell == "ipv4" then cell = "IPv4地址"
+                    elseif cell == "hostname" then cell = "主机名"
+                    elseif cell == "cost" then cell = "路由"
+                    elseif cell == "lat(ms)" then cell = "延迟(ms)"
+                    elseif cell == "loss" then cell = "丢包率"
+                    elseif cell == "rx" then cell = "下载"
+                    elseif cell == "tx" then cell = "上传"
+                    elseif cell == "tunnel" then cell = "协议"
+                    elseif cell == "NAT" then cell = "NAT类型"
+                    elseif cell == "version" then cell = "内核版本"
+                    end
+                else
+                    -- 内容值中文化
+                    if cell == "Local" then
+                        cell = "本机"
+                    elseif cell == "PortRestricted" then
+                        cell = "端口受限"
+                    elseif cell == "NoPat" then
+                        cell = "无端口映射"
+                    end
+                end
+
+                table.insert(row, cell)
+
+                if not s then break end
             end
 
             if #row > 0 then
+                parsed = true
                 local tr = {}
                 for i, c in ipairs(row) do
-                    local tag = "td"
+                    local tag = rowIndex == 0 and "th" or "td"
                     local style = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
 
-                    if rowIndex == 0 then
-                        tag = "th"
+                    if tag == "th" then
                         style = "padding:6px;text-align:center;white-space:nowrap;border:1px solid #ccc;background:#f7f7f7;"
+                    elseif rowIndex % 2 == 1 then
+                        style = style .. "background:#fafafa;"
                     else
-                        -- 奇偶行背景色
-                        if rowIndex % 2 == 1 then
-                            style = style .. "background:#fafafa;"
-                        else
-                            style = style .. "background:#ffffff;"
-                        end
+                        style = style .. "background:#ffffff;"
                     end
 
                     table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
                 end
+
                 table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
                 rowIndex = rowIndex + 1
             end
@@ -570,7 +619,15 @@ btn1info.cfgvalue = function(self, section)
     end
 
     table.insert(html, "</table></div>")
-    return table.concat(html, "\n")
+
+    if parsed then
+        return table.concat(html, "\n")
+    else
+        return string.format(
+            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
+            luci.xml.pcdata(content)
+        )
+    end
 end
 
 btn2 = s:taboption("infos", Button, "btn2")
@@ -611,7 +668,6 @@ btn3info.cfgvalue = function(self, section)
     return string.format("<pre>%s</pre>", luci.util.pcdata(content))
 end
 
-
 btn4 = s:taboption("infos", Button, "btn4")
 btn4.inputtitle = translate("Route Info")
 btn4.description = translate("Click the button to refresh and view route information")
@@ -628,7 +684,10 @@ btn4info = s:taboption("infos", DummyValue, "btn4info")
 btn4info.rawhtml = true
 btn4info.cfgvalue = function(self, section)
     local content = nixio.fs.readfile("/tmp/easytier-cli_route") or ""
+    content = luci.util.trim(content or "")
+
     local html = {}
+    local parsed = false 
 
     table.insert(html, [[
         <div style="overflow:auto; max-width:100%;">
@@ -644,10 +703,37 @@ btn4info.cfgvalue = function(self, section)
         if not line:match("^|%s*-") then
             local cells = {}
             for cell in line:gmatch("|%s*([^|]+)%s*") do
-                table.insert(cells, cell)
+                local value = luci.util.trim(cell)
+
+                if rowIndex == 1 then
+                    if value == "ipv4" then value = "IPv4地址"
+                    elseif value == "hostname" then value = "主机名"
+                    elseif value == "proxy_cidrs" then value = "代理网段"
+                    elseif value == "next_hop_ipv4" then value = "下一跳IPv4"
+                    elseif value == "next_hop_hostname" then value = "下一跳主机名"
+                    elseif value == "next_hop_lat" then value = "下一跳延迟"
+                    elseif value == "path_len" then value = "路径长度"
+                    elseif value == "path_latency" then value = "路径延迟"
+                    elseif value == "next_hop_ipv4_lat_first" then value = "首跳IPv4延迟"
+                    elseif value == "next_hop_hostname_lat_first" then value = "首跳主机名延迟"
+                    elseif value == "path_len_lat_first" then value = "首跳路径长度"
+                    elseif value == "path_latency_lat_first" then value = "首跳路径延迟"
+                    elseif value == "version" then value = "版本"
+                    end
+                else
+
+                    if value == "Local" then
+                        value = "本机"
+                    elseif value == "DIRECT" then
+                        value = "直连"
+                    end
+                end
+
+                table.insert(cells, value)
             end
 
             if #cells > 0 then
+                parsed = true
                 local tr = {}
                 for i, c in ipairs(cells) do
                     local tag = rowIndex == 1 and "th" or "td"
@@ -661,15 +747,25 @@ btn4info.cfgvalue = function(self, section)
                         style = style .. "background:#ffffff;"
                     end
 
-                    table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
+                    table.insert(tr, string.format("<%s style='%s'>%s</%s>",
+                        tag, style, luci.util.pcdata(c), tag))
                 end
+
                 table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
             end
         end
     end
 
     table.insert(html, "</table></div>")
-    return table.concat(html, "\n")
+
+    if parsed then
+        return table.concat(html, "\n")
+    else
+        return string.format(
+            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
+            luci.xml.pcdata(content)
+        )
+    end
 end
 
 btn6 = s:taboption("infos", Button, "btn6")
@@ -688,7 +784,10 @@ btn6info = s:taboption("infos", DummyValue, "btn6info")
 btn6info.rawhtml = true
 btn6info.cfgvalue = function(self, section)
     local content = nixio.fs.readfile("/tmp/easytier-cli_peer-center") or ""
+    content = luci.util.trim(content or "")
+
     local html = {}
+    local parsed = false 
 
     table.insert(html, [[
         <div style="overflow:auto; max-width:100%;">
@@ -704,10 +803,25 @@ btn6info.cfgvalue = function(self, section)
         if not line:match("^|%s*-") then
             local cells = {}
             for cell in line:gmatch("|%s*([^|]+)%s*") do
-                table.insert(cells, cell)
+                local value = luci.util.trim(cell)
+
+                if rowIndex == 1 then
+                    if value == "node_id" then
+                        value = "节点ID"
+                    elseif value == "hostname" then
+                        value = "主机名"
+                    elseif value == "ipv4" then
+                        value = "IPv4地址"
+                    elseif value == "direct_peers" then
+                        value = "直连节点"
+                    end
+                end
+
+                table.insert(cells, value)
             end
 
             if #cells > 0 then
+                parsed = true
                 local tr = {}
                 for i, c in ipairs(cells) do
                     local tag = rowIndex == 1 and "th" or "td"
@@ -721,16 +835,26 @@ btn6info.cfgvalue = function(self, section)
                         style = style .. "background:#ffffff;"
                     end
 
-                    table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
+                    table.insert(tr, string.format("<%s style='%s'>%s</%s>",
+                        tag, style, luci.util.pcdata(c), tag))
                 end
-
                 table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
             end
         end
     end
 
     table.insert(html, "</table></div>")
-    return table.concat(html, "\n")
+
+    if parsed then
+        -- 成功解析表格
+        return table.concat(html, "\n")
+    else
+        -- 没有表格 → 原样显示
+        return string.format(
+            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
+            luci.xml.pcdata(content)
+        )
+    end
 end
 
 btn7 = s:taboption("infos", Button, "btn7")
@@ -768,7 +892,10 @@ btn8info = s:taboption("infos", DummyValue, "btn8info")
 btn8info.rawhtml = true
 btn8info.cfgvalue = function(self, section)
     local content = nixio.fs.readfile("/tmp/easytier-cli_proxy") or ""
+    content = luci.util.trim(content or "")
+
     local html = {}
+    local parsed = false 
 
     table.insert(html, [[
         <div style="overflow:auto; max-width:100%;">
@@ -784,10 +911,28 @@ btn8info.cfgvalue = function(self, section)
         if not line:match("^|%s*-") then
             local cells = {}
             for cell in line:gmatch("|%s*([^|]+)%s*") do
-                table.insert(cells, luci.util.trim(cell))
+                local value = luci.util.trim(cell)
+
+                -- 表头关键词替换
+                if rowIndex == 1 then
+                    if value == "src" then
+                        value = "源地址"
+                    elseif value == "dst" then
+                        value = "目标地址"
+                    elseif value == "start_time" then
+                        value = "启动时间"
+                    elseif value == "state" then
+                        value = "状态"
+                    elseif value == "transport_type" then
+                        value = "传输类型"
+                    end
+                end
+
+                table.insert(cells, value)
             end
 
             if #cells > 0 then
+                parsed = true
                 local tr = {}
                 for i, c in ipairs(cells) do
                     local tag = rowIndex == 1 and "th" or "td"
@@ -801,7 +946,8 @@ btn8info.cfgvalue = function(self, section)
                         style = style .. "background:#ffffff;"
                     end
 
-                    table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
+                    table.insert(tr, string.format("<%s style='%s'>%s</%s>",
+                        tag, style, luci.util.pcdata(c), tag))
                 end
 
                 table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
@@ -810,7 +956,16 @@ btn8info.cfgvalue = function(self, section)
     end
 
     table.insert(html, "</table></div>")
-    return table.concat(html, "\n")
+
+    if parsed then
+        return table.concat(html, "\n")
+    else
+        -- 没解析出表格，原样显示
+        return string.format(
+            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
+            luci.util.pcdata(content)
+        )
+    end
 end
 
 btn9 = s:taboption("infos", Button, "btn9")
@@ -867,26 +1022,36 @@ btn11info = s:taboption("infos", DummyValue, "btn11info")
 btn11info.rawhtml = true
 btn11info.cfgvalue = function(self, section)
     local content = nixio.fs.readfile("/tmp/easytier-cli_stats") or ""
+    content = luci.util.trim(content or "")
+
     local html = {}
-
-    table.insert(html, [[
-        <div style="overflow:auto; max-width:100%;">
-        <table style="border-collapse:collapse;width:100%;font-family:monospace;">
-    ]])
-
     local lines = {}
     for line in content:gmatch("[^\r\n]+") do
         table.insert(lines, line)
     end
 
+    local parsed = false
+    local tableRows = {}
+
     for rowIndex, line in ipairs(lines) do
         if not line:match("^|%s*-") then
             local cells = {}
             for cell in line:gmatch("|%s*([^|]+)%s*") do
-                table.insert(cells, luci.util.trim(cell))
+                local value = luci.util.trim(cell)
+                if rowIndex == 1 then
+                    if value == "Metric Name" then
+                        value = "指标名称"
+                    elseif value == "Value" then
+                        value = "值"
+                    elseif value == "Labels" then
+                        value = "标签"
+                    end
+                end
+                table.insert(cells, value)
             end
 
             if #cells > 0 then
+                parsed = true
                 local tr = {}
                 for i, c in ipairs(cells) do
                     local tag = rowIndex == 1 and "th" or "td"
@@ -902,14 +1067,24 @@ btn11info.cfgvalue = function(self, section)
 
                     table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
                 end
-
-                table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
+                table.insert(tableRows, "<tr>" .. table.concat(tr) .. "</tr>")
             end
         end
     end
 
-    table.insert(html, "</table></div>")
-    return table.concat(html, "\n")
+    if parsed then
+        table.insert(html, [[
+            <div style="overflow:auto; max-width:100%;">
+            <table style="border-collapse:collapse;width:100%;font-family:monospace;">
+        ]])
+        for _, row in ipairs(tableRows) do
+            table.insert(html, row)
+        end
+        table.insert(html, "</table></div>")
+        return table.concat(html, "\n")
+    else
+        return string.format("<pre style='background:#f9f9f9;padding:8px;border:1px solid #ccc;white-space:pre-wrap;'>%s</pre>", luci.util.pcdata(content))
+    end
 end
 
 btn5 = s:taboption("infos", Button, "btn5")

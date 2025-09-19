@@ -65,6 +65,6 @@ Fri Feb  7 11:13:30 2025 daemon.err uhttpd[3381]: luci.util.pcdata() has been re
 ```
 
 ```
-sed -i 's/util/xml/g' /usr/lib/lua/luci/model/cbi/easytier.lua
+sed -i 's/util.pcdata/xml.pcdata/g' /usr/lib/lua/luci/model/cbi/easytier.lua
 ```
 
