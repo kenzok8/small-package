@@ -392,7 +392,7 @@ return view.extend({
 				}),
 				E('button', {
 					class: 'cbi-button cbi-button-add',
-					click: ui.createHandlerFn(this, function() {
+					click: ui.createHandlerFn(this, () => {
 						this.hm_options.params = document.getElementById(cbid).value;
 
 						return hm.handleGenKey.call(this, this.hm_options);
