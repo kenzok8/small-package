@@ -59,7 +59,7 @@ const methods = {
 	certificate_write: {
 		args: { filename: 'filename' },
 		call: function(req) {
-			const writeCertificate = function(filename, priv) {
+			const writeCertificate = (filename, priv) => {
 				const tmpcert = '/tmp/homeproxy_certificate.tmp';
 				const filestat = lstat(tmpcert);
 

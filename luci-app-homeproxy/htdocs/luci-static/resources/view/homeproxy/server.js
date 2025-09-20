@@ -46,7 +46,7 @@ function renderStatus(isRunning, version) {
 function handleGenKey(option) {
 	let section_id = this.section.section;
 	let type = this.section.getOption('type')?.formvalue(section_id);
-	let widget = L.bind(function(option) {
+	let widget = L.bind((option) => {
 		return this.map.findElement('id', 'widget.' + this.cbid(section_id).replace(/\.[^\.]+$/, '.') + option);
 	}, this);
 
@@ -85,10 +85,10 @@ function handleGenKey(option) {
 				break;
 		}
 		/* AEAD */
-		(function(length) {
+		((length) => {
 			if (length && length > 0)
 				password = hp.generateRand('base64', length);
-		}(hp.shadowsocks_encrypt_length[required_method]));
+		})(hp.shadowsocks_encrypt_length[required_method]);
 
 		return widget(option).value = password;
 	}
@@ -110,8 +110,8 @@ return view.extend({
 			_('The modern ImmortalWrt proxy platform for ARM64/AMD64.'));
 
 		s = m.section(form.TypedSection);
-		s.render = function () {
-			poll.add(function () {
+		s.render = function() {
+			poll.add(() => {
 				return L.resolveDefault(getServiceStatus()).then((res) => {
 					let view = document.getElementById('service_status');
 					view.innerHTML = renderStatus(res, features.version);
@@ -807,7 +807,7 @@ return view.extend({
 				}),
 				E('button', {
 					class: 'cbi-button cbi-button-add',
-					click: ui.createHandlerFn(this, function() {
+					click: ui.createHandlerFn(this, () => {
 						this.hp_options.params = document.getElementById(cbid).value;
 
 						return handleGenKey.call(this, this.hp_options);
