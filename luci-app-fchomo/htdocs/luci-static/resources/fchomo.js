@@ -64,6 +64,14 @@ const dashrepos_urlparams = {
 	'metacubex/razord-meta': '?host=%s&port=%s&secret=%s'
 };
 
+const log_levels = [
+	['silent', _('Silent')],
+	['error', _('Error')],
+	['warning', _('Warning')],
+	['info', _('Info')],
+	['debug', _('Debug')]
+];
+
 const glossary = {
 	proxy_group: {
 		prefmt: 'group_%s',
@@ -1422,6 +1430,7 @@ return baseclass.extend({
 	stunserver,
 	dashrepos,
 	dashrepos_urlparams,
+	log_levels,
 	glossary,
 	health_checkurls,
 	inbound_type,
