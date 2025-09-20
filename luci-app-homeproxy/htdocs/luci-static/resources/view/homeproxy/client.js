@@ -1020,6 +1020,7 @@ return view.extend({
 			_('The domain strategy for resolving the domain name in the address.'));
 		for (let i in hp.dns_strategy)
 			so.value(i, hp.dns_strategy[i]);
+		so.depends({'address_resolver': '', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'outbound', _('Outbound'),
