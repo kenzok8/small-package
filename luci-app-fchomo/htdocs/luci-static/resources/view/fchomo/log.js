@@ -70,7 +70,7 @@ function getRuntimeLog(name, filename) {
 				' ',
 				E('button', {
 					'class': 'btn cbi-button cbi-button-action',
-					'click': ui.createHandlerFn(this, function() {
+					'click': ui.createHandlerFn(this, () => {
 						return L.resolveDefault(callLogClean(filename), {});
 					})
 				}, [ _('Clean log') ])

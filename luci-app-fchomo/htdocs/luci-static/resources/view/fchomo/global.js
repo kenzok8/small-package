@@ -145,7 +145,7 @@ return view.extend({
 				const playButton = mapEl.querySelector('.cbi-map-descr > img');
 				const audio = mapEl.querySelector('.cbi-map-descr > audio');
 
-				playButton.addEventListener('click', function() {
+				playButton.addEventListener('click', () => {
 					if (audio.paused)
 						audio.play();
 				});
@@ -208,7 +208,7 @@ return view.extend({
 			return E([
 				E('button', {
 					'class': 'cbi-button cbi-button-apply',
-					'click': ui.createHandlerFn(this, function() {
+					'click': ui.createHandlerFn(this, () => {
 						let weight = document.getElementById(ElId);
 
 						weight.innerHTML = '';
@@ -257,7 +257,7 @@ return view.extend({
 					]),
 					E('button', {
 						'class': 'cbi-button cbi-button-apply',
-						'click': ui.createHandlerFn(this, function() {
+						'click': ui.createHandlerFn(this, () => {
 							const stun = this.formvalue(this.section.section);
 							const l4proto = document.getElementById('_status_nattest_l4proto').value;
 
@@ -570,7 +570,7 @@ return view.extend({
 				}),
 				E('button', {
 					class: 'cbi-button cbi-button-add',
-					click: ui.createHandlerFn(this, function() {
+					click: ui.createHandlerFn(this, () => {
 						this.hm_options.params = document.getElementById(cbid).value;
 
 						return hm.handleGenKey.call(this, this.hm_options);
