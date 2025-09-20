@@ -404,12 +404,10 @@ return view.extend({
 		so.default = 'off';
 
 		so = ss.option(form.ListValue, 'log_level', _('Log level'));
-		so.value('silent', _('Silent'));
-		so.value('error', _('Error'));
-		so.value('warning', _('Warning'));
-		so.value('info', _('Info'));
-		so.value('debug', _('Debug'));
 		so.default = 'warning';
+		hm.log_levels.forEach((res) => {
+			so.value.apply(so, res);
+		});
 
 		so = ss.option(form.Flag, 'etag_support', _('ETag support'));
 		so.default = so.enabled;

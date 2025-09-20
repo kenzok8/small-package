@@ -26,4 +26,5 @@ config mosdns 'config'
 	option cache_size '8000'
 	option lazy_cache_ttl '86400'
 	option dump_file '0'
+	option reject_type65 '1'
 

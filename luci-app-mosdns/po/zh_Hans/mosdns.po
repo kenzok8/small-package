@@ -83,6 +83,12 @@ msgstr "DNS 重定向"
 msgid "Force redirect all local DNS queries to MosDNS, a.k.a. DNS Hijacking"
 msgstr "强制将所有本地 DNS 查询重定向到 MosDNS，即 DNS 劫持。"
 
+msgid "Disable RR Type 65 (HTTPS/SVCB)"
+msgstr "禁用 RR Type 65 (HTTPS/SVCB)"
+
+msgid "Block DNS RR Type 65 records (HTTPS/SVCB, used for HTTP/3, ECH, etc.), force using only A/AAAA records."
+msgstr "屏蔽 DNS 类型 65 记录（HTTPS/SVCB，用于 HTTP/3、ECH 等），强制仅使用 A/AAAA 解析。"
+
 msgid "Enable DNS ADblock"
 msgstr "启用 DNS 广告过滤"
 

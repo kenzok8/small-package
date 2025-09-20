@@ -331,6 +331,11 @@ return view.extend({
 		o.default = 0;
 		o.depends('configfile', '/var/etc/mosdns.json');
 
+		o = s.taboption('advanced', form.Flag, 'reject_type65', _('Disable RR Type 65 (HTTPS/SVCB)'),
+			_('Block DNS RR Type 65 records (HTTPS/SVCB, used for HTTP/3, ECH, etc.), force using only A/AAAA records.'));
+		o.default = 0;
+		o.depends('configfile', '/var/etc/mosdns.json');
+
 		o = s.taboption('advanced', form.Flag, 'adblock', _('Enable DNS ADblock'));
 		o.depends('configfile', '/var/etc/mosdns.json');
 		o.default = false;
