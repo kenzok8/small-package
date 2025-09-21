@@ -407,7 +407,7 @@ return view.extend({
 		so.default = 'warning';
 		hm.log_levels.forEach((res) => {
 			so.value.apply(so, res);
-		});
+		})
 
 		so = ss.option(form.Flag, 'etag_support', _('ETag support'));
 		so.default = so.enabled;

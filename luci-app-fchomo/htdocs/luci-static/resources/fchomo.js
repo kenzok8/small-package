@@ -385,6 +385,18 @@ const CBIDynamicList = form.DynamicList.extend({ // @pr7558_merged
 	}
 });
 
+const CBIStaticList = form.DynamicList.extend({
+	__name__: 'CBI.StaticList',
+
+	renderWidget(/* ... */) {
+		let El = (!pr7558_merged ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @pr7558_merged
+
+		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
+
+		return El;
+	}
+});
+
 const CBIListValue = form.ListValue.extend({
 	renderWidget(/* ... */) {
 		let frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
@@ -399,18 +411,6 @@ const CBIRichMultiValue = form.MultiValue.extend({
 	__name__: 'CBI.RichMultiValue',
 
 	value: form.RichListValue.prototype.value
-});
-
-const CBIStaticList = form.DynamicList.extend({
-	__name__: 'CBI.StaticList',
-
-	renderWidget(/* ... */) {
-		let El = (!pr7558_merged ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @pr7558_merged
-
-		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
-
-		return El;
-	}
 });
 
 const CBITextValue = form.TextValue.extend({
@@ -1452,9 +1452,9 @@ return baseclass.extend({
 	/* Prototype */
 	GridSection: CBIGridSection,
 	DynamicList: CBIDynamicList,
+	StaticList: CBIStaticList,
 	ListValue: CBIListValue,
 	RichMultiValue: CBIRichMultiValue,
-	StaticList: CBIStaticList,
 	TextValue: CBITextValue,
 	GenValue: CBIGenValue,
 	GenText: CBIGenText,
