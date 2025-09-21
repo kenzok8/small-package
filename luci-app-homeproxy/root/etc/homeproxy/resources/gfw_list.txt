@@ -1904,6 +1904,7 @@ gaopi.net
 gardennetworks.com
 gardennetworks.org
 gartlive.com
+garudalinux.org
 gate.io
 gatecoin.com
 gather.com
@@ -1979,6 +1980,7 @@ github.io
 githubassets.com
 githubcopilot.com
 githubusercontent.com
+gitlab.com
 gitlab.net
 gizlen.net
 gjczz.com
@@ -3185,6 +3187,7 @@ mcadforums.com
 mcaf.ee
 mcfog.com
 mcreasite.com
+mcusercontent.com
 md-t.org
 me.me
 me.ns.ci
@@ -3559,6 +3562,7 @@ ninecommentaries.com
 ninjacloak.com
 ninjaproxy.ninja
 nintendium.com
+nirsoft.net
 nitter.cc
 nitter.net
 niu.moe
@@ -4379,6 +4383,7 @@ simplecd.org
 simpleproductivityblog.com
 simpleswap.io
 simplex.chat
+sina.com.hk
 sinchew.com.my
 singaporepools.com.sg
 singfortibet.com
@@ -4679,6 +4684,7 @@ taiwantt.org.tw
 taiwanus.net
 taiwanyes.ning.com
 talk853.com
+talkatone.com
 talkboxapp.com
 talkcc.com
 talkonly.net
@@ -5392,6 +5398,7 @@ vpnvip.com
 vpnworldwide.com
 vporn.com
 vpser.net
+vpsxb.net
 vraiesagesse.net
 vrchat.com
 vrmtr.com
