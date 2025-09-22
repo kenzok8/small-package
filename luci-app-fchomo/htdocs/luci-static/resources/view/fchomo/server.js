@@ -374,10 +374,12 @@ return view.extend({
 		o.hm_options = {
 			type: 'ech-keypair',
 			params: '',
-			result: {
-				ech_key: o.option,
-				ech_cfg: 'tls_ech_config'
-			}
+			callback: L.bind(function(result) {
+				return [
+					[this.option, result.ech_key],
+					['tls_ech_config', result.ech_cfg]
+				]
+			}, o)
 		}
 		o.renderWidget = function(section_id, option_index, cfgvalue) {
 			let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
@@ -425,20 +427,21 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.taboption('field_tls', hm.GenValue, 'tls_reality_private_key', _('REALITY private key'));
-		const tls_reality_public_key = 'tls_reality_public_key';
 		o.hm_options = {
 			type: 'reality-keypair',
-			result: {
-				private_key: o.option,
-				public_key: tls_reality_public_key
-			}
-		};
+			callback: L.bind(function(result) {
+				return [
+					[this.option, result.private_key],
+					['tls_reality_public_key', result.public_key]
+				]
+			}, o)
+		}
 		o.password = true;
 		o.rmempty = false;
 		o.depends('tls_reality', '1');
 		o.modalonly = true;
 
-		o = s.taboption('field_tls', form.Value, tls_reality_public_key, _('REALITY public key'));
+		o = s.taboption('field_tls', form.Value, 'tls_reality_public_key', _('REALITY public key'));
 		o.depends('tls_reality', '1');
 		o.modalonly = true;
 

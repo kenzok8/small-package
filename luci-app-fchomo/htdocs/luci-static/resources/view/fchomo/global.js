@@ -550,10 +550,12 @@ return view.extend({
 		so.hm_options = {
 			type: 'ech-keypair',
 			params: '',
-			result: {
-				ech_key: so.option,
-				ech_cfg: 'tls_ech_cfg'
-			}
+			callback: L.bind(function(result) {
+				return [
+					[this.option, result.ech_key],
+					['tls_ech_cfg', result.ech_cfg]
+				]
+			}, so)
 		}
 		so.renderWidget = function(section_id, option_index, cfgvalue) {
 			let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);

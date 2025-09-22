@@ -1009,12 +1009,13 @@ function handleGenKey(option) {
 	});
 
 	if (typeof option === 'object') {
-		return callMihomoGenerator(option.type, option.params).then((ret) => {
-			if (ret.result)
-				for (let key in option.result)
-					widget(option.result[key]).value = ret.result[key] ?? '';
+		return callMihomoGenerator(option.type, option.params).then((res) => {
+			if (res.result)
+				option.callback(res.result).forEach(([k, v]) => {
+					widget(k).value = v ?? '';
+				});
 			else
-				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, ret.error)));
+				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, res.error)));
 		});
 	} else {
 		let password, required_method;
@@ -1037,7 +1038,7 @@ function handleGenKey(option) {
 				break;
 			/* DEFAULT */
 			default:
-				password = generateRand('hex', 16);
+				password = generateRand('hex', 32/2);
 				break;
 		}
 		/* AEAD */
