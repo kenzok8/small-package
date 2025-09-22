@@ -374,12 +374,12 @@ return view.extend({
 		o.hm_options = {
 			type: 'ech-keypair',
 			params: '',
-			callback: L.bind(function(result) {
+			callback: function(result) {
 				return [
 					[this.option, result.ech_key],
 					['tls_ech_config', result.ech_cfg]
 				]
-			}, o)
+			}
 		}
 		o.renderWidget = function(section_id, option_index, cfgvalue) {
 			let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
@@ -429,12 +429,12 @@ return view.extend({
 		o = s.taboption('field_tls', hm.GenValue, 'tls_reality_private_key', _('REALITY private key'));
 		o.hm_options = {
 			type: 'reality-keypair',
-			callback: L.bind(function(result) {
+			callback: function(result) {
 				return [
 					[this.option, result.private_key],
 					['tls_reality_public_key', result.public_key]
 				]
-			}, o)
+			}
 		}
 		o.password = true;
 		o.rmempty = false;

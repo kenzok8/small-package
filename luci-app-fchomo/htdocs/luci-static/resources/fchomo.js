@@ -1011,7 +1011,7 @@ function handleGenKey(option) {
 	if (typeof option === 'object') {
 		return callMihomoGenerator(option.type, option.params).then((res) => {
 			if (res.result)
-				option.callback(res.result).forEach(([k, v]) => {
+				option.callback.call(this, res.result).forEach(([k, v]) => {
 					widget(k).value = v ?? '';
 				});
 			else
