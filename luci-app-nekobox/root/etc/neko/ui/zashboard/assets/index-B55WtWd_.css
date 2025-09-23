@@ -5388,6 +5388,10 @@ th:hover .resizer {
         flex-shrink: 0
     }
 
+    .shrink-1 {
+        flex-shrink: 1
+    }
+
     .grow {
         flex-grow: 1
     }
@@ -6225,8 +6229,8 @@ th:hover .resizer {
         white-space: nowrap
     }
 
-    .whitespace-pre {
-        white-space: pre
+    .whitespace-pre-wrap {
+        white-space: pre-wrap
     }
 
     .text-accent {

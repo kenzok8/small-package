@@ -1050,6 +1050,8 @@
         'clearJsonTooltip' => 'JSON-Datei löschen',   
         'traffic_monitor_title' => 'OpenWrt Echtzeit-Verkehrsmonitor',
         'subscriptionClearedSuccess' => 'Abonnementinformationen erfolgreich gelöscht',
+        'upToDate' => 'Aktuell',
+        'updateAvailable' => 'Update verfügbar',
         'save_file_error' => 'Fehler beim Speichern der Datei: {message}'
     ],
     'fr' => [
@@ -2106,6 +2108,8 @@
         
         'traffic_monitor_title' => 'Moniteur de trafic OpenWrt en temps réel',
         'subscriptionClearedSuccess' => "Informations d'abonnement effacées avec succès",
+        'upToDate' => 'À jour',
+        'updateAvailable' => 'Mise à jour disponible',
         'save_file_error' => 'Erreur de sauvegarde : {message}'
     ],
     'zh' => [
@@ -3050,6 +3054,8 @@
         'clearJsonTooltip' => '清空 JSON 文件',
         'traffic_monitor_title' => 'OpenWrt 实时流量监控',
         'subscriptionClearedSuccess' => '订阅信息已清空成功',
+        'upToDate' => '已最新',
+        'updateAvailable' => '有更新',
         'save_file_error' => '保存文件出错：{message}'
     ],
     'en' => [
@@ -4181,6 +4187,8 @@
         'clearJsonTooltip' => 'Clear JSON file',       
         'traffic_monitor_title' => 'OpenWrt Real-time Traffic Monitor',
         'subscriptionClearedSuccess' => 'Subscription information cleared successfully',
+        'upToDate' => 'Up-to-date',
+        'updateAvailable' => 'Update Available',
         'save_file_error' => 'Save error: {message}'
     ],
     'hk' => [
@@ -5213,6 +5221,8 @@
         
         'traffic_monitor_title' => 'OpenWrt 即時流量監控',
         'subscriptionClearedSuccess' => '訂閱信息已清空成功',
+        'upToDate' => '已最新',
+        'updateAvailable' => '有更新',
         'save_file_error' => '儲存檔案時發生錯誤：{message}'
     ],
     'ko' => [
@@ -6283,6 +6293,8 @@
         
         'traffic_monitor_title' => 'OpenWrt 실시간 트래픽 모니터',
         'subscriptionClearedSuccess' => '구독 정보가 성공적으로 삭제되었습니다',
+        'upToDate' => '최신',
+        'updateAvailable' => '업데이트 가능',
         'save_file_error' => '파일 저장 오류: {message}'
     ],
     'ja' => [
@@ -7340,6 +7352,8 @@
         
         'traffic_monitor_title' => 'OpenWrt リアルタイムトラフィック監視',
         'subscriptionClearedSuccess' => 'サブスクリプション情報が正常にクリアされました',
+        'upToDate' => '最新',
+        'updateAvailable' => '更新あり',
         'save_file_error' => 'ファイルの保存中にエラーが発生しました：{message}'
    ],
     'ru' => [
@@ -8420,6 +8434,8 @@
         
         'traffic_monitor_title' => 'Монитор трафика OpenWrt в реальном времени',
         'subscriptionClearedSuccess' => 'Информация о подписках успешно очищена',
+        'upToDate' => 'Актуально',
+        'updateAvailable' => 'Доступно обновление',
         'save_file_error' => 'Ошибка сохранения файла: {message}'
     ],
     'ar' => [
@@ -9473,6 +9489,8 @@
         
         'traffic_monitor_title' => 'مراقب حركة المرور OpenWrt في الوقت الفعلي',
         'subscriptionClearedSuccess' => 'تم مسح معلومات الاشتراك بنجاح',
+        'upToDate' => 'محدث',
+        'updateAvailable' => 'تحديث متاح',
         'save_file_error' => 'خطأ في حفظ الملف: {message}'
     ],
     'es' => [
@@ -10567,6 +10585,8 @@
         
         'traffic_monitor_title' => 'Monitor de tráfico OpenWrt en tiempo real',
         'subscriptionClearedSuccess' => 'Información de suscripción borrada con éxito',
+        'upToDate' => 'Actualizado',
+        'updateAvailable' => 'Actualización disponible',
         'save_file_error' => 'Error al guardar: {message}'
     ],
     'vi' => [
@@ -11657,6 +11677,8 @@
         
         'traffic_monitor_title' => 'Giám sát lưu lượng OpenWrt thời gian thực',
         'subscriptionClearedSuccess' => 'Thông tin đăng ký đã được xóa thành công',
+        'upToDate' => 'Đã mới nhất',
+        'updateAvailable' => 'Có bản cập nhật',
         'save_file_error' => 'Lỗi khi lưu: {message}'
     ]
 ];
