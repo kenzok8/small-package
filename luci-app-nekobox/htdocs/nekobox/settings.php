@@ -147,7 +147,7 @@ $razordVersion = getRazordVersion();
       <div class="card">
         <div class="card-body text-center">
           <h5 class="card-title" data-translate="ui_panel_title">Ui Panel</h5>
-          <p class="card-text"><?php echo htmlspecialchars($uiVersion); ?></p>
+          <p id="uiVersion" class="card-text"><?php echo htmlspecialchars($uiVersion); ?></p>
           <div class="d-flex justify-content-center gap-2 mt-3">
             <button class="btn btn-pink" id="checkUiButton">
               <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
@@ -181,7 +181,7 @@ $razordVersion = getRazordVersion();
       <div class="card">
         <div class="card-body text-center">
           <h5 class="card-title" data-translate="mihomo_core_version_title">Mihomo Core Version</h5>
-          <p class="card-text"><?php echo htmlspecialchars($mihomoVersion); ?></p>
+          <p id="mihomoVersion" class="card-text"><?php echo htmlspecialchars($mihomoVersion); ?></p>
           <div class="d-flex justify-content-center gap-2 mt-3">
             <button class="btn btn-pink" id="checkMihomoButton">
               <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
@@ -807,6 +807,108 @@ document.addEventListener('DOMContentLoaded', function() {
         showPanelSelector();  
     });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const addIndicator = (el, text, color='warning') => {
+        if (!el) return;
+        const old = el.querySelector('.version-status-indicator');
+        if (old) old.remove();
+
+        const span = document.createElement('span');
+        span.className = `ms-2 version-status-indicator text-${color}`;
+        span.textContent = `(${text})`;
+        el.appendChild(span);
+    };
+
+    const compareVersions = (current, latest) => {
+        if (!current || !latest) return false;
+        const clean = v => v.replace(/^v/, '').trim();
+        return clean(current) === clean(latest);
+    };
+
+    const singBoxEl = document.getElementById('singBoxCorever');
+    const singBoxCurrent = "<?php echo htmlspecialchars($singBoxVersion); ?>";
+    let singBoxUrl = '';
+    if (singBoxCurrent && /^v/.test(singBoxCurrent) && /-.+/.test(singBoxCurrent)) singBoxUrl = 'update_singbox_core.php';
+    else if (singBoxCurrent && /-.+/.test(singBoxCurrent)) singBoxUrl = 'update_singbox_preview.php';
+    else if (singBoxCurrent && !/[a-zA-Z]/.test(singBoxCurrent)) singBoxUrl = 'update_singbox_stable.php';
+
+    if (singBoxUrl && singBoxEl) {
+        fetch(singBoxUrl + '?check_version=true')
+            .then(res => res.text())
+            .then(text => {
+                const match = text.trim().match(/Latest version:\s*([^\s]+)/);
+                if (match && match[1]) {
+                    const latest = match[1];
+                    const statusText = compareVersions(singBoxCurrent, latest)
+                        ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
+                        : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
+                    addIndicator(singBoxEl, statusText, compareVersions(singBoxCurrent, latest) ? 'success' : 'warning');
+                }
+            })
+            .catch(() => {});
+    }
+
+    const mihomoEl = document.getElementById('mihomoVersion');
+    const mihomoCurrent = "<?php echo htmlspecialchars($mihomoVersion); ?>";
+    const mihomoType = "<?php echo htmlspecialchars($mihomoType); ?>";
+    let mihomoUrl = '';
+    if (mihomoType === 'Stable') mihomoUrl = 'update_mihomo_stable.php';
+    else if (mihomoType === 'Preview') mihomoUrl = 'update_mihomo_preview.php';
+
+    if (mihomoUrl && mihomoEl) {
+        fetch(mihomoUrl + '?check_version=true')
+            .then(res => res.text())
+            .then(text => {
+                const match = text.trim().match(/Latest version:\s*([^\s]+)/);
+                if (match && match[1]) {
+                    const latest = match[1];
+                    const statusText = compareVersions(mihomoCurrent, latest)
+                        ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
+                        : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
+                    addIndicator(mihomoEl, statusText, compareVersions(mihomoCurrent, latest) ? 'success' : 'warning');
+                }
+            })
+            .catch(() => {});
+    }
+
+    const zashboardEl = document.getElementById('uiVersion');
+    const zashboardCurrent = "<?php echo htmlspecialchars($uiVersion); ?>";
+    if (zashboardEl && zashboardCurrent) {
+        fetch('update_zashboard.php?check_version=true')
+            .then(res => res.text())
+            .then(text => {
+                const match = text.trim().match(/Latest version:\s*([^\s]+)/);
+                if (match && match[1]) {
+                    const latest = match[1];
+                    const statusText = compareVersions(zashboardCurrent, latest)
+                        ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
+                        : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
+                    addIndicator(zashboardEl, statusText, compareVersions(zashboardCurrent, latest) ? 'success' : 'warning');
+                }
+            })
+            .catch(() => {});
+    }
+
+    const cliverEl = document.getElementById('cliver');
+    const cliverCurrent = "<?php echo htmlspecialchars(trim($cliverVersion)); ?>";
+    if (cliverEl && cliverCurrent) {
+        fetch('update_script.php?check_version=true')
+            .then(res => res.text())
+            .then(text => {
+                const match = text.trim().match(/Latest version:\s*([^\s]+)/);
+                if (match && match[1]) {
+                    const latest = match[1];
+                    const statusText = compareVersions(cliverCurrent, latest)
+                        ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
+                        : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
+                    addIndicator(cliverEl, statusText, compareVersions(cliverCurrent, latest) ? 'success' : 'warning');
+                }
+            })
+            .catch(() => {});
+    }
+
+});
 </script>
 
 <script>
@@ -896,6 +998,7 @@ function checkVersion(outputId, updateFiles, currentVersions) {
         versionModal.show();
     });
 }
+
 document.getElementById('checkSingboxButton').addEventListener('click', function () {
     const singBoxVersion = "<?php echo htmlspecialchars(trim($singBoxVersion)); ?>";
     const singBoxType = "<?php echo htmlspecialchars($singBoxType); ?>";
