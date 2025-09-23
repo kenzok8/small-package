@@ -850,6 +850,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
     </div>
 <h2 id="neko-title" class="neko-title-style" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#systemInfoModal">NekoBox</h2>
 
+<?php
+function getSingboxVersion() {
+    $singBoxPath = '/usr/bin/sing-box'; 
+    $command = "$singBoxPath version 2>&1";
+    exec($command, $output, $returnVar);
+
+    if ($returnVar === 0) {
+        foreach ($output as $line) {
+            if (strpos($line, 'version') !== false) {
+                $parts = explode(' ', $line);
+                return end($parts);
+            }
+        }
+    }
+
+    return 'Not installed';
+}
+
+function getMihomoVersion() {
+    $mihomoPath = '/usr/bin/mihomo';
+    
+    if (!file_exists($mihomoPath)) {
+        return 'Not installed';
+    }
+    
+    $command = "$mihomoPath -v 2>&1";  
+    exec($command, $output, $returnVar);
+
+    if ($returnVar === 0 && !empty($output)) {
+        $line = trim($output[0]);
+
+        if (preg_match('/Mihomo Meta\s+([^\s]+)/i', $line, $matches)) {
+            return $matches[1];
+        }
+
+        return $line;
+    }
+
+    return 'Command failed: ' . $returnVar;
+}
+
+
+$singboxVersion = getSingboxVersion();
+$mihomoVersion  = getMihomoVersion();
+?>
 <div class="px-4 mt-4 control-box">
     <div class="card">
         <div class="card-body">
@@ -859,7 +904,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
                     <?php if ($neko_status == '1'): ?>
                         <button type="button" class="btn btn-success">
                             <i class="bi bi-router"></i> 
-                            <span data-translate="mihomoRunning">Mihomo Running</span>
+                            <span data-translate="mihomoRunning" data-index="(<?= htmlspecialchars($mihomoVersion) ?>)"></span>
                         </button>
                     <?php else: ?>
                         <button type="button" class="btn btn-outline-danger">
@@ -875,7 +920,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
                     <?php if ($singbox_status == '1'): ?>
                         <button type="button" class="btn btn-success">
                             <i class="bi bi-hdd-stack"></i> 
-                            <span data-translate="singboxRunning">Sing-box Running</span>
+                            <span data-translate="singboxRunning" data-index="(<?= htmlspecialchars($singboxVersion) ?>)"></span>
                         </button>
                     <?php else: ?>
                         <button type="button" class="btn btn-outline-danger">
