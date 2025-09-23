@@ -152,18 +152,18 @@ EOL;
 <?php
 $dataFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
 $lastUpdateTime = null;
-$singBoxConfigDir = '/etc/neko/config/';
 
 $validUrls = [];
 if (file_exists($dataFilePath)) {
     $lines = file($dataFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         $line = trim($line);
-        if (empty($line)) continue;
+        if ($line === '') continue;
+
         $parts = explode('|', $line);
         foreach ($parts as $part) {
             $part = trim($part);
-            if (!empty($part) && preg_match('/^https?:\/\//i', $part)) {
+            if ($part !== '' && preg_match('/^https?:\/\//i', $part)) {
                 $validUrls[] = $part;
             }
         }
@@ -200,31 +200,11 @@ function getSubInfo($subUrl, $userAgent = "Clash") {
     curl_close($ch);
 
     if ($http_code !== 200 || !$response) {
-        return [
-            "http_code"=>$http_code,
-            "sub_info"=>"Request Failed",
-            "used"=>0,
-            "total"=>0,
-            "percent"=>0,
-            "day_left"=>0,
-            "expire"=>"null",
-            "get_time"=>time(),
-            "url"=>$subUrl
-        ];
+        return ["http_code"=>$http_code,"sub_info"=>"Request Failed","get_time"=>time()];
     }
 
     if (!preg_match("/subscription-userinfo: (.*)/i", $response, $matches)) {
-        return [
-            "http_code"=>$http_code,
-            "sub_info"=>"No Sub Info Found",
-            "used"=>0,
-            "total"=>0,
-            "percent"=>0,
-            "day_left"=>0,
-            "expire"=>"null",
-            "get_time"=>time(),
-            "url"=>$subUrl
-        ];
+        return ["http_code"=>$http_code,"sub_info"=>"No Sub Info Found","get_time"=>time()];
     }
 
     $info = $matches[1];
@@ -289,26 +269,7 @@ function clearSubFile() {
     if (file_exists($filePath)) unlink($filePath);
 }
 
-function countSingBoxNodes($filePath) {
-    $validProtocols = '/^(ss|shadowsocks|vmess|vless|trojan|hysteria2|socks5|http)$/i';
-    $nodeCount = 0;
-
-    if (!file_exists($filePath)) return 0;
-    $content = file_get_contents($filePath);
-    $json = json_decode($content, true);
-
-    if (json_last_error() === JSON_ERROR_NONE && isset($json['outbounds']) && is_array($json['outbounds'])) {
-        foreach ($json['outbounds'] as $outbound) {
-            if (!empty($outbound['type']) && preg_match($validProtocols, $outbound['type'])) {
-                $nodeCount++;
-            }
-        }
-    }
-
-    return $nodeCount;
-}
-
-function fetchAllSubInfos($urls, $singBoxConfigFile) {
+function fetchAllSubInfos($urls) {
     $results = [];
     foreach ($urls as $url) {
         if (empty(trim($url))) continue;
@@ -321,31 +282,29 @@ function fetchAllSubInfos($urls, $singBoxConfigFile) {
         $results[$url] = $subInfo;
     }
 
-    $results['_singbox_node_count'] = countSingBoxNodes($singBoxConfigFile);
-
     saveAllSubInfos($results);
     return $results;
 }
 
-if ($_SERVER['REQUEST_METHOD']=='POST') {
-    if (isset($_POST['clearSubscriptions'])) {
-        clearSubFile();
-        header("Location: ".$_SERVER['PHP_SELF']);
-        exit;
-    }
+if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['clearSubscriptions'])) {
+    clearSubFile();
+    header("Location: ".$_SERVER['PHP_SELF']);
+    exit;
+}
 
-    if (isset($_POST['generateConfig'])) {
-        $subscribeUrls = preg_split('/[\r\n,|]+/', trim($_POST['subscribeUrl'] ?? ''));
-        $subscribeUrls = array_filter($subscribeUrls);
 
-        $customFileName = basename(trim($_POST['customFileName'] ?? ''));
-        if (empty($customFileName)) $customFileName = 'sing-box';
-        if (substr($customFileName,-5) !== '.json') $customFileName .= '.json';
-        $configFilePath = $singBoxConfigDir.$customFileName;
+$lastUpdateTime = null;
+if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['generateConfig'])) {
+    $subscribeUrls = preg_split('/[\r\n,|]+/', trim($_POST['subscribeUrl'] ?? ''));
+    $subscribeUrls = array_filter($subscribeUrls);
 
-        $allSubInfos = fetchAllSubInfos($subscribeUrls, $configFilePath);
-        $lastUpdateTime = time();
-    }
+    $customFileName = basename(trim($_POST['customFileName'] ?? ''));
+    if (empty($customFileName)) $customFileName = 'sing-box';
+    if (substr($customFileName,-5) !== '.json') $customFileName .= '.json';
+    $configFilePath = '/etc/neko/config/'.$customFileName;
+
+    $allSubInfos = fetchAllSubInfos($subscribeUrls);
+    $lastUpdateTime = time();
 } else {
     $allSubInfos = loadAllSubInfosFromFile($lastUpdateTime);
 }
@@ -519,19 +478,13 @@ if ($_SERVER['REQUEST_METHOD']=='POST') {
 <?php if (!empty($allSubInfos)): ?>
 <div class="container-sm py-1">
     <div class="card">
-        <div class="card-body p-2 position-relative">
+        <div class="card-body p-2">
             <h5 class="py-1 ps-3">
                 <i class="bi bi-bar-chart"></i>
                 <span data-translate="subscriptionInfo"></span>
-                <?php if (!empty($allSubInfos['_singbox_node_count'])): ?>
-                    <span style="float:right; font-weight:bold; color:var(--accent-color); margin-right:10px;">
-                        <span data-translate="nodesLabel">Nodes</span>: <?= (int)$allSubInfos['_singbox_node_count'] ?>
-                    </span>
-                <?php endif; ?>
             </h5>
             <div class="rounded-3 p-2 border mx-3">
                 <?php foreach ($allSubInfos as $url => $subInfo): ?>
-                    <?php if ($url === '_singbox_node_count') continue; ?>
                     <?php
                         $total   = formatBytes($subInfo['total'] ?? 0);
                         $used    = formatBytes($subInfo['used'] ?? 0);
