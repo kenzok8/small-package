@@ -565,7 +565,80 @@ $razordVersion = getRazordVersion();
         </div>
     </div>
 </div>
+<style>
+.version-indicator {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-block;
+}
 
+.version-indicator.success {
+    background-color: #28a745;
+    animation: pulse-success 2s infinite;
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+}
+
+.version-indicator.warning {
+    background-color: #ffc107;
+    animation: pulse-warning 2s infinite;
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+}
+
+.version-indicator.danger {
+    background-color: #dc3545;
+    animation: pulse-error 2s infinite;
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+}
+
+.version-indicator::after {
+    content: attr(data-text);
+    position: absolute;
+    bottom: -28px;
+    right: 100%;
+    margin-right: 6px;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 99999;
+}
+
+.version-indicator:hover::after {
+    opacity: 1;
+}
+
+@keyframes pulse-success {
+    0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+    70%  { transform: scale(1);    box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+@keyframes pulse-warning {
+    0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+    70%  { transform: scale(1);    box-shadow: 0 0 0 8px rgba(255, 193, 7, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
+@keyframes pulse-error {
+    0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70%  { transform: scale(1);    box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
+.card-body {
+    position: relative;
+}
+</style>
 <script>
 let selectedSingboxVersion = 'v1.11.0-alpha.10';  
 let selectedMihomoVersion = 'stable';  
@@ -809,15 +882,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    const addIndicator = (el, text, color='warning') => {
+    const addIndicator = (el, text, status = 'warning') => {
         if (!el) return;
-        const old = el.querySelector('.version-status-indicator');
+        const old = el.querySelector('.version-indicator');
         if (old) old.remove();
 
-        const span = document.createElement('span');
-        span.className = `ms-2 version-status-indicator text-${color}`;
-        span.textContent = `(${text})`;
-        el.appendChild(span);
+        const dot = document.createElement('span');
+        dot.className = `version-indicator ${status}`;
+        dot.setAttribute('data-text', text);
+
+        el.appendChild(dot);
     };
 
     const compareVersions = (current, latest) => {
@@ -840,10 +914,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const match = text.trim().match(/Latest version:\s*([^\s]+)/);
                 if (match && match[1]) {
                     const latest = match[1];
-                    const statusText = compareVersions(singBoxCurrent, latest)
+                    const isUpToDate = compareVersions(singBoxCurrent, latest);
+                    const statusText = isUpToDate
                         ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
                         : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
-                    addIndicator(singBoxEl, statusText, compareVersions(singBoxCurrent, latest) ? 'success' : 'warning');
+                    addIndicator(singBoxEl, statusText, isUpToDate ? 'success' : 'warning');
                 }
             })
             .catch(() => {});
@@ -863,10 +938,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const match = text.trim().match(/Latest version:\s*([^\s]+)/);
                 if (match && match[1]) {
                     const latest = match[1];
-                    const statusText = compareVersions(mihomoCurrent, latest)
+                    const isUpToDate = compareVersions(mihomoCurrent, latest);
+                    const statusText = isUpToDate
                         ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
                         : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
-                    addIndicator(mihomoEl, statusText, compareVersions(mihomoCurrent, latest) ? 'success' : 'warning');
+                    addIndicator(mihomoEl, statusText, isUpToDate ? 'success' : 'warning');
                 }
             })
             .catch(() => {});
@@ -881,10 +957,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const match = text.trim().match(/Latest version:\s*([^\s]+)/);
                 if (match && match[1]) {
                     const latest = match[1];
-                    const statusText = compareVersions(zashboardCurrent, latest)
+                    const isUpToDate = compareVersions(zashboardCurrent, latest);
+                    const statusText = isUpToDate
                         ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
                         : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
-                    addIndicator(zashboardEl, statusText, compareVersions(zashboardCurrent, latest) ? 'success' : 'warning');
+                    addIndicator(zashboardEl, statusText, isUpToDate ? 'success' : 'warning');
                 }
             })
             .catch(() => {});
@@ -899,15 +976,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const match = text.trim().match(/Latest version:\s*([^\s]+)/);
                 if (match && match[1]) {
                     const latest = match[1];
-                    const statusText = compareVersions(cliverCurrent, latest)
+                    const isUpToDate = compareVersions(cliverCurrent, latest);
+                    const statusText = isUpToDate
                         ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
                         : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
-                    addIndicator(cliverEl, statusText, compareVersions(cliverCurrent, latest) ? 'success' : 'warning');
+                    addIndicator(cliverEl, statusText, isUpToDate ? 'success' : 'warning');
                 }
             })
             .catch(() => {});
     }
-
 });
 </script>
 

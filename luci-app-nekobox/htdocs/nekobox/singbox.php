@@ -152,6 +152,29 @@ EOL;
 <?php
 $dataFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
 $lastUpdateTime = null;
+$singBoxConfigDir = '/etc/neko/config/';
+
+$validUrls = [];
+if (file_exists($dataFilePath)) {
+    $lines = file($dataFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (empty($line)) continue;
+        $parts = explode('|', $line);
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (!empty($part) && preg_match('/^https?:\/\//i', $part)) {
+                $validUrls[] = $part;
+            }
+        }
+    }
+}
+
+$libDir = __DIR__ . '/lib';
+$cacheFile = $libDir . '/sub_info.json';
+if (empty($validUrls) && file_exists($cacheFile)) {
+    unlink($cacheFile);
+}
 
 function formatBytes($bytes, $precision = 2) {
     if ($bytes === INF || $bytes === "∞") return "∞";
@@ -177,11 +200,31 @@ function getSubInfo($subUrl, $userAgent = "Clash") {
     curl_close($ch);
 
     if ($http_code !== 200 || !$response) {
-        return ["http_code"=>$http_code,"sub_info"=>"Request Failed","get_time"=>time()];
+        return [
+            "http_code"=>$http_code,
+            "sub_info"=>"Request Failed",
+            "used"=>0,
+            "total"=>0,
+            "percent"=>0,
+            "day_left"=>0,
+            "expire"=>"null",
+            "get_time"=>time(),
+            "url"=>$subUrl
+        ];
     }
 
     if (!preg_match("/subscription-userinfo: (.*)/i", $response, $matches)) {
-        return ["http_code"=>$http_code,"sub_info"=>"No Sub Info Found","get_time"=>time()];
+        return [
+            "http_code"=>$http_code,
+            "sub_info"=>"No Sub Info Found",
+            "used"=>0,
+            "total"=>0,
+            "percent"=>0,
+            "day_left"=>0,
+            "expire"=>"null",
+            "get_time"=>time(),
+            "url"=>$subUrl
+        ];
     }
 
     $info = $matches[1];
@@ -204,34 +247,68 @@ function getSubInfo($subUrl, $userAgent = "Clash") {
     }
 
     return [
-        "http_code"=>$http_code,"sub_info"=>"Successful",
-        "upload"=>$upload,"download"=>$download,"used"=>$used,
+        "http_code"=>$http_code,
+        "sub_info"=>"Successful",
+        "upload"=>$upload,
+        "download"=>$download,
+        "used"=>$used,
         "total"=>$total > 0 ? $total : "∞",
-        "percent"=>round($percent,1),"day_left"=>$day_left,
-        "expire"=>$expireDate,"get_time"=>time()
+        "percent"=>round($percent,1),
+        "day_left"=>$day_left,
+        "expire"=>$expireDate,
+        "get_time"=>time(),
+        "url"=>$subUrl
     ];
 }
 
-function saveSubInfoToFile($url,$subInfo) {
-    $libDir = __DIR__.'/lib';
-    if (!is_dir($libDir)) mkdir($libDir,0755,true);
-    $fileName = 'sub_info_'.md5($url).'.json';
-    $filePath = $libDir.'/'.$fileName;
-    $subInfo['url'] = $url;
-    file_put_contents($filePath,json_encode($subInfo));
+function saveAllSubInfos($results) {
+    $libDir = __DIR__ . '/lib';
+    if (!is_dir($libDir)) mkdir($libDir, 0755, true);
+    $filePath = $libDir . '/sub_info.json';
+    file_put_contents($filePath, json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     return $filePath;
 }
 
-function clearOldSubFiles() {
-    $libDir = __DIR__.'/lib';
-    if (is_dir($libDir)) {
-        foreach (glob($libDir.'/sub_info_*.json') as $file) {
-            unlink($file);
+function loadAllSubInfosFromFile(&$lastUpdateTime = null) {
+    $libDir = __DIR__ . '/lib';
+    $filePath = $libDir . '/sub_info.json';
+    $results = [];
+    if (file_exists($filePath)) {
+        $results = json_decode(file_get_contents($filePath), true);
+        if ($results) {
+            $times = array_column($results, 'get_time');
+            if (!empty($times)) $lastUpdateTime = max($times);
         }
     }
+    return $results;
 }
 
-function fetchAllSubInfos($urls) {
+function clearSubFile() {
+    $libDir = __DIR__ . '/lib';
+    $filePath = $libDir . '/sub_info.json';
+    if (file_exists($filePath)) unlink($filePath);
+}
+
+function countSingBoxNodes($filePath) {
+    $validProtocols = '/^(ss|shadowsocks|vmess|vless|trojan|hysteria2|socks5|http)$/i';
+    $nodeCount = 0;
+
+    if (!file_exists($filePath)) return 0;
+    $content = file_get_contents($filePath);
+    $json = json_decode($content, true);
+
+    if (json_last_error() === JSON_ERROR_NONE && isset($json['outbounds']) && is_array($json['outbounds'])) {
+        foreach ($json['outbounds'] as $outbound) {
+            if (!empty($outbound['type']) && preg_match($validProtocols, $outbound['type'])) {
+                $nodeCount++;
+            }
+        }
+    }
+
+    return $nodeCount;
+}
+
+function fetchAllSubInfos($urls, $singBoxConfigFile) {
     $results = [];
     foreach ($urls as $url) {
         if (empty(trim($url))) continue;
@@ -241,47 +318,34 @@ function fetchAllSubInfos($urls) {
             $subInfo = getSubInfo($url,$ua);
             if ($subInfo['sub_info']==="Successful") break;
         }
-        saveSubInfoToFile($url,$subInfo);
         $results[$url] = $subInfo;
     }
+
+    $results['_singbox_node_count'] = countSingBoxNodes($singBoxConfigFile);
+
+    saveAllSubInfos($results);
     return $results;
 }
 
-function loadAllSubInfosFromFile(&$lastUpdateTime = null) {
-    $libDir = __DIR__.'/lib';
-    $results = [];
-    $times = [];
-    if (is_dir($libDir)) {
-        foreach (glob($libDir.'/sub_info_*.json') as $file) {
-            $data = json_decode(file_get_contents($file),true);
-            if ($data && isset($data['url'])) {
-                $results[$data['url']] = $data;
-                if (!empty($data['get_time'])) $times[] = $data['get_time'];
-            }
-        }
+if ($_SERVER['REQUEST_METHOD']=='POST') {
+    if (isset($_POST['clearSubscriptions'])) {
+        clearSubFile();
+        header("Location: ".$_SERVER['PHP_SELF']);
+        exit;
     }
-    if (!empty($times)) $lastUpdateTime = max($times);
-    return $results;
-}
 
-if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['clearSubscriptions'])) {
-    clearOldSubFiles();
-    header("Location: ".$_SERVER['PHP_SELF']);
-    exit;
-}
+    if (isset($_POST['generateConfig'])) {
+        $subscribeUrls = preg_split('/[\r\n,|]+/', trim($_POST['subscribeUrl'] ?? ''));
+        $subscribeUrls = array_filter($subscribeUrls);
 
-$lastUpdateTime = null;
-if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['generateConfig'])) {
-    $subscribeUrls = preg_split('/[\r\n,|]+/', trim($_POST['subscribeUrl'] ?? ''));
-    $subscribeUrls = array_filter($subscribeUrls);
+        $customFileName = basename(trim($_POST['customFileName'] ?? ''));
+        if (empty($customFileName)) $customFileName = 'sing-box';
+        if (substr($customFileName,-5) !== '.json') $customFileName .= '.json';
+        $configFilePath = $singBoxConfigDir.$customFileName;
 
-    $customFileName = basename(trim($_POST['customFileName'] ?? ''));
-    if (empty($customFileName)) $customFileName = 'sing-box';
-    if (substr($customFileName,-5) !== '.json') $customFileName .= '.json';
-    $configFilePath = '/etc/neko/config/'.$customFileName;
-
-    $allSubInfos = fetchAllSubInfos($subscribeUrls);
-    $lastUpdateTime = time();
+        $allSubInfos = fetchAllSubInfos($subscribeUrls, $configFilePath);
+        $lastUpdateTime = time();
+    }
 } else {
     $allSubInfos = loadAllSubInfosFromFile($lastUpdateTime);
 }
@@ -455,14 +519,19 @@ if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['generateConfig'])) {
 <?php if (!empty($allSubInfos)): ?>
 <div class="container-sm py-1">
     <div class="card">
-        <div class="card-body p-2">
+        <div class="card-body p-2 position-relative">
             <h5 class="py-1 ps-3">
                 <i class="bi bi-bar-chart"></i>
                 <span data-translate="subscriptionInfo"></span>
+                <?php if (!empty($allSubInfos['_singbox_node_count'])): ?>
+                    <span style="float:right; font-weight:bold; color:var(--accent-color); margin-right:10px;">
+                        <span data-translate="nodesLabel">Nodes</span>: <?= (int)$allSubInfos['_singbox_node_count'] ?>
+                    </span>
+                <?php endif; ?>
             </h5>
             <div class="rounded-3 p-2 border mx-3">
                 <?php foreach ($allSubInfos as $url => $subInfo): ?>
-                    <?php if (str_contains($url, '|')) continue; ?>
+                    <?php if ($url === '_singbox_node_count') continue; ?>
                     <?php
                         $total   = formatBytes($subInfo['total'] ?? 0);
                         $used    = formatBytes($subInfo['used'] ?? 0);

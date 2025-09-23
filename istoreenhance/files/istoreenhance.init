@@ -3,8 +3,25 @@
 START=99
 USE_PROCD=1
 
+write_mirrors_config() {
+    local filename="$1"
+    cat > "$filename" << 'EOF'
+mirrors:
+  - url: "https://docker.1ms.run"
+  - url: "https://docker.m.daocloud.io"
+  - url: "https://docker.m.ixdev.cn"
+  - url: "https://dockerproxy.net"
+  - url: "https://image.cloudlayer.icu"
+  - url: "https://docker.13140521.xyz"
+  - url: "https://docker.1panel.live"
+  - url: "https://docker.anye.in"
+  - url: "https://docker.amingg.com"
+  - url: "https://hub.rat.dev"
+EOF
+}
+
 get_config() {
-	config_get_bool enabled $1 enabled 1
+	config_get_bool enabled $1 enabled 0
 	config_get port $1 port 5443
 	config_get adminport $1 adminport 5003
   config_get cache $1 cache
@@ -21,8 +38,16 @@ start_service() {
   if [ -z $cache ]; then
     return 2
   fi
+	
+	if [ ! -f $cache/kspeeder.yml ]; then
+		parent_dir=$(dirname "$cache")
+		[ -d "$parent_dir" ] || mkdir "$parent_dir"
+		[ -d "$cache" ] || mkdir "$cache"
+		write_mirrors_config $cache/kspeeder.yml
+	fi
 
 	procd_open_instance
+	procd_set_param env KS_USER_MIRROR_CONFIG=$cache/kspeeder.yml
 	procd_set_param limits nofile="65535 65535"
 	procd_set_param command /usr/sbin/iStoreEnhance
 	[ -n "$port" ] && procd_append_param command --localAddr ":$port" --adminAddr ":$adminport" --cachePath $cache

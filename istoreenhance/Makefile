@@ -11,8 +11,8 @@ PKG_ARCH_ISTOREENHANCE:=$(ARCH)
 
 PKG_NAME:=istoreenhance
 # use PKG_SOURCE_DATE instead of PKG_VERSION for compitable
-PKG_SOURCE_DATE:=0.3.3
-PKG_RELEASE:=2
+PKG_SOURCE_DATE:=0.3.7
+PKG_RELEASE:=5
 ARCH_HEXCODE:=
 ifeq ($(ARCH),x86_64)
 ARCH_HEXCODE=8664
@@ -26,7 +26,7 @@ endif
 PKG_SOURCE_VERSION:=$(ARCH_HEXCODE)
 PKG_SOURCE:=iStoreEnhance-binary-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=http://dl.istoreos.com/binary/iStoreEnhance/
-PKG_HASH:=63ec6ac774de9e345a21e4253ec299e4ed77a3cc9b94060cf28bafa167703ca0
+PKG_HASH:=b6ddbe864b28e5912378d3fdf3ad8bc5f74e5ddd33dd0f8990d47749d03def26
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/iStoreEnhance-binary-$(PKG_SOURCE_DATE)
 
@@ -42,7 +42,7 @@ define Package/$(PKG_NAME)
 	TITLE:=iStoreEnhance - Fix some net issues for istore
 	DEPENDS:=@(arm||x86_64||aarch64)
 	PKGARCH:=all
-	URL:=https://www.istoreos.com/
+	URL:=https://www.kspeeder.com/
 endef
 
 define Package/$(PKG_NAME)/description
