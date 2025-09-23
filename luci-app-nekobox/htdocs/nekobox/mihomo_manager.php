@@ -167,44 +167,169 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['downloadFile'], $_GET['
     }
 }
 ?>
-
 <?php
-
+$JSON_FILE = '/etc/neko/proxy_provider/subscriptions.json';
 $subscriptionPath = '/etc/neko/proxy_provider/';
-$subscriptionFile = $subscriptionPath . 'subscriptions.json';
 $notificationMessage = "";
-$subscriptions = [];
 $updateCompleted = false;
-
-function storeUpdateLog($message) {
-    if (!isset($_SESSION['update_logs'])) {
-        $_SESSION['update_logs'] = [];
-    }
-    $_SESSION['update_logs'][] = $message;
-}
 
 if (!file_exists($subscriptionPath)) {
     mkdir($subscriptionPath, 0755, true);
 }
 
-if (!file_exists($subscriptionFile)) {
-    file_put_contents($subscriptionFile, json_encode([]));
-}
-
-$subscriptions = json_decode(file_get_contents($subscriptionFile), true);
-if (!$subscriptions) {
+if (!file_exists($JSON_FILE)) {
+    $emptySubs = [];
     for ($i = 0; $i < 6; $i++) {
-        $subscriptions[$i] = [
+        $emptySubs[] = [
             'url' => '',
-            'file_name' => "subscription_" . ($i + 1) . ".yaml",  
+            'file_name' => "subscription_" . ($i + 1) . ".yaml"
         ];
     }
+    file_put_contents($JSON_FILE, json_encode($emptySubs, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 }
 
-if (isset($_POST['update'])) {
+function getSubscriptionsFromFile() {
+    global $JSON_FILE;
+    if (file_exists($JSON_FILE)) {
+        $content = file_get_contents($JSON_FILE);
+        $data = json_decode($content, true);
+        if (!is_array($data) || count($data) < 6) {
+            $data = $data ?? [];
+            for ($i = count($data); $i < 6; $i++) {
+                $data[$i] = [
+                    'url' => '',
+                    'file_name' => "subscription_" . ($i + 1) . ".yaml"
+                ];
+            }
+        }
+        return $data;
+    }
+    return [];
+}
+
+function formatBytes($bytes, $precision = 2) {
+    if ($bytes === INF || $bytes === "∞") return "∞";
+    if ($bytes <= 0) return "0 B";
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $pow = floor(log($bytes, 1024));
+    $pow = min($pow, count($units) - 1);
+    $bytes /= pow(1024, $pow);
+    return round($bytes, $precision) . ' ' . $units[$pow];
+}
+
+function getSubInfo($subUrl, $userAgent = "Clash") {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $subUrl);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($http_code !== 200 || !$response) {
+        return [
+            "http_code" => $http_code,
+            "sub_info" => "Request Failed",
+            "get_time" => time()
+        ];
+    }
+
+    if (!preg_match("/subscription-userinfo: (.*)/i", $response, $matches)) {
+        return [
+            "http_code" => $http_code,
+            "sub_info" => "No Sub Info Found",
+            "get_time" => time()
+        ];
+    }
+
+    $info = $matches[1];
+    preg_match("/upload=(\d+)/", $info, $m);   $upload   = isset($m[1]) ? (int)$m[1] : 0;
+    preg_match("/download=(\d+)/", $info, $m); $download = isset($m[1]) ? (int)$m[1] : 0;
+    preg_match("/total=(\d+)/", $info, $m);    $total    = isset($m[1]) ? (int)$m[1] : 0;
+    preg_match("/expire=(\d+)/", $info, $m);   $expire   = isset($m[1]) ? (int)$m[1] : 0;
+
+    $used = $upload + $download;
+    $surplus = ($total > 0) ? $total - $used : INF;
+    $percent = ($total > 0) ? (($total - $used) / $total) * 100 : 100;
+
+    $expireDate = "null";
+    $day_left = "null";
+    if ($expire > 0) {
+        $expireDate = date("Y-m-d H:i:s", $expire);
+        $day_left = $expire > time() ? ceil(($expire - time()) / (3600*24)) : 0;
+    } elseif ($expire === 0) {
+        $expireDate = "Long-term";
+        $day_left = "∞";
+    }
+
+    return [
+        "http_code" => $http_code,
+        "sub_info" => "Successful",
+        "upload" => $upload,
+        "download" => $download,
+        "used" => $used,
+        "total" => $total > 0 ? $total : "∞",
+        "surplus" => $surplus,
+        "percent" => round($percent, 1),
+        "day_left" => $day_left,
+        "expire" => $expireDate,
+        "get_time" => time()
+    ];
+}
+
+function saveSubInfoToFile($index, $subInfo) {
+    $libDir = __DIR__ . '/lib';
+    if (!is_dir($libDir)) mkdir($libDir, 0755, true);
+    $filePath = $libDir . '/sub_info_' . $index . '.json';
+    file_put_contents($filePath, json_encode($subInfo));
+}
+
+function getSubInfoFromFile($index) {
+    $filePath = __DIR__ . '/lib/sub_info_' . $index . '.json';
+    if (file_exists($filePath)) {
+        return json_decode(file_get_contents($filePath), true);
+    }
+    return null;
+}
+
+function clearSubInfo($index) {
+    $filePath = __DIR__ . '/lib/sub_info_' . $index . '.json';
+    if (file_exists($filePath)) {
+        unlink($filePath);
+        return true;
+    }
+    return false;
+}
+
+$subscriptions = getSubscriptionsFromFile();
+
+function autoCleanInvalidSubInfo($subscriptions) {
+    $maxSubscriptions = 6;
+    $cleaned = 0;
+    
+    for ($i = 0; $i < $maxSubscriptions; $i++) {
+        $url = trim($subscriptions[$i]['url'] ?? '');
+        
+        if (empty($url)) {
+            if (clearSubInfo($i)) {
+                $cleaned++;
+            }
+        }
+    }
+    
+    return $cleaned;
+}
+
+autoCleanInvalidSubInfo($subscriptions);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     $index = intval($_POST['index']);
     $url = trim($_POST['subscription_url'] ?? '');
-    $customFileName = trim($_POST['custom_file_name'] ?? "subscription_" . ($index + 1) . ".yaml");  
+    $customFileName = trim($_POST['custom_file_name'] ?? "subscription_" . ($index + 1) . ".yaml");
 
     $subscriptions[$index]['url'] = $url;
     $subscriptions[$index]['file_name'] = $customFileName;
@@ -213,33 +338,28 @@ if (isset($_POST['update'])) {
         $tempPath = $subscriptionPath . $customFileName . ".temp";
         $finalPath = $subscriptionPath . $customFileName;
 
-        $command = "curl -s -L -o {$tempPath} {$url}";
+        $command = "curl -s -L -o {$tempPath} " . escapeshellarg($url);
         exec($command . ' 2>&1', $output, $return_var);
 
         if ($return_var !== 0) {
-            $command = "wget -q --show-progress -O {$tempPath} {$url}";
+            $command = "wget -q --show-progress -O {$tempPath} " . escapeshellarg($url);
             exec($command . ' 2>&1', $output, $return_var);
         }
 
-        if ($return_var === 0) {
-            $_SESSION['update_logs'] = [];
-            storeUpdateLog('<span data-translate="subscription_downloaded" data-dynamic-content="' . htmlspecialchars($url) . '"></span> <span data-translate="saved_to_temp_file" data-dynamic-content="' . htmlspecialchars($tempPath) . '"></span>');
-            //echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_downloaded" data-dynamic-content="' . htmlspecialchars($url) . '"></span> <span data-translate="saved_to_temp_file" data-dynamic-content="' . htmlspecialchars($tempPath) . '"></span></div>';
+        if ($return_var === 0 && file_exists($tempPath)) {
+            //echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_downloaded" data-dynamic-content="' . htmlspecialchars($url) . '"></span></div>';
+            
             $fileContent = file_get_contents($tempPath);
 
             if (base64_encode(base64_decode($fileContent, true)) === $fileContent) {
                 $decodedContent = base64_decode($fileContent);
                 if ($decodedContent !== false && strlen($decodedContent) > 0) {
                     file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decodedContent);
-                    storeUpdateLog('<span data-translate="base64_decode_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span>');
                     echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="base64_decode_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
-                    unlink($tempPath); 
                     $notificationMessage = '<span data-translate="update_success"></span>';
                     $updateCompleted = true;
                 } else {
-                    storeUpdateLog('<span data-translate="base64_decode_failed"></span>');
                     echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="base64_decode_failed"></span></div>';
-                    unlink($tempPath); 
                     $notificationMessage = '<span data-translate="update_failed"></span>';
                 }
             } 
@@ -247,40 +367,140 @@ if (isset($_POST['update'])) {
                 $decompressedContent = gzdecode($fileContent);
                 if ($decompressedContent !== false) {
                     file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decompressedContent);
-                    storeUpdateLog('<span data-translate="gzip_decompress_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span>');
-                    echo '<div  class="log-message alert alert-warning custom-alert-success"><span data-translate="gzip_decompress_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
-                    unlink($tempPath); 
+                    echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="gzip_decompress_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
                     $notificationMessage = '<span data-translate="update_success"></span>';
                     $updateCompleted = true;
                 } else {
-                    storeUpdateLog('<span data-translate="gzip_decompress_failed"></span>');
                     echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="gzip_decompress_failed"></span></div>';
-                    unlink($tempPath); 
                     $notificationMessage = '<span data-translate="update_failed"></span>';
                 }
             } 
             else {
-                rename($tempPath, $finalPath); 
-                storeUpdateLog('<span data-translate="subscription_downloaded_no_decode"></span>');
-                echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_downloaded_no_decode"></span></div>';
-                $notificationMessage = '<span data-translate="update_success"></span>';
-                $updateCompleted = true;
+                if (rename($tempPath, $finalPath)) {
+                    echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_downloaded_no_decode"></span></div>';
+                    $notificationMessage = '<span data-translate="update_success"></span>';
+                    $updateCompleted = true;
+                }
+            }
+            
+            $userAgents = ["Clash","clash","ClashVerge","Stash","NekoBox","Quantumult%20X","Surge","Shadowrocket","V2rayU","Sub-Store","Mozilla/5.0"];
+            $subInfo = null;
+            foreach ($userAgents as $ua) {
+                $subInfo = getSubInfo($url, $ua);
+                if ($subInfo['sub_info'] === "Successful") break;
+            }
+            if ($subInfo) {
+                saveSubInfoToFile($index, $subInfo);
+            }
+            
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
             }
         } else {
-            storeUpdateLog('<span data-translate="subscription_update_failed" data-dynamic-content="' . htmlspecialchars(implode("\n", $output)) . '"></span>');
             echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_update_failed" data-dynamic-content="' . htmlspecialchars(implode("\n", $output)) . '"></span></div>';
-            unlink($tempPath); 
             $notificationMessage = '<span data-translate="update_failed"></span>';
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
         }
     } else {
-        storeUpdateLog('<span data-translate="subscription_url_empty" data-dynamic-content="' . ($index + 1) . '"></span>');
+        clearSubInfo($index);
         $notificationMessage = '<span data-translate="update_failed"></span>';
     }
 
-    file_put_contents($subscriptionFile, json_encode($subscriptions));
+    file_put_contents($JSON_FILE, json_encode($subscriptions, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateAll'])) {
+    $updated = 0;
+    $failed = 0;
+    
+    for ($i = 0; $i < 6; $i++) {
+        $url = trim($subscriptions[$i]['url'] ?? '');
+        $customFileName = trim($subscriptions[$i]['file_name'] ?? "subscription_" . ($i + 1) . ".yaml");
+        
+        if (!empty($url)) {
+            $tempPath = $subscriptionPath . $customFileName . ".temp";
+            $finalPath = $subscriptionPath . $customFileName;
+
+            $command = "curl -s -L -o {$tempPath} " . escapeshellarg($url);
+            exec($command . ' 2>&1', $output, $return_var);
+
+            if ($return_var !== 0) {
+                $command = "wget -q --show-progress -O {$tempPath} " . escapeshellarg($url);
+                exec($command . ' 2>&1', $output, $return_var);
+            }
+
+            if ($return_var === 0 && file_exists($tempPath)) {
+                $fileContent = file_get_contents($tempPath);
+                $success = false;
+                
+                if (base64_encode(base64_decode($fileContent, true)) === $fileContent) {
+                    $decodedContent = base64_decode($fileContent);
+                    if ($decodedContent !== false && strlen($decodedContent) > 0) {
+                        file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decodedContent);
+                        $success = true;
+                    }
+                } 
+                elseif (substr($fileContent, 0, 2) === "\x1f\x8b") {
+                    $decompressedContent = gzdecode($fileContent);
+                    if ($decompressedContent !== false) {
+                        file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decompressedContent);
+                        $success = true;
+                    }
+                } 
+                else {
+                    if (rename($tempPath, $finalPath)) {
+                        $success = true;
+                    }
+                }
+                
+                if ($success) {
+                    $updated++;
+                    echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_updated_success" data-index="' . ($i + 1) . '"></span></div>';
+                    
+                    $userAgents = ["Clash","clash","ClashVerge","Stash","NekoBox","Quantumult%20X","Surge","Shadowrocket","V2rayU","Sub-Store","Mozilla/5.0"];
+                    $subInfo = null;
+                    foreach ($userAgents as $ua) {
+                        $subInfo = getSubInfo($url, $ua);
+                        if ($subInfo['sub_info'] === "Successful") break;
+                    }
+                    if ($subInfo) {
+                        saveSubInfoToFile($i, $subInfo);
+                    }
+                } else {
+                    $failed++;
+                    echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_updated_failed" data-index="' . ($i + 1) . '"></span></div>';
+                }
+                
+                if (file_exists($tempPath)) {
+                    unlink($tempPath);
+                }
+            } else {
+                $failed++;
+                echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_updated_failed" data-index="' . ($i + 1) . '"></span></div>';
+                if (file_exists($tempPath)) {
+                    unlink($tempPath);
+                }
+            }
+        }
+    }
+    
+    if ($updated > 0) {
+        $notificationMessage = '<span data-translate="update_all_success" data-count="' . $updated . '"></span>';
+        $updateCompleted = true;
+    } else {
+        $notificationMessage = '<span data-translate="update_all_failed"></span>';
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear'])) {
+    $index = $_POST['index'] ?? 0;
+    clearSubInfo($index);
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
 }
 ?>
-
 <?php
 $shellScriptPath = '/etc/neko/core/update_mihomo.sh';
 $LOG_FILE = '/etc/neko/tmp/log.txt'; 
@@ -457,6 +677,19 @@ function download_file($url, $destination) {
 }
 ?>
 
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clearJsonFile'])) {
+    $fileToClear = $_POST['clearJsonFile'];
+    if ($fileToClear === 'subscriptions.json') {
+        $filePath = '/etc/neko/proxy_provider/subscriptions.json';
+        if (file_exists($filePath)) {
+            file_put_contents($filePath, '[]');
+            echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscriptionClearedSuccess">Subscription information cleared successfully</span></div>';
+        }
+    }
+}
+?>
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -617,6 +850,9 @@ $(document).ready(function() {
                     <a class="nav-link <?= $current == 'mihomo_manager.php' ? 'active' : '' ?>" href="./mihomo_manager.php"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= $current == 'netmon.php' ? 'active' : '' ?>" href="./netmon.php"><i class="bi bi-activity"></i> <span data-translate="traffic_monitor">Traffic Monitor</span></a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= $current == 'singbox.php' ? 'active' : '' ?>" href="./singbox.php"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
                 </li>
                 <li class="nav-item">
@@ -643,54 +879,115 @@ $(document).ready(function() {
         </div>
     </div>
 </nav>
+
+<style>
+.card {
+    position: relative;
+}
+
+.sub-info {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--accent-color);
+    color: #fff;
+    padding: 5px 10px;
+    border-top: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.card:hover .sub-info {
+    display: block;
+}
+
+.update-indicator {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: pulse-success 2s infinite;
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    transition: all 0.3s ease;
+}
+
+.update-indicator.failed {
+    background: #dc3545;
+    animation: pulse-error 2s infinite;
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+}
+
+.update-indicator:hover {
+    transform: scale(1.2);
+}
+
+@keyframes pulse-success {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    
+    50% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(40, 167, 69, 0);
+    }
+    
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+@keyframes pulse-error {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    
+    50% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
+    }
+    
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+.clear-json-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.95rem;
+    min-height: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    z-index: 11;
+    line-height: 1;
+}
+
+.clear-json-btn i {
+    display: block;
+    font-size: inherit;
+    line-height: 1;
+}
+
+.clear-json-btn:hover {
+    background-color: #c82333;
+}
+</style>
+
 <h2 class="container-fluid text-center mt-4 mb-4" data-translate="subscriptionManagement"></h2>
-<div class="container-sm text-center px-2 px-md-3">
-    <?php if (isset($message) && $message): ?>
-        <div class="alert alert-info">
-            <?php echo nl2br(htmlspecialchars($message)); ?>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($subscriptions) && is_array($subscriptions)): ?>
-        <div class="container-fluid px-3">
-            <?php 
-            $maxSubscriptions = 6;
-            for ($i = 0; $i < $maxSubscriptions; $i++):
-                $displayIndex = $i + 1;
-                $url = $subscriptions[$i]['url'] ?? '';
-                $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . $displayIndex . ".yaml";
-                
-                if ($i % 3 == 0) echo '<div class="row">';
-            ?>
-                <div class="col-md-4 mb-3 px-1">
-                    <div class="card">
-                        <form method="post">
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <h5 class="mb-2" data-translate="subscriptionLink"><?php echo $displayIndex; ?></h5>
-                                    <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" data-translate-placeholder="enterSubscriptionUrl">
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom_file_name_<?php echo $displayIndex; ?>" data-translate="customFileName"></label>
-                                    <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
-                                </div>
-                                <input type="hidden" name="index" value="<?php echo $i; ?>">
-                                <div class="text-center mt-3">
-                                    <button type="submit" name="update" class="btn btn-primary btn-block">
-                                        <i class="bi bi-arrow-repeat"></i> <span data-translate="updateSubscription">Settings</span> <?php echo $displayIndex; ?>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            <?php 
-                if ($i % 3 == 2 || $i == $maxSubscriptions - 1) echo '</div>';
-            endfor;
-            ?>
-        </div>
-    <?php else: ?>
-    <?php endif; ?>
-</div>
 
 <div class="text-center mt-4 mb-1">
     <form method="post">
@@ -702,10 +999,93 @@ $(document).ready(function() {
             <i class="bi bi-terminal"></i> <span data-translate="generate_update_script"></span>
         </button>
         
+        <button type="submit" name="updateAll" value="true" class="btn btn-warning mx-1 mb-2">
+            <i class="bi bi-arrow-repeat"></i> <span data-translate="update_all_subscriptions"></span>
+        </button>
+        
         <button type="button" class="btn btn-info mx-1 mb-2" data-bs-toggle="modal" data-bs-target="#downloadModal">
             <i class="bi bi-download"></i> <span data-translate="update_database"></span>
         </button>
     </form>
+</div>
+
+<div class="container-sm text-center px-2 px-md-3">
+    <?php if (isset($subscriptions) && is_array($subscriptions)): ?>
+        <div class="container-fluid px-3">
+            <?php 
+            $maxSubscriptions = 6;
+            for ($i = 0; $i < $maxSubscriptions; $i++):
+                $displayIndex = $i + 1;
+                $url = $subscriptions[$i]['url'] ?? '';
+                $fileName = $subscriptions[$i]['file_name'] ?? "subscription_" . $displayIndex . ".yaml";
+
+                $subInfo = getSubInfoFromFile($i);
+
+                if ($i % 3 == 0) echo '<div class="row">';
+            ?>
+                <div class="col-md-4 mb-3 px-1">
+                    <div class="card">
+                        <?php if (!empty($url)): ?>
+                            <div class="update-indicator <?php 
+                                if (empty($subInfo)) echo 'failed';
+                            ?>" title="<?php 
+                                if (empty($subInfo)) {
+                                    echo htmlspecialchars($translations['noSubInfo'] ?? 'No subscription information obtained');
+                                } else {
+                                    echo htmlspecialchars($translations['subInfoObtained'] ?? 'Subscription information obtained');
+                                }
+                            ?>"></div>
+                        <?php endif; ?>
+                        
+                        <form method="post">
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <h5 class="mb-2" data-translate="subscriptionLink"><?php echo $displayIndex; ?></h5>
+                                    <input type="text" name="subscription_url" id="subscription_url_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($url); ?>" class="form-control" data-translate-placeholder="enterSubscriptionUrl">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="custom_file_name_<?php echo $displayIndex; ?>" data-translate="customFileName"></label>
+                                    <input type="text" name="custom_file_name" id="custom_file_name_<?php echo $displayIndex; ?>" value="<?php echo htmlspecialchars($fileName); ?>" class="form-control">
+                                </div>
+
+                                <input type="hidden" name="index" value="<?php echo $i; ?>">
+
+                                <?php if (!empty($subInfo) && $subInfo['sub_info'] === "Successful"): ?>
+                                    <div class="sub-info">
+                                        <?php
+                                        $total   = formatBytes($subInfo['total']);
+                                        $used    = formatBytes($subInfo['used']);
+                                        $percent = $subInfo['percent'];
+                                        $dayLeft = $subInfo['day_left'];
+                                        $expire  = $subInfo['expire'];
+                                        $remainingLabel = $translations['resetDaysLeftLabel'] ?? 'Remaining';
+                                        $daysUnit       = $translations['daysUnit'] ?? 'days';
+                                        $expireLabel    = $translations['expireDateLabel'] ?? 'Expires';
+                                        echo "{$used} / {$total} ({$percent}%) • {$remainingLabel} {$dayLeft} {$daysUnit} • {$expireLabel}: {$expire}";
+                                        ?>
+                                    </div>
+                                <?php elseif (!empty($subInfo)): ?>
+                                    <div class="sub-info">
+                                        <span data-translate="subscriptionFetchFailed"></span>: <?php echo htmlspecialchars($subInfo['sub_info']); ?>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="text-center mt-3">
+                                    <button type="submit" name="update" class="btn btn-primary btn-block">
+                                        <i class="bi bi-arrow-repeat"></i> 
+                                        <span data-translate="updateSubscription">Settings</span> <?php echo $displayIndex; ?>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            <?php 
+                if ($i % 3 == 2 || $i == $maxSubscriptions - 1) echo '</div>';
+            endfor; ?>
+        </div>
+    <?php endif; ?>
 </div>
 
 <h2 class="text-center mt-3 mb-4" data-translate="fileManagement">File Management</h2>
@@ -831,10 +1211,21 @@ $(document).ready(function() {
       }
     ?>
     <div class="col-12 col-md-6 col-lg-3">
-      <div class="card h-100 text-start">
+      <div class="card h-100 text-start position-relative">
+        <?php if ($file === 'subscriptions.json'): ?>
+        <form method="post" class="position-absolute m-0 p-0" 
+              style="top: 1.4rem; right: 5.2rem;">
+            <input type="hidden" name="clearJsonFile" value="<?= htmlspecialchars($file) ?>">
+            <button type="submit" class="btn btn-sm btn-outline-danger clear-json-btn" 
+                    onclick="return confirm('<?= htmlspecialchars($translations['confirmClearJson'] ?? 'Are you sure to clear all subscription links?') ?>');" 
+                    data-tooltip="clearJsonTooltip">
+              <i class="bi bi-trash"></i>
+            </button>
+        </form>
+        <?php endif; ?>
         <span class="node-count-badge"><span class="node-number"><?= $nodeCount ?></span> <span data-translate="nodesLabel">Nodes</span></span>
         <div class="card-body d-flex flex-column justify-content-between">
-          <h5 class="card-title mb-2" data-tooltip="fileName"><?= htmlspecialchars($file) ?></h5>
+          <h5 class="card-title mb-2" <?= $file === 'subscriptions.json' ? '' : 'data-tooltip="fileName"' ?>><?= htmlspecialchars($file) ?></h5>
           <p class="card-text mb-1"><strong data-translate="fileSize">Size</strong>: <?= $size ?></p>
           <p class="card-text mb-1"><strong data-translate="lastModified">Last Modified</strong>: <?= $modified ?></p>
           <p class="card-text mb-2"><strong data-translate="fileType">Type</strong>: <span class="badge <?= $isProxy ? 'bg-primary' : 'bg-success' ?>"><?= htmlspecialchars($fileTypes[$index]) ?></span></p>
