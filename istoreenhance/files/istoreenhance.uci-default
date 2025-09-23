@@ -10,6 +10,6 @@ uci -q batch <<-EOF >/dev/null
 EOF
 
 /etc/init.d/istoreenhance enable
-/etc/init.d/istoreenhance start
+#/etc/init.d/istoreenhance start
 
 exit 0
