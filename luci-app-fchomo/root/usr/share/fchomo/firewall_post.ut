@@ -218,6 +218,7 @@ chain {{ inchain }} {
 {%- function render_acl_dport(inchain, outchain, l4proto): %}
 chain {{ inchain }} {
 		{#- DNS hijack #}
+		{# Always redirect port 53 #}
 		meta l4proto { tcp, udp } th dport 53 counter goto {{ outchain }} comment "!{{ cfgname }}: DNS hijack (router)"
 
 		{% if ((l4proto === 'tcp' || !l4proto) && routing_tcpport): %}
