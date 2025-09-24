@@ -519,6 +519,10 @@ return view.extend({
 		so = ss.option(form.Flag, 'tun_endpoint_independent_nat', _('Endpoint-Independent NAT'),
 			_('Performance may degrade slightly, so it is not recommended to enable on when it is not needed.'));
 		so.default = so.disabled;
+
+		so = ss.option(form.Flag, 'tun_disable_icmp_forwarding', _('Disable ICMP Forwarding'),
+			_('Prevent ICMP loopback issues in some cases. Ping will not show real delay.'));
+		so.default = so.enabled;
 		/* Inbound END */
 
 		/* TLS START */

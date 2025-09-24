@@ -571,6 +571,10 @@ msgstr "禁用 quic-go 的 显式拥塞通知（ECN）"
 msgid "Disable GSO of quic-go"
 msgstr "禁用 quic-go 的 通用分段卸载（GSO）"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:523
+msgid "Disable ICMP Forwarding"
+msgstr "禁用 ICMP 转发"
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:584
 msgid "Disable SNI"
 msgstr "禁用 SNI"
@@ -1831,10 +1835,6 @@ msgstr "端口"
 msgid "Port %s alrealy exists!"
 msgstr "端口 %s 已存在！"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:212
-msgid "Port range"
-msgstr "端口范围"
-
 #: htdocs/luci-static/resources/view/fchomo/global.js:681
 msgid "Ports"
 msgstr "端口"
@@ -1856,6 +1856,11 @@ msgstr "优先 IPv4"
 #: htdocs/luci-static/resources/fchomo.js:143
 msgid "Prefer IPv6"
 msgstr "优先 IPv6"
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:524
+msgid ""
+"Prevent ICMP loopback issues in some cases. Ping will not show real delay."
+msgstr "在某些情况下防止 ICMP 环回问题。Ping 不会显示实际延迟。"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:727
 #: htdocs/luci-static/resources/view/fchomo/global.js:744
@@ -3127,6 +3132,9 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo.js:997
 msgid "🡇"
 msgstr ""
+
+#~ msgid "Port range"
+#~ msgstr "端口范围"
 
 #~ msgid "Default"
 #~ msgstr "默认"
