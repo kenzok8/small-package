@@ -33,6 +33,23 @@ function parse_users(cfg) {
 
 	return users;
 }
+
+function parse_vless_encryption(payload, side) {
+	if (isEmpty(payload))
+		return null;
+
+	let content = json(trim(payload));
+
+	let required = join('.', [
+		content.method,
+		content.xormode,
+		side === 'server' ? content.ticket : side === 'client' ? content.rtt : null
+	]);
+
+	return required +
+		(isEmpty(content.paddings) ? '' : '.' + join('.', content.paddings)) + // Optional
+		(isEmpty(content.keypairs) ? '' : '.' + join('.', map(content.keypairs, e => e[side]))); // Required
+}
 /* Config helper END */
 
 /* Main */
@@ -103,7 +120,7 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		"padding-scheme": cfg.anytls_padding_scheme,
 
 		/* VMess / VLESS */
-		decryption: cfg.vless_decryption,
+		decryption: cfg.vless_decryption === '1' ? parse_vless_encryption(cfg.vless_encryption_hmpayload, 'server') : null,
 
 		/* Plugin fields */
 		...(cfg.plugin ? {

@@ -49,7 +49,7 @@ const methods = {
 			const type = req.args?.type;
 			let result = {};
 
-			const fd = popen('/usr/bin/mihomo generate ' + type + ` ${req.args?.params || ''}`);
+			const fd = popen('/usr/bin/mihomo generate ' + type + ` ${req.args?.params ?? ''}`);
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (type === 'uuid')
