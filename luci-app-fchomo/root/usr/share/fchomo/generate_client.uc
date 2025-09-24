@@ -391,6 +391,7 @@ if (match(proxy_mode, /tun/))
 		"exclude-interface": [],
 		"udp-timeout": durationToSecond(uci.get(uciconf, uciinbound, 'tun_udp_timeout')) || 300,
 		"endpoint-independent-nat": strToBool(uci.get(uciconf, uciinbound, 'tun_endpoint_independent_nat')),
+		"disable-icmp-forwarding": (uci.get(uciconf, uciinbound, 'tun_disable_icmp_forwarding') === '0') ? false : true,
 		"auto-detect-interface": true
 	});
 /* Inbound END */
@@ -508,7 +509,9 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		/* Shadowsocks */
 
 		/* Mieru */
-		"port-range": cfg.mieru_port_range,
+		...(isEmpty(cfg.mieru_ports) ? {} : {
+			port: join(',', cfg.mieru_ports)
+		}),
 		transport: cfg.mieru_transport,
 		multiplexing: cfg.mieru_multiplexing,
 		"handshake-mode": cfg.mieru_handshake_mode,

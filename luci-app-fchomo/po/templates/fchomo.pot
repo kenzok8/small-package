@@ -560,6 +560,10 @@ msgstr ""
 msgid "Disable GSO of quic-go"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:523
+msgid "Disable ICMP Forwarding"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:584
 msgid "Disable SNI"
 msgstr ""
@@ -1800,10 +1804,6 @@ msgstr ""
 msgid "Port %s alrealy exists!"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:212
-msgid "Port range"
-msgstr ""
-
 #: htdocs/luci-static/resources/view/fchomo/global.js:681
 msgid "Ports"
 msgstr ""
@@ -1824,6 +1824,11 @@ msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:143
 msgid "Prefer IPv6"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/global.js:524
+msgid ""
+"Prevent ICMP loopback issues in some cases. Ping will not show real delay."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:727

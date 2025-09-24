@@ -266,6 +266,7 @@ return view.extend({
 		o = s.taboption('field_general', form.ListValue, 'plugin', _('Plugin'));
 		o.value('', _('none'));
 		o.value('shadow-tls', _('shadow-tls'));
+		//o.value('kcp-tun', _('kcp-tun'));
 		o.depends('type', 'shadowsocks');
 		o.modalonly = true;
 

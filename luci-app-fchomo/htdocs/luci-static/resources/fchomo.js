@@ -1121,7 +1121,7 @@ function renderVlessEncryption(s, uciconfig) {
 
 		_toMihomo(payload, side) {
 			if (!['server', 'client'].includes(side))
-				throw new Error(`Unknown side: '${side}'`);
+				throw new Error('Unknown side: ' + side); // `Unknown side: '${side}'`
 
 			let required = [
 				payload.method,
