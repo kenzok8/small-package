@@ -384,7 +384,7 @@ if (isset($_POST['singbox'])) {
                 writeToLog("Config file not found: $config_file");
             } else {
                 writeToLog("Starting Sing-box");
-                $singbox_version = trim(shell_exec("$singbox_bin version"));
+                $singbox_version = trim(preg_replace(['/^Revision:.*$/m', '/sing-box version\s*/i'], '', shell_exec("$singbox_bin version")));
                 writeToLog("Sing-box version: $singbox_version");
                 
                 shell_exec("mkdir -p " . dirname($singbox_log));
@@ -832,24 +832,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
     });
     </script>
 <?php endif; ?>
-
 <div class="container-sm container-bg mt-0">
     <?php include 'navbar.php'; ?>
     <div class="container-sm text-center col-8">
         <img src="./assets/img/nekobox.png" alt="Icon" class="centered-img">
-        <div id="version-info">
+        <div id="version-info" class="d-flex align-items-center justify-content-center mt-3 gap-2">
             <a id="version-link"
                href="https://github.com/Thaolga/openwrt-nekobox/releases"
                target="_blank">
-                <img id="current-version"
-                     src="./assets/img/curent.svg"
-                     alt="Current Version"
-                     style="max-width: 100%; height: auto;" />
+                <img id="current-version" src="./assets/img/curent.svg" alt="Current Version" class="img-fluid" style="height:23px;">
             </a>
+            <div id="update-spinner" class="spinner-border spinner-border-sm" role="status" style="color: var(--accent-color);">
+                <span class="visually-hidden">Loading...</span>
+            </div>
         </div>
     </div>
-<h2 id="neko-title" class="neko-title-style" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#systemInfoModal">NekoBox</h2>
 
+<h2 id="neko-title" class="neko-title-style" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#systemInfoModal">NekoBox</h2>
 <?php
 function getSingboxVersion() {
     $singBoxPath = '/usr/bin/sing-box'; 
@@ -895,7 +894,7 @@ function getMihomoVersion() {
 $singboxVersion = getSingboxVersion();
 $mihomoVersion  = getMihomoVersion();
 ?>
-<div class="px-4 mt-4 control-box">
+<div class="px-0 px-sm-4 mt-4 control-box">
     <div class="card">
         <div class="card-body">
             <div class="mb-4">
@@ -1286,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<div class="px-4 mt-4">
+<div class="px-0 px-sm-4 mt-4">
     <div class="card border-1">
         <ul class="nav nav-tabs mb-0 border-bottom-0 text-center" id="logTabs" role="tablist">
             <li class="nav-item mb-2 me-1" role="presentation">
@@ -1441,35 +1440,34 @@ $(document).ready(function() {
     }
 
     function checkForUpdate() {
+        const defaultIcon = './assets/img/curent.svg';
+        const latestIcon = 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg';
+        $('#update-spinner').show();
+
         $.ajax({
             url: 'check_update.php',
             method: 'GET',
             dataType: 'json',
             success: function(data) {
                 if (data.hasUpdate) {
-                    $('#current-version').attr('src', 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg');
+                    const img = new Image();
+                    img.onload = function() {
+                        $('#current-version').attr('src', latestIcon);
+                    };
+                    img.onerror = function() {
+                        $('#current-version').attr('src', defaultIcon);
+                    };
+                    img.src = latestIcon;
                 }
-                console.log('Current Version:', data.currentVersion);
-                console.log('Latest Version:', data.latestVersion);
-                console.log('Has Update:', data.hasUpdate);
-
-                localStorage.setItem('lastUpdateCheck', Date.now());
-                startUpdateTimer(); 
             },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error('AJAX Error:', textStatus, errorThrown);
+            error: function() {
+                $('#current-version').attr('src', defaultIcon);
+                console.error('Failed to check update, using default icon.');
+            },
+            complete: function() {
+                $('#update-spinner').hide();
             }
         });
-    }
-
-    function startUpdateTimer() {
-        const now = Date.now();
-        const lastCheck = localStorage.getItem('lastUpdateCheck');
-        let timeSinceLastCheck = lastCheck ? now - parseInt(lastCheck, 10) : Infinity;
-        let timeUntilNextCheck = Math.max(14400000 - timeSinceLastCheck, 0); 
-
-        console.log('Time until next check:', timeUntilNextCheck / 1000 / 60, 'minutes');
-        setTimeout(checkForUpdate, timeUntilNextCheck); 
     }
 
     const tabElms = document.querySelectorAll('#logTabs .nav-link');
@@ -1535,7 +1533,7 @@ $(document).ready(function() {
     fetchLogs();
     handleAutoScroll();
     setupRefreshInterval();
-    startUpdateTimer();
+    setTimeout(checkForUpdate, 3000);
 });
 </script>
 

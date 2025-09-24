@@ -316,7 +316,7 @@ if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['generateConfig'])) {
 <script src="./assets/bootstrap/jquery.min.js"></script>
 <?php include './ping.php'; ?>
 
-<div class="container-sm container-bg mt-4">
+<div class="container-sm container-bg px-0 px-sm-4 mt-4">
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-sm container">
         <a class="navbar-brand d-flex align-items-center" href="#">

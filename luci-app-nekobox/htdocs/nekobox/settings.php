@@ -121,7 +121,7 @@ $razordVersion = getRazordVersion();
 <title>Settings - Nekobox</title>
 <?php include './ping.php'; ?>
 
-<div class="container-sm container-bg mt-4">
+<div class="container-sm container-bg px-0 px-sm-4 mt-4">
 <?php include 'navbar.php'; ?>
 <div class="container-sm container px-4 theme-settings-container text-center">
   <h2 class="text-center p-2 mb-2" data-translate="component_update">Component Update</h2>
