@@ -1,11 +1,14 @@
 {
-	"luci-app-LingTiGameAcc": {
-		"description": "Grant UCI access for luci-app-LingTiGameAcc",
-		"read": {
-			"uci": [ "lingti" ]
-		},
-		"write": {
-			"uci": [ "lingti" ]
-		}
-	}
+    "luci-app-lingtigameacc": {
+        "description": "Grant UCI access for luci-app-lingtigameacc",
+        "read": {
+            "ubus": {
+            	"service": [ "list" ],
+			},
+            "uci": [ "lingtigameacc" ]
+        },
+        "write": {
+            "uci": [ "lingtigameacc" ]
+            }
+        }
 }

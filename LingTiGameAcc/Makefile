@@ -1,56 +1,46 @@
-#
-# Copyright (C) 2015-2016 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v3.
+# SPDX-License-Identifier: GPL-3.0-only
 #
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=LingTiGameAcc
-PKG_VERSION:=2023
-PKG_RELEASE:=1.7.1
+PKG_NAME:=lingtigameacc
+PKG_VERSION:=1.7.7
+PKG_RELEASE:=1
 
-PKG_LICENSE:=GPLv3
-PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=eSir Playground
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(ARCH).tar.gz
+PKG_SOURCE_URL:=http://lingti-1302055788.file.myqcloud.com/router/$(PKG_VERSION)/lingti-router-$(ARCH).tar.gz?
+PKG_HASH:=skip
+
+PKG_LICENSE:=Proprietary
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)
-  CATEGORY:=eSir Playground
-  SUBMENU:=2. GameAcc
-  TITLE:=LingTi Game Accelerator
-  URL:=https://github.com/esirplayground/LingTiGameAcc
-  DEPENDS:=+kmod-tun
+STRIP:=true
+
+TAR_CMD=$(HOST_TAR) -C $(1)/ $(TAR_OPTIONS)
+
+define Package/lingtigameacc
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=@(aarch64||arm||mips||mipsel||x86_64) +kmod-tun
+  TITLE:=LingTi Game Acc
+  URL:=https://game.lingti.com
 endef
 
-define Package/$(PKG_NAME)/description
-LingTi Game Acc is a Game Accelerator which is paid service.
-endef
-
-DIR_ARCH:=$(ARCH)
-
-define Build/Prepare
-	mkdir $(PKG_BUILD_DIR)/$(PKG_NAME)
-	cp -r ./files/$(DIR_ARCH)/* $(PKG_BUILD_DIR)/$(PKG_NAME)/lingti
+define Package/lingtigameacc/description
+  LingTi Game Acc is a Game Accelerator which is paid service.
 endef
 
 define Build/Compile
 endef
 
-define Package/$(PKG_NAME)/install
+define Package/lingtigameacc/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME)/lingti $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lingti $(1)/usr/bin/lingti
 
-
-	$(INSTALL_DIR) $(1)/etc/init.d 
-	$(INSTALL_BIN) ./root/etc/init.d/lingti $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_CONF) ./files/lingti.config $(1)/etc/config/lingtigameacc
+	$(INSTALL_BIN) ./files/lingti.init $(1)/etc/init.d/lingtigameacc
 endef
 
-define Package/$(PKG_NAME)/postinst
-#!/bin/sh
-chmod +x $(1)/usr/bin/lingti
-chmod +x $(1)/etc/init.d/lingti
-endef
-
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,lingtigameacc))
