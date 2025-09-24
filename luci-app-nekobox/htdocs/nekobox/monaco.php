@@ -978,7 +978,7 @@ table.table tbody tr td.file-icon {
 }
 </style>
 
-<div class="container-sm container-bg mt-4">
+<div class="container-sm container-bg px-2 px-sm-4 mt-4">
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-sm container">
         <a class="navbar-brand d-flex align-items-center" href="#">

@@ -49,7 +49,7 @@ footer {
 </style>
 <div  id="mainNavbar" class="container-sm container-bg text-center mt-4">
 <?php include 'navbar.php'; ?>
-<main class="container-fluid text-left p-3">
+<main class="container-fluid text-left px-0 px-sm-3 px-md-4 p-3">
     <iframe id="iframeMeta" class="w-100" src="http://<?=$zash_link?>" title="zash" allowfullscreen style="border-radius: 10px;"></iframe>
     <div class="mt-3 mb-0">
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#panelModal" data-translate="panel_settings">Panel Settings</button>

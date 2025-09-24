@@ -860,7 +860,7 @@ table.table tbody tr td.file-icon {
 	}
 }
 </style>
-<div class="container-sm container-bg mt-4">
+<div class="container-sm container-bg px-1 px-sm-4 mt-4">
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-sm container">
         <a class="navbar-brand d-flex align-items-center" href="#">
@@ -877,6 +877,9 @@ table.table tbody tr td.file-icon {
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?= $current == 'mihomo_manager.php' ? 'active' : '' ?>" href="./mihomo_manager.php"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'netmon.php' ? 'active' : '' ?>" href="./netmon.php"><i class="bi bi-activity"></i> <span data-translate="traffic_monitor">Traffic Monitor</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?= $current == 'singbox.php' ? 'active' : '' ?>" href="./singbox.php"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
