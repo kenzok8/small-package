@@ -62,6 +62,7 @@ return view.extend({
 		s.hm_lowcase_only = false;
 
 		s.tab('field_general', _('General fields'));
+		s.tab('field_vless_encryption', _('Vless Encryption fields'));
 		s.tab('field_tls', _('TLS fields'));
 		s.tab('field_transport', _('Transport fields'));
 		s.tab('field_multiplex', _('Multiplex fields'));
@@ -261,10 +262,6 @@ return view.extend({
 		o.depends('type', 'vmess');
 		o.modalonly = true;
 
-		o = s.taboption('field_general', form.Value, 'vless_decryption', _('decryption'));
-		o.depends('type', 'vless');
-		o.modalonly = true;
-
 		/* Plugin fields */
 		o = s.taboption('field_general', form.ListValue, 'plugin', _('Plugin'));
 		o.value('', _('none'));
@@ -298,6 +295,14 @@ return view.extend({
 		o.default = o.disabled;
 		o.depends({type: /^(socks|mixed|shadowsocks)$/});
 		o.modalonly = true;
+
+		/* Vless Encryption fields */
+		o = s.taboption('field_general', form.Flag, 'vless_decryption', _('decryption'));
+		o.default = o.disabled;
+		o.depends('type', 'vless');
+		o.modalonly = true;
+
+		hm.renderVlessEncryption(s, data[0]);
 
 		/* TLS fields */
 		o = s.taboption('field_general', form.Flag, 'tls', _('TLS'));
