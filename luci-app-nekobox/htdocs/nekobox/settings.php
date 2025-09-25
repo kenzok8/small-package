@@ -81,21 +81,19 @@ function getRazordVersion() {
 }
 
 function getCliverVersion() {
-    $versionFile = '/etc/neko/tmp/nekobox_version';
-    
-    if (file_exists($versionFile)) {
-        $version = trim(file_get_contents($versionFile));
-        
-        if (preg_match('/-cn$|en$/', $version)) {
-            return ['version' => $version, 'type' => 'Stable'];
-        } elseif (preg_match('/-preview$|beta$/', $version)) {
-            return ['version' => $version, 'type' => 'Preview'];
-        } else {
-            return ['version' => $version, 'type' => 'Unknown'];
+    $output = shell_exec("opkg list-installed luci-app-nekobox 2>/dev/null");
+
+    if ($output) {
+        $lines = explode("\n", trim($output));
+        foreach ($lines as $line) {
+            if (preg_match('/luci-app-nekobox\s*-\s*([^\s]+)/', $line, $matches)) {
+                $version = 'v' . $matches[1];
+                return ['version' => $version, 'type' => 'Installed'];
+            }
         }
-    } else {
-        return ['version' => 'Not installed', 'type' => 'Unknown'];
     }
+
+    return ['version' => 'Not installed', 'type' => 'Unknown'];
 }
 
 $cliverData = getCliverVersion();
@@ -130,7 +128,7 @@ $razordVersion = getRazordVersion();
       <div class="card">
         <div class="card-body text-center">
           <h5 class="card-title" data-translate="client_version_title">Client Version</h5>
-          <p id="cliver" class="card-text" style="font-family: monospace;"></p>
+          <p id="cliverVersion" class="card-text" style="font-family: monospace;"><?php echo htmlspecialchars($cliverVersion); ?></p>
           <div class="d-flex justify-content-center gap-2 mt-3">
             <button class="btn btn-pink" id="checkCliverButton">
               <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
@@ -589,7 +587,7 @@ $razordVersion = getRazordVersion();
     box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
 }
 
-.version-indicator.danger {
+.version-indicator.error {
     background-color: #dc3545;
     animation: pulse-error 2s infinite;
     box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
@@ -884,107 +882,129 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', () => {
     const addIndicator = (el, text, status = 'warning') => {
         if (!el) return;
-        const old = el.querySelector('.version-indicator');
-        if (old) old.remove();
 
-        const dot = document.createElement('span');
-        dot.className = `version-indicator ${status}`;
-        dot.setAttribute('data-text', text);
+        let indicator = el.querySelector('.version-indicator');
+        if (!indicator) {
+            indicator = document.createElement('span');
+            indicator.className = 'version-indicator';
+            el.appendChild(indicator);
+        }
 
-        el.appendChild(dot);
+        indicator.className = `version-indicator ${status}`;
+        indicator.setAttribute('data-text', text);
     };
 
     const compareVersions = (current, latest) => {
-        if (!current || !latest) return false;
-        const clean = v => v.replace(/^v/, '').trim();
-        return clean(current) === clean(latest);
+        if (!current || !latest) return null;
+        
+        try {
+            const clean = v => v.replace(/^v\.?/i, '').trim();
+            const curVer = clean(current);
+            const latVer = clean(latest);
+            
+            if (curVer === latVer) return 0;
+            
+            const parseVersion = version => {
+                const parts = version.split('-');
+                const mainVersion = parts[0].split('.').map(part => {
+                    const num = parseInt(part, 10);
+                    return isNaN(num) ? part : num;
+                });
+                const preRelease = parts[1] || '';
+                const preReleaseNum = preRelease.includes('alpha') ? 1 :
+                                    preRelease.includes('beta') ? 2 :
+                                    preRelease.includes('rc') ? 3 :
+                                    preRelease.includes('preview') ? 4 : 
+                                    /^[a-f0-9]{7,}$/.test(preRelease) ? 0 : Infinity;
+                return { main: mainVersion, preRelease, preReleaseNum };
+            };
+
+            const curParsed = parseVersion(curVer);
+            const latParsed = parseVersion(latVer);
+
+            const len = Math.max(curParsed.main.length, latParsed.main.length);
+            for (let i = 0; i < len; i++) {
+                const cur = curParsed.main[i] || 0;
+                const lat = latParsed.main[i] || 0;
+                
+                if (cur > lat) return 1;
+                if (cur < lat) return -1;
+            }
+
+            return curParsed.preReleaseNum > latParsed.preReleaseNum ? 1 :
+                   curParsed.preReleaseNum < latParsed.preReleaseNum ? -1 : 0;
+            
+        } catch (error) {
+            return null;
+        }
     };
 
-    const singBoxEl = document.getElementById('singBoxCorever');
+    const checkVersion = async (elementId, currentVersion, updateUrl) => {
+        const element = document.getElementById(elementId);
+        if (!element || !currentVersion || !updateUrl) return;
+
+        addIndicator(element, "<?php echo $translations['checkingVersion'] ?? 'Checking version...'; ?>", 'info');
+
+        try {
+            const res = await fetch(updateUrl + '?check_version=true');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            const text = await res.text();
+            const match = text.trim().match(/Latest version:\s*([^\s]+)/);
+            if (!match?.[1]) throw new Error('Parse failed');
+            
+            const latest = match[1];
+            const comparison = compareVersions(currentVersion, latest);
+            
+            let statusText, status;
+            if (comparison === null) {
+                statusText = "<?php echo $translations['versionCheckFailed'] ?? 'Version check failed'; ?>";
+                status = 'error';
+            } else if (comparison >= 0) {
+                statusText = "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>";
+                status = 'success';
+            } else {
+                statusText = "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
+                status = 'warning';
+            }
+            addIndicator(element, statusText, status);
+
+        } catch (error) {
+            let errorMessage = "<?php echo $translations['versionCheckFailed'] ?? 'Version check failed'; ?>";
+            if (error.message.includes('Failed to fetch')) {
+                errorMessage += " (<?php echo $translations['networkError'] ?? 'Network error'; ?>)";
+            } else {
+                errorMessage += ` (${error.message})`;
+            }
+            addIndicator(element, errorMessage, 'error');
+        }
+    };
+
     const singBoxCurrent = "<?php echo htmlspecialchars($singBoxVersion); ?>";
     let singBoxUrl = '';
-    if (singBoxCurrent && /^v/.test(singBoxCurrent) && /-.+/.test(singBoxCurrent)) singBoxUrl = 'update_singbox_core.php';
-    else if (singBoxCurrent && /-.+/.test(singBoxCurrent)) singBoxUrl = 'update_singbox_preview.php';
-    else if (singBoxCurrent && !/[a-zA-Z]/.test(singBoxCurrent)) singBoxUrl = 'update_singbox_stable.php';
-
-    if (singBoxUrl && singBoxEl) {
-        fetch(singBoxUrl + '?check_version=true')
-            .then(res => res.text())
-            .then(text => {
-                const match = text.trim().match(/Latest version:\s*([^\s]+)/);
-                if (match && match[1]) {
-                    const latest = match[1];
-                    const isUpToDate = compareVersions(singBoxCurrent, latest);
-                    const statusText = isUpToDate
-                        ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
-                        : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
-                    addIndicator(singBoxEl, statusText, isUpToDate ? 'success' : 'warning');
-                }
-            })
-            .catch(() => {});
+    if (singBoxCurrent) {
+        if (/^v/.test(singBoxCurrent) && /-.+/.test(singBoxCurrent)) {
+            singBoxUrl = 'update_singbox_core.php';
+        } else if (/-.+/.test(singBoxCurrent)) {
+            singBoxUrl = 'update_singbox_preview.php';
+        } else {
+            singBoxUrl = 'update_singbox_stable.php';
+        }
     }
 
-    const mihomoEl = document.getElementById('mihomoVersion');
     const mihomoCurrent = "<?php echo htmlspecialchars($mihomoVersion); ?>";
     const mihomoType = "<?php echo htmlspecialchars($mihomoType); ?>";
-    let mihomoUrl = '';
-    if (mihomoType === 'Stable') mihomoUrl = 'update_mihomo_stable.php';
-    else if (mihomoType === 'Preview') mihomoUrl = 'update_mihomo_preview.php';
+    const mihomoUrl = mihomoType === 'Stable' ? 'update_mihomo_stable.php' : 
+                     mihomoType === 'Preview' ? 'update_mihomo_preview.php' : '';
 
-    if (mihomoUrl && mihomoEl) {
-        fetch(mihomoUrl + '?check_version=true')
-            .then(res => res.text())
-            .then(text => {
-                const match = text.trim().match(/Latest version:\s*([^\s]+)/);
-                if (match && match[1]) {
-                    const latest = match[1];
-                    const isUpToDate = compareVersions(mihomoCurrent, latest);
-                    const statusText = isUpToDate
-                        ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
-                        : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
-                    addIndicator(mihomoEl, statusText, isUpToDate ? 'success' : 'warning');
-                }
-            })
-            .catch(() => {});
-    }
-
-    const zashboardEl = document.getElementById('uiVersion');
+    if (singBoxUrl) checkVersion('singBoxCorever', singBoxCurrent, singBoxUrl);
+    if (mihomoUrl) checkVersion('mihomoVersion', mihomoCurrent, mihomoUrl);
+    
     const zashboardCurrent = "<?php echo htmlspecialchars($uiVersion); ?>";
-    if (zashboardEl && zashboardCurrent) {
-        fetch('update_zashboard.php?check_version=true')
-            .then(res => res.text())
-            .then(text => {
-                const match = text.trim().match(/Latest version:\s*([^\s]+)/);
-                if (match && match[1]) {
-                    const latest = match[1];
-                    const isUpToDate = compareVersions(zashboardCurrent, latest);
-                    const statusText = isUpToDate
-                        ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
-                        : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
-                    addIndicator(zashboardEl, statusText, isUpToDate ? 'success' : 'warning');
-                }
-            })
-            .catch(() => {});
-    }
+    checkVersion('uiVersion', zashboardCurrent, 'update_zashboard.php');
 
-    const cliverEl = document.getElementById('cliver');
     const cliverCurrent = "<?php echo htmlspecialchars(trim($cliverVersion)); ?>";
-    if (cliverEl && cliverCurrent) {
-        fetch('update_script.php?check_version=true')
-            .then(res => res.text())
-            .then(text => {
-                const match = text.trim().match(/Latest version:\s*([^\s]+)/);
-                if (match && match[1]) {
-                    const latest = match[1];
-                    const isUpToDate = compareVersions(cliverCurrent, latest);
-                    const statusText = isUpToDate
-                        ? "<?php echo $translations['upToDate'] ?? 'Up-to-date'; ?>"
-                        : "<?php echo $translations['updateAvailable'] ?? 'Update Available'; ?>: " + latest;
-                    addIndicator(cliverEl, statusText, isUpToDate ? 'success' : 'warning');
-                }
-            })
-            .catch(() => {});
-    }
+    checkVersion('cliverVersion', cliverCurrent, 'update_script.php');
 });
 </script>
 
@@ -1168,14 +1188,14 @@ document.getElementById('checkUiButton').addEventListener('click', function () {
 });
 
 document.getElementById('checkCliverButton').addEventListener('click', function () {
-    const cliverVersion = document.getElementById('cliver').textContent.trim(); 
+    const cliverVersion = document.getElementById('cliverVersion').textContent.trim(); 
 
     const currentVersions = {
         [langData[currentLang]['client'] + ' [ ' + langData[currentLang]['stable'] + ' ]']: cliverVersion, 
     };
 
     const updateFiles = [
-        { name: langData[currentLang]['client'] + ' [ ' + langData[currentLang]['stable'] + ' ]', url: 'update_script.php' },
+        { name: langData[currentLang]['client'] + ' [ ' + langData[currentLang]['stable'] + ' ]', url: 'update_script.php?check_version=true' },
     ];
 
     checkVersion('NewCliver', updateFiles, currentVersions);

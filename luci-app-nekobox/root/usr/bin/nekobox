@@ -99,28 +99,25 @@ install_ipk() {
         return 1
     fi
 
+    asset_file_name=$(echo "$response" | grep -o "\"name\": \"${package_name}_[^\"]*_all\.ipk\"" | head -1 | cut -d'"' -f4)
+    if [ -z "$asset_file_name" ]; then
+        echo -e "${RED}Could not find the asset file for $package_name.${NC}"
+        return 1
+    fi
+
     new_version=$(echo "$response" | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
     if [ -z "$new_version" ]; then
         echo -e "${RED}Latest version not found.${NC}"
         return 1
     fi
 
-    if [ -z "$language_choice" ]; then
-        echo -e "${YELLOW}Language selection not found. Defaulting to 'en'.${NC}"
-        language_choice="en"
-    fi
+    download_url="https://github.com/$repo_owner/$repo_name/releases/download/$new_version/$asset_file_name"
 
-    if [ "$language_choice" != "cn" ] && [ "$language_choice" != "en" ]; then
-        echo -e "${RED}Invalid language selection. Using 'en' as the default.${NC}"
-        language_choice="en"
-    fi
-
-    download_url="https://github.com/$repo_owner/$repo_name/releases/download/$new_version/${package_name}_${new_version}-${language_choice}_all.ipk"
-
-    echo -e "${CYAN}Downloading ONLY: $package_name ($new_version)${NC}"
+    echo -e "${CYAN}Downloading ONLY: $package_name${NC}"
+    echo -e "${CYAN}File: $asset_file_name${NC}"
     echo -e "${CYAN}URL: $download_url${NC}"
 
-    local_file="/tmp/${package_name}.ipk"
+    local_file="/tmp/$asset_file_name"
     curl -L -f -o "$local_file" "$download_url"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Download failed!${NC}"
@@ -134,9 +131,10 @@ install_ipk() {
 
     opkg install --force-reinstall "$local_file"
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}NeKoBox installation completed. Version: $new_version${NC}"
-        echo "$new_version" > /etc/neko/neko_version.txt
-        echo "$new_version" > /etc/neko/version_neko.txt
+        echo -e "${GREEN}NeKoBox installation completed. File: $asset_file_name${NC}"
+        file_version=$(echo "$asset_file_name" | sed -E "s/${package_name}_([^_]+)_all\.ipk/\1/")
+        echo "$file_version" > /etc/neko/neko_version.txt
+        echo "$file_version" > /etc/neko/version_neko.txt
         get_version_info "neko"
     else
         echo -e "${RED}NeKoBox installation failed.${NC}"

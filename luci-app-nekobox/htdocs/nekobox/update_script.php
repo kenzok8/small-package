@@ -25,26 +25,38 @@ $response = file_get_contents($local_api_response);
 $data = json_decode($response, true);
 unlink($local_api_response);
 
-$new_version = $data['tag_name'] ?? '';
+$tag_name = $data['tag_name'] ?? '';
+
+$new_version = '';
+$asset_file_name = '';
+
+if (isset($data['assets']) && is_array($data['assets'])) {
+    foreach ($data['assets'] as $asset) {
+        if (strpos($asset['name'], $package_name) !== false) {
+            preg_match('/' . preg_quote($package_name, '/') . '_(v?\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?)_all\.ipk$/', $asset['name'], $matches);
+            if (!empty($matches[1])) {
+                $new_version = $matches[1];
+                $asset_file_name = $asset['name'];
+                break;
+            }
+        }
+    }
+}
 
 if (empty($new_version)) {
     die("No latest version found or version information is empty");
 }
 
-$installed_lang = isset($_GET['lang']) ? $_GET['lang'] : 'cn'; 
-
-if ($installed_lang !== 'cn' && $installed_lang !== 'en') {
-    die("Invalid language selection. Please choose 'cn' or 'en'");
-}
-
 if (isset($_GET['check_version'])) {
-    echo "Latest version: V" . $new_version; 
+    echo "Latest version: v" . $new_version;
     exit;
 }
 
-$download_url = "https://github.com/$repo_owner/$repo_name/releases/download/$new_version/{$package_name}_{$new_version}-{$installed_lang}_all.ipk";
+$download_url = "https://github.com/$repo_owner/$repo_name/releases/download/{$tag_name}/{$asset_file_name}";
 
 echo "<pre>Latest version: $new_version</pre>";
+echo "<pre>Tag name: $tag_name</pre>";
+echo "<pre>Asset file: $asset_file_name</pre>";
 echo "<pre>Download URL: $download_url</pre>";
 echo "<pre id='logOutput'></pre>";
 
@@ -56,7 +68,7 @@ echo "<script>
 
 echo "<script>appendLog('Start downloading updates...');</script>";
 
-$local_file = "/tmp/{$package_name}_{$new_version}-{$installed_lang}_all.ipk";
+$local_file = "/tmp/{$asset_file_name}";
 
 $curl_command = "curl -sL " . escapeshellarg($download_url) . " -o " . escapeshellarg($local_file);
 exec($curl_command . " 2>&1", $output, $return_var);
