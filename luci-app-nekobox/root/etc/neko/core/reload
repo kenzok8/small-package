@@ -10,7 +10,6 @@ neko_pid="$neko_dir/tmp/neko_pid.txt"
 singbox_pid="$neko_dir/tmp/singbox_pid.txt"
 log="$neko_dir/tmp/log.txt"
 firewall="/etc/init.d/firewall"
-neko_version=$1
 
 check_singbox_running() {
     if [ -f "$singbox_pid" ]; then
@@ -30,18 +29,6 @@ check_neko_running() {
         fi
     fi
     return 1
-}
-
-neko_checknewver(){
-    new_version=$(curl -m 5 -f -s https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/main/nekobox_version)
-    if [ -z "$new_version" ] || [ "$(printf '%s\n' "$neko_version" "$new_version" | sort -V | head -n1)" = "$new_version" ]; then
-        strversion="- Latest"
-    else
-        strversion="- New v.$new_version"
-        if [ "$1" == "log" ]; then
-            echo "[ `date +%T` ] New Version detected. v.$new_version" >> "$log"
-        fi
-    fi
 }
 
 check_interface_changes() {
@@ -139,13 +126,7 @@ if [ "$neko_new_interface" == 1 ]; then
         if [ "$singbox_status" == 1 ] && ! check_neko_running; then
             check_interface_changes "singbox"
         fi
-        
-        if [ $cnt == 30 ]; then
-            neko_checknewver "log"
-            cnt=0
-        fi
     done
 else
     echo "[ `date +%T` ] Mihomo Auto Restart : OFF " >> $log
-    sleep 20 && neko_checknewver "log"
 fi

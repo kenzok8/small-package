@@ -836,19 +836,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_config'])) {
     <?php include 'navbar.php'; ?>
     <div class="container-sm text-center col-8">
         <img src="./assets/img/nekobox.png" alt="Icon" class="centered-img">
-        <div id="version-info" class="d-flex align-items-center justify-content-center mt-3 gap-2">
+        <div id="version-info" class="d-flex align-items-center justify-content-center mt-1 gap-1">
             <a id="version-link"
                href="https://github.com/Thaolga/openwrt-nekobox/releases"
                target="_blank">
                 <img id="current-version" src="./assets/img/curent.svg" alt="Current Version" class="img-fluid" style="height:23px;">
             </a>
-            <div id="update-spinner" class="spinner-border spinner-border-sm" role="status" style="color: var(--accent-color);">
-                <span class="visually-hidden">Loading...</span>
-            </div>
         </div>
     </div>
 
-<h2 id="neko-title" class="neko-title-style" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#systemInfoModal">NekoBox</h2>
+<h2 id="neko-title" class="neko-title-style m-2" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#systemInfoModal">NekoBox</h2>
 <?php
 function getSingboxVersion() {
     $singBoxPath = '/usr/bin/sing-box'; 
@@ -894,7 +891,7 @@ function getMihomoVersion() {
 $singboxVersion = getSingboxVersion();
 $mihomoVersion  = getMihomoVersion();
 ?>
-<div class="px-0 px-sm-4 mt-4 control-box">
+<div class="px-0 px-sm-4 mt-3 control-box">
     <div class="card">
         <div class="card-body">
             <div class="mb-4">
