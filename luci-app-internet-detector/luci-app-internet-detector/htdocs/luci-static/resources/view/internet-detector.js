@@ -844,8 +844,6 @@ return view.extend({
 		o.value(1);
 		o.value(2);
 		o.value(3);
-		o.value(4);
-		o.value(5);
 		o.default = '2';
 
 		// connection_timeout
@@ -859,11 +857,6 @@ return view.extend({
 		o.value(3,  '3 ' + _('sec'));
 		o.value(4,  '4 ' + _('sec'));
 		o.value(5,  '5 ' + _('sec'));
-		o.value(6,  '6 ' + _('sec'));
-		o.value(7,  '7 ' + _('sec'));
-		o.value(8,  '8 ' + _('sec'));
-		o.value(9,  '9 ' + _('sec'));
-		o.value(10, '10 ' + _('sec'));
 		o.default = '2';
 
 		// enabled
@@ -1569,7 +1562,7 @@ return view.extend({
 						// enabled
 						o = s.taboption('telegram', form.Flag,
 							'mod_telegram_enabled',
-							_('Enable'));
+							_('Enabled'));
 						o.rmempty   = false;
 						o.modalonly = true;
 

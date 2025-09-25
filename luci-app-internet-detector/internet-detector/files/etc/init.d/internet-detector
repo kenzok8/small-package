@@ -11,6 +11,8 @@ run_instance() {
 	if [ $enabled = "1" ]; then
 		procd_open_instance "$1"
 		procd_set_param command "$PROG" "-a" "nodaemon" "-i" "$1"
+		procd_set_param respawn
+		procd_set_param term_timeout 60
 		procd_close_instance
 	fi
 }
