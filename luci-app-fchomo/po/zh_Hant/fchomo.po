@@ -2503,12 +2503,12 @@ msgid "The server and client can set different padding parameters."
 msgstr "伺服器和客戶端可以設定不同的填充參數。"
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:360
-msgid "The server private key, in PEM format."
-msgstr "服務端私鑰，需要 PEM 格式。"
+msgid "The %s private key, in PEM format."
+msgstr "%s私鑰，需要 PEM 格式。"
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:345
-msgid "The server public key, in PEM format."
-msgstr "服務端公鑰，需要 PEM 格式。"
+msgid "The %s public key, in PEM format."
+msgstr "%s公鑰，需要 PEM 格式。"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:585
 #: htdocs/luci-static/resources/view/fchomo/server.js:416

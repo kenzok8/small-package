@@ -911,11 +911,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     return isNaN(num) ? part : num;
                 });
                 const preRelease = parts[1] || '';
-                const preReleaseNum = preRelease.includes('alpha') ? 1 :
+                let preReleaseNum = preRelease.includes('alpha') ? 1 :
                                     preRelease.includes('beta') ? 2 :
                                     preRelease.includes('rc') ? 3 :
                                     preRelease.includes('preview') ? 4 : 
-                                    /^[a-f0-9]{7,}$/.test(preRelease) ? 0 : Infinity;
+                                    /^[a-f0-9]{7,}$/.test(preRelease) ? 0 :
+                                    /^r\d+$/i.test(preRelease) ? 5 : // r1, r2, r3...
+                                    Infinity;
                 return { main: mainVersion, preRelease, preReleaseNum };
             };
 
@@ -931,9 +933,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (cur < lat) return -1;
             }
 
-            return curParsed.preReleaseNum > latParsed.preReleaseNum ? 1 :
-                   curParsed.preReleaseNum < latParsed.preReleaseNum ? -1 : 0;
-            
+            if (curParsed.preReleaseNum > latParsed.preReleaseNum) return 1;
+            if (curParsed.preReleaseNum < latParsed.preReleaseNum) return -1;
+
+            if (/^r\d+$/i.test(curParsed.preRelease) && /^r\d+$/i.test(latParsed.preRelease)) {
+                const curNum = parseInt(curParsed.preRelease.replace(/\D+/g, ''), 10) || 0;
+                const latNum = parseInt(latParsed.preRelease.replace(/\D+/g, ''), 10) || 0;
+                if (curNum > latNum) return 1;
+                if (curNum < latNum) return -1;
+            }
+
+            return 0;           
         } catch (error) {
             return null;
         }

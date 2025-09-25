@@ -1467,6 +1467,27 @@ $(document).ready(function() {
         });
     }
 
+    function shouldCheckUpdate() {
+        const lastCheck = localStorage.getItem('lastUpdateCheck');
+        if (!lastCheck) return true;
+        const now = Date.now();
+        const FOUR_HOURS = 4 * 60 * 60 * 1000;
+        return now - parseInt(lastCheck, 10) >= FOUR_HOURS;
+    }
+
+    function recordUpdateCheck() {
+        localStorage.setItem('lastUpdateCheck', Date.now());
+    }
+
+    function runUpdateCheck() {
+        if (shouldCheckUpdate()) {
+            checkForUpdate();
+            recordUpdateCheck();
+        }
+    }
+
+    setInterval(runUpdateCheck, 4 * 60 * 60 * 1000);
+
     const tabElms = document.querySelectorAll('#logTabs .nav-link');
     const savedTabId = localStorage.getItem('activeTab') || 'pluginLogTab';
     const savedTab = document.getElementById(savedTabId);
@@ -1530,7 +1551,6 @@ $(document).ready(function() {
     fetchLogs();
     handleAutoScroll();
     setupRefreshInterval();
-    setTimeout(checkForUpdate, 3000);
 });
 </script>
 

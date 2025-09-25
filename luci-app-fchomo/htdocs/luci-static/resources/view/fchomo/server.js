@@ -343,7 +343,7 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.taboption('field_tls', form.Value, 'tls_cert_path', _('Certificate path'),
-			_('The server public key, in PEM format.'));
+			_('The %s public key, in PEM format.').format(_('Server')));
 		o.value('/etc/fchomo/certs/server_publickey.pem');
 		o.depends({tls: '1', tls_reality: '0'});
 		o.rmempty = false;
@@ -358,7 +358,7 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.taboption('field_tls', form.Value, 'tls_key_path', _('Key path'),
-			_('The server private key, in PEM format.'));
+			_('The %s private key, in PEM format.').format(_('Server')));
 		o.value('/etc/fchomo/certs/server_privatekey.pem');
 		o.rmempty = false;
 		o.depends({tls: '1', tls_cert_path: /.+/});
@@ -372,10 +372,27 @@ return view.extend({
 		o.onclick = L.bind(hm.uploadCertificate, o, _('private key'), 'server_privatekey');
 		o.modalonly = true;
 
+		o = s.taboption('field_tls', form.ListValue, 'tls_client_auth_type', _('API Client Auth type') + _(' (mTLS)'));
+		o.default = hm.tls_client_auth_types[0][0];
+		hm.tls_client_auth_types.forEach((res) => {
+			o.value.apply(o, res);
+		})
+		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
+		o.modalonly = true;
+
+		o = s.taboption('field_tls', form.Value, 'tls_client_auth_cert_path', _('API Client Auth Certificate path') + _(' (mTLS)'),
+			_('The %s public key, in PEM format.').format(_('Client')));
+		o.value('/etc/fchomo/certs/client_publickey.pem');
+		o.validate = function(section_id, value) {
+			return hm.validateMTLSClientAuth.call(this, 'tls_client_auth_type', section_id, value);
+		}
+		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
+		o.modalonly = true;
+
 		o = s.taboption('field_tls', hm.GenText, 'tls_ech_key', _('ECH key'));
 		o.placeholder = '-----BEGIN ECH KEYS-----\nACATwY30o/RKgD6hgeQxwrSiApLaCgU+HKh7B6SUrAHaDwBD/g0APwAAIAAgHjzK\nmadSJjYQIf9o1N5GXjkW4DEEeb17qMxHdwMdNnwADAABAAEAAQACAAEAAwAIdGVz\ndC5jb20AAA==\n-----END ECH KEYS-----';
 		o.hm_placeholder = 'outer-sni.any.domain';
-		o.cols = 30
+		o.cols = 30;
 		o.rows = 2;
 		o.hm_options = {
 			type: 'ech-keypair',

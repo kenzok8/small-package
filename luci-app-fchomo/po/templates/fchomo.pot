@@ -2470,11 +2470,11 @@ msgid "The server and client can set different padding parameters."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:360
-msgid "The server private key, in PEM format."
+msgid "The %s private key, in PEM format."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:345
-msgid "The server public key, in PEM format."
+msgid "The %s public key, in PEM format."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:585

@@ -135,8 +135,15 @@ start_service() {
 		else
 			# Set ENV variables for Client
 			export SAFE_PATHS="$RUN_DIR$(
-				yq 'with(.tls; .[] |= sub("(/[^/]+$)", ""))
-					| [.external-ui, .tls.certificate, .tls.private-key] | unique | map(select(. != null))
+				yq 'with(.external-ui; select(. != null) | . = sub("(/?$)", "/placeholder"))
+					| [.external-ui, .tls.certificate, .tls.private-key, .tls.client-auth-cert] | unique | map(select(. != null))
+					| .[] |= sub("(/[^/]+$)", "") | unique
+					| .[] | sub("(^)", ":")' \
+				"$RUN_DIR/mihomo-c.yaml" | tr -d '\n'
+			)"
+			export SAFE_PATHS="$SAFE_PATHS$( # mTLS
+				yq '.proxies | map([.certificate, .private-key][]) | unique | map(select(. != null))
+					| .[] |= sub("(/[^/]+$)", "") | unique
 					| .[] | sub("(^)", ":")' \
 				"$RUN_DIR/mihomo-c.yaml" | tr -d '\n'
 			)"
@@ -341,8 +348,8 @@ start_service() {
 		else
 			# Set ENV variables for Server
 			export SAFE_PATHS="$RUN_DIR$(
-				yq '[.listeners[] | select(.certificate // .private-key) | [.certificate, .private-key][]]
-					| .[] |= sub("(/[^/]+$)", "") | unique | map(select(. != null))
+				yq '.listeners | map([.certificate, .private-key, .client-auth-cert][]) | unique | map(select(. != null))
+					| .[] |= sub("(/[^/]+$)", "") | unique
 					| .[] | sub("(^)", ":")' \
 				"$RUN_DIR/mihomo-s.yaml" | tr -d '\n'
 			)"
