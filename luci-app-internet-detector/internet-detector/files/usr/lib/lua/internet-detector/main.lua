@@ -51,11 +51,15 @@ local InternetDetector = {
 	modules       = {},
 	parsedHosts   = {},
 	uiCounter     = 0,
+	pidFile       = nil,
+	statusFile    = nil,
 }
-InternetDetector.configDir  = string.format("/etc/%s", InternetDetector.appName)
-InternetDetector.modulesDir = string.format(
+InternetDetector.configDir      = string.format("/etc/%s", InternetDetector.appName)
+InternetDetector.modulesDir     = string.format(
 	"%s/%s/modules", InternetDetector.libDir, InternetDetector.appName)
-InternetDetector.commonDir  = string.format("/tmp/run/%s", InternetDetector.appName)
+InternetDetector.commonDir      = string.format("/tmp/run/%s", InternetDetector.appName)
+InternetDetector.appNamePattern = InternetDetector.appName:gsub("-", "%%-")
+InternetDetector.pidFilePattern = "^" .. InternetDetector.appNamePattern .. ".-%.pid$"
 
 -- Loading settings from UCI
 
@@ -79,11 +83,9 @@ elseif err then
 	io.stderr:write(string.format("Error: %s\n", err))
 end
 
-local _RUNNING
-
 function InternetDetector:prequire(package)
-	local retVal, pkg = pcall(require, package)
-	return retVal and pkg
+	local ok, pkg = pcall(require, package)
+	return ok and pkg
 end
 
 function InternetDetector:loadUCIConfig(sType, instance)
@@ -107,10 +109,6 @@ function InternetDetector:loadUCIConfig(sType, instance)
 		end
 	)
 	self.serviceConfig.instance = instance
-	self.pidFile    = string.format(
-		"%s/%s.%s.pid", self.commonDir, self.appName, instance)
-	self.statusFile = string.format(
-		"%s/%s.%s.status", self.commonDir, self.appName, instance)
 	return success
 end
 
@@ -317,25 +315,16 @@ function InternetDetector:TCPConnectionToHost(host, port)
 	return retCode
 end
 
-function InternetDetector:checkHosts()
-	local checkFunc = (self.serviceConfig.check_type == 1) and self.pingHost or self.TCPConnectionToHost
-	local retCode   = 1
-	for k, v in ipairs(self.parsedHosts) do
-		for i = 1, self.serviceConfig.connection_attempts do
-			if checkFunc(self, v.addr, v.port) == 0 then
-				retCode = 0
-				break
-			end
-		end
-		if retCode == 0 then
-			break
-		end
+function InternetDetector:exit()
+	for _, e in ipairs(self.modules) do
+		e:onExit()
 	end
-	return retCode
-end
-
-function InternetDetector:breakMainLoop(signo)
-	_RUNNING = false
+	self:removeProcessFiles()
+	if self.loggingLevel > 0 then
+		self:writeLogMessage("info", "stoped")
+		syslog.closelog()
+	end
+	os.exit(0)
 end
 
 function InternetDetector:resetUiCounter(signo)
@@ -343,9 +332,9 @@ function InternetDetector:resetUiCounter(signo)
 end
 
 function InternetDetector:mainLoop()
-	signal.signal(signal.SIGTERM, function(signo) self:breakMainLoop(signo) end)
-	signal.signal(signal.SIGINT, function(signo) self:breakMainLoop(signo) end)
-	signal.signal(signal.SIGQUIT, function(signo) self:breakMainLoop(signo) end)
+	signal.signal(signal.SIGTERM, function(signo) self:exit(signo) end)
+	signal.signal(signal.SIGINT, function(signo) self:exit(signo) end)
+	signal.signal(signal.SIGQUIT, function(signo) self:exit(signo) end)
 	signal.signal(signal.SIGUSR1, function(signo) self:resetUiCounter(signo) end)
 
 	local lastStatus, currentStatus, mTimeNow, mTimeDiff, mLastTime, uiTimeNow, uiLastTime
@@ -353,40 +342,91 @@ function InternetDetector:mainLoop()
 	local modulesStatus = {}
 	local counter       = 0
 	local inetChecked   = false
-	_RUNNING            = true
-	while _RUNNING do
+	local checking      = false
+	local hostNum       = 1
+	local attempt       = 1
+	local checkFunc     = (self.serviceConfig.check_type == 1) and self.pingHost or self.TCPConnectionToHost
+
+	while true do
 		if counter == 0 or counter >= interval then
-			if self.debug then
-				currentStatus = self:checkHosts()
-			else
-				local ret, status = pcall(self.checkHosts, self, currentStatus)
-				if ret then
-					currentStatus = status
+			checking = true
+		end
+
+		if checking then
+			local newStatus      = 1
+			local checkCompleted = false
+			if hostNum <= #self.parsedHosts then
+				if attempt <= self.serviceConfig.connection_attempts then
+					local addr    = self.parsedHosts[hostNum].addr
+					local port    = self.parsedHosts[hostNum].port
+					local retCode = 1
+					if self.debug then
+						retCode = checkFunc(self, addr, port)
+					else
+						local ok, status = pcall(checkFunc, self, addr, port)
+						if ok then
+							retCode = status
+						else
+							self:writeLogMessage("err", string.format(
+								"An error occurred while checking the host %s: %s",
+								tostring(addr),
+								tostring(status))
+							)
+						end
+					end
+					if retCode == 0 then
+						attempt        = 1
+						hostNum        = 1
+						checking       = false
+						newStatus      = 0
+						counter        = 0
+						checkCompleted = true
+					else
+						attempt = attempt + 1
+						if attempt > self.serviceConfig.connection_attempts then
+							attempt = 1
+							hostNum = hostNum + 1
+						end
+					end
 				else
-					self:writeLogMessage("err", "Unknown error while checking host!")
+					attempt = 1
+					hostNum = hostNum + 1
 				end
-			end
-			if not stat.stat(self.statusFile) then
-				self:writeValueToFile(self.statusFile, self:statusJson(
-					currentStatus, self.serviceConfig.instance))
+				if hostNum > #self.parsedHosts then
+					hostNum        = 1
+					checking       = false
+					counter        = 0
+					checkCompleted = true
+				end
+			else
+				hostNum        = 1
+				checking       = false
+				counter        = 0
+				checkCompleted = true
 			end
 
-			if currentStatus == 0 then
-				interval = self.serviceConfig.interval_up
-				if currentStatus ~= lastStatus then
+			if checkCompleted then
+				currentStatus = newStatus
+				if not stat.stat(self.statusFile) then
 					self:writeValueToFile(self.statusFile, self:statusJson(
 						currentStatus, self.serviceConfig.instance))
-					self:writeLogMessage("notice", "Connected")
 				end
-			else
-				interval = self.serviceConfig.interval_down
-				if currentStatus ~= lastStatus then
-					self:writeValueToFile(self.statusFile, self:statusJson(
-						currentStatus, self.serviceConfig.instance))
-					self:writeLogMessage("notice", "Disconnected")
+				if currentStatus == 0 then
+					interval = self.serviceConfig.interval_up
+					if currentStatus ~= lastStatus then
+						self:writeValueToFile(self.statusFile, self:statusJson(
+							currentStatus, self.serviceConfig.instance))
+						self:writeLogMessage("notice", "Connected")
+					end
+				else
+					interval = self.serviceConfig.interval_down
+					if currentStatus ~= lastStatus then
+						self:writeValueToFile(self.statusFile, self:statusJson(
+							currentStatus, self.serviceConfig.instance))
+						self:writeLogMessage("notice", "Disconnected")
+					end
 				end
 			end
-			counter = 0
 		end
 
 		mTimeDiff   = 0
@@ -402,9 +442,10 @@ function InternetDetector:mainLoop()
 			if self.debug then
 				e:run(currentStatus, lastStatus, mTimeDiff, mTimeNow, inetChecked)
 			else
-				local ret = pcall(e.run, e, currentStatus, lastStatus, mTimeDiff, mTimeNow, inetChecked)
-				if not ret then
-					self:writeLogMessage("err", string.format("%s: Unknown error!", e.name))
+				local ok, err = pcall(e.run, e, currentStatus, lastStatus, mTimeDiff, mTimeNow, inetChecked)
+				if not ok then
+					self:writeLogMessage("err", string.format(
+						"%s: Module error: %s", e.name, tostring(err)))
 				end
 			end
 		end
@@ -421,9 +462,12 @@ function InternetDetector:mainLoop()
 				currentStatus, self.serviceConfig.instance, modulesStatus))
 		end
 
-		lastStatus = currentStatus
 		unistd.sleep(1)
-		counter = counter + 1
+
+		if not checking then
+			lastStatus = currentStatus
+			counter    = counter + 1
+		end
 
 		if self.mode == 2 then
 			uiTimeNow = time.clock_gettime(time.CLOCK_MONOTONIC).tv_sec
@@ -434,25 +478,22 @@ function InternetDetector:mainLoop()
 			end
 			uiLastTime = uiTimeNow
 			if self.uiCounter >= self.uiRunTime then
-				self:breakMainLoop(signal.SIGTERM)
+				self:exit(signal.SIGTERM)
 			end
 		end
 	end
 end
 
 function InternetDetector:removeProcessFiles()
-	os.remove(string.format(
-		"%s/%s.%s.pid", self.commonDir, self.appName, self.serviceConfig.instance))
-	os.remove(string.format(
-		"%s/%s.%s.status", self.commonDir, self.appName, self.serviceConfig.instance))
+	os.remove(self.statusFile)
+	os.remove(self.pidFile)
 end
 
 function InternetDetector:status()
 	local ok, commonDir = pcall(dirent.files, self.commonDir)
 	if ok then
-		local appName = self.appName:gsub("-", "%%-")
 		for item in commonDir do
-			if item:match("^" .. appName .. ".-%.pid$") then
+			if item:match(self.pidFilePattern) then
 				return "running"
 			end
 		end
@@ -464,10 +505,10 @@ function InternetDetector:inetStatus()
 	local inetStat      = '{"instances":[]}'
 	local ok, commonDir = pcall(dirent.files, self.commonDir)
 	if ok then
-		local appName = self.appName:gsub("-", "%%-")
-		local lines   = {}
+		local statusFilePattern = "^" .. self.appNamePattern .. ".-%.status$"
+		local lines             = {}
 		for item in commonDir do
-			if item:match("^" .. appName .. ".-%.status$") then
+			if item:match(statusFilePattern) then
 				lines[#lines + 1] = self:readValueFromFile(
 					string.format("%s/%s", self.commonDir, item))
 			end
@@ -478,7 +519,7 @@ function InternetDetector:inetStatus()
 end
 
 function InternetDetector:stopInstance(pidFile)
-	local retVal
+	local retVal = false, pidValue
 	if stat.stat(pidFile) then
 		pidValue = self:readValueFromFile(pidFile)
 		if pidValue then
@@ -497,6 +538,8 @@ function InternetDetector:stopInstance(pidFile)
 				os.remove(pidFile)
 			end
 			retVal = true
+		else
+			os.remove(pidFile)
 		end
 	end
 	if not pidValue then
@@ -508,22 +551,22 @@ function InternetDetector:stopInstance(pidFile)
 end
 
 function InternetDetector:stop()
-	local appName = self.appName:gsub("-", "%%-")
-	local success
-	for i = 0, 10 do
-		success = true
+	local nopids = false
+	for i = 0, 100 do
+		nopids = true
 		local ok, commonDir = pcall(dirent.files, self.commonDir)
 		if ok then
 			for item in commonDir do
-				if item:match("^" .. appName .. ".-%.pid$") then
-					self:stopInstance(string.format("%s/%s", self.commonDir, item))
-					success = false
+				if item:match(self.pidFilePattern) then
+					if self:stopInstance(string.format("%s/%s", self.commonDir, item)) then
+						nopids = false
+					end
 				end
 			end
-			if success then
+			if nopids then
 				break
 			end
-			unistd.sleep(1)
+			time.nanosleep({ tv_sec = 0, tv_nsec = 10000000 })
 		else
 			break
 		end
@@ -531,11 +574,10 @@ function InternetDetector:stop()
 end
 
 function InternetDetector:setSIGUSR()
-	local appName = self.appName:gsub("-", "%%-")
 	local ok, commonDir = pcall(dirent.files, self.commonDir)
 	if ok then
 		for item in commonDir do
-			if item:match("^" .. appName .. ".-%.pid$") then
+			if item:match(self.pidFilePattern) then
 				pidValue = self:readValueFromFile(string.format("%s/%s", self.commonDir, item))
 				if pidValue then
 					signal.kill(tonumber(pidValue), signal.SIGUSR1)
@@ -559,18 +601,25 @@ function InternetDetector:preRun()
 			os.exit(1)
 		end
 	end
-	if stat.stat(self.pidFile) then
-		io.stderr:write(
-			string.format('PID file "%s" exists. Is the %s already running?\n',
-				self.pidFile, self.appName))
-		return false
+	local ok, commonDir = pcall(dirent.files, self.commonDir)
+	if ok then
+		local instancePattern = "^" .. self.appNamePattern .. "%." .. self.serviceConfig.instance .. "%.[%d]+%.pid$"
+		for item in commonDir do
+			if item:match(instancePattern) then
+				self:stopInstance(string.format("%s/%s", self.commonDir, item))
+			end
+		end
 	end
-	return true
 end
 
 function InternetDetector:run()
-	local pidValue = unistd.getpid()
+	local pidValue      = unistd.getpid()
+	self.pidFile        = string.format(
+		"%s/%s.%s.%s.pid", self.commonDir, self.appName, self.serviceConfig.instance, pidValue)
+	self.statusFile     = string.format(
+		"%s/%s.%s.status", self.commonDir, self.appName, self.serviceConfig.instance)
 	self:writeValueToFile(self.pidFile, pidValue)
+
 	if self.loggingLevel > 0 then
 		syslog.openlog(self.appName, syslog.LOG_PID, syslog.LOG_DAEMON)
 	end
@@ -613,29 +662,16 @@ function InternetDetector:run()
 		self.statusFile, self:statusJson(-1, self.serviceConfig.instance))
 
 	self:mainLoop()
-
-	for _, e in ipairs(self.modules) do
-		e:onExit()
-	end
-
-	self:removeProcessFiles()
-	if self.loggingLevel > 0 then
-		self:writeLogMessage("info", "stoped")
-		syslog.closelog()
-	end
+	self:exit()
 end
 
 function InternetDetector:noDaemon()
-	if not self:preRun() then
-		return
-	end
+	self:preRun()
 	self:run()
 end
 
 function InternetDetector:daemon()
-	if not self:preRun() then
-		return
-	end
+	self:preRun()
 	-- UNIX double fork
 	if unistd.fork() == 0 then
 		unistd.setpid("s")

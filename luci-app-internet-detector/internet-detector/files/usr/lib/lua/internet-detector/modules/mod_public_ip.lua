@@ -350,7 +350,7 @@ end
 
 function Module:httpRequest(url)
 	local retCode = 1, data
-	local curl = string.format(
+	local curl    = string.format(
 		'%s%s --connect-timeout %s %s "%s"; printf "\n$?";',
 		self.curlExec,
 		self.config.serviceConfig.iface and (" --interface " .. self.config.serviceConfig.iface) or "",
@@ -358,15 +358,17 @@ function Module:httpRequest(url)
 		self.curlParams,
 		url
 	)
-	local fh = io.popen(curl, "r")
+	local fh      = io.popen(curl, "r")
 	if fh then
-		data       = fh:read("*a")
+		data = fh:read("*a")
 		fh:close()
-		local s, e = data:find("[0-9]+\n?$")
-		retCode    = tonumber(data:sub(s))
-		data       = data:sub(0, s - 2)
-		if not data or data == "" then
-			data = nil
+		if data ~= nil then
+			local s, e = data:find("[0-9]+\n?$")
+			retCode    = tonumber(data:sub(s))
+			data       = data:sub(0, s - 2)
+			if not data or data == "" then
+				data = nil
+			end
 		end
 	else
 		retCode = 1
