@@ -5676,7 +5676,7 @@ body {
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
 	line-height: 2;
-	z-index: 2;
+	z-index: 1060;
 	flex-direction: column;
 	gap: 0.5em;
 	width: 200px;
@@ -6212,7 +6212,7 @@ body {
 	display: none;
 	justify-content: center;
 	align-items: center;
-	z-index: 1000;
+	z-index: 1060;
 	backdrop-filter: blur(3px);
         transition: opacity 0.3s ease;
 }

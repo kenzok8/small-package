@@ -25,8 +25,14 @@ $dash_link = $neko_cfg['ctrl_host'] . ':' . $neko_cfg['ctrl_port'] . '/ui/dashbo
 <style>
 #iframeMeta {
     width: 100%;
-    height: 83vh;
+    height: 78vh;
     transition: height 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    #iframeMeta {
+        height: 68vh;
+    }
 }
 
 body, html {
@@ -122,9 +128,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const extraMargin = 40;
 
         const availableHeight = viewportHeight - buttonHeight - footerHeight - extraMargin;
-        const defaultHeight = viewportHeight * 0.83;
-
-        const finalHeight = Math.min(defaultHeight, availableHeight);
+        
+        const isSmallScreen = window.innerWidth <= 768;
+        const baseHeight = isSmallScreen ? viewportHeight * 0.68 : viewportHeight * 0.78;
+        
+        const finalHeight = Math.min(baseHeight, availableHeight);
 
         iframe.style.height = finalHeight + 'px';
     }

@@ -258,6 +258,8 @@ config["global-client-fingerprint"] = uci.get(uciconf, ucitls, 'global_client_fi
 config.tls = {
 	"certificate": uci.get(uciconf, ucitls, 'tls_cert_path'),
 	"private-key": uci.get(uciconf, ucitls, 'tls_key_path'),
+	"client-auth-type": uci.get(uciconf, ucitls, 'tls_client_auth_type'),
+	"client-auth-cert": uci.get(uciconf, ucitls, 'tls_client_auth_cert_path'),
 	"ech-key": uci.get(uciconf, ucitls, 'tls_ech_key')
 };
 /* TLS END */
@@ -591,6 +593,8 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		fingerprint: cfg.tls_fingerprint,
 		alpn: cfg.tls_alpn, // Array
 		"skip-cert-verify": strToBool(cfg.tls_skip_cert_verify),
+		certificate: cfg.tls_cert_path, // mTLS
+		"private-key": cfg.tls_key_path, // mTLS
 		"client-fingerprint": cfg.tls_client_fingerprint,
 		"ech-opts": cfg.tls_ech === '1' ? {
 			enable: true,

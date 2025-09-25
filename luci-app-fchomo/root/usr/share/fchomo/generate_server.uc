@@ -159,6 +159,8 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 				certificate: cfg.tls_cert_path,
 				"private-key": cfg.tls_key_path
 			}),
+			"client-auth-type": cfg.tls_client_auth_type,
+			"client-auth-cert": cfg.tls_client_auth_cert_path,
 			"ech-key": cfg.tls_ech_key,
 		} : {}),
 

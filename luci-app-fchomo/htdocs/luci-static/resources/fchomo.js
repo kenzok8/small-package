@@ -297,6 +297,14 @@ const trojan_cipher_methods = [
 	['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')]
 ];
 
+const tls_client_auth_types = [
+	['', _('none')],
+	['request', _('Request')],
+	['require-any', _('Require any')],
+	['verify-if-given', _('Verify if given')],
+	['require-and-verify', _('Require and verify')]
+];
+
 const tls_client_fingerprints = [
 	['chrome'],
 	['firefox'],
@@ -1585,6 +1593,16 @@ function validateJson(section_id, value) {
 	return true;
 }
 
+function validateMTLSClientAuth(type_option, section_id, value) {
+	// If `client-auth-type` is set to "verify-if-given" or "require-and-verify", `client-auth-cert` must not be empty.
+	const auth_type = this.section.getOption(type_option).formvalue(section_id);
+					//this.section.getUIElement('tls_client_auth_type').getValue();
+	if (!value && ["verify-if-given", "require-and-verify"].includes(auth_type))
+		return _('Expecting: %s').format(_('non-empty value'));
+
+	return true;
+}
+
 function validateBase64Key(length, section_id, value) {
 	/* Thanks to luci-proto-wireguard */
 	if (value)
@@ -1819,6 +1837,7 @@ return baseclass.extend({
 	shadowsocks_cipher_methods,
 	shadowsocks_cipher_length,
 	trojan_cipher_methods,
+	tls_client_auth_types,
 	tls_client_fingerprints,
 	vless_flow,
 
@@ -1869,6 +1888,7 @@ return baseclass.extend({
 	validateAuthPassword,
 	validateCommonPort,
 	validateJson,
+	validateMTLSClientAuth,
 	validateBase64Key,
 	validateShadowsocksPassword,
 	validateBytesize,

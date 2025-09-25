@@ -546,6 +546,17 @@ return view.extend({
 		so.datatype = 'file';
 		so.value('/etc/ssl/acme/example.key');
 
+		so = ss.option(form.ListValue, 'tls_client_auth_type', _('API Client Auth type') + _(' (mTLS)'));
+		so.default = hm.tls_client_auth_types[0][0];
+		hm.tls_client_auth_types.forEach((res) => {
+			so.value.apply(so, res);
+		})
+
+		so = ss.option(form.Value, 'tls_client_auth_cert_path', _('API Client Auth Certificate path') + _(' (mTLS)'),
+			_('The %s public key, in PEM format.').format(_('Client')));
+		so.value('/etc/fchomo/certs/client_publickey.pem');
+		so.validate = L.bind(hm.validateMTLSClientAuth, so, 'tls_client_auth_type');
+
 		so = ss.option(hm.GenText, 'tls_ech_key', _('API ECH key'));
 		so.placeholder = '-----BEGIN ECH KEYS-----\nACATwY30o/RKgD6hgeQxwrSiApLaCgU+HKh7B6SUrAHaDwBD/g0APwAAIAAgHjzK\nmadSJjYQIf9o1N5GXjkW4DEEeb17qMxHdwMdNnwADAABAAEAAQACAAEAAwAIdGVz\ndC5jb20AAA==\n-----END ECH KEYS-----';
 		so.hm_placeholder = 'outer-sni.any.domain';

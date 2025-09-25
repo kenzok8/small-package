@@ -654,6 +654,34 @@ return view.extend({
 		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
 		so.modalonly = true;
 
+		so = ss.taboption('field_tls', form.Value, 'tls_cert_path', _('Certificate path') + _(' (mTLS)'),
+			_('The %s public key, in PEM format.').format(_('Client')));
+		so.value('/etc/fchomo/certs/client_publickey.pem');
+		so.depends('tls', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Button, '_upload_cert', _('Upload certificate') + _(' (mTLS)'),
+			_('<strong>Save your configuration before uploading files!</strong>'));
+		so.inputstyle = 'action';
+		so.inputtitle = _('Upload...');
+		so.depends({tls: '1', tls_cert_path: '/etc/fchomo/certs/client_publickey.pem'});
+		so.onclick = L.bind(hm.uploadCertificate, so, _('certificate'), 'client_publickey');
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Value, 'tls_key_path', _('Key path') + _(' (mTLS)'),
+			_('The %s private key, in PEM format.').format(_('Client')));
+		so.value('/etc/fchomo/certs/client_privatekey.pem');
+		so.depends({tls: '1', tls_cert_path: /.+/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Button, '_upload_key', _('Upload key') + _(' (mTLS)'),
+			_('<strong>Save your configuration before uploading files!</strong>'));
+		so.inputstyle = 'action';
+		so.inputtitle = _('Upload...');
+		so.depends({tls: '1', tls_key_path: '/etc/fchomo/certs/client_privatekey.pem'});
+		so.onclick = L.bind(hm.uploadCertificate, so, _('private key'), 'client_privatekey');
+		so.modalonly = true;
+
 		so = ss.taboption('field_tls', form.Flag, 'tls_ech', _('Enable ECH'));
 		so.default = so.disabled;
 		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
