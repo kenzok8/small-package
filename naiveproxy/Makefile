@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=140.0.7339.123-1
+PKG_VERSION:=140.0.7339.123-2
 PKG_RELEASE:=1
 
 # intel 80386 & riscv64 & cortex-a76
@@ -24,11 +24,11 @@ ifeq ($(ARCH_PACKAGES),aarch64_cortex-a53)
 else ifeq ($(ARCH_PACKAGES),aarch64_cortex-a72)
   PKG_HASH:=b4d31db433ff3b1e28b0a2d0393317b815a41bdaa69f841516086dcfa4ac52bb
 else ifeq ($(ARCH_PACKAGES),aarch64_generic)
-  PKG_HASH:=3d150e002b54bed3dcd8ee1b3f87ec7bd2142d3272fcd8e7a6615d33689da7ef
+  PKG_HASH:=eccb7341e5a2a2307e2c7b469adb271fcb76c9b7d96428b5d9216eb91f07bc04
 else ifeq ($(ARCH_PACKAGES),arm_arm1176jzf-s_vfp)
   PKG_HASH:=c90c564d09648ef7f7b83595b8a0a4635ea8b293c4bfb3ac432d0cc5d003719e
 else ifeq ($(ARCH_PACKAGES),arm_arm926ej-s)
-  PKG_HASH:=8547ed89569709da3a2bfa5b90cad77c6c671da2d721b703a2b1707306013d2f
+  PKG_HASH:=e6b0f057b719fffd3bc5f201538767c69e6367a1e1480808efe62d4f093e4b55
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a15_neon-vfpv4)
   PKG_HASH:=4e41da71ed4a588d9da6748857b7063f441275d573c8935b24b41adad6f92136
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a5_vfpv4)
@@ -38,13 +38,13 @@ else ifeq ($(ARCH_PACKAGES),arm_cortex-a7)
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a7_neon-vfpv4)
   PKG_HASH:=a374076612e4ee741c60d57173771bb6b6f2a2710d4d9a637afb6e8ddce98e76
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a7_vfpv4)
-  PKG_HASH:=b2287851d25d4701c16add18a75d52f5ae14312da64b9240fecfd3d9625f973e
+  PKG_HASH:=0b335809706c8ecbd1a6680adad7f74a0877b74496d11a556dbe6ccb7ab3e7a4
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a8_vfpv3)
   PKG_HASH:=12cf7be62a5d5fd5c0e886e1a22db445b9ef5f34728c1c788e8a8632ae0105a9
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a9)
   PKG_HASH:=9977f8a2c023caa4d7a50b8e4f721f9de18879b74f246c050ea2b15b57e6ff3b
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a9_neon)
-  PKG_HASH:=9969a31508d64a3c396e3f825fa0ad6ca39609db2752069bfe490ad6455a0377
+  PKG_HASH:=d72fd69a5a67ee38c066dbed077f93949b2224ea0a5b45271ef60aac838acb31
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a9_vfpv3-d16)
   PKG_HASH:=3092b1a38b437aef76bbfee69d9a17fcf862907015ef1083e8b2695bfed92723
 else ifeq ($(ARCH_PACKAGES),arm_mpcore)

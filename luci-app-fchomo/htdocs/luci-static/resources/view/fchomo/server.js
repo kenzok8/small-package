@@ -372,7 +372,7 @@ return view.extend({
 		o.onclick = L.bind(hm.uploadCertificate, o, _('private key'), 'server_privatekey');
 		o.modalonly = true;
 
-		o = s.taboption('field_tls', form.ListValue, 'tls_client_auth_type', _('API Client Auth type') + _(' (mTLS)'));
+		o = s.taboption('field_tls', form.ListValue, 'tls_client_auth_type', _('Client Auth type') + _(' (mTLS)'));
 		o.default = hm.tls_client_auth_types[0][0];
 		hm.tls_client_auth_types.forEach((res) => {
 			o.value.apply(o, res);
@@ -380,13 +380,21 @@ return view.extend({
 		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
 		o.modalonly = true;
 
-		o = s.taboption('field_tls', form.Value, 'tls_client_auth_cert_path', _('API Client Auth Certificate path') + _(' (mTLS)'),
+		o = s.taboption('field_tls', form.Value, 'tls_client_auth_cert_path', _('Client Auth Certificate path') + _(' (mTLS)'),
 			_('The %s public key, in PEM format.').format(_('Client')));
 		o.value('/etc/fchomo/certs/client_publickey.pem');
 		o.validate = function(section_id, value) {
 			return hm.validateMTLSClientAuth.call(this, 'tls_client_auth_type', section_id, value);
 		}
 		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
+		o.modalonly = true;
+
+		o = s.taboption('field_tls', form.Button, '_upload_client_auth_cert', _('Upload certificate') + _(' (mTLS)'),
+			_('<strong>Save your configuration before uploading files!</strong>'));
+		o.inputstyle = 'action';
+		o.inputtitle = _('Upload...');
+		o.depends({tls: '1', tls_client_auth_cert_path: '/etc/fchomo/certs/client_publickey.pem'});
+		o.onclick = L.bind(hm.uploadCertificate, o, _('certificate'), 'client_publickey');
 		o.modalonly = true;
 
 		o = s.taboption('field_tls', hm.GenText, 'tls_ech_key', _('ECH key'));

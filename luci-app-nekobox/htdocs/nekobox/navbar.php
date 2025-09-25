@@ -1,5 +1,5 @@
 <nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container-sm container">
+    <div class="container-sm container px-1 px-sm-3 px-md-4">
         <a class="navbar-brand d-flex align-items-center" href="#">
             <?= $iconHtml ?>
             <span id="dynamicTitle" style="color: var(--accent-color); letter-spacing: 1px; cursor: pointer;" onclick="window.open('<?= $titleLink ?>', '_blank')"><?= htmlspecialchars($title) ?></span>

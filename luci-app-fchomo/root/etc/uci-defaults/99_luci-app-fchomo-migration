@@ -4,6 +4,9 @@
 sed -i 's|^FQDN:$|DOMAIN:|' "/etc/fchomo/resources/direct_list.yaml" 2>/dev/null
 sed -i 's|^FQDN:$|DOMAIN:|' "/etc/fchomo/resources/proxy_list.yaml" 2>/dev/null
 
+# mieru_port_range -> mieru_ports
+sed -i 's|^\toption mieru_port_range |\tlist mieru_ports |' /etc/config/fchomo 2>/dev/null
+
 # default_proxy -> client_enabled and MATCH rule
 default_proxy=$(uci -q get fchomo.routing.default_proxy)
 if [ -n "$default_proxy" ]; then
@@ -46,9 +49,6 @@ if [ -n "$dns_port" ]; then
 		set fchomo.dns.dns_port="$dns_port"
 	EOF
 fi
-
-# mieru_port_range -> mieru_ports
-sed -i 's|^\toption mieru_port_range |\tlist mieru_ports |' /etc/config/fchomo 2>/dev/null
 
 uci commit fchomo
 
