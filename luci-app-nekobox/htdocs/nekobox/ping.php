@@ -6212,7 +6212,7 @@ body {
 	display: none;
 	justify-content: center;
 	align-items: center;
-	z-index: 1060;
+	z-index: 1050;
 	backdrop-filter: blur(3px);
         transition: opacity 0.3s ease;
 }
