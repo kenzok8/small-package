@@ -958,6 +958,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (curNum < latNum) return -1;
             }
 
+            if (/^rc\d+$/i.test(curParsed.preRelease) && /^rc\d+$/i.test(latParsed.preRelease)) {
+                const curNum = parseInt(curParsed.preRelease.replace(/\D+/g, ''), 10) || 0;
+                const latNum = parseInt(latParsed.preRelease.replace(/\D+/g, ''), 10) || 0;
+                if (curNum > latNum) return 1;
+                if (curNum < latNum) return -1;
+            }
+
             return 0;           
         } catch (error) {
             return null;
