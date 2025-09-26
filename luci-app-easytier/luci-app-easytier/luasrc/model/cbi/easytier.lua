@@ -1022,9 +1022,53 @@ btn11info = s:taboption("infos", DummyValue, "btn11info")
 btn11info.rawhtml = true
 btn11info.cfgvalue = function(self, section)
     local content = nixio.fs.readfile("/tmp/easytier-cli_stats") or ""
-    content = luci.util.trim(content or "")
+    content = luci.util.trim(content or "") 
 
-    local html = {}
+    local translate_map = { 
+        ["Metric Name"] = "指标名称", 
+        ["Value"] = "值",
+        ["Labels"] = "标签", 
+        ["compression_bytes_rx_after"]   = "接收压缩后字节数",
+        ["compression_bytes_rx_before"]  = "接收压缩前字节数", 
+        ["compression_bytes_tx_after"]   = "发送压缩后字节数",
+        ["compression_bytes_tx_before"]  = "发送压缩前字节数",
+        ["peer_rpc_client_rx"]           = "客户端 RPC 接收数",
+        ["peer_rpc_client_tx"]           = "客户端 RPC 发送数",
+        ["peer_rpc_duration_ms"]         = "RPC 时长 (毫秒)",
+        ["peer_rpc_server_rx"]           = "服务端 RPC 接收数",
+        ["peer_rpc_server_tx"]           = "服务端 RPC 发送数",
+        ["traffic_bytes_rx"]             = "接收字节数",
+        ["traffic_bytes_self_rx"]        = "自身接收字节数",
+        ["traffic_bytes_self_tx"]        = "自身发送字节数",
+        ["traffic_bytes_tx"]             = "发送字节数",
+        ["traffic_packets_rx"]           = "接收包数",
+        ["traffic_packets_self_rx"]      = "自身接收包数",
+        ["traffic_packets_self_tx"]      = "自身发送包数",
+        ["traffic_packets_tx"]           = "发送包数",
+        ["network_name"]        = "网络名称",
+        ["dst_peer_id"]         = "目标节点ID",
+        ["src_peer_id"]         = "源节点ID",
+        ["method_name"]         = "方法名称",
+        ["service_name"]        = "服务名称",
+        ["status"]              = "状态",
+        ["success"]             = "成功",
+        ["get_global_peer_map"] = "获取全局节点映射",
+        ["PeerCenterRpc"]       = "节点中心RPC",
+        ["report_peers"]        = "上报节点",
+        ["sync_route_info"]     = "同步路由信息",
+        ["OspfRouteRpc"]        = "OSPF路由RPC"
+    }
+
+    local function escape_lua_pattern(s) 
+        return s:gsub("(%W)","%%%1") 
+    end 
+
+    local html = {} 
+    table.insert(html, [[ 
+        <div style="overflow:auto; max-width:100%;">
+        <table style="border-collapse:collapse;width:100%;font-family:monospace;">
+    ]]) 
+
     local lines = {}
     for line in content:gmatch("[^\r\n]+") do
         table.insert(lines, line)
@@ -1039,32 +1083,36 @@ btn11info.cfgvalue = function(self, section)
             for cell in line:gmatch("|%s*([^|]+)%s*") do
                 local value = luci.util.trim(cell)
                 if rowIndex == 1 then
-                    if value == "Metric Name" then
-                        value = "指标名称"
-                    elseif value == "Value" then
-                        value = "值"
-                    elseif value == "Labels" then
-                        value = "标签"
+                    if translate_map[value] then
+                        value = translate_map[value]
+                    else
+                        for k, v in pairs(translate_map) do
+                            local k_esc = escape_lua_pattern(k)
+                            value = value:gsub(k_esc, v)
+                        end 
                     end
+                else
+                    for k, v in pairs(translate_map) do
+                        local k_esc = escape_lua_pattern(k)
+                        value = value:gsub(k_esc, v)
+                    end 
                 end
-                table.insert(cells, value)
+                table.insert(cells, value) 
             end
 
             if #cells > 0 then
                 parsed = true
                 local tr = {}
                 for i, c in ipairs(cells) do
-                    local tag = rowIndex == 1 and "th" or "td"
+                    local tag = (rowIndex == 1) and "th" or "td" 
                     local style = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
-
                     if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;border:1px solid #ccc;background:#f0f0f0;"
+                        style = "padding:6px;text-align:center;white-space:nowrap;border:1px solid #ccc;background:#f0f0f0;" 
                     elseif rowIndex % 2 == 0 then
                         style = style .. "background:#fafafa;"
-                    else
+                    else 
                         style = style .. "background:#ffffff;"
                     end
-
                     table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
                 end
                 table.insert(tableRows, "<tr>" .. table.concat(tr) .. "</tr>")
@@ -1073,17 +1121,16 @@ btn11info.cfgvalue = function(self, section)
     end
 
     if parsed then
-        table.insert(html, [[
-            <div style="overflow:auto; max-width:100%;">
-            <table style="border-collapse:collapse;width:100%;font-family:monospace;">
-        ]])
-        for _, row in ipairs(tableRows) do
-            table.insert(html, row)
-        end
+        for _, rowHtml in ipairs(tableRows) do
+            table.insert(html, rowHtml)
+        end 
         table.insert(html, "</table></div>")
         return table.concat(html, "\n")
     else
-        return string.format("<pre style='background:#f9f9f9;padding:8px;border:1px solid #ccc;white-space:pre-wrap;'>%s</pre>", luci.util.pcdata(content))
+        return string.format( 
+            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
+            luci.xml.pcdata(content) 
+        ) 
     end
 end
 
@@ -1202,7 +1249,8 @@ http.setfilehandler(
 
             os.execute("chmod +x /tmp/easytier-core")
             os.execute("chmod +x /tmp/easytier-cli")
-		    os.execute("chmod +x /tmp/easytier-web-embed")
+            os.execute("chmod +x /tmp/easytier-web-embed")
+		   
         end
     end
 )
