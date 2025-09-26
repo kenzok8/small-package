@@ -1436,41 +1436,68 @@ $(document).ready(function() {
         singboxControl.style.display = 'block';
     }
 
+    const defaultIcon = './assets/img/curent.svg';
+    const latestIcon  = './assets/img/Latest.svg';
+    const versionFile = 'version_debug.json';
+    const intervalSec = 5 * 60;
+
+    function compareVersions(current, latest) {
+        if (!current || !latest) return null;
+        const parseVersion = (version) => {
+            const parts = version.split("-");
+            const mainVersion = parts[0].split(".").map(num => parseInt(num, 10));
+            const preRelease = parts[1] || "";
+            let preReleaseType = "", preReleaseNum = 0;
+            if (/^r\d+$/i.test(preRelease)) { preReleaseType = "r"; preReleaseNum = parseInt(preRelease.replace(/\D+/g,"")); }
+            else if (/^rc\d+$/i.test(preRelease)) { preReleaseType = "rc"; preReleaseNum = parseInt(preRelease.replace(/\D+/g,"")); }
+            return { mainVersion, preReleaseType, preReleaseNum };
+        };
+        const order = { "":0, "r":1, "rc":2 };
+        const cur = parseVersion(current);
+        const lat = parseVersion(latest);
+        const len = Math.max(cur.mainVersion.length, lat.mainVersion.length);
+        for (let i=0;i<len;i++){
+            const a=cur.mainVersion[i]||0, b=lat.mainVersion[i]||0;
+            if(a>b) return 1; if(a<b) return -1;
+        }
+        if(order[cur.preReleaseType] !== order[lat.preReleaseType]) return order[cur.preReleaseType]-order[lat.preReleaseType];
+        if(cur.preReleaseNum>lat.preReleaseNum) return 1;
+        if(cur.preReleaseNum<lat.preReleaseNum) return -1;
+        return 0;
+    }
+
+    function loadVersionJSON(callback) {
+        $.getJSON(versionFile, function(data) {
+            callback(data);
+        }).fail(function() {
+            callback(null);
+        });
+    }
+
     function checkForUpdate() {
-        const defaultIcon = './assets/img/curent.svg';
-        const latestIcon = './assets/img/Latest.svg';
-
-        $('#update-spinner').show();
-
-        $.ajax({
-            url: 'check_update.php',
-            method: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                if (data.hasUpdate) {
-                    setTimeout(function() {
-                        const img = new Image();
-                        img.onload = function() {
-                            $('#current-version').attr('src', latestIcon);
-                        };
-                        img.onerror = function() {
-                            $('#current-version').attr('src', defaultIcon);
-                        };
-                        img.src = latestIcon;
-                    }, 1000);
-                }
-            },
-            error: function() {
-                $('#current-version').attr('src', defaultIcon);
-                console.error('Failed to check update, using default icon.');
-            },
-            complete: function() {
-                $('#update-spinner').hide();
+        loadVersionJSON(function(data){
+            const now = Math.floor(Date.now()/1000);
+            if(!data || !data.timestamp || now - data.timestamp > intervalSec){
+                $.getJSON('check_update.php', function(newData){
+                    updateIcon(newData);
+                });
+            } else {
+                updateIcon(data);
             }
         });
     }
 
-    checkForUpdate();
+    function updateIcon(data){
+        if(!data) { $('#current-version').attr('src', defaultIcon); return; }
+        const hasUpdate = compareVersions(data.currentVersion, data.latestVersion) < 0;
+        $('#current-version').attr('src', hasUpdate ? latestIcon : defaultIcon);
+        console.log("Current:", data.currentVersion, "Latest:", data.latestVersion, "Update:", hasUpdate);
+    }
+
+    $(document).ready(function(){
+        checkForUpdate();
+        setInterval(checkForUpdate, 60 * 1000);
+    });
 
     const tabElms = document.querySelectorAll('#logTabs .nav-link');
     const savedTabId = localStorage.getItem('activeTab') || 'pluginLogTab';
