@@ -318,12 +318,12 @@ if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['generateConfig'])) {
 
 <div class="container-sm container-bg px-0 px-sm-4 mt-4">
 <nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container-sm container">
+    <div class="container-sm container px-4 px-sm-3 px-md-4">
         <a class="navbar-brand d-flex align-items-center" href="#">
             <?= $iconHtml ?>
             <span style="color: var(--accent-color); letter-spacing: 1px;"><?= htmlspecialchars($title) ?></span>
         </a>
-        <button class="navbar-toggler" type="button" style="position: relative; z-index: 1;" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
             <i class="bi bi-list" style="color: var(--accent-color); font-size: 1.8rem;"></i>
         </button>
         <div class="collapse navbar-collapse" id="navbarContent">
@@ -335,9 +335,6 @@ if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['generateConfig'])) {
                     <a class="nav-link <?= $current == 'mihomo_manager.php' ? 'active' : '' ?>" href="./mihomo_manager.php"><i class="bi bi-folder"></i> <span data-translate="manager">Manager</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= $current == 'netmon.php' ? 'active' : '' ?>" href="./netmon.php"><i class="bi bi-activity"></i> <span data-translate="traffic_monitor">Traffic Monitor</span></a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link <?= $current == 'singbox.php' ? 'active' : '' ?>" href="./singbox.php"><i class="bi bi-shop"></i> <span data-translate="template_i">Template I</span></a>
                 </li>
                 <li class="nav-item">
@@ -345,6 +342,9 @@ if ($_SERVER['REQUEST_METHOD']=='POST' && isset($_POST['generateConfig'])) {
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?= $current == 'mihomo.php' ? 'active' : '' ?>" href="./mihomo.php"><i class="bi bi-building"></i> <span data-translate="template_iii">Template III</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'netmon.php' ? 'active' : '' ?>" href="./netmon.php"><i class="bi bi-activity"></i> <span data-translate="traffic_monitor">Traffic Monitor</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?= $current == 'filekit.php' ? 'active' : '' ?>" href="./filekit.php"><i class="bi bi-bank"></i> <span data-translate="pageTitle">File Assistant</span></a>

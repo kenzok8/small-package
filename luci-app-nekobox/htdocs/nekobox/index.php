@@ -1438,7 +1438,8 @@ $(document).ready(function() {
 
     function checkForUpdate() {
         const defaultIcon = './assets/img/curent.svg';
-        const latestIcon = 'https://raw.githubusercontent.com/Thaolga/openwrt-nekobox/refs/heads/main/luci-app-nekobox/htdocs/nekobox/assets/img/Latest.svg';
+        const latestIcon = './assets/img/Latest.svg';
+
         $('#update-spinner').show();
 
         $.ajax({
@@ -1447,14 +1448,16 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(data) {
                 if (data.hasUpdate) {
-                    const img = new Image();
-                    img.onload = function() {
-                        $('#current-version').attr('src', latestIcon);
-                    };
-                    img.onerror = function() {
-                        $('#current-version').attr('src', defaultIcon);
-                    };
-                    img.src = latestIcon;
+                    setTimeout(function() {
+                        const img = new Image();
+                        img.onload = function() {
+                            $('#current-version').attr('src', latestIcon);
+                        };
+                        img.onerror = function() {
+                            $('#current-version').attr('src', defaultIcon);
+                        };
+                        img.src = latestIcon;
+                    }, 1000);
                 }
             },
             error: function() {
@@ -1467,26 +1470,7 @@ $(document).ready(function() {
         });
     }
 
-    function shouldCheckUpdate() {
-        const lastCheck = localStorage.getItem('lastUpdateCheck');
-        if (!lastCheck) return true;
-        const now = Date.now();
-        const FOUR_HOURS = 4 * 60 * 60 * 1000;
-        return now - parseInt(lastCheck, 10) >= FOUR_HOURS;
-    }
-
-    function recordUpdateCheck() {
-        localStorage.setItem('lastUpdateCheck', Date.now());
-    }
-
-    function runUpdateCheck() {
-        if (shouldCheckUpdate()) {
-            checkForUpdate();
-            recordUpdateCheck();
-        }
-    }
-
-    setInterval(runUpdateCheck, 4 * 60 * 60 * 1000);
+    checkForUpdate();
 
     const tabElms = document.querySelectorAll('#logTabs .nav-link');
     const savedTabId = localStorage.getItem('activeTab') || 'pluginLogTab';
