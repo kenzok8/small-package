@@ -753,6 +753,34 @@ function decodeBase64Str(str) {
 	).join(''));
 }
 
+function encodeBase64Str(str) {
+	if (!str)
+		return null;
+
+	let buf = encodeURIComponent(str).split('%').slice(1).map(h => parseInt(h, 16));
+	return btoa(String.fromCharCode(...buf));
+}
+
+function decodeBase64Bin(str) {
+	if (!str)
+		return null;
+
+	/* Thanks to luci-app-ssr-plus */
+	str = str.replace(/-/g, '+').replace(/_/g, '/');
+	let padding = (4 - (str.length % 4)) % 4;
+	if (padding)
+		str = str + Array(padding + 1).join('=');
+
+	return Array.prototype.map.call(atob(str), c => c.charCodeAt(0)); // OR Uint8Array.fromBase64(str);
+}
+
+function encodeBase64Bin(buf) {
+	if (isEmpty(buf))
+		return null;
+
+	return btoa(String.fromCharCode(...buf)); // OR new Uint8Array(buf).toBase64();
+}
+
 function generateRand(type, length) {
 	let byteArr;
 	if (['base64', 'hex'].includes(type))
@@ -1523,6 +1551,9 @@ return baseclass.extend({
 	bool2str,
 	calcStringMD5,
 	decodeBase64Str,
+	encodeBase64Str,
+	decodeBase64Bin,
+	encodeBase64Bin,
 	generateRand,
 	getValue,
 	json2yaml,
