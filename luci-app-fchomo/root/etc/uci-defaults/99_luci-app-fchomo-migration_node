@@ -1,0 +1,47 @@
+#!/bin/bash
+# Migration script for fchomo node
+# Used to migrate LuCI application nodes option.
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
+CONF=fchomo
+
+config_load "$CONF"
+
+# isDefined <section> <option>
+isDefined() {
+	local opt=CONFIG_${1}_$2
+
+	if [[ -v $opt ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+migrate() {
+	# mieru_port_range -> mieru_ports
+	if isDefined "$1" mieru_port_range; then
+		local mieru_port_range
+		config_get mieru_port_range "$1" mieru_port_range ""
+		uci_remove "$CONF" "$1" mieru_port_range
+		uci_add_list "$CONF" "$1" mieru_ports "$mieru_port_range"
+	fi
+
+	# vless_encryption -> vless_encryption_encryption
+	if isDefined "$1" vless_encryption; then
+		local vless_encryption
+		config_get vless_encryption "$1" vless_encryption "0"
+		if [ "$vless_encryption" != "1" -a "$vless_encryption" != "0" ]; then
+			uci_set "$CONF" "$1" vless_encryption "1"
+			uci_set "$CONF" "$1" vless_encryption_encryption "$vless_encryption"
+		fi
+	fi
+}
+
+config_foreach migrate node
+
+uci_commit "$CONF"
+
+exit 0
