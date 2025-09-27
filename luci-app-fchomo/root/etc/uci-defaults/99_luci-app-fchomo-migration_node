@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Migration script for fchomo node
 # Used to migrate LuCI application nodes option.
 
@@ -11,13 +11,9 @@ config_load "$CONF"
 
 # isDefined <section> <option>
 isDefined() {
-	local opt=CONFIG_${1}_$2
+	local opt=CONFIG_${1}_${2};
 
-	if [[ -v $opt ]]; then
-		return 0
-	fi
-
-	return 1
+	eval "[ -n \"\${$opt+x}\" ] && return 0 || return 1"
 }
 
 migrate() {
