@@ -58,6 +58,54 @@ function parseProviderYaml(field, name, cfg) {
 	return config;
 }
 
+class VlessEncryptionClient {
+	// origin:
+	// https://github.com/XTLS/Xray-core/pull/5067
+	// client:
+	// https://github.com/muink/mihomo/blob/7917f24f428e40ac20b8b8f953b02cf59d1be334/transport/vless/encryption/factory.go#L12
+	// https://github.com/muink/mihomo/blob/7917f24f428e40ac20b8b8f953b02cf59d1be334/transport/vless/encryption/client.go#L45
+
+	constructor(payload) {
+		this.input = payload || '';
+		let content = String.prototype.split.call(this.input, '.');
+
+		if (content.length >= 4) {
+			this.method = content[0];
+			this.xormode = content[1];
+			this.rtt = content[2];
+			this.paddings = [];
+			this.keypairs = [];
+
+			// https://github.com/muink/mihomo/blob/7917f24f428e40ac20b8b8f953b02cf59d1be334/transport/vless/encryption/factory.go#L39
+			content.slice(3).forEach((e) => {
+				if (e.length < 20)
+					this.paddings.push(e);
+				else
+					this.keypairs.push(e);
+			});
+		} else
+			console.error('Invalid VLESS encryption value: ' + payload);
+	}
+
+	setKey(key, value) {
+		this[key] = value;
+
+		return this
+	}
+
+	toString() {
+		let required = [
+			this.method,
+			this.xormode,
+			this.rtt
+		].join('.');
+
+		return required +
+			(hm.isEmpty(this.paddings) ? '' : '.' + this.paddings.join('.')) + // Optional
+			(hm.isEmpty(this.keypairs) ? '' : '.' + this.keypairs.join('.')); // Required
+	}
+}
+
 return view.extend({
 	load() {
 		return Promise.all([
@@ -558,8 +606,70 @@ return view.extend({
 		so.modalonly = true;
 
 		/* Vless Encryption fields */
-		so = ss.taboption('field_general', form.Value, 'vless_encryption', _('encryption'));
+		so = ss.taboption('field_general', form.Flag, 'vless_encryption', _('encryption'));
+		so.default = so.disabled;
 		so.depends('type', 'vless');
+		so.modalonly = true;
+
+		const initVlessEncryptionClientOption = function(o, key) {
+			o.load = function(section_id) {
+				const value = uci.get(data[0], section_id, 'vless_encryption_encryption');
+
+				if (!value)
+					return null;
+
+				return new VlessEncryptionClient(value)[key];
+			}
+			o.onchange = function(ev, section_id, value) {
+				let UIEl = this.section.getUIElement(section_id, 'vless_encryption_encryption');
+				let newpayload = new VlessEncryptionClient(UIEl.getValue()).setKey(key, value);
+
+				UIEl.setValue(newpayload.toString());
+			}
+			o.write = function() {};
+		}
+
+		so = ss.taboption('field_vless_encryption', form.Value, 'vless_encryption_encryption', _('encryption'));
+		so.renderWidget = function(section_id, option_index, cfgvalue) {
+			let node = form.Value.prototype.renderWidget.apply(this, arguments);
+
+			node.firstChild.style.width = '30em';
+
+			return node;
+		},
+		so.rmempty = false;
+		so.depends('vless_encryption', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_vless_encryption', form.ListValue, 'vless_encryption_rtt', _('Client') +' '+ _('RTT'));
+		so.default = hm.vless_encryption.rtts[0][0];
+		hm.vless_encryption.rtts.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		initVlessEncryptionClientOption(so, 'rtt');
+		so.rmempty = false;
+		so.depends('vless_encryption', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_vless_encryption', !hm.pr7558_merged ? hm.DynamicList : form.DynamicList, 'vless_encryption_paddings', _('Paddings'), // @pr7558_merged
+			_('The server and client can set different padding parameters.') + '</br>' +
+			_('In the order of one <code>Padding-Length</code> and one <code>Padding-Interval</code>, infinite concatenation.') + '</br>' +
+			_('The first padding must have a probability of 100% and at least 35 bytes.'));
+		hm.vless_encryption.paddings.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		initVlessEncryptionClientOption(so, 'paddings');
+		so.validate = function(section_id, value) {
+			if (!value)
+				return true;
+
+			if (!value.match(/^\d+(-\d+){2}$/))
+				return _('Expecting: %s').format('^\\d+(-\\d+){2}$');
+
+			return true;
+		}
+		so.allowduplicates = true;
+		so.depends('vless_encryption', '1');
 		so.modalonly = true;
 
 		/* TLS fields */
