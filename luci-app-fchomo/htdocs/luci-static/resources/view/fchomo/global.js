@@ -304,7 +304,7 @@ return view.extend({
 					.format('https://raw.githubusercontent.com/fcshark-org/openwrt-fchomo/refs/heads/initialpack/initial.tgz'));
 			so.inputstyle = 'action';
 			so.inputtitle = _('Upload...');
-			so.onclick = L.bind(hm.uploadInitialPack, so);
+			so.onclick = hm.uploadInitialPack;
 		}
 
 		so = ss.option(form.Flag, 'auto_update', _('Auto update'),
@@ -424,12 +424,12 @@ return view.extend({
 		so = ss.option(form.Value, 'keep_alive_interval', _('TCP-Keep-Alive interval'),
 			_('In seconds. <code>%s</code> will be used if empty.').format('30'));
 		so.placeholder = '30';
-		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.validate = hm.validateTimeDuration;
 
 		so = ss.option(form.Value, 'keep_alive_idle', _('TCP-Keep-Alive idle timeout'),
 			_('In seconds. <code>%s</code> will be used if empty.').format('600'));
 		so.placeholder = '600';
-		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.validate = hm.validateTimeDuration;
 
 		/* Global Authentication */
 		o = s.taboption('general', form.SectionValue, '_global', form.NamedSection, 'global', 'fchomo', _('Global Authentication'));
@@ -438,7 +438,7 @@ return view.extend({
 		so = ss.option(form.DynamicList, 'authentication', _('User Authentication'));
 		so.datatype = 'list(string)';
 		so.placeholder = 'user1:pass1';
-		so.validate = L.bind(hm.validateAuth, so);
+		so.validate = hm.validateAuth;
 
 		so = ss.option(form.DynamicList, 'skip_auth_prefixes', _('No Authentication IP ranges'));
 		so.datatype = 'list(cidr)';
@@ -514,7 +514,7 @@ return view.extend({
 			_('Aging time of NAT map maintained by client.</br>') +
 			_('In seconds. <code>%s</code> will be used if empty.').format('300'));
 		so.placeholder = '300';
-		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.validate = hm.validateTimeDuration;
 
 		so = ss.option(form.Flag, 'tun_endpoint_independent_nat', _('Endpoint-Independent NAT'),
 			_('Performance may degrade slightly, so it is not recommended to enable on when it is not needed.'));
@@ -555,7 +555,9 @@ return view.extend({
 		so = ss.option(form.Value, 'tls_client_auth_cert_path', _('API Client Auth Certificate path') + _(' (mTLS)'),
 			_('The %s public key, in PEM format.').format(_('Client')));
 		so.value('/etc/fchomo/certs/client_publickey.pem');
-		so.validate = L.bind(hm.validateMTLSClientAuth, so, 'tls_client_auth_type');
+		so.validate = function(/* ... */) {
+			return hm.validateMTLSClientAuth.call(this, 'tls_client_auth_type', ...arguments);
+		}
 
 		so = ss.option(hm.GenText, 'tls_ech_key', _('API ECH key'));
 		so.placeholder = '-----BEGIN ECH KEYS-----\nACATwY30o/RKgD6hgeQxwrSiApLaCgU+HKh7B6SUrAHaDwBD/g0APwAAIAAgHjzK\nmadSJjYQIf9o1N5GXjkW4DEEeb17qMxHdwMdNnwADAABAAEAAQACAAEAAwAIdGVz\ndC5jb20AAA==\n-----END ECH KEYS-----';
@@ -573,7 +575,7 @@ return view.extend({
 			}
 		}
 		so.renderWidget = function(section_id, option_index, cfgvalue) {
-			let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
+			let node = hm.TextValue.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
 			const cbid = this.cbid(section_id) + '._outer_sni';
 
 			node.appendChild(E('div',  { 'class': 'control-group' }, [
@@ -826,7 +828,7 @@ return view.extend({
 			if (!res[0].match(/_udpport$/))
 				so.value.apply(so, res);
 		})
-		so.validate = L.bind(hm.validateCommonPort, so);
+		so.validate = hm.validateCommonPort;
 
 		so = ss.taboption('routing_control', hm.RichMultiValue, 'routing_udpport', _('Routing ports') + ' (UDP)',
 			_('Specify target ports to be proxied. Multiple ports must be separated by commas.'));
@@ -835,7 +837,7 @@ return view.extend({
 			if (!res[0].match(/_tcpport$/))
 				so.value.apply(so, res);
 		})
-		so.validate = L.bind(hm.validateCommonPort, so);
+		so.validate = hm.validateCommonPort;
 
 		so = ss.taboption('routing_control', form.ListValue, 'routing_mode', _('Routing mode'),
 			_('Routing mode of the traffic enters mihomo via firewall rules.'));

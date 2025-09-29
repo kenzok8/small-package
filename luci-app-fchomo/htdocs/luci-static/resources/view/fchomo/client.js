@@ -658,8 +658,8 @@ function renderRules(s, uciconfig) {
 	o.load = function(section_id) {
 		return form.DummyValue.prototype.load.call(this, section_id) || new RulesEntry().toString('json');
 	}
-	o.write = L.bind(form.AbstractValue.prototype.write, o);
-	o.remove = L.bind(form.AbstractValue.prototype.remove, o);
+	o.write = form.AbstractValue.prototype.write;
+	o.remove = form.AbstractValue.prototype.remove;
 	o.editable = true;
 
 	o = s.option(form.ListValue, 'type', _('Type'));
@@ -894,7 +894,7 @@ return view.extend({
 
 		/* General fields */
 		so = ss.taboption('field_general', form.Value, 'label', _('Label'));
-		so.load = L.bind(hm.loadDefaultLabel, so);
+		so.load = hm.loadDefaultLabel;
 		so.validate = function(section_id, value) {
 			if (value.match(/[,]/))
 				return _('Expecting: %s').format(_('not included ","'));
@@ -975,14 +975,14 @@ return view.extend({
 		hm.health_checkurls.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.validate = L.bind(hm.validateUrl, so);
+		so.validate = hm.validateUrl;
 		so.depends({type: 'select', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_health', form.Value, 'interval', _('Health check interval'),
 			_('In seconds. <code>%s</code> will be used if empty.').format('600'));
 		so.placeholder = '600';
-		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.validate = hm.validateTimeDuration;
 		so.depends({type: 'select', '!reverse': true});
 		so.modalonly = true;
 
@@ -1128,14 +1128,14 @@ return view.extend({
 		/* Import mihomo config end */
 
 		so = ss.option(form.Value, 'label', _('Label'));
-		so.load = L.bind(hm.loadDefaultLabel, so);
-		so.validate = L.bind(hm.validateUniqueValue, so);
+		so.load = hm.loadDefaultLabel;
+		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;
 		so.editable = true;
-		so.validate = function(section_id, value) {
+		so.validate = function(/* ... */) {
 			let n = 0;
 
 			return hm.validatePresetIDs.call(this, [
@@ -1224,8 +1224,8 @@ return view.extend({
 		/* Import mihomo config end */
 
 		so = ss.option(form.Value, 'label', _('Label'));
-		so.load = L.bind(hm.loadDefaultLabel, so);
-		so.validate = L.bind(hm.validateUniqueValue, so);
+		so.load = hm.loadDefaultLabel;
+		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
@@ -1235,7 +1235,7 @@ return view.extend({
 		so = ss.option(form.Value, 'group', _('Sub rule group'));
 		so.value('sub-rule1');
 		so.rmempty = false;
-		so.validate = L.bind(hm.validateAuthUsername, so);
+		so.validate = hm.validateAuthUsername;
 		so.editable = true;
 
 		renderRules(ss, data[0]);
@@ -1259,28 +1259,28 @@ return view.extend({
 		so = ss.option(form.MultiValue, 'boot_server', _('Bootstrap DNS server'),
 			_('Used to resolve the domain of the DNS server. Must be IP.'));
 		so.default = 'default-dns';
-		so.load = L.bind(loadDNSServerLabel, so);
-		so.validate = L.bind(validateNameserver, so);
+		so.load = loadDNSServerLabel;
+		so.validate = validateNameserver;
 		so.rmempty = false;
 
 		so = ss.option(form.MultiValue, 'bootnode_server', _('Bootstrap DNS server (Node)'),
 			_('Used to resolve the domain of the Proxy node.'));
 		so.default = 'default-dns';
-		so.load = L.bind(loadDNSServerLabel, so);
-		so.validate = L.bind(validateNameserver, so);
+		so.load = loadDNSServerLabel;
+		so.validate = validateNameserver;
 		so.rmempty = false;
 
 		so = ss.option(form.MultiValue, 'default_server', _('Default DNS server'));
 		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? _('Final DNS server (For non-poisoned domains)') : _('Final DNS server');
 		so.default = 'default-dns';
-		so.load = L.bind(loadDNSServerLabel, so);
-		so.validate = L.bind(validateNameserver, so);
+		so.load = loadDNSServerLabel;
+		so.validate = validateNameserver;
 		so.rmempty = false;
 
 		so = ss.option(form.MultiValue, 'fallback_server', _('Fallback DNS server'));
 		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? _('Final DNS server (For poisoned domains)') : _('Fallback DNS server');
-		so.load = L.bind(loadDNSServerLabel, so);
-		so.validate = L.bind(validateNameserver, so);
+		so.load = loadDNSServerLabel;
+		so.validate = validateNameserver;
 		so.onchange = function(ev, section_id, value) {
 			let ddesc = this.section.getUIElement(section_id, 'default_server').node.nextSibling;
 			let fdesc = ev.target.nextSibling;
@@ -1358,8 +1358,8 @@ return view.extend({
 		/* Import mihomo config end */
 
 		so = ss.option(form.Value, 'label', _('Label'));
-		so.load = L.bind(hm.loadDefaultLabel, so);
-		so.validate = L.bind(hm.validateUniqueValue, so);
+		so.load = hm.loadDefaultLabel;
+		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
@@ -1367,8 +1367,8 @@ return view.extend({
 		so.editable = true;
 
 		so = ss.option(form.DummyValue, 'address', _('Address'));
-		so.write = L.bind(form.AbstractValue.prototype.write, so);
-		so.remove = L.bind(form.AbstractValue.prototype.remove, so);
+		so.write = form.AbstractValue.prototype.write;
+		so.remove = form.AbstractValue.prototype.remove;
 		so.editable = true;
 
 		so = ss.option(form.Value, 'addr', _('Address'));
@@ -1580,14 +1580,14 @@ return view.extend({
 		/* Import mihomo config end */
 
 		so = ss.option(form.Value, 'label', _('Label'));
-		so.load = L.bind(hm.loadDefaultLabel, so);
-		so.validate = L.bind(hm.validateUniqueValue, so);
+		so.load = hm.loadDefaultLabel;
+		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;
 		so.editable = true;
-		so.validate = function(section_id, value) {
+		so.validate = function(/* ... */) {
 			return hm.validatePresetIDs.call(this, [
 				['select', 'type'],
 				['', 'rule_set']
@@ -1628,8 +1628,8 @@ return view.extend({
 		so = ss.option(form.MultiValue, 'server', _('DNS server'));
 		so.value('default-dns');
 		so.default = 'default-dns';
-		so.load = L.bind(loadDNSServerLabel, so);
-		so.validate = L.bind(validateNameserver, so);
+		so.load = loadDNSServerLabel;
+		so.validate = validateNameserver;
 		so.rmempty = false;
 		so.editable = true;
 

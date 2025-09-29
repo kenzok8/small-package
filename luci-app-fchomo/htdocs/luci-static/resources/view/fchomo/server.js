@@ -13,7 +13,7 @@ const CBIDummyCopyValue = form.Value.extend({
 	readonly: true,
 
 	renderWidget: function(section_id, option_index, cfgvalue) {
-		let node = form.Value.prototype.renderWidget.apply(this, arguments);
+		let node = form.Value.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
 
 		node.classList.add('control-group');
 		node.firstChild.style.width = '30em';
@@ -199,8 +199,8 @@ return view.extend({
 
 		/* General fields */
 		o = s.taboption('field_general', form.Value, 'label', _('Label'));
-		o.load = L.bind(hm.loadDefaultLabel, o);
-		o.validate = L.bind(hm.validateUniqueValue, o);
+		o.load = hm.loadDefaultLabel;
+		o.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
 		o.modalonly = true;
 
 		o = s.taboption('field_general', form.Flag, 'enabled', _('Enable'));
@@ -227,7 +227,7 @@ return view.extend({
 		o.datatype = 'or(port, portrange)';
 		//o.placeholder = '1080,2079-2080,3080'; // @fw4 does not support port lists with commas
 		o.rmempty = false;
-		//o.validate = L.bind(hm.validateCommonPort, o); // @fw4 does not support port lists with commas
+		//o.validate = hm.validateCommonPort; // @fw4 does not support port lists with commas
 
 		// @dev: Features under development
 		// @rule
@@ -236,13 +236,13 @@ return view.extend({
 		/* HTTP / SOCKS fields */
 		/* hm.validateAuth */
 		o = s.taboption('field_general', form.Value, 'username', _('Username'));
-		o.validate = L.bind(hm.validateAuthUsername, o);
+		o.validate = hm.validateAuthUsername;
 		o.depends({type: /^(http|socks|mixed|trojan|anytls|hysteria2)$/});
 		o.modalonly = true;
 
 		o = s.taboption('field_general', hm.GenValue, 'password', _('Password'));
 		o.password = true;
-		o.validate = L.bind(hm.validateAuthPassword, o);
+		o.validate = hm.validateAuthPassword;
 		o.rmempty = false;
 		o.depends({type: /^(http|socks|mixed|trojan|anytls|hysteria2)$/, username: /.+/});
 		o.depends({type: /^(tuic)$/, uuid: /.+/});
@@ -308,7 +308,7 @@ return view.extend({
 		/* Tuic fields */
 		o = s.taboption('field_general', hm.GenValue, 'uuid', _('UUID'));
 		o.rmempty = false;
-		o.validate = L.bind(hm.validateUUID, o);
+		o.validate = hm.validateUUID;
 		o.depends('type', 'tuic');
 		o.modalonly = true;
 
@@ -330,14 +330,14 @@ return view.extend({
 		o = s.taboption('field_general', form.Value, 'tuic_max_idle_time', _('Idle timeout'),
 			_('In seconds.'));
 		o.default = '15000';
-		o.validate = L.bind(hm.validateTimeDuration, o);
+		o.validate = hm.validateTimeDuration;
 		o.depends('type', 'tuic');
 		o.modalonly = true;
 
 		o = s.taboption('field_general', form.Value, 'tuic_authentication_timeout', _('Auth timeout'),
 			_('In seconds.'));
 		o.default = '1000';
-		o.validate = L.bind(hm.validateTimeDuration, o);
+		o.validate = hm.validateTimeDuration;
 		o.depends('type', 'tuic');
 		o.modalonly = true;
 
@@ -372,7 +372,7 @@ return view.extend({
 		/* VMess / VLESS fields */
 		o = s.taboption('field_general', hm.GenValue, 'vmess_uuid', _('UUID'));
 		o.rmempty = false;
-		o.validate = L.bind(hm.validateUUID, o);
+		o.validate = hm.validateUUID;
 		o.depends({type: /^(vmess|vless)$/});
 		o.modalonly = true;
 
@@ -573,7 +573,7 @@ return view.extend({
 			}
 		}
 		o.renderWidget = function(section_id, option_index, cfgvalue) {
-			let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
+			let node = hm.TextValue.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
 			const cbid = this.cbid(section_id) + '._keytype_select';
 			const selected = this.hm_options.type;
 
@@ -608,7 +608,7 @@ return view.extend({
 			return JSON.stringify(new VlessEncryption(uci.get(data[0], section_id, 'vless_encryption_hmpayload'))['keypairs'], null, 2);
 		}
 		o.validate = function(section_id, value) {
-			let result = hm.validateJson.apply(this, arguments);
+			let result = hm.validateJson.call(this, section_id, value);
 
 			if (result === true) {
 				let keypairs = JSON.parse(value.trim());
@@ -715,8 +715,8 @@ return view.extend({
 		o = s.taboption('field_tls', form.Value, 'tls_client_auth_cert_path', _('Client Auth Certificate path') + _(' (mTLS)'),
 			_('The %s public key, in PEM format.').format(_('Client')));
 		o.value('/etc/fchomo/certs/client_publickey.pem');
-		o.validate = function(section_id, value) {
-			return hm.validateMTLSClientAuth.call(this, 'tls_client_auth_type', section_id, value);
+		o.validate = function(/* ... */) {
+			return hm.validateMTLSClientAuth.call(this, 'tls_client_auth_type', ...arguments);
 		}
 		o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|hysteria2|tuic)$/});
 		o.modalonly = true;
@@ -745,7 +745,7 @@ return view.extend({
 			}
 		}
 		o.renderWidget = function(section_id, option_index, cfgvalue) {
-			let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
+			let node = hm.TextValue.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
 			const cbid = this.cbid(section_id) + '._outer_sni';
 
 			node.appendChild(E('div',  { 'class': 'control-group' }, [
