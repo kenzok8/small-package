@@ -356,11 +356,11 @@ const vless_flow = [
 /* Prototype */
 const CBIGridSection = form.GridSection.extend({
 	modaltitle(/* ... */) {
-		return loadModalTitle.call(this, ...this.hm_modaltitle || [null,null], ...arguments)
+		return loadModalTitle.call(this, ...this.hm_modaltitle || [null,null], ...arguments);
 	},
 
 	sectiontitle(/* ... */) {
-		return loadDefaultLabel.call(this, ...arguments);
+		return loadDefaultLabel.apply(this, arguments);
 	},
 
 	renderSectionAdd(extra_class) {
@@ -1184,28 +1184,6 @@ function textvalue2Value(section_id) {
 	return this.vallist[i];
 }
 
-function validatePresetIDs(disoption_list, section_id) {
-	let node;
-	let hm_prefmt = glossary[this.section.sectiontype].prefmt;
-	let preset_ids = [
-		'fchomo_direct_list',
-		'fchomo_proxy_list',
-		'fchomo_china_list',
-		'fchomo_gfw_list'
-	];
-
-	if (preset_ids.map((v) => hm_prefmt.format(v)).includes(section_id)) {
-		disoption_list.forEach(([typ, opt]) => {
-			node = this.section.getUIElement(section_id, opt)?.node;
-			(typ ? node?.querySelector(typ) : node)?.setAttribute(typ === 'textarea' ? 'readOnly' : 'disabled', '');
-		});
-
-		this.map.findElement('id', 'cbi-fchomo-' + section_id)?.lastChild.querySelector('.cbi-button-remove')?.remove();
-	}
-
-	return true;
-}
-
 function validateAuth(section_id, value) {
 	if (!value)
 		return true;
@@ -1270,59 +1248,6 @@ function validateCommonPort(section_id, value) {
 	return true;
 }
 
-function validateJson(section_id, value) {
-	if (!value)
-		return true;
-
-	try {
-		let obj = JSON.parse(value.trim());
-		if (!obj)
-			return _('Expecting: %s').format(_('valid JSON format'));
-	}
-	catch(e) {
-		return _('Expecting: %s').format(_('valid JSON format'));
-	}
-
-	return true;
-}
-
-function validateMTLSClientAuth(type_option, section_id, value) {
-	// If `client-auth-type` is set to "verify-if-given" or "require-and-verify", `client-auth-cert` must not be empty.
-	const auth_type = this.section.getOption(type_option).formvalue(section_id);
-					//this.section.getUIElement('tls_client_auth_type').getValue();
-	if (!value && ["verify-if-given", "require-and-verify"].includes(auth_type))
-		return _('Expecting: %s').format(_('non-empty value'));
-
-	return true;
-}
-
-function validateBase64Key(length, section_id, value) {
-	/* Thanks to luci-proto-wireguard */
-	if (value)
-		if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
-			return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
-
-	return true;
-}
-
-function validateShadowsocksPassword(encmode, section_id, value) {
-	let length = shadowsocks_cipher_length[encmode];
-	if (typeof length !== 'undefined') {
-		length = Math.ceil(length/3)*4;
-		if (encmode.match(/^2022-/)) {
-			return validateBase64Key(length, section_id, value);
-		} else {
-			if (length === 0 && !value)
-				return _('Expecting: %s').format(_('non-empty value'));
-			if (length !== 0 && value.length !== length)
-				return _('Expecting: %s').format(_('valid key length with %d characters').format(length));
-		}
-	} else
-		return true;
-
-	return true;
-}
-
 function validateBytesize(section_id, value) {
 	if (!value)
 		return true;
@@ -1342,18 +1267,27 @@ function validateTimeDuration(section_id, value) {
 	return true;
 }
 
-function validateUniqueValue(section_id, value) {
+function validateJson(section_id, value) {
 	if (!value)
-		return _('Expecting: %s').format(_('non-empty value'));
+		return true;
 
-	let duplicate = false;
-	uci.sections(this.config, this.section.sectiontype, (res) => {
-		if (res['.name'] !== section_id)
-			if (res[this.option] === value)
-				duplicate = true;
-	});
-	if (duplicate)
-		return _('Expecting: %s').format(_('unique value'));
+	try {
+		let obj = JSON.parse(value.trim());
+		if (!obj)
+			return _('Expecting: %s').format(_('valid JSON format'));
+	}
+	catch(e) {
+		return _('Expecting: %s').format(_('valid JSON format'));
+	}
+
+	return true;
+}
+
+function validateUUID(section_id, value) {
+	if (!value)
+		return true;
+	else if (value.match('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') === null)
+		return _('Expecting: %s').format(_('valid uuid'));
 
 	return true;
 }
@@ -1374,11 +1308,77 @@ function validateUrl(section_id, value) {
 	return true;
 }
 
-function validateUUID(section_id, value) {
-	if (!value)
+function validateBase64Key(length, section_id, value) {
+	/* Thanks to luci-proto-wireguard */
+	if (value)
+		if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
+			return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
+
+	return true;
+}
+
+function validateMTLSClientAuth(type_option, section_id, value) {
+	// If `client-auth-type` is set to "verify-if-given" or "require-and-verify", `client-auth-cert` must not be empty.
+	const auth_type = this.section.getOption(type_option).formvalue(section_id);
+					//this.section.getUIElement('tls_client_auth_type').getValue();
+	if (!value && ["verify-if-given", "require-and-verify"].includes(auth_type))
+		return _('Expecting: %s').format(_('non-empty value'));
+
+	return true;
+}
+
+function validatePresetIDs(disoption_list, section_id) {
+	let node;
+	let hm_prefmt = glossary[this.section.sectiontype].prefmt;
+	let preset_ids = [
+		'fchomo_direct_list',
+		'fchomo_proxy_list',
+		'fchomo_china_list',
+		'fchomo_gfw_list'
+	];
+
+	if (preset_ids.map((v) => hm_prefmt.format(v)).includes(section_id)) {
+		disoption_list.forEach(([typ, opt]) => {
+			node = this.section.getUIElement(section_id, opt)?.node;
+			(typ ? node?.querySelector(typ) : node)?.setAttribute(typ === 'textarea' ? 'readOnly' : 'disabled', '');
+		});
+
+		this.map.findElement('id', 'cbi-fchomo-' + section_id)?.lastChild.querySelector('.cbi-button-remove')?.remove();
+	}
+
+	return true;
+}
+
+function validateShadowsocksPassword(encmode, section_id, value) {
+	let length = shadowsocks_cipher_length[encmode];
+	if (typeof length !== 'undefined') {
+		length = Math.ceil(length/3)*4;
+		if (encmode.match(/^2022-/)) {
+			return validateBase64Key.call(this, length, section_id, value);
+		} else {
+			if (length === 0 && !value)
+				return _('Expecting: %s').format(_('non-empty value'));
+			if (length !== 0 && value.length !== length)
+				return _('Expecting: %s').format(_('valid key length with %d characters').format(length));
+		}
+	} else
 		return true;
-	else if (value.match('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') === null)
-		return _('Expecting: %s').format(_('valid uuid'));
+
+	return true;
+}
+
+function validateUniqueValue(section_id, value) {
+	if (!value)
+		return _('Expecting: %s').format(_('non-empty value'));
+
+	let duplicate = false;
+	uci.sections(this.config, this.section.sectiontype, (res) => {
+		if (res['.name'] !== section_id)
+			if (res[this.option] === value)
+				duplicate = true;
+	});
+	if (duplicate)
+		return _('Expecting: %s').format(_('unique value'));
 
 	return true;
 }
@@ -1563,6 +1563,7 @@ return baseclass.extend({
 	getFeatures,
 	getServiceStatus,
 	getClashAPI,
+	// load
 	loadDefaultLabel,
 	loadModalTitle,
 	loadProxyGroupLabel,
@@ -1570,6 +1571,7 @@ return baseclass.extend({
 	loadProviderLabel,
 	loadRulesetLabel,
 	loadSubRuleGroup,
+	// render
 	renderStatus,
 	updateStatus,
 	getDashURL,
@@ -1578,20 +1580,23 @@ return baseclass.extend({
 	handleReload,
 	handleRemoveIdles,
 	textvalue2Value,
-	validatePresetIDs,
+	// validate
 	validateAuth,
 	validateAuthUsername,
 	validateAuthPassword,
 	validateCommonPort,
-	validateJson,
-	validateMTLSClientAuth,
-	validateBase64Key,
-	validateShadowsocksPassword,
 	validateBytesize,
 	validateTimeDuration,
-	validateUniqueValue,
-	validateUrl,
+	validateJson,
 	validateUUID,
+	validateUrl,
+	// validate with bind this
+	validateBase64Key,
+	validateMTLSClientAuth,
+	validatePresetIDs,
+	validateShadowsocksPassword,
+	validateUniqueValue,
+	// file operations
 	lsDir,
 	readFile,
 	writeFile,

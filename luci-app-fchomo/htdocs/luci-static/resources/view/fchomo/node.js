@@ -143,8 +143,8 @@ return view.extend({
 		ss.tab('field_dial', _('Dial fields'));
 
 		so = ss.taboption('field_general', form.Value, 'label', _('Label'));
-		so.load = L.bind(hm.loadDefaultLabel, so);
-		so.validate = L.bind(hm.validateUniqueValue, so);
+		so.load = hm.loadDefaultLabel;
+		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'enabled', _('Enable'));
@@ -170,19 +170,19 @@ return view.extend({
 		/* HTTP / SOCKS fields */
 		/* hm.validateAuth */
 		so = ss.taboption('field_general', form.Value, 'username', _('Username'));
-		so.validate = L.bind(hm.validateAuthUsername, so);
+		so.validate = hm.validateAuthUsername;
 		so.depends({type: /^(http|socks5|mieru|ssh)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'password', _('Password'));
 		so.password = true;
-		so.validate = L.bind(hm.validateAuthPassword, so);
+		so.validate = hm.validateAuthPassword;
 		so.depends({type: /^(http|socks5|mieru|trojan|anytls|hysteria2|tuic|ssh)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', hm.TextValue, 'headers', _('HTTP header'));
 		so.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
-		so.validate = L.bind(hm.validateJson, so);
+		so.validate = hm.validateJson;
 		so.depends('type', 'http');
 		so.modalonly = true;
 
@@ -288,7 +288,7 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'snell_psk', _('Pre-shared key'));
 		so.password = true;
 		so.rmempty = false;
-		so.validate = L.bind(hm.validateAuthPassword, so);
+		so.validate = hm.validateAuthPassword;
 		so.depends('type', 'snell');
 		so.modalonly = true;
 
@@ -303,7 +303,7 @@ return view.extend({
 		/* TUIC fields */
 		so = ss.taboption('field_general', form.Value, 'uuid', _('UUID'));
 		so.rmempty = false;
-		so.validate = L.bind(hm.validateUUID, so);
+		so.validate = hm.validateUUID;
 		so.depends('type', 'tuic');
 		so.modalonly = true;
 
@@ -401,14 +401,14 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_check_interval', _('Idle session check interval'),
 			_('In seconds.'));
 		so.placeholder = '30';
-		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.validate = hm.validateTimeDuration;
 		so.depends('type', 'anytls');
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_timeout', _('Idle session timeout'),
 			_('In seconds.'));
 		so.placeholder = '30';
-		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.validate = hm.validateTimeDuration;
 		so.depends('type', 'anytls');
 		so.modalonly = true;
 
@@ -421,7 +421,7 @@ return view.extend({
 		/* VMess / VLESS fields */
 		so = ss.taboption('field_general', form.Value, 'vmess_uuid', _('UUID'));
 		so.rmempty = false;
-		so.validate = L.bind(hm.validateUUID, so);
+		so.validate = hm.validateUUID;
 		so.depends({type: /^(vmess|vless)$/});
 		so.modalonly = true;
 
@@ -485,14 +485,18 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'wireguard_private_key', _('Private key'),
 			_('WireGuard requires base64-encoded private keys.'));
 		so.password = true;
-		so.validate = L.bind(hm.validateBase64Key, so, 44);
+		so.validate = function(/* ... */) {
+			return hm.validateBase64Key.call(this, 44, ...arguments);
+		}
 		so.rmempty = false;
 		so.depends('type', 'wireguard');
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'wireguard_peer_public_key', _('Peer pubkic key'),
 			_('WireGuard peer public key.'));
-		so.validate = L.bind(hm.validateBase64Key, so, 44);
+		so.validate = function(/* ... */) {
+			return hm.validateBase64Key.call(this, 44, ...arguments);
+		}
 		so.rmempty = false;
 		so.depends('type', 'wireguard');
 		so.modalonly = true;
@@ -500,7 +504,9 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'wireguard_pre_shared_key', _('Pre-shared key'),
 			_('WireGuard pre-shared key.'));
 		so.password = true;
-		so.validate = L.bind(hm.validateBase64Key, so, 44);
+		so.validate = function(/* ... */) {
+			return hm.validateBase64Key.call(this, 44, ...arguments);
+		}
 		so.depends('type', 'wireguard');
 		so.modalonly = true;
 
@@ -630,13 +636,13 @@ return view.extend({
 		}
 
 		so = ss.taboption('field_vless_encryption', form.Value, 'vless_encryption_encryption', _('encryption'));
-		so.renderWidget = function(section_id, option_index, cfgvalue) {
+		so.renderWidget = function(/* ... */) {
 			let node = form.Value.prototype.renderWidget.apply(this, arguments);
 
 			node.firstChild.style.width = '30em';
 
 			return node;
-		},
+		}
 		so.rmempty = false;
 		so.depends('vless_encryption', '1');
 		so.modalonly = true;
@@ -904,7 +910,7 @@ return view.extend({
 
 		so = ss.taboption('field_transport', hm.TextValue, 'transport_http_headers', _('HTTP header'));
 		so.placeholder = '{\n  "Host": "example.com",\n  "Connection": [\n    "keep-alive"\n  ]\n}';
-		so.validate = L.bind(hm.validateJson, so);
+		so.validate = hm.validateJson;
 		so.depends({transport_enabled: '1', transport_type: /^(http|ws)$/});
 		so.modalonly = true;
 
@@ -1162,8 +1168,8 @@ return view.extend({
 
 		/* General fields */
 		so = ss.taboption('field_general', form.Value, 'label', _('Label'));
-		so.load = L.bind(hm.loadDefaultLabel, so);
-		so.validate = L.bind(hm.validateUniqueValue, so);
+		so.load = hm.loadDefaultLabel;
+		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'enabled', _('Enable'));
@@ -1216,7 +1222,7 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'url', _('Provider URL'));
-		so.validate = L.bind(hm.validateUrl, so);
+		so.validate = hm.validateUrl;
 		so.rmempty = false;
 		so.depends('type', 'http');
 		so.modalonly = true;
@@ -1224,13 +1230,13 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'size_limit', _('Size limit'),
 			_('In bytes. <code>%s</code> will be used if empty.').format('0'));
 		so.placeholder = '0';
-		so.validate = L.bind(hm.validateBytesize, so);
+		so.validate = hm.validateBytesize;
 		so.depends('type', 'http');
 
 		so = ss.taboption('field_general', form.Value, 'interval', _('Update interval'),
 			_('In seconds. <code>%s</code> will be used if empty.').format('86400'));
 		so.placeholder = '86400';
-		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.validate = hm.validateTimeDuration;
 		so.depends('type', 'http');
 
 		so = ss.taboption('field_general', form.ListValue, 'proxy', _('Proxy group'),
@@ -1240,14 +1246,14 @@ return view.extend({
 			so.value.apply(so, res);
 		})
 		so.load = L.bind(hm.loadProxyGroupLabel, so, hm.preset_outbound.direct);
-		so.textvalue = L.bind(hm.textvalue2Value, so);
+		so.textvalue = hm.textvalue2Value;
 		//so.editable = true;
 		so.depends('type', 'http');
 
 		so = ss.taboption('field_general', hm.TextValue, 'header', _('HTTP header'),
 			_('Custom HTTP header.'));
 		so.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Accept": [\n    //"application/vnd.github.v3.raw"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
-		so.validate = L.bind(hm.validateJson, so);
+		so.validate = hm.validateJson;
 		so.depends('type', 'http');
 		so.modalonly = true;
 
@@ -1267,7 +1273,7 @@ return view.extend({
 			_('For format see <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
 				.format('https://wiki.metacubex.one/config/proxy-providers/#overrideproxy-name', _('override.proxy-name')));
 		so.placeholder = '{"pattern": "IPLC-(.*?)倍", "target": "iplc x $1"}';
-		so.validate = L.bind(hm.validateJson, so);
+		so.validate = hm.validateJson;
 		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
@@ -1360,7 +1366,7 @@ return view.extend({
 		hm.health_checkurls.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.validate = L.bind(hm.validateUrl, so);
+		so.validate = hm.validateUrl;
 		so.retain = true;
 		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
@@ -1368,7 +1374,7 @@ return view.extend({
 		so = ss.taboption('field_health', form.Value, 'health_interval', _('Health check interval'),
 			_('In seconds. <code>%s</code> will be used if empty.').format('600'));
 		so.placeholder = '600';
-		so.validate = L.bind(hm.validateTimeDuration, so);
+		so.validate = hm.validateTimeDuration;
 		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
@@ -1414,7 +1420,7 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.DummyValue, '_update');
-		so.cfgvalue = L.bind(hm.renderResDownload, so);
+		so.cfgvalue = hm.renderResDownload;
 		so.editable = true;
 		so.modalonly = false;
 		/* Provider END */
@@ -1435,8 +1441,8 @@ return view.extend({
 		ss.hm_lowcase_only = true;
 
 		so = ss.option(form.Value, 'label', _('Label'));
-		so.load = L.bind(hm.loadDefaultLabel, so);
-		so.validate = L.bind(hm.validateUniqueValue, so);
+		so.load = hm.loadDefaultLabel;
+		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
@@ -1447,7 +1453,7 @@ return view.extend({
 		so.value('node', _('Proxy Node'));
 		so.value('provider', _('Provider'));
 		so.default = 'node';
-		so.textvalue = L.bind(hm.textvalue2Value, so);
+		so.textvalue = hm.textvalue2Value;
 
 		so = ss.option(form.DummyValue, '_value', _('Value'));
 		so.load = function(section_id) {
