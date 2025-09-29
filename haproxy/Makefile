@@ -78,7 +78,7 @@ endif
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
 	ADDON+=ADDLIB="-lcrypto -lm"
-	ADDON+=USE_QUIC=
+	ADDON+=USE_QUIC=1
 endif
 
 define Build/Compile
