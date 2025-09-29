@@ -84,7 +84,7 @@ function getRuntimeLog(name, option_index, section_id, in_table) {
 	);
 
 	let log;
-	poll.add(L.bind(function() {
+	poll.add(function() {
 		return fs.read_direct(String.format('%s/%s.log', hm_dir, filename), 'text')
 		.then((res) => {
 			log = E('pre', { 'wrap': 'pre' }, [
@@ -104,7 +104,7 @@ function getRuntimeLog(name, option_index, section_id, in_table) {
 
 			dom.content(log_textarea, log);
 		});
-	}));
+	});
 
 	return E([
 		E('style', [ css ]),

@@ -1129,7 +1129,7 @@ return view.extend({
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = hm.loadDefaultLabel;
-		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
+		so.validate = hm.validateUniqueValue;
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
@@ -1225,7 +1225,7 @@ return view.extend({
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = hm.loadDefaultLabel;
-		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
+		so.validate = hm.validateUniqueValue;
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
@@ -1359,7 +1359,7 @@ return view.extend({
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = hm.loadDefaultLabel;
-		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
+		so.validate = hm.validateUniqueValue;
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
@@ -1581,7 +1581,7 @@ return view.extend({
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = hm.loadDefaultLabel;
-		so.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
+		so.validate = hm.validateUniqueValue;
 		so.modalonly = true;
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));

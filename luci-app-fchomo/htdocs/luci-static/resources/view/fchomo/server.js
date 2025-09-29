@@ -200,7 +200,7 @@ return view.extend({
 		/* General fields */
 		o = s.taboption('field_general', form.Value, 'label', _('Label'));
 		o.load = hm.loadDefaultLabel;
-		o.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
+		o.validate = hm.validateUniqueValue;
 		o.modalonly = true;
 
 		o = s.taboption('field_general', form.Flag, 'enabled', _('Enable'));

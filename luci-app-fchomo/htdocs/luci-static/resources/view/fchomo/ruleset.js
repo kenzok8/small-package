@@ -188,7 +188,7 @@ return view.extend({
 			o.placeholder = 'http(s)://github.com/ACL4SSR/ACL4SSR/raw/refs/heads/master/Clash/Providers/BanAD.yaml?fmt=yaml&behav=classical&rawq=good%3Djob#BanAD\n' +
 							'file:///example.txt?fmt=text&behav=domain&fill=LmNuCg#CN%20TLD\n' +
 							'inline://LSAnLmhrJwoK?behav=domain#HK%20TLD\n';
-			o.handleFn = L.bind(function(textarea) {
+			o.handleFn = function(textarea) {
 				let input_links = textarea.getValue().trim().split('\n');
 				let imported_count = 0;
 
@@ -216,7 +216,7 @@ return view.extend({
 					return this.save();
 				else
 					return ui.hideModal();
-			}, o);
+			}
 
 			return o.render();
 		}
@@ -247,7 +247,7 @@ return view.extend({
 
 		o = s.option(form.Value, 'label', _('Label'));
 		o.load = hm.loadDefaultLabel;
-		o.validate = function(/* ... */) { return hm.validateUniqueValue.apply(this, arguments) }
+		o.validate = hm.validateUniqueValue;
 		o.modalonly = true;
 
 		o = s.option(form.Flag, 'enabled', _('Enable'));
