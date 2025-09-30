@@ -1270,26 +1270,33 @@ return view.extend({
 		so.validate = validateNameserver;
 		so.rmempty = false;
 
+		const ddesc_disabled = _('Final DNS server');
+		const fdesc_disabled = _('Fallback DNS server');
+		const ddesc_enabled = _('Final DNS server (For non-poisoned domains)') + '</br>' +
+			_('Used to resolve domains that can be directly connected. Can use domestic DNS servers or ECS.');
+		const fdesc_enabled = _('Final DNS server (For poisoned domains)') + '</br>' +
+			_('Used to resolve domains you want to proxy. Recommended to configure %s for DNS servers.').format(_('Proxy Group'));
+
 		so = ss.option(form.MultiValue, 'default_server', _('Default DNS server'));
-		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? _('Final DNS server (For non-poisoned domains)') : _('Final DNS server');
+		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? ddesc_enabled : ddesc_disabled;
 		so.default = 'default-dns';
 		so.load = loadDNSServerLabel;
 		so.validate = validateNameserver;
 		so.rmempty = false;
 
 		so = ss.option(form.MultiValue, 'fallback_server', _('Fallback DNS server'));
-		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? _('Final DNS server (For poisoned domains)') : _('Fallback DNS server');
+		so.description = uci.get(data[0], so.section.section, 'fallback_server') ? fdesc_enabled : fdesc_disabled;
 		so.load = loadDNSServerLabel;
 		so.validate = validateNameserver;
 		so.onchange = function(ev, section_id, value) {
 			let ddesc = this.section.getUIElement(section_id, 'default_server').node.nextSibling;
 			let fdesc = ev.target.nextSibling;
 			if (value.length > 0) {
-				ddesc.innerHTML = _('Final DNS server (For non-poisoned domains)');
-				fdesc.innerHTML = _('Final DNS server (For poisoned domains)');
+				ddesc.innerHTML = ddesc_enabled;
+				fdesc.innerHTML = fdesc_enabled;
 			} else {
-				ddesc.innerHTML = _('Final DNS server');
-				fdesc.innerHTML = _('Fallback DNS server');
+				ddesc.innerHTML = ddesc_disabled;
+				fdesc.innerHTML = fdesc_disabled;
 			}
 		}
 		/* DNS settings END */
