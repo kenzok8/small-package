@@ -559,6 +559,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 
 	o = s.option(form.Value, 'hysteria_auth_payload', _('Authentication payload'));
+	o.password = true
 	o.depends({'type': 'hysteria', 'hysteria_auth_type': /[\s\S]/});
 	o.rmempty = false;
 	o.modalonly = true;
@@ -570,6 +571,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 
 	o = s.option(form.Value, 'hysteria_obfs_password', _('Obfuscate password'));
+	o.password = true;
 	o.depends('type', 'hysteria');
 	o.depends({'type': 'hysteria2', 'hysteria_obfs_type': /[\s\S]/});
 	o.modalonly = true;
@@ -686,6 +688,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	/* TUIC config start */
 	o = s.option(form.Value, 'uuid', _('UUID'));
+	o.password = true;
 	o.depends('type', 'tuic');
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
@@ -1142,11 +1145,13 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'tls_reality_public_key', _('REALITY public key'));
+		o.password = true;
 		o.depends('tls_reality', '1');
 		o.rmempty = false;
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'tls_reality_short_id', _('REALITY short ID'));
+		o.password = true;
 		o.depends('tls_reality', '1');
 		o.modalonly = true;
 	}
