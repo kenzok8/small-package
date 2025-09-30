@@ -1,7 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0-only
 #
-# Copyright (C) 2022-2023 ImmortalWrt.org
+# Copyright (C) 2022-2025 ImmortalWrt.org
 
 NAME="homeproxy"
 
@@ -16,23 +16,6 @@ log() {
 	echo -e "$(date "+%Y-%m-%d %H:%M:%S") $*" >> "$LOG_PATH"
 }
 
-set_lock() {
-	local act="$1"
-	local type="$2"
-
-	local lock="$RUN_DIR/update_resources-$type.lock"
-	if [ "$act" = "set" ]; then
-		if [ -e "$lock" ]; then
-			log "[$(to_upper "$type")] A task is already running."
-			exit 2
-		else
-			touch "$lock"
-		fi
-	elif [ "$act" = "remove" ]; then
-		rm -f "$lock"
-	fi
-}
-
 to_upper() {
 	echo -e "$1" | tr "[a-z]" "[A-Z]"
 }
@@ -42,10 +25,15 @@ check_list_update() {
 	local listrepo="$2"
 	local listref="$3"
 	local listname="$4"
+	local lock="$RUN_DIR/update_resources-$listtype.lock"
 	local github_token="$(uci -q get homeproxy.config.github_token)"
 	local wget="wget --timeout=10 -q"
 
-	set_lock "set" "$listtype"
+	exec 200>"$lock"
+	if ! flock -n 200 &> "/dev/null"; then
+		log "[$(to_upper "$listtype")] A task is already running."
+		return 2
+	fi
 
 	[ -z "$github_token" ] || github_token="--header=Authorization: Bearer $github_token"
 	local list_info="$($wget "${github_token:--q}" -O- "https://api.github.com/repos/$listrepo/commits?sha=$listref&path=$listname&per_page=1")"
@@ -53,8 +41,6 @@ check_list_update() {
 	local list_ver="$(echo -e "$list_info" | jsonfilter -qe "@[0].commit.message" | grep -Eo "[0-9-]+" | tr -d '-')"
 	if [ -z "$list_sha" ] || [ -z "$list_ver" ]; then
 		log "[$(to_upper "$listtype")] Failed to get the latest version, please retry later."
-
-		set_lock "remove" "$listtype"
 		return 1
 	fi
 
@@ -62,8 +48,6 @@ check_list_update() {
 	if [ "$local_list_ver" = "$list_ver" ]; then
 		log "[$(to_upper "$listtype")] Current version: $list_ver."
 		log "[$(to_upper "$listtype")] You're already at the latest version."
-
-		set_lock "remove" "$listtype"
 		return 3
 	else
 		log "[$(to_upper "$listtype")] Local version: $local_list_ver, latest version: $list_ver."
@@ -72,8 +56,6 @@ check_list_update() {
 	if ! $wget "https://fastly.jsdelivr.net/gh/$listrepo@$list_sha/$listname" -O "$RUN_DIR/$listname" || [ ! -s "$RUN_DIR/$listname" ]; then
 		rm -f "$RUN_DIR/$listname"
 		log "[$(to_upper "$listtype")] Update failed."
-
-		set_lock "remove" "$listtype"
 		return 1
 	fi
 
@@ -81,7 +63,6 @@ check_list_update() {
 	echo -e "$list_ver" > "$RESOURCES_DIR/$listtype.ver"
 	log "[$(to_upper "$listtype")] Successfully updated."
 
-	set_lock "remove" "$listtype"
 	return 0
 }
 
