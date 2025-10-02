@@ -1,7 +1,7 @@
 
 local stdlib = require("posix.stdlib")
-local unistd = require("posix.unistd")
 local time   = require("posix.time")
+local unistd = require("posix.unistd")
 
 local Module = {
 	name        = "mod_regular_script",

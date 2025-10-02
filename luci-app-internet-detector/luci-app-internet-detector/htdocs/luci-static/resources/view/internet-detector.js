@@ -773,7 +773,7 @@ return view.extend({
 			'hosts', _('Hosts'),
 			_('Hosts to check Internet availability. Hosts are polled (in list order) until at least one of them responds.')
 		);
-		o.datatype = 'or(or(host,hostport),ipaddrport(1))';
+		o.datatype = 'or(host,hostport,ipaddrport(1))';
 		o.default  = this.defaultHosts;
 		o.rmempty  = false;
 
@@ -894,6 +894,14 @@ return view.extend({
 		};
 
 		s.addModalOptions = (s, section_id, ev) => {
+
+			if(section_id == 'config') {
+				s.map.children = [];
+				s.map.readonly = true;
+				s.map.children.push(new form.NamedSection(s.map, '_dummy', '_dummy',
+					_('Error!'), _('Invalid instance name...')));
+				return;
+			};
 
 			if(this.currentAppMode !== '2') {
 

@@ -175,6 +175,9 @@ msgstr "Включен"
 msgid "Error"
 msgstr "Ошибка"
 
+msgid "Error!"
+msgstr "Ошибка!"
+
 msgid "Expecting:"
 msgstr "Ожидается:"
 
@@ -271,6 +274,9 @@ msgstr "Интервал между запусками down-script."
 
 msgid "Interval between up-script runs."
 msgstr "Интервал между запусками up-script."
+
+msgid "Invalid instance name..."
+msgstr "Недопустимое имя экземпляра..."
 
 msgid "Jumbo: 9000 bytes"
 msgstr "Гигантский: 9000 байт"
