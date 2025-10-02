@@ -18,7 +18,7 @@ run_instance() {
 }
 
 start_service() {
-	config_load internet-detector
+	config_load "internet-detector"
 	config_get mode "config" mode "0"
 	if [ $mode = "1" ]; then
 		config_foreach run_instance "instance"

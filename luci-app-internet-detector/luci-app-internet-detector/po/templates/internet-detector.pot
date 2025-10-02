@@ -162,6 +162,9 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
+msgid "Error!"
+msgstr ""
+
 msgid "Expecting:"
 msgstr ""
 
@@ -255,6 +258,9 @@ msgid "Interval between down-script runs."
 msgstr ""
 
 msgid "Interval between up-script runs."
+msgstr ""
+
+msgid "Invalid instance name..."
 msgstr ""
 
 msgid "Jumbo: 9000 bytes"

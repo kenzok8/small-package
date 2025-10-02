@@ -88,28 +88,21 @@ function InternetDetector:prequire(package)
 	return ok and pkg
 end
 
-function InternetDetector:loadUCIConfig(sType, instance)
-	local success
-	local num = 0
-	uciCursor:foreach(
-		self.appName,
-		sType,
-		function(s)
-			if s[".name"] == instance then
-				for k, v in pairs(s) do
-					if type(v) == "string" and v:match("^[%d]+$") then
-						v = tonumber(v)
-					end
-					self.serviceConfig[k] = v
-				end
-				success = true
-				self.serviceConfig.instanceNum = num
+function InternetDetector:loadInstanceConfig(instance)
+	local sections = uciCursor:get_all(self.appName)
+	local t        = sections[instance]
+	if t then
+		for k, v in pairs(t) do
+			if type(v) == "string" and v:match("^[%d]+$") then
+				v = tonumber(v)
 			end
-			num = num + 1
+			self.serviceConfig[k] = v
 		end
-	)
-	self.serviceConfig.instance = instance
-	return success
+		self.serviceConfig.instance    = instance
+		self.serviceConfig.instanceNum = t[".index"]
+		return true
+	end
+	return false
 end
 
 function InternetDetector:writeValueToFile(filePath, str)
@@ -693,7 +686,7 @@ function InternetDetector:daemon()
 end
 
 function InternetDetector:setServiceConfig(instance)
-	if self:loadUCIConfig("instance", instance) then
+	if self:loadInstanceConfig(instance) then
 		self:parseHosts()
 		if self.mode == 2 then
 			self.loggingLevel = 0
