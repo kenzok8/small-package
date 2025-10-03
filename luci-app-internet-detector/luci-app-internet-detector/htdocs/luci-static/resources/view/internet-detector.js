@@ -69,13 +69,13 @@ var Timefield = ui.Textfield.extend({
 		let string = '0';
 		if(/^\d+$/.test(value)) {
 			value = Number(value);
-			if(value >= 86400 && (value % 86400) === 0) {
+			if(value >= 86400 && (value % 86400) == 0) {
 				string = String(value / 86400) + 'd';
 			}
-			else if(value >= 3600 && (value % 3600) === 0) {
+			else if(value >= 3600 && (value % 3600) == 0) {
 				string = String(value / 3600) + 'h';
 			}
-			else if(value >= 60 && (value % 60) === 0) {
+			else if(value >= 60 && (value % 60) == 0) {
 				string = String(value / 60) + 'm';
 			}
 			else {
@@ -107,16 +107,16 @@ var Timefield = ui.Textfield.extend({
 		    value    = 0,
 		    res      = rawValue.match(/^(\d+)([dhms]?)$/);
 		if(res) {
-			if(res[2] === 'd') {
+			if(res[2] == 'd') {
 				value = Number(res[1]) * 86400;
 			}
-			else if(res[2] === 'h') {
+			else if(res[2] == 'h') {
 				value = Number(res[1]) * 3600;
 			}
-			else if(res[2] === 'm') {
+			else if(res[2] == 'm') {
 				value = Number(res[1]) * 60;
 			}
-			else if(!res[2] || res[2] === 's') {
+			else if(!res[2] || res[2] == 's') {
 				value = Number(res[1]);
 			}
 			else {
@@ -275,14 +275,14 @@ return view.extend({
 	setInternetStatus() {
 		this.inetStatusArea.innerHTML = '';
 
-		if(!this.inetStatus || !this.inetStatus.instances || this.inetStatus.instances.length === 0) {
+		if(!this.inetStatus || !this.inetStatus.instances || this.inetStatus.instances.length == 0) {
 			let label = E('span', { 'class': 'id-label-status id-undefined' }, _('Undefined'));
-			if((this.currentAppMode === '1' && this.appStatus !== 'stoped') || this.currentAppMode === '2') {
+			if((this.currentAppMode == '1' && this.appStatus != 'stoped') || this.currentAppMode == '2') {
 				label.classList.add('spinning');
 			};
 			this.inetStatusArea.append(label);
 		} else {
-			this.inetStatus.instances.sort((a, b) => a.num > b.num);
+			this.inetStatus.instances.sort((a, b) => a.num - b.num);
 
 			for(let i of this.inetStatus.instances) {
 				let status    = _('Disconnected');
@@ -297,7 +297,7 @@ return view.extend({
 				};
 
 				let publicIp = (i.mod_public_ip !== undefined) ?
-					' | %s: %s'.format(_('Public IP'), (i.mod_public_ip === '') ? _('Undefined') : _(i.mod_public_ip))
+					' | %s: %s'.format(_('Public IP'), (i.mod_public_ip == '') ? _('Undefined') : _(i.mod_public_ip))
 				: '';
 
 				this.inetStatusArea.append(
@@ -310,7 +310,7 @@ return view.extend({
 					this.modRegularScriptNextRun[i.instance] = i.mod_regular_script;
 					let nextRunLabel = document.getElementById('id_next_run_' + i.instance);
 					if(nextRunLabel) {
-						if(this.appStatus === 'running') {
+						if(this.appStatus == 'running') {
 							nextRunLabel.innerHTML = this.modRegularScriptNextRun[i.instance];
 						} else {
 							nextRunLabel.innerHTML = _('Not scheduled');
@@ -320,7 +320,7 @@ return view.extend({
 			};
 		};
 
-		if(this.appStatus === 'running') {
+		if(this.appStatus == 'running') {
 			this.serviceStatusLabel.textContent = _('Running');
 		} else {
 			this.serviceStatusLabel.textContent = _('Stopped');
@@ -633,7 +633,7 @@ return view.extend({
 		if(!data) {
 			return;
 		};
-		this.appStatus  = (data[0].code === 0) ? data[0].stdout.trim() : null;
+		this.appStatus  = (data[0].code == 0) ? data[0].stdout.trim() : null;
 		this.initStatus = data[1];
 		this.leds       = data[2];
 		if(data[3]) {
@@ -675,7 +675,7 @@ return view.extend({
 
 		/* Service widget */
 
-		if(this.currentAppMode === '1') {
+		if(this.currentAppMode == '1') {
 			o = s.option(this.CBIBlockServiceStatus, this);
 
 			// restart button
@@ -709,7 +709,7 @@ return view.extend({
 
 		/* Instances configuration */
 
-		if(this.currentAppMode !== '2') {
+		if(this.currentAppMode != '2') {
 
 			// logging_level
 			o = s.option(form.ListValue, 'logging_level',
@@ -871,7 +871,7 @@ return view.extend({
 
 		/* Modules */
 
-		if(this.currentAppMode !== '2') {
+		if(this.currentAppMode != '2') {
 			s.tab('led_control', _('LED control'));
 			s.tab('reboot_device', _('Reboot device'));
 			s.tab('restart_network', _('Restart network'));
@@ -882,7 +882,7 @@ return view.extend({
 
 		s.tab('public_ip', _('Public IP address'));
 
-		if(this.currentAppMode !== '2') {
+		if(this.currentAppMode != '2') {
 			if(this.email) {
 				s.tab('email', _('Email notification'));
 			};
@@ -903,7 +903,7 @@ return view.extend({
 				return;
 			};
 
-			if(this.currentAppMode !== '2') {
+			if(this.currentAppMode != '2') {
 
 				// LED control
 
@@ -915,7 +915,7 @@ return view.extend({
 				o.modalonly = true;
 
 				if(this.leds.length > 0) {
-					this.leds.sort((a, b) => a.name > b.name);
+					this.leds.sort((a, b) => a.name > b.name ? 1 : -1);
 
 					// enabled
 					o = s.taboption('led_control', form.Flag,
@@ -1411,7 +1411,7 @@ return view.extend({
 				o.value(i, i + ' ' + _('sec'));
 			};
 
-			if(this.currentAppMode !== '2') {
+			if(this.currentAppMode != '2') {
 
 				// enable_ip_script
 				o = s.taboption('public_ip', form.Flag,
@@ -1778,7 +1778,7 @@ return view.extend({
 				// down_script_attempt_interval
 				o = ss.taboption('user_scripts_down_script', this.CBITimeInput,
 					'mod_user_scripts_down_script_attempt_interval',
-					_('Attempt interval'),
+					 _('Attempt interval'),
 					_('Interval between down-script runs.')
 				);
 				o.default   = '60';
@@ -1847,9 +1847,9 @@ return view.extend({
 
 		};
 
-		if(this.currentAppMode !== '0') {
+		if(this.currentAppMode != '0') {
 			poll.add(
-				L.bind((this.currentAppMode === '1') ? this.servicePoll : this.uiPoll, this),
+				L.bind((this.currentAppMode == '1') ? this.servicePoll : this.uiPoll, this),
 				this.pollInterval
 			);
 		};
