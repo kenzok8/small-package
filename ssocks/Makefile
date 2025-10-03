@@ -18,7 +18,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tostercx/ssocks.git
 PKG_SOURCE_DATE:=2020-07-09
 PKG_SOURCE_VERSION:=c2024789c1ee076d171fd6061d7c133302216ea7
-PKG_MIRROR_HASH:=4c180daf4eaba18008fd94285e395b11e679fedda89d531dbed7721aa0c82de4
+PKG_MIRROR_HASH:=2e9d1a2e6b47303389410952867d204e03054763d024a22a838a9707c2daca03
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -75,3 +75,5 @@ endef
 
 $(eval $(call BuildPackage,ssocks))
 $(eval $(call BuildPackage,ssocksd))
+
+
