@@ -92,16 +92,16 @@ return baseclass.extend({
 			}).catch(e => {});
 		};
 
-		if(this.currentAppMode === '2') {
+		if(this.currentAppMode == '2') {
 			return this.getUIPoll();
 		}
-		else if(this.currentAppMode === '1') {
+		else if(this.currentAppMode == '1') {
 			return L.resolveDefault(this.getInetStatus(), null);
 		};
 	},
 
 	render(data) {
-		if(this.currentAppMode === '0') {
+		if(this.currentAppMode == '0') {
 			return;
 		}
 
@@ -109,14 +109,14 @@ return baseclass.extend({
 
 		let inetStatusArea = E('div', {});
 
-		if(!this.inetStatus || !this.inetStatus.instances || this.inetStatus.instances.length === 0) {
+		if(!this.inetStatus || !this.inetStatus.instances || this.inetStatus.instances.length == 0) {
 			let label = E('span', { 'class': 'id-label-status id-undefined' }, _('Undefined'));
-			if(this.currentAppMode === '2') {
+			if(this.currentAppMode == '2') {
 				label.classList.add('spinning');
 			};
 			inetStatusArea.append(label);
 		} else {
-			this.inetStatus.instances.sort((a, b) => a.num > b.num);
+			this.inetStatus.instances.sort((a, b) => a.num - b.num);
 
 			for(let i of this.inetStatus.instances) {
 				let status    = _('Disconnected');
@@ -131,7 +131,7 @@ return baseclass.extend({
 				};
 
 				let publicIp = (i.mod_public_ip !== undefined) ?
-					' | %s: %s'.format(_('Public IP'), (i.mod_public_ip === '') ? _('Undefined') : _(i.mod_public_ip))
+					' | %s: %s'.format(_('Public IP'), (i.mod_public_ip == '') ? _('Undefined') : _(i.mod_public_ip))
 				: '';
 
 				inetStatusArea.append(
