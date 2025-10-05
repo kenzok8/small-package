@@ -180,7 +180,7 @@ function Module:run(currentStatus, lastStatus, timeDiff, timeNow, inetChecked)
 			end
 		end
 		self._connected = false
-	else
+	elseif currentStatus == 0 then
 		self._deadCounter       = 0
 		self._msgSentDisconnect = false
 
