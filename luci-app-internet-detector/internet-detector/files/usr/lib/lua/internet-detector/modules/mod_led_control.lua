@@ -269,7 +269,7 @@ function Module:ledRunFunc(t, currentStatus)
 				)
 			end
 		end
-	else
+	elseif currentStatus == 1 then
 		if t.ledAction2 == 1 then
 			if self:getCurrentState(t) or self:getCurrentTrigger(t) then
 				self:off(t)

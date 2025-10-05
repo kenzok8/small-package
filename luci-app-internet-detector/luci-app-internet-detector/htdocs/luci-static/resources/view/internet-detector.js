@@ -915,7 +915,7 @@ return view.extend({
 				o.modalonly = true;
 
 				if(this.leds.length > 0) {
-					this.leds.sort((a, b) => a.name > b.name ? 1 : -1);
+					this.leds.sort((a, b) => (a.name > b.name) ? 1 : (a.name < b.name) ? -1 : 0);
 
 					// enabled
 					o = s.taboption('led_control', form.Flag,
