@@ -5,11 +5,21 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "%s log"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:1474
+#: htdocs/luci-static/resources/view/fchomo/node.js:1480
+msgid "(Destination)"
+msgstr ""
+
 #: htdocs/luci-static/resources/fchomo.js:582
 #: htdocs/luci-static/resources/view/fchomo/client.js:237
 #: htdocs/luci-static/resources/view/fchomo/client.js:267
 #: htdocs/luci-static/resources/view/fchomo/client.js:363
 msgid "(Imported)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:1496
+#: htdocs/luci-static/resources/view/fchomo/node.js:1502
+msgid "(Transit)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:549

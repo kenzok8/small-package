@@ -12,12 +12,22 @@ msgstr ""
 msgid "%s log"
 msgstr "%s 日志"
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:1474
+#: htdocs/luci-static/resources/view/fchomo/node.js:1480
+msgid "(Destination)"
+msgstr "(落地)"
+
 #: htdocs/luci-static/resources/fchomo.js:582
 #: htdocs/luci-static/resources/view/fchomo/client.js:237
 #: htdocs/luci-static/resources/view/fchomo/client.js:267
 #: htdocs/luci-static/resources/view/fchomo/client.js:363
 msgid "(Imported)"
 msgstr "(已导入)"
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:1496
+#: htdocs/luci-static/resources/view/fchomo/node.js:1502
+msgid "(Transit)"
+msgstr "(中转)"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:549
 #: htdocs/luci-static/resources/view/fchomo/global.js:555

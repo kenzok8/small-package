@@ -1471,13 +1471,13 @@ return view.extend({
 		}
 		so.modalonly = false;
 
-		so = ss.option(form.ListValue, 'chain_head_sub', _('Chain head'));
+		so = ss.option(form.ListValue, 'chain_head_sub', _('Chain head') + _(' (Destination)'));
 		so.load = L.bind(hm.loadProviderLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.depends('type', 'provider');
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'chain_head', _('Chain head'),
+		so = ss.option(form.ListValue, 'chain_head', _('Chain head') + _(' (Destination)'),
 			_('Recommended to use UoT node.</br>such as <code>%s</code>.')
 			.format('ss|ssr|vmess|vless|trojan|tuic'));
 		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
@@ -1493,13 +1493,13 @@ return view.extend({
 		so.depends('type', 'node');
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'chain_tail_group', _('Chain tail'));
+		so = ss.option(form.ListValue, 'chain_tail_group', _('Chain tail') + _(' (Transit)'));
 		so.load = L.bind(hm.loadProxyGroupLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.depends({chain_tail: /.+/, '!reverse': true});
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'chain_tail', _('Chain tail'),
+		so = ss.option(form.ListValue, 'chain_tail', _('Chain tail') + _(' (Transit)'),
 			_('Recommended to use UoT node.</br>such as <code>%s</code>.')
 			.format('ss|ssr|vmess|vless|trojan|tuic'));
 		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
