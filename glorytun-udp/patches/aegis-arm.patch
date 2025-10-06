@@ -1,0 +1,11 @@
+--- a/mud/aegis256/aegis256.c	2019-11-06 21:17:20.945036771 +0100
++++ b/mud/aegis256/aegis256.c	2019-11-06 21:21:18.728943139 +0100
+@@ -43,7 +43,7 @@
+ #ifndef __ARM_FEATURE_CRYPTO
+ #define __ARM_FEATURE_CRYPTO 1
+ #endif
+-#else
++#elifdef __ARM_FEATURE_CRYPTO
+ #pragma GCC target("+crypto")
+ #endif
+ 

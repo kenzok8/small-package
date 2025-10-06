@@ -1,0 +1,246 @@
+#!/bin/sh
+#
+# Update the MPTCP flags with or without the pached iproute2
+#
+# Author: Mario Krueger <openwrt at xedp3x.de>
+#	  Ycarus (Yannick Chabanois) for OpenMPTCProuter <contact@openmptcprouter.com>
+# Released under GPL 3 or later
+
+if [ -d "/proc/sys/net/mptcp" ]; then
+        if ([ -f /proc/sys/net/mptcp/mptcp_enabled ] && [ `cat /proc/sys/net/mptcp/mptcp_enabled` = 0 ]) || ([ -f /proc/sys/net/mptcp/enabled ] && [ `cat /proc/sys/net/mptcp/enabled` = 0 ]); then
+                echo "MPTCP is disabled!"
+                exit 1
+        fi
+else
+        echo "Your device don't support multipath-TCP."
+        exit 1
+fi
+
+case $1 in
+   "-h")
+        echo "          Multipath-TCP configuration tool"
+        echo "show/update flags:"
+        echo "  multipath [device]"
+        if [ -f /proc/sys/net/mptcp/mptcp_enabled ]; then
+                echo "  multipath device {on | off | backup }"
+        else
+                echo "  multipath device {on | off | signal | backup }"
+        fi
+        echo
+        echo "show established conections: -c"
+        echo "show fullmesh info: -f"
+        echo "show kernel config: -k"
+        echo "show MPTCP info: -m"
+        if [ -f /proc/sys/net/mptcp/enabled ]; then
+		echo "verify MPTCP interface: -v device"
+        fi
+        echo
+        echo "Flag on the device, to enable/disable MPTCP for this interface. The backup-flag"
+        echo "will allow a subflow to be established across this interface, but only be used"
+        echo "as backup."
+        echo
+        exit 0 ;;
+   "-c")
+        if [ -f /proc/net/mptcp_net/mptcp ]; then
+            cat /proc/net/mptcp_net/mptcp
+        else
+            ss -M
+        fi
+        exit 0;;
+   "-f")
+        if [ -f /proc/net/mptcp_fullmesh ]; then
+            cat /proc/net/mptcp_fullmesh
+        else
+            ip mptcp endpoint | grep fullmesh
+        fi
+        exit 0;;
+   "-k")
+        if [ -f /proc/sys/net/mptcp/mptcp_enabled ]; then
+            echo Enabled: `cat /proc/sys/net/mptcp/mptcp_enabled`
+        elif [ -f /proc/sys/net/mptcp/enabled ]; then
+            echo Enabled: `cat /proc/sys/net/mptcp/enabled`
+        fi
+        if [ -f /proc/sys/net/mptcp/mptcp_path_manager ]; then
+            echo Path Manager: `cat /proc/sys/net/mptcp/mptcp_path_manager`
+        fi
+        if [ -f /proc/sys/net/mptcp/mptcp_checksum ]; then
+            echo Use checksum: `cat /proc/sys/net/mptcp/mptcp_checksum`
+        else
+            echo Use checksum: `cat /proc/sys/net/mptcp/checksum_enabled`
+        fi
+        if [ -f /proc/sys/net/mptcp/mptcp_scheduler ]; then
+            echo Scheduler: `cat /proc/sys/net/mptcp/mptcp_scheduler`
+        fi
+        if [ -f /proc/sys/net/mptcp/mptcp_syn_retries ]; then
+            echo Syn retries: `cat /proc/sys/net/mptcp/mptcp_syn_retries`
+        fi
+        if [ -f /proc/sys/net/mptcp/mptcp_debug ]; then
+            echo Debugmode: `cat /proc/sys/net/mptcp/mptcp_debug`
+        fi
+        echo
+        exit 0 ;;
+   "-m")
+	if [ -f /proc/net/mptcp_net/snmp ]; then
+	    cat /proc/net/mptcp_net/snmp
+	else
+	    nstat -z | grep -i mptcp
+	fi
+        exit 0 ;;
+   "-v")
+	if [ -f /proc/sys/net/mptcp/enabled ]; then
+		DEVICE="$2"
+		endpoint="$(ip mptcp endpoint show)"
+		if [ -f /usr/bin/jsonfilter ]; then
+			IP=$(ip -j a show $DEVICE scope global | jsonfilter -e '@[0].addr_info[*].local')
+		elif [ -f /usr/bin/jq ]; then
+			IP=$(ip -j a show $DEVICE scope global  | jq -r '.[0].addr_info[].local')
+		else
+			echo "jsonfilter or jq are required"
+			exit 1
+		fi
+		[ -n "$IP" ] && [ -n "$endpoint" ] && ID=$(echo "${endpoint}" show | grep "$IP " | awk '{print $3}')
+	fi
+	if [ -n "$ID" ]; then
+		echo "OK"
+		exit 0
+	else
+		echo "NOK"
+		exit 1
+	fi
+	;;
+   "")
+        for ifpath in /sys/class/net/*; do
+                $0 ${ifpath##*/}
+        done
+        exit 0;;
+   *);;
+esac
+
+DEVICE="$1"
+TYPE="$2"
+#FLAG_PATH=`find /sys/devices/ -path "*/net/$DEVICE/flags"`
+
+[ -e "/sys/class/net/$DEVICE/" ] || {
+        #echo "Device '$DEVICE' can't found!"
+        #echo "Use the hardware name like in ifconfig"
+        exit 1
+}
+
+if [ -f /proc/sys/net/mptcp/mptcp_enabled ]; then
+        FLAG_PATH="/sys/class/net/$DEVICE/flags"
+        IFF=`cat $FLAG_PATH`
+
+        IFF_OFF="0x80000"
+        IFF_ON="0x00"
+        IFF_BACKUP="0x100000"
+        IFF_HANDOVER="0x200000"
+        IFF_MASK="0x380000"
+
+        case $TYPE in
+                "off")          FLAG=$IFF_OFF;;
+                "on")           FLAG=$IFF_ON;;
+                "backup")       FLAG=$IFF_BACKUP;;
+                "handover")     FLAG=$IFF_HANDOVER;;
+                "")
+                        IFF=`printf "0x%02x" $(($IFF&$IFF_MASK))`
+                        case "$IFF" in
+                                $IFF_OFF)       echo $DEVICE is deactivated;;
+                                $IFF_ON)        echo $DEVICE is in default mode;;
+                                $IFF_BACKUP)    echo $DEVICE is in backup mode;;
+                                $IFF_HANDOVER)  echo $DEVICE is in handover mode;;
+                                *) echo "Unkown state!" && exit 1;;
+                        esac
+                        exit 0;;
+                *) echo "Unkown flag! Use 'multipath -h' for help" && exit 1;;
+        esac
+
+        printf "0x%02x" $(($(($IFF^$(($IFF&$IFF_MASK))))|$FLAG)) > $FLAG_PATH
+else
+	endpoint="$(ip mptcp endpoint show)"
+	if [ -n "$TYPE" ]; then
+		# Remove not needed if* interfaces in MPTCP
+		[ -n "$endpoint" ] && oldintfs=$(echo "${endpoint}" | grep "dev if" | awk '{ print $3 }')
+		[ -n "$oldintfs" ] && {
+			for oldintf in $oldintfs; do
+				ip mptcp endpoint delete id $oldintf >/dev/null 2>&1
+			done
+			endpoint="$(ip mptcp endpoint show)"
+		}
+	fi
+	if [ -n "$endpoint" ]; then
+		ID=$(echo "${endpoint}" | sort | grep "dev $DEVICE " | awk '{print $3}')
+		IFF=$(echo "${endpoint}" | sort | grep -m 1 -E "dev $DEVICE " | awk '{print $4; exit}')
+		IFF2=$(echo "${endpoint}" | sort | grep -m 1 -E "dev $DEVICE " | awk '{print $5; exit}')
+	fi
+	if [ -n "$TYPE" ]; then
+		#IP=$(ip a show $DEVICE | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
+		if [ -f /usr/bin/jsonfilter ]; then
+			IP=$(ip -j a show $DEVICE scope global | jsonfilter -e '@[0].addr_info[*].local')
+		elif [ -f /usr/bin/jq ]; then
+			IP=$(ip -j a show $DEVICE scope global  | jq -r '.[0].addr_info[].local')
+		else
+			echo "jsonfilter or jq are required"
+			exit 1
+		fi
+		[ -z "$ID" ] && [ -n "$IP" ] && [ -n "$endpoint" ] && ID=$(echo "${endpoint}" show | grep "$IP " | awk '{print $3}')
+		[ -n "$endpoint" ] && RMID=$(echo "${endpoint}" | grep '::ffff' | awk '{ print $3 }')
+		[ -n "$RMID" ] && ip mptcp endpoint delete id $RMID >/dev/null 2>&1
+	fi
+	case $TYPE in
+                "off")
+                        [ -n "$ID" ] && {
+                            for i in $ID; do
+                                ip mptcp endpoint delete id $i >/dev/null 2>&1
+                            done
+                        }
+                        exit 0;;
+                "on")
+                        [ -n "$ID" ] && {
+                            for i in $ID; do
+                                ip mptcp endpoint delete id $i >/dev/null 2>&1
+                            done
+                        }
+                        for i in $IP; do
+                            ip mptcp endpoint add $i dev $DEVICE subflow fullmesh
+                        done
+                        exit 0;;
+                "signal")
+                        [ -n "$ID" ] && {
+                            for i in $ID; do
+                                ip mptcp endpoint delete id $i >/dev/null 2>&1
+                            done
+                        }
+                        for i in $IP; do
+                            #ip mptcp endpoint add $i dev $DEVICE signal subflow fullmesh
+                            ip mptcp endpoint add $i dev $DEVICE signal
+                        done
+                        exit 0;;
+                "backup")
+                        [ -n "$ID" ] && {
+                            for i in $ID; do
+                                ip mptcp endpoint delete id $i >/dev/null 2>&1
+                            done
+                        }
+                        for i in $IP; do
+                            ip mptcp endpoint add $i dev $DEVICE subflow backup fullmesh
+                        done
+                        exit 0;;
+                "")
+                        case "$IFF" in
+                                "")          echo $DEVICE is deactivated;;
+                                "subflow")
+                                    case "$IFF2" in
+                                        "backup")    echo $DEVICE is in backup mode;;
+                                        "fullmesh")  echo $DEVICE is in default mode;;
+                                        "")  echo $DEVICE is in subflow mode;;
+                                    esac
+                                    ;;
+                                "signal")    echo $DEVICE is in signal mode;;
+                                *)           echo "$DEVICE Unkown state!" && exit 1;;
+                        esac
+                        exit 0;;
+                *) echo "Unkown flag! Use 'multipath -h' for help" && exit 1;;
+        esac
+
+fi
+

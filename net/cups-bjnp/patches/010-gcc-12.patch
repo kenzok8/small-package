@@ -1,0 +1,65 @@
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -20,6 +20,7 @@ AC_DEFUN([BJNP_CHECK_IPV6],
+ 
+   if test "$ipv6" != "no" ; then
+     AC_TRY_COMPILE([
++	#include <stdlib.h>
+ 	#define INET6 
+ 	#include <sys/types.h> 
+ 	#include <sys/socket.h> ], [
+@@ -41,6 +42,7 @@ AC_DEFUN([BJNP_CHECK_IPV6],
+   if test "$ipv6" != "no" ; then
+     AC_MSG_CHECKING([whether struct sockaddr_storage has an ss_family member])
+     AC_TRY_COMPILE([
++	#include <stdlib.h>
+ 	#define INET6
+ 	#include <sys/types.h>
+ 	#include <sys/socket.h> ], [
+@@ -53,6 +55,7 @@ AC_DEFUN([BJNP_CHECK_IPV6],
+ 	AC_DEFINE([HAS_SS_FAMILY], 1, [Define to 1 if struct sockaddr_storage has an ss_family member])
+     ], [
+ 		AC_TRY_COMPILE([
++		#include <stdlib.h>
+ 		#define INET6
+ 		#include <sys/types.h>
+ 		#include <sys/socket.h> ], [
+--- a/bjnp-commands.c
++++ b/bjnp-commands.c
+@@ -185,10 +185,8 @@ get_printer_id(http_addr_t *addr, char *
+ 
+     /* set IEEE1284_id */
+ 
+-    if (printer_id != NULL) {
+         strncpy(printer_id, id.udp_identity_response.id, id_len);
+         printer_id[id_len] = '\0';
+-    }
+ 
+     bjnp_debug(LOG_INFO, "Identity = %s\n", printer_id);
+ 
+--- a/configure
++++ b/configure
+@@ -4515,6 +4515,7 @@ fi
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
++	#include <stdlib.h>
+ 	#define INET6
+ 	#include <sys/types.h>
+ 	#include <sys/socket.h>
+@@ -4557,6 +4558,7 @@ $as_echo_n "checking whether struct sock
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
++	#include <stdlib.h>
+ 	#define INET6
+ 	#include <sys/types.h>
+ 	#include <sys/socket.h>
+@@ -4586,6 +4588,7 @@ else
+ 		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
++		#include <stdlib.h>
+ 		#define INET6
+ 		#include <sys/types.h>
+ 		#include <sys/socket.h>

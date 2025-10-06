@@ -1,0 +1,36 @@
+_DEVICE=/dev/ttyUSB2
+_DEFAULT_LTE_BANDS="1 3 5 8 38 39 40 41"
+
+getinfo() {
+	echo "Yuge CLM920 NC_5"
+}
+
+getsupportedbands() {
+	echo "$_DEFAULT_LTE_BANDS"
+}
+
+getbands() {
+	O=$(sms_tool -d $_DEVICE at "as+bandcfg?")
+	HEXHI=$(echo "$O" | awk -F[,] '/^\+BANDCFG:3,/{print $2}' | xargs)
+	HEXLO=$(echo "$O" | awk -F[,] '/^\+BANDCFG:3,/{print $3}' | xargs)
+	hextobands $(printf "0x%x%08x" 0x${HEXHI:-0} 0x${HEXLO:-0})
+}
+
+setbands() {
+	BANDS="$1"
+	[ "$BANDS" = "default" ] && BANDS="$_DEFAULT_LTE_BANDS"
+
+	HEX=$(bandstohex "$BANDS")
+	LEN=${#HEX}
+	if [ $LEN -gt 8 ]; then
+		CNT=$((LEN - 8))
+		HEXHI=${HEX:0:CNT}
+		HEXLO=${HEX:CNT}
+	else
+		HEXLO=$HEX
+		HEXHI=0
+	fi
+	HEXHI=$(printf "%X" 0x$HEXHI)
+	HEXLO=$(printf "%X" 0x$HEXLO)
+	[ "$HEX" != "0" ] && sms_tool -d $_DEVICE at "at+bandcfg=$HEXHI,$HEXLO,3"
+}

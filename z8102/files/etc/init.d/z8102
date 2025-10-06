@@ -1,0 +1,73 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2013 OpenWrt.org
+# Copyright (C) 2023-2025 Yannick Chabanois (Ycarus) for OpenMPTCProuter
+
+START=00
+USE_PROCD=1
+
+log() {
+	logger -t "z8102" "$@"
+}
+
+modem_reset()
+{
+	modemnb=$1
+	# sim
+	if [ -e /sys/class/gpio/sim${modemnb}/value ]; then
+		echo "0" > /sys/class/gpio/sim${modemnb}/value
+	elif [ -f /usr/bin/gpiofind ]; then
+		gpioset `gpiofind "sim=${modemnb}"`=0
+	else
+		gpioset -t0 sim${modemnb}=0
+	fi
+
+	# stop modem
+	if [ -e /sys/class/gpio/modem${modemnb}/value ]; then
+		echo "0" > /sys/class/gpio/modem${modemnb}/value
+	elif [ -f /usr/bin/gpiofind ]; then
+		gpioset `gpiofind "modem${modemnb}"`=0
+	else
+		gpioset -t0 modem${modemnb}=0
+	fi
+
+	sleep 1
+	# run modem
+	if [ -e /sys/class/gpio/modem${modemnb}/value ]; then
+		echo "1" > /sys/class/gpio/modem${modemnb}/value
+	elif [ -f /usr/bin/gpiofind ]; then
+		gpioset `gpiofind "modem${modemnb}"`=1
+	else
+		gpioset -t0 modem${modemnb}=1
+	fi
+}
+
+start_service()
+{
+	modem="$1"
+	if [ -z "$modem" ]; then
+		log "Enable SIMs and reboot modems..."
+		modem_reset 1
+		modem_reset 2
+		if [ -n "$(cat /etc/board.json | grep z8109)" ]; then
+			modem_reset 3
+			modem_reset 4
+		fi
+	elif [ "$modem" = "modem1" ]; then
+		log "Enable SIM1 and reboot modem1..."
+		modem_reset 1
+	elif [ "$modem" = "modem2" ]; then
+		log "Enable SIM2 and reboot modem2..."
+		modem_reset 2
+	elif [ "$modem" = "modem3" ]; then
+		log "Enable SIM3 and reboot modem3..."
+		modem_reset 3
+	elif [ "$modem" = "modem4" ]; then
+		log "Enable SIM4 and reboot modem4..."
+		modem_reset 4
+	fi
+}
+
+restart()
+{
+	start_service "$@"
+}

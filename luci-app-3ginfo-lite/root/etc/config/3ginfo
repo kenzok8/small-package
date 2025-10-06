@@ -1,7 +1,0 @@
-config 3ginfo 'modem1'
-	option network 'usbwan'
-	option device '/dev/ttyUSB2'
-
-config 3ginfo 'modem2'
-	option network 'usbwan'
-	option device '/dev/ttyUSB2'

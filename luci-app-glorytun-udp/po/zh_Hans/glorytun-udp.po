@@ -1,0 +1,108 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-05-05 11:40+0000\n"
+"Last-Translator: niergouge <1150108426@qq.com>\n"
+"Language-Team: Chinese (Simplified) <http://weblate.openmptcprouter.com/"
+"projects/omr/luciapplicationsglorytun-udp/zh_Hans/>\n"
+"Language: zh_Hans\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.6.1\n"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:40
+msgid "Advanced Settings"
+msgstr "高级设置"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:49
+msgid "Client"
+msgstr "客户端"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:86
+msgid "Clock sync tolerance"
+msgstr "时钟同步容限"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:96
+msgid "Dynamic rate detection"
+msgstr "动态速率检测"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:42
+msgid "Enabled"
+msgstr "启用"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:78
+msgid "Force fallback cipher"
+msgstr "强制回退密码"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:39
+msgid "General Settings"
+msgstr "通用设置"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:32
+#: luci-app-glorytun-udp/root/usr/share/luci/menu.d/luci-app-glorytun-udp.json:3
+msgid "Glorytun UDP"
+msgstr "glorytun UDP"
+
+#: luci-app-glorytun-udp/root/usr/share/rpcd/acl.d/luci-app-glorytun-udp.json:3
+msgid "Grant access to glorytun UDP"
+msgstr "授予访问glorytun UDP的权限"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:53
+msgid "Host"
+msgstr "主机"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:34
+msgid "Instances"
+msgstr "实例"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:63
+msgid "Interface name"
+msgstr "接口名称"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:91
+msgid "Keep alive timeout"
+msgstr "保持超时"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:75
+msgid "Keep the tunnel device after exiting"
+msgstr "退出后保留隧道设备"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:59
+msgid "Key"
+msgstr "秘钥"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:81
+msgid "Key rotation timeout"
+msgstr "秘钥轮换超时"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:45
+msgid "Label"
+msgstr "标签"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:67
+msgid "Local IP"
+msgstr "本地IP"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:48
+msgid "Mode"
+msgstr "模式"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:75
+msgid "Persist"
+msgstr "保持"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:56
+msgid "Port"
+msgstr "端口"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:71
+msgid "Remote IP"
+msgstr "远程IP"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:50
+msgid "Server"
+msgstr "服务器"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:78
+msgid "chacha"
+msgstr "chacha密码"

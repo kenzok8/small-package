@@ -1,0 +1,4 @@
+#!/bin/sh
+
+sed -i "s,option hidden ,list hidden ,g" "/etc/config/dufs"
+exit 0

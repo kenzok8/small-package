@@ -1,0 +1,22 @@
+--- a/src/base/bittorrent/sessionimpl.cpp
++++ b/src/base/bittorrent/sessionimpl.cpp
+@@ -122,7 +122,7 @@ const int MAX_PROCESSING_RESUMEDATA_COUN
+ namespace
+ {
+     const char PEER_ID[] = "qB";
+-    const auto USER_AGENT = QStringLiteral("qBittorrent Enhanced/" QBT_VERSION_2);
++    const auto USER_AGENT = QStringLiteral("qBittorrent/" QBT_VERSION_2);
+     const QString DEFAULT_DHT_BOOTSTRAP_NODES = u"dht.libtorrent.org:25401, dht.transmissionbt.com:6881, router.bittorrent.com:6881"_s;
+ 
+     void torrentQueuePositionUp(const lt::torrent_handle &handle)
+--- a/src/base/version.h.in
++++ b/src/base/version.h.in
+@@ -31,7 +31,7 @@
+ #define QBT_VERSION_MAJOR 5
+ #define QBT_VERSION_MINOR 1
+ #define QBT_VERSION_BUGFIX 2
+-#define QBT_VERSION_BUILD 10
++#define QBT_VERSION_BUILD 0
+ #define QBT_VERSION_STATUS ""  // Should be empty for stable releases!
+ 
+ #define QBT__STRINGIFY(x) #x

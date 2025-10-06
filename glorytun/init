@@ -1,0 +1,156 @@
+#!/bin/sh /etc/rc.common
+# vim: set noexpandtab tabstop=4 shiftwidth=4 softtabstop=4 :
+# Copyright (C) 2015 ovh.com
+# Copyright (C) 2017 Ycarus (Yannick Chabanois) <ycarus@zugaina.org>
+
+START=90
+STOP=10
+
+USE_PROCD=1
+PROG_NAME=glorytun
+PROG=/usr/sbin/${PROG_NAME}
+
+_log() {
+	logger -p daemon.info -t ${PROG_NAME} "$@"
+}
+
+_err() {
+	logger -p daemon.err -t ${PROG_NAME} "$@"
+}
+
+# Apply system optimizations
+apply_sysctl_optimizations() {
+	if [ -f /etc/glorytun/glorytun-sysctl.conf ]; then
+		_log "Applying system optimizations"
+		sysctl -q -p /etc/glorytun/glorytun-sysctl.conf
+	fi
+}
+
+validate_section() {
+	uci_validate_section glorytun glorytun "${1}" \
+		'enable:bool:0'      \
+		'mptcp:bool:0'       \
+		'mode:string'    \
+		'key:string'         \
+		'host:host'          \
+		'port:port'          \
+		'dev:string'         \
+		'timeout:uinteger:10000'         \
+		'chacha20:bool:0'    \
+		'multiqueue:bool:1'  \
+		'cpu_affinity:bool:1' \
+		'proto:string'
+}
+
+# New function for CPU core optimization
+optimize_cpu_cores() {
+	local dev="$1"
+	local multiqueue="$2"
+	local cpu_affinity="$3"
+	
+	if [ "$cpu_affinity" = "1" ]; then
+		_log "Setting up CPU affinity for $dev"
+		if [ -x /usr/sbin/glorytun-irq-affinity.sh ]; then
+			/usr/sbin/glorytun-irq-affinity.sh
+		fi
+	fi
+	
+	if [ "$multiqueue" = "1" ]; then
+		_log "Enabling multiqueue for $dev"
+		
+		# Get CPU count
+		local cpu_count=$(grep -c processor /proc/cpuinfo)
+		if [ "$cpu_count" -gt 1 ]; then
+			# Use half of available CPUs but at least 2
+			local queue_count=$(( cpu_count / 2 ))
+			[ "$queue_count" -lt 2 ] && queue_count=2
+			
+			# Set multiqueue parameters
+			ip link set dev "$dev" multiqueue on
+			
+			# Increase buffer sizes for better performance
+			if [ -e /proc/sys/net/core/rmem_max ]; then
+				echo 16777216 > /proc/sys/net/core/rmem_max
+				echo 16777216 > /proc/sys/net/core/wmem_max
+				echo 16777216 > /proc/sys/net/core/optmem_max
+			fi
+		fi
+	fi
+}
+
+start_instance() {
+	local enable key host port dev mptcp proto chacha20 mode multiqueue cpu_affinity timeout
+
+	validate_section "${1}" || {
+		_err "validation failed"
+		return 1
+	}
+
+	[ "${enable}" = "1" ] || return 1
+	[ "${proto}" = "tcp" ] || return 1
+	[ -n "${key}" ] || {
+		_err "Key empty"
+		return 1
+	}
+	[ "${key}" != "secretkey" ] || return 1
+	[ -n "${port}" ] || return 1
+	[ -n "${dev}" ] || return 1
+	[ -n "${host}" ] || return 1
+
+	echo "${key}" > /tmp/${PROG_NAME}-${1}.key
+	[ -f "/tmp/${PROG_NAME}-${1}.key" ] || {
+		_err "can't create key file"
+		return 1
+	}
+	key=""
+
+	if [ "$(uci -q get network.omrvpn)" != "" ]; then
+		uci -q set network.omrvpn.device=${dev}
+		uci -q commit network
+	fi
+
+	_log "starting ${PROG_NAME} ${1} instance $*"
+
+	procd_open_instance
+
+	procd_set_param command ${PROG} \
+		keyfile /tmp/${PROG_NAME}-${1}.key \
+		${port:+port "$port"} \
+		${host:+host "$host"} \
+		${dev:+dev "$dev"} 
+
+	[ "${mode}" = "listener" ] && procd_append_param command listener
+	[ "${mptcp}" = "1" ] && procd_append_param command mptcp
+	[ "${chacha20}" = "1" ] && procd_append_param command chacha20
+	[ "${multiqueue}" = "1" ] && procd_append_param command multiqueue
+
+	procd_append_param command \
+		retry count -1 const 5000000 \
+		timeout ${timeout} \
+		keepalive count 5 idle 20 interval 2 \
+		buffer-size 65536
+
+	procd_set_param respawn 0 30 0
+	procd_set_param nice 10
+	procd_set_param file /tmp/${PROG_NAME}-${1}.key
+
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	procd_close_instance
+	
+	# Apply CPU optimizations after the instance is started
+	optimize_cpu_cores "$dev" "$multiqueue" "$cpu_affinity"
+}
+
+start_service() {
+	# Apply system optimizations before starting instances
+	apply_sysctl_optimizations
+	
+	config_load glorytun
+	config_foreach start_instance glorytun
+}
+
+service_triggers() {
+	procd_add_reload_trigger glorytun network
+}

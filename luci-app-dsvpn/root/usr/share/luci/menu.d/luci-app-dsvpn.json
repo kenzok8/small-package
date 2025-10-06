@@ -1,0 +1,13 @@
+{
+	"admin/vpn/dsvpn": {
+		"title": "DSVPN",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "services/dsvpn"
+		},
+		"depends": {
+			"acl": [ "luci-app-dsvpn" ]
+		}
+	}
+}

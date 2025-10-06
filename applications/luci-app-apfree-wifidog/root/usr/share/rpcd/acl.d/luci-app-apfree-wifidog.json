@@ -1,0 +1,24 @@
+{
+	"luci-app-apfree-wifidog": {
+		"description": "Grant access to LuCI app apfree-wifidog",
+		"read": {
+			"ubus": {
+				"service": [ "list" ],
+				"luci.wifidogx": [ "get_location", "get_wan_mac" ]
+			},
+			"file": {
+				"/etc/init.d/wifidogx": [ "exec" ],
+				"/usr/bin/wdctlx": [ "exec" ],
+				"/usr/bin/aw-bpfctl": [ "exec" ],
+				"/usr/bin/awk": [ "exec" ]
+			},
+			"uci": ["wifidogx", "hostnames", "network"]
+		},
+		"write": {
+			"uci": ["wifidogx", "hostnames"],
+			"file": {
+				"/etc/wifidogx/*": [ "write" ]
+			}
+		}
+	}
+}

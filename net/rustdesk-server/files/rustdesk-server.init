@@ -1,0 +1,136 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=99
+
+CONF="rustdesk-server"
+RUNDIR="/var/run/rustdesk-server"
+WORKDIR="/etc/rustdesk-server"
+
+start_service() {
+	local auto_fw global_key global_port
+	local hbbr_enabled hbbr_downgrade_start_check hbbr_downgrade_threshold \
+		  hbbr_limit_speed hbbr_total_bandwidth hbbr_single_bandwidth
+	local hbbs_enabled hbbs_always_use_relay
+
+	config_load "$CONF"
+	config_get_bool auto_fw "global" "auto_fw" "0"
+	config_get global_key "global" "key" ""
+	config_get global_port "global" "port" "21116"
+
+	config_get_bool hbbr_enabled "hbbr" "enabled" "0"
+	config_get hbbr_downgrade_start_check "hbbr" "downgrade_start_check" ""
+	config_get hbbr_downgrade_threshold "hbbr" "downgrade_threshold" ""
+	config_get hbbr_limit_speed "hbbr" "limit_speed" ""
+	config_get hbbr_total_bandwidth "hbbr" "total_bandwidth" ""
+	config_get hbbr_single_bandwidth "hbbr" "single_bandwidth" ""
+
+	config_get_bool hbbs_enabled "hbbs" "enabled" "0"
+	config_get hbbs_always_use_relay "hbbs" "always_use_relay" ""
+
+	[ "$hbbr_enabled" -eq "1" ] || [ "$hbbs_enabled" -eq "1" ] || return 1
+
+	for dir in "$RUNDIR" "$WORKDIR"; do
+		if [ ! -d "$dir" ] && ! mkdir -p "$dir"; then
+			logger -p daemon.error -t "rustdesk-server" "Failed to create working directory: $dir"
+			return 1
+		fi
+		chown -R rustdesk-server:rustdesk-server "$dir"
+	done
+
+	if [ "$hbbr_enabled" -eq "1" ]; then
+		procd_open_instance "hbbr"
+		procd_set_param command /usr/bin/hbbr
+
+		procd_set_param env \
+			DOWNGRADE_START_CHECK="$hbbr_downgrade_start_check" \
+			DOWNGRADE_THRESHOLD="$hbbr_downgrade_threshold" \
+			KEY="$global_key" \
+			LIMIT_SPEED="$hbbr_limit_speed" \
+			PORT="$global_port" \
+			SINGLE_BANDWIDTH="$hbbr_single_bandwidth" \
+			TOTAL_BANDWIDTH="$hbbr_total_bandwidth"
+
+		procd_add_jail hbbr log procfs sysfs
+		procd_add_jail_mount "/etc/ssl/"
+		procd_add_jail_mount_rw "/etc/rustdesk-server/"
+		procd_add_jail_mount_rw "/var/run/rustdesk-server/"
+
+		procd_set_param respawn
+		procd_set_param user rustdesk-server
+		procd_set_param group rustdesk-server
+
+		if [ "$auto_fw" -eq "1" ]; then
+			hbbr_tcp_ports="$(( global_port + 1 ))"
+
+			procd_open_data
+			json_add_array firewall
+				json_add_object ""
+				json_add_string type rule
+				json_add_string name "Allow-rustdesk-relay-tcp"
+				json_add_string proto "tcp"
+				json_add_string src "*"
+				json_add_string dest_port "$hbbr_tcp_ports"
+				json_add_string target "ACCEPT"
+				json_close_object
+			json_close_array
+			procd_close_data
+		fi
+		procd_close_instance
+	fi
+
+	if [ "$hbbs_enabled" -eq "1" ]; then
+		procd_open_instance "hbbs"
+		procd_set_param command /usr/bin/hbbs
+
+		procd_set_param env \
+			ALWAYS_USE_RELAY="$hbbs_always_use_relay" \
+			KEY="$global_key" \
+			PORT="$global_port"
+		
+		procd_add_jail hbbs log procfs sysfs
+		procd_add_jail_mount "/etc/ssl/"
+		procd_add_jail_mount_rw "/etc/rustdesk-server/"
+		procd_add_jail_mount_rw "/var/run/rustdesk-server/"
+
+		procd_set_param respawn
+		procd_set_param user rustdesk-server
+		procd_set_param group rustdesk-server
+
+		if [ "$auto_fw" -eq "1" ]; then
+			hbbs_tcp_ports="$(( global_port - 1 )) $global_port"
+			hbbs_udp_ports="$global_port"
+
+			procd_open_data
+			json_add_array firewall
+				json_add_object ""
+				json_add_string type rule
+				json_add_string name "Allow-rustdesk-server-tcp"
+				json_add_string proto "tcp"
+				json_add_string src "*"
+				json_add_string dest_port "$hbbs_tcp_ports"
+				json_add_string target "ACCEPT"
+				json_close_object
+
+				json_add_object ""
+				json_add_string type rule
+				json_add_string name "Allow-rustdesk-server-udp"
+				json_add_string proto "udp"
+				json_add_string src "*"
+				json_add_string dest_port "$hbbs_udp_ports"
+				json_add_string target "ACCEPT"
+				json_close_object
+			json_close_array
+			procd_close_data
+		fi
+		procd_close_instance
+	fi
+}
+
+stop_service() {
+	rm -f "$RUNDIR"/hbbr*.log "$RUNDIR"/hbbs*.log
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$CONF"
+}

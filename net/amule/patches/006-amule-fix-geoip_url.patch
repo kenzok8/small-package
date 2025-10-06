@@ -1,0 +1,21 @@
+From 77d323591615cad631fc292a22c05746f37ba450 Mon Sep 17 00:00:00 2001
+From: Diego <topotech@users.noreply.github.com>
+Date: Wed, 20 Apr 2022 10:45:23 -0400
+Subject: [PATCH] Update Preferences.cpp
+
+Changing maintainer and provider of GeoIP.dat.gz in the meantime that other solution appears. This one is from https://mailfud.org/geoip-legacy/. This should fix #154
+---
+ src/Preferences.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/Preferences.cpp
++++ b/src/Preferences.cpp
+@@ -1286,7 +1286,7 @@ void CPreferences::BuildItemList( const
+ 	s_MiscList.push_back( new Cfg_Str(	wxT("/eMule/Ed2kServersUrl"),		s_Ed2kURL, wxT("http://upd.emule-security.org/server.met") ) );
+ 	s_MiscList.push_back( MkCfg_Int( wxT("/eMule/ShowRatesOnTitle"),		s_showRatesOnTitle, 0 ));
+ 
+-	s_MiscList.push_back( new Cfg_Str(  wxT("/eMule/GeoLiteCountryUpdateUrl"),		s_GeoIPUpdateUrl, wxT("http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz") ) );
++	s_MiscList.push_back( new Cfg_Str(  wxT("/eMule/GeoLiteCountryUpdateUrl"),		s_GeoIPUpdateUrl, wxT("https://mailfud.org/geoip-legacy/GeoIP.dat.gz") ) );
+ 	wxConfigBase::Get()->DeleteEntry(wxT("/eMule/GeoIPUpdateUrl")); // get rid of the old one for a while
+ 
+ 	s_MiscList.push_back( new Cfg_Str( wxT("/WebServer/Path"),				s_sWebPath, wxT("amuleweb") ) );

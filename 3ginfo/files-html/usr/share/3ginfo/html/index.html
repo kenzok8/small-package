@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="cezary@eko.one.pl">
+	<title>3G/4G/5G</title>
+	<link href="/bootstrap.min.css?v=1" rel="stylesheet">
+	<!--[if lt IE 9]>
+		<script src="/html5shiv.min.js?v=1"></script>
+		<script src="/respond.min.js?v=1"></script>
+	<![endif]-->
+	<link href="/3ginfo.css?v=1" rel="stylesheet">
+	<script src="/3ginfo.js?v=1"></script>
+</head>
+<body>
+
+<div class="container">
+	<div id="div_content">
+	<div id="div_template" style="display:none">
+		<h3 class="section" data-i18n="device">Device</h3>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="vendor">Vendor</div>
+			<div class="col-xs-6">
+			<p id="vendor_idx">-</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="product">Product</div>
+			<div class="col-xs-6">
+			<p id="product_idx">-</p>
+		</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="revision">Revision</div>
+			<div class="col-xs-6">
+			<p id="revision_idx">-</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="imei">International Mobile Equipment Identity (IMEI)</div>
+			<div class="col-xs-6">
+			<p id="imei_idx">-</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="iccid">SIM number (ICCID)</div>
+			<div class="col-xs-6">
+			<p id="iccid_idx">-</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="imsi">International Mobile Subscriber Identity (IMSI)</div>
+			<div class="col-xs-6">
+			<p id="imsi_idx">-</p>
+			</div>
+		</div>
+
+		<h3 class="section" data-i18n="parameters">Parameters</h3>
+		<div class="row">
+			<div class="col-sm-8">
+				<div class="row">
+					<div class="col-xs-6 text-right" data-i18n="operator">Operator</div>
+					<div class="col-xs-6">
+					<p id="operator_idx">-</p>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-xs-6 text-right" data-i18n="signal">Signal</div>
+					<div class="col-xs-6">
+					<p id="signal_idx">-</p>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-xs-6 text-right" data-i18n="mode">Mode</div>
+					<div class="col-xs-6">
+					<p id="mode_idx">-</p>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-xs-6 text-right" data-i18n="simstatus">SIM status</div>
+					<div class="col-xs-6">
+					<p id="registration_idx">-</p>
+					</div>
+				</div>
+				<div class="row" id="div_addon_idx" style="display:none;">
+					<div class="col-xs-6 col-xs-offset-6">
+					<p><a href="#" class="click" onclick="modemaddon(_idx);" data-i18n="more">more parameters</a></p>
+					</div>
+				</div>
+				<div class="row" id="div_btsearch_idx" style="display:none;">
+					<div class="col-xs-6 col-xs-offset-6">
+					<p><a href="#" id="btsearch_idx" class="click" target="_blank" data-i18n="btslocation">BTS location</a>&nbsp;&rarr;</p>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-4 center-xd">
+				<div class="signal-bars sizing-box lzero one-bar" id="signal_bars_idx">
+					<div class="first-bar bar"></div>
+					<div class="second-bar bar"></div>
+					<div class="third-bar bar"></div>
+					<div class="fourth-bar bar"></div>
+					<div class="fifth-bar bar"></div>
+				</div>
+			</div>
+		</div>
+
+		<h3 class="section" data-i18n="connection">Connection</h3>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="connectiontime">Connection time</div>
+			<div class="col-xs-6">
+			<p><span id="uptime_idx">-</span><span class="visible-xs oneline"></span><span id="uptime_since_idx"></span></p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="tx">Uploaded</div>
+			<div class="col-xs-6">
+			<p id="tx_idx">-</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-6 text-right" data-i18n="rx">Downloaded</div>
+			<div class="col-xs-6">
+			<p id="rx_idx">-</p>
+			</div>
+		</div>
+	</div>
+	<div id="div_modems">
+		<div class="flex-center position-ref full-height">
+			<div class="flex-content">
+				<div data-i18n="pleasewait">Please wait</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="div_msg" class="modal">
+	<div id="msgtxt" class="modal-content text-center" data-i18n="pleasewait">Please wait</div>
+</div>
+
+<div class="text-center">&nbsp;</div>
+
+</body>
+</html>

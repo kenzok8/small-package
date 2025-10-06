@@ -1,0 +1,96 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-04-30 16:16+0000\n"
+"Last-Translator: Weblate Admin <contact@openmptcprouter.com>\n"
+"Language-Team: French <http://weblate.openmptcprouter.com/projects/omr/"
+"glorytun-tcp/fr/>\n"
+"Language: fr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.5.2\n"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:32
+msgid "Advanced Settings"
+msgstr "Configuration avancée"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:38
+msgid "Client"
+msgstr "Client"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:34
+msgid "Enabled"
+msgstr "Activer"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:68
+msgid "Force fallback cipher"
+msgstr "Forcer le chiffrement de secours"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:31
+msgid "General Settings"
+msgstr "Paramètres généraux"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:24
+#: luci-app-glorytun-tcp/root/usr/share/luci/menu.d/luci-app-glorytun-tcp.json:3
+msgid "Glorytun TCP"
+msgstr "Glorytun TCP"
+
+#: luci-app-glorytun-tcp/root/usr/share/rpcd/acl.d/luci-app-glorytun-tcp.json:3
+msgid "Grant access to glorytun TCP"
+msgstr "Accorder l'accès à Glorytun TCP"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:42
+msgid "Host"
+msgstr "Hôte"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:26
+msgid "Instances"
+msgstr "Instances"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:52
+msgid "Interface name"
+msgstr "Nom de l'interface"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:48
+msgid "Key"
+msgstr "Clef"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:82
+msgid "Label"
+msgstr "Étiquette"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:56
+msgid "Local IP"
+msgstr "Adresse IP locale"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:64
+msgid "MPTCP"
+msgstr "MPTCP"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:37
+msgid "Mode"
+msgstr "Mode"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:77
+msgid "Multiqueue"
+msgstr "Multiqueue"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:45
+msgid "Port"
+msgstr "Port"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:60
+msgid "Remote IP"
+msgstr "IP Distante"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:39
+msgid "Server"
+msgstr "Serveur"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:72
+msgid "Timeout"
+msgstr "Temporisation"
+
+#: luci-app-glorytun-tcp/htdocs/luci-static/resources/view/services/glorytun-tcp.js:68
+msgid "chacha"
+msgstr "Chacha"

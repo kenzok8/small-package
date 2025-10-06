@@ -1,0 +1,10 @@
+
+config server 'server'
+	option enabled '0'
+	option port '1194'
+	option proto 'tcp'
+	option ipv6 '1'
+	option ip_segment '172.30.1.0'
+	option subnet_mask '255.255.255.0'
+	option lzo '1'
+	option ddns 'example.com'

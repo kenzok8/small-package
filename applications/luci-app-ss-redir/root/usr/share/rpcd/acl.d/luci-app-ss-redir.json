@@ -1,0 +1,14 @@
+{
+	"luci-app-ss-redir": {
+		"description": "Grant access to LuCI app ss-redir",
+		"read": {
+			"ubus": {
+				"service": [ "list" ]
+			},
+			"uci": ["ss-redir"]
+		},
+		"write": {
+			"uci": ["ss-redir"]
+		}
+	}
+}

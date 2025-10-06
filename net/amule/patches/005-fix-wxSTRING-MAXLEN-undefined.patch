@@ -1,0 +1,14 @@
+--- a/src/CString_wx.h
++++ b/src/CString_wx.h
+@@ -52,7 +52,11 @@ class CString : public wxString{
+ 		int ReverseFind(const CString& str)const{	return rfind(str);	}
+ 		CString Right(size_t len)const{	return wxString::Right(len);	}
+ 		CString Left(size_t len)const{	return wxString::Left(len);	}
++#if wxCHECK_VERSION(2, 9, 0)
++		CString Mid(size_t first, size_t count = wxString::npos)const{
++#else
+ 		CString Mid(size_t first, size_t count = wxSTRING_MAXLEN)const{
++#endif
+ 			return wxString::Mid(first, count);
+ 		}
+ };

@@ -1,0 +1,11 @@
+{
+    "luci-app-dsvpn": {
+	"description": "Grant access to DSVPN",
+	"read": {
+	    "uci": [ "dsvpn" ]
+	},
+	"write": {
+	    "uci": [ "dsvpn" ]
+	}
+    }
+}

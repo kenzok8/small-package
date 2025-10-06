@@ -10,6 +10,6 @@ PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 LUCI_TITLE:=LuCI app for dae
 LUCI_DEPENDS:=+dae +dae-geoip +dae-geosite
 
-include $(TOPDIR)/feeds/luci/luci.mk
+include ../../luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

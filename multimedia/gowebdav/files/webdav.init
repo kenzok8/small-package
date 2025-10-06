@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2021 ImmortalWrt
+
+START=90
+STOP=10
+
+WEBDAV="/usr/bin/webdav"
+
+WEBDAVCONFIG="/etc/webdav/webdav.yaml"
+
+start() {
+	local enabled="$(uci get webdav.config.enabled)"
+	stop
+	[ "${enabled}" == "1" ] || exit 0
+	export HOME="/root/"
+	"${WEBDAV}" -c "${WEBDAVCONFIG}" >/dev/null 2>&1 &
+}
+
+stop() {
+	killall -9 pgrep "${WEBDAV}" >/dev/null 2>&1
+}
+

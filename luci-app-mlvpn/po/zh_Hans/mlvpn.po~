@@ -1,0 +1,80 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2020-12-04 16:03+0000\n"
+"Last-Translator: antrouter <xinyangla@188.com>\n"
+"Language-Team: Chinese (Simplified) <http://weblate.openmptcprouter.com/"
+"projects/omr/luciapplicationsmlvpn/zh_Hans/>\n"
+"Language: zh_Hans\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.0.4\n"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:32
+msgid "Advanced Settings"
+msgstr "高级设置"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:38
+msgid "Client"
+msgstr "客户端"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:34
+msgid "Enabled"
+msgstr "开启"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:45
+msgid "First Port"
+msgstr "第一端口"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:31
+msgid "General Settings"
+msgstr "通用设置"
+
+#: luci-app-mlvpn/root/usr/share/rpcd/acl.d/luci-app-mlvpn.json:3
+msgid "Grant UCI access for luci-app-mlvpn"
+msgstr "授予UCI访问luci-app-mlvpn的权限"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:42
+msgid "Host"
+msgstr "主机"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:26
+msgid "Instances"
+msgstr "实例"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:54
+msgid "Interface name"
+msgstr "接口名称"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:78
+msgid "Label"
+msgstr "标签"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:72
+msgid "Loss tolerance"
+msgstr "损失容忍"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:24
+#: luci-app-mlvpn/root/usr/share/luci/menu.d/luci-app-mlvpn.json:3
+msgid "MLVPN"
+msgstr "mlvpn"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:37
+msgid "Mode"
+msgstr "模式"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:50
+msgid "Password"
+msgstr "密码"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:66
+msgid "Reorder buffer size"
+msgstr "重新排序缓冲区大小"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:39
+msgid "Server"
+msgstr "服务器"
+
+#: luci-app-mlvpn/htdocs/luci-static/resources/view/services/mlvpn.js:60
+msgid "Timeout (s)"
+msgstr "超时(s)"

@@ -1,0 +1,25 @@
+--- a/h3c.h
++++ b/h3c.h
+@@ -120,19 +120,19 @@
+ #define MD5_XOR 0
+ #define MD5_MD5 1
+ 
+-struct eapol {
++extern struct eapol {
+ 	unsigned char version;
+ 	unsigned char type;
+ 	unsigned short length;
+ }__attribute__ ((packed)) eapol;
+ 
+-struct eap {
++extern struct eap {
+ 	unsigned char code;
+ 	unsigned char id;
+ 	unsigned short length;
+ }__attribute__ ((packed)) eap;
+ 
+-struct packet {
++extern struct packet {
+ 	struct ether_header eth_header;
+ 	struct eapol eapol_header;
+ 	struct eap eap_header;

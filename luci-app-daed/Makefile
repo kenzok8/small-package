@@ -8,6 +8,6 @@ LUCI_TITLE:=LuCI app for dae dashboard
 LUCI_DEPENDS:=+daed +daed-geoip +daed-geosite
 LUCI_PKGARCH:=all
 
-include $(TOPDIR)/feeds/luci/luci.mk
+include ../../luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

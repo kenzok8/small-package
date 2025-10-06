@@ -1,0 +1,59 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:38
+msgid "Client"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:24
+#: luci-app-dsvpn/root/usr/share/luci/menu.d/luci-app-dsvpn.json:3
+msgid "DSVPN"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:31
+msgid "Enabled"
+msgstr ""
+
+#: luci-app-dsvpn/root/usr/share/rpcd/acl.d/luci-app-dsvpn.json:3
+msgid "Grant access to DSVPN"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:42
+msgid "Host"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:26
+msgid "Instances"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:52
+msgid "Interface name"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:48
+msgid "Key"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:34
+msgid "Label"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:56
+msgid "Local IP"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:37
+msgid "Mode"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:45
+msgid "Port"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:60
+msgid "Remote IP"
+msgstr ""
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:39
+msgid "Server"
+msgstr ""

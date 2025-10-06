@@ -1,0 +1,59 @@
+From a8f92f43986c7efd1c1f5fcf5826fdcba76d7ad9 Mon Sep 17 00:00:00 2001
+From: Aether Chen <15167799+chenjunyu19@users.noreply.github.com>
+Date: Sun, 10 Sep 2023 13:45:20 +0800
+Subject: [PATCH] misc: fix some memory issues
+
+---
+ config.c                                | 4 ++--
+ if_impl/if_impl.c                       | 2 +-
+ packet_plugin/packet_plugin.c           | 2 +-
+ packet_plugin/rjv3/packet_plugin_rjv3.c | 3 +++
+ 4 files changed, 7 insertions(+), 4 deletions(-)
+
+--- a/config.c
++++ b/config.c
+@@ -66,8 +66,8 @@ RESULT parse_cmdline_conf_file(int argc,
+                 return FAILURE;
+             } else {
+                 int _len = strnlen(argv[i + 1], MAX_PATH);
+-                g_prog_config.conffile = (char*)malloc(_len);
+-                strncpy(g_prog_config.conffile, argv[i + 1], _len);
++                g_prog_config.conffile = (char*)malloc(_len + 1);
++                strncpy(g_prog_config.conffile, argv[i + 1], _len + 1);
+             }
+         }
+     }
+--- a/if_impl/if_impl.c
++++ b/if_impl/if_impl.c
+@@ -42,7 +42,7 @@ void print_if_impl_list() {
+  * if no name is specified.
+  */
+ static int impl_name_cmp(void* to_find, void* vimpl) {
+-    return to_find ? memcmp(to_find, IMPL->name, strlen(IMPL->name)) : 0;
++    return to_find ? strcmp(to_find, IMPL->name) : 0;
+ }
+ 
+ RESULT select_if_impl(const char* name) {
+--- a/packet_plugin/packet_plugin.c
++++ b/packet_plugin/packet_plugin.c
+@@ -33,7 +33,7 @@ int init_packet_plugin_list() {
+ }
+ 
+ static int plugin_name_cmp(void* to_find, void* curr) {
+-    return memcmp(to_find, ((PACKET_PLUGIN*)curr)->name, strlen(((PACKET_PLUGIN*)curr)->name));
++    return strcmp(to_find, ((PACKET_PLUGIN*)curr)->name);
+ }
+ 
+ RESULT select_packet_plugin(const char* name) {
+--- a/packet_plugin/rjv3/packet_plugin_rjv3.c
++++ b/packet_plugin/rjv3/packet_plugin_rjv3.c
+@@ -230,6 +230,9 @@ static RESULT rjv3_process_success(struc
+              * once the state transition is finished. We need to keep it
+              * in case DHCP fails and we need to start heartbeating.
+              */
++            if (PRIV->duplicated_packet != NULL) {
++                free_frame(&PRIV->duplicated_packet);
++            }
+             PRIV->duplicated_packet = frame_duplicate(frame);
+             system(PRIV->dhcp_script);
+ 

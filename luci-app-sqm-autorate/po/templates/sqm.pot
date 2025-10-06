@@ -1,0 +1,265 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:207
+msgid ""
+"Advanced option string to pass to the egress queueing disciplines; no error "
+"checking, use very carefully."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:204
+msgid ""
+"Advanced option string to pass to the ingress queueing disciplines; no error "
+"checking, use very carefully."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:75
+msgid "Autorate settings"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:96
+msgid "Base download speed (kbit/s) (ingress):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:110
+msgid "Base upload speed (kbit/s) (egress):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:72
+msgid "Basic Settings"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:124
+msgid ""
+"Create log file for this SQM instance under /var/run/sqm/${Interface_name}."
+"[start|stop]-sqm.log."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:259
+msgid "Debug"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:58
+msgid "Enable SQM"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:90
+msgid "Enable SQM autorate"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:79
+msgid "Enable this SQM instance."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:172
+msgid ""
+"Explicit congestion notification (ECN) status on inbound packets (ingress):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:178
+msgid ""
+"Explicit congestion notification (ECN) status on outbound packets (egress)."
+msgstr ""
+
+#: luci-app-sqm-autorate/root/usr/share/rpcd/acl.d/luci-app-sqm.json:3
+msgid "Grant UCI access for luci-app-sqm"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:192
+msgid "Hard limit on egress queues; leave empty for default."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:188
+msgid "Hard limit on ingress queues; leave empty for default."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:166
+msgid "Ignore DSCP on ingress:"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:93
+msgid "Interface name"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:200
+msgid ""
+"Latency target for egress, e.g. 5ms [units: s, ms, or us]; leave empty for "
+"automatic selection, put in the word default for the qdisc's default."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:196
+msgid ""
+"Latency target for ingress, e.g 5ms [units: s, ms, or us]; leave empty for "
+"automatic selection, put in the word default for the qdisc's default."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:74
+msgid "Link Layer Adaptation"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:227
+msgid ""
+"Maximal Size for size and rate calculations, tcMTU (byte); needs to be >= "
+"interface MTU + overhead:"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:105
+msgid "Maximum download speed (kbit/s):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:119
+msgid "Maximum upload speed (kbit/s):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:237
+msgid ""
+"Minimal packet size, MPU (byte); needs to be > 0 for ethernet size tables:"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:100
+msgid "Minimum download speed (kbit/s):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:114
+msgid "Minimum upload speed (kbit/s):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:136
+msgid "Must be set to cake if autorate is used."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:232
+msgid ""
+"Number of entries in size/rate tables, TSIZE; for ATM choose TSIZE = (tcMTU "
+"+ 1) / 16:"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:287
+msgid "Number of seconds to wait on startup:"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:255
+msgid "Output monitoring lines showing cake bandwidth changes"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:251
+msgid "Output monitoring lines showing processing stats"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:217
+msgid "Per Packet Overhead (byte):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:267
+msgid "Pingers numbers:"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:73
+msgid "Queue Discipline"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:144
+msgid "Queue setup script"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:71
+msgid "Queues"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:136
+msgid ""
+"Queuing disciplines useable on this system. After installing a new qdisc, "
+"you need to restart the router to see updates!"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:263
+msgid "Reflector ping interval in seconds:"
+msgstr ""
+
+#: luci-app-sqm-autorate/root/usr/share/luci/menu.d/luci-app-sqm.json:3
+msgid "SQM QoS"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:223
+msgid ""
+"Show Advanced Linklayer Options, (only needed if MTU > 1500). Advanced "
+"options will only be used as long as this box is checked."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:157
+msgid ""
+"Show and Use Advanced Configuration. Advanced options will only be used as "
+"long as this box is checked."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:184
+msgid ""
+"Show and Use Dangerous Configuration. Dangerous options will only be used as "
+"long as this box is checked."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:275
+msgid "Sleep functionnality"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:64
+msgid "Smart Queue Management"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:160
+msgid "Squash DSCP on inbound packets (ingress):"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:84
+msgid ""
+"The SQM GUI has just enabled the sqm initscript on your behalf. Remember to "
+"disable the sqm initscript manually under System Startup menu in case this "
+"change was not wished for."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:48
+msgid ""
+"The SQM service seems to be disabled. Please use the button below to "
+"activate this service."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:279
+msgid "Threshold in Kbit/s below which dl/ul is considered idle"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:283
+msgid ""
+"Time threshold to put pingers to sleep on substained dl/ul achieved rate < "
+"idle_threshold"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:127
+msgid "Verbosity of SQM's output into the system log."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:211
+msgid "Which link layer to account for:"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:242
+msgid "Which linklayer adaptation mechanism to use; for testing only"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:65
+msgid ""
+"With <abbr title=\"Smart Queue Management\">SQM</abbr> you can enable "
+"traffic shaping, better mixing (Fair Queueing), active queue length "
+"management (AQM) and prioritisation on one network interface."
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:131
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:173
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:179
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:212
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:243
+msgid "default"
+msgstr ""
+
+#: luci-app-sqm-autorate/htdocs/luci-static/resources/view/network/sqm.js:271
+msgid "delay threshold in ms:"
+msgstr ""

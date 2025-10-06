@@ -1,0 +1,172 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2020 Lienol <lawlienol@gmail.com>
+# Copyright (C) 2025 jjm2473 <jjm2473@gmail.com> supports fw4
+
+START=99
+
+CONFIG=socat
+CONFIG_PATH=/var/etc/$CONFIG
+NFTABLES=false
+
+add_rule() {
+	if $NFTABLES; then
+		echo '' > /var/etc/$CONFIG.include.nft
+		cat <<-EOF >> /var/etc/$CONFIG.include.nft
+			flush chain inet fw4 socat_input
+			table inet fw4 {
+				chain socat_input {
+		EOF
+		return 0
+	fi
+	iptables -N SOCAT
+	iptables -I INPUT -j SOCAT
+	ip6tables -N SOCAT
+	ip6tables -I INPUT -j SOCAT
+}
+
+del_rule() {
+	$NFTABLES && nft flush chain inet fw4 socat_input
+	iptables -D INPUT -j SOCAT 2>/dev/null
+	iptables -F SOCAT 2>/dev/null
+	iptables -X SOCAT 2>/dev/null
+	ip6tables -D INPUT -j SOCAT 2>/dev/null
+	ip6tables -F SOCAT 2>/dev/null
+	ip6tables -X SOCAT 2>/dev/null
+}
+
+gen_include() {
+	echo '#!/bin/sh' > /var/etc/$CONFIG.include
+	if $NFTABLES; then
+		cat <<-EOF >> /var/etc/$CONFIG.include.nft
+				}
+			}
+		EOF
+		echo "nft -f /var/etc/$CONFIG.include.nft" >>/var/etc/$CONFIG.include
+		( . /var/etc/$CONFIG.include )
+		return 0
+	fi
+	extract_rules() {
+		local _ipt="iptables"
+		[ "$1" == "6" ] && _ipt="ip6tables"
+		
+		echo "*$2"
+		${_ipt}-save -t $2 | grep "SOCAT" | \
+		sed -e "s/^-A \(INPUT\)/-I \1 1/"
+		echo 'COMMIT'
+	}
+	cat <<-EOF >> /var/etc/$CONFIG.include
+		iptables-save -c | grep -v "SOCAT" | iptables-restore -c
+		iptables-restore -n <<-EOT
+		$(extract_rules 4 filter)
+		EOT
+		ip6tables-save -c | grep -v "SOCAT" | ip6tables-restore -c
+		ip6tables-restore -n <<-EOT
+		$(extract_rules 6 filter)
+		EOT
+	EOF
+	return 0
+}
+
+run_service() {
+	local enable remarks protocol family proto listen_port reuseaddr dest_proto dest_ip dest_port firewall_accept
+	local ipv6only_params proxy_arg
+	local proxy proxy_server proxy_port
+	config_get enable $1 enable
+	[ "$enable" = "0" ] && return 0
+	config_get remarks $1 remarks
+	config_get protocol $1 protocol
+	config_get family $1 family
+	config_get proto $1 proto
+	config_get listen_port $1 listen_port
+	config_get reuseaddr $1 reuseaddr
+	config_get dest_proto $1 dest_proto
+	config_get dest_ip $1 dest_ip
+	config_get dest_port $1 dest_port
+	config_get proxy $1 proxy
+	config_get proxy_server $1 proxy_server
+	config_get proxy_port $1 proxy_port
+	config_get firewall_accept $1 firewall_accept
+	ln -s /usr/bin/socat ${CONFIG_PATH}/$1
+	
+	if [ "$reuseaddr" == "1" ]; then
+		reuseaddr=",reuseaddr"
+	else
+		reuseaddr=""
+	fi
+	
+	if [ "$family" == "6" ]; then
+		ipv6only_params=",ipv6-v6only"
+	else
+		ipv6only_params=""
+	fi
+	
+	# 端口转发
+	if [ "$protocol" == "port_forwards" ]; then
+		local listen=${proto}${family}
+		[ "$family" == "" ] && listen=${proto}6
+		[ "$proxy" != "" ] && {
+			proxy_arg=""
+			[ "$proxy" == "socks4/4a" ] && {
+				dest_proto="socks4a"
+				proxy_arg="socksport"
+			}
+			[ "$proxy" == "http" ] && {
+				dest_proto="proxy"
+				proxy_arg="proxyport"
+			}
+			[ -n "$proxy_server" ] && dest_proto="${dest_proto}:${proxy_server}"
+			[ -n "$proxy_port" ] && proxy_arg=",${proxy_arg}=${proxy_port}"
+		}
+		${CONFIG_PATH}/$1 ${listen}-listen:${listen_port}${ipv6only_params}${reuseaddr},fork ${dest_proto}:${dest_ip}:${dest_port}${proxy_arg} >/dev/null 2>&1 &
+	fi
+	
+	[ "$firewall_accept" == "1" ] && {
+		if $NFTABLES; then
+			if [ -z "$family" ]; then
+				echo "	$proto dport $listen_port accept" >>/var/etc/$CONFIG.include.nft
+			else
+				[ "$family" = "6" ] || family=4
+				echo "	meta nfproto ipv$family $proto dport $listen_port accept" >>/var/etc/$CONFIG.include.nft
+			fi
+			return 0
+		fi
+		if [ -z "$family" ] || [ "$family" == "6" ]; then
+			ip6tables -A SOCAT -p $proto --dport $listen_port -m comment --comment "$remarks" -j ACCEPT
+		fi
+		if [ -z "$family" ] || [ "$family" == "4" ]; then
+			iptables -A SOCAT -p $proto --dport $listen_port -m comment --comment "$remarks" -j ACCEPT
+		fi
+	}
+}
+
+stop_service() {
+	[ -x /sbin/fw4 ] && NFTABLES=true
+	rm -f /var/etc/$CONFIG.include /var/etc/$CONFIG.include.nft
+	sleep 1
+	busybox ps -w | grep "$CONFIG_PATH/" | grep -v "grep" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
+	del_rule
+	rm -rf $CONFIG_PATH 
+}
+
+start() {
+	local enable=$(uci -q get $CONFIG.@global[0].enable)
+	if [ "$enable" = "0" ];then
+		stop_service
+	else
+		[ -x /sbin/fw4 ] && NFTABLES=true
+		mkdir -p $CONFIG_PATH
+		add_rule
+		config_load $CONFIG
+		config_foreach run_service "config"
+		gen_include
+	fi
+}
+
+stop() {
+	stop_service
+}
+
+restart() {
+	stop
+	start
+}

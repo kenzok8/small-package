@@ -1,0 +1,68 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-05-05 11:40+0000\n"
+"Last-Translator: niergouge <1150108426@qq.com>\n"
+"Language-Team: Chinese (Simplified) <http://weblate.openmptcprouter.com/"
+"projects/omr/luciapplicationsdsvpn/zh_Hans/>\n"
+"Language: zh_Hans\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.6.1\n"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:38
+msgid "Client"
+msgstr "客户端"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:24
+#: luci-app-dsvpn/root/usr/share/luci/menu.d/luci-app-dsvpn.json:3
+msgid "DSVPN"
+msgstr "DSVPN"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:31
+msgid "Enabled"
+msgstr "启用"
+
+#: luci-app-dsvpn/root/usr/share/rpcd/acl.d/luci-app-dsvpn.json:3
+msgid "Grant access to DSVPN"
+msgstr "授予对DSVPN的访问权限"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:42
+msgid "Host"
+msgstr "主机"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:26
+msgid "Instances"
+msgstr "实例"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:52
+msgid "Interface name"
+msgstr "接口名称"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:48
+msgid "Key"
+msgstr "秘钥"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:34
+msgid "Label"
+msgstr "标签"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:56
+msgid "Local IP"
+msgstr "本地IP"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:37
+msgid "Mode"
+msgstr "模式"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:45
+msgid "Port"
+msgstr "端口"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:60
+msgid "Remote IP"
+msgstr "远程IP"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:39
+msgid "Server"
+msgstr "服务器"

@@ -1,0 +1,42 @@
+<%+header%>
+
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-18.193.28471-ee087a1"></script>
+<script type="text/javascript">//<![CDATA[
+    var stxhr = new XHR();
+
+    function update_monitor()
+    {
+	var fm = document.getElementById('monitor');
+
+	if (fm)
+	{
+	    fm.innerHTML =
+		'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' + '<%:Waiting for command to complete...%>'
+	    ;
+
+	    stxhr.post('<%=url('admin/network/mptcp')%>/mptcp_monitor_data/', { token: '<%=token%>' },
+		function(x)
+		{
+		    if (x.responseText)
+		    {
+			fm.innerHTML = String.format('<pre>%s</pre>', x.responseText );
+		    } else {
+			fm.innerHTML = '<pre><%:Error%></pre>';
+		    }
+		}
+	    );
+	}
+    }
+    setInterval(function () {
+	update_monitor();
+    }, 10000);
+//]]></script>
+
+<% if stderr and #stderr > 0 then %><pre class="error"><%=pcdata(stderr)%></pre><% end %>
+<div class="cbi-section">
+    <span id="monitor"></span>
+    <script type="text/javascript">//<![CDATA[
+	update_monitor();
+    //]]></script>
+</div>
+<%+footer%>

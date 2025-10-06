@@ -1,0 +1,69 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-06-16 10:51+0000\n"
+"Last-Translator: Dmitry Galenko <d@monteops.com>\n"
+"Language-Team: Russian <http://weblate.openmptcprouter.com/projects/omr/"
+"luciapplicationsdsvpn/ru/>\n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.6.1\n"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:38
+msgid "Client"
+msgstr "Клиент"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:24
+#: luci-app-dsvpn/root/usr/share/luci/menu.d/luci-app-dsvpn.json:3
+msgid "DSVPN"
+msgstr "DSVPN"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:31
+msgid "Enabled"
+msgstr "Установлено"
+
+#: luci-app-dsvpn/root/usr/share/rpcd/acl.d/luci-app-dsvpn.json:3
+msgid "Grant access to DSVPN"
+msgstr "Полный доступ к DSVPN"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:42
+msgid "Host"
+msgstr "Хост"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:26
+msgid "Instances"
+msgstr "Экземпляры"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:52
+msgid "Interface name"
+msgstr "Имя интерфейса"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:48
+msgid "Key"
+msgstr "Ключ"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:34
+msgid "Label"
+msgstr "Метка"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:56
+msgid "Local IP"
+msgstr "Локальный IP"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:37
+msgid "Mode"
+msgstr "Режим"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:45
+msgid "Port"
+msgstr "Порт"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:60
+msgid "Remote IP"
+msgstr "Удаленный IP"
+
+#: luci-app-dsvpn/htdocs/luci-static/resources/view/services/dsvpn.js:39
+msgid "Server"
+msgstr "Сервер"

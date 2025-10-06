@@ -1,0 +1,44 @@
+--- a/CPP/7zip/7zip_gcc.mak
++++ b/CPP/7zip/7zip_gcc.mak
+@@ -24,7 +24,7 @@ PROGPATH_STATIC = $(O)/$(PROG)s
+ 
+ 
+ ifneq ($(CC), xlc)
+-CFLAGS_WARN_WALL = -Werror -Wall -Wextra
++CFLAGS_WARN_WALL = -Wall -Wextra
+ endif
+ 
+ # for object file
+@@ -45,12 +45,12 @@ CFLAGS_DEBUG = -g
+ else
+ CFLAGS_DEBUG = -DNDEBUG
+ ifneq ($(CC), $(CROSS_COMPILE)clang)
+-LFLAGS_STRIP = -s
++LFLAGS_STRIP =
+ endif
+ endif
+ 
+ # CFLAGS_BASE_LIST = -S
+-CFLAGS_BASE = -O2 $(CFLAGS_BASE_LIST) $(CFLAGS_WARN_WALL) $(CFLAGS_WARN) \
++CFLAGS_BASE = $(CFLAGS_BASE_LIST) $(CFLAGS_WARN_WALL) $(CFLAGS_WARN) \
+  $(CFLAGS_DEBUG) -D_REENTRANT -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE \
+  -fPIC
+ 
+@@ -169,7 +169,7 @@ endif
+ 
+ 
+ 
+-CFLAGS = $(MY_ARCH_2) $(LOCAL_FLAGS) $(CFLAGS_BASE2) $(CFLAGS_BASE) $(FLAGS_FLTO) $(CC_SHARED) -o $@
++CFLAGS += $(MY_ARCH_2) $(LOCAL_FLAGS) $(CFLAGS_BASE2) $(CFLAGS_BASE) $(FLAGS_FLTO) $(CC_SHARED) -o $@
+ 
+ 
+ ifdef IS_MINGW
+@@ -1361,7 +1361,7 @@ predef_cc:
+ 	$(CC) $(CFLAGS) -E $(SHOW_PREDEF)  ../../../../C/CpuArch.c > predef_cc_log
+ #	$(CC) $(CFLAGS) -E -dM -  < /dev/null
+ predef_cxx:
+-	$(CXX) $(CFLAGS) -E $(SHOW_PREDEF) ../../../Common/CrcReg.cpp  > predef_cxx_log
++	$(CXX) $(CXXFLAGS) -E $(SHOW_PREDEF) ../../../Common/CrcReg.cpp  > predef_cxx_log
+ 
+ predef: predef_cc predef_cxx
+ 

@@ -1,0 +1,25 @@
+From 67315da11c88d7007090c23f68e0b66e6d9b8e37 Mon Sep 17 00:00:00 2001
+From: Mikhail Novosyolov <m.novosyolov@rosalinux.ru>
+Date: Mon, 28 Feb 2022 14:26:57 +0300
+Subject: [PATCH] Fix underlinkage of SSLPlugin
+
++ /usr/share/spec-helper/check_elf_files
+<...>
+Warning: undefined symbols in /usr/lib64/3proxy/SSLPlugin.ld.so: TLS_client_method SSL_get_error BIO_new_fp TLS_server_method SSL_write SSL_free X509_delete_ext SSL_set_fd EVP_sha1 X509_get_subject_name EVP_PKEY_free X509_set_issuer_name SSL_read X509_get_ext_by_NID SSL_new SSL_shutdown SSL_set_read_ahead PEM_write_bio_X509 SSL_accept SSL_CTX_new SSL_get_peer_certificate BIO_ctrl BIO_free OPENSSL_init_ssl SSL_ctrl ERR_error_string SSL_pending X509_free X509_set_pubkey X509_digest SSL_connect SSL_CTX_free X509_sign ERR_get_error SSL_CTX_use_PrivateKey X509_EXTENSION_free X509_dup PEM_read_bio_PrivateKey PEM_read_bio_X509 SSL_CTX_use_certificate EVP_sha256 BIO_new_file
+
+Fixes: https://github.com/3proxy/3proxy/issues/749
+---
+ src/plugins/SSLPlugin/Makefile.inc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/plugins/SSLPlugin/Makefile.inc
++++ b/src/plugins/SSLPlugin/Makefile.inc
+@@ -10,5 +10,5 @@ my_ssl$(OBJSUFFICS): my_ssl.c
+ 
+ 
+ $(BUILDDIR)SSLPlugin$(DLSUFFICS): ssl_plugin$(OBJSUFFICS) my_ssl$(OBJSUFFICS)
+-	$(LN) $(LNOUT)../../$(BUILDDIR)SSLPlugin$(DLSUFFICS) $(LDFLAGS) $(DLFLAGS) ssl_plugin$(OBJSUFFICS) my_ssl$(OBJSUFFICS) $(LIBS) 
+-	
+\ No newline at end of file
++	$(LN) $(LNOUT)../../$(BUILDDIR)SSLPlugin$(DLSUFFICS) $(LDFLAGS) $(DLFLAGS) ssl_plugin$(OBJSUFFICS) my_ssl$(OBJSUFFICS) $(LIBS) -lcrypto -lssl
++	

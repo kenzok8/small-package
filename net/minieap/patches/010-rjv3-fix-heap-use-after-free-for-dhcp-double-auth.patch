@@ -1,0 +1,54 @@
+From 17fb51ee6a502b6def8c0a8d3a6a9035844d56e4 Mon Sep 17 00:00:00 2001
+From: Aether Chen <15167799+chenjunyu19@users.noreply.github.com>
+Date: Sat, 9 Sep 2023 23:35:30 +0800
+Subject: [PATCH] rjv3: fix heap-use-after-free for dhcp double auth
+
+---
+ packet_plugin/rjv3/packet_plugin_rjv3.c      | 2 +-
+ packet_plugin/rjv3/packet_plugin_rjv3_priv.c | 6 +++---
+ packet_plugin/rjv3/packet_plugin_rjv3_priv.h | 1 +
+ 3 files changed, 5 insertions(+), 4 deletions(-)
+
+--- a/packet_plugin/rjv3/packet_plugin_rjv3.c
++++ b/packet_plugin/rjv3/packet_plugin_rjv3.c
+@@ -230,7 +230,7 @@ static RESULT rjv3_process_success(struc
+              * once the state transition is finished. We need to keep it
+              * in case DHCP fails and we need to start heartbeating.
+              */
+-            PRIV->last_recv_packet = frame_duplicate(frame);
++            PRIV->duplicated_packet = frame_duplicate(frame);
+             system(PRIV->dhcp_script);
+ 
+             /* Try right after the script ends */
+--- a/packet_plugin/rjv3/packet_plugin_rjv3_priv.c
++++ b/packet_plugin/rjv3/packet_plugin_rjv3_priv.c
+@@ -504,8 +504,8 @@ void rjv3_start_secondary_auth(void* vth
+     if (IS_FAIL(rjv3_get_dhcp_lease(this, &_tmp_dhcp_lease))) {
+         PRIV->dhcp_count++;
+         if (PRIV->dhcp_count > PRIV->max_dhcp_count) {
+-            rjv3_process_result_prop(PRIV->last_recv_packet); // Loads of texts
+-            free_frame(&PRIV->last_recv_packet); // Duplicated in process_success
++            rjv3_process_result_prop(PRIV->duplicated_packet); // Loads of texts
++            free_frame(&PRIV->duplicated_packet); // Duplicated in process_success
+             schedule_alarm(1, rjv3_send_keepalive_timed, this);
+             PR_ERR("无法获取 IPv4 地址等信息，将不会进行第二次认证而直接开始心跳");
+         } else {
+@@ -515,7 +515,7 @@ void rjv3_start_secondary_auth(void* vth
+         return;
+     } else {
+         PR_INFO("DHCP 完成，正在开始第二次认证");
+-        free_frame(&PRIV->last_recv_packet); // Duplicated in process_success
++        free_frame(&PRIV->duplicated_packet); // Duplicated in process_success
+         switch_to_state(EAP_STATE_START_SENT, NULL);
+         return;
+     }
+--- a/packet_plugin/rjv3/packet_plugin_rjv3_priv.h
++++ b/packet_plugin/rjv3/packet_plugin_rjv3_priv.h
+@@ -126,6 +126,7 @@ typedef struct _packet_plugin_rjv3_priv
+     int succ_count;
+     int dhcp_count; // Used in double auth
+     ETH_EAP_FRAME* last_recv_packet;
++    ETH_EAP_FRAME* duplicated_packet; // Used in double auth
+ } rjv3_priv;
+ 
+ RESULT rjv3_append_priv(struct _packet_plugin* this, ETH_EAP_FRAME* frame);

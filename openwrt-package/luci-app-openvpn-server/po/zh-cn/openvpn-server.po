@@ -1,0 +1,101 @@
+msgid "OpenVPN Server"
+msgstr "OpenVPN 服务器"
+
+msgid "Server"
+msgstr "服务端"
+
+msgid "General Settings"
+msgstr "基本设置"
+
+msgid "Current Condition"
+msgstr "当前状态"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Protocol"
+msgstr "协议"
+
+msgid "Listen IPv6"
+msgstr "监听 IPv6"
+
+msgid "IP segment"
+msgstr "IP 段"
+
+msgid "Subnet mask"
+msgstr "子网掩码"
+
+msgid "LZO compression"
+msgstr "LZO 压缩"
+
+msgid "Extra Config"
+msgstr "额外配置"
+
+msgid "DDNS or IP"
+msgstr "DDNS 域名 或 IP"
+
+msgid "OpenVPN Client config file"
+msgstr "OpenVPN 客户端配置文件"
+
+msgid "Download .ovpn file"
+msgstr "下载 .ovpn 文件"
+
+msgid "Users Manager"
+msgstr "用户管理"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "IP address"
+msgstr "IP 地址"
+
+msgid "Automatically"
+msgstr "自动分配"
+
+msgid "Static Routes"
+msgstr "静态路由"
+
+msgid "Certificate"
+msgstr "证书"
+
+msgid "CA certificate"
+msgstr "CA 证书"
+
+msgid "Server certificate"
+msgstr "服务端证书"
+
+msgid "Server private key"
+msgstr "服务端私钥"
+
+msgid "Renew certificate"
+msgstr "更新证书"
+
+msgid "Please wait a moment after clicking..."
+msgstr "点击后请稍等片刻..."
+
+msgid "Online Users"
+msgstr "在线用户"
+
+msgid "Login Time"
+msgstr "登录时间"
+
+msgid "Blacklist"
+msgstr "黑名单"
+
+msgid "Add to Blacklist"
+msgstr "加入黑名单"
+
+msgid "Remove from Blacklist"
+msgstr "移出黑名单"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "RUNNING"
+msgstr "运行中"

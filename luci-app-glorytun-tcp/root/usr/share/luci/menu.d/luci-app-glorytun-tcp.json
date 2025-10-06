@@ -1,0 +1,13 @@
+{
+	"admin/vpn/glorytun-tcp": {
+		"title": "Glorytun TCP",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "services/glorytun-tcp"
+		},
+		"depends": {
+			"acl": [ "luci-app-glorytun-tcp" ]
+		}
+	}
+}

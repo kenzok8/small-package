@@ -1,0 +1,342 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2022-08-12 19:29+0000\n"
+"Last-Translator: Weblate Admin <contact@openmptcprouter.com>\n"
+"Language-Team: Chinese (Simplified) <http://weblate.openmptcprouter.com/"
+"projects/omr/luciapplicationsmptcp/zh_Hans/>\n"
+"Language: zh_Hans\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.10.1\n"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:775
+msgid "(%d minute window, %d second interval)"
+msgstr "(%d 分钟刷新, %d 秒钟刷新)"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:241
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:242
+msgid "(%d minutes window, %d seconds interval)"
+msgstr "(%d 分钟间隔, %d 秒钟刷新)"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:315
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:373
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:932
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:942
+msgid "Average:"
+msgstr "平均:"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:11
+msgid "Bandwidth"
+msgstr "带宽"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:43
+msgid "Check if MPTCP between interface and server is working."
+msgstr "检查接口和服务器之间的MPTCP是否正常工作."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:52
+msgid "Congestion Control"
+msgstr "阻塞控制"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:97
+msgid "Consecutive segments that should be sent for round robin"
+msgstr "连续轮播应发送的连续段"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:311
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:369
+msgid "Current:"
+msgstr "实时:"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:52
+msgid "Default is cubic"
+msgstr "默认设置 cubic"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:21
+msgid "Default is fullmesh"
+msgstr "默认设置fullmesh"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:908
+msgid "Download:"
+msgstr "下载:"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:24
+msgid "Error"
+msgstr "错误"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:18
+msgid "Established connections"
+msgstr "建立的连接"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:91
+msgid "Fill the congestion window on all subflows for round robin"
+msgstr "在循环的所有子流上填充拥塞窗口"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:74
+msgid "Fullmesh subflows for each pair of IP addresses"
+msgstr "每对IP地址的全网格子流"
+
+#: luci-app-mptcp/root/usr/share/rpcd/acl.d/luci-app-mptcp.json:3
+msgid "Grant UCI access for luci-app-mptcp"
+msgstr "授予UCI访问luci-app-mptcp的权限"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:73
+msgid ""
+"If you get \"TCPOptionMPTCPCapable [...] Sender's Key\" at the end, then "
+"MPTCP is supported. If there is a \"-TCPOptionMPTCPCapable\", then it's "
+"blocked."
+msgstr "如果您在末尾获得“TCPOptionMPTCPCapable [...] Sender 's Key” ，则支持MPTCP"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:929
+msgid "Inbound:"
+msgstr "入站:"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:48
+msgid "Interface"
+msgstr "接口"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:104
+msgid "Interfaces Settings"
+msgstr "网卡设置"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:14
+msgid "Loading"
+msgstr "载入中"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:93
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:686
+msgid "MB/s"
+msgstr "MB/s"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:9
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:7
+#: luci-app-mptcp/root/usr/share/luci/menu.d/luci-app-mptcp.json:3
+msgid "MPTCP"
+msgstr "MPTCP"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:16
+msgid "MPTCP Fullmesh"
+msgstr "设置MPTCP全网"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:14
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:42
+msgid "MPTCP Support Check"
+msgstr "MPTCP支持检查"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:20
+msgid "MPTCP monitoring"
+msgstr "MPTCP监控"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:102
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:695
+msgid "Mbit/s"
+msgstr "Mbit/s"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:18
+msgid "Multipath Debug"
+msgstr "Multipath 调试"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:12
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:108
+msgid "Multipath TCP"
+msgstr "多路径TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:42
+msgid "Multipath TCP SYN retries"
+msgstr "多路径 TCP SYN 重试"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:15
+msgid "Multipath TCP checksum"
+msgstr "多路径TCP校验和"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:21
+msgid "Multipath TCP path-manager"
+msgstr "多路径TCP路径管理器"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:31
+msgid "Multipath TCP scheduler"
+msgstr "多路径TCP调度程序"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:47
+#, fuzzy
+msgid "Multipath TCP version"
+msgstr "多路径TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:28
+msgid "Netlink"
+msgstr "网络链接"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:7
+msgid ""
+"Networks MPTCP settings. Visit <a href='http://multipath-tcp.org/pmwiki.php/"
+"Users/ConfigureMPTCP'>http://multipath-tcp.org/pmwiki.php/Users/"
+"ConfigureMPTCP</a> for help."
+msgstr ""
+"网络MPTCP设置. 访问<a href='http://multipath-tcp.org/pmwiki.php/Users/"
+"ConfigureMPTCP'>http://multipath-tcp.org/pmwiki.php/Users/ConfigureMPTCP4</"
+"a> 获取更多的支持."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:108
+msgid "One interface must be set as master"
+msgstr "必须设置一个网卡为主接口"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:939
+msgid "Outbound:"
+msgstr "出站:"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:319
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:377
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:935
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:945
+msgid "Peak:"
+msgstr "峰值:"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:80
+msgid "Re-create fullmesh subflows after a timeout"
+msgstr "超时后重新创建全网格子流"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:891
+msgid "Realtime Traffic"
+msgstr "实时流量"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:10
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:45
+msgid "Settings"
+msgstr "设置"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:65
+msgid "Test"
+msgstr "测试"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:69
+msgid ""
+"The number of MPTCP-level retransmission intervals with no traffic and "
+"pending outstanding data on a given subflow required to declare it stale"
+msgstr ""
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:914
+msgid "Upload:"
+msgstr "上传:"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:14
+msgid "Waiting for command to complete..."
+msgstr "等待命令完成..."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:112
+msgid "backup"
+msgstr "备份"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:22
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:32
+msgid "default"
+msgstr "默认"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:14
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:17
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:20
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:82
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:93
+msgid "disable"
+msgstr "禁用"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:110
+msgid "disabled"
+msgstr "禁用"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:13
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:16
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:19
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:81
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:92
+msgid "enable"
+msgstr "启用"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:109
+msgid "enabled"
+msgstr "启用"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:88
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:372
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:376
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:380
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:681
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:930
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:933
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:936
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:940
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:943
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:946
+msgid "kB/s"
+msgstr "kB/秒"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:97
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:372
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:376
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:380
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:690
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:930
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:933
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:936
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:940
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:943
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:946
+msgid "kbit/s"
+msgstr "kbit/秒"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:111
+msgid "master"
+msgstr "主"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:85
+msgid "ndiffports subflows number"
+msgstr "ndiffports子流数"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:64
+msgid ""
+"specifies the maximum number of ADD_ADDR suboptions accepted for each MPTCP "
+"connection"
+msgstr ""
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:59
+msgid ""
+"specifies the maximum number of additional subflows allowed for each MPTCP "
+"connection"
+msgstr ""
+
+#~ msgid "BLEST"
+#~ msgstr "最好的"
+
+#~ msgid "binder"
+#~ msgstr "设置binder"
+
+#~ msgid "fullmesh"
+#~ msgstr "全网"
+
+#~ msgid "handover"
+#~ msgstr "移除"
+
+#~ msgid "ndiffports"
+#~ msgstr "设置ndiffports"
+
+#~ msgid "redundant"
+#~ msgstr "冗余"
+
+#~ msgid "round-robin"
+#~ msgstr "轮询"

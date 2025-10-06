@@ -1,0 +1,62 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2039
+# vim: set noexpandtab tabstop=4 shiftwidth=4 softtabstop=4 :
+# Copyright (C) 2018-2022 Ycarus (Yannick Chabanois) <ycarus@zugaina.org>
+# Released under GPL 3. See LICENSE for the full terms.
+
+# shellcheck disable=SC2034
+{
+	START=90
+	STOP=10
+	USE_PROCD=1
+}
+
+. /usr/lib/unbound/iptools.sh
+. /lib/functions/network.sh
+
+_config_autorate() {
+	config_get enabled "$1" enabled
+	[ "${enabled}" != "1" ] && return
+	config_get autorate "$1" autorate
+	[ "${autorate}" != "1" ] && return
+	logger -t "SQM-autorate" "Set config for $1"
+
+	config_get min_download "$1" min_download "0"
+	config_get download "$1" download "0"
+	config_get max_download "$1" max_download "0"
+	[ "${max_download}" == "0" ] || [ "${download}" == "0" ] && return
+	config_get min_upload "$1" min_upload "0"
+	config_get upload "$1" upload "0"
+	config_get max_upload "$1" max_upload "0"
+	[ "${max_upload}" == "0" ] || [ "${upload}" == "0" ] && return
+#	config_get interface "$1" interface
+#	cp /usr/share/sqm-autorate/cake-autorate_template.sh /usr/share/sqm-autorate/cake-autorate_config.${interface}.sh
+	cp /usr/share/sqm-autorate/config_template.sh /usr/share/sqm-autorate/config.$1.sh
+}
+
+_launch_autorate() {
+	logger -t "SQM-autorate" "Launch..."
+	procd_open_instance
+	# shellcheck disable=SC2086
+	procd_set_param command /usr/share/sqm-autorate/launcher.sh
+	procd_set_param limits nofile="51200 51200"
+	procd_set_param respawn 0 10 0
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+start_service() {
+	rm -f /usr/share/sqm-autorate/config.*.sh
+	config_load sqm
+	config_foreach _config_autorate queue
+	[ -n "$(ls /usr/share/sqm-autorate/config.*.sh 2>/dev/null)" ] && _launch_autorate
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger sqm
+}
