@@ -1,0 +1,11 @@
+{
+	"luci-app-uptimekuma": {
+		"description": "Grant UCI access for luci-app-uptimekuma",
+		"read": {
+			"uci": [ "uptimekuma" ]
+		},
+		"write": {
+			"uci": [ "uptimekuma" ]
+		}
+	}
+}

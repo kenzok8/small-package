@@ -7,6 +7,6 @@ LUCI_DESCRIPTION:=Some common net-snmp config items. In no way is this comprehen
 PKG_MAINTAINER:= Christian Korber <ck@dev.tdt.de>
 PKG_LICENSE:=Apache-2.0
 
-include ../../luci.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+boot() {
+	XBOOT=1 start
+}
+
+start() {
+	touch /tmp/fakemesh.ac.config
+	ln -s /tmp/fakemesh.ac.config /etc/config/fakemeshac 2>/dev/null
+
+	band_steer_helper=$(uci get fakemesh.default.band_steer_helper || echo none) exec /usr/sbin/fakemesh band_steer_helper_switch &
+	/usr/sbin/fakemesh
+}
+
+restart() {
+	XRELOAD=1 start
+}

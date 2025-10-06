@@ -1,0 +1,305 @@
+# Fibocom L860-GL
+# Thanks to https://github.com/koshev-msk
+# Modem support based on luci-app-modeminfo package
+
+convertchannel() {
+  if [ $1 -ge 0 ] && [ $1 -le 599 ]; then
+    newband=1
+  elif [ $1 -ge 600 ] && [ $1 -le 1199 ]; then
+    newband=2
+  elif [ $1 -ge 1200 ] && [ $1 -le 1949 ]; then
+    newband=3
+  elif [ $1 -ge 1950] && [ $1 -le 2399 ]; then
+    newband=4
+  elif [ $1 -ge 2400] && [ $1 -le 2469 ]; then
+    newband=5
+  elif [ $1 -ge 2750 ] && [ $1 -le 3449 ]; then
+    newband=7
+  elif [ $1 -ge 3450 ] && [ $1 -le 3799 ]; then
+    newband=8
+  elif [ $1 -ge 6150 ] && [ $1 -le 6449 ]; then
+    newband=20
+  elif [ $1 -ge 9210 ] && [ $1 -le 9659 ]; then
+    newband=28
+  elif [ $1 -ge 9870 ] && [ $1 -le 9919 ]; then
+    newband=31
+  elif [ $1 -ge 37750 ] && [ $1 -le 38249 ]; then
+    newband=38
+  elif [ $1 -ge 38650 ] && [ $1 -le 39649 ]; then
+    newband=40
+  else
+    newband=0
+  fi
+}
+
+O=$(sms_tool -d $DEVICE at "at+xlec?;+rsrp?;+rsrq?;+xmci=1")
+  
+T=$(echo "$O" | awk -F [:_] '/\+XLEC:/{gsub("\r",""); print $4}' | awk -F [:,] '{print $1}')
+if [ -n "$T" ]; then
+	case $T in
+		*"1"*) MODE="${MODE} "$(band 1 "");;
+		*"2"*) MODE="${MODE} "$(band 2 "");;
+		*"3"*) MODE="${MODE} "$(band 3 "");;
+		*"4"*) MODE="${MODE} "$(band 4 "");;
+		*"5"*) MODE="${MODE} "$(band 5 "");;
+		*"7"*) MODE="${MODE} "$(band 7 "");;
+		*"8"*) MODE="${MODE} "$(band 8 "");;
+		*"12"*) MODE="${MODE} "$(band 12 "");;
+		*"13"*) MODE="${MODE} "$(band 13 "");;
+		*"14"*) MODE="${MODE} "$(band 14 "");;
+		*"17"*) MODE="${MODE} "$(band 17 "");;
+		*"18"*) MODE="${MODE} "$(band 18 "");;
+		*"19"*) MODE="${MODE} "$(band 19 "");;
+		*"20"*) MODE="${MODE} "$(band 20 "");;
+		*"21"*) MODE="${MODE} "$(band 21 "");;
+		*"25"*) MODE="${MODE} "$(band 25 "");;
+		*"26"*) MODE="${MODE} "$(band 26 "");;
+		*"28"*) MODE="${MODE} "$(band 28 "");;
+		*"29"*) MODE="${MODE} "$(band 29 "");;
+		*"30"*) MODE="${MODE} "$(band 30 "");;
+		*"32"*) MODE="${MODE} "$(band 32 "");;
+		*"34"*) MODE="${MODE} "$(band 34 "");;
+		*"38"*) MODE="${MODE} "$(band 38 "");;
+		*"39"*) MODE="${MODE} "$(band 39 "");;
+		*"40"*) MODE="${MODE} "$(band 40 "");;
+		*"41"*) MODE="${MODE} "$(band 41 "");;
+		*"42"*) MODE="${MODE} "$(band 42 "");;
+		*"43"*) MODE="${MODE} "$(band 43 "");;
+		*"46"*) MODE="${MODE} "$(band 46 "");;
+		*"48"*) MODE="${MODE} "$(band 48 "");;
+		*"66"*) MODE="${MODE} "$(band 66 "");;
+		*"71"*) MODE="${MODE} "$(band 71 "");;
+		*) MODE="${MODE} ${T}";;
+	esac
+fi
+
+RSRP=$(echo "$O" | awk -F [:,] '/\+RSRP:/{printf "%.0f\n", $4}')
+
+BWDL=$(echo "$O" | awk -F [:,] '/\+XLEC:/{gsub("\r","",$4); print $4}')
+		case $BWDL in
+			1) NP=15 ;;
+			2) NP=25 ;;
+			3) NP=50 ;;
+			4) NP=75 ;;
+			5) NP=100 ;;
+			*) NP=0 ;;
+		esac
+		
+CSQ=$(echo $RSRP $NP | awk '{printf "%.0f\n", (($1+10*log(12*$2)/log(10))+113)/2}')
+[ "x$CSQ" = "x" ] && CSQ=-1                                                                    
+if [ $CSQ -ge 0 -a $CSQ -le 31 ]; then                                                         
+	CSQ_PER=$(($CSQ * 100/31))                                                                                            
+	RSSI=$((2 * CSQ - 113))                                                
+	# Fibocom RSSI up -51dBm. Thanks to TSA74 at 4pda.to                       
+elif [ $CSQ -ge 32 -a $CSQ -le 50 ]; then                                                                              
+	RSSI=$((2 * CSQ - 113))
+	CSQ_PER="100"
+else                                                        
+	CSQ_PER="0"                                                                              
+fi
+
+RSRQ=$(echo "$O" | awk -F [:,] '/\+RSRQ:/{printf "%.0f\n", $4}')
+SINR=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); printf "%.0f\n", $13/4+5}')
+
+LTE_Cx=$(echo "$O" | awk -F [:,] '/\+XLEC:/{print $3}')
+LTE_CA=$(($LTE_Cx -1))
+  
+if [ -n "LTE_CA" ]; then
+
+case $LTE_CA in
+    1*) 
+    CAx=$(echo "$O" | awk -F [:,] '/\+RSRP:/{print $6}')
+    BWCx=$(echo "$O" | awk -F [:,] '/\+XLEC:/{gsub("\r",""); print $4" "$5}')
+    ;;
+    2*) 
+    CAx=$(echo "$O" | awk -F [:,] '/\+RSRP:/{print $6" "$9}')
+    BWCx=$(echo "$O" | awk -F [:,] '/\+XLEC:/{gsub("\r",""); print $4" "$5" "$6}');;
+    3*)
+    CAx=$(echo "$O" | awk -F [:,] '/\+RSRP:/{print $6" "$9" "$12}')
+    BWCx=$(echo "$O" | awk -F [:,] '/\+XLEC:/{gsub("\r",""); print $4" "$5" "$6" "$7}')
+    ;;
+    4*) 
+    CAx=$(echo "$O" | awk -F [:,] '/\+RSRP:/{print $6" "$9" "$12" "$15}')
+    BWCx=$(echo "$O" | awk -F [:,] '/\+XLEC:/{gsub("\r",""); print $4" "$5" "$6" "$7" "$8}')
+    ;;
+esac
+
+CA_BAND=""
+for sca in $CAx; do
+    convertchannel $sca 2> /dev/null
+    BAND="$(band $newband "")"
+    CA_BAND=$CA_BAND' / '$BAND
+    CABANDx=$CABANDx','$newband
+done
+MODE="LTE-A | $(band $T "")${CA_BAND}"
+
+S1=$(echo "$CABANDx" | awk -F [,] '/\,/{print $2" "}' | sed 's/ //g')
+S2=$(echo "$CABANDx" | awk -F [,] '/\,/{print $3" "}' | sed 's/ //g')
+S3=$(echo "$CABANDx" | awk -F [,] '/\,/{print $4" "}' | sed 's/ //g')
+S4=$(echo "$CABANDx" | awk -F [,] '/\,/{print $5" "}' | sed 's/ //g')
+
+BWCA=0
+BWCA_INFO=""
+for T3 in $BWCx; do
+	case $T3 in
+		1*) T5="3";;
+		2*) T5="5";;
+		3*) T5="10";;
+		4*) T5="15";;
+		5*) T5="20";;
+		*) T5="0";;
+	esac
+BWCA=$(($BWCA+$T5))
+[[ -z ${BWCA_INFO} ]] && BWCA_INFO="${T5}" || BWCA_INFO="${BWCA_INFO},${T5}"
+done
+
+BW1=$(echo "$BWCA_INFO" | awk -F [,] '/\,/{print $2" "}')
+BW2=$(echo "$BWCA_INFO" | awk -F [,] '/\,/{print $3" "}')
+BW3=$(echo "$BWCA_INFO" | awk -F [,] '/\,/{print $4" "}')
+BW4=$(echo "$BWCA_INFO" | awk -F [,] '/\,/{print $5" "}')
+
+T2=$(echo "$O" | awk -F [:,] '/\+XLEC:/{gsub("\r",""); print $4" "}')
+	case $T2 in
+		1*) T4="3";;
+		2*) T4="5";;
+		3*) T4="10";;
+		4*) T4="15";;
+		5*) T4="20";;
+		*) T4="0";;
+	esac
+
+	if [ -n "$T4" ]; then
+		PBAND="$(band $T "") @$T4 MHz"
+		PCI=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $2}')
+		EARFCN=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $3}')
+	fi
+
+if [ -n "$S1" ]; then
+S1BAND="$(band $S1 "") @$BW1 MHz"
+S1PCI=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $5}')
+S1EARFCN=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $6}')
+fi
+if [ -n "$S2" ]; then
+S2BAND="$(band $S2 "") @$BW2 MHz"
+S2PCI=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $8}')
+S2EARFCN=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $9}')
+fi
+if [ -n "$S3" ]; then
+S3BAND="$(band $S3 "") @$BW3 MHz"
+S3PCI=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $11}')
+S3EARFCN=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $12}')
+fi
+if [ -n "$S4" ]; then
+S4BAND="$(band $S4 "") @$BW4 MHz"
+S4PCI=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $14}')
+S4EARFCN=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $15}')
+fi
+
+
+fi
+
+if [[ "$MODE" != *"LTE-A"* ]]; then
+   if [ -n "$T" ]; then
+    	MODE="LTE | $(band $T "")"
+
+	T2=$(echo "$O" | awk -F [:,] '/\+XLEC:/{gsub("\r",""); print $4" "}')
+	case $T2 in
+		1*) T4="3";;
+		2*) T4="5";;
+		3*) T4="10";;
+		4*) T4="15";;
+		5*) T4="20";;
+		*) T4="0";;
+	esac
+
+	if [ -n "$T4" ]; then
+		PBAND="$(band $T "") @$T4 MHz"
+		PCI=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $2}')
+		EARFCN=$(echo "$O" | awk -F[,:] '/^\+RSRP:/ {print $3}')
+	fi
+  fi
+fi
+
+MODE=$(echo $MODE | sed 's,/,+,')
+
+# Modem
+FWA=$(sms_tool -d $DEVICE at "AT+GTPKGVER?" | xargs)
+FW=$(echo "$FWA" | cut -d ":" -f2 | xargs)
+
+MDL=$(sms_tool -d $DEVICE at "AT+GMM?" | xargs)
+MODELM=$(echo "$MDL" | cut -d ':' -f2 | cut -d ',' -f1 | awk -F'"' '{print $1}')
+MODELF=$(sms_tool -d $DEVICE at "AT+CGMI" | xargs)
+
+MODELMCUT=$(echo $MODELM)
+MODELFCUT=$(echo $MODELF | sed s/"AT+CGMI "//)
+MODEL="$MODELFCUT "$MODELMCUT
+
+# Temperature
+TC=$(sms_tool -d $DEVICE at "AT+MTSM=1" | xargs)
+T=$(echo "$TC" | awk -F[:,] '/\+MTSM:/{print $2}')
+if [ -n "$T" ]; then
+	TEMP="$T &deg;C"
+fi
+
+# International Mobile Equipment Identity (IMEI)
+O=$(sms_tool -d $DEVICE at "AT+CGSN" | xargs)
+NR_I=$(echo "$O" | sed s/"AT+CGSN "//)
+if [ -n "$NR_I" ]; then
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+O=$(sms_tool -d $DEVICE at "AT+CIMI" | xargs)
+NR_C=$(echo "$O" | sed s/"AT+CIMI "//)
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+#  Integrated Circuit Card Identifier (ICCID)
+O=$(sms_tool -d $DEVICE at "AT+CCID")
+NR_D=$(echo "$O" | awk -F [:] '/^\+CCID: /{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices 2>/dev/null)
+PVCAX=$(echo $PV | awk -F"Vendor=8087 ProdID=07f9" '{print $2}')
+PVCA=$(echo "$PVCAX" | cut -c-2453)
+PVCBX=$(echo $PV | awk -F"Vendor=8087 ProdID=095a" '{print $2}')
+PVCB=$(echo "$PVCBX" | cut -c-2453)
+
+if [ -n "$PVCA" ]; then
+	case $PVCA in
+	*"Driver=qmi_wwan"*)
+		PROTO="qmi"
+    	;;
+	*"Driver=cdc_ncm"*)
+		PROTO="ncm"
+	;;
+	*"Driver=cdc_mbim"*)
+		PROTO="mbim"
+	;;
+	*"Driver=cdc_ether"*)
+		PROTO="ecm"
+	;;
+	esac
+fi
+
+if [ -n "$PVCB" ]; then
+	case $PVCB in
+	*"Driver=qmi_wwan"*)
+		PROTO="qmi"
+	;;
+	*"Driver=cdc_ncm"*)
+		PROTO="ncm"
+	;;
+	*"Driver=cdc_mbim"*)
+		PROTO="mbim"
+	;;
+	*"Driver=cdc_ether"*)
+		PROTO="ecm"
+	;;
+	esac
+fi

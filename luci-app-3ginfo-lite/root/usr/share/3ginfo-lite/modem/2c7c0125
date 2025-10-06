@@ -1,0 +1,120 @@
+# Quectel EC20-E
+# Quectel EC25
+
+O=$(sms_tool -d $DEVICE at "at+qtemp;+qnwinfo;+qeng=\"servingcell\";+qspn")
+
+T=$(echo "$O" | awk -F[,:] '/^\+QTEMP/ {t=$2*1;if($3*1>t)t=$3*1;if($4*1>t)t=$4*1;printf "%d", t}')
+if [ -n "$T" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	TEMP="$T &deg;C"
+	ADDON="$ADDON"'{"Temperatura":"'$T' &deg;C"}'
+fi
+
+T=$(echo "$O" | awk -F[,:] '/^\+QNWINFO:/ {print $4}' | xargs)
+if [ -n "$T" ]; then
+	case "$T" in
+		*"LTE BAND 1") MODE=$(band 1 "LTE ");;
+		*"LTE BAND 3") MODE=$(band 3 "LTE ");;
+		*"LTE BAND 7") MODE=$(band 5 "LTE ");;
+		*"LTE BAND 7") MODE=$(band 7 "LTE ");;
+		*"LTE BAND 8") MODE=$(band 8 "LTE ");;
+		*"LTE BAND 20") MODE=$(band 20 "LTE ");;
+		*"LTE BAND 28") MODE=$(band 28 "LTE ");;
+		*"LTE BAND 32") MODE=$(band 32 "LTE ");;
+		*"LTE BAND 38") MODE=$(band 38 "LTE ");;
+		*"LTE BAND 40") MODE=$(band 40 "LTE ");;
+		*"LTE BAND 41") MODE=$(band 41 "LTE ");;
+		*) MODE="$T";;
+	esac
+fi
+
+T=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $4}' | xargs)
+if [ "x$T" = "xLTE" ] || [ "x$T" = "x4G" ]; then
+#	CELLID=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $8}' | xargs)
+#	PCID=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $9}' | xargs)
+#	EARFCN=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $10}' | xargs)
+#	FREQ_BAND_IND=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $11}' | xargs)
+	ULBW=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $12}' | xargs)
+	DLBW=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $13}' | xargs)
+#	TAC=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $14}' | xargs)
+	RSRP=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $15}' | xargs)
+	RSRQ=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $16}' | xargs)
+	RSSI=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $17}' | xargs)
+	SINR=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $18}' | xargs | awk '{printf "%.1f\n", $1*0.2-20}')
+#	SRXLEV=$(echo "$O" | awk -F[,:] '/^\+QENG:/ {print $19}' | xargs)
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"CELLID":"'$CELLID'"}'
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"PCID":"'$PCID'"}'
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"EARFCN":"'$EARFCN'"}'
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"FREQ_BAND_IND":"'$FREQ_BAND_IND'"}'
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"UL_BANDWIDTH":"'$UL_BANDWIDTH'"}'
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"DL_BANDWIDTH":"'$DL_BANDWIDTH'"}'
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"TAC":"'$TAC'"}'
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSRP":"'$RSRP' dBm"}'
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSRQ":"'$RSRQ' dB"}'
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSSI":"'$RSSI' dBm"}'
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"SINR":"'$SINR' dB"}'
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"SRXLEV":"'$SRXLEV'"}'
+fi
+
+T=$(echo "$O" | awk -F[,:] '/^\+QSPN/ {print $4}' | xargs)
+if [ -n "$T" ]; then
+	COPS="$T"
+fi
+
+# International Mobile Equipment Identity (IMEI)
+O=$(sms_tool -d $DEVICE at "AT+GSN" | xargs)
+NR_I=$(echo "$O" | cut -c 8-)
+if [ -n "$NR_I" ]; then
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+O=$(sms_tool -d $DEVICE at "AT+CIMI" | xargs)
+NR_C=$(echo "$O" | cut -c 9-)
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+#  Integrated Circuit Card Identifier (ICCID)
+O=$(sms_tool -d $DEVICE at "AT+QCCID")
+NR_D=$(echo "$O" | awk -F [:] '/^\+QCCID/{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+# Modem
+OF=$(sms_tool -d $DEVICE at "ati")
+DEVV=$(echo $OF | tr -s "\n"  | xargs)
+FW=$(echo $DEVV | awk -F 'Revision:' '{print $2}'| xargs)
+MODEL=$(echo $DEVV | awk -F 'ati|Revision:' '{print $1}'| xargs)
+if [ -z "$MODEL" ]
+then
+      MODEL=$(echo $DEVV | awk -F 'ati|Revision:' '{print $2}'| xargs)
+fi
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices)
+PVCUT=$(echo $PV | awk -F 'Vendor=2c7c ProdID=0125' '{print $2}' | cut -c-1220)
+if echo "$PVCUT" | grep -q "Driver=qmi_wwan"
+then
+    PROTO="qmi"
+elif echo "$PVCUT" | grep -q "Driver=cdc_mbim"
+then
+    PROTO="mbim"
+elif echo "$PVCUT" | grep -q "Driver=cdc_ether"
+then
+    PROTO="ecm"
+fi

@@ -1,0 +1,148 @@
+# ASKEY WWHC050
+
+O=$(sms_tool -d $DEVICE at "at\$qcai?;+ccputemp;+cgcelli;+cgnws")
+T=$(echo "$O" | awk 'BEGIN{FS="BEARER:"}/^\+CGCELLI/{print $2}' | awk 'BEGIN{FS=","}{print $1}')
+
+case "$T" in
+"0x01"*)
+	MODE="GPRS";;
+"0x02"*)
+	MODE="EDGE";;
+"0x03"*)
+	MODE="HSDPA";;
+"0x04"*)
+	MODE="HSUPA";;
+"0x05"*)
+	MODE="WCDMA";;
+"0x06"*)
+	MODE="CDMA";;
+"0x07"*)
+	MODE="EV-DO REV 0";;
+"0x08"*)
+	MODE="EV-DO REV A";;
+"0x09"*)
+	MODE="GSM";;
+"0x0a"*|"0x0A"*)
+	MODE="EV-DO REV B";;
+"0x0b"*|"0x0B"*)
+	MODE="LTE";;
+"0x0c"*|"0x0C"*)
+	MODE="HSDPA+";;
+"0x0d"*|"0x0D"*)
+	MODE="DC-HSDPA+";;
+esac
+
+if [ $MODE != "LTE" ]; then
+	O1=$(echo "$O" | grep CGCELLI | sed 's/+CGCELLI://')
+	T1="$O1"
+	while true; do
+		T2=${T1%%,*}
+		[ -z "$T2" ] && break
+		if echo "$T2" | grep -q ":"; then
+			F1=${T2%%:*}
+			F2=${T2##*:}
+			UNIT=""
+			IGNORE=0
+			case "$F1" in
+				RSCP|RSRP|RSSI) UNIT=" dBm";;
+				ECIO|SINR|RSRQ) UNIT=" dB";;
+				LAC|PLMN|BEARER) IGNORE=1;;
+			esac
+			if [ $IGNORE -eq 0 ]; then
+				[ -n "$ADDON" ] && ADDON="$ADDON,"
+				ADDON="$ADDON"'{"'$F1'":"'$F2''$UNIT'"}'
+			fi
+		fi
+		if echo "$T1" | grep -q ","; then
+			T2="${T2},"
+		fi
+		T1=$(echo "$T1" | sed 's/^'$T2'//')
+	done
+fi
+
+T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $7}')
+if [ -n "$T" ]; then
+	case $T in
+		*"Band:1") MODE=$(band 1 "LTE ");;
+		*"Band:3") MODE=$(band 3 "LTE ");;
+		*"Band:7") MODE=$(band 7 "LTE ");;
+		*"Band:8") MODE=$(band 8 "LTE ");;
+		*"Band:20") MODE=$(band 20 "LTE ");;
+		*) MODE="LTE ${T}";;
+	esac
+fi
+
+T=$(echo "$O" | awk -F[,] '/CA:ADDED/{print $16}')
+if [ -n "$T" ]; then
+	case $T in
+		*"(S)Band:1") MODE="${MODE/LTE/LTE_A} / "$(band 1 "");;
+		*"(S)Band:3") MODE="${MODE/LTE/LTE_A} / "$(band 3 "");;
+		*"(S)Band:7") MODE="${MODE/LTE/LTE_A} / "$(band 7 "");;
+		*"(S)Band:8") MODE="${MODE/LTE/LTE_A} / "$(band 8 "");;
+		*"(S)Band:20") MODE="${MODE/LTE/LTE_A} / "$(band 20 "");;
+		*) MODE="${MODE/LTE/LTE_A} / B${T}";;
+	esac
+fi
+
+T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $3}')
+if [ -n "$T" ]; then
+	RSRP=${T##*:}
+	T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $12}')
+	if [ -n "$T" ]; then
+		RSRP="$RSRP / "${T##*:}" dBm"
+	fi
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSRP":"'$RSRP'"}'
+fi
+T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $4}')
+if [ -n "$T" ]; then
+	RSRQ=${T##*:}
+	T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $13}')
+	if [ -n "$T" ]; then
+		RSRQ="$RSRQ / "${T##*:}" dB"
+	fi
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSRQ":"'$RSRQ'"}'
+fi
+T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $5}')
+if [ -n "$T" ]; then
+	RSSI=${T##*:}
+	T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $14}')
+	if [ -n "$T" ]; then
+		RSSI="$RSSI / "${T##*:}" dBm"
+	fi
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSSI":"'$RSSI'"}'
+fi
+#T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $6}')
+#if [ -n "$T" ]; then
+#	SINR=${T##*:}
+#	T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $15}')
+#	if [ -n "$T" ]; then
+#		SINR="$SINR / "${T##*:}" dB"
+#	fi
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"SINR":"'$SINR'"}'
+#fi
+#T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $8}')
+#if [ -n "$T" ]; then
+#	BW=${T##*:}" MHz"
+#	T=$(echo "$O" | awk -F[,] '/^\$QCAI/{print $17}')
+#	if [ -n "$T" ]; then
+#		BW="$BW / "${T##*:}" MHz"
+#	fi
+#	[ -n "$ADDON" ] && ADDON="$ADDON,"
+#	ADDON="$ADDON"'{"BW":"'$BW'"}'
+#fi
+
+T=$(echo "$O" | awk -F[:] '/^\+CCPUTEMP/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	TEMP="$T &deg;C"
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"Temperatura":"'$T' &deg;C"}'
+fi
+
+T=$(echo "$O" | awk -F[,] '/^\+CGNWS/ {print $9}' | xargs)
+if [ -n "$T" ]; then
+	COPS="$T"
+fi

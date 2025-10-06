@@ -1,0 +1,19 @@
+# ZTE MF821
+
+O=$(sms_tool -d $DEVICE at "at+zcellinfo?")
+BAND=$(echo "$O" | awk -F[,:] '/^\+ZCELLINFO:/ {print $4}')
+case "$MODE_NUM" in
+	7*)
+		case "$BAND" in
+			*"B1") MODE=$(band 1 "LTE ");;
+			*"B3") MODE=$(band 3 "LTE ");;
+			*"B7") MODE=$(band 7 "LTE ");;
+			*"B8") MODE=$(band 8 "LTE ");;
+			*"B20") MODE=$(band 20 "LTE ");;
+			*) MODE="$MODE B${BAND}";;
+		esac
+		;;
+	*)
+		MODE="$MODE $BAND"
+		;;
+esac

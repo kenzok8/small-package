@@ -1,0 +1,205 @@
+# Fibocom FM150-AE
+
+O=$(sms_tool -d $DEVICE at "at+gtccinfo?;+gtcainfo?")
+
+if [ "x$MODE" = "xLTE" ]; then
+	if [[ "$O" == *"SCC"* ]]; then
+		MODE="LTE_A"
+	fi
+	T1=$(echo "$O" | grep -A 3 'LTE service cell' | grep '1,4,'${COPS_MCC}','${COPS_MNC}',')
+	if [ -n "$T1" ]; then
+		T=$(echo "$T1" | awk -F, '{print $5}')
+		if [ -n "$T" ]; then
+			T_DEC=$(printf "%d" "0x$T")
+			T_HEX=$T
+		fi
+		T=$(echo "$T1" | awk -F, '{print $8}')
+		if [ -n "$T" ]; then
+      			PCI=$T
+		fi
+		T=$(echo "$T1" | awk -F, '{print $7}')
+		if [ -n "$T" ]; then
+      			EARFCN=$T
+		fi
+		T=$(echo "$T1" | awk -F, '{print $11}')
+		if [ -n "$T" ]; then
+			if [ $T -ge -100 ] || [ $T -le 100 ]; then
+				T=$(echo "$T" | awk -F, '{printf "%0.1f", $T/2}')
+			fi
+		fi
+		T=$(echo "$T1" | awk -F, '{print $13}')
+		if [ -n "$T" ]; then
+      			RSRP=$((T - 141))
+		fi
+		T=$(echo "$T1" | awk -F, '{print $14}')
+		if [ -n "$T" ]; then
+			T2=$(echo "$T" | awk '{printf "%0.1f", ($1-34)/2-3 }')
+			RSRQ=$T2
+		fi
+		T=$(echo "$T1" | awk -F, '{print $11}')
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			T2=$(echo "$T" | awk '{printf "%0.1f", $1/4+5 }')
+			SINR=$T2
+		fi
+		T=$(echo "$T1" | awk -F, '{print $14}')
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			T2=$(echo "$T" | awk '{printf "%0.1f", $1-110 }')
+			RSSI=$T2
+		fi
+  
+		T=$(echo "$T1" | awk -F, '{print $9}')
+		if [ -n "$T" ]; then
+			T=$((T - 100))
+
+			case $T in
+				*"1") MODE="$MODE | "$(band 1 "");;
+				*"2") MODE="$MODE | "$(band 2 "");;
+				*"3") MODE="$MODE | "$(band 3 "");;
+				*"5") MODE="$MODE | "$(band 5 "");;
+				*"7") MODE="$MODE | "$(band 7 "");;
+				*"8") MODE="$MODE | "$(band 8 "");;
+				*"18") MODE="$MODE | "$(band 18 "");;
+				*"19") MODE="$MODE | "$(band 19 "");;
+				*"20") MODE="$MODE | "$(band 20 "");;
+				*"28") MODE="$MODE | "$(band 28 "");;
+				*"32") MODE="$MODE | "$(band 32 "");;
+				*"34") MODE="$MODE | "$(band 34 "");;
+				*"38") MODE="$MODE | "$(band 38 "");;
+				*"39") MODE="$MODE | "$(band 39 "");;
+				*"40") MODE="$MODE | "$(band 40 "");;
+				*"41") MODE="$MODE | "$(band 41 "");;
+				*"42") MODE="$MODE | "$(band 42 "");;
+				*"43") MODE="$MODE | "$(band 43 "");;
+				*) MODE="$MODE / B${T}";;
+			esac
+      			PBAND="$(band $T "")"
+		fi
+
+	fi
+
+	T=$(echo "$O" | awk -F[:,] '/^PCC/{print $3}')
+	if [ -n "$T" ]; then
+    		PCI=$T
+	fi
+	T=$(echo "$O" | awk -F[:,] '/^PCC/{print $4}')
+	if [ -n "$T" ]; then
+    		EARFCN=$T
+	fi
+
+IFS="
+"
+
+	IDX=1
+	LINES=$(echo "$O" | grep -E "^SCC[0-9]: ")
+	for LINE in $LINES; do
+		T=$(echo "$LINE" | awk -F[:,] '/^SCC'$IDX': 1,0/{print $4}')
+		T=$((T - 100))
+		
+		case $T in
+      		"1") T2=$(band 1 "");;
+      		"2") T2=$(band 2 "");;
+      		"3") T2=$(band 3 "");;
+      		"5") T2=$(band 5 "");;
+      		"7") T2=$(band 7 "");;
+      		"8") T2=$(band 8 "");;
+      		"18") T2=$(band 18 "");;
+      		"19") T2=$(band 19 "");;
+      		"20") T2=$(band 20 "");;
+      		"28") T2=$(band 28 "");;
+      		"32") T2=$(band 32 "");;
+      		"34") T2=$(band 34 "");;
+      		"38") T2=$(band 38 "");;
+      		"39") T2=$(band 39 "");;
+      		"40") T2=$(band 40 "");;
+      		"41") T2=$(band 41 "");;
+      		"42") T2=$(band 42 "");;
+      		"43") T2=$(band 43 "");;
+		*) T2="B${T}";;
+		esac
+		MODE="$MODE / $T2"
+
+		if [ -n "$T" ]; then
+        
+    			case $IDX in
+      			"1") S1BAND="$T2";;
+      			"2") S2BAND="$T2";;
+      			"3") S3BAND="$T2";;
+      			"4") S4BAND="$T2";;
+			*);;
+			esac
+  
+    			case $IDX in
+      			"1") S1PCI="$T";;
+      			"2") S2PCI="$T";;
+      			"3") S3PCI="$T";;
+      			"4") S4PCI="$T";;
+			*);;
+      			esac
+   
+		fi
+		
+		T=$(echo "$LINE" | awk -F[:,] '/^SCC'$IDX': 1,0/{print $6}')
+		if [ -n "$T" ]; then
+
+    			case $IDX in
+      			"1") S1EARFCN="$T";;
+      			"2") S2EARFCN="$T";;
+      			"3") S3EARFCN="$T";;
+      			"4") S4EARFCN="$T";;
+			*);;
+      			esac
+
+		fi
+		IDX=$((IDX + 1))
+	done
+
+fi
+
+MODE=$(echo $MODE | sed "s/LTE_A /LTE-A /g" | sed 's,/,+,')
+
+# Modem
+OA=$(sms_tool -d $DEVICE at "AT+CGMM?")
+MODELA=$(echo "$OA" | awk -F [:,] '/\+CGMM/{print $2}' | xargs)
+OB=$(sms_tool -d $DEVICE at "AT+CGMI?")
+MODELB=$(echo "$OB" | awk -F [:,] '/\+CGMI/{print $2}' | xargs)
+MODELBCUT=$(echo $MODELB | sed s/"Wireless Inc."//)
+MODEL="$MODELBCUT $MODELA"
+
+OF=$(sms_tool -d $DEVICE at "AT+GMR?")
+FW=$(echo "$OF" | awk -F[,:] '/\+GMR:/ {print $2}' | xargs)
+
+# International Mobile Equipment Identity (IMEI)
+OAA=$(sms_tool -d $DEVICE at "AT+CGSN?")
+NR_IMEI=$(echo "$OAA" | awk -F[,:] '/\+CGSN:/ {print $2}' | xargs)
+
+# International Mobile Subscriber Identity (IMSI)
+OBB=$(sms_tool -d $DEVICE at "AT+CIMI?")
+NR_IMSI=$(echo "$OBB" | awk -F [,:] '/\+CIMI:/ {print $2}' | xargs)
+
+#  Integrated Circuit Card Identifier (ICCID)
+OCC=$(sms_tool -d $DEVICE at "AT+ICCID")
+NR_ICCID=$(echo "$OCC" | awk -F [,:] '/\+ICCID:/ {print $2}' | xargs)
+
+# Temp
+OT=$(sms_tool -d $DEVICE at "AT+MTSM=1")
+TX=$(echo "$OT" | awk '/\+MTSM:/{print $2}')
+if [ -n "$TX" ]; then
+	TEMP="$TX &deg;C"
+fi
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices 2>/dev/null)
+PVCUT=$(echo $PV | awk -F 'Vendor=2cb7 ProdID=0104' '{print $2}' | cut -c-1290)
+if echo "$PVCUT" | grep -q "Driver=qmi_wwan"
+then
+    PROTO="qmi"
+elif echo "$PVCUT" | grep -q "Driver=cdc_mbim"
+then
+    PROTO="mbim"
+elif echo "$PVCUT" | grep -q "Driver=cdc_ether"
+then
+    PROTO="ecm"
+fi

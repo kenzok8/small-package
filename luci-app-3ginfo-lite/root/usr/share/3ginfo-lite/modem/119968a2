@@ -1,0 +1,47 @@
+# Sierra Wireless MC7710
+
+O=$(sms_tool -d $DEVICE at "at!gstatus?")
+
+T=$(echo "$O" | awk '/^LTE band:/ {print $3}' | xargs)
+if [ -n "$T" ]; then
+	case "$T" in
+		*"B1") MODE=$(band 1 "LTE ");;
+		*"B3") MODE=$(band 3 "LTE ");;
+		*"B7") MODE=$(band 7 "LTE ");;
+		*"B8") MODE=$(band 8 "LTE ");;
+		*"B20") MODE=$(band 20 "LTE ");;
+		*) MODE="LTE ${T}";;
+	esac
+fi
+
+T=$(echo "$O" | awk '/^RSSI/ {print $3}' | xargs)
+if [ -n "$T" ]; then
+	RSSI="$T"
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSSI":"'$T' dBm"}'
+fi
+T=$(echo "$O" | awk '/^RSRP/ {print $3}' | xargs)
+if [ -n "$T" ]; then
+	RSRP="$T"
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSRP":"'$T' dBm"}'
+fi
+T=$(echo "$O" | awk '/^RSRQ/ {print $3}' | xargs)
+if [ -n "$T" ]; then
+	RSRQ="$T"
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"RSRQ":"'$T' dB"}'
+fi
+T=$(echo "$O" | awk '/^SINR/ {print $3}' | xargs)
+if [ -n "$T" ]; then
+	SINR="$T"
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"SINR":"'$T' dB"}'
+fi
+
+T=$(echo "$O" | awk -F: '/Temperature:/ {print $3}' | xargs)
+if [ -n "$T" ]; then
+	TEMP="$T &deg;C"
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"Temperatura":"'$T' &deg;C"}'
+fi

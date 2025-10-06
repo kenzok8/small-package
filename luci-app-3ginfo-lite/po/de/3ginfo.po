@@ -1,0 +1,154 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Information about 3G/4G/5G connection"
+msgstr "Informationen über die 3G/4G/5G-Verbindung"
+
+msgid "More information about the 3ginfo on the %seko.one.pl forum%s."
+msgstr "Mehr informationen zu 3ginfo unter %sforum eko.one.pl%s."
+
+msgid "eko.one.pl forum"
+msgstr "Forum eko.one.pl"
+
+msgid "Details"
+msgstr "Details"
+
+msgid "USB debug information"
+msgstr "USB-Debug-Informationen"
+
+msgid "Configuration"
+msgstr "Konfiguration"
+
+msgid "General Information"
+msgstr "allgemeine Informationen"
+
+msgid "Modem Information"
+msgstr "Modem Informationen"
+
+msgid "Cell / Signal Information"
+msgstr "Zellen-/Signalinformationen"
+
+msgid "Technology"
+msgstr "Technologie"
+
+msgid "Operator"
+msgstr "Netzbetreiber"
+
+msgid "Signal strength"
+msgstr "Signalstärke"
+
+msgid "Connection statistics"
+msgstr "Verbindungsstatistik"
+
+msgid "Modem type"
+msgstr "Modemtyp"
+
+msgid "Additional information"
+msgstr "zusätzliche Informationen"
+
+msgid "Revision / Firmware"
+msgstr "Revision / Firmware"
+
+msgid "IP adress / Communication Port"
+msgstr "IP-Adresse / Verbindungsport"
+
+msgid "Chip Temperature"
+msgstr "Chiptemperatur"
+
+msgid "Configuration 3ginfo-lite"
+msgstr "Konfiguration 3ginfo-lite"
+
+msgid "Configuration panel for the 3ginfo-lite application."
+msgstr "Konfigurationspanel für 3ginfo-lite."
+
+msgid "Network"
+msgstr "Netzwerk"
+
+msgid "IP adress / Port for communication with the modem"
+msgstr "IP-Adresse / Verbindungsport mit dem Modem"
+
+msgid "Protocol"
+msgstr "Protokoll"
+
+msgid ""
+"Select the appropriate settings. <br /> <br />Traditional "
+"modem. <br /> Select one of the available ttyUSBX "
+"ports.<br /> <br />HiLink modem. <br /> Enter the IP address "
+"192.168.X.X under which the modem is available."
+msgstr ""
+"Passende Einstellung wählen. <br /> <br />Traditionelles "
+"modem. <br /> Einen der verfügbaren ttyUSBX"
+"Port wählen.<br /> <br />MHiLink Modem. <br /> IP-Adresse wie"
+"192.168.X.X angeben, unter der das Modem erreichbar ist."
+
+msgid "Very good"
+msgstr "Sehr gut"
+
+msgid "Good"
+msgstr "Gut"
+
+msgid "Weak"
+msgstr "Schwach"
+
+msgid "Very weak"
+msgstr "Sehr schwach"
+
+msgid "Excellent"
+msgstr "Exzellent"
+
+msgid "Good"
+msgstr "Gut"
+
+msgid "Mid cell"
+msgstr "Zellmitte"
+
+msgid "Cell edge"
+msgstr "Zellrand"
+
+msgid "SIM status"
+msgstr "SIM-Status"
+
+msgid "Not registered"
+msgstr "Nicht registriert"
+
+msgid "Registered"
+msgstr "Registriert"
+
+msgid "Registered (roaming)"
+msgstr "Registriert (roaming)"
+
+msgid "Searching.."
+msgstr "Suche.."
+
+msgid "Registering denied"
+msgstr "Registrierung abgelehnt"
+
+msgid "Waiting to read data from the modem..."
+msgstr "Daten des Modems werden gelesen..."
+
+msgid "Waiting for connection data..."
+msgstr "Auf Datenverbindung warten..."
+
+msgid "BTS Search"
+msgstr "BTS-Suche"
+
+msgid "Search"
+msgstr "Suche"
+
+msgid "Search BTS using Cell ID"
+msgstr "BTS-Suche mit der Cell ID"
+
+msgid "Hint: To set up a BTS search engine, all you have to do is select the dedicated website for your location."
+msgstr "Hinweis: Um eine BTS-Suchmaschine einzustellen muss nur eine Webseite für den aktuellen Standort angegeben werden."
+
+msgid "BTS search settings"
+msgstr "Einstellungen BTS-Suche"
+
+msgid "Website to search for BTS"
+msgstr "Webseite für BTS-Suche"
+
+msgid "Select a website for searching."
+msgstr "Webseite für dir Suche auswählen."
+
+msgid "SIM Slot"
+msgstr "SIM-Slot"

@@ -1,0 +1,101 @@
+# Mikrotik R11e-LTE6
+
+O=$(sms_tool -d $DEVICE at "at+cesq;+zcainfo?;+zpas?;+zcellinfo?")
+T=$(echo "$O" | awk -F[,:] '/^\+CESQ/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	[ "$T" != "99" ] && RSSI="$((T - 111))"
+fi
+T=$(echo "$O" | awk -F[,:] '/^\+CESQ/ {print $4}' | xargs)
+if [ -n "$T" ]; then
+	[ "$T" != "255" ] && RSCP="$((T - 121))"
+fi
+T=$(echo "$O" | awk -F[,:] '/^\+CESQ/ {print $5}' | xargs)
+if [ -n "$T" ]; then
+	if [ "$T" != "255" ]; then
+		T=$(echo "$T" | awk '{printf "%.1f", -1 * (24.5 - $1 * 0.5)}')
+		ECIO="$T dB"
+	fi
+fi
+T=$(echo "$O" | awk -F[,:] '/^\+CESQ/ {print $7}' | xargs)
+if [ -n "$T" ]; then
+	[ "$T" != "255" ] && RSRP="$((T - 141))"
+fi
+T=$(echo "$O" | awk -F[,:] '/^\+CESQ/ {print $6}' | xargs)
+if [ -n "$T" ]; then
+	if [ "$T" != "255" ]; then
+		T=$(echo "$T" | awk '{printf "%.1f", -1 * (20 - $1 * 0.5)}')
+		RSRQ="$T"
+		SINR=""
+	fi
+fi
+
+T=$(echo "$O" | awk -F[,:] '/^\+ZPAS/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	MODE=$T
+	T=$(echo "$O" | awk -F[,:] '/^\+ZCELLINFO/ {print $4}' | xargs)
+	if [ "x$MODE_NUM" = "x7" ] || [ "x$MODE_NUM" = "x9" ]; then
+		MODE="$MODE $(band ${T/LTE B/})"
+    		PBAND="$(band ${T/LTE B/})"
+	else
+		MODE="$MODE $T"
+		PBAND="$(band ${T})"
+	fi
+fi
+
+case "$MODE_NUM" in
+	9*)
+		T=$(echo "$O" | awk -F[,] '/^\+ZCAINFO: /{print $11}')
+		if [ -n "$T" ]; then
+			if [ "$T" != "0" ]; then
+				MODE="$MODE / $(band ${T})"
+        			S1BAND="$(band ${T})"
+			fi
+		fi
+		;;
+esac
+
+MODE=$(echo $MODE | sed 's,/,+,' | sed "s/LTE_A/LTE-A | /g")
+
+# Modem
+FWA=$(sms_tool -d $DEVICE at "AT+CGMR" | xargs)
+FW=$(echo $FWA | sed s/"AT+CGMR"//)
+
+MODELA=$(sms_tool -d $DEVICE at "AT+CGMM" | xargs)
+MODELB=$(sms_tool -d $DEVICE at "AT+CGMI" | xargs)
+MODELACUT=$(echo $MODELA | awk -F [:] '/^\+CGMM:/{print $2}' | xargs)
+MODELBCUT=$(echo $MODELB | awk -F [:] '/^\+CGMI:/{print $2}' | xargs)
+MODEL="$MODELBCUT "$MODELACUT
+
+# LAC & TAC
+T_HEX=$LAC_HEX
+T_DEC=$LAC_DEC
+
+# International Mobile Equipment Identity (IMEI)
+O=$(sms_tool -d $DEVICE at "AT+CGSN" | xargs)
+NR_I=$(echo "$O"  | sed s/"AT+CGSN"//)
+if [ -n "$NR_I" ]; then
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+O=$(sms_tool -d $DEVICE at "AT+CIMI" | xargs)
+NR_C=$(echo "$O" | sed s/"AT+CIMI"//)
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+#  Integrated Circuit Card Identifier (ICCID)
+O=$(sms_tool -d $DEVICE at "AT*ICCID?")
+NR_D=$(echo "$O" | awk -F [:] '/^\*ICCID:/{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices 2>/dev/null)
+PVCUT=$(echo $PV | awk -F 'Vendor=2cd2 ProdID=0004' '{print $2}' | cut -c-1220)
+if echo "$PVCUT" | grep -q "Driver=rndis_host"
+then
+    PROTO="ncm"
+fi

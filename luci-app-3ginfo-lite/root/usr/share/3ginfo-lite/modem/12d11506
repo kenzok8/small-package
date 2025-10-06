@@ -1,0 +1,122 @@
+# Huawei E3272/E3372/E3276
+
+O=$(sms_tool -d $DEVICE at "at^chiptemp?;^hcsq?;^iccid?")
+
+T=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	MODE="$T"
+
+	case "$MODE" in
+		WCDMA*)
+			PARAM2=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $4}' | xargs)
+			PARAM3=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $5}' | xargs)
+			RSCP=$(awk 'BEGIN {print -121 + '$PARAM2'}')
+#			[ -n "$ADDON" ] && ADDON="$ADDON,"
+#			ADDON="$ADDON"'{"RSCP":"'$RSCP' dBm"}'
+			ECIO=$(awk 'BEGIN {print -32.5 + '$PARAM3'/2}')
+#			[ -n "$ADDON" ] && ADDON="$ADDON,"
+#			ADDON="$ADDON"'{"ECIO":"'$ECIO' dB"}'
+			;;
+		LTE*)
+			PARAM2=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $4}' | xargs)
+			PARAM3=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $5}' | xargs)
+			PARAM4=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $6}' | xargs)
+			RSRP=$(awk 'BEGIN {print -141 + '$PARAM2'}')
+#			[ -n "$ADDON" ] && ADDON="$ADDON,"
+#			ADDON="$ADDON"'{"RSRP":"'$RSRP' dBm"}'
+			SINR=$(awk 'BEGIN {print -20.2 + '$PARAM3'/5}')
+#			[ -n "$ADDON" ] && ADDON="$ADDON,"
+#			ADDON="$ADDON"'{"SINR":"'$SINR' dB"}'
+			RSRQ=$(awk 'BEGIN {print -20 + '$PARAM4'/2}')
+#			[ -n "$ADDON" ] && ADDON="$ADDON,"
+#			ADDON="$ADDON"'{"RSRQ":"'$RSRQ' dB"}'
+			;;
+	esac
+fi
+
+# Modem
+OF=$(sms_tool -d $DEVICE at "ati")
+DEV2=$(echo $OF | tr -s "\n"  | xargs)
+MODELB=$(echo $DEV2 | awk -F 'Manufacturer:|Revision:' '{print $2}'| xargs)
+MODELC=$(echo $MODELB | sed 's/Model://' | xargs)
+MODEL=$(echo $MODELC | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}')
+FW=$(echo $DEV2 | awk -F 'Revision:|IMEI' '{print $2}'| xargs)
+
+# Protocol
+# Driver=qmi_wwan & Driver=cdc_mbim & Driver=cdc_ether & Driver=huawei_cdc_ncm
+PV=$(cat /sys/kernel/debug/usb/devices 2>/dev/null)
+PVCUT=$(echo $PV | awk -F 'Vendor=12d1 ProdID=1506' '{print $2}' | cut -c-1104)
+if echo "$PVCUT" | grep -q "Driver=qmi_wwan"
+then
+    PROTO="qmi"
+elif echo "$PVCUT" | grep -q "Driver=cdc_mbim"
+then
+    PROTO="mbim"
+elif echo "$PVCUT" | grep -q "Driver=cdc_ether"
+then
+    PROTO="ecm"
+elif echo "$PVCUT" | grep -q "cdc_ncm"
+then
+    PROTO="ncm"
+fi
+
+# International Mobile Equipment Identity (IMEI)
+OI=$(sms_tool -d $DEVICE at "AT+GSN" | xargs)
+NR_I=$(echo "$OI" | sed 's/AT+GSN//g' | xargs)
+if [ -n "NR_I" ]
+then
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+OC=$(sms_tool -d $DEVICE at "AT+CIMI" | xargs)
+NR_C=$(echo "$OC" | sed 's/AT+CIMI//g' | xargs)
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+# Integrated Circuit Card Identifier (ICCID)
+NR_D=$(echo "$O" | awk -F [:] '/^\^ICCID: /{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+XFR=$(sms_tool -d $DEVICE at "at^hfreqinfo?")
+XFRCOUNT=$(echo -n "$XFR" | wc -c)
+
+if [ -n "$XFR" ] && [ "$XFRCOUNT" -gt "15" ]; then
+
+# DL / UL / Band
+TBX=$(echo "$XFR" | awk -F [:] '/^\^HFREQINFO:/{print $2}' | xargs)
+TB=$(echo "$TBX" | cut -d ',' -f3-3 )
+
+TDL=$(echo "$TBX" | cut -d ',' -f6-6 )
+DL=$(($TDL/1000))
+
+TUL=$(echo "$TBX" | cut -d ',' -f9-9 )
+UL=$(($TUL/1000))
+
+ULBW="UL: @$UL MHz"
+DLBW="DL: @$DL MHz"
+
+PBAND="$(band $TB "") $DLBW $ULBW"
+EARFCN=$(echo "$TBX" | cut -d ',' -f4-4 )
+PCI="-"
+
+if [[ "$MODE" == *"LTE"* ]] && [ -n "$TB" ]; then
+MODE="LTE | "$(band $TB "")
+fi
+      
+fi
+
+# LAC & TAC
+T_HEX=$LAC_HEX
+T_DEC=$LAC_DEC
+
+# Temperature
+T=$(echo "$O" | awk -F[,:] '/^\^CHIPTEMP/ {gsub(/[ \r]/,"");t=0;for(i=2;i<=NF;i++)if($i!=65535){if($i>100){$i=$i/10};if($i>t){t=$i}};printf "%.1f", t}')
+if [ "x$T" != "x0.0" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	TEMP="$T &deg;C"
+	#ADDON="$ADDON"'{"Temperatura":"'$T' &deg;C"}'
+fi

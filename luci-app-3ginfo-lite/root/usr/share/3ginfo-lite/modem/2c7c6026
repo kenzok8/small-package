@@ -1,0 +1,116 @@
+# Quectel EC200T
+
+O=$(sms_tool -d $DEVICE at "at+qtemp")
+
+T=$(echo "$O" | awk -F[,:] '/^\+QTEMP/ {print $2}' | sort -r | head -n1 | xargs)
+if [ -n "$T" ]; then
+	TEMP="$T &deg;C"
+fi
+
+O=$(sms_tool -d $DEVICE at "at+qnwinfo;+qspn")
+
+T=$(echo "$O" | awk -F[,:] '/^\+QNWINFO/ {print $2"/"$4}' | xargs)
+if [ -n "$T" ]; then
+	if [ "x$MODE_NUM" = "x7" ]; then
+		B=$(echo $T | sed 's/.*LTE BAND \(.*\)/\1/')
+		MODE="LTE | $(band ${B})"
+		MAINCUT="$(band ${B})"
+	fi
+fi
+
+E=$(sms_tool -d $DEVICE at "at+qeng=\"servingcell\"")
+
+T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $4}' | xargs)
+if [ "x$T" = "xLTE" ] || [ "x$T" = "x4G" ]; then
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $14}')
+	T_DEC=$(printf "%d" "0x$T")
+	T_HEX=$T
+
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $12}')
+	case $T in
+		0) T1="1.4";;
+		1) T1="3";;
+		2) T1="5";;
+		3) T1="10";;
+		4) T1="15";;
+		5) T1="20";;
+		*) T1="?";;
+	esac
+	ULBW="UL: @$T1 MHz"
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $13}')
+	case $T in
+		0) T1="1.4";;
+		1) T1="3";;
+		2) T1="5";;
+		3) T1="10";;
+		4) T1="15";;
+		5) T1="20";;
+		*) T1="?";;
+	esac
+	DLBW="DL: @$T1 MHz"
+	PBAND="$MAINCUT $DLBW $ULBW"
+	
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $9}')
+	PCI=$T
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $10}')
+	EARFCN=$T
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $17}')
+	RSSI=$T
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $15}')
+	RSRP=$T
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $16}')
+	RSRQ=$T
+	T=$(echo "$E" | awk -F[,:] '/^\+QENG:/ {print $18}')
+	SINR=$T
+fi
+
+T=$(echo "$O" | awk -F[,:] '/^\+QSPN/ {print $2}' | xargs)
+if [ -n "$T" ] && [ -z "$FORCE_PLMN" ]; then
+	COPS="$T"
+fi
+
+# International Mobile Equipment Identity (IMEI)
+O=$(sms_tool -d $DEVICE at "AT+GSN" | xargs)
+NR_I=$(echo "$O"  | sed 's/AT+GSN//g' | xargs)
+if [ -n "$NR_I" ]; then
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+O=$(sms_tool -d $DEVICE at "AT+CIMI" | xargs)
+NR_C=$(echo "$O" | sed 's/AT+CIMI//g' | xargs)
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+#  Integrated Circuit Card Identifier (ICCID)
+O=$(sms_tool -d $DEVICE at "AT+QCCID")
+NR_D=$(echo "$O" | awk -F [:] '/^\+QCCID/{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+# Modem
+FWA=$(sms_tool -d $DEVICE at "AT+GMR" | tr -s "\n" | xargs)
+FW=$(echo $FWA | sed s/"AT+GMR"//)
+
+MODELA=$(sms_tool -d $DEVICE at "AT+CGMM" | tr -s "\n" | xargs)
+MODELB=$(sms_tool -d $DEVICE at "AT+CGMI" | tr -s "\n" | xargs)
+MODELACUT=$(echo $MODELA | sed s/"AT+CGMM"//)
+MODELBCUT=$(echo $MODELB | sed s/"AT+CGMI"//)
+MODEL="$MODELBCUT "$MODELACUT
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices)
+PVCUT=$(echo $PV | awk -F 'Vendor=2c7c ProdID=6026' '{print $2}' | cut -c-1220)
+if echo "$PVCUT" | grep -q "Driver=qmi_wwan"
+then
+    PROTO="qmi"
+elif echo "$PVCUT" | grep -q "Driver=cdc_mbim"
+then
+    PROTO="mbim"
+elif echo "$PVCUT" | grep -q "Driver=cdc_ether"
+then
+    PROTO="ecm"
+fi

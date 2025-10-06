@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=Packet capture application
-LUCI_DEPENDS:=+luci-mod-admin-full +tcpdump +uhttpd-mod-ubus +coreutils +coreutils-timeout
+LUCI_DEPENDS:=+luci-mod-admin-full +tcpdump +coreutils +coreutils-timeout
 
 PKG_MAINTAINER:=Wojciech Jowsa <wojciech.jowsa@gmail.com>
 PKG_LICENSE:=Apache-2.0
