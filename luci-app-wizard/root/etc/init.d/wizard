@@ -195,6 +195,13 @@ sethttps() {
     	fi
 		uci commit nginx
     	/etc/init.d/nginx reload
+	elif [ -n "$(command -v lighttpd)" ]; then
+        if [ "x${https}" = "x1" ] ; then
+	         sed -i "s/	# url.redirect =/	url.redirect =/" /etc/lighttpd/conf.d/82-https.conf
+		else
+	         sed -i "s/	url.redirect =/	# url.redirect =/" /etc/lighttpd/conf.d/82-https.conf
+        fi
+	    /etc/init.d/lighttpd reload
     else
         if [ "x${https}" = "x1" ] ; then
 	         uci -q set uhttpd.main.redirect_https='1'
@@ -254,4 +261,3 @@ start() {
 restart() {
 	start
 }
-
