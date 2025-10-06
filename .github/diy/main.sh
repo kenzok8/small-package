@@ -237,7 +237,9 @@ git_sparse_clone master "https://github.com/coolsnowwolf/luci" applications
 mv -n applications/* luciapp/; rm -rf applications
 rm -rf luciapp/{luci-app-qbittorrent,luci-app-zerotier,luci-app-cpufreq,luci-app-e2guardian,luci-app-aliyundrive-fuse,luci-app-syncdial,luci-app-firewall}
 git_sparse_clone openwrt-24.10 "https://github.com/immortalwrt/luci" applications protocols/luci-proto-minieap protocols/luci-proto-quectel themes/luci-theme-argon
-mv -n luciapp/!(luci-app-filetransfer|luci-app-ksmbd) applications/; rm -rf luciapp
+shopt -s extglob
+mv -n luciapp/!(luci-app-filetransfer|luci-app-ksmbd) applications/
+rm -rf luciapp
 
 for ipk in $(ls -d applications/!(luci-app-rclone|luci-app-dockerman|luci-app-3ginfo-lite|luci-app-aria2|luci-app-ddns|luci-app-package-manager|luci-app-ksmbd|luci-app-samba4|luci-app-watchcat|luci-app-upnp|luci-app-transmission)/); do
 	if [[ $(ls $ipk/po | wc -l) -gt 4 ]]; then
