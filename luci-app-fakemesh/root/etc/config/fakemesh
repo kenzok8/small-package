@@ -1,0 +1,8 @@
+config fakemesh 'default'
+	option enabled '0'
+	option id 'mesh-x-wrt-id'
+	option key '88888888'
+	option band '5g'
+	option role 'agent' # agent/controller
+	option band_steer_helper 'none' # usteer/dawn/none
+	option fronthaul_disabled '0'

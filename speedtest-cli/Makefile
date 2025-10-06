@@ -34,7 +34,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Speedtest CLI by Ookla
-	DEPENDS:=@(aarch64||arm||i386||x86_64) +ca-certificates
+	DEPENDS:=@(aarch64||arm||i386||x86_64) +ca-bundle
 	URL:=https://www.speedtest.net/
 endef
 

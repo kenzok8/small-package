@@ -9,6 +9,6 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=USB Printer Share via TCP/IP
 LUCI_DEPENDS:=+luci-compat +p910nd +kmod-usb-printer
 
-include ../../luci.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

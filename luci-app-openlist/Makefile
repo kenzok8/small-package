@@ -12,6 +12,6 @@ LUCI_DEPENDS:=+openlist
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_PROVIDES:=luci-app-alist
 
-include ../../luci.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

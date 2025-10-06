@@ -1,0 +1,62 @@
+# ZTE MF28D/MF290
+
+O=$(sms_tool -d $DEVICE at "at+zrssi?;+zcellinfo?")
+
+case "$MODE_NUM" in
+	3*)
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $2}' | xargs)
+		[ -n "$ADDON" ] && ADDON="$ADDON,"
+		RSSI="$T"
+		ADDON="$ADDON"'{"RSSI":"'$T' dBm"}'
+		T=$(echo "$O" | awk -F[,:] '/^\+ZCELLINFO/ {print $4}' | xargs)
+		[ -n "$T" ] && MODE="$T"
+		;;
+	2*|\
+	4*|\
+	5*|\
+	6*)
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $2}' | xargs)
+		[ -n "$ADDON" ] && ADDON="$ADDON,"
+		ADDON="$ADDON"'{"RSCP":"'$T' dBm"}'
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $3}' | xargs)
+		[ -n "$ADDON" ] && ADDON="$ADDON,"
+		ADDON="$ADDON"'{"ECIO":"'$T' dB"}'
+		T=$(echo "$O" | awk -F[,:] '/^\+ZCELLINFO/ {print $4}' | xargs)
+		[ -n "$T" ] && MODE="$T"
+		;;
+	7*)
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $2}' | xargs)
+		[ -n "$ADDON" ] && ADDON="$ADDON,"
+		RSRP="$T"
+		ADDON="$ADDON"'{"RSRP":"'$T' dBm"}'
+		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $3}' | xargs)
+		[ -n "$ADDON" ] && ADDON="$ADDON,"
+		RSRQ="$T"
+		ADDON="$ADDON"'{"RSRQ":"'$T' dB"}'
+#		T=$(echo "$O" | awk -F[,:] '/^\+ZRSSI/ {print $5}' | xargs)
+#		[ -n "$ADDON" ] && ADDON="$ADDON,"
+		SINR="$T"
+#		ADDON="$ADDON"'{"SINR":"'$T' dB"}'
+		T=$(echo "$O" | awk -F[,:\;] '/^\+ZCELLINFO/ {print $3}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			PCI="$T"
+			ADDON="$ADDON"'{"PCI":"'$T'"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^\+ZCELLINFO/ {print $5}' | xargs)
+		if [ -n "$T" ]; then
+			[ -n "$ADDON" ] && ADDON="$ADDON,"
+			EARFCN="$T"
+			ADDON="$ADDON"'{"EARFCN":"'$T'"}'
+		fi
+		T=$(echo "$O" | awk -F[,:] '/^\+ZCELLINFO/ {print $4}' | xargs)
+		case "$T" in
+			*"LTE B1") MODE=$(band 1 "LTE ");;
+			*"LTE B3") MODE=$(band 3 "LTE ");;
+			*"LTE B7") MODE=$(band 7 "LTE ");;
+			*"LTE B8") MODE=$(band 8 "LTE ");;
+			*"LTE B20") MODE=$(band 20 "LTE ");;
+			*) MODE="${T}";;
+		esac
+		;;
+esac

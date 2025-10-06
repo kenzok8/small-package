@@ -1,0 +1,147 @@
+# Sierra Wireless EM9190
+
+O=$(sms_tool -d $DEVICE at "at!gstatus?")
+
+T=$(echo "$O" | awk -F: '/Temperature:/ {print $3}')
+[ -n "$T" ] && TEMP="$T &deg;C"
+
+
+T=$(echo "$O" | awk '/^System mode:/ {print $3}')
+case $T in
+	"LTE")
+		MODE="LTE"
+		;;
+	"ENDC")
+		MODE="5G NSA"
+		;;
+esac
+
+T=$(echo "$O" | awk '/.*TAC:/ {print $6}')
+if [ -n "$T" ]; then
+	T_DEC=$(printf "%d" "0x$T")
+	T_HEX=$T
+fi
+
+T=$(echo "$O" | awk '/^PCC.*RSSI/ {print $4}' | xargs)
+[ -n "$T" ] && && RSSI="${T// //}"
+T=$(echo "$O" | awk '/^PCC.*RSRP/ {print $8}' | xargs)
+[ -n "$T" ] && RSRP="${T// //}"
+T=$(echo "$O" | awk '/^RSRQ/ {print $3}')
+[ -n "$T" ] && RSRQ="$T"
+T=$(echo "$O" | awk '/^SINR/ {print $3}')
+[ -n "$T" ] && SINR="$T"
+
+T=$(echo "$O" | awk '/^LTE band:/ {print $3}')
+if [ -n "$T" ]; then
+	T1=$(echo "$O" | awk '/^LTE band:/ {print $6}')
+	PBAND="$(band ${T/B/}) @${T1} MHz"
+	MODE="$MODE $(band ${T/B/})"
+fi
+T=$(echo "$O" | awk '/^LTE Rx chan:/ {print $4}')
+# [ -n "$T" ] && addon 34 "EARFCN DL" "$T"
+T=$(echo "$O" | awk '/^LTE Rx chan:/ {print $8}')
+# [ -n "$T" ] && addon 34 "EARFCN UL" "$T"
+
+T=$(echo "$O" | awk -F: '/^LTE SCC1 state:.*ACTIVE/ {print $3}')
+if [ -n "$T" ]; then
+	T1=$(echo "$O" | awk '/^LTE SCC1 bw/ {print $5}')
+	if [ -n "$T1" ]; then
+		S1BAND=$(band ${T/B/}) @${T1} MHz"
+	else
+		S1BAND="$(band ${T/B/})"
+	fi
+	MODE="${MODE/LTE/LTE_A} / $(band ${T/B/})"
+
+	T=$(echo "$O" | awk '/.*LTE SCC1 Rx chan:/ {print $11}')
+# 	[ -n "$T" ] && addon 54 "(S1) EARFCN DL" "${T}"
+	T=$(echo "$O" | awk '/.*LTE SCC1 Tx chan:/ {print $10}')
+# 	[ -n "$T" ] && addon 54 "(S1) EARFCN UL" "${T}"
+
+	T=$(echo "$O" | awk '/^SCC1.*RSSI/ {print $4}' | xargs)
+# 	[ -n "$T" ] && addon 55 "(S1) RSSI" "${T// //} dBm"
+	T=$(echo "$O" | awk '/^SCC1.*RSRP/ {print $8}' | xargs)
+# 	[ -n "$T" ] && addon 56 "(S1) RSRP" "${T// //} dBm"
+fi
+
+T=$(echo "$O" | awk -F: '/^LTE SCC2 state:.*ACTIVE/ {print $3}')
+if [ -n "$T" ]; then
+	T1=$(echo "$O" | awk '/^LTE SCC2 bw/ {print $5}')
+	if [ -n "$T1" ]; then
+		S2BAND="$(band ${T/B/}) @${T1} MHz"
+	else
+		S2BAND="$(band ${T/B/})"
+	fi
+	MODE="$MODE / $(band ${T/B/})"
+
+	T=$(echo "$O" | awk '/.*LTE SCC2 Rx chan:/ {print $11}')
+# 	[ -n "$T" ] && addon 64 "(S2) EARFCN DL" "${T}"
+	T=$(echo "$O" | awk '/.*LTE SCC2 Tx chan:/ {print $10}')
+# 	[ -n "$T" ] && addon 64 "(S2) EARFCN UL" "${T}"
+
+	T=$(echo "$O" | awk '/^SCC2.*RSSI/ {print $4}' | xargs)
+# 	[ -n "$T" ] && addon 65 "(S2) RSSI" "${T// //} dBm"
+	T=$(echo "$O" | awk '/^SCC2.*RSRP/ {print $8}' | xargs)
+# 	[ -n "$T" ] && addon 66 "(S2) RSRP" "${T// //} dBm"
+fi
+
+T=$(echo "$O" | awk -F: '/^LTE SCC3 state:.*ACTIVE/ {print $3}')
+if [ -n "$T" ]; then
+	T1=$(echo "$O" | awk '/^LTE SCC3 bw/ {print $5}')
+	if [ -n "$T1" ]; then
+		S3BAND"$(band ${T/B/}) @${T1} MHz"
+	else
+		S3BAND"$(band ${T/B/})"
+	fi
+	MODE="$MODE / $(band ${T/B/})"
+
+	T=$(echo "$O" | awk '/.*LTE SCC3 Rx chan:/ {print $11}')
+# 	[ -n "$T" ] && addon 74 "(S3) EARFCN DL" "${T}"
+	T=$(echo "$O" | awk '/.*LTE SCC3 Tx chan:/ {print $10}')
+# 	[ -n "$T" ] && addon 74 "(S3) EARFCN UL" "${T}"
+
+	T=$(echo "$O" | awk '/^SCC3.*RSSI/ {print $4}' | xargs)
+# 	[ -n "$T" ] && addon 75 "(S3) RSSI" "${T// //} dBm"
+	T=$(echo "$O" | awk '/^SCC3.*RSRP/ {print $8}' | xargs)
+# 	[ -n "$T" ] && addon 76 "(S3) RSRP" "${T// //} dBm"
+fi
+
+T=$(echo "$O" | awk '/^SCC. NR5G band:/ {print $4}')
+if [ -n "$T" ] && [ "$T" != "---" ]; then
+	MODE="$MODE / $(band5g ${T/n/})"
+	T1=$(echo "$O" | awk '/^SCC.*SCC. NR5G bw:/ {print $8}')
+	if [ -n "$T1" ]; then
+# 		addon 80 "5G band" "$(band5g ${T/n/}) @${T1} MHz"
+	else
+# 		addon 80 "5G band" "$(band5g ${T/n/})"
+	fi
+	T=$(echo "$O" | awk '/^SCC. NR5G Rx chan:/ {print $5}')
+# 	[ -n "$T" ] && addon 84 "EARFCN DL" "$T"
+	T=$(echo "$O" | awk '/^SCC.*SCC. NR5G Tx chan:/ {print $10}')
+# 	[ -n "$T" ] && addon 84 "EARFCN UL" "$T"
+	T=$(echo "$O" | awk '/^NR5G RSRP/ {print $4}')
+# 	[ -n "$T" ] && addon 86 "RSRP" "$T dBm"
+	T=$(echo "$O" | awk '/^NR5G.*RSRQ/ {print $8}')
+# 	[ -n "$T" ] && addon 87 "RSRQ" "$T dB"
+	T=$(echo "$O" | awk '/^NR5G SINR/ {print $4}')
+# 	[ -n "$T" ] && addon 88 "RSRP" "$T dBm"
+fi
+
+MODE=$(echo $MODE | sed "s/LTE_A/LTE-A |/g" | sed 's,/,+,')
+
+# Modem
+
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices)
+PVCUT=$(echo $PV | awk -F 'Vendor=1199 ProdID=90d3' '{print $2}' | cut -c-1100)
+if echo "$PVCUT" | grep -q "Driver=qmi_wwan"
+then
+    PROTO="qmi"
+elif echo "$PVCUT" | grep -q "Driver=cdc_mbim"
+then
+    PROTO="mbim"
+elif echo "$PVCUT" | grep -q "Driver=cdc_ether"
+then
+    PROTO="ecm"
+fi

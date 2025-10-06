@@ -1,0 +1,11 @@
+{
+	"luci-app-arcadia": {
+		"description": "Grant UCI access for luci-app-arcadia",
+		"read": {
+			"uci": [ "arcadia" ]
+		},
+		"write": {
+			"uci": [ "arcadia" ]
+		}
+	}
+}

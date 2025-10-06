@@ -1,0 +1,66 @@
+# BroadMobi BM806U
+
+O=$(sms_tool -d $DEVICE at "AT+BMTCELLINFO")
+
+T=$(echo "$O" | awk -F[,:] '/^TAC:/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	T_HEX=$(printf "%X" $T)
+	ADDON="$ADDON"'{"TAC":"'$T' ('$T_HEX')"}'
+fi
+
+ADDON=""
+T=$(echo "$O" | awk -F[,:] '/^RSSI:/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	RSSI="$T"
+	ADDON="$ADDON"'{"RSSI":"-'$T' dBm"}'
+fi
+T=$(echo "$O" | awk -F[,:] '/^RSRP:/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	RSRP="$T"
+	ADDON="$ADDON"'{"RSRP":"'$T' dBm"}'
+fi
+T=$(echo "$O" | awk -F[,:] '/^RSRQ:/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	RSRQ="$T"
+	ADDON="$ADDON"'{"RSRQ":"'$T' dB"}'
+fi
+T=$(echo "$O" | awk -F[,:] '/^SINR:/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	SINR="$T"
+	ADDON="$ADDON"'{"SINR":"'$T' dB"}'
+fi
+
+if [ "x$MODE" = "xLTE" ]; then
+	T=$(echo "$O" | awk -F[,:] '/^ACTIVE BAND:/ {print $2}' | xargs)
+	if [ -n "$T" ]; then
+		case "$T" in
+			*"1") MODE=$(band 1 "LTE ");;
+			*"3") MODE=$(band 3 "LTE ");;
+			*"7") MODE=$(band 7 "LTE ");;
+			*"8") MODE=$(band 8 "LTE ");;
+			*"20") MODE=$(band 20 "LTE ");;
+			*) MODE="LTE B${T}";;
+		esac
+	fi
+fi
+
+T=$(echo "$O" | awk -F[,:] '/^PCI:/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"PCI":"'$T'"}'
+fi
+T=$(echo "$O" | awk -F[,:] '/^EARFCN_DL:/ {print $2}' | xargs)
+if [ -n "$T" ] && [ "x$T" != "x0" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"EARFCN DL":"'$T'"}'
+fi
+T=$(echo "$O" | awk -F[,:] '/^EARFCN_UL:/ {print $2}' | xargs)
+if [ -n "$T" ] && [ "x$T" != "x0" ]; then
+	[ -n "$ADDON" ] && ADDON="$ADDON,"
+	ADDON="$ADDON"'{"EARFCN UL":"'$T'"}'
+fi

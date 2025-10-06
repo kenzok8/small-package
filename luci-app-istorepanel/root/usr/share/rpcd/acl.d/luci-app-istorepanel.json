@@ -1,0 +1,11 @@
+{
+	"luci-app-istorepanel": {
+		"description": "Grant UCI access for luci-app-istorepanel",
+		"read": {
+			"uci": [ "istorepanel" ]
+		},
+		"write": {
+			"uci": [ "istorepanel" ]
+		}
+	}
+}

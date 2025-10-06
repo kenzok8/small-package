@@ -1,0 +1,38 @@
+#!/bin/sh
+
+[ -z "${HOSTNAME##MESH-AGENT_*}" ] || exit 0
+[ -z "${HOSTNAME##MESH-AGENT_}" ] && exit 0
+
+need_reload=0
+
+case "$ACTION" in
+	add | update)
+		if grep -q ".* ${HOSTNAME##MESH-AGENT_}.ap.fakemesh" /tmp/hosts/fakemesh; then
+			sed -i "s/.* ${HOSTNAME##MESH-AGENT_}.ap.fakemesh/$IPADDR ${HOSTNAME##MESH-AGENT_}.ap.fakemesh/" /tmp/hosts/fakemesh
+		else
+			echo $IPADDR ${HOSTNAME##MESH-AGENT_}.ap.fakemesh >>/tmp/hosts/fakemesh
+			need_reload=1
+		fi
+		logger -t fakemesh "dhcp add host: $IPADDR ${HOSTNAME##MESH-AGENT_}.ap.fakemesh"
+
+		if ! grep -q "$IPADDR .* # ${HOSTNAME##MESH-AGENT_}.ap.fakemesh" /tmp/hosts/fakemesh.idx; then
+			need_reload=1
+		fi
+	;;
+	remove)
+		sed -i "/.* ${HOSTNAME##MESH-AGENT_}.ap.fakemesh/d" /tmp/hosts/fakemesh
+		need_reload=1
+		logger -t fakemesh "dhcp remove host: $IPADDR ${HOSTNAME##MESH-AGENT_}.ap.fakemesh"
+	;;
+esac
+
+if [ "$need_reload" = "1" ] || [ "$(cat /tmp/hosts/fakemesh.idx | wc -l)" != "$(cat /tmp/hosts/fakemesh | wc -l)" ]; then
+	echo -n >/tmp/hosts/fakemesh.idx
+	idx=1
+	cat /tmp/hosts/fakemesh | while read ip h; do
+		echo $h $ip
+	done | sort | while read h ip; do
+		echo "$ip $((idx++)).ap.fakemesh # $h" >>/tmp/hosts/fakemesh.idx
+	done
+	/etc/init.d/dnsmasq reload &
+fi

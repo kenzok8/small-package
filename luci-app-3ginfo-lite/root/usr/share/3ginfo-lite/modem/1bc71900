@@ -1,0 +1,128 @@
+# Telit LN940 (QMI) / Telit LN940 (MBIM) / HP lt4220 (MBIM) / HP lt4220 (QMI)
+
+O=$(sms_tool -D -d $DEVICE at "AT^CA_INFO?;^RFSTS?;+TEMP")
+
+TR=$(echo "$O" |grep -A2 RFSTS: | awk 'NR ==2{print $0}')
+
+if [ "$MODE" = "LTE" ]; then
+	RSRP=$(echo "$TR" | awk -F [,] '{printf "%.0f\n",$3}')
+	RSSI=$(echo "$TR" | awk -F [,] '{printf "%.0f\n",$4}')
+	RSRQ=$(echo "$TR" | awk -F [,] '{printf "%.0f\n",$5}')
+	SINR=$(echo "$TR" | awk -F [,] '{printf "%.0f\n",$16*2-20}')
+else
+	SINR=$(echo "$TR" | awk -F [,] '{printf "%.0f\n",$4}')
+	RSSI=$(echo "$TR" | awk -F [,] '{printf "%.0f\n",$6}')
+fi
+
+T=$(echo "$O" | awk -F[,:] '/^\PCC info: /{print $2}' | sed 's/Band is //g')
+[ -z "$T" ] && T=$(echo "$O" | awk -F[,] '/^\PCC info: /{print $2}')
+if [ -n "$T" ]; then
+	PC=$(echo $T | tr -d 'LTE_B')
+	MODE="LTE | $(band $PC)"
+
+	T=$(echo "$O" | awk -F[,:] '/^\SCC1 info: /{print $2}' | sed 's/Band is //g')
+	if [ -n "$T" ]; then
+		SC1=$(echo $T | tr -d 'LTE_B')
+		MODE="${MODE/LTE/LTE_A} / "$(band ${SC1} "")
+	fi
+
+	T=$(echo "$O" | awk -F[,:] '/^\SCC2 info: /{print $2}' | sed 's/Band is //g')
+	if [ -n "$T" ]; then
+		SC2=$(echo $T | tr -d 'LTE_B')
+		MODE="${MODE} / "$(band ${SC2} "")
+	fi
+fi
+
+MODE=$(echo $MODE | sed 's,/,+,' | sed 's,LTE_A,LTE-A ,')
+
+# Primary band
+T1=$(echo "$O" | awk '/PCC/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+if [ -n "$T1" ]; then
+	T2=$(echo "$O" | awk '/PCC/{print $8}' | sed -e 's/Band_width//g')
+	PBAND="$(band ${T1/B/} "") @$T2 MHz"
+	EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
+	PCI=$(echo "$TR" |awk -F [,] '{print $11}')
+fi
+
+# CA band (S1)
+T3=$(echo "$O" | awk '/SCC1/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+if [ -n "$T3" ]; then
+	T4=$(echo "$O" | awk '/SCC1/{print $8}' | sed -e 's/Band_width//g')
+	S1BAND="$(band ${T3/B/} "") @$T4 MHz"
+#	S1EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
+#	S1PCI=$(echo "$TR" |awk -F [,] '{print $11}')
+fi
+
+# CA band (S2)
+T5=$(echo "$O" | awk '/SCC2/{print $5}' | sed -e 's/LTE_//g' -e 's/.$//')
+if [ -n "$T5" ]; then
+	T6=$(echo "$O" | awk '/SCC2/{print $8}' | sed -e 's/Band_width//g')
+	S2BAND="$(band ${T5/B/} "") @$T6 MHz"
+#	S2EARFCN=$(echo "$TR" |awk -F [,] '{print $2}')
+#	S2PCI=$(echo "$TR" |awk -F [,] '{print $11}')
+fi
+
+# Temperature
+T=$(echo "$O" | awk -F [:] '/tsens_tz_sensor0:/ {print $2}' | xargs)
+if [ -n "$T" ]; then
+	TEMP=$(echo "$T &deg;C")
+fi
+
+# Cell ID & LAC & TAC
+LAC_HEX=$(printf "%X" $LAC_DEC)
+if [ -n "$LAC_DEC" ]; then
+	TAC_HEX=$LAC_HEX
+fi
+CID_HEX=$(printf "%X" $CID_DEC)
+
+# Protocol
+# DRIVER=QMI_WWAN & DRIVER=CDC_MBIM & DRIVER=CDC_ETHER
+PV=$(cat /sys/kernel/debug/usb/devices 2>/dev/null)
+PVCUT=$(echo $PV | awk -F 'Vendor=1bc7 ProdID=1900' '{print $2}' | cut -c-1220)
+
+if echo "$PVCUT" | grep -q "Driver=qmi_wwan"
+then
+	PROTO="qmi"
+elif echo "$PVCUT" | grep -q "Driver=cdc_mbim"
+then
+	PROTO="mbim"
+elif echo "$PVCUT" | grep -q "Driver=cdc_ether"
+then
+	PROTO="ecm"
+fi
+
+# Model
+PVMODEL=$(echo $PV | awk -F 'Vendor=1bc7 ProdID=1900' '{print $2}' | cut -c-150)
+if [ -z "$MODEL" ]
+then
+	MODELBCUT=$(echo $PVMODEL | awk -F 'Manufacturer=|S: Product=' '{print $2}'| xargs)
+	MODELACUT=$(echo $PVMODEL | awk -F 'Product=|S: SerialNumber' '{print $2}'| xargs)
+	MODELC="$MODELBCUT "$MODELACUT
+	MODEL=$(echo "$MODELC" | awk '{for (i=1;i<=NF;i++) if (!a[$i]++) printf("%s%s",$i,FS)}{printf("\n")}')
+fi
+
+# International Mobile Equipment Identity (IMEI)
+O=$(sms_tool -d $DEVICE at "AT+GSN" | xargs)
+NR_I=$(echo "$O" | awk -F " " '/GSN /{print $2}')
+if [ -n "$NR_I" ]; then
+	NR_IMEI="$NR_I"
+fi
+
+# International Mobile Subscriber Identity (IMSI)
+O=$(sms_tool -d $DEVICE at "AT+CIMI" | xargs)
+NR_C=$(echo "$O" | awk -F " " '/CIMI /{print $2}')
+if [ -n "$NR_C" ]; then
+	NR_IMSI="$NR_C"
+fi
+
+# Integrated Circuit Card Identifier (ICCID)
+O=$(sms_tool -d $DEVICE at "AT+ICCID" | xargs)
+NR_D=$(echo "$O" | awk -F [:] '/ICCID: /{print $2}' | xargs)
+if [ -n "$NR_D" ]; then
+	NR_ICCID="$NR_D"
+fi
+
+# FW
+OF=$(sms_tool -d $DEVICE at "ati")
+DEV2=$(echo $OF | tr -s "\n" | xargs)
+FW=$(echo $DEV2 | awk -F 'Revision: | IMEI: ' '{print $2}' | cut -c-50)v

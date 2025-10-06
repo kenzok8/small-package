@@ -1,9 +1,0 @@
-#!/bin/sh
-. /usr/nvr/nvrcommon
-
-/etc/init.d/nvr stop
-kill -9 $(busybox ps | grep nvrrecord | grep -v grep | awk '{print$1}') 2>&1 &
-
-for i in $_all_clients;do
-	kill -9 $(ps -w | grep $i | grep -v grep | grep -v "\-f flv" | awk '{print$1}') 2>&1 &
-done
