@@ -212,6 +212,9 @@ dsvpn glorytun-udp glorytun grpcurl ipcalc luci-app-dsvpn luci-app-glorytun-tcp 
 git_sparse_clone chawrt/24.10 "https://github.com/liudf0716/luci" applications/luci-app-yt-dlp applications/luci-app-apfree-wifidog applications/luci-app-ss-redir
 git_sparse_clone chawrt/24.10 "https://github.com/liudf0716/packages" net/ss-redir
 ) &
+
+wait
+
 git_sparse_clone master "https://github.com/immortalwrt/packages" net/n2n net/dae \
 net/amule net/cdnspeedtest net/minieap net/sysuh3c net/3proxy net/cloudreve \
 net/go-nats net/go-wol net/bitsrunlogin-go net/transfer net/daed net/udp2raw net/msd_lite \
