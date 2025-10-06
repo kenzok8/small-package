@@ -1,0 +1,75 @@
+<%+header%>
+
+<%
+	local uci = require("luci.model.uci").cursor()
+	local sys = require "luci.sys"
+	local ifaces = sys.net:devices()
+	local net = require "luci.model.network".init()
+%>
+
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-18.193.28471-ee087a1"></script>
+<script type="text/javascript">//<![CDATA[
+    var stxhr = new XHR();
+
+    function update_mptcp(interface)
+    {
+	var trace = document.getElementById('tracebox');
+
+	if (trace)
+	{
+	    trace.innerHTML =
+		'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' + '<%:Waiting for command to complete...%>'
+	    ;
+
+	    stxhr.post('<%=url('admin/network/mptcp')%>/mptcp_check_trace/' + interface, { token: '<%=token%>' },
+		function(x)
+		{
+		    if (x.responseText)
+		    {
+			trace.innerHTML = String.format('<pre>%s</pre>', x.responseText );
+		    } else {
+			trace.innerHTML = '<pre><%:Error%></pre>';
+		    }
+		}
+	    );
+	}
+    }
+//]]></script>
+
+<% if stderr and #stderr > 0 then %><pre class="error"><%=pcdata(stderr)%></pre><% end %>
+<form class="inline" method="post" action="<%=url('admin/network/mptcp/mptcp_check_trace')%>">
+    <div class="cbi-map">
+	<h2 name="content"><%:MPTCP Support Check%></h2>
+	<div class="cbi-map-descr"><%:Check if MPTCP between interface and server is working.%></div>
+	<fieldset class="cbi-section" id="networks">
+	    <legend><%:Settings%></legend>
+	    <div class="cbi-section-descr"></div>
+	    <div class="cbi-value">
+		<label class="cbi-value-title"><%:Interface%></label>
+		<div class="cbi-value-field">
+		    <select class="cbi-input-select" name="interface" size="1">
+			<%
+			    for _, iface in ipairs(net:get_networks()) do
+				local ifname = iface:name()
+				local multipath = uci:get("network",ifname,"multipath")
+				if multipath ~= "off" then
+			%>
+			<option value="<%=ifname%>"><%=ifname%></option>
+			<%
+				end
+			    end
+			%>
+		    </select>
+		</div>
+	    </div>
+	    <input type="button" value="<%:Test%>" class="cbi-button cbi-button-apply" onclick="update_mptcp(this.form.interface.value)" />
+	</fieldset>
+    </div>
+</form>
+    
+<div class="cbi-section">
+    <span id="tracebox"></span>
+    <br />
+    <i><%:If you get "TCPOptionMPTCPCapable [...] Sender's Key" at the end, then MPTCP is supported. If there is a "-TCPOptionMPTCPCapable", then it's blocked.%></i>
+</div>
+<%+footer%>

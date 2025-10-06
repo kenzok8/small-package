@@ -1,0 +1,325 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-06-16 10:51+0000\n"
+"Last-Translator: Dmitry Galenko <d@monteops.com>\n"
+"Language-Team: Russian <http://weblate.openmptcprouter.com/projects/omr/"
+"luciapplicationsmptcp/ru/>\n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.6.1\n"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:775
+msgid "(%d minute window, %d second interval)"
+msgstr "(% d минутное окно,% d секундный интервал)"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:241
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:242
+msgid "(%d minutes window, %d seconds interval)"
+msgstr "(% d минутное окно,% d секундный интервал)"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:315
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:373
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:932
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:942
+msgid "Average:"
+msgstr "Среднее:"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:11
+msgid "Bandwidth"
+msgstr "Пропускная способность"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:43
+msgid "Check if MPTCP between interface and server is working."
+msgstr "Проверьте, работает ли MPTCP между интерфейсом и сервером."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:52
+msgid "Congestion Control"
+msgstr "Контроль перегрузки"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:97
+msgid "Consecutive segments that should be sent for round robin"
+msgstr "Последовательные сегменты, которые следует отправлять для round-robin"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:311
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:369
+msgid "Current:"
+msgstr "Текущая:"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:52
+msgid "Default is cubic"
+msgstr "По умолчанию кубический"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:21
+msgid "Default is fullmesh"
+msgstr "По умолчанию - fullmesh"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:908
+msgid "Download:"
+msgstr "Загрузка:"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:24
+msgid "Error"
+msgstr "Ошибка"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:18
+msgid "Established connections"
+msgstr "Установленные соединения"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:91
+msgid "Fill the congestion window on all subflows for round robin"
+msgstr "Заполнение окна перегрузки для всех подпотоков для round-robin"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:74
+msgid "Fullmesh subflows for each pair of IP addresses"
+msgstr "Подпотоки Fullmesh для каждой пары IP-адресов"
+
+#: luci-app-mptcp/root/usr/share/rpcd/acl.d/luci-app-mptcp.json:3
+msgid "Grant UCI access for luci-app-mptcp"
+msgstr "Предоставить доступ UCI для luci-app-mptcp"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:73
+msgid ""
+"If you get \"TCPOptionMPTCPCapable [...] Sender's Key\" at the end, then "
+"MPTCP is supported. If there is a \"-TCPOptionMPTCPCapable\", then it's "
+"blocked."
+msgstr ""
+"Если в конце вы получите «TCPOptionMPTCPCapable [...] Sender's Key», то "
+"MPTCP поддерживается. Если \"-TCPOptionMPTCPCapable\", то MPTCP заблокирован."
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:929
+msgid "Inbound:"
+msgstr "Входящий:"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:48
+msgid "Interface"
+msgstr "Интерфейс"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:104
+msgid "Interfaces Settings"
+msgstr "Настройки интерфейсов"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:14
+msgid "Loading"
+msgstr "Загрузка"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:93
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:686
+msgid "MB/s"
+msgstr "MB/s"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:9
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:7
+#: luci-app-mptcp/root/usr/share/luci/menu.d/luci-app-mptcp.json:3
+msgid "MPTCP"
+msgstr "MPTCP"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:16
+msgid "MPTCP Fullmesh"
+msgstr "MPTCP Fullmesh"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:14
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:42
+msgid "MPTCP Support Check"
+msgstr "Проверка поддержки MPTCP"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:20
+msgid "MPTCP monitoring"
+msgstr "Мониторинг MPTCP"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:102
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:695
+msgid "Mbit/s"
+msgstr "Mbit/s"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:18
+msgid "Multipath Debug"
+msgstr "Многоуровневая отладка"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:12
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:108
+msgid "Multipath TCP"
+msgstr "Многопоточный TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:42
+msgid "Multipath TCP SYN retries"
+msgstr "Попытки многопоточной TCP SYN"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:15
+msgid "Multipath TCP checksum"
+msgstr "Контрольная сумма многопоточного TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:21
+msgid "Multipath TCP path-manager"
+msgstr "Многопоточный TCP менеджер"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:31
+msgid "Multipath TCP scheduler"
+msgstr "Планировщик многопоточного TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:47
+#, fuzzy
+#| msgid "Multipath TCP"
+msgid "Multipath TCP version"
+msgstr "Многопоточный TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:28
+msgid "Netlink"
+msgstr "Netlink"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:7
+msgid ""
+"Networks MPTCP settings. Visit <a href='http://multipath-tcp.org/pmwiki.php/"
+"Users/ConfigureMPTCP'>http://multipath-tcp.org/pmwiki.php/Users/"
+"ConfigureMPTCP</a> for help."
+msgstr ""
+"Настройки сети MPTCP. Посетите <a href='http://multipath-tcp.org/pmwiki.php/"
+"Users/ConfigureMPTCP'>http://multipath-tcp.org/pmwiki.php/Users/"
+"ConfigureMPTCP</a> для справки."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:108
+msgid "One interface must be set as master"
+msgstr "Один интерфейс должен быть установлен как главный"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:939
+msgid "Outbound:"
+msgstr "Отправка:"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:319
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:377
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:935
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:945
+msgid "Peak:"
+msgstr "Пиковое значение:"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:80
+msgid "Re-create fullmesh subflows after a timeout"
+msgstr "Повторно создать подпотоки fullmesh после тайм-аута"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:891
+msgid "Realtime Traffic"
+msgstr "Трафик в реальном времени"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:10
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:45
+msgid "Settings"
+msgstr "Настройки"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:65
+msgid "Test"
+msgstr "Тест"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:69
+msgid ""
+"The number of MPTCP-level retransmission intervals with no traffic and "
+"pending outstanding data on a given subflow required to declare it stale"
+msgstr ""
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:914
+msgid "Upload:"
+msgstr "Отправка:"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:14
+msgid "Waiting for command to complete..."
+msgstr "Ожидание завершения команды..."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:112
+msgid "backup"
+msgstr "Резервирование"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:22
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:32
+msgid "default"
+msgstr "По умолчанию"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:14
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:17
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:20
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:82
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:93
+msgid "disable"
+msgstr "отключить"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:110
+msgid "disabled"
+msgstr "отключить"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:13
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:16
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:19
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:81
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:92
+msgid "enable"
+msgstr "включить"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:109
+msgid "enabled"
+msgstr "Установлено"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:88
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:372
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:376
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:380
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:681
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:930
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:933
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:936
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:940
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:943
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:946
+msgid "kB/s"
+msgstr "kB/s"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:97
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:372
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:376
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:380
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:690
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:930
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:933
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:936
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:940
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:943
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:946
+msgid "kbit/s"
+msgstr "kbit/s"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:111
+msgid "master"
+msgstr "мастер"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:85
+msgid "ndiffports subflows number"
+msgstr "количество подпотоков ndiffports"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:64
+msgid ""
+"specifies the maximum number of ADD_ADDR suboptions accepted for each MPTCP "
+"connection"
+msgstr ""
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:59
+msgid ""
+"specifies the maximum number of additional subflows allowed for each MPTCP "
+"connection"
+msgstr ""

@@ -1,0 +1,46 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=01
+USE_PROCD=1
+
+service_triggers() {
+    procd_add_reload_trigger "airconnect"
+}
+
+main_config() {
+    config_get AIRUPNP_IFACE "$1" interface "lan"
+    config_get_bool ENABLE_MAIN "$1" enabled 0
+    config_get_bool ENABLE_AIRCAST "$1" aircast 0
+    config_get_bool ENABLE_AIRUPNP "$1" airupnp 0
+}
+
+start_service() {
+    config_load airconnect
+    config_foreach main_config main
+    [ "$ENABLE_MAIN" = 0 ] && return 0
+    [ "$ENABLE_AIRCAST" = 0 -a "$ENABLE_AIRUPNP" = 0 ] && return 0
+
+    local interface=$(
+        . /lib/functions/network.sh
+
+        network_is_up "$AIRUPNP_IFACE" || exit 0
+        network_get_device device "$AIRUPNP_IFACE"
+        printf "%s" "${device:-$AIRUPNP_IFACE}"
+    )
+    [ -z "$interface" ] && interface=br-lan
+    local common_args="-Z -b $interface"
+
+    if [ "$ENABLE_AIRUPNP" = 1 ]; then
+        procd_open_instance
+        procd_set_param command /usr/bin/airupnp $common_args
+        procd_set_param respawn
+        procd_close_instance
+    fi
+    if [ "$ENABLE_AIRCAST" = 1 ]; then
+        procd_open_instance
+        procd_set_param command /usr/bin/aircast $common_args
+        procd_set_param respawn
+        procd_close_instance
+    fi
+}

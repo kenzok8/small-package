@@ -1,0 +1,4 @@
+config kodexplorer
+  option 'cache_path' ''
+  option 'port' '8081'
+  option 'image_name' 'kodcloud/kodbox:latest'

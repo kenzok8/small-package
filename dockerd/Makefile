@@ -22,7 +22,7 @@ PKG_BUILD_FLAGS:=no-mips16
 GO_PKG:=github.com/docker/docker
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
+include ../../lang/golang/golang-package.mk
 
 define Package/dockerd/config
   source "$(SOURCE)/Config.in"
@@ -34,7 +34,7 @@ define Package/dockerd
   TITLE:=Docker Community Edition Daemon
   URL:=https://www.docker.com/
   DEPENDS:=$(GO_ARCH_DEPENDS) \
-    +ca-bundle \
+    +ca-certificates \
     +containerd \
     +iptables \
     +iptables-mod-extra \

@@ -1,0 +1,22 @@
+<%#
+ Copyright 2008-2020 sirpdboy Wich <sirpdboy@qq.com>
+ https://github.com/sirpdboy/luci-app-netdata
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+header%>
+<div class="cbi-map">
+    <h2 name="content"><%=translate("NetData")%></h2>  
+<script type="text/javascript">//<![CDATA[
+		function upnetdata(button) {
+
+		(new XHR()).post('<%=controller%>/admin/status/netdata/call', { token: '<%=token%>' }, check);
+	}
+//]]></script>
+
+        <iframe id="netdata" style="width: 100%; min-height: 1200px; border: none; border-radius: 3px;"></iframe>
+</div>
+<script type="text/javascript">
+        document.getElementById("netdata").src = window.location.protocol + "//" + window.location.hostname + ":19999";
+</script>
+<%+footer%>

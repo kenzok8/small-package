@@ -1,0 +1,15 @@
+--- a/src/main.c
++++ b/src/main.c
+@@ -1164,9 +1164,9 @@
+
+     if (memcmp(&data_r[size-hash_size-sizeof(proto)], proto, 3)) {
+         gt_log("bad packet [%02"PRIX8"%02"PRIX8"%02"PRIX8"] !\n",
+-            &data_r[size-hash_size-sizeof(proto)+0],
+-            &data_r[size-hash_size-sizeof(proto)+1],
+-            &data_r[size-hash_size-sizeof(proto)+2]);
++            data_r[size-hash_size-sizeof(proto)+0],
++            data_r[size-hash_size-sizeof(proto)+1],
++            data_r[size-hash_size-sizeof(proto)+2]);
+         return -2;
+     }
+ 

@@ -1,0 +1,11 @@
+--- a/setupdwfl.cxx	2023-07-26 20:22:35.427807372 +0200
++++ b/setupdwfl.cxx	2023-07-26 20:22:43.855666830 +0200
+@@ -762,7 +762,7 @@
+         clog << _("Attempting to extract kernel debuginfo build ID from /sys/kernel/notes") << endl;
+ 
+       const char *notesfile = "/sys/kernel/notes";
+-      int fd = open64 (notesfile, O_RDONLY);
++      int fd = open (notesfile, O_RDONLY);
+       if (fd < 0)
+       return "";
+ 

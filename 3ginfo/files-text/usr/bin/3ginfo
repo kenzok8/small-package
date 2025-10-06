@@ -1,0 +1,138 @@
+#!/bin/sh
+
+#
+# (c) 2024-2025 Cezary Jackiewicz <cezary@eko.one.pl>
+#
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
+FORMAT=1
+[ "x$1" = "xjson" ] && FORMAT=2
+ECM=""
+
+RES="/usr/share/modemdata"
+
+format_conn_time() {
+	CT=$1
+	D=$(expr $CT / 60 / 60 / 24)
+	H=$(expr $CT / 60 / 60 % 24)
+	M=$(expr $CT / 60 % 60)
+	S=$(expr $CT % 60)
+	printf "%dd, %02d:%02d:%02d" $D $H $M $S
+}
+
+SEPARATOR=""
+parse_section() {
+	[ -n "$SEPARATOR" ] && echo "$SEPARATOR"
+	local section="$1"
+	config_get device "$section" device ""
+	config_get network "$section" network ""
+	config_get force_plmn "$section" force_plmn "0"
+
+	if echo "x$device" | grep -q "192.168."; then
+		ECM="$RES/addon/ecm/huawei.sh $device"
+	else
+		ECM=""
+		if [ ! -e /var/state/3ginfo-detected ]; then
+			[ -z "$device" ] && device=$(/usr/share/3ginfo/detectdevice.sh)
+			[ -z "$network" ] && network=$(/usr/share/3ginfo/detectsection.sh "$section")
+		fi
+		config_get pincode "$section" pincode ""
+		if [ -n "$pincode" ] && [ ! -e /var/state/3ginfo-pincode ]; then
+			[ -n "$device" ] && sms_tool -d "$device" at "at+cpin=\"$pincode\""
+		fi
+	fi
+
+	if [ "$FORMAT" = "1" ]; then
+		SEPARATOR="---"
+		json_init
+		if [ -n "$ECM" ]; then
+			json_load "$($ECM product)"
+		else
+			json_load "$($RES/product.sh "$device")"
+		fi
+		json_get_vars vendor product revision imei iccid imsi
+		echo "Device: ${vendor} ${product}"
+		echo "Revision: ${revision}"
+		echo "IMEI: ${imei}"
+		echo "ICCID: ${iccid}"
+		echo "IMSI: ${imsi}"
+		echo ""
+
+		json_init
+		json_load "$($RES/network.sh "$network")"
+		json_get_vars conn_time_sec rx tx
+		echo "Connected time: "$(format_conn_time ${conn_time_sec})
+		echo "TX: ${tx}"
+		echo "RX: ${rx}"
+		echo ""
+
+		json_init
+		if [ -n "$ECM" ]; then
+			json_load "$($ECM params)"
+		else
+			json_load "$($RES/params.sh "$device" "$force_plmn")"
+		fi
+		json_get_vars signal operator_name operator_mcc operator_mnc country mode registration lac_dec lac_hex cid_dec cid_hex
+		echo "Signal: ${signal} %"
+		echo "Mode: ${mode}"
+		echo "Operator: ${operator_name} (${operator_mcc} ${operator_mnc})"
+		[ -n "$country" ] && echo "Country: ${country}"
+		case $registration in
+			0) REG="not registered";;
+			1) REG="registered, home network";;
+			2) REG="not registered, searching";;
+			3) REG="registration denied";;
+			5) REG="registered, roaming";;
+			6) REG="registered for SMS only, home network";;
+			7) REG="registered for SMS only, roaming";;
+			*) REG="$registration";;
+		esac
+		echo "Registration: ${REG}"
+		echo ""
+		T="21;CellID: ${cid_dec} (${cid_hex})"
+		T="${T}\n22;LAC: ${lac_dec} (${lac_hex})"
+		if json_is_a addon array; then
+			json_get_keys addon addon
+			json_select addon
+			for i in $addon; do
+				json_select "$i"
+				json_get_vars idx key value
+				json_select ..
+				if [ "$idx" = "10" ]; then
+					T="${T}\n${idx};${key}: ${value/&deg;/°}"
+				else
+					T="${T}\n${idx};${key}: ${value}"
+				fi
+			done
+		fi
+		echo -e "$T" | sort | awk -F[\;] '{print $2}'
+	else
+		SEPARATOR=","
+		echo "["
+		if [ -n "$ECM" ]; then
+			$ECM product
+			echo ","
+			$RES/network.sh "$network"
+			echo ","
+			$ECM params
+		else
+			$RES/product.sh "$device"
+			echo ","
+			$RES/network.sh "$network"
+			echo ","
+			$RES/params.sh "$device" "$force_plmn"
+		fi
+		echo "]"
+	fi
+}
+
+config_load 3ginfo
+[ "$FORMAT" = "2" ] && echo '{"res":['
+config_foreach parse_section 3ginfo
+[ "$FORMAT" = "2" ] && echo ']}'
+touch /var/state/3ginfo-detected
+touch /var/state/3ginfo-pincode
+
+exit 0

@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=15
+USE_PROCD=1
+
+SERVICE=clouddrive2
+PROGDIR=/usr/share/clouddrive2/clouddrive
+
+load_config() {
+    config_load 'clouddrive2'
+    config_get_bool enabled main enabled 1
+    config_get port main port 19798
+    config_get mount_point main mount_point '/mnt/clouddrive'
+}
+
+service_triggers() {
+	procd_add_reload_trigger "clouddrive2"
+}
+
+start_service() {
+    load_config
+    [ "$enabled" = "1" ] || return
+
+    [ -d "$mount_point" ] || mkdir -p "$mount_point"
+
+    procd_open_instance
+    procd_set_param command "$PROGDIR"
+    procd_append_param command -p "$port"
+    procd_append_param command -m "$mount_point"
+    procd_set_param respawn
+    procd_close_instance
+    echo "$SERVICE started on port $port, mounted at $mount_point"
+}
+
+stop_service() {
+    load_config
+    echo "Stopping $SERVICE"
+    killall -q clouddrive
+    [ -d "$mount_point" ] && fusermount -u "$mount_point"
+}

@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+
+START=60
+USE_PROCD=1
+
+PROG=/usr/bin/fan2go
+CONFIG=/etc/fan2go/fan2go.yaml
+
+start_service() {
+	[ -f "$CONFIG" ] || { echo "fan2go: $CONFIG is missing"; return 1; }
+	procd_open_instance
+	procd_set_param command $PROG -c "${CONFIG}" --no-style
+	procd_set_param respawn
+	procd_close_instance
+}

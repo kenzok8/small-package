@@ -1,0 +1,47 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete glorytun-udp[-1]
+	add ucitrack glorytun-udp
+	set ucitrack.@glorytun-udp[-1].init=glorytun-udp
+	commit ucitrack
+EOF
+
+if [ "$(uci -q get network.glorytun-udp)" = "" ] && [ "$(uci -q get network.omrvpn)" = "" ]; then
+	uci -q batch <<-EOF >/dev/null
+		delete network.glorytun-udp
+		set network.glorytun-udp=interface
+		set network.glorytun-udp.device=tun0
+		set network.glorytun-udp.proto=dhcp
+		set network.glorytun-udp.ip4table=vpn
+		set network.glorytun-udp.multipath=off
+		set network.glorytun-udp.leasetime=12h
+		commit network
+	EOF
+fi
+
+if [ "$(uci -q show firewall | grep glorytun-udp)" = "" ] && [ "$(uci -q get network.omrvpn)" = "" ]; then
+	uci -q batch <<-EOF >/dev/null
+		set firewall.zone_vpn=zone
+		set firewall.zone_vpn.name=vpn
+		set firewall.zone_vpn.network=glorytun-udp
+		set firewall.zone_vpn.masq=1
+		set firewall.zone_vpn.input=REJECT
+		set firewall.zone_vpn.forward=ACCEPT
+		set firewall.zone_vpn.output=ACCEPT
+		commit firewall
+	EOF
+fi
+if [ "$(uci -q show firewall | grep Allow-All-LAN-to-VPN)" = "" ]; then
+	uci -q batch <<-EOF >/dev/null
+		add firewall rule
+		set firewall.@rule[-1].enabled='1'
+		set firewall.@rule[-1].target='ACCEPT'
+		set firewall.@rule[-1].name='Allow-All-LAN-to-VPN'
+		set firewall.@rule[-1].dest='vpn'
+		set firewall.@rule[-1].src='lan'
+		commit firewall
+	EOF
+fi
+rm -f /tmp/luci-indexcache
+exit 0

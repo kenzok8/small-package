@@ -26,6 +26,6 @@ define Package/luci-theme-material3/postrm
 }
 endef
 
-include $(TOPDIR)/feeds/luci/luci.mk
+include ../../luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

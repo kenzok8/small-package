@@ -1,0 +1,13 @@
+{
+	"admin/services/nginx-ha": {
+		"title": "Nginx High Availability",
+		"order": 80,
+		"action": {
+			"type": "cbi",
+			"path": "nginx-ha"
+		},
+		"depends": {
+			"acl": [ "luci-app-nginx-ha" ]
+		}
+	}
+}

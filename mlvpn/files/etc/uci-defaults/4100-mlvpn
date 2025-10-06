@@ -1,0 +1,30 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@mlvpn[-1]
+	add ucitrack mlvpn
+	set ucitrack.@mlvpn[-1].init=mlvpn
+	commit ucitrack
+EOF
+
+if [ "$(uci -q get network.omrvpn)" = "" ] && [ "$(uci -q get network.mlvpn)" = "" ]; then
+	uci -q batch <<-EOF >/dev/null
+		delete network.mlvpn=interface
+		set network.mlvpn=interface
+		set network.mlvpn.device=mlvpn0
+		set network.mlvpn.proto=dhcp
+		set network.mlvpn.ip4table=vpn
+		set network.mlvpn.multipath=off
+		set network.mlvpn.leasetime=12h
+		set network.mlvpn.mtu=1440
+		commit network
+	EOF
+fi
+
+if [ "$(uci -q get firewall.zone_vpn.network | grep omrvpn)" = "" ] && [ "$(uci -q get firewall.zone_vpn.network | grep mlvpn)" = "" ]; then
+	uci -q batch <<-EOF >/dev/null
+		add_list firewall.zone_vpn.network='mlvpn'
+	EOF
+fi
+rm -f /tmp/luci-indexcache
+exit 0

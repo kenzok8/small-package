@@ -1,0 +1,23 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Use AirPlay to stream to UPnP/Sonos &amp; Chromecast devices"
+msgstr "AirConnect 让 UPnP/Sonos 和 Chromecast 设备支持 AirPlay 音频串流"
+
+msgid "Global Settings"
+msgstr "全局设置"
+
+msgid "Network interface for serving, usually LAN"
+msgstr "提供服务的网络接口，通常是 LAN 口"
+
+msgid "Supports Chromecast"
+msgstr "支持 Chromecast 设备"
+
+msgid "Supports UPnP/Sonos"
+msgstr "支持 UPnP/Sonos 设备"
+
+msgid "Select this if you have Chromecast devices"
+msgstr "如果你有 Chromecast 设备就选中这个"
+
+msgid "Select this if you have UPnP/Sonos devices"
+msgstr "如果你有 UPnP/Sonos 设备就选中这个"

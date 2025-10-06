@@ -1,0 +1,85 @@
+#!/bin/sh /etc/rc.common
+
+START=88
+SERVICE_DAEMONIZE=1
+#SERVICE_SIG="KILL"
+
+interface_multipath_settings() {
+	local mode port
+	local config="$1"
+	id=$(($id+1))
+	config_get mode "$config" multipath ""
+	[ "$mode" = "" ] && {
+		mode="$(uci -q get openmptcprouter.$config.multipath)"
+	}
+	[ "$mode" = "off" ] || [ "$mode" = "" ] && return 1
+	config_get ifname "$config" device
+	[ -z "$ifname" ] && config_get ifname "$config" ifname
+	[ -z "$ifname" ] && ifname=$(ifstatus "$config" | jsonfilter -q -e '@["l3_device"]')
+	[ -n "$(echo $ifname | grep '@')" ] && ifname=$(ifstatus "$1" | jsonfilter -q -e '@["device"]')
+	[ -z "$ifname" ] && return 1
+	addr=$(ifstatus ${config} | jsonfilter -q -e '@["ipv4-address"][0].address')
+	[ -z "$addr" ] && return 1
+	count=$(($count+1))
+	port=$((firstport+count))
+	cat >> /tmp/etc/${interface_name}.conf <<-EOF
+
+	[${config}]
+	bindhost = "${addr}"
+	bindport = "${port}"
+	remotehost = "${host}"
+	remoteport = "${port}"
+	EOF
+}
+
+start() {
+	local enable timeout mode password reorder_buffer_size interface_name host firstport loss_tolerance latency_tolerance
+	[ "$(uci -q get mlvpn.general.enable)" = "1" ] || return 1
+	interface_name="$(uci -q get mlvpn.general.interface_name)"
+	timeout="$(uci -q get mlvpn.general.timeout)"
+	mode="$(uci -q get mlvpn.general.mode)"
+	password="$(uci -q get mlvpn.general.password)"
+	reorder_buffer_size="$(uci -q get mlvpn.general.reorder_buffer_size)"
+	loss_tolerance="$(uci -q get mlvpn.general.loss_tolerance)"
+	latency_tolerance="$(uci -q get mlvpn.general.latency_tolerance)"
+	cleartext_data="$(uci -q get mlvpn.general.cleartext_data)"
+	[ -z "$cleartext_data" ] && cleartext_data="0"
+	host="$(uci -q get mlvpn.general.host)"
+	firstport="$(uci -q get mlvpn.general.firstport)"
+	
+	if [ "$(uci -q get network.omrvpn)" != "${interface_name}" ]; then
+		uci -q set network.omrvpn.device=${interface_name}
+		uci -q commit
+	fi
+	
+	cat > /tmp/etc/${interface_name}.conf <<-EOF
+	[general]
+	tuntap = "tun"
+	mode = "${mode}"
+	interface_name = "${interface_name}"
+	timeout = ${timeout}
+	reorder_buffer = yes
+	reorder_buffer_size = ${reorder_buffer_size}
+	loss_tolerence = ${loss_tolerance}
+	latency_tolerence = ${latency_tolerance}
+	cleartext_data = ${cleartext_data}
+	password = "${password}"
+	mtu = 1452
+	EOF
+	
+	local count=0 id=0
+	config_load network
+	config_foreach interface_multipath_settings interface
+
+	chmod 0600 "/tmp/etc/${interface_name}.conf"
+	service_start /usr/sbin/mlvpn -c /tmp/etc/${interface_name}.conf --user nobody
+}
+
+stop() {
+	service_stop /usr/sbin/mlvpn
+}
+
+reload() {
+	stop
+	start
+}

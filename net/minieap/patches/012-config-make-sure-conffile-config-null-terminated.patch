@@ -1,0 +1,21 @@
+From 983fd4a5851d4a344fab92666c5cdb83f26b2294 Mon Sep 17 00:00:00 2001
+From: Aether Chen <15167799+chenjunyu19@users.noreply.github.com>
+Date: Thu, 21 Sep 2023 18:45:09 +0800
+Subject: [PATCH] config: make sure conffile config null-terminated
+
+---
+ config.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/config.c
++++ b/config.c
+@@ -67,7 +67,8 @@ RESULT parse_cmdline_conf_file(int argc,
+             } else {
+                 int _len = strnlen(argv[i + 1], MAX_PATH);
+                 g_prog_config.conffile = (char*)malloc(_len + 1);
+-                strncpy(g_prog_config.conffile, argv[i + 1], _len + 1);
++                strncpy(g_prog_config.conffile, argv[i + 1], _len);
++                g_prog_config.conffile[_len] = '\0';
+             }
+         }
+     }

@@ -1,0 +1,787 @@
+# Translations for LuCI
+# Copyright (C) 2022 Jo-Philipp Wich <jo@mein.io>
+# This file is distributed under the Apache License, Version 2.0.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: apfree-wifidog 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-16 00:00+0000\n"
+"PO-Revision-Date: 2025-03-16 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "apfree-wifidog"
+msgstr "门户认证"
+
+msgid "ApFree-WiFiDog"
+msgstr "门户认证"
+
+msgid "apfree-wifidog offers a stable and secure captive portal solution."
+msgstr "apfree-wifidog 提供了一个稳定安全的门户认证解决方案"
+
+msgid "Enable apfree-wifidog service."
+msgstr "启用apfree-wifidog门户认证服务"
+
+msgid "Log Level"
+msgstr "日志级别"
+
+msgid "The log level of the apfree-wifidog."
+msgstr "apfree-wifidog的日志级别"
+
+msgid "Debug"
+msgstr "调试"
+
+msgid "Info"
+msgstr "信息"
+
+msgid "Notice"
+msgstr "通知"
+
+msgid "Warning"
+msgstr "警告"
+
+msgid "Error"
+msgstr "错误"
+
+msgid "Critical"
+msgstr "严重"
+
+msgid "Alert"
+msgstr "警报"
+
+msgid "Emergency"
+msgstr "紧急"
+
+msgid "None"
+msgstr "无"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Auth Enabled"
+msgstr "启用认证"
+
+msgid "Enable the authentication of the gateway."
+msgstr "启用网关的认证功能"
+
+msgid "Gateway Name"
+msgstr "网关名称"
+
+msgid "The name of the gateway."
+msgstr "开启认证的网关所属网络区域"
+
+msgid "Gateway Channel"
+msgstr "网关通道"
+
+msgid "The channel of the gateway."
+msgstr "网关的通道"
+
+msgid "Gateway Subnetv4"
+msgstr "网关IPv4子网"
+
+msgid "The ipv4 subnet of the gateway."
+msgstr "网关的IPv4子网"
+
+msgid "Gateway ID"
+msgstr "网关 ID"
+
+msgid "The ID of the gateway."
+msgstr "网关的ID（一般为设备的MAC地址）"
+
+msgid "Channel Path"
+msgstr "用户渠道"
+
+msgid "The channel path of the gateway."
+msgstr "网关的用户渠道"
+
+msgid "Auth Server Hostname"
+msgstr "认证服务器主机名"
+
+msgid "The domain or IP address of the authentication server."
+msgstr "认证服务器的域名或 IP 地址"
+
+msgid "Auth Server Port"
+msgstr "认证服务器端口"
+
+msgid "The port of the authentication server."
+msgstr "认证服务器的端口"
+
+msgid "Auth Server URI path"
+msgstr "认证服务器URI路径"
+
+msgid "The URI path of the authentication server."
+msgstr "认证服务器的URI路径"
+
+msgid "Trusted Domains"
+msgstr "信任的域名"
+
+msgid "The trusted domains of the gateway"
+msgstr "网关的信任域名"
+
+msgid "The trusted domains of the gateway, for example: \"www.baidu.com,www.qq.com,...\"."
+msgstr "域名白名单（多域名用逗号分隔），例如：\"www.baidu.com,www.qq.com,...\""
+
+msgid "Trusted MACs"
+msgstr "信任的MAC地址"
+
+msgid "The trusted MAC addresses of the gateway"
+msgstr "网关的 MAC 地址白名单"
+
+msgid "The trusted MAC addresses of the gateway, for example: \"00:11:22:33:44:55,66:77:88:99:00:11,...\"."
+msgstr "MAC 地址白名单（多 MAC 地址用逗号分隔），例如：\"00:11:22:33:44:55,66:77:88:99:00:11,...\""
+
+msgid "running..."
+msgstr "运行中"
+
+msgid "not running..."
+msgstr "未运行"
+
+msgid "Value"
+msgstr "值"
+
+msgid "Internet Connectivity"
+msgstr "互联网连接"
+
+msgid "Auth server reachable"
+msgstr "认证服务器可达"
+
+msgid "Authentication servers"
+msgstr "认证服务器"
+
+msgid "Enable Wildcard Domain"
+msgstr "启用通配符域名"
+
+msgid "Enable wildcard domain support."
+msgstr "启用通配符域名支持"
+
+msgid "Trusted Wildcard Domains"
+msgstr "信任的通配符域名"
+
+msgid "The trusted wildcard domains of the gateway."
+msgstr "网关的信任通配符域名"
+
+msgid "App White List"
+msgstr "应用白名单"
+
+msgid "The app white list of the gateway."
+msgstr "网关的应用白名单"
+
+msgid "MAC White List"
+msgstr "MAC白名单"
+
+msgid "The MAC white list of the gateway."
+msgstr "网关的MAC白名单"
+
+msgid "Wildcard White List"
+msgstr "通配符白名单"
+
+msgid "The wildcard domain white list of the gateway."
+msgstr "网关的通配符域名白名单"
+
+msgid "Check Interval"
+msgstr "检查间隔"
+
+msgid "The interval of the check(s)."
+msgstr "检查的时间间隔（秒）"
+
+msgid "Check Timeout"
+msgstr "检查超时"
+
+msgid "Client Timeout"
+msgstr "客户端超时"
+
+msgid "The timeout of the client."
+msgstr "客户端的超时时间"
+
+msgid "Wired Passed"
+msgstr "有线免认证"
+
+msgid "Wired users do not need to authenticate to access the internet."
+msgstr "有线用户无需认证即可访问互联网"
+
+msgid "Apple CNA"
+msgstr "苹果CNA"
+
+msgid "Enable Apple Captive Network Assistant."
+msgstr "启用苹果强制网络门户助手"
+
+msgid "JS Filter"
+msgstr "JS过滤"
+
+msgid "Enable JS redirect."
+msgstr "启用JS重定向"
+
+msgid "Enable WebSocket"
+msgstr "启用 Websocket"
+
+msgid "Enable websocket support."
+msgstr "启用 Websocket 支持, 用于实现认证服务器端放行功能"
+
+msgid "Enable Anti NAT"
+msgstr "启用防NAT"
+
+msgid "Enable Anti NAT devices."
+msgstr "启用防NAT设备"
+
+msgid "TTL Value"
+msgstr "TTL值"
+
+msgid "The TTL value of the gateway support."
+msgstr "网关支持的TTL值"
+
+msgid "Bypass Auth"
+msgstr "旁认证"
+
+msgid "Anti NAT Permit MAC"
+msgstr "防NAT允许的MAC"
+
+msgid "The MAC address of the Anti NAT permit."
+msgstr "防NAT允许的MAC地址"
+
+msgid "Enable Global QoS"
+msgstr "启用全局QoS"
+
+msgid "Enable Global QoS."
+msgstr "启用全局QoS"
+
+msgid "Global QoS Up"
+msgstr "全局QoS上行"
+
+msgid "The global QoS up value(Mbps)."
+msgstr "全局QoS上行速度（Mbps）"
+
+msgid "Global QoS Down"
+msgstr "全局QoS下行"
+
+msgid "The global QoS down value(Mbps)."
+msgstr "全局QoS下行速度（Mbps）"
+
+msgid "WebSocket Hostname"
+msgstr "WebSocket主机名"
+
+msgid "The hostname of the websocket, if the field is left empty, automatically use the same hostname as the auth server."
+msgstr "WebSocket的主机名，如果此字段为空，自动使用与认证服务器相同的主机名"
+
+msgid "WebSocket Port"
+msgstr "WebSocket端口"
+
+msgid "The port of the websocket, if the field is left empty, automatically use the same port as the auth server."
+msgstr "WebSocket的端口，如果此字段为空，自动使用与认证服务器相同的端口"
+
+msgid "WebSocket URI path"
+msgstr "WebSocket URI路径"
+
+msgid "The URI path of the websocket."
+msgstr "WebSocket的URI路径"
+
+msgid "MQTT Port"
+msgstr "MQTT端口"
+
+msgid "The port of the mqtt."
+msgstr "MQTT的端口"
+
+msgid "MQTT Username"
+msgstr "MQTT用户名"
+
+msgid "The username of the mqtt."
+msgstr "MQTT的用户名"
+
+msgid "MQTT Password"
+msgstr "MQTT密码"
+
+msgid "The password of the mqtt."
+msgstr "MQTT的密码"
+
+msgid "Device ID"
+msgstr "设备ID"
+
+msgid "The ID of the device."
+msgstr "设备的ID"
+
+msgid "Local Portal"
+msgstr "本地门户"
+
+msgid "The local portal url."
+msgstr "本地门户网址"
+
+msgid "External Interface"
+msgstr "外部接口"
+
+msgid "The external interface of the device, if bypass mode, do not choose."
+msgstr "设备的外部接口，如果是旁路模式，请不要选择"
+
+msgid "Configuration"
+msgstr "配置"
+
+msgid "Basic Settings"
+msgstr "基本设置"
+
+msgid "Gateway Settings"
+msgstr "网关设置"
+
+msgid "Advanced Settings"
+msgstr "高级设置"
+
+msgid "Long Connection Settings"
+msgstr "长连接设置"
+
+msgid "Auth Server Settings"
+msgstr "认证服务器设置"
+
+msgid "Rule Settings"
+msgstr "规则设置"
+
+msgid "QoS Settings"
+msgstr "QoS设置"
+
+msgid "Authentication Location Settings"
+msgstr "认证位置设置"
+
+msgid "Group Define"
+msgstr "组定义"
+
+msgid "Group Type"
+msgstr "组类型"
+
+msgid "The type of the group."
+msgstr "组的类型"
+
+msgid "Domain Group"
+msgstr "域名组"
+
+msgid "MAC Group"
+msgstr "MAC地址组"
+
+msgid "Wildcard Domain Group"
+msgstr "通配符域名组"
+
+msgid "Domain Name"
+msgstr "域名"
+
+msgid "The domain name of the group."
+msgstr "组的域名"
+
+msgid "MAC Address"
+msgstr "MAC地址"
+
+msgid "The MAC address of the group."
+msgstr "组的MAC地址"
+
+msgid "Wildcard Domain"
+msgstr "通配符域名"
+
+msgid "The wildcard domain of the group."
+msgstr "组的通配符域名"
+
+msgid "Group Description"
+msgstr "组描述"
+
+msgid "The description of the group."
+msgstr "组的描述"
+
+msgid "The group is used by "
+msgstr "该组正被 "
+
+msgid " please remove it from "
+msgstr " 使用，请先从 "
+
+msgid " first."
+msgstr " 中移除。"
+
+#~ msgid "Down. (Bytes / Pkts.)"
+#~ msgstr "下载（字节 / 数据包）"
+
+#~ msgid "Download (Bytes / Packets)"
+#~ msgstr "下载（字节 / 数据包）"
+
+#~ msgid "Up. (Bytes / Pkts.)"
+#~ msgstr "上传（字节 / 数据包）"
+
+#~ msgid "Upload (Bytes / Packets)"
+#~ msgstr "上传（字节 / 数据包）"
+
+msgid "Speed Distribution"
+msgstr "速率分布"
+
+msgid "Download Speed (Bit/s)"
+msgstr "下载速率 (比特/秒)"
+
+msgid "Upload Speed (Bit/s)"
+msgstr "上传速率 (比特/秒)"
+
+msgid "Upload Speed / Host"
+msgstr "上传速率 / 主机"
+
+msgid "Download Speed / Host"
+msgstr "下载速率 / 主机"
+
+msgid "Traffic History"
+msgstr "流量统计"
+
+msgid "Network Speed Monitor"
+msgstr "网络速度监控"
+
+msgid "Auth User Speed Monitor"
+msgstr "认证用户速率监控"
+
+msgid "<big id=\"speed-host\">0</big> hosts"
+msgstr "主机：<big id=\"speed-host\">0</big>"
+
+msgid "<big id=\"speed-tx-max\">0</big> download speed"
+msgstr "总下载速度：<big id=\"speed-tx-max\">0</big>"
+
+msgid "<big id=\"speed-rx-max\">0</big> upload speed"
+msgstr "总上传速度：<big id=\"speed-rx-max\">0</big>"
+
+msgid "<big id=\"ipv6-speed-host\">0</big> hosts"
+msgstr "主机：<big id=\"ipv6-speed-host\">0</big>"
+
+msgid "<big id=\"ipv6-speed-tx-max\">0</big> download speed"
+msgstr "总下载速度：<big id=\"ipv6-speed-tx-max\">0</big>"
+
+msgid "<big id=\"ipv6-speed-rx-max\">0</big> upload speed"
+msgstr "总上传速度：<big id=\"ipv6-speed-rx-max\">0</big>"
+
+msgid "<big id=\"mac-speed-host\">0</big> hosts"
+msgstr "主机：<big id=\"mac-speed-host\">0</big>"
+
+msgid "<big id=\"mac-speed-tx-max\">0</big> download speed"
+msgstr "总下载速度：<big id=\"mac-speed-tx-max\">0</big>"
+
+msgid "<big id=\"mac-speed-rx-max\">0</big> upload speed"
+msgstr "总上传速度：<big id=\"mac-speed-rx-max\">0</big>"
+
+msgid "<big id=\"layer7-speed-most-rx\">0</big> cause the most download"
+msgstr "下载量最大的协议：<big id=\"layer7-speed-most-rx\">0</big>"
+
+msgid "<big id=\"layer7-speed-most-tx\">0</big> cause the most upload"
+msgstr "上传量最大的协议：<big id=\"layer7-speed-most-tx\">0</big>"
+
+msgid "<big id=\"layer7-speed-total\">0</big> different application protocols"
+msgstr "应用层协议计数：<big id=\"layer7-speed-total\">0</big>"
+
+msgid "L7 Protocol Support"
+msgstr "应用层协议支持"
+
+msgid "Initial traffic"
+msgstr "初始流量"
+
+msgid "apfree-wifidog Status"
+msgstr "apfree-wifidog 状态"
+
+msgid "Upload (Bytes)"
+msgstr "上传 (字节)"
+
+msgid "Upload (Packets)"
+msgstr "上传 (数据包)"
+
+msgid "Download (Bytes)"
+msgstr "下载 (字节)"
+
+msgid "Download (Packets)"
+msgstr "下载 (数据包)"
+
+msgid "download speed"
+msgstr "下载速度"
+
+msgid "upload speed"
+msgstr "上传速度"
+
+msgid "Display"
+msgstr "主机流速显示"
+
+msgid "Auth User"
+msgstr "认证用户"
+
+msgid "No data recorded yet."
+msgstr "暂无数据记录"
+
+msgid "Edit Speed Limit"
+msgstr "带宽控制"
+
+msgid "Download Limit"
+msgstr "限制下载速度"
+
+msgid "Upload Limit"
+msgstr "限制上传速度"
+
+msgid "Speed limit updated"
+msgstr "限速配置已更新"
+
+msgid "Data format error"
+msgstr "数据格式错误"
+
+msgid "Please enter a valid IPv4 address"
+msgstr "请输入有效的 IPv4 地址"
+
+msgid "Please enter a valid IPv6 address"
+msgstr "请输入有效的 IPv6 地址"
+
+msgid "Please enter a valid MAC address"
+msgstr "请输入有效的 MAC 地址"
+
+msgid "Updated successfully!"
+msgstr "更新成功！"
+
+msgid "L7 SID Data"
+msgstr "L7 应用数据"
+
+msgid "L7 Protocol Data"
+msgstr "L7 协议数据"
+
+msgid "Download / SID"
+msgstr "下载 / SID"
+
+msgid "Upload / SID"
+msgstr "上传 / SID"
+
+msgid "Download / Protocol"
+msgstr "下载 / 协议"
+
+msgid "Upload / Protocol"
+msgstr "上传 / 协议"
+
+msgid "SID"
+msgstr "应用"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Incoming"
+msgstr "接收"
+
+msgid "Outgoing"
+msgstr "发送"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Description"
+msgstr "描述"
+
+msgid "Bytes"
+msgstr "字节"
+
+msgid "Collecting data..."
+msgstr "正在收集数据..."
+
+msgid "different SIDs"
+msgstr "个不同的应用"
+
+msgid "total download"
+msgstr "总下载"
+
+msgid "total upload"
+msgstr "总上传"
+
+msgid "different protocols"
+msgstr "个不同的协议"
+
+msgid "no traffic"
+msgstr "无流量"
+
+msgid "QoS"
+msgstr "流控"
+
+msgid "L7 application"
+msgstr "L7应用"
+
+msgid "L7 Data Monitor"
+msgstr "L7 数据监控"
+
+msgid "Upload Speed / SID"
+msgstr "上传速率 / 应用"
+
+msgid "Download Speed / SID"
+msgstr "下载速率 / 应用"
+
+msgid "<big id=\"sid-total\">0</big> different SIDs"
+msgstr "应用计数：<big id=\"sid-total\">0</big>"
+
+msgid "<big id=\"sid-tx-rate\">0</big> download speed"
+msgstr "总下载速度：<big id=\"sid-tx-rate\">0</big>"
+
+msgid "<big id=\"sid-rx-rate\">0</big> upload speed"
+msgstr "总上传速度：<big id=\"sid-rx-rate\">0</big>"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "Edit"
+msgstr "编辑"
+
+msgid "Add"
+msgstr "添加"
+
+msgid "Refreshing"
+msgstr "刷新"
+
+msgid "Error: "
+msgstr "错误："
+
+msgid "Delete Host"
+msgstr "删除主机"
+
+msgid "Are you sure you want to delete this host?"
+msgstr "您确定要删除这个主机吗？"
+
+msgid "Enable Internet Access Log"
+msgstr "开启上网记录功能"
+
+msgid "Enable logging of internet access events and user activities."
+msgstr "启用互联网访问事件和用户活动的日志记录功能。"
+
+msgid "Client Status"
+msgstr "客户端状态"
+
+msgid "Authentication Server Status"
+msgstr "认证服务器状态"
+
+msgid "Internet Connected"
+msgstr "互联网连接"
+
+msgid "Auth Server Connected"
+msgstr "认证服务器连接"
+
+msgid "Auth Server Mode"
+msgstr "认证服务器模式"
+
+msgid "Online Clients"
+msgstr "在线客户端"
+
+msgid "Active Clients"
+msgstr "活跃客户端"
+
+msgid "Connected Clients"
+msgstr "已连接客户端"
+
+msgid "IP Address"
+msgstr "IP地址"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Online Time"
+msgstr "在线时间"
+
+msgid "Connection Type"
+msgstr "连接类型"
+
+msgid "Online"
+msgstr "在线"
+
+msgid "Offline"
+msgstr "离线"
+
+msgid "Wired"
+msgstr "有线"
+
+msgid "Wireless"
+msgstr "无线"
+
+msgid "Auth Server Online"
+msgstr "认证服务器在线"
+
+msgid "Failed to get wifidogx status"
+msgstr "获取wifidogx状态失败"
+
+msgid "Failed to get client status"
+msgstr "获取客户端状态失败"
+
+msgid "Failed to get auth server status"
+msgstr "获取认证服务器状态失败"
+
+msgid "Error getting status information: "
+msgstr "获取状态信息错误："
+
+msgid "Cloud Auth"
+msgstr "云认证"
+
+msgid "Local Auth"
+msgstr "本地认证"
+
+msgid "Unknown"
+msgstr "未知"
+
+msgid "d"
+msgstr "天"
+
+msgid "h"
+msgstr "小时"
+
+msgid "m"
+msgstr "分钟"
+
+msgid "s"
+msgstr "秒"
+
+msgid "Authentication Server"
+msgstr "认证服务器"
+
+msgid "Select the authentication server to use for cloud authentication."
+msgstr "选择用于云认证的认证服务器"
+
+msgid "Please create an authentication server first"
+msgstr "请先创建认证服务器"
+
+msgid "Domain&L7Protocol"
+msgstr "域名&L7协议"
+
+msgid "Protocol"
+msgstr "协议"
+
+msgid "Domain"
+msgstr "域名"
+
+msgid "Download Total"
+msgstr "下载总量"
+
+msgid "Upload Total"
+msgstr "上传总量"
+
+msgid "Download Speed"
+msgstr "下载速度"
+
+msgid "Upload Speed"
+msgstr "上传速度"
+
+msgid "Showing top %d by %s"
+msgstr "按%s显示前%d项"
+
+msgid "Download Traffic / SID"
+msgstr "下载流量 / 应用"
+
+msgid "Upload Traffic / SID"
+msgstr "上传流量 / 应用"
+
+msgid "Show entries: "
+msgstr "显示条目： "
+
+msgid "Pause"
+msgstr "暂停"
+
+msgid "Resume"
+msgstr "恢复"
+
+msgid "Last updated: %s"
+msgstr "上次更新：%s"
+
+msgid "Error loading SID data: %s"
+msgstr "加载 SID 数据错误：%s"
+
+msgid "Error loading L7 protocol data: %s"
+msgstr "加载 L7 协议数据错误：%s"
+
+msgid "Last updated: never"
+msgstr "上次更新：从未"
+
+msgid "Real-time Download Speed"
+msgstr "实时下载速度"
+
+msgid "Real-time Upload Speed"
+msgstr "实时上传速度"

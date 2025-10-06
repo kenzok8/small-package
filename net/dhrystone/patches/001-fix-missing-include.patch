@@ -1,0 +1,10 @@
+--- a/src/dhry1.c
++++ b/src/dhry1.c
+@@ -2,6 +2,7 @@
+ #include <sys/time.h>
+ #include <stdlib.h>
+ #include <stdio.h>
++#include <unistd.h>
+ //#include <gio/gio.h>
+ 
+ Rec_Pointer  	Ptr_Glob, Next_Ptr_Glob;

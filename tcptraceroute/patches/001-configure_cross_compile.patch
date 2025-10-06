@@ -1,0 +1,62 @@
+--- tcptraceroute-1.5beta7.orig/configure	2006-03-29 02:49:55.000000000 +0100
++++ tcptraceroute-1.5beta7/configure	2007-03-19 19:13:31.644193395 +0000
+@@ -5484,11 +5484,11 @@
+ echo "$as_me:$LINENO: checking for Solaris" >&5
+ echo $ECHO_N "checking for Solaris... $ECHO_C" >&6
+ if test "$cross_compiling" = yes; then
+-  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
++  { { echo "$as_me:$LINENO: warning: cannot run test program while cross compiling
+ See \`config.log' for more details." >&5
+-echo "$as_me: error: cannot run test program while cross compiling
++echo "$as_me: warning: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ /* confdefs.h.  */
+@@ -5551,11 +5551,11 @@
+ echo "$as_me:$LINENO: checking for BSDI" >&5
+ echo $ECHO_N "checking for BSDI... $ECHO_C" >&6
+ if test "$cross_compiling" = yes; then
+-  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
++  { { echo "$as_me:$LINENO: warning: cannot run test program while cross compiling
+ See \`config.log' for more details." >&5
+-echo "$as_me: error: cannot run test program while cross compiling
++echo "$as_me: warning: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ /* confdefs.h.  */
+@@ -5618,11 +5618,11 @@
+ echo "$as_me:$LINENO: checking for NetBSD" >&5
+ echo $ECHO_N "checking for NetBSD... $ECHO_C" >&6
+ if test "$cross_compiling" = yes; then
+-  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
++  { { echo "$as_me:$LINENO: warning: cannot run test program while cross compiling
+ See \`config.log' for more details." >&5
+-echo "$as_me: error: cannot run test program while cross compiling
++echo "$as_me: warning: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ /* confdefs.h.  */
+@@ -5685,11 +5685,11 @@
+ echo "$as_me:$LINENO: checking for MacOS X" >&5
+ echo $ECHO_N "checking for MacOS X... $ECHO_C" >&6
+ if test "$cross_compiling" = yes; then
+-  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
++  { { echo "$as_me:$LINENO: warning: cannot run test program while cross compiling
+ See \`config.log' for more details." >&5
+-echo "$as_me: error: cannot run test program while cross compiling
++echo "$as_me: warning: cannot run test program while cross compiling
+ See \`config.log' for more details." >&2;}
+-   { (exit 1); exit 1; }; }
++   }
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+ /* confdefs.h.  */

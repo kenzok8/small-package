@@ -47,6 +47,6 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_kmod_md_linears
 	default n
 endef
 
-include $(TOPDIR)/feeds/luci/luci.mk
+include ../../luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

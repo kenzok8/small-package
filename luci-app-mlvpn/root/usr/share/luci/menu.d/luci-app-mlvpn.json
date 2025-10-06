@@ -1,0 +1,13 @@
+{
+	"admin/vpn/mlvpn": {
+		"title": "MLVPN",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "services/mlvpn"
+		},
+		"depends": {
+			"acl": [ "luci-app-mlvpn" ]
+		}
+	}
+}

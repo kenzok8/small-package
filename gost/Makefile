@@ -25,7 +25,7 @@ GO_PKG_BUILD_PKG:=$(GO_PKG)/cmd/gost
 GO_PKG_LDFLAGS_X:=main.version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
+include ../../lang/golang/golang-package.mk
 
 define Package/gost
   SECTION:=net

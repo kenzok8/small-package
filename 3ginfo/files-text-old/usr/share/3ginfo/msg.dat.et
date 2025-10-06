@@ -1,0 +1,8 @@
+NOTDETECTED="Ei tuvastatud ühtegi seadet"
+NODEVICE="Seade puudub"
+PINERROR="PIN-koodi viga"
+CONNECTED="Ühendatud"
+CONNECT="Ühenda"
+DISCONNECTED="Lahti ühendatud"
+DISCONNECT="Ühenda lahti"
+NOINFO="Pole informatsiooni"

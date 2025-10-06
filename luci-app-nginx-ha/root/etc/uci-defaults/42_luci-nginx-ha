@@ -1,0 +1,15 @@
+#!/bin/sh 
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@nginx-ha[-1]
+	add ucitrack nginx-ha
+	set ucitrack.@nginx-ha[-1].init=nginx-ha
+	commit ucitrack
+EOF
+
+/etc/init.d/nginx stop >/dev/null 2>&1
+/etc/init.d/nginx disable >/dev/null 2>&1
+/etc/init.d/nginx-ha enable >/dev/null 2>&1
+
+rm -f /tmp/luci-indexcache
+exit 0

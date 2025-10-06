@@ -1,0 +1,57 @@
+_DEVICE=/dev/ttyUSB0
+_DEFAULT_LTE_BANDS="1 2 3 4 5 7 8 12 13 14 17 18 19 20 25 26 28 29 30 32 34 38 39 40 41 42 46 48 66 71"
+_DEFAULT_5GNSA_BANDS="1 2 3 5 7 8 12 20 25 28 38 41 66 71 77 78 79"
+
+getinfo() {
+	echo "Thales/Cinterion MV31-W"
+}
+
+getsupportedbands() {
+	echo "$_DEFAULT_LTE_BANDS"
+}
+
+getbands() {
+	O=$(sms_tool -d $_DEVICE at "AT^BAND_PREF?")
+	echo "$O" | awk -F: '/LTE,Enable.*Bands.*:/{gsub(",", " ");print $2}' | xargs
+}
+
+setbands() {
+	BANDS="$1"
+	[ "$BANDS" = "default" ] && BANDS="$_DEFAULT_LTE_BANDS"
+
+	T=""
+	for BAND in $BANDS; do
+		case $BAND in
+			''|*[!0-9]*) continue ;;
+		esac
+		[ -n "$T" ] && T="${T},"
+		T="${T}${BAND}"
+	done
+
+	[ -n "$T" ] && sms_tool -d $_DEVICE at "AT^BAND_PREF=LTE,2,$T"
+}
+
+getsupportedbands5gnsa() {
+	echo "$_DEFAULT_5GNSA_BANDS"
+}
+
+getbands5gnsa() {
+	O=$(sms_tool -d $_DEVICE at "AT^BAND_PREF?")
+	echo "$O" | awk -F: '/NR5G,Enable.*Bands.*:/{gsub(",", " ");print $2}' | xargs
+}
+
+setbands5gnsa() {
+	BANDS="$1"
+	[ "$BANDS" = "default" ] && BANDS="$_DEFAULT_5GNSA_BANDS"
+
+	T=""
+	for BAND in $BANDS; do
+		case $BAND in
+			''|*[!0-9]*) continue ;;
+		esac
+		[ -n "$T" ] && T="${T},"
+		T="${T}${BAND}"
+	done
+
+	[ -n "$T" ] && sms_tool -d $_DEVICE at "AT^BAND_PREF=NR5G,2,$T"
+}

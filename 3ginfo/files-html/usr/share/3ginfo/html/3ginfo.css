@@ -1,0 +1,192 @@
+label {
+  font-weight: 400;
+  text-align: right;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(0,0,0);
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  border-radius: 5px;
+}
+
+.section {
+  border-bottom: 1px dashed #8c8b8b;
+}
+
+h3 {
+  margin-bottom: 20px;
+}
+
+#container {
+  transition: margin-left .5s;
+  padding: 20px;
+}
+
+.click,
+.click:hover,
+.click:visited,
+.click:link {
+  text-decoration: none;
+  color: #31708f;
+  cursor: pointer;
+}
+
+.margintop {
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .margintop {
+    margin-top: -90px;
+  }
+  .center-xd {
+    text-align: center;
+  }
+}
+
+.sizing-box {
+  height: 110px;
+  width: 150px;
+}
+
+.signal-bars {
+  display: inline-block;
+}
+
+.signal-bars .bar {
+  width: 14%;
+  margin-left: 1%;
+  min-height: 20%;
+  display: inline-block;
+}
+.signal-bars .bar.first-bar  { height: 20%; }
+.signal-bars .bar.second-bar { height: 40%; }
+.signal-bars .bar.third-bar  { height: 60%; }
+.signal-bars .bar.fourth-bar { height: 80%; }
+.signal-bars .bar.fifth-bar  { height: 99%; }
+
+.lzero .bar {
+  background-color: #fafafa;
+  border: thin solid #ccc;
+}
+.lone .bar {
+  background-color: #ff0000;
+  border: thin solid #800000;
+}
+.ltwo .bar {
+  background-color: #ff6a00;
+  border: thin solid #803500;
+}
+.lthree .bar {
+  background-color: #ffd800;
+  border: thin solid #806a00;
+}
+.lfour .bar {
+  background-color: #b6ff00;
+  border: thin solid #558000;
+}
+.lfive .bar {
+  background-color: #4cff00;
+  border: thin solid #2a8000;
+}
+
+.four-bars .bar.fifth-bar,
+.three-bars .bar.fifth-bar,
+.three-bars .bar.fourth-bar,
+.one-bar .bar:not(.first-bar),
+.two-bars .bar:not(.first-bar):not(.second-bar) {
+  background-color: #fafafa;
+  border: thin solid #ccc;
+}
+
+.oneline {
+  clear: both;
+}
+
+@media (max-width: 527px) {
+  .hidden-vxs {
+    display: none;
+  }
+}
+
+@media (min-width: 578px) and (max-width: 821px) {
+  .modalmargintop {
+    margin-top: 5px;
+  }
+}
+
+.error {
+  color: red;
+}
+
+@media (max-width: 768px) {
+  .col-xs-12-text-left {
+    text-align: left;
+  }
+}
+
+.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+.tab button:hover {
+  background-color: #ddd;
+}
+
+.tab button.active {
+  background-color: #ccc;
+}
+
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  b1order: 1px solid #ccc;
+  b1order-top: none;
+}
+
+.full-height {
+  height: 100vh;
+}
+
+.flex-center {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.position-ref {
+  position: relative;
+}
+
+.flex-content {
+  text-align: center;
+}

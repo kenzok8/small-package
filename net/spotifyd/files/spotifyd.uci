@@ -1,0 +1,20 @@
+#!/bin/sh
+
+audio_format="$(uci -q get "spotifyd.config.audio_format")"
+[ -n "$audio_format" ] || exit 0
+
+case "$audio_format" in
+"F32"|"S16"|"S24"|"S32")
+	audio_format="$(echo "$audio_format" | tr "[A-Z]" "[a-z]")"
+	;;
+"S24_3")
+	audio_format="s24-3"
+	;;
+esac
+
+if [ -n "$audio_format" ]; then
+	uci -q set "spotifyd.config.audio_format"="$audio_format"
+	uci -q commit "spotifyd"
+fi
+
+exit 0

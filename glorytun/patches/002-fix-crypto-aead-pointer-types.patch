@@ -1,0 +1,13 @@
+--- a/src/main.c
++++ b/src/main.c
+@@ -1228,8 +1228,8 @@
+         memcpy(ctx->read.key, key_r, sizeof(key_r));
+         memcpy(ctx->write.key, key_w, sizeof(key_w));
+     } else {
+-        crypto_aead_aes256gcm_beforenm(&ctx->read.key, key_r);
+-        crypto_aead_aes256gcm_beforenm(&ctx->write.key, key_w);
++        crypto_aead_aes256gcm_beforenm((crypto_aead_aes256gcm_state *)ctx->read.key, key_r);
++        crypto_aead_aes256gcm_beforenm((crypto_aead_aes256gcm_state *)ctx->write.key, key_w);
+     }
+ 
+     sodium_memzero(secret, sizeof(secret)); 

@@ -1,0 +1,11 @@
+{
+    "luci-app-glorytun-tcp": {
+	"description": "Grant access to glorytun TCP",
+	"read": {
+	    "uci": [ "glorytun" ]
+	},
+	"write": {
+	    "uci": [ "glorytun" ]
+	}
+    }
+}

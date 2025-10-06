@@ -1,0 +1,10 @@
+#!/bin/sh
+
+grep -q "config login$" "/etc/config/sysuh3c" || exit 0
+
+sed -e "s,config login,config sysuh3c 'config'," \
+    -e "s,option enable ,option enabled ," \
+    -e "/blockstartup/d" \
+	-i "/etc/config/sysuh3c"
+
+exit 0

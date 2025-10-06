@@ -1,0 +1,120 @@
+#!/bin/sh /etc/rc.common
+# vim: set noexpandtab tabstop=4 shiftwidth=4 softtabstop=4 :
+# Copyright (C) 2015 ovh.com
+# Copyright (C) 2017-2020 Ycarus (Yannick Chabanois) <ycarus@zugaina.org>
+
+START=90
+STOP=10
+
+USE_PROCD=1
+PROG_NAME=glorytun-udp
+PROG=/usr/sbin/${PROG_NAME}
+
+_log() {
+	logger -p daemon.info -t ${PROG_NAME} "$@"
+}
+
+_err() {
+	logger -p daemon.err -t ${PROG_NAME} "$@"
+}
+
+validate_section() {
+	uci_validate_section glorytun-udp glorytun-udp "${1}" \
+		'enable:bool:0'            \
+		'mode:string'              \
+		'key:string'               \
+		'host:host'                \
+		'port:port'                \
+		'mtuauto:bool:0'           \
+		'chacha:bool:0'            \
+		'dev:string'
+}
+
+start_instance() {
+	local enable key host port listener proto mtuauto chacha dev mode
+
+	validate_section "${1}" || {
+		_err "validation failed"
+		return 1
+	}
+
+	[ "${enable}" = "1" ] || return 1
+
+	[ -n "${key}" ] || return 1
+	[ "${key}" != "secretkey" ] || return 1
+	[ -n "${port}" ] || return 1
+	[ -n "${dev}" ] || return 1
+	[ -n "${mode}" ] || return 1
+
+	echo "${key}" > /tmp/${PROG_NAME}-${1}.key
+	key=""
+
+	if [ "$(uci -q get network.omrvpn)" != "" ]; then
+		uci -q set network.omrvpn.device=$dev
+		uci -q commit
+	fi
+
+	_log "starting ${PROG_NAME} ${1} instance $*"
+
+	host=$(resolveip $host)
+
+	if [ "$mode" = "to" ]; then
+		bind="bind from addr :: port 5000 to addr $host port $port"
+	else
+		bind="bind from addr $host port $port to addr :: port 5000"
+	fi
+	procd_open_instance
+
+	procd_set_param command ${PROG} \
+		${bind} \
+		${dev:+dev "$dev"} \
+		keyfile /tmp/${PROG_NAME}-${1}.key \
+		persist
+
+	[ "${chacha}" = "1" ] && procd_append_param command chacha
+
+	procd_set_param respawn 0 30 0
+	procd_set_param nice 10
+	procd_set_param file /tmp/${PROG_NAME}-${1}.key
+
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	procd_close_instance
+
+	#tc qdisc replace dev ${dev} root cake
+
+	#ip link set $dev txqlen 100
+	#config_load network
+	#config_foreach add_glorytun_path interface
+
+}
+
+add_glorytun_path() {
+	case "$1" in
+		loopback|lan|if0|*tun*|ifb*) return ;;
+	esac
+	local multipath
+	network_get_ipaddr ipaddr "$1"
+	config_get multipath "$1" multipath "off"
+	case "$multipath" in
+		master|on) glorytun-udp path "$ipaddr" dev $dev up ;;
+		backup) glorytun-udp path "$ipaddr" dev $dev backup ;;
+		*) glorytun-udp path "$ipaddr" dev $dev down ;;
+	esac
+}
+
+start_service() {
+	local dev
+	config_load glorytun-udp
+	config_foreach start_instance glorytun-udp
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger glorytun-udp network
+}

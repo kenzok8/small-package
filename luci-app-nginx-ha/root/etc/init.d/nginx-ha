@@ -1,0 +1,115 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2016 chenhw2 <chenhw2@github.com>
+# Copyright (C) 2018 Ycarus (Yannick Chabanois) <ycarus@zugaina.org>
+
+START=85
+
+USE_PROCD=1
+PROG_NAME=nginx
+PROG=/usr/sbin/${PROG_NAME}
+NAME=nginx-ha
+
+PIDCOUNT=0
+
+_log() {
+	logger -p daemon.info -t ${PROG_NAME} "$@"
+}
+
+_err() {
+	logger -p daemon.err -t ${PROG_NAME} "$@"
+}
+
+validate_section() {
+	uci_validate_section nginx-ha nginxha "${1}" \
+		'enable:bool:0'            \
+		'retries:uinteger:3'       \
+		'timeout:uinteger:4000'    \
+		'listen:string'            \
+		'upstreams:list(string)'
+}
+
+genline_srv(){
+	echo "    server $1;"
+}
+
+start_instance() {
+	local enable retries timeout startup_delay listen upstreams
+
+	validate_section "${1}" || {
+		_err "validation failed"
+		return 1
+	}
+
+	[ "$enable" = 1 ] || return 1
+
+	stream="${stream}
+		upstream ${1} {
+			zone dynamic 64k;
+			$(config_list_foreach "${1}" "upstreams" genline_srv)
+		}
+	
+		server {
+			listen ${listen:-0.0.0.0:6666} udp;
+			listen ${listen:-0.0.0.0:6666} so_keepalive=off;
+			proxy_pass ${1};
+		}
+	"
+}
+
+start_service() {
+	local stream=""
+	config_load nginx-ha
+	config_foreach start_instance nginxha
+
+	[ -z "$stream" ] && return
+	
+	mkdir -p /var/log/nginx
+	mkdir -p /var/etc
+	cat <<-EOF > /var/etc/$PROG_NAME.cfg
+	user nobody nogroup;
+	worker_processes $(grep -c '^processor' /proc/cpuinfo | tr -d "\n");
+	worker_rlimit_nofile 300000;
+	
+	events {
+		worker_connections 15000;
+		multi_accept on;
+		use epoll;
+	}
+	
+	stream {
+		${stream}
+	}
+	EOF
+
+	procd_open_instance "nginx-ha"
+	procd_set_param command /usr/sbin/nginx -c /var/etc/$PROG_NAME.cfg -g 'daemon off;'
+	procd_set_param file /var/etc/$PROG_NAME.cfg
+	procd_set_param respawn
+	procd_close_instance
+
+
+}
+
+reload_service() {
+	stop
+	start
+}
+
+stop_service() {
+	local _PID=$(cat /var/run/nginx.pid 2>/dev/null)
+	kill -15 $_PID 2>/dev/null
+	sleep 1                 # give time to shutdown
+	local _tmp=$(pgrep nginx | tr "\n" " ")
+	if [ -z "$_tmp" ]; then
+		logger -p daemon.notice -t "nginx-ha[$_PID]" "Shutdown successfully"
+	else
+		kill -9 $_tmp   # Normally never come here
+		logger -p daemon.warn -t "nginx-ha[$_tmp]" "Shutdown forced by KILL"
+	fi
+	return 0
+}
+
+
+service_triggers() {
+	procd_add_reload_trigger nginx-ha
+}

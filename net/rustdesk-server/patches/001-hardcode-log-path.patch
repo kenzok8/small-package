@@ -1,0 +1,46 @@
+--- a/src/hbbr.rs
++++ b/src/hbbr.rs
+@@ -8,7 +8,19 @@ mod version;
+ 
+ fn main() -> ResultType<()> {
+     let _logger = Logger::try_with_env_or_str("info")?
+-        .log_to_stdout()
++        .log_to_file(
++            FileSpec::default()
++                .directory("/var/run/rustdesk-server")
++                .basename("hbbr")
++                .suffix("log")
++                .suppress_timestamp()
++        )
++        .rotate(
++            Criterion::Size(10_000_000),
++            Naming::Numbers,
++            Cleanup::KeepLogFiles(3),
++        )
++        .duplicate_to_stderr(Duplicate::Warn)
+         .format(opt_format)
+         .write_mode(WriteMode::Async)
+         .start()?;
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -9,7 +9,19 @@ const RMEM: usize = 0;
+ 
+ fn main() -> ResultType<()> {
+     let _logger = Logger::try_with_env_or_str("info")?
+-        .log_to_stdout()
++        .log_to_file(
++            FileSpec::default()
++                .directory("/var/run/rustdesk-server")
++                .basename("hbbs")
++                .suffix("log")
++                .suppress_timestamp()
++        )
++        .rotate(
++            Criterion::Size(10_000_000),
++            Naming::Numbers,
++            Cleanup::KeepLogFiles(3),
++        )
++        .duplicate_to_stderr(Duplicate::Warn)
+         .format(opt_format)
+         .write_mode(WriteMode::Async)
+         .start()?;

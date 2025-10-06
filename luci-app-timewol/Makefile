@@ -18,6 +18,6 @@ define Package/luci-app-timewol/postinst
 	exit 0
 endef
 
-include $(TOPDIR)/feeds/luci/luci.mk
+include ../../luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

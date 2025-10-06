@@ -1,0 +1,51 @@
+#: ss-redir package
+msgid "ss-redir"
+msgstr "SS转发服务"
+
+msgid "ss-redir redirect tcp service to kcptun client process."
+msgstr "SS转发服务，将TCP流量重定向到本地KCP隧道，要结合本地KCP隧道服务一起使用。"
+
+msgid "Shadowsocks Server Settings"
+msgstr "Shadowsocks服务器设置"
+
+msgid "ss-redir Settings"
+msgstr "SS转发服务设置"
+
+msgid "The address of kcptun client listening on. default: 127.0.0.1"
+msgstr "KCP隧道客户端监听地址，默认: 127.0.0.1"
+
+msgid "Server Address"
+msgstr "服务器地址"
+
+msgid "The port of kcptun client listening on. default: 12948"
+msgstr "KCP隧道客户端监听端口，默认: 12948"
+
+msgid "The password of shadowsocks server"
+msgstr "Shadowsocks服务器密码"
+
+msgid "Server Port"
+msgstr "服务器端口"
+
+msgid "Encryption Method"
+msgstr "加密方式"
+
+msgid "The encryption method of shadowsocks server"
+msgstr "Shadowsocks服务器的加密方式"
+
+msgid "Enable ss-redir service"
+msgstr "启用SS转发服务"
+
+msgid "Server Command"
+msgstr "服务器端命令"
+
+msgid "Copy the command to run ss-server on the server side"
+msgstr "复制在服务器端运行ss-server的命令"
+
+msgid "Copy Command"
+msgstr "复制命令"
+
+msgid "Compy the command to clipboard"
+msgstr "复制服务器端命令到剪贴板"
+
+msgid "Copied to clipboard"
+msgstr "已复制到剪贴板"

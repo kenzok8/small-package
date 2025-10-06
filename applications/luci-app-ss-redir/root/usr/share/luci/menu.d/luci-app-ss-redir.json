@@ -1,0 +1,12 @@
+{
+	"admin/vpn/ss-redir": {
+		"title": "ss-redir",
+		"action": {
+			"type": "view",
+			"path": "ss-redir"
+		},
+		"depends": {
+			"uci": { "ss-redir": true }
+		}
+	}
+}

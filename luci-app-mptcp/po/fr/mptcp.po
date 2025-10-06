@@ -1,0 +1,351 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2022-08-10 18:51+0000\n"
+"Last-Translator: Weblate Admin <contact@openmptcprouter.com>\n"
+"Language-Team: French <http://weblate.openmptcprouter.com/projects/omr/"
+"luciapplicationsmptcp/fr/>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.10.1\n"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:775
+msgid "(%d minute window, %d second interval)"
+msgstr "(fenêtre de %d minute, intervalle de %d seconde)"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:241
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:242
+msgid "(%d minutes window, %d seconds interval)"
+msgstr "(fenêtre de %d minutes, intervalle de %d secondes)"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:315
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:373
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:932
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:942
+msgid "Average:"
+msgstr "Moyenne :"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:11
+msgid "Bandwidth"
+msgstr "Bande passante"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:43
+msgid "Check if MPTCP between interface and server is working."
+msgstr "Vérifiez si MPTCP entre l'interface et le serveur fonctionne."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:52
+msgid "Congestion Control"
+msgstr "Contrôle de la congestion"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:97
+msgid "Consecutive segments that should be sent for round robin"
+msgstr "Segments consécutifs à envoyer pour round robin"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:311
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:369
+msgid "Current:"
+msgstr "Actuellement :"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:52
+msgid "Default is cubic"
+msgstr "La valeur par défaut est cubic"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:21
+msgid "Default is fullmesh"
+msgstr "La valeur par défaut est fullmesh"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:908
+msgid "Download:"
+msgstr "Téléchargement :"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:31
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:24
+msgid "Error"
+msgstr "Erreur"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:18
+msgid "Established connections"
+msgstr "Connexions établies"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:91
+msgid "Fill the congestion window on all subflows for round robin"
+msgstr ""
+"Remplir la fenêtre de congestion de tous les sous-flux pour round robin"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:74
+msgid "Fullmesh subflows for each pair of IP addresses"
+msgstr "Sous-flux Fullmesh pour chaque paire d'adresses IP"
+
+#: luci-app-mptcp/root/usr/share/rpcd/acl.d/luci-app-mptcp.json:3
+msgid "Grant UCI access for luci-app-mptcp"
+msgstr "Accorder l'accès UCI pour luci-app-mlvpn"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:73
+msgid ""
+"If you get \"TCPOptionMPTCPCapable [...] Sender's Key\" at the end, then "
+"MPTCP is supported. If there is a \"-TCPOptionMPTCPCapable\", then it's "
+"blocked."
+msgstr ""
+"Si vous obtenez «TCPOptionMPTCPCapable [...] Sender's Key» à la fin, alors "
+"MPTCP est pris en charge. Si il y a \"-TCPOptionMPTCPCapable\", alors il est "
+"bloqué."
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:929
+msgid "Inbound:"
+msgstr "Entrant :"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:48
+msgid "Interface"
+msgstr "Interface"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:104
+msgid "Interfaces Settings"
+msgstr "Paramètres des interfaces"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:14
+msgid "Loading"
+msgstr "Chargement"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:93
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:686
+msgid "MB/s"
+msgstr "Mo/s"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:9
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:7
+#: luci-app-mptcp/root/usr/share/luci/menu.d/luci-app-mptcp.json:3
+msgid "MPTCP"
+msgstr "MPTCP"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:16
+msgid "MPTCP Fullmesh"
+msgstr "MPTCP Fullmesh"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:14
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:42
+msgid "MPTCP Support Check"
+msgstr "Vérification du support MPTCP"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:20
+msgid "MPTCP monitoring"
+msgstr "Surveillance MPTCP"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:102
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:695
+msgid "Mbit/s"
+msgstr "Mbit/s"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:18
+msgid "Multipath Debug"
+msgstr "Débogage multipath"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:12
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:108
+msgid "Multipath TCP"
+msgstr "Multipath TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:42
+msgid "Multipath TCP SYN retries"
+msgstr "Tentatives Multipath TCP SYN"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:15
+msgid "Multipath TCP checksum"
+msgstr "Somme de contrôle Multipath TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:21
+msgid "Multipath TCP path-manager"
+msgstr "Gestionnaire de chemins Multipath TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:31
+msgid "Multipath TCP scheduler"
+msgstr "Planificateur Multipath TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:47
+msgid "Multipath TCP version"
+msgstr "Version de Multipath TCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:28
+msgid "Netlink"
+msgstr "Netlink"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:7
+msgid ""
+"Networks MPTCP settings. Visit <a href='http://multipath-tcp.org/pmwiki.php/"
+"Users/ConfigureMPTCP'>http://multipath-tcp.org/pmwiki.php/Users/"
+"ConfigureMPTCP</a> for help."
+msgstr ""
+"Paramètres réseaux MPTCP. Visiter <a href='http://multipath-tcp.org/pmwiki."
+"php/Users/ConfigureMPTCP'>http://multipath-tcp.org/pmwiki.php/Users/"
+"ConfigureMPTCP</a> pour de l'aide."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:108
+msgid "One interface must be set as master"
+msgstr "Une interface doit être configuré en temps que maître"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:939
+msgid "Outbound:"
+msgstr "Sortant :"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:319
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:377
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:935
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:945
+msgid "Peak:"
+msgstr "Pointe :"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:80
+msgid "Re-create fullmesh subflows after a timeout"
+msgstr "Recréer les sous-flux fullmesh après le délai d'expiration"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:891
+msgid "Realtime Traffic"
+msgstr "Trafic temps réel"
+
+#: luci-app-mptcp/luasrc/controller/mptcp.lua:10
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:45
+msgid "Settings"
+msgstr "Paramètres"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:65
+msgid "Test"
+msgstr "Essai"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:69
+msgid ""
+"The number of MPTCP-level retransmission intervals with no traffic and "
+"pending outstanding data on a given subflow required to declare it stale"
+msgstr ""
+"Le nombre d'intervalles de retransmission au niveau de MPTCP sans trafic et "
+"en attente de données sur un sous-flux requis pour le déclarer obsolète"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:914
+msgid "Upload:"
+msgstr "Envoie :"
+
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_check.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_connections.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_fullmesh.htm:21
+#: luci-app-mptcp/luasrc/view/mptcp/mptcp_monitor.htm:14
+msgid "Waiting for command to complete..."
+msgstr "En attente de la réponse de la commande..."
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:112
+msgid "backup"
+msgstr "remplaçant"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:22
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:32
+msgid "default"
+msgstr "Défaut"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:14
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:17
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:20
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:82
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:93
+msgid "disable"
+msgstr "Désactive"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:110
+msgid "disabled"
+msgstr "Désactivé"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:13
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:16
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:19
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:81
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:92
+msgid "enable"
+msgstr "Active"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:109
+msgid "enabled"
+msgstr "Activé"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:88
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:372
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:376
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:380
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:681
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:930
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:933
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:936
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:940
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:943
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:946
+msgid "kB/s"
+msgstr "Ko/s"
+
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:97
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:314
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:318
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:322
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:372
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:376
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:380
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:690
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:930
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:933
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:936
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:940
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:943
+#: luci-app-mptcp/luasrc/view/mptcp/multipath.htm:946
+msgid "kbit/s"
+msgstr "kbit/s"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:111
+msgid "master"
+msgstr "maître"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:85
+msgid "ndiffports subflows number"
+msgstr "Nombre de sous-flux ndiffports"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:64
+msgid ""
+"specifies the maximum number of ADD_ADDR suboptions accepted for each MPTCP "
+"connection"
+msgstr ""
+"spécifie le nombre maximum de sous-options ADD_ADDR acceptées pour chaque "
+"connexion MPTCP"
+
+#: luci-app-mptcp/luasrc/model/cbi/mptcp.lua:59
+msgid ""
+"specifies the maximum number of additional subflows allowed for each MPTCP "
+"connection"
+msgstr ""
+"spécifie le nombre maximum de sous-flux ADD_ADDR acceptées pour chaque "
+"connexion MPTCP"
+
+#~ msgid "binder"
+#~ msgstr "lier"
+
+#~ msgid "handover"
+#~ msgstr "relais"
+
+#~ msgid "ndiffports"
+#~ msgstr "ndiffports"
+
+#~ msgid "redundant"
+#~ msgstr "redondant"
+
+#~ msgid "round-robin"
+#~ msgstr "à tour de rôle"
+
+#~ msgid "Networks MPTCP settings"
+#~ msgstr "Paramètres réseaux MPTCP"

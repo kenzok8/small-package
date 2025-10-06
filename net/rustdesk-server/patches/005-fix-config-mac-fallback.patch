@@ -1,0 +1,16 @@
+--- a/libs/hbb_common/src/config.rs
++++ b/libs/hbb_common/src/config.rs
+@@ -804,7 +804,12 @@ impl Config {
+                 id &= 0x1FFFFFFF;
+                 Some(id.to_string())
+             } else {
+-                None
++                log::warn!("Failed to get MAC address. Fallback to random ID");
++                Some(
++                    rand::thread_rng()
++                        .gen_range(1_000_000_000..2_000_000_000)
++                        .to_string(),
++                )
+             }
+         }
+     }

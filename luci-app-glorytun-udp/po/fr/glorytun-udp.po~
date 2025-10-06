@@ -1,0 +1,108 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-04-30 16:16+0000\n"
+"Last-Translator: Weblate Admin <contact@openmptcprouter.com>\n"
+"Language-Team: French <http://weblate.openmptcprouter.com/projects/omr/"
+"luciapplicationsglorytun-udp/fr/>\n"
+"Language: fr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.5.2\n"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:40
+msgid "Advanced Settings"
+msgstr "Configuration avancée"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:46
+msgid "Client"
+msgstr "Client"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:85
+msgid "Clock sync tolerance"
+msgstr "Tolérance de synchronisation d'horloge"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:95
+msgid "Dynamic rate detection"
+msgstr "Détection dynamique de la vitesse"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:42
+msgid "Enabled"
+msgstr "Activer"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:76
+msgid "Force fallback cipher"
+msgstr "Forcer le chiffrement de secours"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:39
+msgid "General Settings"
+msgstr "Paramètres généraux"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:32
+#: luci-app-glorytun-udp/root/usr/share/luci/menu.d/luci-app-glorytun-udp.json:3
+msgid "Glorytun UDP"
+msgstr "Glorytun UDP"
+
+#: luci-app-glorytun-udp/root/usr/share/rpcd/acl.d/luci-app-glorytun-udp.json:3
+msgid "Grant access to glorytun UDP"
+msgstr "Accorder l'accès à Glorytun UDP"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:50
+msgid "Host"
+msgstr "Hôte"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:34
+msgid "Instances"
+msgstr "Instances"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:60
+msgid "Interface name"
+msgstr "Nom de l'interface"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:90
+msgid "Keep alive timeout"
+msgstr "Délai de maintien de la connexion (Keep Alive)"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:72
+msgid "Keep the tunnel device after exiting"
+msgstr "Gardez le périphérique tunnel après avoir quitté"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:56
+msgid "Key"
+msgstr "Clef"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:80
+msgid "Key rotation timeout"
+msgstr "Délai de rotation des clés"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:99
+msgid "Label"
+msgstr "Étiquette"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:64
+msgid "Local IP"
+msgstr "Adresse IP locale"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:45
+msgid "Mode"
+msgstr "Mode"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:72
+msgid "Persist"
+msgstr "Persister"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:53
+msgid "Port"
+msgstr "Port"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:68
+msgid "Remote IP"
+msgstr "IP Distante"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:47
+msgid "Server"
+msgstr "Serveur"
+
+#: luci-app-glorytun-udp/htdocs/luci-static/resources/view/services/glorytun-udp.js:76
+msgid "chacha"
+msgstr "Chacha"

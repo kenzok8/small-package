@@ -1,0 +1,13 @@
+{
+	"admin/network/mptcp": {
+		"title": "MPTCP",
+		"order": 10,
+		"action": {
+			"type": "cbi",
+			"path": "mptcp"
+		},
+		"depends": {
+			"acl": [ "luci-app-mptcp" ]
+		}
+	}
+}

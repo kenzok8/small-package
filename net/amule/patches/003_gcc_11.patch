@@ -1,0 +1,10 @@
+--- a/src/libs/common/MuleDebug.cpp
++++ b/src/libs/common/MuleDebug.cpp
+@@ -56,6 +56,7 @@
+ 
+ #include <vector>
+ 
++#include <exception>
+ 
+ /**
+  * This functions displays a verbose description of

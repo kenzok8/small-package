@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2013 OpenWrt.org
+# Copyright (C) 2023 Yannick Chabanois (Ycarus) for OpenMPTCProuter
+
+START=01
+USE_PROCD=1
+
+log() {
+        logger -t "z8102-wdg" "$@"
+}
+
+start_service()
+{
+        # watchdog
+        procd_open_instance
+        procd_set_param command /usr/lib/custom/wdg.sh
+        procd_set_param respawn
+        procd_close_instance
+}

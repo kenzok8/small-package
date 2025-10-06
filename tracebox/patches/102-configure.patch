@@ -1,0 +1,19 @@
+--- a/configure.ac	2018-07-20 16:15:42.284633906 +0200
++++ b/configure.ac	2018-07-20 16:16:09.812296939 +0200
+@@ -162,16 +162,8 @@
+      ;;
+   *)
+      AC_MSG_RESULT($withval)
+-     if test -f $withval/pcap.h -a \
+-         -f $withval/libpcap.a -a \
+-         -d $withval/pcap; then
+-        owd=`pwd`
+-        if cd $withval; then withval=`pwd`; cd $owd; fi
+         PCAPINC="-I$withval -I$withval/bpf"
+         PCAPLIB="-L$withval -lpcap"
+-     else
+-        AC_ERROR(pcap.h, net/bpf.h, or libpcap.a not found in $withval)
+-     fi
+      ;;
+   esac ],
+ [ if test -f ${prefix}/include/pcap.h; then

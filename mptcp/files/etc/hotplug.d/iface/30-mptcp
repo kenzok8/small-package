@@ -1,0 +1,22 @@
+#!/bin/sh
+[ "$ACTION" = ifup -o "$ACTION" = ifupdate -o "$ACTION" = ifdown -o "$ACTION" = iflink -o "$ACTION" = link-up -o "$ACTION" = link-down ] || exit 0
+#[ "$ACTION" = ifupdate -a -z "$IFUPDATE_ADDRESSES" -a -z "$IFUPDATE_DATA" ] && exit 0
+
+
+/etc/init.d/mptcp enabled || exit 0
+
+if [ "$ACTION" = ifupdate -a -n "$IFUPDATE_ADDRESSES" ] && [ -n "$(uci -q get network.$INTERFACE.multipath)" ] && [ "$(uci -q get network.$INTERFACE.multipath)" != "off" ]; then
+	logger -t "mptcp" "New IP ($IFUPDATE_ADDRESSES) for $INTERFACE ($DEVICE)"
+	multipath $DEVICE off 2>&1 >/dev/null || exit 0
+	multipath $DEVICE on 2>&1 >/dev/null || exit 0
+elif [ "$ACTION" = ifupdate ] && [ -n "$(uci -q get network.$INTERFACE.multipath)" ] && [ "$(uci -q get network.$INTERFACE.multipath)" != "off" ]; then
+	logger -t "mptcp" "Update of $INTERFACE ($DEVICE)"
+	multipath $DEVICE off 2>&1 >/dev/null || exit 0
+	multipath $DEVICE on 2>&1 >/dev/null || exit 0
+elif [ "$ACTION" = ifup -o "$ACTION" = iflink  -o "$ACTION" = link-up ] && [ -z "$(echo $DEVICE | grep oip | grep gre)" ] && [ -n "$(uci -q get network.$INTERFACE.multipath)" ] && [ "$(uci -q get network.$INTERFACE.multipath)" != "off" ]; then
+	logger -t "mptcp" "Reloading mptcp config due to $ACTION of $INTERFACE ($DEVICE)"
+	/etc/init.d/mptcp reload "$DEVICE" >/dev/null || exit 0
+elif [ "$ACTION" = ifdown -o "$ACTION" = link-down ]; then
+	multipath $DEVICE off 2>&1 >/dev/null || exit 0
+fi
+

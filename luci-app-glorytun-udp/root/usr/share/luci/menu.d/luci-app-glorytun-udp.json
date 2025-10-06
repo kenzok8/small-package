@@ -1,0 +1,13 @@
+{
+	"admin/vpn/glorytun-udp": {
+		"title": "Glorytun UDP",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "services/glorytun-udp"
+		},
+		"depends": {
+			"acl": [ "luci-app-glorytun-udp" ]
+		}
+	}
+}
