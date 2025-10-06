@@ -1,22 +1,63 @@
 #!/bin/bash
-function git_clone() {
-  git clone --depth 1 $1 $2 || true
- }
-function git_sparse_clone() {
-  branch="$1" rurl="$2" localdir="$3" && shift 3
-  git clone -b $branch --depth 1 --filter=blob:none --sparse $rurl $localdir
-  cd $localdir
-  git sparse-checkout init --cone
-  git sparse-checkout set $@
-  mv -n $@ ../
-  cd ..
-  rm -rf $localdir
-  }
-function mvdir() {
-mv -n `find $1/* -maxdepth 0 -type d` ./
-rm -rf $1
+MAX_JOBS=6
+current_jobs=0
+
+wait_for_slot() {
+    while [ $current_jobs -ge $MAX_JOBS ]; do
+        sleep 0.5
+        current_jobs=$(jobs -r | wc -l)
+    done
+    ((current_jobs++))
 }
-(
+
+function git_clone() {
+    wait_for_slot
+    (
+        echo "正在克隆: $2"
+        git clone --depth 1 "$1" "$2" || true
+        ((current_jobs--))
+    ) &
+}
+
+function git_sparse_clone() {
+    wait_for_slot
+    (
+        branch="$1" rurl="$2" localdir="$3" && shift 3
+        echo "正在稀疏克隆: $rurl ($branch)"
+        git clone -b "$branch" --depth 1 --filter=blob:none --sparse "$rurl" "$localdir"
+        cd "$localdir" || exit
+        git sparse-checkout init --cone
+        git sparse-checkout set "$@"
+
+        for item in "$@"; do
+            target_name=$(basename "$item")
+            if [ -d "$item" ]; then
+                mv -n "$item" "../$target_name" 2>/dev/null || true
+            fi
+        done
+        
+        cd ..
+        rm -rf "$localdir"
+        ((current_jobs--))
+    ) &
+}
+
+function mvdir() {
+    if [ -d "$1" ]; then
+        mv -n $(find "$1" -maxdepth 1 -type d ! -path "$1") ./
+        rm -rf "$1"
+    fi
+}
+
+# 等待所有后台任务完成
+wait_for_all() {
+    echo "等待当前组任务完成..."
+    wait
+    current_jobs=0
+}
+
+echo "开始下载软件包..."
+
 #git clone --depth 1 https://github.com/kenzo78/my-packages && mvdir my-packages
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
 git clone --depth 1 https://github.com/kiddin9/aria2
