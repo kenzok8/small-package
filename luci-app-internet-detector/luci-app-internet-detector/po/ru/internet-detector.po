@@ -212,8 +212,8 @@ msgid "Hosts polling interval when the Internet is up."
 msgstr "Интервал опроса хостов если Интернет доступен."
 
 msgid ""
-"Hosts to check Internet availability. Hosts are polled (in list order) until "
-"at least one of them responds."
+"Hosts for checking Internet availability. Hosts are polled (in list "
+"order) until at least one responds."
 msgstr ""
 "Хосты для проверки доступности Интернет. Хосты опрашиваются (в порядке "
 "списка) до тех пор, пока хотя бы один из них не ответит."
@@ -444,6 +444,15 @@ msgstr "Интервал опроса"
 msgid "Provider"
 msgstr "Провайдер"
 
+msgid "Proxy"
+msgstr "Прокси"
+
+msgid "Proxy host"
+msgstr "Хост прокси"
+
+msgid "Proxy port"
+msgstr "Порт прокси"
+
 msgid "Public IP"
 msgstr "Публичный IP"
 
@@ -600,8 +609,11 @@ msgstr "Таймаут между остановкой и запуском се�
 msgid "Timeout between stopping and starting a ModemManger interface when restarting."
 msgstr "Таймаут между остановкой и запуском интерфейса ModemManger при перезапуске."
 
-msgid "To support HTTP services you need to install curl."
+msgid "To support HTTP services, you need to install curl."
 msgstr "Для поддержки HTTP сервисов необходимо установить curl."
+
+msgid "To support URL checking, you need to install curl."
+msgstr "Для поддержки проверки URL необходимо установить curl."
 
 msgid "Transmit"
 msgstr "Передача"
@@ -620,6 +632,16 @@ msgstr "Неопределён"
 
 msgid "Unlock modem bands"
 msgstr "Освободить частоты модема"
+
+msgid "URL test (HTTP)"
+msgstr "Тест URL (HTTP)"
+
+msgid ""
+"URLs for checking Internet availability. URLs are polled (in list "
+"order) until at least one returns HTTP status code 200."
+msgstr ""
+"URL для проверки доступности Интернет. URL опрашиваются (в порядке "
+"списка) до тех пор, пока хотя бы один из них не вернёт код статуса HTTP 200."
 
 msgid "User"
 msgstr "Пользователь"

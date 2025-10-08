@@ -199,8 +199,8 @@ msgid "Hosts polling interval when the Internet is up."
 msgstr ""
 
 msgid ""
-"Hosts to check Internet availability. Hosts are polled (in list order) until "
-"at least one of them responds."
+"Hosts for checking Internet availability. Hosts are polled (in list "
+"order) until at least one responds."
 msgstr ""
 
 msgid "Huge: 1492 bytes"
@@ -415,6 +415,15 @@ msgstr ""
 msgid "Provider"
 msgstr ""
 
+msgid "Proxy"
+msgstr ""
+
+msgid "Proxy host"
+msgstr ""
+
+msgid "Proxy port"
+msgstr ""
+
 msgid "Public IP"
 msgstr ""
 
@@ -571,7 +580,10 @@ msgstr ""
 msgid "Timeout between stopping and starting a ModemManger interface when restarting."
 msgstr ""
 
-msgid "To support HTTP services you need to install curl."
+msgid "To support HTTP services, you need to install curl."
+msgstr ""
+
+msgid "To support URL checking, you need to install curl."
 msgstr ""
 
 msgid "Transmit"
@@ -590,6 +602,14 @@ msgid "Undefined"
 msgstr ""
 
 msgid "Unlock modem bands"
+msgstr ""
+
+msgid "URL test (HTTP)"
+msgstr ""
+
+msgid ""
+"URLs for checking Internet availability. URLs are polled (in list "
+"order) until at least one returns HTTP status code 200."
 msgstr ""
 
 msgid "User"
