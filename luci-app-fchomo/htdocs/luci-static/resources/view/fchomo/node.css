@@ -15,8 +15,8 @@
 /* https://github.com/openwrt/luci/blob/715f41e4c1033fc67724a32c6f1d33caba5357c6/themes/luci-theme-bootstrap/htdocs/luci-static/bootstrap/cascade.css#L2210 */
 [data-darkmode="true"] .bubble[style] {
 	background: linear-gradient(
-		color-mix(in srgb, rgb(var(--zone-color-rgb)) 40%, var(--background-color-high)),
-		color-mix(in srgb, rgb(var(--zone-color-rgb)) 30%, var(--background-color-high))
+		color-mix(in srgb, var(--bubble-color) 40%, var(--background-color-high)),
+		color-mix(in srgb, var(--bubble-color) 30%, var(--background-color-high))
 	) !important;
 }
 
