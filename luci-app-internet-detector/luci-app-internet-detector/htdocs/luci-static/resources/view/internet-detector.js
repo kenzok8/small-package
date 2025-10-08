@@ -173,9 +173,29 @@ return view.extend({
 	initButton             : null,
 	currentAppMode         : '0',
 	defaultHosts           : [ '8.8.8.8', '1.1.1.1' ],
+	defaultURLs            : [ 'https://www.google.com' ],
 	ledsPath               : '/sys/class/leds',
 	ledsPerInstance        : 3,
 	leds                   : [],
+	publicIPProviders      : {
+		dns : [
+			{ name: 'opendns1', title: 'opendns1 (DNS)' },
+			{ name: 'opendns2', title: 'opendns2 (DNS)' },
+			{ name: 'opendns3', title: 'opendns3 (DNS)' },
+			{ name: 'opendns4', title: 'opendns4 (DNS)' },
+			{ name: 'google',   title: 'google (DNS)' },
+			{ name: 'akamai',   title: 'akamai (DNS)' },
+		],
+		http: [
+			{ name: 'akamai_http', title: 'akamai (HTTP)' },
+			{ name: 'amazonaws',   title: 'amazonaws (HTTP)' },
+			{ name: 'wgetip',      title: 'wgetip.com (HTTP)' },
+			{ name: 'ifconfig',    title: 'ifconfig.me (HTTP)' },
+			{ name: 'ipecho',      title: 'ipecho.net (HTTP)' },
+			{ name: 'canhazip',    title: 'canhazip.com (HTTP)' },
+			{ name: 'icanhazip',   title: 'icanhazip.com (HTTP)' },
+		],
+	},
 	tgUpdatesURLPattern    : 'https://api.telegram.org/bot%s/getUpdates',
 	mm                     : false,
 	mmInit                 : false,
@@ -413,6 +433,11 @@ return view.extend({
 			alert(e.message);
 			throw e;
 		});
+	},
+
+	validateUrl(section, value) {
+		return (/^$|^https?:\/\/[\w.-]+(:[0-9]{2,5})?[\w\/~.&?+=-]*$/.test(value)) ?
+			true : _('Expecting:') + ` ${_('valid URL')}\n`;
 	},
 
 	CBITimeInput: form.Value.extend({
@@ -771,19 +796,41 @@ return view.extend({
 		// hosts
 		o = s.taboption('main', form.DynamicList,
 			'hosts', _('Hosts'),
-			_('Hosts to check Internet availability. Hosts are polled (in list order) until at least one of them responds.')
+			_('Hosts for checking Internet availability. Hosts are polled (in list order) until at least one responds.')
 		);
-		o.datatype = 'or(host,hostport,ipaddrport(1))';
-		o.default  = this.defaultHosts;
-		o.rmempty  = false;
+		o.datatype  = 'or(host,hostport,ipaddrport(1))';
+		o.default   = this.defaultHosts;
+		o.depends({ check_type: '0' });
+		o.depends({ check_type: '1' });
+		o.rmempty   = false;
+		o.modalonly = true;
+
+		if(this.curlExec) {
+
+			// urls
+			o = s.taboption('main', form.DynamicList,
+				'urls', _('URLs'),
+				_('URLs for checking Internet availability. URLs are polled (in list order) until at least one returns HTTP status code 200.')
+			);
+			o.validate  = this.validateUrl;
+			o.default   = this.defaultURLs;
+			o.rmempty   = false;
+			o.depends({ check_type: '2' });
+			o.modalonly = true;
+		};
 
 		// check_type
 		o = s.taboption('main', form.ListValue,
 			'check_type', _('Check type'),
-			_('Host availability check type.')
+			_('Host availability check type.') + '<br />' +
+			((this.curlExec) ? '' :
+				_('To support URL checking, you need to install curl.'))
 		);
-		o.value(0, _('TCP port connection'));
 		o.value(1, _('ICMP-echo request (ping)'));
+		o.value(0, _('TCP port connection'));
+		if(this.curlExec) {
+			o.value(2, _('URL test (HTTP)'));
+		};
 		o.default   = '0';
 		o.modalonly = true;
 
@@ -792,8 +839,8 @@ return view.extend({
 			'tcp_port', _('TCP port'),
 			_('Default port value for TCP connections.')
 		);
-		o.datatype = 'port';
-		o.default  = '53';
+		o.datatype  = 'port';
+		o.default   = '53';
 		o.depends({ check_type: '0' });
 		o.modalonly = true;
 
@@ -806,16 +853,51 @@ return view.extend({
 		o.value(248,  _('Big: 248 bytes'));
 		o.value(1492, _('Huge: 1492 bytes'));
 		o.value(9000, _('Jumbo: 9000 bytes'));
-		o.default = '56';
+		o.default   = '56';
 		o.depends({ check_type: '1' });
 		o.modalonly = true;
+
+		if(this.curlExec) {
+
+			// proxy_type
+			o = s.taboption('main', form.ListValue,
+				'proxy_type', _('Proxy')
+			);
+			o.value('', _('Disabled'));
+			o.value('http');
+			o.value('socks4');
+			o.value('socks4a');
+			o.value('socks5');
+			o.value('socks5h');
+			o.default   = '';
+			o.depends({ check_type: '2' });
+			o.modalonly = true;
+
+			// proxy_host
+			o = s.taboption('main', form.Value,
+				'proxy_host', _('Proxy host')
+			);
+			o.datatype  = 'host';
+			o.rmempty   = false;
+			o.depends({ proxy_type: /.+/ });
+			o.modalonly = true;
+
+			// proxy_port
+			o = s.taboption('main', form.Value,
+				'proxy_port', _('Proxy port')
+			);
+			o.datatype  = 'port';
+			o.rmempty   = false;
+			o.depends({ proxy_type: /.+/ });
+			o.modalonly = true;
+		};
 
 		// iface
 		o = s.taboption('main', widgets.DeviceSelect,
 			'iface', _('Device'),
 			_('Network device for Internet access. If not specified, the default device is used.')
 		);
-		o.noaliases  = true;
+		o.noaliases = true;
 
 		// interval_up
 		o = s.taboption('main', form.ListValue,
@@ -857,6 +939,11 @@ return view.extend({
 		o.value(3,  '3 ' + _('sec'));
 		o.value(4,  '4 ' + _('sec'));
 		o.value(5,  '5 ' + _('sec'));
+		o.value(6,  '6 ' + _('sec'));
+		o.value(7,  '7 ' + _('sec'));
+		o.value(8,  '8 ' + _('sec'));
+		o.value(9,  '9 ' + _('sec'));
+		o.value(10, '10 ' + _('sec'));
 		o.default = '2';
 
 		// enabled
@@ -1146,6 +1233,7 @@ return view.extend({
 				);
 				o.modalonly = true;
 				o.multiple  = true;
+				o.modalonly = true;
 
 				// attempts
 				o = s.taboption('restart_network', form.ListValue,
@@ -1327,25 +1415,18 @@ return view.extend({
 				'mod_public_ip_provider', _('Provider'),
 				_('Service for determining the public IP address.') + '<br />' +
 				((this.curlExec) ? '' :
-					_('To support HTTP services you need to install curl.'))
+					_('To support HTTP services, you need to install curl.'))
 			);
 			o.modalonly = true;
-			o.value('opendns1', 'opendns1 (DNS)');
-			o.value('opendns2', 'opendns2 (DNS)');
-			o.value('opendns3', 'opendns3 (DNS)');
-			o.value('opendns4', 'opendns4 (DNS)');
-			o.value('google',   'google (DNS)');
-			o.value('akamai',   'akamai (DNS)');
-			if(this.curlExec) {
-				o.value('akamai_http', "akamai (HTTP)");
-				o.value('amazonaws',   "amazonaws (HTTP)");
-				o.value('wgetip',      "wgetip.com (HTTP)");
-				o.value('ifconfig',    "ifconfig.me (HTTP)");
-				o.value('ipecho',      "ipecho.net (HTTP)");
-				o.value('canhazip',    "canhazip.com (HTTP)");
-				o.value('icanhazip',   "icanhazip.com (HTTP)");
+			for(let i of this.publicIPProviders.dns) {
+				o.value(i.name, i.title);
 			};
-			o.default = 'opendns1';
+			if(this.curlExec) {
+				for(let i of this.publicIPProviders.http) {
+					o.value(i.name, i.title);
+				};
+			};
+			o.default = this.publicIPProviders.dns[0].name;
 
 			// ipv6
 			o = s.taboption('public_ip', form.ListValue,
@@ -1356,12 +1437,9 @@ return view.extend({
 			o.value('0', 'A (IPv4)');
 			o.value('1', 'AAAA (IPv6)');
 			o.default = '0';
-			o.depends({ 'mod_public_ip_provider': 'opendns1' });
-			o.depends({ 'mod_public_ip_provider': 'opendns2' });
-			o.depends({ 'mod_public_ip_provider': 'opendns3' });
-			o.depends({ 'mod_public_ip_provider': 'opendns4' });
-			o.depends({ 'mod_public_ip_provider': 'google' });
-			o.depends({ 'mod_public_ip_provider': 'akamai' });
+			for(let i of this.publicIPProviders.dns) {
+				o.depends({ mod_public_ip_provider: i.name });
+			};
 
 			// interval
 			o = s.taboption('public_ip', form.ListValue,
@@ -1620,7 +1698,6 @@ return view.extend({
 						o.password  = true;
 						o.modalonly = true;
 
-						// tg_chat_id
 						o = s.taboption('telegram', this.CBITextfieldButtonInput,
 							'mod_telegram_chat_id', _('Chat ID'),
 							_('ID of the Telegram chat to which messages will be sent.')

@@ -10,7 +10,10 @@ local Module = {
 		noModules     = false,
 		debug         = false,
 		serviceConfig = {
-			iface = nil,
+			iface      = nil,
+			proxy_type = nil,
+			proxy_host = nil,
+			proxy_port = nil,
 		},
 	},
 	syslog               = function(level, msg) return true end,
@@ -24,7 +27,7 @@ local Module = {
 	requestAttempts      = 2,
 	timeout              = 3,
 	curlExec             = "/usr/bin/curl",
-	curlParams           = "-s",
+	curlParams           = '-s --no-keepalive --user-agent "Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0"',
 	providers            = {
 		opendns1 = {
 			name    = "opendns1", type = "dns", host = "myip.opendns.com",
@@ -88,6 +91,7 @@ local Module = {
 	ipScript             = "",
 	enableIpScript       = false,
 	status               = nil,
+	_proxyString         = "",
 	_provider            = nil,
 	_qtype               = false,
 	_currentIp           = nil,
@@ -177,6 +181,7 @@ function Module:sendUDPMessage(message, server, port)
 			"GETADDRINFO ERROR: %s, %s", errMsg, errNum))
 	else
 		local family = saTable[1].family
+
 		if family then
 			local sock, errMsg, errNum = socket.socket(family, socket.SOCK_DGRAM, 0)
 
@@ -266,12 +271,13 @@ function Module:decodeMessage(message)
 	local NSCOUNT = message:sub(17, 20)
 	local ARCOUNT = message:sub(21, 24)
 
+	-- Question section
 	local questionSectionStarts = 25
-
 	local questionParts = self:parseParts(message, questionSectionStarts, {})
 	local qtypeStarts   = questionSectionStarts + (#table.concat(questionParts)) + (#questionParts * 2) + 1
 	local qclassStarts  = qtypeStarts + 4
 
+	-- Answer section
 	local answerSectionStarts = qclassStarts + 4
 	local numAnswers          = math.max(
 		tonumber(ANCOUNT, 16), tonumber(NSCOUNT, 16), tonumber(ARCOUNT, 16))
@@ -351,9 +357,10 @@ end
 function Module:httpRequest(url)
 	local retCode = 1, data
 	local curl    = string.format(
-		'%s%s --connect-timeout %s %s "%s"; printf "\n$?";',
+		'%s%s%s --connect-timeout %s %s "%s"; printf "\n$?";',
 		self.curlExec,
 		self.config.serviceConfig.iface and (" --interface " .. self.config.serviceConfig.iface) or "",
+		self._proxyString,
 		self.timeout,
 		self.curlParams,
 		url
@@ -373,6 +380,14 @@ function Module:httpRequest(url)
 	else
 		retCode = 1
 	end
+
+	self.debugOutput(string.format(
+		"--- Curl ---\ntime = %s\n%s\nretCode = %s\ndata = [\n%s]\n",
+		os.time(),
+		curl,
+		retCode,
+		tostring(data))
+	)
 	return retCode, data
 end
 
@@ -453,6 +468,15 @@ function Module:init(t)
 		else
 			self._enabled = false
 		end
+	end
+	if (self.config.serviceConfig.proxy_type and
+		self.config.serviceConfig.proxy_host and
+		self.config.serviceConfig.proxy_port) then
+		self._proxyString = string.format(
+			" --proxy %s://%s:%d",
+			self.config.serviceConfig.proxy_type,
+			self.config.serviceConfig.proxy_host,
+			self.config.serviceConfig.proxy_port)
 	end
 end
 
