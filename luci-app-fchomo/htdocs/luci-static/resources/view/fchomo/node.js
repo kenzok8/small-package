@@ -5,7 +5,7 @@
 'require view';
 
 'require fchomo as hm';
-'require firewall as fw';
+'require tools.prng as random';
 'require tools.widgets as widgets';
 
 document.querySelector('head').appendChild(E('link', {
@@ -40,7 +40,7 @@ const CBIBubblesValue = form.DummyValue.extend({
 
 	textvalue(section_id) {
 		const cval = this.cfgvalue(section_id);
-		if (cval === null)
+		if (!cval)
 			return null;
 
 		const chain = cval.split('⇒').map(t => t.trim());
@@ -48,16 +48,17 @@ const CBIBubblesValue = form.DummyValue.extend({
 
 		let curWrapper = null;
 		for (let i = 0; i < chain.length; i++) {
-			const value = chain[i];
+			const text = chain[i];
 
 			const labelEl = E('span', {
 				class: 'bubble-label'
-			}, [ value ]);
+			}, [ text ]);
 
 			const bubbleEl = E('div', {
 				class: 'bubble',
-				//id: container_id + `.${hm.toUciname(value)}`,
-				style: fw.getZoneColorStyle(value)
+				//id: container_id + `.${hm.toUciname(text)}`,
+				style: '--bubble-color:%s; background-color:var(--bubble-color)'
+					.format(random.derive_color(text))
 			}, [ labelEl ]);
 
 			if (curWrapper)
