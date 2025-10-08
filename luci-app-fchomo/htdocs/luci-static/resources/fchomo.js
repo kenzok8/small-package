@@ -857,6 +857,15 @@ function removeBlankAttrs(res) {
 	return res;
 }
 
+function toUciname(str) {
+	if (isEmpty(str))
+		return null;
+
+	const unuciname = new RegExp(/[^a-zA-Z0-9_]+/, "g");
+
+	return str.replace(/[\s\.-]/g, '_').replace(unuciname, '');
+}
+
 function getFeatures() {
 	const callGetFeatures = rpc.declare({
 		object: 'luci.fchomo',
@@ -1560,6 +1569,7 @@ return baseclass.extend({
 	yaml2json,
 	isEmpty,
 	removeBlankAttrs,
+	toUciname,
 	getFeatures,
 	getServiceStatus,
 	getClashAPI,

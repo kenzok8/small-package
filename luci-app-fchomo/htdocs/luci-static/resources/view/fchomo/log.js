@@ -11,20 +11,19 @@
 
 'require fchomo as hm';
 
-/* Thanks to luci-app-aria2 */
-const css = '				\
-#log_textarea {				\
-	padding: 10px;			\
-	text-align: left;		\
-}					\
-#log_textarea pre {			\
-	padding: .5rem;			\
-	word-break: break-all;		\
-	margin: 0;			\
-}					\
-.description {				\
-	background-color: #33ccff;	\
-}';
+document.querySelector('head').appendChild(E('style', [
+	'\
+	#log_textarea {\
+		padding: 10px;\
+		text-align: left;\
+	}\
+	#log_textarea pre {\
+		padding: .5rem;\
+		word-break: break-all;\
+		margin: 0;\
+	}\
+	'
+]));
 
 const hm_dir = '/var/run/fchomo';
 
@@ -107,7 +106,6 @@ function getRuntimeLog(name, option_index, section_id, in_table) {
 	});
 
 	return E([
-		E('style', [ css ]),
 		E('div', {'class': 'cbi-map'}, [
 			E('h3', {'name': 'content', 'style': 'align-items: center; display: flex;'}, [
 				_('%s log').format(name),

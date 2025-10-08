@@ -61,6 +61,9 @@ uci delete firewall.fchomo_post
 uci commit firewall
 endef
 
+# Disable CSStidy for compilation
+#CONFIG_LUCI_CSSTIDY:=
+
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

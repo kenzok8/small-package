@@ -31,10 +31,10 @@ function parseRulesetYaml(field, name, cfg) {
 }
 
 function parseRulesetLink(section_type, uri) {
-	let config,
-		filefmt = new RegExp(/^(text|yaml|mrs)$/),
-		filebehav = new RegExp(/^(domain|ipcidr|classical)$/),
-		unuciname = new RegExp(/[^a-zA-Z0-9_]+/, "g");
+	const filefmt = new RegExp(/^(text|yaml|mrs)$/);
+	const filebehav = new RegExp(/^(domain|ipcidr|classical)$/);
+
+	let config;
 
 	uri = uri.split('://');
 	if (uri[0] && uri[1]) {
@@ -46,8 +46,7 @@ function parseRulesetLink(section_type, uri) {
 			var behavior = url.searchParams.get('behav');
 			var interval = url.searchParams.get('sec');
 			var rawquery = url.searchParams.get('rawq');
-			var name = decodeURI(url.pathname).split('/').pop()
-				.replace(/[\s\.-]/g, '_').replace(unuciname, '');
+			var name = hm.toUciname(decodeURI(url.pathname).split('/').pop());
 
 			if (filefmt.test(format) && filebehav.test(behavior)) {
 				let fullpath = (url.username ? url.username + '@' : '') + url.host + url.pathname + (rawquery ? '?' + decodeURIComponent(rawquery) : '');
@@ -69,8 +68,7 @@ function parseRulesetLink(section_type, uri) {
 			var behavior = url.searchParams.get('behav');
 			var filler = url.searchParams.get('fill');
 			var path = decodeURI(url.pathname);
-			var name = path.split('/').pop()
-				.replace(/[\s\.-]/g, '_').replace(unuciname, '');
+			var name = hm.toUciname(path.split('/').pop());
 
 			if (filefmt.test(format) && filebehav.test(behavior)) {
 				config = {
