@@ -23,8 +23,7 @@
 .bubble {
 	/* border: 2px solid; */
 	border-radius: 6px;
-	padding: 2px;
-	margin: 2px;
+	padding: 3px;
 	box-sizing: border-box;
 
 	/* Default compact width (for desktop, will be overwritten on mobile)*/
