@@ -28,6 +28,7 @@ do_install() {
 
   local cmd="docker run --restart=unless-stopped -d -v \"$config:/config\" \
     --dns=172.17.0.1 \
+    -e PUID=911 -e PGID=911 \
     -e DEFAULT_WORKSPACE=/config/workspace \
     -p $http_port:8443 "
 

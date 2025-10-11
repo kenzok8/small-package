@@ -69,7 +69,7 @@ case ${ACTION} in
     docker ps --all -f 'name=^/uptimekuma$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=^/htreader$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->9060/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    docker ps --all -f 'name=^/uptimekuma$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->9060/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
   ;;
   *)
     usage
