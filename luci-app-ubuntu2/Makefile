@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.0.3-20241215
+PKG_VERSION:=1.0.5-20251011
 PKG_RELEASE:=
 
 LUCI_TITLE:=LuCI support for Ubuntu2

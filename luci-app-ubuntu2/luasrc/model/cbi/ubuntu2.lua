@@ -35,11 +35,11 @@ o.datatype = "port"
 o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
-o:value("linkease/desktop-ubuntu2-standard-arm64:latest", "Standard-ARM64")
-o:value("linkease/desktop-ubuntu2-standard-amd64:latest", "Standard-AMD64")
 if "x86_64" == docker_info.Architecture then
+  o:value("linkease/desktop-ubuntu2-standard-amd64:latest", "Standard-AMD64")
   o.default = "linkease/desktop-ubuntu2-standard-amd64:latest"
 else
+  o:value("linkease/desktop-ubuntu2-standard-arm64:latest", "Standard-ARM64")
   o.default = "linkease/desktop-ubuntu2-standard-arm64:latest"
 end
 

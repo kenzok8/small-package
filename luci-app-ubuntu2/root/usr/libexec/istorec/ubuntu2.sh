@@ -8,6 +8,7 @@ do_install() {
   local https_port=`uci get ubuntu2.@main[0].https_port 2>/dev/null`
   local image_name=`uci get ubuntu2.@main[0].image_name 2>/dev/null`
   local config=`uci get ubuntu2.@main[0].config_path 2>/dev/null`
+  local pwd=`uci get ubuntu2.@main[0].password 2>/dev/null`
   if [ -z ${IMAGE_NAME} ]; then
     local arch=`uname -m`
     if [ "$arch" = "x86_64" ]; then
@@ -34,6 +35,10 @@ do_install() {
     -v /var/run/docker.sock:/var/run/docker.sock \
     --dns=172.17.0.1 \
     -p $https_port:3001 "
+
+  if [ -n "$pwd" ]; then
+    cmd="$cmd -e \"PASSWORD=$pwd\" "
+  fi
 
   if [ -d /dev/dri ]; then
     cmd="$cmd\
