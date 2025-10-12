@@ -12,7 +12,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/shadowsocks/pdnsd.git
 PKG_SOURCE_DATE:=2012-04-26
 PKG_SOURCE_VERSION:=a8e46ccba7b0fa2230d6c42ab6dcd92926f6c21d
-PKG_MIRROR_HASH:=e493bb71875dafe6f3f0a870c7f27c13631e78151dc65e6384c989d286ea698d
+PKG_MIRROR_HASH:=387f991f9c4fe33dedb6028626ecf8aed4b6c5cacaa6f07bf48668e4cfdd8e14
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -55,4 +55,5 @@ define Package/pdnsd-alt/install
 endef
 
 $(eval $(call BuildPackage,pdnsd-alt))
+
 
