@@ -1649,8 +1649,8 @@ msgid "Name of the Proxy group to download rule set."
 msgstr "用于下载规则集订阅的代理组名称。"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:328
-msgid "Native"
-msgstr "原生"
+msgid "Native UDP"
+msgstr "原生 UDP"
 
 #: htdocs/luci-static/resources/fchomo.js:325
 msgid "Native appearance"

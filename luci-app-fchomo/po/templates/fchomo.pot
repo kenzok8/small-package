@@ -1620,7 +1620,7 @@ msgid "Name of the Proxy group to download rule set."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:328
-msgid "Native"
+msgid "Native UDP"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:325
