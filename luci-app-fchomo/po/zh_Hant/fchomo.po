@@ -2061,6 +2061,10 @@ msgstr "REALITY 標識符"
 msgid "RTT"
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:319
+msgid "Random"
+msgstr "隨機"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:650
 msgid "Random will be used if empty."
 msgstr "留空將使用隨機令牌。"

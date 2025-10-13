@@ -2029,6 +2029,10 @@ msgstr ""
 msgid "RTT"
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:319
+msgid "Random"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:650
 msgid "Random will be used if empty."
 msgstr ""

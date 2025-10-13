@@ -22,6 +22,8 @@ const sharktaikogif = function() {
 
 const pr7558_merged = form.DynamicList.prototype.renderWidget.toString().match('this\.allowduplicates');
 
+const HM_DIR = "/etc/fchomo";
+
 const monospacefonts = [
 	'"Cascadia Code"',
 	'"Cascadia Mono"',
@@ -314,7 +316,7 @@ const tls_client_fingerprints = [
 	['edge'],
 	['360'],
 	['qq'],
-	['random']
+	['random', _('Random')]
 ];
 
 const vless_encryption = {
@@ -1518,6 +1520,7 @@ return baseclass.extend({
 	sharkaudio,
 	sharktaikogif,
 	pr7558_merged,
+	HM_DIR,
 	monospacefonts,
 	checkurls,
 	stunserver,

@@ -309,7 +309,7 @@ return view.extend({
 
 			switch (option) {
 				case 'file':
-					return uci.get(data[0], section_id, '.name');
+					return `${hm.HM_DIR}/${this.section.sectiontype}/` + uci.get(data[0], section_id, '.name');
 				case 'http':
 					return uci.get(data[0], section_id, 'url');
 				case 'inline':
