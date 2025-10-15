@@ -71,3 +71,21 @@ config sniff
 	option protocol 'QUIC'
 	list ports '443'
 	list ports '8443'
+
+config proxy_group 'group_stun'
+	option label 'STUN'
+	option type 'select'
+	list groups 'DIRECT'
+	list groups 'REJECT'
+	list groups 'GLOBAL'
+
+config rules 'STUN_host'
+	option label 'STUN'
+	option entry '{"type":"RULE-SET","payload":[{"type":"RULE-SET","factor":"rule_STUN"}],"detour":"group_stun"}'
+
+config ruleset 'rule_STUN'
+	option label 'STUN'
+	option type 'inline'
+	option behavior 'classical'
+	option payload '- DST-PORT,3478
+- DST-PORT,19302'
