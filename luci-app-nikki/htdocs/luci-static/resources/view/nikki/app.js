@@ -109,7 +109,7 @@ return view.extend({
 
         o = s.option(form.Value, 'start_delay', _('Start Delay'));
         o.datatype = 'uinteger';
-        o.placeholder = '0';
+        o.placeholder = _('Start Immidiately');
 
         o = s.option(form.Flag, 'scheduled_restart', _('Scheduled Restart'));
         o.rmempty = false;
@@ -122,15 +122,53 @@ return view.extend({
         o = s.option(form.Flag, 'test_profile', _('Test Profile'));
         o.rmempty = false;
 
-        o = s.option(form.Flag, 'fast_reload', _('Fast Reload'));
-        o.rmempty = false;
-
         o = s.option(form.Flag, 'core_only', _('Core Only'));
         o.rmempty = false;
 
-        s = m.section(form.NamedSection, 'env', 'env', _('Core Environment Variable Config'));
+        s = m.section(form.NamedSection, 'procd', 'procd', _('procd Config'));
 
-        o = s.option(form.DynamicList, 'safe_paths', _('Safe Paths'));
+        s.tab('general', _('General Config'));
+
+        o = s.taboption('general', form.Flag, 'fast_reload', _('Fast Reload'));
+        o.rmempty = false;
+
+        s.tab('rlimit', _('RLIMIT Config'));
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_address_space_soft', _('Address Space Size Soft Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_address_space_hard', _('Address Space Size Hard Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_data_soft', _('Heap Size Soft Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_data_hard', _('Heap Size Hard Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_stack_soft', _('Stack Size Soft Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_stack_hard', _('Stack Size Hard Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_nofile_soft', _('Number of Open Files Soft Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_nofile_hard', _('Number of Open Files Hard Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        s.tab('environment_variable', _('Environment Variable Config'));
+
+        o = s.taboption('environment_variable', form.DynamicList, 'env_safe_paths', _('Safe Paths'));
         o.load = function (section_id) {
             return this.super('load', section_id)?.split(':');
         };
@@ -138,16 +176,16 @@ return view.extend({
             this.super('write', section_id, formvalue?.join(':'));
         };
 
-        o = s.option(form.Flag, 'disable_loopback_detector', _('Disable Loopback Detector'));
+        o = s.taboption('environment_variable', form.Flag, 'env_disable_loopback_detector', _('Disable Loopback Detector'));
         o.rmempty = false;
 
-        o = s.option(form.Flag, 'disable_quic_go_gso', _('Disable GSO of quic-go'));
+        o = s.taboption('environment_variable', form.Flag, 'env_disable_quic_go_gso', _('Disable GSO of quic-go'));
         o.rmempty = false;
 
-        o = s.option(form.Flag, 'disable_quic_go_ecn', _('Disable ECN of quic-go'));
+        o = s.taboption('environment_variable', form.Flag, 'env_disable_quic_go_ecn', _('Disable ECN of quic-go'));
         o.rmempty = false;
 
-        o = s.option(form.Flag, 'skip_system_ipv6_check', _('Skip System IPv6 Check'));
+        o = s.taboption('environment_variable', form.Flag, 'env_skip_system_ipv6_check', _('Skip System IPv6 Check'));
         o.rmempty = false;
 
         return m.render();

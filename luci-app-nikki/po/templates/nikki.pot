@@ -14,6 +14,14 @@ msgstr ""
 msgid "Access Control"
 msgstr ""
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:141
+msgid "Address Space Size Hard Limit"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:137
+msgid "Address Space Size Soft Limit"
+msgstr ""
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:181
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:186
 msgid "All Port"
@@ -94,15 +102,11 @@ msgstr ""
 msgid "Commonly Used Port"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:131
-msgid "Core Environment Variable Config"
-msgstr ""
-
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:60
 msgid "Core Log"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:128
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:125
 msgid "Core Only"
 msgstr ""
 
@@ -191,15 +195,15 @@ msgstr ""
 msgid "Disable"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:147
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:185
 msgid "Disable ECN of quic-go"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:144
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:182
 msgid "Disable GSO of quic-go"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:141
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:179
 msgid "Disable Loopback Detector"
 msgstr ""
 
@@ -316,6 +320,10 @@ msgstr ""
 msgid "Enable"
 msgstr ""
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:169
+msgid "Environment Variable Config"
+msgstr ""
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:47
 msgid "Expire At"
 msgstr ""
@@ -340,7 +348,7 @@ msgstr ""
 msgid "Fake-IP Range"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:125
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:132
 msgid "Fast Reload"
 msgstr ""
 
@@ -377,6 +385,7 @@ msgstr ""
 msgid "GSO Max Size"
 msgstr ""
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:130
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:28
 msgid "General Config"
 msgstr ""
@@ -439,6 +448,14 @@ msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:142
 msgid "HTTP Port"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:149
+msgid "Heap Size Hard Limit"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:145
+msgid "Heap Size Soft Limit"
 msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:38
@@ -554,6 +571,14 @@ msgstr ""
 msgid "Not Running"
 msgstr ""
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:165
+msgid "Number of Open Files Hard Limit"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:161
+msgid "Number of Open Files Soft Limit"
+msgstr ""
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:89
 msgid "Open Dashboard"
 msgstr ""
@@ -650,6 +675,10 @@ msgstr ""
 msgid "Proxy Provider:"
 msgstr ""
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:135
+msgid "RLIMIT Config"
+msgstr ""
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:98
 msgid "Random"
 msgstr ""
@@ -706,7 +735,7 @@ msgstr ""
 msgid "SOCKS Port"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:133
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:171
 msgid "Safe Paths"
 msgstr ""
 
@@ -723,7 +752,7 @@ msgstr ""
 msgid "Scroll To Bottom"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:150
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:188
 msgid "Skip System IPv6 Check"
 msgstr ""
 
@@ -747,12 +776,24 @@ msgstr ""
 msgid "Stack"
 msgstr ""
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:157
+msgid "Stack Size Hard Limit"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:153
+msgid "Stack Size Soft Limit"
+msgstr ""
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:542
 msgid "Standard Loader"
 msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:110
 msgid "Start Delay"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:112
+msgid "Start Immidiately"
 msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:40
@@ -850,6 +891,17 @@ msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:70
 msgid "Unify Delay"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:139
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:143
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:147
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:151
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:155
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:159
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:163
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:167
+msgid "Unlimited"
 msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:32
@@ -952,4 +1004,8 @@ msgstr ""
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:176
 msgid "Username"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:128
+msgid "procd Config"
 msgstr ""
