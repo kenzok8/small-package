@@ -511,9 +511,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		/* Shadowsocks */
 
 		/* Mieru */
-		...(isEmpty(cfg.mieru_ports) ? {} : {
-			port: join(',', cfg.mieru_ports)
-		}),
+		"port-range": cfg.mieru_port_range,
 		transport: cfg.mieru_transport,
 		multiplexing: cfg.mieru_multiplexing,
 		"handshake-mode": cfg.mieru_handshake_mode,
