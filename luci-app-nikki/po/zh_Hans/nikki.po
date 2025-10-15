@@ -21,6 +21,14 @@ msgstr "API 密钥"
 msgid "Access Control"
 msgstr "访问控制"
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:141
+msgid "Address Space Size Hard Limit"
+msgstr "地址空间大小硬限制"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:137
+msgid "Address Space Size Soft Limit"
+msgstr "地址空间大小软限制"
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:181
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:186
 msgid "All Port"
@@ -101,15 +109,11 @@ msgstr "清空日志"
 msgid "Commonly Used Port"
 msgstr "常用端口"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:131
-msgid "Core Environment Variable Config"
-msgstr "核心环境变量配置"
-
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/log.js:60
 msgid "Core Log"
 msgstr "核心日志"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:128
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:125
 msgid "Core Only"
 msgstr "仅核心"
 
@@ -198,15 +202,15 @@ msgstr "直连模式"
 msgid "Disable"
 msgstr "禁用"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:147
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:185
 msgid "Disable ECN of quic-go"
 msgstr "禁用 quic-go 的显式拥塞通知"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:144
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:182
 msgid "Disable GSO of quic-go"
 msgstr "禁用 quic-go 的通用分段卸载"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:141
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:179
 msgid "Disable Loopback Detector"
 msgstr "禁用回环检测"
 
@@ -323,6 +327,10 @@ msgstr "编辑器"
 msgid "Enable"
 msgstr "启用"
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:169
+msgid "Environment Variable Config"
+msgstr "环境变量配置"
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/profile.js:47
 msgid "Expire At"
 msgstr "到期时间"
@@ -347,7 +355,7 @@ msgstr "Fake-IP Ping 劫持"
 msgid "Fake-IP Range"
 msgstr "Fake-IP 范围"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:125
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:132
 msgid "Fast Reload"
 msgstr "快速重载"
 
@@ -384,6 +392,7 @@ msgstr "通用分段卸载"
 msgid "GSO Max Size"
 msgstr "分段最大长度"
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:130
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:28
 msgid "General Config"
 msgstr "全局配置"
@@ -447,6 +456,14 @@ msgstr "用户组"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:142
 msgid "HTTP Port"
 msgstr "HTTP 端口"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:149
+msgid "Heap Size Hard Limit"
+msgstr "堆大小硬限制"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:145
+msgid "Heap Size Soft Limit"
+msgstr "堆大小软限制"
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:38
 msgid "How To Use"
@@ -561,6 +578,14 @@ msgstr "节点"
 msgid "Not Running"
 msgstr "未在运行"
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:165
+msgid "Number of Open Files Hard Limit"
+msgstr "打开文件数量硬限制"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:161
+msgid "Number of Open Files Soft Limit"
+msgstr "打开文件数量软限制"
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:89
 msgid "Open Dashboard"
 msgstr "打开面板"
@@ -657,6 +682,10 @@ msgstr "代理配置"
 msgid "Proxy Provider:"
 msgstr "代理提供者："
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:135
+msgid "RLIMIT Config"
+msgstr "资源限制配置"
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:98
 msgid "Random"
 msgstr "随机"
@@ -713,7 +742,7 @@ msgstr "运行中"
 msgid "SOCKS Port"
 msgstr "SOCKS 端口"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:133
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:171
 msgid "Safe Paths"
 msgstr "安全路径"
 
@@ -730,7 +759,7 @@ msgstr "定时重启"
 msgid "Scroll To Bottom"
 msgstr "滚动到底部"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:150
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:188
 msgid "Skip System IPv6 Check"
 msgstr "跳过系统 IPv6 检查"
 
@@ -754,6 +783,14 @@ msgstr "嗅探器配置"
 msgid "Stack"
 msgstr "栈"
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:157
+msgid "Stack Size Hard Limit"
+msgstr "栈大小硬限制"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:153
+msgid "Stack Size Soft Limit"
+msgstr "栈大小软限制"
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:542
 msgid "Standard Loader"
 msgstr "标准加载器"
@@ -761,6 +798,10 @@ msgstr "标准加载器"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:110
 msgid "Start Delay"
 msgstr "启动延迟"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:112
+msgid "Start Immidiately"
+msgstr "立即启动"
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:40
 msgid "Status"
@@ -858,6 +899,17 @@ msgstr "UI 下载地址"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:70
 msgid "Unify Delay"
 msgstr "统一延迟"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:139
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:143
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:147
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:151
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:155
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:159
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:163
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:167
+msgid "Unlimited"
+msgstr "无限制"
 
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:32
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:41
@@ -960,3 +1012,7 @@ msgstr "用户代理（UA）"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:176
 msgid "Username"
 msgstr "用户名"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:128
+msgid "procd Config"
+msgstr "procd 配置"

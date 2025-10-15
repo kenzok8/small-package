@@ -47,6 +47,12 @@ start_service() {
 	# start
 	log "App" "Enabled."
 	log "App" "Start."
+	# check if executable
+	if [ ! -x $PROG ]; then
+		log "App" "Core is not executable."
+		log "App" "Exit."
+		return
+	fi
 	# get config
 	## app config
 	local scheduled_restart cron_expression profile test_profile fast_reload core_only
@@ -54,15 +60,27 @@ start_service() {
 	config_get cron_expression "config" "cron_expression"
 	config_get profile "config" "profile"
 	config_get_bool test_profile "config" "test_profile" 0
-	config_get_bool fast_reload "config" "fast_reload" 0
 	config_get_bool core_only "config" "core_only" 0
-	## environment variable
-	local safe_paths disable_loopback_detector disable_quic_go_gso disable_quic_go_ecn skip_system_ipv6_check
-	config_get safe_paths "env" "safe_paths"
-	config_get_bool disable_loopback_detector "env" "disable_loopback_detector" 0
-	config_get_bool disable_quic_go_gso "env" "disable_quic_go_gso" 0
-	config_get_bool disable_quic_go_ecn "env" "disable_quic_go_ecn" 0
-	config_get_bool skip_system_ipv6_check "env" "skip_system_ipv6_check" 0
+	## procd config
+	### fast reload
+	config_get_bool fast_reload "procd" "fast_reload" 0
+	### rlimit
+	local rlimit_address_space_soft rlimit_address_space_hard rlimit_data_soft rlimit_data_hard rlimit_stack_soft rlimit_stack_hard rlimit_nofile_soft rlimit_nofile_hard
+	config_get rlimit_address_space_soft "procd" "rlimit_address_space_soft"
+	config_get rlimit_address_space_hard "procd" "rlimit_address_space_hard"
+	config_get rlimit_data_soft "procd" "rlimit_data_soft"
+	config_get rlimit_data_hard "procd" "rlimit_data_hard"
+	config_get rlimit_stack_soft "procd" "rlimit_stack_soft"
+	config_get rlimit_stack_hard "procd" "rlimit_stack_hard"
+	config_get rlimit_nofile_soft "procd" "rlimit_nofile_soft"
+	config_get rlimit_nofile_hard "procd" "rlimit_nofile_hard"
+	### environment variable
+	local env_safe_paths env_disable_loopback_detector env_disable_quic_go_gso env_disable_quic_go_ecn env_skip_system_ipv6_check
+	config_get env_safe_paths "procd" "env_safe_paths"
+	config_get_bool env_disable_loopback_detector "procd" "env_disable_loopback_detector" 0
+	config_get_bool env_disable_quic_go_gso "procd" "env_disable_quic_go_gso" 0
+	config_get_bool env_disable_quic_go_ecn "procd" "env_disable_quic_go_ecn" 0
+	config_get_bool env_skip_system_ipv6_check "procd" "env_skip_system_ipv6_check" 0
 	## mixin config
 	### overwrite
 	local overwrite_authentication overwrite_tun_dns_hijack overwrite_fake_ip_filter overwrite_hosts overwrite_dns_nameserver overwrite_dns_nameserver_policy overwrite_sniffer_sniff overwrite_sniffer_force_domain_name overwrite_sniffer_ignore_domain_name
@@ -210,18 +228,20 @@ start_service() {
 
 	procd_set_param command /bin/sh -c "$PROG -d $RUN_DIR >> $CORE_LOG_PATH 2>&1"
 	procd_set_param file "$RUN_PROFILE_PATH"
-	procd_append_param env SAFE_PATHS="$safe_paths"
-	procd_append_param env DISABLE_LOOPBACK_DETECTOR="$disable_loopback_detector"
-	procd_append_param env QUIC_GO_DISABLE_GSO="$disable_quic_go_gso"
-	procd_append_param env QUIC_GO_DISABLE_ECN="$disable_quic_go_ecn"
-	procd_append_param env SKIP_SYSTEM_IPV6_CHECK="$skip_system_ipv6_check"
+	procd_append_param env SAFE_PATHS="$env_safe_paths"
+	procd_append_param env DISABLE_LOOPBACK_DETECTOR="$env_disable_loopback_detector"
+	procd_append_param env QUIC_GO_DISABLE_GSO="$env_disable_quic_go_gso"
+	procd_append_param env QUIC_GO_DISABLE_ECN="$env_disable_quic_go_ecn"
+	procd_append_param env SKIP_SYSTEM_IPV6_CHECK="$env_skip_system_ipv6_check"
 	if [ "$fast_reload" = 1 ]; then
 		procd_set_param reload_signal HUP
 	fi
 	procd_set_param pidfile "$PID_FILE_PATH"
 	procd_set_param respawn
-	procd_append_param limits core="unlimited"
-	procd_append_param limits nofile="1048576 1048576"
+	procd_append_param limits as="${rlimit_address_space_soft:-unlimited} ${rlimit_address_space_hard:-unlimited}"
+	procd_append_param limits data="${rlimit_data_soft:-unlimited} ${rlimit_data_hard:-unlimited}"
+	procd_append_param limits stack="${rlimit_stack_soft:-unlimited} ${rlimit_stack_hard:-unlimited}"
+	procd_append_param limits nofile="${rlimit_nofile_soft:-unlimited} ${rlimit_nofile_hard:-unlimited}"
 
 	procd_close_instance
 	# cron
@@ -290,7 +310,7 @@ service_started() {
 		if [ "$tun_enable" = 1 ]; then
 			log "Proxy" "Waiting for tun device online within $tun_timeout seconds..."
 			while [ "$tun_timeout" -gt 0 ]; do
-				if ip -j link show dev "$tun_device" 2>/dev/null | jsonfilter -q -e "@[@['flags'][@='UP']]"; then
+				if ip -j link show dev "$tun_device" 2>/dev/null | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1; then
 					log "Proxy" "TUN device is online."
 					break
 				fi
