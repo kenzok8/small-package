@@ -21,8 +21,8 @@ msgstr "API 密鑰"
 msgid "Access Control"
 msgstr "存取控制"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:178
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:183
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:181
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:186
 msgid "All Port"
 msgstr "所有埠"
 
@@ -71,7 +71,11 @@ msgstr "繞過"
 msgid "Bypass China Mainland IP"
 msgstr "繞過中國大陸 IP"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:186
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:176
+msgid "Bypass China Mainland IP6"
+msgstr "繞過中國大陸 IP6"
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:189
 msgid "Bypass DSCP"
 msgstr "繞過 DSCP"
 
@@ -92,8 +96,8 @@ msgstr "選擇設定檔"
 msgid "Clear Log"
 msgstr "清空日誌"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:179
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:184
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:182
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:187
 msgid "Commonly Used Port"
 msgstr "常用埠"
 
@@ -154,11 +158,11 @@ msgstr "目標 IP（地理位置）"
 msgid "Destination Port"
 msgstr "目標埠"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:176
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:179
 msgid "Destination TCP Port to Proxy"
 msgstr "要代理的 TCP 目標埠"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:181
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:184
 msgid "Destination UDP Port to Proxy"
 msgstr "要代理的 UDP 目標埠"
 
