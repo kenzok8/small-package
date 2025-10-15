@@ -262,9 +262,11 @@ service_started() {
 	config_get tun_timeout "proxy" "tun_timeout" 30
 	config_get tun_interval "proxy" "tun_interval" 1
 	## routing config
-	local tproxy_fw_mark tun_fw_mark tproxy_rule_pref tun_rule_pref tproxy_route_table tun_route_table cgroup_id cgroup_name
+	local tproxy_fw_mark tproxy_fw_mask tun_fw_mark tun_fw_mask tproxy_rule_pref tun_rule_pref tproxy_route_table tun_route_table cgroup_id cgroup_name
 	config_get tproxy_fw_mark "routing" "tproxy_fw_mark" "0x80"
+	config_get tproxy_fw_mask "routing" "tproxy_fw_mask" "0xFF"
 	config_get tun_fw_mark "routing" "tun_fw_mark" "0x81"
+	config_get tun_fw_mask "routing" "tun_fw_mask" "0xFF"
 	config_get tproxy_rule_pref "routing" "tproxy_rule_pref" "1024"
 	config_get tun_rule_pref "routing" "tun_rule_pref" "1025"
 	config_get tproxy_route_table "routing" "tproxy_route_table" "80"
@@ -288,7 +290,7 @@ service_started() {
 		if [ "$tun_enable" = 1 ]; then
 			log "Proxy" "Waiting for tun device online within $tun_timeout seconds..."
 			while [ "$tun_timeout" -gt 0 ]; do
-				if ip -j link show dev "$tun_device" | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1; then
+				if ip -j link show dev "$tun_device" 2>/dev/null | jsonfilter -q -e "@[@['flags'][@='UP']]"; then
 					log "Proxy" "TUN device is online."
 					break
 				fi
@@ -331,21 +333,21 @@ service_started() {
 		if [ "$tproxy_enable" = 1 ]; then
 			if [ "$ipv4_proxy" = 1 ]; then
 				ip -4 route add local default dev lo table "$tproxy_route_table"
-				ip -4 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark" table "$tproxy_route_table"
+				ip -4 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark/$tproxy_fw_mask" table "$tproxy_route_table"
 			fi
 			if [ "$ipv6_proxy" = 1 ]; then
 				ip -6 route add local default dev lo table "$tproxy_route_table"
-				ip -6 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark" table "$tproxy_route_table"
+				ip -6 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark/$tproxy_fw_mask" table "$tproxy_route_table"
 			fi
 		fi
 		if [ "$tun_enable" = 1 ]; then
 			if [ "$ipv4_proxy" = 1 ]; then
 				ip -4 route add unicast default dev "$tun_device" table "$tun_route_table"
-				ip -4 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark" table "$tun_route_table"
+				ip -4 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark/$tun_fw_mask" table "$tun_route_table"
 			fi
 			if [ "$ipv6_proxy" = 1 ]; then
 				ip -6 route add unicast default dev "$tun_device" table "$tun_route_table"
-				ip -6 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark" table "$tun_route_table"
+				ip -6 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark/$tun_fw_mask" table "$tun_route_table"
 			fi
 			$FIREWALL_INCLUDE_SH
 		fi

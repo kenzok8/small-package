@@ -14,8 +14,8 @@ msgstr ""
 msgid "Access Control"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:178
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:183
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:181
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:186
 msgid "All Port"
 msgstr ""
 
@@ -64,7 +64,11 @@ msgstr ""
 msgid "Bypass China Mainland IP"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:186
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:176
+msgid "Bypass China Mainland IP6"
+msgstr ""
+
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:189
 msgid "Bypass DSCP"
 msgstr ""
 
@@ -85,8 +89,8 @@ msgstr ""
 msgid "Clear Log"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:179
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:184
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:182
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:187
 msgid "Commonly Used Port"
 msgstr ""
 
@@ -147,11 +151,11 @@ msgstr ""
 msgid "Destination Port"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:176
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:179
 msgid "Destination TCP Port to Proxy"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:181
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:184
 msgid "Destination UDP Port to Proxy"
 msgstr ""
 
