@@ -1884,6 +1884,10 @@ msgstr "連接埠"
 msgid "Port %s alrealy exists!"
 msgstr "連接埠 %s 已存在！"
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:342
+msgid "Port range"
+msgstr "連接埠範圍"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:696
 msgid "Ports"
 msgstr "連接埠"
@@ -2262,7 +2266,11 @@ msgstr ""
 msgid "Running"
 msgstr "正在運作"
 
-#: htdocs/luci-static/resources/fchomo.js:125
+#: htdocs/luci-static/resources/fchomo.js:206
+msgid "SMTP ports"
+msgstr "SMTP 連接埠"
+
+#: htdocs/luci-static/resources/fchomo.js:127
 msgid "SOCKS"
 msgstr ""
 
@@ -3236,9 +3244,6 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo.js:1064
 msgid "🡇"
 msgstr ""
-
-#~ msgid "Port range"
-#~ msgstr "連接埠範圍"
 
 #~ msgid "Default"
 #~ msgstr "預設"
