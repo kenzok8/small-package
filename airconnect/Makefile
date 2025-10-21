@@ -12,7 +12,7 @@ PKG_RELEASE=1
 
 PKG_SOURCE:=AirConnect-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://github.com/philippe44/AirConnect/releases/download/$(PKG_VERSION)/
-PKG_HASH:=bbf16ac8292fc46e38e5697684befaff7e0f2c4aea888d8d82ba3297548a81a8
+PKG_HASH:=8dd9df6794078c638005e8d7040b1a68fa75239ee1d284556a24868d44903b6f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/airconnect-$(PKG_VERSION)
 
