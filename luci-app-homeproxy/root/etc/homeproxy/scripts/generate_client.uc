@@ -152,12 +152,12 @@ function parse_port(strport) {
 
 }
 
-function parse_dnserver(server_addr, default_protocol) {
+function parse_dnsserver(server_addr, default_protocol) {
 	if (isEmpty(server_addr))
 		return null;
 
 	if (!match(server_addr, /:\/\//))
-		server_addr = (default_protocol || 'udp') + '://' + (validation('ip6addr', dns_server) ? `[${dns_server}]` : dns_server);
+		server_addr = (default_protocol || 'udp') + '://' + (validation('ip6addr', server_addr) ? `[${server_addr}]` : server_addr);
 	server_addr = parseURL(server_addr);
 
 	return {
@@ -448,7 +448,7 @@ if (!isEmpty(main_node)) {
 			strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
 		},
 		detour: 'main-out',
-		...parse_dnserver(dns_server, 'tcp')
+		...parse_dnsserver(dns_server, 'tcp')
 	});
 	config.dns.final = 'main-dns';
 
@@ -475,7 +475,7 @@ if (!isEmpty(main_node)) {
 				strategy: 'prefer_ipv6'
 			},
 			detour: self_mark ? 'direct-out' : null,
-			...parse_dnserver(china_dns_server)
+			...parse_dnsserver(china_dns_server)
 		});
 
 		if (length(proxy_domain_list))

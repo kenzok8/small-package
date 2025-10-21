@@ -118,6 +118,7 @@
 91vps.club
 92ccav.com
 991.com
+996.icu
 99btgc01.com
 99cn.info
 9bis.com
@@ -139,6 +140,7 @@ abematv.akamaized.net
 abitno.linpie.com
 ablwang.com
 aboluowang.com
+about.gitlab.com
 about.me
 abplive.com
 abs.edu
@@ -303,6 +305,7 @@ apetube.com
 api-secure.recaptcha.net
 api-verify.recaptcha.net
 api.ai
+api.palworldgame.com
 api.pureapk.com
 api.recaptcha.net
 api.steampowered.com
@@ -360,6 +363,7 @@ asia-gaming.com
 asiaharvest.org
 asianage.com
 asianews.it
+asianfanfics.com
 asiansexdiary.com
 asiaone.com
 asiatgp.com
@@ -748,7 +752,6 @@ btc98.com
 btcbank.bank
 btctrade.im
 btdig.com
-btdigg.org
 btguard.com
 btku.me
 btku.org
@@ -1166,6 +1169,7 @@ csuchen.de
 csw.org.uk
 ct.org.tw
 ctao.org
+ctinets.com
 ctinews.com
 ctitv.com.tw
 ctowc.org
@@ -1799,6 +1803,8 @@ freedominfonetweb.wordpress.com
 freedomsherald.org
 freeforums.org
 freegao.com
+freegpt.es
+freegpt.tech
 freehongkong.org
 freeilhamtohti.org
 freekazakhs.org
@@ -1980,7 +1986,6 @@ github.io
 githubassets.com
 githubcopilot.com
 githubusercontent.com
-gitlab.com
 gitlab.net
 gizlen.net
 gjczz.com
@@ -2697,6 +2702,7 @@ internet.org
 internetdefenseleague.org
 internetfreedom.org
 internetpopculture.com
+interseclab.org
 inthenameofconfuciusmovie.com
 investigating.wordpress.com
 invidio.us
@@ -3662,6 +3668,7 @@ occupytiananmen.com
 ocreampies.com
 ocry.com
 october-review.org
+octocaptcha.com
 oculus.com
 oculuscdn.com
 odysee.com
@@ -4471,6 +4478,7 @@ solana.com
 solarsystem.nasa.gov
 solidaritetibet.org
 solidfiles.com
+solscan.io
 solv.finance
 somee.com
 songjianjun.com
@@ -4692,8 +4700,10 @@ tanc.org
 tangren.us
 tanks.gg
 taoism.net
+tap.io
 tapanwap.com
 tapatalk.com
+taptap.io
 tardigrade.io
 tarr.uspto.gov
 taup.net
@@ -5003,6 +5013,7 @@ trt.net.tr
 trtc.com.tw
 truebuddha-md.org
 trulyergonomic.com
+trustwallet.com
 truthsocial.com
 truveo.com
 tryheart.jp
@@ -5160,7 +5171,6 @@ ubddns.org
 uberproxy.net
 uc-japan.org
 uchicago.edu
-uderzo.it
 udn.com
 udn.com.tw
 udnbkk.com
@@ -5312,6 +5322,7 @@ vijayatemple.org
 vilanet.me
 vilavpn.com
 vimeo.com
+vimeocdn.com
 vimperator.org
 vincnd.com
 vine.co
@@ -5460,6 +5471,7 @@ webpkgcache.com
 webrtc.org
 webrush.net
 webs-tv.net
+websdr.org
 website.informer.com
 website.new
 websitepulse.com
@@ -5531,6 +5543,7 @@ wikilivres.info
 wikimapia.org
 wikimedia.org
 wikinews.org
+wikipedia.com
 wikipedia.org
 wikisource.org
 wikiversity.org
@@ -5706,6 +5719,7 @@ xn--ngstr-lra8j.com
 xn--noss43i.com
 xn--oiq.cc
 xn--p8j9a0d9c9a.xn--q9jyb4c
+xn--u2u927b.com
 xnpool.com
 xnxx.com
 xpdo.net
@@ -5831,6 +5845,7 @@ z-lib.gd
 z-lib.gl
 z-lib.io
 z-lib.org
+z-library.ec
 z-library.sk
 zacebook.com
 zalmos.com
