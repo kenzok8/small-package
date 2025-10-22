@@ -1,0 +1,31 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.4\n"
+"Last-Translator: kyota1200 <https://github.com/kyota1200>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
+
+msgid "PowerOff"
+msgstr "電源オフ"
+
+msgid "Shut down your router"
+msgstr "シャットダウンします"
+
+msgid "Perform PowerOff"
+msgstr "電源オフの実行"
+
+msgid "Warning: There are unsaved changes that will get lost on shutting down!"
+msgstr "警告: 保存されていない変更はシャットダウン時に失われます。"
+
+msgid "Waiting for device..."
+msgstr "待機中..."
+
+msgid "Router is shutting down..."
+msgstr "シャットダウンしています..."
