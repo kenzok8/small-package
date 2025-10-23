@@ -20,6 +20,9 @@ Please read this page carefully, which includes precautions and instructions on 
 
 ## Function Description:
 
+### Task Setting Version 2.3.0 (taskplan)
+#### 2025.10.22 Task Setting 2.3.0 Version: Fixed the issue of invalid boot service during startup
+
 ### Task Setting Version 2.2.4 (taskplan)
 #### 2025.8.7 Task Setting 2.2.4 Version: Fixed the issue of sometimes invalid custom scripts in the new version.
 
