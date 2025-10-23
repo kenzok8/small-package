@@ -2178,6 +2178,10 @@ msgstr ""
 msgid "Routing mark"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:758
+msgid "Routing mark (Fwmark)"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:840
 msgid "Routing mode"
 msgstr ""
@@ -2595,7 +2599,7 @@ msgid "To enable, you need to install <code>dnsmasq-full</code>."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:765
-msgid "Tproxy Fwmark"
+msgid "Tproxy Fwmark/fwmask"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:465
@@ -2628,7 +2632,7 @@ msgid "Trojan"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:770
-msgid "Tun Fwmark"
+msgid "Tun Fwmark/fwmask"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:482

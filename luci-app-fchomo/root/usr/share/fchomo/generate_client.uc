@@ -47,7 +47,7 @@ const ucisniff = 'sniff',
 
 /* Hardcode options */
 const port_presets = {
-      	common_tcpport: uci.get(uciconf, ucifchm, 'common_tcpport') || '20-21,22,53,80,110,143,443,465,853,873,993,995,5222,8080,8443,9418',
+      	common_tcpport: uci.get(uciconf, ucifchm, 'common_tcpport') || '20-21,22,53,80,110,143,443,853,873,993,995,5222,8080,8443,9418',
       	common_udpport: uci.get(uciconf, ucifchm, 'common_udpport') || '20-21,22,53,80,110,143,443,853,993,995,8080,8443,9418',
       	smtp_tcpport: uci.get(uciconf, ucifchm, 'smtp_tcpport') || '465,587',
       	stun_port: uci.get(uciconf, ucifchm, 'stun_port') || '3478,19302',

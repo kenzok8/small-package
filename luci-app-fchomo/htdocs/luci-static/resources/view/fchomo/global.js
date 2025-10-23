@@ -755,19 +755,19 @@ return view.extend({
 		so.placeholder = '9000';
 		so.rmempty = false;
 
-		so = ss.taboption('interface', form.Value, 'self_mark', _('Routing mark'),
+		so = ss.taboption('interface', form.Value, 'self_mark', _('Routing mark (Fwmark)'),
 			_('Priority: Proxy Node > Global.'));
 		so.ucisection = 'config';
 		so.datatype = 'uinteger';
 		so.placeholder = '200';
 		so.rmempty = false;
 
-		so = ss.taboption('interface', form.Value, 'tproxy_mark', _('Tproxy Fwmark'));
+		so = ss.taboption('interface', form.Value, 'tproxy_mark', _('Tproxy Fwmark/fwmask'));
 		so.ucisection = 'config';
 		so.placeholder = '201 or 0xc9/0xff';
 		so.rmempty = false;
 
-		so = ss.taboption('interface', form.Value, 'tun_mark', _('Tun Fwmark'));
+		so = ss.taboption('interface', form.Value, 'tun_mark', _('Tun Fwmark/fwmask'));
 		so.ucisection = 'config';
 		so.placeholder = '202 or 0xca/0xff';
 		so.rmempty = false;

@@ -2210,6 +2210,10 @@ msgstr "路由 GFW 流量"
 msgid "Routing mark"
 msgstr "路由标记"
 
+#: htdocs/luci-static/resources/view/fchomo/global.js:758
+msgid "Routing mark (Fwmark)"
+msgstr "路由标记 (Fwmark)"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:840
 msgid "Routing mode"
 msgstr "路由模式"
@@ -2633,8 +2637,8 @@ msgid "To enable, you need to install <code>dnsmasq-full</code>."
 msgstr "要启用，您需要安装 <code>dnsmasq-full</code>。"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:765
-msgid "Tproxy Fwmark"
-msgstr "Tproxy 标记"
+msgid "Tproxy Fwmark/fwmask"
+msgstr "Tproxy Fwmark/fwmask"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:465
 msgid "Tproxy port"
@@ -2666,8 +2670,8 @@ msgid "Trojan"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:770
-msgid "Tun Fwmark"
-msgstr "Tun 标记"
+msgid "Tun Fwmark/fwmask"
+msgstr "Tun Fwmark/fwmask"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:482
 msgid "Tun TCP/UDP"
