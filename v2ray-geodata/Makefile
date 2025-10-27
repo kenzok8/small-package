@@ -21,13 +21,13 @@ define Download/geoip
   HASH:=c23ac8343e9796f8cc8b670c3aeb6df6d03d4e8914437a409961477f6b226098
 endef
 
-GEOSITE_VER:=20251026063608
+GEOSITE_VER:=20251026234004
 GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
 define Download/geosite
   URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
   URL_FILE:=dlc.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=a8d4a7ae3b3fb1ece40eb3e5af8618fc7b86fe6f51eeda6efa08a390ed7de16c
+  HASH:=c38fb79748fcc194d505a70dc356a66f9bc68359b6e5fc009b6d79a3950e37a7
 endef
 
 GEOSITE_IRAN_VER:=202510270042
