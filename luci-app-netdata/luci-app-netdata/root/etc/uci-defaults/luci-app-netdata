@@ -1,0 +1,20 @@
+#!/bin/sh
+[ -f /usr/share/netdata/webcn/netdata.conf ] && mv -f /usr/share/netdata/webcn/netdata.conf /etc/netdata/netdata.conf
+[ -f /usr/share/netdata/webcn/netdata.config ] && mv -f /usr/share/netdata/webcn/netdata.config  /etc/config/netdata
+[ -f /usr/share/netdata/webcn/netdata.init ] && mv -f /usr/share/netdata/webcn/netdata.init /etc/init.d/netdata
+
+[ -f "/etc/config/ucitrack" ] && {
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@netdata[-1]
+	add ucitrack netdata
+	set ucitrack.@netdata[-1].init=netdata
+	commit ucitrack
+EOF
+}
+
+rm -f /tmp/luci-indexcache* 2>/dev/null
+rm -f /tmp/luci-modulecache/* 2>/dev/null  # OpenWrt 21.02
+rm -f /tmp/luci-indexcache
+
+rm -rf /tmp/luci-*
+exit 0
