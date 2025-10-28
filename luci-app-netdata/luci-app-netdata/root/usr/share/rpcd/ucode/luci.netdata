@@ -1,0 +1,47 @@
+#!/usr/bin/ucode
+/*
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * Copyright (C) 2021-2025  sirpdboy  <herboy2008@gmail.com> https://github.com/sirpdboy/luci-app-netdata 
+ */
+
+'use strict';
+
+import { access, error, lstat, popen, readfile, writefile } from 'fs';
+
+/* Kanged from ucode/luci */
+function shellquote(s) {
+	return `'${replace(s, "'", "'\\''")}'`;
+}
+
+function get_version() {
+    if (!access('/usr/sbin/netdata'))
+        return null;
+    
+    const fd = popen('/usr/sbin/netdata -v');
+    if (fd) {
+        let output = trim(fd.read('all'));
+        fd.close();
+        let m = /netdata v([0-9]+\.[0-9]+\.[0-9]+)/.exec(output);
+        if (m && m[1]) {
+            return m[1];
+        }
+        m = /v?([0-9]+\.[0-9]+\.[0-9]+)/.exec(output);
+        return m ? m[1] : null;
+    }
+    return null;
+}
+
+const methods = {
+    get_ver: {
+        call: function() {
+            let version = get_version();
+            if (!version)
+                return { version: null, error: 'netdata not found or version check failed' };
+            
+            return { version: version };
+        }
+    }
+};
+
+return { 'luci.netdata': methods };

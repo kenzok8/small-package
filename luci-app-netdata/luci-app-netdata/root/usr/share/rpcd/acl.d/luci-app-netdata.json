@@ -1,0 +1,31 @@
+{
+  "luci-app-netdata": {
+    "description": "Grant UCI access for netdata",
+    "read": {
+      "file": {
+        "/etc/netdata/netdata.conf": [ "read" ],
+        "/etc/init.d/netdata": [ "exec" ],
+        "/usr/bin/openssl passwd -apr1 *": [ "exec" ],
+        "/bin/pidof": [ "exec" ],
+        "/bin/ps": [ "exec" ],
+        "/bin/ash": [ "exec" ]
+      },
+      "ubus": {
+        "rc": [ "*" ],
+        "file": [ "read" ],
+        "luci.netdata": [ "*" ]
+      },
+      "uci": [ "netdata" ]
+    },
+    "write": {
+      "file": {
+        "/etc/netdata/netdata.conf": [ "write" ]
+      },
+      "ubus": {
+        "file": [ "write" ],
+        "luci.netdata": [ "*" ]
+      },
+      "uci": [ "netdata" ]
+    }
+  }
+}

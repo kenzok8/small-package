@@ -1,0 +1,55 @@
+msgid ""
+msgstr ""
+
+msgid "Netdata"
+msgstr "实时监控"
+
+msgid "Basic Setting"
+msgstr "基本设置"
+
+msgid "Config Setting"
+msgstr "配置文件"
+
+msgid "Edit Netdata main config: <code>/etc/netdata/netdata.conf</code>"
+msgstr "编辑 Netdata 主配置: <code>/etc/netdata/netdata.conf</code>"
+
+msgid "Enable"
+msgstr "启用"
+
+
+
+msgid "Enable SSL"
+msgstr "SSL启用https访问"
+
+msgid "Enable logger"
+msgstr "启用日志记录器"
+
+msgid "An open-source real-time performance monitoring and visualization tool"
+msgstr "一款开源的实时性能监控与可视化工具"
+
+msgid "Open Web UI"
+msgstr "打开Web网页"
+
+msgid "Service port"
+msgstr "服务端口"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "Netdata Service Not Running"
+msgstr "Netdata服务未启用"
+
+msgid "Cert file"
+msgstr "Cert文件"
+
+msgid "Cert Key file"
+msgstr "Cert密钥文件"
+
+msgid ""
+msgstr ""
+
+msgid ""
+msgstr ""
