@@ -119,22 +119,34 @@ fi
 # Convert kernel repo to api format
 [[ "${kernel_repo}" =~ ^https: ]] && kernel_repo="$(echo ${kernel_repo} | awk -F'/' '{print $4"/"$5}')"
 kernel_api="https://github.com/${kernel_repo}"
-if [[ -n "${KERNEL_TAGS}" ]]; then
-    kernel_tag="${KERNEL_TAGS}"
-else
-    if [[ "${SOC}" == "rk3588" ]]; then
-        kernel_tag="rk3588"
-    elif [[ "${SOC}" == "rk3528" ]]; then
-        kernel_tag="rk35xx"
-    else
-        kernel_tag="stable"
-    fi
-fi
 
-# Remove the kernel_ prefix
-kernel_tag="${kernel_tag/kernel_/}"
-# If the kernel tag is a number, it is converted to a stable branch
-[[ "${kernel_tag}" =~ ^[1-9]+ ]] && kernel_tag="stable"
+# Get the kernel tag from uci config
+op_kernel_tags="$(uci get amlogic.config.amlogic_kernel_tags 2>/dev/null)"
+if [[ -n "${op_kernel_tags}" ]]; then
+    kernel_tag="${op_kernel_tags/kernel_/}"
+else
+    # Get the kernel tag from the release file
+    if [[ -n "${KERNEL_TAGS}" ]]; then
+        kernel_tag="${KERNEL_TAGS}"
+    else
+        if [[ "${SOC}" == "rk3588" ]]; then
+            kernel_tag="rk3588"
+        elif [[ "${SOC}" == "rk3528" ]]; then
+            kernel_tag="rk35xx"
+        else
+            kernel_tag="stable"
+        fi
+    fi
+
+    # Remove the kernel_ prefix
+    kernel_tag="${kernel_tag/kernel_/}"
+    # If the kernel tag is a number, it is converted to a stable branch
+    [[ "${kernel_tag}" =~ ^[1-9]+ ]] && kernel_tag="stable"
+
+    # Save the kernel tag to uci config
+    uci set amlogic.config.amlogic_kernel_tags="kernel_${kernel_tag}" 2>/dev/null
+    uci commit amlogic 2>/dev/null
+fi
 
 # Step 2: Check if there is the latest kernel version
 check_kernel() {

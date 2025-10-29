@@ -392,6 +392,33 @@ msgstr "OpenWrt 内核的下载路径："
 msgid "Set the download path of the kernel in the github.com repository in [Online Download Update]."
 msgstr "设置 [在线下载更新] 中 github.com 仓库里内核的下载路径。"
 
+msgid "Download tags of OpenWrt kernel:"
+msgstr "OpenWrt 内核的下载标签："
+
+msgid "Set the download tags of the kernel in the github.com repository in [Online Download Update]."
+msgstr "设置 [在线下载更新] 中 github.com 仓库里内核的下载标签。"
+
+msgid "kernel_rk3588 [Rockchip RK3588 Kernel]"
+msgstr "kernel_rk3588 [Rockchip RK3588 内核]"
+
+msgid "kernel_rk35xx [Rockchip RK35xx Kernel]"
+msgstr "kernel_rk35xx [Rockchip RK35xx 内核]"
+
+msgid "kernel_stable [Mainline Stable Kernel]"
+msgstr "kernel_stable [主线稳定内核]"
+
+msgid "kernel_flippy [Mainline Stable Kernel by Flippy]"
+msgstr "kernel_flippy [Flippy 的主线稳定内核]"
+
+msgid "kernel_h6 [Allwinner H6 Kernel]"
+msgstr "kernel_h6 [Allwinner H6 内核]"
+
+msgid "kernel_dev [Development Kernel]"
+msgstr "kernel_dev [开发版内核]"
+
+msgid "kernel_beta [Beta Kernel]"
+msgstr "kernel_beta [测试版内核]"
+
 msgid "Set version branch:"
 msgstr "设置版本分支："
 
