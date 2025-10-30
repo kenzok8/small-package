@@ -147,7 +147,7 @@ listenermode = s:taboption("general", ListValue, "listenermode", translate("List
                 .. "If used purely as a client (not as a server), you can choose not to listen on a port"))
 listenermode:value("ON", translate("Listen"))
 listenermode:value("OFF", translate("Do Not Listen"))
-listenermode.default = "OFF"
+listenermode.default = "ON"
 listenermode:depends("etcmd", "etcmd")
 
 tcp_port = s:taboption("general", Value, "tcp_port", translate("TCP/UDP Port"),
@@ -625,7 +625,7 @@ btn1info.cfgvalue = function(self, section)
     else
         return string.format(
             "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.xml.pcdata(content)
+            luci.util.pcdata(content)
         )
     end
 end
@@ -763,7 +763,7 @@ btn4info.cfgvalue = function(self, section)
     else
         return string.format(
             "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.xml.pcdata(content)
+            luci.util.pcdata(content)
         )
     end
 end
@@ -852,7 +852,7 @@ btn6info.cfgvalue = function(self, section)
         -- 没有表格 → 原样显示
         return string.format(
             "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.xml.pcdata(content)
+            luci.util.pcdata(content)
         )
     end
 end
@@ -1129,7 +1129,7 @@ btn11info.cfgvalue = function(self, section)
     else
         return string.format( 
             "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.xml.pcdata(content) 
+            luci.util.pcdata(content) 
         ) 
     end
 end

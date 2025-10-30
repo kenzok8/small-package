@@ -702,7 +702,7 @@ start_service() {
         echo "" >/tmp/easytier.log
 	echo "" >/tmp/easytierweb.log
         size="$(df -k | awk '/\/overlay$/ {sub(/K$/, "", $4); print $4}')"
-	[ -z "$size" ] && size="$(df -k /usr/bin | awk 'NR==2 {print $(NF-2) }')"
+	[ -z "$size" ] && size="$(df -kP /usr/bin | awk 'NR==2 {print $(NF-2) }')"
 	if [ -z "$(uci -q get easytier.@easytierweb[0].enabled)" ] ; then
 		echo "config easytierweb" >>/etc/config/easytier
 		echo "	option enabled '0'" >>/etc/config/easytier
