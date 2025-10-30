@@ -41,10 +41,21 @@ define Package/$(PKG_NAME)
 	TITLE:=A simple, decentralized mesh VPN with WireGuard support.
 	DEPENDS:=@(x86_64||arm||aarch64||mipsel||mips) +kmod-tun
 	URL:=https://github.com/EasyTier/EasyTier
+	MENU:=1
 endef
 
 define Package/$(PKG_NAME)/description
   A simple, decentralized mesh VPN with WireGuard support.
+endef
+
+define Package/$(PKG_NAME)/config
+	config EASYTIER_INCLUDE_WEBCONSOLE
+		bool "Include Web Console (easytier-web)"
+		depends on PACKAGE_$(PKG_NAME)
+		depends on !@(mips||mipsel)
+		default y
+		help
+		  Install the easytier-web web console.
 endef
 
 define Build/Prepare
@@ -59,7 +70,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/easytier-core $(1)/usr/bin/easytier-core
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/easytier-cli $(1)/usr/bin/easytier-cli
-	[ "$(APP_ARCH)" != "mips" ] && [ "$(APP_ARCH)" != "mipsel" ] && $(INSTALL_BIN) $(PKG_BUILD_DIR)/easytier-web-embed $(1)/usr/bin/easytier-web || true
+ifdef CONFIG_EASYTIER_INCLUDE_WEBCONSOLE
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/easytier-web-embed $(1)/usr/bin/easytier-web
+endif
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
