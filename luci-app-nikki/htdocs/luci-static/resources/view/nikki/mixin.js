@@ -526,6 +526,7 @@ return view.extend({
         so = o.subsection.option(form.Flag, 'no_resolve', _('No Resolve'));
         so.rmempty = false;
         so.depends('type', /IP-CIDR6?/i);
+        so.depends('type', /IP-ASN/i);
         so.depends('type', /GEOIP/i);
 
         s.tab('geox', _('GeoX Config'));
