@@ -3,8 +3,28 @@ local appname = api.appname
 local datatypes = api.datatypes
 
 m = Map(appname, "Sing-Box/Xray " .. translate("Shunt Rule"))
-m.redirect = api.url()
+m.redirect = api.url("rule")
 api.set_apply_on_parse(m)
+
+if not arg[1] or not m:get(arg[1]) then
+	luci.http.redirect(m.redirect)
+end
+
+-- Add inline CSS to map description
+m.description = (m.description or "") .. [[
+<style>
+/* Scope to passwall2 CBI fields so it won't leak elsewhere */
+div[id^="cbid.passwall2."] .cbi-value-field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+}
+div[id^="cbid.passwall2."] .cbi-checkbox {
+  display: inline-flex;
+  align-items: center;
+}
+</style>
+]]
 
 function clean_text(text)
 	local nbsp = string.char(0xC2, 0xA0) -- 不间断空格（U+00A0）
@@ -31,10 +51,16 @@ protocol = s:option(MultiValue, "protocol", translate("Protocol"))
 protocol:value("http")
 protocol:value("tls")
 protocol:value("bittorrent")
+protocol.widget = "checkbox"
+protocol.default = nil
+protocol.optional = false
 
 o = s:option(MultiValue, "inbound", translate("Inbound Tag"))
 o:value("tproxy", translate("Transparent proxy"))
 o:value("socks", "Socks")
+o.widget = "checkbox"
+o.default = nil
+o.optional = false
 
 network = s:option(ListValue, "network", translate("Network"))
 network:value("tcp,udp", "TCP UDP")
