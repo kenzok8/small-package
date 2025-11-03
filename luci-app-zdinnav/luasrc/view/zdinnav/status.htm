@@ -1,0 +1,94 @@
+<%
+local util = require "luci.util"
+local container_status = util.trim(util.exec("/usr/libexec/istorec/zdinnav.sh status"))
+local container_install = (string.len(container_status) > 0)
+local container_running = container_status == "running"
+-%>
+<style type="text/css" scoped>
+  .running-span {
+    line-height: 2em;
+    padding: 2px 14px;
+    display: inline-block;
+    font-style: italic;
+    font-weight: bold;
+    color: #008000;
+  }
+  .stopped-span {
+    line-height: 2em;
+    padding: 2px 14px;
+    display: inline-block;
+    font-style: italic;
+    font-weight: bold;
+    color: #ff0009;
+  }
+  .span-offline-installation-path {
+    color: #ff0ac8;
+    word-wrap: break-word;
+    word-break: break-all;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    -ms-word-break: break-all;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphens: auto;
+  }
+  .a-btn-offline {
+    color: #0c4ec4;
+  }
+</style>
+<div class="cbi-value">
+  <label class="cbi-value-title"><%:Status%></label>
+  <% if container_running then %>
+  <span class="running-span"><%:ZdinNav is running%></span>
+  <% else %>
+  <span class="stopped-span"><%:ZdinNav is not running%></span>
+  <% end %>
+  <%
+   if container_running then
+      local port=util.trim(util.exec("/usr/libexec/istorec/zdinnav.sh port"))
+      local protocol_type=util.trim(util.exec("/usr/libexec/istorec/zdinnav.sh protocol"))
+      if port == "" then
+        port="9200"
+      end
+  -%>
+  <input
+    class="btn cbi-button cbi-button-apply"
+    name="start"
+    onclick="window.open('<%=protocol_type%>://'+location.hostname+':<%=port%>/', '_blank')"
+    type="button"
+    value="<%:Open ZdinNav%>"
+  />
+  <% end %>
+</div>
+<script type="text/javascript">
+  function onResetPassword() {
+     if (confirm(_("Are you sure you want to reset the password to: pwd123?"))) {
+      new XHR().post(
+          "<%=controller%>admin/services/zdinnav/reset_password",
+          null,
+          function (__, data) {
+            if (parseInt(data.status) != 1) {
+              return alert(_("The password reset has failed."));
+            }
+            alert(_("Password reset successful."));
+            location.reload();
+          }
+        );
+    }
+  }
+  function onResetHttp() {
+    if (confirm(_("Are you sure you want to reset HTTP access?"))) {
+      new XHR().post(
+          "<%=controller%>admin/services/zdinnav/reset_http",
+          null,
+          function (__, data) {
+            if (parseInt(data.status) != 1) {
+              return alert(_("HTTP reset failed. Please restart your soft router and try again!"));
+            }
+            alert(_("Switched to HTTP access."));
+            location.reload();
+          }
+        );
+    }
+  }
+</script>

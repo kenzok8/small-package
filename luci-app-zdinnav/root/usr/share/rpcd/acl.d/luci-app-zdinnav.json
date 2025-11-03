@@ -1,0 +1,11 @@
+{
+	"luci-app-zdinnav": {
+		"description": "Grant UCI access for luci-app-zdinnav",
+		"read": {
+			"uci": [ "zdinnav" ]
+		},
+		"write": {
+			"uci": [ "zdinnav" ]
+		}
+	}
+}

@@ -1,0 +1,59 @@
+<%
+local tagval = self.default 
+local tagdatatype = self.datatype
+-%>
+<script type="text/javascript">
+  var selectNameTag =
+    "<%=cbid%>".split(".").slice(0, -1).join(".") + ".<%=tagval%>";
+  var checkNameTag =
+    "<%=cbid%>".split(".").slice(0, -1).join(".") + ".<%=tagdatatype%>";
+
+  function setSpan() {
+    const selectElement = document.querySelector(
+      'input[name="' + selectNameTag + '"]'
+    );
+    const spanElement = document.querySelector(
+      'span[name="span_offline_installation_path"]'
+    );
+
+    if (!selectElement || !spanElement) return { path: "", file: "" };
+    var offline_path = selectElement.value + "/downloads/*.tar";
+    spanElement.innerHTML = offline_path;
+    return {
+      path: selectElement.value,
+      file: offline_path,
+    };
+  }
+
+  setTimeout(function () {
+    const targetSelectDiv = document.getElementById(selectNameTag);
+    targetSelectDiv.addEventListener("mouseleave", function (e) {
+      setSpan();
+    });
+
+    const targetCheckboxDiv = document.getElementById(checkNameTag);
+    targetCheckboxDiv.addEventListener("mouseleave", function (e) {
+      setTimeout(setSpan, 600);
+    });
+  }, 1500);
+
+  function offline_installation_Verify() {
+    var o = setSpan();
+    new XHR().post(
+      "<%=controller%>admin/services/zdinnav/check_package",
+      { path: o.path },
+      function (__, data) {
+        if (parseInt(data.status) != 1) {
+          return alert(
+            _(
+              "Unable to find the installation package. Please place the package in the following directory:"
+            ) +
+              o.file +
+              _("(this path must not contain any other files).")
+          );
+        }
+        alert(_("We've found the installation package."));
+      }
+    );
+  }
+</script>
