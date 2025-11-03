@@ -1,0 +1,113 @@
+msgid "Git website:"
+msgstr "git网址："
+
+msgid "ZdinNav"
+msgstr "智淀导航"
+
+msgid "ZdinNav software is a bookmark management tool for websites."
+msgstr "智淀导航：网站书签管理的工具，"
+
+msgid "Default Ultra-Super Administrator:zdinnav Password:pwd123"
+msgstr "默认超高级管理员：zdinnav 密码：pwd123"
+
+msgid "Config path"
+msgstr "配置文件路径"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Upgrade"
+msgstr "升级"
+
+msgid "Apply"
+msgstr "应用"
+
+msgid "Service Status"
+msgstr "运行状态"
+
+msgid "Setup"
+msgstr "安装配置"
+
+msgid "The following parameters will only take effect during installation or upgrade."
+msgstr "以下参数只在安装或升级时才生效。"
+
+msgid "Takes effect when the database is initially created, or when the /ZdinNav/ folder under the configuration file path does not contain any data."
+msgstr "数据库初始化创建时有效，或者配置文件路径下的/ZdinNav/文件夹不包含数据时生效。"
+
+msgid "Modifying errors may result in data loss or system failure to boot properly. Please proceed with caution!"
+msgstr "修改错误可能导致数据丢失或者系统无法正常启动，请谨慎操作！"
+
+msgid "If you forget the super administrator passwor, you can <a href=\"javascript:void(0)\" onclick=\"onResetPassword()\">reset it here</a>"
+msgstr "如果忘记超级管理员密码可以<a href=\"javascript:void(0)\" onclick=\"onResetPassword()\">重置密码</a>"
+
+msgid "If HTTPS is inaccessible, you can revert to <a href=\"javascript:void(0)\" onclick=\"onResetHttp()\">HTTP access here</a>."
+msgstr "https无法访问可以在这里还原<a href=\"javascript:void(0)\" onclick=\"onResetHttp()\">http访问</a>。"
+
+msgid "Database Type"
+msgstr "数据类型"
+
+msgid "Connection Settings"
+msgstr "数据库连接字符串"
+
+msgid "Administrator Account"
+msgstr "管理员账号"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Enable Offline Installation"
+msgstr "离线安装"
+
+msgid "Offline Installation Path"
+msgstr "离线安装说明"
+
+msgid "Offline Installation Path Rules"
+msgstr "离线包上传路径"
+
+msgid "Offline Installation Description"
+msgstr "推荐安装包类型："
+ 
+msgid "Offline Installation Path Verify"
+msgstr "离线包检查"
+
+msgid "Unable to find the installation package. Please place the package in the following directory:"
+msgstr "无法找到安装包，请将安装包放到："
+
+msgid "(this path must not contain any other files)."
+msgstr "(该路径不能包含其他文件)。"
+
+msgid "We've found the installation package."
+msgstr "安装包已经找到了。"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "ZdinNav is running"
+msgstr "运行中"
+
+msgid "ZdinNav is not running"
+msgstr "未运行"
+
+msgid "Open ZdinNav"
+msgstr "进入界面"
+
+msgid "The free space of Docker is less than 512M, which may cause the installation to fail."
+msgstr "Docker 可用空间已不足512M，可能导致安装失败。"
+
+msgid "Are you sure you want to reset HTTP access?"
+msgstr "你确定重置http访问吗？"
+
+msgid "Are you sure you want to reset the password to: pwd123?"
+msgstr "你确定重置密为：pwd123吗？"
+
+msgid "The password reset has failed."
+msgstr "密码重置失败。"
+
+msgid "Password reset successful."
+msgstr "密码已重置。"
+
+msgid "HTTP reset failed. Please restart your soft router and try again!"
+msgstr "http重置失败，请重启软路由后再试！"
+
+msgid "Switched to HTTP access."
+msgstr "已重置为http访问。"

@@ -1,0 +1,60 @@
+{
+  "users": [
+    {
+      "nickName": "超级管理员",
+      "account": "ACCOUNT_VAR",
+      "password": "PASSWORD_VAR"
+    }
+  ],
+  "searchEngine": [
+    {
+      "title": "百度",
+      "icon": "BaiduSvgIcon",
+      "isDefault": true,
+      "url": "https://www.baidu.com/s?wd={s}",
+      "enable": true
+    },
+    {
+      "title": "必应",
+      "icon": "BingSvgIcon",
+      "isDefault": false,
+      "url": "https://www.bing.com/search?q={s}",
+      "enable": true
+    },
+    {
+      "title": "搜狗",
+      "icon": "SogouSvgIcon",
+      "isDefault": false,
+      "url": "https://www.sogou.com/sogou?query={s}",
+      "enable": true
+    },
+    {
+      "title": "360",
+      "icon": "SoSvgIcon",
+      "isDefault": false,
+      "url": "https://www.so.com/s?q={s}",
+      "enable": true
+    },
+    {
+      "title": "Yandex",
+      "icon": "YandexSvgIcon",
+      "isDefault": false,
+      "url": "https://yandex.com/search/?text={s}",
+      "enable": true
+    },
+    {
+      "title": "Google",
+      "icon": "GoogleSvgIcon",
+      "isDefault": false,
+      "url": "https://www.google.com/search?q={s}",
+      "enable": true
+    },
+    {
+      "title": "DuckDuckGo",
+      "icon": "DuckDuckGoSvgIcon",
+      "isDefault": false,
+      "url": "https://duckduckgo.com/?q={s}",
+      "enable": true
+    }
+  ]
+}
