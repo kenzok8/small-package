@@ -74,10 +74,12 @@ function index()
 	entry({"admin", "services", appname, "connect_status"}, call("connect_status")).leaf = true
 	entry({"admin", "services", appname, "ping_node"}, call("ping_node")).leaf = true
 	entry({"admin", "services", appname, "urltest_node"}, call("urltest_node")).leaf = true
+	entry({"admin", "services", appname, "add_node"}, call("add_node")).leaf = true
 	entry({"admin", "services", appname, "set_node"}, call("set_node")).leaf = true
 	entry({"admin", "services", appname, "copy_node"}, call("copy_node")).leaf = true
 	entry({"admin", "services", appname, "clear_all_nodes"}, call("clear_all_nodes")).leaf = true
 	entry({"admin", "services", appname, "delete_select_nodes"}, call("delete_select_nodes")).leaf = true
+	entry({"admin", "services", appname, "get_node"}, call("get_node")).leaf = true
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_node"}, call("subscribe_del_node")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_all"}, call("subscribe_del_all")).leaf = true
@@ -326,6 +328,21 @@ function urltest_node()
 	http_write_json(e)
 end
 
+function add_node()
+	local redirect = http.formvalue("redirect")
+
+	local uuid = api.gen_short_uuid()
+	uci:section(appname, "nodes", uuid)
+
+	if redirect == "1" then
+		api.uci_save(uci, appname)
+		http.redirect(api.url("node_config", uuid))
+	else
+		api.uci_save(uci, appname, true, true)
+		http_write_json({result = uuid})
+	end
+end
+
 function set_node()
 	local type = http.formvalue("type")
 	local config = http.formvalue("config")
@@ -350,7 +367,7 @@ function copy_node()
 			end)
 		end
 	end
-	uci:delete(appname, uuid, "add_from")
+	uci:delete(appname, uuid, "group")
 	uci:set(appname, uuid, "add_mode", 1)
 	api.uci_save(uci, appname)
 	http.redirect(api.url("node_config", uuid))
@@ -386,6 +403,7 @@ end
 
 function delete_select_nodes()
 	local ids = http.formvalue("ids")
+	local redirect = http.formvalue("redirect")
 	string.gsub(ids, '[^' .. "," .. ']+', function(w)
 		if (uci:get(appname, "@global[0]", "node") or "") == w then
 			uci:delete(appname, '@global[0]', "node")
@@ -454,10 +472,10 @@ function delete_select_nodes()
 			end
 		end)
 		if (uci:get(appname, w, "add_mode") or "0") == "2" then
-			local add_from = uci:get(appname, w, "add_from") or ""
-			if add_from ~= "" then
+			local group = uci:get(appname, w, "group") or ""
+			if group ~= "" then
 				uci:foreach(appname, "subscribe_list", function(t)
-					if t["remark"] == add_from then
+					if t["remark"] == group then
 						uci:delete(appname, t[".name"], "md5")
 					end
 				end)
@@ -465,7 +483,25 @@ function delete_select_nodes()
 		end
 		uci:delete(appname, w)
 	end)
-	api.uci_save(uci, appname, true, true)
+	if redirect == "1" then
+		api.uci_save(uci, appname)
+		http.redirect(api.url("node_list"))
+	else
+		api.uci_save(uci, appname, true, true)
+	end
+end
+
+function get_node()
+	local id = http.formvalue("id")
+	local result = {}
+	if id then
+		result = uci:get_all(appname, id)
+	else
+		uci:foreach(appname, "nodes", function(t)
+			result[#result + 1] = t
+		end)
+	end
+	http_write_json(result)
 end
 
 function update_rules()
