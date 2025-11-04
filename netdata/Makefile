@@ -105,10 +105,6 @@ define Package/netdata/install
 	$(CP) $(PKG_INSTALL_DIR)/etc/netdata $(1)/etc
 	$(INSTALL_DATA) ./files/netdata.conf $(1)/etc/netdata
 	touch $(1)/etc/netdata/.opt-out-from-anonymous-statistics
-	
-	#netdata init
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/netdata.init $(1)/etc/init.d/netdata
 
 	#netdata webdir and remove uneeded files
 	$(INSTALL_DIR) $(1)/usr/share/netdata
