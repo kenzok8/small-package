@@ -7,39 +7,45 @@
 
 'use strict';
 
-import { access, error, lstat, popen, readfile, writefile } from 'fs';
+import { access, popen } from 'fs';
 
-/* Kanged from ucode/luci */
-function shellquote(s) {
-	return `'${replace(s, "'", "'\\''")}'`;
-}
-
-function get_version() {
+function get_netdata_version() {
     if (!access('/usr/sbin/netdata'))
         return null;
     
-    const fd = popen('/usr/sbin/netdata -v');
+    const fd = popen("a=`/usr/sbin/netdata -v`&&echo $a |awk -F v '{printf $2}'");
     if (fd) {
         let output = trim(fd.read('all'));
         fd.close();
-        let m = /netdata v([0-9]+\.[0-9]+\.[0-9]+)/.exec(output);
-        if (m && m[1]) {
-            return m[1];
-        }
-        m = /v?([0-9]+\.[0-9]+\.[0-9]+)/.exec(output);
-        return m ? m[1] : null;
+        // 方法1: 简单替换（推荐）
+        let version_with_v = replace(output, "netdata ", "");
+        // 方法2: 去掉 v 前缀
+        let version_clean = replace(version_with_v, "v", "");
+        return version_with_v;  // 返回 "v2.3.2"
     }
     return null;
 }
 
 const methods = {
-    get_ver: {
+    get_version: {
         call: function() {
-            let version = get_version();
+            let version = get_netdata_version();
             if (!version)
-                return { version: null, error: 'netdata not found or version check failed' };
+                return { version: null, error: '无法获取 netdata 版本' };
             
             return { version: version };
+        }
+    },
+    
+    get_version_clean: {
+        call: function() {
+            let version = get_netdata_version();
+            if (!version)
+                return { version: null, error: '无法获取 netdata 版本' };
+            
+            // 去掉 "v" 前缀，返回纯数字版本
+            let clean_version = replace(version, /^v/, "");
+            return { version: clean_version };
         }
     }
 };
