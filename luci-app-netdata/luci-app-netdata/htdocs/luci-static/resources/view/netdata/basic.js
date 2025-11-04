@@ -8,10 +8,10 @@
 'require view';
 'require fs';
 
-const getnetdataver = rpc.declare({
+const getNetdataVersion = rpc.declare({
     object: 'luci.netdata',
-    method: 'get_ver',
-    expect: { 'version': '' } 
+    method: 'get_version',
+    expect: { 'version': '' }
 });
 
 async function checkProcess() {
@@ -39,10 +39,10 @@ async function checkProcess() {
 }
 
 function getVersionInfo() {
-    return L.resolveDefault(getnetdataver(), {}).then(function(result) {
+    return L.resolveDefault(getNetdataVersion(), {}).then(function(result) {
         return result || {};
     }).catch(function(error) {
-         console.error('Failed to get version:', error);
+        console.error('Failed to get version:', error);
         return {};
     });
 }
@@ -162,17 +162,18 @@ return view.extend({
         o = s.option(form.Flag, 'enable_ssl', _('Enable SSL'));
         o.rmempty = true;
 
-		o = s.option(form.Value, 'cert_file', _('Cert file'));
-		o.placeholder = '/etc/netdata/cert.crt';
-		o.rmempty = false;
-		o.retain = true;
-		o.depends('enable_ssl', '1');
+        o = s.option(form.Value, 'cert_file', _('Cert file'));
+        o.placeholder = '/etc/netdata/cert.crt';
+        o.rmempty = false;
+        o.retain = true;
+        o.depends('enable_ssl', '1');
 
-		o = s.option(form.Value, 'key_file', _('Cert Key file'));
-		o.placeholder = '/etc/netdata/cert.key';
-		o.rmempty = false;
-		o.retain = true;
-		o.depends('enable_ssl', '1');
+        o = s.option(form.Value, 'key_file', _('Cert Key file'));
+        o.placeholder = '/etc/netdata/cert.key';
+        o.rmempty = false;
+        o.retain = true;
+        o.depends('enable_ssl', '1');
+
         return m.render();
     }
 });
