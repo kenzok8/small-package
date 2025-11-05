@@ -4,11 +4,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lingtigameacc
-PKG_VERSION:=1.7.7
+PKG_VERSION:=2.1.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(ARCH).tar.gz
-PKG_SOURCE_URL:=http://lingti-1302055788.file.myqcloud.com/router/$(PKG_VERSION)/lingti-router-$(ARCH).tar.gz?
+PKG_SOURCE_URL:https://res.lingti666.com/router/$(PKG_VERSION)/lingti-router-$(ARCH).tar.gz?
 PKG_HASH:=skip
 
 PKG_LICENSE:=Proprietary
