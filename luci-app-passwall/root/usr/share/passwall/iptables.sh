@@ -1052,8 +1052,8 @@ add_firewall_rule() {
 	$ip6t_m -N PSW_RULE
 	$ip6t_m -A PSW_RULE -j CONNMARK --restore-mark
 	$ip6t_m -A PSW_RULE -m mark --mark 1 -j RETURN
-	$ip6t_m -A PSW2_RULE -p tcp -m tcp --syn -j MARK --set-xmark 1
-	$ip6t_m -A PSW2_RULE -p udp -m conntrack --ctstate NEW,RELATED -j MARK --set-xmark 1
+	$ip6t_m -A PSW_RULE -p tcp -m tcp --syn -j MARK --set-xmark 1
+	$ip6t_m -A PSW_RULE -p udp -m conntrack --ctstate NEW,RELATED -j MARK --set-xmark 1
 	$ip6t_m -A PSW_RULE -j CONNMARK --save-mark
 
 	$ip6t_m -N PSW
