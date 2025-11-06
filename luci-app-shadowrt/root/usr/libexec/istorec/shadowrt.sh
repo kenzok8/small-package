@@ -36,6 +36,12 @@ do_install() {
 		exit 1
 	}
 
+	local alpine_image="alpine:3.22.2"
+	if ! docker image inspect -f '{}' "$alpine_image" >/dev/null 2>&1; then
+		echo "pulling alpine image $alpine_image ..."
+		docker pull "$alpine_image" || exit 1
+	fi
+
 	local config="{\"id\":\"$id\",\"data\":\"$data\",\"proto\":\"$proto\",\"address\":\"$address\",\"gateway\":\"$gateway\",\"dns\":\"$dns\",\"dhcp_server\":\"$dhcp_server\",\"ports\":\"$ports\"}"
 
 	local cmd="docker run --restart=unless-stopped -d \
@@ -87,12 +93,13 @@ do_install() {
 
 	cmd="$cmd -v /mnt:/mnt"
 	mountpoint -q /mnt && cmd="$cmd:rshared"
-	cmd="$cmd alpine:3.22.2"
+	cmd="$cmd $alpine_image"
 
 	echo "stopping existing container..."
-	docker stop $id >/dev/null 2>&1
+	docker stop "$id" >/dev/null 2>&1
 	docker rm -f "$id"
 
+	echo "starting shadowrt instance $id..."
 	echo "$cmd"
 	eval "$cmd"
 
@@ -166,11 +173,12 @@ do_reset_network() {
 				/bin/board_detect
 				/bin/config_generate
 				/bin/sh -c ". /rom/etc/uci-defaults/zzz-dockerenv"
+				/bin/sh -c '. /rom/etc/uci-defaults/12_network-generate-ula'
 				/etc/init.d/network restart
 				sleep 2
 			EOF
 		else
-			echo 'rm -f etc/uci-defaults/zzz-dockerenv'
+			echo 'rm -f etc/uci-defaults/zzz-dockerenv etc/uci-defaults/12_network-generate-ula'
 		fi
 	} | sh -c "$shell"
 }

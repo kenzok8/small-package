@@ -2,10 +2,10 @@
 
 mkdir -p /var/lock
 
-for service in adb-enablemodem appfilter gpio_switch hd-idle \
-	kmods kmods-unload led lm-sensors luci-fan \
-	mdadm modemmanager smartd sysfixtime sysfsutils sysntpd \
-	tuning_net usbmode wan_drop zprintk zram
+for service in adb-enablemodem appfilter dockerd gpio_switch hd-idle \
+	kmods kmods-unload lcdsimple led lm-sensors luci-fan \
+	mdadm modemmanager odhcpd smartd sysfixtime sysfsutils sysntpd \
+	tuning_net umount usbmode usbmuxd wan_drop zprintk zram
 do
 	[ -x /etc/init.d/$service ] && /etc/init.d/$service disable
 done
@@ -15,6 +15,7 @@ for file in \
 	/etc/config/appfilter \
 	/etc/config/kmods \
 	/etc/init.d/appfilter \
+	/etc/init.d/umount \
 	/ext_overlay \
 	/lib/upgrade/ota.sh \
 	/lib/upgrade/platform.sh \
