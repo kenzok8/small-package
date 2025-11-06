@@ -1,0 +1,41 @@
+#!/bin/sh
+
+/etc/init.d/dockerd disable
+/etc/init.d/odhcpd disable
+
+uci -q batch <<-EOF >/dev/null
+	set quickstart.main.disable_dhns=1
+	commit quickstart
+EOF
+
+uci -q batch <<-EOF >/dev/null
+	set argon.@global[0].primary='#5b7e99'
+	set argon.@global[0].dark_primary='#337d8c'
+	commit argon
+EOF
+
+GATEWAY=
+DNS=
+DHCP_SERVER=
+
+[ -n "$GATEWAY" ] && uci set network.lan.gateway="$GATEWAY"
+if [ -n "$DNS" ]; then
+	for dns in $DNS; do
+		uci add_list network.lan.dns="$dns"
+	done
+fi
+uci commit network
+
+uci -q batch <<-EOF >/dev/null
+	del dhcp.lan.ra
+	del dhcp.lan.ra_slaac
+	del dhcp.lan.ra_flags
+	del dhcp.lan.dhcpv6
+EOF
+
+if [ -z "$DHCP_SERVER" ]; then
+	uci set dhcp.lan.ignore='1'
+fi
+uci commit dhcp
+
+exit 0

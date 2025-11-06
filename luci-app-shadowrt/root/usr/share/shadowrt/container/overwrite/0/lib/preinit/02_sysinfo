@@ -1,0 +1,8 @@
+do_sysinfo_generic() {
+	mkdir -p /tmp/sysinfo
+
+	echo "docker" > /tmp/sysinfo/board_name
+	echo "Docker" > /tmp/sysinfo/model
+}
+
+boot_hook_add preinit_main do_sysinfo_generic
