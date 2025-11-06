@@ -7,13 +7,11 @@
 'require ui';
 'require view';
 'require fs';
-
 const getNetdataVersion = rpc.declare({
     object: 'luci.netdata',
     method: 'get_version',
     expect: { 'version': '' }
 });
-
 async function checkProcess() {
     try {
         const pidofRes = await fs.exec('/bin/pidof', ['netdata']);
@@ -37,7 +35,6 @@ async function checkProcess() {
         return { running: false, pid: null };
     }
 }
-
 function getVersionInfo() {
     return L.resolveDefault(getNetdataVersion(), {}).then(function(result) {
         return result || {};
@@ -86,7 +83,6 @@ function renderStatus(isRunning, webport, protocol, version) {
     
     return html;
 }
-
 return view.extend({
     load: function() {
         return Promise.all([
@@ -162,18 +158,26 @@ return view.extend({
         o = s.option(form.Flag, 'enable_ssl', _('Enable SSL'));
         o.rmempty = true;
 
-        o = s.option(form.Value, 'cert_file', _('Cert file'));
-        o.placeholder = '/etc/netdata/cert.crt';
-        o.rmempty = false;
-        o.retain = true;
+        o = s.option(form.DummyValue, 'cert_file', _('Cert file'));
+        o.default = '/etc/ssl/ezopwrt.crt';
         o.depends('enable_ssl', '1');
+        o.cfgvalue = function(section_id) {
+            return uci.get('netdata', section_id, 'cert_file') || '/etc/ssl/ezopwrt.crt'; 
+        };
 
-        o = s.option(form.Value, 'key_file', _('Cert Key file'));
-        o.placeholder = '/etc/netdata/cert.key';
-        o.rmempty = false;
-        o.retain = true;
+        o = s.option(form.DummyValue, 'key_file', _('Cert Key file'));
+        o.default = '/etc/ssl/ezopwrt.key';
         o.depends('enable_ssl', '1');
-
+        o.cfgvalue = function(section_id) {
+            return uci.get('netdata', section_id, 'key_file') || '/etc/ssl/ezopwrt.key'; 
+        };
+    
+        //  o = s.option(form.DummyValue, 'feedback_info',  _('feedback info'));
+        //  o.href = 'https://github.com/sirpdboy';
+        //  o.cfgvalue = function() {
+        //     return 'https://github.com/sirpdboy';
+        //  };
+    
         return m.render();
     }
 });

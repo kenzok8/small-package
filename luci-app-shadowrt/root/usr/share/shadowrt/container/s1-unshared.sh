@@ -43,7 +43,9 @@ fi
 # patch rom
 LOWERDIR=/rom
 
-mkdir -p /tmp/tmp/shadowrt /tmp/patch/upper /tmp/patch/work
+mkdir -p /tmp/tmp/shadowrt /tmp/patch/upper/usr/libexec /tmp/patch/work
+
+cp -a /rom/sbin/kmodloader /tmp/patch/upper/usr/libexec/
 
 for o in 0 2; do
 	cp -a /shadowrt/overwrite/$o/. /tmp/patch/upper/

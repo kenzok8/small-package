@@ -30,7 +30,7 @@ return view.extend({
             let uci_ssl = uci.get_first('netdata', 'netdata', 'enable_ssl') || '0';
             let nginx = uci.get_first('netdata', 'netdata', 'nginx_support') || '0';
             let protocol = nginx === '1' ? window.location.protocol : uci_ssl === '1' ? 'https:' : 'http:';
-            let buttonUrl = String.format('%s//%s:%s/', protocol, window.location.hostname, webport);
+            let buttonUrl = String.format('%s//%s:%s/#menu_system', protocol, window.location.hostname, webport);
             
             var container = E('div');
             if (!isRunning) { 

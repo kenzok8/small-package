@@ -12,8 +12,8 @@ get_config() {
 	config_get_bool enabled $1 enabled 0
 	config_get port $1 port 19999
 	config_get_bool ssl $1 enable_ssl 0
-	config_get cert_file $1 cert_file '/etc/netdata/cert.crt'
-	config_get key_file $1 key_file '/etc/netdata/cert.key'
+	config_get cert_file $1 cert_file '/etc/ssl/ezopwrt.crt'
+	config_get key_file $1 key_file '/etc/ssl/ezopwrt.key'
 	config_get_bool ennginx $1 nginx_support 0
 	config_get_bool auth $1 auth 0
 	config_get userpw $1 user_passwd 'admin:$apr1$t7qQjoqb$YBHtAb7VGSkjIdObMG.Oy0'
@@ -37,8 +37,17 @@ white_option() {
 }
 
 white_conf() {
-	[ "$ssl" == "0" ] && local cert_file='' key_file=''
-
+	if [ "x$ssl" == "x1" ] ;then
+	         rm -f $certskey $certscrt
+		 hostname=$(uci -q get system.@system[0].hostname | awk '{print tolower($0)}')
+		 uci -q set network.lan.hostname=${hostname}
+		 uci -q set dhcp.@dnsmasq[0].domain="${hostname}.lan"
+	         openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 -keyout $key_file -out $cert_file -subj "/C=CN/CN=$hostname.lan"
+		 uci commit dhcp
+		 uci commit network
+	else
+	   local cert_file='' key_file=''
+	fi
 	[ "$port" == "$(read_option 'default port')" ] || white_option 'default port' "$port"
 	[ "$cert_file" == "$(read_option 'ssl certificate')" ] || white_option 'ssl certificate' "$cert_file"
 	[ "$key_file" == "$(read_option 'ssl key')" ] || white_option 'ssl key' "$key_file"

@@ -1,8 +1,5 @@
 #!/bin/sh
 
-/etc/init.d/dockerd disable
-/etc/init.d/odhcpd disable
-
 uci -q batch <<-EOF >/dev/null
 	set quickstart.main.disable_dhns=1
 	commit quickstart
