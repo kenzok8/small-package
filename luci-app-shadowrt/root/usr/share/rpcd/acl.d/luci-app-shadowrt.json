@@ -1,0 +1,11 @@
+{
+	"luci-app-shadowrt": {
+		"description": "Grant UCI access for luci-app-shadowrt",
+		"read": {
+			"uci": [ "shadowrt" ]
+		},
+		"write": {
+			"uci": [ "shadowrt" ]
+		}
+	}
+}

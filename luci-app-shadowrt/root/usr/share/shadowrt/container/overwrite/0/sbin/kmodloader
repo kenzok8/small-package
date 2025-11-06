@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "ignore '$0 $@' in container" >&2
+exit 0
+

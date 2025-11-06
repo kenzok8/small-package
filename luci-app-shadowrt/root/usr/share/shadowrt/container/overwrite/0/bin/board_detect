@@ -1,0 +1,30 @@
+#!/bin/sh
+
+CFG=$1
+
+IP_PROTO=dhcp
+IP_ADDRESS=
+
+[ -n "$CFG" ] || CFG=/etc/board.json
+
+. /lib/functions/uci-defaults.sh
+
+board_config_update
+
+ucidef_set_hostname "iStoreOS"
+
+ucidef_set_timezone "CST-8"
+
+ucidef_set_ntpserver "0.cn.pool.ntp.org" "1.cn.pool.ntp.org" "2.cn.pool.ntp.org" "3.cn.pool.ntp.org"
+
+if [ "static" = "$IP_PROTO" -a -n "$IP_ADDRESS" ]; then
+	eval $(ipcalc.sh "$IP_ADDRESS")
+	ucidef_set_interface_lan "eth0"
+	ucidef_set_interface "lan" ipaddr "$IP" netmask "$NETMASK"
+else
+	ucidef_set_interface_lan "eth0" "dhcp"
+fi
+
+board_config_flush
+
+[ -s "$CFG" ] || return 1

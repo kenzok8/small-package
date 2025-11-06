@@ -1,0 +1,201 @@
+<div class="cbi-section cbi-tblsection">
+	<h3><%:Instance List%></h3>
+	<div class="cbi-section-descr">
+		<details>
+			<summary><%:Instructions%></summary>
+			<ul>
+				<li><%:Reset network will restore the instance's network configuration to the state at installation%></li>
+				<li><%:When deleting, you can choose whether to delete the data%></li>
+				<li><%:"Copy/Edit" will redirect to the "Install" page. If the ID is changed, a new instance will be created; otherwise, the existing instance will be overwritten%></li>
+			</ul>
+		</details>
+	</div>
+	<table class="table cbi-section-table">
+		<thead>
+			<tr class="tr cbi-section-table-titles anonymous">
+				<th class="th cbi-section-table-cell" >ID</th>
+				<th class="th cbi-section-table-cell" ><%:Status%></th>
+				<th class="th cbi-section-table-cell" >IP</th>
+				<th class="th cbi-section-table-cell cbi-section-actions"></th>
+			</tr>
+		</thead>
+		<tbody id="cbi-table-shadowrt-instances">
+			<tr class="tr cbi-section-table-row placeholder"><td class="td"><em><%:Loading view…%></em></td></tr>
+			<% if false then %>
+			<!--
+			<tr class="tr cbi-section-table-row" >
+				<td class="td cbi-value-field" data-title="ID" ><b>istoreos-shadow1</b>
+				</td>
+				<td class="td cbi-value-field" data-title="状态">
+					<b>running</b></td>
+				<td class="td cbi-value-field" data-title="IP">192.168.100.2</td>
+				<td class="td cbi-section-table-cell nowrap cbi-section-actions">
+					<div>
+						<input type="button" class="cbi-button cbi-button-neutral stop" title="停止" value="停止">
+						<input type="button" class="cbi-button cbi-button-neutral start" title="启动" disabled="" value="启动">
+						<input type="button" class="cbi-button cbi-button-neutral reload" title="重启" value="重启">
+						<input type="button" title="复制/编辑" class="btn cbi-button cbi-button-edit" value="复制/编辑">
+						<input type="button" title="删除" class="btn cbi-button cbi-button-remove" value="删除">
+					</div>
+				</td>
+			</tr>
+			-->
+			<% end %>
+		</tbody>
+	</table>
+	<style type="text/css">
+		#cbi-table-shadowrt-instances.busy {
+			cursor: progress;
+		}
+		#cbi-table-shadowrt-instances.busy input {
+			pointer-events: none;
+			opacity: 0.6;
+			cursor: progress;
+		}
+		#cbi-table-shadowrt-instances .td.cbi-section-actions>div {
+			position: relative;
+			padding-left: 32px !important;
+		}
+		#cbi-table-shadowrt-instances.busy .td.cbi-section-actions>div::before {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			left: .2em;
+			width: 32px;
+			content: "";
+			background: currentColor;
+			mask: url(/luci-static/resources/icons/loading.svg) center / 16px no-repeat;
+			-webkit-mask: url(/luci-static/resources/icons/loading.svg) center / 16px no-repeat;
+		}
+	</style>
+	<%
+	local util  = require "luci.util"
+	local containers = util.trim(util.exec("/usr/libexec/istorec/shadowrt.sh ls"))
+	-%>
+	<script type="text/javascript">
+	window.addEventListener("load", function() {
+		var containers = <%=containers%>;
+		console.log(containers);
+		var table = document.getElementById("cbi-table-shadowrt-instances");
+
+		var doAction = function(action, name, cb) {
+			table.classList.add("busy");
+			(new XHR()).post('<%=url([[admin/services/shadowrt/action]])%>', { token: '<%=token%>', action: action, name: name },
+				function() {
+					try {
+						if (cb)
+							cb();
+						else
+							location.href = location.href.replace(/#.*$/,'');
+					} finally {
+						table.classList.remove("busy");
+					}
+				}
+			);
+		};
+		var action_stop = function(name) {
+			console.log("Stop ", name);
+			doAction("stop", name);
+		};
+		var action_start = function(name) {
+			console.log("Start ", name);
+			doAction("start", name);
+		};
+		var action_restart = function(name) {
+			console.log("Restart ", name);
+			doAction("restart", name);
+		};
+		var action_edit = function(name) {
+			console.log("Edit ", name);
+			doAction("clone", name, function() {
+				location.href = '<%=url([[admin/services/shadowrt/config]])%>';
+			});
+		};
+		var action_reset_network = function(name) {
+			console.log("Reset Network ", name);
+			if (!confirm("<%:Are you sure you want to reset the network configuration of this instance?%>"))
+				return;
+			doAction("reset_network", name);
+		};
+		var action_remove = function(name) {
+			console.log("Remove ", name);
+			if (!confirm("<%:Are you sure you want to delete this instance?%>"))
+				return;
+			var deleteData = confirm("<%:Delete instance data as well? (If retained, future instances with the same ID in the same data directory will use this data)%>");
+			doAction(deleteData?"rmd":"rm", name);
+		};
+		var status_map = {
+			"running": "<b><%:Running%></b>",
+			"starting": "<i><%:Starting%></i>",
+			"restarting": "<i><%:Restarting%></i>",
+			"exited": "<%:Stopped%>"
+		};
+		var rows = containers.map(function(container) {
+			var name = container.name;
+			var status = container.status;
+			var ip = container.ip;
+			var row = document.createElement("tr");
+			row.className = "tr cbi-section-table-row";
+			var idCell = document.createElement("td");
+			idCell.className = "td cbi-value-field";
+			idCell.setAttribute("data-title", "ID");
+			idCell.innerHTML = "<b>" + name + "</b>";
+			row.appendChild(idCell);
+
+			var statusCell = document.createElement("td");
+			statusCell.className = "td cbi-value-field";
+			statusCell.setAttribute("data-title", "<%:Status%>");
+			statusCell.innerHTML = status_map[status] || status;
+			row.appendChild(statusCell);
+
+			var ipCell = document.createElement("td");
+			ipCell.className = "td cbi-value-field";
+			ipCell.setAttribute("data-title", "IP");
+			ipCell.innerHTML = '<a href="http://' + ip + '" target="_blank">' + ip + '</a>';
+			row.appendChild(ipCell);
+
+			var actionCell = document.createElement("td");
+			actionCell.className = "td cbi-section-table-cell nowrap cbi-section-actions";
+			var actionDiv = document.createElement("div");
+
+			var actions = [
+				{fn: action_stop, title: "<%:Stop%>", class: "cbi-button cbi-button-neutral", disabled: status !== "running"},
+				{fn: action_start, title: "<%:Start%>", class: "cbi-button cbi-button-neutral", disabled: status === "running"},
+				{fn: action_restart, title: "<%:Restart%>", class: "cbi-button cbi-button-neutral", disabled: false},
+				{fn: action_edit, title: "<%:Copy/Edit%>", class: "cbi-button cbi-button-edit", disabled: false},
+				{fn: action_reset_network, title: "<%:Reset Network%>", class: "cbi-button cbi-button-remove", disabled: false},
+				{fn: action_remove, title: "<%:Delete%>", class: "cbi-button cbi-button-remove", disabled: false},
+			];
+			var actionBtns = actions.map(function(action) {
+				var input = document.createElement("input");
+				input.type = "button";
+				input.className = action.class;
+				input.title = action.title;
+				input.value = action.title;
+				if (action.disabled) {
+					input.disabled = true;
+				}
+				input.addEventListener("click", action.fn.bind(null, name));
+				return input;
+			});
+			actionDiv.replaceChildren(...actionBtns);
+			actionCell.appendChild(actionDiv);
+			row.appendChild(actionCell);
+			return row;
+		});
+
+		if (rows.length === 0) {
+			var row = document.createElement("tr");
+			row.className = "tr cbi-section-table-row placeholder";
+			var cell = document.createElement("td");
+			cell.className = "td";
+			cell.innerHTML = '<em><%=translatef([[No instances yet, go to <a href="%s">Install</a>.]], url([[admin/services/shadowrt/config]]))%></em>';
+			row.appendChild(cell);
+			rows.push(row);
+		}
+
+		table.replaceChildren(...rows);
+
+	});
+	</script>
+</div>

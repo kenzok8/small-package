@@ -1,0 +1,38 @@
+#!/bin/sh
+
+/etc/init.d/docker-lan boot 2>/dev/null
+
+uci_find_section()
+{
+	local config="$1"
+	local type="$2"
+	local key="$3"
+	local value="$4"
+	local section
+
+	uci show $config | grep -E '^'$config'\.[^\.]+\.'$key'='"'$value'"'$' | sed 's/\.'$key'='"'$value'"'$//' | while read section; do
+		[ "$type" = "`uci get "$section"`" ] && echo $section
+	done
+}
+
+section=`uci_find_section network device name br-lan | head -n1`
+if [ -n "$section" ]; then
+	uci get "$section.ports" | grep -wq docker-lan-op || uci add_list "$section.ports=docker-lan-op"
+else
+	ifnames="`uci get network.lan.ifname`"
+	if [ -n "$ifnames" ]; then
+		echo "$ifnames" | grep -wq docker-lan-op || {
+			ifnames="$ifnames docker-lan-op"
+			uci set network.lan.ifname="$ifnames"
+			uci set network.lan.type='bridge'
+		}
+	else
+		echo "uci get lan ports failed!" >&2
+		exit 1
+	fi
+fi
+uci commit network
+
+/etc/init.d/network reload
+
+exit 0

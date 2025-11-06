@@ -1,0 +1,2 @@
+
+[ "$ACTION" = add -a "$DEVICENAME" = br-lan ] && ip link set docker-lan-d master docker-lan

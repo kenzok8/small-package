@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+
+START=15
+
+boot() {
+	ip link add docker-lan type bridge
+	ip link add docker-lan-op type veth peer name docker-lan-d
+	ip link set docker-lan-d master docker-lan
+	ip link set docker-lan-op up
+	ip link set docker-lan-d up
+}
+
+start() {
+	# in case docker-lan was destroyed
+	ip link add docker-lan type bridge 2>/dev/null
+	ip link set docker-lan-d master docker-lan 2>/dev/null
+
+	docker network inspect docker-lan -f '{{.Name}}' >/dev/null 2>&1 && return 0
+
+	local lanip=`ip addr show dev br-lan | grep -m1 'inet ' | head -1 | sed -nE 's#.*inet ([0-9\.]*)/([0-9]*) .*#\1#p'`
+	local dockerip=172.25.1
+	if [ -n "$lanip" ]; then
+		local lanip3=`echo "$lanip" | cut -d. -f3`
+		local lanip4=`echo "$lanip" | cut -d. -f4`
+		dockerip=172.$(( $lanip3 & 7 | 24 )).$lanip4
+	fi
+
+	docker network create --subnet $dockerip.0/24 --gateway $dockerip.1 --ip-range $dockerip.0/25 \
+		-d bridge -o com.docker.network.bridge.name=docker-lan docker-lan
+}
