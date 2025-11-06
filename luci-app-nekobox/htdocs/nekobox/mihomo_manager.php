@@ -324,6 +324,16 @@ function autoCleanInvalidSubInfo($subscriptions) {
     return $cleaned;
 }
 
+function isValidSubscriptionContent($content) {
+    $keywords = ['ss', 'shadowsocks', 'vmess', 'vless', 'trojan', 'hysteria2', 'socks5', 'http'];
+    foreach ($keywords as $keyword) {
+        if (stripos($content, $keyword) !== false) {
+            return true;
+        }
+    }
+    return false;
+}
+
 autoCleanInvalidSubInfo($subscriptions);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
@@ -353,7 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
             if (base64_encode(base64_decode($fileContent, true)) === $fileContent) {
                 $decodedContent = base64_decode($fileContent);
-                if ($decodedContent !== false && strlen($decodedContent) > 0) {
+                if ($decodedContent !== false && strlen($decodedContent) > 0 && isValidSubscriptionContent($decodedContent)) {
                     file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decodedContent);
                     echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="base64_decode_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
                     $notificationMessage = '<span data-translate="update_success"></span>';
@@ -365,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             } 
             elseif (substr($fileContent, 0, 2) === "\x1f\x8b") {
                 $decompressedContent = gzdecode($fileContent);
-                if ($decompressedContent !== false) {
+                if ($decompressedContent !== false && isValidSubscriptionContent($decompressedContent)) {
                     file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decompressedContent);
                     echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="gzip_decompress_success" data-dynamic-content="' . htmlspecialchars($finalPath) . '"></span></div>';
                     $notificationMessage = '<span data-translate="update_success"></span>';
@@ -376,10 +386,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                 }
             } 
             else {
-                if (rename($tempPath, $finalPath)) {
+                if (isValidSubscriptionContent($fileContent) && rename($tempPath, $finalPath)) {
                     echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_downloaded_no_decode"></span></div>';
                     $notificationMessage = '<span data-translate="update_success"></span>';
                     $updateCompleted = true;
+                } else {
+                    echo '<div class="log-message alert alert-warning custom-alert-success"><span data-translate="subscription_update_failed" data-dynamic-content="' . htmlspecialchars(implode("\n", $output)) . '"></span></div>';
+                    $notificationMessage = '<span data-translate="update_failed"></span>';
                 }
             }
             
@@ -437,20 +450,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateAll'])) {
                 
                 if (base64_encode(base64_decode($fileContent, true)) === $fileContent) {
                     $decodedContent = base64_decode($fileContent);
-                    if ($decodedContent !== false && strlen($decodedContent) > 0) {
+                    if ($decodedContent !== false && strlen($decodedContent) > 0 && isValidSubscriptionContent($decodedContent)) {
                         file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decodedContent);
                         $success = true;
                     }
                 } 
                 elseif (substr($fileContent, 0, 2) === "\x1f\x8b") {
                     $decompressedContent = gzdecode($fileContent);
-                    if ($decompressedContent !== false) {
+                    if ($decompressedContent !== false && isValidSubscriptionContent($decompressedContent)) {
                         file_put_contents($finalPath, "# Clash Meta Config\n\n" . $decompressedContent);
                         $success = true;
                     }
                 } 
                 else {
-                    if (rename($tempPath, $finalPath)) {
+                    if (isValidSubscriptionContent($fileContent) && rename($tempPath, $finalPath)) {
                         $success = true;
                     }
                 }
@@ -2011,35 +2024,36 @@ function confirmDelete(name, event) {
     return false;
 }
 </script>
-    <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="downloadModalLabel" data-translate="select_database_download"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                </div>
-                <div class="modal-body">
-                    <form method="GET" action="">
-                        <div class="mb-3">
-                            <label for="fileSelect" class="form-label" data-translate="select_file"></label>
-                            <select class="form-select" id="fileSelect" name="file">
-                                <option value="geoip">geoip.metadb</option>
-                                <option value="geosite">geosite.dat</option>
-                                <option value="cache">cache.db</option>
-                            </select>
-                        </div>
-                    </div>
-                        <div class="modal-footer d-flex justify-content-end gap-3">
-                            <button type="submit" class="btn btn-primary me-2" data-translate="download_button"></button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button"></button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+
+<div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <form method="GET" action="" class="no-loader">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="downloadModalLabel" data-translate="select_database_download"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
-    </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="fileSelect" class="form-label" data-translate="select_file"></label>
+            <select class="form-select" id="fileSelect" name="file">
+              <option value="geoip">geoip.metadb</option>
+              <option value="geosite">geosite.dat</option>
+              <option value="cache">cache.db</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-end gap-3">
+          <button type="submit" class="btn btn-primary me-2" data-translate="download_button"></button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel_button"></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 <form method="POST">
     <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-lg" role="document">

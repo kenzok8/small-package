@@ -559,10 +559,21 @@ displayLogData('/etc/neko/proxy_provider/subscription_data.txt', $translations);
 ?>
 
 <?php
+ini_set('memory_limit', '512M'); 
 $dataFilePath = '/etc/neko/proxy_provider/subscription_data.txt';
 $configFilePath = '/etc/neko/config/sing-box.json';
 $downloadedContent = '';
 $fixedFileName = 'subscription.txt';
+
+function isValidSubscriptionContent($content) {
+    $patterns = ['shadowsocks', 'vmess', 'vless', 'trojan', 'hysteria2', 'socks5', 'http'];
+    foreach ($patterns as $p) {
+        if (stripos($content, $p) !== false) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function url_decode_fields(&$node) {
     $fields_to_decode = ['password', 'uuid', 'public_key', 'psk', 'id', 'alterId', 'short_id'];
@@ -729,18 +740,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['generateConfig'])) {
                 if ($downloadedContent === false) {
                     $logMessages[] = "Failed to encode JSON: " . json_last_error_msg();
                 } else {
-                    $tmpFileSavePath = '/etc/neko/proxy_provider/' . $fixedFileName;
-                    if (file_put_contents($tmpFileSavePath, $completeSubscribeUrl) === false) {
-                        $logMessages[] = $translations['save_subscribe_url_failed'] . $tmpFileSavePath;
+                    if (!isValidSubscriptionContent($downloadedContent)) {
+                        $logMessages[] = $translations['update_fail'];
                     } else {
-                        $logMessages[] = $translations['subscribe_url_saved'] . $tmpFileSavePath;
-                    }
+                        $tmpFileSavePath = '/etc/neko/proxy_provider/' . $fixedFileName;
+                        if (file_put_contents($tmpFileSavePath, $completeSubscribeUrl) === false) {
+                            $logMessages[] = $translations['save_subscribe_url_failed'] . $tmpFileSavePath;
+                        } else {
+                            $logMessages[] = $translations['subscribe_url_saved'] . $tmpFileSavePath;
+                        }
 
-                    $configFilePath = '/etc/neko/config/' . $customFileName;
-                    if (file_put_contents($configFilePath, $downloadedContent) === false) {
-                        $logMessages[] = $translations['save_config_failed'] . $configFilePath;
-                    } else {
-                        $logMessages[] = $translations['config_saved'] . $configFilePath;
+                        $configFilePath = '/etc/neko/config/' . $customFileName;
+                        if (file_put_contents($configFilePath, $downloadedContent) === false) {
+                            $logMessages[] = $translations['save_config_failed'] . $configFilePath;
+                        } else {
+                            $logMessages[] = $translations['config_saved'] . $configFilePath;
+                        }
                     }
                 }
 

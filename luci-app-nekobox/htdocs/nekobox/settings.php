@@ -951,6 +951,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (curParsed.preReleaseNum > latParsed.preReleaseNum) return 1;
             if (curParsed.preReleaseNum < latParsed.preReleaseNum) return -1;
 
+            if (
+                /^(alpha|beta|preview)(\.?\d+)?$/i.test(curParsed.preRelease) &&
+                /^(alpha|beta|preview)(\.?\d+)?$/i.test(latParsed.preRelease)
+            ) {
+                const curNum = parseInt(curParsed.preRelease.replace(/\D+/g, ''), 10) || 0;
+                const latNum = parseInt(latParsed.preRelease.replace(/\D+/g, ''), 10) || 0;
+                if (curNum > latNum) return 1;
+                if (curNum < latNum) return -1;
+            }
+
             if (/^r\d+$/i.test(curParsed.preRelease) && /^r\d+$/i.test(latParsed.preRelease)) {
                 const curNum = parseInt(curParsed.preRelease.replace(/\D+/g, ''), 10) || 0;
                 const latNum = parseInt(latParsed.preRelease.replace(/\D+/g, ''), 10) || 0;
