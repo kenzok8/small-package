@@ -11,6 +11,8 @@ IP_ADDRESS=
 
 board_config_update
 
+json_is_a network object && exit 0
+
 ucidef_set_hostname "iStoreOS"
 
 ucidef_set_timezone "CST-8"

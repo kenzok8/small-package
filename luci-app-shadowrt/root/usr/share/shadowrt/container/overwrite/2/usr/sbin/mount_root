@@ -537,7 +537,9 @@ do_mount_overlayfs()
 	post_extroot >/dev/null 2>&1
 
 	if $SHAREDMNT; then
-		mount --move /dev/mnt /mnt
+		mount --rbind /dev/mnt /mnt
+		mount --make-rprivate /dev/mnt
+		umount -R /dev/mnt || /bin/umount -r -l /dev/mnt
 		rmdir /dev/mnt
 	else
 		inlog mount --make-shared -t tmpfs -o size=4M tmpfs /mnt
