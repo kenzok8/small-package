@@ -28,15 +28,15 @@ msgstr "配置"
 msgid "Copy/Edit"
 msgstr "复制/编辑"
 
-#: luasrc/model/cbi/shadowrt/config.lua:104
+#: luasrc/model/cbi/shadowrt/config.lua:107
 msgid "DHCP Server"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:88
+#: luasrc/model/cbi/shadowrt/config.lua:91
 msgid "DHCP client"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:100
+#: luasrc/model/cbi/shadowrt/config.lua:103
 msgid "DNS Servers"
 msgstr ""
 
@@ -56,7 +56,7 @@ msgstr ""
 "是否同时删除实例数据?(若保留,未来相同数据目录下创建相同ID的实例将会使用此数"
 "据)"
 
-#: luasrc/model/cbi/shadowrt/config.lua:104
+#: luasrc/model/cbi/shadowrt/config.lua:107
 msgid "Enable DHCP server on this instance"
 msgstr "这个实例提供 DHCP 服务"
 
@@ -66,19 +66,19 @@ msgid ""
 "use the \"Stop\" button below."
 msgstr "分身内执行关机会重启分身，如果要关机，使用下面的“停止”按钮。"
 
-#: luasrc/model/cbi/shadowrt/config.lua:91
+#: luasrc/model/cbi/shadowrt/config.lua:94
 msgid "Format: xxx.xxx.xxx.xxx/xx"
 msgstr "格式：xxx.xxx.xxx.xxx/xx"
 
-#: luasrc/model/cbi/shadowrt/config.lua:96
+#: luasrc/model/cbi/shadowrt/config.lua:99
 msgid "Gateway"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:91
+#: luasrc/model/cbi/shadowrt/config.lua:94
 msgid "IP Address"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:86
+#: luasrc/model/cbi/shadowrt/config.lua:89
 msgid "IP Protocol"
 msgstr ""
 
@@ -98,7 +98,7 @@ msgstr "操作说明"
 msgid "Loading view…"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:100
+#: luasrc/model/cbi/shadowrt/config.lua:103
 msgid ""
 "Multiple DNS servers can be separated by spaces, e.g., '8.8.8.8 8.8.4.4'"
 msgstr "多个 DNS 可以用空格隔开，例如‘8.8.8.8 8.8.4.4’"
@@ -133,7 +133,7 @@ msgstr "重启中"
 msgid "Running"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:86
+#: luasrc/model/cbi/shadowrt/config.lua:89
 msgid "Select how this instance gets its IP address"
 msgstr "实例如何获取自身 IP 地址"
 
@@ -155,6 +155,14 @@ msgstr ""
 "ShadoWRT 使用宿主的 /rom 作为分身的基础镜像，所以只支持使用 SquashFS 固件的宿"
 "主。宿主系统升级后，分身也会使用新版本。"
 
+#: luasrc/model/cbi/shadowrt/config.lua:86
+msgid "Share /mnt"
+msgstr "共享 /mnt"
+
+#: luasrc/model/cbi/shadowrt/config.lua:86
+msgid "Share host's /mnt directory"
+msgstr "共享宿主的 /mnt 文件夹"
+
 #: luasrc/model/cbi/shadowrt/config.lua:65
 msgid ""
 "Some services are unavailable in the clone, such as hardware-related "
@@ -175,7 +183,7 @@ msgstr ""
 msgid "Starting"
 msgstr "启动中"
 
-#: luasrc/model/cbi/shadowrt/config.lua:87
+#: luasrc/model/cbi/shadowrt/config.lua:90
 msgid "Static address"
 msgstr ""
 
@@ -193,9 +201,9 @@ msgstr ""
 
 #: luasrc/model/cbi/shadowrt/config.lua:64
 msgid ""
-"The clone cannot directly access the disk or mount the disk, but /mnt will "
+"The clone cannot directly access the disk or mount the disk, but /mnt can "
 "share the host's."
-msgstr "分身无法直接访问磁盘，也无法挂载磁盘，不过 /mnt 会共享宿主的。"
+msgstr "分身无法直接访问磁盘，也无法挂载磁盘，不过 /mnt 可以共享宿主的。"
 
 #: luasrc/model/cbi/shadowrt/config.lua:68
 msgid ""
@@ -219,4 +227,4 @@ msgstr "\"删除\"时可选择是否删除数据。"
 msgid ""
 "Will create sub-directory by ID under the selected path, so the path can be "
 "shared among multiple instances"
-msgstr "会在选择的路径下创建以 ID 命名的子文件夹，所以此路径可以被多个实例使用"
+msgstr "会在选择的路径下创建以 ID 命名的子文件夹，所以此路径可以被多个实例共用"

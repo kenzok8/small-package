@@ -7,6 +7,7 @@ shift 1
 do_install() {
 	local id="`uci get shadowrt.@instance[0].id 2>/dev/null`"
 	local data="`uci get shadowrt.@instance[0].data 2>/dev/null`"
+	local mnt="`uci get shadowrt.@instance[0].mnt 2>/dev/null`"
 	local proto=`uci get shadowrt.@instance[0].proto 2>/dev/null`
 	local address=`uci get shadowrt.@instance[0].address 2>/dev/null`
 	local gateway=`uci get shadowrt.@instance[0].gateway 2>/dev/null`
@@ -42,7 +43,7 @@ do_install() {
 		docker pull "$alpine_image" || exit 1
 	fi
 
-	local config="{\"id\":\"$id\",\"data\":\"$data\",\"proto\":\"$proto\",\"address\":\"$address\",\"gateway\":\"$gateway\",\"dns\":\"$dns\",\"dhcp_server\":\"$dhcp_server\",\"ports\":\"$ports\"}"
+	local config="{\"id\":\"$id\",\"data\":\"$data\",\"mnt\":\"$mnt\",\"proto\":\"$proto\",\"address\":\"$address\",\"gateway\":\"$gateway\",\"dns\":\"$dns\",\"dhcp_server\":\"$dhcp_server\",\"ports\":\"$ports\"}"
 
 	local cmd="docker run --restart=unless-stopped -d \
 		--stop-signal SIGINT \
@@ -91,8 +92,10 @@ do_install() {
 	local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
 	[ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
-	cmd="$cmd -v /mnt:/mnt"
-	mountpoint -q /mnt && cmd="$cmd:rshared"
+	if [ "$mnt" = "1" -o "$mnt" = "on" ]; then
+		cmd="$cmd -v /mnt:/mnt"
+		mountpoint -q /mnt && cmd="$cmd:rshared"
+	fi
 	cmd="$cmd $alpine_image"
 
 	echo "stopping existing container..."
@@ -135,6 +138,7 @@ do_clone() {
 		echo "add shadowrt instance"
 		echo "$config_json" | jsonfilter -e 'id=$.id' \
 			-e 'data=$.data' \
+			-e 'mnt=$.mnt' \
 			-e 'proto=$.proto' \
 			-e 'address=$.address' \
 			-e 'gateway=$.gateway' \

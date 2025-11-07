@@ -3,6 +3,7 @@ config main 'main'
 config instance
 	option 'id' 'shadowrt0'
 	option 'data' '/mnt/data/shadowrt'
+	option 'mnt' '0'
 	option 'proto' 'static'
 	option 'address' '192.168.100.2/24'
 	option 'gateway' '192.168.100.1'
