@@ -25,15 +25,15 @@ msgstr ""
 msgid "Copy/Edit"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:104
+#: luasrc/model/cbi/shadowrt/config.lua:107
 msgid "DHCP Server"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:88
+#: luasrc/model/cbi/shadowrt/config.lua:91
 msgid "DHCP client"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:100
+#: luasrc/model/cbi/shadowrt/config.lua:103
 msgid "DNS Servers"
 msgstr ""
 
@@ -51,7 +51,7 @@ msgid ""
 "ID in the same data directory will use this data)"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:104
+#: luasrc/model/cbi/shadowrt/config.lua:107
 msgid "Enable DHCP server on this instance"
 msgstr ""
 
@@ -61,19 +61,19 @@ msgid ""
 "use the \"Stop\" button below."
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:91
+#: luasrc/model/cbi/shadowrt/config.lua:94
 msgid "Format: xxx.xxx.xxx.xxx/xx"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:96
+#: luasrc/model/cbi/shadowrt/config.lua:99
 msgid "Gateway"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:91
+#: luasrc/model/cbi/shadowrt/config.lua:94
 msgid "IP Address"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:86
+#: luasrc/model/cbi/shadowrt/config.lua:89
 msgid "IP Protocol"
 msgstr ""
 
@@ -93,7 +93,7 @@ msgstr ""
 msgid "Loading view…"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:100
+#: luasrc/model/cbi/shadowrt/config.lua:103
 msgid ""
 "Multiple DNS servers can be separated by spaces, e.g., '8.8.8.8 8.8.4.4'"
 msgstr ""
@@ -128,7 +128,7 @@ msgstr ""
 msgid "Running"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:86
+#: luasrc/model/cbi/shadowrt/config.lua:89
 msgid "Select how this instance gets its IP address"
 msgstr ""
 
@@ -148,6 +148,14 @@ msgid ""
 "the clones will also use the new version."
 msgstr ""
 
+#: luasrc/model/cbi/shadowrt/config.lua:86
+msgid "Share /mnt"
+msgstr ""
+
+#: luasrc/model/cbi/shadowrt/config.lua:86
+msgid "Share host's /mnt directory"
+msgstr ""
+
 #: luasrc/model/cbi/shadowrt/config.lua:65
 msgid ""
 "Some services are unavailable in the clone, such as hardware-related "
@@ -165,7 +173,7 @@ msgstr ""
 msgid "Starting"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:87
+#: luasrc/model/cbi/shadowrt/config.lua:90
 msgid "Static address"
 msgstr ""
 
@@ -183,7 +191,7 @@ msgstr ""
 
 #: luasrc/model/cbi/shadowrt/config.lua:64
 msgid ""
-"The clone cannot directly access the disk or mount the disk, but /mnt will "
+"The clone cannot directly access the disk or mount the disk, but /mnt can "
 "share the host's."
 msgstr ""
 
