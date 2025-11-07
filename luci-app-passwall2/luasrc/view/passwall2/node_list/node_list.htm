@@ -76,6 +76,12 @@ table td, .table .td {
 
 	function cbi_t_switch(section, tab) {
 		if( cbi_t[section] && cbi_t[section][tab] ) {
+			//在切换选项卡之前，先取消当前激活选项卡的全选状态
+			var btn = document.getElementById("select_all_btn");
+			if (btn) {
+				dechecked_all_node(btn);
+			}
+
 			var o = cbi_t[section][tab];
 			var h = document.getElementById('tab.' + section);
 			for( var tid in cbi_t[section] ) {
@@ -191,7 +197,9 @@ table td, .table .td {
 	}
 	
 	function checked_all_node(btn) {
-		var doms = document.getElementById("cbi-passwall2-nodes").getElementsByClassName("nodes_select");
+		var visibleContainer = document.querySelector('#cbi-passwall2-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall2-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
 			for (var i = 0 ; i < doms.length; i++) {
 				doms[i].checked = true;
@@ -202,7 +210,9 @@ table td, .table .td {
 	}
 	
 	function dechecked_all_node(btn) {
-		var doms = document.getElementById("cbi-passwall2-nodes").getElementsByClassName("nodes_select");
+		var visibleContainer = document.querySelector('#cbi-passwall2-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall2-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
 			for (var i = 0 ; i < doms.length; i++) {
 				doms[i].checked = false;
@@ -214,7 +224,9 @@ table td, .table .td {
 	
 	function delete_select_nodes() {
 		var ids = [];
-		var doms = document.getElementById("cbi-passwall2-nodes").getElementsByClassName("nodes_select");
+		var visibleContainer = document.querySelector('#cbi-passwall2-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall2-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
 			for (var i = 0 ; i < doms.length; i++) {
 				if (doms[i].checked) {
@@ -554,7 +566,7 @@ table td, .table .td {
 			var group_nodes = {}
 			for (let i = 0; i < node_list.length; i++) {
 				let _node = node_list[i]
-				if (!_node.group) {
+				if (!_node.group || _node.group === "") {
 					_node.group = "default"
 				}
 				if (!group_nodes[_node.group]) {
@@ -617,10 +629,15 @@ table td, .table .td {
 					_html = _html.split("{{node-tr}}").join(node_tr_html);
 					table_html = _html;
 				}
+
+				var group_name = group
+				if (group === "default") {
+					group_name = "<%:default%>"
+				}
 				
 				tab_ul_li_html +=
 					'<li id="tab.passwall2.nodes.' + group + '" class="cbi-tab">' +
-						'<a onclick="this.blur(); return cbi_t_switch(\'passwall2.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall2.nodes=' + group + '">' + group + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
+						'<a onclick="this.blur(); return cbi_t_switch(\'passwall2.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall2.nodes=' + group + '">' + group_name + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
 					'</li>'
 				tab_content_html +=
 					'<div class="cbi-tabcontainer" id="container.passwall2.nodes.' + group + '" style="display: none;">' +
