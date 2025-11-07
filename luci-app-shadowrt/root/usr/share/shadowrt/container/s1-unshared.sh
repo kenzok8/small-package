@@ -51,8 +51,13 @@ for o in 0 2; do
 	cp -a /shadowrt/overwrite/$o/. /tmp/patch/upper/
 done
 
-mount -o noatime,lowerdir=$LOWERDIR,upperdir=/tmp/patch/upper,workdir=/tmp/patch/work,xino=off,uuid=null \
-	-t overlay "/dev/root" $PATCHROM || exit 1
+OVERLAYFS_UUID=",uuid=null"
+if ! mount -o noatime,lowerdir=$LOWERDIR,upperdir=/tmp/patch/upper,workdir=/tmp/patch/work,xino=off$OVERLAYFS_UUID \
+		-t overlay "/dev/root" $PATCHROM ; then
+	OVERLAYFS_UUID=""
+	mount -o noatime,lowerdir=$LOWERDIR,upperdir=/tmp/patch/upper,workdir=/tmp/patch/work,xino=off \
+		-t overlay "/dev/root" $PATCHROM || exit 1
+fi
 
 mount --bind /tmp/tmp $PATCHROM/tmp
 mount --bind /shadowrt $PATCHROM/tmp/shadowrt
@@ -112,8 +117,19 @@ sh -c 'mount --bind /tmp/proconly.txt /proc/$$/mounts && exec mount -o rw,remoun
 rm -f /tmp/proconly.txt
 
 
+PROCD_VER=`grep -o '^Version: [0-9]*' /rom/usr/lib/opkg/info/procd.control | cut -d' ' -f2`
+if [ -n "$PROCD_VER" -a "$PROCD_VER" -lt 2024 ]; then
+	# workaround procd < 2024 infite loop on resolving rootfs type
+	echo "overwrite /proc/$$/mounts for bug on procd v$PROCD_VER" >&2
+	echo "/dev/root /rom squashfs ro,relatime 0 0" > /tmp/procd_mounts.txt
+	cat /proc/mounts | grep -v '^tmpfs /tmp tmpfs' | grep -v ' /shadowrt ' >> /tmp/procd_mounts.txt
+	mount --bind /tmp/procd_mounts.txt /proc/$$/mounts
+	rm -f /tmp/procd_mounts.txt
+fi
+
+
 # mount openwrt rootfs
-mount -o ro,noatime,lowerdir=/tmp/patch/upper:$LOWERDIR,xino=off,uuid=null \
+mount -o ro,noatime,lowerdir=/tmp/patch/upper:$LOWERDIR,xino=off$OVERLAYFS_UUID \
 	-t overlay "/dev/root" /rom || exit 1
 
 umount /tmp
