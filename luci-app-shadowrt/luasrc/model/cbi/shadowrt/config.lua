@@ -61,7 +61,7 @@ local m, s, o
 m = taskd.docker_map("shadowrt", "shadowrt", "/usr/libexec/istorec/shadowrt.sh",
 	translate("ShadoWRT"), 
 	translate("ShadoWRT uses the host's /rom as the base image for its clones, so it only supports hosts using SquashFS firmware. After the host system is upgraded, the clones will also use the new version.") .. "<br>"
-		.. translate("The clone cannot access the disk; only /mnt is shared with the host.") .. "<br>"
+		.. translate("The clone cannot directly access the disk or mount the disk, but /mnt will share the host's.") .. "<br>"
 		.. translate("Some services are unavailable in the clone, such as hardware-related services and OAF. In addition, the Docker service is disabled by default because the host already has the Docker service. If you need to enable the Docker service in the clone, you can enable it under the \"Startup\" menu on the clone's LuCI."))
 
 s = m:section(TypedSection, "instance", translate("Configuration"),
