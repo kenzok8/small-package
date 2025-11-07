@@ -27,33 +27,54 @@ return view.extend({
             E('p', {}, _('Please enable the Homebox service'))
         ]);
         
-        var iframe = E('iframe', {
-            src: window.location.origin + ':' + state.port,
-            style: 'border:none;width: 100%; min-height: 80vh; border: none; border-radius: 3px;overflow:hidden !important;'
-        });
-
-async function checkProcess() {
-    try {
-        // 尝试使用pgrep 
-        const res = await fs.exec('/usr/bin/pgrep', ['homebox']);
-        return {
-            running: res.code === 0,
-            pid: res.stdout.trim() || null
-        };
-    } catch (err) {
-        // 回退到ps方法
-        try {
-            const psRes = await fs.exec('/bin/ps', ['-w', '-C', 'homebox', '-o', 'pid=']);
-            const pid = psRes.stdout.trim();
-            return {
-                running: pid !== '',
-                pid: pid || null
-            };
-        } catch (err) {
-            return { running: false, pid: null };
+        var isHttps = window.location.protocol === 'https:';
+        var iframe;
+        
+        if (!isHttps) {
+            iframe = E('iframe', {
+                src: window.location.origin + ':' + state.port,
+                style: 'border:none;width: 100%; min-height: 80vh; border: none; border-radius: 3px;overflow:hidden !important;'
+            });
         }
-    }
-}
+
+        function createHttpsButton() {
+            return E('div', {
+                style: 'text-align: center; padding: 2em;'
+            }, [
+                E('h2', {}, _('Homebox Control panel')),
+                E('p', {}, _('Due to browser security policies, the Homebox interface https cannot be embedded directly.')),
+                E('a', {
+                    href: 'http://' + window.location.hostname + ':' + state.port,
+                    target: '_blank',
+                    class: 'cbi-button cbi-button-apply',
+                    style: 'display: inline-block; margin-top: 1em; padding: 10px 20px; font-size: 16px; text-decoration: none; color: white;'
+                }, _('Open Web Interface'))
+                
+            ]);
+        }
+
+        async function checkProcess() {
+            try {
+                // 尝试使用pgrep 
+                const res = await fs.exec('/usr/bin/pgrep', ['homebox']);
+                return {
+                    running: res.code === 0,
+                    pid: res.stdout.trim() || null
+                };
+            } catch (err) {
+                // 回退到ps方法
+                try {
+                    const psRes = await fs.exec('/bin/ps', ['-w', '-C', 'homebox', '-o', 'pid=']);
+                    const pid = psRes.stdout.trim();
+                    return {
+                        running: pid !== '',
+                        pid: pid || null
+                    };
+                } catch (err) {
+                    return { running: false, pid: null };
+                }
+            }
+        }
 
         function controlService(action) {
             var command = action === 'start' 
@@ -70,14 +91,17 @@ async function checkProcess() {
             statusText.style.fontWeight = 'bold'; 
             statusText.style.fontSize = '0.92rem'; 
             
-            // 更新按钮状态
             toggleBtn.textContent = state.running ? _('Stop Server') : _('Start Server');
             toggleBtn.className = `btn cbi-button cbi-button-${state.running ? 'reset' : 'apply'}`;
             
-            // Update container content based on state
+            // Update container content based on state and protocol
             container.textContent = '';
             if (state.running) {
-                container.appendChild(iframe);
+                if (isHttps) {
+                    container.appendChild(createHttpsButton());
+                } else {
+                    container.appendChild(iframe);
+                }
             } else {
                 container.appendChild(statusMessage);
             }
@@ -93,21 +117,20 @@ async function checkProcess() {
                 });
         }));
 
-        // 开始
         statusSection.appendChild(E('div', { 'style': 'margin: 15px' }, [
             E('h3', {}, _('Lan Speedtest Homebox')),
             E('div', { 'class': 'cbi-map-descr' }, [statusIcon, statusText]),
             E('div', {'class': 'cbi-value', 'style': 'margin-top: 20px'}, [
                 E('div', {'class': 'cbi-value-title'}, _('Homebox service control')),
                 E('div', {'class': 'cbi-value-field'}, toggleBtn),
-        E('div', { 'style': 'text-align: right; font-style: italic; margin-top: 20px;' }, [
-            _('© github '),
-            E('a', { 
-                'href': 'https://github.com/sirpdboy/luci-app-netspeedtest', 
-                'target': '_blank',
-                'style': 'text-decoration: none;'
-            }, 'by sirpdboy')
-        ])
+                E('div', { 'style': 'text-align: right; font-style: italic; margin-top: 20px;' }, [
+                    _('© github '),
+                    E('a', { 
+                        'href': 'https://github.com/sirpdboy', 
+                        'target': '_blank',
+                        'style': 'text-decoration: none;'
+                    }, 'by sirpdboy')
+                ])
             ])
         ]));
 
@@ -134,9 +157,9 @@ async function checkProcess() {
             statusSection,
             container
         ]);
-    }
+    },
 
-    // handleSaveApply: null,
-   //  handleSave: null,
-    // handleReset: null
+    handleSaveApply: null,
+    handleSave: null,
+    handleReset: null
 });

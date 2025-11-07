@@ -53,9 +53,9 @@ function controlService(action) {
 
 
 return view.extend({
-//	handleSaveApply: null,
-//	handleSave: null,
-//	handleReset: null,
+    handleSaveApply: null,
+    handleSave: null,
+    handleReset: null,
     load: function() {
 	return Promise.all([
 		uci.load('netspeedtest')

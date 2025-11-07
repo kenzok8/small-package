@@ -100,8 +100,8 @@ msgstr "Homebox服务端"
 msgid "Homebox Service Not Running"
 msgstr "Homebox服务端未运行"
 
-msgid "Ookla® SpeedTest-CLI"
-msgstr ""
+msgid "Open Web Interface"
+msgstr "打开WEB页面"
 
 msgid "Start Ookla SpeedTest"
 msgstr "开始宽带测速"
@@ -120,3 +120,9 @@ msgstr "还没有测试结果"
 
 msgid "Test Script"
 msgstr "测速脚本"
+
+msgid "Homebox Control panel"
+msgstr "Homebox控制台"
+
+msgid "Due to browser security policies, the Homebox interface https cannot be embedded directly."
+msgstr "由于浏览器安全策略，Homebox接口https不能直接嵌入。"

@@ -28,11 +28,10 @@ return view.extend({
 		};
 
 		return m.render();
-	}
+	},
 
 
-
-    // handleSaveApply: null,
-   //  handleSave: null,
-    // handleReset: null
+    handleSaveApply: null,
+    handleSave: null,
+    handleReset: null
 });
