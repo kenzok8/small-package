@@ -90,7 +90,7 @@ format_filesize() {
 	local gb; gb=$((mb * 1024))
 	local tb; tb=$((gb * 1024))
 	local pb; pb=$((tb * 1024))
-	local size; size=
+	local size; size=$1
 	if [ -n "$size" ]; then
 		if [ "$size" -lt "$kb" ]; then
 			echo "$(awk "BEGIN {print $size / $b}") B"
