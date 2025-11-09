@@ -249,6 +249,10 @@ return view.extend({
         o.datatype = 'cidr4';
         o.placeholder = _('Unmodified');
 
+        o = s.taboption('dns', form.Value, 'fake_ip6_range', _('Fake-IP6 Range'));
+        o.datatype = 'cidr6';
+        o.placeholder = _('Unmodified');
+
         o = s.taboption('dns', form.Flag, 'fake_ip_filter', _('Overwrite Fake-IP Filter'));
         o.rmempty = false;
 

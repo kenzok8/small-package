@@ -38,7 +38,7 @@ msgstr "所有埠"
 msgid "Allow Lan"
 msgstr "允許區域網路存取"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:263
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:267
 msgid "Allow Mode"
 msgstr "白名單模式"
 
@@ -55,19 +55,19 @@ msgstr "應用程式日誌"
 msgid "App Version"
 msgstr "應用程式版本"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:486
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:490
 msgid "Append Rule"
 msgstr "追加規則"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:417
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:421
 msgid "Append Rule Provider"
 msgstr "追加規則提供者"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:473
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:477
 msgid "Behavior"
 msgstr "行為"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:262
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:266
 msgid "Block Mode"
 msgstr "黑名單模式"
 
@@ -150,15 +150,15 @@ msgstr "DNS 模式"
 msgid "Debug Log"
 msgstr "除錯日誌"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:509
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:513
 msgid "Destination IP"
 msgstr "目標 IP"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:513
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:517
 msgid "Destination IP Geo"
 msgstr "目標 IP（地理位置）"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:510
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:514
 msgid "Destination Port"
 msgstr "目標埠"
 
@@ -188,15 +188,15 @@ msgstr "直連模式"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:208
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:229
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:239
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:268
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:274
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:280
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:286
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:292
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:361
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:367
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:373
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:560
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:272
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:278
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:284
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:290
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:296
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:365
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:371
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:377
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:565
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:38
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:45
 msgid "Disable"
@@ -218,32 +218,32 @@ msgstr "停用迴路檢測"
 msgid "Disable TCP Keep Alive"
 msgstr "停用 TCP Keep Alive"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:277
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:281
 msgid "DoH Prefer HTTP/3"
 msgstr "DoH 優先使用 HTTP/3"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:309
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:504
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:313
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:508
 msgid "Domain Name"
 msgstr "網域名稱"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:512
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:516
 msgid "Domain Name Geo"
 msgstr "網域名稱（地理位置）"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:507
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:511
 msgid "Domain Name Keyword"
 msgstr "網域名稱（關鍵字）"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:508
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:512
 msgid "Domain Name Regex"
 msgstr "網域名稱（正則表達式）"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:505
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:509
 msgid "Domain Name Suffix"
 msgstr "網域名稱（後綴）"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:506
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:510
 msgid "Domain Name Wildcard"
 msgstr "網域名稱（通配符）"
 
@@ -255,27 +255,27 @@ msgstr "編輯身分驗證"
 msgid "Edit DNS Hijacks"
 msgstr "編輯 DNS 劫持"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:255
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:259
 msgid "Edit Fake-IP Filters"
 msgstr "編輯 Fake-IP 過濾清單"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:298
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:302
 msgid "Edit Hosts"
 msgstr "編輯 Hosts"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:340
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:344
 msgid "Edit Nameserver Policies"
 msgstr "編輯 DNS 伺服器查詢策略"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:317
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:321
 msgid "Edit Nameservers"
 msgstr "編輯 DNS 伺服器"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:420
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:424
 msgid "Edit Rule Providers"
 msgstr "編輯規則提供者"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:489
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:493
 msgid "Edit Rules"
 msgstr "編輯規則"
 
@@ -302,23 +302,23 @@ msgstr "編輯器"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:226
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:230
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:240
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:269
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:275
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:281
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:287
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:293
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:306
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:325
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:348
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:358
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:273
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:279
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:285
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:291
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:297
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:310
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:329
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:352
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:362
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:368
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:374
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:400
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:428
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:497
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:561
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:569
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:366
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:372
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:378
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:404
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:432
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:501
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:566
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:574
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:33
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:66
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/proxy.js:77
@@ -339,11 +339,11 @@ msgstr "到期時間"
 msgid "External Control Config"
 msgstr "外部控制設定"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:265
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:269
 msgid "Fake-IP Cache"
 msgstr "Fake-IP 快取"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:259
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:263
 msgid "Fake-IP Filter Mode"
 msgstr "Fake-IP 過濾模式"
 
@@ -355,19 +355,23 @@ msgstr "Fake-IP Ping 劫持"
 msgid "Fake-IP Range"
 msgstr "Fake-IP 範圍"
 
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:252
+msgid "Fake-IP6 Range"
+msgstr "Fake-IP6 範圍"
+
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/app.js:132
 msgid "Fast Reload"
 msgstr "快速重載"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:467
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:471
 msgid "File Format"
 msgstr "檔案格式"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:461
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:465
 msgid "File Path"
 msgstr "檔案路徑"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:455
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:459
 msgid "File Size Limit"
 msgstr "檔案大小限制"
 
@@ -380,7 +384,7 @@ msgstr "用於混入的檔案"
 msgid "File:"
 msgstr "檔案:"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:379
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:383
 msgid "Force Sniff Domain Name"
 msgstr "強制嗅探的網域名稱"
 
@@ -401,39 +405,39 @@ msgstr "一般設定"
 msgid "Generate & Download"
 msgstr "生成並下載"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:539
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:544
 msgid "GeoData Loader"
 msgstr "GeoData 載入器"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:533
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:538
 msgid "GeoIP Format"
 msgstr "GeoIP 格式"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:554
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:559
 msgid "GeoIP(ASN) Url"
 msgstr "GeoIP(ASN) 下載網址"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:551
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:556
 msgid "GeoIP(DAT) Url"
 msgstr "GeoIP(DAT) 下載網址"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:548
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:553
 msgid "GeoIP(MMDB) Url"
 msgstr "GeoIP(MMDB) 下載網址"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:545
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:550
 msgid "GeoSite Url"
 msgstr "GeoSite 下載網址"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:557
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:562
 msgid "GeoX Auto Update"
 msgstr "定時更新 GeoX 檔案"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:531
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:536
 msgid "GeoX Config"
 msgstr "GeoX 設定"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:563
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:568
 msgid "GeoX Update Interval"
 msgstr "GeoX 檔案更新間隔"
 
@@ -485,7 +489,7 @@ msgstr "IPv6 DNS 劫持"
 msgid "IPv6 Proxy"
 msgstr "IPv6 代理"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:386
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:390
 msgid "Ignore Sniff Domain Name"
 msgstr "忽略嗅探的網域名稱"
 
@@ -522,12 +526,12 @@ msgstr "最大傳輸單元"
 msgid "Match Process"
 msgstr "匹配程序"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:351
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:515
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:355
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:519
 msgid "Matcher"
 msgstr "匹配器"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:543
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:548
 msgid "Memory Conservative Loader"
 msgstr "為記憶體受限裝置最佳化的載入器"
 
@@ -539,7 +543,7 @@ msgstr "混合埠"
 msgid "Mixin Config"
 msgstr "混入設定"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:567
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:572
 msgid "Mixin File Content"
 msgstr "混入檔案內容"
 
@@ -551,12 +555,12 @@ msgstr "混入選項"
 msgid "Mode"
 msgstr "模式"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:434
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:438
 msgid "Name"
 msgstr "名稱"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:335
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:354
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:339
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:358
 msgid "Nameserver"
 msgstr "DNS 伺服器"
 
@@ -565,12 +569,12 @@ msgstr "DNS 伺服器"
 msgid "Nikki"
 msgstr "Nikki"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:526
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:530
 msgid "No Resolve"
 msgstr "不解析"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:448
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:519
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:452
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:523
 msgid "Node"
 msgstr "節點"
 
@@ -602,35 +606,35 @@ msgstr "覆寫身分驗證"
 msgid "Overwrite DNS Hijack"
 msgstr "覆寫 DNS 劫持"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:412
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:416
 msgid "Overwrite Destination"
 msgstr "將嗅探結果作為連線目標"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:252
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:256
 msgid "Overwrite Fake-IP Filter"
 msgstr "覆寫 Fake-IP 過濾清單"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:376
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:380
 msgid "Overwrite Force Sniff Domain Name"
 msgstr "覆寫強制嗅探的網域名稱"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:295
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:299
 msgid "Overwrite Hosts"
 msgstr "覆寫 Hosts"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:383
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:387
 msgid "Overwrite Ignore Sniff Domain Name"
 msgstr "覆寫忽略嗅探的網域名稱"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:314
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:318
 msgid "Overwrite Nameserver"
 msgstr "覆寫 DNS 伺服器"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:337
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:341
 msgid "Overwrite Nameserver Policy"
 msgstr "覆寫 DNS 伺服器查詢策略"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:390
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:394
 msgid "Overwrite Sniff By Protocol"
 msgstr "覆寫按協定嗅探"
 
@@ -638,11 +642,11 @@ msgstr "覆寫按協定嗅探"
 msgid "Password"
 msgstr "密碼"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:569
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:574
 msgid "Please go to the editor tab to edit the file for mixin"
 msgstr "請前往編輯器標籤編輯用於混入的檔案"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:409
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:413
 msgid "Port"
 msgstr "埠"
 
@@ -650,7 +654,7 @@ msgstr "埠"
 msgid "Prefer"
 msgstr "優先"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:511
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:515
 msgid "Process Name"
 msgstr "程序名稱"
 
@@ -663,7 +667,7 @@ msgstr "設定檔"
 msgid "Profile for Startup"
 msgstr "用於啟動的設定檔"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:403
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:407
 msgid "Protocol"
 msgstr "協定"
 
@@ -706,7 +710,7 @@ msgstr "重新載入服務"
 msgid "Remote"
 msgstr "遠端"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:271
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:275
 msgid "Respect Rules"
 msgstr "遵循分流規則"
 
@@ -718,7 +722,7 @@ msgstr "重新啟動服務"
 msgid "Router Proxy"
 msgstr "路由器代理"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:415
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:419
 msgid "Rule Config"
 msgstr "規則設定"
 
@@ -730,7 +734,7 @@ msgstr "規則模式"
 msgid "Rule Provider:"
 msgstr "規則提供者:"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:503
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:507
 msgid "Rule Set"
 msgstr "規則集"
 
@@ -763,19 +767,19 @@ msgstr "捲動到底部"
 msgid "Skip System IPv6 Check"
 msgstr "跳過系統 IPv6 檢查"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:393
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:397
 msgid "Sniff By Protocol"
 msgstr "按協定嗅探"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:370
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:374
 msgid "Sniff Pure IP"
 msgstr "嗅探純 IP 連線"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:364
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:368
 msgid "Sniff Redir-Host"
 msgstr "嗅探 Redir-Host 流量"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:356
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:360
 msgid "Sniffer Config"
 msgstr "嗅探器設定"
 
@@ -791,7 +795,7 @@ msgstr ""
 msgid "Stack Size Soft Limit"
 msgstr ""
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:542
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:547
 msgid "Standard Loader"
 msgstr "標準載入器"
 
@@ -874,9 +878,9 @@ msgstr "總計"
 msgid "Transparent Proxy with Mihomo on OpenWrt."
 msgstr "在 OpenWrt 上使用 Mihomo 進行透明代理."
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:328
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:437
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:501
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:332
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:441
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:505
 msgid "Type"
 msgstr "類型"
 
@@ -945,23 +949,24 @@ msgstr "無限制"
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:238
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:244
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:250
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:261
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:267
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:273
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:279
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:285
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:291
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:360
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:366
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:372
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:535
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:541
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:254
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:265
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:271
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:277
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:283
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:289
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:295
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:364
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:370
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:376
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:540
 #: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:546
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:549
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:552
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:555
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:559
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:565
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:551
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:554
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:557
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:560
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:564
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:570
 msgid "Unmodified"
 msgstr "不修改"
 
@@ -977,7 +982,7 @@ msgstr "更新時間"
 msgid "Update Dashboard"
 msgstr "更新儀表板"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:480
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:484
 msgid "Update Interval"
 msgstr "更新間隔"
 
@@ -985,15 +990,15 @@ msgstr "更新間隔"
 msgid "Upload Profile"
 msgstr "上傳設定檔"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:443
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:447
 msgid "Url"
 msgstr "下載網址"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:289
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:293
 msgid "Use Hosts"
 msgstr "使用 Hosts"
 
-#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:283
+#: applications/luci-app-nikki/htdocs/luci-static/resources/view/nikki/mixin.js:287
 msgid "Use System Hosts"
 msgstr "使用系統的 Hosts"
 

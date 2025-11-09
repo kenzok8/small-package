@@ -72,6 +72,7 @@ config['dns']['listen'] = uci.get('nikki', 'mixin', 'dns_listen');
 config['dns']['ipv6'] = uci_bool(uci.get('nikki', 'mixin', 'dns_ipv6'));
 config['dns']['enhanced-mode'] = uci.get('nikki', 'mixin', 'dns_mode');
 config['dns']['fake-ip-range'] = uci.get('nikki', 'mixin', 'fake_ip_range');
+config['dns']['fake-ip-range6'] = uci.get('nikki', 'mixin', 'fake_ip6_range');
 if (uci_bool(uci.get('nikki', 'mixin', 'fake_ip_filter'))) {
 	config['dns']['fake-ip-filter'] = uci_array(uci.get('nikki', 'mixin', 'fake_ip_filters'));
 }
