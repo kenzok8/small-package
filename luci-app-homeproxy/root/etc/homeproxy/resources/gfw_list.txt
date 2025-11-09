@@ -1273,9 +1273,7 @@ deezer.com
 definebabe.com
 deja.com
 delcamp.net
-delicious.com
 demo.unlock-music.dev
-democrats.org
 demosisto.hk
 deno.dev
 depositphotos.com
@@ -1346,6 +1344,7 @@ dnvod.tv
 doc.new
 docker.com
 docker.io
+dockerstatus.com
 docs.deno.com
 docs.new
 doctorvoice.org
@@ -1732,6 +1731,7 @@ flagsonline.it
 flecheinthepeche.fr
 fleshbot.com
 fleursdeslettres.com
+flexclip.com
 flexpool.io
 flgjustice.org
 flickr.com
@@ -2649,6 +2649,7 @@ imagefap.com
 imageflea.com
 imageglass.org
 images-gaytube.com
+images.prismic.io
 imageshack.us
 imagevenue.com
 imagezilla.net
@@ -4752,6 +4753,7 @@ telegraph.co.uk
 telesco.pe
 tellapart.com
 tellme.pw
+temu.com
 tenacy.com
 tenor.com
 tensorflow.org
