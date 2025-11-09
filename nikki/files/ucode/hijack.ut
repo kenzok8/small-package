@@ -26,6 +26,7 @@
 	let dns_listen;
 	let dns_port;
 	let fake_ip_range;
+	let fake_ip6_range;
 	if (profile['dns']) {
 		dns_listen = profile['dns']['listen'];
 		const dns_listen_rindex = rindex(dns_listen, ':');
@@ -33,6 +34,7 @@
 			dns_port = substr(dns_listen, dns_listen_rindex + 1);
 		}
 		fake_ip_range = profile['dns']['fake-ip-range'];
+		fake_ip6_range = profile['dns']['fake-ip-range6'];
 	}
 
 	let tun_device;
@@ -445,19 +447,22 @@ table inet nikki {
 		{% if (tcp_mode == 'redirect'): %}
 		fib daddr type { local, broadcast, anycast, multicast } counter return
 		ct direction reply counter return
-		ip daddr @reserved_ip counter return
-		ip6 daddr @reserved_ip6 counter return
+		ip daddr @reserved_ip {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
+		ip6 daddr @reserved_ip6 {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		ip daddr @china_ip counter return
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
-		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
+		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
-		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta nfproto @proxy_nfproto jump router_redirect
 		{% endif %}
 		{% if (fake_ip_ping_hijack): %}
 		{% if (fake_ip_range ): %}
 		icmp type echo-request ip daddr {{ fake_ip_range }} counter redirect
+		{% endif %}
+		{% if (fake_ip6_range ): %}
+		icmpv6 type echo-request ip6 daddr {{ fake_ip6_range }} counter redirect
 		{% endif %}
 		{% endif %}
 	}
@@ -471,14 +476,14 @@ table inet nikki {
 		{% endif %}
 		fib daddr type { local, broadcast, anycast, multicast } counter return
 		ct direction reply counter return
-		ip daddr @reserved_ip counter return
-		ip6 daddr @reserved_ip6 counter return
+		ip daddr @reserved_ip {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
+		ip6 daddr @reserved_ip6 {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		ip daddr @china_ip counter return
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
-		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
+		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
-		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 		{% endif %}
@@ -514,19 +519,22 @@ table inet nikki {
 		{% if (tcp_mode == 'redirect'): %}
 		fib daddr type { local, broadcast, anycast, multicast } counter return
 		ct direction reply counter return
-		ip daddr @reserved_ip counter return
-		ip6 daddr @reserved_ip6 counter return
+		ip daddr @reserved_ip {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
+		ip6 daddr @reserved_ip6 {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		ip daddr @china_ip counter return
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
-		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
+		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
-		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		iifname @lan_inbound_device meta nfproto @proxy_nfproto jump lan_redirect
 		{% endif %}
 		{% if (fake_ip_ping_hijack): %}
 		{% if (fake_ip_range): %}
 		icmp type echo-request ip daddr {{ fake_ip_range }} counter redirect
+		{% endif %}
+		{% if (fake_ip6_range ): %}
+		icmpv6 type echo-request ip6 daddr {{ fake_ip6_range }} counter redirect
 		{% endif %}
 		{% endif %}
 	}
@@ -535,14 +543,14 @@ table inet nikki {
 		type filter hook prerouting priority mangle; policy accept;
 		fib daddr type { local, broadcast, anycast, multicast } counter return
 		ct direction reply counter return
-		ip daddr @reserved_ip counter return
-		ip6 daddr @reserved_ip6 counter return
+		ip daddr @reserved_ip {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
+		ip6 daddr @reserved_ip6 {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		ip daddr @china_ip counter return
 		ip6 daddr @china_ip6 counter return
 		meta nfproto ipv4 meta l4proto . th dport != @proxy_dport {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
-		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport counter return
+		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
-		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp counter return
+		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 		{% endif %}
