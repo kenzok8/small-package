@@ -43,6 +43,10 @@ do_install() {
 		docker pull "$alpine_image" || exit 1
 	fi
 
+	if [ -d "$data/$id" ]; then
+		echo "WARNING: $data/$id already exists, may use old data." >&2
+	fi
+
 	local config="{\"id\":\"$id\",\"data\":\"$data\",\"mnt\":\"$mnt\",\"proto\":\"$proto\",\"address\":\"$address\",\"gateway\":\"$gateway\",\"dns\":\"$dns\",\"dhcp_server\":\"$dhcp_server\",\"ports\":\"$ports\"}"
 
 	local cmd="docker run --restart=unless-stopped -d \
@@ -187,6 +191,19 @@ do_reset_network() {
 	} | sh -c "$shell"
 }
 
+check_all_ready() {
+	local names="$1"
+	local name
+	local ret=0
+	for name in $names; do
+		if ! docker exec "$name" test -e /etc/openwrt_release -a ! -e /rom/note; then
+			ret=1
+			break
+		fi
+	done
+	return $ret
+}
+
 usage() {
 	echo "usage: $0 sub-command"
 	echo "where sub-command is one of:"
@@ -221,11 +238,11 @@ case "${ACTION}" in
 	;;
 	"start" | "stop" | "restart")
 		if [ -n "$1" ]; then
-			docker "${ACTION}" "$1"
+			docker "${ACTION}" $1
 			if [ "$ACTION" = "start" -o "$ACTION" = "restart" ]; then
 				sleep 2
 				for i in $(seq 1 5); do
-					docker exec "$1" test -e /etc/openwrt_release -a ! -e /rom/note && break
+					check_all_ready "$1" && break
 					sleep 1
 				done
 			fi
