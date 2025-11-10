@@ -83,8 +83,8 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 			}
 			/*{
 			}*/
-		] : ((cfg.type in ['anytls', 'tuic', 'hysteria2']) ? {
-			/* AnyTLS / Hysteria2 */
+		] : ((cfg.type in ['mieru', 'anytls', 'tuic', 'hysteria2']) ? {
+			/* Mieru / AnyTLS / Hysteria2 */
 			...arrToObj([[cfg.username, cfg.password]]),
 
 			/* Tuic */
@@ -102,6 +102,9 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		/* Shadowsocks */
 		cipher: cfg.shadowsocks_chipher,
 		password: cfg.shadowsocks_password,
+
+		/* Mieru */
+		transport: cfg.mieru_transport,
 
 		/* Tuic */
 		"congestion-controller": cfg.tuic_congestion_controller,
