@@ -119,7 +119,7 @@ rm -f /tmp/proconly.txt
 
 PROCD_VER=`grep -o '^Version: [0-9]*' /rom/usr/lib/opkg/info/procd.control | cut -d' ' -f2`
 if [ -n "$PROCD_VER" -a "$PROCD_VER" -lt 2024 ]; then
-	# workaround procd < 2024 infite loop on resolving rootfs type
+	# workaround procd < 2024 infite loop on resolving rootfs type, e.g. `ubus call system board`
 	echo "overwrite /proc/$$/mounts for bug on procd v$PROCD_VER" >&2
 	echo "/dev/root /rom squashfs ro,relatime 0 0" > /tmp/procd_mounts.txt
 	cat /proc/mounts | grep -v '^tmpfs /tmp tmpfs' | grep -v ' /shadowrt ' >> /tmp/procd_mounts.txt
