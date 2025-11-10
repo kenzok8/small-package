@@ -9,7 +9,7 @@ msgid ""
 "new instance will be created; otherwise, the existing instance will be "
 "overwritten."
 msgstr ""
-"\"复制/编辑\"将跳转到\"安装\"页面,如果修改ID则创建新实例,否则覆盖原有实例。"
+"“复制/编辑”将跳转到“安装”页面，如果修改ID则创建新实例，否则覆盖原有实例。"
 
 #: luasrc/model/cbi/shadowrt/config.lua:80
 msgid "-- Please choose --"
@@ -57,8 +57,8 @@ msgid ""
 "Delete instance data as well? (If retained, future instances with the same "
 "ID in the same data directory will use this data)"
 msgstr ""
-"是否同时删除实例数据?(若保留,未来相同数据目录下创建相同ID的实例将会使用此数"
-"据)"
+"是否同时删除实例数据？（若保留，未来相同数据目录下创建相同 ID 的实例将会使用"
+"此数据）"
 
 #: luasrc/model/cbi/shadowrt/config.lua:108
 msgid "Enable DHCP server on this instance"
@@ -213,7 +213,7 @@ msgstr "分身无法直接访问磁盘，也无法挂载磁盘，不过 /mnt 可
 msgid ""
 "The following network parameters will only take effect during instance fresh "
 "installation or after reset:"
-msgstr "这些网络参数只在实例全新安装或重置以后才生效："
+msgstr "以下网络参数只在实例全新安装或重置以后才生效："
 
 #: luasrc/model/cbi/shadowrt/config.lua:72
 msgid ""
@@ -226,7 +226,7 @@ msgstr ""
 
 #: luasrc/view/shadowrt/status.htm:9
 msgid "When deleting, you can choose whether to delete the data."
-msgstr "\"删除\"时可选择是否删除数据。"
+msgstr "“删除”时可选择是否删除数据。"
 
 #: luasrc/model/cbi/shadowrt/config.lua:76
 msgid ""

@@ -968,20 +968,20 @@ return view.extend({
 			_('The path of the DNS server.'));
 		so.placeholder = '/dns-query';
 		so.depends('type', 'https');
-		so.depends('type', 'http3');
+		so.depends('type', 'h3');
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'headers', _('Headers'),
 			_('Additional headers to be sent to the DNS server.'));
 		so.depends('type', 'https');
-		so.depends('type', 'http3');
+		so.depends('type', 'h3');
 		so.modalonly = true;
 
 		so = ss.option(form.Value, 'tls_sni', _('TLS SNI'),
 			_('Used to verify the hostname on the returned certificates.'));
 		so.depends('type', 'tls');
 		so.depends('type', 'https');
-		so.depends('type', 'http3');
+		so.depends('type', 'h3');
 		so.depends('type', 'quic');
 		so.modalonly = true;
 

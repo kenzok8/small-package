@@ -14,10 +14,11 @@
 	<table class="table cbi-section-table">
 		<thead>
 			<tr class="tr cbi-section-table-titles anonymous">
+				<th class="th cbi-section-table-cell" ></th>
 				<th class="th cbi-section-table-cell" >ID</th>
 				<th class="th cbi-section-table-cell" ><%:Status%></th>
 				<th class="th cbi-section-table-cell" >IP</th>
-				<th class="th cbi-section-table-cell cbi-section-actions"></th>
+				<th class="th cbi-section-table-cell cbi-section-actions" id="cbi-section-table-head-actions"></th>
 			</tr>
 		</thead>
 		<tbody id="cbi-table-shadowrt-instances">
@@ -25,6 +26,13 @@
 			<% if false then %>
 			<!--
 			<tr class="tr cbi-section-table-row" >
+				<td class="td cbi-value-field">
+					<div>
+						<div class="cbi-checkbox">
+							<input name="selected" type="checkbox" value="istoreos-shadow1">
+						</div>
+					</div>
+				</td>
 				<td class="td cbi-value-field" data-title="ID" ><b>istoreos-shadow1</b>
 				</td>
 				<td class="td cbi-value-field" data-title="状态">
@@ -53,22 +61,32 @@
 			opacity: 0.6;
 			cursor: progress;
 		}
-		#cbi-table-shadowrt-instances .td.cbi-section-actions>div {
-			position: relative;
-			padding-left: 32px !important;
+	</style>
+</div>
+<div class="cbi-section">
+	<div class="cbi-section-node">
+		<div id="cbi-section-batch-actions" class="empty">
+			<div style="display: inline-block;">
+				<input class="btn cbi-button cbi-button-neutral" type="button" name="stop" value="<%:Stop%>">
+			</div>
+			<div style="display: inline-block;">
+				<input class="btn cbi-button cbi-button-neutral" type="button" name="start" value="<%:Start%>">
+			</div>
+			<div style="display: inline-block;">
+				<input class="btn cbi-button cbi-button-neutral" type="button" name="restart" value="<%:Restart%>">
+			</div>
+		</div>
+	</div>
+	<style type="text/css">
+		#cbi-section-batch-actions.spinning, #cbi-section-batch-actions.spinning input {
+			cursor: progress;
 		}
-		#cbi-table-shadowrt-instances.busy .td.cbi-section-actions>div::before {
-			position: absolute;
-			top: 0;
-			bottom: 0;
-			left: .2em;
-			width: 32px;
-			content: "";
-			background: currentColor;
-			mask: url(/luci-static/resources/icons/loading.svg) center / 16px no-repeat;
-			-webkit-mask: url(/luci-static/resources/icons/loading.svg) center / 16px no-repeat;
+		#cbi-section-batch-actions.spinning input, #cbi-section-batch-actions.empty input {
+			pointer-events: none;
+			opacity: 0.6;
 		}
 	</style>
+
 	<%
 	local util  = require "luci.util"
 	local containers = util.trim(util.exec("/usr/libexec/istorec/shadowrt.sh ls"))
@@ -78,9 +96,13 @@
 		var containers = <%=containers%>;
 		console.log(containers);
 		var table = document.getElementById("cbi-table-shadowrt-instances");
+		var tableHeadActions = document.getElementById("cbi-section-table-head-actions");
+		var batchActionsView = document.getElementById("cbi-section-batch-actions");
 
 		var doAction = function(action, name, cb) {
 			table.classList.add("busy");
+			tableHeadActions.classList.add("spinning");
+			batchActionsView.classList.add("spinning");
 			(new XHR()).post('<%=url([[admin/services/shadowrt/action]])%>', { token: '<%=token%>', action: action, name: name },
 				function() {
 					try {
@@ -90,6 +112,8 @@
 							location.href = location.href.replace(/#.*$/,'');
 					} finally {
 						table.classList.remove("busy");
+						tableHeadActions.classList.remove("spinning");
+						batchActionsView.classList.remove("spinning");
 					}
 				}
 			);
@@ -125,6 +149,36 @@
 			var deleteData = confirm("<%:Delete instance data as well? (If retained, future instances with the same ID in the same data directory will use this data)%>");
 			doAction(deleteData?"rmd":"rm", name);
 		};
+		var selected = [];
+		var on_selected = function(name, checked) {
+			console.log("Selected ", name, checked);
+			if (checked) {
+				selected.push(name);
+			} else {
+				var index = selected.indexOf(name);
+				if (index !== -1)
+					selected.splice(index, 1);
+			}
+			if (selected.length > 0) {
+				batchActionsView.classList.remove("empty");
+			} else {
+				batchActionsView.classList.add("empty");
+			}
+		};
+		var batchActions = {
+			stop: action_stop,
+			start: action_start,
+			restart: action_restart
+		};
+		batchActionsView.querySelectorAll('input[type="button"]').forEach(function(button) {
+			var action = button.name;
+			if (batchActions[action]) {
+				var fn = batchActions[action];
+				button.addEventListener("click", function() {
+					fn(selected.join(" "));
+				});
+			}
+		});
 		var status_map = {
 			"running": "<b><%:Running%></b>",
 			"starting": "<i><%:Starting%></i>",
@@ -137,6 +191,22 @@
 			var ip = container.ip;
 			var row = document.createElement("tr");
 			row.className = "tr cbi-section-table-row";
+
+			var selectCell = document.createElement("td");
+			selectCell.className = "td cbi-value-field";
+			var selectDiv = document.createElement("div");
+			var checkboxDiv = document.createElement("div");
+			checkboxDiv.className = "cbi-checkbox";
+			var checkboxInput = document.createElement("input");
+			checkboxInput.type = "checkbox";
+			checkboxInput.name = "selected";
+			checkboxInput.value = name;
+			checkboxInput.addEventListener('change', function(e){on_selected(e.target.value, e.target.checked)});
+			checkboxDiv.appendChild(checkboxInput);
+			selectDiv.appendChild(checkboxDiv);
+			selectCell.appendChild(selectDiv);
+			row.appendChild(selectCell);
+
 			var idCell = document.createElement("td");
 			idCell.className = "td cbi-value-field";
 			idCell.setAttribute("data-title", "ID");
@@ -160,8 +230,8 @@
 			var actionDiv = document.createElement("div");
 
 			var actions = [
-				{fn: action_stop, title: "<%:Stop%>", class: "cbi-button cbi-button-neutral", disabled: status !== "running"},
-				{fn: action_start, title: "<%:Start%>", class: "cbi-button cbi-button-neutral", disabled: status === "running"},
+				{fn: action_stop, title: "<%:Stop%>", class: "cbi-button cbi-button-neutral", disabled: status === "created" || status === "exited"},
+				{fn: action_start, title: "<%:Start%>", class: "cbi-button cbi-button-neutral", disabled: status === "running" || status === "starting"},
 				{fn: action_restart, title: "<%:Restart%>", class: "cbi-button cbi-button-neutral", disabled: false},
 				{fn: action_edit, title: "<%:Copy/Edit%>", class: "cbi-button cbi-button-edit", disabled: false},
 				{fn: action_reset_network, title: "<%:Reset Network%>", class: "cbi-button cbi-button-remove", disabled: false},
