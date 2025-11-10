@@ -237,14 +237,14 @@ return view.extend({
 		/* hm.validateAuth */
 		o = s.taboption('field_general', form.Value, 'username', _('Username'));
 		o.validate = hm.validateAuthUsername;
-		o.depends({type: /^(http|socks|mixed|trojan|anytls|hysteria2)$/});
+		o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2)$/});
 		o.modalonly = true;
 
 		o = s.taboption('field_general', hm.GenValue, 'password', _('Password'));
 		o.password = true;
 		o.validate = hm.validateAuthPassword;
 		o.rmempty = false;
-		o.depends({type: /^(http|socks|mixed|trojan|anytls|hysteria2)$/, username: /.+/});
+		o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2)$/, username: /.+/});
 		o.depends({type: /^(tuic)$/, uuid: /.+/});
 		o.modalonly = true;
 
@@ -303,6 +303,14 @@ return view.extend({
 			return hm.validateShadowsocksPassword.call(this, encmode, section_id, value);
 		}
 		o.depends({type: 'shadowsocks', shadowsocks_chipher: /.+/});
+		o.modalonly = true;
+
+		/* Mieru fields */
+		o = s.taboption('field_general', form.ListValue, 'mieru_transport', _('Transport'));
+		o.default = 'TCP';
+		o.value('TCP');
+		o.value('UDP');
+		o.depends('type', 'mieru');
 		o.modalonly = true;
 
 		/* Tuic fields */

@@ -127,6 +127,7 @@ const inbound_type = [
 	['socks', _('SOCKS')],
 	['mixed', _('Mixed')],
 	['shadowsocks', _('Shadowsocks')],
+	['mieru', _('Mieru')],
 	['vmess', _('VMess')],
 	['vless', _('VLESS')],
 	['trojan', _('Trojan')],
