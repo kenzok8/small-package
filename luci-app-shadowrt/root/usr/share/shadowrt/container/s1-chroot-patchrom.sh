@@ -21,6 +21,7 @@ for file in \
 	/lib/upgrade/platform.sh \
 	/lib/board \
 	/sbin/ujail \
+	/usr/lib/opkg/info/luci-app-oaf.control \
 	/usr/libexec/fan-control \
 	/usr/sbin/sandbox
 do

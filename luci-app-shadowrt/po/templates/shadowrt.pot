@@ -8,6 +8,10 @@ msgid ""
 "overwritten."
 msgstr ""
 
+#: luasrc/model/cbi/shadowrt/config.lua:80
+msgid "-- Please choose --"
+msgstr ""
+
 #: luasrc/view/shadowrt/status.htm:123
 msgid "Are you sure you want to delete this instance?"
 msgstr ""
@@ -25,15 +29,15 @@ msgstr ""
 msgid "Copy/Edit"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:107
+#: luasrc/model/cbi/shadowrt/config.lua:108
 msgid "DHCP Server"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:91
+#: luasrc/model/cbi/shadowrt/config.lua:92
 msgid "DHCP client"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:103
+#: luasrc/model/cbi/shadowrt/config.lua:104
 msgid "DNS Servers"
 msgstr ""
 
@@ -51,7 +55,7 @@ msgid ""
 "ID in the same data directory will use this data)"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:107
+#: luasrc/model/cbi/shadowrt/config.lua:108
 msgid "Enable DHCP server on this instance"
 msgstr ""
 
@@ -61,19 +65,19 @@ msgid ""
 "use the \"Stop\" button below."
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:94
+#: luasrc/model/cbi/shadowrt/config.lua:95
 msgid "Format: xxx.xxx.xxx.xxx/xx"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:99
+#: luasrc/model/cbi/shadowrt/config.lua:100
 msgid "Gateway"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:94
+#: luasrc/model/cbi/shadowrt/config.lua:95
 msgid "IP Address"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:89
+#: luasrc/model/cbi/shadowrt/config.lua:90
 msgid "IP Protocol"
 msgstr ""
 
@@ -93,7 +97,7 @@ msgstr ""
 msgid "Loading view…"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:103
+#: luasrc/model/cbi/shadowrt/config.lua:104
 msgid ""
 "Multiple DNS servers can be separated by spaces, e.g., '8.8.8.8 8.8.4.4'"
 msgstr ""
@@ -128,7 +132,7 @@ msgstr ""
 msgid "Running"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:89
+#: luasrc/model/cbi/shadowrt/config.lua:90
 msgid "Select how this instance gets its IP address"
 msgstr ""
 
@@ -148,11 +152,11 @@ msgid ""
 "the clones will also use the new version."
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:86
+#: luasrc/model/cbi/shadowrt/config.lua:87
 msgid "Share /mnt"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:86
+#: luasrc/model/cbi/shadowrt/config.lua:87
 msgid "Share host's /mnt directory"
 msgstr ""
 
@@ -173,7 +177,7 @@ msgstr ""
 msgid "Starting"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:90
+#: luasrc/model/cbi/shadowrt/config.lua:91
 msgid "Static address"
 msgstr ""
 
@@ -204,7 +208,8 @@ msgstr ""
 #: luasrc/model/cbi/shadowrt/config.lua:72
 msgid ""
 "This ID will be used as hostname and container name, only letters, numbers, "
-"underscore and hyphen are allowed. Same ID will overwrite existing instance"
+"underscore and hyphen are allowed. Same ID will overwrite existing instance, "
+"please avoid using the name as other Docker containers"
 msgstr ""
 
 #: luasrc/view/shadowrt/status.htm:9
@@ -214,5 +219,6 @@ msgstr ""
 #: luasrc/model/cbi/shadowrt/config.lua:76
 msgid ""
 "Will create sub-directory by ID under the selected path, so the path can be "
-"shared among multiple instances"
+"shared among multiple instances. Please select a file system with good Linux "
+"compatibility, such as ext4, btrfs, zfs, etc."
 msgstr ""

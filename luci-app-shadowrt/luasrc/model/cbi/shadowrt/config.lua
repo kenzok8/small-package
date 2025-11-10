@@ -8,52 +8,53 @@ local util  = require "luci.util"
 local jsonc = require "luci.jsonc"
 
 local block_dir = function()
-  local f = io.popen("lsblk -s -f -b -o NAME,FSSIZE,MOUNTPOINT --json", "r")
-  local vals = {}
-  if f then
-    local ret = f:read("*all")
-    f:close()
-    local obj = jsonc.parse(ret)
-    for _, val in pairs(obj["blockdevices"]) do
-      local fsize = val["fssize"]
-      if fsize ~= nil and string.len(fsize) > 10 and val["mountpoint"] then
-        -- fsize > 1G
-        vals[#vals+1] = val["mountpoint"]
-      end
-    end
-  end
-  return vals
+	local f = io.popen("lsblk -s -f -b -o NAME,FSSIZE,MOUNTPOINT,FSTYPE --json", "r")
+	local vals = {}
+	if f then
+		local ret = f:read("*all")
+		f:close()
+		local obj = jsonc.parse(ret)
+		for _, val in pairs(obj["blockdevices"]) do
+			local fsize = val["fssize"]
+			if fsize ~= nil and string.len(fsize) > 9 and val["mountpoint"] 
+					and val["mountpoint"] ~= "/rom" and val["mountpoint"] ~= "/overlay" and val["mountpoint"] ~= "/ext_overlay" then
+				-- fsize > 1GB and has mountpoint
+				vals[#vals+1] = {val["mountpoint"], val["fstype"]}
+			end
+		end
+	end
+	return vals
 end
 
 local homedir = function()
-  local uci = require "luci.model.uci".cursor()
-  local home_dirs = {}
-  home_dirs["main_dir"] = uci:get_first("quickstart", "main", "main_dir", "/root")
-  home_dirs["Configs"] = uci:get_first("quickstart", "main", "conf_dir", home_dirs["main_dir"].."/Configs")
-  return home_dirs
+	local uci = require "luci.model.uci".cursor()
+	local home_dirs = {}
+	home_dirs["main_dir"] = uci:get_first("quickstart", "main", "main_dir", "/root")
+	home_dirs["Configs"] = uci:get_first("quickstart", "main", "conf_dir", home_dirs["main_dir"].."/Configs")
+	return home_dirs
 end
 
 local find_paths = function()
-  local blocks = block_dir()
-  local home_dirs = homedir()
-  local path_name = "Configs"
-  local default_path = ''
-  local configs = {}
+	local blocks = block_dir()
+	local home_dirs = homedir()
+	local path_name = "Configs"
+	local default_path = ''
+	local configs = {}
 
-  default_path = home_dirs[path_name] .. "/ShadoWRT"
-  if #blocks == 0 then
-    table.insert(configs, default_path)
-  else
-    for _, val in pairs(blocks) do 
-      table.insert(configs, val .. "/" .. path_name .. "/ShadoWRT")
-    end
-    local without_conf_dir = "/root/" .. path_name .. "/ShadoWRT"
-    if default_path == without_conf_dir then
-      default_path = configs[1]
-    end
-  end
+	default_path = home_dirs[path_name] .. "/ShadoWRT"
+	if #blocks == 0 then
+		table.insert(configs, {default_path, "rootfs"})
+	else
+		for _, val in pairs(blocks) do
+			table.insert(configs, {val[1] .. "/" .. path_name .. "/ShadoWRT", val[2]})
+		end
+		local without_conf_dir = "/root/" .. path_name .. "/ShadoWRT"
+		if default_path == without_conf_dir then
+			default_path = configs[1][1]
+		end
+	end
 
-  return configs, default_path
+	return configs, default_path
 end
 
 local m, s, o
@@ -69,19 +70,20 @@ s = m:section(TypedSection, "instance", translate("Configuration"),
 s.addremove=false
 s.anonymous=true
 
-o = s:option(Value, "id", "ID".."<b>*</b>", translate("This ID will be used as hostname and container name, only letters, numbers, underscore and hyphen are allowed. Same ID will overwrite existing instance"))
+o = s:option(Value, "id", "ID".."<b>*</b>", translate("This ID will be used as hostname and container name, only letters, numbers, underscore and hyphen are allowed. Same ID will overwrite existing instance, please avoid using the name as other Docker containers"))
 o.rmempty = false
 o.datatype = "hostname"
 
-o = s:option(Value, "data", translate("Data Directory").."<b>*</b>", translate("Will create sub-directory by ID under the selected path, so the path can be shared among multiple instances"))
+o = s:option(Value, "data", translate("Data Directory").."<b>*</b>", translate("Will create sub-directory by ID under the selected path, so the path can be shared among multiple instances. Please select a file system with good Linux compatibility, such as ext4, btrfs, zfs, etc."))
 o.rmempty = false
 o.datatype = "string"
 
+o:value("", translate("-- Please choose --"))
+
 local paths, default_path = find_paths()
 for _, val in pairs(paths) do
-  o:value(val, val)
+	o:value(val[1], val[1] .. " (" .. val[2] .. ")")
 end
-o.default = default_path
 
 o = s:option(Flag, "mnt", translate("Share /mnt"), translate("Share host's /mnt directory"))
 o.default = 0
