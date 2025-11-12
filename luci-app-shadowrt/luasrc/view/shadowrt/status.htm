@@ -18,7 +18,7 @@
 				<th class="th cbi-section-table-cell" >ID</th>
 				<th class="th cbi-section-table-cell" ><%:Status%></th>
 				<th class="th cbi-section-table-cell" >IP</th>
-				<th class="th cbi-section-table-cell cbi-section-actions" id="cbi-section-table-head-actions"></th>
+				<th class="th cbi-section-table-cell cbi-section-actions" id="cbi-section-table-head-actions"><em><%:Refreshing…%></em></th>
 			</tr>
 		</thead>
 		<tbody id="cbi-table-shadowrt-instances">
@@ -56,10 +56,16 @@
 		#cbi-table-shadowrt-instances.busy {
 			cursor: progress;
 		}
-		#cbi-table-shadowrt-instances.busy input {
+		#cbi-table-shadowrt-instances.busy input[type="button"] {
 			pointer-events: none;
 			opacity: 0.6;
 			cursor: progress;
+		}
+		#cbi-section-table-head-actions>em {
+			display: none;
+		}
+		#cbi-section-table-head-actions.refreshing>em {
+			display: initial;
 		}
 	</style>
 </div>
@@ -78,10 +84,10 @@
 		</div>
 	</div>
 	<style type="text/css">
-		#cbi-section-batch-actions.spinning, #cbi-section-batch-actions.spinning input {
+		#cbi-section-batch-actions.busy, #cbi-section-batch-actions.busy input {
 			cursor: progress;
 		}
-		#cbi-section-batch-actions.spinning input, #cbi-section-batch-actions.empty input {
+		#cbi-section-batch-actions.busy input, #cbi-section-batch-actions.empty input {
 			pointer-events: none;
 			opacity: 0.6;
 		}
@@ -99,21 +105,77 @@
 		var tableHeadActions = document.getElementById("cbi-section-table-head-actions");
 		var batchActionsView = document.getElementById("cbi-section-batch-actions");
 
-		var doAction = function(action, name, cb) {
+		const State = {
+			IDLE: 0,
+			BUSY: 1,
+			REFRESH: 2
+		};
+		var state = State.IDLE;
+
+		var busy = function() {
 			table.classList.add("busy");
 			tableHeadActions.classList.add("spinning");
-			batchActionsView.classList.add("spinning");
+			batchActionsView.classList.add("busy");
+		};
+		var idle = function() {
+			table.classList.remove("busy");
+			tableHeadActions.classList.remove("spinning");
+			batchActionsView.classList.remove("busy");
+		};
+		var render = undefined;
+		var refreshTimer = undefined;
+		var refresh = function(inbusy) {
+			if (state !== State.IDLE) {
+				return;
+			}
+			state = State.REFRESH;
+			if (!inbusy)
+				busy();
+			tableHeadActions.classList.add("refreshing");
+			(new XHR()).get('<%=url([[admin/services/shadowrt/ls]])%>', {},
+				function(xhr) {
+					if (state !== State.REFRESH) {
+						return;
+					}
+					try {
+						var resp = JSON.parse(xhr.responseText);
+						if (resp.code === 200) {
+							containers = resp.clones;
+							render();
+						} else {
+							console.error("Failed to get instance list.");
+						}
+					} finally {
+						idle();
+						tableHeadActions.classList.remove("refreshing");
+						refreshTimer = setTimeout(refresh, 5000);
+						state = State.IDLE;
+					}
+				}
+			);
+		};
+
+		var doAction = function(action, name, cb) {
+			if (state !== State.IDLE) {
+				return;
+			}
+			if (refreshTimer !== undefined) {	
+				clearTimeout(refreshTimer);
+				refreshTimer = undefined;
+			}
+			state = State.BUSY;
+			busy();
 			(new XHR()).post('<%=url([[admin/services/shadowrt/action]])%>', { token: '<%=token%>', action: action, name: name },
 				function() {
-					try {
-						if (cb)
+					state = State.IDLE;
+					if (cb) {
+						try {
 							cb();
-						else
-							location.href = location.href.replace(/#.*$/,'');
-					} finally {
-						table.classList.remove("busy");
-						tableHeadActions.classList.remove("spinning");
-						batchActionsView.classList.remove("spinning");
+						} finally {
+							idle();
+						}
+					} else {
+						refresh(true);
 					}
 				}
 			);
@@ -133,6 +195,7 @@
 		var action_edit = function(name) {
 			console.log("Edit ", name);
 			doAction("clone", name, function() {
+				refreshTimer = setTimeout(refresh, 1000);
 				location.href = '<%=url([[admin/services/shadowrt/config]])%>';
 			});
 		};
@@ -151,7 +214,6 @@
 		};
 		var selected = [];
 		var on_selected = function(name, checked) {
-			console.log("Selected ", name, checked);
 			if (checked) {
 				selected.push(name);
 			} else {
@@ -159,6 +221,14 @@
 				if (index !== -1)
 					selected.splice(index, 1);
 			}
+			if (selected.length === 1) {
+				batchActionsView.classList.remove("empty");
+			} else if (selected.length === 0) {
+				batchActionsView.classList.add("empty");
+			}
+		};
+		var reset_selected = function(newSelected) {
+			selected = newSelected || [];
 			if (selected.length > 0) {
 				batchActionsView.classList.remove("empty");
 			} else {
@@ -185,87 +255,96 @@
 			"restarting": "<i><%:Restarting%></i>",
 			"exited": "<%:Stopped%>"
 		};
-		var rows = containers.map(function(container) {
-			var name = container.name;
-			var status = container.status;
-			var ip = container.ip;
-			var row = document.createElement("tr");
-			row.className = "tr cbi-section-table-row";
+		var actions = [
+			{fn: action_stop, title: "<%:Stop%>", class: "cbi-button cbi-button-neutral", disabled: function(status) { return status === "created" || status === "exited"; }},
+			{fn: action_start, title: "<%:Start%>", class: "cbi-button cbi-button-neutral", disabled: function(status) { return status === "running" || status === "starting"; }},
+			{fn: action_restart, title: "<%:Restart%>", class: "cbi-button cbi-button-neutral", disabled: function(status) { return false; }},
+			{fn: action_edit, title: "<%:Copy/Edit%>", class: "cbi-button cbi-button-edit", disabled: function(status) { return false; }},
+			{fn: action_reset_network, title: "<%:Reset Network%>", class: "cbi-button cbi-button-remove", disabled: function(status) { return false; }},
+			{fn: action_remove, title: "<%:Delete%>", class: "cbi-button cbi-button-remove", disabled: function(status) { return false; }},
+		];
+		render = function() {
+			var newSelected = [];
+			var rows = containers.map(function(container) {
+				var name = container.name;
+				var status = container.status;
+				var ip = container.ip;
+				var row = document.createElement("tr");
+				row.className = "tr cbi-section-table-row";
 
-			var selectCell = document.createElement("td");
-			selectCell.className = "td cbi-value-field";
-			var selectDiv = document.createElement("div");
-			var checkboxDiv = document.createElement("div");
-			checkboxDiv.className = "cbi-checkbox";
-			var checkboxInput = document.createElement("input");
-			checkboxInput.type = "checkbox";
-			checkboxInput.name = "selected";
-			checkboxInput.value = name;
-			checkboxInput.addEventListener('change', function(e){on_selected(e.target.value, e.target.checked)});
-			checkboxDiv.appendChild(checkboxInput);
-			selectDiv.appendChild(checkboxDiv);
-			selectCell.appendChild(selectDiv);
-			row.appendChild(selectCell);
+				var selectCell = document.createElement("td");
+				selectCell.className = "td cbi-value-field";
+				var selectDiv = document.createElement("div");
+				var checkboxDiv = document.createElement("div");
+				checkboxDiv.className = "cbi-checkbox";
+				var checkboxInput = document.createElement("input");
+				checkboxInput.type = "checkbox";
+				checkboxInput.name = "selected";
+				checkboxInput.value = name;
+				checkboxInput.checked = selected.indexOf(name) !== -1;
+				if (checkboxInput.checked)
+					newSelected.push(name);
+				checkboxInput.addEventListener('change', function(e){on_selected(e.target.value, e.target.checked)});
+				checkboxDiv.appendChild(checkboxInput);
+				selectDiv.appendChild(checkboxDiv);
+				selectCell.appendChild(selectDiv);
+				row.appendChild(selectCell);
 
-			var idCell = document.createElement("td");
-			idCell.className = "td cbi-value-field";
-			idCell.setAttribute("data-title", "ID");
-			idCell.innerHTML = "<b>" + name + "</b>";
-			row.appendChild(idCell);
+				var idCell = document.createElement("td");
+				idCell.className = "td cbi-value-field";
+				idCell.setAttribute("data-title", "ID");
+				idCell.innerHTML = "<b>" + name + "</b>";
+				row.appendChild(idCell);
 
-			var statusCell = document.createElement("td");
-			statusCell.className = "td cbi-value-field";
-			statusCell.setAttribute("data-title", "<%:Status%>");
-			statusCell.innerHTML = status_map[status] || status;
-			row.appendChild(statusCell);
+				var statusCell = document.createElement("td");
+				statusCell.className = "td cbi-value-field";
+				statusCell.setAttribute("data-title", "<%:Status%>");
+				statusCell.innerHTML = status_map[status] || status;
+				row.appendChild(statusCell);
 
-			var ipCell = document.createElement("td");
-			ipCell.className = "td cbi-value-field";
-			ipCell.setAttribute("data-title", "IP");
-			ipCell.innerHTML = '<a href="http://' + ip + '" target="_blank">' + ip + '</a>';
-			row.appendChild(ipCell);
+				var ipCell = document.createElement("td");
+				ipCell.className = "td cbi-value-field";
+				ipCell.setAttribute("data-title", "IP");
+				ipCell.innerHTML = '<a href="http://' + ip + '" target="_blank">' + ip + '</a>';
+				row.appendChild(ipCell);
 
-			var actionCell = document.createElement("td");
-			actionCell.className = "td cbi-section-table-cell nowrap cbi-section-actions";
-			var actionDiv = document.createElement("div");
+				var actionCell = document.createElement("td");
+				actionCell.className = "td cbi-section-table-cell nowrap cbi-section-actions";
+				var actionDiv = document.createElement("div");
 
-			var actions = [
-				{fn: action_stop, title: "<%:Stop%>", class: "cbi-button cbi-button-neutral", disabled: status === "created" || status === "exited"},
-				{fn: action_start, title: "<%:Start%>", class: "cbi-button cbi-button-neutral", disabled: status === "running" || status === "starting"},
-				{fn: action_restart, title: "<%:Restart%>", class: "cbi-button cbi-button-neutral", disabled: false},
-				{fn: action_edit, title: "<%:Copy/Edit%>", class: "cbi-button cbi-button-edit", disabled: false},
-				{fn: action_reset_network, title: "<%:Reset Network%>", class: "cbi-button cbi-button-remove", disabled: false},
-				{fn: action_remove, title: "<%:Delete%>", class: "cbi-button cbi-button-remove", disabled: false},
-			];
-			var actionBtns = actions.map(function(action) {
-				var input = document.createElement("input");
-				input.type = "button";
-				input.className = action.class;
-				input.title = action.title;
-				input.value = action.title;
-				if (action.disabled) {
-					input.disabled = true;
-				}
-				input.addEventListener("click", action.fn.bind(null, name));
-				return input;
+				var actionBtns = actions.map(function(action) {
+					var input = document.createElement("input");
+					input.type = "button";
+					input.className = action.class;
+					input.title = action.title;
+					input.value = action.title;
+					if (action.disabled(status)) {
+						input.disabled = true;
+					}
+					input.addEventListener("click", action.fn.bind(null, name));
+					return input;
+				});
+				actionDiv.replaceChildren(...actionBtns);
+				actionCell.appendChild(actionDiv);
+				row.appendChild(actionCell);
+				return row;
 			});
-			actionDiv.replaceChildren(...actionBtns);
-			actionCell.appendChild(actionDiv);
-			row.appendChild(actionCell);
-			return row;
-		});
 
-		if (rows.length === 0) {
-			var row = document.createElement("tr");
-			row.className = "tr cbi-section-table-row placeholder";
-			var cell = document.createElement("td");
-			cell.className = "td";
-			cell.innerHTML = '<em><%=translatef([[No instances yet, go to <a href="%s">Install</a>.]], url([[admin/services/shadowrt/config]]))%></em>';
-			row.appendChild(cell);
-			rows.push(row);
-		}
+			if (rows.length === 0) {
+				var row = document.createElement("tr");
+				row.className = "tr cbi-section-table-row placeholder";
+				var cell = document.createElement("td");
+				cell.className = "td";
+				cell.innerHTML = '<em><%=translatef([[No instances yet, go to <a href="%s">Install</a>.]], url([[admin/services/shadowrt/config]]))%></em>';
+				row.appendChild(cell);
+				rows.push(row);
+			}
+			reset_selected(newSelected);
 
-		table.replaceChildren(...rows);
+			table.replaceChildren(...rows);
+		};
+		render();
+		refreshTimer = setTimeout(refresh, 10000);
 
 	});
 	</script>

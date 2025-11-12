@@ -1,4 +1,0 @@
-#!/bin/sh
-# 证书续期脚本
-/usr/bin/acme.sh --cron --home "/etc/ssl/acme" > /var/log/acme.log 2>&1
-exit 0
