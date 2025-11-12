@@ -11,48 +11,48 @@ msgid ""
 msgstr ""
 "“复制/编辑”将跳转到“安装”页面，如果修改ID则创建新实例，否则覆盖原有实例。"
 
-#: luasrc/model/cbi/shadowrt/config.lua:80
+#: luasrc/model/cbi/shadowrt/config.lua:81
 msgid "-- Please choose --"
 msgstr ""
 
-#: luasrc/view/shadowrt/status.htm:123
+#: luasrc/view/shadowrt/status.htm:210
 msgid "Are you sure you want to delete this instance?"
 msgstr "确定要删除此实例吗?"
 
-#: luasrc/view/shadowrt/status.htm:117
+#: luasrc/view/shadowrt/status.htm:204
 msgid ""
 "Are you sure you want to reset the network configuration of this instance?"
 msgstr "确定要重置此实例的网络配置吗?"
 
-#: luasrc/model/cbi/shadowrt/config.lua:67
+#: luasrc/model/cbi/shadowrt/config.lua:68
 msgid "Configuration"
 msgstr "配置"
 
-#: luasrc/view/shadowrt/status.htm:166
+#: luasrc/view/shadowrt/status.htm:262
 msgid "Copy/Edit"
 msgstr "复制/编辑"
 
-#: luasrc/model/cbi/shadowrt/config.lua:108
+#: luasrc/model/cbi/shadowrt/config.lua:109
 msgid "DHCP Server"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:92
+#: luasrc/model/cbi/shadowrt/config.lua:93
 msgid "DHCP client"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:104
+#: luasrc/model/cbi/shadowrt/config.lua:105
 msgid "DNS Servers"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:76
+#: luasrc/model/cbi/shadowrt/config.lua:77
 msgid "Data Directory"
 msgstr "数据文件夹"
 
-#: luasrc/view/shadowrt/status.htm:168
+#: luasrc/view/shadowrt/status.htm:264
 msgid "Delete"
 msgstr "删除"
 
-#: luasrc/view/shadowrt/status.htm:125
+#: luasrc/view/shadowrt/status.htm:212
 msgid ""
 "Delete instance data as well? (If retained, future instances with the same "
 "ID in the same data directory will use this data)"
@@ -60,7 +60,7 @@ msgstr ""
 "是否同时删除实例数据？（若保留，未来相同数据目录下创建相同 ID 的实例将会使用"
 "此数据）"
 
-#: luasrc/model/cbi/shadowrt/config.lua:108
+#: luasrc/model/cbi/shadowrt/config.lua:109
 msgid "Enable DHCP server on this instance"
 msgstr "这个实例提供 DHCP 服务"
 
@@ -70,19 +70,19 @@ msgid ""
 "use the \"Stop\" button below."
 msgstr "分身内执行关机会重启分身，如果要关机，使用下面的“停止”按钮。"
 
-#: luasrc/model/cbi/shadowrt/config.lua:95
+#: luasrc/model/cbi/shadowrt/config.lua:96
 msgid "Format: xxx.xxx.xxx.xxx/xx"
 msgstr "格式：xxx.xxx.xxx.xxx/xx"
 
-#: luasrc/model/cbi/shadowrt/config.lua:100
+#: luasrc/model/cbi/shadowrt/config.lua:101
 msgid "Gateway"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:95
+#: luasrc/model/cbi/shadowrt/config.lua:96
 msgid "IP Address"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:90
+#: luasrc/model/cbi/shadowrt/config.lua:91
 msgid "IP Protocol"
 msgstr ""
 
@@ -98,16 +98,16 @@ msgstr "实例列表"
 msgid "Instructions"
 msgstr "操作说明"
 
-#: luasrc/view/shadowrt/status.htm:24
+#: luasrc/view/shadowrt/status.htm:25
 msgid "Loading view…"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:104
+#: luasrc/model/cbi/shadowrt/config.lua:105
 msgid ""
 "Multiple DNS servers can be separated by spaces, e.g., '8.8.8.8 8.8.4.4'"
 msgstr "多个 DNS 可以用空格隔开，例如‘8.8.8.8 8.8.4.4’"
 
-#: luasrc/view/shadowrt/status.htm:193
+#: luasrc/view/shadowrt/status.htm:338
 msgid "No instances yet, go to <a href=\"%s\">Install</a>."
 msgstr "还没有实例，前往<a href=\"%s\">安装</a>"
 
@@ -115,7 +115,11 @@ msgstr "还没有实例，前往<a href=\"%s\">安装</a>"
 msgid "Overview"
 msgstr ""
 
-#: luasrc/view/shadowrt/status.htm:167
+#: luasrc/view/shadowrt/status.htm:21
+msgid "Refreshing…"
+msgstr "刷新中…"
+
+#: luasrc/view/shadowrt/status.htm:263
 msgid "Reset Network"
 msgstr "重置网络"
 
@@ -125,24 +129,24 @@ msgid ""
 "at installation."
 msgstr "重置网络可将实例的网络配置重置为安装时的状态。"
 
-#: luasrc/view/shadowrt/status.htm:165
+#: luasrc/view/shadowrt/status.htm:82 luasrc/view/shadowrt/status.htm:261
 msgid "Restart"
 msgstr ""
 
-#: luasrc/view/shadowrt/status.htm:131
+#: luasrc/view/shadowrt/status.htm:255
 msgid "Restarting"
 msgstr "重启中"
 
-#: luasrc/view/shadowrt/status.htm:129
+#: luasrc/view/shadowrt/status.htm:253
 msgid "Running"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:90
+#: luasrc/model/cbi/shadowrt/config.lua:91
 msgid "Select how this instance gets its IP address"
 msgstr "实例如何获取自身 IP 地址"
 
 #: luasrc/controller/shadowrt.lua:5 luasrc/model/cbi/shadowrt/overview.lua:7
-#: luasrc/model/cbi/shadowrt/config.lua:62
+#: luasrc/model/cbi/shadowrt/config.lua:63
 msgid "ShadoWRT"
 msgstr "ShadoWRT"
 
@@ -150,7 +154,7 @@ msgstr "ShadoWRT"
 msgid "ShadoWRT can create isolated clones of iStoreOS/OpenWRT."
 msgstr "ShadoWRT 可创建隔离的 iStoreOS/OpenWRT 的分身"
 
-#: luasrc/model/cbi/shadowrt/config.lua:63
+#: luasrc/model/cbi/shadowrt/config.lua:64
 msgid ""
 "ShadoWRT uses the host's /rom as the base image for its clones, so it only "
 "supports hosts using SquashFS firmware. After the host system is upgraded, "
@@ -159,15 +163,15 @@ msgstr ""
 "ShadoWRT 使用宿主的 /rom 作为分身的基础镜像，所以只支持使用 SquashFS 固件的宿"
 "主。宿主系统升级后，分身也会使用新版本。"
 
-#: luasrc/model/cbi/shadowrt/config.lua:87
+#: luasrc/model/cbi/shadowrt/config.lua:88
 msgid "Share /mnt"
 msgstr "共享 /mnt"
 
-#: luasrc/model/cbi/shadowrt/config.lua:87
+#: luasrc/model/cbi/shadowrt/config.lua:88
 msgid "Share host's /mnt directory"
 msgstr "共享宿主的 /mnt 文件夹"
 
-#: luasrc/model/cbi/shadowrt/config.lua:65
+#: luasrc/model/cbi/shadowrt/config.lua:66
 msgid ""
 "Some services are unavailable in the clone, such as hardware-related "
 "services and OAF. In addition, the Docker service is disabled by default "
@@ -179,43 +183,43 @@ msgstr ""
 "禁用，因为宿主已经有 Docker 服务，如需在分身中启用 Docker 服务，可在分身的后"
 "台页面“启动项”中开启。"
 
-#: luasrc/view/shadowrt/status.htm:164
+#: luasrc/view/shadowrt/status.htm:79 luasrc/view/shadowrt/status.htm:260
 msgid "Start"
 msgstr ""
 
-#: luasrc/view/shadowrt/status.htm:130
+#: luasrc/view/shadowrt/status.htm:254
 msgid "Starting"
 msgstr "启动中"
 
-#: luasrc/model/cbi/shadowrt/config.lua:91
+#: luasrc/model/cbi/shadowrt/config.lua:92
 msgid "Static address"
 msgstr ""
 
-#: luasrc/view/shadowrt/status.htm:18 luasrc/view/shadowrt/status.htm:148
+#: luasrc/view/shadowrt/status.htm:19 luasrc/view/shadowrt/status.htm:301
 msgid "Status"
 msgstr ""
 
-#: luasrc/view/shadowrt/status.htm:163
+#: luasrc/view/shadowrt/status.htm:76 luasrc/view/shadowrt/status.htm:259
 msgid "Stop"
 msgstr ""
 
-#: luasrc/view/shadowrt/status.htm:132
+#: luasrc/view/shadowrt/status.htm:256
 msgid "Stopped"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:64
+#: luasrc/model/cbi/shadowrt/config.lua:65
 msgid ""
 "The clone cannot directly access the disk or mount the disk, but /mnt can "
 "share the host's."
 msgstr "分身无法直接访问磁盘，也无法挂载磁盘，不过 /mnt 可以共享宿主的。"
 
-#: luasrc/model/cbi/shadowrt/config.lua:68
+#: luasrc/model/cbi/shadowrt/config.lua:69
 msgid ""
 "The following network parameters will only take effect during instance fresh "
 "installation or after reset:"
 msgstr "以下网络参数只在实例全新安装或重置以后才生效："
 
-#: luasrc/model/cbi/shadowrt/config.lua:72
+#: luasrc/model/cbi/shadowrt/config.lua:73
 msgid ""
 "This ID will be used as hostname and container name, only letters, numbers, "
 "underscore and hyphen are allowed. Same ID will overwrite existing instance, "
@@ -228,7 +232,7 @@ msgstr ""
 msgid "When deleting, you can choose whether to delete the data."
 msgstr "“删除”时可选择是否删除数据。"
 
-#: luasrc/model/cbi/shadowrt/config.lua:76
+#: luasrc/model/cbi/shadowrt/config.lua:77
 msgid ""
 "Will create sub-directory by ID under the selected path, so the path can be "
 "shared among multiple instances. Please select a file system with good Linux "

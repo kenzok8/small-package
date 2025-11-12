@@ -6,6 +6,7 @@ function index()
 	entry({"admin", "services", "shadowrt", "overview"}, form("shadowrt/overview"), _("Overview"), 10).dependent = true
 	entry({"admin", "services", "shadowrt", "config"}, cbi("shadowrt/config"), _("Install"), 20).dependent = true
 	entry({"admin", "services", "shadowrt", "action"}, post("shadowrt_action"))
+	entry({"admin", "services", "shadowrt", "ls"}, call("shadowrt_ls"))
 end
 
 function shadowrt_action()
@@ -20,4 +21,13 @@ function shadowrt_action()
 	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({ code = r })
+end
+
+function shadowrt_ls()
+	local util  = require "luci.util"
+	local clones = util.trim(util.exec("/usr/libexec/istorec/shadowrt.sh ls"))
+	luci.http.prepare_content("application/json")
+	luci.http.write("{\n\"code\":200,\n\"clones\":")
+	luci.http.write(clones)
+	luci.http.write("\n}\n")
 end

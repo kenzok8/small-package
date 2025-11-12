@@ -1,3 +1,0 @@
-#!/bin/sh
-# 日志轮转脚本
-logrotate -f /etc/logrotate.d/nginx-proxy
