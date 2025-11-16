@@ -10,6 +10,10 @@ if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
 
+function m.on_before_save(self)
+	m:set("@global[0]", "flush_set", "1")
+end
+
 -- Add inline CSS to map description
 m.description = (m.description or "") .. [[
 <style>
@@ -139,7 +143,7 @@ source.write = dynamicList_write
 
 sourcePort = s:option(Value, "sourcePort", translate("Source port"))
 
-port = s:option(Value, "port", translate("port"))
+port = s:option(Value, "port", translate("Port"))
 
 domain_list = s:option(TextValue, "domain_list", translate("Domain"))
 domain_list.rows = 10
@@ -230,5 +234,7 @@ ip_list.description = "<br /><ul>"
 .. "</li>"
 .. "<li>" .. translate("Annotation: Begining with #") .. "</li>"
 .. "</ul>"
+
+o = s:option(Flag, "invert", "invert", translate("Invert match result.") .. " " .. translate("Only support Sing-Box."))
 
 return m

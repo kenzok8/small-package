@@ -178,11 +178,11 @@ msgstr "DNS 重定向"
 msgid "Force special DNS server to need proxy devices."
 msgstr "强制需要代理的設備使用专用 DNS 服務器。"
 
-msgid "Clear IPSet"
-msgstr "清空 IPSet"
+msgid "Clear IPSET"
+msgstr "清空 IPSET"
 
-msgid "Clear NFTSet"
-msgstr "清空 NFTSet"
+msgid "Clear NFTSET"
+msgstr "清空 NFTSET"
 
 msgid "Try this feature if the rule modification does not take effect."
 msgstr "如果修改規則後没有生效，请尝試此功能。"
@@ -1113,6 +1113,12 @@ msgstr "预定义域名列表：由'geosite:'開头，余下部分是一个名�
 
 msgid "Annotation: Begining with #"
 msgstr "注释: 由 # 開头"
+
+msgid "Invert match result."
+msgstr "反選匹配結果。"
+
+msgid "Only support Sing-Box."
+msgstr "只支持 Sing-Box。"
 
 msgid "IP: such as '127.0.0.1'."
 msgstr "IP: 形如'127.0.0.1'。"
