@@ -210,6 +210,18 @@ msgstr "<br />与创建的机器人发一条消息，开启对话"
 msgid "Get chat_id"
 msgstr "获取 chat_id"
 
+#: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js:235
+msgid "Optional: specify a thread (topic) ID for forum-style Telegram chats."
+msgstr "可选：用于论坛式 Telegram 群的主题 ID。"
+
+#: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js:241
+msgid "TG API Server"
+msgstr "TG API 服务器"
+
+#: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js:242
+msgid "Override the Telegram API endpoint (scheme + host only), e.g. https://your-telegram-proxy.example"
+msgstr "自定义 Telegram API 地址（仅填写协议和主机），例如：https://your-telegram-proxy.example"
+
 msgid "Recipient Email Address"
 msgstr "收件邮箱地址"
 

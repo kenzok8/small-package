@@ -2,7 +2,7 @@
 	"_api": "这是 telegram api 文件",
 	"_api": "【telegram】",
 	
-	"url": "https://api.telegram.org/bot${tg_token}/sendMessage",
+    "url": "${tg_api_server}/bot${tg_token}/sendMessage",
 	"data": "@${tempjsonpath}",
 	"content_type": "Content-Type: application/json",
 	"str_title_start": "<b>",
@@ -14,7 +14,8 @@
 	"type":
 	  {
 		"text":"\"${str_title_start}${1}${str_title_end}${str_splitline}${nowtime}${2}\"",
-		"chat_id":"\"${chat_id}\"",
+		"chat_id":"\"${tg_chat_id}\"",
+		"message_thread_id":"\"${tg_thread_id}\"",
 		"parse_mode":"\"HTML\""
 	  }
 }
