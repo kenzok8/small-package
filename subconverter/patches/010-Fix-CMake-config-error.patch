@@ -1,0 +1,19 @@
+From ddbc1534aa3221aec0d14c904fe4c076a1f84096 Mon Sep 17 00:00:00 2001
+From: Tindy X <49061470+tindy2013@users.noreply.github.com>
+Date: Fri, 16 May 2025 19:35:02 +0800
+Subject: [PATCH] Fix CMake config error
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ PROJECT(subconverter LANGUAGES CXX)
+ SET(BUILD_TARGET_NAME ${PROJECT_NAME})
+-CMAKE_MINIMUM_REQUIRED(VERSION 3.4)
++CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+ INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/include/")
+ 
