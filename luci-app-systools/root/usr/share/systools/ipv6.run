@@ -16,6 +16,8 @@ FROM_PD=pd
 FROM_ULA=ula
 FROM_NONE=none
 
+ODHCPD_NDP_BUG=false
+
 ipv6_enable_nat() {
 	uci -q delete firewall.nat6
 	uci -q set firewall.nat6="include"
@@ -47,18 +49,20 @@ ipv6_set_lan_addr() {
 	EOF
 	case "$addr" in
 	$FROM_PD)
-		uci -q batch <<-EOF >/dev/null
-			set network.lan.ip6assign='60'
-			add_list network.lan.ip6class='wan6'
-			add_list network.lan.ip6class='wan_6'
-			add_list network.lan.ip6class='wan'
-		EOF
+		uci -q set network.lan.ip6assign='60'
+		if $ODHCPD_NDP_BUG; then
+			uci -q batch <<-EOF >/dev/null
+				add_list network.lan.ip6class='wan6'
+				add_list network.lan.ip6class='wan_6'
+				add_list network.lan.ip6class='wan'
+			EOF
+		fi
 	;;
 	$FROM_ULA)
-		uci -q batch <<-EOF >/dev/null
-			set network.lan.ip6assign='60'
-			add_list network.lan.ip6class='local'
-		EOF
+		uci -q set network.lan.ip6assign='60'
+		if $ODHCPD_NDP_BUG; then
+			uci -q add_list network.lan.ip6class='local'
+		fi
 	;;
 	$FROM_NONE)
 		uci -q del network.lan.ip6assign
@@ -152,6 +156,12 @@ level=$1
 [ -n "$level" ] || level=$LEVEL_PD
 
 echo "Try Level $level"
+
+odhcpd_version=$(grep -o 'Version: [0-9]*' /usr/lib/opkg/info/odhcpd-ipv6only.control | cut -d' ' -f2)
+if [ -n "$odhcpd_version" -a "$odhcpd_version" -lt 2025 ]; then
+	echo "odhcpd version $odhcpd_version detected, enabling NDP bug workaround"
+	ODHCPD_NDP_BUG=true
+fi
 
 # nat
 if [ "$level" = $LEVEL_NAT ]; then
