@@ -222,16 +222,27 @@ return view.extend({
 		o.rmempty = false;
 		o.depends('jsonpath', '/usr/share/wechatpush/api/pushplus.json');
 
-		o = s.taboption('basic', form.Value, 'tg_token', _('TG_token'));
+		o = s.taboption('basic', form.Value, 'tg_token', _('Bot Token'));
 		o.description = _('Get Bot') + ' <a href="https://t.me/BotFather" target="_blank">' + _('Click here') + '</a>' + _('<br />Send a message to the created bot to initiate a conversation.');
 		o.rmempty = false;
 		o.depends('jsonpath', '/usr/share/wechatpush/api/telegram.json');
 
-		o = s.taboption('basic', form.Value, 'chat_id', _('TG_chatid'));
+		o = s.taboption('basic', form.Value, 'tg_chat_id', _('Chat ID'));
 		o.description = _('Get chat_id') + ' <a href="https://t.me/getuserIDbot" target="_blank">' + _('Click here') + '</a>' + _('<br />If you want to send to a group/channel, please create a non-Chinese group/channel (for easier chatid lookup, you can rename it later).<br />Add the bot to the group, send a message, and use https://api.telegram.org/bot token /getUpdates to obtain the chatid.');
 		o.rmempty = false;
 		o.depends('jsonpath', '/usr/share/wechatpush/api/telegram.json');
 
+		o = s.taboption('basic', form.Value, 'tg_thread_id', _('Message Thread ID'));
+		o.description = _('Optional: specify a thread (topic) ID for forum-style Telegram chats.');
+		o.rmempty = false;
+		o.optional = true;
+		o.depends('jsonpath', '/usr/share/wechatpush/api/telegram.json');
+
+		o = s.taboption('basic', form.Value, 'tg_api_server', _('API Server URL'));
+		o.placeholder = 'https://api.telegram.org';
+		o.rmempty = false;
+		o.depends('jsonpath', '/usr/share/wechatpush/api/telegram.json');
+		
 		o = s.taboption('basic', form.Value, 'recipient_email', _('Recipient Email Address'));
 		o.depends('jsonpath', '/usr/share/wechatpush/api/msmtp.json');
 		o.rmempty = false;

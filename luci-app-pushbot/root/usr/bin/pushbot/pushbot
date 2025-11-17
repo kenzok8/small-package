@@ -107,23 +107,6 @@ function diy_send(){
 	curl -X POST -H "$content_type" -d "${data}" "${diyurl}"
 }
 
-# ---------- ShowDoc ----------
-send_to_showdoc(){
-	local api_key=$(uci -q get pushbot.pushbot.showdoc_api_key)
-	local api_token=$(uci -q get pushbot.pushbot.showdoc_api_token)
-	local item_id=$(uci -q get pushbot.pushbot.showdoc_item_id)
-	[ -z "$api_key" -o -z "$api_token" -o -z "$item_id" ] && return 0
-
-	# 把 title + content 合并成 Markdown
-	local doc_content="## $title$str_linefeed$content"
-	doc_content=$(echo "$doc_content" | sed 's/\r//g; s/"/\\"/g; s/'"'/\\'"'/g')
-
-	curl -s -X POST "https://www.showdoc.com.cn/server/api/item/updateByApi" \
-	     -d "api_key=$api_key" \
-	     -d "api_token=$api_token" \
-	     -d "item_id=$item_id" \
-	     -d "content=$doc_content" >/dev/null 2>&1
-}
 # 下载设备MAC厂商信息
 function down_oui(){
 	[ -f ${oui_base} ] && local logrow=$(grep -c "" ${oui_base}) || local logrow="0"
@@ -1194,7 +1177,6 @@ function send(){
 
 	[ ! -z "$device_name" ] && local send_title="【$device_name】${send_title}"
 	[ -z "$send_content" ] && local send_content="${str_splitline}${str_title_start} 我遇到了一个难题${str_title_end}${str_linefeed}${str_tab}定时发送选项错误，你没有选择需要发送的项目，该怎么办呢${str_splitline}"
-	[ "$disturb" -eq 0 ] && [ "$(uci -q get pushbot.pushbot.enable_showdoc)" = "1" ] && send_to_showdoc "$title" "$content"
 	[ "$send_disturb" -eq "0" ] && diy_send "${send_title}" "${send_content}" "${jsonpath}" >/dev/null 2>&1
 	[ $? -eq 1 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】定时推送失败，请检查网络或设置信息" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}定时推送任务完成" >> ${logfile}
 	deltemp
