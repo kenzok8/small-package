@@ -5,17 +5,10 @@ services:
     restart: unless-stopped
     ports:
       - "PORT_VAR:9200"
-    networks:
-      - zdinnavnet
+    network_mode: "bridge"
     environment:
       - TZ=Asia/Shanghai 
     volumes:
       - CONFIG_PATH_VAR/configuration:/app/configuration
       - CONFIG_PATH_VAR/database:/app/database
       - CONFIG_PATH_VAR/logs:/app/Logs
-networks:
-  zdinnavnet:
-      driver: bridge
-
-volumes:
-  fonts_volume:
