@@ -1,3 +1,15 @@
 #!/bin/sh
 
+function get_config_wechatpush(){
+	while [[ "$*" != "" ]]; do
+		eval ${1}='`uci get wechatpush.config.$1`' 2>/dev/null
+		uci del wechatpush.config.$1 2>/dev/null
+		uci commit wechatpush
+		shift
+	done
+}
+
+get_config_wechatpush "chat_id"
+[ -n "$chat_id" ] && uci set wechatpush.config.tg_chat_id="$chat_id"
+
 rm -rf /tmp/luci-* >/dev/null 2>&1

@@ -9,5 +9,6 @@ config main
 
 config zdinnav_config
 	option 'docker_url' 'tkme/zdinnav'
+	option 'version_hub_url' 'https://registry.hub.docker.com/v2/repositories/tkme/zdinnav/tags/'
 	option 'version_url' 'https://raw.githubusercontent.com/MyTkme/ZdinNav-Link/refs/heads/main/version/version.txt'
 	option 'version' '1.0.0'

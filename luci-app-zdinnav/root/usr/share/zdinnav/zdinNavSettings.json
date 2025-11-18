@@ -9,7 +9,7 @@
   },
   "jwtSettings": {
     "expiresIn": "00:30:00",
-    "expiryTime": "15:00:00",
+    "expiryTime": "15.00:00:00",
     "validIssuer": "ZdinNav",
     "validAudience": "ZdinNav.Web"
   },
