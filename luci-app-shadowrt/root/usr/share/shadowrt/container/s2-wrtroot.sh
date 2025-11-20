@@ -10,5 +10,10 @@ fi
 
 echo "exec /sbin/init" >&2
 
+export -n TZ SHLVL HOSTNAME OLDPWD PWD USER LOGNAME
+unset TZ SHLVL HOSTNAME OLDPWD PWD USER LOGNAME
+
+export HOME=/ TERM=linux PATH=/sbin:/bin
+
 exec /sbin/init </dev/null
 
