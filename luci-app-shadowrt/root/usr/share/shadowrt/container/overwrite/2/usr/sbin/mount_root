@@ -164,7 +164,6 @@ clean_overlayfs_redundant_whiteout_marker()
 	find upper -xdev -path 'upper/opt' -prune ! -type d -o -type c -perm 0 -user 0 -group 0 | sed 's#^upper/#/#g' | while read; do
 		line="$REPLY"
 		[ ! -e "$line" -a \( -z "$2" -o ! -e "$2/upper$line" \) ] && \
-			busybox ls -l "upper$line" | grep -Fq 'c---------    1 root     root        0,   0 ' && \
 			rm -f "upper$line"
 	done
 	cd - >/dev/null 2>&1
@@ -178,7 +177,6 @@ clean_overlayfs_redundant_whiteout_marker_luci()
 	find luci -xdev -type c -perm 0 -user 0 -group 0 | while read; do
 		line="$REPLY"
 		[ ! -e "/usr/lib/lua/$line" -a \( -z "$2" -o ! -e "$2/upper/usr/lib/lua/$line" \) ] && \
-			busybox ls -l "$line" | grep -Fq 'c---------    1 root     root        0,   0 ' && \
 			rm -f "$line"
 	done
 	cd - >/dev/null 2>&1
