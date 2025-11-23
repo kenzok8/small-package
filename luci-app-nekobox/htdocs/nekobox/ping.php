@@ -1253,50 +1253,109 @@ function updateLanguage(lang) {
     });
 }
 
+const languageStandardMap = {
+    'zh': 'zh-CN',
+    'hk': 'zh-TW', 
+    'en': 'en-US',
+    'ko': 'ko-KR',
+    'ja': 'ja-JP',
+    'ru': 'ru-RU',
+    'ar': 'ar-EG',
+    'es': 'es-ES',
+    'de': 'de-DE',
+    'fr': 'fr-FR',
+    'th': 'th-TH',
+    'bn': 'bn-BD',
+    'vi': 'vi-VN'
+};
+
+const langToVoiceLangMap = {
+    'zh': ['zh-CN', 'zh-HK', 'zh-TW'],
+    'hk': ['zh-CN', 'zh-HK', 'zh-TW'],
+    'en': ['en-US', 'en-GB', 'en-AU', 'en-CA', 'en-IN'],
+    'ko': ['ko-KR'],
+    'ja': ['ja-JP'],
+    'vi': ['vi-VN'],
+    'th': ['th-TH'],
+    'ru': ['ru-RU'],
+    'ar': ['ar-SA', 'ar-EG', 'ar-AE'],
+    'es': ['es-ES', 'es-MX', 'es-US'],
+    'de': ['de-DE', 'de-AT', 'de-CH'],
+    'fr': ['fr-FR', 'fr-CA', 'fr-CH'],
+    'bn': ['bn-BD', 'bn-IN']
+};
+
 function speakMessage(message) {
-  const langToVoiceMap = {
-    zh: getChineseVoicePreference(),
-    hk: getChineseVoicePreference(),
-    en: 'en-US',
-    ko: 'ko-KR',
-    ja: 'ja-JP',
-    vi: 'vi-VN',
-    ru: 'ru-RU',
-    ar: 'ar-SA',
-    es: 'es-ES',
-    de: 'de-DE',
-    fr: 'fr-FR'
-  };
+    const globalVoiceEnabled = localStorage.getItem('colorVoiceEnabled') !== 'false';
+    if (!globalVoiceEnabled) return;
 
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', './lib/language.txt', true);
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === 4 && xhr.status === 200) {
-      const lang = xhr.responseText.trim();
-      const voiceLang = langToVoiceMap[lang] || 'zh-HK';
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.lang = voiceLang;
-      speechSynthesis.speak(utterance);
+    function speakWithVoices() {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length === 0) {
+            setTimeout(speakWithVoices, 100);
+            return;
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', './lib/language.txt', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const lang = xhr.responseText.trim();
+                
+                const voiceKey = getVoicePreferenceKey(lang);
+                const savedVoiceIndex = localStorage.getItem(voiceKey);
+                
+                let selectedVoice = null;
+                
+                if (savedVoiceIndex !== null) {
+                    const targetLangs = langToVoiceLangMap[lang] || [languageStandardMap[lang] || lang];
+                    const filteredVoices = voices.filter(voice => 
+                        targetLangs.some(targetLang => voice.lang.startsWith(targetLang))
+                    );
+                    selectedVoice = filteredVoices[savedVoiceIndex];
+                }
+                
+                if (!selectedVoice) {
+                    const chineseVoiceKey = getChineseVoiceKey();
+                    const savedChineseIndex = localStorage.getItem(chineseVoiceKey);
+                    const chineseVoices = voices.filter(voice => 
+                        ['zh-CN', 'zh-HK', 'zh-TW'].some(lang => voice.lang.startsWith(lang))
+                    );
+                    
+                    if (savedChineseIndex !== null && chineseVoices[savedChineseIndex]) {
+                        selectedVoice = chineseVoices[savedChineseIndex];
+                    } else if (chineseVoices.length > 0) {
+                        selectedVoice = chineseVoices[0];
+                    }
+                }
+                
+                if (!selectedVoice) {
+                    selectedVoice = voices.find(voice => voice.lang.includes('zh')) || voices[0];
+                }
+                
+                if (selectedVoice) {
+                    const utterance = new SpeechSynthesisUtterance(message);
+                    utterance.voice = selectedVoice;
+                    speechSynthesis.speak(utterance);
+                }
+            }
+        };
+        xhr.send();
     }
-  };
-  xhr.send();
+
+    speakWithVoices();
 }
 
-function getChineseVoicePreference() {
-  return localStorage.getItem('chineseVoiceLang') || 'zh-HK';
+function getVoicePreferenceKey(lang) {
+    if (lang === 'zh' || lang === 'hk') {
+        return 'voicePreference_chinese';
+    }
+    return `voicePreference_${lang}`;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const radios = document.querySelectorAll('input[name="chineseVoice"]');
-  const saved = getChineseVoicePreference();
-  radios.forEach(radio => {
-    if (radio.value === saved) radio.checked = true;
-    radio.addEventListener('change', function() {
-      localStorage.setItem('chineseVoiceLang', this.value);
-      speakMessage(`Chinese voice has been switched to ${this.value}`);
-    });
-  });
-});
+function getChineseVoiceKey() {
+    return 'voicePreference_chinese';
+}
 
 function updateFlagIcon(lang) {
     const flagImg = document.getElementById('flagIcon');
@@ -3645,10 +3704,6 @@ document.addEventListener('keydown', function (event) {
             event.preventDefault();
             document.querySelector('.toggleFloatingLyricsBtn')?.click();
             break;
-        case 'ArrowDown': 
-            event.preventDefault();
-            toggleControlPanel();
-            break;
         case 'Delete':
           if (currentTrackIndex !== 0) {
             currentTrackIndex = 0;
@@ -5012,6 +5067,31 @@ document.getElementById('removeAppColorBtn').addEventListener('click', function(
         if (typeof speakMessage === 'function') speakMessage(successMsg);
     });
 });
+
+function checkColorChange() {
+    const saved = localStorage.getItem('appColorSettings');
+    
+    if (saved) {
+        const settings = JSON.parse(saved);
+        
+        const rootStyles = getComputedStyle(document.documentElement);
+        const currentHueValue = parseFloat(rootStyles.getPropertyValue('--base-hue').trim()) || 0;
+        const currentChromaValue = parseFloat(rootStyles.getPropertyValue('--base-chroma').trim()) || 0;
+        
+        if (Math.abs(settings.hue - currentHueValue) > 1 || Math.abs(settings.chroma - currentChromaValue) > 0.01) {
+            document.documentElement.style.setProperty('--base-hue', settings.hue);
+            document.documentElement.style.setProperty('--base-chroma', settings.chroma);
+            
+            const textL = settings.lightness > 60 ? 20 : 95;
+            document.documentElement.style.setProperty('--text-primary', `oklch(${textL}% 0 0)`);
+            
+            const theme = settings.lightness > 60 ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+    }
+}
+
+setInterval(checkColorChange, 1000);
 </script>
 
 <script>
@@ -6788,7 +6868,7 @@ h2#neko-title.neko-title-style {
         0 8px 32px 4px color-mix(in oklch, var(--glow-secondary), transparent 50%),
         inset 0 0 24px color-mix(in oklch, var(--glow-primary), transparent 60%);
 	transform: translateY(-4px) !important;
-	animation-play-state: paused;
+        /* animation-play-state: paused; */
 }
 
 @keyframes breath {

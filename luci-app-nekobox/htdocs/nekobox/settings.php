@@ -133,7 +133,7 @@ $razordVersion = getRazordVersion();
             <button class="btn btn-pink" id="checkCliverButton">
               <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
             </button>
-            <button class="btn btn-info" id="updateButton" title="Update to Latest Version" onclick="showUpdateVersionModal()">
+            <button class="btn btn-info" id="updateButton" onclick="showUpdateVersionModal()">
               <i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span>
             </button>
           </div>
@@ -150,7 +150,7 @@ $razordVersion = getRazordVersion();
             <button class="btn btn-pink" id="checkUiButton">
               <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
             </button>
-            <button class="btn btn-info" id="updateUiButton" title="Update Panel" onclick="showPanelSelector()">
+            <button class="btn btn-info" id="updateUiButton" onclick="showPanelSelector()">
               <i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span>
             </button>
           </div>
@@ -167,7 +167,7 @@ $razordVersion = getRazordVersion();
             <button class="btn btn-pink" id="checkSingboxButton">
               <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
             </button>
-            <button class="btn btn-info" id="singboxOptionsButton" title="Singbox Related Operations">
+            <button class="btn btn-info" id="singboxOptionsButton">
               <i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span>
             </button>
           </div>
@@ -184,7 +184,7 @@ $razordVersion = getRazordVersion();
             <button class="btn btn-pink" id="checkMihomoButton">
               <i class="bi bi-search"></i> <span data-translate="detect_button">Detect</span>
             </button>
-            <button class="btn btn-info" id="updateCoreButton" title="Update Mihomo Core" onclick="showMihomoVersionSelector()">
+            <button class="btn btn-info" id="updateCoreButton" onclick="showMihomoVersionSelector()">
               <i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span>
             </button>
           </div>
@@ -357,8 +357,8 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="modal-body">
                 <select id="mihomoVersionSelect" class="form-select">
-                    <option value="stable" data-translate="mihomo_version_stable">Stable</option>
                     <option value="preview" data-translate="mihomo_version_preview">Preview</option>
+                    <option value="stable" data-translate="mihomo_version_stable">Stable</option>
                 </select>
             </div>
             <div class="modal-footer">
@@ -370,29 +370,41 @@ $razordVersion = getRazordVersion();
 </div>
 
 <div class="modal fade" id="optionsModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="optionsModalLabel" data-translate="options_modal_title">Select Operation</h5>
                 <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-warning text-start" role="alert">
-                    <strong data-translate="note_label"></strong>
-                    <span data-translate="options_modal_note" class="note-text">
-                        Please prioritize selecting the Channel 1 version for updates to ensure compatibility. The system will first check and dynamically generate the latest version number for download. If the Channel 1 update is unavailable, you can try the Channel 2 version.
-                    </span>
-                </div>
-                <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
-                    <button class="btn btn-info btn-lg flex-fill" style="max-width: 240px;" onclick="showSingboxVersionSelector()" data-translate="singbox_channel_one">
-                        Update Singbox Core (Channel One)
-                    </button>
-                    <button class="btn btn-success btn-lg flex-fill" style="max-width: 240px;" onclick="showSingboxVersionSelectorForChannelTwo()" data-translate="singbox_channel_two">
-                        Update Singbox Core (Channel Two)
-                    </button>
-                    <button type="button" class="btn btn-warning btn-lg flex-fill" style="max-width: 240px;" id="operationOptionsButton" data-translate="other_operations">
-                        Other operations
-                    </button>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card h-100 text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title" data-translate="singbox_channel_one">Singbox Core (Channel One)</h5>
+                                <p class="card-text flex-grow-1" data-translate="channel_one_desc">Backup channel</p>
+                                <button class="btn btn-info mt-auto" onclick="showSingboxVersionSelector()"><i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title" data-translate="singbox_channel_two">Singbox Core (Channel Two)</h5>
+                                <p class="card-text flex-grow-1" data-translate="channel_two_desc">Official preferred channel</p>
+                                <button class="btn btn-info mt-auto" onclick="showSingboxVersionSelectorForChannelTwo()"><i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100 text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title" data-translate="other_operations">Other Operations</h5>
+                                <p class="card-text flex-grow-1" data-translate="other_operations_desc">Additional management options</p>
+                                <button class="btn btn-info mt-auto" id="operationOptionsButton"><i class="bi bi-arrow-repeat"></i> <span data-translate="update_button">Update</span></button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="d-flex justify-content-end mt-3">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">
@@ -414,7 +426,7 @@ $razordVersion = getRazordVersion();
             <div class="modal-body">
                 <div class="alert alert-warning text-start" role="alert">
                     <strong data-translate="note_label"></strong>
-                    <span data-translate="operation_modal_note">
+                    <span data-translate="operation_modal_note" class="text-black">
                         Please select an operation based on your requirements
                     </span>
                 </div>
@@ -484,10 +496,9 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="singboxVersionSelectForChannelTwo" data-translate="singboxVersionModalTitle">Select version</label>
                     <select id="singboxVersionSelectForChannelTwo" class="form-select">
-                        <option value="stable" data-translate="stable">Stable</option>
                         <option value="preview" data-translate="preview">Preview</option>  
+                        <option value="stable" data-translate="stable">Stable</option>
                     </select>
                 </div>
             </div>

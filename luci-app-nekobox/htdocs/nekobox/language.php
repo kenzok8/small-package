@@ -1052,6 +1052,9 @@
         'subscriptionClearedSuccess' => 'Abonnementinformationen erfolgreich gelöscht',
         'upToDate' => 'Aktuell',
         'updateAvailable' => 'Update verfügbar',
+        'channel_one_desc' => 'Backup-Kanal',
+        'channel_two_desc' => 'Offizieller bevorzugter Kanal',
+        'other_operations_desc' => 'Zusätzliche Verwaltungsoptionen',
         'save_file_error' => 'Fehler beim Speichern der Datei: {message}'
     ],
     'fr' => [
@@ -2110,6 +2113,9 @@
         'subscriptionClearedSuccess' => "Informations d'abonnement effacées avec succès",
         'upToDate' => 'À jour',
         'updateAvailable' => 'Mise à jour disponible',
+        'channel_one_desc' => 'Canal de secours',
+        'channel_two_desc' => 'Canal préféré officiel',
+        'other_operations_desc' => 'Options de gestion supplémentaires',
         'save_file_error' => 'Erreur de sauvegarde : {message}'
     ],
     'zh' => [
@@ -3056,6 +3062,9 @@
         'subscriptionClearedSuccess' => '订阅信息已清空成功',
         'upToDate' => '已最新',
         'updateAvailable' => '有更新',
+        'channel_one_desc' => '备用通道',
+        'channel_two_desc' => '官方首选通道',
+        'other_operations_desc' => '附加管理选项',
         'save_file_error' => '保存文件出错：{message}'
     ],
     'en' => [
@@ -4189,6 +4198,9 @@
         'subscriptionClearedSuccess' => 'Subscription information cleared successfully',
         'upToDate' => 'Up-to-date',
         'updateAvailable' => 'Update Available',
+        'channel_one_desc' => 'Backup channel',
+        'channel_two_desc' => 'Official preferred channel',
+        'other_operations_desc' => 'Additional management options',
         'save_file_error' => 'Save error: {message}'
     ],
     'hk' => [
@@ -5223,6 +5235,9 @@
         'subscriptionClearedSuccess' => '訂閱信息已清空成功',
         'upToDate' => '已最新',
         'updateAvailable' => '有更新',
+        'channel_one_desc' => '备用通道',
+        'channel_two_desc' => '官方首选通道',
+        'other_operations_desc' => '附加管理选项',
         'save_file_error' => '儲存檔案時發生錯誤：{message}'
     ],
     'ko' => [
@@ -6295,6 +6310,9 @@
         'subscriptionClearedSuccess' => '구독 정보가 성공적으로 삭제되었습니다',
         'upToDate' => '최신',
         'updateAvailable' => '업데이트 가능',
+        'channel_one_desc' => '백업 채널',
+        'channel_two_desc' => '공식 선호 채널',
+        'other_operations_desc' => '추가 관리 옵션',
         'save_file_error' => '파일 저장 오류: {message}'
     ],
     'ja' => [
@@ -7354,6 +7372,9 @@
         'subscriptionClearedSuccess' => 'サブスクリプション情報が正常にクリアされました',
         'upToDate' => '最新',
         'updateAvailable' => '更新あり',
+        'channel_one_desc' => 'バックアップチャネル',
+        'channel_two_desc' => '公式推奨チャネル',
+        'other_operations_desc' => '追加管理オプション',
         'save_file_error' => 'ファイルの保存中にエラーが発生しました：{message}'
    ],
     'ru' => [
@@ -8436,6 +8457,9 @@
         'subscriptionClearedSuccess' => 'Информация о подписках успешно очищена',
         'upToDate' => 'Актуально',
         'updateAvailable' => 'Доступно обновление',
+        'channel_one_desc' => 'Резервный канал',
+        'channel_two_desc' => 'Официальный предпочтительный канал',
+        'other_operations_desc' => 'Дополнительные параметры управления',
         'save_file_error' => 'Ошибка сохранения файла: {message}'
     ],
     'ar' => [
@@ -9491,6 +9515,9 @@
         'subscriptionClearedSuccess' => 'تم مسح معلومات الاشتراك بنجاح',
         'upToDate' => 'محدث',
         'updateAvailable' => 'تحديث متاح',
+        'channel_one_desc' => 'قناة احتياطية',
+        'channel_two_desc' => 'القناة المفضلة الرسمية',
+        'other_operations_desc' => 'خيارات إدارة إضافية',
         'save_file_error' => 'خطأ في حفظ الملف: {message}'
     ],
     'es' => [
@@ -10587,6 +10614,9 @@
         'subscriptionClearedSuccess' => 'Información de suscripción borrada con éxito',
         'upToDate' => 'Actualizado',
         'updateAvailable' => 'Actualización disponible',
+        'channel_one_desc' => 'Canal de respaldo',
+        'channel_two_desc' => 'Canal preferido oficial',
+        'other_operations_desc' => 'Opciones de gestión adicionales',
         'save_file_error' => 'Error al guardar: {message}'
     ],
     'vi' => [
@@ -11679,6 +11709,9 @@
         'subscriptionClearedSuccess' => 'Thông tin đăng ký đã được xóa thành công',
         'upToDate' => 'Đã mới nhất',
         'updateAvailable' => 'Có bản cập nhật',
+        'channel_one_desc' => 'Kênh dự phòng',
+        'channel_two_desc' => 'Kênh ưu tiên chính thức',
+        'other_operations_desc' => 'Tùy chọn quản lý bổ sung',
         'save_file_error' => 'Lỗi khi lưu: {message}'
     ]
 ];
