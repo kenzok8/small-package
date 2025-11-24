@@ -6,10 +6,10 @@
 	"data": "${tempjsonpath}",
 	"content_type": "",
 	"command": "'\"To: \\(.to)\\nSubject: \\(.subject)\\nContent-Type: text/html\\n\\n\\(.body)\"'",
-	"str_title_start": "<h3>",
+	"str_title_start": "<br><h3 style=\\\"margin: 0em 0em;\\\">",
 	"str_title_end": "</h3>",
 	"str_linefeed": "<br>",
-	"str_splitline": "<br>----<br>",
+	"str_splitline": "<br><br><hr>",
 	"str_space": " ",
 	"str_tab": "    ",
 	"type":
