@@ -36,7 +36,6 @@ msgstr ""
 "项目地址：<a href=\"https://github.com/EasyTier/EasyTier\" target=\"_blank\">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;"
 "<a href=\"http://easytier.cn\" target=\"_blank\">官网文档</a>&nbsp;&nbsp;"
 "<a href=\"http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" target=\"_blank\">QQ群</a>&nbsp;&nbsp;"
-"<a href=\"https://doc.oee.icu\" target=\"_blank\">菜鸟教程</a>"
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:720
 msgid "API Port"
 msgstr "API端口"
