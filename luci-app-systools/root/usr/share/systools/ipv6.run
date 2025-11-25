@@ -19,6 +19,7 @@ FROM_NONE=none
 ODHCPD_NDP_BUG=false
 
 ipv6_enable_nat() {
+	uci -q set network.wan6.sourcefilter=0
 	uci -q delete firewall.nat6
 	uci -q set firewall.nat6="include"
 	uci -q set firewall.nat6.path="/usr/share/systools/firewall.nat6"
@@ -217,7 +218,7 @@ else
 		if [ "$level" = $LEVEL_PD ]; then
 			ipv6_set_lan_addr $FROM_PD
 		elif [ "$level" = $LEVEL_NAT ]; then
-			uci set network.globals.ula_prefix="$(uci get network.globals.ula_prefix | sed 's/^./d/')"
+			# uci set network.globals.ula_prefix="$(uci get network.globals.ula_prefix | sed 's/^./d/')"
 			ipv6_set_lan_addr $FROM_ULA
 		else
 			ipv6_set_lan_addr $FROM_NONE
