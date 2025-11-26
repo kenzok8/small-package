@@ -26,13 +26,13 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
-	TITLE:=aihelper
+	TITLE:=AiHelper
 	DEPENDS:=@(x86_64||aarch64||arm)
 	URL:=https://github.com/Carseason/openwrt-packages
 endef
 
 define Package/$(PKG_NAME)/description
-  aihelper is a dashboard & user guide
+  AiHelper is a dashboard & user guide
 endef
 
 define Package/$(PKG_NAME)/conffiles
