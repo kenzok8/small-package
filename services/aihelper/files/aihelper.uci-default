@@ -1,0 +1,7 @@
+#!/bin/sh
+
+
+/etc/init.d/aihelper enable
+/etc/init.d/aihelper start
+
+exit 0

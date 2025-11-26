@@ -1,0 +1,22 @@
+<script <script type="text/javascript">//<![CDATA[
+XHR.poll(5, '<%=url("admin/services/aihelper_status")%>', null,function(x, st){
+	var el = document.getElementById('aihelper_status');
+	if (st && el){
+		if(!st.running){
+			el.innerHTML = '<br/><em style=\"color:red\"><%:The AiHelper service is not running.%></em>';
+		}
+		if (st.running){
+			el.innerHTML = '<br/><em style=\"color:green\"><%:The AiHelper service is running.%></em>'
+				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open AiHelper%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
+		}
+	}
+});
+//]]></script>
+
+<fieldset class="cbi-section">
+	<legend>状态</legend>
+	<p id="aihelper_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
+
