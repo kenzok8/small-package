@@ -1,0 +1,67 @@
+#
+# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2020 jjm2473@gmail.com
+#
+# This is free software, licensed under the GNU General Public License v3.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_ARCH_aihelper:=$(ARCH)
+
+PKG_NAME:=aihelper
+PKG_VERSION:=0.0.1
+PKG_RELEASE:=
+PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/Carseason/openwrt-packages/releases/download/prebuilt/
+PKG_HASH:=4e8c947cbc3e5063bcb9b8c2889941a81b454f2595ee50555807215547de2b51
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
+
+PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/$(PKG_NAME)
+	SECTION:=net
+	CATEGORY:=Network
+	SUBMENU:=Web Servers/Proxies
+	TITLE:=aihelper
+	DEPENDS:=@(x86_64||aarch64||arm)
+	URL:=https://github.com/Carseason/openwrt-packages
+endef
+
+define Package/$(PKG_NAME)/description
+  aihelper is a dashboard & user guide
+endef
+
+define Package/$(PKG_NAME)/conffiles
+/etc/config/aihelper
+endef
+
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	if [ -f /etc/uci-defaults/09-aihelper ]; then
+		chmod 755 /etc/uci-defaults/09-aihelper
+		/etc/uci-defaults/09-aihelper && rm -f /etc/uci-defaults/09-aihelper
+	fi
+fi
+endef
+
+define Build/Configure
+endef
+
+define Build/Compile
+endef
+
+define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/aihelper.$(PKG_ARCH_aihelper) $(1)/usr/sbin/aihelper
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/opencode.$(PKG_ARCH_aihelper) $(1)/usr/sbin/opencode
+	$(INSTALL_BIN) ./files/aihelper.init $(1)/etc/init.d/aihelper
+	$(INSTALL_BIN) ./files/aihelper.uci-default $(1)/etc/uci-defaults/09-aihelper
+	$(INSTALL_CONF) ./files/aihelper.config $(1)/etc/config/aihelper
+endef
+
+$(eval $(call BuildPackage,$(PKG_NAME)))
