@@ -33,7 +33,8 @@ config_t_set() {
 IDLIST="/var/$NAME.idlist"
 TMPID="/var/$NAME.tmpid"
 LOG_FILE="/var/log/$NAME.log"
-list_type=$(config_t_get $NAME list_type 0 )
+list_type=$(config_t_get $NAME list_type "blacklist" )
+
 CHAIN=$(config_t_get $NAME chain 0 )
 bin_nft=$(which nft 2>/dev/null)
 bin_iptables=$(which iptables 2>/dev/null)
@@ -41,7 +42,7 @@ bin_ip6tables=$(which ip6tables 2>/dev/null)
 
 dbg() {
     local d="$(date "+%Y-%m-%d %H:%M:%S")"
-    [ "$DEBUG" -eq 1 ] && echo -e "\nDEBUG: $@ \n"
+    [ "$DEBUG" -eq 1 ] && echo -e "\nDEBUG: $@ \n" >>$LOG_FILE
 }
 
 # Check if nftables/iptables is available
@@ -96,6 +97,7 @@ get_target_info() {
     elif echo "$target" | grep -qE '^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$'; then
         table="bridge"
         addr_type="ether_addr"
+        target=$(echo "$target" | tr '[:upper:]' '[:lower:]')
     elif echo "$target" | grep -qE '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'; then
         table="ip6"
         addr_type="ipv6_addr"
@@ -117,20 +119,33 @@ nft_set_exists() {
     nft list sets | grep -q "$table $set"
 }
 
+nft_chain_exists() {
+    local table=$1
+    local chain=$2
+    nft list chain "$table" filter "$chain" 2>/dev/null >/dev/null
+}
+
 stop_timecontrol() {
     if [ -n "$nftables_ver" ]; then
         for chain in "ip" "bridge" "ip6"; do
             if nft_table_exists "$chain filter"; then
-                if nft_set_exists "$chain filter" "${list_type}_list"; then
-                    nft delete set "$chain" filter "${list_type}_list"
+                if nft_chain_exists "$chain" filter "$CHAIN"; then
+                    nft flush chain "$chain" filter "$CHAIN"
                 fi
-                nft delete table "$chain" filter
+                if nft_chain_exists "$chain" filter "forward_$CHAIN"; then
+                    nft flush chain "$chain" filter "forward_$CHAIN"
+                fi
+                if nft_set_exists "$chain filter" "${list_name}_list"; then
+                    nft delete set "$chain" filter "${list_name}_list"
+                fi
             fi
         done
         dbg "All nftables rules have been cleared."
     else
         iptables -D INPUT -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null
         ip6tables -D INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null
+        iptables -D FORWARD -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null
+        ip6tables -D FORWARD -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null
         ipset flush timecontrol_blacklist 2>/dev/null
         ipset flush timecontrol_blacklistv6 2>/dev/null
         ipset destroy timecontrol_blacklist 2>/dev/null
@@ -161,8 +176,16 @@ init_timecontrol() {
                 nft add table "$chain" filter
             fi
             
-            if ! nft_set_exists "$chain filter" "${list_type}_list"; then
-                nft add set "$chain" filter "${list_type}_list" "{ type $addr_type; }"
+            if ! nft_set_exists "$chain filter" "${list_name}_list"; then
+                nft add set "$chain" filter "${list_name}_list" "{ type $addr_type; flags interval; }"
+            fi
+            
+            if ! nft_chain_exists "$chain" filter "$CHAIN"; then
+                nft add chain "$chain" filter "$CHAIN" "{ type filter hook input priority -100; }"
+            fi
+            
+            if ! nft_chain_exists "$chain" filter "forward_$CHAIN"; then
+                nft add chain "$chain" filter "forward_$CHAIN" "{ type filter hook forward priority -100; }"
             fi
         done
     elif [ -n "$iptables_ver" ]; then
@@ -171,9 +194,14 @@ init_timecontrol() {
         
         iptables -C INPUT -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null || \
         iptables -I INPUT -m set --match-set timecontrol_blacklist src -j DROP
-        
+        iptables -C FORWARD -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null || \
+        iptables -I FORWARD -m set --match-set timecontrol_blacklist src -j DROP
+    
         ip6tables -C INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null || \
         ip6tables -I INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP
+
+        ip6tables -C FORWARD -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null || \
+        ip6tables -I FORWARD -m set --match-set timecontrol_blacklistv6 src -j DROP
     fi
 }
 
@@ -207,24 +235,29 @@ timeadd() {
     esac
     
     if [ -n "$nftables_ver" ]; then
-        nft add element "$table" filter "${list_type}_list" "{ $target }"
+        nft add element "$table" filter "${list_name}_list" "{ $target }"
         
-        if [ "$list_type" = "blacklist" ]; then
-            if ! nft list chain "$table" filter "$CHAIN" 2>/dev/null; then
-                nft add chain "$table" filter "$CHAIN" "{ type filter hook input priority -100; }"
-            fi
-            nft add rule "$table" filter "$CHAIN" "$daddr" @"${list_type}_list" drop
-            nft add rule "$table" filter "$CHAIN" "$saddr" @"${list_type}_list" drop
-        elif [ "$list_type" = "whitelist" ]; then
-            if ! nft list chain "$table" filter "$CHAIN" 2>/dev/null; then
-                nft add chain "$table" filter "$CHAIN" "{ type filter hook input priority -100; policy drop; }"
-            fi
-            nft add rule "$table" filter "$CHAIN" "$daddr" @"${list_type}_list" accept
-            nft add rule "$table" filter "$CHAIN" "$saddr" @"${list_type}_list" accept
+        if [ "$list_name" = "blacklist" ]; then
+            nft flush chain "$table" filter "$CHAIN"
+            nft flush chain "$table" filter "forward_$CHAIN"
+            nft add rule "$table" filter "$CHAIN" "$saddr" @"${list_name}_list" drop
+            nft add rule "$table" filter "forward_$CHAIN" "$saddr" @"${list_name}_list" drop
+            
+        elif [ "$list_name" = "whitelist" ]; then
+            nft flush chain "$table" filter "$CHAIN"
+            nft flush chain "$table" filter "forward_$CHAIN"
+            nft add rule "$table" filter "$CHAIN" "$saddr" @"${list_name}_list" accept
+            nft add rule "$table" filter "$CHAIN" "$saddr" drop
+            nft add rule "$table" filter "forward_$CHAIN" "$saddr" @"${list_name}_list" accept
+            nft add rule "$table" filter "forward_$CHAIN" "$saddr" drop
         fi
+        
+        dbg "Added $target to $list_name in table $table"
+        
     else
         if ! ipset test "$ipset_name" "$target" 2>/dev/null; then
             ipset add "$ipset_name" "$target"
+            dbg "Added $target to ipset $ipset_name"
         fi
     fi
 }
@@ -247,9 +280,11 @@ timedel() {
     esac
     
     if [ -n "$nftables_ver" ]; then
-        nft delete element "$table" filter "${list_type}_list" "{ $target }"
+        nft delete element "$table" filter "${list_name}_list" "{ $target }"
+        dbg "Removed $target from $list_name in table $table"
     else
         ipset del "$ipset_name" "$target" 2>/dev/null
+        dbg "Removed $target from ipset $ipset_name"
     fi
 }
 
