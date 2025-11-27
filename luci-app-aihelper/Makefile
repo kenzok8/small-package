@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=aihelper
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=
+PKG_RELEASE:=3
 LUCI_DEPENDS:=+aihelper +opencode
 LUCI_MINIFY_CSS:=0
 LUCI_MINIFY_JS:=0
