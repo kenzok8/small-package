@@ -39,6 +39,13 @@ define Package/$(PKG_NAME)/conffiles
 endef
 
 define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	if [ -f /etc/uci-defaults/09-aihelper ]; then
+		chmod 755 /etc/uci-defaults/09-aihelper
+		/etc/uci-defaults/09-aihelper && rm -f /etc/uci-defaults/09-aihelper
+	fi
+fi
 endef
 
 define Build/Configure
@@ -50,7 +57,6 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/aihelper.$(PKG_ARCH_aihelper) $(1)/usr/sbin/aihelper
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/opencode.$(PKG_ARCH_aihelper) $(1)/usr/sbin/opencode
 	$(INSTALL_BIN) ./files/aihelper.init $(1)/etc/init.d/aihelper
 	$(INSTALL_BIN) ./files/aihelper.uci-default $(1)/etc/uci-defaults/09-aihelper
 	$(INSTALL_CONF) ./files/aihelper.config $(1)/etc/config/aihelper
