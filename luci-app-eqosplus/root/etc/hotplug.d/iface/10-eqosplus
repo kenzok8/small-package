@@ -1,0 +1,5 @@
+#!/bin/sh
+[ "$ACTION" = "ifup" ] && [ "$INTERFACE" = "wan" ] && {
+    sleep 5
+    /etc/init.d/eqosplus restart
+}

@@ -119,25 +119,16 @@ nft_set_exists() {
     nft list sets | grep -q "$table $set"
 }
 
-nft_chain_exists() {
-    local table=$1
-    local chain=$2
-    nft list chain "$table" filter "$chain" 2>/dev/null >/dev/null
-}
-
 stop_timecontrol() {
     if [ -n "$nftables_ver" ]; then
         for chain in "ip" "bridge" "ip6"; do
             if nft_table_exists "$chain filter"; then
-                if nft_chain_exists "$chain" filter "$CHAIN"; then
-                    nft flush chain "$chain" filter "$CHAIN"
+                    nft flush chain "$chain" filter input
+                    nft flush chain "$chain" filter forward
+                if nft_set_exists "$chain filter" "${list_type}_list"; then
+                    nft delete set "$chain" filter "${list_type}_list"
                 fi
-                if nft_chain_exists "$chain" filter "forward_$CHAIN"; then
-                    nft flush chain "$chain" filter "forward_$CHAIN"
-                fi
-                if nft_set_exists "$chain filter" "${list_name}_list"; then
-                    nft delete set "$chain" filter "${list_name}_list"
-                fi
+                nft delete table "$chain" filter
             fi
         done
         dbg "All nftables rules have been cleared."
@@ -176,16 +167,16 @@ init_timecontrol() {
                 nft add table "$chain" filter
             fi
             
-            if ! nft_set_exists "$chain filter" "${list_name}_list"; then
-                nft add set "$chain" filter "${list_name}_list" "{ type $addr_type; flags interval; }"
+            if ! nft_set_exists "$chain filter" "${list_type}_list"; then
+                nft add set "$chain" filter "${list_type}_list" "{ type $addr_type; }"
             fi
             
-            if ! nft_chain_exists "$chain" filter "$CHAIN"; then
-                nft add chain "$chain" filter "$CHAIN" "{ type filter hook input priority -100; }"
+            if ! nft list chain "$chain" filter input 2>/dev/null; then
+                nft add chain "$chain" filter input "{ type filter hook input priority -100; }"
             fi
             
-            if ! nft_chain_exists "$chain" filter "forward_$CHAIN"; then
-                nft add chain "$chain" filter "forward_$CHAIN" "{ type filter hook forward priority -100; }"
+            if ! nft list chain "$chain" filter forward 2>/dev/null; then
+                nft add chain "$chain" filter forward "{ type filter hook forward priority -100; }"
             fi
         done
     elif [ -n "$iptables_ver" ]; then
@@ -235,24 +226,12 @@ timeadd() {
     esac
     
     if [ -n "$nftables_ver" ]; then
-        nft add element "$table" filter "${list_name}_list" "{ $target }"
-        
-        if [ "$list_name" = "blacklist" ]; then
-            nft flush chain "$table" filter "$CHAIN"
-            nft flush chain "$table" filter "forward_$CHAIN"
-            nft add rule "$table" filter "$CHAIN" "$saddr" @"${list_name}_list" drop
-            nft add rule "$table" filter "forward_$CHAIN" "$saddr" @"${list_name}_list" drop
-            
-        elif [ "$list_name" = "whitelist" ]; then
-            nft flush chain "$table" filter "$CHAIN"
-            nft flush chain "$table" filter "forward_$CHAIN"
-            nft add rule "$table" filter "$CHAIN" "$saddr" @"${list_name}_list" accept
-            nft add rule "$table" filter "$CHAIN" "$saddr" drop
-            nft add rule "$table" filter "forward_$CHAIN" "$saddr" @"${list_name}_list" accept
-            nft add rule "$table" filter "forward_$CHAIN" "$saddr" drop
-        fi
-        
-        dbg "Added $target to $list_name in table $table"
+        nft add element "$table" filter "${list_type}_list" "{ $target }"
+        nft add rule "$table" filter input "$daddr" @"${list_type}_list" drop 2>/dev/null
+        nft add rule "$table" filter input "$saddr" @"${list_type}_list" drop 2>/dev/null
+        nft add rule "$table" filter forward "$daddr" @"${list_type}_list" drop 2>/dev/null
+        nft add rule "$table" filter forward "$saddr" @"${list_type}_list" drop 2>/dev/null
+        dbg "Added $target to $list_type in table $table"
         
     else
         if ! ipset test "$ipset_name" "$target" 2>/dev/null; then
@@ -280,8 +259,11 @@ timedel() {
     esac
     
     if [ -n "$nftables_ver" ]; then
-        nft delete element "$table" filter "${list_name}_list" "{ $target }"
-        dbg "Removed $target from $list_name in table $table"
+        nft delete element "$table" filter "${list_type}_list" "{ $target }"
+        nft delete rule "$table" filter input "$daddr" @"${list_type}_list" 2>/dev/null
+        nft delete rule "$table" filter input "$saddr" @"${list_type}_list" 2>/dev/null
+        nft delete rule "$table" filter forward "$daddr" @"${list_type}_list" 2>/dev/null
+        nft delete rule "$table" filter forward "$saddr" @"${list_type}_list" 2>/dev/null
     else
         ipset del "$ipset_name" "$target" 2>/dev/null
         dbg "Removed $target from ipset $ipset_name"

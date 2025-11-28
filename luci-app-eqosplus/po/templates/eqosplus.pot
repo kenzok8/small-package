@@ -1,61 +1,61 @@
 
 msgid "Eqosplus"
-msgstr "定时限速"
+msgstr ""
 
 msgid "Network speed limit"
-msgstr "定时网速限制"
+msgstr ""
 
 msgid "Running state"
-msgstr "运行状态"
+msgstr ""
 
 msgid "Not running"
-msgstr "未运行"
+msgstr ""
 
 msgid "Running"
-msgstr "已运行"
+msgstr ""
 
 msgid "Users can limit the network speed for uploading/downloading through MAC, IP, and IP segments (192.168.110.00-192.168.10.200). The speed unit is MB/second."
-msgstr "用户可以通过MAC、IP、IP段（192.168.10.100-192.168.10.200),限制上传/下载的网络速度。速度单位为MB/秒。。"
+msgstr ""
 
 msgid "MAC/IP"
-msgstr "MAC/IP"
+msgstr ""
 
 msgid "Downloads"
-msgstr "下载速度"
+msgstr ""
 
 msgid "Uploads"
-msgstr "上传速度"
+msgstr ""
 
 msgid "Comment"
-msgstr "备注"
+msgstr ""
 
 msgid "Upload bandwidth(Mbit/s)"
-msgstr "上传总带宽(Mbit/s)"
+msgstr ""
 
 msgid "Download bandwidth(Mbit/s)"
-msgstr "下载总带宽(Mbit/s)"
+msgstr ""
 
 msgid "Start control time"
-msgstr "起控时间"
+msgstr ""
 
 msgid "Stop control time"
-msgstr "停控时间"
+msgstr ""
 
 msgid "Week Day(1~7)"
-msgstr "星期(1~7)"
+msgstr ""
 
 msgid "Suggested feedback:"
-msgstr "建议反馈:"
+msgstr ""
 
 msgid "Set the interface used for restriction, use pppoe-wan for dialing, use WAN hardware interface for DHCP mode (such as eth1), and use br-lan for bypass mode"
-msgstr "设定用来限制网络速度的接口,拨号使用pppoe-wan,DHCP模式使用WAN口的硬件接口(如:eth1),通用使用br-lan接口"
+msgstr ""
 
 msgid "Rest Day"
-msgstr "休息日"
+msgstr ""
 
 msgid "Workday"
-msgstr "工作日"
+msgstr ""
 
 msgid "Automatic settings"
-msgstr "自动设置"
+msgstr ""
 

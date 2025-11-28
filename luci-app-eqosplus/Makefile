@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2006-2017 OpenWrt.org
-# Copyright (C) 2022-2025 sirpdboy <herboy2008@gmail.com>
+# Copyright (C) 2006-2017 OpenWrt.org#
+# Copyright (C) 2022-2025 sirpdboy herboy2008@gmail.com https://github.com/sirpdboy/luci-app-eqosplus
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -14,11 +14,11 @@ PKG_LICENSE:=Apache-2.0
 
 LUCI_TITLE:=LuCI support for eqosplus.
 LUCI_DESCRIPTION:=LuCI support for Easy eqosplus(Support speed limit based on IP address).
-LUCI_DEPENDS:=+bash +tc +kmod-sched-core +kmod-ifb +kmod-sched +iptables-mod-filter +iptables-mod-nat-extra
+LUCI_DEPENDS:=+ip-full +tc +nftables +bc +kmod-ifb
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=1.2.8
-PKG_RELEASE:=20250723
+PKG_VERSION:=1.3.0
+PKG_RELEASE:=20251128
 PKG_MAINTAINER:=sirpdboy <herboy2008@gmail.com>
 
 define Build/Compile
