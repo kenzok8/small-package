@@ -11,11 +11,11 @@ config device
 	option download '1'
 	option timeend '23:55'
 	option upload '1'
-	option mac ''
+	option mac '192.168.10.10'
 	option enable '0'
 
 config device
-	option mac '192.168.10.10/24'
+	option mac '192.168.10.10-192.168.10.200'
 	option timestart '00:00'
 	option timeend '00:00'
 	option week '0'
