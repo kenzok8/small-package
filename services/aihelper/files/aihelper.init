@@ -6,6 +6,9 @@ USE_PROCD=1
 get_config() {
 	config_get_bool enabled $1 enabled 1
 }
+aihelper_prepare() {
+    killall aihelper 2>/dev/null
+}
 
 start_service() { 
 	config_load aihelper
@@ -16,4 +19,8 @@ start_service() {
 	procd_set_param stderr 1
 	procd_set_param respawn
 	procd_close_instance
+}
+
+stop_service() {
+    aihelper_prepare
 }
