@@ -15,8 +15,7 @@ reset_pkg() {
     local line
     local dep
     local deps
-    echo "${pkgname}" | grep -q '^kmod-
-^kernel$
+    echo "${pkgname}" | grep -q '^kernel$
 ^libc$
 ^libgcc1$
 ^libatomic1$
