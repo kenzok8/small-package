@@ -7,7 +7,7 @@ local ipc = require "luci.ip"
 local a, t, e
 
 a = Map("eqosplus", translate("Network speed limit"))
-a.description = translate("Users can limit the network speed for uploading/downloading through MAC, IP, and IP segments (192.168.110.00-192.168.10.200). The speed unit is MB/second."))
+a.description = translate("Users can limit the network speed for uploading/downloading through MAC, IP, and IP segments (192.168.110.00-192.168.10.200). The speed unit is MB/second.")
 a.template = "eqosplus/index"
 
 t = a:section(TypedSection, "eqosplus")
