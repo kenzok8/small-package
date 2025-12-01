@@ -12,3 +12,5 @@ uci -q batch <<-EOF >/dev/null
 	set floatip.main.role=main
 	commit floatip
 EOF
+
+exit 0

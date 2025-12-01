@@ -108,7 +108,7 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 
 		/* Sudoku */
 		key: cfg.sudoku_key,
-		"aead-method": cfg.sudoku_aead_method,
+		"aead-method": replace(cfg.sudoku_aead_method || '', 'chacha20-ietf-poly1305', 'chacha20-poly1305') || null,
 		"padding-min": strToInt(cfg.sudoku_padding_min),
 		"padding-max": strToInt(cfg.sudoku_padding_max),
 		"table-type": cfg.sudoku_table_type,
