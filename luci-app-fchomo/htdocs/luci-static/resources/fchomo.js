@@ -128,6 +128,7 @@ const inbound_type = [
 	['mixed', _('Mixed')],
 	['shadowsocks', _('Shadowsocks')],
 	['mieru', _('Mieru')],
+	['sudoku', _('Sudoku')],
 	['vmess', _('VMess')],
 	['vless', _('VLESS')],
 	['trojan', _('Trojan')],
@@ -159,6 +160,7 @@ const outbound_type = [
 	['ss', _('Shadowsocks')],
 	//['ssr', _('ShadowsocksR')], // Deprecated
 	['mieru', _('Mieru')],
+	['sudoku', _('Sudoku')],
 	['snell', _('Snell')],
 	['vmess', _('VMess')],
 	['vless', _('VLESS')],
@@ -267,6 +269,19 @@ const rules_logical_payload_count = {
 	//'SUB-RULE': 0,
 };
 
+const aead_cipher_length = {
+	/* AEAD */
+	'aes-128-gcm': 0,
+	'aes-192-gcm': 0,
+	'aes-256-gcm': 0,
+	'chacha20-ietf-poly1305': 0,
+	'xchacha20-ietf-poly1305': 0,
+	/* AEAD 2022 */
+	'2022-blake3-aes-128-gcm': 16,
+	'2022-blake3-aes-256-gcm': 32,
+	'2022-blake3-chacha20-poly1305': 32
+};
+
 const shadowsocks_cipher_methods = [
 	/* Stream */
 	['none', _('none')],
@@ -282,18 +297,11 @@ const shadowsocks_cipher_methods = [
 	['2022-blake3-chacha20-poly1305', _('2022-blake3-chacha20-poly1305')]
 ];
 
-const shadowsocks_cipher_length = {
-	/* AEAD */
-	'aes-128-gcm': 0,
-	'aes-192-gcm': 0,
-	'aes-256-gcm': 0,
-	'chacha20-ietf-poly1305': 0,
-	'xchacha20-ietf-poly1305': 0,
-	/* AEAD 2022 */
-	'2022-blake3-aes-128-gcm': 16,
-	'2022-blake3-aes-256-gcm': 32,
-	'2022-blake3-chacha20-poly1305': 32
-};
+const sudoku_cipher_methods = [
+	['none', _('none')],
+	['aes-128-gcm', _('aes-128-gcm')],
+	['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')]
+];
 
 const trojan_cipher_methods = [
 	['aes-128-gcm', _('aes-128-gcm')],
@@ -1131,7 +1139,7 @@ function handleGenKey(option) {
 		(function(length) {
 			if (length && length > 0)
 				password = generateRand('base64', length);
-		}(shadowsocks_cipher_length[required_method]));
+		}(aead_cipher_length[required_method]));
 
 		return widget(option).value = password;
 	}
@@ -1363,7 +1371,7 @@ function validatePresetIDs(disoption_list, section_id) {
 }
 
 function validateShadowsocksPassword(encmode, section_id, value) {
-	let length = shadowsocks_cipher_length[encmode];
+	let length = aead_cipher_length[encmode];
 	if (typeof length !== 'undefined') {
 		length = Math.ceil(length/3)*4;
 		if (encmode.match(/^2022-/)) {
@@ -1541,8 +1549,9 @@ return baseclass.extend({
 	rules_type,
 	rules_logical_type,
 	rules_logical_payload_count,
+	aead_cipher_length,
 	shadowsocks_cipher_methods,
-	shadowsocks_cipher_length,
+	sudoku_cipher_methods,
 	trojan_cipher_methods,
 	tls_client_auth_types,
 	tls_client_fingerprints,
