@@ -95,8 +95,8 @@ add_samba_share() {
         cat <<-EOF
     add $1 sambashare
     set $1.@sambashare[-1].unishare=1
-    set $1.@sambashare[-1].path=$2
-    set $1.@sambashare[-1].name=$3
+    set $1.@sambashare[-1].path='$2'
+    set $1.@sambashare[-1].name='$3'
     set $1.@sambashare[-1].read_only=yes
     set $1.@sambashare[-1].force_root=1
     set $1.@sambashare[-1].inherit_owner=yes
