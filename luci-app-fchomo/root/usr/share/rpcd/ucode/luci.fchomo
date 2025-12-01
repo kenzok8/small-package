@@ -43,7 +43,8 @@ const methods = {
 	mihomo_generator: {
 		args: { type: 'type', params: 'params' },
 		call: function(req) {
-			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair', 'vless-x25519', 'vless-mlkem768', 'ech-keypair']))
+			/* https://github.com/MetaCubeX/mihomo/blob/Alpha/component/generator/cmd.go */
+			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair', 'ech-keypair', 'vless-mlkem768', 'vless-x25519']))
 				return { result: false, error: 'illegal type' };
 
 			const type = req.args?.type;

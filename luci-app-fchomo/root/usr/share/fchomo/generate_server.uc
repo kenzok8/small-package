@@ -106,6 +106,15 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		/* Mieru */
 		transport: cfg.mieru_transport,
 
+		/* Sudoku */
+		key: cfg.sudoku_key,
+		"aead-method": cfg.sudoku_aead_method,
+		"padding-min": strToInt(cfg.sudoku_padding_min),
+		"padding-max": strToInt(cfg.sudoku_padding_max),
+		"table-type": cfg.sudoku_table_type,
+		seed: cfg.sudoku_seed,
+		"handshake-timeout": strToInt(cfg.sudoku_handshake_timeout) ?? null,
+
 		/* Tuic */
 		"congestion-controller": cfg.tuic_congestion_controller,
 		"max-idle-time": durationToSecond(cfg.tuic_max_idle_time),
