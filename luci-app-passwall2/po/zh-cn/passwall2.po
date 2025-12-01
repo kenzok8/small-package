@@ -325,6 +325,15 @@ msgstr "节点备注"
 msgid "Add Mode"
 msgstr "添加方式"
 
+msgid "Save Order"
+msgstr "保存当前顺序"
+
+msgid "Saved current page order successfully."
+msgstr "保存当前页面顺序成功。"
+
+msgid "Drag to reorder"
+msgstr "拖动以重排"
+
 msgid "Type"
 msgstr "类型"
 
@@ -1573,6 +1582,12 @@ msgstr "协议参数。 如果启用会随机浪费流量。"
 msgid "Protocol parameter. Enable length block encryption."
 msgstr "协议参数。启用长度块加密。"
 
+msgid "TLS Chain Fingerprint (SHA256)"
+msgstr "TLS 证书链指纹（SHA256）"
+
+msgid "Once set, connects only when the server’s chain fingerprint matches."
+msgstr "设置后，仅在服务器证书链指纹匹配时连接。"
+
 msgid "ECH Config"
 msgstr "ECH 配置"
 
@@ -2180,7 +2195,7 @@ msgid "%s type node subscriptions are not currently supported, skip this node."
 msgstr "暂时不支持 %s 类型的节点订阅，跳过此节点。"
 
 msgid "Update [%s]"
-msgstr "'更新【%s】"
+msgstr "更新【%s】"
 
 msgid "Matching node:"
 msgstr "匹配节点："
@@ -2202,6 +2217,9 @@ msgstr "第五匹配节点："
 
 msgid "Unable to find the best matching node, now replaced with:"
 msgstr "无法找到最匹配的节点，当前已更换为："
+
+msgid "Unable to find a new node. Please confirm and process manually."
+msgstr "无法匹配到新节点，请手动确认处理。"
 
 msgid "No node information updates are available."
 msgstr "没有可用的节点信息更新。"

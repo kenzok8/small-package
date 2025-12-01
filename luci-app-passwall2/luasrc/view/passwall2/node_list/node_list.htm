@@ -18,6 +18,7 @@ if node then
 	end
 end
 -%>
+<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js"></script>
 
 <style>
 table th, .table .th {
@@ -55,9 +56,9 @@ table td, .table .td {
 }
 
 @media (prefers-color-scheme: dark) {
-    ._now_use_bg {
-        background: #4a90e2 !important;
-    }
+	._now_use_bg {
+		background: #4a90e2 !important;
+	}
 }
 
 .td.cbi-section-actions {
@@ -70,20 +71,112 @@ table td, .table .td {
 	gap: 4px;
 }
 
-.node-wrapper .cbi-input-checkbox {
-	flex-grow: 0 !important;
-	flex-basis: auto;
-}
-
 .cbi-tabmenu > li {
-    margin-right: 2px !important;
+	margin-right: 2px !important;
 }
 
 .cbi-tabmenu > li:last-child {
-    margin-right: 0 !important;
+	margin-right: 0 !important;
 }
 
+.node-wrapper .drag-handle {
+	cursor: grab !important;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 20px;
+	font-weight: 100;
+	padding: 0 !important;
+	line-height: inherit;
+	user-select: none;
+	color: #00000070;
+	align-self: stretch;
+}
 
+#cbi-passwall2-nodes .pw-checkbox, #cbi-passwall2-nodes th:nth-child(1) {
+	padding-right: 0px;
+}
+
+#select_all_btn {
+	display: none;
+}
+
+/* enable flex for small screens*/
+@media screen and (max-width: 1152px) {
+	.cbi-section-table-row {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: space-between;
+	}
+
+	#cbi-passwall2-nodes-default-fieldset {
+		margin: 0;
+	}
+
+	.cbi-section-table-titles {
+		display: none !important;
+	}
+
+	/* meticulously control how each component occupies the limited space we have */
+	#cbi-passwall2-nodes .pw-checkbox, #cbi-passwall2-nodes th:nth-child(1) {
+		flex: 0 0 40px;
+		min-width: 0;
+	}
+
+	#cbi-passwall2-nodes .pw-remark {
+		flex: 1 1 30%;
+		min-width: 0;
+	}
+
+	#cbi-passwall2-nodes .pw-ping, #cbi-passwall2-nodes .pw-tcping, #cbi-passwall2-nodes .pw-urltest {
+		flex: 0 0 50px;
+		white-space: nowrap;
+		min-width: 0;
+	}
+
+	.pw-actions {
+		padding-top: 0 !important;
+		border-top-width: 0 !important;
+		flex: 1 1 350px;
+	}
+
+	#select_all_btn {
+		display: inline-block !important;
+	}
+}
+
+/* shrink actionbar even further for mobile devices */
+@media screen and (max-width: 500px) {
+	.node-wrapper {
+		gap: 0;
+	}
+
+	.cbi-button {
+		margin-left: 0 !important;
+		margin-right: 1px !important;
+	}
+
+	.pw-actions {
+		padding-left: 5px!important;
+		padding-right: 5px !important;
+	}
+}
+
+.sortable-chosen {
+	background-color: rgba(220, 235, 245, 0.4) !important;
+	opacity: 0.7;
+}
+
+.sortable-ghost {
+	background: #cce5ff !important;
+	height: 3px !important;
+}
+
+.dragging-row {
+	background-color: rgba(131, 191, 255, 0.7) !important;
+	box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 </style>
 
 <% if api.is_js_luci() then -%>
@@ -102,11 +195,7 @@ table td, .table .td {
 	function cbi_t_switch(section, tab) {
 		if( cbi_t[section] && cbi_t[section][tab] ) {
 			// Before switching tabs, first deselect all currently active tabs.
-			var btn = document.getElementById("select_all_btn");
-			if (btn) {
-				dechecked_all_node(btn);
-			}
-
+			dechecked_all_node();
 			var o = cbi_t[section][tab];
 			var h = document.getElementById('tab.' + section);
 			for( var tid in cbi_t[section] ) {
@@ -131,10 +220,7 @@ table td, .table .td {
 		if (typeof(cbi_t_switch) === "function") {
 			var old_switch = cbi_t_switch;
 			cbi_t_switch = function(section, tab) {
-				var btn = document.getElementById("select_all_btn");
-				if (btn) {
-					dechecked_all_node(btn);
-				}
+				dechecked_all_node();
 				return old_switch(section, tab);
 			};
 		}
@@ -225,47 +311,70 @@ table td, .table .td {
 		document.getElementById("set_node_div").style.display="none";
 		document.getElementById("set_node_name").innerHTML = "";
 	}
-	
-	function _cbi_row_top(id) {
-		//It has been damaged and awaits repair or other solutions.
-		var dom = document.getElementById("cbi-passwall2-" + id);
-		if (dom) {
-			var trs = document.getElementById("cbi-passwall2-nodes").getElementsByClassName("cbi-section-table-row");
-			if (trs && trs.length > 0) {
-				for (var i = 0; i < trs.length; i++) {
-					var up = dom.getElementsByClassName("cbi-button-up");
-					if (up) {
-						cbi_row_swap(up[0], true, 'cbi.sts.passwall2.nodes');
-					}
-				}
-			}
+
+	function row_top(btn) {
+		const row = btn.closest("tr");
+		if (!row) return;
+		const parent = row.parentNode;
+		let firstDataRow = parent.querySelector("tr:not(.cbi-section-table-titles)");
+		if (firstDataRow && firstDataRow !== row) {
+			parent.insertBefore(row, firstDataRow);
 		}
 	}
-	
+
+	function set_select_all_state(sectionChecked) {
+		var visibleContainer = document.querySelector('#cbi-passwall2-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall2-nodes > .cbi-tabcontainer[style*="display: block"]');
+		if (!visibleContainer) return;
+		var nodes = visibleContainer.getElementsByClassName("nodes_select");
+		var selectAllChk = visibleContainer.querySelector(".nodes_select_all");
+		var selectAllBtn = document.getElementById("select_all_btn");
+		for (var i = 0; i < nodes.length; i++) {
+			nodes[i].checked = sectionChecked;
+		}
+		if (selectAllChk) {
+			selectAllChk.checked = sectionChecked;
+			selectAllChk.title = sectionChecked ? "<%:DeSelect all%>" : "<%:Select all%>";
+			selectAllChk.setAttribute("onclick", sectionChecked ? "dechecked_all_node(this)" : "checked_all_node(this)");
+		}
+		if (selectAllBtn) {
+			selectAllBtn.value = sectionChecked ? "<%:DeSelect all%>" : "<%:Select all%>";
+			selectAllBtn.setAttribute("onclick", sectionChecked ? "dechecked_all_node(this)" : "checked_all_node(this)");
+		}
+	}
+
 	function checked_all_node(btn) {
-		var visibleContainer = document.querySelector('#cbi-passwall2-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall2-nodes > .cbi-tabcontainer[style*="display: block"]');
-		if (!visibleContainer) return;
-		var doms = visibleContainer.getElementsByClassName("nodes_select");
-		if (doms && doms.length > 0) {
-			for (var i = 0 ; i < doms.length; i++) {
-				doms[i].checked = true;
-			}
-			btn.value = "<%:DeSelect all%>";
-			btn.setAttribute("onclick", "dechecked_all_node(this)");
-		}
+		set_select_all_state(true);
 	}
-	
+
 	function dechecked_all_node(btn) {
+		set_select_all_state(false);
+	}
+
+	function update_select_state() {
 		var visibleContainer = document.querySelector('#cbi-passwall2-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall2-nodes > .cbi-tabcontainer[style*="display: block"]');
 		if (!visibleContainer) return;
-		var doms = visibleContainer.getElementsByClassName("nodes_select");
-		if (doms && doms.length > 0) {
-			for (var i = 0 ; i < doms.length; i++) {
-				doms[i].checked = false;
-			}
-			btn.value = "<%:Select all%>";
-			btn.setAttribute("onclick", "checked_all_node(this)");
+		var nodes = visibleContainer.getElementsByClassName("nodes_select");
+		if (!nodes.length) return;
+		var selectAllChk = visibleContainer.querySelector(".nodes_select_all");
+		var selectAllBtn = document.getElementById("select_all_btn");
+		var checkedCount = 0;
+		for (var i = 0; i < nodes.length; i++) {
+			if (nodes[i].checked) checkedCount++;
 		}
+		var allChecked = checkedCount === nodes.length;
+		var title = allChecked ? "<%:DeSelect all%>" : "<%:Select all%>";
+		var onclickFunc = allChecked ? "dechecked_all_node(this)" : "checked_all_node(this)";
+
+		function updateElement(el) {
+			if (!el) return;
+			if ("checked" in el) el.checked = allChecked;
+			if ("title" in el) el.title = title;
+			if ("value" in el) el.value = title;
+			el.setAttribute("onclick", onclickFunc);
+		}
+
+		updateElement(selectAllChk);
+		updateElement(selectAllBtn);
 	}
 	
 	function delete_select_nodes() {
@@ -321,6 +430,66 @@ table td, .table .td {
 		return { address: address, port: port };
 	}
 	
+	function get_node_order(group) {
+		let table = document.getElementById("cbi-passwall2-nodes-" + group + "-table");
+		if (!table) {
+			return;
+		}
+		let rows = table.querySelectorAll("tr.cbi-section-table-row");
+		if (!rows || rows.length === 0) {
+			return;
+		}
+		var ids = [];
+		rows.forEach(function(row) {
+			var id = row.id.replace("cbi-passwall2-", "");
+			ids.push(id);
+		});
+		return ids;
+	}
+
+	function save_current_page_order(group) {
+		var table = document.getElementById("cbi-passwall2-nodes-" + group + "-table");
+		if (!table) {
+			alert("<%:No table!%>");
+			return;
+		}
+		var rows = table.querySelectorAll("tr.cbi-section-table-row");
+		if (!rows || rows.length === 0) {
+			alert("<%:No nodes!%>");
+			return;
+		}
+		var btn = document.getElementById("save_order_btn_" + group);
+		if (btn) {
+			btn.style.display = "none";
+			btn.disabled = true;
+		}
+		var ids = [];
+		rows.forEach(function(row) {
+			var id = row.id.replace("cbi-passwall2-", "");
+			ids.push(id);
+		});
+		XHR.get('<%=api.url("save_node_order")%>', {
+				group: group,
+				ids: ids.join(",")
+			},
+			function(x, result) {
+				if (btn) {
+					btn.style.display = null;
+					btn.disabled = false;
+				}
+				if (x && x.status === 200) {
+					origin_group_node_order[group] = get_node_order(group);
+					alert("<%:Saved current page order successfully.%>");
+					if (btn) {
+						btn.style.display = "none";
+					}
+				} else {
+					alert("<%:Save failed!%>");
+				}
+			}
+		);
+	}
+
 	function get_now_use_node() {
 		XHR.get('<%=api.url("get_now_use_node")%>', null,
 			function(x, result) {
@@ -505,6 +674,79 @@ table td, .table .td {
 			}
 		}
 	}
+
+	function arraysEqual(a, b) {
+		if (a === b) return true;
+		if (a == null || b == null) return false;
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (a[i] !== b[i]) return false;
+		}
+		return true;
+	}
+
+	// List drag and rearrange
+	function initSortableForTable(table) {
+		if (!table) return null;
+		let group = table.id.replace("cbi-passwall2-nodes-", "").replace("-table", "")
+		var root = table.querySelector('tbody') || table;
+		if (root._sortable_initialized) return root._sortable_instance;
+		root._sortable_initialized = true;
+		var opts = {
+			handle: ".drag-handle",
+			draggable: "tr.cbi-section-table-row",
+			animation: 150,
+			ghostClass: "dragging-row",
+			fallbackOnBody: true,
+			forceFallback: false,
+			swapThreshold: 0.65,
+			onEnd: function (evt) {
+				//save_current_page_order(group); // Auto save
+				let save_order_btn = document.getElementById("save_order_btn_" + group);
+				if (save_order_btn) {
+					const new_order = get_node_order(group);
+					if (!arraysEqual(new_order, origin_group_node_order[group])) {
+						save_order_btn.style.display = null;
+					} else {
+						save_order_btn.style.display = "none";
+					}
+				}
+			}
+		};
+		try {
+			var instance = Sortable.create(root, opts);
+			root._sortable_instance = instance;
+			return instance;
+		} catch (err) {
+			root._sortable_initialized = false;
+			console.error("Sortable init failed:", err);
+			return null;
+		}
+	}
+
+	function initAllSortable(group_nodes) {
+		if (typeof Sortable === 'undefined') {
+			var retries = 0;
+			var maxRetries = 25;
+			var t = setInterval(function () {
+				retries++;
+				if (typeof Sortable !== 'undefined') {
+					clearInterval(t);
+					for (var group in group_nodes) {
+						var table = document.getElementById("cbi-passwall2-nodes-" + group + "-table");
+						initSortableForTable(table);
+					}
+				} else if (retries >= maxRetries) {
+					clearInterval(t);
+				}
+			}, 200);
+		} else {
+			for (var group in group_nodes) {
+				var table = document.getElementById("cbi-passwall2-nodes-" + group + "-table");
+				initSortableForTable(table);
+			}
+		}
+	}
 </script>
 
 
@@ -512,6 +754,9 @@ table td, .table .td {
 	<fieldset class="cbi-section cbi-tblsection" id="cbi-passwall2-nodes-{{group}}-fieldset">
 		<table class="table cbi-section-table" id="cbi-passwall2-nodes-{{group}}-table" style="">
 			<tr class="tr cbi-section-table-titles anonymous">
+				<th class="th cbi-section-table-cell" style="width:20px">
+					<input class="cbi-input-checkbox nodes_select_all" type="checkbox" onclick="checked_all_node(this)" title="<%:Select all%>"/>
+				</th>
 				<th class="th cbi-section-table-cell" style="width:40%"><%:Remarks%></th>
 				<th class="th cbi-section-table-cell" style="width:8%">Ping</th>
 				<th class="th cbi-section-table-cell" style="width:8%">TCPing</th>
@@ -522,6 +767,7 @@ table td, .table .td {
 		</table>
 		<div class="cbi-section-create cbi-tblsection-create">
 			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="to_add_node()">
+			<input class="cbi-button cbi-button-apply" style="display: none" type="button" id="save_order_btn_{{group}}" value="<%:Save Order%>" onclick="save_current_page_order('{{group}}')">
 		</div>
 	</fieldset>
 </script>
@@ -531,19 +777,21 @@ table td, .table .td {
 		<input class="hidden" id="cbid.passwall2.{{id}}.remarks" value="{{remarks_val}}"/>
 		<input class="hidden" id="cbid.passwall2.{{id}}.address" value="{{address_val}}"/>
 		<input class="hidden" id="cbid.passwall2.{{id}}.port" value="{{port_val}}"/>
-		<td class="td cbi-value-field">{{remarks}}</td>
-		<td class="td cbi-value-field">{{ping}}</td>
-		<td class="td cbi-value-field">{{tcping}}</td>
-		<td class="td cbi-value-field">{{url_test}}</td>
-		<td class="td cbi-section-table-cell nowrap cbi-section-actions">
+		<td class="td cbi-value-field pw-checkbox">
+			<input class="cbi-input-checkbox nodes_select" type="checkbox" cbid="{{id}}" onclick="update_select_state()"/>
+		</td>
+		<td class="td cbi-value-field pw-remark">{{remarks}}</td>
+		<td class="td cbi-value-field pw-ping">{{ping}}</td>
+		<td class="td cbi-value-field pw-tcping">{{tcping}}</td>
+		<td class="td cbi-value-field pw-urltest">{{url_test}}</td>
+		<td class="td cbi-section-table-cell nowrap cbi-section-actions pw-actions">
 			<div class="node-wrapper">
-				<!--It has been damaged and awaits repair or other solutions.-->
-				<!--<input class="btn cbi-button" type="button" value="<%:To Top%>" onclick="_cbi_row_top('{{id}}')"/>-->
-				<input class="cbi-input-checkbox nodes_select" type="checkbox" cbid="{{id}}" />
+				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:To Top%>" onclick="row_top(this)" title="<%:To Top%>"/>
 				<input class="btn cbi-button cbi-button-apply" type="button" value="<%:Use%>" id="apply_{{id}}" onclick="open_set_node_div('{{id}}')"/>
 				<input class="btn cbi-button cbi-button-add" type="button" value="<%:Copy%>" onclick="copy_node('{{id}}')"/>
 				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:Edit%>" onclick="location.href='<%=api.url("node_config")%>/{{id}}'" alt="<%:Edit%>" title="<%:Edit%>">
 				<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>" onclick="del_node('{{id}}')" alt="<%:Delete%>" title="<%:Delete%>">
+				<span class="drag-handle center" title="<%:Drag to reorder%>">⠿</span>
 			</div>
 		</td>
 	</tr>
@@ -705,6 +953,13 @@ table td, .table .td {
 				cbi_t_switch("passwall2.nodes", default_group)
 			}
 			
+			origin_group_node_order = {};
+			for (let group in group_nodes) {
+				origin_group_node_order[group] = get_node_order(group);
+			}
+
+			initAllSortable(group_nodes);
+
 			//clear expire data
 			if (localStorage && localStorage.length > 0) {
 				const now = Date.now();
