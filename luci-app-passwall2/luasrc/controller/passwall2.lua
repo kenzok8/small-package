@@ -80,6 +80,7 @@ function index()
 	entry({"admin", "services", appname, "clear_all_nodes"}, call("clear_all_nodes")).leaf = true
 	entry({"admin", "services", appname, "delete_select_nodes"}, call("delete_select_nodes")).leaf = true
 	entry({"admin", "services", appname, "get_node"}, call("get_node")).leaf = true
+	entry({"admin", "services", appname, "save_node_order"}, call("save_node_order")).leaf = true
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_node"}, call("subscribe_del_node")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_all"}, call("subscribe_del_all")).leaf = true
@@ -504,7 +505,7 @@ function get_node()
 	local result = {}
 	local show_node_info = api.uci_get_type("global_other", "show_node_info", "0")
 
-	function add_is_ipv6_key(o)
+	local function add_is_ipv6_key(o)
 		if o and o.address and show_node_info == "1" then
 			local f = api.get_ipv6_full(o.address)
 			if f ~= "" then
@@ -518,12 +519,33 @@ function get_node()
 		result = uci:get_all(appname, id)
 		add_is_ipv6_key(result)
 	else
+		local default_nodes = {}
+		local other_nodes = {}
 		uci:foreach(appname, "nodes", function(t)
 			add_is_ipv6_key(t)
-			result[#result + 1] = t
+			if not t.group or t.group == "" then
+				default_nodes[#default_nodes + 1] = t
+			else
+				other_nodes[#other_nodes + 1] = t
+			end
 		end)
+		for i = 1, #default_nodes do result[#result + 1] = default_nodes[i] end
+		for i = 1, #other_nodes do result[#result + 1] = other_nodes[i] end
 	end
 	http_write_json(result)
+end
+
+function save_node_order()
+	local ids = http.formvalue("ids") or ""
+	local new_order = {}
+	for id in ids:gmatch("([^,]+)") do
+		new_order[#new_order + 1] = id
+	end
+	for idx, name in ipairs(new_order) do
+		luci.sys.call(string.format("uci -q reorder %s.%s=%d", appname, name, idx - 1))
+	end
+	api.sh_uci_commit(appname)
+	http_write_json({ status = "ok" })
 end
 
 function update_rules()
@@ -631,7 +653,7 @@ function restore_backup()
 		fp:close()
 		if chunk_index + 1 == total_chunks then
 			api.sys.call("echo '' > /tmp/log/passwall2.log")
-			api.log(string.format(" * PassWall2 %s", i18n.translate("Configuration file uploaded successfully…")))
+			api.log(0, string.format(" * PassWall2 %s", i18n.translate("Configuration file uploaded successfully…")))
 			local temp_dir = '/tmp/passwall2_bak'
 			api.sys.call("mkdir -p " .. temp_dir)
 			if api.sys.call("tar -xzf " .. file_path .. " -C " .. temp_dir) == 0 then
@@ -641,13 +663,13 @@ function restore_backup()
 						api.sys.call("cp -f " .. temp_file .. " " .. backup_file)
 					end
 				end
-				api.log(string.format(" * PassWall2 %s", i18n.translate("Configuration restored successfully…")))
-				api.log(string.format(" * PassWall2 %s", i18n.translate("Service restarting…")))
+				api.log(0, string.format(" * PassWall2 %s", i18n.translate("Configuration restored successfully…")))
+				api.log(0, string.format(" * PassWall2 %s", i18n.translate("Service restarting…")))
 				luci.sys.call('/etc/init.d/passwall2 restart > /dev/null 2>&1 &')
 				luci.sys.call('/etc/init.d/passwall2_server restart > /dev/null 2>&1 &')
 				result = { status = "success", message = "Upload completed", path = file_path }
 			else
-				api.log(string.format(" * PassWall2 %s", i18n.translate("Configuration file decompression failed, please try again!")))
+				api.log(0, string.format(" * PassWall2 %s", i18n.translate("Configuration file decompression failed, please try again!")))
 				result = { status = "error", message = "Decompression failed" }
 			end
 			api.sys.call("rm -rf " .. temp_dir)

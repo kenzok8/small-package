@@ -31,12 +31,29 @@ if lang == "auto" then
 end
 i18n.setlanguage(lang)
 
-function log(...)
-	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
+function echolog(...)
+	local result = table.concat({...}, " ")
 	local f, err = io.open(LOG_FILE, "a")
 	if f and err == nil then
 		f:write(result .. "\n")
 		f:close()
+	end
+end
+
+function echolog_date(...)
+	local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
+	echolog(result)
+end
+
+function log(level, ...)
+	local indent = ""
+	if level >= 1 then
+		for i = 1, level, 1 do
+			indent = indent .. "  "
+		end
+		echolog_date(indent .. "- " .. table.concat({...}, " "))
+	else
+		echolog_date(table.concat({...}, " "))
 	end
 end
 
@@ -118,19 +135,15 @@ function exec_call(cmd)
 end
 
 function base64Decode(text)
-	local raw = text
 	if not text then return '' end
-	text = text:gsub("%z", "")
-	text = text:gsub("%c", "")
-	text = text:gsub("_", "/")
-	text = text:gsub("-", "+")
-	local mod4 = #text % 4
-	text = text .. string.sub('====', mod4 + 1)
-	local result = nixio.bin.b64decode(text)
+	local encoded = text:gsub("%z", ""):gsub("%c", ""):gsub("_", "/"):gsub("-", "+")
+	local mod4 = #encoded % 4
+	encoded = encoded .. string.sub('====', mod4 + 1)
+	local result = nixio.bin.b64decode(encoded)
 	if result then
 		return result:gsub("%z", "")
 	else
-		return raw
+		return text
 	end
 end
 
@@ -229,9 +242,13 @@ function url(...)
 	return require "luci.dispatcher".build_url(url)
 end
 
-function trim(text)
-	if not text or text == "" then return "" end
-	return text:match("^%s*(.-)%s*$")
+function trim(s)
+	local len = #s
+	local i, j = 1, len
+	while i <= len and s:byte(i) <= 32 do i = i + 1 end
+	while j >= i and s:byte(j) <= 32 do j = j - 1 end
+	if i > j then return "" end
+	return s:sub(i, j)
 end
 
 function split(full, sep)
@@ -450,6 +467,8 @@ end
 function get_valid_nodes()
 	local show_node_info = uci_get_type("global_other", "show_node_info") or "0"
 	local nodes = {}
+	local default_nodes = {}
+	local other_nodes = {}
 	uci:foreach(appname, "nodes", function(e)
 		e.id = e[".name"]
 		if e.type and e.remarks then
@@ -458,7 +477,11 @@ function get_valid_nodes()
 				if type == "sing-box" then type = "Sing-Box" end
 				e["remark"] = "%s：[%s] " % {type .. " " .. i18n.translatef(e.protocol), e.remarks}
 				e["node_type"] = "special"
-				nodes[#nodes + 1] = e
+				if not e.group or e.group == "" then
+					default_nodes[#default_nodes + 1] = e
+				else
+					other_nodes[#other_nodes + 1] = e
+				end
 			end
 			local port = e.port or e.hysteria_hop or e.hysteria2_hop
 			if port and e.address then
@@ -498,11 +521,17 @@ function get_valid_nodes()
 						e["remark"] = "%s：[%s] %s:%s" % {type, e.remarks, address, port}
 					end
 					e.node_type = "normal"
-					nodes[#nodes + 1] = e
+					if not e.group or e.group == "" then
+						default_nodes[#default_nodes + 1] = e
+					else
+						other_nodes[#other_nodes + 1] = e
+					end
 				end
 			end
 		end
 	end)
+	for i = 1, #default_nodes do nodes[#nodes + 1] = default_nodes[i] end
+	for i = 1, #other_nodes do nodes[#nodes + 1] = other_nodes[i] end
 	return nodes
 end
 

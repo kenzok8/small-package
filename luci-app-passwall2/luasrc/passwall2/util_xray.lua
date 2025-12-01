@@ -151,6 +151,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 					serverName = node.tls_serverName,
 					allowInsecure = (node.tls_allowInsecure == "1") and true or false,
 					fingerprint = (node.type == "Xray" and node.utls == "1" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or nil,
+					pinnedPeerCertificateChainSha256 = node.tls_chain_fingerprint and { node.tls_chain_fingerprint } or nil,
 					echConfigList = (node.ech == "1") and node.ech_config or nil,
 					echForceQuery = (node.ech == "1") and (node.ech_ForceQuery or "none") or nil
 				} or nil,
@@ -218,7 +219,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 					host = node.xhttp_host,
 					-- If the code contains an "extra" section, retrieve the contents of "extra"; otherwise, assign the value directly to "extra".
 					extra = node.xhttp_extra and (function()
-							local success, parsed = pcall(jsonc.parse, node.xhttp_extra)
+							local success, parsed = pcall(jsonc.parse, api.base64Decode(node.xhttp_extra))
 							if success then
 								return parsed.extra or parsed
 							else
