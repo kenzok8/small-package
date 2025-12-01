@@ -1581,9 +1581,7 @@ return view.extend({
 		so.depends('type', 'provider');
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'chain_head', _('Chain head') + _(' (Destination)'),
-			_('Recommended to use UoT node.</br>such as <code>%s</code>.')
-			.format('ss|ssr|vmess|vless|trojan|tuic'));
+		so = ss.option(form.ListValue, 'chain_head', _('Chain head') + _(' (Destination)'));
 		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.validate = function(section_id, value) {
@@ -1603,9 +1601,7 @@ return view.extend({
 		so.depends({chain_tail: /.+/, '!reverse': true});
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'chain_tail', _('Chain tail') + _(' (Transit)'),
-			_('Recommended to use UoT node.</br>such as <code>%s</code>.')
-			.format('ss|ssr|vmess|vless|trojan|tuic'));
+		so = ss.option(form.ListValue, 'chain_tail', _('Chain tail') + _(' (Transit)'));
 		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.validate = function(section_id, value) {
