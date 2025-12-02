@@ -22,6 +22,11 @@ start_service() {
 		logger -s -t floatip "LAN proto is not static"
 		return 0
 	}
+	local lan_iface="`uci -q get network.lan.device`"
+	if [ -z "$lan_iface" ]; then
+		logger -s -t floatip "Cannot get LAN device"
+		return 0
+	fi
 	local set_ip set_prefix
 	config_get set_ip "main" set_ip
 	[[ -n "$set_ip" ]] || return 0
@@ -57,7 +62,7 @@ start_service() {
 		return 0
 	}
 	procd_open_instance
-	procd_set_param command /usr/libexec/floatip.sh "$set_prefix"
+	procd_set_param command /usr/libexec/floatip.sh "$lan_iface" "$set_prefix"
 	procd_set_param stderr 1
 	procd_set_param file /etc/config/floatip
 	procd_close_instance
