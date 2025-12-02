@@ -1936,12 +1936,6 @@ async function translateText(text, targetLang = null) {
             url: `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${apiTargetLang}&de=example@yourdomain.com`,
             method: 'GET',
             parse: data => data.responseData?.translatedText
-        },
-        {
-            url: 'https://libretranslate.com/translate',
-            method: 'POST',
-            body: JSON.stringify({ q: text, source: sourceLang, target: apiTargetLang, format: 'text' }),
-            headers: { 'Content-Type': 'application/json' }
         }
     ];
 
@@ -3426,31 +3420,6 @@ window.addEventListener('resize', () => {
 </script>
 
 <script>
-let isLyricsMode = localStorage.getItem('lyricsMode') === 'true';
-
-function toggleLyricsMode() {
-    const modal = document.getElementById('musicModal');
-    const icon = document.getElementById('lyricsIcon');
-
-    isLyricsMode = !isLyricsMode;
-    modal.classList.toggle('lyrics-mode', isLyricsMode);
-    localStorage.setItem('lyricsMode', isLyricsMode);
-
-    icon.className = isLyricsMode ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const icon = document.getElementById('lyricsIcon');
-    document.getElementById('lyricsToggle').addEventListener('click', toggleLyricsMode);
-
-    if (isLyricsMode) {
-        document.getElementById('musicModal').classList.add('lyrics-mode');
-        icon.className = 'bi bi-chevron-up';
-    }
-});
-</script>
-
-<script>
   const muteToggle    = document.getElementById('muteToggle');
   const volumeToggle  = document.getElementById('volumeToggle');
   const volumePanel   = document.getElementById('volumePanel');
@@ -3740,40 +3709,6 @@ document.getElementById('goFirstBtn')?.addEventListener('click', function() {
     showLogMessage(message);
     speakMessage(message);
 });
-</script>
-
-<script>
-document.addEventListener('keydown', function(event) {
-    if (event.ctrlKey && event.shiftKey && event.key === 'V') {
-        var urlModal = new bootstrap.Modal(document.getElementById('urlModal'));
-        urlModal.show();
-        speakMessage(translations["openCustomPlaylist"]);
-    }
-});
-
-document.getElementById('resetButton').addEventListener('click', function() {
-    fetch('', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: 'reset_default=true'
-    })
-    .then(response => response.text())  
-    .then(data => {
-        var urlModal = bootstrap.Modal.getInstance(document.getElementById('urlModal'));
-        urlModal.hide();
-
-        document.getElementById('new_url').value = '<?php echo $default_url; ?>';
-
-        showLogMessage(translations['restoreSuccess']);
-    })
-    .catch(error => {
-        console.error('恢复默认链接时出错:', error);
-        showLogMessage(translations['restoreError']);
-    });
-});
-
 </script>
 
 <script>
@@ -5263,44 +5198,41 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-function updateIpStatusButton(hidden) {
-    const btn = document.getElementById('toggleIpStatusBtn');
-    const icon = btn.querySelector('i');
-    const text = btn.querySelector('span');
-
-    if (hidden) {
-        icon.className = 'bi bi-eye';
-        text.textContent = translations['show_ip_info'] || 'Show IP Information';
-    } else {
-        icon.className = 'bi bi-eye-slash';
-        text.textContent = translations['hide_ip_info'] || 'Hide IP Information';
-    }
-}
-
-function toggleIpStatusBar() {
+window.toggleIpStatusBar = function() {
     const ipStatusBar = document.getElementById('status-bar-component');
+    if (!ipStatusBar) return;
+    
     const isHidden = ipStatusBar.style.display === 'none';
 
     if (isHidden) {
         ipStatusBar.style.display = '';
         localStorage.setItem('neko_ip_status_hidden', 'false');
-        speakMessage(translations['ip_info_shown'] || 'IP Information Shown');
-        showLogMessage(translations['ip_info_shown'] || 'IP Information Shown');
+        if (typeof speakMessage === 'function') {
+            speakMessage(translations['ip_info_shown'] || 'IP Information Shown');
+        }
+        if (typeof showLogMessage === 'function') {
+            showLogMessage(translations['ip_info_shown'] || 'IP Information Shown');
+        }
     } else {
         ipStatusBar.style.display = 'none';
         localStorage.setItem('neko_ip_status_hidden', 'true');
-        speakMessage(translations['ip_info_hidden'] || 'IP Information Hidden');
-        showLogMessage(translations['ip_info_hidden'] || 'IP Information Hidden');
+        if (typeof speakMessage === 'function') {
+            speakMessage(translations['ip_info_hidden'] || 'IP Information Hidden');
+        }
+        if (typeof showLogMessage === 'function') {
+            showLogMessage(translations['ip_info_hidden'] || 'IP Information Hidden');
+        }
     }
-    updateIpStatusButton(!isHidden);
-}
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     const storedValue = localStorage.getItem('neko_ip_status_hidden');
     const ipStatusHidden = storedValue === null || storedValue === 'true';
     const ipStatusBar = document.getElementById('status-bar-component');
-    ipStatusBar.style.display = ipStatusHidden ? 'none' : '';
-    updateIpStatusButton(ipStatusHidden);
+    
+    if (ipStatusBar) {
+        ipStatusBar.style.display = ipStatusHidden ? 'none' : '';
+    }
     localStorage.setItem('neko_ip_status_hidden', ipStatusHidden.toString());
 });
 </script>
