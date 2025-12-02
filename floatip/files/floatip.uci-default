@@ -6,6 +6,9 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
+# don't change role if enabled
+[[ "`uci -q get floatip.main.enabled`" = "1" ]] && exit 0
+
 [[ "`uci -q get network.lan.proto`" = "static" && -n "`uci -q get network.lan.gateway`" ]] || exit 0
 
 uci -q batch <<-EOF >/dev/null

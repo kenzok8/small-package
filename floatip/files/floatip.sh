@@ -16,7 +16,7 @@ random() {
 # check host alive, timeout in 2 seconds
 host_alive() {
 	ping -4 -c 2 -A -t 1 -W 1 -q "$1" >/dev/null
-	# arping -f -q -b -c 2 -w 2 -i 1 -I br-lan "$1"
+	# arping -f -q -b -c 2 -w 2 -i 1 -I $LAN_IFACE "$1"
 }
 
 set_up() {
@@ -25,6 +25,7 @@ set_up() {
 	if ! uci -q get network.floatip.ipaddr | grep -Fwq $ipaddr; then
 		if [[ "x$(uci -q get network.floatip)" = xinterface ]]; then
 			uci -q batch <<-EOF >/dev/null
+				set network.floatip.device=$LAN_IFACE
 				delete network.floatip.ipaddr
 				add_list network.floatip.ipaddr=$ipaddr
 			EOF
@@ -32,8 +33,8 @@ set_up() {
 			uci -q batch <<-EOF >/dev/null
 				set network.floatip=interface
 				set network.floatip.proto=static
+				set network.floatip.device=$LAN_IFACE
 				add_list network.floatip.ipaddr=$ipaddr
-				set network.floatip.device=br-lan
 				set network.floatip.auto=0
 			EOF
 		fi
@@ -230,6 +231,13 @@ try_lock || {
 	exit 1
 }
 echo "lock $LOCK_FILE success" >&2 
+
+LAN_IFACE="$1"
+[ -n "$LAN_IFACE" ] || {
+	echo "LAN_IFACE is not set" >&2
+	exit 1
+}
+shift
 
 if [[ -n "$1" ]]; then
 	[[ "$1" -ge 0 && "$1" -lt 32 ]] && DEFAULT_PREFIX=$1
