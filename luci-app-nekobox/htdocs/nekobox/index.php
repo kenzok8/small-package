@@ -1491,7 +1491,7 @@ $(document).ready(function() {
         if(!data) { $('#current-version').attr('src', defaultIcon); return; }
         const hasUpdate = compareVersions(data.currentVersion, data.latestVersion) < 0;
         $('#current-version').attr('src', hasUpdate ? latestIcon : defaultIcon);
-        console.log("Current:", data.currentVersion, "Latest:", data.latestVersion, "Update:", hasUpdate);
+        //console.log("Current:", data.currentVersion, "Latest:", data.latestVersion, "Update:", hasUpdate);
     }
 
     $(document).ready(function(){
