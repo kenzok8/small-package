@@ -123,19 +123,19 @@ const health_checkurls = [
 ];
 
 const inbound_type = [
-	['http', _('HTTP')],
-	['socks', _('SOCKS')],
-	['mixed', _('Mixed')],
-	['shadowsocks', _('Shadowsocks')],
-	['mieru', _('Mieru')],
-	['sudoku', _('Sudoku')],
-	['vmess', _('VMess')],
-	['vless', _('VLESS')],
-	['trojan', _('Trojan')],
-	['anytls', _('AnyTLS')],
-	['tuic', _('TUIC')],
-	['hysteria2', _('Hysteria2')],
-	//['tunnel', _('Tunnel')]
+	['http', _('HTTP') + ' - ' + _('TCP')],
+	['socks', _('SOCKS') + ' - ' + _('TCP')],
+	['mixed', _('Mixed') + ' - ' + _('TCP')],
+	['shadowsocks', _('Shadowsocks') + ' - ' + _('TCP/UDP')],
+	['mieru', _('Mieru') + ' - ' + _('TCP/UDP')],
+	['sudoku', _('Sudoku') + ' - ' + _('TCP')],
+	['vmess', _('VMess') + ' - ' + _('TCP')],
+	['vless', _('VLESS') + ' - ' + _('TCP')],
+	['trojan', _('Trojan') + ' - ' + _('TCP')],
+	['anytls', _('AnyTLS') + ' - ' + _('TCP')],
+	['tuic', _('TUIC') + ' - ' + _('UDP')],
+	['hysteria2', _('Hysteria2') + ' - ' + _('UDP')],
+	//['tunnel', _('Tunnel') + ' - ' + _('TCP/UDP')]
 ];
 
 const ip_version = [
@@ -154,23 +154,23 @@ const load_balance_strategy = [
 ];
 
 const outbound_type = [
-	['direct', _('DIRECT')],
-	['http', _('HTTP')],
-	['socks5', _('SOCKS5')],
-	['ss', _('Shadowsocks')],
+	['direct', _('DIRECT') + ' - ' + _('TCP/UDP')],
+	['http', _('HTTP') + ' - ' + _('TCP')],
+	['socks5', _('SOCKS5') + ' - ' + _('TCP')],
+	['ss', _('Shadowsocks') + ' - ' + _('TCP/UDP')],
 	//['ssr', _('ShadowsocksR')], // Deprecated
-	['mieru', _('Mieru')],
-	['sudoku', _('Sudoku')],
-	['snell', _('Snell')],
-	['vmess', _('VMess')],
-	['vless', _('VLESS')],
-	['trojan', _('Trojan')],
-	['anytls', _('AnyTLS')],
-	//['hysteria', _('Hysteria')],
-	['hysteria2', _('Hysteria2')],
-	['tuic', _('TUIC')],
-	['wireguard', _('WireGuard')],
-	['ssh', _('SSH')]
+	['mieru', _('Mieru') + ' - ' + _('TCP/UDP')],
+	['sudoku', _('Sudoku') + ' - ' + _('TCP')],
+	['snell', _('Snell') + ' - ' + _('TCP')],
+	['vmess', _('VMess') + ' - ' + _('TCP')],
+	['vless', _('VLESS') + ' - ' + _('TCP')],
+	['trojan', _('Trojan') + ' - ' + _('TCP')],
+	['anytls', _('AnyTLS') + ' - ' + _('TCP')],
+	//['hysteria', _('Hysteria') + ' - ' + _('UDP')],
+	['hysteria2', _('Hysteria2') + ' - ' + _('UDP')],
+	['tuic', _('TUIC') + ' - ' + _('UDP')],
+	['wireguard', _('WireGuard') + ' - ' + _('UDP')],
+	['ssh', _('SSH') + ' - ' + _('TCP')]
 ];
 
 const preset_outbound = {

@@ -453,6 +453,10 @@ msgstr "客戶端認證類型"
 msgid "Client fingerprint"
 msgstr "客戶端指紋"
 
+#: htdocs/luci-static/resources/view/fchomo/server.js:374
+msgid "Client key"
+msgstr "客戶端密鑰"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:176
 msgid "Client status"
 msgstr "客戶端狀態"
