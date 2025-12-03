@@ -44,7 +44,7 @@ const methods = {
 		args: { type: 'type', params: 'params' },
 		call: function(req) {
 			/* https://github.com/MetaCubeX/mihomo/blob/Alpha/component/generator/cmd.go */
-			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair', 'ech-keypair', 'vless-mlkem768', 'vless-x25519']))
+			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair', 'ech-keypair', 'vless-mlkem768', 'vless-x25519', 'sudoku-keypair']))
 				return { result: false, error: 'illegal type' };
 
 			const type = req.args?.type;
@@ -55,7 +55,7 @@ const methods = {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (type === 'uuid')
 						result.uuid = trim(line);
-					else if (type in ['reality-keypair', 'wg-keypair']) {
+					else if (type in ['reality-keypair', 'wg-keypair', 'sudoku-keypair']) {
 						let priv = match(trim(line), /PrivateKey: (.*)/);
 						if (priv)
 							result.private_key = priv[1];

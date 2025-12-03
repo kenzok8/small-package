@@ -442,6 +442,10 @@ msgstr ""
 msgid "Client fingerprint"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/server.js:374
+msgid "Client key"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:176
 msgid "Client status"
 msgstr ""
