@@ -97,7 +97,7 @@ start()
 			action=0
 		fi
 
-		host=$(uci get hostacl.@rule[$idx].host 2>/dev/null)
+		host=$(uci get hostacl.@rule[$idx].host 2>/dev/null | tr A-Z a-z)
 		host=$(echo $host | sed "s/,/ /g;s/'/ /g")
 		for HOST in $host; do
 			echo add acl=${idx},${action},$HOST >/dev/hostacl_ctl
