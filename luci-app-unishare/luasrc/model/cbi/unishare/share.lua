@@ -3,7 +3,12 @@ local uci = luci.model.uci.cursor()
 
 local users = {}
 uci:foreach("unishare", "user", function(e)
-    users[#users+1] = e["username"]
+	local username = e["username"]
+	if not username or username == "" then
+		return
+	end
+	local comment = e["comment"]
+	users[#users+1] = {username=username, displayname=username .. (comment and (" (" .. comment .. ")") or "")}
 end)
 
 m = Map("unishare", translate("Configure Share"))
@@ -16,7 +21,7 @@ s = m:section(NamedSection, arg[1], "share", "")
 s.addremove = false
 s.dynamic = false
 
-path = s:option(Value, "path", translate("Path"), 
+local path = s:option(Value, "path", translate("Path"), 
     translate("Note: '/mnt' is not suitable as a writable share, because Windows will recognize the wrong capacity"))
 path.datatype = "string"
 path.rmempty = false
@@ -34,7 +39,7 @@ path.validate = function(self, value, section)
     return AbstractValue.validate(self, value, section)
 end
 
-name = s:option(Value, "name", translate("Name"))
+local name = s:option(Value, "name", translate("Name"))
 name.datatype = "string"
 name.rmempty = true
 name.validate = function(self, value, section)
@@ -44,20 +49,21 @@ name.validate = function(self, value, section)
     return AbstractValue.validate(self, value, section)
 end
 
+local i, u
 o = s:option(StaticList, "rw", translate("Read/Write Users"),
     translatef("'Everyone' includes anonymous if enabled, 'Logged Users' includes all users configured in '%s' tab", 
         "<a href=\""..luci.dispatcher.build_url("admin", "nas", "unishare", "users").."\" >"..translate("Users").."</a>"))
-o:value("everyone", translate("Everyone"))
-o:value("users", translate("Logged Users"))
-for k, u in pairs(users) do
-    o:value(u)
+o:value("everyone", "{" .. translate("Everyone") .. "}")
+o:value("users", "{" .. translate("Logged Users") .. "}")
+for i, u in ipairs(users) do
+    o:value(u.username, u.displayname)
 end
 
 o = s:option(StaticList, "ro", translate("Read Only Users"))
-o:value("everyone", translate("Everyone"))
-o:value("users", translate("Logged Users"))
-for k, u in pairs(users) do
-    o:value(u)
+o:value("everyone", "{" .. translate("Everyone") .. "}")
+o:value("users", "{" .. translate("Logged Users") .. "}")
+for i, u in ipairs(users) do
+    o:value(u.username, u.displayname)
 end
 
 o = s:option(StaticList, "proto", translate("Protocol"))

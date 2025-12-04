@@ -23,4 +23,7 @@ o.datatype = "string"
 o.password = true
 o.rmempty = true
 
+o = s:option(Value, "comment", translate("Comment"))
+o.datatype = "string"
+
 return m
