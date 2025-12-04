@@ -124,8 +124,8 @@ const health_checkurls = [
 
 const inbound_type = [
 	['http', _('HTTP') + ' - ' + _('TCP')],
-	['socks', _('SOCKS') + ' - ' + _('TCP')],
-	['mixed', _('Mixed') + ' - ' + _('TCP')],
+	['socks', _('SOCKS') + ' - ' + _('TCP/UDP')],
+	['mixed', _('Mixed') + ' - ' + _('TCP/UDP')],
 	['shadowsocks', _('Shadowsocks') + ' - ' + _('TCP/UDP')],
 	['mieru', _('Mieru') + ' - ' + _('TCP/UDP')],
 	['sudoku', _('Sudoku') + ' - ' + _('TCP')],
@@ -156,7 +156,7 @@ const load_balance_strategy = [
 const outbound_type = [
 	['direct', _('DIRECT') + ' - ' + _('TCP/UDP')],
 	['http', _('HTTP') + ' - ' + _('TCP')],
-	['socks5', _('SOCKS5') + ' - ' + _('TCP')],
+	['socks5', _('SOCKS5') + ' - ' + _('TCP/UDP')],
 	['ss', _('Shadowsocks') + ' - ' + _('TCP/UDP')],
 	//['ssr', _('ShadowsocksR')], // Deprecated
 	['mieru', _('Mieru') + ' - ' + _('TCP/UDP')],
