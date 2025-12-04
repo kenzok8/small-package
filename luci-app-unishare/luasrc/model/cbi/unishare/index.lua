@@ -1,3 +1,19 @@
+local xml = require "luci.xml"
+local pcdata = xml.pcdata
+
+local uci = luci.model.uci.cursor()
+
+local usersmap = {}
+usersmap["everyone"] = "{" .. translate("Everyone") .. "}"
+usersmap["users"] = "{" .. translate("Logged Users") .. "}"
+uci:foreach("unishare", "user", function(e)
+	local username = e["username"]
+	if not username or username == "" then
+		return
+	end
+	local comment = e["comment"]
+	usersmap[username] = username .. (comment and (" (" .. comment .. ")") or "")
+end)
 
 m = Map("unishare", nil, translate("Configure multiple file sharing protocols in one page (Samba, WebDAV, maybe more in the future?)"))
 
@@ -28,7 +44,7 @@ function s.create(...)
 	luci.http.redirect(s.extedit % sid)
 end
 
-path = s:option(Value, "path", translate("Path"))
+local path = s:option(Value, "path", translate("Path"))
 path.datatype = "string"
 path.rmempty = false
 path.validate = function(self, value, section)
@@ -45,7 +61,7 @@ path.validate = function(self, value, section)
     return AbstractValue.validate(self, value, section)
 end
 
-name = s:option(Value, "name", translate("Name"))
+local name = s:option(Value, "name", translate("Name"))
 name.datatype = "string"
 name.rmempty = true
 name.validate = function(self, value, section)
@@ -60,9 +76,14 @@ local function uci2string(v, s)
         return "&#8212;"
     end
     if type(v) == "table" then
-        return table.concat(v, s)
+		local i, u
+		local d = {}
+		for i, u in ipairs(v) do
+			d[#d+1] = pcdata(usersmap[u] or u)
+		end
+        return table.concat(d, s)
     else
-        return v
+        return pcdata(usersmap[v] or v)
     end
 end
 
