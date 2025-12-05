@@ -4,6 +4,8 @@ START=97
 STOP=05
 USE_PROCD=1
 
+NEWLINE=$'\n'
+
 # $section $proto callback $args
 validate_share() {
     local path
@@ -137,13 +139,13 @@ add_webdav_share() {
     local v
     for u in $rw; do
         var="UNISHARE_DAV_${u}_rw"
-        eval "v=\$$var"
-        export -n "$var=${v:+$v }$name"
+        eval "v=\"\$$var\""
+        export -n "$var=${v}$name$NEWLINE"
     done
     for u in $ro; do
         var="UNISHARE_DAV_${u}_ro"
-        eval "v=\$$var"
-        export -n "$var=${v:+$v }$name"
+        eval "v=\"\$$var\""
+        export -n "$var=${v}$name$NEWLINE"
     done
     ln -s "$path" "/var/run/unishare/root/$name"
 }
@@ -167,7 +169,9 @@ add_webdav_user() {
     echo "    rules:"
     local v
     local r
-    eval "v=\$UNISHARE_DAV_${username}_rw"
+	local oifs=$IFS
+	IFS="$NEWLINE"
+    eval "v=\"\$UNISHARE_DAV_${username}_rw\""
     for r in $v; do
         echo "      - path: /$r"
         echo "        modify: true"
@@ -176,7 +180,7 @@ add_webdav_user() {
         echo "      - path: /$r"
         echo "        modify: true"
     done
-    eval "v=\$UNISHARE_DAV_${username}_ro"
+    eval "v=\"\$UNISHARE_DAV_${username}_ro\""
     for r in $v; do
         echo "      - path: /$r"
         echo "        allow: true"
@@ -185,6 +189,7 @@ add_webdav_user() {
         echo "      - path: /$r"
         echo "        allow: true"
     done
+	IFS=$oifs
 }
 
 config_webdav_header() {
@@ -209,6 +214,8 @@ scope: /var/run/unishare/root
 modify: false
 rules:
 EOF
+	local oifs=$IFS
+	IFS="$NEWLINE"
     for r in $UNISHARE_DAV_everyone_rw; do
         echo "  - path: /$r"
         echo "    modify: true"
@@ -217,6 +224,7 @@ EOF
         echo "  - path: /$r"
         echo "    allow: true"
     done
+	IFS=$oifs
     cat <<-EOF
   - regex: true
     allow: false

@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=unishare
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.1.2
 PKG_RELEASE:=1
 PKG_MAINTAINER:=jjm2473 <jjm2473@gmail.com>
 
