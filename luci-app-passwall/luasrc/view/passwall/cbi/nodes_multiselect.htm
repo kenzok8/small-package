@@ -1,6 +1,5 @@
 <%+cbi/valueheader%>
 <%
-local api = require "luci.passwall.api"
 local cbid = "cbid." .. self.config .. "." .. section .. "." .. self.option
 
 -- 读取 MultiValue
@@ -32,7 +31,7 @@ local group_order = {}
 for _, item in ipairs(values) do
 	local g = item.group
 	if not g or g == "" then 
-		g = api.i18n.translate("default") 
+		g = translate("default") 
 	end
 	if not groups[g] then 
 		groups[g] = {}
@@ -84,8 +83,8 @@ end
 				<div class="group-title"
 					onclick="toggleGroup_<%=self.option%>('<%=gname%>')"
 					style="cursor:pointer;padding:6px;background:#f0f0f0;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;white-space:nowrap;">
-					<span id="arrow-<%=self.option%>-<%=gname%>" class="lv-arrow-down-small" style="margin-right: 8px;"></span>
-					<b><%=gname%></b>
+					<span id="arrow-<%=self.option%>-<%=gname%>" class="lv-arrow-down-small"></span>
+					<b style="margin-left:8px;"><%=gname%></b>
 					<span id="group-count-<%=self.option%>-<%=gname%>" style="margin-left:8px;color:blue;">
 						(0/<%=#items%>)
 					</span>
