@@ -325,12 +325,24 @@ return view.extend({
 				.format('https://wiki.metacubex.one/config/rule-providers/content/', _('Contents')));
 		o.placeholder = _('Content will not be verified, Please make sure you enter it correctly.');
 		o.load = function(section_id) {
-			return L.resolveDefault(hm.readFile(this.section.sectiontype, section_id), '');
+			const option = uci.get(data[0], section_id, 'type');
+
+			if (option === 'file')
+				return L.resolveDefault(hm.readFile(this.section.sectiontype, section_id), '');
 		}
-		o.write = L.bind(hm.writeFile, o, o.section.sectiontype);
-		o.remove = L.bind(hm.writeFile, o, o.section.sectiontype);
-		o.rmempty = false;
-		o.retain = true;
+		o.write = function(section_id, formvalue) {
+			const option = uci.get(data[0], section_id, 'type');
+
+			if (option === 'file')
+				return hm.writeFile.call(this, this.section.sectiontype, section_id, formvalue);
+		}
+		o.remove = function(section_id) {
+			const option = uci.get(data[0], section_id, 'type');
+			const cached_option = this.section.getOption('type').cfgvalue(section_id);
+
+			if (option === 'file' && cached_option === 'file')
+				return hm.writeFile.call(this, this.section.sectiontype, section_id);
+		}
 		o.depends({'type': 'file', 'format': /^(text|yaml)$/});
 		o.modalonly = true;
 
