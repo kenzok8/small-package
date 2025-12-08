@@ -1587,13 +1587,13 @@ return view.extend({
 		so = ss.option(CBIBubblesValue, '_value', _('Value'));
 		so.modalonly = false;
 
-		so = ss.option(form.ListValue, 'chain_head_sub', _('Destination'));
+		so = ss.option(form.ListValue, 'chain_head_sub', _('Destination provider'));
 		so.load = L.bind(hm.loadProviderLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.depends('type', 'provider');
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'chain_head', _('Destination'));
+		so = ss.option(form.ListValue, 'chain_head', _('Destination proxy node'));
 		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.validate = function(section_id, value) {
@@ -1607,13 +1607,13 @@ return view.extend({
 		so.depends('type', 'node');
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'chain_tail_group', _('Transit'));
+		so = ss.option(form.ListValue, 'chain_tail_group', _('Transit proxy group'));
 		so.load = L.bind(hm.loadProxyGroupLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.depends({chain_tail: /.+/, '!reverse': true});
 		so.modalonly = true;
 
-		so = ss.option(form.ListValue, 'chain_tail', _('Transit'));
+		so = ss.option(form.ListValue, 'chain_tail', _('Transit proxy node'));
 		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
 		so.rmempty = false;
 		so.validate = function(section_id, value) {
