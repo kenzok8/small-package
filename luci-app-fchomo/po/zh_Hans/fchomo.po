@@ -561,14 +561,17 @@ msgstr "默认 DNS（由 WAN 下发）"
 msgid "Default DNS server"
 msgstr "默认 DNS 服务器"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1590
-#: htdocs/luci-static/resources/view/fchomo/node.js:1596
-msgid "Destination"
-msgstr "落地"
-
 #: htdocs/luci-static/resources/view/fchomo/node.js:631
 msgid "Destination addresses allowed to be forwarded via Wireguard."
 msgstr "允许通过 WireGuard 转发的目的地址"
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:1590
+msgid "Destination provider"
+msgstr "落地供应商"
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:1596
+msgid "Destination proxy node"
+msgstr "落地代理节点"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:225
 msgid "Dial fields"
@@ -2704,9 +2707,12 @@ msgid "Tproxy port"
 msgstr "Tproxy 端口"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1610
+msgid "Transit proxy group"
+msgstr "中转代理组"
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:1616
-msgid "Transit"
-msgstr "中转"
+msgid "Transit proxy node"
+msgstr "中转代理节点"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:347
 #: htdocs/luci-static/resources/view/fchomo/node.js:962
