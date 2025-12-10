@@ -1,0 +1,5 @@
+#!/bin/sh
+
+rm -f /tmp/luci-indexcache
+/etc/init.d/nginx reload 2>/dev/null
+exit 0

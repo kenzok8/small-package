@@ -1,0 +1,10 @@
+<%
+	local url=luci.http.getenv("REQUEST_URI")
+	local prefix="/cgi-bin/luci/istorenext"
+
+	if string.sub(url, 1, #prefix) == prefix then
+-%>
+<%=url%>
+<% else
+	luci.http.redirect(prefix)
+end %>
