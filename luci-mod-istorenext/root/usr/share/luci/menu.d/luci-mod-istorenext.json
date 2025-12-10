@@ -1,0 +1,14 @@
+{
+	"istorenext": {
+		"order": 0,
+		"leaf": true,
+		"action": {
+			"type": "template",
+			"path": "istorenext/index"
+		},
+		"auth": {
+			"methods": [ "cookie:sysauth_https", "cookie:sysauth_http" ],
+			"login": true
+		}
+	}
+}

@@ -1,0 +1,20 @@
+proxy_intercept_errors on;
+uwsgi_intercept_errors on;
+
+error_page 403 /istorenext-login.html;
+
+location /cgi-bin/luci/istorenext {
+	include uwsgi_params;
+	
+	uwsgi_param SERVER_ADDR $server_addr;
+	uwsgi_modifier1 9;
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	if ($login_request = 0) {
+		proxy_pass http://127.0.0.1:8080;
+	} 
+	if ($login_request = 1) {
+		uwsgi_pass unix:////var/run/luci-webui.socket;
+	}
+}

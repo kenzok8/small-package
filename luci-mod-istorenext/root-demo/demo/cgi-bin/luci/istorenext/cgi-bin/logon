@@ -1,0 +1,116 @@
+#!/usr/bin/env ucode
+
+'use strict';
+
+import { connect } from 'ubus';
+import request from 'luci.http';
+
+let ubus = connect();
+let http;
+
+function session_retrieve(sid, allowed_users) {
+	let sdat = ubus.call("session", "get", { ubus_rpc_session: sid });
+	if (type(sdat?.values?.token) == 'string' &&
+		(!length(allowed_users) || sdat?.values?.username in allowed_users)) {
+		// uci:set_session_id(sid)
+		return {
+			sid,
+			data: sdat.values
+		};
+	}
+
+	return null;
+}
+
+function check_authentication(method) {
+	let m = match(method, /^([[:alpha:]]+):(.+)$/);
+	let sid;
+
+	switch (m?.[1]) {
+	case 'cookie':
+		sid = http.getcookie(m[2]);
+		break;
+
+	case 'param':
+		sid = http.formvalue(m[2]);
+		break;
+
+	case 'query':
+		sid = http.formvalue(m[2], true);
+		break;
+	}
+
+	return sid ? session_retrieve(sid) : null;
+}
+
+function is_authenticated(auth) {
+	for (let method in auth?.methods) {
+		let session = check_authentication(method);
+
+		if (session)
+			return session;
+	}
+
+	return null;
+}
+
+const input_bufsize = 4096;
+let input_available = +getenv('CONTENT_LENGTH') || 0;
+
+import { stdin, stdout } from 'fs';
+
+function read(len) {
+	if (input_available == 0) {
+		stdin.close();
+
+		return null;
+	}
+
+	let chunk = stdin.read(min(input_available, len ?? input_bufsize, input_bufsize));
+
+	if (chunk == null) {
+		input_available = 0;
+		stdin.close();
+	}
+	else {
+		input_available -= length(chunk);
+	}
+
+	return chunk;
+}
+
+function write(data) {
+	return stdout.write(data);
+}
+
+http = request(getenv(), read, write);
+
+import { open } from 'fs';
+function read_jsonfile(path, defval) {
+	let rv;
+
+	try {
+		rv = json(open(path, "r"));
+	}
+	catch (e) {
+		rv = defval;
+	}
+
+	return rv;
+}
+
+let luci_base_menu = read_jsonfile("/usr/share/luci/menu.d/luci-base.json");
+
+let session = is_authenticated(luci_base_menu["admin"].auth);
+
+if (!session) {
+	http.status(403, 'Forbidden');
+	http.header('X-LuCI-Login-Required', 'yes');
+	http.prepare_content('text/html; charset=UTF-8');
+	http.write('<html><body><h1>403 Forbidden</h1><p>This page should be overridden by nginx</p></body></html>');
+} else {
+	http.status(200, 'OK');
+	http.prepare_content('application/json; charset=UTF-8');
+	http.write_json(session);
+}
+http.close();

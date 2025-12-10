@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>登录</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			min-height: 100vh;
+			padding: 20px;
+		}
+
+		.login-container {
+			background: white;
+			border-radius: 10px;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+			width: 100%;
+			max-width: 400px;
+			padding: 40px;
+		}
+
+		.login-header {
+			text-align: center;
+			margin-bottom: 30px;
+		}
+
+		.login-header h1 {
+			color: #333;
+			font-size: 28px;
+			margin-bottom: 10px;
+		}
+
+		.login-header p {
+			color: #666;
+			font-size: 14px;
+		}
+
+		.form-group {
+			margin-bottom: 20px;
+		}
+
+		.form-group label {
+			display: block;
+			color: #333;
+			font-size: 14px;
+			font-weight: 500;
+			margin-bottom: 8px;
+		}
+
+		.form-group input {
+			width: 100%;
+			padding: 12px 15px;
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			font-size: 14px;
+			transition: border-color 0.3s;
+		}
+
+		.form-group input:focus {
+			outline: none;
+			border-color: #667eea;
+		}
+
+		.login-button {
+			width: 100%;
+			padding: 12px;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			border-radius: 5px;
+			font-size: 16px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: transform 0.2s, box-shadow 0.2s;
+		}
+
+		.login-button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+		}
+
+		.login-button:active {
+			transform: translateY(0);
+		}
+
+		.error-message {
+			background: #fee;
+			color: #c33;
+			padding: 10px;
+			border-radius: 5px;
+			margin-bottom: 20px;
+			font-size: 14px;
+			display: none;
+		}
+
+		.error-message.show {
+			display: block;
+		}
+	</style>
+</head>
+<body>
+	<div class="login-container">
+		<div class="login-header">
+			<h1>登录</h1>
+			<p>欢迎回来，请输入您的凭证</p>
+		</div>
+
+		<div id="errorMessage" class="error-message"></div>
+
+		<form action="?istorenextlogin=1" method="post" id="loginForm">
+			<div class="form-group">
+				<label for="username">用户名</label>
+				<input 
+					type="text" 
+					id="username" 
+					name="luci_username" 
+					required 
+					autocomplete="username"
+					placeholder="请输入用户名"
+					value="root">
+			</div>
+
+			<div class="form-group">
+				<label for="password">密码</label>
+				<input 
+					type="password" 
+					id="password" 
+					name="luci_password"  
+					autocomplete="current-password"
+					placeholder="请输入密码">
+			</div>
+
+			<button type="submit" class="login-button">登录</button>
+		</form>
+	</div>
+
+	<script>
+		// 客户端表单验证
+		document.getElementById('loginForm').addEventListener('submit', function(e) {
+			const username = document.getElementById('username').value.trim();
+			const errorMessage = document.getElementById('errorMessage');
+
+			if (!username) {
+				e.preventDefault();
+				errorMessage.textContent = '请输入用户名';
+				errorMessage.classList.add('show');
+				return false;
+			}
+
+			// 清除错误消息
+			errorMessage.classList.remove('show');
+		});
+
+		// 输入时清除错误消息
+		const inputs = document.querySelectorAll('input');
+		inputs.forEach(input => {
+			input.addEventListener('input', function() {
+				document.getElementById('errorMessage').classList.remove('show');
+			});
+		});
+	</script>
+</body>
+</html>
