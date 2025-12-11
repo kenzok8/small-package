@@ -1,3 +1,7 @@
+if ($login_request = 2) {
+	return 302 $uri;
+}
+
 proxy_intercept_errors on;
 uwsgi_intercept_errors on;
 

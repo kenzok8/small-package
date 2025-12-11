@@ -146,10 +146,16 @@
 	</div>
 
 	<script>
+		const errorMessage = document.getElementById('errorMessage');
+
+		if ("?istorenextlogin=1" == location.search) {
+			errorMessage.textContent = '用户名或密码错误';
+			errorMessage.classList.add('show');
+		}
+
 		// 客户端表单验证
 		document.getElementById('loginForm').addEventListener('submit', function(e) {
 			const username = document.getElementById('username').value.trim();
-			const errorMessage = document.getElementById('errorMessage');
 
 			if (!username) {
 				e.preventDefault();
@@ -166,7 +172,7 @@
 		const inputs = document.querySelectorAll('input');
 		inputs.forEach(input => {
 			input.addEventListener('input', function() {
-				document.getElementById('errorMessage').classList.remove('show');
+				errorMessage.classList.remove('show');
 			});
 		});
 	</script>
