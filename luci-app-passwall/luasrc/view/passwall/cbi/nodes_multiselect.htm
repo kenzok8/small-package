@@ -48,16 +48,15 @@ end
 
 <div id="<%=cbid%>" class="cbi-input-select" style="display:inline-block;">
 	<!-- 搜索 -->
-	<input type="text" id="<%=cbid%>.search" class="node_search_input cbi-input-text" placeholder="<%:Search nodes...%>"
-		style="width:100%;padding:6px;margin-bottom:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;max-height:36px;" />
+	<input type="text" id="<%=cbid%>.search" class="mv_search_input cbi-input-text" placeholder="<%:Search nodes...%>" />
 	<!-- 主容器 -->
-	<div style="max-height:300px;overflow:auto;margin-bottom:8px;white-space:nowrap;">
-		<ul class="cbi-multi" id="<%=cbid%>.node_list" style="padding:0 !important;margin:0 !important;width:100%;box-sizing:border-box;">
+	<div class="mv_list_container">
+		<ul class="cbi-multi mv_node_list" id="<%=cbid%>.node_list">
 			<% for _, gname in ipairs(group_order) do %>
 			<% 	local items = groups[gname] %>
-			<li class="group-block" data-group="<%=gname%>" style="list-style:none;padding:0;margin:0 0 8px 0;">
+			<li class="group-block" data-group="<%=gname%>">
 				<!-- 组标题 -->
-				<div class="group-title" style="cursor:pointer;padding:6px;background:#f0f0f0;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;white-space:nowrap;">
+				<div class="group-title">
 					<span id="arrow-<%=self.option%>-<%=gname%>" class="mv-arrow-down-small"></span>
 					<b style="margin-left:8px;"><%=gname%></b>
 					<span id="group-count-<%=self.option%>-<%=gname%>" style="margin-left:8px;color:#007bff;">
@@ -65,18 +64,17 @@ end
 					</span>
 				</div>
 				<!-- 组内容 -->
-				<ul id="group-<%=self.option%>-<%=gname%>" style="margin:0 0 8px 16px;padding:0;list-style:none;">
-
+				<ul id="group-<%=self.option%>-<%=gname%>" class="group-items">
 				<% for _, item in ipairs(items) do %>
-					<li data-node-name="<%=pcdata(item.label):lower()%>" title="<%=pcdata(item.label)%>" style="list-style:none;padding:0;margin:0;white-space:nowrap;text-align:left;">
-						<div style="display:inline-flex;align-items:center;vertical-align:middle;">
-							<input type="checkbox" class="cbi-input-checkbox" style="vertical-align:middle;margin:0;margin-right:6px;"
+					<li class="node-item" data-node-name="<%=pcdata(item.label):lower()%>" title="<%=pcdata(item.label)%>">
+						<div class="mv-node-row">
+							<input type="checkbox" class="cbi-input-checkbox mv-node-checkbox"
 								<%= attr("id",   cbid .. "." .. item.key) ..
 									attr("name", cbid) ..
 									attr("value", item.key) ..
 									ifattr(selected[item.key], "checked", "checked")
 								%> />
-							<label for="<%=cbid .. "." .. item.key%>" style="vertical-align:middle;margin:0;padding:0;"><%=pcdata(item.label)%></label>
+							<label for="<%=cbid .. "." .. item.key%>" class="mv-node-label"><%=pcdata(item.label)%></label>
 						</div>
 					</li>
 				<% end %>
@@ -86,7 +84,7 @@ end
 		</ul>
 	</div>
 	<!-- 控制栏 -->
-	<div style="margin-top:4px;display:flex;gap:4px;align-items:center;">
+	<div class="mv-controls">
 		<input class="btn cbi-button cbi-button-edit" type="button" onclick="mv_selectAll('<%=cbid%>','<%=self.option%>',true)" value="<%:Select all%>">
 		<input class="btn cbi-button cbi-button-edit" type="button" onclick="mv_selectAll('<%=cbid%>','<%=self.option%>',false)" value="<%:DeSelect all%>">
 		<span id="count-<%=self.option%>" style="color:#666;"></span>
@@ -119,6 +117,76 @@ if not _G.__NODES_MULTIVALUE_CSS_JS__ then
 	border-top: 5px solid #555;
 	display: inline-block;
 	vertical-align: middle;
+}
+.mv_search_input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 6px;
+	margin-bottom: 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	max-height: 36px;
+}
+.mv_list_container {
+	max-height: 300px;
+	overflow: auto;
+	margin-bottom: 8px;
+	white-space: nowrap;
+}
+.mv_node_list {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+.mv_node_list li.group-block {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+.mv_node_list .group-title {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	padding: 6px;
+	margin-bottom: 4px;
+	background: #f0f0f0;
+	border-radius: 4px;
+	white-space: nowrap;
+}
+.mv_node_list ul.group-items {
+	margin: 0 0 8px 16px;
+	padding: 0;
+	list-style: none;
+}
+.mv_node_list ul.group-items li.node-item {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	white-space: nowrap;
+	text-align: left;
+}
+.mv-node-row {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+}
+.mv-node-checkbox {
+	margin: 0;
+	vertical-align: middle;
+	margin-right: 6px;
+}
+.mv-node-label {
+	margin: 0;
+	padding: 0;
+	vertical-align: middle;
+	cursor: pointer;
+}
+.mv-controls {
+	margin-top: 4px;
+	display: flex;
+	gap: 4px;
+	align-items: center;
 }
 </style>
 
