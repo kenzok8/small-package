@@ -1,9 +1,17 @@
+<%
+	local util = require "luci.util"
+	local http = require "luci.http"
+
+	local boardinfo = util.ubus("system", "board")
+	http.prepare_content("text/html; charset=UTF-8")
+-%>
+
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="<%=luci.i18n.context.lang%>">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>登录</title>
+	<title><%=striptags( boardinfo.hostname or "?" ) %> - LuCI</title>
 	<style>
 		* {
 			margin: 0;
@@ -112,36 +120,36 @@
 <body>
 	<div class="login-container">
 		<div class="login-header">
-			<h1>登录</h1>
-			<p>欢迎回来，请输入您的凭证</p>
+			<h1><%:Log in%></h1>
+			<p><%:Welcome back, please enter your credentials%></p>
 		</div>
 
 		<div id="errorMessage" class="error-message"></div>
 
 		<form action="?istorenextlogin=1" method="post" id="loginForm">
 			<div class="form-group">
-				<label for="username">用户名</label>
+				<label for="username"><%:Username%></label>
 				<input 
 					type="text" 
 					id="username" 
 					name="luci_username" 
 					required 
 					autocomplete="username"
-					placeholder="请输入用户名"
+					placeholder="<%:Please enter username%>"
 					value="root">
 			</div>
 
 			<div class="form-group">
-				<label for="password">密码</label>
+				<label for="password"><%:Password%></label>
 				<input 
 					type="password" 
 					id="password" 
 					name="luci_password"  
 					autocomplete="current-password"
-					placeholder="请输入密码">
+					placeholder="<%:Please enter password%>">
 			</div>
 
-			<button type="submit" class="login-button">登录</button>
+			<button type="submit" class="login-button"><%:Log in%></button>
 		</form>
 	</div>
 
@@ -149,26 +157,23 @@
 		const errorMessage = document.getElementById('errorMessage');
 
 		if ("?istorenextlogin=1" == location.search) {
-			errorMessage.textContent = '用户名或密码错误';
+			errorMessage.textContent = '<%:Invalid username and/or password! Please try again.%>';
 			errorMessage.classList.add('show');
 		}
 
-		// 客户端表单验证
 		document.getElementById('loginForm').addEventListener('submit', function(e) {
 			const username = document.getElementById('username').value.trim();
 
 			if (!username) {
 				e.preventDefault();
-				errorMessage.textContent = '请输入用户名';
+				errorMessage.textContent = '<%:Please enter username%>';
 				errorMessage.classList.add('show');
 				return false;
 			}
 
-			// 清除错误消息
 			errorMessage.classList.remove('show');
 		});
 
-		// 输入时清除错误消息
 		const inputs = document.querySelectorAll('input');
 		inputs.forEach(input => {
 			input.addEventListener('input', function() {

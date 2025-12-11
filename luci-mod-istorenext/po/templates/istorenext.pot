@@ -1,0 +1,32 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:160
+msgid "Invalid username and/or password! Please try again."
+msgstr ""
+
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:123
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:152
+msgid "Log in"
+msgstr ""
+
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:143
+msgid "Password"
+msgstr ""
+
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:149
+msgid "Please enter password"
+msgstr ""
+
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:138
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:169
+msgid "Please enter username"
+msgstr ""
+
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:131
+msgid "Username"
+msgstr ""
+
+#: luci/luci-mod-istorenext/root/usr/lib/lua/luci/view/istorenext/login.htm:124
+msgid "Welcome back, please enter your credentials"
+msgstr ""

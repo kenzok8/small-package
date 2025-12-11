@@ -5,9 +5,9 @@ if ($login_request = 2) {
 proxy_intercept_errors on;
 uwsgi_intercept_errors on;
 
-error_page 403 /istorenext-login.html;
+error_page 403 /cgi-bin/luci/istorenext-login;
 
-location /cgi-bin/luci/istorenext {
+location ~ ^/cgi-bin/luci/istorenext(/|$) {
 	include uwsgi_params;
 	
 	uwsgi_param SERVER_ADDR $server_addr;
