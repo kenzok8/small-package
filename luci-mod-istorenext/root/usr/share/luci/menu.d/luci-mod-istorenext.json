@@ -10,5 +10,11 @@
 			"methods": [ "cookie:sysauth_https", "cookie:sysauth_http" ],
 			"login": true
 		}
+	},
+	"istorenext-login": {
+		"action": {
+			"type": "template",
+			"path": "istorenext/login"
+		}
 	}
 }
