@@ -774,7 +774,7 @@ return view.extend({
 		so.depends('vless_encryption', '1');
 		so.modalonly = true;
 
-		so = ss.taboption('field_vless_encryption', !hm.pr7558_merged ? hm.DynamicList : form.DynamicList, 'vless_encryption_paddings', _('Paddings'), // @pr7558_merged
+		so = ss.taboption('field_vless_encryption', hm.less_25_12 ? hm.DynamicList : form.DynamicList, 'vless_encryption_paddings', _('Paddings'), // @less_25_12
 			_('The server and client can set different padding parameters.') + '</br>' +
 			_('In the order of one <code>Padding-Length</code> and one <code>Padding-Interval</code>, infinite concatenation.') + '</br>' +
 			_('The first padding must have a probability of 100% and at least 35 bytes.'));

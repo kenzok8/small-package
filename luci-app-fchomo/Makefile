@@ -39,14 +39,15 @@ define Package/luci-app-fchomo/postinst
 export REVISION VERSION_NUMBER ARCH_PACKAGES
 if [ -n "$$IPKG_INSTROOT" ]; then
 	# building
-	REVISION=$$($$TOPDIR/scripts/getver.sh)
-	REVISION=$$(echo "$$REVISION" | cut -f1 -d'-' | sed 's|[a-z]||gi')
+	#REVISION=$$($$TOPDIR/scripts/getver.sh | cut -f1 -d'-' | sed 's|[a-z]||gi')
+	eval "$$(grep BUILD_ID "$$IPKG_INSTROOT/usr/lib/os-release")"
+	REVISION=$$(echo "$$BUILD_ID" | cut -f1 -d'-' | sed 's|[a-z]||gi')
 else
 	# system
 	REVISION=$$(ubus call system board | jsonfilter -qe '@.release.revision' | cut -f1 -d'-' | sed 's|[a-z]||gi')
 fi
 
-[ "$$REVISION" -ge 28158 ] || { 2>&1 echo "Minimum OpenWrt version required is 24.10."; exit 1; }
+[ "$$REVISION" -ge 28158 -o "$$REVISION" -eq 0 ] || { 2>&1 echo "Minimum OpenWrt version required is 24.10."; exit 1; }
 # https://archive.openwrt.org/releases/**/version.buildinfo
 # r?????-??????????    25.??.?-rc1
 # r28158-d276b4c91a    24.10.0-rc1
