@@ -20,7 +20,7 @@ const sharktaikogif = function() {
 'c2hhcmstdGFpa28uZ2lm'
 }()
 
-const pr7558_merged = form.DynamicList.prototype.renderWidget.toString().match('this\.allowduplicates');
+const less_25_12 = !form.DynamicList.prototype.renderWidget.toString().match('this\.allowduplicates');
 
 const HM_DIR = "/etc/fchomo";
 
@@ -413,7 +413,7 @@ const CBIGridSection = form.GridSection.extend({
 	}
 });
 
-const CBIDynamicList = form.DynamicList.extend({ // @pr7558_merged
+const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
 	__name__: 'CBI.DynamicList',
 
 	renderWidget(section_id, option_index, cfgvalue) {
@@ -440,7 +440,7 @@ const CBIStaticList = form.DynamicList.extend({
 	__name__: 'CBI.StaticList',
 
 	renderWidget(/* ... */) {
-		let El = (!pr7558_merged ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @pr7558_merged
+		let El = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
 
 		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
 
@@ -510,6 +510,39 @@ const CBIGenText = CBITextValue.extend({
 			title: _('Generate'),
 			click: ui.createHandlerFn(this, handleGenKey, this.hm_options || this.option)
 		}, [ _('Generate') ]));
+
+		return node;
+	}
+});
+
+const CBICopyValue = form.Value.extend({
+	__name__: 'CBI.CopyValue',
+
+	readonly: true,
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		let node = form.Value.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
+
+		node.classList.add('control-group');
+
+		node.appendChild(E('button', {
+			class: 'cbi-button cbi-button-add',
+			click: ui.createHandlerFn(this, async (section_id) => {
+				try {
+					await navigator.clipboard.writeText(this.formvalue(section_id));
+					console.log('Content copied to clipboard!');
+				} catch (e) {
+					console.error('Failed to copy: ', e);
+				}
+				/* Deprecated
+				let inputEl = document.getElementById(this.cbid(section_id)).querySelector('input');
+				inputEl.select();
+				document.execCommand("copy");
+				inputEl.blur();
+				*/
+				return alert(_('Content copied to clipboard!'));
+			}, section_id)
+		}, [ _('Copy') ]));
 
 		return node;
 	}
@@ -640,7 +673,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 	}
 });
 
-const UIDynamicList = ui.DynamicList.extend({ // @pr7558_merged
+const UIDynamicList = ui.DynamicList.extend({ // @less_25_12
 	addItem(dl, value, text, flash) {
 		if (this.options.allowduplicates) {
 			const new_item = E('div', { class: flash ? 'item flash' : 'item', tabindex: 0, draggable: true }, [
@@ -1529,7 +1562,7 @@ return baseclass.extend({
 	rulesetdoc,
 	sharkaudio,
 	sharktaikogif,
-	pr7558_merged,
+	less_25_12,
 	HM_DIR,
 	monospacefonts,
 	checkurls,
@@ -1568,6 +1601,7 @@ return baseclass.extend({
 	TextValue: CBITextValue,
 	GenValue: CBIGenValue,
 	GenText: CBIGenText,
+	CopyValue: CBICopyValue,
 	HandleImport: CBIHandleImport,
 
 	/* Method */
