@@ -548,6 +548,47 @@ const CBICopyValue = form.Value.extend({
 	}
 });
 
+const CBIparseYaml = baseclass.extend(/** @lends hm.parseYaml.prototype */ {
+	__init__(field, name, cfg) {
+		if (isEmpty(cfg))
+			return null;
+
+		if (typeof cfg === 'object') {
+			this.id = this.calcID(field, name ?? cfg.name);
+			this.label = '%s %s'.format(name ?? cfg.name, _('(Imported)'));
+		} else {
+			this.id = this.calcID(field, name ?? cfg);
+			this.label = '%s %s'.format(name ?? cfg, _('(Imported)'));
+		}
+
+		this.field = field;
+		this.name = name;
+		this.cfg = this.key_mapping(cfg);
+	},
+
+	key_mapping(cfg) {
+		return cfg;
+	},
+
+	calcID(field, name) {
+		return calcStringMD5(String.format('%s:%s', field, name));
+	},
+
+	bool2str(value) {
+		if (typeof value !== 'boolean')
+			return null;
+		return value ? '1' : '0';
+	},
+
+	jq(obj, path) {
+		return path.split('.').reduce((acc, cur) => acc && acc[cur], obj);
+	},
+
+	output() {
+		return this.cfg;
+	}
+});
+
 const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */ {
 	__init__(map, section, title, description) {
 		this.map = map;
@@ -557,10 +598,6 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 		this.placeholder = '';
 		this.appendcommand = '';
 		this.overridecommand = '';
-	},
-
-	calcID(field, name) {
-		return calcStringMD5(String.format('%s:%s', field, name));
 	},
 
 	handleFn(textarea) {
@@ -580,7 +617,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 			if (!isEmpty(res) && typeof res === 'object') {
 				if (Array.isArray(res))
 					res.forEach((cfg) => {
-						let config = this.parseYaml(field, null, cfg);
+						let config = new this.parseYaml(field, null, cfg).output();
 						//console.info(JSON.stringify(config, null, 2));
 						if (config) {
 							this.write(config);
@@ -589,7 +626,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 					})
 				else
 					for (let name in res) {
-						let config = this.parseYaml(field, name, res[name]);
+						let config = new this.parseYaml(field, name, res[name]).output();
 						//console.info(JSON.stringify(config, null, 2));
 						if (config) {
 							this.write(config);
@@ -618,17 +655,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 		});
 	},
 
-	parseYaml(field, name, cfg) {
-		if (isEmpty(cfg))
-			return null;
-
-		if (typeof cfg === 'object') {
-			cfg.hm_id = this.calcID(field, name ?? cfg.name);
-			cfg.hm_label = '%s %s'.format(name ?? cfg.name, _('(Imported)'));
-		}
-
-		return cfg;
-	},
+	parseYaml: CBIparseYaml,
 
 	render() {
 		const textarea = new ui.Textarea('', {
@@ -701,12 +728,6 @@ const UIDynamicList = ui.DynamicList.extend({ // @less_25_12
 });
 
 /* Method */
-function bool2str(value) {
-	if (typeof value !== 'boolean')
-		return null;
-	return value ? '1' : '0';
-}
-
 /* thanks to homeproxy */
 function calcStringMD5(e) {
 	/* Thanks to https://stackoverflow.com/a/41602636 */
@@ -847,10 +868,6 @@ function generateRand(type, length) {
 		default:
 			return null;
 	};
-}
-
-function getValue(obj, path) {
-	return path.split('.').reduce((acc, cur) => acc && acc[cur], obj);
 }
 
 function json2yaml(object, command) {
@@ -1602,17 +1619,16 @@ return baseclass.extend({
 	GenValue: CBIGenValue,
 	GenText: CBIGenText,
 	CopyValue: CBICopyValue,
+	parseYaml: CBIparseYaml,
 	HandleImport: CBIHandleImport,
 
 	/* Method */
-	bool2str,
 	calcStringMD5,
 	decodeBase64Str,
 	encodeBase64Str,
 	decodeBase64Bin,
 	encodeBase64Bin,
 	generateRand,
-	getValue,
 	json2yaml,
 	yaml2json,
 	isEmpty,
