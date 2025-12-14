@@ -8,43 +8,45 @@
 'require fchomo as hm';
 'require tools.widgets as widgets';
 
-function parseProxyGroupYaml(field, name, cfg) {
-	if (!cfg.type)
-		return null;
+const parseProxyGroupYaml = hm.parseYaml.extend({
+	key_mapping(cfg) {
+		if (!cfg.type)
+			return null;
 
-	// key mapping
-	let config = hm.removeBlankAttrs({
-		id: cfg.hm_id,
-		label: cfg.hm_label,
-		type: cfg.type,
-		groups: cfg.proxies ? cfg.proxies.map((grop) => hm.preset_outbound.full.map(([key, label]) => key).includes(grop) ? grop : this.calcID(hm.glossary["proxy_group"].field, grop)) : null, // array
-		use: cfg.use ? cfg.use.map((prov) => this.calcID(hm.glossary["provider"].field, prov)) : null, // array
-		include_all: hm.bool2str(cfg["include-all"]), // bool
-		include_all_proxies: hm.bool2str(cfg["include-all-proxies"]), // bool
-		include_all_providers: hm.bool2str(cfg["include-all-providers"]), // bool
-		// Url-test fields
-		tolerance: cfg.tolerance,
-		// Load-balance fields
-		strategy: cfg.strategy,
-		// Override fields
-		disable_udp: hm.bool2str(cfg["disable-udp"]), // bool
-		// Health fields
-		url: cfg.url,
-		interval: cfg.interval,
-		timeout: cfg.timeout,
-		lazy: hm.bool2str(cfg.lazy), // bool
-		expected_status: cfg["expected-status"],
-		max_failed_times: cfg["max-failed-times"],
-		// General fields
-		filter: [cfg.filter], // array.string: string
-		exclude_filter: [cfg["exclude-filter"]], // array.string: string
-		exclude_type: [cfg["exclude-type"]], // array.string: string
-		hidden: hm.bool2str(cfg.hidden), // bool
-		icon: cfg.icon
-	});
+		// key mapping // 2025/02/13
+		let config = hm.removeBlankAttrs({
+			id: this.id,
+			label: this.label,
+			type: cfg.type,
+			groups: cfg.proxies ? cfg.proxies.map((grop) => hm.preset_outbound.full.map(([key, label]) => key).includes(grop) ? grop : this.calcID(hm.glossary["proxy_group"].field, grop)) : null, // array
+			use: cfg.use ? cfg.use.map((prov) => this.calcID(hm.glossary["provider"].field, prov)) : null, // array
+			include_all: this.bool2str(cfg["include-all"]), // bool
+			include_all_proxies: this.bool2str(cfg["include-all-proxies"]), // bool
+			include_all_providers: this.bool2str(cfg["include-all-providers"]), // bool
+			// Url-test fields
+			tolerance: cfg.tolerance,
+			// Load-balance fields
+			strategy: cfg.strategy,
+			// Override fields
+			disable_udp: this.bool2str(cfg["disable-udp"]), // bool
+			// Health fields
+			url: cfg.url,
+			interval: cfg.interval,
+			timeout: cfg.timeout,
+			lazy: this.bool2str(cfg.lazy), // bool
+			expected_status: cfg["expected-status"],
+			max_failed_times: cfg["max-failed-times"],
+			// General fields
+			filter: [cfg.filter], // array.string: string
+			exclude_filter: [cfg["exclude-filter"]], // array.string: string
+			exclude_type: [cfg["exclude-type"]], // array.string: string
+			hidden: this.bool2str(cfg.hidden), // bool
+			icon: cfg.icon
+		});
 
-	return config;
-}
+		return config;
+	}
+});
 
 function loadDNSServerLabel(section_id) {
 	delete this.keylist;
@@ -221,161 +223,169 @@ class RulesEntry {
 	}
 }
 
-function parseDNSYaml(field, name, cfg) {
-	let addr = new DNSAddress(cfg);
+const parseDNSYaml = hm.parseYaml.extend({
+	key_mapping(cfg) {
+		let addr = new DNSAddress(cfg);
 
-	if (!addr.toString())
-		return null;
+		if (!addr.toString())
+			return null;
 
-	let detour = addr.parseParam('detour');
-	if (detour)
-		addr.setParam('detour', hm.preset_outbound.full.map(([key, label]) => key).includes(detour) ? detour : this.calcID(hm.glossary["proxy_group"].field, detour));
+		let detour = addr.parseParam('detour');
+		if (detour)
+			addr.setParam('detour', hm.preset_outbound.full.map(([key, label]) => key).includes(detour) ? detour : this.calcID(hm.glossary["proxy_group"].field, detour));
 
-	// key mapping
-	let config = {
-		id: this.calcID(field, cfg),
-		label: '%s %s'.format(cfg, _('(Imported)')),
-		address: addr.toString()
-	};
+		// key mapping // 2025/12/01
+		let config = {
+			id: this.id,
+			label: this.label,
+			address: addr.toString()
+		};
 
-	return config;
-}
-
-function parseDNSPolicyYaml(field, name, cfg) {
-	//console.info([name, cfg]);
-
-	let type = name.match(/^([^:]+):(.*)$/),
-		rules;
-	switch (type?.[1]) {
-		case 'geosite':
-			rules = type[2].split(',');
-			type = 'geosite';
-			break;
-		case 'rule-set':
-			rules = type[2].split(',').map((rule) => this.calcID(hm.glossary["ruleset"].field, rule));
-			type = 'rule_set';
-			break;
-		default:
-			rules = name.split(',');
-			type = 'domain';
-			break;
+		return config;
 	}
+});
 
-	// key mapping
-	let config = {
-		id: this.calcID(field, name),
-		label: '%s %s'.format(name, _('(Imported)')),
-		type: type,
-		...Object.fromEntries([[type, rules]]),
-		server: (Array.isArray(cfg) ? cfg : [cfg]).map((dns) => this.calcID(hm.glossary["dns_server"].field, dns)),
-		//proxy: null // fchomo unique features
-	};
+const parseDNSPolicyYaml = hm.parseYaml.extend({
+	key_mapping(cfg) {
+		//console.info([this.name, cfg]);
 
-	return config;
-}
+		let type = this.name.match(/^([^:]+):(.*)$/),
+			rules;
+		switch (type?.[1]) {
+			case 'geosite':
+				rules = type[2].split(',');
+				type = 'geosite';
+				break;
+			case 'rule-set':
+				rules = type[2].split(',').map((rule) => this.calcID(hm.glossary["ruleset"].field, rule));
+				type = 'rule_set';
+				break;
+			default:
+				rules = this.name.split(',');
+				type = 'domain';
+				break;
+		}
 
-function parseRules(rule) {
-	// parse rules
-	// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/config/config.go#L1040-L1090
-	// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/rules/parser.go#L12
-	rule = rule.split(',');
-	let ruleName = rule[0].toUpperCase(),
-		logical_payload,
-		payload,
-		target,
-		params = [],
-		subrule;
+		// key mapping // 2025/12/01
+		let config = {
+			id: this.id,
+			label: this.label,
+			type: type,
+			...Object.fromEntries([[type, rules]]),
+			server: (Array.isArray(cfg) ? cfg : [cfg]).map((dns) => this.calcID(hm.glossary["dns_server"].field, dns)),
+			//proxy: null // fchomo unique features
+		};
 
-	let l = rule.length;
+		return config;
+	}
+});
 
-	if (ruleName === 'SUB-RULE') {
-		subrule = rule.slice(1).join(',').match(/^\((.*)\)/); // SUB-RULE,(payload),subrule
-		if (subrule) {
-			[rule, subrule] = [subrule[1].split(',').concat('DIRECT'), rule.pop()];
-			ruleName = rule[0].toUpperCase();
-			l = rule.length;
+const parseRulesYaml = hm.parseYaml.extend({
+	key_mapping(cfg) {
+		let entry = this.parseRules(cfg); // 2025/07/11
+
+		if (!entry)
+			return null;
+
+		// key mapping // 2025/07/11
+		let config = {
+			id: this.id,
+			label: '%s %s'.format(this.id.slice(0,7), _('(Imported)')),
+			entry: entry
+		};
+
+		return config;
+	},
+
+	parseRules(rule) {
+		// parse rules
+		// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/config/config.go#L1040-L1090
+		// https://github.com/muink/mihomo/blob/8e6eb70e714d44f26ba407adbd7b255762f48b97/rules/parser.go#L12
+		rule = rule.split(',');
+		let ruleName = rule[0].toUpperCase(),
+			logical_payload,
+			payload,
+			target,
+			params = [],
+			subrule;
+
+		let l = rule.length;
+
+		if (ruleName === 'SUB-RULE') {
+			subrule = rule.slice(1).join(',').match(/^\((.*)\)/); // SUB-RULE,(payload),subrule
+			if (subrule) {
+				[rule, subrule] = [subrule[1].split(',').concat('DIRECT'), rule.pop()];
+				ruleName = rule[0].toUpperCase();
+				l = rule.length;
+			} else
+				return null;
+		}
+
+		if (hm.rules_logical_type.map(o => o[0]).includes(ruleName)) {
+			target = rule.pop();
+			logical_payload = rule.slice(1).join(',').match(/^\(\((.*)\)\)$/); // LOGIC_TYPE,((payload1),(payload2))
+			if (logical_payload)
+				logical_payload = logical_payload[1].split('),(');
+			else
+				return null;
+		} else if (hm.rules_type.map(o => o[0]).includes(ruleName)) {
+			if (l < 2) return null; // error: format invalid
+			else if (ruleName === 'MATCH') l = 2;
+			else if (l >= 3) {
+				l = 3;
+				payload = rule[1];
+			}
+			target = rule[l-1];
+			params = rule.slice(l);
 		} else
 			return null;
-	}
 
-	if (hm.rules_logical_type.map(o => o[0]).includes(ruleName)) {
-		target = rule.pop();
-		logical_payload = rule.slice(1).join(',').match(/^\(\((.*)\)\)$/); // LOGIC_TYPE,((payload1),(payload2))
+		// make entry
+		let entry = new RulesEntry();
+		entry.type = ruleName;
+		// parse payload
 		if (logical_payload)
-			logical_payload = logical_payload[1].split('),(');
-		else
-			return null;
-	} else if (hm.rules_type.map(o => o[0]).includes(ruleName)) {
-		if (l < 2) return null; // error: format invalid
-		else if (ruleName === 'MATCH') l = 2;
-		else if (l >= 3) {
-			l = 3;
-			payload = rule[1];
-		}
-		target = rule[l-1];
-		params = rule.slice(l);
-	} else
-		return null;
+			for (let i=0; i < logical_payload.length; i++) {
+				let type, factor, deny;
 
-	// make entry
-	let entry = new RulesEntry();
-	entry.type = ruleName;
-	// parse payload
-	if (logical_payload)
-		for (let i=0; i < logical_payload.length; i++) {
-			let type, factor, deny;
+				// deny
+				deny = logical_payload[i].match(/^NOT,\(\((.*)\)\)$/);
+				if (deny)
+					[type, factor] = deny[1].split(',');
+				else
+					[type, factor] = logical_payload[i].split(',');
 
-			// deny
-			deny = logical_payload[i].match(/^NOT,\(\((.*)\)\)$/);
-			if (deny)
-				[type, factor] = deny[1].split(',');
+				if (type === 'RULE-SET')
+					factor = this.calcID(hm.glossary["ruleset"].field, factor);
+
+				entry.setPayload(i, {type: type.toUpperCase(), factor: factor, deny: deny ? true : null});
+			}
+		else if (payload)
+			if (ruleName === 'RULE-SET')
+				entry.setPayload(0, {factor: this.calcID(hm.glossary["ruleset"].field, payload)});
 			else
-				[type, factor] = logical_payload[i].split(',');
-
-			if (type === 'RULE-SET')
-				factor = this.calcID(hm.glossary["ruleset"].field, factor);
-
-			entry.setPayload(i, {type: type.toUpperCase(), factor: factor, deny: deny ? true : null});
-		}
-	else if (payload)
-		if (ruleName === 'RULE-SET')
-			entry.setPayload(0, {factor: this.calcID(hm.glossary["ruleset"].field, payload)});
+				entry.setPayload(0, {factor: payload});
+		params.forEach((param) => entry.setParam(param, true));
+		if (subrule)
+			entry.subrule = subrule;
 		else
-			entry.setPayload(0, {factor: payload});
-	params.forEach((param) => entry.setParam(param, true));
-	if (subrule)
-		entry.subrule = subrule;
-	else
-		entry.detour = hm.preset_outbound.full.map(([key, label]) => key).includes(target) ? target : this.calcID(hm.glossary["proxy_group"].field, target);
+			entry.detour = hm.preset_outbound.full.map(([key, label]) => key).includes(target) ? target : this.calcID(hm.glossary["proxy_group"].field, target);
 
-	return entry.toString('json');
-}
-function parseRulesYaml(field, name, cfg) {
-	let id = this.calcID(field, cfg);
-	let entry = parseRules.call(this, cfg);
+		return entry.toString('json');
+	}
+});
+const parseSubrulesYaml = parseRulesYaml.extend({
+	key_mapping(cfg) {
+		cfg = cfg.match(/^([^:]+):(.+)$/);
 
-	if (!entry)
-		return null;
+		if (!cfg)
+			return null;
 
-	// key mapping
-	let config = {
-		id: id,
-		label: '%s %s'.format(id.slice(0,7), _('(Imported)')),
-		entry: entry
-	};
+		let config = new parseRulesYaml(this.field, this.name, cfg[2]).output();
 
-	return config;
-}
-function parseSubrulesYaml(field, name, cfg) {
-	cfg = cfg.match(/^([^:]+):(.+)$/);
-
-	if (!cfg)
-		return null;
-
-	let config = parseRulesYaml.call(this, field, name, cfg[2]);
-
-	return config ? Object.assign(config, {group: cfg[1]}) : null;
-}
+		return config ? Object.assign(config, {group: cfg[1]}) : null;
+	}
+});
 
 function boolToFlag(boolean) {
 	if (typeof(boolean) !== 'boolean')
@@ -853,7 +863,7 @@ return view.extend({
 							'  url: "https://cp.cloudflare.com/generate_204"\n' +
 							'  interval: 300\n' +
 							'  lazy: false\n' +
-							'  strategy: consistent-hashin\n' +
+							'  strategy: consistent-hashing\n' +
 							'- name: AllProxy\n' +
 							'  type: select\n' +
 							'  disable-udp: true\n' +
@@ -867,11 +877,7 @@ return view.extend({
 							'  exclude-filter: "美|日"\n' +
 							'  exclude-type: "Shadowsocks|Http"\n' +
 							'  ...'
-			o.parseYaml = function(field, name, cfg) {
-				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
-
-				return config ? parseProxyGroupYaml.call(this, field, name, config) : null;
-			};
+			o.parseYaml = parseProxyGroupYaml;
 
 			return o.render();
 		}
@@ -1106,11 +1112,7 @@ return view.extend({
 							'- AND,((GEOIP,cn),(DSCP,12),(NETWORK,udp),(NOT,((IP-ASN,12345))),(DSCP,14),(NOT,((NETWORK,udp)))),DIRECT\n' +
 							'- MATCH,GLOBAL\n' +
 							'  ...'
-			o.parseYaml = function(field, name, cfg) {
-				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
-
-				return config ? parseRulesYaml.call(this, field, name, config) : null;
-			};
+			o.parseYaml = parseRulesYaml;
 
 			return o.render();
 		}
@@ -1202,11 +1204,7 @@ return view.extend({
 							'    - DOMAIN,dns.alidns.com,REJECT\n' +
 							'  ...'
 			o.appendcommand = ' | with_entries(.key as $k | .value |= map("\\($k):" + .)) | [.[][]]'
-			o.parseYaml = function(field, name, cfg) {
-				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
-
-				return config ? parseSubrulesYaml.call(this, field, name, config) : null;
-			};
+			o.parseYaml = parseSubrulesYaml;
 
 			return o.render();
 		}
@@ -1343,11 +1341,7 @@ return view.extend({
 							'    - https://doh.pub/dns-query\n' +
 							'  ...'
 			o.overridecommand = '.dns | pick(["default-nameserver", "proxy-server-nameserver", "nameserver", "fallback", "nameserver-policy"]) | with(.["nameserver-policy"]; . = [.[]] | flatten) | [.[][]] | unique'
-			o.parseYaml = function(field, name, cfg) {
-				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
-
-				return config ? parseDNSYaml.call(this, field, name, config) : null;
-			};
+			o.parseYaml = parseDNSYaml;
 
 			return o.render();
 		}
@@ -1565,11 +1559,7 @@ return view.extend({
 							'    - https://doh.pub/dns-query#DIRECT\n' +
 							'  "rule-set:google": tls://8.8.4.4:853\n' +
 							'  ...'
-			o.parseYaml = function(field, name, cfg) {
-				let config = hm.HandleImport.prototype.parseYaml.call(this, field, name, cfg);
-
-				return config ? parseDNSPolicyYaml.call(this, field, name, config) : null;
-			};
+			o.parseYaml = parseDNSPolicyYaml;
 
 			return o.render();
 		}
