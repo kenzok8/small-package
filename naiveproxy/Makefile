@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=140.0.7339.123-3
+PKG_VERSION:=143.0.7499.109-1
 PKG_RELEASE:=1
 
 # intel 80386 & riscv64 & cortex-a76
@@ -30,7 +30,7 @@ else ifeq ($(ARCH_PACKAGES),arm_arm1176jzf-s_vfp)
 else ifeq ($(ARCH_PACKAGES),arm_arm926ej-s)
   PKG_HASH:=27b28beaa032165e9b93d423353ced3cfe594c71353fd9d109699f330b785732
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a15_neon-vfpv4)
-  PKG_HASH:=14d4929d2b417baa7f31df114eefa2d0a1ae4bc255cf1b3a037558bd67b77faf
+  PKG_HASH:=5e2dd76559c1eef027471ddadb646a5aaff7f4d2b337bf9aa609bc38dde4247b
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a5_vfpv4)
   PKG_HASH:=49a9c7eecab54155a31c3bfae71cf5193a881189715c7b4d29ce50a8c5c759d6
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a7)
@@ -46,9 +46,9 @@ else ifeq ($(ARCH_PACKAGES),arm_cortex-a9)
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a9_neon)
   PKG_HASH:=ab5a699ef830d65344f014547ae6ce73e0f25103ad02d3e80a5d441e19c7e21e
 else ifeq ($(ARCH_PACKAGES),arm_cortex-a9_vfpv3-d16)
-  PKG_HASH:=efb7650c31c862564f39be269d67fca4e1a43bf356a5d4c1c158cc83e7c378e2
+  PKG_HASH:=294b676fb05f7042e16ca5871200915f3bcc73a6650c99f17857d651af6bb920
 else ifeq ($(ARCH_PACKAGES),arm_mpcore)
-  PKG_HASH:=1e0fa7d2f283807a019c85ddb58f99b711bcf86eb4ac759562b221d998091093
+  PKG_HASH:=0498d19350ae3e6c064913758199c53014254c4765a106eac1913fd7642eff41
 else ifeq ($(ARCH_PACKAGES),arm_xscale)
   PKG_HASH:=40175f13102597b88f92c664bf5c595ab69b248a5b64229a6aba388be77345b4
 else ifeq ($(ARCH_PACKAGES),mipsel_24kc)
@@ -60,7 +60,7 @@ else ifeq ($(ARCH_PACKAGES),riscv64)
 else ifeq ($(ARCH_PACKAGES),x86)
   PKG_HASH:=a3e8aad951330b995273176cc310038971f4f3fff56ab047d5e60e3a0eb67d14
 else ifeq ($(ARCH_PACKAGES),x86_64)
-  PKG_HASH:=d6c39befccb1f3ad54ffa11c5ae8ad11a90151998eeaae6b1a73cc0702f24966
+  PKG_HASH:=7387ce2af58463735d839f45d8564626cdc1baea3e053c2479ba5fe0f2fa721f
 else
   PKG_HASH:=dummy
 endif
