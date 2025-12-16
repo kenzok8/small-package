@@ -841,7 +841,22 @@ return view.extend({
 			_('Routing mode of the traffic enters mihomo via firewall rules.'));
 		so.value('', _('All allowed'));
 		so.value('bypass_cn', _('Bypass CN'));
-		so.value('routing_gfw', _('Routing GFW'));
+		if (features.has_dnsmasq_full)
+			so.value('routing_gfw', _('Routing GFW'));
+		so.validate = function(section_id, value) {
+			const mode = this.section.getOption('routing_mode').formvalue(section_id);
+			let pd = this.section.getUIElement(section_id, 'routing_domain').node.querySelector('input');
+
+			// Force enabled
+			if (mode === 'routing_gfw') {
+				pd.checked = true;
+				pd.disabled = true;
+			} else {
+				pd.removeAttribute('disabled');
+			}
+
+			return true;
+		}
 
 		so = ss.taboption('routing_control', form.Flag, 'routing_domain', _('Handle domain'),
 			_('Routing mode will be handle domain.') + '</br>' +
