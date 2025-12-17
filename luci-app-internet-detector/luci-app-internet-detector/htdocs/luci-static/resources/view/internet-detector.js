@@ -436,7 +436,7 @@ return view.extend({
 	},
 
 	validateUrl(section, value) {
-		return (/^$|^https?:\/\/[\w.-]+(:[0-9]{2,5})?[\w\/~.&?+=-]*$/.test(value)) ?
+		return (/^$|^https?:\/\/([\w.-]+|\[[a-fA-F0-9:.]+\])(:[0-9]{2,5})?((\/|\?).*)?$/.test(value)) ?
 			true : _('Expecting:') + ` ${_('valid URL')}\n`;
 	},
 
@@ -1698,6 +1698,7 @@ return view.extend({
 						o.password  = true;
 						o.modalonly = true;
 
+						// tg_chat_id
 						o = s.taboption('telegram', this.CBITextfieldButtonInput,
 							'mod_telegram_chat_id', _('Chat ID'),
 							_('ID of the Telegram chat to which messages will be sent.')
