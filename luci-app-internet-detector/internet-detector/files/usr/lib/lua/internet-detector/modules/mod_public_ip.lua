@@ -27,7 +27,7 @@ local Module = {
 	requestAttempts      = 2,
 	timeout              = 3,
 	curlExec             = "/usr/bin/curl",
-	curlParams           = '-s --no-keepalive --user-agent "Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0"',
+	curlParams           = '-s -g --no-keepalive --user-agent "Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0"',
 	providers            = {
 		opendns1 = {
 			name    = "opendns1", type = "dns", host = "myip.opendns.com",

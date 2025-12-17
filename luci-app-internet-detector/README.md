@@ -21,22 +21,22 @@ Internet-detector is an application for checking the availability of the Interne
 ## Installation notes:
 
     opkg update
-    wget --no-check-certificate -O /tmp/internet-detector_1.7.0-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector_1.7.0-r1_all.ipk
-    opkg install /tmp/internet-detector_1.7.0-r1_all.ipk
-    rm /tmp/internet-detector_1.7.0-r1_all.ipk
+    wget --no-check-certificate -O /tmp/internet-detector_1.7.1-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector_1.7.1-r1_all.ipk
+    opkg install /tmp/internet-detector_1.7.1-r1_all.ipk
+    rm /tmp/internet-detector_1.7.1-r1_all.ipk
     service internet-detector start
     service internet-detector enable
 
-    wget --no-check-certificate -O /tmp/luci-app-internet-detector_1.7.0-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/luci-app-internet-detector_1.7.0-r1_all.ipk
-    opkg install /tmp/luci-app-internet-detector_1.7.0-r1_all.ipk
-    rm /tmp/luci-app-internet-detector_1.7.0-r1_all.ipk
+    wget --no-check-certificate -O /tmp/luci-app-internet-detector_1.7.1-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/luci-app-internet-detector_1.7.1-r1_all.ipk
+    opkg install /tmp/luci-app-internet-detector_1.7.1-r1_all.ipk
+    rm /tmp/luci-app-internet-detector_1.7.1-r1_all.ipk
     service rpcd restart
 
 i18n-ru:
 
-    wget --no-check-certificate -O /tmp/luci-i18n-internet-detector-ru_1.7.0-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/luci-i18n-internet-detector-ru_1.7.0-r1_all.ipk
-    opkg install /tmp/luci-i18n-internet-detector-ru_1.7.0-r1_all.ipk
-    rm /tmp/luci-i18n-internet-detector-ru_1.7.0-r1_all.ipk
+    wget --no-check-certificate -O /tmp/luci-i18n-internet-detector-ru_1.7.1-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/luci-i18n-internet-detector-ru_1.7.1-r1_all.ipk
+    opkg install /tmp/luci-i18n-internet-detector-ru_1.7.1-r1_all.ipk
+    rm /tmp/luci-i18n-internet-detector-ru_1.7.1-r1_all.ipk
 
 ## Screenshots:
 
@@ -48,9 +48,9 @@ i18n-ru:
 
 **Dependences:** modemmanager.
 
-    wget --no-check-certificate -O /tmp/internet-detector-mod-modem-restart_1.7.0-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector-mod-modem-restart_1.7.0-r1_all.ipk
-    opkg install /tmp/internet-detector-mod-modem-restart_1.7.0-r1_all.ipk
-    rm /tmp/internet-detector-mod-modem-restart_1.7.0-r1_all.ipk
+    wget --no-check-certificate -O /tmp/internet-detector-mod-modem-restart_1.7.1-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector-mod-modem-restart_1.7.1-r1_all.ipk
+    opkg install /tmp/internet-detector-mod-modem-restart_1.7.1-r1_all.ipk
+    rm /tmp/internet-detector-mod-modem-restart_1.7.1-r1_all.ipk
     service internet-detector restart
 
 ![](https://github.com/gSpotx2f/luci-app-internet-detector/blob/master/screenshots/04.jpg)
@@ -59,9 +59,9 @@ i18n-ru:
 
 **Dependences:** mailsend.
 
-    wget --no-check-certificate -O /tmp/internet-detector-mod-email_1.7.0-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector-mod-email_1.7.0-r1_all.ipk
-    opkg install /tmp/internet-detector-mod-email_1.7.0-r1_all.ipk
-    rm /tmp/internet-detector-mod-email_1.7.0-r1_all.ipk
+    wget --no-check-certificate -O /tmp/internet-detector-mod-email_1.7.1-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector-mod-email_1.7.1-r1_all.ipk
+    opkg install /tmp/internet-detector-mod-email_1.7.1-r1_all.ipk
+    rm /tmp/internet-detector-mod-email_1.7.1-r1_all.ipk
     service internet-detector restart
 
 ![](https://github.com/gSpotx2f/luci-app-internet-detector/blob/master/screenshots/05.jpg)
@@ -70,9 +70,9 @@ i18n-ru:
 
 **Dependences:** curl.
 
-    wget --no-check-certificate -O /tmp/internet-detector-mod-telegram_1.7.0-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector-mod-telegram_1.7.0-r1_all.ipk
-    opkg install /tmp/internet-detector-mod-telegram_1.7.0-r1_all.ipk
-    rm /tmp/internet-detector-mod-telegram_1.7.0-r1_all.ipk
+    wget --no-check-certificate -O /tmp/internet-detector-mod-telegram_1.7.1-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/internet-detector-mod-telegram_1.7.1-r1_all.ipk
+    opkg install /tmp/internet-detector-mod-telegram_1.7.1-r1_all.ipk
+    rm /tmp/internet-detector-mod-telegram_1.7.1-r1_all.ipk
     service internet-detector restart
 
 ![](https://github.com/gSpotx2f/luci-app-internet-detector/blob/master/screenshots/06.jpg)
