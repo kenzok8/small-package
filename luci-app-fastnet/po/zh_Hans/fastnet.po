@@ -1,0 +1,39 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "FastNet"
+msgstr "FastNet"
+
+msgid "FastNet provides network testing tools and a Web UI."
+msgstr "FastNet 提供网络测试工具与 Web 界面。"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Listen Host"
+msgstr "监听地址"
+
+msgid "Listen Port"
+msgstr "监听端口"
+
+msgid "API Token"
+msgstr "访问 Token"
+
+msgid "Enable Logging"
+msgstr "启用日志"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Not running"
+msgstr "未运行"
+
+msgid "Open Web UI"
+msgstr "打开 Web 界面"
+
