@@ -1,0 +1,14 @@
+#!/bin/sh
+
+uci -q batch <<-EOF_UCI >/dev/null
+	delete ucitrack.@fastnet[-1]
+	add ucitrack fastnet
+	set ucitrack.@fastnet[-1].init=fastnet
+	commit ucitrack
+
+EOF_UCI
+
+/etc/init.d/fastnet enable
+/etc/init.d/fastnet start
+
+exit 0

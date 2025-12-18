@@ -1,0 +1,21 @@
+<fieldset class="cbi-section">
+	<legend><%:Status%></legend>
+	<div class="cbi-section-node">
+		<div class="cbi-value">
+			<label class="cbi-value-title"><%:Status%></label>
+			<div class="cbi-value-field">
+				<% if self.running then %>
+				<span style="color: green; font-weight: bold"><%:Running%></span>
+				<% else %>
+				<span style="color: red; font-weight: bold"><%:Not running%></span>
+				<% end %>
+			</div>
+		</div>
+		<div class="cbi-value">
+			<label class="cbi-value-title"><%:Open Web UI%></label>
+			<div class="cbi-value-field">
+				<a href="<%=self.url%>" target="_blank" rel="noreferrer"><%:Open Web UI%></a>
+			</div>
+		</div>
+	</div>
+</fieldset>
