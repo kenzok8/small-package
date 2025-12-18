@@ -8,6 +8,9 @@ if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(api.url())
 end
 
+m:append(Template(appname .. "/cbi/nodes_multivalue_com"))
+m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
+
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
 
@@ -44,6 +47,8 @@ socks_node = s:option(ListValue, "node", translate("Node"))
 if auto_switch_tip then
 	socks_node.description = auto_switch_tip
 end
+socks_node.template = appname .. "/cbi/nodes_listvalue"
+socks_node.group = {}
 
 o = s:option(Flag, "bind_local", translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
 o.default = "0"
@@ -90,25 +95,40 @@ o.datatype = "min(1)"
 o.default = 1
 o:depends("enable_autoswitch", true)
 	
-autoswitch_backup_node = s:option(DynamicList, "autoswitch_backup_node", translate("List of backup nodes"))
-autoswitch_backup_node:depends("enable_autoswitch", true)
+o = s:option(MultiValue, "autoswitch_backup_node", translate("List of backup nodes"))
+o:depends("enable_autoswitch", true)
+o.widget = "checkbox"
+o.template = appname .. "/cbi/nodes_multivalue"
+o.group = {}
+for i, v in pairs(nodes_table) do
+	o:value(v.id, v.remark)
+	o.group[#o.group+1] = v.group or ""
+	socks_node:value(v.id, v["remark"])
+	socks_node.group[#socks_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+end
+-- Reading the old DynamicList
+function o.cfgvalue(self, section)
+	return m.uci:get_list(appname, section, "autoswitch_backup_node") or {}
+end
+-- Write-and-hold DynamicList
 function o.write(self, section, value)
-	local t = {}
-	local t2 = {}
-	if type(value) == "table" then
-		local x
-		for _, x in ipairs(value) do
-			if x and #x > 0 then
-				if not t2[x] then
-					t2[x] = x
-					t[#t+1] = x
-				end
-			end
-		end
-	else
-		t = { value }
+	local old = m.uci:get_list(appname, section, "autoswitch_backup_node") or {}
+	local new, set = {}, {}
+	for v in value:gmatch("%S+") do
+		new[#new + 1] = v
+		set[v] = 1
 	end
-	return DynamicList.write(self, section, t)
+	for _, v in ipairs(old) do
+		if not set[v] then
+			m.uci:set_list(appname, section, "autoswitch_backup_node", new)
+			return
+		end
+		set[v] = nil
+	end
+	for _ in pairs(set) do
+		m.uci:set_list(appname, section, "autoswitch_backup_node", new)
+		return
+	end
 end
 
 o = s:option(Flag, "autoswitch_restore_switch", translate("Restore Switch"), translate("When detects main node is available, switch back to the main node."))
@@ -118,12 +138,7 @@ o = s:option(Value, "autoswitch_probe_url", translate("Probe URL"), translate("T
 o.default = "https://www.google.com/generate_204"
 o:depends("enable_autoswitch", true)
 
-for k, v in pairs(nodes_table) do
-	autoswitch_backup_node:value(v.id, v["remark"])
-	socks_node:value(v.id, v["remark"])
-end
-
-o = s:option(DummyValue, "btn", " ")
+o = s:option(DummyValue, "btn", "　")
 o.template = appname .. "/socks_auto_switch/btn"
 o:depends("enable_autoswitch", true)
 

@@ -79,8 +79,10 @@ function index()
 	entry({"admin", "services", appname, "copy_node"}, call("copy_node")).leaf = true
 	entry({"admin", "services", appname, "clear_all_nodes"}, call("clear_all_nodes")).leaf = true
 	entry({"admin", "services", appname, "delete_select_nodes"}, call("delete_select_nodes")).leaf = true
+	entry({"admin", "services", appname, "reassign_group"}, call("reassign_group")).leaf = true
 	entry({"admin", "services", appname, "get_node"}, call("get_node")).leaf = true
 	entry({"admin", "services", appname, "save_node_order"}, call("save_node_order")).leaf = true
+	entry({"admin", "services", appname, "save_node_list_opt"}, call("save_node_list_opt")).leaf = true
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_node"}, call("subscribe_del_node")).leaf = true
 	entry({"admin", "services", appname, "subscribe_del_all"}, call("subscribe_del_all")).leaf = true
@@ -545,6 +547,29 @@ function save_node_order()
 		luci.sys.call(string.format("uci -q reorder %s.%s=%d", appname, name, idx - 1))
 	end
 	api.sh_uci_commit(appname)
+	http_write_json({ status = "ok" })
+end
+
+function reassign_group()
+	local ids = http.formvalue("ids") or ""
+	local group = http.formvalue("group") or "default"
+	for id in ids:gmatch("([^,]+)") do
+		if group ~="" and group ~= "default" then
+			api.sh_uci_set(appname, id, "group", group)
+		else
+			api.sh_uci_del(appname, id, "group")
+		end
+	end
+	api.sh_uci_commit(appname)
+	http_write_json({ status = "ok" })
+end
+
+function save_node_list_opt()
+	local option = http.formvalue("option") or ""
+	local value = http.formvalue("value") or ""
+	if option ~= "" then
+		api.sh_uci_set(appname, "@global_other[0]", option, value, true)
+	end
 	http_write_json({ status = "ok" })
 end
 
