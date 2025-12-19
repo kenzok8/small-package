@@ -523,7 +523,9 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"padding-min": strToInt(cfg.sudoku_padding_min),
 		"padding-max": strToInt(cfg.sudoku_padding_max),
 		"table-type": cfg.sudoku_table_type,
+		"custom-tables": cfg.sudoku_custom_tables,
 		"http-mask": (cfg.sudoku_http_mask === '0') ? false : true,
+		"enable-pure-downlink": (cfg.sudoku_enable_pure_downlink === '0') ? false : null,
 
 		/* Snell */
 		psk: cfg.snell_psk,
