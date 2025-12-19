@@ -1608,3 +1608,8 @@ msgstr "黑名单添加失败，IP %s 格式错误，已从列表中移除"
 
 msgid "Currently %s devices online"  
 msgstr "当前共 %s 台设备在线"
+msgid "Prefer displaying online devices"
+msgstr "优先显示在线设备"
+
+msgid "Only effective when service is running"
+msgstr "仅在服务运行时生效"

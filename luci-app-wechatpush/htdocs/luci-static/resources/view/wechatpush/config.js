@@ -242,7 +242,7 @@ return view.extend({
 		o.placeholder = 'https://api.telegram.org';
 		o.rmempty = false;
 		o.depends('jsonpath', '/usr/share/wechatpush/api/telegram.json');
-		
+
 		o = s.taboption('basic', form.Value, 'recipient_email', _('Recipient Email Address'));
 		o.depends('jsonpath', '/usr/share/wechatpush/api/msmtp.json');
 		o.rmempty = false;
@@ -367,6 +367,10 @@ return view.extend({
 		o.depends('oui_data', '2');
 
 		o = s.taboption('basic', form.Flag, 'reset_regularly', _('Reset Traffic Data Every Day at Midnight'));
+
+		o = s.taboption('basic', form.Flag, 'prefer_client_page', _('Prefer displaying online devices'));
+		o.default = '1';
+		o.description = _('Only effective when service is running');
 
 		o = s.taboption('basic', form.Flag, 'debuglevel', _('Enable Logging'));
 
