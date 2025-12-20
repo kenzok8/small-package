@@ -1455,9 +1455,24 @@ scanlocalip() {
 		local start_ip=$(echo "$scan_ip_range" | cut -d "-" -f 1)
 		local end_ip=$(echo "$scan_ip_range" | cut -d "-" -f 2)
 
-		local start_num=$(echo "$start_ip" | awk -F '.' '{print $NF}')
-		local end_num=$(echo "$end_ip" | awk -F '.' '{print $NF}')
-		local base_ip=$(echo "$start_ip" | awk -F '.' '{print $1"."$2"."$3}')
+		ip2int() {
+			local a b c d
+			IFS=. read a b c d <<< "$1"
+			echo $(( (a << 24) + (b << 16) + (c << 8) + d ))
+		}
+
+		int2ip() {
+			local ui32=$1
+			local ip n
+			for n in 1 2 3 4; do
+				ip=$((ui32 & 0xff))${ip:+.}$ip
+				ui32=$((ui32 >> 8))
+			done
+			echo $ip
+		}
+
+		local start_int=$(ip2int "$start_ip")
+		local end_int=$(ip2int "$end_ip")
 
 		tmp_thread_num=5
 		# 临时增加并发数
@@ -1466,11 +1481,12 @@ scanlocalip() {
 		done
 		unset i
 
-		for i in $(seq "$start_num" "$end_num"); do
+		for i in $(seq "$start_int" "$end_int"); do
 			# 获取一个令牌
 			read -u 5
 			{
-				run_with_tag ping -c 1 -W 2 "${base_ip}.${i}" >/dev/null 2>&1
+				current_ip=$(int2ip "$i")
+				run_with_tag ping -c 1 -W 2 "${current_ip}" >/dev/null 2>&1
 				# 释放令牌
 				echo >&5
 			} &
@@ -1713,8 +1729,9 @@ first() {
 	done
 	wait
 
-	local IP_INFO=$(ip addr show br-lan | grep 'inet ' | awk '{print $2}')
-	[ -n "$IP_INFO" ] && local SUBNET=$(echo $IP_INFO | cut -d'/' -f1 | cut -d'.' -f1-3)
+	local IP_INFO=$(ip addr show br-lan | grep 'inet ' | awk '{print $2}' | head -n 1)
+	local NETMASK=$(echo "$IP_INFO" | cut -d'/' -f2)
+	[ -n "$IP_INFO" ] && [ "$NETMASK" == "24" ] && local SUBNET=$(echo $IP_INFO | cut -d'/' -f1 | cut -d'.' -f1-3)
 	[ -n "$SUBNET" ] && local IPLIST=$(cat /proc/net/arp | grep "0x2\|0x6" | awk '{print $1}' | grep -v "^169.254." | grep -v "^$" | sort -u | grep -oE "${SUBNET}\.[0-9]{1,3}") || local IPLIST=$(cat /proc/net/arp | grep "0x2\|0x6" | awk '{print $1}' | grep -v "^169.254." | grep -v "^$" | sort -u | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
 
 	local IPLIST+=$'\n'"$gateway_iplist"
