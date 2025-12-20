@@ -382,6 +382,8 @@ const CBIGridSection = form.GridSection.extend({
 		let el = form.GridSection.prototype.renderSectionAdd.call(this, extra_class),
 			nameEl = el.querySelector('.cbi-section-create-name');
 
+		nameEl.placeholder = _('Specify a ID');
+
 		ui.addValidator(nameEl, 'uciname', true, (v) => {
 			let button = el.querySelector('.cbi-section-create > .cbi-button-add');
 
