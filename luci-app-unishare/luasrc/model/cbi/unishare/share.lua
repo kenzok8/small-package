@@ -25,6 +25,17 @@ local path = s:option(Value, "path", translate("Path"),
     translate("Note: '/mnt' is not suitable as a writable share, because Windows will recognize the wrong capacity"))
 path.datatype = "string"
 path.rmempty = false
+
+local name = s:option(Value, "name", translate("Name"))
+name.datatype = "string"
+name.rmempty = true
+name.validate = function(self, value, section)
+    if value and string.match(value, "[`&|;<>/\\*?$#]") then
+        return nil, translatef("Name must not contains '%s'", "`&|;<>/\\*?$#")
+    end
+    return AbstractValue.validate(self, value, section)
+end
+
 path.validate = function(self, value, section)
     if value then
         if value == "/" or string.match(value, "^/.+[^/]$") then
@@ -35,16 +46,6 @@ path.validate = function(self, value, section)
         else
             return nil, translate("Path must starts with '/' and not ends with '/'")
         end
-    end
-    return AbstractValue.validate(self, value, section)
-end
-
-local name = s:option(Value, "name", translate("Name"))
-name.datatype = "string"
-name.rmempty = true
-name.validate = function(self, value, section)
-    if value and string.match(value, "[`&|;<>/\\*?$#]") then
-        return nil, translatef("Name must not contains '%s'", "`&|;<>/\\*?$#")
     end
     return AbstractValue.validate(self, value, section)
 end
