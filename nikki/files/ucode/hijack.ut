@@ -88,6 +88,19 @@
 	const reserved_ip = uci_array(uci.get('nikki', 'proxy', 'reserved_ip'));
 	const reserved_ip6 = uci_array(uci.get('nikki', 'proxy', 'reserved_ip6'));
 	const bypass_dscp = uci_array(uci.get('nikki', 'proxy', 'bypass_dscp'));
+	const bypass_fwmark = [];
+	for (let fwmark in uci_array(uci.get('nikki', 'proxy', 'bypass_fwmark'))) {
+		let mark;
+		let mask = '0xFFFFFFFF';
+		if (index(fwmark, '/') >= 0) {
+			const parts = split(fwmark, '/');
+			mark = parts[0];
+			mask = parts[1];
+		} else {
+			mark = fwmark;
+		}
+		push(bypass_fwmark, { mark: mark, mask: mask });
+	}
 	const bypass_china_mainland_ip = uci_bool(uci.get('nikki', 'proxy', 'bypass_china_mainland_ip'));
 	const bypass_china_mainland_ip6 = uci_bool(uci.get('nikki', 'proxy', 'bypass_china_mainland_ip6'));
 	const proxy_tcp_dport = split((uci.get('nikki', 'proxy', 'proxy_tcp_dport') ?? '0-65535'), ' ');
@@ -455,6 +468,9 @@ table inet nikki {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
+		{% for (let fwmark in bypass_fwmark): %}
+		meta mark & {{ fwmark.mask }} == {{ fwmark.mark }} counter return
+		{% endfor %}
 		meta nfproto @proxy_nfproto jump router_redirect
 		{% endif %}
 		{% if (fake_ip_ping_hijack): %}
@@ -484,6 +500,9 @@ table inet nikki {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
+		{% for (let fwmark in bypass_fwmark): %}
+		meta mark & {{ fwmark.mask }} == {{ fwmark.mark }} counter return
+		{% endfor %}
 		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 		{% endif %}
@@ -527,6 +546,9 @@ table inet nikki {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
+		{% for (let fwmark in bypass_fwmark): %}
+		meta mark & {{ fwmark.mask }} == {{ fwmark.mark }} counter return
+		{% endfor %}
 		iifname @lan_inbound_device meta nfproto @proxy_nfproto jump lan_redirect
 		{% endif %}
 		{% if (fake_ip_ping_hijack): %}
@@ -551,6 +573,9 @@ table inet nikki {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
+		{% for (let fwmark in bypass_fwmark): %}
+		meta mark & {{ fwmark.mask }} == {{ fwmark.mark }} counter return
+		{% endfor %}
 		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 		{% endif %}

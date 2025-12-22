@@ -72,8 +72,8 @@ start_service() {
 	config_get rlimit_data_hard "procd" "rlimit_data_hard"
 	config_get rlimit_stack_soft "procd" "rlimit_stack_soft"
 	config_get rlimit_stack_hard "procd" "rlimit_stack_hard"
-	config_get rlimit_nofile_soft "procd" "rlimit_nofile_soft"
-	config_get rlimit_nofile_hard "procd" "rlimit_nofile_hard"
+	config_get rlimit_nofile_soft "procd" "rlimit_nofile_soft" "$(ulimit -Sn)"
+	config_get rlimit_nofile_hard "procd" "rlimit_nofile_hard" "$(ulimit -Hn)"
 	### environment variable
 	local env_safe_paths env_disable_loopback_detector env_disable_quic_go_gso env_disable_quic_go_ecn env_skip_system_ipv6_check
 	config_get env_safe_paths "procd" "env_safe_paths"
@@ -241,7 +241,7 @@ start_service() {
 	procd_append_param limits as="${rlimit_address_space_soft:-unlimited} ${rlimit_address_space_hard:-unlimited}"
 	procd_append_param limits data="${rlimit_data_soft:-unlimited} ${rlimit_data_hard:-unlimited}"
 	procd_append_param limits stack="${rlimit_stack_soft:-unlimited} ${rlimit_stack_hard:-unlimited}"
-	procd_append_param limits nofile="${rlimit_nofile_soft:-unlimited} ${rlimit_nofile_hard:-unlimited}"
+	procd_append_param limits nofile="${rlimit_nofile_soft} ${rlimit_nofile_hard}"
 
 	procd_close_instance
 	# cron
