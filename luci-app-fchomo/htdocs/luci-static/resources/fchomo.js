@@ -1151,10 +1151,10 @@ function renderResDownload(section_id) {
 					return downloadFile(section_type, section_id, url, header).then((res) => {
 						ui.addNotification(null, E('p', _('Download successful.')));
 					}).catch((e) => {
-						ui.addNotification(null, E('p', _('Download failed: %s').format(e)));
+						ui.addNotification(null, E('p', _('Download failed: %s').format(e)), 'error');
 					});
 				} else
-					return ui.addNotification(null, E('p', _('Unable to download unsupported type: %s').format(type)));
+					return ui.addNotification(null, E('p', _('Unable to download unsupported type: %s').format(type)), 'error');
 			}, section_type, section_id, type, url, header)
 		}, [ _('🡇') ]) //🗘
 	]);
@@ -1183,7 +1183,7 @@ function handleGenKey(option) {
 					widget(k).value = v ?? '';
 				});
 			else
-				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, res.error)));
+				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, res.error)), 'error');
 		});
 	} else {
 		let password, required_method;
@@ -1230,7 +1230,7 @@ function handleReload(instance, ev, section_id) {
 	return fs.exec('/etc/init.d/fchomo', ['reload', instance])
 		.then((res) => { /* return window.location = window.location.href.split('#')[0] */ })
 		.catch((e) => {
-			ui.addNotification(null, E('p', _('Failed to execute "/etc/init.d/fchomo %s %s" reason: %s').format('reload', instance, e)))
+			ui.addNotification(null, E('p', _('Failed to execute "/etc/init.d/fchomo %s %s" reason: %s').format('reload', instance, e)), 'error')
 		})
 }
 
@@ -1595,10 +1595,10 @@ function uploadCertificate(type, filename, ev) {
 			if (ret.result === true)
 				ui.addNotification(null, E('p', _('Your %s was successfully uploaded. Size: %sB.').format(type, res.size)));
 			else
-				ui.addNotification(null, E('p', _('Failed to upload %s, error: %s.').format(type, ret.error)));
+				ui.addNotification(null, E('p', _('Failed to upload %s, error: %s.').format(type, ret.error)), 'error');
 		});
 	}, this, ev.target))
-	.catch((e) => { ui.addNotification(null, E('p', e.message)) });
+	.catch((e) => { ui.addNotification(null, E('p', e.message), 'error') });
 }
 function uploadInitialPack(ev, section_id) {
 	const callWriteInitialPack = rpc.declare({
@@ -1614,10 +1614,10 @@ function uploadInitialPack(ev, section_id) {
 				ui.addNotification(null, E('p', _('Successfully uploaded.')));
 				return window.location = window.location.href.split('#')[0];
 			} else
-				ui.addNotification(null, E('p', _('Failed to upload, error: %s.').format(ret.error)));
+				ui.addNotification(null, E('p', _('Failed to upload, error: %s.').format(ret.error)), 'error');
 		});
 	}, this, ev.target))
-	.catch((e) => { ui.addNotification(null, E('p', e.message)) });
+	.catch((e) => { ui.addNotification(null, E('p', e.message), 'error') });
 }
 
 return baseclass.extend({
