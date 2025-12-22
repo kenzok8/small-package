@@ -422,6 +422,13 @@ return view.extend({
 		so.depends('type', 'sudoku');
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.ListValue, 'sudoku_http_mask_strategy', _('HTTP mask strategy'));
+		so.value('random', _('Random'));
+		so.value('post', _('post'));
+		so.value('websocket', _('websocket'));
+		so.depends('sudoku_http_mask', '1');
+		so.modalonly = true;
+
 		so = ss.taboption('field_general', form.Flag, 'sudoku_enable_pure_downlink', _('Enable obfuscate for downlink'),
 			_('When disabled, downlink ciphertext is split into 6-bit segments, reusing the original padding pool and obfuscate type to reduce downlink overhead.') + '</br>' +
 			_('Uplink keeps the Sudoku protocol, and downlink characteristics are consistent with uplink characteristics.'));
