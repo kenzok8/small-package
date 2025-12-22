@@ -18,7 +18,7 @@ return view.extend({
 			document.querySelector('textarea').value = value;
 			ui.addNotification(null, E('p', _('Contents have been saved.')), 'info');
 		}).catch((e) => {
-			ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e)));
+			ui.addNotification(null, E('p', _('Unable to save contents: %s').format(e)), 'error');
 		});
 	},
 
