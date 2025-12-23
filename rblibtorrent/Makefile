@@ -19,6 +19,7 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include ./boost-version.mk
 
 define Package/rblibtorrent
   SECTION:=libs
