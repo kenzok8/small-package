@@ -1,15 +1,16 @@
+<%
+  local json = require "luci.jsonc"
+  local resource = (luci.config.main and luci.config.main.mediaurlbase) or "/luci-static"
+  local cfg = json.stringify(data or {})
+%>
+<%+header%>
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>DDNSTO Plugin Settings Page</title>
-      <script type="module" crossorigin src="/luci-static/ddnsto/index.js"></script>
-    </head>
+<script>
+  window.ddnstoConfig = <%=cfg%>;
+  window.ddnstoCsrfToken = <%=json.stringify((data or {}).token or "")%>;
+</script>
 
-    <body>
-      <div id="root"></div>
-    </body>
-  </html>
-  
+<div id="app" data-ddnsto-shadow="true"></div>
+<script type="module" src="<%=resource%>/ddnsto/index.js"></script>
+
+<%+footer%>
