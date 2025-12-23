@@ -205,7 +205,7 @@ return view.extend({
 						ui.addNotification(null, E('p', _('No valid rule-set link found.')));
 					else
 						ui.addNotification(null, E('p', _('Successfully imported %s %s of total %s.')
-							.format(imported_count, _('rule-set'), input_links.length)));
+							.format(imported_count, _('rule-set'), input_links.length)), 'info');
 				}
 
 				if (imported_count)
