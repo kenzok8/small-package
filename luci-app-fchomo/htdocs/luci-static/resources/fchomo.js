@@ -647,7 +647,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 						E('br'),
 						//type_file_count ? _("%s rule-set of type '%s' need to be filled in manually.")
 						//	.format(type_file_count, 'file') : ''
-					]));
+					]), 'info');
 			}
 
 			if (imported_count)
@@ -1149,7 +1149,7 @@ function renderResDownload(section_id) {
 			click: ui.createHandlerFn(this, (section_type, section_id, type, url, header) => {
 				if (type === 'http') {
 					return downloadFile(section_type, section_id, url, header).then((res) => {
-						ui.addNotification(null, E('p', _('Download successful.')));
+						ui.addNotification(null, E('p', _('Download successful.')), 'info');
 					}).catch((e) => {
 						ui.addNotification(null, E('p', _('Download failed: %s').format(e)), 'error');
 					});
@@ -1593,7 +1593,7 @@ function uploadCertificate(type, filename, ev) {
 	.then(L.bind((btn, res) => {
 		return L.resolveDefault(callWriteCertificate(filename), {}).then((ret) => {
 			if (ret.result === true)
-				ui.addNotification(null, E('p', _('Your %s was successfully uploaded. Size: %sB.').format(type, res.size)));
+				ui.addNotification(null, E('p', _('Your %s was successfully uploaded. Size: %sB.').format(type, res.size)), 'info');
 			else
 				ui.addNotification(null, E('p', _('Failed to upload %s, error: %s.').format(type, ret.error)), 'error');
 		});
@@ -1611,7 +1611,7 @@ function uploadInitialPack(ev, section_id) {
 	.then(L.bind((btn, res) => {
 		return L.resolveDefault(callWriteInitialPack(), {}).then((ret) => {
 			if (ret.result === true) {
-				ui.addNotification(null, E('p', _('Successfully uploaded.')));
+				ui.addNotification(null, E('p', _('Successfully uploaded.')), 'info');
 				return window.location = window.location.href.split('#')[0];
 			} else
 				ui.addNotification(null, E('p', _('Failed to upload, error: %s.').format(ret.error)), 'error');
