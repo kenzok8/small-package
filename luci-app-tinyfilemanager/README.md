@@ -37,6 +37,7 @@ o.datatype = "and(uinteger,max(2048))";  //limit to 2048MB
 And edit [Makefile](Makefile) before build
 
 ```makefile
+memory_limit=??            #Memory limit
 total_size_limit=??        #Total size of multiple files
 single_size_limit=??       #Max single file size
 otime_uploads_limit=??     #Max count of simultaneous uploads
@@ -45,6 +46,7 @@ otime_uploads_limit=??     #Max count of simultaneous uploads
 And edit `/etc/php.ini` in router
 
 ```ini
+memory_limit = ??           ;Memory limit
 post_max_size = ??          ;Total size of multiple files
 upload_max_filesize = ??    ;Max single file size
 max_file_uploads = ??       ;Max count of simultaneous uploads
