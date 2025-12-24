@@ -417,23 +417,43 @@ return view.extend({
 		so.depends('type', 'sudoku');
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.Flag, 'sudoku_enable_pure_downlink', _('Enable obfuscate for downlink'),
+			_('When disabled, downlink ciphertext is split into 6-bit segments, reusing the original padding pool and obfuscate type to reduce downlink overhead.') + '</br>' +
+			_('Uplink keeps the Sudoku protocol, and downlink characteristics are consistent with uplink characteristics.'));
+		so.default = so.enabled;
+		so.depends('type', 'sudoku');
+		so.modalonly = true;
+
 		so = ss.taboption('field_general', form.Flag, 'sudoku_http_mask', _('HTTP mask'));
 		so.default = so.enabled;
 		so.depends('type', 'sudoku');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'sudoku_http_mask_mode', _('HTTP mask mode'));
+		so.default = 'legacy';
+		so.value('legacy', _('Legacy'));
+		so.value('stream', _('stream') + ' - ' + _('CDN support'));
+		so.value('poll', _('poll') + ' - ' + _('CDN support'));
+		so.value('auto', _('Auto') + ' - ' + _('CDN support'));
+		so.depends('sudoku_http_mask', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'sudoku_http_mask_tls', _('HTTP mask: %s').format(_('TLS')));
+		so.default = so.disabled;
+		so.depends({sudoku_http_mask_mode: /^(stream|poll|auto)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'sudoku_http_mask_host', _('HTTP mask: %s').format(_('Host/SNI override')));
+		so.datatype = 'or(hostname, hostport)';
+		so.placeholder = 'example.com[:443]';
+		so.depends({sudoku_http_mask_mode: /^(stream|poll|auto)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'sudoku_http_mask_strategy', _('HTTP mask strategy'));
 		so.value('random', _('Random'));
 		so.value('post', _('post'));
 		so.value('websocket', _('websocket'));
-		so.depends('sudoku_http_mask', '1');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Flag, 'sudoku_enable_pure_downlink', _('Enable obfuscate for downlink'),
-			_('When disabled, downlink ciphertext is split into 6-bit segments, reusing the original padding pool and obfuscate type to reduce downlink overhead.') + '</br>' +
-			_('Uplink keeps the Sudoku protocol, and downlink characteristics are consistent with uplink characteristics.'));
-		so.default = so.enabled;
-		so.depends('type', 'sudoku');
+		so.depends('sudoku_http_mask_mode', 'legacy');
 		so.modalonly = true;
 
 		/* Snell fields */
