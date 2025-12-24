@@ -418,6 +418,20 @@ return view.extend({
 		o.depends('type', 'sudoku');
 		o.modalonly = true;
 
+		o = s.taboption('field_general', form.Flag, 'sudoku_http_mask', _('HTTP mask'));
+		o.default = o.enabled;
+		o.depends('type', 'sudoku');
+		o.modalonly = true;
+
+		o = s.taboption('field_general', form.ListValue, 'sudoku_http_mask_mode', _('HTTP mask mode'));
+		o.default = 'legacy';
+		o.value('legacy', _('Legacy'));
+		o.value('stream', _('stream') + ' - ' + _('CDN support'));
+		o.value('poll', _('poll') + ' - ' + _('CDN support'));
+		o.value('auto', _('Auto') + ' - ' + _('CDN support'));
+		o.depends('sudoku_http_mask', '1');
+		o.modalonly = true;
+
 		/* Tuic fields */
 		o = s.taboption('field_general', hm.GenValue, 'uuid', _('UUID'));
 		o.rmempty = false;
