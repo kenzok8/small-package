@@ -40,7 +40,7 @@ for k, v in pairs(groups) do
 	o:value(k)
 end
 o.write = function(self, section, value)
-	value = value and value:gsub("%s+", "") or ""
+	value = api.trim(value)
 	local lower = value:lower()
 
 	if lower == "" or lower == "default" then

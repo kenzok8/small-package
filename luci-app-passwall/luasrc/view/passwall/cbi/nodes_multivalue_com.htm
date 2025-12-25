@@ -100,8 +100,16 @@
 
 <script type="text/javascript">
 //<![CDATA[
+	function mv_idSafe(id) {
+		return id
+			.trim()
+			.replace(/\s+/g, "-")
+			.replace(/[\x00-\x1F\x7F]/g, "");
+	}
+
 	// 折叠组
 	function mv_toggleGroup(opt, nodeList, searchInput, g) {
+		g = mv_idSafe(g);
 		const ul = document.getElementById("group-" + opt + "-" + g);
 		const arrow = document.getElementById("arrow-" + opt + "-" + g);
 		if (!ul) return;
