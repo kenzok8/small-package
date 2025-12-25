@@ -194,7 +194,7 @@ local api = require "luci.passwall.api"
 			e.stopPropagation();
 			e.preventDefault();
 
-			const val = input.value.trim();
+			const val = input.value.replace(/\s/g, '');
 			if (!val) return;
 
 			if (val.toLowerCase() === "default") {
