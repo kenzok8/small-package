@@ -91,7 +91,7 @@ s.dynamic = false
 o = s:option(Value, "remark", translate("Subscribe Remark"))
 o.rmempty = false
 o.validate = function(self, value, section)
-	value = api.trim(value)
+	value = value and value:gsub("%s+", "") or ""
 	if value == "" then
 		return nil, translate("Remark cannot be empty.")
 	end
