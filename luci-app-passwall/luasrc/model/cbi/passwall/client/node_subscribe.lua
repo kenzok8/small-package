@@ -175,7 +175,7 @@ o = s:option(Value, "remark", translate("Remarks"))
 o.width = "auto"
 o.rmempty = false
 o.validate = function(self, value, section)
-	value = value and value:gsub("%s+", "") or ""
+	value = api.trim(value)
 	if value == "" then
 		return nil, translate("Remark cannot be empty.")
 	end

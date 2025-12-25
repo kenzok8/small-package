@@ -52,7 +52,14 @@ fi
 # r?????-??????????    25.??.?-rc1
 # r28158-d276b4c91a    24.10.0-rc1
 # r23069-e2701e0f33    23.05.0-rc1
-exit 0
+
+# https://github.com/openwrt/luci/blob/db91dbcdf7db16b307aaf054a6039a6abc464b0c/luci.mk#L232-L239
+[ -n "$${IPKG_INSTROOT}" ] || {
+	rm -f /tmp/luci-indexcache.*
+	rm -rf /tmp/luci-modulecache/
+	killall -HUP rpcd 2>/dev/null
+	exit 0
+}
 endef
 
 define Package/luci-app-fchomo/prerm
