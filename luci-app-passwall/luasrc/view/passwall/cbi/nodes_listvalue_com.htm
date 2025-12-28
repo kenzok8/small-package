@@ -5,10 +5,6 @@
 --	Copyright: copyright(c)2025–2027
 --	Description: Passwall(2) UI template
 -- It is the common part of the template and cannot be used independently
-
-local api = require "luci.passwall.api"
-local appname = api.appname
-
 %>
 <style>
 /* 主下拉按钮的下箭头 */
@@ -73,6 +69,18 @@ local appname = api.appname
 	min-width: 220px;
 	white-space: nowrap;
 }
+@media (max-width: 1152px) {
+	.lv-dropdown-container {
+		white-space: normal;
+	}
+}
+@media (max-width: 600px) {
+	.lv-dropdown-container {
+		display: block;
+		white-space: normal;
+	}
+}
+
 .lv-dropdown-display {
 	cursor: pointer;
 	display: inline-flex;
@@ -128,9 +136,6 @@ local appname = api.appname
 	overflow: hidden;
 	text-overflow: ellipsis;
 	text-align: left !important;
-}
- #cbi-<%=appname%>-socks .td.cbi-value-field > div { 
-	white-space: nowrap;
 }
 </style>
 
