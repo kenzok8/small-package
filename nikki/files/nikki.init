@@ -55,14 +55,15 @@ start_service() {
 	fi
 	# get config
 	## app config
-	local scheduled_restart cron_expression profile test_profile fast_reload core_only
+	local scheduled_restart cron_expression profile test_profile core_only
 	config_get_bool scheduled_restart "config" "scheduled_restart" 0
 	config_get cron_expression "config" "cron_expression"
 	config_get profile "config" "profile"
 	config_get_bool test_profile "config" "test_profile" 0
 	config_get_bool core_only "config" "core_only" 0
 	## procd config
-	### fast reload
+	### general
+	local fast_reload
 	config_get_bool fast_reload "procd" "fast_reload" 0
 	### rlimit
 	local rlimit_address_space_soft rlimit_address_space_hard rlimit_data_soft rlimit_data_hard rlimit_stack_soft rlimit_stack_hard rlimit_nofile_soft rlimit_nofile_hard

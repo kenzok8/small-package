@@ -109,7 +109,7 @@ return view.extend({
 
         o = s.option(form.Value, 'start_delay', _('Start Delay'));
         o.datatype = 'uinteger';
-        o.placeholder = '0';
+        o.placeholder = _('Start Immidiately');
 
         o = s.option(form.Flag, 'scheduled_restart', _('Scheduled Restart'));
         o.rmempty = false;
@@ -122,11 +122,47 @@ return view.extend({
         o = s.option(form.Flag, 'test_profile', _('Test Profile'));
         o.rmempty = false;
 
-        o = s.option(form.Flag, 'fast_reload', _('Fast Reload'));
-        o.rmempty = false;
-
         o = s.option(form.Flag, 'core_only', _('Core Only'));
         o.rmempty = false;
+
+        s = m.section(form.NamedSection, 'procd', 'procd', _('procd Config'));
+
+        s.tab('general', _('General Config'));
+
+        o = s.taboption('general', form.Flag, 'fast_reload', _('Fast Reload'));
+        o.rmempty = false;
+
+        s.tab('rlimit', _('RLIMIT Config'));
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_address_space_soft', _('Address Space Size Soft Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_address_space_hard', _('Address Space Size Hard Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_data_soft', _('Heap Size Soft Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_data_hard', _('Heap Size Hard Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_stack_soft', _('Stack Size Soft Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_stack_hard', _('Stack Size Hard Limit'));
+        o.datatype = 'uinteger';
+        o.placeholder = _('Unlimited');
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_nofile_soft', _('Number of Open Files Soft Limit'));
+        o.datatype = 'uinteger';
+
+        o = s.taboption('rlimit', form.Value, 'rlimit_nofile_hard', _('Number of Open Files Hard Limit'));
+        o.datatype = 'uinteger';
 
         return m.render();
     }
