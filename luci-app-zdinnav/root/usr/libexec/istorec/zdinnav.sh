@@ -13,6 +13,17 @@ auto_arch() {
 	esac
 }
 
+# 设置文件夹权限
+file_permissions() {
+	local config_path="$1"
+	#设置文件夹权限
+	# chmod 777 "$config_path" 2>/dev/null
+	# 递归设置目录权限
+	find "$config_path" -type d -exec chmod 777 {} \; 2>/dev/null
+	# 递归设置文件权限
+	find "$config_path" -type f -exec chmod 766 {} \; 2>/dev/null
+}
+
 # 创建文件夹
 create_folder() {
 	local config_path="$1"
@@ -20,11 +31,10 @@ create_folder() {
 	local config_password="$3"
 	local config_database="$4"
 	local config_connection="$5"
+
 	[ ! -d "$config_path/logs" ] && mkdir -p "$config_path/logs"
 	[ ! -d "$config_path/database" ] && mkdir -p "$config_path/database"
 	[ ! -d "$config_path/configuration" ] && mkdir -p "$config_path/configuration"
-	# 设置文件夹权限
-	chmod -R 777 "$config_path"
 
 	# 数据库初始化配置
 	sed -e "s|ACCOUNT_VAR|${config_account}|g" \
@@ -34,6 +44,9 @@ create_folder() {
 	sed -e "s|DBTYPE_VAR|${config_database}|g" \
 		-e "s|CONNECTIONSTRING_VAR|${config_connection}|g" \
 		"/usr/share/zdinnav/zdinNavSettings.json" >"${config_path}/configuration/zdinNavSettings.json"
+
+	# 设置文件夹权限
+	file_permissions "$config_path"
 }
 
 # 创建docker可以执行的接口命令
@@ -154,9 +167,11 @@ compare_versions() {
 # 获取最新版号
 get_version() {
 	local platform="$1"
-	local version_url=$(uci get zdinnav.@zdinnav_config[0].version_url 2>/dev/null)
-	local version_hub_url=$(uci get zdinnav.@zdinnav_config[0].version_hub_url 2>/dev/null)
+	local version_url=$(uci get zdinnav.@zdinnav_const_config[0].version_url 2>/dev/null)
+	local version_hub_url=$(uci get zdinnav.@zdinnav_const_config[0].version_hub_url 2>/dev/null)
 	local content=""
+
+	echo "智淀导航docker版本获取中...,Fetching ZdinNav Docker version..." >&2
 
 	# 检查wget是否安装
 	if ! which wget >/dev/null 2>&1; then
@@ -210,36 +225,12 @@ get_version() {
 	echo "$version"
 }
 
-# 合并配置文件
-merge_config() {
-	local zdinnav_config="/etc/config/zdinnav"
-	local zdinnav_config_opkg="/etc/config/zdinnav-opkg"
-	# 检查是否需要合并
-	if [ ! -f "$zdinnav_config" ] || [ ! -f "$zdinnav_config_opkg" ]; then
-		return 0
-	fi
-
-	# 1.1.0 新加配置
-	local version_hub_url=$(uci get zdinnav.@zdinnav_config[0].version_hub_url 2>/dev/null)
-	if [ -z "$version_hub_url" ]; then
-		local version_hub_url_opkg=$(uci get zdinnav-opkg.@zdinnav_config[0].version_hub_url 2>/dev/null)
-		uci set zdinnav.@zdinnav_config[0].version_hub_url=$version_hub_url_opkg
-	fi
-
-	# 提交配置
-	uci commit zdinnav
-	# 删除新版配置文件
-	chmod 777 "$zdinnav_config_opkg" 2>/dev/null
-	rm -f "$zdinnav_config_opkg"
-}
-
+# 安装
 do_install() {
-	# 检查配置是否需要合并
-	merge_config
 	# 读取配置文件数据
 	local port=$(uci get zdinnav.@main[0].port 2>/dev/null)
 	local config=$(uci get zdinnav.@main[0].config_path 2>/dev/null)
-	local docker_url=$(uci get zdinnav.@zdinnav_config[0].docker_url 2>/dev/null)
+	local docker_url=$(uci get zdinnav.@zdinnav_const_config[0].docker_url 2>/dev/null)
 	local version=$(uci get zdinnav.@zdinnav_config[0].version 2>/dev/null)
 	local offline_installation=$(uci get zdinnav.@main[0].enable_offline_installation 2>/dev/null)
 	local zdinnav_account=$(uci get zdinnav.@main[0].administrator_account 2>/dev/null)
@@ -250,6 +241,7 @@ do_install() {
 
 	if [ -z "$config" ]; then
 		echo "config path is empty!"
+		sleep 1
 		exit 1
 	fi
 
@@ -257,6 +249,7 @@ do_install() {
 	RET=$?
 	if [ ! "$RET" = "0" ]; then
 		echo "mkdir config path failed"
+		sleep 1
 		exit 1
 	fi
 
@@ -269,15 +262,13 @@ do_install() {
 			local version_local="${basename#*_}"
 			if [ -z "$version_local" ]; then
 				echo "无法解析安装包，请不要修改安装包文件名。Unable to parse the installation package. Do not modify its file name."
+				sleep 1
 				exit 1
 			fi
 			# 停止并删除并旧版本
 			local docker_state=$(docker ps --all -f 'name=^/zdinnav' --format '{{.State}}')
 			if [ -n "$docker_state" ]; then
-				if [ "$docker_state" = "running" ]; then
-					docker stop zdinnav
-				fi
-				docker rm zdinnav
+				docker rm -f zdinnav
 			fi
 			if [[ "$(docker images -q $docker_url:$version 2>/dev/null)" != "" ]]; then
 				docker rmi "$docker_url:$version"
@@ -286,6 +277,7 @@ do_install() {
 			docker load -i "$latest_tar"
 			if [ ! "$?" = "0" ]; then
 				echo "docker load 执行失败，请检查*.tar安装包是否正确。The 'docker load' command failed. Please verify the integrity of the *.tar file."
+				sleep 1
 				exit 1
 			fi
 			version=$version_local
@@ -293,10 +285,12 @@ do_install() {
 			local zdinnav_tag=$(docker images --format "{{.Repository}} {{.Tag}} {{.CreatedAt}}" | grep -E ".*/zdinnav" | sort -r | head -n 1 | awk '{print $2}')
 			if [ "$zdinnav_tag" != "$version"]; then
 				echo "安装失败，请重新下载安装包，下载后勿修改，放至指定位置后重装。Installation failed. Redownload the package unmodified, move it to the specified location, and retry installation."
+				sleep 1
 				exit 1
 			fi
 		else
 			echo "无法找到安装包。Cannot find the installation package."
+			sleep 1
 			exit 1
 		fi
 	else
@@ -317,6 +311,7 @@ do_install() {
 	RET=$?
 	if [ ! "$RET" = "0" ]; then
 		echo "convert docker-compose.yaml failed"
+		sleep 1
 		exit 1
 	fi
 
@@ -336,15 +331,16 @@ do_install() {
 		if [[ -z "$zdinnav_State" || "$zdinnav_State" != "running" ]]; then
 			echo "智淀导航运行失败，请检查*.tar安装包是否支持该平台。The zdinnav application failed to start. Ensure the *.tar package is compatible with the current platform."
 			# 移除错误docker数据
-			docker stop zdinnav
-			docker rm zdinnav
+			docker rm -f zdinnav
 			docker rmi "$docker_url:$version"
+			sleep 1
 			exit 1
 		fi
 	fi
 
 	# 更新版本记录
 	uci set zdinnav.@zdinnav_config[0].version=$version
+	uci set zdinnav.@main[0].enable_offline_installation='0'
 	uci commit zdinnav
 
 	if [[ -n "$latest_tar" && -f "$latest_tar" ]]; then
@@ -354,19 +350,21 @@ do_install() {
 
 # 升级/应用
 do_upgrade() {
-	# 检查配置是否需要合并
-	merge_config
 	# 读取配置文件数据
 	local port=$(uci get zdinnav.@main[0].port 2>/dev/null)
 	local config=$(uci get zdinnav.@main[0].config_path 2>/dev/null)
-	local docker_url=$(uci get zdinnav.@zdinnav_config[0].docker_url 2>/dev/null)
+	local docker_url=$(uci get zdinnav.@zdinnav_const_config[0].docker_url 2>/dev/null)
 	local version=$(uci get zdinnav.@zdinnav_config[0].version 2>/dev/null)
+	local offline_installation=$(uci get zdinnav.@main[0].enable_offline_installation 2>/dev/null)
 	local zdinnav_account=$(uci get zdinnav.@main[0].administrator_account 2>/dev/null)
 	local zdinnav_password=$(uci get zdinnav.@main[0].administrator_password 2>/dev/null)
 	local zdinnav_database=$(uci get zdinnav.@main[0].database_type 2>/dev/null)
 	local zdinnav_connection=$(uci get zdinnav.@main[0].connection_settings 2>/dev/null)
+	local latest_tar=""
+
 	if [ -z "$config" ]; then
 		echo "config path is empty!"
+		sleep 1
 		exit 1
 	fi
 
@@ -374,32 +372,86 @@ do_upgrade() {
 	RET=$?
 	if [ ! "$RET" = "0" ]; then
 		echo "mkdir config path failed"
+		sleep 1
 		exit 1
 	fi
 
-	# 获取最新版
-	local latest_version=$(get_version "$(auto_arch)")
-	local is_update=$(compare_versions "$latest_version" "$version")
-
-	# 检查是否需要升级应用
-	if [ "$is_update" = "1" ]; then
-		echo "发现新版本：$latest_version。New version found: $latest_version."
-		local docker_state=$(docker ps --all -f 'name=^/zdinnav' --format '{{.State}}')
-		if [ -n "$docker_state" ]; then
-			if [ "$docker_state" = "running" ]; then
-				docker stop zdinnav
+	if [ "$offline_installation" = "1" ]; then
+		# 离线升级(检查安装包是否存在需要检查安装包是否存在)
+		latest_tar=$(ls -t "$config/downloads/"*.tar 2>/dev/null | head -n 1)
+		if [ -n "$latest_tar" ]; then
+			local basename="${latest_tar%.tar}"
+			# 获取版本号:zdinnav_linux-amd64-1.0.0.tar 返回：linux-amd64-1.0.0
+			local version_local="${basename#*_}"
+			if [ -z "$version_local" ]; then
+				echo "无法解析安装包，请不要修改安装包文件名。Unable to parse the installation package. Do not modify its file name."
+				sleep 1
+				exit 1
 			fi
-			docker rm zdinnav
+			local is_update=$(compare_versions "$version_local" "$version")
+			if [ "$is_update" -ne 1 ]; then
+				# 删除安装包
+				rm -f "$latest_tar"
+				echo "当前已经是最新版：$version。You're already on the latest version: $version." >&2
+				return 0
+			fi
+			# 停止并删除并旧版本
+			local docker_state=$(docker ps --all -f 'name=^/zdinnav' --format '{{.State}}')
+			if [ -n "$docker_state" ]; then
+				docker rm -f zdinnav
+			fi
+			if [[ "$(docker images -q $docker_url:$version 2>/dev/null)" != "" ]]; then
+				docker rmi "$docker_url:$version"
+			fi
+			# 安装docker离线文件
+			docker load -i "$latest_tar"
+			if [ ! "$?" = "0" ]; then
+				echo "docker load 执行失败，请检查*.tar安装包是否正确。The 'docker load' command failed. Please verify the integrity of the *.tar file."
+				sleep 1
+				exit 1
+			fi
+			version=$version_local
+			# 离线安装版本检查
+			local zdinnav_tag=$(docker images --format "{{.Repository}} {{.Tag}} {{.CreatedAt}}" | grep -E ".*/zdinnav" | sort -r | head -n 1 | awk '{print $2}')
+			if [ "$zdinnav_tag" != "$version"]; then
+				echo "安装失败，请重新下载安装包，下载后勿修改，放至指定位置后重装。Installation failed. Redownload the package unmodified, move it to the specified location, and retry installation."
+				sleep 1
+				exit 1
+			fi
+		else
+			echo "无法找到安装包。Cannot find the installation package."
+			sleep 1
+			exit 1
 		fi
-		if [[ "$(docker images -q $docker_url:$version 2>/dev/null)" != "" ]]; then
-			docker rmi "$docker_url:$version"
-		fi
-		# 更新版本
-		version=$latest_version
 	else
-		if [[ -n "$latest_version" && "$latest_version" != "1" ]]; then
-			echo "当前已经是最新版：$version。You're already on the latest version: $version."
+		# 获取最新版
+		local latest_version=$(get_version "$(auto_arch)")
+		# 这里只能判断是否为空(为空表示无法获取最新版本号)
+		if [ -z "$latest_version" ]; then
+			sleep 1
+			return 1
 		fi
+		local is_update=$(compare_versions "$latest_version" "$version")
+		# 检查是否需要升级应用
+		if [ "$is_update" -eq 1 ]; then
+			echo "发现新版本：$latest_version。New version found: $latest_version."
+			local docker_state=$(docker ps --all -f 'name=^/zdinnav' --format '{{.State}}')
+			if [ -n "$docker_state" ]; then
+				docker rm -f zdinnav
+			fi
+			if [[ "$(docker images -q $docker_url:$version 2>/dev/null)" != "" ]]; then
+				docker rmi "$docker_url:$version"
+			fi
+			# 更新版本
+			version=$latest_version
+		else
+			if [[ -n "$latest_version" && "$latest_version" != "1" ]]; then
+				echo "当前已经是最新版：$version。You're already on the latest version: $version."
+				sleep 1
+				exit 0
+			fi
+		fi
+
 	fi
 
 	[ -z $port ] && port=9200
@@ -411,31 +463,50 @@ do_upgrade() {
 	RET=$?
 	if [ ! "$RET" = "0" ]; then
 		echo "convert docker-compose.yaml failed"
+		sleep 1
 		exit 1
 	fi
 
-	cd $config
 	# 创建文件夹，创建配置文件
 	$(create_folder "$config" "$zdinnav_account" "$zdinnav_password" "$zdinnav_database" "$zdinnav_connection")
+
+	cd $config
 
 	docker-compose down || true
 	docker-compose up -d
 
+	# 离线安装时，校验
+	if [ "$offline_installation" = "1" ]; then
+		# 休眠3秒后，校验是否正常运行
+		sleep 3
+		local zdinnav_State=$(docker ps --all -f 'name=^/zdinnav' --format '{{.State}}')
+		if [[ -z "$zdinnav_State" || "$zdinnav_State" != "running" ]]; then
+			echo "智淀导航运行失败，请检查*.tar安装包是否支持该平台。The zdinnav application failed to start. Ensure the *.tar package is compatible with the current platform."
+			# 移除错误docker数据
+			docker rm -f zdinnav
+			docker rmi "$docker_url:$version"
+			sleep 1
+			exit 1
+		fi
+	fi
+
 	# 更新版本记录
 	uci set zdinnav.@zdinnav_config[0].version=$version
+	uci set zdinnav.@main[0].enable_offline_installation='0'
 	uci commit zdinnav
+
+	if [[ -n "$latest_tar" && -f "$latest_tar" ]]; then
+		rm -f "$latest_tar"
+	fi
 }
 
 # 移除应用
 do_remove() {
-	local docker_url=$(uci get zdinnav.@zdinnav_config[0].docker_url 2>/dev/null)
+	local docker_url=$(uci get zdinnav.@zdinnav_const_config[0].docker_url 2>/dev/null)
 	local version=$(uci get zdinnav.@zdinnav_config[0].version 2>/dev/null)
 	local docker_state=$(docker ps --all -f 'name=^/zdinnav' --format '{{.State}}')
 	if [ -n "$docker_state" ]; then
-		if [ "$docker_state" = "running" ]; then
-			docker stop zdinnav
-		fi
-		docker rm zdinnav
+		docker rm -f zdinnav
 	fi
 	if [[ "$(docker images -q $docker_url:$version 2>/dev/null)" != "" ]]; then
 		docker rmi "$docker_url:$version"

@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# 生成到：config rule 'zdinnav_config' 节点下面
+# uci -q batch <<-EOF >/dev/null
+# 	    delete zdinnav.zdinnav_config
+# 		set zdinnav.zdinnav_config=rule
+# 	    set zdinnav.zdinnav_config.name='zdinnav'
+# 	    set zdinnav.zdinnav_config.test_option='test'
+# 	    commit zdinnav
+# EOF
+
+# 配置文件路径
+zdinnav_config="/etc/config/zdinnav"
+
+# 用户的基本配置数据(如果之前存在记录，将会保存)
+zdinnav_main_port=""
+zdinnav_main_config_path=""
+zdinnav_main_enable_offline_installation=""
+zdinnav_main_database_type=""
+zdinnav_main_connection_settings=""
+zdinnav_main_administrator_account=""
+zdinnav_main_administrator_password=""
+# 隐藏的配置信息
+zdinnav_config_version="1.0.0"
+
+# 如果存在旧版文件(保留用户配置，并删除文件)
+if [ -f "$zdinnav_config" ]; then
+	# 读取用户的旧版配置信息
+	zdinnav_main_port=$(uci get zdinnav.@main[0].port 2>/dev/null || echo "")
+	zdinnav_main_config_path=$(uci get zdinnav.@main[0].config_path 2>/dev/null || echo "")
+	zdinnav_main_database_type=$(uci get zdinnav.@main[0].database_type 2>/dev/null || echo "")
+	zdinnav_main_connection_settings=$(uci get zdinnav.@main[0].connection_settings 2>/dev/null || echo "")
+	zdinnav_main_administrator_account=$(uci get zdinnav.@main[0].administrator_account 2>/dev/null || echo "")
+	zdinnav_main_administrator_password=$(uci get zdinnav.@main[0].administrator_password 2>/dev/null || echo "")
+	# 隐藏的配置信息
+	zdinnav_config_version=$(uci get zdinnav.@zdinnav_config[0].version 2>/dev/null || echo "1.0.0")
+	# 删除旧版配置信息
+	rm -f "$zdinnav_config"
+fi
+
+# 重新创建文件
+touch "$zdinnav_config"
+
+# 生成新的配置信息
+uci -q batch <<-EOF >/dev/null
+	add zdinnav main
+	set zdinnav.@main[0].port='$zdinnav_main_port'
+	set zdinnav.@main[0].config_path='$zdinnav_main_config_path'
+	set zdinnav.@main[0].enable_offline_installation='0'
+	set zdinnav.@main[0].database_type='$zdinnav_main_database_type'
+	set zdinnav.@main[0].connection_settings='$zdinnav_main_connection_settings'
+	set zdinnav.@main[0].administrator_account='$zdinnav_main_administrator_account'
+	set zdinnav.@main[0].administrator_password='$zdinnav_main_administrator_password' 
+
+	add zdinnav zdinnav_config
+	set zdinnav.@zdinnav_config[0].version='$zdinnav_config_version'
+
+	add zdinnav zdinnav_const_config
+	set zdinnav.@zdinnav_const_config[0].default_port='9200'
+	set zdinnav.@zdinnav_const_config[0].default_database_type='Sqlite'
+	set zdinnav.@zdinnav_const_config[0].default_connection_settings='Data Source=ZdinNav.db;Mode=ReadWriteCreate;Password=ZdinNav'
+	set zdinnav.@zdinnav_const_config[0].default_administrator_account='zdinnav'
+	set zdinnav.@zdinnav_const_config[0].default_administrator_password='pwd123'
+	set zdinnav.@zdinnav_const_config[0].docker_url='tkme/zdinnav'
+	set zdinnav.@zdinnav_const_config[0].git_url='https://github.com/MyTkme/ZdinNav-Link'
+	set zdinnav.@zdinnav_const_config[0].version_hub_url='https://registry.hub.docker.com/v2/repositories/tkme/zdinnav/tags/'
+	set zdinnav.@zdinnav_const_config[0].version_url='https://raw.githubusercontent.com/MyTkme/ZdinNav-Link/refs/heads/main/version/version.txt'
+	commit zdinnav
+EOF
+
+exit 0
