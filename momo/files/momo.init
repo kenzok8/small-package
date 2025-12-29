@@ -47,15 +47,34 @@ start_service() {
 	# start
 	log "App" "Enabled."
 	log "App" "Start."
+	# check if executable
+	if [ ! -x $PROG ]; then
+		log "App" "Core is not executable."
+		log "App" "Exit."
+		return
+	fi
 	# get config
 	## app config
-	local scheduled_restart cron_expression profile test_profile fast_reload core_only
+	local scheduled_restart cron_expression profile test_profile core_only
 	config_get_bool scheduled_restart "config" "scheduled_restart" 0
 	config_get cron_expression "config" "cron_expression"
 	config_get profile "config" "profile"
 	config_get_bool test_profile "config" "test_profile" 0
-	config_get_bool fast_reload "config" "fast_reload" 0
 	config_get_bool core_only "config" "core_only" 0
+	## procd config
+	### general
+	local fast_reload
+	config_get_bool fast_reload "procd" "fast_reload" 0
+	### rlimit
+	local rlimit_address_space_soft rlimit_address_space_hard rlimit_data_soft rlimit_data_hard rlimit_stack_soft rlimit_stack_hard rlimit_nofile_soft rlimit_nofile_hard
+	config_get rlimit_address_space_soft "procd" "rlimit_address_space_soft"
+	config_get rlimit_address_space_hard "procd" "rlimit_address_space_hard"
+	config_get rlimit_data_soft "procd" "rlimit_data_soft"
+	config_get rlimit_data_hard "procd" "rlimit_data_hard"
+	config_get rlimit_stack_soft "procd" "rlimit_stack_soft"
+	config_get rlimit_stack_hard "procd" "rlimit_stack_hard"
+	config_get rlimit_nofile_soft "procd" "rlimit_nofile_soft" "$(ulimit -Sn)"
+	config_get rlimit_nofile_hard "procd" "rlimit_nofile_hard" "$(ulimit -Hn)"
 	## core config
 	local redirect_inbound_tag tproxy_inbound_tag tun_inbound_tag dns_inbound_tag fake_ip_dns_server_tag
 	config_get redirect_inbound_tag "core" "redirect_inbound_tag"
@@ -168,8 +187,10 @@ start_service() {
 	fi
 	procd_set_param pidfile "$PID_FILE_PATH"
 	procd_set_param respawn
-	procd_append_param limits core="unlimited"
-	procd_append_param limits nofile="1048576 1048576"
+	procd_append_param limits as="${rlimit_address_space_soft:-unlimited} ${rlimit_address_space_hard:-unlimited}"
+	procd_append_param limits data="${rlimit_data_soft:-unlimited} ${rlimit_data_hard:-unlimited}"
+	procd_append_param limits stack="${rlimit_stack_soft:-unlimited} ${rlimit_stack_hard:-unlimited}"
+	procd_append_param limits nofile="${rlimit_nofile_soft} ${rlimit_nofile_hard}"
 
 	procd_close_instance
 	# cron
@@ -213,9 +234,11 @@ service_started() {
 	config_get tun_timeout "proxy" "tun_timeout" 30
 	config_get tun_interval "proxy" "tun_interval" 1
 	## routing config
-	local tproxy_fw_mark tun_fw_mark tproxy_rule_pref tun_rule_pref tproxy_route_table tun_route_table cgroup_id cgroup_name
+	local tproxy_fw_mark tproxy_fw_mask tun_fw_mark tun_fw_mask tproxy_rule_pref tun_rule_pref tproxy_route_table tun_route_table cgroup_id cgroup_name
 	config_get tproxy_fw_mark "routing" "tproxy_fw_mark" "0x80"
+	config_get tproxy_fw_mask "routing" "tproxy_fw_mask" "0xFF"
 	config_get tun_fw_mark "routing" "tun_fw_mark" "0x81"
+	config_get tun_fw_mask "routing" "tun_fw_mask" "0xFF"
 	config_get tproxy_rule_pref "routing" "tproxy_rule_pref" "1024"
 	config_get tun_rule_pref "routing" "tun_rule_pref" "1025"
 	config_get tproxy_route_table "routing" "tproxy_route_table" "80"
@@ -239,7 +262,7 @@ service_started() {
 		if [ "$tun_enable" = 1 ]; then
 			log "Proxy" "Waiting for tun device online within $tun_timeout seconds..."
 			while [ "$tun_timeout" -gt 0 ]; do
-				if ip -j link show dev "$tun_device" | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1; then
+				if ip -j link show dev "$tun_device" 2>/dev/null | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1; then
 					log "Proxy" "TUN device is online."
 					break
 				fi
@@ -282,21 +305,21 @@ service_started() {
 		if [ "$tproxy_enable" = 1 ]; then
 			if [ "$ipv4_proxy" = 1 ]; then
 				ip -4 route add local default dev lo table "$tproxy_route_table"
-				ip -4 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark" table "$tproxy_route_table"
+				ip -4 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark/$tproxy_fw_mask" table "$tproxy_route_table"
 			fi
 			if [ "$ipv6_proxy" = 1 ]; then
 				ip -6 route add local default dev lo table "$tproxy_route_table"
-				ip -6 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark" table "$tproxy_route_table"
+				ip -6 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark/$tproxy_fw_mask" table "$tproxy_route_table"
 			fi
 		fi
 		if [ "$tun_enable" = 1 ]; then
 			if [ "$ipv4_proxy" = 1 ]; then
 				ip -4 route add unicast default dev "$tun_device" table "$tun_route_table"
-				ip -4 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark" table "$tun_route_table"
+				ip -4 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark/$tun_fw_mask" table "$tun_route_table"
 			fi
 			if [ "$ipv6_proxy" = 1 ]; then
 				ip -6 route add unicast default dev "$tun_device" table "$tun_route_table"
-				ip -6 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark" table "$tun_route_table"
+				ip -6 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark/$tun_fw_mask" table "$tun_route_table"
 			fi
 			$FIREWALL_INCLUDE_SH
 		fi
@@ -379,8 +402,9 @@ update_subscription() {
 	# load config
 	config_load momo
 	# get subscription config
-	local subscription_name subscription_url subscription_user_agent
+	local subscription_name subscription_info_url subscription_url subscription_user_agent
 	config_get subscription_name "$subscription_section" "name"
+	config_get subscription_info_url "$subscription_section" "info_url"
 	config_get subscription_url "$subscription_section" "url"
 	config_get subscription_user_agent "$subscription_section" "user_agent"
 	# reset subscription info
@@ -395,10 +419,27 @@ update_subscription() {
 	# update subscription
 	log "Profile" "Update subscription: $subscription_name."
 	local success
+	local subscription_info_header_tmpfile; subscription_info_header_tmpfile="$TEMP_DIR/$subscription_section.info.header"
 	local subscription_header_tmpfile; subscription_header_tmpfile="$TEMP_DIR/$subscription_section.header"
 	local subscription_tmpfile; subscription_tmpfile="$TEMP_DIR/$subscription_section.json"
+	local subscription_info_file
 	local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.json"
-	if curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url"; then
+	# fetch subscription info
+	if [ -n "$subscription_info_url" ]; then
+		log "Profile" "Fetch subscription info."
+		if curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_info_header_tmpfile" "$subscription_info_url" > /dev/null 2>&1; then
+			if [ ! -f "$subscription_info_file" ] && grep -q -i "subscription-userinfo:" "$subscription_info_header_tmpfile"; then
+				subscription_info_file="$subscription_info_header_tmpfile"
+			fi
+		fi
+	fi
+	# download subscription
+	log "Profile" "Download subscription."
+	if curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url" > /dev/null 2>&1; then
+		log "Profile" "Subscription download successful."
+		if [ ! -f "$subscription_info_file" ] && grep -q -i "subscription-userinfo:" "$subscription_header_tmpfile"; then
+			subscription_info_file="$subscription_header_tmpfile"
+		fi
 		log "Profile" "Subscription download successful."
 		success=1
 	else
@@ -408,39 +449,42 @@ update_subscription() {
 	# check if success
 	if [ "$success" = 1 ]; then
 		log "Profile" "Subscription update successful."
-		local subscription_expire subscription_upload subscription_download subscription_total subscription_used subscription_avaliable
-		subscription_expire=$(grep -i "subscription-userinfo: " "$subscription_header_tmpfile" | grep -i -o -E "expire=[[:digit:]]+" | cut -d '=' -f 2)
-		subscription_upload=$(grep -i "subscription-userinfo: " "$subscription_header_tmpfile" | grep -i -o -E "upload=[[:digit:]]+" | cut -d '=' -f 2)
-		subscription_download=$(grep -i "subscription-userinfo: " "$subscription_header_tmpfile" | grep -i -o -E "download=[[:digit:]]+" | cut -d '=' -f 2)
-		subscription_total=$(grep -i "subscription-userinfo: " "$subscription_header_tmpfile" | grep -i -o -E "total=[[:digit:]]+" | cut -d '=' -f 2)
-		if [ -n "$subscription_upload" ] && [ -n "$subscription_download" ]; then
-			subscription_used=$((subscription_upload + subscription_download))
-			if [ -n "$subscription_total" ]; then
-				subscription_avaliable=$((subscription_total - subscription_used))
+		if [ -f "$subscription_info_file" ]; then
+			local subscription_expire subscription_upload subscription_download subscription_total subscription_used subscription_avaliable
+			subscription_expire=$(grep -i "subscription-userinfo: " "$subscription_info_file" | grep -i -o -E "expire=[[:digit:]]+" | cut -d '=' -f 2)
+			subscription_upload=$(grep -i "subscription-userinfo: " "$subscription_info_file" | grep -i -o -E "upload=[[:digit:]]+" | cut -d '=' -f 2)
+			subscription_download=$(grep -i "subscription-userinfo: " "$subscription_info_file" | grep -i -o -E "download=[[:digit:]]+" | cut -d '=' -f 2)
+			subscription_total=$(grep -i "subscription-userinfo: " "$subscription_info_file" | grep -i -o -E "total=[[:digit:]]+" | cut -d '=' -f 2)
+			if [ -n "$subscription_upload" ] && [ -n "$subscription_download" ]; then
+				subscription_used=$((subscription_upload + subscription_download))
+				if [ -n "$subscription_total" ]; then
+					subscription_avaliable=$((subscription_total - subscription_used))
+				fi
 			fi
-		fi
-		# update subscription info
-		if [ -n "$subscription_expire" ]; then
-			uci_set "momo" "$subscription_section" "expire" "$(date "+%Y-%m-%d %H:%M:%S" -d "@$subscription_expire")"
-		fi
-		if [ -n "$subscription_upload" ]; then
-			uci_set "momo" "$subscription_section" "upload" "$(format_filesize "$subscription_upload")"
-		fi
-		if [ -n "$subscription_download" ]; then
-			uci_set "momo" "$subscription_section" "download" "$(format_filesize "$subscription_download")"
-		fi
-		if [ -n "$subscription_total" ]; then
-			uci_set "momo" "$subscription_section" "total" "$(format_filesize "$subscription_total")"
-		fi
-		if [ -n "$subscription_used" ]; then
-			uci_set "momo" "$subscription_section" "used" "$(format_filesize "$subscription_used")"
-		fi
-		if [ -n "$subscription_avaliable" ]; then
-			uci_set "momo" "$subscription_section" "avaliable" "$(format_filesize "$subscription_avaliable")"
+			# update subscription info
+			if [ -n "$subscription_expire" ]; then
+				uci_set "momo" "$subscription_section" "expire" "$(date "+%Y-%m-%d %H:%M:%S" -d "@$subscription_expire")"
+			fi
+			if [ -n "$subscription_upload" ]; then
+				uci_set "momo" "$subscription_section" "upload" "$(format_filesize "$subscription_upload")"
+			fi
+			if [ -n "$subscription_download" ]; then
+				uci_set "momo" "$subscription_section" "download" "$(format_filesize "$subscription_download")"
+			fi
+			if [ -n "$subscription_total" ]; then
+				uci_set "momo" "$subscription_section" "total" "$(format_filesize "$subscription_total")"
+			fi
+			if [ -n "$subscription_used" ]; then
+				uci_set "momo" "$subscription_section" "used" "$(format_filesize "$subscription_used")"
+			fi
+			if [ -n "$subscription_avaliable" ]; then
+				uci_set "momo" "$subscription_section" "avaliable" "$(format_filesize "$subscription_avaliable")"
+			fi
 		fi
 		uci_set "momo" "$subscription_section" "update" "$(date "+%Y-%m-%d %H:%M:%S")"
 		uci_set "momo" "$subscription_section" "success" "1"
 		# update subscription file
+		rm -f "$subscription_info_header_tmpfile"
 		rm -f "$subscription_header_tmpfile"
 		mv -f "$subscription_tmpfile" "$subscription_file"
 	elif [ "$success" = 0 ]; then
@@ -448,6 +492,7 @@ update_subscription() {
 		# update subscription info
 		uci_set "momo" "$subscription_section" "success" "0"
 		# remove tmpfile
+		rm -f "$subscription_info_header_tmpfile"
 		rm -f "$subscription_header_tmpfile"
 		rm -f "$subscription_tmpfile"
 	fi

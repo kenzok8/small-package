@@ -66,6 +66,9 @@ return view.extend({
             return momo.updateSubscription(section_id);
         };
 
+        o = s.option(form.Value, 'info_url', _('Subscription Info Url'));
+        o.modalonly = true;
+
         o = s.option(form.Value, 'url', _('Subscription Url'));
         o.modalonly = true;
         o.rmempty = false;

@@ -173,6 +173,9 @@ return view.extend({
         o = s.taboption('bypass', form.Flag, 'bypass_china_mainland_ip', _('Bypass China Mainland IP'));
         o.rmempty = false;
 
+        o = s.taboption('bypass', form.Flag, 'bypass_china_mainland_ip6', _('Bypass China Mainland IP6'));
+        o.rmempty = false;
+
         o = s.taboption('bypass', form.Value, 'proxy_tcp_dport', _('Destination TCP Port to Proxy'));
         o.rmempty = false;
         o.value('0-65535', _('All Port'));
@@ -185,6 +188,24 @@ return view.extend({
 
         o = s.taboption('bypass', form.DynamicList, 'bypass_dscp', _('Bypass DSCP'));
         o.datatype = 'range(0, 63)';
+
+        o = s.taboption('bypass', form.DynamicList, 'bypass_fwmark', _('Bypass FWMark'));
+
+        s.tab('misc', _('Misc'));
+
+        o = s.taboption('misc', form.DynamicList, 'reserved_ip', _('Reserved IP'));
+        o.datatype = 'ip4addr';
+
+        o = s.taboption('misc', form.DynamicList, 'reserved_ip6', _('Reserved IP6'));
+        o.datatype = 'ip6addr';
+
+        o = s.taboption('misc', form.Value, 'tun_timeout', _('TUN Timeout'));
+        o.datatype = 'uinteger';
+        o.rmempty = false;
+
+        o = s.taboption('misc', form.Value, 'tun_interval', _('TUN Interval'));
+        o.datatype = 'uinteger';
+        o.rmempty = false;
 
         return m.render();
     }

@@ -8,6 +8,8 @@
 	import { connect } from 'ubus';
 	import { get_paths, uci_bool, uci_array, get_cgroups_version, get_users, get_groups, get_cgroups } from '/etc/momo/ucode/include.uc';
 
+	const fw4 = require('fw4');
+
 	const paths = get_paths();
 
 	const cgroups_version = get_cgroups_version();
@@ -103,14 +105,32 @@
 	const reserved_ip = uci_array(uci.get('momo', 'proxy', 'reserved_ip'));
 	const reserved_ip6 = uci_array(uci.get('momo', 'proxy', 'reserved_ip6'));
 	const bypass_china_mainland_ip = uci_bool(uci.get('momo', 'proxy', 'bypass_china_mainland_ip'));
+	const bypass_china_mainland_ip6 = uci_bool(uci.get('momo', 'proxy', 'bypass_china_mainland_ip6'));
 	const proxy_tcp_dport = split((uci.get('momo', 'proxy', 'proxy_tcp_dport') ?? '0-65535'), ' ');
 	const proxy_udp_dport = split((uci.get('momo', 'proxy', 'proxy_udp_dport') ?? '0-65535'), ' ');
 	const bypass_dscp = uci_array(uci.get('momo', 'proxy', 'bypass_dscp'));
+	const bypass_fwmark = [];
+	for (let fwmark in uci_array(uci.get('momo', 'proxy', 'bypass_fwmark'))) {
+		let mark;
+		let mask = '0xFFFFFFFF';
+		if (index(fwmark, '/') >= 0) {
+			const parts = split(fwmark, '/');
+			mark = parts[0];
+			mask = parts[1];
+		} else {
+			mark = fwmark;
+		}
+		push(bypass_fwmark, { mark: mark, mask: mask });
+	}
 
 	const cgroup_id = uci.get('momo', 'routing', 'cgroup_id') ?? '0x07250725';
 	const cgroup_name = uci.get('momo', 'routing', 'cgroup_name') ?? 'momo';
-	const tproxy_fw_mark = uci.get('momo', 'routing', 'tproxy_fw_mark') ?? '80';
-	const tun_fw_mark = uci.get('momo', 'routing', 'tun_fw_mark') ?? '81';
+	const tproxy_fw_mark = uci.get('momo', 'routing', 'tproxy_fw_mark') ?? '0x80';
+	const tproxy_fw_mask = uci.get('momo', 'routing', 'tproxy_fw_mask') ?? '0xFF';
+	const tproxy_fw_umask = fw4.hex(~tproxy_fw_mask & 0xFFFFFFFF);
+	const tun_fw_mark = uci.get('momo', 'routing', 'tun_fw_mark') ?? '0x81';
+	const tun_fw_mask = uci.get('momo', 'routing', 'tun_fw_mask') ?? '0xFF';
+	const tun_fw_umask = fw4.hex(~tun_fw_mask & 0xFFFFFFFF);
 
 	const dns_hijack_nfproto = [];
 	if (ipv4_dns_hijack) {
@@ -285,20 +305,20 @@ table inet momo {
 		{% for (let access_control in router_access_control): %}
 		{% if (access_control['enabled']): %}
 		{% if (length(access_control['user']) == 0 && length(access_control['group']) == 0 && length(access_control['cgroup']) == 0): %}
-		meta l4proto { tcp, udp } {% if (access_control.proxy == '1'): %} meta mark set {{ tproxy_fw_mark }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tproxy_fw_umask }} | {{ tproxy_fw_mark }} counter accept {% else %} counter return {% endif %}
 
 		{% else %}
 		{% if (length(access_control['user']) > 0): %}
-		meta l4proto { tcp, udp } meta skuid { {{ join(', ', access_control['user']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tproxy_fw_mark }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } meta skuid { {{ join(', ', access_control['user']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tproxy_fw_umask }} | {{ tproxy_fw_mark }} counter accept {% else %} counter return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['group']) > 0): %}
-		meta l4proto { tcp, udp } meta skgid { {{ join(', ', access_control['group']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tproxy_fw_mark }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } meta skgid { {{ join(', ', access_control['group']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tproxy_fw_umask }} | {{ tproxy_fw_mark }} counter accept {% else %} counter return {% endif %}
 
 		{% endif %}
 		{% if (cgroups_version == 2 && length(access_control['cgroup']) > 0): %}
 		{% for (let cgroup in access_control['cgroup']): %}
-		meta l4proto { tcp, udp } socket cgroupv2 level {{ length(split(cgroup, '/')) }} "{{ cgroup }}" {% if (access_control.proxy == '1'): %} meta mark set {{ tproxy_fw_mark }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } socket cgroupv2 level {{ length(split(cgroup, '/')) }} "{{ cgroup }}" {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tproxy_fw_umask }} | {{ tproxy_fw_mark }} counter accept {% else %} counter return {% endif %}
 		
 		{% endfor %}
 		{% endif %}
@@ -313,20 +333,20 @@ table inet momo {
 		{% for (let access_control in router_access_control): %}
 		{% if (access_control['enabled']): %}
 		{% if (length(access_control['user']) == 0 && length(access_control['group']) == 0 && length(access_control['cgroup']) == 0): %}
-		meta l4proto { tcp, udp } {% if (access_control.proxy == '1'): %} meta mark set {{ tun_fw_mark }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tun_fw_umask }} | {{ tun_fw_mark }} counter accept {% else %} counter return {% endif %}
 
 		{% else %}
 		{% if (length(access_control['user']) > 0): %}
-		meta l4proto { tcp, udp } meta skuid { {{ join(', ', access_control['user']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tun_fw_mark }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } meta skuid { {{ join(', ', access_control['user']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tun_fw_umask }} | {{ tun_fw_mark }} counter accept {% else %} counter return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['group']) > 0): %}
-		meta l4proto { tcp, udp } meta skgid { {{ join(', ', access_control['group']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tun_fw_mark }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } meta skgid { {{ join(', ', access_control['group']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tun_fw_umask }} | {{ tun_fw_mark }} counter accept {% else %} counter return {% endif %}
 
 		{% endif %}
 		{% if (cgroups_version == 2 && length(access_control['cgroup']) > 0): %}
 		{% for (let cgroup in access_control['cgroup']): %}
-		meta l4proto { tcp, udp } socket cgroupv2 level {{ length(split(cgroup, '/')) }} "{{ cgroup }}" {% if (access_control.proxy == '1'): %} meta mark set {{ tun_fw_mark }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } socket cgroupv2 level {{ length(split(cgroup, '/')) }} "{{ cgroup }}" {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tun_fw_umask }} | {{ tun_fw_mark }} counter accept {% else %} counter return {% endif %}
 		
 		{% endfor %}
 		{% endif %}
@@ -395,19 +415,19 @@ table inet momo {
 		{% for (let access_control in lan_access_control): %}
 		{% if (access_control['enabled']): %}
 		{% if (length(access_control['ip']) == 0 && length(access_control['ip6']) == 0 && length(access_control['mac']) == 0): %}
-		meta l4proto { tcp, udp } {% if (access_control.proxy == '1'): %} meta mark set {{ tproxy_fw_mark }} tproxy to :{{ tproxy_port }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tproxy_fw_umask }} | {{ tproxy_fw_mark }} tproxy to :{{ tproxy_port }} counter accept {% else %} counter return {% endif %}
 
 		{% else %}
 		{% if (length(access_control['ip']) > 0): %}
-		meta l4proto { tcp, udp } ip saddr { {{ join(', ', access_control['ip']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tproxy_fw_mark }} tproxy ip to :{{ tproxy_port }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } ip saddr { {{ join(', ', access_control['ip']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tproxy_fw_umask }} | {{ tproxy_fw_mark }} tproxy ip to :{{ tproxy_port }} counter accept {% else %} counter return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['ip6']) > 0): %}
-		meta l4proto { tcp, udp } ip6 saddr { {{ join(', ', access_control['ip6']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tproxy_fw_mark }} tproxy ip6 to :{{ tproxy_port }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } ip6 saddr { {{ join(', ', access_control['ip6']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tproxy_fw_umask }} | {{ tproxy_fw_mark }} tproxy ip6 to :{{ tproxy_port }} counter accept {% else %} counter return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['mac']) > 0): %}
-		meta l4proto { tcp, udp } ether saddr { {{ join(', ', access_control['mac']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tproxy_fw_mark }} tproxy to :{{ tproxy_port }} counter accept {% else %} counter return {% endif %}
+		meta l4proto { tcp, udp } ether saddr { {{ join(', ', access_control['mac']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tproxy_fw_umask }} | {{ tproxy_fw_mark }} tproxy to :{{ tproxy_port }} counter accept {% else %} counter return {% endif %}
 
 		{% endif %}
 		{% endif %}
@@ -421,19 +441,19 @@ table inet momo {
 		{% for (let access_control in lan_access_control): %}
 		{% if (access_control['enabled']): %}
 		{% if (length(access_control['ip']) == 0 && length(access_control['ip6']) == 0 && length(access_control['mac']) == 0): %}
-		meta l4proto { tcp, udp } {% if (access_control.proxy == '1'): %} meta mark set {{ tun_fw_mark }} counter accept {% else %}counter return {% endif %}
+		meta l4proto { tcp, udp } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tun_fw_umask }} | {{ tun_fw_mark }} counter accept {% else %}counter return {% endif %}
 
 		{% else %}
 		{% if (length(access_control['ip']) > 0): %}
-		meta l4proto { tcp, udp } ip saddr { {{ join(', ', access_control['ip']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tun_fw_mark }} counter accept {% else %}counter return {% endif %}
+		meta l4proto { tcp, udp } ip saddr { {{ join(', ', access_control['ip']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tun_fw_umask }} | {{ tun_fw_mark }} counter accept {% else %}counter return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['ip6']) > 0): %}
-		meta l4proto { tcp, udp } ip6 saddr { {{ join(', ', access_control['ip6']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tun_fw_mark }} counter accept {% else %}counter return {% endif %}
+		meta l4proto { tcp, udp } ip6 saddr { {{ join(', ', access_control['ip6']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tun_fw_umask }} | {{ tun_fw_mark }} counter accept {% else %}counter return {% endif %}
 
 		{% endif %}
 		{% if (length(access_control['mac']) > 0): %}
-		meta l4proto { tcp, udp } ether saddr { {{ join(', ', access_control['mac']) }} } {% if (access_control.proxy == '1'): %} meta mark set {{ tun_fw_mark }} counter accept {% else %}counter return {% endif %}
+		meta l4proto { tcp, udp } ether saddr { {{ join(', ', access_control['mac']) }} } {% if (access_control.proxy == '1'): %} meta mark set meta mark & {{ tun_fw_umask }} | {{ tun_fw_mark }} counter accept {% else %}counter return {% endif %}
 
 		{% endif %}
 		{% endif %}
@@ -465,6 +485,9 @@ table inet momo {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
+		{% for (let fwmark in bypass_fwmark): %}
+		meta mark & {{ fwmark.mask }} == {{ fwmark.mark }} counter return
+		{% endfor %}
 		meta nfproto @proxy_nfproto jump router_redirect
 		{% endif %}
 		{% if (fake_ip_ping_hijack): %}
@@ -494,6 +517,9 @@ table inet momo {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
+		{% for (let fwmark in bypass_fwmark): %}
+		meta mark & {{ fwmark.mask }} == {{ fwmark.mark }} counter return
+		{% endfor %}
 		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 		{% endif %}
@@ -512,7 +538,7 @@ table inet momo {
 	chain mangle_prerouting_router {
 		type filter hook prerouting priority mangle - 1; policy accept;
 		{% if (tcp_mode == 'tproxy' || udp_mode == 'tproxy'): %}
-		iifname lo meta l4proto { tcp, udp } meta mark {{ tproxy_fw_mark }} tproxy to :{{ tproxy_port }} counter accept
+		iifname lo meta l4proto { tcp, udp } meta mark & {{ tproxy_fw_mask }} == {{ tproxy_fw_mark }} tproxy to :{{ tproxy_port }} counter accept
 		{% endif %}
 		{% if (tcp_mode == 'tun' || udp_mode == 'tun'): %}
 		iifname "{{ tun_device }}" meta l4proto { icmp, tcp, udp } counter accept
@@ -537,6 +563,9 @@ table inet momo {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
+		{% for (let fwmark in bypass_fwmark): %}
+		meta mark & {{ fwmark.mask }} == {{ fwmark.mark }} counter return
+		{% endfor %}
 		iifname @lan_inbound_device meta nfproto @proxy_nfproto jump lan_redirect
 		{% endif %}
 		{% if (fake_ip_ping_hijack): %}
@@ -561,6 +590,9 @@ table inet momo {
 		meta nfproto ipv6 meta l4proto . th dport != @proxy_dport {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip dscp @bypass_dscp {% if (fake_ip_range): %} ip daddr != {{ fake_ip_range }} {% endif %} counter return
 		meta l4proto { tcp, udp } ip6 dscp @bypass_dscp {% if (fake_ip6_range): %} ip6 daddr != {{ fake_ip6_range }} {% endif %} counter return
+		{% for (let fwmark in bypass_fwmark): %}
+		meta mark & {{ fwmark.mask }} == {{ fwmark.mark }} counter return
+		{% endfor %}
 		{% if (length(dns_hijack_nfproto) > 0): %}
 		meta nfproto @dns_hijack_nfproto meta l4proto { tcp, udp } th dport 53 counter return
 		{% endif %}
@@ -580,5 +612,7 @@ table inet momo {
 
 {% if (bypass_china_mainland_ip): %}
 include "/etc/momo/firewall/geoip_cn.nft"
+{% endif %}
+{% if (bypass_china_mainland_ip6): %}
 include "/etc/momo/firewall/geoip6_cn.nft"
 {% endif %}
