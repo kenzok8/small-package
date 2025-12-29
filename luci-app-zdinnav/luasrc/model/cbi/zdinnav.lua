@@ -23,7 +23,10 @@ local resetHttp_button = isResetHttp and ("," .. translate(
 m = taskd.docker_map("zdinnav", "zdinnav", "/usr/libexec/istorec/zdinnav.sh", translate("ZdinNav"),
     translate("ZdinNav software is a bookmark management tool for websites.") .. translate("Git website:") ..
         ' <a href=\"https://github.com/MyTkme/ZdinNav-Link\" target=\"_blank\">https://github.com/MyTkme/ZdinNav-Link</a>' ..
-        '<br/>' .. translate("Default Ultra-Super Administrator:zdinnav Password:pwd123") .. '<br/>' ..
+        '<br/>' .. translatef(
+        "If you have any suggestions for this program, please join my %sgroup — your participation will help make it even better!",
+        "<a target=\"_blank\" href=\"https://qm.qq.com/q/2jzO6bYQEI\">QQ</a>") .. '<br/>' .. 
+        translate("Default Ultra-Super Administrator:zdinnav Password:pwd123") .. '<br/>' ..
         (isInstalled and (translate(
             "If you forget the super administrator passwor, you can <a href=\"javascript:void(0)\" onclick=\"onResetPassword()\">reset it here</a>") ..
             resetHttp_button) or ""))
@@ -52,16 +55,13 @@ s.anonymous = true
 s:tab("general", translate("General Settings"),
     translate("The following parameters will only take effect during installation or upgrade."))
 
--- 第一次安装时的配置
-if not isInstalled then
-    -- 高级设置(第二个页签)
-    s:tab("advanced", translate("Advanced Settings"), translate(
-        "Takes effect when the database is initially created, or when the /ZdinNav/ folder under the configuration file path does not contain any data.") ..
-        "<br/><span style=\"color:red;\">" ..
-        translate(
-            "Modifying errors may result in data loss or system failure to boot properly. Please proceed with caution!") ..
-        "</span>")
-end
+-- 高级设置(第二个页签)
+s:tab("advanced", translate("Advanced Settings"), translate(
+    "Takes effect when the database is initially created, or when the /ZdinNav/ folder under the configuration file path does not contain any data.") ..
+    "<br/><span style=\"color:red;\">" ..
+    translate(
+        "Modifying errors may result in data loss or system failure to boot properly. Please proceed with caution!") ..
+    "</span>")
 
 -- 第一个标签页的选项
 o = s:taboption("general", Value, "port", translate("Port") .. "<b>*</b>")
@@ -82,47 +82,42 @@ end
 o.default = default_path
 
 -- 离线安装配置
-if not isInstalled then
-    local auto_arch = util.trim(util.exec("/usr/libexec/istorec/zdinnav.sh auto_get_arch"))
-    o = s:taboption("general", Flag, "enable_offline_installation", translate("Enable Offline Installation"))
-    o.default = "0"
-    o.rmempty = false
+local auto_arch = util.trim(util.exec("/usr/libexec/istorec/zdinnav.sh auto_get_arch"))
+o = s:taboption("general", Flag, "enable_offline_installation", translate("Enable Offline Installation"))
+o.default = "0"
+o.rmempty = false
 
-    o = s:taboption("general", DummyValue, "offline_installation_path", translate("Offline Installation Path"))
-    o:depends("enable_offline_installation", "1")
-    o.template = "cbi/dvalue"
-    o.rawhtml = true
-    o.value = [[<div>]] .. translate("Offline Installation Description") .. auto_arch .. [[<br/>]] ..
-                  translate("Offline Installation Path Rules") .. [[(]] .. translate("Config path") ..
-                  [[/downloads/*.tar)：<span class="span-offline-installation-path" name="span_offline_installation_path">]] ..
-                  default_path ..
-                  [[/downloads/*.tar</span><br/><button class="a-btn-offline btn cbi-button cbi-button-apply" type="button" onclick="offline_installation_Verify()">]] ..
-                  translate("Offline Installation Path Verify") .. [[</button></div>]]
+o = s:taboption("general", DummyValue, "offline_installation_path", translate("Offline Installation Path"))
+o:depends("enable_offline_installation", "1")
+o.template = "cbi/dvalue"
+o.rawhtml = true
+o.value = [[<div>]] .. translate("Offline Installation Description") .. auto_arch .. [[<br/>]] ..
+              translate("Offline Installation Path Rules") .. [[(]] .. translate("Config path") ..
+              [[/downloads/*.tar)：<span class="span-offline-installation-path" name="span_offline_installation_path">]] ..
+              default_path ..
+              [[/downloads/*.tar</span><br/><button class="a-btn-offline btn cbi-button cbi-button-apply" type="button" onclick="offline_installation_Verify()">]] ..
+              translate("Offline Installation Path Verify") .. [[</button></div>]]
 
-    o = s:taboption("general", Value, "config_path_change_tag")
-    o.template = "zdinnav/local_install"
-    o.default = "config_path"
-    o.datatype = "enable_offline_installation"
-end
+o = s:taboption("general", Value, "config_path_change_tag")
+o.template = "zdinnav/local_install"
+o.default = "config_path"
+o.datatype = "enable_offline_installation"
 
--- 第一次安装时的配置
-if not isInstalled then
-    -- 第二个标签页的选项
-    o = s:taboption("advanced", Value, "database_type", translate("Database Type"))
-    o.datatype = "string"
-    o:value("Sqlite", "Sqlite")
-    o:value("PostgreSQL", "PostgreSQL")
-    o:value("MySql", "MySql")
+-- 第二个标签页的选项
+o = s:taboption("advanced", Value, "database_type", translate("Database Type"))
+o.datatype = "string"
+o:value("Sqlite", "Sqlite")
+o:value("PostgreSQL", "PostgreSQL")
+o:value("MySql", "MySql")
 
-    o = s:taboption("advanced", Value, "connection_settings", translate("Connection Settings"))
-    o.datatype = "string"
+o = s:taboption("advanced", Value, "connection_settings", translate("Connection Settings"))
+o.datatype = "string"
 
-    o = s:taboption("advanced", Value, "administrator_account", translate("Administrator Account"))
-    o.datatype = "string"
+o = s:taboption("advanced", Value, "administrator_account", translate("Administrator Account"))
+o.datatype = "string"
 
-    o = s:taboption("advanced", Value, "administrator_password", translate("Password"))
-    o.password = true
-    o.datatype = "string"
-end
+o = s:taboption("advanced", Value, "administrator_password", translate("Password"))
+o.password = true
+o.datatype = "string"
 
 return m

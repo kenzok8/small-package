@@ -7,6 +7,9 @@ msgstr "智淀导航"
 msgid "ZdinNav software is a bookmark management tool for websites."
 msgstr "智淀导航：网站书签管理的工具，"
 
+msgid "If you have any suggestions for this program, please join my %sgroup — your participation will help make it even better!"
+msgstr "如果你对该程序有建议可以加入到我的 %s群 ，欢迎你的加入它更完美！"
+
 msgid "Default Ultra-Super Administrator:zdinnav Password:pwd123"
 msgstr "默认超高级管理员：zdinnav 密码：pwd123"
 
