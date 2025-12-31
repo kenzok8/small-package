@@ -1,97 +1,46 @@
 #!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2023 sirpdboy herboy2008@gmail.com
+#
 
 START=99
+USE_PROCD=1
 
-TIMECONTROL_ENABLE=0
+NAME=timecontrol
+LOCK="/var/lock/$NAME.lock"
 
-iptables_w(){
-	iptables -w 1 "$@"
-	ip6tables -w 1 "$@" 2>/dev/null
+start_instance() {
+	 procd_open_instance
+	 procd_set_param command /usr/bin/timecontrolctrl
+	 procd_set_param respawn
+	 procd_set_param stderr 1
+	 procd_close_instance
 }
 
-add_rule(){
-	local enable macaddr timeoff timeon z1 z2 z3 z4 z5 z6 z7
-	config_get enable "$1" enable "0"
-	config_get macaddr "$1" macaddr
-	config_get timeoff "$1" timeoff
-	config_get timeon "$1" timeon
-	config_get z1 "$1" z1
-	config_get z2 "$1" z2
-	config_get z3 "$1" z3
-	config_get z4 "$1" z4
-	config_get z5 "$1" z5
-	config_get z6 "$1" z6
-	config_get z7 "$1" z7
-
-	if [ -z $enable ] || [ "$enable" != "1" ] || [ -z $macaddr ] || [ -z $timeoff ] || [ -z $timeon ]; then
-		return 0
-	fi
-
-	local Z1 Z2 Z3 Z4 Z5 Z6 Z7
-	[ "$z1" == "1" ] && Z1="Mon,"
-	[ "$z2" == "1" ] && Z2="Tue,"
-	[ "$z3" == "1" ] && Z3="Wed,"
-	[ "$z4" == "1" ] && Z4="Thu,"
-	[ "$z5" == "1" ] && Z5="Fri,"
-	[ "$z6" == "1" ] && Z6="Sat,"
-	[ "$z7" == "1" ] && Z7="Sun"
-
-	local table
-	for table in filter nat; do
-		iptables_w -t $table -A TIMECONTROL_RULES -m mac --mac-source $macaddr -m time --kerneltz --timestart $timeon --timestop $timeoff --weekdays $Z1$Z2$Z3$Z4$Z5$Z6$Z7 -j TIMECONTROL_REJECT
-	done
+_timecontrol_start() {
+	 if [ "$(grep -c 'option enable .1.' /etc/config/$NAME 2>/dev/null)" -gt "0" ]; then
+	    touch $LOCK
+	    timecontrol start
+	    start_instance
+	 else
+            echo "INFO: 没有任何管制的设备！"
+	    stop_service
+	 fi
 }
 
-timecontrol_header(){
-	config_get TIMECONTROL_ENABLE "$1" enable "0"
+start_service(){
+	[ -f $LOCK ] && exit
+	_timecontrol_start
+	rm -f $LOCK
 }
 
-start(){
-	local table
-	config_load timecontrol
-	config_foreach timecontrol_header basic
-
-	[ "$TIMECONTROL_ENABLE" != "1" ] && return 0
-	# resolve interface
-	local interface=$(
-		. /lib/functions/network.sh
-
-		network_is_up "lan" && network_get_device device "lan"
-		echo "${device:-br-lan}"
-	)
-
-	for table in filter nat; do
-		iptables_w -t $table -N TIMECONTROL
-		iptables_w -t $table -F TIMECONTROL
-		iptables_w -t $table -N TIMECONTROL_RULES
-		iptables_w -t $table -F TIMECONTROL_RULES
-		iptables_w -t $table -N TIMECONTROL_REJECT
-		iptables_w -t $table -F TIMECONTROL_REJECT
-	done
-	iptables_w -t filter -I TIMECONTROL_REJECT -j DROP
-	iptables_w -t filter -I TIMECONTROL_REJECT -p tcp -j REJECT --reject-with tcp-reset
-	iptables_w -t nat -I TIMECONTROL_REJECT -j ACCEPT
-
-	config_foreach add_rule macbind
-
-	iptables_w -t filter -I TIMECONTROL -i $interface -j TIMECONTROL_RULES
-	iptables_w -t filter -I FORWARD -j TIMECONTROL
-	iptables_w -t nat -I TIMECONTROL -i $interface -j TIMECONTROL_RULES
-	iptables_w -t nat -I PREROUTING -j TIMECONTROL
-	echo "/etc/init.d/timecontrol restart" > "/var/etc/timecontrol.include"
+service_triggers() {
+ 	 procd_add_reload_trigger 'timecontrol'
 }
 
-stop(){
-	local table
-	iptables_w -t filter -D FORWARD -j TIMECONTROL
-	iptables_w -t nat -D PREROUTING -j TIMECONTROL
-
-	for table in filter nat; do
-		iptables_w -t $table -F TIMECONTROL
-		iptables_w -t $table -X TIMECONTROL
-		iptables_w -t $table -F TIMECONTROL_RULES
-		iptables_w -t $table -X TIMECONTROL_RULES
-		iptables_w -t $table -F TIMECONTROL_REJECT
-		iptables_w -t $table -X TIMECONTROL_REJECT
-	done
+stop_service(){
+	kill -9 $(busybox ps -w | grep 'timecontrolctrl' | grep -v 'grep' | awk '{print $1}') >/dev/null 2>&1
+	rm -f $LOCK 2>/dev/null
+	timecontrol stop
 }
+

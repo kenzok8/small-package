@@ -1,0 +1,123 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Control"
+msgstr "管控"
+
+msgid "Time Control"
+msgstr "时间控制"
+
+msgid "Internet Time Control"
+msgstr "上网时间控制"
+
+msgid "Users can limit their internet usage time through MAC and IP, with available IP ranges such as 192.168.110.00 to 192.168.10.200"
+msgstr "用户可以通过MAC和IP限制其上网时间，可用IP范围如192.168.110.00至192.168.10.200"
+
+msgid "Suggested feedback:"
+msgstr "问题反馈:"
+
+msgid "Checking service status..."
+msgstr "正在检查服务状态..."
+
+msgid "Status check failed"
+msgstr "状态检查失败"
+
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "TimeControl Service"
+msgstr "时间控制服务"
+
+msgid "Control Mode"
+msgstr "控制模式"
+
+msgid "blacklist: Block the networking of the target address, whitelist: Only allow networking for the target address and block all other addresses."
+msgstr "黑名单：阻断目标地址的上网；白名单：仅允许目标地址上网，阻断其他所有地址。"
+
+msgid "Blacklist"
+msgstr "黑名单"
+
+msgid "Whitelist"
+msgstr "白名单"
+
+msgid "Control Intensity"
+msgstr "控制强度"
+
+msgid "Pay attention to strong control: machines under control will not be able to connect to the software router backend!"
+msgstr "注意强控制：被控制的机器将无法连接软件路由器后台！"
+
+msgid "Ordinary forward control"
+msgstr "普通管制"
+
+msgid "Strong input control"
+msgstr "强力管制"
+
+msgid "Device Rules"
+msgstr "设备规则"
+
+msgid "Comment"
+msgstr "备注"
+
+msgid "Description"
+msgstr "描述"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "IP/MAC Address"
+msgstr "IP/MAC地址"
+
+msgid "192.168.10.100 or 00:11:22:33:44:55"
+msgstr "192.168.10.100 或 00:11:22:33:44:55"
+
+msgid "-- Please select or enter manually --"
+msgstr "-- 请选择或手动输入 --"
+
+msgid "Start Control Time"
+msgstr "控制开始时间"
+
+msgid "00:00"
+msgstr "00:00"
+
+msgid "Stop Control Time"
+msgstr "控制结束时间"
+
+msgid "Week Day (1~7)"
+msgstr "星期（1~7）"
+
+msgid "Everyday"
+msgstr "每天"
+
+msgid "Monday"
+msgstr "星期一"
+
+msgid "Tuesday"
+msgstr "星期二"
+
+msgid "Wednesday"
+msgstr "星期三"
+
+msgid "Thursday"
+msgstr "星期四"
+
+msgid "Friday"
+msgstr "星期五"
+
+msgid "Saturday"
+msgstr "星期六"
+
+msgid "Sunday"
+msgstr "星期日"
+
+msgid "Workday"
+msgstr "工作日"
+
+msgid "Rest Day"
+msgstr "休息日"
+
+msgid "© github "
+msgstr "© 作者 "
