@@ -1,0 +1,841 @@
+#!/bin/bash
+
+# Copyright (C) 2006 OpenWrt.org
+# Copyright 2022-2025 sirpdboy <herboy2008@gmail.com>
+
+crrun=$1
+crid=$2
+NAME=timecontrol
+DEBUG=0
+
+config_get_type() {
+    local ret=$(uci -q get "${NAME}.${1}")
+    echo "${ret:=$2}"
+}
+
+config_n_get() {
+    local ret=$(uci -q get "${NAME}.${1}.${2}")
+    echo "${ret:=$3}"
+}
+
+config_t_get() {
+    local index=${3:-0}
+    local default=$4
+    local ret=$(uci -q get "${NAME}.@${1}[${index}].${2}")
+    echo "${ret:-$default}"
+}
+
+config_t_set() {
+    local index=${3:-0}
+    local ret=$(uci -q set "${NAME}.@${1}[${index}].${2}=${3}")
+}
+
+IDLIST="/var/$NAME.idlist"
+TMPID="/var/$NAME.tmpid"
+LOG_FILE="/var/log/$NAME.log"
+list_type=$(config_t_get $NAME list_type 0 )
+
+# 获取控制强度配置
+CHAIN=$(config_t_get $NAME chain 0 )
+
+
+bin_nft=$(which nft 2>/dev/null)
+bin_iptables=$(which iptables 2>/dev/null)
+bin_ip6tables=$(which ip6tables 2>/dev/null)
+bin_conntrack=$(which conntrack 2>/dev/null)
+
+is_input_chain() {
+    [ "$CHAIN" = "input" ]
+}
+
+dbg() {
+    if [ "$DEBUG" -eq 1 ] ;then
+    local d="$(date '+%Y-%m-%d %H:%M:%S')"
+        echo "[$d] DEBUG: $@ " >>$LOG_FILE
+        echo "DEBUG: $@"  # 直接输出到终端以便调试
+    fi
+}
+
+info() {
+    local d="$(date '+%Y-%m-%d %H:%M:%S')"
+    echo "[$d] INFO: $@" >>$LOG_FILE
+    echo "INFO: $@"
+}
+
+parse_target() {
+    local target="$1"
+    
+    # 去除空格
+    target=$(echo "${target}" | xargs)
+    
+    # 1. 单个IP地址 (192.168.1.100)
+    if echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        local octets=(${target//./ })
+        for octet in "${octets[@]}"; do
+            [ "$octet" -le 255 ] || return 1
+        done
+        echo "ipv4:single:${target}"
+        return 0
+    
+    # 2. IP范围 (192.168.1.1-192.168.1.100)
+    elif echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}-([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        local start_ip=${target%-*}
+        local end_ip=${target#*-}
+        
+        # 验证起始IP和结束IP
+        local start_octets=(${start_ip//./ })
+        local end_octets=(${end_ip//./ })
+        for i in {0..3}; do
+            [ "${start_octets[$i]}" -le 255 ] && [ "${end_octets[$i]}" -le 255 ] || return 1
+        done
+        
+        echo "ipv4:range:${target}"
+        return 0
+    
+    # 3. CIDR格式 (192.168.1.0/24)
+    elif echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
+        local ip=${target%/*}
+        local mask=${target#*/}
+        
+        # 验证掩码
+        if [ "$mask" -ge 0 ] && [ "$mask" -le 32 ]; then
+            local octets=(${ip//./ })
+            for octet in "${octets[@]}"; do
+                [ "$octet" -le 255 ] || return 1
+            done
+            echo "ipv4:cidr:${target}"
+            return 0
+        fi
+    
+    # 4. MAC地址 (00:11:22:33:44:55)
+    elif echo "$target" | grep -qE '^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$'; then
+        echo "mac:single:${target,,}"  # 转换为小写
+        return 0
+    
+    # 5. IPv6地址（简单验证）
+    elif echo "$target" | grep -qE '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'; then
+        echo "ipv6:single:${target}"
+        return 0
+    
+    # 6. IPv6 CIDR
+    elif echo "$target" | grep -qE '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}/[0-9]{1,3}$'; then
+        local ipv6=${target%/*}
+        local mask=${target#*/}
+        if [ "$mask" -ge 0 ] && [ "$mask" -le 128 ]; then
+            echo "ipv6:cidr:${target}"
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+convert_to_old_format() {
+    local target="$1"
+    local parsed_result=$(parse_target "$target")
+    [ $? -ne 0 ] && return 1
+    
+    IFS=':' read -r type subtype value <<< "$parsed_result"
+    
+    case "$type" in
+        "ipv4")
+            case "$subtype" in
+                "single") 
+                    echo "ip ipv4_addr $value"
+                    ;;
+                "range")
+                    # 转换为nftables范围格式
+                    local start_ip=${value%-*}
+                    local end_ip=${value#*-}
+                    echo "ip ipv4_addr { $start_ip-$end_ip }"
+                    ;;
+                "cidr")
+                    echo "ip ipv4_addr $value"
+                    ;;
+            esac
+            ;;
+        "mac")
+            echo "bridge ether_addr $value"
+            ;;
+        "ipv6")
+            case "$subtype" in
+                "single") echo "ip6 ipv6_addr $value" ;;
+                "cidr") echo "ip6 ipv6_addr $value" ;;
+            esac
+            ;;
+    esac
+}
+
+flush_connections() {
+    local target="$1"
+    
+    if [ -x "$bin_conntrack" ]; then
+        local parsed_result=$(parse_target "${target}")
+        if [ $? -eq 0 ]; then
+            IFS=':' read -r type subtype value <<< "${parsed_result}"
+            
+            case "${type}" in
+                "ipv4")
+                    case "$subtype" in
+                        "single")
+                            $bin_conntrack -D -s "${value}" 2>/dev/null || true
+                            $bin_conntrack -D -d "${value}" 2>/dev/null || true
+                            dbg "清理单个IP连接: ${value}"
+                            ;;
+                        "range")
+                            # 对于IP范围，需要转换为CIDR或逐个清理
+                            # 这里简化处理：提取起始IP的第一个八位组
+                            local start_ip=${value%-*}
+                            local network="${start_ip%.*}.0/24"  # 假设为/24网络
+                            $bin_conntrack -D -s "${network}" 2>/dev/null || true
+                            dbg "清理IP范围连接: ${value}"
+                            ;;
+                        "cidr")
+                            $bin_conntrack -D -s "${value}" 2>/dev/null || true
+                            $bin_conntrack -D -d "${value}" 2>/dev/null || true
+                            dbg "清理CIDR连接: ${value}"
+                            ;;
+                    esac
+                    info "断开连接: ${target}"
+                    ;;
+                "mac")
+                    # 从ARP表查找IP
+                    if [ -f "/proc/net/arp" ]; then
+                        local ip_addr=$(grep -i "${value}" /proc/net/arp 2>/dev/null | awk '{print $1}' | head -1)
+                        if [ -n "${ip_addr}" ]; then
+                            $bin_conntrack -D -s "${ip_addr}" 2>/dev/null || true
+                            $bin_conntrack -D -d "${ip_addr}" 2>/dev/null || true
+                            dbg "清理MAC连接: ${value} (IP: ${ip_addr})"
+                            info "断开MAC连接: ${value}"
+                        fi
+                    fi
+                    ;;
+                "ipv6")
+                    dbg "IPv6连接清理暂不支持: ${value}"
+                    ;;
+            esac
+        else
+            dbg "无法解析目标地址: ${target}"
+        fi
+    else
+        dbg "conntrack未安装，跳过连接清理"
+    fi
+}
+
+send_tcp_reset() {
+    local target="$1"
+    
+    [ "$TCP_RST" != "1" ] && return
+    
+    local parsed_result=$(parse_target "${target}")
+    [ $? -ne 0 ] && return
+    
+    IFS=':' read -r type subtype value <<< "${parsed_result}"
+    [ "$type" != "ipv4" ] && return
+    
+    info "发送TCP RST包: ${target}"
+    
+    # ============ iptables ============
+    if [ -n "$iptables_ver" ]; then
+        case "$subtype" in
+            "single"|"cidr")
+                iptables -I FORWARD -s "$value" -p tcp -j REJECT --reject-with tcp-reset 2>/dev/null || true
+                [ "$StrongCHAIN" = "1" ] && iptables -I INPUT -s "$value" -p tcp -j REJECT --reject-with tcp-reset 2>/dev/null || true
+                ;;
+            "range")
+                local start_ip=${value%-*}
+                local end_ip=${value#*-}
+                iptables -I FORWARD -m iprange --src-range "$start_ip-$end_ip" -p tcp -j REJECT --reject-with tcp-reset 2>/dev/null || true
+                [ "$StrongCHAIN" = "1" ] && iptables -I INPUT -m iprange --src-range "$start_ip-$end_ip" -p tcp -j REJECT --reject-with tcp-reset 2>/dev/null || true
+                ;;
+        esac
+    fi
+    
+    # ============ nftables ============
+    if [ -n "$nftables_ver" ]; then
+        case "$subtype" in
+            "single"|"cidr")
+                nft add rule inet timecontrol forward ip saddr "$value" tcp flags rst counter reject with tcp reset 2>/dev/null || true
+                [ "$StrongCHAIN" = "1" ] && nft add rule inet timecontrol input ip saddr "$value" tcp flags rst counter reject with tcp reset 2>/dev/null || true
+                ;;
+            "range")
+                local start_ip=${value%-*}
+                local end_ip=${value#*-}
+                nft add rule inet timecontrol forward ip saddr >= "$start_ip" ip saddr <= "$end_ip" tcp flags rst counter reject with tcp reset 2>/dev/null || true
+                [ "$StrongCHAIN" = "1" ] && nft add rule inet timecontrol input ip saddr >= "$start_ip" ip saddr <= "$end_ip" tcp flags rst counter reject with tcp reset 2>/dev/null || true
+                ;;
+        esac
+    fi
+    
+    # 10秒后自动删除
+    (sleep 10; remove_tcp_reset "$target") &
+}
+
+remove_tcp_reset() {
+    local target="$1"
+    local parsed_result=$(parse_target "$target")
+    [ $? -ne 0 ] && return
+    
+    IFS=':' read -r type subtype value <<< "$parsed_result"
+    [ "$type" != "ipv4" ] && return
+    
+    # iptables删除
+    if [ -n "$iptables_ver" ]; then
+        case "$subtype" in
+            "single"|"cidr")
+                iptables -D FORWARD -s "$value" -p tcp -j REJECT --reject-with tcp-reset 2>/dev/null || true
+                [ "$StrongCHAIN" = "1" ] && iptables -D INPUT -s "$value" -p tcp -j REJECT --reject-with tcp-reset 2>/dev/null || true
+                ;;
+            "range")
+                local start_ip=${value%-*}
+                local end_ip=${value#*-}
+                iptables -D FORWARD -m iprange --src-range "$start_ip-$end_ip" -p tcp -j REJECT --reject-with tcp-reset 2>/dev/null || true
+                [ "$StrongCHAIN" = "1" ] && iptables -D INPUT -m iprange --src-range "$start_ip-$end_ip" -p tcp -j REJECT --reject-with tcp-reset 2>/dev/null || true
+                ;;
+        esac
+    fi
+    
+    # nftables删除（简化：重新加载表）
+    if [ -n "$nftables_ver" ]; then
+        # 简单的做法是重新创建表
+        nft delete table inet timecontrol 2>/dev/null || true
+        # 重新初始化
+        init_timecontrol
+    fi
+}
+
+
+# Check if nftables/iptables is available
+if [ -x "$bin_nft" ]; then
+    nftables_ver="true"
+    dbg "nft found: $bin_nft"
+elif [ -x "$bin_iptables" ] || [ -x "$bin_ip6tables" ]; then
+    iptables_ver="true"
+    dbg "iptables found: $bin_iptables"
+else
+    dbg "No firewall tool found!"
+    exit 1
+fi
+
+nft() {
+    dbg "nft $*"
+    $bin_nft "$@" 2>/dev/null
+}
+
+iptables() {
+    dbg "iptables $*"
+    $bin_iptables "$@" 2>/dev/null
+}
+
+ip6tables() {
+    dbg "ip6tables $*"
+    $bin_ip6tables "$@" 2>/dev/null
+}
+
+get_target_info() {
+    local target="$1"
+    local result=$(convert_to_old_format "$target")
+    if [ $? -eq 0 ]; then
+        echo "$result"
+        return 0
+    fi
+    target=$(echo "${target}" | xargs)
+    if echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        local octets=(${target//./ })
+        for octet in "${octets[@]}"; do
+            [ "$octet" -le 255 ] || return 1
+        done
+        table="ip"
+        addr_type="ipv4_addr"
+    elif echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}-([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        local start_ip=${target%-*}
+        local end_ip=${target#*-}
+        table="ip"
+        addr_type="ipv4_addr"
+        target="{ $start_ip-$end_ip }"
+    elif echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
+        local ip=${target%/*}
+        local mask=${target#*/}
+        [ "$mask" -le 32 ] || return 1
+        table="ip"
+        addr_type="ipv4_addr"
+    elif echo "$target" | grep -qE '^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$'; then
+        table="bridge"
+        addr_type="ether_addr"
+        target=$(echo "$target" | tr '[:upper:]' '[:lower:]')
+    elif echo "$target" | grep -qE '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'; then
+        table="ip6"
+        addr_type="ipv6_addr"
+    else
+        return 1
+    fi
+
+    echo "$table $addr_type $target"
+}
+
+nft_table_exists() {
+    local table=$1
+    nft list tables | grep -q "$table"
+}
+
+nft_set_exists() {
+    local table=$1
+    local set=$2
+    nft list sets | grep -q "$table $set"
+}
+
+nft_rule_exists() {
+    local table=$1
+    local chain=$2
+    local rule=$3
+    nft list chain "$table" "$chain" | grep -q "$rule"
+}
+
+stop_timecontrol() {
+    remove_tcp_reset
+    if [ -n "$nftables_ver" ]; then
+        for chain in "ip" "bridge" "ip6"; do
+            if nft_table_exists "$chain filter"; then
+                if [ "$StrongCHAIN" -eq 1 ]; then
+                    nft flush chain "$chain" filter input
+                    nft delete chain "$chain" filter input 2>/dev/null
+                fi
+                nft flush chain "$chain" filter forward
+                nft delete chain "$chain" filter forward 2>/dev/null
+                
+                if nft_set_exists "$chain filter" "${list_type}_list"; then
+                    nft delete set "$chain" filter "${list_type}_list"
+                fi
+                nft delete table "$chain" filter
+            fi
+        done
+        dbg "All nftables rules have been cleared."
+    elif [ -n "$iptables_ver" ]; then
+    
+           
+        if [ "$StrongCHAIN" -eq 1 ]; then
+            iptables -D INPUT -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null
+            ip6tables -D INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null
+        fi
+        
+        iptables -D FORWARD -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null
+        ip6tables -D FORWARD -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null
+        
+        ipset flush timecontrol_blacklist 2>/dev/null
+        ipset flush timecontrol_blacklistv6 2>/dev/null
+        ipset destroy timecontrol_blacklist 2>/dev/null
+        ipset destroy timecontrol_blacklistv6 2>/dev/null
+        dbg "Deleted iptables rules and ipsets"
+    fi
+
+    rm -rf  "$IDLIST" "$TMPID"
+}
+
+init_timecontrol() {
+    info "初始化时间控制"
+    
+    if [ -n "$nftables_ver" ]; then
+        for chain in "ip" "bridge" "ip6"; do
+            case $chain in
+                ip)
+                    addr_type="ipv4_addr"
+                    ip_protocol="ip"
+                    ;;
+                ip6)
+                    addr_type="ipv6_addr"
+                    ip_protocol="ip6"
+                    ;;
+                bridge)
+                    addr_type="ether_addr"
+                    ip_protocol="ether"
+                    ;;
+            esac
+            
+            if ! nft_table_exists "$chain filter"; then
+                nft add table "$chain" filter
+                dbg "Created table $chain filter"
+            fi
+            
+            if ! nft_set_exists "$chain filter" "${list_type}_list"; then
+                nft add set "$chain" filter "${list_type}_list" "{ type $addr_type; flags interval; }"
+                dbg "Created set ${list_type}_list in $chain filter"
+            fi
+            
+            if [ "$StrongCHAIN" -eq 1 ]; then
+                if ! nft list chain "$chain" filter input 2>/dev/null; then
+                    nft add chain "$chain" filter input "{ type filter hook input priority -100; }"
+                    dbg "Created INPUT chain in $chain filter (强控制)"
+                fi
+            fi
+            
+            if ! nft list chain "$chain" filter forward 2>/dev/null; then
+                nft add chain "$chain" filter forward "{ type filter hook forward priority -100; }"
+                dbg "Created FORWARD chain in $chain filter"
+            fi
+        done
+    elif [ -n "$iptables_ver" ]; then
+        ipset create timecontrol_blacklist hash:net 2>/dev/null || ipset flush timecontrol_blacklist
+        ipset create timecontrol_blacklistv6 hash:net family inet6 2>/dev/null || ipset flush timecontrol_blacklistv6
+        
+        dbg "Created ipsets: timecontrol_blacklist and timecontrol_blacklistv6"
+        
+        if [ "$StrongCHAIN" -eq 1 ]; then
+            if ! iptables -C INPUT -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null; then
+                iptables -I INPUT -m set --match-set timecontrol_blacklist src -j DROP
+                dbg "Added INPUT chain rule for IPv4 (强控制)"
+            fi
+            
+            if ! ip6tables -C INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null; then
+                ip6tables -I INPUT -m set --match-set timecontrol_blacklistv6 src -j DROP
+                dbg "Added INPUT chain rule for IPv6 (强控制)"
+            fi
+        fi
+        
+        if ! iptables -C FORWARD -m set --match-set timecontrol_blacklist src -j DROP 2>/dev/null; then
+            iptables -I FORWARD -m set --match-set timecontrol_blacklist src -j DROP
+            dbg "Added FORWARD chain rule for IPv4"
+        fi
+        
+        if ! ip6tables -C FORWARD -m set --match-set timecontrol_blacklistv6 src -j DROP 2>/dev/null; then
+            ip6tables -I FORWARD -m set --match-set timecontrol_blacklistv6 src -j DROP
+            dbg "Added FORWARD chain rule for IPv6"
+        fi
+    fi
+    
+    info "初始化完成"
+}
+
+
+timeadd() {
+    local id=$1
+    local target=$(config_t_get device mac "$id")
+    [ -z "$target" ] && return
+    
+    info "添加设备控制: $target"
+    
+    local parsed_result=$(parse_target "$target")
+    if [ $? -ne 0 ]; then
+        dbg "无法解析目标地址: $target"
+        return
+    fi
+    
+    local target_info=$(convert_to_old_format "$target")
+    if [ $? -ne 0 ]; then
+        dbg "无法转换目标格式: $target"
+        return
+    fi
+    
+    read -r table addr_type target_val <<< "$target_info"
+    
+    case $table in
+        ip)
+            saddr="ip saddr"
+            daddr="ip daddr"
+            ipset_name="timecontrol_blacklist"
+            ;;
+        ip6)
+            saddr="ip6 saddr"
+            daddr="ip6 daddr"
+            ipset_name="timecontrol_blacklistv6"
+            ;;
+        bridge)
+            saddr="ether saddr"
+            daddr="ether daddr"
+            ipset_name="timecontrol_blacklistbridge"
+            ;;
+        *) 
+            dbg "未知的table类型: $table"
+            return 
+            ;;
+    esac
+    
+    if [ -n "$nftables_ver" ]; then
+        nft add element "$table" filter "${list_type}_list" "{ $target_val }"
+        
+        if [ "$StrongCHAIN" -eq 1 ]; then
+            if ! nft list chain "$table" filter input 2>/dev/null | grep -q "@${list_type}_list"; then
+                nft add rule "$table" filter input "$saddr" @"${list_type}_list" drop
+                dbg "Added INPUT rule for $target in table $table (强控制)"
+            fi
+        fi
+        if ! nft list chain "$table" filter forward 2>/dev/null | grep -q "@${list_type}_list"; then
+            nft add rule "$table" filter forward "$saddr" @"${list_type}_list" drop
+            dbg "Added FORWARD rule for $target in table $table"
+        fi
+        
+    elif [ -n "$iptables_ver" ]; then
+        # 对于iptables，需要根据不同类型处理
+        IFS=':' read -r type subtype value <<< "$parsed_result"
+        
+        case "$type" in
+            "ipv4")
+                case "$subtype" in
+                    "single"|"cidr")
+                        ipset add "$ipset_name" "$value" 2>/dev/null || true
+                        ;;
+                    "range")
+                        # IP范围需要特殊处理
+                        local start_ip=${value%-*}
+                        local end_ip=${value#*-}
+                        # 将范围转换为多个CIDR或使用iprange模块
+                        ipset add "$ipset_name" "$start_ip-$end_ip" 2>/dev/null || true
+                        ;;
+                esac
+                ;;
+            "mac")
+                ipset add "$ipset_name" "$value" 2>/dev/null || true
+                ;;
+        esac
+        dbg "Added $target to ipset $ipset_name"
+    fi
+if [ "$StrongCHAIN" -eq 1 ]; then
+    flush_connections "$target"
+    send_tcp_reset "$target"
+fi
+}
+
+
+timedel() {
+    local id=$1
+    local target=$(config_t_get device mac "$id")
+    [ -z "$target" ] && return
+    
+    info "移除设备控制: $target"
+    
+    # 解析目标
+    local parsed_result=$(parse_target "$target")
+    if [ $? -ne 0 ]; then
+        dbg "无法解析目标地址: $target"
+        return
+    fi
+    
+    local target_info=$(convert_to_old_format "$target")
+    if [ $? -ne 0 ]; then
+        dbg "无法转换目标格式: $target"
+        return
+    fi
+    
+    read -r table addr_type target_val <<< "$target_info"
+    
+    case $table in
+        ip) ipset_name="timecontrol_blacklist" ;;
+        ip6) ipset_name="timecontrol_blacklistv6" ;;
+        bridge) ipset_name="timecontrol_blacklistbridge" ;;
+        *) return ;;
+    esac
+    
+    if [ -n "$nftables_ver" ]; then
+        nft delete element "$table" filter "${list_type}_list" "{ $target_val }" 2>/dev/null
+        dbg "Removed $target_val from ${list_type}_list in table $table"
+    else
+        IFS=':' read -r type subtype value <<< "$parsed_result"
+        ipset del "$ipset_name" "$value" 2>/dev/null || true
+        dbg "Removed $target from ipset $ipset_name"
+    fi
+}
+
+
+check_time() {
+    local start=$1
+    local end=$2
+    local current=$(date +%H%M)
+    local start_min=$((10#${start:0:2}*60 + 10#${start:3:2}))
+    local end_min=$((10#${end:0:2}*60 + 10#${end:3:2}))
+    local current_min=$((10#${current:0:2}*60 + 10#${current:2:2}))
+    
+    if [[ $start_min -lt $end_min ]]; then
+        [[ $current_min -ge $start_min && $current_min -lt $end_min ]]
+    else
+        [[ $current_min -ge $start_min || $current_min -lt $end_min ]]
+    fi
+}
+
+check_list() {
+    local i=$1
+    local start_time=$(config_t_get device timestart "$i")
+    local end_time=$(config_t_get device timeend "$i")
+    local wweek=$(config_t_get device week "$i")
+    local current_weekday=$(date +%u)
+    
+    # 检查时间
+    check_time "$start_time" "$end_time" || return 1
+    
+    # 检查星期
+    if [ "$wweek" != "0" ]; then
+        echo "$wweek" | grep -qw "$current_weekday" || return 1
+    fi
+    
+    return 0
+}
+
+
+test_parse() {
+    echo "=== 测试地址解析 ==="
+    
+    local test_cases=(
+        "192.168.1.100"
+        "192.168.1.1-192.168.1.100"
+        "192.168.1.0/24"
+        "192.168.10.1-192.168.10.254"
+        "192.168.10.0/24"
+        "00:11:22:33:44:55"
+        "2001:db8::1"
+        "invalid_address"
+    )
+    
+    for test_case in "${test_cases[@]}"; do
+        echo -n "测试 '$test_case': "
+        if parse_target "$test_case" >/dev/null; then
+            echo "✓ 通过"
+            parse_target "$test_case"
+        else
+            echo "✗ 失败"
+        fi
+        echo ""
+    done
+}
+
+
+show_status() {
+    echo ""
+    echo "┌────────────────────────────────────────────┐"
+    echo "│           时间控制系统状态                 │"
+    echo "├────────────────────────────────────────────┤"
+    
+    # 控制模式
+    if [ "$StrongCHAIN" -eq 1 ]; then
+        echo "│    控制模式: 强力控制 (INPUT链)            │"
+        echo "│    阻止访问路由器和互联网，立即生效        │"
+    else
+        echo "│    控制模式: 普通控制 (FORWARD链)          │"
+        echo "│    仅阻止互联网访问，可能有延迟            │"
+    fi
+    
+    echo "├────────────────────────────────────────────┤"
+   
+    # 当前时间
+    echo "│ 当前时间: $(date '+%Y-%m-%d %H:%M:%S')              │"
+    echo "│ 星期: $(date '+%u' | sed 's/1/星期一/;s/2/星期二/;s/3/星期三/;s/4/星期四/;s/5/星期五/;s/6/星期六/;s/7/星期日/')                               │"
+    echo "├────────────────────────────────────────────┤"
+    
+    if [ -s "$IDLIST" ]; then
+    local device_count=$(wc -l < $IDLIST 2>/dev/null || echo "0")
+    echo "│ 控制设备数: $device_count 个                           │"
+    
+    # 显示前5个设备
+        echo "├────────────────────────────────────────────┤"
+        echo "│ 控制中的设备:                              │"
+        local count=0
+        cat "$IDLIST" | sed 's/!//g' | head -5 | while read id; do
+            count=$((count + 1))
+            local target=$(config_t_get device mac "$id")
+            local comment=$(config_t_get device comment "$id" "设备$id")
+            printf "│ %2d  %-15s %-20s     │\n" $count "$comment" "$target"
+        done
+        
+        if [ $device_count -gt 5 ]; then
+            echo "│ ... 还有 $(($device_count - 5)) 个设备           │"
+        fi
+    else
+    
+    echo "│ 控制设备数: 0 个                            │"
+    fi
+    
+    echo "└────────────────────────────────────────────┘"
+    echo ""
+}
+
+show_help() {
+    echo "上网时间控制系统"
+    echo ""
+    echo "支持的地址格式:"
+    echo "  1. 单个IP: 192.168.1.100"
+    echo "  2. IP范围: 192.168.1.1-192.168.1.100"
+    echo "  3. CIDR: 192.168.1.0/24"
+    echo "  4. MAC地址: 00:11:22:33:44:55"
+    echo ""
+    echo "强力控制新增功能:"
+    echo "  - TCP RST包: 立即断开现有TCP连接"
+    echo "  - 连接清理: 清除conntrack表中的连接"
+    echo ""
+    echo "用法: $0 {start|stop|add <id>|del <id>|status|test|help}"
+    echo ""
+    echo "配置: 编辑 /etc/config/timecontrol"
+    echo "日志: 查看 /var/log/timecontrol.log"
+}
+
+if is_input_chain; then
+    StrongCHAIN=1
+else
+    StrongCHAIN=0
+fi
+
+case "$crrun" in
+    "stop")
+        info "停止时间控制服务"
+        stop_timecontrol
+        info "所有防火墙规则已清除"
+        ;;
+    "start")
+        stop_timecontrol
+        echo -e "\n====== 启动时间控制 ======" > /var/log/timecontrol.log
+	touch  $IDLIST
+        idlist=$(uci show $NAME | grep "enable='1'" | grep "device" | grep -oE '\[.*?\]' | grep -o '[0-9]' | sed -e 's/^/!/g' -e 's/$/!/g' > "$IDLIST"; cat "$IDLIST" | sed -e 's/!//g')
+        init_timecontrol
+        for list in $(echo "$idlist" | sed -e 's/!//g'); do
+            if check_list "$list"; then
+                timeadd "$list"
+                info "设备 $list 已添加到控制列表"
+            else
+                if grep -q "!${list}!" "$IDLIST"; then
+                    timedel "$list"
+                    sed -i "/!$list!/d" "$IDLIST"
+                    info "设备 $list 已从控制列表移除"
+                fi
+            fi
+        done
+        info "时间控制启动完成，控制 $(wc -l < $IDLIST) 个设备"
+        show_status >> /var/log/timecontrol.log
+        echo -e "============ END ===========" >> /var/log/timecontrol.log
+        ;;
+    "add")
+        info "添加设备控制"
+        for list in $(echo "$crid" | sed -e 's/!//g' | sed 's/,/ /g'); do
+            if check_list "$list"; then
+                timeadd "$list"
+                if ! grep -q "!$list!" "$IDLIST"; then
+                    echo "!$list!" >> "$IDLIST"
+                fi
+                info "设备 $list 已添加"
+            else
+                if grep -q "!${list}!" "$IDLIST"; then
+                    timedel "$list"
+                    sed -i "/!$list!/d" "$IDLIST"
+                    info "设备 $list 已移除"
+                fi
+            fi
+        done
+        ;;
+    "del")
+        info "移除设备控制"
+        for list in $(echo "$crid" | sed -e 's/!//g' | sed 's/,/ /g'); do
+            timedel "$list"
+            sed -i "/!$list!/d" "$IDLIST"
+            info "设备 $list 已删除"
+        done
+        ;;
+    "status")
+        show_status
+        ;;
+    "test")
+        test_parse
+        ;;
+    "help"|"")
+        show_help
+        ;;
+    *)
+        dbg "Invalid command: $crrun"
+        show_help
+        exit 1
+        ;;
+esac
