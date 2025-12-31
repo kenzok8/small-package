@@ -25,18 +25,18 @@ yml_other_rules_dl()
    local enabled config
    config_get_bool "enabled" "$section" "enabled" "1"
    config_get "config" "$section" "config" ""
-   
+
    if [ "$enabled" = "0" ] || [ "$config" != "$2" ]; then
       return
    fi
-   
+
    if [ -n "$rule_name" ]; then
       LOG_OUT "Warrning: Multiple Other-Rules-Configurations Enabled, Ignore..."
       return
    fi
-   
+
    config_get "rule_name" "$section" "rule_name" ""
-   
+
    LOG_OUT "Start Downloading Third Party Rules in Use..."
    if [ "$rule_name" = "lhie1" ]; then
       if [ "$github_address_mod" != "0" ]; then
@@ -83,14 +83,10 @@ yml_other_rules_dl()
       elif ! "$(ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
          Value = YAML.load_file('/usr/share/openclash/res/${rule_name}.yaml');
          Value_1 = YAML.load_file('/tmp/rules.yaml');
-         OLD_GROUP = Value['rules'].collect{|x| x.split(',')[2] or x.split(',')[1]}.uniq.map(&:strip);
-         NEW_GROUP = Value_1['rules'].collect{|x| x.split(',')[2] or x.split(',')[1]}.uniq.map(&:strip);
-         if (OLD_GROUP | NEW_GROUP).eql?(OLD_GROUP) then
-            if (OLD_GROUP | NEW_GROUP).eql?(NEW_GROUP) then
-               puts true
-            else
-               puts false
-            end
+         OLD_GROUP = Value['rules'].collect{|x| x.split(',')[2] or x.split(',')[1]}.map(&:strip).reject{|g| ['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].include?(g)}.uniq.sort;
+         NEW_GROUP = Value_1['rules'].collect{|x| x.split(',')[2] or x.split(',')[1]}.map(&:strip).reject{|g| ['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].include?(g)}.uniq.sort;
+         if OLD_GROUP.eql?(NEW_GROUP) then
+            puts true
          else
             puts false
          end
@@ -101,13 +97,13 @@ yml_other_rules_dl()
          del_lock
          exit 0
       fi
-      
+
       #取出规则部分
       ruby_read "/tmp/rules.yaml" ".select {|x| 'rule-providers' == x or 'rules' == x }.to_yaml" > "$OTHER_RULE_FILE"
       #合并
       cat "$OTHER_RULE_FILE" > "/tmp/rules.yaml" 2>/dev/null
       rm -rf /tmp/other_rule* 2>/dev/null
-      
+
       LOG_OUT "Check The Downloaded Rule File For Updates..."
       cmp -s /usr/share/openclash/res/"$rule_name".yaml /tmp/rules.yaml
       if [ "$?" -ne "0" ]; then
@@ -150,7 +146,7 @@ else
       CONFIG_FILE="/etc/openclash/config/config.yaml"
       CONFIG_NAME="config.yaml"
    fi
-   
+
    config_load "openclash"
    config_foreach yml_other_rules_dl "other_rules" "$CONFIG_NAME"
    if [ -z "$rule_name" ]; then

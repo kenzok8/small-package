@@ -227,6 +227,7 @@ o.description = translate("Fake-IP is not returned if the matching succeeds when
 o.default = "blacklist"
 o:value("blacklist", translate("Blacklist Mode"))
 o:value("whitelist", translate("Whitelist Mode"))
+o:value("rule", translate("Rule Mode"))
 o:depends("custom_fakeip_filter", "1")
 
 custom_fake_black = s:taboption("dns", Value, "custom_fake_filter")
@@ -375,13 +376,6 @@ end
 o = s:taboption("smart", Flag, "auto_smart_switch", font_red..bold_on..translate("Smart Auto Switch")..bold_off..font_off)
 o.description = font_red..bold_on..translate("Auto Switch Url-test and Load-balance Group to Smart Group")..bold_off..font_off
 o.default = 0
-
-o = s:taboption("smart", ListValue, "smart_strategy", translate("Node Select Strategy"))
-o:value("0", translate("Disable"))
-o:value("sticky-sessions", translate("Sticky-sessions"))
-o:value("round-robin", translate("Round-robin"))
-o.default = "0"
-o.description = translate("Before Node Data Collect Completely, The Default is Sticky-sessions")
 
 o = s:taboption("smart", Value, "smart_policy_priority", translate("Policy Priority"))
 o.default = ""
