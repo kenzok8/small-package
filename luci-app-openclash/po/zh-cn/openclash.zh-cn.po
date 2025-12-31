@@ -293,8 +293,8 @@ msgstr "规则设置"
 msgid "Config Manage"
 msgstr "配置管理"
 
-msgid "Upload Config File"
-msgstr "上传配置文件"
+msgid "Add Config File"
+msgstr "添加配置文件"
 
 msgid "Upload File Type"
 msgstr "上传文件类型"
@@ -888,9 +888,6 @@ msgstr "Fallback【故障切换】"
 msgid "Load-Balance"
 msgstr "Load-Balance【负载均衡】"
 
-msgid "Relay-Traffic"
-msgstr "Relay【嵌套中转】"
-
 msgid "Other Group (Support Regex)"
 msgstr "包含其他策略组（请勿重复添加，支持正则匹配）"
 
@@ -908,6 +905,9 @@ msgstr "指定策略组"
 
 msgid "No Need Set when Config Create, The added Proxy Groups Must Exist"
 msgstr "注意：使用一键生成配置文件功能时无需设置此项，修改配置文件前添加的策略组必须已创建"
+
+msgid "The added Dialer Proxy or Group Must Exist"
+msgstr "注意：修改配置文件前添加的策略组或者节点必须已创建"
 
 msgid "Clean"
 msgstr "清理日志"
@@ -1202,9 +1202,6 @@ msgstr "策略类型"
 
 msgid "Choose The Load-Balance's Strategy Type"
 msgstr "选择负载均衡的策略类型"
-
-msgid "Choose The Smart's Strategy Type"
-msgstr "选择 Smart 策略组的初始数据收集策略类型"
 
 msgid "Uselightgbm"
 msgstr "Uselightgbm(使用模型)"
@@ -2763,7 +2760,7 @@ msgstr "清理超时"
 msgid "Flush"
 msgstr "清理"
 
-msgid "Flush DNS Cache"
+msgid "Flush DNS"
 msgstr "清理 DNS 缓存"
 
 msgid "No Specify Upload File"
@@ -2819,6 +2816,9 @@ msgstr "*路由本机代理"
 
 msgid "Only Supported for Rule Mode"
 msgstr "仅支持规则（Rule）模式，其他模式默认分流"
+
+msgid "Rule Mode"
+msgstr "规则模式"
 
 msgid "ALL Functions In Stream Enhance Tag Will Not Work After Disable"
 msgstr "禁用后将无法使用流媒体增强标签中的所有功能"
@@ -4062,12 +4062,6 @@ msgstr "数据收集采样率"
 msgid "Data Acquisition Rate, Desirable Values are 0-1, The Default is 1"
 msgstr "指定数据收集时的采样率，值为 0-1 之间的数字，默认为 1"
 
-msgid "Node Select Strategy"
-msgstr "节点选择策略"
-
-msgid "Before Node Data Collect Completely, The Default is Sticky-sessions"
-msgstr "在收集到足够数据并优选前，使用指定策略选择节点，默认为粘性会话（sticky-sessions）"
-
 msgid "Error: Setting Smart Auto Switch Failed,"
 msgstr "错误：Smart 策略组自动切换失败，"
 
@@ -4206,5 +4200,11 @@ msgstr "选择节点时强制查找并优先使用目标的 ASN 信息，以获�
 msgid "Prefer-ASN"
 msgstr "ASN 优先"
 
-msgid "Theme Switch"
-msgstr "主题切换"
+msgid "Light Theme"
+msgstr "浅色主题"
+
+msgid "Dark Theme"
+msgstr "暗色主题"
+
+msgid "Auto Theme"
+msgstr "自适应主题"

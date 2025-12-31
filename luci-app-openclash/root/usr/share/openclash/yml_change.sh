@@ -16,6 +16,7 @@ custom_fallback_filter=$(uci_get_config "custom_fallback_filter" || echo 0)
 china_ip_route=$(uci_get_config "china_ip_route" || echo 0)
 china_ip6_route=$(uci_get_config "china_ip6_route" || echo 0)
 enable_redirect_dns=$(uci_get_config "enable_redirect_dns" || echo 1)
+fake_ip_filter_mode=${34}
 
 [ "$china_ip_route" -ne 0 ] && [ "$china_ip_route" -ne 1 ] && [ "$china_ip_route" -ne 2 ] && china_ip_route=0
 [ "$china_ip6_route" -ne 0 ] && [ "$china_ip6_route" -ne 1 ] && [ "$china_ip6_route" -ne 2 ] && china_ip6_route=0
@@ -30,15 +31,25 @@ fi
 if [ "$1" = "fake-ip" ] && [ "$enable_redirect_dns" != "2" ]; then
    TMP_FILTER_FILE="/tmp/yaml_openclash_fake_filter_include"
    > "$TMP_FILTER_FILE"
-
+   
    process_pass_list() {
       [ ! -f "$1" ] && return
-      awk '
+      awk -v mode="$fake_ip_filter_mode" '
          !/^$/ && !/^#/ {
-            if ($0 ~ /^\+?\./ || $0 ~ /^\*\./) {
-               print $0
-            } else {
-               print "+."$0
+            # 跳过IPv4和IPv6地址
+            if ($0 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ || $0 ~ /:/) {
+               next
+            }
+            if (mode == "blacklist") {
+               if ($0 ~ /^\+?\./ || $0 ~ /^\*\./) {
+                  print $0
+               } else {
+                  print "+."$0
+               }
+            } else if (mode == "rule") {
+               domain = $0
+               sub(/^[\+\*\.]+/, "", domain)
+               print "DOMAIN-SUFFIX," domain ",real-ip"
             }
          }
       ' "$1" >> "$TMP_FILTER_FILE" 2>/dev/null
@@ -163,13 +174,13 @@ yml_dns_get()
 {
    local section="$1" regex='^([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}$'
    local enabled port type ip group dns_type dns_address interface specific_group node_resolve http3 ecs_subnet ecs_override
-   
+
    config_get_bool "enabled" "$section" "enabled" "1"
    [ "$enabled" = "0" ] && return
 
    config_get "ip" "$section" "ip" ""
    [ -z "$ip" ] && return
-   
+
    config_get "port" "$section" "port" ""
    config_get "type" "$section" "type" ""
    config_get "group" "$section" "group" ""
@@ -229,7 +240,7 @@ yml_dns_get()
          params="$params$1"
       fi
    }
-   
+
    append_param "$specific_group_param"
    append_param "$interface_param"
    append_param "$http3_param"
@@ -391,7 +402,7 @@ threads << Thread.new do
       Value['unified-delay'] = true if unified_delay
       Value['find-process-mode'] = find_process_mode if find_process_mode != '0'
       Value['global-client-fingerprint'] = global_client_fingerprint if global_client_fingerprint != '0'
-      
+
       (Value['experimental'] ||= {})['quic-go-disable-gso'] = true if quic_gso
       if cors_origin != '0'
          (Value['external-controller-cors'] ||= {})['allow-origins'] = [cors_origin]
@@ -444,7 +455,7 @@ threads << Thread.new do
             'enable' => true, 'override-destination' => true,
             'sniff' => {'QUIC' => {'ports' => [443]}, 'TLS' => {'ports' => [443, 8443]}, 'HTTP' => {'ports' => [80, '8080-8880'], 'override-destination' => true}},
             'force-domain' => ['+.netflix.com', '+.nflxvideo.net', '+.amazonaws.com', '+.media.dssott.com'],
-            'skip-domain' => ['+.apple.com', 'Mijia Cloud', 'dlg.io.mi.com', '+.oray.com', '+.sunlogin.net', '+.push.apple.com']
+            'skip-domain' => ['Mijia Cloud', 'dlg.io.mi.com', '+.oray.com', '+.sunlogin.net', '+.push.apple.com']
          }
          sniffer_config['force-dns-mapping'] = true if fake_ip_mode == 'redir-host'
          sniffer_config['parse-pure-ip'] = true if sniffer_parse_pure_ip
@@ -477,6 +488,12 @@ threads << Thread.new do
          Value.delete('routing-mark')
       end
       Value.delete('auto-redir')
+
+      (Value['ntp'] ||= {})['enable'] = true
+      Value['ntp']['server'] = 'time.apple.com' if !Value['ntp'].key?('server')
+      Value['ntp']['port'] = 123 if !Value['ntp'].key?('port')
+      Value['ntp']['interval'] = 30 if !Value['ntp'].key?('interval')
+      Value['ntp']['write-to-system'] = true if !Value['ntp'].key?('write-to-system')
 
    rescue Exception => e
       YAML.LOG('Error: Set General Failed,【%s】' % [e.message])

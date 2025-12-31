@@ -58,7 +58,7 @@ yml_other_rules_del()
    config_get_bool "enabled" "$section" "enabled" "1"
    config_get "config" "$section" "config" ""
    config_get "rule_name" "$section" "rule_name" ""
-   
+
    if [ "$enabled" = "0" ] || [ "$config" != "$2" ] || [ "$rule_name" != "$3" ]; then
       return
    else
@@ -82,7 +82,7 @@ yml_proxy_provider_set()
    config_get "health_check_url" "$section" "health_check_url" ""
    config_get "health_check_interval" "$section" "health_check_interval" ""
    config_get "other_parameters" "$section" "other_parameters" ""
-   
+
    if [ "$enabled" = "0" ]; then
       return
    fi
@@ -90,29 +90,29 @@ yml_proxy_provider_set()
    if [ -z "$type" ]; then
       return
    fi
-   
+
    if [ -z "$name" ]; then
       return
    fi
-   
+
    if [ "$path" != "./proxy_provider/$name.yaml" ] && [ "$type" = "http" ]; then
       path="./proxy_provider/$name.yaml"
    elif [ -z "$path" ]; then
       return
    fi
-   
+
    if [ -z "$health_check" ]; then
       return
    fi
-   
+
    if [ ! -z "$if_game_proxy" ] && [ "$if_game_proxy" != "$name" ] && [ "$if_game_proxy_type" = "proxy-provider" ]; then
       return
    fi
-   
+
    if [ "$MIX_PROXY" != "1" ] && [ ! -z "$config" ] && [ "$config" != "$CONFIG_NAME" ] && [ "$config" != "all" ]; then
       return
    fi
-   
+
    #避免重复代理集
    if [ "$config" = "$CONFIG_NAME" ] || [ "$config" = "all" ]; then
       if [ -n "$(grep -w "path: $path" "$PROXY_PROVIDER_FILE" 2>/dev/null)" ]; then
@@ -123,10 +123,10 @@ yml_proxy_provider_set()
          return
       fi
    fi
-   
+
    LOG_OUT "Start Writing【$CONFIG_NAME - $type - $name】Proxy-provider To Config File..."
    echo "$name" >> /tmp/Proxy_Provider
-   
+
 cat >> "$PROXY_PROVIDER_FILE" <<-EOF
   $name:
     type: $type
@@ -207,6 +207,7 @@ yml_servers_set()
    config_get "name" "$section" "name" ""
    config_get "server" "$section" "server" ""
    config_get "port" "$section" "port" ""
+   config_get "dialer_proxy" "$section" "dialer_proxy" ""
    config_get "cipher" "$section" "cipher" ""
    config_get "cipher_ssr" "$section" "cipher_ssr" ""
    config_get "password" "$section" "password" ""
@@ -327,6 +328,12 @@ yml_servers_set()
    config_get "idle_session_check_interval" "$section" "idle_session_check_interval" ""
    config_get "idle_session_timeout" "$section" "idle_session_timeout" ""
    config_get "min_idle_session" "$section" "min_idle_session" ""
+   config_get "sudoku_key" "$section" "sudoku_key" ""
+   config_get "aead_method" "$section" "aead_method" "none"
+   config_get "padding_min" "$section" "padding_min" ""
+   config_get "padding_max" "$section" "padding_max" ""
+   config_get "table_type" "$section" "table_type" "prefer_ascii"
+   config_get "http_mask" "$section" "http_mask" "true"
 
    if [ "$enabled" = "0" ]; then
       return
@@ -335,40 +342,40 @@ yml_servers_set()
    if [ -z "$type" ]; then
       return
    fi
-   
+
    if [ -z "$name" ]; then
       return
    fi
-   
+
    if [ -z "$server" ] && [ "$type" != "direct" ] && [ "$type" != "dns" ]; then
       return
    fi
-   
+
    if [ -z "$port" ] && [ "$type" != "direct" ] && [ "$type" != "dns" ]; then
       return
    fi
-   
+
    if [ -z "$password" ]; then
    	 if [ "$type" = "ss" ] || [ "$type" = "trojan" ] || [ "$type" = "ssr" ]; then
         return
      fi
    fi
-   
+
    if [ ! -z "$if_game_proxy" ] && [ "$if_game_proxy" != "$name" ] && [ "$if_game_proxy_type" = "proxy" ]; then
       return
    fi
-   
+
    if [ "$MIX_PROXY" != "1" ] && [ ! -z "$config" ] && [ "$config" != "$CONFIG_NAME" ] && [ "$config" != "all" ]; then
       return
    fi
-   
+
    #避免重复节点
    if [ "$config" = "$CONFIG_NAME" ] || [ "$config" = "all" ]; then
       if [ "$(grep -w "^$name$" "$servers_name" |wc -l 2>/dev/null)" -ge 2 ] && [ -n "$(grep -w "name: \"$name\"" "$SERVER_FILE" 2>/dev/null)" ]; then
          return
       fi
    fi
-   
+
    if [ "$config" = "$CONFIG_NAME" ] || [ "$config" = "all" ]; then
       if [ -n "$(grep -w "name: \"$name\"" "$SERVER_FILE" 2>/dev/null)" ]; then
          return
@@ -379,7 +386,7 @@ yml_servers_set()
       fi
    fi
    LOG_OUT "Start Writing【$CONFIG_NAME - $type - $name】Proxy To Config File..."
-   
+
    if [ "$obfs" != "none" ] && [ -n "$obfs" ]; then
       if [ "$obfs" = "websocket" ]; then
          obfss="plugin: v2ray-plugin"
@@ -393,11 +400,11 @@ yml_servers_set()
    else
       obfss=""
    fi
-   
+
    if [ "$obfs_vless" = "ws" ]; then
       obfs_vless="network: ws"
    fi
-   
+
    if [ "$obfs_vless" = "grpc" ]; then
       obfs_vless="network: grpc"
    fi
@@ -405,27 +412,27 @@ yml_servers_set()
    if [ "$obfs_vless" = "tcp" ]; then
       obfs_vless="network: tcp"
    fi
-   
+
    if [ "$obfs_vmess" = "websocket" ]; then
       obfs_vmess="network: ws"
    fi
-   
+
    if [ "$obfs_vmess" = "http" ]; then
       obfs_vmess="network: http"
    fi
-   
+
    if [ "$obfs_vmess" = "h2" ]; then
       obfs_vmess="network: h2"
    fi
-   
+
    if [ "$obfs_vmess" = "grpc" ]; then
       obfs_vmess="network: grpc"
    fi
-   
+
    if [ ! -z "$custom" ] && [ "$type" = "vmess" ]; then
       custom="Host: \"$custom\""
    fi
-   
+
    if [ ! -z "$path" ]; then
       if [ "$type" != "vmess" ]; then
          path="path: \"$path\""
@@ -541,7 +548,7 @@ EOF
         fi
     fi
 fi
-   
+
 #ssr
 if [ "$type" = "ssr" ]; then
 cat >> "$SERVER_FILE" <<-EOF
@@ -1489,6 +1496,46 @@ EOF
     fi
 fi
 
+#Sudoku
+if [ "$type" = "sudoku" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+  - name: "$name"
+    type: $type
+    server: "$server"
+    port: $port
+EOF
+    if [ -n "$sudoku_key" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    key: "$sudoku_key"
+EOF
+    fi
+    if [ -n "$aead_method" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    aead-method: $aead_method
+EOF
+    fi
+    if [ -n "$padding_min" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    padding-min: $padding_min
+EOF
+    fi
+    if [ -n "$padding_max" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    padding-max: $padding_max
+EOF
+    fi
+    if [ -n "$table_type" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    table-type: $table_type
+EOF
+    fi
+    if [ -n "$http_mask" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    http-mask: $http_mask
+EOF
+    fi
+fi
+
 #ip_version
 if [ ! -z "$ip_version" ]; then
 cat >> "$SERVER_FILE" <<-EOF
@@ -1564,6 +1611,13 @@ fi
 if [ -n "$other_parameters" ]; then
       echo -e "$other_parameters" >> "$SERVER_FILE"
 fi
+
+#dialer_proxy
+if [ -n "$dialer_proxy" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    dialer-proxy: "$dialer_proxy"
+EOF
+fi
 }
 
 new_servers_group_set()
@@ -1572,17 +1626,17 @@ new_servers_group_set()
    local enabled name
    config_get_bool "enabled" "$section" "enabled" "1"
    config_get "name" "$section" "name" ""
-   
+
    if [ "$enabled" = "0" ]; then
       return
    fi
-   
+
    if [ -z "$name" ] || [ "$(echo $name.yaml)" != "$CONFIG_NAME" ]; then
       return
    fi
-   
+
    new_servers_group_set=1
-   
+
 }
 
 yml_servers_name_get()
