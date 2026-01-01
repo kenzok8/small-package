@@ -729,10 +729,20 @@ o:depends({ [_n("mux")] = true })
 
 o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"))
 o.default = 0
+o:depends({ [_n("protocol")] = "vmess" })
+o:depends({ [_n("protocol")] = "vless" })
+o:depends({ [_n("protocol")] = "socks" })
+o:depends({ [_n("protocol")] = "shadowsocks" })
+o:depends({ [_n("protocol")] = "trojan" })
 
 --[[tcpMptcp]]
 o = s:option(Flag, _n("tcpMptcp"), "tcpMptcp", translate("Enable Multipath TCP, need to be enabled in both server and client configuration."))
 o.default = 0
+
+o = s:option(Value, _n("preconns"), translate("Pre-connections"), translate("Number of early established connections to reduce latency."))
+o.datatype = "uinteger"
+o.placeholder = 0
+o:depends({ [_n("protocol")] = "vless" })
 
 o = s:option(ListValue, _n("chain_proxy"), translate("Chain Proxy"))
 o:value("", translate("Close(Not use)"))

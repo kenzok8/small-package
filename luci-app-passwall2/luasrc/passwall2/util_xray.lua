@@ -264,6 +264,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 								id = node.uuid,
 								level = 0,
 								security = (node.protocol == "vmess") and node.security or nil,
+								testpre = (node.protocol == "vless") and tonumber(node.preconns) or nil,
 								encryption = (node.protocol == "vless") and ((node.encryption and node.encryption ~= "") and node.encryption or "none") or nil,
 								flow = (node.protocol == "vless"
 									and (node.tls == "1" or (node.encryption and node.encryption ~= "" and node.encryption ~= "none"))
@@ -621,6 +622,7 @@ function gen_config(var)
 	local inbounds = {}
 	local outbounds = {}
 	local routing = nil
+	local observatory = nil
 	local burstObservatory = nil
  	local strategy = nil
 	local COMMON = {}
@@ -855,8 +857,14 @@ function gen_config(var)
 			fallbackTag = fallback_node_tag,
 			strategy = strategy
 		})
-		if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" or fallback_node_tag then
-			if not burstObservatory then
+		if _node.balancingStrategy == "leastPing" and not observatory then
+				observatory = {
+					subjectSelector = { "blc-" },
+					probeUrl = _node.useCustomProbeUrl and _node.probeUrl or nil,
+					probeInterval = (api.format_go_time(_node.probeInterval) ~= "0s") and api.format_go_time(_node.probeInterval) or "1m",
+					enableConcurrency = true
+				}
+			elseif _node.balancingStrategy == "leastLoad" and not burstObservatory then
 				burstObservatory = {
 					subjectSelector = { "blc-" },
 					pingConfig = {
@@ -864,9 +872,8 @@ function gen_config(var)
 						interval = (api.format_go_time(_node.probeInterval) ~= "0s") and api.format_go_time(_node.probeInterval) or "1m",
 						sampling = 3,
 						timeout = "5s"
-					}
 				}
-			end
+			}
 		end
 		local inbound_tag = gen_loopback(loopback_tag, loopback_dst)
 		table.insert(rules, { inboundTag = { inbound_tag }, balancerTag = balancer_tag })
@@ -1419,7 +1426,7 @@ function gen_config(var)
 					address = remote_dns_udp_server,
 					port = tonumber(remote_dns_udp_port) or 53,
 					network = _remote_dns_proto or "tcp",
-					nonIPQuery = "drop"
+					nonIPQuery = "reject"
 				}
 			}
 			local type_dns = direct_type_dns
@@ -1589,6 +1596,7 @@ function gen_config(var)
 			fakedns = fakedns,
 			inbounds = inbounds,
 			outbounds = outbounds,
+			observatory = (not burstObservatory) and observatory or nil,
 			burstObservatory = burstObservatory,
 			routing = routing,
 			policy = {
@@ -1985,7 +1993,7 @@ function gen_dns_config(var)
 				address = other_type_dns_server or "1.1.1.1",
 				port = other_type_dns_port or 53,
 				network = other_type_dns_proto or "tcp",
-				nonIPQuery = "drop"
+				nonIPQuery = "reject"
 			}
 		})
 	

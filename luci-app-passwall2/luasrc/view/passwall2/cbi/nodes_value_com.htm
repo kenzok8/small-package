@@ -1,14 +1,13 @@
 <%
 --	Template Developers:
 --		- lwb1978
---		- snowie2000
 --	Copyright: copyright(c)2025–2027
 --	Description: Passwall(2) UI template
 -- It is the common part of the template and cannot be used independently
 %>
 <style>
 /* 主下拉按钮的下箭头 */
-.lv-arrow-down {
+.v-arrow-down {
 	width: 0;
 	height: 0;
 	border-left: 5px solid transparent;
@@ -19,7 +18,7 @@
 	vertical-align: middle;
 }
 /* 组标题的右箭头（折叠） */
-.lv-arrow-right {
+.v-arrow-right {
 	width: 0;
 	height: 0;
 	border-top: 4px solid transparent;
@@ -29,7 +28,7 @@
 	vertical-align: middle;
 }
 /* 组标题的下箭头（展开） */
-.lv-arrow-down-small {
+.v-arrow-down-small {
 	width: 0;
 	height: 0;
 	border-left: 4px solid transparent;
@@ -63,38 +62,26 @@
 	background-color: #0056b3 !important;
 }
 
-.lv-dropdown-container {
-	display: inline-block;
+.v-dropdown-container {
+	display: block;
 	position: relative;
-	min-width: 220px;
 	white-space: nowrap;
+	width: 100%;
 }
-@media (max-width: 1152px) {
-	.lv-dropdown-container {
-		white-space: normal;
-	}
-}
-@media (max-width: 600px) {
-	.lv-dropdown-container {
-		display: block;
-		white-space: normal;
-	}
-}
-
-.lv-dropdown-display {
+.v-dropdown-display {
 	cursor: pointer;
 	display: inline-flex;
 	align-items: center;
 	justify-content: space-between;
 	box-sizing: border-box;
 }
-.lv-dropdown-label {
+.v-dropdown-label {
 	display: inline-block;
 	overflow: hidden;
 	white-space: nowrap;
 	max-width: calc(100% - 18px);
 }
-.lv-dropdown-panel {
+.v-dropdown-panel {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -105,7 +92,7 @@
 	max-height: 50vh;
 	overflow: auto;
 }
-.lv-dropdown-search {
+.v-dropdown-search, .v-dropdown-custom {
 	width: 100%;
 	max-width: 100% !important;
 	min-width: 0 !important;
@@ -114,7 +101,7 @@
 	border: 1px solid #e0e0e0;
 	border-radius: 4px;
 }
-.lv-group-title {
+.v-group-title {
 	cursor: pointer;
 	padding: 6px;
 	border-radius: 4px;
@@ -123,12 +110,12 @@
 	line-height: normal;
 	white-space: nowrap;
 }
-.lv-group-list {
+.v-group-list {
 	list-style: none;
 	margin: 6px 0 0 8px;
 	padding: 0;
 }
-.lv-group-item {
+.v-group-item {
 	padding: 6px;
 	border-radius: 4px;
 	cursor: pointer;
@@ -142,13 +129,13 @@
 <script type="text/javascript">
 //<![CDATA[
 	// css helper functions
-	function lv_camelToKebab(str) {
+	function v_camelToKebab(str) {
 		return str.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase()
 	}
 
-	function lv_style2Css(styleDeclaration, properties) {
+	function v_style2Css(styleDeclaration, properties) {
 		const cssRules = properties.map(prop => {
-			const kebabCaseProp = lv_camelToKebab(prop);[1, 5]
+			const kebabCaseProp = v_camelToKebab(prop);[1, 5]
 			const value = styleDeclaration[prop]
 			if (value) {
 				return `${kebabCaseProp}: ${value};`
@@ -159,7 +146,7 @@
 		return cssRules.filter(Boolean).join(' ')
 	}
 
-	function lv_parseColorToRgba(color) {
+	function v_parseColorToRgba(color) {
 			if (!color) return null;
 
 			const ctx = document.createElement('canvas').getContext('2d');
@@ -204,7 +191,7 @@
 	}
 
 	// Helper to convert back to Hex (for output consistency)
-	function lv_rgbToHex(r, g, b) {
+	function v_rgbToHex(r, g, b) {
 		const toHex = (n) => {
 			const hex = Math.max(0, Math.min(255, n)).toString(16)
 			return hex.length === 1 ? '0' + hex : hex
@@ -212,14 +199,14 @@
 		return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 	}
 
-	function lv_isTransparent(color) {
-		const cleanColor = lv_parseColorToRgba(color);
+	function v_isTransparent(color) {
+		const cleanColor = v_parseColorToRgba(color);
 		// check #RRGGBBAA for transparency
 		return !cleanColor || (cleanColor.a !== undefined && !cleanColor.a);
 	}
 
-	function lv_getColorSchema(color) {
-		const rgb = lv_parseColorToRgba(color);
+	function v_getColorSchema(color) {
+		const rgb = v_parseColorToRgba(color);
 		if (!rgb) return 'unknown'; // Handle invalid colors
 		// Calculate YIQ brightness (human eye perception)
 		const brightness = ((rgb.r * 299) + (rgb.g * 587) + (rgb.b * 114)) / 1000;
@@ -227,57 +214,57 @@
 		return brightness > 128 ? 'light' : 'dark';
 	}
 
-	function lv_lighter(color, amount) {
-		const rgb = lv_parseColorToRgba(color);
+	function v_lighter(color, amount) {
+		const rgb = v_parseColorToRgba(color);
 		if (!rgb) return color;
 		// Add amount to each channel
 		const r = rgb.r + amount;
 		const g = rgb.g + amount;
 		const b = rgb.b + amount;
 		// Convert back to Hex (clamping happens inside rgbToHex)
-		return lv_rgbToHex(r, g, b);
+		return v_rgbToHex(r, g, b);
 	}
 
-	function lv_darker(color, amount) {
-		const rgb = lv_parseColorToRgba(color);
+	function v_darker(color, amount) {
+		const rgb = v_parseColorToRgba(color);
 		if (!rgb) return color;
 		// Subtract amount from each channel
 		const r = rgb.r - amount;
 		const g = rgb.g - amount;
 		const b = rgb.b - amount;
 
-		return lv_rgbToHex(r, g, b);
+		return v_rgbToHex(r, g, b);
 	}
 
 	// copy select styles
-	function lv_adaptiveStyle(cbid) {
+	function v_adaptiveStyle(cbid) {
 		const display = document.getElementById(cbid + ".display");
-		const hiddenSelect = document.getElementById(cbid);
+		const hiddenRef = document.getElementById(cbid + ".ref");
 		const panel = document.getElementById(cbid + ".panel");
-		if (hiddenSelect && display) {
-			const elOption = hiddenSelect.getElementsByTagName("option")[0]
-			const styleSelect = window.getComputedStyle(hiddenSelect)
+		if (hiddenRef && display) {
+			const elOption = hiddenRef.getElementsByTagName("option")[0]
+			const styleSelect = window.getComputedStyle(hiddenRef)
 			const styleOption = window.getComputedStyle(elOption)
 			const styleBody = window.getComputedStyle(document.body)
 
 			const styleNode = document.createElement('style')
-			const styleNames = ["width", "color", "height", "padding", "margin", "lineHeight", "border", "borderRadius", "minWidth", "minHeight"]
+			const styleNames = ["color", "height", "padding", "margin", "lineHeight", "border", "borderRadius","minHeight"]
 			if (styleSelect.borderBottomStyle !== "none") {
 				styleNames.push("borderBottomWidth", "borderBottomStyle", "borderBottomColor");
 			}
 			document.head.appendChild(styleNode)
 			// trace back from option -> select -> body for background color
 			const panelRadius = styleSelect.borderRadius;
-			const optionColor = !lv_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !lv_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
-			const titleColor = lv_getColorSchema(optionColor) === "light" ? lv_darker(optionColor, 30) : lv_lighter(optionColor, 30)
-			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, lv_style2Css(styleSelect, styleNames), lv_style2Css(styleSelect, ["backgroundColor"]), "}"]
-			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, lv_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, `border-radius: ${panelRadius};`, "}"]
-			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .lv-group-title  {`, `background-color: ${titleColor} !important;`, "}"]
+			const optionColor = !v_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !v_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
+			const titleColor = v_getColorSchema(optionColor) === "light" ? v_darker(optionColor, 30) : v_lighter(optionColor, 30)
+			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, v_style2Css(styleSelect, styleNames), v_style2Css(styleSelect, ["backgroundColor"]), `width:100%;min-width:7rem;`, "}"]
+			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, v_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, `border-radius: ${panelRadius};`, "}"]
+			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .v-group-title  {`, `background-color: ${titleColor} !important;`, "}"]
 			styleNode.textContent = [].concat(selectStyleCSS, optionStyleCSS, titleStyleCSS).join("\n")
 		}
 	}
 
-	function lv_idSafe(id) {
+	function v_idSafe(id) {
 		return id
 			.trim()
 			.replace(/\s+/g, "-")
@@ -285,9 +272,9 @@
 	}
 
 	// 高亮当前选中的项
-	function lv_highlightSelectedItem(listContainer, hiddenSelect) {
+	function v_highlightSelectedItem(listContainer, hiddenInput) {
 		const allItems = listContainer.querySelectorAll("li[data-key]");
-		const currentKey = hiddenSelect.options[0].value;
+		const currentKey = hiddenInput.value;
 		allItems.forEach(item => {
 			item.classList.remove("is-selected");
 			if (item.getAttribute('data-key') === currentKey) {
@@ -297,9 +284,9 @@
 	}
 
 	// 更新组内选中计数
-	function lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput) {
-		const groups = listContainer.querySelectorAll(".lv-group");
-		const currentKey = hiddenSelect.options[0].value;
+	function v_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput) {
+		const groups = listContainer.querySelectorAll(".v-group");
+		const currentKey = hiddenInput.value;
 		const isSearching = searchInput.value.trim() !== "";
 		groups.forEach(group => {
 			const gname = group.getAttribute("data-group");
@@ -341,10 +328,14 @@
 	}
 
 	//搜索过滤器：按 name 或 label 做模糊匹配，搜索时自动展开所有组并隐藏不匹配条目
-	function lv_filterList(keyword, cbid, listContainer, hiddenSelect, searchInput) {
+	function v_filterList(keyword, cbid, listContainer, hiddenInput, searchInput) {
 		keyword = (keyword || "").toLowerCase().trim();
 		const topItems = listContainer.querySelectorAll("ul li[data-key]");
-		topItems.forEach(li=>{
+		topItems.forEach((li, index)=>{
+			if (index === 0) {
+				li.style.display = "block";
+				return;
+			}
 			const name = (li.getAttribute("data-node-name") || "").toLowerCase();
 			if (!keyword || name.indexOf(keyword) !== -1) {
 				li.style.display = "block";
@@ -352,7 +343,7 @@
 				li.style.display = "none";
 			}
 		});
-		const groups = listContainer.querySelectorAll(".lv-group");
+		const groups = listContainer.querySelectorAll(".v-group");
 		groups.forEach(group=>{
 			const items = group.querySelectorAll("li[data-key]");
 			let matchCount = 0;
@@ -366,27 +357,27 @@
 				}
 			});
 			group.style.display = (matchCount === 0 && keyword !== "") ? "none" : "block";
-			const ul = group.querySelector(".lv-group-list");
+			const ul = group.querySelector(".v-group-list");
 			const gname = group.getAttribute("data-group");
 			const arrow = document.getElementById("arrow-" + cbid + "-" + gname);
 			if (keyword) {
 				if (ul) ul.style.display = (matchCount > 0 ? "block" : "none");
-				if (arrow) arrow.className = (matchCount > 0 ? "lv-arrow-down-small" : "lv-arrow-right");
+				if (arrow) arrow.className = (matchCount > 0 ? "v-arrow-down-small" : "v-arrow-right");
 			} else {
 				if (ul) ul.style.display = "none";
-				if (arrow) arrow.className = "lv-arrow-right";
+				if (arrow) arrow.className = "v-arrow-right";
 			}
 		});
-		lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
-		lv_highlightSelectedItem(listContainer, hiddenSelect);
+		v_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput);
+		v_highlightSelectedItem(listContainer, hiddenInput);
 	}
 
 	// 切换单个组（点击组标题）
-	function lv_toggleGroup(listContainer, cbid, g) {
-		g = lv_idSafe(g);
-		const group = listContainer.querySelector(".lv-group[data-group='" + g + "']");
+	function v_toggleGroup(listContainer, cbid, g) {
+		g = v_idSafe(g);
+		const group = listContainer.querySelector(".v-group[data-group='" + g + "']");
 		if (!group) return;
-		const ul = group.querySelector(".lv-group-list");
+		const ul = group.querySelector(".v-group-list");
 		const arrow = document.getElementById("arrow-" + cbid + "-" + g);
 		if (!ul) return;
 		const searchInput = document.getElementById(cbid + ".search");
@@ -395,57 +386,57 @@
 
 		if (isExpanded) {
 			ul.style.display = "none";
-			if (arrow) arrow.className = "lv-arrow-right";
+			if (arrow) arrow.className = "v-arrow-right";
 		} else {
 			ul.style.display = "block";
-			if (arrow) arrow.className = "lv-arrow-down-small";
+			if (arrow) arrow.className = "v-arrow-down-small";
 
 			if (!isSearching) {
-				const allGroups = listContainer.querySelectorAll(".lv-group");
+				const allGroups = listContainer.querySelectorAll(".v-group");
 				allGroups.forEach(otherGroup => {
 					if (otherGroup !== group) {
-						const otherUl = otherGroup.querySelector(".lv-group-list");
+						const otherUl = otherGroup.querySelector(".v-group-list");
 						const otherGname = otherGroup.getAttribute("data-group");
 						const otherArrow = document.getElementById("arrow-" + cbid + "-" + otherGname);
 						if (otherUl) otherUl.style.display = "none";
-						if (otherArrow) otherArrow.className = "lv-arrow-right";
+						if (otherArrow) otherArrow.className = "v-arrow-right";
 					}
 				});
 			}
 		}
 	}
 
-	// 展开包含当前 hiddenSelect 值的组（初始化或打开面板时使用）
-	function lv_expandGroupOfCurrent(cbid, listContainer, hiddenSelect) {
-		const key = hiddenSelect.options[0].value;
+	// 展开包含当前 hiddenInput 值的组（初始化或打开面板时使用）
+	function v_expandGroupOfCurrent(cbid, listContainer, hiddenInput) {
+		const key = hiddenInput.value;
 		if (!key) return;
 		const targetLi = listContainer.querySelector("li[data-key='" + key.replace(/'/g,"\\'") + "']");
 		if (!targetLi) return;
-		let parentGroup = targetLi.closest(".lv-group");
+		let parentGroup = targetLi.closest(".v-group");
 		if (parentGroup) {
-			const ul = parentGroup.querySelector(".lv-group-list");
+			const ul = parentGroup.querySelector(".v-group-list");
 			const gname = parentGroup.getAttribute("data-group");
 			const arrow = document.getElementById("arrow-" + cbid + "-" + gname);
 			if (ul) ul.style.display = "block";
-			if (arrow) arrow.className = "lv-arrow-down-small";
-			const allGroups = listContainer.querySelectorAll(".lv-group");
+			if (arrow) arrow.className = "v-arrow-down-small";
+			const allGroups = listContainer.querySelectorAll(".v-group");
 			allGroups.forEach(gp=>{
 				if (gp !== parentGroup) {
-					const gul = gp.querySelector(".lv-group-list");
+					const gul = gp.querySelector(".v-group-list");
 					const otherGname = gp.getAttribute("data-group");
 					const gar = document.getElementById("arrow-" + cbid + "-" + otherGname);
 					if (gul) gul.style.display = "none";
-					if (gar) gar.className = "lv-arrow-right";
+					if (gar) gar.className = "v-arrow-right";
 				}
 			});
 		} else {
-			const allGroups = listContainer.querySelectorAll(".lv-group");
+			const allGroups = listContainer.querySelectorAll(".v-group");
 			allGroups.forEach(gp=>{
-				const gul = gp.querySelector(".lv-group-list");
+				const gul = gp.querySelector(".v-group-list");
 				const gname = gp.getAttribute("data-group");
 				const gar = document.getElementById("arrow-" + cbid + "-" + gname);
 				if (gul) gul.style.display = "none";
-				if (gar) gar.className = "lv-arrow-right";
+				if (gar) gar.className = "v-arrow-right";
 			});
 		}
 		if (targetLi) {
@@ -456,14 +447,14 @@
 	}
 
 	// 计算panel位置
-	function lv_repositionPanel(panel, display) {
+	function v_repositionPanel(panel, display) {
 		if (!panel || panel.style.display === "none") return;
 		const rect = display.getBoundingClientRect();
 		const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 		panel.style.visibility = "hidden";
 		panel.style.display = "block";
 		panel.style.minHeight = "100px";
-		panel.style.maxHeight = Math.min(0.5*viewportHeight, 550) + "px";
+		panel.style.maxHeight = Math.min(0.48*viewportHeight, 500) + "px";
 		const panelHeight = panel.offsetHeight;
 		const spaceBelow = viewportHeight - rect.bottom;
 		const spaceAbove = rect.top;
@@ -490,27 +481,27 @@
 		const remainingWidth = window.innerWidth - panelRect.left - 12;
 		const maxWidth = Math.max(displayWidth, Math.floor(remainingWidth));
 		panel.style.maxWidth = maxWidth + "px";
-		panel.style.minWidth = displayWidth + "px";
+		panel.style.minWidth = Math.max(displayWidth, 240) + "px";
 		panel.style.width = "auto";
 		panel.style.visibility = "";
 	}
 
 	// 打开/关闭面板
-	function lv_openPanel(cbid, display, panel, listContainer, hiddenSelect, searchInput) {
+	function v_openPanel(cbid, display, panel, listContainer, hiddenInput, searchInput, customInput) {
 		if (!panel._moved) {
 			document.body.appendChild(panel);
 			panel._moved = true;
 		}
-		lv_expandGroupOfCurrent(cbid, listContainer, hiddenSelect);
-		lv_highlightSelectedItem(listContainer, hiddenSelect);
+		v_expandGroupOfCurrent(cbid, listContainer, hiddenInput);
+		v_highlightSelectedItem(listContainer, hiddenInput);
 		panel.style.display = "block";
-		lv_repositionPanel(panel, display);
+		v_repositionPanel(panel, display);
 		// 失焦监听
 		const handler = function(e){
 			const target = e.target;
 			if (panel.style.display !== "none") {
 				if (!panel.contains(target) && !display.contains(target)) {
-					lv_closePanel(cbid, panel, listContainer, hiddenSelect, searchInput, display);
+					v_closePanel(cbid, panel, listContainer, hiddenInput, searchInput, display, customInput);
 				}
 			}
 		}
@@ -523,17 +514,18 @@
 			ticking = true;
 			requestAnimationFrame(function () {
 				ticking = false;
-				lv_repositionPanel(panel, display);
+				v_repositionPanel(panel, display);
 			});
 		};
 		panel._repositionHandler = repositionHandler;
 		window.addEventListener("scroll", repositionHandler, true);
 		window.addEventListener("resize", repositionHandler);
 	}
-	function lv_closePanel(cbid, panel, listContainer, hiddenSelect, searchInput) {
+	function v_closePanel(cbid, panel, listContainer, hiddenInput, searchInput, customInput) {
 		panel.style.display = "none";
 		searchInput.value = "";
-		lv_filterList("", cbid, listContainer, hiddenSelect, searchInput);
+		customInput.value = "";
+		v_filterList("", cbid, listContainer, hiddenInput, searchInput);
 		// document click
 		if (panel._docClickHandler) {
 			document.removeEventListener("click", panel._docClickHandler);
@@ -547,16 +539,52 @@
 		}
 	}
 
+	//自定义框
+	function v_customEnter(cbid, labelSpan, hiddenInput, searchInput, panel, listContainer, customInput) {
+		let inputValue = customInput.value.trim();
+    	if (!inputValue) {
+			return;
+		}
+		const existingItems = listContainer.querySelectorAll('li[data-key="' + inputValue + '"]');
+		if (existingItems.length <= 0) {
+			let newLi = document.createElement('li');
+			newLi.setAttribute('data-key', inputValue);
+			newLi.setAttribute('data-node-name', inputValue.toLowerCase());
+			newLi.className = 'list-item';
+
+			let newSpan = document.createElement('span');
+			newSpan.className = 'v-item-label';
+			newSpan.style.marginLeft = '12px';
+			newSpan.textContent = inputValue;
+			newLi.appendChild(newSpan);
+
+			const ungroupedList = listContainer.querySelector('ul');
+			if (ungroupedList) {
+				ungroupedList.appendChild(newLi);
+			}
+		}
+		const changed = inputValue !== hiddenInput.value;
+		if (changed) {
+			//改值
+			hiddenInput.value = inputValue;
+			labelSpan.textContent = inputValue;
+			labelSpan.title = inputValue;
+			v_highlightSelectedItem(listContainer, hiddenInput);
+			v_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput);
+		}
+		v_closePanel(cbid,panel,listContainer,hiddenInput,searchInput,customInput);
+	}
+
 	// 动态生成下拉框
-	window.lv_dropdown_rendered = {};
-	function lv_escape_html(s) {
+	window.v_dropdown_rendered = {};
+	function v_escape_html(s) {
 		return s.replace(/[&<>"']/g, c => ({
 			"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
 		}[c]));
 	}
-	function lv_render_dropdown_list(cbid, panel, listContainer, hiddenSelect, labelSpan, searchInput, display) {
-		if (window.lv_dropdown_rendered[cbid]) return;
-		const data = window.lv_dropdown_data[cbid];
+	function v_render_dropdown_list(cbid, panel, listContainer, hiddenInput, labelSpan, searchInput, display, customInput) {
+		if (window.v_dropdown_rendered[cbid]) return;
+		const data = window.v_dropdown_data[cbid];
 		if (!data) return;
 		if (!listContainer) return;
 
@@ -566,13 +594,15 @@
 		if (data.ungrouped && data.ungrouped.length > 0) {
 			html += `<ul style="list-style:none;padding:0;margin:0 0 8px 0;">`;
 
-			data.ungrouped.forEach(item => {
+			data.ungrouped.forEach((item, index) => {
+				const liStyle = index === 0 ? 'text-align:center;' : '';
+				const spanStyle = index === 0 ? 'margin-left:0px;' : 'margin-left:12px;';
 				html += `
 					<li data-key="${item.key}"
-						data-node-name="${lv_escape_html(item.label.toLowerCase())}"
-						class="list-item">
-						<span class="lv-item-label" style="margin-left:12px;">
-							${lv_escape_html(item.label)}
+						data-node-name="${v_escape_html(item.label.toLowerCase())}"
+						class="list-item" style="${liStyle}">
+						<span class="v-item-label" style="${spanStyle}">
+							${v_escape_html(item.label)}
 						</span>
 					</li>`;
 			});
@@ -585,23 +615,23 @@
 			const items = data.groups[gname];
 
 			html += `
-			<div class="lv-group" data-group="${lv_idSafe(gname)}" style="margin-bottom:8px;">
-				<div class="lv-group-title" data-group-name="${lv_idSafe(gname)}">
-					<span class="lv-arrow-right" id="arrow-${cbid}-${lv_idSafe(gname)}"></span>
-					<b style="margin-left:6px;">${lv_escape_html(gname)}</b>
-					<span id="group-count-${cbid}-${lv_idSafe(gname)}"
+			<div class="v-group" data-group="${v_idSafe(gname)}" style="margin-bottom:8px;">
+				<div class="v-group-title" data-group-name="${v_idSafe(gname)}">
+					<span class="v-arrow-right" id="arrow-${cbid}-${v_idSafe(gname)}"></span>
+					<b style="margin-left:6px;">${v_escape_html(gname)}</b>
+					<span id="group-count-${cbid}-${v_idSafe(gname)}"
 						style="margin-left:8px;color:#666;">(0/${items.length})</span>
 				</div>
-				<ul id="group-${cbid}-${lv_idSafe(gname)}" class="lv-group-list" style="display:none">
+				<ul id="group-${cbid}-${v_idSafe(gname)}" class="v-group-list" style="display:none">
 			`;
 
 			items.forEach(item => {
 				html += `
 				<li data-key="${item.key}"
-					data-node-name="${lv_escape_html(item.label.toLowerCase())}"
-					class="lv-group-item">
-					<span class="lv-item-label" title="${lv_escape_html(item.label)}">
-						${lv_escape_html(item.label)}
+					data-node-name="${v_escape_html(item.label.toLowerCase())}"
+					class="v-group-item">
+					<span class="v-item-label" title="${v_escape_html(item.label)}">
+						${v_escape_html(item.label)}
 					</span>
 				</li>`;
 			});
@@ -614,10 +644,10 @@
 
 		listContainer.innerHTML = html;
 
-		window.lv_dropdown_rendered[cbid] = true;
+		window.v_dropdown_rendered[cbid] = true;
 
-		lv_adaptiveStyle(cbid);
-		lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
+		v_adaptiveStyle(cbid);
+		v_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput);
 
 		// 点击项（无组与组内项都使用 li[data-key]）
 		listContainer.addEventListener("click", function(e){
@@ -625,31 +655,24 @@
 			while(li && li !== listContainer && !li.hasAttribute('data-key')) li = li.parentNode;
 			if(!li || li === listContainer) return;
 			const key = li.getAttribute('data-key') || "";
-			const text = li.querySelector(".lv-item-label")?.textContent || li.textContent || key;
+			const text = li.querySelector(".v-item-label")?.textContent || li.textContent || key;
 
-			const changed = key !== hiddenSelect.value;
+			const changed = key !== hiddenInput.value;
 			if (changed) {
 				//改值
-				hiddenSelect.options[0].value = key;
-				hiddenSelect.options[0].text = key;
-				hiddenSelect.value = key;
+				hiddenInput.value = key;
 				labelSpan.textContent = text;
 				labelSpan.title = text;
-				lv_highlightSelectedItem(listContainer, hiddenSelect);
-				lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
+				v_highlightSelectedItem(listContainer, hiddenInput);
+				v_updateGroupCounts(cbid, listContainer, hiddenInput, searchInput);
 			}
-			lv_closePanel(cbid,panel,listContainer,hiddenSelect,searchInput);
-			if (changed) {
-				setTimeout(() => {
-					hiddenSelect.dispatchEvent(new Event('change', { bubbles: true }));
-				}, 0);
-			}
+			v_closePanel(cbid,panel,listContainer,hiddenInput,searchInput,customInput);
 		});
 
 		// 搜索功能
 		searchInput.addEventListener("input", function() {
-			lv_filterList(this.value, cbid, listContainer, hiddenSelect, searchInput);
-			lv_repositionPanel(panel, display);
+			v_filterList(this.value, cbid, listContainer, hiddenInput, searchInput);
+			v_repositionPanel(panel, display);
 		});
 		searchInput.addEventListener('keydown', function(e) {
 			const isEnter = e.key === "Enter" || e.keyCode === 13;
@@ -660,29 +683,38 @@
 		});
 
 		// 切换组
-		listContainer.querySelectorAll(".lv-group-title").forEach(title => {
+		listContainer.querySelectorAll(".v-group-title").forEach(title => {
 			title.addEventListener("click", function() {
-				const g = this.closest(".lv-group")?.getAttribute("data-group");
+				const g = this.closest(".v-group")?.getAttribute("data-group");
 				if (g) {
-					lv_toggleGroup(listContainer, cbid, g);
-					lv_repositionPanel(panel, display);
+					v_toggleGroup(listContainer, cbid, g);
+					v_repositionPanel(panel, display);
 				}
 			});
 		});
+
+		//自定义框
+		customInput.addEventListener("keydown", function(e){
+			const isEnter = e.key === "Enter" || e.keyCode === 13;
+			if (!isEnter) return;
+			e.stopPropagation();
+			e.preventDefault();
+			v_customEnter(cbid, labelSpan, hiddenInput, searchInput, panel, listContainer, customInput);
+		});
 	}
 
-	const lv_adaptiveControls = new Set();
-	function lv_registerAdaptive(cbid) {
-		lv_adaptiveControls.add(cbid);
-		lv_adaptiveStyle(cbid);
+	const v_adaptiveControls = new Set();
+	function v_registerAdaptive(cbid) {
+		v_adaptiveControls.add(cbid);
+		v_adaptiveStyle(cbid);
 	}
-	let lv_adaptiveTicking = false;
+	let v_adaptiveTicking = false;
 	window.addEventListener("resize", () => {
-		if (!lv_adaptiveTicking) {
-			lv_adaptiveTicking = true;
+		if (!v_adaptiveTicking) {
+			v_adaptiveTicking = true;
 			requestAnimationFrame(() => {
-				lv_adaptiveControls.forEach(cbid => lv_adaptiveStyle(cbid));
-				lv_adaptiveTicking = false;
+				v_adaptiveControls.forEach(cbid => v_adaptiveStyle(cbid));
+				v_adaptiveTicking = false;
 			});
 		}
 	});
