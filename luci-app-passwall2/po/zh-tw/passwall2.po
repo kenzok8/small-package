@@ -781,6 +781,9 @@ msgstr "注意，當使用TCP健康檢查時負載均衡的節點配置參數必
 msgid "Node Address"
 msgstr "節點地址"
 
+msgid "Node address cannot be empty."
+msgstr "節點地址不能為空。"
+
 msgid "Node Port"
 msgstr "節點端口"
 
@@ -1161,6 +1164,12 @@ msgstr "本地端口"
 
 msgid "Fast Open"
 msgstr "快速打開"
+
+msgid "Pre-connections"
+msgstr "預連接"
+
+msgid "Number of early established connections to reduce latency."
+msgstr "預連接的數量，用於降低延遲。"
 
 msgid "plugin"
 msgstr "插件"
