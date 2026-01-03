@@ -1455,6 +1455,12 @@ scanlocalip() {
 		local start_ip=$(echo "$scan_ip_range" | cut -d "-" -f 1)
 		local end_ip=$(echo "$scan_ip_range" | cut -d "-" -f 2)
 
+	# 修复简写形式的IP范围，如192.168.31.100-200
+	if [[ "$end_ip" != *.* ]]; then
+		local base_ip=$(echo "$start_ip" | cut -d "." -f 1-3)
+		end_ip="$base_ip.$end_ip"
+	fi
+		# IP 转整数和整数转 IP 函数
 		ip2int() {
 			local a b c d
 			IFS=. read a b c d <<< "$1"
