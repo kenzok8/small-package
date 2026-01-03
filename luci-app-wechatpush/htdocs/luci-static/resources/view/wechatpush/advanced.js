@@ -233,7 +233,7 @@ return view.extend({
 
 		o = s.option(form.Value, "scan_ip_range", _('IP range to be scanned'))
 		o.rmempty = true
-		o.placeholder = _('192.168.1.1-100');
+		o.placeholder = _('192.168.1.1-192.168.1.100');
 		o.depends({ device_info_helper: "scan_local_ip", '!contains': true });
 
 		o = s.option(form.Value, 'device_info_helper_sleeptime', _('Interval for capturing info'));
