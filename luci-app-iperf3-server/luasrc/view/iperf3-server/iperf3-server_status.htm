@@ -1,22 +1,165 @@
-<script type="text/javascript">//<![CDATA[
-XHR.poll(3, '<%=url([[admin]], [[services]], [[iperf3-server]], [[status]])%>', null,
-	function(x, data) {
-		var tb = document.getElementById('iperf3-server_status');
-		if (data && tb) {
-			if (data.running) {
-				var links = '<em><b><font color=green>iPerf3 Server <%:RUNNING%></font></b></em>';
-				tb.innerHTML = links;
-			} else {
-				tb.innerHTML = '<em><b><font color=red>iPerf3 Server <%:NOT RUNNING%></font></b></em>';
+<fieldset class="cbi-section">
+	<legend><%:Status%></legend>
+
+	<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+		<div id="iperf3_status">-</div>
+
+		<button class="btn cbi-button cbi-button-apply" id="btn_start" type="button"><%:Start%></button>
+		<button class="btn cbi-button cbi-button-reset" id="btn_stop" type="button"><%:Stop%></button>
+		<button class="btn cbi-button cbi-button-action" id="btn_restart" type="button"><%:Restart%></button>
+
+		<span id="iperf3_busy" style="display:none; color:#999;">...</span>
+	</div>
+
+	<div id="iperf3_list" style="margin-top:8px;"></div>
+</fieldset>
+
+<script type="text/javascript">
+//<![CDATA[
+(function () {
+	var token = '<%=token%>';
+
+	function esc(s) {
+		if (s === null || s === undefined) return '';
+		return String(s).replace(/[&<>"']/g, function (c) {
+			return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
+		});
+	}
+
+	function setBusy(b) {
+		document.getElementById('iperf3_busy').style.display = b ? '' : 'none';
+		document.getElementById('btn_start').disabled = b;
+		document.getElementById('btn_stop').disabled = b;
+		document.getElementById('btn_restart').disabled = b;
+	}
+
+	function badge(text, color) {
+		return '<span style="color:' + color + '">' + text + '</span>';
+	}
+
+	function stateBadge(it) {
+		// 兼容旧字段：it.running/it.pid
+		// 新字段优先：it.state
+		var st = it.state;
+
+		if (!st) {
+			if (it.enable === false) st = "disabled";
+			else st = it.running ? "running" : "stopped";
+		}
+
+		if (st === "running")   return badge('<%:Running%>', 'green');
+		if (st === "delay")     return badge('<%:Delay%>', '#d67f00');      // 橙色
+		if (st === "conflict")  return badge('<%:Conflict%>', 'red');
+		if (st === "disabled")  return badge('<%:Disabled%>', '#999');
+		return badge('<%:Stopped%>', '#999');
+	}
+
+	function overallBadge(data) {
+		// controller 返回 data.running=true 表示至少一个 running
+		// 如果没有 running，但存在 delay/conflict，也给更准确的总体状态
+		if (data && data.running) {
+			return badge('<%:Running%>', 'green');
+		}
+
+		var hasDelay = false, hasConflict = false;
+		if (data && data.servers && data.servers.length) {
+			for (var i = 0; i < data.servers.length; i++) {
+				var st = data.servers[i].state;
+				if (st === "delay") hasDelay = true;
+				else if (st === "conflict") hasConflict = true;
 			}
 		}
+
+		if (hasConflict) return badge('<%:Conflict%>', 'red');
+		if (hasDelay)    return badge('<%:Delay%>', '#d67f00');
+		return badge('<%:Not running%>', 'red');
 	}
-);
+
+	function renderStatus(data) {
+		var s = document.getElementById('iperf3_status');
+		s.innerHTML = overallBadge(data);
+
+		var list = document.getElementById('iperf3_list');
+		var html = '';
+
+		if (data && data.servers && data.servers.length) {
+			html += '<ul>';
+
+			for (var i = 0; i < data.servers.length; i++) {
+				var it = data.servers[i];
+
+				var port = esc(it.port);
+				var en = (it.enable !== false) && (it.enable !== "0"); // 兼容 true/false/字符串
+				var detail = it.detail ? (' <span style="color:#999">(' + esc(it.detail) + ')</span>') : '';
+
+				// 兼容旧字段 pid
+				var pidInfo = '';
+				if (it.pid) {
+					pidInfo = ' <span style="color:#999">PID ' + esc(it.pid) + '</span>';
+				}
+
+				// 监听信息（新字段 listen）
+				var listenInfo = '';
+				if (typeof it.listen === "boolean") {
+					listenInfo = it.listen ? ' <span style="color:#999">[LISTEN]</span>' : ' <span style="color:#999">[NO LISTEN]</span>';
+				}
+
+				html += '<li>'
+					+ 'Port ' + port + ' : '
+					+ stateBadge(it)
+					+ pidInfo
+					+ listenInfo
+					+ detail
+					+ (en ? '' : ' <span style="color:#999">(disabled)</span>')
+					+ '</li>';
+			}
+
+			html += '</ul>';
+
+			// 状态说明（简短）
+			html += '<div style="margin-top:6px; color:#999;">'
+				+ '<span><%:Delay%></span>: <%:starting after configured delay%> &nbsp; '
+				+ '<span><%:Conflict%></span>: <%:port is occupied%>'
+				+ '</div>';
+		}
+
+		list.innerHTML = html;
+	}
+
+	function refresh() {
+		XHR.get('<%=luci.dispatcher.build_url("admin/services/iperf3-server/status")%>', null,
+			function (x, data) { renderStatus(data || {}); }
+		);
+	}
+
+	function doAction(url, confirmText) {
+		if (confirmText && !window.confirm(confirmText)) return;
+
+		setBusy(true);
+		XHR.post(url, { token: token }, function (x, data) {
+			setBusy(false);
+			// restart 有 delay 的情况下，立即 refresh 可能还是 delay/stopped；轮询会继续更新
+			refresh();
+		});
+	}
+
+	document.getElementById('btn_start').addEventListener('click', function () {
+		doAction('<%=luci.dispatcher.build_url("admin/services/iperf3-server/start")%>', '<%:Start iPerf3 servers?%>');
+	});
+	document.getElementById('btn_stop').addEventListener('click', function () {
+		doAction('<%=luci.dispatcher.build_url("admin/services/iperf3-server/stop")%>', '<%:Stop iPerf3 servers?%>');
+	});
+	document.getElementById('btn_restart').addEventListener('click', function () {
+		doAction('<%=luci.dispatcher.build_url("admin/services/iperf3-server/restart")%>', '<%:Restart iPerf3 servers?%>');
+	});
+
+	// 轮询刷新
+	XHR.poll(2, '<%=luci.dispatcher.build_url("admin/services/iperf3-server/status")%>', null,
+		function (x, data) { renderStatus(data || {}); }
+	);
+
+	// 首次刷新
+	refresh();
+})();
 //]]>
 </script>
-<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
-<fieldset class="cbi-section">
-	<p id="iperf3-server_status">
-		<em><%:Collecting data...%></em>
-	</p>
-</fieldset>

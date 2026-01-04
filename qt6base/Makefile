@@ -19,7 +19,6 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/qtbase-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=qt6base/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
 PKG_BUILD_FLAGS:=no-mips16
 CMAKE_INSTALL:=1
 
@@ -127,6 +126,7 @@ CMAKE_OPTIONS+= \
 	-DFEATURE_testlib=$(if $(CONFIG_PACKAGE_libQt6Test),ON,OFF) \
 	-DFEATURE_itemmodeltester=OFF \
 	-DFEATURE_widgets=$(if $(CONFIG_PACKAGE_libQt6Widgets),ON,OFF) \
+	-DFEATURE_commandlinkbutton=OFF \
 	-DFEATURE_xml=$(if $(CONFIG_PACKAGE_libQt6Xml),ON,OFF) \
 	-DFEATURE_tuiotouch=$(if $(CONFIG_PACKAGE_qt6-plugin-libqtuiotouchplugin),ON,OFF)
 

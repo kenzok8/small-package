@@ -1,55 +1,184 @@
 #!/bin/sh /etc/rc.common
+# iPerf3 Server init (OpenWrt 23.05) - procd multi-instance (UCI-only fetch)
+# UCI: /etc/config/iperf3-server
+#
+# config iperf3-server
+#   option main_enable '1'
+#
+# config servers
+#   option enable_server '1'
+#   option port '5201'
+#   option delay '0'
+#   option extra_options ''
 
+USE_PROCD=1
 START=99
-LOGGER="logger -t [iPerf3-Server]"
 
-start() {
-	local basic_list="main_enable"
-	local server_list="port delay extra_options enable_server"
-	for i in $(echo $basic_list)
-	do
-		local eval $i="$(uci_get_by_type iperf3-server 0 $i)"
-	done ; unset i
-	if [ "$main_enable" == 1 ]
-	then
-		server_number=$(uci show iperf3-server 2> /dev/null | egrep '@servers\[[0-9]\]+=servers' | wc -l)
-		# server_number=$(uci show iperf3-server 2> /dev/null | egrep -o '@servers\[[0-9]\]+=servers' | awk 'END {print}' | egrep -o "[0-9]")
-		for u in $(seq 0 $((${server_number} - 1)))
-		do
-			for i in $server_list
-			do
-				eval ${i}=$(uci_get_by_type servers $u $i)
-			done ; unset i
-			if [ "$enable_server" == 1 ]
-			then
-				sleep $delay
-				$LOGGER "Starting iPerf3 Server [$u] with Port [$port] ..."
-				old_process="$(ps -efww | grep 'iperf3 -s -D -p $port' | grep -v 'grep' | awk '{print $1}')"
-				[ "$old_process" ] && kill -9 "$old_process" 2> /dev/null
-				$(command -v iperf3) -s -D -p $port $extra_options
-				#procd_open_instance
-				#procd_set_param command sleep $delay ; $(command -v iperf3) -s -D -p $port $extra_options
-				#procd_set_param respawn 3000 3 10
-				#procd_close_instance
-			fi
-			unset enable_server delay
-		done ; unset u
-	else
-		$LOGGER "iPerf3 Server is disabled ..."
-		stop_service
-	fi
+PROG="/usr/bin/iperf3"
+CONFIG="iperf3-server"
+LOGGER="logger -t iPerf3-Server"
+
+# 与 CBI 的 extra_options 校验保持一致：拦截明显 shell 元字符
+is_safe_extra_opts() {
+	[ -z "$1" ] && return 0
+	case "$1" in
+		*";"*|*"&"*|*"|"*|*"\`"*|*"\$"*|*"<"*|*">"*|*"\""*|*"'"* )
+			return 1
+		;;
+	esac
+	return 0
 }
 
-stop() {
+# 停止某端口：既杀 iperf3 server，也杀 delay 阶段的 sh/sleep
+kill_by_port() {
+	local port="$1"
+	local pids
+
+	# 1) 已经起来的 iperf3 server
+	pids="$(ps w | grep '[i]perf3' | grep ' -s' | grep " -p $port" | awk '{print $1}')"
+	[ -n "$pids" ] && kill $pids 2>/dev/null
+
+	# 2) delay 阶段：/bin/sh -c "sleep N; exec iperf3 -s -p PORT ..."
+	pids="$(ps w | grep '[s]leep' | grep '[i]perf3' | grep " -p $port" | awk '{print $1}')"
+	[ -n "$pids" ] && kill $pids 2>/dev/null
+
+	sleep 1
+
+	# hard kill 兜底
+	pids="$(ps w | grep '[i]perf3' | grep ' -s' | grep " -p $port" | awk '{print $1}')"
+	[ -n "$pids" ] && kill -9 $pids 2>/dev/null
+
+	pids="$(ps w | grep '[s]leep' | grep '[i]perf3' | grep " -p $port" | awk '{print $1}')"
+	[ -n "$pids" ] && kill -9 $pids 2>/dev/null
+}
+
+# 获取 servers 索引列表（0 1 2 ...）
+get_server_indexes() {
+	# 从 uci show 里提取 @servers[NUM]
+	uci -q show "$CONFIG" 2>/dev/null \
+		| sed -n "s/^$CONFIG\.@servers\[\([0-9]\+\)\]=servers$/\1/p"
+}
+
+start_one_idx() {
+	local idx="$1"
+
+	local enable_server port delay extra_options
+	enable_server="$(uci -q get $CONFIG.@servers[$idx].enable_server)"
+	port="$(uci -q get $CONFIG.@servers[$idx].port)"
+	delay="$(uci -q get $CONFIG.@servers[$idx].delay)"
+	extra_options="$(uci -q get $CONFIG.@servers[$idx].extra_options)"
+
+	# 默认值
+	[ -n "$enable_server" ] || enable_server="1"
+	[ -n "$port" ] || port="5201"
+	[ -n "$delay" ] || delay="0"
+
+	[ "$enable_server" = "1" ] || return 0
+
+	# 端口合法性兜底
+	case "$port" in
+		*[!0-9]*|'') $LOGGER "Skip invalid port in @servers[$idx]"; return 0 ;;
+	esac
+	[ "$port" -ge 1 ] 2>/dev/null && [ "$port" -le 65535 ] 2>/dev/null || {
+		$LOGGER "Skip invalid port [$port] in @servers[$idx]"
+		return 0
+	}
+
+	# delay 合法性兜底
+	case "$delay" in
+		*[!0-9]*|'') delay=0 ;;
+	esac
+
+	# extra_options 安全兜底
+	if [ -n "$extra_options" ] && ! is_safe_extra_opts "$extra_options"; then
+		$LOGGER "Rejected unsafe extra_options on port [$port] (@servers[$idx])"
+		extra_options=""
+	fi
+
+	$LOGGER "Starting @servers[$idx] port=[$port] delay=[$delay] ..."
+
+	# procd 实例名按端口
+	procd_open_instance "iperf3_${port}"
+
+	# 不用 -D；delay 用 sh -c 不阻塞
+	if [ "$delay" -gt 0 ] 2>/dev/null; then
+		if [ -n "$extra_options" ]; then
+			procd_set_param command /bin/sh -c "sleep $delay; exec $PROG -s -p $port $extra_options"
+		else
+			procd_set_param command /bin/sh -c "sleep $delay; exec $PROG -s -p $port"
+		fi
+	else
+		if [ -n "$extra_options" ]; then
+			procd_set_param command "$PROG" -s -p "$port" $extra_options
+		else
+			procd_set_param command "$PROG" -s -p "$port"
+		fi
+	fi
+
+	procd_set_param respawn 3600 5 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+start_service() {
+	[ -x "$PROG" ] || { $LOGGER "iperf3 not found: $PROG"; return 1; }
+
+	# 主开关：直接用 uci 读取匿名段
+	local main_enable
+	main_enable="$(uci -q get $CONFIG.@iperf3-server[0].main_enable)"
+	[ -n "$main_enable" ] || main_enable="0"
+
+	[ "$main_enable" = "1" ] || {
+		$LOGGER "iPerf3 Server is disabled ..."
+		return 0
+	}
+
+	# 遍历 servers 索引
+	local idx
+	for idx in $(get_server_indexes); do
+		start_one_idx "$idx"
+	done
+
+	return 0
+}
+
+stop_one_idx() {
+	local idx="$1"
+	local enable_server port
+
+	enable_server="$(uci -q get $CONFIG.@servers[$idx].enable_server)"
+	[ -n "$enable_server" ] || enable_server="1"
+	[ "$enable_server" = "1" ] || return 0
+
+	port="$(uci -q get $CONFIG.@servers[$idx].port)"
+	[ -n "$port" ] || port="5201"
+
+	case "$port" in
+		*[!0-9]*|'') return 0 ;;
+	esac
+
+	kill_by_port "$port"
+}
+
+stop_service() {
 	$LOGGER "Stopping iPerf3 Server ..."
-	ps -efww | grep 'iperf3 -s -D' | grep -v 'grep' | awk '{print $1}' | xargs kill -9
+
+	# 按 servers 列表逐个端口清理（不误杀其它 iperf3）
+	local idx
+	for idx in $(get_server_indexes); do
+		stop_one_idx "$idx"
+	done
+
+	return 0
+}
+
+reload_service() {
+	# /etc/init.d/iperf3-server reload
+	stop
+	start
 }
 
 service_triggers() {
-	procd_add_reload_trigger "iperf3-server"
-}
-
-uci_get_by_type() {
-	local ret=$(uci get iperf3-server.@$1[$2].$3 2>/dev/null)
-	echo ${ret:=$4}
+	procd_add_reload_trigger "$CONFIG"
 }
