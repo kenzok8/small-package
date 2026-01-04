@@ -24,3 +24,75 @@ msgstr "iPerf3 服务端监听端口"
 
 msgid "Extra Options"
 msgstr "额外参数"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Not running"
+msgstr "未运行"
+
+msgid "Stopped"
+msgstr "已停止"
+
+msgid "Start"
+msgstr "启动"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Restart"
+msgstr "重启"
+
+msgid "Delay"
+msgstr "延迟中"
+
+msgid "Conflict"
+msgstr "端口冲突"
+
+msgid "Disabled"
+msgstr "已禁用"
+
+msgid "starting after configured delay"
+msgstr "将在设定的延迟时间后启动"
+
+msgid "port is occupied"
+msgstr "端口已被其他服务占用"
+
+msgid "port is listening but not iperf3 (occupied)"
+msgstr "端口正在监听，但不是 iPerf3（被占用）"
+
+msgid "Delay pending (sleep)"
+msgstr "延迟启动中"
+
+msgid "listening and iperf3 process found"
+msgstr "正在监听，且 iPerf3 进程已启动"
+
+msgid "not listening"
+msgstr "未监听端口"
+
+msgid "disabled in config"
+msgstr "已在配置中禁用"
+
+msgid "PID"
+msgstr "进程号"
+
+msgid "LISTEN"
+msgstr "监听中"
+
+msgid "NO LISTEN"
+msgstr "未监听"
+
+msgid "port is listening"
+msgstr "端口正在监听"
+
+msgid "Start iPerf3 servers?"
+msgstr "确认启动 iPerf3 服务？"
+
+msgid "Stop iPerf3 servers?"
+msgstr "确认停止 iPerf3 服务？"
+
+msgid "Restart iPerf3 servers?"
+msgstr "确认重启 iPerf3 服务？"

@@ -3,7 +3,7 @@
 # AutoUpdate for Openwrt
 # Dependences: wget-ssl/wget/uclient-fetch curl jq expr sysupgrade
 
-Version=V6.10.5
+Version=V6.10.6
 
 function TITLE() {
 	clear && echo "Openwrt-AutoUpdate Script by Hyy2001 ${Version}"
@@ -22,19 +22,19 @@ function SHELL_HELP() {
     -f				跳过版本号校验,并强制刷写固件 ${Red}(危险)${White} *
     -F, --force-flash		强制刷写固件 ${Red}(危险)${White} *
     -P, --proxy			优先开启镜像加速下载固件 *
-    ${Next} A			自动选择镜像地址
-	${Next} E		ghproxy.cn
-    ${Next} F			ghps.cc
-    ${Next} G			ghgo.xyz
+    ${Next} A			自动选择镜像站
+    ${Next} E			[镜像站] ghproxy.cn
+    ${Next} F			[镜像站] ghps.cc
+    ${Next} G			[镜像站] ghgo.xyz
     -D <Downloader>		使用指定的下载器 <wget-ssl | wget | curl | uclient-fetch> *
     --decompress		解压 img.gz 固件后再更新固件 *
     --skip-verify		跳过固件 SHA256 校验 ${Red}(危险)${White} *
     --path <PATH>		固件下载到用户提供的绝对路径 <PATH> *
 
 更新程序:
-    -x				更新 autoupdate 程序
-    -x -path <PATH>		更新 autoupdate 程序 (保存程序到用户提供的绝对路径 <PATH>) *
-    -x -url <URL>		更新 autoupdate 程序 (使用提供的地址 <URL> 更新程序) *
+    -x				自动更新 autoupdate 程序
+    -x -path <PATH>		自动更新 autoupdate 程序 (保存程序到用户提供的绝对路径 <PATH>) *
+    -x -url <URL>		手动更新 autoupdate 程序 (使用用户提供的地址 <URL> 更新 autoupdate 程序) *
 
 其他参数:
     --help			打印 AutoUpdate 程序帮助信息
@@ -70,7 +70,7 @@ function SHOW_VARIABLE() {
 固件版本:		${OP_VERSION} *
 固件标签:		${TARGET_FLAG} *
 内核版本:		$(uname -r)
-运行内存:		Memory: $(MEMINFO Mem)M | swap: $(MEMINFO Swap)M | Total: $(MEMINFO All)M
+运行内存:		Memory: $(MEMINFO Mem)MB | Swap: $(MEMINFO Swap)MB | Total: $(MEMINFO All)MB
 其他参数:		${TARGET_BOARD} / ${TARGET_SUBTARGET}
 固件作者:		${Author} *
 作者仓库:		${Github} *
@@ -89,48 +89,110 @@ EOF
 }
 
 function MEMINFO() {
-	[[ ! $1 || ! $* =~ (All|Mem|Swap) ]] && return 1
+	# 只接受 Mem / Swap / All
+	[[ -z "$1" || ! "$1" =~ ^(Mem|Swap|All)$ ]] && return 1
+	local want="$1"
+
 	local Mem Swap All Result
-	Mem=$(free | grep Mem: | awk '{Mem=$7/1024} {printf("%.0f\n",Mem)}' 2> /dev/null)
-	Swap=$(free | grep Swap: | awk '{Swap=$4/1024} {printf("%.0f\n",Swap)}' 2> /dev/null)
-	All=$(expr ${Mem} + ${Swap} 2> /dev/null)
-	Result=$(eval echo '$'$1)
-	if [[ ${Result} ]]
-	then
-		LOGGER "[$1] 可用运行内存: [${Result}M]"
-		echo ${Result}
+
+	# 只调用一次 free，用 awk 同时解析：
+	# - Mem: 优先取最后一列（一般是 available），若没有 available 列则退回 free 列
+	# - Swap: 取 free 列（通常是第4列），若列不够则取最后一列
+	read -r Mem Swap < <(
+		free 2>/dev/null | awk '
+			$1=="Mem:"  {
+				# 通常 NF>=7 时最后一列是 available，更符合“可用内存”概念
+				mem_kb = (NF>=7 ? $(NF) : $4)
+				next
+			}
+			$1=="Swap:" {
+				swap_kb = ($4 ? $4 : $(NF))
+				next
+			}
+			END{
+				# free 默认一般是 KiB，这里换算成 MB（与你原逻辑一致）
+				if(mem_kb=="")  mem_kb=0
+				if(swap_kb=="") swap_kb=0
+				printf "%.0f %.0f\n", mem_kb/1024, swap_kb/1024
+			}'
+	)
+
+	# 兜底，避免空值导致算术报错
+	[[ "$Mem"  =~ ^[0-9]+$ ]] || Mem=0
+	[[ "$Swap" =~ ^[0-9]+$ ]] || Swap=0
+
+	All=$((Mem + Swap))
+	Result="${!want}"
+
+	if [[ "$Result" =~ ^[0-9]+$ ]]; then
+		LOGGER "[$want] 可用运行内存: [${Result}M]"
+		echo "$Result"
 		return 0
 	else
-		LOGGER "[$1] 可用内存获取失败!"
+		LOGGER "[$want] 可用内存获取失败!"
 		return 1
 	fi
 }
 
 function SPACEINFO() {
-	[[ ! $1 ]] && return 1
-	local Result Path
-	Path="$(awk -F '/' '{print $2}' <<< $1)"
-	Result="$(df -m /${Path} 2> /dev/null | grep -v Filesystem | awk '{print $4}')"
-	if [[ ${Result} ]]
-	then
-		LOGGER "[/${Path}] 可用存储空间: [${Result}M]"
-		echo "${Result}"
+	local path="$1"
+	local Result
+
+	# 目标：不存在就输出 0
+	if [[ -z "$path" || ! -e "$path" ]]; then
+		LOGGER "[${path:-<empty>}] 路径不存在,可用存储空间: [0M]"
+		echo 0
+		return 1
+	fi
+
+	# df -P 保证格式稳定；-m 输出单位 MB（OpenWrt busybox 通常也支持 -m）
+	Result="$(df -Pm -- "$path" 2>/dev/null | awk 'NR==2{print $4}')"
+
+	# 兜底：df 失败/异常输出 → 0
+	if [[ "$Result" =~ ^[0-9]+$ ]]; then
+		LOGGER "[$path] 可用存储空间: [${Result}M]"
+		echo "$Result"
 		return 0
 	else
-		LOGGER "[/${Path}] 可用存储空间获取失败!"
+		LOGGER "[$path] 可用存储空间获取失败,输出 0"
+		echo 0
 		return 1
 	fi
 }
 
 function RM() {
-	for i in $@
-	do
-		rm -r "$i" 2> /dev/null
-		LOGGER "删除文件: [$i]"
+	local i
+
+	for i in "$@"; do
+		# 1) 空参数直接跳过（防止 rm -r "" 这类异常）
+		[[ -z "$i" ]] && { LOGGER "删除跳过: [空路径]"; continue; }
+
+		# 2) 禁止危险路径（兜底防止误删系统）
+		case "$i" in
+			/|/.|/..|.|..)
+				LOGGER "删除拒绝(危险路径): [$i]"
+				continue
+			;;
+		esac
+
+		# 3) 不存在就跳过（你的需求）
+		# -e: 存在（文件/目录）; -L: 断链符号链接也算“存在可删”
+		if [[ ! -e "$i" && ! -L "$i" ]]; then
+			LOGGER "删除跳过(不存在): [$i]"
+			continue
+		fi
+
+		# 4) 执行删除（文件/目录都覆盖）
+		rm -rf -- "$i" 2>/dev/null
+		if [[ $? == 0 ]]; then
+			LOGGER "删除成功: [$i]"
+		else
+			LOGGER "删除失败: [$i]"
+		fi
 	done
 }
 
-GET_DOWNLOADER() {
+function GET_DOWNLOADER() {
 	for i in ${DL_DEPENDS[@]}
 	do
 		if [[ $(CHECK_PKG $i) == true ]]
@@ -262,7 +324,7 @@ function LOGGER() {
 	fi
 }
 
-function RANDOM() {
+function RANDOM_HEX() {
 	head -n 5 /dev/urandom | md5sum | cut -c 1-$1
 }
 
@@ -278,55 +340,84 @@ function GET_SHA256SUM() {
 }
 
 function GET_VARIABLE() {
-	local Result="$(grep "$1=" $2 2> /dev/null | grep -v "#" | awk -F '=' '{print $2}')"
-	if [[ ${Result} && $? == 0 ]]
-	then
-		eval echo "${Result}"
-		return 0
-	else
-		return 1
-	fi
+	local key="$1" file="$2"
+	local Result
+	Result="$(grep -E "^${key}=" "$file" 2>/dev/null | tail -n1 | cut -d= -f2-)"
+	[[ -n "$Result" ]] && { echo "$Result"; return 0; }
+	return 1
 }
 
 function EDIT_VARIABLE() {
-	local Mode=$1
+	local Mode="$1"
 	shift
-	[[ ! -s $1 ]] && ECHO r "未检测到环境变量文件: [$1] !" && return 1
-	case "${Mode}" in
-	edit)
-		if [[ ! $(GET_VARIABLE $2 $1) ]]
-		then
-			LOGGER "[EDIT_VARIABLE] 新增环境变量 [$2 = $3]"
-			echo -e "\n$2=$3" >> $1
-			RETURN=0
-		else
-			sed -i "s?$(GET_VARIABLE $2 $1)?$3?g" $1 2> /dev/null
-			if [[ $? == 0 ]]
-			then
-				LOGGER "[EDIT_VARIABLE] 环境变量 [$2 > $3] 修改成功!"
+
+	local File="$1"
+	shift
+
+	[[ ! -s "$File" ]] && ECHO r "未检测到环境变量文件: [$File] !" && return 1
+
+	local Key="$1"
+	local Val="$2"
+	local RETURN=1
+
+	# key 基本校验（保守一些，避免 sed 正则炸）
+	[[ -z "$Key" ]] && ECHO r "环境变量 Key 不能为空!" && return 1
+
+	# sed 正则/替换转义
+	_escape_sed_regex() { printf '%s' "$1" | sed 's/[.[\*^$(){}+?|\\/]/\\&/g'; }
+	_escape_sed_repl()  { printf '%s' "$1" | sed 's/[\/&|\\]/\\&/g'; }
+
+	local Key_Re="$(_escape_sed_regex "$Key")"
+	local Val_Repl="$(_escape_sed_repl "${Val:-}")"
+
+	case "$Mode" in
+		edit)
+			[[ -z "$Val" && "$Val" != "0" ]] && { ECHO r "环境变量 [$Key] 的值不能为空!"; return 1; }
+
+			if ! grep -q -E "^${Key_Re}=" "$File" 2>/dev/null; then
+				LOGGER "[EDIT_VARIABLE] 新增环境变量 [$Key = $Val]"
+				# 不用 echo -e，避免反斜杠被解释
+				printf '\n%s=%s\n' "$Key" "$Val" >> "$File"
+				RETURN=$?
+			else
+				# 精确替换整行：KEY=...
+				sed -i -E "s|^${Key_Re}=.*|${Key}=${Val_Repl}|" "$File" 2>/dev/null
+				if [[ $? == 0 ]]; then
+					LOGGER "[EDIT_VARIABLE] 环境变量 [$Key > $Val] 修改成功!"
+					RETURN=0
+				else
+					LOGGER "[EDIT_VARIABLE] 环境变量 [$Key > $Val] 修改失败!"
+					RETURN=1
+				fi
+			fi
+		;;
+		rm)
+			# 只删除以 KEY= 开头的行
+			sed -i -E "/^${Key_Re}=/d" "$File" 2>/dev/null
+			if [[ $? == 0 ]]; then
+				LOGGER "[EDIT_VARIABLE] 从 $File 删除环境变量 [$Key] ... 成功"
 				RETURN=0
 			else
-				LOGGER "[EDIT_VARIABLE] 环境变量 [$2 > $3] 修改失败!"
+				LOGGER "[EDIT_VARIABLE] 从 $File 删除环境变量 [$Key] ... 失败"
 				RETURN=1
 			fi
-		fi
-	;;
-	rm)
-		sed -i "/$2=/d" $1
-		if [[ $? == 0 ]]
-		then
-			LOGGER "[EDIT_VARIABLE] 从 $1 删除环境变量 [$2] ... 成功"
-			RETURN=0
-		else
-			LOGGER "[EDIT_VARIABLE] 从 $1 删除环境变量 [$2] ... 失败"
-			RETURN=1
-		fi
-	;;
+		;;
+		*)
+			ECHO r "EDIT_VARIABLE 模式错误: [$Mode] (仅支持 edit/rm)"
+			return 1
+		;;
 	esac
-	cp -a ${Config_Custom} ${Tmp_Path}/custom
-	grep -vE "^[[:blank:]]*$" ${Tmp_Path}/custom > ${Config_Custom}
-	echo >> ${Config_Custom}
-	return ${RETURN}
+
+	# 保留你原来的功能：把 Config_Custom 去空行并保证末尾有空行
+	# （即使本次修改的不是 Config_Custom，也按原行为执行）
+	[[ -d "$Tmp_Path" ]] || mkdir -p "$Tmp_Path" 2>/dev/null
+	if [[ -f "$Config_Custom" ]]; then
+		cp -a "$Config_Custom" "$Tmp_Path/custom" 2>/dev/null
+		grep -vE "^[[:blank:]]*$" "$Tmp_Path/custom" > "$Config_Custom"
+		echo >> "$Config_Custom"
+	fi
+
+	return $RETURN
 }
 
 function LOAD_CONFIG() {
@@ -522,7 +613,7 @@ function ANALYZE_API() {
 		exit 1
 	}
 	local API_Cache=${Tmp_Path}/API_Cache
-	if [[ $(CHECK_TIME ${API_File} 1) == false ]]
+	if [[ $(CHECK_TIME ${API_Cache} 1) == false ]]
 	then
 		DOWNLOADER --path ${Tmp_Path} --file-name API_Cache --dl ${DL_DEPENDS[@]} --url "${Github_API}@@1 $(Proxy_X ${Github_Release}/API G@@1 F@@1 E@@1)" --no-url-name --timeout 5
 		[[ ! $? == 0 || -z $(cat ${API_Cache} 2> /dev/null) ]] && {
@@ -1053,9 +1144,9 @@ function DOWNLOADER() {
 }
 
 function REMOVE_CACHE() {
-	rm -r ${Tmp_Path}/API \
-		${Tmp_Path}/Update_Logs.json \
-		${Tmp_Path}/API_Cache 2> /dev/null
+	RM ${Tmp_Path}/API
+	RM ${Tmp_Path}/Update_Logs.json
+	RM ${Tmp_Path}/API_Cache
 }
 
 function LOG() {
@@ -1076,7 +1167,7 @@ function LOG() {
 		fi
 		EDIT_VARIABLE rm ${Config_Custom} Log_Path
 		EDIT_VARIABLE edit ${Config_Custom} Log_Path $2
-		Log_Path=${Log_Path}
+		Log_Path="$2"
 		uci set autoupdate.@autoupdate[0].logpath=$2 2> /dev/null
 		uci commit autoupdate
 		ECHO y "AutoUpdate 日志保存路径已修改为: [$2]!"
@@ -1248,7 +1339,7 @@ function AutoUpdate_Main() {
 			exit $?
 		;;
 		--backup)
-			local Backup_File="backup-$(uname -n)-$(date +%Y-%m-%d)-$(RANDOM 5).tar.gz"
+			local Backup_File="backup-$(uname -n)-$(date +%Y-%m-%d)-$(RANDOM_HEX 5).tar.gz"
 			shift
 			[[ $# -gt 1 ]] && SHELL_HELP
 			if [[ ! $1 ]]
@@ -1373,7 +1464,7 @@ function AutoUpdate_Main() {
 			exit $?
 		;;
 		--reset)
-			rm -r ${Config_Default} ${Config_Custom}
+			RM ${Config_Default} ${Config_Custom}
 			cp -a /rom/$(dirname ${Config_Default})/* $(dirname ${Config_Default})/
 			cp -a /rom/etc/config/autoupdate /etc/config
 			REMOVE_CACHE
@@ -1388,10 +1479,18 @@ function AutoUpdate_Main() {
 }
 
 function KILL_PROCESS() {
-	local i ; for i in $(ps -ef 2> /dev/null | grep -v grep | grep $1 | grep -v $$ | awk '{print $1}' 2> /dev/null)
-	do
-		kill -9 ${i} 2> /dev/null &
-		LOGGER "结束进程: ${i}"
+	local pattern="$1"
+	local pids=""
+
+	if command -v pgrep >/dev/null 2>&1; then
+		pids="$(pgrep -f "$pattern" 2>/dev/null | grep -v "^$$\$" || true)"
+	else
+		pids="$(ps -ef 2>/dev/null \
+			| awk -v pat="$pattern" -v self="$$" '$0 ~ pat && $2 != self && $0 !~ /grep/ {print $2}')"
+	fi
+
+	for pid in $pids; do
+		kill -9 "$pid" 2>/dev/null && LOGGER "结束进程 PID: $pid (pattern=$pattern)"
 	done
 }
 
