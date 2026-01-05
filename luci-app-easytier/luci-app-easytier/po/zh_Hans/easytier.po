@@ -29,8 +29,7 @@ msgid ""
 "cgi-bin/qm/qr?"
 "_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx"
 "%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" "
-"target=\"_blank\">QQ Group</a>&nbsp;&nbsp;<a href=\"https://doc.oee.icu"
-"\" target=\"_blank\">Beginner Tutorial</a>"
+"target=\"_blank\">QQ Group</a>&nbsp;&nbsp;">Beginner Tutorial</a>"
 msgstr ""
 "一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 "
 "项目地址：<a href=\"https://github.com/EasyTier/EasyTier\" target=\"_blank\">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;"
@@ -1082,4 +1081,46 @@ msgstr "外网访问API"
 
 msgid "Automatically add firewall rules to allow WAN access to the API control page"
 msgstr "自动添加防火墙端口放行规则，外网可访问API控制页面"
+
+msgid "P2P only"
+msgstr "仅P2P"
+
+msgid "only communicate with peers that already establish p2p connection. (--p2p-only parameter)"
+msgstr "仅与已经建立P2P连接的对等节点通信（ --p2p-only 参数）"
+
+msgid "Disable TCP"
+msgstr "禁用TCP"
+
+msgid "Disable TCP hole punching (--disable-tcp-hole-punching parameter)"
+msgstr "禁用TCP打洞功能（ --disable-tcp-hole-punching 参数）"
+
+msgid "Disable sym"
+msgstr "禁用sym"
+
+msgid "if true, disable udp nat hole punching for symmetric nat (NAT4), which is based on birthday attack and may be blocked by ISP. (--disable-sym-hole-punching parameter)"
+msgstr "如果为true，则禁用基于生日攻击的对称NAT (NAT4) UDP 打洞功能，该打洞方式可能会被运营商封锁（ --disable-sym-hole-punching 参数）"
+
+msgid "UDP whitelist"
+msgstr "UDP 端口白名单"
+
+msgid "udp port whitelist. Supports single ports (53) and ranges (5000-6000). (--udp-whitelist parameter)"
+msgstr "UDP 端口白名单。支持单个端口（53）和范围（5000-6000）（ --udp-whitelist 参数）"
+
+msgid "TCP whitelist"
+msgstr "TCP 端口白名单"
+
+msgid "tcp port whitelist. Supports single ports (53) and ranges (5000-6000). (--tcp-whitelist parameter)"
+msgstr "TCP 端口白名单。支持单个端口（53）和范围（5000-6000）（ --tcp-whitelist 参数）"
+
+msgid "Disable relay kcp"
+msgstr "禁止节点转发 KCP"
+
+msgid "If true, disable relay kcp packets. avoid consuming too many bandwidth. default is false. (--disable-relay-kcp parameter)"
+msgstr "如果开启，则禁止节点转发 KCP 数据包，防止过度消耗流量。默认关闭（ --disable-relay-kcp 参数）"
+
+msgid "Relay foreign network kcp"
+msgstr "转发 KCP"
+
+msgid "If true, allow relay kcp packets from foreign network. default is false (not forward foreign network kcp packets). (--enable-relay-foreign-network-kcp parameter)"
+msgstr "如果开启，则作为共享节点时也可以转发其他网络的 KCP 数据包。默认关闭（不转发）（ --enable-relay-foreign-network-kcp 参数）"
 

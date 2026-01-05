@@ -688,7 +688,7 @@
     <div class="config-upload-model-overlay" id="config-upload-overlay">
         <div class="config-upload-model" id="config-upload-model">
             <div class="config-upload-header">
-                <div class="config-upload-title">
+                <div class="config-upload-title" id="config-upload-title">
                     <span><%:Add Config File%></span>
                 </div>
                 <div class="config-upload-actions">
@@ -787,6 +787,7 @@
                                         <select id="convert-address-input" class="form-select">
                                             <option value="https://api.dler.io/sub">api.dler.io (<%:Default%>)</option>
                                             <option value="https://api.wcc.best/sub">api.wcc.best</option>
+                                            <option value="https://api.asailor.org/sub">api.asailor.org</option>
                                             <option value="custom"><%:Custom%></option>
                                         </select>
                                     </div>
@@ -949,6 +950,29 @@
             </div>
         </div>
     </div>
+    <div class="config-upload-model-overlay" id="subscription-url-overlay" style="display: none;">
+        <div class="config-upload-model" id="subscription-url-model">
+            <div class="config-upload-header">
+                <div class="config-upload-title"><%:Set Subscription Info URL%></div>
+                <button type="button" class="icon-btn" onclick="SubscriptionUrlSetter.hide()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="config-upload-content">
+                <div class="form-group">
+                    <label><%:Paste the new url of subscribe infos sources here:%></label>
+                    <textarea id="subscription-url-textarea" class="form-textarea" placeholder="<%:Enter URLs, one per line, use #name=example end for specifing display name%> (https://example.com#name=example)" rows="5"></textarea>
+                </div>
+            </div>
+            <div class="config-upload-footer">
+                <div class="config-upload-status"></div>
+                <div class="config-upload-buttons">
+                    <button type="button" class="btn cancel-btn" onclick="SubscriptionUrlSetter.hide()"><%:Cancel%></button>
+                    <button type="button" class="btn upload-btn" onclick="SubscriptionUrlSetter.submit()"><%:Submit%></button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script type="text/javascript">
@@ -1030,8 +1054,8 @@ var ConfigUploader = {
         var advancedOptionsContainer = document.getElementById('advanced-options-container');
 
         subscribeUrlInput.addEventListener('input', function() {
-            self.updateSubmitButton();
             self.autoFillConfigName();
+            self.updateSubmitButton();
         });
 
         filenameInput.addEventListener('input', this.updateSubmitButton.bind(this));
@@ -1051,7 +1075,6 @@ var ConfigUploader = {
                 advancedOptionsContainer.style.display = 'none';
                 self.resetAdvancedOptions();
             }
-            self.updateSubmitButton();
         });
 
         subConvertEnable.addEventListener('change', function() {
@@ -1060,7 +1083,6 @@ var ConfigUploader = {
             } else {
                 subConvertOptions.style.display = 'none';
             }
-            self.updateSubmitButton();
         });
 
         convertAddressSelect.addEventListener('change', function() {
@@ -1114,7 +1136,20 @@ var ConfigUploader = {
 
     show: function() {
         this.overlay.classList.add('show');
+        document.getElementById('config-upload-title').textContent = '<%:Add Config%>';
         this.reset();
+    },
+
+    showEditSubscribe: function(subscribeData, filename) {
+        this.overlay.classList.add('show');
+        this.reset();
+        this.isEditMode = true;
+        this.editFilename = filename;
+        this.switchMode('subscribe');
+        document.getElementById('config-upload-title').textContent = '<%:Edit Subscription%>';
+        document.getElementById('config-upload-submit').textContent = '<%:Edit Config%>';
+        this.fillSubscribeForm(subscribeData);
+        this.updateSubmitButton();
     },
 
     hide: function() {
@@ -1157,6 +1192,8 @@ var ConfigUploader = {
         this.selectedFile = null;
         this.isProcessing = false;
         this.currentMode = 'file';
+        this.isEditMode = false;
+        this.editFilename = null;
 
         this.switchMode('file');
         document.getElementById('config-filename-input').value = '';
@@ -1175,7 +1212,103 @@ var ConfigUploader = {
 
         document.getElementById('upload-progress').style.display = 'none';
         document.getElementById('config-upload-status-text').textContent = '<%:Ready to add config%>';
+        document.getElementById('config-upload-submit').textContent = '<%:Add Config%>';
         this.updateSubmitButton();
+    },
+
+    fillSubscribeForm: function(data) {
+        if (!data) return;
+
+        if (this.editFilename) {
+            document.getElementById('config-filename-input').value = this.editFilename;
+        }
+
+        if (data.address) {
+            document.getElementById('subscribe-url-input').value = data.address;
+        }
+        if (data.sub_ua) {
+            if (data.sub_ua === 'clash.meta' || data.sub_ua === 'clash-verge/v1.5.1' || data.sub_ua === 'Clash' || data.sub_ua === 'custom') {
+                document.getElementById('subscribe-ua-input').value = data.sub_ua;
+                if (data.sub_ua === 'custom') {
+                    document.getElementById('subscribe-ua-custom').style.display = 'block';
+                    document.getElementById('subscribe-ua-custom').value = data.sub_ua_custom || '';
+                }
+            } else {
+                document.getElementById('subscribe-ua-input').value = 'custom';
+                document.getElementById('subscribe-ua-custom').style.display = 'block';
+                document.getElementById('subscribe-ua-custom').value = data.sub_ua;
+            }
+        }
+
+        if (data.sub_convert === '1' || data.convert_address || data.template || data.emoji === 'true' || data.udp === 'true' || data.skip_cert_verify === 'true' || data.sort === 'true' || data.node_type === 'true' || data.rule_provider === 'true' || data.custom_params || data.keyword || data.ex_keyword || data.de_ex_keyword) {
+            document.getElementById('advanced-options-enable').checked = true;
+            document.getElementById('advanced-options-container').style.display = 'block';
+
+            if (data.sub_convert === '1') {
+                document.getElementById('sub-convert-enable').checked = true;
+                document.getElementById('sub-convert-options').style.display = 'block';
+
+                if (data.convert_address) {
+                    if (data.convert_address === 'https://api.dler.io/sub' || data.convert_address === 'https://api.wcc.best/sub' || data.convert_address === 'https://api.asailor.org/sub') {
+                        document.getElementById('convert-address-input').value = data.convert_address;
+                        if (data.convert_address === 'custom') {
+                            document.getElementById('convert-address-custom').style.display = 'block';
+                            document.getElementById('convert-address-custom').value = data.convert_address_custom || '';
+                        }
+                    } else {
+                        document.getElementById('convert-address-input').value = 'custom';
+                        document.getElementById('convert-address-custom').style.display = 'block';
+                        document.getElementById('convert-address-custom').value = data.convert_address;
+                    }
+                }
+
+                if (data.template) {
+                    var templateSelect = document.getElementById('template-select');
+                    var found = false;
+                    for (var i = 0; i < templateSelect.options.length; i++) {
+                        if (templateSelect.options[i].value === data.template) {
+                            templateSelect.selectedIndex = i;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found && data.template !== '0') {
+                        templateSelect.value = '0';
+                        document.getElementById('custom-template-group').style.display = 'block';
+                        document.getElementById('custom-template-input').value = data.template;
+                    } else if (data.template === '0') {
+                        templateSelect.value = '0';
+                        document.getElementById('custom-template-group').style.display = 'block';
+                        document.getElementById('custom-template-input').value = data.custom_template || '';
+                    }
+                }
+
+                document.getElementById('emoji-enable').checked = data.emoji === 'true';
+                document.getElementById('udp-enable').checked = data.udp === 'true';
+                document.getElementById('skip-cert-verify').checked = data.skip_cert_verify === 'true';
+                document.getElementById('sort-enable').checked = data.sort === 'true';
+                document.getElementById('node-type-enable').checked = data.node_type === 'true';
+                document.getElementById('rule-provider-enable').checked = data.rule_provider === 'true';
+
+                if (data.custom_params) {
+                    document.getElementById('custom-params-input').value = data.custom_params;
+                }
+            }
+
+            if (data.keyword) {
+                document.getElementById('keyword-input').value = data.keyword;
+            }
+            if (data.ex_keyword) {
+                document.getElementById('exclude-keyword-input').value = data.ex_keyword;
+            }
+            if (data.de_ex_keyword) {
+                var defaults = data.de_ex_keyword.split(' ');
+                document.getElementById('exclude-expire').checked = defaults.indexOf('过期时间') !== -1;
+                document.getElementById('exclude-traffic').checked = defaults.indexOf('剩余流量') !== -1;
+                document.getElementById('exclude-tg').checked = defaults.indexOf('TG群') !== -1;
+                document.getElementById('exclude-website').checked = defaults.indexOf('官网') !== -1;
+            }
+        }
     },
 
     switchMode: function(mode) {
@@ -1188,6 +1321,9 @@ var ConfigUploader = {
         var statusText = document.getElementById('config-upload-status-text');
         var uploadZone = document.getElementById('upload-zone');
 
+        modeFileTab.style.display = this.isEditMode ? 'none' : '';
+        modeSubscribeTab.style.display = '';
+
         if (mode === 'file') {
             modeFileTab.classList.add('active');
             modeSubscribeTab.classList.remove('active');
@@ -1199,7 +1335,7 @@ var ConfigUploader = {
             modeSubscribeTab.classList.add('active');
             modeFileContent.style.display = 'none';
             modeSubscribeContent.style.display = 'block';
-            statusText.textContent = '<%:Ready to add subscription%>';
+            statusText.textContent = this.isEditMode ? '<%:Ready to edit subscription%>' : '<%:Ready to add subscription%>';
         }
 
         this.selectedFile = null;
@@ -1472,25 +1608,6 @@ var ConfigUploader = {
             return;
         }
 
-        var requestData = {
-            name: filename,
-            address: url,
-            sub_ua: userAgent,
-            sub_convert: subConvert ? '1' : '0',
-            convert_address: convertAddress,
-            template: template,
-            emoji: emoji ? 'true' : 'false',
-            udp: udp ? 'true' : 'false',
-            skip_cert_verify: skipCert ? 'true' : 'false',
-            sort: sort ? 'true' : 'false',
-            node_type: nodeType ? 'true' : 'false',
-            rule_provider: ruleProvider ? 'true' : 'false',
-            custom_params: customParams,
-            keyword: keywords,
-            ex_keyword: excludeKeywords,
-            de_ex_keyword: excludeDefaults.join('\n')
-        };
-
         var self = this;
         this.isProcessing = true;
 
@@ -1503,7 +1620,7 @@ var ConfigUploader = {
 
         submitBtn.disabled = true;
         cancelBtn.disabled = true;
-        statusText.textContent = '<%:Adding subscription...%>';
+        statusText.textContent = this.isEditMode ? '<%:Updating subscription...%>' : '<%:Adding subscription...%>';
         progressContainer.style.display = 'block';
 
         var progress = 0;
@@ -1531,32 +1648,34 @@ var ConfigUploader = {
             custom_params: customParams,
             keyword: keywords,
             ex_keyword: excludeKeywords,
-            de_ex_keyword: excludeDefaults.join('\n')
+            de_ex_keyword: excludeDefaults.join(' ')
         }, function(x, data) {
             if (x && x.status == 200) {
                 XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "update_config")%>', {
                     filename: filename
                 }, function(x2, data2) {
                     clearInterval(progressInterval);
-
                     if (x2 && x2.status == 200) {
                         progressFill.style.width = '100%';
-                        progressText.textContent = '<%:Subscription added successfully%> 100%';
-                        statusText.textContent = '<%:Subscription added successfully%>';
-
-                        setTimeout(function() {
-                            self.hide();
-                            if (typeof ConfigFileManager !== 'undefined' && ConfigFileManager.refreshConfigList) {
-                                ConfigFileManager.refreshConfigList();
-                            }
-                        }, 2000);
+                        if (status.status === 'success') {
+                            progressText.textContent = (this.isEditMode ? '<%:Subscription updated successfully%>' : '<%:Subscription added successfully%>') + ' 100%';
+                            statusText.textContent = this.isEditMode ? '<%:Subscription updated successfully%>' : '<%:Subscription added successfully%>';
+                            setTimeout(function() {
+                                self.hide();
+                                if (typeof ConfigFileManager !== 'undefined' && ConfigFileManager.refreshConfigList) {
+                                    ConfigFileManager.refreshConfigList();
+                                }
+                            }, 2000);
+                        } else {
+                            self.handleError(this.isEditMode ? '<%:Failed to update subscription config%>' : '<%:Failed to download subscription config%>');
+                        }
                     } else {
-                        self.handleError('<%:Failed to download subscription config%>');
+                        self.handleError(this.isEditMode ? '<%:Failed to update subscription config%>' : '<%:Failed to download subscription config%>');
                     }
                 });
             } else {
                 clearInterval(progressInterval);
-                self.handleError('<%:Failed to add subscription%>');
+                self.handleError(this.isEditMode ? '<%:Failed to update subscription%>' : '<%:Failed to add subscription%>');
             }
         });
     },
@@ -1586,7 +1705,6 @@ var ConfigUploader = {
                 }
 
                 filenameInput.value = configName;
-                this.updateSubmitButton();
             } catch (e) {
             }
         }

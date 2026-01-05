@@ -8,18 +8,18 @@ local sid = arg[1]
 
 font_red = [[<b style=color:red>]]
 font_off = [[</b>]]
-bold_on  = [[<strong>]]
+bold_on = [[<strong>]]
 bold_off = [[</strong>]]
 
 function IsYamlFile(e)
-   e=e or""
-   local e=string.lower(string.sub(e,-5,-1))
-   return e == ".yaml"
+	e=e or""
+	local e=string.lower(string.sub(e,-5,-1))
+	return e == ".yaml"
 end
 function IsYmlFile(e)
-   e=e or""
-   local e=string.lower(string.sub(e,-4,-1))
-   return e == ".yml"
+	e=e or""
+	local e=string.lower(string.sub(e,-4,-1))
+	return e == ".yml"
 end
 
 m = Map(openclash, translate("Edit Group"))
@@ -33,7 +33,7 @@ end
 -- [[ Groups Setting ]]--
 s = m:section(NamedSection, sid, "groups")
 s.anonymous = true
-s.addremove   = false
+s.addremove = false
 
 o = s:option(ListValue, "config", translate("Config File"))
 o:value("all", translate("Use For All Config File"))
@@ -41,12 +41,12 @@ local e,a={}
 for t,f in ipairs(fs.glob("/etc/openclash/config/*"))do
 	a=fs.stat(f)
 	if a then
-    e[t]={}
-    e[t].name=fs.basename(f)
-    if IsYamlFile(e[t].name) or IsYmlFile(e[t].name) then
-       o:value(e[t].name)
-    end
-  end
+		e[t]={}
+		e[t].name=fs.basename(f)
+		if IsYamlFile(e[t].name) or IsYmlFile(e[t].name) then
+			
+		end
+	end
 end
 
 o = s:option(ListValue, "type", translate("Group Type"))
@@ -126,13 +126,65 @@ o = s:option(Value, "policy_filter", translate("Provider Filter"))
 o.rmempty = true
 o.placeholder = "bgp|sg"
 
+o = s:option(Value, "icon", translate("Icon"))
+o.rmempty = true
+
+-- [[ other-setting ]]--
+o = s:option(Value, "other_parameters", translate("Other Parameters"))
+o.template = "cbi/tvalue"
+o.rows = 20
+o.wrap = "off"
+o.description = font_red..bold_on..translate("Edit Your Other Parameters Here")..bold_off..font_off
+o.rmempty = true
+function o.cfgvalue(self, section)
+	if self.map:get(section, "other_parameters") == nil then
+		return "# Example:\n"..
+		"# Only support YAML, four spaces need to be reserved at the beginning of each line to maintain formatting alignment\n"..
+		"# 示例：\n"..
+		"# 仅支持 YAML, 每行行首需要多保留四个空格以使脚本处理后能够与上方配置保持格式对齐\n"..
+		"#      type: select\n"..
+		"#      proxies:\n"..
+		"#      - DIRECT\n"..
+		"#      - ss\n"..
+		"#      use:\n"..
+		"#      - provider1\n"..
+		"#      - provider1\n"..
+		"#      url: 'https://www.gstatic.com/generate_204'\n"..
+		"#      interval: 300\n"..
+		"#      lazy: true\n"..
+		"#      timeout: 5000\n"..
+		"#      max-failed-times: 5\n"..
+		"#      disable-udp: true\n"..
+		"#      interface-name: en0\n"..
+		"#      routing-mark: 11451\n"..
+		"#      include-all: false\n"..
+		"#      include-all-proxies: false\n"..
+		"#      include-all-providers: false\n"..
+		"#      filter: \"(?i)港|hk|hongkong|hong kong\"\n"..
+		"#      exclude-filter: \"美|日\"\n"..
+		"#      exclude-type: \"Shadowsocks|Http\"\n"..
+		"#      expected-status: 204\n"..
+		"#      hidden: true\n"..
+		"#      icon: xxx"
+	else
+		return Value.cfgvalue(self, section)
+	end
+end
+function o.validate(self, value)
+	if value then
+		value = value:gsub("\r\n?", "\n")
+		value = value:gsub("%c*$", "")
+	end
+	return value
+end
+
 o = s:option(DynamicList, "other_group", translate("Other Group (Support Regex)"))
 o.description = font_red..bold_on..translate("The Added Proxy Groups Must Exist Except 'DIRECT' & 'REJECT' & 'REJECT-DROP' & 'PASS' & 'GLOBAL'")..bold_off..font_off
 o:value("all", translate("All Groups"))
 uci:foreach("openclash", "groups",
 		function(s)
-		  if s.name ~= "" and s.name ~= nil and s.name ~= m.uci:get(openclash, sid, "name") then
-			   o:value(s.name)
+			if s.name ~= "" and s.name ~= nil and s.name ~= m.uci:get(openclash, sid, "name") then
+				o:value(s.name)
 			end
 		end)
 o:value("DIRECT")
@@ -143,7 +195,7 @@ o:value("GLOBAL")
 o.rmempty = true
 
 local t = {
-    {Commit, Back}
+	{Commit, Back}
 }
 a = m:section(Table, t)
 
@@ -151,18 +203,19 @@ o = a:option(Button,"Commit", " ")
 o.inputtitle = translate("Commit Settings")
 o.inputstyle = "apply"
 o.write = function()
-   m.uci:commit(openclash)
-   sys.call("/usr/share/openclash/yml_groups_name_ch.sh")
-   luci.http.redirect(m.redirect)
+	m.uci:commit(openclash)
+	sys.call("/usr/share/openclash/yml_groups_name_ch.sh")
+	luci.http.redirect(m.redirect)
 end
 
 o = a:option(Button,"Back", " ")
 o.inputtitle = translate("Back Settings")
 o.inputstyle = "reset"
 o.write = function()
-   m.uci:revert(openclash, sid)
-   luci.http.redirect(m.redirect)
+	m.uci:revert(openclash, sid)
+	luci.http.redirect(m.redirect)
 end
 
 m:append(Template("openclash/toolbar_show"))
+m:append(Template("openclash/config_editor"))
 return m
