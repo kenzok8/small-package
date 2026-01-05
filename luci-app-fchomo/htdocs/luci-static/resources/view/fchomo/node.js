@@ -449,11 +449,13 @@ return view.extend({
 		so.depends({sudoku_http_mask_mode: /^(stream|poll|auto)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.ListValue, 'sudoku_http_mask_strategy', _('HTTP mask strategy'));
-		so.value('random', _('Random'));
-		so.value('post', _('post'));
-		so.value('websocket', _('websocket'));
-		so.depends('sudoku_http_mask_mode', 'legacy');
+		so = ss.taboption('field_general', form.ListValue, 'sudoku_http_mask_multiplex', _('HTTP mask multiplex'),
+			_('Reusing a single tunnel to carry multiple target connections within it.'));
+		so.default = 'off';
+		so.value('off', _('OFF'));
+		so.value('auto', _('Auto'));
+		so.value('on', _('ON'));
+		so.depends('type', 'sudoku');
 		so.modalonly = true;
 
 		/* Snell fields */
