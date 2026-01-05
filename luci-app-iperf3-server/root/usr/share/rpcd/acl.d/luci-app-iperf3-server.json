@@ -1,11 +1,14 @@
 {
-	"luci-app-iperf3-server": {
-		"description": "Grant UCI access for luci-app-iperf3-server",
-		"read": {
-			"uci": [ "iperf3-server" ]
-		},
-		"write": {
-			"uci": [ "iperf3-server" ]
-		}
-	}
+  "luci-app-iperf3-server": {
+    "description": "Grant access to LuCI app iPerf3 Server",
+    "read": {
+      "uci": [ "iperf3-server" ]
+    },
+    "write": {
+      "uci": [ "iperf3-server" ],
+      "file": {
+        "/etc/init.d/iperf3-server": [ "exec" ]
+      }
+    }
+  }
 }

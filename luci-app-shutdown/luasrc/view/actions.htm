@@ -1,0 +1,115 @@
+<div class="cbi-section">
+  <div class="cbi-section-node">
+
+    <div id="shutdown_info" class="alert-message" style="display:none;"></div>
+
+    <div class="cbi-value">
+      <label class="cbi-value-title"><%:Device%></label>
+      <div class="cbi-value-field">
+        <strong id="dev_model">-</strong><br />
+        <small id="dev_release">-</small>
+      </div>
+    </div>
+
+    <div class="cbi-value">
+      <label class="cbi-value-title"><%:Actions%></label>
+      <div class="cbi-value-field">
+        <button id="btn_reboot" class="cbi-button cbi-button-apply"><%:Reboot%></button>
+        <button id="btn_poweroff" class="cbi-button cbi-button-reset"><%:Shutdown%></button>
+        <span id="poweroff_hint" style="margin-left:8px;"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="text/javascript">
+(function() {
+  var statusUrl   = '<%=luci.dispatcher.build_url("admin","system","shutdown","status")%>';
+  var rebootUrl   = '<%=luci.dispatcher.build_url("admin","system","shutdown","reboot")%>';
+  var poweroffUrl = '<%=luci.dispatcher.build_url("admin","system","shutdown","poweroff")%>';
+
+  var infoBox = document.getElementById('shutdown_info');
+  var btnReboot = document.getElementById('btn_reboot');
+  var btnPoweroff = document.getElementById('btn_poweroff');
+  var hint = document.getElementById('poweroff_hint');
+
+  function showInfo(msg, isErr) {
+    infoBox.style.display = '';
+    infoBox.className = isErr ? 'alert-message error' : 'alert-message success';
+    infoBox.textContent = msg;
+  }
+
+  function setPoweroffAvailable(ok) {
+    if (ok) {
+      btnPoweroff.disabled = false;
+      hint.textContent = '';
+    } else {
+      btnPoweroff.disabled = true;
+      hint.textContent = '(<%:Poweroff is not supported on this device.%>)';
+    }
+  }
+
+  function xhrGet(url, cb) {
+    fetch(url, { method: 'GET', credentials: 'same-origin' })
+      .then(r => r.json()).then(cb)
+      .catch(() => cb(null));
+  }
+
+  function xhrPost(url, cb) {
+    fetch(url, { method: 'POST', credentials: 'same-origin' })
+      .then(r => r.json()).then(cb)
+      .catch(() => cb(null));
+  }
+
+  function loadStatus() {
+    xhrGet(statusUrl, function(data) {
+      if (!data || !data.ok) {
+        showInfo('<%:Failed to load status.%>', true);
+        setPoweroffAvailable(false, 'status unavailable');
+        return;
+      }
+
+      var board = data.board || {};
+      document.getElementById('dev_model').textContent =
+        board.model || board.system || '-';
+
+      var rel = board.release || {};
+      var relTxt = [];
+      if (rel.distribution) relTxt.push(rel.distribution);
+      if (rel.version) relTxt.push(rel.version);
+      if (rel.revision) relTxt.push(rel.revision);
+      document.getElementById('dev_release').textContent = relTxt.join(' ') || '-';
+
+      setPoweroffAvailable(!!data.poweroff_supported);
+    });
+  }
+
+  btnReboot.addEventListener('click', function() {
+    if (!confirm('<%:Are you sure you want to reboot the system?%>'))
+      return;
+
+	btnReboot.disabled = true;
+
+	xhrPost(rebootUrl, function() {
+		/* no ui feedback, system will reboot */
+	});
+  });
+
+  btnPoweroff.addEventListener('click', function() {
+    if (btnPoweroff.disabled)
+      return;
+
+    if (!confirm('<%:Are you sure you want to shut down the system?%>'))
+      return;
+
+	btnPoweroff.disabled = true;
+
+	xhrPost(poweroffUrl, function() {
+	  /* no ui feedback, system will power off */
+	});
+  });
+
+  loadStatus();
+})();
+</script>

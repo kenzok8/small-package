@@ -1,0 +1,12 @@
+{
+  "luci-app-shutdown": {
+    "description": "Grant access to LuCI shutdown/reboot app",
+    "read": {
+      "luci": [ "shutdown" ],
+      "uci":  [ "system" ]
+    },
+    "write": {
+      "luci": [ "shutdown" ]
+    }
+  }
+}
