@@ -336,9 +336,29 @@ disable_p2p = s:taboption("privacy", Flag, "disable_p2p", translate("Disable P2P
         translate("Disable P2P communication; only use nodes specified by -p to forward packets (--disable-p2p parameter)"))
 disable_p2p:depends("etcmd", "etcmd")
 
+p2p_only = s:taboption("privacy", Flag, "p2p_only", translate("P2P only"),
+        translate("only communicate with peers that already establish p2p connection. (--p2p-only parameter)"))
+p2p_only:depends("etcmd", "etcmd")
+
 disable_udp = s:taboption("privacy", Flag, "disable_udp", translate("Disable UDP"),
         translate("Disable UDP hole punching (--disable-udp-hole-punching parameter)"))
 disable_udp:depends("etcmd", "etcmd")
+
+udp_port = s:taboption("privacy", Value, "udp_port", translate("UDP whitelist"),
+        translate("udp port whitelist. Supports single ports (53) and ranges (5000-6000). (--udp-whitelist parameter)"))
+udp_port:depends("etcmd", "etcmd")
+
+disable_tcp = s:taboption("privacy", Flag, "disable_tcp", translate("Disable TCP"),
+        translate("Disable TCP hole punching (--disable-tcp-hole-punching parameter)"))
+disable_tcp:depends("etcmd", "etcmd")
+
+tcp_port = s:taboption("privacy", Value, "tcp_port", translate("TCP whitelist"),
+        translate("tcp port whitelist. Supports single ports (53) and ranges (5000-6000). (--tcp-whitelist parameter)"))
+tcp_port:depends("etcmd", "etcmd")
+
+disable_sym = s:taboption("privacy", Flag, "disable_sym", translate("Disable sym"),
+        translate("if true, disable udp nat hole punching for symmetric nat (NAT4), which is based on birthday attack and may be blocked by ISP. (--disable-sym-hole-punching parameter)"))
+disable_sym:depends("etcmd", "etcmd")
 
 relay_all = s:taboption("privacy", Flag, "relay_all", translate("Allow Forwarding"),
         translate("Forward RPC packets from all peer nodes, even if they are not in the relay network whitelist.<br>"
@@ -362,6 +382,14 @@ kcp_input = s:taboption("privacy", Flag, "kcp_input", translate("Disable KCP Inp
         translate("Disallow other nodes from using KCP proxy TCP streams to this node.<br>"
                 .. "KCP proxy-enabled nodes accessing this node will still use the original method. (--disable-kcp-input parameter)"))
 kcp_input:depends("etcmd", "etcmd")
+
+disable_relay_kcp = s:taboption("privacy", Flag, "disable_relay_kcp", translate("Disable relay kcp"),
+        translate("If true, disable relay kcp packets. avoid consuming too many bandwidth. default is false. (--disable-relay-kcp parameter)"))
+disable_relay_kcp:depends("etcmd", "etcmd")
+
+relay_kcp = s:taboption("privacy", Flag, "relay_kcp", translate("Relay foreign network kcp"),
+        translate("If true, allow relay kcp packets from foreign network. default is false (not forward foreign network kcp packets). (--enable-relay-foreign-network-kcp parameter)"))
+relay_kcp:depends("etcmd", "etcmd")
 
 quic_proxy = s:taboption("privacy", Flag, "quic_proxy", translate("Enable QUIC Proxy"),
         translate("Proxy tcp streams with QUIC, improving the latency and throughput on the network with udp packet loss.<br>"

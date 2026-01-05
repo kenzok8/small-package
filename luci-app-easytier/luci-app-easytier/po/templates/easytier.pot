@@ -1048,3 +1048,45 @@ msgstr ""
 msgid "Automatically add firewall rules to allow WAN access to the API control page"
 msgstr ""
 
+msgid "P2P only"
+msgstr ""
+
+msgid "only communicate with peers that already establish p2p connection. (--p2p-only parameter)"
+msgstr ""
+
+msgid "Disable TCP"
+msgstr ""
+
+msgid "Disable TCP hole punching (--disable-tcp-hole-punching parameter)"
+msgstr ""
+
+msgid "Disable sym"
+msgstr ""
+
+msgid "if true, disable udp nat hole punching for symmetric nat (NAT4), which is based on birthday attack and may be blocked by ISP. (--disable-sym-hole-punching parameter)"
+msgstr ""
+
+msgid "UDP whitelist"
+msgstr ""
+
+msgid "udp port whitelist. Supports single ports (53) and ranges (5000-6000). (--udp-whitelist parameter)"
+msgstr ""
+
+msgid "TCP whitelist"
+msgstr ""
+
+msgid "tcp port whitelist. Supports single ports (53) and ranges (5000-6000). (--tcp-whitelist parameter)"
+msgstr ""
+
+msgid "Disable relay kcp"
+msgstr ""
+
+msgid "If true, disable relay kcp packets. avoid consuming too many bandwidth. default is false. (--disable-relay-kcp parameter)"
+msgstr ""
+
+msgid "Relay foreign network kcp"
+msgstr ""
+
+msgid "If true, allow relay kcp packets from foreign network. default is false (not forward foreign network kcp packets). (--enable-relay-foreign-network-kcp parameter)"
+msgstr ""
+

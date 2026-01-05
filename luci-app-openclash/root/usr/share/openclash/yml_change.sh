@@ -17,6 +17,9 @@ china_ip_route=$(uci_get_config "china_ip_route" || echo 0)
 china_ip6_route=$(uci_get_config "china_ip6_route" || echo 0)
 enable_redirect_dns=$(uci_get_config "enable_redirect_dns" || echo 1)
 fake_ip_filter_mode=${34}
+default_dashboard=$(uci_get_config "default_dashboard" || echo "metacubexd")
+yacd_type=$(uci_get_config "yacd_type" || echo "Official")
+dashboard_type=$(uci_get_config "dashboard_type" || echo "Official")
 
 [ "$china_ip_route" -ne 0 ] && [ "$china_ip_route" -ne 1 ] && [ "$china_ip_route" -ne 2 ] && china_ip_route=0
 [ "$china_ip6_route" -ne 0 ] && [ "$china_ip6_route" -ne 1 ] && [ "$china_ip6_route" -ne 2 ] && china_ip6_route=0
@@ -305,7 +308,7 @@ def merge_list_from_file(dns_hash, key, file_path)
    return unless File.exist?(file_path)
    lines = File.readlines(file_path).map { |l| l.gsub(/#.*$/, '').strip }.reject(&:empty?)
    return if lines.empty?
-   (dns_hash[key] ||= []).concat(lines).uniq!
+   (dns_hash[key] ||= []).unshift(*lines).uniq!
 end
 
 
@@ -361,6 +364,9 @@ lgbm_update_interval = '${44}'
 smart_collect = '${45}' == '1'
 smart_collect_size = '${46}'
 fake_ip_range6 = '${47}'
+default_dashboard = '$default_dashboard'
+yacd_type = '$yacd_type'
+dashboard_type = '$dashboard_type'
 
 enable_custom_dns = '$enable_custom_dns' == '1'
 append_wan_dns = '$append_wan_dns' == '1'
@@ -388,8 +394,25 @@ threads << Thread.new do
       Value['secret'] = secret
       Value['bind-address'] = '*'
       Value['external-ui'] = '/usr/share/openclash/ui'
-      Value['external-ui-name'] = 'metacubexd'
-      Value.delete('external-ui-url')
+      Value['external-ui-name'] = default_dashboard
+      case default_dashboard
+      when 'dashboard'
+        if dashboard_type == 'Official'
+          Value['external-ui-url'] = 'https://codeload.github.com/ayanamist/clash-dashboard/zip/refs/heads/gh-pages'
+        else
+          Value['external-ui-url'] = 'https://codeload.github.com/MetaCubeX/Razord-meta/zip/refs/heads/gh-pages'
+        end
+      when 'yacd'
+        if yacd_type == 'Official'
+          Value['external-ui-url'] = 'https://codeload.github.com/haishanh/yacd/zip/refs/heads/gh-pages'
+        else
+          Value['external-ui-url'] = 'https://codeload.github.com/MetaCubeX/Yacd-meta/zip/refs/heads/gh-pages'
+        end
+      when 'metacubexd'
+        Value['external-ui-url'] = 'https://codeload.github.com/MetaCubeX/metacubexd/zip/refs/heads/gh-pages'
+      when 'zashboard'
+        Value['external-ui-url'] = 'https://codeload.github.com/Zephyruso/zashboard/zip/refs/heads/gh-pages-cdn-fonts'
+      end
       if !Value.key?('keep-alive-interval') && !Value.key?('keep-alive-idle')
          Value['keep-alive-interval'] = 15
          Value['keep-alive-idle'] = 600
@@ -448,7 +471,7 @@ threads << Thread.new do
          end
       end
       Value['dns']['listen'] = '0.0.0.0:' + dns_listen_port
-      Value['dns']['respect-rules'] = true if respect_rules
+      Value['dns']['respect-rules'] = respect_rules
 
       if enable_sniffer
          sniffer_config = {
@@ -463,6 +486,8 @@ threads << Thread.new do
          if append_sniffer_config && (custom_sniffer = safe_load_yaml('/etc/openclash/custom/openclash_custom_sniffer.yaml'))
             Value['sniffer'].merge!(custom_sniffer['sniffer']) if custom_sniffer && custom_sniffer['sniffer']
          end
+      else
+         Value['sniffer']['enable'] = false if Value.key?('sniffer')
       end
 
       if en_mode_tun != '0' || ['2', '3'].include?(tun_device_setting)
@@ -602,19 +627,23 @@ threads << Thread.new do
       if fake_ip_mode == 'fake-ip' && (china_ip_route || china_ip6_route)
          filter_mode = Value.dig('dns', 'fake-ip-filter-mode')
          filters = Value.dig('dns', 'fake-ip-filter') || []
+         deleted_filters = filters.select { |f| f =~ /(geosite:?|rule-set:?).*(@cn|:cn|,cn|:china)/i }
          if filter_mode == 'blacklist' || filter_mode.nil?
-            unless filters.include?('geosite:cn')
+            if !deleted_filters.any?
                (Value['dns']['fake-ip-filter'] ||= []) << 'geosite:cn'
                YAML.LOG('Tip: Because Need Ensure Bypassing IP Option Work, Added The Fake-IP-Filter Rule【geosite:cn】...')
             end
          else
-            deleted_filters = filters.select { |f| f =~ /(geosite:?).*(@cn|:cn|,cn|:china)/ }
             if deleted_filters.any?
                Value['dns']['fake-ip-filter'] -= deleted_filters
                deleted_filters.each do |f|
                   YAML.LOG('Tip: Because Need Ensure Bypassing IP Option Work, Deleted The Fake-IP-Filter Rule【%s】...' % [f])
                end
             end
+         end
+         if filter_mode == 'rule'
+            (Value['dns']['fake-ip-filter'] ||= []).unshift('GEOSITE,cn,real-ip')
+            YAML.LOG('Tip: Because Need Ensure Bypassing IP Option Work, Added The Fake-IP-Filter Rule【GEOSITE,cn,real-ip】...')
          end
       end
    rescue Exception => e
@@ -707,7 +736,7 @@ begin
    end
 
    # proxy-server-nameserver
-   local_exclude = (%x{ls -l /sys/class/net/ |awk '{print \$9}'  2>&1}.each_line.map(&:strip) + ['h3=', 'skip-cert-verify=', 'ecs=', 'ecs-override='] + ['utun', 'tailscale0', 'docker0', 'tun163', 'br-lan', 'mihomo']).uniq.join('|')
+   local_exclude = (%x{ls -l /sys/class/net/ |awk '{print \$9}'  2>&1}.each_line.map(&:strip) + ['h3=', 'skip-cert-verify=', 'ecs=', 'ecs-override=', 'disable-ipv6=', 'disable-ipv4='] + ['utun', 'tailscale0', 'docker0', 'tun163', 'br-lan', 'mihomo']).uniq.join('|')
    proxied_server_reg = /^[^#&]+#(?:(?:#{local_exclude})[^&]*&)*(?:(?!(?:#{local_exclude}))[^&]+)/
    default_proxy_servers = ['114.114.114.114', '119.29.29.29', '8.8.8.8', '1.1.1.1']
 
