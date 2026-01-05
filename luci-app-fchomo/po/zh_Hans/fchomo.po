@@ -12,6 +12,15 @@ msgstr ""
 msgid "%s log"
 msgstr "%s 日志"
 
+#: htdocs/luci-static/resources/fchomo.js:209
+#: htdocs/luci-static/resources/fchomo.js:210
+#: htdocs/luci-static/resources/fchomo.js:211
+#: htdocs/luci-static/resources/fchomo.js:212
+#: htdocs/luci-static/resources/fchomo.js:213
+#: htdocs/luci-static/resources/fchomo.js:214
+msgid "%s ports"
+msgstr "%s 端口"
+
 #: htdocs/luci-static/resources/fchomo.js:560
 #: htdocs/luci-static/resources/fchomo.js:563
 #: htdocs/luci-static/resources/view/fchomo/client.js:293
@@ -1128,8 +1137,8 @@ msgid "Google"
 msgstr "谷歌"
 
 #: htdocs/luci-static/resources/fchomo.js:212
-msgid "Google FCM ports"
-msgstr "谷歌 FCM 端口"
+msgid "Google FCM"
+msgstr "谷歌 FCM"
 
 #: root/usr/share/rpcd/acl.d/luci-app-fchomo.json:3
 msgid "Grant access to fchomo configuration"
@@ -2363,8 +2372,8 @@ msgid "Running"
 msgstr "正在运行"
 
 #: htdocs/luci-static/resources/fchomo.js:209
-msgid "SMTP ports"
-msgstr "SMTP 端口"
+msgid "SMTP"
+msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:127
 msgid "SOCKS"
@@ -2379,8 +2388,8 @@ msgid "SSH"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:210
-msgid "STUN ports"
-msgstr "STUN 端口"
+msgid "STUN"
+msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1151
 msgid "SUB-RULE"
@@ -2535,12 +2544,12 @@ msgid "Stack"
 msgstr "堆栈"
 
 #: htdocs/luci-static/resources/fchomo.js:213
-msgid "Steam Client ports"
-msgstr "Steam 客户端 端口"
+msgid "Steam Client"
+msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:214
-msgid "Steam P2P ports"
-msgstr "Steam P2P 端口"
+msgid "Steam P2P"
+msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1032
 #: htdocs/luci-static/resources/view/fchomo/client.js:1034
@@ -2669,8 +2678,8 @@ msgid "TUIC"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:211
-msgid "TURN ports"
-msgstr "TURN 端口"
+msgid "TURN"
+msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:243
 msgid ""
@@ -3435,6 +3444,24 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo.js:1159
 msgid "🡇"
 msgstr ""
+
+#~ msgid "Google FCM ports"
+#~ msgstr "谷歌 FCM 端口"
+
+#~ msgid "SMTP ports"
+#~ msgstr "SMTP 端口"
+
+#~ msgid "STUN ports"
+#~ msgstr "STUN 端口"
+
+#~ msgid "Steam Client ports"
+#~ msgstr "Steam 客户端"
+
+#~ msgid "Steam P2P ports"
+#~ msgstr "Steam P2P 端口"
+
+#~ msgid "TURN ports"
+#~ msgstr "TURN 端口"
 
 #~ msgid "Chain head"
 #~ msgstr "链头"

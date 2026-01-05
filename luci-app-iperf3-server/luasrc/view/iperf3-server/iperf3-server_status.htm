@@ -38,17 +38,16 @@
 	}
 
 	function stateBadge(it) {
-		// 兼容旧字段：it.running/it.pid
-		// 新字段优先：it.state
+		// 新字段优先：it.state；旧字段兼容：it.running
 		var st = it.state;
 
 		if (!st) {
-			if (it.enable === false) st = "disabled";
+			if (it.enable === false || it.enable === "0") st = "disabled";
 			else st = it.running ? "running" : "stopped";
 		}
 
 		if (st === "running")   return badge('<%:Running%>', 'green');
-		if (st === "delay")     return badge('<%:Delay%>', '#d67f00');      // 橙色
+		if (st === "delay")     return badge('<%:Delay%>', '#d67f00');
 		if (st === "conflict")  return badge('<%:Conflict%>', 'red');
 		if (st === "disabled")  return badge('<%:Disabled%>', '#999');
 		return badge('<%:Stopped%>', '#999');
@@ -75,6 +74,19 @@
 		return badge('<%:Not running%>', 'red');
 	}
 
+	function translateDetail(detail) {
+		// detail 来自 controller 的英文字符串，这里做映射为可翻译字符串
+		// 未命中映射时，直接原样显示
+		var map = {
+			"disabled in config": "<%:disabled in config%>",
+			"delay pending (sleep)": "<%:delay pending (sleep)%>",
+			"listening and iperf3 process found": "<%:listening and iperf3 process found%>",
+			"port is listening but not iperf3 (occupied)": "<%:port is listening but not iperf3 (occupied)%>",
+			"not listening": "<%:not listening%>"
+		};
+		return map[detail] || detail || "";
+	}
+
 	function renderStatus(data) {
 		var s = document.getElementById('iperf3_status');
 		s.innerHTML = overallBadge(data);
@@ -89,28 +101,33 @@
 				var it = data.servers[i];
 
 				var port = esc(it.port);
-				var en = (it.enable !== false) && (it.enable !== "0"); // 兼容 true/false/字符串
-				var detail = it.detail ? (' <span style="color:#999">(' + esc(it.detail) + ')</span>') : '';
+				var en = (it.enable !== false) && (it.enable !== "0");
 
-				// 兼容旧字段 pid
+				// 旧字段 pid 兼容
 				var pidInfo = '';
 				if (it.pid) {
-					pidInfo = ' <span style="color:#999">PID ' + esc(it.pid) + '</span>';
+					pidInfo = ' <span style="color:#999"><%:PID%> ' + esc(it.pid) + '</span>';
 				}
 
 				// 监听信息（新字段 listen）
 				var listenInfo = '';
 				if (typeof it.listen === "boolean") {
-					listenInfo = it.listen ? ' <span style="color:#999">[LISTEN]</span>' : ' <span style="color:#999">[NO LISTEN]</span>';
+					listenInfo = it.listen
+						? ' <span style="color:#999">[<%:LISTEN%>]</span>'
+						: ' <span style="color:#999">[<%:NO LISTEN%>]</span>';
 				}
 
+				// detail（来自 controller）
+				var dt = translateDetail(it.detail);
+				var detail = dt ? (' <span style="color:#999">(' + esc(dt) + ')</span>') : '';
+
 				html += '<li>'
-					+ 'Port ' + port + ' : '
+					+ '<%:Port%> ' + port + ' : '
 					+ stateBadge(it)
 					+ pidInfo
 					+ listenInfo
 					+ detail
-					+ (en ? '' : ' <span style="color:#999">(disabled)</span>')
+					+ (en ? '' : ' <span style="color:#999">(<%:disabled%>)</span>')
 					+ '</li>';
 			}
 
@@ -138,7 +155,6 @@
 		setBusy(true);
 		XHR.post(url, { token: token }, function (x, data) {
 			setBusy(false);
-			// restart 有 delay 的情况下，立即 refresh 可能还是 delay/stopped；轮询会继续更新
 			refresh();
 		});
 	}

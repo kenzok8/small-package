@@ -1,17 +1,34 @@
 module("luci.controller.iperf3-server", package.seeall)
 
 function index()
-	if not nixio.fs.access("/etc/config/iperf3-server") then
+	local fs = require "nixio.fs"
+
+	if not fs.access("/etc/config/iperf3-server") then
 		return
 	end
 
-	entry({"admin", "services", "iperf3-server"}, cbi("iperf3-server"), _("iPerf3 Server"), 99)
+	local page
 
-	entry({"admin", "services", "iperf3-server", "status"},  call("act_status")).leaf  = true
-	entry({"admin", "services", "iperf3-server", "start"},   call("act_start")).leaf   = true
-	entry({"admin", "services", "iperf3-server", "stop"},    call("act_stop")).leaf    = true
-	entry({"admin", "services", "iperf3-server", "restart"}, call("act_restart")).leaf = true
+	page = entry({"admin", "services", "iperf3-server"}, cbi("iperf3-server"), _("iPerf3 Server"), 99)
+	page.acl_depends = { "luci-app-iperf3-server" }
+
+	page = entry({"admin", "services", "iperf3-server", "status"},  call("act_status"))
+	page.leaf = true
+	page.acl_depends = { "luci-app-iperf3-server" }
+
+	page = entry({"admin", "services", "iperf3-server", "start"},   call("act_start"))
+	page.leaf = true
+	page.acl_depends = { "luci-app-iperf3-server" }
+
+	page = entry({"admin", "services", "iperf3-server", "stop"},    call("act_stop"))
+	page.leaf = true
+	page.acl_depends = { "luci-app-iperf3-server" }
+
+	page = entry({"admin", "services", "iperf3-server", "restart"}, call("act_restart"))
+	page.leaf = true
+	page.acl_depends = { "luci-app-iperf3-server" }
 end
+
 
 local function json_ok(extra)
 	local e = extra or {}
@@ -119,21 +136,21 @@ function act_status()
 		local state, detail
 		if not enabled then
 			state = "disabled"
-			detail = "disabled in config"
+			detail = "detail_disabled"
 		else
 			if delay_pending and not listen then
 				state = "delay"
-				detail = "delay pending (sleep)"
+				detail = "detail_delay"
 			elseif listen and iperf3_proc then
 				state = "running"
-				detail = "listening and iperf3 process found"
+				detail = "detail_running"
 				result.running = true
 			elseif listen and not iperf3_proc then
 				state = "conflict"
-				detail = "port is listening but not iperf3 (occupied)"
+				detail = "detail_conflict"
 			else
 				state = "stopped"
-				detail = "not listening"
+				detail = "detail_stopped"
 			end
 		end
 

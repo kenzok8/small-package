@@ -1,11 +1,17 @@
-msgid "iPerf3 - The ultimate speed test tool for TCP, UDP and SCTP"
-msgstr "iPerf3 是一款集 TCP UDP 和 SCTP 于的一身的终极速度测试工具"
-
-msgid "Port"
-msgstr "端口"
-
+#
+# App / Menu
+#
 msgid "iPerf3 Server"
 msgstr "iPerf3 服务器"
+
+msgid "iPerf3 - The ultimate speed test tool for TCP, UDP and SCTP"
+msgstr "iPerf3 是一款集 TCP、UDP 和 SCTP 于一身的终极速度测试工具"
+
+#
+# CBI (model)
+#
+msgid "Enable"
+msgstr "启用"
 
 msgid "Enable iPerf3 Servers"
 msgstr "启用 iPerf3 服务器"
@@ -16,15 +22,30 @@ msgstr "服务端设置"
 msgid "Set up Multi-iPerf3 Servers"
 msgstr "设置多个 iPerf3 服务端"
 
-msgid "Start delay"
-msgstr "启动延迟 (秒)"
+msgid "Port"
+msgstr "端口"
 
-msgid "iPerf3 Server listening port"
-msgstr "iPerf3 服务端监听端口"
+msgid "Start delay (Seconds)"
+msgstr "启动延迟（秒）"
 
 msgid "Extra Options"
 msgstr "额外参数"
 
+msgid "Invalid port."
+msgstr "端口无效。"
+
+msgid "Port must be unique."
+msgstr "端口必须唯一，不能重复。"
+
+msgid "Delay must be between 0 and 3600 seconds."
+msgstr "启动延迟必须在 0 到 3600 秒之间。"
+
+msgid "Invalid characters in Extra Options."
+msgstr "额外参数包含非法字符。"
+
+#
+# Status page (.htm)
+#
 msgid "Status"
 msgstr "状态"
 
@@ -55,26 +76,8 @@ msgstr "端口冲突"
 msgid "Disabled"
 msgstr "已禁用"
 
-msgid "starting after configured delay"
-msgstr "将在设定的延迟时间后启动"
-
-msgid "port is occupied"
-msgstr "端口已被其他服务占用"
-
-msgid "port is listening but not iperf3 (occupied)"
-msgstr "端口正在监听，但不是 iPerf3（被占用）"
-
-msgid "Delay pending (sleep)"
-msgstr "延迟启动中"
-
-msgid "listening and iperf3 process found"
-msgstr "正在监听，且 iPerf3 进程已启动"
-
-msgid "not listening"
-msgstr "未监听端口"
-
-msgid "disabled in config"
-msgstr "已在配置中禁用"
+msgid "disabled"
+msgstr "已禁用"
 
 msgid "PID"
 msgstr "进程号"
@@ -85,8 +88,11 @@ msgstr "监听中"
 msgid "NO LISTEN"
 msgstr "未监听"
 
-msgid "port is listening"
-msgstr "端口正在监听"
+msgid "starting after configured delay"
+msgstr "将在设定的延迟时间后启动"
+
+msgid "port is occupied"
+msgstr "端口已被其他服务占用"
 
 msgid "Start iPerf3 servers?"
 msgstr "确认启动 iPerf3 服务？"
@@ -96,3 +102,22 @@ msgstr "确认停止 iPerf3 服务？"
 
 msgid "Restart iPerf3 servers?"
 msgstr "确认重启 iPerf3 服务？"
+
+#
+# Controller detail keys (act_status -> detail)
+# 你现在返回的是 detail_* key，前端应做 key->文本映射或直接 <%:detail_xxx%>
+#
+msgid "detail_disabled"
+msgstr "已在配置中禁用"
+
+msgid "detail_delay"
+msgstr "延迟启动中"
+
+msgid "detail_running"
+msgstr "正在监听，且 iPerf3 进程已启动"
+
+msgid "detail_conflict"
+msgstr "端口正在监听，但不是 iPerf3（被占用）"
+
+msgid "detail_stopped"
+msgstr "未监听端口"

@@ -5,6 +5,15 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "%s log"
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:209
+#: htdocs/luci-static/resources/fchomo.js:210
+#: htdocs/luci-static/resources/fchomo.js:211
+#: htdocs/luci-static/resources/fchomo.js:212
+#: htdocs/luci-static/resources/fchomo.js:213
+#: htdocs/luci-static/resources/fchomo.js:214
+msgid "%s ports"
+msgstr ""
+
 #: htdocs/luci-static/resources/fchomo.js:560
 #: htdocs/luci-static/resources/fchomo.js:563
 #: htdocs/luci-static/resources/view/fchomo/client.js:293
@@ -1105,7 +1114,7 @@ msgid "Google"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:212
-msgid "Google FCM ports"
+msgid "Google FCM"
 msgstr ""
 
 #: root/usr/share/rpcd/acl.d/luci-app-fchomo.json:3
@@ -2331,7 +2340,7 @@ msgid "Running"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:209
-msgid "SMTP ports"
+msgid "SMTP"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:127
@@ -2347,7 +2356,7 @@ msgid "SSH"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:210
-msgid "STUN ports"
+msgid "STUN"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1151
@@ -2503,11 +2512,11 @@ msgid "Stack"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:213
-msgid "Steam Client ports"
+msgid "Steam Client"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:214
-msgid "Steam P2P ports"
+msgid "Steam P2P"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1032
@@ -2635,7 +2644,7 @@ msgid "TUIC"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:211
-msgid "TURN ports"
+msgid "TURN"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/server.js:243
