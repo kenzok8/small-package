@@ -529,7 +529,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"http-mask-mode": cfg.sudoku_http_mask_mode,
 		"http-mask-tls": strToBool(cfg.sudoku_http_mask_tls),
 		"http-mask-host": cfg.sudoku_http_mask_host,
-		"http-mask-strategy": cfg.sudoku_http_mask_strategy,
+		"http-mask-multiplex": cfg.sudoku_http_mask_multiplex,
 
 		/* Snell */
 		psk: cfg.snell_psk,
