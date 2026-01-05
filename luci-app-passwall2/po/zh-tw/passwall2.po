@@ -559,6 +559,9 @@ msgstr "自動檢測延迟"
 msgid "Show server address and port"
 msgstr "顯示服務器地址和端口"
 
+msgid "URL Test Address"
+msgstr "URL 測試地址"
+
 msgid "URL Test"
 msgstr "URL 測試"
 
