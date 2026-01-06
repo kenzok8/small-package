@@ -37,7 +37,9 @@ define Package/mihomo
   TITLE:=Another Mihomo Kernel.
   URL:=https://wiki.metacubex.one
   DEPENDS:=$(GO_ARCH_DEPENDS)
-  PROVIDES:=mihomo
+  #PROVIDES:=@mihomo-any # implicit self-provide
+  ALTERNATIVES:=\
+    100:/usr/bin/mihomo:/usr/libexec/fchomo/core
   USERID:=mihomo=7890:mihomo=7890
 endef
 
@@ -51,8 +53,8 @@ define Package/mihomo/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(CURDIR)/.prepare.sh $(VERSION) $(CURDIR) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME)
 
-	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/libexec/fchomo/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/libexec/fchomo/core
 endef
 
 $(eval $(call GoBinPackage,mihomo))
