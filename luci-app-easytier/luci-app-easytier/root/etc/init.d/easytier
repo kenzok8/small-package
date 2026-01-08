@@ -172,7 +172,7 @@ get_etconfig() {
 		listenermode="$(uci -q get easytier.@easytier[0].listenermode)"
 		tunname="$(uci -q get easytier.@easytier[0].tunname)"
 		relay_network="$(uci -q get easytier.@easytier[0].relay_network || echo 0)"
-		tcp_port="$(uci -q get easytier.@easytier[0].tcp_port)"
+		tcp_port="$(uci -q get easytier.@easytier[0].tcp_port | awk '{print $1}')"
 		ws_port="$(uci -q get easytier.@easytier[0].ws_port)"
 		wss_port="$(uci -q get easytier.@easytier[0].wss_port)"
 		wg_port="$(uci -q get easytier.@easytier[0].wg_port)"
@@ -220,8 +220,8 @@ get_etconfig() {
 		p2p_only="$(uci -q get easytier.@easytier[0].p2p_only || echo 0)"
 		disable_tcp="$(uci -q get easytier.@easytier[0].disable_tcp || echo 0)"
 		disable_sym="$(uci -q get easytier.@easytier[0].disable_sym || echo 0)"
-		udp_port="$(uci -q get easytier.@easytier[0].udp_port)"
-		tcp_port="$(uci -q get easytier.@easytier[0].tcp_port)"
+		udp_white_port="$(uci -q get easytier.@easytier[0].udp_white_port)"
+		tcp_white_port="$(uci -q get easytier.@easytier[0].tcp_white_port)"
 		disable_relay_kcp="$(uci -q get easytier.@easytier[0].disable_relay_kcp || echo 0)"
 		relay_kcp="$(uci -q get easytier.@easytier[0].relay_kcp || echo 0)"
 		
@@ -535,9 +535,11 @@ start_et() {
 				[ "$disable_sym" = "0" ] || core_cmd="${core_cmd} --disable-sym-hole-punching"
 				[ "$disable_relay_kcp" = "0" ] || core_cmd="${core_cmd} --disable-relay-kcp true"
 				[ "$relay_kcp" = "0" ] || core_cmd="${core_cmd} --enable-relay-foreign-network-kcp true"
-				[ -z "$udp_port" ] || core_cmd="${core_cmd} --udp-whitelist $udp_port"
-				[ -z "$tcp_port" ] || core_cmd="${core_cmd} --tcp-whitelist $tcp_port"
+				[ -z "$udp_white_port" ] || core_cmd="${core_cmd} --udp-whitelist $udp_white_port"
+				[ -z "$tcp_white_port" ] || core_cmd="${core_cmd} --tcp-whitelist $tcp_white_port"
 				[ -z "$extra_args" ] || core_cmd="${core_cmd} $extra_args"
+				
+				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} ${core_cmd} --console-log-level ${log}" >>/tmp/easytier.log
 				
 		
 	     		fi
