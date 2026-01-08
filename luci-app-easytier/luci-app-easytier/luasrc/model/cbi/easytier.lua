@@ -344,17 +344,17 @@ disable_udp = s:taboption("privacy", Flag, "disable_udp", translate("Disable UDP
         translate("Disable UDP hole punching (--disable-udp-hole-punching parameter)"))
 disable_udp:depends("etcmd", "etcmd")
 
-udp_port = s:taboption("privacy", Value, "udp_port", translate("UDP whitelist"),
+udp_white_port = s:taboption("privacy", Value, "udp_white_port", translate("UDP whitelist"),
         translate("udp port whitelist. Supports single ports (53) and ranges (5000-6000). (--udp-whitelist parameter)"))
-udp_port:depends("etcmd", "etcmd")
+udp_white_port:depends("etcmd", "etcmd")
 
 disable_tcp = s:taboption("privacy", Flag, "disable_tcp", translate("Disable TCP"),
         translate("Disable TCP hole punching (--disable-tcp-hole-punching parameter)"))
 disable_tcp:depends("etcmd", "etcmd")
 
-tcp_port = s:taboption("privacy", Value, "tcp_port", translate("TCP whitelist"),
+tcp_white_port = s:taboption("privacy", Value, "tcp_white_port", translate("TCP whitelist"),
         translate("tcp port whitelist. Supports single ports (53) and ranges (5000-6000). (--tcp-whitelist parameter)"))
-tcp_port:depends("etcmd", "etcmd")
+tcp_white_port:depends("etcmd", "etcmd")
 
 disable_sym = s:taboption("privacy", Flag, "disable_sym", translate("Disable sym"),
         translate("if true, disable udp nat hole punching for symmetric nat (NAT4), which is based on birthday attack and may be blocked by ISP. (--disable-sym-hole-punching parameter)"))
