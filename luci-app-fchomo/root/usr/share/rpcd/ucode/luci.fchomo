@@ -117,8 +117,8 @@ const methods = {
 				fd.close();
 			}
 
-			features.app_version = trim(popen(`${use_apk ? 'apk list -I' : 'opkg list-installed'} luci-app-fchomo | ` +
-				`awk '{print $${use_apk ? '1' : 'NF'}}' | sed 's|luci-app-fchomo-||'`).read('all')) || null; // @less_25_12
+			features.app_version = trim(popen(`${use_apk ? 'apk list -I --manifest' : 'opkg list-installed'} luci-app-fchomo | ` +
+				`awk '{print $NF}'`).read('all')) || null; // @less_25_12
 
 			features.has_dnsmasq_full = system(`[ -n "$(${use_apk ? 'apk list -qI' : 'opkg list-installed'} dnsmasq-full)" ]`) == 0 || null; // @less_25_12
 			features.has_ip_full = access('/usr/libexec/ip-full');
