@@ -255,6 +255,17 @@ const rules_type = [
 	['MATCH']
 ];
 
+const rules_type_allowparms = [
+	// params only available for types other than
+	// https://github.com/muink/mihomo/blob/300eb8b12a75504c4bd4a6037d2f6503fd3b347f/rules/parser.go#L12
+	'GEOIP',
+	'IP-ASN',
+	'IP-CIDR',
+	'IP-CIDR6',
+	'IP-SUFFIX',
+	'RULE-SET',
+];
+
 const rules_logical_type = [
 	['AND'],
 	['OR'],
@@ -1643,6 +1654,7 @@ return baseclass.extend({
 	proxy_group_type,
 	routing_port_type,
 	rules_type,
+	rules_type_allowparms,
 	rules_logical_type,
 	rules_logical_payload_count,
 	aead_cipher_length,
