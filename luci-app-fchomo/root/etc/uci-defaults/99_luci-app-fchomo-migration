@@ -1,52 +1,9 @@
 #!/bin/sh
+# Migration script for fchomo
+# Used to migrate LuCI application option.
 
-# custom list FQDN: -> DOMAIN:
-sed -i 's|^FQDN:$|DOMAIN:|' "/etc/fchomo/resources/direct_list.yaml" 2>/dev/null
-sed -i 's|^FQDN:$|DOMAIN:|' "/etc/fchomo/resources/proxy_list.yaml" 2>/dev/null
+CONF=fchomo
 
-# default_proxy -> client_enabled and MATCH rule
-default_proxy=$(uci -q get fchomo.routing.default_proxy)
-if [ -n "$default_proxy" ]; then
-	uci -q batch <<-EOF >"/dev/null"
-		delete fchomo.routing.default_proxy
-		set fchomo.routing.client_enabled="1"
-		set fchomo.autogened_final_host="rules"
-		set fchomo.autogened_final_host.label="Auto Generated Final"
-		set fchomo.autogened_final_host.entry="MATCH,$default_proxy"
-	EOF
-fi
-
-# routing_tcpport and routing_udpport format: value -> list
-for option in routing_tcpport routing_udpport; do
-	value=$(uci -q get fchomo.routing.$option)
-	if [ -z "$value" ]; then
-		uci -q batch <<-EOF >"/dev/null"
-			delete fchomo.routing.$option
-			add_list fchomo.routing.$option="all"
-		EOF
-	elif [ "$value" = "common" ]; then
-		uci -q batch <<-EOF >"/dev/null"
-			delete fchomo.routing.$option
-			add_list fchomo.routing.$option="${option/routing/common}"
-		EOF
-	elif [ "$value" = "common_stun" ]; then
-		uci -q batch <<-EOF >"/dev/null"
-			delete fchomo.routing.$option
-			add_list fchomo.routing.$option="${option/routing/common}"
-			add_list fchomo.routing.$option="stun_port"
-		EOF
-	fi
-done
-
-# dns.port -> dns.dns_port
-dns_port=$(uci -q get fchomo.dns.port)
-if [ -n "$dns_port" ]; then
-	uci -q batch <<-EOF >"/dev/null"
-		delete fchomo.dns.port
-		set fchomo.dns.dns_port="$dns_port"
-	EOF
-fi
-
-uci commit fchomo
+#uci commit "$CONF"
 
 exit 0
