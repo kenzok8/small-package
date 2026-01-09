@@ -1,0 +1,150 @@
+#!/bin/sh
+# Migration script for fchomo
+# Used to migrate LuCI application option.
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
+CONF=fchomo
+
+config_load "$CONF"
+
+hm_file=/www/luci-static/resources/fchomo.js
+raw_glossary="$(grep -o 'const glossary *= *{[^;]*};' $hm_file || sed -n '/^const glossary *= *{/,/^};$/p' $hm_file)"
+
+# func <sectiontype> <name>
+name_fmt() {
+	ucode -e "\
+		$raw_glossary \
+		let prefmt = glossary[\"$1\"].prefmt; \
+		printf(prefmt, '$2'); \
+	"
+}
+
+# func <sectiontype> <name> <src>
+mk_symlink() {
+	ln -sf /var/run/fchomo/$3 /etc/fchomo/$1/$(name_fmt $1 $2) 2>/dev/null
+}
+
+# func <sectiontype> <name> <label> [{"option1": value1, "option21": value2, ...}]
+mk_config() {
+	local section_id=$(name_fmt $1 $2)
+	_add_val() { uci_add_list $CONF $section_id $_key "$1"; }
+
+	if ! uci_get $CONF $section_id >/dev/null; then
+		uci_add $CONF $1 $section_id
+		uci_set $CONF $section_id label "$3"
+		if [ -n "$4" ]; then
+			local _keys _key _val _type
+			json_load "$4"
+			json_get_keys _keys
+			for _key in $_keys; do
+				json_get_var _val $_key
+				json_get_type _type $_key
+				if [ "$_type" = "array" ]; then
+					json_for_each_item _add_val $_key
+				else
+					uci_set $CONF $section_id $_key "$_val"
+				fi
+			done
+		fi
+	fi
+}
+
+
+# Initialize the default direct list
+mk_symlink ruleset fchomo_direct_list direct_list.yaml
+# ruleset config
+mk_config ruleset fchomo_direct_list 'Custom Direct List (Preset)' \
+'{
+	"type": "file",
+	"behavior": "classical",
+	"format": "yaml"
+}'
+# dns_policy config
+mk_config dns_policy fchomo_direct_list 'Custom Direct List (Preset)' \
+'{
+	"type": "rule_set",
+	"server": ["default-dns"],
+	"rule_set": ["'"$(name_fmt ruleset fchomo_direct_list)"'"],
+	"proxy": "DIRECT"
+}'
+# rules config
+#mk_config rules fchomo_direct_list 'Custom Direct List (Debug)' \
+#'{
+#	"entry": "{\"type\":\"RULE-SET\",\"payload\":[{\"type\":\"RULE-SET\",\"factor\":\"'"$(name_fmt ruleset fchomo_direct_list)"'\"}],\"detour\":\"DIRECT\"}"
+#}'
+
+
+# Initialize the default proxy list
+mk_symlink ruleset fchomo_proxy_list proxy_list.yaml
+# ruleset config
+mk_config ruleset fchomo_proxy_list 'Custom Proxy List (Preset)' \
+'{
+	"type": "file",
+	"behavior": "classical",
+	"format": "yaml"
+}'
+# dns_policy config
+mk_config dns_policy fchomo_proxy_list 'Custom Proxy List (Preset)' \
+'{
+	"type": "rule_set",
+	"server": ["default-dns"],
+	"rule_set": ["'"$(name_fmt ruleset fchomo_proxy_list)"'"],
+	"proxy": "GLOBAL"
+}'
+# rules config
+mk_config rules fchomo_proxy_list 'Custom Proxy List (Preset)' \
+'{
+	"entry": "{\"type\":\"RULE-SET\",\"payload\":[{\"type\":\"RULE-SET\",\"factor\":\"'"$(name_fmt ruleset fchomo_proxy_list)"'\"}],\"detour\":\"GLOBAL\"}"
+}'
+
+
+# Initialize the default china list
+mk_symlink ruleset fchomo_china_list china_list.mrs
+# ruleset config
+mk_config ruleset fchomo_china_list 'China List (Preset)' \
+'{
+	"type": "file",
+	"behavior": "domain",
+	"format": "mrs"
+}'
+# dns_policy config
+mk_config dns_policy fchomo_china_list 'China List (Preset)' \
+'{
+	"type": "rule_set",
+	"server": ["default-dns"],
+	"rule_set": ["'"$(name_fmt ruleset fchomo_china_list)"'"],
+	"proxy": "DIRECT"
+}'
+# rules config
+mk_config rules fchomo_china_list 'China List (Preset)' \
+'{
+	"entry": "{\"type\":\"RULE-SET\",\"payload\":[{\"type\":\"RULE-SET\",\"factor\":\"'"$(name_fmt ruleset fchomo_china_list)"'\"}],\"detour\":\"DIRECT\"}"
+}'
+
+
+# Initialize the default gfw list
+mk_symlink ruleset fchomo_gfw_list gfw_list.mrs
+# ruleset config
+mk_config ruleset fchomo_gfw_list 'GFW List (Preset)' \
+'{
+	"type": "file",
+	"behavior": "domain",
+	"format": "mrs"
+}'
+# dns_policy config
+mk_config dns_policy fchomo_gfw_list 'GFW List (Preset)' \
+'{
+	"type": "rule_set",
+	"server": ["default-dns"],
+	"rule_set": ["'"$(name_fmt ruleset fchomo_gfw_list)"'"],
+	"proxy": "GLOBAL"
+}'
+# rules config
+mk_config rules fchomo_gfw_list 'GFW List (Preset)' \
+'{
+	"entry": "{\"type\":\"RULE-SET\",\"payload\":[{\"type\":\"RULE-SET\",\"factor\":\"'"$(name_fmt ruleset fchomo_gfw_list)"'\"}],\"detour\":\"GLOBAL\"}"
+}'
+
+uci_commit $CONF
