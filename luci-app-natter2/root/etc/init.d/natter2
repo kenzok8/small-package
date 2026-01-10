@@ -10,7 +10,7 @@ start_service() {
 		interval enable_bonding bonding_interface bonding_port \
 		enable_forwarding forwarding_method target_address target_port \
 		enable_forwarding_retry enable_quit delay log_level enable_notify \
-		notify_path"
+		notify_path enable_upnp_service"
 	for i in $basic_list
 	do
 		local eval $i="$(uci_get_by_type base 0 $i)"
@@ -43,6 +43,8 @@ start_service() {
 			[ "$enable_keepalive_server" == 1 ] && script_command="$script_command -h $keepalive_server"
 			[ "$interval" ] && script_command="$script_command -k $interval"
 			
+			[ "$enable_upnp_service" == 1 ] && script_command="$script_command -U"
+
 			if [ "$enable_bonding" == 1 ]
 			then
 				[ "$bonding_interface" ] && script_command="$script_command -i $bonding_interface"
@@ -98,9 +100,9 @@ start_service() {
 
 stop_service() {
 	echo "Stopping Natter2 ..."
-	for i in $(ps -efww | grep "$script_path" | grep -v grep | grep -v $$ | awk '{print $1}')
+	for i in $(ps -ww | grep "$script_path" | grep -v grep | grep -v $$ | awk '{print $1}')
 	do
-		kill -9 "$i" 2> /dev/null
+		kill -15 "$i" 2> /dev/null
 	done
 	rm -r "$tmp_path" 2> /dev/null
 	for u in $(seq 0 $(($(uci show natter2 2> /dev/null | egrep '@instances\[[0-9]\]+=instances' | wc -l) - 1)))
@@ -109,6 +111,7 @@ stop_service() {
 		uci commit natter2
 	done
 	rm -f /tmp/natter2_nat_type
+	
 }
 
 restart() {
