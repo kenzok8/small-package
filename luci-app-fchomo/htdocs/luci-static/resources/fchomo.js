@@ -243,8 +243,10 @@ const rules_type = [
 
 	['PROCESS-PATH'],
 	['PROCESS-PATH-REGEX'],
+	['PROCESS-PATH-WILDCARD'],
 	['PROCESS-NAME'],
 	['PROCESS-NAME-REGEX'],
+	['PROCESS-NAME-WILDCARD'],
 	['UID'],
 
 	['NETWORK'],

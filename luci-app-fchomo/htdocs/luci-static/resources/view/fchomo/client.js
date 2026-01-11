@@ -342,7 +342,7 @@ const parseRulesYaml = hm.parseYaml.extend({
 
 	ParseRule(tp, payload, target, params) {
 		// parse rules
-		// https://github.com/muink/mihomo/blob/300eb8b12a75504c4bd4a6037d2f6503fd3b347f/rules/parser.go#L12
+		// https://github.com/muink/mihomo/blob/487de9b5482d838acc33b067045a0dc293e35d40/rules/parser.go#L12
 
 		// nested ParseRule
 		let logical_payload, subrule;
@@ -551,7 +551,7 @@ function renderPayload(s, total, uciconfig) {
 			o.depends({type: /\b(CIDR|CIDR6)\b/});
 			o.depends({type: /\bIP-SUFFIX\b/});
 		}
-		o.depends(Object.fromEntries([[prefix + 'type', /\b(CIDR|CIDR6)\b/]]));
+		o.depends(Object.fromEntries([[prefix + 'type', /\bCIDR6?\b/]]));
 		o.depends(Object.fromEntries([[prefix + 'type', /\bIP-SUFFIX\b/]]));
 		initPayload(o, n, 'factor', uciconfig);
 

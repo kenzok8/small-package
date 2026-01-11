@@ -70,11 +70,10 @@ mk_config dns_policy fchomo_direct_list 'Custom Direct List (Preset)' \
 	"proxy": "DIRECT"
 }'
 # rules config
-#mk_config rules fchomo_direct_list 'Custom Direct List (Debug)' \
-#'{
-#	"entry": "{\"type\":\"RULE-SET\",\"payload\":[{\"type\":\"RULE-SET\",\"factor\":\"'"$(name_fmt ruleset fchomo_direct_list)"'\"}],\"detour\":\"DIRECT\"}"
-#}'
-
+mk_config rules fchomo_direct_list 'Custom Direct List (Debug)' \
+'{
+	"entry": "{\"type\":\"RULE-SET\",\"payload\":[{\"type\":\"RULE-SET\",\"factor\":\"'"$(name_fmt ruleset fchomo_direct_list)"'\"}],\"detour\":\"DIRECT\"}"
+}'
 
 # Initialize the default proxy list
 mk_symlink ruleset fchomo_proxy_list proxy_list.yaml
