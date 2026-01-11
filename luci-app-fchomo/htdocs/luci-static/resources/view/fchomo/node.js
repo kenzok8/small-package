@@ -449,12 +449,20 @@ return view.extend({
 		so.depends({sudoku_http_mask_mode: /^(stream|poll|auto)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.ListValue, 'sudoku_http_mask_multiplex', _('HTTP mask multiplex'),
+		so = ss.taboption('field_general', form.RichListValue, 'sudoku_http_mask_multiplex', _('HTTP mask multiplex'),
 			_('Reusing a single tunnel to carry multiple target connections within it.'));
 		so.default = 'off';
 		so.value('off', _('OFF'));
-		so.value('auto', _('Auto'));
-		so.value('on', _('ON'));
+		so.value('auto', _('Auto'), _('Reuse h1.1 keep-alive / h2 connections to reduce RTT for each connection establishment.'));
+		so.value('on', _('ON'), _('Reusing a single tunnel to carry multiple target connections within it.'));
+		so.validate = function(section_id, value) {
+			const http_mask_mode = this.section.getOption('sudoku_http_mask_mode').formvalue(section_id);
+
+			if (value === 'on' && !['stream', 'poll', 'auto'].includes(http_mask_mode))
+				return _('Expecting: %s').format(_('only applies when %s is stream/poll/auto.').format(_('HTTP mask mode')));
+
+			return true;
+		}
 		so.depends('type', 'sudoku');
 		so.modalonly = true;
 
