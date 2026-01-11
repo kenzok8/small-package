@@ -1,6 +1,33 @@
 <%
 local api = require "luci.passwall.api"
 -%>
+<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js?v=26.1.11"></script>
+
+<style>
+table .cbi-button-up,
+table .cbi-button-down {
+	display: none !important;
+}
+
+.drag-handle {
+	cursor: grab !important;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 20px;
+	font-weight: 100;
+	padding: 0 !important;
+	line-height: inherit;
+	user-select: none;
+	align-self: stretch;
+}
+
+.dragging-row {
+	background-color: rgba(131, 191, 255, 0.7) !important;
+	box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+</style>
+
 <script type="text/javascript">
 	//<![CDATA[
 	var appname = "<%= api.appname %>"
@@ -107,5 +134,131 @@ local api = require "luci.passwall.api"
 			}
 		});
 	}
+
+	//订阅列表添加拖拽排序
+	(function () {
+		function initSortableForTable() {
+			var section = document.getElementById("cbi-<%=api.appname%>-subscribe_list");
+			if (!section) return;
+
+			hideSortColumn(section);
+
+			// === 插入 drag handle ===
+			var delBtns = section.getElementsByClassName("cbi-button-remove");
+			for (var i = 0; i < delBtns.length; i++) {
+				var btnsInRow = delBtns[i].closest("tr").getElementsByClassName("cbi-button-remove");
+				if (!btnsInRow || btnsInRow.length === 0) continue;
+				var btn = btnsInRow[btnsInRow.length - 1];
+				var parent = btn && btn.parentNode;
+				if (!parent || parent.getElementsByClassName("drag-handle").length) continue;
+				var handle = document.createElement("span");
+				handle.className = "drag-handle center";
+				handle.title = "<%:Drag to reorder%>";
+				handle.innerHTML = "⠿";
+				parent.insertBefore(handle, btn.nextSibling);
+			}
+
+			// === 初始化 Sortable ===
+			var table = section.getElementsByTagName("table")[0];
+			if (!table) return;
+			var root = table.tBodies[0] || table;
+			if (root._sortable_initialized) return root._sortable_instance;
+			root._sortable_initialized = true;
+
+			// 保存原始顺序
+			root._origOrder = getCurrentOrder(root);
+
+			try {
+				root._sortable_instance = Sortable.create(root, {
+					handle: ".drag-handle",
+					draggable: "tr.cbi-section-table-row",
+					animation: 150,
+					ghostClass: "dragging-row",
+					fallbackOnBody: true,
+					forceFallback: false,
+					swapThreshold: 0.65,
+					onEnd: function (evt) {
+						updateHiddenInput(root, section);
+					}
+				});
+				return root._sortable_instance;
+			} catch (e) {
+				root._sortable_initialized = false;
+				console.error("Sortable init failed:", e);
+			}
+		}
+
+		// 获取 table 当前行顺序
+		function getCurrentOrder(root) {
+			var order = [];
+			var rows = root.querySelectorAll("tr.cbi-section-table-row");
+			rows.forEach(function (tr) {
+				var id = tr.id || "";
+				if (id.startsWith("cbi-<%=api.appname%>-"))
+					id = id.replace("cbi-<%=api.appname%>-", "");
+				order.push(id);
+			});
+			return order;
+		}
+
+		// 拖拽完成后更新 hidden input
+		function updateHiddenInput(root, section) {
+			var newOrder = getCurrentOrder(root);
+			var changed = newOrder.join(" ") !== root._origOrder.join(" ");
+			var hiddenInput = section.querySelector('input[type="hidden"][id^="cbi.sts."]');
+			if (hiddenInput) {
+				hiddenInput.value = changed ? newOrder.join(" ") : "";
+			}
+		}
+
+		// 隐藏18.06 up/down 列
+		function hideSortColumn(section) {
+			var table = section.querySelector("table");
+			if (!table) return;
+			var ths = Array.prototype.slice.call(table.querySelectorAll("tr.cbi-section-table-titles > th"));
+			var dataRows = table.querySelectorAll("tr.cbi-section-table-row");
+			if (!ths.length || !dataRows.length) return;
+			var sortCol = -1;
+			for (var i = 0; i < ths.length; i++) {
+				var hasSort = false, invalid = false;
+				dataRows.forEach(function(tr) {
+					var td = tr.querySelectorAll(":scope > td")[i];
+					if (!td) return;
+					if (td.querySelector(".cbi-button-edit, .cbi-button-remove")) invalid = true;
+					if (td.querySelector(".cbi-button-up, .cbi-button-down")) hasSort = true;
+				});
+				if (!invalid && hasSort) { sortCol = i; break; }
+			}
+			if (sortCol === -1) return;
+			var rows = [table.querySelector("tr.cbi-section-table-titles")].concat(
+				Array.prototype.slice.call(dataRows),
+				Array.prototype.slice.call(table.querySelectorAll("tr.cbi-section-table-descr"))
+			);
+			rows.forEach(function(tr) {
+				var cells = Array.prototype.filter.call(tr.children, function(el) {
+					return el.tagName === "TH" || el.tagName === "TD";
+				});
+				if (cells[sortCol]) cells[sortCol].style.display = "none";
+			});
+		}
+
+		// === 等待 TypedSection 行稳定 ===
+		(function waitStable() {
+			var last = 0, stable = 0;
+			var THRESHOLD = 5;
+			function tick() {
+				var count = document.querySelectorAll("tr.cbi-section-table-row").length;
+				if (count && count === last) stable++;
+				else stable = 0;
+
+				last = count;
+				if (stable >= THRESHOLD)
+					initSortableForTable();
+				else
+					requestAnimationFrame(tick);
+			}
+			tick();
+		})();
+	})();
 	//]]>
 </script>

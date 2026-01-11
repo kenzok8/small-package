@@ -1,5 +1,6 @@
 #!/bin/sh /etc/rc.common
 
+USE_PROCD=1
 START=98
 script_path="/usr/share/natter2/natter.py"
 
@@ -11,20 +12,19 @@ start_service() {
 		enable_forwarding forwarding_method target_address target_port \
 		enable_forwarding_retry enable_quit delay log_level enable_notify \
 		notify_path enable_upnp_service"
-	for i in $basic_list
-	do
+	
+	for i in $basic_list; do
 		local eval $i="$(uci_get_by_type base 0 $i)"
 	done ; unset i
-	if [ "$enable" == 1 ]
-	then
+
+	if [ "$enable" == 1 ]; then
 		mkdir -p ${tmp_path}
 		mkdir -p /var/etc/natter2
-		for u in $(seq 0 $(($(uci show natter2 2> /dev/null | egrep '@instances\[[0-9]\]+=instances' | wc -l) - 1)))
+
+		for u in $(seq 0 $(($(uci show natter2 2> /dev/null | grep -E '@instances\[[0-9]\]+=instances' | wc -l) - 1)))
 		do
-			for i in $instance_list
-			do
+			for i in $instance_list; do
 				local eval $i="$(uci_get_by_type instances $u $i)"
-				# echo "$i : $(uci_get_by_type instances $u $i)"
 			done ; unset i
 
 			[ "$enable_instance" != 1 ] && continue
@@ -32,27 +32,22 @@ start_service() {
 			
 			[ "$protocol" == udp ] && script_command="$script_command -u"
 			
-			if [ "$enable_stun_server" == 1 ]
-			then
-				for i in $stun_server
-				do
+			if [ "$enable_stun_server" == 1 ]; then
+				for i in $stun_server; do
 					script_command="$script_command -s $i"
 				done ; unset i
 			fi
 			
 			[ "$enable_keepalive_server" == 1 ] && script_command="$script_command -h $keepalive_server"
 			[ "$interval" ] && script_command="$script_command -k $interval"
-			
 			[ "$enable_upnp_service" == 1 ] && script_command="$script_command -U"
 
-			if [ "$enable_bonding" == 1 ]
-			then
+			if [ "$enable_bonding" == 1 ]; then
 				[ "$bonding_interface" ] && script_command="$script_command -i $bonding_interface"
 				[ "$bonding_port" ] && script_command="$script_command -b $bonding_port"
 			fi
 			
-			if [ "$enable_forwarding" == 1 ]
-			then
+			if [ "$enable_forwarding" == 1 ]; then
 				[ "$forwarding_method" ] && script_command="$script_command -m $forwarding_method"
 				[ "$target_address" ] && script_command="$script_command -t $target_address"
 				[ "$target_port" ] && script_command="$script_command -p $target_port"
@@ -60,35 +55,30 @@ start_service() {
 			fi
 			
 			[ "$enable_quit" == 1 ] && script_command="$script_command -q"
-			
 			[ "$log_level" == "verbose" ] && script_command="$script_command -v"
 			
-			if [ "$enable_notify" == 1 ]
-			then
+			if [ "$enable_notify" == 1 ]; then
 				echo "$notify_path" > /var/etc/natter2/${id}-notify
 				var_file=/var/etc/natter2/${id}-${u}-1
 			else
 				var_file=/var/etc/natter2/${id}-${u}-0
 			fi
 			
-			log_file=${tmp_path}/natter2-${id}.log
-			
 			cp -a /usr/share/luci-app-natter2/notify-base.sh $var_file
 			chmod +x $var_file
 			
-			# echo "log_file: $log_file"
-			# echo "var_file: $var_file"
+			procd_open_instance "natter2_${id}"
+			procd_set_param command $(command -v python) "$script_path" $script_command -e $var_file
 			
-			sleep $delay
-			for i in $(ps -efww | grep "$script_path" | grep -v grep | grep -v $$ | grep "$id" | awk '{print $1}')
-			do
-				kill -9 "$i" 2> /dev/null
-			done
+			procd_set_param stdout 1
+			procd_set_param stderr 1
 			
-			nohup $(command -v python) "$script_path" $script_command -e $var_file > "$log_file" 2>&1 &
+			[ -n "$delay" ] && procd_set_param delay "$delay"
+			procd_set_param respawn
 			
-			for i in $instance_list
-			do
+			procd_close_instance
+
+			for i in $instance_list; do
 				unset $(echo $i)
 			done ; unset i
 			unset script_command
@@ -99,24 +89,13 @@ start_service() {
 }
 
 stop_service() {
-	echo "Stopping Natter2 ..."
-	for i in $(ps -ww | grep "$script_path" | grep -v grep | grep -v $$ | awk '{print $1}')
-	do
-		kill -15 "$i" 2> /dev/null
-	done
-	rm -r "$tmp_path" 2> /dev/null
-	for u in $(seq 0 $(($(uci show natter2 2> /dev/null | egrep '@instances\[[0-9]\]+=instances' | wc -l) - 1)))
+	rm -rf "/var/etc/natter2" 2> /dev/null
+	for u in $(seq 0 $(($(uci show natter2 2> /dev/null | grep -E '@instances\[[0-9]\]+=instances' | wc -l) - 1)))
 	do
 		uci set natter2.@instances[$u].tmp_public_port=""
 		uci commit natter2
 	done
 	rm -f /tmp/natter2_nat_type
-	
-}
-
-restart() {
-	stop_service
-	start_service
 }
 
 service_triggers() {
