@@ -7,24 +7,47 @@ XHR.poll(3, '<%=url([[admin]], [[vpn]], [[easytier]], [[status]])%>', null,
     function(x, data) {
         var st = document.getElementById('easytier_status');
         if (data && st) {
-            var clientStatus = data.crunning ? "<span style='color:green;'> 运行中</span><img src='https://www.right.com.cn/forum/data/attachment/album/202401/30/081238k459q2d5klacs8rk.gif' width='30px' alt=''>" : "<span style='color:red;'> 未运行</span>";
-            var etstaContent = data.crunning ? "已运行：" + "<span style='color:#DA70D6;'>" + data.etsta + "</span>" : "";      
-            var etcpuContent = data.crunning ? "<br>" + "&nbsp;&nbsp;CPU占用：" + "<span style='color:#6A5ACD;'>" + data.etcpu + "</span>" : "";  
-            var etramContent = data.crunning ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;&nbsp;内存占用：" + "<span style='color:#0000CD;'>" + data.etram + "</span>" : "";
-            var ettagContent = data.crunning ? "<br>" + "&nbsp;&nbsp;当前版本：" + "<span style='color:#CD853F;'>" + data.ettag + "</span>" : ""; 
-            var etnewtagContent = data.crunning ? "&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;最新版本：" + "<span style='color:#FFA500;'>" + data.etnewtag + "</span>" : ""; 
-
-            var webStatus = data.wrunning ? "<span style='color:green;'> 运行中</span><img src='https://www.right.com.cn/forum/data/attachment/album/202401/30/081238k459q2d5klacs8rk.gif' width='30px' alt=''>" : "<span style='color:red;'> 未运行</span>";
-            var etwebstaContent = data.wrunning ? "已运行：" + "<span style='color:#DA70D6;'>" + data.etwebsta + "</span>" : "";
-            var etwebcpuContent = data.wrunning ? "<br>" + "&nbsp;&nbsp;CPU占用：" + "<span style='color:#6A5ACD;'>" + data.etwebcpu + "</span>" : "";  
-            var etwebramContent = data.wrunning ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;&nbsp;内存占用：" + "<span style='color:#0000CD;'>" + data.etwebram + "</span>" : "";
-            var etwtagContent = data.wrunning ? "<br>" + "&nbsp;&nbsp;当前版本：" + "<span style='color:#CD853F;'>" + data.ettag + "</span>" : ""; 
-            var etwnewtagContent = data.wrunning ? "&nbsp;&nbsp;&nbsp;&nbsp;" + "&nbsp;&nbsp;&nbsp;最新版本：" + "<span style='color:#FFA500;'>" + data.etnewtag + "</span>" : ""; 
-            var etwebContent = "";
-            if (data.port !== 0 && data.wrunning) {
-            	etwebContent = "&nbsp;&nbsp;&nbsp;" + "<input class=\"cbi-button cbi-button-reload mar-10\" type=\"button\" value=\" <%:Web Console%> \" onclick=\"window.open('<%=protocol%>" + window.location.hostname + ":" + data.port + "')\"/>";
+            var html = '';
+            
+            // easytier-core 状态
+            var coreStatus = data.crunning 
+                ? "<span style='color:#4CAF50;font-weight:bold;'>● 运行中</span>" 
+                : "<span style='color:#F44336;font-weight:bold;'>○ 未运行</span>";
+            
+            html += "<div style='margin-bottom:16px;'>";
+            html += "<div style='font-size:15px;font-weight:bold;margin-bottom:8px;'>easytier-core " + coreStatus + "</div>";
+            
+            if (data.crunning) {
+                html += "<table style='border-collapse:collapse;'>";
+                html += "<tr><td style='padding:2px 16px 2px 0;'>运行时间</td><td>" + data.etsta + "</td></tr>";
+                html += "<tr><td style='padding:2px 16px 2px 0;'>CPU / 内存</td><td>" + data.etcpu + " / " + data.etram + "</td></tr>";
+                html += "<tr><td style='padding:2px 16px 2px 0;'>当前 / 最新版本</td><td>" + data.ettag + " / " + data.etnewtag + "</td></tr>";
+                html += "</table>";
             }
-            st.innerHTML = "<em><b>easytier-core " + clientStatus + etstaContent + etcpuContent + etramContent + ettagContent + etnewtagContent + "</b></em><br><br><em><b>easytier-web " + webStatus + etwebstaContent + etwebcpuContent + etwebramContent + etwtagContent + etwnewtagContent + etwebContent + "</b></em>";         
+            html += "</div>";
+            
+            // easytier-web 状态
+            var webStatus = data.wrunning 
+                ? "<span style='color:#4CAF50;font-weight:bold;'>● 运行中</span>" 
+                : "<span style='color:#F44336;font-weight:bold;'>○ 未运行</span>";
+            
+            html += "<div>";
+            html += "<div style='font-size:15px;font-weight:bold;margin-bottom:8px;'>easytier-web " + webStatus + "</div>";
+            
+            if (data.wrunning) {
+                html += "<table style='border-collapse:collapse;'>";
+                html += "<tr><td style='padding:2px 16px 2px 0;'>运行时间</td><td>" + data.etwebsta + "</td></tr>";
+                html += "<tr><td style='padding:2px 16px 2px 0;'>CPU / 内存</td><td>" + data.etwebcpu + " / " + data.etwebram + "</td></tr>";
+                html += "<tr><td style='padding:2px 16px 2px 0;'>当前 / 最新版本</td><td>" + data.ettag + " / " + data.etnewtag + "</td></tr>";
+                html += "</table>";
+                
+                if (data.port !== 0) {
+                    html += "<div style='margin-top:8px;'><input class='cbi-button cbi-button-reload' type='button' value=' <%:Web Console%> ' onclick=\"window.open('<%=protocol%>" + window.location.hostname + ":" + data.port + "')\"/></div>";
+                }
+            }
+            html += "</div>";
+            
+            st.innerHTML = html;
         }
     }
 );
