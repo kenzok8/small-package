@@ -237,6 +237,6 @@ o.cfgvalue = function(self, section)
 	section, translate("Manual subscription"))
 end
 
-s:append(Template(appname .. "/node_subscribe/js"))
+m:append(Template(appname .. "/node_subscribe/js"))
 
 return m

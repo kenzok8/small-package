@@ -8,19 +8,24 @@ api.set_apply_on_parse(m)
 s = m:section(TypedSection, "global_rules", translate("Rule status"))
 s.anonymous = true
 
-o = s:option(Value, "v2ray_location_asset", translate("Location of V2ray/Xray asset"), translate("This variable specifies a directory where geoip.dat and geosite.dat files are."))
+o = s:option(ListValue, "geoip_url", translate("GeoIP Update URL"))
+o:value("https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat", translate("Loyalsoldier/geoip"))
+o:value("https://github.com/MetaCubeX/meta-rules-dat/releases/latest/download/geoip.dat", translate("MetaCubeX/geoip"))
+o:value("https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@release/geoip.dat", translate("Loyalsoldier/geoip (CDN)"))
+o:value("https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat", translate("MetaCubeX/geoip (CDN)"))
+o.default = o.keylist[1]
+
+o = s:option(ListValue, "geosite_url", translate("Geosite Update URL"))
+o:value("https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat", translate("Loyalsoldier/geosite"))
+o:value("https://github.com/MetaCubeX/meta-rules-dat/releases/latest/download/geosite.dat", translate("MetaCubeX/geosite"))
+o:value("https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat", translate("Loyalsoldier/geosite (CDN)"))
+o:value("https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat", translate("MetaCubeX/geosite (CDN)"))
+o.default = o.keylist[1]
+
+o = s:option(Value, "v2ray_location_asset", translate("Location of Geo rule files"), translate("This variable specifies a directory where geoip.dat and geosite.dat files are."))
 o.default = "/usr/share/v2ray/"
+o.placeholder = o.default
 o.rmempty = false
-
----- Custom geo file url
-o = s:option(Value, "geoip_url", translate("Custom geoip URL"))
-o.default = "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
-o.rmempty = false
-
-o = s:option(Value, "geosite_url", translate("Custom geosite URL"))
-o.default = "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest"
-o.rmempty = false
-----
 
 if api.is_finded("geoview") then
 	o = s:option(Flag, "enable_geoview", translate("Enable Geo Data Parsing"))
@@ -39,8 +44,6 @@ if api.is_finded("geoview") then
 		return Flag.write(self, section, value)
 	end
 end
-
-s:append(Template(appname .. "/rule/rule_version"))
 
 ---- Auto Update
 o = s:option(Flag, "auto_update", translate("Enable auto update rules"))
@@ -82,6 +85,17 @@ for t = 1, 24 do o:value(t, t .. " " .. translate("hour")) end
 o.default = 2
 o:depends("week_update", "8")
 o.rmempty = true
+
+--- The update option is always hidden by JavaScript.
+local flags = {
+	"geoip_update", "geosite_update"
+}
+for _, f in ipairs(flags) do
+	o = s:option(Flag, f)
+	o.rmempty = false
+end
+
+s:append(Template(appname .. "/rule/rule_version"))
 
 s = m:section(TypedSection, "shunt_rules", "Sing-Box/Xray " .. translate("Shunt Rule"), "<a style='color: red'>" .. translate("Please note attention to the priority, the higher the order, the higher the priority.") .. "</a>")
 s.template = "cbi/tblsection"

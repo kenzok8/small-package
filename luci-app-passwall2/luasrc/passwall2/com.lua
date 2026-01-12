@@ -57,4 +57,18 @@ _M.xray = {
 	}
 }
 
+_M.geoview = {
+	name = "Geoview",
+	repo = "snowie2000/geoview",
+	get_url = gh_release_url,
+	cmd_version = '-version 2>/dev/null | awk \'NR==1 && $1=="Geoview" {print $2}\'',
+	zipped = false,
+	default_path = "/usr/bin/geoview",
+	match_fmt_str = "linux%%-%s",
+	file_tree = {
+		mipsel = "mipsle",
+		mips64el = "mips64le"
+	}
+}
+
 return _M

@@ -27,7 +27,7 @@ config global_delay
 config global_forwarding
 	option tcp_no_redir_ports 'disable'
 	option udp_no_redir_ports 'disable'
-	option tcp_redir_ports '22,25,53,80,143,443,465,587,853,873,993,995,5222,8080,8443,9418'
+	option tcp_redir_ports '1:65535'
 	option udp_redir_ports '1:65535'
 	option accept_icmp '0'
 	option use_nft '0'
@@ -46,9 +46,12 @@ config global_rules
 	option geosite_update '1'
 	option geoip_update '1'
 	option v2ray_location_asset '/usr/share/v2ray/'
+	option geoip_url 'https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat'
+	option geosite_url 'https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat'
 	option enable_geoview '1'
 
 config global_app
+	option geoview_file '/usr/bin/geoview'
 	option xray_file '/usr/bin/xray'
 	option hysteria_file '/usr/bin/hysteria'
 	option sing_box_file '/usr/bin/sing-box'
@@ -64,10 +67,6 @@ config global_subscribe
 	
 config global_singbox
 	option sniff_override_destination '0'
-	option geoip_path '/usr/share/singbox/geoip.db'
-	option geoip_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.db'
-	option geosite_path '/usr/share/singbox/geosite.db'
-	option geosite_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.db'
 
 config nodes 'myshunt'
 	option remarks '分流总节点'
@@ -78,6 +77,7 @@ config nodes 'myshunt'
 	option Direct '_direct'
 	option GooglePlay '_default'
 	option Proxy '_default'
+	option GFW '_default'
 	option China '_direct'
 	option QUIC '_blackhole'
 	option default_node '_direct'
@@ -111,9 +111,7 @@ lv.queniujq.cn
 alibaba.cdn.steampipe.steamcontent.com
 
 # CN Game geosite domain
-geosite:category-games@cn
-rule-set:remote:https://raw.githubusercontent.com/lyc8503/sing-box-rules/rule-set-geosite/geosite-category-games%40cn.srs
-'
+geosite:category-games@cn'
 
 	option ip_list '# Steam IP
 45.121.184.0/24
@@ -182,8 +180,7 @@ steamcloud-sydney.storage.googleapis.com
 steamcloud-taiwan.storage.googleapis.com
 steamcloud-eu.storage.googleapis.com
 
-geosite:category-games
-rule-set:remote:https://raw.githubusercontent.com/lyc8503/sing-box-rules/rule-set-geosite/geosite-category-games.srs'
+geosite:category-games'
 
 config shunt_rules 'Direct'
 	option network 'tcp,udp'
@@ -220,14 +217,12 @@ domain:xn--ngstr-lra8j.com'
 config shunt_rules 'Netflix'
 	option remarks 'Netflix'
 	option network 'tcp,udp'
-	option domain_list 'geosite:netflix
-rule-set:remote:https://raw.githubusercontent.com/lyc8503/sing-box-rules/rule-set-geosite/geosite-netflix.srs'
+	option domain_list 'geosite:netflix'
 	
 config shunt_rules 'OpenAI'
 	option remarks 'OpenAI'
 	option network 'tcp,udp'
-	option domain_list 'geosite:openai
-rule-set:remote:https://raw.githubusercontent.com/lyc8503/sing-box-rules/rule-set-geosite/geosite-openai.srs'
+	option domain_list 'geosite:openai'
 
 config shunt_rules 'Proxy'
 	option network 'tcp,udp'
@@ -257,13 +252,16 @@ config shunt_rules 'Proxy'
 2606:4700:4700::1001
 '
 
+config shunt_rules 'GFW'
+	option remarks 'GFW'
+	option network 'tcp,udp'
+	option domain_list 'geosite:gfw'
+
 config shunt_rules 'China'
 	option remarks 'China'
 	option network 'tcp,udp'
-	option ip_list 'geoip:cn
-rule-set:remote:https://raw.githubusercontent.com/lyc8503/sing-box-rules/rule-set-geoip/geoip-cn.srs'
-	option domain_list 'geosite:cn
-rule-set:remote:https://raw.githubusercontent.com/lyc8503/sing-box-rules/rule-set-geosite/geosite-cn.srs'
+	option ip_list 'geoip:cn'
+	option domain_list 'geosite:cn'
 
 config shunt_rules 'QUIC'
 	option remarks 'QUIC'

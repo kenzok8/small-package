@@ -13,169 +13,183 @@ local arg2 = arg[2]
 local arg3 = arg[3]
 
 local reboot = 0
-local geoip_update = 0
-local geosite_update = 0
-local asset_location = uci:get_first(name, 'global_rules', "v2ray_location_asset", "/usr/share/v2ray/")
+local geoip_update = "0"
+local geosite_update = "0"
 
--- Custom geo file
-local geoip_api = uci:get_first(name, 'global_rules', "geoip_url", "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest")
-local geosite_api = uci:get_first(name, 'global_rules', "geosite_url", "https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases/latest")
+local geoip_url =  uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
+local geosite_url =  uci:get(name, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+local asset_location = uci:get(name, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+asset_location = asset_location:match("/$") and asset_location or (asset_location .. "/")
 
 if arg3 == "cron" then
 	arg2 = nil
 end
 
 -- curl
-local function curl(url, file)
+local function curl(url, file, valifile)
 	local args = {
-		"-skL", "-w %{http_code}", "--retry 3", "--connect-timeout 3", "--max-time 300", "--speed-limit 51200 --speed-time 15"
+		"-skL", "-w %{http_code}", "--retry 3", "--connect-timeout 3", "--max-time 300", "--speed-limit 51200 --speed-time 15",
+		'-A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"'
 	}
 	if file then
 		args[#args + 1] = "-o " .. file
 	end
-	local return_code, result = api.curl_logic(url, nil, args)
+	if valifile then
+		args[#args + 1] = "--dump-header " .. valifile
+	end
+	local return_code, result = api.curl_auto(url, nil, args)
 	return tonumber(result)
 end
 
-local function fetch_geoip()
-	xpcall(function()
-		local return_code, content = api.curl_logic(geoip_api)
-		local json = jsonc.parse(content)
-		if json.tag_name and json.assets then
-			for _, v in ipairs(json.assets) do
-				if v.name and v.name == "geoip.dat.sha256sum" then
-					local sret = curl(v.browser_download_url, "/tmp/geoip.dat.sha256sum")
-					if sret == 200 then
-						local f = io.open("/tmp/geoip.dat.sha256sum", "r")
-						local content = f:read()
-						f:close()
-						f = io.open("/tmp/geoip.dat.sha256sum", "w")
-						f:write(content:gsub("geoip.dat", "/tmp/geoip.dat"), "")
-						f:close()
+local function non_file_check(file_path, vali_file)
+	if fs.readfile(file_path, 10) then
+		local size_str = sys.exec("grep -i 'Content-Length' " .. vali_file .. " | tail -n1 | sed 's/[^0-9]//g'")
+		local remote_file_size = tonumber(size_str)
+		remote_file_size = (remote_file_size and remote_file_size > 0) and remote_file_size or nil
+		local local_file_size = tonumber(fs.stat(file_path, "size"))
+		if remote_file_size and local_file_size then
+			if remote_file_size == local_file_size then
+				return nil;
+			else
+				log(2, api.i18n.translatef("Download file size verification error. Original file size: %sB. Downloaded file size: %sB.", remote_file_size, local_file_size))
+				return true;
+			end
+		else
+			return nil;
+		end
+	else
+		log(2, api.i18n.translate("Error reading downloaded file."))
+		return true;
+	end
+end
 
-						if fs.access(asset_location .. "geoip.dat") then
-							sys.call(string.format("cp -f %s %s", asset_location .. "geoip.dat", "/tmp/geoip.dat"))
-							if sys.call('sha256sum -c /tmp/geoip.dat.sha256sum > /dev/null 2>&1') == 0 then
-								log(1, api.i18n.translatef("%s version is the same and does not need to be updated.", "geoip"))
-								return 1
-							end
-						end
-						for _2, v2 in ipairs(json.assets) do
-							if v2.name and v2.name == "geoip.dat" then
-								sret = curl(v2.browser_download_url, "/tmp/geoip.dat")
-								if sys.call('sha256sum -c /tmp/geoip.dat.sha256sum > /dev/null 2>&1') == 0 then
-									sys.call(string.format("mkdir -p %s && cp -f %s %s", asset_location, "/tmp/geoip.dat", asset_location .. "geoip.dat"))
-									reboot = 1
-									log(1, api.i18n.translatef("%s update success.", "geoip"))
-									return 1
-								else
-									log(1, api.i18n.translatef("%s update failed, please try again later.", "geoip"))
-								end
-								break
-							end
-						end
-					end
-					break
+local function fetch_geofile(geo_name, geo_type, url)
+	local tmp_path = "/tmp/" .. geo_name
+	local asset_path = asset_location .. geo_name
+	local down_filename = url:match("^.*/([^/?#]+)")
+	local sha_url = url:gsub(down_filename, down_filename .. ".sha256sum")
+	local sha_path = tmp_path .. ".sha256sum"
+	local vali_file = tmp_path .. ".vali"
+
+	local function verify_sha256(sha_file)
+		return sys.call("sha256sum -c " .. sha_file .. " > /dev/null 2>&1") == 0
+	end
+
+	local sha_verify = curl(sha_url, sha_path) == 200
+	if sha_verify then
+		local f = io.open(sha_path, "r")
+		if f then
+			local content = f:read("*l")
+			f:close()
+			if content then
+				content = content:gsub(down_filename, tmp_path)
+				f = io.open(sha_path, "w")
+				if f then
+					f:write(content)
+					f:close()
 				end
 			end
 		end
-		if json.message then
-			log(2, json.message)
+		if fs.access(asset_path) then
+			sys.call(string.format("cp -f %s %s", asset_path, tmp_path))
+			if verify_sha256(sha_path) then
+				log(1, api.i18n.translatef("%s version is the same and does not need to be updated.", geo_type))
+				return 0
+			end
 		end
-	end,
-	function(e)
-	end)
+	end
 
+	local sret_tmp = curl(url, tmp_path, vali_file)
+	if sret_tmp == 200 and non_file_check(tmp_path, vali_file) then
+		log(1, api.i18n.translatef("%s an error occurred during the file download process. Please try downloading again.", geo_type))
+		os.remove(tmp_path)
+		os.remove(vali_file)
+		sret_tmp = curl(url, tmp_path, vali_file)
+		if sret_tmp == 200 and non_file_check(tmp_path, vali_file) then
+			sret_tmp = 0
+			log(1, api.i18n.translatef("%s an error occurred while downloading the file. Please check your network or the download link and try again!", geo_type))
+		end
+	end
+	if sret_tmp == 200 then
+		if sha_verify then
+			if verify_sha256(sha_path) then
+				sys.call(string.format("mkdir -p %s && cp -f %s %s", asset_location, tmp_path, asset_path))
+				reboot = 1
+				log(1, api.i18n.translatef("%s update success.", geo_type))
+			else
+				log(1, api.i18n.translatef("%s update failed, please try again later.", geo_type))
+				return 1
+			end
+		else
+			if fs.access(asset_path) and sys.call(string.format("cmp -s %s %s", tmp_path, asset_path)) == 0 then
+				log(1, api.i18n.translatef("%s version is the same and does not need to be updated.", geo_type))
+				return 0
+			end
+			sys.call(string.format("mkdir -p %s && cp -f %s %s", asset_location, tmp_path, asset_path))
+			reboot = 1
+			log(1, api.i18n.translatef("%s update success.", geo_type))
+		end
+	else
+		log(1, api.i18n.translatef("%s update failed, please try again later.", geo_type))
+		return 1
+	end
 	return 0
 end
 
+local function fetch_geoip()
+	fetch_geofile("geoip.dat", "geoip", geoip_url)
+end
+
 local function fetch_geosite()
-	xpcall(function()
-		local return_code, content = api.curl_logic(geosite_api)
-		local json = jsonc.parse(content)
-		if json.tag_name and json.assets then
-			for _, v in ipairs(json.assets) do
-				if v.name and (v.name == "geosite.dat.sha256sum" or v.name == "dlc.dat.sha256sum") then
-					local sret = curl(v.browser_download_url, "/tmp/geosite.dat.sha256sum")
-					if sret == 200 then
-						local f = io.open("/tmp/geosite.dat.sha256sum", "r")
-						local content = f:read()
-						f:close()
-						f = io.open("/tmp/geosite.dat.sha256sum", "w")
-						f:write(content:gsub("[^%s]+.dat", "/tmp/geosite.dat"), "")
-						f:close()
+	fetch_geofile("geosite.dat", "geosite", geosite_url)
+end
 
-						if fs.access(asset_location .. "geosite.dat") then
-							sys.call(string.format("cp -f %s %s", asset_location .. "geosite.dat", "/tmp/geosite.dat"))
-							if sys.call('sha256sum -c /tmp/geosite.dat.sha256sum > /dev/null 2>&1') == 0 then
-								log(1, api.i18n.translatef("%s version is the same and does not need to be updated.", "geosite"))
-								return 1
-							end
-						end
-						for _2, v2 in ipairs(json.assets) do
-							if v2.name and (v2.name == "geosite.dat" or v2.name == "dlc.dat") then
-								sret = curl(v2.browser_download_url, "/tmp/geosite.dat")
-								if sys.call('sha256sum -c /tmp/geosite.dat.sha256sum > /dev/null 2>&1') == 0 then
-									sys.call(string.format("mkdir -p %s && cp -f %s %s", asset_location, "/tmp/geosite.dat", asset_location .. "geosite.dat"))
-									reboot = 1
-									log(1, api.i18n.translatef("%s update success.", "geosite"))
-									return 1
-								else
-									log(1, api.i18n.translatef("%s update failed, please try again later.", "geosite"))
-								end
-								break
-							end
-						end
-					end
-					break
-				end
-			end
-		end
-		if json.message then
-			log(2, json.message)
-		end
-	end,
-	function(e)
-	end)
-
-	return 0
+local function remove_tmp_geofile(name)
+	os.remove("/tmp/" .. name .. ".dat")
+	os.remove("/tmp/" .. name .. ".dat.sha256sum")
+	os.remove("/tmp/" .. name .. ".dat.vali")
 end
 
 if arg2 then
 	string.gsub(arg2, '[^' .. "," .. ']+', function(w)
 		if w == "geoip" then
-			geoip_update = 1
+			geoip_update = "1"
 		end
 		if w == "geosite" then
-			geosite_update = 1
+			geosite_update = "1"
 		end
 	end)
 else
-	geoip_update = uci:get_first(name, 'global_rules', "geoip_update", 1)
-	geosite_update = uci:get_first(name, 'global_rules', "geosite_update", 1)
+	geoip_update = uci:get(name, "@global_rules[0]", "geoip_update") or "1"
+	geosite_update = uci:get(name, "@global_rules[0]", "geosite_update") or "1"
 end
-if geoip_update == 0 and geosite_update == 0 then
+if geoip_update == "0" and geosite_update == "0" then
 	os.exit(0)
 end
 
 log(0, api.i18n.translate("Start updating the rules..."))
+local function safe_call(func, err_msg)
+	xpcall(func, function(e)
+		log(1, e)
+		log(1, debug.traceback())
+		log(1, err_msg)
+	end)
+end
 
-if tonumber(geoip_update) == 1 then
+if geoip_update == "1" then
 	log(1, api.i18n.translatef("%s Start updating...", "geoip"))
-	local status = fetch_geoip()
-	os.remove("/tmp/geoip.dat")
-	os.remove("/tmp/geoip.dat.sha256sum")
+	safe_call(fetch_geoip, api.i18n.translatef("%s update error!", "geoip"))
+	remove_tmp_geofile("geoip")
 end
 
-if tonumber(geosite_update) == 1 then
+if geosite_update == "1" then
 	log(1, api.i18n.translatef("%s Start updating...", "geosite"))
-	local status = fetch_geosite()
-	os.remove("/tmp/geosite.dat")
-	os.remove("/tmp/geosite.dat.sha256sum")
+	safe_call(fetch_geosite, api.i18n.translatef("%s update error!", "geosite"))
+	remove_tmp_geofile("geosite")
 end
 
-uci:set(name, uci:get_first(name, 'global_rules'), "geoip_update", geoip_update)
-uci:set(name, uci:get_first(name, 'global_rules'), "geosite_update", geosite_update)
+uci:set(name, "@global_rules[0]", "geoip_update", geoip_update)
+uci:set(name, "@global_rules[0]", "geosite_update", geosite_update)
 api.uci_save(uci, name, true)
 
 if reboot == 1 then
