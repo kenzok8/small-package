@@ -30,7 +30,7 @@ define Download/geosite
   HASH:=60aa9988750f09431ad989e952afe0de0c08a5df18a9b867fc679ccbfc8c62de
 endef
 
-GEOSITE_IRAN_VER:=202601050049
+GEOSITE_IRAN_VER:=202601120047
 GEOSITE_IRAN_FILE:=iran.dat.$(GEOSITE_IRAN_VER)
 define Download/geosite-ir
   URL:=https://github.com/bootmortis/iran-hosted-domains/releases/download/$(GEOSITE_IRAN_VER)/
