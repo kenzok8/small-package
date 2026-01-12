@@ -45,29 +45,15 @@ if has_hysteria2 then
 end
 
 m = Map(appname)
+api.set_apply_on_parse(m)
 
-function m.commit_handler(self)
+function m.on_before_save(self)
 	if self.no_commit then
 		return
 	end
 	self.uci:foreach(appname, "subscribe_list", function(e)
 		self:del(e[".name"], "md5")
 	end)
-end
-
-if api.is_js_luci() then
-	m.apply_on_parse = false
-	m.on_after_apply = function(self)
-		uci:foreach(appname, "subscribe_list", function(e)
-			uci:delete(appname, e[".name"], "md5")
-		end)
-		uci:commit(appname)
-		api.showMsg_Redirect()
-	end
-	m.render = function(self, ...)
-		Map.render(self, ...)
-		api.optimize_cbi_ui()
-	end
 end
 
 -- [[ Subscribe Settings ]]--

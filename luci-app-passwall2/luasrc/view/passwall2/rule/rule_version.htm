@@ -1,12 +1,97 @@
 <%
 local api = require "luci.passwall2.api"
-
-local geoip_update = api.uci_get_type("global_rules", "geoip_update", "1") == "1" and "checked='checked'" or ""
-local geosite_update = api.uci_get_type("global_rules", "geosite_update", "1") == "1" and "checked='checked'" or ""
 -%>
+<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js?v=26.1.9"></script>
+
+<style>
+	table .cbi-button-up,
+	table .cbi-button-down {
+		display: none !important;
+	}
+
+	div.cbi-value[id$="-geoip_update"],
+	div.cbi-value[id$="-geosite_update"] {
+		display: none !important;
+	}
+
+	.drag-handle {
+		cursor: grab !important;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		font-weight: 100;
+		padding: 0 !important;
+		line-height: inherit;
+		user-select: none;
+		align-self: stretch;
+	}
+
+	.dragging-row {
+		background-color: rgba(131, 191, 255, 0.7) !important;
+		box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+	}
+</style>
+
+<div class="cbi-value" id="_rule_div">
+	<label class="cbi-value-title">
+		<%:Update Options%>
+	</label>
+	<div class="cbi-value-field">
+		<div>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="geoip" value="1" />
+				geoip
+			</label>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="geosite" value="1" />
+				geosite
+			</label>
+			<br><br><input class="btn cbi-button cbi-button-apply" type="button" id="update_rules_btn" onclick="update_rules(this)" value="<%:Manually update%>" />
+		</div>
+	</div>
+</div>
 
 <script type="text/javascript">
 	//<![CDATA[
+	document.addEventListener('DOMContentLoaded', function () {
+		const flags = [
+			"geoip_update", "geosite_update"
+		];
+		const bindFlags = () => {
+			let allBound = true;
+			flags.forEach(flag => {
+				const orig = Array.from(document.querySelectorAll(`input[name$=".${flag}"]`)).find(i => i.type === 'checkbox');
+				if (!orig) { allBound = false; return; }
+				// 隐藏最外层 div
+				const wrapper = orig.closest('.cbi-value');
+				if (wrapper && wrapper.style.display !== 'none') {
+					wrapper.style.display = 'none';
+				}
+				const custom = document.querySelector(`.cbi-input-checkbox[name="${flag.replace('_update','')}"]`);
+				if (!custom) { allBound = false; return; }
+				custom.checked = orig.checked;
+				// 自定义选择框与原生Flag双向绑定
+				if (!custom._binded) {
+					custom._binded = true;
+					orig.addEventListener('change', () => {
+						custom.checked = orig.checked;
+					});
+					custom.addEventListener('change', () => {
+						orig.checked = custom.checked;
+						orig.dispatchEvent(new Event('change', { bubbles: true }));
+					});
+				}
+			});
+			return allBound;
+		};
+		const target = document.querySelector('form') || document.body;
+		const observer = new MutationObserver(() => bindFlags() ? observer.disconnect() : 0);
+		observer.observe(target, { childList: true, subtree: true });
+		const timer = setInterval(() => bindFlags() ? (clearInterval(timer), observer.disconnect()) : 0, 300);
+		setTimeout(() => { clearInterval(timer); observer.disconnect(); }, 5000);
+	});
+
 	function update_rules(btn) {
 		btn.disabled = true;
 		btn.value = '<%:Updating...%>';
@@ -34,23 +119,118 @@ local geosite_update = api.uci_get_type("global_rules", "geosite_update", "1") =
 			}
 		);
 	}
+	//分流规则添加拖拽排序
+	(function () {
+		function initSortableForTable() {
+			var section = document.getElementById("cbi-<%=api.appname%>-shunt_rules");
+			if (!section) return;
+
+			// === 插入 drag handle ===
+			var delBtns = section.getElementsByClassName("cbi-button-remove");
+			for (var i = 0; i < delBtns.length; i++) {
+				var btn = delBtns[i];
+				var parent = btn && btn.parentNode;
+				if (!parent || parent.getElementsByClassName("drag-handle").length)
+					continue;
+				var handle = document.createElement("span");
+				handle.className = "drag-handle center";
+				handle.title = "<%:Drag to reorder%>";
+				handle.innerHTML = "⠿";
+				parent.insertBefore(handle, btn.nextSibling);
+			}
+
+			// === 初始化 Sortable ===
+			var table = section.getElementsByTagName("table")[0];
+			if (!table) return;
+			var root = table.tBodies[0] || table;
+			if (root._sortable_initialized) return root._sortable_instance;
+			root._sortable_initialized = true;
+
+			// 保存原始顺序
+			root._origOrder = getCurrentOrder(root);
+
+			try {
+				root._sortable_instance = Sortable.create(root, {
+					handle: ".drag-handle",
+					draggable: "tr.cbi-section-table-row",
+					animation: 150,
+					ghostClass: "dragging-row",
+					fallbackOnBody: true,
+					forceFallback: false,
+					swapThreshold: 0.65,
+					onEnd: function (evt) {
+						updateHiddenInput(root, section);
+					}
+				});
+				return root._sortable_instance;
+			} catch (e) {
+				root._sortable_initialized = false;
+				console.error("Sortable init failed:", e);
+			}
+		}
+
+		// 获取 table 当前行顺序
+		function getCurrentOrder(root) {
+			var order = [];
+			var rows = root.querySelectorAll("tr.cbi-section-table-row");
+			rows.forEach(function (tr) {
+				var id = tr.id || "";
+				if (id.startsWith("cbi-<%=api.appname%>-"))
+					id = id.replace("cbi-<%=api.appname%>-", "");
+				order.push(id);
+			});
+			return order;
+		}
+
+		// 拖拽完成后更新 hidden input
+		function updateHiddenInput(root, section) {
+			var newOrder = getCurrentOrder(root);
+			var changed = newOrder.join(" ") !== root._origOrder.join(" ");
+			var hiddenInput = section.querySelector('input[type="hidden"][id^="cbi.sts."]');
+			if (hiddenInput) {
+				hiddenInput.value = changed ? newOrder.join(" ") : "";
+			}
+		}
+		
+		// 隐藏18.06 up/down 列
+		function hideSortColumn(section) {
+			var table = section.getElementsByTagName("table")[0];
+			if(!table) return;
+			var rows = table.querySelectorAll("tr.cbi-section-table-row");
+			if(!rows.length) return;
+			var colCount = rows[0].children.length, sortCol = -1;
+			for(var col=0; col<colCount; col++){
+				var hasSort=false, invalid=false;
+				rows.forEach(function(tr){
+					var td=tr.children[col]; if(!td) return;
+					if(td.querySelector(".cbi-button-edit, .cbi-button-remove")) invalid=true;
+					if(td.querySelector(".cbi-button-up, .cbi-button-down")) hasSort=true;
+				});
+				if(!invalid && hasSort){ sortCol=col; break; }
+			}
+			if(sortCol===-1) return;
+			table.querySelectorAll("tr").forEach(function(tr){
+				var c=tr.children[sortCol]; if(c) c.style.display="none";
+			});
+		}
+
+		// === 等待 TypedSection 行稳定 ===
+		(function waitStable() {
+			var last = 0, stable = 0;
+			var THRESHOLD = 5;
+			function tick() {
+				var count = document.querySelectorAll("tr.cbi-section-table-row").length;
+				if (count && count === last) stable++;
+				else stable = 0;
+
+				last = count;
+				if (stable >= THRESHOLD)
+					initSortableForTable();
+				else
+					requestAnimationFrame(tick);
+			}
+			tick();
+		})();
+	})();
 	//]]>
 </script>
-<div class="cbi-value" id="_rule_div">
-	<label class="cbi-value-title">
-		<%:Manually update%>
-	</label>
-	<div class="cbi-value-field">
-		<div>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="geoip" value="1" <%=geoip_update%> />
-				geoip
-			</label>
-			<label>
-				<input class="cbi-input-checkbox" type="checkbox" name="geosite" value="1" <%=geosite_update%> />
-				geosite
-			</label>
-			<input class="btn cbi-button cbi-button-apply" type="button" id="update_rules_btn" onclick="update_rules(this)" value="<%:Manually update%>" />
-		</div>
-	</div>
-</div>

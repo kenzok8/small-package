@@ -10,8 +10,6 @@ IPSET_LOCAL6="passwall2_local6"
 IPSET_LAN6="passwall2_lan6"
 IPSET_VPS6="passwall2_vps6"
 
-FORCE_INDEX=2
-
 . /lib/functions/network.sh
 
 ipt=$(command -v iptables-legacy || command -v iptables)
@@ -201,24 +199,36 @@ gen_lanlist_6() {
 }
 
 get_wan_ip() {
-	local NET_IF
 	local NET_ADDR
-	
-	network_flush_cache
-	network_find_wan NET_IF
-	network_get_ipaddr NET_ADDR "${NET_IF}"
-	
+	local iface
+	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
+	for iface in $INTERFACES; do
+		local ipv4
+		network_get_ipaddr ipv4 "$iface"
+		if [ -n "$ipv4" ] && [ "$ipv4" != "0.0.0.0" ]; then
+			case " $NET_ADDR " in
+				*" $ipv4 "*) ;;
+				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$ipv4" ;;
+			esac
+		fi
+	done
 	echo $NET_ADDR
 }
 
 get_wan6_ip() {
-	local NET_IF
 	local NET_ADDR
-	
-	network_flush_cache
-	network_find_wan6 NET_IF
-	network_get_ipaddr6 NET_ADDR "${NET_IF}"
-	
+	local iface
+	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
+	for iface in $INTERFACES; do
+		local ipv6
+		network_get_ipaddr6 ipv6 "$iface"
+		if [ -n "$ipv6" ] && ! echo "$ipv6" | grep -q "^fe80:"; then
+			case " $NET_ADDR " in
+				*" $ipv6 "*) ;;
+				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$ipv6" ;;
+			esac
+		fi
+	done
 	echo $NET_ADDR
 }
 
@@ -264,13 +274,8 @@ gen_shunt_list() {
 					[ "${enable_geoview}" = "1" ] && {
 						local _geoip_code=$(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 						[ -n "$_geoip_code" ] && {
-							if [ "$(config_n_get $node type)" = "sing-box" ]; then
-								get_singbox_geoip $_geoip_code ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $ipset_v4 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-								get_singbox_geoip $_geoip_code ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $ipset_v6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-							else
-								get_geoip $_geoip_code ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $ipset_v4 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-								get_geoip $_geoip_code ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $ipset_v6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-							fi
+							get_geoip $_geoip_code ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $ipset_v4 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+							get_geoip $_geoip_code ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $ipset_v6 &/g" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
 							log 1 "$(i18n "parse the traffic splitting rules[%s]-[geoip:%s] add to %s to complete." "${shunt_id}" "${_geoip_code}" "IPSET")"
 						}
 					}
@@ -751,7 +756,11 @@ add_firewall_rule() {
 	$ipt_n -A PSW2 $(dst $IPSET_VPS) -j RETURN
 
 	WAN_IP=$(get_wan_ip)
-	[ ! -z "${WAN_IP}" ] && $ipt_n -A PSW2 $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
+	[ -n "${WAN_IP}" ] && {
+		for wan_ip in $WAN_IP; do
+			$ipt_n -A PSW2 $(comment "WAN_IP_RETURN") -d "${wan_ip}" -j RETURN
+		done
+	}
 	
 	[ "$accept_icmp" = "1" ] && insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p icmp -j PSW2"
 	[ -z "${is_tproxy}" ] && insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW2"
@@ -780,9 +789,13 @@ add_firewall_rule() {
 	$ipt_m -A PSW2 $(dst $IPSET_LAN) -j RETURN
 	$ipt_m -A PSW2 $(dst $IPSET_VPS) -j RETURN
 	$ipt_m -A PSW2 -m conntrack --ctdir REPLY -j RETURN
-	
-	[ ! -z "${WAN_IP}" ] && $ipt_m -A PSW2 $(comment "WAN_IP_RETURN") -d "${WAN_IP}" -j RETURN
-	unset WAN_IP
+
+	[ -n "${WAN_IP}" ] && {
+		for wan_ip in $WAN_IP; do
+			$ipt_m -A PSW2 $(comment "WAN_IP_RETURN") -d "${wan_ip}" -j RETURN
+		done
+	}
+	unset WAN_IP wan_ip
 
 	insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW2"
 
@@ -836,8 +849,12 @@ add_firewall_rule() {
 	$ip6t_m -A PSW2 -m conntrack --ctdir REPLY -j RETURN
 	
 	WAN6_IP=$(get_wan6_ip)
-	[ ! -z "${WAN6_IP}" ] && $ip6t_m -A PSW2 $(comment "WAN6_IP_RETURN") -d ${WAN6_IP} -j RETURN
-	unset WAN6_IP
+	[ -n "${WAN6_IP}" ] && {
+		for wan6_ip in $WAN6_IP; do
+			$ip6t_m -A PSW2 $(comment "WAN6_IP_RETURN") -d ${wan6_ip} -j RETURN
+		done
+	}
+	unset WAN6_IP wan6_ip
 
 	insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW2"
 
@@ -1046,12 +1063,20 @@ gen_include() {
 
 			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_n" PSW2 WAN_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
-				[ ! -z "\${WAN_IP}" ] && $ipt_n -R PSW2 \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
+				[ -n "\${WAN_IP}" ] && {
+					for wan_ip in \$WAN_IP; do
+						$ipt_n -R PSW2 \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${wan_ip}" -j RETURN
+					done
+				}
 			fi
 
 			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_m" PSW2 WAN_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
-				[ ! -z "\${WAN_IP}" ] && $ipt_m -R PSW2 \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${WAN_IP}" -j RETURN
+				[ -n "\${WAN_IP}" ] && {
+					for wan_ip in \$WAN_IP; do
+						$ipt_m -R PSW2 \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${wan_ip}" -j RETURN
+					done
+				}
 			fi
 		EOF
 		)
@@ -1072,7 +1097,11 @@ gen_include() {
 			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PSW2 WAN6_IP_RETURN -1)
 			if [ \$PR_INDEX -ge 0 ]; then
 				WAN6_IP=\$(${MY_PATH} get_wan6_ip)
-				[ ! -z "\${WAN6_IP}" ] && $ip6t_m -R PSW2 \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${WAN6_IP}" -j RETURN
+				[ -n "\${WAN6_IP}" ] && {
+					for wan6_ip in \$WAN6_IP; do
+						$ip6t_m -R PSW2 \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${wan6_ip}" -j RETURN
+					done
+				}
 			fi
 		EOF
 		)

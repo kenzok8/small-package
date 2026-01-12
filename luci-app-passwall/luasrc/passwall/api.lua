@@ -38,72 +38,6 @@ function is_old_uci()
 	return sys.call("grep -E 'require[ \t]*\"uci\"' /usr/lib/lua/luci/model/uci.lua >/dev/null 2>&1") == 0
 end
 
-function set_apply_on_parse(map)
-	if not map then
-		return
-	end
-	if is_js_luci() then
-		map.apply_on_parse = false
-		map.on_after_apply = function(self)
-			showMsg_Redirect(self.redirect, 3000)
-		end
-		map.render = function(self, ...)
-			getmetatable(self).__index.render(self, ...) -- 保持原渲染流程
-			optimize_cbi_ui()
-		end
-	end
-end
-
-function showMsg_Redirect(redirectUrl, delay)
-	local message = "PassWall " .. i18n.translate("Settings have been successfully saved and applied!")
-	luci.http.write([[
-		<script type="text/javascript">
-			document.addEventListener('DOMContentLoaded', function() {
-				// 创建遮罩层
-				var overlay = document.createElement('div');
-				overlay.style.position = 'fixed';
-				overlay.style.top = '0';
-				overlay.style.left = '0';
-				overlay.style.width = '100%';
-				overlay.style.height = '100%';
-				overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-				overlay.style.zIndex = '9999';
-				// 创建提示条
-				var messageDiv = document.createElement('div');
-				messageDiv.style.position = 'fixed';
-				messageDiv.style.top = '0';
-				messageDiv.style.left = '0';
-				messageDiv.style.width = '100%';
-				messageDiv.style.background = '#4caf50';
-				messageDiv.style.color = '#fff';
-				messageDiv.style.textAlign = 'center';
-				messageDiv.style.padding = '10px';
-				messageDiv.style.zIndex = '10000';
-				messageDiv.textContent = ']] .. message .. [[';
-				// 将遮罩层和提示条添加到页面
-				document.body.appendChild(overlay);
-				document.body.appendChild(messageDiv);
-				// 重定向或隐藏提示条和遮罩层
-				var redirectUrl = ']] .. (redirectUrl or "") .. [[';
-				var delay = ]] .. (delay or 3000) .. [[;
-				setTimeout(function() {
-					if (redirectUrl) {
-						window.location.href = redirectUrl;
-					} else {
-						if (messageDiv && messageDiv.parentNode) {
-							messageDiv.parentNode.removeChild(messageDiv);
-						}
-						if (overlay && overlay.parentNode) {
-							overlay.parentNode.removeChild(overlay);
-						}
-						window.location.href = window.location.href;
-					}
-				}, delay);
-			});
-		</script>
-	]])
-end
-
 function uci_save(cursor, config, commit, apply)
 	if is_old_uci() then
 		cursor:save(config)
@@ -1414,26 +1348,44 @@ function format_go_time(input)
 	return result
 end
 
-function optimize_cbi_ui()
-	luci.http.write([[
-		<script type="text/javascript">
-			//修正上移、下移按钮名称
-			document.querySelectorAll("input.btn.cbi-button.cbi-button-up").forEach(function(btn) {
-				btn.value = "]] .. i18n.translate("Move up") .. [[";
-			});
-			document.querySelectorAll("input.btn.cbi-button.cbi-button-down").forEach(function(btn) {
-				btn.value = "]] .. i18n.translate("Move down") .. [[";
-			});
-			//删除控件和说明之间的多余换行
-			document.querySelectorAll("div.cbi-value-description").forEach(function(descDiv) {
-				var prev = descDiv.previousSibling;
-				while (prev && prev.nodeType === Node.TEXT_NODE && prev.textContent.trim() === "") {
-					prev = prev.previousSibling;
-				}
-				if (prev && prev.nodeType === Node.ELEMENT_NODE && prev.tagName === "BR") {
-					prev.remove();
-				}
-			});
-		</script>
-	]])
+function set_apply_on_parse(map)
+	if not map then return end
+	if is_js_luci() then
+		apply_redirect(map)
+		local old = map.on_after_save
+		map.on_after_save = function(self)
+			if old then old(self) end
+			map:set("@global[0]", "timestamp", os.time())
+		end
+		-- 优化页面
+		local cbi = require "luci.cbi"
+		map:append(cbi.Template(appname .. "/cbi/optimize_cbi_ui"))
+	end
+end
+
+function apply_redirect(m)
+	local tmp_uci_file = "/etc/config/" .. appname .. "_redirect"
+	if m.redirect and m.redirect ~= "" then
+		if fs.access(tmp_uci_file) then
+			local redirect
+			for line in io.lines(tmp_uci_file) do
+				redirect = line:match("option%s+url%s+['\"]([^'\"]+)['\"]")
+				if redirect and redirect ~= "" then break end
+			end
+			if redirect and redirect ~= "" then
+				sys.call("/bin/rm -f " .. tmp_uci_file)
+				luci.http.redirect(redirect)
+			end
+		else
+			fs.writefile(tmp_uci_file, "config redirect\n")
+		end
+		m.on_after_save = function(self)
+			local redirect = self.redirect
+			if redirect and redirect ~= "" then
+				uci:set(appname .. "_redirect", "@redirect[0]", "url", redirect)
+			end
+		end
+	else
+		sys.call("/bin/rm -f " .. tmp_uci_file)
+	end
 end

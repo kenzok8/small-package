@@ -1,7 +1,7 @@
 <%
 local api = require "luci.passwall2.api"
 -%>
-<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js?v=26.1.11"></script>
+<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js?v=26.1.9"></script>
 
 <style>
 table .cbi-button-up,
@@ -27,118 +27,57 @@ table .cbi-button-down {
 	box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 </style>
-
 <script type="text/javascript">
 	//<![CDATA[
-	var appname = "<%= api.appname %>"
+	document.addEventListener("DOMContentLoaded", function () {
+		let monitorStartTime = Date.now();
 
-	function confirmDeleteNode(remark) {
-		if (!confirm("<%:Delete the subscribed node%>: " + remark + " ?"))
-			return false;
-
-		fetch('<%= api.url("subscribe_del_node") %>?remark=' + encodeURIComponent(remark), {
-			method: "GET"
-		}).then(res => {
-			if (res.ok) {
-				location.reload();
-			} else {
-				alert("<%:Failed to delete.%>");
-			}
-		});
-		return false;
-	}
-
-	function confirmDeleteAll() {
-		if (!confirm("<%:Are you sure you want to delete all subscribed nodes?%>"))
-			return false;
-
-		fetch('<%= api.url("subscribe_del_all") %>', {
-			method: "GET"
-		}).then(res => {
-			if (res.ok) {
-				location.reload();
-			} else {
-				alert("<%:Failed to delete.%>");
-			}
-		});
-		return false;
-	}
-
-	function ManualSubscribe(sectionId) {
-		var urlInput = document.querySelector("input[name='cbid." + appname + "." + sectionId + ".url']");
-		var currentUrl = urlInput ? urlInput.value.trim() : "";
-		if (!currentUrl) {
-			alert("<%:Subscribe URL cannot be empty.%>");
-			return;
-		}
-
-		fetch('<%= api.url("subscribe_manual") %>?section='
-			+ encodeURIComponent(sectionId)
-			+ '&url='
-			+ encodeURIComponent(currentUrl))
-		.then(response => response.json())
-		.then(data => {
-			if (!data.success) {
-				alert(data.msg || "Operation failed");
-			} else {
-				window.location.href = '<%= api.url("log") %>'
-			}
-		});
-	}
-
-	function ManualSubscribeAll() {
-		var sectionIds = [];
-		var urls = [];
-
-		var table = document.getElementById("cbi-" + appname + "-subscribe_list");
-		var editBtns = table ? table.getElementsByClassName("cbi-button cbi-button-edit") : [];
-
-		for (var i = 0; i < editBtns.length; i++) {
-			var btn = editBtns[i];
-			var onclickStr = btn.getAttribute("onclick");
-			if (!onclickStr) continue;
-
-			var id = onclickStr.substring(onclickStr.lastIndexOf('/') + 1, onclickStr.length - 1);
-			if (!id) continue;
-
-			var urlInput = document.querySelector("input[name='cbid." + appname + "." + id + ".url']");
-			var currentUrl = urlInput ? urlInput.value.trim() : "";
-			if (!currentUrl) {
-				alert("<%:Subscribe URL cannot be empty.%>");
+		const monitorInterval = setInterval(function () {
+			if (Date.now() - monitorStartTime > 3000) {
+				clearInterval(monitorInterval);
 				return;
 			}
 
-			sectionIds.push(id);
-			urls.push(currentUrl);
-		}
+			const rows = Array.from(document.querySelectorAll("tr.cbi-section-table-row"))
+				.filter(row => !row.classList.contains("placeholder")); // 排除无配置行
 
-		if (sectionIds.length === 0) {
-			//alert("No subscriptions found.");
-			return;
-		}
+			if (rows.length <= 1) return;
 
-		var params = new URLSearchParams();
-		params.append("sections", sectionIds.join(","));
-		params.append("urls", urls.join(","));
+			const lastRow = rows[rows.length - 1];
+			const secondLastRow = rows[rows.length - 2];
 
-		fetch('<%= api.url("subscribe_manual_all") %>', {
-			method: 'POST',
-			body: params
-		})
-		.then(response => response.json())
-		.then(data => {
-			if (!data.success) {
-				alert(data.msg || "Operation failed");
-			} else {
-				window.location.href = '<%= api.url("log") %>'
+			const lastInput = lastRow.querySelector("input[name$='.haproxy_port']");
+			const secondLastInput = secondLastRow.querySelector("input[name$='.haproxy_port']");
+
+			if (!lastInput || !secondLastInput) return;
+
+			// 如果还没绑定 change 事件，绑定一次
+			if (!lastInput.dataset.bindChange) {
+				lastInput.dataset.bindChange = "1";
+				lastInput.addEventListener("input", () => {
+					lastInput.dataset.userModified = "1";
+				});
 			}
-		});
-	}
 
-	//订阅列表添加拖拽排序
+			// 如果用户手动修改过，就不再自动设置
+			if (lastInput.dataset.userModified === "1") return;
+
+			const lastVal = lastInput.value.trim();
+			const secondLastVal = secondLastInput.value.trim();
+
+			const lbssHiddenInput = lastRow.querySelector("div.cbi-dropdown > div > input[type='hidden'][name$='.lbss']");
+			if (!lbssHiddenInput) {
+				if (lastVal !== secondLastVal && secondLastVal !== "" && secondLastVal !== "0") {
+					lastInput.value = secondLastVal;
+				}
+			}
+		}, 300);
+	});
+
+	//节点列表添加拖拽排序
 	(function () {
 		function initSortableForTable() {
-			var section = document.getElementById("cbi-<%=api.appname%>-subscribe_list");
+			var section = document.getElementById("cbi-<%=api.appname%>-haproxy_config");
 			if (!section) return;
 
 			hideSortColumn(section);
@@ -146,11 +85,10 @@ table .cbi-button-down {
 			// === 插入 drag handle ===
 			var delBtns = section.getElementsByClassName("cbi-button-remove");
 			for (var i = 0; i < delBtns.length; i++) {
-				var btnsInRow = delBtns[i].closest("tr").getElementsByClassName("cbi-button-remove");
-				if (!btnsInRow || btnsInRow.length === 0) continue;
-				var btn = btnsInRow[btnsInRow.length - 1];
+				var btn = delBtns[i];
 				var parent = btn && btn.parentNode;
-				if (!parent || parent.getElementsByClassName("drag-handle").length) continue;
+				if (!parent || parent.getElementsByClassName("drag-handle").length)
+					continue;
 				var handle = document.createElement("span");
 				handle.className = "drag-handle center";
 				handle.title = "<%:Drag to reorder%>";

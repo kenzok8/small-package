@@ -4,29 +4,17 @@ local appname = "passwall"
 
 m = Map(appname)
 m.redirect = api.url("node_subscribe")
+api.set_apply_on_parse(m)
 
 if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
 
-function m.commit_handler(self)
+function m.on_before_save(self)
 	self:del(arg[1], "md5")
 end
 
 m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
-
-if api.is_js_luci() then
-	m.apply_on_parse = false
-	m.on_after_apply = function(self)
-		uci:delete(appname, arg[1], "md5")
-		uci:commit(appname)
-		api.showMsg_Redirect(self.redirect, 3000)
-	end
-	m.render = function(self, ...)
-		Map.render(self, ...)
-		api.optimize_cbi_ui()
-	end
-end
 
 local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")

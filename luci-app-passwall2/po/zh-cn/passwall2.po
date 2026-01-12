@@ -871,8 +871,14 @@ msgstr "小时"
 msgid "Hour"
 msgstr "小时"
 
-msgid "Location of V2ray/Xray asset"
-msgstr "V2ray/Xray 资源文件目录"
+msgid "GeoIP Update URL"
+msgstr "GeoIP 更新 URL"
+
+msgid "Geosite Update URL"
+msgstr "Geosite 更新 URL"
+
+msgid "Location of Geo rule files"
+msgstr "Geo 资源文件目录"
 
 msgid "This variable specifies a directory where geoip.dat and geosite.dat files are."
 msgstr "此变量指定geoip.dat和geosite.dat文件所在的目录。"
@@ -1546,18 +1552,6 @@ msgstr "缓冲区大小"
 msgid "Buffer size for every connection (kB)"
 msgstr "每一个连接的缓冲区大小（kB）"
 
-msgid "Custom geoip Path"
-msgstr "自定义geoip文件路径"
-
-msgid "Custom geoip URL"
-msgstr "自定义geoip文件更新链接"
-
-msgid "Custom geosite Path"
-msgstr "自定义geosite文件路径"
-
-msgid "Custom geosite URL"
-msgstr "自定义geosite文件更新链接"
-
 msgid "Handshake Timeout"
 msgstr "握手超时 "
 
@@ -1569,12 +1563,6 @@ msgstr "端口跳跃时间 "
 
 msgid "HeartbeatPeriod(second)"
 msgstr "心跳周期（单位：秒）"
-
-msgid "Remove resource files"
-msgstr "删除资源文件"
-
-msgid "Sing-Box will automatically download resource files when starting, you can use this feature achieve upgrade resource files."
-msgstr "Sing-Box 会在启动时自动下载资源文件，您可以使用此功能实现升级资源文件。"
 
 msgid "Override the connection destination address"
 msgstr "覆盖连接目标地址"
@@ -2140,17 +2128,32 @@ msgstr "节点：%s:%s，权重：%s"
 msgid "Start updating the rules..."
 msgstr "开始更新规则..."
 
+msgid "Download file size verification error. Original file size: %sB. Downloaded file size: %sB."
+msgstr "下载文件大小校验出错，原始文件大小 %sB，下载文件大小：%sB。"
+
+msgid "Error reading downloaded file."
+msgstr "下载文件读取出错。"
+
 msgid "%s Start updating..."
 msgstr "%s 开始更新..."
 
 msgid "%s version is the same and does not need to be updated."
 msgstr "%s 版本一致，无需更新。"
 
+msgid "%s an error occurred during the file download process. Please try downloading again."
+msgstr "%s 下载文件过程出错，尝试重新下载。"
+
+msgid "%s an error occurred while downloading the file. Please check your network or the download link and try again!"
+msgstr "%s 下载文件过程出错，请检查网络或下载链接后重试！"
+
 msgid "%s update success."
 msgstr "%s 更新成功。"
 
-msgid "%s update failed, please try again later."
-msgstr "%s 更新失败，请稍后再试。"
+msgid "%s update failed, please try again later or change URL."
+msgstr "%s 更新失败，请稍后再试或更换 URL。"
+
+msgid "%s update error!"
+msgstr "%s 更新发生错误！"
 
 msgid "Restart the service and apply the new rules."
 msgstr "重启服务，应用新的规则。"
