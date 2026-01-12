@@ -512,7 +512,6 @@ start_et() {
 				[ "$latency_first" = "0" ] || core_cmd="${core_cmd} --latency-first"
 				[ "$exit_node" = "0" ] || core_cmd="${core_cmd} --enable-exit-node"
               	  		[ "$disable_p2p" = "0" ] || core_cmd="${core_cmd} --disable-p2p"
-                		[ "$disable_udp" = "0" ] || core_cmd="${core_cmd} --disable-udp-hole-punching"
                 		[ "$relay_all" = "0" ] || core_cmd="${core_cmd} --relay-all-peer-rpc"
                 		[ -z "$socks_port" ] || core_cmd="${core_cmd} --socks5 $socks_port"
 				[ "$comp" = "none" ] || core_cmd="${core_cmd} --compression $comp"

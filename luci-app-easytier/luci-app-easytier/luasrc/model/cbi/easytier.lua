@@ -516,13 +516,8 @@ btn0info.cfgvalue = function(self, section)
                 -- Value 中文化
                 value = value:gsub("PortRestricted", "端口受限")
 
-                local style_key = "padding:6px;text-align:left;white-space:nowrap;border:1px solid #ccc;background:#f7f7f7;"
-                local style_value = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
-                if rowIndex % 2 == 1 then
-                    style_value = style_value .. "background:#fafafa;"
-                else
-                    style_value = style_value .. "background:#ffffff;"
-                end
+                local style_key = "padding:6px;text-align:left;white-space:nowrap;"
+                local style_value = "padding:4px;text-align:left;white-space:nowrap;"
 
                 local tr = {}
                 table.insert(tr, string.format("<th style='%s'>%s</th>", style_key, luci.util.pcdata(key)))
@@ -626,14 +621,10 @@ btn1info.cfgvalue = function(self, section)
                 local tr = {}
                 for i, c in ipairs(row) do
                     local tag = rowIndex == 0 and "th" or "td"
-                    local style = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
+                    local style = "padding:4px;text-align:left;white-space:nowrap;"
 
                     if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;border:1px solid #ccc;background:#f7f7f7;"
-                    elseif rowIndex % 2 == 1 then
-                        style = style .. "background:#fafafa;"
-                    else
-                        style = style .. "background:#ffffff;"
+                        style = "padding:6px;text-align:center;white-space:nowrap;"
                     end
 
                     table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
@@ -764,14 +755,10 @@ btn4info.cfgvalue = function(self, section)
                 local tr = {}
                 for i, c in ipairs(cells) do
                     local tag = rowIndex == 1 and "th" or "td"
-                    local style = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
+                    local style = "padding:4px;text-align:left;white-space:nowrap;"
 
                     if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;border:1px solid #ccc;background:#f7f7f7;"
-                    elseif rowIndex % 2 == 0 then
-                        style = style .. "background:#fafafa;"
-                    else
-                        style = style .. "background:#ffffff;"
+                        style = "padding:6px;text-align:center;white-space:nowrap;"
                     end
 
                     table.insert(tr, string.format("<%s style='%s'>%s</%s>",
@@ -852,14 +839,10 @@ btn6info.cfgvalue = function(self, section)
                 local tr = {}
                 for i, c in ipairs(cells) do
                     local tag = rowIndex == 1 and "th" or "td"
-                    local style = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
+                    local style = "padding:4px;text-align:left;white-space:nowrap;"
 
                     if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;border:1px solid #ccc;background:#f0f0f0;"
-                    elseif rowIndex % 2 == 0 then
-                        style = style .. "background:#fafafa;"
-                    else
-                        style = style .. "background:#ffffff;"
+                        style = "padding:6px;text-align:center;white-space:nowrap;"
                     end
 
                     table.insert(tr, string.format("<%s style='%s'>%s</%s>",
