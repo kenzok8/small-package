@@ -1,0 +1,408 @@
+<%
+	local uci = require 'luci.model.uci'.cursor()
+%>
+<script type="text/javascript">//<![CDATA[
+// 中文翻译映射
+var translations = {
+	// 表头翻译
+	"Virtual IP": "虚拟IP",
+	"Hostname": "主机名",
+	"Proxy CIDRs": "代理CIDR",
+	"Peer ID": "节点ID",
+	"Public IPv4": "公网IPv4",
+	"UDP Stun Type": "UDP穿透类型",
+	"Interface IPv4": "IPv4地址",
+	"Interface IPv6": "IPv6地址",
+	"ipv4": "IPv4地址",
+	"hostname": "主机名",
+	"cost": "路由",
+	"lat(ms)": "延迟(ms)",
+	"loss": "丢包率",
+	"rx": "下载",
+	"tx": "上传",
+	"tunnel": "协议",
+	"NAT": "NAT类型",
+	"version": "版本",
+	"proxy_cidrs": "代理网段",
+	"next_hop_ipv4": "下一跳IPv4",
+	"next_hop_hostname": "下一跳主机名",
+	"next_hop_lat": "下一跳延迟",
+	"path_len": "路径长度",
+	"path_latency": "路径延迟",
+	"node_id": "节点ID",
+	"direct_peers": "直连节点",
+	"src": "源地址",
+	"dst": "目标地址",
+	"start_time": "启动时间",
+	"state": "状态",
+	"transport_type": "传输类型",
+	"Metric Name": "指标名称",
+	"Value": "值",
+	"Labels": "标签",
+	// 值翻译
+	"Local": "本机",
+	"PortRestricted": "端口受限",
+	"NoPat": "无端口映射",
+	"DIRECT": "直连"
+};
+
+function translate(text) {
+	return translations[text] || text;
+}
+
+function parseCliTable(content, isKeyValue) {
+	if (!content || content.trim() === '') {
+		return '<div class="conninfo-empty">暂无数据</div>';
+	}
+	
+	if (content.indexOf('错误：') === 0) {
+		return '<div class="conninfo-error">' + escapeHtml(content) + '</div>';
+	}
+	
+	var lines = content.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
+	
+	// 检查是否是表格格式
+	if (lines.length === 0 || lines[0].indexOf('|') === -1) {
+		return '<pre class="conninfo-pre">' + escapeHtml(content) + '</pre>';
+	}
+	
+	var html = '<div class="conninfo-table-wrap"><table class="conninfo-table">';
+	var rowIndex = 0;
+	
+	for (var i = 0; i < lines.length; i++) {
+		var line = lines[i];
+		// 跳过分隔行
+		if (/^\|[\s-]+\|/.test(line)) continue;
+		
+		var cells = [];
+		var matches = line.match(/\|([^|]+)/g);
+		if (matches) {
+			for (var j = 0; j < matches.length; j++) {
+				var cell = matches[j].replace(/^\|/, '').trim();
+				cells.push(cell);
+			}
+		}
+		
+		if (cells.length === 0) continue;
+		
+		html += '<tr>';
+		for (var k = 0; k < cells.length; k++) {
+			var tag = rowIndex === 0 ? 'th' : 'td';
+			var cellContent = rowIndex === 0 ? translate(cells[k]) : translate(cells[k]);
+			html += '<' + tag + '>' + escapeHtml(cellContent) + '</' + tag + '>';
+		}
+		html += '</tr>';
+		rowIndex++;
+	}
+	
+	html += '</table></div>';
+	return html;
+}
+
+function escapeHtml(text) {
+	var div = document.createElement('div');
+	div.appendChild(document.createTextNode(text));
+	return div.innerHTML;
+}
+
+function toggleSection(id) {
+	var content = document.getElementById('conninfo_content_' + id);
+	var icon = document.getElementById('conninfo_icon_' + id);
+	if (content.style.display === 'none') {
+		content.style.display = 'block';
+		icon.innerHTML = '▼';
+	} else {
+		content.style.display = 'none';
+		icon.innerHTML = '▶';
+	}
+}
+
+function refreshConnInfo() {
+	var btn = document.getElementById('conninfo_refresh_btn');
+	btn.disabled = true;
+	btn.value = '刷新中...';
+	
+	XHR.get('<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
+		function(x, data) {
+			updateConnInfo(data);
+			btn.disabled = false;
+			btn.value = '刷新数据';
+		}
+	);
+}
+
+function updateConnInfo(data) {
+	if (!data) return;
+	
+	var sections = [
+		{id: 'node', title: '节点信息', key: 'node'},
+		{id: 'peer', title: '节点列表', key: 'peer'},
+		{id: 'connector', title: '连接器信息', key: 'connector'},
+		{id: 'stun', title: 'STUN信息', key: 'stun'},
+		{id: 'route', title: '路由信息', key: 'route'},
+		{id: 'peercenter', title: '节点中心', key: 'peer_center'},
+		{id: 'vpnportal', title: 'VPN门户', key: 'vpn_portal'},
+		{id: 'proxy', title: 'TCP/KCP代理', key: 'proxy'},
+		{id: 'acl', title: 'ACL规则', key: 'acl'},
+		{id: 'mappedlistener', title: '映射监听器', key: 'mapped_listener'},
+		{id: 'stats', title: '统计信息', key: 'stats'},
+		{id: 'cmdline', title: '启动参数', key: 'cmdline'}
+	];
+	
+	for (var i = 0; i < sections.length; i++) {
+		var sec = sections[i];
+		var el = document.getElementById('conninfo_content_' + sec.id);
+		if (el && data[sec.key] !== undefined) {
+			el.innerHTML = parseCliTable(data[sec.key], sec.id === 'node');
+		}
+	}
+	
+	// 更新时间戳
+	var ts = document.getElementById('conninfo_timestamp');
+	if (ts) {
+		ts.innerHTML = '最后更新: ' + new Date().toLocaleTimeString();
+	}
+}
+
+// 初始加载
+document.addEventListener('DOMContentLoaded', function() {
+	refreshConnInfo();
+});
+
+// 自动刷新 (每5秒)
+XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
+	function(x, data) {
+		updateConnInfo(data);
+		var ts = document.getElementById('conninfo_timestamp');
+		if (ts) {
+			ts.innerHTML = '最后更新: ' + new Date().toLocaleTimeString();
+		}
+	}
+);
+//]]></script>
+
+<style>
+.conninfo-container {
+	padding: 10px 0;
+}
+.conninfo-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--border-color-medium, #ddd);
+}
+.conninfo-timestamp {
+	color: var(--text-color-secondary, #666);
+	font-size: 12px;
+}
+.conninfo-section {
+	margin-bottom: 15px;
+	border: 1px solid var(--border-color-medium, #ddd);
+	border-radius: 4px;
+	overflow: hidden;
+}
+.conninfo-section-header {
+	background: var(--background-color-high, rgba(128,128,128,0.1));
+	padding: 10px 15px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	user-select: none;
+}
+.conninfo-section-header:hover {
+	background: var(--background-color-medium, rgba(128,128,128,0.15));
+}
+.conninfo-section-icon {
+	margin-right: 10px;
+	font-size: 12px;
+	color: var(--text-color-secondary, #666);
+}
+.conninfo-section-title {
+	font-weight: bold;
+	font-size: 14px;
+}
+.conninfo-section-content {
+	padding: 15px;
+	overflow-x: auto;
+}
+.conninfo-table-wrap {
+	overflow-x: auto;
+}
+.conninfo-table {
+	border-collapse: collapse;
+	width: 100%;
+	font-family: monospace;
+	font-size: 13px;
+}
+.conninfo-table th {
+	background: var(--background-color-high, rgba(128,128,128,0.1));
+	padding: 8px 12px;
+	text-align: left;
+	white-space: nowrap;
+	border: 1px solid var(--border-color-medium, #ddd);
+	font-weight: bold;
+}
+.conninfo-table td {
+	padding: 6px 12px;
+	text-align: left;
+	white-space: nowrap;
+	border: 1px solid var(--border-color-medium, #ddd);
+}
+.conninfo-table tr:nth-child(even) td {
+	background: var(--background-color-low, rgba(128,128,128,0.05));
+}
+.conninfo-table tr:hover td {
+	background: var(--background-color-medium, rgba(128,128,128,0.15));
+}
+.conninfo-pre {
+	background: var(--background-color-low, rgba(128,128,128,0.05));
+	border: 1px solid var(--border-color-medium, #ccc);
+	padding: 10px;
+	margin: 0;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	font-family: monospace;
+	font-size: 13px;
+}
+.conninfo-empty {
+	color: var(--text-color-secondary, #999);
+	font-style: italic;
+	padding: 10px;
+}
+.conninfo-error {
+	color: #c00;
+	padding: 10px;
+	background: rgba(255,0,0,0.1);
+	border: 1px solid rgba(255,0,0,0.3);
+	border-radius: 4px;
+}
+</style>
+
+<div class="conninfo-container">
+	<div class="conninfo-header">
+		<input type="button" class="cbi-button cbi-button-action" id="conninfo_refresh_btn" value="刷新数据" onclick="refreshConnInfo()" />
+		<span id="conninfo_timestamp" class="conninfo-timestamp">加载中...</span>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('node')">
+			<span id="conninfo_icon_node" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">节点信息</span>
+		</div>
+		<div id="conninfo_content_node" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('peer')">
+			<span id="conninfo_icon_peer" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">节点列表</span>
+		</div>
+		<div id="conninfo_content_peer" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('connector')">
+			<span id="conninfo_icon_connector" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">连接器信息</span>
+		</div>
+		<div id="conninfo_content_connector" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('stun')">
+			<span id="conninfo_icon_stun" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">STUN信息</span>
+		</div>
+		<div id="conninfo_content_stun" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('route')">
+			<span id="conninfo_icon_route" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">路由信息</span>
+		</div>
+		<div id="conninfo_content_route" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('peercenter')">
+			<span id="conninfo_icon_peercenter" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">节点中心</span>
+		</div>
+		<div id="conninfo_content_peercenter" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('vpnportal')">
+			<span id="conninfo_icon_vpnportal" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">VPN门户</span>
+		</div>
+		<div id="conninfo_content_vpnportal" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('proxy')">
+			<span id="conninfo_icon_proxy" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">TCP/KCP代理</span>
+		</div>
+		<div id="conninfo_content_proxy" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('acl')">
+			<span id="conninfo_icon_acl" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">ACL规则</span>
+		</div>
+		<div id="conninfo_content_acl" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('mappedlistener')">
+			<span id="conninfo_icon_mappedlistener" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">映射监听器</span>
+		</div>
+		<div id="conninfo_content_mappedlistener" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('stats')">
+			<span id="conninfo_icon_stats" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">统计信息</span>
+		</div>
+		<div id="conninfo_content_stats" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+	
+	<div class="conninfo-section">
+		<div class="conninfo-section-header" onclick="toggleSection('cmdline')">
+			<span id="conninfo_icon_cmdline" class="conninfo-section-icon">▼</span>
+			<span class="conninfo-section-title">启动参数</span>
+		</div>
+		<div id="conninfo_content_cmdline" class="conninfo-section-content">
+			<em><%:Collecting data...%></em>
+		</div>
+	</div>
+</div>

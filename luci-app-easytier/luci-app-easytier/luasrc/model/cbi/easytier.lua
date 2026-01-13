@@ -15,6 +15,7 @@ s.addremove=false
 s.anonymous=true
 s:tab("general", translate("General Settings"))
 s:tab("privacy", translate("Advanced Settings"))
+s:tab("webconsole", translate("Self-hosted Web Server"))
 s:tab("infos", translate("Connection Info"))
 s:tab("upload", translate("Upload Program"))
 
@@ -469,699 +470,10 @@ checktime:depends("check", "1")
 
 local process_status = luci.sys.exec("ps | grep easytier-core| grep -v grep")
 
-btn0 = s:taboption("infos", Button, "btn0")
-btn0.inputtitle = translate("Node Info")
-btn0.description = translate("Click the button to refresh and view local node information")
-btn0.inputstyle = "apply"
-btn0.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli node >/tmp/easytier-cli_node 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_node")
-    end
-end
-
-btn0info = s:taboption("infos", DummyValue, "btn0info")
-btn0info.rawhtml = true
-btn0info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_node") or ""
-    content = luci.util.trim(content or "")
-
-    local html = {}
-    local parsed = false 
-
-    table.insert(html, [[
-        <div style="overflow:auto; max-width:100%;">
-        <table style="border-collapse:collapse;font-family:monospace;width:100%;">
-    ]])
-
-    local rowIndex = 0
-    for line in content:gmatch("[^\r\n]+") do
-        if not line:match("^|%s*-") then
-            local key, value = line:match("^|%s*(.-)%s*|%s*(.-)%s*|?$")
-            if key and value then
-                parsed = true
-
-                -- Key 中文化
-                key = key:gsub("^Virtual IP$", "虚拟IP")
-                key = key:gsub("^Hostname$", "主机名")
-                key = key:gsub("^Proxy CIDRs$", "代理CIDR")
-                key = key:gsub("^Peer ID$", "节点ID")
-                key = key:gsub("^Public IPv4$", "公网IPv4")
-                key = key:gsub("^UDP Stun Type$", "UDP穿透类型")
-                key = key:gsub("^Interface IPv4$", "IPv4地址")
-                key = key:gsub("^Interface IPv6$", "IPv6地址")
-                key = key:gsub("^Listener%s*(%d+)$", "监听器 %1") 
-
-                -- Value 中文化
-                value = value:gsub("PortRestricted", "端口受限")
-
-                local style_key = "padding:6px;text-align:left;white-space:nowrap;"
-                local style_value = "padding:4px;text-align:left;white-space:nowrap;"
-
-                local tr = {}
-                table.insert(tr, string.format("<th style='%s'>%s</th>", style_key, luci.util.pcdata(key)))
-                table.insert(tr, string.format("<td style='%s'>%s</td>", style_value, luci.util.pcdata(value)))
-
-                table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
-                rowIndex = rowIndex + 1
-            end
-        end
-    end
-
-    table.insert(html, "</table></div>")
-
-    if parsed then
-        return table.concat(html, "\n")
-    else
-        return string.format(
-            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.util.pcdata(content)
-        )
-    end
-end
-
-btn1 = s:taboption("infos", Button, "btn1")
-btn1.inputtitle = translate("Peer Info")
-btn1.description = translate("Click the button to refresh and view peer information")
-btn1.inputstyle = "apply"
-btn1.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli peer >/tmp/easytier-cli_peer 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_peer")
-    end
-end
-
-btn1info = s:taboption("infos", DummyValue, "btn1info")
-btn1info.rawhtml = true
-btn1info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_peer") or ""
-    content = luci.util.trim(content or "")
-
-    local html = {}
-    local parsed = false 
-
-    table.insert(html, [[
-        <div style="overflow:auto; max-width:100%;">
-        <table style="border-collapse:collapse;font-family:monospace;width:100%;">
-    ]])
-
-    local rowIndex = 0
-    for line in content:gmatch("[^\r\n]+") do
-        if not line:match("^|[-| ]+|$") then
-            local trimmed = line:gsub("^|", ""):gsub("|$", "")
-            local row = {}
-
-            local start = 1
-            while true do
-                local s, e = string.find(trimmed, "|", start, true)
-                local cell
-                if s then
-                    cell = trimmed:sub(start, s - 1)
-                    start = e + 1
-                else
-                    cell = trimmed:sub(start)
-                end
-
-                cell = luci.util.trim(cell)
-                cell = cell:gsub("&#124;", "|")
-
-                -- 表头替换中文
-                if rowIndex == 0 then
-                    if cell == "ipv4" then cell = "IPv4地址"
-                    elseif cell == "hostname" then cell = "主机名"
-                    elseif cell == "cost" then cell = "路由"
-                    elseif cell == "lat(ms)" then cell = "延迟(ms)"
-                    elseif cell == "loss" then cell = "丢包率"
-                    elseif cell == "rx" then cell = "下载"
-                    elseif cell == "tx" then cell = "上传"
-                    elseif cell == "tunnel" then cell = "协议"
-                    elseif cell == "NAT" then cell = "NAT类型"
-                    elseif cell == "version" then cell = "内核版本"
-                    end
-                else
-                    -- 内容值中文化
-                    if cell == "Local" then
-                        cell = "本机"
-                    elseif cell == "PortRestricted" then
-                        cell = "端口受限"
-                    elseif cell == "NoPat" then
-                        cell = "无端口映射"
-                    end
-                end
-
-                table.insert(row, cell)
-
-                if not s then break end
-            end
-
-            if #row > 0 then
-                parsed = true
-                local tr = {}
-                for i, c in ipairs(row) do
-                    local tag = rowIndex == 0 and "th" or "td"
-                    local style = "padding:4px;text-align:left;white-space:nowrap;"
-
-                    if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;"
-                    end
-
-                    table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
-                end
-
-                table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
-                rowIndex = rowIndex + 1
-            end
-        end
-    end
-
-    table.insert(html, "</table></div>")
-
-    if parsed then
-        return table.concat(html, "\n")
-    else
-        return string.format(
-            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.util.pcdata(content)
-        )
-    end
-end
-
-btn2 = s:taboption("infos", Button, "btn2")
-btn2.inputtitle = translate("Connector Info")
-btn2.description = translate("Click the button to refresh and view connector information")
-btn2.inputstyle = "apply"
-btn2.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli connector >/tmp/easytier-cli_connector 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_connector")
-    end
-end
-
-btn2info = s:taboption("infos", DummyValue, "btn2info")
-btn2info.rawhtml = true
-btn2info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_connector") or ""
-    return string.format("<pre>%s</pre>", luci.util.pcdata(content))
-end
-
-btn3 = s:taboption("infos", Button, "btn3")
-btn3.inputtitle = translate("STUN Info")
-btn3.description = translate("Click the button to refresh and view STUN information")
-btn3.inputstyle = "apply"
-btn3.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli stun >/tmp/easytier-cli_stun 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_stun")
-    end
-end
-
-btn3info = s:taboption("infos", DummyValue, "btn3info")
-btn3info.rawhtml = true
-btn3info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_stun") or ""
-    return string.format("<pre>%s</pre>", luci.util.pcdata(content))
-end
-
-btn4 = s:taboption("infos", Button, "btn4")
-btn4.inputtitle = translate("Route Info")
-btn4.description = translate("Click the button to refresh and view route information")
-btn4.inputstyle = "apply"
-btn4.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli route >/tmp/easytier-cli_route 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_route")
-    end
-end
-
-btn4info = s:taboption("infos", DummyValue, "btn4info")
-btn4info.rawhtml = true
-btn4info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_route") or ""
-    content = luci.util.trim(content or "")
-
-    local html = {}
-    local parsed = false 
-
-    table.insert(html, [[
-        <div style="overflow:auto; max-width:100%;">
-        <table style="border-collapse:collapse;font-family:monospace;width:100%;">
-    ]])
-
-    local lines = {}
-    for line in content:gmatch("[^\r\n]+") do
-        table.insert(lines, line)
-    end
-
-    for rowIndex, line in ipairs(lines) do
-        if not line:match("^|%s*-") then
-            local cells = {}
-            for cell in line:gmatch("|%s*([^|]+)%s*") do
-                local value = luci.util.trim(cell)
-
-                if rowIndex == 1 then
-                    if value == "ipv4" then value = "IPv4地址"
-                    elseif value == "hostname" then value = "主机名"
-                    elseif value == "proxy_cidrs" then value = "代理网段"
-                    elseif value == "next_hop_ipv4" then value = "下一跳IPv4"
-                    elseif value == "next_hop_hostname" then value = "下一跳主机名"
-                    elseif value == "next_hop_lat" then value = "下一跳延迟"
-                    elseif value == "path_len" then value = "路径长度"
-                    elseif value == "path_latency" then value = "路径延迟"
-                    elseif value == "next_hop_ipv4_lat_first" then value = "首跳IPv4延迟"
-                    elseif value == "next_hop_hostname_lat_first" then value = "首跳主机名延迟"
-                    elseif value == "path_len_lat_first" then value = "首跳路径长度"
-                    elseif value == "path_latency_lat_first" then value = "首跳路径延迟"
-                    elseif value == "version" then value = "版本"
-                    end
-                else
-
-                    if value == "Local" then
-                        value = "本机"
-                    elseif value == "DIRECT" then
-                        value = "直连"
-                    end
-                end
-
-                table.insert(cells, value)
-            end
-
-            if #cells > 0 then
-                parsed = true
-                local tr = {}
-                for i, c in ipairs(cells) do
-                    local tag = rowIndex == 1 and "th" or "td"
-                    local style = "padding:4px;text-align:left;white-space:nowrap;"
-
-                    if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;"
-                    end
-
-                    table.insert(tr, string.format("<%s style='%s'>%s</%s>",
-                        tag, style, luci.util.pcdata(c), tag))
-                end
-
-                table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
-            end
-        end
-    end
-
-    table.insert(html, "</table></div>")
-
-    if parsed then
-        return table.concat(html, "\n")
-    else
-        return string.format(
-            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.util.pcdata(content)
-        )
-    end
-end
-
-btn6 = s:taboption("infos", Button, "btn6")
-btn6.inputtitle = translate("Peer-Center Info")
-btn6.description = translate("Click the button to refresh and view peer-center information")
-btn6.inputstyle = "apply"
-btn6.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli peer-center >/tmp/easytier-cli_peer-center 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_peer-center")
-    end
-end
-
-btn6info = s:taboption("infos", DummyValue, "btn6info")
-btn6info.rawhtml = true
-btn6info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_peer-center") or ""
-    content = luci.util.trim(content or "")
-
-    local html = {}
-    local parsed = false 
-
-    table.insert(html, [[
-        <div style="overflow:auto; max-width:100%;">
-        <table style="border-collapse:collapse;font-family:monospace;width:100%;">
-    ]])
-
-    local lines = {}
-    for line in content:gmatch("[^\r\n]+") do
-        table.insert(lines, line)
-    end
-
-    for rowIndex, line in ipairs(lines) do
-        if not line:match("^|%s*-") then
-            local cells = {}
-            for cell in line:gmatch("|%s*([^|]+)%s*") do
-                local value = luci.util.trim(cell)
-
-                if rowIndex == 1 then
-                    if value == "node_id" then
-                        value = "节点ID"
-                    elseif value == "hostname" then
-                        value = "主机名"
-                    elseif value == "ipv4" then
-                        value = "IPv4地址"
-                    elseif value == "direct_peers" then
-                        value = "直连节点"
-                    end
-                end
-
-                table.insert(cells, value)
-            end
-
-            if #cells > 0 then
-                parsed = true
-                local tr = {}
-                for i, c in ipairs(cells) do
-                    local tag = rowIndex == 1 and "th" or "td"
-                    local style = "padding:4px;text-align:left;white-space:nowrap;"
-
-                    if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;"
-                    end
-
-                    table.insert(tr, string.format("<%s style='%s'>%s</%s>",
-                        tag, style, luci.util.pcdata(c), tag))
-                end
-                table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
-            end
-        end
-    end
-
-    table.insert(html, "</table></div>")
-
-    if parsed then
-        -- 成功解析表格
-        return table.concat(html, "\n")
-    else
-        -- 没有表格 → 原样显示
-        return string.format(
-            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.util.pcdata(content)
-        )
-    end
-end
-
-btn7 = s:taboption("infos", Button, "btn7")
-btn7.inputtitle = translate("VPN-Portal Info")
-btn7.description = translate("Click the button to refresh and view vpn-portal information")
-btn7.inputstyle = "apply"
-btn7.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli vpn-portal >/tmp/easytier-cli_vpn-portal 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_vpn-portal")
-    end
-end
-
-btn7info = s:taboption("infos", DummyValue, "btn7info")
-btn7info.rawhtml = true
-btn7info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_vpn-portal") or ""
-    return string.format("<pre>%s</pre>", luci.util.pcdata(content))
-end
-
-btn8 = s:taboption("infos", Button, "btn8")
-btn8.inputtitle = translate("TCP/KCP Proxy Info")
-btn8.description = translate("Click the button to refresh and view TCP/KCP proxy information")
-btn8.inputstyle = "apply"
-btn8.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli proxy >/tmp/easytier-cli_proxy 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_proxy")
-    end
-end
-
-btn8info = s:taboption("infos", DummyValue, "btn8info")
-btn8info.rawhtml = true
-btn8info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_proxy") or ""
-    content = luci.util.trim(content or "")
-
-    local html = {}
-    local parsed = false 
-
-    table.insert(html, [[
-        <div style="overflow:auto; max-width:100%;">
-        <table style="border-collapse:collapse;font-family:monospace;width:100%;">
-    ]])
-
-    local lines = {}
-    for line in content:gmatch("[^\r\n]+") do
-        table.insert(lines, line)
-    end
-
-    for rowIndex, line in ipairs(lines) do
-        if not line:match("^|%s*-") then
-            local cells = {}
-            for cell in line:gmatch("|%s*([^|]+)%s*") do
-                local value = luci.util.trim(cell)
-
-                -- 表头关键词替换
-                if rowIndex == 1 then
-                    if value == "src" then
-                        value = "源地址"
-                    elseif value == "dst" then
-                        value = "目标地址"
-                    elseif value == "start_time" then
-                        value = "启动时间"
-                    elseif value == "state" then
-                        value = "状态"
-                    elseif value == "transport_type" then
-                        value = "传输类型"
-                    end
-                end
-
-                table.insert(cells, value)
-            end
-
-            if #cells > 0 then
-                parsed = true
-                local tr = {}
-                for i, c in ipairs(cells) do
-                    local tag = rowIndex == 1 and "th" or "td"
-                    local style = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
-
-                    if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;border:1px solid #ccc;background:#f0f0f0;"
-                    elseif rowIndex % 2 == 0 then
-                        style = style .. "background:#fafafa;"
-                    else
-                        style = style .. "background:#ffffff;"
-                    end
-
-                    table.insert(tr, string.format("<%s style='%s'>%s</%s>",
-                        tag, style, luci.util.pcdata(c), tag))
-                end
-
-                table.insert(html, "<tr>" .. table.concat(tr) .. "</tr>")
-            end
-        end
-    end
-
-    table.insert(html, "</table></div>")
-
-    if parsed then
-        return table.concat(html, "\n")
-    else
-        -- 没解析出表格，原样显示
-        return string.format(
-            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.util.pcdata(content)
-        )
-    end
-end
-
-btn9 = s:taboption("infos", Button, "btn9")
-btn9.inputtitle = translate("ACL rules")
-btn9.description = translate("Click the button to refresh and view ACL rules information")
-btn9.inputstyle = "apply"
-btn9.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli acl stats >/tmp/easytier-cli_acl 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_acl")
-    end
-end
-
-btn9info = s:taboption("infos", DummyValue, "btn9info")
-btn9info.rawhtml = true
-btn9info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_acl") or ""
-    return string.format("<pre>%s</pre>", luci.util.pcdata(content))
-end
-
-btn10 = s:taboption("infos", Button, "btn10")
-btn10.inputtitle = translate("Mapped listener")
-btn10.description = translate("Click the button to refresh and view manage mapped listeners")
-btn10.inputstyle = "apply"
-btn10.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli mapped-listener >/tmp/easytier-cli_mapped_listener 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_mapped_listener")
-    end
-end
-
-btn10info = s:taboption("infos", DummyValue, "btn10info")
-btn10info.rawhtml = true
-btn10info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_mapped_listener") or ""
-    return string.format("<pre>%s</pre>", luci.util.pcdata(content))
-end
-
-btn11 = s:taboption("infos", Button, "btn11")
-btn11.inputtitle = translate("Stats")
-btn11.description = translate("Click the button to refresh and view statistics information")
-btn11.inputstyle = "apply"
-btn11.write = function()
-    if process_status ~= "" then
-        luci.sys.call("$(dirname $(uci -q get easytier.@easytier[0].easytierbin))/easytier-cli stats >/tmp/easytier-cli_stats 2>&1")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier-cli_stats")
-    end
-end
-
-btn11info = s:taboption("infos", DummyValue, "btn11info")
-btn11info.rawhtml = true
-btn11info.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier-cli_stats") or ""
-    content = luci.util.trim(content or "") 
-
-    local translate_map = { 
-        ["Metric Name"] = "指标名称", 
-        ["Value"] = "值",
-        ["Labels"] = "标签", 
-        ["compression_bytes_rx_after"]   = "接收压缩后字节数",
-        ["compression_bytes_rx_before"]  = "接收压缩前字节数", 
-        ["compression_bytes_tx_after"]   = "发送压缩后字节数",
-        ["compression_bytes_tx_before"]  = "发送压缩前字节数",
-        ["peer_rpc_client_rx"]           = "客户端 RPC 接收数",
-        ["peer_rpc_client_tx"]           = "客户端 RPC 发送数",
-        ["peer_rpc_duration_ms"]         = "RPC 时长 (毫秒)",
-        ["peer_rpc_server_rx"]           = "服务端 RPC 接收数",
-        ["peer_rpc_server_tx"]           = "服务端 RPC 发送数",
-        ["traffic_bytes_rx"]             = "接收字节数",
-        ["traffic_bytes_self_rx"]        = "自身接收字节数",
-        ["traffic_bytes_self_tx"]        = "自身发送字节数",
-        ["traffic_bytes_tx"]             = "发送字节数",
-        ["traffic_packets_rx"]           = "接收包数",
-        ["traffic_packets_self_rx"]      = "自身接收包数",
-        ["traffic_packets_self_tx"]      = "自身发送包数",
-        ["traffic_packets_tx"]           = "发送包数",
-        ["network_name"]        = "网络名称",
-        ["dst_peer_id"]         = "目标节点ID",
-        ["src_peer_id"]         = "源节点ID",
-        ["method_name"]         = "方法名称",
-        ["service_name"]        = "服务名称",
-        ["status"]              = "状态",
-        ["success"]             = "成功",
-        ["get_global_peer_map"] = "获取全局节点映射",
-        ["PeerCenterRpc"]       = "节点中心RPC",
-        ["report_peers"]        = "上报节点",
-        ["sync_route_info"]     = "同步路由信息",
-        ["OspfRouteRpc"]        = "OSPF路由RPC"
-    }
-
-    local function escape_lua_pattern(s) 
-        return s:gsub("(%W)","%%%1") 
-    end 
-
-    local html = {} 
-    table.insert(html, [[ 
-        <div style="overflow:auto; max-width:100%;">
-        <table style="border-collapse:collapse;width:100%;font-family:monospace;">
-    ]]) 
-
-    local lines = {}
-    for line in content:gmatch("[^\r\n]+") do
-        table.insert(lines, line)
-    end
-
-    local parsed = false
-    local tableRows = {}
-
-    for rowIndex, line in ipairs(lines) do
-        if not line:match("^|%s*-") then
-            local cells = {}
-            for cell in line:gmatch("|%s*([^|]+)%s*") do
-                local value = luci.util.trim(cell)
-                if rowIndex == 1 then
-                    if translate_map[value] then
-                        value = translate_map[value]
-                    else
-                        for k, v in pairs(translate_map) do
-                            local k_esc = escape_lua_pattern(k)
-                            value = value:gsub(k_esc, v)
-                        end 
-                    end
-                else
-                    for k, v in pairs(translate_map) do
-                        local k_esc = escape_lua_pattern(k)
-                        value = value:gsub(k_esc, v)
-                    end 
-                end
-                table.insert(cells, value) 
-            end
-
-            if #cells > 0 then
-                parsed = true
-                local tr = {}
-                for i, c in ipairs(cells) do
-                    local tag = (rowIndex == 1) and "th" or "td" 
-                    local style = "padding:4px;text-align:left;white-space:nowrap;border:1px solid #ccc;"
-                    if tag == "th" then
-                        style = "padding:6px;text-align:center;white-space:nowrap;border:1px solid #ccc;background:#f0f0f0;" 
-                    elseif rowIndex % 2 == 0 then
-                        style = style .. "background:#fafafa;"
-                    else 
-                        style = style .. "background:#ffffff;"
-                    end
-                    table.insert(tr, string.format("<%s style='%s'>%s</%s>", tag, style, luci.util.pcdata(c), tag))
-                end
-                table.insert(tableRows, "<tr>" .. table.concat(tr) .. "</tr>")
-            end
-        end
-    end
-
-    if parsed then
-        for _, rowHtml in ipairs(tableRows) do
-            table.insert(html, rowHtml)
-        end 
-        table.insert(html, "</table></div>")
-        return table.concat(html, "\n")
-    else
-        return string.format( 
-            "<pre style='background:#f9f9f9;border:1px solid #ccc;padding:8px;white-space:pre-wrap;'>%s</pre>",
-            luci.util.pcdata(content) 
-        ) 
-    end
-end
-
-btn5 = s:taboption("infos", Button, "btn5")
-btn5.inputtitle = translate("Local Startup Parameters")
-btn5.description = translate("Click the button to refresh and view the complete local startup parameters")
-btn5.inputstyle = "apply"
-btn5.write = function()
-    if process_status ~= "" then
-        luci.sys.call("echo $(cat /proc/$(pidof easytier-core)/cmdline | awk '{print $1}') >/tmp/easytier_cmd")
-    else
-        luci.sys.call("echo '错误：程序未运行！请启动程序后重新点击刷新' >/tmp/easytier_cmd")
-    end
-end
-
-btn5cmd = s:taboption("infos", DummyValue, "btn5cmd")
-btn5cmd.rawhtml = true
-btn5cmd.cfgvalue = function(self, section)
-    local content = nixio.fs.readfile("/tmp/easytier_cmd") or ""
-    return string.format("<pre>%s</pre>", luci.util.pcdata(content))
-end
+-- 连接信息 tab - 使用 HTM 模板展示
+conninfo = s:taboption("infos", DummyValue, "_conninfo")
+conninfo.template = "easytier/easytier_conninfo"
+conninfo.rawhtml = true
 
 btnrm = s:taboption("infos", Button, "btnrm")
 btnrm.inputtitle = translate("Check for Updates")
@@ -1268,76 +580,71 @@ if luci.http.formvalue("upload") then
     local f = luci.http.formvalue("ulfile")
 end
 
--- easytier-web
-s=m:section(TypedSection, "easytierweb", translate("Self-hosted Web Server"))
-s.addremove=false
-s.anonymous=true
+-- Self-hosted Web Console tab options
 
-switch = s:option(Flag, "enabled", translate("Enable"))
-switch.rmempty = false
+web_enabled = s:taboption("webconsole", Flag, "web_enabled", translate("Enable"))
+web_enabled.rmempty = false
 
-btncq = s:option(Button, "btncq", translate("Restart"))
-btncq.inputtitle = translate("Restart")
-btncq.description = translate("Quickly restart once without modifying any parameters")
-btncq.inputstyle = "apply"
-btncq:depends("enabled", "1")
-btncq.write = function()
-  luci.sys.call("/etc/init.d/easytier restart >/dev/null 2>&1 &")  -- 执行重启命令
+web_btncq = s:taboption("webconsole", Button, "web_btncq", translate("Restart"))
+web_btncq.inputtitle = translate("Restart")
+web_btncq.description = translate("Quickly restart once without modifying any parameters")
+web_btncq.inputstyle = "apply"
+web_btncq.write = function()
+  luci.sys.call("/etc/init.d/easytier restart >/dev/null 2>&1 &")
 end
 
-db_path = s:option(Value, "db_path", translate("Database File Path"),
+web_db_path = s:taboption("webconsole", Value, "web_db_path", translate("Database File Path"),
         translate("Path to the sqlite3 database file used to store all data. (-d parameter)"))
-db_path.default = "/etc/easytier/et.db"
+web_db_path.default = "/etc/easytier/et.db"
 
-web_protocol = s:option(ListValue, "web_protocol", translate("Listening Protocol"),
+web_protocol = s:taboption("webconsole", ListValue, "web_protocol", translate("Listening Protocol"),
         translate("Configure the server's listening protocol for easytier-core to connect. (-p parameter)"))
 web_protocol.default = "udp"
 web_protocol:value("udp",translate("UDP"))
 web_protocol:value("tcp",translate("TCP"))
 web_protocol:value("ws",translate("WS"))
 
-web_port = s:option(Value, "web_port", translate("Server Port"),
+web_port = s:taboption("webconsole", Value, "web_port", translate("Server Port"),
         translate("Configure the server's listening port for easytier-core to connect. (-c parameter)"))
 web_port.datatype = "range(1,65535)"
 web_port.placeholder = "22020"
 web_port.default = "22020"
 
-fw_web = s:option(Flag, "fw_web", translate("WAN access to WEB"),
+web_fw_web = s:taboption("webconsole", Flag, "web_fw_web", translate("WAN access to WEB"),
         translate("Automatically add firewall rules to allow WAN access to this WEB console"))
-        
-api_port = s:option(Value, "api_port", translate("API Port"),
+
+web_api_port = s:taboption("webconsole", Value, "web_api_port", translate("API Port"),
         translate("Listening port of the RESTful server, used as ApiHost by the web frontend. (-a parameter)"))
-api_port.datatype = "range(1,65535)"
-api_port.placeholder = "11211"
-api_port.default = "11211"
+web_api_port.datatype = "range(1,65535)"
+web_api_port.placeholder = "11211"
+web_api_port.default = "11211"
 
-html_port = s:option(Value, "html_port", translate("Web Interface Port"),
+web_html_port = s:taboption("webconsole", Value, "web_html_port", translate("Web Interface Port"),
         translate("Frontend listening port for the web dashboard server. Leave empty to disable. (-l parameter)"))
-html_port.datatype = "range(1,65535)"
-html_port.default = "11211"
+web_html_port.datatype = "range(1,65535)"
+web_html_port.default = "11211"
 
-fw_api = s:option(Flag, "fw_api", translate("WAN access to API"),
+web_fw_api = s:taboption("webconsole", Flag, "web_fw_api", translate("WAN access to API"),
         translate("Automatically add firewall rules to allow WAN access to the API control page"))
-        
-api_host = s:option(Value, "api_host", translate("Default API Server URL"),
+
+web_api_host = s:taboption("webconsole", Value, "web_api_host", translate("Default API Server URL"),
         translate("The URL of the API server, used for connecting the web frontend. (--api-host parameter)<br>"
                 .. "Example: http://[current device IP or resolved domain name]:[API port]"))
 
-geoip_db = s:option(Value, "geoip_db", translate("GEOIP_DB Path"),
+web_geoip_db = s:taboption("webconsole", Value, "web_geoip_db", translate("GEOIP_DB Path"),
         translate("GeoIP2 database file path used to locate the client. Defaults to an embedded file (country-level information only)."
 		.. "<br>Recommended: https://github.com/P3TERX/GeoLite.mmdb (--geoip-db parameter)"))
-geoip_db.placeholder = "/etc/easytier/GeoLite.mmdb"
+web_geoip_db.placeholder = "/etc/easytier/GeoLite.mmdb"
 
-weblog = s:option(ListValue, "weblog", translate("Program Log"),
+web_weblog = s:taboption("webconsole", ListValue, "web_weblog", translate("Program Log"),
         translate("Runtime log located at /tmp/easytierweb.log, viewable in the log section above.<br>"
                 .. "Levels: Error < Warning < Info < Debug < Trace"))
-weblog.default = "off"
-weblog:value("off", translate("Off"))
-weblog:value("error", translate("Error"))
-weblog:value("warn", translate("Warning"))
-weblog:value("info", translate("Info"))
-weblog:value("debug", translate("Debug"))
-weblog:value("trace", translate("Trace"))
+web_weblog.default = "off"
+web_weblog:value("off", translate("Off"))
+web_weblog:value("error", translate("Error"))
+web_weblog:value("warn", translate("Warning"))
+web_weblog:value("info", translate("Info"))
+web_weblog:value("debug", translate("Debug"))
+web_weblog:value("trace", translate("Trace"))
 
 return m
-
