@@ -9,9 +9,8 @@ if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
 
-m.render = function(self, ...)
-	Map.render(self, ...)
-	api.optimize_cbi_ui()
+function m.on_before_save(self)
+	self:del(arg[1], "md5")
 end
 
 m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
@@ -70,10 +69,6 @@ end
 s = m:section(NamedSection, arg[1])
 s.addremove = false
 s.dynamic = false
-
-function m.commit_handler(self)
-	self:del(arg[1], "md5")
-end
 
 o = s:option(Value, "remark", translate("Subscribe Remark"))
 o.rmempty = false

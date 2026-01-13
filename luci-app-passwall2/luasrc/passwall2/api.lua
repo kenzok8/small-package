@@ -1277,14 +1277,15 @@ function set_apply_on_parse(map)
 				end
 			end
 		else
+			apply_redirect(map)
+			local old = map.on_after_save
 			map.on_after_save = function(self)
+				if old then old(self) end
 				map:set("@global[0]", "timestamp", os.time())
 			end
+			local cbi = require "luci.cbi"
+			map:append(cbi.Template(appname .. "/cbi/optimize_cbi_ui"))
 		end
-	end
-	map.render = function(self, ...)
-		getmetatable(self).__index.render(self, ...) -- Maintain the original rendering process
-		optimize_cbi_ui()
 	end
 end
 
@@ -1390,26 +1391,29 @@ function format_go_time(input)
 	return result
 end
 
-function optimize_cbi_ui()
-	luci.http.write([[
-		<script type="text/javascript">
-			//Correct the names of the move up and move down buttons.
-			document.querySelectorAll("input.btn.cbi-button.cbi-button-up").forEach(function(btn) {
-				btn.value = "]] .. i18n.translate("Move up") .. [[";
-			});
-			document.querySelectorAll("input.btn.cbi-button.cbi-button-down").forEach(function(btn) {
-				btn.value = "]] .. i18n.translate("Move down") .. [[";
-			});
-			//Remove extra line breaks between controls and descriptions.
-			document.querySelectorAll("div.cbi-value-description").forEach(function(descDiv) {
-				var prev = descDiv.previousSibling;
-				while (prev && prev.nodeType === Node.TEXT_NODE && prev.textContent.trim() === "") {
-					prev = prev.previousSibling;
-				}
-				if (prev && prev.nodeType === Node.ELEMENT_NODE && prev.tagName === "BR") {
-					prev.remove();
-				}
-			});
-		</script>
-	]])
+function apply_redirect(m)
+	local tmp_uci_file = "/etc/config/" .. appname .. "_redirect"
+	if m.redirect and m.redirect ~= "" then
+		if fs.access(tmp_uci_file) then
+			local redirect
+			for line in io.lines(tmp_uci_file) do
+				redirect = line:match("option%s+url%s+['\"]([^'\"]+)['\"]")
+				if redirect and redirect ~= "" then break end
+			end
+			if redirect and redirect ~= "" then
+				sys.call("/bin/rm -f " .. tmp_uci_file)
+				luci.http.redirect(redirect)
+			end
+		else
+			fs.writefile(tmp_uci_file, "config redirect\n")
+		end
+		m.on_after_save = function(self)
+			local redirect = self.redirect
+			if redirect and redirect ~= "" then
+				uci:set(appname .. "_redirect", "@redirect[0]", "url", redirect)
+			end
+		end
+	else
+		sys.call("/bin/rm -f " .. tmp_uci_file)
+	end
 end

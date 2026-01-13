@@ -42,32 +42,15 @@ end
 m = Map(appname)
 api.set_apply_on_parse(m)
 
-if api.is_js_luci() then
-	m.on_after_apply = function(self)
-		uci:foreach(appname, "subscribe_list", function(e)
-			uci:delete(appname, e[".name"], "md5")
-		end)
-		uci:commit(appname)
-	end
-end
-
-m.render = function(self, ...)
-	Map.render(self, ...)
-	api.optimize_cbi_ui()
+function m.on_before_save(self)
+	self.uci:foreach(appname, "subscribe_list", function(e)
+		self:del(e[".name"], "md5")
+	end)
 end
 
 -- [[ Subscribe Settings ]]--
 s = m:section(TypedSection, "global_subscribe", "")
 s.anonymous = true
-
-function m.commit_handler(self)
-	if self.no_commit then
-		return
-	end
-	self.uci:foreach(appname, "subscribe_list", function(e)
-		self:del(e[".name"], "md5")
-	end)
-end
 
 o = s:option(ListValue, "filter_keyword_mode", translate("Filter keyword Mode"))
 o:value("0", translate("Close"))
