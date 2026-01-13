@@ -3,5 +3,4 @@ config easytier
 	option enabled '0'
         option easytierbin '/usr/bin/easytier-core'
 
-config easytierweb
-	option enabled '0'
+

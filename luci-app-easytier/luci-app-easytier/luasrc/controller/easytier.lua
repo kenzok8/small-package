@@ -15,13 +15,14 @@ function index()
 	entry({"admin", "vpn", "easytier", "get_wlog"}, call("get_wlog")).leaf = true
 	entry({"admin", "vpn", "easytier", "clear_wlog"}, call("clear_wlog")).leaf = true
 	entry({"admin", "vpn", "easytier", "status"}, call("act_status")).leaf = true
+	entry({"admin", "vpn", "easytier", "conninfo"}, call("act_conninfo")).leaf = true
 end
 
 function act_status()
 	local e = {}
 	local sys  = require "luci.sys"
 	local uci  = require "luci.model.uci".cursor()
-	local port = tonumber(uci:get_first("easytier", "easytierweb", "html_port"))
+	local port = tonumber(uci:get_first("easytier", "easytier", "web_html_port"))
 	e.crunning = luci.sys.call("pgrep easytier-core >/dev/null") == 0
 	e.wrunning = luci.sys.call("pgrep easytier-web >/dev/null") == 0
 	e.port = (port or 0)
@@ -110,4 +111,64 @@ end
 
 function clear_wlog()
 	luci.sys.call("echo '' >/tmp/easytierweb.log")
+end
+
+function act_conninfo()
+	local e = {}
+	local uci = require "luci.model.uci".cursor()
+	local easytierbin = uci:get_first("easytier", "easytier", "easytierbin") or "/usr/bin/easytier-core"
+	local clibin = easytierbin:gsub("easytier%-core$", "easytier-cli")
+	
+	local process_status = luci.sys.exec("pgrep easytier-core")
+	
+	if process_status ~= "" then
+		-- 获取各类CLI信息
+		local function get_cli_output(cmd)
+			local handle = io.popen(clibin .. " " .. cmd .. " 2>&1")
+			if handle then
+				local result = handle:read("*all")
+				handle:close()
+				return result or ""
+			end
+			return ""
+		end
+		
+		e.node = get_cli_output("node")
+		e.peer = get_cli_output("peer")
+		e.connector = get_cli_output("connector")
+		e.stun = get_cli_output("stun")
+		e.route = get_cli_output("route")
+		e.peer_center = get_cli_output("peer-center")
+		e.vpn_portal = get_cli_output("vpn-portal")
+		e.proxy = get_cli_output("proxy")
+		e.acl = get_cli_output("acl stats")
+		e.mapped_listener = get_cli_output("mapped-listener")
+		e.stats = get_cli_output("stats")
+		
+		-- 获取启动参数
+		local cmdhandle = io.popen("cat /proc/$(pidof easytier-core)/cmdline 2>/dev/null | tr '\\0' ' '")
+		if cmdhandle then
+			e.cmdline = cmdhandle:read("*all") or ""
+			cmdhandle:close()
+		else
+			e.cmdline = ""
+		end
+	else
+		local errMsg = "错误：程序未运行！请启动程序后刷新"
+		e.node = errMsg
+		e.peer = errMsg
+		e.connector = errMsg
+		e.stun = errMsg
+		e.route = errMsg
+		e.peer_center = errMsg
+		e.vpn_portal = errMsg
+		e.proxy = errMsg
+		e.acl = errMsg
+		e.mapped_listener = errMsg
+		e.stats = errMsg
+		e.cmdline = errMsg
+	end
+	
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(e)
 end
