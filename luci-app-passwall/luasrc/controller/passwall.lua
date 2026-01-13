@@ -334,7 +334,10 @@ function connect_status()
 	local proxy_mode = uci:get(appname, "@global[0]", "tcp_proxy_mode") or "proxy"
 	local localhost_proxy = uci:get(appname, "@global[0]", "localhost_proxy") or "1"
 	local socks_server = (localhost_proxy == "0") and api.get_cache_var("GLOBAL_TCP_SOCKS_server") or ""
-	url = "-w %{http_code}:%{time_starttransfer} " .. url
+	-- 兼容 curl 8.6 time_starttransfer 错误
+	local curl_ver = api.get_bin_version_cache("/usr/bin/curl", "-V 2>/dev/null | head -n 1 | awk '{print $2}' | cut -d. -f1,2 | tr -d ' \n'") or "0"
+	url = (curl_ver == "8.6") and "-w %{http_code}:%{time_appconnect} https://" .. url
+		or "-w %{http_code}:%{time_starttransfer} http://" .. url
 	if socks_server and socks_server ~= "" then
 		if (chn_list == "proxy" and gfw_list == "0" and proxy_mode ~= "proxy" and baidu ~= nil) or (chn_list == "0" and gfw_list == "0" and proxy_mode == "proxy") then
 		-- 中国列表+百度 or 全局
