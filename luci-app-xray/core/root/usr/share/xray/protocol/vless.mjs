@@ -38,7 +38,7 @@ export function vless_outbound(server, tag) {
                                 email: server["username"],
                                 id: server["password"],
                                 flow: flow,
-                                encryption: server["vless_encryption"]
+                                encryption: server["vless_encryption"] || "none"
                             }
                         ]
                     };
@@ -66,7 +66,7 @@ export function https_vless_inbound(proxy, config) {
         tag: "https_inbound",
         settings: {
             clients: map(proxy["web_server_password"], k => vless_inbound_user(k, flow)),
-            decryption: "none",
+            decryption: proxy["vless_decryption"] || "none",
             fallbacks: fallbacks(proxy, config)
         },
         streamSettings: {

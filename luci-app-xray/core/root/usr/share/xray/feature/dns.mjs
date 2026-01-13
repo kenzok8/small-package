@@ -34,14 +34,14 @@ function parse_ip_port(val, port_default) {
 
 function format_dns(method, val) {
     const parsed = parse_ip_port(val, 53);
-    if (method == "udp") {
+    if (method === "udp") {
         return {
             address: parsed["ip"],
             port: parsed["port"]
         };
     }
     let url_suffix = "";
-    if (substr(method, 0, 5) == "https") {
+    if (substr(method, 0, 5) === "https") {
         url_suffix = "/dns-query";
     }
     return {
@@ -50,11 +50,11 @@ function format_dns(method, val) {
 }
 
 function domain_rules(proxy, k) {
-    if (proxy[k] == null) {
+    if (proxy[k] === null) {
         return [];
     }
     return filter(proxy[k], function (x) {
-        if (substr(x, 0, 8) == "geosite:") {
+        if (substr(x, 0, 8) === "geosite:") {
             return geosite_existence;
         }
         return true;
@@ -96,11 +96,27 @@ export function dns_server_inbounds(proxy) {
 export function dns_rules(proxy, tcp_hijack_inbound_tags, udp_hijack_inbound_tags) {
     const dns_port = int(proxy["dns_port"] || 5300);
     const dns_count = int(proxy["dns_count"] || 3);
+    const fast_dns = parse_ip_port(proxy["fast_dns"] || fallback_fast_dns, 53);
+    const secure_dns = parse_ip_port(proxy["secure_dns"] || fallback_secure_dns, 53);
     let dns_server_tags = [];
     for (let i = dns_port; i <= dns_port + dns_count; i++) {
         push(dns_server_tags, sprintf("dns_server_inbound:%d", i));
     }
     let result = [
+        {
+            type: "field",
+            inboundTag: ["dns_conf_inbound"],
+            ip: [fast_dns["ip"]],
+            port: `${fast_dns["port"]}`,
+            outboundTag: "dynamic_direct"
+        },
+        {
+            type: "field",
+            inboundTag: ["dns_conf_inbound"],
+            ip: [secure_dns["ip"]],
+            port: `${secure_dns["port"]}`,
+            balancerTag: "udp_outbound_v4"
+        },
         {
             type: "field",
             inboundTag: dns_server_tags,
@@ -157,7 +173,7 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
     let domain_names_set = {};
     let domain_extra_options = {};
 
-    for (let server in filter(values(config), i => i[".type"] == "servers")) {
+    for (let server in filter(values(config), i => i[".type"] === "servers")) {
         if (iptoarr(server["server"])) {
             continue;
         }
@@ -206,6 +222,20 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
             port: fast_dns_object["port"],
             domains: [...keys(domain_names_set), ...fast_domain_rules(proxy)],
             skipFallback: true,
+            expectIPs: function () {
+                let ips = [];
+                if (proxy["align_fast_dns_to_geoip_direct"] === "1") {
+                    if (geoip_existence) {
+                        const geoip_direct_code_list = map(proxy["geoip_direct_code_list"] || [], v => index(v, ":") > 0 ? v : `geoip:${v}`);
+                        const geoip_direct_code_list_v6 = map(proxy["geoip_direct_code_list_v6"] || [], v => index(v, ":") > 0 ? v : `geoip:${v}`);
+                        push(ips, ...geoip_direct_code_list, ...geoip_direct_code_list_v6);
+                    }
+                }
+                if (length(ips) > 0) {
+                    return uniq(ips);
+                }
+                return null;
+            }(),
         },
     ];
 
@@ -228,7 +258,7 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
     for (let v in manual_tproxy) {
         if (v.domain_names != null) {
             for (let d in v.domain_names) {
-                if (index(v.source_addr, ":") == -1) {
+                if (index(v.source_addr, ":") === -1) {
                     hosts[d] = [v.source_addr];
                 }
             }
@@ -245,13 +275,13 @@ export function dns_conf(proxy, config, manual_tproxy, fakedns) {
 
 export function dns_direct_servers(config) {
     let result = [];
-    for (let server in filter(values(config), i => i[".type"] == "servers")) {
+    for (let server in filter(values(config), i => i[".type"] === "servers")) {
         if (iptoarr(server["server"])) {
             continue;
         }
         if (server["domain_resolve_dns"]) {
             if (index(server["domain_resolve_dns_method"], "local") > 1) {
-                push(result, parse_ip_port(server["domain_resolve_dns"])["ip"]);
+                push(result, parse_ip_port(server["domain_resolve_dns"]));
             }
         }
     }

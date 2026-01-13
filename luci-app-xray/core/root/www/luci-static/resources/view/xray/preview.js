@@ -17,6 +17,7 @@ return view.extend({
         s.anonymous = true;
 
         s.tab("dns_hijack", _("DNS Hijacking"));
+        s.taboption('dns_hijack', form.Flag, 'align_fast_dns_to_geoip_direct', _('Align Fast DNS & GeoIP Direct'), _("Return only IP adddresses from GeoIP Direct List for Fast DNS."));
 
         let dnsmasq_integration_mode = s.taboption('dns_hijack', form.ListValue, 'dnsmasq_integration_mode', _('Dnsmasq Integration Mode'), _('Per Instance mode requires OpenWrt 24.10 or later versions.'));
         dnsmasq_integration_mode.value("global", _("Global"));
@@ -71,6 +72,13 @@ return view.extend({
 
         let direct_bittorrent = s.taboption('sniffing', form.Flag, 'direct_bittorrent', _('Bittorrent Direct'), _("If enabled, no bittorrent request will be forwarded through Xray."));
         direct_bittorrent.depends("tproxy_sniffing", "1");
+
+        let routing_domain_strategy = s.taboption('sniffing', form.ListValue, 'routing_domain_strategy', _('Routing Domain Strategy'), _("Domain resolution strategy when matching domain against rules. (For tproxy, this is effective only when sniffing is enabled.)"));
+        routing_domain_strategy.value("AsIs", "AsIs");
+        routing_domain_strategy.value("IPIfNonMatch", "IPIfNonMatch");
+        routing_domain_strategy.value("IPOnDemand", "IPOnDemand");
+        routing_domain_strategy.depends("tproxy_sniffing", "1");
+        routing_domain_strategy.default = "AsIs";
 
         s.tab('dynamic_direct', _('Dynamic Direct'));
 

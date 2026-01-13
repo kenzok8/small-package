@@ -7,7 +7,7 @@ export function fake_dns_domains(fakedns) {
     for (let f in fakedns) {
         push(domains, ...f["fake_dns_domain_names"]);
     }
-    if (length(domains) == 0) {
+    if (length(domains) === 0) {
         return [];
     }
     return [

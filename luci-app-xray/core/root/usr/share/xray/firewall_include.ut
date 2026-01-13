@@ -14,17 +14,15 @@
     const udp6_enabled = length(general.udp_balancer_v6 || []) > 0;
     const uids_direct = uniq(general.uids_direct || []);
     const gids_direct = uniq(general.gids_direct || []);
-    let wan_bp_ips_no_dns = general.wan_bp_ips || [];
-    let wan_fw_ips_no_dns = general.wan_fw_ips || [];
-    push(wan_bp_ips_no_dns, split(general.fast_dns || "223.5.5.5:53", ":")[0]);
-    for (let i in dns_direct_servers(config)) {
-        push(wan_bp_ips_no_dns, i);
-    }
-    push(wan_fw_ips_no_dns, split(general.secure_dns || "8.8.8.8:53", ":")[0]);
-    const wan_bp_ips_v4 = filter(uniq(wan_bp_ips_no_dns), v => index(v, ":") == -1);
-    const wan_bp_ips_v6 = filter(uniq(wan_bp_ips_no_dns), v => index(v, ":") != -1);
-    const wan_fw_ips_v4 = filter(uniq(wan_fw_ips_no_dns), v => index(v, ":") == -1);
-    const wan_fw_ips_v6 = filter(uniq(wan_fw_ips_no_dns), v => index(v, ":") != -1);
+    let wan_bp_ips = uniq(general.wan_bp_ips || []);
+    let wan_fw_ips = uniq(general.wan_fw_ips || []);
+    let wan_bp_dns = dns_direct_servers(config);
+    const wan_bp_ips_v4 = filter(wan_bp_ips, v => index(v, ":") == -1);
+    const wan_bp_ips_v6 = filter(wan_bp_ips, v => index(v, ":") != -1);
+    const wan_fw_ips_v4 = filter(wan_fw_ips, v => index(v, ":") == -1);
+    const wan_fw_ips_v6 = filter(wan_fw_ips, v => index(v, ":") != -1);
+    const wan_bp_dns_v4 = filter(wan_bp_dns, v => index(v.ip, ":") == -1);
+    const wan_bp_dns_v6 = filter(wan_bp_dns, v => index(v.ip, ":") != -1);
     const transparent_default_port_policy = general.transparent_default_port_policy || "forwarded";
     const wan_fw_tcp_ports = general.wan_fw_tcp_ports || [];
     const wan_fw_udp_ports = general.wan_fw_udp_ports || [];
@@ -141,6 +139,28 @@
         return "";
     }();
 %}
+
+{% if (length(wan_bp_dns_v4) > 0): %}
+    set tp_spec_dp4_bp {
+        typeof ip daddr . udp dport
+        size {{ length(wan_bp_dns_v4) * 2 + 1 }}
+        flags interval
+        elements = {
+            {{ join(", ", uniq(map(wan_bp_dns_v4, v => `${v.ip} . ${v.port}`))) }}
+        }
+    }
+{% endif %}
+
+{% if (length(wan_bp_dns_v6) > 0): %}
+    set tp_spec_dp6_bp {
+        typeof ip6 daddr . udp dport
+        size {{ length(wan_bp_dns_v6) * 2 + 1 }}
+        flags interval
+        elements = {
+            {{ join(", ", uniq(map(wan_bp_dns_v6, v => `${v.ip} . ${v.port}`))) }}
+        }
+    }
+{% endif %}
 
     set tp_spec_dv4_sp {
         type ipv4_addr
@@ -508,6 +528,14 @@
 {% if (length(manual_tproxy_source_ips) > 0): %}
         ip protocol tcp ip daddr @tp_spec_dv4_mt {{ counter }} goto tp_spec_lan_fw comment "Xray manual transparent proxy TCP"
         ip protocol udp ip daddr @tp_spec_dv4_mt {{ counter }} goto tp_spec_lan_fw comment "Xray manual transparent proxy UDP"
+{% endif %}
+{% if (length(wan_bp_dns_v4) > 0): %}
+        ip daddr . tcp dport @tp_spec_dp4_bp {{ counter }} accept
+        ip daddr . udp dport @tp_spec_dp4_bp {{ counter }} accept
+{% endif %}
+{% if (length(wan_bp_dns_v6) > 0): %}
+        ip6 daddr . tcp dport @tp_spec_dp6_bp {{ counter }} accept
+        ip6 daddr . udp dport @tp_spec_dp6_bp {{ counter }} accept
 {% endif %}
         {{ counter }} return
     }

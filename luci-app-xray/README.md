@@ -38,7 +38,7 @@ Fork this repository and:
 
 * Create a release by pushing a tag
 * Wait until actions finish
-* Use `opkg -i *` to install both ipks from Releases.
+* Use `opkg -i *` to install all ipks from Releases.
 
 ## Enable preview app
 
@@ -56,6 +56,7 @@ Some features are deprecated / unstable so they are placed in preview app. To en
 * 2025-07-27 fix: dynamic direct: only cover global servers; increase default timeout
 * 2025-08-20 fix: dynamic direct connection tracking
 * 2025-08-26 fix: dnsmasq global integration mode
+* 2026-01-13 feat: feat: vless encryption; minor DNS tweaks; code cleanups
 
 ## Changelog since 3.5.0
 

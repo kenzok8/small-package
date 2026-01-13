@@ -124,7 +124,15 @@ if has_fw4 then
 	o:value("1", "NFtables")
 end
 
-if (os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod | grep -i TPROXY >/dev/null") == 0) or (os.execute("lsmod | grep -i nft_redir >/dev/null") == 0 and os.execute("lsmod | grep -i nft_tproxy >/dev/null") == 0) then
+---- Check the transparent proxy component
+local handle = io.popen("lsmod")
+local mods = ""
+if handle then
+	mods = handle:read("*a") or ""
+	handle:close()
+end
+
+if (mods:find("REDIRECT") and mods:find("TPROXY")) or (mods:find("nft_redir") and mods:find("nft_tproxy")) then
 	o = s:option(ListValue, "tcp_proxy_way", translate("TCP Proxy Way"))
 	o.default = "redirect"
 	o:value("redirect", "REDIRECT")
@@ -142,7 +150,7 @@ if (os.execute("lsmod | grep -i REDIRECT >/dev/null") == 0 and os.execute("lsmod
 		self.map:set(section, "tcp_proxy_way", value)
 	end
 
-	if os.execute("lsmod | grep -i ip6table_mangle >/dev/null") == 0 or os.execute("lsmod | grep -i nft_tproxy >/dev/null") == 0 then
+	if mods:find("ip6table_mangle") or mods:find("nft_tproxy") then
 		---- IPv6 TProxy
 		o = s:option(Flag, "ipv6_tproxy", translate("IPv6 TProxy"),
 					"<font color='red'>" .. translate(
