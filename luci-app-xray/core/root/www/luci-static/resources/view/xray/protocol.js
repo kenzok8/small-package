@@ -214,10 +214,10 @@ function vmess_client(protocol, sub_section, tab_name) {
 function vless_client(protocol, sub_section, tab_name) {
     protocol.value("vless", "VLESS");
 
-    let vless_encryption = sub_section.taboption(tab_name, form.ListValue, "vless_encryption", _("[vless] Encrypt Method"));
+    let vless_encryption = sub_section.taboption(tab_name, form.Value, "vless_encryption", _("[vless] Encrypt Method"));
     vless_encryption.depends("protocol", "vless");
-    vless_encryption.value("none", "none");
-    vless_encryption.rmempty = false;
+    vless_encryption.placeholder = "none";
+    vless_encryption.rmempty = true;
     vless_encryption.modalonly = true;
 
     add_flow_and_stream_security_conf(sub_section, tab_name, "protocol", "vless", true, false);
@@ -235,6 +235,12 @@ function http_client(protocol, sub_section, tab_name) {
 
 function vless_server(protocol, section, tab_name) {
     protocol.value("vless", "VLESS");
+
+    let vless_decryption = section.taboption(tab_name, form.Value, "vless_decryption", _("[vless] Decrypt Method"));
+    vless_decryption.depends("web_server_protocol", "vless");
+    vless_decryption.placeholder = "none";
+    vless_decryption.rmempty = true;
+
     add_flow_and_stream_security_conf(section, tab_name, "web_server_protocol", "vless", true, true);
 }
 

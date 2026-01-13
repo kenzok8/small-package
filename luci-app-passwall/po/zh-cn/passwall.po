@@ -352,6 +352,9 @@ msgstr "客户端代理"
 msgid "When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy. But you can still use access control to allow the designated device to proxy."
 msgstr "当勾选时，局域网内的设备可以透明代理。否则，将不代理。但您仍然可以使用访问控制允许指定的设备代理。"
 
+msgid "Missing components, transparent proxy is unavailable."
+msgstr "缺少组件，透明代理不可用。"
+
 msgid "Want different devices to use different proxy modes/ports/nodes? Please use access control."
 msgstr "希望不同设备使用不同的代理模式/端口/节点？请使用访问控制。"
 

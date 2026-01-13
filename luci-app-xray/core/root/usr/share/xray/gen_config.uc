@@ -285,4 +285,4 @@ function gen_config() {
     });
 }
 
-print(gen_config());
+printf("%.4J", gen_config());
