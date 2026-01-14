@@ -6,6 +6,7 @@ import { socks_outbound } from "../protocol/socks.mjs";
 import { trojan_outbound } from "../protocol/trojan.mjs";
 import { vless_outbound } from "../protocol/vless.mjs";
 import { vmess_outbound } from "../protocol/vmess.mjs";
+import { hysteria_outbound } from "../protocol/hysteria.mjs";
 
 const direct_mark = 252;
 const outbound_mark = 253;
@@ -34,6 +35,8 @@ function server_outbound_recursive(t, server, tag, config) {
         outbound_result = http_outbound(server, tag);
     } else if (server["protocol"] == "socks") {
         outbound_result = socks_outbound(server, tag);
+    } else if (server["protocol"] == "hysteria") {
+        outbound_result = hysteria_outbound(server, tag);
     }
     if (outbound_result == null) {
         die(`unknown outbound server protocol ${server["protocol"]}`);

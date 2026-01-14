@@ -3,7 +3,7 @@
 import { reality_outbound_settings, tls_outbound_settings } from "./tls.mjs";
 
 function stream_tcp_fake_http_request(server) {
-    if (server["tcp_guise"] == "http") {
+    if (server["tcp_guise"] === "http") {
         return {
             version: "1.1",
             method: "GET",
@@ -24,7 +24,7 @@ function stream_tcp_fake_http_request(server) {
 }
 
 function stream_tcp_fake_http_response(server) {
-    if (server["tcp_guise"] == "http") {
+    if (server["tcp_guise"] === "http") {
         return {
             version: "1.1",
             status: "200",
@@ -41,7 +41,7 @@ function stream_tcp_fake_http_response(server) {
 }
 
 function stream_tcp(server) {
-    if (server["transport"] == "tcp") {
+    if (server["transport"] === "tcp") {
         return {
             header: {
                 type: server["tcp_guise"],
@@ -54,33 +54,33 @@ function stream_tcp(server) {
 }
 
 function stream_h2(server) {
-    if (server["transport"] == "h2") {
+    if (server["transport"] === "h2") {
         return {
             path: server["h2_path"],
             host: server["h2_host"],
-            read_idle_timeout: server["h2_health_check"] == "1" ? int(server["h2_read_idle_timeout"] || 10) : null,
-            health_check_timeout: server["h2_health_check"] == "1" ? int(server["h2_health_check_timeout"] || 20) : null,
+            read_idle_timeout: server["h2_health_check"] === "1" ? int(server["h2_read_idle_timeout"] || 10) : null,
+            health_check_timeout: server["h2_health_check"] === "1" ? int(server["h2_health_check_timeout"] || 20) : null,
         };
     }
     return null;
 }
 
 function stream_grpc(server) {
-    if (server["transport"] == "grpc") {
+    if (server["transport"] === "grpc") {
         return {
             serviceName: server["grpc_service_name"],
-            multiMode: server["grpc_multi_mode"] == "1",
+            multiMode: server["grpc_multi_mode"] === "1",
             initial_windows_size: int(server["grpc_initial_windows_size"] || 0),
-            idle_timeout: server["grpc_health_check"] == "1" ? int(server["grpc_idle_timeout"] || 10) : null,
-            health_check_timeout: server["grpc_health_check"] == "1" ? int(server["grpc_health_check_timeout"] || 20) : null,
-            permit_without_stream: server["grpc_health_check"] == "1" ? (server["grpc_permit_without_stream"] == "1") : null
+            idle_timeout: server["grpc_health_check"] === "1" ? int(server["grpc_idle_timeout"] || 10) : null,
+            health_check_timeout: server["grpc_health_check"] === "1" ? int(server["grpc_health_check_timeout"] || 20) : null,
+            permit_without_stream: server["grpc_health_check"] === "1" ? (server["grpc_permit_without_stream"] === "1") : null
         };
     }
     return null;
 }
 
 function stream_ws(server) {
-    if (server["transport"] == "ws") {
+    if (server["transport"] === "ws") {
         let headers = null;
         if (server["ws_host"] != null) {
             headers = {
@@ -96,7 +96,7 @@ function stream_ws(server) {
 }
 
 function stream_kcp(server) {
-    if (server["transport"] == "mkcp") {
+    if (server["transport"] === "mkcp") {
         let mkcp_seed = null;
         if (server["mkcp_seed"] != "") {
             mkcp_seed = server["mkcp_seed"];
@@ -106,7 +106,7 @@ function stream_kcp(server) {
             tti: int(server["mkcp_tti"] || 50),
             uplinkCapacity: int(server["mkcp_uplink_capacity"] || 5),
             downlinkCapacity: int(server["mkcp_downlink_capacity"] || 20),
-            congestion: server["mkcp_congestion"] == "1",
+            congestion: server["mkcp_congestion"] === "1",
             readBufferSize: int(server["mkcp_read_buffer_size"] || 2),
             writeBufferSize: int(server["mkcp_write_buffer_size"] || 2),
             seed: mkcp_seed,
@@ -119,7 +119,7 @@ function stream_kcp(server) {
 }
 
 function stream_quic(server) {
-    if (server["transport"] == "quic") {
+    if (server["transport"] === "quic") {
         return {
             security: server["quic_security"],
             key: server["quic_key"],
@@ -132,7 +132,7 @@ function stream_quic(server) {
 }
 
 function stream_splithttp(server) {
-    if (server["transport"] == "splithttp") {
+    if (server["transport"] === "splithttp") {
         return {
             path: server["splithttp_path"],
             host: server["splithttp_host"],
@@ -142,11 +142,37 @@ function stream_splithttp(server) {
 }
 
 function stream_httpupgrade(server) {
-    if (server["transport"] == "httpupgrade") {
+    if (server["transport"] === "httpupgrade") {
         return {
             path: server["httpupgrade_path"],
             host: server["httpupgrade_host"],
         };
+    }
+    return null;
+}
+
+function stream_hysteria(server) {
+    if (server["transport"] === "hysteria") {
+        let result = {
+            version: 2,
+            auth: server["password"],
+        };
+        let hysteria_up = server["hysteria_up_mbps"] || "";
+        if (hysteria_up !== "") {
+            result["up"] = `${hysteria_up}mbps`;
+        }
+        let hysteria_down = server["hysteria_down_mbps"] || "";
+        if (hysteria_down !== "") {
+            result["down"] = `${hysteria_down}mbps`;
+        }
+        let udphop_port = server["hysteria_udphop_port"] || "";
+        if (udphop_port !== "") {
+            result["udphop"] = {
+                port: udphop_port,
+                interval: int(server["hysteria_udphop_interval"] || 30)
+            };
+        }
+        return result;
     }
     return null;
 }
@@ -162,9 +188,9 @@ export function stream_settings(server, protocol, tag) {
     const security = server[protocol + "_tls"];
     let tlsSettings = null;
     let realitySettings = null;
-    if (security == "tls") {
+    if (security === "tls") {
         tlsSettings = tls_outbound_settings(server, protocol);
-    } else if (security == "reality") {
+    } else if (security === "reality") {
         realitySettings = reality_outbound_settings(server, protocol);
     }
 
@@ -191,7 +217,8 @@ export function stream_settings(server, protocol, tag) {
             grpcSettings: stream_grpc(server),
             httpSettings: stream_h2(server),
             splithttpSettings: stream_splithttp(server),
-            httpupgradeSettings: stream_httpupgrade(server)
+            httpupgradeSettings: stream_httpupgrade(server),
+            hysteriaSettings: stream_hysteria(server)
         },
         dialer_proxy: dialer_proxy
     };
