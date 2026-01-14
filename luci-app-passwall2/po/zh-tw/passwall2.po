@@ -94,6 +94,9 @@ msgstr "客戶端代理"
 msgid "When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy. But you can still use access control to allow the designated device to proxy."
 msgstr "當勾選時，局域網內的設備可以透明代理。否則，將不代理。但您仍然可以使用訪問控制允許指定的設備代理。"
 
+msgid "Missing components, transparent proxy is unavailable."
+msgstr "缺少組件，透明代理無法使用。"
+
 msgid "Socks Config"
 msgstr "Socks 配置"
 
@@ -2131,8 +2134,8 @@ msgstr "開始更新規則..."
 msgid "Download file size verification error. Original file size: %sB. Downloaded file size: %sB."
 msgstr "下載檔案大小校驗出錯，原始檔案大小 %sB，下載檔案大小：%sB。"
 
-msgid "Error reading downloaded file."
-msgstr "下載檔案讀取出錯。"
+msgid "Downloaded file is empty or an error occurred while reading it."
+msgstr "下載的文件為空或讀取文件時發生錯誤。"
 
 msgid "%s Start updating..."
 msgstr "%s 開始更新..."
