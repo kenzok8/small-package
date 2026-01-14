@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray
-PKG_VERSION:=3.6.1
+PKG_VERSION:=3.7.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -139,6 +139,7 @@ endif
 	$(INSTALL_DATA) ./root/usr/share/xray/feature/system.mjs $(1)/usr/share/xray/feature/system.mjs
 	$(INSTALL_DIR) $(1)/usr/share/xray/protocol
 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/shadowsocks.mjs $(1)/usr/share/xray/protocol/shadowsocks.mjs
+	$(INSTALL_DATA) ./root/usr/share/xray/protocol/hysteria.mjs $(1)/usr/share/xray/protocol/hysteria.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/trojan.mjs $(1)/usr/share/xray/protocol/trojan.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/vless.mjs $(1)/usr/share/xray/protocol/vless.mjs
 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/vmess.mjs $(1)/usr/share/xray/protocol/vmess.mjs

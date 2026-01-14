@@ -132,6 +132,7 @@ function add_flow_and_stream_security_conf(s, tab_name, depends_field_name, prot
 
         o = s.taboption(tab_name, form.DynamicList, `${protocol_name}_tls_alpn`, _(`[${protocol_name}][tls] ALPN`));
         o.depends(`${protocol_name}_tls`, "tls");
+        o.value("h3", "h3");
         o.value("h2", "h2");
         o.value("http/1.1", "http/1.1");
         o.modalonly = true;
@@ -233,6 +234,11 @@ function http_client(protocol, sub_section, tab_name) {
     add_flow_and_stream_security_conf(sub_section, tab_name, "protocol", "http", false, false);
 }
 
+function hysteria_client(protocol, sub_section, tab_name) {
+    protocol.value("hysteria", "Hysteria");
+    add_flow_and_stream_security_conf(sub_section, tab_name, "protocol", "hysteria", false, false);
+}
+
 function vless_server(protocol, section, tab_name) {
     protocol.value("vless", "VLESS");
 
@@ -262,6 +268,7 @@ return baseclass.extend({
         shadowsocks_client(protocol, sub_section, tab_name);
         http_client(protocol, sub_section, tab_name);
         socks_client(protocol, sub_section, tab_name);
+        hysteria_client(protocol, sub_section, tab_name);
     },
     add_server_protocol: function (protocol, section, tab_name) {
         vless_server(protocol, section, tab_name);
