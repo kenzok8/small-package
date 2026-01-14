@@ -19,6 +19,9 @@ msgstr "连接失败"
 msgid "Touch Check"
 msgstr "点我检测"
 
+msgid "TLS handshake test, latency for reference only"
+msgstr "TLS握手测试，延时仅供参考"
+
 msgid "Kernel Unsupported"
 msgstr "内核不支持"
 
