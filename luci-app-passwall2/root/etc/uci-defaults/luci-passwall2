@@ -1,35 +1,46 @@
 #!/bin/sh
 
-uci -q batch <<-EOF >/dev/null
-	set dhcp.@dnsmasq[0].localuse=1
-	commit dhcp
-	[ -e "/etc/config/ucitrack" ] && {
-	delete ucitrack.@passwall2[-1]
-	add ucitrack passwall2
-	set ucitrack.@passwall2[-1].init=passwall2
-	commit ucitrack
-	}
+if [ -e "/etc/config/ucitrack" ]; then
+    uci -q batch <<-EOF
+ 		delete ucitrack.@passwall2[-1]
+		add ucitrack passwall2
+		set ucitrack.@passwall2[-1].init=passwall2
+		delete ucitrack.@passwall2_server[-1]
+		add ucitrack passwall2_server
+		set ucitrack.@passwall2_server[-1].init=passwall2_server
+		commit ucitrack
+EOF
+fi
+
+uci -q batch <<-EOF
 	delete firewall.passwall2
 	set firewall.passwall2=include
-	set firewall.passwall2.type=script
-	set firewall.passwall2.path=/var/etc/passwall2.include
-	set firewall.passwall2.reload=1
-	commit firewall
-	[ -e "/etc/config/ucitrack" ] && {
-	delete ucitrack.@passwall2_server[-1]
-	add ucitrack passwall2_server
-	set ucitrack.@passwall2_server[-1].init=passwall2_server
-	commit ucitrack
-	}
+	set firewall.passwall2.type='script'
+	set firewall.passwall2.path='/var/etc/passwall2.include'
+
 	delete firewall.passwall2_server
 	set firewall.passwall2_server=include
-	set firewall.passwall2_server.type=script
-	set firewall.passwall2_server.path=/var/etc/passwall2_server.include
-	set firewall.passwall2_server.reload=1
-	commit firewall
+	set firewall.passwall2_server.type='script'
+	set firewall.passwall2_server.path='/var/etc/passwall2_server.include'
+
+	set dhcp.@dnsmasq[0].localuse=1
+	commit dhcp
+
 	set uhttpd.main.max_requests=50
 	commit uhttpd
 EOF
+
+if [ -x "/sbin/fw4" ]; then
+	uci -q delete firewall.passwall2.reload
+	uci -q delete firewall.passwall2.fw4_compatible
+	uci -q delete firewall.passwall2_server.reload
+	uci -q delete firewall.passwall2_server.fw4_compatible
+else
+	uci -q set firewall.passwall2.reload='1'
+	uci -q set firewall.passwall2_server.reload='1'
+fi
+uci commit firewall
+
 
 [ ! -s "/etc/config/passwall2" ] && cp -f /usr/share/passwall2/0_default_config /etc/config/passwall2
 

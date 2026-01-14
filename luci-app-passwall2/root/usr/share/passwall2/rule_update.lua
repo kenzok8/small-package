@@ -42,25 +42,29 @@ local function curl(url, file, valifile)
 end
 
 local function non_file_check(file_path, vali_file)
-	if fs.readfile(file_path, 10) then
-		local size_str = sys.exec("grep -i 'Content-Length' " .. vali_file .. " | tail -n1 | sed 's/[^0-9]//g'")
-		local remote_file_size = tonumber(size_str)
-		remote_file_size = (remote_file_size and remote_file_size > 0) and remote_file_size or nil
-		local local_file_size = tonumber(fs.stat(file_path, "size"))
-		if remote_file_size and local_file_size then
-			if remote_file_size == local_file_size then
-				return nil;
-			else
-				log(2, api.i18n.translatef("Download file size verification error. Original file size: %sB. Downloaded file size: %sB.", remote_file_size, local_file_size))
-				return true;
-			end
-		else
-			return nil;
-		end
-	else
-		log(2, api.i18n.translate("Error reading downloaded file."))
-		return true;
+	local local_file_size = tonumber(fs.stat(file_path, "size")) or 0
+	if local_file_size == 0 then
+		log(2, api.i18n.translate("Downloaded file is empty or an error occurred while reading it."))
+		return true
 	end
+
+	local remote_file_size = nil
+	local f = io.open(vali_file, "r")
+	if f then
+		local header_content = f:read("*a")
+		f:close()
+		for size in header_content:gmatch("[Cc]ontent%-[Ll]ength:%s*(%d+)") do
+			local s = tonumber(size)
+			if s and s > 0 then
+				remote_file_size = s
+			end
+		end
+	end
+	if remote_file_size and remote_file_size ~= local_file_size then
+		log(2, api.i18n.translatef("Download file size verification error. Original file size: %sB. Downloaded file size: %sB.", remote_file_size, local_file_size))
+		return true
+	end
+	return nil
 end
 
 local function fetch_geofile(geo_name, geo_type, url)

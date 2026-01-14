@@ -3,10 +3,12 @@
 DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/iptables.sh
 IPSET_LOCAL="passwall2_local"
+IPSET_WAN="passwall2_wan"
 IPSET_LAN="passwall2_lan"
 IPSET_VPS="passwall2_vps"
 
 IPSET_LOCAL6="passwall2_local6"
+IPSET_WAN6="passwall2_wan6"
 IPSET_LAN6="passwall2_lan6"
 IPSET_VPS6="passwall2_vps6"
 
@@ -198,38 +200,31 @@ gen_lanlist_6() {
 	EOF
 }
 
-get_wan_ip() {
+get_wan_ips() {
+	local family="$1"
 	local NET_ADDR
 	local iface
 	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
 	for iface in $INTERFACES; do
-		local ipv4
-		network_get_ipaddr ipv4 "$iface"
-		if [ -n "$ipv4" ] && [ "$ipv4" != "0.0.0.0" ]; then
-			case " $NET_ADDR " in
-				*" $ipv4 "*) ;;
-				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$ipv4" ;;
+		local addr
+		if [ "$family" = "ip6" ]; then
+			network_get_ipaddr6 addr "$iface"
+			case "$addr" in
+				""|fe80*) continue ;;
+			esac
+		else
+			network_get_ipaddr addr "$iface"
+			case "$addr" in
+				""|"0.0.0.0") continue ;;
 			esac
 		fi
-	done
-	echo $NET_ADDR
-}
 
-get_wan6_ip() {
-	local NET_ADDR
-	local iface
-	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
-	for iface in $INTERFACES; do
-		local ipv6
-		network_get_ipaddr6 ipv6 "$iface"
-		if [ -n "$ipv6" ] && ! echo "$ipv6" | grep -q "^fe80:"; then
-			case " $NET_ADDR " in
-				*" $ipv6 "*) ;;
-				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$ipv6" ;;
-			esac
-		fi
+		case " $NET_ADDR " in
+			*" $addr "*) ;;
+			*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$addr" ;;
+		esac
 	done
-	echo $NET_ADDR
+	echo "$NET_ADDR"
 }
 
 gen_shunt_list() {
@@ -675,10 +670,12 @@ add_firewall_rule() {
 	log_i18n 0 "Starting to load %s firewall rules..." "iptables"
 	
 	ipset -! create $IPSET_LOCAL nethash maxelem 1048576
+	ipset -! create $IPSET_WAN nethash maxelem 1048576
 	ipset -! create $IPSET_LAN nethash maxelem 1048576
 	ipset -! create $IPSET_VPS nethash maxelem 1048576
 
 	ipset -! create $IPSET_LOCAL6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_WAN6 nethash family inet6 maxelem 1048576
 	ipset -! create $IPSET_LAN6 nethash family inet6 maxelem 1048576
 	ipset -! create $IPSET_VPS6 nethash family inet6 maxelem 1048576
 	
@@ -754,13 +751,6 @@ add_firewall_rule() {
 	$ipt_n -N PSW2
 	$ipt_n -A PSW2 $(dst $IPSET_LAN) -j RETURN
 	$ipt_n -A PSW2 $(dst $IPSET_VPS) -j RETURN
-
-	WAN_IP=$(get_wan_ip)
-	[ -n "${WAN_IP}" ] && {
-		for wan_ip in $WAN_IP; do
-			$ipt_n -A PSW2 $(comment "WAN_IP_RETURN") -d "${wan_ip}" -j RETURN
-		done
-	}
 	
 	[ "$accept_icmp" = "1" ] && insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p icmp -j PSW2"
 	[ -z "${is_tproxy}" ] && insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW2"
@@ -790,10 +780,14 @@ add_firewall_rule() {
 	$ipt_m -A PSW2 $(dst $IPSET_VPS) -j RETURN
 	$ipt_m -A PSW2 -m conntrack --ctdir REPLY -j RETURN
 
+	WAN_IP=$(get_wan_ips ip4)
 	[ -n "${WAN_IP}" ] && {
+		ipset -F $IPSET_WAN
 		for wan_ip in $WAN_IP; do
-			$ipt_m -A PSW2 $(comment "WAN_IP_RETURN") -d "${wan_ip}" -j RETURN
+			ipset -! add $IPSET_WAN ${wan_ip}
 		done
+		$ipt_n -A PSW2 $(comment "WAN_IP_RETURN") $(dst $IPSET_WAN) -j RETURN
+		$ipt_m -A PSW2 $(comment "WAN_IP_RETURN") $(dst $IPSET_WAN) -j RETURN
 	}
 	unset WAN_IP wan_ip
 
@@ -848,11 +842,13 @@ add_firewall_rule() {
 	$ip6t_m -A PSW2 $(dst $IPSET_VPS6) -j RETURN
 	$ip6t_m -A PSW2 -m conntrack --ctdir REPLY -j RETURN
 	
-	WAN6_IP=$(get_wan6_ip)
+	WAN6_IP=$(get_wan_ips ip6)
 	[ -n "${WAN6_IP}" ] && {
+		ipset -F $IPSET_WAN6
 		for wan6_ip in $WAN6_IP; do
-			$ip6t_m -A PSW2 $(comment "WAN6_IP_RETURN") -d ${wan6_ip} -j RETURN
+			ipset -! add $IPSET_WAN6 ${wan6_ip}
 		done
+		$ip6t_m -A PSW2 $(comment "WAN6_IP_RETURN") $(dst $IPSET_WAN6) -j RETURN
 	}
 	unset WAN6_IP wan6_ip
 
@@ -1059,25 +1055,13 @@ gen_include() {
 
 			\$(${MY_PATH} insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW2")
 
-			WAN_IP=\$(${MY_PATH} get_wan_ip)
-
-			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_n" PSW2 WAN_IP_RETURN -1)
-			if [ \$PR_INDEX -ge 0 ]; then
-				[ -n "\${WAN_IP}" ] && {
-					for wan_ip in \$WAN_IP; do
-						$ipt_n -R PSW2 \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${wan_ip}" -j RETURN
-					done
-				}
-			fi
-
-			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ipt_m" PSW2 WAN_IP_RETURN -1)
-			if [ \$PR_INDEX -ge 0 ]; then
-				[ -n "\${WAN_IP}" ] && {
-					for wan_ip in \$WAN_IP; do
-						$ipt_m -R PSW2 \$PR_INDEX $(comment "WAN_IP_RETURN") -d "\${wan_ip}" -j RETURN
-					done
-				}
-			fi
+			WAN_IP=\$(${MY_PATH} get_wan_ips ip4)
+			[ ! -z "\${WAN_IP}" ] && {
+				ipset -F $IPSET_WAN
+				for wan_ip in \$WAN_IP; do
+					ipset -! add $IPSET_WAN \${wan_ip}
+				done
+			}
 		EOF
 		)
 	}
@@ -1094,15 +1078,13 @@ gen_include() {
 
 			\$(${MY_PATH} insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW2")
 
-			PR_INDEX=\$(${MY_PATH} RULE_LAST_INDEX "$ip6t_m" PSW2 WAN6_IP_RETURN -1)
-			if [ \$PR_INDEX -ge 0 ]; then
-				WAN6_IP=\$(${MY_PATH} get_wan6_ip)
-				[ -n "\${WAN6_IP}" ] && {
-					for wan6_ip in \$WAN6_IP; do
-						$ip6t_m -R PSW2 \$PR_INDEX $(comment "WAN6_IP_RETURN") -d "\${wan6_ip}" -j RETURN
-					done
-				}
-			fi
+			WAN6_IP=\$(${MY_PATH} get_wan_ips ip6)
+			[ ! -z "\${WAN6_IP}" ] && {
+				ipset -F $IPSET_WAN6
+				for wan6_ip in \$WAN6_IP; do
+					ipset -! add $IPSET_WAN6 \${wan6_ip}
+				done
+			}
 		EOF
 		)
 	}
@@ -1160,11 +1142,8 @@ get_ipt_bin)
 get_ip6t_bin)
 	get_ip6t_bin
 	;;
-get_wan_ip)
-	get_wan_ip
-	;;
-get_wan6_ip)
-	get_wan6_ip
+get_wan_ips)
+	get_wan_ips
 	;;
 filter_direct_node_list)
 	filter_direct_node_list
