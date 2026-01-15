@@ -30,7 +30,7 @@ config global_forwarding
 	option tcp_redir_ports '1:65535'
 	option udp_redir_ports '1:65535'
 	option accept_icmp '0'
-	option use_nft '0'
+	option prefer_nft '1'
 	option tcp_proxy_way 'redirect'
 	option ipv6_tproxy '0'
 

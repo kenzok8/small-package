@@ -237,20 +237,56 @@ get_new_port() {
 	fi
 }
 
-check_depends() {
-	local depends
-	local tables=${1}
-	local file_path="/usr/lib/opkg/info"
-	local file_ext=".control"
-	[ -d "/lib/apk/packages" ] && file_path="/lib/apk/packages" && file_ext=".list"
-	if [ "$tables" == "iptables" ]; then
-		for depends in "iptables-mod-tproxy" "iptables-mod-socket" "iptables-mod-iprange" "iptables-mod-conntrack-extra" "kmod-ipt-nat"; do
-			[ -s "${file_path}/${depends}${file_ext}" ] || log_i18n 0 "%s Transparent proxy base dependencies %s Not installed..." "${tables}" "${depends}"
+check_run_environment() {
+	local prefer_nft=$(config_t_get global_forwarding prefer_nft 1)
+	local dnsmasq_info=$(dnsmasq -v 2>/dev/null)
+	local dnsmasq_ver=$(echo "$dnsmasq_info" | sed -n '1s/.*version \([0-9.]*\).*/\1/p')
+	# local dnsmasq_opts=$(echo "$dnsmasq_info" | grep -i "Compile time options")
+	local dnsmasq_ipset=0; [[ "$dnsmasq_info" == *" ipset"* ]] && dnsmasq_ipset=1
+	local dnsmasq_nftset=0; [[ "$dnsmasq_info" == *" nftset"* ]] && dnsmasq_nftset=1
+	local has_ipt=0; { command -v iptables-legacy || command -v iptables; } >/dev/null && has_ipt=1
+	local has_ipset=$(command -v ipset >/dev/null && echo 1 || echo 0)
+	local has_fw4=$(command -v fw4 >/dev/null && echo 1 || echo 0)
+	if [ "$prefer_nft" = "1" ]; then
+		if [ "$dnsmasq_nftset" -eq 1 ] && [ "$has_fw4" -eq 1 ]; then
+			USE_TABLES="nftables"
+		elif [ "$has_ipset" -eq 1 ] && [ "$has_ipt" -eq 1 ] && [ "$dnsmasq_ipset" -eq 1 ]; then
+			log_i18n 0 "Warning: The %s application environment is incomplete. Switch to %s. (%s)" "nftables (fw4)" "iptables" "has_fw4:$has_fw4/dnsmasq_nftset:$dnsmasq_nftset"
+			USE_TABLES="iptables"
+		fi
+	else
+		if [ "$has_ipset" -eq 1 ] && [ "$has_ipt" -eq 1 ] && [ "$dnsmasq_ipset" -eq 1 ]; then
+			USE_TABLES="iptables"
+		elif [ "$dnsmasq_nftset" -eq 1 ] && [ "$has_fw4" -eq 1 ]; then
+			log_i18n 0 "Warning: The %s application environment is incomplete. Switch to %s. (%s)" "iptables (fw3)" "nftables" "has_ipt:$has_ipt/has_ipset:$has_ipset/dnsmasq_ipset:$dnsmasq_ipset"
+			USE_TABLES="nftables"
+		fi
+	fi
+
+	if [ -n "$USE_TABLES" ]; then
+		local dep_list
+		local file_path="/usr/lib/opkg/info"
+		local file_ext=".control"
+		[ -d "/lib/apk/packages" ] && { file_path="/lib/apk/packages"; file_ext=".list"; }
+
+		if [ "$USE_TABLES" = "iptables" ]; then
+			dep_list="iptables-mod-tproxy iptables-mod-socket iptables-mod-iprange iptables-mod-conntrack-extra kmod-ipt-nat"
+		else
+			dep_list="kmod-nft-socket kmod-nft-tproxy kmod-nft-nat"
+			nftflag=1
+			local v_num=$(echo "$dnsmasq_ver" | tr -cd '0-9')
+			if [ "${v_num:-0}" -lt 290 ]; then
+				log_i18n 0 "Note: Dnsmasq (%s) is below 2.90. Upgrading is recommended to improve stability." "${dnsmasq_ver}"
+			fi
+		fi
+		local pkg
+		for pkg in $dep_list; do
+			if [ ! -s "${file_path}/${pkg}${file_ext}" ]; then
+				log_i18n 0 "Warning: %s transparent proxy is missing basic dependency %s!" "${USE_TABLES}" "${pkg}"
+			fi
 		done
 	else
-		for depends in "kmod-nft-socket" "kmod-nft-tproxy" "kmod-nft-nat"; do
-			[ -s "${file_path}/${depends}${file_ext}" ] || log_i18n 0 "%s Transparent proxy base dependencies %s Not installed..." "${tables}" "${depends}"
-		done
+		log_i18n 0 "Warning: Not compatible with any transparent proxy system environment."
 	fi
 }
 
@@ -1288,37 +1324,8 @@ start() {
 	start_haproxy
 	start_socks
 	nftflag=0
-	local use_nft=$(config_t_get global_forwarding use_nft 0)
-	local USE_TABLES
-	if [ "$use_nft" == 0 ]; then
-		if [ -n "$(command -v iptables-legacy || command -v iptables)" ] && [ -n "$(command -v ipset)" ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* ipset')" ]; then
-			USE_TABLES="iptables"
-		else
-			log_i18n 0 "The system does not have iptables or ipset installed, or Dnsmasq does not have ipset support enabled, so iptables+ipset transparent proxy cannot be used!"
-			if [ -n "$(command -v fw4)" ] && [ -n "$(command -v nft)" ] && [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
-				log_i18n 0 "fw4 detected, use nftables to transparent proxy."
-				USE_TABLES="nftables"
-				nftflag=1
-				config_t_set global_forwarding use_nft 1
-				uci -q commit ${CONFIG}
-			fi
-		fi
-	else
-		if [ -n "$(dnsmasq --version | grep 'Compile time options:.* nftset')" ]; then
-			USE_TABLES="nftables"
-			nftflag=1
-		else
-			log_i18n 0 "The Dnsmasq package does not meet the requirements for transparent proxy in nftables. If you need to use it, please ensure that the dnsmasq version is 2.87 or higher and that nftset support is enabled."
-		fi
-	fi
-
-	check_depends $USE_TABLES
-	
-	[ "$USE_TABLES" = "nftables" ] && {
-		dnsmasq_version=$(dnsmasq -v | grep -i "Dnsmasq version " | awk '{print $3}')
-		[ "$(expr $dnsmasq_version \>= 2.90)" == 0 ] && log_i18n 0 "If your Dnsmasq version is lower than 2.90, it is recommended to upgrade to version 2.90 or higher to avoid Dnsmasq crashing in some cases!"
-	}
-
+	USE_TABLES=""
+	check_run_environment
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		[ "$(uci -q get dhcp.@dnsmasq[0].dns_redirect)" == "1" ] && {
 			uci -q set ${CONFIG}.@global[0].dnsmasq_dns_redirect='1'
