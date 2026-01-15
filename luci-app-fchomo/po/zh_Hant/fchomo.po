@@ -3212,6 +3212,10 @@ msgstr ""
 msgid "gRPC service name"
 msgstr "gRPC 服務名稱"
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:1096
+msgid "gRPC User-Agent"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:496
 msgid "gVisor"
 msgstr "gVisor"

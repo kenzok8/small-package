@@ -255,7 +255,6 @@ config["geo-auto-update"] = false;
 
 /* TLS START */
 /* TLS settings */
-config["global-client-fingerprint"] = uci.get(uciconf, ucitls, 'global_client_fingerprint');
 config.tls = {
 	"certificate": uci.get(uciconf, ucitls, 'tls_cert_path'),
 	"private-key": uci.get(uciconf, ucitls, 'tls_key_path'),
@@ -633,7 +632,8 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 				path: cfg.transport_path || '/',
 			} : null,
 			"grpc-opts": cfg.transport_type === 'grpc' ? {
-				"grpc-service-name": cfg.transport_grpc_servicename
+				"grpc-service-name": cfg.transport_grpc_servicename,
+				"grpc-user-agent": cfg.transport_grpc_useragent
 			} : null,
 			"ws-opts": cfg.transport_type === 'ws' ? {
 				path: cfg.transport_path || '/',

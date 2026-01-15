@@ -1345,8 +1345,8 @@ msgstr "账号密码"
 msgid "Username and Password must be used together!"
 msgstr "账号和密码必须同时使用！"
 
-msgid "Firewall tools"
-msgstr "防火墙工具"
+msgid "Prefer firewall tools"
+msgstr "首选防火墙工具"
 
 msgid "IPv6 TProxy"
 msgstr "IPv6透明代理(TProxy)"
@@ -1909,8 +1909,17 @@ msgstr "脚本已经在运行，不重复运行，退出."
 msgid "Stop the script and wait for a timeout, then exit without repeating the process."
 msgstr "停止脚本等待超时，不重复运行，退出."
 
-msgid "%s Transparent proxy base dependencies %s Not installed..."
-msgstr "%s 透明代理基础依赖 %s 未安装..."
+msgid "Warning: The %s application environment is incomplete. Switch to %s. (%s)"
+msgstr "警告：%s 应用环境不完整，切换至 %s。(%s)"
+
+msgid "Note: Dnsmasq (%s) is below 2.90. Upgrading is recommended to improve stability."
+msgstr "提示：Dnsmasq (%s) 低于 2.90，建议升级以增强稳定性。"
+
+msgid "Warning: %s transparent proxy is missing basic dependency %s!"
+msgstr "警告：%s 透明代理缺失基础依赖 %s!"
+
+msgid "Warning: Not compatible with any transparent proxy system environment."
+msgstr "警告：不满足任何透明代理系统环境。"
 
 msgid "%s does not have execute permissions and cannot be started: %s %s"
 msgstr "%s 没有执行权限，无法启动：%s %s"
@@ -1986,18 +1995,6 @@ msgstr "远程 DNS：%s"
 
 msgid "The program has started. Please stop it and then restart it!"
 msgstr "程序已启动，先停止再重新启动!"
-
-msgid "The system does not have iptables or ipset installed, or Dnsmasq does not have ipset support enabled, so iptables+ipset transparent proxy cannot be used!"
-msgstr "系统未安装iptables或ipset或Dnsmasq没有开启ipset支持，无法使用iptables+ipset透明代理！"
-
-msgid "fw4 detected, use nftables to transparent proxy."
-msgstr "检测到fw4，使用nftables进行透明代理。"
-
-msgid "The Dnsmasq package does not meet the requirements for transparent proxy in nftables. If you need to use it, please ensure that the dnsmasq version is 2.87 or higher and that nftset support is enabled."
-msgstr "Dnsmasq软件包不满足nftables透明代理要求，如需使用请确保dnsmasq版本在2.87以上并开启nftset支持。"
-
-msgid "If your Dnsmasq version is lower than 2.90, it is recommended to upgrade to version 2.90 or higher to avoid Dnsmasq crashing in some cases!"
-msgstr "Dnsmasq版本低于2.90，建议升级至2.90及以上版本以避免部分情况下Dnsmasq崩溃问题！"
 
 msgid "Running complete!"
 msgstr "运行完成！"

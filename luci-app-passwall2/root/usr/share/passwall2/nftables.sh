@@ -704,15 +704,15 @@ filter_direct_node_list() {
 add_firewall_rule() {
 	log_i18n 0 "Starting to load %s firewall rules..." "nftables"
 	gen_nft_tables
-	gen_nftset $NFTSET_WAN ipv4_addr 0 0
+	gen_nftset $NFTSET_WAN ipv4_addr 0 "-1"
 	gen_nftset $NFTSET_LOCAL ipv4_addr 0 "-1"
 	gen_nftset $NFTSET_LAN ipv4_addr 0 "-1" $(gen_lanlist)
-	gen_nftset $NFTSET_VPS ipv4_addr 0 0
+	gen_nftset $NFTSET_VPS ipv4_addr 0 "-1"
 
-	gen_nftset $NFTSET_WAN6 ipv6_addr 0 0
+	gen_nftset $NFTSET_WAN6 ipv6_addr 0 "-1"
 	gen_nftset $NFTSET_LOCAL6 ipv6_addr 0 "-1"
 	gen_nftset $NFTSET_LAN6 ipv6_addr 0 "-1" $(gen_lanlist_6)
-	gen_nftset $NFTSET_VPS6 ipv6_addr 0 0
+	gen_nftset $NFTSET_VPS6 ipv6_addr 0 "-1"
 
 	ip address show | grep -w "inet" | awk '{print $2}' | awk -F '/' '{print $1}' | sed -e "s/ /\n/g" | insert_nftset $NFTSET_LOCAL "-1"
 	ip address show | grep -w "inet6" | awk '{print $2}' | awk -F '/' '{print $1}' | sed -e "s/ /\n/g" | insert_nftset $NFTSET_LOCAL6 "-1"

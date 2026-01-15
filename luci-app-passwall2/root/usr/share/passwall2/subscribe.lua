@@ -44,8 +44,7 @@ local ss_type_default = get_core("ss_type", {{has_ss,"shadowsocks-libev"},{has_s
 local trojan_type_default = get_core("trojan_type", {{has_singbox,"sing-box"},{has_xray,"xray"}})
 local vmess_type_default = get_core("vmess_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
 local vless_type_default = get_core("vless_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
-local hysteria2_type_default = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{has_singbox,"sing-box"}})
-
+local hysteria2_type_default = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{has_singbox,"sing-box"},{has_xray,"xray"}})
 local domain_strategy_default = uci:get(appname, "@global_subscribe[0]", "domain_strategy") or ""
 local domain_strategy_node = ""
 local preproxy_node_group, to_node_group, chain_node_type = "", "", ""
@@ -1372,8 +1371,9 @@ local function processData(szType, content, add_mode, group)
 		result.hysteria2_tls_pinSHA256 = params.pinSHA256
 		result.hysteria2_hop = params.mport
 
-		if hysteria2_type_default == "sing-box" and has_singbox then
-			result.type = 'sing-box'
+		if (hysteria2_type_default == "sing-box" and has_singbox) or (hysteria2_type_default == "xray" and has_xray) then
+			local is_singbox = hysteria2_type_default == "sing-box" and has_singbox
+			result.type = is_singbox and 'sing-box' or 'Xray'
 			result.protocol = "hysteria2"
 			if params["obfs-password"] or params["obfs_password"] then
 				result.hysteria2_obfs_type = "salamander"

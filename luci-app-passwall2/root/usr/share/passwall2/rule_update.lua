@@ -16,8 +16,8 @@ local reboot = 0
 local geoip_update = "0"
 local geosite_update = "0"
 
-local geoip_url =  uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
-local geosite_url =  uci:get(name, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+local geoip_url = uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
+local geosite_url = uci:get(name, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 local asset_location = uci:get(name, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
 asset_location = asset_location:match("/$") and asset_location or (asset_location .. "/")
 
@@ -26,33 +26,46 @@ if arg3 == "cron" then
 end
 
 -- curl
-local function curl(url, file, valifile)
+local function curl(url, file)
+	local http_code = 0
+	local header_str = ""
 	local args = {
-		"-skL", "-w %{http_code}", "--retry 3", "--connect-timeout 3", "--max-time 300", "--speed-limit 51200 --speed-time 15",
-		'-A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"'
+		"-skL",
+		"--retry 3",
+		"--connect-timeout 3",
+		"--max-time 300",
+		"--speed-limit 51200 --speed-time 15",
+		'-A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"',
+		"--dump-header -",
+		"-w '\\n%{http_code}'"
 	}
 	if file then
 		args[#args + 1] = "-o " .. file
 	end
-	if valifile then
-		args[#args + 1] = "--dump-header " .. valifile
-	end
 	local return_code, result = api.curl_auto(url, nil, args)
-	return tonumber(result)
+	if result and result ~= "" then
+		local body, code = result:match("^(.-)%s*([0-9]+)$")
+		if code then
+			http_code = tonumber(code) or 0
+			header_str = body
+		else
+			http_code = tonumber(result:match("(%d+)%s*$")) or 0
+		end
+	end
+	if header_str ~= "" then
+		header_str = header_str:gsub("\r", "")
+	end
+	return http_code, header_str
 end
 
-local function non_file_check(file_path, vali_file)
+local function non_file_check(file_path, header_content)
+	local remote_file_size = nil
 	local local_file_size = tonumber(fs.stat(file_path, "size")) or 0
 	if local_file_size == 0 then
 		log(2, api.i18n.translate("Downloaded file is empty or an error occurred while reading it."))
 		return true
 	end
-
-	local remote_file_size = nil
-	local f = io.open(vali_file, "r")
-	if f then
-		local header_content = f:read("*a")
-		f:close()
+	if header_content and header_content ~= "" then
 		for size in header_content:gmatch("[Cc]ontent%-[Ll]ength:%s*(%d+)") do
 			local s = tonumber(size)
 			if s and s > 0 then
@@ -64,7 +77,7 @@ local function non_file_check(file_path, vali_file)
 		log(2, api.i18n.translatef("Download file size verification error. Original file size: %sB. Downloaded file size: %sB.", remote_file_size, local_file_size))
 		return true
 	end
-	return nil
+	return false
 end
 
 local function fetch_geofile(geo_name, geo_type, url)
@@ -73,13 +86,12 @@ local function fetch_geofile(geo_name, geo_type, url)
 	local down_filename = url:match("^.*/([^/?#]+)")
 	local sha_url = url:gsub(down_filename, down_filename .. ".sha256sum")
 	local sha_path = tmp_path .. ".sha256sum"
-	local vali_file = tmp_path .. ".vali"
 
 	local function verify_sha256(sha_file)
 		return sys.call("sha256sum -c " .. sha_file .. " > /dev/null 2>&1") == 0
 	end
 
-	local sha_verify = curl(sha_url, sha_path) == 200
+	local sha_verify, _ = curl(sha_url, sha_path) == 200
 	if sha_verify then
 		local f = io.open(sha_path, "r")
 		if f then
@@ -103,13 +115,12 @@ local function fetch_geofile(geo_name, geo_type, url)
 		end
 	end
 
-	local sret_tmp = curl(url, tmp_path, vali_file)
-	if sret_tmp == 200 and non_file_check(tmp_path, vali_file) then
+	local sret_tmp, header = curl(url, tmp_path)
+	if sret_tmp == 200 and non_file_check(tmp_path, header) then
 		log(1, api.i18n.translatef("%s an error occurred during the file download process. Please try downloading again.", geo_type))
 		os.remove(tmp_path)
-		os.remove(vali_file)
-		sret_tmp = curl(url, tmp_path, vali_file)
-		if sret_tmp == 200 and non_file_check(tmp_path, vali_file) then
+		sret_tmp, header = curl(url, tmp_path)
+		if sret_tmp == 200 and non_file_check(tmp_path, header) then
 			sret_tmp = 0
 			log(1, api.i18n.translatef("%s an error occurred while downloading the file. Please check your network or the download link and try again!", geo_type))
 		end
@@ -151,7 +162,6 @@ end
 local function remove_tmp_geofile(name)
 	os.remove("/tmp/" .. name .. ".dat")
 	os.remove("/tmp/" .. name .. ".dat.sha256sum")
-	os.remove("/tmp/" .. name .. ".dat.vali")
 end
 
 if arg2 then

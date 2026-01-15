@@ -127,6 +127,12 @@ function gen_outbound(flag, node, tag, proxy_table)
 			node.wireguard_reserved = #bytes > 0 and bytes or nil
 		end
 
+		if node.protocol == "hysteria2" then
+			node.protocol = "hysteria"
+			node.transport = "hysteria"
+			node.stream_security = "tls"
+		end
+
 		result = {
 			_id = node_id,
 			_flag = flag,
@@ -139,7 +145,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				concurrency = (node.mux == "1" and ((node.mux_concurrency) and tonumber(node.mux_concurrency) or -1)) or nil,
 				xudpConcurrency = (node.mux == "1" and ((node.xudp_concurrency) and tonumber(node.xudp_concurrency) or 8)) or nil
 			} or nil,
-			streamSettings = (node.streamSettings or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
+			streamSettings = (node.streamSettings or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan" or node.protocol == "hysteria") and {
 				sockopt = {
 					mark = 255,
 					tcpFastOpen = (node.tcp_fast_open == "1") and true or nil,
@@ -253,6 +259,36 @@ function gen_outbound(flag, node, tag, proxy_table)
 						return next(extra_tbl) ~= nil and extra_tbl or nil
 					end)()
 				} or nil,
+				hysteriaSettings = (node.transport == "hysteria") and {
+					version = 2,
+					auth = node.hysteria2_auth_password,
+					up = (node.hysteria2_up_mbps and tonumber(node.hysteria2_up_mbps)) and tonumber(node.hysteria2_up_mbps) .. "mbps" or nil,
+					down = (node.hysteria2_down_mbps and tonumber(node.hysteria2_down_mbps)) and tonumber(node.hysteria2_down_mbps) .. "mbps" or nil,
+					udphop = (node.hysteria2_hop) and {
+						port = string.gsub(node.hysteria2_hop, ":", "-"),
+						interval = (function()
+								local v = tonumber((node.hysteria2_hop_interval or "30s"):match("^%d+"))
+								return (v and v >= 5) and (v .. "s") or "30s"
+							    end)()
+					} or nil,
+					maxIdleTimeout = (function()
+						local timeoutStr = tostring(node.hysteria2_idle_timeout or "")
+						local timeout = tonumber(timeoutStr:match("^%d+"))
+						if timeout and timeout >= 4 and timeout <= 120 then
+							return timeout
+						end
+						return 30
+					end)(),
+					disablePathMTUDiscovery = (node.hysteria2_disable_mtu_discovery) and true or false
+				} or nil,
+				udpmasks = (node.transport == "hysteria" and node.hysteria2_obfs_type and node.hysteria2_obfs_type ~= "") and {
+					{
+						type = node.hysteria2_obfs_type,
+						settings = node.hysteria2_obfs_password and {
+							password = node.hysteria2_obfs_password
+						} or nil
+					}
+				} or nil
 			} or nil,
 			settings = {
 				vnext = (node.protocol == "vmess" or node.protocol == "vless") and {
@@ -291,7 +327,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						} or nil
 					}
 				} or nil,
-				address = (node.protocol == "wireguard" and node.wireguard_local_address) and node.wireguard_local_address or nil,
+				address = (node.protocol == "wireguard" and node.wireguard_local_address) or (node.protocol == "hysteria" and node.address) or nil,
 				secretKey = (node.protocol == "wireguard") and node.wireguard_secret_key or nil,
 				peers = (node.protocol == "wireguard") and {
 					{
@@ -302,7 +338,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 					}
 				} or nil,
 				mtu = (node.protocol == "wireguard" and node.wireguard_mtu) and tonumber(node.wireguard_mtu) or nil,
-				reserved = (node.protocol == "wireguard" and node.wireguard_reserved) and node.wireguard_reserved or nil
+				reserved = (node.protocol == "wireguard" and node.wireguard_reserved) and node.wireguard_reserved or nil,
+				port = (node.protocol == "hysteria" and node.port) and tonumber(node.port) or nil,
+				version = node.protocol == "hysteria" and 2 or nil
 			}
 		}
 
@@ -1698,7 +1736,8 @@ function gen_config(var)
 			if not value["_flag_proxy_tag"] and value["_id"] and s and not no_run and
 			((s.vnext and s.vnext[1] and s.vnext[1].address and s.vnext[1].port) or 
 			(s.servers and s.servers[1] and s.servers[1].address and s.servers[1].port) or
-			(s.peers and s.peers[1] and s.peers[1].endpoint)) then
+			(s.peers and s.peers[1] and s.peers[1].endpoint) or
+			(s.address and s.port)) then
 				sys.call(string.format("echo '%s' >> %s", value["_id"], api.TMP_PATH .. "/direct_node_list"))
 			end
 			for k, v in pairs(config.outbounds[index]) do
