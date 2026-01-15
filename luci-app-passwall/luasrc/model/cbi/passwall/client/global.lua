@@ -210,6 +210,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 					pt.remove = get_remove(v.id, id .. "_proxy_tag")
 					pt:value("", translate("Close"))
 					pt:value("main", translate("Preproxy Node"))
+					pt:depends("__hide__", "1")
 					for k1, v1 in pairs(socks_list) do
 						o:value(v1.id, v1.remark)
 						o.group[#o.group+1] = (v1.group and v1.group ~= "") and v1.group or translate("default")
@@ -274,6 +275,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 			o.remove = get_remove(v.id, id)
 			o:value("", translate("Close"))
 			o:value("main", translate("Preproxy Node"))
+			o:depends("__hide__", "1")
 			for k1, v1 in pairs(normal_list) do
 				if v1.protocol ~= "_balancing" and v1.protocol ~= "_urltest" and not api.is_local_ip(v1.address) then
 					o:depends({ [vid .. "-default_node"] = v1.id, [vid .. "-preproxy_enabled"] = "1" })

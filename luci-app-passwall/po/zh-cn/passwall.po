@@ -781,6 +781,9 @@ msgstr "常用的"
 msgid "Only Web"
 msgstr "仅网页"
 
+msgid "default"
+msgstr "默认"
+
 msgid "Default"
 msgstr "默认"
 
