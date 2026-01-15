@@ -144,19 +144,17 @@ table .cbi-button-down {
 			hideSortColumn(section);
 
 			// === 插入 drag handle ===
-			var delBtns = section.getElementsByClassName("cbi-button-remove");
-			for (var i = 0; i < delBtns.length; i++) {
-				var btnsInRow = delBtns[i].closest("tr").getElementsByClassName("cbi-button-remove");
-				if (!btnsInRow || btnsInRow.length === 0) continue;
-				var btn = btnsInRow[btnsInRow.length - 1];
-				var parent = btn && btn.parentNode;
-				if (!parent || parent.getElementsByClassName("drag-handle").length) continue;
+			var rows = section.querySelectorAll("tr");
+			rows.forEach(function(row) {
+				var btn = row.querySelector(".cbi-button-remove:last-of-type");
+				if (!btn) return;
+				if (btn.nextElementSibling && btn.nextElementSibling.classList.contains("drag-handle")) return;
 				var handle = document.createElement("span");
 				handle.className = "drag-handle center";
 				handle.title = "<%:Drag to reorder%>";
 				handle.innerHTML = "⠿";
-				parent.insertBefore(handle, btn.nextSibling);
-			}
+				btn.after(handle);
+			});
 
 			// === 初始化 Sortable ===
 			var table = section.getElementsByTagName("table")[0];
