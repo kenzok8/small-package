@@ -19,11 +19,12 @@ end
 
 local new_port
 local function get_new_port()
-	if new_port then
-		new_port = tonumber(sys.exec(string.format("echo -n $(/usr/share/%s/app.sh get_new_port %s tcp)", appname, new_port + 1)))
-	else
-		new_port = tonumber(sys.exec(string.format("echo -n $(/usr/share/%s/app.sh get_new_port auto tcp)", appname)))
+	local cmd_format = ". /usr/share/passwall/utils.sh ; echo -n $(get_new_port %s tcp)"
+	local set_port = 0
+	if new_port and tonumber(new_port) then
+		set_port = tonumber(new_port) + 1
 	end
+	new_port = tonumber(sys.exec(string.format(cmd_format, set_port == 0 and "auto" or set_port)))
 	return new_port
 end
 
@@ -207,7 +208,7 @@ listen %s
 		f_out:write("	" .. server_conf .. "\n")
 
 		if o.export ~= "0" then
-			sys.call(string.format("/usr/share/passwall/app.sh add_ip2route %s %s", o.origin_address, o.export))
+			sys.call(string.format(". /usr/share/passwall2/utils.sh ; add_ip2route %s %s", o.origin_address, o.export))
 		end
 
 		log(string.format("  | - 出口节点：%s:%s，权重：%s", o.origin_address, o.origin_port, o.lbweight))

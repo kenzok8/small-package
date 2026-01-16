@@ -1401,11 +1401,11 @@ del_firewall_rule() {
 	destroy_ipset $IPSET_BLOCK6
 	destroy_ipset $IPSET_WHITE6
 
-	$DIR/app.sh echolog "删除 iptables 规则完成。"
+	echolog "删除 iptables 规则完成。"
 }
 
 flush_ipset() {
-	$DIR/app.sh echolog "清空 IPSet。"
+	echolog "清空 IPSet。"
 	for _name in $(ipset list | grep "Name: " | grep "passwall_" | awk '{print $2}'); do
 		destroy_ipset ${_name}
 	done
@@ -1511,6 +1511,7 @@ start() {
 }
 
 stop() {
+	[ -z "$(command -v echolog)" ] && . /usr/share/passwall/utils.sh
 	del_firewall_rule
 	[ $(config_t_get global flush_set_on_reboot "0") = "1" -o $(config_t_get global flush_set "0") = "1" ] && {
 		uci -q delete ${CONFIG}.@global[0].flush_set

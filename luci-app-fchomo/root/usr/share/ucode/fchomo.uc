@@ -92,7 +92,7 @@ export function yqReadFile(flags, command, filepath) {
 
 /* String helper start */
 export function isEmpty(res) {                                            // no false, 0, NaN
-	if (res == null || res in ['', 'nil']) return true;                   // null, '', 'nil'
+	if (res == null || res in ['']) return true;                          // null, ''
 	if (type(res) in ['array', 'object']) return length(res) === 0;       // empty Array/Object
 	return false;
 };

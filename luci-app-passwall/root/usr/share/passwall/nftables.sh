@@ -1428,11 +1428,11 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_BLOCK6
 	destroy_nftset $NFTSET_WHITE6
 
-	$DIR/app.sh echolog "删除 nftables 规则完成。"
+	echolog "删除 nftables 规则完成。"
 }
 
 flush_nftset() {
-	$DIR/app.sh echolog "清空 NFTSet。"
+	echolog "清空 NFTSet。"
 	for _name in $(nft -a list sets | grep -E "passwall_" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
 		destroy_nftset ${_name}
 	done
@@ -1486,6 +1486,7 @@ start() {
 }
 
 stop() {
+	[ -z "$(command -v echolog)" ] && . /usr/share/passwall/utils.sh
 	del_firewall_rule
 	[ $(config_t_get global flush_set_on_reboot "0") = "1" -o $(config_t_get global flush_set "0") = "1" ] && {
 		uci -q delete ${CONFIG}.@global[0].flush_set
