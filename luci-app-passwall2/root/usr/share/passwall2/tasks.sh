@@ -1,23 +1,10 @@
 #!/bin/sh
-
 ## Loop update script
 
-CONFIG=passwall2
-APP_PATH=/usr/share/$CONFIG
-TMP_PATH=/tmp/etc/$CONFIG
-LOCK_FILE=/tmp/lock/${CONFIG}_tasks.lock
+. /usr/share/passwall2/utils.sh
+LOCK_FILE=${LOCK_PATH}/${CONFIG}_tasks.lock
+
 CFG_UPDATE_INT=0
-
-config_n_get() {
-	local ret=$(uci -q get "${CONFIG}.${1}.${2}" 2>/dev/null)
-	echo "${ret:=$3}"
-}
-
-config_t_get() {
-	local index=${4:-0}
-	local ret=$(uci -q get "${CONFIG}.@${1}[${index}].${2}" 2>/dev/null)
-	echo "${ret:=${3}}"
-}
 
 exec 99>"$LOCK_FILE"
 flock -n 99

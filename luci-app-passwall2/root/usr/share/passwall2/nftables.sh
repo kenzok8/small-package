@@ -1049,11 +1049,11 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_LAN6
 	destroy_nftset $NFTSET_VPS6
 
-	$DIR/app.sh log_i18n 0 "Delete %s rules is complete." "nftables"
+	log_i18n 0 "Delete %s rules is complete." "nftables"
 }
 
 flush_nftset() {
-	$DIR/app.sh log_i18n 0 "Clear %s." "NFTSet"
+	log_i18n 0 "Clear %s." "NFTSet"
 	for _name in $(nft -a list sets | grep -E "passwall2_" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
 		destroy_nftset ${_name}
 	done
@@ -1107,6 +1107,7 @@ start() {
 }
 
 stop() {
+	[ -z "$(command -v log_i18n)" ] && . /usr/share/passwall2/utils.sh
 	del_firewall_rule
 	[ $(config_t_get global flush_set "0") = "1" ] && {
 		uci -q delete ${CONFIG}.@global[0].flush_set
