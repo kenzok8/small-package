@@ -121,7 +121,7 @@ start_service() {
 		ucode -S "$SDL_DIR/generate_client.uc" 2>>"$LOG_PATH" | yq -Poy | yq \
 			'.sniffer["force-domain"][] style="double"
 			| .sniffer["skip-domain"][] style="double"
-			| with(.dns["nameserver-policy"] | keys; .. style="double")
+			| with(.dns["nameserver-policy"]; ... style="double")
 			| .dns["fallback-filter"].domain[] style="double"
 			| with(.["proxy-providers"][] | select(.payload); .payload style="literal")
 			| with(.["rule-providers"][] | select(.payload); .payload style="literal")' \
