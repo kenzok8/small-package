@@ -121,7 +121,7 @@ local api = require "luci.passwall2.api"
 		);
 	}
 	//分流规则添加拖拽排序
-	(function () {
+	document.addEventListener("DOMContentLoaded", function () {
 		function initSortableForTable() {
 			var section = document.getElementById("cbi-<%=api.appname%>-shunt_rules");
 			if (!section) return;
@@ -225,12 +225,12 @@ local api = require "luci.passwall2.api"
 
 				last = count;
 				if (stable >= THRESHOLD)
-					initSortableForTable();
+					setTimeout(initSortableForTable, 200);
 				else
 					requestAnimationFrame(tick);
 			}
 			tick();
 		})();
-	})();
+	});
 	//]]>
 </script>
