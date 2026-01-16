@@ -134,7 +134,7 @@
 {# Common function START #}
 {%- function render_acl_src(inchain, outchain): %}
 chain {{ inchain }} {
-		{% if (control_info.listen_interfaces): %}
+		{% if (!isEmpty(control_info.listen_interfaces)): %}
 		meta iifname != {{ array_to_nftarr(uniq([...control_info.listen_interfaces, ...['lo']])) }} counter return
 		{% endif %}
 		meta mark {{ self_mark }} counter return
@@ -163,6 +163,10 @@ chain {{ inchain }} {
 
 		{% if (control_info.lan_filter !== 'white_list'): %}
 		counter goto {{ outchain }}
+		{% endif %}
+
+		{% if (proxy_router === '1' && match(inchain, /tproxy/)): %}
+		iifname lo meta mark {{ tproxy_mark }} counter goto {{ outchain }}
 		{% endif %}
 	}
 {% endfunction %}
@@ -400,10 +404,7 @@ table inet fchomo {
 		type nat hook prerouting priority dstnat + 5; policy accept;
 		{#- DNS hijack #}
 		{% if (dnsmasq_hijacked !== '1'): %}
-		{% if (control_info.listen_interfaces): %}
-		meta iifname {{ array_to_nftarr(control_info.listen_interfaces) }}
-		{% endif %}
-		meta iifname != lo meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto { tcp, udp } th dport 53 counter redirect to :{{ dnsmasq_port }} comment "!{{ cfgname }}: DNS hijack (subnet)"
+		meta iifname != lo meta nfproto { {{ (global_ipv6 === '1') ? 'ipv4, ipv6' : 'ipv4' }} } th dport 53 jump pre_acl_src
 		{% endif /* dnsmasq_hijacked */ %}
 		{#- TCP redirect entrypoint #}
 		{% if (match(proxy_mode, /redir/)): %}
@@ -448,6 +449,14 @@ table inet fchomo {
 	{% endif /* proxy_router */ %}
 	{# Main entrypoint END #}
 
+	{#- DNS hijack #}
+	{% if (dnsmasq_hijacked !== '1'): %}
+	{{ render_acl_src('pre_acl_src', 'pre_dns_hijack') }}
+	chain pre_dns_hijack {
+		meta l4proto { tcp, udp } counter redirect to :{{ dnsmasq_port }} comment "!{{ cfgname }}: DNS hijack (subnet)"
+	}
+	{% endif %}
+
 	{# TCP redirect START #}
 	{% if (match(proxy_mode, /redir/)): %}
 	{{ render_acl_src('redir_acl_src', 'redir_acl_dst') }}
@@ -478,9 +487,7 @@ table inet fchomo {
 	{{ render_acl_dst('tproxy_acl_dst_reroute', 'tproxy_acl_dport_reroute') }}
 	{{ render_acl_dport('tproxy_acl_dport_reroute', 'tproxy_mark', 'udp') }}
 	chain tproxy_mark {
-		{#- DNS hijack (router udp) #}
 		{# tproxy_mark --> route_table_id --reroute-to--> lo --> prerouting --> tproxy_port --> DST-PORT,53,dns-out #}
-
 		meta l4proto udp meta mark set {{ tproxy_mark }} counter accept
 	}
 	{% endif /* proxy_router */ %}
@@ -493,6 +500,7 @@ table inet fchomo {
 	{{ render_acl_dst('tun_acl_dst', 'tun_acl_dport') }}
 	{{ render_acl_dport('tun_acl_dport', 'tun_mark', (proxy_mode === 'tun') ? '' : 'udp') }}
 	chain tun_mark {
+		{# tun_mark --> route_table_id --reroute-to--> tun_iface --> DST-PORT,53,dns-out #}
 		meta mark set {{ tun_mark }} counter accept
 	}
 	{% endif /* proxy_mode */ %}

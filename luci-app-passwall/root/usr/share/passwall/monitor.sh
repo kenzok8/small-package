@@ -1,22 +1,7 @@
 #!/bin/sh
 
-CONFIG=passwall
-TMP_PATH=/tmp/etc/$CONFIG
-TMP_SCRIPT_FUNC_PATH=$TMP_PATH/script_func
-LOCK_FILE_DIR=/tmp/lock
-LOCK_FILE=${LOCK_FILE_DIR}/${CONFIG}_script.lock
-
-config_n_get() {
-	local ret=$(uci -q get $CONFIG.$1.$2 2>/dev/null)
-	echo ${ret:=$3}
-}
-
-config_t_get() {
-	local index=0
-	[ -n "$4" ] && index=$4
-	local ret=$(uci -q get $CONFIG.@$1[$index].$2 2>/dev/null)
-	echo ${ret:=$3}
-}
+. /usr/share/passwall/utils.sh
+LOCK_FILE=${LOCK_PATH}/${CONFIG}_monitor.lock
 
 ENABLED=$(config_t_get global enabled 0)
 [ "$ENABLED" != 1 ] && return 1

@@ -3,8 +3,8 @@
 START=99
 STOP=15
 
-CONFIG=passwall
-APP_FILE=/usr/share/${CONFIG}/app.sh
+. /usr/share/passwall/utils.sh
+APP_FILE=${APP_PATH}/app.sh
 LOCK_FILE_DIR=/var/lock
 LOCK_FILE=${LOCK_FILE_DIR}/${CONFIG}.lock
 

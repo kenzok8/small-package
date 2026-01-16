@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2025 xiaorouji
 # Copyright (C) 2026 Openwrt-Passwall Organization
 
-CONFIG=passwall2
+CONFIG=passwall
 APP_PATH=/usr/share/${CONFIG}
 TMP_PATH=/tmp/etc/${CONFIG}
 TMP_PATH2=${TMP_PATH}_tmp
@@ -13,6 +13,12 @@ TMP_BIN_PATH=${TMP_PATH}/bin
 TMP_IFACE_PATH=${TMP_PATH}/iface
 TMP_ROUTE_PATH=${TMP_PATH}/route
 TMP_SCRIPT_FUNC_PATH=${TMP_PATH}/script_func
+RULES_PATH=/usr/share/${CONFIG}/rules
+
+echolog() {
+	local d="$(date "+%Y-%m-%d %H:%M:%S")"
+	echo -e "$d: $*" >>$LOG_FILE
+}
 
 config_get_type() {
 	local ret=$(uci -q get "${CONFIG}.${1}" 2>/dev/null)
@@ -35,97 +41,6 @@ config_t_set() {
 	local ret=$(uci -q set "${CONFIG}.@${1}[${index}].${2}=${3}" 2>/dev/null)
 }
 
-eval_set_val() {
-	for i in $@; do
-		for j in $i; do
-			eval $j
-		done
-	done
-}
-
-eval_unset_val() {
-	for i in $@; do
-		for j in $i; do
-			eval unset j
-		done
-	done
-}
-
-eval_cache_var() {
-	[ -s "$TMP_PATH/var" ] && eval $(cat "$TMP_PATH/var")
-}
-
-get_cache_var() {
-	local key="${1}"
-	[ -n "${key}" ] && [ -s "$TMP_PATH/var" ] && {
-		echo $(cat $TMP_PATH/var | grep "^${key}=" | awk -F '=' '{print $2}' | tail -n 1 | awk -F'"' '{print $2}')
-	}
-}
-
-set_cache_var() {
-	local key="${1}"
-	shift 1
-	local val="$@"
-	[ -n "${key}" ] && [ -n "${val}" ] && {
-		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
-		echo "${key}=\"${val}\"" >> $TMP_PATH/var
-		eval ${key}=\"${val}\"
-	}
-}
-
-echolog() {
-	echo -e "$*" >>$LOG_FILE
-}
-
-echolog_date() {
-	local d="$(date "+%Y-%m-%d %H:%M:%S")"
-	echolog "$d: $*"
-}
-
-i18n() {
-	echo "$(lua ${APP_PATH}/i18n.lua "$@")"
-}
-
-log() {
-	local num="$1"
-	shift
-	local content="$@"
-	local indent=""
-	if [ "$num" -ge 1 ]; then
-		for i in $(seq 1 ${num}); do
-			indent="${indent}  "
-		done
-		echolog_date "${indent}- ${content}"
-	else
-		echolog_date "${content}"
-	fi
-}
-
-log_i18n() {
-	local num="$1"
-	shift
-	log ${num} "$(i18n "$@")"
-}
-
-lua_api() {
-	local func=${1}
-	[ -z "${func}" ] && {
-		echo ""
-		return
-	}
-	echo $(lua -e "local api = require 'luci.passwall2.api' print(api.${func})")
-}
-
-check_host() {
-	local f=${1}
-	a=$(echo $f | grep "\/")
-	[ -n "$a" ] && return 1
-	# Determine if it contains Chinese characters.
-	local tmp=$(echo -n $f | awk '{print gensub(/[!-~]/,"","g",$0)}')
-	[ -n "$tmp" ] && return 1
-	return 0
-}
-
 get_enabled_anonymous_secs() {
 	uci -q show "${CONFIG}" | grep "${1}\[.*\.enabled='1'" | cut -d '.' -sf2
 }
@@ -140,8 +55,6 @@ get_host_ip() {
 		isip=$(echo $host | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		if [ -n "$isip" ]; then
 			isip=$(echo $host | cut -d '[' -f2 | cut -d ']' -f1)
-		else
-			isip=$(echo $host | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
 		fi
 	else
 		isip=$(echo $host | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
@@ -174,11 +87,15 @@ get_ip_port_from() {
 	local __ucipriority=${1}; shift 1
 
 	local val1 val2
+	val2=$(echo "$__host" | sed -n '
+		s/^[^#]*[#]\([0-9]*\)$/\1/p; t;
+		s/^\(\[[^]]*\]\)[:]\([0-9]*\)$/\2/p; t;
+		s/^.*[:#]\([0-9]*\)$/\1/p
+	')
 	if [ -n "${__ucipriority}" ]; then
-		val2=$(config_n_get ${__host} port $(echo $__host | sed -n 's/^.*[:#]\([0-9]*\)$/\1/p'))
+		val2=$(config_n_get ${__host} port "${val2}")
 		val1=$(config_n_get ${__host} address "${__host%%${val2:+[:#]${val2}*}}")
 	else
-		val2=$(echo $__host | sed -n 's/^.*[:#]\([0-9]*\)$/\1/p')
 		val1="${__host%%${val2:+[:#]${val2}*}}"
 	fi
 	eval "${__ipv}=\"$val1\"; ${__portv}=\"$val2\""
@@ -217,6 +134,16 @@ hosts_foreach() {
 		__ret=$?
 		[ ${__ret} -ge ${ERROR_NO_CATCH:-1} ] && return ${__ret}
 	done
+}
+
+check_host() {
+	local f=${1}
+	a=$(echo $f | grep "\/")
+	[ -n "$a" ] && return 1
+	# 判断是否包含汉字~
+	local tmp=$(echo -n $f | awk '{print gensub(/[!-~]/,"","g",$0)}')
+	[ -n "$tmp" ] && return 1
+	return 0
 }
 
 get_first_dns() {
@@ -274,6 +201,77 @@ get_new_port() {
 	fi
 }
 
+check_ver() {
+	local version1="$1"
+	local version2="$2"
+	local i v1 v1_1 v1_2 v1_3 v2 v2_1 v2_2 v2_3
+	IFS='.'; set -- $version1; v1_1=${1:-0}; v1_2=${2:-0}; v1_3=${3:-0}
+	IFS='.'; set -- $version2; v2_1=${1:-0}; v2_2=${2:-0}; v2_3=${3:-0}
+	IFS=
+	for i in 1 2 3; do
+		eval v1=\$v1_$i
+		eval v2=\$v2_$i
+		if [ "$v1" -gt "$v2" ]; then
+			# $1 大于 $2
+			echo 0
+			return
+		elif [ "$v1" -lt "$v2" ]; then
+			# $1 小于 $2
+			echo 1
+			return
+		fi
+	done
+	# $1 等于 $2
+	echo 255
+}
+
+eval_set_val() {
+	for i in $@; do
+		for j in $i; do
+			eval $j
+		done
+	done
+}
+
+eval_unset_val() {
+	for i in $@; do
+		for j in $i; do
+			eval unset j
+		done
+	done
+}
+
+lua_api() {
+	local func=${1}
+	[ -z "${func}" ] && {
+		echo "nil"
+		return
+	}
+	echo $(lua -e "local api = require 'luci.passwall.api' print(api.${func})")
+}
+
+set_cache_var() {
+	local key="${1}"
+	shift 1
+	local val="$@"
+	[ -n "${key}" ] && [ -n "${val}" ] && {
+		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
+		echo "${key}=\"${val}\"" >> $TMP_PATH/var
+		eval ${key}=\"${val}\"
+	}
+}
+
+get_cache_var() {
+	local key="${1}"
+	[ -n "${key}" ] && [ -s "$TMP_PATH/var" ] && {
+		echo $(cat $TMP_PATH/var | grep "^${key}=" | awk -F '=' '{print $2}' | tail -n 1 | awk -F'"' '{print $2}')
+	}
+}
+
+eval_cache_var() {
+	[ -s "$TMP_PATH/var" ] && eval $(cat "$TMP_PATH/var")
+}
+
 has_1_65535() {
 	local val="$1"
 	val=${val//:/-}
@@ -286,7 +284,7 @@ has_1_65535() {
 add_ip2route() {
 	local ip=$(get_host_ip "ipv4" $1)
 	[ -z "$ip" ] && {
-		log 1 "$(i18n "Unable to resolve [%s], route table addition failed!" "${1}")"
+		echolog "  - 无法解析[${1}]，路由表添加失败！"
 		return 1
 	}
 	local remarks="${1}"
@@ -301,14 +299,15 @@ add_ip2route() {
 	if [ -n "${gateway}" ]; then
 		route add -host ${ip} gw ${gateway} dev ${device} >/dev/null 2>&1
 		echo "$ip" >> $TMP_ROUTE_PATH/${device}
-		log 1 "$(i18n "[%s] was successfully added to the routing table of interface [%s]!" "${remarks}" "${device}")"
+		echolog "  - [${remarks}]添加到接口[${device}]路由表成功！"
 	else
-		log 1 "$(i18n "Adding [%s] to the [%s] routing table failed! The reason is that the [%s] gateway cannot be found." "${remarks}" "${device}" "${device}")"
+		echolog "  - [${remarks}]添加到接口[${device}]路由表失功！原因是找不到[${device}]网关。"
 	fi
 }
 
 delete_ip2route() {
 	[ -d "${TMP_ROUTE_PATH}" ] && {
+		local interface
 		for interface in $(ls ${TMP_ROUTE_PATH}); do
 			for ip in $(cat ${TMP_ROUTE_PATH}/${interface}); do
 				route del -host ${ip} dev ${interface} >/dev/null 2>&1
