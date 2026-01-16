@@ -1,11 +1,8 @@
 #!/bin/sh
-
 # dhcp.leases to hosts
 
-CONFIG=passwall2
-TMP_PATH=/tmp/etc/${CONFIG}
-TMP_PATH2=/tmp/etc/${CONFIG}_tmp
-LOCK_FILE=/tmp/lock/${CONFIG}_lease2hosts.lock
+. /usr/share/passwall2/utils.sh
+LOCK_FILE=${LOCK_PATH}/${CONFIG}_lease2hosts.lock
 LEASE_FILE="/tmp/dhcp.leases"
 HOSTS_FILE="$TMP_PATH2/dhcp-hosts"
 TMP_FILE="/tmp/dhcp-hosts.tmp"

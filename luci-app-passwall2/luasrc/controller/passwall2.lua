@@ -1,4 +1,5 @@
 -- Copyright (C) 2022-2025 xiaorouji
+-- Copyright (C) 2026 Openwrt-Passwall Organization
 
 module("luci.controller.passwall2", package.seeall)
 local api = require "luci.passwall2.api"

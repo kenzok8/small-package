@@ -1016,11 +1016,11 @@ del_firewall_rule() {
 	ip -6 rule del fwmark 1 table 100 2>/dev/null
 	ip -6 route del local ::/0 dev lo table 100 2>/dev/null
 
-	$DIR/app.sh log_i18n 0 "Delete %s rules is complete." "iptables"
+	log_i18n 0 "Delete %s rules is complete." "iptables"
 }
 
 flush_ipset() {
-	$DIR/app.sh log_i18n 0 "Clear %s." "IPSet"
+	log_i18n 0 "Clear %s." "IPSet"
 	for _name in $(ipset list | grep "Name: " | grep "passwall2_" | awk '{print $2}'); do
 		destroy_ipset ${_name}
 	done
@@ -1113,6 +1113,7 @@ start() {
 }
 
 stop() {
+	[ -z "$(command -v log_i18n)" ] && . /usr/share/passwall2/utils.sh
 	del_firewall_rule
 	[ $(config_t_get global flush_set "0") = "1" ] && {
 		uci -q delete ${CONFIG}.@global[0].flush_set

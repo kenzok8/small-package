@@ -1,18 +1,6 @@
 #!/bin/sh
 
-CONFIG=passwall2
-
-config_n_get() {
-	local ret=$(uci -q get "${CONFIG}.${1}.${2}" 2>/dev/null)
-	echo "${ret:=$3}"
-}
-
-config_t_get() {
-	local index=0
-	[ -n "$4" ] && index=$4
-	local ret=$(uci -q get $CONFIG.@$1[$index].$2 2>/dev/null)
-	echo ${ret:=$3}
-}
+. /usr/share/passwall2/utils.sh
 
 test_url() {
 	local url=$1
@@ -58,7 +46,7 @@ url_test_node() {
 	local node_id=$1
 	local _type=$(echo $(config_n_get ${node_id} type) | tr 'A-Z' 'a-z')
 	[ -n "${_type}" ] && {
-		local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp,udp)
+		local _tmp_port=$(get_new_port 61080 tcp,udp)
 		/usr/share/${CONFIG}/app.sh run_socks flag="url_test_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=url_test_${node_id}.json
 		local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		sleep 1s

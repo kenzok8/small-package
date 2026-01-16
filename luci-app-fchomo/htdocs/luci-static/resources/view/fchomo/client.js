@@ -82,7 +82,7 @@ class DNSAddress {
 		this.params = new URLSearchParams(this.rawparams);
 		// disable-qtypes
 		// https://dns.google/dns-query#GLOBAL&disable-qtype-1=true&disable-qtype-28=true&disable-qtype-33=true&disable-qtype-65=true
-		let qtypes = [...this.params.keys()].filter(e => e.match(/disable-qtype-\d+/)).map(e => e.replace('disable-qtype-', ''))
+		let qtypes = [...this.params.keys()].filter(e => e.match(/^disable-qtype-\d+$/)).map(e => e.replace('disable-qtype-', ''))
 		if (!hm.isEmpty(qtypes))
 			this.params.set('disable-qtypes', qtypes);
 	}
@@ -119,7 +119,9 @@ class DNSAddress {
 			['detour', 'h3', 'skip-cert-verify', 'ecs', 'ecs-override', 'disable-ipv4', 'disable-ipv6'].map((k) => {
 				return this.params.has(k) ? '%s=%s'.format(k, encodeURI(this.params.get(k))) : null;
 			}).filter(v => v).join('&') +
-			(! this.params.has('disable-qtypes') ? '' : '&' + this.params.get('disable-qtypes').split(',').map(v => `disable-qtype-${v}=true`).join('&'))
+			(function(k) {
+				return this.params.has(k) ? '&' + this.params.get(k).split(',').map(v => `disable-qtype-${v}=true`).join('&') : '';
+			}.bind(this, 'disable-qtypes')())
 		).replace('#&', '#');
 	}
 }

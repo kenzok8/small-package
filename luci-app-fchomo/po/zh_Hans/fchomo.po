@@ -3298,7 +3298,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:466
 msgid "only applies when %s is stream/poll/auto."
-msgstr ""
+msgstr "仅当 %s 为 stream/poll/auto 时适用。"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1466
 msgid "override.proxy-name"

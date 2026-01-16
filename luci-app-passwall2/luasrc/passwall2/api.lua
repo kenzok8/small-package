@@ -108,10 +108,10 @@ function sh_uci_commit(config)
 end
 
 function set_cache_var(key, val)
-	sys.call(string.format('/usr/share/passwall2/app.sh set_cache_var %s "%s"', key, val))
+	sys.call(string.format('. /usr/share/passwall2/utils.sh ; set_cache_var %s "%s"', key, val))
 end
 function get_cache_var(key)
-	local val = sys.exec(string.format('echo -n $(/usr/share/passwall2/app.sh get_cache_var %s)', key))
+	local val = sys.exec(string.format('. /usr/share/passwall2/utils.sh ; echo -n $(get_cache_var %s)', key))
 	if val == "" then val = nil end
 	return val
 end
