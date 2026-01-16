@@ -11,7 +11,7 @@ const parseRulesetYaml = hm.parseYaml.extend({
 		if (!cfg.type)
 			return null;
 
-		// key mapping // 2025/06/21
+		// key mapping // 2026/01/16
 		let config = hm.removeBlankAttrs({
 			id: this.id,
 			label: this.label,
@@ -25,6 +25,7 @@ const parseRulesetYaml = hm.parseYaml.extend({
 				size_limit: cfg["size-limit"],
 				interval: cfg.interval,
 				proxy: cfg.proxy ? hm.preset_outbound.full.map(([key, label]) => key).includes(cfg.proxy) ? cfg.proxy : this.calcID(hm.glossary["proxy_group"].field, cfg.proxy) : null,
+				header: cfg.header ? JSON.stringify(cfg.header, null, 2) : null, // string: object
 			})
 		});
 
@@ -162,6 +163,14 @@ return view.extend({
 							'    url: "https://raw.githubusercontent.com/../Google.yaml"\n' +
 							'    proxy: proxy\n' +
 							'    behavior: classical\n' +
+							'    header:\n' +
+							'      User-Agent:\n' +
+							'      - "Clash/v1.18.0"\n' +
+							'      - "mihomo/1.18.3"\n' +
+							'      Accept:\n' +
+							"      - 'application/vnd.github.v3.raw'\n" +
+							'      Authorization:\n' +
+							"      - 'token 1231231'\n" +
 							'  rule4:\n' +
 							'    type: inline\n' +
 							'    behavior: domain\n' +
@@ -380,6 +389,13 @@ return view.extend({
 		o.textvalue = hm.textvalue2Value;
 		//o.editable = true;
 		o.depends('type', 'http');
+
+		o = s.option(hm.TextValue, 'header', _('HTTP header'),
+			_('Custom HTTP header.'));
+		o.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Accept": [\n    //"application/vnd.github.v3.raw"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
+		o.validate = hm.validateJson;
+		o.depends('type', 'http');
+		o.modalonly = true;
 
 		o = s.option(form.DummyValue, '_update');
 		o.cfgvalue = hm.renderResDownload;

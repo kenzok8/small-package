@@ -117,6 +117,7 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 		"enable-pure-downlink": (cfg.sudoku_enable_pure_downlink === '0') ? false : null,
 		"disable-http-mask": (cfg.sudoku_http_mask === '0') ? true : null,
 		"http-mask-mode": cfg.sudoku_http_mask_mode,
+		"path-root": cfg.sudoku_path_root,
 
 		/* Tuic */
 		"congestion-controller": cfg.tuic_congestion_controller,

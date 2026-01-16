@@ -449,6 +449,10 @@ return view.extend({
 		so.depends({sudoku_http_mask_mode: /^(stream|poll|auto)$/});
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.Value, 'sudoku_path_root', _('HTTP root path'));
+		so.depends('sudoku_http_mask', '1');
+		so.modalonly = true;
+
 		so = ss.taboption('field_general', form.RichListValue, 'sudoku_http_mask_multiplex', _('HTTP mask multiplex'),
 			_('Reusing a single tunnel to carry multiple target connections within it.'));
 		so.default = 'off';
