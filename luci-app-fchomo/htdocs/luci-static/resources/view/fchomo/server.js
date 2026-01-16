@@ -432,6 +432,10 @@ return view.extend({
 		o.depends('sudoku_http_mask', '1');
 		o.modalonly = true;
 
+		o = s.taboption('field_general', form.Value, 'sudoku_path_root', _('HTTP root path'));
+		o.depends('sudoku_http_mask', '1');
+		o.modalonly = true;
+
 		/* Tuic fields */
 		o = s.taboption('field_general', hm.GenValue, 'uuid', _('UUID'));
 		o.rmempty = false;

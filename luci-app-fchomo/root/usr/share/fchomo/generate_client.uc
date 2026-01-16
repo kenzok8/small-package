@@ -528,6 +528,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"http-mask-mode": cfg.sudoku_http_mask_mode,
 		"http-mask-tls": strToBool(cfg.sudoku_http_mask_tls),
 		"http-mask-host": cfg.sudoku_http_mask_host,
+		"path-root": cfg.sudoku_path_root,
 		"http-mask-multiplex": cfg.sudoku_http_mask_multiplex,
 
 		/* Snell */
@@ -779,7 +780,8 @@ uci.foreach(uciconf, ucirule, (cfg) => {
 			url: cfg.url,
 			"size-limit": bytesizeToByte(cfg.size_limit) || null,
 			interval: (cfg.type === 'http') ? durationToSecond(cfg.interval) ?? 259200 : null,
-			proxy: get_proxygroup(cfg.proxy)
+			proxy: get_proxygroup(cfg.proxy),
+			header: cfg.header ? json(cfg.header) : null
 		})
 	};
 });
