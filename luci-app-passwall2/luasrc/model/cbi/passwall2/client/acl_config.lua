@@ -200,10 +200,12 @@ local NODE = m:get("@global[0]", "node")
 o = s:option(ListValue, "node", "<a style='color: red'>" .. translate("Node") .. "</a>")
 if GLOBAL_ENABLED == "1" and NODE then
 	o:value("", translate("Use global config") .. "(" .. api.get_node_name(NODE) .. ")")
+	o.group = {""}
+else
+	o.group = {}
 end
 o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
 o.template = appname .. "/cbi/nodes_listvalue"
-o.group = {}
 
 o = s:option(DummyValue, "_hide_dns_option", "")
 o.template = "passwall2/cbi/hidevalue"
@@ -236,7 +238,7 @@ o:value("1:65535", translate("All"))
 o.validate = port_validate
 o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
 
-o = s:option(DummyValue, "tips", " ")
+o = s:option(DummyValue, "tips", "　")
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	return string.format('<font color="red">%s</font>',

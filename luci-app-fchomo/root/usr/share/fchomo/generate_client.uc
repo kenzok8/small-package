@@ -579,6 +579,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"pre-shared-key": cfg.wireguard_pre_shared_key,
 		"allowed-ips": cfg.wireguard_allowed_ips,
 		reserved: cfg.wireguard_reserved,
+		"persistent-keepalive": strToInt(cfg.wireguard_persistent_keepalive),
 		mtu: strToInt(cfg.wireguard_mtu) || null,
 		"remote-dns-resolve": strToBool(cfg.wireguard_remote_dns_resolve),
 		dns: cfg.wireguard_dns,
