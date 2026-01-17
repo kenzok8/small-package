@@ -702,6 +702,12 @@ return view.extend({
 		so.depends('type', 'wireguard');
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.Value, 'wireguard_persistent_keepalive', _('Persistent keepalive'),
+			_('Periodically sends data packets to maintain connection persistence.'));
+		so.datatype = 'uinteger';
+		so.depends('type', 'wireguard');
+		so.modalonly = true;
+
 		so = ss.taboption('field_general', form.Value, 'wireguard_mtu', _('MTU'));
 		so.datatype = 'range(0,9000)';
 		so.placeholder = '1408';

@@ -48,8 +48,8 @@ test_node() {
 	local node_id=$1
 	local _type=$(echo $(config_n_get ${node_id} type) | tr 'A-Z' 'a-z')
 	[ -n "${_type}" ] && {
-		local _tmp_port=$(/usr/share/${CONFIG}/app.sh get_new_port 61080 tcp,udp)
-		/usr/share/${CONFIG}/app.sh run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=test_node_${node_id}.json
+		local _tmp_port=$(get_new_port 61080 tcp,udp)
+		$APP_FILE run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=test_node_${node_id}.json
 		local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		sleep 1s
 		local _proxy_status=$(test_url "${probe_url}" ${retry_num} ${connect_timeout} "-x $curlx")
@@ -70,8 +70,8 @@ test_auto_switch() {
 	local b_nodes=$1
 	local now_node=$2
 	[ -z "$now_node" ] && {
-		if [ -n "$(/usr/share/${CONFIG}/app.sh get_cache_var "socks_${id}")" ]; then
-			now_node=$(/usr/share/${CONFIG}/app.sh get_cache_var "socks_${id}")
+		if [ -n "$(get_cache_var "socks_${id}")" ]; then
+			now_node=$(get_cache_var "socks_${id}")
 		else
 			#echolog "Socks切换检测：未知错误"
 			return 1
@@ -94,7 +94,7 @@ test_auto_switch() {
 		[ $? -eq 0 ] && {
 			#主节点正常，切换到主节点
 			echolog "Socks切换检测：${id}主节点【$(config_n_get $main_node type)：[$(config_n_get $main_node remarks)]】正常，切换到主节点！"
-			/usr/share/${CONFIG}/app.sh socks_node_switch flag=${id} new_node=${main_node}
+			$APP_FILE socks_node_switch flag=${id} new_node=${main_node}
 			[ $? -eq 0 ] && {
 				echolog "Socks切换检测：${id}节点切换完毕！"
 			}
@@ -132,7 +132,7 @@ test_auto_switch() {
 #				uci commit $CONFIG
 #			}
 			echolog "Socks切换检测：${id}【$(config_n_get $new_node type)：[$(config_n_get $new_node remarks)]】正常，切换到此节点！"
-			/usr/share/${CONFIG}/app.sh socks_node_switch flag=${id} new_node=${new_node}
+			$APP_FILE socks_node_switch flag=${id} new_node=${new_node}
 			[ $? -eq 0 ] && {
 				echolog "Socks切换检测：${id}节点切换完毕！"
 			}
