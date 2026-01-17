@@ -612,7 +612,8 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"client-fingerprint": cfg.tls_client_fingerprint,
 		"ech-opts": cfg.tls_ech === '1' ? {
 			enable: true,
-			config: cfg.tls_ech_config
+			config: cfg.tls_ech_config,
+			"query-server-name": cfg.tls_ech_query_server_name
 		} : null,
 		"reality-opts": cfg.tls_reality === '1' ? {
 			"public-key": cfg.tls_reality_public_key,
@@ -635,7 +636,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			} : null,
 			"grpc-opts": cfg.transport_type === 'grpc' ? {
 				"grpc-service-name": cfg.transport_grpc_servicename,
-				"grpc-user-agent": cfg.transport_grpc_useragent
+				"grpc-user-agent": cfg.transport_grpc_user_agent
 			} : null,
 			"ws-opts": cfg.transport_type === 'ws' ? {
 				path: cfg.transport_path || '/',

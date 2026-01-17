@@ -256,7 +256,7 @@ const parseDNSYaml = hm.parseYaml.extend({
 		if (detour)
 			addr.setParam('detour', hm.preset_outbound.full.map(([key, label]) => key).includes(detour) ? detour : this.calcID(hm.glossary["proxy_group"].field, detour));
 
-		// key mapping // 2026/01/16
+		// key mapping // 2026/01/17
 		let config = {
 			id: this.id,
 			label: this.label,
@@ -288,7 +288,7 @@ const parseDNSPolicyYaml = hm.parseYaml.extend({
 				break;
 		}
 
-		// key mapping // 2025/12/01
+		// key mapping // 2026/01/17
 		let config = {
 			id: this.id,
 			label: this.label,
@@ -304,12 +304,12 @@ const parseDNSPolicyYaml = hm.parseYaml.extend({
 
 const parseRulesYaml = hm.parseYaml.extend({
 	key_mapping(cfg) {
-		let entry = this.parseRules(cfg); // 2025/07/11
+		let entry = this.parseRules(cfg);
 
 		if (!entry)
 			return null;
 
-		// key mapping // 2025/07/11
+		// key mapping // 2026/01/17
 		let config = {
 			id: this.id,
 			label: '%s %s'.format(this.id.slice(0,7), _('(Imported)')),
@@ -1165,9 +1165,11 @@ return view.extend({
 							'- DST-PORT,80,DIRECT\n' +
 							'- SRC-PORT,7777,DIRECT\n' +
 							'- PROCESS-PATH,/usr/bin/wget,auto\n' +
+							'- PROCESS-PATH-WILDCARD,/usr/*/wget,GLOBAL\n' +
 							'- PROCESS-PATH-REGEX,.*bin/wget,auto\n' +
 							'- PROCESS-PATH-REGEX,(?i).*Application\\\\chrome.*,GLOBAL\n' +
 							'- PROCESS-NAME,curl,auto\n' +
+							'- PROCESS-NAME-WILDCARD,*telegram*,GLOBAL\n' +
 							'- PROCESS-NAME-REGEX,curl$,auto\n' +
 							'- PROCESS-NAME-REGEX,(?i)Telegram,GLOBAL\n' +
 							'- PROCESS-NAME-REGEX,.*telegram.*,GLOBAL\n' +

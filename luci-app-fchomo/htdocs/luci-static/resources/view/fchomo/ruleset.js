@@ -11,7 +11,7 @@ const parseRulesetYaml = hm.parseYaml.extend({
 		if (!cfg.type)
 			return null;
 
-		// key mapping // 2026/01/16
+		// key mapping // 2026/01/17
 		let config = hm.removeBlankAttrs({
 			id: this.id,
 			label: this.label,
@@ -165,7 +165,6 @@ return view.extend({
 							'    behavior: classical\n' +
 							'    header:\n' +
 							'      User-Agent:\n' +
-							'      - "Clash/v1.18.0"\n' +
 							'      - "mihomo/1.18.3"\n' +
 							'      Accept:\n' +
 							"      - 'application/vnd.github.v3.raw'\n" +
@@ -392,7 +391,7 @@ return view.extend({
 
 		o = s.option(hm.TextValue, 'header', _('HTTP header'),
 			_('Custom HTTP header.'));
-		o.placeholder = '{\n  "User-Agent": [\n    "Clash/v1.18.0",\n    "mihomo/1.18.3"\n  ],\n  "Accept": [\n    //"application/vnd.github.v3.raw"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
+		o.placeholder = '{\n  "User-Agent": [\n    "mihomo/1.18.3"\n  ],\n  "Accept": [\n    //"application/vnd.github.v3.raw"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
 		o.validate = hm.validateJson;
 		o.depends('type', 'http');
 		o.modalonly = true;
