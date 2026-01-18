@@ -208,7 +208,7 @@ listen %s
 		f_out:write("	" .. server_conf .. "\n")
 
 		if o.export ~= "0" then
-			sys.call(string.format(". /usr/share/passwall2/utils.sh ; add_ip2route %s %s", o.origin_address, o.export))
+			sys.call(string.format(". /usr/share/passwall/utils.sh ; add_ip2route %s %s", o.origin_address, o.export))
 		end
 
 		log(string.format("  | - 出口节点：%s:%s，权重：%s", o.origin_address, o.origin_port, o.lbweight))

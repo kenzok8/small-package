@@ -1426,6 +1426,7 @@ start_dns() {
 	[ -n "${TCP_PROXY_DNS}" ] && echolog "  * 请确认上游 DNS 支持 TCP/DoH 查询，如非直连地址，确保 TCP 代理打开，并且已经正确转发！"
 	[ -n "${UDP_PROXY_DNS}" ] && echolog "  * 请确认上游 DNS 支持 UDP 查询并已使用 UDP 节点，如上游 DNS 非直连地址，确保 UDP 代理打开，并且已经正确转发！"
 
+	local china_ng_listen=0
 	[ "${DNS_SHUNT}" = "smartdns" ] && {
 		if command -v smartdns > /dev/null 2>&1; then
 			rm -rf $TMP_PATH2/dnsmasq_default*
@@ -1436,23 +1437,30 @@ start_dns() {
 			else
 				smartdns_remote_dns="tcp://1.1.1.1"
 			fi
+
+			echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
+			china_ng_listen="127.0.0.1#${SMARTDNS_LISTEN_PORT}"
+			echolog "  - SmartDNS(127.0.0.1#${SMARTDNS_LOCAL_PORT}) -> 国内分组(${group_domestic})，SmartDNS(${china_ng_listen}) -> Dnsmasq"
+			china_ng_listen="${china_ng_listen},::1#${SMARTDNS_LISTEN_PORT}"
+
 			local subnet_ip=$(config_t_get global remote_dns_client_ip)
 			lua $APP_PATH/helper_smartdns_add.lua -FLAG "default" -SMARTDNS_CONF "/tmp/etc/smartdns/$CONFIG.conf" \
+				-LISTEN_PORT ${SMARTDNS_LISTEN_PORT} -LOCAL_PORT ${SMARTDNS_LOCAL_PORT} \
 				-LOCAL_GROUP ${group_domestic:-nil} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${TCP_SOCKS_server} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" \
 				-REMOTE_DNS ${smartdns_remote_dns} -DNS_MODE ${DNS_MODE:-socks} -TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} \
 				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 				-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 				-SUBNET ${subnet_ip:-0} -NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
 			source $APP_PATH/helper_smartdns.sh restart
-			echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
-			return
+
+			USE_DEFAULT_DNS="chinadns_ng"
 		else
 			DNS_SHUNT="dnsmasq"
 			echolog "  * 未安装SmartDNS，默认使用Dnsmasq进行域名解析！"
 		fi
 	}
 
-	[ "$DNS_SHUNT" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
+	[ "${DNS_SHUNT}" = "chinadns-ng" ] && [ -n "$(first_type chinadns-ng)" ] && {
 		chinadns_ng_min=2024.04.13
 		chinadns_ng_now=$($(first_type chinadns-ng) -V | grep -i "ChinaDNS-NG " | awk '{print $2}')
 		if [ $(check_ver "$chinadns_ng_now" "$chinadns_ng_min") = 1 ]; then
@@ -1461,7 +1469,7 @@ start_dns() {
 
 		[ "$FILTER_PROXY_IPV6" = "1" ] && DNSMASQ_FILTER_PROXY_IPV6=0
 		[ -z "${china_ng_listen_port}" ] && local china_ng_listen_port=$(expr $NEXT_DNS_LISTEN_PORT + 1)
-		local china_ng_listen="127.0.0.1#${china_ng_listen_port}"
+		china_ng_listen="127.0.0.1#${china_ng_listen_port}"
 		[ -z "${china_ng_trust_dns}" ] && local china_ng_trust_dns=${TUN_DNS}
 
 		echolog "  - ChinaDNS-NG(${china_ng_listen})：直连DNS：${china_ng_local_dns}，可信DNS：${china_ng_trust_dns}"
@@ -2027,6 +2035,17 @@ get_config() {
 	fi
 	set_cache_var GLOBAL_DNSMASQ_CONF ${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf
 	set_cache_var GLOBAL_DNSMASQ_CONF_PATH ${GLOBAL_ACL_PATH}/dnsmasq.d
+
+	SMARTDNS_LOCAL_PORT=0
+	SMARTDNS_LISTEN_PORT=0
+	[ "${DNS_SHUNT}" = "smartdns" ] && {
+		NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
+		SMARTDNS_LOCAL_PORT=${NEXT_DNS_LISTEN_PORT}
+		NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
+		SMARTDNS_LISTEN_PORT=${NEXT_DNS_LISTEN_PORT}
+		NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
+		LOCAL_DNS="127.0.0.1#${SMARTDNS_LOCAL_PORT}"
+	}
 }
 
 arg1=$1
