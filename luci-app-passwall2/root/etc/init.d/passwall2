@@ -3,7 +3,7 @@
 START=99
 STOP=15
 
-. /usr/share/passwall2/utils.sh
+. $IPKG_INSTROOT/usr/share/passwall2/utils.sh
 APP_FILE=${APP_PATH}/app.sh
 LOCK_FILE_DIR=/var/lock
 LOCK_FILE=${LOCK_FILE_DIR}/${CONFIG}.lock

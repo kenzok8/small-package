@@ -257,16 +257,22 @@ check_port_exists() {
 }
 
 get_new_port() {
+	local default_start_port=2000
+	local min_port=1025
+	local max_port=49151
 	local port=$1
-	[ "$port" == "auto" ] && port=2082
+	[ "$port" == "auto" ] && port=$default_start_port
+	[ "$port" -lt $min_port -o "$port" -gt $max_port ] && port=$default_start_port
 	local protocol=$(echo $2 | tr 'A-Z' 'a-z')
 	local result=$(check_port_exists $port $protocol)
 	if [ "$result" != 0 ]; then
 		local temp=
-		if [ "$port" -lt 65535 ]; then
+		if [ "$port" -lt $max_port ]; then
 			temp=$(expr $port + 1)
-		elif [ "$port" -gt 1 ]; then
+		elif [ "$port" -gt $min_port ]; then
 			temp=$(expr $port - 1)
+		else
+			temp=$default_start_port
 		fi
 		get_new_port $temp $protocol
 	else

@@ -7,17 +7,6 @@ local appname = api.appname
 local fs = api.fs
 local CACHE_PATH = api.CACHE_PATH
 
-local new_port
-local function get_new_port()
-	local cmd_format = ". /usr/share/passwall2/utils.sh ; echo -n $(get_new_port %s tcp)"
-	local set_port = 0
-	if new_port and tonumber(new_port) then
-		set_port = tonumber(new_port) + 1
-	end
-	new_port = tonumber(sys.exec(string.format(cmd_format, set_port == 0 and "auto" or set_port)))
-	return new_port
-end
-
 local function get_noise_packets()
 	local noises = {}
 	uci:foreach(appname, "xray_noise_packets", function(n)
@@ -69,7 +58,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		if node.type ~= "Xray" then
 			local relay_port = node.port
-			new_port = get_new_port()
+			local new_port = api.get_new_port()
 			local config_file = string.format("%s_%s_%s.json", flag, tag, new_port)
 			if tag and node_id and not tag:find(node_id) then
 				config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
@@ -1038,7 +1027,7 @@ function gen_config(var)
 							return copied_outbound.tag, nil
 						else
 							if use_proxy and _node.type ~= "Xray" then
-								new_port = get_new_port()
+								local new_port = api.get_new_port()
 								table.insert(inbounds, {
 									tag = "proxy_" .. rule_name,
 									listen = "127.0.0.1",
