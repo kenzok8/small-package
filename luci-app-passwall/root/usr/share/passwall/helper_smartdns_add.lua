@@ -110,9 +110,9 @@ if not fs.access(FLAG_PATH) then
 end
 
 local LOCAL_EXTEND_ARG = ""
-if LOCAL_GROUP == "nil" then
+if LOCAL_GROUP == "null" then
 	LOCAL_GROUP = nil
-	log("  * 注意：国内分组名未设置，可能会导致 DNS 分流错误！")
+	log("  * 注意：国内分组名未设置，直连 DNS 将无法查询！")
 else
 	--从smartdns配置中读取参数
 	local custom_conf_path = "/etc/smartdns/custom.conf"
@@ -168,7 +168,7 @@ local force_https_soa = uci:get(appname, "@global[0]", "force_https_soa") or 1
 local proxy_server_name = "passwall-proxy-server"
 config_lines = {
 	tonumber(LISTEN_PORT) ~= 0 and "bind [::]:" .. LISTEN_PORT .. "@lo" or "",
-	(tonumber(LOCAL_PORT) ~= 0 and LOCAL_GROUP ~= "nil") and "bind [::]:" .. LOCAL_PORT .. "@lo -group " ..  LOCAL_GROUP or "",
+	(tonumber(LOCAL_PORT) ~= 0 and LOCAL_GROUP) and "bind [::]:" .. LOCAL_PORT .. "@lo -group " ..  LOCAL_GROUP or "",
 	tonumber(force_https_soa) == 1 and "force-qtype-SOA 65" or "force-qtype-SOA -,65",
 	"server 114.114.114.114 -bootstrap-dns",
 	DNS_MODE == "socks" and string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name) or ""
