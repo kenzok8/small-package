@@ -1,15 +1,14 @@
 {
-
   "admin/control/timecontrol": {
     "title": "Time Control",
     "order": 10,
     "action": {
-      "type": "firstchild",
-      "preferred": "timecontrol"
+      "type": "firstchild"
     },
-    "acl": [
-      "luci-app-timecontrol"
-    ],
+    "acl": [ "read" ], 
+    "depends": {
+      "acl": [ "luci-app-timecontrol" ]
+    },
     "recurse": true
   },
   "admin/control/timecontrol/basic": {
@@ -18,15 +17,16 @@
 		"action": {
 			"type": "view",
 			"path": "timecontrol/basic"
-		}
+    },
+    "acl": [ "read" ]
   },
   "admin/control/timecontrol/log": {
-		"title": "Log",
-		"order": 40,
-		"action": {
-			"type": "view",
-			"path": "timecontrol/log"
-		}
+    "title": "Log",
+    "order": 40,
+    "action": {
+      "type": "view",
+      "path": "timecontrol/log"
+    },
+    "acl": [ "read" ]
   }
-
 }

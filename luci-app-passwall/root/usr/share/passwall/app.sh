@@ -1440,13 +1440,13 @@ start_dns() {
 
 			echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
 			china_ng_listen="127.0.0.1#${SMARTDNS_LISTEN_PORT}"
-			echolog "  - SmartDNS(127.0.0.1#${SMARTDNS_LOCAL_PORT}) -> 国内分组(${group_domestic})，SmartDNS(${china_ng_listen}) -> Dnsmasq"
+			echolog "  - SmartDNS(127.0.0.1#${SMARTDNS_LOCAL_PORT}) -> 国内分组(${group_domestic:-null})，SmartDNS(${china_ng_listen}) -> Dnsmasq"
 			china_ng_listen="${china_ng_listen},::1#${SMARTDNS_LISTEN_PORT}"
 
 			local subnet_ip=$(config_t_get global remote_dns_client_ip)
 			lua $APP_PATH/helper_smartdns_add.lua -FLAG "default" -SMARTDNS_CONF "/tmp/etc/smartdns/$CONFIG.conf" \
 				-LISTEN_PORT ${SMARTDNS_LISTEN_PORT} -LOCAL_PORT ${SMARTDNS_LOCAL_PORT} \
-				-LOCAL_GROUP ${group_domestic:-nil} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${TCP_SOCKS_server} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" \
+				-LOCAL_GROUP ${group_domestic:-null} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${TCP_SOCKS_server} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" \
 				-REMOTE_DNS ${smartdns_remote_dns} -DNS_MODE ${DNS_MODE:-socks} -TUN_DNS ${TUN_DNS} -REMOTE_FAKEDNS ${fakedns:-0} \
 				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 				-TCP_NODE ${TCP_NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
@@ -2045,6 +2045,8 @@ get_config() {
 		SMARTDNS_LISTEN_PORT=${NEXT_DNS_LISTEN_PORT}
 		NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
 		LOCAL_DNS="127.0.0.1#${SMARTDNS_LOCAL_PORT}"
+		uci -q set smartdns.@smartdns[0].auto_set_dnsmasq=0
+		uci commit smartdns
 	}
 }
 

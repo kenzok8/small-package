@@ -795,8 +795,7 @@ case "$crrun" in
             fi
         done
         info "时间控制启动完成，控制 $(wc -l < $IDLIST) 个设备"
-        show_status >> /var/log/timecontrol.log
-        echo -e "============ END ===========" >> /var/log/timecontrol.log
+        show_status
         ;;
     "add")
         info "添加设备控制"
