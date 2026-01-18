@@ -2,8 +2,8 @@
 # Copyright (C) 2022-2025 xiaorouji
 # Copyright (C) 2026 Openwrt-Passwall Organization
 
-. $IPKG_INSTROOT/lib/functions.sh
-. $IPKG_INSTROOT/lib/functions/service.sh
+. /lib/functions.sh
+. /lib/functions/service.sh
 
 . /usr/share/passwall2/utils.sh
 GLOBAL_ACL_PATH=${TMP_ACL_PATH}/default
@@ -20,8 +20,8 @@ check_run_environment() {
 	local dnsmasq_info=$(dnsmasq -v 2>/dev/null)
 	local dnsmasq_ver=$(echo "$dnsmasq_info" | sed -n '1s/.*version \([0-9.]*\).*/\1/p')
 	# local dnsmasq_opts=$(echo "$dnsmasq_info" | grep -i "Compile time options")
-	local dnsmasq_ipset=0; [[ "$dnsmasq_info" == *" ipset"* ]] && dnsmasq_ipset=1
-	local dnsmasq_nftset=0; [[ "$dnsmasq_info" == *" nftset"* ]] && dnsmasq_nftset=1
+	local dnsmasq_ipset=0; echo "$dnsmasq_info" | grep -qw "ipset" && dnsmasq_ipset=1
+	local dnsmasq_nftset=0; echo "$dnsmasq_info" | grep -qw "nftset" && dnsmasq_nftset=1
 	local has_ipt=0; { command -v iptables-legacy || command -v iptables; } >/dev/null && has_ipt=1
 	local has_ipset=$(command -v ipset >/dev/null && echo 1 || echo 0)
 	local has_fw4=$(command -v fw4 >/dev/null && echo 1 || echo 0)
@@ -64,7 +64,7 @@ check_run_environment() {
 			fi
 		done
 	else
-		log_i18n 0 "Warning: Not compatible with any transparent proxy system environment."
+		log 0 "$(i18n "Warning: Not compatible with any transparent proxy system environment.") (has_fw4:$has_fw4/has_ipt:$has_ipt/has_ipset:$has_ipset/dnsmasq_nftset:$dnsmasq_nftset/dnsmasq_ipset:$dnsmasq_ipset)"
 	fi
 }
 
