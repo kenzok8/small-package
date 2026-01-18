@@ -335,7 +335,7 @@ if api.is_finded("smartdns") then
 	o = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
 	o.placeholder = "local"
 	o:depends("dns_shunt", "smartdns")
-	o.description = translate("You only need to configure domestic DNS packets in SmartDNS and set it redirect or as Dnsmasq upstream, and fill in the domestic DNS group name here.")
+	o.description = translate("You only need to configure domestic DNS packets in SmartDNS, and fill in the domestic DNS group name here.")
 end
 
 o = s:taboption("DNS", ListValue, "direct_dns_mode", translate("Direct DNS") .. " " .. translate("Request protocol"))

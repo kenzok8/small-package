@@ -24,6 +24,8 @@ local NO_PROXY_IPV6 = var["-NO_PROXY_IPV6"]
 local NO_LOGIC_LOG = var["-NO_LOGIC_LOG"]
 local NFTFLAG = var["-NFTFLAG"]
 local SUBNET = var["-SUBNET"]
+local LISTEN_PORT = var["-LISTEN_PORT"]
+local LOCAL_PORT = var["-LOCAL_PORT"]
 
 local uci = api.uci
 local sys = api.sys
@@ -165,9 +167,11 @@ end
 local force_https_soa = uci:get(appname, "@global[0]", "force_https_soa") or 1
 local proxy_server_name = "passwall-proxy-server"
 config_lines = {
+	tonumber(LISTEN_PORT) ~= 0 and "bind [::]:" .. LISTEN_PORT .. "@lo" or "",
+	(tonumber(LOCAL_PORT) ~= 0 and LOCAL_GROUP ~= "nil") and "bind [::]:" .. LOCAL_PORT .. "@lo -group " ..  LOCAL_GROUP or "",
 	tonumber(force_https_soa) == 1 and "force-qtype-SOA 65" or "force-qtype-SOA -,65",
 	"server 114.114.114.114 -bootstrap-dns",
-	DNS_MODE == "socks" and string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name) or nil
+	DNS_MODE == "socks" and string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name) or ""
 }
 if DNS_MODE == "socks" then
 	for w in string.gmatch(REMOTE_DNS, '[^|]+') do
@@ -655,4 +659,4 @@ end
 
 fs.symlink(TMP_CONF_FILE, SMARTDNS_CONF)
 sys.call(string.format('echo "conf-file %s" >> /etc/smartdns/custom.conf', string.gsub(SMARTDNS_CONF, appname, appname .. "*")))
-log("  - 请让SmartDNS作为Dnsmasq的上游或重定向！")
+log("  - SmartDNS已作为Dnsmasq上游，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理域名)分流失效！！！")
