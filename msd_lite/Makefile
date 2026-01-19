@@ -8,14 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msd_lite
-PKG_VERSION:=1.11
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2024-03-15
+PKG_SOURCE_DATE:=2025-05-02
 PKG_SOURCE_URL:=https://github.com/rozhuk-im/msd_lite.git
-PKG_SOURCE_VERSION:=cfef57f31aba00aa2bfa147b6d491aa16a2a37e8
-PKG_MIRROR_HASH:=df89bb2172161e61a5be1dc1ef325f7ca12343541f2389ed6452207147c5bd45
+PKG_SOURCE_VERSION:=79a6c62c8fced6128a5e445ee110709b3b51bb78
+PKG_MIRROR_HASH:=bda05ff715a405939e14af1cddb5a892c8f85565942eeff079b613cb38827343
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -26,13 +25,15 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/msd_lite
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=Multi Stream daemon Lite
-  URL:=https://github.com/rozhuk-im/msd_litea
+  TITLE:=Program for IP TV streaming on the network via HTTP
+  URL:=https://netlab.dhis.org/wiki/software:msd:lite
   DEPENDS:= +libpthread
 endef
 
 define Package/msd_lite/description
-Program for IP TV streaming on the network via HTTP
+  msd_lite - Multi stream daemon lite. This lightweight version of 
+  Multi Stream daemon (msd) Program for organizing IP TV streaming 
+  on the network via HTTP.
 endef
 
 define Package/msd_lite/conffiles
