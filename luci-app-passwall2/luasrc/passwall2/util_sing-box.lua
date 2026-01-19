@@ -13,7 +13,7 @@ local version_ge_1_11_0 = api.compare_versions(local_version, ">=", "1.11.0")
 local version_ge_1_12_0 = api.compare_versions(local_version, ">=", "1.12.0")
 
 local GEO_VAR = {
-	OK = false,
+	OK = nil,
 	DIR = nil,
 	SITE_PATH = nil,
 	IP_PATH = nil,
@@ -24,9 +24,10 @@ local GEO_VAR = {
 
 function check_geoview()
 	if not GEO_VAR.OK then
-		GEO_VAR.OK = (api.finded_com("geoview") and api.compare_versions(api.get_app_version("geoview"), ">=", "0.1.10")) and true or false
+		-- Only get once
+		GEO_VAR.OK = (api.finded_com("geoview") and api.compare_versions(api.get_app_version("geoview"), ">=", "0.1.10")) and 1 or 0
 	end
-	if GEO_VAR.OK == false then
+	if GEO_VAR.OK == 0 then
 		api.log(0, "!!! Note: Geo rules cannot be used if the Geoview component is missing or the version is too low.")
 	else
 		GEO_VAR.DIR = GEO_VAR.DIR or (uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
@@ -40,7 +41,7 @@ function check_geoview()
 end
 
 function geo_convert_srs(var)
-	if check_geoview() == false then
+	if check_geoview() ~= 1 then
 		return
 	end
 	local geo_path = var["-geo_path"]
@@ -59,7 +60,7 @@ function geo_convert_srs(var)
 end
 
 local function convert_geofile()
-	if check_geoview() == false then
+	if check_geoview() ~= 1 then
 		return
 	end
 	local function convert(file_path, prefix, tags)

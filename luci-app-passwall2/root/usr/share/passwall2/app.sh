@@ -68,52 +68,6 @@ check_run_environment() {
 	fi
 }
 
-first_type() {
-	[ "${1#/}" != "$1" ] && [ -x "$1" ] && echo "$1" && return
-	for p in "/bin/$1" "/usr/bin/$1" "${TMP_BIN_PATH:-/tmp}/$1"; do
-		[ -x "$p" ] && echo "$p" && return
-	done
-	command -v "$1" 2>/dev/null || command -v "$2" 2>/dev/null
-}
-
-ln_run() {
-	local file_func=${1}
-	local ln_name=${2}
-	local output=${3}
-
-	shift 3;
-	if [  "${file_func%%/*}" != "${file_func}" ]; then
-		[ ! -L "${file_func}" ] && {
-			ln -s "${file_func}" "${TMP_BIN_PATH}/${ln_name}" >/dev/null 2>&1
-			file_func="${TMP_BIN_PATH}/${ln_name}"
-		}
-		[ -x "${file_func}" ] || log 1 "$(i18n "%s does not have execute permissions and cannot be started: %s %s" "$(readlink ${file_func})" "${file_func}" "$*")"
-	fi
-	#echo "${file_func} $*" >&2
-	[ -n "${file_func}" ] || log 1 "$(i18n "%s not found, unable to start..." "${ln_name}")"
-	${file_func:-log 1 "${ln_name}"} "$@" >${output} 2>&1 &
-	process_count=$(ls $TMP_SCRIPT_FUNC_PATH | grep -v "^_" | wc -l)
-	process_count=$((process_count + 1))
-	echo "${file_func:-log 1 "${ln_name}"} $@ >${output}" > $TMP_SCRIPT_FUNC_PATH/$process_count
-}
-
-get_geoip() {
-	local geoip_code="$1"
-	local geoip_type_flag=""
-	local geoip_path="$(config_t_get global_rules v2ray_location_asset)"
-	geoip_path="${geoip_path%*/}/geoip.dat"
-	[ -e "$geoip_path" ] || { echo ""; return; }
-	case "$2" in
-		"ipv4") geoip_type_flag="-ipv6=false" ;;
-		"ipv6") geoip_type_flag="-ipv4=false" ;;
-	esac
-	if type geoview &> /dev/null; then
-		geoview -input "$geoip_path" -list "$geoip_code" $geoip_type_flag -lowmem=true
-	else
-		echo ""
-	fi
-}
-
 run_xray() {
 	local flag node redir_port tcp_proxy_way socks_address socks_port socks_username socks_password http_address http_port http_username http_password
 	local dns_listen_port direct_dns_query_strategy remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy dns_cache write_ipset_direct
@@ -524,35 +478,34 @@ run_global() {
 
 	V2RAY_ARGS="flag=global node=$NODE redir_port=$REDIR_PORT tcp_proxy_way=${TCP_PROXY_WAY}"
 	V2RAY_ARGS="${V2RAY_ARGS} dns_listen_port=${TUN_DNS_PORT} direct_dns_query_strategy=${DIRECT_DNS_QUERY_STRATEGY} remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY} dns_cache=${DNS_CACHE}"
-	local msg="DNS: ${TUN_DNS} （$(i18n "Direct DNS: %s" "${AUTO_DNS}")"
+	local dns_msg="DNS: ${TUN_DNS} （$(i18n "Direct DNS: %s" "${AUTO_DNS}")"
 
 	[ -n "$REMOTE_DNS_PROTOCOL" ] && {
 		V2RAY_ARGS="${V2RAY_ARGS} remote_dns_protocol=${REMOTE_DNS_PROTOCOL} remote_dns_detour=${REMOTE_DNS_DETOUR}"
 		case "$REMOTE_DNS_PROTOCOL" in
 			udp*)
 				V2RAY_ARGS="${V2RAY_ARGS} remote_dns_udp_server=${REMOTE_DNS}"
-				msg="${msg} $(i18n "Remote DNS: %s" "${REMOTE_DNS}")"
+				dns_msg="${dns_msg} $(i18n "Remote DNS: %s" "${REMOTE_DNS}")"
 			;;
 			tcp)
 				V2RAY_ARGS="${V2RAY_ARGS} remote_dns_tcp_server=${REMOTE_DNS}"
-				msg="${msg} $(i18n "Remote DNS: %s" "${REMOTE_DNS}")"
+				dns_msg="${dns_msg} $(i18n "Remote DNS: %s" "${REMOTE_DNS}")"
 			;;
 			doh)
 				REMOTE_DNS_DOH=$(config_t_get global remote_dns_doh "https://1.1.1.1/dns-query")
 				V2RAY_ARGS="${V2RAY_ARGS} remote_dns_doh=${REMOTE_DNS_DOH}"
-				msg="${msg} $(i18n "Remote DNS: %s" "${REMOTE_DNS_DOH}")"
+				dns_msg="${dns_msg} $(i18n "Remote DNS: %s" "${REMOTE_DNS_DOH}")"
 			;;
 		esac
 		[ "$REMOTE_FAKEDNS" = "1" ] && {
 			V2RAY_ARGS="${V2RAY_ARGS} remote_fakedns=1"
-			msg="${msg} + FakeDNS "
+			dns_msg="${dns_msg} + FakeDNS "
 		}
 		
 		local _remote_dns_client_ip=$(config_t_get global remote_dns_client_ip)
 		[ -n "${_remote_dns_client_ip}" ] && V2RAY_ARGS="${V2RAY_ARGS} remote_dns_client_ip=${_remote_dns_client_ip}"
 	}
-	msg="${msg}）"
-	log 0 ${msg}
+	dns_msg="${dns_msg}）"
 
 	V2RAY_CONFIG=${GLOBAL_ACL_PATH}/global.json
 	V2RAY_LOG=${GLOBAL_ACL_PATH}/global.log
@@ -581,6 +534,17 @@ run_global() {
 	fi
 	
 	${run_func} ${V2RAY_ARGS}
+
+	sleep 1s
+
+	netstat -tuln | grep "LISTEN" | grep "${REDIR_PORT}" >/dev/null; REDIR_PORT_STATUS=$?
+	if [ "$REDIR_PORT_STATUS" == 0 ]; then
+		log 0 ${dns_msg}
+	else
+		log_i18n 0 "[%s] process %s error, skip!" $(i18n "Global") "${V2RAY_CONFIG}"
+		ENABLED_DEFAULT_ACL=0
+		return 1
+	fi
 
 	local RUN_NEW_DNSMASQ=1
 	RUN_NEW_DNSMASQ=${DNS_REDIRECT}
@@ -648,14 +612,6 @@ start_socks() {
 				[ "$enable_autoswitch" = "1" ] && $APP_PATH/socks_auto_switch.sh ${id} > /dev/null 2>&1 &
 			done
 		}
-	}
-}
-
-clean_log() {
-	logsnum=$(cat $LOG_FILE 2>/dev/null | wc -l)
-	[ "$logsnum" -gt 1000 ] && {
-		echo "" > $LOG_FILE
-		log_i18n 0 "Log file is too long, clear it!"
 	}
 }
 
@@ -873,10 +829,6 @@ run_ipset_dnsmasq() {
 	ln_run "$(first_type dnsmasq)" "dnsmasq" "/dev/null" -C $config_file
 }
 
-kill_all() {
-	kill -9 $(pidof "$@") >/dev/null 2>&1
-}
-
 acl_app() {
 	local items=$(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
 	[ -n "$items" ] && {
@@ -978,7 +930,19 @@ acl_app() {
 								elif [ "${type}" = "sing-box" ] && [ -n "${SINGBOX_BIN}" ]; then
 									run_func="run_singbox"
 								fi
-								${run_func} flag=acl_$sid node=$node redir_port=$redir_port tcp_proxy_way=${TCP_PROXY_WAY} socks_address=127.0.0.1 socks_port=$acl_socks_port dns_listen_port=${dns_port} direct_dns_query_strategy=${direct_dns_query_strategy} remote_dns_protocol=${remote_dns_protocol} remote_dns_tcp_server=${remote_dns} remote_dns_udp_server=${remote_dns} remote_dns_doh="${remote_dns}" remote_dns_client_ip=${remote_dns_client_ip} remote_dns_detour=${remote_dns_detour} remote_fakedns=${remote_fakedns} remote_dns_query_strategy=${remote_dns_query_strategy} write_ipset_direct=${write_ipset_direct} config_file=${config_file}
+								${run_func} flag=acl_$sid node=$node redir_port=$redir_port tcp_proxy_way=${TCP_PROXY_WAY} \
+											socks_address=127.0.0.1 socks_port=$acl_socks_port \
+											dns_listen_port=${dns_port} \
+											direct_dns_query_strategy=${direct_dns_query_strategy} \
+											remote_dns_protocol=${remote_dns_protocol} remote_dns_tcp_server=${remote_dns} remote_dns_udp_server=${remote_dns} remote_dns_doh="${remote_dns}" \
+											remote_dns_client_ip=${remote_dns_client_ip} remote_dns_detour=${remote_dns_detour} remote_fakedns=${remote_fakedns} remote_dns_query_strategy=${remote_dns_query_strategy} \
+											write_ipset_direct=${write_ipset_direct} config_file=${config_file}
+								sleep 1s
+								netstat -tuln | grep "LISTEN" | grep "${redir_port}" >/dev/null; redir_port_status=$?
+								if [ "$redir_port_status" != 0 ]; then
+									log_i18n 2 "[%s] process %s error, skip!" "${remarks}" "${config_file}"
+									continue
+								fi
 							fi
 							dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
 							run_copy_dnsmasq flag="$sid" listen_port=$dnsmasq_port tun_dns="127.0.0.1#${dns_port}"
