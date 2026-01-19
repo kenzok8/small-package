@@ -74,12 +74,20 @@ network_name = s:taboption("general", Value, "network_name", translate("Network 
         translate("The network name used to identify this VPN network (--network-name parameter)"))
 network_name.password = true
 network_name.placeholder = "easytier-name"
+network_name.maxlength = 64
+network_name.validate = function(self, value)
+    if value and value ~= "" and value:match("[^%w%-_]") then
+        return nil, translate("Only alphanumeric characters, hyphens and underscores allowed")
+    end
+    return value
+end
 network_name:depends("etcmd", "etcmd")
 
 network_secret = s:taboption("general", Value, "network_secret", translate("Network Secret"),
         translate("Network secret used to verify whether this node belongs to the VPN network (--network-secret parameter)"))
 network_secret.password = true
 network_secret.placeholder = "easytier-password"
+network_secret.maxlength = 128
 network_secret:depends("etcmd", "etcmd")
 
 ip_dhcp = s:taboption("general", Flag, "ip_dhcp", translate("Enable DHCP"),
@@ -192,14 +200,14 @@ local model = nixio.fs.readfile("/proc/device-tree/model") or ""
 local hostname = nixio.fs.readfile("/proc/sys/kernel/hostname") or ""
 model = model:gsub("\n", "")
 hostname = hostname:gsub("\n", "")
-local device_name = (model ~= "" and model) or (hostname ~= "" and hostname) or "OpenWrt"
-device_name = device_name:gsub(" ", "_")
-desvice_name = s:taboption("general", Value, "desvice_name", translate("Hostname"),
+local device_name_default = (model ~= "" and model) or (hostname ~= "" and hostname) or "OpenWrt"
+device_name_default = device_name_default:gsub(" ", "_")
+hostname_opt = s:taboption("general", Value, "desvice_name", translate("Hostname"),
         translate("The hostname used to identify this device (--hostname parameter)"))
-desvice_name.placeholder = device_name
-desvice_name.default = device_name
-desvice_name:depends("etcmd", "etcmd")
-desvice_name:depends("etcmd", "web")
+hostname_opt.placeholder = device_name_default
+hostname_opt.default = device_name_default
+hostname_opt:depends("etcmd", "etcmd")
+hostname_opt:depends("etcmd", "web")
 
 uuid = s:taboption("general", Value, "uuid", translate("UUID"),
         translate("Unique identifier used to recognize this device when connecting to the web console, for issuing configuration files"))
@@ -495,6 +503,16 @@ webbin = s:taboption("upload", Value, "webbin", translate("easytier-web Binary P
                 .. "then upload the installer"))
 webbin.placeholder = "/usr/bin/easytier-web"
 webbin.default = "/usr/bin/easytier-web"
+
+github_proxys = s:taboption("upload", Value, "github_proxys", translate("GitHub Proxy URLs"),
+        translate("Space-separated list of GitHub proxy URLs for downloading binaries. "
+                .. "Leave empty to use default proxies."))
+github_proxys.placeholder = "https://ghproxy.net/ https://gh-proxy.com/"
+
+fallback_version = s:taboption("upload", Value, "fallback_version", translate("Fallback Version"),
+        translate("Fallback version to use when unable to fetch the latest version from GitHub."))
+fallback_version.placeholder = "v2.5.0"
+fallback_version.default = "v2.5.0"
 
 local upload = s:taboption("upload", FileUpload, "upload_file")
 upload.optional = true

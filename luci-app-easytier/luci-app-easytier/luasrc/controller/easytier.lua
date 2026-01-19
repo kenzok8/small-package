@@ -1,6 +1,46 @@
 
 module("luci.controller.easytier", package.seeall)
 
+-- 安全执行命令并返回结果
+local function safe_exec(cmd)
+    local handle = io.popen(cmd)
+    if not handle then return "" end
+    local result = handle:read("*all") or ""
+    handle:close()
+    return result:gsub("[\r\n]+$", "")
+end
+
+-- 安全读取文件内容
+local function safe_read_file(path)
+    local file = io.open(path, "r")
+    if not file then return nil end
+    local content = file:read("*all")
+    file:close()
+    return content
+end
+
+-- 计算运行时长
+local function calc_uptime(start_time_file)
+    local content = safe_read_file(start_time_file)
+    if not content or content == "" then return "" end
+    
+    local start_time = tonumber(content:match("%d+"))
+    if not start_time then return "" end
+    
+    local now = os.time()
+    local elapsed = now - start_time
+    
+    local days = math.floor(elapsed / 86400)
+    local hours = math.floor((elapsed % 86400) / 3600)
+    local mins = math.floor((elapsed % 3600) / 60)
+    local secs = elapsed % 60
+    
+    local result = ""
+    if days > 0 then result = days .. "天 " end
+    result = result .. string.format("%02d小时%02d分%02d秒", hours, mins, secs)
+    return result
+end
+
 function index()
 	if not nixio.fs.access("/etc/config/easytier") then
 		return
@@ -27,61 +67,54 @@ function act_status()
 	e.wrunning = luci.sys.call("pgrep easytier-web >/dev/null") == 0
 	e.port = (port or 0)
 	
-	local tagfile = io.open("/tmp/easytier_time", "r")
-        if tagfile then
-		local tagcontent = tagfile:read("*all")
-		tagfile:close()
-		if tagcontent and tagcontent ~= "" then
-        		os.execute("start_time=$(cat /tmp/easytier_time) && time=$(($(date +%s)-start_time)) && day=$((time/86400)) && [ $day -eq 0 ] && day='' || day=${day}天 && time=$(date -u -d @${time} +'%H小时%M分%S秒') && echo $day $time > /tmp/command_easytier 2>&1")
-        		local command_output_file = io.open("/tmp/command_easytier", "r")
-        		if command_output_file then
-            			e.etsta = command_output_file:read("*all")
-            			command_output_file:close()
-        		end
-		end
-	end
+	-- 使用 Lua 原生计算运行时长
+	e.etsta = calc_uptime("/tmp/easytier_time")
+	e.etwebsta = calc_uptime("/tmp/easytierweb_time")
 	
-        local command2 = io.popen('test ! -z "`pidof easytier-core`" && (top -b -n1 | grep -E "$(pidof easytier-core)" 2>/dev/null | grep -v grep | awk \'{for (i=1;i<=NF;i++) {if ($i ~ /easytier-core/) break; else cpu=i}} END {print $cpu}\')')
+	-- 获取 CPU 和内存使用率（使用原始命令）
+	local command2 = io.popen('test ! -z "`pidof easytier-core`" && (top -b -n1 | grep -E "$(pidof easytier-core)" 2>/dev/null | grep -v grep | awk \'{for (i=1;i<=NF;i++) {if ($i ~ /easytier-core/) break; else cpu=i}} END {print $cpu}\')')
 	e.etcpu = command2:read("*all")
 	command2:close()
 	
-        local command3 = io.popen("test ! -z `pidof easytier-core` && (cat /proc/$(pidof easytier-core | awk '{print $NF}')/status | grep -w VmRSS | awk '{printf \"%.2f MB\", $2/1024}')")
+	local command3 = io.popen("test ! -z `pidof easytier-core` && (cat /proc/$(pidof easytier-core | awk '{print $NF}')/status | grep -w VmRSS | awk '{printf \"%.2f MB\", $2/1024}')")
 	e.etram = command3:read("*all")
 	command3:close()
-
-	local wtagfile = io.open("/tmp/easytierweb_time", "r")
-        if wtagfile then
-		local wtagcontent = wtagfile:read("*all")
-		wtagfile:close()
-		if wtagcontent and wtagcontent ~= "" then
-        		os.execute("start_time=$(cat /tmp/easytierweb_time) && time=$(($(date +%s)-start_time)) && day=$((time/86400)) && [ $day -eq 0 ] && day='' || day=${day}天 && time=$(date -u -d @${time} +'%H小时%M分%S秒') && echo $day $time > /tmp/command_easytierweb 2>&1")
-        		local wcommand_output_file = io.open("/tmp/command_easytierweb", "r")
-        		if wcommand_output_file then
-            			e.etwebsta = wcommand_output_file:read("*all")
-            			wcommand_output_file:close()
-        		end
-		end
-	end
-
+	
 	local command4 = io.popen('test ! -z "`pidof easytier-web`" && (top -b -n1 | grep -E "$(pidof easytier-web)" 2>/dev/null | grep -v grep | awk \'{for (i=1;i<=NF;i++) {if ($i ~ /easytier-web/) break; else cpu=i}} END {print $cpu}\')')
 	e.etwebcpu = command4:read("*all")
 	command4:close()
 	
-        local command5 = io.popen("test ! -z `pidof easytier-web` && (cat /proc/$(pidof easytier-web | awk '{print $NF}')/status | grep -w VmRSS | awk '{printf \"%.2f MB\", $2/1024}')")
+	local command5 = io.popen("test ! -z `pidof easytier-web` && (cat /proc/$(pidof easytier-web | awk '{print $NF}')/status | grep -w VmRSS | awk '{printf \"%.2f MB\", $2/1024}')")
 	e.etwebram = command5:read("*all")
 	command5:close()
 	
-        local command8 = io.popen("([ -s /tmp/easytiernew.tag ] && cat /tmp/easytiernew.tag ) || ( curl -L -k -s --connect-timeout 3 --user-agent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36' https://api.github.com/repos/EasyTier/EasyTier/releases/latest | grep tag_name | sed 's/[^0-9.]*//g' >/tmp/easytiernew.tag && cat /tmp/easytiernew.tag )")
-	e.etnewtag = command8:read("*all")
-	command8:close()
+	-- 获取版本信息
+	local cached_newtag = safe_read_file("/tmp/easytiernew.tag")
+	if cached_newtag and cached_newtag ~= "" then
+		e.etnewtag = cached_newtag:gsub("[\r\n]+", "")
+	else
+		e.etnewtag = safe_exec("curl -L -k -s --connect-timeout 3 --user-agent 'Mozilla/5.0' https://api.github.com/repos/EasyTier/EasyTier/releases/latest | grep tag_name | sed 's/[^0-9.]*//g'")
+		if e.etnewtag ~= "" then
+			local f = io.open("/tmp/easytiernew.tag", "w")
+			if f then f:write(e.etnewtag); f:close() end
+		end
+	end
 	
-        local command9 = io.popen("([ -s /tmp/easytier.tag ] && cat /tmp/easytier.tag ) || ( echo `$(uci -q get easytier.@easytier[0].easytierbin) -V | sed 's/^[^0-9]*//'` > /tmp/easytier.tag && cat /tmp/easytier.tag && [ ! -s /tmp/easytier.tag ] && echo '？' >> /tmp/easytier.tag && cat /tmp/easytier.tag )")
-	e.ettag = command9:read("*all")
-	command9:close()
+	local cached_tag = safe_read_file("/tmp/easytier.tag")
+	if cached_tag and cached_tag ~= "" then
+		e.ettag = cached_tag:gsub("[\r\n]+", "")
+	else
+		local easytierbin = uci:get_first("easytier", "easytier", "easytierbin") or "/usr/bin/easytier-core"
+		e.ettag = safe_exec(easytierbin .. " -V | sed 's/^[^0-9]*//'")
+		if e.ettag == "" then e.ettag = "?" end
+		local f = io.open("/tmp/easytier.tag", "w")
+		if f then f:write(e.ettag); f:close() end
+	end
 
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
+
 
 function get_log()
     local log = ""
