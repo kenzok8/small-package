@@ -5,8 +5,9 @@
 #
 
 include $(TOPDIR)/rules.mk
+-include $(dir $(lastword $(MAKEFILE_LIST)))../version.mk
 
-PKG_VERSION:=2.5.0
+PKG_VERSION:=$(or $(EASYTIER_VERSION),2.5.0)
 PKG_RELEASE:=2
 
 LUCI_TITLE:=LuCI support for EasyTier
@@ -16,6 +17,7 @@ LUCI_PKGARCH:=all
 PKG_NAME:=luci-app-easytier
 
 define Package/$(PKG_NAME)/conffiles
+/etc/config/easytier
 /etc/easytier/
 endef
 

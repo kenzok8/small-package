@@ -4,6 +4,12 @@
 START=99
 USE_PROCD=1
 
+# 引入模块化脚本
+EASYTIER_LIB_DIR="/usr/share/easytier"
+[ -f "${EASYTIER_LIB_DIR}/utils.sh" ] && . "${EASYTIER_LIB_DIR}/utils.sh"
+[ -f "${EASYTIER_LIB_DIR}/firewall.sh" ] && . "${EASYTIER_LIB_DIR}/firewall.sh"
+[ -f "${EASYTIER_LIB_DIR}/download.sh" ] && . "${EASYTIER_LIB_DIR}/download.sh"
+
 check() {
     if [ ! -z "$checkip" ]; then
         echo ' ' >/tmp/easytier_check
@@ -49,6 +55,9 @@ EOF
     fi
 }
 
+# get_tz 函数已移至 utils.sh，保留兼容性包装
+# 如果 utils.sh 未加载，使用内联定义
+if ! type get_tz >/dev/null 2>&1; then
 get_tz() {
 	SET_TZ=""
 	[ -e "/etc/localtime" ] && return
@@ -60,6 +69,7 @@ get_tz() {
 	[ -z "$tz" ] && return
 	SET_TZ=$tz
 }
+fi
 
 check_bin() {
 	curltest=`which curl`
@@ -78,7 +88,11 @@ check_bin() {
        		tag="$( curl -k --connect-timeout 3 --user-agent "$user_agent"  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
        		[ -z "$tag" ] && tag="$( curl -Lk --connect-timeout 3 --user-agent "$user_agent" -s  https://api.github.com/repos/EasyTier/EasyTier/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
    	fi
-	[ -z "$tag"] && tag=v2.5.0
+	# 如果获取失败，从 UCI 配置或使用默认版本
+	if [ -z "$tag" ]; then
+		tag=$(uci -q get easytier.@easytier[0].fallback_version)
+		[ -z "$tag" ] && tag="v2.5.0"
+	fi
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytier.log
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytierweb.log
         mkdir -p "$path"

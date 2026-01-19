@@ -1,6 +1,4 @@
 
 config easytier
 	option enabled '0'
-        option easytierbin '/usr/bin/easytier-core'
-
-
+	option easytierbin '/usr/bin/easytier-core'
