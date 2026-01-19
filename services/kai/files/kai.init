@@ -17,7 +17,7 @@ start_kai_bin(){
 start_kai_session(){
 	procd_open_instance
 	procd_set_param env OPENCODE_CONFIG="http://127.0.0.1:8197/config/opencode/opencode.json"
-	procd_set_param command  cd /tmp && /usr/sbin/kai_session
+	procd_set_param command  cd /tmp && /usr/sbin/kai_session serve
 	procd_append_param command --port "8196"
 	procd_append_param command --hostname "127.0.0.1"
 	procd_set_param stderr 1
