@@ -11,10 +11,10 @@ PKG_ARCH_kai_session:=$(ARCH)
 
 PKG_NAME:=kai_session
 PKG_VERSION:=0.0.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Carseason/openwrt-packages/releases/download/prebuilt/
-PKG_HASH:=efef8ae3360a682c215b44a908a71480ca064eadc0380f28f2f400edc84807fe
+PKG_HASH:=b52dd8b87ba81be75c61c04ee3a1fa9fdad74fba0fd925beab1eeda9fb02a698
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
