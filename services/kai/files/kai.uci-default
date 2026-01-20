@@ -1,7 +1,0 @@
-#!/bin/sh
-
-
-/etc/init.d/kai enable
-/etc/init.d/kai start
-
-exit 0
