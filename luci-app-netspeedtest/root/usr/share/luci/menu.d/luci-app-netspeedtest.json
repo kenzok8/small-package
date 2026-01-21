@@ -34,12 +34,12 @@
       "path": "netspeedtest/speedtest"
     }
   },
-  "admin/network/netspeedtest/openspeedtest": {
-    "title": "Wan OpenSpeedTest",
+  "admin/network/netspeedtest/onlinespeedtest": {
+    "title": "Online SpeedTest",
     "order": 5,
     "action": {
       "type": "view",
-      "path": "netspeedtest/openspeedtest"
+      "path": "netspeedtest/onlinespeedtest"
     }
   },
   "admin/network/netspeedtest/logs": {

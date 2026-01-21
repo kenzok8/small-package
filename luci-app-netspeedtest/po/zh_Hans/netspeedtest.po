@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 sirpdboy  herboy2008@gmail.com  https://github.com/sirpdboy/netspeedtest
+# Copyright (C) 2020-2026 sirpdboy  herboy2008@gmail.com  https://github.com/sirpdboy/netspeedtest
 # This is free software, licensed under the GNU General Public License v3.
 #
 msgid ""
@@ -28,8 +28,8 @@ msgstr "本地homebox测速"
 msgid "Wan Ookla SpeedTest"
 msgstr "宽带Ookla测速"
 
-msgid "Wan OpenSpeedTest SpeedTest"
-msgstr "宽带OpenSpeedTest测速"
+msgid "Online SpeedTest"
+msgstr "在线宽带测速"
 
 msgid "Log"
 msgstr "日志"
@@ -126,3 +126,10 @@ msgstr "Homebox控制台"
 
 msgid "Due to browser security policies, the Homebox interface https cannot be embedded directly."
 msgstr "由于浏览器安全策略，Homebox接口https不能直接嵌入。"
+
+msgid "Select speed measurement station"
+msgstr "选择测速站点"
+
+msgid ""
+msgstr ""
+
