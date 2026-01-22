@@ -309,7 +309,7 @@ const parseRulesYaml = hm.parseYaml.extend({
 		if (!entry)
 			return null;
 
-		// key mapping // 2026/01/17
+		// key mapping // 2026/01/18
 		let config = {
 			id: this.id,
 			label: '%s %s'.format(this.id.slice(0,7), _('(Imported)')),
