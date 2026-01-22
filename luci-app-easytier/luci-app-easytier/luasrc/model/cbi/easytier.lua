@@ -261,15 +261,15 @@ disable_encryption = s:taboption("privacy", Flag, "disable_encryption", translat
 disable_encryption:depends("etcmd", "etcmd")
 
 encryption_algorithm = s:taboption("privacy", ListValue, "encryption_algorithm", translate("Encryption Algorithm"),
-        translate("encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-gcm-256, openssl-aes128-gcm, openssl-aes256-gcm, openssl-chacha20. default (aes-gcm) (--encryption-algorithm parameter)"))
+        translate("encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-256-gcm, openssl-aes-gcm, openssl-chacha20, openssl-aes-256-gcm. default (aes-gcm) (--encryption-algorithm parameter)"))
 encryption_algorithm.default = "aes-gcm"
 encryption_algorithm:value("xor",translate("xor"))
 encryption_algorithm:value("chacha20",translate("chacha20"))
 encryption_algorithm:value("aes-gcm",translate("aes-gcm"))
-encryption_algorithm:value("aes-gcm-256",translate("aes-gcm-256"))
-encryption_algorithm:value("openssl-aes128-gcm",translate("openssl-aes128-gcm"))
-encryption_algorithm:value("openssl-aes256-gcm",translate("openssl-aes256-gcm"))
+encryption_algorithm:value("aes-256-gcm",translate("aes-256-gcm"))
+encryption_algorithm:value("openssl-aes-gcm",translate("openssl-aes-gcm"))
 encryption_algorithm:value("openssl-chacha20",translate("openssl-chacha20"))
+encryption_algorithm:value("openssl-aes-256-gcm",translate("openssl-aes-256-gcm"))
 encryption_algorithm:depends("etcmd", "etcmd")
 
 multi_thread = s:taboption("privacy", Flag, "multi_thread", translate("Enable Multithreading"),
@@ -448,6 +448,22 @@ log:value("warn", translate("Warning"))
 log:value("info", translate("Info"))
 log:value("debug", translate("Debug"))
 log:value("trace", translate("Trace"))
+
+-- Network Configuration Options
+auto_config_interface = s:taboption("privacy", Flag, "auto_config_interface", translate("Auto Configure Interface"),
+        translate("Automatically create and configure the EasyTier network interface"))
+auto_config_interface.default = "1"
+
+interface_netmask = s:taboption("privacy", Value, "interface_netmask", translate("Interface Netmask"),
+        translate("Subnet mask for the EasyTier interface (default: 255.0.0.0)"))
+interface_netmask.placeholder = "255.0.0.0"
+interface_netmask.default = "255.0.0.0"
+interface_netmask.datatype = "ip4addr"
+interface_netmask:depends("auto_config_interface", "1")
+
+auto_config_firewall = s:taboption("privacy", Flag, "auto_config_firewall", translate("Auto Configure Firewall"),
+        translate("Automatically add and manage firewall rules"))
+auto_config_firewall.default = "1"
 
 et_forward = s:taboption("privacy", MultiValue, "et_forward", translate("Access Control"),
         translate("Set traffic permission rules between different network zones"))

@@ -1027,7 +1027,7 @@ msgstr ""
 msgid "Encryption Algorithm"
 msgstr ""
 
-msgid "encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-gcm-256, openssl-aes128-gcm, openssl-aes256-gcm, openssl-chacha20. default (aes-gcm) (--encryption-algorithm parameter)"
+msgid "encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-256-gcm, openssl-aes-gcm, openssl-chacha20, openssl-aes-256-gcm. default (aes-gcm) (--encryption-algorithm parameter)"
 msgstr ""
 
 msgid "Stats"
