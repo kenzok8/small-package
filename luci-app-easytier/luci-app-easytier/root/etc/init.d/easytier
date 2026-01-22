@@ -238,10 +238,18 @@ get_etconfig() {
 		tcp_white_port="$(uci -q get easytier.@easytier[0].tcp_white_port)"
 		disable_relay_kcp="$(uci -q get easytier.@easytier[0].disable_relay_kcp || echo 0)"
 		relay_kcp="$(uci -q get easytier.@easytier[0].relay_kcp || echo 0)"
+		auto_config_interface="$(uci -q get easytier.@easytier[0].auto_config_interface || echo 1)"
+		interface_netmask="$(uci -q get easytier.@easytier[0].interface_netmask)"
+		auto_config_firewall="$(uci -q get easytier.@easytier[0].auto_config_firewall || echo 1)"
 		
 }
 
 set_firewall() {
+		# Check if auto_config_firewall is enabled
+		if [ "$auto_config_firewall" != "1" ]; then
+			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 自动防火墙配置已禁用，跳过配置" >>/tmp/easytier.log
+			return
+		fi
 		
 			if [ ! -z "$tcp_port" ] ; then
 		    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_tcp_udp 放行端口 ${tcp_port} " >>/tmp/easytier.log
@@ -311,31 +319,42 @@ set_firewall() {
 		   	fi
                 
 		[ -z "$tunname" ] && tunname="tun0"
-                uci -q delete network.EasyTier >/dev/null 2>&1
-	        if [ -z "$(uci -q get network.EasyTier)" ];  then				
-		       uci set network.EasyTier='interface'
-                       if [ -z "$ipaddr" ]; then
-				uci set network.EasyTier.proto='none'
-			else
-				uci set network.EasyTier.proto='static'
-				uci set network.EasyTier.ipaddr=$ipaddr
-				uci set network.EasyTier.netmask='255.0.0.0'
-		       fi
-		       echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加网络接口 EasyTier 绑定虚拟接口 ${tunname}" >>/tmp/easytier.log
-                       uci set network.EasyTier.device="$tunname"
-                       uci set network.EasyTier.ifname="$tunname"
+		
+		# Check if auto_config_interface is enabled
+		if [ "$auto_config_interface" = "1" ]; then
+			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 自动网络接口配置已启用" >>/tmp/easytier.log
+                	uci -q delete network.EasyTier >/dev/null 2>&1
+		        if [ -z "$(uci -q get network.EasyTier)" ];  then				
+			       uci set network.EasyTier='interface'
+                       		if [ -z "$ipaddr" ]; then
+						uci set network.EasyTier.proto='none'
+					else
+						uci set network.EasyTier.proto='static'
+						uci set network.EasyTier.ipaddr=$ipaddr
+						[ -z "$interface_netmask" ] && interface_netmask="255.0.0.0"
+						uci set network.EasyTier.netmask="$interface_netmask"
+			       		fi
+			       		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加网络接口 EasyTier 绑定虚拟接口 ${tunname}，子网掩码: ${interface_netmask:-255.0.0.0}" >>/tmp/easytier.log
+                       		uci set network.EasyTier.device="$tunname"
+                       		uci set network.EasyTier.ifname="$tunname"
+			fi
+			if [ -z "$(uci -q get firewall.easytierzone)" ];  then
+					echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则，放行网络接口 EasyTier 允许出入转发，开启IP动态伪装 MSS钳制" >>/tmp/easytier.log
+					uci set firewall.easytierzone='zone'
+					uci set firewall.easytierzone.input='ACCEPT'
+					uci set firewall.easytierzone.output='ACCEPT'
+					uci set firewall.easytierzone.forward='ACCEPT'
+					uci set firewall.easytierzone.masq='1'
+                                	uci set firewall.easytierzone.mtu_fix='1'
+					uci set firewall.easytierzone.name='EasyTier'
+					uci set firewall.easytierzone.network='EasyTier'
+			fi
+		else
+			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 自动网络接口配置已禁用，不创建网络接口" >>/tmp/easytier.log
+			uci -q delete network.EasyTier >/dev/null 2>&1
+			uci -q delete firewall.easytierzone >/dev/null 2>&1
 		fi
-		if [ -z "$(uci -q get firewall.easytierzone)" ];  then
-				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则，放行网络接口 EasyTier 允许出入转发，开启IP动态伪装 MSS钳制" >>/tmp/easytier.log
-				uci set firewall.easytierzone='zone'
-				uci set firewall.easytierzone.input='ACCEPT'
-				uci set firewall.easytierzone.output='ACCEPT'
-				uci set firewall.easytierzone.forward='ACCEPT'
-				uci set firewall.easytierzone.masq='1'
-                                uci set firewall.easytierzone.mtu_fix='1'
-				uci set firewall.easytierzone.name='EasyTier'
-				uci set firewall.easytierzone.network='EasyTier'
-		fi
+		
 		et_forward="$(uci -q get easytier.@easytier[0].et_forward)"
 		if [ "${et_forward//etfwlan/}" != "$et_forward" ]; then
 			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 允许从虚拟网络 EasyTier 到局域网 lan 的流量" >>/tmp/easytier.log
