@@ -292,9 +292,9 @@ if (isset($_POST['save_autostart'])) {
 	border-radius: var(--radius);
 	font-size: 0.85rem;
 	pointer-events: none;
-	z-index: 10000;
-	white-space: nowrap;
-	max-width: 300px;
+	z-index: 10000000;
+        white-space: normal;
+        max-width: 300px;
 	line-height: 1.4;
 	backdrop-filter: var(--glass-blur);
 	border: var(--glass-border);
@@ -304,6 +304,8 @@ if (isset($_POST['save_autostart'])) {
 	transform: translateY(10px);
 	transition: opacity 0.2s ease-out,
         transform 0.2s ease-out;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
 }
 
 .custom-tooltip.show {
@@ -754,7 +756,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                style="width: 80px; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.3);">
             <input type="color" id="color-selector"
                    class="form-control form-control-color p-0"
-                   value=" "
+                   value="#0f3460"
                    data-tooltip="choose_color"
                    style="width: 36px; height: 36px; cursor: pointer;">
           </div>
@@ -5198,43 +5200,43 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-window.toggleIpStatusBar = function() {
-    const ipStatusBar = document.getElementById('status-bar-component');
-    if (!ipStatusBar) return;
-    
-    const isHidden = ipStatusBar.style.display === 'none';
+    window.toggleIpStatusBar = function() {
+        const ipStatusBar = document.getElementById('status-bar-component');
+        if (!ipStatusBar) return;
+        
+        const isHidden = ipStatusBar.style.display === 'none';
 
-    if (isHidden) {
-        ipStatusBar.style.display = '';
-        localStorage.setItem('neko_ip_status_hidden', 'false');
-        if (typeof speakMessage === 'function') {
-            speakMessage(translations['ip_info_shown'] || 'IP Information Shown');
+        if (isHidden) {
+            ipStatusBar.style.display = '';
+            localStorage.setItem('neko_ip_status_hidden', 'false');
+            if (typeof speakMessage === 'function') {
+                speakMessage(translations['ip_info_shown'] || 'IP Information Shown');
+            }
+            if (typeof showLogMessage === 'function') {
+                showLogMessage(translations['ip_info_shown'] || 'IP Information Shown');
+            }
+        } else {
+            ipStatusBar.style.display = 'none';
+            localStorage.setItem('neko_ip_status_hidden', 'true');
+            if (typeof speakMessage === 'function') {
+                speakMessage(translations['ip_info_hidden'] || 'IP Information Hidden');
+            }
+            if (typeof showLogMessage === 'function') {
+                showLogMessage(translations['ip_info_hidden'] || 'IP Information Hidden');
+            }
         }
-        if (typeof showLogMessage === 'function') {
-            showLogMessage(translations['ip_info_shown'] || 'IP Information Shown');
-        }
-    } else {
-        ipStatusBar.style.display = 'none';
-        localStorage.setItem('neko_ip_status_hidden', 'true');
-        if (typeof speakMessage === 'function') {
-            speakMessage(translations['ip_info_hidden'] || 'IP Information Hidden');
-        }
-        if (typeof showLogMessage === 'function') {
-            showLogMessage(translations['ip_info_hidden'] || 'IP Information Hidden');
-        }
-    }
-};
+    };
 
-document.addEventListener('DOMContentLoaded', () => {
-    const storedValue = localStorage.getItem('neko_ip_status_hidden');
-    const ipStatusHidden = storedValue === null || storedValue === 'true';
-    const ipStatusBar = document.getElementById('status-bar-component');
-    
-    if (ipStatusBar) {
-        ipStatusBar.style.display = ipStatusHidden ? 'none' : '';
-    }
-    localStorage.setItem('neko_ip_status_hidden', ipStatusHidden.toString());
-});
+    document.addEventListener('DOMContentLoaded', () => {
+        const storedValue = localStorage.getItem('neko_ip_status_hidden');
+        const ipStatusHidden = storedValue === null || storedValue === 'true';
+        const ipStatusBar = document.getElementById('status-bar-component');
+        
+        if (ipStatusBar) {
+            ipStatusBar.style.display = ipStatusHidden ? 'none' : '';
+        }
+        localStorage.setItem('neko_ip_status_hidden', ipStatusHidden.toString());
+    });
 </script>
 
 <script>
@@ -5315,6 +5317,7 @@ document.addEventListener("DOMContentLoaded", () => {
         --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         --transition-speed: 0.3s;
         --highlight-intensity: 0.8;
+        --border-strong: 1px solid oklch(70% 0.1 var(--base-hue) / 0.6);
 
 	--bg-body: oklch(40% var(--base-chroma) var(--base-hue) / 90%);
 	--bg-container: oklch(30% var(--base-chroma) var(--base-hue));
@@ -5371,6 +5374,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	--card-bg: oklch(96% var(--base-chroma) var(--base-hue));
 	--header-bg: oklch(88% var(--base-chroma) var(--base-hue));
 	--border-color: oklch(85% 0.03 var(--base-hue));
+        --border-strong: 1px solid oklch(70% 0.1 var(--base-hue) / 0.6);
 	
 	--btn-primary-bg: oklch(60% 0.35 var(--base-hue));
 	--btn-success-bg: oklch(75% 0.25 140);
@@ -5486,7 +5490,7 @@ body {
 	margin-bottom: 15px;
 	border-radius: var(--radius);
 	background: var(--card-bg);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -5599,7 +5603,7 @@ body {
 
 .control-btn, #volumeToggle {
 	background: var(--card-bg);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 	color: var(--text-color);
 	width: 48px;
 	height: 48px;
@@ -5635,7 +5639,7 @@ body {
             inset -1px -1px 2px rgba(0, 0, 0, 0.15),
             inset 1px -1px 1px rgba(0, 0, 0, 0.08),
             inset -1px 1px 1px rgba(0, 0, 0, 0.08);
-        border: 1px solid var(--border-color);
+	border: var(--border-strong);
         transition: all 0.3s ease;
 }
 
@@ -5693,7 +5697,7 @@ body {
 	resize: none;
 	overflow: auto;
 	user-select: none;
-        border: 1px solid var(--border-color, #999);
+	border: var(--border-strong);
 }
 
 @keyframes float {
@@ -5779,7 +5783,7 @@ body {
 
 .ctrl-btn {
 	background: var(--bg-body);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 	color: var(--text-primary) !important;
 	border-radius: 50%;
 	width: 36px;
@@ -5962,7 +5966,7 @@ body {
 	transform: translateX(-50%);
 	margin-bottom: 10px;
 	background-color: var(--card-bg);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 	border-radius: 0.5rem;
 	padding: 10px;
 	width: 160px;
@@ -6023,7 +6027,7 @@ body {
 	word-wrap: break-word;
 	line-height: 1.5;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-	border: 1px solid rgba(255, 255, 255, 0.15);
+	border: var(--border-strong);
 	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 	backdrop-filter: blur(2px);
 	transform: translateY(0);
@@ -6128,7 +6132,7 @@ body {
 	cursor: pointer;
 	color: var(--text-primary);
 	background: var(--bg-container);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 	transition: background 0.3s ease;
 }
 
@@ -6678,7 +6682,7 @@ h2#neko-title.neko-title-style {
 	flex-direction: column;
 	min-width: 0;
 	background: var(--bg-container) !important;
-	border: var(--card-border-width) solid var(--border-color);
+	border: var(--border-strong);
 	border-radius: var(--radius);
 	box-shadow: 0 2px 8px color-mix(in oklch, var(--border-color), transparent 70%);
 	transform: translateY(-2px);
@@ -6878,7 +6882,7 @@ h2#neko-title.neko-title-style {
 }
 
 .log-content-container {
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 	border-radius: var(--radius);
 	margin-bottom: 0.5rem;
 	overflow: hidden;
@@ -6950,7 +6954,7 @@ h2#neko-title.neko-title-style {
 .btn-clear-log {
 	color: #fff;
 	background: var(--btn-danger-bg);
-	border: 1px solid transparent;
+	border: var(--border-strong);
 	padding: 0.375rem 0.75rem;
 	font-size: 0.875rem;
 	border-radius: calc(var(--radius) / 2);
@@ -6966,7 +6970,7 @@ h2#neko-title.neko-title-style {
 .btn-schedule {
 	color: #fff;
 	background: var(--btn-primary-bg);
-	border: 1px solid transparent;
+	border: var(--border-strong);
 	padding: 0.375rem 0.75rem;
 	font-size: 0.875rem;
 	border-radius: calc(var(--radius) / 2);
@@ -6991,7 +6995,7 @@ h2#neko-title.neko-title-style {
 	height: 1.1em;
 	margin: 0;
 	background-color: var(--bg-container);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 	appearance: none;
 	-webkit-appearance: none;
 	transition: var(--transition);
@@ -7050,7 +7054,7 @@ h2#neko-title.neko-title-style {
 
 .img-thumbnail {
 	background: var(--bg-container);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 }
 
 #toggleButton {
@@ -7059,7 +7063,7 @@ h2#neko-title.neko-title-style {
 
 .modal-content {
 	background: var(--bg-container);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 }
 
 .modal-header {
@@ -7140,7 +7144,7 @@ label {
 
  table td,.alert.alert-info {
 	background-color: var(--card-bg) !important;
-	border: 1px solid rgba(255, 255, 255, 0.6) !important;
+        border: var(--border-strong) !important;
 }
 
 .form-control::placeholder {
@@ -7161,7 +7165,7 @@ label {
 input[type="text"] {
 	background-color: var(--header-bg);
 	color: var(--text-primary);
-	border: 1px solid var(--border-color);
+	border: var(--border-strong);
 }
 
 #color-input {
@@ -7322,7 +7326,7 @@ input.btn:hover,
 button.btn:focus,
 a.btn:focus,
 input.btn:focus {
-	transform: scale(1.1) !important;
+	transform: scale(1.05) !important;
 }
 
 #logTabs .nav-link:hover {
@@ -7490,7 +7494,7 @@ input[type=range]::-webkit-slider-thumb {
 	height: 18px;
 	border-radius: 50%;
 	background: #ffffff !important;
-	border: 2px solid var(--accent-color) !important;
+	border: var(--border-strong) !important;
 	cursor: pointer;
 	transition: background 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
 }
@@ -7630,7 +7634,7 @@ input[type=range]::-ms-thumb {
 
 .ace_search {
 	background: var(--bg-container) !important;
-	border: 1px solid var(--border-color) !important;
+	border: var(--border-strong) !important;
 	border-radius: var(--radius);
 	box-shadow: var(--item-hover-shadow);
 	padding: 8px 12px !important;
@@ -7648,7 +7652,7 @@ input[type=range]::-ms-thumb {
 
 .ace_search_field {
 	background: var(--card-bg) !important;
-	border: 1px solid var(--border-color) !important;
+	border: var(--border-strong) !important;
 	color: var(--text-primary) !important;
 	padding: 6px 12px !important;
 	border-radius: calc(var(--radius) - 4px) !important;
@@ -7887,7 +7891,7 @@ input[type=range]::-ms-thumb {
 }
 
 :root {
-	--container-width: 1700px;
+	--container-width: 2350px;
 	--modal-max-width: 1100px;
 }
 
@@ -8001,5 +8005,9 @@ input[type=range]::-ms-thumb {
 		text-shadow: 0 0 10px color-mix(in oklch, var(--glow-primary), transparent 30%),
       0 0 25px color-mix(in oklch, var(--glow-primary), transparent 60%);
 	}
+}
+
+.rounded-3.border {
+	border: var(--border-strong) !important;
 }
 </style>

@@ -640,6 +640,10 @@ if (!is_dir($storageDir)) {
     mkdir($storageDir, 0755, true);
 }
 
+if (!file_exists($storageFile)) {
+    file_put_contents($storageFile, '');
+}
+
 $currentConfigPath = '';
 if (file_exists($storageFile)) {
     $rawPath = trim(file_get_contents($storageFile));
@@ -974,7 +978,7 @@ $mihomoVersion  = getMihomoVersion();
             </div>
 
             <div class="mb-4 control-box" id="singboxControl">
-                <h6 class="mb-2"><i data-feather="codesandbox"></i> <span data-translate="singboxControl">Singbox Control</span></h6>
+                <h6 class="mb-2"><i data-feather="codesandbox"></i> <span data-translate="singboxControl">Singbox Control</span><i class="fas fa-question-circle ms-1" data-tooltip="first_time_singbox_user" style="cursor: help;"></i></h6>
                 <div class="d-flex flex-column gap-2">
                     <form action="index.php" method="post">
                         <select name="config_file" class="form-select mb-2" onchange="this.form.submit()">
