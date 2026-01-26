@@ -5,7 +5,11 @@
 			"uci": ["dnsmasq-ipset"]
 		},
 		"write": {
-			"uci": ["dnsmasq-ipset"]
+			"uci": ["dnsmasq-ipset"],
+            "ubus": {
+                "service": ["list"],
+                "uci": ["commit", "apply"]
+            }
 		}
 	}
 }
