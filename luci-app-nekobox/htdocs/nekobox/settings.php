@@ -378,7 +378,7 @@ $razordVersion = getRazordVersion();
             </div>
             <div class="modal-body">
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-4 d-none">
                         <div class="card h-100 text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title" data-translate="singbox_channel_one">Singbox Core (Channel One)</h5>
@@ -387,7 +387,7 @@ $razordVersion = getRazordVersion();
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="card h-100 text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title" data-translate="singbox_channel_two">Singbox Core (Channel Two)</h5>
@@ -396,7 +396,7 @@ $razordVersion = getRazordVersion();
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="card h-100 text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title" data-translate="other_operations">Other Operations</h5>
@@ -406,11 +406,11 @@ $razordVersion = getRazordVersion();
                         </div>
                     </div>
                 </div>
-                <div class="d-flex justify-content-end mt-3">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">
-                        Close
-                    </button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="close_button">
+                    Close
+                </button>
             </div>
         </div>
     </div>

@@ -46,29 +46,42 @@ if (empty($latest_version)) {
     die("No version information found.");
 }
 
+logMessage("Latest version found: $latest_version");
+
+exec("opkg list-installed | grep -q '^sing-box'", $output, $opkg_check_return);
+
 $current_version = ''; 
 $install_path = '/usr/bin/sing-box'; 
-$temp_file = '/tmp/sing-box.tar.gz'; 
-$temp_dir = '/tmp/singbox_temp'; 
 
 if (file_exists($install_path)) {
     $current_version = trim(shell_exec("{$install_path} --version"));
+    logMessage("Current version: $current_version");
 }
 
 $current_arch = trim(shell_exec("uname -m"));
+logMessage("Architecture: $current_arch");
+
 $base_version = ltrim($latest_version, 'v');
 $download_url = '';
+$ipk_filename = '';
 
 switch ($current_arch) {
     case 'aarch64':
-        $download_url = "https://github.com/SagerNet/sing-box/releases/download/$latest_version/sing-box-$base_version-linux-arm64.tar.gz";
+    case 'arm64':
+        $ipk_filename = "sing-box_{$base_version}_openwrt_aarch64_generic.ipk";
+        $download_url = "https://github.com/SagerNet/sing-box/releases/download/{$latest_version}/{$ipk_filename}";
         break;
     case 'x86_64':
-        $download_url = "https://github.com/SagerNet/sing-box/releases/download/$latest_version/sing-box-$base_version-linux-amd64.tar.gz";
+        $ipk_filename = "sing-box_{$base_version}_openwrt_x86_64.ipk";
+        $download_url = "https://github.com/SagerNet/sing-box/releases/download/{$latest_version}/{$ipk_filename}";
         break;
     default:
+        logMessage("Unsupported architecture: $current_arch");
         die("No download link found for architecture: $current_arch");
 }
+
+logMessage("IPK filename: $ipk_filename");
+logMessage("Download URL: $download_url");
 
 if (isset($_GET['check_version'])) {
     if (trim($current_version) === trim($latest_version)) {
@@ -80,33 +93,50 @@ if (isset($_GET['check_version'])) {
 }
 
 if (trim($current_version) === trim($latest_version)) {
+    logMessage("Current version is already the latest. Skipping update.");
     die("Current version is already the latest.");
 }
 
-exec("wget -O '$temp_file' '$download_url'", $output, $return_var);
+if ($opkg_check_return !== 0) {
+    logMessage("Sing-box is not installed via opkg. Running opkg update...");
+    exec("opkg update 2>&1", $update_output, $update_return);
+    if ($update_return !== 0) {
+        logMessage("opkg update failed: " . implode("\n", $update_output));
+    } else {
+        logMessage("opkg update completed");
+    }
+} else {
+    logMessage("Sing-box is already installed via opkg. Skipping opkg update.");
+}
+
+$temp_file = "/tmp/{$ipk_filename}";
+logMessage("Downloading IPK file to: $temp_file");
+
+exec("wget -O '$temp_file' '$download_url' 2>&1", $output, $return_var);
 if ($return_var !== 0) {
+    logMessage("Download failed! Return code: $return_var, Output: " . implode("\n", $output));
     die("Download failed!");
 }
+logMessage("Download completed. File size: " . filesize($temp_file) . " bytes");
 
-if (!is_dir($temp_dir)) {
-    mkdir($temp_dir, 0755, true);
+logMessage("Installing IPK package...");
+exec("opkg install --force-depends --force-reinstall --force-overwrite '$temp_file' 2>&1", $install_output, $install_return);
+
+if ($install_return !== 0) {
+    logMessage("Installation failed! Return code: $install_return, Output: " . implode("\n", $install_output));
+    die("Installation failed!");
 }
 
-exec("tar -xzf '$temp_file' -C '$temp_dir'", $output, $return_var);
-if ($return_var !== 0) {
-    die("Extraction failed!");
+logMessage("Installation completed successfully");
+writeVersionToFile($latest_version); 
+logMessage("Version written to file: $latest_version");
+
+echo "Update completed! Current version: $latest_version";
+
+if (file_exists($temp_file)) {
+    unlink($temp_file);
+    logMessage("Temporary file cleaned: $temp_file");
 }
 
-$extracted_file = glob("$temp_dir/sing-box-*/*sing-box")[0] ?? '';
-if ($extracted_file && file_exists($extracted_file)) {
-    exec("cp -f '$extracted_file' '$install_path'");
-    exec("chmod 0755 '$install_path'");
-    writeVersionToFile($latest_version); 
-    echo "Update completed! Current version: $latest_version";
-} else {
-    die("Extracted file 'sing-box' does not exist.");
-}
-
-unlink($temp_file);
-exec("rm -r '$temp_dir'");
+logMessage("Update process completed");
 ?>
