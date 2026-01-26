@@ -3,7 +3,7 @@
 'require form';
 
 function transport_tcp(transport, sub_section, tab_name) {
-    transport.value("tcp", "TCP");
+    transport.value("tcp", "TCP (RAW)");
 
     let tcp_guise = sub_section.taboption(tab_name, form.ListValue, "tcp_guise", _("[tcp] Fake Header Type"));
     tcp_guise.depends("transport", "tcp");
@@ -197,7 +197,7 @@ function transport_httpupgrade(transport, sub_section, tab_name) {
 }
 
 function transport_splithttp(transport, sub_section, tab_name) {
-    transport.value("splithttp", "SplitHTTP");
+    transport.value("splithttp", "SplitHTTP (XHTTP)");
 
     let splithttp_host = sub_section.taboption(tab_name, form.Value, "splithttp_host", _("[splithttp] Host"));
     splithttp_host.depends("transport", "splithttp");

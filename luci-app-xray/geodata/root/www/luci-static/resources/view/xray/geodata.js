@@ -1,5 +1,6 @@
 'use strict';
 'require dom';
+'require fs';
 'require uci';
 'require ui';
 'require view';
@@ -342,8 +343,8 @@ return view.extend({
         return Promise.all([
             new Date(),
             uci.load(shared.variant),
-            fetch("/xray/geoip.dat").then(v => v.arrayBuffer()),
-            fetch("/xray/geosite.dat").then(v => v.arrayBuffer()),
+            fs.read_direct("/usr/share/xray/geoip.dat", "blob").then(v => v.arrayBuffer()),
+            fs.read_direct("/usr/share/xray/geosite.dat", "blob").then(v => v.arrayBuffer()),
         ]);
     },
 

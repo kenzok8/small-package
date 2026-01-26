@@ -156,7 +156,7 @@ return view.extend({
 
         s.tab('general', _('General Settings'));
 
-        o = s.taboption('general', form.Flag, 'transparent_proxy_enable', _('Enable Xray Service'), _('Uncheck this to disable the entire Xray service.'));
+        o = s.taboption('general', form.Flag, 'transparent_proxy_enable', _('Enable Transparent Proxy'), _('Enable integrations with dnsmasq and nftables. To disable luci-app-xray completely, go to <a href="/cgi-bin/luci/admin/system/startup">Startup</a> and disable <code>xray_core</code>.'));
 
         let tcp_balancer_v4 = s.taboption('general', form.MultiValue, 'tcp_balancer_v4', _('TCP Server (IPv4)'), _("Select multiple outbound servers to enable load balancing. Select none to disable TCP Outbound."));
         tcp_balancer_v4.datatype = "uciname";

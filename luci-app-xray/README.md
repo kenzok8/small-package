@@ -51,6 +51,7 @@ Some features are deprecated / unstable so they are placed in preview app. To en
 ## Changelog since 3.7.0
 
 * 2026-01-14 chore: bump version
+* 2026-01-26 fix: typos and hysteria version check
 
 ## Changelog since 3.6.0
 
