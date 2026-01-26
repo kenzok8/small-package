@@ -11,6 +11,7 @@ export function hysteria_outbound(server, tag) {
             protocol: "hysteria",
             tag: tag,
             settings: {
+                version: 2,
                 address: server["server"],
                 port: port_array(server["server_port"])[0],
             },

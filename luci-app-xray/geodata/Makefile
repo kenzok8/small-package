@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-xray-geodata
-PKG_VERSION:=3.7.0
+PKG_VERSION:=3.7.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MPLv2
@@ -34,9 +34,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-app-xray-geodata.json $(1)/usr/share/luci/menu.d/luci-app-xray-geodata.json
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(INSTALL_DATA) ./root/usr/share/rpcd/acl.d/luci-app-xray-geodata.json $(1)/usr/share/rpcd/acl.d/luci-app-xray-geodata.json
-	$(INSTALL_DIR) $(1)/www/xray
-	$(LN) /usr/share/xray/geoip.dat $(1)/www/xray/geoip.dat
-	$(LN) /usr/share/xray/geosite.dat $(1)/www/xray/geosite.dat
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
