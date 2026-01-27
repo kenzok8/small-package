@@ -751,7 +751,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div id="color-preview" class="rounded border mb-3" style="height: 100px; background: #333;"></div>
         <div class="d-flex align-items-center gap-2 mb-3">
           <div class="d-flex align-items-center justify-content-center rounded"
-               style="width: 80px; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.3);">
+               style="width: 80px; height: 50px; background: rgba(255,255,255,0.05); border: var(--border-strong);">
             <input type="color" id="color-selector"
                    class="form-control form-control-color p-0"
                    value="#0f3460"
@@ -760,7 +760,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
           <div id="current-color-block"
                class="rounded d-flex align-items-center justify-content-center text-white position-relative"
-               style="height: 50px; flex: 1; cursor: pointer; background: #333; border: 2px solid white; transition: all 0.3s ease;">
+               style="height: 50px; flex: 1; cursor: pointer; background: #333; border: var(--border-strong); transition: all 0.3s ease;">
             <input type="text"
                    id="color-input"
                    class="form-control text-center border-0 bg-transparent text-white p-0 m-0"

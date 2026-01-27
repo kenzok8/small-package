@@ -325,7 +325,7 @@ function autoCleanInvalidSubInfo($subscriptions) {
 }
 
 function isValidSubscriptionContent($content) {
-    $keywords = ['ss', 'shadowsocks', 'vmess', 'vless', 'trojan', 'hysteria2', 'socks5', 'http'];
+    $keywords = ['ss', 'anytls', 'vmess', 'vless', 'trojan', 'hysteria2', 'socks5', 'http'];
     foreach ($keywords as $keyword) {
         if (stripos($content, $keyword) !== false) {
             return true;
@@ -1139,7 +1139,7 @@ $(document).ready(function() {
       $size = file_exists($filePath) ? formatSize(filesize($filePath)) : ($translations['fileNotExist'] ?? 'Not Exist');
       $modified = file_exists($filePath) ? date('Y-m-d H:i:s', filemtime($filePath)) : '-';
 
-      $validProtocols = '/^(ss|shadowsocks|vmess|vless|trojan|hysteria2|socks5|http)$/i';
+      $validProtocols = '/^(ss|shadowsocks|anytls|vmess|vless|trojan|hysteria2|socks5|http)$/i';
       $nodeCount = 0;
 
       if (file_exists($filePath)) {
@@ -1215,12 +1215,12 @@ $(document).ready(function() {
                       }
                   }
               }
-              elseif (preg_match('/^(ss|vmess|vless|trojan|hysteria2|socks5|http):\/\//im', $content)) {
+              elseif (preg_match('/^(ss|shadowsocks|anytls|vmess|vless|trojan|hysteria2|socks5|http):\/\//im', $content)) {
                   $lines = preg_split("/\r?\n/", $content);
                   foreach ($lines as $line) {
                       $line = trim($line);
                       if ($line === '' || str_starts_with($line, '#')) continue;
-                      if (preg_match('/^(ss|vmess|vless|trojan|hysteria2|socks5|http):\/\//i', $line)) {
+                      if (preg_match('/^(ss|shadowsocks|anytls|vmess|vless|trojan|hysteria2|socks5|http):\/\//i', $line)) {
                           $nodeCount++;
                       }
                   }

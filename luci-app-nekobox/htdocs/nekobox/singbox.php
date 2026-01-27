@@ -566,7 +566,7 @@ $downloadedContent = '';
 $fixedFileName = 'subscription.txt';
 
 function isValidSubscriptionContent($content) {
-    $patterns = ['shadowsocks', 'vmess', 'vless', 'trojan', 'hysteria2', 'socks5', 'http'];
+    $patterns = ['anytls', 'shadowsocks', 'vmess', 'vless', 'trojan', 'hysteria2', 'socks5', 'http'];
     foreach ($patterns as $p) {
         if (stripos($content, $p) !== false) {
             return true;
