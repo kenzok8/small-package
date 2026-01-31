@@ -180,7 +180,7 @@ start_service() {
 	log "Core" "Start."
 	procd_open_instance momo
 
-	procd_set_param command /bin/sh -c "$PROG -D $RUN_DIR run >> $CORE_LOG_PATH 2>&1"
+	procd_set_param command /bin/sh -c "$PROG -D $RUN_DIR run --disable-color >> $CORE_LOG_PATH 2>&1"
 	procd_set_param file "$RUN_PROFILE_PATH"
 	if [ "$fast_reload" = 1 ]; then
 		procd_set_param reload_signal HUP
