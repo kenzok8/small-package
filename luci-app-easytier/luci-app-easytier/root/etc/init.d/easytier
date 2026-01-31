@@ -145,8 +145,8 @@ check_config() {
                    proxy_network=$(grep -F '[[proxy_network]]' $config_file)
                    wireguard_port=$(cat $config_file | grep "wireguard_listen = " | awk -F ":" '{print $2}'| tr -d '/", ')
                    log="$(uci -q get easytier.@easytier[0].log || echo off)"
-                   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 检测配置文件可用性 ${easytierbin} --check-config ${config_file}" >>/tmp/easytier.log
-                   ${easytierbin} --check-config ${config_file} >> /tmp/easytier.log 2>&1 &
+                   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 检测配置文件可用性 ${easytierbin} --check-config --config-file ${config_file}" >>/tmp/easytier.log
+                   ${easytierbin} --check-config --config-file ${config_file} >> /tmp/easytier.log 2>&1 &
                    
 		   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始运行 ${easytierbin} -c ${config_file}" >>/tmp/easytier.log
                    procd_open_instance
@@ -437,11 +437,11 @@ start_et() {
 		
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+			get_etconfig
           	if [ "$etcmd" = "config" ] ; then 
 			#配置文件启动方式
                 	check_config  
          	else
-			get_etconfig
 			procd_open_instance "easytier_core"
 			get_tz
 			[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
