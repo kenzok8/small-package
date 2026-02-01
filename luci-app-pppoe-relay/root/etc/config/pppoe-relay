@@ -1,1 +1,6 @@
 
+config service
+	option enabled '0'
+	option server_interface 'wan'
+	option client_interface 'br-lan'
+

@@ -5,14 +5,16 @@ START=99
 
 CONFIG="pppoe-relay"
 
+BIN="$(command -v pppoe-relay)"
+
 setup_service() {
 	config_get enabled $1 enabled
 	[ "$enabled" -eq 0 ] && return 0
 	config_get server_interface $1 server_interface
 	config_get client_interface $1 client_interface
 	[ -n "$server_interface" -a -n "$client_interface" ] && {	
-		is_run=$(ps | grep "/usr/sbin/pppoe-relay -S $server_interface -C $client_interface" | grep -v "grep")
-		[ -z "$is_run" ] && /usr/sbin/pppoe-relay -S $server_interface -C $client_interface
+		top -bn1 | grep "${BIN}" | grep -v "grep" >/dev/null
+		[ "$?" != 0 ] && ${BIN} -S $server_interface -C $client_interface
 	}
 }
 
@@ -22,5 +24,5 @@ start() {
 }
 
 stop() {
-	killall -q -9 pppoe-relay
+	killall -q -9 ${BIN}
 }
