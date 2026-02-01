@@ -9,7 +9,7 @@ LUCI_TITLE:=LuCI support for PPPoE Relay
 LUCI_DEPENDS:=+rp-pppoe-common +rp-pppoe-relay
 LUCI_PKGARCH:=all
 PKG_VERSION:=1
-PKG_RELEASE:=2-20200326
+PKG_RELEASE:=3-20260201
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
