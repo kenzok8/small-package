@@ -1,0 +1,478 @@
+<%
+--	Template Developers:
+--		- lwb1978
+--	Copyright: copyright(c)2025–2027
+--	Description: Passwall(2) UI template
+%>
+
+<style>
+/* 组标题的右箭头 */
+.mv-arrow-right {
+	width: 0;
+	height: 0;
+	border-top: 4px solid transparent;
+	border-bottom: 4px solid transparent;
+	border-left: 5px solid #555;
+	display: inline-block;
+	vertical-align: middle;
+}
+/* 组标题的下箭头 */
+.mv-arrow-down-small {
+	width: 0;
+	height: 0;
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 5px solid #555;
+	display: inline-block;
+	vertical-align: middle;
+}
+.mv_search_input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 6px;
+	margin-bottom: 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	max-height: 36px;
+}
+.mv_list_container {
+	max-height: 300px;
+	overflow: auto;
+	margin-bottom: 8px;
+	white-space: nowrap;
+}
+.mv_node_list {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+.mv_node_list li.group-block {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+.mv_node_list .group-title {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	padding: 6px;
+	margin-bottom: 4px;
+	border-radius: 4px;
+	white-space: nowrap;
+}
+.mv_node_list ul.group-items {
+	margin: 0 0 8px 16px;
+	padding: 0;
+	list-style: none;
+}
+.mv_node_list ul.group-items li.node-item {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	white-space: nowrap;
+	text-align: left;
+}
+.mv-node-row {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+}
+.mv-node-checkbox {
+	margin: 0;
+	vertical-align: middle;
+	margin-right: 6px;
+}
+.mv-node-label {
+	margin: 0;
+	padding: 0;
+	vertical-align: middle;
+	cursor: pointer;
+}
+.mv-controls {
+	margin-top: 4px;
+	display: flex;
+	gap: 4px;
+	align-items: center;
+}
+</style>
+
+<script type="text/javascript">
+//<![CDATA[
+	// css helper functions
+	function mv_camelToKebab(str) {
+		return str.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase()
+	}
+
+	function mv_style2Css(styleDeclaration, properties) {
+		const cssRules = properties.map(prop => {
+			const kebabCaseProp = mv_camelToKebab(prop);[1, 5]
+			const value = styleDeclaration[prop]
+			if (value) {
+				return `${kebabCaseProp}: ${value};`
+			}
+			return ''
+		})
+		// Filter out any empty strings and join the rules
+		return cssRules.filter(Boolean).join(' ')
+	}
+
+	function mv_parseColorToRgba(color) {
+			if (!color) return null;
+
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+
+			ctx.fillStyle = color;
+			const computedColor = ctx.fillStyle;
+			// Match #RRGGBB or #RRGGBBAA format
+			if (computedColor.startsWith('#')) {
+					const hex = computedColor.substring(1);
+					// #RRGGBB (6 digits)
+					if (hex.length === 6) {
+							return {
+									r: parseInt(hex.substring(0, 2), 16),
+									g: parseInt(hex.substring(2, 4), 16),
+									b: parseInt(hex.substring(4, 6), 16),
+									a: 1
+							};
+					}
+					// #RRGGBBAA (8 digits)
+					if (hex.length === 8) {
+							return {
+									r: parseInt(hex.substring(0, 2), 16),
+									g: parseInt(hex.substring(2, 4), 16),
+									b: parseInt(hex.substring(4, 6), 16),
+									a: parseInt(hex.substring(6, 8), 16) / 255
+							};
+					}
+			}
+			// Match rgba() or rgb() format (for browsers that return this format)
+			const rgbaMatch = computedColor.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+			if (rgbaMatch) {
+					return {
+							r: parseInt(rgbaMatch[1], 10),
+							g: parseInt(rgbaMatch[2], 10),
+							b: parseInt(rgbaMatch[3], 10),
+							a: rgbaMatch[4] !== undefined ? parseFloat(rgbaMatch[4]) : 1
+					};
+			}
+
+			return null; // Invalid color
+	}
+
+	// Helper to convert back to Hex (for output consistency)
+	function mv_rgbToHex(r, g, b) {
+		const toHex = (n) => {
+			const hex = Math.max(0, Math.min(255, n)).toString(16)
+			return hex.length === 1 ? '0' + hex : hex
+		}
+		return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+	}
+
+	function mv_isTransparent(color) {
+		const cleanColor = mv_parseColorToRgba(color);
+		// check #RRGGBBAA for transparency
+		return !cleanColor || (cleanColor.a !== undefined && !cleanColor.a);
+	}
+
+	function mv_getColorSchema(color) {
+		const rgb = mv_parseColorToRgba(color);
+		if (!rgb) return 'unknown'; // Handle invalid colors
+		// Calculate YIQ brightness (human eye perception)
+		const brightness = ((rgb.r * 299) + (rgb.g * 587) + (rgb.b * 114)) / 1000;
+		
+		return brightness > 128 ? 'light' : 'dark';
+	}
+
+	function mv_lighter(color, amount) {
+		const rgb = mv_parseColorToRgba(color);
+		if (!rgb) return color;
+		// Add amount to each channel
+		const r = rgb.r + amount;
+		const g = rgb.g + amount;
+		const b = rgb.b + amount;
+		// Convert back to Hex (clamping happens inside rgbToHex)
+		return mv_rgbToHex(r, g, b);
+	}
+
+	function mv_darker(color, amount) {
+		const rgb = mv_parseColorToRgba(color);
+		if (!rgb) return color;
+		// Subtract amount from each channel
+		const r = rgb.r - amount;
+		const g = rgb.g - amount;
+		const b = rgb.b - amount;
+
+		return mv_rgbToHex(r, g, b);
+	}
+
+	// copy select styles
+	function mv_adaptiveStyle(cbid) {
+		const mainDiv = document.getElementById(cbid);
+		const hiddenRef = document.getElementById(cbid + ".ref");
+		const panel = document.getElementById(cbid + ".panel");
+		if (hiddenRef && mainDiv) {
+			const elOption = hiddenRef.getElementsByTagName("option")[0]
+			const styleSelect = window.getComputedStyle(hiddenRef)
+			const styleOption = window.getComputedStyle(elOption)
+			const styleBody = window.getComputedStyle(document.body)
+
+			const styleNode = document.createElement('style')
+			const styleNames = ["width", "color", "height", "margin", "lineHeight", "borderRadius", "minWidth", "minHeight"]
+
+			document.head.appendChild(styleNode)
+			// trace back from option -> select -> body for background color
+			const panelRadius = styleSelect.borderRadius;
+			const optionColor = !mv_isTransparent(styleOption.backgroundColor) ? styleOption.backgroundColor : !mv_isTransparent(styleSelect.backgroundColor) ? styleSelect.backgroundColor : styleBody.backgroundColor
+			const titleColor = mv_getColorSchema(optionColor) === "light" ? mv_darker(optionColor, 30) : mv_lighter(optionColor, 30)
+			const selectStyleCSS = [`#${CSS.escape(cbid)} {`, mv_style2Css(styleSelect, styleNames), "}"]
+			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, mv_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, `border-radius: ${panelRadius};`, "}"]
+			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .group-title  {`, `background-color: ${titleColor} !important;`, "}"]
+			styleNode.textContent = [].concat(selectStyleCSS, optionStyleCSS, titleStyleCSS).join("\n")
+		}
+	}
+
+	function mv_idSafe(id) {
+		return id
+			.trim()
+			.replace(/\s+/g, "-")
+			.replace(/[\x00-\x1F\x7F]/g, "");
+	}
+
+	// 折叠组
+	function mv_toggleGroup(opt, nodeList, searchInput, g) {
+		g = mv_idSafe(g);
+		const ul = document.getElementById("group-" + opt + "-" + g);
+		const arrow = document.getElementById("arrow-" + opt + "-" + g);
+		if (!ul) return;
+		// 判断是否在搜索状态
+		const keyword = searchInput.value.trim().toLowerCase();
+		const isSearching = keyword.length > 0;
+		// 搜索状态下，仅切换当前组，不处理其他组
+		if (isSearching){
+			ul.style.display = ul.style.display === "none" ? "block" : "none";
+			if (arrow) arrow.className = ul.style.display === "none" ? "mv-arrow-right" : "mv-arrow-down-small";
+			return;
+		}
+		// 非搜索模式：先折叠其他组
+		nodeList.querySelectorAll(".group-block").forEach(group=>{
+			const gname = group.getAttribute("data-group");
+			const gul = document.getElementById("group-" + opt + "-" + gname);
+			const garrow = document.getElementById("arrow-" + opt + "-" + gname);
+			if (gname !== g) {
+				if (gul) gul.style.display = "none";
+				if (garrow) garrow.className = "mv-arrow-right";
+			}
+		});
+		nodeList.parentNode.scrollTop = 0;
+		// 切换当前组
+		ul.style.display = ul.style.display === "none" ? "block" : "none";
+		if (arrow) arrow.className = ul.style.display === "none" ? "mv-arrow-right" : "mv-arrow-down-small";
+	};
+
+	// 计数
+	function mv_updateCount(opt, nodeList, searchInput) {
+		const keyword = searchInput.value.trim().toLowerCase();
+		const isSearching = keyword.length > 0;
+		// 当前实例下的所有 checkbox
+		const cbs = isSearching 
+			? Array.from(nodeList.querySelectorAll("input[type=checkbox]")).filter(cb => cb.closest("li").style.display !== "none")
+			: nodeList.querySelectorAll("input[type=checkbox]");
+		let checked = 0;
+		cbs.forEach(cb => { if(cb.checked) checked++; });
+		// 更新总计
+		const totalSpan = document.getElementById("count-" + opt);
+		if (totalSpan) {
+			totalSpan.innerHTML = "<%:Selected:%> <span style='color:red;'>" + checked + "/" + cbs.length + "</span>";
+		}
+		// 更新每个组计数
+		nodeList.querySelectorAll(".group-block").forEach(group => {
+			const gname = group.getAttribute("data-group");
+			const groupCbs = group.querySelectorAll("li[data-node-name] input[type=checkbox]");
+			let groupChecked = 0;
+			let totalCount = 0;
+			groupCbs.forEach(cb => {
+				const li = cb.closest("li");
+				// 搜索时只统计可见节点
+				if (!isSearching || li.style.display !== "none") {
+					totalCount++;
+					if (cb.checked) groupChecked++;
+				}
+			});
+			const span = document.getElementById("group-count-" + opt + "-" + gname);
+			if(span) span.textContent = "(" + groupChecked + "/" + totalCount + ")";
+		});
+	}
+
+	// 搜索
+	function mv_filterGroups(searchInput, opt, nodeList) {
+		const keyword = searchInput.value.trim().toLowerCase();
+		nodeList.querySelectorAll(".group-block").forEach(group => {
+			const items = group.querySelectorAll("li[data-node-name]");
+			let matchCount = 0;
+			items.forEach(li => {
+				const name = li.getAttribute("data-node-name");
+				if (!keyword || name.indexOf(keyword) !== -1) {
+					li.style.display = "";
+					matchCount++;
+				} else {
+					li.style.display = "none";
+				}
+			});
+			// 搜索时自动展开组
+			const gname = group.getAttribute("data-group");
+			const ul = document.getElementById("group-" + opt + "-" + gname);
+			const arrow = document.getElementById("arrow-" + opt + "-" + gname);
+
+			if (matchCount === 0 && keyword !== "") {
+				group.style.display = "none";
+			} else {
+				group.style.display = "";
+				if (keyword && ul && arrow) {
+					ul.style.display = "";
+					arrow.className = "mv-arrow-down-small";
+				}
+			}
+		});
+		mv_updateCount(opt, nodeList, searchInput);
+		// 清空搜索后恢复全部折叠
+		if (!keyword) {
+			mv_collapseAllGroups(opt, nodeList);
+		}
+	}
+
+	// 折叠所有组
+	function mv_collapseAllGroups(opt, nodeList) {
+		nodeList.querySelectorAll(".group-block").forEach(group => {
+			const gname = group.getAttribute("data-group");
+			const ul = document.getElementById("group-" + opt + "-" + gname);
+			const arrow = document.getElementById("arrow-" + opt + "-" + gname);
+			if (ul) ul.style.display = "none";
+			if (arrow) arrow.className = "mv-arrow-right";
+		});
+	}
+
+	window.mv_nodeitem_rendered = {};
+	function mv_render_multivalue_list(cbid, opt, nodeList, searchInput) {
+		if (window.mv_nodeitem_rendered[cbid]) return;
+		const root = document.getElementById(cbid);
+		if (!root) return;
+		// 遍历所有组
+		root.querySelectorAll(".group-items").forEach(function(ul) {
+			// 组名
+			const gname = ul.id.replace("group-" + opt + "-", "");
+			// 解析 Lua 注入的数据
+			const items    = JSON.parse(ul.dataset.items || "[]");
+			const selected = JSON.parse(ul.dataset.selected || "{}");
+			// 清空
+			ul.innerHTML = "";
+			// 列表渲染
+			items.forEach(function(item) {
+				// li
+				let li = document.createElement("li");
+				li.className = "node-item";
+				li.setAttribute("data-node-name", item.label.toLowerCase());
+				li.title = item.label;
+				// row div
+				let row = document.createElement("div");
+				row.className = "mv-node-row";
+				// checkbox
+				let checkboxId = cbid + "." + item.key;
+				let checkbox = document.createElement("input");
+				checkbox.type = "checkbox";
+				checkbox.className = "cbi-input-checkbox mv-node-checkbox";
+				checkbox.id = checkboxId;
+				checkbox.name = cbid;
+				checkbox.value = item.key;
+				if (selected[item.key]) checkbox.checked = true;
+				// label
+				let label = document.createElement("label");
+				label.className = "mv-node-label";
+				label.htmlFor = checkboxId;
+				label.textContent = item.label;
+				// 组装
+				row.appendChild(checkbox);
+				row.appendChild(label);
+				li.appendChild(row);
+				ul.appendChild(li);
+			});
+		});
+		window.mv_nodeitem_rendered[cbid] = true;
+		searchInput.addEventListener("input", function() {
+			mv_filterGroups(searchInput, opt, nodeList);
+		});
+		searchInput.addEventListener('keydown', function(e) {
+			const isEnter = e.key === "Enter" || e.keyCode === 13;
+			if (!isEnter) return;
+			e.stopPropagation();
+			e.preventDefault();
+			searchInput.blur();
+		});
+		// checkbox 改变时更新计数
+		nodeList.addEventListener("change", () => {
+			mv_updateCount(opt, nodeList, searchInput);
+		});
+	}
+
+	// 全选 / 全不选
+	function mv_selectAll(cbid, opt, flag) {
+		if (!window.mv_nodeitem_rendered[cbid]) return;
+		const nodeList = document.getElementById(cbid + ".node_list");
+		const searchInput = document.getElementById(cbid + ".search");
+		const cbs = nodeList.querySelectorAll("input[type=checkbox]");
+		cbs.forEach(cb=>{
+			if (cb.offsetParent !== null) cb.checked = flag;
+		});
+		mv_updateCount(opt, nodeList, searchInput);
+	};
+
+
+	function mv_onControlVisible(cbid, cb) {
+		var root = document.getElementById(cbid);
+		if (!root) return;
+		var container = root.closest(".cbi-value");
+		if (!container) return;
+		if (container.offsetParent !== null) {
+			cb();
+			return;
+		}
+		var observer = new MutationObserver(function () {
+			if (container.offsetParent !== null) {
+				observer.disconnect();
+				cb();
+			}
+		});
+		observer.observe(container, {
+			attributes: true,
+			attributeFilter: ["style", "class"]
+		});
+	}
+
+	function mv_multivalue_init(cbid, opt, nodeList, searchInput) {
+		mv_onControlVisible(cbid, function () {
+			var root = document.getElementById(cbid);
+			if (!root || root.dataset.rendered) return;
+			root.dataset.rendered = "1";
+			mv_render_multivalue_list(cbid, opt, nodeList, searchInput)
+		});
+		mv_registerAdaptive(cbid);
+	}
+
+	const mv_adaptiveControls = new Set();
+	function mv_registerAdaptive(cbid) {
+		mv_adaptiveControls.add(cbid);
+		mv_adaptiveStyle(cbid);
+	}
+	let mv_adaptiveTicking = false;
+	window.addEventListener("resize", () => {
+		if (!mv_adaptiveTicking) {
+			mv_adaptiveTicking = true;
+			requestAnimationFrame(() => {
+				mv_adaptiveControls.forEach(cbid => mv_adaptiveStyle(cbid));
+				mv_adaptiveTicking = false;
+			});
+		}
+	});
+//]]>
+</script>
