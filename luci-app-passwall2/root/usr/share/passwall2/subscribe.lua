@@ -611,6 +611,8 @@ local function processData(szType, content, add_mode, group)
 			else
 				result.tls_allowInsecure = allowInsecure_default and "1" or "0"
 			end
+			result.tls_CertSha = info.pcs
+			result.tls_CertByName = info.vcn
 		else
 			result.tls = "0"
 		end
@@ -869,6 +871,8 @@ local function processData(szType, content, add_mode, group)
 							result.ech = "1"
 							result.ech_config = params.ech
 						end
+						result.tls_CertSha = params.pcs
+						result.tls_CertByName = params.vcn
 						if params.security == "reality" then
 							result.reality = "1"
 							result.reality_publicKey = params.pbk or nil
@@ -992,6 +996,8 @@ local function processData(szType, content, add_mode, group)
 
 			result.tls = '1'
 			result.tls_serverName = peer and peer or sni
+			result.tls_CertSha = params.pcs
+			result.tls_CertByName = params.vcn
 
 			params.allowinsecure = params.allowinsecure or params.insecure
 			if params.allowinsecure then
@@ -1251,6 +1257,8 @@ local function processData(szType, content, add_mode, group)
 					result.ech = "1"
 					result.ech_config = params.ech
 				end
+				result.tls_CertSha = params.pcs
+				result.tls_CertByName = params.vcn
 				if params.security == "reality" then
 					result.reality = "1"
 					result.reality_publicKey = params.pbk or nil
@@ -1366,6 +1374,8 @@ local function processData(szType, content, add_mode, group)
 			result.address = host_port
 		end
 		result.tls_serverName = params.sni
+		result.tls_CertSha = params.pcs
+		result.tls_CertByName = params.vcn
 		params.allowinsecure = params.allowinsecure or params.insecure
 		if params.allowinsecure and (params.allowinsecure == "1" or params.allowinsecure == "0") then
 			result.tls_allowInsecure = params.allowinsecure

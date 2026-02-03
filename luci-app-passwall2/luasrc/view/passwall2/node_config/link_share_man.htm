@@ -313,6 +313,8 @@ local current_node = map:get(section)
 					params += opt.query("alpn", dom_prefix + "alpn");
 					params += opt.query("sni", dom_prefix + "tls_serverName");
 					params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+					params += opt.query("pcs", dom_prefix + "tls_CertSha");
+					params += opt.query("vcn", dom_prefix + "tls_CertByName");
 					params += opt.query("ech", dom_prefix + "ech_config");
 				}
 
@@ -491,6 +493,8 @@ local current_node = map:get(section)
 				params += opt.query("alpn", dom_prefix + "alpn");
 				params += opt.query("sni", dom_prefix + "tls_serverName");
 				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+				params += opt.query("pcs", dom_prefix + "tls_CertSha");
+				params += opt.query("vcn", dom_prefix + "tls_CertByName");
 				params += opt.query("ech", dom_prefix + "ech_config");
 			}
 
@@ -555,6 +559,8 @@ local current_node = map:get(section)
 				params += opt.query("alpn", dom_prefix + "alpn");
 				params += opt.query("sni", dom_prefix + "tls_serverName");
 				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
+				params += opt.query("pcs", dom_prefix + "tls_CertSha");
+				params += opt.query("vcn", dom_prefix + "tls_CertByName");
 				params += opt.query("ech", dom_prefix + "ech_config");
 			}
 			params += "#" + encodeURI(v_alias.value);
@@ -568,6 +574,8 @@ local current_node = map:get(section)
 			var params = "";
 			params += opt.query("sni", dom_prefix + "tls_serverName");
 			params += opt.query("insecure", dom_prefix + "tls_allowInsecure");
+			params += opt.query("pcs", dom_prefix + "tls_CertSha");
+			params += opt.query("vcn", dom_prefix + "tls_CertByName");
 			
 			var v_password = null;
 			
@@ -1011,6 +1019,8 @@ local current_node = map:get(section)
 						}
 						opt.set(dom_prefix + 'ech', !!queryParam.ech);
 						opt.set(dom_prefix + 'ech_config', queryParam.ech || '');
+						opt.set(dom_prefix + 'tls_CertSha', queryParam.pcs || '');
+						opt.set(dom_prefix + 'tls_CertByName', queryParam.vcn || '');
 					}
 
 					if (queryParam.security == "reality") {
@@ -1249,6 +1259,8 @@ local current_node = map:get(section)
 				tls_serverName = tls_serverName || "";
 				opt.set(dom_prefix + 'tls_serverName', tls_serverName);
 				opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
+				opt.set(dom_prefix + 'tls_CertSha', queryParam.pcs || '');
+				opt.set(dom_prefix + 'tls_CertByName', queryParam.vcn || '');
 			}
 			opt.set(dom_prefix + 'tls_allowInsecure', true);
 			if ((queryParam.allowinsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0') {
@@ -1406,6 +1418,8 @@ local current_node = map:get(section)
 					}
 					opt.set(dom_prefix + 'ech', !!queryParam.ech);
 					opt.set(dom_prefix + 'ech_config', queryParam.ech || '');
+					opt.set(dom_prefix + 'tls_CertSha', queryParam.pcs || '');
+					opt.set(dom_prefix + 'tls_CertByName', queryParam.vcn || '');
 				}
 
 				if (queryParam.security == "reality") {
@@ -1552,6 +1566,8 @@ local current_node = map:get(section)
 			if (queryParam.insecure && queryParam.insecure == "1") {
 				opt.set(dom_prefix + 'tls_allowInsecure', true);
 			}
+			opt.set(dom_prefix + 'tls_CertSha', queryParam.pcs || '');
+			opt.set(dom_prefix + 'tls_CertByName', queryParam.vcn || '');
 			if (m.hash) {
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}

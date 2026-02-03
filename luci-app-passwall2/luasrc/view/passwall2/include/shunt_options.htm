@@ -1,0 +1,75 @@
+<style>
+.hidden {
+	display: none !important;
+	visibility: hidden !important;
+}
+</style>
+<script type="text/javascript">
+	//<![CDATA[
+	function check_fakedns(id, val) {
+		const dom_id = "cbid.table." + id + ".";
+		const fakedns_dom = document.getElementById(dom_id + "_fakedns");
+		if (!val) {
+			const selectNode = document.getElementById(dom_id + "_node");
+			val = selectNode.value;
+		}
+		if (val == "" || val == "_direct") {
+			fakedns_dom.value = 0;
+			fakedns_dom.checked = false;
+			fakedns_dom.classList.add('hidden');
+		} else {
+			fakedns_dom.classList.remove('hidden');
+		}
+	}
+	function check_proxy_tag(id, val) {
+		const dom_id = "cbid.table." + id + ".";
+		const cbid = dom_id + "_proxy_tag";
+		const proxy_tag_dom = document.getElementById(cbid + ".main");
+		if (!val) {
+			const selectNode = document.getElementById(dom_id + "_node");
+			val = selectNode.value;
+		}
+		if (val == "" || val.startsWith("_") || val.startsWith("Socks_")) {
+			const hiddenSelect = document.getElementById(cbid);
+			const panel = document.getElementById(cbid + ".panel");
+			const display = document.getElementById(cbid + ".display");
+			const labelSpan = document.getElementById(cbid + ".label");
+			const searchInput = document.getElementById(cbid + ".search");
+			const listContainer = document.getElementById(cbid + ".list");
+			lv_change(cbid, listContainer, hiddenSelect, labelSpan, searchInput, "", "<%:Close (Not use)%>");
+			proxy_tag_dom.classList.add('hidden');
+		} else {
+			proxy_tag_dom.classList.remove('hidden');
+		}
+	}
+	function refresh_depends() {
+		const table_dom = document.getElementById("cbi-passwall2-shunt_option_list");
+		if (table_dom) {
+			const trs = table_dom.getElementsByTagName("tr");
+			for (let i = 1; i < trs.length;i++) {
+				check_fakedns(i);
+				check_proxy_tag(i);
+			}
+		}
+	}
+	document.addEventListener("DOMContentLoaded", function () {
+		refresh_depends();
+		const table_dom = document.getElementById("cbi-passwall2-shunt_option_list");
+		if (table_dom) {
+			const trs = table_dom.getElementsByTagName("tr");
+			for (let i = 1; i < trs.length;i++) {
+				const selectNode = document.getElementById("cbid.table." + i + "._node.main");
+				selectNode.addEventListener("change", function(el){
+					let new_val = el.target.value
+					check_fakedns(i, new_val);
+					check_proxy_tag(i, new_val);
+				});
+				if (i == trs.length - 1) {
+					const newArray = window.lv_dropdown_data["cbid.table." + i + "._node"].ungrouped.filter(item => item.key !== "_default");
+					window.lv_dropdown_data["cbid.table." + i + "._node"].ungrouped = newArray
+				}
+			}
+		}
+	});
+	//]]>
+</script>
