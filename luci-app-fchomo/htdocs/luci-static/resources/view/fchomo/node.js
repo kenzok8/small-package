@@ -403,23 +403,30 @@ return view.extend({
 		so.depends('sudoku_table_type', 'prefer_entropy');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'sudoku_padding_min', _('Minimum padding'));
-		so.datatype = 'uinteger';
+		so = ss.taboption('field_general', form.Value, 'sudoku_padding_min', _('Minimum padding rate'));
+		so.datatype = 'and(uinteger, range(0, 100))';
 		so.default = 2;
 		so.rmempty = false;
 		so.depends('type', 'sudoku');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'sudoku_padding_max', _('Maximum padding'));
-		so.datatype = 'uinteger';
+		so = ss.taboption('field_general', form.Value, 'sudoku_padding_max', _('Maximum padding rate'));
+		so.datatype = 'and(uinteger, range(0, 100))';
 		so.default = 7;
 		so.rmempty = false;
+		so.validate = function(section_id, value) {
+			const padding_min = this.section.getOption('sudoku_padding_min').formvalue(section_id);
+
+			if (value < padding_min)
+				return _('Expecting: %s').format(_('Maximum padding rate must be greater than or equal to the minimum padding rate.'));
+
+			return true;
+		}
 		so.depends('type', 'sudoku');
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'sudoku_enable_pure_downlink', _('Enable obfuscate for downlink'),
-			_('When disabled, downlink ciphertext is split into 6-bit segments, reusing the original padding pool and obfuscate type to reduce downlink overhead.') + '</br>' +
-			_('Uplink keeps the Sudoku protocol, and downlink characteristics are consistent with uplink characteristics.'));
+			_('false = bandwidth optimized downlink; true = pure Sudoku downlink.'));
 		so.default = so.enabled;
 		so.depends('type', 'sudoku');
 		so.modalonly = true;
@@ -432,7 +439,7 @@ return view.extend({
 		so = ss.taboption('field_general', form.ListValue, 'sudoku_http_mask_mode', _('HTTP mask mode'));
 		so.default = 'legacy';
 		so.value('legacy', _('Legacy'));
-		so.value('stream', _('stream') + ' - ' + _('CDN support'));
+		so.value('stream', _('split-stream') + ' - ' + _('CDN support'));
 		so.value('poll', _('poll') + ' - ' + _('CDN support'));
 		so.value('auto', _('Auto') + ' - ' + _('CDN support'));
 		so.depends('sudoku_http_mask', '1');
@@ -457,7 +464,7 @@ return view.extend({
 			_('Reusing a single tunnel to carry multiple target connections within it.'));
 		so.default = 'off';
 		so.value('off', _('OFF'));
-		so.value('auto', _('Auto'), _('Reuse h1.1 keep-alive / h2 connections to reduce RTT for each connection establishment.'));
+		so.value('auto', _('Auto'), _('Reuse HTTP connections to reduce RTT for each connection establishment.'));
 		so.value('on', _('ON'), _('Reusing a single tunnel to carry multiple target connections within it.'));
 		so.validate = function(section_id, value) {
 			const http_mask_mode = this.section.getOption('sudoku_http_mask_mode').formvalue(section_id);
@@ -501,10 +508,10 @@ return view.extend({
 
 		so = ss.taboption('field_general', form.ListValue, 'tuic_congestion_controller', _('Congestion controller'),
 			_('QUIC congestion controller.'));
-		so.default = 'cubic';
-		so.value('cubic', _('cubic'));
-		so.value('new_reno', _('new_reno'));
-		so.value('bbr', _('bbr'));
+		so.default = hm.congestion_controller[0][0];
+		hm.congestion_controller.forEach((res) => {
+			so.value.apply(so, res);
+		})
 		so.depends('type', 'tuic');
 		so.modalonly = true;
 
@@ -654,10 +661,66 @@ return view.extend({
 		so.depends({type: /^(vmess|vless)$/});
 		so.modalonly = true;
 
+		/* Masque fields */
+		so = ss.taboption('field_general', form.Value, 'masque_private_key', _('Private key'),
+			_('Base64 encoded ECDSA private key on the NIST P-256 curve.'));
+		so.password = true;
+		so.validate = L.bind(hm.validateBase64Key, so, 164);
+		so.rmempty = false;
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'masque_endpoint_public_key', _('Endpoint pubkic key'),
+			_('Base64 encoded ECDSA public key on the NIST P-256 curve.'));
+		so.validate = L.bind(hm.validateBase64Key, so, 124);
+		so.rmempty = false;
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'masque_ip', _('Local address'),
+			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv4'));
+		so.datatype = 'ip4addr(1)';
+		so.placeholder = '172.16.0.2';
+		so.rmempty = false;
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'masque_ipv6', _('Local IPv6 address'),
+			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv6'));
+		so.datatype = 'ip6addr(1)';
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'masque_mtu', _('MTU'));
+		so.datatype = 'range(0,9000)';
+		so.placeholder = '1280';
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'masque_remote_dns_resolve', _('Remote DNS resolve'),
+			_('Force DNS remote resolution.'));
+		so.default = so.disabled;
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'masque_dns', _('DNS server'));
+		so.datatype = 'or(host, hostport)';
+		so.depends('masque_remote_dns_resolve', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'masque_congestion_controller', _('Congestion controller'));
+		so.default = hm.congestion_controller[0][0];
+		hm.congestion_controller.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
 		/* WireGuard fields */
 		so = ss.taboption('field_general', form.Value, 'wireguard_ip', _('Local address'),
 			_('The %s address used by local machine in the Wireguard network.').format('IPv4'));
 		so.datatype = 'ip4addr(1)';
+		so.placeholder = '172.16.0.2';
 		so.rmempty = false;
 		so.depends('type', 'wireguard');
 		so.modalonly = true;
@@ -781,7 +844,7 @@ return view.extend({
 		/* Extra fields */
 		so = ss.taboption('field_general', form.Flag, 'udp', _('UDP'));
 		so.default = so.disabled;
-		so.depends({type: /^(direct|socks5|ss|mieru|vmess|vless|trojan|anytls|wireguard)$/});
+		so.depends({type: /^(direct|socks5|ss|mieru|vmess|vless|trojan|anytls|masque|wireguard)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'uot', _('UoT'),

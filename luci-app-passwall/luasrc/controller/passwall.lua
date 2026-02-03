@@ -884,7 +884,7 @@ function geo_view()
 		return
 	end
 	local function get_rules(str, type)
-		local remarks = {}
+		local rules_id = {}
 		uci:foreach(appname, "shunt_rules", function(s)
 			local list
 			if type == "geoip" then list = s.ip_list else list = s.domain_list end
@@ -893,14 +893,14 @@ function geo_view()
 					local prefix, main = line:match("^(.-):(.*)")
 					if not main then main = line end
 					if type == "geoip" and (api.datatypes.ipaddr(str) or api.datatypes.ip6addr(str)) then
-						if main:find(str, 1, true) and s.remarks then remarks[#remarks + 1] = s.remarks end
+						if main:find(str, 1, true) then rules_id[#rules_id + 1] = s[".name"] end
 					else
-						if main == str and s.remarks then remarks[#remarks + 1] = s.remarks end
+						if main == str then rules_id[#rules_id + 1] = s[".name"] end
 					end
 				end
 			end
 		end)
-		return remarks
+		return rules_id
 	end
 	local geo_dir = (uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 	local geosite_path = geo_dir .. "/geosite.dat"

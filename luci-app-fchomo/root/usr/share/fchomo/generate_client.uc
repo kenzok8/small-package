@@ -488,13 +488,20 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"routing-mark": strToInt(cfg.routing_mark) || null,
 		"ip-version": cfg.ip_version,
 
-		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / hysteria2 / TUIC / SSH / WireGuard */
+		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / hysteria2 / TUIC / SSH / WireGuard / Masque */
 		username: cfg.username,
 		uuid: cfg.vmess_uuid || cfg.uuid,
 		cipher: cfg.vmess_chipher || cfg.shadowsocks_chipher,
 		password: cfg.shadowsocks_password || cfg.password,
 		headers: cfg.headers ? json(cfg.headers) : null,
-		"private-key": cfg.wireguard_private_key || cfg.ssh_priv_key,
+		"congestion-controller": cfg.tuic_congestion_controller || cfg.masque_congestion_controller,
+		"private-key": cfg.masque_private_key || cfg.wireguard_private_key || cfg.ssh_priv_key,
+		"public-key": cfg.masque_endpoint_public_key || cfg.wireguard_peer_public_key,
+		ip: cfg.masque_ip || cfg.wireguard_ip,
+		ipv6: cfg.masque_ipv6 || cfg.wireguard_ipv6,
+		mtu: strToInt(cfg.masque_mtu ?? cfg.wireguard_mtu) || null,
+		"remote-dns-resolve": strToBool(cfg.masque_remote_dns_resolve ?? cfg.wireguard_remote_dns_resolve),
+		dns: cfg.masque_dns || cfg.wireguard_dns,
 
 		/* Hysteria / Hysteria2 */
 		ports: isEmpty(cfg.hysteria_ports) ? null : join(',', cfg.hysteria_ports),
@@ -541,7 +548,6 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 
 		/* TUIC */
 		ip: cfg.tuic_ip,
-		"congestion-controller": cfg.tuic_congestion_controller,
 		"udp-relay-mode": cfg.tuic_udp_relay_mode,
 		"udp-over-stream": strToBool(cfg.tuic_udp_over_stream),
 		"udp-over-stream-version": cfg.tuic_udp_over_stream_version,
@@ -573,16 +579,10 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		encryption: cfg.vless_encryption === '1' ? cfg.vless_encryption_encryption : null,
 
 		/* WireGuard */
-		ip: cfg.wireguard_ip,
-		ipv6: cfg.wireguard_ipv6,
-		"public-key": cfg.wireguard_peer_public_key,
 		"pre-shared-key": cfg.wireguard_pre_shared_key,
 		"allowed-ips": cfg.wireguard_allowed_ips,
 		reserved: cfg.wireguard_reserved,
 		"persistent-keepalive": strToInt(cfg.wireguard_persistent_keepalive),
-		mtu: strToInt(cfg.wireguard_mtu) || null,
-		"remote-dns-resolve": strToBool(cfg.wireguard_remote_dns_resolve),
-		dns: cfg.wireguard_dns,
 
 		/* Plugin fields */
 		plugin: cfg.plugin,

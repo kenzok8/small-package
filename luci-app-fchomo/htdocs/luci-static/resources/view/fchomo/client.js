@@ -593,7 +593,7 @@ function renderPayload(s, total, uciconfig) {
 		initPayload(o, n, 'factor', uciconfig);
 
 		o = s.option(form.Value, prefix + 'dscp', _('Factor') + ` ${n+1}`);
-		o.datatype = 'range(0, 63)';
+		o.datatype = 'and(uinteger, range(0, 63))';
 		if (n === 0)
 			o.depends('type', 'DSCP');
 		o.depends(prefix + 'type', 'DSCP');
