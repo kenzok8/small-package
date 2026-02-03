@@ -43,6 +43,15 @@ const checkurls = [
 	['https://www.youtube.com', _('YouTube')]
 ];
 
+// allowed_congestion    '/proc/sys/net/ipv4/tcp_allowed_congestion_control'
+// available_congestion  '/proc/sys/net/ipv4/tcp_available_congestion_control'
+const congestion_controller = [
+	['', _('Keep default')],
+	['cubic', _('cubic')],
+	['new_reno', _('new_reno')],
+	['bbr', _('bbr')],
+];
+
 const stunserver = [
 	['stun.fitauto.ru:3478'],
 	['stun.hot-chilli.net:3478'],
@@ -169,6 +178,7 @@ const outbound_type = [
 	//['hysteria', _('Hysteria') + ' - ' + _('UDP')],
 	['hysteria2', _('Hysteria2') + ' - ' + _('UDP')],
 	['tuic', _('TUIC') + ' - ' + _('UDP')],
+	['masque', _('Masque') + ' - ' + _('UDP')], // https://blog.cloudflare.com/post-quantum-warp/
 	['wireguard', _('WireGuard') + ' - ' + _('UDP')],
 	['ssh', _('SSH') + ' - ' + _('TCP')]
 ];
@@ -1643,6 +1653,7 @@ return baseclass.extend({
 	HM_DIR,
 	monospacefonts,
 	checkurls,
+	congestion_controller,
 	stunserver,
 	dashrepos,
 	dashrepos_urlparams,

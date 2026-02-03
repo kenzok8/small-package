@@ -391,29 +391,37 @@ return view.extend({
 		o.depends('sudoku_table_type', 'prefer_entropy');
 		o.modalonly = true;
 
-		o = s.taboption('field_general', form.Value, 'sudoku_padding_min', _('Minimum padding'));
-		o.datatype = 'uinteger';
+		o = s.taboption('field_general', form.Value, 'sudoku_padding_min', _('Minimum padding rate'));
+		o.datatype = 'and(uinteger, range(0, 100))';
 		o.default = 1;
 		o.rmempty = false;
 		o.depends('type', 'sudoku');
 		o.modalonly = true;
 
-		o = s.taboption('field_general', form.Value, 'sudoku_padding_max', _('Maximum padding'));
-		o.datatype = 'uinteger';
+		o = s.taboption('field_general', form.Value, 'sudoku_padding_max', _('Maximum padding rate'));
+		o.datatype = 'and(uinteger, range(0, 100))';
 		o.default = 15;
 		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			const padding_min = this.section.getOption('sudoku_padding_min').formvalue(section_id);
+
+			if (value < padding_min)
+				return _('Expecting: %s').format(_('Maximum padding rate must be greater than or equal to the minimum padding rate.'));
+
+			return true;
+		}
 		o.depends('type', 'sudoku');
 		o.modalonly = true;
 
-		o = s.taboption('field_general', form.Value, 'sudoku_handshake_timeout', _('Handshake timeout'));
+		o = s.taboption('field_general', form.Value, 'sudoku_handshake_timeout', _('Handshake timeout'),
+			_('In seconds.'));
 		o.datatype = 'uinteger';
 		o.placeholder = 5;
 		o.depends('type', 'sudoku');
 		o.modalonly = true;
 
 		o = s.taboption('field_general', form.Flag, 'sudoku_enable_pure_downlink', _('Enable obfuscate for downlink'),
-			_('When disabled, downlink ciphertext is split into 6-bit segments, reusing the original padding pool and obfuscate type to reduce downlink overhead.') + '</br>' +
-			_('Uplink keeps the Sudoku protocol, and downlink characteristics are consistent with uplink characteristics.'));
+			_('false = bandwidth optimized downlink; true = pure Sudoku downlink.'));
 		o.default = o.enabled;
 		o.depends('type', 'sudoku');
 		o.modalonly = true;
@@ -426,7 +434,7 @@ return view.extend({
 		o = s.taboption('field_general', form.ListValue, 'sudoku_http_mask_mode', _('HTTP mask mode'));
 		o.default = 'legacy';
 		o.value('legacy', _('Legacy'));
-		o.value('stream', _('stream') + ' - ' + _('CDN support'));
+		o.value('stream', _('split-stream') + ' - ' + _('CDN support'));
 		o.value('poll', _('poll') + ' - ' + _('CDN support'));
 		o.value('auto', _('Auto') + ' - ' + _('CDN support'));
 		o.depends('sudoku_http_mask', '1');
@@ -445,10 +453,10 @@ return view.extend({
 
 		o = s.taboption('field_general', form.ListValue, 'tuic_congestion_controller', _('Congestion controller'),
 			_('QUIC congestion controller.'));
-		o.default = 'cubic';
-		o.value('cubic', _('cubic'));
-		o.value('new_reno', _('new_reno'));
-		o.value('bbr', _('bbr'));
+		o.default = hm.congestion_controller[0][0];
+		hm.congestion_controller.forEach((res) => {
+			o.value.apply(o, res);
+		})
 		o.depends('type', 'tuic');
 		o.modalonly = true;
 
