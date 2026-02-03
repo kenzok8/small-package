@@ -1,0 +1,111 @@
+<%
+local api = require "luci.passwall.api"
+-%>
+
+<style>
+	.faq-title {
+		color: var(--primary);
+		font-weight: bolder;
+		margin-bottom: 0.5rem;
+		display: inline-block;
+	}
+	.faq-item {
+		margin-bottom: 0.8rem;
+		line-height:1.2rem;
+	}
+
+	.geoview-search {
+		display: flex;
+		gap: 2px;
+		align-items: center;
+		white-space: nowrap;
+	}
+</style>
+
+<div class="cbi-value">
+	<ul>
+		<b class="faq-title"><%:Tips:%></b>
+		<li class="faq-item">1. <span><%:By entering a domain or IP, you can query the Geo rule list they belong to.%></span></li>
+		<li class="faq-item">2. <span><%:By entering a GeoIP or Geosite, you can extract the domains/IPs they contain.%></span></li>
+		<li class="faq-item">3. <span><%:Use the GeoIP/Geosite query function to verify if the entered Geo rules are correct.%></span></li>
+	</ul>
+</div>
+<div class="cbi-value" id="cbi-passwall-geoview-lookup">
+	<label class="cbi-value-title" for="geoview.lookup"><%:Domain/IP Query%></label>
+	<div class="cbi-value-field">
+		<div class="geoview-search">
+			<input type="text" class="password-input cbi-input-text" id="geoview.lookup" name="geoview.lookup" inputmode="search" enterkeyhint="search" />
+			<input class="btn cbi-button cbi-button-apply" type="button" id="lookup-view_btn"
+				onclick='do_geoview(this, "lookup", lookupInput.value)'
+				value="<%:Query%>" />
+		</div>
+		<div class="cbi-value-description">
+			<%:Enter a domain or IP to query the Geo rule list they belong to.%>
+		</div>
+	</div>
+</div>
+<div class="cbi-value" id="cbi-passwall-geoview-extract">
+	<label class="cbi-value-title" for="geoview.extract"><%:GeoIP/Geosite Query%></label>
+	<div class="cbi-value-field">
+		<div class="geoview-search">
+			<input type="text" class="password-input cbi-input-text" id="geoview.extract" name="geoview.extract" inputmode="search" enterkeyhint="search" />
+			<input class="btn cbi-button cbi-button-apply" type="button" id="extract-view_btn"
+				onclick='do_geoview(this, "extract", extractInput.value)'
+				value="<%:Query%>" />
+		</div>
+		<div class="cbi-value-description">
+			<%:Enter a GeoIP or Geosite to extract the domains/IPs they contain. Format: geoip:cn or geosite:gfw%>
+		</div>
+	</div>
+</div>
+<div class="cbi-value">
+	<textarea id="geoview_textarea" class="cbi-input-textarea" style="width: 100%; margin-top: 10px;" rows="25" wrap="off" readonly="readonly"></textarea>
+</div>
+
+<script type="text/javascript">
+	//<![CDATA[
+	const lookupInput = document.getElementById("geoview.lookup");
+	const extractInput = document.getElementById("geoview.extract");
+	const lookup_btn = document.getElementById("lookup-view_btn");
+	const extract_btn = document.getElementById("extract-view_btn");
+
+	function do_geoview(btn,action,value) {
+		value = value.trim();
+		if (!value) {
+			alert("<%:Please enter query content!%>");
+			return;
+        }
+		lookup_btn.disabled = true;
+		extract_btn.disabled = true;
+		btn.value = '<%:Querying%>';
+		const textarea = document.getElementById('geoview_textarea');
+		textarea.textContent = "";
+		fetch('<%= api.url("geo_view") %>?action=' + action + '&value=' + encodeURIComponent(value))
+			.then(response => response.text())
+			.then(data => {
+				textarea.textContent = data;
+				lookup_btn.disabled = false;
+				extract_btn.disabled = false;
+				btn.value = '<%:Query%>';
+			})
+	}
+
+	lookupInput.addEventListener("keydown", function(e) {
+		const isEnter = e.key === "Enter" || e.keyCode === 13;
+		if (!isEnter) return;
+		e.stopPropagation();
+		e.preventDefault();
+		lookupInput.blur();
+		lookup_btn.click();
+	});
+
+	extractInput.addEventListener("keydown", function(e) {
+		const isEnter = e.key === "Enter" || e.keyCode === 13;
+		if (!isEnter) return;
+		e.stopPropagation();
+		e.preventDefault();
+		extractInput.blur();
+		extract_btn.click();
+	});
+	//]]>
+</script>
