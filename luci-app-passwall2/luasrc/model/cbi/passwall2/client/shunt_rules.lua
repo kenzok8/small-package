@@ -50,6 +50,13 @@ s.dynamic = false
 remarks = s:option(Value, "remarks", translate("Remarks"))
 remarks.default = arg[1]
 remarks.rmempty = false
+remarks.validate = function(self, value, section)
+	value = api.trim(value)
+	if value == "" then
+		return nil, translate("Remark cannot be empty.")
+	end
+	return value
+end
 
 protocol = s:option(MultiValue, "protocol", translate("Protocol"))
 protocol:value("http")

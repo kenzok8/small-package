@@ -392,10 +392,15 @@ if api.compare_versions(xray_version, "<", "26.1.31") then
 	o.default = "0"
 	o:depends({ [_n("tls")] = true, [_n("reality")] = false })
 	o:depends({ [_n("protocol")] = "hysteria2" })
-end
+else
+	o = s:option(Value, _n("tls_CertSha"), translate("TLS Chain Fingerprint (SHA256)"), translate("Once set, connects only when the server’s chain fingerprint matches."))
+	o:depends({ [_n("tls")] = true, [_n("reality")] = false })
+	o:depends({ [_n("protocol")] = "hysteria2" })
 
-o = s:option(Value, _n("tls_chain_fingerprint"), translate("TLS Chain Fingerprint (SHA256)"), translate("Once set, connects only when the server’s chain fingerprint matches."))
-o:depends({ [_n("tls")] = true, [_n("reality")] = false })
+	o = s:option(Value, _n("tls_CertByName"), translate("TLS Certificate Name (CertName)"), translate("TLS is used to verify the leaf certificate name."))
+	o:depends({ [_n("tls")] = true, [_n("reality")] = false })
+	o:depends({ [_n("protocol")] = "hysteria2" })
+end
 
 o = s:option(Flag, _n("ech"), translate("ECH"))
 o.default = "0"

@@ -1624,6 +1624,12 @@ msgstr "TLS 憑證鏈指紋（SHA256）"
 msgid "Once set, connects only when the server’s chain fingerprint matches."
 msgstr "設定後，僅在伺服器憑證鏈指紋匹配時連接。"
 
+msgid "TLS Certificate Name (CertName)"
+msgstr "TLS 憑證名稱（CertName）"
+
+msgid "TLS is used to verify the leaf certificate name."
+msgstr "TLS 用於驗證 leaf 憑證的 name。"
+
 msgid "ECH Config"
 msgstr "ECH 配置"
 
