@@ -1337,9 +1337,15 @@ function gen_config(var)
 					preproxy_tag = preproxy_outboundTag
 				end
 			end
+
 			--default_node
 			local default_node_id = node.default_node or "_direct"
 			COMMON.default_outbound_tag = gen_shunt_node("default", default_node_id)
+
+			if inner_fakedns == "1" and node["default_fakedns"] == "1" then
+				remote_dns_fake = true
+			end
+
 			--shunt rule
 			uci:foreach(appname, "shunt_rules", function(e)
 				local outboundTag = gen_shunt_node(e[".name"])

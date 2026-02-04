@@ -556,6 +556,18 @@
 			"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
 		}[c]));
 	}
+	
+	function lv_change(cbid, listContainer, hiddenSelect, labelSpan, searchInput, new_key, new_text) {
+		//改值
+		hiddenSelect.options[0].value = new_key;
+		hiddenSelect.options[0].text = new_key;
+		hiddenSelect.value = new_key;
+		labelSpan.textContent = lv_ellipsisByWidth(cbid, new_text);
+		labelSpan.title = new_text;
+		lv_highlightSelectedItem(listContainer, hiddenSelect);
+		lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
+	}
+	
 	function lv_render_dropdown_list(cbid, panel, listContainer, hiddenSelect, labelSpan, searchInput, display) {
 		if (window.lv_dropdown_rendered[cbid]) return;
 		const data = window.lv_dropdown_data[cbid];
@@ -632,13 +644,7 @@
 			const changed = key !== hiddenSelect.value;
 			if (changed) {
 				//改值
-				hiddenSelect.options[0].value = key;
-				hiddenSelect.options[0].text = key;
-				hiddenSelect.value = key;
-				labelSpan.textContent = lv_ellipsisByWidth(cbid, text);
-				labelSpan.title = text;
-				lv_highlightSelectedItem(listContainer, hiddenSelect);
-				lv_updateGroupCounts(cbid, listContainer, hiddenSelect, searchInput);
+				lv_change(cbid, listContainer, hiddenSelect, labelSpan, searchInput, key, text);
 			}
 			lv_closePanel(cbid,panel,listContainer,hiddenSelect,searchInput);
 			if (changed) {

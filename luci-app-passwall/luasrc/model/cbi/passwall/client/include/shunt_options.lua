@@ -161,6 +161,9 @@ o.remove = function(self, section)
 end
 
 o = s2:option(ListValue, "_proxy_tag", string.format('<a style="color:red">%s</a>', translate("Preproxy")))
+--TODO Choose any node as a pre-proxy. Instead of main node.
+o.template = appname .. "/cbi/nodes_listvalue"
+o.group = {"",""}
 o:value("", translate("Close (Not use)"))
 o:value("main", translate("Use preproxy node"))
 o.cfgvalue = function(self, section)
@@ -222,3 +225,8 @@ end
 if #main_node.keylist > 0 then
 	main_node.default = main_node.keylist[1]
 end
+
+local footer = Template(appname .. "/include/shunt_options")
+footer.api = api
+footer.id = current_node_id
+m:append(footer)
