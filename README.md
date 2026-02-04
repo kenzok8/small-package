@@ -36,11 +36,11 @@ rm -rf feeds/smpackage/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftabl
 
 本仓库包含众多常用OpenWrt插件，包括但不限于：
 
-* **科学上网类**：luci-app-passwall, luci-app-passwall2, luci-app-ssr-plus, luci-app-openclash, luci-app-bypass 等
-* **网络工具类**：luci-app-mosdns, luci-app-smartdns, luci-app-adguardhome 等
-* **系统增强类**：luci-app-advanced, luci-app-diskman, luci-app-dockerman 等
-* **存储与下载**：luci-app-alist, luci-app-aria2, luci-app-qbittorrent 等
-* **主题类**：luci-theme-argon, luci-theme-design, luci-theme-edge 等
+* **科学上网类**：luci-app-passwall, luci-app-passwall2, luci-app-ssr-plus, luci-app-openclash, luci-app-bypass等
+* **网络工具类**：luci-app-mosdns, luci-app-smartdns, luci-app-adguardhome等
+* **系统增强类**：luci-app-advanced, luci-app-diskman, luci-app-dockerman等
+* **存储与下载**：luci-app-alist, luci-app-aria2, luci-app-qbittorrent等
+* **主题类**：luci-theme-argon, luci-theme-design, luci-theme-edge等
 
 > **注意**：Passwall 和 Passwall2 都在本仓库中持续维护更新，请放心使用！
 
