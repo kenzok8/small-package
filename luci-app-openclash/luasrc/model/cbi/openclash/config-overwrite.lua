@@ -274,6 +274,29 @@ function custom_domain_dns_policy.write(self, section, value)
 	end
 end
 
+o = s:taboption("dns", Flag, "custom_proxy_server_policy", translate("Proxy-Server-Nameserver-Policy"))
+o.default = 0
+
+custom_proxy_server_dns_policy = s:taboption("dns", Value, "custom_proxy_server_dns_policy")
+custom_proxy_server_dns_policy.template = "cbi/tvalue"
+custom_proxy_server_dns_policy.description = translate("Domain Names In The List Use The Custom DNS Server, But Still Return Fake-IP Results, One rule per line")
+custom_proxy_server_dns_policy.rows = 20
+custom_proxy_server_dns_policy.wrap = "off"
+custom_proxy_server_dns_policy:depends("custom_proxy_server_policy", "1")
+
+function custom_proxy_server_dns_policy.cfgvalue(self, section)
+	return NXFS.readfile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list") or ""
+end
+function custom_proxy_server_dns_policy.write(self, section, value)
+	if value then
+		value = value:gsub("\r\n?", "\n")
+		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list")
+		if value ~= old_value then
+			NXFS.writefile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list", value)
+		end
+	end
+end
+
 o = s:taboption("dns", Flag, "custom_host", translate("Hosts"))
 o.default = 0
 
@@ -312,21 +335,6 @@ o:value("0", translate("Disable"))
 o:value("off", translate("OFF　"))
 o:value("always", translate("Always　"))
 o:value("strict", translate("strict　"))
-o.default = "0"
-
-o = s:taboption("meta", ListValue, "global_client_fingerprint", translate("Client Fingerprint"))
-o.description = translate("Change The Client Fingerprint, Only Support TLS Transport in TCP/GRPC/WS/HTTP For Vless/Vmess and Trojan")
-o:value("0", translate("Disable"))
-o:value("none", translate("None　"))
-o:value("random", translate("Random"))
-o:value("chrome", translate("Chrome"))
-o:value("firefox", translate("Firefox"))
-o:value("safari", translate("Safari"))
-o:value("ios", translate("IOS"))
-o:value("android", translate("Android"))
-o:value("edge", translate("Edge"))
-o:value("360", translate("360"))
-o:value("qq", translate("QQ"))
 o.default = "0"
 
 o = s:taboption("meta", ListValue, "geodata_loader", translate("Geodata Loader Mode"))

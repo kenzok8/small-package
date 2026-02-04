@@ -9,6 +9,7 @@ CONFIG_FILE="$5"
 
 custom_fakeip_filter=$(uci_get_config "custom_fakeip_filter" || echo 0)
 custom_name_policy=$(uci_get_config "custom_name_policy" || echo 0)
+custom_proxy_server_policy=$(uci_get_config "custom_proxy_server_policy" || echo 0)
 custom_host=$(uci_get_config "custom_host" || echo 0)
 enable_custom_dns=$(uci_get_config "enable_custom_dns" || echo 0)
 append_wan_dns=$(uci_get_config "append_wan_dns" || echo 0)
@@ -26,7 +27,7 @@ dashboard_type=$(uci_get_config "dashboard_type" || echo "Official")
 
 en_mode_tun=${11:-0}
 if [ -z "${12}" ]; then
-   stack_type=${31:-"system"}
+   stack_type=${30:-"system"}
 else
    stack_type=${12}
 fi
@@ -173,10 +174,18 @@ PROXY_GROUPS=$(ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
    end
 " 2>/dev/null)
 
+set_disable_qtype()
+{
+   if [ -z "$1" ]; then
+      return
+   fi
+   [ -z "$disable_qtype_param" ] && disable_qtype_param="disable-qtype-$1=true" || disable_qtype_param="$disable_qtype_param&disable-qtype-$1=true"
+}
+
 yml_dns_get()
 {
    local section="$1" regex='^([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}$'
-   local enabled port type ip group dns_type dns_address interface specific_group node_resolve http3 ecs_subnet ecs_override
+   local enabled port type ip group dns_type dns_address interface specific_group node_resolve http3 ecs_subnet ecs_override disable_qtype_param
 
    config_get_bool "enabled" "$section" "enabled" "1"
    [ "$enabled" = "0" ] && return
@@ -195,8 +204,9 @@ yml_dns_get()
    config_get_bool "skip_cert_verify" "$section" "skip_cert_verify" "0"
    config_get_bool "ecs_override" "$section" "ecs_override" "0"
    config_get "ecs_subnet" "$section" "ecs_subnet" ""
-   config_get "disable_ipv4" "$section" "disable_ipv4" "0"
-   config_get "disable_ipv6" "$section" "disable_ipv6" "0"
+   config_get_bool "disable_ipv4" "$section" "disable_ipv4" "0"
+   config_get_bool "disable_ipv6" "$section" "disable_ipv6" "0"
+   config_list_foreach "$section" "disable_qtype" set_disable_qtype
 
    if [[ "$ip" =~ "$regex" ]] || [ -n "$(echo "${ip}" | grep -Eo "${regex}")" ]; then
       ip="[${ip}]"
@@ -252,6 +262,7 @@ yml_dns_get()
    append_param "$ecs_override_param"
    append_param "$disable_ipv4_param"
    append_param "$disable_ipv6_param"
+   append_param "$disable_qtype_param"
 
    full_dns_address="$dns_type$dns_address$params"
 
@@ -346,24 +357,23 @@ add_default_from_dns = '${25}' == '1'
 sniffer_parse_pure_ip = '${26}' == '1'
 find_process_mode = '${27}'
 fake_ip_range = '${28}'
-global_client_fingerprint = '${29}'
-tun_device_setting = '${30}'
-unified_delay = '${32}' == '1'
-respect_rules = '${33}' == '1'
-fake_ip_filter_mode = '${34}'
-routing_mark_setting = '${35}'
-quic_gso = '${36}' == '1'
-cors_origin = '${37}'
-geo_custom_url = '${38}'
-geoip_custom_url = '${39}'
-geosite_custom_url = '${40}'
-geoasn_custom_url = '${41}'
-lgbm_auto_update = '${42}' == '1'
-lgbm_custom_url = '${43}'
-lgbm_update_interval = '${44}'
-smart_collect = '${45}' == '1'
-smart_collect_size = '${46}'
-fake_ip_range6 = '${47}'
+ipv6_mode = '${29}'
+unified_delay = '${31}' == '1'
+respect_rules = '${32}' == '1'
+fake_ip_filter_mode = '${33}'
+routing_mark_setting = '${34}'
+quic_gso = '${35}' == '1'
+cors_origin = '${36}'
+geo_custom_url = '${37}'
+geoip_custom_url = '${38}'
+geosite_custom_url = '${39}'
+geoasn_custom_url = '${40}'
+lgbm_auto_update = '${41}' == '1'
+lgbm_custom_url = '${42}'
+lgbm_update_interval = '${43}'
+smart_collect = '${44}' == '1'
+smart_collect_size = '${45}'
+fake_ip_range6 = '${46}'
 default_dashboard = '$default_dashboard'
 yacd_type = '$yacd_type'
 dashboard_type = '$dashboard_type'
@@ -374,6 +384,7 @@ custom_fakeip_filter = '$custom_fakeip_filter' == '1'
 china_ip_route = '$china_ip_route' != '0'
 china_ip6_route = '$china_ip6_route' != '0'
 custom_name_policy = '$custom_name_policy' == '1'
+custom_proxy_server_policy = '$custom_proxy_server_policy' == '1'
 custom_host = '$custom_host' == '1'
 enable_redirect_dns = '$enable_redirect_dns'
 
@@ -424,7 +435,6 @@ threads << Thread.new do
       Value['tcp-concurrent'] = true if tcp_concurrent
       Value['unified-delay'] = true if unified_delay
       Value['find-process-mode'] = find_process_mode if find_process_mode != '0'
-      Value['global-client-fingerprint'] = global_client_fingerprint if global_client_fingerprint != '0'
 
       (Value['experimental'] ||= {})['quic-go-disable-gso'] = true if quic_gso
       if cors_origin != '0'
@@ -490,7 +500,7 @@ threads << Thread.new do
          Value['sniffer']['enable'] = false if Value.key?('sniffer')
       end
 
-      if en_mode_tun != '0' || ['2', '3'].include?(tun_device_setting)
+      if en_mode_tun != '0' || ['2', '3'].include?(ipv6_mode)
          Value['tun'] = {
             'enable' => true, 'stack' => stack_type, 'device' => 'utun',
             'dns-hijack' => ['127.0.0.1:53'], 'endpoint-independent-nat' => true,
@@ -579,6 +589,7 @@ threads << Thread.new do
    end
 end
 
+# proxy-server-nameserver
 threads << Thread.new do
    begin
       if enable_custom_dns
@@ -589,7 +600,10 @@ threads << Thread.new do
    rescue Exception => e
       YAML.LOG('Error: Set proxy-server-nameserver Failed,【%s】' % [e.message])
    end
+end
 
+# direct-nameserver
+threads << Thread.new do
    begin
       if enable_custom_dns
          if (directdns = safe_load_yaml('/tmp/yaml_config.directnamedns.yaml')) && directdns['direct-nameserver']
@@ -611,6 +625,19 @@ threads << Thread.new do
       end
    rescue Exception => e
       YAML.LOG('Error: Set Nameserver-Policy Failed,【%s】' % [e.message])
+   end
+end
+
+# proxy-server-nameserver-policy
+threads << Thread.new do
+   begin
+      if custom_proxy_server_policy
+         if (policy = safe_load_yaml('/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list'))
+            (Value['dns']['proxy-server-nameserver-policy'] ||= {}).merge!(policy)
+         end
+      end
+   rescue Exception => e
+      YAML.LOG('Error: Set Proxy-Server-Nameserver-Policy Failed,【%s】' % [e.message])
    end
 end
 
@@ -688,12 +715,12 @@ begin
 
    # DNS Loop Check
    if enable_redirect_dns != '2'
-      dns_options = ['nameserver', 'fallback', 'default-nameserver', 'proxy-server-nameserver', 'nameserver-policy', 'direct-nameserver']
+      dns_options = ['nameserver', 'fallback', 'default-nameserver', 'proxy-server-nameserver', 'nameserver-policy', 'direct-nameserver', 'proxy-server-nameserver-policy']
       dns_options.each do |option|
          threads << Thread.new(option) do |opt|
             begin
                next unless Value['dns'].key?(opt) && !Value['dns'][opt].nil?
-                  if opt != 'nameserver-policy'
+                  if opt != 'nameserver-policy' && opt != 'proxy-server-nameserver-policy'
                      original_size = Value['dns'][opt].size
                      Value['dns'][opt].reject! { |v| v.to_s.match?(/^system($|:\/\/)/) }
                      if Value['dns'][opt].size < original_size
@@ -736,25 +763,33 @@ begin
    end
 
    # proxy-server-nameserver
-   local_exclude = (%x{ls -l /sys/class/net/ |awk '{print \$9}'  2>&1}.each_line.map(&:strip) + ['h3=', 'skip-cert-verify=', 'ecs=', 'ecs-override=', 'disable-ipv6=', 'disable-ipv4='] + ['utun', 'tailscale0', 'docker0', 'tun163', 'br-lan', 'mihomo']).uniq.join('|')
+   local_exclude = (%x{ls -l /sys/class/net/ |awk '{print \$9}'  2>&1}.each_line.map(&:strip) + ['h3=', 'skip-cert-verify=', 'ecs=', 'ecs-override=', 'disable-ipv6=', 'disable-ipv4=', 'disable-qtype-'] + ['utun', 'tailscale0', 'docker0', 'tun163', 'br-lan', 'mihomo']).uniq.join('|')
+   non_domain_reg = /^dhcp:\/\/|^system($|:\/\/)|([0-9a-zA-Z-]{1,}\.)+([a-zA-Z]{2,})/
    proxied_server_reg = /^[^#&]+#(?:(?:#{local_exclude})[^&]*&)*(?:(?!(?:#{local_exclude}))[^&]+)/
-   default_proxy_servers = ['114.114.114.114', '119.29.29.29', '8.8.8.8', '1.1.1.1']
+   servers_to_check = Value.dig('dns', 'nameserver').to_a | Value.dig('dns', 'fallback').to_a | Value.dig('dns', 'default-nameserver').to_a
+   default_proxy_servers = servers_to_check.reject { |s| s.match?(non_domain_reg) }
+   if ! default_proxy_servers.any? || default_proxy_servers.all? { |x| x.match?(proxied_server_reg) }
+      default_proxy_servers = ['114.114.114.114', '119.29.29.29', '8.8.8.8', '1.1.1.1']
+   end
+   proxy_server_nameserver_policy = Value.dig('dns', 'proxy-server-nameserver-policy') && !Value['dns']['proxy-server-nameserver-policy'].empty?
 
    if Value.dig('dns', 'proxy-server-nameserver').to_a.empty?
       all_ns_proxied = Value.dig('dns', 'nameserver').to_a.all? { |x| x.match?(proxied_server_reg) }
-      if respect_rules || Value.dig('dns', 'respect-rules').to_s == 'true' || all_ns_proxied
+      if respect_rules || Value.dig('dns', 'respect-rules').to_s == 'true' || all_ns_proxied || proxy_server_nameserver_policy
          Value['dns']['proxy-server-nameserver'] = default_proxy_servers
          if all_ns_proxied
-            YAML.LOG('Tip: Nameserver Option Maybe All Setted The Proxy Option, Auto Set Proxy-server-nameserver Option to【114.114.114.114, 119.29.29.29, 8.8.8.8, 1.1.1.1】For Avoiding Proxies Server Resolve Loop...')
+            YAML.LOG('Tip: Nameserver Option Maybe All Setted The Proxy Option, Auto Set Proxy-server-nameserver Option to【%s】For Avoiding Proxies Server Resolve Loop...' % [default_proxy_servers.join(', ')])
+         elsif proxy_server_nameserver_policy
+            YAML.LOG('Tip:【Proxy-server-nameserver-policy】Need Proxy-server-nameserver Option Must Be Setted, Auto Set to【%s】' % [default_proxy_servers.join(', ')])
          else
-            YAML.LOG('Tip: Respect-rules Option Need Proxy-server-nameserver Option Must Be Setted, Auto Set to【114.114.114.114, 119.29.29.29, 8.8.8.8, 1.1.1.1】')
+            YAML.LOG('Tip:【Respect-rules】Need Proxy-server-nameserver Option Must Be Setted, Auto Set to【%s】' % [default_proxy_servers.join(', ')])
          end
       end
    else
       all_psn_proxied = Value.dig('dns', 'proxy-server-nameserver').to_a.all? { |x| x.match?(proxied_server_reg) }
       if all_psn_proxied
          (Value['dns']['proxy-server-nameserver'] ||= []).concat(default_proxy_servers).uniq!
-         YAML.LOG('Tip: Proxy-server-nameserver Option Maybe All Setted The Proxy Option, Auto Set Proxy-server-nameserver Option to【114.114.114.114, 119.29.29.29, 8.8.8.8, 1.1.1.1】For Avoiding Proxies Server Resolve Loop...')
+         YAML.LOG('Tip: Proxy-server-nameserver Option Maybe All Setted The Proxy Option, Auto Set Proxy-server-nameserver Option to【%s】For Avoiding Proxies Server Resolve Loop...' % [default_proxy_servers.join(', ')])
       end
    end
 

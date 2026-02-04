@@ -132,6 +132,7 @@ cp -f "/etc/openclash/custom/openclash_custom_hosts.list" "/usr/share/openclash/
 cp -f "/etc/openclash/custom/openclash_custom_fake_filter.list" "/usr/share/openclash/backup/openclash_custom_fake_filter.list" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_domain_dns.list" "/usr/share/openclash/backup/openclash_custom_domain_dns.list" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_domain_dns_policy.list" "/usr/share/openclash/backup/openclash_custom_domain_dns_policy.list" >/dev/null 2>&1
+cp -f "/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list" "/usr/share/openclash/backup/openclash_custom_proxy_server_dns_policy.list" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_fallback_filter.yaml" "/usr/share/openclash/backup/openclash_custom_fallback_filter.yaml" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_sniffer.yaml" "/usr/share/openclash/backup/openclash_custom_sniffer.yaml" >/dev/null 2>&1
 cp -f "/etc/openclash/custom/openclash_custom_localnetwork_ipv4.list" "/usr/share/openclash/backup/openclash_custom_localnetwork_ipv4.list" >/dev/null 2>&1
@@ -164,15 +165,11 @@ if [ -f "/tmp/openclash.bak" ]; then
 	fi
 	mv -f "/tmp/openclash.bak" "/etc/config/openclash" >/dev/null 2>&1
 	cp -rf "/tmp/openclash/." "/etc/openclash/" >/dev/null 2>&1
-	if [ -d "/tmp/openclash_dashboard/" ]; then
-		rm -rf "/usr/share/openclash/ui/dashboard/" >/dev/null 2>&1
-		cp -rf "/tmp/openclash_dashboard/." "/usr/share/openclash/ui/dashboard/" >/dev/null 2>&1
-		rm -rf "/tmp/openclash_dashboard/" >/dev/null 2>&1
-	fi
-	if [ -d "/tmp/openclash_yacd/" ]; then
-		rm -rf "/usr/share/openclash/ui/yacd/" >/dev/null 2>&1
-		cp -rf "/tmp/openclash_yacd/." "/usr/share/openclash/ui/yacd/" >/dev/null 2>&1
-		rm -rf "/tmp/openclash_yacd/" >/dev/null 2>&1
+	#ui
+	if [ -d "/tmp/openclash_ui/" ]; then
+		rm -rf "/usr/share/openclash/ui/" >/dev/null 2>&1
+		cp -rf "/tmp/openclash_ui/." "/usr/share/openclash/ui/" >/dev/null 2>&1
+		rm -rf "/tmp/openclash_ui/" >/dev/null 2>&1
 	fi
 	#pac
 	if [ -d "/tmp/pac/" ]; then

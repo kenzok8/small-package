@@ -284,12 +284,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 					end)(),
 					disablePathMTUDiscovery = (node.hysteria2_disable_mtu_discovery) and true or false
 				} or nil,
-				udpmasks = (node.transport == "hysteria" and node.hysteria2_obfs_type and node.hysteria2_obfs_type ~= "") and {
-					{
-						type = node.hysteria2_obfs_type,
-						settings = node.hysteria2_obfs_password and {
-							password = node.hysteria2_obfs_password
-						} or nil
+				finalmask = (node.transport == "hysteria" and node.hysteria2_obfs_type and node.hysteria2_obfs_type ~= "") and {
+					udp = {
+						{
+							type = node.hysteria2_obfs_type,
+							settings = node.hysteria2_obfs_password and {
+								password = node.hysteria2_obfs_password
+							} or nil
+						}
 					}
 				} or nil
 			} or nil,

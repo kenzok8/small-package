@@ -3200,9 +3200,6 @@ msgstr "No se ha obtenido respuesta."
 msgid "Client Fingerprint"
 msgstr "Huella del cliente"
 
-msgid "Change The Client Fingerprint, Only Support TLS Transport in TCP/GRPC/WS/HTTP For Vless/Vmess and Trojan"
-msgstr "Cambiar la huella del cliente. Solo compatible con transporte TLS en TCP/GRPC/WS/HTTP para Vless/Vmess y Trojan."
-
 msgid "Watchdog: Edit Client-fingerprint Failed,"
 msgstr "Watchdog: fallo al modificar la huella del cliente,"
 
@@ -3404,8 +3401,8 @@ msgstr "Forzar ECS"
 msgid "Override the ECS Subnet Address"
 msgstr "Sobrescribir la subred ECS en consultas DNS"
 
-msgid "Tip: Respect-rules Option Need Proxy-server-nameserver Option Must Be Setted, Auto Set to"
-msgstr "Tip: para usar Respect-rules, proxy-server-nameserver debe estar configurado. Se ajustará automáticamente a"
+msgid "Need Proxy-server-nameserver Option Must Be Setted, Auto Set to"
+msgstr "necesidad proxy-server-nameserver debe estar configurado. Se ajustará automáticamente a"
 
 msgid "Tip: Nameserver Option Maybe All Setted The Proxy Option, Auto Set Proxy-server-nameserver Option to"
 msgstr "Tip: los servidores nameserver podrían estar todos usando proxy. Se ajustará automáticamente proxy-server-nameserver a"
@@ -4237,3 +4234,6 @@ msgstr "¿Estás seguro de que quieres eliminar este panel?"
 
 msgid "Default"
 msgstr "Defecto"
+
+msgid "Disable-Qtype"
+msgstr "Desactivar Qtype"
