@@ -123,7 +123,7 @@ local current_node = map:get(section)
 
 	function buildUrl(btn, urlname, sid) {
 		var opt = {
-			base: "cbid.passwall2",
+			base: "cbid.<%=appname%>",
 			client: true,
 			get: function (opt) {
 				var id = this.base + "." + opt;
@@ -700,7 +700,7 @@ local current_node = map:get(section)
 
 	function fromUrl(btn, urlname, sid, cacheData) {
 		var opt = {
-			base: 'cbid.passwall2',
+			base: 'cbid.<%=appname%>',
 			client: true,
 			get: function (opt) {
 				var obj;
