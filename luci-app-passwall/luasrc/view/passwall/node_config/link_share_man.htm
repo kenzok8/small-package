@@ -1,7 +1,7 @@
 <%+cbi/valueheader%>
 <%
 local api = require "luci.passwall.api"
-local appname = 'passwall'
+local appname = api.appname
 local map = self.map
 
 local has_ss = api.is_finded("ss-redir")
@@ -124,7 +124,7 @@ local current_node = map:get(section)
 
 	function buildUrl(btn, urlname, sid) {
 		var opt = {
-			base: "cbid.passwall",
+			base: "cbid.<%=appname%>",
 			client: true,
 			get: function (opt) {
 				var id = this.base + "." + opt;
@@ -704,7 +704,7 @@ local current_node = map:get(section)
 
 	function fromUrl(btn, urlname, sid, cacheData) {
 		var opt = {
-			base: 'cbid.passwall',
+			base: 'cbid.<%=appname%>',
 			client: true,
 			get: function (opt) {
 				var obj;

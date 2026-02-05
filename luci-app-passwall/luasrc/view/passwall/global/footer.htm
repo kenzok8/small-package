@@ -1,12 +1,13 @@
 <%
 local api = self.api
+local appname = api.appname
 -%>
 <style>
- #cbi-<%=api.appname%>-socks .td.cbi-value-field > div { 
+ #cbi-<%=appname%>-socks .td.cbi-value-field > div { 
 	white-space: nowrap;
 }
 @media (max-width: 1152px) {
-	 #cbi-<%=api.appname%>-socks .td.cbi-value-field > div {
+	 #cbi-<%=appname%>-socks .td.cbi-value-field > div {
 		white-space: normal;
 	}
 }
@@ -22,11 +23,11 @@ local api = self.api
 
 	function to_edit_node(btn) {
 		if (!btn) return;
-		const idReg = /^cbid\.<%=api.appname%>\..*node$/;
+		const idReg = /^cbid\.<%=appname%>\..*node$/;
 		let hidden_select = null;
-		const container = btn.closest('#cbi-<%=api.appname%>-global') || btn.closest('#cbi-<%=api.appname%>-socks');
+		const container = btn.closest('#cbi-<%=appname%>-global') || btn.closest('#cbi-<%=appname%>-socks');
 		if (!container) return null;
-		const selects = container.querySelectorAll('select[id^="cbid.<%=api.appname%>."]');
+		const selects = container.querySelectorAll('select[id^="cbid.<%=appname%>."]');
 		for (const sel of selects) {
 			if ( idReg.test(sel.id) && getComputedStyle(sel).display === "none" && (sel.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING)) {
 				hidden_select = sel;
@@ -73,7 +74,7 @@ local api = self.api
 		}
 
 		var global_id = null;
-		var global = document.getElementById("cbi-<%=api.appname%>-global");
+		var global = document.getElementById("cbi-<%=appname%>-global");
 		if (global) {
 			var node = global.getElementsByClassName("cbi-section-node")[0];
 			var node_id = node.getAttribute("id");
@@ -109,7 +110,7 @@ local api = self.api
 			}
 		}
 
-		var socks = document.getElementById("cbi-<%=api.appname%>-socks");
+		var socks = document.getElementById("cbi-<%=appname%>-socks");
 		if (socks) {
 			var socks_enabled_dom = document.getElementById(global_id + "-socks_enabled");
 			socks_enabled_dom.parentNode.removeChild(socks_enabled_dom);
@@ -128,7 +129,7 @@ local api = self.api
 					if (!node_select) continue;
 
 					var html = '<a href="#" onclick="return to_edit_node(this);"><%:Edit%></a>';
-					html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_socks_log")%>?name=' + id.replace("cbi-passwall-", "") + '\', \'_blank\')"><%:Log%></a>';
+					html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_socks_log")%>?name=' + id.replace("cbi-<%=appname%>-", "") + '\', \'_blank\')"><%:Log%></a>';
 
 					node_select.insertAdjacentHTML("afterend",
 						'<div class="node-actions" style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; margin-left:4px;">'  
@@ -145,7 +146,7 @@ local api = self.api
 		let stableTimes = 0;
 		const STABLE_THRESHOLD = 5;
 		function waitStable() {
-			const list = document.querySelectorAll('[id^="cbid.<%=api.appname%>."][id$="node.main"]');
+			const list = document.querySelectorAll('[id^="cbid.<%=appname%>."][id$="node.main"]');
 			const count = list.length;
 			if (count === lastCount && count > 0) {
 				stableTimes++;
@@ -212,7 +213,7 @@ local api = self.api
 	})();
 
 	document.addEventListener("DOMContentLoaded", function () {
-		const hiddenSelect = document.getElementById("cbid.passwall.<%=self.global_cfgid%>.tcp_node");
+		const hiddenSelect = document.getElementById("cbid.<%=appname%>.<%=self.global_cfgid%>.tcp_node");
 		let o_val = hiddenSelect.value
 		const o_hasItem = shunt_list.find(element => element.id == o_val);
 		hiddenSelect.addEventListener("change", function(el){
@@ -235,8 +236,8 @@ local api = self.api
 				});
 			} else {
 				try {
-					document.getElementById("tab.passwall.<%=self.global_cfgid%>.Shunt").classList.add('shunt-tab-hidden');
-					document.getElementById("tab.passwall.<%=self.global_cfgid%>.Shunt").style.display = "none";
+					document.getElementById("tab.<%=appname%>.<%=self.global_cfgid%>.Shunt").classList.add('shunt-tab-hidden');
+					document.getElementById("tab.<%=appname%>.<%=self.global_cfgid%>.Shunt").style.display = "none";
 				} catch (error) {}
 				try {
 					document.querySelector('li[data-tab*="Shunt"]').classList.add('shunt-tab-hidden');
@@ -244,9 +245,9 @@ local api = self.api
 				} catch (error) {}
 			}
 		});
-		let shunt_taboption = document.getElementById("container.passwall.<%=self.global_cfgid%>.Shunt");
+		let shunt_taboption = document.getElementById("container.<%=appname%>.<%=self.global_cfgid%>.Shunt");
 		if (shunt_taboption) {
-			let shunt_option_list = document.getElementById("cbi-passwall-shunt_option_list");
+			let shunt_option_list = document.getElementById("cbi-<%=appname%>-shunt_option_list");
 			if (shunt_option_list) {
 				shunt_taboption.appendChild(shunt_option_list);
 			}

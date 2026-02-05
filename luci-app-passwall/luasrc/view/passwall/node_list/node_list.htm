@@ -1,7 +1,8 @@
 <%
 local api = require "luci.passwall.api"
+local appname = api.appname
 -%>
-<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js?v=25.11.27"></script>
+<script src="<%=resource%>/view/<%=appname%>/Sortable.min.js?v=25.11.27"></script>
 
 <style>
 table th, .table .th {
@@ -71,7 +72,7 @@ table td, .table .td {
 	align-self: stretch;
 }
 
-#cbi-passwall-nodes .pw-checkbox, #cbi-passwall-nodes th:nth-child(1) {
+#cbi-<%=appname%>-nodes .pw-checkbox, #cbi-<%=appname%>-nodes th:nth-child(1) {
 	padding-right: 0px;
 }
 
@@ -88,7 +89,7 @@ table td, .table .td {
 		justify-content: space-between;
 	}
 
-	#cbi-passwall-nodes-default-fieldset {
+	#cbi-<%=appname%>-nodes-default-fieldset {
 		margin: 0;
 	}
 
@@ -97,17 +98,17 @@ table td, .table .td {
 	}
 
 	/* meticulously control how each component occupies the limited space we have */
-	#cbi-passwall-nodes .pw-checkbox, #cbi-passwall-nodes th:nth-child(1) {
+	#cbi-<%=appname%>-nodes .pw-checkbox, #cbi-<%=appname%>-nodes th:nth-child(1) {
 		flex: 0 0 40px;
 		min-width: 0;
 	}
 
-	#cbi-passwall-nodes .pw-remark {
+	#cbi-<%=appname%>-nodes .pw-remark {
 		flex: 1 1 30%;
 		min-width: 0;
 	}
 
-	#cbi-passwall-nodes .pw-ping, #cbi-passwall-nodes .pw-tcping, #cbi-passwall-nodes .pw-urltest {
+	#cbi-<%=appname%>-nodes .pw-ping, #cbi-<%=appname%>-nodes .pw-tcping, #cbi-<%=appname%>-nodes .pw-urltest {
 		flex: 0 0 50px;
 		white-space: nowrap;
 		min-width: 0;
@@ -295,7 +296,7 @@ table td, .table .td {
 	function open_set_node_div(cbi_id) {
 		section = cbi_id;
 		document.getElementById("set_node_div").style.display="block";
-		var node_name = document.getElementById("cbid.passwall." + cbi_id + ".remarks").value;
+		var node_name = document.getElementById("cbid.<%=appname%>." + cbi_id + ".remarks").value;
 		document.getElementById("set_node_name").innerHTML = node_name;
 	}
 
@@ -324,7 +325,7 @@ table td, .table .td {
 	}
 
 	function set_select_all_state(sectionChecked) {
-		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		var visibleContainer = document.querySelector('#cbi-<%=appname%>-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-<%=appname%>-nodes > .cbi-tabcontainer[style*="display: block"]');
 		if (!visibleContainer) return;
 		var nodes = visibleContainer.getElementsByClassName("nodes_select");
 		var selectAllChk = visibleContainer.querySelector(".nodes_select_all");
@@ -352,7 +353,7 @@ table td, .table .td {
 	}
 
 	function update_select_state() {
-		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		var visibleContainer = document.querySelector('#cbi-<%=appname%>-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-<%=appname%>-nodes > .cbi-tabcontainer[style*="display: block"]');
 		if (!visibleContainer) return;
 		var nodes = visibleContainer.getElementsByClassName("nodes_select");
 		if (!nodes.length) return;
@@ -380,7 +381,7 @@ table td, .table .td {
 
 	function delete_select_nodes() {
 		var ids = [];
-		var visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
+		var visibleContainer = document.querySelector('#cbi-<%=appname%>-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-<%=appname%>-nodes > .cbi-tabcontainer[style*="display: block"]');
 		if (!visibleContainer) return;
 		var doms = visibleContainer.getElementsByClassName("nodes_select");
 		if (doms && doms.length > 0) {
@@ -398,7 +399,7 @@ table td, .table .td {
 						if (x && x.status == 200) {
 							/*
 							for (var i = 0 ; i < ids.length; i++) {
-								var box = document.getElementById("cbi-passwall-" + ids[i]);
+								var box = document.getElementById("cbi-<%=appname%>-" + ids[i]);
 								box.remove();
 							}
 							*/
@@ -425,8 +426,8 @@ table td, .table .td {
 	}
 
 	function get_address_full(id) {
-		var address = (document.getElementById("cbid.passwall." + id + ".address") || {}).value || "";
-		var port = (document.getElementById("cbid.passwall." + id + ".port") || {}).value || "";
+		var address = (document.getElementById("cbid.<%=appname%>." + id + ".address") || {}).value || "";
+		var port = (document.getElementById("cbid.<%=appname%>." + id + ".port") || {}).value || "";
 		//判断是否含有汉字
 		var reg = /[\u4E00-\u9FFF]+/;
 		address = !reg.test(address) ? address : "";
@@ -434,7 +435,7 @@ table td, .table .td {
 	}
 
 	function get_node_order(group) {
-		let table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
+		let table = document.getElementById("cbi-<%=appname%>-nodes-" + group + "-table");
 		if (!table) {
 			return;
 		}
@@ -444,14 +445,14 @@ table td, .table .td {
 		}
 		var ids = [];
 		rows.forEach(function(row) {
-			var id = row.id.replace("cbi-passwall-", "");
+			var id = row.id.replace("cbi-<%=appname%>-", "");
 			ids.push(id);
 		});
 		return ids;
 	}
 
 	function save_current_page_order(group) {
-		var table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
+		var table = document.getElementById("cbi-<%=appname%>-nodes-" + group + "-table");
 		if (!table) {
 			alert("<%:No table!%>");
 			return;
@@ -468,7 +469,7 @@ table td, .table .td {
 		}
 		var ids = [];
 		rows.forEach(function(row) {
-			var id = row.id.replace("cbi-passwall-", "");
+			var id = row.id.replace("cbi-<%=appname%>-", "");
 			ids.push(id);
 		});
 		XHR.get('<%=api.url("save_node_order")%>', {
@@ -499,12 +500,12 @@ table td, .table .td {
 			function(x, result) {
 				var id = result["TCP"];
 				if (id) {
-					var dom = document.getElementById("cbi-passwall-" + id);
+					var dom = document.getElementById("cbi-<%=appname%>-" + id);
 					if (dom) {
 						dom.title = '<%=api.i18n.translatef("Currently using %s node", "TCP")%>';
 						dom.classList.add("_now_use_bg");
-						//var v = "<a style='color: red'>当前TCP节点：</a>" + document.getElementById("cbid.passwall." + id + ".remarks").value;
-						//document.getElementById("cbi-passwall-" + id + "-remarks").innerHTML = v;
+						//var v = "<a style='color: red'>当前TCP节点：</a>" + document.getElementById("cbid.<%=appname%>." + id + ".remarks").value;
+						//document.getElementById("cbi-<%=appname%>-" + id + "-remarks").innerHTML = v;
 						var dom_remarks = dom.querySelector("td.pw-remark");
 						if (dom_remarks) {
 							dom_remarks.style.color = 'red';
@@ -513,7 +514,7 @@ table td, .table .td {
 				}
 				id = result["UDP"];
 				if (id) {
-					var dom = document.getElementById("cbi-passwall-" + id);
+					var dom = document.getElementById("cbi-<%=appname%>-" + id);
 					if (dom) {
 						if (result["TCP"] == result["UDP"]) {
 							dom.title = '<%=api.i18n.translatef("Currently using %s node", "TCP/UDP")%>';
@@ -708,7 +709,7 @@ table td, .table .td {
 	//列表拖动重排
 	function initSortableForTable(table) {
 		if (!table) return null;
-		let group = table.id.replace("cbi-passwall-nodes-", "").replace("-table", "")
+		let group = table.id.replace("cbi-<%=appname%>-nodes-", "").replace("-table", "")
 		var root = table.querySelector('tbody') || table;
 		if (root._sortable_initialized) return root._sortable_instance;
 		root._sortable_initialized = true;
@@ -753,7 +754,7 @@ table td, .table .td {
 				if (typeof Sortable !== 'undefined') {
 					clearInterval(t);
 					for (var group in group_nodes) {
-						var table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
+						var table = document.getElementById("cbi-<%=appname%>-nodes-" + group + "-table");
 						initSortableForTable(table);
 					}
 				} else if (retries >= maxRetries) {
@@ -762,7 +763,7 @@ table td, .table .td {
 			}, 200);
 		} else {
 			for (var group in group_nodes) {
-				var table = document.getElementById("cbi-passwall-nodes-" + group + "-table");
+				var table = document.getElementById("cbi-<%=appname%>-nodes-" + group + "-table");
 				initSortableForTable(table);
 			}
 		}
@@ -776,8 +777,8 @@ table td, .table .td {
 </script>
 
 <script type="text/template" id="nodes-table-template">
-	<fieldset class="cbi-section cbi-tblsection" id="cbi-passwall-nodes-{{group}}-fieldset">
-		<table class="table cbi-section-table" id="cbi-passwall-nodes-{{group}}-table" style="">
+	<fieldset class="cbi-section cbi-tblsection" id="cbi-<%=appname%>-nodes-{{group}}-fieldset">
+		<table class="table cbi-section-table" id="cbi-<%=appname%>-nodes-{{group}}-table" style="">
 			<tr class="tr cbi-section-table-titles anonymous">
 				<th class="th cbi-section-table-cell" style="width:20px">
 					<input class="cbi-input-checkbox nodes_select_all" type="checkbox" onclick="checked_all_node(this)" title="<%:Select all%>"/>
@@ -798,10 +799,10 @@ table td, .table .td {
 </script>
 
 <script type="text/template" id="node-tr-template">
-	<tr class="tr cbi-section-table-row" id="cbi-passwall-{{id}}">
-		<input class="hidden" id="cbid.passwall.{{id}}.remarks" value="{{remarks_val}}"/>
-		<input class="hidden" id="cbid.passwall.{{id}}.address" value="{{address_val}}"/>
-		<input class="hidden" id="cbid.passwall.{{id}}.port" value="{{port_val}}"/>
+	<tr class="tr cbi-section-table-row" id="cbi-<%=appname%>-{{id}}">
+		<input class="hidden" id="cbid.<%=appname%>.{{id}}.remarks" value="{{remarks_val}}"/>
+		<input class="hidden" id="cbid.<%=appname%>.{{id}}.address" value="{{address_val}}"/>
+		<input class="hidden" id="cbid.<%=appname%>.{{id}}.port" value="{{port_val}}"/>
 		<td class="td cbi-value-field pw-checkbox">
 			<input class="cbi-input-checkbox nodes_select" type="checkbox" cbid="{{id}}" onclick="update_select_state()"/>
 		</td>
@@ -830,7 +831,7 @@ table td, .table .td {
 		let str = "";
 		let remarks = o["remarks"] || "";
 		let type = o["type"] || "";
-		str += "<input type='hidden' id='cbid.passwall." + o[".name"] + ".type' value='" + type + "'/>";
+		str += "<input type='hidden' id='cbid.<%=appname%>." + o[".name"] + ".type' value='" + type + "'/>";
 		if (type == "sing-box" || type == "Xray") {
 			let protocol = o["protocol"]
 			let p = "";
@@ -898,7 +899,7 @@ table td, .table .td {
 
 			var tab_ul_html = '<ul class="cbi-tabmenu">'
 			var tab_ul_li_html = ''
-			var tab_content_html = '<fieldset class="cbi-section-node cbi-section-node-tabbed" id="cbi-passwall-nodes">'
+			var tab_content_html = '<fieldset class="cbi-section-node cbi-section-node-tabbed" id="cbi-<%=appname%>-nodes">'
 			var nodes_table_template = document.getElementById("nodes-table-template");
 			var node_template = document.getElementById("node-tr-template");
 			var default_group = null
@@ -957,11 +958,11 @@ table td, .table .td {
 				}
 
 				tab_ul_li_html +=
-					'<li group_name="' + group + '" id="tab.passwall.nodes.' + group + '" class="cbi-tab">' +
-						'<a onclick="this.blur(); return cbi_t_switch(\'passwall.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.passwall.nodes=' + group + '">' + escape_html(group_name) + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
+					'<li group_name="' + group + '" id="tab.<%=appname%>.nodes.' + group + '" class="cbi-tab">' +
+						'<a onclick="this.blur(); return cbi_t_switch(\'<%=appname%>.nodes\', \'' + group + '\')" href="<%=REQUEST_URI%>?tab.<%=appname%>.nodes=' + group + '">' + escape_html(group_name) + " | " + "<font style='color: red'>" + group_nodes[group].length + '</font></a>' +
 					'</li>'
 				tab_content_html +=
-					'<div class="cbi-tabcontainer" id="container.passwall.nodes.' + group + '" style="display: none;">' +
+					'<div class="cbi-tabcontainer" id="container.<%=appname%>.nodes.' + group + '" style="display: none;">' +
 					'' + table_html +
 					'</div>'
 			}
@@ -973,11 +974,11 @@ table td, .table .td {
 			document.getElementById("node_list").innerHTML = tab_html
 
 			for (let group in group_nodes) {
-				cbi_t_add("passwall.nodes", group)
+				cbi_t_add("<%=appname%>.nodes", group)
 			}
 
 			if (default_group) {
-				cbi_t_switch("passwall.nodes", default_group)
+				cbi_t_switch("<%=appname%>.nodes", default_group)
 			}
 
 			origin_group_node_order = {};
@@ -1039,7 +1040,7 @@ table td, .table .td {
 			});
 		}
 
-		waitForElement('input[type="checkbox"][name*="passwall"][name*="show_node_info"]', function(el) {
+		waitForElement('input[type="checkbox"][name*="<%=appname%>"][name*="show_node_info"]', function(el) {
 			el.addEventListener("change", () => {
 				el.blur();
 				show_node_info = el.checked ? "1" : "0";
@@ -1047,7 +1048,7 @@ table td, .table .td {
 			});
 		});
 
-		waitForElement('select[name*="passwall"][name*="auto_detection_time"]', function(el) {
+		waitForElement('select[name*="<%=appname%>"][name*="auto_detection_time"]', function(el) {
 			el.addEventListener("change", () => {
 				el.blur();
 				auto_detection_time = el.value;
