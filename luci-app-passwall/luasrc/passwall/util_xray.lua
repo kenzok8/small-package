@@ -202,12 +202,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 					downlinkCapacity = tonumber(node.mkcp_downlinkCapacity),
 					congestion = (node.mkcp_congestion == "1") and true or false,
 					readBufferSize = tonumber(node.mkcp_readBufferSize),
-					writeBufferSize = tonumber(node.mkcp_writeBufferSize),
-					seed = (node.mkcp_seed and node.mkcp_seed ~= "") and node.mkcp_seed or nil,
-					header = {
-						type = node.mkcp_guise,
-						domain = node.mkcp_domain
-					}
+					writeBufferSize = tonumber(node.mkcp_writeBufferSize)
 				} or nil,
 				wsSettings = (node.transport == "ws") and {
 					path = node.ws_path or "/",
@@ -288,7 +283,24 @@ function gen_outbound(flag, node, tag, proxy_table)
 					end)(),
 					disablePathMTUDiscovery = (node.hysteria2_disable_mtu_discovery) and true or false
 				} or nil,
-				finalmask = (node.transport == "hysteria" and node.hysteria2_obfs_type and node.hysteria2_obfs_type ~= "") and {
+				finalmask = (node.transport == "mkcp") and {
+					udp = (function()
+						local t = {}
+						if node.mkcp_guise and node.mkcp_guise ~= "none" then
+							local g = { type = node.mkcp_guise }
+							if node.mkcp_guise == "header-dns" and node.mkcp_domain and node.mkcp_domain ~= "" then
+								g.settings = { domain = node.mkcp_domain }
+							end
+							t[#t + 1] = g
+						end
+						local c = { type = (node.mkcp_seed and node.mkcp_seed ~= "") and "mkcp-aes128gcm" or "mkcp-original" }
+						if node.mkcp_seed and node.mkcp_seed ~= "" then
+							c.settings = { password = node.mkcp_seed }
+						end
+						t[#t + 1] = c
+						return t
+					end)()
+				} or (node.transport == "hysteria" and node.hysteria2_obfs_type and node.hysteria2_obfs_type ~= "") and {
 					udp = {
 						{
 							type = node.hysteria2_obfs_type,
@@ -563,12 +575,7 @@ function gen_config_server(node)
 						downlinkCapacity = tonumber(node.mkcp_downlinkCapacity),
 						congestion = (node.mkcp_congestion == "1") and true or false,
 						readBufferSize = tonumber(node.mkcp_readBufferSize),
-						writeBufferSize = tonumber(node.mkcp_writeBufferSize),
-						seed = (node.mkcp_seed and node.mkcp_seed ~= "") and node.mkcp_seed or nil,
-						header = {
-							type = node.mkcp_guise,
-							domain = node.mkcp_domain
-						}
+						writeBufferSize = tonumber(node.mkcp_writeBufferSize)
 					} or nil,
 					wsSettings = (node.transport == "ws") and {
 						host = node.ws_host or nil,
@@ -586,6 +593,24 @@ function gen_config_server(node)
 						host = node.xhttp_host,
 						maxUploadSize = node.xhttp_maxuploadsize,
 						maxConcurrentUploads = node.xhttp_maxconcurrentuploads
+					} or nil,
+					finalmask = (node.transport == "mkcp") and {
+						udp = (function()
+							local t = {}
+							if node.mkcp_guise and node.mkcp_guise ~= "none" then
+								local g = { type = node.mkcp_guise }
+								if node.mkcp_guise == "header-dns" and node.mkcp_domain and node.mkcp_domain ~= "" then
+									g.settings = { domain = node.mkcp_domain }
+								end
+								t[#t + 1] = g
+							end
+							local c = { type = (node.mkcp_seed and node.mkcp_seed ~= "") and "mkcp-aes128gcm" or "mkcp-original" }
+							if node.mkcp_seed and node.mkcp_seed ~= "" then
+								c.settings = { password = node.mkcp_seed }
+							end
+							t[#t + 1] = c
+							return t
+						end)()
 					} or nil,
 					sockopt = {
 						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false
