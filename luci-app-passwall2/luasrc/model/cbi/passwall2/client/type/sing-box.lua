@@ -827,7 +827,7 @@ o2.template = appname .. "/cbi/nodes_listvalue"
 o2.group = {}
 
 for k, v in pairs(nodes_list) do
-	if v.type == "sing-box" and v.id ~= arg[1] and (not v.chain_proxy or v.chain_proxy == "") then
+	if v.id ~= arg[1] and (not v.chain_proxy or v.chain_proxy == "") then
 		o1:value(v.id, v.remark)
 		o1.group[#o1.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 		o2:value(v.id, v.remark)
