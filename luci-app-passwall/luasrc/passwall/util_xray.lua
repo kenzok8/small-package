@@ -937,9 +937,12 @@ function gen_config(var)
 				else
 					local preproxy_node = uci:get_all(appname, node.preproxy_node)
 					if preproxy_node then
-						local preproxy_outbound = gen_outbound(nil, preproxy_node)
+						local preproxy_outbound = gen_outbound(node[".name"], preproxy_node)
 						if preproxy_outbound then
-							preproxy_outbound.tag = preproxy_node[".name"] .. ":" .. preproxy_node.remarks
+							preproxy_outbound.tag = preproxy_node[".name"]
+							if preproxy_node.remarks then
+								preproxy_outbound.tag = preproxy_outbound.tag .. ":" .. preproxy_node.remarks
+							end
 							outbound.tag = preproxy_outbound.tag .. " -> " .. outbound.tag
 							outbound.proxySettings = {
 								tag = preproxy_outbound.tag,
@@ -954,19 +957,49 @@ function gen_config(var)
 			if node.chain_proxy == "2" and node.to_node then
 				local to_node = uci:get_all(appname, node.to_node)
 				if to_node then
-					local to_outbound = gen_outbound(nil, to_node)
+					local to_outbound
+					if to_node.type ~= "Xray" then
+						local tag = to_node[".name"]
+						local new_port = api.get_new_port()
+						table.insert(inbounds, {
+							tag = tag,
+							listen = "127.0.0.1",
+							port = new_port,
+							protocol = "dokodemo-door",
+							settings = {network = "tcp,udp", address = to_node.address, port = tonumber(to_node.port)}
+						})
+						if to_node.tls_serverName == nil then
+							to_node.tls_serverName = to_node.address
+						end
+						to_node.address = "127.0.0.1"
+						to_node.port = new_port
+						table.insert(rules, 1, {
+							inboundTag = {tag},
+							outboundTag = outbound.tag
+						})
+						to_outbound = gen_outbound(node[".name"], to_node, tag, {
+							tag = tag,
+							run_socks_instance = not no_run
+						})
+					else
+						to_outbound = gen_outbound(node[".name"], to_node)
+					end
 					if to_outbound then
 						if shunt_rule_name then
 							to_outbound.tag = outbound.tag
 							outbound.tag = node[".name"]
 						else
+							if to_node.remarks then
+								to_outbound.tag = to_outbound.tag .. ":" .. to_node.remarks
+							end
 							to_outbound.tag = outbound.tag .. " -> " .. to_outbound.tag
 						end
-
-						to_outbound.proxySettings = {
-							tag = outbound.tag,
-							transportLayer = true
-						}
+						if to_node.type == "Xray" then
+							to_outbound.proxySettings = {
+								tag = outbound.tag,
+								transportLayer = true
+							}
+						end
 						table.insert(outbounds_table, to_outbound)
 						default_outTag = to_outbound.tag
 					end
@@ -1308,7 +1341,7 @@ function gen_config(var)
 			routing = {
 				domainStrategy = "AsIs",
 				domainMatcher = "hybrid",
-				rules = {}
+				rules = rules
 			}
 			table.insert(routing.rules, {
 				ruleTag = "default",

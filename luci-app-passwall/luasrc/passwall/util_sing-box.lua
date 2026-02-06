@@ -1191,9 +1191,12 @@ function gen_config(var)
 				else
 					local preproxy_node = uci:get_all(appname, node.preproxy_node)
 					if preproxy_node then
-						local preproxy_outbound = gen_outbound(nil, preproxy_node)
+						local preproxy_outbound = gen_outbound(node[".name"], preproxy_node)
 						if preproxy_outbound then
-							preproxy_outbound.tag = preproxy_node[".name"] .. ":" .. preproxy_node.remarks
+							preproxy_outbound.tag = preproxy_node[".name"]
+							if preproxy_node.remarks then
+								preproxy_outbound.tag = preproxy_outbound.tag .. ":" .. preproxy_node.remarks
+							end
 							outbound.tag = preproxy_outbound.tag .. " -> " .. outbound.tag
 							outbound.detour = preproxy_outbound.tag
 							last_insert_outbound = preproxy_outbound
@@ -1205,16 +1208,47 @@ function gen_config(var)
 			if node.chain_proxy == "2" and node.to_node then
 				local to_node = uci:get_all(appname, node.to_node)
 				if to_node then
-					local to_outbound = gen_outbound(nil, to_node)
+					local to_outbound
+					if to_node.type ~= "sing-box" then
+						local tag = to_node[".name"]
+						local new_port = api.get_new_port()
+						table.insert(inbounds, {
+							type = "direct",
+							tag = tag,
+							listen = "127.0.0.1",
+							listen_port = new_port,
+							override_address = to_node.address,
+							override_port = tonumber(to_node.port),
+						})
+						table.insert(rules, 1, {
+							inbound = {tag},
+							outbound = outbound.tag,
+						})
+						if to_node.tls_serverName == nil then
+							to_node.tls_serverName = to_node.address
+						end
+						to_node.address = "127.0.0.1"
+						to_node.port = new_port
+						to_outbound = gen_outbound(node[".name"], to_node, tag, {
+							tag = tag,
+							run_socks_instance = not no_run
+						})
+					else
+						to_outbound = gen_outbound(node[".name"], to_node)
+					end
 					if to_outbound then
 						if shunt_rule_name then
 							to_outbound.tag = outbound.tag
 							outbound.tag = node[".name"]
 						else
+							if to_node.remarks then
+								to_outbound.tag = to_outbound.tag .. ":" .. to_node.remarks
+							end
 							to_outbound.tag = outbound.tag .. " -> " .. to_outbound.tag
 						end
-
-						to_outbound.detour = outbound.tag
+						if to_node.type == "sing-box" then
+							to_outbound.detour = outbound.tag
+						end
 						table.insert(outbounds_table, to_outbound)
 						default_outTag = to_outbound.tag
 					end
@@ -1223,9 +1257,9 @@ function gen_config(var)
 			return default_outTag, last_insert_outbound
 		end
 
-		if node.protocol == "_shunt" then
-			local rules = {}
+		rules = {}
 
+		if node.protocol == "_shunt" then
 			local preproxy_rule_name = node.preproxy_enabled == "1" and "main" or nil
 			local preproxy_tag = preproxy_rule_name
 			local preproxy_node_id = preproxy_rule_name and node["main_node"] or nil
@@ -1544,10 +1578,6 @@ function gen_config(var)
 					table.insert(rules, rule)
 				end
 			end)
-
-			for index, value in ipairs(rules) do
-				table.insert(route.rules, rules[index])
-			end
 		elseif node.protocol == "_urltest" then
 			if node.urltest_node then
 				COMMON.default_outbound_tag = gen_urltest(node)
@@ -1574,6 +1604,10 @@ function gen_config(var)
 					table.insert(outbounds, last_insert_outbound)
 				end
 			end
+		end
+
+		for index, value in ipairs(rules) do
+			table.insert(route.rules, rules[index])
 		end
 	end
 
