@@ -104,6 +104,10 @@ const glossary = {
 		prefmt: '%s_domain',
 		field: 'nameserver-policy',
 	},
+	dns_node_policy: {
+		prefmt: '%s_nodedomain',
+		field: 'proxy-server-nameserver-policy',
+	},
 	node: {
 		prefmt: 'node_%s',
 		field: 'proxies',

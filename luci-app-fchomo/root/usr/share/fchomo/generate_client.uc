@@ -37,6 +37,7 @@ const uciglobal = 'global',
 const ucisniff = 'sniff',
       ucidnser = 'dns_server',
       ucidnspoli = 'dns_policy',
+      ucidnsnpoli = 'dns_node_policy',
       ucipgrp = 'proxy_group',
       ucinode = 'node',
       uciprov = 'provider',
@@ -411,6 +412,7 @@ config.dns = {
 	"respect-rules": true,
 	"default-nameserver": get_nameserver(uci.get(uciconf, ucidns, 'boot_server')),
 	"proxy-server-nameserver": get_nameserver(uci.get(uciconf, ucidns, 'bootnode_server')),
+	"proxy-server-nameserver-policy": {},
 	nameserver: get_nameserver(uci.get(uciconf, ucidns, 'default_server')),
 	fallback: get_nameserver(uci.get(uciconf, ucidns, 'fallback_server')),
 	"nameserver-policy": {},
@@ -419,23 +421,31 @@ config.dns = {
 	}
 };
 /* DNS policy */
-uci.foreach(uciconf, ucidnspoli, (cfg) => {
-	if (cfg.enabled === '0')
-		return null;
+map([
+		[ucidnspoli, "nameserver-policy"],              // DNS policy
+		[ucidnsnpoli, "proxy-server-nameserver-policy"] // Bootstrap DNS policy (Node)
+	], (e) => {
+	const sectiontype = e[0];
+	const field = e[1];
 
-	let key;
-	if (cfg.type === 'domain') {
-		key = isEmpty(cfg.domain) ? null : join(',', cfg.domain);
-	} else if (cfg.type === 'geosite') {
-		key = isEmpty(cfg.geosite) ? null : 'geosite:' + join(',', cfg.geosite);
-	} else if (cfg.type === 'rule_set') {
-		key = isEmpty(cfg.rule_set) ? null : 'rule-set:' + join(',', cfg.rule_set);
-	};
+	uci.foreach(uciconf, sectiontype, (cfg) => {
+		if (cfg.enabled === '0')
+			return null;
 
-	if (!key)
-		return null;
+		let key;
+		if (cfg.type === 'domain') {
+			key = isEmpty(cfg.domain) ? null : join(',', cfg.domain);
+		} else if (cfg.type === 'geosite') {
+			key = isEmpty(cfg.geosite) ? null : 'geosite:' + join(',', cfg.geosite);
+		} else if (cfg.type === 'rule_set') {
+			key = isEmpty(cfg.rule_set) ? null : 'rule-set:' + join(',', cfg.rule_set);
+		};
 
-	config.dns["nameserver-policy"][key] = get_nameserver(cfg.server, cfg.proxy);
+		if (!key)
+			return null;
+
+		config.dns[field][key] = get_nameserver(cfg.server, cfg.proxy);
+	});
 });
 /* Fallback filter */
 if (!isEmpty(config.dns.fallback))
@@ -741,7 +751,7 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 			override: {
 				"additional-prefix": cfg.override_prefix,
 				"additional-suffix": cfg.override_suffix,
-				"proxy-name": isEmpty(cfg.override_replace) ? null : map(cfg.override_replace, (obj) => json(obj)),
+				"proxy-name": isEmpty(cfg.override_replace) ? null : map(cfg.override_replace, obj => json(obj)),
 				// Configuration Items
 				tfo: strToBool(cfg.override_tfo),
 				mptcp: strToBool(cfg.override_mptcp),

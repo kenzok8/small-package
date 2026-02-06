@@ -122,6 +122,7 @@ start_service() {
 			'.sniffer["force-domain"][] style="double"
 			| .sniffer["skip-domain"][] style="double"
 			| with(.dns["nameserver-policy"]; ... style="double")
+			| with(.dns["proxy-server-nameserver-policy"]; ... style="double")
 			| .dns["fallback-filter"].domain[] style="double"
 			| with(.["proxy-providers"][] | select(.payload); .payload style="literal")
 			| with(.["rule-providers"][] | select(.payload); .payload style="literal")' \
