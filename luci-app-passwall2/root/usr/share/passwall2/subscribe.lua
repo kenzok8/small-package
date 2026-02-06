@@ -1828,7 +1828,7 @@ local function update_node(manual)
 						uci:set(appname, cfgid, "domain_strategy", domain_strategy_node)
 					end
 					-- Subscription Group Chain Agent
-					if chain_node_type ~= "" and kkk == "type" and vvv == chain_node_type then
+					if chain_node_type ~= "" and kkk == "type" and (vvv == "Xray" or vvv == "sing-box") then
 						if preproxy_node_group ~="" then
 							uci:set(appname, cfgid, "chain_proxy", "1")
 							uci:set(appname, cfgid, "preproxy_node", preproxy_node_group)

@@ -259,7 +259,6 @@ o:value("1", translate("Preproxy Node"))
 o:value("2", translate("Landing Node"))
 
 local descrStr = "Chained proxy works only with Xray or Sing-box nodes.<br>"
-descrStr = descrStr .. "The chained node must be the same type as your subscription node (Xray with Xray, Sing-box with Sing-box).<br>"
 descrStr = descrStr .. "You can only use manual or imported nodes as chained nodes."
 descrStr = translate(descrStr) .. "<br>" .. translate("Only support a layer of proxy.")
 
