@@ -117,49 +117,31 @@
 		return cssRules.filter(Boolean).join(' ')
 	}
 
-	function mv_parseColorToRgba(color) {
-			if (!color) return null;
-
-			const ctx = document.createElement('canvas').getContext('2d');
-			if (!ctx) return null;
-
-			ctx.fillStyle = color;
-			const computedColor = ctx.fillStyle;
-			// Match #RRGGBB or #RRGGBBAA format
-			if (computedColor.startsWith('#')) {
-					const hex = computedColor.substring(1);
-					// #RRGGBB (6 digits)
-					if (hex.length === 6) {
-							return {
-									r: parseInt(hex.substring(0, 2), 16),
-									g: parseInt(hex.substring(2, 4), 16),
-									b: parseInt(hex.substring(4, 6), 16),
-									a: 1
-							};
-					}
-					// #RRGGBBAA (8 digits)
-					if (hex.length === 8) {
-							return {
-									r: parseInt(hex.substring(0, 2), 16),
-									g: parseInt(hex.substring(2, 4), 16),
-									b: parseInt(hex.substring(4, 6), 16),
-									a: parseInt(hex.substring(6, 8), 16) / 255
-							};
-					}
-			}
-			// Match rgba() or rgb() format (for browsers that return this format)
-			const rgbaMatch = computedColor.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
-			if (rgbaMatch) {
-					return {
-							r: parseInt(rgbaMatch[1], 10),
-							g: parseInt(rgbaMatch[2], 10),
-							b: parseInt(rgbaMatch[3], 10),
-							a: rgbaMatch[4] !== undefined ? parseFloat(rgbaMatch[4]) : 1
-					};
-			}
-
-			return null; // Invalid color
-	}
+	const mv_parseColorToRgba = (function() {
+		// Create canvas and context once (Closure)
+		const canvas = document.createElement('canvas');
+		canvas.width = 1;
+		canvas.height = 1;
+		const ctx = canvas.getContext('2d', { willReadFrequently: true });
+		return function(colorStr) {
+			if (!colorStr)
+			   return null;
+			ctx.clearRect(0, 0, 1, 1);
+			// 2. Apply the color
+			ctx.fillStyle = colorStr;
+			// 3. Fill a single pixel
+			ctx.fillRect(0, 0, 1, 1);
+			// 4. Extract pixel data [R, G, B, A]
+			const data = ctx.getImageData(0, 0, 1, 1).data;
+			return {
+				r: data[0],
+				g: data[1],
+				b: data[2],
+				// Convert alpha from 0-255 to 0-1 (rounded to 3 decimal places)
+				a: Math.round((data[3] / 255) * 1000) / 1000
+			};
+		};
+	})();
 
 	// Helper to convert back to Hex (for output consistency)
 	function mv_rgbToHex(r, g, b) {
