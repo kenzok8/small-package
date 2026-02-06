@@ -246,6 +246,22 @@
 		return v_rgbToHex(r, g, b);
 	}
 
+	function v_getBg(el) {
+		if (!el) return null;
+		while (el && el !== document.documentElement) {
+			const style = getComputedStyle(el);
+			if (style.backgroundImage && style.backgroundImage !== "none") {
+				return style.backgroundColor || style.background;
+			}
+			const bg = style.backgroundColor;
+			if (bg && bg !== "transparent" && !/^rgba?\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)$/.test(bg)) {
+				return bg;
+			}
+			el = el.parentElement;
+		}
+		return null;
+	}
+
 	// copy select styles
 	function v_adaptiveStyle(cbid) {
 		const display = document.getElementById(cbid + ".display");
@@ -270,6 +286,13 @@
 			const selectStyleCSS = [`#${CSS.escape(cbid + ".display")} {`, v_style2Css(styleSelect, styleNames), v_style2Css(styleSelect, ["backgroundColor"]), "}"]
 			const optionStyleCSS = [`#${CSS.escape(cbid + ".panel")}  {`, v_style2Css(styleOption, styleNames), `background-color: ${optionColor};`, `border-radius: ${panelRadius};`, "}"]
 			const titleStyleCSS = [`#${CSS.escape(cbid + ".panel")} .v-group-title  {`, `background-color: ${titleColor} !important;`, "}"]
+			const isTransparent = !optionColor || optionColor === "transparent" || /^rgba?\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)$/.test(optionColor);
+			if (isTransparent) {
+				const bg = v_getBg(elOption) || v_getBg(hiddenSelect) || v_getBg(display) || v_getBg(document.body);
+				if (bg) {
+					optionStyleCSS.splice(optionStyleCSS.length - 1, 0, `background: ${bg} !important;`);
+				}
+			}
 			styleNode.textContent = [].concat(selectStyleCSS, optionStyleCSS, titleStyleCSS).join("\n")
 		}
 	}
