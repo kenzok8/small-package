@@ -44,7 +44,7 @@ Can be `domain` or `ipcidr` or `classical`. Rule file behavior.
 
 #### interval
 
-The update interval for the Rule set, in seconds or /^(\d+)(s|m|h|d)?$/.
+The update interval for the Rule set, in seconds or `/^(\d+)(s|m|h|d)?$/`.
 
 #### rawQuery
 
