@@ -29,6 +29,7 @@ START_LOG="/tmp/openclash_start.log"
 PROXY_FWMARK="0x162"
 PROXY_ROUTE_TABLE="0x162"
 QUICK_START_CHECK=false
+QUICK_START=true
 
 add_cron()
 {
@@ -456,43 +457,34 @@ check_run_quick()
    fi
 
    QUICK_START_CHECK=true
-   quick_start=true
-   check_file="$(cat /tmp/openclash.change 2>/dev/null |awk '{print $1}')"
-   if [ -z "$check_file" ] || [ ! -f "/tmp/openclash_config.tmp" ]; then
-      quick_start=false
-      return
-   fi
-   cmp -s "/etc/config/openclash" "/tmp/openclash_config.tmp"
-   if [ "$?" -ne "0" ]; then
-      LOG_OUT "Tip: Because of the file【 /etc/config/openclash 】modificated, Pause quick start..."
-      quick_start=false
-   else
-      if [ -s "/tmp/openclash.change" ]; then
-         for i in $check_file; do
-            if [ -z "$(grep "$i $(date -r "$i")$" "/tmp/openclash.change")" ]; then
-               LOG_OUT "Tip: Because of the file【 $i 】modificated, Pause quick start..."
-               quick_start=false
-               break
-            fi
-         done
-      fi
-   fi
 
+   cat "/tmp/openclash.change" | while read -r i; do
+      file_path=$(echo "$i" |awk -F ' #edited time# ' '{print $1}')
+      if [ -z "$(grep "$file_path #edited time# $(date -r "$file_path")$" "/tmp/openclash.change")" ]; then
+         LOG_OUT "Tip: Because of the file【 $file_path 】modificated, Pause quick start..."
+         rm -rf /tmp/openclash.change
+         break
+      fi
+   done
+
+   if [ ! -f "/tmp/openclash.change" ]; then
+      QUICK_START=false
+   fi
 } >/dev/null 2>&1
 
 write_run_quick()
 {
-   check_file="$(echo $RAW_CONFIG_FILE | tr " " "?") $(echo $CONFIG_FILE | tr " " "?") $(ls -d /etc/openclash/custom/*) $(ls -d /etc/openclash/overwrite/*) /usr/share/openclash/res/lhie1.yaml"
-   cmp -s "/etc/config/openclash" "/tmp/openclash_config.tmp"
-	 if [ "$?" -ne "0" ]; then
-	    cp "/etc/config/openclash" "/tmp/openclash_config.tmp"
-	 fi
-	 if [ "$quick_start" != "true" ]; then
-	    : > "/tmp/openclash.change"
-	    for i in $check_file; do
-         echo "$i $(date -r "$i")" >> "/tmp/openclash.change"
-      done
-	 fi
+   : > "/tmp/openclash.change"
+   {
+      echo "/etc/config/openclash"
+      echo "$RAW_CONFIG_FILE"
+      echo "$CONFIG_FILE"
+      ls -d /etc/openclash/custom/* 2>/dev/null
+      ls -d /etc/openclash/overwrite/* 2>/dev/null
+      echo "/usr/share/openclash/res/lhie1.yaml"
+   } | while read -r file; do
+      echo "$file #edited time# $(date -r "$file")" >> "/tmp/openclash.change"
+   done
 } >/dev/null 2>&1
 
 #运行模式处理
@@ -747,7 +739,6 @@ check_core_status()
          while ( [ -n "$(pidof clash)" ] && [ -z "$($ip_ route list |grep utun)" ] && [ "$TUN_RESTART" -le 3 ] )
          do
             LOG_OUT "Warning: TUN Interface Start Failed, Try to Restart Again..."
-            kill_clash
             start_run_core
             sleep 120
             let TUN_RESTART++
@@ -759,17 +750,16 @@ check_core_status()
       fi
 
       if [ -n "$(pidof clash)" ]; then
+         ip -6 rule del oif utun table 2022
+         ip -6 route del default dev utun table 2022
          if [ "$ipv6_mode" -eq 2 ] || [ "$ipv6_mode" -eq 3 ]; then
-            ip -6 rule del oif utun table 2022
-            ip -6 route del default dev utun table 2022
             ip -6 route add default dev utun table "$PROXY_ROUTE_TABLE"
-            ip -6 rule add fwmark "$PROXY_FWMARK" ipproto icmp table main pref 1888
-            ip -6 rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" pref 1889
+            ip -6 rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" pref 1888
          fi
-
-         ip route add default dev utun table "$PROXY_ROUTE_TABLE"
-         ip rule add fwmark "$PROXY_FWMARK" ipproto icmp table main pref 1888
-         ip rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" pref 1889
+         if [ -n "$en_mode_tun" ]; then
+            ip route add default dev utun table "$PROXY_ROUTE_TABLE"
+            ip rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" pref 1888
+         fi
       fi
    else
       reg4='^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$'
@@ -812,7 +802,7 @@ start_run_core()
    ulimit -v unlimited
    ulimit -u unlimited
 
-   if [ "$quick_start" != "true" ]; then
+   if ! $QUICK_START; then
       mv "$TMP_CONFIG_FILE" "$CONFIG_FILE"
       rm -rf "$TMP_CONFIG_FILE"
    fi
@@ -2229,10 +2219,27 @@ if [ -n "$FW4" ]; then
    fi
 
    #icmp
+   if [ -n "$en_mode_tun" ]; then
+      nft insert rule inet fw4 mangle_prerouting position 0 meta nfproto {ipv4} ip protocol icmp icmp type echo-request mark set "$PROXY_FWMARK" counter accept comment \"OpenClash ICMP Redirect\"
+   fi
+   if [ "$ipv6_enable" -eq 1 ]; then
+      if [ "$ipv6_mode" -eq 2 ] || [ "$ipv6_mode" -eq 3 ]; then
+         nft insert rule inet fw4 mangle_prerouting position 0 meta nfproto {ipv6} ip6 nexthdr icmpv6 icmpv6 type echo-request mark set "$PROXY_FWMARK" counter accept comment \"OpenClash ICMPv6 Redirect\"
+      fi
+   fi
    if [ "$en_mode" = "fake-ip" ]; then
-      nft insert rule inet fw4 input position 0 ip protocol icmp icmp type echo-request ip daddr { $fakeip_range } counter reject comment \"OpenClash ICMP INPUT REJECT\"
-      nft insert rule inet fw4 forward position 0 ip protocol icmp icmp type echo-request ip daddr { $fakeip_range } counter reject comment \"OpenClash ICMP FORWARD REJECT\"
-      nft insert rule inet fw4 output position 0 ip protocol icmp icmp type echo-request ip daddr { $fakeip_range } $noowner counter reject comment \"OpenClash ICMP OUTPUT REJECT\"
+      if [ -z "$en_mode_tun" ]; then
+         nft insert rule inet fw4 input position 0 ip protocol icmp icmp type echo-request ip daddr { $fakeip_range } counter reject comment \"OpenClash ICMP INPUT REJECT\"
+         nft insert rule inet fw4 forward position 0 ip protocol icmp icmp type echo-request ip daddr { $fakeip_range } counter reject comment \"OpenClash ICMP FORWARD REJECT\"
+         nft insert rule inet fw4 output position 0 ip protocol icmp icmp type echo-request ip daddr { $fakeip_range } $noowner counter reject comment \"OpenClash ICMP OUTPUT REJECT\"
+      fi
+      if [ "$ipv6_enable" -eq 1 ] || [ "$ipv6_dns" -eq 1 ]; then
+         if [ "$ipv6_mode" -ne 2 ] && [ "$ipv6_mode" -ne 3 ]; then
+            nft insert rule inet fw4 input position 0 ip6 nexthdr icmpv6 icmpv6 type echo-request ip6 daddr { $fakeip_range6 } counter reject with icmpv6 admin-prohibited comment \"OpenClash ICMPv6 INPUT REJECT\"
+            nft insert rule inet fw4 forward position 0 ip6 nexthdr icmpv6 icmpv6 type echo-request ip6 daddr { $fakeip_range6 } counter reject with icmpv6 admin-prohibited comment \"OpenClash ICMPv6 FORWARD REJECT\"
+            nft insert rule inet fw4 output position 0 ip6 nexthdr icmpv6 icmpv6 type echo-request ip6 daddr { $fakeip_range6 } $noowner counter reject with icmpv6 admin-prohibited comment \"OpenClash ICMPv6 OUTPUT REJECT\"
+         fi
+      fi
    fi
 fi
 
@@ -3009,10 +3016,27 @@ if [ -z "$FW4" ]; then
    fi
 
    #icmp
+   if [ -n "$en_mode_tun" ]; then
+      iptables -t mangle -I PREROUTING -p icmp --icmp-type echo-request -j MARK --set-xmark "$PROXY_FWMARK" -m comment --comment "OpenClash ICMP Redirect"
+   fi
+   if [ "$ipv6_enable" -eq 1 ]; then
+      if [ "$ipv6_mode" -eq 2 ] || [ "$ipv6_mode" -eq 3 ]; then
+         ip6tables -t mangle -I PREROUTING -p icmpv6 --icmpv6-type echo-request -j MARK --set-xmark "$PROXY_FWMARK" -m comment --comment "OpenClash ICMPv6 Redirect"
+      fi
+   fi
    if [ "$en_mode" = "fake-ip" ]; then
-      iptables -t filter -I INPUT   -p icmp --icmp-type echo-request -d "$fakeip_range" -j REJECT --reject-with icmp-admin-prohibited -m comment --comment "OpenClash ICMP INPUT REJECT"
-      iptables -t filter -I FORWARD -p icmp --icmp-type echo-request -d "$fakeip_range" -j REJECT --reject-with icmp-admin-prohibited -m comment --comment "OpenClash ICMP FORWARD REJECT"
-      iptables -t filter -I OUTPUT  -p icmp --icmp-type echo-request -d "$fakeip_range" $noowner -j REJECT --reject-with icmp-admin-prohibited -m comment --comment "OpenClash ICMP OUTPUT REJECT"
+      if [ -z "$en_mode_tun" ]; then
+         iptables -t filter -I INPUT -p icmp --icmp-type echo-request -d "$fakeip_range" -j REJECT --reject-with icmp-admin-prohibited -m comment --comment "OpenClash ICMP INPUT REJECT"
+         iptables -t filter -I FORWARD -p icmp --icmp-type echo-request -d "$fakeip_range" -j REJECT --reject-with icmp-admin-prohibited -m comment --comment "OpenClash ICMP FORWARD REJECT"
+         iptables -t filter -I OUTPUT  -p icmp --icmp-type echo-request -d "$fakeip_range" $noowner -j REJECT --reject-with icmp-admin-prohibited -m comment --comment "OpenClash ICMP OUTPUT REJECT"
+      fi
+      if [ "$ipv6_enable" -eq 1 ] || [ "$ipv6_dns" -eq 1 ]; then
+         if [ "$ipv6_mode" -ne 2 ] && [ "$ipv6_mode" -ne 3 ]; then
+            ip6tables -t filter -I INPUT -p icmpv6 --icmpv6-type echo-request -d "$fakeip_range6" -j REJECT --reject-with icmp6-adm-prohibited -m comment --comment "OpenClash ICMPv6 INPUT REJECT"
+            ip6tables -t filter -I FORWARD -p icmpv6 --icmpv6-type echo-request -d "$fakeip_range6" -j REJECT --reject-with icmp6-adm-prohibited -m comment --comment "OpenClash ICMPv6 FORWARD REJECT"
+            ip6tables -t filter -I OUTPUT  -p icmpv6 --icmpv6-type echo-request -d "$fakeip_range6" $noowner -j REJECT --reject-with icmp6-adm-prohibited -m comment --comment "OpenClash ICMPv6 OUTPUT REJECT"
+         fi
+      fi
    fi
 fi
 
@@ -3045,10 +3069,8 @@ revert_firewall()
 
    #TUN
    ip rule del fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE"
-   ip rule del fwmark "$PROXY_FWMARK" ipproto icmp table main
    ip route del default dev utun table "$PROXY_ROUTE_TABLE"
    ip -6 rule del fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE"
-   ip -6 rule del fwmark "$PROXY_FWMARK" ipproto icmp table main
    ip -6 route del default dev utun table "$PROXY_ROUTE_TABLE"
 
    if [ -n "$FW4" ]; then
@@ -3067,7 +3089,7 @@ revert_firewall()
          nft delete set inet fw4 handle ${handle}
       done
    else
-      for ipt in "iptables -nvL INPUT" "iptables -nvL FORWARD" "iptables -nvL OUTPUT" "iptables -nvL POSTROUTING -t nat" "iptables -nvL OUTPUT -t nat" "iptables -nvL OUTPUT -t mangle" "iptables -nvL PREROUTING -t nat" "iptables -nvL PREROUTING -t mangle" "ip6tables -nvL PREROUTING -t mangle" "ip6tables -nvL OUTPUT -t mangle" "ip6tables -nvL PREROUTING -t nat" "ip6tables -nvL INPUT" "ip6tables -nvL POSTROUTING -t nat" "ip6tables -nvL FORWARD" "ip6tables -nvL OUTPUT -t nat"; do
+      for ipt in "iptables -nvL INPUT" "iptables -nvL FORWARD" "iptables -nvL OUTPUT" "iptables -nvL POSTROUTING -t nat" "iptables -nvL OUTPUT -t nat" "iptables -nvL OUTPUT -t mangle" "iptables -nvL PREROUTING -t nat" "iptables -nvL PREROUTING -t mangle" "ip6tables -nvL OUTPUT" "ip6tables -nvL INPUT" "ip6tables -nvL FORWARD" "ip6tables -nvL OUTPUT -t mangle" "ip6tables -nvL PREROUTING -t nat" "ip6tables -nvL PREROUTING -t mangle" "ip6tables -nvL POSTROUTING -t nat" "ip6tables -nvL OUTPUT -t nat"; do
          for comment in "openclash" "OpenClash"; do
             local lines=$($ipt |sed 1,2d |sed -n "/${comment}/=" 2>/dev/null |sort -rn)
             if [ -n "$lines" ]; then
@@ -3619,10 +3641,6 @@ start_service()
    enable=$(uci_get_config "enable")
    [ "$enable" != "1" ] && LOG_OUT "Warning: OpenClash Now Disabled, Need Start From Luci Page, Exit..." && SLOG_CLEAN && exit 0
 
-   if pidof clash >/dev/null 2>&1; then
-      stop
-   fi
-
    LOG_OUT "Tip: OpenClash Start Running..."
 
    {
@@ -3637,7 +3655,7 @@ start_service()
       LOG_OUT "Step 2: Check The Components..."
       do_run_file "$RAW_CONFIG_FILE" "$BACKUP_FILE"
 
-      if [ "$quick_start" != "true" ]; then
+      if ! $QUICK_START; then
          LOG_OUT "Step 3: Modify The Config File..."
          config_check
          /usr/share/openclash/yml_change.sh \
@@ -3749,7 +3767,6 @@ stop_service()
                 /tmp/rules_name \
                 /tmp/rule_providers_name \
                 /tmp/openclash_last_version \
-                /tmp/openclash_config.tmp \
                 /tmp/openclash.change \
                 /tmp/openclash_debug.log \
                 /tmp/openclash_edit_file_name \
@@ -3846,7 +3863,8 @@ reload_service()
    if pidof clash >/dev/null && [ "$enable" == "1" ] && [ "$1" == "restore" ]; then
       do_run_mode
       get_config
-      check_core_status &
+      # used for config subscribe, not background for avoiding system unready
+      check_core_status
    fi
 } >/dev/null 2>&1
 
