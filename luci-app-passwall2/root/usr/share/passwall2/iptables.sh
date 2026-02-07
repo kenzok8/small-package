@@ -168,65 +168,6 @@ get_redirect_ip6t() {
 	echo "$(REDIRECT $2 $3)"
 }
 
-gen_lanlist() {
-	cat <<-EOF
-		0.0.0.0/8
-		10.0.0.0/8
-		100.64.0.0/10
-		127.0.0.0/8
-		169.254.0.0/16
-		172.16.0.0/12
-		192.168.0.0/16
-		224.0.0.0/4
-		240.0.0.0/4
-	EOF
-}
-
-gen_lanlist_6() {
-	cat <<-EOF
-		::/128
-		::1/128
-		::ffff:0:0/96
-		::ffff:0:0:0/96
-		64:ff9b::/96
-		100::/64
-		2001::/32
-		2001:20::/28
-		2001:db8::/32
-		2002::/16
-		fc00::/7
-		fe80::/10
-		ff00::/8
-	EOF
-}
-
-get_wan_ips() {
-	local family="$1"
-	local NET_ADDR
-	local iface
-	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e '@.interface[@.route[0]].interface')
-	for iface in $INTERFACES; do
-		local addr
-		if [ "$family" = "ip6" ]; then
-			network_get_ipaddr6 addr "$iface"
-			case "$addr" in
-				""|fe80*) continue ;;
-			esac
-		else
-			network_get_ipaddr addr "$iface"
-			case "$addr" in
-				""|"0.0.0.0") continue ;;
-			esac
-		fi
-
-		case " $NET_ADDR " in
-			*" $addr "*) ;;
-			*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$addr" ;;
-		esac
-	done
-	echo "$NET_ADDR"
-}
-
 gen_shunt_list() {
 	local node=${1}
 	local shunt_list4_var_name=${2}

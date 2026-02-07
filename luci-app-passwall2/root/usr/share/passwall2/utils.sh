@@ -151,16 +151,13 @@ get_geoip() {
 	local geoip_type_flag=""
 	local geoip_path="$(config_t_get global_rules v2ray_location_asset)"
 	geoip_path="${geoip_path%*/}/geoip.dat"
-	[ -e "$geoip_path" ] || { echo ""; return; }
+	local bin="$(first_type $(config_t_get global_app geoview_file) geoview)"
+	[ -n "$bin" ] && [ -s "$geoip_path" ] || { echo ""; return; }
 	case "$2" in
 		"ipv4") geoip_type_flag="-ipv6=false" ;;
 		"ipv6") geoip_type_flag="-ipv4=false" ;;
 	esac
-	if type geoview &> /dev/null; then
-		geoview -input "$geoip_path" -list "$geoip_code" $geoip_type_flag -lowmem=true
-	else
-		echo ""
-	fi
+	"$bin" -input "$geoip_path" -list "$geoip_code" $geoip_type_flag -lowmem=true
 }
 
 get_host_ip() {
@@ -385,4 +382,63 @@ ln_run() {
 
 kill_all() {
 	kill -9 $(pidof "$@") >/dev/null 2>&1
+}
+
+gen_lanlist() {
+	cat <<-EOF
+		0.0.0.0/8
+		10.0.0.0/8
+		100.64.0.0/10
+		127.0.0.0/8
+		169.254.0.0/16
+		172.16.0.0/12
+		192.168.0.0/16
+		224.0.0.0/4
+		240.0.0.0/4
+	EOF
+}
+
+gen_lanlist_6() {
+	cat <<-EOF
+		::/128
+		::1/128
+		::ffff:0:0/96
+		::ffff:0:0:0/96
+		64:ff9b::/96
+		100::/64
+		2001::/32
+		2001:20::/28
+		2001:db8::/32
+		2002::/16
+		fc00::/7
+		fe80::/10
+		ff00::/8
+	EOF
+}
+
+get_wan_ips() {
+	local family="$1"
+	local NET_ADDR
+	local iface
+	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e \
+			'@.interface[!(@.interface ~ /lan/) && !(@.l3_device ~ /\./) && @.route[0]].interface')
+	for iface in $INTERFACES; do
+		local addr
+		if [ "$family" = "ip6" ]; then
+			network_get_ipaddr6 addr "$iface"
+			case "$addr" in
+				""|fe80*) continue ;;
+			esac
+		else
+			network_get_ipaddr addr "$iface"
+			case "$addr" in
+				""|"0.0.0.0") continue ;;
+			esac
+		fi
+		case " $NET_ADDR " in
+			*" $addr "*) ;;
+			*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$addr" ;;
+		esac
+	done
+	echo "$NET_ADDR"
 }
