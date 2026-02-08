@@ -784,6 +784,33 @@ function gen_config(var)
 			return result
 		end
 
+		local nodes_list = {}
+		function get_balancer_batch_nodes(_node)
+			if #nodes_list == 0 then
+				for k, e in ipairs(api.get_valid_nodes()) do
+					if e.node_type == "normal" and (not e.chain_proxy or e.chain_proxy == "") then
+						nodes_list[#nodes_list + 1] = {
+							id = e[".name"],
+							remarks = e["remarks"],
+							group = e["group"]
+						}
+					end
+				end
+			end
+			if not _node.node_group or _node.node_group == "" then return {} end
+			local nodes = {}
+			for g in _node.node_group:gmatch("%S+") do
+				g = api.UrlDecode(g)
+				for k, v in pairs(nodes_list) do
+					local gn = (v.group and v.group ~= "") and v.group or "default"
+					if gn == g and api.match_node_rule(v.remarks, _node.node_match_rule) then
+						nodes[#nodes + 1] = v.id
+					end
+				end
+			end
+			return nodes
+		end
+
 		function gen_loopback(outbound_tag, loopback_dst)
 			if not outbound_tag or outbound_tag == "" then return nil end
 			local inbound_tag = loopback_dst and "lo-to-" .. loopback_dst or outbound_tag .. "-lo"
@@ -808,7 +835,12 @@ function gen_config(var)
 				end
 			end
 			-- new balancer
-			local blc_nodes = _node.balancing_node
+			local blc_nodes
+			if _node.node_add_mode and _node.node_add_mode == "batch" then
+				blc_nodes = get_balancer_batch_nodes(_node)
+			else
+				blc_nodes = _node.balancing_node
+			end
 			local valid_nodes = {}
 			for i = 1, #blc_nodes do
 				local blc_node_id = blc_nodes[i]
@@ -1158,7 +1190,12 @@ function gen_config(var)
 							preproxy_nodes[_node_id] = true
 							break
 						end
-						local _blc_nodes = _node.balancing_node
+						local _blc_nodes
+						if _node.node_add_mode and _node.node_add_mode == "batch" then
+							_blc_nodes = get_balancer_batch_nodes(_node)
+						else
+							_blc_nodes = _node.balancing_node
+						end
 						for i = 1, #_blc_nodes do preproxy_nodes[_blc_nodes[i]] = true end
 						_node_id = _node.fallback_node
 					end
@@ -1301,7 +1338,13 @@ function gen_config(var)
 				rules = rules
 			}
 		elseif node.protocol == "_balancing" then
-			if node.balancing_node then
+			local blc_nodes
+			if node.node_add_mode and node.node_add_mode == "batch" then
+				blc_nodes = get_balancer_batch_nodes(node)
+			else
+				blc_nodes = node.balancing_node
+			end
+			if blc_nodes and #blc_nodes > 0 then
 				local balancer_tag = gen_balancer(node)
 				if balancer_tag then
 					table.insert(rules, { network = "tcp,udp", balancerTag = balancer_tag })

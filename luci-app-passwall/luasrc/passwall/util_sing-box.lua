@@ -1101,6 +1101,33 @@ function gen_config(var)
 			return result
 		end
 
+		local nodes_list = {}
+		function get_urltest_batch_nodes(_node)
+			if #nodes_list == 0 then
+				for k, e in ipairs(api.get_valid_nodes()) do
+					if e.node_type == "normal" and (not e.chain_proxy or e.chain_proxy == "") then
+						nodes_list[#nodes_list + 1] = {
+							id = e[".name"],
+							remarks = e["remarks"],
+							group = e["group"]
+						}
+					end
+				end
+			end
+			if not _node.node_group or _node.node_group == "" then return {} end
+			local nodes = {}
+			for g in _node.node_group:gmatch("%S+") do
+				g = api.UrlDecode(g)
+				for k, v in pairs(nodes_list) do
+					local gn = (v.group and v.group ~= "") and v.group or "default"
+					if gn == g and api.match_node_rule(v.remarks, _node.node_match_rule) then
+						nodes[#nodes + 1] = v.id
+					end
+				end
+			end
+			return nodes
+		end
+
 		function gen_urltest(_node)
 			local urltest_id = _node[".name"]
 			local urltest_tag = "urltest-" .. urltest_id
@@ -1111,7 +1138,13 @@ function gen_config(var)
 				end
 			end
 			-- new urltest
-			local ut_nodes = _node.urltest_node
+			local ut_nodes
+			if _node.node_add_mode and _node.node_add_mode == "batch" then
+				ut_nodes = get_urltest_batch_nodes(_node)
+			else
+				ut_nodes = _node.urltest_node
+			end
+			if #ut_nodes == 0 then return nil end
 			local valid_nodes = {}
 			for i = 1, #ut_nodes do
 				local ut_node_id = ut_nodes[i]
@@ -1579,9 +1612,7 @@ function gen_config(var)
 				end
 			end)
 		elseif node.protocol == "_urltest" then
-			if node.urltest_node then
 				COMMON.default_outbound_tag = gen_urltest(node)
-			end
 		elseif node.protocol == "_iface" then
 			if node.iface then
 				local outbound = {

@@ -129,8 +129,14 @@ m.uci:foreach(appname, "socks", function(s)
 end)
 
 if load_balancing_options then -- [[ 负载均衡 Start ]]
-	o = s:option(MultiValue, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
+	o = s:option(ListValue, _n("node_add_mode"), translate("Node Addition Method"))
 	o:depends({ [_n("protocol")] = "_balancing" })
+	o.default = "manual"
+	o:value("manual", translate("Manual"))
+	o:value("batch", translate("Batch"))
+
+	o = s:option(MultiValue, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
+	o:depends({ [_n("node_add_mode")] = "manual" })
 	o.widget = "checkbox"
 	o.template = appname .. "/cbi/nodes_multivalue"
 	o.group = {}
@@ -166,6 +172,21 @@ if load_balancing_options then -- [[ 负载均衡 Start ]]
 			return
 		end
 	end
+
+	o = s:option(MultiValue, _n("node_group"), translate("Select Group"))
+	o:depends({ [_n("node_add_mode")] = "batch" })
+	o.widget = "checkbox"
+	o:value("default", translate("default"))
+	for k, v in pairs(groups) do
+		o:value(api.UrlEncode(k), k)
+	end
+
+	o = s:option(Value, _n("node_match_rule"), translate("Node Matching Rules"))
+	o:depends({ [_n("node_add_mode")] = "batch" })
+	local descrStr = "Example: <code>^A && B && !C && D$</code><br>"
+	descrStr = descrStr .. "This means the node remark must start with A (^), include B, exclude C (!), and end with D ($).<br>"
+	descrStr = descrStr .. "Conditions are joined by <code>&&</code>, and their order does not affect the result."
+	o.description = translate(descrStr)
 
 	o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
 	o:depends({ [_n("protocol")] = "_balancing" })

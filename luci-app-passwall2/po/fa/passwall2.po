@@ -1,0 +1,2547 @@
+msgid "Auto"
+msgstr "اتوماتیک"
+
+msgid "RUNNING"
+msgstr "در حال اجرا"
+
+msgid "NOT RUNNING"
+msgstr "متوقف شده"
+
+msgid "Working..."
+msgstr "در حال کار..."
+
+msgid "Problem detected!"
+msgstr "مشکل شناسایی شد!"
+
+msgid "Touch Check"
+msgstr "بررسی اتصال"
+
+msgid "Global"
+msgstr "سراسری"
+
+msgid "Kernel Unsupported"
+msgstr "هسته پشتیبانی نمی‌شود"
+
+msgid "Basic Settings"
+msgstr "تنظیمات پایه"
+
+msgid "Node List"
+msgstr "لیست گره‌ها"
+
+msgid "Other Settings"
+msgstr "تنظیمات دیگر"
+
+msgid "Load Balancing"
+msgstr "توزیع بار"
+
+msgid "Enter interface"
+msgstr "رابط ورود"
+
+msgid "Rule Manage"
+msgstr "مدیریت قوانین"
+
+msgid "Rule List"
+msgstr "لیست قوانین"
+
+msgid "Access control"
+msgstr "کنترل دسترسی"
+
+msgid "Watch Logs"
+msgstr "مشاهده گزارش‌ها"
+
+msgid "Node Config"
+msgstr "پیکربندی گره"
+
+msgid "Running Status"
+msgstr "وضعیت اجرا"
+
+msgid "Baidu Connection"
+msgstr "اتصال بایدو"
+
+msgid "Google Connection"
+msgstr "اتصال گوگل"
+
+msgid "GitHub Connection"
+msgstr "اتصال گیت‌هاب"
+
+msgid "Instagram Connection"
+msgstr "اتصال اینستاگرام"
+
+msgid "Node Check"
+msgstr "بررسی گره"
+
+msgid "Check..."
+msgstr "بررسی..."
+
+msgid "Clear"
+msgstr "پاک کردن"
+
+msgid "Main switch"
+msgstr "سوئیچ اصلی"
+
+msgid "Node"
+msgstr "گره"
+
+msgid "Edit Current Node"
+msgstr "ویرایش گره فعلی"
+
+msgid "Localhost Proxy"
+msgstr "پروکسی میزبان محلی"
+
+msgid "When selected, localhost can transparent proxy."
+msgstr "در صورت انتخاب، میزبان محلی می‌تواند از پروکسی شفاف استفاده کند."
+
+msgid "Client Proxy"
+msgstr "پروکسی کلاینت"
+
+msgid ""
+"When selected, devices in LAN can transparent proxy. Otherwise, it will not "
+"be proxy. But you can still use access control to allow the designated "
+"device to proxy."
+msgstr ""
+"در صورت انتخاب، دستگاه‌های موجود در شبکه داخلی می‌توانند از پروکسی شفاف استفاده کنند. "
+"در غیر این صورت، پروکسی نخواهند شد. اما همچنان می‌توانید از کنترل دسترسی برای اجازه دادن "
+"به دستگاه‌های تعیین شده برای استفاده از پروکسی استفاده کنید."
+
+msgid "Missing components, transparent proxy is unavailable."
+msgstr "اجزای مورد نیاز یافت نشد، پروکسی شفاف در دسترس نیست."
+
+msgid "Socks Config"
+msgstr "پیکربندی Socks"
+
+msgid "Socks Node"
+msgstr "گره Socks"
+
+msgid "Current Node"
+msgstr "گره فعلی"
+
+msgid "Listen Port"
+msgstr "پورت شنود"
+
+msgid "0 is not use"
+msgstr "0 به معنای عدم استفاده است"
+
+msgid "Current node: %s"
+msgstr "گره فعلی: %s"
+
+msgid "IP:Port mode acceptable, multi value split with english comma."
+msgstr "حالت IP:Port قابل قبول است، مقادیر متعدد را با کاما انگلیسی جدا کنید."
+
+msgid "Direct DNS Protocol"
+msgstr "پروتکل DNS مستقیم"
+
+msgid "Direct DNS"
+msgstr "DNS مستقیم"
+
+msgid "Direct DNS DoH"
+msgstr "DNS مستقیم DoH"
+
+msgid "Direct DNS EDNS Client Subnet"
+msgstr "زیرشبکه کلاینت EDNS برای DNS مستقیم"
+
+msgid "Remote DNS Protocol"
+msgstr "پروتکل DNS راه دور"
+
+msgid "Remote DNS"
+msgstr "DNS راه دور"
+
+msgid "Remote DNS DoH"
+msgstr "DNS راه دور DoH"
+
+msgid "Remote DNS EDNS Client Subnet"
+msgstr "زیرشبکه کلاینت EDNS برای DNS راه دور"
+
+msgid ""
+"Notify the DNS server when the DNS query is notified, the location of the "
+"client (cannot be a private IP address)."
+msgstr "به سرور DNS اطلاع دهید که کلاینت در چه موقعیتی قرار دارد (نمی‌تواند آدرس IP خصوصی باشد)."
+
+msgid ""
+"This feature requires the DNS server to support the Edns Client Subnet "
+"(RFC7871)."
+msgstr "این ویژگی نیازمند پشتیبانی سرور DNS از زیرشبکه کلاینت EDNS (RFC7871) است."
+
+msgid "Remote DNS Outbound"
+msgstr "خروجی DNS راه دور"
+
+msgid "Remote"
+msgstr "راه دور"
+
+msgid "Direct"
+msgstr "مستقیم"
+
+msgid "Direct Query Strategy"
+msgstr "استراتژی پرس‌وجوی مستقیم"
+
+msgid "Remote Query Strategy"
+msgstr "استراتژی پرس‌وجوی راه دور"
+
+msgid "Use FakeDNS work in the domain that proxy."
+msgstr "استفاده از FakeDNS در دامنه‌هایی که پروکسی می‌شوند."
+
+msgid ""
+"Suitable scenarios for let the node servers get the target domain names."
+msgstr "سناریوهای مناسب برای اینکه سرورهای گره نام دامنه هدف را دریافت کنند."
+
+msgid ""
+"Such as: DNS unlocking of streaming media, reducing DNS query latency, etc."
+msgstr "مانند: رفع فیلتر DNS رسانه‌های جریانی، کاهش تاخیر پرس‌وجوی DNS و غیره."
+
+msgid "Domain Override"
+msgstr "بازنویسی دامنه"
+
+msgid "Direct DNS result write to IPSet"
+msgstr "نتیجه DNS مستقیم در IPSet نوشته شود"
+
+msgid ""
+"Perform the matching direct domain name rules into IP to IPSet/NFTSet, and "
+"then connect directly (not entering the core)."
+msgstr "قوانین نام دامنه مستقیم منطبق را به IP در IPSet/NFTSet تبدیل کرده و سپس مستقیماً متصل شود (بدون ورود به هسته)."
+
+msgid "Maybe conflict with some special circumstances."
+msgstr "ممکن است با برخی شرایط خاص تداخل داشته باشد."
+
+msgid "DNS Redirect"
+msgstr "تغییر مسیر DNS"
+
+msgid "Force special DNS server to need proxy devices."
+msgstr "اجبار دستگاه‌های پروکسی به استفاده از سرور DNS خاص."
+
+msgid "Clear IPSET"
+msgstr "پاک کردن IPSET"
+
+msgid "Clear NFTSET"
+msgstr "پاک کردن NFTSET"
+
+msgid "Try this feature if the rule modification does not take effect."
+msgstr "اگر تغییر قوانین تاثیری نداشت، این ویژگی را امتحان کنید."
+
+msgid "About DNS issues:"
+msgstr "درباره مشکلات DNS:"
+
+msgid ""
+"Some browsers may have built-in DNS, be sure to close. Example: Chrome. "
+"Settings - Security and Privacy - Security - Use secure DNS disabled."
+msgstr "برخی مرورگرها ممکن است DNS داخلی داشته باشند، مطمئن شوید که آن را بسته‌اید. مثال: کروم. تنظیمات - امنیت و حریم خصوصی - امنیت - استفاده از DNS امن را غیرفعال کنید."
+
+msgid ""
+"Sometimes after restart, you can not internet. At this time, close all "
+"browsers (important), Windows Client, please `ipconfig /flushdns`. Please "
+"close the WiFi on the phone, cut the flight mode and then cut back."
+msgstr "گاهی اوقات پس از راه‌اندازی مجدد، اینترنت ندارید. در این زمان، تمام مرورگرها را ببندید (مهم)، کلاینت ویندوز، لطفا دستور `ipconfig /flushdns` را اجرا کنید. وای‌فای گوشی را ببندید، حالت پرواز را روشن و سپس خاموش کنید."
+
+msgid "The client DNS and the default gateway must point to this router."
+msgstr "DNS کلاینت و دروازه پیش‌فرض باید به این روتر اشاره کنند."
+
+msgid "If you have a wrong DNS process, the consequences are at your own risk!"
+msgstr "اگر فرآیند DNS اشتباهی دارید، عواقب آن با خودتان است!"
+
+msgid "Hide menu method, input example in the address bar:"
+msgstr "روش مخفی کردن منو، مثال ورودی در نوار آدرس:"
+
+msgid "After the hidden to the display, input example in the address bar:"
+msgstr "پس از مخفی شدن برای نمایش، مثال ورودی در نوار آدرس:"
+
+msgid "Are you sure to hide?"
+msgstr "آیا مطمئن هستید که مخفی شود؟"
+
+msgid "DNS related issues:"
+msgstr "مشکلات مربوط به DNS:"
+
+msgid ""
+"Certain browsers such as Chrome have built-in DNS service, which may affect "
+"DNS resolution settings. You can go to 'Settings -> Privacy and security -> "
+"Use secure DNS' menu to turn it off."
+msgstr "مرورگرهای خاصی مانند Chrome دارای سرویس DNS داخلی هستند که ممکن است بر تنظیمات تفکیک DNS تأثیر بگذارد. می‌توانید به منوی 'تنظیمات -> حریم خصوصی و امنیت -> استفاده از DNS امن' بروید تا آن را خاموش کنید."
+
+msgid ""
+"If you are unable to access the internet after reboot, please try clearing "
+"the cache of your terminal devices (make sure to close all open browser "
+"application windows first, this step is especially important):"
+msgstr "اگر پس از راه‌اندازی مجدد قادر به دسترسی به اینترنت نیستید، لطفاً سعی کنید کش دستگاه‌های نهایی خود را پاک کنید (حتماً ابتدا تمام پنجره‌های برنامه مرورگر باز را ببندید، این مرحله بسیار مهم است):"
+
+msgid ""
+"For Windows systems, open Command Prompt and run the command 'ipconfig /"
+"flushdns'."
+msgstr "برای سیستم‌های ویندوز، Command Prompt را باز کرده و دستور 'ipconfig /flushdns' را اجرا کنید."
+
+msgid ""
+"For Mac systems, open Terminal and run the command 'sudo killall -HUP "
+"mDNSResponder'."
+msgstr "برای سیستم‌های مک، ترمینال را باز کرده و دستور 'sudo killall -HUP mDNSResponder' را اجرا کنید."
+
+msgid ""
+"For mobile devices, you can clear it by reconnecting to the network, such as "
+"toggling Airplane Mode and reconnecting to WiFi."
+msgstr "برای دستگاه‌های تلفن همراه، می‌توانید با اتصال مجدد به شبکه، مانند روشن و خاموش کردن حالت هواپیما و اتصال مجدد به وای‌فای، آن را پاک کنید."
+
+msgid ""
+"Please make sure your device's network settings point both the DNS server "
+"and default gateway to this router, to ensure DNS queries are properly "
+"routed."
+msgstr "لطفاً مطمئن شوید که تنظیمات شبکه دستگاه شما هم سرور DNS و هم دروازه پیش‌فرض را به این روتر ارجاع می‌دهد تا اطمینان حاصل شود که پرس‌وجوهای DNS به درستی هدایت می‌شوند."
+
+msgid "Browser access:"
+msgstr "دسترسی مرورگر:"
+
+msgid "Hide in main menu:"
+msgstr "مخفی کردن در منوی اصلی:"
+
+msgid "Show in main menu:"
+msgstr "نمایش در منوی اصلی:"
+
+msgid "DNS Export Of Multi WAN"
+msgstr "خروجی DNS برای چند WAN"
+
+msgid "Node Export Of Multi WAN"
+msgstr "خروجی گره برای چند WAN"
+
+msgid "Only support Multi Wan."
+msgstr "فقط از چند WAN پشتیبانی می‌کند."
+
+msgid "Not Specify"
+msgstr "نامشخص"
+
+msgid "custom"
+msgstr "سفارشی"
+
+msgid "If not available, try clearing the cache."
+msgstr "در صورت عدم دسترسی، پاک کردن کش را امتحان کنید."
+
+msgid "Operation"
+msgstr "عملیات"
+
+msgid "Add Node"
+msgstr "افزودن گره"
+
+msgid "Add the node via the link"
+msgstr "افزودن گره از طریق لینک"
+
+msgid "Enter share links, one per line. Subscription links are not supported!"
+msgstr "لینک‌های اشتراک‌گذاری را وارد کنید، هر کدام در یک خط. لینک‌های اشتراک (Subscription) پشتیبانی نمی‌شوند!"
+
+msgid "Please enter the correct link."
+msgstr "لطفاً لینک صحیح را وارد کنید."
+
+msgid "Clear all nodes"
+msgstr "پاک کردن همه گره‌ها"
+
+msgid "Are you sure to clear all nodes?"
+msgstr "آیا از پاک کردن همه گره‌ها اطمینان دارید؟"
+
+msgid "Success"
+msgstr "موفقیت"
+
+msgid "Error"
+msgstr "خطا"
+
+msgid "Delete select nodes"
+msgstr "حذف گره‌های انتخاب شده"
+
+msgid "To Top"
+msgstr "به بالا"
+
+msgid "Select"
+msgstr "انتخاب"
+
+msgid "Selected:"
+msgstr "انتخاب شده:"
+
+msgid "DeSelect"
+msgstr "لغو انتخاب"
+
+msgid "Select all"
+msgstr "انتخاب همه"
+
+msgid "DeSelect all"
+msgstr "لغو انتخاب همه"
+
+msgid "Are you sure to delete select nodes?"
+msgstr "آیا از حذف گره‌های انتخاب شده اطمینان دارید؟"
+
+msgid "You no select nodes !"
+msgstr "شما هیچ گره‌ای انتخاب نکرده‌اید!"
+
+msgid "Are you sure set to"
+msgstr "آیا مطمئن هستید که تنظیم شود به"
+
+msgid "the server?"
+msgstr "سرور؟"
+
+msgid "You choose node is:"
+msgstr "گره انتخابی شما عبارتست از:"
+
+msgid "Timeout"
+msgstr "مهلت زمانی"
+
+msgid "Node Remarks"
+msgstr "توضیحات گره"
+
+msgid "Add Mode"
+msgstr "حالت افزودن"
+
+msgid "Save Order"
+msgstr "ذخیره ترتیب"
+
+msgid "Saved current page order successfully."
+msgstr "ترتیب صفحه جاری با موفقیت ذخیره شد."
+
+msgid "Drag to reorder"
+msgstr "برای تغییر ترتیب بکشید"
+
+msgid "Type"
+msgstr "نوع"
+
+msgid "_balancing"
+msgstr "_توزیع بار"
+
+msgid "_shunt"
+msgstr "_شنت (Shunt)"
+
+msgid "Balancing"
+msgstr "توزیع بار"
+
+msgid "Balancing Strategy"
+msgstr "استراتژی توزیع بار"
+
+msgid "Fallback Node"
+msgstr "گره پشتیبان"
+
+msgid "Use Custom Probe URL"
+msgstr "استفاده از URL پروب سفارشی"
+
+msgid ""
+"By default the built-in probe URL will be used, enable this option to use a "
+"custom probe URL."
+msgstr "به‌صورت پیش‌فرض از URL پروب داخلی استفاده می‌شود، برای استفاده از URL سفارشی این گزینه را فعال کنید."
+
+msgid "Probe URL"
+msgstr "URL پروب"
+
+msgid "The URL used to detect the connection status."
+msgstr "آدرس URL مورد استفاده برای تشخیص وضعیت اتصال."
+
+msgid "Probe Interval"
+msgstr "فاصله زمانی پروب"
+
+msgid "The interval between initiating probes."
+msgstr "فاصله زمانی بین شروع پروب‌ها."
+
+msgid ""
+"The time format is numbers + units, such as '10s', '2h45m', and the "
+"supported time units are <code>s</code>, <code>m</code>, <code>h</code>, "
+"which correspond to seconds, minutes, and hours, respectively."
+msgstr "فرمت زمان عدد + واحد است، مانند '10s'، '2h45m'، و واحدهای زمانی پشتیبانی شده <code>s</code>، <code>m</code>، <code>h</code> هستند که به ترتیب ثانیه، دقیقه و ساعت می‌باشند."
+
+msgid "When the unit is not filled in, it defaults to seconds."
+msgstr "زمانی که واحد پر نشده باشد، پیش‌فرض ثانیه است."
+
+msgid "Preferred Node Count"
+msgstr "تعداد گره‌های ترجیحی"
+
+msgid ""
+"The load balancer selects the optimal number of nodes, and traffic is "
+"randomly distributed among them."
+msgstr "توزیع‌کننده بار تعداد بهینه‌ای از گره‌ها را انتخاب می‌کند و ترافیک به طور تصادفی بین آن‌ها توزیع می‌شود."
+
+msgid "Shunt"
+msgstr "شنت (Shunt)"
+
+msgid "Preproxy"
+msgstr "پیش‌پروکسی"
+
+msgid "Preproxy Node"
+msgstr "گره پیش‌پروکسی"
+
+msgid ""
+"Set the node to be used as a pre-proxy. Each rule (including <code>Default</"
+"code>) has a separate switch that controls whether this rule uses the pre-"
+"proxy or not."
+msgstr ""
+"گره‌ای را که باید به عنوان پیش‌پروکسی استفاده شود تنظیم کنید. هر قانون (شامل <code>Default</"
+"code>) دارای یک سوئیچ جداگانه است که کنترل می‌کند آیا این قانون از پیش-"
+"پروکسی استفاده کند یا خیر."
+
+msgid "Close (Not use)"
+msgstr "بستن (عدم استفاده)"
+
+msgid "Use default node"
+msgstr "استفاده از گره پیش‌فرض"
+
+msgid "Direct Connection"
+msgstr "اتصال مستقیم"
+
+msgid "Blackhole (Block)"
+msgstr "سیاه‌چاله (مسدودسازی)"
+
+msgid "Use preproxy node"
+msgstr "استفاده از گره پیش‌پروکسی"
+
+msgid "Default Preproxy"
+msgstr "پیش‌پروکسی پیش‌فرض"
+
+msgid "There are no available nodes, please add or subscribe nodes first."
+msgstr "هیچ گره در دسترس نیست، لطفاً ابتدا گره‌ها را اضافه یا مشترک شوید."
+
+msgid "No shunt rules? Click me to go to add."
+msgstr "قانون شنتی وجود ندارد؟ برای افزودن اینجا کلیک کنید."
+
+msgid ""
+"When using, localhost will connect this node first and then use this node to "
+"connect the default node."
+msgstr "در صورت استفاده، میزبان محلی ابتدا به این گره متصل شده و سپس از این گره برای اتصال به گره پیش‌فرض استفاده می‌کند."
+
+msgid "Domain Strategy"
+msgstr "استراتژی دامنه"
+
+msgid "Domain matcher"
+msgstr "تتطبیق‌دهنده دامنه"
+
+msgid "'AsIs': Only use domain for routing. Default value."
+msgstr "'AsIs': فقط استفاده از دامنه برای مسیریابی. مقدار پیش‌فرض."
+
+msgid ""
+"'IPIfNonMatch': When no rule matches current domain, resolves it into IP "
+"addresses (A or AAAA records) and try all rules again."
+msgstr ""
+"'IPIfNonMatch': زمانی که هیچ قانونی با دامنه فعلی مطابقت ندارد، آن را به آدرس‌های IP "
+"(رکوردهای A یا AAAA) حل می‌کند و تمام قوانین را دوباره امتحان می‌کند."
+
+msgid ""
+"'IPOnDemand': As long as there is a IP-based rule, resolves the domain into "
+"IP immediately."
+msgstr ""
+"'IPOnDemand': تا زمانی که یک قانون مبتنی بر IP وجود داشته باشد، بلافاصله دامنه را به "
+"IP حل می‌کند."
+
+msgid "Load balancing node list"
+msgstr "لیست گره‌های توزیع بار"
+
+msgid ""
+"Load balancing node list, <a target='_blank' href='https://xtls.github.io/"
+"config/routing.html#balancerobject'>document</a>"
+msgstr "لیست گره‌های توزیع بار، <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>مستندات</a>"
+
+msgid "From Share URL"
+msgstr "از لینک اشتراک‌گذاری"
+
+msgid "Build Share URL"
+msgstr "ساخت لینک اشتراک‌گذاری"
+
+msgid "Generate QRCode"
+msgstr "تولید کد QR"
+
+msgid "Export Config File"
+msgstr "خروجی فایل پیکربندی"
+
+msgid "Import Finished"
+msgstr "وارد کردن پایان یافت"
+
+msgid "Not a supported scheme:"
+msgstr "طرح پشتیبانی نشده:"
+
+msgid "Invalid Share URL Format"
+msgstr "فرمت لینک اشتراک‌گذاری نامعتبر"
+
+msgid "Paste Share URL Here"
+msgstr "لینک اشتراک‌گذاری را اینجا جایگذاری کنید"
+
+msgid "Share URL to clipboard unable."
+msgstr "کپی لینک اشتراک‌گذاری در کلیپ‌بورد ناموفق بود."
+
+msgid "Share URL to clipboard successfully."
+msgstr "لینک اشتراک‌گذاری با موفقیت در کلیپ‌بورد کپی شد."
+
+msgid "Faltal on get option, please help in debug:"
+msgstr "خطای مهلک در دریافت گزینه، لطفاً در اشکال‌زدایی کمک کنید:"
+
+msgid "Faltal on set option, please help in debug:"
+msgstr "خطای مهلک در تنظیم گزینه، لطفاً در اشکال‌زدایی کمک کنید:"
+
+msgid "Address"
+msgstr "آدرس"
+
+msgid "Address (Support Domain Name)"
+msgstr "آدرس (پشتیبانی از نام دامنه)"
+
+msgid "Trojan Verify Cert"
+msgstr "تایید گواهی Trojan"
+
+msgid "Trojan Cert Path"
+msgstr "مسیر گواهی Trojan"
+
+msgid "Finger Print"
+msgstr "اثر انگشت (Fingerprint)"
+
+msgid "Avoid using randomized, unless you have to."
+msgstr "از استفاده از تصادفی خودداری کنید، مگر اینکه مجبور باشید."
+
+msgid "Original"
+msgstr "اصلی"
+
+msgid "Transport Plugin"
+msgstr "افزونه انتقال"
+
+msgid "Shadowsocks secondary encryption"
+msgstr "رمزنگاری ثانویه Shadowsocks"
+
+msgid "Obfs Type"
+msgstr "نوع مبهم‌سازی (Obfs)"
+
+msgid "Obfs Password"
+msgstr "رمز عبور مبهم‌سازی"
+
+msgid "Auth Type"
+msgstr "نوع احراز هویت"
+
+msgid "Auth Password"
+msgstr "رمز عبور احراز هویت"
+
+msgid "Commands the client to use the BBR flow control algorithm"
+msgstr "به کلاینت دستور می‌دهد تا از الگوریتم کنترل جریان BBR استفاده کند"
+
+msgid "PinSHA256"
+msgstr "PinSHA256"
+
+msgid "Certificate fingerprint"
+msgstr "اثر انگشت گواهی"
+
+msgid "Max upload Mbps"
+msgstr "حداکثر آپلود (Mbps)"
+
+msgid "Max download Mbps"
+msgstr "حداکثر دانلود (Mbps)"
+
+msgid "QUIC stream receive window"
+msgstr "پنجره دریافت جریان QUIC"
+
+msgid "QUIC connection receive window"
+msgstr "پنجره دریافت اتصال QUIC"
+
+msgid "QUIC concurrent bidirectional streams"
+msgstr "جریان‌های دوطرفه همزمان QUIC"
+
+msgid "Disable MTU detection"
+msgstr "غیرفعال کردن تشخیص MTU"
+
+msgid "ignoreClientBandwidth"
+msgstr "نادیده گرفتن پهنای باند کلاینت"
+
+msgid "Lazy Start"
+msgstr "شروع تنبل (Lazy Start)"
+
+msgid "Encrypt Method"
+msgstr "روش رمزنگاری"
+
+msgid "Encrypt Key"
+msgstr "کلید رمزنگاری"
+
+msgid "Latency"
+msgstr "تاخیر"
+
+msgid "Automatic detection delay"
+msgstr "تاخیر تشخیص خودکار"
+
+msgid "Show server address and port"
+msgstr "نمایش آدرس و پورت سرور"
+
+msgid "URL Test Address"
+msgstr "آدرس تست URL"
+
+msgid "URL Test"
+msgstr "تست URL"
+
+msgid "Test"
+msgstr "تست"
+
+msgid "Node num"
+msgstr "شماره گره"
+
+msgid "Self add"
+msgstr "افزودن خودکار"
+
+msgid "Apply"
+msgstr "اعمال"
+
+msgid "Use"
+msgstr "استفاده"
+
+msgid "Copy"
+msgstr "کپی"
+
+msgid "Delay Settings"
+msgstr "تنظیمات تاخیر"
+
+msgid "Open and close Daemon"
+msgstr "باز و بسته کردن دیمن (Daemon)"
+
+msgid "Delay Start"
+msgstr "شروع با تاخیر"
+
+msgid "Units:seconds"
+msgstr "واحد: ثانیه"
+
+msgid "Units:minutes"
+msgstr "واحد: دقیقه"
+
+msgid "stop automatically mode"
+msgstr "حالت توقف خودکار"
+
+msgid "stop Time(Every day)"
+msgstr "زمان توقف (هر روز)"
+
+msgid "stop Interval(Hour)"
+msgstr "بازه توقف (ساعت)"
+
+msgid "start automatically mode"
+msgstr "حالت شروع خودکار"
+
+msgid "start Time(Every day)"
+msgstr "زمان شروع (هر روز)"
+
+msgid "start Interval(Hour)"
+msgstr "بازه شروع (ساعت)"
+
+msgid "restart automatically mode"
+msgstr "حالت راه‌اندازی مجدد خودکار"
+
+msgid "restart Time(Every day)"
+msgstr "زمان راه‌اندازی مجدد (هر روز)"
+
+msgid "restart Interval(Hour)"
+msgstr "بازه راه‌اندازی مجدد (ساعت)"
+
+msgid "Forwarding Settings"
+msgstr "تنظیمات فورواردینگ"
+
+msgid "TCP No Redir Ports"
+msgstr "پورت‌های بدون تغییر مسیر TCP"
+
+msgid "UDP No Redir Ports"
+msgstr "پورت‌های بدون تغییر مسیر UDP"
+
+msgid ""
+"Fill in the ports you don't want to be forwarded by the agent, with the "
+"highest priority."
+msgstr "پورت‌هایی را که نمی‌خواهید توسط نماینده فوروارد شوند، با بالاترین اولویت وارد کنید."
+
+msgid ""
+"If you don't want to let the device in the list to go proxy, please choose "
+"all."
+msgstr "اگر نمی‌خواهید دستگاه موجود در لیست پروکسی شود، لطفاً همه را انتخاب کنید."
+
+msgid ""
+"The port settings support single ports and ranges.<br>Separate multiple "
+"ports with commas (,).<br>Example: 21,80,443,1000:2000."
+msgstr "تنظیمات پورت از پورت‌های تکی و بازه‌ها پشتیبانی می‌کند.<br>پورت‌های متعدد را با کاما (,) جدا کنید.<br>مثال: 21,80,443,1000:2000."
+
+msgid "TCP Proxy Drop Ports"
+msgstr "پورت‌های حذف پروکسی TCP"
+
+msgid "UDP Proxy Drop Ports"
+msgstr "پورت‌های حذف پروکسی UDP"
+
+msgid "TCP Redir Ports"
+msgstr "پورت‌های تغییر مسیر TCP"
+
+msgid "UDP Redir Ports"
+msgstr "پورت‌های تغییر مسیر UDP"
+
+msgid "No patterns are used"
+msgstr "هیچ الگویی استفاده نشده است"
+
+msgid "All"
+msgstr "همه"
+
+msgid "Common Use"
+msgstr "استفاده متداول"
+
+msgid "Only Web"
+msgstr "فقط وب"
+
+msgid "or more"
+msgstr "یا بیشتر"
+
+msgid "or less"
+msgstr "یا کمتر"
+
+msgid "Default"
+msgstr "پیش‌فرض"
+
+msgid "Close"
+msgstr "بستن"
+
+msgid "Hijacking ICMP (PING)"
+msgstr "ربودن ICMP (PING)"
+
+msgid "Hijacking ICMPv6 (IPv6 PING)"
+msgstr "ربودن ICMPv6 (IPv6 PING)"
+
+msgid "Sniffing"
+msgstr "شنود (Sniffing)"
+
+msgid "TCP Proxy Way"
+msgstr "روش پروکسی TCP"
+
+msgid "Auto Switch"
+msgstr "سوئیچ خودکار"
+
+msgid "When there is no server, an automatic reconnect scheme is used"
+msgstr "زمانی که هیچ سروری وجود ندارد، از طرح اتصال مجدد خودکار استفاده می‌شود"
+
+msgid "How often to test"
+msgstr "هر چند وقت یکبار تست شود"
+
+msgid "Timeout seconds"
+msgstr "ثانیه‌های مهلت زمانی"
+
+msgid "Timeout retry num"
+msgstr "تعداد تلاش مجدد مهلت زمانی"
+
+msgid "Automatic switching cannot be used when this option is checked"
+msgstr "زمانی که این گزینه تیک خورده باشد، نمی‌توان از سوئیچینگ خودکار استفاده کرد"
+
+msgid "Main node"
+msgstr "گره اصلی"
+
+msgid "List of backup nodes"
+msgstr "لیست گره‌های پشتیبان"
+
+msgid "Restore Switch"
+msgstr "سوئیچ بازگردانی"
+
+msgid "When detects main node is available, switch back to the main node."
+msgstr "زمانی که در دسترس بودن گره اصلی تشخیص داده شود، به گره اصلی بازگردانده می‌شود."
+
+msgid "If the main node is shunt"
+msgstr "اگر گره اصلی شنت (Shunt) باشد"
+
+msgid "Switch it"
+msgstr "سوئیچ کردن"
+
+msgid "Applying to the default node"
+msgstr "اعمال بر روی گره پیش‌فرض"
+
+msgid "Applying to the default preproxy node"
+msgstr "اعمال بر روی گره پیش‌پروکسی پیش‌فرض"
+
+msgid "Add nodes to the standby node list by keywords"
+msgstr "افزودن گره‌ها به لیست گره‌های آماده‌به‌کار با استفاده از کلمات کلیدی"
+
+msgid "Delete nodes in the standby node list by keywords"
+msgstr "حذف گره‌ها در لیست گره‌های آماده‌به‌کار با استفاده از کلمات کلیدی"
+
+msgid ""
+"Please enter the node keyword, pay attention to distinguish between spaces, "
+"uppercase and lowercase."
+msgstr "لطفاً کلمه کلیدی گره را وارد کنید، به تمایز بین فاصله، حروف بزرگ و کوچک توجه کنید."
+
+msgid "Enable Load Balancing"
+msgstr "فعال‌سازی توزیع بار"
+
+msgid "Console Login Auth"
+msgstr "احراز هویت ورود به کنسول"
+
+msgid "Console Username"
+msgstr "نام کاربری کنسول"
+
+msgid "Console Password"
+msgstr "رمز عبور کنسول"
+
+msgid "Console Port"
+msgstr "پورت کنسول"
+
+msgid ""
+"In the browser input routing IP plus port access, such as:192.168.1.1:1188"
+msgstr "در مرورگر IP مسیریابی به همراه پورت را وارد کنید، مانند: 192.168.1.1:1188"
+
+msgid "Haproxy Port"
+msgstr "پورت Haproxy"
+
+msgid "Health Check Type"
+msgstr "نوع بررسی سلامت"
+
+msgid "Inner implement"
+msgstr "پیاده‌سازی داخلی"
+
+msgid "Health Check Inter"
+msgstr "بازه بررسی سلامت"
+
+msgid ""
+"When the URL test is used, the load balancing node will be converted into a "
+"Socks node. when node list set customizing, must be a Socks node, otherwise "
+"the health check will be invalid."
+msgstr "زمانی که تست URL استفاده می‌شود، گره توزیع بار به یک گره Socks تبدیل می‌شود. زمانی که لیست گره‌ها به صورت سفارشی تنظیم شده باشد، باید یک گره Socks باشد، در غیر این صورت بررسی سلامت نامعتبر خواهد بود."
+
+msgid ""
+"Add a node, Export Of Multi WAN Only support Multi Wan. Load specific "
+"gravity range 1-256. Multiple primary servers can be load balanced, standby "
+"will only be enabled when the primary server is offline! Multiple groups can "
+"be set, Haproxy port same one for each group."
+msgstr "افزودن گره، خروجی چند WAN تنها از چند WAN پشتیبانی می‌کند. محدوده وزن خاص بار 1-256. چندین سرور اصلی می‌توانند توزیع بار شوند، حالت آماده‌به‌کار تنها زمانی فعال می‌شود که سرور اصلی آفلاین باشد! چندین گروه قابل تنظیم است، پورت Haproxy برای هر گروه یکسان است."
+
+msgid ""
+"Note that the node configuration parameters for load balancing must be "
+"consistent when use TCP health check type, otherwise it cannot be used "
+"normally!"
+msgstr "توجه داشته باشید که پارامترهای پیکربندی گره برای توزیع بار باید در صورت استفاده از نوع بررسی سلامت TCP یکسان باشند، در غیر این صورت نمی‌توان از آن به درستی استفاده کرد!"
+
+msgid "Node Address"
+msgstr "آدرس گره"
+
+msgid "Node address cannot be empty."
+msgstr "آدرس گره نمی‌تواند خالی باشد."
+
+msgid "Node Port"
+msgstr "پورت گره"
+
+msgid "Node Weight"
+msgstr "وزن گره"
+
+msgid "Export Of Multi WAN"
+msgstr "خروجی چند WAN"
+
+msgid "Main"
+msgstr "اصلی"
+
+msgid "Mode"
+msgstr "حالت"
+
+msgid "Primary"
+msgstr "اولیه"
+
+msgid "Standby"
+msgstr "آماده‌به‌کار"
+
+msgid "Check update"
+msgstr "بررسی به‌روزرسانی"
+
+msgid "Force update"
+msgstr "به‌روزرسانی اجباری"
+
+msgid ""
+"The latest version: %s, currently does not support automatic update, if you "
+"need to update, please compile or download the ipk and then manually install."
+msgstr "آخرین نسخه: %s، در حال حاضر از به‌روزرسانی خودکار پشتیبانی نمی‌کند، اگر نیاز به به‌روزرسانی دارید، لطفاً کامپایل کنید یا فایل ipk را دانلود و سپس دستی نصب کنید."
+
+msgid "Enable custom URL"
+msgstr "فعال‌سازی URL سفارشی"
+
+msgid "Rule status"
+msgstr "وضعیت رول"
+
+msgid "Manually update"
+msgstr "به‌روزرسانی دستی"
+
+msgid "Rollback"
+msgstr "بازگردانی"
+
+msgid "Rollbacking..."
+msgstr "در حال بازگردانی..."
+
+msgid "Enable auto update rules"
+msgstr "فعال‌سازی به‌روزرسانی خودکار قوانین"
+
+msgid "Update Time(every day)"
+msgstr "زمان به‌روزرسانی (هر روز)"
+
+msgid "Update Interval(hour)"
+msgstr "بازه به‌روزرسانی (ساعت)"
+
+msgid "Update Mode"
+msgstr "حالت به‌روزرسانی"
+
+msgid "Loop Mode"
+msgstr "حالت حلقه"
+
+msgid "Every day"
+msgstr "هر روز"
+
+msgid "Every Monday"
+msgstr "هر دوشنبه"
+
+msgid "Every Tuesday"
+msgstr "هر سه‌شنبه"
+
+msgid "Every Wednesday"
+msgstr "هر چهارشنبه"
+
+msgid "Every Thursday"
+msgstr "هر پنج‌شنبه"
+
+msgid "Every Friday"
+msgstr "هر جمعه"
+
+msgid "Every Saturday"
+msgstr "هر شنبه"
+
+msgid "Every Sunday"
+msgstr "هر یکشنبه"
+
+msgid "hour"
+msgstr "ساعت"
+
+msgid "Hour"
+msgstr "ساعت"
+
+msgid "GeoIP Update URL"
+msgstr "URL به‌روزرسانی GeoIP"
+
+msgid "Geosite Update URL"
+msgstr "URL به‌روزرسانی Geosite"
+
+msgid "Location of Geo rule files"
+msgstr "مکان فایل‌های قوانین Geo"
+
+msgid ""
+"This variable specifies a directory where geoip.dat and geosite.dat files "
+"are."
+msgstr "این متغیر دایرکتوری محل قرارگیری فایل‌های geoip.dat و geosite.dat را مشخص می‌کند."
+
+msgid "Enable GeoIP Data Parsing"
+msgstr "فعال‌سازی تجزیه داده‌های GeoIP"
+
+msgid "Analyzes and preloads GeoIP data to enhance the shunt performance."
+msgstr "داده‌های GeoIP را برای بهبود عملکرد شنت تجزیه و پیش‌بارگذاری می‌کند."
+
+msgid "Note: Increases resource usage."
+msgstr "توجه: مصرف منابع را افزایش می‌دهد."
+
+msgid "Shunt Rule"
+msgstr "قانون شنت"
+
+msgid ""
+"Please note attention to the priority, the higher the order, the higher the "
+"priority."
+msgstr "لطفاً به اولویت توجه کنید، هرچه ترتیب بالاتر باشد، اولویت بیشتر است."
+
+msgid "Update..."
+msgstr "به‌روزرسانی..."
+
+msgid "It is the latest version"
+msgstr "این آخرین نسخه است"
+
+msgid "Update successful"
+msgstr "به‌روزرسانی موفقیت‌آمیز بود"
+
+msgid "Click to update"
+msgstr "برای به‌روزرسانی کلیک کنید"
+
+msgid "Updating..."
+msgstr "در حال به‌روزرسانی..."
+
+msgid "Retry"
+msgstr "تلاش مجدد"
+
+msgid "Unexpected error"
+msgstr "خطای غیرمنتظره"
+
+msgid "Updating, are you sure to close?"
+msgstr "در حال به‌روزرسانی، آیا مطمئن هستید که ببندید؟"
+
+msgid "Downloading..."
+msgstr "در حال دانلود..."
+
+msgid "Unpacking..."
+msgstr "در حال استخراج..."
+
+msgid "Moving..."
+msgstr "در حال انتقال..."
+
+msgid "App Update"
+msgstr "به‌روزرسانی برنامه"
+
+msgid "Please confirm that your firmware supports FPU."
+msgstr "لطفاً تأیید کنید که سیستم‌عامل شما از FPU پشتیبانی می‌کند."
+
+msgid ""
+"if you want to run from memory, change the path, /tmp beginning then save "
+"the application and update it manually."
+msgstr "اگر می‌خواهید از حافظه اجرا کنید، مسیر را تغییر دهید، با /tmp شروع شود سپس برنامه را ذخیره و دستی به‌روزرسانی کنید."
+
+msgid "Make sure there is enough space to install %s"
+msgstr "مطمئن شوید که فضای کافی برای نصب %s وجود دارد"
+
+msgid "App Path"
+msgstr "مسیر برنامه"
+
+msgid "%s App Path"
+msgstr "مسیر برنامه %s"
+
+msgid "%s Client App Path"
+msgstr "مسیر برنامه کلاینت %s"
+
+msgid "Node Subscribe"
+msgstr "اشتراک گره"
+
+msgid "Subscribe Remark"
+msgstr "توضیحات اشتراک"
+
+msgid "Subscribe Info"
+msgstr "اطلاعات اشتراک"
+
+msgid "Subscribe URL"
+msgstr "URL اشتراک"
+
+msgid "Subscribe URL Access Method"
+msgstr "روش دسترسی به URL اشتراک"
+
+msgid ""
+"When adding a new subscription, please save and apply before manually "
+"subscribing. If you only change the subscription URL, you can subscribe "
+"manually, and the system will save it automatically."
+msgstr "هنگام افزودن اشتراک جدید، لطفاً قبل از اشتراک دستی، ذخیره و اعمال کنید. اگر فقط URL اشتراک را تغییر دهید، می‌توانید به صورت دستی مشترک شوید و سیستم آن را به صورت خودکار ذخیره می‌کند."
+
+msgid "Please save and apply before manually subscribing."
+msgstr "لطفاً قبل از اشتراک دستی، ذخیره و اعمال کنید."
+
+msgid "Subscribe URL cannot be empty."
+msgstr "URL اشتراک نمی‌تواند خالی باشد."
+
+msgid "Subscribe via proxy"
+msgstr "اشتراک از طریق پروکسی"
+
+msgid "Enable auto update subscribe"
+msgstr "فعال‌سازی به‌روزرسانی خودکار اشتراک"
+
+msgid "Manual subscription"
+msgstr "اشتراک دستی"
+
+msgid "Delete All Subscribe Node"
+msgstr "حذف همه گره‌های اشتراک"
+
+msgid "Delete the subscribed node"
+msgstr "حذف گره مشترک شده"
+
+msgid "Are you sure you want to delete all subscribed nodes?"
+msgstr "آیا مطمئن هستید که می‌خواهید همه گره‌های مشترک شده را حذف کنید؟"
+
+msgid "Manual subscription All"
+msgstr "اشتراک دستی همه"
+
+msgid "This remark already exists, please change a new remark."
+msgstr "این توضیحات قبلاً وجود دارد، لطفاً توضیحات جدیدی را انتخاب کنید."
+
+msgid "Remark cannot be empty."
+msgstr "توضیحات نمی‌تواند خالی باشد."
+
+msgid "URL cannot be empty."
+msgstr "URL نمی‌تواند خالی باشد."
+
+msgid "Filter keyword Mode"
+msgstr "حالت فیلتر کلمه کلیدی"
+
+msgid "Discard List"
+msgstr "لیست حذف"
+
+msgid "Keep List"
+msgstr "لیست نگهداری"
+
+msgid "Discard List,But Keep List First"
+msgstr "لیست حذف، اما ابتدا لیست نگهداری"
+
+msgid "Keep List,But Discard List First"
+msgstr "لیست نگهداری، اما ابتدا لیست حذف"
+
+msgid "Use global config"
+msgstr "استفاده از پیکربندی سراسری"
+
+msgid "User-Agent"
+msgstr "User-Agent"
+
+msgid "Add"
+msgstr "افزودن"
+
+msgid "ACLs"
+msgstr "ACLها"
+
+msgid "ACLs is a tools which used to designate specific IP proxy mode."
+msgstr "ACL ابزاری است که برای تعیین حالت پروکسی IP خاص استفاده می‌شود."
+
+msgid "Example:"
+msgstr "مثال:"
+
+msgid "IP range"
+msgstr "محدوده IP"
+
+msgid "Source Interface"
+msgstr "رابط منبع"
+
+msgid "Use Interface With ACLs"
+msgstr "استفاده از رابط با ACLها"
+
+msgid "Remarks"
+msgstr "توضیحات"
+
+msgid "Direct List"
+msgstr "لیست مستقیم"
+
+msgid "Proxy List"
+msgstr "لیست پروکسی"
+
+msgid "Block List"
+msgstr "لیست مسدود"
+
+msgid "Lan IP List"
+msgstr "لیست IP شبکه داخلی"
+
+msgid "Route Hosts"
+msgstr "میزبان‌های مسیر"
+
+msgid "Join the direct hosts list of domain names will not proxy."
+msgstr "نام دامنه‌هایی که به لیست میزبان‌های مستقیم اضافه شده‌اند، پروکسی نخواهند شد."
+
+msgid ""
+"These had been joined ip addresses will not proxy. Please input the ip "
+"address or ip address segment,every line can input only one ip address. For "
+"example: 192.168.0.0/24 or 223.5.5.5."
+msgstr "آدرس‌های IP اضافه شده پروکسی نخواهند شد. لطفاً آدرس IP یا بخش آدرس IP را وارد کنید، هر خط فقط یک آدرس IP. برای مثال: 192.168.0.0/24 یا 223.5.5.5."
+
+msgid ""
+"These had been joined websites will use proxy. Please input the domain names "
+"of websites, every line can input only one website domain. For example: "
+"google.com."
+msgstr "وب‌سایت‌های اضافه شده از پروکسی استفاده خواهند کرد. لطفاً نام دامنه وب‌سایت‌ها را وارد کنید، هر خط فقط یک نام دامنه. برای مثال: google.com."
+
+msgid ""
+"These had been joined ip addresses will use proxy. Please input the ip "
+"address or ip address segment, every line can input only one ip address. For "
+"example: 35.24.0.0/24 or 8.8.4.4."
+msgstr "آدرس‌های IP اضافه شده از پروکسی استفاده خواهند کرد. لطفاً آدرس IP یا بخش آدرس IP را وارد کنید، هر خط فقط یک آدرس IP. برای مثال: 35.24.0.0/24 یا 8.8.4.4."
+
+msgid ""
+"These had been joined websites will be block. Please input the domain names "
+"of websites, every line can input only one website domain. For example: "
+"twitter.com."
+msgstr "وب‌سایت‌های اضافه شده مسدود خواهند شد. لطفاً نام دامنه وب‌سایت‌ها را وارد کنید، هر خط فقط یک نام دامنه. برای مثال: twitter.com."
+
+msgid ""
+"The list is the IPv4 LAN IP list, which represents the direct connection IP "
+"of the LAN. If you need the LAN IP in the proxy list, please clear it from "
+"the list. Do not modify this list by default."
+msgstr "این لیست، لیست IP شبکه داخلی IPv4 است که نشان‌دهنده IP اتصال مستقیم شبکه داخلی است. اگر به IP شبکه داخلی در لیست پروکسی نیاز دارید، لطفاً آن را از لیست پاک کنید. به طور پیش‌فرض این لیست را تغییر ندهید."
+
+msgid ""
+"The list is the IPv6 LAN IP list, which represents the direct connection IP "
+"of the LAN. If you need the LAN IP in the proxy list, please clear it from "
+"the list. Do not modify this list by default."
+msgstr "این لیست، لیست IP شبکه داخلی IPv6 است که نشان‌دهنده IP اتصال مستقیم شبکه داخلی است. اگر به IP شبکه داخلی در لیست پروکسی نیاز دارید، لطفاً آن را از لیست پاک کنید. به طور پیش‌فرض این لیست را تغییر ندهید."
+
+msgid ""
+"Configure routing etc/hosts file, if you don't know what you are doing, "
+"please don't change the content."
+msgstr "پیکربندی فایل etc/hosts مسیریابی، اگر نمی‌دانید چه کاری انجام می‌دهید، لطفاً محتوا را تغییر ندهید."
+
+msgid ""
+"These had been joined ip addresses will be block. Please input the ip "
+"address or ip address segment, every line can input only one ip address."
+msgstr "آدرس‌های IP اضافه شده مسدود خواهند شد. لطفاً آدرس IP یا بخش آدرس IP را وارد کنید، هر خط فقط یک آدرس IP."
+
+msgid "Inbound Tag"
+msgstr "برچسب ورودی"
+
+msgid "Transparent proxy"
+msgstr "پروکسی شفاف"
+
+msgid "Not valid domain name, please re-enter!"
+msgstr ""
+
+msgid "Not valid IP format, please re-enter!"
+msgstr ""
+
+msgid "Not valid IPv4 format, please re-enter!"
+msgstr "فرمت IPv4 نامعتبر است، لطفاً دوباره وارد کنید!"
+
+msgid "Not valid IPv6 format, please re-enter!"
+msgstr "فرمت IPv6 نامعتبر است، لطفاً دوباره وارد کنید!"
+
+msgid "Not true format, please re-enter!"
+msgstr "فرمت صحیح نیست، لطفاً دوباره وارد کنید!"
+
+msgid ""
+"Plaintext: If this string matches any part of the targeting domain, this "
+"rule takes effet. Example: rule 'sina.com' matches targeting domain "
+"'sina.com', 'sina.com.cn' and 'www.sina.com', but not 'sina.cn'."
+msgstr "متن ساده (Plaintext): اگر این رشته با هر بخشی از دامنه هدف مطابقت داشته باشد، این قانون اعمال می‌شود. مثال: قانون 'sina.com' با دامنه هدف 'sina.com'، 'sina.com.cn' و 'www.sina.com' مطابقت دارد، اما با 'sina.cn' خیر."
+
+msgid ""
+"Regular expression: Begining with 'regexp:', the rest is a regular "
+"expression. When the regexp matches targeting domain, this rule takes "
+"effect. Example: rule 'regexp:\\.goo.*\\.com$' matches 'www.google.com' and "
+"'fonts.googleapis.com', but not 'google.com'."
+msgstr "عبارت باقاعده (Regular expression): با 'regexp:' شروع می‌شود و بقیه یک عبارت باقاعده است. زمانی که عبارت باقاعده با دامنه هدف مطابقت داشته باشد، این قانون اعمال می‌شود. مثال: قانون 'regexp:\\.goo.*\\.com$' با 'www.google.com' و 'fonts.googleapis.com' مطابقت دارد، اما با 'google.com' خیر."
+
+msgid ""
+"Subdomain (recommended): Begining with 'domain:' and the rest is a domain. "
+"When the targeting domain is exactly the value, or is a subdomain of the "
+"value, this rule takes effect. Example: rule 'domain:v2ray.com' matches "
+"'www.v2ray.com', 'v2ray.com', but not 'xv2ray.com'."
+msgstr "زیردامنه (توصیه شده): با 'domain:' شروع می‌شود و بقیه یک دامنه است. زمانی که دامنه هدف دقیقاً مقدار باشد، یا زیردامنه‌ای از مقدار باشد، این قانون اعمال می‌شود. مثال: قانون 'domain:v2ray.com' با 'www.v2ray.com' و 'v2ray.com' مطابقت دارد، اما با 'xv2ray.com' خیر."
+
+msgid ""
+"Full domain: Begining with 'full:' and the rest is a domain. When the "
+"targeting domain is exactly the value, the rule takes effect. Example: rule "
+"'domain:v2ray.com' matches 'v2ray.com', but not 'www.v2ray.com'."
+msgstr "دامنه کامل: با 'full:' شروع می‌شود و بقیه یک دامنه است. زمانی که دامنه هدف دقیقاً مقدار باشد، قانون اعمال می‌شود. مثال: قانون 'domain:v2ray.com' با 'v2ray.com' مطابقت دارد، اما با 'www.v2ray.com' خیر."
+
+msgid ""
+"Sing-Box rule-set: Begining with 'rule-set:remote:' or 'rule-set:local:'"
+msgstr "مجموعه قوانین Sing-Box: با 'rule-set:remote:' یا 'rule-set:local:' شروع می‌شود"
+
+msgid "Such as:"
+msgstr "مانند:"
+
+msgid ""
+"Pre-defined domain list: Begining with 'geosite:' and the rest is a name, "
+"such as geosite:google or geosite:cn."
+msgstr "لیست دامنه از پیش تعریف شده: با 'geosite:' شروع می‌شود و بقیه یک نام است، مانند geosite:google یا geosite:cn."
+
+msgid "Annotation: Begining with #"
+msgstr "توضیحات: با # شروع می‌شود"
+
+msgid "Invert match result."
+msgstr "معکوس کردن نتیجه تطابق."
+
+msgid "Only support Sing-Box."
+msgstr "فقط پشتیبانی از Sing-Box."
+
+msgid "IP: such as '127.0.0.1'."
+msgstr "IP: مانند '127.0.0.1'."
+
+msgid "CIDR: such as '127.0.0.0/8'."
+msgstr "CIDR: مانند '127.0.0.0/8'."
+
+msgid ""
+"GeoIP: such as 'geoip:cn'. It begins with geoip: (lower case) and followed "
+"by two letter of country code."
+msgstr "GeoIP: مانند 'geoip:cn'. با geoip: (حروف کوچک) شروع می‌شود و با دو حرف کد کشور دنبال می‌شود."
+
+msgid "Clear logs"
+msgstr "پاک کردن گزارش‌ها"
+
+msgid "Password"
+msgstr "رمز عبور"
+
+msgid "IV Check"
+msgstr "بررسی IV"
+
+msgid "UDP over TCP"
+msgstr "UDP بر روی TCP"
+
+msgid "Connection Timeout"
+msgstr "مهلت زمانی اتصال"
+
+msgid "Local Port"
+msgstr "پورت محلی"
+
+msgid "Fast Open"
+msgstr "بازگشایی سریع (Fast Open)"
+
+msgid "Pre-connections"
+msgstr "پیش‌اتصالات"
+
+msgid "Number of early established connections to reduce latency."
+msgstr "تعداد اتصالات از پیش برقرار شده برای کاهش تاخیر."
+
+msgid "plugin"
+msgstr "افزونه"
+
+msgid "Supports custom SIP003 plugins, Make sure the plugin is installed."
+msgstr "پشتیبانی از افزونه‌های سفارشی SIP003، مطمئن شوید که افزونه نصب شده است."
+
+msgid "opts"
+msgstr "گزینه‌ها (opts)"
+
+msgid "Protocol"
+msgstr "پروتکل"
+
+msgid "Protocol_param"
+msgstr "پارامتر پروتکل"
+
+msgid "Obfs"
+msgstr "مبهم‌سازی (Obfs)"
+
+msgid "Obfs_param"
+msgstr "پارامتر مبهم‌سازی"
+
+msgid "Plugin Name"
+msgstr "نام افزونه"
+
+msgid "Plugin Arguments"
+msgstr "آرگومان‌های افزونه"
+
+msgid "Naiveproxy Protocol"
+msgstr "پروتکل Naiveproxy"
+
+msgid "User Level"
+msgstr "سطح کاربر"
+
+msgid "Transport"
+msgstr "انتقال"
+
+msgid "Public Key"
+msgstr "کلید عمومی"
+
+msgid "Private Key"
+msgstr "کلید خصوصی"
+
+msgid "Pre shared key"
+msgstr "کلید از پیش به اشتراک گذاشته شده"
+
+msgid "Local Address"
+msgstr "آدرس محلی"
+
+msgid "System interface"
+msgstr "رابط سیستم"
+
+msgid "System interface name"
+msgstr "نام رابط سیستم"
+
+msgid "Decimal numbers separated by \",\" or Base64-encoded strings."
+msgstr "اعداد دهدهی جدا شده با \",\" یا رشته‌های کدگذاری شده با Base64."
+
+msgid "Camouflage Domain"
+msgstr "دامنه استتار"
+
+msgid "Camouflage Type"
+msgstr "نوع استتار"
+
+msgid "Transport Layer Encryption"
+msgstr "رمزنگاری لایه انتقال"
+
+msgid ""
+"Whether or not transport layer encryption is enabled, \"none\" for "
+"unencrypted, \"tls\" for using TLS, \"xtls\" for using XTLS."
+msgstr "اینکه رمزنگاری لایه انتقال فعال باشد یا خیر، \"none\" برای بدون رمزنگاری، \"tls\" برای استفاده از TLS، \"xtls\" برای استفاده از XTLS."
+
+msgid "Original Trojan only supported 'tls', please choose 'tls'."
+msgstr "Trojan اصلی فقط از 'tls' پشتیبانی می‌کند، لطفاً 'tls' را انتخاب کنید."
+
+msgid "Transfer mode"
+msgstr "حالت انتقال"
+
+msgid "Do not send server name in ClientHello."
+msgstr "نام سرور را در ClientHello ارسال نکن."
+
+msgid "Domain"
+msgstr "دامنه"
+
+msgid "allowInsecure"
+msgstr "اجازه ناامن (allowInsecure)"
+
+msgid ""
+"Whether unsafe connections are allowed. When checked, Certificate validation "
+"will be skipped."
+msgstr "آیا اتصالات ناامن مجاز هستند. در صورت تیک خوردن، اعتبارسنجی گواهی نادیده گرفته می‌شود."
+
+msgid "%s Node Use Type"
+msgstr "نوع استفاده گره %s"
+
+msgid "Set the TUIC proxy server ip address"
+msgstr "تنظیم آدرس IP سرور پروکسی TUIC"
+
+msgid "TUIC User Password For Connect Remote Server"
+msgstr "رمز عبور کاربر TUIC برای اتصال به سرور راه دور"
+
+msgid "TUIC UserName For Local Socks"
+msgstr "نام کاربری TUIC برای Socks محلی"
+
+msgid "TUIC Password For Local Socks"
+msgstr "رمز عبور TUIC برای Socks محلی"
+
+msgid "UDP relay mode"
+msgstr "حالت بازپخش UDP"
+
+msgid "Congestion control algorithm"
+msgstr "الگوریتم کنترل ازدحام"
+
+msgid "Heartbeat interval(second)"
+msgstr "بازه ضربان قلب (ثانیه)"
+
+msgid "Timeout for establishing a connection to server(second)"
+msgstr "مهلت زمانی برای برقراری اتصال به سرور (ثانیه)"
+
+msgid "Garbage collection interval(second)"
+msgstr "بازه جمع‌آوری زباله (ثانیه)"
+
+msgid "Garbage collection lifetime(second)"
+msgstr "طول عمر جمع‌آوری زباله (ثانیه)"
+
+msgid "Disable SNI"
+msgstr "غیرفعال کردن SNI"
+
+msgid "Enable 0-RTT QUIC handshake"
+msgstr "فعال‌سازی دست تکان دادن 0-RTT QUIC"
+
+msgid "TUIC send window"
+msgstr "پنجره ارسال TUIC"
+
+msgid "TUIC receive window"
+msgstr "پنجره دریافت TUIC"
+
+msgid ""
+"TUIC Maximum packet size the socks5 server can receive from external, in "
+"bytes"
+msgstr "حداکثر اندازه بسته TUIC که سرور socks5 می‌تواند از خارج دریافت کند، به بایت"
+
+msgid "Set if the listening socket should be dual-stack"
+msgstr "تنظیم کنید که سوکت شنونده دو پشته‌ای (dual-stack) باشد یا خیر"
+
+msgid ""
+"<br />none: default, no masquerade, data sent is packets with no "
+"characteristics.<br />srtp: disguised as an SRTP packet, it will be "
+"recognized as video call data (such as FaceTime).<br />utp: packets "
+"disguised as uTP will be recognized as bittorrent downloaded data.<br /"
+">wechat-video: packets disguised as WeChat video calls.<br />dtls: disguised "
+"as DTLS 1.2 packet.<br />wireguard: disguised as a WireGuard packet. (not "
+"really WireGuard protocol)<br />dns: Disguising traffic as DNS requests."
+msgstr "<br />none: پیش‌فرض، بدون استتار، داده‌های ارسالی بسته‌های بدون مشخصه هستند.<br />srtp: مبدل شده به بسته SRTP، به عنوان داده تماس تصویری (مانند FaceTime) شناخته می‌شود.<br />utp: بسته‌های مبدل شده به uTP به عنوان داده دانلود شده bittorrent شناخته می‌شوند.<br />wechat-video: بسته‌های مبدل شده به تماس‌های تصویری WeChat.<br />dtls: مبدل شده به بسته DTLS 1.2.<br />wireguard: مبدل شده به بسته WireGuard. (نه واقعاً پروتکل WireGuard)<br />dns: پنهان کردن ترافیک به عنوان درخواست‌های DNS."
+
+msgid ""
+"Use it together with the DNS disguised type. You can fill in any domain."
+msgstr "از آن همراه با نوع استتار DNS استفاده کنید. می‌توانید هر دامنه‌ای را وارد کنید."
+
+msgid "Auth"
+msgstr "احراز هویت"
+
+msgid "Socks for authentication"
+msgstr "Socks برای احراز هویت"
+
+msgid "Socks protocol authentication, support anonymous and password."
+msgstr "احراز هویت پروتکل Socks، پشتیبانی از ناشناس و رمز عبور."
+
+msgid "anonymous"
+msgstr "ناشناس"
+
+msgid "User Password"
+msgstr "رمز عبور کاربر"
+
+msgid "Username and Password must be used together!"
+msgstr "نام کاربری و رمز عبور باید با هم استفاده شوند!"
+
+msgid "Prefer firewall tools"
+msgstr "ترجیح ابزارهای فایروال"
+
+msgid "IPv6 TProxy"
+msgstr "IPv6 TProxy"
+
+msgid "Experimental feature. Make sure that your node supports IPv6."
+msgstr "ویژگی آزمایشی. مطمئن شوید که گره شما از IPv6 پشتیبانی می‌کند."
+
+msgid "Status info"
+msgstr "اطلاعات وضعیت"
+
+msgid "Big icon"
+msgstr "آیکون بزرگ"
+
+msgid "Show node check"
+msgstr "نمایش بررسی گره"
+
+msgid "Show Show IP111"
+msgstr "نمایش نمایش IP111"
+
+msgid "Destination protocol"
+msgstr "پروتکل مقصد"
+
+msgid "Destination address"
+msgstr "آدرس مقصد"
+
+msgid "Destination port"
+msgstr "پورت مقصد"
+
+msgid ""
+"Whether to receive PROXY protocol, when this node want to be fallback or "
+"forwarded by proxy, it must be enable, otherwise it cannot be used."
+msgstr "آیا پروتکل PROXY دریافت شود، زمانی که این گره بخواهد پشتیبان باشد یا توسط پروکسی فوروارد شود، باید فعال باشد، در غیر این صورت قابل استفاده نیست."
+
+msgid "outbound node"
+msgstr "گره خروجی"
+
+msgid "Custom Socks"
+msgstr "Socks سفارشی"
+
+msgid "Custom HTTP"
+msgstr "HTTP سفارشی"
+
+msgid "Custom Interface"
+msgstr "رابط سفارشی"
+
+msgid "Interface"
+msgstr "رابط"
+
+msgid "Bind Local"
+msgstr "اتصال محلی (Bind Local)"
+
+msgid "When selected, it can only be accessed localhost."
+msgstr "در صورت انتخاب، فقط از طریق localhost قابل دسترسی است."
+
+msgid "Accept LAN Access"
+msgstr "پذیرش دسترسی شبکه داخلی (LAN)"
+
+msgid "When selected, it can accessed lan , this will not be safe!"
+msgstr "در صورت انتخاب، از شبکه داخلی قابل دسترسی است، این امن نخواهد بود!"
+
+msgid "Enable Remote"
+msgstr "فعال‌سازی راه دور"
+
+msgid "You can forward to Nginx/Caddy/V2ray/Xray WebSocket and more."
+msgstr "می‌توانید به Nginx/Caddy/V2ray/Xray WebSocket و موارد دیگر فوروارد کنید."
+
+msgid "Remote Address"
+msgstr "آدرس راه دور"
+
+msgid "Remote Port"
+msgstr "پورت راه دور"
+
+msgid "as:"
+msgstr "به عنوان:"
+
+msgid "Public key absolute path"
+msgstr "مسیر مطلق کلید عمومی"
+
+msgid "Private key absolute path"
+msgstr "مسیر مطلق کلید خصوصی"
+
+msgid "Can't find this file!"
+msgstr "این فایل پیدا نشد!"
+
+msgid "Public key and Private key path can not be empty!"
+msgstr "مسیر کلید عمومی و کلید خصوصی نمی‌تواند خالی باشد!"
+
+msgid "Server-Side"
+msgstr "سمت سرور"
+
+msgid "Server Config"
+msgstr "پیکربندی سرور"
+
+msgid "Users Manager"
+msgstr "مدیریت کاربران"
+
+msgid "Logs"
+msgstr "گزارش‌ها (Logs)"
+
+msgid "Log"
+msgstr "گزارش (Log)"
+
+msgid "Enable Node Log"
+msgstr "فعال‌سازی گزارش گره"
+
+msgid "Log Level"
+msgstr "سطح گزارش"
+
+msgid "Not enabled log"
+msgstr "گزارش فعال نیست"
+
+msgid "UDP Forward"
+msgstr "فوروارد UDP"
+
+msgid "DNS Settings"
+msgstr "تنظیمات DNS"
+
+msgid "Null"
+msgstr "تهی (Null)"
+
+msgid ""
+"You did not fill in the %s path. Please save and apply then update manually."
+msgstr "شما مسیر %s را پر نکرده‌اید. لطفاً ذخیره و اعمال کنید سپس به صورت دستی به‌روزرسانی کنید."
+
+msgid "Not installed %s, Can't unzip!"
+msgstr "%s نصب نشده است، استخراج امکان‌پذیر نیست!"
+
+msgid "Can't determine ARCH, or ARCH not supported."
+msgstr "معماری (ARCH) قابل تشخیص نیست، یا پشتیبانی نمی‌شود."
+
+msgid "Get remote version info failed."
+msgstr "دریافت اطلاعات نسخه راه دور ناموفق بود."
+
+msgid "New version found, but failed to get new version download url."
+msgstr "نسخه جدید پیدا شد، اما دریافت URL دانلود نسخه جدید ناموفق بود."
+
+msgid "Download url is required."
+msgstr "URL دانلود الزامی است."
+
+msgid "File download failed or timed out: %s"
+msgstr "دانلود فایل ناموفق بود یا زمان آن تمام شد: %s"
+
+msgid "File path required."
+msgstr "مسیر فایل الزامی است."
+
+msgid "%s not enough space."
+msgstr "%s فضای کافی ندارد."
+
+msgid "Can't find client in file: %s"
+msgstr "کلاینت در فایل پیدا نشد: %s"
+
+msgid "Client file is required."
+msgstr "فایل کلاینت الزامی است."
+
+msgid "The client file is not suitable for current device."
+msgstr "فایل کلاینت برای دستگاه فعلی مناسب نیست."
+
+msgid "Can't move new file to path: %s"
+msgstr "انتقال فایل جدید به مسیر امکان‌پذیر نیست: %s"
+
+msgid "An XHttpObject in JSON format, used for sharing."
+msgstr "یک XHttpObject در فرمت JSON، برای اشتراک‌گذاری استفاده می‌شود."
+
+msgid "Enable Mux.Cool"
+msgstr "فعال‌سازی Mux.Cool"
+
+msgid "Mux concurrency"
+msgstr "همزمانی Mux"
+
+msgid "XUDP Mux concurrency"
+msgstr "همزمانی XUDP Mux"
+
+msgid "Padding"
+msgstr "پدینگ (Padding)"
+
+msgid "Enable early data"
+msgstr "فعال‌سازی داده‌های اولیه (Early Data)"
+
+msgid "Early data length"
+msgstr "طول داده‌های اولیه"
+
+msgid "Early data header name"
+msgstr "نام هدر داده‌های اولیه"
+
+msgid "Recommended value: Sec-WebSocket-Protocol"
+msgstr "مقدار پیشنهادی: Sec-WebSocket-Protocol"
+
+msgid "Health check"
+msgstr "بررسی سلامت"
+
+msgid "Health check timeout"
+msgstr "مهلت زمانی بررسی سلامت"
+
+msgid "Permit without stream"
+msgstr "اجازه بدون جریان (stream)"
+
+msgid "Initial Windows Size"
+msgstr "اندازه اولیه پنجره"
+
+msgid "Excluded Domains"
+msgstr "دامنه‌های استثنا شده"
+
+msgid ""
+"If the traffic sniffing result is in this list, the destination address will "
+"not be overridden."
+msgstr "اگر نتیجه شنود ترافیک در این لیست باشد، آدرس مقصد بازنویسی نخواهد شد."
+
+msgid "Buffer Size"
+msgstr "اندازه بافر"
+
+msgid "Buffer size for every connection (kB)"
+msgstr "اندازه بافر برای هر اتصال (کیلوبایت)"
+
+msgid "Handshake Timeout"
+msgstr "مهلت زمانی دست تکان دادن"
+
+msgid "Idle Timeout"
+msgstr "مهلت زمانی بیکاری"
+
+msgid "Hop Interval"
+msgstr "بازه پرش (Hop)"
+
+msgid "HeartbeatPeriod(second)"
+msgstr "دوره ضربان قلب (ثانیه)"
+
+msgid "Override the connection destination address"
+msgstr "بازنویسی آدرس مقصد اتصال"
+
+msgid ""
+"Override the connection destination address with the sniffed domain.<br /"
+">Otherwise use sniffed domain for routing only.<br />If using shunt nodes, "
+"configure the domain shunt rules correctly."
+msgstr "بازنویسی آدرس مقصد اتصال با دامنه شنود شده.<br />در غیر این صورت از دامنه شنود شده فقط برای مسیریابی استفاده کنید.<br />اگر از گره‌های شنت استفاده می‌کنید، قوانین شنت دامنه را به درستی پیکربندی کنید."
+
+msgid ""
+"Override the connection destination address with the sniffed domain.<br /"
+">When enabled, traffic will match only by domain, ignoring IP rules.<br />If "
+"using shunt nodes, configure the domain shunt rules correctly."
+msgstr "بازنویسی آدرس مقصد اتصال با دامنه شنود شده.<br />زمانی که فعال باشد، ترافیک فقط با دامنه مطابقت داده می‌شود و قوانین IP نادیده گرفته می‌شوند.<br />اگر از گره‌های شنت استفاده می‌کنید، قوانین شنت دامنه را به درستی پیکربندی کنید."
+
+msgid "Handshake Server"
+msgstr "سرور دست تکان دادن"
+
+msgid "Handshake Server Port"
+msgstr "پورت سرور دست تکان دادن"
+
+msgid "Protocol parameter. Will waste traffic randomly if enabled."
+msgstr "پارامتر پروتکل. در صورت فعال‌سازی، ترافیک را به طور تصادفی هدر می‌دهد."
+
+msgid "Protocol parameter. Enable length block encryption."
+msgstr "پارامتر پروتکل. فعال‌سازی رمزنگاری بلوک طول."
+
+msgid "TLS Chain Fingerprint (SHA256)"
+msgstr "اثر انگشت زنجیره TLS (SHA256)"
+
+msgid "Once set, connects only when the server’s chain fingerprint matches."
+msgstr "پس از تنظیم، فقط زمانی متصل می‌شود که اثر انگشت زنجیره سرور مطابقت داشته باشد."
+
+msgid "ECH Config"
+msgstr "پیکربندی ECH"
+
+msgid "ECH Key"
+msgstr "کلید ECH"
+
+msgid "PQ signature schemes"
+msgstr "طرح‌های امضای PQ"
+
+msgid "Disable adaptive sizing of TLS records"
+msgstr "غیرفعال‌سازی اندازه‌دهی تطبیقی رکوردهای TLS"
+
+msgid "ECH Query Policy"
+msgstr "سیاست پرس‌وجوی ECH"
+
+msgid ""
+"Controls the policy used when performing DNS queries for ECH configuration."
+msgstr "سیاستی که هنگام انجام پرس‌وجوهای DNS برای پیکربندی ECH استفاده می‌شود را کنترل می‌کند."
+
+msgid ""
+"Enable Multipath TCP, need to be enabled in both server and client "
+"configuration."
+msgstr "فعال‌سازی Multipath TCP، باید در تنظیمات سرور و کلاینت فعال باشد."
+
+msgid "Fragment"
+msgstr "قطعه‌بندی (Fragment)"
+
+msgid ""
+"TCP fragments, which can deceive the censorship system in some cases, such "
+"as bypassing SNI blacklists."
+msgstr "قطعه‌بندی TCP، که می‌تواند در برخی موارد سیستم سانسور را فریب دهد، مانند دور زدن لیست سیاه SNI."
+
+msgid "Fragment Packets"
+msgstr "بسته‌های قطعه‌بندی شده"
+
+msgid ""
+" \"1-3\" is for segmentation at TCP layer, applying to the beginning 1 to 3 "
+"data writes by the client. \"tlshello\" is for TLS client hello packet "
+"fragmentation."
+msgstr " \"1-3\" برای قطعه‌بندی در لایه TCP است و به 1 تا 3 نوشتن اول داده توسط کلاینت اعمال می‌شود. \"tlshello\" برای قطعه‌بندی بسته سلام کلاینت TLS است."
+
+msgid "Fragment Length"
+msgstr "طول قطعه"
+
+msgid "Fragmented packet length (byte)"
+msgstr "طول بسته قطعه‌بندی شده (بایت)"
+
+msgid "Fragment Interval"
+msgstr "بازه قطعه‌بندی"
+
+msgid "Fragmentation interval (ms)"
+msgstr "بازه قطعه‌بندی (میلی‌ثانیه)"
+
+msgid "Max Split"
+msgstr "حداکثر تقسیم"
+
+msgid "Limit the maximum number of splits."
+msgstr "محدود کردن حداکثر تعداد تقسیم‌ها."
+
+msgid ""
+"Split handshake data into multiple TLS records for better censorship "
+"evasion. Low overhead. Recommended to enable first."
+msgstr "تقسیم داده‌های دست تکان دادن به چندین رکورد TLS برای فرار بهتر از سانسور. سربار کم. توصیه می‌شود ابتدا فعال شود."
+
+msgid ""
+"Split handshake into multiple TCP segments. Enhances obfuscation. May "
+"increase delay. Use only if needed."
+msgstr "تقسیم دست تکان دادن به چندین قطعه TCP. افزایش مبهم‌سازی. ممکن است تاخیر را افزایش دهد. فقط در صورت نیاز استفاده کنید."
+
+msgid "Noise"
+msgstr "نویز (Noise)"
+
+msgid ""
+"UDP noise, Under some circumstances it can bypass some UDP based protocol "
+"restrictions."
+msgstr "نویز UDP، در برخی شرایط می‌تواند محدودیت‌های پروتکل مبتنی بر UDP را دور بزند."
+
+msgid "To send noise packets, select \"Noise\" in Xray Settings."
+msgstr "برای ارسال بسته‌های نویز، \"Noise\" را در تنظیمات Xray انتخاب کنید."
+
+msgid "Xray Noise Packets"
+msgstr "بسته‌های نویز Xray"
+
+msgid "Packet"
+msgstr "بسته"
+
+msgid "Delay (ms)"
+msgstr "تاخیر (میلی‌ثانیه)"
+
+msgid "IP Type"
+msgstr "نوع IP"
+
+msgid ""
+"If is domain name, The requested domain name will be resolved to IP before "
+"connect."
+msgstr "اگر نام دامنه است، نام دامنه درخواست شده قبل از اتصال به IP حل می‌شود."
+
+msgid "Chain Proxy"
+msgstr "پروکسی زنجیره‌ای"
+
+msgid "Landing Node"
+msgstr "گره فرود (Landing Node)"
+
+msgid "Only support a layer of proxy."
+msgstr "فقط از یک لایه پروکسی پشتیبانی می‌کند."
+
+msgid ""
+"Chained proxy works only with Xray or Sing-box nodes.<br>The chained node "
+"must be the same type as your subscription node (Xray with Xray, Sing-box "
+"with Sing-box).<br>You can only use manual or imported nodes as chained "
+"nodes."
+msgstr "پروکسی زنجیره‌ای فقط با گره‌های Xray یا Sing-box کار می‌کند.<br>گره زنجیره‌ای باید هم‌نوع گره اشتراک شما باشد (Xray با Xray، Sing-box با Sing-box).<br>فقط می‌توانید از گره‌های دستی یا وارد شده به عنوان گره‌های زنجیره‌ای استفاده کنید."
+
+msgid "Set the default domain resolution strategy for the sing-box node."
+msgstr "تنظیم استراتژی پیش‌فرض حل دامنه برای گره sing-box."
+
+msgid "Prefer IPv4"
+msgstr "ترجیح IPv4"
+
+msgid "Prefer IPv6"
+msgstr "ترجیح IPv6"
+
+msgid "IPv4 Only"
+msgstr "فقط IPv4"
+
+msgid "IPv6 Only"
+msgstr "فقط IPv6"
+
+msgid "Maintain"
+msgstr "نگهداری"
+
+msgid "Backup and Restore"
+msgstr "پشتیبان‌گیری و بازیابی"
+
+msgid "Backup or Restore Client and Server Configurations."
+msgstr "پشتیبان‌گیری یا بازیابی پیکربندی‌های کلاینت و سرور."
+
+msgid ""
+"Note: Restoring configurations across different versions may cause "
+"compatibility issues."
+msgstr "توجه: بازیابی پیکربندی‌ها در بین نسخه‌های مختلف ممکن است باعث مشکلات سازگاری شود."
+
+msgid "Create Backup File"
+msgstr "ایجاد فایل پشتیبان"
+
+msgid "Restore Backup File"
+msgstr "بازیابی فایل پشتیبان"
+
+msgid "DL Backup"
+msgstr "دانلود پشتیبان"
+
+msgid "RST Backup"
+msgstr "بازنشانی پشتیبان"
+
+msgid "Backup failed!"
+msgstr "پشتیبان‌گیری ناموفق بود!"
+
+msgid "UL Restore"
+msgstr "آپلود بازیابی"
+
+msgid "CLOSE WIN"
+msgstr "بستن پنجره"
+
+msgid "Restore to default configuration"
+msgstr "بازیابی به پیکربندی پیش‌فرض"
+
+msgid "Do Reset"
+msgstr "انجام بازنشانی"
+
+msgid "Please select a file first."
+msgstr "لطفاً ابتدا یک فایل انتخاب کنید."
+
+msgid "Invalid file type. Please upload a .tar.gz file."
+msgstr "نوع فایل نامعتبر است. لطفاً یک فایل .tar.gz آپلود کنید."
+
+msgid "File size exceeds 10MB limit."
+msgstr "اندازه فایل از محدودیت 10 مگابایت بیشتر است."
+
+msgid "Do you want to restore the client to default settings?"
+msgstr "آیا می‌خواهید کلاینت را به تنظیمات پیش‌فرض بازگردانید؟"
+
+msgid "Are you sure you want to restore the client to default settings?"
+msgstr "آیا مطمئن هستید که می‌خواهید کلاینت را به تنظیمات پیش‌فرض بازگردانید؟"
+
+msgid "Configuration file uploaded successfully…"
+msgstr "فایل پیکربندی با موفقیت آپلود شد..."
+
+msgid "Configuration restored successfully…"
+msgstr "پیکربندی با موفقیت بازیابی شد..."
+
+msgid "Service restarting…"
+msgstr "راه اندازی مجدد سرویس..."
+
+msgid "Configuration file decompression failed, please try again!"
+msgstr "استخراج فایل پیکربندی ناموفق بود، لطفاً دوباره تلاش کنید!"
+
+msgid "_urltest"
+msgstr "_تست URL"
+
+msgid "URLTest node list"
+msgstr "لیست گره‌های URLTest"
+
+msgid ""
+"List of nodes to test, <a target='_blank' href='https://sing-"
+"box.sagernet.org/configuration/outbound/urltest'>document</a>"
+msgstr "لیست گره‌ها برای تست، <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>مستندات</a>"
+
+msgid "Test interval"
+msgstr "بازه تست"
+
+msgid "Test interval must be less or equal than idle timeout."
+msgstr "بازه تست باید کمتر یا مساوی مهلت زمانی بیکاری باشد."
+
+msgid "Test tolerance"
+msgstr "تحمل تست"
+
+msgid "The test tolerance in milliseconds."
+msgstr "تحمل تست بر حسب میلی‌ثانیه."
+
+msgid "Idle timeout"
+msgstr "مهلت زمانی بیکاری"
+
+msgid "The idle timeout."
+msgstr "مهلت زمانی بیکاری."
+
+msgid "Interrupt existing connections"
+msgstr "قطع اتصالات موجود"
+
+msgid "Interrupt existing connections when the selected outbound has changed."
+msgstr "قطع اتصالات موجود زمانی که خروجی انتخاب شده تغییر کرده است."
+
+msgid "Port hopping range"
+msgstr "محدوده پرش پورت"
+
+msgid ""
+"Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,)."
+msgstr "فرمت به صورت 1000:2000 یا 1000-2000 گروه‌های متعدد با کاما (,) جدا می‌شوند."
+
+msgid "Use Custom Config"
+msgstr "استفاده از پیکربندی سفارشی"
+
+msgid "Custom Config"
+msgstr "پیکربندی سفارشی"
+
+msgid "Must be JSON text!"
+msgstr "باید متن JSON باشد!"
+
+msgid "Geo View"
+msgstr "نمای Geo"
+
+msgid "Query"
+msgstr "پرس‌وجو"
+
+msgid "Querying"
+msgstr "در حال پرس‌وجو"
+
+msgid "Please enter query content!"
+msgstr "لطفاً محتوای پرس‌وجو را وارد کنید!"
+
+msgid "No results were found!"
+msgstr "هیچ نتیجه‌ای یافت نشد!"
+
+msgid "Rules containing this value:"
+msgstr "قوانین حاوی این مقدار:"
+
+msgid "Domain/IP Query"
+msgstr "پرس‌وجوی دامنه/IP"
+
+msgid "GeoIP/Geosite Query"
+msgstr "پرس‌وجوی GeoIP/Geosite"
+
+msgid "Enter a domain or IP to query the Geo rule list they belong to."
+msgstr "یک دامنه یا IP وارد کنید تا لیست قوانین Geo که به آن تعلق دارند را جستجو کنید."
+
+msgid ""
+"Enter a GeoIP or Geosite to extract the domains/IPs they contain. Format: "
+"geoip:cn or geosite:gfw"
+msgstr "یک GeoIP یا Geosite وارد کنید تا دامنه‌ها/IPهای موجود در آن استخراج شوند. فرمت: geoip:cn یا geosite:gfw"
+
+msgid "Tips:"
+msgstr "نکات:"
+
+msgid ""
+"By entering a domain or IP, you can query the Geo rule list they belong to."
+msgstr "با وارد کردن یک دامنه یا IP، می‌توانید لیست قوانین Geo که به آن تعلق دارند را جستجو کنید."
+
+msgid ""
+"By entering a GeoIP or Geosite, you can extract the domains/IPs they contain."
+msgstr "با وارد کردن یک GeoIP یا Geosite، می‌توانید دامنه‌ها/IPهای موجود در آن را استخراج کنید."
+
+msgid ""
+"Use the GeoIP/Geosite query function to verify if the entered Geo rules are "
+"correct."
+msgstr "از عملکرد پرس‌وجوی GeoIP/Geosite برای تأیید صحت قوانین Geo وارد شده استفاده کنید."
+
+msgid "Private Key Passphrase"
+msgstr "عبارت عبور کلید خصوصی"
+
+msgid "Host Key"
+msgstr "کلید میزبان (Host Key)"
+
+msgid "Accept any if empty."
+msgstr "در صورت خالی بودن، همه پذیرفته می‌شوند."
+
+msgid "Host Key Algorithms"
+msgstr "الگوریتم‌های کلید میزبان"
+
+msgid "Client Version"
+msgstr "نسخه کلاینت"
+
+msgid "Random version will be used if empty."
+msgstr "در صورت خالی بودن، از نسخه تصادفی استفاده می‌شود."
+
+msgid ""
+"The configured type also applies to the core specified when manually "
+"importing nodes."
+msgstr "نوع پیکربندی شده همچنین به هسته مشخص شده هنگام وارد کردن دستی گره‌ها اعمال می‌شود."
+
+msgid "Group Name"
+msgstr "نام گروه"
+
+msgid "Reassign Group"
+msgstr "تغییر گروه"
+
+msgid "Reassign Node Group"
+msgstr "تغییر گروه گره"
+
+msgid "Search nodes..."
+msgstr "جستجوی گره‌ها..."
+
+msgid "Using..."
+msgstr "در حال استفاده..."
+
+msgid "Generate configuration file and run"
+msgstr "تولید فایل پیکربندی و اجرا"
+
+msgid "Start after a delay of %s seconds!"
+msgstr "شروع پس از تاخیر %s ثانیه‌ای!"
+
+msgid "The script is already running, do not run it again. Exit."
+msgstr "اسکریپت در حال اجرا است، دوباره آن را اجرا نکنید. خروج."
+
+msgid ""
+"Stop the script and wait for a timeout, then exit without repeating the "
+"process."
+msgstr "توقف اسکریپت و انتظار برای مهلت زمانی، سپس خروج بدون تکرار فرآیند."
+
+msgid ""
+"Warning: The %s application environment is incomplete. Switch to %s. (%s)"
+msgstr "هشدار: محیط برنامه %s ناقص است. سوئیچ به %s. (%s)"
+
+msgid ""
+"Note: Dnsmasq (%s) is below 2.90. Upgrading is recommended to improve "
+"stability."
+msgstr "توجه: Dnsmasq (%s) کمتر از 2.90 است. ارتقا برای بهبود پایداری توصیه می‌شود."
+
+msgid "Warning: %s transparent proxy is missing basic dependency %s!"
+msgstr "هشدار: پروکسی شفاف %s وابستگی اساسی %s را ندارد!"
+
+msgid "Warning: Not compatible with any transparent proxy system environment."
+msgstr "هشدار: با هیچ محیط سیستم پروکسی شفاف سازگار نیست."
+
+msgid "%s does not have execute permissions and cannot be started: %s %s"
+msgstr "%s مجوز اجرا ندارد و نمی‌تواند شروع شود: %s %s"
+
+msgid "%s not found, unable to start..."
+msgstr "%s پیدا نشد، شروع امکان‌پذیر نیست..."
+
+msgid "Socks node: [%s]%s is an invalid server address and cannot be started!"
+msgstr "گره Socks: [%s]%s یک آدرس سرور نامعتبر است و نمی‌تواند شروع شود!"
+
+msgid ""
+"For some reason, the configuration for this Socks service has been lost, and "
+"its startup has been aborted!"
+msgstr "به دلایلی، پیکربندی این سرویس Socks از بین رفته است و راه‌اندازی آن لغو شد!"
+
+msgid "Socks node: [%s]%s, start failed %s:%s %s"
+msgstr "گره Socks: [%s]%s، شروع ناموفق %s:%s %s"
+
+msgid "Socks node: [%s]%s, starting %s:%s"
+msgstr "گره Socks: [%s]%s، در حال شروع %s:%s"
+
+msgid ""
+"To enable experimental IPv6 transparent proxy (TProxy), please ensure your "
+"node and type support IPv6!"
+msgstr "برای فعال‌سازی پروکسی شفاف IPv6 آزمایشی، لطفاً مطمئن شوید گره و نوع شما از IPv6 پشتیبانی می‌کند!"
+
+msgid "[%s] process %s error, skip this transparent proxy!"
+msgstr "خطای فرآیند [%s] %s، از این پروکسی شفاف صرف‌نظر کنید!"
+
+msgid "Analyzing the node configuration of the Socks service..."
+msgstr "تحلیل پیکربندی گره سرویس Socks..."
+
+msgid "Log file is too long, clear it!"
+msgstr "فایل گزارش خیلی طولانی است، آن را پاک کنید!"
+
+msgid ""
+"The task is currently running automatically as a scheduled task; no "
+"reconfiguration of the scheduled task is required."
+msgstr "وظیفه در حال حاضر به طور خودکار به عنوان یک وظیفه زمان‌بندی شده اجرا می‌شود؛ نیازی به پیکربندی مجدد وظیفه زمان‌بندی شده نیست."
+
+msgid "Scheduled tasks: Auto stop service."
+msgstr "وظایف زمان‌بندی شده: توقف خودکار سرویس."
+
+msgid "Scheduled tasks: Auto start service."
+msgstr "وظایف زمان‌بندی شده: شروع خودکار سرویس."
+
+msgid "Scheduled tasks: Auto restart service."
+msgstr "وظایف زمان‌بندی شده: راه‌اندازی مجدد خودکار سرویس."
+
+msgid "Scheduled tasks: Auto update rules."
+msgstr "وظایف زمان‌بندی شده: به‌روزرسانی خودکار قوانین."
+
+msgid "Scheduled tasks: Auto update [%s] subscription."
+msgstr "وظایف زمان‌بندی شده: به‌روزرسانی خودکار اشتراک [%s]."
+
+msgid "Auto updates: Starts a cyclical update process."
+msgstr "به‌روزرسانی‌های خودکار: شروع یک فرآیند به‌روزرسانی چرخشی."
+
+msgid ""
+"Running in no proxy mode, it only allows scheduled tasks for starting and "
+"stopping services."
+msgstr "در حالت بدون پروکسی اجرا می‌شود، فقط اجازه وظایف زمان‌بندی شده برای شروع و توقف سرویس‌ها را می‌دهد."
+
+msgid "Clear scheduled commands."
+msgstr "پاک کردن دستورات زمان‌بندی شده."
+
+msgid "Unable to resolve [%s], route table addition failed!"
+msgstr "عدم توانایی در حل [%s]، افزودن به جدول مسیریابی ناموفق بود!"
+
+msgid "[%s] was successfully added to the routing table of interface [%s]!"
+msgstr "[%s] با موفقیت به جدول مسیریابی رابط [%s] اضافه شد!"
+
+msgid ""
+"Adding [%s] to the [%s] routing table failed! The reason is that the [%s] "
+"gateway cannot be found."
+msgstr "افزودن [%s] به جدول مسیریابی [%s] ناموفق بود! دلیل این است که دروازه [%s] پیدا نمی‌شود."
+
+msgid "Global nodes are not enabled, skip [%s]."
+msgstr "گره‌های سراسری فعال نیستند، صرف‌نظر از [%s]."
+
+msgid "Direct DNS: %s"
+msgstr "DNS مستقیم: %s"
+
+msgid "Remote DNS: %s"
+msgstr "DNS راه دور: %s"
+
+msgid "The program has started. Please stop it and then restart it!"
+msgstr "برنامه شروع شده است. لطفاً آن را متوقف و سپس دوباره راه‌اندازی کنید!"
+
+msgid "Running complete!"
+msgstr "اجرا کامل شد!"
+
+msgid "Clearing and closing related programs and cache complete."
+msgstr "پاک‌سازی و بستن برنامه‌های مرتبط و کش کامل شد."
+
+msgid "Incorrect index listing method (%s), execution terminated!"
+msgstr "روش فهرست‌بندی ایندکس نادرست (%s)، اجرا متوقف شد!"
+
+msgid "parse the traffic splitting rules[%s]-[geoip:%s] add to %s to complete."
+msgstr "تجزیه قوانین تقسیم ترافیک [%s]-[geoip:%s] و افزودن به %s کامل شد."
+
+msgid "Access Control:"
+msgstr "کنترل دسترسی:"
+
+msgid "Add node to the load balancer is directly connected to %s[%s]."
+msgstr "افزودن گره به توزیع‌کننده بار مستقیماً به %s[%s] متصل است."
+
+msgid "Add all %s nodes to %s[%s] direct connection complete."
+msgstr "افزودن تمام گره‌های %s به %s[%s] اتصال مستقیم کامل شد."
+
+msgid "Starting to load %s firewall rules..."
+msgstr "شروع بارگذاری قوانین فایروال %s..."
+
+msgid "local network segments (%s) direct connection: %s"
+msgstr "بخش‌های شبکه محلی (%s) اتصال مستقیم: %s"
+
+msgid "Add ISP %s DNS to the whitelist: %s"
+msgstr "افزودن DNS ISP %s به لیست سفید: %s"
+
+msgid "[%s]"
+msgstr "[%s]"
+
+msgid "[%s],"
+msgstr "[%s]،"
+
+msgid "Source iface [%s],"
+msgstr "رابط منبع [%s]،"
+
+msgid "IP range [%s],"
+msgstr "محدوده IP [%s]،"
+
+msgid "All device,"
+msgstr "همه دستگاه‌ها،"
+
+msgid "Does not exist, ignore."
+msgstr "وجود ندارد، نادیده گرفتن."
+
+msgid "not proxy %s port [%s]"
+msgstr "پروکسی نکردن پورت %s [%s]"
+
+msgid "not proxy all %s"
+msgstr "پروکسی نکردن همه %s"
+
+msgid "Use the %s node [%s]"
+msgstr "استفاده از گره %s [%s]"
+
+msgid ""
+"Using a node that is different from the global configuration, DNS has been "
+"forcibly redirected to a dedicated DNS server."
+msgstr "استفاده از گره‌ای متفاوت از پیکربندی سراسری، DNS به اجبار به سرور DNS اختصاصی هدایت شده است."
+
+msgid "Add direct DNS to %s: %s"
+msgstr "افزودن DNS مستقیم به %s: %s"
+
+msgid "Local"
+msgstr "محلی"
+
+msgid "[Local],"
+msgstr "[محلی]،"
+
+msgid "Clear %s."
+msgstr "پاک کردن %s."
+
+msgid "Delete %s rules is complete."
+msgstr "حذف قوانین %s کامل شد."
+
+msgid "%s firewall rules load complete!"
+msgstr "بارگذاری قوانین فایروال %s کامل شد!"
+
+msgid "Socks switch detection: Unknown error."
+msgstr "تشخیص سوئیچ Socks: خطای ناشناخته."
+
+msgid ""
+"Socks switch detection: Unable to connect to the network. Please check if "
+"the network is working properly!"
+msgstr "تشخیص سوئیچ Socks: عدم توانایی در اتصال به شبکه. لطفاً بررسی کنید که شبکه به درستی کار می‌کند!"
+
+msgid ""
+"Socks switch detection: Primary node 【%s: [%s]】 is normal. Switch to the "
+"primary node!"
+msgstr "تشخیص سوئیچ Socks: گره اولیه 【%s: [%s]】 عادی است. سوئیچ به گره اولیه!"
+
+msgid "Socks switch detection: %s node switch complete!"
+msgstr "تشخیص سوئیچ Socks: سوئیچ گره %s کامل شد!"
+
+msgid "Socks switch detection: %s 【%s:[%s]】 normal."
+msgstr "تشخیص سوئیچ Socks: %s 【%s:[%s]】 عادی است."
+
+msgid "switch to %s test detect!"
+msgstr "سوئیچ به تست تشخیص %s!"
+
+msgid "backup node"
+msgstr "گره پشتیبان"
+
+msgid "next backup node"
+msgstr "گره پشتیبان بعدی"
+
+msgid "main node"
+msgstr "گره اصلی"
+
+msgid "Socks switch detection: %s 【%s:[%s]】 abnormal, %s"
+msgstr "تشخیص سوئیچ Socks: %s 【%s:[%s]】 غیرعادی، %s"
+
+msgid "Socks switch detection: %s 【%s:[%s]】 normal, switch to this node!"
+msgstr "تشخیص سوئیچ Socks: %s 【%s:[%s]】 عادی، سوئیچ به این گره!"
+
+msgid "Restart dnsmasq service."
+msgstr "راه‌اندازی مجدد سرویس dnsmasq."
+
+msgid "Console Port: %s"
+msgstr "پورت کنسول: %s"
+
+msgid "Discard one obviously invalid node."
+msgstr "حذف یک گره به وضوح نامعتبر."
+
+msgid "Entrance %s:%s"
+msgstr "ورودی %s:%s"
+
+msgid "Node: %s:%s, Weight: %s"
+msgstr "گره: %s:%s، وزن: %s"
+
+msgid "Start updating the rules..."
+msgstr "شروع به‌روزرسانی قوانین..."
+
+msgid ""
+"Download file size verification error. Original file size: %sB. Downloaded "
+"file size: %sB."
+msgstr "خطای تأیید اندازه فایل دانلود شده. اندازه فایل اصلی: %sB. اندازه فایل دانلود شده: %sB."
+
+msgid "Downloaded file is empty or an error occurred while reading it."
+msgstr "فایل دانلود شده خالی است یا خطایی هنگام خواندن آن رخ داده است."
+
+msgid "%s Start updating..."
+msgstr "%s شروع به‌روزرسانی..."
+
+msgid "%s version is the same and does not need to be updated."
+msgstr "نسخه %s یکسان است و نیازی به به‌روزرسانی ندارد."
+
+msgid ""
+"%s an error occurred during the file download process. Please try "
+"downloading again."
+msgstr "%s خطایی در فرآیند دانلود فایل رخ داد. لطفاً دوباره تلاش کنید."
+
+msgid ""
+"%s an error occurred while downloading the file. Please check your network "
+"or the download link and try again!"
+msgstr "%s خطایی هنگام دانلود فایل رخ داد. لطفاً شبکه یا لینک دانلود را بررسی کرده و دوباره تلاش کنید!"
+
+msgid "%s update success."
+msgstr "%s به‌روزرسانی موفق."
+
+msgid "%s update failed, please try again later or change URL."
+msgstr "%s به‌روزرسانی ناموفق بود، لطفاً بعداً تلاش کنید یا URL را تغییر دهید."
+
+msgid "%s update error!"
+msgstr "%s خطای به‌روزرسانی!"
+
+msgid "Restart the service and apply the new rules."
+msgstr "راه‌اندازی مجدد سرویس و اعمال قوانین جدید."
+
+msgid "The rules have been updated..."
+msgstr "قوانین به‌روز شده‌اند..."
+
+msgid "Socks node list [%s]"
+msgstr "لیست گره‌های Socks [%s]"
+
+msgid "Backup node list"
+msgstr "لیست گره‌های پشتیبان"
+
+msgid "HAProxy node list [%s]"
+msgstr "لیست گره‌های HAProxy [%s]"
+
+msgid "ACL list [%s]"
+msgstr "لیست ACL [%s]"
+
+msgid "Shunt [%s] node"
+msgstr "گره شنت [%s]"
+
+msgid "Xray Load Balancing node [%s] list"
+msgstr "لیست گره‌های توزیع بار Xray [%s]"
+
+msgid "Xray Load Balancing node [%s] backup node"
+msgstr "گره پشتیبان گره توزیع بار Xray [%s]"
+
+msgid "Sing-Box URLTest node [%s] list"
+msgstr "لیست گره‌های URLTest Sing-Box [%s]"
+
+msgid "Node [%s] preproxy node"
+msgstr "گره پیش‌پروکسی گره [%s]"
+
+msgid "Node [%s] landing node"
+msgstr "گره فرود گره [%s]"
+
+msgid ""
+"Skipping the %s node is due to incompatibility with the %s core program or "
+"incorrect node usage type settings."
+msgstr "صرف‌نظر از گره %s به دلیل ناسازگاری با برنامه اصلی %s یا تنظیمات نادرست نوع استفاده گره."
+
+msgid ""
+"Skip node: %s. Because Sing-Box does not support the %s protocol's %s "
+"transmission method, Xray needs to be used instead."
+msgstr "صرف‌نظر از گره: %s. زیرا Sing-Box از روش انتقال %s پروتکل %s پشتیبانی نمی‌کند، باید به جای آن از Xray استفاده شود."
+
+msgid "Xray unsupport %s plugin."
+msgstr "Xray از افزونه %s پشتیبانی نمی‌کند."
+
+msgid "Plugin options Incomplete."
+msgstr "گزینه‌های افزونه ناقص است."
+
+msgid "shadowsocks-libev unsupport 2022 encryption."
+msgstr "shadowsocks-libev از رمزنگاری 2022 پشتیبانی نمی‌کند."
+
+msgid ""
+"Please replace Xray or Sing-Box to support more transmission methods in "
+"Shadowsocks."
+msgstr "لطفاً برای پشتیبانی از روش‌های انتقال بیشتر در Shadowsocks، از Xray یا Sing-Box استفاده کنید."
+
+msgid "unsupport %s plugin."
+msgstr "پشتیبانی نکردن از افزونه %s."
+
+msgid "Skip the %s node because the %s core program is not installed."
+msgstr "صرف‌نظر از گره %s زیرا برنامه اصلی %s نصب نشده است."
+
+msgid ""
+"Skip the %s node, as %s type nodes require Sing-Box version 1.12 or higher."
+msgstr "صرف‌نظر از گره %s، زیرا گره‌های نوع %s به نسخه 1.12 یا بالاتر Sing-Box نیاز دارند."
+
+msgid "%s type node subscriptions are not currently supported, skip this node."
+msgstr "اشتراک‌های گره نوع %s در حال حاضر پشتیبانی نمی‌شوند، صرف‌نظر از این گره."
+
+msgid "Update [%s]"
+msgstr "به‌روزرسانی [%s]"
+
+msgid "Matching node:"
+msgstr "گره منطبق:"
+
+msgid "First Matching node:"
+msgstr "اولین گره منطبق:"
+
+msgid "Second Matching node:"
+msgstr "دومین گره منطبق:"
+
+msgid "Third Matching node:"
+msgstr "سومین گره منطبق:"
+
+msgid "Fourth Matching node:"
+msgstr "چهارمین گره منطبق:"
+
+msgid "Fifth Matching node:"
+msgstr "پنجمین گره منطبق:"
+
+msgid "Unable to find the best matching node, now replaced with:"
+msgstr "عدم توانایی در یافتن بهترین گره منطبق، اکنون جایگزین شده با:"
+
+msgid "Unable to find a new node. Please confirm and process manually."
+msgstr "عدم توانایی در یافتن گره جدید. لطفاً تأیید و به صورت دستی پردازش کنید."
+
+msgid "No node information updates are available."
+msgstr "هیچ به‌روزرسانی اطلاعات گره در دسترس نیست."
+
+msgid "Skip unknown types:"
+msgstr "صرف‌نظر از انواع ناشناخته:"
+
+msgid "Discard node: %s, Reason:"
+msgstr "حذف گره: %s، دلیل:"
+
+msgid "No usable binary was found."
+msgstr "هیچ باینری قابل استفاده‌ای یافت نشد."
+
+msgid "Discard filter nodes: %s type node %s"
+msgstr "حذف گره‌های فیلتر: نوع گره %s %s"
+
+msgid "Parsing error, skip this node."
+msgstr "خطای تجزیه، صرف‌نظر از این گره."
+
+msgid "Successfully resolved the [%s] node, number: %s"
+msgstr "گره [%s] با موفقیت حل شد، تعداد: %s"
+
+msgid ""
+"Get subscription content for [%s] is empty. This may be due to an invalid "
+"subscription address or a network problem. Please diagnose the issue!"
+msgstr "دریافت محتوای اشتراک برای [%s] خالی است. این ممکن است به دلیل آدرس اشتراک نامعتبر یا مشکل شبکه باشد. لطفاً مشکل را بررسی کنید!"
+
+msgid "Proxy"
+msgstr "پروکسی"
+
+msgid "Start subscribing..."
+msgstr "شروع اشتراک‌گیری..."
+
+msgid "Start subscribing: %s"
+msgstr "شروع اشتراک‌گیری: %s"
+
+msgid "Subscription: [%s] No changes, no update required."
+msgstr "اشتراک: [%s] بدون تغییر، نیازی به به‌روزرسانی نیست."
+
+msgid ""
+"[%s] Subscription failed. This could be due to an invalid subscription "
+"address or a network issue. Please diagnose the problem! [%s]"
+msgstr "[%s] اشتراک ناموفق بود. این می‌تواند به دلیل آدرس اشتراک نامعتبر یا مشکل شبکه باشد. لطفاً مشکل را بررسی کنید! [%s]"
+
+msgid "Error, restoring service."
+msgstr "خطا، بازیابی سرویس."
+
+msgid "Subscription complete..."
+msgstr "اشتراک کامل شد..."
