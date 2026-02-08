@@ -1,16 +1,12 @@
 local m, s = ...
 
-local api = require "luci.passwall.api"
-
 local singbox_bin = api.finded_com("sing-box")
 
 if not singbox_bin then
 	return
 end
 
-local appname = "passwall"
-
-local type_name = "sing-box"
+type_name = "sing-box"
 
 -- [[ sing-box ]]
 
