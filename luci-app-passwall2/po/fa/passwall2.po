@@ -453,14 +453,11 @@ msgstr "پیش‌پروکسی"
 msgid "Preproxy Node"
 msgstr "گره پیش‌پروکسی"
 
-msgid ""
-"Set the node to be used as a pre-proxy. Each rule (including <code>Default</"
-"code>) has a separate switch that controls whether this rule uses the pre-"
-"proxy or not."
-msgstr ""
-"گره‌ای را که باید به عنوان پیش‌پروکسی استفاده شود تنظیم کنید. هر قانون (شامل <code>Default</"
-"code>) دارای یک سوئیچ جداگانه است که کنترل می‌کند آیا این قانون از پیش-"
-"پروکسی استفاده کند یا خیر."
+msgid "Set the node to be used as a pre-proxy."
+msgstr "گره را طوری تنظیم کنید که به عنوان پیش پروکسی استفاده شود."
+
+msgid "Each rule has a separate switch that controls whether this rule uses the pre-proxy or not."
+msgstr "هر قانون یک سوئیچ جداگانه دارد که کنترل می‌کند آیا این قانون از پیش-پروکسی استفاده می‌کند یا خیر."
 
 msgid "Close (Not use)"
 msgstr "بستن (عدم استفاده)"
@@ -473,12 +470,6 @@ msgstr "اتصال مستقیم"
 
 msgid "Blackhole (Block)"
 msgstr "سیاه‌چاله (مسدودسازی)"
-
-msgid "Use preproxy node"
-msgstr "استفاده از گره پیش‌پروکسی"
-
-msgid "Default Preproxy"
-msgstr "پیش‌پروکسی پیش‌فرض"
 
 msgid "There are no available nodes, please add or subscribe nodes first."
 msgstr "هیچ گره در دسترس نیست، لطفاً ابتدا گره‌ها را اضافه یا مشترک شوید."
@@ -812,18 +803,6 @@ msgstr "سوئیچ بازگردانی"
 
 msgid "When detects main node is available, switch back to the main node."
 msgstr "زمانی که در دسترس بودن گره اصلی تشخیص داده شود، به گره اصلی بازگردانده می‌شود."
-
-msgid "If the main node is shunt"
-msgstr "اگر گره اصلی شنت (Shunt) باشد"
-
-msgid "Switch it"
-msgstr "سوئیچ کردن"
-
-msgid "Applying to the default node"
-msgstr "اعمال بر روی گره پیش‌فرض"
-
-msgid "Applying to the default preproxy node"
-msgstr "اعمال بر روی گره پیش‌پروکسی پیش‌فرض"
 
 msgid "Add nodes to the standby node list by keywords"
 msgstr "افزودن گره‌ها به لیست گره‌های آماده‌به‌کار با استفاده از کلمات کلیدی"

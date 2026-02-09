@@ -239,6 +239,9 @@ local current_node = map:get(section)
 			}
 
 			var params = "";
+
+			opt.get(dom_prefix + "tcp_fast_open")?.checked && (params += "&tfo=1");
+
 			var v_plugin_dom = opt.get(dom_prefix + "plugin");
 			if (v_plugin_dom) {
 				var v_plugin = v_plugin_dom.value;
@@ -317,6 +320,8 @@ local current_node = map:get(section)
 					params += opt.query("vcn", dom_prefix + "tls_CertByName");
 					params += opt.query("ech", dom_prefix + "ech_config");
 				}
+
+				opt.get(dom_prefix + "uot")?.checked && (params += "&udp=1");
 
 				if (opt.get(dom_prefix + "shadowtls")?.checked) {
 					let st_plugin_str = "";
@@ -414,6 +419,9 @@ local current_node = map:get(section)
 				info.tls = "tls";
 				info.sni = opt.get(dom_prefix + "tls_serverName").value;
 			}
+
+			opt.get(dom_prefix + "tcp_fast_open")?.checked && (info.tfo = "1");
+
 			url = b64EncodeUnicode(JSON.stringify(info));
 		} else if ((v_type === "sing-box" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "vless") {
 			protocol = "vless";
@@ -498,6 +506,8 @@ local current_node = map:get(section)
 				params += opt.query("ech", dom_prefix + "ech_config");
 			}
 
+			opt.get(dom_prefix + "tcp_fast_open")?.checked && (params += "&tfo=1");
+
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
 				params = params.substring(1);
@@ -563,6 +573,9 @@ local current_node = map:get(section)
 				params += opt.query("vcn", dom_prefix + "tls_CertByName");
 				params += opt.query("ech", dom_prefix + "ech_config");
 			}
+
+			opt.get(dom_prefix + "tcp_fast_open")?.checked && (params += "&tfo=1");
+
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
 				params = params.substring(1);
@@ -940,11 +953,14 @@ local current_node = map:get(section)
 				pluginOpts = pluginParams.join(";");
 			}
 
-			if (has_xray && ((ss_type !== "xray" && ss_type !== "sing-box" && queryParam.type) || ss_type == "xray" || queryParam.type == "xhttp")) {
+			const needUpgrade = ss_type !== "Xray" && ss_type !== "sing-box" &&
+					queryParam.type && queryParam.type !== "tcp" &&
+					queryParam.headerType && queryParam.headerType !== "none";
+			if (has_xray && (ss_type == "xray" || needUpgrade || queryParam.type === "xhttp")) {
 				dom_prefix = "xray_"
 				opt.set('type', "Xray");
 				opt.set(dom_prefix + 'protocol', "shadowsocks");
-			} else if (has_singbox && ((ss_type !== "xray" && ss_type !== "sing-box" && queryParam.type) || ss_type == "sing-box")) {
+			} else if (has_singbox && (ss_type == "sing-box" || needUpgrade)) {
 				dom_prefix = "singbox_"
 				opt.set('type', "sing-box");
 				opt.set(dom_prefix + 'protocol', "shadowsocks");
@@ -973,6 +989,7 @@ local current_node = map:get(section)
 			opt.set(dom_prefix + 'password', password || "");
 			opt.set(dom_prefix + 'method', method || "");
 			opt.set(dom_prefix + 'ss_method', method || "");
+			opt.set(dom_prefix + 'tcp_fast_open', queryParam.tfo);
 			if (plugin && plugin != "none") {
 				plugin = (plugin === "simple-obfs") ? "obfs-local" : plugin;
 				opt.set(dom_prefix + 'plugin_enabled', true);
@@ -1110,6 +1127,8 @@ local current_node = map:get(section)
 					opt.set(dom_prefix + 'use_xhttp_extra', !!queryParam.extra);
 					opt.set(dom_prefix + 'xhttp_extra', queryParam.extra || "");
 				}
+
+				opt.set(dom_prefix + 'uot', queryParam.udp);
 			
 				if (queryParam["shadow-tls"]) {
 					// Parsing SS Shadow-TLS plugin parameters
@@ -1267,7 +1286,8 @@ local current_node = map:get(section)
 				opt.set(dom_prefix + 'tls_allowInsecure', false);
 			}
 
-			opt.set(dom_prefix + 'mux', queryParam.mux === '1');
+			opt.set(dom_prefix + 'tcp_fast_open', queryParam.tfo);
+
 			if (m.hash) {
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
@@ -1362,6 +1382,8 @@ local current_node = map:get(section)
 			} else if (ssm.net === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', ssm.path);
 			}
+
+			opt.set(dom_prefix + 'tcp_fast_open', ssm.tfo);
 		}
 		if (ssu[0] === "vless") {
 			if (vless_type == "sing-box" && has_singbox) {
@@ -1512,6 +1534,8 @@ local current_node = map:get(section)
 				opt.set(dom_prefix + 'httpupgrade_host', queryParam.host || "");
 				opt.set(dom_prefix + 'httpupgrade_path', queryParam.path || "");
 			}
+
+			opt.set(dom_prefix + 'tcp_fast_open', queryParam.tfo);
 
 			if (m.hash) {
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
@@ -1692,12 +1716,14 @@ local current_node = map:get(section)
 	}
 
 	document.addEventListener("DOMContentLoaded", function () {
-		const fromUrlCache = JSON.parse(sessionStorage.getItem("fromUrl"));
-		if (fromUrlCache && fromUrlCache.savetime && (Date.now() - fromUrlCache.timestamp) < fromUrlCache.savetime) {
-			fromUrl(null, fromUrlCache.urlname, fromUrlCache.sid, fromUrlCache)
-		} else {
-			sessionStorage.removeItem("fromUrl");
-		}
+		setTimeout(function () {
+			const fromUrlCache = JSON.parse(sessionStorage.getItem("fromUrl"));
+			if (fromUrlCache && fromUrlCache.savetime && (Date.now() - fromUrlCache.timestamp) < fromUrlCache.savetime) {
+				fromUrl(null, fromUrlCache.urlname, fromUrlCache.sid, fromUrlCache)
+			} else {
+				sessionStorage.removeItem("fromUrl");
+			}
+		}, 500);
 	})
 
 //]]></script>

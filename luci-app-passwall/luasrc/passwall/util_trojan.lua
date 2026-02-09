@@ -87,7 +87,7 @@ function gen_config(var)
 			no_delay = true,
 			keep_alive = true,
 			reuse_port = true,
-			fast_open = (node.tcp_fast_open == "true") and true or false,
+			fast_open = (node.tcp_fast_open and node.tcp_fast_open == "1") and true or false,
 			fast_open_qlen = 20
 		}
 	}

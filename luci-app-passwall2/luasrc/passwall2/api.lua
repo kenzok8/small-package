@@ -164,6 +164,18 @@ function base64Encode(text)
 	return result
 end
 
+function UrlEncode(szText)
+	return szText:gsub("([^%w%-_%.%~])", function(c)
+		return string.format("%%%02X", string.byte(c))
+	end)
+end
+
+function UrlDecode(szText)
+	return szText and szText:gsub("%+", " "):gsub("%%(%x%x)", function(h)
+		return string.char(tonumber(h, 16))
+	end) or nil
+end
+
 -- Extract the domain name and port from the URL (no IP address).
 function get_domain_port_from_url(url)
 	local scheme, domain, port = string.match(url, "^(https?)://([%w%.%-]+):?(%d*)")
@@ -1426,4 +1438,51 @@ function apply_redirect(m)
 	else
 		sys.call("/bin/rm -f " .. tmp_uci_file)
 	end
+end
+
+function match_node_rule(name, rule)
+	if not name then return false end
+	if not rule or rule == "" then return true end
+	-- split rule by &&
+	local function split_and(expr)
+		local t = {}
+		for part in expr:gmatch("[^&]+") do
+			part = part:gsub("^%s+", ""):gsub("%s+$", "")
+			if part ~= "" then
+				table.insert(t, part)
+			end
+		end
+		return t
+	end
+	-- match single condition
+	local function match_cond(str, cond)
+		if cond == "" then
+			return true
+		end
+		-- exclude: !xxx
+		if cond:sub(1, 1) == "!" then
+			local k = cond:sub(2)
+			if k == "" then return true end
+			return not str:find(k, 1, true)
+		end
+		-- prefix: ^xxx
+		if cond:sub(1, 1) == "^" then
+			local k = cond:sub(2)
+			return str:sub(1, #k) == k
+		end
+		-- suffix: xxx$
+		if cond:sub(-1) == "$" then
+			local k = cond:sub(1, -2)
+			return str:sub(-#k) == k
+		end
+		-- contains
+		return str:find(cond, 1, true) ~= nil
+	end
+	-- AND logic
+	for _, cond in ipairs(split_and(rule)) do
+		if not match_cond(name, cond) then
+			return false
+		end
+	end
+	return true
 end

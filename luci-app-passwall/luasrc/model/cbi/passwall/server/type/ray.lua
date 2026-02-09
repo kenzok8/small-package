@@ -362,6 +362,10 @@ o = s:option(Flag, _n("acceptProxyProtocol"), translate("acceptProxyProtocol"), 
 o.default = "0"
 o:depends({ [_n("custom")] = false })
 
+o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"))
+o.default = "0"
+o:depends({ [_n("custom")] = false })
+
 -- [[ Fallback部分 ]]--
 o = s:option(Flag, _n("fallback"), translate("Fallback"))
 o:depends({ [_n("protocol")] = "vless", [_n("transport")] = "raw" })

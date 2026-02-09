@@ -38,6 +38,10 @@ local ss_method_list = {
 
 local security_list = { "none", "auto", "aes-128-gcm", "chacha20-poly1305", "zero" }
 
+local header_type_list = {
+	"none", "srtp", "utp", "wechat-video", "dtls", "wireguard", "dns"
+}
+
 local xray_version = api.get_app_version("xray")
 
 o = s:option(ListValue, _n("protocol"), translate("Protocol"))
@@ -128,8 +132,14 @@ m.uci:foreach(appname, "socks", function(s)
 end)
 
 if load_balancing_options then -- [[ Load balancing Start ]]
-	o = s:option(MultiValue, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
+	o = s:option(ListValue, _n("node_add_mode"), translate("Node Addition Method"))
 	o:depends({ [_n("protocol")] = "_balancing" })
+	o.default = "manual"
+	o:value("manual", translate("Manual"))
+	o:value("batch", translate("Batch"))
+
+	o = s:option(MultiValue, _n("balancing_node"), translate("Load balancing node list"), translate("Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"))
+	o:depends({ [_n("node_add_mode")] = "manual" })
 	o.widget = "checkbox"
 	o.template = appname .. "/cbi/nodes_multivalue"
 	o.group = {}
@@ -165,6 +175,21 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 			return
 		end
 	end
+
+	o = s:option(MultiValue, _n("node_group"), translate("Select Group"))
+	o:depends({ [_n("node_add_mode")] = "batch" })
+	o.widget = "checkbox"
+	o:value("default", translate("default"))
+	for k, v in pairs(groups) do
+		o:value(api.UrlEncode(k), k)
+	end
+
+	o = s:option(Value, _n("node_match_rule"), translate("Node Matching Rules"))
+	o:depends({ [_n("node_add_mode")] = "batch" })
+	local descrStr = "Example: <code>^A && B && !C && D$</code><br>"
+	descrStr = descrStr .. "This means the node remark must start with A (^), include B, exclude C (!), and end with D ($).<br>"
+	descrStr = descrStr .. "Conditions are joined by <code>&&</code>, and their order does not affect the result."
+	o.description = translate(descrStr)
 
 	o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
 	o:depends({ [_n("protocol")] = "_balancing" })
@@ -517,17 +542,11 @@ o:depends({ [_n("tcp_guise")] = "http" })
 
 -- [[ mKCP ]]--
 o = s:option(ListValue, _n("mkcp_guise"), translate("Camouflage Type"), translate('<br />none: default, no masquerade, data sent is packets with no characteristics.<br />srtp: disguised as an SRTP packet, it will be recognized as video call data (such as FaceTime).<br />utp: packets disguised as uTP will be recognized as bittorrent downloaded data.<br />wechat-video: packets disguised as WeChat video calls.<br />dtls: disguised as DTLS 1.2 packet.<br />wireguard: disguised as a WireGuard packet. (not really WireGuard protocol)<br />dns: Disguising traffic as DNS requests.'))
-o:value("none", "none")
-o:value("header-srtp", "srtp")
-o:value("header-utp", "utp")
-o:value("header-wechat", "wechat-video")
-o:value("header-dtls", "dtls")
-o:value("header-wireguard", "wireguard")
-o:value("header-dns", "dns")
+for a, t in ipairs(header_type_list) do o:value(t) end
 o:depends({ [_n("transport")] = "mkcp" })
 
 o = s:option(Value, _n("mkcp_domain"), translate("Camouflage Domain"), translate("Use it together with the DNS disguised type. You can fill in any domain."))
-o:depends({ [_n("mkcp_guise")] = "header-dns" })
+o:depends({ [_n("mkcp_guise")] = "dns" })
 
 o = s:option(Value, _n("mkcp_mtu"), translate("KCP MTU"))
 o.default = "1350"
@@ -692,7 +711,7 @@ o = s:option(Value, _n("xudp_concurrency"), translate("XUDP Mux concurrency"))
 o.default = 8
 o:depends({ [_n("mux")] = true })
 
-o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"))
+o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"), translate("Need node support required"))
 o.default = 0
 
 --[[tcpMptcp]]
@@ -724,12 +743,22 @@ o2:depends({ [_n("chain_proxy")] = "2" })
 o2.template = appname .. "/cbi/nodes_listvalue"
 o2.group = {}
 
-for k, v in pairs(nodes_list) do
-	if v.id ~= arg[1] and (not v.chain_proxy or v.chain_proxy == "") then
-		o1:value(v.id, v.remark)
-		o1.group[#o1.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-		o2:value(v.id, v.remark)
-		o2.group[#o2.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+for k, v in pairs(socks_list) do
+	o1:value(v.id, v.remark)
+	o1.group[#o1.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+end
+
+for k, e in ipairs(api.get_valid_nodes()) do
+	if e[".name"] ~= arg[1] then
+		if e.protocol ~= "_shunt" and e.protocol ~= "_iface" then
+			o1:value(e[".name"], e["remark"])
+			o1.group[#o1.group+1] = (e["group"] and e["group"] ~= "") and e["group"] or translate("default")
+		end
+		if not e.protocol:find("_") then
+			-- Landing Node not support use special node.
+			o2:value(e[".name"], e["remark"])
+			o2.group[#o2.group+1] = (e["group"] and e["group"] ~= "") and e["group"] or translate("default")
+		end
 	end
 end
 

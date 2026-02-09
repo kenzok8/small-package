@@ -282,6 +282,10 @@ local function processData(szType, content)
 				result.insecure = "1"
 			end
 		end
+		if params.tfo then
+			-- 处理 fast open 参数
+			result.fast_open = params.tfo
+		end
 	elseif szType == 'ssr' then
 		-- 去掉前后空白和#注释
 		local link = trim(content:gsub("#.*$", ""))
@@ -308,6 +312,11 @@ local function processData(szType, content)
 
 		result.obfs_param = base64Decode(params.obfsparam or '')
 		result.protocol_param = base64Decode(params.protoparam or '')
+
+		if params.tfo then
+			-- 处理 fast open 参数
+			result.fast_open = params.tfo
+		end
 
 		local group = base64Decode(params.group or '')
 		local remarks = base64Decode(params.remarks or '')
@@ -396,7 +405,7 @@ local function processData(szType, content)
 		end
 		if info.net == 'kcp' then
 			result.kcp_guise = info.type or "none"
-			if info.type and info.type == "header-dns" then
+			if info.type and info.type == "dns" then
 				result.kcp_guise = info.host or ""
 			end
 			result.mtu = 1350
@@ -560,6 +569,11 @@ local function processData(szType, content)
 			result.server = server
 			result.server_port = port
 
+			if params.tfo then
+				-- 处理 fast open 参数
+				result.fast_open = params.tfo
+			end
+
 			-- 插件处理
 			if params.plugin then
 				local plugin_info = UrlDecode(params.plugin)
@@ -719,7 +733,7 @@ local function processData(szType, content)
 				result.h2_path = params.path and UrlDecode(params.path) or nil
 			elseif result.transport == "kcp" then
 				result.kcp_guise = params.headerType or "none"
-				if params.headerType and params.headerType == "header-dns" then
+				if params.headerType and params.headerType == "dns" then
 					result.kcp_domain = params.host or ""
 				end
 				result.seed = params.seed
@@ -914,7 +928,7 @@ local function processData(szType, content)
 					result.h2_path = params.path and UrlDecode(params.path) or nil
 				elseif result.transport == "kcp" then
 					result.kcp_guise = params.headerType or "none"
-					if params.headerType and params.headerType == "header-dns" then
+					if params.headerType and params.headerType == "dns" then
 						result.kcp_domain = params.host or ""
 					end
 					result.seed = params.seed
@@ -1035,6 +1049,10 @@ local function processData(szType, content)
 			result.xhttp_mode = params.mode or "auto"
 			result.xhttp_host = params.host and UrlDecode(params.host) or nil
 			result.xhttp_path = params.path and UrlDecode(params.path) or "/"
+			if params.tfo then
+				-- 处理 fast open 参数
+				result.fast_open = params.tfo
+			end
 			if params.extra and params.extra ~= "" then
 				result.enable_xhttp_extra = "1"
 				result.xhttp_extra = params.extra
@@ -1054,7 +1072,7 @@ local function processData(szType, content)
 
 		elseif result.transport == "kcp" then
 			result.kcp_guise = params.headerType or "none"
-			if params.headerType and params.headerType == "header-dns" then
+			if params.headerType and params.headerType == "dns" then
 				result.kcp_domain = params.host or ""
 			end
 			result.seed = params.seed

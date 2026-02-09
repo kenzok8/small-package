@@ -75,7 +75,7 @@ function gen_config(var)
 		password = node.password,
 		method = node.method,
 		timeout = tonumber(node.timeout),
-		fast_open = (node.tcp_fast_open and node.tcp_fast_open == "true") and true or false,
+		fast_open = (node.tcp_fast_open and node.tcp_fast_open == "1") and true or false,
 		reuse_port = true,
 		tcp_tproxy = var["tcp_tproxy"] and true or nil
 	}
@@ -103,7 +103,7 @@ function gen_config(var)
 				}
 			},
 			locals = {},
-			fast_open = (node.tcp_fast_open and node.tcp_fast_open == "true") and true or false
+			fast_open = (node.tcp_fast_open and node.tcp_fast_open == "1") and true or false
 		}
 		if local_socks_address and local_socks_port then
 			table.insert(config.locals, {

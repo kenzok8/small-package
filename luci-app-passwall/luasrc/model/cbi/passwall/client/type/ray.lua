@@ -718,7 +718,7 @@ o = s:option(Value, _n("xudp_concurrency"), translate("XUDP Mux concurrency"))
 o.default = 8
 o:depends({ [_n("mux")] = true })
 
-o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"))
+o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"), translate("Need node support required"))
 o.default = 0
 
 --[[tcpMptcp]]

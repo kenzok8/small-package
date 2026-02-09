@@ -617,6 +617,7 @@ function gen_config_server(node)
 						end)()
 					} or nil,
 					sockopt = {
+						tcpFastOpen = (node.tcp_fast_open == "1") and true or nil,
 						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false
 					}
 				}
