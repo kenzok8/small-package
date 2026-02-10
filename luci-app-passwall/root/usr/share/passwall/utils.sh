@@ -15,6 +15,8 @@ TMP_ROUTE_PATH=${TMP_PATH}/route
 TMP_SCRIPT_FUNC_PATH=${TMP_PATH}/script_func
 RULES_PATH=/usr/share/${CONFIG}/rules
 
+. /lib/functions/network.sh
+
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
 	echo -e "$d: $*" >>$LOG_FILE
@@ -81,14 +83,15 @@ get_host_ip() {
 	local count=$3
 	[ -z "$count" ] && count=3
 	local isip=""
-	local ip=$host
+	local ip=""
 	if [ "$1" == "ipv6" ]; then
 		isip=$(echo $host | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}")
 		if [ -n "$isip" ]; then
-			isip=$(echo $host | cut -d '[' -f2 | cut -d ']' -f1)
+			ip=$(echo "$host" | tr -d '[]')
 		fi
 	else
 		isip=$(echo $host | grep -E "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
+		[ -n "$isip" ] && ip=$isip
 	fi
 	[ -z "$isip" ] && {
 		local t=4
@@ -96,7 +99,7 @@ get_host_ip() {
 		local vpsrip=$(resolveip -$t -t $count $host | awk 'NR==1{print}')
 		ip=$vpsrip
 	}
-	echo $ip
+	[ -n "$ip" ] && echo "$ip"
 }
 
 get_node_host_ip() {
@@ -354,7 +357,6 @@ add_ip2route() {
 	local remarks="${1}"
 	[ "$remarks" != "$ip" ] && remarks="${1}(${ip})"
 
-	. /lib/functions/network.sh
 	local gateway device
 	network_get_gateway gateway "$2"
 	network_get_device device "$2"

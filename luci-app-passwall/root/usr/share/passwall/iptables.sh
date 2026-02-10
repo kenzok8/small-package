@@ -2,6 +2,7 @@
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/iptables.sh
+UTILS_PATH=$DIR/utils.sh
 IPSET_LOCAL="passwall_local"
 IPSET_WAN="passwall_wan"
 IPSET_LAN="passwall_lan"
@@ -28,8 +29,6 @@ FORCE_INDEX=2
 
 USE_SHUNT_TCP=0
 USE_SHUNT_UDP=0
-
-. /lib/functions/network.sh
 
 ipt=$(command -v iptables-legacy || command -v iptables)
 ip6t=$(command -v ip6tables-legacy || command -v ip6tables)
@@ -283,7 +282,6 @@ load_acl() {
 				local _ipt_source _ipv4
 				local msg
 				if [ -n "${interface}" ]; then
-					. /lib/functions/network.sh
 					local gateway device
 					network_get_gateway gateway "${interface}"
 					network_get_device device "${interface}"
@@ -1398,6 +1396,7 @@ gen_include() {
 	local __ipt=""
 	[ -n "${ipt}" ] && {
 		__ipt=$(cat <<- EOF
+			. $UTILS_PATH
 			mangle_output_psw=\$(${ipt}-save -t mangle | grep "PSW" | grep "mangle\-OUTPUT\-PSW" | sed "s#-A OUTPUT ##g")
 			$ipt-save -c | grep -v "PSW" | $ipt-restore -c
 			$ipt-restore -n <<-EOT
@@ -1415,7 +1414,7 @@ gen_include() {
 			\$(${MY_PATH} insert_rule_before "$ipt_m" "PREROUTING" "mwan3" "-j PSW")
 			\$(${MY_PATH} insert_rule_before "$ipt_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT")
 
-			WAN_IP=\$(${MY_PATH} get_wan_ips ip4)
+			WAN_IP=\$(get_wan_ips ip4)
 			[ ! -z "\${WAN_IP}" ] && {
 				ipset -F $IPSET_WAN
 				for wan_ip in \$WAN_IP; do
@@ -1429,6 +1428,7 @@ gen_include() {
 	local __ip6t=""
 	[ -n "${ip6t}" ] && {
 		__ip6t=$(cat <<- EOF
+			. $UTILS_PATH
 			mangle_output_psw=\$(${ip6t}-save -t mangle | grep "PSW" | grep "mangle\-OUTPUT\-PSW" | sed "s#-A OUTPUT ##g")
 			$ip6t-save -c | grep -v "PSW" | $ip6t-restore -c
 			$ip6t-restore -n <<-EOT
@@ -1445,7 +1445,7 @@ gen_include() {
 			\$(${MY_PATH} insert_rule_before "$ip6t_m" "PREROUTING" "mwan3" "-j PSW")
 			\$(${MY_PATH} insert_rule_before "$ip6t_m" "PREROUTING" "PSW" "-p tcp -m socket -j PSW_DIVERT")
 
-			WAN6_IP=\$(${MY_PATH} get_wan_ips ip6)
+			WAN6_IP=\$(get_wan_ips ip6)
 			[ ! -z "\${WAN6_IP}" ] && {
 				ipset -F $IPSET_WAN6
 				for wan6_ip in \$WAN6_IP; do
@@ -1509,9 +1509,6 @@ get_ipt_bin)
 	;;
 get_ip6t_bin)
 	get_ip6t_bin
-	;;
-get_wan_ips)
-	get_wan_ips
 	;;
 filter_direct_node_list)
 	filter_direct_node_list
