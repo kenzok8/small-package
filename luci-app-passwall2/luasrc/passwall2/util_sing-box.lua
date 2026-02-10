@@ -93,6 +93,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if tag == nil then
 			tag = node_id
 		end
+		local remarks = node.remarks
 
 		local proxy_tag = nil
 		local fragment = nil
@@ -131,10 +132,15 @@ function gen_outbound(flag, node, tag, proxy_table)
 				address = "127.0.0.1",
 				port = new_port
 			}
+			proxy_tag = "socks <- " .. node_id
 		else
 			if proxy_tag then
 				node.detour = proxy_tag
 			end
+		end
+
+		if remarks then
+			tag = tag .. ":" .. remarks
 		end
 
 		result = {
@@ -1152,7 +1158,7 @@ function gen_config(var)
 			-- existing urltest
 			for _, v in ipairs(outbounds) do
 				if v.tag == urltest_tag then
-					return urltest_tag
+					return v, true
 				end
 			end
 			-- new urltest
@@ -1229,22 +1235,20 @@ function gen_config(var)
 				else
 					local preproxy_node = get_node_by_id(node.preproxy_node)
 					if preproxy_node then
-						local preproxy_outbound
+						local preproxy_outbound, exist
 						if preproxy_node.protocol == "_urltest" then
 							if preproxy_node.urltest_node then
-								preproxy_outbound = gen_urltest_outbound(preproxy_node)
+								preproxy_outbound, exist = gen_urltest_outbound(preproxy_node)
 							end
 						else
 							preproxy_outbound = gen_outbound(node[".name"], preproxy_node)
 						end
 						if preproxy_outbound then
-							preproxy_outbound.tag = preproxy_node[".name"]
-							if preproxy_node.remarks then
-								preproxy_outbound.tag = preproxy_outbound.tag .. ":" .. preproxy_node.remarks
-							end
 							outbound.tag = preproxy_outbound.tag .. " -> " .. outbound.tag
 							outbound.detour = preproxy_outbound.tag
-							last_insert_outbound = preproxy_outbound
+							if not exist then
+								last_insert_outbound = preproxy_outbound
+							end
 							default_outTag = outbound.tag
 						end
 					end
@@ -1292,9 +1296,6 @@ function gen_config(var)
 							to_outbound.tag = outbound.tag
 							outbound.tag = node[".name"]
 						else
-							if to_node.remarks then
-								to_outbound.tag = to_outbound.tag .. ":" .. to_node.remarks
-							end
 							to_outbound.tag = outbound.tag .. " -> " .. to_outbound.tag
 						end
 						if to_node.type == "sing-box" then
@@ -1339,18 +1340,28 @@ function gen_config(var)
 					proxy_table.preproxy_node = nil
 					proxy_table.to_node = nil
 				end
-				local outbound
+				local outbound, exist
 				if node.protocol == "_urltest" then
 					if node.urltest_node then
-						outbound = gen_urltest_outbound(node)
+						outbound, exist = gen_urltest_outbound(node)
+						if exist then
+							return outbound.tag
+						end
 					end
 				else
-					outbound = gen_outbound(flag, node, tag, proxy_table)
+					for _, _outbound in ipairs(outbounds) do
+						-- Avoid generating duplicate nested processes
+						if _outbound["_flag_proxy_tag"] and _outbound["_flag_proxy_tag"]:find("socks <- " .. node[".name"], 1, true) then
+							outbound = api.clone(_outbound)
+							outbound.tag = tag
+							break
+						end
+					end
+					if not outbound then
+						outbound = gen_outbound(flag, node, tag, proxy_table)
+					end
 				end
 				if outbound then
-					if node.remarks then
-						outbound.tag = outbound.tag .. ":" .. node.remarks
-					end
 					local default_outbound_tag, last_insert_outbound = set_outbound_detour(node, outbound, outbounds)
 					table.insert(outbounds, outbound)
 					if last_insert_outbound then
@@ -1503,6 +1514,7 @@ function gen_config(var)
 
 					if e.domain_list then
 						local domain_table = {
+							shunt_tag = e[".name"],
 							outboundTag = outboundTag,
 							domain = {},
 							domain_suffix = {},
@@ -1750,7 +1762,7 @@ function gen_config(var)
 						dns_rule.rewrite_ttl = 30
 						if value.outboundTag ~= COMMON.default_outbound_tag and remote_server.address and remote_dns_detour ~= "direct" then
 							local remote_dns_server = api.clone(remote_server)
-							remote_dns_server.tag = value.outboundTag
+							remote_dns_server.tag = value.shunt_tag
 							remote_dns_server.detour = value.outboundTag
 							table.insert(dns.servers, remote_dns_server)
 							dns_rule.server = remote_dns_server.tag
