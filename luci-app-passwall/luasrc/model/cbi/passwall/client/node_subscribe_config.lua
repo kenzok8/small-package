@@ -106,6 +106,18 @@ o.write = function(self, section, value)
 			if e["group"] and e["group"]:lower() == old:lower() then
 				m.uci:set(appname, e[".name"], "group", value)
 			end
+			if e["protocol"] and (e["protocol"] == "_balancing" or e["protocol"] == "_urltest") and e["node_group"] then
+				local gs = ""
+				for g in e["node_group"]:gmatch("%S+") do
+					if api.UrlEncode(old) == g then
+						gs = gs .. " " .. api.UrlEncode(value)
+					else
+						gs = gs .. " " .. g
+					end
+				end
+				gs = api.trim(gs)
+				m.uci:set(appname, e[".name"], "node_group", gs)
+			end
 		end)
 	end
 	return Value.write(self, section, value)

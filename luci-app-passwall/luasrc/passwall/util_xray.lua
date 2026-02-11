@@ -827,7 +827,7 @@ function gen_config(var)
 				g = api.UrlDecode(g)
 				for k, v in pairs(nodes_list) do
 					local gn = (v.group and v.group ~= "") and v.group or "default"
-					if gn == g and api.match_node_rule(v.remarks, _node.node_match_rule) then
+					if gn:lower() == g:lower() and api.match_node_rule(v.remarks, _node.node_match_rule) then
 						nodes[#nodes + 1] = v.id
 					end
 				end
