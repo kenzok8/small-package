@@ -45,6 +45,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if tag == nil then
 			tag = node_id
 		end
+		local remarks = node.remarks
 
 		local proxy_tag = nil
 		local fragment = nil
@@ -68,6 +69,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 				if tag and node_id and not tag:find(node_id) then
 					config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
 				end
+				if node.protocol == "_balancing" then
+					config_file = string.format("%s_%s_%s.json", flag, node_id, new_port)
+				end
 				if run_socks_instance then
 					sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
 						appname,
@@ -88,6 +92,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				node.port = new_port
 			end
 			node.stream_security = "none"
+			proxy_tag = "socks <- " .. node_id
 		else
 			if proxy_tag then
 				node.proxySettings = {
@@ -125,6 +130,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 			node.protocol = "hysteria"
 			node.transport = "hysteria"
 			node.stream_security = "tls"
+		end
+
+		if remarks then
+			tag = tag .. ":" .. remarks
 		end
 
 		result = {
@@ -965,10 +974,6 @@ function gen_config(var)
 					if preproxy_node then
 						local preproxy_outbound = gen_outbound(node[".name"], preproxy_node)
 						if preproxy_outbound then
-							preproxy_outbound.tag = preproxy_node[".name"]
-							if preproxy_node.remarks then
-								preproxy_outbound.tag = preproxy_outbound.tag .. ":" .. preproxy_node.remarks
-							end
 							outbound.tag = preproxy_outbound.tag .. " -> " .. outbound.tag
 							outbound.proxySettings = {
 								tag = preproxy_outbound.tag,
@@ -1021,9 +1026,6 @@ function gen_config(var)
 							to_outbound.tag = outbound.tag
 							outbound.tag = node[".name"]
 						else
-							if to_node.remarks then
-								to_outbound.tag = to_outbound.tag .. ":" .. to_node.remarks
-							end
 							to_outbound.tag = outbound.tag .. " -> " .. to_outbound.tag
 						end
 						if to_node.type == "Xray" then
@@ -1075,11 +1077,19 @@ function gen_config(var)
 					proxy_table.preproxy_node = nil
 					proxy_table.to_node = nil
 				end
-				local outbound = gen_outbound(flag, node, tag, proxy_table)
-				if outbound then
-					if node.remarks then
-						outbound.tag = outbound.tag .. ":" .. node.remarks
+				local outbound
+				for _, _outbound in ipairs(outbounds) do
+					-- Avoid generating duplicate nested processes
+					if _outbound["_flag_proxy_tag"] and _outbound["_flag_proxy_tag"]:find("socks <- " .. node[".name"], 1, true) then
+						outbound = api.clone(_outbound)
+						outbound.tag = tag
+						break
 					end
+				end
+				if not outbound then
+					outbound = gen_outbound(flag, node, tag, proxy_table)
+				end
+				if outbound then
 					local default_outbound_tag, last_insert_outbound = set_outbound_detour(node, outbound, outbounds)
 					if tag == "default" then
 						table.insert(outbounds, 1, outbound)
