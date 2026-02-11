@@ -1757,7 +1757,7 @@ local current_node = map:get(section)
 </style>
 <div class="share-toolbar">
 	<div class="toolbar-buttons">
-		<% if not current_node.protocol or not current_node.protocol:find("_") then -%>
+		<% if not current_node.protocol or not current_node.protocol:find("^_") then -%>
 		<input id="fromUrlBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
 		<input id="exportUrlBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return exportUrl(this, '<%=self.option%>', '<%=self.value%>')" />
 		<input id="genQrcodeBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:Generate QRCode%>' onclick="return genQrcode(this, '<%=self.option%>', '<%=self.value%>')" />
