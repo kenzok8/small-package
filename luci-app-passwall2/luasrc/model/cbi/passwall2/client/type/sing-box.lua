@@ -858,7 +858,7 @@ for k, e in ipairs(api.get_valid_nodes()) do
 			o1:value(e[".name"], e["remark"])
 			o1.group[#o1.group+1] = (e["group"] and e["group"] ~= "") and e["group"] or translate("default")
 		end
-		if not e.protocol:find("_") then
+		if not e.protocol or not e.protocol:find("_") then
 			-- Landing Node not support use special node.
 			o2:value(e[".name"], e["remark"])
 			o2.group[#o2.group+1] = (e["group"] and e["group"] ~= "") and e["group"] or translate("default")
@@ -878,8 +878,5 @@ if load_shunt_options then
 		node_id = arg[1],
 		node = current_node,
 		socks_list = socks_list,
-		urltest_list = urltest_list,
-		iface_list = iface_list,
-		normal_list = nodes_list
 	})
 end

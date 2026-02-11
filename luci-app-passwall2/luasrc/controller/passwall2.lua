@@ -355,7 +355,7 @@ function add_node()
 	uci:section(appname, "nodes", uuid)
 
 	local group = http.formvalue("group")
-	if group then
+	if group and group ~= "default" then
 		uci:set(appname, uuid, "group", group)
 	end
 

@@ -761,7 +761,7 @@ for k, e in ipairs(api.get_valid_nodes()) do
 			o1:value(e[".name"], e["remark"])
 			o1.group[#o1.group+1] = (e["group"] and e["group"] ~= "") and e["group"] or translate("default")
 		end
-		if not e.protocol:find("_") then
+		if not (e.protocol and e.protocol:find("_")) then
 			-- Landing Node not support use special node.
 			o2:value(e[".name"], e["remark"])
 			o2.group[#o2.group+1] = (e["group"] and e["group"] ~= "") and e["group"] or translate("default")

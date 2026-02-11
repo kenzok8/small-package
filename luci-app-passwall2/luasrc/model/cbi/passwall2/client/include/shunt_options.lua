@@ -192,40 +192,14 @@ if data.socks_list then
 		proxy_tag_node.group[#proxy_tag_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 end
-if data.urltest_list then
-	for k, v in pairs(data.urltest_list) do
-		_node:value(v.id, v.remark)
-		_node.group[#_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 
-		proxy_tag_node:value(v.id, v.remark)
-		proxy_tag_node.group[#proxy_tag_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-	end
-end
-if data.balancing_list then
-	for k, v in pairs(data.balancing_list) do
-		_node:value(v.id, v.remark)
-		_node.group[#_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+for k, e in ipairs(api.get_valid_nodes()) do
+	if e.protocol ~= "_shunt" then
+		_node:value(e[".name"], e["remark"])
+		_node.group[#_node.group+1] = (e["group"] and e["group"] ~= "") and e["group"] or translate("default")
 
-		proxy_tag_node:value(v.id, v.remark)
-		proxy_tag_node.group[#proxy_tag_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-	end
-end
-if data.iface_list then
-	for k, v in pairs(data.iface_list) do
-		_node:value(v.id, v.remark)
-		_node.group[#_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-
-		proxy_tag_node:value(v.id, v.remark)
-		proxy_tag_node.group[#proxy_tag_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-	end
-end
-if data.normal_list then
-	for k, v in pairs(data.normal_list) do
-		_node:value(v.id, v.remark)
-		_node.group[#_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-
-		proxy_tag_node:value(v.id, v.remark)
-		proxy_tag_node.group[#proxy_tag_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+		proxy_tag_node:value(e[".name"], e["remark"])
+		proxy_tag_node.group[#proxy_tag_node.group+1] = (e["group"] and e["group"] ~= "") and e["group"] or translate("default")
 	end
 end
 

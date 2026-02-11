@@ -54,7 +54,7 @@ o.password = true
 o = s:option(ListValue, _n("method"), translate("Encrypt Method"))
 for a, t in ipairs(ssr_encrypt_method_list) do o:value(t) end
 
-o = s:option(ListValue, _n("protocol"), translate("Protocol"))
+o = s:option(ListValue, _n("ssr_protocol"), translate("Protocol"))
 for a, t in ipairs(ssr_protocol_list) do o:value(t) end
 
 o = s:option(Value, _n("protocol_param"), translate("Protocol_param"))
