@@ -248,34 +248,54 @@ get_new_port() {
 	local default_start_port=2001
 	local min_port=1025
 	local max_port=49151
-	local port=$1
-	local last_get_new_port_auto
-	if [ "$1" == "auto" ]; then
-		last_get_new_port_auto=$(get_cache_var "last_get_new_port_auto")
-		if [ -n "$last_get_new_port_auto" ]; then
-			port=$last_get_new_port_auto
-			port=$(expr $port + 1)
+	local port="$1"
+	local protocol=$(echo "$2" | tr 'A-Z' 'a-z')
+	local LOCK_FILE="${LOCK_PATH}/${CONFIG}_get_prot.lock"
+	while ! mkdir "$LOCK_FILE" 2>/dev/null; do
+		sleep 0.05
+	done
+	if [ "$port" = "auto" ]; then
+		local now last_time diff last_port
+		now=$(date +%s 2>/dev/null)
+		last_time=$(get_cache_var "last_get_new_port_time")
+		if [ -n "$now" ] && [ -n "$last_time" ]; then
+			diff=$(expr "$now" - "$last_time")
+			[ "$diff" -lt 0 ] && diff=$(expr 0 - "$diff")
 		else
+			diff=999
+		fi
+		if [ "$diff" -gt 10 ]; then
 			port=$default_start_port
+		else
+			last_port=$(get_cache_var "last_get_new_port_auto")
+			if [ -n "$last_port" ]; then
+				port=$(expr "$last_port" + 1)
+			else
+				port=$default_start_port
+			fi
 		fi
 	fi
 	[ "$port" -lt $min_port -o "$port" -gt $max_port ] && port=$default_start_port
-	local protocol=$(echo $2 | tr 'A-Z' 'a-z')
-	local result=$(check_port_exists $port $protocol)
-	if [ "$result" != 0 ]; then
-		local temp=
-		if [ "$port" -lt $max_port ]; then
-			temp=$(expr $port + 1)
-		elif [ "$port" -gt $min_port ]; then
-			temp=$(expr $port - 1)
-		else
-			temp=$default_start_port
+	local start_port="$port"
+	while :; do
+		if [ "$(check_port_exists "$port" "$protocol")" = 0 ]; then
+			break
 		fi
-		get_new_port $temp $protocol
-	else
-		[ "$1" == "auto" ] && set_cache_var "last_get_new_port_auto" "$port"
-		echo $port
+		port=$(expr "$port" + 1)
+		if [ "$port" -gt $max_port ]; then
+			port=$min_port
+		fi
+		[ "$port" = "$start_port" ] && {
+			rmdir "$LOCK_FILE" 2>/dev/null
+			return 1
+		}
+	done
+	if [ "$1" = "auto" ]; then
+		set_cache_var "last_get_new_port_auto" "$port"
+		[ -n "$now" ] && set_cache_var "last_get_new_port_time" "$now"
 	fi
+	rmdir "$LOCK_FILE" 2>/dev/null
+	echo "$port"
 }
 
 check_ver() {
