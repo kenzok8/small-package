@@ -107,6 +107,7 @@ const control_info = {};
 for (let i in control_options)
 	control_info[i] = uci.get(cfgname, 'control', i);
 
+const dns_redirect = uci.get(cfgname, 'infra', 'dns_redirect') || '1';
 const dns_hijacked = uci.get('dhcp', '@dnsmasq[0]', 'dns_redirect') || '0',
       dns_port = uci.get('dhcp', '@dnsmasq[0]', 'port') || '53';
 /* UCI config end */
@@ -251,7 +252,7 @@ set homeproxy_routing_port {
 
 {# DNS hijack & TCP redirect #}
 chain dstnat {
-{% if (dns_hijacked !== '1'): %}
+{% if ((dns_redirect === '1') && (dns_hijacked !== '1')): %}
 	{% if (control_info.listen_interfaces): %}
 	meta iifname {{ array_to_nftarr(control_info.listen_interfaces) }}
 	{%- endif /* listen_interfaces */ %}

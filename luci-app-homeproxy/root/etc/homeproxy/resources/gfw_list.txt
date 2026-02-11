@@ -192,6 +192,7 @@ agoogleaday.com
 agro.hk
 ai.binwang.me
 ai.dev
+ai.studio
 aiosearch.com
 aiph.net
 airasia.com
@@ -204,6 +205,7 @@ ait.org.tw
 aiweiwei.com
 aiweiweiblog.com
 akademiye.org
+akamai.tvb.com
 akamaihd.net
 akiba-online.com
 akiba-web.com
@@ -220,6 +222,7 @@ alicejapan.co.jp
 aliengu.com
 alive.bar
 aljazeera.com
+aljazeera.net
 alkasir.com
 all4mom.org
 allcoin.com
@@ -276,7 +279,10 @@ angola.org
 angularjs.org
 animecrazy.net
 aniscartujo.com
+annas-archive.in
+annas-archive.li
 annas-archive.org
+annas-archive.pm
 annas-archive.se
 annatam.com
 anobii.com
@@ -554,6 +560,7 @@ bird.so
 bit-z.com
 bit.do
 bit.ly
+bitbaby.com
 bitbay.net
 bitchute.com
 bitcointalk.org
@@ -1258,6 +1265,7 @@ david-kilgour.com
 dawangidc.com
 daxa.cn
 daylife.com
+dazn.com
 db.tt
 dbgjd.com
 dcard.tw
@@ -1286,7 +1294,6 @@ deja.com
 delcamp.net
 demo.unlock-music.dev
 demosisto.hk
-deno.dev
 depositphotos.com
 desc.se
 desipro.de
@@ -1356,7 +1363,6 @@ doc.new
 docker.com
 docker.io
 dockerstatus.com
-docs.deno.com
 docs.new
 doctorvoice.org
 documentingreality.com
@@ -1779,7 +1785,6 @@ forum.cyberctm.com
 forum.mymaji.com
 forum.palmislife.com
 forum.slime.com.tw
-forum.tvb.com
 forum.xinbao.de
 forum4hk.com
 fountmedia.io
@@ -1982,6 +1987,7 @@ gfsale.com
 gfw.press
 gfw.report
 gfwatch.org
+gfwbao.com
 ggpht.com
 ggssl.com
 ghidra-sre.org
@@ -2630,6 +2636,7 @@ iconpaper.org
 icu-project.org
 id.hao123.com
 id.heroku.com
+idcflare.com
 idemocracy.asia
 identi.ca
 idiomconnection.com
@@ -3121,6 +3128,7 @@ lookpic.com
 looktoronto.com
 lotsawahouse.org
 lotuslight.org.tw
+lovart.ai
 lovetvshow.com
 lpsg.com
 lrfz.com
@@ -3459,6 +3467,7 @@ myspace.com
 myspacecdn.com
 mytalkbox.com
 mytizi.com
+mytvsuper.com
 mywife.cc
 mywww.biz
 myz.info
@@ -3506,6 +3515,7 @@ nekoslovakia.net
 nemesis2.qx.net
 neo-miracle.com
 neowin.net
+nephobox.com
 netalert.me
 netbirds.com
 netcolony.com
@@ -3750,6 +3760,8 @@ onmypc.org
 onthehunt.com
 ontrac.com
 oojj.de
+ooni.io
+ooni.org
 open.com.hk
 open.firstory.me
 openai.com
@@ -3832,6 +3844,7 @@ parkansky.com
 parler.com
 parse.com
 parsevideo.com
+partnerstack.xyz
 partycasino.com
 partypoker.com
 passion.com
@@ -3860,6 +3873,7 @@ pct.org.tw
 pdetails.com
 pdproxy.com
 pds.nasa.gov
+pdst.fm
 peace.ca
 peacefire.org
 peeasian.com
@@ -3909,6 +3923,23 @@ ping.fm
 pinimg.com
 pinkrod.com
 pinoy-n.com
+pinterest.at
+pinterest.ca
+pinterest.cl
+pinterest.co.uk
+pinterest.com
+pinterest.com.au
+pinterest.com.mx
+pinterest.de
+pinterest.es
+pinterest.fr
+pinterest.ie
+pinterest.it
+pinterest.jp
+pinterest.nz
+pinterest.ph
+pinterest.pt
+pinterest.se
 pioneer-worker.forums-free.com
 pipii.tv
 piraattilahti.org
@@ -4597,12 +4628,14 @@ startpage.com
 startuplivingchina.com
 stat.gov.tw
 static-economist.com
+static.pocketcasts.com
 static.shemalez.com
 static01.nyt.com
 staticflickr.com
 stboy.net
 stc.com.sa
 steamcommunity.com
+steamladder.com
 steamstatic.com
 steel-storm.com
 steemit.com
@@ -5099,6 +5132,7 @@ tuzaijidi.com
 tv.com
 tv.jtbc.joins.com
 tvants.com
+tvbanywhere.com
 tvboxnow.com
 tvider.com
 tvmost.com.hk
@@ -5251,6 +5285,7 @@ unseen.is
 unstable.icu
 unwire.hk
 uocn.org
+up.audio
 upbit.com
 updates.tdesktop.com
 upghsbc.com
@@ -5519,6 +5554,7 @@ wefightcensorship.org
 wefong.com
 wego.here.com
 weiboleak.com
+weights.com
 weihuo.org
 weijingsheng.org
 weiming.info
@@ -5714,6 +5750,7 @@ xbabe.com
 xbookcn.com
 xbtce.com
 xcafe.in
+xcancel.com
 xcity.jp
 xcritic.com
 xerotica.com
@@ -5839,6 +5876,7 @@ you.com
 youdontcare.com
 youjizz.com
 youmaker.com
+youmind.com
 youngpornvideos.com
 youngspiration.hk
 youpai.org
