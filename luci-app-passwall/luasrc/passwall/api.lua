@@ -523,6 +523,46 @@ function get_valid_nodes()
 	return nodes
 end
 
+function get_node_list()
+	local node_list = {
+		socks_list = {},
+		normal_list = {},
+	}
+	uci:foreach(appname, "socks", function(s)
+		if s.enabled == "1" and s.node then
+			node_list.socks_list[#node_list.socks_list + 1] = {
+				id = "Socks_" .. s[".name"],
+				remark = i18n.translate("Socks Config") .. " [" .. s.port .. i18n.translate("Port") .. "]",
+				group = "Socks"
+			}
+		end
+	end)
+	for k, e in ipairs(get_valid_nodes()) do
+		if e.node_type == "normal" then
+			node_list.normal_list[#node_list.normal_list + 1] = {
+				id = e[".name"],
+				remark = e["remark"],
+				type = e["type"],
+				chain_proxy = e["chain_proxy"],
+				group = e["group"]
+			}
+		end
+		if e.protocol and e.protocol:find("^_") then
+			local proto = e.protocol:sub(2)
+			if not node_list[proto .. "_list"] then
+				node_list[proto .. "_list"] = {}
+			end
+			node_list[proto .. "_list"][#node_list[proto .. "_list"] + 1] = {
+				id = e[".name"],
+				remark = e["remark"],
+				group = e["group"],
+				o = e,
+			}
+		end
+	end
+	return node_list
+end
+
 function get_node_remarks(n)
 	local remarks = ""
 	if n then

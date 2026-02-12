@@ -358,7 +358,7 @@ local current_node = map:get(section)
 			url += params;
 		} else if (v_type === "SSR") {
 			var v_port = opt.get(dom_prefix + "port");
-			var v_protocol = opt.get(dom_prefix + "ssr_protocol");
+			var v_protocol = opt.get(dom_prefix + "protocol");
 			var v_method = opt.get(dom_prefix + "method");
 			var v_obfs = opt.get(dom_prefix + "obfs");
 			var v_password = opt.get(dom_prefix + "password");
@@ -875,7 +875,7 @@ local current_node = map:get(section)
 			opt.set('type', "SSR");
 			opt.set(dom_prefix + 'address', unbracketIP(ssm[1]));
 			opt.set(dom_prefix + 'port', ssm[2]);
-			opt.set(dom_prefix + 'ssr_protocol', ssm[3]);
+			opt.set(dom_prefix + 'protocol', ssm[3]);
 			opt.set(dom_prefix + 'method', ssm[4]);
 			opt.set(dom_prefix + 'obfs', ssm[5]);
 			opt.set(dom_prefix + 'password', b64decsafe(ssm[6]));
@@ -1763,7 +1763,7 @@ local current_node = map:get(section)
 </style>
 <div class="share-toolbar">
 	<div class="toolbar-buttons">
-		<% if not current_node.protocol or not current_node.protocol:find("_") then -%>
+		<% if not current_node.protocol or not current_node.protocol:find("^_") then -%>
 		<input id="fromUrlBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
 		<input id="exportUrlBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return exportUrl(this, '<%=self.option%>', '<%=self.value%>')" />
 		<input id="genQrcodeBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:Generate QRCode%>' onclick="return genQrcode(this, '<%=self.option%>', '<%=self.value%>')" />

@@ -1250,7 +1250,7 @@ function gen_config(var)
 				local to_node = get_node_by_id(node.to_node)
 				if to_node then
 					-- Landing Node not support use special node.
-					if to_node.protocol:find("_") then
+					if to_node.protocol:find("^_") then
 						to_node = nil
 					end
 				end

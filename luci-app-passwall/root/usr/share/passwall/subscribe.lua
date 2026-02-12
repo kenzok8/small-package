@@ -490,7 +490,7 @@ local function processData(szType, content, add_mode, group)
 			result.address = hostInfo[#hostInfo-5]
 		end
 		result.port = hostInfo[#hostInfo-4]
-		result.ssr_protocol = hostInfo[#hostInfo-3]
+		result.protocol = hostInfo[#hostInfo-3]
 		result.method = hostInfo[#hostInfo-2]
 		result.obfs = hostInfo[#hostInfo-1]
 		result.password = base64Decode(hostInfo[#hostInfo])	
