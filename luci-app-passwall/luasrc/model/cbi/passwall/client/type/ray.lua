@@ -321,7 +321,7 @@ o:value("salamander")
 o:depends({ [_n("protocol")] = "hysteria2" })
 
 o = s:option(Value, _n("hysteria2_obfs_password"), translate("Obfs Password"))
-o:depends({ [_n("protocol")] = "hysteria2" })
+o:depends({ [_n("hysteria2_obfs_type")] = "salamander" })
 
 o = s:option(Value, _n("hysteria2_auth_password"), translate("Auth Password"))
 o.password = true
