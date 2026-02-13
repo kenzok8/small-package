@@ -273,11 +273,11 @@ local current_node = map:get(section)
 						var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
 						params += "?ed=" + ws_maxEarlyData;
 					}
-				} else if (v_transport === "h2") {
-					v_transport = "http";
-					params += opt.query("host", dom_prefix + "h2_host");
-					params += opt.query("path", dom_prefix + "h2_path");
+				} else if (v_transport === "http") {
+					params += opt.query("host", dom_prefix + "http_host");
+					params += opt.query("path", dom_prefix + "http_path");
 				} else if (v_transport === "raw" || v_transport === "tcp") {
+					v_transport = "tcp";
 					params += opt.query("headerType", dom_prefix + "tcp_guise");
 					params += opt.query("host", dom_prefix + "tcp_guise_http_host");
 					params += opt.query("path", dom_prefix + "tcp_guise_http_path");
@@ -392,10 +392,11 @@ local current_node = map:get(section)
 					var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
 					info.path = info.path + "?ed=" + ws_maxEarlyData;
 				}
-			} else if (v_transport === "h2") {
-				info.host = opt.get(dom_prefix + "h2_host").value;
-				info.path = opt.get(dom_prefix + "h2_path").value;
+			} else if (v_transport === "http") {
+				info.host = opt.get(dom_prefix + "http_host").value;
+				info.path = opt.get(dom_prefix + "http_path").value;
 			} else if (v_transport === "raw" || v_transport === "tcp") {
+				v_transport = "tcp";
 				info.type = opt.get(dom_prefix + "tcp_guise").value;
 				if (info.type === "http") {
 					info.host = opt.get(dom_prefix + "tcp_guise_http_host").value;
@@ -444,11 +445,11 @@ local current_node = map:get(section)
 					var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
 					params += encodeURIComponent("?ed=" + ws_maxEarlyData);
 				}
-			} else if (v_transport === "h2") {
-				v_transport = "http";
-				params += opt.query("host", dom_prefix + "h2_host");
-				params += opt.query("path", dom_prefix + "h2_path");
+			} else if (v_transport === "http") {
+				params += opt.query("host", dom_prefix + "http_host");
+				params += opt.query("path", dom_prefix + "http_path");
 			} else if (v_transport === "raw" || v_transport === "tcp") {
+				v_transport = "tcp";
 				params += opt.query("headerType", dom_prefix + "tcp_guise");
 				params += opt.query("host", dom_prefix + "tcp_guise_http_host");
 				params += opt.query("path", dom_prefix + "tcp_guise_http_path");
@@ -533,11 +534,11 @@ local current_node = map:get(section)
 					var ws_maxEarlyData = opt.get(dom_prefix + "ws_maxEarlyData").value;
 					params += "?ed=" + ws_maxEarlyData;
 				}
-			} else if (v_transport === "h2") {
-				v_transport = "http";
-				params += opt.query("host", dom_prefix + "h2_host");
-				params += opt.query("path", dom_prefix + "h2_path");
+			} else if (v_transport === "http") {
+				params += opt.query("host", dom_prefix + "http_host");
+				params += opt.query("path", dom_prefix + "http_path");
 			} else if (v_transport === "raw" || v_transport === "tcp") {
+				v_transport = "tcp";
 				params += opt.query("headerType", dom_prefix + "tcp_guise");
 				params += opt.query("host", dom_prefix + "tcp_guise_http_host");
 				params += opt.query("path", dom_prefix + "tcp_guise_http_path");
