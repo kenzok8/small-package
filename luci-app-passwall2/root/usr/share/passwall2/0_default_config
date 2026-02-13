@@ -85,36 +85,46 @@ config nodes 'myshunt'
 	option write_ipset_direct '1'
 	option enable_geoview_ip '1'
 
+config shunt_rules 'DirectFront'
+	option remarks 'DirectFront'
+	option network 'tcp,udp'
+	option domain_list 'domain:ip233.cn'
+
+config shunt_rules 'ProxyFront'
+	option remarks 'ProxyFront'
+	option network 'tcp,udp'
+	option domain_list 'domain:www.gstatic.com
+domain:ssl.gstatic.com
+domain:fonts.gstatic.com'
+
 config shunt_rules 'DirectGame'
 	option remarks 'DirectGame'
-	option network 'tcp,udp'
-	option domain_list '# Steam CDN
+	option domain_list '# steam直连域名获取国内CDN走国内线路下载
 cm.steampowered.com
 steamserver.net
 
-# Steam CN Huawei CDN
+# steam国内CDN华为云
 steampipe.steamcontent.tnkjmec.com
-# Steam CN BaiShan CDN
+# steam国内CDN白山云
 st.dl.eccdnx.com
 st.dl.bscstorage.net
 st.dl.pinyuncloud.com
-# Steam CN XinLiuYun(support ipv6) CDN
+# steam国内CDN新流云(原金山云)(支持ipv6)
 dl.steam.clngaa.com
-# Steam CN Wangsu CDN
+# steam国内CDN网宿
 cdn.mileweb.cs.steampowered.com.8686c.com
 cdn-ws.content.steamchina.com
-# Steam CN Tencent CDN
+# steam国内CDN腾讯云 (蒸汽中国独占)
 cdn-qc.content.steamchina.com
-# Steam CN Aliyun(support ipv6) CDN
+# steam国内CDN阿里云(支持ipv6)
 cdn-ali.content.steamchina.com
 xz.pphimalayanrt.com
 lv.queniujq.cn
 alibaba.cdn.steampipe.steamcontent.com
 
-# CN Game geosite domain
+# 国内游戏geosite域名
 geosite:category-games@cn'
-
-	option ip_list '# Steam IP
+	option ip_list '# steam直连IP
 45.121.184.0/24
 103.10.124.0/23
 103.28.54.0/24
@@ -138,10 +148,11 @@ geosite:category-games@cn'
 208.64.200.0/22
 208.78.164.0/22
 205.185.194.0/24'
+	option network 'tcp,udp'
 
 config shunt_rules 'ProxyGame'
 	option remarks 'ProxyGame'
-	option domain_list '# steam 商店/客服/聊天/网页布局/API/二维码 代理URL
+	option domain_list '# steam 商店/客服/聊天/网页布局/API/二维码/Google云同步 代理URL
 steamcommunity.com
 www.steamcommunity.com
 store.steampowered.com
@@ -180,89 +191,59 @@ steamcloud-singapore.storage.googleapis.com
 steamcloud-sydney.storage.googleapis.com
 steamcloud-taiwan.storage.googleapis.com
 steamcloud-eu.storage.googleapis.com
-
+domain:blizzard.com
 geosite:category-games'
+	option network 'tcp,udp'
 
-config shunt_rules 'Direct'
+config shunt_rules 'AIGC'
+	option remarks 'AIGC'
+	option domain_list 'geosite:category-ai-!cn'
 	option network 'tcp,udp'
-	option remarks 'Direct'
-	option ip_list '114.114.114.114
-114.114.115.115
-223.5.5.5
-223.6.6.6
-119.29.29.29
-180.76.76.76
-'
-	option domain_list 'apple.com
-microsoft.com
-dyndns.com
-steamcontent.com
-dl.steam.clngaa.com
-dl.steam.ksyna.com
-st.dl.bscstorage.net
-st.dl.eccdnx.com
-st.dl.pinyuncloud.com
-cdn.mileweb.cs.steampowered.com.8686c.com
-cdn-ws.content.steamchina.com
-cdn-qc.content.steamchina.com
-cdn-ali.content.steamchina.com
-epicgames-download1-1251447533.file.myqcloud.com'
-
-config shunt_rules 'GooglePlay'
-	option remarks 'GooglePlay'
-	option network 'tcp,udp'
-	option domain_list 'domain:googleapis.cn
-domain:googleapis.com
-domain:xn--ngstr-lra8j.com'
-
-config shunt_rules 'Netflix'
-	option remarks 'Netflix'
-	option network 'tcp,udp'
-	option domain_list 'geosite:netflix'
-	
-config shunt_rules 'OpenAI'
-	option remarks 'OpenAI'
-	option network 'tcp,udp'
-	option domain_list 'geosite:openai'
 
 config shunt_rules 'Proxy'
-	option network 'tcp,udp'
 	option remarks 'Proxy'
-	option ip_list '149.154.160.0/20
-91.108.4.0/22
-91.108.56.0/24
-109.239.140.0/24
-67.198.55.0/24
-8.8.4.4
-8.8.8.8
-208.67.222.222
-208.67.220.220
-1.1.1.1
-1.1.1.2
-1.0.0.1
-9.9.9.9
-149.112.112.112
-2001:67c:4e8::/48
-2001:b28:f23c::/48
-2001:b28:f23d::/48
-2001:b28:f23f::/48
-2001:b28:f242::/48
-2001:4860:4860::8888
-2001:4860:4860::8844
-2606:4700:4700::1111
-2606:4700:4700::1001
-'
-
-config shunt_rules 'GFW'
-	option remarks 'GFW'
+	option domain_list 'geosite:geolocation-!cn
+geosite:gfw
+geosite:google
+geosite:github
+geosite:telegram
+geosite:microsoft
+geosite:apple
+geosite:amazon
+geosite:netflix
+geosite:disney
+geosite:spotify
+geosite:steam
+geosite:cloudflare
+geosite:fastly'
 	option network 'tcp,udp'
-	option domain_list 'geosite:gfw'
+	option ip_list 'geoip:google
+geoip:telegram
+geoip:twitter
+geoip:facebook
+geoip:netflix
+geoip:cloudflare
+geoip:cloudfront
+geoip:fastly
+geoip:us
+geoip:ca
+geoip:gb
+geoip:fr
+geoip:de
+geoip:nl
+geoip:jp
+geoip:kr
+geoip:sg
+geoip:hk
+geoip:tw
+geoip:au'
 
-config shunt_rules 'China'
-	option remarks 'China'
-	option network 'tcp,udp'
-	option ip_list 'geoip:cn'
+config shunt_rules 'Direct'
+	option remarks 'Direct'
 	option domain_list 'geosite:cn'
+	option ip_list 'geoip:cn
+geoip:private'
+	option network 'tcp,udp'
 	
 config shunt_rules 'Iran'
 	option remarks 'Iran'
@@ -285,12 +266,3 @@ config shunt_rules 'Russia'
 	option network 'tcp,udp'
 	option ip_list 'geoip:ru
 #rule-set:remote:https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/refs/heads/release/sing-box/rule-set-geoip/geoip-ru.srs'
-
-config shunt_rules 'QUIC'
-	option remarks 'QUIC'
-	option port '443'
-	option network 'udp'
-
-config shunt_rules 'UDP'
-	option remarks 'UDP'
-	option network 'udp'
