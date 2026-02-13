@@ -222,18 +222,18 @@ config shunt_rules 'Proxy'
 	option remarks 'Proxy'
 	option domain_list 'geosite:geolocation-!cn
 geosite:gfw
-geosite:google
-geosite:github
-geosite:telegram
-geosite:microsoft
-geosite:apple
-geosite:amazon
-geosite:netflix
-geosite:disney
-geosite:spotify
-geosite:steam
-geosite:cloudflare
-geosite:fastly'
+#geosite:google
+#geosite:github
+#geosite:telegram
+#geosite:microsoft
+#geosite:apple
+#geosite:amazon
+#geosite:netflix
+#geosite:disney
+#geosite:spotify
+#geosite:steam
+#geosite:cloudflare
+#geosite:fastly'
 	option network 'tcp,udp'
 	option ip_list 'geoip:google
 geoip:telegram
@@ -243,18 +243,18 @@ geoip:netflix
 geoip:cloudflare
 geoip:cloudfront
 geoip:fastly
-geoip:us
-geoip:ca
-geoip:gb
-geoip:fr
-geoip:de
-geoip:nl
-geoip:jp
-geoip:kr
-geoip:sg
-geoip:hk
-geoip:tw
-geoip:au'
+#geoip:us
+#geoip:ca
+#geoip:gb
+#geoip:fr
+#geoip:de
+#geoip:nl
+#geoip:jp
+#geoip:kr
+#geoip:sg
+#geoip:hk
+#geoip:tw
+#geoip:au'
 
 config shunt_rules 'Direct'
 	option remarks 'Direct'
