@@ -204,18 +204,18 @@ config shunt_rules 'Proxy'
 	option remarks 'Proxy'
 	option domain_list 'geosite:geolocation-!cn
 geosite:gfw
-#geosite:google
-#geosite:github
-#geosite:telegram
-#geosite:microsoft
-#geosite:apple
-#geosite:amazon
-#geosite:netflix
-#geosite:disney
-#geosite:spotify
-#geosite:steam
-#geosite:cloudflare
-#geosite:fastly'
+geosite:google
+geosite:github
+geosite:telegram
+geosite:microsoft
+geosite:apple
+geosite:amazon
+geosite:netflix
+geosite:disney
+geosite:spotify
+geosite:steam
+geosite:cloudflare
+geosite:fastly'
 	option network 'tcp,udp'
 	option ip_list 'geoip:google
 geoip:telegram
