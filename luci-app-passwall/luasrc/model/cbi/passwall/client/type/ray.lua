@@ -82,7 +82,7 @@ end
 local node_list = api.get_node_list()
 local fallback_list = {}
 local is_balancer = nil
-for k, e in ipairs(node_list.balancing_list) do
+for k, e in ipairs(node_list.balancing_list or {}) do
 	if e.id ~= arg[1] then
 		fallback_list[#fallback_list + 1] = {
 			id = e["id"],

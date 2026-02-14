@@ -103,20 +103,9 @@ config nodes 'myshunt'
 	option default_node '_direct'
 	option domainStrategy 'IPOnDemand'
 
-config shunt_rules 'DirectFront'
-	option remarks 'DirectFront'
-	option network 'tcp,udp'
-	option domain_list 'domain:ip233.cn'
-
-config shunt_rules 'ProxyFront'
-	option remarks 'ProxyFront'
-	option network 'tcp,udp'
-	option domain_list 'domain:www.gstatic.com
-domain:ssl.gstatic.com
-domain:fonts.gstatic.com'
-
 config shunt_rules 'DirectGame'
 	option remarks 'DirectGame'
+	option network 'tcp,udp'
 	option domain_list '# steam直连域名获取国内CDN走国内线路下载
 cm.steampowered.com
 steamserver.net
@@ -166,10 +155,10 @@ geosite:category-games@cn'
 208.64.200.0/22
 208.78.164.0/22
 205.185.194.0/24'
-	option network 'tcp,udp'
 
 config shunt_rules 'ProxyGame'
 	option remarks 'ProxyGame'
+	option network 'tcp,udp'
 	option domain_list '# steam 商店/客服/聊天/网页布局/API/二维码/Google云同步 代理URL
 steamcommunity.com
 www.steamcommunity.com
@@ -211,76 +200,58 @@ steamcloud-taiwan.storage.googleapis.com
 steamcloud-eu.storage.googleapis.com
 domain:blizzard.com
 geosite:category-games'
-	option network 'tcp,udp'
 
 config shunt_rules 'AIGC'
 	option remarks 'AIGC'
-	option domain_list 'geosite:category-ai-!cn'
 	option network 'tcp,udp'
+	option domain_list 'geosite:category-ai-!cn
+geosite:apple-intelligence'
+
+config shunt_rules 'Streaming'
+	option remarks 'Streaming'
+	option network 'tcp,udp'
+	option domain_list 'geosite:netflix
+geosite:disney'
 
 config shunt_rules 'Proxy'
 	option remarks 'Proxy'
-	option domain_list 'geosite:geolocation-!cn
-geosite:gfw
-geosite:google
-geosite:github
-geosite:telegram
-geosite:microsoft
-geosite:apple
-geosite:amazon
-geosite:netflix
-geosite:disney
-geosite:spotify
-geosite:steam
-geosite:cloudflare
-geosite:fastly'
 	option network 'tcp,udp'
-	option ip_list 'geoip:google
-geoip:telegram
-geoip:twitter
-geoip:facebook
-geoip:netflix
-geoip:cloudflare
-geoip:cloudfront
-geoip:fastly
-#geoip:us
-#geoip:ca
-#geoip:gb
-#geoip:fr
-#geoip:de
-#geoip:nl
-#geoip:jp
-#geoip:kr
-#geoip:sg
-#geoip:hk
-#geoip:tw
-#geoip:au'
+	option domain_list 'geosite:geolocation-!cn'
+	option ip_list '149.154.160.0/20
+91.108.4.0/22
+91.108.56.0/24
+109.239.140.0/24
+67.198.55.0/24
+8.8.4.4
+8.8.8.8
+208.67.222.222
+208.67.220.220
+1.1.1.1
+1.1.1.2
+1.0.0.1
+9.9.9.9
+149.112.112.112
+2001:67c:4e8::/48
+2001:b28:f23c::/48
+2001:b28:f23d::/48
+2001:b28:f23f::/48
+2001:b28:f242::/48
+2001:4860:4860::8888
+2001:4860:4860::8844
+2606:4700:4700::1111
+2606:4700:4700::1001'
 
 config shunt_rules 'Direct'
 	option remarks 'Direct'
+	option network 'tcp,udp'
 	option domain_list 'geosite:cn'
-	option ip_list 'geoip:cn
+	option ip_list '223.5.5.5/32
+223.6.6.6/32
+119.29.29.29/32
+180.76.76.76/32
+114.114.114.114/32
+114.114.115.115/32
+1.12.12.12/32
+120.53.53.53/32
+geoip:cn
 geoip:private'
-	option network 'tcp,udp'
-
-config shunt_rules 'Iran'
-	option remarks 'Iran'
-	option network 'tcp,udp'
-	option domain_list 'geosite:ir
-#rule-set:remote:https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geosite-ir.srs'
-	option ip_list 'geoip:ir
-#rule-set:remote:https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geoip-ir.srs'
-
-config shunt_rules 'Russia_Block'
-	option remarks 'Russia_Block'
-	option network 'tcp,udp'
-	option domain_list 'geosite:ru-blocked
-#rule-set:remote:https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/refs/heads/release/sing-box/rule-set-geosite/geosite-ru-blocked.srs'
-	option ip_list 'geoip:ru-blocked
-#rule-set:remote:https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/refs/heads/release/sing-box/rule-set-geoip/geoip-ru-blocked.srs'
-
-config shunt_rules 'Russia'
-	option remarks 'Russia'
-	option network 'tcp,udp'
-	option ip_list 'geoip:ru
-#rule-set:remote:https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/refs/heads/release/sing-box/rule-set-geoip/geoip-ru.srs'

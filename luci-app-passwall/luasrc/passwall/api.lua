@@ -527,10 +527,6 @@ function get_node_list()
 	local node_list = {
 		socks_list = {},
 		normal_list = {},
-		shunt_list = {},
-		iface_list = {},
-		balancing_list = {},
-		urltest_list = {},
 	}
 	uci:foreach(appname, "socks", function(s)
 		if s.enabled == "1" and s.node then
@@ -553,6 +549,9 @@ function get_node_list()
 		end
 		if e.protocol and e.protocol:find("^_") then
 			local proto = e.protocol:sub(2)
+			if not node_list[proto .. "_list"] then
+				node_list[proto .. "_list"] = {}
+			end
 			node_list[proto .. "_list"][#node_list[proto .. "_list"] + 1] = {
 				id = e[".name"],
 				remark = e["remark"],
