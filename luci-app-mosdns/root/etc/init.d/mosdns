@@ -26,6 +26,7 @@ get_config() {
 	config_get geo_update_day_time $1 geo_update_day_time 2
 	config_get geo_update_week_time $1 geo_update_week_time "*"
 	config_get listen_port $1 listen_port 5335
+	config_get listen_address $1 listen_address "0.0.0.0"
 	config_get log_file $1 log_file "/var/log/mosdns.log"
 	config_get log_level $1 log_level "info"
 	config_get minimal_ttl $1 minimal_ttl 0
@@ -665,7 +666,7 @@ generate_config() {
 	json_add_string "type" "udp_server"
 	json_add_object "args"
 	json_add_string "entry" "main_sequence"
-	json_add_string "listen" ":$listen_port"
+	json_add_string "listen" "$listen_address:$listen_port"
 	json_close_object
 	json_close_object
 	# plugin: tcp_server
@@ -674,7 +675,7 @@ generate_config() {
 	json_add_string "type" "tcp_server"
 	json_add_object "args"
 	json_add_string "entry" "main_sequence"
-	json_add_string "listen" ":$listen_port"
+	json_add_string "listen" "$listen_address:$listen_port"
 	json_close_object
 	json_close_object
 	# close plugins array

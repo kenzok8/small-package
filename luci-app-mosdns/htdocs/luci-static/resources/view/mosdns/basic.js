@@ -141,9 +141,12 @@ return view.extend({
 		o.value('/etc/mosdns/config_custom.yaml', _('Custom Config'));
 		o.default = '/var/etc/mosdns.json';
 
-		o = s.taboption('basic', form.Value, 'listen_port', _('Listen port'));
+		o = s.taboption('basic', form.Value, 'listen_port', _('Listen Port'));
 		o.default = '5335';
 		o.datatype = 'port';
+		o.depends('configfile', '/var/etc/mosdns.json');
+
+		o = s.taboption('basic', form.Value, 'listen_address', _('Listen Address'));
 		o.depends('configfile', '/var/etc/mosdns.json');
 
 		o = s.taboption('basic', form.ListValue, 'log_level', _('Log Level'));
@@ -200,7 +203,7 @@ return view.extend({
 		o.value('https://doh.pub/dns-query', _('Tencent Public DNS (DNS over HTTPS)'));
 		o.value('quic://dns.alidns.com', _('Aliyun Public DNS (DNS over QUIC)'));
 		o.value('https://dns.alidns.com/dns-query', _('Aliyun Public DNS (DNS over HTTPS)'));
-		o.value('h3://dns.alidns.com/dns-query', _('Aliyun Public DNS (DNS over HTTPS/3)'));
+		o.value('h3://dns.alidns.com/dns-query', _('Aliyun Public DNS (DNS over HTTP/3)'));
 		o.value('https://doh.360.cn/dns-query', _('360 Public DNS (DNS over HTTPS)'));
 		o.default = '119.29.29.29';
 		o.depends('custom_local_dns', '1');

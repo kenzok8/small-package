@@ -41,8 +41,11 @@ msgstr "获取数据中..."
 msgid "Enabled"
 msgstr "启用"
 
-msgid "Listen port"
+msgid "Listen Port"
 msgstr "监听端口"
+
+msgid "Listen Address"
+msgstr "监听地址"
 
 msgid "API Listen port"
 msgstr "API 监听端口"
@@ -275,8 +278,8 @@ msgstr "阿里云公共 DNS（DNS over QUIC）"
 msgid "Aliyun Public DNS (DNS over HTTPS)"
 msgstr "阿里云公共 DNS（DNS over HTTPS）"
 
-msgid "Aliyun Public DNS (DNS over HTTPS/3)"
-msgstr "阿里云公共 DNS（DNS over HTTPS/3）"
+msgid "Aliyun Public DNS (DNS over HTTP/3)"
+msgstr "阿里云公共 DNS（DNS over HTTP/3）"
 
 msgid "360 Public DNS (DNS over HTTPS)"
 msgstr "360 安全 DNS（DNS over HTTPS）"
