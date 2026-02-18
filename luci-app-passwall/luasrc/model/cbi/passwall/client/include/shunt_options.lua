@@ -95,6 +95,7 @@ o = add_option(Flag, "fakedns", '<a style="color:#FF8C00">FakeDNS</a>' .. " " ..
 local shunt_rules = {}
 m.uci:foreach(appname, "shunt_rules", function(e)
 	e.id = e[".name"]
+	e.remarks = e.remarks or e[".name"]
 	e["_node_option"] = e[".name"]
 	e["_node_default"] = ""
 	e["_fakedns_option"] = e[".name"] .. "_fakedns"
