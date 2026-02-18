@@ -58,7 +58,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 			run_socks_instance = proxy_table.run_socks_instance
 		end
 
-		if node.type ~= "Xray" or node.protocol == "_balancing" then
+		if node.type ~= "Xray" then
 			if node.type == "Socks" then
 				node.protocol = "socks"
 				node.transport = "tcp"
@@ -68,9 +68,6 @@ function gen_outbound(flag, node, tag, proxy_table)
 				local config_file = string.format("%s_%s_%s.json", flag, tag, new_port)
 				if tag and node_id and not tag:find(node_id) then
 					config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
-				end
-				if node.protocol == "_balancing" then
-					config_file = string.format("%s_%s_%s.json", flag, node_id, new_port)
 				end
 				if run_socks_instance then
 					sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
@@ -838,12 +835,17 @@ function gen_config(var)
 		function gen_loopback(outbound_tag, loopback_dst)
 			if not outbound_tag or outbound_tag == "" then return nil end
 			local inbound_tag = loopback_dst and "lo-to-" .. loopback_dst or outbound_tag .. "-lo"
-			table.insert(outbounds, {
+			local loopback_outbound = {
 				protocol = "loopback",
 				tag = outbound_tag,
 				settings = { inboundTag = inbound_tag }
-			})
-			return inbound_tag
+			}
+			local insert_index = #outbounds + 1
+			if outbound_tag == "default" then
+				insert_index = 1
+			end
+			table.insert(outbounds, insert_index, loopback_outbound)
+			return loopback_outbound
 		end
 
 		function gen_balancer(_node, loopback_tag)
@@ -854,8 +856,8 @@ function gen_config(var)
 			-- existing balancer
 			for _, v in ipairs(balancers) do
 				if v.tag == balancer_tag then
-					gen_loopback(loopback_tag, loopback_dst)
-					return balancer_tag
+					local loopback_outbound = gen_loopback(loopback_tag, loopback_dst)
+					return balancer_tag, loopback_outbound
 				end
 			end
 			-- new balancer
@@ -956,9 +958,10 @@ function gen_config(var)
 					end
 				end
 			end
-			local inbound_tag = gen_loopback(loopback_tag, loopback_dst)
+			local loopback_outbound = gen_loopback(loopback_tag, loopback_dst)
+			local inbound_tag = loopback_outbound.settings.inboundTag
 			table.insert(rules, { inboundTag = { inbound_tag }, balancerTag = balancer_tag })
-			return balancer_tag
+			return balancer_tag, loopback_outbound
 		end
 
 		function set_outbound_detour(node, outbound, outbounds_table, shunt_rule_name)
@@ -1043,7 +1046,7 @@ function gen_config(var)
 		end
 
 		function gen_outbound_get_tag(flag, node_id, tag, proxy_table)
-			if not node_id or node_id == "nil" then return nil end
+			if not node_id or node_id == "" or node_id == "nil" then return nil end
 			local node
 			if type(node_id) == "string" then
 				node = get_node_by_id(node_id)
@@ -1077,7 +1080,7 @@ function gen_config(var)
 					proxy_table.preproxy_node = nil
 					proxy_table.to_node = nil
 				end
-				local outbound
+				local outbound, has_add_outbound
 				for _, _outbound in ipairs(outbounds) do
 					-- Avoid generating duplicate nested processes
 					if _outbound["_flag_proxy_tag"] and _outbound["_flag_proxy_tag"]:find("socks <- " .. node[".name"], 1, true) then
@@ -1086,15 +1089,25 @@ function gen_config(var)
 						break
 					end
 				end
+				if node.protocol == "_balancing" then
+					local balancer_tag, loopback_outbound = gen_balancer(node, tag)
+					if loopback_outbound then
+						outbound = loopback_outbound
+						node[".name"] = outbound.tag
+						has_add_outbound = true
+					end
+				end
 				if not outbound then
 					outbound = gen_outbound(flag, node, tag, proxy_table)
 				end
 				if outbound then
 					local default_outbound_tag, last_insert_outbound = set_outbound_detour(node, outbound, outbounds)
-					if tag == "default" then
-						table.insert(outbounds, 1, outbound)
-					else
-						table.insert(outbounds, outbound)
+					if not has_add_outbound then
+						local insert_index = #outbounds + 1
+						if tag == "default" then
+							insert_index = 1
+						end
+						table.insert(outbounds, insert_index, outbound)
 					end
 					if last_insert_outbound then
 						table.insert(outbounds, last_insert_outbound)
@@ -1108,17 +1121,14 @@ function gen_config(var)
 			inner_fakedns = node.fakedns or "0"
 
 			local function gen_shunt_node(rule_name, _node_id)
-				if not rule_name then return nil, nil end
-				if not _node_id then
-					_node_id = node[rule_name] or nil
-					if not _node_id then return nil, nil end
-				end
+				if not rule_name then return nil end
+				if not _node_id then _node_id = node[rule_name] end
 				if _node_id == "_direct" then
-					return "direct", nil
+					return "direct"
 				elseif _node_id == "_blackhole" then
-					return "blackhole", nil
+					return "blackhole"
 				elseif _node_id == "_default" and rule_name ~= "default" then
-					return "default", nil
+					return "default"
 				elseif _node_id then
 					local proxy_table = {
 						fragment = xray_settings.fragment == "1",
@@ -1130,19 +1140,18 @@ function gen_config(var)
 					if preproxy_node_id then
 						proxy_table.chain_proxy = "2"
 						proxy_table.to_node = _node_id
-						return gen_outbound_get_tag(flag, preproxy_node_id, rule_name, proxy_table), nil
+						return gen_outbound_get_tag(flag, preproxy_node_id, rule_name, proxy_table)
 					else
-						return gen_outbound_get_tag(flag, _node_id, rule_name, proxy_table), nil
+						return gen_outbound_get_tag(flag, _node_id, rule_name, proxy_table)
 					end
 				end
-				return nil, nil
+				return nil
 			end
 
 			--default_node
 			local default_node_id = node.default_node or "_direct"
-			local default_outboundTag, default_balancerTag = gen_shunt_node("default", default_node_id)
+			local default_outboundTag = gen_shunt_node("default", default_node_id)
 			COMMON.default_outbound_tag = default_outboundTag
-			COMMON.default_balancer_tag = default_balancerTag
 
 			if inner_fakedns == "1" and node["default_fakedns"] == "1" then
 				remote_dns_fake = true
@@ -1150,11 +1159,10 @@ function gen_config(var)
 
 			--shunt rule
 			uci:foreach(appname, "shunt_rules", function(e)
-				local outbound_tag, balancer_tag = gen_shunt_node(e[".name"])
-				if outbound_tag or balancer_tag and e.remarks then
+				local outbound_tag = gen_shunt_node(e[".name"])
+				if outbound_tag and e.remarks then
 					if outbound_tag == "default" then
 						outbound_tag = default_outboundTag
-						balancer_tag = default_balancerTag
 					end
 					local protocols = nil
 					if e["protocol"] and e["protocol"] ~= "" then
@@ -1185,7 +1193,6 @@ function gen_config(var)
 						local domain_table = {
 							shunt_rule_name = e[".name"],
 							outboundTag = outbound_tag,
-							balancerTag = balancer_tag,
 							domain = {},
 							fakedns = nil,
 						}
@@ -1199,7 +1206,7 @@ function gen_config(var)
 						if inner_fakedns == "1" and node[e[".name"] .. "_fakedns"] == "1" and #domains > 0 then
 							domain_table.fakedns = true
 						end
-						if outbound_tag or balancer_tag then
+						if outbound_tag then
 							table.insert(dns_domain_rules, api.clone(domain_table))
 						end
 						if #domains == 0 then domains = nil end
@@ -1225,7 +1232,6 @@ function gen_config(var)
 						ruleTag = e.remarks,
 						inboundTag = inbound_tag,
 						outboundTag = outbound_tag,
-						balancerTag = balancer_tag,
 						network = e["network"] or "tcp,udp",
 						source = source,
 						--sourcePort = e["sourcePort"] ~= "" and e["sourcePort"] or nil,
@@ -1250,12 +1256,11 @@ function gen_config(var)
 				end
 			end)
 
-			if default_outboundTag or default_balancerTag then
+			if default_outboundTag then
 				local rule = {
 					_flag = "default",
 					type = "field",
-					outboundTag = default_outboundTag,
-					balancerTag = default_balancerTag
+					outboundTag = default_outboundTag
 				}
 				if node.domainStrategy == "IPIfNonMatch" then
 					rule.ip = { "0.0.0.0/0", "::/0" }
@@ -1271,26 +1276,8 @@ function gen_config(var)
 				balancers = #balancers > 0 and balancers or nil,
 				rules = rules
 			}
-		elseif node.protocol == "_balancing" then
-			local blc_nodes
-			if node.node_add_mode and node.node_add_mode == "batch" then
-				blc_nodes = get_balancer_batch_nodes(node)
-			else
-				blc_nodes = node.balancing_node
-			end
-			if blc_nodes and #blc_nodes > 0 then
-				local balancer_tag = gen_balancer(node)
-				if balancer_tag then
-					table.insert(rules, { network = "tcp,udp", balancerTag = balancer_tag })
-				end
-				routing = {
-					balancers = balancers,
-					rules = rules
-				}
-				COMMON.default_balancer_tag = balancer_tag
-			end
 		else
-			COMMON.default_outbound_tag = gen_outbound_get_tag(flag, node, nil, {
+			COMMON.default_outbound_tag = gen_outbound_get_tag(flag, node, "default", {
 				fragment = xray_settings.fragment == "1" or nil,
 				noise = xray_settings.noise == "1" or nil,
 				run_socks_instance = not no_run
@@ -1299,12 +1286,13 @@ function gen_config(var)
 				routing = {
 					domainStrategy = "AsIs",
 					domainMatcher = "hybrid",
+					balancers = #balancers > 0 and balancers or nil,
 					rules = rules
 				}
 				table.insert(routing.rules, {
 					ruleTag = "default",
-					outboundTag = COMMON.default_outbound_tag,
-					network = "tcp,udp"
+					network = "tcp,udp",
+					outboundTag = COMMON.default_outbound_tag
 				})
 			end
 		end
@@ -1524,7 +1512,7 @@ function gen_config(var)
 			dns_rule_position = dns_rule_position + 1
 		end
 
-		if COMMON.default_outbound_tag == "direct" then
+		if not COMMON.default_outbound_tag or COMMON.default_outbound_tag == "direct" then
 			if direct_dns_udp_server or direct_dns_tcp_server then
 				table.insert(routing.rules, dns_rule_position, {
 					inboundTag = {
@@ -1539,7 +1527,7 @@ function gen_config(var)
 		--按分流顺序DNS
 		if dns_domain_rules and #dns_domain_rules > 0 then
 			for index, value in ipairs(dns_domain_rules) do
-				if value.domain and (value.outboundTag or value.balancerTag) then
+				if value.domain and value.outboundTag then
 					local dns_server = nil
 					if value.outboundTag == "direct" and _direct_dns.address then
 						dns_server = api.clone(_direct_dns)
@@ -1556,19 +1544,16 @@ function gen_config(var)
 					end
 
 					if dns_server then
-						local outboundTag, balancerTag
+						local outboundTag
 						if not api.is_local_ip(dns_server.address) or value.outboundTag == "blackhole" then --dns为本地ip，不走代理
 							outboundTag = value.outboundTag
-							balancerTag  = value.balancerTag
 						else
 							outboundTag = "direct"
-							balancerTag  = nil
 						end
 						table.insert(dns.servers, dns_server)
 						table.insert(routing.rules, dns_rule_position, {
 							inboundTag = { dns_server.tag },
-							outboundTag = outboundTag,
-							balancerTag = balancerTag
+							outboundTag = outboundTag
 						})
 						dns_rule_position = dns_rule_position + 1
 					end
@@ -1576,17 +1561,14 @@ function gen_config(var)
 			end
 		end
 
-		local _outboundTag, _balancerTag
+		local _outboundTag
 		if not api.is_local_ip(_remote_dns.address) or dns_outbound_tag == "blackhole" then --dns为本地ip，不走代理
 			_outboundTag = dns_outbound_tag
-			_balancerTag  = COMMON.default_balancer_tag
 		else
 			_outboundTag = "direct"
-			_balancerTag  = nil
 		end
 		table.insert(routing.rules, dns_rule_position, {
 			inboundTag = { "dns-global" },
-			balancerTag = _balancerTag,
 			outboundTag = _outboundTag
 		})
 		dns_rule_position = dns_rule_position + 1

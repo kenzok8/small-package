@@ -282,11 +282,11 @@ o:value("tcp", translatef("Requery DNS By %s", "TCP"))
 if api.is_finded("dns2socks") then
 	o:value("dns2socks", "dns2socks")
 end
-if has_singbox then
-	o:value("sing-box", "Sing-Box")
-end
 if has_xray then
 	o:value("xray", "Xray")
+end
+if has_singbox then
+	o:value("sing-box", "Sing-Box")
 end
 o:depends({ dns_shunt = "chinadns-ng", _node_sel_other = "1" })
 o:depends({ dns_shunt = "dnsmasq", _node_sel_other = "1" })
@@ -302,11 +302,11 @@ end
 if api.is_finded("smartdns") then
 	o = s:taboption("DNS", ListValue, "smartdns_dns_mode", translate("Filter Mode"))
 	o:value("socks", "Socks")
-	if has_singbox then
-		o:value("sing-box", "Sing-Box")
-	end
 	if has_xray then
 		o:value("xray", "Xray")
+	end
+	if has_singbox then
+		o:value("sing-box", "Sing-Box")
 	end
 	o:depends({ dns_shunt = "smartdns", _node_sel_other = "1" })
 	o.remove = function(self, section)
@@ -365,13 +365,14 @@ o.default = "tcp"
 o:value("udp", "UDP")
 o:value("tcp", "TCP")
 o:value("tcp+doh", "TCP + DoH (" .. translate("A/AAAA type") .. ")")
-o:depends("dns_mode", "xray")
-o:depends("smartdns_dns_mode", "xray")
+o:depends({ dns_mode = "xray", _node_sel_other = "1" })
+o:depends({ smartdns_dns_mode = "xray", _node_sel_other = "1" })
 o.cfgvalue = function(self, section)
 	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
-	if s.fields["dns_mode"]:formvalue(section) == "xray" or s.fields["smartdns_dns_mode"]:formvalue(section) == "xray" then
+	local f = s.fields["smartdns_dns_mode"]
+	if s.fields["dns_mode"]:formvalue(section) == "xray" or (f and f:formvalue(section) == "xray") then
 		return m:set(section, "v2ray_dns_mode", value)
 	end
 end
@@ -381,13 +382,14 @@ o.default = "tcp"
 o:value("udp", "UDP")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
-o:depends("dns_mode", "sing-box")
-o:depends("smartdns_dns_mode", "sing-box")
+o:depends({ dns_mode = "sing-box", _node_sel_other = "1" })
+o:depends({ smartdns_dns_mode = "sing-box", _node_sel_other = "1" })
 o.cfgvalue = function(self, section)
 	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
-	if s.fields["dns_mode"]:formvalue(section) == "sing-box" or s.fields["smartdns_dns_mode"]:formvalue(section) == "sing-box" then
+	local f = s.fields["smartdns_dns_mode"]
+	if s.fields["dns_mode"]:formvalue(section) == "sing-box" or (f and f:formvalue(section) == "sing-box") then
 		return m:set(section, "v2ray_dns_mode", value)
 	end
 end
@@ -401,7 +403,7 @@ o.validate = function(self, value, t)
 	end
 	return value
 end
-o:depends({dns_mode = "dns2socks"})
+o:depends({ dns_mode = "dns2socks", _node_sel_other = "1" })
 
 ---- DNS Forward
 o = s:taboption("DNS", Value, "remote_dns", translate("Remote DNS"))
