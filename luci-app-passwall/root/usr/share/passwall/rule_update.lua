@@ -659,7 +659,7 @@ else
 	geoip_update = uci:get(name, "@global_rules[0]", "geoip_update") or "1"
 	geosite_update = uci:get(name, "@global_rules[0]", "geosite_update") or "1"
 end
-if gfwlist_update == "0" and chnroute_update == "0" and chnroute6_update == "0" and chnlist_update == "0" and geoip_update == "0" and geosite_update == "0" then
+if geo2rule ~= "1" and gfwlist_update == "0" and chnroute_update == "0" and chnroute6_update == "0" and chnlist_update == "0" and geoip_update == "0" and geosite_update == "0" then
 	os.exit(0)
 end
 
@@ -691,28 +691,25 @@ if geo2rule == "1" then
 	end
 
 	-- 如果是手动更新(arg2存在)始终生成规则
-	local force_generate = (arg2 ~= nil)
+	if arg2 then geoip_update_ok, geosite_update_ok = true, true end
+	chnroute_update, chnroute6_update, gfwlist_update, chnlist_update = "1", "1", "1", "1"
 
-	if (geoip_update_ok or force_generate) and fs.access(asset_location .. "geoip.dat") then
-			if force_generate or chnroute_update == "1" then
-				safe_call(fetch_chnroute, "生成chnroute发生错误...")
-			end
-			if force_generate or chnroute6_update == "1" then
-				safe_call(fetch_chnroute6, "生成chnroute6发生错误...")
-			end
-	else
-		log("geoip.dat 文件不存在,跳过规则生成。")
+	if geoip_update_ok then
+		if fs.access(asset_location .. "geoip.dat") then
+			safe_call(fetch_chnroute, "生成chnroute发生错误...")
+			safe_call(fetch_chnroute6, "生成chnroute6发生错误...")
+		else
+			log("geoip.dat 文件不存在,跳过规则生成。")
+		end
 	end
 
-	if (geosite_update_ok or force_generate) and fs.access(asset_location .. "geosite.dat") then
-			if force_generate or gfwlist_update == "1" then
-				safe_call(fetch_gfwlist, "生成gfwlist发生错误...")
-			end
-			if force_generate or chnlist_update == "1" then
-				safe_call(fetch_chnlist, "生成chnlist发生错误...")
-			end
-	else
-		log("geosite.dat 文件不存在,跳过规则生成。")
+	if geosite_update_ok then
+		if fs.access(asset_location .. "geosite.dat") then
+			safe_call(fetch_gfwlist, "生成gfwlist发生错误...")
+			safe_call(fetch_chnlist, "生成chnlist发生错误...")
+		else
+			log("geosite.dat 文件不存在,跳过规则生成。")
+		end
 	end
 else
 	if gfwlist_update == "1" then
