@@ -85,7 +85,7 @@ if has_xray or has_singbox then
 			.. "<li>" .. translate("Experimental feature.") .. "</li>"
 			.. "<li>" .. "1." .. translate("Analyzes and preloads GeoIP/Geosite data to enhance the shunt performance of Sing-box/Xray.") .. "</li>"
 			.. "<li>" .. "2." .. translate("Once enabled, the rule list can support GeoIP/Geosite rules.") .. "</li>"
-			.. "<li>" .. translate("Note: Increases resource usage; Geosite analysis is only supported in ChinaDNS-NG modes.") .. "</li>"
+			.. "<li>" .. translate("Note: Increases resource usage; Geosite analysis is only supported in ChinaDNS-NG and SmartDNS modes.") .. "</li>"
 			.. "</ul>"
 		function o.write(self, section, value)
 			local old = m:get(section, self.option) or "0"
