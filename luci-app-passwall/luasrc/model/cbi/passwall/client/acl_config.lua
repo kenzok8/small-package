@@ -228,7 +228,7 @@ o.template = appname .. "/cbi/nodes_listvalue"
 o.group = {"",""}
 o.remove = function(self, section)
 	local v = s.fields["shunt_udp_node"]:formvalue(section)
-	if not f then
+	if not v then
 		return m:del(section, self.option)
 	end
 end
