@@ -124,12 +124,6 @@ msgstr "当前节点：%s"
 msgid "DNS Shunt"
 msgstr "DNS分流"
 
-msgid "Domestic group name"
-msgstr "国内分组名"
-
-msgid "You only need to configure domestic DNS packets in SmartDNS, and fill in the domestic DNS group name here."
-msgstr "您只需要在SmartDNS配置好国内DNS分组，并在此处填入国内DNS分组名。"
-
 msgid "Filter Mode"
 msgstr "过滤模式"
 
@@ -1066,8 +1060,8 @@ msgstr "分析和预加载 GeoIP/Geosite 数据，以增强 Sing-box/Xray 的分
 msgid "Once enabled, the rule list can support GeoIP/Geosite rules."
 msgstr "启用后，规则列表可以支持 GeoIP/Geosite 规则。"
 
-msgid "Note: Increases resource usage; Geosite analysis is only supported in ChinaDNS-NG and SmartDNS modes."
-msgstr "注：会增加一些系统资源的开销，仅在 ChinaDNS-NG 和 SmartDNS 模式下支持分析 Geosite 。"
+msgid "Note: Increases resource usage; Geosite analysis is only supported in ChinaDNS-NG modes."
+msgstr "注：会增加一些系统资源的开销，仅在 ChinaDNS-NG 模式下支持分析 Geosite 。"
 
 msgid "Shunt Rule"
 msgstr "分流规则"

@@ -210,13 +210,6 @@ s:tab("DNS", translate("DNS"))
 o = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
-if api.is_finded("smartdns") then
-	o:value("smartdns", "SmartDNS")
-	o = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
-	o.placeholder = "local"
-	o:depends("dns_shunt", "smartdns")
-	o.description = translate("You only need to configure domestic DNS packets in SmartDNS, and fill in the domestic DNS group name here.")
-end
 
 o = s:taboption("DNS", ListValue, "direct_dns_mode", translate("Direct DNS") .. " " .. translate("Request protocol"))
 o:value("", translate("Auto"))
@@ -241,39 +234,6 @@ o:depends("direct_dns_mode", "tcp")
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
 
--- TCP分流时dns过滤模式保存逻辑
-function dns_mode_save(section)
-	local f = s.fields["tcp_node"]
-	local id_val = f and f:formvalue(section) or ""
-	if id_val == "" then
-		return
-	end
-	for _, v in pairs(shunt_list) do
-		if v.id == id_val then
-			local type_val = v.type
-			if type_val and (type_val == "Xray" or type_val == "sing-box") then
-				local dns_shunt_val = s.fields["dns_shunt"]:formvalue(section)
-				local dns_mode_val = (dns_shunt_val ~= "smartdns") and "dns_mode" or "smartdns_dns_mode"
-				local current_val = m:get(section, dns_mode_val) or ""
-				local new_val = (type_val == "Xray") and "xray" or "sing-box"
-
-				if current_val ~= new_val then
-					m:set(section, dns_mode_val, new_val)
-					m:del(section, (dns_mode_val == "dns_mode") and "smartdns_dns_mode" or "dns_mode")
-				end
-
-				local dns_field = s.fields[type_val == "Xray" and "xray_dns_mode" or "singbox_dns_mode"]
-				local v2ray_dns_mode = dns_field and dns_field:formvalue(section)
-				if v2ray_dns_mode and m:get(section, "v2ray_dns_mode") ~= v2ray_dns_mode then
-					m:set(section, "v2ray_dns_mode", v2ray_dns_mode)
-				end
-
-				break
-			end
-		end
-	end
-end
-
 ---- DNS Forward Mode
 o = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
 o.default = "tcp"
@@ -290,73 +250,32 @@ if has_xray then
 end
 o:depends({ dns_shunt = "chinadns-ng", _node_sel_other = "1" })
 o:depends({ dns_shunt = "dnsmasq", _node_sel_other = "1" })
-o.remove = function(self, section)
-	local f = s.fields["smartdns_dns_mode"]
-	if f and f:formvalue(section) then
-		return m:del(section, self.option)
+o.remove = function(self, section) -- 当TCP节点为分流时的保存逻辑
+	local f = s.fields["tcp_node"]
+	local id_val = f and f:formvalue(section) or ""
+	if id_val == "" then
+		return
 	end
-	dns_mode_save(section)
-end
+	for _, v in pairs(shunt_list) do
+		if v.id == id_val then
+			local type_val = v.type
+			if type_val and (type_val == "Xray" or type_val == "sing-box") then
+				local dns_shunt_val = s.fields["dns_shunt"]:formvalue(section)
+				local current_val = m:get(section, "dns_mode") or ""
+				local new_val = (type_val == "Xray") and "xray" or "sing-box"
 
----- SmartDNS Forward Mode
-if api.is_finded("smartdns") then
-	o = s:taboption("DNS", ListValue, "smartdns_dns_mode", translate("Filter Mode"))
-	o:value("socks", "Socks")
-	if has_singbox then
-		o:value("sing-box", "Sing-Box")
-	end
-	if has_xray then
-		o:value("xray", "Xray")
-	end
-	o:depends({ dns_shunt = "smartdns", _node_sel_other = "1" })
-	o.remove = function(self, section)
-		local f = s.fields["dns_mode"]
-		if f and f:formvalue(section) then
-			return m:del(section, self.option)
-		end
-		dns_mode_save(section)
-	end
-
-	o = s:taboption("DNS", DynamicList, "smartdns_remote_dns", translate("Remote DNS"))
-	o:value("tcp://1.1.1.1")
-	o:value("tcp://8.8.4.4")
-	o:value("tcp://8.8.8.8")
-	o:value("tcp://9.9.9.9")
-	o:value("tcp://208.67.222.222")
-	o:value("tls://1.1.1.1")
-	o:value("tls://8.8.4.4")
-	o:value("tls://8.8.8.8")
-	o:value("tls://9.9.9.9")
-	o:value("tls://208.67.222.222")
-	o:value("https://1.1.1.1/dns-query")
-	o:value("https://8.8.4.4/dns-query")
-	o:value("https://8.8.8.8/dns-query")
-	o:value("https://9.9.9.9/dns-query")
-	o:value("https://208.67.222.222/dns-query")
-	o:value("https://dns.adguard.com/dns-query,94.140.14.14")
-	o:value("https://doh.libredns.gr/dns-query,116.202.176.26")
-	o:value("https://doh.libredns.gr/ads,116.202.176.26")
-	o:depends({ dns_shunt = "smartdns", smartdns_dns_mode = "socks" })
-	o.cfgvalue = function(self, section)
-		return m:get(section, self.option) or {"tcp://1.1.1.1"}
-	end
-	function o.write(self, section, value)
-		local t = {}
-		local t2 = {}
-		if type(value) == "table" then
-			local x
-			for _, x in ipairs(value) do
-				if x and #x > 0 then
-					if not t2[x] then
-						t2[x] = x
-						t[#t+1] = x
-					end
+				if current_val ~= new_val then
+					m:set(section, "dns_mode", new_val)
 				end
+
+				local dns_field = s.fields[type_val == "Xray" and "xray_dns_mode" or "singbox_dns_mode"]
+				local v2ray_dns_mode = dns_field and dns_field:formvalue(section)
+				if v2ray_dns_mode and m:get(section, "v2ray_dns_mode") ~= v2ray_dns_mode then
+					m:set(section, "v2ray_dns_mode", v2ray_dns_mode)
+				end
+				break
 			end
-		else
-			t = { value }
 		end
-		return DynamicList.write(self, section, t)
 	end
 end
 
@@ -366,13 +285,11 @@ o:value("udp", "UDP")
 o:value("tcp", "TCP")
 o:value("tcp+doh", "TCP + DoH (" .. translate("A/AAAA type") .. ")")
 o:depends("dns_mode", "xray")
-o:depends("smartdns_dns_mode", "xray")
 o.cfgvalue = function(self, section)
 	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
-	local f = s.fields["smartdns_dns_mode"]
-	if s.fields["dns_mode"]:formvalue(section) == "xray" or (f and f:formvalue(section) == "xray") then
+	if s.fields["dns_mode"]:formvalue(section) == "xray" then
 		return m:set(section, "v2ray_dns_mode", value)
 	end
 end
@@ -383,13 +300,11 @@ o:value("udp", "UDP")
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:depends("dns_mode", "sing-box")
-o:depends("smartdns_dns_mode", "sing-box")
 o.cfgvalue = function(self, section)
 	return m:get(section, "v2ray_dns_mode")
 end
 o.write = function(self, section, value)
-	local f = s.fields["smartdns_dns_mode"]
-	if s.fields["dns_mode"]:formvalue(section) == "sing-box" or (f and f:formvalue(section) == "sing-box") then
+	if s.fields["dns_mode"]:formvalue(section) == "sing-box" then
 		return m:set(section, "v2ray_dns_mode", value)
 	end
 end
@@ -449,24 +364,18 @@ o.description = translate("Notify the DNS server when the DNS query is notified,
 o.datatype = "ipaddr"
 o:depends({dns_mode = "sing-box"})
 o:depends({dns_mode = "xray"})
-o:depends("dns_shunt", "smartdns")
 o:depends("_node_sel_shunt", "1")
 
 o = s:taboption("DNS", Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the domain that proxy."))
 o.default = "0"
 o:depends({dns_mode = "sing-box", dns_shunt = "dnsmasq"})
 o:depends({dns_mode = "sing-box", dns_shunt = "chinadns-ng"})
-o:depends({smartdns_dns_mode = "sing-box", dns_shunt = "smartdns"})
 o:depends({dns_mode = "xray", dns_shunt = "dnsmasq"})
 o:depends({dns_mode = "xray", dns_shunt = "chinadns-ng"})
-o:depends({smartdns_dns_mode = "xray", dns_shunt = "smartdns"})
 --o:depends("_node_sel_shunt", "1")
 o.validate = function(self, value, t)
 	if value and value == "1" then
 		local _dns_mode = s.fields["dns_mode"]:formvalue(t)
-		if not _dns_mode and s.fields["smartdns_dns_mode"] then
-			_dns_mode = s.fields["smartdns_dns_mode"]:formvalue(t)
-		end
 		local _tcp_node = s.fields["tcp_node"]:formvalue(t)
 		if _dns_mode and _tcp_node then
 			if m:get(_tcp_node, "type"):lower() ~= _dns_mode then
@@ -501,17 +410,11 @@ o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
 o.description = desc .. "</ul>"
 o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
-if api.is_finded("smartdns") then
-	o:depends({dns_shunt = "smartdns", tcp_proxy_mode = "proxy", chn_list = "direct"})
-end
 
 o = s:taboption("DNS", Flag, "force_https_soa", translate("Force HTTPS SOA"), translate("Force queries with qtype 65 to respond with an SOA record."))
 o.default = "1"
 o.rmempty = false
 o:depends({dns_shunt = "chinadns-ng"})
-if api.is_finded("smartdns") then
-	o:depends({dns_shunt = "smartdns"})
-end
 
 o = s:taboption("DNS", Flag, "dns_redirect", translate("DNS Redirect"), translate("Force special DNS server to need proxy devices."))
 o.default = "1"
