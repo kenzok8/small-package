@@ -226,7 +226,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 					idle_timeout = tonumber(node.grpc_idle_timeout) or nil,
 					health_check_timeout = tonumber(node.grpc_health_check_timeout) or nil,
 					permit_without_stream = (node.grpc_permit_without_stream == "1") and true or nil,
-					initial_windows_size = tonumber(node.grpc_initial_windows_size) or nil
+					initial_windows_size = tonumber(node.grpc_initial_windows_size) or nil,
+					user_agent = node.user_agent
 				} or nil,
 				httpupgradeSettings = (node.transport == "httpupgrade") and {
 					path = node.httpupgrade_path or "/",

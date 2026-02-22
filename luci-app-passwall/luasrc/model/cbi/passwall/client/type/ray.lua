@@ -660,6 +660,7 @@ o:depends({ [_n("tcp_guise")] = "http" })
 o:depends({ [_n("transport")] = "ws" })
 o:depends({ [_n("transport")] = "httpupgrade" })
 o:depends({ [_n("transport")] = "xhttp" })
+o:depends({ [_n("transport")] = "grpc" })
 
 -- [[ Mux.Cool ]]--
 o = s:option(Flag, _n("mux"), "Mux", translate("Enable Mux.Cool"))
