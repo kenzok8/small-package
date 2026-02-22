@@ -1421,7 +1421,6 @@ gen_include() {
 					ipset -! add $IPSET_WAN \${wan_ip}
 				done
 			}
-			fi
 		EOF
 		)
 	}
