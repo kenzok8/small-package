@@ -116,9 +116,9 @@ if not fs.access(FLAG_PATH) then
 end
 
 local LOCAL_EXTEND_ARG = ""
-if LOCAL_GROUP == "null" then
-	LOCAL_GROUP = nil
-	log("  * 注意：国内分组名未设置，直连 DNS 将无法查询！")
+if LOCAL_GROUP == "null" or LOCAL_GROUP == "" then
+	log("  * 注意：SmartDNS 国内分组名未设置，DNS 将无法正常工作！！！")
+	os.exit(1)
 else
 	--从smartdns配置中读取参数
 	local custom_conf_path = "/etc/smartdns/custom.conf"
@@ -137,9 +137,10 @@ else
 			prefix = "-address ",
 			get_value = function(custom_config)
 				local soa = custom_config["force-qtype-SOA"]
-				if soa and soa:match("(^|%s)28(%s|$)") then return "#6" end
-				if uci:get("smartdns", "@smartdns[0]", "force_aaaa_soa") == "1" then return "#6" end
-				return "-6"
+				return ((soa and soa:match("(^|%s)28(%s|$)"))
+					or custom_config["force-AAAA-SOA"] == "yes"
+					or uci:get("smartdns", "@smartdns[0]", "force_aaaa_soa") == "1")
+					and "#6" or "-6"
 			end
 		}
 	}
