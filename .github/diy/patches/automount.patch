@@ -1,16 +1,21 @@
 --- a/automount/Makefile
 +++ b/automount/Makefile
-@@ -21,6 +21,8 @@ define Package/automount
+@@ -20,6 +20,7 @@ define Package/automount
    TITLE:=Mount autoconfig hotplug script.
    MAINTAINER:=Lean
    DEPENDS:= \
-+    +kmod-usb3 \
-+    +kmod-usb2 \
++    +luci-app-partexp \
      +block-mount \
+     +e2fsprogs \
      +kmod-usb-storage \
-     +kmod-usb-storage-extras \
-@@ -58,4 +60,3 @@ define Package/ntfs3-mount/install
+@@ -48,10 +49,6 @@ endef
+ 
+ define Package/automount/install
+ 	$(INSTALL_DIR) $(1)/etc/uci-defaults
+-	$(INSTALL_BIN) ./files/11-anonmount $(1)/etc/uci-defaults/
+-
+-	$(INSTALL_DIR) $(1)/etc/hotplug.d/block
+-	$(INSTALL_BIN) ./files/15-automount $(1)/etc/hotplug.d/block/
  endef
  
- $(eval $(call BuildPackage,automount))
--$(eval $(call BuildPackage,ntfs3-mount))
+ define Package/ntfs3-mount/install
