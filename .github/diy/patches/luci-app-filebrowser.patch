@@ -1,5 +1,5 @@
---- a/luci-app-filebrowser/htdocs/luci-static/resources/view/filebrowser.js
-+++ b/luci-app-filebrowser/htdocs/luci-static/resources/view/filebrowser.js
+--- a/luci-app-filebrowser-go/htdocs/luci-static/resources/view/filebrowser.js
++++ b/luci-app-filebrowser-go/htdocs/luci-static/resources/view/filebrowser.js
 @@ -28,7 +28,7 @@ function renderStatus(isRunning, port) {
  	if (isRunning) {
  		var button = String.format('&#160;<a class="btn cbi-button" href="http://%s:%s" target="_blank" rel="noreferrer noopener">%s</a>',
