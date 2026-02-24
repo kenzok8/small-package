@@ -193,7 +193,7 @@ svn export https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn export https://github.com/QiuSimons/OpenWrt-Add/trunk/luci-app-irqbalance
 svn export https://github.com/sirpdboy/sirpdboy-package/trunk/luci-app-control-speedlimit
 #svn export https://github.com/xiaoxifu64/immortalwrt/trunk/package/rooter/ext-rooter-basic
-svn export https://github.com/openwrt/luci/branches/openwrt-22.03/applications/luci-app-wireguard
+svn export https://github.com/openwrt/luci/branches/openwrt-24.10/applications/luci-app-wireguard
 svn export https://github.com/lucikap/Brukamen/trunk/luci-app-ua2f
 svn export https://github.com/openwrt/packages/trunk/net/shadowsocks-libev
 svn export https://github.com/kenzok8/jell/trunk/vsftpd-alt
