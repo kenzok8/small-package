@@ -1,7 +1,7 @@
 --- a/amule/Makefile
 +++ b/amule/Makefile
-@@ -42,6 +42,19 @@ define Package/amule
- 	$(ICONV_DEPENDS) $(INTL_DEPENDS) +!AMULE_CRYPTOPP_STATIC_LINKING:libcryptopp
+@@ -31,6 +31,19 @@ define Package/amule
+ 	+libupnp +libbfd +libcryptopp
  endef
  
 +define Download/AmuleWebUI
@@ -18,14 +18,21 @@
 +endef
 +
  CONFIGURE_ARGS+= \
+ 	--disable-nls \
  	--disable-static \
- 	--disable-rpath \
-@@ -103,7 +116,9 @@ define Package/amule/install
- 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/amule{cmd,d} $(1)/usr/bin/
- 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/webserver/src/amuleweb $(1)/usr/bin/
- 	$(CP) $(PKG_BUILD_DIR)/src/webserver/default $(1)/usr/share/amule/webserver
-+	$(CP) $(PKG_BUILD_DIR)/AmuleWebUI-Reloaded-master $(1)/usr/share/amule-dlp/webserver/AmuleWebUI-Reloaded
- 	
+@@ -72,12 +85,16 @@ endef
+ 
+ define Package/amule/install
+ 	$(INSTALL_DIR) $(1)/usr/bin
++	$(INSTALL_DIR) $(1)/usr/share/amule/webserver
+ 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/amulecmd $(1)/usr/bin/amulecmd
+ 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/amuled $(1)/usr/bin/amuled
+ 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/amuleweb $(1)/usr/bin/amuleweb
++	$(CP) $(PKG_BUILD_DIR)/src/webserver/default $(1)/usr/share/amule/webserver
++	$(CP) $(PKG_BUILD_DIR)/AmuleWebUI-Reloaded-master $(1)/usr/share/amule/webserver/AmuleWebUI-Reloaded
+ 
+ 	$(INSTALL_DIR) $(1)/usr/share
+ 	$(CP) $(PKG_INSTALL_DIR)/usr/share/amule $(1)/usr/share/
  endef
  
 +$(eval $(call Download,AmuleWebUI))
