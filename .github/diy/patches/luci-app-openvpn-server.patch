@@ -1,12 +1,125 @@
---- a/luci-app-openvpn-server/root/etc/uci-defaults/luci-openvpn
-+++ b/luci-app-openvpn-server/root/etc/uci-defaults/luci-openvpn
-@@ -1,5 +1,10 @@
+--- a/luci-app-openvpn-server/root/etc/uci-defaults/openvpn
++++ b/luci-app-openvpn-server/root/etc/uci-defaults/openvpn
+@@ -1,5 +1,7 @@
  #!/bin/sh
  
-+if [ ! "$(grep "myvpn" /etc/config/openvpn)" ]; then
-+	rm -f /etc/config/openvpn
-+	mv -f /etc/config/openvpn-opkg /etc/config/openvpn
-+fi
++grep -qv "myvpn" /etc/config/openvpn && grep -q "myvpn" /etc/config/openvpn-opkg && cp -f /etc/config/openvpn-opkg /etc/config/openvpn
 +
  openvpn_port="$(uci -q get openvpn.myvpn.port)"
- [ -z "$openvpn_port" ] && openvpn_port=1197
+ [ -z "$openvpn_port" ] && openvpn_port=1194
+
+--- a/luci-app-openvpn-server/luasrc/controller/openvpn-server.lua
++++ b/luci-app-openvpn-server/luasrc/controller/openvpn-server.lua
+@@ -6,13 +6,13 @@ function index()
+ 		return
+ 	end
+ 	
+-	entry({"admin", "services", "openvpn-server"},firstchild(), _("OpenVPN Server"), 1).dependent = true
++	entry({"admin", "vpn", "openvpn-server"},firstchild(), _("OpenVPN Server"), 1).dependent = true
+ 
+-	entry({"admin", "services", "openvpn-server", "general"}, cbi("openvpn-server/openvpn-server"), _("OpenVPN Server"), 1).leaf = true
+-	entry({"admin", "services", "openvpn-server", "log"},form("openvpn-server/openvpn-server_run_log"), _("Running log"), 2).leaf = true
+-	entry({"admin", "services", "openvpn-server", "passlog"},form("openvpn-server/openvpn-server_pass_log"), _("Login log"), 3).leaf = true
++	entry({"admin", "vpn", "openvpn-server", "general"}, cbi("openvpn-server/openvpn-server"), _("OpenVPN Server"), 1).leaf = true
++	entry({"admin", "vpn", "openvpn-server", "log"},form("openvpn-server/openvpn-server_run_log"), _("Running log"), 2).leaf = true
++	entry({"admin", "vpn", "openvpn-server", "passlog"},form("openvpn-server/openvpn-server_pass_log"), _("Login log"), 3).leaf = true
+ 
+-	entry({"admin", "services", "openvpn-server","status"},call("act_status")).leaf=true
++	entry({"admin", "vpn", "openvpn-server","status"},call("act_status")).leaf=true
+ end
+ 
+ function act_status()
+
+--- a/luci-app-openvpn-server/luasrc/model/cbi/openvpn-server/openvpn-server.lua
++++ b/luci-app-openvpn-server/luasrc/model/cbi/openvpn-server/openvpn-server.lua
+@@ -166,7 +166,7 @@ if pid == "" then
+         message = luci.util.exec("/etc/init.d/openvpn start 2>&1")
+         luci.util.exec("sleep 2")
+         luci.http.redirect(
+-                luci.dispatcher.build_url("admin", "services", "openvpn-server") .. "?message=" .. message
++                luci.dispatcher.build_url("admin", "vpn", "openvpn-server") .. "?message=" .. message
+         )
+   end
+ else
+@@ -177,7 +177,7 @@ else
+         luci.util.exec("/etc/init.d/openvpn stop")
+         luci.util.exec("sleep 2")
+         luci.http.redirect(
+-                luci.dispatcher.build_url("admin", "services", "openvpn-server")
++                luci.dispatcher.build_url("admin", "vpn", "openvpn-server")
+         )
+   end
+ end
+
+--- a/luci-app-openvpn-server/luasrc/view/openvpn/openvpn_status.htm
++++ b/luci-app-openvpn-server/luasrc/view/openvpn/openvpn_status.htm
+@@ -1,5 +1,5 @@
+ <script type="text/javascript">//<![CDATA[
+-XHR.poll(3, '<%=url([[admin]], [[services]], [[openvpn-server]], [[status]])%>', null,
++XHR.poll(3, '<%=url([[admin]], [[vpn]], [[openvpn-server]], [[status]])%>', null,
+ 	function(x, data) {
+ 		var tb = document.getElementById('openvpn_status');
+ 		if (data && tb) {
+
+--- a/luci-app-openvpn-server-client/root/etc/uci-defaults/openvpn
++++ b/luci-app-openvpn-server-client/root/etc/uci-defaults/openvpn
+@@ -1,5 +1,7 @@
+ #!/bin/sh
+ 
++grep -qv "myvpn" /etc/config/openvpn && grep -q "myvpn" /etc/config/openvpn-opkg && cp -f /etc/config/openvpn-opkg /etc/config/openvpn
++
+ openvpn_port="$(uci -q get openvpn.myvpn.port)"
+ [ -z "$openvpn_port" ] && openvpn_port=1194
+
+--- a/luci-app-openvpn-server-client/luasrc/controller/openvpn-server.lua
++++ b/luci-app-openvpn-server-client/luasrc/controller/openvpn-server.lua
+@@ -18,13 +18,13 @@ function index()
+ 		return
+ 	end
+ 
+-	entry({"admin", "services", "openvpn-server"},firstchild(), _("OpenVPN Server"), 1).dependent = true
++	entry({"admin", "vpn", "openvpn-server"},firstchild(), _("OpenVPN Server"), 1).dependent = true
+ 
+-	entry({"admin", "services", "openvpn-server", "general"}, cbi("openvpn-server/openvpn-server"), _("OpenVPN Server"), 1).leaf = true
+-	entry({"admin", "services", "openvpn-server", "client"},cbi("openvpn-server/openvpn-server_ovpn"), _("Client"), 2).leaf = true
+-	entry({"admin", "services", "openvpn-server", "log"},form("openvpn-server/openvpn-server_run_log"), _("Running log"), 3).leaf = true
++	entry({"admin", "vpn", "openvpn-server", "general"}, cbi("openvpn-server/openvpn-server"), _("OpenVPN Server"), 1).leaf = true
++	entry({"admin", "vpn", "openvpn-server", "client"},cbi("openvpn-server/openvpn-server_ovpn"), _("Client"), 2).leaf = true
++	entry({"admin", "vpn", "openvpn-server", "log"},form("openvpn-server/openvpn-server_run_log"), _("Running log"), 3).leaf = true
+ 
+-	entry({"admin", "services", "openvpn-server","status"},call("act_status")).leaf=true
++	entry({"admin", "vpn", "openvpn-server","status"},call("act_status")).leaf=true
+ end
+ 
+ function act_status()
+
+--- a/luci-app-openvpn-server-client/luasrc/model/cbi/openvpn-server/openvpn-server.lua
++++ b/luci-app-openvpn-server-client/luasrc/model/cbi/openvpn-server/openvpn-server.lua
+@@ -166,7 +166,7 @@ if pid == "" then
+         message = luci.util.exec("/etc/init.d/openvpn start 2>&1")
+         luci.util.exec("sleep 2")
+         luci.http.redirect(
+-                luci.dispatcher.build_url("admin", "services", "openvpn-server") .. "?message=" .. message
++                luci.dispatcher.build_url("admin", "vpn", "openvpn-server") .. "?message=" .. message
+         )
+   end
+ else
+@@ -177,7 +177,7 @@ else
+         luci.util.exec("/etc/init.d/openvpn stop")
+         luci.util.exec("sleep 2")
+         luci.http.redirect(
+-                luci.dispatcher.build_url("admin", "services", "openvpn-server")
++                luci.dispatcher.build_url("admin", "vpn", "openvpn-server")
+         )
+   end
+ end
+
+--- a/luci-app-openvpn-server-client/luasrc/view/openvpn/openvpn_status.htm
++++ b/luci-app-openvpn-server-client/luasrc/view/openvpn/openvpn_status.htm
+@@ -1,5 +1,5 @@
+ <script type="text/javascript">//<![CDATA[
+-XHR.poll(3, '<%=url([[admin]], [[services]], [[openvpn-server]], [[status]])%>', null,
++XHR.poll(3, '<%=url([[admin]], [[vpn]], [[openvpn-server]], [[status]])%>', null,
+ 	function(x, data) {
+ 		var tb = document.getElementById('openvpn_status');
+ 		if (data && tb) {
