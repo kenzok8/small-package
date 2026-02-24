@@ -1,14 +1,3 @@
---- a/luci-app-uugamebooster/root/etc/init.d/uuplugin
-+++ b/luci-app-uugamebooster/root/etc/init.d/uuplugin
-@@ -21,3 +21,7 @@ start_service() {
-     procd_close_instance
- 	fi
- }
-+
-+service_triggers() {
-+        procd_add_reload_trigger "uuplugin"
-+}
-
 --- a/luci-app-wifidog/root/etc/init.d/wifidog
 +++ b/luci-app-wifidog/root/etc/init.d/wifidog
 @@ -150,3 +150,8 @@ start_service() {
@@ -21,8 +10,8 @@
 +}
 +
 
---- a/luci-app-docker/root/etc/init.d/dockerd
-+++ b/luci-app-docker/root/etc/init.d/dockerd
+--- a/luci-app-docker/root/etc/init.d/docker
++++ b/luci-app-docker/root/etc/init.d/docker
 @@ -19,3 +19,7 @@ start_service() {
  	procd_set_param limits nofile="${nofile} ${nofile}"
  	procd_close_instance
@@ -45,3 +34,95 @@
  reload_service() {
    stop
    start
+
+--- a/luci-app-leigod-acc/root/etc/init.d/acc
++++ b/luci-app-leigod-acc/root/etc/init.d/acc
+@@ -164,3 +164,6 @@ start_service() {
+     start_service_daemon
+ }
+ 
++service_triggers() {
++      procd_add_reload_trigger "acc"
++}
+
+--- a/luci-app-gpoint/root/etc/init.d/gpoint
++++ b/luci-app-gpoint/root/etc/init.d/gpoint
+@@ -30,3 +30,7 @@ stop_service() {
+ 	echo "gpoint not running"
+    fi
+ }
++
++service_triggers() {
++      procd_add_reload_trigger "gpoint"
++}
+
+--- a/luci-app-homebridge/files/root/etc/init.d/homebridge
++++ b/luci-app-homebridge/files/root/etc/init.d/homebridge
+@@ -227,4 +227,7 @@ status(){
+ 	fi
+ }
+ 
++service_triggers() {
++      procd_add_reload_trigger "homebridge"
++}
+
+--- a/luci-app-xupnpd/root/etc/init.d/xupnpd
++++ b/luci-app-xupnpd/root/etc/init.d/xupnpd
+@@ -19,3 +19,7 @@ start_service() {
+ 	procd_set_param respawn
+ 	procd_close_instance
+ }
++
++service_triggers() {
++      procd_add_reload_trigger "xupnpd"
++}
+
+--- a/luci-app-packagesync/root/etc/init.d/packagesync
++++ b/luci-app-packagesync/root/etc/init.d/packagesync
+@@ -290,3 +290,7 @@ boot() {
+ 	mkdir -p "$RESULTPATH" 2>/dev/null
+     return 0
+ }
++
++service_triggers() {
++      procd_add_reload_trigger "packagesync"
++}
+
+--- a/luci-app-change-mac/root/etc/init.d/change-mac
++++ b/luci-app-change-mac/root/etc/init.d/change-mac
+@@ -101,3 +101,7 @@ restore() {
+ restart() {
+ 	start
+ }
++
++service_triggers() {
++      procd_add_reload_trigger "change-mac"
++}
+
+--- a/mmdvm-luci/luci-app-mmdvm/root/etc/init.d/dmrid
++++ b/mmdvm-luci/luci-app-mmdvm/root/etc/init.d/dmrid
+@@ -41,4 +41,8 @@ status() {
+     fi
+ 
+     echo "${APP}:		[${STATUS}]"
+-}
+\ No newline at end of file
++}
++
++service_triggers() {
++      procd_add_reload_trigger "dmrid"
++}
+
+--- a/luci-app-uugamebooster/root/etc/init.d/uuplugin
++++ b/luci-app-uugamebooster/root/etc/init.d/uuplugin
+@@ -10,6 +10,10 @@ UU_BIN="/usr/share/uugamebooster/uuplugin"
+ UU_CONF="/usr/share/uugamebooster/uu.conf"
+ UU_LOGFILE="/tmp/uugamebooster.log"
+ 
++service_triggers() {
++	procd_add_reload_trigger "uuplugin"
++}
++
+ start_service() {
+   config_load uuplugin
+ 	local enable
