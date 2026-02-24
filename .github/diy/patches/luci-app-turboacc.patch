@@ -1,3 +1,26 @@
+--- a/luci-app-turboacc/Makefile
++++ b/luci-app-turboacc/Makefile
+@@ -7,6 +7,7 @@ include $(TOPDIR)/rules.mk
+ 
+ PKG_NAME:=luci-app-turboacc
+ PKG_RELEASE:=$(COMMITCOUNT)
++PKG_FLAGS:=nonshared
+ 
+ PKG_LICENSE:=GPL-3.0-only
+ PKG_MAINTAINER:=Lean <coolsnowwolf@gmail.com>
+@@ -21,10 +22,7 @@ PKG_CONFIG_DEPENDS:= \
+ 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_SHORTCUT_FE_DRV
+ 
+ LUCI_TITLE:=LuCI support for Flow Offload / Shortcut-FE
+-LUCI_DEPENDS:=+PACKAGE_$(PKG_NAME)_INCLUDE_PDNSD:pdnsd-alt \
+-	+PACKAGE_$(PKG_NAME)_INCLUDE_BBR_CCA:kmod-tcp-bbr \
+-	+PACKAGE_$(PKG_NAME)_INCLUDE_DNSFORWARDER:dnsforwarder \
+-	+PACKAGE_$(PKG_NAME)_INCLUDE_DNSPROXY:dnsproxy \
++LUCI_DEPENDS:=+PACKAGE_$(PKG_NAME)_INCLUDE_BBR_CCA:kmod-tcp-bbr \
+ 	+PACKAGE_$(PKG_NAME)_INCLUDE_OFFLOADING:kmod-ipt-offload \
+ 	+PACKAGE_$(PKG_NAME)_INCLUDE_SHORTCUT_FE:kmod-fast-classifier \
+ 	+PACKAGE_$(PKG_NAME)_INCLUDE_SHORTCUT_FE_CM:kmod-shortcut-fe-cm \
+
 --- a/luci-app-turboacc/luasrc/controller/turboacc.lua
 +++ b/luci-app-turboacc/luasrc/controller/turboacc.lua
 @@ -13,7 +13,7 @@ function index()
@@ -21,47 +44,122 @@
  sw_flow = s:option(Flag, "sw_flow", translate("Software flow offloading"))
  sw_flow.default = 0
  sw_flow.description = translate("Software based offloading for routing/NAT")
-@@ -47,12 +47,14 @@ bbr_cca.default = 0
+@@ -48,36 +48,15 @@ bbr_cca.default = 0
  bbr_cca.description = translate("Using BBR CCA can improve TCP network performance effectively")
  end
  
+-fullcone_nat = s:option(ListValue, "fullcone_nat", translate("FullCone NAT"))
 +if nixio.fs.access("/lib/modules/" .. kernel_version .. "/xt_FULLCONENAT.ko") or nixio.fs.access("/lib/modules/" .. kernel_version .. "/nft_fullcone.ko") then
- fullcone_nat = s:option(ListValue, "fullcone_nat", translate("FullCone NAT"))
++fullcone_nat = s:option(Flag, "fullcone_nat", translate("FullCone NAT"))
  fullcone_nat.default = 0
- fullcone_nat:value("0", translate("Disable"))
- fullcone_nat:value("1", translate("Compatible Mode"))
- fullcone_nat:value("2", translate("High Performing Mode"))
+-fullcone_nat:value("0", translate("Disable"))
+-fullcone_nat:value("1", translate("Compatible Mode"))
+-fullcone_nat:value("2", translate("High Performing Mode"))
  fullcone_nat.description = translate("Using FullCone NAT can improve gaming performance effectively")
-+end
+-
+-if nixio.fs.access("/usr/sbin/pdnsd") or nixio.fs.access("/usr/bin/dnsforwarder") or nixio.fs.access("/usr/bin/dnsproxy") then
+-dns_caching = s:option(Flag, "dns_caching", translate("DNS Caching"))
+-dns_caching.default = 0
+-dns_caching.rmempty = false
+-dns_caching.description = translate("Enable DNS Caching and anti ISP DNS pollution")
+-end
+-
+-dns_caching_mode = s:option(ListValue, "dns_caching_mode", translate("Resolve DNS Mode"), translate("DNS Program"))
+-if nixio.fs.access("/usr/sbin/pdnsd") then
+-dns_caching_mode:value("1", translate("Using PDNSD to query and cache"))
++if nixio.fs.access("/usr/sbin/nft") then
++fullcone_nat6 = s:option(Flag, "fullcone_nat6", translate("FullCone NAT6"))
++fullcone_nat6.default = 0
++fullcone_nat6.description = translate("Using FullCone NAT6 can improve gaming performance effectively")
+ end
+-if nixio.fs.access("/usr/bin/dnsforwarder") then
+-dns_caching_mode:value("2", translate("Using DNSForwarder to query and cache"))
+ end
+-if nixio.fs.access("/usr/bin/dnsproxy") then
+-dns_caching_mode:value("3", translate("Using DNSProxy to query and cache"))
+-end
+-dns_caching_mode.default = 1
+-dns_caching_mode:depends("dns_caching", 1)
+-
+-dns_caching_dns = s:option(Value, "dns_caching_dns", translate("Upsteam DNS Server"))
+-dns_caching_dns.default = "114.114.114.114,114.114.115.115,223.5.5.5,223.6.6.6,180.76.76.76,119.29.29.29,119.28.28.28,1.2.4.8,210.2.4.8"
+-dns_caching_dns.description = translate("Muitiple DNS server can saperate with ','")
+-dns_caching_dns:depends("dns_caching", 1)
  
- if nixio.fs.access("/usr/sbin/pdnsd") or nixio.fs.access("/usr/bin/dnsforwarder") or nixio.fs.access("/usr/bin/dnsproxy") then
- dns_caching = s:option(Flag, "dns_caching", translate("DNS Caching"))
-
---- a/luci-app-turboacc/root/etc/uci-defaults/luci-turboacc
-+++ b/luci-app-turboacc/root/etc/uci-defaults/luci-turboacc
-@@ -7,4 +7,9 @@ uci -q batch <<-EOF >/dev/null
- 	commit ucitrack
- EOF
- 
-+ls /sys/module/shortcut_fe* >/dev/null 2>&1 && {
-+uci -q del turboacc.config.sw_flow
-+uci commit turboacc
-+}
-+
- exit 0
+ return m
 
 --- a/luci-app-turboacc/root/etc/init.d/turboacc
 +++ b/luci-app-turboacc/root/etc/init.d/turboacc
-@@ -22,7 +22,7 @@ inital_conf(){
- 	config_get "dns_caching_mode" "config" "dns_caching_mode" "0"
- 	config_get "dns_caching_dns" "config" "dns_caching_dns"
+@@ -18,11 +18,10 @@ inital_conf(){
+ 	config_get "sfe_flow" "config" "sfe_flow" "0"
+ 	config_get "bbr_cca" "config" "bbr_cca" "0"
+ 	config_get "fullcone_nat" "config" "fullcone_nat" "0"
+-	config_get "dns_caching" "config" "dns_caching" "0"
+-	config_get "dns_caching_mode" "config" "dns_caching_mode" "0"
+-	config_get "dns_caching_dns" "config" "dns_caching_dns"
++	config_get "fullcone_nat6" "config" "fullcone_nat6" "0"
  
 -	[ ! -e "/lib/modules/$(uname -r)/xt_FLOWOFFLOAD.ko" ] && { sw_flow="0"; hw_flow="0"; }
 +	[[ ! -e "/lib/modules/$(uname -r)/xt_FLOWOFFLOAD.ko" && ! -e "/lib/modules/$(uname -r)/nft_flow_offload.ko" ]] && { sw_flow="0"; hw_flow="0"; }
++	[[ ! -e "/lib/modules/$(uname -r)/xt_FULLCONENAT.ko" && ! -e "/lib/modules/$(uname -r)/nft_fullcone.ko" ]] && { fullcone_nat="0"; fullcone_nat6="0"; }
  	[ ! -e "/lib/modules/$(uname -r)/tcp_bbr.ko" ] && bbr_cca="0"
  }
  
-@@ -346,10 +346,10 @@ restart(){
+@@ -264,6 +263,7 @@ start(){
+ 	uci set firewall.@defaults[0].flow_offloading="${sw_flow}"
+ 	uci set firewall.@defaults[0].flow_offloading_hw="${hw_flow}"
+ 	uci set firewall.@defaults[0].fullcone="${fullcone_nat}"
++	uci set firewall.@defaults[0].fullcone6="${fullcone_nat6}"
+ 	uci commit firewall
+ 
+ 	[ "${sw_flow}" -ne "1" ] && [ "${sfe_flow}" -eq "1" ] && {
+@@ -280,27 +280,6 @@ start(){
+ 		sysctl -w net.ipv4.tcp_congestion_control="cubic"
+ 	fi
+ 
+-	if [ "${dns_caching}" -eq "1" ];  then
+-		stop_dnscache
+-		sleep 1
+-
+-		rm -f "/var/log/dnscache.file"
+-		if [ "${dns_caching_mode}" = "1" ];  then
+-			start_pdnsd
+-		elif [ "${dns_caching_mode}" = "2" ];  then
+-			start_dnsforwarder
+-		elif [ "${dns_caching_mode}" = "3" ];  then
+-			start_dnsproxy
+-		fi
+-
+-		change_dns
+-
+-		/usr/share/dnscache/dnscache-while.sh > "/var/log/dnscache.file" 2>&1 &
+-	else
+-		revert_dns
+-		stop_dnscache
+-	fi
+-
+ 	if [ "${restart_utils}" = "true" ]; then
+ 		echo "DNSMASQ change"
+ 		/etc/init.d/dnsmasq restart >"/dev/null" 2>&1
+@@ -314,6 +293,7 @@ stop(){
+ 	uci set firewall.@defaults[0].flow_offloading="${sw_flow}"
+ 	uci set firewall.@defaults[0].flow_offloading_hw="${hw_flow}"
+ 	uci set firewall.@defaults[0].fullcone="${fullcone_nat}"
++	uci set firewall.@defaults[0].fullcone6="${fullcone_na6}"
+ 	uci commit firewall
+ 
+ 	[ "${hw_wed}" -eq "0" ] && {
+@@ -322,9 +302,6 @@ stop(){
+ 
+ 	unload_sfe
+ 
+-	stop_dnscache
+-	revert_dns
+-
+ 	if [ "${restart_utils}" = "true" ]; then
+ 		echo "DNSMASQ revert"
+ 		/etc/init.d/dnsmasq restart >"/dev/null" 2>&1
+@@ -346,10 +323,10 @@ restart(){
  check_status(){
  	case "$1" in
  	"fastpath")
@@ -74,7 +172,7 @@
  		    [ -e /sys/kernel/debug/hnat/hnat_version ]; then
  			echo -n "MediaTek HWNAT"
  			exit 0
-@@ -370,7 +370,7 @@ check_status(){
+@@ -370,7 +347,7 @@ check_status(){
  		fi
  		;;
  	"fullconenat")
@@ -83,26 +181,61 @@
        exit 1
      else
        exit 0
-
---- a/luci-app-turboacc/Makefile
-+++ b/luci-app-turboacc/Makefile
-@@ -7,6 +7,7 @@ include $(TOPDIR)/rules.mk
- 
- PKG_NAME:=luci-app-turboacc
- PKG_RELEASE:=$(COMMITCOUNT)
-+PKG_FLAGS:=nonshared
- 
- PKG_LICENSE:=GPL-3.0-only
- PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org> & Lean <coolsnowwolf@gmail.com>
+@@ -380,9 +357,6 @@ check_status(){
+ 		[ "x$(cat "/proc/sys/net/ipv4/tcp_congestion_control" 2>"/dev/null")" = "xbbr" ] && \
+ 			exit 0 || exit 1
+ 		;;
+-	"dns")
+-		pgrep "dnscache" >"/dev/null" && exit 0 || exit 1
+-		;;
+ 	*)
+ 		exit 2
+ 		;;
 
 --- a/luci-app-turboacc/root/etc/config/turboacc
 +++ b/luci-app-turboacc/root/etc/config/turboacc
-@@ -3,7 +3,7 @@ config turboacc 'config'
+@@ -3,9 +3,7 @@ config turboacc 'config'
  	option sw_flow '1'
  	option hw_flow '1'
  	option sfe_flow '1'
 -	option fullcone_nat '2'
 +	option fullcone_nat '1'
++	option fullcone_nat6 '0'
  	option hw_wed '0'
  	option bbr_cca '0'
- 	option dns_caching '0'
+-	option dns_caching '0'
+-	option dns_caching_mode '1'
+-	option dns_caching_dns '114.114.114.114,114.114.115.115,223.5.5.5,223.6.6.6,180.76.76.76,119.29.29.29,119.28.28.28,1.2.4.8,210.2.4.8'
+
+--- a/shortcut-fe/shortcut-fe/Makefile
++++ b/shortcut-fe/shortcut-fe/Makefile
+@@ -58,7 +58,6 @@ define KernelPackage/shortcut-fe-cm
+ 	   CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y \
+ 	   CONFIG_NF_CONNTRACK_EVENTS=y \
+ 	   CONFIG_XFRM=y
+-  CONFLICTS:=kmod-shortcut-fe-drv
+ endef
+ 
+ define KernelPackage/shortcut-fe-cm/Description
+
+--- a/shortcut-fe/fast-classifier/Makefile
++++ b/shortcut-fe/fast-classifier/Makefile
+@@ -32,7 +32,6 @@ define KernelPackage/fast-classifier/Default
+ 	   CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y \
+ 	   CONFIG_NF_CONNTRACK_MARK=y \
+ 	   CONFIG_XFRM=y
+-  CONFLICTS:=kmod-shortcut-fe-drv kmod-shortcut-fe-cm
+ endef
+ 
+ define KernelPackage/fast-classifier
+
+--- a/luci-app-turboacc/luasrc/view/turboacc/turboacc_status.htm
++++ b/luci-app-turboacc/luasrc/view/turboacc/turboacc_status.htm
+@@ -4,7 +4,6 @@
+ 		<tr><td width="33%"><%:Flow Offloading%></td><td id="_fastpath_state"><em><%:Collecting data...%></em></td></tr>
+ 		<tr><td width="33%"><%:FullCone NAT%></td><td id="_fullconenat_state"><em><%:Collecting data...%></em></td></tr>
+ 		<tr><td width="33%"><%:BBR CCA%></td><td id="_bbr_state"><em><%:Collecting data...%></em></td></tr>
+-		<tr><td width="33%"><%:DNS Caching%></td><td id="_dnscaching_state"><em><%:Collecting data...%></em></td></tr>
+ 	</table>
+ </fieldset>
+
