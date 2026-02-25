@@ -523,6 +523,8 @@ local function processData(szType, content, add_mode, group)
 		-- result.mux = 1
 		-- result.mux_concurrency = 8
 
+		info.path = (info.path and info.path ~= "") and UrlDecode(info.path) or nil
+
 		if not info.net then info.net = "tcp" end
 		info.net = string.lower(info.net)
 		if result.type == "sing-box" and info.net == "raw" then 
@@ -617,6 +619,10 @@ local function processData(szType, content, add_mode, group)
 		end
 
 		result.tcp_fast_open = info.tfo
+
+		info.fm = (info.fm and info.fm ~= "") and UrlDecode(info.fm) or nil
+		result.use_finalmask = (info.fm and info.fm ~= "") and "1" or nil
+		result.finalmask = (info.fm and info.fm ~= "") and api.base64Encode(info.fm) or nil
 
 		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 			log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
@@ -722,6 +728,8 @@ local function processData(szType, content, add_mode, group)
 			result.method = method
 			result.password = password
 			result.tcp_fast_open = params.tfo
+			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
+			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
 			local need_upgrade = (result.type ~= "Xray" and result.type ~= "sing-box")
 				and (params.type and params.type ~= "tcp")
@@ -1095,6 +1103,8 @@ local function processData(szType, content, add_mode, group)
 
 			result.alpn = params.alpn
 			result.tcp_fast_open = params.tfo
+			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
+			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
 			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
@@ -1286,6 +1296,8 @@ local function processData(szType, content, add_mode, group)
 			end
 
 			result.tcp_fast_open = params.tfo
+			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
+			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
 			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 				log("跳过节点:" .. result.remarks .."，因Sing-Box不支持" .. szType .. "协议的" .. result.transport .. "传输方式，需更换Xray。")
@@ -1404,6 +1416,8 @@ local function processData(szType, content, add_mode, group)
 				result.hysteria2_obfs_type = "salamander"
 				result.hysteria2_obfs_password = params["obfs-password"] or params["obfs_password"]
 			end
+			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
+			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 		elseif has_hysteria2 then
 			result.type = "Hysteria2"
 			if params["obfs-password"] or params["obfs_password"] then

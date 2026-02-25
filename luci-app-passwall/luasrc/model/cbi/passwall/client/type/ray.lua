@@ -616,9 +616,9 @@ o = s:option(Flag, _n("use_xhttp_extra"), translate("XHTTP Extra"))
 o.default = "0"
 o:depends({ [_n("transport")] = "xhttp" })
 
-o = s:option(TextValue, _n("xhttp_extra"), " ", translate("An XHttpObject in JSON format, used for sharing."))
+o = s:option(TextValue, _n("xhttp_extra"), "　", translate("An XHttpObject in JSON format, used for sharing."))
 o:depends({ [_n("use_xhttp_extra")] = true })
-o.rows = 15
+o.rows = 10
 o.wrap = "off"
 o.custom_cfgvalue = function(self, section, value)
 	local raw = m:get(section, "xhttp_extra")
@@ -627,7 +627,7 @@ o.custom_cfgvalue = function(self, section, value)
 	end
 end
 o.custom_write = function(self, section, value)
-	m:set(section, "xhttp_extra", api.base64Encode(value))
+	m:set(section, "xhttp_extra", api.base64Encode(value) or "")
 	local success, data = pcall(jsonc.parse, value)
 	if success and data then
 		local address = (data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
@@ -643,11 +643,12 @@ o.custom_write = function(self, section, value)
 	end
 end
 o.validate = function(self, value)
-	value = value:gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
-	if value:sub(-1) == "\n" then
-		value = value:sub(1, -2)
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
+	if api.jsonc.parse(value) then
+		return value
+	else
+		return nil, "XHTTP Extra " .. translate("Must be JSON text!")
 	end
-	return value
 end
 o.custom_remove = function(self, section, value)
 	m:del(section, "xhttp_extra")
@@ -682,6 +683,39 @@ o = s:option(Value, _n("xudp_concurrency"), translate("XUDP Mux concurrency"))
 o.default = 8
 o:depends({ [_n("mux")] = true })
 
+--[[FinalMask]]
+o = s:option(Flag, _n("use_finalmask"), "FinalMask")
+o.default = "0"
+o:depends({ [_n("protocol")] = "vmess" })
+o:depends({ [_n("protocol")] = "vless" })
+o:depends({ [_n("protocol")] = "trojan" })
+o:depends({ [_n("protocol")] = "shadowsocks" })
+o:depends({ [_n("protocol")] = "wireguard" })
+o:depends({ [_n("protocol")] = "hysteria2" })
+
+o = s:option(TextValue, _n("finalmask"), "　", translate("An FinalMaskObject in JSON format, used for sharing."))
+o:depends({ [_n("use_finalmask")] = true })
+o.rows = 10
+o.wrap = "off"
+o.custom_cfgvalue = function(self, section, value)
+	local raw = m:get(section, "finalmask")
+	if raw then
+		return api.base64Decode(raw)
+	end
+end
+o.custom_write = function(self, section, value)
+	m:set(section, "finalmask", api.base64Encode(value) or "")
+end
+o.validate = function(self, value)
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
+	if api.jsonc.parse(value) then
+		return value
+	else
+		return nil, "FinalMask " .. translate("Must be JSON text!")
+	end
+end
+
+--[[Fast Open]]
 o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"), translate("Need node support required"))
 o.default = 0
 

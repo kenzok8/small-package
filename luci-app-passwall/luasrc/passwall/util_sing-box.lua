@@ -366,7 +366,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						bytes[#bytes + 1] = tonumber(b)
 					end)
 				else
-					local result = api.bin.b64decode(node.wireguard_reserved)
+					local result = api.base64Decode(node.wireguard_reserved)
 					for i = 1, #result do
 						bytes[i] = result:byte(i)
 					end
