@@ -1,0 +1,2349 @@
+msgid "Auto"
+msgstr "Авто"
+
+msgid "RUNNING"
+msgstr "Служба активна"
+
+msgid "NOT RUNNING"
+msgstr "Служба остановлена"
+
+msgid "Working..."
+msgstr "Выполняется..."
+
+msgid "Problem detected!"
+msgstr "Обнаружена ошибка!"
+
+msgid "Touch Check"
+msgstr "Проверить доступность"
+
+msgid "Global"
+msgstr "Глобальный режим"
+
+msgid "Kernel Unsupported"
+msgstr "Ядро несовместимо"
+
+msgid "Basic Settings"
+msgstr "Общие параметры"
+
+msgid "Node List"
+msgstr "Список узлов"
+
+msgid "Other Settings"
+msgstr "Дополнительные настройки"
+
+msgid "Load Balancing"
+msgstr "Балансировка трафика"
+
+msgid "Enter interface"
+msgstr "Открыть интерфейс"
+
+msgid "Rule Manage"
+msgstr "Управление правилами"
+
+msgid "Rule List"
+msgstr "Список правил"
+
+msgid "Access control"
+msgstr "Контроль доступа"
+
+msgid "Watch Logs"
+msgstr "Просмотр журнала"
+
+msgid "Node Config"
+msgstr "Параметры узла"
+
+msgid "Running Status"
+msgstr "Состояние системы"
+
+msgid "Baidu Connection"
+msgstr "Baidu"
+
+msgid "Google Connection"
+msgstr "Google"
+
+msgid "GitHub Connection"
+msgstr "GitHub"
+
+msgid "Instagram Connection"
+msgstr "Instagram"
+
+msgid "Node Check"
+msgstr "Проверка узлов"
+
+msgid "Check..."
+msgstr "Идёт проверка..."
+
+msgid "Clear"
+msgstr "Очистить"
+
+msgid "Main switch"
+msgstr "Включить модуль"
+
+msgid "Node"
+msgstr "Узел"
+
+msgid "Edit Current Node"
+msgstr "Изменить выбранный узел"
+
+msgid "Localhost Proxy"
+msgstr "Прокси для самого роутера"
+
+msgid "When selected, localhost can transparent proxy."
+msgstr "Если включено, трафик самого роутера будет идти через прозрачный прокси."
+
+msgid "Client Proxy"
+msgstr "Прокси для клиентских устройств"
+
+msgid "When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy. But you can still use access control to allow the designated device to proxy."
+msgstr "Если включено, все устройства в локальной сети будут автоматически использовать прозрачный прокси. В противном случае прокси не активируется, но вы можете добавить исключения через список контроля доступа."
+
+msgid "Missing components, transparent proxy is unavailable."
+msgstr "Не установлены необходимые компоненты — прозрачный прокси недоступен."
+
+msgid "Socks Config"
+msgstr "Настройки SOCKS-прокси"
+
+msgid "Socks Node"
+msgstr "SOCKS-сервер"
+
+msgid "Current Node"
+msgstr "Активный сервер"
+
+msgid "Listen Port"
+msgstr "Порт прослушивания"
+
+msgid "0 is not use"
+msgstr "0 — отключить функцию"
+
+msgid "Current node: %s"
+msgstr "Текущий узел: %s"
+
+msgid "IP:Port mode acceptable, multi value split with english comma."
+msgstr "Допустим формат IP:Port. Несколько значений указывайте через запятую."
+
+msgid "Direct DNS Protocol"
+msgstr "Протокол прямого DNS"
+
+msgid "Direct DNS"
+msgstr "Прямой DNS"
+
+msgid "Direct DNS DoH"
+msgstr "Прямой DNS-over-HTTPS"
+
+msgid "Direct DNS EDNS Client Subnet"
+msgstr "EDNS Client Subnet для прямого DNS"
+
+msgid "Remote DNS Protocol"
+msgstr "Протокол прокси-DNS"
+
+msgid "Remote DNS"
+msgstr "Прокси-DNS"
+
+msgid "Remote DNS DoH"
+msgstr "Прокси DNS-over-HTTPS"
+
+msgid "Remote DNS EDNS Client Subnet"
+msgstr "EDNS Client Subnet для прокси-DNS"
+
+msgid "Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address)."
+msgstr "Сообщает DNS-серверу примерное местоположение клиента при запросе. Указывайте публичный IP-адрес."
+
+msgid "This feature requires the DNS server to support the Edns Client Subnet (RFC7871)."
+msgstr "Функция работает только если DNS-сервер поддерживает EDNS Client Subnet (RFC7871)."
+
+msgid "Remote DNS Outbound"
+msgstr "Маршрут для прокси-DNS"
+
+msgid "Remote"
+msgstr "Через прокси"
+
+msgid "Direct"
+msgstr "Прямой"
+
+msgid "Direct Query Strategy"
+msgstr "Стратегия прямого запроса"
+
+msgid "Remote Query Strategy"
+msgstr "Стратегия прокси-запроса"
+
+msgid "Use FakeDNS work in the domain that proxy."
+msgstr "Использовать FakeDNS для доменов, проходящих через прокси"
+
+msgid "Suitable scenarios for let the node servers get the target domain names."
+msgstr "Позволяет узлам получать реальные доменные имена (вместо подставных адресов)."
+
+msgid "Such as: DNS unlocking of streaming media, reducing DNS query latency, etc."
+msgstr "Например: разблокировка стриминговых сервисов, ускорение разрешения имён и т.п."
+
+msgid "Domain Override"
+msgstr "Переопределение доменов"
+
+msgid "Direct DNS result write to IPSet"
+msgstr "Записывать результаты прямого DNS в IPSet"
+
+msgid "Perform the matching direct domain name rules into IP to IPSet/NFTSet, and then connect directly (not entering the core)."
+msgstr "IP-адреса доменов, подходящих под правила прямого доступа, добавляются в IPSet/NFTSet для обхода ядра прокси."
+
+msgid "Maybe conflict with some special circumstances."
+msgstr "В отдельных случаях может конфликтовать с другими правилами."
+
+msgid "DNS Redirect"
+msgstr "Перехват DNS-запросов"
+
+msgid "Force special DNS server to need proxy devices."
+msgstr "Принудительно направлять DNS-запросы устройств через прокси на выделенный сервер."
+
+msgid "Clear IPSET"
+msgstr "Очистить IPSet"
+
+msgid "Clear NFTSET"
+msgstr "Очистить NFTSet"
+
+msgid "Try this feature if the rule modification does not take effect."
+msgstr "Используйте, если изменения в правилах не применяются."
+
+msgid "About DNS issues:"
+msgstr "Важно о настройке DNS:"
+
+msgid "Some browsers may have built-in DNS, be sure to close. Example: Chrome. Settings - Security and Privacy - Security - Use secure DNS disabled."
+msgstr "Некоторые браузеры используют собственный DNS. Отключите эту функцию: в Chrome это «Настройки → Конфиденциальность и безопасность → Безопасность → Использовать безопасный DNS»."
+
+msgid "Sometimes after restart, you can not internet. At this time, close all browsers (important), Windows Client, please `ipconfig /flushdns`. Please close the WiFi on the phone, cut the flight mode and then cut back."
+msgstr "Если после перезагрузки нет доступа в сеть: закройте все браузеры, в Windows выполните `ipconfig /flushdns`, на телефоне переключите авиарежим или переподключитесь к Wi-Fi."
+
+msgid "The client DNS and the default gateway must point to this router."
+msgstr "В настройках клиентов DNS-сервер и шлюз по умолчанию должны указывать на этот роутер."
+
+msgid "If you have a wrong DNS process, the consequences are at your own risk!"
+msgstr "Неверная настройка DNS может привести к потере доступа в сеть — действуйте на свой страх и риск."
+
+msgid "Hide menu method, input example in the address bar:"
+msgstr "Чтобы скрыть меню, введите в адресной строке:"
+
+msgid "After the hidden to the display, input example in the address bar:"
+msgstr "Чтобы вернуть меню, введите в адресной строке:"
+
+msgid "Are you sure to hide?"
+msgstr "Скрыть меню?"
+
+msgid "DNS related issues:"
+msgstr "Возможные проблемы с DNS:"
+
+msgid "Certain browsers such as Chrome have built-in DNS service, which may affect DNS resolution settings. You can go to 'Settings -> Privacy and security -> Use secure DNS' menu to turn it off."
+msgstr "Браузеры вроде Chrome могут использовать собственный DNS, что конфликтует с настройками роутера. Отключите: «Настройки → Конфиденциальность → Безопасность → Использовать безопасный DNS»."
+
+msgid "If you are unable to access the internet after reboot, please try clearing the cache of your terminal devices (make sure to close all open browser application windows first, this step is especially important):"
+msgstr "Если после перезагрузки нет доступа в интернет, очистите кэш DNS на устройствах (предварительно закройте все вкладки браузера):"
+
+msgid "For Windows systems, open Command Prompt and run the command 'ipconfig /flushdns'."
+msgstr "Windows: откройте командную строку и выполните `ipconfig /flushdns`."
+
+msgid "For Mac systems, open Terminal and run the command 'sudo killall -HUP mDNSResponder'."
+msgstr "macOS: откройте Терминал и выполните `sudo killall -HUP mDNSResponder`."
+
+msgid "For mobile devices, you can clear it by reconnecting to the network, such as toggling Airplane Mode and reconnecting to WiFi."
+msgstr "Мобильные устройства: переключите авиарежим или переподключитесь к Wi-Fi."
+
+msgid "Please make sure your device's network settings point both the DNS server and default gateway to this router, to ensure DNS queries are properly routed."
+msgstr "Убедитесь, что в настройках сети устройства DNS и шлюз по умолчанию указывают на этот роутер."
+
+msgid "Browser access:"
+msgstr "Доступ через браузер:"
+
+msgid "Hide in main menu:"
+msgstr "Скрыть в главном меню:"
+
+msgid "Show in main menu:"
+msgstr "Показать в главном меню:"
+
+msgid "DNS Export Of Multi WAN"
+msgstr "Выбор WAN-интерфейса для прямого DNS"
+
+msgid "Node Export Of Multi WAN"
+msgstr "Выбор WAN-интерфейса для узлов"
+
+msgid "Only support Multi Wan."
+msgstr "Работает только при наличии нескольких WAN-подключений."
+
+msgid "Not Specify"
+msgstr "Не указывать"
+
+msgid "custom"
+msgstr "Свой вариант"
+
+msgid "If not available, try clearing the cache."
+msgstr "Если не работает — попробуйте очистить кэш."
+
+msgid "Operation"
+msgstr "Действия"
+
+msgid "Add Node"
+msgstr "Добавить узел"
+
+msgid "Add the node via the link"
+msgstr "Добавить узел по ссылке"
+
+msgid "Enter share links, one per line. Subscription links are not supported!"
+msgstr "Введите ссылки для импорта, по одной на строку. Ссылки на подписки не поддерживаются!"
+
+msgid "Please enter the correct link."
+msgstr "Пожалуйста, введите корректную ссылку."
+
+msgid "Clear all nodes"
+msgstr "Удалить все узлы"
+
+msgid "Are you sure to clear all nodes?"
+msgstr "Вы действительно хотите удалить все узлы?"
+
+msgid "Success"
+msgstr "Готово"
+
+msgid "Error"
+msgstr "Ошибка"
+
+msgid "Delete select nodes"
+msgstr "Удалить выбранные узлы"
+
+msgid "To Top"
+msgstr "В начало списка"
+
+msgid "Select"
+msgstr "Выбрать"
+
+msgid "Selected:"
+msgstr "Выбрано:"
+
+msgid "DeSelect"
+msgstr "Снять выделение"
+
+msgid "Select all"
+msgstr "Выделить все"
+
+msgid "DeSelect all"
+msgstr "Снять выделение со всех"
+
+msgid "Are you sure to delete select nodes?"
+msgstr "Вы действительно хотите удалить выбранные узлы?"
+
+msgid "You no select nodes !"
+msgstr "Вы не выбрали ни одного узла!"
+
+msgid "Are you sure set to"
+msgstr "Вы действительно хотите назначить"
+
+msgid "the server?"
+msgstr "активным сервером?"
+
+msgid "You choose node is:"
+msgstr "Выбранный узел:"
+
+msgid "Timeout"
+msgstr "Тайм-аут"
+
+msgid "Node Remarks"
+msgstr "Описание узла"
+
+msgid "Add Mode"
+msgstr "Способ добавления"
+
+msgid "Save Order"
+msgstr "Сохранить порядок"
+
+msgid "Saved current page order successfully."
+msgstr "Порядок элементов сохранён."
+
+msgid "Drag to reorder"
+msgstr "Перетащите для изменения порядка"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "_balancing"
+msgstr "_balancing"
+
+msgid "_shunt"
+msgstr "_shunt"
+
+msgid "Balancing"
+msgstr "Балансировка"
+
+msgid "Node Addition Method"
+msgstr "Способ добавления узлов"
+
+msgid "Manual"
+msgstr "Вручную"
+
+msgid "Batch"
+msgstr "Пакетно"
+
+msgid "Select Group"
+msgstr "Выберите группу"
+
+msgid "Node Matching Rules"
+msgstr "Правила отбора узлов"
+
+msgid ""
+"Example: <code>^A && B && !C && D$</code><br>"
+"This means the node remark must start with A (^), include B, exclude C (!), and end with D ($).<br>"
+"Conditions are joined by <code>&&</code>, and their order does not affect the result."
+msgstr ""
+"Пример: <code>^A && B && !C && D$</code><br>"
+"Описание узла должно: начинаться с A (^), содержать B, не содержать C (!), заканчиваться на D ($).<br>"
+"Условия соединяются оператором <code>&&</code>, порядок условий не влияет на результат."
+
+msgid "Balancing Strategy"
+msgstr "Алгоритм балансировки"
+
+msgid "Fallback Node"
+msgstr "Запасной узел"
+
+msgid "Use Custom Probe URL"
+msgstr "Использовать свой URL для проверки"
+
+msgid "By default the built-in probe URL will be used, enable this option to use a custom probe URL."
+msgstr "По умолчанию используется встроенный адрес для проверки. Включите эту опцию, чтобы задать свой URL."
+
+msgid "Probe URL"
+msgstr "URL для диагностики"
+
+msgid "The URL used to detect the connection status."
+msgstr "Адрес, используемый для проверки доступности соединения."
+
+msgid "Probe Interval"
+msgstr "Интервал проверки"
+
+msgid "The interval between initiating probes."
+msgstr "Периодичность проверки доступности."
+
+msgid "The time format is numbers + units, such as '10s', '2h45m', and the supported time units are <code>s</code>, <code>m</code>, <code>h</code>, which correspond to seconds, minutes, and hours, respectively."
+msgstr "Формат: число + единица измерения, например <code>10s</code>, <code>2h45m</code>. Поддерживаемые единицы: <code>s</code> (секунды), <code>m</code> (минуты), <code>h</code> (часы)."
+
+msgid "When the unit is not filled in, it defaults to seconds."
+msgstr "Если единица не указана, по умолчанию используются секунды."
+
+msgid "Preferred Node Count"
+msgstr "Количество предпочтительных узлов"
+
+msgid "The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them."
+msgstr "Балансировщик выбирает указанное количество наилучших узлов и распределяет трафик между ними случайным образом."
+
+msgid "Shunt"
+msgstr "Shunt (разделение трафика)"
+
+msgid "Preproxy"
+msgstr "Цепочка прокси"
+
+msgid "Preproxy Node"
+msgstr "Первый узел цепочки"
+
+msgid "Set the node to be used as a pre-proxy."
+msgstr "Укажите узел, который будет использоваться как первый узел в цепочке."
+
+msgid "Set the node to be used as a pre-proxy. Each rule (including Default) has a separate switch that controls whether this rule uses the pre-proxy or not."
+msgstr "Укажите узел для использования в качестве первого узла цепочки. Каждое правило (включая «По умолчанию») имеет отдельный переключатель, определяющий, использовать ли цепочку для этого правила."
+
+msgid "Each rule has a separate switch that controls whether this rule uses the pre-proxy or not."
+msgstr "Для каждого правила можно отдельно включить или отключить использование цепочки."
+
+msgid "Close (Not use)"
+msgstr "Отключено"
+
+msgid "Use default node"
+msgstr "Использовать узел по умолчанию"
+
+msgid "Direct Connection"
+msgstr "Прямое соединение"
+
+msgid "Blackhole (Block)"
+msgstr "Блокировка (Blackhole)"
+
+msgid "There are no available nodes, please add or subscribe nodes first."
+msgstr "Нет доступных узлов! Добавьте вручную или настройте подписку."
+
+msgid "No shunt rules? Click me to go to add."
+msgstr "Нет правил разделения трафика! Нажмите, чтобы добавить."
+
+msgid "When using, localhost will connect this node first and then use this node to connect the default node."
+msgstr "При использовании трафик сначала пойдёт через этот узел, а затем — через основной узел назначения."
+
+msgid "Domain Strategy"
+msgstr "Порядок разрешения имён"
+
+msgid "Domain matcher"
+msgstr "Алгоритм сопоставления доменов"
+
+msgid "'AsIs': Only use domain for routing. Default value."
+msgstr "AsIs: использовать доменное имя как есть. Значение по умолчанию."
+
+msgid "'IPIfNonMatch': When no rule matches current domain, resolves it into IP addresses (A or AAAA records) and try all rules again."
+msgstr "IPIfNonMatch: если домен не подошёл ни под одно правило, разрешить его в IP-адрес и повторить проверку."
+
+msgid "'IPOnDemand': As long as there is a IP-based rule, resolves the domain into IP immediately."
+msgstr "IPOnDemand: если встречается правило на основе IP, сразу разрешать домен в адрес."
+
+msgid "Load balancing node list"
+msgstr "Список узлов для балансировки"
+
+msgid "Load balancing node list, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>document</a>"
+msgstr "Список узлов для балансировки, <a target='_blank' href='https://xtls.github.io/config/routing.html#balancerobject'>документация</a>"
+
+msgid "From Share URL"
+msgstr "Импорт из ссылки"
+
+msgid "Build Share URL"
+msgstr "Экспорт в ссылку"
+
+msgid "Generate QRCode"
+msgstr "Сгенерировать QR-код"
+
+msgid "Export Config File"
+msgstr "Экспорт конфигурации"
+
+msgid "Import Finished"
+msgstr "Импорт завершён:"
+
+msgid "Not a supported scheme:"
+msgstr "Неподдерживаемый формат:"
+
+msgid "Invalid Share URL Format"
+msgstr "Неверный формат ссылки"
+
+msgid "Paste Share URL Here"
+msgstr "Вставьте ссылку сюда"
+
+msgid "Share URL to clipboard unable."
+msgstr "Не удалось скопировать ссылку в буфер обмена."
+
+msgid "Share URL to clipboard successfully."
+msgstr "Ссылка скопирована в буфер обмена."
+
+msgid "Faltal on get option, please help in debug:"
+msgstr "Ошибка при чтении настроек, пожалуйста, сообщите разработчикам:"
+
+msgid "Faltal on set option, please help in debug:"
+msgstr "Ошибка при сохранении настроек, пожалуйста, сообщите разработчикам:"
+
+msgid "Address"
+msgstr "Адрес"
+
+msgid "Address (Support Domain Name)"
+msgstr "Адрес (поддерживаются домены)"
+
+msgid "Trojan Verify Cert"
+msgstr "Проверять сертификат (Trojan)"
+
+msgid "Trojan Cert Path"
+msgstr "Путь к сертификату (Trojan)"
+
+msgid "Finger Print"
+msgstr "TLS отпечаток"
+
+msgid "Avoid using randomized, unless you have to."
+msgstr "Избегайте режима randomized, если в этом нет острой необходимости."
+
+msgid "Original"
+msgstr "Оригинал"
+
+msgid "Transport Plugin"
+msgstr "Плагин транспорта"
+
+msgid "Shadowsocks secondary encryption"
+msgstr "Дополнительное шифрование Shadowsocks"
+
+msgid "global_padding"
+msgstr "Включить padding-заполнение"
+
+msgid "authenticated_length"
+msgstr "Шифровать длину пакетов"
+
+msgid "Obfs Type"
+msgstr "Тип обфускации"
+
+msgid "Obfs Password"
+msgstr "Пароль обфускации"
+
+msgid "Auth Type"
+msgstr "Тип аутентификации"
+
+msgid "Auth Password"
+msgstr "Пароль аутентификации"
+
+msgid "Commands the client to use the BBR flow control algorithm"
+msgstr "Включает использование алгоритма управления потоком BBR на клиенте"
+
+msgid "PinSHA256"
+msgstr "PinSHA256"
+
+msgid "Certificate fingerprint"
+msgstr "Хеш сертификата"
+
+msgid "Max upload Mbps"
+msgstr "Макс. скорость отдачи (Мбит/с)"
+
+msgid "Max download Mbps"
+msgstr "Макс. скорость загрузки (Мбит/с)"
+
+msgid "QUIC stream receive window"
+msgstr "Размер окна приёма потока QUIC"
+
+msgid "QUIC connection receive window"
+msgstr "Размер окна приёма соединения QUIC"
+
+msgid "QUIC concurrent bidirectional streams"
+msgstr "Макс. количество одновременных двунаправленных потоков QUIC"
+
+msgid "Disable MTU detection"
+msgstr "Отключить определение MTU"
+
+msgid "ignoreClientBandwidth"
+msgstr "Игнорировать заявленные лимиты пропускной способности клиента"
+
+msgid "Lazy Start"
+msgstr "Отложенный старт"
+
+msgid "Encrypt Method"
+msgstr "Метод шифрования"
+
+msgid "Encrypt Key"
+msgstr "Ключ шифрования"
+
+msgid "Latency"
+msgstr "Задержка"
+
+msgid "Automatic detection delay"
+msgstr "Метод автопроверки"
+
+msgid "Show server address and port"
+msgstr "Показывать адрес и порт узла"
+
+msgid "URL Test Address"
+msgstr "Адрес для проверки"
+
+msgid "URL Test"
+msgstr "URL-тест"
+
+msgid "Test"
+msgstr "Проверить"
+
+msgid "Node num"
+msgstr "Количество узлов"
+
+msgid "Self add"
+msgstr "Добавлен вручную"
+
+msgid "Apply"
+msgstr "Применить"
+
+msgid "Use"
+msgstr "Использовать"
+
+msgid "Copy"
+msgstr "Копировать"
+
+msgid "Delay Settings"
+msgstr "Расписание"
+
+msgid "Open and close Daemon"
+msgstr "Запускать демон"
+
+msgid "Delay Start"
+msgstr "Отложенный запуск"
+
+msgid "Units:seconds"
+msgstr "Единица: секунды"
+
+msgid "Units:minutes"
+msgstr "Единица: минуты"
+
+msgid "stop automatically mode"
+msgstr "Режим автоотключения"
+
+msgid "stop Time(Every day)"
+msgstr "Время отключения (ежедневно)"
+
+msgid "stop Interval(Hour)"
+msgstr "Интервал отключения (часы)"
+
+msgid "start automatically mode"
+msgstr "Режим автозапуска"
+
+msgid "start Time(Every day)"
+msgstr "Время запуска (ежедневно)"
+
+msgid "start Interval(Hour)"
+msgstr "Интервал запуска (часы)"
+
+msgid "restart automatically mode"
+msgstr "Режим автоперезапуска"
+
+msgid "restart Time(Every day)"
+msgstr "Время перезапуска (ежедневно)"
+
+msgid "restart Interval(Hour)"
+msgstr "Интервал перезапуска (часы)"
+
+msgid "Forwarding Settings"
+msgstr "Настройки перенаправления"
+
+msgid "TCP No Redir Ports"
+msgstr "TCP-порты без перенаправления"
+
+msgid "UDP No Redir Ports"
+msgstr "UDP-порты без перенаправления"
+
+msgid "Fill in the ports you don't want to be forwarded by the agent, with the highest priority."
+msgstr "Укажите порты, которые не должны обрабатываться прокси. Эти настройки имеют наивысший приоритет."
+
+msgid "If you don't want to let the device in the list to go proxy, please choose all."
+msgstr "Если вы не хотите, чтобы устройства из списка использовали прокси, выберите «Все»."
+
+msgid "The port settings support single ports and ranges.<br>Separate multiple ports with commas (,).<br>Example: 21,80,443,1000:2000."
+msgstr "Поддерживаются отдельные порты и диапазоны.<br>Несколько значений указывайте через запятую.<br>Пример: 21,80,443,1000:2000."
+
+msgid "TCP Proxy Drop Ports"
+msgstr "TCP-порты для блокировки прокси"
+
+msgid "UDP Proxy Drop Ports"
+msgstr "UDP-порты для блокировки прокси"
+
+msgid "TCP Redir Ports"
+msgstr "TCP-порты для перенаправления"
+
+msgid "UDP Redir Ports"
+msgstr "UDP-порты для перенаправления"
+
+msgid "No patterns are used"
+msgstr "Не использовать"
+
+msgid "All"
+msgstr "Все"
+
+msgid "Common Use"
+msgstr "Распространённые"
+
+msgid "Only Web"
+msgstr "Только веб"
+
+msgid "or more"
+msgstr "и более"
+
+msgid "or less"
+msgstr "и менее"
+
+msgid "Default"
+msgstr "По умолчанию"
+
+msgid "Close"
+msgstr "Отключить"
+
+msgid "Hijacking ICMP (PING)"
+msgstr "Перехват ICMP (PING)"
+
+msgid "Hijacking ICMPv6 (IPv6 PING)"
+msgstr "Перехват ICMPv6 (IPv6 PING)"
+
+msgid "Sniffing"
+msgstr "Анализ трафика"
+
+msgid "TCP Proxy Way"
+msgstr "Метод TCP-проксирования"
+
+msgid "Auto Switch"
+msgstr "Автопереключение"
+
+msgid "When there is no server, an automatic reconnect scheme is used"
+msgstr "При потере связи автоматически выполняется переподключение"
+
+msgid "How often to test"
+msgstr "Частота проверки"
+
+msgid "Timeout seconds"
+msgstr "Тайм-аут (сек)"
+
+msgid "Timeout retry num"
+msgstr "Количество повторов при тайм-ауте"
+
+msgid "Automatic switching cannot be used when this option is checked"
+msgstr "При включении этой опции автопереключение недоступно"
+
+msgid "Main node"
+msgstr "Основной узел"
+
+msgid "List of backup nodes"
+msgstr "Список резервных узлов"
+
+msgid "Restore Switch"
+msgstr "Возврат к основному"
+
+msgid "When detects main node is available, switch back to the main node."
+msgstr "При восстановлении доступности основного узла — автоматически переключиться на него."
+
+msgid "Add nodes to the standby node list by keywords"
+msgstr "Добавить узлы в резервный список по ключевым словам"
+
+msgid "Delete nodes in the standby node list by keywords"
+msgstr "Удалить узлы из резервного списка по ключевым словам"
+
+msgid "Please enter the node keyword, pay attention to distinguish between spaces, uppercase and lowercase."
+msgstr "Введите ключевое слово. Учитывайте регистр и пробелы."
+
+msgid "Enable Load Balancing"
+msgstr "Включить балансировку"
+
+msgid "Console Login Auth"
+msgstr "Аутентификация в консоли"
+
+msgid "Console Username"
+msgstr "Логин консоли"
+
+msgid "Console Password"
+msgstr "Пароль консоли"
+
+msgid "Console Port"
+msgstr "Порт консоли"
+
+msgid "In the browser input routing IP plus port access, such as:192.168.1.1:1188"
+msgstr "В браузере введите IP роутера и порт, например: 192.168.1.1:1188"
+
+msgid "Haproxy Port"
+msgstr "Порт HAProxy"
+
+msgid "Health Check Type"
+msgstr "Тип проверки доступности"
+
+msgid "Inner implement"
+msgstr "Встроенный механизм"
+
+msgid "Health Check Inter"
+msgstr "Интервал проверки состояния"
+
+msgid "When the URL test is used, the load balancing node will be converted into a Socks node. when node list set customizing, must be a Socks node, otherwise the health check will be invalid."
+msgstr "При использовании URL-теста узлы балансировки рассматриваются как SOCKS-узлы. Если список задан вручную, все узлы должны быть типа SOCKS — иначе проверка не будет работать."
+
+msgid "Add a node, Export Of Multi WAN Only support Multi Wan. Load specific gravity range 1-256. Multiple primary servers can be load balanced, standby will only be enabled when the primary server is offline! Multiple groups can be set, Haproxy port same one for each group."
+msgstr "Добавление узла: функция выбора WAN-интерфейса работает только при нескольких WAN. Вес: 1–256. Несколько основных узлов могут балансироваться, резервные активируются только при отказе основных. Можно создать несколько групп — узлы с одинаковым портом HAProxy объединяются в одну группу."
+
+msgid "Note that the node configuration parameters for load balancing must be consistent when use TCP health check type, otherwise it cannot be used normally!"
+msgstr "Важно: при использовании TCP-проверки параметры узлов в группе балансировки должны совпадать, иначе функция не будет работать корректно."
+
+msgid "Node Address"
+msgstr "Адрес сервера"
+
+msgid "Node address cannot be empty."
+msgstr "Адрес сервера не может быть пустым."
+
+msgid "Node Port"
+msgstr "Порт сервера"
+
+msgid "Node Weight"
+msgstr "Вес нагрузки"
+
+msgid "Export Of Multi WAN"
+msgstr "Выбор WAN-интерфейса"
+
+msgid "Main"
+msgstr "Основной"
+
+msgid "Mode"
+msgstr "Режим"
+
+msgid "Primary"
+msgstr "Основной"
+
+msgid "Standby"
+msgstr "Резервный"
+
+msgid "Check update"
+msgstr "Проверить обновления"
+
+msgid "Force update"
+msgstr "Принудительное обновление"
+
+msgid "The latest version: %s, currently does not support automatic update, if you need to update, please compile or download the ipk and then manually install."
+msgstr "Доступна версия %s. Автоматическое обновление пока не поддерживается — для установки скачайте или соберите ipk-пакет и установите его вручную."
+
+msgid "Enable custom URL"
+msgstr "Включить пользовательский URL"
+
+msgid "Rule status"
+msgstr "Версия правил"
+
+msgid "Manually update"
+msgstr "Обновить вручную"
+
+msgid "Rollback"
+msgstr "Откатить"
+
+msgid "Rollbacking..."
+msgstr "Выполняется откат..."
+
+msgid "Enable auto update rules"
+msgstr "Автообновление правил"
+
+msgid "Update Time(every day)"
+msgstr "Время обновления (ежедневно)"
+
+msgid "Update Interval(hour)"
+msgstr "Интервал обновления (часы)"
+
+msgid "Update Mode"
+msgstr "Режим обновления"
+
+msgid "Loop Mode"
+msgstr "Циклический"
+
+msgid "Every day"
+msgstr "Ежедневно"
+
+msgid "Every Monday"
+msgstr "По понедельникам"
+
+msgid "Every Tuesday"
+msgstr "По вторникам"
+
+msgid "Every Wednesday"
+msgstr "По средам"
+
+msgid "Every Thursday"
+msgstr "По четвергам"
+
+msgid "Every Friday"
+msgstr "По пятницам"
+
+msgid "Every Saturday"
+msgstr "По субботам"
+
+msgid "Every Sunday"
+msgstr "По воскресеньям"
+
+msgid "hour"
+msgstr "час"
+
+msgid "Hour"
+msgstr "Час"
+
+msgid "GeoIP Update URL"
+msgstr "URL обновления GeoIP"
+
+msgid "Geosite Update URL"
+msgstr "URL обновления Geosite"
+
+msgid "Location of Geo rule files"
+msgstr "Папка для Geo-файлов"
+
+msgid "This variable specifies a directory where geoip.dat and geosite.dat files are."
+msgstr "Укажите директорию, в которой находятся файлы geoip.dat и geosite.dat."
+
+msgid "Enable GeoIP Data Parsing"
+msgstr "Включить анализ данных GeoIP"
+
+msgid "Analyzes and preloads GeoIP data to enhance the shunt performance."
+msgstr "Анализирует и предварительно загружает данные GeoIP для улучшения работы разделения трафика."
+
+msgid "Note: Increases resource usage."
+msgstr "Примечание: увеличивает нагрузку на систему."
+
+msgid "Shunt Rule"
+msgstr "Правила разделения трафика"
+
+msgid "Please note attention to the priority, the higher the order, the higher the priority."
+msgstr "Обратите внимание: правила выше в списке имеют более высокий приоритет."
+
+msgid "Update..."
+msgstr "Обновление..."
+
+msgid "It is the latest version"
+msgstr "Установлена последняя версия"
+
+msgid "Update successful"
+msgstr "Обновление успешно"
+
+msgid "Click to update"
+msgstr "Нажмите для обновления"
+
+msgid "Updating..."
+msgstr "Идёт обновление..."
+
+msgid "Retry"
+msgstr "Повторить"
+
+msgid "Unexpected error"
+msgstr "Непредвиденная ошибка"
+
+msgid "Updating, are you sure to close?"
+msgstr "Идёт обновление. Вы уверены, что хотите закрыть?"
+
+msgid "Downloading..."
+msgstr "Загрузка..."
+
+msgid "Unpacking..."
+msgstr "Распаковка..."
+
+msgid "Moving..."
+msgstr "Перемещение..."
+
+msgid "App Update"
+msgstr "Обновление компонентов"
+
+msgid "Please confirm that your firmware supports FPU."
+msgstr "Убедитесь, что ваша прошивка поддерживает FPU."
+
+msgid "if you want to run from memory, change the path, /tmp beginning then save the application and update it manually."
+msgstr "Если вы хотите запускать из оперативной памяти, измените путь на начинающийся с /tmp, затем сохраните настройки и обновите компонент вручную."
+
+msgid "Make sure there is enough space to install %s"
+msgstr "Убедитесь, что достаточно места для установки %s"
+
+msgid "App Path"
+msgstr "Путь к приложению"
+
+msgid "%s App Path"
+msgstr "Путь к приложению %s"
+
+msgid "%s Client App Path"
+msgstr "Путь к клиенту %s"
+
+msgid "Node Subscribe"
+msgstr "Подписки"
+
+msgid "Subscribe Remark"
+msgstr "Название подписки"
+
+msgid "Subscribe Info"
+msgstr "Информация о подписке"
+
+msgid "Subscribe URL"
+msgstr "URL подписки"
+
+msgid "Subscribe URL Access Method"
+msgstr "Способ доступа к URL подписки"
+
+msgid "When adding a new subscription, please save and apply before manually subscribing. If you only change the subscription URL, you can subscribe manually, and the system will save it automatically."
+msgstr "При добавлении новой подписки сначала сохраните и примените настройки, затем выполните ручную подписку. Если вы только изменили URL — можно сразу выполнить ручную подписку, система сохранит изменения автоматически."
+
+msgid "Please save and apply before manually subscribing."
+msgstr "Сохраните и примените настройки перед ручной подпиской."
+
+msgid "Subscribe URL cannot be empty."
+msgstr "URL подписки не может быть пустым."
+
+msgid "Subscribe via proxy"
+msgstr "Подписка через прокси"
+
+msgid "Enable auto update subscribe"
+msgstr "Автообновление подписки"
+
+msgid "Manual subscription"
+msgstr "Ручное обновление подписки"
+
+msgid "Delete All Subscribe Node"
+msgstr "Удалить все узлы из подписки"
+
+msgid "Delete the subscribed node"
+msgstr "Удалить узел"
+
+msgid "Are you sure you want to delete all subscribed nodes?"
+msgstr "Вы действительно хотите удалить все узлы, добавленные через подписку?"
+
+msgid "Manual subscription All"
+msgstr "Ручное обновление всех подписок"
+
+msgid "This remark already exists, please change a new remark."
+msgstr "Такое название уже существует, выберите другое."
+
+msgid "Remark cannot be empty."
+msgstr "Название не может быть пустым."
+
+msgid "URL cannot be empty."
+msgstr "URL не может быть пустым."
+
+msgid "Filter keyword Mode"
+msgstr "Режим фильтрации по ключевым словам"
+
+msgid "Discard List"
+msgstr "Отбрасывать совпадения"
+
+msgid "Keep List"
+msgstr "Оставлять только совпадения"
+
+msgid "Discard List,But Keep List First"
+msgstr "Отбрасывать совпадения, но сначала применить список исключений"
+
+msgid "Keep List,But Discard List First"
+msgstr "Оставлять только совпадения, но сначала применить список отбрасывания"
+
+msgid "Use global config"
+msgstr "Использовать глобальные настройки"
+
+msgid "User-Agent"
+msgstr "User-Agent"
+
+msgid "Add"
+msgstr "Добавить"
+
+msgid "ACLs"
+msgstr "Правила доступа"
+
+msgid "ACLs is a tools which used to designate specific IP proxy mode."
+msgstr "Правила доступа (ACL) позволяют задавать особый режим прокси для отдельных IP-адресов."
+
+msgid "Example:"
+msgstr "Пример:"
+
+msgid "IP range"
+msgstr "Диапазон IP"
+
+msgid "Source Interface"
+msgstr "Исходящий интерфейс"
+
+msgid "Use Interface With ACLs"
+msgstr "Применять правила к интерфейсу"
+
+msgid "Remarks"
+msgstr "Описание"
+
+msgid "Direct List"
+msgstr "Список прямого доступа"
+
+msgid "Proxy List"
+msgstr "Список для прокси"
+
+msgid "Block List"
+msgstr "Список блокировки"
+
+msgid "Lan IP List"
+msgstr "Список LAN-IP"
+
+msgid "Route Hosts"
+msgstr "Файл hosts"
+
+msgid "Join the direct hosts list of domain names will not proxy."
+msgstr "Домены из этого списка будут обходить прокси. Правило действует для всех режимов и имеет наивысший приоритет."
+
+msgid "These had been joined ip addresses will not proxy. Please input the ip address or ip address segment,every line can input only one ip address. For example: 192.168.0.0/24 or 223.5.5.5."
+msgstr "IP-адреса и подсети из этого списка будут обходить прокси. Вводите по одному значению на строку. Пример: 192.168.0.0/24 или 223.5.5.5."
+
+msgid "These had been joined websites will use proxy. Please input the domain names of websites, every line can input only one website domain. For example: google.com."
+msgstr "Домены из этого списка будут использовать прокси. Вводите по одному домену на строку. Пример: google.com."
+
+msgid "These had been joined ip addresses will use proxy. Please input the ip address or ip address segment, every line can input only one ip address. For example: 35.24.0.0/24 or 8.8.4.4."
+msgstr "IP-адреса и подсети из этого списка будут использовать прокси. Вводите по одному значению на строку. Пример: 35.24.0.0/24 или 8.8.4.4."
+
+msgid "These had been joined websites will be block. Please input the domain names of websites, every line can input only one website domain. For example: twitter.com."
+msgstr "Домены из этого списка будут блокироваться. Вводите по одному домену на строку. Пример: twitter.com."
+
+msgid "The list is the IPv4 LAN IP list, which represents the direct connection IP of the LAN. If you need the LAN IP in the proxy list, please clear it from the list. Do not modify this list by default."
+msgstr "Список IPv4-адресов локальной сети, которые всегда подключаются напрямую. Если вам нужно, чтобы LAN-IP использовал прокси, удалите его из этого списка. По умолчанию не изменяйте этот список."
+
+msgid "The list is the IPv6 LAN IP list, which represents the direct connection IP of the LAN. If you need the LAN IP in the proxy list, please clear it from the list. Do not modify this list by default."
+msgstr "Список IPv6-адресов локальной сети, которые всегда подключаются напрямую. Если вам нужно, чтобы LAN-IP использовал прокси, удалите его из этого списка. По умолчанию не изменяйте этот список."
+
+msgid "Configure routing etc/hosts file, if you don't know what you are doing, please don't change the content."
+msgstr "Редактирование файла hosts роутера. Если вы не уверены в своих действиях, не изменяйте содержимое."
+
+msgid "These had been joined ip addresses will be block. Please input the ip address or ip address segment, every line can input only one ip address."
+msgstr "IP-адреса и подсети из этого списка будут блокироваться. Вводите по одному значению на строку."
+
+msgid "Inbound Tag"
+msgstr "Метка входящего соединения"
+
+msgid "Transparent proxy"
+msgstr "Прозрачный прокси"
+
+msgid "Not valid domain name, please re-enter!"
+msgstr "Неверный формат домена, пожалуйста, введите заново!"
+
+msgid "Not valid IP format, please re-enter!"
+msgstr "Неверный формат IP, пожалуйста, введите заново!"
+
+msgid "Not valid IPv4 format, please re-enter!"
+msgstr "Неверный формат IPv4, пожалуйста, введите заново!"
+
+msgid "Not valid IPv6 format, please re-enter!"
+msgstr "Неверный формат IPv6, пожалуйста, введите заново!"
+
+msgid "Not true format, please re-enter!"
+msgstr "Неверный формат, пожалуйста, введите заново!"
+
+msgid "Plaintext: If this string matches any part of the targeting domain, this rule takes effet. Example: rule 'sina.com' matches targeting domain 'sina.com', 'sina.com.cn' and 'www.sina.com', but not 'sina.cn'."
+msgstr "Текст: правило срабатывает, если строка встречается в любом месте домена. Например, 'sina.com' совпадёт с 'sina.com', 'sina.com.cn', 'www.sina.com', но не с 'sina.cn'."
+
+msgid "Regular expression: Begining with 'regexp:', the rest is a regular expression. When the regexp matches targeting domain, this rule takes effect. Example: rule 'regexp:\\.goo.*\\.com$' matches 'www.google.com' and 'fonts.googleapis.com', but not 'google.com'."
+msgstr "Регулярное выражение: начинается с 'regexp:', далее — шаблон. Правило срабатывает при совпадении. Например, 'regexp:\\.goo.*\\.com$' совпадёт с 'www.google.com' и 'fonts.googleapis.com', но не с 'google.com'."
+
+msgid "Subdomain (recommended): Begining with 'domain:' and the rest is a domain. When the targeting domain is exactly the value, or is a subdomain of the value, this rule takes effect. Example: rule 'domain:v2ray.com' matches 'www.v2ray.com', 'v2ray.com', but not 'xv2ray.com'."
+msgstr "Поддомен (рекомендуется): начинается с 'domain:', далее — домен. Правило срабатывает для точного совпадения или любого поддомена. Например, 'domain:v2ray.com' совпадёт с 'www.v2ray.com' и 'v2ray.com', но не с 'xv2ray.com'."
+
+msgid "Full domain: Begining with 'full:' and the rest is a domain. When the targeting domain is exactly the value, the rule takes effect. Example: rule 'domain:v2ray.com' matches 'v2ray.com', but not 'www.v2ray.com'."
+msgstr "Полное совпадение: начинается с 'full:', далее — домен. Правило срабатывает только при точном совпадении. Например, 'full:v2ray.com' совпадёт только с 'v2ray.com', но не с 'www.v2ray.com'."
+
+msgid "Sing-Box rule-set: Begining with 'rule-set:remote:' or 'rule-set:local:'"
+msgstr "Набор правил Sing-Box: начинается с 'rule-set:remote:' или 'rule-set:local:'"
+
+msgid "Such as:"
+msgstr "Например:"
+
+msgid "Pre-defined domain list: Begining with 'geosite:' and the rest is a name, such as geosite:google or geosite:cn."
+msgstr "Предопределённый список: начинается с 'geosite:', далее — имя набора, например geosite:google или geosite:cn."
+
+msgid "Annotation: Begining with #"
+msgstr "Комментарий начинается с #"
+
+msgid "Invert match result."
+msgstr "Инвертировать результат."
+
+msgid "Only support Sing-Box."
+msgstr "Поддерживается только в Sing-Box."
+
+msgid "IP: such as '127.0.0.1'."
+msgstr "IP: например, '127.0.0.1'."
+
+msgid "CIDR: such as '127.0.0.0/8'."
+msgstr "CIDR: например, '10.0.0.0/8'."
+
+msgid "GeoIP: such as 'geoip:cn'. It begins with geoip: (lower case) and followed by two letter of country code."
+msgstr "GeoIP: например, 'geoip:cn'. Должно начинаться с 'geoip:' (строчными), далее — двухбуквенный код страны."
+
+msgid "Clear logs"
+msgstr "Очистить журнал"
+
+msgid "Password"
+msgstr "Пароль"
+
+msgid "IV Check"
+msgstr "Проверка IV"
+
+msgid "UDP over TCP"
+msgstr "UDP через TCP"
+
+msgid "Connection Timeout"
+msgstr "Тайм-аут подключения"
+
+msgid "Local Port"
+msgstr "Локальный порт"
+
+msgid "Fast Open"
+msgstr "Fast Open"
+
+msgid "Pre-connections"
+msgstr "Предварительные соединения"
+
+msgid "Number of early established connections to reduce latency."
+msgstr "Количество заранее установленных соединений для снижения задержки."
+
+msgid "plugin"
+msgstr "Плагин"
+
+msgid "Supports custom SIP003 plugins, Make sure the plugin is installed."
+msgstr "Поддерживаются пользовательские плагины SIP003. Убедитесь, что плагин установлен."
+
+msgid "opts"
+msgstr "опции"
+
+msgid "Protocol"
+msgstr "Протокол"
+
+msgid "Protocol_param"
+msgstr "Параметры протокола"
+
+msgid "Obfs"
+msgstr "Обфускация"
+
+msgid "Obfs_param"
+msgstr "Параметры обфускации"
+
+msgid "Plugin Name"
+msgstr "Название плагина"
+
+msgid "Plugin Arguments"
+msgstr "Аргументы плагина"
+
+msgid "Naiveproxy Protocol"
+msgstr "Протокол Naiveproxy"
+
+msgid "User Level"
+msgstr "Уровень доступа"
+
+msgid "Transport"
+msgstr "Транспорт"
+
+msgid "Public Key"
+msgstr "Публичный ключ"
+
+msgid "Private Key"
+msgstr "Приватный ключ"
+
+msgid "Pre shared key"
+msgstr "Дополнительный симметричный ключ"
+
+msgid "Local Address"
+msgstr "Локальный адрес"
+
+msgid "System interface"
+msgstr "Системный интерфейс"
+
+msgid "System interface name"
+msgstr "Имя системного интерфейса"
+
+msgid "Decimal numbers separated by \",\" or Base64-encoded strings."
+msgstr "Десятичные числа через запятую или строки в кодировке Base64."
+
+msgid "Camouflage Domain"
+msgstr "Маскировочный домен"
+
+msgid "Camouflage Type"
+msgstr "Тип маскировки"
+
+msgid "Transport Layer Encryption"
+msgstr "Шифрование транспортного уровня"
+
+msgid "Whether or not transport layer encryption is enabled, \"none\" for unencrypted, \"tls\" for using TLS, \"xtls\" for using XTLS."
+msgstr "Включено ли шифрование транспортного уровня: «none» — без шифрования, «tls» — TLS, «xtls» — XTLS."
+
+msgid "Original Trojan only supported 'tls', please choose 'tls'."
+msgstr "Оригинальный Trojan поддерживает только 'tls' — выберите этот вариант."
+
+msgid "Transfer mode"
+msgstr "Режим передачи"
+
+msgid "Do not send server name in ClientHello."
+msgstr "Не отправлять имя сервера в ClientHello."
+
+msgid "Domain"
+msgstr "Домен"
+
+msgid "allowInsecure"
+msgstr "Пропускать проверку сертификата"
+
+msgid "Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."
+msgstr "Разрешить соединения без проверки сертификата. При включении валидация будет пропущена."
+
+msgid "%s Node Use Type"
+msgstr "Тип использования сервера %s"
+
+msgid "Set the TUIC proxy server ip address"
+msgstr "Указать IP-адрес сервера TUIC"
+
+msgid "TUIC User Password For Connect Remote Server"
+msgstr "Пароль для подключения к удалённому серверу TUIC"
+
+msgid "TUIC UserName For Local Socks"
+msgstr "Имя пользователя для локального SOCKS TUIC"
+
+msgid "TUIC Password For Local Socks"
+msgstr "Пароль для локального SOCKS TUIC"
+
+msgid "UDP relay mode"
+msgstr "Режим ретрансляции UDP"
+
+msgid "Congestion control algorithm"
+msgstr "Алгоритм контроля перегрузок"
+
+msgid "Heartbeat interval(second)"
+msgstr "Интервал heartbeat-пакетов (сек)"
+
+msgid "Timeout for establishing a connection to server(second)"
+msgstr "Тайм-аут установки соединения с сервером (сек)"
+
+msgid "Garbage collection interval(second)"
+msgstr "Интервал очистки фрагментов UDP (сек)"
+
+msgid "Garbage collection lifetime(second)"
+msgstr "Время жизни фрагментов UDP на сервере (сек)"
+
+msgid "Disable SNI"
+msgstr "Отключить SNI"
+
+msgid "Enable 0-RTT QUIC handshake"
+msgstr "Включить 0-RTT рукопожатие QUIC"
+
+msgid "TUIC send window"
+msgstr "Окно отправки TUIC (макс. байт без подтверждения: по умолчанию 8 МБ × 2)"
+
+msgid "TUIC receive window"
+msgstr "Окно приёма TUIC (макс. байт без подтверждения: по умолчанию 8 МБ)"
+
+msgid "TUIC Maximum packet size the socks5 server can receive from external, in bytes"
+msgstr "Макс. размер пакета, который SOCKS5-сервер TUIC может принять извне (в байтах)"
+
+msgid "Set if the listening socket should be dual-stack"
+msgstr "Включить поддержку dual-stack для слушающего сокета"
+
+msgid "<br />none: default, no masquerade, data sent is packets with no characteristics.<br />srtp: disguised as an SRTP packet, it will be recognized as video call data (such as FaceTime).<br />utp: packets disguised as uTP will be recognized as bittorrent downloaded data.<br />wechat-video: packets disguised as WeChat video calls.<br />dtls: disguised as DTLS 1.2 packet.<br />wireguard: disguised as a WireGuard packet. (not really WireGuard protocol)<br />dns: Disguising traffic as DNS requests."
+msgstr "<br />none: по умолчанию, без маскировки, данные отправляются обычными пакетами.<br />srtp: маскировка под SRTP — трафик определяется как видеозвонок (например, FaceTime).<br />utp: маскировка под uTP — трафик определяется как BitTorrent.<br />wechat-video: маскировка под видеозвонок WeChat.<br />dtls: маскировка под DTLS 1.2.<br />wireguard: маскировка под WireGuard (не настоящий протокол WireGuard).<br />dns: маскировка трафика под DNS-запросы."
+
+msgid "Use it together with the DNS disguised type. You can fill in any domain."
+msgstr "Используется вместе с типом маскировки DNS. Можно указать любой домен."
+
+msgid "Auth"
+msgstr "Аутентификация"
+
+msgid "Socks for authentication"
+msgstr "Аутентификация SOCKS"
+
+msgid "Socks protocol authentication, support anonymous and password."
+msgstr "Метод аутентификации SOCKS: анонимный или по логину/паролю."
+
+msgid "anonymous"
+msgstr "анонимно"
+
+msgid "User Password"
+msgstr "Логин и пароль"
+
+msgid "Username and Password must be used together!"
+msgstr "Логин и пароль должны быть указаны вместе!"
+
+msgid "Prefer firewall tools"
+msgstr "Предпочтительный инструмент фаервола"
+
+msgid "IPv6 TProxy"
+msgstr "IPv6 TProxy"
+
+msgid "Experimental feature. Make sure that your node supports IPv6."
+msgstr "Экспериментальная функция. Убедитесь, что ваш сервер поддерживает IPv6."
+
+msgid "Status info"
+msgstr "Информация о статусе"
+
+msgid "Big icon"
+msgstr "Крупный значок"
+
+msgid "Show node check"
+msgstr "Показывать проверку серверов"
+
+msgid "Show Show IP111"
+msgstr "Показывать IP111"
+
+msgid "Destination protocol"
+msgstr "Целевой протокол"
+
+msgid "Destination address"
+msgstr "Целевой адрес"
+
+msgid "Destination port"
+msgstr "Целевой порт"
+
+msgid "Whether to receive PROXY protocol, when this node want to be fallback or forwarded by proxy, it must be enable, otherwise it cannot be used."
+msgstr "Принимать ли PROXY protocol. Если этот сервер используется для fallback или перенаправления через прокси, опция должна быть включена, иначе работа невозможна."
+
+msgid "outbound node"
+msgstr "Исходящий сервер"
+
+msgid "Custom Socks"
+msgstr "Пользовательский SOCKS"
+
+msgid "Custom HTTP"
+msgstr "Пользовательский HTTP"
+
+msgid "Custom Interface"
+msgstr "Пользовательский интерфейс"
+
+msgid "Interface"
+msgstr "Интерфейс"
+
+msgid "Bind Local"
+msgstr "Только для localhost"
+
+msgid "When selected, it can only be accessed localhost."
+msgstr "Если включено, доступ возможен только с самого роутера."
+
+msgid "Accept LAN Access"
+msgstr "Разрешить доступ из LAN"
+
+msgid "When selected, it can accessed lan , this will not be safe!"
+msgstr "Если включено, сервис будет доступен из локальной сети. Это небезопасно! (Не рекомендуется без необходимости)."
+
+msgid "Enable Remote"
+msgstr "Включить перенаправление"
+
+msgid "You can forward to Nginx/Caddy/V2ray/Xray WebSocket and more."
+msgstr "Можно перенаправлять на Nginx/Caddy/V2Ray/Xray WebSocket и другие сервисы."
+
+msgid "Remote Address"
+msgstr "Удалённый адрес"
+
+msgid "Remote Port"
+msgstr "Удалённый порт"
+
+msgid "as:"
+msgstr "например:"
+
+msgid "Public key absolute path"
+msgstr "Полный путь к публичному ключу"
+
+msgid "Private key absolute path"
+msgstr "Полный путь к приватному ключу"
+
+msgid "Can't find this file!"
+msgstr "Файл не найден!"
+
+msgid "Public key and Private key path can not be empty!"
+msgstr "Пути к публичному и приватному ключам не могут быть пустыми!"
+
+msgid "Server-Side"
+msgstr "Серверная часть"
+
+msgid "Server Config"
+msgstr "Конфигурация сервера"
+
+msgid "Users Manager"
+msgstr "Управление пользователями"
+
+msgid "Logs"
+msgstr "Журнал"
+
+msgid "Log"
+msgstr "Журнал"
+
+msgid "Enable Node Log"
+msgstr "Запись журнала"
+
+msgid "Log Level"
+msgstr "Уровень записи журнала"
+
+msgid "Not enabled log"
+msgstr "Запись журнала отключена"
+
+msgid "UDP Forward"
+msgstr "UDP-перенаправление"
+
+msgid "DNS Settings"
+msgstr "Настройки DNS"
+
+msgid "Null"
+msgstr "Нет"
+
+msgid "You did not fill in the %s path. Please save and apply then update manually."
+msgstr "Вы не указали путь к %s. Сохраните настройки, затем выполните обновление вручную."
+
+msgid "Not installed %s, Can't unzip!"
+msgstr "%s не установлен — распаковка невозможна."
+
+msgid "Can't determine ARCH, or ARCH not supported."
+msgstr "Не удалось определить архитектуру, или она не поддерживается."
+
+msgid "Get remote version info failed."
+msgstr "Не удалось получить информацию о версии с сервера."
+
+msgid "New version found, but failed to get new version download url."
+msgstr "Обнаружена новая версия, но не удалось получить ссылку для загрузки."
+
+msgid "Download url is required."
+msgstr "Необходимо указать URL для загрузки."
+
+msgid "File download failed or timed out: %s"
+msgstr "Ошибка загрузки файла или тайм-аут: %s"
+
+msgid "File path required."
+msgstr "Необходимо указать путь к файлу."
+
+msgid "%s not enough space."
+msgstr "Недостаточно места для %s."
+
+msgid "Can't find client in file: %s"
+msgstr "Не удалось найти клиент в файле: %s"
+
+msgid "Client file is required."
+msgstr "Необходимо указать файл клиента."
+
+msgid "The client file is not suitable for current device."
+msgstr "Файл клиента не подходит для текущего устройства."
+
+msgid "Can't move new file to path: %s"
+msgstr "Не удалось переместить файл в: %s"
+
+msgid "An XHttpObject in JSON format, used for sharing."
+msgstr "XHttpObject в формате JSON, используется для обмена настройками."
+
+msgid "Enable Mux.Cool"
+msgstr "Включить Mux.Cool"
+
+msgid "Mux concurrency"
+msgstr "Макс. параллельных соединений"
+
+msgid "XUDP Mux concurrency"
+msgstr "Макс. параллельных соединений XUDP"
+
+msgid "Padding"
+msgstr "Заполнение"
+
+msgid "Enable early data"
+msgstr "Включить 0-RTT данные"
+
+msgid "Early data length"
+msgstr "Макс. длина 0-RTT данных"
+
+msgid "Early data header name"
+msgstr "Имя HTTP-заголовка для 0-RTT"
+
+msgid "Recommended value: Sec-WebSocket-Protocol"
+msgstr "Рекомендуемое значение: Sec-WebSocket-Protocol"
+
+msgid "Health check"
+msgstr "Проверка доступности"
+
+msgid "Health check timeout"
+msgstr "Тайм-аут проверки"
+
+msgid "Permit without stream"
+msgstr "Проверка без активного потока"
+
+msgid "Initial Windows Size"
+msgstr "Начальный размер окна"
+
+msgid "Excluded Domains"
+msgstr "Исключённые домены"
+
+msgid "If the traffic sniffing result is in this list, the destination address will not be overridden."
+msgstr "Если результат анализа трафика есть в этом списке, целевой адрес не будет заменён."
+
+msgid "Buffer Size"
+msgstr "Размер буфера"
+
+msgid "Buffer size for every connection (kB)"
+msgstr "Размер буфера для каждого соединения (КБ)"
+
+msgid "Handshake Timeout"
+msgstr "Тайм-аут рукопожатия"
+
+msgid "Idle Timeout"
+msgstr "Тайм-аут простоя"
+
+msgid "Hop Interval"
+msgstr "Интервал смены порта"
+
+msgid "HeartbeatPeriod(second)"
+msgstr "Период heartbeat-пакетов (сек)"
+
+msgid "Override the connection destination address"
+msgstr "Заменять целевой адрес соединения"
+
+msgid "Override the connection destination address with the sniffed domain.<br />Otherwise use sniffed domain for routing only.<br />If using shunt nodes, configure the domain shunt rules correctly."
+msgstr "Заменять целевой адрес на домен, полученный при анализе трафика.<br />Иначе домен будет использоваться только для маршрутизации.<br />При использовании серверов разделения трафика правильно настройте правила доменной маршрутизации."
+
+msgid "Override the connection destination address with the sniffed domain.<br />When enabled, traffic will match only by domain, ignoring IP rules.<br />If using shunt nodes, configure the domain shunt rules correctly."
+msgstr "Заменять целевой адрес на домен, полученный при анализе трафика.<br />При включении трафик будет сопоставляться только по домену, IP-правила игнорируются.<br />При использовании серверов разделения трафика правильно настройте правила доменной маршрутизации."
+
+msgid "Handshake Server"
+msgstr "Сервер рукопожатия"
+
+msgid "Handshake Server Port"
+msgstr "Порт сервера рукопожатия"
+
+msgid "Protocol parameter. Will waste traffic randomly if enabled."
+msgstr "Параметр протокола. При включении случайным образом увеличивает расход трафика."
+
+msgid "Protocol parameter. Enable length block encryption."
+msgstr "Параметр протокола. Включает шифрование блоков длины."
+
+msgid "TLS Chain Fingerprint (SHA256)"
+msgstr "Отпечаток цепочки TLS (SHA256)"
+
+msgid "Once set, connects only when the server's chain fingerprint matches."
+msgstr "После установки соединение возможно только при совпадении отпечатка цепочки сервера."
+
+msgid "TLS Certificate Name (CertName)"
+msgstr "Имя TLS-сертификата (CertName)"
+
+msgid "TLS is used to verify the leaf certificate name."
+msgstr "Используется TLS для проверки имени конечного сертификата."
+
+msgid "ECH Config"
+msgstr "Конфигурация ECH"
+
+msgid "ECH Key"
+msgstr "Ключ ECH"
+
+msgid "PQ signature schemes"
+msgstr "Схемы постквантовой подписи"
+
+msgid "Disable adaptive sizing of TLS records"
+msgstr "Отключить адаптивный размер TLS-записей"
+
+msgid "ECH Query Policy"
+msgstr "Политика запросов ECH"
+
+msgid "Controls the policy used when performing DNS queries for ECH configuration."
+msgstr "Управляет политикой DNS-запросов для получения конфигурации ECH."
+
+msgid "Enable Multipath TCP, need to be enabled in both server and client configuration."
+msgstr "Включить Multipath TCP. Должно быть активировано и на сервере, и на клиенте."
+
+msgid "Fragment"
+msgstr "Фрагментация"
+
+msgid "TCP fragments, which can deceive the censorship system in some cases, such as bypassing SNI blacklists."
+msgstr "Фрагментация TCP-пакетов. В некоторых случаях помогает обходить системы цензуры, например, чёрные списки SNI."
+
+msgid "Fragment Packets"
+msgstr "Способ фрагментации"
+
+msgid "\"1-3\" is for segmentation at TCP layer, applying to the beginning 1 to 3 data writes by the client. \"tlshello\" is for TLS client hello packet fragmentation."
+msgstr "«1–3» — фрагментация TCP для первых 1–3 отправок данных клиентом. «tlshello» — фрагментация пакета TLS ClientHello."
+
+msgid "Fragment Length"
+msgstr "Длина фрагмента"
+
+msgid "Fragmented packet length (byte)"
+msgstr "Длина фрагментированного пакета (байт)"
+
+msgid "Fragment Interval"
+msgstr "Интервал фрагментации"
+
+msgid "Fragmentation interval (ms)"
+msgstr "Интервал между фрагментами (мс)"
+
+msgid "Max Split"
+msgstr "Макс. число фрагментов"
+
+msgid "Limit the maximum number of splits."
+msgstr "Ограничить максимальное количество фрагментов."
+
+msgid "Split handshake data into multiple TLS records for better censorship evasion. Low overhead. Recommended to enable first."
+msgstr "Разбивать данные рукопожатия на несколько TLS-записей для лучшего обхода цензуры. Малая нагрузка. Рекомендуется включить в первую очередь."
+
+msgid "Split handshake into multiple TCP segments. Enhances obfuscation. May increase delay. Use only if needed."
+msgstr "Разбивать рукопожатие на несколько TCP-сегментов. Усиливает маскировку. Может увеличить задержку. Использовать только при необходимости."
+
+msgid "Noise"
+msgstr "Шум"
+
+msgid "UDP noise, Under some circumstances it can bypass some UDP based protocol restrictions."
+msgstr "UDP-шум. В некоторых случаях помогает обходить ограничения, наложенные на UDP-протоколы."
+
+msgid "To send noise packets, select \"Noise\" in Xray Settings."
+msgstr "Чтобы отправлять шумовые пакеты, включите «Шум» в настройках Xray."
+
+msgid "Xray Noise Packets"
+msgstr "Пакеты шума Xray"
+
+msgid "Packet"
+msgstr "Пакет"
+
+msgid "Delay (ms)"
+msgstr "Задержка (мс)"
+
+msgid "IP Type"
+msgstr "Тип IP"
+
+msgid "If is domain name, The requested domain name will be resolved to IP before connect."
+msgstr "Если указано доменное имя, оно будет разрешено в IP-адрес перед подключением."
+
+msgid "Chain Proxy"
+msgstr "Цепочка прокси"
+
+msgid "Landing Node"
+msgstr "Сервер выхода"
+
+msgid "Only support a layer of proxy."
+msgstr "Поддерживается только один уровень цепочки."
+
+msgid ""
+"Chained proxy works only with Xray or Sing-box nodes.<br>"
+"You can only use manual or imported nodes as chained nodes."
+msgstr ""
+"Цепочка прокси работает только с серверами Xray или Sing-Box.<br>"
+"В качестве звеньев цепочки можно использовать только серверы, добавленные вручную или импортированные."
+
+msgid "Set the default domain resolution strategy for the sing-box node."
+msgstr "Задать стратегию разрешения доменов по умолчанию для сервера Sing-Box."
+
+msgid "Prefer IPv4"
+msgstr "Предпочитать IPv4"
+
+msgid "Prefer IPv6"
+msgstr "Предпочитать IPv6"
+
+msgid "IPv4 Only"
+msgstr "Только IPv4"
+
+msgid "IPv6 Only"
+msgstr "Только IPv6"
+
+msgid "Maintain"
+msgstr "Обслуживание"
+
+msgid "Backup and Restore"
+msgstr "Резервное копирование"
+
+msgid "Backup or Restore Client and Server Configurations."
+msgstr "Создание или восстановление резервной копии настроек клиента и сервера."
+
+msgid "Note: Restoring configurations across different versions may cause compatibility issues."
+msgstr "Примечание: восстановление настроек между разными версиями может вызвать проблемы совместимости."
+
+msgid "Create Backup File"
+msgstr "Создать резервную копию"
+
+msgid "Restore Backup File"
+msgstr "Восстановить из резервной копии"
+
+msgid "DL Backup"
+msgstr "Скачать резервную копию"
+
+msgid "RST Backup"
+msgstr "Восстановить из копии"
+
+msgid "Backup failed!"
+msgstr "Ошибка создания резервной копии!"
+
+msgid "UL Restore"
+msgstr "Загрузить и восстановить"
+
+msgid "CLOSE WIN"
+msgstr "Закрыть окно"
+
+msgid "Restore to default configuration"
+msgstr "Восстановить настройки по умолчанию"
+
+msgid "Do Reset"
+msgstr "Выполнить сброс"
+
+msgid "Please select a file first."
+msgstr "Сначала выберите файл."
+
+msgid "Invalid file type. Please upload a .tar.gz file."
+msgstr "Недопустимый тип файла. Пожалуйста, загрузите файл .tar.gz."
+
+msgid "File size exceeds 10MB limit."
+msgstr "Размер файла превышает лимит 10 МБ."
+
+msgid "Do you want to restore the client to default settings?"
+msgstr "Восстановить настройки клиента по умолчанию?"
+
+msgid "Are you sure you want to restore the client to default settings?"
+msgstr "Вы действительно хотите восстановить настройки клиента по умолчанию?"
+
+msgid "Configuration file uploaded successfully…"
+msgstr "Файл конфигурации успешно загружен…"
+
+msgid "Configuration restored successfully…"
+msgstr "Конфигурация успешно восстановлена…"
+
+msgid "Service restarting…"
+msgstr "Перезапуск службы…"
+
+msgid "Configuration file decompression failed, please try again!"
+msgstr "Ошибка распаковки файла конфигурации, попробуйте ещё раз!"
+
+msgid "_urltest"
+msgstr "_urltest"
+
+msgid "URLTest node list"
+msgstr "Список серверов для URLTest"
+
+msgid "List of nodes to test, <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>document</a>"
+msgstr "Список серверов для тестирования, <a target='_blank' href='https://sing-box.sagernet.org/zh/configuration/outbound/urltest'>документация</a>"
+
+msgid "Test interval"
+msgstr "Интервал тестирования"
+
+msgid "Test interval must be less or equal than idle timeout."
+msgstr "Интервал тестирования не должен превышать тайм-аут простоя."
+
+msgid "Test tolerance"
+msgstr "Допустимая погрешность"
+
+msgid "The test tolerance in milliseconds."
+msgstr "Допустимая погрешность теста в миллисекундах."
+
+msgid "Idle timeout"
+msgstr "Тайм-аут простоя"
+
+msgid "The idle timeout."
+msgstr "Время бездействия до отключения."
+
+msgid "Interrupt existing connections"
+msgstr "Разрывать активные соединения"
+
+msgid "Interrupt existing connections when the selected outbound has changed."
+msgstr "Разрывать существующие соединения при смене выбранного исходящего сервера."
+
+msgid "Port hopping range"
+msgstr "Диапазон смены портов"
+
+msgid "Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,)."
+msgstr "Формат: 1000:2000 или 1000-2000. Несколько групп разделяются запятой (,)."
+
+msgid "Use Custom Config"
+msgstr "Использовать свою конфигурацию"
+
+msgid "Custom Config"
+msgstr "Пользовательская конфигурация"
+
+msgid "Must be JSON text!"
+msgstr "Должен быть JSON-текст!"
+
+msgid "Geo View"
+msgstr "Просмотр Geo"
+
+msgid "Query"
+msgstr "Запрос"
+
+msgid "Querying"
+msgstr "Идёт запрос..."
+
+msgid "Please enter query content!"
+msgstr "Пожалуйста, введите текст запроса!"
+
+msgid "No results were found!"
+msgstr "Ничего не найдено!"
+
+msgid "Rules containing this value:"
+msgstr "Правила, содержащие это значение:"
+
+msgid "Domain/IP Query"
+msgstr "Запрос домена/IP"
+
+msgid "GeoIP/Geosite Query"
+msgstr "Запрос GeoIP/Geosite"
+
+msgid "Enter a domain or IP to query the Geo rule list they belong to."
+msgstr "Введите домен или IP, чтобы узнать, в какие Geo-правила они входят."
+
+msgid "Enter a GeoIP or Geosite to extract the domains/IPs they contain. Format: geoip:cn or geosite:gfw"
+msgstr "Введите GeoIP или Geosite, чтобы получить список содержащихся в них доменов/IP. Формат: geoip:cn или geosite:gfw"
+
+msgid "Tips:"
+msgstr "Подсказки:"
+
+msgid "By entering a domain or IP, you can query the Geo rule list they belong to."
+msgstr "Введя домен или IP, можно узнать, в какие Geo-правила он входит."
+
+msgid "By entering a GeoIP or Geosite, you can extract the domains/IPs they contain."
+msgstr "Введя GeoIP или Geosite, можно получить список содержащихся в них доменов/IP."
+
+msgid "Use the GeoIP/Geosite query function to verify if the entered Geo rules are correct."
+msgstr "Используйте функцию запроса GeoIP/Geosite для проверки корректности введённых Geo-правил."
+
+msgid "Private Key Passphrase"
+msgstr "Парольная фраза приватного ключа"
+
+msgid "Host Key"
+msgstr "Ключ хоста"
+
+msgid "Accept any if empty."
+msgstr "Если оставить пустым — принимать любой."
+
+msgid "Host Key Algorithms"
+msgstr "Алгоритмы ключа хоста"
+
+msgid "Client Version"
+msgstr "Версия клиента"
+
+msgid "Random version will be used if empty."
+msgstr "Если оставить пустым — будет использована случайная версия."
+
+msgid "The configured type also applies to the core specified when manually importing nodes."
+msgstr "Выбранный тип также применяется к ядру, указанному при ручном импорте серверов."
+
+msgid "Group Name"
+msgstr "Название группы"
+
+msgid "Reassign Group"
+msgstr "Изменить группу"
+
+msgid "Reassign Node Group"
+msgstr "Изменить группу сервера"
+
+msgid "Search nodes..."
+msgstr "Поиск серверов..."
+
+msgid "Using..."
+msgstr "Используется."
+
+msgid "Generate configuration file and run"
+msgstr "Сгенерировать конфигурацию и запустить"
+
+msgid "Start after a delay of %s seconds!"
+msgstr "Запуск с задержкой %s секунд!"
+
+msgid "The script is already running, do not run it again. Exit."
+msgstr "Скрипт уже выполняется, повторный запуск отменён."
+
+msgid "Stop the script and wait for a timeout, then exit without repeating the process."
+msgstr "Остановка скрипта и ожидание тайм-аута, выход без повторного выполнения."
+
+msgid "Warning: The %s application environment is incomplete. Switch to %s. (%s)"
+msgstr "Внимание: среда приложения %s неполная. Переключение на %s. (%s)"
+
+msgid "Note: Dnsmasq (%s) is below 2.90. Upgrading is recommended to improve stability."
+msgstr "Примечание: версия Dnsmasq (%s) ниже 2.90. Рекомендуется обновить для повышения стабильности."
+
+msgid "Warning: %s transparent proxy is missing basic dependency %s!"
+msgstr "Внимание: для прозрачного прокси %s отсутствует базовая зависимость %s!"
+
+msgid "Warning: Not compatible with any transparent proxy system environment."
+msgstr "Внимание: несовместимо ни с одной средой прозрачного прокси."
+
+msgid "%s does not have execute permissions and cannot be started: %s %s"
+msgstr "У %s нет прав на выполнение, запуск невозможен: %s %s"
+
+msgid "%s not found, unable to start..."
+msgstr "%s не найден, запуск невозможен..."
+
+msgid "Socks node: [%s]%s is an invalid server address and cannot be started!"
+msgstr "SOCKS-сервер: [%s]%s — недопустимый адрес, запуск невозможен!"
+
+msgid "For some reason, the configuration for this Socks service has been lost, and its startup has been aborted!"
+msgstr "По неизвестной причине конфигурация этого SOCKS-сервиса утеряна, запуск отменён!"
+
+msgid "Socks node: [%s]%s, start failed %s:%s %s"
+msgstr "SOCKS-сервер: [%s]%s, ошибка запуска %s:%s %s"
+
+msgid "Socks node: [%s]%s, starting %s:%s"
+msgstr "SOCKS-сервер: [%s]%s, запуск %s:%s"
+
+msgid "To enable experimental IPv6 transparent proxy (TProxy), please ensure your node and type support IPv6!"
+msgstr "Для включения экспериментального IPv6-прокси (TProxy) убедитесь, что ваш сервер и тип поддерживают IPv6!"
+
+msgid "[%s] process %s error, skip this transparent proxy!"
+msgstr "【%s】 ошибка процесса %s, этот прозрачный прокси пропускается!"
+
+msgid "Analyzing the node configuration of the Socks service..."
+msgstr "Анализ конфигурации сервера для SOCKS-сервиса..."
+
+msgid "Log file is too long, clear it!"
+msgstr "Файл журнала слишком большой, выполняется очистка!"
+
+msgid "The task is currently running automatically as a scheduled task; no reconfiguration of the scheduled task is required."
+msgstr "Задача уже выполняется автоматически по расписанию, повторная настройка не требуется."
+
+msgid "Scheduled tasks: Auto stop service."
+msgstr "Планировщик: автоотключение службы."
+
+msgid "Scheduled tasks: Auto start service."
+msgstr "Планировщик: автозапуск службы."
+
+msgid "Scheduled tasks: Auto restart service."
+msgstr "Планировщик: автоперезапуск службы."
+
+msgid "Scheduled tasks: Auto update rules."
+msgstr "Планировщик: автообновление правил."
+
+msgid "Scheduled tasks: Auto update [%s] subscription."
+msgstr "Планировщик: автообновление подписки [%s]."
+
+msgid "Auto updates: Starts a cyclical update process."
+msgstr "Автообновление: запуск циклического процесса обновления."
+
+msgid "Running in no proxy mode, it only allows scheduled tasks for starting and stopping services."
+msgstr "Работа в режиме без прокси: разрешены только задачи автозапуска и автоотключения службы."
+
+msgid "Clear scheduled commands."
+msgstr "Очистить запланированные команды."
+
+msgid "Unable to resolve [%s], route table addition failed!"
+msgstr "Не удалось разрешить [%s], добавление в таблицу маршрутизации не выполнено!"
+
+msgid "[%s] was successfully added to the routing table of interface [%s]!"
+msgstr "[%s] успешно добавлен в таблицу маршрутизации интерфейса [%s]!"
+
+msgid "Adding [%s] to the [%s] routing table failed! The reason is that the [%s] gateway cannot be found."
+msgstr "Добавление [%s] в таблицу маршрутизации [%s] не выполнено! Причина: не найден шлюз [%s]."
+
+msgid "Global nodes are not enabled, skip [%s]."
+msgstr "Глобальные серверы не включены, [%s] пропускается."
+
+msgid "Direct DNS: %s"
+msgstr "Прямой DNS: %s"
+
+msgid "Remote DNS: %s"
+msgstr "Прокси-DNS: %s"
+
+msgid "The program has started. Please stop it and then restart it!"
+msgstr "Программа уже запущена. Пожалуйста, сначала остановите её, затем перезапустите!"
+
+msgid "Running complete!"
+msgstr "Выполнение завершено!"
+
+msgid "Clearing and closing related programs and cache complete."
+msgstr "Очистка и завершение связанных процессов и кэша завершена."
+
+msgid "Incorrect index listing method (%s), execution terminated!"
+msgstr "Неверный способ перечисления индексов (%s), выполнение прервано!"
+
+msgid "parse the traffic splitting rules[%s]-[geoip:%s] add to %s to complete."
+msgstr "Разбор правил разделения трафика [%s]-[geoip:%s], добавление в %s завершено."
+
+msgid "Access Control:"
+msgstr "Контроль доступа:"
+
+msgid "Add node to the load balancer is directly connected to %s[%s]."
+msgstr "Добавление сервера в балансировщик: прямое подключение к %s[%s] завершено."
+
+msgid "Add all %s nodes to %s[%s] direct connection complete."
+msgstr "Добавление всех серверов %s в %s[%s]: прямое подключение завершено."
+
+msgid "Starting to load %s firewall rules..."
+msgstr "Начало загрузки правил фаервола %s..."
+
+msgid "local network segments (%s) direct connection: %s"
+msgstr "Локальные подсети (%s): прямое подключение: %s"
+
+msgid "Add ISP %s DNS to the whitelist: %s"
+msgstr "Добавление DNS провайдера %s в белый список: %s"
+
+msgid "[%s]"
+msgstr "【%s】"
+
+msgid "[%s],"
+msgstr "【%s】,"
+
+msgid "Source iface [%s],"
+msgstr "Исходящий интерфейс 【%s】,"
+
+msgid "IP range [%s],"
+msgstr "Диапазон IP 【%s】,"
+
+msgid "All device,"
+msgstr "Все устройства,"
+
+msgid "Does not exist, ignore."
+msgstr "Не существует, пропущено."
+
+msgid "not proxy %s port [%s]"
+msgstr "не прокси %s порт [%s]"
+
+msgid "not proxy all %s"
+msgstr "не прокси все %s"
+
+msgid "Use the %s node [%s]"
+msgstr "Использовать %s сервер [%s]"
+
+msgid "Using a node that is different from the global configuration, DNS has been forcibly redirected to a dedicated DNS server."
+msgstr "Используется сервер, отличный от глобальной настройки: DNS принудительно перенаправлен на выделенный DNS-сервер."
+
+msgid "Add direct DNS to %s: %s"
+msgstr "Добавление прямого DNS в %s: %s"
+
+msgid "Local"
+msgstr "Локально"
+
+msgid "[Local],"
+msgstr "【Локально】,"
+
+msgid "Clear %s."
+msgstr "Очистка %s."
+
+msgid "Delete %s rules is complete."
+msgstr "Удаление правил %s завершено."
+
+msgid "%s firewall rules load complete!"
+msgstr "Загрузка правил фаервола %s завершена!"
+
+msgid "Socks switch detection: Unknown error."
+msgstr "Проверка переключения SOCKS: неизвестная ошибка."
+
+msgid "Socks switch detection: Unable to connect to the network. Please check if the network is working properly!"
+msgstr "Проверка переключения SOCKS: не удалось подключиться к сети. Пожалуйста, проверьте работоспособность сети!"
+
+msgid "Socks switch detection: Primary node 【%s: [%s]】 is normal. Switch to the primary node!"
+msgstr "Проверка переключения SOCKS: основной сервер 【%s: [%s]】 работает нормально. Переключение на основной сервер!"
+
+msgid "Socks switch detection: %s node switch complete!"
+msgstr "Проверка переключения SOCKS: переключение сервера %s завершено!"
+
+msgid "Socks switch detection: %s 【%s:[%s]】 normal."
+msgstr "Проверка переключения SOCKS: %s 【%s:[%s]】 работает нормально."
+
+msgid "switch to %s test detect!"
+msgstr "Переключение на %s для проверки!"
+
+msgid "backup node"
+msgstr "резервный сервер"
+
+msgid "next backup node"
+msgstr "следующий резервный сервер"
+
+msgid "main node"
+msgstr "основной сервер"
+
+msgid "Socks switch detection: %s 【%s:[%s]】 abnormal, %s"
+msgstr "Проверка переключения SOCKS: %s 【%s:[%s]】 не работает, %s"
+
+msgid "Socks switch detection: %s 【%s:[%s]】 normal, switch to this node!"
+msgstr "Проверка переключения SOCKS: %s 【%s:[%s]】 работает нормально, переключение на этот сервер!"
+
+msgid "Restart dnsmasq service."
+msgstr "Перезапуск службы dnsmasq."
+
+msgid "Console Port: %s"
+msgstr "Порт консоли: %s"
+
+msgid "Discard one obviously invalid node."
+msgstr "Отброшен 1 явно некорректный сервер."
+
+msgid "Entrance %s:%s"
+msgstr "Вход %s:%s"
+
+msgid "Node: %s:%s, Weight: %s"
+msgstr "Сервер: %s:%s, вес: %s"
+
+msgid "Start updating the rules..."
+msgstr "Начало обновления правил..."
+
+msgid "Download file size verification error. Original file size: %sB. Downloaded file size: %sB."
+msgstr "Ошибка проверки размера файла. Исходный размер: %sB, загруженный: %sB."
+
+msgid "Downloaded file is empty or an error occurred while reading it."
+msgstr "Загруженный файл пуст или произошла ошибка при чтении."
+
+msgid "%s Start updating..."
+msgstr "%s начало обновления..."
+
+msgid "%s version is the same and does not need to be updated."
+msgstr "Версия %s совпадает, обновление не требуется."
+
+msgid "%s an error occurred during the file download process. Please try downloading again."
+msgstr "%s ошибка при загрузке файла. Пожалуйста, попробуйте ещё раз."
+
+msgid "%s an error occurred while downloading the file. Please check your network or the download link and try again!"
+msgstr "%s ошибка при загрузке файла. Пожалуйста, проверьте сеть или ссылку и повторите попытку!"
+
+msgid "%s update success."
+msgstr "%s обновлён успешно."
+
+msgid "%s update failed, please try again later or change URL."
+msgstr "%s обновление не удалось, попробуйте позже или измените URL."
+
+msgid "%s update error!"
+msgstr "%s ошибка обновления!"
+
+msgid "Restart the service and apply the new rules."
+msgstr "Перезапуск службы для применения новых правил."
+
+msgid "The rules have been updated..."
+msgstr "Правила обновлены..."
+
+msgid "Socks node list [%s]"
+msgstr "Список SOCKS-серверов [%s]"
+
+msgid "Backup node list"
+msgstr "Список резервных серверов"
+
+msgid "HAProxy node list [%s]"
+msgstr "Список серверов HAProxy [%s]"
+
+msgid "ACL list [%s]"
+msgstr "Список ACL [%s]"
+
+msgid "Shunt [%s] node"
+msgstr "Сервер разделения [%s]"
+
+msgid "Xray Load Balancing node [%s] list"
+msgstr "Список серверов балансировки Xray [%s]"
+
+msgid "Xray Load Balancing node [%s] backup node"
+msgstr "Резервный сервер балансировки Xray [%s]"
+
+msgid "Sing-Box URLTest node [%s] list"
+msgstr "Список серверов Sing-Box URLTest [%s]"
+
+msgid "Node [%s] preproxy node"
+msgstr "Сервер [%s]: звено цепочки"
+
+msgid "Node [%s] landing node"
+msgstr "Сервер [%s]: финальное звено"
+
+msgid "Skipping the %s node is due to incompatibility with the %s core program or incorrect node usage type settings."
+msgstr "Пропуск сервера %s: несовместимость с ядром %s или неверно задан тип использования."
+
+msgid "Skip node: %s. Because Sing-Box does not support the %s protocol's %s transmission method, Xray needs to be used instead."
+msgstr "Пропуск сервера: %s. Sing-Box не поддерживает метод передачи %s протокола %s, необходимо использовать Xray."
+
+msgid "Xray unsupport %s plugin."
+msgstr "Xray не поддерживает плагин %s."
+
+msgid "Plugin options Incomplete."
+msgstr "Опции плагина указаны не полностью."
+
+msgid "shadowsocks-libev unsupport 2022 encryption."
+msgstr "shadowsocks-libev не поддерживает шифрование 2022."
+
+msgid "Please replace Xray or Sing-Box to support more transmission methods in Shadowsocks."
+msgstr "Пожалуйста, используйте Xray или Sing-Box для поддержки дополнительных методов передачи в Shadowsocks."
+
+msgid "unsupport %s plugin."
+msgstr "не поддерживает плагин %s."
+
+msgid "Skip the %s node because the %s core program is not installed."
+msgstr "Пропуск сервера %s: не установлено ядро %s."
+
+msgid "Skip the %s node, as %s type nodes require Sing-Box version 1.12 or higher."
+msgstr "Пропуск сервера %s: серверы типа %s требуют Sing-Box версии 1.12 или выше."
+
+msgid "%s type node subscriptions are not currently supported, skip this node."
+msgstr "Подписки на серверы типа %s пока не поддерживаются, этот сервер пропускается."
+
+msgid "Update [%s]"
+msgstr "Обновление [%s]"
+
+msgid "Matching node:"
+msgstr "Найденный сервер:"
+
+msgid "First Matching node:"
+msgstr "Первый подходящий сервер:"
+
+msgid "Second Matching node:"
+msgstr "Второй подходящий сервер:"
+
+msgid "Third Matching node:"
+msgstr "Третий подходящий сервер:"
+
+msgid "Fourth Matching node:"
+msgstr "Четвёртый подходящий сервер:"
+
+msgid "Fifth Matching node:"
+msgstr "Пятый подходящий сервер:"
+
+msgid "Unable to find the best matching node, now replaced with:"
+msgstr "Не удалось найти наилучший сервер, текущая замена:"
+
+msgid "Unable to find a new node. Please confirm and process manually."
+msgstr "Не удалось найти новый сервер. Пожалуйста, проверьте и обработайте вручную."
+
+msgid "No node information updates are available."
+msgstr "Нет доступных обновлений информации о серверах."
+
+msgid "Skip unknown types:"
+msgstr "Пропуск неизвестных типов:"
+
+msgid "Discard node: %s, Reason:"
+msgstr "Отброшен узел: %s, причина:"
+
+msgid "No usable binary was found."
+msgstr "Не найдено пригодного исполняемого файла."
+
+msgid "Discard filter nodes: %s type node %s"
+msgstr "Отброшены узлы фильтра: тип %s, сервер %s"
+
+msgid "Parsing error, skip this node."
+msgstr "Ошибка разбора, этот сервер пропускается."
+
+msgid "Successfully resolved the [%s] node, number: %s"
+msgstr "Успешно разобран [%s], количество узлов: %s"
+
+msgid "Get subscription content for [%s] is empty. This may be due to an invalid subscription address or a network problem. Please diagnose the issue!"
+msgstr "Содержимое подписки [%s] пусто. Возможно, адрес подписки неверен или есть проблема с сетью. Пожалуйста, проведите диагностику!"
+
+msgid "Proxy"
+msgstr "Прокси"
+
+msgid "Start subscribing..."
+msgstr "Начало подписки..."
+
+msgid "Start subscribing: %s"
+msgstr "Начало подписки: %s"
+
+msgid "Subscription: [%s] No changes, no update required."
+msgstr "Подписка: [%s] изменений нет, обновление не требуется."
+
+msgid "[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]"
+msgstr "[%s] Ошибка подписки. Возможно, адрес подписки неверен или есть проблема с сетью. Пожалуйста, проведите диагностику! [%s]"
+
+msgid "Error, restoring service."
+msgstr "Ошибка, выполняется восстановление службы."
+
+msgid "Subscription complete..."
+msgstr "Подписка завершена..."
