@@ -134,7 +134,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 					</div>
 				</div>
 				<div class="pure-u-2-3">
-					<h4 id="status_haproxy"><%:Load Balancing%><br /><span class="red"><%:NOT RUNNING%></span></h4>
+					<h4 id="status_haproxy">HAPROXY<br /><span class="red">N/A</span></h4>
 				</div>
 			</div>
 		</div>
@@ -229,10 +229,12 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 						status_dns.innerHTML = 'DNS<br /><span class="red"><%:NOT RUNNING%></span>';
 					}
 					if (status_haproxy) {
-						if (data.haproxy_status) {
-							status_haproxy.innerHTML = '<%:Load Balancing%><br /><span class="green"><%:RUNNING%></span>'
+						if (data.haproxy_status === "-1") {
+							status_haproxy.innerHTML = 'HAPROXY<br /><span class="red"><%:UNINSTALLED%></span>';
+						} else if (data.haproxy_status === "0") {
+							status_haproxy.innerHTML = 'HAPROXY<br /><span class="green"><%:RUNNING%></span>';
 						} else {
-							status_haproxy.innerHTML = '<%:Load Balancing%><br /><span class="red"><%:NOT RUNNING%></span>'
+							status_haproxy.innerHTML = 'HAPROXY<br /><span class="red"><%:NOT RUNNING%></span>';
 						}
 					}
 				}

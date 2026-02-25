@@ -10,6 +10,9 @@ msgstr "运行中"
 msgid "NOT RUNNING"
 msgstr "未运行"
 
+msgid "UNINSTALLED"
+msgstr "未安装"
+
 msgid "Working..."
 msgstr "连接正常"
 
