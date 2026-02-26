@@ -873,8 +873,8 @@ add_firewall_rule() {
 
 			[ -d "${TMP_IFACE_PATH}" ] && {
 				for iface in $(ls ${TMP_IFACE_PATH}); do
-					$ipt_n -I PSW2_OUTPUT -o $iface -p tcp -j RETURN
-					$ipt_m -I PSW2_OUTPUT -o $iface -p tcp -j RETURN
+					$ipt_n -A PSW2_OUTPUT -o $iface -p tcp -j RETURN
+					$ipt_m -A PSW2_OUTPUT -o $iface -p tcp -j RETURN
 				done
 			}
 		fi
@@ -899,8 +899,8 @@ add_firewall_rule() {
 
 			[ -d "${TMP_IFACE_PATH}" ] && {
 				for iface in $(ls ${TMP_IFACE_PATH}); do
-					$ipt_n -I PSW2_OUTPUT -o $iface -p udp -j RETURN
-					$ipt_m -I PSW2_OUTPUT -o $iface -p udp -j RETURN
+					$ipt_n -A PSW2_OUTPUT -o $iface -p udp -j RETURN
+					$ipt_m -A PSW2_OUTPUT -o $iface -p udp -j RETURN
 				done
 			}
 		fi

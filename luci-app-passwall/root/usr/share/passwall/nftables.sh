@@ -1351,8 +1351,8 @@ add_firewall_rule() {
 
 	[ -d "${TMP_IFACE_PATH}" ] && {
 		for iface in $(ls ${TMP_IFACE_PATH}); do
-			nft "insert rule $NFTABLE_NAME $nft_output_chain oif $iface counter return"
-			nft "insert rule $NFTABLE_NAME PSW_OUTPUT_MANGLE_V6 oif $iface counter return"
+			nft "add rule $NFTABLE_NAME $nft_output_chain oif $iface counter return"
+			nft "add rule $NFTABLE_NAME PSW_OUTPUT_MANGLE_V6 oif $iface counter return"
 		done
 	}
 

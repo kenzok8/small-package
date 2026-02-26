@@ -909,8 +909,8 @@ add_firewall_rule() {
 
 			[ -d "${TMP_IFACE_PATH}" ] && {
 				for iface in $(ls ${TMP_IFACE_PATH}); do
-					nft "insert rule $NFTABLE_NAME $nft_output_chain ip protocol tcp oif $iface counter return"
-					nft "insert rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 ip protocol tcp oif $iface counter return"
+					nft "add rule $NFTABLE_NAME $nft_output_chain ip protocol tcp oif $iface counter return"
+					nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 ip protocol tcp oif $iface counter return"
 				done
 			}
 		fi
@@ -934,8 +934,8 @@ add_firewall_rule() {
 
 			[ -d "${TMP_IFACE_PATH}" ] && {
 				for iface in $(ls ${TMP_IFACE_PATH}); do
-					nft "insert rule $NFTABLE_NAME $nft_output_chain ip protocol udp oif $iface counter return"
-					nft "insert rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 ip protocol udp oif $iface counter return"
+					nft "add rule $NFTABLE_NAME $nft_output_chain ip protocol udp oif $iface counter return"
+					nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 ip protocol udp oif $iface counter return"
 				done
 			}
 		fi

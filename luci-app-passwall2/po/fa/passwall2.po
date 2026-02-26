@@ -1257,9 +1257,6 @@ msgstr "نام افزونه"
 msgid "Plugin Arguments"
 msgstr "آرگومان‌های افزونه"
 
-msgid "Naiveproxy Protocol"
-msgstr "پروتکل Naiveproxy"
-
 msgid "User Level"
 msgstr "سطح کاربر"
 
@@ -1667,6 +1664,9 @@ msgstr "سیاستی که هنگام انجام پرس‌وجوهای DNS برا
 
 msgid "Enable Multipath TCP, need to be enabled in both server and client configuration."
 msgstr "فعال‌سازی Multipath TCP، باید در تنظیمات سرور و کلاینت فعال باشد."
+
+msgid "An FinalMaskObject in JSON format, used for sharing."
+msgstr "یک شیء FinalMaskObject با فرمت JSON که برای اشتراک‌گذاری استفاده می‌شود."
 
 msgid "Fragment"
 msgstr "قطعه‌بندی (Fragment)"

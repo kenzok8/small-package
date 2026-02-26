@@ -1258,9 +1258,6 @@ msgstr "Название плагина"
 msgid "Plugin Arguments"
 msgstr "Аргументы плагина"
 
-msgid "Naiveproxy Protocol"
-msgstr "Протокол Naiveproxy"
-
 msgid "User Level"
 msgstr "Уровень доступа"
 
@@ -1668,6 +1665,9 @@ msgstr "Управляет политикой DNS-запросов для пол
 
 msgid "Enable Multipath TCP, need to be enabled in both server and client configuration."
 msgstr "Включить Multipath TCP. Должно быть активировано и на сервере, и на клиенте."
+
+msgid "An FinalMaskObject in JSON format, used for sharing."
+msgstr "Объект FinalMaskObject в формате JSON, используемый для обмена данными."
 
 msgid "Fragment"
 msgstr "Фрагментация"

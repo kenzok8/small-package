@@ -322,6 +322,9 @@ local current_node = map:get(section)
 				}
 
 				opt.get(dom_prefix + "uot")?.checked && (params += "&udp=1");
+				if (opt.get(dom_prefix + "use_finalmask")?.checked) {
+					params += opt.query("fm", dom_prefix + "finalmask");
+				}
 
 				if (opt.get(dom_prefix + "shadowtls")?.checked) {
 					let st_plugin_str = "";
@@ -422,6 +425,10 @@ local current_node = map:get(section)
 			}
 
 			opt.get(dom_prefix + "tcp_fast_open")?.checked && (info.tfo = "1");
+			if (opt.get(dom_prefix + "use_finalmask")?.checked) {
+				info.fm = opt.get(dom_prefix + "finalmask").value;
+				if (info.fm) info.fm = encodeURI(info.fm);
+			}
 
 			url = b64EncodeUnicode(JSON.stringify(info));
 		} else if ((v_type === "sing-box" || v_type === "Xray") && opt.get(dom_prefix + "protocol").value === "vless") {
@@ -508,6 +515,9 @@ local current_node = map:get(section)
 			}
 
 			opt.get(dom_prefix + "tcp_fast_open")?.checked && (params += "&tfo=1");
+			if (opt.get(dom_prefix + "use_finalmask")?.checked) {
+				params += opt.query("fm", dom_prefix + "finalmask");
+			}
 
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
@@ -576,6 +586,9 @@ local current_node = map:get(section)
 			}
 
 			opt.get(dom_prefix + "tcp_fast_open")?.checked && (params += "&tfo=1");
+			if (opt.get(dom_prefix + "use_finalmask")?.checked) {
+				params += opt.query("fm", dom_prefix + "finalmask");
+			}
 
 			params += "#" + encodeURI(v_alias.value);
 			if (params[0] == "&") {
@@ -610,6 +623,9 @@ local current_node = map:get(section)
 					params += opt.query("obfs-password", dom_prefix + "hysteria2_obfs_password");
 				}
 				params += opt.query("mport", dom_prefix + "hysteria2_hop");
+				if (opt.get(dom_prefix + "use_finalmask")?.checked) {
+					params += opt.query("fm", dom_prefix + "finalmask");
+				}
 			}
 			params = params.replace(/^&/, "");
 			url =
@@ -1130,6 +1146,8 @@ local current_node = map:get(section)
 				}
 
 				opt.set(dom_prefix + 'uot', queryParam.udp);
+				opt.set(dom_prefix + 'use_finalmask', !!queryParam.fm);
+				opt.set(dom_prefix + 'finalmask', queryParam.fm || "");
 			
 				if (queryParam["shadow-tls"]) {
 					// Parsing SS Shadow-TLS plugin parameters
@@ -1288,6 +1306,8 @@ local current_node = map:get(section)
 			}
 
 			opt.set(dom_prefix + 'tcp_fast_open', queryParam.tfo);
+			opt.set(dom_prefix + 'use_finalmask', !!queryParam.fm);
+			opt.set(dom_prefix + 'finalmask', queryParam.fm || "");
 
 			if (m.hash) {
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
@@ -1383,8 +1403,9 @@ local current_node = map:get(section)
 			} else if (ssm.net === "grpc") {
 				opt.set(dom_prefix + 'grpc_serviceName', ssm.path);
 			}
-
 			opt.set(dom_prefix + 'tcp_fast_open', ssm.tfo);
+			opt.set(dom_prefix + 'use_finalmask', !!ssm.fm);
+			opt.set(dom_prefix + 'finalmask', ssm.fm || "");
 		}
 		if (ssu[0] === "vless") {
 			if (vless_type == "sing-box" && has_singbox) {
@@ -1537,6 +1558,8 @@ local current_node = map:get(section)
 			}
 
 			opt.set(dom_prefix + 'tcp_fast_open', queryParam.tfo);
+			opt.set(dom_prefix + 'use_finalmask', !!queryParam.fm);
+			opt.set(dom_prefix + 'finalmask', queryParam.fm || "");
 
 			if (m.hash) {
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
@@ -1571,6 +1594,8 @@ local current_node = map:get(section)
 					opt.set(dom_prefix + 'hysteria2_obfs_password', queryParam["obfs-password"] || queryParam["obfs_password"]);
 				}
 				opt.set(dom_prefix + 'hysteria2_hop', queryParam.mport || "");
+				opt.set(dom_prefix + 'use_finalmask', !!queryParam.fm);
+				opt.set(dom_prefix + 'finalmask', queryParam.fm || "");
 			} else if (has_hysteria2) {
 				opt.set('type', "Hysteria2");
 				dom_prefix = "hysteria2_"

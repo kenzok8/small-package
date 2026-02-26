@@ -1249,9 +1249,6 @@ msgstr "插件名称"
 msgid "Plugin Arguments"
 msgstr "插件參數"
 
-msgid "Naiveproxy Protocol"
-msgstr "Naiveproxy協議"
-
 msgid "User Level"
 msgstr "用戶等級(level)"
 
@@ -1659,6 +1656,9 @@ msgstr "控制使用 DNS 查詢 ECH 配置時的策略。"
 
 msgid "Enable Multipath TCP, need to be enabled in both server and client configuration."
 msgstr "啟用 Multipath TCP，需在服務端和客戶端配置中同時啟用。"
+
+msgid "An FinalMaskObject in JSON format, used for sharing."
+msgstr "JSON 格式的 FinalMaskObject，用來實現分享。"
 
 msgid "Fragment"
 msgstr "分片"

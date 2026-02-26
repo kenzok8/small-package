@@ -1,7 +1,7 @@
 module("luci.passwall2.api", package.seeall)
 appname = "passwall2"
 local com = require "luci.passwall2.com"
-bin = require "nixio".bin
+nixio = require "nixio"
 fs = require "nixio.fs"
 sys = require "luci.sys"
 uci = require"luci.model.uci".cursor()
@@ -153,8 +153,8 @@ function base64Decode(text)
 end
 
 function base64Encode(text)
-	local result = nixio.bin.b64encode(text)
-	return result
+	if not text then return nil end
+	return nixio.bin.b64encode(text)
 end
 
 function UrlEncode(szText)

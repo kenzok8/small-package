@@ -348,7 +348,7 @@ do
 		else
 			-- Preproxy Node
 			local currentNode = uci:get_all(appname, node_id) or nil
-			if currentNode and currentNode.preproxy_node then
+			if currentNode and currentNode.preproxy_node and not currentNode.preproxy_node:find("Socks_") then
 				CONFIG[#CONFIG + 1] = {
 					log = true,
 					id = node_id,
@@ -365,7 +365,7 @@ do
 			end
 			-- Landing node
 			local currentNode = uci:get_all(appname, node_id) or nil
-			if currentNode and currentNode.to_node then
+			if currentNode and currentNode.to_node and not currentNode.to_node:find("Socks_") then
 				CONFIG[#CONFIG + 1] = {
 					log = true,
 					id = node_id,
@@ -501,6 +501,8 @@ local function processData(szType, content, add_mode, group)
 		-- result.mux = 1
 		-- result.mux_concurrency = 8
 
+		info.path = (info.path and info.path ~= "") and UrlDecode(info.path) or nil
+
 		if not info.net then info.net = "tcp" end
 		info.net = string.lower(info.net)
 		if result.type == "sing-box" and info.net == "raw" then 
@@ -605,6 +607,10 @@ local function processData(szType, content, add_mode, group)
 
 		result.tcp_fast_open = info.tfo
 
+		info.fm = (info.fm and info.fm ~= "") and UrlDecode(info.fm) or nil
+		result.use_finalmask = (info.fm and info.fm ~= "") and "1" or nil
+		result.finalmask = (info.fm and info.fm ~= "") and api.base64Encode(info.fm) or nil
+
 		if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 			log(2, i18n.translatef("Skip node: %s. Because Sing-Box does not support the %s protocol's %s transmission method, Xray needs to be used instead.", result.remarks, szType, result.transport))
 			return nil
@@ -708,6 +714,8 @@ local function processData(szType, content, add_mode, group)
 			result.method = method
 			result.password = password
 			result.tcp_fast_open = params.tfo
+			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
+			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
 			local need_upgrade = (result.type ~= "Xray" and result.type ~= "sing-box")
 				and (params.type and params.type ~= "tcp")
@@ -1084,6 +1092,8 @@ local function processData(szType, content, add_mode, group)
 
 			result.alpn = params.alpn
 			result.tcp_fast_open = params.tfo
+			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
+			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
 			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 				log(2, i18n.translatef("Skip node: %s. Because Sing-Box does not support the %s protocol's %s transmission method, Xray needs to be used instead.", result.remarks, szType, result.transport))
@@ -1273,6 +1283,8 @@ local function processData(szType, content, add_mode, group)
 			end
 
 			result.tcp_fast_open = params.tfo
+			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
+			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 
 			if result.type == "sing-box" and (result.transport == "mkcp" or result.transport == "xhttp") then
 				log(2, i18n.translatef("Skip node: %s. Because Sing-Box does not support the %s protocol's %s transmission method, Xray needs to be used instead.", result.remarks, szType, result.transport))
@@ -1389,6 +1401,8 @@ local function processData(szType, content, add_mode, group)
 				result.hysteria2_obfs_type = "salamander"
 				result.hysteria2_obfs_password = params["obfs-password"] or params["obfs_password"]
 			end
+			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
+			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 		elseif has_hysteria2 then
 			result.type = "Hysteria2"
 			if params["obfs-password"] or params["obfs_password"] then

@@ -1005,7 +1005,7 @@ function gen_config(var)
 			return balancer_tag, loopback_outbound
 		end
 
-		function set_outbound_detour(node, outbound, outbounds_table, shunt_rule_name)
+		function set_outbound_detour(node, outbound, outbounds_table)
 			if not node or not outbound or not outbounds_table then return nil end
 			local default_outTag = outbound.tag
 			local last_insert_outbound
@@ -1066,12 +1066,7 @@ function gen_config(var)
 						to_outbound = gen_outbound(node[".name"], to_node)
 					end
 					if to_outbound then
-						if shunt_rule_name then
-							to_outbound.tag = outbound.tag
-							outbound.tag = node[".name"]
-						else
-							to_outbound.tag = outbound.tag .. " -> " .. to_outbound.tag
-						end
+						to_outbound.tag = outbound.tag .. " -> " .. to_outbound.tag
 						if to_node.type == "Xray" then
 							to_outbound.proxySettings = {
 								tag = outbound.tag,
@@ -1094,25 +1089,8 @@ function gen_config(var)
 			elseif type(node_id) == "table" then
 				node = node_id
 			end
+			if not tag then tag = node[".name"] end
 			if node then
-				if node.protocol == "_iface" then
-					if node.iface then
-						local outbound = {
-							tag = tag,
-							protocol = "freedom",
-							streamSettings = {
-								sockopt = {
-									mark = 255,
-									interface = node.iface
-								}
-							}
-						}
-						table.insert(outbounds, outbound)
-						sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
-						return outbound.tag
-					end
-					return nil
-				end
 				if proxy_table.chain_proxy == "1" or proxy_table.chain_proxy == "2" then
 					node.chain_proxy = proxy_table.chain_proxy
 					node.preproxy_node = proxy_table.chain_proxy == "1" and proxy_table.preproxy_node
@@ -1136,6 +1114,20 @@ function gen_config(var)
 						outbound = loopback_outbound
 						node[".name"] = outbound.tag
 						has_add_outbound = true
+					end
+				elseif node.protocol == "_iface" then
+					if node.iface then
+						outbound = {
+							tag = tag,
+							protocol = "freedom",
+							streamSettings = {
+								sockopt = {
+									mark = 255,
+									interface = node.iface
+								}
+							}
+						}
+						sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 					end
 				end
 				if not outbound then
@@ -1318,7 +1310,7 @@ function gen_config(var)
 				rules = rules
 			}
 		else
-			COMMON.default_outbound_tag = gen_outbound_get_tag(flag, node, "default", {
+			COMMON.default_outbound_tag = gen_outbound_get_tag(flag, node, nil, {
 				fragment = xray_settings.fragment == "1" or nil,
 				noise = xray_settings.noise == "1" or nil,
 				run_socks_instance = not no_run

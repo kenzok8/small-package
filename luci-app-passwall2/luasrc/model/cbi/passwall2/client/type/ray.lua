@@ -610,9 +610,9 @@ o = s:option(Flag, _n("use_xhttp_extra"), translate("XHTTP Extra"))
 o.default = "0"
 o:depends({ [_n("transport")] = "xhttp" })
 
-o = s:option(TextValue, _n("xhttp_extra"), " ", translate("An XHttpObject in JSON format, used for sharing."))
+o = s:option(TextValue, _n("xhttp_extra"), "　", translate("An XHttpObject in JSON format, used for sharing."))
 o:depends({ [_n("use_xhttp_extra")] = true })
-o.rows = 15
+o.rows = 10
 o.wrap = "off"
 o.custom_cfgvalue = function(self, section, value)
 	local raw = m:get(section, "xhttp_extra")
@@ -621,7 +621,7 @@ o.custom_cfgvalue = function(self, section, value)
 	end
 end
 o.custom_write = function(self, section, value)
-	m:set(section, "xhttp_extra", api.base64Encode(value))
+	m:set(section, "xhttp_extra", api.base64Encode(value) or "")
 	local success, data = pcall(jsonc.parse, value)
 	if success and data then
 		local address = (data.extra and data.extra.downloadSettings and data.extra.downloadSettings.address)
@@ -637,11 +637,12 @@ o.custom_write = function(self, section, value)
 	end
 end
 o.validate = function(self, value)
-	value = value:gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
-	if value:sub(-1) == "\n" then
-		value = value:sub(1, -2)
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
+	if api.jsonc.parse(value) then
+		return value
+	else
+		return nil, "XHTTP Extra " .. translate("Must be JSON text!")
 	end
-	return value
 end
 o.custom_remove = function(self, section, value)
 	m:del(section, "xhttp_extra")
@@ -654,6 +655,7 @@ o:depends({ [_n("tcp_guise")] = "http" })
 o:depends({ [_n("transport")] = "ws" })
 o:depends({ [_n("transport")] = "httpupgrade" })
 o:depends({ [_n("transport")] = "xhttp" })
+o:depends({ [_n("transport")] = "grpc" })
 
 -- [[ Mux.Cool ]]--
 o = s:option(Flag, _n("mux"), "Mux", translate("Enable Mux.Cool"))
@@ -675,6 +677,39 @@ o = s:option(Value, _n("xudp_concurrency"), translate("XUDP Mux concurrency"))
 o.default = 8
 o:depends({ [_n("mux")] = true })
 
+--[[FinalMask]]
+o = s:option(Flag, _n("use_finalmask"), "FinalMask")
+o.default = "0"
+o:depends({ [_n("protocol")] = "vmess" })
+o:depends({ [_n("protocol")] = "vless" })
+o:depends({ [_n("protocol")] = "trojan" })
+o:depends({ [_n("protocol")] = "shadowsocks" })
+o:depends({ [_n("protocol")] = "wireguard" })
+o:depends({ [_n("protocol")] = "hysteria2" })
+
+o = s:option(TextValue, _n("finalmask"), "　", translate("An FinalMaskObject in JSON format, used for sharing."))
+o:depends({ [_n("use_finalmask")] = true })
+o.rows = 10
+o.wrap = "off"
+o.custom_cfgvalue = function(self, section, value)
+	local raw = m:get(section, "finalmask")
+	if raw then
+		return api.base64Decode(raw)
+	end
+end
+o.custom_write = function(self, section, value)
+	m:set(section, "finalmask", api.base64Encode(value) or "")
+end
+o.validate = function(self, value)
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
+	if api.jsonc.parse(value) then
+		return value
+	else
+		return nil, "FinalMask " .. translate("Must be JSON text!")
+	end
+end
+
+--[[Fast Open]]
 o = s:option(Flag, _n("tcp_fast_open"), "TCP " .. translate("Fast Open"), translate("Need node support required"))
 o.default = 0
 
@@ -687,52 +722,50 @@ o.datatype = "uinteger"
 o.placeholder = 0
 o:depends({ [_n("protocol")] = "vless" })
 
-o = s:option(ListValue, _n("chain_proxy"), translate("Chain Proxy"))
-o:value("", translate("Close(Not use)"))
-o:value("1", translate("Preproxy Node"))
-o:value("2", translate("Landing Node"))
 for i, v in ipairs(s.fields[_n("protocol")].keylist) do
-	if not v:find("^_") then
-		o:depends({ [_n("protocol")] = v })
+	if not v:find("^_") and v ~= "hysteria2" then
+		s.fields[_n("tcp_fast_open")]:depends({ [_n("protocol")] = v })
+		s.fields[_n("tcpMptcp")]:depends({ [_n("protocol")] = v })
 	end
 end
+end
+-- [[ Normal single node End ]]
 
-o1 = s:option(ListValue, _n("preproxy_node"), translate("Preproxy Node"), translate("Only support a layer of proxy."))
-o1:depends({ [_n("chain_proxy")] = "1" })
-o1.template = appname .. "/cbi/nodes_listvalue"
-o1.group = {}
+if not load_shunt_options then
+	o = s:option(ListValue, _n("chain_proxy"), translate("Chain Proxy"))
+	o:value("", translate("Close(Not use)"))
+	if not (load_iface_options or load_balancing_options) then
+		-- Special node cannot be use pre-proxy.
+		o:value("1", translate("Preproxy Node"))
+	end
+	o:value("2", translate("Landing Node"))
 
-o2 = s:option(ListValue, _n("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
-o2:depends({ [_n("chain_proxy")] = "2" })
-o2.template = appname .. "/cbi/nodes_listvalue"
-o2.group = {}
+	o1 = s:option(ListValue, _n("preproxy_node"), translate("Preproxy Node"), translate("Only support a layer of proxy."))
+	o1:depends({ [_n("chain_proxy")] = "1" })
+	o1.template = appname .. "/cbi/nodes_listvalue"
+	o1.group = {}
 
-for k1, v1 in pairs(node_list) do
-	if k1 ~= "shunt_list" and k1 ~= "iface_list" then
-		for i, v in ipairs(v1) do
-			if v.id ~= arg[1] then
-				o1:value(v.id, v.remark)
-				o1.group[#o1.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-				if k1 == "normal_list" then
-					-- Landing Node not support use special node.
-					o2:value(v.id, v.remark)
-					o2.group[#o2.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+	o2 = s:option(ListValue, _n("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
+	o2:depends({ [_n("chain_proxy")] = "2" })
+	o2.template = appname .. "/cbi/nodes_listvalue"
+	o2.group = {}
+
+	for k1, v1 in pairs(node_list) do
+		if k1 ~= "shunt_list" and k1 ~= "iface_list" then
+			for i, v in ipairs(v1) do
+				if v.id ~= arg[1] then
+					o1:value(v.id, v.remark)
+					o1.group[#o1.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+					if k1 == "normal_list" then
+						-- Landing Node not support use special node.
+						o2:value(v.id, v.remark)
+						o2.group[#o2.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+					end
 				end
 			end
 		end
 	end
 end
-
-for i, v in ipairs(s.fields[_n("protocol")].keylist) do
-	if not v:find("^_") and v ~= "hysteria2" then
-		s.fields[_n("tcp_fast_open")]:depends({ [_n("protocol")] = v })
-		s.fields[_n("tcpMptcp")]:depends({ [_n("protocol")] = v })
-		s.fields[_n("chain_proxy")]:depends({ [_n("protocol")] = v })
-	end
-end
-
-end
--- [[ Normal single node End ]]
 
 api.luci_types(arg[1], m, s, type_name, option_prefix)
 
