@@ -1,6 +1,6 @@
 local m, s
 
-m = Map("kai", translate("KAI"), translate("KAI is an efficient data transfer tool."))
+m = Map("kai", translate("KAI"), translate("KAI is an efficient AI tool."))
 m:section(SimpleSection).template  = "kai/kai_status"
 
 s=m:section(TypedSection, "kai", translate("Global settings"))

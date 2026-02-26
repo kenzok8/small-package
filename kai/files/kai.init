@@ -1,0 +1,48 @@
+#!/bin/sh /etc/rc.common
+
+START=93
+USE_PROCD=1
+
+get_config() {
+	config_get_bool enabled $1 enabled 1
+	config_get cwd $1 cwd "/tmp/kai"
+}
+
+start_kai_bin(){
+	procd_open_instance kai_bin
+	procd_set_param command /usr/sbin/kai_bin
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+mkdir_cwd(){
+	if [ ! -d $1 ]; then
+		mkdir -p $1
+	fi
+}
+start_kai_session(){
+	procd_open_instance kai_session
+	procd_set_param env OPENCODE_CWD=$1 OPENCODE_CONFIG=http://127.0.0.1:8197/config/opencode/opencode.json
+	procd_set_param command  /usr/sbin/kai_session
+	procd_append_param command serve --port "8196"  --hostname "127.0.0.1"
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+start_service() { 
+	config_load kai
+	config_foreach get_config kai
+	if [ $enabled != 1 ]; then 
+        return 1
+    fi 
+	logger -t kai "Starting KAI Service"
+	start_kai_bin
+	sleep 1
+	mkdir_cwd $cwd
+	start_kai_session $cwd
+	logger -t kai "Starting KAI Service Completed"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "kai"
+}
