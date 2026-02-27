@@ -250,6 +250,11 @@ if #protocols > 0 then
 	end
 end
 
+o = s:option(Value, _n("uuid"), translate("ID"))
+o.password = true
+o:depends({ [_n("protocol")] = "vmess" })
+o:depends({ [_n("protocol")] = "vless" })
+
 o = s:option(Value, _n("username"), translate("Username"))
 o:depends({ [_n("protocol")] = "http" })
 o:depends({ [_n("protocol")] = "socks" })
@@ -287,11 +292,6 @@ o:depends({ [_n("protocol")] = "shadowsocks", [_n("ss_method")] = "xchacha20-pol
 
 o = s:option(Flag, _n("uot"), translate("UDP over TCP"))
 o:depends({ [_n("protocol")] = "shadowsocks" })
-
-o = s:option(Value, _n("uuid"), translate("ID"))
-o.password = true
-o:depends({ [_n("protocol")] = "vmess" })
-o:depends({ [_n("protocol")] = "vless" })
 
 o = s:option(ListValue, _n("flow"), translate("flow"))
 o.default = ""

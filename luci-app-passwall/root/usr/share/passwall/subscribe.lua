@@ -34,18 +34,27 @@ local allowInsecure_default = nil
 -- 取节点使用core类型（节点订阅页面未设置时，自动取默认）
 local function get_core(field, candidates)
 	local v = uci:get(appname, "@global_subscribe[0]", field)
-	if not v or v == "" then
+	if v and v ~= "" then
 		for _, c in ipairs(candidates) do
-			if c[1] then return c[2] end
+			if c[2] == v and c[1] then
+				return v
+			end
 		end
 	end
-	return v
+	for _, c in ipairs(candidates) do
+		if c[1] then return c[2] end
+	end
+	return nil
 end
 local ss_type_default = get_core("ss_type", {{has_ss,"shadowsocks-libev"},{has_ss_rust,"shadowsocks-rust"},{has_singbox,"sing-box"},{has_xray,"xray"}})
 local trojan_type_default = get_core("trojan_type", {{has_trojan_plus,"trojan-plus"},{has_singbox,"sing-box"},{has_xray,"xray"}})
 local vmess_type_default = get_core("vmess_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
 local vless_type_default = get_core("vless_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
 local hysteria2_type_default = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{has_singbox,"sing-box"},{has_xray,"xray"}})
+local core_has = {
+	["xray"] = has_xray, ["sing-box"] = has_singbox, ["shadowsocks-libev"] = has_ss,["shadowsocks-rust"] = has_ss_rust,
+	["trojan-plus"] = has_trojan_plus, ["hysteria2"] = has_hysteria2
+}
 ----
 local domain_strategy_default = uci:get(appname, "@global_subscribe[0]", "domain_strategy") or ""
 local domain_strategy_node = ""
@@ -2046,23 +2055,23 @@ local execute = function()
 				filter_keyword_discard_list_default = value.filter_discard_list or {}
 			end
 			local ss_type = value.ss_type or "global"
-			if ss_type ~= "global" then
+			if ss_type ~= "global" and core_has[ss_type] then
 				ss_type_default = ss_type
 			end
 			local trojan_type = value.trojan_type or "global"
-			if trojan_type ~= "global" then
+			if trojan_type ~= "global" and core_has[trojan_type] then
 				trojan_type_default = trojan_type
 			end
 			local vmess_type = value.vmess_type or "global"
-			if vmess_type ~= "global" then
+			if vmess_type ~= "global" and core_has[vmess_type] then
 				vmess_type_default = vmess_type
 			end
 			local vless_type = value.vless_type or "global"
-			if vless_type ~= "global" then
+			if vless_type ~= "global" and core_has[vless_type] then
 				vless_type_default = vless_type
 			end
 			local hysteria2_type = value.hysteria2_type or "global"
-			if hysteria2_type ~= "global" then
+			if hysteria2_type ~= "global" and core_has[hysteria2_type] then
 				hysteria2_type_default = hysteria2_type
 			end
 			local domain_strategy = value.domain_strategy or "global"
@@ -2118,11 +2127,21 @@ local execute = function()
 			filter_keyword_mode_default = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 			filter_keyword_discard_list_default = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
 			filter_keyword_keep_list_default = uci:get(appname, "@global_subscribe[0]", "filter_keep_list") or {}
-			ss_type_default = uci:get(appname, "@global_subscribe[0]", "ss_type") or "shadowsocks-libev"
-			trojan_type_default = uci:get(appname, "@global_subscribe[0]", "trojan_type") or "trojan-plus"
-			vmess_type_default = uci:get(appname, "@global_subscribe[0]", "vmess_type") or "xray"
-			vless_type_default = uci:get(appname, "@global_subscribe[0]", "vless_type") or "xray"
-			hysteria2_type_default = uci:get(appname, "@global_subscribe[0]", "hysteria2_type") or "hysteria2"
+			
+			ss_type = uci:get(appname, "@global_subscribe[0]", "ss_type") or ""
+			ss_type_default = core_has[ss_type] and ss_type or ss_type_default
+
+			trojan_type = uci:get(appname, "@global_subscribe[0]", "trojan_type") or ""
+			trojan_type_default = core_has[trojan_type] and trojan_type or trojan_type_default
+
+			vmess_type = uci:get(appname, "@global_subscribe[0]", "vmess_type") or ""
+			vmess_type_default = core_has[vmess_type] and vmess_type or vmess_type_default
+
+			vless_type = uci:get(appname, "@global_subscribe[0]", "vless_type") or ""
+			vless_type_default = core_has[vless_type] and vless_type or vless_type_default
+
+			hysteria2_type = uci:get(appname, "@global_subscribe[0]", "hysteria2_type") or ""
+			hysteria2_type_default = core_has[hysteria2_type] and hysteria2_type or hysteria2_type_default
 		end
 
 		if #fail_list > 0 then

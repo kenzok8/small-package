@@ -13,12 +13,17 @@ local has_hysteria2 = api.finded_com("hysteria")
 
 local function get_core(field, candidates)
 	local v = map:get("@global_subscribe[0]", field)
-	if not v or v == "" then
+	if v and v ~= "" then
 		for _, c in ipairs(candidates) do
-			if c[1] then return c[2] end
+			if c[2] == v and c[1] then
+				return v
+			end
 		end
 	end
-	return v
+	for _, c in ipairs(candidates) do
+		if c[1] then return c[2] end
+	end
+	return nil
 end
 
 local ss_type = get_core("ss_type", {{has_ss,"shadowsocks-libev"},{has_ss_rust,"shadowsocks-rust"},{has_singbox,"sing-box"},{has_xray,"xray"}})

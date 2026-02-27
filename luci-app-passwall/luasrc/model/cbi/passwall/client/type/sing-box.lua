@@ -218,6 +218,12 @@ if #protocols > 0 then
 	end
 end
 
+o = s:option(Value, _n("uuid"), translate("ID"))
+o.password = true
+o:depends({ [_n("protocol")] = "vmess" })
+o:depends({ [_n("protocol")] = "vless" })
+o:depends({ [_n("protocol")] = "tuic" })
+
 o = s:option(Value, _n("username"), translate("Username"))
 o:depends({ [_n("protocol")] = "http" })
 o:depends({ [_n("protocol")] = "socks" })
@@ -246,12 +252,6 @@ o:depends({ [_n("protocol")] = "shadowsocks" })
 o = s:option(Flag, _n("uot"), translate("UDP over TCP"))
 o:depends({ [_n("protocol")] = "socks" })
 o:depends({ [_n("protocol")] = "shadowsocks" })
-
-o = s:option(Value, _n("uuid"), translate("ID"))
-o.password = true
-o:depends({ [_n("protocol")] = "vmess" })
-o:depends({ [_n("protocol")] = "vless" })
-o:depends({ [_n("protocol")] = "tuic" })
 
 o = s:option(Value, _n("alter_id"), "Alter ID")
 o.datatype = "uinteger"
