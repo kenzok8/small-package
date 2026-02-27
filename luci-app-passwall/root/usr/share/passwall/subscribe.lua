@@ -1444,12 +1444,17 @@ local function processData(szType, content, add_mode, group)
 		end
 		result.remarks = UrlDecode(alias)
 		local Info = content
-		if content:find("@") then
+		if content:find("@", 1, true) then
 			local contents = split(content, "@")
-			if contents[1]:find(":") then
-				local userinfo = split(contents[1], ":")
-				result.uuid = UrlDecode(userinfo[1])
-				result.password = UrlDecode(userinfo[2])
+			local auth = contents[1] or ""
+			local idx = auth:find(":", 1, true)
+			if not idx then --修正某些链接会把uuid和password之间的:进行编码
+				auth = UrlDecode(auth)
+				idx = auth:find(":", 1, true)
+			end
+			if idx then
+				result.uuid = UrlDecode(auth:sub(1, idx - 1))
+				result.password = UrlDecode(auth:sub(idx + 1))
 			end
 			Info = (contents[2] or ""):gsub("/%?", "?")
 		end
@@ -1474,6 +1479,7 @@ local function processData(szType, content, add_mode, group)
 			result.address = host_port
 		end
 		result.tls_serverName = params.sni
+		result.tls_disable_sni = params.disable_sni
 		result.tuic_alpn = params.alpn or "default"
 		result.tuic_congestion_control = params.congestion_control or "cubic"
 		result.tuic_udp_relay_mode = params.udp_relay_mode or "native"

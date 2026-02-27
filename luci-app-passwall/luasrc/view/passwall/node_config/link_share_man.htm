@@ -652,6 +652,7 @@ local current_node = map:get(section)
 
 			var params = "";
 			params += opt.query("sni", dom_prefix + "tls_serverName");
+			params += opt.query("disable_sni", dom_prefix + "tls_disable_sni");
 			params += opt.query("alpn", dom_prefix + "tuic_alpn");
 			params += opt.query("congestion_control", dom_prefix + "tuic_congestion_control");
 			params += opt.query("udp_relay_mode", dom_prefix + "tuic_udp_relay_mode");
@@ -1641,6 +1642,14 @@ local current_node = map:get(section)
 			var port = _parsedUrl.port;
 			var search = _parsedUrl.search;
 			var hash = _parsedUrl.hash;
+			if (!username || !password) {  //修正某些链接会把uuid和password之间的:进行编码
+				const decoded = decodeURIComponent(username || password || "");
+				const i = decoded.indexOf(":");
+				if (i > -1) {
+					username = decoded.slice(0, i);
+					password = decoded.slice(i + 1);
+				}
+			}
 			opt.set(dom_prefix + 'uuid', decodeURIComponent(username));
 			opt.set(dom_prefix + 'password', decodeURIComponent(password));
 			opt.set(dom_prefix + 'address', unbracketIP(hostname));
@@ -1660,6 +1669,7 @@ local current_node = map:get(section)
 			opt.set(dom_prefix + 'tuic_udp_relay_mode', queryParam.udp_relay_mode || 'native');
 			opt.set(dom_prefix + 'tuic_alpn', queryParam.alpn || 'default');
 			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
+			opt.set(dom_prefix + 'tls_disable_sni', queryParam.disable_sni === "1");
 			opt.set(dom_prefix + 'tls_allowInsecure', true);
 			if ((queryParam.allowinsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0') {
 				opt.set(dom_prefix + 'tls_allowInsecure', false);
