@@ -1230,9 +1230,7 @@ function gen_config(var)
 					if preproxy_node then
 						local preproxy_outbound, exist
 						if preproxy_node.protocol == "_urltest" then
-							if preproxy_node.urltest_node or (preproxy_node.node_add_mode and preproxy_node.node_add_mode == "batch") then
-								preproxy_outbound, exist = gen_urltest_outbound(preproxy_node)
-							end
+							preproxy_outbound, exist = gen_urltest_outbound(preproxy_node)
 						else
 							preproxy_outbound = gen_outbound(node[".name"], preproxy_node)
 						end
@@ -1317,11 +1315,9 @@ function gen_config(var)
 				end
 				local outbound, exist
 				if node.protocol == "_urltest" then
-					if node.urltest_node or (node.node_add_mode and node.node_add_mode == "batch") then
-						outbound, exist = gen_urltest_outbound(node)
-						if exist then
-							return outbound.tag
-						end
+					outbound, exist = gen_urltest_outbound(node)
+					if exist then
+						return outbound.tag
 					end
 				elseif node.protocol == "_iface" then
 					if node.iface then

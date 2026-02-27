@@ -1519,3 +1519,18 @@ function match_node_rule(name, rule)
 	end
 	return true
 end
+
+function get_core(field, candidates)
+	local v = uci:get(appname, "@global_subscribe[0]", field)
+	if v and v ~= "" then
+		for _, c in ipairs(candidates) do
+			if c[2] == v and c[1] then
+				return v
+			end
+		end
+	end
+	for _, c in ipairs(candidates) do
+		if c[1] then return c[2] end
+	end
+	return nil
+end

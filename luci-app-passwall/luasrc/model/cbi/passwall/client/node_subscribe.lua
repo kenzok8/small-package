@@ -77,6 +77,7 @@ o = s:option(DynamicList, "filter_keep_list", translate("Keep List"))
 
 if #ss_type > 0 then
 	o = s:option(ListValue, "ss_type", translatef("%s Node Use Type", "Shadowsocks"))
+	o:value("", translate("Auto"))
 	for key, value in pairs(ss_type) do
 		o:value(value)
 	end
@@ -84,6 +85,7 @@ end
 
 if #trojan_type > 0 then
 	o = s:option(ListValue, "trojan_type", translatef("%s Node Use Type", "Trojan"))
+	o:value("", translate("Auto"))
 	for key, value in pairs(trojan_type) do
 		o:value(value)
 	end
@@ -91,31 +93,25 @@ end
 
 if #vmess_type > 0 then
 	o = s:option(ListValue, "vmess_type", translatef("%s Node Use Type", "VMess"))
+	o:value("", translate("Auto"))
 	for key, value in pairs(vmess_type) do
 		o:value(value)
-	end
-	if has_xray then
-		o.default = "xray"
 	end
 end
 
 if #vless_type > 0 then
 	o = s:option(ListValue, "vless_type", translatef("%s Node Use Type", "VLESS"))
+	o:value("", translate("Auto"))
 	for key, value in pairs(vless_type) do
 		o:value(value)
-	end
-	if has_xray then
-		o.default = "xray"
 	end
 end
 
 if #hysteria2_type > 0 then
 	o = s:option(ListValue, "hysteria2_type", translatef("%s Node Use Type", "Hysteria2"))
+	o:value("", translate("Auto"))
 	for key, value in pairs(hysteria2_type) do
 		o:value(value)
-	end
-	if has_hysteria2 then
-		o.default = "hysteria2"
 	end
 end
 

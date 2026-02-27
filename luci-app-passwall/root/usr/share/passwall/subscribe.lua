@@ -32,25 +32,11 @@ local has_xray = api.finded_com("xray")
 local has_hysteria2 = api.finded_com("hysteria")
 local allowInsecure_default = nil
 -- 取节点使用core类型（节点订阅页面未设置时，自动取默认）
-local function get_core(field, candidates)
-	local v = uci:get(appname, "@global_subscribe[0]", field)
-	if v and v ~= "" then
-		for _, c in ipairs(candidates) do
-			if c[2] == v and c[1] then
-				return v
-			end
-		end
-	end
-	for _, c in ipairs(candidates) do
-		if c[1] then return c[2] end
-	end
-	return nil
-end
-local ss_type_default = get_core("ss_type", {{has_ss,"shadowsocks-libev"},{has_ss_rust,"shadowsocks-rust"},{has_singbox,"sing-box"},{has_xray,"xray"}})
-local trojan_type_default = get_core("trojan_type", {{has_trojan_plus,"trojan-plus"},{has_singbox,"sing-box"},{has_xray,"xray"}})
-local vmess_type_default = get_core("vmess_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
-local vless_type_default = get_core("vless_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
-local hysteria2_type_default = get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{has_singbox,"sing-box"},{has_xray,"xray"}})
+local ss_type_default = api.get_core("ss_type", {{has_ss,"shadowsocks-libev"},{has_ss_rust,"shadowsocks-rust"},{has_singbox,"sing-box"},{has_xray,"xray"}})
+local trojan_type_default = api.get_core("trojan_type", {{has_trojan_plus,"trojan-plus"},{has_singbox,"sing-box"},{has_xray,"xray"}})
+local vmess_type_default = api.get_core("vmess_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
+local vless_type_default = api.get_core("vless_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
+local hysteria2_type_default = api.get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{has_singbox,"sing-box"},{has_xray,"xray"}})
 local core_has = {
 	["xray"] = has_xray, ["sing-box"] = has_singbox, ["shadowsocks-libev"] = has_ss,["shadowsocks-rust"] = has_ss_rust,
 	["trojan-plus"] = has_trojan_plus, ["hysteria2"] = has_hysteria2
