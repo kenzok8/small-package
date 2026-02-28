@@ -45,8 +45,17 @@ _M["sing-box"] = {
 	default_path = "/usr/bin/sing-box",
 	match_fmt_str = "linux%%-%s",
 	file_tree = {
-		x86_64 = "amd64",
-		mips64el = "mips64le"
+		x86_64 = "amd64%-musl",
+		x86     = "386%-musl",
+		aarch64 = "arm64%-musl",
+		rockchip = "arm64%-musl",
+		mips    = "mips%-softfloat",
+		mips64  = "mips64%-softfloat",
+		mipsel  = "mipsle%-softfloat%-musl",
+		mips64el = "mips64le%-softfloat",
+		armv7   = "armv7%-musl",
+		armv8   = "arm64%-musl",
+		riscv64 = "riscv64%-musl"
 	}
 }
 
