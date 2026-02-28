@@ -222,11 +222,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 				} or nil,
 				grpcSettings = (node.transport == "grpc") and {
 					serviceName = node.grpc_serviceName,
-					multiMode = (node.grpc_mode == "multi") and true or nil,
-					idle_timeout = tonumber(node.grpc_idle_timeout) or nil,
+					multiMode = (node.grpc_mode == "multi") and true or false,
+					idle_timeout = node.grpc_idle_timeout and (tonumber(node.grpc_idle_timeout) < 10 and 10 or tonumber(node.grpc_idle_timeout)) or nil,
 					health_check_timeout = tonumber(node.grpc_health_check_timeout) or nil,
-					permit_without_stream = (node.grpc_permit_without_stream == "1") and true or nil,
-					initial_windows_size = tonumber(node.grpc_initial_windows_size) or nil,
+					permit_without_stream = (node.grpc_permit_without_stream == "1") and true or false,
+					initial_windows_size = node.grpc_initial_windows_size and tonumber(node.grpc_initial_windows_size) or 0,
 					user_agent = node.user_agent
 				} or nil,
 				httpupgradeSettings = (node.transport == "httpupgrade") and {
@@ -610,7 +610,7 @@ function gen_config_server(node)
 						host = node.ws_host or nil,
 						path = node.ws_path
 					} or nil,
-					grpcSettings = (node.transport == "grpc") and {
+					grpcSettings = (node.transport == "grpc" and node.grpc_serviceName) and {
 						serviceName = node.grpc_serviceName
 					} or nil,
 					httpupgradeSettings = (node.transport == "httpupgrade") and {
