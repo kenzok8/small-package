@@ -496,6 +496,9 @@ msgstr ""
 "表示节点备注需同时满足：以 A 开头（^）、包含 B、不包含 C（!）、并以 D 结尾（$）。<br>"
 "多个条件使用 <code>&&</code> 连接，条件顺序不影响结果。"
 
+msgid "Keep the match scope small. Too many nodes can impact router performance."
+msgstr "建议尽量缩小匹配范围，节点过多会增加路由器负载。"
+
 msgid "Balancing Strategy"
 msgstr "负载均衡策略"
 

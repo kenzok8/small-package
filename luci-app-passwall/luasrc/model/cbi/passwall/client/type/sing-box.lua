@@ -152,7 +152,8 @@ if load_urltest_options then -- [[ URLTest Start ]]
 	local descrStr = "Example: <code>^A && B && !C && D$</code><br>"
 	descrStr = descrStr .. "This means the node remark must start with A (^), include B, exclude C (!), and end with D ($).<br>"
 	descrStr = descrStr .. "Conditions are joined by <code>&&</code>, and their order does not affect the result."
-	o.description = translate(descrStr)
+	o.description = translate(descrStr) .. string.format("<br><font color='red'>%s</font>",
+			translate("Keep the match scope small. Too many nodes can impact router performance."))
 
 	o = s:option(Value, _n("urltest_url"), translate("Probe URL"))
 	o:depends({ [_n("protocol")] = "_urltest" })
