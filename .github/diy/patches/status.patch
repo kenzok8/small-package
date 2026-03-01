@@ -118,7 +118,7 @@
 
 --- a/luci-mod-status/htdocs/luci-static/resources/view/status/nftables.js
 +++ b/luci-mod-status/htdocs/luci-static/resources/view/status/nftables.js
-@@ -675,7 +675,6 @@ return view.extend({
+@@ -778,7 +778,6 @@ return view.extend({
  	checkLegacyRules: function(ipt4save, ipt6save) {
  		if (ipt4save.match(/\n-A /) || ipt6save.match(/\n-A /)) {
  			ui.addNotification(_('Legacy rules detected'), [
