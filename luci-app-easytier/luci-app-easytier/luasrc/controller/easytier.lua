@@ -93,7 +93,7 @@ function act_status()
 	if cached_newtag and cached_newtag ~= "" then
 		e.etnewtag = cached_newtag:gsub("[\r\n]+", "")
 	else
-		e.etnewtag = safe_exec("curl -L -k -s --connect-timeout 3 --user-agent 'Mozilla/5.0' https://api.github.com/repos/EasyTier/EasyTier/releases/latest | grep tag_name | sed 's/[^0-9.]*//g'")
+		e.etnewtag = safe_exec("curl -L -k -s --connect-timeout 3 --user-agent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36' https://api.github.com/repos/EasyTier/EasyTier/releases/latest | grep tag_name | sed 's/[^0-9.]*//g'")
 		if e.etnewtag ~= "" then
 			local f = io.open("/tmp/easytiernew.tag", "w")
 			if f then f:write(e.etnewtag); f:close() end
