@@ -97,7 +97,9 @@ ifeq ($(ARCH),aarch64)
 endif
 
 ifeq ($(strip $(TARGET_ARCH)$(TARGET_BOARD)),)
-  $(error Unsupported ARCH/BOARD combo: ARCH=$(ARCH) BOARD=$(BOARD) SUBTARGET=$(SUBTARGET))
+  $(warning Unsupported ARCH/BOARD combo: ARCH=$(ARCH) BOARD=$(BOARD) SUBTARGET=$(SUBTARGET), using default)
+  TARGET_ARCH:=$(ARCH)
+  TARGET_BOARD:=musl
 endif
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(TARGET_ARCH)-openwrt-linux-$(TARGET_BOARD).tar.gz
