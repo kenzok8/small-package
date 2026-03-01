@@ -1051,8 +1051,8 @@ stop() {
 		uci -q commit ${CONFIG}
 		#flush_table
 		flush_nftset
-		rm -rf /tmp/etc/passwall2_tmp/singbox*
-		rm -f /tmp/etc/passwall2_tmp/geoip-*.json
+		rm -rf $TMP_PATH2/singbox*
+		rm -rf $TMP_PATH2/geo_output
 	}
 	flush_include
 }

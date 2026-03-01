@@ -42,7 +42,7 @@ dst() {
 
 comment() {
 	local name=$(echo $1 | sed 's/ /_/g')
-	echo "-m comment --comment '$name'"
+	echo "-m comment --comment "${name}""
 }
 
 # Resolves invalid IP addresses for ports exceeding 15; it supports single ports and port ranges.
@@ -1047,8 +1047,8 @@ stop() {
 		uci -q delete ${CONFIG}.@global[0].flush_set
 		uci -q commit ${CONFIG}
 		flush_ipset
-		rm -rf /tmp/etc/passwall2_tmp/singbox*
-		rm -f /tmp/etc/passwall2_tmp/geoip-*.json
+		rm -rf $TMP_PATH2/singbox*
+		rm -rf $TMP_PATH2/geo_output
 	}
 	flush_include
 }

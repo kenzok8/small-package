@@ -1559,12 +1559,19 @@ function gen_config(var)
 								end
 							end
 						end
-						dns_server.domains = value.domain
-						if value.shunt_rule_name then
-							dns_server.tag = "dns-in-" .. value.shunt_rule_name
+						local dns_block_mode = "host"
+						if dns_block_mode == "host" and dns_outboundTag == "blackhole" then
+							for d_i, d_k in ipairs(value.domain) do
+								dns.hosts[d_k] = "0.0.0.0"
+							end
+							dns_server = nil
 						end
-
 						if dns_server then
+							dns_server.finalQuery = true
+							dns_server.domains = value.domain
+							if value.shunt_rule_name then
+								dns_server.tag = "dns-in-" .. value.shunt_rule_name
+							end
 							table.insert(dns_servers, {
 								outboundTag = dns_outboundTag,
 								server = dns_server
