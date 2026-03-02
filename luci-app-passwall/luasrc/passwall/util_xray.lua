@@ -1571,17 +1571,26 @@ function gen_config(var)
 							dns_server = api.clone(_remote_dns)
 						end
 					end
-					dns_server.domains = value.domain
-					if value.shunt_rule_name then
-						dns_server.tag = "dns-in-" .. value.shunt_rule_name
-					end
-
+					local outboundTag
 					if dns_server then
-						local outboundTag
-						if not api.is_local_ip(dns_server.address) or value.outboundTag == "blackhole" then --dns为本地ip，不走代理
+						if not api.is_local_ip(dns_server.address) or value.outboundTag == "blackhole" then
 							outboundTag = value.outboundTag
 						else
-							outboundTag = "direct"
+							outboundTag = "direct" --dns为本地ip，走直连
+						end
+					end
+					local dns_block_mode = "host"
+					if dns_block_mode == "host" and outboundTag == "blackhole" then
+						for d_i, d_k in ipairs(value.domain) do
+							dns.hosts[d_k] = "0.0.0.0"
+						end
+						dns_server = nil
+					end
+					if dns_server then
+						dns_server.finalQuery = true
+						dns_server.domains = value.domain
+						if value.shunt_rule_name then
+							dns_server.tag = "dns-in-" .. value.shunt_rule_name
 						end
 						table.insert(dns.servers, dns_server)
 						table.insert(routing.rules, dns_rule_position, {
