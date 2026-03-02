@@ -359,10 +359,8 @@ push(config.listeners, {
 }); // @Not required for v1.19.2+
 /* Tun settings */
 if (match(proxy_mode, /tun/))
-	push(config.listeners, {
-		name: 'tun-in',
-		type: 'tun',
-
+	config.tun = {
+		enable: true,
 		device: tun_name,
 		stack: uci.get(uciconf, uciinbound, 'tun_stack') || 'system',
 		"dns-hijack": ['udp://[::]:53', 'tcp://[::]:53'],
@@ -396,7 +394,7 @@ if (match(proxy_mode, /tun/))
 		"endpoint-independent-nat": strToBool(uci.get(uciconf, uciinbound, 'tun_endpoint_independent_nat')),
 		"disable-icmp-forwarding": (uci.get(uciconf, uciinbound, 'tun_disable_icmp_forwarding') === '0') ? false : true,
 		"auto-detect-interface": true
-	});
+	};
 /* Inbound END */
 
 /* DNS START */
