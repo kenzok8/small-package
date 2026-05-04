@@ -10,6 +10,56 @@ local target = dsp.build_url("admin", "services", "shadowsocksr", "save_subscrib
 				return false;
 			}
 
+			var singleSectionFields = {
+				auto_update: true,
+				config_auto_update_mode: true,
+				auto_update_week_time: true,
+				auto_update_day_time: true,
+				auto_update_min_time: true,
+				config_update_interval: true,
+				subscribe_advanced: true,
+				filter_words: true,
+				save_words: true,
+				allow_insecure: true,
+				switch: true,
+				proxy: true,
+				url_test_url: true,
+				user_agent: true
+			};
+
+			var subscribeItemFields = {
+				enabled: true,
+				alias: true,
+				url: true
+			};
+
+			function isAllowedElement(el) {
+				if (!el || !el.name || el.disabled) {
+					return false;
+				}
+
+				if (el.name === 'token') {
+					return true;
+				}
+
+				var matched = el.name.match(/^cbid\.shadowsocksr\.([^.]+)\.([^.]+)$/);
+				if (!matched) {
+					return false;
+				}
+
+				var field = matched[2];
+				if (singleSectionFields[field]) {
+					return true;
+				}
+
+				if (!subscribeItemFields[field]) {
+					return false;
+				}
+
+				var row = el.closest && el.closest('#cbi-shadowsocksr-server_subscribe_item');
+				return !!row;
+			}
+
 			var tempForm = document.createElement('form');
 			tempForm.method = 'post';
 			tempForm.action = '<%=target%>';
@@ -18,7 +68,7 @@ local target = dsp.build_url("admin", "services", "shadowsocksr", "save_subscrib
 			var elements = sourceForm.elements || [];
 			for (var i = 0; i < elements.length; i++) {
 				var el = elements[i];
-				if (!el || !el.name || el.disabled) {
+				if (!isAllowedElement(el)) {
 					continue;
 				}
 
