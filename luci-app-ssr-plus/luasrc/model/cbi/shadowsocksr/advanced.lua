@@ -96,6 +96,8 @@ o.datatype = "uinteger"
 o:depends("enable_switch", "1")
 o.default = 3
 
+s:append(cbi.Template("shadowsocksr/advanced_switch_compact"))
+
 o = s:option(Value, "default_node_local_port", translate("Default Node Local Port"))
 o.datatype = "port"
 o.default = 1234
@@ -149,47 +151,12 @@ end
 -- [[ SOCKS5 Proxy ]]--
 s = m:section(TypedSection, "socks5_proxy", translate("Global SOCKS5 Proxy Server"))
 s.anonymous = true
-s.description = translate("Clash can be reused only in the Same as Global Server scenario. Use Xray Socks for generic Socks outbound.")
+-- s.description = translate("Only Same as Global Server is supported here. If the current main program supports a built-in SOCKS5 listener, it will be enabled in-process; otherwise SSR Plus will fall back to microsocks.")
 
 -- Enable/Disable Option
 o = s:option(Flag, "enabled", translate("Enable"))
 o.default = 0
 o.rmempty = false
-
--- Server Selection
-o = s:option(ListValue, "server", translate("Server"))
-o:value("same", translate("Same as Global Server"))
-for _, key in pairs(key_table) do
-	if type_table[key] ~= "socks5" and type_table[key] ~= "clash" then
-		o:value(key, server_table[key])
-	end
-end
-o.default = "same"
-o.rmempty = false
-
--- Dynamic value handling based on enabled/disabled state
-o.cfgvalue = function(self, section)
-	local enabled = m:get(section, "enabled")
-	if enabled == "0" then
-		return m:get(section, "old_server")
-	end
-	return Value.cfgvalue(self, section)-- Default to `same` when enabled
-end
-
-o.write = function(self, section, value)
-	local enabled = m:get(section, "enabled")
-	if enabled == "0" then
-		local old_server = Value.cfgvalue(self, section)
-		if old_server ~= "nil" then
-			m:set(section, "old_server", old_server)
-		end
-		m:set(section, "server", "nil")
-	else
-		m:del(section, "old_server")
-		-- Write the value normally when enabled
-		Value.write(self, section, value)
-	end
-end
 
 -- Socks Auth
 if is_finded("xray") then
@@ -198,13 +165,6 @@ o.default = "noauth"
 o:value("noauth", "NOAUTH")
 o:value("password", "PASSWORD")
 o.rmempty = true
-for key, server_type in pairs(type_table) do
-	if server_type == "v2ray" then
-		-- 如果服务器类型是 v2ray，则设置依赖项显示
-		o:depends("server", key)
-	end
-end
-o:depends({server = "same", disable = true})
 
 -- Socks User
 o = s:option(Value, "socks5_user", translate("Socks5 User"), translate("Only when Socks5 Auth Mode is password valid, Mandatory."))
@@ -221,13 +181,6 @@ o:depends("socks5_auth", "password")
 o = s:option(Flag, "socks5_mixed", translate("Enabled Mixed"), translate("Mixed as an alias of socks, default:Enabled."))
 o.default = "1"
 o.rmempty = false
-for key, server_type in pairs(type_table) do
-	if server_type == "v2ray" then
-		-- 如果服务器类型是 v2ray，则设置依赖项显示
-		o:depends("server", key)
-	end
-end
-o:depends({server = "same", disable = true})
 end
 
 -- Local Port
@@ -240,45 +193,13 @@ if is_finded("3proxy") then
 	-- [[ HTTP/HTTPS Proxy ]]--
 	s = m:section(TypedSection, "http_proxy", translate("Global HTTP/HTTPS Proxy Server"))
 	s.anonymous = true
-	s.description = translate("Lightweight Socks5 transparent proxy nodes are not available here. Clash is supported only when reusing Same as Global Server.")
+	-- s.description = translate("Only Same as Global Server is supported here. HTTP/HTTPS proxy service is provided through 3proxy.")
 
 	o = s:option(Flag, "enabled", translate("Enable"))
 	o.default = 0
 	o.rmempty = false
 
-	o = s:option(ListValue, "server", translate("Server"))
-	o:value("same", translate("Same as Global Server"))
-	for _, key in pairs(key_table) do
-		if type_table[key] ~= "socks5" then
-			o:value(key, server_table[key])
-		end
-	end
-	o.default = "same"
-	o.rmempty = false
-
-	o.cfgvalue = function(self, section)
-		local enabled = m:get(section, "enabled")
-		if enabled == "0" then
-			return m:get(section, "old_server")
-		end
-		return Value.cfgvalue(self, section)
-	end
-
-	o.write = function(self, section, value)
-		local enabled = m:get(section, "enabled")
-		if enabled == "0" then
-			local old_server = Value.cfgvalue(self, section)
-			if old_server ~= "nil" then
-				m:set(section, "old_server", old_server)
-			end
-			m:set(section, "server", "nil")
-		else
-			m:del(section, "old_server")
-			Value.write(self, section, value)
-		end
-	end
-
-	o = s:option(ListValue, "http_auth", translate("HTTP Auth Mode"), translate("3proxy HTTP proxy auth method, default:none."))
+	o = s:option(ListValue, "http_auth", translate("HTTP Auth Mode"), translate("HTTP proxy auth method, default:none."))
 	o.default = "none"
 	o:value("none", "NONE")
 	o:value("password", "PASSWORD")
@@ -296,11 +217,6 @@ if is_finded("3proxy") then
 	o = s:option(Value, "local_port", translate("Local Port"))
 	o.datatype = "port"
 	o.default = 3128
-	o.rmempty = false
-
-	o = s:option(Value, "socks_port", translate("Relay SOCKS5 Port"), translate("Dedicated local Socks5 port used by 3proxy as upstream."))
-	o.datatype = "port"
-	o.default = 1081
 	o.rmempty = false
 end
 

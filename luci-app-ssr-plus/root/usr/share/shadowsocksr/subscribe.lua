@@ -32,7 +32,6 @@ local user_agent = ucic:get_first(name, 'server_subscribe', 'user_agent', 'v2ray
 local local_clash_dir = "/etc/ssrplus/clash"
 local target_subscribe_sid = tostring(arg and arg[1] or ""):gsub("^%s*(.-)%s*$", "%1")
 
-local has_ss_rust = luci.sys.exec('type -t -p sslocal 2>/dev/null || type -t -p ssserver 2>/dev/null') ~= ""
 local has_xray = luci.sys.exec('type -t -p xray 2>/dev/null') ~= ""
 local has_mihomo = luci.sys.exec('type -t -p mihomo -p /usr/libexec/mihomo 2>/dev/null') ~= ""
 
@@ -44,9 +43,6 @@ end
 local function preferred_ss_backend()
 	if has_mihomo then
 		return "ss"
-	end
-	if has_ss_rust then
-		return "ss-rust"
 	end
 	if has_xray then
 		return "v2ray"
@@ -974,7 +970,6 @@ local function processData(szType, content, cfgid)
 			result.server = server
 			result.server_port = port
 
-			-- 插件处理
 			if params.plugin then
 				local plugin_info = UrlDecode(params.plugin)
 				local idx_pn = plugin_info:find(";")
@@ -985,38 +980,28 @@ local function processData(szType, content, cfgid)
 					result.plugin = plugin_info
 					result.plugin_opts = ""
 				end
-				-- 部分机场下发的插件名为 simple-obfs，这里应该改为 obfs-local
 				if result.plugin == "simple-obfs" then
 					result.plugin = "obfs-local"
 				end
-				-- 如果插件不为 none，确保 enable_plugin 为 1
 				if result.plugin ~= "none" and result.plugin ~= "" then
 					result.enable_plugin = 1
 				end
-			else
-				if params["shadow-tls"] then
-					-- 特别处理 shadow-tls 作为插件
-					-- log("原始 shadow-tls 参数:", params["shadow-tls"])
-					local decoded_tls = base64Decode(UrlDecode(params["shadow-tls"]))
-					--log("SS 节点 shadow-tls 解码后:", decoded_tls or "nil")
-					if decoded_tls then
-						local ok, st = pcall(jsonParse, decoded_tls)
-						if ok and st then
-							result.plugin = "shadow-tls"
-							result.enable_plugin = 1
-							local version_flag = ""
-							if st.version and tonumber(st.version) then
-								version_flag = string.format("v%s=1;", st.version)
-							end
-					
-							-- 合成 plugin_opts 格式：v%s=1;host=xxx;password=xxx
-							result.plugin_opts = string.format("%shost=%s;passwd=%s",
-								version_flag,
-								st.host or "",
-								st.password or "")
-						else
-							log("shadow-tls JSON 解析失败")
+			elseif params["shadow-tls"] then
+				local decoded_tls = base64Decode(UrlDecode(params["shadow-tls"]))
+				if decoded_tls then
+					local ok, st = pcall(jsonParse, decoded_tls)
+					if ok and st then
+						result.plugin = "shadow-tls"
+						result.enable_plugin = 1
+						local version_flag = ""
+						if st.version and tonumber(st.version) then
+							version_flag = string.format("v%s=1;", st.version)
 						end
+						result.plugin_opts = string.format("%shost=%s;password=%s",
+							version_flag,
+							st.host or "",
+							st.password or "")
+						result.client_fingerprint = st.fingerprint or ""
 					end
 				end
 			end
@@ -1057,22 +1042,22 @@ local function processData(szType, content, cfgid)
 		if selected_ss_backend == "v2ray" then
 			result.v2ray_protocol = "shadowsocks"
 		end
-		result.server = content.server
-		result.server_port = content.port
-		result.password = content.password
-		result.encrypt_method_ss = content.method
-		result.plugin_opts = content.plugin_options
-		local raw_alias = "[" .. content.airport .. "] " .. content.remarks
-		result.raw_alias = raw_alias   -- 新增
-		result.alias = raw_alias       -- 临时赋值（后面会被覆盖）
-		if content.plugin == "simple-obfs" then
-			result.plugin = "obfs-local"
-		else
-			result.plugin = content.plugin
-		end
-		if not checkTabValue(encrypt_methods_ss)[content.encryption] then
-			result.server = nil
-		end
+			result.server = content.server
+			result.server_port = content.port
+			result.password = content.password
+			result.encrypt_method_ss = content.method
+			result.plugin_opts = content.plugin_options
+			local raw_alias = "[" .. content.airport .. "] " .. content.remarks
+			result.raw_alias = raw_alias   -- 新增
+			result.alias = raw_alias       -- 临时赋值（后面会被覆盖）
+			if content.plugin == "simple-obfs" then
+				result.plugin = "obfs-local"
+			else
+				result.plugin = content.plugin
+			end
+			if not checkTabValue(encrypt_methods_ss)[content.encryption] then
+				result.server = nil
+			end
 	elseif szType == "trojan" then
 		-- 提取别名（如果存在）
 		local alias = ""

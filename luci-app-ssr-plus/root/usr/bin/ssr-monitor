@@ -31,11 +31,7 @@ fi
 i=0
 GLOBAL_SERVER=$(uci_get_by_type global global_server)
 server=$(uci_get_by_name $GLOBAL_SERVER server)
-kcp_port=$(uci_get_by_name $GLOBAL_SERVER kcp_port)
 server_port=$(uci_get_by_name $GLOBAL_SERVER server_port)
-password=$(uci_get_by_name $GLOBAL_SERVER kcp_password)
-kcp_param=$(uci_get_by_name $GLOBAL_SERVER kcp_param)
-[ "$password" != "" ] && password="--key "${password}
 
 while [ "1" == "1" ]; do #死循环
 	sleep 000030s
@@ -68,16 +64,6 @@ while [ "1" == "1" ]; do #死循环
 			kill -9 $(ps_list | grep ssr-server | grep -v grep | awk '{print $1}') >/dev/null 2>&1
 			/etc/init.d/shadowsocksr restart
 			exit 0
-		fi
-	fi
-	#kcptun
-	if [ "$kcp_process" -gt 0 ]; then
-		icount=$(ps_list | grep kcptun-client | grep -v grep | wc -l)
-		if [ "$icount" -lt "$kcp_process" ]; then #如果进程挂掉就重启它
-			logger -t "$NAME" "ssrplus kcptun error.restart!"
-			echolog "ssrplus kcptun error.restart!"
-			killall -q -9 kcptun-client
-			(/usr/bin/kcptun-client -r $server:$kcp_port -l :$server_port $password $kcp_param &)
 		fi
 	fi
 	#localsocks

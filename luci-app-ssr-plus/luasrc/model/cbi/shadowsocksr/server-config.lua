@@ -85,7 +85,7 @@ o.rmempty = false
 
 o = s:option(ListValue, "type", translate("Server Type"))
 o:value("socks5", translate("Socks5"))
-if nixio.fs.access("/usr/bin/mihomo") or nixio.fs.access("/usr/libexec/mihomo") or nixio.fs.access("/usr/bin/ssserver") or nixio.fs.access("/usr/libexec/ssserver") then
+if nixio.fs.access("/usr/bin/mihomo") or nixio.fs.access("/usr/libexec/mihomo") then
 	o:value("ss", translate("ShadowSocks"))
 end
 if nixio.fs.access("/usr/bin/ssr-server") then

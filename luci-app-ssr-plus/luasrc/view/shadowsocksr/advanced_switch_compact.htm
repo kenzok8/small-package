@@ -1,0 +1,143 @@
+<style type="text/css">
+.ssr-advanced-switch-inline {
+	display: flex;
+	gap: 2%;
+	align-items: flex-start;
+	flex-wrap: nowrap;
+}
+
+.ssr-advanced-switch-item {
+	width: 30%;
+	min-width: 0;
+}
+
+.ssr-advanced-switch-item input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.ssr-advanced-switch-subtitle {
+	font-size: 12px;
+	color: #666;
+	margin-bottom: 4px;
+	line-height: 1.2;
+}
+
+.ssr-advanced-switch-hidden {
+	display: none !important;
+}
+</style>
+
+<script type="text/javascript">
+//<![CDATA[
+function ssrCompactAdvancedSwitch() {
+	function getInputByName(suffix) {
+		return document.querySelector('input[name$=".' + suffix + '"]');
+	}
+
+	function getRowByName(suffix) {
+		var el = getInputByName(suffix);
+		return el ? el.closest('.cbi-value') : null;
+	}
+
+	function compactSwitchRow() {
+		var timeRow = getRowByName('switch_time');
+		var timeoutRow = getRowByName('switch_timeout');
+		var tryRow = getRowByName('switch_try_count');
+		if (!timeRow || !timeoutRow || !tryRow) return;
+
+		var timeField = timeRow.querySelector('.cbi-value-field');
+		var timeoutField = timeoutRow.querySelector('.cbi-value-field');
+		var tryField = tryRow.querySelector('.cbi-value-field');
+		if (!timeField || !timeoutField || !tryField) return;
+
+		if (timeField.querySelector('.ssr-advanced-switch-inline')) {
+			return;
+		}
+
+		var timeInput = timeField.querySelector('input');
+		var timeoutInput = timeoutField.querySelector('input');
+		var tryInput = tryField.querySelector('input');
+		if (!timeInput || !timeoutInput || !tryInput) return;
+
+		var wrap = document.createElement('div');
+		wrap.className = 'ssr-advanced-switch-inline';
+
+		function makeItem(title, input) {
+			var item = document.createElement('div');
+			item.className = 'ssr-advanced-switch-item';
+			var subtitle = document.createElement('div');
+			subtitle.className = 'ssr-advanced-switch-subtitle';
+			subtitle.textContent = title;
+			item.appendChild(subtitle);
+			item.appendChild(input);
+			return item;
+		}
+
+		wrap.appendChild(makeItem('<%:Second%>', timeInput));
+		wrap.appendChild(makeItem('<%:Timeout%>', timeoutInput));
+		wrap.appendChild(makeItem('<%:Try Count%>', tryInput));
+
+		timeField.innerHTML = '';
+		timeField.appendChild(wrap);
+
+		timeoutRow.classList.add('ssr-advanced-switch-hidden');
+		tryRow.classList.add('ssr-advanced-switch-hidden');
+	}
+
+	compactSwitchRow();
+}
+
+(function() {
+	var retryCount = 0;
+	var maxRetries = 30;
+	var retryTimer = null;
+	var observer = null;
+
+	function hasCompactLayout() {
+		return !!document.querySelector('.ssr-advanced-switch-inline');
+	}
+
+	function tryCompact() {
+		ssrCompactAdvancedSwitch();
+		if (hasCompactLayout()) {
+			if (retryTimer) {
+				window.clearTimeout(retryTimer);
+				retryTimer = null;
+			}
+			if (observer) {
+				observer.disconnect();
+				observer = null;
+			}
+			return;
+		}
+
+		if (retryCount >= maxRetries) {
+			return;
+		}
+
+		retryCount = retryCount + 1;
+		retryTimer = window.setTimeout(tryCompact, 200);
+	}
+
+	function startWatcher() {
+		tryCompact();
+		if (window.MutationObserver) {
+			observer = new MutationObserver(function() {
+				if (!hasCompactLayout()) {
+					tryCompact();
+				}
+			});
+			observer.observe(document.body, { childList: true, subtree: true });
+		}
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', startWatcher);
+		window.addEventListener('load', tryCompact);
+	} else {
+		startWatcher();
+	}
+})();
+//]]>
+</script>

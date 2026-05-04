@@ -286,6 +286,15 @@ msgstr ""
 msgid "Auto Update Server subscription, GFW list and CHN route"
 msgstr ""
 
+msgid "Update Mode"
+msgstr ""
+
+msgid "Appointment Mode"
+msgstr ""
+
+msgid "Loop Mode"
+msgstr ""
+
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:811
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1569
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1585
@@ -381,6 +390,15 @@ msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:72
 msgid "Check timout(second)"
+msgstr ""
+
+msgid "Second"
+msgstr ""
+
+msgid "Timeout"
+msgstr ""
+
+msgid "Try Count"
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/check.htm:6
@@ -967,13 +985,10 @@ msgstr ""
 msgid "Global HTTP/HTTPS Proxy Server"
 msgstr ""
 
-msgid "Lightweight Socks5 transparent proxy nodes are not available here. Clash is supported only when reusing Same as Global Server."
-msgstr ""
-
 msgid "HTTP Auth Mode"
 msgstr ""
 
-msgid "3proxy HTTP proxy auth method, default:none."
+msgid "HTTP proxy auth method, default:none."
 msgstr ""
 
 msgid "HTTP User"
@@ -986,12 +1001,6 @@ msgid "HTTP Password"
 msgstr ""
 
 msgid "Only when HTTP Auth Mode is password valid, Not mandatory."
-msgstr ""
-
-msgid "Relay SOCKS5 Port"
-msgstr ""
-
-msgid "Dedicated local Socks5 port used by 3proxy as upstream."
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server.lua:81
@@ -2876,9 +2885,6 @@ msgid "Clash Subscription URL"
 msgstr ""
 
 msgid "Clash User-Agent"
-msgstr ""
-
-msgid "Lightweight Socks5 transparent proxy nodes are not available here. Clash can be reused only in the Same as Global Server scenario. Use Xray Socks for generic Socks outbound."
 msgstr ""
 
 msgid "Panel"

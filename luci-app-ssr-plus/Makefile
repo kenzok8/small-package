@@ -4,7 +4,7 @@ LUCI_TITLE:=luci-app-ssr-plus
 LUCI_PKGARCH:=all
 PKG_NAME:=luci-app-ssr-plus
 PKG_VERSION:=192
-PKG_RELEASE:=13
+PKG_RELEASE:=16
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_Iptables_Transparent_Proxy \
@@ -15,15 +15,10 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_MosDNS \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Http_Proxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Mihomo \
-	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadow_TLS \
-	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_NONE_Client \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Mihomo_Client \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_NONE_Server \
-	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Server \
-	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Simple_Obfs \
-	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_V2ray_Plugin \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Client \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server
 
@@ -34,14 +29,7 @@ LUCI_DEPENDS:= \
 	+jq +ip-full +lua-neturl +libuci-lua +microsocks +ipt2socks \
 	+resolveip +curl +nping +unzip +xz-utils \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_MosDNS:mosdns \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadow_TLS:shadow-tls \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun:kcptun-client \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy:naiveproxy \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Mihomo_Client:mihomo \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Client:shadowsocks-rust-sslocal \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Server:shadowsocks-rust-ssserver \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Simple_Obfs:simple-obfs-client \
-	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_V2ray_Plugin:v2ray-plugin \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Client:shadowsocksr-libev-ssr-local \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Client:shadowsocksr-libev-ssr-redir \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server:shadowsocksr-libev-ssr-server
@@ -78,7 +66,6 @@ endchoice
 choice
 	prompt "Shadowsocks Client Selection"
 	default PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Mihomo_Client if aarch64||arm||i386||loongarch64||riscv64||x86_64
-	default PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Client if ! (aarch64||arm||i386||loongarch64||riscv64||x86_64)
 	default PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_NONE_Client
 
 	config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_NONE_Client
@@ -86,9 +73,6 @@ choice
 
 	config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Mihomo_Client
 	bool "Mihomo"
-
-	config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Client
-	bool "Shadowsocks-rust"
 endchoice
 
 choice
@@ -97,9 +81,6 @@ choice
 
 	config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_NONE_Server
 	bool "None"
-
-	config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Server
-	bool "Shadowsocks-rust"
 endchoice
 
 choice
@@ -120,7 +101,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_MosDNS
 	default y if aarch64||arm||i386||x86_64
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Http_Proxy
-	bool "Include HTTP Proxy"
+	bool "Include HTTP(S) Proxy Server"
 	select PACKAGE_3proxy
 	default n
 
@@ -137,28 +118,9 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_GeoData
 	select PACKAGE_v2ray-geosite
 	default y if i386||x86_64
 
-config PACKAGE_$(PKG_NAME)_INCLUDE_Shadow_TLS
-	bool "Include Shadow-TLS"
-	select PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Client
-	depends on aarch64||arm||x86_64
-	depends on !(TARGET_x86_geode||TARGET_x86_legacy)
-	default n
-
-config PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun
-	bool "Include Kcptun"
-	default n
-
 config PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy
 	bool "Include NaiveProxy"
 	depends on !(arc||armeb||mips||mips64||powerpc||TARGET_gemini)
-	default n
-
-config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Simple_Obfs
-	bool "Include Shadowsocks Simple Obfs Plugin"
-	default n
-
-config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_V2ray_Plugin
-	bool "Include Shadowsocks V2ray Plugin"
 	default n
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Client
@@ -178,5 +140,39 @@ define Package/$(PKG_NAME)/conffiles
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
+
+define Package/$(PKG_NAME)/install
+ ifneq ($(wildcard ${CURDIR}/luasrc),)
+	$(INSTALL_DIR) $(1)$(LUCI_LIBRARYDIR)
+	cp -pR $(PKG_BUILD_DIR)/luasrc/* $(1)$(LUCI_LIBRARYDIR)/
+	$(FIND) $(1)$(LUCI_LIBRARYDIR)/ -type f -name '*.luadoc' | $(XARGS) rm
+	$(if $(CONFIG_LUCI_SRCDIET),$(call SrcDiet,$(1)$(LUCI_LIBRARYDIR)/),true)
+	$(call SubstituteVersion,$(1)$(LUCI_LIBRARYDIR)/)
+ endif
+ ifneq ($(wildcard ${CURDIR}/ucode),)
+	  $(INSTALL_DIR) $(1)$(UCODE_LIBRARYDIR)
+	  cp -pR $(PKG_BUILD_DIR)/ucode/* $(1)$(UCODE_LIBRARYDIR)/
+	  $(call SubstituteVersion,$(1)$(UCODE_LIBRARYDIR)/)
+ endif
+ ifneq ($(wildcard ${CURDIR}/htdocs),)
+	$(INSTALL_DIR) $(1)$(HTDOCS)
+	cp -pR $(PKG_BUILD_DIR)/htdocs/* $(1)$(HTDOCS)/
+	$(if $(CONFIG_LUCI_JSMIN),$(call JsMin,$(1)$(HTDOCS)/),true)
+	$(if $(CONFIG_LUCI_CSSTIDY),$(call CssTidy,$(1)$(HTDOCS)/),true)
+ endif
+ ifneq ($(wildcard ${CURDIR}/root),)
+	$(INSTALL_DIR) $(1)/
+	cp -pR $(PKG_BUILD_DIR)/root/* $(1)/
+ endif
+ ifneq ($(wildcard ${CURDIR}/src),)
+	$(call Build/Install/Default)
+	$(CP) $(PKG_INSTALL_DIR)/* $(1)/
+ endif
+	if [ -d "$(1)/usr/bin" ]; then \
+		chmod 0755 "$(1)/usr/bin/ssr-monitor" 2>/dev/null || true; \
+		chmod 0755 "$(1)/usr/bin/ssr-rules" 2>/dev/null || true; \
+		chmod 0755 "$(1)/usr/bin/ssr-switch" 2>/dev/null || true; \
+	fi
+endef
 
 # call BuildPackage - OpenWrt buildroot signature
