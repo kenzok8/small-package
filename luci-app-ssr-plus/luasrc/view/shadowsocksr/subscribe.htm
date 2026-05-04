@@ -199,17 +199,16 @@ local autostart = self.map and self.map.ssr_subscribe_autostart
 			}
 
 			function startSubscribe(options, done) {
-				options = options || {};
 				running = true;
 				updateLog('');
-				setStatus(options.title || '<%:Starting subscription update...%>', '#0072c3');
+				setStatus('<%:Starting subscription update...%>', '#0072c3');
 				openModal();
 
 				clearPoll();
 				fetchLog();
 				pollTimer = window.setInterval(fetchLog, 1000);
 
-				XHR.get('<%=subscribe_url%>', options.sid ? { sid: options.sid } : null, function(x, rv) {
+				XHR.get('<%=subscribe_url%>', null, function(x, rv) {
 					var ok = !!(rv && typeof rv.ret !== 'undefined' && Number(rv.ret) === 0);
 					if (typeof done === 'function') {
 						done(ok);

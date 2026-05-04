@@ -1,0 +1,47 @@
+<script type="text/javascript">//<![CDATA[
+	(function() {
+		function bindSubscribeItemEnabledAutoSave() {
+			var root = document.getElementById('cbi-shadowsocksr-server_subscribe_item');
+			if (!root || root.getAttribute('data-enabled-autosave-bound') === '1') {
+				return;
+			}
+
+			root.addEventListener('change', function(ev) {
+				var target = ev.target;
+				if (!target || target.type !== 'checkbox' || !target.name) {
+					return;
+				}
+
+				var matched = target.name.match(/^cbid\.shadowsocksr\.([^.]+)\.enabled$/);
+				if (!matched) {
+					return;
+				}
+
+				var sid = matched[1];
+				var original = target.checked;
+				target.disabled = true;
+
+				XHR.post(
+					'<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "toggle_subscribe_item_enabled")%>',
+					{ sid: sid, enabled: original ? '1' : '0' },
+					function(x, rv) {
+						target.disabled = false;
+						if (!(rv && Number(rv.ret) === 1)) {
+							target.checked = !original;
+							alert('Failed to save subscription enable state.');
+						}
+					}
+				);
+			});
+
+			root.setAttribute('data-enabled-autosave-bound', '1');
+		}
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', bindSubscribeItemEnabledAutoSave);
+			window.addEventListener('load', bindSubscribeItemEnabledAutoSave);
+		} else {
+			window.setTimeout(bindSubscribeItemEnabledAutoSave, 0);
+		}
+	})();
+//]]></script>

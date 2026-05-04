@@ -787,7 +787,7 @@ msgstr "日/周"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:315
 msgid "Delete All Subscribe Servers"
-msgstr "删除所有订阅服务器节点"
+msgstr "删除所有订阅节点"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/control.lua:116
 msgid "Deny Domain List"
@@ -2284,8 +2284,8 @@ msgid "Subscribe URL"
 msgstr "订阅 URL (支持SS/SSR/V2/TROJAN/HY2/TUIC/CLASH等)"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:469
-msgid "Manage multiple subscribe URLs, including Clash subscriptions. Each entry can be edited and refreshed independently."
-msgstr "管理多条订阅 URL，包括 Clash 订阅。每一条都可以单独编辑并单独更新。"
+msgid "Manage multiple subscribe URLs, including Clash subscriptions. Only enabled entries are included when updating all subscriptions."
+msgstr "管理多条订阅 URL，包括 Clash 订阅。只有启用的订阅项才会参与“更新所有订阅节点”。"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:304
 msgid "Subscribe new add server default Auto-Switch on"
@@ -2537,7 +2537,7 @@ msgstr "未知"
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:311
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/subscribe.htm:16
 msgid "Update All Subscribe Servers"
-msgstr "更新所有订阅服务器节点"
+msgstr "更新所有订阅节点"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:288
 msgid "Save Subscribe Settings"
@@ -2561,7 +2561,7 @@ msgid "Upload"
 msgstr "上传"
 
 msgid "Upload Custom YAML File"
-msgstr "上传自定义YAML文件"
+msgstr "上传自定义 YAML 文件"
 
 msgid "Upload a custom Clash/Mihomo YAML file. The file will be preprocessed and saved as a local Clash node."
 msgstr "上传自定义 Clash/Mihomo YAML 文件。文件会先做预处理，再保存为本地 Clash 节点。"
@@ -3338,7 +3338,7 @@ msgid "Subscribe Log"
 msgstr "订阅日志"
 
 msgid "Starting subscription update..."
-msgstr "正在开始订阅更新..."
+msgstr "正在开始更新订阅..."
 
 msgid "Subscribe complete, refreshing page..."
 msgstr "订阅完成，正在刷新页面..."

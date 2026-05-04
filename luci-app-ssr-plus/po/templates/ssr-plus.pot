@@ -2122,7 +2122,7 @@ msgid "Subscribe URL"
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:469
-msgid "Manage multiple subscribe URLs, including Clash subscriptions. Each entry can be edited and refreshed independently."
+msgid "Manage multiple subscribe URLs, including Clash subscriptions. Only enabled entries are included when updating all subscriptions."
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:304

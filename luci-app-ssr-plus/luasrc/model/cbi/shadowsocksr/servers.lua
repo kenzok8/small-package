@@ -377,12 +377,6 @@ o.datatype = "uinteger"
 o.rmempty = true
 o:depends({auto_update = "1", config_auto_update_mode = "1"})
 
-if has_mihomo then
-	o = s:option(DummyValue, "_upload_clash_yaml", translate("Upload Custom YAML File"))
-	o.template = "shadowsocksr/clash_yaml_upload"
-	o.description = translate("Upload a custom Clash/Mihomo YAML file. The file will be preprocessed and saved as a local Clash node.")
-end
-
 o = s:option(Flag, "subscribe_advanced", translate("Subscribe Advanced Settings"))
 o.rmempty = false
 o.default = "0"
@@ -419,17 +413,6 @@ o.description = translate("Through proxy update list, Not Recommended ")
 o.default = "1"
 o:depends("subscribe_advanced", "1")
 preserve_when_hidden(o, "subscribe_advanced", "1")
-
-o = s:option(Button, "update_Sub", translate("Save Subscribe Settings"))
-o.inputstyle = "reload"
-o.description = translate("Save current subscribe settings")
-o.render = function(self, section, scope)
-	self.inputstyle = "reload"
-	self.title = translate("Save Subscribe Settings")
-	self.inputtitle = translate("Save Subscribe Settings")
-	self.template = "shadowsocksr/subscribe_save_button"
-	Button.render(self, section, scope)
-end
 
 o = s:option(Button, "subscribe", translate("Update All Subscribe Servers"))
 o.rawhtml = true
@@ -477,14 +460,21 @@ o:value("v2rayN/9.99", "v2rayN")
 o:depends("subscribe_advanced", "1")
 preserve_when_hidden(o, "subscribe_advanced", "1")
 
+if has_mihomo then
+	o = s:option(DummyValue, "_upload_clash_yaml", translate("Upload Custom YAML File"))
+	o.template = "shadowsocksr/clash_yaml_upload"
+	o.description = translate("Upload a custom Clash/Mihomo YAML file. The file will be preprocessed and saved as a local Clash node.")
+end
+
 s:append(cbi.Template("shadowsocksr/subscribe_schedule_compact"))
 
 s = m:section(TypedSection, "server_subscribe_item", translate("Subscribe URL"))
 s.anonymous = true
 s.addremove = true
 s.sortable = true
-s.template = "shadowsocksr/subscribe_item_tblsection"
-s.description = translate("Manage multiple subscribe URLs, including Clash subscriptions. Each entry can be edited and refreshed independently.")
+s.template = "cbi/tblsection"
+s.template_addremove = "shadowsocksr/subscribe_actions_footer"
+s.description = translate("Manage multiple subscribe URLs, including Clash subscriptions. Only enabled entries are included when updating all subscriptions.")
 
 o = s:option(Flag, "enabled", translate("Enable"))
 o.rmempty = false
@@ -496,7 +486,7 @@ end
 
 o = s:option(Value, "alias", translate("Alias"))
 o.rmempty = true
-o.width = "18rem"
+o.width = "7.5rem"
 function o.cfgvalue(self, section)
 	return Value.cfgvalue(self, section) or string.format("Subscribe %s", section:sub(-4))
 end

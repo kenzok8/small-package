@@ -46,6 +46,7 @@ shunt_config_file=
 local_config_file=
 shunt_dns_config_file=
 tmp_local_port=
+DNS2TCP_FILTER_AAAA_SUPPORTED=
 
 ARG_UDP=
 ARG_UDP_RULES=
@@ -126,13 +127,38 @@ get_filter_aaaa() {
 	echo "${ret:=1}"
 }
 
+supports_dns2tcp_filter_aaaa() {
+	local dns2tcp_bin="${1:-$(first_type dns2tcp)}"
+
+	[ -n "$dns2tcp_bin" ] || return 1
+
+	if [ -n "$DNS2TCP_FILTER_AAAA_SUPPORTED" ]; then
+		[ "$DNS2TCP_FILTER_AAAA_SUPPORTED" = "1" ]
+		return $?
+	fi
+
+	if "$dns2tcp_bin" -h 2>&1 | grep -Eq '(^|[[:space:]])-A([[:space:]]|$)'; then
+		DNS2TCP_FILTER_AAAA_SUPPORTED=1
+		return 0
+	fi
+
+	DNS2TCP_FILTER_AAAA_SUPPORTED=0
+	return 1
+}
+
 start_dns2tcp() {
 	local dnsserver="$1"
+	local dns2tcp_bin="$(first_type dns2tcp)"
 
 	if [ "$(get_filter_aaaa)" = "1" ]; then
-		ln_start_bin $(first_type dns2tcp) dns2tcp -L "127.0.0.1#$dns_port" -R "${dnsserver/:/#}" -A
+		if supports_dns2tcp_filter_aaaa "$dns2tcp_bin"; then
+			ln_start_bin "$dns2tcp_bin" dns2tcp -L "127.0.0.1#$dns_port" -R "${dnsserver/:/#}" -A
+		else
+			echolog "警告：当前 dns2tcp 不支持 AAAA 过滤参数(-A)，已改为不带该参数启动。请升级 dns2tcp 版本。"
+			ln_start_bin "$dns2tcp_bin" dns2tcp -L "127.0.0.1#$dns_port" -R "${dnsserver/:/#}"
+		fi
 	else
-		ln_start_bin $(first_type dns2tcp) dns2tcp -L "127.0.0.1#$dns_port" -R "${dnsserver/:/#}"
+		ln_start_bin "$dns2tcp_bin" dns2tcp -L "127.0.0.1#$dns_port" -R "${dnsserver/:/#}"
 	fi
 }
 

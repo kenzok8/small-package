@@ -1,75 +1,155 @@
 <style type="text/css">
-	#cbi-shadowsocksr-server_subscribe_item table {
-		table-layout: auto;
-		width: 100%;
+	#cbi-shadowsocksr-server_subscribe_item > h3 {
+		font-weight: 800 !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item > .table {
+		table-layout: fixed !important;
+		width: 100% !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .th,
+	#cbi-shadowsocksr-server_subscribe_item .td {
+		vertical-align: middle !important;
+		line-height: 1 !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .table.cbi-section-table .th,
+	#cbi-shadowsocksr-server_subscribe_item .table.cbi-section-table .td {
+		padding: 4px 6px !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .cbi-section-table-row {
+		text-align: left !important;
+		height: auto !important;
+		min-height: 0 !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .cbi-section-table-row .td {
+		text-align: left !important;
 	}
 
 	#cbi-shadowsocksr-server_subscribe_item .cbi-value {
 		margin-bottom: 0;
+		min-height: 0 !important;
+		padding: 0 !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field {
+		width: auto !important;
 	}
 
 	#cbi-shadowsocksr-server_subscribe_item input[type="text"] {
 		width: 100%;
+		height: 2.1rem !important;
+		line-height: 1.15 !important;
+		font-size: 1.08rem !important;
+		padding-top: 0.22rem !important;
+		padding-bottom: 0.22rem !important;
+		padding-left: 0.5rem !important;
+		padding-right: 0.5rem !important;
 		min-width: 0;
 		box-sizing: border-box;
 	}
 
-	#cbi-shadowsocksr-server_subscribe_item td.cbi-value-field {
-		vertical-align: middle;
+	#cbi-shadowsocksr-server_subscribe_item .cbi-value-field {
+		margin-left: 0;
 	}
 
-	#cbi-shadowsocksr-server_subscribe_item th:nth-child(1),
-	#cbi-shadowsocksr-server_subscribe_item td:nth-child(1) {
-		width: 1%;
-		text-align: center;
-		white-space: nowrap;
+	#cbi-shadowsocksr-server_subscribe_item .cbi-value label.cbi-value-title {
+		display: none;
 	}
 
-	#cbi-shadowsocksr-server_subscribe_item th:nth-child(2),
-	#cbi-shadowsocksr-server_subscribe_item td:nth-child(2) {
-		width: 18rem;
-		min-width: 18rem;
-		text-align: center;
-	}
-
-	#cbi-shadowsocksr-server_subscribe_item th:nth-child(3),
-	#cbi-shadowsocksr-server_subscribe_item td:nth-child(3) {
-		width: auto;
-	}
-
-	#cbi-shadowsocksr-server_subscribe_item th:last-child,
-	#cbi-shadowsocksr-server_subscribe_item td:last-child {
-		width: 1%;
-		white-space: nowrap;
-		text-align: center;
-		padding-left: 0;
-		padding-right: 0;
-	}
-
-	#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions {
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="enabled"] > div {
 		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: 8px;
+		justify-content: center !important;
+		align-items: center !important;
+		min-height: 1.7rem;
+		width: 100% !important;
 	}
 
-	#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions .btn {
-		margin-bottom: 0;
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="enabled"] [data-ui-widget*="Checkbox"] {
+		display: flex !important;
+		justify-content: center !important;
+		align-items: center !important;
+		width: 100% !important;
 	}
 
-	#cbi-shadowsocksr-server_subscribe_item td:nth-child(2) input[type="text"] {
-		width: 100%;
-		max-width: 18rem;
-		text-align: center;
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="enabled"] input[type="checkbox"] {
+		margin-left: 0 !important;
+		margin-right: 0 !important;
+		margin-top: 0 !important;
 	}
 
-	#cbi-shadowsocksr-server_subscribe_item td:nth-child(3) input[type="text"] {
+	#cbi-shadowsocksr-server_subscribe_item .th:nth-child(1),
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="enabled"] {
+		width: 4.2rem !important;
+		min-width: 4.2rem !important;
+		max-width: 4.2rem !important;
+		text-align: center !important;
+		white-space: nowrap;
+		padding-left: 4px !important;
+		padding-right: 2px !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .th:nth-child(2),
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="alias"] {
+		width: 10.2rem !important;
+		min-width: 10.2rem !important;
+		max-width: 10.2rem !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .th:nth-child(3),
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="url"] {
+		width: auto !important;
+		min-width: 0 !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .th.cbi-section-actions,
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-section-actions {
+		width: 7.4rem !important;
+		min-width: 7.4rem !important;
+		max-width: 7.4rem !important;
+		text-align: right !important;
+		white-space: nowrap;
+		padding-left: 0 !important;
+		padding-right: 0 !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-section-actions > div {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-section-actions .btn {
+		height: 2.1rem !important;
+		line-height: 1.1 !important;
+		padding-top: 0.22rem !important;
+		padding-bottom: 0.22rem !important;
+		padding-left: 0.9rem !important;
+		padding-right: 0.9rem !important;
+		margin: 0 !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="url"] input[type="text"] {
 		font-family: "Menlo", "Monaco", "Consolas", monospace;
-		width: 100%;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="alias"] .cbi-input-text,
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="url"] .cbi-input-text {
+		width: 100% !important;
+		max-width: none !important;
+		min-width: 0 !important;
+		display: block !important;
+		margin: 0 !important;
+	}
+
+	#cbi-shadowsocksr-server_subscribe_item .td.cbi-value-field[data-name="alias"] .cbi-input-text {
+		font-size: 0.96rem !important;
 	}
 
 	@media (max-width: 900px) {
-		#cbi-shadowsocksr-server_subscribe_item .table {
+		#cbi-shadowsocksr-server_subscribe_item > .table {
 			display: block;
 			overflow-x: auto;
 		}
