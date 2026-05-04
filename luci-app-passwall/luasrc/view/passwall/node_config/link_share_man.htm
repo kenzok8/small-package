@@ -406,16 +406,19 @@ local current_node = map:get(section)
 			} else if (v_transport === "grpc") {
 				info.path = opt.get(dom_prefix + "grpc_serviceName").value;
 			}
-			if (info.path && info.path != "") {
-				info.path = encodeURI(info.path);
-			}
 			info.net = v_transport;
 
 			info.security = opt.get(dom_prefix + "security").value || "auto";
+			info.scy = info.security;
 			if (opt.get(dom_prefix + "tls").checked) {
 				var v_security = "tls";
 				info.tls = "tls";
 				info.sni = opt.get(dom_prefix + "tls_serverName").value;
+				info.alpn = opt.get(dom_prefix + "alpn")?.value;
+				if (info.alpn === "default") info.alpn = undefined;
+				info.fp = opt.get(dom_prefix + "fingerprint")?.value;
+				info.pcs = opt.get(dom_prefix + "tls_pinSHA256")?.value;
+				opt.get(dom_prefix + "tls_allowInsecure")?.checked && (info.insecure = "1");
 			}
 
 			opt.get(dom_prefix + "tcp_fast_open")?.checked && (info.tfo = "1");
@@ -1350,9 +1353,16 @@ local current_node = map:get(section)
 			opt.set(dom_prefix + 'address', unbracketIP(ssm.add));
 			opt.set(dom_prefix + 'port', ssm.port);
 			opt.set(dom_prefix + 'uuid', ssm.id);
+			opt.set(dom_prefix + 'security', ssm.security || ssm.scy || "auto");
 			opt.set(dom_prefix + 'tls', ssm.tls === "tls");
 			if (ssm.tls === "tls") {
 				opt.set(dom_prefix + 'tls_serverName', ssm.sni || ssm.host);
+				opt.set(dom_prefix + 'alpn', ssm.alpn || "default");
+				if (ssm.fp && ssm.fp !== "") {
+					opt.set(dom_prefix + 'utls', true);
+					opt.set(dom_prefix + 'fingerprint', ssm.fp);
+				}
+				opt.set(dom_prefix + 'tls_pinSHA256', ssm.pcs || "");
 				opt.set(
 					dom_prefix + 'tls_allowInsecure',
 					!((ssm.allowinsecure ?? '0') === '0' && (ssm.allowInsecure ?? '0') === '0' && (ssm.insecure ?? '0') === '0')
@@ -1798,7 +1808,8 @@ local current_node = map:get(section)
 				opt.get(dom_prefix + 'port').blur();
 			}
 		} else {
-			s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>: " + ssu[0];
+			s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
+			sessionStorage.removeItem("fromUrl");
 			return false;
 		}
 		s.innerHTML = "<font color='green'><%:Import Finished %></font>";
