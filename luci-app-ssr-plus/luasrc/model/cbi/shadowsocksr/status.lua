@@ -9,6 +9,7 @@ local reudp_run = 0
 local sock5_run = 0
 local http_run = 0
 local server_run = 0
+local kcptun_run = 0
 local tunnel_run = 0
 local gfw_count = 0
 local ad_count = 0
@@ -28,6 +29,20 @@ style_blue = [[<b style=color:red>]]
 font_off = [[</b>]]
 bold_on = [[<strong>]]
 bold_off = [[</strong>]]
+local kcptun_version = translate("Unknown")
+local kcp_file = "/usr/bin/kcptun-client"
+if not nixio.fs.access(kcp_file) then
+	kcptun_version = translate("Not exist")
+else
+	if not nixio.fs.access(kcp_file, "rwx", "rx", "rx") then
+		nixio.fs.chmod(kcp_file, 755)
+	end
+	kcptun_version = "<b>" ..luci.sys.exec(kcp_file .. " -v | awk '{printf $3}'") .. "</b>"
+	if not kcptun_version or kcptun_version == "" then
+		kcptun_version = translate("Unknown")
+	end
+end
+
 if nixio.fs.access("/etc/ssrplus/gfw_list.conf") then
 	gfw_count = tonumber(luci.sys.exec("cat /etc/ssrplus/gfw_list.conf | wc -l")) / 2
 end
@@ -115,6 +130,10 @@ if has_3proxy and global_http_enabled and http_run == 0 and Process_list:find("3
 	http_run = 1
 end
 
+if Process_list:find("kcptun.client") then
+	kcptun_run = 1
+end
+
 if Process_list:find("ssr.server") then
 	server_run = 1
 end
@@ -190,6 +209,19 @@ if server_run == 1 then
 	s.value = font_blue .. bold_on .. translate("Running") .. bold_off .. font_off
 else
 	s.value = style_blue .. bold_on .. translate("Not Running") .. bold_off .. font_off
+end
+
+if nixio.fs.access("/usr/bin/kcptun-client") then
+	s = m:field(DummyValue, "kcp_version", translate("KcpTun Version"))
+	s.rawhtml = true
+	s.value = kcptun_version
+	s = m:field(DummyValue, "kcptun_run", translate("KcpTun"))
+	s.rawhtml = true
+	if kcptun_run == 1 then
+		s.value = font_blue .. bold_on .. translate("Running") .. bold_off .. font_off
+	else
+		s.value = style_blue .. bold_on .. translate("Not Running") .. bold_off .. font_off
+	end
 end
 
 s = m:field(Button, "Restart", translate("Restart ShadowSocksR Plus+"))

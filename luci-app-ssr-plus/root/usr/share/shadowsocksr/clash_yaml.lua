@@ -9,8 +9,6 @@ if not ok_lyaml then
 	os.exit(2)
 end
 
-local uci = require "luci.model.uci".cursor()
-
 local function read_file(path)
 	local data = nixio.fs.readfile(path)
 	if not data or data == "" then
@@ -55,6 +53,75 @@ local function split_filter_words(text)
 		end
 	end
 	return items
+end
+
+local function trim(value)
+	return tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+end
+
+local function parse_csv_line(line)
+	local cols = {}
+	local cur = ""
+	local in_quote = false
+	local i = 1
+
+	while i <= #line do
+		local ch = line:sub(i, i)
+		if ch == '"' then
+			if in_quote and line:sub(i + 1, i + 1) == '"' then
+				cur = cur .. '"'
+				i = i + 1
+			else
+				in_quote = not in_quote
+			end
+		elseif ch == "," and not in_quote then
+			cols[#cols + 1] = cur
+			cur = ""
+		else
+			cur = cur .. ch
+		end
+		i = i + 1
+	end
+
+	cols[#cols + 1] = cur
+	return cols
+end
+
+local function read_clash_client_rules_csv(sid)
+	local rows = {}
+	sid = trim(sid)
+	if sid == "" then
+		return rows
+	end
+
+	local csv_path = string.format("/etc/ssrplus/clash/%s.csv", sid)
+	local raw = read_file(csv_path)
+	if not raw or raw == "" then
+		return rows
+	end
+
+	local first = true
+	for line in tostring(raw):gsub("\r", ""):gmatch("[^\n]+") do
+		local text = trim(line)
+		if text ~= "" then
+			if first and text:lower() == "enabled,client,policy,remarks,client_mac" then
+				first = false
+			else
+				local cols = parse_csv_line(line)
+				if #cols >= 4 then
+					rows[#rows + 1] = {
+						enabled = cols[1],
+						ip_addr = trim(cols[2] or ""),
+						policy_group = trim(cols[3] or ""),
+						remarks = trim(cols[4] or ""),
+						client_mac = trim(cols[5] or "")
+					}
+				end
+			end
+		end
+	end
+
+	return rows
 end
 
 local function has_proxy_sections(doc)
@@ -263,26 +330,38 @@ local function merge(raw_path, overlay_path, output_path)
 	return true
 end
 
-local function append_client_policy_rules(runtime_path)
+local function append_client_policy_rules(runtime_path, sid)
 	local doc, err = load_yaml(runtime_path)
 	if not doc then
 		io.stderr:write(err or "parse_failed", "\n")
 		return false
 	end
 
+	local valid_policies = {}
+	for _, proxy in ipairs(doc.proxies or {}) do
+		if type(proxy) == "table" and proxy.name and proxy.name ~= "" then
+			valid_policies[tostring(proxy.name)] = true
+		end
+	end
+	for _, group in ipairs(doc["proxy-groups"] or {}) do
+		if type(group) == "table" and group.name and group.name ~= "" then
+			valid_policies[tostring(group.name)] = true
+		end
+	end
+
 	local custom_rules = {}
-	uci:foreach("shadowsocksr", "clash_client_group", function(section)
+	for _, section in ipairs(read_clash_client_rules_csv(sid)) do
 		if tostring(section.enabled or "0") == "1" then
 			local ip_addr = tostring(section.ip_addr or "")
 			local policy_group = tostring(section.policy_group or "")
-			if ip_addr ~= "" and policy_group ~= "" then
+			if ip_addr ~= "" and policy_group ~= "" and valid_policies[policy_group] then
 				if not ip_addr:find("/", 1, true) then
 					ip_addr = ip_addr .. "/32"
 				end
 				custom_rules[#custom_rules + 1] = string.format("SRC-IP-CIDR,%s,%s", ip_addr, policy_group)
 			end
 		end
-	end)
+	end
 
 	if #custom_rules == 0 then
 		io.stdout:write("client_rules=0\n")
@@ -497,7 +576,7 @@ local function normalize_plugin_name(plugin)
 	return value
 end
 
-local function apply_shadowsocks_plugin(proxy, sid)
+local function build_shadowsocks_plugin(proxy, sid)
 	local plugin = normalize_plugin_name(get_server_field(sid, "plugin", ""))
 	local plugin_opts = parse_plugin_opts(get_server_field(sid, "plugin_opts", ""))
 
@@ -514,7 +593,7 @@ local function apply_shadowsocks_plugin(proxy, sid)
 		return
 	end
 
-	if plugin == "v2ray-plugin" then
+	if plugin == "v2ray-plugin" or plugin == "xray-plugin" then
 		proxy.plugin = "v2ray-plugin"
 		proxy["plugin-opts"] = {
 			mode = plugin_opts.mode or "websocket",
@@ -539,25 +618,19 @@ local function apply_shadowsocks_plugin(proxy, sid)
 		proxy["plugin-opts"] = {
 			host = host ~= "" and host or nil,
 			port = tonumber(port) or nil,
-			password = plugin_opts.password or plugin_opts.passwd or nil,
+			password = plugin_opts.passwd or plugin_opts.password or nil,
 			version = version
 		}
-		if get_server_field(sid, "client_fingerprint", "") ~= "" then
-			proxy["client-fingerprint"] = get_server_field(sid, "client_fingerprint", "")
-		end
 		return
 	end
 
-	if plugin == "kcptun" then
-		proxy.plugin = "kcptun"
+	if plugin == "kcptun" or plugin == "kcp-tun" then
+		proxy.plugin = "kcp-tun"
 		proxy["plugin-opts"] = {
-			mode = plugin_opts.mode or "fast",
 			host = plugin_opts.host or nil,
 			port = tonumber(plugin_opts.port) or nil,
-			key = plugin_opts.key or plugin_opts.password or plugin_opts.passwd or nil,
-			mtu = tonumber(plugin_opts.mtu) or nil,
-			sndwnd = tonumber(plugin_opts.sndwnd) or nil,
-			rcvwnd = tonumber(plugin_opts.rcvwnd) or nil
+			key = plugin_opts.key or plugin_opts.passwd or plugin_opts.password or nil,
+			mode = plugin_opts.mode or nil
 		}
 		return
 	end
@@ -568,16 +641,17 @@ local function apply_shadowsocks_plugin(proxy, sid)
 	end
 end
 
-local function apply_kcptun_legacy(proxy, sid)
+local function build_kcptun_plugin(proxy, sid)
 	if not bool_enabled(get_server_field(sid, "kcp_enable", "0")) then
 		return
 	end
-	proxy.plugin = "kcptun"
+
+	proxy.plugin = "kcp-tun"
 	proxy["plugin-opts"] = {
-		mode = "fast",
 		host = get_server_field(sid, "server", ""),
 		port = tonumber(get_server_field(sid, "kcp_port", "0")) or nil,
 		key = get_server_field(sid, "kcp_password", ""),
+		mode = "fast",
 		mtu = 1350
 	}
 end
@@ -598,9 +672,12 @@ local function build_shadowsocks_runtime_doc(sid, local_port, socks_port, mode)
 		udp = true,
 		tfo = bool_enabled(get_server_field(sid, "fast_open", "0"))
 	}
-	apply_kcptun_legacy(proxy, sid)
+
+	if get_server_field(sid, "type", "") == "ss" then
+		build_kcptun_plugin(proxy, sid)
+	end
 	if proxy.plugin == nil then
-		apply_shadowsocks_plugin(proxy, sid)
+		build_shadowsocks_plugin(proxy, sid)
 	end
 
 	local doc = {
@@ -672,6 +749,16 @@ local function build_shadowsocks_server_doc(sid)
 		tfo = bool_enabled(get_server_field(sid, "fast_open", "0"))
 	}
 
+	local plugin = normalize_plugin_name(get_server_field(sid, "plugin", ""))
+	if plugin == "obfs-local" then
+		local plugin_opts = parse_plugin_opts(get_server_field(sid, "plugin_opts", ""))
+		listener.obfs = plugin_opts.obfs or plugin_opts.mode or "http"
+		listener.obfs_opts = {
+			mode = plugin_opts.obfs or plugin_opts.mode or "http",
+			host = plugin_opts.obfs_host or plugin_opts.host or nil
+		}
+	end
+
 	return {
 		["allow-lan"] = true,
 		["bind-address"] = "*",
@@ -702,7 +789,7 @@ elseif action == "prepare" then
 elseif action == "merge" then
 	os.exit(merge(arg[2], arg[3], arg[4]) and 0 or 1)
 elseif action == "append_client_policy_rules" then
-	os.exit(append_client_policy_rules(arg[2]) and 0 or 1)
+	os.exit(append_client_policy_rules(arg[2], arg[3]) and 0 or 1)
 elseif action == "tuic" then
 	os.exit(generate_tuic_runtime(arg[2], arg[3], arg[4], arg[5], arg[6]) and 0 or 1)
 elseif action == "ss" then
@@ -710,6 +797,6 @@ elseif action == "ss" then
 elseif action == "ss_server" then
 	os.exit(generate_shadowsocks_server(arg[2], arg[3]) and 0 or 1)
 else
-	io.stderr:write("usage: clash_yaml.lua validate <yaml> | filter <yaml> <words> | prepare <input> <output> | merge <raw> <overlay> <output> | append_client_policy_rules <runtime_yaml> | tuic <sid> <output> <local_port> [socks_port] [mode] | ss <sid> <output> <local_port> [socks_port] [mode] | ss_server <sid> <output>\n")
+	io.stderr:write("usage: clash_yaml.lua validate <yaml> | filter <yaml> <words> | prepare <input> <output> | merge <raw> <overlay> <output> | append_client_policy_rules <runtime_yaml> <sid> | tuic <sid> <output> <local_port> [socks_port] [mode] | ss <sid> <output> <local_port> [socks_port] [mode] | ss_server <sid> <output>\n")
 	os.exit(1)
 end

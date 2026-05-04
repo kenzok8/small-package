@@ -14,6 +14,7 @@ local CLASH_API_PORT = "16756"
 local COMPONENT_HELPER = "/usr/share/shadowsocksr/update_components.sh"
 local SERVER_DETECT_CACHE = "/tmp/ssrplus_server_detect.json"
 local SERVER_DETECT_LOCK = "/tmp/ssrplus_server_detect.lock"
+local CLASH_RULES_DIR = "/etc/ssrplus/clash"
 local SUPPORTED_COMPONENTS = {
 	xray = true,
 	mihomo = true,
@@ -48,6 +49,108 @@ local function normalize_client_ip(value)
 	return ""
 end
 
+local function get_clash_client_rule_csv_path(sid)
+	sid = trim(sid)
+	if sid == "" then
+		return nil
+	end
+	return string.format("%s/%s.csv", CLASH_RULES_DIR, sid)
+end
+
+local function csv_escape(value)
+	value = tostring(value or "")
+	if value:find('[",\n\r]') then
+		return '"' .. value:gsub('"', '""') .. '"'
+	end
+	return value
+end
+
+local function parse_csv_line(line)
+	local cols = {}
+	local cur = ""
+	local in_quote = false
+	local i = 1
+
+	while i <= #line do
+		local ch = line:sub(i, i)
+		if ch == '"' then
+			if in_quote and line:sub(i + 1, i + 1) == '"' then
+				cur = cur .. '"'
+				i = i + 1
+			else
+				in_quote = not in_quote
+			end
+		elseif ch == "," and not in_quote then
+			cols[#cols + 1] = cur
+			cur = ""
+		else
+			cur = cur .. ch
+		end
+		i = i + 1
+	end
+
+	cols[#cols + 1] = cur
+	return cols
+end
+
+local function read_clash_client_rules_csv(sid)
+	local rules = {}
+	local csv_path = get_clash_client_rule_csv_path(sid)
+	if not csv_path or not nixio.fs.access(csv_path) then
+		return rules
+	end
+
+	local raw = nixio.fs.readfile(csv_path)
+	if not raw or raw == "" then
+		return rules
+	end
+
+	local first = true
+	for line in tostring(raw):gsub("\r", ""):gmatch("[^\n]+") do
+		local text = trim(line)
+		if text ~= "" then
+			if first and text:lower() == "enabled,client,policy,remarks,client_mac" then
+				first = false
+			else
+				local cols = parse_csv_line(line)
+				if #cols >= 4 then
+					rules[#rules + 1] = {
+						id = tostring(#rules + 1),
+						enabled = cols[1] == "1" or tostring(cols[1] or ""):lower() == "true",
+						ip_addr = trim(cols[2] or ""),
+						policy_group = trim(cols[3] or ""),
+						remarks = trim(cols[4] or ""),
+						client_mac = sanitize_mac(cols[5] or "")
+					}
+				end
+			end
+		end
+	end
+
+	return rules
+end
+
+local function write_clash_client_rules_csv(sid, rows)
+	local csv_path = get_clash_client_rule_csv_path(sid)
+	if not csv_path then
+		return false
+	end
+
+	nixio.fs.mkdirr(CLASH_RULES_DIR)
+	local lines = { "enabled,client,policy,remarks,client_mac" }
+	for _, row in ipairs(rows or {}) do
+		lines[#lines + 1] = table.concat({
+			row.enabled == "1" and "1" or "0",
+			csv_escape(row.ip_addr or ""),
+			csv_escape(row.policy_group or ""),
+			csv_escape(row.remarks or ""),
+			csv_escape(row.client_mac or "")
+		}, ",")
+	end
+
+	return nixio.fs.writefile(csv_path, table.concat(lines, "\n") .. "\n")
+end
+
 local function collect_lan_clients()
 	local clients = {}
 	local seen = {}
@@ -72,19 +175,8 @@ local function collect_lan_clients()
 	return clients
 end
 
-local function read_clash_client_rules()
-	local rules = {}
-	uci:foreach("shadowsocksr", "clash_client_group", function(section)
-		rules[#rules + 1] = {
-			id = section[".name"],
-			enabled = section.enabled == "1",
-			remarks = section.remarks or "",
-			ip_addr = section.ip_addr or "",
-			client_mac = section.client_mac or "",
-			policy_group = section.policy_group or ""
-		}
-	end)
-	return rules
+local function read_clash_client_rules(sid)
+	return read_clash_client_rules_csv(sid)
 end
 
 local function normalize_ping_ms(value, scale)
@@ -793,7 +885,7 @@ function clash_client_policies()
 		active = active_sid ~= nil,
 		sid = active_sid,
 		clients = collect_lan_clients(),
-		rules = read_clash_client_rules(),
+		rules = read_clash_client_rules(sid),
 		policies = policies
 	})
 end
@@ -822,19 +914,14 @@ function clash_client_rule_save()
 		end
 	end
 
-	uci:delete_all("shadowsocksr", "clash_client_group")
-	for _, row in ipairs(rows) do
-		local rid = uci:add("shadowsocksr", "clash_client_group")
-		if rid then
-			uci:set("shadowsocksr", rid, "enabled", row.enabled)
-			uci:set("shadowsocksr", rid, "remarks", row.remarks)
-			uci:set("shadowsocksr", rid, "ip_addr", row.ip_addr)
-			uci:set("shadowsocksr", rid, "client_mac", row.client_mac)
-			uci:set("shadowsocksr", rid, "policy_group", row.policy_group)
-		end
+	if not sid or sid == "" or uci:get("shadowsocksr", sid) ~= "servers" or uci:get("shadowsocksr", sid, "type") ~= "clash" then
+		luci.http.status(400, "Bad Request")
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ success = false, error = "invalid_sid" })
+		return
 	end
-	uci:save("shadowsocksr")
-	uci:commit("shadowsocksr")
+
+	write_clash_client_rules_csv(sid, rows)
 
 	local active_sid = resolve_active_clash_sid(sid)
 	local current_sid = uci:get_first("shadowsocksr", "global", "global_server")
@@ -851,16 +938,24 @@ function clash_client_rule_save()
 		success = true,
 		count = #rows,
 		reapplied = reapplied,
-		rules = read_clash_client_rules()
+		rules = read_clash_client_rules(sid)
 	})
 end
 
 function clash_client_rule_clear()
 	local sid = luci.http.formvalue("sid")
 
-	uci:delete_all("shadowsocksr", "clash_client_group")
-	uci:save("shadowsocksr")
-	uci:commit("shadowsocksr")
+	if not sid or sid == "" or uci:get("shadowsocksr", sid) ~= "servers" or uci:get("shadowsocksr", sid, "type") ~= "clash" then
+		luci.http.status(400, "Bad Request")
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ success = false, error = "invalid_sid" })
+		return
+	end
+
+	local csv_path = get_clash_client_rule_csv_path(sid)
+	if csv_path and nixio.fs.access(csv_path) then
+		nixio.fs.remove(csv_path)
+	end
 
 	local current_sid = uci:get_first("shadowsocksr", "global", "global_server")
 	local reapplied = false

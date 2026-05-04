@@ -2,11 +2,13 @@
 <%
 local map = self.map
 
+local has_ss_rust = luci.sys.exec('type -t -p sslocal 2>/dev/null || type -t -p ssserver 2>/dev/null') ~= ""
 local has_mihomo = luci.sys.exec('type -t -p mihomo -p /usr/libexec/mihomo 2>/dev/null') ~= ""
 local has_xray = luci.sys.exec('type -t -p xray 2>/dev/null') ~= ""
 -%>
 <script type="text/javascript">
 //<![CDATA[
+let has_ss_rust = "<%=has_ss_rust%>"
 let has_mihomo = "<%=has_mihomo%>"
 let has_xray = "<%=has_xray%>"
 
@@ -250,7 +252,6 @@ function import_ssr_url(btn, urlname, sid) {
 				function parseSSPluginInfo() {
 					var plugin = "";
 					var pluginOpts = "";
-					var clientFingerprint = "";
 
 					if (params.plugin) {
 						var pluginInfo = decodeURIComponentSafe(params.plugin);
@@ -268,8 +269,7 @@ function import_ssr_url(btn, urlname, sid) {
 							if (decodedTls.version && !isNaN(decodedTls.version)) {
 								versionFlag = "v" + decodedTls.version + "=1;";
 							}
-							pluginOpts = versionFlag + "host=" + (decodedTls.host || "") + ";password=" + (decodedTls.password || "");
-							clientFingerprint = decodedTls.fingerprint || "";
+							pluginOpts = versionFlag + "host=" + (decodedTls.host || "") + ";passwd=" + (decodedTls.password || "");
 						} catch (e) {
 							console.log("shadow-tls decode failed:", e);
 						}
@@ -277,8 +277,7 @@ function import_ssr_url(btn, urlname, sid) {
 
 					return {
 						plugin: plugin,
-						pluginOpts: pluginOpts,
-						clientFingerprint: clientFingerprint
+						pluginOpts: pluginOpts
 					};
 				}
 
@@ -336,41 +335,40 @@ function import_ssr_url(btn, urlname, sid) {
 					}
 
 					var pluginInfo = parseSSPluginInfo();
-						return {
-							method: method,
-							password: password,
-							server: normalizeHost(serverInfo.server),
-							port: serverInfo.port,
-							plugin: pluginInfo.plugin,
-							pluginOpts: pluginInfo.pluginOpts,
-							clientFingerprint: pluginInfo.clientFingerprint,
-							alias: param != undefined ? decodeURIComponentSafe(param) : ""
-						};
-					}
+					return {
+						method: method,
+						password: password,
+						server: normalizeHost(serverInfo.server),
+						port: serverInfo.port,
+						plugin: pluginInfo.plugin,
+						pluginOpts: pluginInfo.pluginOpts,
+						alias: param != undefined ? decodeURIComponentSafe(param) : ""
+					};
+				}
 
 				function importAsNormalSS(ssNode) {
-					document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].value = "ss";
+					document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].value = has_mihomo === "true" ? "ss" : "ss-rust";
 					document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].dispatchEvent(event);
 
 					document.getElementsByName('cbid.shadowsocksr.' + sid + '.server')[0].value = ssNode.server;
 					document.getElementsByName('cbid.shadowsocksr.' + sid + '.server_port')[0].value = ssNode.port;
-						document.getElementsByName('cbid.shadowsocksr.' + sid + '.password')[0].value = ssNode.password || "";
-						document.getElementsByName('cbid.shadowsocksr.' + sid + '.encrypt_method_ss')[0].value = ssNode.method;
-						document.getElementsByName('cbid.shadowsocksr.' + sid + '.encrypt_method_ss')[0].dispatchEvent(event);
+					document.getElementsByName('cbid.shadowsocksr.' + sid + '.password')[0].value = ssNode.password || "";
+					document.getElementsByName('cbid.shadowsocksr.' + sid + '.encrypt_method_ss')[0].value = ssNode.method;
+					document.getElementsByName('cbid.shadowsocksr.' + sid + '.encrypt_method_ss')[0].dispatchEvent(event);
 
-						if (ssNode.plugin && ssNode.plugin !== "none") {
-							document.getElementsByName('cbid.shadowsocksr.' + sid + '.enable_plugin')[0].checked = true;
-							document.getElementsByName('cbid.shadowsocksr.' + sid + '.enable_plugin')[0].dispatchEvent(event);
-							document.getElementsByName('cbid.shadowsocksr.' + sid + '.plugin')[0].value = ssNode.plugin;
-							document.getElementsByName('cbid.shadowsocksr.' + sid + '.plugin')[0].dispatchEvent(event);
-							document.getElementsByName('cbid.shadowsocksr.' + sid + '.plugin_opts')[0].value = ssNode.pluginOpts || "";
-							if (ssNode.clientFingerprint) {
-								document.getElementsByName('cbid.shadowsocksr.' + sid + '.client_fingerprint')[0].value = ssNode.clientFingerprint;
-							}
-						}
+					if (ssNode.plugin && ssNode.plugin !== "none") {
+						document.getElementsByName('cbid.shadowsocksr.' + sid + '.enable_plugin')[0].checked = true;
+						document.getElementsByName('cbid.shadowsocksr.' + sid + '.enable_plugin')[0].dispatchEvent(event);
+						document.getElementsByName('cbid.shadowsocksr.' + sid + '.plugin')[0].value = ssNode.plugin;
+						document.getElementsByName('cbid.shadowsocksr.' + sid + '.plugin')[0].dispatchEvent(event);
+						document.getElementsByName('cbid.shadowsocksr.' + sid + '.plugin_opts')[0].value = ssNode.pluginOpts || "";
+					} else {
+						document.getElementsByName('cbid.shadowsocksr.' + sid + '.enable_plugin')[0].checked = false;
+						document.getElementsByName('cbid.shadowsocksr.' + sid + '.enable_plugin')[0].dispatchEvent(event);
+					}
 
-						if (params.tfo === "1") {
-							document.getElementsByName('cbid.shadowsocksr.' + sid + '.fast_open')[0].checked = true;
+					if (params.tfo === "1") {
+						document.getElementsByName('cbid.shadowsocksr.' + sid + '.fast_open')[0].checked = true;
 						document.getElementsByName('cbid.shadowsocksr.' + sid + '.fast_open')[0].dispatchEvent(event);
 					}
 
@@ -525,6 +523,7 @@ function import_ssr_url(btn, urlname, sid) {
 
 				function preferredSSBackend() {
 					if (has_mihomo === "true") return "ss";
+					if (has_ss_rust === "true") return "ss-rust";
 					if (has_xray === "true") return "v2ray";
 					return null;
 				}

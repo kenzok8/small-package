@@ -1668,7 +1668,15 @@ function gen_config(var)
 				protocol = "dns",
 				settings = {
 					nonIPQuery = (api.compare_versions(xray_version, "<", "26.4.25")) and "reject" or nil, -- Todo is to remove it
-					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {{ action = "hijack" }} or nil
+					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {
+						{
+							action = "hijack",
+							qtype = "1,28"
+						},
+						{
+							action = "reject"
+						}
+					} or nil
 				}
 			})
 

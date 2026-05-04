@@ -376,12 +376,29 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 			return lines.join('\n');
 		}
 
+		function buildClientRulesFilename() {
+			var label = currentEditorSid || currentPanelSid || 'unknown';
+			var titleEl = document.getElementById('ssr-clash-modal-node');
+			if (titleEl && titleEl.textContent) {
+				label = titleEl.textContent.trim() || label;
+			}
+			label = String(label || 'unknown')
+				.replace(/[\\/:*?"<>|]/g, '_')
+				.replace(/\s+/g, '_')
+				.replace(/_+/g, '_')
+				.replace(/^_+|_+$/g, '');
+			if (!label) {
+				label = 'unknown';
+			}
+			return 'ssr-clash-client-rules-' + label + '.csv';
+		}
+
 		function downloadClientRulesCsv() {
 			var blob = new Blob([exportClientRulesCsv()], { type: 'text/csv;charset=utf-8;' });
 			var url = URL.createObjectURL(blob);
 			var link = document.createElement('a');
 			link.href = url;
-			link.download = 'ssr-clash-client-rules.csv';
+			link.download = buildClientRulesFilename();
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);

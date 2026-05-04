@@ -377,42 +377,49 @@ o.datatype = "uinteger"
 o.rmempty = true
 o:depends({auto_update = "1", config_auto_update_mode = "1"})
 
-o = s:option(Flag, "subscribe_advanced", translate("Subscribe Advanced Settings"))
+o = s:option(Flag, "_subscribe_advanced_toggle", translate("Subscribe Advanced Settings"))
 o.rmempty = false
 o.default = "0"
+o.write = function() end
+o.remove = function() end
 
 o = s:option(Value, "filter_words", translate("Subscribe Filter Words"))
 o.rmempty = true
 o.description = translate("Filter Words splited by /")
-o:depends("subscribe_advanced", "1")
-preserve_when_hidden(o, "subscribe_advanced", "1")
+o:depends("_subscribe_advanced_toggle", "1")
+preserve_when_hidden(o, "_subscribe_advanced_toggle", "1")
 
 o = s:option(Value, "save_words", translate("Subscribe Save Words"))
 o.rmempty = true
 o.description = translate("Save Words splited by /")
-o:depends("subscribe_advanced", "1")
-preserve_when_hidden(o, "subscribe_advanced", "1")
+o:depends("_subscribe_advanced_toggle", "1")
+preserve_when_hidden(o, "_subscribe_advanced_toggle", "1")
 
 o = s:option(Flag, "allow_insecure", translate("Allow subscribe Insecure nodes By default"))
 o.rmempty = false
 o.description = translate("Subscribe nodes allows insecure connection as TLS client (insecure)")
 o.default = "0"
-o:depends("subscribe_advanced", "1")
-preserve_when_hidden(o, "subscribe_advanced", "1")
+o:depends("_subscribe_advanced_toggle", "1")
+preserve_when_hidden(o, "_subscribe_advanced_toggle", "1")
 
 o = s:option(Flag, "switch", translate("Subscribe Default Auto-Switch"))
 o.rmempty = false
 o.description = translate("Subscribe new add server default Auto-Switch on")
 o.default = "1"
-o:depends("subscribe_advanced", "1")
-preserve_when_hidden(o, "subscribe_advanced", "1")
+o:depends("_subscribe_advanced_toggle", "1")
+preserve_when_hidden(o, "_subscribe_advanced_toggle", "1")
 
 o = s:option(Flag, "proxy", translate("Through proxy update"))
 o.rmempty = false
 o.description = translate("Through proxy update list, Not Recommended ")
 o.default = "1"
-o:depends("subscribe_advanced", "1")
-preserve_when_hidden(o, "subscribe_advanced", "1")
+o:depends("_subscribe_advanced_toggle", "1")
+preserve_when_hidden(o, "_subscribe_advanced_toggle", "1")
+
+o = s:option(Button, "_save_subscribe_settings", translate("Save Subscribe Settings"))
+o.inputstyle = "save"
+o.description = translate("Save current subscribe settings")
+o.write = function() end
 
 o = s:option(Button, "subscribe", translate("Update All Subscribe Servers"))
 o.rawhtml = true
@@ -457,8 +464,8 @@ o:value("curl", "Curl")
 o:value("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Linux")
 o:value("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Windows")
 o:value("v2rayN/9.99", "v2rayN")
-o:depends("subscribe_advanced", "1")
-preserve_when_hidden(o, "subscribe_advanced", "1")
+o:depends("_subscribe_advanced_toggle", "1")
+preserve_when_hidden(o, "_subscribe_advanced_toggle", "1")
 
 if has_mihomo then
 	o = s:option(DummyValue, "_upload_clash_yaml", translate("Upload Custom YAML File"))

@@ -443,7 +443,7 @@ prepare_clash_runtime_config() {
 	fi
 	local client_policy_stats=""
 	local client_rules=0
-	client_policy_stats="$(/usr/bin/lua "$CLASH_YAML_HELPER" append_client_policy_rules "$runtime_file" 2>/dev/null)" || true
+	client_policy_stats="$(/usr/bin/lua "$CLASH_YAML_HELPER" append_client_policy_rules "$runtime_file" "$sid" 2>/dev/null)" || true
 	client_rules="$(printf '%s\n' "$client_policy_stats" | sed -n 's/.*client_rules=\([0-9][0-9]*\).*/\1/p' | tail -n1)"
 	[ -n "$client_rules" ] || client_rules=0
 	if [ "$client_rules" -gt 0 ] 2>/dev/null; then
@@ -987,6 +987,9 @@ gen_config_file() { #server1 type2 code3 local_port4 socks_port5 chain6 threads5
 start_udp() {
 	local udp_relay_server_type=$(uci_get_by_name $UDP_RELAY_SERVER type)
 	local type=$udp_relay_server_type
+	if [ "$udp_relay_server_type" = "ss-rust" ]; then
+		type="ss"
+	fi
 	redir_udp=1
 	case "$type" in
 	ss | ssr)
@@ -998,6 +1001,8 @@ start_udp() {
 			gen_config_file $UDP_RELAY_SERVER $type 2 $tmp_udp_port
 			if [ "$udp_relay_server_type" = "ssr" ]; then
 				ss_program="$(first_type ${type}-redir)"
+			elif [ "$udp_relay_server_type" = "ss-rust" ] || [ "$udp_relay_server_type" = "ss" ]; then
+				ss_program="$(first_type ${type}local)"
 			fi
 			echolog "$(get_name $type) program is: $ss_program"
 			old_ss_program=$(readlink -f "$TMP_PATH/bin/${type}-redir" 2>/dev/null)
@@ -1030,6 +1035,22 @@ start_udp() {
 		ARG_UDP=""
 		echolog "TUIC UDP relay is handled by the main Mihomo instance."
 		;;
+	shadowtls)
+		gen_config_file $UDP_RELAY_SERVER $type 2 ${tmp_udp_local_port}
+		gen_config_file $UDP_RELAY_SERVER $type 2 ${tmp_udp_local_port} 0 chain
+		ln_start_bin $(first_type shadow-tls) shadow-tls config --config $chain_config_file
+		local chain_type=$(uci_get_by_name $UDP_RELAY_SERVER chain_type)
+		case ${chain_type} in
+		vmess)
+			ln_start_bin $(first_type xray) v2ray run -c $udp_config_file
+			echolog "UDP TPROXY Relay:shadow-tls chain-to $($(first_type xray) --version) Started!"
+			;;
+		sslocal)
+			ln_start_bin $(first_type sslocal) sslocal -c $udp_config_file
+			echolog "UDP TPROXY Relay:shadow-tls chain-to $($(first_type sslocal) --version) Started!"
+			;;
+		esac
+		;;
 		socks5)
 			if [ "$(uci_get_by_name $UDP_RELAY_SERVER auth_enable 0)" == "1" ]; then
 				local auth="-a $(uci_get_by_name $UDP_RELAY_SERVER username) -k $(uci_get_by_name $UDP_RELAY_SERVER password)"
@@ -1048,24 +1069,14 @@ start_local() {
 	local local_port="${1:-$(uci_get_by_type socks5_proxy local_port)}"
 	local local_server_type=$(uci_get_by_name $LOCAL_SERVER type)
 	local type=$local_server_type
+	if [ "$local_server_type" = "ss-rust" ]; then
+		type="ss"
+	fi
 	case "$type" in
 	ss | ssr)
-		if [ "$local_server_type" = "ss" ]; then
-			local mihomo_bin="$(first_type mihomo)"
-			local instance_key="${LOCAL_SERVER}-local"
-			[ -x "$mihomo_bin" ] || {
-				echolog "Global_Socks5:Mihomo 内核不存在，请确认 /usr/bin/mihomo 或 /usr/libexec/mihomo 可执行。"
-				return 1
-			}
-			prepare_ss_mihomo_runtime_config "$LOCAL_SERVER" "$local_port" "$local_port" "$instance_key" "socks" || return 1
-			local ss_workdir="$(get_ss_mihomo_workdir "$instance_key")"
-			ln_start_bin "$mihomo_bin" ss-local -d "$ss_workdir" -f "$ss_workdir/config.yaml"
-			echolog "Global_Socks5:Mihomo (Shadowsocks) Started!"
-		else
+		if [ "$local_server_type" = "ssr" ]; then
 			gen_config_file $LOCAL_SERVER $type 4 $local_port
-			if [ "$local_server_type" = "ssr" ]; then
-				ss_program="$(first_type ${type}-local)"
-			fi
+			ss_program="$(first_type ${type}-local)"
 			echolog "$(get_name $type) program is: $ss_program"
 			old_ss_program=$(readlink -f "$TMP_PATH/bin/${type}-local" 2>/dev/null)
 			if [ "$old_ss_program" != "$ss_program" ]; then
@@ -1073,6 +1084,16 @@ start_local() {
 			fi
 			ln_start_bin $ss_program ${type}-local -c $local_config_file
 			echolog "Global_Socks5:$(get_name $type) Started!"
+		else
+			gen_config_file $LOCAL_SERVER $type 4 $local_port
+			ss_program="$(first_type sslocal)"
+			echolog "ShadowSocks program is: $ss_program"
+			old_ss_program=$(readlink -f "$TMP_PATH/bin/${type}-local" 2>/dev/null)
+			if [ "$old_ss_program" != "$ss_program" ]; then
+				rm -rf "$TMP_PATH/bin/${type}-local"
+			fi
+			ln_start_bin $ss_program ${type}-local -c $local_config_file
+			echolog "Global_Socks5:Shadowsocks-rust Started!"
 		fi
 		;;
 	v2ray)
@@ -1104,6 +1125,25 @@ start_local() {
 		ln_start_bin "$mihomo_bin" tuic-local -d "$tuic_workdir" -f "$tuic_workdir/config.yaml"
 		echolog "Global_Socks5:Mihomo (TUIC) Started!"
 		;;
+		shadowtls)
+			#respective config for global socks and main node
+			if [ "$_local" == "2" ]; then
+				gen_config_file $LOCAL_SERVER $type 4 "10${tmp_tcp_local_port}"
+			gen_config_file $LOCAL_SERVER $type 4 0 $local_port chain/"10${tmp_tcp_local_port}"
+			ln_start_bin $(first_type shadow-tls) shadow-tls config --config $chain_local_config_file
+			local chain_type=$(uci_get_by_name $LOCAL_SERVER chain_type)
+			case ${chain_type} in
+			vmess)
+				ln_start_bin $(first_type xray) v2ray run -c $local_config_file
+				echolog "Global Socks5 Proxy:shadow-tls chain-to$($(first_type xray) --version) Started!"
+				;;
+			sslocal)
+				ln_start_bin $(first_type sslocal) sslocal -c $local_config_file
+				echolog "Global Socks5 Proxy:shadow-tls chain-to$($(first_type sslocal) --version) Started!"
+				;;
+				esac
+			fi
+			;;
 		clash)
 			echolog "Global_Socks5:Clash total node is only supported when using Same as Global Server."
 			return 1
@@ -1266,6 +1306,7 @@ get_udp_relay_mode() {
 	local socks_ver
 
 	type=$(uci_get_by_name "$node" type)
+	[ "$type" = "ss-rust" ] && type="ss"
 
 	case "$type" in
 	ss|ssr|hysteria2)
@@ -1308,6 +1349,20 @@ Start_Run() {
 		local threads=$(uci_get_by_type global threads)
 	fi
 	local global_server_type=$(uci_get_by_name $GLOBAL_SERVER type)
+	if [ "$(uci_get_by_name $GLOBAL_SERVER kcp_enable 0)" == "1" ] && [ "$global_server_type" != "ss" ]; then
+		[ ! -f "/usr/bin/kcptun-client" ] && return 1
+		local kcp_str=$(/usr/bin/kcptun-client -v | grep kcptun | wc -l)
+		[ "0" == "$kcp_str" ] && return 1
+		local kcp_server=$(uci_get_by_name $GLOBAL_SERVER server)
+		local kcp_port=$(uci_get_by_name $GLOBAL_SERVER kcp_port)
+		local server_port=$(uci_get_by_name $GLOBAL_SERVER server_port)
+		local password=$(uci_get_by_name $GLOBAL_SERVER kcp_password)
+		local kcp_param=$(uci_get_by_name $GLOBAL_SERVER kcp_param)
+		[ "$password" != "" ] && password="--key "$password
+		service_start /usr/bin/kcptun-client -r $kcp_server:$kcp_port -l :$server_port $password $kcp_param
+		kcp_enable_flag=1
+		ARG_UDP=""
+	fi
 	if [ "$_local" == "1" ]; then
 		local socks_port=$(uci_get_by_type socks5_proxy local_port)
 		tcp_config_file=$TMP_PATH/local-ssr-retcp.json
@@ -1324,27 +1379,14 @@ Start_Run() {
 	fi
 	local tcp_port=$(get_default_node_local_port)
 	local type=$global_server_type
+	if [ "$global_server_type" = "ss-rust" ]; then
+		type="ss"
+	fi
 	case "$type" in
 	ss | ssr)
-		if [ "$global_server_type" = "ss" ]; then
-			local mihomo_bin="$(first_type mihomo)"
-			local ss_socks_port=0
-			[ -x "$mihomo_bin" ] || {
-				echolog "Main node:Mihomo 内核不存在，请确认 /usr/bin/mihomo 或 /usr/libexec/mihomo 可执行。"
-				return 1
-			}
-			if [ "$_local" = "1" ] && [ "$LOCAL_SERVER" = "$GLOBAL_SERVER" ]; then
-				ss_socks_port=$(uci_get_by_type socks5_proxy local_port 1080)
-			fi
-			prepare_ss_mihomo_runtime_config "$GLOBAL_SERVER" "$tcp_port" "$ss_socks_port" "$GLOBAL_SERVER" "redir" || return 1
-			local ss_workdir="$(get_ss_mihomo_workdir "$GLOBAL_SERVER")"
-			ln_start_bin "$mihomo_bin" ssr-retcp -d "$ss_workdir" -f "$ss_workdir/config.yaml"
-			echolog "Main node:Mihomo (Shadowsocks) Started!"
-		else
+		if [ "$global_server_type" = "ssr" ]; then
 			gen_config_file $GLOBAL_SERVER $type 1 $tcp_port
-			if [ "$global_server_type" = "ssr" ]; then
-				ss_program="$(first_type ${type}-redir)"
-			fi
+			ss_program="$(first_type ${type}-redir)"
 			echolog "$(get_name $type) program is: $ss_program"
 			old_ss_program=$(readlink -f "$TMP_PATH/bin/${type}-redir" 2>/dev/null)
 			if [ "$old_ss_program" != "$ss_program" ]; then
@@ -1354,6 +1396,16 @@ Start_Run() {
 				ln_start_bin $ss_program ${type}-redir -c $tcp_config_file
 			done
 			echolog "Main node:$(get_name $type) $threads Threads Started!"
+		else
+			gen_config_file $GLOBAL_SERVER $type 1 $tcp_port
+			ss_program="$(first_type sslocal)"
+			echolog "ShadowSocks program is: $ss_program"
+			old_ss_program=$(readlink -f "$TMP_PATH/bin/${type}-redir" 2>/dev/null)
+			if [ "$old_ss_program" != "$ss_program" ]; then
+				rm -rf "$TMP_PATH/bin/${type}-redir"
+			fi
+			ln_start_bin $ss_program ${type}-redir -c $tcp_config_file
+			echolog "Main node:Shadowsocks-rust Started!"
 		fi
 		;;
 	v2ray)
@@ -1388,6 +1440,28 @@ Start_Run() {
 		ln_start_bin "$mihomo_bin" ssr-retcp -d "$tuic_workdir" -f "$tuic_workdir/config.yaml"
 		echolog "Main node:Mihomo (TUIC) Started!"
 		;;
+		shadowtls)
+			if [ -z "$socks_port" ]; then
+				gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}"
+			gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}" 0 chain
+		else
+			gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}"
+			gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}" $socks_port chain
+		fi
+		local chain_type=$(uci_get_by_name $GLOBAL_SERVER chain_type)
+		case ${chain_type} in
+		vmess)
+			ln_start_bin $(first_type shadow-tls) shadow-tls config --config $chain_config_file
+			ln_start_bin $(first_type xray) v2ray run -c $tcp_config_file
+			echolog "Mian node:shadow-tls chain-to $($(first_type xray) --version) Started!"
+			;;
+		sslocal)
+			ln_start_bin $(first_type shadow-tls) shadow-tls config --config $chain_config_file
+			ln_start_bin $(first_type sslocal) sslocal -c $tcp_config_file
+			echolog "Main node:shadow-tls chain-to $($(first_type sslocal) --version) Started!"
+			;;
+				esac
+			;;
 		clash)
 			local clash_socks_port=0
 			local mihomo_bin="$(first_type mihomo)"
@@ -1547,6 +1621,9 @@ start_server() {
 		fi
 			local node_type=$(uci_get_by_name $1 type)
 			local type=$node_type
+			if [ "$node_type" = "ss-rust" ]; then
+				type="ss"
+			fi
 			case "$type" in
 			ss | ssr)
 				if [ "$node_type" = "ss" ]; then
@@ -1563,6 +1640,8 @@ start_server() {
 					gen_service_file ${type} $1 $TMP_PATH/ssr-server$server_count.json
 					if [ "$node_type" = "ssr" ]; then
 						ss_program="$(first_type ${type}-server)"
+					elif [ "$node_type" = "ss-rust" ] || [ "$node_type" = "ss" ]; then
+						ss_program="$(first_type ${type}server)"
 					fi
 					old_ss_program=$(readlink -f "$TMP_PATH/bin/${type}-server" 2>/dev/null)
 					if [ "$old_ss_program" != "$ss_program" ]; then
@@ -1765,6 +1844,7 @@ start_rules() {
 			-w "$(uci_get_by_type access_control wan_fw_ips)" \
 			-B "$(uci_get_by_type access_control lan_bp_ips)" \
 			-p "$(uci_get_by_type access_control lan_fp_ips)" \
+			-G "$(uci_get_by_type access_control lan_gm_ips)" \
 			-m "$(uci_get_by_type access_control Interface)" \
 			-D "$proxyport" \
 			$(get_arg_out) $(gfwmode) $ARG_UDP $ARG_UDP_RULES $ARG_A
@@ -1913,6 +1993,7 @@ stop() {
 		if [ -z "$switch_server" ]; then
 			ps_list | grep -v "grep" | grep ssr-switch | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 			rm -f /var/lock/ssr-switch.lock
+			killall -q -9 kcptun-client
 		fi
 		ps_list | grep -v "grep" | grep ssr-monitor | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
 		ps_list | grep -v "grep" | grep ssr-rules | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
@@ -1924,6 +2005,7 @@ stop() {
 			# Force kill hanged programs
 			ps_list | grep -v "grep" | grep "$TMP_PATH" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 ; \
 		)
+	killall -q -9 v2ray-plugin obfs-local xray-plugin shadow-tls
 	rm -f /var/lock/ssr-monitor.lock
 	if [ "$(uci -q get "dhcp.@dnsmasq[0]._unused_ssrp_changed")" = "1" ]; then
 		uci -q del "dhcp.@dnsmasq[0].noresolv"

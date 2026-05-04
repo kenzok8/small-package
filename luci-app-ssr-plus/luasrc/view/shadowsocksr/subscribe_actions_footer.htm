@@ -7,6 +7,13 @@
 		title="<%:Add%>"
 	/>
 
+	<input
+		class="btn cbi-button cbi-button-save ssr-subscribe-save-settings"
+		type="submit"
+		value="<%:Save%>"
+		title="<%:Save%>"
+	/>
+
 	<div class="ssr-subscribe-toolbar-slot ssr-subscribe-toolbar-slot-delete"></div>
 	<div class="ssr-subscribe-toolbar-slot ssr-subscribe-toolbar-slot-update"></div>
 </div>
@@ -136,10 +143,15 @@
 	}
 
 	#ssr-subscribe-toolbar > .btn.cbi-button-add,
+	#ssr-subscribe-toolbar > .ssr-subscribe-save-settings,
 	#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot .btn {
 		min-height: 2.1rem;
 		padding-top: 0.18rem;
 		padding-bottom: 0.18rem;
+	}
+
+	#ssr-subscribe-toolbar > .ssr-subscribe-save-settings {
+		margin: 0;
 	}
 
 	#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot .btn.cbi-button-add {
@@ -162,6 +174,7 @@
 		}
 
 		#ssr-subscribe-toolbar > .btn.cbi-button-add,
+		#ssr-subscribe-toolbar > .ssr-subscribe-save-settings,
 		#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot-delete,
 		#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot-update {
 			margin-left: 0;
