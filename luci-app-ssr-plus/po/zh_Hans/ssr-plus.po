@@ -573,6 +573,14 @@ msgstr "正在检查..."
 msgid "China IP Data"
 msgstr "【中国大陆 IP 段】数据库"
 
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:255
+msgid "ChinaDNS-NG query protocol"
+msgstr "ChinaDNS-NG 查询协议"
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:226
+msgid "ChinaDNS-NG shunt query protocol"
+msgstr "ChinaDNS-NG 分流查询协议"
+
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:89
 msgid "Chnroute Update url"
 msgstr "中国大陆 IP 段更新 URL"
@@ -817,6 +825,10 @@ msgstr "禁止连接的域名"
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/control.lua:37
 msgid "Disable"
 msgstr "停用"
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:263
+msgid "Disable ChinaDNS-NG"
+msgstr "直通模式（禁用 ChinaDNS-NG）"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:152
 msgid "Disable IPv6 In MosDNS Query Mode (Shunt Mode)"
@@ -1903,6 +1915,12 @@ msgstr "恢复备份"
 msgid "RUNNING"
 msgstr "运行中"
 
+msgid "RUNNING in %s Mode"
+msgstr "运行中，当前为 %s 模式"
+
+msgid "RUNNING in %s (%s) Mode"
+msgstr "运行中，当前为 %s（%s）模式"
+
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/reset.htm:5
 msgid "Really reset all changes?"
 msgstr "真的重置所有更改吗？"
@@ -2238,7 +2256,13 @@ msgstr "shadowsocks密码"
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:345
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:92
 msgid "ShadowsocksR"
-msgstr ""
+msgstr "ShadowsocksR"
+
+msgid "Shadowsocks"
+msgstr "Shadowsocks"
+
+msgid "Shadowsocks-rust"
+msgstr "Shadowsocks-rust"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1324
 msgid "Short ID"
@@ -2386,7 +2410,7 @@ msgstr "TLS 用于验证 leaf 证书的 name。"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:360
 msgid "TUIC"
-msgstr ""
+msgstr "TUIC"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1429
 msgid "TUIC ALPN"
@@ -2498,7 +2522,19 @@ msgstr "传输协议"
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:444
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:91
 msgid "Trojan"
-msgstr ""
+msgstr "Trojan"
+
+msgid "SOCKS5"
+msgstr "SOCKS5"
+
+msgid "ShadowTLS"
+msgstr "ShadowTLS"
+
+msgid "Xray"
+msgstr "Xray"
+
+msgid "Clash"
+msgstr "Clash"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:412
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:362
@@ -2601,6 +2637,11 @@ msgstr "Clash YAML 路径"
 
 msgid "Please specify either a Clash subscription URL or a local YAML path."
 msgstr "请填写 Clash 订阅 URL 或本地 YAML 路径中的至少一项。"
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:120
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:144
+msgid "Use ChinaDNS-NG query and cache"
+msgstr "使用 ChinaDNS-NG 查询并缓存"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:168
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:196

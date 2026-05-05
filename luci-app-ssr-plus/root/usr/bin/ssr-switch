@@ -18,6 +18,8 @@ PROBE_SID=""
 cycle_time=60
 switch_time=3
 probe_socks_port=10800
+direct_fail_count=0
+direct_fail_limit=3
 probe_url="$(uci_get_by_type server_subscribe url_test_url)"
 [ -n "$probe_url" ] || probe_url="https://www.google.com/generate_204"
 
@@ -68,6 +70,26 @@ start_probe_socks() {
 	return 0
 }
 
+probe_http_ok() {
+	case "$1" in
+		[1-5][0-9][0-9])
+			return 0
+			;;
+	esac
+	return 1
+}
+
+check_direct_probe() {
+	local code
+
+	code="$(curl -k -sS -L -o /dev/null \
+		--connect-timeout "$switch_time" \
+		--max-time "$switch_time" \
+		-w '%{http_code}' \
+		"$probe_url" 2>/dev/null || true)"
+	probe_http_ok "$code"
+}
+
 check_proxy_via_socks() {
 	local try_count
 	local code
@@ -82,11 +104,7 @@ check_proxy_via_socks() {
 				--socks5-hostname "$proxy_host" \
 				-w '%{http_code}' \
 				"$probe_url" 2>/dev/null || true)"
-			case "$code" in
-				204|200|301|302)
-					return 0
-					;;
-			esac
+			probe_http_ok "$code" && return 0
 		done
 		sleep 1
 	done
@@ -151,26 +169,38 @@ start() {
 
 run_once() {
 	DEFAULT_SERVER="$(uci_get_by_type global global_server)"
-	[ "$DEFAULT_SERVER" = "nil" ] && return 0
+	[ "$DEFAULT_SERVER" = "nil" ] && {
+		direct_fail_count=0
+		return 0
+	}
 	[ "$(uci_get_by_name "$DEFAULT_SERVER" type)" = "clash" ] && {
-		echolog "提示：Mihomo 托管节点不启用 SSR Plus 自动切换逻辑。"
+		direct_fail_count=0
 		cleanup_probe_socks
 		return 0
 	}
 	[ "$(uci_get_by_name "$DEFAULT_SERVER" type)" = "tuic" ] && {
-		echolog "提示：Mihomo 托管节点不启用 SSR Plus 自动切换逻辑。"
+		direct_fail_count=0
 		cleanup_probe_socks
 		return 0
 	}
 	[ "$(uci_get_by_name "$DEFAULT_SERVER" kcp_enable 0)" = "1" ] && {
+		direct_fail_count=0
 		cleanup_probe_socks
 		return 1
 	}
 
 	CURRENT_SERVER="$DEFAULT_SERVER"
 
+	if check_direct_probe; then
+		direct_fail_count=0
+		return 0
+	fi
+
+	direct_fail_count=$((direct_fail_count + 1))
+	[ "$direct_fail_count" -lt "$direct_fail_limit" ] && return 0
+	direct_fail_count=0
+
 	if test_proxy "$CURRENT_SERVER"; then
-		echolog "Current main server is available: $(uci_get_by_name "$CURRENT_SERVER" alias)"
 		return 0
 	fi
 

@@ -143,7 +143,8 @@ if Process_list:find("mihomo") and Process_list:find("/ss%-server%-") then
 end
 
 if  Process_list:find("ssrplus/bin/dns2tcp") or
-    Process_list:find("ssrplus/bin/mosdns") then
+    Process_list:find("ssrplus/bin/mosdns") or
+    Process_list:find("chinadns.*127.0.0.1.*5335") then
 	pdnsd_run = 1
 end
 

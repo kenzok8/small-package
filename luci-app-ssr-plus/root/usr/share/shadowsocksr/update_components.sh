@@ -12,9 +12,11 @@ COUNTRY_MMDB_URL="https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@r
 GEOSITE_URL="https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
 GEOIP_DAT_URL="https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
 COUNTRY_MMDB_FILE="/usr/share/shadowsocksr/Country.mmdb"
-GEOSITE_FILE="/etc/openclash/GeoSite.dat"
 GEOIP_DAT_FILE="/usr/share/v2ray/geoip.dat"
 GEOSITE_DAT_FILE="/usr/share/v2ray/geosite.dat"
+OPENCLASH_GEOSITE_FILE="/etc/openclash/GeoSite.dat"
+OPENCLASH_GEOIP_DAT_FILE="/etc/openclash/geoip.dat"
+OPENCLASH_GEOSITE_DAT_FILE="/etc/openclash/geosite.dat"
 
 log_kv() {
 	key="$1"
@@ -38,6 +40,31 @@ file_size() {
 		return 0
 	}
 	wc -c < "$path" 2>/dev/null | tr -d '[:space:]'
+}
+
+resolve_existing_geo_file() {
+	local primary="$1"
+	local fallback="$2"
+
+	if [ -f "$primary" ]; then
+		printf '%s' "$primary"
+	elif [ -n "$fallback" ] && [ -f "$fallback" ]; then
+		printf '%s' "$fallback"
+	else
+		printf '%s' "$primary"
+	fi
+}
+
+resolve_geosite_file() {
+	resolve_existing_geo_file "$GEOSITE_DAT_FILE" "$OPENCLASH_GEOSITE_FILE"
+}
+
+resolve_v2ray_geoip_file() {
+	resolve_existing_geo_file "$GEOIP_DAT_FILE" "$OPENCLASH_GEOIP_DAT_FILE"
+}
+
+resolve_v2ray_geosite_file() {
+	resolve_existing_geo_file "$GEOSITE_DAT_FILE" "$OPENCLASH_GEOSITE_DAT_FILE"
 }
 
 trim_version() {
@@ -427,11 +454,11 @@ geo_local_info() {
 			file1="$COUNTRY_MMDB_FILE"
 			;;
 		geosite)
-			file1="$GEOSITE_FILE"
+			file1="$(resolve_geosite_file)"
 			;;
 		v2ray_geo)
-			file1="$GEOIP_DAT_FILE"
-			file2="$GEOSITE_DAT_FILE"
+			file1="$(resolve_v2ray_geoip_file)"
+			file2="$(resolve_v2ray_geosite_file)"
 			;;
 		*)
 			log_kv error 'unsupported_component'
@@ -490,7 +517,7 @@ geo_upgrade() {
 			msg='Upgrade completed'
 			;;
 		geosite)
-			file_a="$GEOSITE_FILE"
+			file_a="$(resolve_geosite_file)"
 			url_a="$(mirror_wrap_url "$GEOSITE_URL")"
 			download_file "$url_a" "$tmp_dir/file_a" || {
 				log_kv component "$geo"
@@ -517,9 +544,9 @@ geo_upgrade() {
 			msg='Upgrade completed'
 			;;
 		v2ray_geo)
-			file_a="$GEOIP_DAT_FILE"
+			file_a="$(resolve_v2ray_geoip_file)"
 			url_a="$(mirror_wrap_url "$GEOIP_DAT_URL")"
-			file_b="$GEOSITE_DAT_FILE"
+			file_b="$(resolve_v2ray_geosite_file)"
 			url_b="$(mirror_wrap_url "$GEOSITE_URL")"
 			download_file "$url_a" "$tmp_dir/file_a" || {
 				log_kv component "$geo"

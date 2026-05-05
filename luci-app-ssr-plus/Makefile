@@ -4,13 +4,14 @@ LUCI_TITLE:=luci-app-ssr-plus
 LUCI_PKGARCH:=all
 PKG_NAME:=luci-app-ssr-plus
 PKG_VERSION:=193
-PKG_RELEASE:=11
+PKG_RELEASE:=15
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_Iptables_Transparent_Proxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_Nftables_Transparent_Proxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_NONE_V2RAY \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Xray \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_DNS2TCP \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_MosDNS \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Http_Proxy \
@@ -32,6 +33,7 @@ LUCI_DEPENDS:= \
 	+libuci-lua +lua +luci-compat +coreutils +coreutils-base64 +dns2tcp +dnsmasq-full \
 	+jq +ip-full +lua-neturl +libuci-lua +microsocks +ipt2socks +lyaml \
 	+resolveip +curl +nping +unzip +xz-utils \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG:chinadns-ng \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_MosDNS:mosdns \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Shadow_TLS:shadow-tls \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun:kcptun-client \
@@ -75,7 +77,6 @@ endchoice
 
 choice
 	prompt "Shadowsocks Client Selection"
-	default PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Client if (aarch64||arm||i386||loongarch64||riscv64||x86_64)
 	default PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_NONE_Client
 
 	config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_NONE_Client
@@ -109,6 +110,10 @@ choice
 	select PACKAGE_xray-core
 endchoice
 
+config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG
+	bool "Include ChinaDNS-NG"
+	default n
+
 config PACKAGE_$(PKG_NAME)_INCLUDE_MosDNS
 	bool "Include MosDNS"
 	default y if aarch64||arm||i386||x86_64
@@ -116,7 +121,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_MosDNS
 config PACKAGE_$(PKG_NAME)_INCLUDE_Http_Proxy
 	bool "Include HTTP(S) Proxy Server"
 	select PACKAGE_3proxy
-	default n
+	default y if (aarch64||arm||i386||loongarch64||riscv64||x86_64)
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Mihomo
 	bool "Include Mihomo (Clash Support)"
@@ -132,6 +137,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_GeoData
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Shadow_TLS
 	bool "Include Shadow-TLS"
+	select PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG
 	select PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Rust_Client
 	depends on aarch64||arm||x86_64
 	depends on !(TARGET_x86_geode||TARGET_x86_legacy)
@@ -148,7 +154,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_Simple_Obfs
 	bool "Include Shadowsocks Simple Obfs Plugin"
-	default y if (aarch64||arm||i386||loongarch64||riscv64||x86_64)
+	default n
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Shadowsocks_V2ray_Plugin
 	bool "Include Shadowsocks V2ray Plugin"
@@ -160,7 +166,7 @@ config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Client
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Libev_Server
 	bool "Include ShadowsocksR Libev Server"
-	default y if i386||x86_64||arm
+	default n
 
 endef
 
@@ -203,6 +209,9 @@ define Package/$(PKG_NAME)/install
 		chmod 0755 "$(1)/usr/bin/ssr-monitor" 2>/dev/null || true; \
 		chmod 0755 "$(1)/usr/bin/ssr-rules" 2>/dev/null || true; \
 		chmod 0755 "$(1)/usr/bin/ssr-switch" 2>/dev/null || true; \
+	fi
+	if [ -f "$(1)/etc/hotplug.d/iface/99-ssrplus-pppoe" ]; then \
+		chmod 0755 "$(1)/etc/hotplug.d/iface/99-ssrplus-pppoe" 2>/dev/null || true; \
 	fi
 endef
 

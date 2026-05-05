@@ -6,9 +6,11 @@ require "nixio.fs"
 require "luci.util"
 require "luci.template"
 require "luci.sys"
+local i18n = require "luci.i18n"
 local datatypes = require "luci.cbi.datatypes"
 local json = require "luci.jsonc"
 local uci = require "luci.model.uci".cursor()
+local translate = i18n.translate
 
 local CLASH_API_PORT = "16756"
 local COMPONENT_HELPER = "/usr/share/shadowsocksr/update_components.sh"
@@ -324,6 +326,103 @@ local function clash_process_running()
 	return luci.sys.call("(busybox ps -w 2>/dev/null || busybox ps) | grep ssr-retcp | grep -v grep >/dev/null") == 0
 end
 
+local function global_client_running()
+	local process_list = luci.sys.exec("busybox ps -w 2>/dev/null || busybox ps")
+	local global_server = uci:get_first("shadowsocksr", "global", "global_server", "nil")
+	local global_type = global_server ~= "nil" and (uci:get("shadowsocksr", global_server, "type") or "") or ""
+
+	if process_list:find("tcp.only.ssr.retcp")
+		or process_list:find("tcp.udp.ssr.retcp")
+		or process_list:find("local.ssr.retcp")
+		or process_list:find("local.udp.ssr.retcp") then
+		return true
+	end
+
+	if (global_type == "clash" or global_type == "tuic" or global_type == "ss")
+		and process_list:find("ssr%-retcp") then
+		return true
+	end
+
+	if (global_type == "clash" or global_type == "tuic" or global_type == "ss")
+		and process_list:find("mihomo")
+		and (process_list:find("/clash%-") or process_list:find("/tuic%-") or process_list:find("/ss%-")) then
+		return true
+	end
+
+	return false
+end
+
+local function get_active_node_runtime(sid)
+	if not sid or sid == "" or sid == "nil" or uci:get("shadowsocksr", sid) ~= "servers" then
+		return nil, nil
+	end
+
+	local stype = (uci:get("shadowsocksr", sid, "type") or ""):lower()
+	local proto = (uci:get("shadowsocksr", sid, "v2ray_protocol") or ""):lower()
+	local backend
+	local protocol
+
+	if stype == "ss" then
+		backend = translate("Mihomo")
+		protocol = translate("Shadowsocks")
+	elseif stype == "clash" then
+		backend = translate("Mihomo")
+		protocol = translate("Clash")
+	elseif stype == "tuic" then
+		backend = translate("Mihomo")
+		protocol = translate("TUIC")
+	elseif stype == "ssr" then
+		backend = translate("ShadowsocksR")
+	elseif stype == "ss-rust" then
+		backend = translate("Shadowsocks-rust")
+	elseif stype == "v2ray" then
+		local proto_map = {
+			vmess = "VMess",
+			vless = "VLESS",
+			trojan = "Trojan",
+			socks = "SOCKS5",
+			hysteria2 = "Hysteria2",
+			shadowsocks = "Shadowsocks",
+			http = "HTTP"
+		}
+		backend = translate("Xray")
+		if proto_map[proto] then
+			protocol = translate(proto_map[proto])
+		end
+	elseif stype == "trojan" then
+		backend = translate("Trojan")
+	elseif stype == "naiveproxy" then
+		backend = translate("NaiveProxy")
+	elseif stype == "socks5" then
+		backend = translate("SOCKS5")
+	elseif stype == "shadowtls" then
+		backend = translate("ShadowTLS")
+	elseif stype == "hysteria2" then
+		backend = translate("Hysteria2")
+	end
+
+	if not backend or backend == "" then
+		backend = trim(stype)
+	end
+
+	return backend, protocol
+end
+
+local function get_running_status_text()
+	local sid = uci:get_first("shadowsocksr", "global", "global_server", "nil")
+	local backend, protocol = get_active_node_runtime(sid)
+
+	if backend and backend ~= "" and protocol and protocol ~= "" and backend ~= protocol then
+		return string.format(translate("RUNNING in %s (%s) Mode"), backend, protocol)
+	end
+
+	if backend and backend ~= "" then
+		return string.format(translate("RUNNING in %s Mode"), backend)
+	end
+
+	return translate("RUNNING")
+end
+
 local function is_active_clash_node(sid)
 	if not sid then return false end
 	if uci:get("shadowsocksr", sid) ~= "servers" then return false end
@@ -370,46 +469,6 @@ local function clash_api_request(sid, method, path, body)
 		code = tonumber(code),
 		body = body_output
 	}
-end
-
-local function clash_delay_ok(sid, candidates, probe_url)
-	local raw = clash_api_request(sid, "GET", "/proxies")
-	local parsed = raw and json.parse(raw.body or "") or nil
-	local proxies = parsed and parsed.proxies or nil
-	local tried = {}
-
-	if type(proxies) ~= "table" then
-		return false
-	end
-
-	local function test_proxy(name)
-		if not name or name == "" or tried[name] or not proxies[name] then
-			return false
-		end
-		tried[name] = true
-		local delay_raw = clash_api_request(
-			sid,
-			"GET",
-			"/proxies/" .. urlencode(name) .. "/delay?timeout=5000&url=" .. urlencode(probe_url)
-		)
-		local delay_data = delay_raw and json.parse(delay_raw.body or "") or nil
-		return delay_data and tonumber(delay_data.delay or 0) and tonumber(delay_data.delay or 0) > 0
-	end
-
-	for _, name in ipairs(candidates or {}) do
-		if test_proxy(name) then
-			return true
-		end
-
-		local info = proxies[name]
-		if type(info) == "table" and type(info.now) == "string" and info.now ~= "" then
-			if test_proxy(info.now) then
-				return true
-			end
-		end
-	end
-
-	return false
 end
 
 local function use_fw4_backend()
@@ -790,7 +849,10 @@ end
 
 function act_status()
 	local e = {}
-	e.running = clash_process_running()
+	e.running = global_client_running()
+	if e.running then
+		e.status_text = get_running_status_text()
+	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
@@ -1229,42 +1291,7 @@ end
 function check_status()
 	local e = {}
 	local target = luci.http.formvalue("set") or ""
-	local sid = uci:get_first("shadowsocksr", "global", "global_server", "nil")
-	local stype = sid ~= "nil" and (uci:get("shadowsocksr", sid, "type") or "") or ""
-
-	if stype == "clash" and is_active_clash_node(sid) then
-		if target == "baidu" then
-			e.ret = luci.sys.call("curl -I -m 5 http://www.baidu.com >/dev/null 2>&1")
-			luci.http.prepare_content("application/json")
-			luci.http.write_json(e)
-			return
-		end
-
-		if target == "google" then
-			e.ret = luci.sys.call("curl -I -m 5 http://www.gstatic.com/generate_204 >/dev/null 2>&1")
-			luci.http.prepare_content("application/json")
-			luci.http.write_json(e)
-			return
-		end
-
-		local profile_map = {
-			google = {
-				url = "http://www.gstatic.com/generate_204",
-				candidates = { "自动选择", "故障转移", "Proxy", "GLOBAL" }
-			},
-			baidu = {
-				url = "http://www.baidu.com",
-				candidates = { "Domestic", "DIRECT", "GLOBAL" }
-			}
-		}
-		local profile = profile_map[target] or {
-			url = "http://www." .. target .. ".com",
-			candidates = { "自动选择", "故障转移", "Proxy", "Domestic", "DIRECT", "GLOBAL" }
-		}
-		e.ret = clash_delay_ok(sid, profile.candidates, profile.url) and 0 or 1
-	else
-		e.ret = luci.sys.call("curl -m 3 -sS -o /dev/null http://www." .. target .. ".com >/dev/null 2>&1")
-	end
+	e.ret = luci.sys.call("curl -m 3 -sS -o /dev/null http://www." .. target .. ".com >/dev/null 2>&1")
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
