@@ -270,6 +270,10 @@ local function migrate_xray_protocol_nodes()
 				uci:set("shadowsocksr", section[".name"], "v2ray_protocol", "shadowsocks")
 				changed = true
 			end
+		elseif section.type == "v2ray" and section.v2ray_protocol == "shadowsocks" and has_mihomo then
+			uci:set("shadowsocksr", section[".name"], "type", "ss")
+			uci:delete("shadowsocksr", section[".name"], "v2ray_protocol")
+			changed = true
 		end
 		if section.type == "hysteria2" then
 			uci:set("shadowsocksr", section[".name"], "type", "v2ray")
