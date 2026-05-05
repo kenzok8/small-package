@@ -22,16 +22,18 @@ direct_fail_count=0
 direct_fail_limit=3
 probe_url="$(uci_get_by_type server_subscribe url_test_url)"
 [ -n "$probe_url" ] || probe_url="https://www.google.com/generate_204"
+PROBE_INSTANCE_KEY="ssr-switch-probe-local"
 
 DEFAULT_SERVER="$(uci_get_by_type global global_server)"
 CURRENT_SERVER="$DEFAULT_SERVER"
 ENABLE_SERVER="nil"
 
 cleanup_probe_socks() {
-	ps_list | grep -v "grep" | grep "tcp-http-ssr-switch-local.json" | awk '{print $1}' | xargs kill >/dev/null 2>&1
+	ps_list | grep -v "grep" | grep -E "tcp-http-ssr-switch-local\\.json|ss-${PROBE_INSTANCE_KEY}/config\\.yaml|tuic-${PROBE_INSTANCE_KEY}/config\\.yaml" | awk '{print $1}' | xargs kill >/dev/null 2>&1
 	sleep 1
-	ps_list | grep -v "grep" | grep "tcp-http-ssr-switch-local.json" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	ps_list | grep -v "grep" | grep -E "tcp-http-ssr-switch-local\\.json|ss-${PROBE_INSTANCE_KEY}/config\\.yaml|tuic-${PROBE_INSTANCE_KEY}/config\\.yaml" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -f "$TMP_PATH/tcp-http-ssr-switch-local.json" 2>/dev/null
+	rm -rf "$TMP_PATH/ss-${PROBE_INSTANCE_KEY}" "$TMP_PATH/tuic-${PROBE_INSTANCE_KEY}" 2>/dev/null
 	rm -f /tmp/ssr-switch-probe.log 2>/dev/null
 }
 
@@ -62,7 +64,9 @@ start_probe_socks() {
 		"$xray_bin" run -c "$local_config_file" >>/tmp/ssr-switch-probe.log 2>&1 &
 	else
 		export SSR_SWITCH_PROBE=1
+		export SSR_SWITCH_PROBE_INSTANCE_KEY="$PROBE_INSTANCE_KEY"
 		start_local_with_port "$probe_socks_port" >/tmp/ssr-switch-probe.log 2>&1 || return 1
+		unset SSR_SWITCH_PROBE_INSTANCE_KEY
 		unset SSR_SWITCH_PROBE
 	fi
 

@@ -2126,6 +2126,7 @@ local execute = function()
 			local cfgid = value[".name"]
 			local remark = value.remark or ""
 			local url = value.url or ""
+			local tmp_file, ua
 
 			local url_is_local
 			if fs.access(url) then
@@ -2134,7 +2135,10 @@ local execute = function()
 				url_is_local = true
 				tmp_file = url
 			else
-				local ua = value.user_agent
+				ua = value.user_agent
+				if value.clash_convert == "1" or (ua and ua:lower():find("clash", 1, true)) then
+					ua = "clash.meta"
+				end
 				local access_mode = value.access_mode
 				local result = (not access_mode) and "自动" or (access_mode == "direct" and "直连" or (access_mode == "proxy" and "代理" or "自动"))
 				log('正在订阅:【' .. remark .. '】' .. url .. ' [' .. result .. ']')
@@ -2145,6 +2149,14 @@ local execute = function()
 					fail_list[#fail_list + 1] = value
 					luci.sys.call("rm -f " .. tmp_file)
 				end
+			end
+			if ua == "clash.meta" and fs.access(tmp_file) then
+				log('转换 Clash 订阅:【' .. remark .. '】...')
+				local yaml = tmp_file
+				tmp_file = tmp_file .. "_convert"
+				local cmd = string.format("lua /usr/share/%s/clash_subconverter.lua %s %s", appname, yaml, tmp_file)
+				luci.sys.call(cmd)
+				luci.sys.call("rm -f " .. yaml)
 			end
 			if fs.access(tmp_file) then
 				if luci.sys.call("[ -f " .. tmp_file .. " ] && sed -i -e '/^[ \t]*$/d' -e '/^[ \t]*\r$/d' " .. tmp_file) == 0 then

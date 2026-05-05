@@ -371,12 +371,17 @@ function apply_dns_from_uci() {
 	for (let _me = 0; _me < length(_mihomo_exp); _me++)
 		if (cfg.experimental && cfg.experimental[_mihomo_exp[_me]] != null)
 			delete cfg.experimental[_mihomo_exp[_me]];
-	/* 清除 root 级别 mihomo 字段 */
-	let _mihomo_root = ['clash-for-android', 'cfw-bypass', 'sniffer', 'profile', 
+	/* 清除 root 级别非 sing-box 字段 */
+	let _mihomo_root = ['clash-for-android', 'cfw-bypass', 'sniffer', 'profile',
 	                'geodata-mode', 'geodata-loader', 'geox-url', 'geo-auto-update',
 	                'geo-update-interval', 'tun', 'ipv6', 'interface-name',
 	                'port', 'socks-port', 'mixed-port', 'redir-port', 'tproxy-port', 'mode', 'allow-lan', 'log-level', 'external-controller', 'secret', 'bind-address', 'routing-mark', 'find-process-mode', 'tcp-concurrent', 'unified-delay',
 	                'keep-alive-interval', 'keep-alive-idle', 'disable-keep-alive'];
+	/* 清除 subconverter 产物的附加说明字段及非标准字段 */
+	let _subconv_fields = ['_note', '_sub_url', 'hosts', 'script', 'enable', 'fake-ip-filter', 'fake-ip-range'];
+	for (let _sf = 0; _sf < length(_subconv_fields); _sf++)
+		if (cfg[_subconv_fields[_sf]] != null)
+			delete cfg[_subconv_fields[_sf]];
 	for (let _mr = 0; _mr < length(_mihomo_root); _mr++)
 		if (cfg[_mihomo_root[_mr]] != null)
 			delete cfg[_mihomo_root[_mr]];

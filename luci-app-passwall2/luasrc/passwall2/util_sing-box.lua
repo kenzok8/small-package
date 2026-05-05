@@ -176,6 +176,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 			tag = tag .. ":" .. remarks
 		end
 
+		node.address = (node.address or ""):lower()
+
 		result = {
 			_id = node_id,
 			_flag = flag,
@@ -1312,7 +1314,7 @@ function gen_config(var)
 			end
 			if #ut_nodes == 0 then return nil end
 			local valid_nodes = {}
-			for i = 1, #ut_nodes do
+			for i = 1, #(ut_nodes or {}) do
 				local ut_node_id = ut_nodes[i]
 				local ut_node_tag = "ut-" .. ut_node_id
 				local is_new_ut_node = true
@@ -1853,6 +1855,7 @@ function gen_config(var)
 			local nodes_domain = {}
 			local nodes_domain_text = sys.exec('uci show passwall2 | grep ".address=" | cut -d "\'" -f 2 | grep "[a-zA-Z]$" | sort -u')
 			string.gsub(nodes_domain_text, '[^' .. "\r\n" .. ']+', function(w)
+				w = (w or ""):lower()
 				table.insert(nodes_domain, w)
 			end)
 			if #nodes_domain > 0 then
@@ -2350,6 +2353,7 @@ function gen_front_dns_config(var)
 		local node_domain = {}
 		local nodes_domain_text = sys.exec('uci show passwall2 | grep ".address=" | cut -d "\'" -f 2 | grep "[a-zA-Z]$" | sort -u')
 		string.gsub(nodes_domain_text, '[^' .. "\r\n" .. ']+', function(w)
+			w = (w or ""):lower()
 			table.insert(node_domain, w)
 		end)
 		if #node_domain > 0 then

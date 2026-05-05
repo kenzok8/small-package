@@ -133,6 +133,16 @@ o.validate = function(self, value)
 	return value:gsub("%s+", ""):gsub("%z", "")
 end
 
+local has_lyaml = pcall(require, "lyaml")
+if has_lyaml then
+	o = s:option(Flag, "clash_convert", translate("Subscription Conversion"))
+	o.default = "0"
+	o.rmempty = false
+	o.description = translate("Download and convert Clash subscription when enabled (Clash subscription required).") .. "<br>" ..
+			translate("Experimental feature.")
+end
+
+
 o = s:option(ListValue, "domain_resolver", translate("Domain DNS Resolve"))
 o.description = translate("If the node address is a domain name, this DNS will be used for resolution.") .. "<br>" ..
 		translate("Supports only Xray or Sing-box node types.") .. "<br>" .. string.format('<font color="red">%s</font>',
@@ -291,6 +301,7 @@ o:value("v2rayN/9.99", "v2rayN")
 o:value("curl", "Curl")
 o:value("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Linux")
 o:value("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Windows")
+o:depends("clash_convert", false)
 
 o = s:option(ListValue, "chain_proxy", translate("Chain Proxy"))
 o:value("", translate("Close(Not use)"))

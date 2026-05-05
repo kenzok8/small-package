@@ -1,0 +1,62 @@
+<script type="text/javascript">
+//<![CDATA[
+(function() {
+	function getField(name) {
+		return document.querySelector('select[name$=".' + name + '"], input[name$=".' + name + '"]');
+	}
+
+	function ensureMosdnsDefault() {
+		var modeEl = getField('pdnsd_enable');
+		var dnsEl = getField('tunnel_forward_mosdns');
+		if (!modeEl || !dnsEl || modeEl.value !== '4') {
+			return;
+		}
+
+		var current = (dnsEl.value || '').trim();
+		if (current !== '' && current !== '-- 请选择 --') {
+			return;
+		}
+
+		if (dnsEl.tagName === 'SELECT') {
+			var firstValue = '';
+			for (var i = 0; i < dnsEl.options.length; i++) {
+				var option = dnsEl.options[i];
+				if (option && option.value) {
+					firstValue = option.value;
+					break;
+				}
+			}
+			if (firstValue) {
+				dnsEl.value = firstValue;
+			}
+		} else if (dnsEl.dataset && dnsEl.dataset.default) {
+			dnsEl.value = dnsEl.dataset.default;
+		}
+	}
+
+	function bindModeChange() {
+		var modeEl = getField('pdnsd_enable');
+		if (!modeEl || modeEl.dataset.ssrMosdnsDefaultBound) {
+			return;
+		}
+
+		modeEl.dataset.ssrMosdnsDefaultBound = '1';
+		modeEl.addEventListener('change', function() {
+			window.setTimeout(ensureMosdnsDefault, 0);
+		});
+	}
+
+	function initMosdnsDefault() {
+		bindModeChange();
+		ensureMosdnsDefault();
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initMosdnsDefault);
+		window.addEventListener('load', initMosdnsDefault);
+	} else {
+		initMosdnsDefault();
+	}
+})();
+//]]>
+</script>

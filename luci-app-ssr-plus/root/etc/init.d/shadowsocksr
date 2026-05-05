@@ -641,7 +641,19 @@ _exit() {
 }
 
 first_type() {
-	type -t -p "/bin/${1}" -p "/usr/bin/${1}" -p "/usr/libexec/${1}" -p "${TMP_BIN_PATH}/${1}" -p "${1}" "$@" | head -n1
+	local candidate
+	for candidate in "/bin/${1}" "/usr/bin/${1}" "/usr/libexec/${1}" "${TMP_BIN_PATH}/${1}"; do
+		[ -x "$candidate" ] && {
+			echo "$candidate"
+			return 0
+		}
+	done
+
+	command -v "${1}" 2>/dev/null | head -n1
+}
+
+is_finded() {
+	[ -n "$(first_type "$1")" ]
 }
 
 has_ss_rust_client_binary() {
@@ -1168,6 +1180,7 @@ start_local() {
 	[ "$LOCAL_SERVER" = "nil" ] && return 1
 	local local_port="${1:-$(uci_get_by_type socks5_proxy local_port)}"
 	local local_server_type=$(uci_get_by_name $LOCAL_SERVER type)
+	local probe_instance_key="$(printf '%s' "${SSR_SWITCH_PROBE_INSTANCE_KEY:-}" | tr -cd '0-9A-Za-z._-')"
 	local type=$local_server_type
 	if [ "$local_server_type" = "ss-rust" ]; then
 		type="ss"
@@ -1187,6 +1200,7 @@ start_local() {
 		elif [ "$local_server_type" = "ss" ] || { [ "$local_server_type" = "ss-rust" ] && use_mihomo_for_ss_rust_client; }; then
 			local mihomo_bin="$(first_type mihomo)"
 			local instance_key="${LOCAL_SERVER}-local"
+			[ -n "$probe_instance_key" ] && instance_key="$probe_instance_key"
 			[ -x "$mihomo_bin" ] || {
 				echolog "Global_Socks5:Mihomo 内核不存在，请确认 /usr/bin/mihomo 或 /usr/libexec/mihomo 可执行。"
 				return 1
@@ -1231,6 +1245,7 @@ start_local() {
 	tuic)
 		local mihomo_bin="$(first_type mihomo)"
 		local instance_key="${LOCAL_SERVER}-local"
+		[ -n "$probe_instance_key" ] && instance_key="$probe_instance_key"
 		[ -x "$mihomo_bin" ] || {
 			echolog "Global_Socks5:Mihomo 内核不存在，请确认 /usr/bin/mihomo 或 /usr/libexec/mihomo 可执行。"
 			return 1

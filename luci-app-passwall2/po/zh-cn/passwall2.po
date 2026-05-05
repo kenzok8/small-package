@@ -1684,12 +1684,6 @@ msgstr "ECH 配置"
 msgid "ECH Key"
 msgstr "ECH 密钥"
 
-msgid "ECH Query Policy"
-msgstr "ECH 查询策略"
-
-msgid "Controls the policy used when performing DNS queries for ECH configuration."
-msgstr "控制使用 DNS 查询 ECH 配置时的策略。"
-
 msgid "ECH Query Domain"
 msgstr "ECH 查询域名"
 

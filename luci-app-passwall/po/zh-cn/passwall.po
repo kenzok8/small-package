@@ -1162,6 +1162,12 @@ msgstr "订阅信息"
 msgid "Subscribe URL"
 msgstr "订阅网址"
 
+msgid "Subscription Conversion"
+msgstr "订阅转换"
+
+msgid "Download and convert Clash subscription when enabled (Clash subscription required)."
+msgstr "开启后下载 Clash 订阅并转换（需提供 Clash 订阅）。"
+
 msgid "Subscribe URL Access Method"
 msgstr "订阅网址访问方式"
 

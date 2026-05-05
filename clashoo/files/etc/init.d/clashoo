@@ -818,6 +818,49 @@ yml_change() {
 			END { if (dns && !inserted) { print "  fallback-filter:"; print "    geoip: false" } }
 		' "$CONFIG_YAML" > /tmp/_clashoo_fb.yaml && mv /tmp/_clashoo_fb.yaml "$CONFIG_YAML"
 		fi
+		# Sniffer injection (streaming support for transparent proxy)
+		_sniffer_streaming=$(uci get clashoo.config.sniffer_streaming 2>/dev/null)
+		awk '
+			BEGIN { skip = 0 }
+			{
+				if ($0 ~ /^sniffer:[[:space:]]*$/) { skip = 1; next }
+				if (skip && $0 ~ /^[^[:space:]#][^:]*:[[:space:]]*.*$/) skip = 0
+				if (!skip) print
+			}
+		' "$CONFIG_YAML" > /tmp/_clashoo_sniffer.yaml 2>/dev/null && mv /tmp/_clashoo_sniffer.yaml "$CONFIG_YAML"
+		if [ "${_sniffer_streaming:-0}" = "1" ] || [ "${_sniffer_streaming}" = "true" ]; then
+cat >> "$CONFIG_YAML" <<-'SNIFFER_EOF'
+
+sniffer:
+  enable: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  sniff:
+    HTTP:
+      ports:
+        - 80
+        - 8080
+      override-destination: true
+    TLS:
+      ports:
+        - 443
+        - 8443
+      override-destination: true
+    QUIC:
+      ports:
+        - 443
+        - 8443
+      override-destination: true
+  force-domain:
+    - "+.youtube.com"
+    - "+.googlevideo.com"
+    - "+.netflix.com"
+    - "+.nflxvideo.net"
+    - "+.disneyplus.com"
+    - "+.hulu.com"
+    - "+.hbomax.com"
+SNIFFER_EOF
+		fi
 		return 0
 	fi
 	sh /usr/share/clashoo/runtime/yum_change.sh 2>/dev/null
@@ -1088,7 +1131,8 @@ singbox_dns_change() {
 		uci set dhcp.@dnsmasq[0].cachesize='0'
 	fi
 	uci commit dhcp >/dev/null 2>&1
-	/etc/init.d/dnsmasq restart >/dev/null 2>&1
+	/etc/init.d/dnsmasq stop >/dev/null 2>&1
+	/etc/init.d/dnsmasq start >/dev/null 2>&1
 #===========================================================================================================================
 }
 
@@ -1414,7 +1458,8 @@ _start_launch_core() {
 	backend_apply_rules >/dev/null 2>&1
 
 	log_msg "Reloading DNS resolver" "重启 DNS 解析"
-	/etc/init.d/dnsmasq restart >/dev/null 2>&1
+	/etc/init.d/dnsmasq stop >/dev/null 2>&1
+	/etc/init.d/dnsmasq start >/dev/null 2>&1
 
 	restore >/dev/null 2>&1
 	add_cron

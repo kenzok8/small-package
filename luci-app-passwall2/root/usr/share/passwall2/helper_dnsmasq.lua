@@ -270,6 +270,7 @@ function add_rule(var)
 			fwd_dns = LOCAL_DNS
 			uci:foreach(appname, "nodes", function(t)
 				local function process_address(address)
+					address = (address or ""):lower()
 					if address == "engage.cloudflareclient.com" then return end
 					if datatypes.hostname(address) then
 						set_domain_dns(address, fwd_dns)

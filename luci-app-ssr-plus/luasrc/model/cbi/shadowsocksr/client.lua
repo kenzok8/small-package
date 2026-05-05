@@ -158,6 +158,7 @@ o:value("tcp://4.2.2.3:53,tcp://4.2.2.4:53", translate("Level 3 Public DNS-3 (4.
 o:value("tcp://1.1.1.1:53,tcp://1.0.0.1:53", translate("Cloudflare DNS"))
 o:depends("pdnsd_enable", "4")
 o.description = translate("Custom DNS Server format as tcp://IP:PORT or tls://DOMAIN:PORT (tcp://8.8.8.8 or tls://dns.google:853)")
+o.default = "tcp://8.8.4.4:53,tcp://8.8.8.8:53"
 
 o = s:option(Flag, "filter_aaaa", translate("Disable IPv6 for Overseas FQDN"))
 o:depends("pdnsd_enable", "1")
@@ -224,5 +225,8 @@ if is_finded("chinadns-ng") then
 		return value
 	end
 end
+
+local dns_defaults_section = m:section(SimpleSection)
+dns_defaults_section.template = "shadowsocksr/client_dns_defaults"
 
 return m

@@ -650,9 +650,14 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.httpupgrade_host = info.host
 			result.httpupgrade_path = info.path
 		end
-		if not info.security then result.security = "auto" end
+		result.security = info.security or info.scy or "auto"
 		if info.tls == "tls" or info.tls == "1" then
 			result.tls = "1"
+			result.alpn = info.alpn
+			if info.fp and info.fp ~= "" then
+				result.utls = "1"
+				result.fingerprint = info.fp
+			end
 			result.tls_serverName = (info.sni and info.sni ~= "") and info.sni or info.host
 			result.tls_pinSHA256 = info.pcs
 			result.tls_CertByName = info.vcn
