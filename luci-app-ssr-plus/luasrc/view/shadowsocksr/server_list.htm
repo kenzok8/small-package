@@ -276,14 +276,22 @@ end
 		var input = document.getElementById(store);
 		var order = ids.join(" ");
 		if (input) input.value = order;
-		XHR.post('<%=luci.dispatcher.build_url("admin/services/shadowsocksr/save_order")%>', { order: order }, function() {});
+			XHR.post('<%=luci.dispatcher.build_url("admin/services/shadowsocksr/save_order")%>', {
+				order: order,
+				page: '<%=self.server_page or 1%>',
+				page_size: '<%=self.server_page_size or 0%>'
+			}, function() {});
 		return false;
 	}
 
 	// set tr draggable
-	function enableDragForTable(table_selector, store) {
-		// 添加 CSS 样式
-		const style = document.createElement("style");
+		function enableDragForTable(table_selector, store) {
+			var storeInput = document.getElementById(store);
+			if (!storeInput) {
+				return;
+			}
+			// 添加 CSS 样式
+			const style = document.createElement("style");
 		style.textContent = `
 			tr[draggable="true"] {
 				cursor: move;

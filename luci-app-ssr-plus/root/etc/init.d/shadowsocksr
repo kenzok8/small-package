@@ -183,6 +183,28 @@ get_builtin_dns_fallback_mode() {
 	fi
 }
 
+get_dns2tcp_fallback_mode() {
+	if is_finded "dns2tcp"; then
+		echo "1"
+	else
+		echo "0"
+	fi
+}
+
+force_dns2tcp_fallback() {
+	local reason="$1"
+	local fallback_mode="$(get_dns2tcp_fallback_mode)"
+
+	if [ "$fallback_mode" = "1" ]; then
+		echolog "提示：${reason}，强制回退到 dns2tcp 模式。"
+		echo "1"
+		return 0
+	fi
+
+	echolog "错误：${reason}，且未安装 dns2tcp，启动终止。"
+	return 1
+}
+
 is_builtin_dns_active() {
 	local global_server_type="$(uci_get_by_name "$GLOBAL_SERVER" type)"
 	case "$global_server_type" in
@@ -760,29 +782,27 @@ start_dns() {
 	local ssrplus_dns="$(uci_get_by_type global pdnsd_enable 0)"
 	local global_server_type="$(uci_get_by_name "$GLOBAL_SERVER" type)"
 	local builtin_dns_enabled=0
+	local dnsserver="$(uci_get_by_type global tunnel_forward 8.8.4.4:53)"
 	if [ "$ssrplus_dns" = "5" ]; then
-		ssrplus_dns="$(get_builtin_dns_fallback_mode)"
-		if [ "$ssrplus_dns" = "0" ]; then
-			echolog "提示：旧版 DNSPROXY 模式已移除，且当前无可用 DNS helper，继续使用本地 5335 模式。"
-		else
-			echolog "提示：旧版 DNSPROXY 模式已移除，自动回退到可用 DNS helper 模式($ssrplus_dns)。"
-			uci_set_by_type global pdnsd_enable "$ssrplus_dns"
-		fi
-	else
-		dnsserver="$(uci_get_by_type global tunnel_forward 8.8.4.4:53)"
+		ssrplus_dns="$(force_dns2tcp_fallback "旧版 DNSPROXY 模式已移除")" || return 1
+		uci_set_by_type global pdnsd_enable "$ssrplus_dns"
+	elif [ "$ssrplus_dns" = "6" ]; then
+		ssrplus_dns="$(force_dns2tcp_fallback "ChinaDNS-NG 模式已移除")" || return 1
+		uci_set_by_type global pdnsd_enable "$ssrplus_dns"
 	fi
 	local run_mode="$(normalize_run_mode)"
+
+	if [ "$ssrplus_dns" = "4" ] && ! is_finded "mosdns"; then
+		ssrplus_dns="$(force_dns2tcp_fallback "当前 DNS 模式 MosDNS 不可用")" || return 1
+		uci_set_by_type global pdnsd_enable "$ssrplus_dns"
+	fi
 
 	if [ "$ssrplus_dns" = "7" ]; then
 		if supports_builtin_dns "$global_server_type"; then
 			builtin_dns_enabled=1
 		else
-			ssrplus_dns="$(get_builtin_dns_fallback_mode)"
-			[ "$ssrplus_dns" = "0" ] && {
-				echolog "提示：当前主节点不支持模块内置 DNS，且无可用 DNS helper，继续使用本地 5335 模式。"
-			} || {
-				echolog "提示：当前主节点不支持模块内置 DNS，自动回退到可用 DNS helper 模式($ssrplus_dns)。"
-			}
+			ssrplus_dns="$(force_dns2tcp_fallback "当前主节点不支持模块内置 DNS")" || return 1
+			uci_set_by_type global pdnsd_enable "$ssrplus_dns"
 		fi
 	fi
 
@@ -833,9 +853,7 @@ start_dns() {
 				sed -i "s,$(printf '%s' "$old_appledns"),$(printf '%s' "$new_appledns"),g" /etc/ssrplus/applechina.conf
 			fi
 		fi
-		echolog "Apple 域名中国大陆 CDN 的 优化规则正在加载。"
 		cp -f /etc/ssrplus/applechina.conf $TMP_DNSMASQ_PATH/
-		echolog "Apple 域名中国大陆 CDN 的 优化规则加载完毕。"
 	fi
 }
 
@@ -1084,6 +1102,17 @@ start_local() {
 			fi
 			ln_start_bin $ss_program ${type}-local -c $local_config_file
 			echolog "Global_Socks5:$(get_name $type) Started!"
+		elif [ "$local_server_type" = "ss" ]; then
+			local mihomo_bin="$(first_type mihomo)"
+			local instance_key="${LOCAL_SERVER}-local"
+			[ -x "$mihomo_bin" ] || {
+				echolog "Global_Socks5:Mihomo 内核不存在，请确认 /usr/bin/mihomo 或 /usr/libexec/mihomo 可执行。"
+				return 1
+			}
+			prepare_ss_mihomo_runtime_config "$LOCAL_SERVER" "$local_port" "$local_port" "$instance_key" "socks" || return 1
+			local ss_workdir="$(get_ss_mihomo_workdir "$instance_key")"
+			ln_start_bin "$mihomo_bin" ss-local -d "$ss_workdir" -f "$ss_workdir/config.yaml"
+			echolog "Global_Socks5:Mihomo (Shadowsocks) Started!"
 		else
 			gen_config_file $LOCAL_SERVER $type 4 $local_port
 			ss_program="$(first_type sslocal)"
@@ -1396,6 +1425,20 @@ Start_Run() {
 				ln_start_bin $ss_program ${type}-redir -c $tcp_config_file
 			done
 			echolog "Main node:$(get_name $type) $threads Threads Started!"
+		elif [ "$global_server_type" = "ss" ]; then
+			local mihomo_bin="$(first_type mihomo)"
+			local ss_socks_port=0
+			[ -x "$mihomo_bin" ] || {
+				echolog "Main node:Mihomo 内核不存在，请确认 /usr/bin/mihomo 或 /usr/libexec/mihomo 可执行。"
+				return 1
+			}
+			if [ "$_local" = "1" ] && [ "$LOCAL_SERVER" = "$GLOBAL_SERVER" ]; then
+				ss_socks_port=$(uci_get_by_type socks5_proxy local_port 1080)
+			fi
+			prepare_ss_mihomo_runtime_config "$GLOBAL_SERVER" "$tcp_port" "$ss_socks_port" "$GLOBAL_SERVER" "redir" || return 1
+			local ss_workdir="$(get_ss_mihomo_workdir "$GLOBAL_SERVER")"
+			ln_start_bin "$mihomo_bin" ssr-retcp -d "$ss_workdir" -f "$ss_workdir/config.yaml"
+			echolog "Main node:Mihomo (Shadowsocks) Started!"
 		else
 			gen_config_file $GLOBAL_SERVER $type 1 $tcp_port
 			ss_program="$(first_type sslocal)"

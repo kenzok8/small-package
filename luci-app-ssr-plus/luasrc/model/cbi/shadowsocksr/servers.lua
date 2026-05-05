@@ -14,9 +14,12 @@ local URL = require "url"
 local m, s, o, node
 local server_count = 0
 local server_cache = {}
+local server_sections = {}
 local detect_cache = {}
 local CLASH_YAML_DIR = "/etc/ssrplus/clash"
 local CLASH_YAML_HELPER = "/usr/share/shadowsocksr/clash_yaml.lua"
+local DEFAULT_SERVER_PAGE_SIZE = 50
+local SERVER_PAGE_SIZE_OPTIONS = {25, 50, 100, 200, 0}
 
 local function is_finded(e)
 	return luci.sys.exec(string.format('type -t -p "%s" -p "/usr/libexec/%s" 2>/dev/null', e, e)) ~= ""
@@ -27,6 +30,27 @@ local function trim(text)
 		return ""
 	end
 	return (text:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+local function parse_nonnegative_int(value)
+	local number = tonumber(value)
+	if not number then
+		return nil
+	end
+	number = math.floor(number)
+	if number < 0 then
+		return nil
+	end
+	return number
+end
+
+local function in_list(list, target)
+	for _, item in ipairs(list) do
+		if item == target then
+			return true
+		end
+	end
+	return false
 end
 
 local function upload_alias(filename)
@@ -287,6 +311,7 @@ migrate_legacy_subscribe_urls()
 
 uci:foreach("shadowsocksr", "servers", function(s)
 	server_count = server_count + 1
+	server_sections[#server_sections + 1] = s[".name"]
 	server_cache[s[".name"]] = {
 		type = s.type,
 		v2ray_protocol = s.v2ray_protocol,
@@ -506,10 +531,59 @@ s = m:section(TypedSection, "servers")
 s.anonymous = true
 s.addremove = true
 s.description = translate("Node order can be dragged with the mouse and takes effect immediately. The automatic switch order of server nodes is consistent with the node order in the table.")
-s.template = "cbi/tblsection"
+s.template = "shadowsocksr/server_table"
 s:append(cbi.Template("shadowsocksr/optimize_cbi_ui"))
-s.sortable = true
 s.extedit = luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers", "%s")
+
+local server_page_size = parse_nonnegative_int(luci.http.formvalue("server_page_size"))
+if not server_page_size or not in_list(SERVER_PAGE_SIZE_OPTIONS, server_page_size) then
+	server_page_size = DEFAULT_SERVER_PAGE_SIZE
+end
+
+local server_page_count = 1
+if server_page_size > 0 and server_count > 0 then
+	server_page_count = math.ceil(server_count / server_page_size)
+end
+
+local server_page = parse_nonnegative_int(luci.http.formvalue("server_page")) or 1
+if server_page < 1 then
+	server_page = 1
+end
+if server_page > server_page_count then
+	server_page = server_page_count
+end
+
+local visible_server_sections = server_sections
+local server_first_index = server_count > 0 and 1 or 0
+local server_last_index = server_count
+
+if server_page_size > 0 then
+	local first = ((server_page - 1) * server_page_size) + 1
+	local last = math.min(first + server_page_size - 1, server_count)
+	visible_server_sections = {}
+	server_first_index = server_count > 0 and first or 0
+	server_last_index = server_count > 0 and last or 0
+
+	for index = first, last do
+		visible_server_sections[#visible_server_sections + 1] = server_sections[index]
+	end
+end
+
+s.sortable = true
+
+function s.cfgsections(self)
+	return visible_server_sections
+end
+
+s.server_page = server_page
+s.server_page_size = server_page_size
+s.server_page_count = server_page_count
+s.server_page_sizes = SERVER_PAGE_SIZE_OPTIONS
+s.server_total = server_count
+s.server_first_index = server_first_index
+s.server_last_index = server_last_index
+s.server_base_url = luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers")
+
 function s.create(...)
 	local sid = TypedSection.create(...)
 	if sid then

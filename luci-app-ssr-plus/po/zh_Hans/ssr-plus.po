@@ -150,6 +150,24 @@ msgstr "GeoSite 数据库"
 msgid "V2Ray GEO Databases"
 msgstr "V2Ray GEO 数据库"
 
+msgid "Showing %d-%d of %d nodes"
+msgstr "当前显示第 %d-%d 个节点，共 %d 个"
+
+msgid "Per page"
+msgstr "每页"
+
+msgid "All"
+msgstr "全部"
+
+msgid "Prev"
+msgstr "上一页"
+
+msgid "Next"
+msgstr "下一页"
+
+msgid "Drag reorder applies within the current page only."
+msgstr "拖拽排序仅在当前分页内生效。"
+
 msgid "Geo Database Update"
 msgstr "Geo 数据库更新"
 

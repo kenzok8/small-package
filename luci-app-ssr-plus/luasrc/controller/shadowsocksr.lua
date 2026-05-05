@@ -30,6 +30,18 @@ local function trim(value)
 	return tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
 end
 
+local function parse_nonnegative_int(value)
+	local number = tonumber(value)
+	if not number then
+		return nil
+	end
+	number = math.floor(number)
+	if number < 0 then
+		return nil
+	end
+	return number
+end
+
 local function sanitize_mac(value)
 	value = trim(value):upper():gsub("-", ":")
 	if value:match("^%x%x:%x%x:%x%x:%x%x:%x%x:%x%x$") then
@@ -590,22 +602,69 @@ end
 
 function save_order()
 	local order = luci.http.formvalue("order") or ""
+	local page = parse_nonnegative_int(luci.http.formvalue("page")) or 1
+	local page_size = parse_nonnegative_int(luci.http.formvalue("page_size")) or 0
 	local sids = {}
+	local all_sections = {}
+	local server_sections = {}
+	local server_positions = {}
+	local section_index = {}
+	local page_start
+	local page_end
 
 	for sid in order:gmatch("%S+") do
-		if uci:get("shadowsocksr", sid) == "servers" then
+		if uci:get("shadowsocksr", sid) == "servers" and not section_index[sid] then
 			sids[#sids + 1] = sid
+			section_index[sid] = true
 		end
 	end
 
-	if #sids > 0 then
-		uci:reorder("shadowsocksr", sids)
+	uci:foreach("shadowsocksr", nil, function(section)
+		all_sections[#all_sections + 1] = section[".name"]
+		if section[".type"] == "servers" then
+			server_sections[#server_sections + 1] = section[".name"]
+			server_positions[#server_positions + 1] = #all_sections
+		end
+	end)
+
+	page_start = 1
+	page_end = #server_sections
+	if page_size > 0 then
+		page_start = ((math.max(page, 1) - 1) * page_size) + 1
+		page_end = math.min(page_start + page_size - 1, #server_sections)
+	end
+
+	local page_sections = {}
+	local page_lookup = {}
+	for index = page_start, page_end do
+		local sid = server_sections[index]
+		if sid then
+			page_sections[#page_sections + 1] = sid
+			page_lookup[sid] = true
+		end
+	end
+
+	local valid = #sids > 0 and #sids == #page_sections
+	if valid then
+		for _, sid in ipairs(sids) do
+			if not page_lookup[sid] then
+				valid = false
+				break
+			end
+		end
+	end
+
+	if valid then
+		for offset, sid in ipairs(sids) do
+			all_sections[server_positions[page_start + offset - 1]] = sid
+		end
+		uci:reorder("shadowsocksr", all_sections)
 		uci:commit("shadowsocksr")
 	end
 
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({
-		ret = (#sids > 0) and 1 or 0,
+		ret = valid and 1 or 0,
 		count = #sids
 	})
 end
