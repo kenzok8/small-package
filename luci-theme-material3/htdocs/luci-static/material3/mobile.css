@@ -2,6 +2,17 @@ header h3 a {
 	display: none !important;
 }
 
+body[data-page="admin-status-overview"] .cbi-title .label {
+	width: 32px;
+	padding: 0;
+	font-size: 0 !important;
+	gap: 0;
+}
+
+body[data-page="admin-status-overview"] .cbi-title .label::before {
+	flex: 0 0 auto;
+}
+
 @media screen and (max-device-width: 600px) {
 	.modal {
 		margin: 1.5em auto;

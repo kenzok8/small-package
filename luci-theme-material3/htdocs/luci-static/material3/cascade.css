@@ -4015,7 +4015,7 @@ th[data-sort-direction="desc"]::after {
 	background: var(--default-btn-background, var(--background-color-high));
 	color: var(--on-color, var(--text-color-high));
 	text-shadow: none;
-	border-radius: 10px;
+	border-radius: 12px;
 	box-shadow: none;
 	cursor: default;
 	line-height: 1.2em;
