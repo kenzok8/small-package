@@ -187,7 +187,7 @@ fi
 		mode=$(uci get clashoo.config.mode 2>/dev/null)
 		p_mode=$(uci get clashoo.config.p_mode 2>/dev/null)
 		da_password=$(uci get clashoo.config.dash_pass 2>/dev/null)
-		safe_password=$(printf '%s' "$da_password" | sed 's/[\\/&]/\\\\&/g')
+		safe_password=$(printf '%s' "$da_password" | sed 's/[\/&]/\\&/g')
 		redir_port=$(uci get clashoo.config.redir_port 2>/dev/null)
 		http_port=$(uci get clashoo.config.http_port 2>/dev/null)
 		socks_port=$(uci get clashoo.config.socks_port 2>/dev/null)

@@ -443,9 +443,12 @@ apply_rules() {
 	ensure_firewall_include clash_fw4_dstnat "$DSTNAT_RULES" dstnat
 	remove_firewall_include clash_fw4_output
 	if [ -s "$MANGLE_RULES" ]; then
+		_route_table_dec="$((PROXY_ROUTE_TABLE))"
 		ensure_firewall_include clash_fw4_mangle "$MANGLE_RULES" mangle_prerouting
-		ip rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" >/dev/null 2>&1 || true
-		ip route add local 0.0.0.0/0 dev lo table "$PROXY_ROUTE_TABLE" >/dev/null 2>&1 || true
+		ip rule show 2>/dev/null | grep -q "fwmark ${PROXY_FWMARK}.*lookup ${_route_table_dec}" ||
+			ip rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" >/dev/null 2>&1 || true
+		ip route show table "$PROXY_ROUTE_TABLE" 2>/dev/null | grep -q 'local 0.0.0.0/0 dev lo' ||
+			ip route add local 0.0.0.0/0 dev lo table "$PROXY_ROUTE_TABLE" >/dev/null 2>&1 || true
 	else
 		remove_firewall_include clash_fw4_mangle
 	fi

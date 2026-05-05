@@ -19,6 +19,16 @@ ps_list() {
 	fi
 }
 
+match_proc_count() {
+	local pattern="$1"
+	ps_list | grep -E "$pattern" | grep -v grep | wc -l
+}
+
+kill_matched_procs() {
+	local pattern="$1"
+	ps_list | grep -E "$pattern" | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+}
+
 server_process_count=$1
 redir_tcp_process=$2
 redir_udp_process=$3
@@ -61,11 +71,11 @@ while [ "1" == "1" ]; do #死循环
 	fi
 	#server
 	if [ "$server_process_count" -gt 0 ]; then
-		icount=$(ps_list | grep ssr-server | grep -v grep | wc -l)
+		icount=$(match_proc_count 'ssr-server|ss-server-')
 		if [ "$icount" -lt "$server_process_count" ]; then #如果进程挂掉就重启它
 			logger -t "$NAME" "ssrplus server error.restart!"
 			echolog "ssrplus server error.restart!"
-			kill -9 $(ps_list | grep ssr-server | grep -v grep | awk '{print $1}') >/dev/null 2>&1
+			kill_matched_procs 'ssr-server|ss-server-'
 			/etc/init.d/shadowsocksr restart
 			exit 0
 		fi
@@ -82,11 +92,11 @@ while [ "1" == "1" ]; do #死循环
 	fi
 	#localsocks
 	if [ "$local_process" -gt 0 ]; then
-		icount=$(ps_list | grep ssr-local | grep -v grep | wc -l)
+		icount=$(match_proc_count 'ssr-local|ss-local|tuic-local')
 		if [ "$icount" -lt "$local_process" ]; then #如果进程挂掉就重启它
 			logger -t "$NAME" "global socks server error.restart!"
 			echolog "global socks server error.restart!"
-			kill -9 $(ps_list | grep ssr-local | grep -v grep | awk '{print $1}') >/dev/null 2>&1
+			kill_matched_procs 'ssr-local|ss-local|tuic-local'
 			/etc/init.d/shadowsocksr restart
 			exit 0
 		fi

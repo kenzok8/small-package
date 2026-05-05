@@ -1643,9 +1643,7 @@ function gen_config(var)
 				}
 			})
 		else
-			if COMMON.default_balancer_tag then
-				dns_outbound_tag = nil
-			elseif COMMON.default_outbound_tag then
+			if COMMON.default_outbound_tag then
 				dns_outbound_tag = COMMON.default_outbound_tag
 			end
 		end
@@ -1663,10 +1661,18 @@ function gen_config(var)
 				}
 			})
 
+			local chn_list = uci:get(appname, "@global[0]", "chn_list") or "direct"
+
 			table.insert(outbounds, {
 				tag = "dns-out",
 				protocol = "dns",
+				proxySettings = dns_outbound_tag and {
+					tag = (dns_outbound_tag ~= "blackhole") and dns_outbound_tag or "direct"
+				} or nil,
 				settings = {
+					address = (chn_list ~= "proxy") and "8.8.8.8" or "223.5.5.5",
+					port = 53,
+					network = "tcp",
 					nonIPQuery = (api.compare_versions(xray_version, "<", "26.4.25")) and "reject" or nil, -- Todo is to remove it
 					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {
 						{
@@ -1674,7 +1680,7 @@ function gen_config(var)
 							qtype = "1,28"
 						},
 						{
-							action = "reject"
+							action = "direct"
 						}
 					} or nil
 				}

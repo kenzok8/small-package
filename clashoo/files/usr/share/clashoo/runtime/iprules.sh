@@ -2,11 +2,13 @@
 . /lib/functions.sh
 
 
-CUSTOM_RULE_FILE="/tmp/ipadd.conf"
-RULE="/tmp/rules_conf.yaml"
-CLASH="/tmp/conf.yaml"
+TMP_PREFIX="/tmp/clashoo_iprules.$$"
+CUSTOM_RULE_FILE="${TMP_PREFIX}.ipadd.conf"
+RULE="${TMP_PREFIX}.rules_conf.yaml"
+CLASH="${TMP_PREFIX}.conf.yaml"
 CONFIG_YAML="/etc/clashoo/config.yaml"
-CLASH_CONFIG="/tmp/config.yaml"
+CLASH_CONFIG="${TMP_PREFIX}.config.yaml"
+trap 'rm -f "$CUSTOM_RULE_FILE" "$RULE" "$CLASH" "$CLASH_CONFIG"' EXIT
 
 
 
@@ -61,9 +63,9 @@ ipadd()
 	   fi
 	   
 	   if [ "${res}" -eq 1 ];then
-		echo "- $type,$ipaaddr,$pgroup,no-resolve">>/tmp/ipadd.conf
+		echo "- $type,$ipaaddr,$pgroup,no-resolve" >> "$CUSTOM_RULE_FILE"
 	   else
-		echo "- $type,$ipaaddr,$pgroup">>/tmp/ipadd.conf
+		echo "- $type,$ipaaddr,$pgroup" >> "$CUSTOM_RULE_FILE"
 	   fi
 }
 
@@ -83,7 +85,7 @@ else
    echo "#CUSTOMRULESTART#" >> "$CLASH_CONFIG" 2>/dev/null
 fi
 
-sed -i '/CUSTOMRULESTART/r/tmp/ipadd.conf' "$CLASH_CONFIG" 2>/dev/null
+sed -i "/CUSTOMRULESTART/r${CUSTOM_RULE_FILE}" "$CLASH_CONFIG" 2>/dev/null
 mv 	$CLASH_CONFIG $CONFIG_YAML 2>/dev/null
 
 fi

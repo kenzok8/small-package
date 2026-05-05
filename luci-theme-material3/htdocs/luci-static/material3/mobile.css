@@ -2,12 +2,6 @@ header h3 a {
 	display: none !important;
 }
 
-footer {
-	width: 100%;
-	padding-left: 12px;
-	padding-right: 12px;
-}
-
 @media screen and (max-device-width: 600px) {
 	.modal {
 		margin: 1.5em auto;
@@ -189,6 +183,7 @@ footer {
 		max-width: 100%;
 		padding: 3px 2px;
 		flex-basis: 100%;
+		text-align: left;
 	}
 
 	.hide-sm,

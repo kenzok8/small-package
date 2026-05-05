@@ -121,12 +121,15 @@ return content ? trim(split(content, '\n')[0] || '') : '';
 }
 
 function runtime_state_get(key) {
-let cmd = "awk -F= '$1==\"" + key + "\"{print substr($0, index($0,\"=\")+1); exit}' /tmp/clashoo/runtime_state 2>/dev/null";
-let p = popen(cmd);
-if (!p) return '';
-let value = trim(p.read('all'));
-p.close();
-return value || '';
+if (!key || !access('/tmp/clashoo/runtime_state', 'r')) return '';
+let content = readfile('/tmp/clashoo/runtime_state') || '';
+for (let line in split(content, '\n')) {
+let pos = index(line, '=');
+if (pos <= 0) continue;
+if (substr(line, 0, pos) == key)
+return trim(substr(line, pos + 1));
+}
+return '';
 }
 
 function is_running() {
@@ -619,6 +622,8 @@ function safe_name(name) {
 name = trim(name || '');
 if (!name) return '';
 if (index(name, '/') >= 0 || index(name, '..') >= 0) return '';
+if (substr(name, 0, 1) == '.') return '';
+if (!match(name, /^[A-Za-z0-9][A-Za-z0-9._-]*$/)) return '';
 return name;
 }
 
@@ -2181,10 +2186,9 @@ return { files, active: active_name };
 delete_config: {
 args: { name: 'name', type: 'type' },
 call: function(req) {
-let name = req.args?.name || '';
+let name = safe_name(req.args?.name || '');
 let type = req.args?.type || '1';
 if (!name) return { error: 'missing name' };
-if (index(name, '..') >= 0 || index(name, '/') >= 0) return { error: 'invalid name' };
 let type_map = { '1': SUB_DIR, '2': '/usr/share/clashoo/config/upload', '3': '/usr/share/clashoo/config/custom' };
 let dir = type_map[type] || SUB_DIR;
 let target = dir + '/' + name;
@@ -2199,6 +2203,10 @@ alt_target = dir + '/' + alt_name;
 
 if (file_exists) {
 if (unlink(target) === null) return { success: false, error: 'delete failed' };
+if (type == '1') {
+unlink(target + '.info');
+unlink(target + '.url');
+}
 }
 else if (type != '1') {
 return { error: 'not found' };
@@ -2206,6 +2214,8 @@ return { error: 'not found' };
 
 if (type == '1' && alt_target != target && access(alt_target, 'r')) {
 unlink(alt_target);
+unlink(alt_target + '.info');
+unlink(alt_target + '.url');
 }
 
 let c = cursor();
@@ -2524,9 +2534,9 @@ message: '远程复写文件已保存: ' + name
 read_other_config: {
 args: { name: 'name', type: 'type' },
 call: function(req) {
-let name = req.args?.name || '';
+let name = safe_name(req.args?.name || '');
 let type = req.args?.type || '2';
-if (!name || index(name, '/') >= 0 || index(name, '..') >= 0)
+if (!name)
   return { error: 'invalid name' };
 let dir = config_dir_by_type(type);
 if (!dir) return { error: 'invalid type' };

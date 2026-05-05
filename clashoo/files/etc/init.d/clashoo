@@ -10,6 +10,12 @@ command_exists() {
 	command -v "$1" >/dev/null 2>&1
 }
 
+shell_quote() {
+	printf "'"
+	printf '%s' "$1" | sed "s/'/'\\\\''/g"
+	printf "'"
+}
+
 use_fw4_backend() {
 	command_exists fw4 && command_exists nft
 }
@@ -92,7 +98,7 @@ _core_running() {
 }
 
 _kill_core() {
-	local _found _name _pid
+	local _found _name _pid _comm
 	for _name in $(_core_names); do
 		_found=0
 		for _pid in $(pidof "$_name" 2>/dev/null); do
@@ -104,6 +110,8 @@ _kill_core() {
 		sleep 1
 		for _pid in $(pidof "$_name" 2>/dev/null); do
 			[ "$_pid" = "$$" ] && continue
+			_comm="$(cat "/proc/${_pid}/comm" 2>/dev/null || true)"
+			[ -n "$_comm" ] && [ "$_comm" != "$_name" ] && continue
 			kill -9 "$_pid" >/dev/null 2>&1
 		done
 	done
@@ -229,16 +237,50 @@ runtime_state_reset() {
 }
 
 runtime_state_set() {
-	local key="$1" value="${2:-}"
+	local key="$1" value="${2:-}" safe_value
 	[ -n "$key" ] || return 0
 	mkdir -p "$(dirname "$RUNTIME_STATE_FILE")" >/dev/null 2>&1
 	touch "$RUNTIME_STATE_FILE"
 	value="$(printf '%s' "$value" | tr '\r\n' '  ')"
+	safe_value="$(printf '%s' "$value" | sed 's/[\/&|\\]/\\&/g')"
 	if grep -q "^${key}=" "$RUNTIME_STATE_FILE" 2>/dev/null; then
-		sed -i "s|^${key}=.*|${key}=${value}|g" "$RUNTIME_STATE_FILE"
+		sed -i "s|^${key}=.*|${key}=${safe_value}|g" "$RUNTIME_STATE_FILE"
 	else
 		echo "${key}=${value}" >> "$RUNTIME_STATE_FILE"
 	fi
+}
+
+inject_dns_fallback_filter() {
+	local cfg="$1" tmp="/tmp/_clashoo_fb.$$"
+	[ -f "$cfg" ] || return 0
+	grep -Eq '^[[:space:]]+fallback-filter:' "$cfg" 2>/dev/null && return 0
+	awk '
+		function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
+		/^dns:[[:space:]]*$/ { dns=1; child_indent=-1; print; next }
+		dns {
+			cur_indent = indent_len($0)
+			if ($0 ~ /^[[:space:]]*[^#[:space:]][^:]*:/ && cur_indent > 0 && child_indent < 0)
+				child_indent = cur_indent
+			if ($0 ~ /^[^[:space:]#][^:]*:/) {
+				if (!inserted) {
+					sp = sprintf("%*s", child_indent > 0 ? child_indent : 2, "")
+					print sp "fallback-filter:"
+					print sp "  geoip: false"
+					inserted=1
+				}
+				dns=0
+			}
+		}
+		{ print }
+		END {
+			if (dns && !inserted) {
+				sp = sprintf("%*s", child_indent > 0 ? child_indent : 2, "")
+				print sp "fallback-filter:"
+				print sp "  geoip: false"
+			}
+		}
+	' "$cfg" > "$tmp" 2>/dev/null && mv "$tmp" "$cfg"
+	rm -f "$tmp" 2>/dev/null
 }
 
 runtime_has_tun_device() {
@@ -309,6 +351,13 @@ runtime_state_record_health() {
 	runtime_state_set "updated_at" "$(date +%s)"
 }
 
+curl_has_final_http_response() {
+	awk '
+		/^HTTP\// && $0 !~ /Connection established/ { ok=1 }
+		END { exit ok ? 0 : 1 }
+	'
+}
+
 runtime_run_health_check() {
 	local dns_state explicit_state transparent_state detail require_fakeip mixed_port _try
 	local dns_out dns_addr _url
@@ -339,24 +388,24 @@ runtime_run_health_check() {
 	mixed_port="$(uci -q get clashoo.config.mixed_port 2>/dev/null)"
 	[ -z "$mixed_port" ] && mixed_port="7890"
 	if command_exists curl; then
-		explicit_state="fail"
-		for _url in https://www.google.com/generate_204 https://www.gstatic.com/generate_204; do
-			for _try in 1 2; do
-				if curl -4 --proxy "http://127.0.0.1:${mixed_port}" -I --max-time 6 -sS "$_url" 2>/dev/null | grep -q '^HTTP/'; then
-					explicit_state="ok"
-					break 2
-				fi
-				sleep 1
+			explicit_state="fail"
+			for _url in https://www.google.com/generate_204 https://www.gstatic.com/generate_204; do
+				for _try in 1 2; do
+					if curl -4 --proxy "http://127.0.0.1:${mixed_port}" -I --max-time 6 -sS "$_url" 2>/dev/null | curl_has_final_http_response; then
+						explicit_state="ok"
+						break 2
+					fi
+					sleep 1
 			done
 		done
-		transparent_state="fail"
-		for _url in https://www.google.com https://www.gstatic.com/generate_204; do
-			for _try in 1 2; do
-				if curl -4 -I --max-time 6 -sS "$_url" 2>/dev/null | grep -q '^HTTP/'; then
-					transparent_state="ok"
-					break 2
-				fi
-				sleep 1
+			transparent_state="fail"
+			for _url in https://www.google.com https://www.gstatic.com/generate_204; do
+				for _try in 1 2; do
+					if curl -4 -I --max-time 6 -sS "$_url" 2>/dev/null | curl_has_final_http_response; then
+						transparent_state="ok"
+						break 2
+					fi
+					sleep 1
 			done
 		done
 	fi
@@ -803,21 +852,7 @@ yml_change() {
 		# 注入 fallback-filter: geoip: false — 防止 mihomo 启动时因 nameserver
 		# 无法引导 GeoIP 下载而 FATAL（订阅 nameserver 可能是 IP 直连 DoH）。
 		# 等代理启动后，后台 GeoIP 更新会走代理下载。
-		if ! grep -Eq '^[[:space:]]+fallback-filter:' "$CONFIG_YAML" 2>/dev/null; then
-			awk '
-			/^dns:/ { dns=1; print; next }
-			dns && /^[a-zA-Z]/ {
-				if (!inserted) {
-					print "  fallback-filter:"
-					print "    geoip: false"
-					inserted=1
-				}
-				dns=0; print; next
-			}
-			{ print }
-			END { if (dns && !inserted) { print "  fallback-filter:"; print "    geoip: false" } }
-		' "$CONFIG_YAML" > /tmp/_clashoo_fb.yaml && mv /tmp/_clashoo_fb.yaml "$CONFIG_YAML"
-		fi
+		inject_dns_fallback_filter "$CONFIG_YAML"
 		# Sniffer injection (streaming support for transparent proxy)
 		_sniffer_streaming=$(uci get clashoo.config.sniffer_streaming 2>/dev/null)
 		awk '
@@ -1409,21 +1444,7 @@ _start_prepare_config() {
 		# default-nameserver 只用于解析 nameserver 域名，不用于 GeoIP 下载。
 		# 注入 geoip: false 后 mihomo 跳过 GeoIP 校验直接启动，
 		# 后台 GeoIP 更新通过代理下载。
-		if ! grep -Eq '^[[:space:]]+fallback-filter:' "$CONFIG_YAML" 2>/dev/null; then
-			awk '
-			/^dns:/ { dns=1; print; next }
-			dns && /^[a-zA-Z]/ {
-				if (!inserted) {
-					print "  fallback-filter:"
-					print "    geoip: false"
-					inserted=1
-				}
-				dns=0; print; next
-			}
-			{ print }
-			END { if (dns && !inserted) { print "  fallback-filter:"; print "    geoip: false" } }
-		' "$CONFIG_YAML" > /tmp/_clashoo_fb.yaml && mv /tmp/_clashoo_fb.yaml "$CONFIG_YAML"
-		fi
+			inject_dns_fallback_filter "$CONFIG_YAML"
 	fi
 
 	if [ ! -f /etc/clashoo/config.yaml ];then
@@ -1443,11 +1464,13 @@ _start_prepare_config() {
 }
 
 _start_launch_core() {
+	local _cmd
 	disable_quic_gso=$(uci get clashoo.config.disable_quic_gso 2>/dev/null)
 	mkdir -p "$(dirname "$CORE_LOG_PATH")" >/dev/null 2>&1
 	touch "$CORE_LOG_PATH" >/dev/null 2>&1
 	procd_open_instance
-	procd_set_param command /bin/sh -c "$CLASH -d '$CLASH_CONFIG' >> '$CORE_LOG_PATH' 2>&1"
+	_cmd="$(shell_quote "$CLASH") -d $(shell_quote "$CLASH_CONFIG") >> $(shell_quote "$CORE_LOG_PATH") 2>&1"
+	procd_set_param command /bin/sh -c "$_cmd"
 	[ "$disable_quic_gso" = "1" ] && procd_set_param env QUIC_GO_DISABLE_GSO=1
 	procd_set_param respawn 3600 5 5
 	procd_close_instance

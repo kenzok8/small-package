@@ -253,7 +253,7 @@ o:value("119.28.28.28")
 o:depends("direct_dns_mode", "udp")
 o:depends("direct_dns_mode", "tcp")
 
-o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
+o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"))
 o.default = "0"
 
 -- TCP分流时dns过滤模式保存逻辑
