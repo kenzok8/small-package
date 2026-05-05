@@ -140,6 +140,21 @@ local function trim(text)
 	return (sgsub(text, "^%s*(.-)%s*$", "%1"))
 end
 
+local function shell_quote(value)
+	value = tostring(value or "")
+	return "'" .. value:gsub("'", "'\\''") .. "'"
+end
+
+local function nft_string_literal(value)
+	value = tostring(value or "")
+	value = value:gsub("\\", "\\\\"):gsub('"', '\\"')
+	return '"' .. value .. '"'
+end
+
+local function escape_lua_pattern(value)
+	return tostring(value or ""):gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+end
+
 local function is_true_value(v)
 	if v == nil then
 		return false
@@ -1560,6 +1575,233 @@ local function curl(url, user_agent)
 	return stdout, md5
 end
 
+local function collect_wan_interfaces()
+	local ifaces = {}
+	local seen = {}
+
+	local function add_iface(value)
+		value = trim(value or "")
+		if value == "" or value == "nil" or value:sub(1, 1) == "@" then
+			return
+		end
+
+		if value:find("%s") then
+			for iface in value:gmatch("%S+") do
+				add_iface(iface)
+			end
+			return
+		end
+
+		if not seen[value] then
+			seen[value] = true
+			ifaces[#ifaces + 1] = value
+		end
+	end
+
+	local function add_iface_from_status(netif)
+		local raw = trim(luci.sys.exec(string.format(
+			"ubus -S call network.interface.%s status 2>/dev/null",
+			netif
+		)))
+		if raw == "" then
+			return
+		end
+
+		local status = jsonParse(raw)
+		if type(status) ~= "table" then
+			return
+		end
+
+		add_iface(status.l3_device)
+		add_iface(status.device)
+	end
+
+	add_iface_from_status("wan")
+	add_iface_from_status("wan6")
+
+	if #ifaces == 0 then
+		add_iface(ucic:get("network", "wan", "device"))
+		add_iface(ucic:get("network", "wan", "ifname"))
+		add_iface(ucic:get("network", "wan6", "device"))
+		add_iface(ucic:get("network", "wan6", "ifname"))
+	end
+
+	if #ifaces == 0 then
+		local route_output = luci.sys.exec("ip route show default 2>/dev/null")
+		for iface in route_output:gmatch("dev%s+(%S+)") do
+			add_iface(iface)
+		end
+	end
+
+	if #ifaces == 0 then
+		local route6_output = luci.sys.exec("ip -6 route show default 2>/dev/null")
+		for iface in route6_output:gmatch("dev%s+(%S+)") do
+			add_iface(iface)
+		end
+	end
+
+	return ifaces
+end
+
+local function detect_subscribe_bypass_backend()
+	if luci.sys.call("nft list chain inet ss_spec ss_spec_output >/dev/null 2>&1") == 0 then
+		return "nftables"
+	end
+
+	local ipt_output = luci.sys.exec("iptables -t nat -S OUTPUT 2>/dev/null")
+	if ipt_output:find("SS_SPEC_WAN_AC", 1, true) or ipt_output:find("SS_SPEC_ROUTER", 1, true) then
+		return "iptables"
+	end
+
+	return nil
+end
+
+local function create_direct_subscribe_bypass()
+	if proxy ~= "0" then
+		return nil
+	end
+
+	local backend = detect_subscribe_bypass_backend()
+	if not backend then
+		log("直连订阅: 未检测到 SSR 路由器自身 OUTPUT 代理链，跳过临时绕过规则。")
+		return nil
+	end
+
+	local wan_ifaces = collect_wan_interfaces()
+	local targets = (#wan_ifaces > 0) and wan_ifaces or {false}
+	local tag = string.format("SSR_SUB_BYPASS_%d", tonumber(nixio.getpid()) or os.time())
+	local manager = {
+		backend = backend,
+		tag = tag,
+		targets = targets,
+		added = false
+	}
+
+	function manager:describe_target(target)
+		if target then
+			return target
+		end
+		return "all-output"
+	end
+
+	function manager:apply_iptables_rule(target)
+		local cmd = {
+			"iptables -t nat -I OUTPUT 1"
+		}
+
+		if target then
+			cmd[#cmd + 1] = "-o " .. shell_quote(target)
+		end
+
+		cmd[#cmd + 1] = "-p tcp -m multiport --dports 80,443"
+		cmd[#cmd + 1] = "-m comment --comment " .. shell_quote(self.tag)
+		cmd[#cmd + 1] = "-j RETURN >/dev/null 2>&1"
+
+		return luci.sys.call(table.concat(cmd, " ")) == 0
+	end
+
+	function manager:apply_nft_rule(target)
+		local rule = {
+			"nft insert rule inet ss_spec ss_spec_output"
+		}
+
+		if target then
+			rule[#rule + 1] = "oifname " .. nft_string_literal(target)
+		end
+
+		rule[#rule + 1] = "meta l4proto tcp tcp dport { 80, 443 }"
+		rule[#rule + 1] = "counter return"
+		rule[#rule + 1] = "comment " .. nft_string_literal(self.tag)
+
+		return luci.sys.call(table.concat(rule, " ") .. " >/dev/null 2>&1") == 0
+	end
+
+	function manager:apply()
+		for index = #self.targets, 1, -1 do
+			local target = self.targets[index]
+			local ok
+
+			if self.backend == "nftables" then
+				ok = self:apply_nft_rule(target)
+			else
+				ok = self:apply_iptables_rule(target)
+			end
+
+			if ok then
+				self.added = true
+				log("直连订阅: 已添加临时绕过规则 -> " .. self.backend .. " / " .. self:describe_target(target))
+			else
+				log("直连订阅: 添加临时绕过规则失败 -> " .. self.backend .. " / " .. self:describe_target(target))
+			end
+		end
+
+		if not self.added then
+			log("直连订阅: 临时绕过规则未生效，订阅请求仍可能走代理。")
+		end
+	end
+
+	function manager:cleanup_nft_rules()
+		local output = luci.sys.exec("nft -a list chain inet ss_spec ss_spec_output 2>/dev/null")
+		local pattern = 'comment "' .. escape_lua_pattern(self.tag) .. '".-# handle (%d+)'
+		local handles = {}
+
+		for handle in output:gmatch(pattern) do
+			handles[#handles + 1] = handle
+		end
+
+		for _, handle in ipairs(handles) do
+			luci.sys.call(string.format(
+				"nft delete rule inet ss_spec ss_spec_output handle %s >/dev/null 2>&1",
+				handle
+			))
+		end
+
+		return #handles
+	end
+
+	function manager:cleanup_iptables_rules()
+		local removed = 0
+
+		for _, target in ipairs(self.targets) do
+			local cmd = {
+				"iptables -t nat -D OUTPUT"
+			}
+
+			if target then
+				cmd[#cmd + 1] = "-o " .. shell_quote(target)
+			end
+
+			cmd[#cmd + 1] = "-p tcp -m multiport --dports 80,443"
+			cmd[#cmd + 1] = "-m comment --comment " .. shell_quote(self.tag)
+			cmd[#cmd + 1] = "-j RETURN >/dev/null 2>&1"
+
+			if luci.sys.call(table.concat(cmd, " ")) == 0 then
+				removed = removed + 1
+			end
+		end
+
+		return removed
+	end
+
+	function manager:cleanup()
+		if not self.added then
+			return
+		end
+
+		local removed
+		if self.backend == "nftables" then
+			removed = self:cleanup_nft_rules()
+		else
+			removed = self:cleanup_iptables_rules()
+		end
+
+		log("直连订阅: 已清理临时绕过规则数量: " .. tostring(removed or 0))
+		self.added = false
+	end
+
+	return manager
+end
+
 local function check_filer(result)
 	-- 过滤的关键词列表
 	local filter_word = split(filter_words, "/")
@@ -1673,17 +1915,10 @@ end
 
 local execute = function()
 	local updated = false
-	local service_stopped = false
 	local selected_hashes = {}
 
 	for _, item in ipairs(subscribe_items) do
 		selected_hashes[md5(item.url)] = true
-	end
-
-	if proxy == '0' then
-		log('服务正在暂停')
-		luci.sys.init.stop(name)
-		service_stopped = true
 	end
 
 	if target_subscribe_sid ~= "" then
@@ -1894,10 +2129,6 @@ local execute = function()
 	-- diff 阶段
 	if next(nodeResult) == nil then
 		log("更新失败，没有可用的节点信息")
-		if proxy == '0' then
-			luci.sys.init.start(name)
-			log('订阅失败, 恢复服务')
-		end
 		return
 	end
 	local add, del = 0, 0
@@ -1992,10 +2223,19 @@ local execute = function()
 end
 
 if subscribe_items and #subscribe_items > 0 then
+	if proxy == "1" then
+		log("当前订阅模式: 通过代理订阅")
+	else
+		log("当前订阅模式: 不通过代理订阅")
+	end
+	local direct_bypass = create_direct_subscribe_bypass()
+	if direct_bypass then
+		direct_bypass:apply()
+	end
 	xpcall(execute, function(e)
 		log(e)
 		log(debug.traceback())
-		log('发生错误, 正在恢复服务')
+		log('发生错误, 正在尝试恢复服务状态')
 		local firstServer = ucic:get_first(name, uciType)
 		if firstServer then
 			luci.sys.call("/etc/init.d/" .. name .. " restart > /dev/null 2>&1 &") -- 不加&的话日志会出现的更早
@@ -2005,4 +2245,7 @@ if subscribe_items and #subscribe_items > 0 then
 			log('停止服务成功')
 		end
 	end)
+	if direct_bypass then
+		direct_bypass:cleanup()
+	end
 end
