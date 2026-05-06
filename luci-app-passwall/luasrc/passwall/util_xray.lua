@@ -1649,6 +1649,7 @@ function gen_config(var)
 		end
 
 		local dns_rule_position = 1
+		local remote_dns_outbound
 		if dns_listen_port then
 			table.insert(inbounds, {
 				listen = "127.0.0.1",
@@ -1661,9 +1662,9 @@ function gen_config(var)
 				}
 			})
 
+			-- remote dns outbound
 			local chn_list = uci:get(appname, "@global[0]", "chn_list") or "direct"
-
-			table.insert(outbounds, {
+			remote_dns_outbound = {
 				tag = "dns-out",
 				protocol = "dns",
 				proxySettings = dns_outbound_tag and {
@@ -1674,17 +1675,9 @@ function gen_config(var)
 					port = 53,
 					network = "tcp",
 					nonIPQuery = (api.compare_versions(xray_version, "<", "26.4.25")) and "reject" or nil, -- Todo is to remove it
-					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {
-						{
-							action = "hijack",
-							qtype = "1,28"
-						},
-						{
-							action = "direct"
-						}
-					} or nil
+					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {} or nil
 				}
-			})
+			}
 
 			table.insert(routing.rules, 1, {
 				inboundTag = {
@@ -1708,6 +1701,7 @@ function gen_config(var)
 		end
 
 		--按分流顺序DNS
+		local remote_dns_out_rules = {}
 		if dns_domain_rules and #dns_domain_rules > 0 then
 			for index, value in ipairs(dns_domain_rules) do
 				if value.domain and value.outboundTag then
@@ -1738,6 +1732,21 @@ function gen_config(var)
 						dns_server = nil
 					end
 					]]--
+
+					-- remote dns outbound rules
+					if value.outboundTag == "blackhole" then
+						table.insert(remote_dns_out_rules, {
+							action = "reject",
+							domain = api.clone(value.domain)
+						})
+					else
+						table.insert(remote_dns_out_rules, {
+							action = "hijack",
+							qtype = "1,28",
+							domain = api.clone(value.domain)
+						})
+					end
+
 					if dns_server then
 						--dns_server.finalQuery = true
 						dns_server.domains = value.domain
@@ -1793,6 +1802,21 @@ function gen_config(var)
 
 		if dns_hosts_len == 0 then
 			dns.hosts = nil
+		end
+
+		-- remote dns outbound
+		if remote_dns_outbound then
+			if remote_dns_outbound.settings.rules then
+				table.insert(remote_dns_out_rules, {
+					action = "hijack",
+					qtype = "1,28"
+				})
+				table.insert(remote_dns_out_rules, {
+					action = "direct"
+				})
+				remote_dns_outbound.settings.rules = remote_dns_out_rules
+			end
+			table.insert(outbounds, remote_dns_outbound)
 		end
 
 		-- 自定义节点 DNS
