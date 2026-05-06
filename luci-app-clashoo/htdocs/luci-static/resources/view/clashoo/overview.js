@@ -586,11 +586,7 @@ return view.extend({
   _renderCoreSwitch: function (st) {
     var self = this;
     var effective = this._effectiveCore(st);
-    var statusKnown = st && typeof st.running === 'boolean';
-    var running = statusKnown && st.running === true;
-    var runningText = statusKnown ? (running ? '运行中' : '未运行') : '同步中';
-    var coreText = effective === 'singbox' ? 'sing-box' : effective === 'smart' ? 'Smart' : 'mihomo';
-    var note = this._coreSwitchMsg || ('当前内核：' + coreText + ' · ' + runningText);
+    var note = this._coreSwitchMsg || '';
 
     var mkBtn = function (core, label) {
       var active = core === effective;
@@ -607,17 +603,20 @@ return view.extend({
       }, label);
     };
 
-    return E('div', { 'class': 'cl-core-switch-wrap' }, [
+    var children = [
       E('div', {
         'class': 'cl-status-kernel' + (this._coreSwitchBusy ? ' is-busy' : ''),
-        title: note
+        title: note || null
       }, [
         mkBtn('mihomo', 'Mihomo'),
         mkBtn('smart', 'Smart'),
         mkBtn('singbox', 'Sing-box')
-      ]),
-      E('div', { 'class': 'cl-core-switch-hint' }, note)
-    ]);
+      ])
+    ];
+    if (note)
+      children.push(E('div', { 'class': 'cl-core-switch-hint' }, note));
+
+    return E('div', { 'class': 'cl-core-switch-wrap' }, children);
   },
 
   _proxyModeLabel: function (mode) {

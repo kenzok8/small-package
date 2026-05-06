@@ -1647,7 +1647,7 @@ get_log_status: {
 call: function() {
 let core_updating  = !!access('/var/run/core_update', 'r');
 let geoip_updating = !!access('/var/run/geoip_update', 'r');
-let p = popen("tail -5 /tmp/clash_update.txt 2>/dev/null");
+let p = popen("tail -8 /tmp/clash_update.txt 2>/dev/null");
 let core_log = ''; if (p) { core_log = trim(p.read('all')); p.close(); }
 let p2 = popen("tail -5 /tmp/geoip_update.txt 2>/dev/null");
 let geoip_log = ''; if (p2) { geoip_log = trim(p2.read('all')); p2.close(); }
