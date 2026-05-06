@@ -10,6 +10,8 @@ local appname = 'passwall'
 local api = require ("luci.passwall.api")
 local datatypes = require "luci.cbi.datatypes"
 
+loadfile("/usr/share/" .. appname .. "/clash_subconverter.lua")()
+
 -- these global functions are accessed all the time by the event handler
 -- so caching them is worth the effort
 local tinsert = table.insert
@@ -1641,11 +1643,14 @@ local function curl(url, file, ua, mode)
 	local curl_args = {
 		"-fskL", "-w %{http_code}", "--retry 3", "--connect-timeout 3", "-H 'Accept-Encoding: identity'"
 	}
-	if ua and ua ~= "" and ua ~= "curl" then
-		ua = (ua == "passwall") and ("passwall/" .. api.get_version()) or ua
-		curl_args[#curl_args + 1] = '--user-agent "' .. ua .. '"'
+
+	ua = (ua and ua ~= "") and ua or "passwall"
+	ua = (ua == "passwall") and ("passwall/" .. api.get_version()) or ua
+	curl_args[#curl_args + 1] = '--user-agent "' .. ua .. '"'
+	if not ua:lower():find("clash", 1, true) then
+		curl_args[#curl_args + 1] = get_headers()
 	end
-	curl_args[#curl_args + 1] = get_headers()
+
 	local return_code, result
 	if mode == "direct" then
 		return_code, result = api.curl_base(url, file, curl_args)
@@ -2136,9 +2141,6 @@ local execute = function()
 				tmp_file = url
 			else
 				ua = value.user_agent
-				if value.clash_convert == "1" or (ua and ua:lower():find("clash", 1, true)) then
-					ua = "clash.meta"
-				end
 				local access_mode = value.access_mode
 				local result = (not access_mode) and "自动" or (access_mode == "direct" and "直连" or (access_mode == "proxy" and "代理" or "自动"))
 				log('正在订阅:【' .. remark .. '】' .. url .. ' [' .. result .. ']')
@@ -2149,14 +2151,6 @@ local execute = function()
 					fail_list[#fail_list + 1] = value
 					luci.sys.call("rm -f " .. tmp_file)
 				end
-			end
-			if ua == "clash.meta" and fs.access(tmp_file) then
-				log('转换 Clash 订阅:【' .. remark .. '】...')
-				local yaml = tmp_file
-				tmp_file = tmp_file .. "_convert"
-				local cmd = string.format("lua /usr/share/%s/clash_subconverter.lua %s %s", appname, yaml, tmp_file)
-				luci.sys.call(cmd)
-				luci.sys.call("rm -f " .. yaml)
 			end
 			if fs.access(tmp_file) then
 				if luci.sys.call("[ -f " .. tmp_file .. " ] && sed -i -e '/^[ \t]*$/d' -e '/^[ \t]*\r$/d' " .. tmp_file) == 0 then
@@ -2169,6 +2163,7 @@ local execute = function()
 					if not manual_sub and old_md5 == new_md5 then
 						log('订阅:【' .. remark .. '】没有变化，无需更新。')
 					else
+						raw_data = parseClashNode(raw_data)
 						parse_link(raw_data, "2", remark, value)
 						uci:set(appname, cfgid, "md5", new_md5)
 					end

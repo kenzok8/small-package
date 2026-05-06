@@ -7,17 +7,6 @@ local urlencode = api.UrlEncode
 local base64 = api.base64Encode
 local json = api.jsonc
 
-local isDebug = false
-
-local log = function(...)
-	if isDebug == true then
-		local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
-		print(result)
-	else
-		api.log(...)
-	end
-end
-
 local function host_format(host)
 	if not host then return "" end
 	local str = host:match("%[(.-)%]") or host
@@ -25,20 +14,6 @@ local function host_format(host)
 		return "[" .. str .. "]"
 	end
 	return host
-end
-
-local function load_yaml(file)
-	local ok, lyaml = pcall(require, "lyaml")
-	if not ok then
-		log("  - 缺少 YAML 解析器（lyaml），Clash 订阅转换失败！")
-		return nil
-	end
-	local f = io.open(file)
-	if f then
-		local data = lyaml.load(f:read("*a"))
-		f:close()
-		return data
-	end
 end
 
 local function build_alpn(alpn)   -- 排序+去重
@@ -484,37 +459,28 @@ local function encode_node(node)
 	elseif t == "tuic" then return encode_tuic(node)
 	elseif t == "anytls" then return encode_anytls(node)
 	elseif t == "ssr" then return encode_ssr(node)
-	else log("  - 丢弃不支持的节点：" .. node.name .. "，节点类型：" .. t)
+	else api.log("订阅转换 → 丢弃不支持的节点：" .. node.name .. "，节点类型：" .. t)
 	end
 end
 
-local function convert(input, output)
-	local data = load_yaml(input)
-	if not data or not data.proxies then
-		log("  - 转换失败，没有 Clash YAML 节点信息，请检查 URL 是否支持 Clash 订阅。")
-		return
-	end
+function parseClashNode(raw, remark)
+	if not raw then return "" end 
+	local ok, lyaml = pcall(require, "lyaml")
+	if not ok then return raw end
 
-	local f = io.open(output, "w")
+	local data = lyaml.load(raw)
+	if not data or type(data) ~= "table" then return raw end
+	if not data.proxies then return "" end
 
+	api.log('检测到 Clash 订阅，正在进行转换 ...')
+
+	local links = {}
 	for _, node in ipairs(data.proxies) do
 		local link = encode_node(node)
-		if link then f:write(link .. "\n") end
+		if link then
+			table.insert(links, link)
+		end
 	end
 
-	f:close()
+	return #links > 0 and table.concat(links, "\n") or ""
 end
-
-local input = arg[1] or "/tmp/clash.yaml"
-local output = arg[2] or "/tmp/sub.txt"
-
-local execute = function()
-	convert(input, output)
-end
-
-xpcall(execute, function(e)
-	log(e)
-	if type(debug) == "table" and type(debug.traceback) == "function" then
-		log(debug.traceback())
-	end
-end)
