@@ -3,6 +3,7 @@
 LOG_FILE="/tmp/geoip_update.txt"
 TMP_DIR="/tmp/clash_geoip_$$"
 MMDB_MIN_SIZE=2000000
+GEOSITE_MIN_SIZE=2000000
 
 geoip_source="$(uci -q get clashoo.config.geoip_source 2>/dev/null)"
 license_key="$(uci -q get clashoo.config.license_key 2>/dev/null)"
@@ -61,6 +62,33 @@ download_optional() {
 	fi
 	rm -f "$tmp_target" >/dev/null 2>&1
 	log "$name update failed"
+	return 0
+}
+
+download_geosite() {
+	url="$1"
+	tmp_target="${TMP_DIR}/GeoSite.dat.tmp"
+	size=0
+	if [ -z "$url" ]; then
+		log "GeoSite.dat skip (url empty)"
+		return 0
+	fi
+	rm -f "$tmp_target" >/dev/null 2>&1
+	if ! download_to "$url" "$tmp_target"; then
+		rm -f "$tmp_target" >/dev/null 2>&1
+		log "GeoSite.dat update failed"
+		return 0
+	fi
+	size=$(wc -c <"$tmp_target" 2>/dev/null)
+	if [ -z "$size" ] || [ "$size" -lt "$GEOSITE_MIN_SIZE" ]; then
+		log "GeoSite.dat download invalid or incomplete (${size:-0} bytes)"
+		rm -f "$tmp_target" >/dev/null 2>&1
+		return 0
+	fi
+	mv -f "$tmp_target" /etc/clashoo/GeoSite.dat >/dev/null 2>&1 || return 1
+	cp -f /etc/clashoo/GeoSite.dat /etc/clashoo/geosite.dat >/dev/null 2>&1 || true
+	chmod 644 /etc/clashoo/GeoSite.dat /etc/clashoo/geosite.dat >/dev/null 2>&1
+	log "GeoSite.dat updated"
 	return 0
 }
 
@@ -147,7 +175,7 @@ if [ "$geoip_source" != "1" ]; then
 	fi
 	log "Country.mmdb updated"
 
-	download_optional "$geosite_url" /etc/clashoo/geosite.dat "geosite.dat"
+	download_geosite "$geosite_url"
 	download_optional "$geoip_dat_url" /etc/clashoo/geoip.dat "geoip.dat"
 	download_optional "$geoip_asn_url" /etc/clashoo/GeoLite2-ASN.mmdb "GeoLite2-ASN.mmdb"
 fi

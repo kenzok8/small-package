@@ -1219,7 +1219,26 @@ _has_valid_local_mmdb() {
 }
 
 _config_needs_geosite() {
-	grep -Eq "^[[:space:]]*-[[:space:]]*[\"']?GEOSITE,|^[[:space:]]*geosite:[[:space:]]|^[[:space:]]*'geosite:" "$CONFIG_YAML"
+	grep -Eq "^[[:space:]]*-[[:space:]]*[\"']?GEOSITE,|^[[:space:]]*geosite:[[:space:]]*|^[[:space:]]*'geosite:" "$CONFIG_YAML"
+}
+
+_has_valid_local_geosite() {
+	local site_file site_size
+
+	for site_file in /etc/clashoo/GeoSite.dat /etc/clashoo/geosite.dat; do
+		[ -f "$site_file" ] || continue
+		site_size=$(wc -c <"$site_file" 2>/dev/null)
+		[ -n "$site_size" ] || continue
+		if [ "$site_size" -ge 2000000 ]; then
+			if [ "$site_file" = "/etc/clashoo/geosite.dat" ]; then
+				cp -f "$site_file" /etc/clashoo/GeoSite.dat >/dev/null 2>&1 || true
+				chmod 644 /etc/clashoo/GeoSite.dat >/dev/null 2>&1 || true
+			fi
+			return 0
+		fi
+	done
+
+	return 1
 }
 
 _strip_geox_url_block() {
@@ -1307,7 +1326,7 @@ _prepare_geo_bootstrap_mode() {
 		rm -f /etc/clashoo/geoip.metadb >/dev/null 2>&1
 		log_msg "GeoIP database is invalid or incomplete, fallback to bootstrap mode" "GeoIP 数据库无效或下载不完整，已回退到引导模式"
 	fi
-	[ "$needs_geosite" -eq 1 ] && [ -f /etc/clashoo/geosite.dat ] && needs_geosite=0
+	[ "$needs_geosite" -eq 1 ] && _has_valid_local_geosite && needs_geosite=0
 
 	if [ "$needs_mmdb" -eq 0 ] && [ "$needs_geosite" -eq 0 ]; then
 		return 0
@@ -1324,6 +1343,7 @@ _prepare_geo_bootstrap_mode() {
 	fi
 
 	if [ "$needs_geosite" -eq 1 ]; then
+		rm -f /etc/clashoo/GeoSite.dat /etc/clashoo/geosite.dat >/dev/null 2>&1
 		_strip_yaml_rule_lines "^[[:space:]]*-[[:space:]]*[\"']?GEOSITE,"
 		_strip_yaml_child_block '^[[:space:]]*geosite:[[:space:]]*$'
 		_strip_yaml_child_block "^[[:space:]]*'geosite:[^']*'[[:space:]]*:[[:space:]]*$"
