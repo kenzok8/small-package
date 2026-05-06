@@ -588,21 +588,23 @@ for (let ob in (cfg.outbounds || [])) {
 	if (t == 'selector' || t == 'urltest' || t == 'fallback' || t == 'load_balance' || t == 'dns' || t == 'block')
 		continue;
 
-		/* plugin_opts 必须是字符串；订阅转换可能输出对象（如 {"mode":"http","host":"..."}），
-		 * sing-box 只接受 "obfs=http;obfs-host=..." 字符串格式。 */
-		/* 清除 sing-box 不支持的 plugin（如 obfs），否则 Fatal: plugin not found */
-		if (ob.plugin != null && ob.plugin != 'obfs-local' && ob.plugin != 'v2ray-plugin' && ob.plugin != 'shadow-tls') {
-			delete ob.plugin;
-			delete ob.plugin_opts;
-		}
+		/* Clash 的 SS obfs 写法是 plugin=obfs + plugin-opts 对象；sing-box 需要
+		 * plugin=obfs-local + "obfs=http;obfs-host=..." 字符串。 */
+		if (ob.plugin == 'obfs')
+			ob.plugin = 'obfs-local';
 		if (ob.plugin_opts != null && type(ob.plugin_opts) == 'object') {
 			let _parts = [];
+			let _map = { mode: 'obfs', host: 'obfs-host', uri: 'obfs-uri' };
 			for (let _k in ob.plugin_opts) {
 				let _v = ob.plugin_opts[_k];
 				if (type(_v) == 'object' || type(_v) == 'array') continue;
-				push(_parts, _k + '=' + _v);
+				push(_parts, (_map[_k] || _k) + '=' + _v);
 			}
 			ob.plugin_opts = join(';', _parts);
+		}
+		if (ob.plugin != null && ob.plugin != 'obfs-local' && ob.plugin != 'v2ray-plugin' && ob.plugin != 'shadow-tls') {
+			delete ob.plugin;
+			delete ob.plugin_opts;
 		}
 
 		if (wants_tun) {

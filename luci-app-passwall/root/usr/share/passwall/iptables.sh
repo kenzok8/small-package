@@ -795,6 +795,8 @@ filter_direct_node_list() {
 update_wan_sets() {
 	local log=$1
 
+	[ -z "$(command -v get_wan_ips)" ] && . "$UTILS_PATH"
+
 	local WAN_IP=$(get_wan_ips ip4)
 	[ -n "$WAN_IP" ] && {
 		ipset -F "$IPSET_WAN"
@@ -1487,7 +1489,7 @@ start() {
 }
 
 stop() {
-	[ -z "$(command -v echolog)" ] && . /usr/share/passwall/utils.sh
+	[ -z "$(command -v echolog)" ] && . "$UTILS_PATH"
 	del_firewall_rule
 	[ $(config_t_get global flush_set_on_reboot "0") = "1" -o $(config_t_get global flush_set "0") = "1" ] && {
 		uci -q delete ${CONFIG}.@global[0].flush_set

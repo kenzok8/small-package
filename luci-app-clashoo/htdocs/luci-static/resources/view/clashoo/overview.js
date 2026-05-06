@@ -16,6 +16,9 @@ var CSS = [
   '.cl-status-kernel .cl-core-btn.active{background:rgba(var(--primary-rgb,0,122,255),.2);border:0;color:var(--primary-color,#0b68dd);box-shadow:none;opacity:1}',
   '.cl-status-kernel .cl-core-btn:disabled{opacity:.48;cursor:not-allowed}',
   '.cl-status-kernel.is-busy{opacity:.9}',
+  '.cl-core-switch-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:6px}',
+  '.cl-core-switch-hint{font-size:12px;line-height:1.35;color:rgba(74,86,106,.72)}',
+  'body.dark .cl-core-switch-hint,html[data-theme="dark"] .cl-core-switch-hint,html[data-bs-theme="dark"] .cl-core-switch-hint{color:rgba(208,219,238,.72)}',
   'body.dark .cl-status-kernel,body.dark .cl-status-kernel,html[data-theme="dark"] .cl-status-kernel,html[data-bs-theme="dark"] .cl-status-kernel{border:0;background:rgba(255,255,255,.06)}',
   'body.dark .cl-status-kernel .cl-core-btn.active,body.dark .cl-status-kernel .cl-core-btn.active,html[data-theme="dark"] .cl-status-kernel .cl-core-btn.active,html[data-bs-theme="dark"] .cl-status-kernel .cl-core-btn.active{background:rgba(var(--primary-rgb,122,180,255),.24);border:0;color:rgba(222,236,255,.96);box-shadow:none}',
   '.cl-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}',
@@ -470,8 +473,8 @@ return view.extend({
     return f + ' ' + c;
   },
 
-  _configuredChannel: function (family) {
-    var dcore = uci.get('clashoo', 'config', 'dcore') || '2';
+  _configuredChannel: function (family, st) {
+    var dcore = (st && st.dcore) || uci.get('clashoo', 'config', 'dcore') || '2';
     if (family === 'singbox')
       return dcore === '5' ? 'alpha' : 'stable';
     if (dcore === '1') return 'smart';
@@ -497,16 +500,33 @@ return view.extend({
     wrap.appendChild(this._renderCoreSwitch(this._lastSt || {}));
   },
 
+  _showCoreSwitchHint: function (msg) {
+    var self = this;
+    self._coreSwitchMsg = msg;
+    self._refreshCoreSwitch();
+    setTimeout(function () {
+      if (self._coreSwitchMsg === msg) {
+        self._coreSwitchMsg = '';
+        self._refreshCoreSwitch();
+      }
+    }, 3500);
+  },
+
   _switchCore: function (targetCore) {
     var self = this;
     if (self._coreSwitchBusy)
       return Promise.resolve();
 
+    if (targetCore === 'smart' && self._lastSt && self._lastSt.has_smart === false) {
+      self._showCoreSwitchHint('未检测到 Smart 内核；更新模型不会安装内核，请到系统页下载 Smart 版');
+      return Promise.resolve();
+    }
+
     var currentEffective = self._effectiveCore(self._lastSt || {});
     if (targetCore === currentEffective)
       return Promise.resolve();
 
-    var currentDcore = uci.get('clashoo', 'config', 'dcore') || '2';
+    var currentDcore = (self._lastSt && self._lastSt.dcore) || uci.get('clashoo', 'config', 'dcore') || '2';
     var rpcCore, nextDcore, targetLabel;
     if (targetCore === 'smart') {
       rpcCore = 'mihomo'; nextDcore = '1'; targetLabel = 'Smart';
@@ -522,6 +542,10 @@ return view.extend({
 
     return clashoo.setCore(rpcCore, nextDcore)
       .then(function (r) {
+        if (r && r.success === false && r.error === 'smart_core_missing') {
+          self._showCoreSwitchHint('未检测到 Smart 内核；更新模型不会安装内核，请到系统页下载 Smart 版');
+          throw { soft: true };
+        }
         if (r && r.success === false)
           throw new Error(r.message || '切换内核失败');
         self._lastSt = self._lastSt || {};
@@ -545,6 +569,8 @@ return view.extend({
         ui.addNotification(null, E('p', msg));
       })
       .catch(function (e) {
+        if (e && e.soft)
+          return;
         self._coreSwitchMsg = '切换失败';
         ui.addNotification(null, E('p', '切换失败: ' + (e.message || e)));
       })
@@ -568,8 +594,10 @@ return view.extend({
 
     var mkBtn = function (core, label) {
       var active = core === effective;
+      var missingSmart = core === 'smart' && st && st.has_smart === false;
       return E('button', {
         type: 'button',
+        title: missingSmart ? '未检测到 Smart 内核；更新模型不会安装内核' : null,
         'class': 'cl-core-btn' + (active ? ' active' : ''),
         disabled: self._coreSwitchBusy ? '' : null,
         click: function (ev) {
@@ -579,13 +607,16 @@ return view.extend({
       }, label);
     };
 
-    return E('div', {
-      'class': 'cl-status-kernel' + (this._coreSwitchBusy ? ' is-busy' : ''),
-      title: note
-    }, [
-      mkBtn('mihomo', 'Mihomo'),
-      mkBtn('smart', 'Smart'),
-      mkBtn('singbox', 'Sing-box')
+    return E('div', { 'class': 'cl-core-switch-wrap' }, [
+      E('div', {
+        'class': 'cl-status-kernel' + (this._coreSwitchBusy ? ' is-busy' : ''),
+        title: note
+      }, [
+        mkBtn('mihomo', 'Mihomo'),
+        mkBtn('smart', 'Smart'),
+        mkBtn('singbox', 'Sing-box')
+      ]),
+      E('div', { 'class': 'cl-core-switch-hint' }, note)
     ]);
   },
 
@@ -630,7 +661,7 @@ return view.extend({
     var statusKnown = st && typeof st.running === 'boolean';
     var running = statusKnown && st.running === true;
     var health = st.health_status || 'unknown';
-    var configuredCoreLabel = this._coreLabel(st.core_type, this._configuredChannel(st.core_type));
+    var configuredCoreLabel = this._coreLabel(st.core_type, this._configuredChannel(st.core_type, st));
 
     var statusChildren = [
       !statusKnown

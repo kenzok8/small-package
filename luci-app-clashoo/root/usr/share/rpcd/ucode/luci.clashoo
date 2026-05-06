@@ -12,6 +12,12 @@ const BINARY_PATHS = [
 '/etc/clashoo/clash'
 ];
 
+const SMART_BINARY_PATHS = [
+'/usr/bin/smart',
+'/etc/clashoo/clash',
+'/usr/bin/clash'
+];
+
 const SINGBOX_BINARY_PATHS = [
 '/usr/bin/sing-box',
 '/usr/local/bin/sing-box'
@@ -67,6 +73,9 @@ family = family || get_core_type();
 if (family == 'singbox')
 return dcore == '5' ? 'alpha' : 'stable';
 
+if (dcore == '1' || legacy == '1')
+return 'smart';
+
 if (dcore == '3' || legacy == '3')
 return 'alpha';
 
@@ -77,7 +86,7 @@ function get_core_label(family, channel) {
 family = family || get_core_type();
 channel = channel || get_core_channel(family);
 let name = family == 'singbox' ? 'sing-box' : 'mihomo';
-return name + ' ' + (channel == 'alpha' ? 'alpha' : 'stable');
+return name + ' ' + (channel == 'smart' ? 'smart' : channel == 'alpha' ? 'alpha' : 'stable');
 }
 
 function get_mihomo_service_name() {
@@ -102,6 +111,12 @@ return family || '';
 function find_binary_for_family(family) {
 let paths = family === 'singbox' ? SINGBOX_BINARY_PATHS : BINARY_PATHS;
 for (let path in paths)
+if (access(path, 'x')) return path;
+return '';
+}
+
+function find_smart_binary() {
+for (let path in SMART_BINARY_PATHS)
 if (access(path, 'x')) return path;
 return '';
 }
@@ -169,7 +184,7 @@ let legacy = '2';
 if (family == 'singbox')
 legacy = dcore == '5' ? '5' : '4';
 else
-legacy = dcore == '3' ? '3' : '2';
+legacy = dcore == '1' ? '1' : dcore == '3' ? '3' : '2';
 
 c.set('clashoo', 'config', 'core', legacy);
 }
@@ -1401,7 +1416,8 @@ return { running, dash_port, dash_pass, proxy_mode, conf_path: conf_name, config
          effective_tcp_mode, effective_udp_mode,
          runtime_degraded, runtime_degrade_reason,
          health_status, health_detail, has_tun_device,
-         core_type: configured_core, dcore, local_ip };
+         core_type: configured_core, dcore, local_ip,
+         has_smart: !!find_smart_binary() };
 } catch (e) {
 return { success: false, error: 'status_failed', message: '' + e };
 }
@@ -1495,6 +1511,12 @@ let core = req.args?.core || 'mihomo';
 let dcore = req.args?.dcore || '';
 if (core != 'mihomo' && core != 'singbox')
 return { success: false, error: 'invalid core', message: '无效内核类型' };
+if (core == 'mihomo' && dcore == '1' && !find_smart_binary())
+return {
+success: false,
+error: 'smart_core_missing',
+message: '未检测到 Smart 内核。「更新模型」只更新 Smart 模型，不会安装 Smart 内核；请到「系统 → 内核更新」选择 mihomo Smart 版并下载。'
+};
 
 let c = cursor(); c.load('clashoo');
 c.set('clashoo', 'config', 'core_type', core);
@@ -1509,7 +1531,7 @@ c.commit('clashoo');
 system('uci commit clashoo >/dev/null 2>&1');
 
 if (is_running())
-system('sh /usr/share/clashoo/rpc/rpc_async.sh stop >/dev/null 2>&1');
+system('/etc/init.d/clashoo stop >/dev/null 2>&1');
 
 return { success: true, core_type: core, stopped: true };
 }
@@ -1943,6 +1965,7 @@ backend:           detect_firewall_backend(),
 missing_fw4_tools: detect_missing_fw4_tools(),
 has_singbox:       !!find_binary_for_family('singbox'),
 has_mihomo:        !!access('/usr/bin/mihomo', 'x'),
+has_smart:         !!find_smart_binary(),
 has_clash_meta:    !!access('/usr/bin/clash-meta', 'x'),
 has_builtin_core:  !!access('/etc/clashoo/clash', 'x')
 };

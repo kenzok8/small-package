@@ -59,16 +59,19 @@ _detect_selected_core() {
 			for _bin in /usr/bin/smart /etc/clashoo/clash /usr/bin/clash; do
 				[ -x "$_bin" ] && echo "$_bin" && return
 			done
+			return 1
 			;;
 		2|mihomo)
 			for _bin in /usr/bin/mihomo /usr/bin/clash-meta /etc/clashoo/clash-meta; do
 				[ -x "$_bin" ] && echo "$_bin" && return
 			done
+			return 1
 			;;
 		3|mihomo-alpha)
 			for _bin in /usr/bin/mihomo /usr/bin/clash-meta; do
 				[ -x "$_bin" ] && echo "$_bin" && return
 			done
+			return 1
 			;;
 	esac
 	_detect_core
@@ -1359,6 +1362,7 @@ _prepare_geo_bootstrap_mode() {
 
 
 _start_validate_core() {
+	core="$(uci -q get clashoo.config.core 2>/dev/null)"
 	if is_singbox_selected; then
 		if [ ! -x /usr/bin/sing-box ]; then
 			if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
@@ -1375,11 +1379,11 @@ _start_validate_core() {
 
 	if [ "${core:-0}" -eq 1 ] && [ ! -x "$CLASH" ]; then
 		if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S") - mihomo core not found, detected binary is unavailable: $CLASH" >> /usr/share/clashoo/clashoo.txt
+			echo "  $(date "+%Y-%m-%d %H:%M:%S") - Smart core not found, please install the local Smart binary first" >> /usr/share/clashoo/clashoo.txt
 		elif [ "${lang}" = "zh_cn" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 找不到可用的 mihomo 内核: $CLASH" >> /usr/share/clashoo/clashoo.txt
+			echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 找不到本地 Smart 内核，请先安装 Smart 二进制" >> /usr/share/clashoo/clashoo.txt
 		fi
-		log_msg "mihomo core not found, detected binary is unavailable: $CLASH" "找不到可用的 mihomo 内核: $CLASH"
+		log_msg "Smart core not found, please install the local Smart binary first" "找不到本地 Smart 内核，请先安装 Smart 二进制"
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
 	elif [ "${core:-0}" -eq 2 ] && [ ! -x "$CLASH" ]; then
@@ -1565,6 +1569,7 @@ start_service(){
 	tun_mode=$(uci get clashoo.config.tun_mode 2>/dev/null)
 
 	sync_legacy_core_field
+	CLASH="$(_detect_selected_core)"
 
 	cleanup_legacy_startup_backups
 	migrate_legacy_clash_dir
@@ -1607,6 +1612,7 @@ start_service(){
 			echo "Clashoo" > "$REAL_LOG"
 			return 0
 		fi
+		if _core_running; then stop_service >/dev/null 2>&1; fi
 		if ! select_config >/dev/null 2>&1; then
 			runtime_state_record_health "fail" "preflight:config_missing"
 			_log_runtime_error "Config file is missing or empty; please import a subscription/config first"
