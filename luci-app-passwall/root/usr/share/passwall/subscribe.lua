@@ -1492,7 +1492,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		end
 		result.tls_serverName = params.sni
 		result.tls_disable_sni = params.disable_sni
-		result.tuic_alpn = params.alpn or "default"
+		result.tuic_alpn = params.alpn or "h3"
 		result.tuic_congestion_control = params.congestion_control or "cubic"
 		result.tuic_udp_relay_mode = params.udp_relay_mode or "native"
 		local insecure = params.allowinsecure or params.insecure or params.allow_insecure

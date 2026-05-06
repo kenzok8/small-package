@@ -1252,8 +1252,8 @@ msgstr "/ (首页登录)"
 msgid "%s frequent %s login attempts"
 msgstr "%s 频繁尝试 %s 登录"
 
-msgid "Block Information"
-msgstr "封禁信息"
+msgid "Frequent Login Attempts Information"
+msgstr "频繁尝试登录信息"
 
 msgid "Device %s (%s) frequently attempted %s %s login"
 msgstr "设备 %s (%s) 频繁尝试 %s %s 登录"

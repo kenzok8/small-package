@@ -1684,7 +1684,7 @@ local current_node = map:get(section)
 			}
 			opt.set(dom_prefix + 'tuic_congestion_control', queryParam.congestion_control || 'cubic');
 			opt.set(dom_prefix + 'tuic_udp_relay_mode', queryParam.udp_relay_mode || 'native');
-			opt.set(dom_prefix + 'tuic_alpn', queryParam.alpn || 'default');
+			opt.set(dom_prefix + 'tuic_alpn', queryParam.alpn || 'h3');
 			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 			opt.set(dom_prefix + 'tls_disable_sni', queryParam.disable_sni === "1");
 			opt.set(

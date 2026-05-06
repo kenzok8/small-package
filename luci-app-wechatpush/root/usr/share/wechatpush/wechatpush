@@ -2356,8 +2356,8 @@ process_login() {
 	if [[ $count -ge $login_max_num && ("$3" == "web_failed_counts" || "$3" == "ssh_failed_counts") ]]; then
 		add_ip_black ${login_ip} && {
 			unset login_counts["$login_ip"]
-			login_send "$login_ip" "$login_time" "$3"
 		}
+		login_send "$login_ip" "$login_time" "$3"
 	fi
 
 	# 正常登录
@@ -2590,7 +2590,7 @@ login_send() {
 	if [ -z "$login_disturb" ] || [ "$login_disturb" -ne "1" ]; then
 		if [[ "$log_type" == *"failed"* ]]; then
 			local login_title=$(translate "%s frequent %s login attempts" "$login_ip" "$log_type_short")
-			local login_content_info="${str_splitline}${str_title_start}$(translate "Block Information")${str_title_end}"
+			local login_content_info="${str_splitline}${str_title_start}$(translate "Frequent Login Attempts Information")${str_title_end}"
 			log_change "${disturb_text} $(translate "Device %s (%s) frequently attempted %s %s login" "$login_ip" "$login_ip_attribution" "$log_type_short" "$login_mode")"
 		else
 			local login_title=$(translate "%s logged into router via %s" "$login_ip" "$log_type_short")

@@ -128,20 +128,20 @@ return baseclass.extend({
 
 		sidebar.addEventListener('mouseover', ev => {
 			const link = ev.target.closest('.nav a');
-				const title = link ? link.querySelector('.nav-menu-title') : null;
+			const title = link ? link.querySelector('.nav-menu-title') : null;
 
-				if (title && title.scrollWidth > title.clientWidth)
-					title.scrollTo({ left: title.scrollWidth - title.clientWidth, behavior: 'smooth' });
-			});
+			if (title && title.scrollWidth > title.clientWidth)
+				title.scrollTo({ left: title.scrollWidth - title.clientWidth, behavior: 'smooth' });
+		});
 
 		sidebar.addEventListener('mouseout', ev => {
 			const link = ev.target.closest('.nav a');
-				const title = link ? link.querySelector('.nav-menu-title') : null;
+			const title = link ? link.querySelector('.nav-menu-title') : null;
 
-				if (title && !link.contains(ev.relatedTarget))
-					title.scrollTo({ left: 0, behavior: 'smooth' });
-			});
-		},
+			if (title && !link.contains(ev.relatedTarget))
+				title.scrollTo({ left: 0, behavior: 'smooth' });
+		});
+	},
 
 	isDashboardPage() {
 		const path = (L.env.requestpath || []).join('/');
@@ -154,20 +154,11 @@ return baseclass.extend({
 			return;
 
 		const sync = () => this.updateDashboardTables();
-		const schedule = () => {
-			if (window.requestAnimationFrame)
-				window.requestAnimationFrame(sync);
-			else
-				window.setTimeout(sync, 0);
-		};
 
 		if (document.readyState == 'loading')
-			document.addEventListener('DOMContentLoaded', schedule, { once: true });
+			document.addEventListener('DOMContentLoaded', sync, { once: true });
 		else
-			schedule();
-
-		window.setTimeout(sync, 300);
-		window.setTimeout(sync, 1000);
+			sync();
 
 		const target = document.querySelector('#maincontent') || document.body;
 		let queued = false;

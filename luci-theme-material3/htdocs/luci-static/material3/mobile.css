@@ -148,6 +148,7 @@ header h3 a {
 	}
 
 	.tr.table-titles,
+	.tr.dashboard-table-titles,
 	.cbi-section-table-titles,
 	.cbi-section-table-descr {
 		display: none;
@@ -321,33 +322,25 @@ header h3 a {
 		border-bottom: 0;
 	}
 
-	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) :is(.Dashboard, .dashboard-bg.box-s1) .table {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-
-	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) :is(.Dashboard, .dashboard-bg.box-s1) .dashboard-table-titles {
-		display: none;
-	}
-
-	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) :is(.Dashboard, .dashboard-bg.box-s1) .tr {
-		align-items: stretch;
-		margin: 0;
-		padding: 0;
-	}
-
-	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) :is(.Dashboard, .dashboard-bg.box-s1) .td {
-		flex: 1 1 50%;
-		width: auto !important;
-		min-width: 0;
-		padding: 5px 6px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
 	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) :is(.Dashboard, .dashboard-bg.box-s1) .td[data-title]::before {
 		word-break: keep-all;
+	}
+
+	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) .Dashboard .devices-list .devices-info .tr .td {
+		padding: 3px !important;
+	}
+
+	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) .Dashboard .router-status-wifi.dashboard-bg.box-s1 .assoclist.devices-info.table>.tr:not(.dashboard-table-titles)>.td {
+		display: block;
+		flex: 0 0 50% !important;
+		width: 50% !important;
+		max-width: 50%;
+		min-width: 0;
+	}
+
+	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) .Dashboard .router-status-wifi.dashboard-bg.box-s1 .assoclist.devices-info .cbi-progressbar {
+		width: 100% !important;
+		min-width: 0 !important;
 	}
 
 	header .pull-right .label {

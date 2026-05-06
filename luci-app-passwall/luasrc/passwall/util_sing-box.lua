@@ -511,13 +511,12 @@ function gen_outbound(flag, node, tag, proxy_table)
 				heartbeat = (tonumber(node.tuic_heartbeat) or 3) .. "s",
 				tls = tls
 			}
-			if node.tuic_alpn and node.tuic_alpn ~= "default" then
-				local alpn = {}
-				string.gsub(node.tuic_alpn, '[^,]+', function(w)
-					table.insert(alpn, w)
-				end)
-				if #alpn > 0 then protocol_table.tls.alpn = alpn end
-			end
+			node.tuic_alpn = (node.tuic_alpn and node.tuic_alpn ~= "default") and node.tuic_alpn or "h3"
+			local alpn = {}
+			string.gsub(node.tuic_alpn, '[^,]+', function(w)
+				table.insert(alpn, w)
+			end)
+			if #alpn > 0 then protocol_table.tls.alpn = alpn end
 		end
 
 		if node.protocol == "hysteria2" then
