@@ -425,9 +425,9 @@ function apply_dns_from_uci() {
 	cfg.dns.rules = rules;
 	cfg.dns.final = 'dns_direct';
 
-	/* 防 DNS 泄漏：未匹配域名改走代理 DNS（不落国内 DNS）；AAAA 全部 drop，避免 IPv6 直连绕代理 */
+	/* 防 DNS 泄漏：DNS 流量由 hijack-dns/853 reject 收口；final 仍走直连 DNS，
+	 * 避免局域网 PTR、国内域名等未命中规则的查询被兜底送到 DoT 导致启动超时。 */
 	if (opt_bool(uci_opt('dns_leak_protect', '0'), false)) {
-		cfg.dns.final = 'dns_proxy';
 		unshift(cfg.dns.rules, { query_type: ['AAAA'], action: 'reject', method: 'drop' });
 	}
 
