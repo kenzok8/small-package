@@ -4627,6 +4627,18 @@ div.cbi-value var.cbi-tooltip-container,
 	width: auto;
 }
 
+:is(body[data-page="admin-dashboard"], body[data-page="admin"], body[data-page=""]) .Dashboard .router-status-wifi .assoclist.devices-info .tr> :nth-child(3) {
+	width: 30%;
+}
+
+:is(body[data-page="admin-dashboard"], body[data-page="admin"], body[data-page=""]) .Dashboard .router-status-wifi .assoclist.devices-info .tr> :nth-child(4) {
+	width: 20%;
+	min-width: 85px;
+	white-space: normal;
+	word-break: keep-all;
+	overflow-wrap: normal;
+}
+
 :is(body[data-page="admin-dashboard"], body[data-page="admin"], body[data-page=""]) .Dashboard hr {
 	border: 0;
 }

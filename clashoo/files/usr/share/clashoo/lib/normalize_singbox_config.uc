@@ -425,6 +425,12 @@ function apply_dns_from_uci() {
 	cfg.dns.rules = rules;
 	cfg.dns.final = 'dns_direct';
 
+	/* 防 DNS 泄漏：未匹配域名改走代理 DNS（不落国内 DNS）；AAAA 全部 drop，避免 IPv6 直连绕代理 */
+	if (opt_bool(uci_opt('dns_leak_protect', '0'), false)) {
+		cfg.dns.final = 'dns_proxy';
+		unshift(cfg.dns.rules, { query_type: ['AAAA'], action: 'reject', method: 'drop' });
+	}
+
 	let ecs = trim_s(uci_opt('dns_ecs', ''));
 	if (s_len(ecs))
 		cfg.dns.client_subnet = ecs;
@@ -648,6 +654,34 @@ if (!has_dns_hijack) {
 }
 cfg.route.auto_detect_interface = true;
 apply_dns_from_uci();
+
+/* 防 DNS 泄漏：阻断 DoT/DoQ（853），强制 DNS 走核心。插在 hijack-dns 之后保证 dns 入站不被误杀 */
+if (opt_bool(uci_opt('dns_leak_protect', '0'), false)) {
+	let _has_853 = false;
+	for (let _r in cfg.route.rules) {
+		if (_r && type(_r) == 'object' && _r.action == 'reject' && _r.port) {
+			if (type(_r.port) == 'array') {
+				for (let _p in _r.port) if (_p == 853) { _has_853 = true; break; }
+			} else if (_r.port == 853) {
+				_has_853 = true;
+			}
+		}
+		if (_has_853) break;
+	}
+	if (!_has_853) {
+		let _new_rules = [];
+		let _inserted = false;
+		for (let _ri = 0; _ri < length(cfg.route.rules); _ri++) {
+			push(_new_rules, cfg.route.rules[_ri]);
+			if (!_inserted && cfg.route.rules[_ri] && cfg.route.rules[_ri].action == 'hijack-dns') {
+				push(_new_rules, { port: [853], action: 'reject' });
+				_inserted = true;
+			}
+		}
+		if (!_inserted) unshift(_new_rules, { port: [853], action: 'reject' });
+		cfg.route.rules = _new_rules;
+	}
+}
 
 if (uci_opt('enhanced_mode', 'fake-ip') == 'fake-ip') {
 	add_remote_rule_set('geolocation-!cn',

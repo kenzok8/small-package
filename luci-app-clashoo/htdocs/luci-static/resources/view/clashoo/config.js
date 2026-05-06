@@ -670,6 +670,9 @@ return view.extend({
     o = s.option(form.Flag, 'ipv4_proxy',      'IPv4 代理');
     o = s.option(form.Flag, 'ipv6_proxy',      'IPv6 代理');
     o = s.option(form.Flag, 'fake_ip_ping_hijack', '虚拟 IP Ping 劫持');
+    o = s.option(form.Flag, 'dns_leak_protect', '防 DNS 泄漏');
+    o.description = '阻止国内 DNS 解析国外域名、关闭 IPv6 解析、阻断 DoT/DoQ（853 端口）。切换后需重启服务生效。<br>' +
+                    '<strong>注意：</strong>开启后 IPv6 网站只能通过 IPv4 访问，纯 IPv6 网络下可能无法上网。';
 
     s = m.section(form.NamedSection, 'config', 'clashoo', '端口配置');
     s.addremove = false;

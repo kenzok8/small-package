@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-clashoo
-PKG_VERSION:=1.19.39
+PKG_VERSION:=1.20.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=kenzok8
 

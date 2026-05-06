@@ -321,6 +321,37 @@ header h3 a {
 		border-bottom: 0;
 	}
 
+	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) .Dashboard .router-status-wifi .assoclist.devices-info {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) .Dashboard .router-status-wifi .assoclist.devices-info .tr {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		align-items: stretch;
+		margin: 0;
+		padding: 0;
+	}
+
+	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) .Dashboard .router-status-wifi .assoclist.devices-info .th,
+	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) .Dashboard .router-status-wifi .assoclist.devices-info .td {
+		display: block;
+		width: auto !important;
+		min-width: 0;
+		padding: 5px 6px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		word-break: keep-all;
+	}
+
+	:is([data-page="admin-dashboard"], [data-page="admin"], [data-page=""]) .Dashboard .router-status-wifi .assoclist.devices-info .tr> :nth-child(4) {
+		white-space: normal;
+		word-break: keep-all;
+		overflow-wrap: normal;
+	}
+
 	header .pull-right .label {
 		white-space: normal;
 		display: inline-block;

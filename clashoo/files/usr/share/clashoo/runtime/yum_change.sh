@@ -212,7 +212,7 @@ fi
 		tun_mode=$(uci get clashoo.config.tun_mode 2>/dev/null)
 		stack=$(uci get clashoo.config.stack 2>/dev/null)
 		[ -z "$stack" ] && stack="system"
-		listen_port=$(uci get clashoo.config.listen_port 2>/dev/null)	
+		listen_port=$(uci get clashoo.config.listen_port 2>/dev/null)
 		TEMP_FILE="/tmp/clashdns.yaml"
 		interf=$(uci get clashoo.config.interf 2>/dev/null)
 		CONFIG_YAML="/etc/clashoo/config.yaml"
@@ -366,11 +366,9 @@ EOF
 
 
 if [ "$enable_ipv6" == "true" ];then
-
 cat >> "/tmp/enable_dns.yaml" <<-EOF
   ipv6: true
 EOF
-
 fi
 
 cat /tmp/enable_dns.yaml >> $TEMP_FILE 2>/dev/null

@@ -6,6 +6,8 @@ STOP=15
 
 CORE_LOG_PATH="/var/log/clashoo/core.log"
 
+. /usr/share/clashoo/runtime/dns_helpers.sh 2>/dev/null || true
+
 command_exists() {
 	command -v "$1" >/dev/null 2>&1
 }
@@ -1429,6 +1431,21 @@ _start_prepare_config() {
 	fi
 
 	yml_change >/dev/null 2>&1
+	dns_leak_protect=$(uci -q get clashoo.config.dns_leak_protect 2>/dev/null)
+	if command -v dns_mihomo_apply_leak_protect >/dev/null 2>&1; then
+		# dns_leak_protect=1 强制 ipv6: false；否则按 UCI enable_ipv6 收敛（true/false），未配置则不强制写
+		if [ "${dns_leak_protect:-0}" = "1" ]; then
+			_ipv6_value="false"
+		else
+			case "$(uci -q get clashoo.config.enable_ipv6 2>/dev/null)" in
+				true|1) _ipv6_value="true" ;;
+				false|0) _ipv6_value="false" ;;
+				*) _ipv6_value="" ;;
+			esac
+		fi
+		dns_mihomo_apply_leak_protect "$CONFIG_YAML" "${dns_leak_protect:-0}" "$_ipv6_value" >/dev/null 2>&1
+		unset _ipv6_value
+	fi
 	smart_inject >/dev/null 2>&1
 
 	if ! _has_valid_local_mmdb; then
