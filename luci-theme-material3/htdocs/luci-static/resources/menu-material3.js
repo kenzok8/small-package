@@ -6,6 +6,7 @@ return baseclass.extend({
 	__init__() {
 		ui.menu.load().then((tree) => this.render(tree));
 		this.initNavigationShell();
+		this.initDashboardTables();
 	},
 
 	createRipple(ev, target) {
@@ -140,6 +141,79 @@ return baseclass.extend({
 				if (title && !link.contains(ev.relatedTarget))
 					title.scrollTo({ left: 0, behavior: 'smooth' });
 			});
+		},
+
+	isDashboardPage() {
+		const path = (L.env.requestpath || []).join('/');
+
+		return path == '' || path == 'admin' || path == 'admin/dashboard';
+	},
+
+	initDashboardTables() {
+		if (!this.isDashboardPage())
+			return;
+
+		const sync = () => this.updateDashboardTables();
+		const schedule = () => {
+			if (window.requestAnimationFrame)
+				window.requestAnimationFrame(sync);
+			else
+				window.setTimeout(sync, 0);
+		};
+
+		if (document.readyState == 'loading')
+			document.addEventListener('DOMContentLoaded', schedule, { once: true });
+		else
+			schedule();
+
+		window.setTimeout(sync, 300);
+		window.setTimeout(sync, 1000);
+
+		const target = document.querySelector('#maincontent') || document.body;
+		let queued = false;
+		const observer = new MutationObserver(() => {
+			if (queued)
+				return;
+
+			queued = true;
+			window.setTimeout(() => {
+				queued = false;
+				sync();
+			}, 100);
+		});
+
+		if (target)
+			observer.observe(target, { childList: true, subtree: true });
+	},
+
+	updateDashboardTables() {
+		document.querySelectorAll('.Dashboard, .dashboard-bg.box-s1').forEach(scope => {
+			scope.querySelectorAll('.table').forEach(table => {
+				const rows = Array.prototype.filter.call(table.children, child => child.classList && child.classList.contains('tr'));
+				const headerRow = rows.find(row => row.querySelector('.th'));
+
+				if (!headerRow)
+					return;
+
+				const titles = Array.prototype.map.call(headerRow.children, cell =>
+					cell.classList && cell.classList.contains('th') ? cell.textContent.trim() : '');
+
+				headerRow.classList.add('dashboard-table-titles');
+
+				rows.forEach(row => {
+					if (row === headerRow)
+						return;
+
+					Array.prototype.forEach.call(row.children, (cell, index) => {
+						if (!cell.classList || !cell.classList.contains('td') || !titles[index])
+							return;
+
+						if (!cell.getAttribute('data-title'))
+							cell.setAttribute('data-title', titles[index]);
+					});
+				});
+			});
+		});
 	},
 
 	render(tree) {
