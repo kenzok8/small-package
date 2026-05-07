@@ -1535,8 +1535,13 @@ start_dns() {
 
 start_haproxy() {
 	[ "$(config_t_get global_haproxy balancing_enable 0)" != "1" ] && return
-	haproxy_path=$TMP_PATH/haproxy
-	haproxy_conf="config.cfg"
+	local haproxy_ver=$($(first_type haproxy) -v 2>/dev/null | awk 'NR==1 {print $3}' | cut -d'-' -f1)
+	if [ "$(check_ver "$haproxy_ver" "3.0.0")" = "1" ]; then
+		echolog "* 注意：haproxy($haproxy_ver) 程序版本低，HAPROXY 负载均衡启动失败，请更新到 3.0 以上版本。"
+		return
+	fi
+	local haproxy_path=$TMP_PATH/haproxy
+	local haproxy_conf="config.cfg"
 	lua $APP_PATH/haproxy.lua -path ${haproxy_path} -conf ${haproxy_conf} -dns ${LOCAL_DNS}
 	ln_run "$(first_type haproxy)" haproxy "/dev/null" -f "${haproxy_path}/${haproxy_conf}"
 }
