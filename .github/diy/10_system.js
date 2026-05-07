@@ -62,7 +62,7 @@ return baseclass.extend({
 		    tempinfo    = data[5],
 		    luciversion = data[6];
 
-		luciversion = luciversion.branch + ' ' + luciversion.revision;
+		luciversion = (luciversion.branch || 'LuCI') + ' ' + (luciversion.revision || _('unknown version'));
 
 		var datestr = null;
 
@@ -94,9 +94,13 @@ return baseclass.extend({
 		sourcelink.append(' / ');
 		sourcelink.append(corelink);
 
+		var model = boardinfo.model || '?';
+		if (cpubench.cpubench)
+			model += cpubench.cpubench;
+
 		var fields = [
 			_('Hostname'),         boardinfo.hostname,
-			_('Model'),            boardinfo.model + cpubench.cpubench,
+			_('Model'),            model,
 			_('Architecture'),     cpuinfo.cpuinfo || boardinfo.system,
 			_('Target Platform'),  (L.isObject(boardinfo.release) ? boardinfo.release.target : ''),
 			_('Firmware Version'), (L.isObject(boardinfo.release) ? boardinfo.release.description + ' / ' : '') + (luciversion || ''),
