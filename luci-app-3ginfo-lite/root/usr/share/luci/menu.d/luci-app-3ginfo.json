@@ -1,7 +1,7 @@
 {
 	"admin/modem": {
 		"title": "Modem",
-		"order": 30,
+		"order": 75,
 		"action": {
 			"type": "firstchild",
 			"recurse": true
