@@ -536,13 +536,17 @@ function delete_select_nodes()
 				uci:delete(appname, t[".name"])
 				socks = "Socks_" .. t[".name"]
 			end
+			local changed = false
 			local auto_switch_node_list = uci:get(appname, t[".name"], "autoswitch_backup_node") or {}
 			for i = #auto_switch_node_list, 1, -1 do
 				if w == auto_switch_node_list[i] then
 					table.remove(auto_switch_node_list, i)
+					changed = true
 				end
 			end
-			uci:set_list(appname, t[".name"], "autoswitch_backup_node", auto_switch_node_list)
+			if changed then
+				uci:set_list(appname, t[".name"], "autoswitch_backup_node", auto_switch_node_list)
+			end
 		end)
 		local tcp_node = uci:get(appname, "@global[0]", "tcp_node") or ""
 		if tcp_node == w or tcp_node == socks then

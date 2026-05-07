@@ -186,7 +186,7 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 		o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 	end
 	for k1, v1 in pairs(node_list) do
-		if k1 == "socks_list" or k1 == "normal_list" then
+		if k1 == "socks_list" or k1 == "normal_list" or k1 == "urltest_list" then
 			for i, v in ipairs(v1) do
 				o:value(v.id, v.remark)
 				o.group[#o.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
