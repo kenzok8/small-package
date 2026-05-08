@@ -50,6 +50,8 @@ var CSS = [
   '.cl-log-tabs{display:flex;gap:8px;margin-bottom:8px}',
   '.cl-log-tab{padding:4px 12px;border:1px solid rgba(128,128,128,.2);border-radius:20px;font-size:12px;cursor:pointer;opacity:.6}',
   '.cl-log-tab.active{opacity:1;font-weight:600;background:rgba(128,128,128,.1)}',
+  '.cl-dl-hint{font-size:12px;color:#2e7d32;margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace}',
+  '.cl-theme-dark .cl-dl-hint{color:#7fd591}',
   /* 统一 form.Map 字体大小与 config 页一致 */
   '.cl-panel .cbi-section>h3{font-size:13px !important;font-weight:600;margin-bottom:8px}',
   '.cl-panel .cbi-value-title{font-size:13px !important}',
@@ -329,31 +331,119 @@ return view.extend({
     o.value('', 'GitHub 直连'); o.value('https://gh-proxy.com/', 'GHProxy');
     o = s.option(form.DummyValue, '_dl_btn', '');
     o.cfgvalue = function () {
-      var dlStatus = E('span', { 'class': 'cl-ver-tag' }, '');
+      var origText = '下载内核';
       var dlBtn = E('button', {
-        'class': 'btn cbi-button-action',
-        click: function () {
-          dlBtn.disabled = true;
-          dlStatus.textContent = '正在启动下载任务…';
-          m.save()
-            .then(function () { return clashoo.commitConfig(); })
-            .then(function () { return clashoo.clearUpdateLog(); })
-            .then(function () { return clashoo.downloadCore(); })
-            .then(function () { return clearClashooDirty(); })
-            .then(function () {
-              dlBtn.disabled = false;
-              dlStatus.textContent = '下载已启动，正在跳转日志…';
-              self._switchTab('logs');
-              if (self._activateLogTab) self._activateLogTab('update');
-            })
-            .catch(function (e) {
-              dlBtn.disabled = false;
-              dlStatus.textContent = '';
-              ui.addNotification(null, E('p', '启动下载失败: ' + (e.message || e)));
-            });
+        'class': 'btn cbi-button-action cl-dl-core-btn',
+        'data-cl-orig-text': origText
+      }, origText);
+      var dlHint = E('div', { 'class': 'cl-dl-hint' }, '');
+
+      /* 取日志最后一行，去掉时间戳和缩进，留下短描述 */
+      var lastLogLine = function (log) {
+        if (!log) return '';
+        var lines = String(log).split('\n');
+        for (var i = lines.length - 1; i >= 0; i--) {
+          var s = lines[i].trim();
+          if (s) return s.replace(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s*-\s*/, '');
         }
-      }, '下载内核');
-      return E('div', { 'class': 'cl-btn-ver-wrap' }, [dlBtn, dlStatus]);
+        return '';
+      };
+
+      /* 实时从 DOM 拿元素（form.Map 重渲染后闭包引用会失效） */
+      var liveBtn  = function () { return document.querySelector('.cl-dl-core-btn') || dlBtn; };
+      var liveHint = function () { return document.querySelector('.cl-dl-hint')     || dlHint; };
+
+      var stopPoll = function () {
+        if (self._coreDlTimer) { clearInterval(self._coreDlTimer); self._coreDlTimer = null; }
+      };
+      var resetAfter = function (btnText, hintText, ms) {
+        var b = liveBtn(), h = liveHint();
+        b.textContent = btnText;
+        h.textContent = hintText || '';
+        setTimeout(function () {
+          var b2 = liveBtn(), h2 = liveHint();
+          b2.disabled = false;
+          b2.textContent = b2.getAttribute('data-cl-orig-text') || origText;
+          h2.textContent = '';
+        }, ms || 5000);
+      };
+      var smartDownload = false; /* 由点击逻辑标记，下载完成时决定要不要自动重启 */
+      var pollOnce = function () {
+        return clashoo.getLogStatus().then(function (st) {
+          if (!st) return;
+          var b = liveBtn(), h = liveHint();
+          if (st.core_updating) {
+            b.disabled = true;
+            b.textContent = '下载中…';
+            h.textContent = lastLogLine(st.core_log) || '下载中…';
+            return;
+          }
+          stopPoll();
+          var tail = lastLogLine(st.core_log || '');
+          var failed = /失败|error|failed/i.test(tail) && !/完成/.test(tail);
+          if (failed) {
+            resetAfter('下载失败', tail);
+            return;
+          }
+          /* Smart 内核：下载完成后自动重启服务让新二进制生效 */
+          if (smartDownload) {
+            smartDownload = false;
+            liveBtn().textContent = '重启服务…';
+            liveHint().textContent = '应用 Smart 内核中…';
+            clashoo.restart().then(function () {
+              resetAfter('已应用 ✓', 'Smart 内核已替换并重启');
+            }).catch(function () {
+              resetAfter('下载完成 ✓', tail + '（重启失败，请手动启动）');
+            });
+            return;
+          }
+          resetAfter('下载完成 ✓', tail);
+        }).catch(function () {});
+      };
+      var startPolling = function () {
+        stopPoll();
+        pollOnce();
+        self._coreDlTimer = setInterval(pollOnce, 1500);
+      };
+
+      dlBtn.addEventListener('click', function () {
+        var b = liveBtn(), h = liveHint();
+        b.disabled = true;
+        b.textContent = '保存中…';
+        h.textContent = '';
+        m.save()
+          .then(function () { return clashoo.commitConfig(); })
+          .then(function () {
+            /* 下载 Smart 内核 (dcore=1)：顺手把 smart_auto_switch 打开，避免用户漏配置 */
+            var dc = uci.get('clashoo', 'config', 'dcore');
+            smartDownload = (String(dc) === '1');
+            if (smartDownload && uci.get('clashoo', 'config', 'smart_auto_switch') !== '1') {
+              uci.set('clashoo', 'config', 'smart_auto_switch', '1');
+              return uci.save().then(function () { return clashoo.commitConfig(); });
+            }
+          })
+          .then(function () { return clashoo.clearUpdateLog(); })
+          .then(function () {
+            liveBtn().textContent = '下载中…';
+            return clashoo.downloadCore();
+          })
+          .then(function () { return clearClashooDirty(); })
+          .then(function () { startPolling(); })
+          .catch(function (e) {
+            resetAfter('启动失败', e.message || String(e));
+            ui.addNotification(null, E('p', '启动下载失败: ' + (e.message || e)));
+          });
+      });
+
+      /* 进入页面时若已有任务在跑，恢复"下载中"状态并接管轮询 */
+      clashoo.getLogStatus().then(function (st) {
+        if (st && st.core_updating) startPolling();
+      }).catch(function () {});
+
+      return E('div', { 'class': 'cl-btn-ver-wrap' }, [
+        E('div', { style: 'display:flex;align-items:center;gap:10px;flex-wrap:wrap' }, [dlBtn]),
+        dlHint
+      ]);
     };
     o.write = function () {};
 

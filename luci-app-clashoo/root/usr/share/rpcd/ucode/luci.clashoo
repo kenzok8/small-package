@@ -636,9 +636,17 @@ return '';
 function safe_name(name) {
 name = trim(name || '');
 if (!name) return '';
-if (index(name, '/') >= 0 || index(name, '..') >= 0) return '';
+/* 路径遍历防护 */
+if (index(name, '/') >= 0 || index(name, '\\') >= 0) return '';
+if (index(name, '..') >= 0) return '';
 if (substr(name, 0, 1) == '.') return '';
-if (!match(name, /^[A-Za-z0-9][A-Za-z0-9._-]*$/)) return '';
+/* 拒绝 NUL 与换行/制表等控制字符（逐字节扫描，ucode 正则不支持 \x 转义） */
+let n = length(name);
+for (let i = 0; i < n; i++) {
+let ch = ord(name, i);
+if (ch < 0x20) return '';
+}
+/* 允许 Unicode（CJK 等）—— 不再用纯 ASCII 白名单 */
 return name;
 }
 
@@ -893,6 +901,7 @@ let configs = [];
 let subs = read_subscriptions();
 let core_type = get_core_type();
 let current = get_current_config(core_type);
+let is_singbox = (core_type == 'singbox');
 
 function has_cfg(n) {
 for (let i = 0; i < length(configs); i++)
@@ -900,6 +909,14 @@ if (configs[i] == n) return true;
 return false;
 }
 
+if (is_singbox) {
+/* sing-box 内核：只列出 .json 配置 */
+for (let f in (glob(SINGBOX_DIR + '/*.json') || [])) {
+let n = replace(f, SINGBOX_DIR + '/', '');
+if (n && !has_cfg(n)) push(configs, n);
+}
+} else {
+/* mihomo / smart 内核：只列出 .yaml / .yml 配置 */
 for (let row in subs) {
 let n = row.name;
 if (!n) continue;
@@ -924,10 +941,6 @@ for (let f in (glob('/usr/share/clashoo/config/custom/*.yml') || [])) {
 let n = replace(f, '/usr/share/clashoo/config/custom/', '');
 if (n && !has_cfg(n)) push(configs, n);
 }
-
-for (let f in (glob(SINGBOX_DIR + '/*.json') || [])) {
-let n = replace(f, SINGBOX_DIR + '/', '');
-if (n && !has_cfg(n)) push(configs, n);
 }
 
 /* 仅当 current 真实存在于任一标准目录时才补到列表，避免删除文件后下拉框残留 */

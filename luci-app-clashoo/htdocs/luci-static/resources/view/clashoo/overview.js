@@ -1307,7 +1307,31 @@ return view.extend({
         E('div', { 'class': 'cl-ctrl-row cl-config-row' }, [
           mkSel(configs.length ? configs.map(function(c){return[c,c];}) : [['','（空）']], current,
             function (ev) {
-              clashoo.setConfig(ev.target.value).then(function () { location.reload(); });
+              var sel = ev.target;
+              var name = sel.value;
+              var prev = sel.getAttribute('data-cl-prev') || current;
+              sel.disabled = true;
+              var setter = (st.core_type === 'singbox')
+                ? clashoo.setSingboxProfile(name)
+                : clashoo.setConfig(name);
+              setter
+                .then(function (r) {
+                  if (r && r.error) {
+                    ui.addNotification(null, E('p', '切换配置失败: ' + r.error));
+                    sel.value = prev;
+                    return;
+                  }
+                  sel.setAttribute('data-cl-prev', name);
+                })
+                .catch(function (e) {
+                  ui.addNotification(null, E('p', '切换配置失败: ' + (e.message || e)));
+                  sel.value = prev;
+                })
+                .then(function () {
+                  sel.disabled = false;
+                  /* 强制立即刷新一次状态，让卡片/按钮拿到新 current（重启服务期间还会再次自然 poll） */
+                  return self._pollOverview(true);
+                });
             }),
           E('button', {
             'class': 'btn cbi-button-action cl-btn-update-sub',
@@ -1387,16 +1411,38 @@ return view.extend({
         self._writeCachedOverview(ov);
         self._refreshCoreSwitch();
 
+        /* 只有用户能直接看到的字段变化时才重建 DOM——避免每 5 秒一次的"闪烁"，
+           尤其是切换 tab 回到 overview 时缓存数据与首次 poll 数据通常一致 */
+        var sig = JSON.stringify({
+          running: st.running,
+          health: st.health_status,
+          proxy_mode: st.proxy_mode,
+          tcp_mode: st.tcp_mode,
+          udp_mode: st.udp_mode,
+          config: st.config,
+          core_type: st.core_type,
+          panel_type: st.panel_type,
+          dcore: st.dcore,
+          configs: cfgData.configs || [],
+          current: cfgData.current,
+          ac_updated: ac.updated_at,
+          ac_updating: ac.updating
+        });
+        var skipRebuild = (sig === self._lastRenderSig);
+        self._lastRenderSig = sig;
+
         var cards = document.getElementById('cl-cards');
         if (!cards) return;
-        var newCards = self._cards(st, cfgData, ac);
-        cards.innerHTML = '';
-        newCards.forEach(function (card) { cards.appendChild(card); });
+        if (!skipRebuild) {
+          var newCards = self._cards(st, cfgData, ac);
+          cards.innerHTML = '';
+          newCards.forEach(function (card) { cards.appendChild(card); });
 
-        var controls = document.getElementById('cl-controls');
-        if (controls) {
-          controls.innerHTML = '';
-          self._controls(st, cfgData).forEach(function (ctrl) { controls.appendChild(ctrl); });
+          var controls = document.getElementById('cl-controls');
+          if (controls) {
+            controls.innerHTML = '';
+            self._controls(st, cfgData).forEach(function (ctrl) { controls.appendChild(ctrl); });
+          }
         }
 
         self._updateRealtimePanel(stats);
