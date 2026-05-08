@@ -175,7 +175,7 @@ stat_update_cb(EV_P_ ev_timer *watcher, int revents)
 
         memset(&svaddr, 0, sizeof(struct sockaddr_un));
         svaddr.sun_family = AF_UNIX;
-        snprintf(svaddr.sun_path, sizeof(svaddr.sun_path), "%s", manager_address);
+        strncpy(svaddr.sun_path, manager_address, sizeof(svaddr.sun_path) - 1);
 
         if (sendto(sfd, resp, strlen(resp) + 1, 0, (struct sockaddr *)&svaddr,
                    sizeof(struct sockaddr_un)) != msgLen) {
@@ -931,9 +931,8 @@ server_recv_cb(EV_P_ ev_io *w, int revents)
         } else if ((atyp & ADDRTYPE_MASK) == 3) {
             // Domain name
             uint8_t name_len = *(uint8_t *)(server->buf->array + offset);
-            if (name_len + 4 <= server->buf->len && name_len < sizeof(host)) {
+            if (name_len + 4 <= server->buf->len) {
                 memcpy(host, server->buf->array + offset + 1, name_len);
-                host[name_len] = '\0';
                 offset += name_len + 1;
             } else {
                 LOGE("invalid name length: %d", name_len);

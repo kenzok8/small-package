@@ -1462,6 +1462,28 @@ return { success: rc === 0 };
 }
 },
 
+dns_auto_setup: {
+call: function() {
+let running = is_running();
+let p = popen('sh /usr/share/clashoo/net/dns_auto_setup.sh --apply 2>/dev/null');
+if (!p) return { success: false, message: 'DNS 自动配置启动失败' };
+let raw = trim(p.read('all') || '');
+p.close();
+let res = null;
+try {
+	res = raw ? json(raw) : null;
+} catch (e) {}
+if (!res || !res.success)
+return res || { success: false, message: 'DNS 自动配置失败' };
+res.restarted = false;
+if (running) {
+	system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
+	res.restarted = true;
+}
+return res;
+}
+},
+
 set_mode: {
 args: { mode: 'mode' },
 call: function(req) {
