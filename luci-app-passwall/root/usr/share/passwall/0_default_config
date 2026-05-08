@@ -24,7 +24,6 @@ config global
 	option log_tcp '0'
 	option log_udp '0'
 	option loglevel 'error'
-	option trojan_loglevel '4'
 	option log_chinadns_ng '0'
 
 config global_haproxy

@@ -604,6 +604,10 @@ local function write_geo_json(data)
 	})
 end
 
+local function shell_quote(value)
+	return "'" .. tostring(value or ""):gsub("'", "'\\''") .. "'"
+end
+
 function index()
 	if not nixio.fs.access("/etc/config/shadowsocksr") then
 		call("act_reset")
@@ -715,16 +719,36 @@ function save_order()
 
 	if valid then
 		for offset, sid in ipairs(sids) do
-			all_sections[server_positions[page_start + offset - 1]] = sid
+			local absolute_index = page_start + offset - 1
+			local position = server_positions[absolute_index]
+			if not position then
+				valid = false
+				break
+			end
+
+			local cmd = string.format(
+				"uci -q reorder %s=%d >/dev/null 2>&1",
+				shell_quote("shadowsocksr." .. sid),
+				position - 1
+			)
+
+			if luci.sys.call(cmd) ~= 0 then
+				valid = false
+				break
+			end
+			all_sections[position] = sid
 		end
-		uci:reorder("shadowsocksr", all_sections)
-		uci:commit("shadowsocksr")
+		if valid then
+			valid = luci.sys.call("uci -q commit shadowsocksr >/dev/null 2>&1") == 0
+		end
 	end
 
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({
 		ret = valid and 1 or 0,
-		count = #sids
+		count = #sids,
+		page = page,
+		page_size = page_size
 	})
 end
 

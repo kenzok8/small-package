@@ -276,11 +276,20 @@ end
 		var input = document.getElementById(store);
 		var order = ids.join(" ");
 		if (input) input.value = order;
-			XHR.post('<%=luci.dispatcher.build_url("admin/services/shadowsocksr/save_order")%>', {
-				order: order,
-				page: '<%=self.server_page or 1%>',
-				page_size: '<%=self.server_page_size or 0%>'
-			}, function() {});
+		XHR.post('<%=luci.dispatcher.build_url("admin/services/shadowsocksr/save_order")%>', {
+			order: order,
+			page: '<%=self.server_page or 1%>',
+			page_size: '<%=self.server_page_size or 0%>'
+		}, function(x, result) {
+			result = result || {};
+			if (result.ret !== 1 && result.ret !== "1") {
+				window.location.reload();
+				return;
+			}
+			if (input) {
+				input.value = "";
+			}
+		});
 		return false;
 	}
 
@@ -310,6 +319,16 @@ end
 		if (!trs || trs.length < 2) {
 			return;
 		}
+
+		function getDataRows() {
+			return Array.prototype.filter.call(
+				document.querySelectorAll(table_selector + " tr"),
+				function(row) {
+					return row.id && row.id.indexOf("cbi-shadowsocksr-") === 0;
+				}
+			);
+		}
+
 		function ondragstart(ev) {
 			ev.dataTransfer.setData("Text", ev.target.id);
 		}
@@ -324,8 +343,7 @@ end
 
 		// 上移一行
 		function moveUp(id) {
-			// 查找当前行的索引
-			var trList = document.querySelectorAll(table_selector + " tr");
+			var trList = getDataRows();
 			var currentIndex = -1;
 			for (var i = 0; i < trList.length; i++) {
 				if (trList[i].id === id) {
@@ -334,8 +352,7 @@ end
 				}
 			}
 
-			// 如果不是第一行数据行，则上移一行
-			if (currentIndex > 1) {
+			if (currentIndex > 0) {
 				var prevRow = trList[currentIndex - 1];
 				cbi_row_drop(id, prevRow.id, store);
 			}
@@ -343,8 +360,7 @@ end
 
 		// 下移一行
 		function moveDown(id) {
-			// 查找当前行的索引
-			var trList = document.querySelectorAll(table_selector + " tr");
+			var trList = getDataRows();
 			var currentIndex = -1;
 			for (var i = 0; i < trList.length; i++) {
 				if (trList[i].id === id) {
@@ -353,36 +369,35 @@ end
 				}
 			}
 
-			// 如果不是最后一行，则下移一行
 			if (currentIndex < trList.length - 1) {
 				var nextRow = trList[currentIndex + 1];
-				// 对于下移，我们需要将当前行插入到下一行的后面
 				var nextNextRow = trList[currentIndex + 2];
 				if (nextNextRow) {
 					cbi_row_drop(id, nextNextRow.id, store, false);
 				} else {
-					// 如果是倒数第二行，移动到最后一行的后面
 					cbi_row_drop(id, nextRow.id, store, true);
 				}
 			}
 		}
 
-		// 置顶
 		function moveToTop(id) {
-			var top = document.querySelectorAll(table_selector + " tr")[1];
-			cbi_row_drop(id, top.id, store);
+			var trList = getDataRows();
+			if (trList.length > 0) {
+				cbi_row_drop(id, trList[0].id, store);
+			}
 		}
 
-		// 置底
 		function moveToBottom(id) {
-			//console.log('moveToBottom:', id);
-			var trList = document.querySelectorAll(table_selector + " tr");
-			var bottom = trList[trList.length - 1];
-			cbi_row_drop(id, bottom.id, store, true);
+			var trList = getDataRows();
+			if (trList.length > 0) {
+				var bottom = trList[trList.length - 1];
+				cbi_row_drop(id, bottom.id, store, true);
+			}
 		}
 
-		for (let index = 1; index < trs.length; index++) {
-			const el = trs[index];
+		var dataRows = getDataRows();
+		for (let index = 0; index < dataRows.length; index++) {
+			const el = dataRows[index];
 			el.setAttribute("draggable", true);
 			el.ondragstart = ondragstart;
 			el.ondrop = ondrop;

@@ -639,14 +639,6 @@ o:value("info")
 o:value("warning")
 o:value("error")
 
-o = s:taboption("log", ListValue, "trojan_loglevel", "Trojan " ..  translate("Log Level"))
-o.default = "2"
-o:value("0", "all")
-o:value("1", "info")
-o:value("2", "warn")
-o:value("3", "error")
-o:value("4", "fatal")
-
 o = s:taboption("log", Flag, "advanced_log_feature", translate("Advanced log feature"), translate("For professionals only."))
 o.default = "0"
 o = s:taboption("log", Flag, "sys_log", translate("Logging to system log"), translate("Logging to the system log for more advanced functions. For example, send logs to a dedicated log server."))

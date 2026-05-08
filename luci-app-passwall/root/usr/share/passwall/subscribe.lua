@@ -27,7 +27,6 @@ local fs = api.fs
 local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
 local has_ssr = api.is_finded("ssr-local") and api.is_finded("ssr-redir")
-local has_trojan_plus = api.is_finded("trojan-plus")
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
 local has_hysteria2 = api.finded_com("hysteria")
@@ -37,7 +36,7 @@ local DEFAULT_FILTER_KEYWORD_DISCARD_LIST = uci:get(appname, "@global_subscribe[
 local DEFAULT_FILTER_KEYWORD_KEEP_LIST = uci:get(appname, "@global_subscribe[0]", "filter_keep_list") or {}
 -- 取节点使用core类型（节点订阅页面未设置时，自动取默认）
 local DEFAULT_SS_TYPE = api.get_core("ss_type", {{has_ss,"shadowsocks-libev"},{has_ss_rust,"shadowsocks-rust"},{has_singbox,"sing-box"},{has_xray,"xray"}})
-local DEFAULT_TROJAN_TYPE =  api.get_core("trojan_type", {{has_trojan_plus,"trojan-plus"},{has_singbox,"sing-box"},{has_xray,"xray"}})
+local DEFAULT_TROJAN_TYPE =  api.get_core("trojan_type", {{has_singbox,"sing-box"},{has_xray,"xray"}})
 local DEFAULT_VMESS_TYPE = api.get_core("vmess_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
 local DEFAULT_VLESS_TYPE = api.get_core("vless_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
 local DEFAULT_HYSTERIA2_TYPE = api.get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{has_singbox,"sing-box"},{has_xray,"xray"}})
@@ -46,7 +45,6 @@ local core_has = {
 	["sing-box"] = has_singbox,
 	["shadowsocks-libev"] = has_ss,
 	["shadowsocks-rust"] = has_ss_rust,
-	["trojan-plus"] = has_trojan_plus,
 	["hysteria2"] = has_hysteria2
 }
 -- 判断是否过滤节点关键字
@@ -1008,9 +1006,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			end
 		end
 	elseif szType == "trojan" then
-		if sub_trojan_type == "trojan-plus" and has_trojan_plus then
-			result.type = "Trojan-Plus"
-		elseif sub_trojan_type == "sing-box" and has_singbox then
+		if sub_trojan_type == "sing-box" and has_singbox then
 			result.type = 'sing-box'
 			result.protocol = 'trojan'
 		elseif sub_trojan_type == "xray" and has_xray then
