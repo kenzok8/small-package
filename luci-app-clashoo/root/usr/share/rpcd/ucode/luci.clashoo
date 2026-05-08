@@ -576,7 +576,7 @@ return updated <= 0 || (updated + ACCESS_CACHE_TTL) < now;
 }
 
 function trigger_access_cache_refresh() {
-system('sh /usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &');
+system('nice -n 19 sh /usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &');
 }
 
 function access_check_daemon_running() {
@@ -588,7 +588,7 @@ return !!access('/proc/' + pid, 'r');
 
 function ensure_access_check_daemon() {
 if (access_check_daemon_running()) return true;
-system('nohup sh /usr/share/clashoo/net/access_check_daemon.sh >/dev/null 2>&1 </dev/null &');
+system('nohup nice -n 19 sh /usr/share/clashoo/net/access_check_daemon.sh >/dev/null 2>&1 </dev/null &');
 return true;
 }
 

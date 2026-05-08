@@ -385,11 +385,32 @@ return view.extend({
     var tabEls   = {};
     var panelEls = {};
 
+    var subPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'subs' ? ' active' : ''), id: 'cl-panel-subs' },
+      this._buildSubsPanel(subsData, subFiles, upFiles, customFiles, tplFiles, uiData)
+    );
+    panelEls['subs'] = subPanel;
+
+    var proxyPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'proxy' ? ' active' : ''), id: 'cl-panel-proxy' });
+    panelEls['proxy'] = proxyPanel;
+
+    var dnsPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'dns' ? ' active' : ''), id: 'cl-panel-dns' });
+    panelEls['dns'] = dnsPanel;
+
+    var built = { subs: true, proxy: false, dns: false };
+    var ensureBuilt = function (id) {
+      if (built[id]) return;
+      if (id === 'proxy') self._buildProxyForm(proxyPanel, smartModelData);
+      else if (id === 'dns') self._buildDnsForm(dnsPanel);
+      built[id] = true;
+    };
+    if (this._tab !== 'subs') ensureBuilt(this._tab);
+
     var tabBar = E('div', { 'class': 'cl-tabs' },
       tabs.map(function (t) {
         var el = E('div', {
           'class': 'cl-tab' + (self._tab === t.id ? ' active' : ''),
           click: function () {
+            ensureBuilt(t.id);
             Object.keys(tabEls).forEach(function (k) {
               tabEls[k].className   = 'cl-tab'   + (k === t.id ? ' active' : '');
               panelEls[k].className = 'cl-panel' + (k === t.id ? ' active' : '');
@@ -402,19 +423,6 @@ return view.extend({
         return el;
       })
     );
-
-    var subPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'subs' ? ' active' : ''), id: 'cl-panel-subs' },
-      this._buildSubsPanel(subsData, subFiles, upFiles, customFiles, tplFiles, uiData)
-    );
-    panelEls['subs'] = subPanel;
-
-    var proxyPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'proxy' ? ' active' : ''), id: 'cl-panel-proxy' });
-    panelEls['proxy'] = proxyPanel;
-    this._buildProxyForm(proxyPanel, smartModelData);
-
-    var dnsPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'dns' ? ' active' : ''), id: 'cl-panel-dns' });
-    panelEls['dns'] = dnsPanel;
-    this._buildDnsForm(dnsPanel);
 
     return E('div', { 'class': 'cl-wrap clashoo-container cl-config-page cl-form-page ' + getThemeClass() }, [tabBar, subPanel, proxyPanel, dnsPanel]);
   },
