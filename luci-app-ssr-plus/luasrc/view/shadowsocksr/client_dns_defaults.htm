@@ -5,15 +5,19 @@
 		return document.querySelector('select[name$=".' + name + '"], input[name$=".' + name + '"]');
 	}
 
-	function ensureMosdnsDefault() {
+	function ensureDefaultValue(modeValue, fieldName) {
 		var modeEl = getField('pdnsd_enable');
-		var dnsEl = getField('tunnel_forward_mosdns');
-		if (!modeEl || !dnsEl || modeEl.value !== '4') {
+		var dnsEl = getField(fieldName);
+		if (!modeEl || !dnsEl || modeEl.value !== modeValue) {
 			return;
 		}
 
 		var current = (dnsEl.value || '').trim();
-		if (current !== '' && current !== '-- 请选择 --') {
+		var placeholder = (dnsEl.options && dnsEl.selectedIndex >= 0 && dnsEl.options[dnsEl.selectedIndex])
+			? (dnsEl.options[dnsEl.selectedIndex].text || '').trim()
+			: '';
+		if (current !== '' && current !== '-- 请选择 --' && current !== '-- Please choose --' &&
+			placeholder !== '-- 请选择 --' && placeholder !== '-- Please choose --') {
 			return;
 		}
 
@@ -34,21 +38,33 @@
 		}
 	}
 
+	function ensureMosdnsDefault() {
+		ensureDefaultValue('4', 'tunnel_forward_mosdns');
+	}
+
+	function ensureChinaDnsNgDefault() {
+		ensureDefaultValue('6', 'chinadns_ng_tunnel_forward');
+	}
+
 	function bindModeChange() {
 		var modeEl = getField('pdnsd_enable');
-		if (!modeEl || modeEl.dataset.ssrMosdnsDefaultBound) {
+		if (!modeEl || modeEl.dataset.ssrDnsDefaultBound) {
 			return;
 		}
 
-		modeEl.dataset.ssrMosdnsDefaultBound = '1';
+		modeEl.dataset.ssrDnsDefaultBound = '1';
 		modeEl.addEventListener('change', function() {
-			window.setTimeout(ensureMosdnsDefault, 0);
+			window.setTimeout(function() {
+				ensureMosdnsDefault();
+				ensureChinaDnsNgDefault();
+			}, 0);
 		});
 	}
 
 	function initMosdnsDefault() {
 		bindModeChange();
 		ensureMosdnsDefault();
+		ensureChinaDnsNgDefault();
 	}
 
 	if (document.readyState === 'loading') {

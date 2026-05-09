@@ -24,9 +24,42 @@ match_proc_count() {
 	ps_list | grep -E "$pattern" | grep -v grep | wc -l
 }
 
+redir_tcp_running() {
+	local ssr_count
+	local ipt_count
+	ssr_count=$(match_proc_count 'ssr-retcp')
+	ipt_count=$(ps_list | grep 'ipt2socks' | grep -v grep | grep -E ' -T( |$)| --tcp-only( |$)' | wc -l)
+	echo $((ssr_count + ipt_count))
+}
+
+redir_udp_running() {
+	local ssr_count
+	local ipt_count
+	ssr_count=$(match_proc_count 'ssr-reudp')
+	ipt_count=$(ps_list | grep 'ipt2socks' | grep -v grep | grep -E ' -U( |$)| --udp-only( |$)' | wc -l)
+	echo $((ssr_count + ipt_count))
+}
+
 kill_matched_procs() {
 	local pattern="$1"
 	ps_list | grep -E "$pattern" | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+}
+
+get_expected_threads() {
+	local threads
+	threads=$(uci_get_by_type global threads 0)
+	if [ "$threads" = "0" ] || [ -z "$threads" ]; then
+		threads=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null)
+	fi
+
+	case "$threads" in
+		''|*[!0-9]*)
+			threads=1
+			;;
+	esac
+
+	[ "$threads" -lt 1 ] && threads=1
+	echo "$threads"
 }
 
 server_process_count=$1
@@ -40,6 +73,8 @@ if [ -z "$pdnsd_process" ]; then
 fi
 i=0
 GLOBAL_SERVER=$(uci_get_by_type global global_server)
+GLOBAL_TYPE=$(uci_get_by_name $GLOBAL_SERVER type)
+EXPECTED_THREADS=$(get_expected_threads)
 server=$(uci_get_by_name $GLOBAL_SERVER server)
 kcp_port=$(uci_get_by_name $GLOBAL_SERVER kcp_port)
 server_port=$(uci_get_by_name $GLOBAL_SERVER server_port)
@@ -51,8 +86,12 @@ while [ "1" == "1" ]; do #死循环
 	sleep 000030s
 	#redir tcp
 	if [ "$redir_tcp_process" -gt 0 ]; then
-		icount=$(ps_list | grep ssr-retcp | grep -v grep | wc -l)
-		if [ "$icount" == 0 ]; then
+		icount=$(redir_tcp_running)
+		local tcp_expected="$redir_tcp_process"
+		if [ "$GLOBAL_TYPE" = "socks5" ]; then
+			tcp_expected="$EXPECTED_THREADS"
+		fi
+		if [ "$icount" -lt "$tcp_expected" ]; then
 			logger -t "$NAME" "ssrplus redir tcp error.restart!"
 			echolog "ssrplus redir tcp error.restart!"
 			/etc/init.d/shadowsocksr restart
@@ -61,8 +100,12 @@ while [ "1" == "1" ]; do #死循环
 	fi
 	#redir udp
 	if [ "$redir_udp_process" -gt 0 ]; then
-		icount=$(ps_list | grep ssr-reudp | grep -v grep | wc -l)
-		if [ "$icount" == 0 ]; then
+		icount=$(redir_udp_running)
+		local udp_expected="$redir_udp_process"
+		if [ "$GLOBAL_TYPE" = "socks5" ]; then
+			udp_expected="$EXPECTED_THREADS"
+		fi
+		if [ "$icount" -lt "$udp_expected" ]; then
 			logger -t "$NAME" "ssrplus redir udp error.restart!"
 			echolog "ssrplus redir udp error.restart!"
 			/etc/init.d/shadowsocksr restart

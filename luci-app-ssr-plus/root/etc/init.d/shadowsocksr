@@ -226,6 +226,24 @@ get_default_node_local_port() {
 	uci_get_by_type global default_node_local_port 1234
 }
 
+get_configured_threads() {
+	local threads
+	if [ "$(uci_get_by_type global threads 0)" = "0" ]; then
+		threads=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null)
+	else
+		threads=$(uci_get_by_type global threads 1)
+	fi
+
+	case "$threads" in
+		''|*[!0-9]*)
+			threads=1
+			;;
+	esac
+
+	[ "$threads" -lt 1 ] && threads=1
+	echo "$threads"
+}
+
 get_clash_api_secret() {
 	echo "${1}_ssrplus_clash"
 }
@@ -1094,6 +1112,7 @@ gen_config_file() { #server1 type2 code3 local_port4 socks_port5 chain6 threads5
 
 start_udp() {
 	local udp_relay_server_type=$(uci_get_by_name $UDP_RELAY_SERVER type)
+	local threads=$(get_configured_threads)
 	local type=$udp_relay_server_type
 	if [ "$udp_relay_server_type" = "ss-rust" ]; then
 		type="ss"
@@ -1163,16 +1182,18 @@ start_udp() {
 			;;
 		esac
 		;;
-		socks5)
-			if [ "$(uci_get_by_name $UDP_RELAY_SERVER auth_enable 0)" == "1" ]; then
-				local auth="-a $(uci_get_by_name $UDP_RELAY_SERVER username) -k $(uci_get_by_name $UDP_RELAY_SERVER password)"
-			fi
-			ln_start_bin $(first_type ipt2socks) ipt2socks -U -b 0.0.0.0 -4 \
+	socks5)
+		if [ "$(uci_get_by_name $UDP_RELAY_SERVER auth_enable 0)" == "1" ]; then
+			local auth="-a $(uci_get_by_name $UDP_RELAY_SERVER username) -k $(uci_get_by_name $UDP_RELAY_SERVER password)"
+		fi
+		for i in $(seq 1 $threads); do
+			ln_start_bin $(first_type ipt2socks) ipt2socks -U -r -b 0.0.0.0 -4 \
 				-s $(uci_get_by_name $UDP_RELAY_SERVER server) \
 				-p $(uci_get_by_name $UDP_RELAY_SERVER server_port) \
 				-l $tmp_udp_port $auth
-			echolog "UDP TPROXY Relay:Socks5 via IPT2Socks Started!"
-			;;
+		done
+		echolog "UDP TPROXY Relay:Socks5 via IPT2Socks $threads Threads Started!"
+		;;
 	esac
 }
 
@@ -1445,7 +1466,10 @@ get_udp_relay_mode() {
 	clash|tuic)
 		echo "native"
 		;;
-	trojan|shadowtls|socks5)
+	trojan|shadowtls)
+		echo "split"
+		;;
+	socks5)
 		echo "split"
 		;;
 	naiveproxy)
@@ -1473,11 +1497,7 @@ get_udp_relay_mode() {
 }
 
 Start_Run() {
-	if [ "$(uci_get_by_type global threads 0)" == "0" ]; then
-		local threads=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
-	else
-		local threads=$(uci_get_by_type global threads)
-	fi
+	local threads=$(get_configured_threads)
 	local global_server_type=$(uci_get_by_name $GLOBAL_SERVER type)
 	if [ "$(uci_get_by_name $GLOBAL_SERVER kcp_enable 0)" == "1" ] && [ "$global_server_type" != "ss" ]; then
 		[ ! -f "/usr/bin/kcptun-client" ] && return 1
@@ -1633,6 +1653,25 @@ Start_Run() {
 			ln_start_bin "$mihomo_bin" ssr-retcp -d "$clash_workdir" -f "$clash_workdir/config.yaml"
 			echolog "Main node:Mihomo (Clash) Started!"
 			;;
+	socks5)
+		local ipt2socks_bin="$(first_type ipt2socks)"
+		local auth_opts=""
+		[ -x "$ipt2socks_bin" ] || {
+			echolog "Main node:Socks5 缺少 ipt2socks，无法启动透明代理。"
+			return 1
+		}
+		if [ "$(uci_get_by_name $GLOBAL_SERVER auth_enable 0)" = "1" ]; then
+			auth_opts="-a $(uci_get_by_name $GLOBAL_SERVER username) -k $(uci_get_by_name $GLOBAL_SERVER password)"
+		fi
+		for i in $(seq 1 $threads); do
+			ln_start_bin "$ipt2socks_bin" ipt2socks \
+				-T -R -r -b 0.0.0.0 -4 \
+				-s "$(uci_get_by_name $GLOBAL_SERVER server)" \
+				-p "$(uci_get_by_name $GLOBAL_SERVER server_port)" \
+				-l "$tcp_port" $auth_opts
+		done
+		echolog "Main node:Socks5 via IPT2Socks $threads Threads Started!"
+		;;
 	esac
 	redir_tcp=1
 	return 0

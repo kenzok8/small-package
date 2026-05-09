@@ -349,6 +349,12 @@ local function global_client_running()
 		return true
 	end
 
+	if global_type == "socks5"
+		and process_list:find("ipt2socks")
+		and (process_list:find("%-T") or process_list:find("%-%-tcp%-only")) then
+		return true
+	end
+
 	return false
 end
 
