@@ -47,6 +47,49 @@ backend_remove_rules() {
 	fi
 }
 
+# Compute start-wait window: TUN needs longer for utun setup + fake-ip pool init.
+# Override via `uci set clashoo.config.start_wait_secs=N` for slow devices.
+_compute_start_wait() {
+	local override
+	override="$(uci -q get clashoo.config.start_wait_secs)"
+	if [ -n "$override" ] && [ "$override" -gt 0 ] 2>/dev/null; then
+		echo "$override"; return
+	fi
+	if [ "$(uci -q get clashoo.config.tun_mode)" = "1" ]; then
+		echo 15
+	else
+		echo 6
+	fi
+}
+
+# Wait up to $1 seconds for $2 (mihomo|sing-box) to be alive AND stable.
+# Returns 0 if alive at end of window, 1 if dead/never-started.
+_wait_core_alive() {
+	local max="${1:-6}" want="${2:-mihomo}" i=0
+	while [ "$i" -lt "$max" ]; do
+		sleep 1
+		if [ "$want" = "sing-box" ] || [ "$want" = "singbox" ]; then
+			pidof sing-box >/dev/null 2>&1 && return 0
+		else
+			_core_running && return 0
+		fi
+		i=$((i + 1))
+	done
+	return 1
+}
+
+# Roll back partial state when start failed after backend rules / DNS were applied.
+# Reuses the same cleanup primitives as stop_service so behavior stays consistent.
+_rollback_failed_start() {
+	log_msg "Rolling back failed start" "启动失败，正在回退防火墙与 DNS 配置"
+	backend_remove_rules >/dev/null 2>&1
+	revert_dns >/dev/null 2>&1
+	stop_singbox_service >/dev/null 2>&1
+	_kill_core >/dev/null 2>&1
+	rm -rf /www/luci-static/yacd 2>/dev/null
+	del_cron >/dev/null 2>&1
+}
+
 _core_candidates() {
 	echo "/usr/bin/mihomo /usr/bin/clash-meta /etc/clashoo/clash"
 }
@@ -1530,10 +1573,14 @@ _start_launch_core() {
 	echo "Clashoo" > "$REAL_LOG"
 	# procd starts the core process only after start_service() returns, so we
 	# cannot block here waiting for it. Launch a background watcher instead.
+	# If the core never appears within the window, roll back the firewall
+	# rules and dnsmasq override we already applied — otherwise the box is
+	# left with a hijacked DNS pointing at a port nobody is listening on.
 	(
 		exec 1000>&-
+		_bg_max="$(_compute_start_wait)"
 		bg_wait=0
-		while [ "$bg_wait" -lt 30 ]; do
+		while [ "$bg_wait" -lt "$_bg_max" ]; do
 			sleep 1
 			if _core_running; then
 				runtime_run_health_check >/dev/null 2>&1
@@ -1541,8 +1588,9 @@ _start_launch_core() {
 			fi
 			bg_wait=$((bg_wait + 1))
 		done
+		_rollback_failed_start
 		runtime_state_record_health "fail" "start:core_not_running"
-		echo "  $(date "+%Y-%m-%d %H:%M:%S") - clashoo core not detected within 30s" >> /usr/share/clashoo/clashoo.txt
+		echo "  $(date "+%Y-%m-%d %H:%M:%S") - clashoo core not detected within ${_bg_max}s, rolled back" >> /usr/share/clashoo/clashoo.txt
 		echo "Clashoo" > "$REAL_LOG"
 	) &
 }
@@ -1608,6 +1656,14 @@ start_service(){
 			backend_apply_rules >/dev/null 2>&1
 			singbox_dns_change >/dev/null 2>&1
 			add_cron >/dev/null 2>&1
+			# Sync-wait: if sing-box dies within window, roll back applied state.
+			# /etc/init.d/sing-box start forks immediately so we can poll here.
+			if ! _wait_core_alive "$(_compute_start_wait)" sing-box; then
+				_rollback_failed_start
+				runtime_state_record_health "fail" "start:singbox_died_after_apply"
+				echo "Clashoo" > "$REAL_LOG"
+				return 1
+			fi
 			(exec 1000>&-; runtime_run_health_check >/dev/null 2>&1) &
 			echo "Clashoo" > "$REAL_LOG"
 			return 0
