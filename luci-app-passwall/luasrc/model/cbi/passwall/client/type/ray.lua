@@ -165,10 +165,11 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 
 	-- Fallback Node
 	o = s:option(ListValue, _n("fallback_node"), translate("Fallback Node"))
+	o.group = {"",""}
 	o:value("", translate("Close(Not use)"))
+	o:value("_direct", translate("Direct Connection"))
 	o:depends({ [_n("protocol")] = "_balancing" })
 	o.template = appname .. "/cbi/nodes_listvalue"
-	o.group = {""}
 	local function check_fallback_chain(fb)
 		for k, v in pairs(fallback_list) do
 			if v.fallback == fb then

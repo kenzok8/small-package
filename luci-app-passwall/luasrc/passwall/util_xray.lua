@@ -1033,10 +1033,10 @@ function gen_config(var)
 			if #valid_nodes == 0 then return nil end
 
 			-- fallback node
-			local fallback_node_tag = nil
 			local fallback_node_id = _node.fallback_node
-			if not fallback_node_id or fallback_node_id == "" then fallback_node_id = nil end
-			if fallback_node_id then
+			fallback_node_id = (fallback_node_id and fallback_node_id ~= "") and fallback_node_id or nil
+			local fallback_node_tag = (fallback_node_id == "_direct") and "direct" or "blackhole"
+			if fallback_node_id and fallback_node_id ~= "_direct" then
 				local is_new_node = true
 				for _, outbound in ipairs(outbounds) do
 					if string.sub(outbound.tag, 1, #fallback_node_id) == fallback_node_id then
