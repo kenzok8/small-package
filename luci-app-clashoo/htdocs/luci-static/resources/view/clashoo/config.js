@@ -84,6 +84,9 @@ var CSS = [
   '.cl-dns-auto-result b{font-weight:700;opacity:.72;margin-right:4px}',
   '.cl-section-toggle{font-size:12px;cursor:pointer;flex-shrink:0;margin-left:auto}',
   '.cl-collapsible.cl-closed>*:not(h3){display:none!important}',
+  /* 折叠标题：通过 .clashoo-section-header wrapper class 上色，不裸改 LuCI 默认 h3 样式 */
+  '.clashoo-section-header{display:flex!important;align-items:center;gap:8px;position:relative}',
+  '.clashoo-section-header::before{content:"";flex:0 0 3px;width:3px;height:14px;border-radius:2px;background:var(--primary-color,var(--cl-primary,#007aff))}',
   '.cl-wrap .cbi-section-remove.right{background:transparent!important}',
   '.cl-json-editor{width:100%;height:340px;font-family:monospace;font-size:11px;border:1px solid rgba(128,128,128,.25);border-radius:8px;padding:10px;box-sizing:border-box;resize:vertical;background:rgba(0,0,0,.02)}',
   '.cl-editor-hdr{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;font-weight:600}',
@@ -325,7 +328,10 @@ function makeSectionCollapsible(root, title, open) {
     }
   }, open ? '折叠' : '展开');
   var h3 = section.querySelector('h3');
-  if (h3) h3.appendChild(btn);
+  if (h3) {
+    h3.classList.add('clashoo-section-header');
+    h3.appendChild(btn);
+  }
 }
 
 return view.extend({

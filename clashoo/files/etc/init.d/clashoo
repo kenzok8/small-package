@@ -1673,9 +1673,9 @@ stop_service(){
 		
 			lang=$(uci get luci.main.lang 2>/dev/null)
 			tun_mode=$(uci get clashoo.config.tun_mode 2>/dev/null)
-			LIST="/usr/share/clashoo/server.list"
 
-			sed -i '/#START/,/#END/d' "$LIST" 2>/dev/null
+			# server.list 现为只读包文件；停服时清理 /tmp 下的合并产物即可
+			rm -f /tmp/clashoo/fake_filter.list /tmp/clashoo/fake_filter.yaml 2>/dev/null
 
 			log_msg "Stopping Clashoo" "正在停止 Clashoo"
 		log_msg "Removing firewall rules" "清理防火墙规则"

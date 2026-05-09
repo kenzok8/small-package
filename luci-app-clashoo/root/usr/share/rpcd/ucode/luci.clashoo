@@ -634,12 +634,20 @@ return '';
 }
 
 function safe_name(name) {
-name = trim(name || '');
+name = name || '';
 if (!name) return '';
+/* 拒绝前后导空白（不静默 trim，避免与可见名称偏差） */
+if (trim(name) != name) return '';
 /* 路径遍历防护 */
 if (index(name, '/') >= 0 || index(name, '\\') >= 0) return '';
 if (index(name, '..') >= 0) return '';
 if (substr(name, 0, 1) == '.') return '';
+/* 黑名单：# 注释、空格、? * : 等不安全/系统保留字符 */
+if (index(name, '#') >= 0) return '';
+if (index(name, ' ') >= 0) return '';
+if (index(name, '?') >= 0) return '';
+if (index(name, '*') >= 0) return '';
+if (index(name, ':') >= 0) return '';
 /* 拒绝 NUL 与换行/制表等控制字符（逐字节扫描，ucode 正则不支持 \x 转义） */
 let n = length(name);
 for (let i = 0; i < n; i++) {

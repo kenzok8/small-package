@@ -155,29 +155,34 @@ add_dnsserver() {
 	addr="$2"
 	proto="$3"
 	port="$4"
-	sec="$(uci -q add clashoo dnsservers)"
+	sec="$(uci -q add clashoo dnsservers)" || return 1
 	[ -n "$sec" ] || return 1
-	uci -q set clashoo."$sec".enabled='1'
-	uci -q set clashoo."$sec".ser_type="$role"
-	uci -q set clashoo."$sec".ser_address="$addr"
-	uci -q set clashoo."$sec".protocol="$proto"
-	[ -n "$port" ] && uci -q set clashoo."$sec".ser_port="$port"
+	uci -q set clashoo."$sec".enabled='1' || return 1
+	uci -q set clashoo."$sec".ser_type="$role" || return 1
+	uci -q set clashoo."$sec".ser_address="$addr" || return 1
+	uci -q set clashoo."$sec".protocol="$proto" || return 1
+	if [ -n "$port" ]; then
+		uci -q set clashoo."$sec".ser_port="$port" || return 1
+	fi
+	return 0
 }
 
 set_default_nameserver() {
 	uci -q delete clashoo.config.default_nameserver >/dev/null 2>&1 || true
-	uci -q add_list clashoo.config.default_nameserver="$1"
+	uci -q add_list clashoo.config.default_nameserver="$1" || return 1
+	return 0
 }
 
 apply_result() {
-	uci -q set clashoo.config.enable_dns='1'
-	set_default_nameserver "$BOOTSTRAP"
+	uci -q set clashoo.config.enable_dns='1' || { uci -q revert clashoo; return 1; }
+	set_default_nameserver "$BOOTSTRAP" || { uci -q revert clashoo; return 1; }
 	while uci -q delete clashoo.@dnsservers[0] >/dev/null 2>&1; do :; done
-	add_dnsserver 'nameserver' "$NAMESERVER" 'none' ''
-	add_dnsserver 'direct-nameserver' "$BOOTSTRAP" 'udp://' ''
-	add_dnsserver 'proxy-server-nameserver' "$PROXY_NS" 'none' ''
-	add_dnsserver 'fallback' "$FALLBACK_NS" 'none' ''
-	uci -q commit clashoo
+	add_dnsserver 'nameserver' "$NAMESERVER" 'none' '' || { uci -q revert clashoo; return 1; }
+	add_dnsserver 'direct-nameserver' "$BOOTSTRAP" 'udp://' '' || { uci -q revert clashoo; return 1; }
+	add_dnsserver 'proxy-server-nameserver' "$PROXY_NS" 'none' '' || { uci -q revert clashoo; return 1; }
+	add_dnsserver 'fallback' "$FALLBACK_NS" 'none' '' || { uci -q revert clashoo; return 1; }
+	uci -q commit clashoo || { uci -q revert clashoo; return 1; }
+	return 0
 }
 
 FAILED_COUNT=0
