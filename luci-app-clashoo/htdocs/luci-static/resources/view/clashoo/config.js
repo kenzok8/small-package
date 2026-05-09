@@ -978,7 +978,7 @@ return view.extend({
     o.placeholder = '223.5.5.5';
     o.description = '用于解析 DoH/DoT/DoQ 服务器域名，建议填写纯 IP DNS。';
     o = s.option(form.Value, 'dns_ecs', 'ECS 客户端子网');
-    o.placeholder = '223.5.5.0/24';
+    o.placeholder = '推荐留空';
     o.description = 'Mihomo 写入 DNS URL 的 ecs 参数；sing-box 写入 dns.client_subnet。清空则不写入。';
     o.rmempty = true;
     o = s.option(form.Flag, 'dns_ecs_override', '强制覆盖 ECS');

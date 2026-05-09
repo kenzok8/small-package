@@ -1394,6 +1394,7 @@ return view.extend({
   _pollOverview: function (force) {
     this._applyThemeClass();
     if (!force && this._op) return Promise.resolve();
+    if (!force && this._coreSwitchBusy) return Promise.resolve();
     if (!force && document.hidden) return Promise.resolve();
     var self = this;
     return rpcOverview()
