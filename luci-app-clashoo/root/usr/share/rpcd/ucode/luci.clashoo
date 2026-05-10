@@ -3106,11 +3106,7 @@ if (!config_obj && system('command -v ucode >/dev/null 2>&1') == 0 &&
     let tmp_yaml = '/tmp/clashoo_sb_sub.yaml';
     let tmp_hdr  = '/tmp/clashoo_sb_sub.hdr';
     system('rm -f ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
-    let dl_cmd = 'curl -fL --connect-timeout 8 --max-time 20 '
-      + ' -D ' + shell_quote(tmp_hdr)
-      + ' ' + shell_quote(sub_url)
-      + ' -o ' + shell_quote(tmp_yaml)
-      + ' >/dev/null 2>&1 || wget -O ' + shell_quote(tmp_yaml) + ' ' + shell_quote(sub_url) + ' >/dev/null 2>&1';
+    let dl_cmd = 'curl -fsSL --connect-timeout 8 --max-time 20 -D ' + shell_quote(tmp_hdr) + ' -A "Clash/OpenWRT" ' + shell_quote(sub_url) + ' -o ' + shell_quote(tmp_yaml) + ' >/dev/null 2>&1 || wget -q -O ' + shell_quote(tmp_yaml) + ' ' + shell_quote(sub_url) + ' >/dev/null 2>&1';
     if (system(dl_cmd) == 0 && access(tmp_yaml, 'r')) {
       yaml_src = tmp_yaml;
       downloaded_yaml = tmp_yaml;
