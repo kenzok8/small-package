@@ -78,7 +78,6 @@ cfg['dns'] = {
 	'fake-ip-range': s(a('fake_ip_range'), '198.18.0.1/16'),
 	'fake-ip-filter': [],
 	ipv6:           ab('enable_ipv6'),
-	'respect-rules': true,
 };
 /* fake-ip-filter */
 let filters = a('fake_ip_filter');

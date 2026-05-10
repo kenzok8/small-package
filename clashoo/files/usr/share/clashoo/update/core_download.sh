@@ -20,6 +20,13 @@ write_log() {
 
 finalize() {
 	if [ "$CORE_INSTALLED" = "1" ]; then
+		# Smart 内核下载后自动切换
+		if [ "$CORETYPE" = "1" ]; then
+			uci set clashoo.config.core_type="mihomo" 2>/dev/null
+			uci set clashoo.config.smart_auto_switch="1" 2>/dev/null
+			uci commit clashoo 2>/dev/null
+			write_log "Smart 内核已就绪，自动启用 Smart 策略"
+		fi
 		write_log "内核已替换，重启 Clashoo"
 		if ! /etc/init.d/clashoo restart >/dev/null 2>&1; then
 			write_log "重启 Clashoo 失败"
@@ -85,11 +92,24 @@ fetch_url_try() {
 	return 127
 }
 
+detect_proxy() {
+	if pidof mihomo >/dev/null 2>&1 || pidof clash-meta >/dev/null 2>&1 || pidof sing-box >/dev/null 2>&1; then
+		local p
+		p="$(uci -q get clashoo.config.mixed_port 2>/dev/null)"
+		[ -n "$p" ] && echo "http://127.0.0.1:$p"
+	fi
+}
+
 download_file_try() {
 	url="$1"
 	out="$2"
+	proxy="$3"
 	if command -v curl >/dev/null 2>&1; then
-		curl -fsSL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --retry 0 -A "Clash/OpenWRT" "$url" -o "$out"
+		if [ -n "$proxy" ]; then
+			curl -fsSL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --retry 0 -A "Clash/OpenWRT" --proxy "$proxy" "$url" -o "$out"
+		else
+			curl -fsSL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --retry 0 -A "Clash/OpenWRT" "$url" -o "$out"
+		fi
 		return $?
 	fi
 	if command -v wget >/dev/null 2>&1; then
@@ -544,6 +564,7 @@ download_with_mirrors() {
 	base_url="$1"
 	outfile="$2"
 	verify_mode="${3:-gzip}"
+	proxy="$(detect_proxy)"
 	for p in $(mirror_prefixes) ""; do
 		ensure_not_timed_out || return 1
 		u="$(prefixed_url "$p" "$base_url")"
@@ -552,7 +573,7 @@ download_with_mirrors() {
 			ensure_not_timed_out || return 1
 			write_log "Downloading from ${u} (try ${i})"
 			rm -f "$outfile" 2>/dev/null
-			if download_file_try "$u" "$outfile"; then
+			if download_file_try "$u" "$outfile" "$proxy"; then
 				case "$verify_mode" in
 					raw)
 						if [ -s "$outfile" ]; then
@@ -702,7 +723,7 @@ if [ -n "$CUSTOM_CORE_URL" ]; then
 	ASSET="custom"
 	VERSION_VALUE="custom-url"
 
-	if ! download_file_try "$URL" /tmp/clash.gz; then
+	if ! download_file_try "$URL" /tmp/clash.gz "$(detect_proxy)"; then
 		write_log "自定义链接下载失败"
 		exit 1
 	fi

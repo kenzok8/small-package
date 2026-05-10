@@ -2431,11 +2431,24 @@ return { success: false, error: 'copy_failed', message: '读取本地模板失�
 if (system('command -v yq >/dev/null 2>&1') != 0)
 return { success: false, error: 'missing_yq', message: '缺少 yq，无法注入订阅 URL' };
 
-let yq_cmd = 'URL=' + shell_quote(sub_url) + ' yq e \'(."proxy-providers" | .[] | .url) = env(URL)\' '
-+ shell_quote(tmp_tpl) + ' > ' + shell_quote(tmp_out);
-
-if (system(yq_cmd) != 0 || !access(tmp_out, 'r'))
-return { success: false, error: 'inject_failed', message: '订阅 URL 注入失败' };
+	/* 先展开 YAML anchor（<<: *xxx），再注入订阅 URL */
+	let exploded = tmp_tpl + ".exploded";
+	system("yq ea \"explode(.)\" " + shell_quote(tmp_tpl) + " > " + shell_quote(exploded) + " 2>/dev/null");
+	if (!access(exploded, "r")) {
+		system("cp -f " + shell_quote(tmp_tpl) + " " + shell_quote(exploded));
+	}
+	/* proxy-providers 和 rule-providers 两处都注入（兼容不同模板格式） */
+	let inject_cmd = "URL=" + shell_quote(sub_url)
+		+ " yq e '.\\\"proxy-providers\\\"[].url = env(URL) | .\\\"rule-providers\\\"[].url = env(URL)' "
+		+ shell_quote(exploded) + " > " + shell_quote(tmp_out);
+	if (system(inject_cmd) != 0 || !access(tmp_out, "r")) {
+		system("rm -f " + shell_quote(exploded));
+		return { success: false, error: "inject_failed", message: "订阅 URL 注入失败" };
+	}
+	system("rm -f " + shell_quote(exploded));
+		/* 替换模板中的 直连 → DIRECT（兼容不同模板的命名差异） */
+		system("sed -i 's/直连/DIRECT/g' " + shell_quote(tmp_out) + " 2>/dev/null");
+	system("yq e '(.proxy-groups[].proxies) |= sub(\"直连\", \"DIRECT\")' " + shell_quote(tmp_out) + " -i 2>/dev/null");
 
 if (!output_name) {
 output_name = 'tpl-rewrite.yaml';
@@ -2446,6 +2459,18 @@ if (system('mv -f ' + shell_quote(tmp_out) + ' ' + shell_quote(out_path)) != 0)
 return { success: false, error: 'write_failed', message: '写入结果文件失败' };
 
 system('rm -f ' + shell_quote(tmp_tpl));
+	/* 用 mixin.uc + yq merge 叠加 UCI 覆盖（端口、routing-mark、dns 等） */
+	let mixin_script = "/usr/share/clashoo/runtime/mixin.uc";
+	if (access(mixin_script, "r") && system("command -v yq >/dev/null 2>&1") == 0) {
+		let mixin_yaml = "/tmp/_clashoo_mixin.yaml";
+		let merged_out = out_path + ".merged";
+		system("ucode " + shell_quote(mixin_script) + " 2>/dev/null | yq -M -p json -o yaml > " + shell_quote(mixin_yaml) + " 2>/dev/null");
+		system("yq -M eval-all '. as $item ireduce ({}; . * $item)' " + shell_quote(out_path) + " " + shell_quote(mixin_yaml) + " > " + shell_quote(merged_out) + " 2>/dev/null");
+		if (access(merged_out, "r")) {
+			system("mv -f " + shell_quote(merged_out) + " " + shell_quote(out_path));
+		}
+		system("rm -f " + shell_quote(mixin_yaml));
+	}
 
 if (set_active) {
 let c = cursor();
