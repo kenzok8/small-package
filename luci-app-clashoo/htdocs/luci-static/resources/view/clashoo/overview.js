@@ -546,6 +546,10 @@ return view.extend({
           self._showCoreSwitchHint('未检测到 Smart 内核；更新模型不会安装内核，请到系统页下载 Smart 版');
           throw { soft: true };
         }
+        if (r && r.success === false && r.error === 'singbox_core_missing') {
+          self._showCoreSwitchHint('未检测到 sing-box 内核；请到系统页下载 sing-box');
+          throw { soft: true };
+        }
         if (r && r.success === false)
           throw new Error(r.message || '切换内核失败');
         self._lastSt = self._lastSt || {};

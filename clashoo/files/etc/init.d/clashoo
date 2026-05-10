@@ -243,6 +243,12 @@ start_singbox_service() {
 		return 1
 	fi
 	prepare_singbox_runtime || return 1
+	# 启动前干测：配置坏直接放弃，不污染防火墙与 dnsmasq
+	if ! /usr/bin/sing-box -c /etc/sing-box/config.json check >> "$CORE_LOG_PATH" 2>&1; then
+		log_msg "sing-box config dry-run failed; firewall/DNS untouched" "sing-box 配置预检失败，未应用防火墙与 DNS 改动"
+		runtime_state_record_health "fail" "preflight:singbox_dry_run_failed"
+		return 1
+	fi
 	/etc/init.d/sing-box start >/dev/null 2>&1
 }
 
@@ -304,6 +310,7 @@ inject_dns_fallback_filter() {
 	grep -Eq '^[[:space:]]+fallback-filter:' "$cfg" 2>/dev/null && return 0
 	awk '
 		function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
+		function pad(n,    i, s) { s=""; for (i=0; i<n; i++) s=s " "; return s }
 		/^dns:[[:space:]]*$/ { dns=1; child_indent=-1; print; next }
 		dns {
 			cur_indent = indent_len($0)
@@ -311,7 +318,7 @@ inject_dns_fallback_filter() {
 				child_indent = cur_indent
 			if ($0 ~ /^[^[:space:]#][^:]*:/) {
 				if (!inserted) {
-					sp = sprintf("%*s", child_indent > 0 ? child_indent : 2, "")
+					sp = pad(child_indent > 0 ? child_indent : 2)
 					print sp "fallback-filter:"
 					print sp "  geoip: false"
 					inserted=1
@@ -322,7 +329,7 @@ inject_dns_fallback_filter() {
 		{ print }
 		END {
 			if (dns && !inserted) {
-				sp = sprintf("%*s", child_indent > 0 ? child_indent : 2, "")
+				sp = pad(child_indent > 0 ? child_indent : 2)
 				print sp "fallback-filter:"
 				print sp "  geoip: false"
 			}
@@ -490,13 +497,6 @@ _service_enabled() {
 	local svc="$1"
 	[ -x "/etc/init.d/${svc}" ] || return 1
 	"/etc/init.d/${svc}" enabled >/dev/null 2>&1
-}
-
-_openclash_conflict() {
-	if [ "$(uci -q get openclash.config.enable 2>/dev/null)" = "1" ]; then
-		return 0
-	fi
-	_service_enabled openclash
 }
 
 # 按优先级自动检测内核二进制：mihomo > clash-meta > 内置 clash
@@ -1552,6 +1552,15 @@ _start_launch_core() {
 	disable_quic_gso=$(uci get clashoo.config.disable_quic_gso 2>/dev/null)
 	mkdir -p "$(dirname "$CORE_LOG_PATH")" >/dev/null 2>&1
 	touch "$CORE_LOG_PATH" >/dev/null 2>&1
+
+	# 启动前干测：配置坏直接放弃，不污染防火墙与 dnsmasq
+	if ! "$CLASH" -d "$CLASH_CONFIG" -t >> "$CORE_LOG_PATH" 2>&1; then
+		log_msg "Config dry-run failed; firewall/DNS untouched" "配置预检失败，未应用防火墙与 DNS 改动"
+		runtime_state_record_health "fail" "preflight:config_dry_run_failed"
+		echo "Clashoo" > "$REAL_LOG"
+		return 1
+	fi
+
 	procd_open_instance
 	_cmd="$(shell_quote "$CLASH") -d $(shell_quote "$CLASH_CONFIG") >> $(shell_quote "$CORE_LOG_PATH") 2>&1"
 	procd_set_param command /bin/sh -c "$_cmd"
@@ -1623,13 +1632,6 @@ start_service(){
 	migrate_legacy_clash_dir
 	runtime_state_reset
 
-	if _openclash_conflict; then
-		runtime_state_set "health_status" "fail"
-		runtime_state_set "health_detail" "preflight:openclash_conflict"
-		runtime_state_set "updated_at" "$(date +%s)"
-		_log_runtime_error "OpenClash is enabled; skip Clashoo start to avoid firewall/DNS conflicts"
-		return 0
-	fi
 	if [ "${enable:-0}" -eq 1 ]; then
 		resolve_effective_tp_modes
 		runtime_state_record_preflight "$(selected_core_family)"
@@ -1648,7 +1650,11 @@ start_service(){
 				return 1
 			fi
 			if ! start_singbox_service; then
-				runtime_state_record_health "fail" "start:singbox_service_failed"
+				# 干测失败已写入 preflight:* detail，避免被外层兜底覆盖
+				case "$(grep '^health_detail=' "$RUNTIME_STATE_FILE" 2>/dev/null | cut -d= -f2-)" in
+					preflight:*) ;;
+					*) runtime_state_record_health "fail" "start:singbox_service_failed" ;;
+				esac
 				echo "Clashoo" > "$REAL_LOG"
 				return 1
 			fi

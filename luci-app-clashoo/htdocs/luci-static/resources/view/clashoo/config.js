@@ -984,7 +984,8 @@ return view.extend({
     o = s.option(form.Flag, 'dns_ecs_override', '强制覆盖 ECS');
     o.default = '0';
     o = s.option(form.Flag, 'fallback_filter_geoip', 'Fallback GeoIP 过滤');
-    o.default = '1';
+    o.default = '0';
+    o.description = '依赖 MMDB；若启用但本地 GeoIP 数据库缺失，可能导致内核启动失败。一般无需开启。';
     o = s.option(form.DynamicList, 'fallback_filter_ipcidr', 'Fallback IP CIDR');
     o.placeholder = '240.0.0.0/4';
     o = s.option(form.Flag, 'singbox_independent_cache', 'sing-box 独立 DNS 缓存');

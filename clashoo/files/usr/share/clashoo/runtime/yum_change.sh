@@ -545,7 +545,7 @@ if [ -f /tmp/fallback.yaml ];then
 sed -i "1i\  fallback:" /tmp/fallback.yaml 
 
 fallback_filter_geoip=$(uci get clashoo.config.fallback_filter_geoip 2>/dev/null)
-[ -n "$fallback_filter_geoip" ] || fallback_filter_geoip=1
+[ -n "$fallback_filter_geoip" ] || fallback_filter_geoip=0
 [ "$fallback_filter_geoip" = "1" ] && fallback_filter_geoip=true || fallback_filter_geoip=false
 fallback_filter_ipcidr=$(uci get clashoo.config.fallback_filter_ipcidr 2>/dev/null)
 cat >> "/tmp/fallback.yaml" <<-EOF

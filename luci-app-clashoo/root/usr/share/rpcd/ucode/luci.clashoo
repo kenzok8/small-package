@@ -1560,6 +1560,12 @@ success: false,
 error: 'smart_core_missing',
 message: '未检测到 Smart 内核。「更新模型」只更新 Smart 模型，不会安装 Smart 内核；请到「系统 → 内核更新」选择 mihomo Smart 版并下载。'
 };
+if (core == 'singbox' && !find_binary_for_family('singbox'))
+return {
+success: false,
+error: 'singbox_core_missing',
+message: '未检测到 sing-box 内核；请到「系统 → 内核更新」下载 sing-box。'
+};
 
 let c = cursor(); c.load('clashoo');
 c.set('clashoo', 'config', 'core_type', core);

@@ -31,17 +31,56 @@ cleanup() {
 	rm -f /var/run/geoip_update >/dev/null 2>&1
 }
 
-download_to() {
-	url="$1"
-	target="$2"
-	if [ -z "$url" ]; then
-		return 1
+detect_proxy() {
+	if pidof mihomo >/dev/null 2>&1 || pidof clash-meta >/dev/null 2>&1 || pidof sing-box >/dev/null 2>&1; then
+		local p
+		p="$(uci -q get clashoo.config.mixed_port 2>/dev/null)"
+		[ -n "$p" ] && echo "http://127.0.0.1:$p"
 	fi
+}
+
+_fetch() {
+	url="$1"; target="$2"; proxy="$3"
 	if command -v curl >/dev/null 2>&1; then
-		curl -fsSL --connect-timeout 15 --max-time 300 -A "Clash/OpenWRT" "$url" -o "$target"
+		if [ -n "$proxy" ]; then
+			curl --proxy "$proxy" -fsSL --connect-timeout 15 --max-time 120 -A "Clash/OpenWRT" "$url" -o "$target"
+		else
+			curl -fsSL --connect-timeout 15 --max-time 120 -A "Clash/OpenWRT" "$url" -o "$target"
+		fi
 		return $?
 	fi
-	wget -q -c4 --timeout=300 --no-check-certificate --user-agent="Clash/OpenWRT" "$url" -O "$target"
+	wget -q --timeout=120 --no-check-certificate --user-agent="Clash/OpenWRT" "$url" -O "$target"
+}
+
+# 多源拉取：本机代理 → 国内镜像（jsdelivr / ghproxy）→ 原 URL 兜底
+download_to() {
+	url="$1"; target="$2"
+	[ -z "$url" ] && return 1
+
+	proxy="$(detect_proxy)"
+
+	if [ -n "$proxy" ]; then
+		_fetch "$url" "$target" "$proxy" && return 0
+	fi
+
+	case "$url" in
+		https://raw.githubusercontent.com/*)
+			rest="${url#https://raw.githubusercontent.com/}"
+			owner="${rest%%/*}"; r1="${rest#*/}"
+			repo="${r1%%/*}"; r2="${r1#*/}"
+			branch="${r2%%/*}"; path="${r2#*/}"
+			for m in \
+				"https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${path}" \
+				"https://mirror.ghproxy.com/${url}"; do
+				_fetch "$m" "$target" "" && return 0
+			done
+			;;
+		https://github.com/*)
+			_fetch "https://mirror.ghproxy.com/${url}" "$target" "" && return 0
+			;;
+	esac
+
+	_fetch "$url" "$target" ""
 }
 
 download_optional() {
