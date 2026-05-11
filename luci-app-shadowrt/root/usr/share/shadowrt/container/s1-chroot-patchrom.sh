@@ -5,7 +5,8 @@ mkdir -p /var/lock
 for service in adb-enablemodem appfilter dockerd gpio_switch hd-idle \
 	kmods kmods-unload lcdsimple led lm-sensors luci-fan \
 	mdadm modemmanager odhcpd smartd sysfixtime sysfsutils sysntpd \
-	tuning_net umount usbmode usbmuxd wan_drop zprintk zram
+	tuning_net umount usbmode usbmuxd wan_drop zprintk zram \
+	log
 do
 	[ -x /etc/init.d/$service ] && /etc/init.d/$service disable
 done
