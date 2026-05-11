@@ -395,7 +395,11 @@ runtime_run_health_check() {
 	if command_exists nslookup; then
 		dns_state="fail"
 		for _try in 1 2 3; do
-			dns_out="$(timeout 3 nslookup www.google.com 127.0.0.1 2>/dev/null)"
+			if command_exists timeout; then
+				dns_out="$(timeout 3 nslookup www.google.com 127.0.0.1 2>/dev/null)"
+			else
+				dns_out="$(nslookup www.google.com 127.0.0.1 2>/dev/null)"
+			fi
 			dns_addr="$(echo "$dns_out" | awk '/^Address: /{print $2} /^Address [0-9]+: /{print $3}' | grep -E '^[0-9a-fA-F:.]+$' | tail -n1)"
 			if [ -n "$dns_addr" ]; then
 				if echo "$dns_addr" | grep -Eq '^198\.18\.|^fc00:'; then
@@ -782,7 +786,7 @@ smart_inject() {
 					.collectdata = (env(SMART_COLLECT) == "true") |
 					.["sample-rate"] = (env(SMART_COLLECT_RATE) | tonumber) |
 					(if env(SMART_PRIORITY) != "" then .["policy-priority"] = env(SMART_PRIORITY) else del(.["policy-priority"]) end)
-				else .
+			else .
 				end
 			)) |
 			(if env(SMART_COLLECT) == "true" then

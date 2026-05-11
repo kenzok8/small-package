@@ -179,7 +179,7 @@ return baseclass.extend({
     clearUpdateMergedLog: function () { return L.resolveDefault(callClearUpdateMergedLog(), {}); },
 
     getCpuArch: function () { return L.resolveDefault(callGetCpuArch(), { arch: '' }).then(r => r.arch || ''); },
-    downloadCore: function () { return L.resolveDefault(callDownloadCore(), {}); },
+    downloadCore: function (dcore, arch) { return L.resolveDefault(callDownloadCore({ dcore: dcore, arch: arch }), {}); },
     updateGeoip:      function () { return L.resolveDefault(callUpdateGeoip(),     {}); },
     getGeoipVersion:  function () { return L.resolveDefault(callGetGeoipVersion(), { version: '' }); },
     updateChinaIp: function () { return L.resolveDefault(callUpdateChinaIp(), {}); },

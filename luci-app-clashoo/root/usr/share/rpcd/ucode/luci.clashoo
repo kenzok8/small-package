@@ -1665,10 +1665,19 @@ return { arch: get_cpu_arch() };
 },
 
 download_core: {
-call: function() {
+call: function(req) {
 if (access('/var/run/core_update', 'r'))
 return { success: true, started: false, running: true };
-system("printf '%s - 内核下载任务已触发\\n' \"$(date '+%Y-%m-%d %H:%M:%S')\" >>/tmp/clash_update.txt");
+let dc = req.args?.dcore || '';
+let arch = req.args?.arch || '';
+if (dc) {
+	let c = cursor(); c.load('clashoo');
+	c.set('clashoo', 'config', 'dcore', dc);
+	if (arch) c.set('clashoo', 'config', 'download_core', arch);
+	c.commit('clashoo');
+	system('uci commit clashoo >/dev/null 2>&1');
+}
+system("printf '%s - 内核下载任务已触发\\n' \"\$(date '+%Y-%m-%d %H:%M:%S')\" >>/tmp/clash_update.txt");
 system("nohup sh -c 'touch /var/run/core_update; sh /usr/share/clashoo/update/core_download.sh; rc=$?; rm -f /var/run/core_update; exit $rc' >/dev/null 2>&1 </dev/null &");
 return { success: true, started: true };
 }
@@ -2447,7 +2456,7 @@ return { success: false, error: 'missing_yq', message: '缺少 yq，无法注入
 	}
 	system("rm -f " + shell_quote(exploded));
 		/* 替换模板中的 直连 → DIRECT（兼容不同模板的命名差异） */
-		system("sed -i 's/直连/DIRECT/g' " + shell_quote(tmp_out) + " 2>/dev/null");
+		system("sed -i 's/直连/DIRECT/g' " + shell_quote(out_path) + " 2>/dev/null");
 	system("yq e '(.proxy-groups[].proxies) |= sub(\"直连\", \"DIRECT\")' " + shell_quote(tmp_out) + " -i 2>/dev/null");
 
 if (!output_name) {
@@ -2458,6 +2467,8 @@ let out_path = out_dir + '/' + output_name;
 if (system('mv -f ' + shell_quote(tmp_out) + ' ' + shell_quote(out_path)) != 0)
 return { success: false, error: 'write_failed', message: '写入结果文件失败' };
 
+/* 删除 respect-rules（模板可能设了但没提供 proxy-server-nameserver） */
+system("sed -i '/respect-rules/d' " + shell_quote(out_path) + " 2>/dev/null");
 system('rm -f ' + shell_quote(tmp_tpl));
 	/* 用 mixin.uc + yq merge 叠加 UCI 覆盖（端口、routing-mark、dns 等） */
 	let mixin_script = "/usr/share/clashoo/runtime/mixin.uc";

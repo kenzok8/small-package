@@ -200,28 +200,31 @@ function start_amlogic_plugin()
 		-- SUCCESS
 		luci.sys.call("echo 'Installation successful. Finalizing...' >> " .. log_file)
 		luci.sys.call(string.format("[ -f %s ] && cp -vf %s %s >> %s 2>&1", config_bak, config_bak, config_file, log_file))
-		-- Cross-branch cleanup: detect which branch was just installed
-		local new_release = ""
-		if luci.sys.call("command -v opkg >/dev/null") == 0 then
-			new_release = luci.sys.exec("opkg list-installed | grep '^luci-app-amlogic ' | awk '{print $3}' | cut -d'-' -f2") or ""
-		elseif luci.sys.call("command -v apk >/dev/null") == 0 then
-			new_release = luci.sys.exec("apk list --installed 2>/dev/null | grep '^luci-app-amlogic-' | awk '{print $1}' | cut -d'-' -f5 | sed 's/^r//'") or ""
-		end
-		new_release = trim(new_release)
-		if new_release == "2" then
-			luci.sys.call("echo 'Cross-branch cleanup: JS installed, removing Lua-only files.' >> " .. log_file)
-			luci.sys.call("rm -f /usr/lib/lua/luci/controller/amlogic.lua >> " .. log_file .. " 2>&1")
-			luci.sys.call("rm -rf /usr/lib/lua/luci/model/cbi/amlogic >> " .. log_file .. " 2>&1")
-			luci.sys.call("rm -rf /usr/lib/lua/luci/view/amlogic >> " .. log_file .. " 2>&1")
-		elseif new_release == "1" then
-			luci.sys.call("echo 'Cross-branch cleanup: Lua installed, removing JS-only files.' >> " .. log_file)
-			luci.sys.call("rm -f /usr/share/rpcd/ucode/luci.amlogic >> " .. log_file .. " 2>&1")
-			luci.sys.call("rm -f /www/luci-static/resources/view/amlogic/*.js >> " .. log_file .. " 2>&1")
-			luci.sys.call("rm -f /usr/share/luci/menu.d/luci-app-amlogic.json >> " .. log_file .. " 2>&1")
-		end
+		luci.sys.call("rm -f /etc/config/amlogic.apk-new /etc/config/amlogic.ipk-old >> " .. log_file .. " 2>&1")
 		luci.sys.call("rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/* " .. config_bak)
 		luci.sys.call("echo '' > " .. running_lock)
 		luci.sys.call("echo 'Successful Update' > " .. log_file)
+		-- Cross-branch cleanup: run in background after a delay so the browser
+		-- can poll "Successful Update" before any files are removed.
+		local cleanup_cmd = table.concat({
+			"(sleep 3",
+			"new_release=''",
+			"if command -v opkg >/dev/null 2>&1; then",
+			"  new_release=\"$(opkg list-installed | grep '^luci-app-amlogic ' | awk '{print $3}' | cut -d'-' -f2)\"",
+			"elif command -v apk >/dev/null 2>&1; then",
+			"  new_release=\"$(apk list --installed 2>/dev/null | grep '^luci-app-amlogic-' | awk '{print $1}' | cut -d'-' -f5 | sed 's/^r//')\"",
+			"fi",
+			"if [ \"${new_release}\" = '2' ]; then",
+			"  rm -f /usr/lib/lua/luci/controller/amlogic.lua",
+			"  rm -rf /usr/lib/lua/luci/model/cbi/amlogic",
+			"  rm -rf /usr/lib/lua/luci/view/amlogic",
+			"elif [ \"${new_release}\" = '1' ]; then",
+			"  rm -f /usr/share/rpcd/ucode/luci.amlogic",
+			"  rm -f /www/luci-static/resources/view/amlogic/*.js",
+			"  rm -f /usr/share/luci/menu.d/luci-app-amlogic.json",
+			"fi) &"
+		}, "\n")
+		luci.sys.call(cleanup_cmd)
 		return 0
 	else
 		-- FAILURE

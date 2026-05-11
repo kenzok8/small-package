@@ -414,7 +414,7 @@ return view.extend({
         m.save()
           .then(function () { return clashoo.commitConfig(); })
           .then(function () {
-            /* 下载 Smart 内核 (dcore=1)：顺手把 smart_auto_switch 打开，避免用户漏配置 */
+            /* 下载 Smart 内核 (dcore=1)：顺手把 smart_auto_switch 打开 */
             var dc = uci.get('clashoo', 'config', 'dcore');
             smartDownload = (String(dc) === '1');
             if (smartDownload && uci.get('clashoo', 'config', 'smart_auto_switch') !== '1') {
@@ -425,7 +425,10 @@ return view.extend({
           .then(function () { return clashoo.clearUpdateLog(); })
           .then(function () {
             liveBtn().textContent = '下载中…';
-            return clashoo.downloadCore();
+            /* 传参给后端，后端负责写入 UCI 再跑脚本 */
+            var dc = uci.get('clashoo', 'config', 'dcore') || '2';
+            var ac = uci.get('clashoo', 'config', 'download_core') || '';
+            return clashoo.downloadCore(dc, ac);
           })
           .then(function () { return clearClashooDirty(); })
           .then(function () { startPolling(); })
