@@ -161,6 +161,22 @@ cfg['experimental'] = {
 	},
 };
 
+/* ════════════════════════════════════════════════════════════ */
+/*  可选覆盖（UCI 字段为空时不注入，类 Nikki "Unmodified"）    */
+/* ════════════════════════════════════════════════════════════ */
+
+/* 模式覆盖 */
+cfg['mode'] = s(a('override_mode'), 'rule');
+
+/* 日志级别覆盖 */
+cfg['log-level'] = s(a('override_log_level'), 'info');
+
+/* DNS 模式覆盖 */
+if (cfg['dns']) cfg['dns']['enhanced-mode'] = s(a('override_dns_mode'), 'fake-ip');
+
+/* TUN Stack 覆盖 */
+if (cfg['tun']) cfg['tun']['stack'] = s(a('override_stack'), 'gvisor');
+
 /* ── 输出 JSON (不含 null/空对象) ─────────────────── */
 function clean(obj) {
 	if (type(obj) == 'array') {
