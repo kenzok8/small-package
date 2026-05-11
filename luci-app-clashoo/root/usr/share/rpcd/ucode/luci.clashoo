@@ -1670,7 +1670,7 @@ if (access('/var/run/core_update', 'r'))
 return { success: true, started: false, running: true };
 let dc = req.args?.dcore || '';
 let arch = req.args?.arch || '';
-if (dc) {
+if (dc && dc != '0' && match(dc, /^[1-5]$/)) {
 	let c = cursor(); c.load('clashoo');
 	c.set('clashoo', 'config', 'dcore', dc);
 	if (arch) c.set('clashoo', 'config', 'download_core', arch);
@@ -2484,9 +2484,16 @@ system('rm -f ' + shell_quote(tmp_tpl));
 	}
 
 
-	/* ── mihomo -t 预校验 ── */
-	if (access('/usr/bin/mihomo', 'x')) {
-		let _ret = system("mihomo -t -d /etc/clashoo -f " + shell_quote(out_path) + " 2>/tmp/clashoo_tpl_verify.txt");
+	/* ── mihomo -t 预校验（搜所有 mihomo 变体）── */
+	let _core_bin = '';
+	for (let _cm in ['mihomo', 'clash-meta', 'clash']) {
+		if (system('command -v ' + _cm + ' >/dev/null 2>&1') == 0) {
+			_core_bin = _cm;
+			break;
+		}
+	}
+	if (_core_bin) {
+		let _ret = system(_core_bin + " -t -d /etc/clashoo -f " + shell_quote(out_path) + " 2>/tmp/clashoo_tpl_verify.txt");
 		if (_ret != 0) {
 			let _err = trim(readfile('/tmp/clashoo_tpl_verify.txt') || '配置校验失败');
 			system('rm -f ' + shell_quote(out_path) + ' /tmp/clashoo_tpl_verify.txt 2>/dev/null');

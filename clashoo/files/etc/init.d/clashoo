@@ -483,7 +483,6 @@ CLASH="$(_detect_selected_core)"
 CLASH_CONFIG="/etc/clashoo"
 CRON_FILE="/etc/crontabs/root"
 CONFIG_YAML="/etc/clashoo/config.yaml"
-CONFIG_YAML_PATH=$(uci get clashoo.config.use_config 2>/dev/null)  
 
 CUSLIST="/tmp/dnsmasq.d/custom_list.conf"
 CUSLITT="/tmp/dnsmasq.clashoo"
@@ -627,7 +626,6 @@ revert_dns() {
 }
 
 add_cron(){
-config_type=$(uci get clashoo.config.config_type 2>/dev/null)
 #===========================================================================================================================
 	clear=$(uci get clashoo.config.auto_clear_log 2>/dev/null)
 	if [ "${clear:-0}" -eq 1 ]; then
@@ -688,7 +686,7 @@ del_cron(){
 
 select_config(){
 #=========================================================================================================================== 
-config_type=$(uci get clashoo.config.config_type 2>/dev/null)
+CONFIG_YAML_PATH=$(uci get clashoo.config.use_config 2>/dev/null)
 log_msg "Checking Config file" "正在检查配置文件"
 
 if [ -f "$CONFIG_YAML_PATH" ] && [ -s "$CONFIG_YAML_PATH" ];then

@@ -66,14 +66,7 @@ var CSS = [
   '.cl-rewrite-wrap{max-width:760px;padding:0;border:0;background:transparent;box-shadow:none}',
   '.cl-rewrite-group{display:flex;flex-direction:column;gap:8px}',
   '.cl-rewrite-group-title{font-size:12px;font-weight:700;opacity:.68}',
-  '.cl-rw-divider{height:1px;background:rgba(128,128,128,.18);margin:10px 0}' +
-  '.cl-ov-toggle{cursor:pointer;font-size:13px;padding:6px 0;border:0;background:none;opacity:.7;width:100%;text-align:left}' +
-  '.cl-ov-toggle:hover{opacity:1}' +
-  '.cl-ov-wrap{width:100%}' +
-  '.cl-ov-body{padding:8px 0 4px 4px}' +
-  '.cl-ov-row{display:flex;align-items:center;gap:12px;margin-bottom:6px}' +
-  '.cl-ov-label{min-width:85px;font-size:13px;opacity:.75}' +
-  '.ov-select{max-width:200px}',
+  '.cl-rw-divider{height:1px;background:rgba(128,128,128,.18);margin:10px 0}',
   '.cl-rewrite-wrap .cl-sub-url,.cl-rewrite-wrap .cbi-input-select{padding:8px 12px;border-radius:6px;width:100%;box-sizing:border-box;margin-bottom:0}',
   '.cl-rewrite-actions{margin-top:4px}',
   '.cl-actions{display:flex;gap:8px;flex-wrap:wrap}',
@@ -755,48 +748,7 @@ return view.extend({
               E('button', { 'class': 'btn cbi-button cl-btn-sm', click: function(){ rwApply(false); } }, '生成配置'),
               E('button', { 'class': 'btn cbi-button-action cl-btn-sm cl-btn-generate-switch', click: function(){ rwApply(true); } }, '应用配置')
             ])
-          ]),
-          E('div', { 'class': 'cl-rw-divider' }),
-          /* foldable UCI quick overrides */
-          (function() {
-            var ovBody = E('div', { 'class': 'cl-ov-body', 'style': 'display:none' });
-            var ovCollapsed = true;
-            var ovToggle = E('button', {
-              'class': 'btn cbi-button cl-btn-sm cl-ov-toggle',
-              click: function () {
-                ovCollapsed = !ovCollapsed;
-                ovBody.style.display = ovCollapsed ? 'none' : '';
-                ovToggle.textContent = ovCollapsed ? '\u25b8 快速复写（可选）' : '\u25be 快速复写（可选）';
-              }
-            }, '\u25b8 快速复写（可选）');
-
-            var ovFields = [
-              { opt: 'override_mode',     label: '模式',       opts: ['rule','global','direct'],     def: 'rule' },
-              { opt: 'override_log_level', label: '日志级别',   opts: ['info','debug','warning','error','silent'], def: 'info' },
-              { opt: 'override_dns_mode',  label: 'DNS 模式',   opts: ['fake-ip','redir-host','normal'], def: 'fake-ip' },
-              { opt: 'override_stack',     label: 'TUN Stack',  opts: ['gvisor','system','mixed'],    def: 'gvisor' },
-            ];
-
-            ovFields.forEach(function (f) {
-              var opts = f.opts.map(function (v) { return E('option', { value: v }, v); });
-              var sel = E('select', { 'class': 'cbi-input-select ov-select', 'data-ov': f.opt }, opts);
-              var cv = uci.get('clashoo', 'config', f.opt) || f.def || '';
-              if (cv) sel.value = cv;
-              ovBody.appendChild(E('div', { 'class': 'cl-ov-row' }, [
-                E('label', { 'class': 'cl-ov-label' }, f.label),
-                sel
-              ]));
-            });
-
-            window._saveOverrideFields = function () {
-              ovBody.querySelectorAll('[data-ov]').forEach(function (el) {
-                uci.set('clashoo', 'config', el.getAttribute('data-ov'), el.value || '');
-              });
-            };
-
-            var ovWrap = E('div', { 'class': 'cl-ov-wrap' }, [ovToggle, ovBody]);
-            return ovWrap;
-          })(),
+          ])
         ])
       ])
     );
@@ -935,13 +887,13 @@ return view.extend({
 
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'btn cbi-button', click: function () {
-          if (window._saveOverrideFields) window._saveOverrideFields(); m.save().then(function () { return clashoo.commitConfig(); })
+          m.save().then(function () { return clashoo.commitConfig(); })
             .then(function () { return clearClashooDirty(); })
             .then(function () { location.reload(); })
             .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });
         }}, '保存配置'),
         E('button', { 'class': 'btn cbi-button-action', click: function () {
-          if (window._saveOverrideFields) window._saveOverrideFields(); saveCommitApplyMaybeReload(m, '代理配置已保存并热重载服务', '代理配置已保存，服务未启动')
+          saveCommitApplyMaybeReload(m, '代理配置已保存并热重载服务', '代理配置已保存，服务未启动')
             .catch(function (e) { ui.addNotification(null, E('p', '操作失败: ' + (e.message || e))); });
         }}, '应用配置')
       ]));

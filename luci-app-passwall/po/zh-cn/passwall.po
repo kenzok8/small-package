@@ -58,8 +58,8 @@ msgstr "规则列表"
 msgid "Access control"
 msgstr "访问控制"
 
-msgid "Watch Logs"
-msgstr "查看日志"
+msgid "Runtime Logs"
+msgstr "运行日志"
 
 msgid "Node Config"
 msgstr "节点配置"

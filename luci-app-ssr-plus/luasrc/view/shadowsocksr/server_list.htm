@@ -275,11 +275,15 @@ end
 		}
 		var input = document.getElementById(store);
 		var order = ids.join(" ");
+		var pageElem = document.getElementById('cbi-server-page');
+		var pageSizeElem = document.getElementById('cbi-server-page-size');
+		var server_page = pageElem ? pageElem.value : '<%=self.server_page or 1%>';
+		var server_page_size = pageSizeElem ? pageSizeElem.value : '<%=self.server_page_size or 0%>';
 		if (input) input.value = order;
 		XHR.post('<%=luci.dispatcher.build_url("admin/services/shadowsocksr/save_order")%>', {
 			order: order,
-			page: '<%=self.server_page or 1%>',
-			page_size: '<%=self.server_page_size or 0%>'
+			page: server_page,
+			page_size: server_page_size
 		}, function(x, result) {
 			result = result || {};
 			if (result.ret !== 1 && result.ret !== "1") {

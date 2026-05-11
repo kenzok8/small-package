@@ -1011,6 +1011,9 @@ function gen_config(var)
 			else
 				blc_nodes = _node.balancing_node
 			end
+
+			api.log("  - 加载 Xray 负载均衡 节点【" .. (_node.remarks or "") .. "】，子节点数量：" .. #(blc_nodes or {}))
+
 			local valid_nodes = {}
 			for i = 1, #(blc_nodes or {}) do
 				local blc_node_id = blc_nodes[i]

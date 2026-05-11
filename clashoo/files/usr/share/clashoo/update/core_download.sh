@@ -682,6 +682,7 @@ backup_binary() {
 	bak="${dst}.bak"
 	if [ -x "$dst" ]; then
 		cp -f "$dst" "$bak" 2>/dev/null || true
+		[ -f "$bak" ] || { write_log "备份旧内核失败（磁盘满？），跳过备份"; }
 	fi
 }
 

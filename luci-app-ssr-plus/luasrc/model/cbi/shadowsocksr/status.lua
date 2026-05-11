@@ -117,7 +117,7 @@ if global_type == "socks5" and Process_list:find("ipt2socks") then
 	if Process_list:find("%-U") or Process_list:find("%-%-udp%-only") then
 		reudp_run = 1
 	end
-	if global_socks_enabled and (global_socks_server == "same" or global_socks_server == global_server) then
+	if global_socks_enabled and (global_socks_server == "same" and global_socks_server == global_server) then
 		sock5_run = 1
 	end
 end
@@ -125,7 +125,7 @@ end
 if (global_type == "clash" or global_type == "tuic" or global_type == "ss") and Process_list:find("ssr%-retcp") then
 	redir_run = 1
 	reudp_run = 1
-	if global_socks_enabled and (global_socks_server == "same" or global_socks_server == global_server) then
+	if global_socks_enabled and (global_socks_server == "same" and global_socks_server == global_server) then
 		sock5_run = 1
 	end
 end
@@ -133,7 +133,7 @@ end
 if (global_type == "clash" or global_type == "tuic" or global_type == "ss") and Process_list:find("mihomo") and (Process_list:find("/clash%-") or Process_list:find("/tuic%-") or Process_list:find("/ss%-")) then
 	redir_run = 1
 	reudp_run = 1
-	if global_socks_enabled and (global_socks_server == "same" or global_socks_server == global_server) then
+	if global_socks_enabled and (global_socks_server == "same" and global_socks_server == global_server) then
 		sock5_run = 1
 	end
 end

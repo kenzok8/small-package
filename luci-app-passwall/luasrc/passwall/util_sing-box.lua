@@ -1267,6 +1267,9 @@ function gen_config(var)
 			else
 				ut_nodes = _node.urltest_node
 			end
+
+			api.log("  - 加载 Sing-Box URLTest 节点【" .. (_node.remarks or "") .. "】，子节点数量：" .. #(ut_nodes or {}))
+
 			local valid_nodes = {}
 			for i = 1, #(ut_nodes or {}) do
 				local ut_node_id = ut_nodes[i]
