@@ -3156,7 +3156,7 @@ if (!prefer_template) {
 if (!config_obj && system('command -v ucode >/dev/null 2>&1') == 0 &&
     access('/usr/share/clashoo/lib/yaml2singbox.uc', 'r') &&
     access('/usr/share/clashoo/lib/templates/default.json', 'r')) {
-  let yaml_src = preferred_yaml;
+  let yaml_src = '';
   if (!(yaml_src && access(yaml_src, 'r') && match(yaml_src, /\.(yaml|yml)$/))) {
     let tmp_yaml = '/tmp/clashoo_sb_sub.yaml';
     let tmp_hdr  = '/tmp/clashoo_sb_sub.hdr';
