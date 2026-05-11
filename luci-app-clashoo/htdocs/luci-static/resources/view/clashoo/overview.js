@@ -1541,34 +1541,38 @@ return view.extend({
     return '健康检查中…';
   },
 
-  /* fn: fire-and-forget RPC + 独立轮询直到状态到位 */
+  /* fn: fire-and-forget RPC + 秒速轮询直到状态到位 */
+  /* 注：点按即翻转开关（秒回），不等 RPC 确认，体验如 OpenClash */
   _svc: function (fn, opKey) {
     if (this._busy) return Promise.resolve();
     this._busy = true;
     var self = this;
     self._op = opKey;
 
-    var startMsgs = ['校验配置文件', '配置防火墙规则', '初始化 DNS'];
-    var stopMsgs  = ['关闭服务', '清理规则'];
-    var msgs    = opKey === 'stop' ? stopMsgs : startMsgs;
-    var animMs  = opKey === 'stop' ? 3000 : 8000;
-    var maxWait = opKey === 'stop' ? 15000 : 35000;
+    /* 立即翻转 switch 视觉 */
+    var btn = document.querySelector('.cl-service-switch');
+    if (btn) {
+      var running = btn.getAttribute('aria-pressed') === 'true';
+      var newRunning = opKey === 'start';
+      if (newRunning !== running) {
+        btn.setAttribute('aria-pressed', newRunning ? 'true' : 'false');
+        btn.className = 'cl-service-switch' + (newRunning ? ' is-on' : ' is-off');
+      }
+      self._showOpMsg(opKey === 'stop' ? '停止中…' : '启动中…');
+    }
 
-    self._startMsgAnim(msgs, animMs);
-    fn().catch(function () {});   /* fire-and-forget；超时由下面的轮询兜底 */
+    var maxWait = opKey === 'stop' ? 15000 : 35000;
+    fn().catch(function () {});   /* fire-and-forget */
 
     var started   = Date.now();
     var pollTimer = null;
 
     function finish(finalMsg) {
       if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
-      self._clearOpTimers();
       if (finalMsg) self._showOpMsg(finalMsg);
-      setTimeout(function () {
-        self._busy = false;
-        self._op   = null;
-        self._pollOverview(true);
-      }, finalMsg ? 900 : 0);
+      self._busy = false;
+      self._op   = null;
+      self._pollOverview(true);
     }
 
     function pollOnce() {
@@ -1579,16 +1583,16 @@ return view.extend({
           if (st.running === false)          return finish('已停止 ⚪');
         } else {
           if (st.running === true)           return finish('运行中 🟢');
-          if (st.health_status === 'fail')   return finish(null);   /* 全量刷新展示具体错误 */
+          if (st.health_status === 'fail')   return finish(null);
         }
         if (elapsed >= maxWait) return finish(null);
-        pollTimer = setTimeout(pollOnce, 1500);
+        pollTimer = setTimeout(pollOnce, 500);
       }).catch(function () {
-        if (Date.now() - started < maxWait) pollTimer = setTimeout(pollOnce, 1500);
+        if (Date.now() - started < maxWait) pollTimer = setTimeout(pollOnce, 500);
         else finish(null);
       });
     }
-    pollTimer = setTimeout(pollOnce, 1200);
+    pollTimer = setTimeout(pollOnce, 100);
   },
 
   _start:   function () { return this._svc(function () { return clashoo.start(); },   'start'); },

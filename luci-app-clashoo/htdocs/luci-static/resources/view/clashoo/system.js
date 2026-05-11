@@ -411,23 +411,25 @@ return view.extend({
         b.disabled = true;
         b.textContent = '保存中…';
         h.textContent = '';
+        /* 从 DOM 直接读下拉值，不依赖 uci.get 缓存 */
+        var dv = function (o) {
+                  var e = document.querySelector('select[id$=".' + o + '"]');
+                  return e ? e.value : '';
+        };
+        var dc = dv('dcore') || '2';
+        var ac = dv('download_core') || '';
+        smartDownload = (String(dc) === '1');
         m.save()
           .then(function () { return clashoo.commitConfig(); })
           .then(function () {
-            /* 下载 Smart 内核 (dcore=1)：顺手把 smart_auto_switch 打开 */
-            var dc = uci.get('clashoo', 'config', 'dcore');
-            smartDownload = (String(dc) === '1');
-            if (smartDownload && uci.get('clashoo', 'config', 'smart_auto_switch') !== '1') {
-              uci.set('clashoo', 'config', 'smart_auto_switch', '1');
-              return uci.save().then(function () { return clashoo.commitConfig(); });
+            if (smartDownload) {
+                    uci.set('clashoo', 'config', 'smart_auto_switch', '1');
+                    return uci.save().then(function () { return clashoo.commitConfig(); });
             }
           })
           .then(function () { return clashoo.clearUpdateLog(); })
           .then(function () {
             liveBtn().textContent = '下载中…';
-            /* 传参给后端，后端负责写入 UCI 再跑脚本 */
-            var dc = uci.get('clashoo', 'config', 'dcore') || '2';
-            var ac = uci.get('clashoo', 'config', 'download_core') || '';
             return clashoo.downloadCore(dc, ac);
           })
           .then(function () { return clearClashooDirty(); })

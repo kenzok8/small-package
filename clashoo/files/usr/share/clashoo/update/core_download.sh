@@ -414,7 +414,29 @@ fetch_latest_tag() {
 		esac
 	done
 
-	best="$(pick_highest_stable_tag "$candidates")"
+		# 终极兜底：直连 GitHub 爬取 releases 页面（镜像都失效时备用）
+	ensure_not_timed_out || return 1
+	p=""
+	u="$(prefixed_url "$p" "$releases_url")"
+	tag="$(fetch_url_try "$u" 2>/dev/null | sed -n 's#.*releases/tag/\(v[0-9][^"/?]*\).*#\1#p' | head -n 1)"
+	case "$tag" in
+		v*[-]*)
+			;;
+		*)
+			[ -n "$tag" ] && { echo "$tag"; return 0; }
+			;;
+	esac
+	# 再试一次 releases/latest 的 302 跳转
+	u="$(prefixed_url "$p" "$web_url")"
+	if command -v curl >/dev/null 2>&1; then
+		tag="$(curl -fsSIL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$REQUEST_TIMEOUT" -A "Clash/OpenWRT" "$u" 2>/dev/null | sed -n 's#^[Ll]ocation: .*/releases/tag/\([^[:space:]
+]*\).*#\1#p' | head -n 1)"
+	else
+		tag="$(wget -S --spider --timeout="$CONNECT_TIMEOUT" --no-check-certificate --user-agent="Clash/OpenWRT" "$u" 2>&1 | sed -n 's#^  Location: .*/releases/tag/\([^[:space:]]*\).*#\1#p' | head -n 1)"
+	fi
+	[ -n "$tag" ] && { echo "$tag"; return 0; }
+
+best="$(pick_highest_stable_tag "$candidates")"
 	[ -n "$best" ] && {
 		echo "$best"
 		return 0
