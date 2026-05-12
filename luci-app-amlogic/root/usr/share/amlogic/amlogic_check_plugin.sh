@@ -64,38 +64,39 @@ fi
 tolog "PLATFORM: [ ${PLATFORM} ]"
 sleep 2
 
-# Read plugin branch from UCI config; default to auto-detect when missing or empty.
-# When amlogic_plugin_branch is missing, add it and auto-detect from system.
-if [[ -f "${AMLOGIC_CONFIG_FILE}" ]]; then
-    plugin_branch="$(uci get amlogic.config.amlogic_plugin_branch 2>/dev/null | xargs)"
-    if ! grep -q "amlogic_plugin_branch" "${AMLOGIC_CONFIG_FILE}" 2>/dev/null; then
-        # Auto-detect: JS LuCI → js branch, Lua LuCI → lua branch
-        if [[ -f "/www/luci-static/resources/luci.js" ]]; then
-            plugin_branch="main"
-        else
-            plugin_branch="lua"
-        fi
-        uci set amlogic.config.amlogic_plugin_branch="${plugin_branch}" 2>/dev/null
-        uci commit amlogic 2>/dev/null
-    fi
-else
-    # Config file missing, detect from system
+# Read and resolve plugin_branch from UCI config.
+# Normalise to canonical values: "main" (JS) or "lua".
+# Priority: UCI value → auto-detect from system.
+plugin_branch="$(uci get amlogic.config.amlogic_plugin_branch 2>/dev/null | tr '[:upper:]' '[:lower:]' | xargs)"
+
+# Normalize aliases (js / javascript / main → "main"; anything else → "lua")
+case "${plugin_branch}" in
+js | javascript | main)
+    plugin_branch="main"
+    ;;
+lua)
+    plugin_branch="lua"
+    ;;
+*)
+    # Empty, unknown, or missing → auto-detect from system
     if [[ -f "/www/luci-static/resources/luci.js" ]]; then
         plugin_branch="main"
     else
         plugin_branch="lua"
     fi
+    ;;
+esac
+
+# Safety check: "main" requires JS LuCI; fall back when absent
+if [[ "${plugin_branch}" == "main" && ! -f "/www/luci-static/resources/luci.js" ]]; then
+    plugin_branch="lua"
+    tolog "Warning: JS LuCI not found, falling back to lua branch."
 fi
-# If branch is still empty (old config set it to ''), auto-detect
-if [[ -z "${plugin_branch}" ]]; then
-    if [[ -f "/www/luci-static/resources/luci.js" ]]; then
-        plugin_branch="main"
-    else
-        plugin_branch="lua"
-    fi
-    uci set amlogic.config.amlogic_plugin_branch="${plugin_branch}" 2>/dev/null
-    uci commit amlogic 2>/dev/null
-fi
+
+# Persist the resolved value back to UCI (covers migration + branch-switch cases)
+uci set amlogic.config.amlogic_plugin_branch="${plugin_branch}" 2>/dev/null
+uci commit amlogic 2>/dev/null
+
 tolog "Plugin branch: [ ${plugin_branch} ]"
 sleep 1
 get_plugin_info() {
