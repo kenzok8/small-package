@@ -15,7 +15,6 @@ checkmd5(){
 	fi
 }
 
-configpath
 configpath="$(uci get AdGuardHome.AdGuardHome.configpath 2>/dev/null)"
 if [ -z "$configpath" ]; then
 	configpath="/etc/AdGuardHome.yaml"

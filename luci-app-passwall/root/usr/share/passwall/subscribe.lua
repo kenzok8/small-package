@@ -1775,12 +1775,12 @@ local function select_node(nodes, config, parentConfig)
 				end
 			end
 		end
-		-- 第一优先级 类型 + 备注 + IP + 端口
+		-- 第一优先级 类型 + 备注 + IP + 端口 + 分组
 		if not server then
 			for index, node in pairs(nodes) do
 				if config.currentNode.type and config.currentNode.remarks and config.currentNode.address and config.currentNode.port then
 					if node.type and node.remarks and node.address and node.port then
-						if node.type == config.currentNode.type and node.remarks == config.currentNode.remarks and (node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port) then
+						if node.type == config.currentNode.type and node.remarks == config.currentNode.remarks and (node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port) and node.group == config.currentNode.group then
 							if config.log == nil or config.log == true then
 								log('更新【' .. config.remarks .. '】第一匹配节点：' .. node.remarks)
 							end
@@ -1791,12 +1791,12 @@ local function select_node(nodes, config, parentConfig)
 				end
 			end
 		end
-		-- 第二优先级 类型 + IP + 端口
+		-- 第二优先级 类型 + IP + 端口 + 分组
 		if not server then
 			for index, node in pairs(nodes) do
 				if config.currentNode.type and config.currentNode.address and config.currentNode.port then
 					if node.type and node.address and node.port then
-						if node.type == config.currentNode.type and (node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port) then
+						if node.type == config.currentNode.type and (node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port) and node.group == config.currentNode.group then
 							if config.log == nil or config.log == true then
 								log('更新【' .. config.remarks .. '】第二匹配节点：' .. node.remarks)
 							end
@@ -1807,12 +1807,12 @@ local function select_node(nodes, config, parentConfig)
 				end
 			end
 		end
-		-- 第三优先级 IP + 端口
+		-- 第三优先级 IP + 端口 + 分组
 		if not server then
 			for index, node in pairs(nodes) do
 				if config.currentNode.address and config.currentNode.port then
 					if node.address and node.port then
-						if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port then
+						if node.address .. ':' .. node.port == config.currentNode.address .. ':' .. config.currentNode.port and node.group == config.currentNode.group then
 							if config.log == nil or config.log == true then
 								log('更新【' .. config.remarks .. '】第三匹配节点：' .. node.remarks)
 							end
@@ -1823,12 +1823,12 @@ local function select_node(nodes, config, parentConfig)
 				end
 			end
 		end
-		-- 第四优先级 IP
+		-- 第四优先级 IP + 分组
 		if not server then
 			for index, node in pairs(nodes) do
 				if config.currentNode.address then
 					if node.address then
-						if node.address == config.currentNode.address then
+						if node.address == config.currentNode.address and node.group == config.currentNode.group then
 							if config.log == nil or config.log == true then
 								log('更新【' .. config.remarks .. '】第四匹配节点：' .. node.remarks)
 							end
@@ -1839,12 +1839,12 @@ local function select_node(nodes, config, parentConfig)
 				end
 			end
 		end
-		-- 第五优先级备注
+		-- 第五优先级备注 + 分组
 		if not server then
 			for index, node in pairs(nodes) do
 				if config.currentNode.remarks then
 					if node.remarks then
-						if node.remarks == config.currentNode.remarks then
+						if node.remarks == config.currentNode.remarks and node.group == config.currentNode.group then
 							if config.log == nil or config.log == true then
 								log('更新【' .. config.remarks .. '】第五匹配节点：' .. node.remarks)
 							end
