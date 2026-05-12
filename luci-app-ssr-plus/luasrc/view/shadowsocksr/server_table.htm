@@ -245,7 +245,21 @@ end
 							<%- end
 							%> alt="<%:Edit%>" title="<%:Edit%>" />
 						<% end; if self.addremove then %>
-							<input class="btn cbi-button cbi-button-remove" type="submit" value="<%:Delete%>" onclick="this.form.cbi_state='del-section'; return true" name="cbi.rts.<%=self.config%>.<%=k%>" alt="<%:Delete%>" title="<%:Delete%>" />
+							<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>"
+								onclick="
+									var sid = '<%=k%>';
+									XHR.post('<%=luci.dispatcher.build_url("admin/services/shadowsocksr/delete_node")%>', {
+										sid: sid
+									}, function(x, result) {
+										result = result || {};
+										if (result.ret == 1) {
+											window.location.reload();
+											return;
+										}
+									});
+									return false;
+								"
+							/>
 						<%- end -%>
 					</div>
 				</td>

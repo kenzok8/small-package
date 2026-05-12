@@ -646,6 +646,7 @@ function index()
 	entry({"admin", "services", "shadowsocksr", "run"}, call("act_status"))
 	entry({"admin", "services", "shadowsocksr", "ping"}, call("act_ping"))
 	entry({"admin", "services", "shadowsocksr", "save_order"}, call("save_order")).leaf = true
+	entry({"admin", "services", "shadowsocksr", "delete_node"}, call("act_delete_node")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "toggle_subscribe_item_enabled"}, call("toggle_subscribe_item_enabled")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "reset"}, call("act_reset"))
 	entry({"admin", "services", "shadowsocksr", "restart"}, call("act_restart"))
@@ -756,6 +757,33 @@ function save_order()
 		page = page,
 		page_size = page_size
 	})
+end
+
+function act_delete_node()
+	local sid = luci.http.formvalue("sid")
+
+	if not sid or sid == "" then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "missing sid" })
+		return
+	end
+
+	local del_cmd = luci.sys.call("uci -q delete shadowsocksr." .. sid)
+	if del_cmd ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "delete failed" })
+		return
+	end
+
+	local com_cmd = luci.sys.call("uci -q commit shadowsocksr >/dev/null 2>&1")
+	if com_cmd ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "commit failed" })
+		return
+	end
+
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({ ret = 1, sid = sid })
 end
 
 function toggle_subscribe_item_enabled()
