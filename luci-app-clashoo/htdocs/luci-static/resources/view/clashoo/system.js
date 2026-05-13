@@ -50,8 +50,7 @@ var CSS = [
   '.cl-log-tabs{display:flex;gap:8px;margin-bottom:8px}',
   '.cl-log-tab{padding:4px 12px;border:1px solid rgba(128,128,128,.2);border-radius:20px;font-size:12px;cursor:pointer;opacity:.6}',
   '.cl-log-tab.active{opacity:1;font-weight:600;background:rgba(128,128,128,.1)}',
-  '.cl-dl-hint{font-size:12px;color:#2e7d32;margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace}',
-  '.cl-theme-dark .cl-dl-hint{color:#7fd591}',
+  '.cl-dl-hint{margin-top:6px;font-size:12px;min-height:18px;line-height:1.4}',
   /* 统一 form.Map 字体大小与 config 页一致 */
   '.cl-panel .cbi-section>h3{font-size:13px !important;font-weight:600;margin-bottom:8px}',
   '.cl-panel .cbi-value-title{font-size:13px !important}',
@@ -336,7 +335,7 @@ return view.extend({
         'class': 'btn cbi-button-action cl-dl-core-btn',
         'data-cl-orig-text': origText
       }, origText);
-      var dlHint = E('div', { 'class': 'cl-dl-hint' }, '');
+      var dlHint = E('div', { 'class': 'cl-update-status cl-dl-hint' }, '');
 
       /* 取日志最后一行，去掉时间戳和缩进，留下短描述 */
       var lastLogLine = function (log) {
@@ -352,52 +351,119 @@ return view.extend({
       /* 实时从 DOM 拿元素（form.Map 重渲染后闭包引用会失效） */
       var liveBtn  = function () { return document.querySelector('.cl-dl-core-btn') || dlBtn; };
       var liveHint = function () { return document.querySelector('.cl-dl-hint')     || dlHint; };
+      var coreTypeLabel = function (v) {
+        switch (String(v || '')) {
+        case '1': return 'mihomo Smart 版';
+        case '2': return 'mihomo 稳定版';
+        case '3': return 'mihomo Alpha 版';
+        case '4': return 'sing-box 稳定版';
+        case '5': return 'sing-box Alpha 版';
+        default:  return '内核';
+        }
+      };
+      var selectedCoreLabel = function () {
+        var e = document.querySelector('select[id$=".dcore"]');
+        return coreTypeLabel(e ? e.value : (uci.get('clashoo', 'config', 'dcore') || '2'));
+      };
+      var activeCoreLabel = selectedCoreLabel();
+      var withCoreLabel = function (msg) {
+        msg = msg || '';
+        if (!msg) return '';
+        if (/^通道：/.test(msg))
+          return msg.replace(/^通道：/, '');
+        if (msg.indexOf(activeCoreLabel + '：') === 0)
+          return msg;
+        return activeCoreLabel + '：' + msg;
+      };
+      var setHint = function (text, tone) {
+        var h = liveHint();
+        h.textContent = text || '';
+        h.style.color = tone === 'success' ? 'var(--success-color, #2e7d32)'
+                    : tone === 'error'   ? 'var(--error-color, #d32f2f)'
+                    : tone === 'progress'? 'var(--tip-color, #1976d2)'
+                    : '';
+      };
+      var compactCoreLog = function (line) {
+        var msg = clashoo.localizeLogLine(lastLogLine(line));
+        if (!msg) return '';
+        if (/内核下载任务已触发/.test(msg)) return '任务已提交';
+        if (/内核下载任务启动/.test(msg)) return '正在准备下载';
+        if (/^下载架构：/.test(msg)) return msg.replace(/^下载架构：/, '架构：');
+        if (/^已选择内核通道：mihomo Smart/.test(msg)) return '通道：mihomo Smart 版';
+        if (/^已选择内核通道：稳定版/.test(msg)) return '通道：mihomo 稳定版';
+        if (/^已选择内核通道：预发布版/.test(msg)) return '通道：mihomo Alpha 版';
+        if (/^已选择 sing-box 稳定版/.test(msg)) return '通道：sing-box 稳定版';
+        if (/^已选择 sing-box 预发布版/.test(msg)) return '通道：sing-box Alpha 版';
+        if (/GitHub Release/.test(msg) || /版本号/.test(msg)) return '正在获取版本信息';
+        if (/^版本标签：/.test(msg)) return msg.replace(/^版本标签：/, '版本：');
+        if (/^匹配内核文件：/.test(msg)) return '已匹配内核文件';
+        if (/^开始下载内核/.test(msg)) return '正在下载内核';
+        if (/^Downloading from /.test(msg)) return '正在下载文件';
+        if (/invalid gzip|file is empty/i.test(msg)) return '镜像文件异常，切换源';
+        if (/OpenWrt APK 包/.test(msg)) return '尝试 OpenWrt APK 包';
+        if (/OpenWrt IPK 包/.test(msg)) return '尝试 OpenWrt IPK 包';
+        if (/sing-box 归档包/.test(msg)) return '尝试 sing-box 归档包';
+        if (/Smart 内核已就绪/.test(msg)) return 'Smart 内核已就绪';
+        if (/内核已替换，重启 Clashoo/.test(msg)) return '内核已替换，正在重启';
+        if (/内核更新完成|sing-box 更新完成/.test(msg)) return msg.replace(/^sing-box 更新完成:/, 'sing-box 更新完成：');
+        if (/未找到对应架构的内核文件/.test(msg)) return '未找到对应架构的内核文件';
+        if (/所有镜像源均不可达/.test(msg)) return '内核下载失败：镜像不可达';
+        if (/自定义镜像前缀/.test(msg)) return '可尝试更换镜像源';
+        return msg.length > 36 ? (msg.slice(0, 34) + '…') : msg;
+      };
+      var coreLogFailed = function (log) {
+        return /失败|错误|error|failed|invalid|incomplete|not found|未找到|不可达/i.test(log || '');
+      };
 
       var stopPoll = function () {
         if (self._coreDlTimer) { clearInterval(self._coreDlTimer); self._coreDlTimer = null; }
       };
       var resetAfter = function (btnText, hintText, ms) {
-        var b = liveBtn(), h = liveHint();
+        var b = liveBtn();
+        var failed = /失败|错误|不可达|未找到|failed|error/i.test(hintText || btnText);
+        var hint = hintText || '';
         b.textContent = btnText;
-        h.textContent = hintText || '';
+        if (hint && !/^[✓✗ℹ⏳]/.test(hint))
+          hint = (failed ? '✗ ' : '✓ ') + hint;
+        setHint(hint, failed ? 'error' : 'success');
         setTimeout(function () {
-          var b2 = liveBtn(), h2 = liveHint();
+          var b2 = liveBtn();
           b2.disabled = false;
           b2.textContent = b2.getAttribute('data-cl-orig-text') || origText;
-          h2.textContent = '';
+          setHint('');
         }, ms || 5000);
       };
       var smartDownload = false; /* 由点击逻辑标记，下载完成时决定要不要自动重启 */
       var pollOnce = function () {
         return clashoo.getLogStatus().then(function (st) {
           if (!st) return;
-          var b = liveBtn(), h = liveHint();
+          var b = liveBtn();
           if (st.core_updating) {
             b.disabled = true;
             b.textContent = '下载中…';
-            h.textContent = lastLogLine(st.core_log) || '下载中…';
+            setHint('⏳ ' + withCoreLabel(compactCoreLog(st.core_log) || '正在下载内核...'), 'progress');
             return;
           }
           stopPoll();
-          var tail = lastLogLine(st.core_log || '');
-          var failed = /失败|error|failed/i.test(tail) && !/完成/.test(tail);
+          var tail = withCoreLabel(compactCoreLog(st.core_log || '') || '内核下载完成');
+          var failed = coreLogFailed(st.core_log || '') && !/完成|updated|success/i.test(tail);
           if (failed) {
-            resetAfter('下载失败', tail);
+            resetAfter('下载失败', tail || '内核下载失败');
             return;
           }
           /* Smart 内核：下载完成后自动重启服务让新二进制生效 */
           if (smartDownload) {
             smartDownload = false;
             liveBtn().textContent = '重启服务…';
-            liveHint().textContent = '应用 Smart 内核中…';
+            setHint('⏳ 应用 Smart 内核中...', 'progress');
             clashoo.restart().then(function () {
               resetAfter('已应用 ✓', 'Smart 内核已替换并重启');
             }).catch(function () {
-              resetAfter('下载完成 ✓', tail + '（重启失败，请手动启动）');
+              resetAfter('下载完成 ✓', (tail || '内核下载完成') + '，重启失败');
             });
             return;
           }
-          resetAfter('下载完成 ✓', tail);
+          resetAfter('下载完成 ✓', tail || '内核下载完成');
         }).catch(function () {});
       };
       var startPolling = function () {
@@ -407,10 +473,10 @@ return view.extend({
       };
 
       dlBtn.addEventListener('click', function () {
-        var b = liveBtn(), h = liveHint();
+        var b = liveBtn();
         b.disabled = true;
         b.textContent = '保存中…';
-        h.textContent = '';
+        setHint('');
         /* 从 DOM 直接读下拉值，不依赖 uci.get 缓存 */
         var dv = function (o) {
                   var e = document.querySelector('select[id$=".' + o + '"]');
@@ -418,6 +484,7 @@ return view.extend({
         };
         var dc = dv('dcore') || '2';
         var ac = dv('download_core') || '';
+        activeCoreLabel = coreTypeLabel(dc);
         smartDownload = (String(dc) === '1');
         m.save()
           .then(function () { return clashoo.commitConfig(); })
@@ -430,6 +497,7 @@ return view.extend({
           .then(function () { return clashoo.clearUpdateLog(); })
           .then(function () {
             liveBtn().textContent = '下载中…';
+            setHint('⏳ ' + withCoreLabel('正在启动下载...'), 'progress');
             return clashoo.downloadCore(dc, ac);
           })
           .then(function () { return clearClashooDirty(); })
@@ -442,7 +510,10 @@ return view.extend({
 
       /* 进入页面时若已有任务在跑，恢复"下载中"状态并接管轮询 */
       clashoo.getLogStatus().then(function (st) {
-        if (st && st.core_updating) startPolling();
+        if (st && st.core_updating) {
+          activeCoreLabel = selectedCoreLabel();
+          startPolling();
+        }
       }).catch(function () {});
 
       return E('div', { 'class': 'cl-btn-ver-wrap' }, [
@@ -462,27 +533,75 @@ return view.extend({
     o = s.option(form.DummyValue, '_geo_btn', '');
     o.cfgvalue = function () {
       var verSpan = E('span', { 'class': 'cl-ver-tag' }, '');
-      clashoo.getGeoipVersion().then(function (r) {
-        if (r && r.version) {
-          verSpan.textContent = '';
-          verSpan.appendChild(E('span', { 'class': 'cl-ver-label' }, '当前版本: '));
-          verSpan.appendChild(E('span', { 'class': 'cl-ver-value' }, r.version));
+      function refreshVer() {
+        clashoo.getGeoipVersion().then(function (r) {
+          if (r && r.version) {
+            verSpan.textContent = '';
+            verSpan.appendChild(E('span', { 'class': 'cl-ver-label' }, '当前版本: '));
+            verSpan.appendChild(E('span', { 'class': 'cl-ver-value' }, r.version));
+          }
+        });
+      }
+      refreshVer();
+
+      var statusEl = E('div', { 'class': 'cl-update-status', style: 'margin-top:6px;font-size:12px;min-height:18px;line-height:1.4' });
+      var poller = null;
+      function stopPoller() { if (poller) { clearInterval(poller); poller = null; } }
+      function setStatus(text, tone) {
+        statusEl.textContent = text || '';
+        statusEl.style.color = tone === 'success' ? 'var(--success-color, #2e7d32)'
+                              : tone === 'error'   ? 'var(--error-color, #d32f2f)'
+                              : tone === 'progress'? 'var(--tip-color, #1976d2)'
+                              : '';
+      }
+      function pickLastLine(text) {
+        var lines = String(text || '').split('\n');
+        for (var i = lines.length - 1; i >= 0; i--) {
+          var t = lines[i].trim();
+          if (t) return t;
         }
-      });
+        return '';
+      }
+      function pollGeoStatus() {
+        clashoo.getLogStatus().then(function (st) {
+          st = st || {};
+          var rawLast = pickLastLine(st.geoip_log);
+          var last = clashoo.localizeLogLine(rawLast);
+          if (st.geoip_updating) {
+            setStatus('⏳ ' + (last || '正在下载 GeoIP / GeoSite...'), 'progress');
+            return;
+          }
+          stopPoller();
+          btn.disabled = false;
+          var ok = /success|complete|done|完成|成功|已更新/i.test(rawLast + ' ' + last);
+          var failed = /fail|failed|invalid|incomplete|not found|empty|失败|错误|异常/i.test(rawLast + ' ' + last);
+          setStatus((ok ? '✓ ' : failed ? '✗ ' : 'ℹ ') + (last || (ok ? '更新成功' : failed ? '更新失败' : '更新已结束')),
+            ok ? 'success' : failed ? 'error' : '');
+          refreshVer();
+          setTimeout(function () { setStatus(''); }, 8000);
+        });
+      }
+
       var btn = E('button', {
         'class': 'btn cbi-button',
         click: function () {
+          stopPoller();
           btn.disabled = true;
+          setStatus('⏳ 正在启动 GeoIP 更新...', 'progress');
           clashoo.updateGeoip().then(function () {
+            poller = setInterval(pollGeoStatus, 2000);
+            setTimeout(pollGeoStatus, 500);
+          }).catch(function () {
             btn.disabled = false;
-            ui.addNotification(null, E('p', 'GeoIP 更新任务已启动'));
-            self._switchTab('logs');
-            if (self._activateLogTab)
-              self._activateLogTab('update');
-          }).catch(function () { btn.disabled = false; });
+            setStatus('✗ 启动失败', 'error');
+            setTimeout(function () { setStatus(''); }, 5000);
+          });
         }
       }, '立即更新 GeoIP');
-      return E('div', { 'class': 'cl-btn-ver-row' }, [btn, verSpan]);
+      return E('div', {}, [
+        E('div', { 'class': 'cl-btn-ver-row' }, [btn, verSpan]),
+        statusEl
+      ]);
     };
     o.write = function () {};
 

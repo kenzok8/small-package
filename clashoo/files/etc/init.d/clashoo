@@ -1338,6 +1338,8 @@ _start_launch_core() {
 			sleep 1
 			if _core_running; then
 				runtime_run_health_check >/dev/null 2>&1
+				# 触发访问检查立即刷新一次，避免面板显示陈旧 down 状态（daemon 周期 5-20s）
+				/usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &
 				exit 0
 			fi
 			bg_wait=$((bg_wait + 1))
@@ -1519,8 +1521,11 @@ stop_service(){
 		runtime_state_set "health_detail" "service_stopped"
 		runtime_state_set "updated_at" "$(date +%s)"
 
+		# 触发访问检查立即刷新（proxy_listening 会立刻 fast-path 标 down，
+		# 配合前端 status.running=false 的 patch，UI ≤5s 反映"停代理"）
+		/usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &
 
-#=========================================================================================================================== 	
+#===========================================================================================================================
 }
 
 reload_service()

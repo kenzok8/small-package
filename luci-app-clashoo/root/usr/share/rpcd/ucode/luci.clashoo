@@ -46,7 +46,8 @@ const SINGBOX_DIR = '/usr/share/clashoo/config/singbox';
 const ACCESS_CACHE_FILE = '/tmp/clashoo_check_cache';
 const ACCESS_UPDATING_FLAG = '/tmp/clashoo/access_check_updating';
 const ACCESS_DAEMON_PID_FILE = '/tmp/clashoo/access_check_daemon.pid';
-const ACCESS_CACHE_TTL = 90;
+const ACCESS_CACHE_TTL = 30;
+const ACCESS_UPDATING_TTL = 60;
 const OVERVIEW_STATS_CACHE_FILE = '/tmp/clashoo_overview_stats_cache.json';
 
 function uci_get(pkg, sec, opt) {
@@ -579,6 +580,17 @@ function trigger_access_cache_refresh() {
 system('nice -n 19 sh /usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &');
 }
 
+function access_check_is_updating(now) {
+if (!access(ACCESS_UPDATING_FLAG, 'r')) return false;
+let st = stat(ACCESS_UPDATING_FLAG);
+let mtime = st ? int(st.mtime || 0) : 0;
+if (mtime > 0 && now > 0 && (mtime + ACCESS_UPDATING_TTL) < now) {
+unlink(ACCESS_UPDATING_FLAG);
+return false;
+}
+return true;
+}
+
 function access_check_daemon_running() {
 if (!access(ACCESS_DAEMON_PID_FILE, 'r')) return false;
 let pid = trim(readfile(ACCESS_DAEMON_PID_FILE) || '');
@@ -972,7 +984,7 @@ ensure_access_check_daemon();
 let now = now_epoch_sec();
 let cache = read_access_check_cache();
 let stale = access_cache_is_stale(cache, now);
-let updating = !!access(ACCESS_UPDATING_FLAG, 'r');
+let updating = access_check_is_updating(now);
 
 if ((stale || !cache) && !updating) {
 trigger_access_cache_refresh();
@@ -1551,9 +1563,10 @@ set_core: {
 args: { core: 'core', dcore: 'dcore' },
 call: function(req) {
 let core = req.args?.core || 'mihomo';
+if (core == 'sing-box') core = 'singbox';
 let dcore = req.args?.dcore || '';
 if (core != 'mihomo' && core != 'singbox')
-return { success: false, error: 'invalid core', message: '无效内核类型' };
+return { success: false, error: 'invalid core', message: '无效内核类型，仅支持 mihomo / singbox' };
 if (core == 'mihomo' && dcore == '1' && !find_smart_binary())
 return {
 success: false,
@@ -1831,7 +1844,7 @@ return get_access_payload();
 access_check_refresh: {
 call: function() {
 ensure_access_check_daemon();
-let updating = !!access(ACCESS_UPDATING_FLAG, 'r');
+let updating = access_check_is_updating(now_epoch_sec());
 if (!updating)
 trigger_access_cache_refresh();
 return { success: true, started: !updating };
@@ -2730,6 +2743,28 @@ return { success: true };
 }
 },
 
+smart_upgrade_lgbm_status: {
+call: function() {
+let log_path   = '/tmp/lgbm_update.log';
+let model_path = '/etc/clashoo/Model.bin';
+// 用括号正则避免匹配 grep 自身；busybox ash 下比 pgrep -f 更可靠
+let p = popen('ps w 2>/dev/null | grep "[l]gbm_update.sh" | head -1');
+let line = ''; if (p) { line = trim(p.read('all')); p.close(); }
+let running = (line && line != '');
+let last_line = '';
+let p2 = popen('tail -1 ' + shell_quote(log_path) + ' 2>/dev/null');
+if (p2) { last_line = trim(p2.read('all')); p2.close(); }
+let version = ''; let size_kb = 0;
+let s = stat(model_path);
+if (s) {
+  size_kb = int(s.size / 1024);
+  let p3 = popen('date -d @' + s.mtime + ' "+%Y-%m-%d %H:%M:%S" 2>/dev/null || date -r ' + shell_quote(model_path) + ' "+%Y-%m-%d %H:%M:%S" 2>/dev/null');
+  if (p3) { version = trim(p3.read('all')); p3.close(); }
+}
+return { running, last_line, version, size_kb, has_model: !!s };
+}
+},
+
 smart_model_status: {
 call: function() {
 let model_path = '/etc/clashoo/Model.bin';
@@ -2948,9 +2983,10 @@ let path       = dir + '/' + final_name;
 let tmp_json   = '/tmp/clashoo_sb_native.json';
 let tmp_hdr    = '/tmp/clashoo_sb_native.hdr';
 system('rm -f ' + shell_quote(tmp_json) + ' ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
+let sub_ua = uci_get('clashoo', 'config', 'sub_ua') || 'clash.meta';
 let dl_cmd = 'curl -fsSL --connect-timeout 8 --max-time 20'
   + ' -D ' + shell_quote(tmp_hdr)
-  + ' -A "ClashMeta/sing-box"'
+  + ' -A ' + shell_quote(sub_ua)
   + ' ' + shell_quote(sub_url)
   + ' -o ' + shell_quote(tmp_json)
   + ' >/dev/null 2>&1';
@@ -3008,9 +3044,10 @@ if (!sub_url) return { success: false, message: '订阅链接为空' };
 let tmp_json = '/tmp/clashoo_sb_native_upd.json';
 let tmp_hdr  = '/tmp/clashoo_sb_native_upd.hdr';
 system('rm -f ' + shell_quote(tmp_json) + ' ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
+let sub_ua = uci_get('clashoo', 'config', 'sub_ua') || 'clash.meta';
 let dl_cmd = 'curl -fsSL --connect-timeout 8 --max-time 20'
   + ' -D ' + shell_quote(tmp_hdr)
-  + ' -A "ClashMeta/sing-box"'
+  + ' -A ' + shell_quote(sub_ua)
   + ' ' + shell_quote(sub_url)
   + ' -o ' + shell_quote(tmp_json)
   + ' >/dev/null 2>&1';
@@ -3085,11 +3122,13 @@ return { success: true, changes: ['deprecated fields removed/updated'] };
 },
 
 create_singbox_config: {
-args: { sub_url: 'sub_url', name: 'name', secret: 'secret' },
+args: { sub_url: 'sub_url', name: 'name' },
 call: function(req) {
 let sub_url  = trim(req.args?.sub_url || '');
 let name     = trim(req.args?.name    || '');
-let secret   = req.args?.secret || uci_get('clashoo', 'config', 'dash_pass') || '';
+// dashboard 字段（port/secret）由 normalize_singbox_config.uc 在启动时强制覆盖为 UCI 值，
+// 这里写入仅作占位，无实际生效途径，因此直接读 UCI 即可。
+let secret   = uci_get('clashoo', 'config', 'dash_pass') || '';
 let ext_port = uci_get('clashoo', 'config', 'dash_port') || '9090';
 
 if (!sub_url || !match(sub_url, /^https?:\/\//))
@@ -3137,8 +3176,9 @@ else if (match(sub_url, /format=clash/i))
   push(try_urls, replace(sub_url, /format=clash/i, 'format=singbox'));
 
 if (!prefer_template) {
+  let probe_ua = uci_get('clashoo', 'config', 'sub_ua') || 'clash.meta';
   for (let try_url in try_urls) {
-    let p0 = popen('curl -sL --max-time 12 ' + shell_quote(try_url) + ' 2>/dev/null');
+    let p0 = popen('curl -sL --max-time 12 -A ' + shell_quote(probe_ua) + ' ' + shell_quote(try_url) + ' 2>/dev/null');
     let raw0 = p0 ? trim(p0.read('all')) : '';
     if (p0) p0.close();
     if (length(raw0) > 50 && substr(raw0, 0, 1) === '{') {
@@ -3161,7 +3201,8 @@ if (!config_obj && system('command -v ucode >/dev/null 2>&1') == 0 &&
     let tmp_yaml = '/tmp/clashoo_sb_sub.yaml';
     let tmp_hdr  = '/tmp/clashoo_sb_sub.hdr';
     system('rm -f ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
-    let dl_cmd = 'curl -fsSL --connect-timeout 8 --max-time 20 -D ' + shell_quote(tmp_hdr) + ' -A "Clash/OpenWRT" ' + shell_quote(sub_url) + ' -o ' + shell_quote(tmp_yaml) + ' >/dev/null 2>&1 || wget -q -O ' + shell_quote(tmp_yaml) + ' ' + shell_quote(sub_url) + ' >/dev/null 2>&1';
+    let conv_ua = uci_get('clashoo', 'config', 'sub_ua') || 'clash.meta';
+    let dl_cmd = 'curl -fsSL --connect-timeout 8 --max-time 20 -D ' + shell_quote(tmp_hdr) + ' -A ' + shell_quote(conv_ua) + ' ' + shell_quote(sub_url) + ' -o ' + shell_quote(tmp_yaml) + ' >/dev/null 2>&1 || wget -q --user-agent=' + shell_quote(conv_ua) + ' -O ' + shell_quote(tmp_yaml) + ' ' + shell_quote(sub_url) + ' >/dev/null 2>&1';
     if (system(dl_cmd) == 0 && access(tmp_yaml, 'r')) {
       yaml_src = tmp_yaml;
       downloaded_yaml = tmp_yaml;

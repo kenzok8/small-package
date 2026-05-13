@@ -483,6 +483,12 @@ if has_xray then
 	o:value("xray", "Xray")
 end
 o:depends({ _tcp_node_bool = "1", _node_sel_other = "1" })
+o.write = function(self, section, value)
+	if value == "dns2socks" then
+		m:del(section, "v2ray_dns_mode")
+	end
+	return ListValue.write(self, section, value)
+end
 o.remove = function(self, section)
 	local f = s.fields["tcp_node"]
 	local id_val = f and f:formvalue(section) or ""

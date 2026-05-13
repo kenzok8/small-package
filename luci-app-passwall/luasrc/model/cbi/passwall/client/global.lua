@@ -305,6 +305,12 @@ if has_xray then
 end
 o:depends({ dns_shunt = "chinadns-ng", _node_sel_other = "1" })
 o:depends({ dns_shunt = "dnsmasq", _node_sel_other = "1" })
+o.write = function(self, section, value)
+	if value ~= "sing-box" and value ~= "xray" then
+		m:del(section, "v2ray_dns_mode")
+	end
+	return ListValue.write(self, section, value)
+end
 o.remove = function(self, section)
 	local f = s.fields["smartdns_dns_mode"]
 	if f and f:formvalue(section) then
@@ -324,6 +330,12 @@ if api.is_finded("smartdns") then
 		o:value("xray", "Xray")
 	end
 	o:depends({ dns_shunt = "smartdns", _node_sel_other = "1" })
+	o.write = function(self, section, value)
+		if value == "socks" then
+			m:del(section, "v2ray_dns_mode")
+		end
+		return ListValue.write(self, section, value)
+	end
 	o.remove = function(self, section)
 		local f = s.fields["dns_mode"]
 		if f and f:formvalue(section) then

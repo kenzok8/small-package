@@ -1186,7 +1186,7 @@ return view.extend({
       return E('div', { 'class': 'cl-check-updated' }, '上次检查：初始化中');
     }
     var msg = '上次检查：' + this._timeAgoText(updatedAt);
-    if (ac.updating)
+    if (ac.updating && this._accessRefreshing)
       msg += '（刷新中）';
     return E('div', { 'class': 'cl-check-updated' }, msg);
   },
@@ -1409,6 +1409,12 @@ return view.extend({
         var ac = ov.access || {};
         var stats = ov.stats || {};
 
+        /* 服务未运行时立即把 proxy 探测项强制标 down，避免显示陈旧绿色（不等 daemon 5-20s 刷新） */
+        if (!st.running && ac && ac.proxy) {
+          var downProbe = { ok: false, state: 'down', code: '000', ok_count: 0, attempts: 1, loss: 1, avg_ms: 0 };
+          Object.keys(ac.proxy).forEach(function (k) { ac.proxy[k] = downProbe; });
+        }
+
         self._overviewLoaded = true;
         self._lastSt      = st;
         self._lastCfgData = cfgData;
@@ -1481,6 +1487,7 @@ return view.extend({
   _manualRefreshAccess: function () {
     var self = this;
     if (self._accessRefreshing) return Promise.resolve();
+    var previousUpdatedAt = parseInt((self._lastAc && self._lastAc.updated_at) || 0, 10) || 0;
     self._accessRefreshing = true;
     self._refreshAccessCard();
 
@@ -1490,10 +1497,7 @@ return view.extend({
 
     return L.resolveDefault(trigger, { success: false })
       .then(function () {
-        return new Promise(function (resolve) { setTimeout(resolve, 250); });
-      })
-      .then(function () {
-        return self._pollAccess();
+        return self._waitAccessRefresh(previousUpdatedAt);
       })
       .catch(function () {
         return self._pollAccess();
@@ -1502,6 +1506,32 @@ return view.extend({
         self._accessRefreshing = false;
         self._refreshAccessCard();
       });
+  },
+
+  _waitAccessRefresh: function (previousUpdatedAt) {
+    var self = this;
+    var started = Date.now();
+    var maxWait = 25000;
+
+    function sleep(ms) {
+      return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    }
+
+    function loop() {
+      return self._pollAccess().then(function () {
+        var ac = self._lastAc || {};
+        var updatedAt = parseInt(ac.updated_at || 0, 10) || 0;
+        if (updatedAt > previousUpdatedAt && !ac.updating)
+          return;
+        if (!ac.updating && updatedAt > 0 && (Date.now() - started) > 2500)
+          return;
+        if ((Date.now() - started) >= maxWait)
+          return;
+        return sleep(700).then(loop);
+      });
+    }
+
+    return sleep(500).then(loop);
   },
 
   _pollRealtime: function () {

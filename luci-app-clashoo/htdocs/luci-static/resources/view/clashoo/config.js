@@ -131,6 +131,7 @@ var callApplyTplUrl   = rpc.declare({ object: 'luci.clashoo', method: 'apply_tem
 var callMigrateSbProfile = rpc.declare({ object: 'luci.clashoo', method: 'migrate_singbox_profile', params: ['name'], expect: {} });
 var callSmartModelStatus = rpc.declare({ object: 'luci.clashoo', method: 'smart_model_status',  expect: {} });
 var callSmartUpgradeLgbm = rpc.declare({ object: 'luci.clashoo', method: 'smart_upgrade_lgbm',  expect: {} });
+var callSmartUpgradeLgbmStatus = rpc.declare({ object: 'luci.clashoo', method: 'smart_upgrade_lgbm_status', expect: {} });
 var callSmartFlushCache  = rpc.declare({ object: 'luci.clashoo', method: 'smart_flush_cache',   expect: {} });
 
 function fastResolve(promise, timeoutMs, fallback) {
@@ -145,9 +146,53 @@ function loadUiState() {
     return {
       core_type:      uci.get('clashoo', 'config', 'core_type') || 'mihomo',
       subscribe_url:  uci.get('clashoo', 'config', 'subscribe_url') || '',
-      config_name:    uci.get('clashoo', 'config', 'config_name') || ''
+      config_name:    uci.get('clashoo', 'config', 'config_name') || '',
+      sub_ua:         uci.get('clashoo', 'config', 'sub_ua') || ''
     };
   });
+}
+
+var SUB_UA_PRESETS = ['clash', 'clash.meta', 'mihomo'];
+
+// 构造 UA 选择器：select 预设 + custom 切到 input
+// 返回 { wrap, getValue() }
+function buildUaPicker(initialValue) {
+  var presets   = SUB_UA_PRESETS;
+  var isPreset  = presets.indexOf(initialValue) !== -1;
+  var customVal = (!initialValue || isPreset) ? '' : initialValue;
+  var pickerVal = isPreset ? initialValue : (initialValue ? '__custom__' : 'clash.meta');
+
+  var customInput = E('input', {
+    'class': 'cl-sub-url',
+    type: 'text',
+    placeholder: '自定义 User-Agent',
+    value: customVal,
+    style: 'margin-top:0;' + (pickerVal === '__custom__' ? '' : 'display:none')
+  });
+
+  var selectEl = E('select', {
+    'class': 'cbi-input-select cl-sub-url',
+    style: 'margin-top:0',
+    change: function (ev) {
+      customInput.style.display = (ev.target.value === '__custom__') ? '' : 'none';
+      if (ev.target.value === '__custom__') customInput.focus();
+    }
+  }, [
+    E('option', { value: 'clash',      selected: pickerVal === 'clash'      ? '' : null }, 'clash'),
+    E('option', { value: 'clash.meta', selected: pickerVal === 'clash.meta' ? '' : null }, 'clash.meta'),
+    E('option', { value: 'mihomo',     selected: pickerVal === 'mihomo'     ? '' : null }, 'mihomo'),
+    E('option', { value: '__custom__', selected: pickerVal === '__custom__' ? '' : null }, '自定义...')
+  ]);
+
+  return {
+    wrap: E('div', { 'class': 'cl-ua-picker', style: 'display:flex;flex-direction:column;gap:6px;margin-top:0' }, [
+      E('label', { style: 'font-size:12px;color:var(--text-secondary, #888)' }, 'User-Agent（订阅请求头）'),
+      selectEl, customInput
+    ]),
+    getValue: function () {
+      return selectEl.value === '__custom__' ? customInput.value.trim() : selectEl.value;
+    }
+  };
 }
 
 function readSavedTab(key, fallback, allowed) {
@@ -345,7 +390,7 @@ return view.extend({
       fastResolve(callListDir('2'), 1200, { files: [] }),
       fastResolve(callListDir('3'), 1200, { files: [] }),
       fastResolve(callListTemplates(), 1200, { files: [] }),
-      fastResolve(loadUiState(), 1200, { core_type: 'mihomo', subscribe_url: '', config_name: '' }),
+      fastResolve(loadUiState(), 1200, { core_type: 'mihomo', subscribe_url: '', config_name: '', sub_ua: '' }),
       fastResolve(clashoo.listSingboxProfiles(), 1200, { profiles: [], active: '' }),
       fastResolve(callSmartModelStatus(), 1500, { has_model: false, version: '' })
     ]);
@@ -358,7 +403,7 @@ return view.extend({
     var upFiles    = (data[2] && data[2].files) || [];
     var customFiles= (data[3] && data[3].files) || [];
     var tplFiles   = (data[4] && data[4].files) || [];
-    var uiData     = data[5] || { core_type: 'mihomo', subscribe_url: '', config_name: '' };
+    var uiData     = data[5] || { core_type: 'mihomo', subscribe_url: '', config_name: '', sub_ua: '' };
     var sbData          = data[6] || { profiles: [], active: '' };
     var smartModelData  = data[7] || { has_model: false, version: '' };
     var coreType   = uiData.core_type || 'mihomo';
@@ -438,6 +483,7 @@ return view.extend({
     var sanitizeText = function (v) { return (v == null || v === 'null') ? '' : String(v); };
     var subUrl      = sanitizeText(uiData && uiData.subscribe_url);
     var savedName   = sanitizeText(uiData && uiData.config_name);
+    var savedUa     = sanitizeText(uiData && uiData.sub_ua);
     var subs        = subsData.subs || [];
     var safeText    = function (v) { return (v == null || v === 'null') ? '' : String(v); };
 
@@ -456,6 +502,8 @@ return view.extend({
       style: 'margin-top:0'
     });
 
+    var uaPicker = buildUaPicker(savedUa);
+
     var dlBtn = E('button', {
       'class': 'btn cbi-button-action cl-btn-sm',
       click: function () {
@@ -463,6 +511,7 @@ return view.extend({
           .then(function () {
             uci.set('clashoo', 'config', 'subscribe_url', urlInput.value);
             uci.set('clashoo', 'config', 'config_name',   nameInput.value.trim());
+            uci.set('clashoo', 'config', 'sub_ua',        uaPicker.getValue());
             return uci.save();
           })
           .then(function () { return clashoo.commitConfig(); })
@@ -700,7 +749,7 @@ return view.extend({
     var sections = [
       E('div', { 'class': 'cl-section cl-card' }, [
         E('h4', {}, '订阅链接'),
-        E('div', { 'class': 'cl-form-wrap cl-fixed-600' }, [urlInput, nameInput, dlBtn])
+        E('div', { 'class': 'cl-form-wrap cl-fixed-600' }, [urlInput, nameInput, uaPicker.wrap, dlBtn])
       ]),
       E('div', { 'class': 'cl-section cl-card' }, [
         E('h4', {}, '已下载订阅'),
@@ -854,12 +903,54 @@ return view.extend({
               E('span', { 'class': 'cl-ver-value' }, modelStatus.version)
             ])
           : E('span', { 'class': 'cl-ver-tag cl-ver-label' }, '模型未安装');
-        var upgBtn = E('button', { 'class': 'btn cbi-button-action', 'click': function () {
-          upgBtn.disabled = true; upgBtn.textContent = '更新中...';
-          callSmartUpgradeLgbm().then(function () {
+        var statusEl = E('div', { 'class': 'cl-update-status', style: 'margin-top:6px;font-size:12px;min-height:18px;line-height:1.4' });
+        var upgPoller = null;
+        function stopUpgPoller() { if (upgPoller) { clearInterval(upgPoller); upgPoller = null; } }
+        function setStatus(text, tone) {
+          // tone: '' / 'success' / 'error' / 'progress'
+          statusEl.textContent = text || '';
+          statusEl.style.color = tone === 'success' ? 'var(--success-color, #2e7d32)'
+                                : tone === 'error'   ? 'var(--error-color, #d32f2f)'
+                                : tone === 'progress'? 'var(--tip-color, #1976d2)'
+                                : '';
+        }
+        function pollUpgStatus() {
+          callSmartUpgradeLgbmStatus().then(function (st) {
+            st = st || {};
+            var rawLine = st.last_line || '';
+            var line = clashoo.localizeLogLine(rawLine);
+            if (st.running) {
+              setStatus('⏳ ' + (line || '正在下载 LightGBM 模型...'), 'progress');
+              return;
+            }
+            stopUpgPoller();
             upgBtn.disabled = false; upgBtn.textContent = '检查并更新';
-            ui.addNotification(null, E('p', '模型更新任务已启动'));
-          }).catch(function () { upgBtn.disabled = false; upgBtn.textContent = '检查并更新'; });
+            var ok = /success|complete|done|完成|成功|无需更新|已是最新/i.test(rawLine + ' ' + line) || (st.has_model && st.size_kb > 100);
+            var sizeTxt = st.size_kb ? '（' + (st.size_kb >= 1024 ? (st.size_kb/1024).toFixed(1) + ' MB' : st.size_kb + ' KB') + '）' : '';
+            setStatus((ok ? '✓ ' : '✗ ') + (line || (ok ? '更新成功' : '更新失败')) + sizeTxt, ok ? 'success' : 'error');
+            // 刷新版本标签
+            if (verEl && st.version) {
+              var valEl = verEl.querySelector('.cl-ver-value');
+              if (valEl) valEl.textContent = st.version;
+              else verEl.textContent = '当前版本: ' + st.version;
+            }
+            setTimeout(function () { setStatus(''); }, 8000);
+          });
+        }
+        var upgBtn = E('button', { 'class': 'btn cbi-button-action', 'click': function () {
+          stopUpgPoller();
+          upgBtn.disabled = true; upgBtn.textContent = '下载中...';
+          setStatus('⏳ 正在启动更新任务...', 'progress');
+          callSmartUpgradeLgbm().then(function () {
+            // 开启状态轮询：每 2s 一次直到结束
+            upgPoller = setInterval(pollUpgStatus, 2000);
+            // 立即先拉一次，反馈更快
+            setTimeout(pollUpgStatus, 500);
+          }).catch(function () {
+            upgBtn.disabled = false; upgBtn.textContent = '检查并更新';
+            setStatus('✗ 启动失败', 'error');
+            setTimeout(function () { setStatus(''); }, 5000);
+          });
         }}, '检查并更新');
         smartSec.appendChild(E('div', { 'class': 'cbi-value' }, [
           E('label', { 'class': 'cbi-value-title' }, '更新模型'),
@@ -867,7 +958,8 @@ return view.extend({
             E('div', { 'class': 'cl-btn-ver-wrap' }, [
               upgBtn,
               verEl
-            ])
+            ]),
+            statusEl
           ])
         ]));
         var flushBtn = E('button', { 'class': 'btn cbi-button', 'click': function () {
@@ -1267,12 +1359,8 @@ return view.extend({
       placeholder: '配置文件名（选填，留空自动生成 singbox.json）',
       style: 'margin-top:0'
     });
-    var secretInput = E('input', {
-      'class': 'cl-sub-url',
-      type: 'text',
-      placeholder: 'API 密钥（选填，留空使用当前面板密码）',
-      style: 'margin-top:0'
-    });
+    // YAML 订阅转换走 mihomo 订阅流程（拉 yaml → yaml2singbox），UA 与 mihomo 共用 sub_ua
+    var convertUaPicker = buildUaPicker(savedUa);
 
     var genBtn, applyBtn;
     function setBusy(busy) {
@@ -1291,7 +1379,14 @@ return view.extend({
       var url = urlInput.value.trim();
       if (!url) { ui.addNotification(null, E('p', '请填写订阅链接')); return; }
       setBusy(true);
-      clashoo.createSingboxConfig(url, nameInput.value.trim(), secretInput.value.trim())
+      // 保存 UA 到 UCI，后端 create_singbox_config 会读这个字段
+      var uaPromise = L.resolveDefault(uci.load('clashoo'), null).then(function () {
+        uci.set('clashoo', 'config', 'sub_ua', convertUaPicker.getValue());
+        return uci.save().then(function () { return clashoo.commitConfig(); });
+      }).catch(function () {});
+      uaPromise.then(function () {
+        return clashoo.createSingboxConfig(url, nameInput.value.trim());
+      })
         .then(function (r) {
           /* RPC 超时被 resolveDefault 兜底成 {}，r.success 是 undefined。
            * 此时后端可能仍在跑（yaml2singbox 转 90 节点等），让用户直接刷新页
@@ -1324,6 +1419,10 @@ return view.extend({
     applyBtn = E('button', { 'class': 'btn cbi-button-action cl-btn-sm', click: function () { doCreate(true);  } }, '应用配置');
 
     /* ── native sing-box subscription card ── */
+    // 注：原生 sing-box JSON 订阅不需要 UA 选项（机场按链接参数/路径区分格式）
+    var savedUa = '';
+    try { savedUa = uci.get('clashoo', 'config', 'sub_ua') || ''; } catch (e) {}
+
     var nativeUrlInput = E('input', {
       'class': 'cl-sub-url',
       type: 'text',
@@ -1387,10 +1486,7 @@ return view.extend({
         E('h4', {}, '节点订阅'),
         E('div', { 'class': 'cl-form-wrap cl-fixed-600 cl-sb-form' }, [
           nativeUrlInput, nativeNameInput,
-          E('div', { 'class': 'cl-actions cl-sb-top-actions' }, [
-            fetchBtn,
-            fetchApplyBtn
-          ])
+          E('div', { 'class': 'cl-actions cl-sb-top-actions' }, [fetchBtn, fetchApplyBtn])
         ]),
         E('p', { 'class': 'cl-sb-note' },
           '适用于机场直接提供 sing-box JSON 格式订阅、或已用外部工具转换好的链接。\n' +
@@ -1400,7 +1496,7 @@ return view.extend({
       E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [
         E('h4', {}, 'YAML 订阅转换'),
         E('div', { 'class': 'cl-form-wrap cl-fixed-600 cl-sb-form' }, [
-          urlInput, nameInput, secretInput,
+          urlInput, nameInput, convertUaPicker.wrap,
           E('div', { 'class': 'cl-actions cl-sb-top-actions' }, [
             genBtn,
             applyBtn
