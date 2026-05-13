@@ -23,6 +23,9 @@ const callAuthor = rpc.declare({
 // Called on every info page load so the sidebar menu is correct from first visit.
 const callSyncMenu = rpc.declare({ object: 'luci.amlogic', method: 'sync_menu' });
 
+// Get runtime state to determine plugin_branch for the language badge.
+const callState = rpc.declare({ object: 'luci.amlogic', method: 'state' });
+
 // Static list of supported boxes (display only, not used in any logic).
 const SUPPORTED_BOXES = [
 	_('Amlogic s922x --- [ Beelink, Beelink-Pro, Ugoos-AM6-Plus, ODROID-N2, Khadas-VIM3, Ali-CT2000 ]'),
@@ -67,6 +70,23 @@ return view.extend({
 		amlogicShared.ensureCss();
 		const res = L.resource('amlogic');
 
+		// Language badge image — default to javascript.svg (JS version),
+		// will be confirmed/corrected after the state RPC resolves.
+		var langsImg = E('img', {
+			id: 'Langs',
+			src: res + '/javascript.svg', alt: 'javascript',
+			width: '86', height: '20',
+			style: 'margin:0 5px; vertical-align:middle; border-radius:3px'
+		});
+
+		// Fetch plugin_branch from state and update the language badge.
+		callState().then(function (s) {
+			var isLua = s && s.plugin_branch === 'lua';
+			langsImg.src = res + (isLua ? '/lua.svg' : '/javascript.svg');
+			langsImg.alt = isLua ? 'lua' : 'javascript';
+			langsImg.setAttribute('width', isLua ? '46' : '86');
+		}).catch(function () {});
+
 		// Flatten the supported-boxes list to [text, <br>, text, <br>, ...].
 		const boxRows = [];
 		for (let i = 0; i < SUPPORTED_BOXES.length; i++)
@@ -86,13 +106,13 @@ return view.extend({
 						E('img', {
 							src: res + '/packit.svg', alt: 'Packit',
 							width: '168', height: '20',
-							style: 'cursor:pointer; margin:0 5px',
+							style: 'cursor:pointer; margin:0 5px; vertical-align:middle; border-radius:3px',
 							click: function () { openExternal('https://github.com/unifreq/openwrt_packit'); }
 						}),
 						E('img', {
 							src: res + '/author.svg', alt: 'Author',
 							width: '168', height: '20',
-							style: 'cursor:pointer; margin:0 5px',
+							style: 'cursor:pointer; margin:0 5px; vertical-align:middle; border-radius:3px',
 							click: function () {
 								callAuthor().then(function (repo) {
 									let url = String(repo || '').trim();
@@ -106,9 +126,10 @@ return view.extend({
 						E('img', {
 							src: res + '/plugin.svg', alt: 'luci-app-amlogic',
 							width: '160', height: '20',
-							style: 'cursor:pointer; margin:0 5px',
+							style: 'cursor:pointer; margin:0 5px; vertical-align:middle; border-radius:3px',
 							click: function () { openExternal('https://github.com/ophub/luci-app-amlogic'); }
-						})
+						}),
+						langsImg
 					])
 				]),
 				E('tr', [
