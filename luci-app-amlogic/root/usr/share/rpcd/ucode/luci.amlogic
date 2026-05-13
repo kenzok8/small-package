@@ -752,7 +752,8 @@ function m_sync_menu() {
 	const show_armcpu  = (index(p, 'qemu') < 0) ? 'yes' : 'no';
 	shcall('uci -q set amlogic.config.menu_install=' + shq(show_install) +
 	       ' && uci -q set amlogic.config.menu_armcpu=' + shq(show_armcpu) +
-	       ' && uci commit amlogic');
+	       ' && uci commit amlogic' +
+	       ' && rm -f /tmp/luci-indexcache* && rm -rf /tmp/luci-modulecache/*');
 	return { code: 0, show_install, show_armcpu };
 }
 

@@ -60,9 +60,27 @@ return view.extend({
 	handleReset:     null,
 
 	load: function () {
-		// Fire sync_menu in background (don't block render on it).
-		callSyncMenu().catch(function () {});
-		return callAuthor();
+		// Call sync_menu and wait for it. sync_menu writes menu_install /
+		// menu_armcpu into UCI and clears the LuCI index cache on the server.
+		// On first boot from USB the install menu may be missing from the
+		// browser-side navigation (built before sync_menu ran). After the RPC
+		// returns we check if the sidebar already has an install link; if not,
+		// reload once so the browser re-fetches the updated menu tree.
+		// A URL hash flag (#menu-synced) prevents an infinite reload loop.
+		const alreadyReloaded = window.location.hash === '#menu-synced';
+		const syncMenuPromise = callSyncMenu().then(function (res) {
+			if (alreadyReloaded) return;
+			if (res && res.show_install === 'yes') {
+				// Check if the sidebar navigation already contains the install link.
+				const installLink = document.querySelector('a[href*="amlogic/install"]');
+				if (!installLink) {
+					// Server has updated the index cache; reload to pick up new nav.
+					window.location.replace(window.location.pathname + '#menu-synced');
+					window.location.reload();
+				}
+			}
+		}).catch(function () {});
+		return Promise.all([callAuthor(), syncMenuPromise]).then(function (r) { return r[0]; });
 	},
 
 	render: function (authorUrl) {
