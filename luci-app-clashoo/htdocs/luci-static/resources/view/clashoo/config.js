@@ -152,7 +152,7 @@ function loadUiState() {
   });
 }
 
-var SUB_UA_PRESETS = ['clash', 'clash.meta', 'mihomo'];
+var SUB_UA_PRESETS = ['', 'clash', 'clash.meta', 'mihomo'];
 
 // 构造 UA 选择器：select 预设 + custom 切到 input
 // 返回 { wrap, getValue() }
@@ -160,7 +160,7 @@ function buildUaPicker(initialValue) {
   var presets   = SUB_UA_PRESETS;
   var isPreset  = presets.indexOf(initialValue) !== -1;
   var customVal = (!initialValue || isPreset) ? '' : initialValue;
-  var pickerVal = isPreset ? initialValue : (initialValue ? '__custom__' : 'clash.meta');
+  var pickerVal = isPreset ? initialValue : (initialValue ? '__custom__' : '');
 
   var customInput = E('input', {
     'class': 'cl-sub-url',
@@ -178,6 +178,7 @@ function buildUaPicker(initialValue) {
       if (ev.target.value === '__custom__') customInput.focus();
     }
   }, [
+    E('option', { value: '',           selected: pickerVal === ''           ? '' : null }, '默认'),
     E('option', { value: 'clash',      selected: pickerVal === 'clash'      ? '' : null }, 'clash'),
     E('option', { value: 'clash.meta', selected: pickerVal === 'clash.meta' ? '' : null }, 'clash.meta'),
     E('option', { value: 'mihomo',     selected: pickerVal === 'mihomo'     ? '' : null }, 'mihomo'),
@@ -186,8 +187,9 @@ function buildUaPicker(initialValue) {
 
   return {
     wrap: E('div', { 'class': 'cl-ua-picker', style: 'display:flex;flex-direction:column;gap:6px;margin-top:0' }, [
-      E('label', { style: 'font-size:12px;color:var(--text-secondary, #888)' }, 'User-Agent（订阅请求头）'),
-      selectEl, customInput
+      E('label', { style: 'font-size:12px;color:var(--text-secondary, #888)' }, '用户代理（UA）'),
+      selectEl, customInput,
+      E('div', { style: 'font-size:12px;color:var(--text-secondary, #888)' }, '不确定时保持默认。')
     ]),
     getValue: function () {
       return selectEl.value === '__custom__' ? customInput.value.trim() : selectEl.value;
@@ -974,6 +976,8 @@ return view.extend({
           E('div', { 'class': 'cbi-value-field' }, [flushBtn])
         ]));
       }
+      makeSectionCollapsible(node, '透明代理', true);
+      makeSectionCollapsible(node, '端口配置', true);
       makeSectionCollapsible(node, 'Smart 策略设置', false);
       makeSectionCollapsible(node, '代理认证', false);
 
@@ -1359,17 +1363,20 @@ return view.extend({
       placeholder: '配置文件名（选填，留空自动生成 singbox.json）',
       style: 'margin-top:0'
     });
+    var savedUa = '';
+    try { savedUa = uci.get('clashoo', 'config', 'sub_ua') || ''; } catch (e) {}
     // YAML 订阅转换走 mihomo 订阅流程（拉 yaml → yaml2singbox），UA 与 mihomo 共用 sub_ua
     var convertUaPicker = buildUaPicker(savedUa);
 
     var genBtn, applyBtn;
-    function setBusy(busy) {
+    function setBusy(busy, activeBtn) {
       [genBtn, applyBtn].forEach(function (b) {
         if (!b) return;
         b.disabled = busy ? '' : null;
         if (busy) {
           if (!b.dataset.label) b.dataset.label = b.textContent;
-          b.textContent = '生成中…';
+          if (b === activeBtn)
+            b.textContent = b._clBusyLabel || '处理中…';
         } else if (b.dataset.label) {
           b.textContent = b.dataset.label;
         }
@@ -1378,11 +1385,13 @@ return view.extend({
     function doCreate(setActive) {
       var url = urlInput.value.trim();
       if (!url) { ui.addNotification(null, E('p', '请填写订阅链接')); return; }
-      setBusy(true);
+      setBusy(true, setActive ? applyBtn : genBtn);
       // 保存 UA 到 UCI，后端 create_singbox_config 会读这个字段
       var uaPromise = L.resolveDefault(uci.load('clashoo'), null).then(function () {
         uci.set('clashoo', 'config', 'sub_ua', convertUaPicker.getValue());
-        return uci.save().then(function () { return clashoo.commitConfig(); });
+        return uci.save()
+          .then(function () { return clashoo.commitConfig(); })
+          .then(function () { return clearClashooDirty(); });
       }).catch(function () {});
       uaPromise.then(function () {
         return clashoo.createSingboxConfig(url, nameInput.value.trim());
@@ -1393,6 +1402,7 @@ return view.extend({
            * 看实际产物，而不是误报"失败"。 */
           if (!r || typeof r.success === 'undefined') {
             ui.addNotification(null, E('p', '生成时间较长，正在刷新查看结果…'));
+            setBusy(false);
             setTimeout(function () { location.reload(); }, 1500);
             return;
           }
@@ -1417,12 +1427,11 @@ return view.extend({
 
     genBtn   = E('button', { 'class': 'btn cbi-button cl-btn-sm',        click: function () { doCreate(false); } }, '生成配置');
     applyBtn = E('button', { 'class': 'btn cbi-button-action cl-btn-sm', click: function () { doCreate(true);  } }, '应用配置');
+    genBtn._clBusyLabel = '生成中…';
+    applyBtn._clBusyLabel = '应用中…';
 
     /* ── native sing-box subscription card ── */
     // 注：原生 sing-box JSON 订阅不需要 UA 选项（机场按链接参数/路径区分格式）
-    var savedUa = '';
-    try { savedUa = uci.get('clashoo', 'config', 'sub_ua') || ''; } catch (e) {}
-
     var nativeUrlInput = E('input', {
       'class': 'cl-sub-url',
       type: 'text',

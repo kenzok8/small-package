@@ -341,6 +341,41 @@ function add_remote_rule_set(tag, url) {
 	});
 }
 
+function array_has_value(arr, val) {
+	if (type(arr) != 'array')
+		return false;
+	for (let item in arr)
+		if (item == val)
+			return true;
+	return false;
+}
+
+function ensure_tun_cn_exclude(ib) {
+	let excludes = ib.route_exclude_address_set;
+	if (type(excludes) != 'array')
+		excludes = excludes ? [ excludes ] : [];
+	if (!array_has_value(excludes, 'cn-ip'))
+		push(excludes, 'cn-ip');
+	ib.route_exclude_address_set = excludes;
+}
+
+function prune_tun_cn_exclude_if_missing() {
+	if (has_route_rule_set('cn-ip'))
+		return;
+	for (let ib in cfg.inbounds || []) {
+		if (!ib || ib.type != 'tun')
+			continue;
+		let excludes = [];
+		for (let item in ib.route_exclude_address_set || [])
+			if (item != 'cn-ip')
+				push(excludes, item);
+		if (length(excludes))
+			ib.route_exclude_address_set = excludes;
+		else
+			delete ib.route_exclude_address_set;
+	}
+}
+
 function matcher_rule(matcher, server_tag) {
 	let r = { server: server_tag };
 	if (starts_with(matcher, 'geosite:'))
@@ -456,6 +491,11 @@ let has_dns_in = false;
 let wants_tun = has_tun_device && (uci_opt('tcp_mode', '') == 'tun' || uci_opt('udp_mode', '') == 'tun');
 let tun_stack = uci_opt('stack', 'mixed') || 'mixed';
 
+if (wants_tun) {
+	add_remote_rule_set('cn-ip',
+		'https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo/geoip/cn.srs');
+}
+
 for (let ib in inbounds) {
 	if (!ib)
 		continue;
@@ -471,6 +511,7 @@ for (let ib in inbounds) {
 			ib.auto_redirect = true;
 			ib.strict_route = true;
 			ib.stack = tun_stack;
+			ensure_tun_cn_exclude(ib);
 			push(normalized, ib);
 			has_tun = true;
 		}
@@ -548,7 +589,7 @@ if (!has_mixed) {
 }
 
 if (wants_tun && !has_tun) {
-	push(normalized, {
+	let tun_ib = {
 		type: 'tun',
 		tag: 'tun-in',
 		address: [ '172.19.0.1/30', 'fdfe:dcba:9876::1/126' ],
@@ -556,7 +597,9 @@ if (wants_tun && !has_tun) {
 		auto_redirect: true,
 		strict_route: true,
 		stack: tun_stack
-	});
+	};
+	ensure_tun_cn_exclude(tun_ib);
+	push(normalized, tun_ib);
 }
 
 if (!has_tproxy) {
@@ -749,6 +792,7 @@ for (let _rsi = 0; _rsi < length(cfg.route.rule_set); _rsi++) {
 	push(_clean_rs, _rs);
 }
 cfg.route.rule_set = _clean_rs;
+prune_tun_cn_exclude_if_missing();
 
 	/* 删除引用了已移除 rule_set 的 DNS/路由规则，否则 sing-box FATAL: rule-set not found */
 	let _existing_tags = {};
