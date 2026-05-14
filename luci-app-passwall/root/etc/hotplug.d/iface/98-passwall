@@ -12,7 +12,7 @@
 
 		if [ "$ACTION" = "ifupdate" ]; then
 			USE_TABLES=$(get_cache_var "USE_TABLES")
-			[ -n "$USE_TABLES" ] && ${APP_PATH}/${USE_TABLES}.sh update_wan_sets >/dev/null 2>&1 &
+			[ -n "$USE_TABLES" ] && { ${APP_PATH}/${USE_TABLES}.sh update_wan_sets >/dev/null 2>&1 & }
 			exit 0
 		fi
 

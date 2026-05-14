@@ -256,9 +256,12 @@ start_singbox_service() {
 }
 
 stop_singbox_service() {
-	# Kill directly instead of /etc/init.d/sing-box stop (which uses ubus),
-	# because calling ubus from within a procd stop_service() callback deadlocks procd.
 	uci -q set sing-box.main.enabled='0' && uci -q commit sing-box >/dev/null 2>&1 || true
+
+	# sing-box 自身 init.d 带 procd respawn，仅 kill 进程会被立刻拉起；
+	# 必须先 /etc/init.d/sing-box stop 注销 procd 实例（实测不会死锁）。
+	[ -x /etc/init.d/sing-box ] && /etc/init.d/sing-box stop >/dev/null 2>&1 || true
+
 	for _pid in $(pidof sing-box 2>/dev/null); do
 		kill "$_pid" >/dev/null 2>&1
 	done

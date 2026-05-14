@@ -118,6 +118,7 @@
       { "rule_set": "private-ip",                                "outbound": "🏠 私有网络" },
       { "rule_set": ["geolocation-cn", "cn"],                    "outbound": "🎯 全球直连" },
       { "rule_set": "cn-ip",                                     "outbound": "🎯 全球直连" },
+      { "domain_suffix": ["cn"],                                 "outbound": "🎯 全球直连" },
       { "rule_set": "geolocation-!cn",                           "outbound": "🌐 非中国" },
       { "rule_set": "google-ip",                                 "outbound": "🔍 Google" }
     ],

@@ -254,6 +254,7 @@ local tls_flows = {
 	"none"
 }
 
+--[[
 local function migrate_xray_protocol_nodes()
 	local changed = false
 
@@ -306,6 +307,7 @@ local function migrate_xray_protocol_nodes()
 end
 
 migrate_xray_protocol_nodes()
+]]--
 
 m = Map("shadowsocksr", translate("Edit ShadowSocksR Server"))
 m.redirect = url("servers")
@@ -371,44 +373,43 @@ o.cfgvalue = function(self, section)
 	end
 	return val
 end
+o.description = translate("Using incorrect encryption mothod may causes service fail to start")
 
-		o.description = translate("Using incorrect encryption mothod may causes service fail to start")
+o = s:option(Value, "alias", translate("Alias(optional)"))
 
-	o = s:option(Value, "alias", translate("Alias(optional)"))
-
-	local function clash_source_formvalue(map, section, option)
-		local value = map:formvalue("cbid." .. map.config .. "." .. section .. "." .. option)
-		if value == nil then
-			value = map.uci:get(map.config, section, option)
-		end
-		return trim(value or "")
+local function clash_source_formvalue(map, section, option)
+	local value = map:formvalue("cbid." .. map.config .. "." .. section .. "." .. option)
+	if value == nil then
+		value = map.uci:get(map.config, section, option)
 	end
+	return trim(value or "")
+end
 
-	local function validate_clash_source(self, value, section)
-		local clash_url = clash_source_formvalue(self.map, section, "clash_url")
-		local clash_path = clash_source_formvalue(self.map, section, "clash_path")
-		if clash_url == "" and clash_path == "" then
-			return nil, translate("Please specify either a Clash subscription URL or a local YAML path.")
-		end
-		return value
+local function validate_clash_source(self, value, section)
+	local clash_url = clash_source_formvalue(self.map, section, "clash_url")
+	local clash_path = clash_source_formvalue(self.map, section, "clash_path")
+	if clash_url == "" and clash_path == "" then
+		return nil, translate("Please specify either a Clash subscription URL or a local YAML path.")
 	end
+	return value
+end
 
-	o = s:option(Value, "clash_url", translate("Clash Subscription URL"))
-	o.placeholder = "https://example.com/config.yaml"
-	o.rmempty = true
-	o:depends("type", "clash")
-	o.validate = validate_clash_source
+o = s:option(Value, "clash_url", translate("Clash Subscription URL"))
+o.placeholder = "https://example.com/config.yaml"
+o.rmempty = true
+o:depends("type", "clash")
+o.validate = validate_clash_source
 
-	o = s:option(Value, "clash_path", translate("Clash YAML Path"))
-	o.placeholder = "/etc/ssrplus/clash/custom.yaml"
-	o.rmempty = true
-	o:depends("type", "clash")
-	o.validate = validate_clash_source
+o = s:option(Value, "clash_path", translate("Clash YAML Path"))
+o.placeholder = "/etc/ssrplus/clash/custom.yaml"
+o.rmempty = true
+o:depends("type", "clash")
+o.validate = validate_clash_source
 
-	o = s:option(Value, "clash_user_agent", translate("Clash User-Agent"))
-	o.default = "clash"
-	o.rmempty = false
-	o:depends("type", "clash")
+o = s:option(Value, "clash_user_agent", translate("Clash User-Agent"))
+o.default = "clash"
+o.rmempty = false
+o:depends("type", "clash")
 
 o = s:option(ListValue, "v2ray_protocol", translate("V2Ray/XRay protocol"))
 o:value("vless", translate("VLESS"))
@@ -425,33 +426,33 @@ o:value("socks", translate("Socks"))
 o:value("http", translate("HTTP"))
 o:depends("type", "v2ray")
 
-	o = s:option(Value, "server", translate("Server Address"))
-	o.datatype = "or(host,ip6addr)"
-	o.rmempty = false
-	o:depends("type", "ssr")
-	o:depends("type", "ss")
-	o:depends("type", "ss-rust")
-	o:depends("type", "v2ray")
+o = s:option(Value, "server", translate("Server Address"))
+o.datatype = "or(host,ip6addr)"
+o.rmempty = false
+o:depends("type", "ssr")
+o:depends("type", "ss")
+o:depends("type", "ss-rust")
+o:depends("type", "v2ray")
 o:depends("type", "trojan")
-	o:depends("type", "naiveproxy")
-	o:depends("type", "hysteria2")
-	o:depends("type", "tuic")
-	o:depends("type", "shadowtls")
-	o:depends("type", "socks5")
+o:depends("type", "naiveproxy")
+o:depends("type", "hysteria2")
+o:depends("type", "tuic")
+o:depends("type", "shadowtls")
+o:depends("type", "socks5")
 
-	o = s:option(Value, "server_port", translate("Server Port"))
-	o.datatype = "port"
-	o.rmempty = true
-	o:depends("type", "ssr")
-	o:depends("type", "ss")
-	o:depends("type", "ss-rust")
-	o:depends("type", "v2ray")
+o = s:option(Value, "server_port", translate("Server Port"))
+o.datatype = "port"
+o.rmempty = true
+o:depends("type", "ssr")
+o:depends("type", "ss")
+o:depends("type", "ss-rust")
+o:depends("type", "v2ray")
 o:depends("type", "trojan")
-	o:depends("type", "naiveproxy")
-	o:depends("type", "hysteria2")
-	o:depends("type", "tuic")
-	o:depends("type", "shadowtls")
-	o:depends("type", "socks5")
+o:depends("type", "naiveproxy")
+o:depends("type", "hysteria2")
+o:depends("type", "tuic")
+o:depends("type", "shadowtls")
+o:depends("type", "socks5")
 
 o = s:option(Flag, "auth_enable", translate("Enable Authentication"))
 o.rmempty = false
@@ -467,13 +468,13 @@ o:depends({type = "socks5", auth_enable = true})
 o:depends({type = "v2ray", v2ray_protocol = "http", auth_enable = true})
 o:depends({type = "v2ray", v2ray_protocol = "socks", auth_enable = true})
 
-	o = s:option(Value, "password", translate("Password"))
-	o.password = true
-	o.rmempty = true
-	o:depends("type", "ssr")
-	o:depends("type", "ss")
-	o:depends("type", "ss-rust")
-	o:depends("type", "trojan")
+o = s:option(Value, "password", translate("Password"))
+o.password = true
+o.rmempty = true
+o:depends("type", "ssr")
+o:depends("type", "ss")
+o:depends("type", "ss-rust")
+o:depends("type", "trojan")
 o:depends("type", "naiveproxy")
 o:depends("type", "shadowtls")
 o:depends({type = "socks5", auth_enable = true})
@@ -489,7 +490,7 @@ end
 o.rmempty = true
 o:depends("type", "ssr")
 
-	o = s:option(ListValue, "encrypt_method_ss", translate("Encrypt Method"))
+o = s:option(ListValue, "encrypt_method_ss", translate("Encrypt Method"))
 for _, v in ipairs(encrypt_methods_ss) do
 	if v == "none" then
 	   o.default = "none"
@@ -498,10 +499,10 @@ for _, v in ipairs(encrypt_methods_ss) do
 	    o:value(v, translate(v))
 	end
 end
-	o.rmempty = true
-	o:depends("type", "ss-rust")
-	o:depends("type", "ss")
-	o:depends({type = "v2ray", v2ray_protocol = "shadowsocks"})
+o.rmempty = true
+o:depends("type", "ss-rust")
+o:depends("type", "ss")
+o:depends({type = "v2ray", v2ray_protocol = "shadowsocks"})
 
 o = s:option(Flag, "uot", translate("UDP over TCP"))
 o.description = translate("Enable the SUoT protocol, requires server support.")
@@ -515,11 +516,11 @@ o:depends({type = "v2ray", v2ray_protocol = "shadowsocks"})
 o.default = "1"
 
 -- [[ Enable Shadowsocks Plugin ]]--
-	o = s:option(Flag, "enable_plugin", translate("Enable Plugin"))
-	o.rmempty = true
-	o:depends("type", "ss")
-	o:depends("type", "ss-rust")
-	o.default = "0"
+o = s:option(Flag, "enable_plugin", translate("Enable Plugin"))
+o.rmempty = true
+o:depends("type", "ss")
+o:depends("type", "ss-rust")
+o.default = "0"
 
 -- Shadowsocks Plugin
 o = s:option(ListValue, "plugin", translate("Obfs"))

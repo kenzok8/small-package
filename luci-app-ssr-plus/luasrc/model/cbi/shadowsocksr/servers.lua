@@ -25,6 +25,50 @@ local function is_finded(e)
 	return luci.sys.exec(string.format('type -t -p "%s" -p "/usr/libexec/%s" 2>/dev/null', e, e)) ~= ""
 end
 
+local function is_js_luci()
+	return luci.sys.call('[ -f "/www/luci-static/resources/uci.js" ]') == 0
+end
+
+-- 保存并应用行为
+local function apply_redirect(m)
+	local tmp_uci_file = "/etc/config/" .. "shadowsocksr" .. "_redirect"
+	if m.redirect and m.redirect ~= "" then
+		if nixio.fs.access(tmp_uci_file) then
+			local redirect
+			for line in io.lines(tmp_uci_file) do
+				redirect = line:match("option%s+url%s+['\"]([^'\"]+)['\"]")
+				if redirect and redirect ~= "" then break end
+			end
+			if redirect and redirect ~= "" then
+				luci.sys.call("/bin/rm -f " .. tmp_uci_file)
+				luci.http.redirect(redirect)
+			end
+		else
+			nixio.fs.writefile(tmp_uci_file, "config redirect\n")
+		end
+		m.on_after_save = function(self)
+			local redirect = self.redirect
+			if redirect and redirect ~= "" then
+				m.uci:set("shadowsocksr" .. "_redirect", "@redirect[0]", "url", redirect)
+			end
+		end
+	else
+		luci.sys.call("/bin/rm -f " .. tmp_uci_file)
+	end
+end
+
+local function set_apply_on_parse(map)
+	if not map then return end
+	if is_js_luci() then
+		apply_redirect(map)
+		local old = map.on_after_save
+		map.on_after_save = function(self)
+			if old then old(self) end
+			map:set("@global[0]", "timestamp", os.time())
+		end
+	end
+end
+
 local function trim(text)
 	if not text or text == "" then
 		return ""
@@ -532,6 +576,7 @@ s.anonymous = true
 s.addremove = true
 s.description = translate("Node order can be dragged with the mouse and takes effect immediately. The automatic switch order of server nodes is consistent with the node order in the table.")
 s.template = "shadowsocksr/server_table"
+set_apply_on_parse(m)
 s:append(cbi.Template("shadowsocksr/optimize_cbi_ui"))
 s.extedit = luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers", "%s")
 
@@ -584,12 +629,17 @@ s.server_first_index = server_first_index
 s.server_last_index = server_last_index
 s.server_base_url = luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers")
 
-function s.create(...)
-	local sid = TypedSection.create(...)
-	if sid then
-		luci.http.redirect(s.extedit % sid)
-		return
-	end
+function s.create(self, ...)
+    local sid = TypedSection.create(self, ...)
+    if sid then
+		local newsid = "cfg" .. sid:sub(-6)
+		-- 删除匿名
+		self.map.uci:delete(self.config, sid)
+		-- 重命名 section
+		self.map.uci:section(self.config, self.sectiontype, newsid)
+		luci.http.redirect(self.extedit % newsid)
+        return
+    end
 end
 
 o = s:option(DummyValue, "type", translate("Type"))

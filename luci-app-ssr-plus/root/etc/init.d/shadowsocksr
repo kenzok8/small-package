@@ -797,7 +797,27 @@ normalize_xray_protocol_nodes() {
 	_migrate_xray_protocol_node() {
 		local section="$1"
 		local type="$(uci_get_by_name "$section" type)"
+		local v2ray_protocol="$(uci_get_by_name "$section" v2ray_protocol)"
 
+		if [ "$type" = "ss" ] || [ "$type" = "ss-libev" ]; then
+			if [ -n "$(first_type mihomo)" ]; then
+				uci -q set "$NAME.$section.type=ss"
+				changed=1
+			elif [ -n "$(first_type sslocal)" ]; then
+				uci -q set "$NAME.$section.type=ss-rust"
+				changed=1
+			elif [ -n "$(first_type xray)" ]; then
+				uci -q set "$NAME.$section.type=v2ray"
+				uci -q set "$NAME.$section.v2ray_protocol=shadowsocks"
+				changed=1
+			fi
+		elif [ "$type" = "v2ray" ] && [ "$v2ray_protocol" = "shadowsocks" ]; then
+			if [ -n "$(first_type mihomo)" ]; then
+				uci -q set "$NAME.$section.type=ss"
+				uci -q delete "$NAME.$section.v2ray_protocol"
+				changed=1
+			fi
+		fi
 		if [ "$type" = "hysteria2" ]; then
 			echolog "提示：检测到原生 Hysteria2 节点，自动迁移为 Xray(Hysteria2)。"
 			uci -q set "$NAME.$section.type=v2ray"
@@ -815,13 +835,13 @@ normalize_xray_protocol_nodes() {
 	config_foreach _migrate_xray_protocol_node servers
 
 	local subscribe_sid="$(uci_get_by_cfgid server_subscribe)"
-	if [ -n "$subscribe_sid" ] && uci -q get "$NAME.$subscribe_sid.xray_hy2_type" >/dev/null; then
-		uci -q delete "$NAME.$subscribe_sid.xray_hy2_type"
-		changed=1
-	fi
-	if [ -n "$subscribe_sid" ] && uci -q get "$NAME.$subscribe_sid.xray_tj_type" >/dev/null; then
-		uci -q delete "$NAME.$subscribe_sid.xray_tj_type"
-		changed=1
+	if [ -n "$subscribe_sid" ]; then
+		for key in xray_hy2_type xray_tj_type ss_type; do
+			if uci -q get "$NAME.$subscribe_sid.$key" >/dev/null; then
+				uci -q delete "$NAME.$subscribe_sid.$key"
+				changed=1
+			fi
+		done
 	fi
 
 	if [ "$changed" = "1" ]; then

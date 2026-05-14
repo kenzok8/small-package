@@ -1101,7 +1101,7 @@ start_crontab() {
 
 	if [ "$ENABLED_DEFAULT_ACL" = "1" ] || [ "$ENABLED_ACLS" = "1" ]; then
 		local start_daemon=$(config_t_get global_delay start_daemon 0)
-		[ "$start_daemon" = "1" ] && { $APP_PATH/monitor.sh >/dev/null 2>&1 & }
+		[ "$start_daemon" = "1" ] && { $APP_PATH/monitor.sh > /dev/null 2>&1 & }
 	fi
 
 	if [ -f "${LOCK_PATH}/${CONFIG}_cron.lock" ]; then
@@ -1194,7 +1194,7 @@ start_crontab() {
 	# ===== loop =====
 	if [ "$ENABLED_DEFAULT_ACL" = "1" ] || [ "$ENABLED_ACLS" = "1" ]; then
 		if [ "$update_loop" = "1" ]; then
-			$APP_PATH/tasks.sh >/dev/null 2>&1 &
+			$APP_PATH/tasks.sh > /dev/null 2>&1 &
 			echolog "自动更新：启动循环更新进程。"
 		fi
 	else
