@@ -1436,6 +1436,11 @@ let runtime_degraded = runtime_state_get('degraded') == '1';
 let runtime_degrade_reason = runtime_state_get('degrade_reason') || '';
 let health_status = runtime_state_get('health_status') || (running ? 'unknown' : 'stopped');
 let health_detail = runtime_state_get('health_detail') || '';
+if (!running) {
+	health_status = 'stopped';
+	if (health_detail != 'boot_disabled' && health_detail != 'service_disabled')
+		health_detail = 'service_stopped';
+}
 let has_tun_device = runtime_state_get('has_tun_device');
 let local_ip = get_local_ip();
 let config = get_display_config_name(configured_core);
@@ -1953,6 +1958,11 @@ let api = get_clash_api_auth();
 	let runtime_degrade_reason = runtime_state_get('degrade_reason') || '';
 	let health_status = runtime_state_get('health_status') || (running ? 'unknown' : 'stopped');
 	let health_detail = runtime_state_get('health_detail') || '';
+	if (!running) {
+		health_status = 'stopped';
+		if (health_detail != 'boot_disabled' && health_detail != 'service_disabled')
+			health_detail = 'service_stopped';
+	}
 	let has_tun_device = runtime_state_get('has_tun_device');
 	let local_ip = get_local_ip();
 	let config = get_display_config_name(configured_core);
@@ -3272,6 +3282,9 @@ if (config_obj) {
   // cache_file disabled - can cause "timeout" on first run without pre-existing cache
   // config_obj.experimental.cache_file = { enabled: true };
   if (!config_obj.log) config_obj.log = { level: 'info', timestamp: true };
+  // OpenWrt owns time sync; avoid sing-box NTP IPv6 noise on IPv4-only routers.
+  config_obj.ntp = config_obj.ntp || {};
+  config_obj.ntp.enabled = false;
 
   // Fix rule_set URLs: rewrite to jsDelivr CDN (accessible from China)
   // Pattern: https://[gh-proxy.com/]https://github.com/{owner}/{repo}/raw/refs/heads/{branch}/{path}

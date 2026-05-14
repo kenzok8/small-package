@@ -17,7 +17,7 @@
     "final": "dns_direct"
   },
   "ntp": {
-    "enabled": true,
+    "enabled": false,
     "server": "time.apple.com",
     "server_port": 123,
     "interval": "30m"

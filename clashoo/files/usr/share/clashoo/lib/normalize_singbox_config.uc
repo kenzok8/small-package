@@ -779,6 +779,11 @@ cfg.experimental.cache_file = {
 	store_fakeip: true
 };
 
+/* OpenWrt already owns system time sync. Keep sing-box NTP disabled by
+ * default to avoid noisy IPv6 UDP/123 failures on IPv4-only routers. */
+cfg.ntp = cfg.ntp || {};
+cfg.ntp.enabled = false;
+
 cfg.log = cfg.log || {};
 cfg.log.output = '/var/log/clashoo/core.log';
 if (!cfg.log.level)

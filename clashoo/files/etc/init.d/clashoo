@@ -375,6 +375,16 @@ runtime_state_record_health() {
 	runtime_state_set "updated_at" "$(date +%s)"
 }
 
+runtime_state_accepts_health_update() {
+	_core_running || return 1
+	case "$(grep '^health_detail=' "$RUNTIME_STATE_FILE" 2>/dev/null | cut -d= -f2-)" in
+		service_stopped|service_disabled|boot_disabled)
+			return 1
+			;;
+	esac
+	return 0
+}
+
 curl_has_final_http_response() {
 	awk '
 		/^HTTP\// && $0 !~ /Connection established/ { ok=1 }
@@ -385,6 +395,8 @@ curl_has_final_http_response() {
 runtime_run_health_check() {
 	local dns_state explicit_state transparent_state detail require_fakeip mixed_port _try
 	local dns_out dns_addr _url
+
+	runtime_state_accepts_health_update || return 1
 
 	dns_state="na"
 	explicit_state="na"
@@ -441,11 +453,13 @@ runtime_run_health_check() {
 	detail="dns:${dns_state};explicit:${explicit_state};transparent:${transparent_state}"
 	if [ "$explicit_state" = "ok" ] && [ "$transparent_state" = "ok" ]; then
 		if [ "$require_fakeip" = "0" ] || [ "$dns_state" = "ok" ] || [ "$dns_state" = "compat" ] || [ "$dns_state" = "na" ]; then
+			runtime_state_accepts_health_update || return 1
 			runtime_state_record_health "pass" "$detail"
 			return 0
 		fi
 	fi
 
+	runtime_state_accepts_health_update || return 1
 	runtime_state_record_health "fail" "$detail"
 	echo "  $(date "+%Y-%m-%d %H:%M:%S") - runtime health check failed: ${detail}" >> /usr/share/clashoo/clashoo.txt
 	return 1
