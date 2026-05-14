@@ -1037,7 +1037,7 @@ start_socks() {
 				NO_REC_PROCESS=$no_rec $APP_PATH/app.sh run_socks flag=$id node=$node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 				set_cache_var "socks_${id}" "$node"
 				#自动切换逻辑
-				[ "$enable_autoswitch" = "1" ] && $APP_PATH/socks_auto_switch.sh ${id} > /dev/null 2>&1 &
+				[ "$enable_autoswitch" = "1" ] && { $APP_PATH/socks_auto_switch.sh ${id} > /dev/null 2>&1 & }
 			done
 		}
 	}
@@ -1101,7 +1101,7 @@ start_crontab() {
 
 	if [ "$ENABLED_DEFAULT_ACL" = "1" ] || [ "$ENABLED_ACLS" = "1" ]; then
 		local start_daemon=$(config_t_get global_delay start_daemon 0)
-		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh >/dev/null 2>&1 &
+		[ "$start_daemon" = "1" ] && { $APP_PATH/monitor.sh >/dev/null 2>&1 & }
 	fi
 
 	if [ -f "${LOCK_PATH}/${CONFIG}_cron.lock" ]; then
