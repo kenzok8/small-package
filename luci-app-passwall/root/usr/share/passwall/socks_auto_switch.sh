@@ -6,7 +6,7 @@ APP_FILE=${APP_PATH}/app.sh
 flag=0
 
 check_process() {
-	while pgrep -af "${CONFIG}/" | grep -E 'app\.sh.*(start|stop)|nftables\.sh|iptables\.sh|subscribe\.lua' >/dev/null; do
+	while busybox pgrep -af "${CONFIG}/" | grep -E 'app\.sh.*(start|stop)|nftables\.sh|iptables\.sh|subscribe\.lua' >/dev/null; do
 		sleep 6s
 	done
 }
@@ -63,7 +63,7 @@ test_node() {
 		# 结束 SS 插件进程
 		local pid_file="/tmp/etc/${CONFIG}/test_node_${node_id}_plugin.pid"
 		[ -s "$pid_file" ] && kill -9 "$(head -n 1 "$pid_file")" >/dev/null 2>&1
-		pgrep -af "test_node_${node_id}" | awk '! /socks_auto_switch\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
+		busybox pgrep -af "test_node_${node_id}" | awk '! /socks_auto_switch\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
 		rm -rf /tmp/etc/${CONFIG}/test_node_${node_id}*.*
 		if [ "${_proxy_status}" -eq 200 ]; then
 			return 0

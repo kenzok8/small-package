@@ -38,7 +38,7 @@ while [ 1 -eq 1 ]; do
 		# 检查是否超过最大重启次数
 		[ "$restart_count" -ge "$MAX_RESTART_COUNT" ] && continue
 
-		if ! pgrep -f "$cmd_check" >/dev/null; then
+		if ! busybox pgrep -f "$cmd_check" >/dev/null; then
 			restart_count=$((restart_count + 1))
 			echo "$restart_count" > "$stats_file"
 			#echo "${cmd} 进程挂掉，重启" >> /tmp/log/passwall.log

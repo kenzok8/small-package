@@ -1205,7 +1205,7 @@ function to_move(app_name,file)
 		}
 	end
 
-	local flag = sys.call('pgrep -af "passwall/.*'.. app_name ..'" >/dev/null')
+	local flag = sys.call('busybox pgrep -af "passwall/.*'.. app_name ..'" >/dev/null')
 	if flag == 0 then
 		sys.call("/etc/init.d/passwall stop")
 	end
