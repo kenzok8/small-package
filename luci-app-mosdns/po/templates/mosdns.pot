@@ -74,7 +74,7 @@ msgstr ""
 msgid "Aliyun Public DNS (DNS over QUIC)"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:55
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:68
 msgid "Another update is already in progress."
 msgstr ""
 
@@ -86,7 +86,7 @@ msgstr ""
 msgid "Auto Save Cache Interval"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:86
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:106
 msgid ""
 "Automatically update GeoIP and GeoSite databases as well as ad filtering "
 "rules through scheduled tasks."
@@ -133,11 +133,11 @@ msgstr ""
 msgid "Cache Dump"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:130
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:150
 msgid "Check And Update"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:128
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:148
 msgid "Check And Update GeoData."
 msgstr ""
 
@@ -163,7 +163,7 @@ msgstr ""
 msgid "Clear logs"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:33
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:35
 msgid "Close"
 msgstr ""
 
@@ -246,7 +246,7 @@ msgstr ""
 msgid "DNS redirect"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:129
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:149
 msgid "Database Update"
 msgstr ""
 
@@ -276,7 +276,7 @@ msgstr ""
 msgid "DoH/TCP/DoT Connection Multiplexing idle timeout (default 30 seconds)"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:91
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:111
 msgid "Enable Auto Database Update"
 msgstr ""
 
@@ -318,35 +318,35 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:95
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:115
 msgid "Every Day"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:100
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:120
 msgid "Every Friday"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:96
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:116
 msgid "Every Monday"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:101
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:121
 msgid "Every Saturday"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:102
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:122
 msgid "Every Sunday"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:99
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:119
 msgid "Every Thursday"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:97
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:117
 msgid "Every Tuesday"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:98
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:118
 msgid "Every Wednesday"
 msgstr ""
 
@@ -359,7 +359,7 @@ msgstr ""
 msgid "Failed to clean logs."
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:74
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:89
 msgid "Failed to start update."
 msgstr ""
 
@@ -399,11 +399,11 @@ msgstr ""
 msgid "Forward Dnsmasq Domain Name resolution requests to MosDNS"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:116
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:136
 msgid "Full"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:114
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:134
 msgid "Full: includes all Countries and Private IP addresses."
 msgstr ""
 
@@ -415,7 +415,7 @@ msgstr ""
 msgid "GeoIP Tags"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:111
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:131
 msgid "GeoIP Type"
 msgstr ""
 
@@ -427,7 +427,7 @@ msgstr ""
 msgid "Geodata Update"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:121
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:141
 msgid "GitHub Proxy"
 msgstr ""
 
@@ -503,11 +503,11 @@ msgstr ""
 msgid "Listen Port"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:117
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:137
 msgid "Little"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:112
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:132
 msgid "Little: only include Mainland China and Private IP addresses."
 msgstr ""
 
@@ -585,7 +585,7 @@ msgid ""
 "Media DNS requests"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:36
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:22
 msgid "Please wait, this may take a few moments..."
 msgstr ""
 
@@ -641,7 +641,7 @@ msgstr ""
 msgid "Save the cache locally and reload the cache dump on the next startup"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:26
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:28
 msgid "Starting update..."
 msgstr ""
 
@@ -721,32 +721,36 @@ msgstr ""
 msgid "Unable to save contents: %s"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:94
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:114
 msgid "Update Cycle"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:85
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:105
 msgid "Update GeoIP & GeoSite databases"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:105
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:125
 msgid "Update Time"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:122
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:142
 msgid ""
 "Update data files with GitHub Proxy, leave blank to disable proxy downloads."
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:78
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:59
+msgid "Update failed"
+msgstr ""
+
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:95
 msgid "Update failed: %s"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:49
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:50
 msgid "Update success"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:35
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:37
 msgid "Updating Database..."
 msgstr ""
 
@@ -781,6 +785,6 @@ msgstr ""
 msgid "Xinfeng Public DNS (114.114.115.115)"
 msgstr ""
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:123
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:143
 msgid "https://gh-proxy.com"
 msgstr ""

@@ -19,6 +19,8 @@ const callGetUpdateLog = rpc.declare({
 
 return view.extend({
 	handleUpdate() {
+		const statusMsg = E('p', { 'class': 'spinning' }, _('Please wait, this may take a few moments...'));
+
 		const logTextarea = E('textarea', {
 			'class': 'cbi-input-textarea',
 			'readonly': 'readonly',
@@ -33,7 +35,7 @@ return view.extend({
 		}, _('Close'));
 
 		ui.showModal(_('Updating Database...'), [
-			E('p', { 'class': 'spinning' }, _('Please wait, this may take a few moments...')),
+			statusMsg,
 			logTextarea,
 			E('div', { 'class': 'right' }, [ closeButton ])
 		]);
@@ -45,14 +47,28 @@ return view.extend({
 					logTextarea.scrollTop = logTextarea.scrollHeight;
 
 					if (res.log.match(/UPDATE_FINISHED/)) {
-						ui.hideModal();
-						ui.addNotification(null, E('p', _('Update success')), 'info');
+						statusMsg.textContent = _('Update success');
+						statusMsg.classList.remove('spinning');
+						statusMsg.style.color = '#19be6b';
+						statusMsg.style.fontWeight = 'bold';
+						closeButton.style.display = 'inline';
+						return false;
+					}
+
+					if (res.log.match(/UPDATE_EXITED/)) {
+						statusMsg.textContent = _('Update failed');
+						statusMsg.classList.remove('spinning');
+						statusMsg.style.color = '#ed4014';
+						statusMsg.style.fontWeight = 'bold';
+						closeButton.style.display = 'inline';
 						return false;
 					}
 
 					if (res.log.match(/Another update is already in progress/)) {
-						ui.hideModal();
-						ui.addNotification(null, E('p', _('Another update is already in progress.')), 'warn');
+						statusMsg.textContent = _('Another update is already in progress.');
+						statusMsg.classList.remove('spinning');
+						statusMsg.style.color = '#ff9900';
+						closeButton.style.display = 'inline';
 						return false;
 					}
 				}
@@ -70,12 +86,16 @@ return view.extend({
 					});
 				}, 1000);
 			} else {
-				ui.hideModal();
-				ui.addNotification(null, E('p', res.error || _('Failed to start update.')), 'error');
+				statusMsg.textContent = res.error || _('Failed to start update.');
+				statusMsg.classList.remove('spinning');
+				statusMsg.style.color = '#ed4014';
+				closeButton.style.display = 'inline';
 			}
 		}).catch(e => {
-			ui.hideModal();
-			ui.addNotification(null, E('p', _('Update failed: %s').format(e.message)), 'error');
+			statusMsg.textContent = _('Update failed: %s').format(e.message);
+			statusMsg.classList.remove('spinning');
+			statusMsg.style.color = '#ed4014';
+			closeButton.style.display = 'inline';
 		});
 	},
 

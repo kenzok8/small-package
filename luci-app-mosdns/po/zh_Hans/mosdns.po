@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-20 09:23+0800\n"
-"PO-Revision-Date: 2026-05-01 09:13+0800\n"
+"PO-Revision-Date: 2026-05-15 14:09+0800\n"
 "Last-Translator: sbwml <admin@cooluc.com>\n"
 "Language-Team: Chinese\n"
 "Language: zh_Hans\n"
@@ -89,7 +89,7 @@ msgstr "阿里云公共 DNS（DNS over HTTPS）"
 msgid "Aliyun Public DNS (DNS over QUIC)"
 msgstr "阿里云公共 DNS（DNS over QUIC）"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:55
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:68
 msgid "Another update is already in progress."
 msgstr "另一个更新正在进行中。"
 
@@ -101,7 +101,7 @@ msgstr "Apple 域名解析优化"
 msgid "Auto Save Cache Interval"
 msgstr "自动保存缓存间隔（秒）"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:86
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:106
 msgid ""
 "Automatically update GeoIP and GeoSite databases as well as ad filtering "
 "rules through scheduled tasks."
@@ -150,11 +150,11 @@ msgstr "Bootstrap DNS 服务器用于解析您指定为上游的 DoH / DoT 解�
 msgid "Cache Dump"
 msgstr "自动保存缓存"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:130
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:150
 msgid "Check And Update"
 msgstr "检查并更新"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:128
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:148
 msgid "Check And Update GeoData."
 msgstr "检查并更新 GeoData 数据库。"
 
@@ -180,7 +180,7 @@ msgstr "思科公共 DNS（208.67.222.222）"
 msgid "Clear logs"
 msgstr "清空日志"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:33
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:35
 msgid "Close"
 msgstr "关闭"
 
@@ -264,7 +264,7 @@ msgstr "DNS 查询请求并发数，允许同时发起请求的上游 DNS 服务
 msgid "DNS redirect"
 msgstr "DNS 重定向"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:129
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:149
 msgid "Database Update"
 msgstr "数据库更新"
 
@@ -295,7 +295,7 @@ msgstr ""
 msgid "DoH/TCP/DoT Connection Multiplexing idle timeout (default 30 seconds)"
 msgstr "DoH/TCP/DoT 连接复用空闲保持时间（默认 30 秒）"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:91
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:111
 msgid "Enable Auto Database Update"
 msgstr "启用自动更新"
 
@@ -337,35 +337,35 @@ msgstr "填写需要导出的 GeoSite.dat 类别条目，允许添加多个标�
 msgid "Error"
 msgstr "错误"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:95
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:115
 msgid "Every Day"
 msgstr "每天"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:100
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:120
 msgid "Every Friday"
 msgstr "每周五"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:96
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:116
 msgid "Every Monday"
 msgstr "每周一"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:101
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:121
 msgid "Every Saturday"
 msgstr "每周六"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:102
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:122
 msgid "Every Sunday"
 msgstr "每周日"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:99
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:119
 msgid "Every Thursday"
 msgstr "每周四"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:97
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:117
 msgid "Every Tuesday"
 msgstr "每周二"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:98
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:118
 msgid "Every Wednesday"
 msgstr "每周三"
 
@@ -378,7 +378,7 @@ msgstr "导出目录：/var/mosdns"
 msgid "Failed to clean logs."
 msgstr "清理日志失败：%s"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:74
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:89
 msgid "Failed to start update."
 msgstr "启动更新失败"
 
@@ -418,11 +418,11 @@ msgstr "强制将所有本地 DNS 查询重定向到 MosDNS，即 DNS 劫持。"
 msgid "Forward Dnsmasq Domain Name resolution requests to MosDNS"
 msgstr "将 Dnsmasq 域名解析请求转发到 MosDNS 服务器"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:116
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:136
 msgid "Full"
 msgstr "全量"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:114
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:134
 msgid "Full: includes all Countries and Private IP addresses."
 msgstr "全量：包含所有国家和私有 IP 地址。"
 
@@ -434,7 +434,7 @@ msgstr "GeoData 导出"
 msgid "GeoIP Tags"
 msgstr "GeoIP 标签"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:111
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:131
 msgid "GeoIP Type"
 msgstr "GeoIP 类型"
 
@@ -446,7 +446,7 @@ msgstr "GeoSite 标签"
 msgid "Geodata Update"
 msgstr "更新数据库"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:121
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:141
 msgid "GitHub Proxy"
 msgstr "GitHub 代理"
 
@@ -463,7 +463,7 @@ msgstr "谷歌公共 DNS（8.8.8.8）"
 
 #: luci-app-mosdns/root/usr/share/rpcd/acl.d/luci-app-mosdns.json:3
 msgid "Grant UCI access for luci-app-mosdns"
-msgstr ""
+msgstr "授予 luci-app-mosdns 的 UCI 访问权限"
 
 #: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/rules.js:20
 msgid "Grey Lists"
@@ -522,11 +522,11 @@ msgstr "监听地址"
 msgid "Listen Port"
 msgstr "监听端口"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:117
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:137
 msgid "Little"
 msgstr "轻量"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:112
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:132
 msgid "Little: only include Mainland China and Private IP addresses."
 msgstr "轻量：仅包含中国大陆和私有 IP 地址。"
 
@@ -609,7 +609,7 @@ msgstr ""
 "请提供您在访问国外网站时使用的 IP 地址，这个 IP 子网（0/24）将用作 远程 / 流"
 "媒体 DNS 请求的 ECS 地址"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:36
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:22
 msgid "Please wait, this may take a few moments..."
 msgstr "请稍候，这可能需要一点时间..."
 
@@ -667,7 +667,7 @@ msgstr "规则列表"
 msgid "Save the cache locally and reload the cache dump on the next startup"
 msgstr "保存缓存到本地文件，以供下次启动时重新载入使用"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:26
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:28
 msgid "Starting update..."
 msgstr ""
 
@@ -751,32 +751,36 @@ msgstr "火山引擎公共 DNS（180.184.2.2）"
 msgid "Unable to save contents: %s"
 msgstr "无法保存内容：%s"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:94
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:114
 msgid "Update Cycle"
 msgstr "更新周期"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:85
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:105
 msgid "Update GeoIP & GeoSite databases"
 msgstr "更新广告规则、GeoIP & GeoSite 数据库"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:105
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:125
 msgid "Update Time"
 msgstr "更新时间"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:122
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:142
 msgid ""
 "Update data files with GitHub Proxy, leave blank to disable proxy downloads."
 msgstr "通过 GitHub 代理更新数据文件，留空则禁用代理下载。"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:78
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:59
+msgid "Update failed"
+msgstr "更新失败"
+
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:95
 msgid "Update failed: %s"
 msgstr "更新失败: %s"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:49
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:50
 msgid "Update success"
 msgstr "更新成功"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:35
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:37
 msgid "Updating Database..."
 msgstr "更新数据库..."
 
@@ -815,6 +819,6 @@ msgstr "信风公共 DNS（114.114.114.114）"
 msgid "Xinfeng Public DNS (114.114.115.115)"
 msgstr "信风公共 DNS（114.114.115.115）"
 
-#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:123
+#: luci-app-mosdns/htdocs/luci-static/resources/view/mosdns/update.js:143
 msgid "https://gh-proxy.com"
 msgstr ""

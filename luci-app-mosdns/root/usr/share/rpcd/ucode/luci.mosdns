@@ -128,7 +128,7 @@ const methods = {
 					return { success: false, error: 'Another update is already in progress.' };
 				}
 				exec_sys('echo "" > /var/log/mosdns_update.log');
-				exec_sys('{ /usr/share/mosdns/mosdns.uc update; rm -f /var/lock/mosdns_update.lock; echo "UPDATE_FINISHED"; } > /var/log/mosdns_update.log 2>&1 &');
+				exec_sys('/usr/share/mosdns/mosdns.uc update > /var/log/mosdns_update.log 2>&1 &');
 				return { success: true };
 			} catch (e) {
 				return { success: false, error: String(e) };
