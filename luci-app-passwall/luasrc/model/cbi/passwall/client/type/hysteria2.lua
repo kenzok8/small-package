@@ -24,19 +24,36 @@ o = s:option(ListValue, _n("protocol"), translate("Protocol"))
 o:value("udp", "UDP")
 
 o = s:option(Value, _n("address"), translate("Address (Support Domain Name)"))
+o:depends({ [_n("realms")] = false })
 
 o = s:option(Value, _n("port"), translate("Port"))
 o.datatype = "port"
+o:depends({ [_n("realms")] = false })
 
 o = s:option(Value, _n("hop"), translate("Port hopping range"))
 o.description = translate("Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,).")
 o.rewrite_option = o.option
+o:depends({ [_n("realms")] = false })
 
 o = s:option(Value, _n("hop_interval"), translate("Hop Interval(second)"), translate("Supports a fixed value or a random range (e.g., 30, 5-30), minimum 5."))
 o.datatype = "or(uinteger,portrange)"
 o.placeholder = "30"
 o.default = "30"
 o.rewrite_option = o.option
+o:depends({ [_n("realms")] = false })
+
+o = s:option(Flag, _n("realms"), translate("Realms"))
+o.default = "0"
+o.rewrite_option = o.option
+
+o = s:option(Value, _n("realm_url"), translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
+o.rewrite_option = o.option
+o:depends({ [_n("realms")] = "1" })
+
+o = s:option(DynamicList, _n("realm_stun"), translate("Realm STUN"))
+o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
+o.rewrite_option = o.option
+o:depends({ [_n("realms")] = "1" })
 
 o = s:option(Value, _n("auth_password"), translate("Auth Password"))
 o.password = true
