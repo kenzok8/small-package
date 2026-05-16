@@ -5,3 +5,5 @@ config easytier
 	option auto_config_interface '1'
 	option auto_config_firewall '1'
 	option interface_netmask '255.0.0.0'
+	option web_enabled '0'
+	option webbin '/usr/bin/easytier-web'

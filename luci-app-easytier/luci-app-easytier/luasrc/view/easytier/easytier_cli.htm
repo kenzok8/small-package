@@ -370,11 +370,41 @@ local uci = require 'luci.model.uci'.cursor()
 	border-radius: 12px;
 	white-space: pre-wrap;
 	word-wrap: break-word;
+	overflow-wrap: anywhere;
+	word-break: break-word;
 	font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 	font-size: 13px;
 	color: var(--text-primary);
 	overflow-x: auto;
 	line-height: 1.5;
+}
+
+.et-command-panel {
+	position: relative;
+}
+
+.et-command-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 8px;
+}
+
+.et-copy-btn {
+	display: inline-flex;
+	align-items: center;
+	padding: 5px 10px;
+	background: var(--tab-active);
+	color: #fff;
+	border: 1px solid var(--tab-active);
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.4;
+}
+
+.et-copy-btn:hover {
+	opacity: 0.9;
 }
 
 @media (max-width: 768px) {
@@ -893,6 +923,50 @@ function escapeHtml(text) {
 	return div.innerHTML;
 }
 
+function copyTextFromElement(elementId, button) {
+	var el = document.getElementById(elementId);
+	if (!el) return;
+	var text = el.textContent || el.innerText || '';
+
+	function markCopied() {
+		if (!button) return;
+		var oldText = button.textContent;
+		button.textContent = '<%:Copied%>';
+		window.setTimeout(function() {
+			button.textContent = oldText;
+		}, 1500);
+	}
+
+	if (navigator.clipboard && window.isSecureContext) {
+		navigator.clipboard.writeText(text).then(markCopied);
+		return;
+	}
+
+	var textarea = document.createElement('textarea');
+	textarea.value = text;
+	textarea.setAttribute('readonly', 'readonly');
+	textarea.style.position = 'fixed';
+	textarea.style.left = '-9999px';
+	document.body.appendChild(textarea);
+	textarea.select();
+	try {
+		document.execCommand('copy');
+		markCopied();
+	} finally {
+		document.body.removeChild(textarea);
+	}
+}
+
+function renderCopyablePre(content, className) {
+	var id = 'et_copy_' + Math.random().toString(36).slice(2);
+	return '<div class="et-command-panel">' +
+		'<div class="et-command-toolbar">' +
+			'<button type="button" class="et-copy-btn" onclick="copyTextFromElement(\'' + id + '\', this); return false;"><%:Copy%></button>' +
+		'</div>' +
+		'<div id="' + id + '" class="' + (className || 'et-pre') + '">' + escapeHtml(content) + '</div>' +
+	'</div>';
+}
+
 function parseTable(content, tabName) {
 	if (!content || content.trim() === '') {
 		return '<div class="et-empty"><%:No data available%></div>';
@@ -915,6 +989,47 @@ function parseTable(content, tabName) {
 	// Peer Center错误处理
 	if (content.indexOf('Error: Invalid service name: "PeerCenterRpc"') !== -1) {
 		return '<div class="et-error"><%:Peer Center service not available. This feature requires multiple nodes in the network.%></div>';
+	}
+
+	// 启动参数可能包含管道符等特殊字符，必须先于表格解析处理。
+	if (tabName === 'cmdline') {
+		var html = renderCopyablePre(content);
+
+		// 检查是否使用配置文件启动
+		if (content.indexOf('--config-file') !== -1 || content.match(/-c\s+\//)) {
+			XHR.get('<%=url("admin/vpn/easytier/api_conninfo")%>', null, function(x, data) {
+				if (data && data.config_file) {
+					var configDiv = document.createElement('div');
+					configDiv.className = 'et-pre';
+					configDiv.style.marginTop = '16px';
+					configDiv.style.borderTop = '2px solid var(--border-color)';
+					configDiv.style.paddingTop = '16px';
+
+					var title = document.createElement('div');
+					title.style.fontWeight = '600';
+					title.style.marginBottom = '8px';
+					title.style.color = 'var(--primary-color)';
+					title.textContent = tr('Configuration File Content') + ':';
+
+					var contentDiv = document.createElement('pre');
+					contentDiv.style.margin = '0';
+					contentDiv.style.whiteSpace = 'pre-wrap';
+					contentDiv.style.overflowWrap = 'anywhere';
+					contentDiv.style.wordBreak = 'break-word';
+					contentDiv.textContent = data.config_file;
+
+					configDiv.appendChild(title);
+					configDiv.appendChild(contentDiv);
+
+					var container = document.getElementById('tab_cmdline');
+					if (container) {
+						container.appendChild(configDiv);
+					}
+				}
+			});
+		}
+
+		return html;
 	}
 	
 	// 连接失败错误处理
@@ -948,46 +1063,6 @@ function parseTable(content, tabName) {
 	var lines = content.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
 	
 	if (lines.length === 0 || lines[0].indexOf('|') === -1) {
-		// 启动参数不翻译
-		if (tabName === 'cmdline') {
-			var html = '<div class="et-pre">' + escapeHtml(content) + '</div>';
-			
-			// 检查是否使用配置文件启动
-			if (content.indexOf('--config-file') !== -1 || content.match(/-c\s+\//)) {
-				XHR.get('<%=url("admin/vpn/easytier/api_conninfo")%>', null, function(x, data) {
-					if (data && data.config_file) {
-						var configDiv = document.createElement('div');
-						configDiv.className = 'et-pre';
-						configDiv.style.marginTop = '16px';
-						configDiv.style.borderTop = '2px solid var(--border-color)';
-						configDiv.style.paddingTop = '16px';
-						
-						var title = document.createElement('div');
-						title.style.fontWeight = '600';
-						title.style.marginBottom = '8px';
-						title.style.color = 'var(--primary-color)';
-						title.textContent = tr('Configuration File Content') + ':';
-						
-						var contentDiv = document.createElement('pre');
-						contentDiv.style.margin = '0';
-						contentDiv.style.whiteSpace = 'pre-wrap';
-						contentDiv.style.wordBreak = 'break-all';
-						contentDiv.textContent = data.config_file;
-						
-						configDiv.appendChild(title);
-						configDiv.appendChild(contentDiv);
-						
-						var container = document.querySelector('.et-tab-content[data-tab="cmdline"]');
-						if (container) {
-							container.appendChild(configDiv);
-						}
-					}
-				});
-			}
-			
-			return html;
-		}
-		
 		// 对非表格内容进行全面翻译处理
 		var translatedContent = content;
 		

@@ -1403,3 +1403,12 @@ msgstr ""
 
 msgid "GEOIP Database Path"
 msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Copied"
+msgstr ""
+
+msgid "Duplicate extra parameter"
+msgstr ""

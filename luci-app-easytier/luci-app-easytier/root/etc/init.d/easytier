@@ -71,6 +71,10 @@ get_tz() {
 }
 fi
 
+shell_quote() {
+	printf "'%s'" "$(printf "%s" "$1" | sed "s/'/'\\\\''/g")"
+}
+
 check_bin() {
 	# 优先使用 UCI 配置的代理列表（list 类型），否则使用默认值
 	local proxys=""
@@ -103,10 +107,15 @@ check_bin() {
 	# 如果获取失败，从 UCI 配置或使用默认版本
 	if [ -z "$tag" ]; then
 		tag=$(uci -q get easytier.@easytier[0].fallback_version)
-		[ -z "$tag" ] && tag="v2.6.2"
+		[ -z "$tag" ] && tag="v2.6.4"
 	fi
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytier.log
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytierweb.log
+	if ! command -v unzip >/dev/null 2>&1; then
+		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 系统缺少 unzip，无法解压下载的 EasyTier 压缩包，请安装 unzip 后重试" >>/tmp/easytier.log
+		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 系统缺少 unzip，无法解压下载的 EasyTier 压缩包，请安装 unzip 后重试" >>/tmp/easytierweb.log
+		return 1
+	fi
         mkdir -p "$path"
 	for proxy in $proxys ; do
 	        if curl -L -k -o /tmp/easytier.zip --connect-timeout 10 --retry 3 "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip" || \
@@ -205,7 +214,6 @@ get_etconfig() {
 		quic_port="$(uci -q get easytier.@easytier[0].quic_port)"
 		peeradd="$(uci -q get easytier.@easytier[0].peeradd)"
 		desvice_name="$(uci -q get easytier.@easytier[0].desvice_name)"
-		[ -z "$desvice_name" ] || desvice_name=$(echo "$desvice_name" | sed 's/[\\$`"()|><&;]/\\&/g')
 		instance_name="$(uci -q get easytier.@easytier[0].instance_name)"
 		vpn_portal="$(uci -q get easytier.@easytier[0].vpn_portal)"
 		mtu="$(uci -q get easytier.@easytier[0].mtu)"
@@ -442,8 +450,8 @@ start_et() {
 			core_cmd=""
 			if [ "$etcmd" = "etcmd" ] ; then
 				#默认方式启动
-				[ -z "$network_name" ] || core_cmd="${core_cmd} --network-name $network_name"
-				[ -z "$network_secret" ] || core_cmd="${core_cmd} --network-secret $network_secret"
+				[ -z "$network_name" ] || core_cmd="${core_cmd} --network-name $(shell_quote "$network_name")"
+				[ -z "$network_secret" ] || core_cmd="${core_cmd} --network-secret $(shell_quote "$network_secret")"
 				[ -z "$ipaddr" ] || core_cmd="${core_cmd} -i $ipaddr"
 				[ -z "$ip6addr" ] || core_cmd="${core_cmd} --ipv6 $ip6addr"
 				[ "$ip_dhcp" = "0" ] || core_cmd="${core_cmd} -d"
@@ -524,7 +532,7 @@ start_et() {
 				[ -z "$quic_port" ] || core_cmd="${core_cmd} -l quic:$quic_port"
                 		[ -z "$external_node" ] || core_cmd="${core_cmd} -e $external_node"
 				[ "$listenermode" = "ON" ] || core_cmd="${core_cmd} --no-listener"
-				[ -z "$desvice_name" ] || core_cmd="${core_cmd} --hostname $desvice_name"
+				[ -z "$desvice_name" ] || core_cmd="${core_cmd} --hostname $(shell_quote "$desvice_name")"
 				[ -z "$instance_name" ] || core_cmd="${core_cmd} -m $instance_name"
 				[ -z "$vpn_portal" ] || core_cmd="${core_cmd} --vpn-portal $vpn_portal"
 				[ -z "$mtu" ] || core_cmd="${core_cmd} --mtu $mtu"
@@ -563,7 +571,13 @@ start_et() {
 				[ "$relay_kcp" = "0" ] || core_cmd="${core_cmd} --enable-relay-foreign-network-kcp true"
 				[ -z "$udp_white_port" ] || core_cmd="${core_cmd} --udp-whitelist $udp_white_port"
 				[ -z "$tcp_white_port" ] || core_cmd="${core_cmd} --tcp-whitelist $tcp_white_port"
-				[ -z "$extra_args" ] || core_cmd="${core_cmd} $extra_args"
+				if [ -n "$extra_args" ] ; then
+					while IFS= read -r extra_arg; do
+						[ -n "$extra_arg" ] && core_cmd="${core_cmd} $extra_arg"
+					done <<EOF
+$(sed -n "s/^[[:space:]]*list[[:space:]]\\+extra_args[[:space:]]\\+'\\(.*\\)'[[:space:]]*$/\\1/p" /etc/config/easytier)
+EOF
+				fi
 				
 				echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} ${core_cmd} --console-log-level ${log}" >>/tmp/easytier.log
 				
@@ -580,7 +594,7 @@ start_et() {
 				et_uuid="$(cat /etc/easytier/et_machine_id | tr -d ' \n')"
 				[ -z "$et_uuid" ] || core_cmd="${core_cmd} --machine-id $et_uuid"
 				[ -z "$web_config" ] || core_cmd="${core_cmd} -w $web_config"
-				[ -z "$desvice_name" ] || core_cmd="${core_cmd} --hostname $desvice_name"
+				[ -z "$desvice_name" ] || core_cmd="${core_cmd} --hostname $(shell_quote "$desvice_name")"
 			fi
 	     		procd_set_param command /bin/sh -c "
 			cd /tmp ; ${easytierbin} ${core_cmd} --console-log-level ${log} >> /tmp/easytier.log 2>&1 &
@@ -636,6 +650,7 @@ start_et() {
 
 start_web() {
 	webbin="$(uci -q get easytier.@easytier[0].webbin)"
+	[ -z "$webbin" ] && webbin="/usr/bin/easytier-web" && uci -q set easytier.@easytier[0].webbin=/usr/bin/easytier-web
 	path=$(dirname "$webbin")
 	if [ -f /tmp/easytier-web-embed ] ; then
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 找到上传的easytier-web程序，替换${webbin} " >>/tmp/easytierweb.log
@@ -813,7 +828,7 @@ start_service() {
 	
 	# 延迟重载网络配置，避免与拨号等网络事件冲突
 	if [ -n "$(uci changes network)" ] || [ -n "$(uci changes firewall)" ]; then
-		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 检测到配置变更，将在5秒后后台重载... " >>/tmp/easytier.log
+		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 检测到配置变更，将在5秒后后台重载网络、防火墙... " >>/tmp/easytier.log
 		(
 			sleep 5
 			# 使用锁文件防止重复重载
@@ -891,4 +906,3 @@ service_triggers() {
 	#如果WAN网络接口上线则触发重新启动easytier
         # procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytier reload
 }
-

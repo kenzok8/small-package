@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 -include $(dir $(lastword $(MAKEFILE_LIST)))../version.mk
 
 PKG_NAME:=easytier-noweb
-PKG_VERSION:=$(or $(EASYTIER_VERSION),2.6.2)
+PKG_VERSION:=$(or $(EASYTIER_VERSION),2.6.4)
 
 ifeq ($(ARCH),mipsel)
 	APP_ARCH:=mipsel
@@ -36,6 +36,8 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
+RSTRIP:=:
+
 define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
@@ -63,8 +65,10 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/easytier-core $(1)/usr/bin/easytier-core
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/easytier-cli $(1)/usr/bin/easytier-cli
+	$(CP) $(PKG_BUILD_DIR)/easytier-core $(1)/usr/bin/
+	chmod 0755 $(1)/usr/bin/easytier-core
+	$(CP) $(PKG_BUILD_DIR)/easytier-cli $(1)/usr/bin/
+	chmod 0755 $(1)/usr/bin/easytier-cli
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

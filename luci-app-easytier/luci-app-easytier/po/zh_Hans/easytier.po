@@ -1267,6 +1267,15 @@ msgstr "统计数据"
 msgid "Command Line"
 msgstr "启动参数"
 
+msgid "Copy"
+msgstr "复制"
+
+msgid "Copied"
+msgstr "已复制"
+
+msgid "Duplicate extra parameter"
+msgstr "重复的额外参数"
+
 msgid "IPv4 Address"
 msgstr "IPv4地址"
 
@@ -2098,4 +2107,3 @@ msgstr "数据库重置成功"
 
 msgid "Restart service to apply changes?"
 msgstr "重启服务以生效？"
-

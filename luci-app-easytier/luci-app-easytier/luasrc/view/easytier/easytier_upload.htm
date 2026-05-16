@@ -383,7 +383,7 @@ local translate = i18n.translate
 					<select id="fallback_version_select" class="config-input" style="display:none;width:100%;">
 						<option value=""><%=translate("Loading versions...")%></option>
 					</select>
-					<input type="text" id="fallback_version" class="config-input" placeholder="v2.6.2" style="display:none;width:100%;">
+					<input type="text" id="fallback_version" class="config-input" placeholder="v2.6.4" style="display:none;width:100%;">
 				</div>
 				<button type="button" class="upload-btn" onclick="showDownloadModal()" style="padding:8px 16px;min-width:auto;flex-shrink:0;">
 					<%=translate("Online Download")%>
@@ -758,14 +758,14 @@ function loadConfig() {
 				proxyList = Array.isArray(proxys) ? proxys : [];
 				
 				renderProxyList();
-				versionManager.setVersion(config.fallback_version || 'v2.6.2');
+				versionManager.setVersion(config.fallback_version || 'v2.6.4');
 				
 				// 保存原始配置
 				originalConfig = {
 					easytierbin: config.easytierbin || '/usr/bin/easytier-core',
 					webbin: config.webbin || '/usr/bin/easytier-web',
 					github_proxys: JSON.stringify(proxyList),
-					fallback_version: config.fallback_version || 'v2.6.2'
+					fallback_version: config.fallback_version || 'v2.6.4'
 				};
 				
 				checkDiskSpace('easytierbin');
@@ -843,7 +843,7 @@ function getCurrentConfig() {
 		easytierbin: document.getElementById('easytierbin').value || '/usr/bin/easytier-core',
 		webbin: document.getElementById('webbin').value || '/usr/bin/easytier-web',
 		github_proxys: JSON.stringify(proxyList),
-		fallback_version: versionManager.getCurrentVersion() || 'v2.6.2'
+		fallback_version: versionManager.getCurrentVersion() || 'v2.6.4'
 	};
 }
 
@@ -868,7 +868,7 @@ function saveConfig() {
 		easytierbin: document.getElementById('easytierbin').value || '/usr/bin/easytier-core',
 		webbin: document.getElementById('webbin').value || '/usr/bin/easytier-web',
 		github_proxys: proxyList,
-		fallback_version: versionManager.getCurrentVersion() || 'v2.6.2'
+		fallback_version: versionManager.getCurrentVersion() || 'v2.6.4'
 	};
 	
 	var xhr = new XMLHttpRequest();

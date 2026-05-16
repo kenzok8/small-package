@@ -155,7 +155,6 @@ function update_adlist() {
 	}
 
 	if (download_failed) {
-		print("\x1b[1;31mRules download failed.\n");
 		exec_sys(`rm -rf "${ad_tmpdir}"`);
 		unlink(lock_file);
 		die("Rules download failed.");
@@ -215,7 +214,6 @@ function update_geodat() {
 
 		let sum_downloaded = split(exec_sys(`sha256sum "${tmpdir}/geoip.dat"`).stdout, /[ \t\n]+/)[0];
 		if (sum_downloaded !== geoip_sum_remote) {
-			print("\x1b[1;31mgeoip.dat checksum error\n");
 			exec_sys(`rm -rf "${tmpdir}"`); die("geoip.dat checksum error");
 		}
 		geoip_updated = true;
@@ -248,7 +246,6 @@ function update_geodat() {
 
 		let sum_downloaded = split(exec_sys(`sha256sum "${tmpdir}/geosite.dat"`).stdout, /[ \t\n]+/)[0];
 		if (sum_downloaded !== geosite_sum_remote) {
-			print("\x1b[1;31mgeosite.dat checksum error\n");
 			exec_sys(`rm -rf "${tmpdir}"`); die("geosite.dat checksum error");
 		}
 		geosite_updated = true;
@@ -332,7 +329,7 @@ switch (action) {
 			print("UPDATE_FINISHED\n");
 			stdout.flush();
 		} catch (e) {
-			print("\x1b[1;31mUpdate failed: " + e + "\n\x1b[0m");
+			print("Update failed: " + e + "\n");
 			print("UPDATE_EXITED\n");
 			stdout.flush();
 			unlink('/var/lock/mosdns_update.lock');
