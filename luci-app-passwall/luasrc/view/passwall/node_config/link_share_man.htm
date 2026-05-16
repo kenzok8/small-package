@@ -602,10 +602,10 @@ local current_node = map:get(section)
 			
 			if (v_type === "Hysteria2") {
 				v_password = opt.get("hysteria2_auth_password");
-				var dom_obfs = opt.get("hysteria2_obfs");
+				var dom_obfs = opt.get("hysteria2_obfs_password");
 				if (dom_obfs && dom_obfs.value != "") {
 					params += "&obfs=" + "salamander";
-					params += opt.query("obfs-password", "hysteria2_obfs");
+					params += opt.query("obfs-password", "hysteria2_obfs_password");
 				}
 				params += opt.query("mport", "hysteria2_hop");
 			} else {
@@ -1620,7 +1620,8 @@ local current_node = map:get(section)
 				dom_prefix = "hysteria2_"
 				opt.set(dom_prefix + 'auth_password', decodeURIComponent(password));
 				if (queryParam["obfs-password"] || queryParam["obfs_password"]) {
-					opt.set(dom_prefix + 'obfs', queryParam["obfs-password"] || queryParam["obfs_password"]);
+					opt.set(dom_prefix + 'obfs_type', "salamander");
+					opt.set(dom_prefix + 'obfs_password', queryParam["obfs-password"] || queryParam["obfs_password"]);
 				}
 				opt.set(dom_prefix + 'hop', queryParam.mport || "");
 			}

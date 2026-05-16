@@ -38,12 +38,18 @@ o.placeholder = "30"
 o.default = "30"
 o.rewrite_option = o.option
 
-o = s:option(Value, _n("obfs"), translate("Obfs Password"))
-o.rewrite_option = o.option
-
 o = s:option(Value, _n("auth_password"), translate("Auth Password"))
 o.password = true
 o.rewrite_option = o.option
+
+o = s:option(ListValue, _n("obfs_type"), translate("Obfs Type"))
+o:value("", translate("Disable"))
+o:value("salamander")
+o.rewrite_option = o.option
+
+o = s:option(Value, _n("obfs_password"), translate("Obfs Password"))
+o.rewrite_option = o.option
+o:depends({ [_n("obfs_type")] = "salamander" })
 
 o = s:option(Flag, _n("fast_open"), translate("Fast Open"))
 o.default = "0"

@@ -353,17 +353,15 @@ if singbox_tags:find("with_quic") then
 	o.description = translate("Format as 1000:2000 or 1000-2000 Multiple groups are separated by commas (,).")
 	o:depends({ [_n("protocol")] = "hysteria2" })
 
-	o = s:option(Value, _n("hysteria2_hop_interval"), translate("Hop Interval(Second)"), translate("Supports a fixed value or a random range (e.g., 30, 5-30), minimum 5."))
+	o = s:option(Value, _n("hysteria2_hop_interval"), translate("Hop Interval(second)"), translate("Supports a fixed value or a random range (e.g., 30, 5-30), minimum 5."))
 	o.datatype = "or(uinteger,portrange)"
 	o.placeholder = "30"
 	o.default = "30"
 	o:depends({ [_n("protocol")] = "hysteria2" })
 
-	o = s:option(Value, _n("hysteria2_up_mbps"), translate("Max upload Mbps"))
-	o:depends({ [_n("protocol")] = "hysteria2" })
-
-	o = s:option(Value, _n("hysteria2_down_mbps"), translate("Max download Mbps"))
-	o:depends({ [_n("protocol")] = "hysteria2" })
+	o = s:option(Value, _n("hysteria2_auth_password"), translate("Auth Password"))
+	o.password = true
+	o:depends({ [_n("protocol")] = "hysteria2"})
 
 	o = s:option(ListValue, _n("hysteria2_obfs_type"), translate("Obfs Type"))
 	o:value("", translate("Disable"))
@@ -373,8 +371,20 @@ if singbox_tags:find("with_quic") then
 	o = s:option(Value, _n("hysteria2_obfs_password"), translate("Obfs Password"))
 	o:depends({ [_n("hysteria2_obfs_type")] = "salamander" })
 
-	o = s:option(Value, _n("hysteria2_auth_password"), translate("Auth Password"))
-	o.password = true
+	o = s:option(Value, _n("hysteria2_up_mbps"), translate("Max upload Mbps"))
+	o:depends({ [_n("protocol")] = "hysteria2" })
+
+	o = s:option(Value, _n("hysteria2_down_mbps"), translate("Max download Mbps"))
+	o:depends({ [_n("protocol")] = "hysteria2" })
+
+	o = s:option(Value, _n("hysteria2_idle_timeout"), translate("Idle Timeout"), translate("Example:") .. "30s (4s~120s)")
+	o:depends({ [_n("protocol")] = "hysteria2"})
+
+	o = s:option(Value, _n("hysteria2_keep_alive_period"), translate("QUIC KeepAlive interval"), translate("Example:") .. "10s (2s~60s)")
+	o:depends({ [_n("protocol")] = "hysteria2"})
+
+	o = s:option(Flag, _n("hysteria2_disable_mtu_discovery"), translate("Disable MTU detection"))
+	o.default = "0"
 	o:depends({ [_n("protocol")] = "hysteria2"})
 end
 

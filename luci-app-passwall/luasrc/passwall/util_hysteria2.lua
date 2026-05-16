@@ -10,10 +10,10 @@ function gen_config_server(node)
 			cert = node.tls_certificateFile,
 			key = node.tls_keyFile,
 		},
-		obfs = (node.hysteria2_obfs) and {
+		obfs = (node.hysteria2_obfs_type and node.hysteria2_obfs_password) and {
 			type = "salamander",
 			salamander = {
-				password = node.hysteria2_obfs
+				password = node.hysteria2_obfs_password
 			}
 		} or nil,
 		auth = {
@@ -86,10 +86,10 @@ function gen_config(var)
 				return udp
 			end)() or nil
 		},
-		obfs = (node.hysteria2_obfs) and {
+		obfs = (node.hysteria2_obfs_type and node.hysteria2_obfs_password) and {
 			type = "salamander",
 			salamander = {
-				password = node.hysteria2_obfs
+				password = node.hysteria2_obfs_password
 			}
 		} or nil,
 		auth = node.hysteria2_auth_password,

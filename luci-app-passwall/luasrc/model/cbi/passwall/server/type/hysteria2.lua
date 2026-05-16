@@ -26,14 +26,20 @@ o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
 o:depends({ [_n("custom")] = false })
 
-o = s:option(Value, _n("obfs"), translate("Obfs Password"))
-o.rewrite_option = o.option
-o:depends({ [_n("custom")] = false })
-
 o = s:option(Value, _n("auth_password"), translate("Auth Password"))
 o.password = true
 o.rewrite_option = o.option
 o:depends({ [_n("custom")] = false })
+
+o = s:option(ListValue, _n("obfs_type"), translate("Obfs Type"))
+o:value("", translate("Disable"))
+o:value("salamander")
+o.rewrite_option = o.option
+o:depends({ [_n("custom")] = false })
+
+o = s:option(Value, _n("obfs_password"), translate("Obfs Password"))
+o.rewrite_option = o.option
+o:depends({ [_n("obfs_type")] = "salamander" })
 
 o = s:option(Flag, _n("udp"), translate("UDP"))
 o.default = "1"
