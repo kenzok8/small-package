@@ -103,8 +103,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 		local run_socks_instance = true
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
-			fragment = proxy_table.fragment or nil
-			record_fragment = proxy_table.record_fragment or nil
+			fragment = (proxy_table.fragment and node.protocol ~= "naive") and true or nil
+			record_fragment = (proxy_table.record_fragment and node.protocol ~= "naive") and true or nil
 			run_socks_instance = proxy_table.run_socks_instance
 		end
 
