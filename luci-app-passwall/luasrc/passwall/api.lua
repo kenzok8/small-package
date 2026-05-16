@@ -358,11 +358,13 @@ function is_special_node(e)
 end
 
 function is_ip(val)
+	val = trim(val):lower()
 	local str = val:match("%[(.-)%]") or val
 	return datatypes.ipaddr(str) or false
 end
 
 function is_ipv6(val)
+	val = trim(val):lower()
 	local str = val:match("%[(.-)%]") or val
 	return datatypes.ip6addr(str) or false
 end
@@ -470,9 +472,9 @@ function get_valid_nodes()
 				end
 			end
 			local port = e.port or e.hysteria_hop or e.hysteria2_hop
-			if port and e.address then
+			if (port and e.address) or e.hysteria2_realms then
 				local address = e.address
-				if is_ip(address) or datatypes.hostname(address) then
+				if is_ip(address) or datatypes.hostname(address) or e.hysteria2_realms then
 					if (e.type == "sing-box" or e.type == "Xray") and e.protocol then
 						local protocol = e.protocol
 						if protocol == "vmess" then
@@ -501,8 +503,10 @@ function get_valid_nodes()
 					if is_ipv6(address) then address = get_ipv6_full(address) end
 					e["remark"] = trim("%s：[%s]" % {type_name, e.remarks})
 					if show_node_info == "1" then
-						port = port:gsub(":", "-")
-						e["remark"] = trim("%s：[%s] %s:%s" % {type_name, e.remarks, address, port})
+						port = (port or ""):gsub(":", "-")
+						if not e.hysteria2_realms then
+							e["remark"] = trim("%s：[%s] %s:%s" % {type_name, e.remarks, address, port})
+						end
 					end
 					e.node_type = "normal"
 					if not e.group or e.group == "" then

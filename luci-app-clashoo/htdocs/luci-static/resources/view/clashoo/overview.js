@@ -257,7 +257,7 @@ return view.extend({
         core_type: core,
         dash_port: uci.get('clashoo', 'config', 'dash_port') || '9090',
         dash_pass: uci.get('clashoo', 'config', 'dash_pass') || '',
-        panel_type: uci.get('clashoo', 'config', 'dashboard_panel') || 'metacubexd',
+        panel_type: uci.get('clashoo', 'config', 'dashboard_panel') || 'zashboard',
         proxy_mode: uci.get('clashoo', 'config', 'p_mode') || 'rule',
         tcp_mode: uci.get('clashoo', 'config', 'tcp_mode') || 'tun',
         udp_mode: uci.get('clashoo', 'config', 'udp_mode') || (uci.get('clashoo', 'config', 'tcp_mode') || 'tun'),
@@ -1235,7 +1235,7 @@ return view.extend({
       tpMode = 'mixed';
     else if (tunLike)
       tpMode = 'tun';
-    var panelType = st.panel_type  || 'metacubexd';
+    var panelType = st.panel_type  || 'zashboard';
     var panelUrl  = this._dashboardUrl(st);
     var panels    = ['metacubexd', 'yacd', 'zashboard', 'razord'];
 

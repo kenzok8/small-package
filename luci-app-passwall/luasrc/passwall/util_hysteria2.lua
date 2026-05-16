@@ -61,15 +61,16 @@ function gen_config(var)
 	local local_http_password = var["local_http_password"]
 	local tcp_proxy_way = var["tcp_proxy_way"]
 	local server_host = var["server_host"] or (node.address or ""):lower()
-	local server_port = var["server_port"] or (node.port or "443")
+	local server_port = var["server_port"] or node.port
 
 	if api.is_ipv6(server_host) then
 		server_host = api.get_ipv6_full(server_host)
 	end
-	local server = server_host .. ":" .. server_port
 
-	if (node.hysteria2_hop) then
-		server = server .. "," .. string.gsub(node.hysteria2_hop, ":", "-")
+	local server = server_host .. (server_port and ":" .. server_port or "")
+
+	if node.hysteria2_hop then
+		server = server .. (server_port and "," or ":") .. string.gsub(node.hysteria2_hop, ":", "-")
 	end
 
 	local config = {

@@ -60,6 +60,25 @@ function shell_quote(s) {
 return "'" + replace(s || '', /'/g, "'\\''") + "'";
 }
 
+function dashboard_panel_dir(name) {
+if (name == 'metacubexd') return '/etc/clashoo/dashboard-metacubexd';
+if (name == 'yacd') return '/etc/clashoo/dashboard-yacd';
+if (name == 'zashboard') return '/etc/clashoo/dashboard-zashboard';
+if (name == 'razord') return '/etc/clashoo/dashboard-razord';
+return '/etc/clashoo/dashboard-zashboard';
+}
+
+function activate_dashboard_panel(name) {
+let dir = dashboard_panel_dir(name);
+if (!access(dir + '/index.html', 'r'))
+return false;
+system('rm -rf /etc/clashoo/dashboard /www/luci-static/yacd >/dev/null 2>&1');
+system('ln -s ' + shell_quote(dir) + ' /etc/clashoo/dashboard >/dev/null 2>&1 || cp -a ' + shell_quote(dir) + ' /etc/clashoo/dashboard >/dev/null 2>&1');
+if (name == 'yacd')
+system('ln -s ' + shell_quote(dir) + ' /www/luci-static/yacd >/dev/null 2>&1');
+return true;
+}
+
 function get_core_type() {
 let core_type = uci_get('clashoo', 'config', 'core_type');
 if (core_type == 'singbox') return 'singbox';
@@ -1423,7 +1442,7 @@ let r = p ? trim(p.read('all')) : '1'; if (p) p.close();
 let running = r === '0';
 let proxy_mode = c.get('clashoo', 'config', 'p_mode')         || 'rule';
 let conf_path  = c.get('clashoo', 'config', 'use_config')     || '';
-let panel_type = c.get('clashoo', 'config', 'dashboard_panel')|| 'metacubexd';
+let panel_type = c.get('clashoo', 'config', 'dashboard_panel')|| 'zashboard';
 let tcp_mode   = c.get('clashoo', 'config', 'tcp_mode')       || 'tun';
 let udp_mode   = c.get('clashoo', 'config', 'udp_mode')       || tcp_mode;
 let stack      = c.get('clashoo', 'config', 'stack')          || 'system';
@@ -1607,21 +1626,28 @@ return { success: true, core_type: core, stopped: true };
 set_panel: {
 args: { name: 'name' },
 call: function(req) {
-let name = req.args?.name || 'metacubexd';
+let name = req.args?.name || 'zashboard';
 if (name != 'metacubexd' && name != 'yacd' && name != 'zashboard' && name != 'razord')
-name = 'metacubexd';
+name = 'zashboard';
 let c = cursor(); c.load('clashoo');
 c.set('clashoo', 'config', 'dashboard_panel', name);
 c.commit('clashoo');
 system('uci commit clashoo >/dev/null 2>&1');
-return { success: true };
+let activated = activate_dashboard_panel(name);
+return { success: true, activated };
 }
 },
 
 update_panel: {
 args: { name: 'name' },
 call: function(req) {
-let name = req.args?.name || 'metacubexd';
+let name = req.args?.name || 'zashboard';
+if (name != 'metacubexd' && name != 'yacd' && name != 'zashboard' && name != 'razord')
+name = 'zashboard';
+let c = cursor(); c.load('clashoo');
+c.set('clashoo', 'config', 'dashboard_panel', name);
+c.commit('clashoo');
+system('uci commit clashoo >/dev/null 2>&1');
 let pretty = name;
 if (name == 'metacubexd') pretty = 'MetaCubeXD';
 else if (name == 'yacd') pretty = 'YACD';
@@ -1945,7 +1971,7 @@ try {
 	let running = r === '0';
 	let proxy_mode = c.get('clashoo', 'config', 'p_mode')         || 'rule';
 	let conf_path  = c.get('clashoo', 'config', 'use_config')     || '';
-let panel_type = c.get('clashoo', 'config', 'dashboard_panel')|| 'metacubexd';
+let panel_type = c.get('clashoo', 'config', 'dashboard_panel')|| 'zashboard';
 let tcp_mode   = c.get('clashoo', 'config', 'tcp_mode')       || 'tun';
 let udp_mode   = c.get('clashoo', 'config', 'udp_mode')       || tcp_mode;
 let stack      = c.get('clashoo', 'config', 'stack')          || 'system';

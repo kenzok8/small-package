@@ -374,6 +374,10 @@ run_socks() {
 		fi
 	fi
 
+	if [ -n "${error_msg}" ] && [ "$(config_n_get $node hysteria2_realms)" = "1" ]; then
+		unset error_msg
+	fi
+
 	[ -n "${error_msg}" ] && {
 		[ "$bind" != "127.0.0.1" ] && echolog "  - Socks节点：[$remarks]${tmp}，启动中止 ${bind}:${socks_port} ${error_msg}"
 		return 1

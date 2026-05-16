@@ -5,31 +5,32 @@ panel="$1"
 lang="$(uci -q get luci.main.lang 2>/dev/null)"
 STATE_FILE="/tmp/clash_panel_download_state"
 RUN_FILE="/var/run/panel_downloading"
+DASHBOARD_LINK="/etc/clashoo/dashboard"
 
 [ -n "$panel" ] || panel="$(uci -q get clashoo.config.dashboard_panel 2>/dev/null)"
-[ -n "$panel" ] || panel="metacubexd"
+[ -n "$panel" ] || panel="zashboard"
 
 case "$panel" in
 	metacubexd)
 		URLS="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
-		TARGET_DIR="/etc/clashoo/dashboard"
+		TARGET_DIR="/etc/clashoo/dashboard-metacubexd"
 		;;
 	yacd)
 		URLS="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip https://github.com/haishanh/yacd/archive/refs/heads/gh-pages.zip"
-		TARGET_DIR="/usr/share/clashoo/yacd"
+		TARGET_DIR="/etc/clashoo/dashboard-yacd"
 		;;
 	zashboard)
-		URLS="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip"
-		TARGET_DIR="/etc/clashoo/dashboard"
+		URLS="https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip"
+		TARGET_DIR="/etc/clashoo/dashboard-zashboard"
 		;;
 	razord)
 		URLS="https://github.com/MetaCubeX/Razord-meta/archive/refs/heads/gh-pages.zip https://github.com/ayanamist/clash-dashboard/archive/refs/heads/gh-pages.zip"
-		TARGET_DIR="/etc/clashoo/dashboard"
+		TARGET_DIR="/etc/clashoo/dashboard-razord"
 		;;
 	*)
-		URLS="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
-		TARGET_DIR="/etc/clashoo/dashboard"
-		panel="metacubexd"
+		URLS="https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip"
+		TARGET_DIR="/etc/clashoo/dashboard-zashboard"
+		panel="zashboard"
 		;;
 esac
 
@@ -108,6 +109,15 @@ find_web_root() {
 	return 1
 }
 
+activate_panel() {
+	rm -rf "$DASHBOARD_LINK" >/dev/null 2>&1
+	ln -s "$TARGET_DIR" "$DASHBOARD_LINK" >/dev/null 2>&1 || cp -a "$TARGET_DIR" "$DASHBOARD_LINK" >/dev/null 2>&1
+	rm -rf /www/luci-static/yacd >/dev/null 2>&1
+	if [ "$panel" = "yacd" ]; then
+		ln -s "$TARGET_DIR" /www/luci-static/yacd >/dev/null 2>&1
+	fi
+}
+
 trap cleanup EXIT INT TERM
 mkdir -p "$UNPACK_DIR" "$TARGET_DIR" >/dev/null 2>&1
 touch "$RUN_FILE"
@@ -143,10 +153,10 @@ fi
 rm -rf "$TARGET_DIR"/* >/dev/null 2>&1
 cp -a "$SRC_DIR"/. "$TARGET_DIR"/ >/dev/null 2>&1
 
-if [ "$panel" = "yacd" ]; then
-	rm -rf /www/luci-static/yacd >/dev/null 2>&1
-	ln -s /usr/share/clashoo/yacd /www/luci-static/yacd >/dev/null 2>&1
-fi
+activate_panel
+
+uci set clashoo.config.dashboard_panel="$panel" >/dev/null 2>&1
+uci commit clashoo >/dev/null 2>&1
 
 set_state "success" "安装成功"
 log_msg "Dashboard panel installed" "面板安装完成"

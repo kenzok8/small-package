@@ -193,7 +193,7 @@ return baseclass.extend({
     setProxyMode: function (mode) { return L.resolveDefault(callSetProxyMode(mode), {}); },
     setCore: function (core, dcore) { return L.resolveDefault(callSetCore(core, dcore), {}); },
     setPanel: function (name) { return L.resolveDefault(callSetPanel(name), {}); },
-    updatePanel: function (name) { return L.resolveDefault(callUpdatePanel(name || 'metacubexd'), {}); },
+    updatePanel: function (name) { return L.resolveDefault(callUpdatePanel(name || 'zashboard'), {}); },
 
     readLog: function () { return L.resolveDefault(callReadLog(), { content: '' }).then(r => r.content || ''); },
     readRealLog: function () { return L.resolveDefault(callReadRealLog(), { content: '' }).then(r => r.content || ''); },
