@@ -42,7 +42,7 @@
 	transform: translateX(22px);
 }
 .adg-service-switch:disabled {
-	opacity: .48;
+	opacity: .72;
 	cursor: not-allowed;
 }
 .adg-enable-status {
@@ -63,6 +63,7 @@
 	var btn = document.getElementById('<%=field_id%>.switch');
 	var status = document.getElementById('<%=field_id%>.status');
 	var current = hidden && hidden.value === '1';
+	var pollSerial = 0;
 
 	function setState(on) {
 		current = !!on;
@@ -100,6 +101,32 @@
 			tb.innerHTML += '<em><b><font color=red><%:Not redirect%></font></b></em>';
 	}
 
+	function pollTarget(target, serial, left) {
+		XHR.get('<%=url([[admin]], [[services]], [[AdGuardHome]], [[status]])%>', null, function(_, statusData) {
+			if (serial !== pollSerial)
+				return;
+
+			updateStatus(statusData);
+			if (statusData && statusData.running === target) {
+				if (status)
+					status.innerHTML = '';
+				return;
+			}
+
+			if (left <= 0) {
+				setState(!target);
+				if (status)
+					status.innerHTML = '';
+				notify(target ? '<%:AdGuardHome start failed%>' : '<%:AdGuardHome stop failed%>');
+				return;
+			}
+
+			window.setTimeout(function() {
+				pollTarget(target, serial, left - 1);
+			}, 1000);
+		});
+	}
+
 	if (!btn || !hidden)
 		return;
 
@@ -108,24 +135,25 @@
 			ev.preventDefault();
 
 		var next = !current;
+		var previous = current;
+		var serial = ++pollSerial;
+		setState(next);
 		btn.disabled = true;
 		if (status)
 			status.innerHTML = next ? '<%:Starting...%>' : '<%:Stopping...%>';
 
 		XHR.get('<%=url([[admin]], [[services]], [[AdGuardHome]], [[toggle]])%>', { enabled: next ? 1 : 0 }, function(x, data) {
 			btn.disabled = false;
-			if (status)
-				status.innerHTML = '';
 
 			if (data && data.success) {
 				setState(data.enabled);
-				XHR.get('<%=url([[admin]], [[services]], [[AdGuardHome]], [[status]])%>', null, function(_, statusData) {
-					updateStatus(statusData);
-				});
+				pollTarget(next, serial, 12);
 				return;
 			}
 
-			setState(current);
+			if (status)
+				status.innerHTML = '';
+			setState(previous);
 			notify(data && data.message ? data.message : '<%:Operation failed%>');
 		});
 

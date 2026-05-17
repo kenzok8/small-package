@@ -114,20 +114,26 @@ function toggle_service()
 
 	local rc
 	if enabled == "1" then
-		rc = luci.sys.call("/etc/init.d/AdGuardHome reload >/dev/null 2>&1")
+		rc = luci.sys.call("/sbin/start-stop-daemon -S -b -x /bin/sh -- -c '/etc/init.d/AdGuardHome reload >/dev/null 2>&1'")
 	else
 		rc = luci.sys.call("/etc/init.d/AdGuardHome stop >/dev/null 2>&1")
 	end
 
-	for _ = 1, 6 do
+	if enabled == "1" then
+		result.running = false
+	else
 		result.running = service_running()
-		if (enabled == "1" and result.running) or (enabled == "0" and not result.running) then
-			break
+		for _ = 1, 2 do
+			if not result.running then
+				break
+			end
+			luci.sys.call("sleep 1")
+			result.running = service_running()
 		end
-		luci.sys.call("sleep 1")
 	end
 
-	result.success = (rc == 0) and ((enabled == "1" and result.running) or (enabled == "0" and not result.running))
+	result.pending = (enabled == "1" and not result.running)
+	result.success = (rc == 0) and (enabled == "1" or not result.running)
 
 	if not result.success then
 		uci:set("AdGuardHome", "AdGuardHome", "enabled", old_enabled)
