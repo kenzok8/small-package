@@ -162,6 +162,7 @@ const inbound_type = [
 	['anytls', _('AnyTLS') + ' - ' + _('TCP')],
 	['tuic', _('TUIC') + ' - ' + _('UDP')],
 	['hysteria2', _('Hysteria2') + ' - ' + _('UDP')],
+	['hysteria2-realm', _('Hysteria2 Realm') + ' - ' + _('TCP/UDP')],
 	['trusttunnel', _('TrustTunnel') + ' - ' + _('TCP/UDP')],
 	['tunnel', _('Tunnel') + ' - ' + _('TCP/UDP')]
 ];

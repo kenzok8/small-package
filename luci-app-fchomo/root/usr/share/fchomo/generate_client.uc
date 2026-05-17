@@ -511,6 +511,20 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		down: cfg.hysteria_down_mbps ? cfg.hysteria_down_mbps + ' Mbps' : null,
 		obfs: cfg.hysteria_obfs_type,
 		"obfs-password": cfg.hysteria_obfs_password,
+		"realm-opts": cfg.hysteria2_realm === '1' ? {
+			enable: true,
+			"server-url": cfg.hysteria2_realm_server_url,
+			token: cfg.hysteria2_realm_token,
+			"realm-id": cfg.hysteria2_realm_id,
+			"stun-servers": cfg.hysteria2_realm_stun_servers,
+			// @TLS of server-url
+			//sni,
+			//alpn,
+			//"skip-cert-verify",
+			//fingerprint,
+			//certificate,
+			//"private-key"
+		} : null,
 
 		/* SSH */
 		"private-key-passphrase": cfg.ssh_priv_key_passphrase,
@@ -680,6 +694,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 					"h-max-request-times": cfg.transport_xhttp_xmux_max_request_times,
 					"h-max-reusable-secs": cfg.transport_xhttp_xmux_max_reusable_secs,
 					"h-keep-alive-period": strToInt(cfg.transport_xhttp_xmux_keep_alive_period)
+				// @download-settings
 				} : null
 			} : null
 		} : {}),
