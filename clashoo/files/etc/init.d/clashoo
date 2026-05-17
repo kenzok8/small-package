@@ -64,12 +64,23 @@ _compute_start_wait() {
 
 # Wait up to $1 seconds for $2 (mihomo|sing-box) to be alive AND stable.
 # Returns 0 if alive at end of window, 1 if dead/never-started.
+_singbox_instance_pid() {
+	ubus call service list "{\"name\":\"sing-box\",\"verbose\":true}" 2>/dev/null \
+		| jsonfilter -e '@["sing-box"].instances.*.pid' 2>/dev/null | head -n1
+}
+
+_singbox_running() {
+	local _pid
+	_pid="$(_singbox_instance_pid)"
+	[ -n "$_pid" ] && [ -d "/proc/$_pid" ]
+}
+
 _wait_core_alive() {
 	local max="${1:-6}" want="${2:-mihomo}" i=0
 	while [ "$i" -lt "$max" ]; do
 		sleep 1
 		if [ "$want" = "sing-box" ] || [ "$want" = "singbox" ]; then
-			pidof sing-box >/dev/null 2>&1 && return 0
+			_singbox_running && return 0
 		else
 			_core_running && return 0
 		fi
@@ -138,34 +149,33 @@ core_supports_advanced_features() {
 	esac
 }
 
-_core_names() {
-	echo "mihomo clash-meta clash sing-box smart"
+# 仅认 procd 自家拉起的 clashoo 实例 PID；二进制可能叫 mihomo / clash / smart /
+# sing-box，与 openclash / nikki / passwall 共享名字，pidof 会误伤。学 nikki：
+# 一切信号源走 ubus service list，让 procd 做真相来源。
+_clashoo_instance_pid() {
+	ubus call service list "{\"name\":\"clashoo\",\"verbose\":true}" 2>/dev/null \
+		| jsonfilter -e '@.clashoo.instances.*.pid' 2>/dev/null | head -n1
 }
 
 _core_running() {
-	for _name in $(_core_names); do
-		for _pid in $(pidof "$_name" 2>/dev/null); do
-			[ "$_pid" = "$$" ] && continue
-			return 0
-		done
-	done
-	return 1
+	local _pid
+	_pid="$(_clashoo_instance_pid)"
+	[ -n "$_pid" ] && [ -d "/proc/$_pid" ]
 }
 
+# 仅杀 clashoo 自家 procd 实例，绝不按二进制名 pidof —— 否则 openclash / nikki 的
+# mihomo、passwall 的 sing-box 会被一起干掉。
 _kill_core() {
-	local _name _pid _wait
-	for _name in $(_core_names); do
-		for _pid in $(pidof "$_name" 2>/dev/null); do
-			[ "$_pid" = "$$" ] && continue
-			kill "$_pid" >/dev/null 2>&1
-		done
-		for _pid in $(pidof "$_name" 2>/dev/null); do
-			[ "$_pid" = "$$" ] && continue
-			_comm="$(cat "/proc/${_pid}/comm" 2>/dev/null || true)"
-			[ -n "$_comm" ] && [ "$_comm" != "$_name" ] && continue
-			kill -9 "$_pid" >/dev/null 2>&1
-		done
+	local _pid _wait
+	_pid="$(_clashoo_instance_pid)"
+	[ -n "$_pid" ] || return 0
+	kill "$_pid" >/dev/null 2>&1
+	_wait=0
+	while [ "$_wait" -lt 3 ] && [ -d "/proc/$_pid" ]; do
+		sleep 1
+		_wait=$((_wait + 1))
 	done
+	[ -d "/proc/$_pid" ] && kill -9 "$_pid" >/dev/null 2>&1
 }
 
 selected_core_family() {
@@ -259,15 +269,18 @@ stop_singbox_service() {
 	uci -q set sing-box.main.enabled='0' && uci -q commit sing-box >/dev/null 2>&1 || true
 
 	# sing-box 自身 init.d 带 procd respawn，仅 kill 进程会被立刻拉起；
-	# 必须先 /etc/init.d/sing-box stop 注销 procd 实例（实测不会死锁）。
+	# /etc/init.d/sing-box stop 注销 procd 实例（实测不会死锁）。
+	# 注意：不能 pidof sing-box 兜底 —— passwall 等插件也可能跑 sing-box 进程，
+	# 按名 kill 会误伤。procd 注销已经把自家实例终结，足够了。
 	[ -x /etc/init.d/sing-box ] && /etc/init.d/sing-box stop >/dev/null 2>&1 || true
 
-	for _pid in $(pidof sing-box 2>/dev/null); do
-		kill "$_pid" >/dev/null 2>&1
-	done
-	sleep 1
-	for _pid in $(pidof sing-box 2>/dev/null); do
-		kill -9 "$_pid" >/dev/null 2>&1
+	local _wait=0 _pid
+	while [ "$_wait" -lt 3 ]; do
+		_pid="$(_singbox_instance_pid)"
+		[ -z "$_pid" ] && return 0
+		[ -d "/proc/$_pid" ] || return 0
+		sleep 1
+		_wait=$((_wait + 1))
 	done
 }
 

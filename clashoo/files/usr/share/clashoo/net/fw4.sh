@@ -209,10 +209,31 @@ render_token_elements() {
 		}'
 }
 
+detect_coexist_fwmarks() {
+	# 主动检测已安装的同类代理插件的 fwmark，合并进 bypass，避免抢截对方流量。
+	# - passwall:  默认 mark 0x1
+	# - passwall2: 默认 mark 0xff
+	# - nikki:     默认 tproxy_fw_mark=0x80, tun_fw_mark=0x81（mask 0xff）
+	# 仅当 init.d 存在时合并，避免对未安装插件无谓扩 bypass 范围。
+	local marks=""
+	[ -x /etc/init.d/passwall ]  && marks="$marks 0x1"
+	[ -x /etc/init.d/passwall2 ] && marks="$marks 0xff"
+	if [ -x /etc/init.d/nikki ]; then
+		local nm
+		nm="$(uci -q get nikki.routing.tproxy_fw_mark) $(uci -q get nikki.routing.tun_fw_mark)"
+		[ -z "$(echo "$nm" | tr -d ' ')" ] && nm="0x80 0x81"
+		marks="$marks $nm"
+	fi
+	printf '%s\n' "$marks"
+}
+
 merge_fwmark_tokens() {
 	# 始终把 PROXY_FWMARK（入站 TPROXY mark）和 CORE_ROUTING_MARK（核心出站 mark）
-	# 合并进用户 bypass_fwmark 列表，保证这两个 mark 始终被 nft return 放行
-	printf '%s %s %s\n' "$1" "$PROXY_FWMARK" "$CORE_ROUTING_MARK" | tr ',\t' '  ' | awk '
+	# 合并进用户 bypass_fwmark 列表，保证这两个 mark 始终被 nft return 放行。
+	# 同时合并已安装的其他代理插件的 fwmark（passwall/passwall2/nikki），确保共存。
+	local coexist
+	coexist="$(detect_coexist_fwmarks)"
+	printf '%s %s %s %s\n' "$1" "$PROXY_FWMARK" "$CORE_ROUTING_MARK" "$coexist" | tr ',\t' '  ' | awk '
 		BEGIN { first = 1 }
 		{
 			for (i = 1; i <= NF; i++) {

@@ -120,12 +120,30 @@ function get_service_name() {
 return get_core_type() === 'singbox' ? 'sing-box' : get_mihomo_service_name();
 }
 
-function running_core_family() {
-let p = popen("if pidof sing-box >/dev/null 2>&1; then echo singbox; elif pidof mihomo clash-meta clash smart >/dev/null 2>&1; then echo mihomo; fi");
-if (!p) return '';
-let family = trim(p.read('all'));
+// 只看 procd 自家实例 PID。pidof 会撞 openclash / nikki / passwall 的同名进程
+// （mihomo / clash / sing-box / smart），用 ubus 走 procd 真相来源 —— 学 nikki。
+function procd_instance_pid(service) {
+// outer "double" lets ucode unescape \" → ", shell then sees JSON wrapped in
+// '...' so the inner double-quotes survive. jsonfilter pattern also wrapped
+// in shell single-quotes.
+let p = popen("ubus call service list '{\"name\":\"" + service + "\",\"verbose\":true}' 2>/dev/null | jsonfilter -e '@[\"" + service + "\"].instances.*.pid' 2>/dev/null | head -n1");
+if (!p) return 0;
+let s = trim(p.read('all'));
 p.close();
-return family || '';
+let pid = int(s) || 0;
+if (pid > 0 && !access('/proc/' + pid, 'r')) pid = 0;
+return pid;
+}
+
+function clashoo_running() { return procd_instance_pid('clashoo') > 0; }
+function singbox_running() { return procd_instance_pid('sing-box') > 0; }
+
+function running_core_family() {
+// clashoo 跑 singbox 时通过 /etc/init.d/sing-box 委托给 sing-box procd 实例；
+// 跑 mihomo / smart 时 clashoo 自身 procd 实例直接持有进程。
+if (singbox_running()) return 'singbox';
+if (clashoo_running())  return 'mihomo';
+return '';
 }
 
 function find_binary_for_family(family) {
@@ -1437,9 +1455,7 @@ try {
 let c = cursor();
 c.load('clashoo');
 let configured_core = get_core_type();
-let p = popen("pidof mihomo clash-meta clash sing-box smart >/dev/null 2>&1; echo $?");
-let r = p ? trim(p.read('all')) : '1'; if (p) p.close();
-let running = r === '0';
+let running = is_running();
 let proxy_mode = c.get('clashoo', 'config', 'p_mode')         || 'rule';
 let conf_path  = c.get('clashoo', 'config', 'use_config')     || '';
 let panel_type = c.get('clashoo', 'config', 'dashboard_panel')|| 'zashboard';
@@ -1616,8 +1632,11 @@ sync_legacy_core_fields(c);
 c.commit('clashoo');
 system('uci commit clashoo >/dev/null 2>&1');
 
+// 异步停服务，避免阻塞 RPC 响应。同步调用会让前端 setCore() 卡 1-3s，
+// 若用户已先点过 stop，两次 init.d stop 并发执行 firewall/dnsmasq restart
+// 会互相拖累，UI 总卡顿可达 20s。rpc_async.sh 用 flock 串行化，互不冲突。
 if (is_running())
-system('/etc/init.d/clashoo stop >/dev/null 2>&1');
+system('sh /usr/share/clashoo/rpc/rpc_async.sh stop >/dev/null 2>&1');
 
 return { success: true, core_type: core, stopped: true };
 }
@@ -1885,9 +1904,7 @@ return { success: true, started: !updating };
 overview_stats: {
 call: function() {
 try {
-	let p = popen("pidof mihomo clash-meta clash sing-box smart >/dev/null 2>&1; echo $?");
-	let running = p ? (trim(p.read('all')) === '0') : false;
-	if (p) p.close();
+	let running = is_running();
 	if (!running)
 		return { ok: false, running: false };
 
@@ -1966,9 +1983,7 @@ try {
 	let c = cursor();
 	c.load('clashoo');
 	let configured_core = get_core_type();
-	let p = popen("pidof mihomo clash-meta clash sing-box smart >/dev/null 2>&1; echo $?");
-	let r = p ? trim(p.read('all')) : '1'; if (p) p.close();
-	let running = r === '0';
+	let running = is_running();
 	let proxy_mode = c.get('clashoo', 'config', 'p_mode')         || 'rule';
 	let conf_path  = c.get('clashoo', 'config', 'use_config')     || '';
 let panel_type = c.get('clashoo', 'config', 'dashboard_panel')|| 'zashboard';

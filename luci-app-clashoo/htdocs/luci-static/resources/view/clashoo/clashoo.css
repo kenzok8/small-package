@@ -957,7 +957,7 @@ html[data-bs-theme="dark"] .cl-wrap .cl-arch-badge-rec {
 }
 
 .cl-wrap .cl-live-card.is-zero .cl-live-bg-chart {
-  opacity: 0.35;
+  opacity: 0;
 }
 
 .cl-wrap .cl-live-card.is-active .cl-live-bg-chart {

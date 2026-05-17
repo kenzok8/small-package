@@ -55,6 +55,7 @@ o:depends({ [_n("custom")] = false })
 
 o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
+o.rmempty = false
 o:depends({ [_n("custom")] = false })
 
 o = s:option(Flag, _n("auth"), translate("Auth"))
@@ -154,6 +155,17 @@ if singbox_tags:find("with_quic") then
 end
 
 if singbox_tags:find("with_quic") then
+	o = s:option(Flag, _n("hysteria2_realms"), translate("Realms"))
+	o.default = "0"
+	o:depends({ [_n("protocol")] = "hysteria2"})
+
+	o = s:option(Value, _n("hysteria2_realm_url"), translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
+	o:depends({ [_n("hysteria2_realms")] = "1" })
+
+	o = s:option(DynamicList, _n("hysteria2_realm_stun"), translate("Realm STUN"))
+	o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
+	o:depends({ [_n("hysteria2_realms")] = "1" })
+
 	o = s:option(Value, _n("hysteria2_auth_password"), translate("Auth Password"))
 	o.password = true
 	o:depends({ [_n("protocol")] = "hysteria2"})
@@ -321,7 +333,7 @@ o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })
 o:depends({ [_n("protocol")] = "naive" })
 o:depends({ [_n("protocol")] = "hysteria" })
 o:depends({ [_n("protocol")] = "tuic" })
-o:depends({ [_n("protocol")] = "hysteria2" })
+o:depends({ [_n("protocol")] = "hysteria2", [_n("hysteria2_realms")] = false })
 
 o = s:option(TextValue, _n("ech_key"), translate("ECH Key"))
 o.default = ""

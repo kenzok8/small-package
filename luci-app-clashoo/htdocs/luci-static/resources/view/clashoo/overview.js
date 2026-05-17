@@ -296,10 +296,10 @@ return view.extend({
       var link = document.createElement('link');
       link.id = 'cl-css-ext';
       link.rel = 'stylesheet';
-      link.href = L.resource('view/clashoo/clashoo.css') + '?v=20260425b1';
+      link.href = L.resource('view/clashoo/clashoo.css') + '?v=20260517a1';
       document.head.appendChild(link);
     } else {
-      document.getElementById('cl-css-ext').href = L.resource('view/clashoo/clashoo.css') + '?v=20260425b1';
+      document.getElementById('cl-css-ext').href = L.resource('view/clashoo/clashoo.css') + '?v=20260517a1';
     }
 
     this._lastSt      = st;
@@ -1575,6 +1575,18 @@ return view.extend({
   /* 注：点按即翻转开关（秒回），不等 RPC 确认，体验如 OpenClash */
   _svc: function (fn, opKey) {
     if (this._busy) return Promise.resolve();
+
+    // 启动前 preflight：未选配置文件时拒绝启动并明示原因。
+    // 后端 select_config 也会失败兜底，但只发 toast 慢，UI 还会闪一下「启动中」。
+    if (opKey === 'start' || opKey === 'restart') {
+      var st0 = this._lastSt || {};
+      var hasConfig = !!(st0.config || st0.conf_path);
+      if (!hasConfig) {
+        ui.addNotification(null, E('p', '未选择配置文件，请先到「配置」页选择或上传后选中再启动'), 'warning');
+        return Promise.resolve();
+      }
+    }
+
     this._busy = true;
     var self = this;
     self._op = opKey;
