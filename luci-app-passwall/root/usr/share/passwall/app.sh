@@ -463,17 +463,6 @@ run_socks() {
 		lua $UTIL_SS gen_config "$(json_dump)" > $config_file
 		[ -n "$no_run" ] || ln_run "$(first_type ssr-local)" "ssr-local" $log_file -c "$config_file" -v -u
 	;;
-	ss)
-		[ -n "$no_run" ] || {
-			local plugin_sh="${config_file%.json}_plugin.sh"
-			json_add_string "plugin_sh" "$plugin_sh"
-		}
-		json_add_string "local_addr" "$bind"
-		json_add_string "local_port" "$socks_port"
-		json_add_string "mode" "tcp_and_udp"
-		lua $UTIL_SS gen_config "$(json_dump)" > $config_file
-		[ -n "$no_run" ] || ln_run "$(first_type ss-local)" "ss-local" $log_file -c "$config_file" -v
-	;;
 	ss-rust)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
@@ -631,15 +620,6 @@ run_redir() {
 			json_add_string "local_port" "$local_port"
 			lua $UTIL_SS gen_config "$(json_dump)" > $config_file
 			ln_run "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v -U
-		;;
-		ss)
-			local plugin_sh="${config_file%.json}_plugin.sh"
-			json_add_string "plugin_sh" "$plugin_sh"
-			json_add_string "local_addr" "0.0.0.0"
-			json_add_string "local_port" "$local_port"
-			json_add_string "mode" "udp_only"
-			lua $UTIL_SS gen_config "$(json_dump)" > $config_file
-			ln_run "$(first_type ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		ss-rust)
 			local plugin_sh="${config_file%.json}_plugin.sh"
@@ -888,23 +868,6 @@ run_redir() {
 			json_add_string "local_port" "$local_port"
 			lua $UTIL_SS gen_config "$(json_dump)" > $config_file
 			ln_run "$(first_type ssr-redir)" "ssr-redir" $log_file -c "$config_file" -v ${_extra_param}
-		;;
-		ss)
-			[ "${TCP_PROXY_WAY}" = "tproxy" ] && json_add_string "tcp_tproxy" "true"
-			if [ "$TCP_UDP" = "1" ]; then
-				config_file="${config_file//TCP/TCP_UDP}"
-				UDP_REDIR_PORT=$TCP_REDIR_PORT
-				unset UDP_NODE
-				json_add_string "mode" "tcp_and_udp"
-			else
-				json_add_string "mode" "tcp_only"
-			fi
-			local plugin_sh="${config_file%.json}_plugin.sh"
-			json_add_string "plugin_sh" "$plugin_sh"
-			json_add_string "local_addr" "0.0.0.0"
-			json_add_string "local_port" "$local_port"
-			lua $UTIL_SS gen_config "$(json_dump)" > $config_file
-			ln_run "$(first_type ss-redir)" "ss-redir" $log_file -c "$config_file" -v
 		;;
 		ss-rust)
 			json_add_string "local_tcp_redir_port" "$local_port"
@@ -2040,8 +2003,8 @@ get_config() {
 	FILTER_PROXY_IPV6=$(config_t_get global filter_proxy_ipv6 0)
 	DNS_REDIRECT=$(config_t_get global dns_redirect 1)
 
-	REDIRECT_LIST="socks ss ss-rust ssr sing-box xray naiveproxy hysteria2"
-	TPROXY_LIST="socks ss ss-rust ssr sing-box xray hysteria2"
+	REDIRECT_LIST="socks ss-rust ssr sing-box xray naiveproxy hysteria2"
+	TPROXY_LIST="socks ss-rust ssr sing-box xray hysteria2"
 
 	NEXT_DNS_LISTEN_PORT=15353
 	TUN_DNS="127.0.0.1#${NEXT_DNS_LISTEN_PORT}"

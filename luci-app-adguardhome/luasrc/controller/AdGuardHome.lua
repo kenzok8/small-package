@@ -4,6 +4,16 @@ local fs = require "nixio.fs"
 local http = require "luci.http"
 local uci = require "luci.model.uci".cursor()
 
+local function service_running()
+	local binpath = uci:get("AdGuardHome", "AdGuardHome", "binpath") or "/usr/bin/AdGuardHome"
+
+	if not fs.access(binpath) then
+		return false
+	end
+
+	return luci.sys.call("/etc/init.d/AdGuardHome status >/dev/null 2>&1") == 0
+end
+
 function index()
 	-- luci 23.05+ 已通过 menu.d JSON 注册菜单，无需重复注册
 	if not nixio.fs.access("/usr/share/luci/menu.d/luci-app-adguardhome.json") then
@@ -24,6 +34,8 @@ function index()
 	-- API 路由在新旧版本均需注册
 	entry({"admin", "services", "AdGuardHome", "status"},
 		call("act_status"), nil).leaf = true
+	entry({"admin", "services", "AdGuardHome", "toggle"},
+		call("toggle_service"), nil).leaf = true
 	entry({"admin", "services", "AdGuardHome", "check"},
 		call("check_update"), nil)
 	entry({"admin", "services", "AdGuardHome", "doupdate"},
@@ -81,19 +93,48 @@ end
 
 function act_status()
 	local result = {}
-	local binpath = uci:get("AdGuardHome", "AdGuardHome", "binpath") or "/usr/bin/AdGuardHome"
-
-	if fs.access(binpath) then
-		-- 用进程名匹配，避免 pgrep -f 匹配到 shell 自身
-		local safe_bin = binpath:gsub("'", "'\\''")
-		local binname = safe_bin:match("([^/]+)$") or "AdGuardHome"
-			result.running = (luci.sys.call("pgrep '" .. binname .. "' >/dev/null 2>&1") == 0)
-	else
-		result.running = false
-	end
+	result.running = service_running()
 
 	local redir = fs.readfile("/var/run/AdGredir")
 	result.redirect = (redir == "1")
+
+	http.prepare_content("application/json")
+	http.write_json(result)
+end
+
+function toggle_service()
+	local enabled = http.formvalue("enabled") == "1" and "1" or "0"
+	local old_enabled = uci:get("AdGuardHome", "AdGuardHome", "enabled") == "1" and "1" or "0"
+	local result = {
+		enabled = (enabled == "1")
+	}
+
+	uci:set("AdGuardHome", "AdGuardHome", "enabled", enabled)
+	uci:commit("AdGuardHome")
+
+	local rc
+	if enabled == "1" then
+		rc = luci.sys.call("/etc/init.d/AdGuardHome reload >/dev/null 2>&1")
+	else
+		rc = luci.sys.call("/etc/init.d/AdGuardHome stop >/dev/null 2>&1")
+	end
+
+	for _ = 1, 6 do
+		result.running = service_running()
+		if (enabled == "1" and result.running) or (enabled == "0" and not result.running) then
+			break
+		end
+		luci.sys.call("sleep 1")
+	end
+
+	result.success = (rc == 0) and ((enabled == "1" and result.running) or (enabled == "0" and not result.running))
+
+	if not result.success then
+		uci:set("AdGuardHome", "AdGuardHome", "enabled", old_enabled)
+		uci:commit("AdGuardHome")
+		result.enabled = (old_enabled == "1")
+		result.message = enabled == "1" and "AdGuardHome start failed" or "AdGuardHome stop failed"
+	end
 
 	http.prepare_content("application/json")
 	http.write_json(result)

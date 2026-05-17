@@ -80,11 +80,7 @@ function gen_config(var)
 		tcp_tproxy = var["tcp_tproxy"] and true or nil
 	}
 
-	if node.type == "SS" then
-		config.plugin = plugin_file or nil
-		config.plugin_opts = (plugin_file) and node.plugin_opts or nil
-		config.mode = mode
-	elseif node.type == "SSR" then
+	if node.type == "SSR" then
 		config.protocol = node.protocol
 		config.protocol_param = node.protocol_param
 		config.obfs = node.obfs

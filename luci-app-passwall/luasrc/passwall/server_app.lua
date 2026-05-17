@@ -132,7 +132,7 @@ local function start()
 					end
 				end
 				bin = ln_run("/usr/bin/microsocks", "microsocks_" .. id, string.format("-i :: -p %s %s", port, auth), log_path)
-			elseif type == "SS" or type == "SSR" then
+			elseif type == "SSR" then
 				if user.custom == "1" and user.config_str then
 					config = jsonc.parse(api.base64Decode(user.config_str))
 				else

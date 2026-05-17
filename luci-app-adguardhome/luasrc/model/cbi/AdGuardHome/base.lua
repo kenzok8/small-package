@@ -10,6 +10,14 @@ local configpath = uci:get("AdGuardHome", "AdGuardHome", "configpath") or "/etc/
 local binpath = uci:get("AdGuardHome", "AdGuardHome", "binpath") or "/usr/bin/AdGuardHome"
 local httpport = uci:get("AdGuardHome", "AdGuardHome", "httpport") or "3000"
 
+local function service_running()
+	if not fs.access(binpath) then
+		return false
+	end
+
+	return luci.sys.call("/etc/init.d/AdGuardHome status >/dev/null 2>&1") == 0
+end
+
 m = Map("AdGuardHome", "AdGuard Home")
 m.description = translate("Free and open source, powerful network-wide ads & trackers blocking DNS server.")
 m:section(SimpleSection).template = "AdGuardHome/AdGuardHome_status"
@@ -21,6 +29,10 @@ s.addremove = false
 o = s:option(Flag, "enabled", translate("Enable"))
 o.default = "0"
 o.optional = false
+o.template = "AdGuardHome/enable_switch"
+o.cfgvalue = function()
+	return service_running() and "1" or "0"
+end
 
 o = s:option(Value, "httpport", translate("Browser management port"))
 o.placeholder = "3000"

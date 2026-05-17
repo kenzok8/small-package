@@ -16,7 +16,6 @@ end
 
 m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
 
-local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
@@ -27,10 +26,6 @@ local vmess_type = {}
 local vless_type = {}
 local hysteria2_type = {}
 local xray_version = api.get_app_version("xray")
-if has_ss then
-	local s = "shadowsocks-libev"
-	table.insert(ss_type, s)
-end
 if has_ss_rust then
 	local s = "shadowsocks-rust"
 	table.insert(ss_type, s)
