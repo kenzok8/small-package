@@ -24,6 +24,7 @@ o = s:option(Flag, _n("custom"), translate("Use Custom Config"))
 
 o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
+o.rmempty = false
 o:depends({ [_n("custom")] = false })
 
 o = s:option(Flag, _n("realms"), translate("Realms"))
