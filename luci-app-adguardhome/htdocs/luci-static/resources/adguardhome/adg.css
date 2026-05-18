@@ -116,6 +116,29 @@
 	padding: 8px 0;
 }
 
+/* MultiValue checkbox groups — let items flow inline and wrap naturally */
+.adg-wrap .cbi-value-field .cbi-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-right: 16px;
+	margin-bottom: 4px;
+	font-size: 13px;
+	white-space: nowrap;
+}
+.adg-wrap .cbi-value-field .cbi-checkbox input[type="checkbox"] {
+	width: auto;
+	height: auto;
+	margin: 0;
+	flex-shrink: 0;
+}
+
+/* DynamicList — compact row layout */
+.adg-wrap .cbi-dynlist .cbi-value-title { display: none; }
+.adg-wrap .cbi-dynlist .cbi-value { padding: 4px 0; }
+.adg-wrap .cbi-dynlist .cbi-value-field { flex: 1; max-width: 420px; }
+.adg-wrap .cbi-dynlist .cbi-value-field input[type="text"] { max-width: 100%; }
+
 /* AdGuardHome custom status row */
 .adg-status-row {
 	display: flex;
@@ -234,6 +257,16 @@
 	.adg-wrap .cbi-value-field select {
 		max-width: 100%;
 	}
+	/* checkboxes — single column on small screens */
+	.adg-wrap .cbi-value-field .cbi-checkbox {
+		display: flex;
+		white-space: normal;
+		margin-right: 0;
+		margin-bottom: 6px;
+		width: 100%;
+	}
+	/* DynamicList — expand to full width */
+	.adg-wrap .cbi-dynlist .cbi-value-field { max-width: 100%; }
 	/* hide the tooltip ? icons on touch screens (they don't open) */
 	.adg-wrap .cbi-tooltip-container,
 	.adg-wrap .cbi-tooltip {

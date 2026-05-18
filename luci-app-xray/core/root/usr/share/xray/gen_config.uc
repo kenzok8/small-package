@@ -261,7 +261,7 @@ function gen_config() {
 
     const general = filter(values(config), k => k[".type"] == "general")[0] || {};
     const custom_configuration_hook = loadstring(general["custom_configuration_hook"] || "return i => i;")();
-    return custom_configuration_hook({
+    let result = {
         inbounds: inbounds(general, config, extra_inbound),
         outbounds: outbounds(general, config, manual_tproxy, bridge, extra_inbound, fakedns),
         dns: dns_conf(general, config, manual_tproxy, fakedns),
@@ -274,15 +274,19 @@ function gen_config() {
             place: "holder"
         } : null,
         observatory: observatory(general, manual_tproxy),
-        reverse: {
-            bridges: bridges(bridge)
-        },
         routing: {
             domainStrategy: general["routing_domain_strategy"] || "AsIs",
             rules: rules(general, bridge, manual_tproxy, extra_inbound, fakedns),
             balancers: balancers(general, extra_inbound, fakedns)
         }
-    });
+    };
+    const bridges_deprecated = bridges(bridge);
+    if (length(bridges_deprecated) > 0) {
+        result["reverse"] = {
+            bridges: bridges_deprecated
+        };
+    };
+    return custom_configuration_hook(result);
 }
 
 printf("%.4J", gen_config());
