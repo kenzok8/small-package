@@ -910,7 +910,11 @@ table td, .table .td {
 		} else {
 			port_s = o["hysteria_hop"] || o["hysteria2_hop"];
 		}
-		str += type + "：" + remarks;
+		if ((o.type === "Hysteria2" || o.protocol === 'hysteria2') && o.hysteria2_realms) {
+			str += type + " Realm：" + remarks;
+		} else {
+			str += type + "：" + remarks;
+		}
 		return str;
 	}
 
@@ -962,7 +966,8 @@ table td, .table .td {
 						} else {
 							innerHTML = innerHTML.split("{{tcping}}").join('<span class="tcping_value" cbiid="{{id}}"><a href="javascript:void(0)" style="color:inherit">---</a></span>');
 						}
-						if (o["protocol"] && o["protocol"] === '_shunt') {
+						let is_realm = (o.type === "Hysteria2" || o.protocol === 'hysteria2') && o.hysteria2_realms || false;
+						if (o["protocol"] === '_shunt' || is_realm) {
 							innerHTML = innerHTML.split("{{url_test}}").join('<span class="ping" cbiid="{{id}}">---</span>');
 						} else {
 							innerHTML = innerHTML.split("{{url_test}}").join('<span class="ping"><a href="javascript:void(0)" onclick="javascript:urltest_node(\'{{id}}\', this)" title="<%:TLS handshake test, latency for reference only%>"><%:Test%></a></span>');

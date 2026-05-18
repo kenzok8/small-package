@@ -361,10 +361,12 @@ if singbox_tags:find("with_quic") then
 	o.default = "30"
 	o:depends({ [_n("protocol")] = "hysteria2", [_n("hysteria2_realms")] = false })
 
+	o = s:option(Flag, _n("hysteria2_realms"), translate("Realms"))
+	o.default = "0"
 	if api.compare_versions(singbox_version, ">=", "1.14.0") then
-		o = s:option(Flag, _n("hysteria2_realms"), translate("Realms"))
-		o.default = "0"
 		o:depends({ [_n("protocol")] = "hysteria2"})
+	else
+		o:depends({ [_n("protocol")] = "__hide"})
 	end
 
 	o = s:option(Value, _n("hysteria2_realm_url"), translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
