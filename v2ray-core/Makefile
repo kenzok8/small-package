@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v2ray-core
-PKG_VERSION:=5.51.0
+PKG_VERSION:=5.51.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=72d12ea2f4ffb4554a3cbf1341626a23fa075a0fe4ffdfee0b2490ca1eae420d
+PKG_HASH:=7316dd294af15b9c92ba7db09fb274aacec919d18e45a594305c8d8b020bcb50
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE

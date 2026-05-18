@@ -374,7 +374,7 @@ run_socks() {
 		fi
 	fi
 
-	if [ -n "${error_msg}" ] && [ "$(config_n_get $node hysteria2_realms)" = "1" ]; then
+	if [ -n "${error_msg}" ] && ([ -n "$(config_n_get $node hysteria_hop)" ] || [ -n "$(config_n_get $node hysteria2_hop)" ] || [ "$(config_n_get $node hysteria2_realms)" = "1" ]); then
 		unset error_msg
 	fi
 

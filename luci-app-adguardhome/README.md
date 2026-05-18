@@ -17,21 +17,21 @@
 
 ## 截图
 
-### 概览
-
-![概览](screenshots/01-overview.png)
-
 ### 基础设置
 
-![基础设置](screenshots/02-base-setting.png)
+![基础设置](screenshots/01-overview.png)
 
-### 工具与任务
+### 工具规则
 
-![工具与任务](screenshots/03-tools.png)
+![工具](screenshots/02-base-setting.png)
 
-### 日志
+### 页面
 
-![日志](screenshots/04-log.png)
+![页面](screenshots/03-tools.png)
+
+### 概览
+
+![概览](screenshots/04-log.png)
 
 ## 近期变更
 
@@ -46,21 +46,6 @@
 - **日志空态优化**：未配置日志路径时显示提示 + 跳转链接
 - **全中文 Tab**：概览 / 基础设置 / 工具与任务 / 日志 / 手动配置
 - **Argon / Bootstrap 双主题适配**：移动端 + PC 端无溢出
-
-### 2026-05-18  Bug 修复
-
-- **修复 ImmortalWrt (apk) 架构检测**：`get_arch()` 统一 fallback 链 `opkg → apk → uname -m`
-- **修复 UPX 压缩全链路**：GitHub 文件名 v 前缀、xz 装不上 (apk add)、输出路径覆盖输入目录
-- **修复版本比较只升不降**：`sort -V` 数字比较替代字符串不等判断
-- **修复 Argon 主题 CSS 不加载**：CBI 模板过滤 `<link>`，改 JS 动态注入
-- **修复移动端 180px label 高度**：桌面 `min-width:170px` 泄漏到 flex column，加 `!important` 覆盖
-- **修复 Bootstrap 表单缩窄**：`max-width:980px` 从表单级移到卡片级
-
-### 2026-05-17
-
-- **移除 GFW 列表功能**：与现代代理工具（clashoo/OpenClash/HomeProxy）的 DNS 分流职责重叠，删除 gfw2adg.sh 及相关字段
-- **删除 po/zh-cn symlink**：避免 luci.mk 扫描时 i18n .lmo 文件冲突（kenzok8/openwrt-packages#550）
-- **即时启用开关**：ajax toggle，不刷新页面；失败自动回滚 uci
 
 ## 功能
 

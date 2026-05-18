@@ -1780,6 +1780,9 @@ msgstr "僅支援 Xray 或 Sing-box 類型節點。"
 msgid "Chain Proxy"
 msgstr "鏈式代理"
 
+msgid "Outbound Interface"
+msgstr "出站接口"
+
 msgid "Landing Node"
 msgstr "落地節點"
 

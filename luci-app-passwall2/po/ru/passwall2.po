@@ -1789,6 +1789,9 @@ msgstr "Поддерживаются только узлы типа Xray или 
 msgid "Chain Proxy"
 msgstr "Цепочка прокси"
 
+msgid "Outbound Interface"
+msgstr "Исходящий интерфейс"
+
 msgid "Landing Node"
 msgstr "Сервер выхода"
 

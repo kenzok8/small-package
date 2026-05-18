@@ -956,7 +956,7 @@ table td, .table .td {
 						var newDom = node_template.cloneNode(true);
 						newDom.classList.add("cbi-rowstyle-" + (i % 2 + 1));
 						var innerHTML = newDom.innerHTML;
-						if (auto_detection_time != "icmp" && o["address"] && o["port"]) {
+						if (auto_detection_time != "icmp" && o["address"]) {
 							innerHTML = innerHTML.split("{{ping}}").join('<span class="ping"><a href="javascript:void(0)" onclick="javascript:ping_node(\'{{id}}\', this, \'icmp\')"><%:Test%></a></span>');
 						} else {
 							innerHTML = innerHTML.split("{{ping}}").join('<span class="ping_value" cbiid="{{id}}"><a href="javascript:void(0)" style="color:inherit">---</a></span>');
@@ -976,11 +976,13 @@ table td, .table .td {
 						innerHTML = innerHTML.split("{{group}}").join(o["group"] || "");
 						let node_remarks = get_remarks_name(o);
 						if (show_node_info == "1") {
-							if (o["address"] && o["port"]) {
+							let _port = o["port"] || o["hysteria_hop"] || o["hysteria2_hop"];
+							if (_port) _port = _port.replace(/:/g, '-');
+							if (o["address"] && _port) {
 								let _address = o["address"]
 								if (o["full_address"])
 									_address = o["full_address"]
-								node_remarks += "<br>" + _address + ":" + o["port"]
+								node_remarks += "<br>" + _address + ":" + _port
 							}
 						}
 						innerHTML = innerHTML.split("{{remarks}}").join(node_remarks);
