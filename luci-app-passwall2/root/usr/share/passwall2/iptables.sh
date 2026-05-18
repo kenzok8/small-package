@@ -3,17 +3,17 @@
 DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/iptables.sh
 UTILS_PATH=$DIR/utils.sh
-IPSET_LOCAL="passwall2_local"
-IPSET_PROXY_LAN="passwall2_proxy_lan"
-IPSET_LAN="passwall2_lan"
-IPSET_VPS="passwall2_vps"
-IPSET_WAN="passwall2_wan"
+IPSET_LOCAL="psw2_local"
+IPSET_PROXY_LAN="psw2_proxy_lan"
+IPSET_LAN="psw2_lan"
+IPSET_VPS="psw2_vps"
+IPSET_WAN="psw2_wan"
 
-IPSET_LOCAL6="passwall2_local6"
-IPSET_PROXY_LAN6="passwall2_proxy_lan6"
-IPSET_LAN6="passwall2_lan6"
-IPSET_VPS6="passwall2_vps6"
-IPSET_WAN6="passwall2_wan6"
+IPSET_LOCAL6="psw2_local6"
+IPSET_PROXY_LAN6="psw2_proxy_lan6"
+IPSET_LAN6="psw2_lan6"
+IPSET_VPS6="psw2_vps6"
+IPSET_WAN6="psw2_wan6"
 
 FWMARK="0x50535732"
 
@@ -194,8 +194,8 @@ gen_shunt_list() {
 			for shunt_id in $shunt_ids; do
 				local shunt_node=$(config_n_get ${node} "${shunt_id}")
 				[ -n "$shunt_node" ] && {
-					local ipset_v4="passwall2_${node}_${shunt_id}"
-					local ipset_v6="passwall2_${node}_${shunt_id}6"
+					local ipset_v4="psw2_${node}_${shunt_id}"
+					local ipset_v6="psw2_${node}_${shunt_id}6"
 					ipset -! create $ipset_v4 nethash maxelem 1048576
 					ipset -! create $ipset_v6 nethash family inet6 maxelem 1048576
 					local outbound="redirect"
@@ -219,21 +219,13 @@ gen_shunt_list() {
 		}
 		local direct_ipset4=$(get_cache_var "node_${node}_direct_ipset4")
 		[ -n "${direct_ipset4}" ] && {
-			ipset -! create ${direct_ipset4} nethash maxelem 1048576 timeout 259200
+			ipset -! create ${direct_ipset4} iphash maxelem 1048576 timeout 259200
 			_SHUNT_LIST4="${_SHUNT_LIST4} ${direct_ipset4}:direct"
 		}
 		local direct_ipset6=$(get_cache_var "node_${node}_direct_ipset6")
 		[ -n "${direct_ipset6}" ] && {
-			ipset -! create ${direct_ipset6} nethash family inet6 maxelem 1048576 timeout 259200
+			ipset -! create ${direct_ipset6} iphash family inet6 maxelem 1048576 timeout 259200
 			_SHUNT_LIST6="${_SHUNT_LIST6} ${direct_ipset6}:direct"
-		}
-		[ "${preloading}" = "1" ] && [ -n "$default_node" ] && {
-			local ipset_v4="passwall2_${node}_default"
-			local ipset_v6="passwall2_${node}_default6"
-			ipset -! create $ipset_v4 nethash maxelem 1048576
-			ipset -! create $ipset_v6 nethash family inet6 maxelem 1048576
-			_SHUNT_LIST4="${_SHUNT_LIST4} ${ipset_v4}:${default_outbound}"
-			_SHUNT_LIST6="${_SHUNT_LIST6} ${ipset_v6}:${default_outbound}"
 		}
 	}
 	[ -n "${_SHUNT_LIST4}" ] && eval ${shunt_list4_var_name}=\"${_SHUNT_LIST4}\"
@@ -618,6 +610,8 @@ filter_direct_node_list() {
 }
 
 update_wan_sets() {
+	[ -z "$(command -v get_wan_ips)" ] && . "$UTILS_PATH"
+
 	local WAN_IP=$(get_wan_ips ip4)
 	[ -n "$WAN_IP" ] && {
 		ipset -F "$IPSET_WAN"
@@ -641,13 +635,13 @@ add_firewall_rule() {
 	ipset -! create $IPSET_LOCAL nethash maxelem 1048576
 	ipset -! create $IPSET_PROXY_LAN nethash maxelem 1048576
 	ipset -! create $IPSET_LAN nethash maxelem 1048576
-	ipset -! create $IPSET_VPS nethash maxelem 1048576
+	ipset -! create $IPSET_VPS iphash maxelem 1048576
 	ipset -! create $IPSET_WAN nethash maxelem 1048576
 	
 	ipset -! create $IPSET_LOCAL6 nethash family inet6 maxelem 1048576
 	ipset -! create $IPSET_PROXY_LAN6 nethash family inet6 maxelem 1048576
 	ipset -! create $IPSET_LAN6 nethash family inet6 maxelem 1048576
-	ipset -! create $IPSET_VPS6 nethash family inet6 maxelem 1048576
+	ipset -! create $IPSET_VPS6 iphash family inet6 maxelem 1048576
 	ipset -! create $IPSET_WAN6 nethash family inet6 maxelem 1048576
 
 	get_local_ips ip4 | sed "s/^/add $IPSET_LOCAL /" | ipset -! -R
@@ -1025,7 +1019,7 @@ del_firewall_rule() {
 
 flush_ipset() {
 	log_i18n 0 "Clear %s." "IPSet"
-	for _name in $(ipset list | grep "Name: " | grep "passwall2_" | awk '{print $2}'); do
+	for _name in $(ipset list | grep "Name: " | grep "psw2_" | awk '{print $2}'); do
 		destroy_ipset ${_name}
 	done
 }
@@ -1105,7 +1099,7 @@ start() {
 }
 
 stop() {
-	[ -z "$(command -v log_i18n)" ] && . /usr/share/passwall2/utils.sh
+	[ -z "$(command -v log_i18n)" ] && . "$UTILS_PATH"
 	del_firewall_rule
 	destroy_ipset $IPSET_PROXY_LAN
 	destroy_ipset $IPSET_PROXY_LAN6

@@ -412,7 +412,7 @@ run_process_queue() {
 		for filename in $(ls ${TMP_PROCESS_LIST_PATH}); do
 			cmd=$(cat ${TMP_PROCESS_LIST_PATH}/${filename})
 			cmd_check=$(echo $cmd | awk -F '>' '{print $1}')
-			icount=$(pgrep -f "$(echo $cmd_check)" | wc -l)
+			icount=$(busybox pgrep -f "$(echo $cmd_check)" | wc -l)
 			if [ $icount = 0 ]; then
 				eval $(echo "nohup ${cmd} 2>&1 &") >/dev/null 2>&1 &
 			fi

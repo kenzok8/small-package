@@ -46,8 +46,8 @@ msgstr "Список правил"
 msgid "Access control"
 msgstr "Контроль доступа"
 
-msgid "Watch Logs"
-msgstr "Просмотр журнала"
+msgid "Runtime Logs"
+msgstr "Журналы выполнения"
 
 msgid "Node Config"
 msgstr "Параметры узла"
@@ -432,6 +432,12 @@ msgstr "Количество предпочтительных узлов"
 
 msgid "The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them."
 msgstr "Балансировщик выбирает указанное количество наилучших узлов и распределяет трафик между ними случайным образом."
+
+msgid "Failure Tolerance (%)"
+msgstr "Допуск на отказ (%)"
+
+msgid "The maximum acceptable speed test failure rate. For example, 1 means allowing a 1% failure rate."
+msgstr "Максимально допустимый процент отказов при проверке скорости. Например, 1 означает допустимый процент отказов в 1%."
 
 msgid "Shunt"
 msgstr "Shunt (разделение трафика)"

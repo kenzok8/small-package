@@ -134,8 +134,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 		local run_socks_instance = true
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
-			fragment = proxy_table.fragment or nil
-			record_fragment = proxy_table.record_fragment or nil
+			fragment = (proxy_table.fragment and node.protocol ~= "naive" and not node.hysteria2_realms) and true or nil
+			record_fragment = (proxy_table.record_fragment and node.protocol ~= "naive" and not node.hysteria2_realms) and true or nil
 			run_socks_instance = proxy_table.run_socks_instance
 		end
 
@@ -250,7 +250,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				enabled = true,
 				disable_sni = (node.tls_disable_sni == "1") and true or false, -- Do not send the server name in ClientHello.
 				server_name = node.tls_serverName, -- Used to verify the hostname on the returned certificate, unless the settings are insecure. It is also included in ClientHello to support virtual hosts, unless it is an IP address.
-				insecure = (node.tls_allowInsecure == "1") and true or false, -- Accepts any server certificate.
+				insecure = node.tls_allowInsecure == "1" or (node.tls_pinSHA256 and node.tls_pinSHA256 ~= ""), -- Accepts any server certificate. (Also compatible with xray's pinnedPeerCertSha256)
 				alpn = alpn, -- A list of supported application layer protocols, arranged in order of priority. If both peers support ALPN, the protocol selected will be one of these protocols; otherwise, the connection will fail.
 				--max_version = "1.3",
 				fragment = fragment,
@@ -506,6 +506,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						table.insert(server_ports, range)
 					end
 				end
+				result.server_port = nil
 			end
 			protocol_table = {
 				server_ports = next(server_ports) and server_ports or nil,
@@ -519,9 +520,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 				obfs = node.hysteria_obfs,
 				auth = (node.hysteria_auth_type == "base64") and node.hysteria_auth_password or nil,
 				auth_str = (node.hysteria_auth_type == "string") and node.hysteria_auth_password or nil,
-				recv_window_conn = tonumber(node.hysteria_recv_window_conn),
-				recv_window = tonumber(node.hysteria_recv_window),
-				disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,
+				recv_window_conn = tonumber(node.hysteria_recv_window_conn),  --1.14 将变更为 stream_receive_window
+				recv_window = tonumber(node.hysteria_recv_window),  --1.14 将变更为 connection_receive_window
+				disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,  --1.14 将变更为 disable_path_mtu_discovery
 				tls = tls
 			}
 		end
@@ -545,13 +546,12 @@ function gen_outbound(flag, node, tag, proxy_table)
 				heartbeat = (tonumber(node.tuic_heartbeat) or 3) .. "s",
 				tls = tls
 			}
-			if node.tuic_alpn and node.tuic_alpn ~= "default" then
-				local alpn = {}
-				string.gsub(node.tuic_alpn, '[^,]+', function(w)
-					table.insert(alpn, w)
-				end)
-				if #alpn > 0 then protocol_table.tls.alpn = alpn end
-			end
+			node.tuic_alpn = (node.tuic_alpn and node.tuic_alpn ~= "default") and node.tuic_alpn or "h3"
+			local alpn = {}
+			string.gsub(node.tuic_alpn, '[^,]+', function(w)
+				table.insert(alpn, w)
+			end)
+			if #alpn > 0 then protocol_table.tls.alpn = alpn end
 		end
 
 		if node.protocol == "hysteria2" then
@@ -563,6 +563,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 						table.insert(server_ports, range)
 					end
 				end
+				result.server_port = nil
+			end
+			if node.hysteria2_realms then
+				server_ports = {}
 			end
 			local interval, interval_max
 			if next(server_ports) then
@@ -595,7 +599,29 @@ function gen_outbound(flag, node, tag, proxy_table)
 					password = node.hysteria2_obfs_password
 				} or nil,
 				password = node.hysteria2_auth_password or nil,
-				tls = tls
+				idle_timeout = (function(t)
+					if not version_ge_1_14_0 then return nil end
+					t = tonumber(tostring(t or "30"):match("^%d+"))
+					return (t and t >= 4 and t <= 120) and t or 30
+				end)(node.hysteria2_idle_timeout),
+				keep_alive_period = (function(t)
+					if not version_ge_1_14_0 then return nil end
+					t = tonumber(tostring(t or "0"):match("^%d+"))
+					return (t and t >= 2 and t <= 60) and t or nil
+				end)(node.hysteria2_keep_alive_period),
+				disable_path_mtu_discovery = version_ge_1_14_0 and (tonumber(node.hysteria2_disable_mtu_discovery) == 1) or nil,
+				tls = tls,
+				realm = node.hysteria2_realms and (function()
+					result.server = nil
+					result.server_port = nil
+					local realm = api.parse_realm_uri(node.hysteria2_realm_url)
+					if realm then
+						realm.server_url = realm.server_url and "https://" .. realm.server_url or nil
+						realm.stun_servers = realm.stun_servers or node.hysteria2_realm_stun
+						return realm
+					end
+					return nil
+				end)() or nil
 			}
 		end
 
@@ -881,10 +907,10 @@ function gen_config_server(node)
 					auth_str = (node.hysteria_auth_type == "string") and node.hysteria_auth_password or nil,
 				}
 			},
-			recv_window_conn = node.hysteria_recv_window_conn and tonumber(node.hysteria_recv_window_conn) or nil,
-			recv_window_client = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil,
-			max_conn_client = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,
-			disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,
+			recv_window_conn = node.hysteria_recv_window_conn and tonumber(node.hysteria_recv_window_conn) or nil, --1.14 to stream_receive_window
+			recv_window_client = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil, --1.14 to connection_receive_window
+			max_conn_client = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,  --1.14 to max_concurrent_streams
+			disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,  --1.14 to disable_path_mtu_discover
 			tls = tls
 		}
 	end
@@ -928,7 +954,17 @@ function gen_config_server(node)
 				}
 			},
 			ignore_client_bandwidth = (node.hysteria2_ignore_client_bandwidth == "1") and true or false,
-			tls = tls
+			tls = tls,
+			realm = node.hysteria2_realms and (function()
+				local realm = api.parse_realm_uri(node.hysteria2_realm_url)
+				if realm then
+					realm.server_url = realm.server_url and "https://" .. realm.server_url or nil
+					realm.stun_servers = realm.stun_servers or node.hysteria2_realm_stun
+					realm.stun_domain_resolver = "direct"
+					return realm
+				end
+				return nil
+			end)() or nil
 		}
 	end
 
@@ -1312,7 +1348,6 @@ function gen_config(var)
 			else
 				ut_nodes = _node.urltest_node
 			end
-			if #ut_nodes == 0 then return nil end
 			local valid_nodes = {}
 			for i = 1, #(ut_nodes or {}) do
 				local ut_node_id = ut_nodes[i]
@@ -2051,7 +2086,7 @@ function gen_config(var)
 				string.gsub(direct_ipset, '[^' .. "," .. ']+', function(w)
 					sys.call("ipset -q -F " .. w)
 				end)
-				local ipset_prefix_name = "passwall2_" .. node_id .. "_"
+				local ipset_prefix_name = "psw2_" .. node_id .. "_"
 				local ipset_list = sys.exec("ipset list | grep 'Name: ' | grep '" .. ipset_prefix_name .. "' | awk '{print $2}'")
 				string.gsub(ipset_list, '[^' .. "\r\n" .. ']+', function(w)
 					sys.call("ipset -q -F " .. w)
@@ -2070,7 +2105,7 @@ function gen_config(var)
 				end)
 				local family = "inet"
 				local table_name = "passwall2"
-				local nftset_prefix_name = "passwall2_" .. node_id .. "_"
+				local nftset_prefix_name = "psw2_" .. node_id .. "_"
 				local nftset_list = sys.exec("nft -a list sets | grep -E '" .. nftset_prefix_name .. "' | awk -F 'set ' '{print $2}' | awk '{print $1}'")
 				string.gsub(nftset_list, '[^' .. "\r\n" .. ']+', function(w)
 					sys.call(string.format("nft flush set %s %s %s 2>/dev/null", family, table_name, w))
@@ -2138,7 +2173,7 @@ function gen_config(var)
 			if not value.detour and value.server then
 				value.detour = "direct"
 			end
-			if value.server and not api.datatypes.hostname(value.server) then
+			if (value.server and not api.datatypes.hostname(value.server)) and not value.realm then
 				value.domain_resolver = nil
 			end
 			for k, v in pairs(config.outbounds[index]) do

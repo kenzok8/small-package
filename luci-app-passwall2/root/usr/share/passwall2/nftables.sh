@@ -4,17 +4,17 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/nftables.sh
 UTILS_PATH=$DIR/utils.sh
 NFTABLE_NAME="inet passwall2"
-NFTSET_LOCAL="passwall2_local"
-NFTSET_PROXY_LAN="passwall2_proxy_lan"
-NFTSET_LAN="passwall2_lan"
-NFTSET_VPS="passwall2_vps"
-NFTSET_WAN="passwall2_wan"
+NFTSET_LOCAL="psw2_local"
+NFTSET_PROXY_LAN="psw2_proxy_lan"
+NFTSET_LAN="psw2_lan"
+NFTSET_VPS="psw2_vps"
+NFTSET_WAN="psw2_wan"
 
-NFTSET_LOCAL6="passwall2_local6"
-NFTSET_PROXY_LAN6="passwall2_proxy_lan6"
-NFTSET_LAN6="passwall2_lan6"
-NFTSET_VPS6="passwall2_vps6"
-NFTSET_WAN6="passwall2_wan6"
+NFTSET_LOCAL6="psw2_local6"
+NFTSET_PROXY_LAN6="psw2_proxy_lan6"
+NFTSET_LAN6="psw2_lan6"
+NFTSET_VPS6="psw2_vps6"
+NFTSET_WAN6="psw2_wan6"
 
 FWMARK="0x50535732"
 
@@ -231,8 +231,8 @@ gen_shunt_list() {
 			for shunt_id in $shunt_ids; do
 				local shunt_node=$(config_n_get ${node} "${shunt_id}")
 				[ -n "$shunt_node" ] && {
-					local nftset_v4="passwall2_${node}_${shunt_id}"
-					local nftset_v6="passwall2_${node}_${shunt_id}6"
+					local nftset_v4="psw2_${node}_${shunt_id}"
+					local nftset_v6="psw2_${node}_${shunt_id}6"
 					gen_nftset $nftset_v4 ipv4_addr 0 0
 					gen_nftset $nftset_v6 ipv6_addr 0 0
 					local outbound="redirect"
@@ -262,14 +262,6 @@ gen_shunt_list() {
 		[ -n "${direct_nftset6}" ] && {
 			gen_nftset $direct_nftset6 ipv6_addr 0 0
 			_SHUNT_LIST6="${_SHUNT_LIST6} ${direct_nftset6}:direct"
-		}
-		[ "${preloading}" = "1" ] && [ -n "$default_node" ] && {
-			local nftset_v4="passwall2_${node}_default"
-			local nftset_v6="passwall2_${node}_default6"
-			gen_nftset $nftset_v4 ipv4_addr 0 0
-			gen_nftset $nftset_v6 ipv6_addr 0 0
-			_SHUNT_LIST4="${_SHUNT_LIST4} ${nftset_v4}:${default_outbound}"
-			_SHUNT_LIST6="${_SHUNT_LIST6} ${nftset_v6}:${default_outbound}"
 		}
 	}
 	[ -n "${_SHUNT_LIST4}" ] && eval ${shunt_list4_var_name}=\"${_SHUNT_LIST4}\"
@@ -681,6 +673,8 @@ mwan3_start() {
 }
 
 update_wan_sets() {
+	[ -z "$(command -v get_wan_ips)" ] && . "$UTILS_PATH"
+
 	local WAN_IP=$(get_wan_ips ip4)
 	[ -n "$WAN_IP" ] && {
 		nft flush set $NFTABLE_NAME $NFTSET_WAN
@@ -1073,7 +1067,7 @@ del_firewall_rule() {
 
 flush_nftset() {
 	log_i18n 0 "Clear %s." "NFTSet"
-	for _name in $(nft -a list sets | grep -E "passwall2_" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
+	for _name in $(nft -a list sets | grep -E "psw2_" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
 		destroy_nftset ${_name}
 	done
 }
@@ -1116,7 +1110,7 @@ start() {
 }
 
 stop() {
-	[ -z "$(command -v log_i18n)" ] && . /usr/share/passwall2/utils.sh
+	[ -z "$(command -v log_i18n)" ] && . "$UTILS_PATH"
 	del_firewall_rule
 	destroy_nftset $NFTSET_PROXY_LAN
 	destroy_nftset $NFTSET_PROXY_LAN6

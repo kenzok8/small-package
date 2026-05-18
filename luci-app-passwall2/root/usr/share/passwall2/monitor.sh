@@ -18,7 +18,7 @@ while [ "$ENABLED" -eq 1 ]; do
 		for filename in $(ls ${TMP_SCRIPT_FUNC_PATH} | grep -v "^_"); do
 			cmd=$(cat ${TMP_SCRIPT_FUNC_PATH}/${filename})
 			cmd_check=$(echo $cmd | awk -F '>' '{print $1}')
-			icount=$(pgrep -f "$(echo $cmd_check)" | wc -l)
+			icount=$(busybox pgrep -f "$(echo $cmd_check)" | wc -l)
 			if [ $icount = 0 ]; then
 				#echo "${cmd} crashed, restarting." >> /tmp/log/passwall2.log
 				eval $(echo "nohup ${cmd} 2>&1 &") >/dev/null 2>&1 &

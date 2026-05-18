@@ -31,7 +31,11 @@ local type_table = {}
 for filename in fs.dir(types_dir) do
 	table.insert(type_table, filename)
 end
-table.sort(type_table)
+table.sort(type_table, function(a, b)
+    if a == "socks.lua" then return true end
+    if b == "socks.lua" then return false end
+    return a < b
+end)
 
 for index, value in ipairs(type_table) do
 	local p_func = loadfile(types_dir .. value)

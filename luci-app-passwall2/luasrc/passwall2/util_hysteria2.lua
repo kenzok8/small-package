@@ -5,15 +5,24 @@ local jsonc = api.jsonc
 
 function gen_config_server(node)
 	local config = {
-		listen = ":" .. node.port,
+		listen = (function()
+			if node.hysteria2_realms and node.hysteria2_realm_url then
+				local url = node.hysteria2_realm_url:gsub("/+$", "")
+				if node.port then
+					url = url .. (url:find("?") and "&lport=" or "?lport=") .. node.port
+				end
+				return url
+			end
+			return ":" .. (node.port or "0")
+		end)(),
 		tls = {
 			cert = node.tls_certificateFile,
 			key = node.tls_keyFile,
 		},
-		obfs = (node.hysteria2_obfs) and {
+		obfs = (node.hysteria2_obfs_type and node.hysteria2_obfs_password) and {
 			type = "salamander",
 			salamander = {
-				password = node.hysteria2_obfs
+				password = node.hysteria2_obfs_password
 			}
 		} or nil,
 		auth = {
@@ -26,6 +35,9 @@ function gen_config_server(node)
 		} or nil,
 		ignoreClientBandwidth = (node.hysteria2_ignoreClientBandwidth == "1") and true or false,
 		disableUDP = (node.hysteria2_udp == "0") and true or false,
+		realm = (node.hysteria2_realms and node.hysteria2_realm_stun) and {
+			stunServers = node.hysteria2_realm_stun
+		} or nil
 	}
 	return config
 end
@@ -51,14 +63,23 @@ function gen_config(var)
 	if api.is_ipv6(server_host) then
 		server_host = api.get_ipv6_full(server_host)
 	end
-	local server = server_host .. ":" .. server_port
 
-	if (node.hysteria2_hop) then
-		server = server .. "," .. string.gsub(node.hysteria2_hop, ":", "-")
+	local server = server_host .. (server_port and ":" .. server_port or "")
+
+	if node.hysteria2_hop then
+		server = server .. (server_port and "," or ":") .. string.gsub(node.hysteria2_hop, ":", "-")
 	end
 
 	local config = {
-		server = server,
+		server = (function()
+			if node.hysteria2_realms and node.hysteria2_realm_url then
+				return node.hysteria2_realm_url:gsub("/+$", "")
+			end
+			return server
+		end)(),
+		realm = (node.hysteria2_realms and node.hysteria2_realm_stun) and {
+			stunServers = node.hysteria2_realm_stun
+		} or nil,
 		transport = {
 			type = "udp",
 			udp = node.hysteria2_hop and (function()
@@ -83,10 +104,10 @@ function gen_config(var)
 				return udp
 			end)() or nil
 		},
-		obfs = (node.hysteria2_obfs) and {
+		obfs = (node.hysteria2_obfs_type and node.hysteria2_obfs_password) and {
 			type = "salamander",
 			salamander = {
-				password = node.hysteria2_obfs
+				password = node.hysteria2_obfs_password
 			}
 		} or nil,
 		auth = node.hysteria2_auth_password,

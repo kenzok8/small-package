@@ -1072,7 +1072,13 @@ function gen_config(var)
 					type = _node.balancingStrategy,
 					settings = {
 						expected = _node.expected and tonumber(_node.expected) and tonumber(_node.expected) or 2,
-						maxRTT = "1s"
+						maxRTT = "1s",
+						tolerance = (function(t)
+							t = tonumber(t) or 0
+							if t < 1 then return nil end
+							if t > 100 then t = 100 end
+							return t / 100
+						end)(_node.tolerance)
 					}
 				}
 			else

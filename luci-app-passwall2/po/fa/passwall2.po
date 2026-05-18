@@ -46,8 +46,8 @@ msgstr "لیست قوانین"
 msgid "Access control"
 msgstr "کنترل دسترسی"
 
-msgid "Watch Logs"
-msgstr "مشاهده گزارش‌ها"
+msgid "Runtime Logs"
+msgstr "گزارش‌های زمان اجرا"
 
 msgid "Node Config"
 msgstr "پیکربندی گره"
@@ -436,6 +436,12 @@ msgstr "تعداد گره‌های ترجیحی"
 
 msgid "The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them."
 msgstr "توزیع‌کننده بار تعداد بهینه‌ای از گره‌ها را انتخاب می‌کند و ترافیک به طور تصادفی بین آن‌ها توزیع می‌شود."
+
+msgid "Failure Tolerance (%)"
+msgstr "تحمل شکست (%)"
+
+msgid "The maximum acceptable speed test failure rate. For example, 1 means allowing a 1% failure rate."
+msgstr "حداکثر نرخ شکست قابل قبول در تست سرعت. برای مثال، عدد ۱ به معنای مجاز بودن نرخ شکست ۱٪ است.
 
 msgid "Shunt"
 msgstr "شنت (Shunt)"

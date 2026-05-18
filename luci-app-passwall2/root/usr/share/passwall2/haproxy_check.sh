@@ -8,7 +8,8 @@ listen_port=$2
 server_address=$3
 server_port=$4
 
-pgrep -af "${CONFIG}/" | grep -E 'app\.sh.*(start|stop)|nftables\.sh|iptables\.sh|subscribe\.lua' >/dev/null && {
+busybox pgrep -af "${CONFIG}/" | grep -E 'app\.sh.*(start|stop)|nftables\.sh|iptables\.sh|subscribe\.lua' >/dev/null && {
+	# No detection during specific task execution
 	exit 0
 }
 

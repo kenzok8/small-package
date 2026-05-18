@@ -22,7 +22,7 @@ do
 		stop_interval_mode=$(expr "$stop_interval_mode" \* 60)
 		if [ -n "$stop_week_mode" ]; then
 			[ "$stop_week_mode" = "8" ] && {
-				[ "$(expr "$CFG_UPDATE_INT" % "$stop_interval_mode")" -eq 0 ] && /etc/init.d/$CONFIG stop > /dev/null 2>&1 &
+				[ "$(expr "$CFG_UPDATE_INT" % "$stop_interval_mode")" -eq 0 ] && { /etc/init.d/$CONFIG stop > /dev/null 2>&1 & }
 			}
 		fi
 
@@ -31,7 +31,7 @@ do
 		start_interval_mode=$(expr "$start_interval_mode" \* 60)
 		if [ -n "$start_week_mode" ]; then
 			[ "$start_week_mode" = "8" ] && {
-				[ "$(expr "$CFG_UPDATE_INT" % "$start_interval_mode")" -eq 0 ] && /etc/init.d/$CONFIG start > /dev/null 2>&1 &
+				[ "$(expr "$CFG_UPDATE_INT" % "$start_interval_mode")" -eq 0 ] && { /etc/init.d/$CONFIG start > /dev/null 2>&1 & }
 			}
 		fi
 
@@ -40,7 +40,7 @@ do
 		restart_interval_mode=$(expr "$restart_interval_mode" \* 60)
 		if [ -n "$restart_week_mode" ]; then
 			[ "$restart_week_mode" = "8" ] && {
-				[ "$(expr "$CFG_UPDATE_INT" % "$restart_interval_mode")" -eq 0 ] && /etc/init.d/$CONFIG restart > /dev/null 2>&1 &
+				[ "$(expr "$CFG_UPDATE_INT" % "$restart_interval_mode")" -eq 0 ] && { /etc/init.d/$CONFIG restart > /dev/null 2>&1 & }
 			}
 		fi
 
@@ -50,7 +50,7 @@ do
 		hourupdate=$(expr "$hourupdate" \* 60)
 		if [ "$autoupdate" = "1" ]; then
 			[ "$weekupdate" = "8" ] && {
-				[ "$(expr "$CFG_UPDATE_INT" % "$hourupdate")" -eq 0 ] && lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &
+				[ "$(expr "$CFG_UPDATE_INT" % "$hourupdate")" -eq 0 ] && { lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 & }
 			}
 		fi
 
@@ -73,7 +73,7 @@ do
 				hour_update=$(expr "$hour_update" \* 60)
 				cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
 				[ "$week_update" = "8" ] && {
-					[ "$(expr "$CFG_UPDATE_INT" % "$hour_update")" -eq 0 ] && lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &
+					[ "$(expr "$CFG_UPDATE_INT" % "$hour_update")" -eq 0 ] && { lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 & }
 				}
 
 			done

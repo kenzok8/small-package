@@ -274,7 +274,7 @@ function add_rule(var)
 					if address == "engage.cloudflareclient.com" then return end
 					if datatypes.hostname(address) then
 						set_domain_dns(address, fwd_dns)
-						set_domain_ipset(address, setflag_4 .. "passwall2_vps," .. setflag_6 .. "passwall2_vps6")
+						set_domain_ipset(address, setflag_4 .. "psw2_vps," .. setflag_6 .. "psw2_vps6")
 					end
 				end
 				process_address(t.address)

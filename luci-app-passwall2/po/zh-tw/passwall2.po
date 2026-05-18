@@ -46,8 +46,8 @@ msgstr "規則列表"
 msgid "Access control"
 msgstr "訪問控制"
 
-msgid "Watch Logs"
-msgstr "查看日誌"
+msgid "Runtime Logs"
+msgstr "運行日誌"
 
 msgid "Node Config"
 msgstr "節點配置"
@@ -432,6 +432,12 @@ msgstr "優選節點數量"
 
 msgid "The load balancer selects the optimal number of nodes, and traffic is randomly distributed among them."
 msgstr "負載均衡器選出最優節點的個數，流量將在這几個節點中随機分配。"
+
+msgid "Failure Tolerance (%)"
+msgstr "測速失敗率容忍度（%）"
+
+msgid "The maximum acceptable speed test failure rate. For example, 1 means allowing a 1% failure rate."
+msgstr "最多可接受的測速失敗率，例如 1 表示允許 1% 的測速失敗率。"
 
 msgid "Shunt"
 msgstr "分流"
