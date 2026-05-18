@@ -21,7 +21,7 @@ m = Map("AdGuardHome", "AdGuard Home")
 m.description = translate("Free and open source, powerful network-wide ads & trackers blocking DNS server.")
 
 -- Inject card-style CSS for AGH pages
-m:section(SimpleSection).template = "AdGuardHome/head"
+
 
 -- ============================================================
 -- Section 1: Basic Settings

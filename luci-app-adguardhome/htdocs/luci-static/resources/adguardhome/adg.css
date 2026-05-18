@@ -243,9 +243,12 @@
 		margin: 12px 0;
 	}
 	.adg-wrap .cbi-value {
+		display: flex;
 		flex-direction: column;
 		align-items: stretch;
 	}
+	.adg-wrap .cbi-value .cbi-value-field { width: 100%; }
+	.adg-wrap .cbi-value .cbi-value-field > div { width: 100%; }
 	.adg-wrap .cbi-value > .cbi-value-title {
 		width: 100%;
 		min-width: 0;
