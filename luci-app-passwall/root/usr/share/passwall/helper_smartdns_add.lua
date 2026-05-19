@@ -358,8 +358,8 @@ if is_file_nonzero(file_vpslist) then
 		string.format("domain-set -name %s -file %s", domain_set_name, file_vpslist)
 	}
 	local sets = {
-		"#4:" .. setflag .. "passwall_vps",
-		"#6:" .. setflag .. "passwall_vps6"
+		"#4:" .. setflag .. "psw_vps",
+		"#6:" .. setflag .. "psw_vps6"
 	}
 	local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
 	domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
@@ -406,8 +406,8 @@ if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
 		string.format("domain-set -name %s -file %s", domain_set_name, file_direct_host)
 	}
 	local sets = {
-		"#4:" .. setflag .. "passwall_white",
-		"#6:" .. setflag .. "passwall_white6"
+		"#4:" .. setflag .. "psw_white",
+		"#6:" .. setflag .. "psw_white6"
 	}
 	local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
 	domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
@@ -457,14 +457,14 @@ if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
 	domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 	domain_rules_str = domain_rules_str .. " -no-serve-expired"
 	local sets = {
-		"#4:" .. setflag .. "passwall_black"
+		"#4:" .. setflag .. "psw_black"
 	}
 	if NO_PROXY_IPV6 == "1" then
 		domain_rules_str = domain_rules_str .. " -address #6"
 		domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 	else
 		domain_rules_str = domain_rules_str .. " -address -6"
-		table.insert(sets, "#6:" .. setflag .. "passwall_black6")
+		table.insert(sets, "#6:" .. setflag .. "psw_black6")
 		domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 	end
 	table.insert(tmp_lines, domain_rules_str)
@@ -482,14 +482,14 @@ if USE_GFW_LIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
 	domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 	domain_rules_str = domain_rules_str .. " -no-serve-expired"
 	local sets = {
-		"#4:" .. setflag .. "passwall_gfw"
+		"#4:" .. setflag .. "psw_gfw"
 	}
 	if NO_PROXY_IPV6 == "1" then
 		domain_rules_str = domain_rules_str .. " -address #6"
 		domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 	else
 		domain_rules_str = domain_rules_str .. " -address -6"
-		table.insert(sets, "#6:" .. setflag .. "passwall_gfw6")
+		table.insert(sets, "#6:" .. setflag .. "psw_gfw6")
 		domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 	end
 	table.insert(tmp_lines, domain_rules_str)
@@ -506,8 +506,8 @@ if CHN_LIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 
 	if CHN_LIST == "direct" then
 		local sets = {
-			"#4:" .. setflag .. "passwall_chn",
-			"#6:" .. setflag .. "passwall_chn6"
+			"#4:" .. setflag .. "psw_chn",
+			"#6:" .. setflag .. "psw_chn6"
 		}
 		local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
 		domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
@@ -523,14 +523,14 @@ if CHN_LIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 		domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 		domain_rules_str = domain_rules_str .. " -no-serve-expired"
 		local sets = {
-			"#4:" .. setflag .. "passwall_chn"
+			"#4:" .. setflag .. "psw_chn"
 		}
 		if NO_PROXY_IPV6 == "1" then
 			domain_rules_str = domain_rules_str .. " -address #6"
 			domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 		else
 			domain_rules_str = domain_rules_str .. " -address -6"
-			table.insert(sets, "#6:" .. setflag .. "passwall_chn6")
+			table.insert(sets, "#6:" .. setflag .. "psw_chn6")
 			domain_rules_str = REMOTE_FAKEDNS ~= "1" and (domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ",")) or domain_rules_str
 		end
 		table.insert(tmp_lines, domain_rules_str)
@@ -631,14 +631,14 @@ if IS_SHUNT_NODE then
 		local domain_rules_str = string.format('domain-rules /domain-set:%s/ %s', domain_set_name, LOCAL_GROUP and "-nameserver " .. LOCAL_GROUP or "")
 		if USE_DIRECT_LIST == "1" then
 			local sets = {
-				"#4:" .. setflag .. "passwall_white",
-				"#6:" .. setflag .. "passwall_white6"
+				"#4:" .. setflag .. "psw_white",
+				"#6:" .. setflag .. "psw_white6"
 			}
 			domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 		else
 			local sets = {
-				"#4:" .. setflag .. "passwall_shunt",
-				"#6:" .. setflag .. "passwall_shunt6"
+				"#4:" .. setflag .. "psw_shunt",
+				"#6:" .. setflag .. "psw_shunt6"
 			}
 			domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 		end
@@ -656,7 +656,7 @@ if IS_SHUNT_NODE then
 		domain_rules_str = domain_rules_str .. " -speed-check-mode none"
 		domain_rules_str = domain_rules_str .. " -no-serve-expired"
 		local sets = {
-			"#4:" .. setflag .. "passwall_shunt"
+			"#4:" .. setflag .. "psw_shunt"
 		}
 		if NO_PROXY_IPV6 == "1" then
 			domain_rules_str = domain_rules_str .. " -address #6"
@@ -665,7 +665,7 @@ if IS_SHUNT_NODE then
 					or (domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ","))
 		else
 			domain_rules_str = domain_rules_str .. " -address -6"
-			table.insert(sets, "#6:" .. setflag .. "passwall_shunt6")
+			table.insert(sets, "#6:" .. setflag .. "psw_shunt6")
 			domain_rules_str = (not only_global and REMOTE_FAKEDNS == "1")
 					and domain_rules_str
 					or (domain_rules_str .. " -d no " .. set_type .. " " .. table.concat(sets, ","))

@@ -123,7 +123,9 @@ _detect_selected_core() {
 			return 1
 			;;
 		2|mihomo)
-			for _bin in /usr/bin/mihomo /usr/bin/clash-meta /etc/clashoo/clash-meta; do
+			# 稳定版：clash-meta 优先（用户主动下载的稳定通道写入此路径），
+			# IPK 自带的 /usr/bin/mihomo 是 auto-bump-alpha，不该被稳定版误选。
+			for _bin in /usr/bin/clash-meta /etc/clashoo/clash-meta /usr/bin/mihomo; do
 				[ -x "$_bin" ] && echo "$_bin" && return
 			done
 			return 1
@@ -258,7 +260,24 @@ prepare_singbox_runtime() {
 	return 0
 }
 
+_sync_singbox_binary() {
+	# 根据 dcore 把 /usr/bin/sing-box 同步成对应通道的 binary，让稳定版
+	# 与 Alpha 通过 /usr/bin/sing-box-stable / -alpha 分路径并存，互不覆盖。
+	# 老用户若分路径文件不存在则保留 /usr/bin/sing-box 现状（兼容首次升级）。
+	local dcore src
+	dcore="$(uci -q get clashoo.config.dcore 2>/dev/null)"
+	case "$dcore" in
+		4) src="/usr/bin/sing-box-stable" ;;
+		5) src="/usr/bin/sing-box-alpha" ;;
+		*) return 0 ;;
+	esac
+	[ -x "$src" ] || return 0
+	[ "$src" -ef /usr/bin/sing-box ] && return 0
+	ln -sf "$src" /usr/bin/sing-box
+}
+
 start_singbox_service() {
+	_sync_singbox_binary
 	if [ ! -x /usr/bin/sing-box ]; then
 		_log_runtime_error "sing-box core not found, please install the local sing-box binary first"
 		return 1
@@ -778,8 +797,15 @@ smart_inject() {
 	sed -i '/^    uselightgbm:/d; /^    collectdata:/d; /^    prefer-asn:/d; /^    sample-rate:/d' "$CONFIG_YAML" 2>/dev/null
 	sed -i '/^    policy-priority:/d' "$CONFIG_YAML" 2>/dev/null
 	sed -i '/^lgbm-auto-update:/d; /^lgbm-url:/d; /^lgbm-update-interval:/d' "$CONFIG_YAML" 2>/dev/null
+	# 把 url-test/load-balance 改写回 url-test，撤销上一次注入留下的 type: smart
+	if command -v yq >/dev/null 2>&1; then
+		yq e -i '(.["proxy-groups"] // []) |= map(if .type == "smart" then .type = "url-test" else . end)' "$CONFIG_YAML" 2>/dev/null
+	fi
 
 	[ "${smart_auto:-0}" != "1" ] && return 0
+	# 只在实际跑 smart binary（core=1）时才注入 smart 专属字段，
+	# 否则切到标准 mihomo (core=2/3) 时 `type: smart` 会让内核拒绝启动。
+	[ "$(uci -q get clashoo.config.core 2>/dev/null)" = "1" ] || return 0
 
 	smart_priority=$(uci get clashoo.config.smart_policy_priority 2>/dev/null)
 	smart_asn=$(uci get clashoo.config.smart_prefer_asn 2>/dev/null)

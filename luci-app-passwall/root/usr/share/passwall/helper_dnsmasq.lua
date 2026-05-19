@@ -372,8 +372,8 @@ function add_rule(var)
 				fwd_dns = nil
 			else
 				local sets = {
-					setflag_4 .. "passwall_vps",
-					setflag_6 .. "passwall_vps6"
+					setflag_4 .. "psw_vps",
+					setflag_6 .. "psw_vps6"
 				}
 				local function process_address(address)
 					address = (address or ""):lower()
@@ -406,8 +406,8 @@ function add_rule(var)
 				end
 				if fwd_dns then
 					local sets = {
-						setflag_4 .. "passwall_white",
-						setflag_6 .. "passwall_white6"
+						setflag_4 .. "psw_white",
+						setflag_6 .. "psw_white6"
 					}
 					--始终用国内DNS解析直连（白名单）列表
 					for line in io.lines("/usr/share/passwall/rules/direct_host") do
@@ -431,11 +431,11 @@ function add_rule(var)
 					fwd_dns = nil
 				end
 				if fwd_dns then
-					local set_name = "passwall_black"
-					local set6_name = "passwall_black6"
+					local set_name = "psw_black"
+					local set6_name = "psw_black6"
 					if FLAG ~= "default" then
-						set_name = "passwall_" .. FLAG .. "_black"
-						set6_name = "passwall_" .. FLAG .. "_black6"
+						set_name = "psw_" .. FLAG .. "_black"
+						set6_name = "psw_" .. FLAG .. "_black6"
 					end
 					local sets = {
 						setflag_4 .. set_name
@@ -471,11 +471,11 @@ function add_rule(var)
 					fwd_dns = nil
 				end
 				if fwd_dns then
-					local set_name = "passwall_gfw"
-					local set6_name = "passwall_gfw6"
+					local set_name = "psw_gfw"
+					local set6_name = "psw_gfw6"
 					if FLAG ~= "default" then
-						set_name = "passwall_" .. FLAG .. "_gfw"
-						set6_name = "passwall_" .. FLAG .. "_gfw6"
+						set_name = "psw_" .. FLAG .. "_gfw"
+						set6_name = "psw_" .. FLAG .. "_gfw6"
 					end
 					local sets = {
 						setflag_4 .. set_name
@@ -519,13 +519,13 @@ function add_rule(var)
 				end
 				if fwd_dns then
 					local sets = {
-						setflag_4 .. "passwall_chn",
-						setflag_6 .. "passwall_chn6"
+						setflag_4 .. "psw_chn",
+						setflag_6 .. "psw_chn6"
 					}
 					if CHN_LIST == "proxy" then
 						if NO_PROXY_IPV6 == "1" then
 							sets = {
-								setflag_4 .. "passwall_chn"
+								setflag_4 .. "psw_chn"
 							}
 						end
 						if REMOTE_FAKEDNS == "1" then
@@ -569,24 +569,24 @@ function add_rule(var)
 					if _node_id == "_direct" then
 						fwd_dns = LOCAL_DNS
 						if USE_DIRECT_LIST == "1" then
-							table.insert(sets, setflag_4 .. "passwall_white")
-							table.insert(sets, setflag_6 .. "passwall_white6")
+							table.insert(sets, setflag_4 .. "psw_white")
+							table.insert(sets, setflag_6 .. "psw_white6")
 						else
-							local set_name = "passwall_shunt"
-							local set6_name = "passwall_shunt6"
+							local set_name = "psw_shunt"
+							local set6_name = "psw_shunt6"
 							if FLAG ~= "default" then
-								set_name = "passwall_" .. FLAG .. "_shunt"
-								set6_name = "passwall_" .. FLAG .. "_shunt6"
+								set_name = "psw_" .. FLAG .. "_shunt"
+								set6_name = "psw_" .. FLAG .. "_shunt6"
 							end
 							table.insert(sets, setflag_4 .. set_name)
 							table.insert(sets, setflag_6 .. set6_name)
 						end
 					else
-						local set_name = "passwall_shunt"
-						local set6_name = "passwall_shunt6"
+						local set_name = "psw_shunt"
+						local set6_name = "psw_shunt6"
 						if FLAG ~= "default" then
-							set_name = "passwall_" .. FLAG .. "_shunt"
-							set6_name = "passwall_" .. FLAG .. "_shunt6"
+							set_name = "psw_" .. FLAG .. "_shunt"
+							set6_name = "psw_" .. FLAG .. "_shunt6"
 						end
 						fwd_dns = TUN_DNS
 						table.insert(sets, setflag_4 .. set_name)

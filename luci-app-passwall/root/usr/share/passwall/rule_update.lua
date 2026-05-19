@@ -506,9 +506,9 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 		if old_md5 ~= new_md5 then
 			if api.is_finded("fw4") and (rule_type == "ip4" or rule_type == "ip6") then
 				local nft_file = file_tmp .. ".nft"
-				local set_name = "passwall_" .. rule_name
-				if rule_name == "chnroute" then set_name = "passwall_chn"
-				elseif rule_name == "chnroute6" then set_name = "passwall_chn6" end
+				local set_name = "psw_" .. rule_name
+				if rule_name == "chnroute" then set_name = "psw_chn"
+				elseif rule_name == "chnroute6" then set_name = "psw_chn6" end
                 
 				local addr_type = (rule_type == "ip4") and "ipv4_addr" or "ipv6_addr"
 				gen_cache(set_name, addr_type, file_tmp, nft_file)

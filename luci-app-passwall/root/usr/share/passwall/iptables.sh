@@ -3,27 +3,27 @@
 DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/iptables.sh
 UTILS_PATH=$DIR/utils.sh
-IPSET_LOCAL="passwall_local"
-IPSET_WAN="passwall_wan"
-IPSET_LAN="passwall_lan"
-IPSET_VPS="passwall_vps"
-IPSET_SHUNT="passwall_shunt"
-IPSET_GFW="passwall_gfw"
-IPSET_CHN="passwall_chn"
-IPSET_BLACK="passwall_black"
-IPSET_WHITE="passwall_white"
-IPSET_BLOCK="passwall_block"
+IPSET_LOCAL="psw_local"
+IPSET_WAN="psw_wan"
+IPSET_LAN="psw_lan"
+IPSET_VPS="psw_vps"
+IPSET_SHUNT="psw_shunt"
+IPSET_GFW="psw_gfw"
+IPSET_CHN="psw_chn"
+IPSET_BLACK="psw_black"
+IPSET_WHITE="psw_white"
+IPSET_BLOCK="psw_block"
 
-IPSET_LOCAL6="passwall_local6"
-IPSET_WAN6="passwall_wan6"
-IPSET_LAN6="passwall_lan6"
-IPSET_VPS6="passwall_vps6"
-IPSET_SHUNT6="passwall_shunt6"
-IPSET_GFW6="passwall_gfw6"
-IPSET_CHN6="passwall_chn6"
-IPSET_BLACK6="passwall_black6"
-IPSET_WHITE6="passwall_white6"
-IPSET_BLOCK6="passwall_block6"
+IPSET_LOCAL6="psw_local6"
+IPSET_WAN6="psw_wan6"
+IPSET_LAN6="psw_lan6"
+IPSET_VPS6="psw_vps6"
+IPSET_SHUNT6="psw_shunt6"
+IPSET_GFW6="psw_gfw6"
+IPSET_CHN6="psw_chn6"
+IPSET_BLACK6="psw_black6"
+IPSET_WHITE6="psw_white6"
+IPSET_BLOCK6="psw_block6"
 
 USE_SHUNT_TCP=0
 USE_SHUNT_UDP=0
@@ -365,24 +365,24 @@ load_acl() {
 				if ([ -n "$tcp_port" ] && [ -n "${tcp_proxy_mode}" ]) || ([ -n "$udp_port" ] && [ -n "${udp_proxy_mode}" ]); then
 					[ "${use_proxy_list}" = "1" ] && {
 						[ "${use_global_config}" = "0" ] && {
-							black_set_name="passwall_${sid}_black"
-							black6_set_name="passwall_${sid}_black6"
+							black_set_name="psw_${sid}_black"
+							black6_set_name="psw_${sid}_black6"
 							ipset -! create $black_set_name nethash maxelem 1048576 timeout 172800
 							ipset -! create $black6_set_name nethash family inet6 maxelem 1048576 timeout 172800
 						}
 					}
 					[ "${use_gfw_list}" = "1" ] && {
 						[ "${use_global_config}" = "0" ] && {
-							gfw_set_name="passwall_${sid}_gfw"
-							gfw6_set_name="passwall_${sid}_gfw6"
+							gfw_set_name="psw_${sid}_gfw"
+							gfw6_set_name="psw_${sid}_gfw6"
 							ipset -! create $gfw_set_name nethash maxelem 1048576 timeout 172800
 							ipset -! create $gfw6_set_name nethash family inet6 maxelem 1048576 timeout 172800
 						}
 					}
 					[ "${use_shunt_tcp}" = "1" -o "${use_shunt_udp}" = "1" ] && {
 						[ "${use_global_config}" = "0" ] && {
-							shunt_set_name="passwall_${sid}_shunt"
-							shunt6_set_name="passwall_${sid}_shunt6"
+							shunt_set_name="psw_${sid}_shunt"
+							shunt6_set_name="psw_${sid}_shunt6"
 							ipset -! create $shunt_set_name nethash maxelem 1048576 timeout 172800
 							ipset -! create $shunt6_set_name nethash family inet6 maxelem 1048576 timeout 172800
 						}
@@ -1400,7 +1400,7 @@ del_firewall_rule() {
 
 flush_ipset() {
 	echolog "清空 IPSet。"
-	for _name in $(ipset list | grep "Name: " | grep "passwall_" | awk '{print $2}'); do
+	for _name in $(ipset list | grep "Name: " | grep "psw_" | awk '{print $2}'); do
 		destroy_ipset ${_name}
 	done
 }

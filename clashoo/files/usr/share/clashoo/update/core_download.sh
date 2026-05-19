@@ -824,6 +824,14 @@ if [ "$CORETYPE" = "4" ] || [ "$CORETYPE" = "5" ]; then
 	fi
 
 	CORE_INSTALLED=1
+	# 稳定版与 Alpha 分路径归档，避免互相覆盖；同时保留旧字段供老逻辑读
+	if [ "$CORETYPE" = "4" ]; then
+		cp -f /usr/bin/sing-box /usr/bin/sing-box-stable 2>/dev/null
+		printf '%s\n' "$TAG" > "/usr/share/clashoo/singbox_stable_version"
+	else
+		cp -f /usr/bin/sing-box /usr/bin/sing-box-alpha 2>/dev/null
+		printf '%s\n' "$TAG" > "/usr/share/clashoo/singbox_alpha_version"
+	fi
 	printf '%s\n' "$TAG" > "/usr/share/clashoo/singbox_version"
 	rm -f /tmp/singbox.tar.gz /tmp/singbox-openwrt.ipk /tmp/singbox-openwrt.apk
 	rm -rf /tmp/singbox-extract /tmp/singbox-openwrt-pkg /tmp/singbox-openwrt-root

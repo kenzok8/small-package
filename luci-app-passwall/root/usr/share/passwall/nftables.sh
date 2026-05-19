@@ -4,27 +4,27 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 MY_PATH=$DIR/nftables.sh
 UTILS_PATH=$DIR/utils.sh
 NFTABLE_NAME="inet passwall"
-NFTSET_LOCAL="passwall_local"
-NFTSET_WAN="passwall_wan"
-NFTSET_LAN="passwall_lan"
-NFTSET_VPS="passwall_vps"
-NFTSET_SHUNT="passwall_shunt"
-NFTSET_GFW="passwall_gfw"
-NFTSET_CHN="passwall_chn"
-NFTSET_BLACK="passwall_black"
-NFTSET_WHITE="passwall_white"
-NFTSET_BLOCK="passwall_block"
+NFTSET_LOCAL="psw_local"
+NFTSET_WAN="psw_wan"
+NFTSET_LAN="psw_lan"
+NFTSET_VPS="psw_vps"
+NFTSET_SHUNT="psw_shunt"
+NFTSET_GFW="psw_gfw"
+NFTSET_CHN="psw_chn"
+NFTSET_BLACK="psw_black"
+NFTSET_WHITE="psw_white"
+NFTSET_BLOCK="psw_block"
 
-NFTSET_LOCAL6="passwall_local6"
-NFTSET_WAN6="passwall_wan6"
-NFTSET_LAN6="passwall_lan6"
-NFTSET_VPS6="passwall_vps6"
-NFTSET_SHUNT6="passwall_shunt6"
-NFTSET_GFW6="passwall_gfw6"
-NFTSET_CHN6="passwall_chn6"
-NFTSET_BLACK6="passwall_black6"
-NFTSET_WHITE6="passwall_white6"
-NFTSET_BLOCK6="passwall_block6"
+NFTSET_LOCAL6="psw_local6"
+NFTSET_WAN6="psw_wan6"
+NFTSET_LAN6="psw_lan6"
+NFTSET_VPS6="psw_vps6"
+NFTSET_SHUNT6="psw_shunt6"
+NFTSET_GFW6="psw_gfw6"
+NFTSET_CHN6="psw_chn6"
+NFTSET_BLACK6="psw_black6"
+NFTSET_WHITE6="psw_white6"
+NFTSET_BLOCK6="psw_block6"
 
 USE_SHUNT_TCP=0
 USE_SHUNT_UDP=0
@@ -395,24 +395,24 @@ load_acl() {
 				if ([ -n "$tcp_port" ] && [ -n "${tcp_proxy_mode}" ]) || ([ -n "$udp_port" ] && [ -n "${udp_proxy_mode}" ]); then
 					[ "${use_proxy_list}" = "1" ] && {
 						[ "${use_global_config}" = "0" ] && {
-							black_set_name="passwall_${sid}_black"
-							black6_set_name="passwall_${sid}_black6"
+							black_set_name="psw_${sid}_black"
+							black6_set_name="psw_${sid}_black6"
 							gen_nftset $black_set_name ipv4_addr "2d" 0
 							gen_nftset $black6_set_name ipv6_addr "2d" 0
 						}
 					}
 					[ "${use_gfw_list}" = "1" ] && {
 						[ "${use_global_config}" = "0" ] && {
-							gfw_set_name="passwall_${sid}_gfw"
-							gfw6_set_name="passwall_${sid}_gfw6"
+							gfw_set_name="psw_${sid}_gfw"
+							gfw6_set_name="psw_${sid}_gfw6"
 							gen_nftset $gfw_set_name ipv4_addr "2d" 0
 							gen_nftset $gfw6_set_name ipv6_addr "2d" 0
 						}
 					}
 					[ "${use_shunt_tcp}" = "1" -o "${use_shunt_udp}" = "1" ] && {
 						[ "${use_global_config}" = "0" ] && {
-							shunt_set_name="passwall_${sid}_shunt"
-							shunt6_set_name="passwall_${sid}_shunt6"
+							shunt_set_name="psw_${sid}_shunt"
+							shunt6_set_name="psw_${sid}_shunt6"
 							gen_nftset $shunt_set_name ipv4_addr "2d" 0
 							gen_nftset $shunt6_set_name ipv6_addr "2d" 0
 						}
@@ -1462,7 +1462,7 @@ del_firewall_rule() {
 
 flush_nftset() {
 	echolog "清空 NFTSet。"
-	for _name in $(nft -a list sets | grep -E "passwall_" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
+	for _name in $(nft -a list sets | grep -E "psw_" | awk -F 'set ' '{print $2}' | awk '{print $1}'); do
 		destroy_nftset ${_name}
 	done
 }

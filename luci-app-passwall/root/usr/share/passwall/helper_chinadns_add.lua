@@ -194,8 +194,8 @@ if not is_file_nonzero(file_vpslist) then
 end
 if is_file_nonzero(file_vpslist) then
 	local sets = {
-		setflag .. "passwall_vps",
-		setflag .. "passwall_vps6"
+		setflag .. "psw_vps",
+		setflag .. "psw_vps6"
 	}
 	tmp_lines = {
 		"group vpslist",
@@ -240,8 +240,8 @@ if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then
 end
 if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
 	local sets = {
-		setflag .. "passwall_white",
-		setflag .. "passwall_white6"
+		setflag .. "psw_white",
+		setflag .. "psw_white6"
 	}
 	tmp_lines = {
 		"group directlist",
@@ -286,13 +286,13 @@ if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then
 end
 if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
 	local sets = {
-		setflag .. "passwall_black",
-		setflag .. "passwall_black6"
+		setflag .. "psw_black",
+		setflag .. "psw_black6"
 	}
 	if FLAG ~= "default" then
 		sets = {
-			setflag .. "passwall_" .. FLAG .. "_black",
-			setflag .. "passwall_" .. FLAG .. "_black6"
+			setflag .. "psw_" .. FLAG .. "_black",
+			setflag .. "psw_" .. FLAG .. "_black6"
 		}
 	end
 	tmp_lines = {
@@ -310,13 +310,13 @@ end
 --GFW列表
 if GFWLIST == "1" and is_file_nonzero(RULES_PATH .. "/gfwlist") then
 	local sets = {
-		setflag .. "passwall_gfw",
-		setflag .. "passwall_gfw6"
+		setflag .. "psw_gfw",
+		setflag .. "psw_gfw6"
 	}
 	if FLAG ~= "default" then
 		sets = {
-			setflag .. "passwall_" .. FLAG .. "_gfw",
-			setflag .. "passwall_" .. FLAG .. "_gfw6"
+			setflag .. "psw_" .. FLAG .. "_gfw",
+			setflag .. "psw_" .. FLAG .. "_gfw6"
 		}
 	end
 	tmp_lines = {
@@ -333,8 +333,8 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 	if CHNLIST == "direct" then
 		tmp_lines = {
 			"chnlist-file " .. RULES_PATH .. "/chnlist",
-			"ipset-name4 " .. setflag .. "passwall_chn",
-			"ipset-name6 " .. setflag .. "passwall_chn6",
+			"ipset-name4 " .. setflag .. "psw_chn",
+			"ipset-name6 " .. setflag .. "psw_chn6",
 			"add-tagchn-ip",
 			"chnlist-first"
 		}
@@ -345,8 +345,8 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 	--回中国模式
 	if CHNLIST == "proxy" then
 		local sets = {
-			setflag .. "passwall_chn",
-			setflag .. "passwall_chn6"
+			setflag .. "psw_chn",
+			setflag .. "psw_chn6"
 		}
 		tmp_lines = {
 			"group chn_proxy",
@@ -445,13 +445,13 @@ if IS_SHUNT_NODE then
 	end
 
 	local sets = {
-		setflag .. "passwall_shunt",
-		setflag .. "passwall_shunt6"
+		setflag .. "psw_shunt",
+		setflag .. "psw_shunt6"
 	}
 	if FLAG ~= "default" then
 		sets = {
-			setflag .. "passwall_" .. FLAG .. "_shunt",
-			setflag .. "passwall_" .. FLAG .. "_shunt6"
+			setflag .. "psw_" .. FLAG .. "_shunt",
+			setflag .. "psw_" .. FLAG .. "_shunt6"
 		}
 	end
 
