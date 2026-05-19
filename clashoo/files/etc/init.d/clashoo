@@ -1382,16 +1382,23 @@ _start_launch_core() {
 }
 
 boot(){
-	# ClashOO should never claim the router automatically after a reboot.
-	# Users may run other proxy plugins; start is only triggered explicitly
-	# from LuCI or by manually calling /etc/init.d/clashoo start.
-	# Disable sing-box UCI so its init.d doesn't auto-start it either.
+	# sing-box is managed by Clashoo when selected; keep its own init.d from
+	# starting independently before Clashoo has prepared config/firewall/DNS.
 	uci -q set sing-box.main.enabled='0' && uci -q commit sing-box >/dev/null 2>&1 || true
-	runtime_state_reset
-	runtime_state_set "health_status" "stopped"
-	runtime_state_set "health_detail" "boot_disabled"
-	runtime_state_set "updated_at" "$(date +%s)"
-	echo "Clashoo" > "$REAL_LOG"
+
+	if [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
+		runtime_state_reset
+		runtime_state_set "health_status" "starting"
+		runtime_state_set "health_detail" "boot_starting"
+		runtime_state_set "updated_at" "$(date +%s)"
+		start "$@"
+	else
+		runtime_state_reset
+		runtime_state_set "health_status" "stopped"
+		runtime_state_set "health_detail" "boot_disabled"
+		runtime_state_set "updated_at" "$(date +%s)"
+		echo "Clashoo" > "$REAL_LOG"
+	fi
 	return 0
 }
 

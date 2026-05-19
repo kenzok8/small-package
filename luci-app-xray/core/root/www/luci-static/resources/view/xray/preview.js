@@ -63,6 +63,9 @@ return view.extend({
         let ttl_override_bypass_ports = s.taboption('firewall', form.DynamicList, 'ttl_override_bypass_ports', _('Ports to bypass TTL override'), _("Do not override TTL for packets with these destination TCP / UDP ports."));
         ttl_override_bypass_ports.datatype = 'port';
 
+        s.taboption('firewall', form.Flag, 'fakedns_ping_response_prerouting', _('FakeDNS Ping (LAN)'), _('Respond to ICMP echo requests from LAN clients for FakeDNS address pools.'));
+        s.taboption('firewall', form.Flag, 'fakedns_ping_response_output', _('FakeDNS Ping (Local)'), _('Respond to ICMP echo requests from this router for FakeDNS address pools.'));
+
         s.tab("sniffing", _("Sniffing"));
 
         s.taboption('sniffing', form.Flag, 'tproxy_sniffing', _('Enable Sniffing'), _('Route requests according to domain settings in "DNS Settings" tab in core settings. Deprecated; use FakeDNS instead.'));

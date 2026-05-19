@@ -1512,6 +1512,11 @@ return { success: system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/n
 
 start: {
 call: function() {
+let c = cursor();
+c.load('clashoo');
+c.set('clashoo', 'config', 'enable', '1');
+c.commit('clashoo');
+system('/etc/init.d/clashoo enable >/dev/null 2>&1');
 system('sh /usr/share/clashoo/rpc/rpc_async.sh start >/dev/null 2>&1');
 return { success: true };
 }
@@ -1519,6 +1524,10 @@ return { success: true };
 
 stop: {
 call: function() {
+let c = cursor();
+c.load('clashoo');
+c.set('clashoo', 'config', 'enable', '0');
+c.commit('clashoo');
 system('sh /usr/share/clashoo/rpc/rpc_async.sh stop >/dev/null 2>&1');
 return { success: true };
 }

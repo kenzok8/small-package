@@ -1438,6 +1438,10 @@ function gen_config(var)
 					end
 				end
 			end
+			if node.chain_proxy == "3" and node.outbound_iface then
+				outbound.detour = nil
+				outbound.bind_interface = node.outbound_iface
+			end
 			return default_outTag, last_insert_outbound
 		end
 
@@ -2006,6 +2010,10 @@ function gen_config(var)
 		}
 	end
 
+	route.default_domain_resolver = {
+		server = "direct"
+	}
+
 	if not dns.rules then dns.rules = {} end
 
 	for i, v in pairs(GLOBAL.DNS_SERVER) do
@@ -2102,16 +2110,12 @@ function gen_config(var)
 			type = "direct",
 			tag = "direct",
 			routing_mark = 255,
-			domain_resolver = {
-				server = "direct",
-				strategy = "prefer_ipv6"
-			}
 		})
 		for index, value in ipairs(config.outbounds) do
 			if not value["_flag_proxy_tag"] and not value.detour and value["_id"] and value.server and (value.server_port or value.server_ports) and not no_run then
 				sys.call(string.format("echo '%s' >> %s", value["_id"], api.TMP_PATH .. "/direct_node_list"))
 			end
-			if not value.detour and value.server then
+			if not value.detour and not value.bind_interface and value.server then
 				value.detour = "direct"
 			end
 			if (value.server and not api.datatypes.hostname(value.server)) and not value.realm then

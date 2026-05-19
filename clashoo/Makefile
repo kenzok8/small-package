@@ -5,7 +5,7 @@ PKG_SHORT_SHA:=d60b336
 PKG_COMMIT_DATE:=2026.05.18
 
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
@@ -91,7 +91,11 @@ if [ -z "${IPKG_INSTROOT}" ]; then
 	rm -f /usr/share/clashoo/cuslist.sh /usr/share/clashoo/groups.sh /usr/share/clashoo/load_groups.sh /usr/share/clashoo/panel_diag.sh
 	rm -f /usr/share/clashoo/rmlist.sh /usr/share/clashoo/uplist.sh /usr/share/clashoo/rpc_restart_async.sh /usr/share/clashoo/rpc_update_china_ip_async.sh
 	rm -rf /usr/share/clashoo/create
-	/etc/init.d/clashoo disable 2>/dev/null
+	if [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
+		/etc/init.d/clashoo enable 2>/dev/null || true
+	else
+		/etc/init.d/clashoo disable 2>/dev/null || true
+	fi
 fi
 exit 0
 endef

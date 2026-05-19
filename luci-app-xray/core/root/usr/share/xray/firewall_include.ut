@@ -616,3 +616,21 @@
     chain tp_spec_lan_fw {
         {{ counter }} mark set 0x000000fb accept
     }
+
+{% if (length(fakedns) > 0): %}
+{% if (general.fakedns_ping_response_prerouting == "1"): %}
+    chain xray_fakedns_ping_prerouting {
+        type nat hook prerouting priority dstnat {{ firewall_priority }}; policy accept;
+        ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} icmp type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv4 Pool ICMP"
+        ip6 daddr {{ general.pool_v6 || "fc00::/18" }} icmpv6 type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv6 Pool ICMPv6"
+    }
+{% endif %}
+
+{% if (general.fakedns_ping_response_output == "1"): %}
+    chain xray_fakedns_ping_output {
+        type nat hook output priority dstnat {{ firewall_priority }}; policy accept;
+        ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} icmp type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv4 Pool ICMP"
+        ip6 daddr {{ general.pool_v6 || "fc00::/18" }} icmpv6 type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv6 Pool ICMPv6"
+    }
+{% endif %}
+{% endif %}
