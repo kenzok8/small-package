@@ -806,6 +806,7 @@ if not load_shunt_options then
 	if not (load_iface_options or load_balancing_options) then
 		-- Special node cannot be use pre-proxy.
 		o:value("1", translate("Preproxy Node"))
+		o:value("3", translate("Outbound Interface"))
 	end
 	o:value("2", translate("Landing Node"))
 
@@ -813,6 +814,10 @@ if not load_shunt_options then
 	o1:depends({ [_n("chain_proxy")] = "1" })
 	o1.template = appname .. "/cbi/nodes_listvalue"
 	o1.group = {}
+
+	o3 = s:option(Value, _n("outbound_iface"), translate("Outbound Interface"))
+	o3.default = "eth1"
+	o3:depends({ [_n("chain_proxy")] = "3" })
 
 	o2 = s:option(ListValue, _n("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
 	o2:depends({ [_n("chain_proxy")] = "2" })

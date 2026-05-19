@@ -1206,6 +1206,11 @@ function gen_config(var)
 					end
 				end
 			end
+			if node.chain_proxy == "3" and node.outbound_iface then
+				if outbound.streamSettings and outbound.streamSettings.sockopt then
+					outbound.streamSettings.sockopt.interface = node.outbound_iface
+				end
+			end
 			return default_outTag, last_insert_outbound
 		end
 
