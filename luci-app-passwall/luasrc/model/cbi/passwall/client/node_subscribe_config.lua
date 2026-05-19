@@ -288,6 +288,7 @@ o = s:option(ListValue, "chain_proxy", translate("Chain Proxy"))
 o:value("", translate("Close(Not use)"))
 o:value("1", translate("Preproxy Node"))
 o:value("2", translate("Landing Node"))
+o:value("3", translate("Outbound Interface"))
 
 local descrStr = "Chained proxy works only with Xray or Sing-box nodes.<br>"
 descrStr = descrStr .. "You can only use manual or imported nodes as chained nodes."
@@ -304,6 +305,14 @@ o2:depends({ ["chain_proxy"] = "2" })
 o2.description = descrStr
 o2.template = appname .. "/cbi/nodes_listvalue"
 o2.group = {}
+
+o3 = s:option(Value, "outbound_iface", translate("Outbound Interface"))
+o3:depends({ ["chain_proxy"] = "3" })
+o3:value("", translate("All"))
+local iface = api.get_network_devices()
+for _, d in ipairs(iface) do
+	o3:value(d.name, d.label)
+end
 
 for k, v in pairs(nodes_table) do
 	if (v.type == "Xray" or v.type == "sing-box") and (not v.chain_proxy or v.chain_proxy == "") and v.add_mode ~= "2" then

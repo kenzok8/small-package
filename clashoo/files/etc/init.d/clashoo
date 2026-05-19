@@ -178,6 +178,14 @@ _kill_core() {
 	[ -d "/proc/$_pid" ] && kill -9 "$_pid" >/dev/null 2>&1
 }
 
+_selected_core_running() {
+	if is_singbox_selected; then
+		_singbox_running
+	else
+		_core_running
+	fi
+}
+
 selected_core_family() {
 	local core_type
 	core_type="$(uci -q get clashoo.config.core_type 2>/dev/null)"
@@ -392,7 +400,7 @@ runtime_state_record_health() {
 }
 
 runtime_state_accepts_health_update() {
-	_core_running || return 1
+	_selected_core_running || return 1
 	case "$(grep '^health_detail=' "$RUNTIME_STATE_FILE" 2>/dev/null | cut -d= -f2-)" in
 		service_stopped|service_disabled|boot_disabled)
 			return 1
@@ -620,7 +628,7 @@ restore_dnsmasq_state() {
 ensure_dns_when_core_stopped() {
 #===========================================================================================================================
 	# Safety net: when core is stopped, never leave dnsmasq forwarding only to local Clashoo DNS.
-	if _core_running; then
+	if _selected_core_running; then
 		return 0
 	fi
 
@@ -1391,7 +1399,16 @@ boot(){
 		runtime_state_set "health_status" "starting"
 		runtime_state_set "health_detail" "boot_starting"
 		runtime_state_set "updated_at" "$(date +%s)"
-		start "$@"
+		# start_service does mihomo -t dry-run + firewall restart + dnsmasq restart
+		# (~20-30s on LXC). Doing this synchronously in boot() blocks rcS S99 stage
+		# and during that window sshd/uhttpd refuse connections (kex reset). Detach
+		# to background with a small settle delay so the rcS pipeline finishes and
+		# management plane stays responsive while clashoo brings the proxy up.
+		(
+			exec 1000>&- </dev/null >/dev/null 2>&1
+			sleep 5
+			/etc/init.d/clashoo start
+		) &
 	else
 		runtime_state_reset
 		runtime_state_set "health_status" "stopped"
@@ -1568,7 +1585,7 @@ stop_service(){
 reload_service()
 {
 	if is_singbox_selected; then
-		if _core_running; then
+		if _singbox_running; then
 			resolve_effective_tp_modes
 			runtime_state_record_preflight "singbox"
 			prepare_singbox_runtime >/dev/null 2>&1
@@ -1584,5 +1601,13 @@ reload_service()
 		cp -f "$CONFIG_YAML" "${CLASH_CONFIG}/config.yaml" 2>/dev/null
 		backend_apply_rules 2>/dev/null
 		runtime_run_health_check >/dev/null 2>&1
+	fi
+}
+
+status_service() {
+	if _selected_core_running; then
+		echo "running"
+	else
+		echo "inactive"
 	fi
 }

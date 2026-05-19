@@ -834,8 +834,12 @@ if not load_shunt_options then
 	o1.group = {}
 
 	o3 = s:option(Value, _n("outbound_iface"), translate("Outbound Interface"))
-	o3.default = "eth1"
 	o3:depends({ [_n("chain_proxy")] = "3" })
+	o3:value("", translate("All"))
+	local iface = api.get_network_devices()
+	for _, d in ipairs(iface) do
+		o3:value(d.name, d.label)
+	end
 
 	o2 = s:option(ListValue, _n("to_node"), translate("Landing Node"), translate("Only support a layer of proxy."))
 	o2:depends({ [_n("chain_proxy")] = "2", [_n("hysteria2_realms")] = false })

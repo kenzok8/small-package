@@ -60,6 +60,9 @@
   --cl-live-shell-bg: rgba(0, 0, 0, 0.02);
   --cl-live-card-bg: rgba(0, 0, 0, 0.03);
   --cl-live-border: rgba(0, 0, 0, 0.12);
+  --cl-chart-up: rgba(120, 130, 145, 0.55);
+  --cl-chart-down: rgba(120, 130, 145, 0.4);
+  --cl-chart-conn: rgba(120, 130, 145, 0.32);
 }
 
 @media (prefers-color-scheme: dark) {

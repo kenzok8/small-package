@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-clashoo
 PKG_VERSION:=1.23.14
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 PKG_MAINTAINER:=kenzok8
 
 include $(INCLUDE_DIR)/package.mk

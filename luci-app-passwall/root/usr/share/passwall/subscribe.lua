@@ -1883,7 +1883,7 @@ local function update_node(manual)
 		local list = v["list"]
 		local sub_cfg = v["sub_cfg"]
 		local domain_resolver, domain_resolver_dns, domain_resolver_dns_https, domain_strategy
-		local preproxy_node_group, to_node_group, chain_node_type = "", "", ""
+		local preproxy_node_group, to_node_group, outbound_iface_group, chain_node_type = "", "", "", ""
 		-- Subscription Group Chain Agent
 		local function valid_chain_node(node)
 			if not node then return "" end
@@ -1904,6 +1904,8 @@ local function update_node(manual)
 			domain_strategy = (sub_cfg.domain_strategy and map[sub_cfg.domain_strategy]) and sub_cfg.domain_strategy or nil
 			preproxy_node_group = (sub_cfg.chain_proxy == "1") and valid_chain_node(sub_cfg.preproxy_node) or ""
 			to_node_group = (sub_cfg.chain_proxy == "2") and valid_chain_node(sub_cfg.to_node) or ""
+			outbound_iface_group = (sub_cfg.chain_proxy == "3") and sub_cfg.outbound_iface or ""
+			chain_node_type = (outbound_iface_group ~= "") and "iface" or chain_node_type
 		end
 		for _, vv in ipairs(list) do
 			local cfgid = uci:section(appname, "nodes", api.gen_short_uuid())
@@ -1941,6 +1943,9 @@ local function update_node(manual)
 						elseif to_node_group ~= "" then
 							uci:set(appname, cfgid, "chain_proxy", "2")
 							uci:set(appname, cfgid, "to_node", to_node_group)
+						elseif outbound_iface_group ~= "" then
+							uci:set(appname, cfgid, "chain_proxy", "3")
+							uci:set(appname, cfgid, "outbound_iface", outbound_iface_group)
 						end
 					end		
 				end

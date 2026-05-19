@@ -1626,3 +1626,83 @@ function parse_realm_uri(uri)
 	end
 	return realm
 end
+
+function get_network_devices()
+	local _sysnet = "/sys/class/net/"
+	-- Map UCI interface names to their device names and vice versa
+	local _iface_to_dev = {}
+	local _dev_to_ifaces = {}
+	local _iface_proto = {}
+	uci:foreach("network", "interface", function(sec)
+		local name = sec[".name"]
+		if name ~= "loopback" then
+			_iface_proto[name] = sec.proto
+			if sec.device then
+				_iface_to_dev[name] = sec.device
+				_dev_to_ifaces[sec.device] = _dev_to_ifaces[sec.device] or {}
+				table.insert(_dev_to_ifaces[sec.device], name)
+			end
+		end
+	end)
+	-- Classify device type using sysfs attributes
+	local function classify_sysfs(dev)
+		if fs.stat(_sysnet .. dev .. "/bridge", "type") == "dir" then
+			return i18n.translate("Bridge")
+		elseif fs.stat(_sysnet .. dev .. "/wireless", "type") == "dir" then
+			return i18n.translate("Wireless Adapter")
+		elseif dev:match("^tun") or dev:match("^tap") or dev:match("^wg") or dev:match("^ppp") then
+			return i18n.translate("Tunnel Interface")
+		else
+			return i18n.translate("Ethernet Adapter")
+		end
+	end
+	-- Classify offline UCI interfaces by config hints
+	local function classify_uci(dev_name, proto)
+		if dev_name and dev_name:match("^br%-") then
+			return i18n.translate("Bridge")
+		elseif proto == "wireguard" or proto == "pppoe" or proto == "pptp" or proto == "l2tp" then
+			return i18n.translate("Tunnel Interface")
+		else
+			return i18n.translate("Interface")
+		end
+	end
+
+	local _seen = {}
+	local _devices = {}
+	-- Active kernel devices from /sys/class/net/
+	-- Skip bridge member ports (/master) and DSA master devices (/dsa)
+	local _iter = fs.dir(_sysnet)
+	if _iter then
+		for dev in _iter do
+			if dev ~= "lo"
+				and not dev:match("^veth")
+				and not dev:match("^ifb")
+				and not dev:match("^gre")
+				and not dev:match("^sit")
+				and not dev:match("^ip6tnl")
+				and not dev:match("^erspan")
+				and not fs.stat(_sysnet .. dev .. "/master", "type")
+				and not fs.stat(_sysnet .. dev .. "/dsa", "type")
+			then
+				local dtype = classify_sysfs(dev)
+				local label = dtype .. ': "' .. dev .. '"'
+				if _dev_to_ifaces[dev] then
+					label = label .. " (" .. table.concat(_dev_to_ifaces[dev], ", ") .. ")"
+				end
+				_devices[#_devices + 1] = { name = dev, label = label, sort = dtype .. ":" .. dev }
+				_seen[dev] = true
+			end
+		end
+	end
+	-- UCI interfaces whose device does not currently exist
+	for iface, dev in pairs(_iface_to_dev) do
+		if not _seen[dev] then
+			local dtype = classify_uci(dev, _iface_proto[iface])
+			local label = dtype .. ': "' .. iface .. '"'
+			_devices[#_devices + 1] = { name = iface, label = label, sort = "zzz:" .. iface }
+			_seen[dev] = true
+		end
+	end
+	table.sort(_devices, function(a, b) return a.sort < b.sort end)
+	return _devices
+end
