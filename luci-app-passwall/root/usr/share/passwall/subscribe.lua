@@ -1396,6 +1396,8 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.tls_CertByName = params.vcn
 		local insecure = params.allowinsecure or params.insecure
 		result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+		result.hysteria2_up_mbps = params.upmbps
+		result.hysteria2_down_mbps = params.downmbps
 		result.hysteria2_hop = params.mport
 		if params["obfs-password"] or params["obfs_password"] then
 			result.hysteria2_obfs_type = "salamander"

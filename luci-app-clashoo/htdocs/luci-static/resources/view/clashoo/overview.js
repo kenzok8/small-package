@@ -110,6 +110,32 @@ var CSS = [
   '@keyframes cl-spin{to{transform:rotate(360deg)}}',
   '@keyframes cl-shimmer{0%{background-position:220% 0}100%{background-position:-220% 0}}',
   '.cl-op-msg{font-size:12px;font-weight:500;opacity:.85;animation:cl-fadein .25s ease}',
+  /* 简易节点面板（模态浮层）*/
+  '.cl-pm-open{font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid rgba(var(--primary-rgb,0,122,255),.45);background:rgba(var(--primary-rgb,0,122,255),.1);color:inherit;cursor:pointer;white-space:nowrap}',
+  '.cl-pm-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:2000}',
+  '.cl-pm-mask.cl-on{display:block}',
+  '.cl-pm{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(900px,calc(100vw - 28px));max-height:calc(100vh - 56px);overflow:auto;background:#fff;color:#2a3142;border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.28);z-index:2001;padding:0 22px 18px}',
+  '.cl-pm.cl-on{display:block}',
+  'body.dark .cl-pm,html[data-theme="dark"] .cl-pm,html[data-bs-theme="dark"] .cl-pm{background:#1f242c;color:#e4ecf8}',
+  '.cl-pm-head{position:sticky;top:0;background:inherit;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 0 11px;border-bottom:1px solid rgba(128,128,128,.16)}',
+  '.cl-pm-ttl{font-size:16px;font-weight:600;display:flex;align-items:baseline;gap:10px}',
+  '.cl-pm-st{font-size:12px;font-weight:500}',
+  '.cl-pm-acts{display:flex;gap:8px}',
+  '.cl-pm-close{font-size:12px;padding:5px 14px;border-radius:7px;border:1px solid rgba(128,128,128,.3);background:transparent;color:inherit;cursor:pointer}',
+  '.cl-pm-body{display:flex;flex-direction:column;gap:9px;padding-top:12px}',
+  '.cl-pm-empty{font-size:13px;opacity:.6;padding:34px 4px;text-align:center}',
+  '.cl-pm-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}',
+  '.cl-pm-name{flex:0 0 170px;text-align:right;font-size:13px;font-weight:500;display:flex;justify-content:flex-end;align-items:center;gap:6px;word-break:break-all}',
+  '.cl-pm-badge{font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;background:rgba(128,128,128,.16);opacity:.72;flex:none}',
+  '.cl-pm-sel{flex:1;min-width:190px;font-size:13px;padding:7px 10px;border:1px solid rgba(128,128,128,.3);border-radius:8px;background:transparent;color:inherit}',
+  '.cl-pm-now{flex:1;min-width:190px;font-size:13px;padding:7px 10px;border:1px dashed rgba(128,128,128,.32);border-radius:8px;opacity:.78}',
+  '.cl-pm-test{font-size:12px;padding:6px 13px;border-radius:7px;border:1px solid rgba(128,128,128,.3);background:transparent;color:inherit;cursor:pointer;flex:none}',
+  '.cl-pm-test[disabled]{opacity:.5;cursor:default}',
+  '.cl-dly{font-size:11px;font-weight:600}',
+  '.cl-dly-g{color:#2e9b51}',
+  '.cl-dly-y{color:#c98a16}',
+  '.cl-dly-r{color:#d65c4a}',
+  '.cl-dly-x{opacity:.4;font-weight:400}',
   '@media(max-width:900px){.cl-cards{grid-template-columns:repeat(2,1fr)}.cl-controls{grid-template-columns:repeat(2,1fr)}}',
   '@media(max-width:640px){.cl-live-grid{grid-template-columns:1fr}}',
   '@media(max-width:480px){.cl-cards{grid-template-columns:1fr}.cl-controls{grid-template-columns:1fr}.cl-live-grid{grid-template-columns:1fr}}'
@@ -117,6 +143,9 @@ var CSS = [
 
 var callDownloadSubs = rpc.declare({ object: 'luci.clashoo', method: 'download_subs', expect: {} });
 var callOverview = rpc.declare({ object: 'luci.clashoo', method: 'overview', expect: {} });
+var callProxiesList = rpc.declare({ object: 'luci.clashoo', method: 'proxies_list', expect: {} });
+var callProxySelect = rpc.declare({ object: 'luci.clashoo', method: 'proxy_select', params: ['group', 'name'], expect: {} });
+var callProxyDelay  = rpc.declare({ object: 'luci.clashoo', method: 'proxy_delay',  params: ['group'], expect: {} });
 function fastResolve(promise, timeoutMs, fallback) {
   var t = new Promise(function (resolve) {
     setTimeout(function () { resolve(fallback); }, timeoutMs);
@@ -314,7 +343,8 @@ return view.extend({
       E('div', { 'class': 'cl-traffic-wrap', id: 'cl-traffic-wrap' }, [
         this._card('流量监控', this._renderRealtimePanel(), 'cl-card-traffic')
       ]),
-      E('div', { 'class': 'cl-controls', id: 'cl-controls' }, this._controls(st, cfgData))
+      E('div', { 'class': 'cl-controls', id: 'cl-controls' }, this._controls(st, cfgData)),
+      this._renderProxyModal()
     ]);
     this._rootEl = root;
     this._applyThemeClass();
@@ -685,7 +715,11 @@ return view.extend({
     var statusEl = E('span', { id: 'cl-status-val' }, statusChildren);
 
     return [
-      this._card('运行状态', statusEl, 'cl-card-status', this._renderServiceSwitch(st)),
+      this._card('运行状态', statusEl, 'cl-card-status',
+        E('div', { style: 'display:flex;gap:6px;align-items:center' }, [
+          this._proxyTriggerBtn(),
+          this._renderServiceSwitch(st)
+        ])),
       this._card('内核切换',
         E('div', { id: 'cl-core-switch-inline-wrap' }, [
           this._renderCoreSwitch(st)
@@ -829,6 +863,198 @@ return view.extend({
   _toInt: function (v) {
     var n = parseInt(v, 10);
     return isFinite(n) && n > 0 ? n : 0;
+  },
+
+  /* ── 简易节点面板（模态浮层）── */
+  _delayBadge: function (ms) {
+    ms = parseInt(ms, 10) || 0;
+    if (ms <= 0) return E('span', { 'class': 'cl-dly cl-dly-x' }, '—');
+    var cls = ms < 100 ? 'cl-dly-g' : (ms < 300 ? 'cl-dly-y' : 'cl-dly-r');
+    return E('span', { 'class': 'cl-dly ' + cls }, ms + 'ms');
+  },
+
+  _pgTypeLabel: function (t) {
+    var m = { 'Selector': '选择器', 'URLTest': '自动测速', 'Fallback': '故障转移',
+              'LoadBalance': '负载均衡', 'Relay': '链式代理' };
+    return m[t] || t;
+  },
+
+  _proxyTriggerBtn: function () {
+    var self = this;
+    var btn = E('button', { 'class': 'cl-pm-open' }, '节点面板');
+    btn.addEventListener('click', function () { self._openProxyModal(); });
+    return btn;
+  },
+
+  _setPmStatus: function (text, tone) {
+    var el = this._pmStatusEl;
+    if (!el) return;
+    el.textContent = text || '';
+    el.style.color = tone === 'ok' ? '#2e9b51' : (tone === 'err' ? '#d65c4a' : '');
+  },
+
+  _renderProxyModal: function () {
+    var self = this;
+    var statusEl = E('span', { 'class': 'cl-pm-st' }, '');
+    var body = E('div', { 'class': 'cl-pm-body', id: 'cl-pm-body' }, []);
+    this._pmStatusEl = statusEl;
+    this._pmBodyEl = body;
+
+    var refreshBtn = E('button', { 'class': 'cl-pm-close' }, '刷新');
+    refreshBtn.addEventListener('click', function () { self._loadProxies(); });
+    var closeBtn = E('button', { 'class': 'cl-pm-close' }, '关闭');
+    closeBtn.addEventListener('click', function () { self._closeProxyModal(); });
+
+    var modal = E('div', { 'class': 'cl-pm', id: 'cl-pm' }, [
+      E('div', { 'class': 'cl-pm-head' }, [
+        E('div', { 'class': 'cl-pm-ttl' }, [E('span', {}, '节点选择'), statusEl]),
+        E('div', { 'class': 'cl-pm-acts' }, [refreshBtn, closeBtn])
+      ]),
+      body
+    ]);
+    modal.addEventListener('click', function (ev) { ev.stopPropagation(); });
+
+    var mask = E('div', { 'class': 'cl-pm-mask', id: 'cl-pm-mask' }, [modal]);
+    mask.addEventListener('click', function () { self._closeProxyModal(); });
+    this._pmMask = mask;
+    this._pmModal = modal;
+    return mask;
+  },
+
+  _openProxyModal: function () {
+    var self = this;
+    if (!this._pmMask) return;
+    this._pmMask.classList.add('cl-on');
+    this._pmModal.classList.add('cl-on');
+    if (!this._pmEscBound) {
+      this._pmEscHandler = function (ev) { if (ev.key === 'Escape') self._closeProxyModal(); };
+      document.addEventListener('keydown', this._pmEscHandler);
+      this._pmEscBound = true;
+    }
+    this._loadProxies();
+  },
+
+  _closeProxyModal: function () {
+    if (this._pmMask) this._pmMask.classList.remove('cl-on');
+    if (this._pmModal) this._pmModal.classList.remove('cl-on');
+    if (this._pmEscBound) {
+      document.removeEventListener('keydown', this._pmEscHandler);
+      this._pmEscBound = false;
+    }
+  },
+
+  _loadProxies: function () {
+    var self = this;
+    var body = this._pmBodyEl;
+    if (!body) return;
+    var st = this._lastSt || {};
+    if (!st.running) {
+      body.innerHTML = '';
+      body.appendChild(E('div', { 'class': 'cl-pm-empty' }, '核心未运行，启动后可切换节点'));
+      this._setPmStatus('未运行', 'err');
+      return;
+    }
+    body.innerHTML = '';
+    body.appendChild(E('div', { 'class': 'cl-pm-empty' }, '加载中…'));
+    this._setPmStatus('加载中…', '');
+    callProxiesList().then(function (r) {
+      var b = self._pmBodyEl;
+      if (!b) return;
+      b.innerHTML = '';
+      if (!r || !r.ok) {
+        b.appendChild(E('div', { 'class': 'cl-pm-empty' }, '无法连接核心 API，请检查运行状态'));
+        self._setPmStatus('连接失败', 'err');
+        return;
+      }
+      var groups = r.groups || [];
+      if (!groups.length) {
+        b.appendChild(E('div', { 'class': 'cl-pm-empty' }, '当前配置没有可手动切换的节点组'));
+        self._setPmStatus('无节点组', '');
+        return;
+      }
+      groups.forEach(function (g) { b.appendChild(self._renderProxyGroup(g)); });
+      self._setPmStatus('就绪 · ' + groups.length + ' 组', 'ok');
+    }).catch(function () {
+      var b = self._pmBodyEl;
+      if (b) { b.innerHTML = ''; b.appendChild(E('div', { 'class': 'cl-pm-empty' }, '加载失败')); }
+      self._setPmStatus('加载失败', 'err');
+    });
+  },
+
+  _doProxySelect: function (group, name, onOk, onFail) {
+    callProxySelect(group, name).then(function (r) {
+      if (r && r.ok) { if (onOk) onOk(); }
+      else {
+        ui.addNotification(null, E('p', group + ' 切换失败: ' + ((r && r.message) || '')));
+        if (onFail) onFail();
+      }
+    }).catch(function () {
+      ui.addNotification(null, E('p', group + ' 切换异常'));
+      if (onFail) onFail();
+    });
+  },
+
+  _renderProxyGroup: function (g) {
+    var self = this;
+    var row = E('div', { 'class': 'cl-pm-row' }, [
+      E('div', { 'class': 'cl-pm-name' }, [
+        E('span', {}, g.name),
+        E('span', { 'class': 'cl-pm-badge' }, this._pgTypeLabel(g.type))
+      ])
+    ]);
+
+    if (g.selectable) {
+      var members = g.members || [];
+      var prevVal = g.now;
+      var sel = E('select', { 'class': 'cl-pm-sel' },
+        members.map(function (m) {
+          var label = m.name + (m.delay > 0 ? '   ·   ' + m.delay + 'ms' : '');
+          return E('option', { value: m.name, selected: (m.name === g.now) ? '' : null }, label);
+        })
+      );
+      sel.addEventListener('change', function () {
+        var picked = sel.value;
+        sel.disabled = true;
+        self._doProxySelect(g.name, picked,
+          function () { prevVal = picked; sel.disabled = false; },
+          function () { sel.value = prevVal; sel.disabled = false; });
+      });
+      row.appendChild(sel);
+    } else {
+      var dmap = {};
+      (g.members || []).forEach(function (m) { dmap[m.name] = m.delay || 0; });
+      row.appendChild(E('div', { 'class': 'cl-pm-now' }, [
+        E('span', {}, (g.now || '—') + '  '),
+        this._delayBadge(dmap[g.now])
+      ]));
+    }
+
+    var testBtn = E('button', { 'class': 'cl-pm-test' }, '测速');
+    testBtn.addEventListener('click', function () {
+      testBtn.disabled = true;
+      testBtn.textContent = '测速中';
+      callProxyDelay(g.name).then(function (r) {
+        testBtn.disabled = false;
+        testBtn.textContent = '测速';
+        if (!r || !r.ok) {
+          ui.addNotification(null, E('p', g.name + ' 测速失败: ' + ((r && r.message) || '')));
+          return;
+        }
+        var fresh = {
+          name: g.name, type: g.type, now: g.now, selectable: g.selectable,
+          members: (g.members || []).map(function (m) {
+            return { name: m.name, delay: (r.delays && r.delays[m.name]) || m.delay || 0 };
+          })
+        };
+        var newRow = self._renderProxyGroup(fresh);
+        if (row.parentNode) row.parentNode.replaceChild(newRow, row);
+      }).catch(function () {
+        testBtn.disabled = false;
+        testBtn.textContent = '测速';
+      });
+    });
+    row.appendChild(testBtn);
+    return row;
   },
 
   _fmtRate: function (bytes) {

@@ -899,6 +899,38 @@ try {
 }
 }
 
+/* 百分号编码：clash API 路径里的组名常含 emoji/中文/空格，curl 不会自动编码 */
+function uri_encode(s) {
+s = '' + (s || '');
+let out = '';
+for (let i = 0; i < length(s); i++) {
+	let ch = substr(s, i, 1);
+	let o = ord(ch);
+	if ((o >= 48 && o <= 57) || (o >= 65 && o <= 90) || (o >= 97 && o <= 122) ||
+		o == 45 || o == 46 || o == 95 || o == 126)
+		out += ch;
+	else
+		out += sprintf('%%%02X', o);
+}
+return out;
+}
+
+/* PUT + JSON body，用于切换 Selector 组（成功返回 204）；返回 HTTP 状态码字符串 */
+function clash_api_put_json(path, body) {
+let api = get_clash_api_auth();
+let auth = api.pass ? ('-H ' + shell_quote('Authorization: Bearer ' + api.pass) + ' ') : '';
+let url = 'http://127.0.0.1:' + api.port + path;
+let payload = sprintf('%J', body);
+let cmd = 'curl -s -o /dev/null -w "%{http_code}" -m 8 -X PUT ' + auth +
+	'-H ' + shell_quote('Content-Type: application/json') + ' ' +
+	'-d ' + shell_quote(payload) + ' ' + shell_quote(url) + ' 2>/dev/null';
+let p = popen(cmd);
+if (!p) return '000';
+let code = trim(p.read('all'));
+p.close();
+return code || '000';
+}
+
 function read_overview_stats_cache() {
 let raw = trim(readfile(OVERVIEW_STATS_CACHE_FILE) || '');
 if (!raw) return {};
@@ -2439,6 +2471,72 @@ let fail_detail = '';
 let p3 = popen("grep -aE '下载失败：.*(rc=|HTTP )|校验失败：' /tmp/clash_update.txt 2>/dev/null | tail -1");
 if (p3) { fail_detail = trim(p3.read('all')); p3.close(); }
 return { running, last_line, fail_detail };
+}
+},
+
+/* ── 简易代理面板：代理 clash API（前端不直接碰 9090 / secret）── */
+proxies_list: {
+call: function() {
+let data = clash_api_json('/proxies', 6);
+if (!data || !data.proxies)
+	return { ok: false, reason: 'unreachable' };
+let proxies = data.proxies;
+let switchable = { 'Selector': 1 };
+let readonly  = { 'URLTest': 1, 'Fallback': 1, 'LoadBalance': 1, 'Relay': 1 };
+let groups = [];
+for (let gname in proxies) {
+	let g = proxies[gname];
+	if (!g || type(g) != 'object') continue;
+	let gt = g.type || '';
+	if (!switchable[gt] && !readonly[gt]) continue;
+	if (gname == 'GLOBAL') continue;
+	let members = [];
+	for (let mn in (g.all || [])) {
+		let mp = proxies[mn];
+		let delay = 0;
+		if (mp && mp.history && length(mp.history) > 0)
+			delay = mp.history[length(mp.history) - 1].delay || 0;
+		push(members, { name: mn, delay: delay });
+	}
+	push(groups, {
+		name: gname,
+		type: gt,
+		now: g.now || '',
+		selectable: !!switchable[gt],
+		members: members
+	});
+}
+return { ok: true, groups: groups };
+}
+},
+
+proxy_select: {
+args: { group: 'group', name: 'name' },
+call: function(req) {
+let group = trim(req.args?.group || '');
+let name  = trim(req.args?.name  || '');
+if (!group || !name) return { ok: false, message: '参数缺失' };
+let code = clash_api_put_json('/proxies/' + uri_encode(group), { name: name });
+if (code == '204' || code == '200') return { ok: true };
+if (code == '400') return { ok: false, code: code, message: '该节点不可选（组类型不支持或节点无效）' };
+return { ok: false, code: code, message: '切换失败 (HTTP ' + code + ')' };
+}
+},
+
+proxy_delay: {
+args: { group: 'group' },
+call: function(req) {
+let group = trim(req.args?.group || '');
+if (!group) return { ok: false, message: '参数缺失' };
+let path = '/group/' + uri_encode(group) + '/delay'
+	+ '?url=' + uri_encode('https://www.gstatic.com/generate_204')
+	+ '&timeout=3000';
+let data = clash_api_json(path, 14);
+if (!data || type(data) != 'object')
+	return { ok: false, message: '测速失败或超时' };
+if (data.message)
+	return { ok: false, message: '' + data.message };
+return { ok: true, delays: data };
 }
 },
 

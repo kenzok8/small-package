@@ -839,7 +839,6 @@ return view.extend({
     /* ── 其他配置文件（上传 + 自定义/复写输出）── */
     var otherEditorTitle    = E('span', { 'class': 'cl-editor-hdr' }, '选择上方配置后可在此处编辑');
     var otherEd             = createConfigEditor('yaml');
-    otherEd.el.classList.add('cl-other-editor');
     var otherSaveBtn        = E('button', {
       'class': 'btn cbi-button-action cl-btn-sm',
       disabled: '',

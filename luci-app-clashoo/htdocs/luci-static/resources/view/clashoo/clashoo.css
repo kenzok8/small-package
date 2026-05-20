@@ -1569,8 +1569,9 @@ html[data-bs-theme="dark"] .cl-wrap .cl-live-num {
   padding: 8px 12px !important;
 }
 
+/* 大文件回退的原生 textarea 编辑器尺寸（CM 自带尺寸，不受此规则影响）*/
 .cl-wrap.cl-config-page #cl-panel-profiles .cl-json-editor,
-.cl-wrap.cl-config-page #cl-panel-subs .cl-other-editor {
+.cl-wrap.cl-config-page #cl-panel-subs .cl-json-editor {
   min-height: 420px !important;
   height: auto !important;
   padding: 10px 14px !important;
