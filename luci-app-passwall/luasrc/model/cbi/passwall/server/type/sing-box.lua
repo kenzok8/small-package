@@ -461,8 +461,11 @@ o:depends({ [_n("outbound_node")] = "_socks" })
 o:depends({ [_n("outbound_node")] = "_http" })
 
 o = s:option(Value, _n("outbound_node_iface"), translate("Interface"))
-o.default = "eth1"
 o:depends({ [_n("outbound_node")] = "_iface" })
+local netdev_list = api.get_network_devices()
+for _, d in ipairs(netdev_list) do
+	o:value(d.name, d.label)
+end
 
 o = s:option(TextValue, _n("custom_config"), translate("Custom Config"))
 o.rows = 10
