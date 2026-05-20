@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-clashoo
-PKG_VERSION:=1.23.14
-PKG_RELEASE:=4
+PKG_VERSION:=1.23.16
+PKG_RELEASE:=1
 PKG_MAINTAINER:=kenzok8
 
 include $(INCLUDE_DIR)/package.mk
@@ -33,14 +33,20 @@ define Package/luci-app-clashoo/install
 	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/tools
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/clashoo
+	$(INSTALL_DIR) $(1)/www/luci-static/resources/cm/mode
+	$(INSTALL_DIR) $(1)/www/luci-static/resources/cm/addon
 	$(INSTALL_DIR) $(1)/www/luci-static/clashoo
 
 	$(INSTALL_BIN) ./root/usr/share/rpcd/ucode/luci.clashoo $(1)/usr/share/rpcd/ucode/luci.clashoo
 	$(INSTALL_DATA) ./root/usr/share/rpcd/acl.d/luci-app-clashoo.json $(1)/usr/share/rpcd/acl.d/luci-app-clashoo.json
 	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-app-clashoo.json $(1)/usr/share/luci/menu.d/luci-app-clashoo.json
-	
+
 	$(INSTALL_DATA) ./htdocs/luci-static/resources/tools/clashoo.js $(1)/www/luci-static/resources/tools/clashoo.js
 	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/clashoo/* $(1)/www/luci-static/resources/view/clashoo/
+	$(INSTALL_DATA) ./htdocs/luci-static/resources/cm/codemirror.js $(1)/www/luci-static/resources/cm/codemirror.js
+	$(INSTALL_DATA) ./htdocs/luci-static/resources/cm/codemirror.css $(1)/www/luci-static/resources/cm/codemirror.css
+	$(INSTALL_DATA) ./htdocs/luci-static/resources/cm/mode/* $(1)/www/luci-static/resources/cm/mode/
+	$(INSTALL_DATA) ./htdocs/luci-static/resources/cm/addon/* $(1)/www/luci-static/resources/cm/addon/
 	$(INSTALL_DATA) ./htdocs/luci-static/clashoo/logo.png $(1)/www/luci-static/clashoo/logo.png
 endef
 

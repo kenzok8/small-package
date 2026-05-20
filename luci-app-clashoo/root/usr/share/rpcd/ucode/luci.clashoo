@@ -2414,9 +2414,31 @@ call: function() {
 
 download_subs: {
 call: function() {
-let rc = system('sh /usr/share/clashoo/runtime/clashoo.sh >/dev/null 2>&1');
-let msg = rc == 0 ? '订阅下载完成' : '订阅下载失败';
-return { success: rc == 0, code: rc, message: msg };
+// 已有下载任务在跑则不重复触发
+let pb = popen('ps w 2>/dev/null | grep "[c]lashoo/runtime/clashoo.sh" | head -1');
+let busy = ''; if (pb) { busy = trim(pb.read('all')); pb.close(); }
+if (busy != '') return { success: true, started: false, running: true };
+// 清空进度日志后后台执行，前端轮询 download_subs_status 取实时进度
+system("printf '' >/tmp/clash_update.txt 2>/dev/null");
+system('sh /usr/share/clashoo/runtime/clashoo.sh >/dev/null 2>&1 &');
+return { success: true, started: true };
+}
+},
+
+download_subs_status: {
+call: function() {
+let p = popen('ps w 2>/dev/null | grep "[c]lashoo/runtime/clashoo.sh" | head -1');
+let line = ''; if (p) { line = trim(p.read('all')); p.close(); }
+let running = (line && line != '');
+let last_line = '';
+let p2 = popen('tail -1 /tmp/clash_update.txt 2>/dev/null');
+if (p2) { last_line = trim(p2.read('all')); p2.close(); }
+// 收尾行「订阅下载失败：全部链接失败」太笼统，额外捞最近一条带真因的
+// 失败行（下载失败 rc=/HTTP、校验失败 格式不符），让前端能显示具体原因
+let fail_detail = '';
+let p3 = popen("grep -aE '下载失败：.*(rc=|HTTP )|校验失败：' /tmp/clash_update.txt 2>/dev/null | tail -1");
+if (p3) { fail_detail = trim(p3.read('all')); p3.close(); }
+return { running, last_line, fail_detail };
 }
 },
 

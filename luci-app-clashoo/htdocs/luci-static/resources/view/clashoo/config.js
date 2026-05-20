@@ -90,6 +90,21 @@ var CSS = [
   '.cl-wrap .cbi-section-remove.right{background:transparent!important}',
   '.cl-json-editor{width:100%;height:340px;font-family:monospace;font-size:11px;border:1px solid rgba(128,128,128,.25);border-radius:8px;padding:10px;box-sizing:border-box;resize:vertical;background:rgba(0,0,0,.02)}',
   '.cl-editor-hdr{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;font-weight:600}',
+  /* CodeMirror 编辑器外观（小文件套 CM，大文件回退 cl-json-editor textarea）*/
+  '.cl-cm-wrap{width:100%}',
+  '.cl-cm-host .CodeMirror{height:340px;border:1px solid rgba(128,128,128,.25);border-radius:8px;font-size:12px;font-family:monospace}',
+  '.cl-cm-host.cl-cm-dark .CodeMirror{background:#1e2228;color:#d4d4d4}',
+  '.cl-cm-host.cl-cm-dark .CodeMirror-gutters{background:#23282f;border-right:1px solid rgba(255,255,255,.08)}',
+  '.cl-cm-host.cl-cm-dark .CodeMirror-linenumber{color:#5c6370}',
+  '.cl-cm-host.cl-cm-dark .CodeMirror-cursor{border-left-color:#d4d4d4}',
+  '.cl-cm-host.cl-cm-dark .CodeMirror-selected{background:rgba(255,255,255,.12)}',
+  '.cl-cm-host.cl-cm-dark .CodeMirror-activeline-background{background:rgba(255,255,255,.04)}',
+  '.cl-cm-host.cl-cm-dark .cm-string{color:#ce9178}',
+  '.cl-cm-host.cl-cm-dark .cm-number{color:#b5cea8}',
+  '.cl-cm-host.cl-cm-dark .cm-keyword,.cl-cm-host.cl-cm-dark .cm-atom{color:#569cd6}',
+  '.cl-cm-host.cl-cm-dark .cm-property,.cl-cm-host.cl-cm-dark .cm-attribute{color:#9cdcfe}',
+  '.cl-cm-host.cl-cm-dark .cm-comment{color:#6a9955}',
+  '.cl-cm-host.cl-cm-dark .cm-meta,.cl-cm-host.cl-cm-dark .cm-def{color:#dcdcaa}',
   '.cl-active-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(var(--primary-rgb,0,122,255),.12);color:var(--cl-primary)}',
   '.cl-hint{font-size:11px;opacity:.45;margin-left:auto}',
   /* hide auto-generated section IDs in TypedSection */
@@ -118,6 +133,7 @@ var CSS = [
 var callListSubs      = rpc.declare({ object: 'luci.clashoo', method: 'list_subscriptions',  expect: {} });
 var callListDir       = rpc.declare({ object: 'luci.clashoo', method: 'list_dir_files',      params: ['type'], expect: {} });
 var callDownloadSubs  = rpc.declare({ object: 'luci.clashoo', method: 'download_subs',       expect: {} });
+var callDownloadSubsStatus = rpc.declare({ object: 'luci.clashoo', method: 'download_subs_status', expect: {} });
 var callUpdateSub     = rpc.declare({ object: 'luci.clashoo', method: 'update_sub',          params: ['name'], expect: {} });
 var callSetConfig     = rpc.declare({ object: 'luci.clashoo', method: 'set_config',          params: ['name'], expect: {} });
 var callDeleteCfg     = rpc.declare({ object: 'luci.clashoo', method: 'delete_config',       params: ['name', 'type'], expect: {} });
@@ -381,6 +397,97 @@ function makeSectionCollapsible(root, title, open) {
   }
 }
 
+/* ── CodeMirror 懒加载（资源打包在 luci-static/resources/cm/）── */
+var _cmLoad = null;
+function loadCodeMirror() {
+  if (_cmLoad) return _cmLoad;
+  _cmLoad = new Promise(function (resolve, reject) {
+    var base = L.resource('cm'), ver = '?v=20260520';
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = base + '/codemirror.css' + ver;
+    document.head.appendChild(link);
+    var inject = function (src) {
+      return new Promise(function (res, rej) {
+        var s = document.createElement('script');
+        s.src = src; s.async = false;
+        s.onload = res;
+        s.onerror = function () { rej(new Error('load failed: ' + src)); };
+        document.head.appendChild(s);
+      });
+    };
+    /* 核心先就位，mode/addon 注册在全局 CodeMirror 上 */
+    inject(base + '/codemirror.js' + ver)
+      .then(function () {
+        return Promise.all([
+          inject(base + '/mode/yaml.js' + ver),
+          inject(base + '/mode/javascript.js' + ver),
+          inject(base + '/addon/matchbrackets.js' + ver)
+        ]);
+      })
+      .then(function () {
+        if (window.CodeMirror) resolve();
+        else reject(new Error('CodeMirror not available'));
+      })
+      .catch(reject);
+  });
+  return _cmLoad;
+}
+
+/* 配置编辑器：小文件套 CodeMirror（语法高亮/行号/括号匹配），
+   超过 512KB 回退原生 textarea —— CM5 大文档全量 tokenize 会卡顿。
+   CM 加载失败同样回退，编辑功能不至于全废。 */
+function createConfigEditor(mode) {
+  var LARGE = 512 * 1024;
+  var ta = E('textarea', {
+    'class': 'cl-json-editor',
+    placeholder: '选择配置文件后内容将显示在这里…'
+  });
+  var host = E('div', { 'class': 'cl-cm-host', style: 'display:none' });
+  var wrap = E('div', { 'class': 'cl-cm-wrap' }, [host, ta]);
+  var cm = null, usingCM = false;
+
+  function showTextarea(content) {
+    usingCM = false;
+    ta.value = content;
+    ta.style.display = '';
+    host.style.display = 'none';
+  }
+  function showCM(content) {
+    usingCM = true;
+    cm.setValue(content);
+    ta.style.display = 'none';
+    host.style.display = '';
+    setTimeout(function () { cm.refresh(); }, 0);
+  }
+
+  return {
+    el: wrap,
+    textarea: ta,
+    setValue: function (content) {
+      content = (content == null) ? '' : String(content);
+      if (content.length > LARGE) { showTextarea(content); return; }
+      if (cm) { showCM(content); return; }
+      loadCodeMirror().then(function () {
+        if (!cm && window.CodeMirror) {
+          cm = window.CodeMirror(host, {
+            value: '', mode: mode,
+            lineNumbers: true, matchBrackets: true,
+            lineWrapping: true, tabSize: 2, indentUnit: 2,
+            viewportMargin: 60
+          });
+          if (getThemeClass().indexOf('dark') >= 0)
+            host.classList.add('cl-cm-dark');
+        }
+        if (cm) showCM(content); else showTextarea(content);
+      }).catch(function () { showTextarea(content); });
+    },
+    getValue: function () {
+      return (usingCM && cm) ? cm.getValue() : ta.value;
+    }
+  };
+}
+
 return view.extend({
   _tab: null,
   _sbTab: null,
@@ -506,9 +613,60 @@ return view.extend({
 
     var uaPicker = buildUaPicker(savedUa);
 
+    var dlStatusEl = E('div', { 'class': 'cl-update-status', style: 'margin-top:6px;font-size:12px;min-height:18px;line-height:1.4' });
+    var setDlStatus = function (text, tone) {
+      dlStatusEl.textContent = text || '';
+      dlStatusEl.style.color = tone === 'success' ? 'var(--success-color, #2e7d32)'
+                             : tone === 'error'   ? 'var(--error-color, #d32f2f)'
+                             : tone === 'progress'? 'var(--tip-color, #1976d2)'
+                             : '';
+    };
+    var stopDlPoll = function () {
+      if (self._subDlTimer) { clearInterval(self._subDlTimer); self._subDlTimer = null; }
+    };
+
     var dlBtn = E('button', {
       'class': 'btn cbi-button-action cl-btn-sm',
       click: function () {
+        if (!urlInput.value.trim()) {
+          setDlStatus('✗ 请先填写订阅链接', 'error');
+          setTimeout(function () { setDlStatus(''); }, 4000);
+          return;
+        }
+        stopDlPoll();
+        dlBtn.disabled = true;
+        dlBtn.textContent = '下载中…';
+        setDlStatus('⏳ 正在提交下载任务...', 'progress');
+
+        var pollCount = 0;
+        var pollDl = function () {
+          pollCount++;
+          callDownloadSubsStatus().then(function (st) {
+            st = st || {};
+            var raw  = st.last_line || '';
+            var line = clashoo.localizeLogLine(raw);
+            if (st.running) {
+              setDlStatus('⏳ ' + (line || '正在下载订阅...'), 'progress');
+              return;
+            }
+            /* 进程结束但日志还空 → 后台 sh 可能尚未就绪，前几次宽限不判定 */
+            if (!raw && pollCount < 4) return;
+            stopDlPoll();
+            /* 收尾行只有三种：「订阅下载完成：成功 N 个，失败 M 个」=成功（含"失败 0 个"
+               字样，不能按"失败"判负）；「订阅下载失败：全部链接失败」「未找到订阅链接」=失败 */
+            var ok = /下载完成|completed/i.test(raw);
+            /* 收尾行笼统，fail_detail 是带真因的失败行（rc=/HTTP/校验失败）：
+               全失败 → 直接显示真因；部分失败 → 收尾行后附上真因 */
+            var detail = st.fail_detail ? clashoo.localizeLogLine(st.fail_detail) : '';
+            var shown = ok ? (line + (detail ? ' · ' + detail : ''))
+                           : (detail || line || '订阅下载失败');
+            dlBtn.disabled = false;
+            dlBtn.textContent = '下载订阅';
+            setDlStatus((ok ? '✓ ' : '✗ ') + shown, ok ? 'success' : 'error');
+            setTimeout(function () { location.reload(); }, 1200);
+          }).catch(function () {});
+        };
+
         L.resolveDefault(uci.load('clashoo'), null)
           .then(function () {
             uci.set('clashoo', 'config', 'subscribe_url', urlInput.value);
@@ -520,8 +678,15 @@ return view.extend({
           .then(function () { return clearClashooDirty(); })
           .then(function () { return L.resolveDefault(callDownloadSubs(), {}); })
           .then(function (r) {
-            ui.addNotification(null, E('p', r.success ? '下载成功' : '下载失败: ' + (r.message || '')));
-            location.reload();
+            if (r && r.running) setDlStatus('⏳ 已有下载任务进行中...', 'progress');
+            self._subDlTimer = setInterval(pollDl, 2000);
+            setTimeout(pollDl, 800);
+          })
+          .catch(function (e) {
+            stopDlPoll();
+            dlBtn.disabled = false;
+            dlBtn.textContent = '下载订阅';
+            setDlStatus('✗ 启动失败: ' + (e && e.message || e), 'error');
           });
       }
     }, '下载订阅');
@@ -673,14 +838,15 @@ return view.extend({
 
     /* ── 其他配置文件（上传 + 自定义/复写输出）── */
     var otherEditorTitle    = E('span', { 'class': 'cl-editor-hdr' }, '选择上方配置后可在此处编辑');
-    var otherTextarea       = E('textarea', { 'class': 'cl-json-editor cl-other-editor', placeholder: '选择配置文件后内容将显示在这里…' });
+    var otherEd             = createConfigEditor('yaml');
+    otherEd.el.classList.add('cl-other-editor');
     var otherSaveBtn        = E('button', {
       'class': 'btn cbi-button-action cl-btn-sm',
       disabled: '',
       click: function () {
-        var meta = otherTextarea.dataset;
+        var meta = otherEd.textarea.dataset;
         if (!meta.name) return;
-        L.resolveDefault(callUploadConfig(meta.name, otherTextarea.value, meta.type), {}).then(function (r) {
+        L.resolveDefault(callUploadConfig(meta.name, otherEd.getValue(), meta.type), {}).then(function (r) {
           if (r && r.success) ui.addNotification(null, E('p', meta.name + ' 已保存'));
           else ui.addNotification(null, E('p', '保存失败: ' + ((r && (r.message || r.error)) || '')));
         });
@@ -689,7 +855,7 @@ return view.extend({
 
     var otherEditorBox = E('div', { 'class': 'cl-section cl-card cl-sb-editor' }, [
       otherEditorTitle,
-      otherTextarea,
+      otherEd.el,
       E('div', { 'class': 'cl-actions cl-sb-row-actions cl-sb-editor-actions' }, [
         otherSaveBtn,
         E('span', { 'class': 'cl-hint' }, '编辑后点击保存；切换配置后服务将自动重启')
@@ -699,11 +865,11 @@ return view.extend({
     function loadOtherEditor(name, type) {
       otherEditorTitle.textContent = '编辑：' + name;
       otherSaveBtn.removeAttribute('disabled');
-      otherTextarea.dataset.name = name;
-      otherTextarea.dataset.type = type;
-      otherTextarea.value = '加载中…';
+      otherEd.textarea.dataset.name = name;
+      otherEd.textarea.dataset.type = type;
+      otherEd.setValue('加载中…');
       L.resolveDefault(callReadOtherConfig(name, type), {}).then(function (r) {
-        otherTextarea.value = r.content || '';
+        otherEd.setValue(r.content || '');
       });
     }
 
@@ -751,7 +917,7 @@ return view.extend({
     var sections = [
       E('div', { 'class': 'cl-section cl-card' }, [
         E('h4', {}, '订阅链接'),
-        E('div', { 'class': 'cl-form-wrap cl-fixed-600' }, [urlInput, nameInput, uaPicker.wrap, dlBtn])
+        E('div', { 'class': 'cl-form-wrap cl-fixed-600' }, [urlInput, nameInput, uaPicker.wrap, dlBtn, dlStatusEl])
       ]),
       E('div', { 'class': 'cl-section cl-card' }, [
         E('h4', {}, '已下载订阅'),
@@ -1205,14 +1371,14 @@ return view.extend({
 
     /* ── JSON editor (initially hidden) ── */
     var editorTitle = E('span', { 'class': 'cl-editor-hdr' }, '选择上方配置后可在此处编辑');
-    var textarea    = E('textarea', { 'class': 'cl-json-editor', placeholder: '选择配置文件后内容将显示在这里…' });
+    var ed          = createConfigEditor({ name: 'javascript', json: true });
     var saveBtn = E('button', {
       'class': 'btn cbi-button-action cl-btn-sm',
       disabled: '',
       click: function () {
-        var name = textarea.dataset.name;
+        var name = ed.textarea.dataset.name;
         if (!name) return;
-        clashoo.saveSingboxProfile(name, formatJsonForEditor(textarea.value)).then(function (r) {
+        clashoo.saveSingboxProfile(name, formatJsonForEditor(ed.getValue())).then(function (r) {
           if (r.success) ui.addNotification(null, E('p', name + ' 已保存'));
           else ui.addNotification(null, E('p', '保存失败: ' + (r.message || r.error || '')));
         });
@@ -1223,14 +1389,14 @@ return view.extend({
       'class': 'btn cbi-button cl-btn-sm',
       disabled: '',
       click: function () {
-        var name = textarea.dataset.name;
+        var name = ed.textarea.dataset.name;
         if (!name) return;
         L.resolveDefault(callMigrateSbProfile(name), {}).then(function (r) {
           if (r && r.success) {
             var msg = r.changes && r.changes.length ? '已修复废弃字段: ' + r.changes.join(', ') : '配置已是最新，无需修复';
             ui.addNotification(null, E('p', msg));
             /* 重新加载编辑器内容 */
-            clashoo.getSingboxProfile(name).then(function (gr) { textarea.value = formatJsonForEditor(gr.content || ''); });
+            clashoo.getSingboxProfile(name).then(function (gr) { ed.setValue(formatJsonForEditor(gr.content || '')); });
           } else {
             ui.addNotification(null, E('p', '修复失败: ' + ((r && r.message) || '')));
           }
@@ -1240,7 +1406,7 @@ return view.extend({
 
     var editorBox = E('div', { 'class': 'cl-section cl-card cl-sb-card cl-sb-editor' }, [
       editorTitle,
-      textarea,
+      ed.el,
       E('div', { 'class': 'cl-actions cl-sb-row-actions cl-sb-editor-actions' }, [
         saveBtn,
         migrateBtn,
@@ -1252,10 +1418,10 @@ return view.extend({
       editorTitle.textContent = '编辑：' + name;
       saveBtn.removeAttribute('disabled');
       migrateBtn.removeAttribute('disabled');
-      textarea.dataset.name = name;
-      textarea.value = '加载中…';
+      ed.textarea.dataset.name = name;
+      ed.setValue('加载中…');
       clashoo.getSingboxProfile(name).then(function (r) {
-        textarea.value = formatJsonForEditor(r.content || '');
+        ed.setValue(formatJsonForEditor(r.content || ''));
       });
     }
 
@@ -1445,6 +1611,14 @@ return view.extend({
     });
 
     var fetchBtn, fetchApplyBtn;
+    var fetchStatusEl = E('div', { 'class': 'cl-update-status', style: 'margin-top:6px;font-size:12px;min-height:18px;line-height:1.4' });
+    var setFetchStatus = function (text, tone) {
+      fetchStatusEl.textContent = text || '';
+      fetchStatusEl.style.color = tone === 'success' ? 'var(--success-color, #2e7d32)'
+                                : tone === 'error'   ? 'var(--error-color, #d32f2f)'
+                                : tone === 'progress'? 'var(--tip-color, #1976d2)'
+                                : '';
+    };
     function setNativeBusy(busy) {
       [fetchBtn, fetchApplyBtn].forEach(function (b) {
         if (!b) return;
@@ -1459,31 +1633,37 @@ return view.extend({
     }
     function doFetchNative(setActive) {
       var url = nativeUrlInput.value.trim();
-      if (!url) { ui.addNotification(null, E('p', '请填写订阅链接')); return; }
+      if (!url) {
+        setFetchStatus('✗ 请填写订阅链接', 'error');
+        setTimeout(function () { setFetchStatus(''); }, 4000);
+        return;
+      }
       setNativeBusy(true);
+      setFetchStatus('⏳ 正在拉取配置...', 'progress');
       clashoo.fetchSingboxNative(url, nativeNameInput.value.trim())
         .then(function (r) {
           setNativeBusy(false);
           if (!r || typeof r.success === 'undefined') {
-            ui.addNotification(null, E('p', '拉取超时，请刷新页面查看结果'));
+            setFetchStatus('⏳ 拉取超时，正在刷新查看结果...', 'progress');
             setTimeout(function () { location.reload(); }, 1500);
             return;
           }
           if (!r.success) {
-            ui.addNotification(null, E('p', '拉取失败: ' + (r.message || '')));
+            setFetchStatus('✗ 拉取失败: ' + (r.message || ''), 'error');
             return;
           }
           if (setActive) {
+            setFetchStatus('⏳ ' + r.message + '，正在切换为活动配置...', 'progress');
             return clashoo.setSingboxProfile(r.name).then(function () {
-              ui.addNotification(null, E('p', r.message + '，已切换为活动配置'));
-              location.reload();
+              setFetchStatus('✓ ' + r.message + '，已切换为活动配置', 'success');
+              setTimeout(function () { location.reload(); }, 1200);
             });
           }
-          ui.addNotification(null, E('p', r.message));
-          location.reload();
+          setFetchStatus('✓ ' + r.message, 'success');
+          setTimeout(function () { location.reload(); }, 1200);
         }).catch(function (e) {
           setNativeBusy(false);
-          ui.addNotification(null, E('p', '拉取异常: ' + (e && e.message || e)));
+          setFetchStatus('✗ 拉取异常: ' + (e && e.message || e), 'error');
         });
     }
 
@@ -1495,7 +1675,8 @@ return view.extend({
         E('h4', {}, '节点订阅'),
         E('div', { 'class': 'cl-form-wrap cl-fixed-600 cl-sb-form' }, [
           nativeUrlInput, nativeNameInput,
-          E('div', { 'class': 'cl-actions cl-sb-top-actions' }, [fetchBtn, fetchApplyBtn])
+          E('div', { 'class': 'cl-actions cl-sb-top-actions' }, [fetchBtn, fetchApplyBtn]),
+          fetchStatusEl
         ]),
         E('p', { 'class': 'cl-sb-note' },
           '适用于机场直接提供 sing-box JSON 格式订阅、或已用外部工具转换好的链接。\n' +
