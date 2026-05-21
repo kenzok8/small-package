@@ -848,7 +848,9 @@ return view.extend({
 
   _renderAccessRefresh: function (ac) {
     var self = this;
-    var loading = !!(this._accessRefreshing || (ac && ac.updating));
+    /* 核心未运行时访问检查无意义，强制不转圈，避免守护进程周期探测一直转 */
+    var running = !!(this._lastSt && this._lastSt.running);
+    var loading = running && !!(this._accessRefreshing || (ac && ac.updating));
     return E('button', {
       type: 'button',
       id: 'cl-access-refresh',

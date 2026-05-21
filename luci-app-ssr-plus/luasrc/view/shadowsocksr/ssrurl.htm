@@ -534,7 +534,14 @@ function import_ssr_url(btn, urlname, sid) {
 					return false;
 				}
 
-				let finalSSBackend = preferredSSBackend();
+				let finalSSBackend;
+				const finalXray = (params.security && params.security !== "none") ||   // TLS/XTLS/Reality
+								  (params.type && ["ws", "httpupgrade", "xhttp", "splithttp", "grpc", "quic", "kcp", "http", "h2"].includes(params.type));
+				if (finalXray && has_xray === "true") {
+					finalSSBackend = "v2ray";
+				} else {
+					finalSSBackend = preferredSSBackend();
+				}
 				if (finalSSBackend === null) {
 					s.innerHTML = "<font style=\'color:red\'><%:No available core (Shadowsocks or Xray) to import this node.%></font>";
 					return false;

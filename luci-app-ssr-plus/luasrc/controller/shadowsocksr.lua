@@ -1423,11 +1423,12 @@ function act_reset()
 end
 
 function act_restart()
+	luci.sys.call("/etc/init.d/shadowsocksr restart > /dev/null 2>&1 &")
 	luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shadowsocksr"))
 end
 
 function act_delete()
-	luci.sys.call("/etc/init.d/shadowsocksr restart &")
+	luci.sys.call("/etc/init.d/shadowsocksr restart > /dev/null 2>&1 &")
 	luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers"))
 end
 

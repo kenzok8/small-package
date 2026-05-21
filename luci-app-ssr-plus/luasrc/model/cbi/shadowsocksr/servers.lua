@@ -719,9 +719,9 @@ node.render = function(self, section, scope)
 	Button.render(self, section, scope)
 end
 node.write = function(self, section)
-	uci:set("shadowsocksr", '@global[0]', 'global_server', section)
-	uci:save("shadowsocksr")
-	uci:commit("shadowsocksr")
+	local safe_section = luci.util.shellquote(section)
+	local cmd = string.format("uci set shadowsocksr.@global[0].global_server=%s && uci commit shadowsocksr", safe_section)
+	luci.sys.call(cmd)
 	luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shadowsocksr", "restart"))
 end
 
