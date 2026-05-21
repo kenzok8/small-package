@@ -209,7 +209,7 @@ return ip;
 
 function get_core_version(binary) {
 if (!binary) return '';
-let cmd = match(binary, /sing-box$/)
+let cmd = match(binary, /sing-box(-[a-z]+)?$/)
 ? (shell_quote(binary) + ' version 2>&1 | head -1')
 : (shell_quote(binary) + ' -v 2>&1 | head -1');
 let p = popen(cmd);

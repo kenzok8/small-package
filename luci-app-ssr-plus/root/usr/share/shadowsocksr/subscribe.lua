@@ -605,7 +605,7 @@ local function processData(szType, content, cfgid)
 		local remarks = base64Decode(params.remarks or '')
 
 		-- 拼接 alias
-		local alias = ""
+		local raw_alias = ""
 		if group ~= "" then
 			raw_alias = "[" .. group .. "] "
 		end
@@ -853,7 +853,7 @@ local function processData(szType, content, cfgid)
 			-- 检查 finalmaskg 参数是否存在且非空
 			if params.fm and params.fm ~= "" then
 				result.enable_finalmask = "1"
-				result.finalmaskg = base64Encode(params.fm)
+				result.finalmask = base64Encode(params.fm)
 			end
 			-- 检查 pqv 参数是否存在且非空
 			if params.pqv and params.pqv ~= "" then
@@ -1186,7 +1186,7 @@ local function processData(szType, content, cfgid)
 		-- 检查 finalmaskg 参数是否存在且非空
 		if params.fm and params.fm ~= "" then
 			result.enable_finalmask = "1"
-			result.finalmaskg = base64Encode(params.fm)
+			result.finalmask = base64Encode(params.fm)
 		end
 		-- 处理传输协议
 		result.transport = params.type or "raw" -- 默认传输协议为 raw
@@ -2177,13 +2177,15 @@ local execute = function()
 		return next_sid
 	end
 
+	local sid = ucic:add(name, uciType)
+	ucic:delete(name, sid)
 	for _, v in ipairs(nodeResult) do
 		for _, vv in ipairs(v) do
 			if not vv._ignore then
-				local sid = ucic:add(name, uciType)
+				--local sid = ucic:add(name, uciType)
 				if sid then
 					local suffix = sid:sub(-4)
-					ucic:delete(name, sid)
+					--ucic:delete(name, sid)
 					local id = get_next_sid()
 					local cfgid = string.format("cfg%02x%s", id, suffix)
 					local section = ucic:section(name, uciType, cfgid)
