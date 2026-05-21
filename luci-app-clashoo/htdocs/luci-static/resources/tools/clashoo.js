@@ -129,6 +129,10 @@ const callGetCpuArch    = rpc.declare({ object: 'luci.clashoo', method: 'get_cpu
 const callDownloadCore  = rpc.declare({ object: 'luci.clashoo', method: 'download_core',    expect: {} });
 const callUpdateGeoip      = rpc.declare({ object: 'luci.clashoo', method: 'update_geoip',      expect: {} });
 const callGetGeoipVersion  = rpc.declare({ object: 'luci.clashoo', method: 'get_geoip_version', expect: {} });
+const callComponentStatus    = rpc.declare({ object: 'luci.clashoo', method: 'component_status',     expect: {} });
+const callComponentUpdate    = rpc.declare({ object: 'luci.clashoo', method: 'component_update',     params: ['component', 'variant'], expect: {} });
+const callComponentUpdateLog = rpc.declare({ object: 'luci.clashoo', method: 'component_update_log', expect: {} });
+const callComponentCheckUpdates = rpc.declare({ object: 'luci.clashoo', method: 'component_check_updates', expect: {} });
 const callUpdateChinaIp = rpc.declare({ object: 'luci.clashoo', method: 'update_china_ip',  expect: {} });
 const callGetLogStatus  = rpc.declare({ object: 'luci.clashoo', method: 'get_log_status',   expect: {} });
 const callAccessCheck       = rpc.declare({ object: 'luci.clashoo', method: 'access_check',       expect: {} });
@@ -211,6 +215,10 @@ return baseclass.extend({
     downloadCore: function (dcore, arch) { return L.resolveDefault(callDownloadCore({ dcore: dcore, arch: arch }), {}); },
     updateGeoip:      function () { return L.resolveDefault(callUpdateGeoip(),     {}); },
     getGeoipVersion:  function () { return L.resolveDefault(callGetGeoipVersion(), { version: '' }); },
+    componentStatus:    function () { return L.resolveDefault(callComponentStatus(),    { running: false, components: [] }); },
+    componentUpdate:    function (component, variant) { return L.resolveDefault(callComponentUpdate(component, variant || ''), { success: false }); },
+    componentUpdateLog: function () { return L.resolveDefault(callComponentUpdateLog(), { running: false, content: '' }); },
+    componentCheckUpdates: function () { return L.resolveDefault(callComponentCheckUpdates(), { ok: false, latest: {} }); },
     updateChinaIp: function () { return L.resolveDefault(callUpdateChinaIp(), {}); },
     getLogStatus: function () { return L.resolveDefault(callGetLogStatus(), {}); },
     accessCheck:        function () { return L.resolveDefault(callAccessCheck(),      {}); },

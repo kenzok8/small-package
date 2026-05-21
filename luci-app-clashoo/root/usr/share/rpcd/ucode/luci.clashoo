@@ -49,6 +49,11 @@ const ACCESS_DAEMON_PID_FILE = '/tmp/clashoo/access_check_daemon.pid';
 const ACCESS_CACHE_TTL = 30;
 const ACCESS_UPDATING_TTL = 60;
 const OVERVIEW_STATS_CACHE_FILE = '/tmp/clashoo_overview_stats_cache.json';
+const COMPONENT_UPDATE_SCRIPT = '/usr/share/clashoo/update/component_update.sh';
+const COMPONENT_UPDATE_RUNNER = '/tmp/clashoo_component_update_runner.sh';
+const COMPONENT_UPDATE_RUN_FILE = '/var/run/clashoo_component_update';
+const COMPONENT_UPDATE_LOG_FILE = '/tmp/clashoo_component_update.log';
+const COMPONENT_UPDATE_STATE_FILE = '/tmp/clashoo_component_update_state';
 
 function uci_get(pkg, sec, opt) {
 let c = cursor();
@@ -672,7 +677,216 @@ let p = popen("opkg status libc 2>/dev/null | grep Architecture | awk -F': ' '{p
 if (!p) return '';
 let arch = trim(p.read('all'));
 p.close();
+if (arch) return arch;
+p = popen("apk --print-arch 2>/dev/null");
+if (!p) return '';
+arch = trim(p.read('all'));
+p.close();
 return arch;
+}
+
+function shell_read(cmd) {
+let p = popen(cmd);
+if (!p) return '';
+let out = trim(p.read('all') || '');
+p.close();
+return out;
+}
+
+function pkg_version(pkg) {
+let q = shell_quote(pkg);
+return shell_read("if command -v opkg >/dev/null 2>&1; then opkg status " + q + " 2>/dev/null | awk -F': ' '/^Version:/{print $2; exit}'; elif command -v apk >/dev/null 2>&1; then apk list -I " + q + " 2>/dev/null | awk '{print $1; exit}' | sed -n 's/^" + pkg + "-//p'; fi");
+}
+
+function file_mtime_label(path) {
+let s = stat(path);
+if (!s) return '';
+let ts = shell_read('date -d @' + s.mtime + ' "+%Y-%m-%d %H:%M:%S" 2>/dev/null || date -r ' + shell_quote(path) + ' "+%Y-%m-%d %H:%M:%S" 2>/dev/null');
+return ts || ('' + s.mtime);
+}
+
+function read_component_state() {
+let state = {};
+if (!access(COMPONENT_UPDATE_STATE_FILE, 'r')) return state;
+let content = readfile(COMPONENT_UPDATE_STATE_FILE) || '';
+for (let line in split(content, '\n')) {
+let pos = index(line, '=');
+if (pos <= 0) continue;
+state[substr(line, 0, pos)] = trim(substr(line, pos + 1));
+}
+return state;
+}
+
+function component_log_tail(lines) {
+lines = lines || 80;
+return shell_read('tail -' + int(lines) + ' ' + shell_quote(COMPONENT_UPDATE_LOG_FILE) + ' 2>/dev/null');
+}
+
+function component_last_log() {
+return shell_read('tail -1 ' + shell_quote(COMPONENT_UPDATE_LOG_FILE) + ' 2>/dev/null');
+}
+
+// 从 `-v` / `version` 完整输出里抽短版本号：
+// mihomo/smart "Mihomo Meta <ver> linux ..." → <ver>；sing-box "sing-box version <ver>" → <ver>
+function core_short_version(binary) {
+let full = get_core_version(binary);
+if (!full) return '';
+let m = match(full, /Meta[ \t]+([^ \t]+)/);
+if (m) return m[1];
+m = match(full, /version[ \t]+([^ \t]+)/);
+if (m) return m[1];
+return full;
+}
+
+function component_installed_label(id) {
+if (id == 'clashoo') return pkg_version('clashoo') || '未安装';
+if (id == 'luci')    return pkg_version('luci-app-clashoo') || '未安装';
+if (id == 'mihomo') {
+let bin = find_binary_for_family('mihomo');
+return bin ? (core_short_version(bin) || '已安装') : '未安装';
+}
+if (id == 'smart') {
+let bin = find_smart_binary();
+return bin ? (core_short_version(bin) || '已安装') : '未安装';
+}
+if (id == 'singbox') {
+let bin = find_binary_for_family('singbox');
+return bin ? (core_short_version(bin) || '已安装') : '未安装';
+}
+if (id == 'lgbm')  return file_mtime_label('/etc/clashoo/Model.bin') || '未安装';
+if (id == 'china') return file_mtime_label('/usr/share/clashoo/nftables/geoip_cn.nft') || '未更新';
+if (id == 'geoip') return file_mtime_label('/etc/clashoo/Country.mmdb') || '未安装';
+return '';
+}
+
+function mihomo_alpha_label(ver) {
+ver = ver || '';
+if (!ver) return '';
+if (match(ver, /^alpha-/)) return ver;
+if (match(ver, /^[0-9a-fA-F]{7,}$/)) return 'alpha-' + ver;
+return ver;
+}
+
+function component_installed_versions(id) {
+let out = {};
+if (id == 'mihomo') {
+	let stable = read_first_line('/usr/share/clashoo/clash_meta_version');
+	if (!stable && access('/usr/bin/clash-meta', 'x')) stable = core_short_version('/usr/bin/clash-meta');
+	let alpha = read_first_line('/usr/share/clashoo/mihomo_version');
+	if (match(alpha, /^smart-/)) alpha = '';
+	if (!alpha && access('/usr/bin/mihomo', 'x')) alpha = core_short_version('/usr/bin/mihomo');
+	out.stable = stable || '';
+	out.alpha = mihomo_alpha_label(alpha);
+	return out;
+}
+if (id == 'singbox') {
+	let stable = read_first_line('/usr/share/clashoo/singbox_stable_version');
+	if (!stable && access('/usr/bin/sing-box-stable', 'x')) stable = core_short_version('/usr/bin/sing-box-stable');
+	let alpha = read_first_line('/usr/share/clashoo/singbox_alpha_version');
+	if (!alpha && access('/usr/bin/sing-box-alpha', 'x')) alpha = core_short_version('/usr/bin/sing-box-alpha');
+	out.stable = stable || '';
+	out.alpha = alpha || '';
+	return out;
+}
+return out;
+}
+
+const B2_FEED_BASE = 'https://kenzo111.s3.us-west-004.backblazeb2.com/openwrt-feed';
+
+// Prerelease-Alpha 资源清单里抽版本 —— mihomo alpha / smart 是滚动版，
+// 比的是「最新发布的 hash 跟已装的是否不同」，不是比大小（同 OpenClash）
+function alpha_asset_ver(html, arch, kind) {
+if (!html) return '';
+for (let line in split(html, '\n')) {
+	if (index(line, 'mihomo-linux-' + arch + '-') < 0) continue;
+	let m = (kind == 'smart')
+		? match(line, /-(alpha-smart-[0-9A-Za-z]{6,})\.gz/)
+		: match(line, /-(alpha-[0-9a-f]{7,})\.gz/);
+	if (m) return m[1];
+}
+return '';
+}
+
+// 并行抓取全部上游版本 —— 6+ 个 curl 串行会超 ubus 30s 上限，故全部
+// 后台并发，wait 后统一解析（总耗时 ≈ 最慢的单个请求）。
+// DISTRIB_RELEASE 可能是自定义串，不能当 SDK 版本；按包管理器试多个候选。
+function component_latest_versions() {
+let latest = {};
+let core_arch = uci_get('clashoo', 'config', 'download_core') || 'amd64';
+let pkg_arch = trim(shell_read("opkg print-architecture 2>/dev/null | awk '/^arch /{print $2}' | tail -1") || '');
+if (!pkg_arch) pkg_arch = trim(shell_read('apk --print-arch 2>/dev/null') || '');
+let is_apk = !!trim(shell_read('command -v apk 2>/dev/null') || '');
+let sdks = is_apk ? ['25.12', '24.10'] : ['24.10', '23.05', '22.03', '21.02'];
+
+let dir = trim(shell_read('mktemp -d 2>/dev/null') || '');
+if (!dir) return latest;
+
+let GH = 'https://github.com/';
+let cmd = '';
+cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'MetaCubeX/mihomo/releases/latest')  + ' >' + shell_quote(dir + '/ms') + ' 2>/dev/null &\n';
+cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'SagerNet/sing-box/releases/latest') + ' >' + shell_quote(dir + '/ss') + ' 2>/dev/null &\n';
+cmd += 'curl -fsSL -m 20 ' + shell_quote(GH + 'MetaCubeX/mihomo/releases/expanded_assets/Prerelease-Alpha') + ' >' + shell_quote(dir + '/ma') + ' 2>/dev/null &\n';
+cmd += 'curl -fsSL -m 20 ' + shell_quote(GH + 'vernesong/mihomo/releases/expanded_assets/Prerelease-Alpha') + ' >' + shell_quote(dir + '/sm') + ' 2>/dev/null &\n';
+cmd += 'curl -fsSL -m 12 ' + shell_quote(GH + 'SagerNet/sing-box/releases.atom') + ' >' + shell_quote(dir + '/sa') + ' 2>/dev/null &\n';
+if (pkg_arch)
+	for (let sdk in sdks)
+		cmd += 'curl -fsSL -m 8 ' + shell_quote(B2_FEED_BASE + '/' + sdk + '/' + pkg_arch + '/manifest.txt') + ' >' + shell_quote(dir + '/b_' + sdk) + ' 2>/dev/null &\n';
+cmd += 'wait\n';
+let pp = popen(cmd);
+if (pp) { pp.read('all'); pp.close(); }
+
+let m;
+// 稳定版 tag —— releases/latest 302 重定向
+m = match(readfile(dir + '/ms') || '', /\/tag\/([^\/?#\s]+)/); if (m) latest.mihomo_stable  = m[1];
+m = match(readfile(dir + '/ss') || '', /\/tag\/([^\/?#\s]+)/); if (m) latest.singbox_stable = m[1];
+// sing-box alpha —— atom feed 第一个 entry
+m = match(readfile(dir + '/sa') || '', /\/releases\/tag\/([^"?#]+)/); if (m) latest.singbox_alpha = m[1];
+// mihomo alpha / smart —— Prerelease-Alpha 资源清单的 hash
+let v;
+v = alpha_asset_ver(readfile(dir + '/ma') || '', core_arch, 'alpha'); if (v) latest.mihomo_alpha = v;
+v = alpha_asset_ver(readfile(dir + '/sm') || '', core_arch, 'smart'); if (v) latest.smart = v;
+// clashoo / luci —— B2 manifest，按 SDK 候选顺序取第一个命中
+if (pkg_arch)
+for (let sdk in sdks) {
+	let txt = readfile(dir + '/b_' + sdk);
+	if (!txt) continue;
+	let hit = false;
+	for (let line in split(txt, '\n')) {
+		let kv = match(trim(line), /^(core|luci)=(.+)$/);
+		if (!kv) continue;
+		let f = kv[2], mv;
+		if (kv[1] == 'core') {
+			mv = match(f, /^clashoo_(.+)_[^.]+\.ipk$/) || match(f, /^clashoo-(.+)\.apk$/);
+			if (mv) { latest.clashoo = mv[1]; hit = true; }
+		} else {
+			mv = match(f, /^luci-app-clashoo_(.+)_[^.]+\.ipk$/) || match(f, /^luci-app-clashoo-(.+)\.apk$/);
+			if (mv) latest.luci = mv[1];
+		}
+	}
+	if (hit) break;
+}
+
+let rp = popen('rm -rf ' + shell_quote(dir)); if (rp) rp.close();
+return latest;
+}
+
+function component_defs() {
+return [
+{ id: 'clashoo', name: 'Clashoo 核心', description: 'mihomo 运行时与脚本', kind: 'pkg' },
+{ id: 'luci',    name: '客户端',        description: 'LuCI 界面与中文语言包', kind: 'pkg' },
+{ id: 'mihomo',  name: 'mihomo 内核',   description: 'Clash Meta 核心', kind: 'core', variant: true },
+{ id: 'singbox', name: 'sing-box 内核', description: 'sing-box 核心', kind: 'core', variant: true },
+{ id: 'smart',   name: 'mihomo Smart',  description: 'vernesong Smart 核心', kind: 'core' },
+{ id: 'lgbm',    name: 'LightGBM 模型', description: 'Smart 策略模型文件', kind: 'data' },
+{ id: 'china',   name: '大陆白名单',    description: '大陆 IP 直连白名单', kind: 'data' },
+{ id: 'geoip',   name: 'GeoIP / GeoSite', description: 'GeoIP / GeoSite 数据', kind: 'data' }
+];
+}
+
+function valid_component_id(id) {
+for (let comp in component_defs())
+if (comp.id == id) return true;
+return false;
 }
 
 function config_dir_by_type(type) {
@@ -1814,6 +2028,97 @@ let core_log = ''; if (p) { core_log = trim(p.read('all')); p.close(); }
 let p2 = popen("tail -5 /tmp/geoip_update.txt 2>/dev/null");
 let geoip_log = ''; if (p2) { geoip_log = trim(p2.read('all')); p2.close(); }
 return { core_updating, geoip_updating, core_log, geoip_log };
+}
+},
+
+component_status: {
+call: function() {
+let running = !!access(COMPONENT_UPDATE_RUN_FILE, 'r');
+let state = read_component_state();
+let current = '';
+if (access(COMPONENT_UPDATE_RUN_FILE, 'r'))
+current = trim(readfile(COMPONENT_UPDATE_RUN_FILE) || '');
+if (!current) current = state.component || '';
+
+let comps = [];
+for (let def in component_defs()) {
+let status = 'idle';
+let message = '';
+if (running && current == def.id) {
+status = 'running';
+message = state.message || component_last_log();
+} else if (!running && state.component == def.id && state.status) {
+status = state.status;
+message = state.message || '';
+}
+push(comps, {
+id: def.id,
+name: def.name,
+description: def.description,
+kind: def.kind || '',
+variant: !!def.variant,
+installed_version: component_installed_label(def.id),
+installed_versions: def.variant ? component_installed_versions(def.id) : {},
+status,
+message
+});
+}
+return {
+running,
+current,
+components: comps,
+arch: {
+system: trim(shell_read('uname -m 2>/dev/null') || ''),
+download_core: uci_get('clashoo', 'config', 'download_core') || ''
+},
+last_log: component_last_log(),
+log: component_log_tail(40)
+};
+}
+},
+
+component_update: {
+args: { component: 'component', variant: 'variant' },
+call: function(req) {
+let component = req.args?.component || '';
+let variant = req.args?.variant || '';
+if (variant != 'stable' && variant != 'alpha') variant = '';
+if (!valid_component_id(component))
+return { success: false, error: 'invalid_component', message: '未知组件' };
+if (!access(COMPONENT_UPDATE_SCRIPT, 'x'))
+return { success: false, error: 'missing_script', message: '组件更新脚本不存在' };
+if (access(COMPONENT_UPDATE_RUN_FILE, 'r'))
+return { success: true, started: false, running: true, message: '已有组件更新任务运行中' };
+
+if (writefile(COMPONENT_UPDATE_RUN_FILE, component + '\n') === null)
+return { success: false, error: 'lock_failed', message: '无法创建组件更新锁' };
+system("printf '%s - 组件更新任务已提交: " + shell_quote(component) + "\\n' \"$(date '+%Y-%m-%d %H:%M:%S')\" >>" + shell_quote(COMPONENT_UPDATE_LOG_FILE));
+let cmd = 'cp ' + shell_quote(COMPONENT_UPDATE_SCRIPT) + ' ' + shell_quote(COMPONENT_UPDATE_RUNNER) +
+  ' && chmod +x ' + shell_quote(COMPONENT_UPDATE_RUNNER) +
+  ' && nohup sh ' + shell_quote(COMPONENT_UPDATE_RUNNER) + ' ' + shell_quote(component) +
+  (variant ? ' ' + shell_quote(variant) : '') + ' >/dev/null 2>&1 </dev/null &';
+let rc = system(cmd);
+if (rc != 0) unlink(COMPONENT_UPDATE_RUN_FILE);
+return { success: rc == 0, started: rc == 0, running: rc == 0 };
+}
+},
+
+// 点「检查更新」时调用：稳定版走 releases/latest 重定向，alpha/smart 走
+// Prerelease-Alpha 资源清单，clashoo/客户端走 B2 manifest —— 均不碰
+// GitHub API。返回按变体分键，前端按当前选的 stable/alpha 比对。
+component_check_updates: {
+call: function() {
+return { ok: true, latest: component_latest_versions() };
+}
+},
+
+component_update_log: {
+call: function() {
+return {
+running: !!access(COMPONENT_UPDATE_RUN_FILE, 'r'),
+content: component_log_tail(120),
+last_log: component_last_log()
+};
 }
 },
 

@@ -700,19 +700,6 @@ add_cron(){
 		[ -z "$(grep -w "/usr/share/clashoo/update/update_all.sh" "$CRON_FILE")" ] && echo "0 */$auto_update_time * * * sh /usr/share/clashoo/update/update_all.sh >/dev/null 2>&1 &" >> "$CRON_FILE"
 	fi
 	
-	auto_geoip=$(uci get clashoo.config.auto_update_geoip 2>/dev/null)
-	if [ "${auto_geoip:-0}" -eq 1 ]; then
-		geoip_hour=$(uci get clashoo.config.auto_update_geoip_time 2>/dev/null)
-		geoip_interval=$(uci get clashoo.config.geoip_update_interval 2>/dev/null)
-		[ -z "$geoip_hour" ] && geoip_hour=3
-		[ -z "$geoip_interval" ] && geoip_interval=7
-		echo "$geoip_hour" | grep -Eq '^[0-9]+$' || geoip_hour=3
-		[ "$geoip_hour" -lt 0 ] && geoip_hour=3
-		[ "$geoip_hour" -gt 23 ] && geoip_hour=3
-		echo "$geoip_interval" | grep -Eq '^[0-9]+$' || geoip_interval=7
-		[ "$geoip_interval" -lt 1 ] && geoip_interval=7
-		[ -z "$(grep -w "/usr/share/clashoo/rpc/rpc_async.sh update_geoip" "$CRON_FILE")" ] && echo "0 $geoip_hour */$geoip_interval * * sh /usr/share/clashoo/rpc/rpc_async.sh update_geoip >/dev/null 2>&1" >> "$CRON_FILE"
-	fi
 	lgbm_auto=$(uci get clashoo.config.smart_lgbm_auto_update 2>/dev/null)
 	if [ "${lgbm_auto:-0}" -eq 1 ]; then
 		lgbm_interval=$(uci get clashoo.config.smart_lgbm_update_interval 2>/dev/null)
