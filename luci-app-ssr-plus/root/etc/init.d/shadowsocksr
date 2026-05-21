@@ -985,6 +985,130 @@ start_dns() {
 	fi
 }
 
+# 生成 Xray 服务端配置
+# 生成 Xray 服务端配置
+generate_xray_config() {
+	local type="$1"
+	local port="$2"
+	local password="$3"
+	local security="$4"
+	local method="$5"
+	local network="$6"
+	local ws_path="$7"
+	local ws_host="$8"
+	local grpc_service="$9"
+	local alter_id="${10}"
+	local tcp_guise="${11}"
+	local tcp_guise_http_host="${12}"
+	local tcp_guise_http_path="${13}"
+	local config_file="${14}"
+	
+	local inbound_json=""
+	
+	case "$type" in
+		vmess)
+			inbound_json="{
+				\"protocol\": \"vmess\",
+				\"port\": $port,
+				\"settings\": {
+					\"clients\": [{\"id\": \"$password\", \"alterId\": $alter_id}]
+				},
+				\"streamSettings\": {
+					\"network\": \"$network\"
+				}
+			}"
+			;;
+		vless)
+			inbound_json="{
+				\"protocol\": \"vless\",
+				\"port\": $port,
+				\"settings\": {
+					\"clients\": [{\"id\": \"$password\"}],
+					\"decryption\": \"none\"
+				},
+				\"streamSettings\": {
+					\"network\": \"$network\"
+				}
+			}"
+			;;
+		trojan)
+			inbound_json="{
+				\"protocol\": \"trojan\",
+				\"port\": $port,
+				\"settings\": {
+					\"clients\": [{\"password\": \"$password\"}]
+				},
+				\"streamSettings\": {
+					\"network\": \"$network\"
+				}
+			}"
+			;;
+		shadowsocks)
+			inbound_json="{
+				\"protocol\": \"shadowsocks\",
+				\"port\": $port,
+				\"settings\": {
+					\"method\": \"$method\",
+					\"password\": \"$password\"
+				}
+			}"
+			;;
+		*)
+			return 1
+			;;
+	esac
+	
+	# 添加传输层细节
+	case "$network" in
+		ws)
+			local ws_json="{\"path\": \"$ws_path\"}"
+			[ -n "$ws_host" ] && ws_json="{\"path\": \"$ws_path\", \"headers\": {\"Host\": \"$ws_host\"}}"
+			inbound_json=$(echo "$inbound_json" | sed "s/\"streamSettings\": {/\"streamSettings\": {\"wsSettings\": $ws_json, /")
+			;;
+		grpc)
+			[ -n "$grpc_service" ] && inbound_json=$(echo "$inbound_json" | sed "s/\"streamSettings\": {/\"streamSettings\": {\"grpcSettings\": {\"serviceName\": \"$grpc_service\"}, /")
+			;;
+		tcp)
+			# TCP HTTP 伪装
+			if [ "$tcp_guise" = "http" ]; then
+				local tcp_json="{\"header\": {\"type\": \"http\""
+				
+				# 添加 HTTP Host
+				if [ -n "$tcp_guise_http_host" ]; then
+					# 将空格分隔的多个 host 转换为 JSON 数组格式
+					local host_list=$(echo "$tcp_guise_http_host" | sed 's/ /","/g')
+					tcp_json="$tcp_json, \"request\": {\"headers\": {\"Host\": [\"$host_list\"]}}"
+				fi
+				
+				# 添加 HTTP Path
+				if [ -n "$tcp_guise_http_path" ]; then
+					local path_list=$(echo "$tcp_guise_http_path" | sed 's/ /","/g')
+					tcp_json="$tcp_json, \"response\": {\"headers\": {\"Location\": [\"$path_list\"]}}"
+				fi
+				
+				tcp_json="$tcp_json}}"
+				inbound_json=$(echo "$inbound_json" | sed "s/\"streamSettings\": {/\"streamSettings\": {\"tcpSettings\": $tcp_json, /")
+			fi
+			;;
+	esac
+	
+	cat > "$config_file" << EOF
+{
+	"log": {
+		"loglevel": "warning"
+	},
+	"inbounds": [$inbound_json],
+	"outbounds": [
+		{
+			"protocol": "freedom",
+			"settings": {}
+		}
+	]
+}
+EOF
+	return 0
+}
+
 gen_service_file() { #1-server.type 2-cfgname 3-file_path
 	local fastopen
 	if [ $(uci_get_by_name $2 fast_open) == "1" ]; then
@@ -1874,6 +1998,59 @@ start_server() {
 			fi
 			ln_start_bin $(first_type microsocks) microsocks $listenip -p $(uci_get_by_name $1 server_port) -1 $auth_opts ssr-server$server_count
 			echolog "Server:Socks5 Server$server_count Started!"
+			;;
+		vmess|vless|trojan|shadowsocks)
+			# Xray 服务端支持
+			local port=$(uci_get_by_name "$1" server_port)
+			local uuid=$(uci_get_by_name "$1" uuid)
+			local trojan_pass=$(uci_get_by_name "$1" trojan_password)
+			local ss_pass=$(uci_get_by_name "$1" ss_password)
+			local security=$(uci_get_by_name "$1" security "auto")
+			local network=$(uci_get_by_name "$1" network "tcp")
+			local ws_path=$(uci_get_by_name "$1" ws_path "/")
+			local ws_host=$(uci_get_by_name "$1" ws_host "")
+			local grpc_service=$(uci_get_by_name "$1" grpc_service "")
+			local alter_id=$(uci_get_by_name "$1" alter_id "0")
+			local tcp_guise=$(uci_get_by_name "$1" tcp_guise "none")
+			local tcp_guise_http_host=$(uci_get_by_name "$1" tcp_guise_http_host "")
+			local tcp_guise_http_path=$(uci_get_by_name "$1" tcp_guise_http_path "")
+
+			# 确定密码/UUID
+			local password=""
+			local method=""
+			if [ "$type" = "vmess" ] || [ "$type" = "vless" ]; then
+				password="$uuid"
+			elif [ "$type" = "trojan" ]; then
+				password="$trojan_pass"
+			elif [ "$type" = "shadowsocks" ]; then
+				password="$ss_pass"
+				method="$security"
+				[ -z "$method" ] && method="chacha20-ietf-poly1305"
+			fi
+			
+			[ -z "$password" ] && {
+				echolog "Server: $type 服务端缺少密码/UUID，跳过启动"
+				return 1
+			}
+			
+			local config_file="$TMP_PATH/xray-server-$server_count.json"
+			
+			# 生成 Xray 配置
+			generate_xray_config "$type" "$port" "$password" "$security" "$method" "$network" "$ws_path" "$ws_host" "$grpc_service" "$alter_id" "$tcp_guise" "$tcp_guise_http_host" "$tcp_guise_http_path" "$config_file"
+			
+			if [ $? -ne 0 ]; then
+				echolog "Server: Xray $type 配置生成失败"
+				return 1
+			fi
+			
+			local xray_bin=$(first_type xray)
+			if [ -z "$xray_bin" ]; then
+				echolog "Server: xray-core 未安装，无法启动 $type 服务端"
+				return 1
+			fi
+			
+			ln_start_bin "$xray_bin" xray-server-$server_count run -c "$config_file"
+			echolog "Server: Xray $type 服务端 Server$server_count 已启动 (端口: $port)"
 			;;
 		esac
 		server_port=$(uci_get_by_name $1 server_port)

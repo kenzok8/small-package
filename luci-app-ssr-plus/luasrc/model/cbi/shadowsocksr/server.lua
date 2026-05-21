@@ -105,8 +105,13 @@ end
 o.rmempty = false
 
 o = sec:option(DummyValue, "type", translate("Server Type"))
-function o.cfgvalue(...)
-	return Value.cfgvalue(...) or "ss"
+function o.cfgvalue(self, section)
+    local val = Value.cfgvalue(self, section) or "ss"
+    if val == "vmess" then return "VMess (Xray)"
+    elseif val == "vless" then return "VLESS (Xray)"
+    elseif val == "trojan" then return "Trojan (Xray)"
+    elseif val == "shadowsocks" then return "Shadowsocks (Xray)"
+    else return val end
 end
 
 o = sec:option(DummyValue, "server_port", translate("Server Port"))

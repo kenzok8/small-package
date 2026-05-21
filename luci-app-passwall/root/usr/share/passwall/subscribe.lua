@@ -505,6 +505,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 	local sub_vmess_type = DEFAULT_VMESS_TYPE
 	local sub_vless_type = DEFAULT_VLESS_TYPE
 	local sub_hysteria2_type = DEFAULT_HYSTERIA2_TYPE
+	local sub_hy_up_mbps, sub_hy_down_mbps = 1000, 1000
 	if sub_cfg then
 		if sub_cfg.allowInsecure and sub_cfg.allowInsecure ~= "1" then
 			sub_allowinsecure = nil
@@ -529,6 +530,8 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		if hysteria2_type ~= "global" and core_has[hysteria2_type] then
 			sub_hysteria2_type = hysteria2_type
 		end
+		sub_hy_up_mbps = sub_cfg.hysteria_up_mbps
+		sub_hy_down_mbps = sub_cfg.hysteria_down_mbps
 	end
 	local result = {
 		timeout = 60,
@@ -1351,8 +1354,8 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		local insecure = params.allowinsecure or params.allowInsecure or params.insecure
 		result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
 		result.alpn = params.alpn
-		result.hysteria_up_mbps = params.upmbps
-		result.hysteria_down_mbps = params.downmbps
+		result.hysteria_up_mbps = params.upmbps or sub_hy_up_mbps
+		result.hysteria_down_mbps = params.downmbps or sub_hy_down_mbps
 		result.hysteria_hop = params.mport
 
 	elseif szType == 'hysteria2' or szType == 'hy2' then
@@ -1396,8 +1399,8 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.tls_CertByName = params.vcn
 		local insecure = params.allowinsecure or params.insecure
 		result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
-		result.hysteria2_up_mbps = params.upmbps
-		result.hysteria2_down_mbps = params.downmbps
+		result.hysteria2_up_mbps = params.upmbps or sub_hy_up_mbps
+		result.hysteria2_down_mbps = params.downmbps or sub_hy_down_mbps
 		result.hysteria2_hop = params.mport
 		if params["obfs-password"] or params["obfs_password"] then
 			result.hysteria2_obfs_type = "salamander"

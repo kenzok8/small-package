@@ -12,7 +12,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=quickfile-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://r2.cooluc.com/source
-PKG_HASH:=4ba999654345415299af82c96d53d07a030f149b3a72c7e99d8fc0498b51cebb
+PKG_HASH:=313bf1ecb74cc6dcfcf8b3809e3d43f10417f7723fd7b3a1313598e1cba389e3
 
 PKG_MAINTAINER:=sbwml <admin@cooluc.com>
 
