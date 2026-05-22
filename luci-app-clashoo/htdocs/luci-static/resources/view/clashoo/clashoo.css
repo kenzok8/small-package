@@ -461,9 +461,14 @@ html[data-darkmode="true"] .cl-wrap .cl-mode-tag {
   font-size: 13px !important;
 }
 
+/* 表单说明文字统一弱化：明显比标题与字段标签暗，拉开视觉层次 */
+.cl-wrap.cl-config-page .cbi-value-description,
 .cl-wrap.cl-config-page .cbi-section-descr,
-.cl-wrap.cl-config-page .cbi-value-helptext {
-  color: var(--cl-label-muted) !important;
+.cl-wrap.cl-config-page .cbi-value-helptext,
+.cl-wrap.cl-system-page .cbi-value-description,
+.cl-wrap.cl-system-page .cbi-section-descr,
+.cl-wrap.cl-system-page .cbi-value-helptext {
+  color: rgba(120, 130, 150, 0.9) !important;
   font-size: 12px !important;
 }
 
@@ -780,7 +785,8 @@ html[data-bs-theme="dark"] .cl-wrap .cl-active-badge {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: min(100%, 480px);
+  /* 322 = 输入框 210（与面板端口/面板 UI 对齐）+ 两个 48px 按钮 + 两段 8px 间距 */
+  width: min(100%, 322px);
 }
 
 .cl-wrap .cl-pass-wrap input[type="password"],
@@ -1547,11 +1553,7 @@ html[data-bs-theme="dark"] .cl-wrap .cl-live-num {
 }
 
 .cl-wrap.cl-config-page #cl-panel-proxy .cbi-value-title,
-.cl-wrap.cl-config-page #cl-panel-dns .cbi-value-title,
-.cl-wrap.cl-config-page #cl-panel-proxy .cbi-section-descr,
-.cl-wrap.cl-config-page #cl-panel-dns .cbi-section-descr,
-.cl-wrap.cl-config-page #cl-panel-proxy .cbi-value-helptext,
-.cl-wrap.cl-config-page #cl-panel-dns .cbi-value-helptext {
+.cl-wrap.cl-config-page #cl-panel-dns .cbi-value-title {
   color: var(--cl-label-muted) !important;
 }
 
@@ -1695,12 +1697,7 @@ html[data-bs-theme="dark"] .cl-wrap .cl-live-num {
 
 .cl-wrap.cl-system-page #cl-panel-kernel .cbi-value-title,
 .cl-wrap.cl-system-page #cl-panel-rules .cbi-value-title,
-.cl-wrap.cl-system-page #cl-panel-kernel .cl-component-sub,
-.cl-wrap.cl-system-page #cl-panel-kernel .cl-component-desc,
-.cl-wrap.cl-system-page #cl-panel-kernel .cbi-section-descr,
-.cl-wrap.cl-system-page #cl-panel-rules .cbi-section-descr,
-.cl-wrap.cl-system-page #cl-panel-kernel .cbi-value-helptext,
-.cl-wrap.cl-system-page #cl-panel-rules .cbi-value-helptext {
+.cl-wrap.cl-system-page #cl-panel-kernel .cl-component-desc {
   color: var(--cl-label-muted) !important;
 }
 
