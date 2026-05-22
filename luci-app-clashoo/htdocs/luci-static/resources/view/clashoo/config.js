@@ -1221,6 +1221,8 @@ return view.extend({
     o = s.option(form.ListValue,   'enhanced_mode',     '增强模式');
     o.value('fake-ip', 'Fake-IP'); o.value('redir-host', 'Redir-Host');
     o.default = 'fake-ip';
+    o.description = 'Fake-IP（默认）：解析快、分流准，大陆分流由内核完成。' +
+      'Redir-Host：大陆流量可在防火墙层直接绕过核心，DNS 体验略弱。一般保持默认即可。';
     o = s.option(form.Value,       'fake_ip_range',     'Fake-IP 网段');
     o.default = '198.18.0.1/16';
     o.placeholder = '198.18.0.1/16';

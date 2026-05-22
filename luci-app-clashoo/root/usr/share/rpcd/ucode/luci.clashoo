@@ -3870,6 +3870,168 @@ let msg = from_converter
   : '订阅转换失败，已生成基础模板（请手动添加代理）: ' + final_name;
 return { success: true, name: final_name, path, message: msg };
 }
+},
+
+/* 备份导出：把 UCI 配置 + 各类配置文件打包成一个 JSON 对象返回。
+   仅含纯文本，前端存成 clashoo-backup-*.json。内核/GeoIP 体积大且可重下，不备。 */
+backup_export: {
+call: function() {
+try {
+let BACKUP_DIR_MAP = {
+	'config/sub':     '/usr/share/clashoo/config/sub',
+	'config/upload':  '/usr/share/clashoo/config/upload',
+	'config/custom':  '/usr/share/clashoo/config/custom',
+	'config/singbox': SINGBOX_DIR,
+	'templates':      TEMPLATE_USER_DIR
+};
+let BACKUP_FIXED_MAP = {
+	'uci':                         '/etc/config/clashoo',
+	'meta/confit_list.conf':       LIST_FILE,
+	'meta/template_bindings.conf': TEMPLATE_BIND_FILE
+};
+let MAX_TOTAL = 480 * 1024;
+let files = {};
+let total = 0;
+let add_file = function(rel, path) {
+	if (!access(path, 'r')) return true;
+	let s = stat(path);
+	if (s && s.type != 'file') return true;
+	let content = readfile(path);
+	if (content === null) return true;
+	total += length(content);
+	if (total > MAX_TOTAL) return false;
+	files[rel] = content;
+	return true;
+};
+
+for (let rel in BACKUP_FIXED_MAP)
+	if (!add_file(rel, BACKUP_FIXED_MAP[rel]))
+		return { success: false, message: '备份内容过大（超过 480KB）' };
+
+for (let prefix in BACKUP_DIR_MAP) {
+	let d = BACKUP_DIR_MAP[prefix];
+	for (let f in (glob(d + '/*') || [])) {
+		let base = substr(f, length(d) + 1);
+		if (!add_file(prefix + '/' + base, f))
+			return { success: false, message: '备份内容过大（超过 480KB）' };
+	}
+}
+
+let host = '';
+let hp = popen('uname -n 2>/dev/null');
+if (hp) { host = trim(hp.read('all')); hp.close(); }
+
+return {
+	success: true,
+	manifest: {
+		marker:      'clashoo-backup-v1',
+		created_at:  now_epoch_sec(),
+		host:        host,
+		app_version: read_first_line('/usr/share/clashoo/luci_version')
+	},
+	files: files
+};
+} catch (e) {
+return { success: false, message: '导出失败: ' + e };
+}
+}
+},
+
+/* 备份导入：用备份快照覆盖当前配置。先全量校验路径白名单（拒绝目录遍历），
+   通过后才清空目标目录并重写，最后异步重启服务。 */
+backup_import: {
+args: { data: 'data' },
+call: function(req) {
+try {
+let raw = req.args?.data || '';
+if (!raw) return { success: false, message: '备份内容为空' };
+let obj = null;
+try { obj = json(raw); } catch (e) { obj = null; }
+if (type(obj) != 'object')
+	return { success: false, message: '备份文件格式错误，无法解析' };
+let manifest = obj.manifest;
+if (type(manifest) != 'object' || manifest.marker != 'clashoo-backup-v1')
+	return { success: false, message: '这不是有效的 clashoo 备份文件' };
+let files = obj.files;
+if (type(files) != 'object')
+	return { success: false, message: '备份文件缺少配置数据' };
+
+let BACKUP_DIR_MAP = {
+	'config/sub':     '/usr/share/clashoo/config/sub',
+	'config/upload':  '/usr/share/clashoo/config/upload',
+	'config/custom':  '/usr/share/clashoo/config/custom',
+	'config/singbox': SINGBOX_DIR,
+	'templates':      TEMPLATE_USER_DIR
+};
+let BACKUP_FIXED_MAP = {
+	'uci':                         '/etc/config/clashoo',
+	'meta/confit_list.conf':       LIST_FILE,
+	'meta/template_bindings.conf': TEMPLATE_BIND_FILE
+};
+
+let plan = [];
+for (let rel in files) {
+	let content = files[rel];
+	if (type(content) != 'string')
+		return { success: false, message: '备份文件含非法数据项: ' + rel };
+	if (BACKUP_FIXED_MAP[rel]) {
+		push(plan, { path: BACKUP_FIXED_MAP[rel], content: content });
+		continue;
+	}
+	let slash = rindex(rel, '/');
+	if (slash < 0)
+		return { success: false, message: '备份文件含未知数据项: ' + rel };
+	let prefix = substr(rel, 0, slash);
+	let fname  = substr(rel, slash + 1);
+	let dir = BACKUP_DIR_MAP[prefix];
+	if (!dir)
+		return { success: false, message: '备份文件含未知数据项: ' + rel };
+	if (!fname || safe_name(fname) != fname)
+		return { success: false, message: '备份文件含非法文件名: ' + rel };
+	push(plan, { path: dir + '/' + fname, content: content });
+}
+
+/* 校验全部通过后才动手：清空目录类目标，再按计划重写（快照覆盖语义） */
+for (let prefix in BACKUP_DIR_MAP) {
+	let d = BACKUP_DIR_MAP[prefix];
+	system('mkdir -p ' + shell_quote(d));
+	system('rm -f ' + shell_quote(d) + '/* >/dev/null 2>&1');
+}
+let written = 0;
+for (let item in plan) {
+	let p = item.path;
+	let ps = rindex(p, '/');
+	if (ps > 0) system('mkdir -p ' + shell_quote(substr(p, 0, ps)));
+	if (writefile(p, item.content) === null)
+		return { success: false, message: '写入失败: ' + p };
+	written++;
+}
+
+system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
+return { success: true, restored: written,
+         message: '已还原 ' + written + ' 个文件，正在重启服务' };
+} catch (e) {
+return { success: false, message: '导入失败: ' + e };
+}
+}
+},
+
+/* 还原默认：把出厂默认 UCI 覆盖回 /etc/config/clashoo，只重置设置，
+   不动订阅/配置文件。出厂副本由 clashoo 包装在非 conffile 路径，永远最新。 */
+backup_reset: {
+call: function() {
+try {
+let def = '/usr/share/clashoo/clashoo.default';
+if (!access(def, 'r'))
+	return { success: false, message: '出厂默认配置文件缺失，无法还原' };
+if (system('cp ' + shell_quote(def) + ' /etc/config/clashoo') != 0)
+	return { success: false, message: '写入默认配置失败' };
+system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
+return { success: true, message: '已还原出厂默认设置，正在重启服务' };
+} catch (e) {
+return { success: false, message: '还原失败: ' + e };
+}
+}
 }
 };
 

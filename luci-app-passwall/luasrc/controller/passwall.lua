@@ -301,7 +301,8 @@ function index_status()
 	local e = {}
 	local dns_shunt = uci:get(appname, "@global[0]", "dns_shunt") or "dnsmasq"
 	if dns_shunt == "smartdns" then
-		e.dns_mode_status = luci.sys.call("pidof smartdns >/dev/null") == 0
+		local port = api.get_cache_var("SMARTDNS_LOCAL_PORT") or 0
+		e.dns_mode_status = (port ~= 0) and luci.sys.call(string.format("netstat -apn | grep ':%s ' >/dev/null", port)) == 0 or false
 	elseif dns_shunt == "chinadns-ng" then
 		e.dns_mode_status = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '/tmp/etc/passwall/bin/' | grep 'default' | grep 'chinadns_ng' >/dev/null") == 0
 	else

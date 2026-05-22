@@ -1695,6 +1695,14 @@ html[data-bs-theme="dark"] .cl-wrap .cl-live-num {
   color: var(--cl-label-muted) !important;
 }
 
+/* 备份与还原：按钮行，自动换行以适配移动端 */
+.cl-wrap.cl-system-page #cl-panel-kernel .cl-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .cl-wrap.cl-system-page #cl-panel-kernel .cbi-value-field,
 .cl-wrap.cl-system-page #cl-panel-rules .cbi-value-field,
 .cl-wrap.cl-system-page #cl-panel-kernel .cl-control-wrap,

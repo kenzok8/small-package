@@ -36,6 +36,10 @@ var callHostHints = rpc.declare({
   expect: { '': {} }
 });
 
+var callBackupExport = rpc.declare({ object: 'luci.clashoo', method: 'backup_export', expect: {} });
+var callBackupImport = rpc.declare({ object: 'luci.clashoo', method: 'backup_import', params: ['data'], expect: {} });
+var callBackupReset  = rpc.declare({ object: 'luci.clashoo', method: 'backup_reset',  expect: {} });
+
 var CSS = [
   '.cl-wrap{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
   '.cl-tabs{display:flex;border-bottom:2px solid rgba(128,128,128,.15);margin-bottom:18px}',
@@ -299,6 +303,7 @@ return view.extend({
     var kernelPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'kernel' ? ' active' : ''), id: 'cl-panel-kernel' });
     panelEls['kernel'] = kernelPanel;
     this._buildComponentUpdatePanel(kernelPanel, cpuArch);
+    this._buildBackupPanel(kernelPanel);
     this._buildKernelPanel(kernelPanel, cpuArch);
 
     var rulesPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'rules' ? ' active' : ''), id: 'cl-panel-rules' });
@@ -387,6 +392,110 @@ return view.extend({
     ]));
 
     this._refreshComponentUpdatePanel(listEl, logEl, false);
+  },
+
+  /* 备份与还原：折腾内核/配置前的兜底。导出当前配置为 JSON 文件随时可导入还原；
+     还原默认配置则把 UCI 设置重置为出厂值（订阅/配置文件保留）。仅含配置，不含内核。 */
+  _buildBackupPanel: function (container) {
+    function stamp() {
+      var d = new Date();
+      function p(n) { return (n < 10 ? '0' : '') + n; }
+      return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
+             '-' + p(d.getHours()) + p(d.getMinutes());
+    }
+
+    var exportBtn = E('button', { 'class': 'btn cbi-button cbi-button-neutral' }, '导出备份');
+    exportBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      exportBtn.disabled = true;
+      var orig = exportBtn.textContent;
+      exportBtn.textContent = '导出中…';
+      var done = function () { exportBtn.disabled = false; exportBtn.textContent = orig; };
+      callBackupExport().then(function (r) {
+        done();
+        if (!r || !r.success) {
+          clashoo.toast('导出失败：' + ((r && r.message) || '未知错误'), { kind: 'err' });
+          return;
+        }
+        var text = JSON.stringify({ manifest: r.manifest, files: r.files || {} }, null, 2);
+        var url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+        var a = E('a', { href: url, download: 'clashoo-backup-' + stamp() + '.json' });
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        var n = 0; if (r.files) for (var k in r.files) n++;
+        clashoo.toast('备份已导出（' + n + ' 个文件）', { kind: 'ok' });
+      }).catch(function (e) {
+        done();
+        clashoo.toast('导出失败：' + (e.message || e), { kind: 'err' });
+      });
+    });
+
+    var fileInput = E('input', {
+      type: 'file', accept: '.json,application/json', style: 'display:none'
+    });
+    fileInput.addEventListener('change', function (ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      if (!confirm('导入将用备份覆盖当前的全部配置与设置，原有的订阅/配置文件会被替换。确定继续吗？')) {
+        fileInput.value = '';
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        callBackupImport(e.target.result).then(function (r) {
+          fileInput.value = '';
+          if (r && r.success)
+            clashoo.toast(r.message || '已还原备份，正在重启服务', { kind: 'ok' });
+          else
+            clashoo.toast('导入失败：' + ((r && r.message) || '未知错误'), { kind: 'err' });
+        }).catch(function (err) {
+          fileInput.value = '';
+          clashoo.toast('导入失败：' + (err.message || err), { kind: 'err' });
+        });
+      };
+      reader.readAsText(file);
+    });
+    var importBtn = E('button', { 'class': 'btn cbi-button cbi-button-neutral' }, '导入还原');
+    importBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      fileInput.click();
+    });
+
+    var resetBtn = E('button', { 'class': 'btn cbi-button cbi-button-negative' }, '还原默认配置');
+    resetBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      if (!confirm('将把 clashoo 的设置恢复为出厂默认值（订阅与配置文件保留）。确定继续吗？'))
+        return;
+      resetBtn.disabled = true;
+      var orig = resetBtn.textContent;
+      resetBtn.textContent = '还原中…';
+      var done = function () { resetBtn.disabled = false; resetBtn.textContent = orig; };
+      callBackupReset().then(function (r) {
+        done();
+        if (r && r.success)
+          clashoo.toast(r.message || '已还原出厂默认设置', { kind: 'ok' });
+        else
+          clashoo.toast('还原失败：' + ((r && r.message) || '未知错误'), { kind: 'err' });
+      }).catch(function (e) {
+        done();
+        clashoo.toast('还原失败：' + (e.message || e), { kind: 'err' });
+      });
+    });
+
+    container.appendChild(E('div', { 'class': 'cl-component-map' }, [
+      E('div', { 'class': 'cl-component-card' }, [
+        E('div', { 'class': 'cl-component-head' }, [
+          E('div', {}, [
+            E('h4', {}, '备份与还原'),
+            E('div', { 'class': 'cl-component-sub' },
+              '折腾内核或配置前先导出一份，改坏了能一键导入还原。仅含配置与设置，不含内核。')
+          ])
+        ]),
+        E('div', { 'class': 'cl-backup-actions' }, [exportBtn, importBtn, resetBtn, fileInput])
+      ])
+    ]));
   },
 
   _replaceChildren: function (node, children) {

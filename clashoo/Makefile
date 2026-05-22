@@ -5,7 +5,7 @@ PKG_SHORT_SHA:=72f133f
 PKG_COMMIT_DATE:=2026.05.21
 
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
@@ -74,6 +74,7 @@ define Package/clashoo/install
 
 	$(INSTALL_BIN) $(CURDIR)/files/etc/init.d/clashoo $(1)/etc/init.d/clashoo
 	$(INSTALL_CONF) $(CURDIR)/files/etc/config/clashoo $(1)/etc/config/clashoo
+	$(INSTALL_DATA) $(CURDIR)/files/etc/config/clashoo $(1)/usr/share/clashoo/clashoo.default
 	$(CP) $(CURDIR)/files/usr/share/clashoo/* $(1)/usr/share/clashoo/
 
 	$(RM) $(1)/usr/share/clashoo/dashboard
