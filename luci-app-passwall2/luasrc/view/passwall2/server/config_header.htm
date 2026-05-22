@@ -4,7 +4,7 @@ local api = self.api
 <script type="text/javascript">
 	//<![CDATA[
 	let node_id = "<%=self.section%>";
-	let node_config_url = '<%=api.url("node_config")%>/' + node_id;
+	let node_config_url = '<%=api.url("server_user")%>/' + node_id;
 
 	function waitForElement(selector, callback) {
 		const el = document.querySelector(selector);
@@ -39,7 +39,7 @@ local api = self.api
 	}
 	
 	function update_node(data) {
-		XHR.get('<%=api.url("update_node")%>', {
+		XHR.get('<%=api.url("server_user_update")%>', {
 			id: node_id,
 			data: JSON.stringify(data)
 		},

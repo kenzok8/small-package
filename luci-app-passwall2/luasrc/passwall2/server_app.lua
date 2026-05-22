@@ -120,7 +120,7 @@ local function start()
 			local config_file = CONFIG_PATH .. "/" .. id .. ".json"
 			local udp_forward = 1
 			local type = user.type or ""
-			if type == "SS" or type == "SSR" then
+			if type == "SSR" then
 				if user.custom == "1" and user.config_str then
 					config = jsonc.parse(api.base64Decode(user.config_str))
 				else

@@ -142,7 +142,7 @@ local function set_apply_on_parse(map)
 		local old = map.on_after_save
 		map.on_after_save = function(self)
 			if old then old(self) end
-			map:set("@global[0]", "timestamp", os.time())
+			--map:set("@global[0]", "timestamp", os.time())
 		end
 	end
 end

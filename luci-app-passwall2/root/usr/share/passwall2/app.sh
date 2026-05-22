@@ -14,7 +14,6 @@ UTIL_SS=$LUA_UTIL_PATH/util_shadowsocks.lua
 UTIL_XRAY=$LUA_UTIL_PATH/util_xray.lua
 UTIL_NAIVE=$LUA_UTIL_PATH/util_naiveproxy.lua
 UTIL_HYSTERIA2=$LUA_UTIL_PATH/util_hysteria2.lua
-UTIL_TUIC=$LUA_UTIL_PATH/util_tuic.lua
 SINGBOX_BIN=$(first_type $(config_t_get global_app sing_box_file) sing-box)
 XRAY_BIN=$(first_type $(config_t_get global_app xray_file) xray)
 
@@ -467,18 +466,6 @@ run_socks() {
 		lua $UTIL_SS gen_config "${_json_arg}" > $config_file
 		[ -z "$no_run" ] && ln_run ${QUEUE_RUN} "$(first_type ssr-local)" "ssr-local" $log_file -c "$config_file" -v -u
 	;;
-	ss)
-		json_add_string "local_addr" "${bind}"
-		json_add_string "local_port" "${socks_port}"
-		json_add_string "mode" "tcp_and_udp"
-		[ -z "$no_run" ] && {
-			local plugin_sh="${config_file%.json}_plugin.sh"
-			json_add_string "plugin_sh" "${plugin_sh}"
-		}
-		local _json_arg="$(json_dump)"
-		lua $UTIL_SS gen_config "${_json_arg}" > $config_file
-		[ -z "$no_run" ] && ln_run ${QUEUE_RUN} "$(first_type ss-local)" "ss-local" $log_file -c "$config_file" -v
-	;;
 	ss-rust)
 		json_add_string "local_socks_address" "${bind}"
 		json_add_string "local_socks_port" "${socks_port}"
@@ -508,13 +495,6 @@ run_socks() {
 		local _json_arg="$(json_dump)"
 		lua $UTIL_HYSTERIA2 gen_config "${_json_arg}" > $config_file
 		[ -z "$no_run" ] && ln_run ${QUEUE_RUN} "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
-	;;
-	tuic)
-		json_add_string "local_addr" "${bind}"
-		json_add_string "local_port" "${socks_port}"
-		local _json_arg="$(json_dump)"
-		lua $UTIL_TUIC gen_config "${_json_arg}" > $config_file
-		[ -z "$no_run" ] && ln_run ${QUEUE_RUN} "$(first_type tuic-client)" "tuic-client" $log_file -c "$config_file"
 	;;
 	esac
 

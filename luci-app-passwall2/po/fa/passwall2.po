@@ -564,9 +564,6 @@ msgstr "اصلی"
 msgid "Transport Plugin"
 msgstr "افزونه انتقال"
 
-msgid "Shadowsocks secondary encryption"
-msgstr "رمزنگاری ثانویه Shadowsocks"
-
 msgid "Obfs Type"
 msgstr "نوع مبهم‌سازی (Obfs)"
 
@@ -1365,18 +1362,6 @@ msgstr "زمانی استفاده می‌شود که لینک گره شامل ا
 msgid "%s Node Use Type"
 msgstr "نوع استفاده گره %s"
 
-msgid "Set the TUIC proxy server ip address"
-msgstr "تنظیم آدرس IP سرور پروکسی TUIC"
-
-msgid "TUIC User Password For Connect Remote Server"
-msgstr "رمز عبور کاربر TUIC برای اتصال به سرور راه دور"
-
-msgid "TUIC UserName For Local Socks"
-msgstr "نام کاربری TUIC برای Socks محلی"
-
-msgid "TUIC Password For Local Socks"
-msgstr "رمز عبور TUIC برای Socks محلی"
-
 msgid "UDP relay mode"
 msgstr "حالت بازپخش UDP"
 
@@ -1389,32 +1374,11 @@ msgstr "الگوریتم کنترل ازدحام"
 msgid "Heartbeat interval(second)"
 msgstr "بازه ضربان قلب (ثانیه)"
 
-msgid "Timeout for establishing a connection to server(second)"
-msgstr "مهلت زمانی برای برقراری اتصال به سرور (ثانیه)"
-
-msgid "Garbage collection interval(second)"
-msgstr "بازه جمع‌آوری زباله (ثانیه)"
-
-msgid "Garbage collection lifetime(second)"
-msgstr "طول عمر جمع‌آوری زباله (ثانیه)"
-
 msgid "Disable SNI"
 msgstr "غیرفعال کردن SNI"
 
 msgid "Enable 0-RTT QUIC handshake"
 msgstr "فعال‌سازی دست تکان دادن 0-RTT QUIC"
-
-msgid "TUIC send window"
-msgstr "پنجره ارسال TUIC"
-
-msgid "TUIC receive window"
-msgstr "پنجره دریافت TUIC"
-
-msgid "TUIC Maximum packet size the socks5 server can receive from external, in bytes"
-msgstr "حداکثر اندازه بسته TUIC که سرور socks5 می‌تواند از خارج دریافت کند، به بایت"
-
-msgid "Set if the listening socket should be dual-stack"
-msgstr "تنظیم کنید که سوکت شنونده دو پشته‌ای (dual-stack) باشد یا خیر"
 
 msgid "<br />none: default, no masquerade, data sent is packets with no characteristics.<br />srtp: disguised as an SRTP packet, it will be recognized as video call data (such as FaceTime).<br />utp: packets disguised as uTP will be recognized as bittorrent downloaded data.<br />wechat-video: packets disguised as WeChat video calls.<br />dtls: disguised as DTLS 1.2 packet.<br />wireguard: disguised as a WireGuard packet. (not really WireGuard protocol)<br />dns: Disguising traffic as DNS requests."
 msgstr "<br />none: پیش‌فرض، بدون استتار، داده‌های ارسالی بسته‌های بدون مشخصه هستند.<br />srtp: مبدل شده به بسته SRTP، به عنوان داده تماس تصویری (مانند FaceTime) شناخته می‌شود.<br />utp: بسته‌های مبدل شده به uTP به عنوان داده دانلود شده bittorrent شناخته می‌شوند.<br />wechat-video: بسته‌های مبدل شده به تماس‌های تصویری WeChat.<br />dtls: مبدل شده به بسته DTLS 1.2.<br />wireguard: مبدل شده به بسته WireGuard. (نه واقعاً پروتکل WireGuard)<br />dns: پنهان کردن ترافیک به عنوان درخواست‌های DNS."
@@ -2322,9 +2286,6 @@ msgstr "Xray از افزونه %s پشتیبانی نمی‌کند."
 
 msgid "Plugin options Incomplete."
 msgstr "گزینه‌های افزونه ناقص است."
-
-msgid "shadowsocks-libev unsupport 2022 encryption."
-msgstr "shadowsocks-libev از رمزنگاری 2022 پشتیبانی نمی‌کند."
 
 msgid "Please replace %s to support %s transmission method."
 msgstr "لطفا برای پشتیبانی از روش انتقال %s، %s را جایگزین کنید."

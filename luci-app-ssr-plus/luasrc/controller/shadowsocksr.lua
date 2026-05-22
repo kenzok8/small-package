@@ -647,6 +647,8 @@ function index()
 	entry({"admin", "services", "shadowsocksr", "ping"}, call("act_ping"))
 	entry({"admin", "services", "shadowsocksr", "save_order"}, call("save_order")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "delete_node"}, call("act_delete_node")).leaf = true
+	entry({"admin", "services", "shadowsocksr", "add_subscribe_item"}, call("add_subscribe_item")).leaf = true
+	entry({"admin", "services", "shadowsocksr", "delete_subscribe_item"}, call("delete_subscribe_item")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "toggle_subscribe_item_enabled"}, call("toggle_subscribe_item_enabled")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "reset"}, call("act_reset"))
 	entry({"admin", "services", "shadowsocksr", "restart"}, call("act_restart"))
@@ -665,7 +667,9 @@ end
 
 function subscribe()
 	nixio.fs.remove(SERVER_DETECT_CACHE)
-	local ret = luci.sys.call(": > /var/log/ssrplus.log && /usr/bin/lua /usr/share/shadowsocksr/subscribe.lua >>/var/log/ssrplus.log 2>&1")
+	local sid = luci.http.formvalue("sid") or ""
+	local subscribe_arg = sid ~= "" and (" " .. luci.util.shellquote(sid)) or ""
+	local ret = luci.sys.call(": > /var/log/ssrplus.log && /usr/bin/lua /usr/share/shadowsocksr/subscribe.lua" .. subscribe_arg .. " >>/var/log/ssrplus.log 2>&1")
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({ret = ret})
 end
@@ -775,8 +779,67 @@ function act_delete_node()
 		return
 	end
 
-	local com_cmd = luci.sys.call("uci -q commit shadowsocksr >/dev/null 2>&1")
-	if com_cmd ~= 0 then
+	local ret_cmd = luci.sys.call("uci -q commit shadowsocksr >/dev/null 2>&1")
+	if ret_cmd ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "commit failed" })
+		return
+	end
+
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({ ret = 1, sid = sid })
+end
+
+function add_subscribe_item()
+	local sid = luci.sys.exec("uci add shadowsocksr server_subscribe_item"):gsub("%s+", "")
+
+	if not sid or sid == "" then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "add failed" })
+		return
+	end
+
+	local alias = string.format("Subscribe %s", sid:sub(-4))
+
+	-- set enabled
+	local subscribe_enabled = luci.sys.call("uci -q set shadowsocksr." .. sid .. ".enabled=1")
+	if subscribe_enabled ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "set enabled failed" })
+		return
+	end
+
+	-- set alias
+	local subscribe_alias = luci.sys.call("uci -q set shadowsocksr." .. sid .. ".alias='" .. alias .. "'")
+	if subscribe_alias ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "set alias failed" })
+		return
+	end
+
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({ ret = 1, sid = sid, alias = alias, enabled = "1" })
+end
+
+function delete_subscribe_item()
+	local sid = trim(luci.http.formvalue("sid"))
+	if sid == "" then
+		luci.http.status(400, "Bad Request")
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "missing sid" })
+		return
+	end
+
+	local delete_subscribe_set = luci.sys.call("uci -q delete shadowsocksr." .. sid .. " 2>/dev/null")
+	if delete_subscribe_set ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "delete failed" })
+		return
+	end
+
+	-- commit
+	local delete_subscribe_cmd = luci.sys.call("uci -q commit shadowsocksr >/dev/null 2>&1")
+	if delete_subscribe_cmd ~= 0 then
 		luci.http.prepare_content("application/json")
 		luci.http.write_json({ ret = 0, error = "commit failed" })
 		return
@@ -788,21 +851,69 @@ end
 
 function toggle_subscribe_item_enabled()
 	local sid = trim(luci.http.formvalue("sid"))
-	local enabled = luci.http.formvalue("enabled") == "1" and "1" or "0"
+	local field = luci.http.formvalue("field")
+	local value = luci.http.formvalue("value")
 
-	if sid == "" or uci:get("shadowsocksr", sid) ~= "server_subscribe_item" then
+	-- 兼容旧调用方式（只传 enabled）
+	if not field then
+		field = "enabled"
+		value = luci.http.formvalue("enabled") == "1" and "1" or "0"
+	end
+
+	-- 参数校验
+	if sid == "" then
+		luci.http.status(400, "Bad Request")
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "missing sid" })
+		return
+	end
+
+	-- 检查 sid 对应的 section 类型
+	if uci:get("shadowsocksr", sid) ~= "server_subscribe_item" then
 		luci.http.status(400, "Bad Request")
 		luci.http.prepare_content("application/json")
 		luci.http.write_json({ ret = 0, error = "invalid_sid" })
 		return
 	end
 
-	uci:set("shadowsocksr", sid, "enabled", enabled)
-	uci:save("shadowsocksr")
-	uci:commit("shadowsocksr")
+	-- 白名单：只允许以下字段
+	local allowed_fields = { enabled = true, alias = true, url = true }
+	if not allowed_fields[field] then
+		luci.http.status(400, "Bad Request")
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "unsupported field" })
+		return
+	end
+
+	-- 处理字段值
+	if field == "enabled" then
+		value = (value == "1" or value == "true") and "1" or "0"
+	elseif field == "alias" or field == "url" then
+		value = value and trim(value) or ""
+	end
+
+	-- 转义 value 中的单引号（避免破坏 uci 命令）
+	local escaped_value = value:gsub("'", "'\\''")
+
+	-- 使用外部 uci 命令设置值
+	local set_cmd = string.format("uci -q set shadowsocksr.%s.%s='%s'", sid, field, escaped_value)
+	local set_ret = luci.sys.call(set_cmd .. " >/dev/null 2>&1")
+	if set_ret ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "uci set failed" })
+		return
+	end
+
+	-- 提交更改
+	local ret_cmd = luci.sys.call("uci -q commit shadowsocksr >/dev/null 2>&1")
+	if ret_cmd ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "commit failed" })
+		return
+	end
 
 	luci.http.prepare_content("application/json")
-	luci.http.write_json({ ret = 1, sid = sid, enabled = enabled })
+	luci.http.write_json({ ret = 1, sid = sid, field = field, value = value })
 end
 
 function component_status()
@@ -1340,6 +1451,10 @@ function act_ping()
 			ping = tonumber(e.ping) or 0,
 			time = os.time()
 		})
+	end
+
+	if e.ping then
+		e.ping = math.floor(e.ping + 0.5)
 	end
 
 	luci.http.prepare_content("application/json")

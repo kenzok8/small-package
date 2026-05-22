@@ -4,7 +4,7 @@ local api = self.api
 <script type="text/javascript">
 	//<![CDATA[
 	document.addEventListener("DOMContentLoaded", function () {
-		waitForElement('select[name*="<%=api.appname%>"][name*="type"]', function(el) {
+		waitForElement('select[name*="<%=self.config%>"][name*="type"]', function(el) {
 			let o_val = el.value;
 			el.addEventListener("change", () => {
 				el.blur();
@@ -22,7 +22,7 @@ local api = self.api
 				}
 			});
 		});
-		waitForElement('select[name*="<%=api.appname%>"][name*="protocol"]', function(el) {
+		waitForElement('select[name*="<%=self.config%>"][name*="protocol"]', function(el) {
 			let o_val = el.value;
 			el.addEventListener("change", () => {
 				el.blur();

@@ -15,7 +15,6 @@ end
 
 m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
 
-local has_ss = api.is_finded("ss-redir")
 local has_ss_rust = api.is_finded("sslocal")
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
@@ -26,10 +25,6 @@ local vmess_type = {}
 local vless_type = {}
 local hysteria2_type = {}
 local xray_version = api.get_app_version("xray")
-if has_ss then
-	local s = "shadowsocks-libev"
-	table.insert(ss_type, s)
-end
 if has_ss_rust then
 	local s = "shadowsocks-rust"
 	table.insert(ss_type, s)
@@ -223,6 +218,14 @@ if #hysteria2_type > 0 then
 	for key, value in pairs(hysteria2_type) do
 		o:value(value)
 	end
+
+	o = s:option(Value, "hysteria_up_mbps", "Hy/Hy2 " .. translate("Max upload Mbps"))
+	o.datatype = "uinteger"
+	o.default = "100"
+
+	o = s:option(Value, "hysteria_down_mbps", "Hy/Hy2 " .. translate("Max download Mbps"))
+	o.datatype = "uinteger"
+	o.default = "100"
 end
 
 o = s:option(Flag, "boot_update", translate("Update Once on Boot"), translate("Updates the subscription the first time runs automatically after each system boot."))
@@ -287,6 +290,7 @@ o = s:option(ListValue, "chain_proxy", translate("Chain Proxy"))
 o:value("", translate("Close(Not use)"))
 o:value("1", translate("Preproxy Node"))
 o:value("2", translate("Landing Node"))
+o:value("3", translate("Outbound Interface"))
 
 local descrStr = "Chained proxy works only with Xray or Sing-box nodes.<br>"
 descrStr = descrStr .. "You can only use manual or imported nodes as chained nodes."
@@ -303,6 +307,14 @@ o2:depends({ ["chain_proxy"] = "2" })
 o2.description = descrStr
 o2.template = appname .. "/cbi/nodes_listvalue"
 o2.group = {}
+
+o3 = s:option(Value, "outbound_iface", translate("Outbound Interface"))
+o3:depends({ ["chain_proxy"] = "3" })
+o3:value("", translate("All"))
+local iface = api.get_network_devices()
+for _, d in ipairs(iface) do
+	o3:value(d.name, d.label)
+end
 
 for k, v in pairs(nodes_table) do
 	if (v.type == "Xray" or v.type == "sing-box") and (not v.chain_proxy or v.chain_proxy == "") and v.add_mode ~= "2" then

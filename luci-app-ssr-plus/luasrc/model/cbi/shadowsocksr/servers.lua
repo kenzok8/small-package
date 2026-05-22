@@ -64,7 +64,7 @@ local function set_apply_on_parse(map)
 		local old = map.on_after_save
 		map.on_after_save = function(self)
 			if old then old(self) end
-			map:set("@global[0]", "timestamp", os.time())
+			-- map:set("@global[0]", "timestamp", os.time())
 		end
 	end
 end
@@ -552,8 +552,9 @@ s = m:section(TypedSection, "server_subscribe_item", translate("Subscribe URL"))
 s.anonymous = true
 s.addremove = true
 s.sortable = true
-s.template = "cbi/tblsection"
-s.template_addremove = "shadowsocksr/subscribe_actions_footer"
+s.template = "shadowsocksr/subscribe_actions_footer"
+--s.template = "cbi/tblsection"
+--s.template_addremove = "shadowsocksr/subscribe_actions_footer"
 s.description = translate("Manage multiple subscribe URLs, including Clash subscriptions. Only enabled entries are included when updating all subscriptions.")
 
 o = s:option(Flag, "enabled", translate("Enable"))

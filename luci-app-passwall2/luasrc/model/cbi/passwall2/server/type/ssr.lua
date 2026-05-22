@@ -1,12 +1,18 @@
 local m, s = ...
 
-local api = require "luci.passwall2.api"
-
 if not api.is_finded("ssr-server") then
 	return
 end
 
 local type_name = "SSR"
+
+-- [[ ShadowsocksR ]]
+
+s.fields["type"]:value(type_name, translate("ShadowsocksR"))
+
+if s.val["type"] and s.val["type"] ~= type_name then
+	return
+end
 
 local option_prefix = "ssr_"
 
@@ -32,10 +38,6 @@ local ssr_obfs_list = {
 	"plain", "http_simple", "http_post", "random_head", "tls_simple",
 	"tls1.0_session_auth", "tls1.2_ticket_auth"
 }
-
--- [[ ShadowsocksR ]]
-
-s.fields["type"]:value(type_name, translate("ShadowsocksR"))
 
 o = s:option(Flag, _n("custom"), translate("Use Custom Config"))
 

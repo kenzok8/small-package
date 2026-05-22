@@ -1,62 +1,295 @@
+<%-
+local rowcnt = 0
+
+local function rowstyle()
+	rowcnt = rowcnt + 1
+	if rowcnt % 2 == 0 then
+		return " cbi-rowstyle-1"
+	end
+	return " cbi-rowstyle-2"
+end
+
+local function width(o)
+	if o.width then
+		if type(o.width) == "number" then
+			return ' style="width:%dpx"' % o.width
+		end
+		return ' style="width:%s"' % o.width
+	end
+	return ""
+end
+-%>
+<script type="text/javascript">//<![CDATA[
+	window.ssrUpdateSubscribeItem = window.ssrUpdateSubscribeItem || function(btn) {
+		if (!btn) return false;
+
+		var sid = btn.getAttribute('data-sid') || '';
+		var title = btn.getAttribute('data-title') || '';
+		var original = btn.getAttribute('data-original-value') || btn.value || 'Update';
+
+		btn.disabled = true;
+		btn.value = '<%:Updating...%>';
+		window.ssrSubscribeRun = window.ssrSubscribeRun || function(_, done) {
+			if (done) done();
+		};
+		window.ssrSubscribeRun({
+			sid: sid,
+			title: title
+		}, function() {
+			btn.disabled = false;
+			btn.value = original;
+		});
+		return false;
+	};
+
+	function saveAllSubscribeItems(btn) {
+		// var btn = document.querySelector('#ssr-subscribe-toolbar .cbi-button-save');
+		if (!btn) return;
+
+		var originalText = btn.value;
+		btn.disabled = true;
+		btn.value = '<%:Saving...%>';
+
+		var fieldsMap = {};
+		var allInputs = document.querySelectorAll('[name^="cbid.shadowsocksr."]');
+		allInputs.forEach(function(input) {
+			var match = input.name.match(/^cbid\.shadowsocksr\.([^.]+)\.(url|alias|enabled)$/);
+			if (!match) return;
+
+			var sid = match[1];
+			var field = match[2];
+			if (!fieldsMap[sid]) fieldsMap[sid] = {};
+			if (field === 'enabled') {
+				fieldsMap[sid][field] = input.checked ? '1' : '0';
+			} else {
+				fieldsMap[sid][field] = input.value;
+			}
+		});
+
+		var promises = [];
+		for (var sid in fieldsMap) {
+			var fields = fieldsMap[sid];
+			for (var field in fields) {
+				var value = fields[field];
+				var promise = new Promise(function(resolve, reject) {
+					XHR.post(
+						'<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "toggle_subscribe_item_enabled")%>',
+						{ sid: sid, field: field, value: value },
+						function(x, rv) {
+							if (rv && Number(rv.ret) === 1) {
+								resolve();
+							} else {
+								reject(new Error('<%:Save failed:%> ' + sid + '.' + field + ': ' + (rv && rv.error ? rv.error : '<%:Unknown error%>')));
+							}
+						}
+					);
+				});
+				promises.push(promise);
+			}
+		}
+
+		if (promises.length === 0) {
+			btn.disabled = false;
+			btn.value = originalText;
+			alert('<%:No subscription items found%>');
+			return;
+		}
+
+		Promise.all(promises).then(function() {
+			btn.disabled = false;
+			btn.value = originalText;
+			alert('<%:All settings saved successfully.%>');
+		}).catch(function(err) {
+			btn.disabled = false;
+			btn.value = originalText;
+			alert('<%:Save failed:%>' + err.message);
+		});
+	}
+
+	function deleteSubscribeItem(btn) {
+		var sid = btn.getAttribute('data-sid');
+		if (!sid) return;
+		if (!confirm('<%:Are you sure you want to delete subscribe link: %s ?%>'.replace('%s', sid))) return;
+
+		btn.disabled = true;
+		XHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "delete_subscribe_item")%>',
+			{ sid: sid },
+			function(x, rv) {
+				btn.disabled = false;
+				if (rv && rv.ret === 1) {
+					var row = btn.closest('tr');
+					if (row) row.remove();
+					var table = document.querySelector('#cbi-shadowsocksr-server_subscribe_item .cbi-section-table');
+					if (table.querySelectorAll('.cbi-section-table-row:not(.cbi-section-table-titles)').length === 0) {
+						var placeholder = document.createElement('tr');
+						placeholder.className = 'tr cbi-section-table-row placeholder';
+						placeholder.innerHTML = '<td class="td" colspan="4"><em><%:This section contains no values yet%></em></td>';
+						table.appendChild(placeholder);
+					}
+				} else {
+					alert('<%:Delete failed:%> ' + (rv ? rv.error : '<%:Unknown error%>'));
+				}
+			}
+		);
+	}
+
+	function createEmptyRow(sid) {
+		var templateRow = document.querySelector('#cbi-shadowsocksr-server_subscribe_item .cbi-section-table-row:not(.cbi-section-table-titles):not(.placeholder)');
+		if (!templateRow) {
+			console.error('No template row found');
+			return null;
+		}
+
+		var newRow = templateRow.cloneNode(true);
+		newRow.id = 'cbi-shadowsocksr-server_subscribe_item-' + sid;
+
+		var inputs = newRow.querySelectorAll('input');
+		inputs.forEach(function(input) {
+			if (input.name) {
+				input.name = input.name.replace(/cbid\.shadowsocksr\.[^.]+\./, 'cbid.shadowsocksr.' + sid + '.');
+			}
+			if (input.id) {
+				input.id = input.id.replace(/cfg[^.]+/, sid);
+			}
+			if (input.type === 'checkbox') {
+				input.checked = false;
+				input.defaultChecked = false;
+			} else if (input.type === 'text' || input.type === 'url') {
+				input.value = '';
+				input.defaultValue = '';
+			}
+			input.disabled = false;
+		});
+
+		var delBtn = newRow.querySelector('.cbi-button-remove');
+		if (delBtn) {
+			delBtn.setAttribute('data-sid', sid);
+			delBtn.removeAttribute('onclick');
+			delBtn.onclick = function(e) { deleteSubscribeItem(this); return false; };
+		}
+		var updateBtn = newRow.querySelector('.cbi-button-apply');
+		if (updateBtn) {
+			updateBtn.setAttribute('data-sid', sid);
+		}
+		return newRow;
+	}
+
+	function addSubscribeItem() {
+		var btn = document.getElementById('ssr-add-btn');
+		if (!btn) return;
+
+		btn.disabled = true;
+		btn.value = '<%:Adding...%>';
+
+		XHR.post(
+			'<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "add_subscribe_item")%>',
+			{},
+			function(x, rv) {
+				btn.disabled = false;
+				btn.value = '<%:Add%>';
+				if (rv && rv.ret === 1 && rv.sid) {
+					var newRow = createEmptyRow(rv.sid);
+					if (newRow) {
+						var aliasInput = newRow.querySelector('input[name$=".alias"]');
+						if (aliasInput) {
+							aliasInput.value = rv.alias || '';
+							aliasInput.defaultValue = rv.alias || '';
+						}
+						var urlInput = newRow.querySelector('input[name$=".url"]');
+						if (urlInput) {
+							urlInput.value = rv.url || '';
+							urlInput.defaultValue = rv.url || '';
+						}
+						var enabledInput = newRow.querySelector('input[type="checkbox"]');
+						if (enabledInput) {
+							var checked = (rv.enabled === '1');
+							enabledInput.checked = checked;
+							enabledInput.defaultChecked = checked;
+						}
+						var table = document.querySelector('#cbi-shadowsocksr-server_subscribe_item .cbi-section-table');
+						var placeholder = table.querySelector('.placeholder');
+						if (placeholder) placeholder.remove();
+						table.appendChild(newRow);
+					}
+				} else {
+					alert('<%:Add failed:%> ' + (rv && rv.error ? rv.error : '<%:Unknown error%>'));
+				}
+			}
+		);
+	}
+
+//]]></script>
+<div class="cbi-section cbi-tblsection" id="cbi-<%=self.config%>-<%=self.sectiontype%>">
+	<% if self.title and #self.title > 0 then -%>
+		<h3><%=self.title%></h3>
+	<%- end %>
+	<%- if self.sortable then -%>
+		<input type="hidden" id="cbi.sts.<%=self.config%>.<%=self.sectiontype%>" name="cbi.sts.<%=self.config%>.<%=self.sectiontype%>" value="" />
+	<%- end -%>
+	<div class="cbi-section-descr"><%=self.description%></div>
+	<table class="table cbi-section-table">
+		<tr class="tr cbi-section-table-titles anonymous">
+			<% for _, node in ipairs(self.children) do if not node.optional and node.option ~= "_update" then -%>
+				<th class="th cbi-section-table-cell"<%=width(node) .. attr("data-widget", node.typename or "")%>><%=node.title%></th>
+			<% end end -%>
+			<th class="th cbi-section-table-cell cbi-section-actions" style="width:1%"><%:Actions%></th>
+		</tr>
+
+		<%
+			local isempty = true
+			for i, section in ipairs(self:cfgsections()) do
+				isempty = false
+				local colorclass = rowstyle()
+				local scope = {
+					valueheader = "cbi/cell_valueheader",
+					valuefooter = "cbi/cell_valuefooter"
+				}
+		-%>
+		<tr class="tr cbi-section-table-row<%=colorclass%>" id="cbi-<%=self.config%>-<%=section%>">
+			<%
+				for _, node in ipairs(self.children) do
+					if not node.optional and node.option ~= "_update" then
+						node:render(section, scope)
+					end
+				end
+				local alias = self.map:get(section, "alias") or string.format("Subscribe %s", section:sub(-4))
+				local update_title = "Subscribe: " .. tostring(alias)
+			-%>
+			<td class="td cbi-section-table-cell nowrap cbi-section-actions">
+				<div class="ssr-subscribe-actions">
+					<input class="btn cbi-button cbi-button-save" type="button" value="<%:Save%>" title="<%:Save%>" onclick="saveAllSubscribeItems(this)" />
+					<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>" data-sid="<%=section%>" onclick="deleteSubscribeItem(this); return false;" />
+					<input
+						type="button"
+						class="btn cbi-button cbi-button-apply"
+						value="<%:Update%>"
+						data-original-value="<%:Update%>"
+						<%=attr("data-sid", section) .. attr("data-title", update_title)%>
+						onclick="return window.ssrUpdateSubscribeItem(this)"
+					/>
+				</div>
+			</td>
+			</tr>
+		<%- end -%>
+
+		<%- if isempty then -%>
+		<tr class="tr cbi-section-table-row placeholder">
+			<td class="td" colspan="4"><em><%:This section contains no values yet%></em></td>
+		</tr>
+		<%- end -%>
+	</table>
+</div>
+
 <div class="cbi-section-create cbi-tblsection-create ssr-subscribe-toolbar" id="ssr-subscribe-toolbar">
-	<input
-		class="btn cbi-button cbi-button-add"
-		type="submit"
-		value="<%:Add%>"
-		name="cbi.cts.<%=self.config%>.<%=self.sectiontype%>.<%=section%>"
-		title="<%:Add%>"
-	/>
-
-	<input
-		class="btn cbi-button cbi-button-save ssr-subscribe-save-settings"
-		type="submit"
-		value="<%:Save%>"
-		title="<%:Save%>"
-	/>
-
+	<input class="btn cbi-button cbi-button-add" type="button" value="<%:Add%>" id="ssr-add-btn" title="<%:Add%>" />
+	<!-- <input class="btn cbi-button cbi-button-save" type="button" value="<%:Save%>" title="<%:Save%>" onclick="saveAllSubscribeItems(this)" /> -->
+	<!-- <input class="btn cbi-button cbi-button-save ssr-subscribe-save-settings" type="submit" value="<%:Save%>" title="<%:Save%>" name="cbi.apply" /> -->
 	<div class="ssr-subscribe-toolbar-slot ssr-subscribe-toolbar-slot-delete"></div>
 	<div class="ssr-subscribe-toolbar-slot ssr-subscribe-toolbar-slot-update"></div>
 </div>
 
 <script type="text/javascript">//<![CDATA[
 	(function() {
-		function bindSubscribeItemEnabledAutoSave() {
-			var root = document.getElementById('cbi-shadowsocksr-server_subscribe_item');
-			if (!root || root.getAttribute('data-enabled-autosave-bound') === '1') {
-				return;
-			}
-
-			root.addEventListener('change', function(ev) {
-				var target = ev.target;
-				if (!target || target.type !== 'checkbox' || !target.name) {
-					return;
-				}
-
-				var matched = target.name.match(/^cbid\.shadowsocksr\.([^.]+)\.enabled$/);
-				if (!matched) {
-					return;
-				}
-
-				var sid = matched[1];
-				var original = target.checked;
-				target.disabled = true;
-
-				XHR.post(
-					'<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "toggle_subscribe_item_enabled")%>',
-					{ sid: sid, enabled: original ? '1' : '0' },
-					function(x, rv) {
-						target.disabled = false;
-						if (!(rv && Number(rv.ret) === 1)) {
-							target.checked = !original;
-							alert('Failed to save subscription enable state.');
-						}
-					}
-				);
-			});
-
-			root.setAttribute('data-enabled-autosave-bound', '1');
-		}
-
 		function styleActionButton(btn, extraClass) {
 			if (!btn) return;
 			btn.classList.remove('cbi-button-apply', 'cbi-button-reset');
@@ -94,14 +327,26 @@
 			toolbar.setAttribute('data-ssr-subscribe-actions-ready', '1');
 		}
 
+		function bindAddButton() {
+			var addBtn = document.getElementById('ssr-add-btn');
+			if (addBtn && !addBtn.getAttribute('data-bound')) {
+				addBtn.addEventListener('click', addSubscribeItem);
+				addBtn.setAttribute('data-bound', '1');
+			}
+		}
+
 		if (document.readyState === 'loading') {
-			document.addEventListener('DOMContentLoaded', bindSubscribeItemEnabledAutoSave);
-			document.addEventListener('DOMContentLoaded', mountSubscribeActions);
-			window.addEventListener('load', bindSubscribeItemEnabledAutoSave);
-			window.addEventListener('load', mountSubscribeActions);
+			document.addEventListener('DOMContentLoaded', function() {
+				mountSubscribeActions();
+				bindAddButton();
+			});
+			window.addEventListener('load', function() {
+				mountSubscribeActions();
+				bindAddButton();
+			});
 		} else {
-			window.setTimeout(bindSubscribeItemEnabledAutoSave, 0);
 			window.setTimeout(mountSubscribeActions, 0);
+			window.setTimeout(bindAddButton, 0);
 		}
 	})();
 //]]></script>
@@ -114,7 +359,8 @@
 		width: 100%;
 	}
 
-	#ssr-subscribe-toolbar > .btn.cbi-button-add {
+	#ssr-subscribe-toolbar > .btn.cbi-button-add,
+	#ssr-subscribe-toolbar > .btn.cbi-button-save {
 		margin: 0;
 	}
 
@@ -143,15 +389,11 @@
 	}
 
 	#ssr-subscribe-toolbar > .btn.cbi-button-add,
-	#ssr-subscribe-toolbar > .ssr-subscribe-save-settings,
+	#ssr-subscribe-toolbar > .btn.cbi-button-save,
 	#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot .btn {
 		min-height: 2.1rem;
 		padding-top: 0.18rem;
 		padding-bottom: 0.18rem;
-	}
-
-	#ssr-subscribe-toolbar > .ssr-subscribe-save-settings {
-		margin: 0;
 	}
 
 	#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot .btn.cbi-button-add {
@@ -174,7 +416,7 @@
 		}
 
 		#ssr-subscribe-toolbar > .btn.cbi-button-add,
-		#ssr-subscribe-toolbar > .ssr-subscribe-save-settings,
+		#ssr-subscribe-toolbar > .btn.cbi-button-save,
 		#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot-delete,
 		#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot-update {
 			margin-left: 0;
