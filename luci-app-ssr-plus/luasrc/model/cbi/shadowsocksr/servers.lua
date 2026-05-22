@@ -321,18 +321,22 @@ local function migrate_legacy_subscribe_urls()
 	for index, url in ipairs(legacy_urls) do
 		local trimmed = trim(url)
 		if trimmed ~= "" then
-			local sid = uci:add("shadowsocksr", "server_subscribe_item")
-			if sid then
-				uci:set("shadowsocksr", sid, "enabled", "1")
-				uci:set("shadowsocksr", sid, "alias", string.format("Subscribe %d", index))
-				uci:set("shadowsocksr", sid, "url", trimmed)
+			local sid_output = luci.sys.exec("uci add shadowsocksr server_subscribe_item")
+			local sid = sid_output:match("%S+")
+			if sid and sid ~= "" then
+				local escaped_sid = luci.util.shellquote(sid)
+				local alias = string.format("Subscribe %d", index)
+				local escaped_alias = luci.util.shellquote(alias)
+				local escaped_url = luci.util.shellquote(trimmed)
+				luci.sys.call("uci set shadowsocksr." .. escaped_sid .. ".enabled=1")
+				luci.sys.call("uci set shadowsocksr." .. escaped_sid .. ".alias=" .. escaped_alias)
+				luci.sys.call("uci set shadowsocksr." .. escaped_sid .. ".url=" .. escaped_url)
 			end
 		end
 	end
 
-	uci:delete("shadowsocksr", subscribe_sid, "subscribe_url")
-	uci:save("shadowsocksr")
-	uci:commit("shadowsocksr")
+	luci.sys.call("uci delete shadowsocksr." .. subscribe_sid .. ".subscribe_url")
+	luci.sys.call("uci commit shadowsocksr")
 end
 
 local function clash_host_port(clash_url)

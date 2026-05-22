@@ -254,60 +254,55 @@ local tls_flows = {
 	"none"
 }
 
---[[
 local function migrate_xray_protocol_nodes()
 	local changed = false
 
 	uci:foreach("shadowsocksr", "servers", function(section)
-		if section.type == "ss" or section.type == "ss-libev" then
+		local sid = section[".name"]
+		local stype = section.type
+		local proto = section.v2ray_protocol
+		local escaped_sid = luci.util.shellquote(sid)
+
+		if stype == "ss" or stype == "ss-libev" then
 			if has_mihomo then
-				uci:set("shadowsocksr", section[".name"], "type", "ss")
+				luci.sys.call(string.format("uci set shadowsocksr.%s.type='ss'", escaped_sid))
 				changed = true
 			elseif has_ss_rust then
-				uci:set("shadowsocksr", section[".name"], "type", "ss-rust")
+				luci.sys.call(string.format("uci set shadowsocksr.%s.type='ss-rust'", escaped_sid))
 				changed = true
 			elseif has_xray then
-				uci:set("shadowsocksr", section[".name"], "type", "v2ray")
-				uci:set("shadowsocksr", section[".name"], "v2ray_protocol", "shadowsocks")
+				luci.sys.call(string.format("uci set shadowsocksr.%s.type='v2ray' && " .. "uci set shadowsocksr.%s.v2ray_protocol='shadowsocks'", escaped_sid, escaped_sid))
 				changed = true
 			end
-		elseif section.type == "v2ray" and section.v2ray_protocol == "shadowsocks" and has_mihomo then
-			uci:set("shadowsocksr", section[".name"], "type", "ss")
-			uci:delete("shadowsocksr", section[".name"], "v2ray_protocol")
+		elseif stype == "v2ray" and proto == "shadowsocks" and has_mihomo then
+			luci.sys.call(string.format("uci set shadowsocksr.%s.type='ss' && " .. "uci delete shadowsocksr.%s.v2ray_protocol", escaped_sid, escaped_sid))
 			changed = true
 		end
-		if section.type == "hysteria2" then
-			uci:set("shadowsocksr", section[".name"], "type", "v2ray")
-			uci:set("shadowsocksr", section[".name"], "v2ray_protocol", "hysteria2")
+		if stype == "hysteria2" then
+			luci.sys.call(string.format("uci set shadowsocksr.%s.type='v2ray' && " .. "uci set shadowsocksr.%s.v2ray_protocol='hysteria2'", escaped_sid, escaped_sid))
 			changed = true
-		elseif section.type == "trojan" then
-			uci:set("shadowsocksr", section[".name"], "type", "v2ray")
-			uci:set("shadowsocksr", section[".name"], "v2ray_protocol", "trojan")
+		elseif stype == "trojan" then
+			luci.sys.call(string.format("uci set shadowsocksr.%s.type='v2ray' && " .. "uci set shadowsocksr.%s.v2ray_protocol='trojan'", escaped_sid, escaped_sid))
 			changed = true
 		end
 	end)
-
 	local subscribe_sid = uci:get_first("shadowsocksr", "server_subscribe")
-	if subscribe_sid and uci:get("shadowsocksr", subscribe_sid, "xray_hy2_type") then
-		uci:delete("shadowsocksr", subscribe_sid, "xray_hy2_type")
-		changed = true
+	if subscribe_sid then
+		local old_options = {"xray_hy2_type", "xray_tj_type", "ss_type"}
+		local escaped_sub_sid = luci.util.shellquote(subscribe_sid)
+		for _, opt in ipairs(old_options) do
+			if uci:get("shadowsocksr", subscribe_sid, opt) then
+				luci.sys.call(string.format("uci delete shadowsocksr.%s.%s", escaped_sub_sid, opt))
+				changed = true
+			end
+		end
 	end
-	if subscribe_sid and uci:get("shadowsocksr", subscribe_sid, "xray_tj_type") then
-		uci:delete("shadowsocksr", subscribe_sid, "xray_tj_type")
-		changed = true
-	end
-	if subscribe_sid and uci:get("shadowsocksr", subscribe_sid, "ss_type") then
-		uci:delete("shadowsocksr", subscribe_sid, "ss_type")
-		changed = true
-	end
-
 	if changed then
-		uci:commit("shadowsocksr")
+		luci.sys.call("uci commit shadowsocksr")
 	end
 end
 
 migrate_xray_protocol_nodes()
-]]--
 
 m = Map("shadowsocksr", translate("Edit ShadowSocksR Server"))
 m.redirect = url("servers")

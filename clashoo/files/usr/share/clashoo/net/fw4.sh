@@ -64,6 +64,14 @@ config_access_control() {
 	uci_get clashoo.config.access_control
 }
 
+config_ipv4_dns_hijack() {
+	uci_get clashoo.config.ipv4_dns_hijack
+}
+
+config_ipv6_dns_hijack() {
+	uci_get clashoo.config.ipv6_dns_hijack
+}
+
 config_bypass_china() {
 	uci_get clashoo.config.bypass_china
 }
@@ -260,6 +268,17 @@ render_port_match() {
 	fi
 }
 
+# DNS 劫持规则：把客户端明文 DNS（53 端口）重定向回本机 dnsmasq，
+# 让写死 DNS 的设备也走 dnsmasq → 核心 这条正常路。按 UCI 开关分 IPv4/IPv6。
+# 末尾 return 0：两个开关都关时无输出，避免 set -e 误判函数失败。
+render_dns_hijack() {
+	bool_enabled "$(config_ipv4_dns_hijack)" && \
+		printf '%s\n' 'meta nfproto ipv4 meta l4proto { tcp, udp } th dport 53 counter redirect to :53'
+	bool_enabled "$(config_ipv6_dns_hijack)" && \
+		printf '%s\n' 'meta nfproto ipv6 meta l4proto { tcp, udp } th dport 53 counter redirect to :53'
+	return 0
+}
+
 apply_local_output_rule() {
 	local redir_port fake_ip_range tcp_mode bypass_fwmark bypass_china
 	local fwmark_elements fwmark_rule china_set china_rule
@@ -393,11 +412,16 @@ generate_rules() {
 
 	: > "$OUTPUT_RULES"
 
-	# TCP rules: redirect or tproxy (tun mode needs no nftables rule)
+	# DNS 劫持规则先落到 DSTNAT_RULES 顶部：与 TCP 代理模式正交，
+	# redirect/tproxy/tun 三种模式下都要生效，且须排在代理重定向规则之前，
+	# 避免 53 端口流量被下面的代理规则抢走。
+	render_dns_hijack > "$DSTNAT_RULES"
+
+	# TCP rules: redirect 模式追加代理重定向；tproxy/tun 模式不在此链加规则
 	case "$tcp_mode" in
 		redirect)
 			tcp_match="$(render_port_match tcp "$proxy_tcp_dport")"
-			cat > "$DSTNAT_RULES" <<EOF
+			cat >> "$DSTNAT_RULES" <<EOF
 ip daddr @clashoo_localnetwork return
 $( bool_enabled "$bypass_china" && printf '%s\n' 'ip6 daddr @clashoo_china6 return' )
 $( bool_enabled "$bypass_china" && printf '%s\n' 'ip daddr @clashoo_china return' )
@@ -408,13 +432,6 @@ $( [ -n "$dscp_elements" ] && printf '%s\n' "ip6 dscp { ${dscp_elements} } retur
 $( [ -n "$fwmark_elements" ] && printf '%s\n' "meta mark { ${fwmark_elements} } return" )
 ${tcp_match} redirect to :${redir_port}
 EOF
-			;;
-		tproxy)
-			: > "$DSTNAT_RULES"
-			;;
-		*)
-			# tun or unset: no TCP nftables rules
-			: > "$DSTNAT_RULES"
 			;;
 	esac
 

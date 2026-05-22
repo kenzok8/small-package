@@ -11,16 +11,14 @@ var CSS = [
   '.cl-wrap{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
   '.cl-wrap{--cl-live-title-color:rgba(40,50,68,.62);--cl-live-main-color:rgba(84,96,116,.92);--cl-live-sub-color:rgba(74,86,106,.72);--cl-live-foot-color:rgba(74,86,106,.72);--cl-live-zero-color:rgba(128,128,128,.5)}',
   'body.dark .cl-wrap,body.dark .cl-wrap,body[data-theme="dark"] .cl-wrap,body[data-darkmode="1"] .cl-wrap,body[data-darkmode="true"] .cl-wrap,html.dark .cl-wrap,html.dark .cl-wrap,html[data-theme="dark"] .cl-wrap,html[data-bs-theme="dark"] .cl-wrap,html[data-darkmode="1"] .cl-wrap,html[data-darkmode="true"] .cl-wrap{--cl-live-title-color:rgba(230,238,252,.74);--cl-live-main-color:rgba(228,236,248,.9);--cl-live-sub-color:rgba(208,219,238,.72);--cl-live-foot-color:rgba(208,219,238,.72)}',
-  '.cl-status-kernel{display:inline-flex;align-items:center;gap:2px;height:26px;padding:1px;border-radius:8px;border:0;background:rgba(0,0,0,.03)}',
-  '.cl-status-kernel .cl-core-btn{height:24px;line-height:24px;min-width:58px;padding:0 6px;border:0;border-radius:6px;background:transparent;font-size:11px;font-weight:600;cursor:pointer;opacity:.82}',
-  '.cl-status-kernel .cl-core-btn.active{background:rgba(var(--primary-rgb,0,122,255),.2);border:0;color:var(--primary-color,#0b68dd);box-shadow:none;opacity:1}',
-  '.cl-status-kernel .cl-core-btn:disabled{opacity:.48;cursor:not-allowed}',
-  '.cl-status-kernel.is-busy{opacity:.9}',
+  '.cl-status-kernel{display:inline-flex;align-items:center;gap:2px;padding:2px;border-radius:8px;border:0;background:rgba(128,128,128,.1)}',
+  '.cl-status-kernel .cl-core-btn{height:24px;line-height:24px;min-width:60px;padding:0 10px;border:0;border-radius:6px;background:transparent;font-size:11px;font-weight:500;color:var(--cl-live-main-color);opacity:.6;cursor:pointer;transition:background-color .18s ease,color .18s ease,opacity .18s ease}',
+  '.cl-status-kernel .cl-core-btn.active{background:linear-gradient(#3886a1,#2f7288);border:0;color:#fff;opacity:1;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}',
+  '.cl-status-kernel .cl-core-btn:disabled{cursor:not-allowed}',
+  '.cl-status-kernel.is-busy{opacity:.6}',
   '.cl-core-switch-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:6px}',
   '.cl-core-switch-hint{font-size:12px;line-height:1.35;color:rgba(74,86,106,.72)}',
   'body.dark .cl-core-switch-hint,html[data-theme="dark"] .cl-core-switch-hint,html[data-bs-theme="dark"] .cl-core-switch-hint{color:rgba(208,219,238,.72)}',
-  'body.dark .cl-status-kernel,body.dark .cl-status-kernel,html[data-theme="dark"] .cl-status-kernel,html[data-bs-theme="dark"] .cl-status-kernel{border:0;background:rgba(255,255,255,.06)}',
-  'body.dark .cl-status-kernel .cl-core-btn.active,body.dark .cl-status-kernel .cl-core-btn.active,html[data-theme="dark"] .cl-status-kernel .cl-core-btn.active,html[data-bs-theme="dark"] .cl-status-kernel .cl-core-btn.active{background:rgba(var(--primary-rgb,122,180,255),.24);border:0;color:rgba(222,236,255,.96);box-shadow:none}',
   '.cl-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}',
   '.cl-card{border:1px solid rgba(0,0,0,.05);border-radius:10px;padding:14px 16px;min-height:70px;box-shadow:0 4px 12px rgba(0,0,0,.03)}',
   '.cl-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}',
@@ -111,7 +109,9 @@ var CSS = [
   '@keyframes cl-shimmer{0%{background-position:220% 0}100%{background-position:-220% 0}}',
   '.cl-op-msg{font-size:12px;font-weight:500;opacity:.85;animation:cl-fadein .25s ease}',
   /* 简易节点面板（模态浮层）*/
-  '.cl-pm-open{display:inline-flex;align-items:center;justify-content:center;height:24px;min-height:24px;line-height:1;padding:0 9px;font-size:11px;border-radius:6px;border:1px solid rgba(var(--primary-rgb,0,122,255),.45);background:rgba(var(--primary-rgb,0,122,255),.1);color:inherit;cursor:pointer;white-space:nowrap;box-sizing:border-box}',
+  '.cl-pm-open{display:inline-flex;align-items:center;height:24px;line-height:1;padding:0;border:0 !important;background:transparent !important;box-shadow:none !important;font-size:12px;font-weight:500;color:var(--cl-primary,rgba(0,122,255,.9));cursor:pointer;white-space:nowrap}',
+  '.cl-pm-open:hover{opacity:.7}',
+  '#cl-core-switch-inline-wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap}',
   '.cl-pm-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:99998}',
   '.cl-pm-mask.cl-on{display:block}',
   '.cl-pm{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(900px,calc(100vw - 28px));max-height:calc(100vh - 56px);overflow:auto;background:#fff;color:#2a3142;border:1px solid rgba(0,0,0,.08);border-radius:12px;box-shadow:0 22px 60px rgba(0,0,0,.38);z-index:99999;padding:0 22px 18px;opacity:1}',
@@ -545,6 +545,7 @@ return view.extend({
     if (!wrap) return;
     wrap.innerHTML = '';
     wrap.appendChild(this._renderCoreSwitch(this._lastSt || {}));
+    wrap.appendChild(this._proxyTriggerBtn());
   },
 
   _showCoreSwitchHint: function (msg) {
@@ -731,13 +732,11 @@ return view.extend({
 
     return [
       this._card('运行状态', statusEl, 'cl-card-status',
-        E('div', { style: 'display:flex;gap:6px;align-items:center' }, [
-          this._proxyTriggerBtn(),
-          this._renderServiceSwitch(st)
-        ])),
+        this._renderServiceSwitch(st)),
       this._card('内核切换',
         E('div', { id: 'cl-core-switch-inline-wrap' }, [
-          this._renderCoreSwitch(st)
+          this._renderCoreSwitch(st),
+          this._proxyTriggerBtn()
         ]),
         'cl-card-kernel'
       ),
@@ -898,7 +897,7 @@ return view.extend({
 
   _proxyTriggerBtn: function () {
     var self = this;
-    var btn = E('button', { 'class': 'cl-pm-open' }, '节点面板');
+    var btn = E('button', { 'class': 'cl-pm-open' }, '节点面板 ›');
     btn.addEventListener('click', function () { self._openProxyModal(); });
     return btn;
   },

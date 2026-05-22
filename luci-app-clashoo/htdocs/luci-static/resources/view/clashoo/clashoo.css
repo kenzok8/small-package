@@ -120,51 +120,57 @@
   align-items: flex-start;
 }
 
+/* 内核切换分段控件：紧凑分段，选中段实心主色高亮 + 白字。明暗自适应。 */
 .cl-wrap .cl-status-kernel {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  height: 26px;
-  padding: 1px;
+  padding: 2px;
   border-radius: 8px;
   border: 0;
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(128, 128, 128, 0.1);
   box-shadow: none !important;
 }
 
 .cl-wrap .cl-status-kernel .cl-core-btn {
   height: 24px;
   line-height: 24px;
-  min-width: 58px;
-  padding: 0 6px;
+  min-width: 60px;
+  padding: 0 10px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   box-shadow: none !important;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--cl-label-muted);
+  opacity: 0.6;
   cursor: pointer;
-  opacity: 0.82;
+  transition: background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
 }
 
-.cl-wrap .cl-status-kernel .cl-core-btn.active {
-  background: rgba(var(--cl-primary-rgb), 0.16);
+.cl-wrap .cl-status-kernel .cl-core-btn:hover {
+  opacity: 0.85;
+}
+
+/* 选中段实心色：固定青色，四主题（Bootstrap / Argon × 明暗）统一，
+   略带向下变暗的渐变增加层次。 */
+.cl-wrap .cl-status-kernel .cl-core-btn.active,
+.cl-wrap .cl-status-kernel .cl-core-btn.active:hover {
+  background: linear-gradient(#3886a1, #2f7288);
   border-color: transparent;
-  color: var(--cl-primary);
-  box-shadow: none !important;
-  font-weight: 500;
+  color: #fff;
   opacity: 1;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
 }
 
 .cl-wrap .cl-status-kernel .cl-core-btn:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 
-body.dark .cl-wrap .cl-status-kernel,
-html[data-theme="dark"] .cl-wrap .cl-status-kernel,
-html[data-bs-theme="dark"] .cl-wrap .cl-status-kernel {
-  background: rgba(255, 255, 255, 0.06);
+.cl-wrap .cl-status-kernel.is-busy {
+  opacity: 0.6;
 }
 
 .cl-wrap .btn.cbi-button-action,
@@ -611,6 +617,26 @@ html[data-darkmode="true"] .cl-wrap .cl-mode-tag {
   background: rgba(222, 86, 86, 0.08) !important;
   border-color: rgba(222, 86, 86, 0.46) !important;
   color: rgba(190, 62, 62, 0.92) !important;
+}
+
+/* 中性按钮（检查更新 / 导出备份 / 导入还原）：浅灰描边，
+   避免落到主题原生深灰填充（Argon 浅色下尤为突兀）。明暗自适应。 */
+.cl-wrap.cl-config-page .cbi-button-neutral,
+.cl-wrap.cl-config-page .btn.cbi-button-neutral,
+.cl-wrap.cl-system-page .cbi-button-neutral,
+.cl-wrap.cl-system-page .btn.cbi-button-neutral {
+  background: rgba(128, 128, 128, 0.1) !important;
+  border: 1px solid rgba(128, 128, 128, 0.24) !important;
+  color: var(--cl-label-muted) !important;
+  box-shadow: none !important;
+}
+
+.cl-wrap.cl-config-page .cbi-button-neutral:hover,
+.cl-wrap.cl-config-page .btn.cbi-button-neutral:hover,
+.cl-wrap.cl-system-page .cbi-button-neutral:hover,
+.cl-wrap.cl-system-page .btn.cbi-button-neutral:hover {
+  background: rgba(128, 128, 128, 0.18) !important;
+  border-color: rgba(128, 128, 128, 0.32) !important;
 }
 
 /* Config page de-colorization: keep primary accents only */
@@ -1210,23 +1236,6 @@ html[data-bs-theme="dark"] .cl-wrap .cl-live-num {
   border: 0 !important;
   box-shadow: none !important;
   background: transparent !important;
-}
-
-.cl-wrap.cl-overview-page .cl-status-kernel {
-  border: 0 !important;
-  box-shadow: none !important;
-  background: rgba(var(--primary-rgb, var(--cl-primary-rgb)), 0.08) !important;
-}
-
-.cl-wrap.cl-overview-page .cl-status-kernel .cl-core-btn {
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-.cl-wrap.cl-overview-page .cl-status-kernel .cl-core-btn.active {
-  border: 0 !important;
-  box-shadow: none !important;
-  background: rgba(var(--primary-rgb, var(--cl-primary-rgb)), 0.24) !important;
 }
 
 .cl-wrap.cl-overview-page .cl-check-item img,

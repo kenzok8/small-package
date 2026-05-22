@@ -988,6 +988,7 @@ return view.extend({
     o = s.option(form.Flag, 'disable_quic_gso', '禁用 QUIC GSO');
     o = s.option(form.Flag, 'ipv4_dns_hijack', 'IPv4 DNS 劫持');
     o = s.option(form.Flag, 'ipv6_dns_hijack', 'IPv6 DNS 劫持');
+    o.description = '拦截 IPv6 DNS 流量，防止写死 DNS 的设备绕过分流。';
     o = s.option(form.Flag, 'ipv4_proxy',      'IPv4 代理');
     o = s.option(form.Flag, 'ipv6_proxy',      'IPv6 代理');
     o = s.option(form.Flag, 'fake_ip_ping_hijack', '虚拟 IP Ping 劫持');
@@ -1221,8 +1222,8 @@ return view.extend({
     o = s.option(form.ListValue,   'enhanced_mode',     '增强模式');
     o.value('fake-ip', 'Fake-IP'); o.value('redir-host', 'Redir-Host');
     o.default = 'fake-ip';
-    o.description = 'Fake-IP（默认）：解析快、分流准，大陆分流由内核完成。' +
-      'Redir-Host：大陆流量可在防火墙层直接绕过核心，DNS 体验略弱。一般保持默认即可。';
+    o.description = 'Fake-IP（默认）：解析快、分流准，大陆分流由内核完成。<br />' +
+      'Redir-Host：大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。';
     o = s.option(form.Value,       'fake_ip_range',     'Fake-IP 网段');
     o.default = '198.18.0.1/16';
     o.placeholder = '198.18.0.1/16';
