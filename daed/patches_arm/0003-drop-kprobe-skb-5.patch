@@ -1,0 +1,24 @@
+--- a/dae-core/trace/kern/trace.c
++++ b/dae-core/trace/kern/trace.c
+@@ -228,7 +228,7 @@ KPROBE_SKB_AT(1)
+ KPROBE_SKB_AT(2)
+ KPROBE_SKB_AT(3)
+ KPROBE_SKB_AT(4)
+-KPROBE_SKB_AT(5)
++//KPROBE_SKB_AT(5)
+ 
+ SEC("kprobe/skb_lifetime_termination")
+ int kprobe_skb_lifetime_termination(struct pt_regs *ctx)
+--- a/dae-core/trace/trace.go
++++ b/dae-core/trace/trace.go
+@@ -206,8 +206,8 @@ func attachBpfToTargets(objs *bpfObjects
+ 			kp, err = link.Kprobe(fn, objs.KprobeSkb3, nil)
+ 		case 4:
+ 			kp, err = link.Kprobe(fn, objs.KprobeSkb4, nil)
+-		case 5:
+-			kp, err = link.Kprobe(fn, objs.KprobeSkb5, nil)
++		//case 5:
++		//	kp, err = link.Kprobe(fn, objs.KprobeSkb5, nil)
+ 		}
+ 		if err != nil {
+ 			logrus.Debugf("failed to attach kprobe to %s: %+v\n", fn, err)

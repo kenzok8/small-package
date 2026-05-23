@@ -21,6 +21,7 @@ start_service() {
 	config_get log_maxsize "config" "log_maxsize" "5"
 
 	procd_open_instance "$CONF"
+	procd_set_param env DAE_LOCATION_ASSET="/usr/share/v2ray"
 	procd_set_param command "$PROG" run
 	procd_append_param command --config "/etc/daed/"
 	procd_append_param command --listen "$listen_addr"
